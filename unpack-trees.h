@@ -24,10 +24,12 @@ enum unpack_trees_error_types {
 	ERROR_BIND_OVERLAP,
 	ERROR_WOULD_LOSE_SUBMODULE,
 
+	NB_UNPACK_TREES_ERROR_TYPES,
+
 	WARNING_SPARSE_NOT_UPTODATE_FILE,
 	WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN,
 
-	NB_UNPACK_TREES_ERROR_TYPES,
+	NB_UNPACK_TREES_WARNING_TYPES,
 };
 
 /*
@@ -66,13 +68,13 @@ struct unpack_trees_options {
 	struct dir_struct *dir;
 	struct pathspec *pathspec;
 	merge_fn_t fn;
-	const char *msgs[NB_UNPACK_TREES_ERROR_TYPES];
+	const char *msgs[NB_UNPACK_TREES_WARNING_TYPES];
 	struct argv_array msgs_to_free;
 	/*
 	 * Store error messages in an array, each case
 	 * corresponding to a error message type
 	 */
-	struct string_list unpack_rejects[NB_UNPACK_TREES_ERROR_TYPES];
+	struct string_list unpack_rejects[NB_UNPACK_TREES_WARNING_TYPES];
 
 	int head_idx;
 	int merge_size;

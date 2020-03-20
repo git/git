@@ -24,7 +24,7 @@
  * situation better.  See how "git checkout" and "git merge" replaces
  * them using setup_unpack_trees_porcelain(), for example.
  */
-static const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
+static const char *unpack_plumbing_errors[NB_UNPACK_TREES_WARNING_TYPES] = {
 	/* ERROR_WOULD_OVERWRITE */
 	"Entry '%s' would be overwritten by merge. Cannot merge.",
 
@@ -45,6 +45,9 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 
 	/* ERROR_WOULD_LOSE_SUBMODULE */
 	"Submodule '%s' cannot checkout new HEAD.",
+
+	/* NB_UNPACK_TREES_ERROR_TYPES; just a meta value */
+	"",
 
 	/* WARNING_SPARSE_NOT_UPTODATE_FILE */
 	"Entry '%s' not uptodate. Cannot update sparse checkout.",
@@ -222,7 +225,7 @@ static int add_rejected_path(struct unpack_trees_options *o,
 
 	/*
 	 * Otherwise, insert in a list for future display by
-	 * display_error_msgs()
+	 * display_(error|warning)_msgs()
 	 */
 	string_list_append(&o->unpack_rejects[e], path);
 	return -1;
@@ -233,13 +236,16 @@ static int add_rejected_path(struct unpack_trees_options *o,
  */
 static void display_error_msgs(struct unpack_trees_options *o)
 {
-	int e, i;
-	int something_displayed = 0;
+	int e;
+	unsigned error_displayed = 0;
 	for (e = 0; e < NB_UNPACK_TREES_ERROR_TYPES; e++) {
 		struct string_list *rejects = &o->unpack_rejects[e];
+
 		if (rejects->nr > 0) {
+			int i;
 			struct strbuf path = STRBUF_INIT;
-			something_displayed = 1;
+
+			error_displayed = 1;
 			for (i = 0; i < rejects->nr; i++)
 				strbuf_addf(&path, "\t%s\n", rejects->items[i].string);
 			error(ERRORMSG(o, e), super_prefixed(path.buf));
@@ -247,10 +253,36 @@ static void display_error_msgs(struct unpack_trees_options *o)
 		}
 		string_list_clear(rejects, 0);
 	}
-	if (something_displayed)
+	if (error_displayed)
 		fprintf(stderr, _("Aborting\n"));
 }
 
+/*
+ * display all the warning messages stored in a nice way
+ */
+static void display_warning_msgs(struct unpack_trees_options *o)
+{
+	int e;
+	unsigned warning_displayed = 0;
+	for (e = NB_UNPACK_TREES_ERROR_TYPES + 1;
+	     e < NB_UNPACK_TREES_WARNING_TYPES; e++) {
+		struct string_list *rejects = &o->unpack_rejects[e];
+
+		if (rejects->nr > 0) {
+			int i;
+			struct strbuf path = STRBUF_INIT;
+
+			warning_displayed = 1;
+			for (i = 0; i < rejects->nr; i++)
+				strbuf_addf(&path, "\t%s\n", rejects->items[i].string);
+			warning(ERRORMSG(o, e), super_prefixed(path.buf));
+			strbuf_release(&path);
+		}
+		string_list_clear(rejects, 0);
+	}
+	if (warning_displayed)
+		fprintf(stderr, _("After fixing the above paths, you may want to run `git sparse-checkout reapply`.\n"));
+}
 static int check_submodule_move_head(const struct cache_entry *ce,
 				     const char *old_id,
 				     const char *new_id,
@@ -1705,8 +1737,10 @@ done:
 	return ret;
 
 return_failed:
-	if (o->show_all_errors)
+	if (o->show_all_errors) {
 		display_error_msgs(o);
+		display_warning_msgs(o);
+	}
 	mark_all_ce_unused(o->src_index);
 	ret = unpack_failed(o, NULL);
 	if (o->exiting_early)
@@ -1783,7 +1817,7 @@ skip_sparse_checkout:
 		ret = UPDATE_SPARSITY_WORKTREE_UPDATE_FAILURES;
 
 done:
-	display_error_msgs(o);
+	display_warning_msgs(o);
 	o->show_all_errors = old_show_all_errors;
 	if (free_pattern_list)
 		clear_pattern_list(&pl);

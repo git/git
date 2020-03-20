@@ -328,10 +328,10 @@ test_expect_success 'sparse-checkout (init|set|disable) warns with dirty status'
 	echo dirty >dirty/folder1/a &&
 
 	git -C dirty sparse-checkout init 2>err &&
-	test_i18ngrep "error.*Cannot update sparse checkout" err &&
+	test_i18ngrep "warning.*Cannot update sparse checkout" err &&
 
 	git -C dirty sparse-checkout set /folder2/* /deep/deeper1/* 2>err &&
-	test_i18ngrep "error.*Cannot update sparse checkout" err &&
+	test_i18ngrep "warning.*Cannot update sparse checkout" err &&
 	test_path_is_file dirty/folder1/a &&
 
 	git -C dirty sparse-checkout disable 2>err &&
