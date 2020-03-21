@@ -28,6 +28,8 @@
 #include "sequencer.h"
 #include "rebase-interactive.h"
 
+#define DEFAULT_REFLOG_ACTION "rebase"
+
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] "
 		"[--onto <newbase> | --keep-base] [<upstream> [<branch>]]"),
@@ -772,9 +774,10 @@ static void add_var(struct strbuf *buf, const char *name, const char *value)
 #define RESET_HEAD_REFS_ONLY (1<<3)
 #define RESET_ORIG_HEAD (1<<4)
 
-static int reset_head(struct object_id *oid, const char *action,
+static int reset_head(struct repository *r, struct object_id *oid, const char *action,
 		      const char *switch_to_branch, unsigned flags,
-		      const char *reflog_orig_head, const char *reflog_head)
+		      const char *reflog_orig_head, const char *reflog_head,
+		      const char *default_reflog_action)
 {
 	unsigned detach_head = flags & RESET_HEAD_DETACH;
 	unsigned reset_hard = flags & RESET_HEAD_HARD;
@@ -796,7 +799,7 @@ static int reset_head(struct object_id *oid, const char *action,
 	if (switch_to_branch && !starts_with(switch_to_branch, "refs/"))
 		BUG("Not a fully qualified branch: '%s'", switch_to_branch);
 
-	if (!refs_only && hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0) {
+	if (!refs_only && repo_hold_locked_index(r, &lock, LOCK_REPORT_ON_ERROR) < 0) {
 		ret = -1;
 		goto leave_reset_head;
 	}
@@ -815,26 +818,26 @@ static int reset_head(struct object_id *oid, const char *action,
 	memset(&unpack_tree_opts, 0, sizeof(unpack_tree_opts));
 	setup_unpack_trees_porcelain(&unpack_tree_opts, action);
 	unpack_tree_opts.head_idx = 1;
-	unpack_tree_opts.src_index = the_repository->index;
-	unpack_tree_opts.dst_index = the_repository->index;
+	unpack_tree_opts.src_index = r->index;
+	unpack_tree_opts.dst_index = r->index;
 	unpack_tree_opts.fn = reset_hard ? oneway_merge : twoway_merge;
 	unpack_tree_opts.update = 1;
 	unpack_tree_opts.merge = 1;
 	if (!detach_head)
 		unpack_tree_opts.reset = 1;
 
-	if (repo_read_index_unmerged(the_repository) < 0) {
+	if (repo_read_index_unmerged(r) < 0) {
 		ret = error(_("could not read index"));
 		goto leave_reset_head;
 	}
 
-	if (!reset_hard && !fill_tree_descriptor(the_repository, &desc[nr++], &head_oid)) {
+	if (!reset_hard && !fill_tree_descriptor(r, &desc[nr++], &head_oid)) {
 		ret = error(_("failed to find tree of %s"),
 			    oid_to_hex(&head_oid));
 		goto leave_reset_head;
 	}
 
-	if (!fill_tree_descriptor(the_repository, &desc[nr++], oid)) {
+	if (!fill_tree_descriptor(r, &desc[nr++], oid)) {
 		ret = error(_("failed to find tree of %s"), oid_to_hex(oid));
 		goto leave_reset_head;
 	}
@@ -845,16 +848,16 @@ static int reset_head(struct object_id *oid, const char *action,
 	}
 
 	tree = parse_tree_indirect(oid);
-	prime_cache_tree(the_repository, the_repository->index, tree);
+	prime_cache_tree(r, r->index, tree);
 
-	if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK) < 0) {
+	if (write_locked_index(r->index, &lock, COMMIT_LOCK) < 0) {
 		ret = error(_("could not write index"));
 		goto leave_reset_head;
 	}
 
 reset_head_refs:
 	reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
-	strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action : "rebase");
+	strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action : default_reflog_action);
 	prefix_len = msg.len;
 
 	if (update_orig_head) {
@@ -916,8 +919,10 @@ static int move_to_original_branch(struct rebase_options *opts)
 		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
 	strbuf_addf(&head_reflog, "rebase finished: returning to %s",
 		    opts->head_name);
-	ret = reset_head(NULL, "", opts->head_name, RESET_HEAD_REFS_ONLY,
-			 orig_head_reflog.buf, head_reflog.buf);
+	ret = reset_head(the_repository, NULL, "", opts->head_name,
+			 RESET_HEAD_REFS_ONLY,
+			 orig_head_reflog.buf, head_reflog.buf,
+			 DEFAULT_REFLOG_ACTION);
 
 	strbuf_release(&orig_head_reflog);
 	strbuf_release(&head_reflog);
@@ -1005,8 +1010,9 @@ static int run_am(struct rebase_options *opts)
 		free(rebased_patches);
 		argv_array_clear(&am.args);
 
-		reset_head(&opts->orig_head, "checkout", opts->head_name, 0,
-			   "HEAD", NULL);
+		reset_head(the_repository, &opts->orig_head, "checkout",
+			   opts->head_name, 0,
+			   "HEAD", NULL, DEFAULT_REFLOG_ACTION);
 		error(_("\ngit encountered an error while preparing the "
 			"patches to replay\n"
 			"these revisions:\n"
@@ -1661,8 +1667,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		rerere_clear(the_repository, &merge_rr);
 		string_list_clear(&merge_rr, 1);
 
-		if (reset_head(NULL, "reset", NULL, RESET_HEAD_HARD,
-			       NULL, NULL) < 0)
+		if (reset_head(the_repository, NULL, "reset", NULL, RESET_HEAD_HARD,
+			       NULL, NULL, DEFAULT_REFLOG_ACTION) < 0)
 			die(_("could not discard worktree changes"));
 		remove_branch_state(the_repository, 0);
 		if (read_basic_state(&options))
@@ -1679,9 +1685,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		if (read_basic_state(&options))
 			exit(1);
-		if (reset_head(&options.orig_head, "reset",
+		if (reset_head(the_repository, &options.orig_head, "reset",
 			       options.head_name, RESET_HEAD_HARD,
-			       NULL, NULL) < 0)
+			       NULL, NULL, DEFAULT_REFLOG_ACTION) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		remove_branch_state(the_repository, 0);
@@ -2073,8 +2079,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				    options.state_dir);
 			write_file(autostash, "%s", oid_to_hex(&oid));
 			printf(_("Created autostash: %s\n"), buf.buf);
-			if (reset_head(NULL, "reset --hard",
-				       NULL, RESET_HEAD_HARD, NULL, NULL) < 0)
+			if (reset_head(the_repository, NULL, "reset --hard",
+				       NULL, RESET_HEAD_HARD, NULL, NULL,
+				       DEFAULT_REFLOG_ACTION) < 0)
 				die(_("could not reset --hard"));
 
 			if (discard_index(the_repository->index) < 0 ||
@@ -2114,10 +2121,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				strbuf_addf(&buf, "%s: checkout %s",
 					    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
 					    options.switch_to);
-				if (reset_head(&options.orig_head, "checkout",
+				if (reset_head(the_repository,
+					       &options.orig_head, "checkout",
 					       options.head_name,
 					       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
-					       NULL, buf.buf) < 0) {
+					       NULL, buf.buf,
+					       DEFAULT_REFLOG_ACTION) < 0) {
 					ret = !!error(_("could not switch to "
 							"%s"),
 						      options.switch_to);
@@ -2189,10 +2198,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	strbuf_addf(&msg, "%s: checkout %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
-	if (reset_head(&options.onto->object.oid, "checkout", NULL,
+	if (reset_head(the_repository, &options.onto->object.oid, "checkout", NULL,
 		       RESET_HEAD_DETACH | RESET_ORIG_HEAD |
 		       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
-		       NULL, msg.buf))
+		       NULL, msg.buf, DEFAULT_REFLOG_ACTION))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
 
@@ -2207,8 +2216,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&msg, "rebase finished: %s onto %s",
 			options.head_name ? options.head_name : "detached HEAD",
 			oid_to_hex(&options.onto->object.oid));
-		reset_head(NULL, "Fast-forwarded", options.head_name,
-			   RESET_HEAD_REFS_ONLY, "HEAD", msg.buf);
+		reset_head(the_repository, NULL, "Fast-forwarded", options.head_name,
+			   RESET_HEAD_REFS_ONLY, "HEAD", msg.buf,
+			   DEFAULT_REFLOG_ACTION);
 		strbuf_release(&msg);
 		ret = !!finish_rebase(&options);
 		goto cleanup;
