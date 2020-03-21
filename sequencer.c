@@ -420,6 +420,7 @@ static int write_message(const void *buf, size_t len, const char *filename,
 }
 
 #define READ_ONELINER_SKIP_IF_EMPTY (1 << 0)
+#define READ_ONELINER_WARN_NON_EXISTENCE (1 << 1)
 
 /*
  * Reads a file that was presumably written by a shell script, i.e. with an
@@ -436,7 +437,7 @@ static int read_oneliner(struct strbuf *buf,
 	int ret = 0;
 	struct strbuf file_buf = STRBUF_INIT;
 
-	if (!file_exists(path))
+	if (!(flags & READ_ONELINER_WARN_NON_EXISTENCE) && !file_exists(path))
 		return 0;
 
 	if (strbuf_read_file(&file_buf, path, 0) < 0) {
