@@ -419,6 +419,8 @@ static int write_message(const void *buf, size_t len, const char *filename,
 	return 0;
 }
 
+#define READ_ONELINER_SKIP_IF_EMPTY (1 << 0)
+
 /*
  * Reads a file that was presumably written by a shell script, i.e. with an
  * end-of-line marker that needs to be stripped.
@@ -429,7 +431,7 @@ static int write_message(const void *buf, size_t len, const char *filename,
  * Returns 1 if the file was read, 0 if it could not be read or does not exist.
  */
 static int read_oneliner(struct strbuf *buf,
-	const char *path, int skip_if_empty)
+	const char *path, unsigned flags)
 {
 	int ret = 0;
 	struct strbuf file_buf = STRBUF_INIT;
@@ -444,7 +446,7 @@ static int read_oneliner(struct strbuf *buf,
 
 	strbuf_trim_trailing_newline(&file_buf);
 
-	if (skip_if_empty && !file_buf.len)
+	if ((flags & READ_ONELINER_SKIP_IF_EMPTY) && !file_buf.len)
 		goto done;
 
 	strbuf_addbuf(buf, &file_buf);
@@ -2488,7 +2490,8 @@ static int read_populate_opts(struct replay_opts *opts)
 	if (is_rebase_i(opts)) {
 		struct strbuf buf = STRBUF_INIT;
 
-		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(), 1)) {
+		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(),
+				  READ_ONELINER_SKIP_IF_EMPTY)) {
 			if (!starts_with(buf.buf, "-S"))
 				strbuf_reset(&buf);
 			else {
@@ -2498,7 +2501,8 @@ static int read_populate_opts(struct replay_opts *opts)
 			strbuf_reset(&buf);
 		}
 
-		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(), 1)) {
+		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(),
+				  READ_ONELINER_SKIP_IF_EMPTY)) {
 			if (!strcmp(buf.buf, "--rerere-autoupdate"))
 				opts->allow_rerere_auto = RERERE_AUTOUPDATE;
 			else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
@@ -2530,7 +2534,8 @@ static int read_populate_opts(struct replay_opts *opts)
 		strbuf_release(&buf);
 
 		if (read_oneliner(&opts->current_fixups,
-				  rebase_path_current_fixups(), 1)) {
+				  rebase_path_current_fixups(),
+				  READ_ONELINER_SKIP_IF_EMPTY)) {
 			const char *p = opts->current_fixups.buf;
 			opts->current_fixup_count = 1;
 			while ((p = strchr(p, '\n'))) {
@@ -3667,7 +3672,8 @@ static int apply_autostash(struct replay_opts *opts)
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret = 0;
 
-	if (!read_oneliner(&stash_sha1, rebase_path_autostash(), 1)) {
+	if (!read_oneliner(&stash_sha1, rebase_path_autostash(),
+			   READ_ONELINER_SKIP_IF_EMPTY)) {
 		strbuf_release(&stash_sha1);
 		return 0;
 	}
@@ -4291,7 +4297,8 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 		struct strbuf buf = STRBUF_INIT;
 		struct object_id oid;
 
-		if (read_oneliner(&buf, rebase_path_stopped_sha(), 1) &&
+		if (read_oneliner(&buf, rebase_path_stopped_sha(),
+				  READ_ONELINER_SKIP_IF_EMPTY) &&
 		    !get_oid_committish(buf.buf, &oid))
 			record_in_rewritten(&oid, peek_command(&todo_list, 0));
 		strbuf_release(&buf);
