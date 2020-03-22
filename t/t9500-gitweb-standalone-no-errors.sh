@@ -348,7 +348,7 @@ test_expect_success \
 	 echo "To be renamed and changed" >04-rename-from &&
 	 echo "To have mode changed" >05-mode-change &&
 	 echo "File to symlink" >06-file-or-symlink &&
-	 echo "To be changed and have mode changed" >07-change-mode-change	&&
+	 echo "To be changed and have mode changed" >07-change-mode-change &&
 	 git add 0* &&
 	 git commit -a -m "Prepare large commit" &&
 	 echo "Changed" >01-change &&
@@ -361,7 +361,7 @@ test_expect_success \
 	 test_chmod +x 05-mode-change &&
 	 rm -f 06-file-or-symlink &&
 	 test_ln_s_add 01-change 06-file-or-symlink &&
-	 echo "Changed and have mode changed" >07-change-mode-change	&&
+	 echo "Changed and have mode changed" >07-change-mode-change &&
 	 test_chmod +x 07-change-mode-change &&
 	 git commit -a -m "Large commit" &&
 	 git checkout master'

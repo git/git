@@ -58,7 +58,7 @@ test_expect_success 'import with extra info lines from verbose p4 trigger' '
 	(
 		cd "$git" &&
 		git p4 sync
-	)&&
+	) &&
 	(
 		p4 triggers -i <<-EOF
 		Triggers:
