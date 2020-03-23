@@ -11,7 +11,7 @@ static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
 	N_("git commit-graph write [--object-dir <objdir>] "
 	   "[--split[=<strategy>]] "
-	   "[--input=<reachable|stdin-packs|stdin-commits|append>] "
+	   "[--input=<reachable|stdin-packs|stdin-commits|append|graphed>] "
 	   "[--[no-]progress] <split options>"),
 	NULL
 };
@@ -24,7 +24,7 @@ static const char * const builtin_commit_graph_verify_usage[] = {
 static const char * const builtin_commit_graph_write_usage[] = {
 	N_("git commit-graph write [--object-dir <objdir>] "
 	   "[--split[=<strategy>]] "
-	   "[--input=<reachable|stdin-packs|stdin-commits|append>] "
+	   "[--input=<reachable|stdin-packs|stdin-commits|append|graphed>] "
 	   "[--[no-]progress] <split options>"),
 	NULL
 };
@@ -33,7 +33,8 @@ enum commit_graph_input {
 	COMMIT_GRAPH_INPUT_REACHABLE     = (1 << 1),
 	COMMIT_GRAPH_INPUT_STDIN_PACKS   = (1 << 2),
 	COMMIT_GRAPH_INPUT_STDIN_COMMITS = (1 << 3),
-	COMMIT_GRAPH_INPUT_APPEND        = (1 << 4)
+	COMMIT_GRAPH_INPUT_APPEND        = (1 << 4),
+	COMMIT_GRAPH_INPUT_GRAPHED       = (1 << 5)
 };
 
 static struct opts_commit_graph {
@@ -80,6 +81,8 @@ static int option_parse_input(const struct option *opt, const char *arg,
 		*to |= COMMIT_GRAPH_INPUT_STDIN_COMMITS;
 	else if (!strcmp(arg, "append"))
 		*to |= COMMIT_GRAPH_INPUT_APPEND;
+	else if (!strcmp(arg, "graphed"))
+		*to |= (COMMIT_GRAPH_INPUT_APPEND | COMMIT_GRAPH_INPUT_GRAPHED);
 	else
 		die(_("unrecognized --input source, %s"), arg);
 	return 0;
@@ -225,6 +228,8 @@ static int graph_write(int argc, const char **argv)
 		opts.obj_dir = get_object_directory();
 	if (opts.input & COMMIT_GRAPH_INPUT_APPEND)
 		flags |= COMMIT_GRAPH_WRITE_APPEND;
+	if (opts.input & COMMIT_GRAPH_INPUT_GRAPHED)
+		flags |= COMMIT_GRAPH_WRITE_NO_INPUT;
 	if (opts.split)
 		flags |= COMMIT_GRAPH_WRITE_SPLIT;
 	if (opts.progress)
