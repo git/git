@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2020, #06; Thu, 19)
-X-master-at: 98cedd0233ee88e69711f79d1126b6bd772ff5bd
-X-next-at: 2932bb562d7cf4321a6f7aaf0cd78ba2178da59b
+Subject: What's cooking in git.git (Mar 2020, #07; Sun, 22)
+X-master-at: 274b9cc25322d9ee79aa8e6d4e86f0ffe5ced925
+X-next-at: b8618d28a927273cc429ccf5d4d91508d4fb0799
 
-What's cooking in git.git (Mar 2020, #06; Thu, 19)
+What's cooking in git.git (Mar 2020, #07; Sun, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.26-rc2 has been tagged.  Many fixes accumulated on the
-'master' front have been flushed to 'maint' and has been tagged
-as Git 2.25.2.  'git-gui' has been updated from the maintainer tree
-in preparation for the upcoming release.
+Git 2.26 (final) has been tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,30 +20,107 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* en/rebase-backend (2020-03-20) 1 commit
+  (merged to 'next' on 2020-03-21 at abd2f92971)
+ + t3419: prevent failure when run with EXPENSIVE
+
+ Test fix.
+
+--------------------------------------------------
 [New Topics]
 
-* jc/config-tar (2020-03-18) 1 commit
-  (merged to 'next' on 2020-03-19 at aa6216fd1a)
- + separate tar.* config to its own source file
+* ds/default-pack-use-sparse-to-true (2020-03-20) 2 commits
+  (merged to 'next' on 2020-03-21 at 25cc87784d)
+ + pack-objects: flip the use of GIT_TEST_PACK_SPARSE
+ + config: set pack.useSparse=true by default
 
- Improve the structure of the documentation source a bit.
+ The 'pack.useSparse' configuration variable now defaults to 'true',
+ enabling an optimization that has been experimental since Git 2.21.
 
  Will cook in 'next'.
 
 
-* jt/rebase-allow-duplicate (2020-03-18) 1 commit
- - rebase --merge: optionally skip upstreamed commits
+* js/trace2-env-vars (2020-03-20) 1 commit
+ - trace2: teach Git to log environment variables
+
+ Trace2 enhancement to allow logging of the environment variables.
 
 
-* ss/submodule-foreach-cb (2020-03-18) 1 commit
- - submodule--helper.c: Rename 'cb_foreach' to 'foreach_cb'
+* ar/test-style-fixes (2020-03-22) 2 commits
+ - t: fix whitespace around &&
+ - t9500: remove spaces after redirect operators
 
- Code clean-up.
+ Style fixes.
+
+ Will merge to 'next'.
+
+
+* ds/doc-clone-filter (2020-03-22) 1 commit
+ - clone: document --filter options
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* jk/t3419-drop-expensive-tests (2020-03-22) 1 commit
+ - t3419: drop EXPENSIVE tests
+
+ Test update.
+
+ Will merge to 'next'.
+
+
+* jt/connectivity-check-optim-in-partial-clone (2020-03-22) 1 commit
+ - connected: always use partial clone optimization
+
+ Simplify the commit ancestry connectedness check in a partial clone
+ repository in which "promised" objects are assumed to be obtainable
+ lazily on-demand from promisor remote repositories.
+
+
+
+* mt/test-lib-bundled-short-options (2020-03-22) 9 commits
+ - t5703: feed raw data into test-tool unpack-sideband
+ - t4124: fix test for non-compliant diff(1)
+ - t7063: drop non-POSIX argument "-ls" from find(1)
+ - t5616: use rev-parse instead to get HEAD's object_id
+ - t5003: skip conversion test if unzip -a is unavailable
+ - t5003: drop the subshell in test_lazy_prereq
+ - test-lib-functions: test_cmp: eval $GIT_TEST_CMP
+ - t4061: use POSIX compliant regex(7)
+ - test-lib: allow short options to be bundled
+
+ Minor test usability improvement.
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* gs/commit-graph-path-filter (2020-02-12) 12 commits
+ - (bytesex breakage band-aid)
+ - commit-graph: add GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS test flag
+ - revision.c: use Bloom filters to speed up path based revision walks
+ - commit-graph: add --changed-paths option to write subcommand
+ - commit-graph: reuse existing Bloom filters during write.
+ - commit-graph: write Bloom filters to commit graph file
+ - commit-graph: examine commits by generation number
+ - commit-graph: examine changed-path objects in pack order
+ - commit-graph: compute Bloom filters for changed paths
+ - diff: halt tree-diff early after max_changes
+ - bloom: core Bloom filter implementation for changed paths
+ - commit-graph: use MAX_NUM_CHUNKS
+
+ Introduce an extension to the commit-graph to make it efficient to
+ check for the paths that were modified at each commit using Bloom
+ filters.
+
+ Will be rerolled with bytesex fixes squashed in.
+ Breakage due to byte-order dependency reported.
+
 
 * dl/merge-autostash (2020-01-13) 17 commits
  - pull: pass --autostash to merge
@@ -73,22 +147,6 @@ of the repositories listed at
  cf. <20200123042906.GA29009@generichostname>
 
 
-* bk/p4-pre-edit-changelist (2020-02-14) 7 commits
- - git-p4: add RCS keyword status message
- - git-p4: add p4 submit hooks
- - git-p4: restructure code in submit
- - git-p4: add --no-verify option
- - git-p4: add p4-pre-submit exit text
- - git-p4: create new function run_git_hook
- - git-p4: rewrite prompt to be Windows compatible
-
- "git p4" learned four new hooks and also "--no-verify" option to
- bypass them (and the existing "p4-pre-submit" hook).
-
- Waiting for response to RFH from Windows/Python folks.
- cf. <pull.698.v6.git.git.1581691486.gitgitgadget@gmail.com>
-
-
 * en/fill-directory-exponential (2020-01-31) 6 commits
  - t7063: blindly accept diffs
  - dir: replace exponential algorithm with a linear one
@@ -113,7 +171,8 @@ of the repositories listed at
  "git reset HEAD [<pathspec>]" did not reset an empty file that was
  added with the intent-to-add bit.
 
- Expecting a reroll.
+ Will discard.
+ Getting tired of expecting a reroll.
 
 
 * mk/use-size-t-in-zlib (2018-10-15) 1 commit
@@ -126,13 +185,58 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bk/p4-pre-edit-changelist (2020-02-14) 7 commits
+ - git-p4: add RCS keyword status message
+ - git-p4: add p4 submit hooks
+ - git-p4: restructure code in submit
+ - git-p4: add --no-verify option
+ - git-p4: add p4-pre-submit exit text
+ - git-p4: create new function run_git_hook
+ - git-p4: rewrite prompt to be Windows compatible
+
+ "git p4" learned four new hooks and also "--no-verify" option to
+ bypass them (and the existing "p4-pre-submit" hook).
+
+ Will merge to 'next'.
+ Getting tired of waiting for response to RFH from Windows/Python folks.
+ cf. <pull.698.v6.git.git.1581691486.gitgitgadget@gmail.com>
+
+
+* jc/config-tar (2020-03-18) 1 commit
+  (merged to 'next' on 2020-03-19 at aa6216fd1a)
+ + separate tar.* config to its own source file
+
+ Improve the structure of the documentation source a bit.
+
+ Will merge to 'master'.
+
+
+* jt/rebase-allow-duplicate (2020-03-18) 1 commit
+ - rebase --merge: optionally skip upstreamed commits
+
+ Allow "git rebase" to reapply all local commits, even if the may be
+ already in the upstream, without checking first.
+
+ Waiting for discussion to settle, possibly followed by a reroll.
+ cf. <20200318192821.43808-1-jonathantanmy@google.com>
+
+
+* ss/submodule-foreach-cb (2020-03-18) 1 commit
+  (merged to 'next' on 2020-03-21 at 6651eafe02)
+ + submodule--helper.c: Rename 'cb_foreach' to 'foreach_cb'
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
 * sg/commit-slab-clarify-peek (2020-03-10) 1 commit
   (merged to 'next' on 2020-03-11 at 0496b26f23)
  + commit-slab: clarify slabname##_peek()'s return value
 
  In-code comment update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * rs/doc-passthru-fetch-options (2020-03-11) 1 commit
@@ -141,7 +245,7 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * bc/filter-process (2020-03-16) 8 commits
@@ -159,7 +263,7 @@ of the repositories listed at
  the blob being converted appears, in addition to its path, which
  has already been given) to smudge/clean conversion filters.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * bc/faq (2020-03-15) 1 commit
@@ -174,7 +278,7 @@ of the repositories listed at
 
  Corner case "git fetch" fix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * en/oidset-uninclude-hashmap (2020-03-15) 1 commit
@@ -183,7 +287,7 @@ of the repositories listed at
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/log-no-mailmap (2020-03-16) 3 commits
@@ -213,7 +317,7 @@ of the repositories listed at
 
  Update "git p4" to work with Python 3.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * hi/gpg-prefer-check-signature (2020-03-15) 2 commits
@@ -223,7 +327,7 @@ of the repositories listed at
 
  The code to interface with GnuPG has been refactored.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/maintain-doc (2020-03-09) 1 commit
@@ -232,7 +336,7 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * am/real-path-fix (2020-03-10) 4 commits
@@ -246,7 +350,7 @@ of the repositories listed at
  bit of code refactoring in the callers' side, its use has been
  eliminated.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * tb/commit-graph-split-merge (2020-03-05) 3 commits
@@ -293,7 +397,7 @@ of the repositories listed at
  A handful of options to configure SSL when talking to proxies have
  been added.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pw/advise-rebase-skip (2019-12-06) 7 commits
@@ -310,7 +414,7 @@ of the repositories listed at
  or amending during an interrupted cherry-pick was broken during the
  rewrite of "git rebase" in C, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <xmqq7e0e7d9z.fsf@gitster-ct.c.googlers.com>
 
 
@@ -352,7 +456,7 @@ of the repositories listed at
  Fix "git checkout --recurse-submodules" of a nested submodule
  hierarchy.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * bc/sha-256-part-1-of-4 (2020-02-28) 22 commits
@@ -382,7 +486,7 @@ of the repositories listed at
 
  SHA-256 transition continues.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * hw/advise-ng (2020-03-05) 4 commits
@@ -395,7 +499,7 @@ of the repositories listed at
  Revamping of the advise API to allow more systematic enumeration of
  advice knobs in the future.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * hn/reftable (2020-02-26) 6 commits
@@ -427,28 +531,6 @@ of the repositories listed at
 
  As the scope of the topic got trimmed, hopefully these early parts
  can be polished quickly enough to be merged down.
-
-
-* gs/commit-graph-path-filter (2020-02-12) 12 commits
- - (bytesex breakage band-aid)
- - commit-graph: add GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS test flag
- - revision.c: use Bloom filters to speed up path based revision walks
- - commit-graph: add --changed-paths option to write subcommand
- - commit-graph: reuse existing Bloom filters during write.
- - commit-graph: write Bloom filters to commit graph file
- - commit-graph: examine commits by generation number
- - commit-graph: examine changed-path objects in pack order
- - commit-graph: compute Bloom filters for changed paths
- - diff: halt tree-diff early after max_changes
- - bloom: core Bloom filter implementation for changed paths
- - commit-graph: use MAX_NUM_CHUNKS
-
- Introduce an extension to the commit-graph to make it efficient to
- check for the paths that were modified at each commit using Bloom
- filters.
-
- Will be rerolled with bytesex fixes squashed in.
- Breakage due to byte-order dependency reported.
 
 --------------------------------------------------
 [Discarded]
