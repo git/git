@@ -97,11 +97,6 @@
 extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
-#define PRUNE_PACKED_DRY_RUN 01
-#define PRUNE_PACKED_VERBOSE 02
-
-void prune_packed_objects(int);
-
 /**
  * If a built-in has DELAY_PAGER_CONFIG set, the built-in should call this early
  * when it wishes to respect the `pager.foo`-config. The `cmd` is the name of
