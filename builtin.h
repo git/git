@@ -94,8 +94,6 @@
  * command.
  */
 
-#define DEFAULT_MERGE_LOG_LEN 20
-
 extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
@@ -103,15 +101,6 @@ extern const char git_more_info_string[];
 #define PRUNE_PACKED_VERBOSE 02
 
 void prune_packed_objects(int);
-
-struct fmt_merge_msg_opts {
-	unsigned add_title:1,
-		credit_people:1;
-	int shortlog_len;
-};
-
-int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
-		  struct fmt_merge_msg_opts *);
 
 /**
  * If a built-in has DELAY_PAGER_CONFIG set, the built-in should call this early
