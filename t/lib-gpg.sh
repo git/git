@@ -29,7 +29,7 @@ then
 		#		> lib-gpg/ownertrust
 		mkdir ./gpghome &&
 		chmod 0700 ./gpghome &&
-		GNUPGHOME="$(pwd)/gpghome" &&
+		GNUPGHOME="$PWD/gpghome" &&
 		export GNUPGHOME &&
 		(gpgconf --kill gpg-agent >/dev/null 2>&1 || : ) &&
 		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import \
