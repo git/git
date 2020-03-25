@@ -40,7 +40,7 @@ static const char cherry_picked_prefix[] = "(cherry picked from commit ";
 
 GIT_PATH_FUNC(git_path_commit_editmsg, "COMMIT_EDITMSG")
 
-GIT_PATH_FUNC(git_path_seq_dir, "sequencer")
+static GIT_PATH_FUNC(git_path_seq_dir, "sequencer")
 
 static GIT_PATH_FUNC(git_path_todo_file, "sequencer/todo")
 static GIT_PATH_FUNC(git_path_opts_file, "sequencer/opts")
@@ -1433,9 +1433,19 @@ out:
 	return res;
 }
 
+static int write_rebase_head(struct object_id *oid)
+{
+	if (update_ref("rebase", "REBASE_HEAD", oid,
+		       NULL, REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
+		return error(_("could not update %s"), "REBASE_HEAD");
+
+	return 0;
+}
+
 static int do_commit(struct repository *r,
 		     const char *msg_file, const char *author,
-		     struct replay_opts *opts, unsigned int flags)
+		     struct replay_opts *opts, unsigned int flags,
+		     struct object_id *oid)
 {
 	int res = 1;
 
@@ -1460,8 +1470,12 @@ static int do_commit(struct repository *r,
 			return res;
 		}
 	}
-	if (res == 1)
+	if (res == 1) {
+		if (is_rebase_i(opts) && oid)
+			if (write_rebase_head(oid))
+			    return -1;
 		return run_git_commit(r, msg_file, opts, flags);
+	}
 
 	return res;
 }
@@ -1929,7 +1943,9 @@ static int do_pick_commit(struct repository *r,
 	 * However, if the merge did not even start, then we don't want to
 	 * write it at all.
 	 */
-	if (command == TODO_PICK && !opts->no_commit && (res == 0 || res == 1) &&
+	if ((command == TODO_PICK || command == TODO_REWORD ||
+	     command == TODO_EDIT) && !opts->no_commit &&
+	    (res == 0 || res == 1) &&
 	    update_ref(NULL, "CHERRY_PICK_HEAD", &commit->object.oid, NULL,
 		       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
 		res = -1;
@@ -1965,7 +1981,8 @@ static int do_pick_commit(struct repository *r,
 	} /* else allow == 0 and there's nothing special to do */
 	if (!opts->no_commit && !drop_commit) {
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
-			res = do_commit(r, msg_file, author, opts, flags);
+			res = do_commit(r, msg_file, author, opts, flags,
+					commit? &commit->object.oid : NULL);
 		else
 			res = error(_("unable to parse commit author"));
 		*check_todo = !!(flags & EDIT_MSG);
@@ -3000,9 +3017,7 @@ static int make_patch(struct repository *r,
 	p = short_commit_name(commit);
 	if (write_message(p, strlen(p), rebase_path_stopped_sha(), 1) < 0)
 		return -1;
-	if (update_ref("rebase", "REBASE_HEAD", &commit->object.oid,
-		       NULL, REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
-		res |= error(_("could not update %s"), "REBASE_HEAD");
+	res |= write_rebase_head(&commit->object.oid);
 
 	strbuf_addf(&buf, "%s/patch", get_dir(opts));
 	memset(&log_tree_opt, 0, sizeof(log_tree_opt));
@@ -5312,6 +5327,27 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 	hashmap_free_entries(&subject2item, struct subject2item_entry, entry);
 
 	clear_commit_todo_item(&commit_todo);
+
+	return 0;
+}
+
+int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
+{
+	if (file_exists(git_path_cherry_pick_head(r))) {
+		struct object_id cherry_pick_head, rebase_head;
+
+		if (file_exists(git_path_seq_dir()))
+			*whence = FROM_CHERRY_PICK_MULTI;
+		if (file_exists(rebase_path()) &&
+		    !get_oid("REBASE_HEAD", &rebase_head) &&
+		    !get_oid("CHERRY_PICK_HEAD", &cherry_pick_head) &&
+		    oideq(&rebase_head, &cherry_pick_head))
+			*whence = FROM_REBASE_PICK;
+		else
+			*whence = FROM_CHERRY_PICK_SINGLE;
+
+		return 1;
+	}
 
 	return 0;
 }
