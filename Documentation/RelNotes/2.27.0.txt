@@ -1,0 +1,41 @@
+Git 2.27 Release Notes
+======================
+
+Updates since v2.26
+-------------------
+
+UI, Workflows & Features
+
+ * A handful of options to configure SSL when talking to proxies have
+   been added.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The advise API has been revamped to allow more systematic enumeration of
+   advice knobs in the future.
+
+
+Fixes since v2.26
+-----------------
+
+ * The real_path() convenience function can easily be misused; with a
+   bit of code refactoring in the callers' side, its use has been
+   eliminated.
+   (merge 49d3c4b481 am/real-path-fix later to maint).
+
+ * Update "git p4" to work with Python 3.
+   (merge 6bb40ed20a yz/p4-py3 later to maint).
+
+ * The mechanism to prevent "git commit" from making an empty commit
+   or amending during an interrupted cherry-pick was broken during the
+   rewrite of "git rebase" in C, which has been corrected.
+   (merge 430b75f720 pw/advise-rebase-skip later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 564956f358 jc/maintain-doc later to maint).
+   (merge 7422b2a0a1 sg/commit-slab-clarify-peek later to maint).
+   (merge 9c688735f6 rs/doc-passthru-fetch-options later to maint).
+   (merge 757c2ba3e2 en/oidset-uninclude-hashmap later to maint).
+   (merge 8312aa7d74 jc/config-tar later to maint).
+   (merge d00a5bdd50 ss/submodule-foreach-cb later to maint).
