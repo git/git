@@ -2174,7 +2174,7 @@ static void add_path_to_appropriate_result_list(struct dir_struct *dir,
  * If 'stop_at_first_file' is specified, 'path_excluded' is returned
  * to signal that a file was found. This is the least significant value that
  * indicates that a file was encountered that does not depend on the order of
- * whether an untracked or exluded path was encountered first.
+ * whether an untracked or excluded path was encountered first.
  *
  * Returns the most significant path_treatment value encountered in the scan.
  * If 'stop_at_first_file' is specified, `path_excluded` is the most
