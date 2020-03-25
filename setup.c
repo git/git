@@ -32,6 +32,7 @@ static int abspath_part_inside_repo(char *path)
 	char *path0;
 	int off;
 	const char *work_tree = get_git_work_tree();
+	struct strbuf realpath = STRBUF_INIT;
 
 	if (!work_tree)
 		return -1;
@@ -60,8 +61,10 @@ static int abspath_part_inside_repo(char *path)
 		path++;
 		if (*path == '/') {
 			*path = '\0';
-			if (fspathcmp(real_path(path0), work_tree) == 0) {
+			strbuf_realpath(&realpath, path0, 1);
+			if (fspathcmp(realpath.buf, work_tree) == 0) {
 				memmove(path0, path + 1, len - (path - path0));
+				strbuf_release(&realpath);
 				return 0;
 			}
 			*path = '/';
@@ -69,11 +72,14 @@ static int abspath_part_inside_repo(char *path)
 	}
 
 	/* check whole path */
-	if (fspathcmp(real_path(path0), work_tree) == 0) {
+	strbuf_realpath(&realpath, path0, 1);
+	if (fspathcmp(realpath.buf, work_tree) == 0) {
 		*path0 = '\0';
+		strbuf_release(&realpath);
 		return 0;
 	}
 
+	strbuf_release(&realpath);
 	return -1;
 }
 
@@ -623,6 +629,7 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 	struct stat st;
 	int fd;
 	ssize_t len;
+	static struct strbuf realpath = STRBUF_INIT;
 
 	if (stat(path, &st)) {
 		/* NEEDSWORK: discern between ENOENT vs other errors */
@@ -673,7 +680,9 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_NOT_A_REPO;
 		goto cleanup_return;
 	}
-	path = real_path(dir);
+
+	strbuf_realpath(&realpath, dir, 1);
+	path = realpath.buf;
 
 cleanup_return:
 	if (return_error_code)
@@ -729,7 +738,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 		}
 
 		/* #18, #26 */
-		set_git_dir(gitdirenv);
+		set_git_dir(gitdirenv, 0);
 		free(gitfile);
 		return NULL;
 	}
@@ -751,7 +760,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	}
 	else if (!git_env_bool(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, 1)) {
 		/* #16d */
-		set_git_dir(gitdirenv);
+		set_git_dir(gitdirenv, 0);
 		free(gitfile);
 		return NULL;
 	}
@@ -763,14 +772,14 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 
 	/* both get_git_work_tree() and cwd are already normalized */
 	if (!strcmp(cwd->buf, worktree)) { /* cwd == worktree */
-		set_git_dir(gitdirenv);
+		set_git_dir(gitdirenv, 0);
 		free(gitfile);
 		return NULL;
 	}
 
 	offset = dir_inside_of(cwd->buf, worktree);
 	if (offset >= 0) {	/* cwd inside worktree? */
-		set_git_dir(real_path(gitdirenv));
+		set_git_dir(gitdirenv, 1);
 		if (chdir(worktree))
 			die_errno(_("cannot chdir to '%s'"), worktree);
 		strbuf_addch(cwd, '/');
@@ -779,7 +788,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	}
 
 	/* cwd outside worktree */
-	set_git_dir(gitdirenv);
+	set_git_dir(gitdirenv, 0);
 	free(gitfile);
 	return NULL;
 }
@@ -808,7 +817,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 
 	/* #16.2, #17.2, #20.2, #21.2, #24, #25, #28, #29 (see t1510) */
 	if (is_bare_repository_cfg > 0) {
-		set_git_dir(offset == cwd->len ? gitdir : real_path(gitdir));
+		set_git_dir(gitdir, (offset != cwd->len));
 		if (chdir(cwd->buf))
 			die_errno(_("cannot come back to cwd"));
 		return NULL;
@@ -817,7 +826,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 	/* #0, #1, #5, #8, #9, #12, #13 */
 	set_git_work_tree(".");
 	if (strcmp(gitdir, DEFAULT_GIT_DIR_ENVIRONMENT))
-		set_git_dir(gitdir);
+		set_git_dir(gitdir, 0);
 	inside_git_dir = 0;
 	inside_work_tree = 1;
 	if (offset >= cwd->len)
@@ -860,10 +869,10 @@ static const char *setup_bare_git_dir(struct strbuf *cwd, int offset,
 			die_errno(_("cannot come back to cwd"));
 		root_len = offset_1st_component(cwd->buf);
 		strbuf_setlen(cwd, offset > root_len ? offset : root_len);
-		set_git_dir(cwd->buf);
+		set_git_dir(cwd->buf, 0);
 	}
 	else
-		set_git_dir(".");
+		set_git_dir(".", 0);
 	return NULL;
 }
 
@@ -881,7 +890,7 @@ static dev_t get_device_or_die(const char *path, const char *prefix, int prefix_
 
 /*
  * A "string_list_each_func_t" function that canonicalizes an entry
- * from GIT_CEILING_DIRECTORIES using real_path_if_valid(), or
+ * from GIT_CEILING_DIRECTORIES using real_pathdup(), or
  * discards it if unusable.  The presence of an empty entry in
  * GIT_CEILING_DIRECTORIES turns off canonicalization for all
  * subsequent entries.

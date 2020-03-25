@@ -356,12 +356,12 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		if (!exist_ok && !stat(real_git_dir, &st))
 			die(_("%s already exists"), real_git_dir);
 
-		set_git_dir(real_path(real_git_dir));
+		set_git_dir(real_git_dir, 1);
 		git_dir = get_git_dir();
 		separate_git_dir(git_dir, original_git_dir);
 	}
 	else {
-		set_git_dir(real_path(git_dir));
+		set_git_dir(git_dir, 1);
 		git_dir = get_git_dir();
 	}
 	startup_info->have_repository = 1;
