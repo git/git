@@ -7,12 +7,8 @@ test_description='git archive --format=zip test'
 SUBSTFORMAT=%H%n
 
 test_lazy_prereq UNZIP_SYMLINKS '
-	(
-		mkdir unzip-symlinks &&
-		cd unzip-symlinks &&
-		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5003/infozip-symlinks.zip &&
-		test -h symlink
-	)
+	"$GIT_UNZIP" "$TEST_DIRECTORY"/t5003/infozip-symlinks.zip &&
+	test -h symlink
 '
 
 check_zip() {
