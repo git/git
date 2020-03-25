@@ -447,6 +447,8 @@ include::config/submodule.txt[]
 
 include::config/tag.txt[]
 
+include::config/tar.txt[]
+
 include::config/trace2.txt[]
 
 include::config/transfer.txt[]
