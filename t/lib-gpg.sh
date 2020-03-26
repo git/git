@@ -40,12 +40,12 @@ test_lazy_prereq GPG '
 		#		> lib-gpg/ownertrust
 		mkdir "$GNUPGHOME" &&
 		chmod 0700 "$GNUPGHOME" &&
-		(gpgconf --kill gpg-agent >/dev/null 2>&1 || : ) &&
-		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import \
+		(gpgconf --kill gpg-agent || : ) &&
+		gpg --homedir "${GNUPGHOME}" --import \
 			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
-		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import-ownertrust \
+		gpg --homedir "${GNUPGHOME}" --import-ownertrust \
 			"$TEST_DIRECTORY"/lib-gpg/ownertrust &&
-		gpg --homedir "${GNUPGHOME}" </dev/null >/dev/null 2>&1 \
+		gpg --homedir "${GNUPGHOME}" </dev/null >/dev/null \
 			--sign -u committer@example.com
 		;;
 	esac
@@ -68,23 +68,23 @@ test_lazy_prereq GPGSM '
 	#	gpgsm --homedir /tmp/gpghome/ \
 	#		-o t/lib-gpg/gpgsm_cert.p12 \
 	#		--export-secret-key-p12 "committer@example.com"
-       echo | gpgsm --homedir "${GNUPGHOME}" 2>/dev/null \
-	       --passphrase-fd 0 --pinentry-mode loopback \
-	       --import "$TEST_DIRECTORY"/lib-gpg/gpgsm_cert.p12 &&
+	echo | gpgsm --homedir "${GNUPGHOME}" \
+		--passphrase-fd 0 --pinentry-mode loopback \
+		--import "$TEST_DIRECTORY"/lib-gpg/gpgsm_cert.p12 &&
 
-       gpgsm --homedir "${GNUPGHOME}" 2>/dev/null -K |
-       grep fingerprint: |
-       cut -d" " -f4 |
+	gpgsm --homedir "${GNUPGHOME}" -K |
+	grep fingerprint: |
+	cut -d" " -f4 |
 	tr -d "\\n" >"${GNUPGHOME}/trustlist.txt" &&
 
-       echo " S relax" >>"${GNUPGHOME}/trustlist.txt" &&
-       echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
-	       -u committer@example.com -o /dev/null --sign - 2>&1
+	echo " S relax" >>"${GNUPGHOME}/trustlist.txt" &&
+	echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
+	       -u committer@example.com -o /dev/null --sign -
 '
 
 test_lazy_prereq RFC1991 '
 	test_have_prereq GPG &&
-	echo | gpg --homedir "${GNUPGHOME}" -b --rfc1991 >/dev/null 2>&1
+	echo | gpg --homedir "${GNUPGHOME}" -b --rfc1991 >/dev/null
 '
 
 sanitize_pgp() {
