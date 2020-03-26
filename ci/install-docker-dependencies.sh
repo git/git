@@ -11,4 +11,8 @@ Linux32)
 			libssl-dev libexpat-dev gettext python >/dev/null
 	'
 	;;
+linux-musl)
+	apk add --update build-base curl-dev openssl-dev expat-dev gettext \
+		pcre2-dev python3 musl-libintl perl-utils ncurses >/dev/null
+	;;
 esac
