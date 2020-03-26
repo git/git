@@ -1,5 +1,3 @@
-#!/bin/sh
-
 gpg_version=$(gpg --version 2>&1)
 if test $? != 127
 then
