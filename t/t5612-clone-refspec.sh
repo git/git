@@ -87,7 +87,7 @@ test_expect_success 'by default no tags will be kept updated' '
 		git for-each-ref refs/tags >../actual
 	) &&
 	git for-each-ref refs/tags >expect &&
-	test_must_fail test_cmp expect actual &&
+	! test_cmp expect actual &&
 	test_line_count = 2 actual
 '
 
