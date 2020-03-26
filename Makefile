@@ -1364,11 +1364,10 @@ else
 		CURL_LIBCURL =
 	endif
 
-ifdef CURL_LDFLAGS
+	ifndef CURL_LDFLAGS
+		CURL_LDFLAGS := $(shell $(CURL_CONFIG) --libs)
+	endif
 	CURL_LIBCURL += $(CURL_LDFLAGS)
-else
-	CURL_LIBCURL += $(shell $(CURL_CONFIG) --libs)
-endif
 
 	REMOTE_CURL_PRIMARY = git-remote-http$X
 	REMOTE_CURL_ALIASES = git-remote-https$X git-remote-ftp$X git-remote-ftps$X
