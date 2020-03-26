@@ -18,6 +18,10 @@ case "$jobname" in
 Linux32)
 	switch_cmd="linux32 --32bit i386"
 	;;
+linux-musl)
+	switch_cmd=
+	useradd () { adduser -D "$@"; }
+	;;
 *)
 	exit 1
 	;;
