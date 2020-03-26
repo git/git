@@ -1,16 +1,16 @@
 #!/bin/sh
 #
-# Build and test Git in a 32-bit environment
+# Build and test Git inside container
 #
 # Usage:
-#   run-linux32-build.sh <host-user-id>
+#   run-docker-build.sh <host-user-id>
 #
 
 set -ex
 
 if test $# -ne 1 || test -z "$1"
 then
-	echo >&2 "usage: run-linux32-build.sh <host-user-id>"
+	echo >&2 "usage: run-docker-build.sh <host-user-id>"
 	exit 1
 fi
 
