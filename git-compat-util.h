@@ -389,6 +389,14 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define find_last_dir_sep git_find_last_dir_sep
 #endif
 
+#ifndef has_dir_sep
+static inline int git_has_dir_sep(const char *path)
+{
+	return !!strchr(path, '/');
+}
+#define has_dir_sep(path) git_has_dir_sep(path)
+#endif
+
 #ifndef query_user_email
 #define query_user_email() NULL
 #endif
