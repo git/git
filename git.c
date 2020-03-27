@@ -574,12 +574,7 @@ static struct cmd_struct commands[] = {
 	{ "show-ref", cmd_show_ref, RUN_SETUP },
 	{ "sparse-checkout", cmd_sparse_checkout, RUN_SETUP | NEED_WORK_TREE },
 	{ "stage", cmd_add, RUN_SETUP | NEED_WORK_TREE },
-	/*
-	 * NEEDSWORK: Until the builtin stash is thoroughly robust and no
-	 * longer needs redirection to the stash shell script this is kept as
-	 * is, then should be changed to RUN_SETUP | NEED_WORK_TREE
-	 */
-	{ "stash", cmd_stash },
+	{ "stash", cmd_stash, RUN_SETUP | NEED_WORK_TREE },
 	{ "status", cmd_status, RUN_SETUP | NEED_WORK_TREE },
 	{ "stripspace", cmd_stripspace },
 	{ "submodule--helper", cmd_submodule__helper, RUN_SETUP | SUPPORT_SUPER_PREFIX | NO_PARSEOPT },
