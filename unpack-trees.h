@@ -88,6 +88,15 @@ struct unpack_trees_options {
 int unpack_trees(unsigned n, struct tree_desc *t,
 		 struct unpack_trees_options *options);
 
+enum update_sparsity_result {
+	UPDATE_SPARSITY_SUCCESS = 0,
+	UPDATE_SPARSITY_WARNINGS = 1,
+	UPDATE_SPARSITY_INDEX_UPDATE_FAILURES = -1,
+	UPDATE_SPARSITY_WORKTREE_UPDATE_FAILURES = -2
+};
+
+enum update_sparsity_result update_sparsity(struct unpack_trees_options *options);
+
 int verify_uptodate(const struct cache_entry *ce,
 		    struct unpack_trees_options *o);
 
