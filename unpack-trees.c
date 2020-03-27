@@ -353,12 +353,12 @@ static void report_collided_checkout(struct index_state *index)
 	string_list_clear(&list, 0);
 }
 
-static int check_updates(struct unpack_trees_options *o)
+static int check_updates(struct unpack_trees_options *o,
+			 struct index_state *index)
 {
 	unsigned cnt = 0;
 	int errs = 0;
 	struct progress *progress;
-	struct index_state *index = &o->result;
 	struct checkout state = CHECKOUT_INIT;
 	int i;
 
@@ -1665,7 +1665,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		}
 	}
 
-	ret = check_updates(o) ? (-2) : 0;
+	ret = check_updates(o, &o->result) ? (-2) : 0;
 	if (o->dst_index) {
 		move_index_extensions(&o->result, o->src_index);
 		if (!ret) {
