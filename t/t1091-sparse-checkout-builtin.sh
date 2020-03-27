@@ -370,6 +370,47 @@ test_expect_success 'sparse-checkout (init|set|disable) warns with unmerged stat
 	git -C unmerged sparse-checkout disable
 '
 
+test_expect_success 'sparse-checkout reapply' '
+	git clone repo tweak &&
+
+	echo dirty >tweak/deep/deeper2/a &&
+
+	cat >input <<-EOF &&
+	0 0000000000000000000000000000000000000000	folder1/a
+	100644 $(git -C tweak rev-parse HEAD:folder1/a) 1	folder1/a
+	EOF
+	git -C tweak update-index --index-info <input &&
+
+	git -C tweak sparse-checkout init --cone 2>err &&
+	test_i18ngrep "warning.*The following paths are not up to date" err &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+
+	git -C tweak sparse-checkout set folder2 deep/deeper1 2>err &&
+	test_i18ngrep "warning.*The following paths are not up to date" err &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+
+	git -C tweak sparse-checkout reapply 2>err &&
+	test_i18ngrep "warning.*The following paths are not up to date" err &&
+	test_path_is_file tweak/deep/deeper2/a &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+	test_path_is_file tweak/folder1/a &&
+
+	git -C tweak checkout HEAD deep/deeper2/a &&
+	git -C tweak sparse-checkout reapply 2>err &&
+	test_i18ngrep ! "warning.*The following paths are not up to date" err &&
+	test_path_is_missing tweak/deep/deeper2/a &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+	test_path_is_file tweak/folder1/a &&
+
+	git -C tweak add folder1/a &&
+	git -C tweak sparse-checkout reapply 2>err &&
+	test_must_be_empty err &&
+	test_path_is_missing tweak/deep/deeper2/a &&
+	test_path_is_missing tweak/folder1/a &&
+
+	git -C tweak sparse-checkout disable
+'
+
 test_expect_success 'cone mode: set with core.ignoreCase=true' '
 	rm repo/.git/info/sparse-checkout &&
 	git -C repo sparse-checkout init --cone &&

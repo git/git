@@ -18,7 +18,7 @@
 static const char *empty_base = "";
 
 static char const * const builtin_sparse_checkout_usage[] = {
-	N_("git sparse-checkout (init|list|set|add|disable) <options>"),
+	N_("git sparse-checkout (init|list|set|add|reapply|disable) <options>"),
 	NULL
 };
 
@@ -554,6 +554,12 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix,
 	return modify_pattern_list(argc, argv, m);
 }
 
+static int sparse_checkout_reapply(int argc, const char **argv)
+{
+	repo_read_index(the_repository);
+	return update_working_directory(NULL);
+}
+
 static int sparse_checkout_disable(int argc, const char **argv)
 {
 	struct pattern_list pl;
@@ -603,6 +609,8 @@ int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
 			return sparse_checkout_set(argc, argv, prefix, REPLACE);
 		if (!strcmp(argv[0], "add"))
 			return sparse_checkout_set(argc, argv, prefix, ADD);
+		if (!strcmp(argv[0], "reapply"))
+			return sparse_checkout_reapply(argc, argv);
 		if (!strcmp(argv[0], "disable"))
 			return sparse_checkout_disable(argc, argv);
 	}
