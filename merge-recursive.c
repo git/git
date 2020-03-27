@@ -958,7 +958,7 @@ static int update_file_flags(struct merge_options *opt,
 		if (S_ISREG(contents->mode)) {
 			struct strbuf strbuf = STRBUF_INIT;
 			if (convert_to_working_tree(opt->repo->index,
-						    path, buf, size, &strbuf)) {
+						    path, buf, size, &strbuf, NULL)) {
 				free(buf);
 				size = strbuf.len;
 				buf = strbuf_detach(&strbuf, NULL);

@@ -364,6 +364,10 @@ test_expect_success PERL 'required process filter should filter data' '
 		S=$(file_size test.r) &&
 		S2=$(file_size test2.r) &&
 		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		M=$(git hash-object test.r) &&
+		M2=$(git hash-object test2.r) &&
+		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		EMPTY=$(git hash-object /dev/null) &&
 
 		filter_git add . &&
 		cat >expected.log <<-EOF &&
@@ -378,14 +382,16 @@ test_expect_success PERL 'required process filter should filter data' '
 		test_cmp_count expected.log debug.log &&
 
 		git commit -m "test commit 2" &&
+		MASTER=$(git rev-parse --verify master) &&
+		META="ref=refs/heads/master treeish=$MASTER" &&
 		rm -f test2.r "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 
 		filter_git checkout --quiet --no-progress . &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
-			IN: smudge test2.r $S2 [OK] -- OUT: $S2 . [OK]
-			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $S3 [OK] -- OUT: $S3 . [OK]
+			IN: smudge test2.r blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
 			STOP
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
@@ -406,10 +412,10 @@ test_expect_success PERL 'required process filter should filter data' '
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
-			IN: smudge test.r $S [OK] -- OUT: $S . [OK]
-			IN: smudge test2.r $S2 [OK] -- OUT: $S2 . [OK]
-			IN: smudge test4-empty.r 0 [OK] -- OUT: 0  [OK]
-			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $S3 [OK] -- OUT: $S3 . [OK]
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
 			STOP
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
@@ -417,6 +423,117 @@ test_expect_success PERL 'required process filter should filter data' '
 		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.r &&
 		test_cmp_committed_rot13 "$TEST_ROOT/test2.o" test2.r &&
 		test_cmp_committed_rot13 "$TEST_ROOT/test3 '\''sq'\'',\$x=.o" "testsubdir/test3 '\''sq'\'',\$x=.r"
+	)
+'
+
+test_expect_success PERL 'required process filter should filter data for various subcommands' '
+	test_config_global filter.protocol.process "rot13-filter.pl debug.log clean smudge" &&
+	test_config_global filter.protocol.required true &&
+	(
+		cd repo &&
+
+		S=$(file_size test.r) &&
+		S2=$(file_size test2.r) &&
+		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		M=$(git hash-object test.r) &&
+		M2=$(git hash-object test2.r) &&
+		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		EMPTY=$(git hash-object /dev/null) &&
+
+		MASTER=$(git rev-parse --verify master) &&
+
+		cp "$TEST_ROOT/test.o" test5.r &&
+		git add test5.r &&
+		git commit -m "test commit 3" &&
+		git checkout empty-branch &&
+		filter_git rebase --onto empty-branch master^^ master &&
+		MASTER2=$(git rev-parse --verify master) &&
+		META="ref=refs/heads/master treeish=$MASTER2" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge test5.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log &&
+
+		git reset --hard empty-branch &&
+		filter_git reset --hard $MASTER &&
+		META="treeish=$MASTER" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log &&
+
+		git branch old-master $MASTER &&
+		git reset --hard empty-branch &&
+		filter_git reset --hard old-master &&
+		META="ref=refs/heads/old-master treeish=$MASTER" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log &&
+
+		git checkout -b merge empty-branch &&
+		git branch -f master $MASTER2 &&
+		filter_git merge master &&
+		META="treeish=$MASTER2" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge test5.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log &&
+
+		filter_git archive master >/dev/null &&
+		META="ref=refs/heads/master treeish=$MASTER2" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge test5.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log &&
+
+		TREE="$(git rev-parse $MASTER2^{tree})" &&
+		filter_git archive $TREE >/dev/null &&
+		META="treeish=$TREE" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge test5.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log
 	)
 '
 
@@ -519,17 +636,22 @@ test_expect_success PERL 'required process filter should process multiple packet
 		EOF
 		test_cmp_count expected.log debug.log &&
 
-		rm -f *.file &&
+		M1="blob=$(git hash-object 1pkt_1__.file)" &&
+		M2="blob=$(git hash-object 2pkt_1+1.file)" &&
+		M3="blob=$(git hash-object 2pkt_2-1.file)" &&
+		M4="blob=$(git hash-object 2pkt_2__.file)" &&
+		M5="blob=$(git hash-object 3pkt_2+1.file)" &&
+		rm -f *.file debug.log &&
 
 		filter_git checkout --quiet --no-progress -- *.file &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
-			IN: smudge 1pkt_1__.file $(($S    )) [OK] -- OUT: $(($S    )) . [OK]
-			IN: smudge 2pkt_1+1.file $(($S  +1)) [OK] -- OUT: $(($S  +1)) .. [OK]
-			IN: smudge 2pkt_2-1.file $(($S*2-1)) [OK] -- OUT: $(($S*2-1)) .. [OK]
-			IN: smudge 2pkt_2__.file $(($S*2  )) [OK] -- OUT: $(($S*2  )) .. [OK]
-			IN: smudge 3pkt_2+1.file $(($S*2+1)) [OK] -- OUT: $(($S*2+1)) ... [OK]
+			IN: smudge 1pkt_1__.file $M1 $(($S    )) [OK] -- OUT: $(($S    )) . [OK]
+			IN: smudge 2pkt_1+1.file $M2 $(($S  +1)) [OK] -- OUT: $(($S  +1)) .. [OK]
+			IN: smudge 2pkt_2-1.file $M3 $(($S*2-1)) [OK] -- OUT: $(($S*2-1)) .. [OK]
+			IN: smudge 2pkt_2__.file $M4 $(($S*2  )) [OK] -- OUT: $(($S*2  )) .. [OK]
+			IN: smudge 3pkt_2+1.file $M5 $(($S*2+1)) [OK] -- OUT: $(($S*2+1)) ... [OK]
 			STOP
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
@@ -578,6 +700,10 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 		S=$(file_size test.r) &&
 		S2=$(file_size test2.r) &&
 		SF=$(file_size smudge-write-fail.r) &&
+		M=$(git hash-object test.r) &&
+		M2=$(git hash-object test2.r) &&
+		MF=$(git hash-object smudge-write-fail.r) &&
+		rm -f debug.log &&
 
 		git add . &&
 		rm -f *.r &&
@@ -591,11 +717,11 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
-			IN: smudge smudge-write-fail.r $SF [OK] -- [WRITE FAIL]
+			IN: smudge smudge-write-fail.r blob=$MF $SF [OK] -- [WRITE FAIL]
 			START
 			init handshake complete
-			IN: smudge test.r $S [OK] -- OUT: $S . [OK]
-			IN: smudge test2.r $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test.r blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
 			STOP
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
@@ -629,6 +755,10 @@ test_expect_success PERL 'process filter should not be restarted if it signals a
 		S=$(file_size test.r) &&
 		S2=$(file_size test2.r) &&
 		SE=$(file_size error.r) &&
+		M=$(git hash-object test.r) &&
+		M2=$(git hash-object test2.r) &&
+		ME=$(git hash-object error.r) &&
+		rm -f debug.log &&
 
 		git add . &&
 		rm -f *.r &&
@@ -637,9 +767,9 @@ test_expect_success PERL 'process filter should not be restarted if it signals a
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
-			IN: smudge error.r $SE [OK] -- [ERROR]
-			IN: smudge test.r $S [OK] -- OUT: $S . [OK]
-			IN: smudge test2.r $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge error.r blob=$ME $SE [OK] -- [ERROR]
+			IN: smudge test.r blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
 			STOP
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
@@ -665,10 +795,13 @@ test_expect_success PERL 'process filter abort stops processing of all further f
 		echo "error this blob and all future blobs" >abort.o &&
 		cp abort.o abort.r &&
 
+		M="blob=$(git hash-object abort.r)" &&
+		rm -f debug.log &&
 		SA=$(file_size abort.r) &&
 
 		git add . &&
 		rm -f *.r &&
+
 
 		# Note: This test assumes that Git filters files in alphabetical
 		# order ("abort.r" before "test.r").
@@ -676,7 +809,7 @@ test_expect_success PERL 'process filter abort stops processing of all further f
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
-			IN: smudge abort.r $SA [OK] -- [ABORT]
+			IN: smudge abort.r $M $SA [OK] -- [ABORT]
 			STOP
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
@@ -727,27 +860,29 @@ test_expect_success PERL 'delayed checkout in process filter' '
 	) &&
 
 	S=$(file_size "$TEST_ROOT/test.o") &&
+	PM="ref=refs/heads/master treeish=$(git -C repo rev-parse --verify master) " &&
+	M="${PM}blob=$(git -C repo rev-parse --verify master:test.a)" &&
 	cat >a.exp <<-EOF &&
 		START
 		init handshake complete
-		IN: smudge test.a $S [OK] -- OUT: $S . [OK]
-		IN: smudge test-delay10.a $S [OK] -- [DELAYED]
-		IN: smudge test-delay11.a $S [OK] -- [DELAYED]
-		IN: smudge test-delay20.a $S [OK] -- [DELAYED]
+		IN: smudge test.a $M $S [OK] -- OUT: $S . [OK]
+		IN: smudge test-delay10.a $M $S [OK] -- [DELAYED]
+		IN: smudge test-delay11.a $M $S [OK] -- [DELAYED]
+		IN: smudge test-delay20.a $M $S [OK] -- [DELAYED]
 		IN: list_available_blobs test-delay10.a test-delay11.a [OK]
-		IN: smudge test-delay10.a 0 [OK] -- OUT: $S . [OK]
-		IN: smudge test-delay11.a 0 [OK] -- OUT: $S . [OK]
+		IN: smudge test-delay10.a $M 0 [OK] -- OUT: $S . [OK]
+		IN: smudge test-delay11.a $M 0 [OK] -- OUT: $S . [OK]
 		IN: list_available_blobs test-delay20.a [OK]
-		IN: smudge test-delay20.a 0 [OK] -- OUT: $S . [OK]
+		IN: smudge test-delay20.a $M 0 [OK] -- OUT: $S . [OK]
 		IN: list_available_blobs [OK]
 		STOP
 	EOF
 	cat >b.exp <<-EOF &&
 		START
 		init handshake complete
-		IN: smudge test-delay10.b $S [OK] -- [DELAYED]
+		IN: smudge test-delay10.b $M $S [OK] -- [DELAYED]
 		IN: list_available_blobs test-delay10.b [OK]
-		IN: smudge test-delay10.b 0 [OK] -- OUT: $S . [OK]
+		IN: smudge test-delay10.b $M 0 [OK] -- OUT: $S . [OK]
 		IN: list_available_blobs [OK]
 		STOP
 	EOF
@@ -767,8 +902,11 @@ test_expect_success PERL 'delayed checkout in process filter' '
 
 		rm *.a *.b &&
 		filter_git checkout . &&
-		test_cmp_count ../a.exp a.log &&
-		test_cmp_count ../b.exp b.log &&
+		# We are not checking out a ref here, so filter out ref metadata.
+		sed -e "s!$PM!!" ../a.exp >a.exp.filtered &&
+		sed -e "s!$PM!!" ../b.exp >b.exp.filtered &&
+		test_cmp_count a.exp.filtered a.log &&
+		test_cmp_count b.exp.filtered b.log &&
 
 		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.a &&
 		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.a &&

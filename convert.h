@@ -4,10 +4,10 @@
 #ifndef CONVERT_H
 #define CONVERT_H
 
+#include "hash.h"
 #include "string-list.h"
 
 struct index_state;
-struct object_id;
 struct strbuf;
 
 #define CONV_EOL_RNDTRP_DIE   (1<<0) /* Die if CRLF to LF to CRLF is different */
@@ -57,6 +57,12 @@ struct delayed_checkout {
 	struct string_list paths;
 };
 
+struct checkout_metadata {
+	const char *refname;
+	struct object_id treeish;
+	struct object_id blob;
+};
+
 extern enum eol core_eol;
 extern char *check_roundtrip_encoding;
 const char *get_cached_convert_stats_ascii(const struct index_state *istate,
@@ -71,10 +77,12 @@ int convert_to_git(const struct index_state *istate,
 		   struct strbuf *dst, int conv_flags);
 int convert_to_working_tree(const struct index_state *istate,
 			    const char *path, const char *src,
-			    size_t len, struct strbuf *dst);
+			    size_t len, struct strbuf *dst,
+			    const struct checkout_metadata *meta);
 int async_convert_to_working_tree(const struct index_state *istate,
 				  const char *path, const char *src,
 				  size_t len, struct strbuf *dst,
+				  const struct checkout_metadata *meta,
 				  void *dco);
 int async_query_available_blobs(const char *cmd,
 				struct string_list *available_paths);
@@ -93,6 +101,23 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 			      int conv_flags);
 int would_convert_to_git_filter_fd(const struct index_state *istate,
 				   const char *path);
+
+/*
+ * Initialize the checkout metadata with the given values.  Any argument may be
+ * NULL if it is not applicable.  The treeish should be a commit if that is
+ * available, and a tree otherwise.
+ *
+ * The refname is not copied and must be valid for the lifetime of the struct.
+ * THe object IDs are copied.
+ */
+void init_checkout_metadata(struct checkout_metadata *meta, const char *refname,
+			    const struct object_id *treeish,
+			    const struct object_id *blob);
+
+/* Copy the metadata from src to dst, updating the blob. */
+void clone_checkout_metadata(struct checkout_metadata *dst,
+			     const struct checkout_metadata *src,
+			     const struct object_id *blob);
 
 /*
  * Reset the internal list of attributes used by convert_to_git and

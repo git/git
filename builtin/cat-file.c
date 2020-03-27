@@ -42,7 +42,10 @@ static int filter_object(const char *path, unsigned mode,
 			     oid_to_hex(oid), path);
 	if ((type == OBJ_BLOB) && S_ISREG(mode)) {
 		struct strbuf strbuf = STRBUF_INIT;
-		if (convert_to_working_tree(&the_index, path, *buf, *size, &strbuf)) {
+		struct checkout_metadata meta;
+
+		init_checkout_metadata(&meta, NULL, NULL, oid);
+		if (convert_to_working_tree(&the_index, path, *buf, *size, &strbuf, &meta)) {
 			free(*buf);
 			*size = strbuf.len;
 			*buf = strbuf_detach(&strbuf, NULL);

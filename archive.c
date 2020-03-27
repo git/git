@@ -77,6 +77,11 @@ void *object_file_to_archive(const struct archiver_args *args,
 {
 	void *buffer;
 	const struct commit *commit = args->convert ? args->commit : NULL;
+	struct checkout_metadata meta;
+
+	init_checkout_metadata(&meta, args->refname,
+			       args->commit_oid ? args->commit_oid :
+			       (args->tree ? &args->tree->object.oid : NULL), oid);
 
 	path += args->baselen;
 	buffer = read_object_file(oid, type, sizep);
@@ -85,7 +90,7 @@ void *object_file_to_archive(const struct archiver_args *args,
 		size_t size = 0;
 
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
-		convert_to_working_tree(args->repo->index, path, buf.buf, buf.len, &buf);
+		convert_to_working_tree(args->repo->index, path, buf.buf, buf.len, &buf, &meta);
 		if (commit)
 			format_subst(commit, buf.buf, buf.len, &buf);
 		buffer = strbuf_detach(&buf, &size);
@@ -385,16 +390,17 @@ static void parse_treeish_arg(const char **argv,
 	struct tree *tree;
 	const struct commit *commit;
 	struct object_id oid;
+	char *ref = NULL;
 
 	/* Remotes are only allowed to fetch actual refs */
 	if (remote && !remote_allow_unreachable) {
-		char *ref = NULL;
 		const char *colon = strchrnul(name, ':');
 		int refnamelen = colon - name;
 
 		if (!dwim_ref(name, refnamelen, &oid, &ref))
 			die(_("no such ref: %.*s"), refnamelen, name);
-		free(ref);
+	} else {
+		dwim_ref(name, strlen(name), &oid, &ref);
 	}
 
 	if (get_oid(name, &oid))
@@ -427,6 +433,7 @@ static void parse_treeish_arg(const char **argv,
 
 		tree = parse_tree_indirect(&tree_oid);
 	}
+	ar_args->refname = ref;
 	ar_args->tree = tree;
 	ar_args->commit_oid = commit_oid;
 	ar_args->commit = commit;

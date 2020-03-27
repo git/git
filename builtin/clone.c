@@ -784,11 +784,11 @@ static int checkout(int submodule_progress)
 	if (!strcmp(head, "HEAD")) {
 		if (advice_detached_head)
 			detach_advice(oid_to_hex(&oid));
+		FREE_AND_NULL(head);
 	} else {
 		if (!starts_with(head, "refs/heads/"))
 			die(_("HEAD not found below refs/heads!"));
 	}
-	free(head);
 
 	/* We need to be in the new work tree for the checkout */
 	setup_work_tree();
@@ -803,12 +803,15 @@ static int checkout(int submodule_progress)
 	opts.verbose_update = (option_verbosity >= 0);
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
+	init_checkout_metadata(&opts.meta, head, &oid, NULL);
 
 	tree = parse_tree_indirect(&oid);
 	parse_tree(tree);
 	init_tree_desc(&t, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts) < 0)
 		die(_("unable to checkout working tree"));
+
+	free(head);
 
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));

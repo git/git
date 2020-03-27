@@ -4349,7 +4349,7 @@ static int try_create_file(struct apply_state *state, const char *path,
 	if (fd < 0)
 		return 1;
 
-	if (convert_to_working_tree(state->repo->index, path, buf, size, &nbuf)) {
+	if (convert_to_working_tree(state->repo->index, path, buf, size, &nbuf, NULL)) {
 		size = nbuf.len;
 		buf  = nbuf.buf;
 	}

@@ -4062,6 +4062,9 @@ static void prep_temp_blob(struct index_state *istate,
 	struct strbuf tempfile = STRBUF_INIT;
 	char *path_dup = xstrdup(path);
 	const char *base = basename(path_dup);
+	struct checkout_metadata meta;
+
+	init_checkout_metadata(&meta, NULL, NULL, oid);
 
 	/* Generate "XXXXXX_basename.ext" */
 	strbuf_addstr(&tempfile, "XXXXXX_");
@@ -4071,7 +4074,7 @@ static void prep_temp_blob(struct index_state *istate,
 	if (!temp->tempfile)
 		die_errno("unable to create temp-file");
 	if (convert_to_working_tree(istate, path,
-			(const char *)blob, (size_t)size, &buf)) {
+			(const char *)blob, (size_t)size, &buf, &meta)) {
 		blob = buf.buf;
 		size = buf.len;
 	}

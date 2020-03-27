@@ -135,7 +135,13 @@ while (1) {
 				if ( exists $DELAY{$pathname} and $DELAY{$pathname}{"requested"} == 0 ) {
 					$DELAY{$pathname}{"requested"} = 1;
 				}
+			} elsif ($buffer =~ /^(ref|treeish|blob)=/) {
+				print $debug " $buffer";
 			} else {
+				# In general, filters need to be graceful about
+				# new metadata, since it's documented that we
+				# can pass any key-value pairs, but for tests,
+				# let's be a little stricter.
 				die "Unknown message '$buffer'";
 			}
 

@@ -797,6 +797,7 @@ static void handle_filter_error(const struct strbuf *filter_status,
 static int apply_multi_file_filter(const char *path, const char *src, size_t len,
 				   int fd, struct strbuf *dst, const char *cmd,
 				   const unsigned int wanted_capability,
+				   const struct checkout_metadata *meta,
 				   struct delayed_checkout *dco)
 {
 	int err;
@@ -854,6 +855,24 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 	err = packet_write_fmt_gently(process->in, "pathname=%s\n", path);
 	if (err)
 		goto done;
+
+	if (meta && meta->refname) {
+		err = packet_write_fmt_gently(process->in, "ref=%s\n", meta->refname);
+		if (err)
+			goto done;
+	}
+
+	if (meta && !is_null_oid(&meta->treeish)) {
+		err = packet_write_fmt_gently(process->in, "treeish=%s\n", oid_to_hex(&meta->treeish));
+		if (err)
+			goto done;
+	}
+
+	if (meta && !is_null_oid(&meta->blob)) {
+		err = packet_write_fmt_gently(process->in, "blob=%s\n", oid_to_hex(&meta->blob));
+		if (err)
+			goto done;
+	}
 
 	if ((entry->supported_capabilities & CAP_DELAY) &&
 	    dco && dco->state == CE_CAN_DELAY) {
@@ -971,6 +990,7 @@ static struct convert_driver {
 static int apply_filter(const char *path, const char *src, size_t len,
 			int fd, struct strbuf *dst, struct convert_driver *drv,
 			const unsigned int wanted_capability,
+			const struct checkout_metadata *meta,
 			struct delayed_checkout *dco)
 {
 	const char *cmd = NULL;
@@ -990,7 +1010,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 		return apply_single_file_filter(path, src, len, fd, dst, cmd);
 	else if (drv->process && *drv->process)
 		return apply_multi_file_filter(path, src, len, fd, dst,
-			drv->process, wanted_capability, dco);
+			drv->process, wanted_capability, meta, dco);
 
 	return 0;
 }
@@ -1368,7 +1388,7 @@ int would_convert_to_git_filter_fd(const struct index_state *istate, const char 
 	if (!ca.drv->required)
 		return 0;
 
-	return apply_filter(path, NULL, 0, -1, NULL, ca.drv, CAP_CLEAN, NULL);
+	return apply_filter(path, NULL, 0, -1, NULL, ca.drv, CAP_CLEAN, NULL, NULL);
 }
 
 const char *get_convert_attr_ascii(const struct index_state *istate, const char *path)
@@ -1406,7 +1426,7 @@ int convert_to_git(const struct index_state *istate,
 
 	convert_attrs(istate, &ca, path);
 
-	ret |= apply_filter(path, src, len, -1, dst, ca.drv, CAP_CLEAN, NULL);
+	ret |= apply_filter(path, src, len, -1, dst, ca.drv, CAP_CLEAN, NULL, NULL);
 	if (!ret && ca.drv && ca.drv->required)
 		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
 
@@ -1441,7 +1461,7 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 	assert(ca.drv);
 	assert(ca.drv->clean || ca.drv->process);
 
-	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL))
+	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
 		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
 
 	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
@@ -1452,7 +1472,9 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 static int convert_to_working_tree_internal(const struct index_state *istate,
 					    const char *path, const char *src,
 					    size_t len, struct strbuf *dst,
-					    int normalizing, struct delayed_checkout *dco)
+					    int normalizing,
+					    const struct checkout_metadata *meta,
+					    struct delayed_checkout *dco)
 {
 	int ret = 0, ret_filter = 0;
 	struct conv_attrs ca;
@@ -1484,7 +1506,7 @@ static int convert_to_working_tree_internal(const struct index_state *istate,
 	}
 
 	ret_filter = apply_filter(
-		path, src, len, -1, dst, ca.drv, CAP_SMUDGE, dco);
+		path, src, len, -1, dst, ca.drv, CAP_SMUDGE, meta, dco);
 	if (!ret_filter && ca.drv && ca.drv->required)
 		die(_("%s: smudge filter %s failed"), path, ca.drv->name);
 
@@ -1494,22 +1516,24 @@ static int convert_to_working_tree_internal(const struct index_state *istate,
 int async_convert_to_working_tree(const struct index_state *istate,
 				  const char *path, const char *src,
 				  size_t len, struct strbuf *dst,
+				  const struct checkout_metadata *meta,
 				  void *dco)
 {
-	return convert_to_working_tree_internal(istate, path, src, len, dst, 0, dco);
+	return convert_to_working_tree_internal(istate, path, src, len, dst, 0, meta, dco);
 }
 
 int convert_to_working_tree(const struct index_state *istate,
 			    const char *path, const char *src,
-			    size_t len, struct strbuf *dst)
+			    size_t len, struct strbuf *dst,
+			    const struct checkout_metadata *meta)
 {
-	return convert_to_working_tree_internal(istate, path, src, len, dst, 0, NULL);
+	return convert_to_working_tree_internal(istate, path, src, len, dst, 0, meta, NULL);
 }
 
 int renormalize_buffer(const struct index_state *istate, const char *path,
 		       const char *src, size_t len, struct strbuf *dst)
 {
-	int ret = convert_to_working_tree_internal(istate, path, src, len, dst, 1, NULL);
+	int ret = convert_to_working_tree_internal(istate, path, src, len, dst, 1, NULL, NULL);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -1981,4 +2005,26 @@ int stream_filter(struct stream_filter *filter,
 		  char *output, size_t *osize_p)
 {
 	return filter->vtbl->filter(filter, input, isize_p, output, osize_p);
+}
+
+void init_checkout_metadata(struct checkout_metadata *meta, const char *refname,
+			    const struct object_id *treeish,
+			    const struct object_id *blob)
+{
+	memset(meta, 0, sizeof(*meta));
+	if (refname)
+		meta->refname = refname;
+	if (treeish)
+		oidcpy(&meta->treeish, treeish);
+	if (blob)
+		oidcpy(&meta->blob, blob);
+}
+
+void clone_checkout_metadata(struct checkout_metadata *dst,
+			     const struct checkout_metadata *src,
+			     const struct object_id *blob)
+{
+	memcpy(dst, src, sizeof(*dst));
+	if (blob)
+		oidcpy(&dst->blob, blob);
 }

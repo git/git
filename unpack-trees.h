@@ -85,6 +85,7 @@ struct unpack_trees_options {
 	struct index_state result;
 
 	struct pattern_list *pl; /* for internal use */
+	struct checkout_metadata meta;
 };
 
 int unpack_trees(unsigned n, struct tree_desc *t,

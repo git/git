@@ -88,6 +88,19 @@ struct checkout_opts {
 	struct tree *source_tree;
 };
 
+struct branch_info {
+	const char *name; /* The short name used */
+	const char *path; /* The full name of a real branch */
+	struct commit *commit; /* The named commit */
+	char *refname; /* The full name of the ref being checked out. */
+	struct object_id oid; /* The object ID of the commit being checked out. */
+	/*
+	 * if not null the branch is detached because it's already
+	 * checked out in this checkout
+	 */
+	char *checkout;
+};
+
 static int post_checkout_hook(struct commit *old_commit, struct commit *new_commit,
 			      int changed)
 {
@@ -337,7 +350,8 @@ static void mark_ce_for_checkout_no_overlay(struct cache_entry *ce,
 	}
 }
 
-static int checkout_worktree(const struct checkout_opts *opts)
+static int checkout_worktree(const struct checkout_opts *opts,
+			     const struct branch_info *info)
 {
 	struct checkout state = CHECKOUT_INIT;
 	int nr_checkouts = 0, nr_unmerged = 0;
@@ -347,6 +361,10 @@ static int checkout_worktree(const struct checkout_opts *opts)
 	state.force = 1;
 	state.refresh_cache = 1;
 	state.istate = &the_index;
+
+	init_checkout_metadata(&state.meta, info->refname,
+			       info->commit ? &info->commit->object.oid : &info->oid,
+			       NULL);
 
 	enable_delayed_checkout(&state);
 	for (pos = 0; pos < active_nr; pos++) {
@@ -396,7 +414,7 @@ static int checkout_worktree(const struct checkout_opts *opts)
 }
 
 static int checkout_paths(const struct checkout_opts *opts,
-			  const char *revision)
+			  const struct branch_info *new_branch_info)
 {
 	int pos;
 	static char *ps_matched;
@@ -462,7 +480,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		else
 			BUG("either flag must have been set, worktree=%d, index=%d",
 			    opts->checkout_worktree, opts->checkout_index);
-		return run_add_interactive(revision, patch_mode, &opts->pathspec);
+		return run_add_interactive(new_branch_info->name, patch_mode, &opts->pathspec);
 	}
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
@@ -523,7 +541,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 
 	/* Now we are committed to check them out */
 	if (opts->checkout_worktree)
-		errs |= checkout_worktree(opts);
+		errs |= checkout_worktree(opts, new_branch_info);
 	else
 		remove_marked_cache_entries(&the_index, 1);
 
@@ -586,7 +604,8 @@ static void describe_detached_head(const char *msg, struct commit *commit)
 }
 
 static int reset_tree(struct tree *tree, const struct checkout_opts *o,
-		      int worktree, int *writeout_error)
+		      int worktree, int *writeout_error,
+		      struct branch_info *info)
 {
 	struct unpack_trees_options opts;
 	struct tree_desc tree_desc;
@@ -601,6 +620,11 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.verbose_update = o->show_progress;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
+	init_checkout_metadata(&opts.meta, info->refname,
+			       info->commit ? &info->commit->object.oid :
+			       is_null_oid(&info->oid) ? &tree->object.oid :
+			       &info->oid,
+			       NULL);
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
 	switch (unpack_trees(1, &tree_desc, &opts)) {
@@ -620,20 +644,16 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	}
 }
 
-struct branch_info {
-	const char *name; /* The short name used */
-	const char *path; /* The full name of a real branch */
-	struct commit *commit; /* The named commit */
-	/*
-	 * if not null the branch is detached because it's already
-	 * checked out in this checkout
-	 */
-	char *checkout;
-};
-
 static void setup_branch_path(struct branch_info *branch)
 {
 	struct strbuf buf = STRBUF_INIT;
+
+	/*
+	 * If this is a ref, resolve it; otherwise, look up the OID for our
+	 * expression.  Failure here is okay.
+	 */
+	if (!dwim_ref(branch->name, strlen(branch->name), &branch->oid, &branch->refname))
+		repo_get_oid_committish(the_repository, branch->name, &branch->oid);
 
 	strbuf_branchname(&buf, branch->name, INTERPRET_BRANCH_LOCAL);
 	if (strcmp(buf.buf, branch->name))
@@ -663,7 +683,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	} else
 		new_tree = get_commit_tree(new_branch_info->commit);
 	if (opts->discard_changes) {
-		ret = reset_tree(new_tree, opts, 1, writeout_error);
+		ret = reset_tree(new_tree, opts, 1, writeout_error, new_branch_info);
 		if (ret)
 			return ret;
 	} else {
@@ -692,6 +712,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		topts.quiet = opts->merge && old_branch_info->commit;
 		topts.verbose_update = opts->show_progress;
 		topts.fn = twoway_merge;
+		init_checkout_metadata(&topts.meta, new_branch_info->refname,
+				       new_branch_info->commit ?
+				       &new_branch_info->commit->object.oid :
+				       &new_branch_info->oid, NULL);
 		if (opts->overwrite_ignore) {
 			topts.dir = xcalloc(1, sizeof(*topts.dir));
 			topts.dir->flags |= DIR_SHOW_IGNORED;
@@ -762,7 +786,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 
 			ret = reset_tree(new_tree,
 					 opts, 1,
-					 writeout_error);
+					 writeout_error, new_branch_info);
 			if (ret)
 				return ret;
 			o.ancestor = old_branch_info->name;
@@ -782,7 +806,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 				exit(128);
 			ret = reset_tree(new_tree,
 					 opts, 0,
-					 writeout_error);
+					 writeout_error, new_branch_info);
 			strbuf_release(&o.obuf);
 			strbuf_release(&old_commit_shortname);
 			if (ret)
@@ -1710,7 +1734,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 	UNLEAK(opts);
 	if (opts->patch_mode || opts->pathspec.nr)
-		return checkout_paths(opts, new_branch_info.name);
+		return checkout_paths(opts, &new_branch_info);
 	else
 		return checkout_branch(opts, &new_branch_info);
 }
