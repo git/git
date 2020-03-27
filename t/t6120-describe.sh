@@ -129,12 +129,30 @@ test_expect_success 'rename tag A to Q locally' '
 	mv .git/refs/tags/A .git/refs/tags/Q
 '
 cat - >err.expect <<EOF
-warning: tag 'A' is really 'Q' here
+warning: tag 'Q' is externally known as 'A'
 EOF
 check_describe A-* HEAD
 test_expect_success 'warning was displayed for Q' '
 	test_i18ncmp err.expect err.actual
 '
+test_expect_success 'misnamed annotated tag forces long output' '
+	description=$(git describe --no-long Q^0) &&
+	expr "$description" : "A-0-g[0-9a-f]*$" &&
+	git rev-parse --verify "$description" >actual &&
+	git rev-parse --verify Q^0 >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'abbrev=0 will not break misplaced tag (1)' '
+	description=$(git describe --abbrev=0 Q^0) &&
+	expr "$description" : "A-0-g[0-9a-f]*$"
+'
+
+test_expect_success 'abbrev=0 will not break misplaced tag (2)' '
+	description=$(git describe --abbrev=0 c^0) &&
+	expr "$description" : "A-1-g[0-9a-f]*$"
+'
+
 test_expect_success 'rename tag Q back to A' '
 	mv .git/refs/tags/Q .git/refs/tags/A
 '
