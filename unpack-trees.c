@@ -52,6 +52,9 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_WARNING_TYPES] = {
 	/* WARNING_SPARSE_NOT_UPTODATE_FILE */
 	"Path '%s' not uptodate; will not remove from working tree.",
 
+	/* WARNING_SPARSE_UNMERGED_FILE */
+	"Path '%s' unmerged; will not remove from working tree.",
+
 	/* WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN */
 	"Path '%s' already present; will not overwrite with sparse update.",
 };
@@ -173,6 +176,8 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 
 	msgs[WARNING_SPARSE_NOT_UPTODATE_FILE] =
 		_("The following paths are not up to date and were left despite sparse patterns:\n%s");
+	msgs[WARNING_SPARSE_UNMERGED_FILE] =
+		_("The following paths are unmerged and were left despite sparse patterns:\n%s");
 	msgs[WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN] =
 		_("The following paths were already present and thus not updated despite sparse patterns:\n%s");
 
@@ -546,6 +551,23 @@ static int apply_sparse_checkout(struct index_state *istate,
 		ce->ce_flags |= CE_UPDATE;
 	}
 	return 0;
+}
+
+static int warn_conflicted_path(struct index_state *istate,
+				int i,
+				struct unpack_trees_options *o)
+{
+	char *conflicting_path = istate->cache[i]->name;
+	int count = 0;
+
+	add_rejected_path(o, WARNING_SPARSE_UNMERGED_FILE, conflicting_path);
+
+	/* Find out how many higher stage entries at same path */
+	while (++count < istate->cache_nr &&
+	       !strcmp(conflicting_path,
+		       istate->cache[i+count]->name))
+		/* do nothing */;
+	return count;
 }
 
 static inline int call_unpack_fn(const struct cache_entry * const *src,
@@ -1792,6 +1814,14 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 	empty_worktree = 1;
 	for (i = 0; i < o->src_index->cache_nr; i++) {
 		struct cache_entry *ce = o->src_index->cache[i];
+
+
+		if (ce_stage(ce)) {
+			/* -1 because for loop will increment by 1 */
+			i += warn_conflicted_path(o->src_index, i, o) - 1;
+			ret = UPDATE_SPARSITY_WARNINGS;
+			continue;
+		}
 
 		if (apply_sparse_checkout(o->src_index, ce, o))
 			ret = UPDATE_SPARSITY_WARNINGS;
