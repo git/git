@@ -1503,6 +1503,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	int i, ret;
 	static struct cache_entry *dfc;
 	struct pattern_list pl;
+	int free_pattern_list = 0;
 
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
@@ -1519,6 +1520,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		else
 			o->pl = &pl;
 		free(sparse);
+		free_pattern_list = 1;
 	}
 
 	memset(&o->result, 0, sizeof(o->result));
@@ -1686,9 +1688,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->src_index = NULL;
 
 done:
-	trace_performance_leave("unpack_trees");
-	if (!o->keep_pattern_list)
+	if (free_pattern_list)
 		clear_pattern_list(&pl);
+	trace_performance_leave("unpack_trees");
 	return ret;
 
 return_failed:
