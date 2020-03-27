@@ -4,16 +4,61 @@ Git 2.27 Release Notes
 Updates since v2.26
 -------------------
 
+Backward compatibility notes
+
+ * When "git describe C" finds that commit C is pointed by a signed or
+   annotated tag, which records T as its tagname in the object, the
+   command gives T as its answer.  Even if the user renames or moves
+   such a tag from its natural location in the "refs/tags/" hierarchy,
+   "git describe C" would still give T as the answer, but in such a
+   case "git show T^0" would no longer work as expected.  There may be
+   nothing at "refs/tags/T" or even worse there may be a different tag
+   instead.
+
+   Starting from this version, "git describe" will always use the
+   "long" version, as if the "--long" option were given, when giving
+   its output based on such a misplaced tag to work around the problem.
+
+ * "git pull" issues a warning message until the pull.rebase
+   configuration variable is explicitly given, which some existing
+   users may find annoying---those who prefer not to rebase need to
+   set the variable to false to squelch the warning.
+
+
 UI, Workflows & Features
 
  * A handful of options to configure SSL when talking to proxies have
    been added.
+
+ * Smudge/clean conversion filters are now given more information
+   (e.g. the object of the tree-ish in which the blob being converted
+   appears, in addition to its path, which has already been given).
+
+ * When "git describe C" finds an annotated tag with tagname A to be
+   the best name to explain commit C, and the tag is stored in a
+   "wrong" place in the refs/tags hierarchy, e.g. refs/tags/B, the
+   command gave a warning message but used A (not B) to describe C.
+   If C is exactly at the tag, the describe output would be "A", but
+   "git rev-parse A^0" would not be equal as "git rev-parse C^0".  The
+   behavior of the command has been changed to use the "long" form
+   i.e. A-0-gOBJECTNAME, which is correctly interpreted by rev-parse.
+
+ * "git pull" learned to warn when no pull.rebase configuration
+   exists, and neither --[no-]rebase nor --ff-only is given (which
+   would result a merge).
 
 
 Performance, Internal Implementation, Development Support etc.
 
  * The advise API has been revamped to allow more systematic enumeration of
    advice knobs in the future.
+
+ * SHA-256 transition continues.
+
+ * The code to interface with GnuPG has been refactored.
+
+ * "git stash" has kept an escape hatch to use the scripted version
+   for a few releases, which got stale.  It has been removed.
 
 
 Fixes since v2.26
@@ -31,6 +76,14 @@ Fixes since v2.26
    or amending during an interrupted cherry-pick was broken during the
    rewrite of "git rebase" in C, which has been corrected.
    (merge 430b75f720 pw/advise-rebase-skip later to maint).
+
+ * Fix "git checkout --recurse-submodules" of a nested submodule
+   hierarchy.
+   (merge 846f34d351 pb/recurse-submodules-fix later to maint).
+
+ * The "--fork-point" mode of "git rebase" regressed when the command
+   was rewritten in C back in 2.20 era, which has been corrected.
+   (merge f08132f889 at/rebase-fork-point-regression-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
