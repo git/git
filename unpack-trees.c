@@ -1701,23 +1701,15 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			 * correct CE_NEW_SKIP_WORKTREE
 			 */
 			if (ce->ce_flags & CE_ADDED &&
-			    verify_absent(ce, ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN, o)) {
-				if (!o->show_all_errors)
-					goto return_failed;
-				ret = -1;
-			}
+			    verify_absent(ce, WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN, o))
+				ret = 1;
 
-			if (apply_sparse_checkout(&o->result, ce, o)) {
-				if (!o->show_all_errors)
-					goto return_failed;
-				ret = -1;
-			}
+			if (apply_sparse_checkout(&o->result, ce, o))
+				ret = 1;
+
 			if (!ce_skip_worktree(ce))
 				empty_worktree = 0;
-
 		}
-		if (ret < 0)
-			goto return_failed;
 		/*
 		 * Sparse checkout is meant to narrow down checkout area
 		 * but it does not make sense to narrow down to empty working
@@ -1727,6 +1719,15 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		if (o->result.cache_nr && empty_worktree) {
 			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
 			goto done;
+		}
+		if (ret == 1) {
+			/*
+			 * Inability to sparsify or de-sparsify individual
+			 * paths is not an error, but just a warning.
+			 */
+			if (o->show_all_errors)
+				display_warning_msgs(o);
+			ret = 0;
 		}
 	}
 
@@ -1759,10 +1760,8 @@ done:
 	return ret;
 
 return_failed:
-	if (o->show_all_errors) {
+	if (o->show_all_errors)
 		display_error_msgs(o);
-		display_warning_msgs(o);
-	}
 	mark_all_ce_unused(o->src_index);
 	ret = unpack_failed(o, NULL);
 	if (o->exiting_early)
