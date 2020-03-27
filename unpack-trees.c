@@ -46,10 +46,10 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 	/* ERROR_WOULD_LOSE_SUBMODULE */
 	"Submodule '%s' cannot checkout new HEAD.",
 
-	/* ERROR_SPARSE_NOT_UPTODATE_FILE */
+	/* WARNING_SPARSE_NOT_UPTODATE_FILE */
 	"Entry '%s' not uptodate. Cannot update sparse checkout.",
 
-	/* ERROR_WOULD_LOSE_ORPHANED_OVERWRITTEN */
+	/* WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN */
 	"Working tree file '%s' would be overwritten by sparse checkout update.",
 };
 
@@ -168,9 +168,9 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 	msgs[ERROR_WOULD_LOSE_SUBMODULE] =
 		_("Cannot update submodule:\n%s");
 
-	msgs[ERROR_SPARSE_NOT_UPTODATE_FILE] =
+	msgs[WARNING_SPARSE_NOT_UPTODATE_FILE] =
 		_("Cannot update sparse checkout: the following entries are not up to date:\n%s");
-	msgs[ERROR_WOULD_LOSE_ORPHANED_OVERWRITTEN] =
+	msgs[WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN] =
 		_("The following working tree files would be overwritten by sparse checkout update:\n%s");
 
 	opts->show_all_errors = 1;
@@ -509,7 +509,7 @@ static int apply_sparse_checkout(struct index_state *istate,
 		ce->ce_flags &= ~CE_UPDATE;
 	}
 	if (was_skip_worktree && !ce_skip_worktree(ce)) {
-		if (verify_absent_sparse(ce, ERROR_WOULD_LOSE_ORPHANED_OVERWRITTEN, o))
+		if (verify_absent_sparse(ce, WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN, o))
 			return -1;
 		ce->ce_flags |= CE_UPDATE;
 	}
@@ -1875,7 +1875,7 @@ int verify_uptodate(const struct cache_entry *ce,
 static int verify_uptodate_sparse(const struct cache_entry *ce,
 				  struct unpack_trees_options *o)
 {
-	return verify_uptodate_1(ce, o, ERROR_SPARSE_NOT_UPTODATE_FILE);
+	return verify_uptodate_1(ce, o, WARNING_SPARSE_NOT_UPTODATE_FILE);
 }
 
 /*
