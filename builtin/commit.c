@@ -1667,7 +1667,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	if (amend) {
-		const char *exclude_gpgsig[2] = { "gpgsig", NULL };
+		const char *exclude_gpgsig[3] = { "gpgsig", "gpgsig-sha256", NULL };
 		extra = read_commit_extra_headers(current_head, exclude_gpgsig);
 	} else {
 		struct commit_extra_header **tail = &extra;

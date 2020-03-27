@@ -3381,4 +3381,113 @@ test_expect_success 'X: handling encoding' '
 	git log -1 --format=%B encoding | grep $(printf "\317\200")
 '
 
+###
+### series Y (submodules and hash algorithms)
+###
+
+cat >Y-sub-input <<\Y_INPUT_END
+blob
+mark :1
+data 4
+foo
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Full Name <user@company.tld> 1000000000 +0100
+committer Full Name <user@company.tld> 1000000000 +0100
+data 24
+Test submodule commit 1
+M 100644 :1 file
+
+blob
+mark :3
+data 8
+foo
+bar
+
+commit refs/heads/master
+mark :4
+author Full Name <user@company.tld> 1000000001 +0100
+committer Full Name <user@company.tld> 1000000001 +0100
+data 24
+Test submodule commit 2
+from :2
+M 100644 :3 file
+Y_INPUT_END
+
+# Note that the submodule object IDs are intentionally not translated.
+cat >Y-main-input <<\Y_INPUT_END
+blob
+mark :1
+data 4
+foo
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Full Name <user@company.tld> 2000000000 +0100
+committer Full Name <user@company.tld> 2000000000 +0100
+data 14
+Test commit 1
+M 100644 :1 file
+
+blob
+mark :3
+data 73
+[submodule "sub1"]
+	path = sub1
+	url = https://void.example.com/main.git
+
+commit refs/heads/master
+mark :4
+author Full Name <user@company.tld> 2000000001 +0100
+committer Full Name <user@company.tld> 2000000001 +0100
+data 14
+Test commit 2
+from :2
+M 100644 :3 .gitmodules
+M 160000 0712c5be7cf681388e355ef47525aaf23aee1a6d sub1
+
+blob
+mark :5
+data 8
+foo
+bar
+
+commit refs/heads/master
+mark :6
+author Full Name <user@company.tld> 2000000002 +0100
+committer Full Name <user@company.tld> 2000000002 +0100
+data 14
+Test commit 3
+from :4
+M 100644 :5 file
+M 160000 ff729f5e62f72c0c3978207d9a80e5f3a65f14d7 sub1
+Y_INPUT_END
+
+cat >Y-marks <<\Y_INPUT_END
+:2 0712c5be7cf681388e355ef47525aaf23aee1a6d
+:4 ff729f5e62f72c0c3978207d9a80e5f3a65f14d7
+Y_INPUT_END
+
+test_expect_success 'Y: setup' '
+	test_oid_cache <<-EOF
+	Ymaster sha1:9afed2f9161ddf416c0a1863b8b0725b00070504
+	Ymaster sha256:c0a1010da1df187b2e287654793df01b464bd6f8e3f17fc1481a7dadf84caee3
+	EOF
+'
+
+test_expect_success 'Y: rewrite submodules' '
+	git init main1 &&
+	(
+		cd main1 &&
+		git init sub2 &&
+		git -C sub2 fast-import --export-marks=../sub2-marks <../Y-sub-input &&
+		git fast-import --rewrite-submodules-from=sub:../Y-marks \
+			--rewrite-submodules-to=sub:sub2-marks <../Y-main-input &&
+		test "$(git rev-parse master)" = "$(test_oid Ymaster)"
+	)
+'
+
 test_done

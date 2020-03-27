@@ -20,6 +20,10 @@ setdate_and_increment () {
 }
 
 test_expect_success setup '
+	test_oid_cache <<-EOF &&
+	disklen sha1:138
+	disklen sha256:154
+	EOF
 	setdate_and_increment &&
 	echo "Using $datestamp" > one &&
 	git add one &&
@@ -49,6 +53,9 @@ test_atom() {
 		test_cmp expected actual.clean
 	"
 }
+
+hexlen=$(test_oid hexsz)
+disklen=$(test_oid disklen)
 
 test_atom head refname refs/heads/master
 test_atom head refname: refs/heads/master
@@ -82,9 +89,9 @@ test_atom head push:rstrip=-1 refs
 test_atom head push:strip=1 remotes/myfork/master
 test_atom head push:strip=-1 master
 test_atom head objecttype commit
-test_atom head objectsize 171
-test_atom head objectsize:disk 138
-test_atom head deltabase 0000000000000000000000000000000000000000
+test_atom head objectsize $((131 + hexlen))
+test_atom head objectsize:disk $disklen
+test_atom head deltabase $ZERO_OID
 test_atom head objectname $(git rev-parse refs/heads/master)
 test_atom head objectname:short $(git rev-parse --short refs/heads/master)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
@@ -125,11 +132,11 @@ test_atom tag refname:short testtag
 test_atom tag upstream ''
 test_atom tag push ''
 test_atom tag objecttype tag
-test_atom tag objectsize 154
-test_atom tag objectsize:disk 138
-test_atom tag '*objectsize:disk' 138
-test_atom tag deltabase 0000000000000000000000000000000000000000
-test_atom tag '*deltabase' 0000000000000000000000000000000000000000
+test_atom tag objectsize $((114 + hexlen))
+test_atom tag objectsize:disk $disklen
+test_atom tag '*objectsize:disk' $disklen
+test_atom tag deltabase $ZERO_OID
+test_atom tag '*deltabase' $ZERO_OID
 test_atom tag objectname $(git rev-parse refs/tags/testtag)
 test_atom tag objectname:short $(git rev-parse --short refs/tags/testtag)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
@@ -139,7 +146,7 @@ test_atom tag parent ''
 test_atom tag numparent ''
 test_atom tag object $(git rev-parse refs/tags/testtag^0)
 test_atom tag type 'commit'
-test_atom tag '*objectname' 'ea122842f48be4afb2d1fc6a4b96c05885ab7463'
+test_atom tag '*objectname' $(git rev-parse refs/tags/testtag^{})
 test_atom tag '*objecttype' 'commit'
 test_atom tag author ''
 test_atom tag authorname ''
@@ -643,7 +650,7 @@ test_atom refs/tags/signed-long contents "subject line
 body contents
 $sig"
 
-cat >expected <<EOF
+sort >expected <<EOF
 $(git rev-parse refs/tags/bogo) <committer@example.com> refs/tags/bogo
 $(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
 EOF

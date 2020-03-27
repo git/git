@@ -6,6 +6,11 @@ GNUPGHOME_NOT_USED=$GNUPGHOME
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
 test_expect_success GPG 'create signed commits' '
+	test_oid_cache <<-\EOF &&
+	header sha1:gpgsig
+	header sha256:gpgsig-sha256
+	EOF
+
 	test_when_finished "test_unconfig commit.gpgsign" &&
 
 	echo 1 >file && git add file &&
@@ -155,6 +160,11 @@ test_expect_success GPG 'verify signatures with --raw' '
 	)
 '
 
+test_expect_success GPG 'proper header is used for hash algorithm' '
+	git cat-file commit fourth-signed >output &&
+	grep "^$(test_oid header) -----BEGIN PGP SIGNATURE-----" output
+'
+
 test_expect_success GPG 'show signed commit with signature' '
 	git show -s initial >commit &&
 	git show -s --show-signature initial >show &&
@@ -162,7 +172,7 @@ test_expect_success GPG 'show signed commit with signature' '
 	git cat-file commit initial >cat &&
 	grep -v -e "gpg: " -e "Warning: " show >show.commit &&
 	grep -e "gpg: " -e "Warning: " show >show.gpg &&
-	grep -v "^ " cat | grep -v "^gpgsig " >cat.commit &&
+	grep -v "^ " cat | grep -v "^$(test_oid header) " >cat.commit &&
 	test_cmp show.commit commit &&
 	test_cmp show.gpg verify.2 &&
 	test_cmp cat.commit verify.1
@@ -299,10 +309,10 @@ test_expect_success GPG 'check config gpg.format values' '
 test_expect_success GPG 'detect fudged commit with double signature' '
 	sed -e "/gpgsig/,/END PGP/d" forged1 >double-base &&
 	sed -n -e "/gpgsig/,/END PGP/p" forged1 | \
-		sed -e "s/^gpgsig//;s/^ //" | gpg --dearmor >double-sig1.sig &&
+		sed -e "s/^$(test_oid header)//;s/^ //" | gpg --dearmor >double-sig1.sig &&
 	gpg -o double-sig2.sig -u 29472784 --detach-sign double-base &&
 	cat double-sig1.sig double-sig2.sig | gpg --enarmor >double-combined.asc &&
-	sed -e "s/^\(-.*\)ARMORED FILE/\1SIGNATURE/;1s/^/gpgsig /;2,\$s/^/ /" \
+	sed -e "s/^\(-.*\)ARMORED FILE/\1SIGNATURE/;1s/^/$(test_oid header) /;2,\$s/^/ /" \
 		double-combined.asc > double-gpgsig &&
 	sed -e "/committer/r double-gpgsig" double-base >double-commit &&
 	git hash-object -w -t commit double-commit >double-commit.commit &&

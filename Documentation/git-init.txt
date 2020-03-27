@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git init' [-q | --quiet] [--bare] [--template=<template_directory>]
-	  [--separate-git-dir <git dir>]
+	  [--separate-git-dir <git dir>] [--object-format=<format]
 	  [--shared[=<permissions>]] [directory]
 
 
@@ -47,6 +47,11 @@ Only print error and warning messages; all other output will be suppressed.
 
 Create a bare repository. If `GIT_DIR` environment is not set, it is set to the
 current working directory.
+
+--object-format=<format>::
+
+Specify the given object format (hash algorithm) for the repository.  The valid
+values are 'sha1' and (if enabled) 'sha256'.  'sha1' is the default.
 
 --template=<template_directory>::
 
