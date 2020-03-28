@@ -204,7 +204,6 @@ ifndef::git-pull[]
 	recursion (such as settings in linkgit:gitmodules[5] and
 	linkgit:git-config[1]) override this option, as does
 	specifying --[no-]recurse-submodules directly.
-endif::git-pull[]
 
 -u::
 --update-head-ok::
@@ -214,6 +213,7 @@ endif::git-pull[]
 	to communicate with 'git fetch', and unless you are
 	implementing your own Porcelain you are not supposed to
 	use it.
+endif::git-pull[]
 
 --upload-pack <upload-pack>::
 	When given, and the repository to fetch from is handled
