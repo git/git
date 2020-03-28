@@ -184,8 +184,8 @@ test_git_directory_is_unchanged () {
 }
 
 test_git_directory_exists() {
-	test -e ".git/modules/$1" &&
-	if test -f sub1/.git
+	test_path_exists ".git/modules/$1" &&
+	if test_path_is_file sub1/.git
 	then
 		# does core.worktree point at the right place?
 		test "$(git -C .git/modules/$1 config core.worktree)" = "../../../$1"
@@ -197,7 +197,7 @@ test_git_directory_exists() {
 # settings for diff.ignoreSubmodules.
 prolog () {
 	test_oid_init &&
-	(test -d submodule_update_repo || create_lib_submodule_repo) &&
+	(test_path_is_dir submodule_update_repo || create_lib_submodule_repo) &&
 	test_config_global diff.ignoreSubmodules all &&
 	test_config diff.ignoreSubmodules all
 }
@@ -226,13 +226,13 @@ reset_work_tree_to () {
 reset_work_tree_to_interested () {
 	reset_work_tree_to $1 &&
 	# make the submodule git dirs available
-	if ! test -d submodule_update/.git/modules/sub1
+	if ! test_path_is_dir submodule_update/.git/modules/sub1
 	then
 		mkdir -p submodule_update/.git/modules &&
 		cp -r submodule_update_repo/.git/modules/sub1 submodule_update/.git/modules/sub1
 		GIT_WORK_TREE=. git -C submodule_update/.git/modules/sub1 config --unset core.worktree
 	fi &&
-	if ! test -d submodule_update/.git/modules/sub1/modules/sub2
+	if ! test_path_is_dir submodule_update/.git/modules/sub1/modules/sub2
 	then
 		mkdir -p submodule_update/.git/modules/sub1/modules &&
 		cp -r submodule_update_repo/.git/modules/sub1/modules/sub2 submodule_update/.git/modules/sub1/modules/sub2
@@ -269,8 +269,8 @@ test_submodule_content () {
 	fi &&
 	submodule="$1" &&
 	commit="$2" &&
-	test -d "$submodule"/ &&
-	if ! test -f "$submodule"/.git && ! test -d "$submodule"/.git
+	test_path_is_dir "$submodule"/ &&
+	if ! test_path_is_file "$submodule"/.git && ! test_path_is_dir "$submodule"/.git
 	then
 		echo "Submodule $submodule is not populated"
 		return 1
@@ -709,7 +709,7 @@ test_submodule_recursing_with_args_common() {
 			git branch -t remove_sub1 origin/remove_sub1 &&
 			$command remove_sub1 &&
 			test_superproject_content origin/remove_sub1 &&
-			! test -e sub1 &&
+			test_path_is_missing sub1 &&
 			test_must_fail git config -f .git/modules/sub1/config core.worktree
 		)
 	'
@@ -724,7 +724,7 @@ test_submodule_recursing_with_args_common() {
 			rm -rf .git/modules &&
 			$command remove_sub1 &&
 			test_superproject_content origin/remove_sub1 &&
-			! test -e sub1 &&
+			test_path_is_missing sub1 &&
 			test_git_directory_exists sub1
 		)
 	'
@@ -738,7 +738,7 @@ test_submodule_recursing_with_args_common() {
 			git branch -t replace_sub1_with_file origin/replace_sub1_with_file &&
 			$command replace_sub1_with_file &&
 			test_superproject_content origin/replace_sub1_with_file &&
-			test -f sub1
+			test_path_is_file sub1
 		)
 	'
 	RESULTDS=success
@@ -757,7 +757,7 @@ test_submodule_recursing_with_args_common() {
 			test_must_fail $command replace_sub1_with_file &&
 			test_superproject_content origin/add_sub1 &&
 			test_submodule_content sub1 origin/add_sub1 &&
-			test -f sub1/untracked_file
+			test_path_is_file sub1/untracked_file
 		)
 	'
 
@@ -923,7 +923,7 @@ test_submodule_switch_recursing_with_args () {
 			: >sub1/ignored &&
 			$command replace_sub1_with_file &&
 			test_superproject_content origin/replace_sub1_with_file &&
-			test -f sub1
+			test_path_is_file sub1
 		)
 	'
 
