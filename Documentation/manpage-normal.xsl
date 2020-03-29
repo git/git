@@ -1,6 +1,5 @@
 <!-- manpage-normal.xsl:
-     special settings for manpages rendered from asciidoc+docbook
-     handles anything we want to keep away from docbook-xsl 1.72.0 -->
+     special settings for manpages rendered from asciidoc+docbook -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 		version="1.0">
 

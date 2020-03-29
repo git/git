@@ -206,9 +206,8 @@ Issues of note:
    clone two separate git-htmldocs and git-manpages repositories next
    to the clone of git itself.
 
-   The minimum supported version of docbook-xsl is 1.72.
-   It has been reported that docbook-xsl version 1.72 and 1.73 are
-   buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
+   The minimum supported version of docbook-xsl is 1.73.
+   It has been reported that docbook-xsl version 1.73 is buggy; it needs
    the patch in contrib/patches/docbook-xsl-manpages-charmap.patch
 
    Users attempting to build the documentation on Cygwin may need to ensure

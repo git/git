@@ -149,16 +149,6 @@ endif
 -include ../config.mak.autogen
 -include ../config.mak
 
-#
-# For docbook-xsl ...
-#	-1.71.1,	not supported
-#	1.72.0,		set DOCBOOK_XSL_172.
-#	1.73.0-,	no extra settings are needed
-#
-
-ifdef DOCBOOK_XSL_172
-MANPAGE_XSL = manpage-1.72.xsl
-endif
 ifndef NO_MAN_BOLD_LITERAL
 XMLTO_EXTRA += -m manpage-bold-literal.xsl
 endif
