@@ -151,9 +151,7 @@ endif
 
 #
 # For docbook-xsl ...
-#	-1.68.1,	no extra settings are needed?
-#	1.69.0,		set ASCIIDOC_ROFF?
-#	1.69.1-1.71.0,	set DOCBOOK_SUPPRESS_SP?
+#	-1.71.0,	not supported
 #	1.71.1,		set ASCIIDOC_ROFF?
 #	1.72.0,		set DOCBOOK_XSL_172.
 #	1.73.0-,	no extra settings are needed
@@ -171,9 +169,6 @@ else
 endif
 ifndef NO_MAN_BOLD_LITERAL
 XMLTO_EXTRA += -m manpage-bold-literal.xsl
-endif
-ifdef DOCBOOK_SUPPRESS_SP
-XMLTO_EXTRA += -m manpage-suppress-sp.xsl
 endif
 
 # Newer DocBook stylesheet emits warning cruft in the output when
