@@ -151,21 +151,13 @@ endif
 
 #
 # For docbook-xsl ...
-#	-1.71.0,	not supported
-#	1.71.1,		set ASCIIDOC_ROFF?
+#	-1.71.1,	not supported
 #	1.72.0,		set DOCBOOK_XSL_172.
 #	1.73.0-,	no extra settings are needed
 #
 
 ifdef DOCBOOK_XSL_172
-ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
 MANPAGE_XSL = manpage-1.72.xsl
-else
-	ifndef ASCIIDOC_ROFF
-	# docbook-xsl after 1.72 needs the regular XSL, but will not
-	# pass-thru raw roff codes from asciidoc.conf, so turn them off.
-	ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
-	endif
 endif
 ifndef NO_MAN_BOLD_LITERAL
 XMLTO_EXTRA += -m manpage-bold-literal.xsl
