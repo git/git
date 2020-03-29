@@ -1291,9 +1291,23 @@ our $is_last_request = sub { 1 };
 our ($pre_dispatch_hook, $post_dispatch_hook, $pre_listen_hook);
 our $CGI = 'CGI';
 our $cgi;
+our $FCGI_Stream_PRINT_raw = \&FCGI::Stream::PRINT;
 sub configure_as_fcgi {
 	require CGI::Fast;
 	our $CGI = 'CGI::Fast';
+	# FCGI is not Unicode aware hence the UTF-8 encoding must be done manually.
+	# However no encoding must be done within git_blob_plain() and git_snapshot()
+	# which must still output in raw binary mode.
+	no warnings 'redefine';
+	my $enc = Encode::find_encoding('UTF-8');
+	*FCGI::Stream::PRINT = sub {
+		my @OUTPUT = @_;
+		for (my $i = 1; $i < @_; $i++) {
+			$OUTPUT[$i] = $enc->encode($_[$i], Encode::FB_CROAK|Encode::LEAVE_SRC);
+		}
+		@_ = @OUTPUT;
+		goto $FCGI_Stream_PRINT_raw;
+	};
 
 	my $request_number = 0;
 	# let each child service 100 requests
@@ -7079,6 +7093,7 @@ sub git_blob_plain {
 			($sandbox ? 'attachment' : 'inline')
 			. '; filename="' . $save_as . '"');
 	local $/ = undef;
+	local *FCGI::Stream::PRINT = $FCGI_Stream_PRINT_raw;
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
@@ -7417,6 +7432,7 @@ sub git_snapshot {
 
 	open my $fd, "-|", $cmd
 		or die_error(500, "Execute git-archive failed");
+	local *FCGI::Stream::PRINT = $FCGI_Stream_PRINT_raw;
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
