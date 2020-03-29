@@ -10,6 +10,10 @@ Linux32)
 	CI_TARGET=linux32
 	CI_CONTAINER="daald/ubuntu32:xenial"
 	;;
+linux-musl)
+	CI_TARGET=alpine
+	CI_CONTAINER=alpine
+	;;
 *)
 	exit 1 ;;
 esac
