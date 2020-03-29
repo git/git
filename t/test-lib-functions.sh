@@ -1373,11 +1373,10 @@ packetize() {
 		packet="$*"
 		printf '%04x%s' "$((4 + ${#packet}))" "$packet"
 	else
-		cat >packetize.tmp &&
-		len=$(wc -c <packetize.tmp) &&
-		printf '%04x' "$(($len + 4))" &&
-		cat packetize.tmp &&
-		rm -f packetize.tmp
+		perl -e '
+			my $packet = do { local $/; <STDIN> };
+			printf "%04x%s", 4 + length($packet), $packet;
+		'
 	fi
 }
 
