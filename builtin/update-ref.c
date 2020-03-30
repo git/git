@@ -171,11 +171,11 @@ static int parse_next_oid(struct strbuf *input, const char **next,
 /*
  * The following five parse_cmd_*() functions parse the corresponding
  * command.  In each case, next points at the character following the
- * command name and the following space.  They each return a pointer
- * to the character terminating the command, and die with an
- * explanatory message if there are any parsing problems.  All of
- * these functions handle either text or binary format input,
- * depending on how line_termination is set.
+ * command name.  They each return a pointer to the character
+ * terminating the command, and die with an explanatory message if
+ * there are any parsing problems.  All of these functions handle
+ * either text or binary format input, depending on how
+ * line_termination is set.
  */
 
 static const char *parse_cmd_update(struct ref_transaction *transaction,
@@ -185,6 +185,9 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 	char *refname;
 	struct object_id new_oid, old_oid;
 	int have_old;
+
+	if (!skip_prefix(next, " ", &next))
+		die("update: missing space after command");
 
 	refname = parse_refname(input, &next);
 	if (!refname)
@@ -220,6 +223,9 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 	char *refname;
 	struct object_id new_oid;
 
+	if (!skip_prefix(next, " ", &next))
+		die("create: missing space after command");
+
 	refname = parse_refname(input, &next);
 	if (!refname)
 		die("create: missing <ref>");
@@ -252,6 +258,9 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 	char *refname;
 	struct object_id old_oid;
 	int have_old;
+
+	if (!skip_prefix(next, " ", &next))
+		die("delete: missing space after command");
 
 	refname = parse_refname(input, &next);
 	if (!refname)
@@ -288,6 +297,9 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 	char *refname;
 	struct object_id old_oid;
 
+	if (!skip_prefix(next, " ", &next))
+		die("verify: missing space after command");
+
 	refname = parse_refname(input, &next);
 	if (!refname)
 		die("verify: missing <ref>");
@@ -310,9 +322,12 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 	return next;
 }
 
-static const char *parse_cmd_option(struct strbuf *input, const char *next)
+static const char *parse_cmd_option(struct ref_transaction *transaction,
+				    struct strbuf *input, const char *next)
 {
 	const char *rest;
+	if (!skip_prefix(next, " ", &next))
+		die("option: missing space after command");
 	if (skip_prefix(next, "no-deref", &rest) && *rest == line_termination)
 		update_flags |= REF_NO_DEREF;
 	else
@@ -320,33 +335,57 @@ static const char *parse_cmd_option(struct strbuf *input, const char *next)
 	return rest;
 }
 
+static const struct parse_cmd {
+	const char *prefix;
+	const char *(*fn)(struct ref_transaction *, struct strbuf *, const char *);
+} command[] = {
+	{ "update", parse_cmd_update },
+	{ "create", parse_cmd_create },
+	{ "delete", parse_cmd_delete },
+	{ "verify", parse_cmd_verify },
+	{ "option", parse_cmd_option },
+};
+
 static void update_refs_stdin(struct ref_transaction *transaction)
 {
 	struct strbuf input = STRBUF_INIT;
 	const char *next;
+	int i;
 
 	if (strbuf_read(&input, 0, 1000) < 0)
 		die_errno("could not read from stdin");
 	next = input.buf;
 	/* Read each line dispatch its command */
 	while (next < input.buf + input.len) {
+		const struct parse_cmd *cmd = NULL;
+
 		if (*next == line_termination)
 			die("empty command in input");
 		else if (isspace(*next))
 			die("whitespace before command: %s", next);
-		else if (skip_prefix(next, "update ", &next))
-			next = parse_cmd_update(transaction, &input, next);
-		else if (skip_prefix(next, "create ", &next))
-			next = parse_cmd_create(transaction, &input, next);
-		else if (skip_prefix(next, "delete ", &next))
-			next = parse_cmd_delete(transaction, &input, next);
-		else if (skip_prefix(next, "verify ", &next))
-			next = parse_cmd_verify(transaction, &input, next);
-		else if (skip_prefix(next, "option ", &next))
-			next = parse_cmd_option(&input, next);
-		else
+
+		for (i = 0; i < ARRAY_SIZE(command); i++) {
+			const char *prefix = command[i].prefix;
+
+			if (!skip_prefix(next, prefix, &next))
+				continue;
+
+			/*
+			 * Check that the command is terminated by an argument
+			 * or line terminator and not only a matching prefix.
+			 */
+			if (input.buf[strlen(prefix)] != line_termination &&
+			    input.buf[strlen(prefix)] != '\0' &&
+			    input.buf[strlen(prefix)] != ' ')
+				continue;
+
+			cmd = &command[i];
+			break;
+		}
+		if (!cmd)
 			die("unknown command: %s", next);
 
+		next = cmd->fn(transaction, &input, next);
 		next++;
 	}
 
