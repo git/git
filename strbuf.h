@@ -503,6 +503,12 @@ int strbuf_getline(struct strbuf *sb, FILE *file);
 int strbuf_getwholeline(struct strbuf *sb, FILE *file, int term);
 
 /**
+ * Like `strbuf_getwholeline`, but appends the line instead of
+ * resetting the buffer first.
+ */
+int strbuf_appendwholeline(struct strbuf *sb, FILE *file, int term);
+
+/**
  * Like `strbuf_getwholeline`, but operates on a file descriptor.
  * It reads one character at a time, so it is very slow.  Do not
  * use it unless you need the correct position in the file
