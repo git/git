@@ -1,7 +1,7 @@
 #ifndef REF_FILTER_H
 #define REF_FILTER_H
 
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "refs.h"
 #include "commit.h"
 #include "parse-options.h"

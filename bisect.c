@@ -10,7 +10,7 @@
 #include "run-command.h"
 #include "log-tree.h"
 #include "bisect.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "argv-array.h"
 #include "commit-slab.h"
 #include "commit-reach.h"

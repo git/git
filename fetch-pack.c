@@ -15,7 +15,7 @@
 #include "connect.h"
 #include "transport.h"
 #include "version.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "oidset.h"
 #include "packfile.h"
 #include "object-store.h"

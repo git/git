@@ -9,7 +9,7 @@
 #include "connect.h"
 #include "url.h"
 #include "string-list.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "transport.h"
 #include "strbuf.h"
 #include "version.h"

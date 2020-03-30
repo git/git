@@ -3,7 +3,7 @@
 #include "fetch-pack.h"
 #include "remote.h"
 #include "connect.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "protocol.h"
 
 static const char fetch_pack_usage[] =
