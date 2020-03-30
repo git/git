@@ -1,6 +1,9 @@
 #ifndef BLOOM_H
 #define BLOOM_H
 
+struct commit;
+struct repository;
+
 struct bloom_filter_settings {
 	/*
 	 * The version of the hashing technique being used.
@@ -72,5 +75,10 @@ void fill_bloom_key(const char *data,
 void add_key_to_filter(const struct bloom_key *key,
 					   struct bloom_filter *filter,
 					   const struct bloom_filter_settings *settings);
+
+void init_bloom_filters(void);
+
+struct bloom_filter *get_bloom_filter(struct repository *r,
+				      struct commit *c);
 
 #endif

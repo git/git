@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "bloom.h"
 #include "test-tool.h"
+#include "commit.h"
 
 struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 
@@ -32,6 +33,16 @@ static void print_bloom_filter(struct bloom_filter *filter) {
 	printf("\n");
 }
 
+static void get_bloom_filter_for_commit(const struct object_id *commit_oid)
+{
+	struct commit *c;
+	struct bloom_filter *filter;
+	setup_git_directory();
+	c = lookup_commit(the_repository, commit_oid);
+	filter = get_bloom_filter(the_repository, c);
+	print_bloom_filter(filter);
+}
+
 int cmd__bloom(int argc, const char **argv)
 {
 	if (!strcmp(argv[1], "get_murmur3")) {
@@ -55,6 +66,15 @@ int cmd__bloom(int argc, const char **argv)
 		}
 
 		print_bloom_filter(&filter);
+	}
+
+    if (!strcmp(argv[1], "get_filter_for_commit")) {
+		struct object_id oid;
+		const char *end;
+		if (parse_oid_hex(argv[2], &oid, &end))
+			die("cannot parse oid '%s'", argv[2]);
+		init_bloom_filters();
+		get_bloom_filter_for_commit(&oid);
 	}
 
 	return 0;

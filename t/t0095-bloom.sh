@@ -67,4 +67,51 @@ test_expect_success 'compute bloom key for test string 2' '
 	test_cmp expect actual
 '
 
+test_expect_success 'get bloom filters for commit with no changes' '
+	git init &&
+	git commit --allow-empty -m "c0" &&
+	cat >expect <<-\EOF &&
+	Filter_Length:0
+	Filter_Data:
+	EOF
+	test-tool bloom get_filter_for_commit "$(git rev-parse HEAD)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get bloom filter for commit with 10 changes' '
+	rm actual &&
+	rm expect &&
+	mkdir smallDir &&
+	for i in $(test_seq 0 9)
+	do
+		echo $i >smallDir/$i
+	done &&
+	git add smallDir &&
+	git commit -m "commit with 10 changes" &&
+	cat >expect <<-\EOF &&
+	Filter_Length:25
+	Filter_Data:82|a0|65|47|0c|92|90|c0|a1|40|02|a0|e2|40|e0|04|0a|9a|66|cf|80|19|85|42|23|
+	EOF
+	test-tool bloom get_filter_for_commit "$(git rev-parse HEAD)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE 'get bloom filter for commit with 513 changes' '
+	rm actual &&
+	rm expect &&
+	mkdir bigDir &&
+	for i in $(test_seq 0 512)
+	do
+		echo $i >bigDir/$i
+	done &&
+	git add bigDir &&
+	git commit -m "commit with 513 changes" &&
+	cat >expect <<-\EOF &&
+	Filter_Length:0
+	Filter_Data:
+	EOF
+	test-tool bloom get_filter_for_commit "$(git rev-parse HEAD)" >actual &&
+	test_cmp expect actual
+'
+
 test_done
