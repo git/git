@@ -107,7 +107,7 @@ delete::
 
 verify::
 	Verify <ref> against <oldvalue> but do not change it.  If
-	<oldvalue> zero or missing, the ref must not exist.
+	<oldvalue> is zero or missing, the ref must not exist.
 
 option::
 	Modify behavior of the next command naming a <ref>.
