@@ -1665,6 +1665,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 *          you CAN'T DO BOTH.
 	 */
 	enum path_treatment state;
+	int matches_how = 0;
 	int nested_repo = 0, check_only, stop_early;
 	int old_ignored_nr, old_untracked_nr;
 	/* The "len-1" is to strip the final '/' */
@@ -1676,6 +1677,22 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		return path_none;
 	if (status != index_nonexistent)
 		BUG("Unhandled value for directory_exists_in_index: %d\n", status);
+
+	/*
+	 * We don't want to descend into paths that don't match the necessary
+	 * patterns.  Clearly, if we don't have a pathspec, then we can't check
+	 * for matching patterns.  Also, if (excluded) then we know we matched
+	 * the exclusion patterns so as an optimization we can skip checking
+	 * for matching patterns.
+	 */
+	if (pathspec && !excluded) {
+		matches_how = do_match_pathspec(istate, pathspec, dirname, len,
+						0 /* prefix */, NULL /* seen */,
+						DO_MATCH_LEADING_PATHSPEC);
+		if (!matches_how)
+			return path_none;
+	}
+
 
 	if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
 		!(dir->flags & DIR_NO_GITLINKS)) {
@@ -1724,13 +1741,8 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 * 'subdir/some/deep/path/file' or 'subdir/widget-*.c'), then we
 	 * need to recurse.
 	 */
-	if (pathspec) {
-		int ret = do_match_pathspec(istate, pathspec, dirname, len,
-					    0 /* prefix */, NULL /* seen */,
-					    DO_MATCH_LEADING_PATHSPEC);
-		if (ret == MATCHED_RECURSIVELY_LEADING_PATHSPEC)
-			return path_recurse;
-	}
+	if (matches_how == MATCHED_RECURSIVELY_LEADING_PATHSPEC)
+		return path_recurse;
 
 	/*
 	 * Other than the path_recurse case immediately above, we only need
@@ -1849,18 +1861,6 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 */
 	if (state == path_none && !(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
 		state = excluded ? path_excluded : path_untracked;
-
-	/*
-	 * We can recurse into untracked directories that don't match any
-	 * of the given pathspecs when some file underneath the directory
-	 * might match one of the pathspecs.  If so, we should make sure
-	 * to note that the directory itself did not match.
-	 */
-	if (pathspec &&
-	    !match_pathspec(istate, pathspec, dirname, len,
-			    0 /* prefix */, NULL,
-			    0 /* do NOT special case dirs */))
-		state = path_none;
 
 	return state;
 }
