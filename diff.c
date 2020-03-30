@@ -4633,6 +4633,10 @@ void diff_setup_done(struct diff_options *options)
 	if (!options->use_color || external_diff())
 		options->color_moved = 0;
 
+	if (!(options->output_format & ~(DIFF_FORMAT_NAME | DIFF_FORMAT_RAW)) &&
+	    !options->detect_rename)
+			options->skip_batch_download_objects = 1;
+
 	FREE_AND_NULL(options->parseopts);
 }
 
@@ -6507,7 +6511,9 @@ static void add_if_missing(struct repository *r,
 
 void diffcore_std(struct diff_options *options)
 {
-	if (options->repo == the_repository && has_promisor_remote()) {
+	if (!options->skip_batch_download_objects &&
+	    options->repo == the_repository &&
+		has_promisor_remote()) {
 		/*
 		 * Prefetch the diff pairs that are about to be flushed.
 		 */
