@@ -459,15 +459,18 @@ void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int v
 	}
 }
 
-static void print_ref_status(char flag, const char *summary,
+static void print_ref_status(char flag, const char *summary, char *target_refname,
 			     struct ref *to, struct ref *from, const char *msg,
 			     int porcelain, int summary_width)
 {
+	if (!target_refname)
+		target_refname = to->name;
+
 	if (porcelain) {
 		if (from)
-			fprintf(stdout, "%c\t%s:%s\t", flag, from->name, to->name);
+			fprintf(stdout, "%c\t%s:%s\t", flag, from->name, target_refname);
 		else
-			fprintf(stdout, "%c\t:%s\t", flag, to->name);
+			fprintf(stdout, "%c\t:%s\t", flag, target_refname);
 		if (msg)
 			fprintf(stdout, "%s (%s)\n", summary, msg);
 		else
@@ -481,9 +484,9 @@ static void print_ref_status(char flag, const char *summary,
 		fprintf(stderr, " %s%c %-*s%s ", red, flag, summary_width,
 			summary, reset);
 		if (from)
-			fprintf(stderr, "%s -> %s", prettify_refname(from->name), prettify_refname(to->name));
+			fprintf(stderr, "%s -> %s", prettify_refname(from->name), prettify_refname(target_refname));
 		else
-			fputs(prettify_refname(to->name), stderr);
+			fputs(prettify_refname(target_refname), stderr);
 		if (msg) {
 			fputs(" (", stderr);
 			fputs(msg, stderr);
@@ -495,18 +498,26 @@ static void print_ref_status(char flag, const char *summary,
 
 static void print_ok_ref_status(struct ref *ref, int porcelain, int summary_width)
 {
+	char *refname;
+
+	if (ref->remote_status && !strncmp(ref->remote_status, "ref:", 4))
+		refname = ref->remote_status + 4;
+	else
+		refname = ref->name;
+
 	if (ref->deletion)
-		print_ref_status('-', "[deleted]", ref, NULL, NULL,
+		print_ref_status('-', "[deleted]", refname, ref, NULL, NULL,
 				 porcelain, summary_width);
-	else if (is_null_oid(&ref->old_oid))
+	else if (is_null_oid(&ref->old_oid)) {
+
 		print_ref_status('*',
-				 (starts_with(ref->name, "refs/tags/")
+				 (starts_with(refname, "refs/tags/")
 				  ? "[new tag]"
-				  : (starts_with(ref->name, "refs/heads/")
+				  : (starts_with(refname, "refs/heads/")
 				     ? "[new branch]"
 				     : "[new reference]")),
-				 ref, ref->peer_ref, NULL, porcelain, summary_width);
-	else {
+				 refname, ref, ref->peer_ref, NULL, porcelain, summary_width);
+	} else {
 		struct strbuf quickref = STRBUF_INIT;
 		char type;
 		const char *msg;
@@ -525,7 +536,7 @@ static void print_ok_ref_status(struct ref *ref, int porcelain, int summary_widt
 		strbuf_add_unique_abbrev(&quickref, &ref->new_oid,
 					 DEFAULT_ABBREV);
 
-		print_ref_status(type, quickref.buf, ref, ref->peer_ref, msg,
+		print_ref_status(type, quickref.buf, refname, ref, ref->peer_ref, msg,
 				 porcelain, summary_width);
 		strbuf_release(&quickref);
 	}
@@ -542,56 +553,56 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count,
 
 	switch(ref->status) {
 	case REF_STATUS_NONE:
-		print_ref_status('X', "[no match]", ref, NULL, NULL,
+		print_ref_status('X', "[no match]", NULL, ref, NULL, NULL,
 				 porcelain, summary_width);
 		break;
 	case REF_STATUS_REJECT_NODELETE:
-		print_ref_status('!', "[rejected]", ref, NULL,
+		print_ref_status('!', "[rejected]", NULL, ref, NULL,
 				 "remote does not support deleting refs",
 				 porcelain, summary_width);
 		break;
 	case REF_STATUS_UPTODATE:
-		print_ref_status('=', "[up to date]", ref,
+		print_ref_status('=', "[up to date]", NULL, ref,
 				 ref->peer_ref, NULL, porcelain, summary_width);
 		break;
 	case REF_STATUS_REJECT_NONFASTFORWARD:
-		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+		print_ref_status('!', "[rejected]", NULL, ref, ref->peer_ref,
 				 "non-fast-forward", porcelain, summary_width);
 		break;
 	case REF_STATUS_REJECT_ALREADY_EXISTS:
-		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+		print_ref_status('!', "[rejected]", NULL, ref, ref->peer_ref,
 				 "already exists", porcelain, summary_width);
 		break;
 	case REF_STATUS_REJECT_FETCH_FIRST:
-		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+		print_ref_status('!', "[rejected]", NULL, ref, ref->peer_ref,
 				 "fetch first", porcelain, summary_width);
 		break;
 	case REF_STATUS_REJECT_NEEDS_FORCE:
-		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+		print_ref_status('!', "[rejected]", NULL, ref, ref->peer_ref,
 				 "needs force", porcelain, summary_width);
 		break;
 	case REF_STATUS_REJECT_STALE:
-		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+		print_ref_status('!', "[rejected]", NULL, ref, ref->peer_ref,
 				 "stale info", porcelain, summary_width);
 		break;
 	case REF_STATUS_REJECT_SHALLOW:
-		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+		print_ref_status('!', "[rejected]", NULL, ref, ref->peer_ref,
 				 "new shallow roots not allowed",
 				 porcelain, summary_width);
 		break;
 	case REF_STATUS_REMOTE_REJECT:
-		print_ref_status('!', "[remote rejected]", ref,
+		print_ref_status('!', "[remote rejected]", NULL, ref,
 				 ref->deletion ? NULL : ref->peer_ref,
 				 ref->remote_status, porcelain, summary_width);
 		break;
 	case REF_STATUS_EXPECTING_REPORT:
-		print_ref_status('!', "[remote failure]", ref,
+		print_ref_status('!', "[remote failure]", NULL, ref,
 				 ref->deletion ? NULL : ref->peer_ref,
 				 "remote failed to report status",
 				 porcelain, summary_width);
 		break;
 	case REF_STATUS_ATOMIC_PUSH_FAILED:
-		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+		print_ref_status('!', "[rejected]", NULL, ref, ref->peer_ref,
 				 "atomic push failed", porcelain, summary_width);
 		break;
 	case REF_STATUS_OK:
