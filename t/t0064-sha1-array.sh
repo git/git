@@ -18,7 +18,7 @@ test_expect_success 'ordered enumeration' '
 	{
 		echoid append 88 44 aa 55 &&
 		echo for_each_unique
-	} | test-tool sha1-array >actual &&
+	} | test-tool oid-array >actual &&
 	test_cmp expect actual
 '
 
@@ -28,7 +28,7 @@ test_expect_success 'ordered enumeration with duplicate suppression' '
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echo for_each_unique
-	} | test-tool sha1-array >actual &&
+	} | test-tool oid-array >actual &&
 	test_cmp expect actual
 '
 
@@ -36,7 +36,7 @@ test_expect_success 'lookup' '
 	{
 		echoid append 88 44 aa 55 &&
 		echoid lookup 55
-	} | test-tool sha1-array >actual &&
+	} | test-tool oid-array >actual &&
 	n=$(cat actual) &&
 	test "$n" -eq 1
 '
@@ -45,7 +45,7 @@ test_expect_success 'lookup non-existing entry' '
 	{
 		echoid append 88 44 aa 55 &&
 		echoid lookup 33
-	} | test-tool sha1-array >actual &&
+	} | test-tool oid-array >actual &&
 	n=$(cat actual) &&
 	test "$n" -lt 0
 '
@@ -55,7 +55,7 @@ test_expect_success 'lookup with duplicates' '
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echoid lookup 55
-	} | test-tool sha1-array >actual &&
+	} | test-tool oid-array >actual &&
 	n=$(cat actual) &&
 	test "$n" -ge 2 &&
 	test "$n" -le 3
@@ -66,7 +66,7 @@ test_expect_success 'lookup non-existing entry with duplicates' '
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echoid lookup 66
-	} | test-tool sha1-array >actual &&
+	} | test-tool oid-array >actual &&
 	n=$(cat actual) &&
 	test "$n" -lt 0
 '
@@ -81,7 +81,7 @@ test_expect_success 'lookup with almost duplicate values' '
 		echo "append $id1" &&
 		echo "append $id2" &&
 		echoid lookup 55
-	} | test-tool sha1-array >actual &&
+	} | test-tool oid-array >actual &&
 	n=$(cat actual) &&
 	test "$n" -eq 0
 '
@@ -90,7 +90,7 @@ test_expect_success 'lookup with single duplicate value' '
 	{
 		echoid append 55 55 &&
 		echoid lookup 55
-	} | test-tool sha1-array >actual &&
+	} | test-tool oid-array >actual &&
 	n=$(cat actual) &&
 	test "$n" -ge 0 &&
 	test "$n" -le 1
