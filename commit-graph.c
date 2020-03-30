@@ -16,6 +16,7 @@
 #include "hashmap.h"
 #include "replace-object.h"
 #include "progress.h"
+#include "bloom.h"
 
 #define GRAPH_SIGNATURE 0x43475048 /* "CGPH" */
 #define GRAPH_CHUNKID_OIDFANOUT 0x4f494446 /* "OIDF" */
@@ -789,9 +790,11 @@ struct write_commit_graph_context {
 	unsigned append:1,
 		 report_progress:1,
 		 split:1,
-		 check_oids:1;
+		 check_oids:1,
+		 changed_paths:1;
 
 	const struct split_commit_graph_opts *split_opts;
+	size_t total_bloom_filter_data_size;
 };
 
 static void write_graph_chunk_fanout(struct hashfile *f,
@@ -1132,6 +1135,28 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 		}
 	}
 	stop_progress(&ctx->progress);
+}
+
+static void compute_bloom_filters(struct write_commit_graph_context *ctx)
+{
+	int i;
+	struct progress *progress = NULL;
+
+	init_bloom_filters();
+
+	if (ctx->report_progress)
+		progress = start_delayed_progress(
+			_("Computing commit changed paths Bloom filters"),
+			ctx->commits.nr);
+
+	for (i = 0; i < ctx->commits.nr; i++) {
+		struct commit *c = ctx->commits.list[i];
+		struct bloom_filter *filter = get_bloom_filter(ctx->r, c);
+		ctx->total_bloom_filter_data_size += sizeof(unsigned char) * filter->len;
+		display_progress(progress, i + 1);
+	}
+
+	stop_progress(&progress);
 }
 
 static int add_ref_to_list(const char *refname,
@@ -1776,6 +1801,8 @@ int write_commit_graph(struct object_directory *odb,
 	ctx->split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
 	ctx->check_oids = flags & COMMIT_GRAPH_WRITE_CHECK_OIDS ? 1 : 0;
 	ctx->split_opts = split_opts;
+	ctx->changed_paths = flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS ? 1 : 0;
+	ctx->total_bloom_filter_data_size = 0;
 
 	if (ctx->split) {
 		struct commit_graph *g;
@@ -1869,6 +1896,9 @@ int write_commit_graph(struct object_directory *odb,
 		ctx->num_commit_graphs_after = 1;
 
 	compute_generation_numbers(ctx);
+
+	if (ctx->changed_paths)
+		compute_bloom_filters(ctx);
 
 	res = write_commit_graph_file(ctx);
 
