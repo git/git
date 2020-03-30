@@ -133,6 +133,7 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 	struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 	int i;
 	struct diff_options diffopt;
+	int max_changes = 512;
 
 	if (bloom_filters.slab_size == 0)
 		return NULL;
@@ -141,6 +142,7 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 
 	repo_diff_setup(r, &diffopt);
 	diffopt.flags.recursive = 1;
+	diffopt.max_changes = max_changes;
 	diff_setup_done(&diffopt);
 
 	if (c->parents)
@@ -149,7 +151,7 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 		diff_tree_oid(NULL, &c->object.oid, "", &diffopt);
 	diffcore_std(&diffopt);
 
-	if (diff_queued_diff.nr <= 512) {
+	if (diff_queued_diff.nr <= max_changes) {
 		struct hashmap pathmap;
 		struct pathmap_hash_entry *e;
 		struct hashmap_iter iter;
