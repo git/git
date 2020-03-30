@@ -49,8 +49,8 @@
  */
 struct oid_array {
 	struct object_id *oid;
-	int nr;
-	int alloc;
+	size_t nr;
+	size_t alloc;
 	int sorted;
 };
 
