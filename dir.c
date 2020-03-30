@@ -2117,7 +2117,14 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 				       baselen, excluded, pathspec);
 	case DT_REG:
 	case DT_LNK:
-		return excluded ? path_excluded : path_untracked;
+		if (excluded)
+			return path_excluded;
+		if (pathspec &&
+		    !do_match_pathspec(istate, pathspec, path->buf, path->len,
+				       0 /* prefix */, NULL /* seen */,
+				       0 /* flags */))
+			return path_none;
+		return path_untracked;
 	}
 }
 

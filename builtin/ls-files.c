@@ -128,8 +128,9 @@ static void show_dir_entry(const struct index_state *istate,
 	if (len > ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
-	if (!dir_path_match(istate, ent, &pathspec, len, ps_matched))
-		return;
+	/* If ps_matches is non-NULL, figure out which pathspec(s) match. */
+	if (ps_matched)
+		dir_path_match(istate, ent, &pathspec, len, ps_matched);
 
 	fputs(tag, stdout);
 	write_eolinfo(istate, NULL, ent->name);
