@@ -8,6 +8,11 @@ static uint32_t rotate_left(uint32_t value, int32_t count)
 	return ((value << count) | (value >> ((-count) & mask)));
 }
 
+static inline unsigned char get_bitmask(uint32_t pos)
+{
+	return ((unsigned char)1) << (pos & (BITS_PER_WORD - 1));
+}
+
 /*
  * Calculate the murmur3 32-bit hash value for the given data
  * using the given seed.
@@ -70,4 +75,35 @@ uint32_t murmur3_seeded(uint32_t seed, const char *data, size_t len)
 	seed ^= (seed >> 16);
 
 	return seed;
+}
+
+void fill_bloom_key(const char *data,
+					size_t len,
+					struct bloom_key *key,
+					const struct bloom_filter_settings *settings)
+{
+	int i;
+	const uint32_t seed0 = 0x293ae76f;
+	const uint32_t seed1 = 0x7e646e2c;
+	const uint32_t hash0 = murmur3_seeded(seed0, data, len);
+	const uint32_t hash1 = murmur3_seeded(seed1, data, len);
+
+	key->hashes = (uint32_t *)xcalloc(settings->num_hashes, sizeof(uint32_t));
+	for (i = 0; i < settings->num_hashes; i++)
+		key->hashes[i] = hash0 + i * hash1;
+}
+
+void add_key_to_filter(const struct bloom_key *key,
+					   struct bloom_filter *filter,
+					   const struct bloom_filter_settings *settings)
+{
+	int i;
+	uint64_t mod = filter->len * BITS_PER_WORD;
+
+	for (i = 0; i < settings->num_hashes; i++) {
+		uint64_t hash_mod = key->hashes[i] % mod;
+		uint64_t block_pos = hash_mod / BITS_PER_WORD;
+
+		filter->data[block_pos] |= get_bitmask(hash_mod);
+	}
 }
