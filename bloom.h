@@ -83,4 +83,8 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 				      struct commit *c,
 				      int compute_if_not_present);
 
+int bloom_filter_contains(const struct bloom_filter *filter,
+			  const struct bloom_key *key,
+			  const struct bloom_filter_settings *settings);
+
 #endif
