@@ -70,6 +70,25 @@ static int commit_pos_cmp(const void *va, const void *vb)
 	       commit_pos_at(&commit_pos, b);
 }
 
+static int commit_gen_cmp(const void *va, const void *vb)
+{
+	const struct commit *a = *(const struct commit **)va;
+	const struct commit *b = *(const struct commit **)vb;
+
+	/* lower generation commits first */
+	if (a->generation < b->generation)
+		return -1;
+	else if (a->generation > b->generation)
+		return 1;
+
+	/* use date as a heuristic when generations are equal */
+	if (a->date < b->date)
+		return -1;
+	else if (a->date > b->date)
+		return 1;
+	return 0;
+}
+
 char *get_commit_graph_filename(struct object_directory *obj_dir)
 {
 	return xstrfmt("%s/info/commit-graph", obj_dir->path);
@@ -815,7 +834,8 @@ struct write_commit_graph_context {
 		 report_progress:1,
 		 split:1,
 		 check_oids:1,
-		 changed_paths:1;
+		 changed_paths:1,
+		 order_by_pack:1;
 
 	const struct split_commit_graph_opts *split_opts;
 	size_t total_bloom_filter_data_size;
@@ -1178,7 +1198,11 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 
 	ALLOC_ARRAY(sorted_commits, ctx->commits.nr);
 	COPY_ARRAY(sorted_commits, ctx->commits.list, ctx->commits.nr);
-	QSORT(sorted_commits, ctx->commits.nr, commit_pos_cmp);
+
+	if (ctx->order_by_pack)
+		QSORT(sorted_commits, ctx->commits.nr, commit_pos_cmp);
+	else
+		QSORT(sorted_commits, ctx->commits.nr, commit_gen_cmp);
 
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = sorted_commits[i];
@@ -1884,6 +1908,7 @@ int write_commit_graph(struct object_directory *odb,
 	}
 
 	if (pack_indexes) {
+		ctx->order_by_pack = 1;
 		if ((res = fill_oids_from_packs(ctx, pack_indexes)))
 			goto cleanup;
 	}
@@ -1893,8 +1918,10 @@ int write_commit_graph(struct object_directory *odb,
 			goto cleanup;
 	}
 
-	if (!pack_indexes && !commit_hex)
+	if (!pack_indexes && !commit_hex) {
+		ctx->order_by_pack = 1;
 		fill_oids_from_all_packs(ctx);
+	}
 
 	close_reachable(ctx);
 
