@@ -42,10 +42,15 @@ test_expect_success 'setup' '
 	EOF
 '
 
-test_expect_success 'write midx with no packs' '
-	test_when_finished rm -f pack/multi-pack-index &&
-	git multi-pack-index --object-dir=. write &&
-	midx_read_expect 0 0 4 .
+test_expect_success "don't write midx with no packs" '
+	test_must_fail git multi-pack-index --object-dir=. write &&
+	test_path_is_missing pack/multi-pack-index
+'
+
+test_expect_success "Warn if a midx contains no oid" '
+	cp "$TEST_DIRECTORY"/t5319/no-objects.midx $objdir/pack/multi-pack-index &&
+	test_must_fail git multi-pack-index verify &&
+	rm $objdir/pack/multi-pack-index
 '
 
 generate_objects () {
