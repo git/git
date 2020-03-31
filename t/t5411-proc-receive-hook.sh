@@ -59,10 +59,12 @@ make_user_friendly_and_stable_output () {
 
 # Asynchronous sideband may generate inconsistent output messages,
 # sort before comparison.
-test_sorted_cmp () {
-	if ! $GIT_TEST_CMP "$@" >/dev/null 2>&1
+test_sorted_cmp_1 () {
+	local cmp=$1
+	shift
+	if ! "$cmp" "$@" >/dev/null 2>&1
 	then
-		cmd=$GIT_TEST_CMP
+		cmd="$cmp"
 		for f in "$@"
 		do
 			sort "$f" >"$f.sorted"
@@ -70,9 +72,17 @@ test_sorted_cmp () {
 		done
 		if ! eval $cmd >/dev/null 2>&1
 		then
-			$GIT_TEST_CMP "$@"
+			"$cmp" "$@"
 		fi
 	fi
+}
+
+test_sorted_cmp () {
+	test_sorted_cmp_1 test_cmp "$@"
+}
+
+test_sorted_i18ncmp () {
+	test_sorted_cmp_1 test_i18ncmp "$@"
 }
 
 # Refs of upstream : master(B)  next(A)
@@ -200,7 +210,7 @@ test_expect_success "no proc-receive hook, fail to push special ref" '
 	remote: # pre-receive hook
 	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
 	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/master/topic
-	remote: error: cannot to find hook "proc-receive"
+	remote: error: cannot find hook "proc-receive"
 	remote: # post-receive hook
 	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
 	To ../upstream
@@ -208,7 +218,7 @@ test_expect_success "no proc-receive hook, fail to push special ref" '
 	 ! [remote rejected] HEAD -> refs/for/master/topic (fail to run proc-receive hook)
 	error: failed to push some refs to "../upstream"
 	EOF
-	test_cmp expect actual &&
+	test_i18ncmp expect actual &&
 	git -C upstream show-ref >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -236,13 +246,13 @@ test_expect_failure "no proc-receive hook, fail all for atomic push" '
 	remote: # pre-receive hook
 	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
 	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/master/topic
-	remote: error: cannot to find hook "proc-receive"
+	remote: error: cannot find hook "proc-receive"
 	To ../upstream
 	 ! [remote rejected] HEAD -> next (fail to run proc-receive hook)
 	 ! [remote rejected] HEAD -> refs/for/master/topic (fail to run proc-receive hook)
 	error: failed to push some refs to "../upstream"
 	EOF
-	test_cmp expect actual &&
+	test_i18ncmp expect actual &&
 	git -C upstream show-ref >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -313,7 +323,7 @@ test_expect_success "proc-receive bad protocol: no report" '
 	 ! [remote rejected] HEAD -> refs/for/master/topic (no report from proc-receive)
 	error: failed to push some refs to "../upstream"
 	EOF
-	test_cmp expect actual &&
+	test_i18ncmp expect actual &&
 	git -C upstream show-ref >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -483,7 +493,7 @@ test_expect_success "proc-receive: fail to update (no message)" '
 	 ! [remote rejected] HEAD -> refs/for/master/topic (failed)
 	error: failed to push some refs to "../upstream"
 	EOF
-	test_cmp expect actual &&
+	test_i18ncmp expect actual &&
 	git -C upstream show-ref >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -521,7 +531,7 @@ test_expect_success "proc-receive: fail to update (has message)" '
 	 ! [remote rejected] HEAD -> refs/for/master/topic (error msg)
 	error: failed to push some refs to "../upstream"
 	EOF
-	test_cmp expect actual &&
+	test_i18ncmp expect actual &&
 	git -C upstream show-ref >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -565,7 +575,7 @@ test_expect_success "proc-receive: warning on report for builtin command" '
 	 ! [remote rejected] HEAD -> refs/for/master/topic (no report from proc-receive)
 	error: failed to push some refs to "../upstream"
 	EOF
-	test_sorted_cmp expect actual &&
+	test_sorted_i18ncmp expect actual &&
 	git -C upstream show-ref >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -636,7 +646,7 @@ test_expect_success "proc-receive: no report from proc-receive" '
 	 ! [remote rejected] HEAD -> refs/for/a/b/c/my/topic (no report from proc-receive)
 	error: failed to push some refs to "../upstream"
 	EOF
-	test_sorted_cmp expect actual &&
+	test_sorted_i18ncmp expect actual &&
 	git -C upstream show-ref >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -648,7 +658,7 @@ test_expect_success "proc-receive: no report from proc-receive" '
 # Refs of upstream : master(A)
 # Refs of workbench: master(A)  tags/v123
 # git push -o ...  :                       refs/for/master/topic
-test_expect_success "not support push options" '
+test_expect_success "unsupported push options" '
 	test_must_fail git -C workbench push \
 		-o issue=123 \
 		-o reviewer=user1 \
@@ -660,7 +670,7 @@ test_expect_success "not support push options" '
 	fatal: the receiving end does not support push options
 	fatal: the remote end hung up unexpectedly
 	EOF
-	test_cmp expect actual &&
+	test_i18ncmp expect actual &&
 	git -C upstream show-ref >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&

@@ -28,7 +28,7 @@ struct command {
 	char ref_name[FLEX_ARRAY]; /* more */
 };
 
-static void proc_receive_verison(struct packet_reader *reader) {
+static void proc_receive_version(struct packet_reader *reader) {
 	int server_version = 0;
 
 	for (;;) {
@@ -81,7 +81,7 @@ static void proc_receive_read_commands(struct packet_reader *reader,
 			die("protocol error: expected 'old new ref', got '%s'",
 			    reader->line);
 		refname = p;
-		FLEX_ALLOC_MEM(cmd, ref_name, refname, strlen(refname));
+		FLEX_ALLOC_STR(cmd, ref_name, refname);
 		oidcpy(&cmd->old_oid, &old_oid);
 		oidcpy(&cmd->new_oid, &new_oid);
 
@@ -130,7 +130,7 @@ int cmd__proc_receive(int argc, const char **argv)
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	proc_receive_verison(&reader);
+	proc_receive_version(&reader);
 	proc_receive_read_commands(&reader, &commands);
 	proc_receive_read_push_options(&reader, &push_options);
 

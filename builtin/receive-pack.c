@@ -941,7 +941,7 @@ static int run_proc_receive_hook(struct command *commands,
 
 	argv[0] = find_hook("proc-receive");
 	if (!argv[0]) {
-		rp_error("cannot to find hook 'proc-receive'");
+		rp_error("cannot find hook 'proc-receive'");
 		return 1;
 	}
 	argv[1] = NULL;
