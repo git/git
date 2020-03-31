@@ -4,7 +4,7 @@
 #include "khash.h"
 
 /**
- * This API is similar to sha1-array, in that it maintains a set of object ids
+ * This API is similar to oid-array, in that it maintains a set of object ids
  * in a memory-efficient way. The major differences are:
  *
  *   1. It uses a hash, so we can do online duplicate removal, rather than

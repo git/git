@@ -12,7 +12,7 @@
 #include "sideband.h"
 #include "argv-array.h"
 #include "credential.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "send-pack.h"
 #include "protocol.h"
 #include "quote.h"

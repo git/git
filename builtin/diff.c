@@ -17,7 +17,7 @@
 #include "log-tree.h"
 #include "builtin.h"
 #include "submodule.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 
 #define DIFF_NO_INDEX_EXPLICIT 1
 #define DIFF_NO_INDEX_IMPLICIT 2

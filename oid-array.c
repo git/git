@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "sha1-lookup.h"
 
 void oid_array_append(struct oid_array *array, const struct object_id *oid)
@@ -46,9 +46,9 @@ int oid_array_for_each(struct oid_array *array,
 		       for_each_oid_fn fn,
 		       void *data)
 {
-	int i;
+	size_t i;
 
-	/* No oid_array_sort() here! See sha1-array.h */
+	/* No oid_array_sort() here! See oid-array.h */
 
 	for (i = 0; i < array->nr; i++) {
 		int ret = fn(array->oid + i, data);
@@ -62,7 +62,7 @@ int oid_array_for_each_unique(struct oid_array *array,
 			      for_each_oid_fn fn,
 			      void *data)
 {
-	int i;
+	size_t i;
 
 	if (!array->sorted)
 		oid_array_sort(array);
@@ -82,7 +82,7 @@ void oid_array_filter(struct oid_array *array,
 		      for_each_oid_fn want,
 		      void *cb_data)
 {
-	unsigned nr = array->nr, src, dst;
+	size_t nr = array->nr, src, dst;
 	struct object_id *oids = array->oid;
 
 	for (src = dst = 0; src < nr; src++) {
