@@ -7307,7 +7307,7 @@ msgstr "Nichts zum Zusammenführen: '%.*s'"
 #: sequencer.c:3418
 msgid "octopus merge cannot be executed on top of a [new root]"
 msgstr ""
-"Octupus-Merge kann nicht auf Basis von [neuem Root-Commit] ausgeführt werden."
+"Oktopus-Merge kann nicht auf Basis von [neuem Root-Commit] ausgeführt werden."
 
 #: sequencer.c:3434
 #, c-format
