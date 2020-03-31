@@ -1665,7 +1665,8 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 *          you CAN'T DO BOTH.
 	 */
 	enum path_treatment state;
-	int nested_repo = 0, old_ignored_nr, check_only, stop_early;
+	int nested_repo = 0, check_only, stop_early;
+	int old_ignored_nr, old_untracked_nr;
 	/* The "len-1" is to strip the final '/' */
 	enum exist_status status = directory_exists_in_index(istate, dirname, len-1);
 
@@ -1785,9 +1786,13 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 * --porcelain), without listing the individual ignored files
 	 * underneath.  To do so, we'll save the current ignored_nr, and
 	 * pop all the ones added after it if it turns out the entire
-	 * directory is ignored.
+	 * directory is ignored.  Also, when DIR_SHOW_IGNORED_TOO and
+	 * !DIR_KEEP_UNTRACKED_CONTENTS then we don't want to show
+	 * untracked paths so will need to pop all those off the last
+	 * after we traverse.
 	 */
 	old_ignored_nr = dir->ignored_nr;
+	old_untracked_nr = dir->nr;
 
 	/* Actually recurse into dirname now, we'll fixup the state later. */
 	untracked = lookup_untracked(dir->untracked, untracked,
@@ -1823,6 +1828,18 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 				FREE_AND_NULL(dir->ignored[i]);
 			dir->ignored_nr = old_ignored_nr;
 		}
+	}
+
+	/*
+	 * We may need to ignore some of the untracked paths we found while
+	 * traversing subdirectories.
+	 */
+	if ((dir->flags & DIR_SHOW_IGNORED_TOO) &&
+	    !(dir->flags & DIR_KEEP_UNTRACKED_CONTENTS)) {
+		int i;
+		for (i = old_untracked_nr + 1; i<dir->nr; ++i)
+			FREE_AND_NULL(dir->entries[i]);
+		dir->nr = old_untracked_nr;
 	}
 
 	/*
@@ -2652,28 +2669,6 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 		read_directory_recursive(dir, istate, path, len, untracked, 0, 0, pathspec);
 	QSORT(dir->entries, dir->nr, cmp_dir_entry);
 	QSORT(dir->ignored, dir->ignored_nr, cmp_dir_entry);
-
-	/*
-	 * If DIR_SHOW_IGNORED_TOO is set, read_directory_recursive() will
-	 * also pick up untracked contents of untracked dirs; by default
-	 * we discard these, but given DIR_KEEP_UNTRACKED_CONTENTS we do not.
-	 */
-	if ((dir->flags & DIR_SHOW_IGNORED_TOO) &&
-		     !(dir->flags & DIR_KEEP_UNTRACKED_CONTENTS)) {
-		int i, j;
-
-		/* remove from dir->entries untracked contents of untracked dirs */
-		for (i = j = 0; j < dir->nr; j++) {
-			if (i &&
-			    check_dir_entry_contains(dir->entries[i - 1], dir->entries[j])) {
-				FREE_AND_NULL(dir->entries[j]);
-			} else {
-				dir->entries[i++] = dir->entries[j];
-			}
-		}
-
-		dir->nr = i;
-	}
 
 	trace_performance_leave("read directory %.*s", len, path);
 	if (dir->untracked) {
