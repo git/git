@@ -4837,12 +4837,13 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	struct commit *commit;
 	const char *insn = flags & TODO_LIST_ABBREVIATE_CMDS ? "p" : "pick";
 	int rebase_merges = flags & TODO_LIST_REBASE_MERGES;
+	int keep_cherry_pick = flags & TODO_LIST_KEEP_CHERRY_PICK;
 
 	repo_init_revisions(r, &revs, NULL);
 	revs.verbose_header = 1;
 	if (!rebase_merges)
 		revs.max_parents = 1;
-	revs.cherry_mark = 1;
+	revs.cherry_mark = !keep_cherry_pick;
 	revs.limited = 1;
 	revs.reverse = 1;
 	revs.right_only = 1;

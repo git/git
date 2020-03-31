@@ -347,6 +347,21 @@ See also INCOMPATIBLE OPTIONS below.
 +
 See also INCOMPATIBLE OPTIONS below.
 
+--keep-cherry-pick::
+--no-keep-cherry-pick::
+	Control rebase's behavior towards commits in the working
+	branch that are already present upstream, i.e. cherry-picks.
++
+By default, these commits will be dropped. Because this necessitates
+reading all upstream commits, this can be expensive in repos with a
+large number of upstream commits that need to be read.
++
+If `--keep-cherry-pick is given`, all commits (including these) will be
+re-applied. This allows rebase to forgo reading all upstream commits,
+potentially improving performance.
++
+See also INCOMPATIBLE OPTIONS below.
+
 --rerere-autoupdate::
 --no-rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the
@@ -600,6 +615,9 @@ In addition, the following pairs of options are incompatible:
  * --preserve-merges and --empty=
  * --keep-base and --onto
  * --keep-base and --root
+
+Also, the --keep-cherry-pick option requires the use of the merge backend
+(e.g., through --merge).
 
 BEHAVIORAL DIFFERENCES
 -----------------------
@@ -1002,7 +1020,8 @@ Only works if the changes (patch IDs based on the diff contents) on
 'subsystem' did.
 
 In that case, the fix is easy because 'git rebase' knows to skip
-changes that are already present in the new upstream.  So if you say
+changes that are already present in the new upstream (unless
+`--keep-cherry-pick` is given). So if you say
 (assuming you're on 'topic')
 ------------
     $ git rebase subsystem
