@@ -16,7 +16,7 @@ test_expect_success 'setup' '
 
 test_expect_success '"verify" needs a worktree' '
 	git bundle create tip.bundle -1 master &&
-	test_must_fail nongit git bundle verify ../tip.bundle 2>err &&
+	nongit test_must_fail git bundle verify ../tip.bundle 2>err &&
 	test_i18ngrep "need a repository" err
 '
 

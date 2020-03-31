@@ -11,9 +11,15 @@ test_description='Test remote-helper import and export commands'
 PATH="$TEST_DIRECTORY/t5801:$PATH"
 
 compare_refs() {
+	fail= &&
+	if test "x$1" = 'x!'
+	then
+		fail='!' &&
+		shift
+	fi &&
 	git --git-dir="$1/.git" rev-parse --verify $2 >expect &&
 	git --git-dir="$3/.git" rev-parse --verify $4 >actual &&
-	test_cmp expect actual
+	eval $fail test_cmp expect actual
 }
 
 test_expect_success 'setup repository' '
@@ -189,7 +195,7 @@ test_expect_success GPG 'push signed tag' '
 	git push origin signed-tag
 	) &&
 	compare_refs local signed-tag^{} server signed-tag^{} &&
-	test_must_fail compare_refs local signed-tag server signed-tag
+	compare_refs ! local signed-tag server signed-tag
 '
 
 test_expect_success GPG 'push signed tag with signed-tags capability' '
