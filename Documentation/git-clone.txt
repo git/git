@@ -15,7 +15,8 @@ SYNOPSIS
 	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
-	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--] <repository>
+	  [--[no-]remote-submodules] [--jobs <n>] [--sparse]
+	  [--filter=<filter>] [--] <repository>
 	  [<directory>]
 
 DESCRIPTION
@@ -161,6 +162,16 @@ objects from the source repository into a pack in the cloned repository.
 	directory starts with only the files in the root
 	of the repository. The sparse-checkout file can be
 	modified to grow the working directory as needed.
+
+--filter=<filter-spec>::
+	Use the partial clone feature and request that the server sends
+	a subset of reachable objects according to a given object filter.
+	When using `--filter`, the supplied `<filter-spec>` is used for
+	the partial clone filter. For example, `--filter=blob:none` will
+	filter out all blobs (file contents) until needed by Git. Also,
+	`--filter=blob:limit=<size>` will filter out all blobs of size
+	at least `<size>`. For more details on filter specifications, see
+	the `--filter` option in linkgit:git-rev-list[1].
 
 --mirror::
 	Set up a mirror of the source repository.  This implies `--bare`.
