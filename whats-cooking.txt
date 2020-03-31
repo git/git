@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2020, #09; Sun, 29)
+Subject: What's cooking in git.git (Mar 2020, #10; Tue, 31)
 X-master-at: 9fadedd637b312089337d73c3ed8447e9f0aa775
-X-next-at: 6d04fd2bf2c2653e09ae1d75aa42c176da447be8
+X-next-at: 2183baf09cb5d1e1dd473e6d197893cd5e1c99ca
 
-What's cooking in git.git (Mar 2020, #09; Sun, 29)
+What's cooking in git.git (Mar 2020, #10; Tue, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first batch of topics after v2.26 are now in 'master'.  I plan
-to rewind and rebuild 'next' after merging another batch.
+The 'next' branch has been rewound and rebuilt.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,123 +20,80 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ah/force-pull-rebase-configuration (2020-03-10) 1 commit
-  (merged to 'next' on 2020-03-11 at c79dbbaf9c)
- + pull: warn if the user didn't say whether to rebase or to merge
+* ag/rebase-merge-allow-ff-under-abbrev-command (2020-03-30) 2 commits
+ - t3432: test `--merge' with `rebase.abbreviateCommands = true', too
+ - sequencer: don't abbreviate a command if it doesn't have a short form
 
- "git pull" learned to warn when no pull.rebase configuration
- exists, and neither --[no-]rebase nor --ff-only is given (which
- would result a merge).
+ "git rebase" with the merge backend did not work well when the
+ rebase.abbreviateCommands configuration was set.
 
-
-* at/rebase-fork-point-regression-fix (2020-02-11) 1 commit
-  (merged to 'next' on 2020-03-02 at a1a84d37a7)
- + rebase: --fork-point regression fix
-
- The "--fork-point" mode of "git rebase" regressed when the command
- was rewritten in C back in 2.20 era, which has been corrected.
+ Will merge to 'next'.
 
 
-* bc/filter-process (2020-03-16) 8 commits
-  (merged to 'next' on 2020-03-17 at 2cd9dbf794)
- + t0021: test filter metadata for additional cases
- + builtin/reset: compute checkout metadata for reset
- + builtin/rebase: compute checkout metadata for rebases
- + builtin/clone: compute checkout metadata for clones
- + builtin/checkout: compute checkout metadata for checkouts
- + convert: provide additional metadata to filters
- + convert: permit passing additional metadata to filter processes
- + builtin/checkout: pass branch info down to checkout_worktree
+* jk/oid-array-cleanups (2020-03-30) 7 commits
+ - oidset: stop referring to sha1-array
+ - ref-filter: stop referring to "sha1 array"
+ - bisect: stop referring to sha1_array
+ - test-tool: rename sha1-array to oid-array
+ - oid_array: rename source file from sha1-array
+ - oid_array: use size_t for iteration
+ - oid_array: use size_t for count and allocation
 
- Provide more information (e.g. the object of the tree-ish in which
- the blob being converted appears, in addition to its path, which
- has already been given) to smudge/clean conversion filters.
+ Code cleanup.
+
+ Will merge to 'next'.
 
 
-* bc/sha-256-part-1-of-4 (2020-02-28) 22 commits
-  (merged to 'next' on 2020-03-17 at 436c4e64a7)
- + fast-import: add options for rewriting submodules
- + fast-import: add a generic function to iterate over marks
- + fast-import: make find_marks work on any mark set
- + fast-import: add helper function for inserting mark object entries
- + fast-import: permit reading multiple marks files
- + commit: use expected signature header for SHA-256
- + worktree: allow repository version 1
- + init-db: move writing repo version into a function
- + builtin/init-db: add environment variable for new repo hash
- + builtin/init-db: allow specifying hash algorithm on command line
- + setup: allow check_repository_format to read repository format
- + t/helper: make repository tests hash independent
- + t/helper: initialize repository if necessary
- + t/helper/test-dump-split-index: initialize git repository
- + t6300: make hash algorithm independent
- + t6300: abstract away SHA-1-specific constants
- + t: use hash-specific lookup tables to define test constants
- + repository: require a build flag to use SHA-256
- + hex: add functions to parse hex object IDs in any algorithm
- + hex: introduce parsing variants taking hash algorithms
- + hash: implement and use a context cloning function
- + builtin/pack-objects: make hash agnostic
-
- SHA-256 transition continues.
-
-
-* ds/default-pack-use-sparse-to-true (2020-03-20) 2 commits
-  (merged to 'next' on 2020-03-21 at 25cc87784d)
- + pack-objects: flip the use of GIT_TEST_PACK_SPARSE
- + config: set pack.useSparse=true by default
-
- The 'pack.useSparse' configuration variable now defaults to 'true',
- enabling an optimization that has been experimental since Git 2.21.
-
-
-* hi/gpg-prefer-check-signature (2020-03-15) 2 commits
-  (merged to 'next' on 2020-03-17 at 2def2d9a7e)
- + gpg-interface: prefer check_signature() for GPG verification
- + t: increase test coverage of signature verification output
-
- The code to interface with GnuPG has been refactored.
-
-
-* jc/describe-misnamed-annotated-tag (2020-02-20) 1 commit
-  (merged to 'next' on 2020-03-02 at b4e2ca6a46)
- + describe: force long format for a name based on a mislocated tag
-
- When "git describe C" finds an annotated tag with tagname A to be
- the best name to explain commit C, and the tag is stored in a
- "wrong" place in the refs/tags hierarchy, e.g. refs/tags/B, the
- command gave a warning message but used A (not B) to describe C.
- If C is exactly at the tag, the describe output would be "A", but
- "git rev-parse A^0" would not be equal as "git rev-parse C^0".  The
- behavior of the command has been changed to use the "long" form
- i.e. A-0-gOBJECTNAME, which is correctly interpreted by rev-parse.
-
-
-* pb/recurse-submodules-fix (2020-02-19) 6 commits
-  (merged to 'next' on 2020-03-17 at b46922ddd1)
- + t/lib-submodule-update: add test removing nested submodules
- + unpack-trees: check for missing submodule directory in merged_entry
- + unpack-trees: remove outdated description for verify_clean_submodule
- + t/lib-submodule-update: move a test to the right section
- + t/lib-submodule-update: remove outdated test description
- + t7112: remove mention of KNOWN_FAILURE_SUBMODULE_RECURSIVE_NESTED
-
- Fix "git checkout --recurse-submodules" of a nested submodule
- hierarchy.
-
-
-* tg/retire-scripted-stash (2020-03-05) 2 commits
-  (merged to 'next' on 2020-03-05 at 8e82eb9dec)
- + stash: remove the stash.useBuiltin setting
- + stash: get git_stash_config at the top level
-
- "git stash" has kept an escape hatch to use the scripted version
- for a few releases, which got stale.  It has been removed.
+* jx/proc-receive-hook (2020-03-31) 7 commits
+ - SQUASH???
+ - doc: add documentation for the proc-receive hook
+ - receive-pack: refactor report for proc-receive
+ - receive-pack: new config receive.procReceiveRefs
+ - refs.c: refactor to reuse ref_is_hidden()
+ - receive-pack: add new proc-receive hook
+ - transport: not report a non-head push as a branch
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* gs/commit-graph-path-filter (2020-03-30) 16 commits
+ - commit-graph: add GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS test flag
+ - t4216: add end to end tests for git log with Bloom filters
+ - revision.c: add trace2 stats around Bloom filter usage
+ - revision.c: use Bloom filters to speed up path based revision walks
+ - commit-graph: add --changed-paths option to write subcommand
+ - commit-graph: reuse existing Bloom filters during write
+ - commit-graph: write Bloom filters to commit graph file
+ - diff: skip batch object download when possible
+ - commit-graph: examine commits by generation number
+ - commit-graph: examine changed-path objects in pack order
+ - commit-graph: compute Bloom filters for changed paths
+ - diff: halt tree-diff early after max_changes
+ - bloom.c: core Bloom filter implementation for changed paths.
+ - bloom.c: introduce core Bloom filter constructs
+ - bloom.c: add the murmur3 hash implementation
+ - commit-graph: define and use MAX_NUM_CHUNKS
+
+ Introduce an extension to the commit-graph to make it efficient to
+ check for the paths that were modified at each commit using Bloom
+ filters.
+
+ Expecting a reroll.
+ cf. <fdcbd793-57c2-f5ea-ccb9-cf34e911b669@gmail.com>
+ Breakage due to byte-order dependency reported.
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
 
 * dr/midx-avoid-int-underflow (2020-03-28) 1 commit
  - midx.c: fix an integer underflow
@@ -179,7 +135,9 @@ of the repositories listed at
 
  Documentation updates around the "--recurse-submodules" option.
 
- Will merge to 'next'.
+ Getting there...
+ cf. <F03FAA2F-EDFB-4497-A4E8-3AC267C779FC@gmail.com>
+ cf. <1EA4CEB1-D329-4916-A9AC-2F64A7A4F6D0@gmail.com>
 
 
 * dr/push-remoteref-fix (2020-03-27) 1 commit
@@ -243,7 +201,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ps/transactional-update-ref-stdin (2020-03-27) 9 commits
+* ps/transactional-update-ref-stdin (2020-03-30) 9 commits
  - update-ref: implement interactive transaction handling
  - update-ref: read commands in a line-wise fashion
  - update-ref: move transaction handling into `update_refs_stdin()`
@@ -301,7 +259,7 @@ of the repositories listed at
  Gitweb update.
 
 
-* js/walk-doc-optim (2020-03-28) 1 commit
+* js/walk-doc-optim (2020-03-30) 1 commit
  - MyFirstObjectWalk: remove unnecessary conditional statement
 
  Code cleanup.
@@ -354,41 +312,6 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* gs/commit-graph-path-filter (2020-02-12) 12 commits
- - (bytesex breakage band-aid)
- - commit-graph: add GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS test flag
- - revision.c: use Bloom filters to speed up path based revision walks
- - commit-graph: add --changed-paths option to write subcommand
- - commit-graph: reuse existing Bloom filters during write.
- - commit-graph: write Bloom filters to commit graph file
- - commit-graph: examine commits by generation number
- - commit-graph: examine changed-path objects in pack order
- - commit-graph: compute Bloom filters for changed paths
- - diff: halt tree-diff early after max_changes
- - bloom: core Bloom filter implementation for changed paths
- - commit-graph: use MAX_NUM_CHUNKS
-
- Introduce an extension to the commit-graph to make it efficient to
- check for the paths that were modified at each commit using Bloom
- filters.
-
- Expecting a reroll.
- cf. <fdcbd793-57c2-f5ea-ccb9-cf34e911b669@gmail.com>
- Breakage due to byte-order dependency reported.
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
 
 * en/fill-directory-exponential (2020-03-26) 7 commits
  - dir: replace exponential algorithm with a linear one
@@ -574,8 +497,7 @@ of the repositories listed at
  repository in which "promised" objects are assumed to be obtainable
  lazily on-demand from promisor remote repositories.
 
- Looking good.
- cf. <20200326231416.GC12694@google.com>
+ Will merge to 'next'.
 
 
 * mt/test-lib-bundled-short-options (2020-03-25) 1 commit
@@ -603,8 +525,7 @@ of the repositories listed at
  cf. <pull.698.v6.git.git.1581691486.gitgitgadget@gmail.com>
 
 
-* jt/rebase-allow-duplicate (2020-03-29) 2 commits
- - t3402: use POSIX compliant regex(7)
+* jt/rebase-allow-duplicate (2020-03-31) 1 commit
  - rebase --merge: optionally skip upstreamed commits
 
  Allow "git rebase" to reapply all local commits, even if the may be
@@ -614,13 +535,12 @@ of the repositories listed at
  cf. <20200318192821.43808-1-jonathantanmy@google.com>
 
 
-* bc/faq (2020-03-24) 1 commit
+* bc/faq (2020-03-30) 1 commit
  - docs: add a FAQ
 
  Doc update.
 
- Expecting a reroll.
- cf. <20200325110328.GK6499@camp.crustytoothpaste.net>
+ Will merge to 'next'.
 
 
 * jc/log-no-mailmap (2020-03-16) 3 commits
@@ -634,7 +554,8 @@ of the repositories listed at
 
 
 * tb/commit-graph-split-merge (2020-03-24) 3 commits
- - builtin/commit-graph.c: support '--input=graphed'
+  (merged to 'next' on 2020-03-31 at 2183baf09c)
+ + builtin/commit-graph.c: support '--input=graphed'
  + builtin/commit-graph.c: introduce '--input=<source>'
  + builtin/commit-graph.c: support '--split[=<strategy>]'
 
@@ -642,7 +563,7 @@ of the repositories listed at
  options to control if the resulting graph chains should be merged
  or a single new incremental graph is created.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * hn/reftable (2020-02-26) 6 commits
