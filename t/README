@@ -547,6 +547,41 @@ Here are the "do's:"
    reports "ok" or "not ok" to the end user running the tests. Under
    --verbose, they are shown to help debug the tests.
 
+ - Be careful when you loop
+
+   You may need to verify multiple things in a loop, but the
+   following does not work correctly:
+
+	test_expect_success 'test three things' '
+	    for i in one two three
+	    do
+		test_something "$i"
+	    done &&
+	    test_something_else
+	'
+
+   Because the status of the loop itself is the exit status of the
+   test_something in the last round, the loop does not fail when
+   "test_something" for "one" or "two" fails.  This is not what you
+   want.
+
+   Instead, you can break out of the loop immediately when you see a
+   failure.  Because all test_expect_* snippets are executed inside
+   a function, "return 1" can be used to fail the test immediately
+   upon a failure:
+
+	test_expect_success 'test three things' '
+	    for i in one two three
+	    do
+		test_something "$i" || return 1
+	    done &&
+	    test_something_else
+	'
+
+   Note that we still &&-chain the loop to propagate failures from
+   earlier commands.
+
+
 And here are the "don'ts:"
 
  - Don't exit() within a <script> part.
