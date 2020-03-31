@@ -238,4 +238,26 @@ test_expect_success 'checkout -b after clone --no-checkout does a checkout of HE
 	test_path_is_file dest/a.t
 '
 
+test_expect_success 'checkout -b to a new branch preserves mergeable changes despite sparse-checkout' '
+	test_when_finished "
+		git reset --hard &&
+		git checkout branch1-scratch &&
+		test_might_fail git branch -D branch3 &&
+		git config core.sparseCheckout false &&
+		rm .git/info/sparse-checkout" &&
+
+	test_commit file2 &&
+
+	echo stuff >>file1 &&
+	echo file2 >.git/info/sparse-checkout &&
+	git config core.sparseCheckout true &&
+
+	CURHEAD=$(git rev-parse HEAD) &&
+	do_checkout branch3 $CURHEAD &&
+
+	echo file1 >expect &&
+	git diff --name-only >actual &&
+	test_cmp expect actual
+'
+
 test_done
