@@ -31,10 +31,6 @@ test_perf 'simulated fetch' '
 	} | git pack-objects --revs --stdout >/dev/null
 '
 
-test_perf 'pack to file' '
-	git pack-objects --all pack1 </dev/null >/dev/null
-'
-
 test_perf 'pack to file (bitmap)' '
 	git pack-objects --use-bitmap-index --all pack1b </dev/null >/dev/null
 '
