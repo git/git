@@ -28,10 +28,12 @@ test_rebase_same_head () {
 	shift &&
 	cmp_f="$1" &&
 	shift &&
-	test_rebase_same_head_ $status_n $what_n $cmp_n " --apply" "$*" &&
-	test_rebase_same_head_ $status_f $what_f $cmp_f " --apply --no-ff" "$*"
-	test_rebase_same_head_ $status_n $what_n $cmp_n " --merge" "$*" &&
-	test_rebase_same_head_ $status_f $what_f $cmp_f " --merge --no-ff" "$*"
+	test_rebase_same_head_ $status_n $what_n $cmp_n 0 " --apply" "$*" &&
+	test_rebase_same_head_ $status_f $what_f $cmp_f 0 " --apply --no-ff" "$*"
+	test_rebase_same_head_ $status_n $what_n $cmp_n 0 " --merge" "$*" &&
+	test_rebase_same_head_ $status_f $what_f $cmp_f 0 " --merge --no-ff" "$*"
+	test_rebase_same_head_ $status_n $what_n $cmp_n 1 " --merge" "$*" &&
+	test_rebase_same_head_ $status_f $what_f $cmp_f 1 " --merge --no-ff" "$*"
 }
 
 test_rebase_same_head_ () {
@@ -41,9 +43,21 @@ test_rebase_same_head_ () {
 	shift &&
 	cmp="$1" &&
 	shift &&
+	abbreviate="$1" &&
+	shift &&
 	flag="$1"
 	shift &&
-	test_expect_$status "git rebase$flag $* with $changes is $what with $cmp HEAD" "
+	if test $abbreviate -eq 1
+	then
+		msg="git rebase$flag $* (rebase.abbreviateCommands = true) with $changes is $what with $cmp HEAD"
+	else
+		msg="git rebase$flag $* with $changes is $what with $cmp HEAD"
+	fi &&
+	test_expect_$status "$msg" "
+		if test $abbreviate -eq 1
+		then
+			test_config rebase.abbreviateCommands true
+		fi &&
 		oldhead=\$(git rev-parse HEAD) &&
 		test_when_finished 'git reset --hard \$oldhead' &&
 		cp .git/logs/HEAD expect &&
