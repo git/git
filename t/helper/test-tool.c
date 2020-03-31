@@ -112,6 +112,7 @@ int cmd_main(int argc, const char **argv)
 			argc--;
 			trace2_cmd_name(cmds[i].name);
 			trace2_cmd_list_config();
+			trace2_cmd_list_env_vars();
 			return cmds[i].fn(argc, argv);
 		}
 	}

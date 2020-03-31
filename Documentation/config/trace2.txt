@@ -48,6 +48,15 @@ trace2.configParams::
 	May be overridden by the `GIT_TRACE2_CONFIG_PARAMS` environment
 	variable.  Unset by default.
 
+trace2.envVars::
+	A comma-separated list of "important" environment variables that should
+	be recorded in the trace2 output.  For example,
+	`GIT_HTTP_USER_AGENT,GIT_CONFIG` would cause the trace2 output to
+	contain events listing the overrides for HTTP user agent and the
+	location of the Git configuration file (assuming any are set).  May be
+	overriden by the `GIT_TRACE2_ENV_VARS` environment variable.  Unset by
+	default.
+
 trace2.destinationDebug::
 	Boolean.  When true Git will print error messages when a
 	trace target destination cannot be opened for writing.

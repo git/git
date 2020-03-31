@@ -11,6 +11,7 @@
  */
 enum tr2_sysenv_variable {
 	TR2_SYSENV_CFG_PARAM = 0,
+	TR2_SYSENV_ENV_VARS,
 
 	TR2_SYSENV_DST_DEBUG,
 
