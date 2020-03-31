@@ -881,7 +881,34 @@ test_expect_success ':remotename and :remoteref' '
 		actual="$(git for-each-ref \
 			--format="%(push:remotename),%(push:remoteref)" \
 			refs/heads/push-simple)" &&
-		test from, = "$actual"
+		test from, = "$actual" &&
+		git config branch.push-simple.remote from &&
+		git config branch.push-simple.merge refs/heads/master &&
+		actual="$(git for-each-ref \
+			--format="%(push:remotename),%(push:remoteref)" \
+			refs/heads/push-simple)" &&
+		test from, = "$actual" &&
+		actual="$(git -c push.default=upstream for-each-ref \
+			--format="%(push:remotename),%(push:remoteref)" \
+			refs/heads/push-simple)" &&
+		test from,refs/heads/master = "$actual" &&
+		actual="$(git -c push.default=current for-each-ref \
+			--format="%(push:remotename),%(push:remoteref)" \
+			refs/heads/push-simple)" &&
+		test from,refs/heads/push-simple = "$actual" &&
+		actual="$(git -c push.default=matching for-each-ref \
+			--format="%(push:remotename),%(push:remoteref)" \
+			refs/heads/push-simple)" &&
+		test from,refs/heads/push-simple = "$actual" &&
+		actual="$(git -c push.default=nothing for-each-ref \
+			--format="%(push:remotename),%(push:remoteref)" \
+			refs/heads/push-simple)" &&
+		test from, = "$actual" &&
+		git config branch.push-simple.merge refs/heads/push-simple &&
+		actual="$(git for-each-ref \
+			--format="%(push:remotename),%(push:remoteref)" \
+			refs/heads/push-simple)" &&
+		test from,refs/heads/push-simple = "$actual"
 	)
 '
 
