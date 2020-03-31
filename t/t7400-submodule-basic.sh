@@ -938,7 +938,7 @@ test_expect_success 'submodule add --name allows to replace a submodule with ano
 		echo "repo" >expect &&
 		test_must_fail git config -f .gitmodules submodule.repo.path &&
 		git config -f .gitmodules submodule.repo_new.path >actual &&
-		test_cmp expect actual&&
+		test_cmp expect actual &&
 		echo "$submodurl/repo" >expect &&
 		test_must_fail git config -f .gitmodules submodule.repo.url &&
 		echo "$submodurl/bare.git" >expect &&
@@ -1010,7 +1010,7 @@ test_expect_success 'submodule add with an existing name fails unless forced' '
 		test -d repo &&
 		echo "repo" >expect &&
 		git config -f .gitmodules submodule.repo_new.path >actual &&
-		test_cmp expect actual&&
+		test_cmp expect actual &&
 		echo "$submodurl/repo.git" >expect &&
 		git config -f .gitmodules submodule.repo_new.url >actual &&
 		test_cmp expect actual &&

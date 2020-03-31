@@ -192,7 +192,7 @@ test_expect_success 'git add --refresh with pathspec' '
 	test_must_be_empty actual &&
 
 	git diff-files --name-only >actual &&
-	! grep bar actual&&
+	! grep bar actual &&
 	grep baz actual
 '
 
