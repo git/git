@@ -9,6 +9,8 @@ struct string_list;
 struct string_list_item;
 struct worktree;
 
+#define DEFAULT_REF_STORAGE "files"
+
 /*
  * Resolve a reference, recursively following symbolic refererences.
  *
