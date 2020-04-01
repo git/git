@@ -66,6 +66,10 @@ performs all modifications together.  Specify commands of the form:
 	delete SP <ref> [SP <oldvalue>] LF
 	verify SP <ref> [SP <oldvalue>] LF
 	option SP <opt> LF
+	start LF
+	prepare LF
+	commit LF
+	abort LF
 
 With `--create-reflog`, update-ref will create a reflog for each ref
 even if one would not ordinarily be created.
@@ -83,6 +87,10 @@ quoting:
 	delete SP <ref> NUL [<oldvalue>] NUL
 	verify SP <ref> NUL [<oldvalue>] NUL
 	option SP <opt> NUL
+	start NUL
+	prepare NUL
+	commit NUL
+	abort NUL
 
 In this format, use 40 "0" to specify a zero value, and use the empty
 string to specify a missing value.
@@ -107,12 +115,30 @@ delete::
 
 verify::
 	Verify <ref> against <oldvalue> but do not change it.  If
-	<oldvalue> zero or missing, the ref must not exist.
+	<oldvalue> is zero or missing, the ref must not exist.
 
 option::
 	Modify behavior of the next command naming a <ref>.
 	The only valid option is `no-deref` to avoid dereferencing
 	a symbolic ref.
+
+start::
+	Start a transaction. In contrast to a non-transactional session, a
+	transaction will automatically abort if the session ends without an
+	explicit commit.
+
+prepare::
+	Prepare to commit the transaction. This will create lock files for all
+	queued reference updates. If one reference could not be locked, the
+	transaction will be aborted.
+
+commit::
+	Commit all reference updates queued for the transaction, ending the
+	transaction.
+
+abort::
+	Abort the transaction, releasing all locks if the transaction is in
+	prepared state.
 
 If all <ref>s can be locked with matching <oldvalue>s
 simultaneously, all modifications are performed.  Otherwise, no
