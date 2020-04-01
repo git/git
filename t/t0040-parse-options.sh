@@ -54,7 +54,7 @@ Alias
     -A, --alias-source <string>
                           get a string
     -Z, --alias-target <string>
-                          get a string
+                          alias of --alias-source
 
 EOF
 
