@@ -282,12 +282,6 @@ all::
 # Define NO_ST_BLOCKS_IN_STRUCT_STAT if your platform does not have st_blocks
 # field that counts the on-disk footprint in 512-byte blocks.
 #
-# Define DOCBOOK_XSL_172 if you want to format man pages with DocBook XSL v1.72
-# (not v1.73 or v1.71).
-#
-# Define ASCIIDOC_ROFF if your DocBook XSL does not escape raw roff directives
-# (versions 1.68.1 through v1.72).
-#
 # Define GNU_ROFF if your target system uses GNU groff.  This forces
 # apostrophes to be ASCII so that cut&pasting examples to the shell
 # will work.
