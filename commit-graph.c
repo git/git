@@ -1906,7 +1906,7 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	timestamp_t expire_time = time(NULL);
 
 	if (ctx->split_opts && ctx->split_opts->expire_time)
-		expire_time -= ctx->split_opts->expire_time;
+		expire_time = ctx->split_opts->expire_time;
 	if (!ctx->split) {
 		char *chain_file_name = get_chain_filename(ctx->odb);
 		unlink(chain_file_name);
