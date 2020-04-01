@@ -25,6 +25,7 @@
 #include "cache-tree.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "sequencer.h"
 
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
@@ -447,8 +448,12 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		if (reset_type == HARD && !update_ref_status && !quiet)
 			print_new_head_line(lookup_commit_reference(the_repository, &oid));
 	}
-	if (!pathspec.nr)
+	if (!pathspec.nr) {
+		if (reset_type == HARD)
+			save_autostash(git_path_merge_autostash(the_repository));
+
 		remove_branch_state(the_repository, 0);
+	}
 
 	return update_ref_status;
 }
