@@ -79,6 +79,9 @@ check_unignored_build_artifacts ()
 	}
 }
 
+# GitHub Action doesn't set TERM, which is required by tput
+export TERM=${TERM:-dumb}
+
 # Clear MAKEFLAGS that may come from the outside world.
 export MAKEFLAGS=
 
