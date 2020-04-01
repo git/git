@@ -861,30 +861,23 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 			       struct strbuf *untracked_files)
 {
 	int i;
-	int max_len;
 	int found = 0;
-	char *seen;
 	struct dir_struct dir;
 
 	memset(&dir, 0, sizeof(dir));
 	if (include_untracked != INCLUDE_ALL_FILES)
 		setup_standard_excludes(&dir);
 
-	seen = xcalloc(ps->nr, 1);
-
-	max_len = fill_directory(&dir, the_repository->index, ps);
+	fill_directory(&dir, the_repository->index, ps);
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
-		if (dir_path_match(&the_index, ent, ps, max_len, seen)) {
-			found++;
-			strbuf_addstr(untracked_files, ent->name);
-			/* NUL-terminate: will be fed to update-index -z */
-			strbuf_addch(untracked_files, '\0');
-		}
+		found++;
+		strbuf_addstr(untracked_files, ent->name);
+		/* NUL-terminate: will be fed to update-index -z */
+		strbuf_addch(untracked_files, '\0');
 		free(ent);
 	}
 
-	free(seen);
 	free(dir.entries);
 	free(dir.ignored);
 	clear_directory(&dir);

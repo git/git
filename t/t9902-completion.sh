@@ -1638,6 +1638,11 @@ test_expect_success 'complete files' '
 	echo modify > modified &&
 	test_completion "git add " "modified" &&
 
+	mkdir -p some/deep &&
+	touch some/deep/path &&
+	test_completion "git add some/" "some/deep" &&
+	git clean -f some &&
+
 	touch untracked &&
 
 	: TODO .gitignore should not be here &&

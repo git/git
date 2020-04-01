@@ -989,12 +989,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		if (!cache_name_is_other(ent->name, ent->len))
 			continue;
 
-		if (pathspec.nr)
-			matches = dir_path_match(&the_index, ent, &pathspec, 0, NULL);
-
-		if (pathspec.nr && !matches)
-			continue;
-
 		if (lstat(ent->name, &st))
 			die_errno("Cannot lstat '%s'", ent->name);
 
