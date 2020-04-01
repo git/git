@@ -1,0 +1,5 @@
+commit 920f7413f7a25f308d9a203f584873f6753192ec
+Author: Han-Wen Nienhuys <hanwen@google.com>
+Date:   Wed Apr 1 12:41:41 2020 +0200
+
+    C: remove stray debug printfs
