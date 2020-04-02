@@ -310,7 +310,8 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 	return next;
 }
 
-static const char *parse_cmd_option(struct strbuf *input, const char *next)
+static const char *parse_cmd_option(struct ref_transaction *transaction,
+				    struct strbuf *input, const char *next)
 {
 	const char *rest;
 	if (skip_prefix(next, "no-deref", &rest) && *rest == line_termination)
@@ -320,33 +321,49 @@ static const char *parse_cmd_option(struct strbuf *input, const char *next)
 	return rest;
 }
 
+static const struct parse_cmd {
+	const char *prefix;
+	const char *(*fn)(struct ref_transaction *, struct strbuf *, const char *);
+} command[] = {
+	{ "update", parse_cmd_update },
+	{ "create", parse_cmd_create },
+	{ "delete", parse_cmd_delete },
+	{ "verify", parse_cmd_verify },
+	{ "option", parse_cmd_option },
+};
+
 static void update_refs_stdin(struct ref_transaction *transaction)
 {
 	struct strbuf input = STRBUF_INIT;
 	const char *next;
+	int i;
 
 	if (strbuf_read(&input, 0, 1000) < 0)
 		die_errno("could not read from stdin");
 	next = input.buf;
 	/* Read each line dispatch its command */
 	while (next < input.buf + input.len) {
+		const struct parse_cmd *cmd = NULL;
+
 		if (*next == line_termination)
 			die("empty command in input");
 		else if (isspace(*next))
 			die("whitespace before command: %s", next);
-		else if (skip_prefix(next, "update ", &next))
-			next = parse_cmd_update(transaction, &input, next);
-		else if (skip_prefix(next, "create ", &next))
-			next = parse_cmd_create(transaction, &input, next);
-		else if (skip_prefix(next, "delete ", &next))
-			next = parse_cmd_delete(transaction, &input, next);
-		else if (skip_prefix(next, "verify ", &next))
-			next = parse_cmd_verify(transaction, &input, next);
-		else if (skip_prefix(next, "option ", &next))
-			next = parse_cmd_option(&input, next);
-		else
+
+		for (i = 0; i < ARRAY_SIZE(command); i++) {
+			const char *prefix = command[i].prefix;
+
+			if (!skip_prefix(next, prefix, &next) ||
+			    !skip_prefix(next, " ", &next))
+				continue;
+
+			cmd = &command[i];
+			break;
+		}
+		if (!cmd)
 			die("unknown command: %s", next);
 
+		next = cmd->fn(transaction, &input, next);
 		next++;
 	}
 
