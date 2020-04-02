@@ -241,6 +241,9 @@ int promisor_remote_get_direct(struct repository *repo,
 	int to_free = 0;
 	int res = -1;
 
+	if (oid_nr == 0)
+		return 0;
+
 	promisor_remote_init();
 
 	for (r = promisors; r; r = r->next) {

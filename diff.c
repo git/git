@@ -6517,12 +6517,11 @@ void diffcore_std(struct diff_options *options)
 			add_if_missing(options->repo, &to_fetch, p->one);
 			add_if_missing(options->repo, &to_fetch, p->two);
 		}
-		if (to_fetch.nr)
-			/*
-			 * NEEDSWORK: Consider deduplicating the OIDs sent.
-			 */
-			promisor_remote_get_direct(options->repo,
-						   to_fetch.oid, to_fetch.nr);
+		/*
+		 * NEEDSWORK: Consider deduplicating the OIDs sent.
+		 */
+		promisor_remote_get_direct(options->repo,
+					   to_fetch.oid, to_fetch.nr);
 		oid_array_clear(&to_fetch);
 	}
 
