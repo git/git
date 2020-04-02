@@ -312,21 +312,80 @@ static void parse_cmd_option(struct ref_transaction *transaction,
 		die("option unknown: %s", next);
 }
 
+static void parse_cmd_start(struct ref_transaction *transaction,
+			    const char *next, const char *end)
+{
+	if (*next != line_termination)
+		die("start: extra input: %s", next);
+	puts("start: ok");
+}
+
+static void parse_cmd_prepare(struct ref_transaction *transaction,
+			      const char *next, const char *end)
+{
+	struct strbuf error = STRBUF_INIT;
+	if (*next != line_termination)
+		die("prepare: extra input: %s", next);
+	if (ref_transaction_prepare(transaction, &error))
+		die("prepare: %s", error.buf);
+	puts("prepare: ok");
+}
+
+static void parse_cmd_abort(struct ref_transaction *transaction,
+			    const char *next, const char *end)
+{
+	struct strbuf error = STRBUF_INIT;
+	if (*next != line_termination)
+		die("abort: extra input: %s", next);
+	if (ref_transaction_abort(transaction, &error))
+		die("abort: %s", error.buf);
+	puts("abort: ok");
+}
+
+static void parse_cmd_commit(struct ref_transaction *transaction,
+			     const char *next, const char *end)
+{
+	struct strbuf error = STRBUF_INIT;
+	if (*next != line_termination)
+		die("commit: extra input: %s", next);
+	if (ref_transaction_commit(transaction, &error))
+		die("commit: %s", error.buf);
+	puts("commit: ok");
+	ref_transaction_free(transaction);
+}
+
+enum update_refs_state {
+	/* Non-transactional state open for updates. */
+	UPDATE_REFS_OPEN,
+	/* A transaction has been started. */
+	UPDATE_REFS_STARTED,
+	/* References are locked and ready for commit */
+	UPDATE_REFS_PREPARED,
+	/* Transaction has been committed or closed. */
+	UPDATE_REFS_CLOSED,
+};
+
 static const struct parse_cmd {
 	const char *prefix;
 	void (*fn)(struct ref_transaction *, const char *, const char *);
 	unsigned args;
+	enum update_refs_state state;
 } command[] = {
-	{ "update", parse_cmd_update, 3 },
-	{ "create", parse_cmd_create, 2 },
-	{ "delete", parse_cmd_delete, 2 },
-	{ "verify", parse_cmd_verify, 2 },
-	{ "option", parse_cmd_option, 1 },
+	{ "update",  parse_cmd_update,  3, UPDATE_REFS_OPEN },
+	{ "create",  parse_cmd_create,  2, UPDATE_REFS_OPEN },
+	{ "delete",  parse_cmd_delete,  2, UPDATE_REFS_OPEN },
+	{ "verify",  parse_cmd_verify,  2, UPDATE_REFS_OPEN },
+	{ "option",  parse_cmd_option,  1, UPDATE_REFS_OPEN },
+	{ "start",   parse_cmd_start,   0, UPDATE_REFS_STARTED },
+	{ "prepare", parse_cmd_prepare, 0, UPDATE_REFS_PREPARED },
+	{ "abort",   parse_cmd_abort,   0, UPDATE_REFS_CLOSED },
+	{ "commit",  parse_cmd_commit,  0, UPDATE_REFS_CLOSED },
 };
 
 static void update_refs_stdin(void)
 {
 	struct strbuf input = STRBUF_INIT, err = STRBUF_INIT;
+	enum update_refs_state state = UPDATE_REFS_OPEN;
 	struct ref_transaction *transaction;
 	int i, j;
 
@@ -374,14 +433,45 @@ static void update_refs_stdin(void)
 			if (strbuf_appendwholeline(&input, stdin, line_termination))
 				break;
 
+		switch (state) {
+		case UPDATE_REFS_OPEN:
+		case UPDATE_REFS_STARTED:
+			/* Do not downgrade a transaction to a non-transaction. */
+			if (cmd->state >= state)
+				state = cmd->state;
+			break;
+		case UPDATE_REFS_PREPARED:
+			if (cmd->state != UPDATE_REFS_CLOSED)
+				die("prepared transactions can only be closed");
+			state = cmd->state;
+			break;
+		case UPDATE_REFS_CLOSED:
+			die("transaction is closed");
+			break;
+		}
+
 		cmd->fn(transaction, input.buf + strlen(cmd->prefix) + !!cmd->args,
 			input.buf + input.len);
 	}
 
-	if (ref_transaction_commit(transaction, &err))
-		die("%s", err.buf);
+	switch (state) {
+	case UPDATE_REFS_OPEN:
+		/* Commit by default if no transaction was requested. */
+		if (ref_transaction_commit(transaction, &err))
+			die("%s", err.buf);
+		ref_transaction_free(transaction);
+		break;
+	case UPDATE_REFS_STARTED:
+	case UPDATE_REFS_PREPARED:
+		/* If using a transaction, we want to abort it. */
+		if (ref_transaction_abort(transaction, &err))
+			die("%s", err.buf);
+		break;
+	case UPDATE_REFS_CLOSED:
+		/* Otherwise no need to do anything, the transaction was closed already. */
+		break;
+	}
 
-	ref_transaction_free(transaction);
 	strbuf_release(&err);
 	strbuf_release(&input);
 }
