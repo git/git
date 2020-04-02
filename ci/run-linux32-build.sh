@@ -51,10 +51,17 @@ else
 fi
 
 # Build and test
-linux32 --32bit i386 su -m -l $CI_USER -c '
+linux32 --32bit i386 su -m -l $CI_USER -c "
 	set -ex
+	export DEVELOPER='$DEVELOPER'
+	export DEFAULT_TEST_TARGET='$DEFAULT_TEST_TARGET'
+	export GIT_PROVE_OPTS='$GIT_PROVE_OPTS'
+	export GIT_TEST_OPTS='$GIT_TEST_OPTS'
+	export GIT_TEST_CLONE_2GB='$GIT_TEST_CLONE_2GB'
+	export MAKEFLAGS='$MAKEFLAGS'
+	export cache_dir='$cache_dir'
 	cd /usr/src/git
-	test -n "$cache_dir" && ln -s "$cache_dir/.prove" t/.prove
+	test -n '$cache_dir' && ln -s '$cache_dir/.prove' t/.prove
 	make
 	make test
-'
+"
