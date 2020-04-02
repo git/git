@@ -50,7 +50,7 @@ static const char *parse_arg(const char *next, struct strbuf *arg)
  * the argument.  Die if C-quoting is malformed or the reference name
  * is invalid.
  */
-static char *parse_refname(struct strbuf *input, const char **next)
+static char *parse_refname(const char **next)
 {
 	struct strbuf ref = STRBUF_INIT;
 
@@ -186,7 +186,7 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 	struct object_id new_oid, old_oid;
 	int have_old;
 
-	refname = parse_refname(input, &next);
+	refname = parse_refname(&next);
 	if (!refname)
 		die("update: missing <ref>");
 
@@ -220,7 +220,7 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 	char *refname;
 	struct object_id new_oid;
 
-	refname = parse_refname(input, &next);
+	refname = parse_refname(&next);
 	if (!refname)
 		die("create: missing <ref>");
 
@@ -253,7 +253,7 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 	struct object_id old_oid;
 	int have_old;
 
-	refname = parse_refname(input, &next);
+	refname = parse_refname(&next);
 	if (!refname)
 		die("delete: missing <ref>");
 
@@ -288,7 +288,7 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 	char *refname;
 	struct object_id old_oid;
 
-	refname = parse_refname(input, &next);
+	refname = parse_refname(&next);
 	if (!refname)
 		die("verify: missing <ref>");
 
