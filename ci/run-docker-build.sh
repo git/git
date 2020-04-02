@@ -23,12 +23,7 @@ Linux32)
 	;;
 esac
 
-# Update packages to the latest available versions
-command $switch_cmd sh -c '
-    apt update >/dev/null &&
-    apt install -y build-essential libcurl4-openssl-dev libssl-dev \
-	libexpat-dev gettext python >/dev/null
-'
+"${0%/*}/install-docker-dependencies.sh"
 
 # If this script runs inside a docker container, then all commands are
 # usually executed as root. Consequently, the host user might not be
