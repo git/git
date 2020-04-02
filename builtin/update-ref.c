@@ -332,15 +332,21 @@ static const struct parse_cmd {
 	{ "option", parse_cmd_option },
 };
 
-static void update_refs_stdin(struct ref_transaction *transaction)
+static void update_refs_stdin(void)
 {
-	struct strbuf input = STRBUF_INIT;
+	struct strbuf input = STRBUF_INIT, err = STRBUF_INIT;
+	struct ref_transaction *transaction;
 	const char *next;
 	int i;
 
 	if (strbuf_read(&input, 0, 1000) < 0)
 		die_errno("could not read from stdin");
 	next = input.buf;
+
+	transaction = ref_transaction_begin(&err);
+	if (!transaction)
+		die("%s", err.buf);
+
 	/* Read each line dispatch its command */
 	while (next < input.buf + input.len) {
 		const struct parse_cmd *cmd = NULL;
@@ -367,6 +373,11 @@ static void update_refs_stdin(struct ref_transaction *transaction)
 		next++;
 	}
 
+	if (ref_transaction_commit(transaction, &err))
+		die("%s", err.buf);
+
+	ref_transaction_free(transaction);
+	strbuf_release(&err);
 	strbuf_release(&input);
 }
 
@@ -401,21 +412,11 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	}
 
 	if (read_stdin) {
-		struct strbuf err = STRBUF_INIT;
-		struct ref_transaction *transaction;
-
-		transaction = ref_transaction_begin(&err);
-		if (!transaction)
-			die("%s", err.buf);
 		if (delete || argc > 0)
 			usage_with_options(git_update_ref_usage, options);
 		if (end_null)
 			line_termination = '\0';
-		update_refs_stdin(transaction);
-		if (ref_transaction_commit(transaction, &err))
-			die("%s", err.buf);
-		ref_transaction_free(transaction);
-		strbuf_release(&err);
+		update_refs_stdin();
 		return 0;
 	}
 
