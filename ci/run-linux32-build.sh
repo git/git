@@ -14,8 +14,17 @@ then
 	exit 1
 fi
 
+case "$jobname" in
+Linux32)
+	switch_cmd="linux32 --32bit i386"
+	;;
+*)
+	exit 1
+	;;
+esac
+
 # Update packages to the latest available versions
-linux32 --32bit i386 sh -c '
+command $switch_cmd sh -c '
     apt update >/dev/null &&
     apt install -y build-essential libcurl4-openssl-dev libssl-dev \
 	libexpat-dev gettext python >/dev/null
@@ -51,7 +60,7 @@ else
 fi
 
 # Build and test
-linux32 --32bit i386 su -m -l $CI_USER -c "
+command $switch_cmd su -m -l $CI_USER -c "
 	set -ex
 	export DEVELOPER='$DEVELOPER'
 	export DEFAULT_TEST_TARGET='$DEFAULT_TEST_TARGET'
