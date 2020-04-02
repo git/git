@@ -47,6 +47,8 @@ custom_name=
 depth=
 progress=
 dissociate=
+jobs=
+recommend_shallow=
 
 die_if_unmatched ()
 {
