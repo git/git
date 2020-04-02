@@ -95,7 +95,7 @@ static char *parse_refname(const char **next)
  * provided but cannot be converted to a SHA-1, die.  flags can
  * include PARSE_SHA1_OLD and/or PARSE_SHA1_ALLOW_EMPTY.
  */
-static int parse_next_oid(struct strbuf *input, const char **next,
+static int parse_next_oid(const char **next, const char *end,
 			  struct object_id *oid,
 			  const char *command, const char *refname,
 			  int flags)
@@ -103,7 +103,7 @@ static int parse_next_oid(struct strbuf *input, const char **next,
 	struct strbuf arg = STRBUF_INIT;
 	int ret = 0;
 
-	if (*next == input->buf + input->len)
+	if (*next == end)
 		goto eof;
 
 	if (line_termination) {
@@ -128,7 +128,7 @@ static int parse_next_oid(struct strbuf *input, const char **next,
 			die("%s %s: expected NUL but got: %s",
 			    command, refname, *next);
 		(*next)++;
-		if (*next == input->buf + input->len)
+		if (*next == end)
 			goto eof;
 		strbuf_addstr(&arg, *next);
 		*next += arg.len;
@@ -179,7 +179,7 @@ static int parse_next_oid(struct strbuf *input, const char **next,
  */
 
 static const char *parse_cmd_update(struct ref_transaction *transaction,
-				    struct strbuf *input, const char *next)
+				    const char *next, const char *end)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
@@ -190,11 +190,11 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 	if (!refname)
 		die("update: missing <ref>");
 
-	if (parse_next_oid(input, &next, &new_oid, "update", refname,
+	if (parse_next_oid(&next, end, &new_oid, "update", refname,
 			   PARSE_SHA1_ALLOW_EMPTY))
 		die("update %s: missing <newvalue>", refname);
 
-	have_old = !parse_next_oid(input, &next, &old_oid, "update", refname,
+	have_old = !parse_next_oid(&next, end, &old_oid, "update", refname,
 				   PARSE_SHA1_OLD);
 
 	if (*next != line_termination)
@@ -214,7 +214,7 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 }
 
 static const char *parse_cmd_create(struct ref_transaction *transaction,
-				    struct strbuf *input, const char *next)
+				    const char *next, const char *end)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
@@ -224,7 +224,7 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 	if (!refname)
 		die("create: missing <ref>");
 
-	if (parse_next_oid(input, &next, &new_oid, "create", refname, 0))
+	if (parse_next_oid(&next, end, &new_oid, "create", refname, 0))
 		die("create %s: missing <newvalue>", refname);
 
 	if (is_null_oid(&new_oid))
@@ -246,7 +246,7 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 }
 
 static const char *parse_cmd_delete(struct ref_transaction *transaction,
-				    struct strbuf *input, const char *next)
+				    const char *next, const char *end)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
@@ -257,7 +257,7 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 	if (!refname)
 		die("delete: missing <ref>");
 
-	if (parse_next_oid(input, &next, &old_oid, "delete", refname,
+	if (parse_next_oid(&next, end, &old_oid, "delete", refname,
 			   PARSE_SHA1_OLD)) {
 		have_old = 0;
 	} else {
@@ -282,7 +282,7 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 }
 
 static const char *parse_cmd_verify(struct ref_transaction *transaction,
-				    struct strbuf *input, const char *next)
+				    const char *next, const char *end)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
@@ -292,7 +292,7 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 	if (!refname)
 		die("verify: missing <ref>");
 
-	if (parse_next_oid(input, &next, &old_oid, "verify", refname,
+	if (parse_next_oid(&next, end, &old_oid, "verify", refname,
 			   PARSE_SHA1_OLD))
 		oidclr(&old_oid);
 
@@ -311,7 +311,7 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 }
 
 static const char *parse_cmd_option(struct ref_transaction *transaction,
-				    struct strbuf *input, const char *next)
+				    const char *next, const char *end)
 {
 	const char *rest;
 	if (skip_prefix(next, "no-deref", &rest) && *rest == line_termination)
@@ -323,7 +323,7 @@ static const char *parse_cmd_option(struct ref_transaction *transaction,
 
 static const struct parse_cmd {
 	const char *prefix;
-	const char *(*fn)(struct ref_transaction *, struct strbuf *, const char *);
+	const char *(*fn)(struct ref_transaction *, const char *, const char *);
 } command[] = {
 	{ "update", parse_cmd_update },
 	{ "create", parse_cmd_create },
@@ -363,7 +363,7 @@ static void update_refs_stdin(struct ref_transaction *transaction)
 		if (!cmd)
 			die("unknown command: %s", next);
 
-		next = cmd->fn(transaction, &input, next);
+		next = cmd->fn(transaction, next, input.buf + input.len);
 		next++;
 	}
 
