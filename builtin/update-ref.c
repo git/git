@@ -178,8 +178,8 @@ static int parse_next_oid(const char **next, const char *end,
  * depending on how line_termination is set.
  */
 
-static const char *parse_cmd_update(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+static void parse_cmd_update(struct ref_transaction *transaction,
+			     const char *next, const char *end)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
@@ -209,12 +209,10 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 	update_flags = default_flags;
 	free(refname);
 	strbuf_release(&err);
-
-	return next;
 }
 
-static const char *parse_cmd_create(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+static void parse_cmd_create(struct ref_transaction *transaction,
+			     const char *next, const char *end)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
@@ -241,12 +239,10 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 	update_flags = default_flags;
 	free(refname);
 	strbuf_release(&err);
-
-	return next;
 }
 
-static const char *parse_cmd_delete(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+static void parse_cmd_delete(struct ref_transaction *transaction,
+			     const char *next, const char *end)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
@@ -277,12 +273,10 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 	update_flags = default_flags;
 	free(refname);
 	strbuf_release(&err);
-
-	return next;
 }
 
-static const char *parse_cmd_verify(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+static void parse_cmd_verify(struct ref_transaction *transaction,
+			     const char *next, const char *end)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
@@ -306,71 +300,82 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 	update_flags = default_flags;
 	free(refname);
 	strbuf_release(&err);
-
-	return next;
 }
 
-static const char *parse_cmd_option(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+static void parse_cmd_option(struct ref_transaction *transaction,
+			     const char *next, const char *end)
 {
 	const char *rest;
 	if (skip_prefix(next, "no-deref", &rest) && *rest == line_termination)
 		update_flags |= REF_NO_DEREF;
 	else
 		die("option unknown: %s", next);
-	return rest;
 }
 
 static const struct parse_cmd {
 	const char *prefix;
-	const char *(*fn)(struct ref_transaction *, const char *, const char *);
+	void (*fn)(struct ref_transaction *, const char *, const char *);
+	unsigned args;
 } command[] = {
-	{ "update", parse_cmd_update },
-	{ "create", parse_cmd_create },
-	{ "delete", parse_cmd_delete },
-	{ "verify", parse_cmd_verify },
-	{ "option", parse_cmd_option },
+	{ "update", parse_cmd_update, 3 },
+	{ "create", parse_cmd_create, 2 },
+	{ "delete", parse_cmd_delete, 2 },
+	{ "verify", parse_cmd_verify, 2 },
+	{ "option", parse_cmd_option, 1 },
 };
 
 static void update_refs_stdin(void)
 {
 	struct strbuf input = STRBUF_INIT, err = STRBUF_INIT;
 	struct ref_transaction *transaction;
-	const char *next;
-	int i;
-
-	if (strbuf_read(&input, 0, 1000) < 0)
-		die_errno("could not read from stdin");
-	next = input.buf;
+	int i, j;
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction)
 		die("%s", err.buf);
 
 	/* Read each line dispatch its command */
-	while (next < input.buf + input.len) {
+	while (!strbuf_getwholeline(&input, stdin, line_termination)) {
 		const struct parse_cmd *cmd = NULL;
 
-		if (*next == line_termination)
+		if (*input.buf == line_termination)
 			die("empty command in input");
-		else if (isspace(*next))
-			die("whitespace before command: %s", next);
+		else if (isspace(*input.buf))
+			die("whitespace before command: %s", input.buf);
 
 		for (i = 0; i < ARRAY_SIZE(command); i++) {
 			const char *prefix = command[i].prefix;
+			char c;
 
-			if (!skip_prefix(next, prefix, &next) ||
-			    !skip_prefix(next, " ", &next))
+			if (!starts_with(input.buf, prefix))
+				continue;
+
+			/*
+			 * If the command has arguments, verify that it's
+			 * followed by a space. Otherwise, it shall be followed
+			 * by a line terminator.
+			 */
+			c = command[i].args ? ' ' : line_termination;
+			if (input.buf[strlen(prefix)] != c)
 				continue;
 
 			cmd = &command[i];
 			break;
 		}
 		if (!cmd)
-			die("unknown command: %s", next);
+			die("unknown command: %s", input.buf);
 
-		next = cmd->fn(transaction, next, input.buf + input.len);
-		next++;
+		/*
+		 * Read additional arguments if NUL-terminated. Do not raise an
+		 * error in case there is an early EOF to let the command
+		 * handle missing arguments with a proper error message.
+		 */
+		for (j = 1; line_termination == '\0' && j < cmd->args; j++)
+			if (strbuf_appendwholeline(&input, stdin, line_termination))
+				break;
+
+		cmd->fn(transaction, input.buf + strlen(cmd->prefix) + !!cmd->args,
+			input.buf + input.len);
 	}
 
 	if (ref_transaction_commit(transaction, &err))
