@@ -61,9 +61,12 @@ When not possible, refuse to merge and exit with a non-zero status.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
+--no-gpg-sign::
 	GPG-sign the resulting merge commit. The `keyid` argument is
 	optional and defaults to the committer identity; if specified,
-	it must be stuck to the option without a space.
+	it must be stuck to the option without a space. `--no-gpg-sign`
+	is useful to countermand both `commit.gpgSign` configuration variable,
+	and earlier `--gpg-sign`.
 
 --log[=<n>]::
 --no-log::
