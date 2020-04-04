@@ -1,16 +1,26 @@
 #!/bin/sh
 #
-# Download and run Docker image to build and test 32-bit Git
+# Download and run Docker image to build and test Git
 #
 
 . ${0%/*}/lib.sh
 
-docker pull daald/ubuntu32:xenial
+case "$jobname" in
+Linux32)
+	CI_CONTAINER="daald/ubuntu32:xenial"
+	;;
+*)
+	exit 1
+	;;
+esac
+
+docker pull "$CI_CONTAINER"
 
 # Use the following command to debug the docker build locally:
-# $ docker run -itv "${PWD}:/usr/src/git" --entrypoint /bin/bash daald/ubuntu32:xenial
+# <host-user-id> must be 0 if podman is used as drop-in replacement for docker
+# $ docker run -itv "${PWD}:/usr/src/git" --entrypoint /bin/sh "$CI_CONTAINER"
 # root@container:/# export jobname=<jobname>
-# root@container:/# /usr/src/git/ci/run-linux32-build.sh <host-user-id>
+# root@container:/# /usr/src/git/ci/run-docker-build.sh <host-user-id>
 
 container_cache_dir=/tmp/travis-cache
 
@@ -26,8 +36,8 @@ docker run \
 	--env cache_dir="$container_cache_dir" \
 	--volume "${PWD}:/usr/src/git" \
 	--volume "$cache_dir:$container_cache_dir" \
-	daald/ubuntu32:xenial \
-	/usr/src/git/ci/run-linux32-build.sh $(id -u $USER)
+	"$CI_CONTAINER" \
+	/usr/src/git/ci/run-docker-build.sh $(id -u $USER)
 
 check_unignored_build_artifacts
 
