@@ -2485,6 +2485,7 @@ static int read_populate_opts(struct replay_opts *opts)
 {
 	if (is_rebase_i(opts)) {
 		struct strbuf buf = STRBUF_INIT;
+		int ret = 0;
 
 		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(), 1)) {
 			if (!starts_with(buf.buf, "-S"))
@@ -2525,7 +2526,7 @@ static int read_populate_opts(struct replay_opts *opts)
 			opts->keep_redundant_commits = 1;
 
 		read_strategy_opts(opts, &buf);
-		strbuf_release(&buf);
+		strbuf_reset(&buf);
 
 		if (read_oneliner(&opts->current_fixups,
 				  rebase_path_current_fixups(), 1)) {
@@ -2538,12 +2539,16 @@ static int read_populate_opts(struct replay_opts *opts)
 		}
 
 		if (read_oneliner(&buf, rebase_path_squash_onto(), 0)) {
-			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0)
-				return error(_("unusable squash-onto"));
+			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0) {
+				ret = error(_("unusable squash-onto"));
+				goto done_rebase_i;
+			}
 			opts->have_squash_onto = 1;
 		}
 
-		return 0;
+done_rebase_i:
+		strbuf_release(&buf);
+		return ret;
 	}
 
 	if (!file_exists(git_path_opts_file()))
