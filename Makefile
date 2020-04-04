@@ -1366,12 +1366,12 @@ else
 	endif
 
 	ifndef CURL_LDFLAGS
-		CURL_LDFLAGS := $(shell $(CURL_CONFIG) --libs)
+		CURL_LDFLAGS = $(eval CURL_LDFLAGS := $$(shell $$(CURL_CONFIG) --libs))$(CURL_LDFLAGS)
 	endif
 	CURL_LIBCURL += $(CURL_LDFLAGS)
 
 	ifndef CURL_CFLAGS
-		CURL_CFLAGS := $(shell $(CURL_CONFIG) --cflags)
+		CURL_CFLAGS = $(eval CURL_CFLAGS := $$(shell $$(CURL_CONFIG) --cflags))$(CURL_CFLAGS)
 	endif
 	BASIC_CFLAGS += $(CURL_CFLAGS)
 
