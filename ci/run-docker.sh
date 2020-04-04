@@ -9,6 +9,9 @@ case "$jobname" in
 Linux32)
 	CI_CONTAINER="daald/ubuntu32:xenial"
 	;;
+linux-musl)
+	CI_CONTAINER=alpine
+	;;
 *)
 	exit 1
 	;;
