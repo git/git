@@ -964,7 +964,15 @@ revert_attrs:
 size_t mingw_strftime(char *s, size_t max,
 		      const char *format, const struct tm *tm)
 {
-	size_t ret = strftime(s, max, format, tm);
+	/* a pointer to the original strftime in case we can't find the UCRT version */
+	static size_t (*fallback)(char *, size_t, const char *, const struct tm *) = strftime;
+	size_t ret;
+	DECLARE_PROC_ADDR(ucrtbase.dll, size_t, strftime, char *, size_t,
+		const char *, const struct tm *);
+	if (INIT_PROC_ADDR(strftime))
+		ret = strftime(s, max, format, tm);
+	else
+		ret = fallback(s, max, format, tm);
 
 	if (!ret && errno == EINVAL)
 		die("invalid strftime format: '%s'", format);
