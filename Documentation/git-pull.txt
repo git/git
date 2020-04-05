@@ -229,9 +229,9 @@ branch.<name>.merge options; see linkgit:git-config[1] for details.
 $ git pull origin next
 ------------------------------------------------
 +
-This leaves a copy of `next` temporarily in FETCH_HEAD, but
-does not update any remote-tracking branches. Using remote-tracking
-branches, the same can be done by invoking fetch and merge:
+This leaves a copy of `next` temporarily in FETCH_HEAD, and
+updates the remote-tracking branch `origin/next`.
+The same can be done by invoking fetch and merge:
 +
 ------------------------------------------------
 $ git fetch origin
