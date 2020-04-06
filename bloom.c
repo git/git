@@ -253,3 +253,23 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 
 	return filter;
 }
+
+int bloom_filter_contains(const struct bloom_filter *filter,
+			  const struct bloom_key *key,
+			  const struct bloom_filter_settings *settings)
+{
+	int i;
+	uint64_t mod = filter->len * BITS_PER_WORD;
+
+	if (!mod)
+		return -1;
+
+	for (i = 0; i < settings->num_hashes; i++) {
+		uint64_t hash_mod = key->hashes[i] % mod;
+		uint64_t block_pos = hash_mod / BITS_PER_WORD;
+		if (!(filter->data[block_pos] & get_bitmask(hash_mod)))
+			return 0;
+	}
+
+	return 1;
+}
