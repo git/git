@@ -1,11 +1,14 @@
 fetch.recurseSubmodules::
-	This option can be either set to a boolean value or to 'on-demand'.
+	This option controls whether `git fetch` (and the underlying fetch
+	in `git pull`) will recursively fetch into populated submodules.
+	This option can be set either to a boolean value or to 'on-demand'.
 	Setting it to a boolean changes the behavior of fetch and pull to
-	unconditionally recurse into submodules when set to true or to not
-	recurse at all when set to false. When set to 'on-demand' (the default
-	value), fetch and pull will only recurse into a populated submodule
-	when its superproject retrieves a commit that updates the submodule's
+	recurse unconditionally into submodules when set to true or to not
+	recurse at all when set to false. When set to 'on-demand', fetch and
+	pull will only recurse into a populated submodule when its
+	superproject retrieves a commit that updates the submodule's
 	reference.
+	Defaults to 'on-demand', or to the value of 'submodule.recurse' if set.
 
 fetch.fsckObjects::
 	If it is set to true, git-fetch-pack will check all fetched
