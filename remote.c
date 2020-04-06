@@ -1656,6 +1656,18 @@ static const char *tracking_for_push_dest(struct remote *remote,
 	return ret;
 }
 
+static int is_workflow_triangular(struct branch *branch)
+{
+	struct remote *fetch_remote = remote_get(remote_for_branch(branch, NULL));
+	struct remote *push_remote = remote_get(pushremote_for_branch(branch, NULL));
+	return (fetch_remote && push_remote && fetch_remote != push_remote);
+}
+
+/**
+ * Return the tracking branch, as in %(push), that corresponds to the ref we
+ * would push to given a bare `git push` while `branch` is checked out.
+ * See also branch_get_push_remoteref above.
+ */
 static const char *branch_get_push_1(struct branch *branch, struct strbuf *err)
 {
 	struct remote *remote;
@@ -1693,23 +1705,31 @@ static const char *branch_get_push_1(struct branch *branch, struct strbuf *err)
 		return tracking_for_push_dest(remote, branch->refname, err);
 
 	case PUSH_DEFAULT_UPSTREAM:
-		return branch_get_upstream(branch, err);
+		if (is_workflow_triangular(branch))
+			return error_buf(err, _("push has no destination (push.default is 'upstream' and we are in a triangular workflow)"));
+		else
+			return branch_get_upstream(branch, err);
 
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
 		{
 			const char *up, *cur;
 
-			up = branch_get_upstream(branch, err);
-			if (!up)
-				return NULL;
-			cur = tracking_for_push_dest(remote, branch->refname, err);
-			if (!cur)
-				return NULL;
-			if (strcmp(cur, up))
-				return error_buf(err,
-						 _("cannot resolve 'simple' push to a single destination"));
-			return cur;
+			if (is_workflow_triangular(branch)) {
+				return tracking_for_push_dest(remote, branch->refname, err);
+			}
+			else {
+				up = branch_get_upstream(branch, err);
+				if (!up)
+					return NULL;
+				cur = tracking_for_push_dest(remote, branch->refname, err);
+				if (!cur)
+					return NULL;
+				if (strcmp(cur, up))
+					return error_buf(err,
+							 _("cannot resolve 'simple' push to a single destination"));
+				return cur;
+			}
 		}
 	}
 
