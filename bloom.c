@@ -4,6 +4,8 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "hashmap.h"
+#include "commit-graph.h"
+#include "commit.h"
 
 define_commit_slab(bloom_filter_slab, struct bloom_filter);
 
@@ -24,6 +26,36 @@ static uint32_t rotate_left(uint32_t value, int32_t count)
 static inline unsigned char get_bitmask(uint32_t pos)
 {
 	return ((unsigned char)1) << (pos & (BITS_PER_WORD - 1));
+}
+
+static int load_bloom_filter_from_graph(struct commit_graph *g,
+				   struct bloom_filter *filter,
+				   struct commit *c)
+{
+	uint32_t lex_pos, start_index, end_index;
+
+	while (c->graph_pos < g->num_commits_in_base)
+		g = g->base_graph;
+
+	/* The commit graph commit 'c' lives in doesn't carry bloom filters. */
+	if (!g->chunk_bloom_indexes)
+		return 0;
+
+	lex_pos = c->graph_pos - g->num_commits_in_base;
+
+	end_index = get_be32(g->chunk_bloom_indexes + 4 * lex_pos);
+
+	if (lex_pos > 0)
+		start_index = get_be32(g->chunk_bloom_indexes + 4 * (lex_pos - 1));
+	else
+		start_index = 0;
+
+	filter->len = end_index - start_index;
+	filter->data = (unsigned char *)(g->chunk_bloom_data +
+					sizeof(unsigned char) * start_index +
+					BLOOMDATA_CHUNK_HEADER_SIZE);
+
+	return 1;
 }
 
 /*
@@ -127,7 +159,8 @@ void init_bloom_filters(void)
 }
 
 struct bloom_filter *get_bloom_filter(struct repository *r,
-				      struct commit *c)
+				      struct commit *c,
+					  int compute_if_not_present)
 {
 	struct bloom_filter *filter;
 	struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
@@ -139,6 +172,20 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 		return NULL;
 
 	filter = bloom_filter_slab_at(&bloom_filters, c);
+
+	if (!filter->data) {
+		load_commit_graph_info(r, c);
+		if (c->graph_pos != COMMIT_NOT_FROM_GRAPH &&
+			r->objects->commit_graph->chunk_bloom_indexes) {
+			if (load_bloom_filter_from_graph(r->objects->commit_graph, filter, c))
+				return filter;
+			else
+				return NULL;
+		}
+	}
+
+	if (filter->data || !compute_if_not_present)
+		return filter;
 
 	repo_diff_setup(r, &diffopt);
 	diffopt.flags.recursive = 1;
