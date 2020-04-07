@@ -211,7 +211,7 @@ osx-clang|osx-gcc)
 	# Travis CI OS X
 	export GIT_SKIP_TESTS="t9810 t9816"
 	;;
-GIT_TEST_GETTEXT_POISON)
+GETTEXT_POISON)
 	export GIT_TEST_GETTEXT_POISON=true
 	;;
 Linux32)
