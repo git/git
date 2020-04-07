@@ -1274,22 +1274,21 @@ static int check_exec_cmd(const char *cmd)
 	return 0;
 }
 
-static void create_autostash(struct rebase_options *options)
+static void create_autostash(struct repository *r, const char *path,
+			     const char *default_reflog_action)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct lock_file lock_file = LOCK_INIT;
 	int fd;
 
-	fd = hold_locked_index(&lock_file, 0);
-	refresh_cache(REFRESH_QUIET);
+	fd = repo_hold_locked_index(r, &lock_file, 0);
+	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
 	if (0 <= fd)
-		repo_update_index_if_able(the_repository, &lock_file);
+		repo_update_index_if_able(r, &lock_file);
 	rollback_lock_file(&lock_file);
 
-	if (has_unstaged_changes(the_repository, 1) ||
-	    has_uncommitted_changes(the_repository, 1)) {
-		const char *autostash =
-			state_dir_path("autostash", options);
+	if (has_unstaged_changes(r, 1) ||
+	    has_uncommitted_changes(r, 1)) {
 		struct child_process stash = CHILD_PROCESS_INIT;
 		struct object_id oid;
 
@@ -1307,18 +1306,18 @@ static void create_autostash(struct rebase_options *options)
 		strbuf_reset(&buf);
 		strbuf_add_unique_abbrev(&buf, &oid, DEFAULT_ABBREV);
 
-		if (safe_create_leading_directories_const(autostash))
+		if (safe_create_leading_directories_const(path))
 			die(_("Could not create directory for '%s'"),
-			    options->state_dir);
-		write_file(autostash, "%s", oid_to_hex(&oid));
+			    path);
+		write_file(path, "%s", oid_to_hex(&oid));
 		printf(_("Created autostash: %s\n"), buf.buf);
-		if (reset_head(the_repository, NULL, "reset --hard",
+		if (reset_head(r, NULL, "reset --hard",
 			       NULL, RESET_HEAD_HARD, NULL, NULL,
-			       DEFAULT_REFLOG_ACTION) < 0)
+			       default_reflog_action) < 0)
 			die(_("could not reset --hard"));
 
-		if (discard_index(the_repository->index) < 0 ||
-			repo_read_index(the_repository) < 0)
+		if (discard_index(r->index) < 0 ||
+			repo_read_index(r) < 0)
 			die(_("could not read index"));
 	}
 	strbuf_release(&buf);
@@ -1956,7 +1955,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		die(_("could not read index"));
 
 	if (options.autostash) {
-		create_autostash(&options);
+		create_autostash(the_repository, state_dir_path("autostash", &options),
+				 DEFAULT_REFLOG_ACTION);
 	}
 
 	if (require_clean_work_tree(the_repository, "rebase",
