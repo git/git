@@ -3748,6 +3748,7 @@ int apply_autostash(const char *path)
 				  " \"git stash drop\" at any time.\n"));
 	}
 
+	unlink(path);
 	strbuf_release(&stash_oid);
 	return ret;
 }
