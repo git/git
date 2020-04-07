@@ -65,9 +65,12 @@ void free_filespec(struct diff_filespec *);
 void fill_filespec(struct diff_filespec *, const struct object_id *,
 		   int, unsigned short);
 
-#define CHECK_SIZE_ONLY 1
-#define CHECK_BINARY    2
-int diff_populate_filespec(struct repository *, struct diff_filespec *, unsigned int);
+struct diff_populate_filespec_options {
+	unsigned check_size_only : 1;
+	unsigned check_binary : 1;
+};
+int diff_populate_filespec(struct repository *, struct diff_filespec *,
+			   const struct diff_populate_filespec_options *);
 void diff_free_filespec_data(struct diff_filespec *);
 void diff_free_filespec_blob(struct diff_filespec *);
 int diff_filespec_is_binary(struct repository *, struct diff_filespec *);

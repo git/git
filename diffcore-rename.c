@@ -148,6 +148,9 @@ static int estimate_similarity(struct repository *r,
 	 */
 	unsigned long max_size, delta_size, base_size, src_copied, literal_added;
 	int score;
+	struct diff_populate_filespec_options dpf_options = {
+		.check_size_only = 1
+	};
 
 	/* We deal only with regular files.  Symlink renames are handled
 	 * only when they are exact matches --- in other words, no edits
@@ -166,10 +169,10 @@ static int estimate_similarity(struct repository *r,
 	 * say whether the size is valid or not!)
 	 */
 	if (!src->cnt_data &&
-	    diff_populate_filespec(r, src, CHECK_SIZE_ONLY))
+	    diff_populate_filespec(r, src, &dpf_options))
 		return 0;
 	if (!dst->cnt_data &&
-	    diff_populate_filespec(r, dst, CHECK_SIZE_ONLY))
+	    diff_populate_filespec(r, dst, &dpf_options))
 		return 0;
 
 	max_size = ((src->size > dst->size) ? src->size : dst->size);
@@ -187,9 +190,9 @@ static int estimate_similarity(struct repository *r,
 	if (max_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
-	if (!src->cnt_data && diff_populate_filespec(r, src, 0))
+	if (!src->cnt_data && diff_populate_filespec(r, src, NULL))
 		return 0;
-	if (!dst->cnt_data && diff_populate_filespec(r, dst, 0))
+	if (!dst->cnt_data && diff_populate_filespec(r, dst, NULL))
 		return 0;
 
 	if (diffcore_count_changes(r, src, dst,
@@ -261,7 +264,7 @@ static unsigned int hash_filespec(struct repository *r,
 				  struct diff_filespec *filespec)
 {
 	if (!filespec->oid_valid) {
-		if (diff_populate_filespec(r, filespec, 0))
+		if (diff_populate_filespec(r, filespec, NULL))
 			return 0;
 		hash_object_file(r->hash_algo, filespec->data, filespec->size,
 				 "blob", &filespec->oid);

@@ -62,8 +62,8 @@ static int should_break(struct repository *r,
 	    oideq(&src->oid, &dst->oid))
 		return 0; /* they are the same */
 
-	if (diff_populate_filespec(r, src, 0) ||
-	    diff_populate_filespec(r, dst, 0))
+	if (diff_populate_filespec(r, src, NULL) ||
+	    diff_populate_filespec(r, dst, NULL))
 		return 0; /* error but caught downstream */
 
 	max_size = ((src->size > dst->size) ? src->size : dst->size);

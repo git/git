@@ -573,7 +573,7 @@ static int fill_mmfile(struct repository *r, mmfile_t *mf,
 		mf->size = 0;
 		return 0;
 	}
-	else if (diff_populate_filespec(r, one, 0))
+	else if (diff_populate_filespec(r, one, NULL))
 		return -1;
 
 	mf->ptr = one->data;
@@ -585,9 +585,13 @@ static int fill_mmfile(struct repository *r, mmfile_t *mf,
 static unsigned long diff_filespec_size(struct repository *r,
 					struct diff_filespec *one)
 {
+	struct diff_populate_filespec_options dpf_options = {
+		.check_size_only = 1,
+	};
+
 	if (!DIFF_FILE_VALID(one))
 		return 0;
-	diff_populate_filespec(r, one, CHECK_SIZE_ONLY);
+	diff_populate_filespec(r, one, &dpf_options);
 	return one->size;
 }
 
@@ -3020,6 +3024,9 @@ static void show_dirstat(struct diff_options *options)
 		struct diff_filepair *p = q->queue[i];
 		const char *name;
 		unsigned long copied, added, damage;
+		struct diff_populate_filespec_options dpf_options = {
+			.check_size_only = 1,
+		};
 
 		name = p->two->path ? p->two->path : p->one->path;
 
@@ -3047,19 +3054,19 @@ static void show_dirstat(struct diff_options *options)
 		}
 
 		if (DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
-			diff_populate_filespec(options->repo, p->one, 0);
-			diff_populate_filespec(options->repo, p->two, 0);
+			diff_populate_filespec(options->repo, p->one, NULL);
+			diff_populate_filespec(options->repo, p->two, NULL);
 			diffcore_count_changes(options->repo,
 					       p->one, p->two, NULL, NULL,
 					       &copied, &added);
 			diff_free_filespec_data(p->one);
 			diff_free_filespec_data(p->two);
 		} else if (DIFF_FILE_VALID(p->one)) {
-			diff_populate_filespec(options->repo, p->one, CHECK_SIZE_ONLY);
+			diff_populate_filespec(options->repo, p->one, &dpf_options);
 			copied = added = 0;
 			diff_free_filespec_data(p->one);
 		} else if (DIFF_FILE_VALID(p->two)) {
-			diff_populate_filespec(options->repo, p->two, CHECK_SIZE_ONLY);
+			diff_populate_filespec(options->repo, p->two, &dpf_options);
 			copied = 0;
 			added = p->two->size;
 			diff_free_filespec_data(p->two);
@@ -3339,13 +3346,17 @@ static void emit_binary_diff(struct diff_options *o,
 int diff_filespec_is_binary(struct repository *r,
 			    struct diff_filespec *one)
 {
+	struct diff_populate_filespec_options dpf_options = {
+		.check_binary = 1,
+	};
+
 	if (one->is_binary == -1) {
 		diff_filespec_load_driver(one, r->index);
 		if (one->driver->binary != -1)
 			one->is_binary = one->driver->binary;
 		else {
 			if (!one->data && DIFF_FILE_VALID(one))
-				diff_populate_filespec(r, one, CHECK_BINARY);
+				diff_populate_filespec(r, one, &dpf_options);
 			if (one->is_binary == -1 && one->data)
 				one->is_binary = buffer_is_binary(one->data,
 						one->size);
@@ -3677,8 +3688,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	}
 
 	else if (complete_rewrite) {
-		diff_populate_filespec(o->repo, one, 0);
-		diff_populate_filespec(o->repo, two, 0);
+		diff_populate_filespec(o->repo, one, NULL);
+		diff_populate_filespec(o->repo, two, NULL);
 		data->deleted = count_lines(one->data, one->size);
 		data->added = count_lines(two->data, two->size);
 	}
@@ -3914,9 +3925,10 @@ static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
  */
 int diff_populate_filespec(struct repository *r,
 			   struct diff_filespec *s,
-			   unsigned int flags)
+			   const struct diff_populate_filespec_options *options)
 {
-	int size_only = flags & CHECK_SIZE_ONLY;
+	int size_only = options ? options->check_size_only : 0;
+	int check_binary = options ? options->check_binary : 0;
 	int err = 0;
 	int conv_flags = global_conv_flags_eol;
 	/*
@@ -3986,7 +3998,7 @@ int diff_populate_filespec(struct repository *r,
 		 * opening the file and inspecting the contents, this
 		 * is probably fine.
 		 */
-		if ((flags & CHECK_BINARY) &&
+		if (check_binary &&
 		    s->size > big_file_threshold && s->is_binary == -1) {
 			s->is_binary = 1;
 			return 0;
@@ -4012,7 +4024,7 @@ int diff_populate_filespec(struct repository *r,
 	}
 	else {
 		enum object_type type;
-		if (size_only || (flags & CHECK_BINARY)) {
+		if (size_only || check_binary) {
 			type = oid_object_info(r, &s->oid, &s->size);
 			if (type < 0)
 				die("unable to read %s",
@@ -4141,7 +4153,7 @@ static struct diff_tempfile *prepare_temp_file(struct repository *r,
 		return temp;
 	}
 	else {
-		if (diff_populate_filespec(r, one, 0))
+		if (diff_populate_filespec(r, one, NULL))
 			die("cannot read data blob for %s", one->path);
 		prep_temp_blob(r->index, name, temp,
 			       one->data, one->size,
@@ -6407,9 +6419,9 @@ static int diff_filespec_is_identical(struct repository *r,
 {
 	if (S_ISGITLINK(one->mode))
 		return 0;
-	if (diff_populate_filespec(r, one, 0))
+	if (diff_populate_filespec(r, one, NULL))
 		return 0;
-	if (diff_populate_filespec(r, two, 0))
+	if (diff_populate_filespec(r, two, NULL))
 		return 0;
 	return !memcmp(one->data, two->data, one->size);
 }
@@ -6417,6 +6429,10 @@ static int diff_filespec_is_identical(struct repository *r,
 static int diff_filespec_check_stat_unmatch(struct repository *r,
 					    struct diff_filepair *p)
 {
+	struct diff_populate_filespec_options dpf_options = {
+		.check_size_only = 1,
+	};
+
 	if (p->done_skip_stat_unmatch)
 		return p->skip_stat_unmatch_result;
 
@@ -6439,8 +6455,8 @@ static int diff_filespec_check_stat_unmatch(struct repository *r,
 	    !DIFF_FILE_VALID(p->two) ||
 	    (p->one->oid_valid && p->two->oid_valid) ||
 	    (p->one->mode != p->two->mode) ||
-	    diff_populate_filespec(r, p->one, CHECK_SIZE_ONLY) ||
-	    diff_populate_filespec(r, p->two, CHECK_SIZE_ONLY) ||
+	    diff_populate_filespec(r, p->one, &dpf_options) ||
+	    diff_populate_filespec(r, p->two, &dpf_options) ||
 	    (p->one->size != p->two->size) ||
 	    !diff_filespec_is_identical(r, p->one, p->two)) /* (2) */
 		p->skip_stat_unmatch_result = 1;
@@ -6770,7 +6786,7 @@ size_t fill_textconv(struct repository *r,
 			*outbuf = "";
 			return 0;
 		}
-		if (diff_populate_filespec(r, df, 0))
+		if (diff_populate_filespec(r, df, NULL))
 			die("unable to read files to diff");
 		*outbuf = df->data;
 		return df->size;

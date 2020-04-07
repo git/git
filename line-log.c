@@ -519,7 +519,7 @@ static void fill_line_ends(struct repository *r,
 	unsigned long *ends = NULL;
 	char *data = NULL;
 
-	if (diff_populate_filespec(r, spec, 0))
+	if (diff_populate_filespec(r, spec, NULL))
 		die("Cannot read blob %s", oid_to_hex(&spec->oid));
 
 	ALLOC_ARRAY(ends, size);
@@ -1045,12 +1045,12 @@ static int process_diff_filepair(struct rev_info *rev,
 		return 0;
 
 	assert(pair->two->oid_valid);
-	diff_populate_filespec(rev->diffopt.repo, pair->two, 0);
+	diff_populate_filespec(rev->diffopt.repo, pair->two, NULL);
 	file_target.ptr = pair->two->data;
 	file_target.size = pair->two->size;
 
 	if (pair->one->oid_valid) {
-		diff_populate_filespec(rev->diffopt.repo, pair->one, 0);
+		diff_populate_filespec(rev->diffopt.repo, pair->one, NULL);
 		file_parent.ptr = pair->one->data;
 		file_parent.size = pair->one->size;
 	} else {
