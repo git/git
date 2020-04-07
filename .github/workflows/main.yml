@@ -63,6 +63,12 @@ jobs:
       shell: powershell
       run: |
         & .\git-sdk-64-minimal\usr\bin\bash.exe -lc ci/print-test-failures.sh
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v1
+      with:
+        name: failed-tests-windows
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
   vs-build:
     env:
       MSYSTEM: MINGW64
@@ -176,6 +182,12 @@ jobs:
     - run: ci/run-build-and-tests.sh
     - run: ci/print-test-failures.sh
       if: failure()
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v1
+      with:
+        name: failed-tests-${{matrix.vector.jobname}}
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
   dockerized:
     strategy:
       matrix:
@@ -194,6 +206,12 @@ jobs:
     - run: ci/run-build-and-tests.sh
     - run: ci/print-test-failures.sh
       if: failure()
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v1
+      with:
+        name: failed-tests-${{matrix.vector.jobname}}
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
   static-analysis:
     env:
       jobname: StaticAnalysis
