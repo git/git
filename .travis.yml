@@ -16,7 +16,7 @@ compiler:
 
 matrix:
   include:
-    - env: jobname=GIT_TEST_GETTEXT_POISON
+    - env: jobname=GETTEXT_POISON
       os: linux
       compiler:
       addons:
