@@ -657,6 +657,18 @@ die () {
 	fi
 }
 
+file_lineno () {
+	test -z "$GIT_TEST_FRAMEWORK_SELFTEST" && test -n "$BASH" || return 0
+	local i
+	for i in ${!BASH_SOURCE[*]}
+	do
+		case $i,"${BASH_SOURCE[$i]##*/}" in
+		0,t[0-9]*.sh) echo "t/${BASH_SOURCE[$i]}:$LINENO: ${1+$1: }"; return;;
+		*,t[0-9]*.sh) echo "t/${BASH_SOURCE[$i]}:${BASH_LINENO[$(($i-1))]}: ${1+$1: }"; return;;
+		esac
+	done
+}
+
 GIT_EXIT_OK=
 trap 'die' EXIT
 # Disable '-x' tracing, because with some shells, notably dash, it
@@ -702,7 +714,7 @@ test_failure_ () {
 		write_junit_xml_testcase "$1" "      $junit_insert"
 	fi
 	test_failure=$(($test_failure + 1))
-	say_color error "not ok $test_count - $1"
+	say_color error "$(file_lineno error)not ok $test_count - $1"
 	shift
 	printf '%s\n' "$*" | sed -e 's/^/#	/'
 	test "$immediate" = "" || { finalize_junit_xml; GIT_EXIT_OK=t; exit 1; }
