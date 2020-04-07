@@ -4034,10 +4034,18 @@ int diff_populate_filespec(struct repository *r,
 			 */
 			info.contentp = &s->data;
 
+		if (options && options->missing_object_cb) {
+			if (!oid_object_info_extended(r, &s->oid, &info,
+						      OBJECT_INFO_LOOKUP_REPLACE |
+						      OBJECT_INFO_SKIP_FETCH_OBJECT))
+				goto object_read;
+			options->missing_object_cb(options->missing_object_data);
+		}
 		if (oid_object_info_extended(r, &s->oid, &info,
 					     OBJECT_INFO_LOOKUP_REPLACE))
 			die("unable to read %s", oid_to_hex(&s->oid));
 
+object_read:
 		if (size_only || check_binary) {
 			if (size_only)
 				return 0;
@@ -6444,6 +6452,8 @@ static int diff_filespec_check_stat_unmatch(struct repository *r,
 {
 	struct diff_populate_filespec_options dpf_options = {
 		.check_size_only = 1,
+		.missing_object_cb = diff_queued_diff_prefetch,
+		.missing_object_data = r,
 	};
 
 	if (p->done_skip_stat_unmatch)
@@ -6520,9 +6530,9 @@ void diffcore_fix_diff_index(void)
 	QSORT(q->queue, q->nr, diffnamecmp);
 }
 
-static void add_if_missing(struct repository *r,
-			   struct oid_array *to_fetch,
-			   const struct diff_filespec *filespec)
+void diff_add_if_missing(struct repository *r,
+			 struct oid_array *to_fetch,
+			 const struct diff_filespec *filespec)
 {
 	if (filespec && filespec->oid_valid &&
 	    !S_ISGITLINK(filespec->mode) &&
@@ -6531,28 +6541,47 @@ static void add_if_missing(struct repository *r,
 		oid_array_append(to_fetch, &filespec->oid);
 }
 
+void diff_queued_diff_prefetch(void *repository)
+{
+	struct repository *repo = repository;
+	int i;
+	struct diff_queue_struct *q = &diff_queued_diff;
+	struct oid_array to_fetch = OID_ARRAY_INIT;
+
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		diff_add_if_missing(repo, &to_fetch, p->one);
+		diff_add_if_missing(repo, &to_fetch, p->two);
+	}
+
+	/*
+	 * NEEDSWORK: Consider deduplicating the OIDs sent.
+	 */
+	promisor_remote_get_direct(repo, to_fetch.oid, to_fetch.nr);
+
+	oid_array_clear(&to_fetch);
+}
+
 void diffcore_std(struct diff_options *options)
 {
-	if (options->repo == the_repository && has_promisor_remote()) {
-		/*
-		 * Prefetch the diff pairs that are about to be flushed.
-		 */
-		int i;
-		struct diff_queue_struct *q = &diff_queued_diff;
-		struct oid_array to_fetch = OID_ARRAY_INIT;
+	int output_formats_to_prefetch = DIFF_FORMAT_DIFFSTAT |
+		DIFF_FORMAT_NUMSTAT |
+		DIFF_FORMAT_PATCH |
+		DIFF_FORMAT_SHORTSTAT |
+		DIFF_FORMAT_DIRSTAT;
 
-		for (i = 0; i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			add_if_missing(options->repo, &to_fetch, p->one);
-			add_if_missing(options->repo, &to_fetch, p->two);
-		}
-		/*
-		 * NEEDSWORK: Consider deduplicating the OIDs sent.
-		 */
-		promisor_remote_get_direct(options->repo,
-					   to_fetch.oid, to_fetch.nr);
-		oid_array_clear(&to_fetch);
-	}
+	/*
+	 * Check if the user requested a blob-data-requiring diff output and/or
+	 * break-rewrite detection (which requires blob data). If yes, prefetch
+	 * the diff pairs.
+	 *
+	 * If no prefetching occurs, diffcore_rename() will prefetch if it
+	 * decides that it needs inexact rename detection.
+	 */
+	if (options->repo == the_repository && has_promisor_remote() &&
+	    (options->output_format & output_formats_to_prefetch ||
+	     options->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK))
+		diff_queued_diff_prefetch(options->repo);
 
 	/* NOTE please keep the following in sync with diff_tree_combined() */
 	if (options->skip_stat_unmatch)
