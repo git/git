@@ -82,6 +82,7 @@ static int show_progress = -1;
 static int default_to_upstream = 1;
 static int signoff;
 static const char *sign_commit;
+static int autostash;
 static int no_verify;
 
 static struct strategy all_strategy[] = {
@@ -286,6 +287,7 @@ static struct option builtin_merge_options[] = {
 	OPT_SET_INT(0, "progress", &show_progress, N_("force progress reporting"), 1),
 	{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, N_("key-id"),
 	  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
+	OPT_AUTOSTASH(&autostash),
 	OPT_BOOL(0, "overwrite-ignore", &overwrite_ignore, N_("update ignored files (default)")),
 	OPT_BOOL(0, "signoff", &signoff, N_("add Signed-off-by:")),
 	OPT_BOOL(0, "no-verify", &no_verify, N_("bypass pre-merge-commit and commit-msg hooks")),
@@ -475,6 +477,7 @@ static void finish(struct commit *head_commit,
 	/* Run a post-merge hook */
 	run_hook_le(NULL, "post-merge", squash ? "1" : "0", NULL);
 
+	apply_autostash(git_path_merge_autostash(the_repository));
 	strbuf_release(&reflog_message);
 }
 
@@ -634,6 +637,9 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		return 0;
 	} else if (!strcmp(k, "gpg.mintrustlevel")) {
 		check_trust_level = 0;
+	} else if (!strcmp(k, "merge.autostash")) {
+		autostash = git_config_bool(k, v);
+		return 0;
 	}
 
 	status = fmt_merge_msg_config(k, v, cb);
@@ -1281,6 +1287,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (abort_current_merge) {
 		int nargc = 2;
 		const char *nargv[] = {"reset", "--merge", NULL};
+		struct strbuf stash_oid = STRBUF_INIT;
 
 		if (orig_argc != 2)
 			usage_msg_opt(_("--abort expects no arguments"),
@@ -1289,8 +1296,17 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (!file_exists(git_path_merge_head(the_repository)))
 			die(_("There is no merge to abort (MERGE_HEAD missing)."));
 
+		if (read_oneliner(&stash_oid, git_path_merge_autostash(the_repository),
+		    READ_ONELINER_SKIP_IF_EMPTY))
+			unlink(git_path_merge_autostash(the_repository));
+
 		/* Invoke 'git reset --merge' */
 		ret = cmd_reset(nargc, nargv, prefix);
+
+		if (stash_oid.len)
+			apply_autostash_oid(stash_oid.buf);
+
+		strbuf_release(&stash_oid);
 		goto done;
 	}
 
@@ -1513,6 +1529,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			goto done;
 		}
 
+		if (autostash)
+			create_autostash(the_repository,
+					 git_path_merge_autostash(the_repository),
+					 "merge");
 		if (checkout_fast_forward(the_repository,
 					  &head_commit->object.oid,
 					  &commit->object.oid,
@@ -1578,6 +1598,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (fast_forward == FF_ONLY)
 		die(_("Not possible to fast-forward, aborting."));
+
+	if (autostash)
+		create_autostash(the_repository,
+				 git_path_merge_autostash(the_repository),
+				 "merge");
 
 	/* We are going to make a new commit. */
 	git_committer_info(IDENT_STRICT);

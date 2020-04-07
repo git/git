@@ -1376,8 +1376,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
 			N_("GPG-sign commits"),
 			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
-		OPT_BOOL(0, "autostash", &options.autostash,
-			 N_("automatically stash/stash pop before and after")),
+		OPT_AUTOSTASH(&options.autostash),
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
 				N_("add exec lines after each commit of the "
 				   "editable list")),
