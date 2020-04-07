@@ -3659,23 +3659,23 @@ static enum todo_command peek_command(struct todo_list *todo_list, int offset)
 
 static int apply_autostash(const char *path)
 {
-	struct strbuf stash_sha1 = STRBUF_INIT;
+	struct strbuf stash_oid = STRBUF_INIT;
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret = 0;
 
-	if (!read_oneliner(&stash_sha1, path,
+	if (!read_oneliner(&stash_oid, path,
 			   READ_ONELINER_SKIP_IF_EMPTY)) {
-		strbuf_release(&stash_sha1);
+		strbuf_release(&stash_oid);
 		return 0;
 	}
-	strbuf_trim(&stash_sha1);
+	strbuf_trim(&stash_oid);
 
 	child.git_cmd = 1;
 	child.no_stdout = 1;
 	child.no_stderr = 1;
 	argv_array_push(&child.args, "stash");
 	argv_array_push(&child.args, "apply");
-	argv_array_push(&child.args, stash_sha1.buf);
+	argv_array_push(&child.args, stash_oid.buf);
 	if (!run_command(&child))
 		fprintf(stderr, _("Applied autostash.\n"));
 	else {
@@ -3687,9 +3687,9 @@ static int apply_autostash(const char *path)
 		argv_array_push(&store.args, "-m");
 		argv_array_push(&store.args, "autostash");
 		argv_array_push(&store.args, "-q");
-		argv_array_push(&store.args, stash_sha1.buf);
+		argv_array_push(&store.args, stash_oid.buf);
 		if (run_command(&store))
-			ret = error(_("cannot store %s"), stash_sha1.buf);
+			ret = error(_("cannot store %s"), stash_oid.buf);
 		else
 			fprintf(stderr,
 				_("Applying autostash resulted in conflicts.\n"
@@ -3698,7 +3698,7 @@ static int apply_autostash(const char *path)
 				  " \"git stash drop\" at any time.\n"));
 	}
 
-	strbuf_release(&stash_sha1);
+	strbuf_release(&stash_oid);
 	return ret;
 }
 
