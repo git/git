@@ -3707,18 +3707,10 @@ void create_autostash(struct repository *r, const char *path,
 	strbuf_release(&buf);
 }
 
-static int apply_save_autostash(const char *path, int attempt_apply)
+static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
 {
-	struct strbuf stash_oid = STRBUF_INIT;
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret = 0;
-
-	if (!read_oneliner(&stash_oid, path,
-			   READ_ONELINER_SKIP_IF_EMPTY)) {
-		strbuf_release(&stash_oid);
-		return 0;
-	}
-	strbuf_trim(&stash_oid);
 
 	if (attempt_apply) {
 		child.git_cmd = 1;
@@ -3726,7 +3718,7 @@ static int apply_save_autostash(const char *path, int attempt_apply)
 		child.no_stderr = 1;
 		argv_array_push(&child.args, "stash");
 		argv_array_push(&child.args, "apply");
-		argv_array_push(&child.args, stash_oid.buf);
+		argv_array_push(&child.args, stash_oid);
 		ret = run_command(&child);
 	}
 
@@ -3741,9 +3733,9 @@ static int apply_save_autostash(const char *path, int attempt_apply)
 		argv_array_push(&store.args, "-m");
 		argv_array_push(&store.args, "autostash");
 		argv_array_push(&store.args, "-q");
-		argv_array_push(&store.args, stash_oid.buf);
+		argv_array_push(&store.args, stash_oid);
 		if (run_command(&store))
-			ret = error(_("cannot store %s"), stash_oid.buf);
+			ret = error(_("cannot store %s"), stash_oid);
 		else
 			fprintf(stderr,
 				_("%s\n"
@@ -3754,6 +3746,23 @@ static int apply_save_autostash(const char *path, int attempt_apply)
 				_("Applying autostash resulted in conflicts.") :
 				_("Autostash exists; creating a new stash entry."));
 	}
+
+	return ret;
+}
+
+static int apply_save_autostash(const char *path, int attempt_apply)
+{
+	struct strbuf stash_oid = STRBUF_INIT;
+	int ret = 0;
+
+	if (!read_oneliner(&stash_oid, path,
+			   READ_ONELINER_SKIP_IF_EMPTY)) {
+		strbuf_release(&stash_oid);
+		return 0;
+	}
+	strbuf_trim(&stash_oid);
+
+	ret = apply_save_autostash_oid(stash_oid.buf, attempt_apply);
 
 	unlink(path);
 	strbuf_release(&stash_oid);
@@ -3768,6 +3777,11 @@ int save_autostash(const char *path)
 int apply_autostash(const char *path)
 {
 	return apply_save_autostash(path, 1);
+}
+
+int apply_autostash_oid(const char *stash_oid)
+{
+	return apply_save_autostash_oid(stash_oid, 1);
 }
 
 static const char *reflog_message(struct replay_opts *opts,
