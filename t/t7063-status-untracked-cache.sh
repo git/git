@@ -18,12 +18,7 @@ GIT_FORCE_UNTRACKED_CACHE=true
 export GIT_FORCE_UNTRACKED_CACHE
 
 sync_mtime () {
-	if test_have_prereq BUSYBOX
-	then
-		find . -type d -print0 | xargs -0r ls -ld >/dev/null
-	else
-		find . -type d -ls >/dev/null
-	fi
+	find . -type d -exec ls -ld {} + >/dev/null
 }
 
 avoid_racy() {

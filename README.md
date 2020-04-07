@@ -1,8 +1,7 @@
 Git for Windows
 ===============
 
-[![Build Status (Windows/macOS/Linux)](https://dev.azure.com/git-for-windows/git/_apis/build/status/git-for-windows.git)](https://dev.azure.com/git-for-windows/git/_build/latest?definitionId=17)
-[![Build Status (core.autocrlf=true)](https://dev.azure.com/Git-for-Windows/git/_apis/build/status/TestWithAutoCRLF)](https://dev.azure.com/Git-for-Windows/git/_build/latest?definitionId=3)
+[![Build status](https://github.com/git-for-windows/git/workflows/CI/PR/badge.svg)](https://github.com/git-for-windows/git/actions?query=branch%3Amaster+event%3Apush)
 [![Join the chat at https://gitter.im/git-for-windows/git](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/git-for-windows/git?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This is [Git for Windows](http://git-for-windows.github.io/), the Windows port

@@ -905,7 +905,7 @@ test_expect_code () {
 # - not all diff versions understand "-u"
 
 test_cmp() {
-	GIT_ALLOC_LIMIT=0 $GIT_TEST_CMP "$@"
+	GIT_ALLOC_LIMIT=0 eval "$GIT_TEST_CMP" '"$@"'
 }
 
 # Check that the given config key has the expected value.
