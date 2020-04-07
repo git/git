@@ -433,11 +433,9 @@ static int read_oneliner(struct strbuf *buf,
 {
 	int orig_len = buf->len;
 
-	if (!file_exists(path))
-		return 0;
-
 	if (strbuf_read_file(buf, path, 0) < 0) {
-		warning_errno(_("could not read '%s'"), path);
+		if (errno != ENOENT && errno != ENOTDIR)
+			warning_errno(_("could not read '%s'"), path);
 		return 0;
 	}
 
