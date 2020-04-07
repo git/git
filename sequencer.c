@@ -420,6 +420,7 @@ static int write_message(const void *buf, size_t len, const char *filename,
 }
 
 #define READ_ONELINER_SKIP_IF_EMPTY (1 << 0)
+#define READ_ONELINER_WARN_MISSING (1 << 1)
 
 /*
  * Reads a file that was presumably written by a shell script, i.e. with an
@@ -436,7 +437,8 @@ static int read_oneliner(struct strbuf *buf,
 	int orig_len = buf->len;
 
 	if (strbuf_read_file(buf, path, 0) < 0) {
-		if (errno != ENOENT && errno != ENOTDIR)
+		if ((flags & READ_ONELINER_WARN_MISSING) ||
+		    (errno != ENOENT && errno != ENOTDIR))
 			warning_errno(_("could not read '%s'"), path);
 		return 0;
 	}
