@@ -3707,7 +3707,7 @@ void create_autostash(struct repository *r, const char *path,
 	strbuf_release(&buf);
 }
 
-int apply_autostash(const char *path)
+static int apply_save_autostash(const char *path, int attempt_apply)
 {
 	struct strbuf stash_oid = STRBUF_INIT;
 	struct child_process child = CHILD_PROCESS_INIT;
@@ -3720,13 +3720,17 @@ int apply_autostash(const char *path)
 	}
 	strbuf_trim(&stash_oid);
 
-	child.git_cmd = 1;
-	child.no_stdout = 1;
-	child.no_stderr = 1;
-	argv_array_push(&child.args, "stash");
-	argv_array_push(&child.args, "apply");
-	argv_array_push(&child.args, stash_oid.buf);
-	if (!run_command(&child))
+	if (attempt_apply) {
+		child.git_cmd = 1;
+		child.no_stdout = 1;
+		child.no_stderr = 1;
+		argv_array_push(&child.args, "stash");
+		argv_array_push(&child.args, "apply");
+		argv_array_push(&child.args, stash_oid.buf);
+		ret = run_command(&child);
+	}
+
+	if (attempt_apply && !ret)
 		fprintf(stderr, _("Applied autostash.\n"));
 	else {
 		struct child_process store = CHILD_PROCESS_INIT;
@@ -3742,15 +3746,28 @@ int apply_autostash(const char *path)
 			ret = error(_("cannot store %s"), stash_oid.buf);
 		else
 			fprintf(stderr,
-				_("Applying autostash resulted in conflicts.\n"
+				_("%s\n"
 				  "Your changes are safe in the stash.\n"
 				  "You can run \"git stash pop\" or"
-				  " \"git stash drop\" at any time.\n"));
+				  " \"git stash drop\" at any time.\n"),
+				attempt_apply ?
+				_("Applying autostash resulted in conflicts.") :
+				_("Autostash exists; creating a new stash entry."));
 	}
 
 	unlink(path);
 	strbuf_release(&stash_oid);
 	return ret;
+}
+
+int save_autostash(const char *path)
+{
+	return apply_save_autostash(path, 0);
+}
+
+int apply_autostash(const char *path)
+{
+	return apply_save_autostash(path, 1);
 }
 
 static const char *reflog_message(struct replay_opts *opts,
