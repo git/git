@@ -4023,12 +4023,22 @@ int diff_populate_filespec(struct repository *r,
 		}
 	}
 	else {
-		enum object_type type;
+		struct object_info info = {
+			.sizep = &s->size
+		};
+
+		if (!(size_only || check_binary))
+			/*
+			 * Set contentp, since there is no chance that merely
+			 * the size is sufficient.
+			 */
+			info.contentp = &s->data;
+
+		if (oid_object_info_extended(r, &s->oid, &info,
+					     OBJECT_INFO_LOOKUP_REPLACE))
+			die("unable to read %s", oid_to_hex(&s->oid));
+
 		if (size_only || check_binary) {
-			type = oid_object_info(r, &s->oid, &s->size);
-			if (type < 0)
-				die("unable to read %s",
-				    oid_to_hex(&s->oid));
 			if (size_only)
 				return 0;
 			if (s->size > big_file_threshold && s->is_binary == -1) {
@@ -4036,9 +4046,12 @@ int diff_populate_filespec(struct repository *r,
 				return 0;
 			}
 		}
-		s->data = repo_read_object_file(r, &s->oid, &type, &s->size);
-		if (!s->data)
-			die("unable to read %s", oid_to_hex(&s->oid));
+		if (!info.contentp) {
+			info.contentp = &s->data;
+			if (oid_object_info_extended(r, &s->oid, &info,
+						     OBJECT_INFO_LOOKUP_REPLACE))
+				die("unable to read %s", oid_to_hex(&s->oid));
+		}
 		s->should_free = 1;
 	}
 	return 0;
