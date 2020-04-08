@@ -32,7 +32,15 @@ matrix:
       services:
         - docker
       before_install:
-      script: ci/run-linux32-docker.sh
+      script: ci/run-docker.sh
+    - env: jobname=linux-musl
+      os: linux
+      compiler:
+      addons:
+      services:
+        - docker
+      before_install:
+      script: ci/run-docker.sh
     - env: jobname=StaticAnalysis
       os: linux
       compiler:
