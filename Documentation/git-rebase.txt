@@ -620,7 +620,8 @@ commits that started empty, though these are rare in practice.  It
 also drops commits that become empty and has no option for controlling
 this behavior.
 
-The merge backend keeps intentionally empty commits.  Similar to the
+The merge backend keeps intentionally empty commits (though with -i
+they are marked as empty in the todo list editor).  Similar to the
 apply backend, by default the merge backend drops commits that become
 empty unless -i/--interactive is specified (in which case it stops and
 asks the user what to do).  The merge backend also has an
