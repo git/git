@@ -2460,6 +2460,12 @@ proc makewindow {} {
     $ctext tag conf currentsearchhit -back $currentsearchhitbgcolor
     $ctext tag conf wwrap -wrap word -lmargin2 1c
     $ctext tag conf bold -font textfontbold
+    # set these to the lowest priority:
+    $ctext tag lower currentsearchhit
+    $ctext tag lower found
+    $ctext tag lower filesep
+    $ctext tag lower dresult
+    $ctext tag lower d0
 
     .pwbottom add .bleft
     if {!$use_ttk} {
