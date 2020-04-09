@@ -189,6 +189,7 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 
 	repo_diff_setup(r, &diffopt);
 	diffopt.flags.recursive = 1;
+	diffopt.detect_rename = 0;
 	diffopt.max_changes = max_changes;
 	diff_setup_done(&diffopt);
 
