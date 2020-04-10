@@ -1,0 +1,141 @@
+name: mingw-w64-x86_64-git
+
+on:
+  # This workflow can be triggered manually in the Actions tab, see
+  # https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
+  - workflow_dispatch
+
+env:
+  HOME: "${{github.workspace}}\\home"
+  MSYSTEM: MINGW64
+  USERPROFILE: "${{github.workspace}}\\home"
+
+jobs:
+  bundle-artifacts:
+    runs-on: windows-latest
+    steps:
+      - name: Configure user
+        shell: bash
+        run:
+          USER_NAME="${{github.actor}}" &&
+          USER_EMAIL="${{github.actor}}@users.noreply.github.com" &&
+          mkdir "$HOME" &&
+          git config --global user.name "$USER_NAME" &&
+          git config --global user.email "$USER_EMAIL" &&
+          echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
+      - name: Download git-sdk-64-build-installers
+        shell: bash
+        run: |
+          # Use Git Bash to download and unpack the artifact
+
+          ## Get artifact
+          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
+          id=$(curl "$urlbase?definitions=29&statusFilter=completed&resultFilter=succeeded&\$top=1" |
+            jq -r '.value[0].id')
+          download_url=$(curl "$urlbase/$id/artifacts" |
+            jq -r '.value[] | select(.name == "git-sdk-64-build-installers").resource.downloadUrl')
+
+          curl -o artifacts.zip "$download_url"
+
+          ## Unpack artifact
+          unzip artifacts.zip
+      - name: Clone build-extra
+        shell: bash
+        run: |
+          d=git-sdk-64-build-installers/usr/src/build-extra &&
+          git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
+      - name: Generate bundle artifacts
+        shell: powershell
+        run: |
+          & .\git-sdk-64-build-installers\git-cmd.exe --command=usr\bin\bash.exe -lc @"
+            printf '#!/bin/sh\n\nexec /mingw64/bin/git.exe "`$@"\n' >/usr/bin/git &&
+            mkdir -p bundle-artifacts &&
+
+            git -c init.defaultBranch=main init --bare &&
+            git remote add -f origin https://github.com/git-for-windows/git &&
+            git fetch https://github.com/${{github.repository}} ${{github.ref}}:${{github.ref}} &&
+
+            tag_name=\"`$(git describe --match 'v[0-9]*' FETCH_HEAD)-`$(date +%Y%m%d%H%M%S)\" &&
+            echo \"prerelease-`${tag_name#v}\" >bundle-artifacts/ver &&
+            echo \"`${tag_name#v}\" >bundle-artifacts/display_version &&
+            echo \"`$tag_name\" >bundle-artifacts/next_version &&
+            git tag -m \"Snapshot build\" \"`$tag_name\" FETCH_HEAD &&
+            git bundle create bundle-artifacts/git.bundle origin/main..\"`$tag_name\" &&
+
+            sh -x /usr/src/build-extra/please.sh mention feature \"Snapshot of `$(git show -s  --pretty='tformat:%h (%s, %ad)' --date=short FETCH_HEAD)\" &&
+            git -C /usr/src/build-extra bundle create \"`$PWD/bundle-artifacts/build-extra.bundle\" origin/main..main
+          "@
+      - name: 'Publish Pipeline Artifact: bundle-artifacts'
+        uses: actions/upload-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+  pkg-x86_64:
+    runs-on: windows-latest
+    needs: bundle-artifacts
+    steps:
+      - name: Configure user
+        shell: bash
+        run:
+          USER_NAME="${{github.actor}}" &&
+          USER_EMAIL="${{github.actor}}@users.noreply.github.com" &&
+          mkdir "$HOME" &&
+          git config --global user.name "$USER_NAME" &&
+          git config --global user.email "$USER_EMAIL" &&
+          echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
+      - name: Download git-sdk-64-makepkg-git
+        shell: bash
+        run: |
+          # Use Git Bash to download and unpack the artifact
+
+          ## Get artifact
+          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
+          id=${{ needs.bundle-artifacts.outputs.latest-sdk64-extra-build-id }}
+          download_url="$(curl "$urlbase/$id/artifacts" |
+            jq -r '.value[] | select(.name == "git-sdk-64-makepkg-git").resource.downloadUrl')"
+
+          curl -o artifacts.zip "$download_url"
+
+          ## Unpack artifact
+          unzip artifacts.zip
+      - name: Download bundle-artifacts
+        uses: actions/download-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+      - name: Clone and update build-extra
+        shell: bash
+        run: |
+          d=git-sdk-64-makepkg-git/usr/src/build-extra &&
+          git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d &&
+          git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
+      - name: Check out git/git
+        shell: bash
+        run: |
+          git -c init.defaultBranch=main init &&
+          git remote add -f origin https://github.com/git-for-windows/git &&
+          git fetch --tags bundle-artifacts/git.bundle $(cat bundle-artifacts/next_version) &&
+          git reset --hard $(cat bundle-artifacts/next_version)
+      - name: Build mingw-w64-x86_64-git
+        shell: powershell
+        run: |
+          & git-sdk-64-makepkg-git\usr\bin\sh.exe -lc @"
+            set -x
+            # Let `cv2pdb` find the DLLs
+            PATH=\"`$PATH:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/amd64\"
+            type -p mspdb140.dll || exit 1
+            sh -x /usr/src/build-extra/please.sh build-mingw-w64-git --only-64-bit --build-src-pkg -o artifacts HEAD &&
+            cp bundle-artifacts/ver artifacts/ &&
+
+            b=`$PWD/artifacts &&
+            version=`$(cat bundle-artifacts/next_version) &&
+            (cd /usr/src/MINGW-packages/mingw-w64-git &&
+            cp PKGBUILD.`$version PKGBUILD &&
+            git commit -s -m \"mingw-w64-git: new version (`$version)\" PKGBUILD &&
+            git bundle create \"`$b\"/MINGW-packages.bundle origin/main..main)
+          "@
+      - name: Publish mingw-w64-x86_64-git
+        uses: actions/upload-artifact@v1
+        with:
+          name: pkg-x86_64
+          path: artifacts
