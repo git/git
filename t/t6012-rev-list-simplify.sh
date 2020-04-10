@@ -154,4 +154,124 @@ test_expect_success '--full-diff is not affected by --parents' '
 	test_cmp expected actual
 '
 
+#
+# Create a new history to demonstrate the value of --show-pulls
+# with respect to the subtleties of simplified history, --full-history,
+# and --simplify-merges.
+#
+#   .-A---M-----C--N---O---P
+#  /     / \  \  \/   /   /
+# I     B   \  R-'`-Z'   /
+#  \   /     \/         /
+#   \ /      /\        /
+#    `---X--'  `---Y--'
+#
+# This example is explained in Documentation/rev-list-options.txt
+
+test_expect_success 'rebuild repo' '
+	rm -rf .git * &&
+	git init &&
+	git switch -c main &&
+
+	echo base >file &&
+	git add file &&
+	test_commit I &&
+
+	echo A >file &&
+	git add file &&
+	test_commit A &&
+
+	git switch -c branchB I &&
+	echo B >file &&
+	git add file &&
+	test_commit B &&
+
+	git switch main &&
+	test_must_fail git merge -m "M" B &&
+	echo A >file &&
+	echo B >>file &&
+	git add file &&
+	git merge --continue &&
+	note M &&
+
+	echo C >other &&
+	git add other &&
+	test_commit C &&
+
+	git switch -c branchX I &&
+	echo X >file &&
+	git add file &&
+	test_commit X &&
+
+	git switch -c branchR M &&
+	git merge -m R -Xtheirs X &&
+	note R &&
+
+	git switch main &&
+	git merge -m N R &&
+	note N &&
+
+	git switch -c branchY M &&
+	echo Y >y &&
+	git add y &&
+	test_commit Y &&
+
+	git switch -c branchZ C &&
+	echo Z >z &&
+	git add z &&
+	test_commit Z &&
+
+	git switch main &&
+	git merge -m O Z &&
+	note O &&
+
+	git merge -m P Y &&
+	note P
+'
+
+check_result 'X I' -- file
+check_result 'N R X I' --show-pulls -- file
+
+check_result 'P O N R X M B A I' --full-history --topo-order -- file
+check_result 'N R X M B A I' --simplify-merges --topo-order --show-pulls -- file
+check_result 'R X M B A I' --simplify-merges --topo-order -- file
+check_result 'N M A I' --first-parent -- file
+check_result 'N M A I' --first-parent --show-pulls -- file
+
+# --ancestry-path implies --full-history
+check_result 'P O N R M' --topo-order \
+	--ancestry-path A..HEAD -- file
+check_result 'P O N R M' --topo-order \
+	--show-pulls \
+	--ancestry-path A..HEAD -- file
+check_result 'P O N R M' --topo-order \
+	--full-history \
+	--ancestry-path A..HEAD -- file
+check_result 'R M' --topo-order \
+	--simplify-merges \
+	--ancestry-path A..HEAD -- file
+check_result 'N R M' --topo-order \
+	--simplify-merges --show-pulls \
+	--ancestry-path A..HEAD -- file
+
+test_expect_success 'log --graph --simplify-merges --show-pulls' '
+	cat >expect <<-\EOF &&
+	* N
+	*   R
+	|\  
+	| * X
+	* |   M
+	|\ \  
+	| * | B
+	| |/  
+	* / A
+	|/  
+	* I
+	EOF
+	git log --graph --pretty="%s" \
+		--simplify-merges --show-pulls \
+		-- file >actual &&
+	test_cmp expect actual
+'
+
 test_done
