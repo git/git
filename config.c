@@ -358,12 +358,13 @@ static inline int iskeychar(int c)
  *
  * store_key - pointer to char* which will hold a copy of the key with
  *             lowercase section and variable name
- * baselen - pointer to int which will hold the length of the
+ * baselen - pointer to size_t which will hold the length of the
  *           section + subsection part, can be NULL
  */
-static int git_config_parse_key_1(const char *key, char **store_key, int *baselen_, int quiet)
+static int git_config_parse_key_1(const char *key, char **store_key, size_t *baselen_, int quiet)
 {
-	int i, dot, baselen;
+	size_t i, baselen;
+	int dot;
 	const char *last_dot = strrchr(key, '.');
 
 	/*
@@ -425,7 +426,7 @@ out_free_ret_1:
 	return -CONFIG_INVALID_KEY;
 }
 
-int git_config_parse_key(const char *key, char **store_key, int *baselen)
+int git_config_parse_key(const char *key, char **store_key, size_t *baselen)
 {
 	return git_config_parse_key_1(key, store_key, baselen, 0);
 }
@@ -2383,7 +2384,7 @@ void git_die_config(const char *key, const char *err, ...)
  */
 
 struct config_store_data {
-	int baselen;
+	size_t baselen;
 	char *key;
 	int do_not_match;
 	regex_t *value_regex;
@@ -2509,7 +2510,7 @@ static struct strbuf store_create_section(const char *key,
 					  const struct config_store_data *store)
 {
 	const char *dot;
-	int i;
+	size_t i;
 	struct strbuf sb = STRBUF_INIT;
 
 	dot = memchr(key, '.', store->baselen);
@@ -2522,7 +2523,9 @@ static struct strbuf store_create_section(const char *key,
 		}
 		strbuf_addstr(&sb, "\"]\n");
 	} else {
-		strbuf_addf(&sb, "[%.*s]\n", store->baselen, key);
+		strbuf_addch(&sb, '[');
+		strbuf_add(&sb, key, store->baselen);
+		strbuf_addstr(&sb, "]\n");
 	}
 
 	return sb;
