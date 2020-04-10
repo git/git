@@ -70,7 +70,7 @@ Documentation)
 	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns make
 
 	test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
-	gem install --version 1.5.8 asciidoctor
+	sudo gem install --version 1.5.8 asciidoctor
 	;;
 linux-gcc-4.8|GETTEXT_POISON)
 	sudo apt-get -q update
