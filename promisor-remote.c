@@ -101,7 +101,7 @@ static void promisor_remote_move_to_tail(struct promisor_remote *r,
 static int promisor_remote_config(const char *var, const char *value, void *data)
 {
 	const char *name;
-	int namelen;
+	size_t namelen;
 	const char *subkey;
 
 	if (!strcmp(var, "core.partialclonefilter"))

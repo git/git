@@ -305,7 +305,7 @@ static void read_branches_file(struct remote *remote)
 static int handle_config(const char *key, const char *value, void *cb)
 {
 	const char *name;
-	int namelen;
+	size_t namelen;
 	const char *subkey;
 	struct remote *remote;
 	struct branch *branch;

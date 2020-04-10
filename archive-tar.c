@@ -364,7 +364,7 @@ static struct archiver **tar_filters;
 static int nr_tar_filters;
 static int alloc_tar_filters;
 
-static struct archiver *find_tar_filter(const char *name, int len)
+static struct archiver *find_tar_filter(const char *name, size_t len)
 {
 	int i;
 	for (i = 0; i < nr_tar_filters; i++) {
@@ -380,7 +380,7 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 	struct archiver *ar;
 	const char *name;
 	const char *type;
-	int namelen;
+	size_t namelen;
 
 	if (parse_config_key(var, "tar", &name, &namelen, &type) < 0 || !name)
 		return 0;

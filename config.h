@@ -359,7 +359,7 @@ int git_config_include(const char *name, const char *value, void *data);
  */
 int parse_config_key(const char *var,
 		     const char *section,
-		     const char **subsection, int *subsection_len,
+		     const char **subsection, size_t *subsection_len,
 		     const char **key);
 
 /**

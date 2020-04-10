@@ -1018,7 +1018,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 static int read_convert_config(const char *var, const char *value, void *cb)
 {
 	const char *key, *name;
-	int namelen;
+	size_t namelen;
 	struct convert_driver *drv;
 
 	/*

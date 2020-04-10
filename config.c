@@ -309,7 +309,7 @@ int git_config_include(const char *var, const char *value, void *data)
 {
 	struct config_include_data *inc = data;
 	const char *cond, *key;
-	int cond_len;
+	size_t cond_len;
 	int ret;
 
 	/*
@@ -3238,7 +3238,7 @@ int config_error_nonbool(const char *var)
 
 int parse_config_key(const char *var,
 		     const char *section,
-		     const char **subsection, int *subsection_len,
+		     const char **subsection, size_t *subsection_len,
 		     const char **key)
 {
 	const char *dot;

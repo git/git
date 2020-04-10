@@ -222,7 +222,7 @@ static struct userdiff_driver driver_false = {
 	{ NULL, 0 }
 };
 
-static struct userdiff_driver *userdiff_find_by_namelen(const char *k, int len)
+static struct userdiff_driver *userdiff_find_by_namelen(const char *k, size_t len)
 {
 	int i;
 	for (i = 0; i < ndrivers; i++) {
@@ -266,7 +266,7 @@ int userdiff_config(const char *k, const char *v)
 {
 	struct userdiff_driver *drv;
 	const char *name, *type;
-	int namelen;
+	size_t namelen;
 
 	if (parse_config_key(k, "diff", &name, &namelen, &type) || !name)
 		return 0;
