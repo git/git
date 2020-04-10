@@ -174,54 +174,43 @@ static void add_merge(struct branch *branch, const char *name)
 	branch->merge_name[branch->merge_nr++] = name;
 }
 
-static struct branch *make_branch(const char *name, int len)
+static struct branch *make_branch(const char *name, size_t len)
 {
 	struct branch *ret;
 	int i;
 
 	for (i = 0; i < branches_nr; i++) {
-		if (len ? (!strncmp(name, branches[i]->name, len) &&
-			   !branches[i]->name[len]) :
-		    !strcmp(name, branches[i]->name))
+		if (!strncmp(name, branches[i]->name, len) &&
+		    !branches[i]->name[len])
 			return branches[i];
 	}
 
 	ALLOC_GROW(branches, branches_nr + 1, branches_alloc);
 	ret = xcalloc(1, sizeof(struct branch));
 	branches[branches_nr++] = ret;
-	if (len)
-		ret->name = xstrndup(name, len);
-	else
-		ret->name = xstrdup(name);
+	ret->name = xstrndup(name, len);
 	ret->refname = xstrfmt("refs/heads/%s", ret->name);
 
 	return ret;
 }
 
-static struct rewrite *make_rewrite(struct rewrites *r, const char *base, int len)
+static struct rewrite *make_rewrite(struct rewrites *r,
+				    const char *base, size_t len)
 {
 	struct rewrite *ret;
 	int i;
 
 	for (i = 0; i < r->rewrite_nr; i++) {
-		if (len
-		    ? (len == r->rewrite[i]->baselen &&
-		       !strncmp(base, r->rewrite[i]->base, len))
-		    : !strcmp(base, r->rewrite[i]->base))
+		if (len == r->rewrite[i]->baselen &&
+		    !strncmp(base, r->rewrite[i]->base, len))
 			return r->rewrite[i];
 	}
 
 	ALLOC_GROW(r->rewrite, r->rewrite_nr + 1, r->rewrite_alloc);
 	ret = xcalloc(1, sizeof(struct rewrite));
 	r->rewrite[r->rewrite_nr++] = ret;
-	if (len) {
-		ret->base = xstrndup(base, len);
-		ret->baselen = len;
-	}
-	else {
-		ret->base = xstrdup(base);
-		ret->baselen = strlen(base);
-	}
+	ret->base = xstrndup(base, len);
+	ret->baselen = len;
 	return ret;
 }
 
@@ -470,7 +459,7 @@ static void read_config(void)
 		const char *head_ref = resolve_ref_unsafe("HEAD", 0, NULL, &flag);
 		if (head_ref && (flag & REF_ISSYMREF) &&
 		    skip_prefix(head_ref, "refs/heads/", &head_ref)) {
-			current_branch = make_branch(head_ref, 0);
+			current_branch = make_branch(head_ref, strlen(head_ref));
 		}
 	}
 	git_config(handle_config, NULL);
@@ -1584,7 +1573,7 @@ struct branch *branch_get(const char *name)
 	if (!name || !*name || !strcmp(name, "HEAD"))
 		ret = current_branch;
 	else
-		ret = make_branch(name, 0);
+		ret = make_branch(name, strlen(name));
 	set_merge(ret);
 	return ret;
 }
