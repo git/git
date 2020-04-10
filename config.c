@@ -2545,7 +2545,6 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 {
 	int i;
 	ssize_t ret;
-	int length = strlen(key + store->baselen + 1);
 	const char *quote = "";
 	struct strbuf sb = STRBUF_INIT;
 
@@ -2564,8 +2563,7 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 	if (i && value[i - 1] == ' ')
 		quote = "\"";
 
-	strbuf_addf(&sb, "\t%.*s = %s",
-		    length, key + store->baselen + 1, quote);
+	strbuf_addf(&sb, "\t%s = %s", key + store->baselen + 1, quote);
 
 	for (i = 0; value[i]; i++)
 		switch (value[i]) {
