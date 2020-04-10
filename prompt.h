@@ -6,4 +6,6 @@
 
 char *git_prompt(const char *prompt, int flags);
 
+int git_read_line_interactively(struct strbuf *line);
+
 #endif /* PROMPT_H */
