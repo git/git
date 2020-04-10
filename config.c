@@ -37,6 +37,7 @@ struct config_source {
 	enum config_error_action default_error_action;
 	int linenr;
 	int eof;
+	size_t total_len;
 	struct strbuf value;
 	struct strbuf var;
 	unsigned subsection_case_sensitive : 1;
@@ -524,6 +525,19 @@ static int get_next_char(void)
 			c = '\r';
 		}
 	}
+
+	if (c != EOF && ++cf->total_len > INT_MAX) {
+		/*
+		 * This is an absurdly long config file; refuse to parse
+		 * further in order to protect downstream code from integer
+		 * overflows. Note that we can't return an error specifically,
+		 * but we can mark EOF and put trash in the return value,
+		 * which will trigger a parse error.
+		 */
+		cf->eof = 1;
+		return 0;
+	}
+
 	if (c == '\n')
 		cf->linenr++;
 	if (c == EOF) {
@@ -1540,6 +1554,7 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data,
 	top->prev = cf;
 	top->linenr = 1;
 	top->eof = 0;
+	top->total_len = 0;
 	strbuf_init(&top->value, 1024);
 	strbuf_init(&top->var, 1024);
 	cf = top;
