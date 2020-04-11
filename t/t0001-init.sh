@@ -399,7 +399,7 @@ test_expect_success MINGW '.git hidden' '
 		mkdir newdir &&
 		cd newdir &&
 		git init &&
-		is_hidden .git
+		test_path_is_hidden .git
 	) &&
 	check_config newdir/.git false unset
 '
