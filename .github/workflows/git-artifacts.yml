@@ -89,9 +89,18 @@ jobs:
         with:
           name: bundle-artifacts
           path: bundle-artifacts
-  pkg-x86_64:
+  pkg:
     runs-on: windows-latest
     needs: bundle-artifacts
+    strategy:
+      matrix:
+        arch:
+          - name: x86_64
+            bitness: 64
+            bin: /amd64
+          - name: i686
+            bitness: 32
+            bin: ''
     steps:
       - name: Configure user
         shell: bash
@@ -157,7 +166,7 @@ jobs:
           git config --global user.email "<${info#*<}"
         env:
           GPGKEY: ${{secrets.GPGKEY}}
-      - name: Build mingw-w64-x86_64-git
+      - name: Build mingw-w64-${{matrix.arch.name}}-git
         env:
           GPGKEY: "${{secrets.GPGKEY}}"
         shell: powershell
@@ -165,9 +174,9 @@ jobs:
           & git-sdk-64-makepkg-git\usr\bin\sh.exe -lc @"
             set -x
             # Let `cv2pdb` find the DLLs
-            PATH=\"`$PATH:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/amd64\"
+            PATH=\"`$PATH:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin${{matrix.arch.bin}}\"
             type -p mspdb140.dll || exit 1
-            sh -x /usr/src/build-extra/please.sh build-mingw-w64-git --only-64-bit --build-src-pkg -o artifacts HEAD &&
+            sh -x /usr/src/build-extra/please.sh build-mingw-w64-git --only-${{matrix.arch.bitness}}-bit --build-src-pkg -o artifacts HEAD &&
             cp bundle-artifacts/ver artifacts/ &&
             if test -n \"`$GPGKEY\"
             then
@@ -188,10 +197,10 @@ jobs:
         if: always()
         shell: bash
         run: rm -rf home
-      - name: Publish mingw-w64-x86_64-git
+      - name: Publish mingw-w64-${{matrix.arch.name}}-git
         uses: actions/upload-artifact@v1
         with:
-          name: pkg-x86_64
+          name: pkg-${{matrix.arch.name}}
           path: artifacts
   artifacts:
     runs-on: windows-latest
@@ -214,21 +223,27 @@ jobs:
           - name: mingit-busybox
             fileprefix: MinGit
             fileextension: zip
+        arch:
+          - name: x86_64
+            bitness: 64
+          - name: i686
+            bitness: 32
       fail-fast: false
     env:
-      MSYSTEM: MINGW64
+      MSYSTEM: MINGW${{matrix.arch.bitness}}
     steps:
-      - name: Download pkg-x86_64
+      - name: Download pkg-${{matrix.arch.name}}
         uses: actions/download-artifact@v1
         with:
-          name: pkg-x86_64
-          path: pkg-x86_64
+          name: pkg-${{matrix.arch.name}}
+          path: pkg-${{matrix.arch.name}}
       - name: Download bundle-artifacts
         uses: actions/download-artifact@v1
         with:
           name: bundle-artifacts
           path: bundle-artifacts
       - name: Download git-sdk-64-build-installers
+        if: matrix.arch.bitness == '64'
         shell: bash
         run: |
           # Use Git Bash to download and unpack the artifact
@@ -243,10 +258,27 @@ jobs:
 
           ## Unpack artifact
           unzip artifacts.zip
+      - name: Download git-sdk-32-build-installers
+        if: matrix.arch.bitness == '32'
+        shell: bash
+        run: |
+          # Use Git Bash to download and unpack the artifact
+
+          ## Get artifact
+          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
+          id=$(curl "$urlbase?definitions=30&statusFilter=completed&resultFilter=succeeded&\$top=1" |
+            jq -r '.value[0].id')
+          download_url=$(curl "$urlbase/$id/artifacts" |
+            jq -r '.value[] | select(.name == "git-sdk-32-build-installers").resource.downloadUrl')
+
+          curl -o artifacts.zip "$download_url"
+
+          ## Unpack artifact
+          unzip artifacts.zip
       - name: Clone and update build-extra
         shell: bash
         run: |
-          d=git-sdk-64-build-installers/usr/src/build-extra &&
+          d=git-sdk-${{matrix.arch.bitness}}-build-installers/usr/src/build-extra &&
           git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d &&
           git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
       - name: Prepare home directory for code-signing
@@ -260,12 +292,12 @@ jobs:
           echo -n "$CODESIGN_P12" | tr % '\n' | base64 -d >home/.sig/codesign.p12 &&
           echo -n "$CODESIGN_PASS" >home/.sig/codesign.pass &&
           git config --global alias.signtool '!sh "/usr/src/build-extra/signtool.sh"'
-      - name: Build 64-bit ${{matrix.artifact.name}}
+      - name: Build ${{matrix.arch.bitness}}-bit ${{matrix.artifact.name}}
         shell: powershell
         run: |
-          & .\git-sdk-64-build-installers\usr\bin\bash.exe -lc @"
+          & .\git-sdk-${{matrix.arch.bitness}}-build-installers\usr\bin\bash.exe -lc @"
             set -x
-            /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=`$(cat pkg-x86_64/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-x86_64/mingw-w64-x86_64-git-[0-9]*.tar.xz --pkg=pkg-x86_64/mingw-w64-x86_64-git-doc-html-[0-9]*.tar.xz &&
+            /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=`$(cat pkg-${{matrix.arch.name}}/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-[0-9]*.tar.xz --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-doc-html-[0-9]*.tar.xz &&
             if test portable = '${{matrix.artifact.name}}' && test -n \"`$(git config alias.signtool)\"
             then
               git signtool artifacts/PortableGit-*.exe
@@ -276,22 +308,22 @@ jobs:
         if: matrix.artifact.name == 'installer'
         shell: powershell
         run: |
-          & .\git-sdk-64-build-installers\usr\bin\bash.exe -lc @"
+          & .\git-sdk-${{matrix.arch.bitness}}-build-installers\usr\bin\bash.exe -lc @"
             cp /usr/src/build-extra/installer/package-versions.txt artifacts/ &&
 
             a=`$PWD/artifacts &&
-            p=`$PWD/pkg-x86_64 &&
+            p=`$PWD/pkg-${{matrix.arch.name}} &&
             (cd /usr/src/build-extra &&
             mkdir -p cached-source-packages &&
             cp \"`$p\"/*-pdb* cached-source-packages/ &&
-            GIT_CONFIG_PARAMETERS=\"'windows.sdk64.path='\" ./please.sh bundle_pdbs --arch=x86_64 --directory=\"`$a\" installer/package-versions.txt)
+            GIT_CONFIG_PARAMETERS=\"'windows.sdk${{matrix.arch.bitness}}.path='\" ./please.sh bundle_pdbs --arch=${{matrix.arch.name}} --directory=\"`$a\" installer/package-versions.txt)
           "@
       - name: Clean up temporary files
         if: always()
         shell: bash
         run: rm -rf home
-      - name: Publish ${{matrix.artifact.name}}-x86_64
+      - name: Publish ${{matrix.artifact.name}}-${{matrix.arch.name}}
         uses: actions/upload-artifact@v1
         with:
-          name: ${{matrix.artifact.name}}-x86_64
+          name: ${{matrix.artifact.name}}-${{matrix.arch.name}}
           path: artifacts
