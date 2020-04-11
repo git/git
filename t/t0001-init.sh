@@ -392,13 +392,6 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	test_path_is_dir realgitdir/refs
 '
 
-# Tests for the hidden file attribute on windows
-is_hidden () {
-	# Use the output of `attrib`, ignore the absolute path
-	case "$(attrib "$1")" in *H*?:*) return 0;; esac
-	return 1
-}
-
 test_expect_success MINGW '.git hidden' '
 	rm -rf newdir &&
 	(
