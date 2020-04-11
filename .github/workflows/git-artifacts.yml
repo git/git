@@ -1,4 +1,4 @@
-name: mingw-w64-x86_64-git
+name: git-artifacts
 
 on:
   # This workflow can be triggered manually in the Actions tab, see
@@ -192,4 +192,77 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: pkg-x86_64
+          path: artifacts
+  installer-x86_64:
+    runs-on: windows-latest
+    needs: pkg-x86_64
+    env:
+      MSYSTEM: MINGW64
+    steps:
+      - name: Download pkg-x86_64
+        uses: actions/download-artifact@v1
+        with:
+          name: pkg-x86_64
+          path: pkg-x86_64
+      - name: Download bundle-artifacts
+        uses: actions/download-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+      - name: Download git-sdk-64-build-installers
+        shell: bash
+        run: |
+          # Use Git Bash to download and unpack the artifact
+
+          ## Get artifact
+          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
+          id=${{ needs.pkg.outputs.latest-sdk64-extra-build-id }}
+          download_url="$(curl "$urlbase/$id/artifacts" |
+            jq -r '.value[] | select(.name == "git-sdk-64-build-installers").resource.downloadUrl')"
+
+          curl -o artifacts.zip "$download_url"
+
+          ## Unpack artifact
+          unzip artifacts.zip
+      - name: Clone and update build-extra
+        shell: bash
+        run: |
+          d=git-sdk-64-build-installers/usr/src/build-extra &&
+          git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d &&
+          git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
+      - name: Prepare home directory for code-signing
+        env:
+          CODESIGN_P12: ${{secrets.CODESIGN_P12}}
+          CODESIGN_PASS: ${{secrets.CODESIGN_PASS}}
+        if: (matrix.artifact.name == 'installer' || matrix.artifact.name == 'portable') && env.CODESIGN_P12 != '' && env.CODESIGN_PASS != ''
+        shell: bash
+        run: |
+          mkdir -p home/.sig &&
+          echo -n "$CODESIGN_P12" | tr % '\n' | base64 -d >home/.sig/codesign.p12 &&
+          echo -n "$CODESIGN_PASS" >home/.sig/codesign.pass &&
+          git config --global alias.signtool '!sh "/usr/src/build-extra/signtool.sh"'
+      - name: Build 64-bit installer
+        shell: powershell
+        run: |
+          & .\git-sdk-64-build-installers\usr\bin\bash.exe -lc @"
+            set -x
+            /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=`$(cat pkg-x86_64/ver) -o artifacts --installer --pkg=pkg-x86_64/mingw-w64-x86_64-git-[0-9]*.tar.xz --pkg=pkg-x86_64/mingw-w64-x86_64-git-doc-html-[0-9]*.tar.xz &&
+            openssl dgst -sha256 artifacts/Git-*.exe | sed \"s/.* //\" >artifacts/sha-256.txt &&
+            cp /usr/src/build-extra/installer/package-versions.txt artifacts/ &&
+
+            a=`$PWD/artifacts &&
+            p=`$PWD/pkg-x86_64 &&
+            (cd /usr/src/build-extra &&
+            mkdir -p cached-source-packages &&
+            cp \"`$p\"/*-pdb* cached-source-packages/ &&
+            GIT_CONFIG_PARAMETERS=\"'windows.sdk64.path='\" ./please.sh bundle_pdbs --arch=x86_64 --directory=\"`$a\" installer/package-versions.txt)
+          "@
+      - name: Clean up temporary files
+        if: always()
+        shell: bash
+        run: rm -rf home
+      - name: Publish installer-x86_64
+        uses: actions/upload-artifact@v1
+        with:
+          name: installer-x86_64
           path: artifacts
