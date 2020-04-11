@@ -4591,6 +4591,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 				   struct rev_info *revs, struct strbuf *out,
 				   unsigned flags)
 {
+	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	int rebase_cousins = flags & TODO_LIST_REBASE_COUSINS;
 	int root_with_onto = flags & TODO_LIST_ROOT_WITH_ONTO;
 	struct strbuf buf = STRBUF_INIT, oneline = STRBUF_INIT;
@@ -4644,6 +4645,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 
 		is_empty = is_original_commit_empty(commit);
 		if (!is_empty && (commit->object.flags & PATCHSAME))
+			continue;
+		if (is_empty && !keep_empty)
 			continue;
 
 		strbuf_reset(&oneline);
@@ -4822,6 +4825,7 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	struct pretty_print_context pp = {0};
 	struct rev_info revs;
 	struct commit *commit;
+	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	const char *insn = flags & TODO_LIST_ABBREVIATE_CMDS ? "p" : "pick";
 	int rebase_merges = flags & TODO_LIST_REBASE_MERGES;
 
@@ -4860,6 +4864,8 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 		int is_empty = is_original_commit_empty(commit);
 
 		if (!is_empty && (commit->object.flags & PATCHSAME))
+			continue;
+		if (is_empty && !keep_empty)
 			continue;
 		strbuf_addf(out, "%s %s ", insn,
 			    oid_to_hex(&commit->object.oid));

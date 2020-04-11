@@ -123,6 +123,42 @@ test_expect_success 'rebase --interactive uses default of --empty=ask' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rebase --merge --empty=drop --keep-empty' '
+	git checkout -B testing localmods &&
+	git rebase --merge --empty=drop --keep-empty upstream &&
+
+	test_write_lines D C B A >expect &&
+	git log --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase --merge --empty=drop --no-keep-empty' '
+	git checkout -B testing localmods &&
+	git rebase --merge --empty=drop --no-keep-empty upstream &&
+
+	test_write_lines C B A >expect &&
+	git log --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase --merge --empty=keep --keep-empty' '
+	git checkout -B testing localmods &&
+	git rebase --merge --empty=keep --keep-empty upstream &&
+
+	test_write_lines D C2 C B A >expect &&
+	git log --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase --merge --empty=keep --no-keep-empty' '
+	git checkout -B testing localmods &&
+	git rebase --merge --empty=keep --no-keep-empty upstream &&
+
+	test_write_lines C2 C B A >expect &&
+	git log --format=%s >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'rebase --merge does not leave state laying around' '
 	git checkout -B testing localmods~2 &&
 	git rebase --merge upstream &&
