@@ -561,7 +561,7 @@ static void imply_merge(struct rebase_options *opts, const char *option)
 {
 	switch (opts->type) {
 	case REBASE_APPLY:
-		die(_("%s requires an interactive rebase"), option);
+		die(_("%s requires the merge backend"), option);
 		break;
 	case REBASE_MERGE:
 	case REBASE_PRESERVE_MERGES:
