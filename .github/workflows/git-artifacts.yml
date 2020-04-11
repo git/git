@@ -3,13 +3,17 @@ name: git-artifacts
 on:
   # This workflow can be triggered manually in the Actions tab, see
   # https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
-  - workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: 'Optionally restrict what artifacts to build'
 
 env:
   GPG_OPTIONS: "--batch --yes --no-tty --list-options no-show-photos --verify-options no-show-photos --pinentry-mode loopback"
   HOME: "${{github.workspace}}\\home"
   MSYSTEM: MINGW64
   USERPROFILE: "${{github.workspace}}\\home"
+  BUILD_ONLY: "${{github.event.inputs.build_only}}"
 
 jobs:
   bundle-artifacts:
@@ -232,18 +236,28 @@ jobs:
     env:
       MSYSTEM: MINGW${{matrix.arch.bitness}}
     steps:
+      - name: Determine whether this job should be skipped
+        shell: bash
+        run: |
+          case " $BUILD_ONLY " in
+          '  ') ;; # not set; build all
+          *" ${{matrix.artifact.name}} "*|*" ${{matrix.artifact.name}}-${{matrix.arch.name}} "*) ;; # build this artifact
+          *) echo "SKIP=true" >>$GITHUB_ENV;;
+          esac
       - name: Download pkg-${{matrix.arch.name}}
+        if: env.SKIP != 'true'
         uses: actions/download-artifact@v1
         with:
           name: pkg-${{matrix.arch.name}}
           path: pkg-${{matrix.arch.name}}
       - name: Download bundle-artifacts
+        if: env.SKIP != 'true'
         uses: actions/download-artifact@v1
         with:
           name: bundle-artifacts
           path: bundle-artifacts
       - name: Download git-sdk-64-build-installers
-        if: matrix.arch.bitness == '64'
+        if: env.SKIP != 'true' && matrix.arch.bitness == '64'
         shell: bash
         run: |
           # Use Git Bash to download and unpack the artifact
@@ -259,7 +273,7 @@ jobs:
           ## Unpack artifact
           unzip artifacts.zip
       - name: Download git-sdk-32-build-installers
-        if: matrix.arch.bitness == '32'
+        if: env.SKIP != 'true' && matrix.arch.bitness == '32'
         shell: bash
         run: |
           # Use Git Bash to download and unpack the artifact
@@ -276,6 +290,7 @@ jobs:
           ## Unpack artifact
           unzip artifacts.zip
       - name: Clone and update build-extra
+        if: env.SKIP != 'true'
         shell: bash
         run: |
           d=git-sdk-${{matrix.arch.bitness}}-build-installers/usr/src/build-extra &&
@@ -285,7 +300,7 @@ jobs:
         env:
           CODESIGN_P12: ${{secrets.CODESIGN_P12}}
           CODESIGN_PASS: ${{secrets.CODESIGN_PASS}}
-        if: (matrix.artifact.name == 'installer' || matrix.artifact.name == 'portable') && env.CODESIGN_P12 != '' && env.CODESIGN_PASS != ''
+        if: env.SKIP != 'true' && (matrix.artifact.name == 'installer' || matrix.artifact.name == 'portable') && env.CODESIGN_P12 != '' && env.CODESIGN_PASS != ''
         shell: bash
         run: |
           mkdir -p home/.sig &&
@@ -293,6 +308,7 @@ jobs:
           echo -n "$CODESIGN_PASS" >home/.sig/codesign.pass &&
           git config --global alias.signtool '!sh "/usr/src/build-extra/signtool.sh"'
       - name: Build ${{matrix.arch.bitness}}-bit ${{matrix.artifact.name}}
+        if: env.SKIP != 'true'
         shell: powershell
         run: |
           & .\git-sdk-${{matrix.arch.bitness}}-build-installers\usr\bin\bash.exe -lc @"
@@ -305,7 +321,7 @@ jobs:
             openssl dgst -sha256 artifacts/${{matrix.artifact.fileprefix}}-*.${{matrix.artifact.fileextension}} | sed \"s/.* //\" >artifacts/sha-256.txt
           "@
       - name: Copy package-versions and pdbs
-        if: matrix.artifact.name == 'installer'
+        if: env.SKIP != 'true' && matrix.artifact.name == 'installer'
         shell: powershell
         run: |
           & .\git-sdk-${{matrix.arch.bitness}}-build-installers\usr\bin\bash.exe -lc @"
@@ -319,10 +335,11 @@ jobs:
             GIT_CONFIG_PARAMETERS=\"'windows.sdk${{matrix.arch.bitness}}.path='\" ./please.sh bundle_pdbs --arch=${{matrix.arch.name}} --directory=\"`$a\" installer/package-versions.txt)
           "@
       - name: Clean up temporary files
-        if: always()
+        if: always() && env.SKIP != 'true'
         shell: bash
         run: rm -rf home
       - name: Publish ${{matrix.artifact.name}}-${{matrix.arch.name}}
+        if: env.SKIP != 'true'
         uses: actions/upload-artifact@v1
         with:
           name: ${{matrix.artifact.name}}-${{matrix.arch.name}}
@@ -331,17 +348,28 @@ jobs:
     runs-on: windows-latest
     needs: pkg
     steps:
+      - name: Determine whether this job should be skipped
+        shell: bash
+        run: |
+          case " $BUILD_ONLY " in
+          '  ') ;; # not set; build all
+          *" nuget "*) ;; # build this artifact
+          *) echo "SKIP=true" >>$GITHUB_ENV;;
+          esac
       - name: Download pkg-x86_64
+        if: env.SKIP != 'true'
         uses: actions/download-artifact@v1
         with:
           name: pkg-x86_64
           path: pkg-x86_64
       - name: Download bundle-artifacts
+        if: env.SKIP != 'true'
         uses: actions/download-artifact@v1
         with:
           name: bundle-artifacts
           path: bundle-artifacts
       - name: Download git-sdk-64-build-installers
+        if: env.SKIP != 'true'
         shell: bash
         run: |
           # Use Git Bash to download and unpack the artifact
@@ -357,13 +385,16 @@ jobs:
           ## Unpack artifact
           unzip artifacts.zip
       - name: Clone and update build-extra
+        if: env.SKIP != 'true'
         shell: bash
         run: |
           d=git-sdk-64-build-installers/usr/src/build-extra &&
           git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d &&
           git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
       - uses: nuget/setup-nuget@v1
+        if: env.SKIP != 'true'
       - name: Build 64-bit NuGet packages
+        if: env.SKIP != 'true'
         shell: powershell
         run: |
           & .\git-sdk-64-build-installers\usr\bin\bash.exe -lc @"
@@ -372,6 +403,7 @@ jobs:
             openssl dgst -sha256 artifacts/Git*.nupkg | sed \"s/.* //\" >artifacts/sha-256.txt
           "@
       - name: Publish nuget-x86_64
+        if: env.SKIP != 'true'
         uses: actions/upload-artifact@v1
         with:
           name: nuget-x86_64
