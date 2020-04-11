@@ -193,9 +193,28 @@ jobs:
         with:
           name: pkg-x86_64
           path: artifacts
-  installer-x86_64:
+  artifacts:
     runs-on: windows-latest
-    needs: pkg-x86_64
+    needs: pkg
+    strategy:
+      matrix:
+        artifact:
+          - name: installer
+            fileprefix: Git
+            fileextension: exe
+          - name: portable
+            fileprefix: PortableGit
+            fileextension: exe
+          - name: archive
+            fileprefix: Git
+            fileextension: tar.bz2
+          - name: mingit
+            fileprefix: MinGit
+            fileextension: zip
+          - name: mingit-busybox
+            fileprefix: MinGit
+            fileextension: zip
+      fail-fast: false
     env:
       MSYSTEM: MINGW64
     steps:
@@ -241,13 +260,23 @@ jobs:
           echo -n "$CODESIGN_P12" | tr % '\n' | base64 -d >home/.sig/codesign.p12 &&
           echo -n "$CODESIGN_PASS" >home/.sig/codesign.pass &&
           git config --global alias.signtool '!sh "/usr/src/build-extra/signtool.sh"'
-      - name: Build 64-bit installer
+      - name: Build 64-bit ${{matrix.artifact.name}}
         shell: powershell
         run: |
           & .\git-sdk-64-build-installers\usr\bin\bash.exe -lc @"
             set -x
-            /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=`$(cat pkg-x86_64/ver) -o artifacts --installer --pkg=pkg-x86_64/mingw-w64-x86_64-git-[0-9]*.tar.xz --pkg=pkg-x86_64/mingw-w64-x86_64-git-doc-html-[0-9]*.tar.xz &&
-            openssl dgst -sha256 artifacts/Git-*.exe | sed \"s/.* //\" >artifacts/sha-256.txt &&
+            /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=`$(cat pkg-x86_64/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-x86_64/mingw-w64-x86_64-git-[0-9]*.tar.xz --pkg=pkg-x86_64/mingw-w64-x86_64-git-doc-html-[0-9]*.tar.xz &&
+            if test portable = '${{matrix.artifact.name}}' && test -n \"`$(git config alias.signtool)\"
+            then
+              git signtool artifacts/PortableGit-*.exe
+            fi &&
+            openssl dgst -sha256 artifacts/${{matrix.artifact.fileprefix}}-*.${{matrix.artifact.fileextension}} | sed \"s/.* //\" >artifacts/sha-256.txt
+          "@
+      - name: Copy package-versions and pdbs
+        if: matrix.artifact.name == 'installer'
+        shell: powershell
+        run: |
+          & .\git-sdk-64-build-installers\usr\bin\bash.exe -lc @"
             cp /usr/src/build-extra/installer/package-versions.txt artifacts/ &&
 
             a=`$PWD/artifacts &&
@@ -261,8 +290,8 @@ jobs:
         if: always()
         shell: bash
         run: rm -rf home
-      - name: Publish installer-x86_64
+      - name: Publish ${{matrix.artifact.name}}-x86_64
         uses: actions/upload-artifact@v1
         with:
-          name: installer-x86_64
+          name: ${{matrix.artifact.name}}-x86_64
           path: artifacts
