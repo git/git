@@ -7,6 +7,10 @@ on:
     inputs:
       build_only:
         description: 'Optionally restrict what artifacts to build'
+      ref:
+        description: 'Optionally override which branch to build'
+      repository:
+        description: 'Optionally override from where to fetch the specified ref'
 
 env:
   GPG_OPTIONS: "--batch --yes --no-tty --list-options no-show-photos --verify-options no-show-photos --pinentry-mode loopback"
@@ -14,6 +18,8 @@ env:
   MSYSTEM: MINGW64
   USERPROFILE: "${{github.workspace}}\\home"
   BUILD_ONLY: "${{github.event.inputs.build_only}}"
+  REPOSITORY: "${{github.event.inputs.repository}}"
+  REF: "${{github.event.inputs.ref}}"
 
 jobs:
   bundle-artifacts:
@@ -70,9 +76,11 @@ jobs:
             printf '#!/bin/sh\n\nexec /mingw64/bin/git.exe "`$@"\n' >/usr/bin/git &&
             mkdir -p bundle-artifacts &&
 
+            { test -n \"`$REPOSITORY\" || REPOSITORY='${{github.repository}}'; } &&
+            { test -n \"`$REF\" || REF='${{github.ref}}'; } &&
             git -c init.defaultBranch=main init --bare &&
             git remote add -f origin https://github.com/git-for-windows/git &&
-            git fetch https://github.com/${{github.repository}} ${{github.ref}}:${{github.ref}} &&
+            git fetch \"https://github.com/`$REPOSITORY\" \"`$REF:`$REF\" &&
 
             tag_name=\"`$(git describe --match 'v[0-9]*' FETCH_HEAD)-`$(date +%Y%m%d%H%M%S)\" &&
             echo \"prerelease-`${tag_name#v}\" >bundle-artifacts/ver &&
