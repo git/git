@@ -36,6 +36,11 @@ void oidset_clear(struct oidset *set)
 	oidset_init(set, 0);
 }
 
+int oidset_size(struct oidset *set)
+{
+	return kh_size(&set->set);
+}
+
 void oidset_parse_file(struct oidset *set, const char *path)
 {
 	FILE *fp;
