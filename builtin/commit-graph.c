@@ -126,6 +126,8 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 
 	if (!strcmp(arg, "no-merge"))
 		*flags = COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED;
+	else if (!strcmp(arg, "replace"))
+		*flags = COMMIT_GRAPH_SPLIT_REPLACE;
 	else
 		die(_("unrecognized --split argument, %s"), arg);
 

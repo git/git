@@ -866,7 +866,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 
 			if (edge_value >= 0)
 				edge_value += ctx->new_num_commits_in_base;
-			else {
+			else if (ctx->new_base_graph) {
 				uint32_t pos;
 				if (find_commit_in_graph(parent->item,
 							 ctx->new_base_graph,
@@ -897,7 +897,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 
 			if (edge_value >= 0)
 				edge_value += ctx->new_num_commits_in_base;
-			else {
+			else if (ctx->new_base_graph) {
 				uint32_t pos;
 				if (find_commit_in_graph(parent->item,
 							 ctx->new_base_graph,
@@ -964,7 +964,7 @@ static void write_graph_chunk_extra_edges(struct hashfile *f,
 
 			if (edge_value >= 0)
 				edge_value += ctx->new_num_commits_in_base;
-			else {
+			else if (ctx->new_base_graph) {
 				uint32_t pos;
 				if (find_commit_in_graph(parent->item,
 							 ctx->new_base_graph,
@@ -1037,6 +1037,8 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 {
 	int i;
 	struct commit *commit;
+	enum commit_graph_split_flags flags = ctx->split_opts ?
+		ctx->split_opts->flags : COMMIT_GRAPH_SPLIT_UNSPECIFIED;
 
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
@@ -1066,8 +1068,9 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 		if (!commit)
 			continue;
 		if (ctx->split) {
-			if (!parse_commit(commit) &&
-			    commit->graph_pos == COMMIT_NOT_FROM_GRAPH)
+			if ((!parse_commit(commit) &&
+			     commit->graph_pos == COMMIT_NOT_FROM_GRAPH) ||
+			    flags == COMMIT_GRAPH_SPLIT_REPLACE)
 				add_missing_parents(ctx, commit);
 		} else if (!parse_commit_no_graph(commit))
 			add_missing_parents(ctx, commit);
@@ -1287,6 +1290,8 @@ static uint32_t count_distinct_commits(struct write_commit_graph_context *ctx)
 static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 {
 	uint32_t i;
+	enum commit_graph_split_flags flags = ctx->split_opts ?
+		ctx->split_opts->flags : COMMIT_GRAPH_SPLIT_UNSPECIFIED;
 
 	ctx->num_extra_edges = 0;
 	if (ctx->report_progress)
@@ -1303,11 +1308,14 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 		ALLOC_GROW(ctx->commits.list, ctx->commits.nr + 1, ctx->commits.alloc);
 		ctx->commits.list[ctx->commits.nr] = lookup_commit(ctx->r, &ctx->oids.list[i]);
 
-		if (ctx->split &&
+		if (ctx->split && flags != COMMIT_GRAPH_SPLIT_REPLACE &&
 		    ctx->commits.list[ctx->commits.nr]->graph_pos != COMMIT_NOT_FROM_GRAPH)
 			continue;
 
-		parse_commit_no_graph(ctx->commits.list[ctx->commits.nr]);
+		if (ctx->split && flags == COMMIT_GRAPH_SPLIT_REPLACE)
+			parse_commit(ctx->commits.list[ctx->commits.nr]);
+		else
+			parse_commit_no_graph(ctx->commits.list[ctx->commits.nr]);
 
 		num_parents = commit_list_count(ctx->commits.list[ctx->commits.nr]->parents);
 		if (num_parents > 2)
@@ -1488,8 +1496,12 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		}
 
 		if (ctx->base_graph_name) {
-			const char *dest = ctx->commit_graph_filenames_after[
-						ctx->num_commit_graphs_after - 2];
+			const char *dest;
+			int idx = ctx->num_commit_graphs_after - 1;
+			if (ctx->num_commit_graphs_after > 1)
+				idx--;
+
+			dest = ctx->commit_graph_filenames_after[idx];
 
 			if (strcmp(ctx->base_graph_name, dest)) {
 				result = rename(ctx->base_graph_name, dest);
@@ -1546,9 +1558,13 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 
 	g = ctx->r->objects->commit_graph;
 	num_commits = ctx->commits.nr;
-	ctx->num_commit_graphs_after = ctx->num_commit_graphs_before + 1;
+	if (flags == COMMIT_GRAPH_SPLIT_REPLACE)
+		ctx->num_commit_graphs_after = 1;
+	else
+		ctx->num_commit_graphs_after = ctx->num_commit_graphs_before + 1;
 
-	if (flags != COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED) {
+	if (flags != COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED &&
+	    flags != COMMIT_GRAPH_SPLIT_REPLACE) {
 		while (g && (g->num_commits <= size_mult * num_commits ||
 			    (max_commits && num_commits > max_commits))) {
 			if (g->odb != ctx->odb)
@@ -1561,7 +1577,11 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 		}
 	}
 
-	ctx->new_base_graph = g;
+	if (flags != COMMIT_GRAPH_SPLIT_REPLACE)
+		ctx->new_base_graph = g;
+	else if (ctx->num_commit_graphs_after != 1)
+		BUG("split_graph_merge_strategy: num_commit_graphs_after "
+		    "should be 1 with --split=replace");
 
 	if (ctx->num_commit_graphs_after == 2) {
 		char *old_graph_name = get_commit_graph_filename(g->odb);
@@ -1772,6 +1792,7 @@ int write_commit_graph(struct object_directory *odb,
 	struct write_commit_graph_context *ctx;
 	uint32_t i, count_distinct = 0;
 	int res = 0;
+	int replace = 0;
 
 	if (!commit_graph_compatible(the_repository))
 		return 0;
@@ -1806,6 +1827,9 @@ int write_commit_graph(struct object_directory *odb,
 				g = g->base_graph;
 			}
 		}
+
+		if (ctx->split_opts)
+			replace = ctx->split_opts->flags & COMMIT_GRAPH_SPLIT_REPLACE;
 	}
 
 	ctx->approx_nr_objects = approximate_object_count();
@@ -1866,13 +1890,14 @@ int write_commit_graph(struct object_directory *odb,
 		goto cleanup;
 	}
 
-	if (!ctx->commits.nr)
+	if (!ctx->commits.nr && !replace)
 		goto cleanup;
 
 	if (ctx->split) {
 		split_graph_merge_strategy(ctx);
 
-		merge_commit_graphs(ctx);
+		if (!replace)
+			merge_commit_graphs(ctx);
 	} else
 		ctx->num_commit_graphs_after = 1;
 

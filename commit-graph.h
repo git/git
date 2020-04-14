@@ -84,7 +84,8 @@ enum commit_graph_write_flags {
 
 enum commit_graph_split_flags {
 	COMMIT_GRAPH_SPLIT_UNSPECIFIED      = 0,
-	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1
+	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
+	COMMIT_GRAPH_SPLIT_REPLACE          = 2
 };
 
 struct split_commit_graph_opts {
