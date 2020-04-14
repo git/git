@@ -118,11 +118,16 @@ static struct split_commit_graph_opts split_opts;
 static int write_option_parse_split(const struct option *opt, const char *arg,
 				    int unset)
 {
+	enum commit_graph_split_flags *flags = opt->value;
+
 	opts.split = 1;
 	if (!arg)
 		return 0;
 
-	die(_("unrecognized --split argument, %s"), arg);
+	if (!strcmp(arg, "no-merge"))
+		*flags = COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED;
+	else
+		die(_("unrecognized --split argument, %s"), arg);
 
 	return 0;
 }

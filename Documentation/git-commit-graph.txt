@@ -63,6 +63,11 @@ chain of multiple commit-graph files stored in
 strategy and other splitting options. The new commits not already in the
 commit-graph are added in a new "tip" file. This file is merged with the
 existing file if the following merge conditions are met:
+* If `--split=no-merge` is specified, a merge is never performed, and
+the remaining options are ignored. A bare `--split` defers to the
+remaining options. (Note that merging a chain of commit graphs replaces
+the existing chain with a length-1 chain where the first and only
+incremental holds the entire graph).
 +
 * If `--size-multiple=<X>` is not specified, let `X` equal 2. If the new
 tip file would have `N` commits and the previous tip has `M` commits and
