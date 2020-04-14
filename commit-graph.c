@@ -1136,13 +1136,13 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 }
 
-static int add_ref_to_list(const char *refname,
-			   const struct object_id *oid,
-			   int flags, void *cb_data)
+static int add_ref_to_set(const char *refname,
+			  const struct object_id *oid,
+			  int flags, void *cb_data)
 {
-	struct string_list *list = (struct string_list *)cb_data;
+	struct oidset *commits = (struct oidset *)cb_data;
 
-	string_list_append(list, oid_to_hex(oid));
+	oidset_insert(commits, oid);
 	return 0;
 }
 
@@ -1150,14 +1150,14 @@ int write_commit_graph_reachable(struct object_directory *odb,
 				 enum commit_graph_write_flags flags,
 				 const struct split_commit_graph_opts *split_opts)
 {
-	struct string_list list = STRING_LIST_INIT_DUP;
+	struct oidset commits = OIDSET_INIT;
 	int result;
 
-	for_each_ref(add_ref_to_list, &list);
-	result = write_commit_graph(odb, NULL, &list,
+	for_each_ref(add_ref_to_set, &commits);
+	result = write_commit_graph(odb, NULL, &commits,
 				    flags, split_opts);
 
-	string_list_clear(&list, 0);
+	oidset_clear(&commits);
 	return result;
 }
 
@@ -1206,39 +1206,46 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 	return 0;
 }
 
-static int fill_oids_from_commit_hex(struct write_commit_graph_context *ctx,
-				     struct string_list *commit_hex)
+static int fill_oids_from_commits(struct write_commit_graph_context *ctx,
+				  struct oidset *commits)
 {
-	uint32_t i;
+	uint32_t i = 0;
 	struct strbuf progress_title = STRBUF_INIT;
+	struct oidset_iter iter;
+	struct object_id *oid;
+
+	if (!oidset_size(commits))
+		return 0;
 
 	if (ctx->report_progress) {
 		strbuf_addf(&progress_title,
 			    Q_("Finding commits for commit graph from %d ref",
 			       "Finding commits for commit graph from %d refs",
-			       commit_hex->nr),
-			    commit_hex->nr);
+			       oidset_size(commits)),
+			    oidset_size(commits));
 		ctx->progress = start_delayed_progress(
 					progress_title.buf,
-					commit_hex->nr);
+					oidset_size(commits));
 	}
-	for (i = 0; i < commit_hex->nr; i++) {
-		const char *end;
-		struct object_id oid;
+
+	oidset_iter_init(commits, &iter);
+	while ((oid = oidset_iter_next(&iter))) {
 		struct commit *result;
 
-		display_progress(ctx->progress, i + 1);
-		if (!parse_oid_hex(commit_hex->items[i].string, &oid, &end) &&
-		    (result = lookup_commit_reference_gently(ctx->r, &oid, 1))) {
+		display_progress(ctx->progress, ++i);
+
+		result = lookup_commit_reference_gently(ctx->r, oid, 1);
+		if (result) {
 			ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
 			oidcpy(&ctx->oids.list[ctx->oids.nr], &(result->object.oid));
 			ctx->oids.nr++;
 		} else if (ctx->check_oids) {
 			error(_("invalid commit object id: %s"),
-			    commit_hex->items[i].string);
+			      oid_to_hex(oid));
 			return -1;
 		}
 	}
+
 	stop_progress(&ctx->progress);
 	strbuf_release(&progress_title);
 
@@ -1785,7 +1792,7 @@ out:
 
 int write_commit_graph(struct object_directory *odb,
 		       struct string_list *pack_indexes,
-		       struct string_list *commit_hex,
+		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,
 		       const struct split_commit_graph_opts *split_opts)
 {
@@ -1861,12 +1868,12 @@ int write_commit_graph(struct object_directory *odb,
 			goto cleanup;
 	}
 
-	if (commit_hex) {
-		if ((res = fill_oids_from_commit_hex(ctx, commit_hex)))
+	if (commits) {
+		if ((res = fill_oids_from_commits(ctx, commits)))
 			goto cleanup;
 	}
 
-	if (!pack_indexes && !commit_hex)
+	if (!pack_indexes && !commits)
 		fill_oids_from_all_packs(ctx);
 
 	close_reachable(ctx);

@@ -137,7 +137,7 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 static int graph_write(int argc, const char **argv)
 {
 	struct string_list *pack_indexes = NULL;
-	struct string_list *commit_hex = NULL;
+	struct oidset commits = OIDSET_INIT;
 	struct object_directory *odb = NULL;
 	struct string_list lines;
 	int result = 0;
@@ -210,7 +210,20 @@ static int graph_write(int argc, const char **argv)
 		if (opts.stdin_packs)
 			pack_indexes = &lines;
 		if (opts.stdin_commits) {
-			commit_hex = &lines;
+			struct string_list_item *item;
+			oidset_init(&commits, lines.nr);
+			for_each_string_list_item(item, &lines) {
+				struct object_id oid;
+				const char *end;
+
+				if (parse_oid_hex(item->string, &oid, &end)) {
+					error(_("unexpected non-hex object ID: "
+						"%s"), item->string);
+					return 1;
+				}
+
+				oidset_insert(&commits, &oid);
+			}
 			flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
 		}
 
@@ -219,7 +232,7 @@ static int graph_write(int argc, const char **argv)
 
 	if (write_commit_graph(odb,
 			       pack_indexes,
-			       commit_hex,
+			       opts.stdin_commits ? &commits : NULL,
 			       flags,
 			       &split_opts))
 		result = 1;
