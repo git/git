@@ -1010,6 +1010,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	if (opt_rebase) {
 		int ret = 0;
+		int ran_ff = 0;
 		if ((recurse_submodules == RECURSE_SUBMODULES_ON ||
 		     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND) &&
 		    submodule_touches_in_range(the_repository, &rebase_fork_point, &curr_head))
@@ -1026,10 +1027,12 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			if (is_descendant_of(merge_head, list)) {
 				/* we can fast-forward this without invoking rebase */
 				opt_ff = "--ff-only";
+				ran_ff = 1;
 				ret = run_merge();
 			}
 		}
-		ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
+		if (!ran_ff)
+			ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
 
 		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
 			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
