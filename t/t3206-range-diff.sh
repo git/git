@@ -513,6 +513,16 @@ test_expect_success 'range-diff overrides diff.noprefix internally' '
 	git -c diff.noprefix=true range-diff HEAD^...
 '
 
+test_expect_success 'basic with modified format.pretty with suffix' '
+	git -c format.pretty="format:commit %H%d%n" range-diff \
+		master..topic master..unmodified
+'
+
+test_expect_success 'basic with modified format.pretty without "commit "' '
+	git -c format.pretty="format:%H%n" range-diff \
+		master..topic master..unmodified
+'
+
 test_expect_success 'range-diff compares notes by default' '
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&

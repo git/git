@@ -63,6 +63,8 @@ static int read_patches(const char *range, struct string_list *list,
 			"--output-indicator-old=<",
 			"--output-indicator-context=#",
 			"--no-abbrev-commit",
+			"--pretty=medium",
+			"--notes",
 			NULL);
 	if (other_arg)
 		argv_array_pushv(&cp.args, other_arg->argv);
@@ -104,6 +106,17 @@ static int read_patches(const char *range, struct string_list *list,
 			util->matching = -1;
 			in_header = 1;
 			continue;
+		}
+
+		if (!util) {
+			error(_("could not parse first line of `log` output: "
+				"did not start with 'commit ': '%s'"),
+			      line);
+			string_list_clear(list, 1);
+			strbuf_release(&buf);
+			strbuf_release(&contents);
+			finish_command(&cp);
+			return -1;
 		}
 
 		if (starts_with(line, "diff --git")) {
