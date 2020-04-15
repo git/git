@@ -19,7 +19,8 @@ ifndef::git-pull[]
 	(see <<CRTB,CONFIGURED REMOTE-TRACKING BRANCHES>> below).
 endif::git-pull[]
 ifdef::git-pull[]
-	(see linkgit:git-fetch[1]).
+	(see the section "CONFIGURED REMOTE-TRACKING BRANCHES"
+	in linkgit:git-fetch[1]).
 endif::git-pull[]
 +
 The format of a <refspec> parameter is an optional plus
