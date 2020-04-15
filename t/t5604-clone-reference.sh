@@ -175,7 +175,7 @@ test_expect_success 'clone using repo pointed at by gitfile as reference' '
 test_expect_success 'clone and dissociate from reference' '
 	git init P &&
 	(
-		cd P &&	test_commit one
+		cd P && test_commit one
 	) &&
 	git clone P Q &&
 	(

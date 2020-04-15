@@ -780,7 +780,7 @@ test_expect_success 'add -p patch editing works with pathological context lines'
 test_expect_success 'checkout -p works with pathological context lines' '
 	test_write_lines a a a a a a >a &&
 	git add a &&
-	test_write_lines a b a b a b a b a b a > a&&
+	test_write_lines a b a b a b a b a b a >a &&
 	test_write_lines s n n y q | git checkout -p &&
 	test_write_lines a b a b a a b a b a >expect &&
 	test_cmp expect a

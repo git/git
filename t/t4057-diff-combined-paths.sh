@@ -14,7 +14,7 @@ diffc_verify () {
 test_expect_success 'trivial merge - combine-diff empty' '
 	for i in $(test_seq 1 9)
 	do
-		echo $i >$i.txt	&&
+		echo $i >$i.txt &&
 		git add $i.txt
 	done &&
 	git commit -m "init" &&

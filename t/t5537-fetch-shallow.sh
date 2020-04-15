@@ -131,7 +131,7 @@ test_expect_success 'fetch that requires changes in .git/shallow is filtered' '
 	git init notshallow &&
 	(
 	cd notshallow &&
-	git fetch ../shallow/.git refs/heads/*:refs/remotes/shallow/*&&
+	git fetch ../shallow/.git refs/heads/*:refs/remotes/shallow/* &&
 	git for-each-ref --format="%(refname)" >actual.refs &&
 	cat <<EOF >expect.refs &&
 refs/remotes/shallow/no-shallow
