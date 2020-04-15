@@ -1,6 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 
 static int print_oid(const struct object_id *oid, void *data)
 {
@@ -8,7 +8,7 @@ static int print_oid(const struct object_id *oid, void *data)
 	return 0;
 }
 
-int cmd__sha1_array(int argc, const char **argv)
+int cmd__oid_array(int argc, const char **argv)
 {
 	struct oid_array array = OID_ARRAY_INIT;
 	struct strbuf line = STRBUF_INIT;
@@ -19,11 +19,11 @@ int cmd__sha1_array(int argc, const char **argv)
 
 		if (skip_prefix(line.buf, "append ", &arg)) {
 			if (get_oid_hex(arg, &oid))
-				die("not a hexadecimal SHA1: %s", arg);
+				die("not a hexadecimal oid: %s", arg);
 			oid_array_append(&array, &oid);
 		} else if (skip_prefix(line.buf, "lookup ", &arg)) {
 			if (get_oid_hex(arg, &oid))
-				die("not a hexadecimal SHA1: %s", arg);
+				die("not a hexadecimal oid: %s", arg);
 			printf("%d\n", oid_array_lookup(&array, &oid));
 		} else if (!strcmp(line.buf, "clear"))
 			oid_array_clear(&array);

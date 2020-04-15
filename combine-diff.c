@@ -10,7 +10,7 @@
 #include "log-tree.h"
 #include "refs.h"
 #include "userdiff.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "revision.h"
 
 static int compare_paths(const struct combine_diff_path *one,

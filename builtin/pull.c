@@ -12,7 +12,7 @@
 #include "parse-options.h"
 #include "exec-cmd.h"
 #include "run-command.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "remote.h"
 #include "dir.h"
 #include "rebase.h"

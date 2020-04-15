@@ -10,7 +10,7 @@
 #include "run-command.h"
 #include "log-tree.h"
 #include "bisect.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "argv-array.h"
 #include "commit-slab.h"
 #include "commit-reach.h"
@@ -473,7 +473,7 @@ static void read_bisect_paths(struct argv_array *array)
 	fclose(fp);
 }
 
-static char *join_sha1_array_hex(struct oid_array *array, char delim)
+static char *join_oid_array_hex(struct oid_array *array, char delim)
 {
 	struct strbuf joined_hexs = STRBUF_INIT;
 	int i;
@@ -765,7 +765,7 @@ static enum bisect_error handle_bad_merge_base(void)
 {
 	if (is_expected_rev(current_bad_oid)) {
 		char *bad_hex = oid_to_hex(current_bad_oid);
-		char *good_hex = join_sha1_array_hex(&good_revs, ' ');
+		char *good_hex = join_oid_array_hex(&good_revs, ' ');
 		if (!strcmp(term_bad, "bad") && !strcmp(term_good, "good")) {
 			fprintf(stderr, _("The merge base %s is bad.\n"
 				"This means the bug has been fixed "
@@ -796,7 +796,7 @@ static void handle_skipped_merge_base(const struct object_id *mb)
 {
 	char *mb_hex = oid_to_hex(mb);
 	char *bad_hex = oid_to_hex(current_bad_oid);
-	char *good_hex = join_sha1_array_hex(&good_revs, ' ');
+	char *good_hex = join_oid_array_hex(&good_revs, ' ');
 
 	warning(_("the merge base between %s and [%s] "
 		"must be skipped.\n"
