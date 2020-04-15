@@ -52,7 +52,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		strbuf_release(&idx_file);
 	}
 
-	if (opt->check_refs_are_promisor_objects_only) {
+	if (has_promisor_remote()) {
 		/*
 		 * For partial clones, we don't want to have to do a regular
 		 * connectivity check because we have to enumerate and exclude
@@ -75,13 +75,18 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 				if (find_pack_entry_one(oid.hash, p))
 					goto promisor_pack_found;
 			}
-			return 1;
+			/*
+			 * Fallback to rev-list with oid and the rest of the
+			 * object IDs provided by fn.
+			 */
+			goto no_promisor_pack_found;
 promisor_pack_found:
 			;
 		} while (!fn(cb_data, &oid));
 		return 0;
 	}
 
+no_promisor_pack_found:
 	if (opt->shallow_file) {
 		argv_array_push(&rev_list.args, "--shallow-file");
 		argv_array_push(&rev_list.args, opt->shallow_file);
