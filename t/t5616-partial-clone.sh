@@ -415,6 +415,14 @@ test_expect_success 'verify fetch downloads only one pack when updating refs' '
 	test_line_count = 3 pack-list
 '
 
+test_expect_success 'single-branch tag following respects partial clone' '
+	git clone --single-branch -b B --filter=blob:none \
+		"file://$(pwd)/srv.bare" single &&
+	git -C single rev-parse --verify refs/tags/B &&
+	git -C single rev-parse --verify refs/tags/A &&
+	test_must_fail git -C single rev-parse --verify refs/tags/C
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
