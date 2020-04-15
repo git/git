@@ -875,13 +875,80 @@ test_expect_success ':remotename and :remoteref' '
 			git for-each-ref --format="${pair%=*}" \
 				refs/heads/master >actual &&
 			test_cmp expect actual
-		done &&
-		git branch push-simple &&
-		git config branch.push-simple.pushRemote from &&
-		actual="$(git for-each-ref \
-			--format="%(push:remotename),%(push:remoteref)" \
-			refs/heads/push-simple)" &&
-		test from, = "$actual"
+		done
+	)
+'
+
+test_expect_success '%(push) and %(push:remoteref)' '
+	git init pushremote-tests &&
+	(
+		cd pushremote-tests &&
+		test_commit initial &&
+		git remote add from fifth.coffee:blub &&
+		git config branch.master.remote from &&
+		actual="$(git -c push.default=simple for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test from,, = "$actual" &&
+		git config branch.master.merge refs/heads/master &&
+		actual="$(git -c push.default=simple for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test from,refs/heads/master,refs/remotes/from/master = "$actual" &&
+		git config branch.master.merge refs/heads/other &&
+		actual="$(git -c push.default=simple for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test from,, = "$actual" &&
+		actual="$(git -c push.default=upstream for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test from,refs/heads/other,refs/remotes/from/other = "$actual" &&
+		actual="$(git -c push.default=current for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test from,refs/heads/master,refs/remotes/from/master = "$actual" &&
+		actual="$(git -c push.default=matching for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test from,refs/heads/master,refs/remotes/from/master = "$actual" &&
+		actual="$(git -c push.default=nothing for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test from,, = "$actual" &&
+		git remote add to southridge.audio:repo &&
+		git config branch.master.pushRemote to &&
+		git config --unset branch.master.merge &&
+		actual="$(git -c push.default=simple for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test to,refs/heads/master,refs/remotes/to/master = "$actual" &&
+		git config branch.master.merge refs/heads/master &&
+		actual="$(git -c push.default=simple for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test to,refs/heads/master,refs/remotes/to/master = "$actual" &&
+		git config branch.master.merge refs/heads/other &&
+		actual="$(git -c push.default=simple for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test to,refs/heads/master,refs/remotes/to/master = "$actual" &&
+		actual="$(git -c push.default=upstream for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test to,, = "$actual" &&
+		actual="$(git -c push.default=current for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test to,refs/heads/master,refs/remotes/to/master = "$actual" &&
+		actual="$(git -c push.default=matching for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test to,refs/heads/master,refs/remotes/to/master = "$actual" &&
+		actual="$(git -c push.default=nothing for-each-ref \
+			--format="%(push:remotename),%(push:remoteref),%(push)" \
+			refs/heads/master)" &&
+		test to,, = "$actual"
 	)
 '
 
