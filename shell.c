@@ -4,6 +4,7 @@
 #include "strbuf.h"
 #include "run-command.h"
 #include "alias.h"
+#include "prompt.h"
 
 #define COMMAND_DIR "git-shell-commands"
 #define HELP_COMMAND COMMAND_DIR "/help"
@@ -76,12 +77,11 @@ static void run_shell(void)
 		int count;
 
 		fprintf(stderr, "git> ");
-		if (strbuf_getline_lf(&line, stdin) == EOF) {
+		if (git_read_line_interactively(&line) == EOF) {
 			fprintf(stderr, "\n");
 			strbuf_release(&line);
 			break;
 		}
-		strbuf_trim(&line);
 		rawargs = strbuf_detach(&line, NULL);
 		split_args = xstrdup(rawargs);
 		count = split_cmdline(split_args, &argv);
