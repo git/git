@@ -870,7 +870,19 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 			}
 			parent->next = NULL;
 			commit->parents = parent;
-			commit->object.flags |= TREESAME;
+
+			/*
+			 * A merge commit is a "diversion" if it is not
+			 * TREESAME to its first parent but is TREESAME
+			 * to a later parent. In the simplified history,
+			 * we "divert" the history walk to the later
+			 * parent. These commits are shown when "show_pulls"
+			 * is enabled, so do not mark the object as
+			 * TREESAME here.
+			 */
+			if (!revs->show_pulls || !nth_parent)
+				commit->object.flags |= TREESAME;
+
 			return;
 
 		case REV_TREE_NEW:
@@ -897,6 +909,10 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 				relevant_change = 1;
 			else
 				irrelevant_change = 1;
+
+			if (!nth_parent)
+				commit->object.flags |= PULL_MERGE;
+
 			continue;
 		}
 		die("bad tree compare for commit %s", oid_to_hex(&commit->object.oid));
@@ -2269,6 +2285,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--full-diff")) {
 		revs->diff = 1;
 		revs->full_diff = 1;
+	} else if (!strcmp(arg, "--show-pulls")) {
+		revs->show_pulls = 1;
 	} else if (!strcmp(arg, "--full-history")) {
 		revs->simplify_history = 0;
 	} else if (!strcmp(arg, "--relative-date")) {
@@ -3023,7 +3041,8 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 	if (!cnt ||
 	    (commit->object.flags & UNINTERESTING) ||
 	    !(commit->object.flags & TREESAME) ||
-	    (parent = one_relevant_parent(revs, commit->parents)) == NULL)
+	    (parent = one_relevant_parent(revs, commit->parents)) == NULL ||
+	    (revs->show_pulls && (commit->object.flags & PULL_MERGE)))
 		st->simplified = commit;
 	else {
 		pst = locate_simplify_state(revs, parent);
@@ -3606,6 +3625,10 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 			/* drop merges unless we want parenthood */
 			if (!want_ancestry(revs))
 				return commit_ignore;
+
+			if (revs->show_pulls && (commit->object.flags & PULL_MERGE))
+				return commit_show;
+
 			/*
 			 * If we want ancestry, then need to keep any merges
 			 * between relevant commits to tie together topology.
