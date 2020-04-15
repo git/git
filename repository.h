@@ -67,8 +67,12 @@ struct repository {
 	 */
 	struct parsed_object_pool *parsed_objects;
 
-	/* The store in which the refs are held. */
-	struct ref_store *refs;
+	/*
+	 * The store in which the refs are held. This should generally only be
+	 * accessed via get_main_ref_store(), as that will lazily initialize
+	 * the ref object.
+	 */
+	struct ref_store *refs_private;
 
 	/*
 	 * Contains path to often used file names.

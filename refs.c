@@ -1852,14 +1852,14 @@ static struct ref_store *ref_store_init(const char *gitdir,
 
 struct ref_store *get_main_ref_store(struct repository *r)
 {
-	if (r->refs)
-		return r->refs;
+	if (r->refs_private)
+		return r->refs_private;
 
 	if (!r->gitdir)
 		BUG("attempting to get main_ref_store outside of repository");
 
-	r->refs = ref_store_init(r->gitdir, REF_STORE_ALL_CAPS);
-	return r->refs;
+	r->refs_private = ref_store_init(r->gitdir, REF_STORE_ALL_CAPS);
+	return r->refs_private;
 }
 
 /*
