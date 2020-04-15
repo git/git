@@ -92,24 +92,17 @@ test_expect_success 'clone -c remote.<remote>.fetch=<refspec> --origin=<name>' '
 	test_cmp expect actual
 '
 
-# Tests for the hidden file attribute on windows
-is_hidden () {
-	# Use the output of `attrib`, ignore the absolute path
-	case "$(attrib "$1")" in *H*?:*) return 0;; esac
-	return 1
-}
-
 test_expect_success MINGW 'clone -c core.hideDotFiles' '
 	test_commit attributes .gitattributes "" &&
 	rm -rf child &&
 	git clone -c core.hideDotFiles=false . child &&
-	! is_hidden child/.gitattributes &&
+	! test_path_is_hidden child/.gitattributes &&
 	rm -rf child &&
 	git clone -c core.hideDotFiles=dotGitOnly . child &&
-	! is_hidden child/.gitattributes &&
+	! test_path_is_hidden child/.gitattributes &&
 	rm -rf child &&
 	git clone -c core.hideDotFiles=true . child &&
-	is_hidden child/.gitattributes
+	test_path_is_hidden child/.gitattributes
 '
 
 test_done
