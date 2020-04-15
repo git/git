@@ -46,6 +46,7 @@ static int default_abbrev_commit;
 static int default_show_root = 1;
 static int default_follow;
 static int default_show_signature;
+static int default_encode_email_headers = 1;
 static int decoration_style;
 static int decoration_given;
 static int use_mailmap_config = 1;
@@ -151,6 +152,7 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	rev->show_signature = default_show_signature;
+	rev->encode_email_headers = default_encode_email_headers;
 	rev->diffopt.flags.allow_textconv = 1;
 
 	if (default_date_mode)
@@ -438,6 +440,10 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return git_config_string(&fmt_pretty, var, value);
 	if (!strcmp(var, "format.subjectprefix"))
 		return git_config_string(&fmt_patch_subject_prefix, var, value);
+	if (!strcmp(var, "format.encodeemailheaders")) {
+		default_encode_email_headers = git_config_bool(var, value);
+		return 0;
+	}
 	if (!strcmp(var, "log.abbrevcommit")) {
 		default_abbrev_commit = git_config_bool(var, value);
 		return 0;
@@ -1719,6 +1725,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.show_notes = show_notes;
 	memcpy(&rev.notes_opt, &notes_opt, sizeof(notes_opt));
 	rev.commit_format = CMIT_FMT_EMAIL;
+	rev.encode_email_headers = default_encode_email_headers;
 	rev.expand_tabs_in_log_default = 0;
 	rev.verbose_header = 1;
 	rev.diff = 1;
