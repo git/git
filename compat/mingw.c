@@ -964,7 +964,16 @@ revert_attrs:
 size_t mingw_strftime(char *s, size_t max,
 		      const char *format, const struct tm *tm)
 {
-	size_t ret = strftime(s, max, format, tm);
+	/* a pointer to the original strftime in case we can't find the UCRT version */
+	static size_t (*fallback)(char *, size_t, const char *, const struct tm *) = strftime;
+	size_t ret;
+	DECLARE_PROC_ADDR(ucrtbase.dll, size_t, strftime, char *, size_t,
+		const char *, const struct tm *);
+
+	if (INIT_PROC_ADDR(strftime))
+		ret = strftime(s, max, format, tm);
+	else
+		ret = fallback(s, max, format, tm);
 
 	if (!ret && errno == EINVAL)
 		die("invalid strftime format: '%s'", format);
@@ -1479,6 +1488,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	const char *(*quote_arg)(const char *arg) =
 		is_msys2_sh(cmd ? cmd : *argv) ?
 		quote_arg_msys2 : quote_arg_msvc;
+	const char *strace_env;
 
 	/* Make sure to override previous errors, if any */
 	errno = 0;
@@ -1560,6 +1570,31 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 		strbuf_addstr(&args, quoted);
 		if (quoted != *argv)
 			free(quoted);
+	}
+
+	strace_env = getenv("GIT_STRACE_COMMANDS");
+	if (strace_env) {
+		char *p = path_lookup("strace.exe", 1);
+		if (!p)
+			return error("strace not found!");
+		if (xutftowcs_path(wcmd, p) < 0) {
+			free(p);
+			return -1;
+		}
+		free(p);
+		if (!strcmp("1", strace_env) ||
+		    !strcasecmp("yes", strace_env) ||
+		    !strcasecmp("true", strace_env))
+			strbuf_insert(&args, 0, "strace ", 7);
+		else {
+			const char *quoted = quote_arg(strace_env);
+			struct strbuf buf = STRBUF_INIT;
+			strbuf_addf(&buf, "strace -o %s ", quoted);
+			if (quoted != strace_env)
+				free((char *)quoted);
+			strbuf_insert(&args, 0, buf.buf, buf.len);
+			strbuf_release(&buf);
+		}
 	}
 
 	ALLOC_ARRAY(wargs, st_add(st_mult(2, args.len), 1));
@@ -2581,12 +2616,14 @@ not_a_reserved_name:
 					continue;
 				}
 				break;
-			case 'c': case 'C': /* COM<N>, CON, CONIN$, CONOUT$ */
+			case 'c': case 'C':
+				/* COM1 ... COM9, CON, CONIN$, CONOUT$ */
 				if ((c = path[++i]) != 'o' && c != 'O')
 					goto not_a_reserved_name;
 				c = path[++i];
-				if (c == 'm' || c == 'M') { /* COM<N> */
-					if (!isdigit(path[++i]))
+				if (c == 'm' || c == 'M') { /* COM1 ... COM9 */
+					c = path[++i];
+					if (c < '1' || c > '9')
 						goto not_a_reserved_name;
 				} else if (c == 'n' || c == 'N') { /* CON */
 					c = path[i + 1];
