@@ -443,11 +443,45 @@ test_expect_success 'url parser ignores embedded newlines' '
 	username=askpass-username
 	password=askpass-password
 	--
-	warning: url contains a newline in its host component: https://one.example.com?%0ahost=two.example.com/
+	warning: url contains a newline in its path component: https://one.example.com?%0ahost=two.example.com/
 	warning: skipping credential lookup for url: https://one.example.com?%0ahost=two.example.com/
 	askpass: Username:
 	askpass: Password:
 	EOF
+'
+
+# usage: check_host_and_path <url> <expected-host> <expected-path>
+check_host_and_path () {
+	# we always parse the path component, but we need this to make sure it
+	# is passed to the helper
+	test_config credential.useHTTPPath true &&
+	check fill "verbatim user pass" <<-EOF
+	url=$1
+	--
+	protocol=https
+	host=$2
+	path=$3
+	username=user
+	password=pass
+	--
+	verbatim: get
+	verbatim: protocol=https
+	verbatim: host=$2
+	verbatim: path=$3
+	EOF
+}
+
+test_expect_success 'url parser handles bare query marker' '
+	check_host_and_path https://example.com?foo.git example.com ?foo.git
+'
+
+test_expect_success 'url parser handles bare fragment marker' '
+	check_host_and_path https://example.com#foo.git example.com "#foo.git"
+'
+
+test_expect_success 'url parser not confused by encoded markers' '
+	check_host_and_path https://example.com%23%3f%2f/foo.git \
+		"example.com#?/" foo.git
 '
 
 test_done
