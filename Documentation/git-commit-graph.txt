@@ -82,6 +82,11 @@ tip with the previous tip.
 Finally, if `--expire-time=<datetime>` is not specified, let `datetime`
 be the current time. After writing the split commit-graph, delete all
 unused commit-graph whose modified times are older than `datetime`.
++
+The `--[no-]check-oids` option decides whether or not OIDs are required
+to be commits. By default, `--check-oids` is implied, generating an
+error on non-commit objects. If `--no-check-oids` is given, non-commits
+are silently discarded.
 
 'verify'::
 

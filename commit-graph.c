@@ -145,7 +145,7 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 	 *
 	 * There should only be very basic checks here to ensure that
 	 * we don't e.g. segfault in fill_commit_in_graph(), but
-	 * because this is a very hot codepath nothing that e.g. loops
+	 e because this is a very hot codepath nothing that e.g. loops
 	 * over g->num_commits, or runs a checksum on the commit-graph
 	 * itself.
 	 */
