@@ -121,6 +121,7 @@ static void tr2main_atexit_handler(void)
 	tr2_sid_release();
 	tr2_cmd_name_release();
 	tr2_cfg_free_patterns();
+	tr2_cfg_free_env_vars();
 	tr2_sysenv_release();
 
 	trace2_enabled = 0;
@@ -309,6 +310,14 @@ void trace2_cmd_list_config_fl(const char *file, int line)
 		return;
 
 	tr2_cfg_list_config_fl(file, line);
+}
+
+void trace2_cmd_list_env_vars_fl(const char *file, int line)
+{
+	if (!trace2_enabled)
+		return;
+
+	tr2_list_env_vars_fl(file, line);
 }
 
 void trace2_cmd_set_config_fl(const char *file, int line, const char *key,
