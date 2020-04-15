@@ -357,9 +357,6 @@ static void walken_commit_walk(struct rev_info *rev)
 	...
 
 	while ((commit = get_revision(rev))) {
-		if (!commit)
-			continue;
-
 		strbuf_reset(&prettybuf);
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &prettybuf);
 		puts(prettybuf.buf);
