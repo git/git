@@ -248,9 +248,7 @@ test_expect_success 'fetch can handle previously-fetched .idx files' '
 '
 
 test_expect_success 'did not use upload-pack service' '
-	test_might_fail grep '/git-upload-pack' <"$HTTPD_ROOT_PATH"/access.log >act &&
-	: >exp &&
-	test_cmp exp act
+	! grep "/git-upload-pack" "$HTTPD_ROOT_PATH/access.log"
 '
 
 test_expect_success 'git client shows text/plain errors' '
