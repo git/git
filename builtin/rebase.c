@@ -85,6 +85,7 @@ struct rebase_options {
 	const char *action;
 	int signoff;
 	int allow_rerere_autoupdate;
+	int keep_empty;
 	int autosquash;
 	char *gpg_sign_opt;
 	int autostash;
@@ -100,6 +101,7 @@ struct rebase_options {
 #define REBASE_OPTIONS_INIT {			  	\
 		.type = REBASE_UNSPECIFIED,	  	\
 		.empty = EMPTY_UNSPECIFIED,	  	\
+		.keep_empty = 1,			\
 		.default_backend = "merge",	  	\
 		.flags = REBASE_NO_QUIET, 		\
 		.git_am_opts = ARGV_ARRAY_INIT,		\
@@ -379,6 +381,7 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 
 	git_config_get_bool("rebase.abbreviatecommands", &abbreviate_commands);
 
+	flags |= opts->keep_empty ? TODO_LIST_KEEP_EMPTY : 0;
 	flags |= abbreviate_commands ? TODO_LIST_ABBREVIATE_CMDS : 0;
 	flags |= opts->rebase_merges ? TODO_LIST_REBASE_MERGES : 0;
 	flags |= opts->rebase_cousins > 0 ? TODO_LIST_REBASE_COUSINS : 0;
@@ -442,6 +445,7 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 	return ret;
 }
 
+static void imply_merge(struct rebase_options *opts, const char *option);
 static int parse_opt_keep_empty(const struct option *opt, const char *arg,
 				int unset)
 {
@@ -449,10 +453,8 @@ static int parse_opt_keep_empty(const struct option *opt, const char *arg,
 
 	BUG_ON_OPT_ARG(arg);
 
-	/*
-	 * If we ever want to remap --keep-empty to --empty=keep, insert:
-	 * 	opts->empty = unset ? EMPTY_UNSPECIFIED : EMPTY_KEEP;
-	 */
+	imply_merge(opts, unset ? "--no-keep-empty" : "--keep-empty");
+	opts->keep_empty = !unset;
 	opts->type = REBASE_MERGE;
 	return 0;
 }
@@ -471,7 +473,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		OPT_NEGBIT(0, "ff", &opts.flags, N_("allow fast-forward"),
 			   REBASE_FORCE),
 		{ OPTION_CALLBACK, 'k', "keep-empty", &options, NULL,
-			N_("(DEPRECATED) keep empty commits"),
+			N_("keep commits which start empty"),
 			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN,
 			parse_opt_keep_empty },
 		OPT_BOOL_F(0, "allow-empty-message", &opts.allow_empty_message,
@@ -559,7 +561,7 @@ static void imply_merge(struct rebase_options *opts, const char *option)
 {
 	switch (opts->type) {
 	case REBASE_APPLY:
-		die(_("%s requires an interactive rebase"), option);
+		die(_("%s requires the merge backend"), option);
 		break;
 	case REBASE_MERGE:
 	case REBASE_PRESERVE_MERGES:
@@ -1163,6 +1165,7 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 		opts->allow_rerere_autoupdate ?
 			opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE ?
 			"--rerere-autoupdate" : "--no-rerere-autoupdate" : "");
+	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
 	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
 	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
 	add_var(&script_snippet, "cmd", opts->cmd);
@@ -1548,7 +1551,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       N_("how to handle commits that become empty"),
 			       PARSE_OPT_NONEG, parse_opt_empty),
 		{ OPTION_CALLBACK, 'k', "keep-empty", &options, NULL,
-			N_("(DEPRECATED) keep empty commits"),
+			N_("keep commits which start empty"),
 			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN,
 			parse_opt_keep_empty },
 		OPT_BOOL(0, "autosquash", &options.autosquash,

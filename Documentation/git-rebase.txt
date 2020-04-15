@@ -277,20 +277,32 @@ See also INCOMPATIBLE OPTIONS below.
 	Other options, like --exec, will use the default of drop unless
 	-i/--interactive is explicitly specified.
 +
-Note that commits which start empty are kept, and commits which are
-clean cherry-picks (as determined by `git log --cherry-mark ...`) are
-always dropped.
+Note that commits which start empty are kept (unless --no-keep-empty
+is specified), and commits which are clean cherry-picks (as determined
+by `git log --cherry-mark ...`) are always dropped.
 +
 See also INCOMPATIBLE OPTIONS below.
 
+--no-keep-empty::
 --keep-empty::
-	No-op.  Rebasing commits that started empty (had no change
-	relative to their parent) used to fail and this option would
-	override that behavior, allowing commits with empty changes to
-	be rebased.  Now commits with no changes do not cause rebasing
-	to halt.
+	Do not keep commits that start empty before the rebase
+	(i.e. that do not change anything from its parent) in the
+	result.  The default is to keep commits which start empty,
+	since creating such commits requires passing the --allow-empty
+	override flag to `git commit`, signifying that a user is very
+	intentionally creating such a commit and thus wants to keep
+	it.
 +
-See also BEHAVIORAL DIFFERENCES and INCOMPATIBLE OPTIONS below.
+Usage of this flag will probably be rare, since you can get rid of
+commits that start empty by just firing up an interactive rebase and
+removing the lines corresponding to the commits you don't want.  This
+flag exists as a convenient shortcut, such as for cases where external
+tools generate many empty commits and you want them all removed.
++
+For commits which do not start empty but become empty after rebasing,
+see the --empty flag.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --allow-empty-message::
 	No-op.  Rebasing commits with an empty message used to fail
@@ -590,7 +602,7 @@ are incompatible with the following options:
  * --preserve-merges
  * --interactive
  * --exec
- * --keep-empty
+ * --no-keep-empty
  * --empty=
  * --edit-todo
  * --root when used in combination with --onto
@@ -623,12 +635,15 @@ commits that started empty, though these are rare in practice.  It
 also drops commits that become empty and has no option for controlling
 this behavior.
 
-The merge backend keeps intentionally empty commits.  Similar to the
-apply backend, by default the merge backend drops commits that become
-empty unless -i/--interactive is specified (in which case it stops and
-asks the user what to do).  The merge backend also has an
---empty={drop,keep,ask} option for changing the behavior of handling
-commits that become empty.
+The merge backend keeps intentionally empty commits by default (though
+with -i they are marked as empty in the todo list editor, or they can
+be dropped automatically with --no-keep-empty).
+
+Similar to the apply backend, by default the merge backend drops
+commits that become empty unless -i/--interactive is specified (in
+which case it stops and asks the user what to do).  The merge backend
+also has an --empty={drop,keep,ask} option for changing the behavior
+of handling commits that become empty.
 
 Directory rename detection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
