@@ -233,18 +233,19 @@ test_expect_success 'read-tree --reset removes outside worktree' '
 	test_must_be_empty result
 '
 
-test_expect_success 'print errors when failed to update worktree' '
+test_expect_success 'print warnings when some worktree updates disabled' '
 	echo sub >.git/info/sparse-checkout &&
 	git checkout -f init &&
 	mkdir sub &&
 	touch sub/added sub/addedtoo &&
-	test_must_fail git checkout top 2>actual &&
+	# Use -q to suppress "Previous HEAD position" and "Head is now at" msgs
+	git checkout -q top 2>actual &&
 	cat >expected <<\EOF &&
-error: The following untracked working tree files would be overwritten by checkout:
+warning: The following paths were already present and thus not updated despite sparse patterns:
 	sub/added
 	sub/addedtoo
-Please move or remove them before you switch branches.
-Aborting
+
+After fixing the above paths, you may want to run `git sparse-checkout reapply`.
 EOF
 	test_i18ncmp expected actual
 '

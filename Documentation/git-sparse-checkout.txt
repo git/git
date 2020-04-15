@@ -70,6 +70,16 @@ C-style quoted strings.
 	`core.sparseCheckoutCone` is enabled, the given patterns are interpreted
 	as directory names as in the 'set' subcommand.
 
+'reapply::
+	Reapply the sparsity pattern rules to paths in the working tree.
+	Commands like merge or rebase can materialize paths to do their
+	work (e.g. in order to show you a conflict), and other
+	sparse-checkout commands might fail to sparsify an individual file
+	(e.g. because it has unstaged changes or conflicts).  In such
+	cases, it can make sense to run `git sparse-checkout reapply` later
+	after cleaning up affected paths (e.g. resolving conflicts, undoing
+	or committing changes, etc.).
+
 'disable'::
 	Disable the `core.sparseCheckout` config setting, and restore the
 	working directory to include all files. Leaves the sparse-checkout
