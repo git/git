@@ -83,6 +83,12 @@ placeholders, its output is not affected by other options like
 
 	  <full commit message>
 
+* 'mboxrd'
++
+Like 'email', but lines in the commit message starting with "From "
+(preceded by zero or more ">") are quoted with ">" so they aren't
+confused as starting a new commit.
+
 * 'raw'
 +
 The 'raw' format shows the entire commit exactly as
