@@ -43,7 +43,10 @@ OPTIONS
 	If no `--decorate-refs` is given, pretend as if all refs were
 	included.  For each candidate, do not use it for decoration if it
 	matches any patterns given to `--decorate-refs-exclude` or if it
-	doesn't match any of the patterns given to `--decorate-refs`.
+	doesn't match any of the patterns given to `--decorate-refs`. The
+	`log.excludeDecoration` config option allows excluding refs from
+	the decorations, but an explicit `--decorate-refs` pattern will
+	override a match in `log.excludeDecoration`.
 
 --source::
 	Print out the ref name given on the command line by which each

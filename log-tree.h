@@ -8,7 +8,9 @@ struct log_info {
 };
 
 struct decoration_filter {
-	struct string_list *include_ref_pattern, *exclude_ref_pattern;
+	struct string_list *include_ref_pattern;
+	struct string_list *exclude_ref_pattern;
+	struct string_list *exclude_ref_config_pattern;
 };
 
 int parse_decorate_color_config(const char *var, const char *slot_name, const char *value);
