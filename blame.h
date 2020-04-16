@@ -100,6 +100,8 @@ struct blame_entry {
 	int unblamable;
 };
 
+struct blame_bloom_data;
+
 /*
  * The current state of the blame assignment.
  */
@@ -156,6 +158,7 @@ struct blame_scoreboard {
 	void(*found_guilty_entry)(struct blame_entry *, void *);
 
 	void *found_guilty_entry_data;
+	struct blame_bloom_data *bloom_data;
 };
 
 /*
@@ -180,6 +183,9 @@ void init_scoreboard(struct blame_scoreboard *sb);
 void setup_scoreboard(struct blame_scoreboard *sb,
 		      const char *path,
 		      struct blame_origin **orig);
+void setup_blame_bloom_data(struct blame_scoreboard *sb,
+			    const char *path);
+void cleanup_scoreboard(struct blame_scoreboard *sb);
 
 struct blame_entry *blame_entry_prepend(struct blame_entry *head,
 					long start, long end,

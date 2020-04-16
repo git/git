@@ -9,6 +9,8 @@
 #include "blame.h"
 #include "alloc.h"
 #include "commit-slab.h"
+#include "bloom.h"
+#include "commit-graph.h"
 
 define_commit_slab(blame_suspects, struct blame_origin *);
 static struct blame_suspects blame_suspects;
@@ -1246,13 +1248,75 @@ static int fill_blob_sha1_and_mode(struct repository *r,
 	return -1;
 }
 
+struct blame_bloom_data {
+	/*
+	 * Changed-path Bloom filter keys. These can help prevent
+	 * computing diffs against first parents, but we need to
+	 * expand the list as code is moved or files are renamed.
+	 */
+	struct bloom_filter_settings *settings;
+	struct bloom_key **keys;
+	int nr;
+	int alloc;
+};
+
+static int bloom_count_queries = 0;
+static int bloom_count_no = 0;
+static int maybe_changed_path(struct repository *r,
+			      struct commit *parent,
+			      struct blame_origin *origin,
+			      struct blame_bloom_data *bd)
+{
+	int i;
+	struct bloom_filter *filter;
+
+	if (!bd)
+		return 1;
+
+	if (origin->commit->generation == GENERATION_NUMBER_INFINITY)
+		return 1;
+
+	filter = get_bloom_filter(r, origin->commit, 0);
+
+	if (!filter)
+		return 1;
+
+	bloom_count_queries++;
+	for (i = 0; i < bd->nr; i++) {
+		if (bloom_filter_contains(filter,
+					  bd->keys[i],
+					  bd->settings))
+			return 1;
+	}
+
+	bloom_count_no++;
+	return 0;
+}
+
+static void add_bloom_key(struct blame_bloom_data *bd,
+			  const char *path)
+{
+	if (!bd)
+		return;
+
+	if (bd->nr >= bd->alloc) {
+		bd->alloc *= 2;
+		REALLOC_ARRAY(bd->keys, bd->alloc);
+	}
+
+	bd->keys[bd->nr] = xmalloc(sizeof(struct bloom_key));
+	fill_bloom_key(path, strlen(path), bd->keys[bd->nr], bd->settings);
+	bd->nr++;
+}
+
 /*
  * We have an origin -- check if the same path exists in the
  * parent and return an origin structure to represent it.
  */
 static struct blame_origin *find_origin(struct repository *r,
 					struct commit *parent,
-					struct blame_origin *origin)
+					struct blame_origin *origin,
+					struct blame_bloom_data *bd)
 {
 	struct blame_origin *porigin;
 	struct diff_options diff_opts;
@@ -1286,10 +1350,19 @@ static struct blame_origin *find_origin(struct repository *r,
 
 	if (is_null_oid(&origin->commit->object.oid))
 		do_diff_cache(get_commit_tree_oid(parent), &diff_opts);
-	else
-		diff_tree_oid(get_commit_tree_oid(parent),
-			      get_commit_tree_oid(origin->commit),
-			      "", &diff_opts);
+	else {
+		int compute_diff = 1;
+		if (origin->commit->parents &&
+		    !oidcmp(&parent->object.oid,
+			    &origin->commit->parents->item->object.oid))
+			compute_diff = maybe_changed_path(r, parent,
+							  origin, bd);
+
+		if (compute_diff)
+			diff_tree_oid(get_commit_tree_oid(parent),
+				      get_commit_tree_oid(origin->commit),
+				      "", &diff_opts);
+	}
 	diffcore_std(&diff_opts);
 
 	if (!diff_queued_diff.nr) {
@@ -1341,7 +1414,8 @@ static struct blame_origin *find_origin(struct repository *r,
  */
 static struct blame_origin *find_rename(struct repository *r,
 					struct commit *parent,
-					struct blame_origin *origin)
+					struct blame_origin *origin,
+					struct blame_bloom_data *bd)
 {
 	struct blame_origin *porigin = NULL;
 	struct diff_options diff_opts;
@@ -1366,6 +1440,7 @@ static struct blame_origin *find_rename(struct repository *r,
 		struct diff_filepair *p = diff_queued_diff.queue[i];
 		if ((p->status == 'R' || p->status == 'C') &&
 		    !strcmp(p->two->path, origin->path)) {
+			add_bloom_key(bd, p->one->path);
 			porigin = get_origin(parent, p->one->path);
 			oidcpy(&porigin->blob_oid, &p->one->oid);
 			porigin->mode = p->one->mode;
@@ -2332,6 +2407,11 @@ static void distribute_blame(struct blame_scoreboard *sb, struct blame_entry *bl
 
 #define MAXSG 16
 
+typedef struct blame_origin *(*blame_find_alg)(struct repository *,
+					       struct commit *,
+					       struct blame_origin *,
+					       struct blame_bloom_data *);
+
 static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin, int opt)
 {
 	struct rev_info *revs = sb->revs;
@@ -2356,8 +2436,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	 * common cases, then we look for renames in the second pass.
 	 */
 	for (pass = 0; pass < 2 - sb->no_whole_file_rename; pass++) {
-		struct blame_origin *(*find)(struct repository *, struct commit *, struct blame_origin *);
-		find = pass ? find_rename : find_origin;
+		blame_find_alg find = pass ? find_rename : find_origin;
 
 		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 		     i < num_sg && sg;
@@ -2369,7 +2448,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 				continue;
 			if (parse_commit(p))
 				continue;
-			porigin = find(sb->repo, p, origin);
+			porigin = find(sb->repo, p, origin, sb->bloom_data);
 			if (!porigin)
 				continue;
 			if (oideq(&porigin->blob_oid, &origin->blob_oid)) {
@@ -2808,4 +2887,46 @@ struct blame_entry *blame_entry_prepend(struct blame_entry *head,
 	new_head->next = head;
 	blame_origin_incref(o);
 	return new_head;
+}
+
+void setup_blame_bloom_data(struct blame_scoreboard *sb,
+			    const char *path)
+{
+	struct blame_bloom_data *bd;
+
+	if (!sb->repo->objects->commit_graph)
+		return;
+
+	if (!sb->repo->objects->commit_graph->bloom_filter_settings)
+		return;
+
+	bd = xmalloc(sizeof(struct blame_bloom_data));
+
+	bd->settings = sb->repo->objects->commit_graph->bloom_filter_settings;
+
+	bd->alloc = 4;
+	bd->nr = 0;
+	ALLOC_ARRAY(bd->keys, bd->alloc);
+
+	add_bloom_key(bd, path);
+
+	sb->bloom_data = bd;
+}
+
+void cleanup_scoreboard(struct blame_scoreboard *sb)
+{
+	if (sb->bloom_data) {
+		int i;
+		for (i = 0; i < sb->bloom_data->nr; i++) {
+			free(sb->bloom_data->keys[i]->hashes);
+			free(sb->bloom_data->keys[i]);
+		}
+		free(sb->bloom_data->keys);
+		FREE_AND_NULL(sb->bloom_data);
+
+		trace2_data_intmax("blame", sb->repo,
+				   "bloom/queries", bloom_count_queries);
+		trace2_data_intmax("blame", sb->repo,
+				   "bloom/response-no", bloom_count_no);
+	}
 }
