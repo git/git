@@ -136,7 +136,7 @@ run_git_push_porcelain_output_test() {
 	# Refs of upstream : master(A)  bar(B)  baz(A)  next(A)
 	# Refs of workbench: master(B)  bar(A)  baz(A)  next(A)
 	# git-push         : master(B)  bar(A)  NULL    next(A)
-	test_expect_failure "atomic push failed ($PROTOCOL)" '
+	test_expect_success "atomic push failed ($PROTOCOL)" '
 		(
 			cd workbench &&
 			git update-ref refs/heads/master $B &&
@@ -150,10 +150,10 @@ run_git_push_porcelain_output_test() {
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
 		To <URL/of/upstream.git>
+		=    refs/heads/next:refs/heads/next    [up to date]
 		!    refs/heads/bar:refs/heads/bar    [rejected] (non-fast-forward)
 		!    (delete):refs/heads/baz    [rejected] (atomic push failed)
 		!    refs/heads/master:refs/heads/master    [rejected] (atomic push failed)
-		!    refs/heads/next:refs/heads/next    [rejected] (atomic push failed)
 		Done
 		EOF
 		test_cmp expect actual &&
@@ -168,7 +168,6 @@ run_git_push_porcelain_output_test() {
 		EOF
 		test_cmp expect actual
 	'
-
 	test_expect_success "prepare pre-receive hook ($PROTOCOL)" '
 		write_script "$upstream/hooks/pre-receive" <<-EOF
 		exit 1
