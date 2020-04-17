@@ -715,7 +715,15 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 
 	close(data->fd[1]);
 	close(data->fd[0]);
-	ret |= finish_connect(data->conn);
+	/*
+	 * Atomic push may abort the connection early and close the pipe,
+	 * which may cause an error for `finish_connect()`. Ignore this error
+	 * for atomic git-push.
+	 */
+	if (ret || args.atomic)
+		finish_connect(data->conn);
+	else
+		ret = finish_connect(data->conn);
 	data->conn = NULL;
 	data->got_remote_heads = 0;
 

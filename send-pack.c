@@ -190,10 +190,8 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 
 		if (reader->line[0] == 'o' && reader->line[1] == 'k')
 			hint->status = REF_STATUS_OK;
-		else {
+		else
 			hint->status = REF_STATUS_REMOTE_REJECT;
-			ret = -1;
-		}
 		hint->remote_status = xstrdup_or_null(msg);
 		/* start our next search from the next ref */
 		hint = hint->next;
@@ -489,7 +487,8 @@ int send_pack(struct send_pack_args *args,
 			if (use_atomic) {
 				strbuf_release(&req_buf);
 				strbuf_release(&cap_buf);
-				return atomic_push_failure(args, remote_refs, ref);
+				atomic_push_failure(args, remote_refs, ref);
+				return args->porcelain ? 0 : -1;
 			}
 			/* else fallthrough */
 		default:

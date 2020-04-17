@@ -1066,6 +1066,7 @@ test_expect_success 'push --porcelain rejected' '
 
 	echo >.git/foo  "To testrepo"  &&
 	echo >>.git/foo "!	refs/heads/master:refs/heads/master	[remote rejected] (branch is currently checked out)" &&
+	echo >>.git/foo "Done" &&
 
 	test_must_fail git push >.git/bar --porcelain  testrepo refs/heads/master:refs/heads/master &&
 	test_cmp .git/foo .git/bar
