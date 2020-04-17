@@ -12625,7 +12625,9 @@ set cdup {}
 if {[expr {[exec git rev-parse --is-inside-work-tree] == "true"}]} {
     set cdup [exec git rev-parse --show-cdup]
 }
-set worktree [exec git rev-parse --show-toplevel]
+if {$hasworktree} {
+    set worktree [exec git rev-parse --show-toplevel]
+}
 setcoords
 makewindow
 catch {
