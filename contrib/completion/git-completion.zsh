@@ -150,9 +150,11 @@ __git_zsh_cmd_common ()
 	push:'update remote refs along with associated objects'
 	rebase:'forward-port local commits to the updated upstream head'
 	reset:'reset current HEAD to the specified state'
+	restore:'restore working tree files'
 	rm:'remove files from the working tree and from the index'
 	show:'show various types of objects'
 	status:'show the working tree status'
+	switch:'switch branches'
 	tag:'create, list, delete or verify a tag object signed with GPG')
 	_describe -t common-commands 'common commands' list && _ret=0
 }
