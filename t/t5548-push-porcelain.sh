@@ -136,7 +136,7 @@ run_git_push_porcelain_output_test() {
 	# Refs of upstream : master(A)  bar(B)  baz(A)  next(A)
 	# Refs of workbench: master(B)  bar(A)  baz(A)  next(A)
 	# git-push         : master(B)  bar(A)  NULL    next(A)
-	test_expect_success "atomic push failed ($PROTOCOL)" '
+	test_expect_failure "atomic push failed ($PROTOCOL)" '
 		(
 			cd workbench &&
 			git update-ref refs/heads/master $B &&

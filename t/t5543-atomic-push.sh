@@ -200,7 +200,7 @@ test_expect_success 'atomic push is not advertised if configured' '
 # References in upstream : master(1) one(1) foo(1)
 # References in workbench: master(2)        foo(1) two(2) bar(2)
 # Atomic push            : master(2)               two(2) bar(2)
-test_expect_failure 'atomic push reports (reject by update hook)' '
+test_expect_success 'atomic push reports (reject by update hook)' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
@@ -241,7 +241,7 @@ test_expect_failure 'atomic push reports (reject by update hook)' '
 
 # References in upstream : master(1) one(1) foo(1)
 # References in workbench: master(2)        foo(1) two(2) bar(2)
-test_expect_failure 'atomic push reports (mirror, but reject by update hook)' '
+test_expect_success 'atomic push reports (mirror, but reject by update hook)' '
 	(
 		cd workbench &&
 		git remote remove up &&
@@ -262,7 +262,7 @@ test_expect_failure 'atomic push reports (mirror, but reject by update hook)' '
 
 # References in upstream : master(2) one(1) foo(1)
 # References in workbench: master(1)        foo(1) two(2) bar(2)
-test_expect_failure 'atomic push reports (reject by non-ff)' '
+test_expect_success 'atomic push reports (reject by non-ff)' '
 	rm upstream/.git/hooks/update &&
 	(
 		cd workbench &&

@@ -332,6 +332,8 @@ static int atomic_push_failure(struct send_pack_args *args,
 			continue;
 
 		switch (ref->status) {
+		case REF_STATUS_NONE:
+		case REF_STATUS_OK:
 		case REF_STATUS_EXPECTING_REPORT:
 			ref->status = REF_STATUS_ATOMIC_PUSH_FAILED;
 			continue;
