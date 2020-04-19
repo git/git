@@ -1064,17 +1064,21 @@ static int check_submodule_url(const char *url)
 		/*
 		 * URLs which escape their root via "../" can overwrite
 		 * the host field and previous components, resolving to
-		 * URLs like https::example.com/submodule.git that were
+		 * URLs like https::example.com/submodule.git and
+		 * https:///example.com/submodule.git that were
 		 * susceptible to CVE-2020-11008.
 		 */
 		if (count_leading_dotdots(url, &next) > 0 &&
-		    *next == ':')
+		    (*next == ':' || *next == '/'))
 			return -1;
 	}
 
 	else if (url_to_curl_url(url, &curl_url)) {
 		struct credential c = CREDENTIAL_INIT;
-		int ret = credential_from_url_gently(&c, curl_url, 1);
+		int ret = 0;
+		if (credential_from_url_gently(&c, curl_url, 1) ||
+		    !*c.host)
+			ret = -1;
 		credential_clear(&c);
 		return ret;
 	}
