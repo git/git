@@ -88,6 +88,11 @@ static int proto_is_http(const char *s)
 
 static void credential_apply_config(struct credential *c)
 {
+	if (!c->host)
+		die(_("refusing to work with credential missing host field"));
+	if (!c->protocol)
+		die(_("refusing to work with credential missing protocol field"));
+
 	if (c->configured)
 		return;
 	git_config(credential_config_callback, c);
@@ -190,8 +195,11 @@ int credential_read(struct credential *c, FILE *fp)
 	return 0;
 }
 
-static void credential_write_item(FILE *fp, const char *key, const char *value)
+static void credential_write_item(FILE *fp, const char *key, const char *value,
+				  int required)
 {
+	if (!value && required)
+		BUG("credential value for %s is missing", key);
 	if (!value)
 		return;
 	if (strchr(value, '\n'))
@@ -201,11 +209,11 @@ static void credential_write_item(FILE *fp, const char *key, const char *value)
 
 void credential_write(const struct credential *c, FILE *fp)
 {
-	credential_write_item(fp, "protocol", c->protocol);
-	credential_write_item(fp, "host", c->host);
-	credential_write_item(fp, "path", c->path);
-	credential_write_item(fp, "username", c->username);
-	credential_write_item(fp, "password", c->password);
+	credential_write_item(fp, "protocol", c->protocol, 1);
+	credential_write_item(fp, "host", c->host, 1);
+	credential_write_item(fp, "path", c->path, 0);
+	credential_write_item(fp, "username", c->username, 0);
+	credential_write_item(fp, "password", c->password, 0);
 }
 
 static int run_credential_helper(struct credential *c,

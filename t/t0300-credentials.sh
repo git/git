@@ -400,18 +400,16 @@ test_expect_success 'empty helper spec resets helper list' '
 	EOF
 '
 
-test_expect_success 'url parser ignores embedded newlines' '
-	check fill <<-EOF
+test_expect_success 'url parser rejects embedded newlines' '
+	test_must_fail git credential fill 2>stderr <<-\EOF &&
 	url=https://one.example.com?%0ahost=two.example.com/
-	--
-	username=askpass-username
-	password=askpass-password
-	--
+	EOF
+	cat >expect <<-\EOF &&
 	warning: url contains a newline in its host component: https://one.example.com?%0ahost=two.example.com/
 	warning: skipping credential lookup for url: https://one.example.com?%0ahost=two.example.com/
-	askpass: Username:
-	askpass: Password:
+	fatal: refusing to work with credential missing host field
 	EOF
+	test_i18ncmp expect stderr
 '
 
 test_expect_success 'host-less URLs are parsed as empty host' '
@@ -429,6 +427,26 @@ test_expect_success 'host-less URLs are parsed as empty host' '
 	verbatim: host=
 	verbatim: path=path/to/cert.pem
 	EOF
+'
+
+test_expect_success 'credential system refuses to work with missing host' '
+	test_must_fail git credential fill 2>stderr <<-\EOF &&
+	protocol=http
+	EOF
+	cat >expect <<-\EOF &&
+	fatal: refusing to work with credential missing host field
+	EOF
+	test_i18ncmp expect stderr
+'
+
+test_expect_success 'credential system refuses to work with missing protocol' '
+	test_must_fail git credential fill 2>stderr <<-\EOF &&
+	host=example.com
+	EOF
+	cat >expect <<-\EOF &&
+	fatal: refusing to work with credential missing protocol field
+	EOF
+	test_i18ncmp expect stderr
 '
 
 test_done
