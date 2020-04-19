@@ -22,6 +22,11 @@ test_expect_success 'setup helper scripts' '
 	exit 0
 	EOF
 
+	write_script git-credential-quit <<-\EOF &&
+	. ./dump
+	echo quit=1
+	EOF
+
 	write_script git-credential-verbatim <<-\EOF &&
 	user=$1; shift
 	pass=$1; shift
@@ -291,11 +296,16 @@ test_expect_success 'http paths can be part of context' '
 
 test_expect_success 'helpers can abort the process' '
 	test_must_fail git \
-		-c credential.helper="!f() { echo quit=1; }; f" \
+		-c credential.helper=quit \
 		-c credential.helper="verbatim foo bar" \
-		credential fill >stdout &&
+		credential fill >stdout 2>stderr &&
 	>expect &&
-	test_cmp expect stdout
+	test_cmp expect stdout &&
+	cat >expect <<-\EOF &&
+	quit: get
+	fatal: credential helper '\''quit'\'' told us to quit
+	EOF
+	test_i18ncmp expect stderr
 '
 
 test_expect_success 'empty helper spec resets helper list' '
