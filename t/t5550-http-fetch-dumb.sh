@@ -321,11 +321,17 @@ test_expect_success 'git client does not send an empty Accept-Language' '
 '
 
 test_expect_success 'remote-http complains cleanly about malformed urls' '
-	# do not actually issue "list" or other commands, as we do not
-	# want to rely on what curl would actually do with such a broken
-	# URL. This is just about making sure we do not segfault during
-	# initialization.
-	test_must_fail git remote-http http::/example.com/repo.git
+	test_must_fail git remote-http http::/example.com/repo.git 2>stderr &&
+	test_i18ngrep "url has no scheme" stderr
+'
+
+# NEEDSWORK: Writing commands to git-remote-curl can race against the latter
+# erroring out, producing SIGPIPE. Remove "ok=sigpipe" once transport-helper has
+# learned to handle early remote helper failures more cleanly.
+test_expect_success 'remote-http complains cleanly about empty scheme' '
+	test_must_fail ok=sigpipe git ls-remote \
+		http::${HTTPD_URL#http}/dumb/repo.git 2>stderr &&
+	test_i18ngrep "url has no scheme" stderr
 '
 
 test_expect_success 'redirects can be forbidden/allowed' '
