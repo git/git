@@ -89,6 +89,11 @@ static int proto_is_http(const char *s)
 
 static void credential_apply_config(struct credential *c)
 {
+	if (!c->host)
+		die(_("refusing to work with credential missing host field"));
+	if (!c->protocol)
+		die(_("refusing to work with credential missing protocol field"));
+
 	if (c->configured)
 		return;
 	git_config(credential_config_callback, c);
@@ -191,8 +196,11 @@ int credential_read(struct credential *c, FILE *fp)
 	return 0;
 }
 
-static void credential_write_item(FILE *fp, const char *key, const char *value)
+static void credential_write_item(FILE *fp, const char *key, const char *value,
+				  int required)
 {
+	if (!value && required)
+		BUG("credential value for %s is missing", key);
 	if (!value)
 		return;
 	if (strchr(value, '\n'))
@@ -202,11 +210,11 @@ static void credential_write_item(FILE *fp, const char *key, const char *value)
 
 void credential_write(const struct credential *c, FILE *fp)
 {
-	credential_write_item(fp, "protocol", c->protocol);
-	credential_write_item(fp, "host", c->host);
-	credential_write_item(fp, "path", c->path);
-	credential_write_item(fp, "username", c->username);
-	credential_write_item(fp, "password", c->password);
+	credential_write_item(fp, "protocol", c->protocol, 1);
+	credential_write_item(fp, "host", c->host, 1);
+	credential_write_item(fp, "path", c->path, 0);
+	credential_write_item(fp, "username", c->username, 0);
+	credential_write_item(fp, "password", c->password, 0);
 }
 
 static int run_credential_helper(struct credential *c,
@@ -352,8 +360,11 @@ int credential_from_url_gently(struct credential *c, const char *url,
 	 *   (3) proto://<user>:<pass>@<host>/...
 	 */
 	proto_end = strstr(url, "://");
-	if (!proto_end)
-		return 0;
+	if (!proto_end || proto_end == url) {
+		if (!quiet)
+			warning(_("url has no scheme: %s"), url);
+		return -1;
+	}
 	cp = proto_end + 3;
 	at = strchr(cp, '@');
 	colon = strchr(cp, ':');
@@ -374,10 +385,8 @@ int credential_from_url_gently(struct credential *c, const char *url,
 		host = at + 1;
 	}
 
-	if (proto_end - url > 0)
-		c->protocol = xmemdupz(url, proto_end - url);
-	if (slash - host > 0)
-		c->host = url_decode_mem(host, slash - host);
+	c->protocol = xmemdupz(url, proto_end - url);
+	c->host = url_decode_mem(host, slash - host);
 	/* Trim leading and trailing slashes from path */
 	while (*slash == '/')
 		slash++;
@@ -401,8 +410,6 @@ int credential_from_url_gently(struct credential *c, const char *url,
 
 void credential_from_url(struct credential *c, const char *url)
 {
-	if (credential_from_url_gently(c, url, 0) < 0) {
-		warning(_("skipping credential lookup for url: %s"), url);
-		credential_clear(c);
-	}
+	if (credential_from_url_gently(c, url, 0) < 0)
+		die(_("credential url cannot be parsed: %s"), url);
 }
