@@ -373,8 +373,7 @@ int credential_from_url_gently(struct credential *c, const char *url,
 
 	if (proto_end - url > 0)
 		c->protocol = xmemdupz(url, proto_end - url);
-	if (slash - host > 0)
-		c->host = url_decode_mem(host, slash - host);
+	c->host = url_decode_mem(host, slash - host);
 	/* Trim leading and trailing slashes from path */
 	while (*slash == '/')
 		slash++;

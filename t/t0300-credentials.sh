@@ -414,4 +414,21 @@ test_expect_success 'url parser ignores embedded newlines' '
 	EOF
 '
 
+test_expect_success 'host-less URLs are parsed as empty host' '
+	check fill "verbatim foo bar" <<-\EOF
+	url=cert:///path/to/cert.pem
+	--
+	protocol=cert
+	host=
+	path=path/to/cert.pem
+	username=foo
+	password=bar
+	--
+	verbatim: get
+	verbatim: protocol=cert
+	verbatim: host=
+	verbatim: path=path/to/cert.pem
+	EOF
+'
+
 test_done
