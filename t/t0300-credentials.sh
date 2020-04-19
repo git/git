@@ -40,43 +40,71 @@ test_expect_success 'setup helper scripts' '
 
 test_expect_success 'credential_fill invokes helper' '
 	check fill "verbatim foo bar" <<-\EOF
+	protocol=http
+	host=example.com
 	--
+	protocol=http
+	host=example.com
 	username=foo
 	password=bar
 	--
 	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
 	EOF
 '
 
 test_expect_success 'credential_fill invokes multiple helpers' '
 	check fill useless "verbatim foo bar" <<-\EOF
+	protocol=http
+	host=example.com
 	--
+	protocol=http
+	host=example.com
 	username=foo
 	password=bar
 	--
 	useless: get
+	useless: protocol=http
+	useless: host=example.com
 	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
 	EOF
 '
 
 test_expect_success 'credential_fill stops when we get a full response' '
 	check fill "verbatim one two" "verbatim three four" <<-\EOF
+	protocol=http
+	host=example.com
 	--
+	protocol=http
+	host=example.com
 	username=one
 	password=two
 	--
 	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
 	EOF
 '
 
 test_expect_success 'credential_fill continues through partial response' '
 	check fill "verbatim one \"\"" "verbatim two three" <<-\EOF
+	protocol=http
+	host=example.com
 	--
+	protocol=http
+	host=example.com
 	username=two
 	password=three
 	--
 	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
 	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
 	verbatim: username=one
 	EOF
 '
@@ -102,14 +130,20 @@ test_expect_success 'credential_fill passes along metadata' '
 
 test_expect_success 'credential_approve calls all helpers' '
 	check approve useless "verbatim one two" <<-\EOF
+	protocol=http
+	host=example.com
 	username=foo
 	password=bar
 	--
 	--
 	useless: store
+	useless: protocol=http
+	useless: host=example.com
 	useless: username=foo
 	useless: password=bar
 	verbatim: store
+	verbatim: protocol=http
+	verbatim: host=example.com
 	verbatim: username=foo
 	verbatim: password=bar
 	EOF
@@ -117,6 +151,8 @@ test_expect_success 'credential_approve calls all helpers' '
 
 test_expect_success 'do not bother storing password-less credential' '
 	check approve useless <<-\EOF
+	protocol=http
+	host=example.com
 	username=foo
 	--
 	--
@@ -126,14 +162,20 @@ test_expect_success 'do not bother storing password-less credential' '
 
 test_expect_success 'credential_reject calls all helpers' '
 	check reject useless "verbatim one two" <<-\EOF
+	protocol=http
+	host=example.com
 	username=foo
 	password=bar
 	--
 	--
 	useless: erase
+	useless: protocol=http
+	useless: host=example.com
 	useless: username=foo
 	useless: password=bar
 	verbatim: erase
+	verbatim: protocol=http
+	verbatim: host=example.com
 	verbatim: username=foo
 	verbatim: password=bar
 	EOF
@@ -141,33 +183,49 @@ test_expect_success 'credential_reject calls all helpers' '
 
 test_expect_success 'usernames can be preserved' '
 	check fill "verbatim \"\" three" <<-\EOF
+	protocol=http
+	host=example.com
 	username=one
 	--
+	protocol=http
+	host=example.com
 	username=one
 	password=three
 	--
 	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
 	verbatim: username=one
 	EOF
 '
 
 test_expect_success 'usernames can be overridden' '
 	check fill "verbatim two three" <<-\EOF
+	protocol=http
+	host=example.com
 	username=one
 	--
+	protocol=http
+	host=example.com
 	username=two
 	password=three
 	--
 	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
 	verbatim: username=one
 	EOF
 '
 
 test_expect_success 'do not bother completing already-full credential' '
 	check fill "verbatim three four" <<-\EOF
+	protocol=http
+	host=example.com
 	username=one
 	password=two
 	--
+	protocol=http
+	host=example.com
 	username=one
 	password=two
 	--
@@ -179,23 +237,31 @@ test_expect_success 'do not bother completing already-full credential' '
 # askpass helper is run, we know the internal getpass is working.
 test_expect_success 'empty helper list falls back to internal getpass' '
 	check fill <<-\EOF
+	protocol=http
+	host=example.com
 	--
+	protocol=http
+	host=example.com
 	username=askpass-username
 	password=askpass-password
 	--
-	askpass: Username:
-	askpass: Password:
+	askpass: Username for '\''http://example.com'\'':
+	askpass: Password for '\''http://askpass-username@example.com'\'':
 	EOF
 '
 
 test_expect_success 'internal getpass does not ask for known username' '
 	check fill <<-\EOF
+	protocol=http
+	host=example.com
 	username=foo
 	--
+	protocol=http
+	host=example.com
 	username=foo
 	password=askpass-password
 	--
-	askpass: Password:
+	askpass: Password for '\''http://foo@example.com'\'':
 	EOF
 '
 
@@ -207,7 +273,11 @@ HELPER="!f() {
 test_expect_success 'respect configured credentials' '
 	test_config credential.helper "$HELPER" &&
 	check fill <<-\EOF
+	protocol=http
+	host=example.com
 	--
+	protocol=http
+	host=example.com
 	username=foo
 	password=bar
 	--
@@ -298,11 +368,16 @@ test_expect_success 'helpers can abort the process' '
 	test_must_fail git \
 		-c credential.helper=quit \
 		-c credential.helper="verbatim foo bar" \
-		credential fill >stdout 2>stderr &&
+		credential fill >stdout 2>stderr <<-\EOF &&
+	protocol=http
+	host=example.com
+	EOF
 	>expect &&
 	test_cmp expect stdout &&
 	cat >expect <<-\EOF &&
 	quit: get
+	quit: protocol=http
+	quit: host=example.com
 	fatal: credential helper '\''quit'\'' told us to quit
 	EOF
 	test_i18ncmp expect stderr
@@ -311,11 +386,17 @@ test_expect_success 'helpers can abort the process' '
 test_expect_success 'empty helper spec resets helper list' '
 	test_config credential.helper "verbatim file file" &&
 	check fill "" "verbatim cmdline cmdline" <<-\EOF
+	protocol=http
+	host=example.com
 	--
+	protocol=http
+	host=example.com
 	username=cmdline
 	password=cmdline
 	--
 	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
 	EOF
 '
 
