@@ -357,7 +357,7 @@ int credential_from_url_gently(struct credential *c, const char *url,
 	 *   (3) proto://<user>:<pass>@<host>/...
 	 */
 	proto_end = strstr(url, "://");
-	if (!proto_end) {
+	if (!proto_end || proto_end == url) {
 		if (!quiet)
 			warning(_("url has no scheme: %s"), url);
 		return -1;
@@ -382,8 +382,7 @@ int credential_from_url_gently(struct credential *c, const char *url,
 		host = at + 1;
 	}
 
-	if (proto_end - url > 0)
-		c->protocol = xmemdupz(url, proto_end - url);
+	c->protocol = xmemdupz(url, proto_end - url);
 	c->host = url_decode_mem(host, slash - host);
 	/* Trim leading and trailing slashes from path */
 	while (*slash == '/')

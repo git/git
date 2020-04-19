@@ -314,6 +314,15 @@ test_expect_success 'remote-http complains cleanly about malformed urls' '
 	test_i18ngrep "url has no scheme" stderr
 '
 
+# NEEDSWORK: Writing commands to git-remote-curl can race against the latter
+# erroring out, producing SIGPIPE. Remove "ok=sigpipe" once transport-helper has
+# learned to handle early remote helper failures more cleanly.
+test_expect_success 'remote-http complains cleanly about empty scheme' '
+	test_must_fail ok=sigpipe git ls-remote \
+		http::${HTTPD_URL#http}/dumb/repo.git 2>stderr &&
+	test_i18ngrep "url has no scheme" stderr
+'
+
 test_expect_success 'redirects can be forbidden/allowed' '
 	test_must_fail git -c http.followRedirects=false \
 		clone $HTTPD_URL/dumb-redir/repo.git dumb-redir &&

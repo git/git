@@ -92,6 +92,38 @@ test_expect_success 'fsck rejects relative URL resolving to missing scheme' '
 	grep gitmodulesUrl err
 '
 
+test_expect_success 'fsck rejects empty URL scheme' '
+	git checkout --orphan empty-scheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = http::://one.example.com/foo.git
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "gitmodules with empty URL scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck rejects relative URL resolving to empty scheme' '
+	git checkout --orphan relative-empty-scheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = ../../../:://one.example.com/foo.git
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "relative gitmodules URL resolving to empty scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
 test_expect_success 'fsck permits embedded newline with unrecognized scheme' '
 	git checkout --orphan newscheme &&
 	cat >.gitmodules <<-\EOF &&
