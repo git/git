@@ -60,6 +60,116 @@ test_expect_success 'trailing backslash is handled correctly' '
 	test_i18ngrep ! "unknown option" err
 '
 
+test_expect_success 'fsck rejects missing URL scheme' '
+	git checkout --orphan missing-scheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = http::one.example.com/foo.git
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "gitmodules with missing URL scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck rejects relative URL resolving to missing scheme' '
+	git checkout --orphan relative-missing-scheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = "..\\../.\\../:one.example.com/foo.git"
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "gitmodules with relative URL that strips off scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck rejects empty URL scheme' '
+	git checkout --orphan empty-scheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = http::://one.example.com/foo.git
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "gitmodules with empty URL scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck rejects relative URL resolving to empty scheme' '
+	git checkout --orphan relative-empty-scheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = ../../../:://one.example.com/foo.git
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "relative gitmodules URL resolving to empty scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck rejects empty hostname' '
+	git checkout --orphan empty-host &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = http:///one.example.com/foo.git
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "gitmodules with extra slashes" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck rejects relative url that produced empty hostname' '
+	git checkout --orphan messy-relative &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = ../../..//one.example.com/foo.git
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "gitmodules abusing relative_path" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck permits embedded newline with unrecognized scheme' '
+	git checkout --orphan newscheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = "data://acjbkd%0akajfdickajkd"
+	EOF
+	git add .gitmodules &&
+	git commit -m "gitmodules with unrecognized scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	git push dst HEAD
+'
+
 test_expect_success 'fsck rejects embedded newline in url' '
 	# create an orphan branch to avoid existing .gitmodules objects
 	git checkout --orphan newline &&
@@ -69,6 +179,21 @@ test_expect_success 'fsck rejects embedded newline in url' '
 	EOF
 	git add .gitmodules &&
 	git commit -m "gitmodules with newline" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck rejects embedded newline in relative url' '
+	git checkout --orphan relative-newline &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = "./%0ahost=two.example.com/foo.git"
+	EOF
+	git add .gitmodules &&
+	git commit -m "relative url with newline" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
