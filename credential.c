@@ -405,8 +405,6 @@ int credential_from_url_gently(struct credential *c, const char *url,
 
 void credential_from_url(struct credential *c, const char *url)
 {
-	if (credential_from_url_gently(c, url, 0) < 0) {
-		warning(_("skipping credential lookup for url: %s"), url);
-		credential_clear(c);
-	}
+	if (credential_from_url_gently(c, url, 0) < 0)
+		die(_("credential url cannot be parsed: %s"), url);
 }

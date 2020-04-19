@@ -406,8 +406,7 @@ test_expect_success 'url parser rejects embedded newlines' '
 	EOF
 	cat >expect <<-\EOF &&
 	warning: url contains a newline in its host component: https://one.example.com?%0ahost=two.example.com/
-	warning: skipping credential lookup for url: https://one.example.com?%0ahost=two.example.com/
-	fatal: refusing to work with credential missing host field
+	fatal: credential url cannot be parsed: https://one.example.com?%0ahost=two.example.com/
 	EOF
 	test_i18ncmp expect stderr
 '
