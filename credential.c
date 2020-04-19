@@ -357,8 +357,11 @@ int credential_from_url_gently(struct credential *c, const char *url,
 	 *   (3) proto://<user>:<pass>@<host>/...
 	 */
 	proto_end = strstr(url, "://");
-	if (!proto_end)
-		return 0;
+	if (!proto_end) {
+		if (!quiet)
+			warning(_("url has no scheme: %s"), url);
+		return -1;
+	}
 	cp = proto_end + 3;
 	at = strchr(cp, '@');
 	colon = strchr(cp, ':');

@@ -972,6 +972,34 @@ static int submodule_url_is_relative(const char *url)
 }
 
 /*
+ * Count directory components that a relative submodule URL should chop
+ * from the remote_url it is to be resolved against.
+ *
+ * In other words, this counts "../" components at the start of a
+ * submodule URL.
+ *
+ * Returns the number of directory components to chop and writes a
+ * pointer to the next character of url after all leading "./" and
+ * "../" components to out.
+ */
+static int count_leading_dotdots(const char *url, const char **out)
+{
+	int result = 0;
+	while (1) {
+		if (starts_with_dot_dot_slash(url)) {
+			result++;
+			url += strlen("../");
+			continue;
+		}
+		if (starts_with_dot_slash(url)) {
+			url += strlen("./");
+			continue;
+		}
+		*out = url;
+		return result;
+	}
+}
+/*
  * Check whether a transport is implemented by git-remote-curl.
  *
  * If it is, returns 1 and writes the URL that would be passed to
@@ -1018,14 +1046,29 @@ static int check_submodule_url(const char *url)
 		return -1;
 
 	if (submodule_url_is_relative(url)) {
+		char *decoded;
+		const char *next;
+		int has_nl;
+
 		/*
 		 * This could be appended to an http URL and url-decoded;
 		 * check for malicious characters.
 		 */
-		char *decoded = url_decode(url);
-		int has_nl = !!strchr(decoded, '\n');
+		decoded = url_decode(url);
+		has_nl = !!strchr(decoded, '\n');
+
 		free(decoded);
 		if (has_nl)
+			return -1;
+
+		/*
+		 * URLs which escape their root via "../" can overwrite
+		 * the host field and previous components, resolving to
+		 * URLs like https::example.com/submodule.git that were
+		 * susceptible to CVE-2020-11008.
+		 */
+		if (count_leading_dotdots(url, &next) > 0 &&
+		    *next == ':')
 			return -1;
 	}
 

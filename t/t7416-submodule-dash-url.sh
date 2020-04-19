@@ -60,6 +60,38 @@ test_expect_success 'trailing backslash is handled correctly' '
 	test_i18ngrep ! "unknown option" err
 '
 
+test_expect_success 'fsck rejects missing URL scheme' '
+	git checkout --orphan missing-scheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = http::one.example.com/foo.git
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "gitmodules with missing URL scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
+test_expect_success 'fsck rejects relative URL resolving to missing scheme' '
+	git checkout --orphan relative-missing-scheme &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+		url = "..\\../.\\../:one.example.com/foo.git"
+	EOF
+	git add .gitmodules &&
+	test_tick &&
+	git commit -m "gitmodules with relative URL that strips off scheme" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
 test_expect_success 'fsck permits embedded newline with unrecognized scheme' '
 	git checkout --orphan newscheme &&
 	cat >.gitmodules <<-\EOF &&
