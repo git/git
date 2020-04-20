@@ -2978,8 +2978,8 @@ class P4Sync(Command, P4UserMap):
             'depotFile' in self.stream_file):
             size = int(self.stream_file["fileSize"])
             if size > 0:
-                progress = 100*self.stream_file['streamContentSize']/size
-                sys.stdout.write('\r%s %d%% (%i MB)' % (self.stream_file['depotFile'], progress, int(size/1024/1024)))
+                progress = self.stream_file['streamContentSize']/size
+                sys.stdout.write('\r{} {:.0%} ({} MB)'.format(self.stream_file['depotFile'], progress, int(size/1024/1024)))
                 sys.stdout.flush()
 
         self.stream_have_file_info = True
@@ -3454,7 +3454,7 @@ class P4Sync(Command, P4UserMap):
             self.updateOptionDict(description)
 
             if not self.silent:
-                sys.stdout.write("\rImporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+                sys.stdout.write("\rImporting revision {} ({:.0%})".format(change, cnt / len(changes)))
                 sys.stdout.flush()
             cnt = cnt + 1
 
