@@ -1138,6 +1138,11 @@ static void handle_info(struct mailinfo *mi)
 		else
 			continue;
 
+		if (memchr(hdr->buf, '\0', hdr->len)) {
+			error("a NUL byte in '%s' is not allowed.", header[i]);
+			mi->input_error = -1;
+		}
+
 		if (!strcmp(header[i], "Subject")) {
 			if (!mi->keep_subject) {
 				cleanup_subject(mi, hdr);
