@@ -90,10 +90,10 @@ test_expect_success 'Multiple branch or tag paths require -d' '
 	) &&
 	( cd svn_project &&
 		svn_cmd up &&
-		test_must_fail test -d b_one/Nope &&
-		test_must_fail test -d b_two/Nope &&
-		test_must_fail test -d tags_A/Tagless &&
-		test_must_fail test -d tags_B/Tagless
+		test_path_is_missing b_one/Nope &&
+		test_path_is_missing b_two/Nope &&
+		test_path_is_missing tags_A/Tagless &&
+		test_path_is_missing tags_B/Tagless
 	)
 '
 
