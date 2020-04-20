@@ -579,6 +579,7 @@ static int has_cert_password(void)
 		return 0;
 	if (!cert_auth.password) {
 		cert_auth.protocol = xstrdup("cert");
+		cert_auth.host = xstrdup("");
 		cert_auth.username = xstrdup("");
 		cert_auth.path = xstrdup(ssl_cert);
 		credential_fill(&cert_auth);
@@ -593,6 +594,7 @@ static int has_proxy_cert_password(void)
 		return 0;
 	if (!proxy_cert_auth.password) {
 		proxy_cert_auth.protocol = xstrdup("cert");
+		proxy_cert_auth.host = xstrdup("");
 		proxy_cert_auth.username = xstrdup("");
 		proxy_cert_auth.path = xstrdup(http_proxy_ssl_cert);
 		credential_fill(&proxy_cert_auth);
