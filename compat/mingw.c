@@ -290,6 +290,9 @@ int mingw_unlink(const char *pathname)
 	if (xutftowcs_path(wpathname, pathname) < 0)
 		return -1;
 
+	if (DeleteFileW(wpathname))
+		return 0;
+
 	/* read-only files cannot be removed */
 	_wchmod(wpathname, 0666);
 	while ((ret = _wunlink(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
