@@ -1,16 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2020, #01; Wed, 15)
-X-master-at: efe3874640e2e58209ddbb3b072f48f6b7094f34
-X-next-at: 55bc3eb7cb9c200ab95bbd2415bc0a35fbf29053
+Subject: What's cooking in git.git (Apr 2020, #02; Mon, 20)
+X-master-at: 048abe1751e6727bfbacf7b80466d78e04631f94
+X-next-at: 435bf60bd57ed99bd0d44f7afa315bac6c9e97ab
 
-What's cooking in git.git (Apr 2020, #01; Wed, 15)
+What's cooking in git.git (Apr 2020, #02; Mon, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+Having to issue two security fixes on a pair of very similar issues
+was embarrassing, but hopefully that's behind us.  Let's restart
+merging things down.  I am hoping that we can merge all topics
+marked to be merged to 'next' by early next week, so please make
+loud noises if I mistakenly marked stuff that are not yet ready.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -19,6 +25,78 @@ of the repositories listed at
 
 --------------------------------------------------
 [New Topics]
+
+* eb/mboxrd-doc (2020-04-15) 1 commit
+ - Documentation: explain "mboxrd" pretty format
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* mt/grep-cquote-path (2020-04-20) 1 commit
+ - grep: follow conventions for printing paths w/ unusual chars
+
+ "git grep" did not quote a path with unusual character like other
+ commands (like "git diff", "git status") do, but did quote when run
+ from a subdirectory, both of which has been corrected.
+
+ Will merge to 'next'.
+
+
+* tb/diff-tree-with-notes (2020-04-20) 1 commit
+ - diff-tree.c: load notes machinery when required
+
+ "git diff-tree --pretty --notes" used to hit an assertion failure,
+ as it forgot to initialize the notes subsystem.
+
+ Will merge to 'next'.
+
+
+* tm/zsh-complete-switch-restore (2020-04-17) 1 commit
+ - complete: zsh: add missing sub cmd completion candidates
+
+ zsh command line completion (in contrib/) update.
+
+ Will merge to 'next'.
+
+
+* vd/range-diff-with-custom-pretty-format-fix (2020-04-15) 2 commits
+ - range-diff: avoid negative string precision
+ - range-diff: fix a crash in parsing git-log output
+
+ "git range-diff" fixes.
+
+ Will merge to 'next'.
+ cf. <20200416010734.GE36156@syl.local>
+
+
+* dl/test-must-fail-fixes-4 (2020-04-20) 8 commits
+ - t9902: don't use `test_must_fail __git_*`
+ - t9819: don't use test_must_fail with p4
+ - t9164: use test_must_fail only on git commands
+ - t9160: use test_path_is_missing()
+ - t9141: use test_path_is_missing()
+ - t7508: don't use `test_must_fail test_cmp`
+ - t7408: replace incorrect uses of test_must_fail
+ - t6030: use test_path_is_missing()
+
+ Test clean-up.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
 
 * jk/use-quick-lookup-in-clone-for-tag-following (2020-04-01) 1 commit
   (merged to 'next' on 2020-04-15 at 11d6110e99)
@@ -32,20 +110,22 @@ of the repositories listed at
 
 
 * ds/commit-graph-expiry-fix (2020-04-01) 1 commit
- - commit-graph: fix buggy --expire-time option
+  (merged to 'next' on 2020-04-20 at 4afb3de947)
+ + commit-graph: fix buggy --expire-time option
 
  "git commit-graph write --expire-time=<timestamp>" did not use the
  given timestamp correctly, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/t5319-touch-fix (2020-04-01) 1 commit
- - t5319: replace 'touch -m' with 'test-tool chmtime'
+  (merged to 'next' on 2020-04-20 at 41ccdb3fcd)
+ + t5319: replace 'touch -m' with 'test-tool chmtime'
 
  Tests update to use "test-chmtime" instead of "touch -t".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/sequencer-reflog-action (2020-04-07) 1 commit
@@ -73,23 +153,25 @@ of the repositories listed at
 
 
 * en/rebase-doc-hooks-called-by-accident (2020-04-05) 1 commit
- - git-rebase.txt: add another hook to the hooks section, and explain more
+  (merged to 'next' on 2020-04-20 at 1011f8a876)
+ + git-rebase.txt: add another hook to the hooks section, and explain more
 
  "git rebase" happens to call some hooks meant for "checkout" and
  "commit" by this was not a designed behaviour than historical
  accident.  This has been documented.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/fast-import-use-hashmap (2020-04-06) 1 commit
- - fast-import: replace custom hash with hashmap.c
+  (merged to 'next' on 2020-04-20 at 76e8908efe)
+ + fast-import: replace custom hash with hashmap.c
 
  The custom hash function used by "git fast-import" has been
  replaced with the one from hashmap.c, which gave us a nice
  performance boost.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/t0007-typofix (2020-04-05) 1 commit
@@ -102,25 +184,27 @@ of the repositories listed at
 
 
 * jt/avoid-prefetch-when-able-in-diff (2020-04-07) 4 commits
- - diff: restrict when prefetching occurs
- - diff: refactor object read
- - diff: make diff_populate_filespec_options struct
- - promisor-remote: accept 0 as oid_nr in function
+  (merged to 'next' on 2020-04-20 at 02b52c34bf)
+ + diff: restrict when prefetching occurs
+ + diff: refactor object read
+ + diff: make diff_populate_filespec_options struct
+ + promisor-remote: accept 0 as oid_nr in function
 
  "git diff" in a partial clone learned to avoid lazy loading blob
  objects in more casese when they are not needed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * lx/submodule-clear-variables (2020-04-02) 1 commit
- - git-submodule.sh: setup uninitialized variables
+  (merged to 'next' on 2020-04-20 at c18cd924c9)
+ + git-submodule.sh: setup uninitialized variables
 
  The "git submodule" command did not initialize a few variables it
  internally uses and was affected by variable settings leaked from
  the environment.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pb/pull-fetch-doc (2020-04-05) 2 commits
@@ -136,26 +220,27 @@ of the repositories listed at
 
 
 * dd/ci-swap-azure-pipelines-with-github-actions (2020-04-10) 14 commits
- - ci: let GitHub Actions upload failed tests' directories
- - ci: add a problem matcher for GitHub Actions
- - tests: when run in Bash, annotate test failures with file name/line number
- - ci: retire the Azure Pipelines definition
- - README: add a build badge for the GitHub Actions runs
- - ci: configure GitHub Actions for CI/PR
- - ci: run gem with sudo to install asciidoctor
- - ci: explicit install all required packages
- - ci: fix the `jobname` of the `GETTEXT_POISON` job
- - ci/lib: set TERM environment variable if not exist
- - ci/lib: allow running in GitHub Actions
- - ci/lib: if CI type is unknown, show the environment variables
- - Merge branch 'dd/ci-musl-libc' into HEAD
- - Merge branch 'dd/test-with-busybox' into HEAD
+  (merged to 'next' on 2020-04-20 at 40d0486c23)
+ + ci: let GitHub Actions upload failed tests' directories
+ + ci: add a problem matcher for GitHub Actions
+ + tests: when run in Bash, annotate test failures with file name/line number
+ + ci: retire the Azure Pipelines definition
+ + README: add a build badge for the GitHub Actions runs
+ + ci: configure GitHub Actions for CI/PR
+ + ci: run gem with sudo to install asciidoctor
+ + ci: explicit install all required packages
+ + ci: fix the `jobname` of the `GETTEXT_POISON` job
+ + ci/lib: set TERM environment variable if not exist
+ + ci/lib: allow running in GitHub Actions
+ + ci/lib: if CI type is unknown, show the environment variables
+ + Merge branch 'dd/ci-musl-libc' into HEAD
+ + Merge branch 'dd/test-with-busybox' into HEAD
  (this branch uses dd/ci-musl-libc and dd/test-with-busybox.)
 
  Update the CI configuration to use GitHub Actions, retiring the one
  based on Azure Pipelines.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * eb/format-patch-no-encode-headers (2020-04-07) 1 commit
@@ -182,22 +267,24 @@ of the repositories listed at
 
 
 * js/stash-p-fix (2020-04-08) 2 commits
- - stash -p: (partially) fix bug concerning split hunks
- - t3904: fix incorrect demonstration of a bug
+  (merged to 'next' on 2020-04-20 at 435bf60bd5)
+ + stash -p: (partially) fix bug concerning split hunks
+ + t3904: fix incorrect demonstration of a bug
 
  Allowing the user to split a patch hunk while "git stash -p" does
  not work well; a band-aid has been added to make this (partially)
  work better.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/subtree-doc-update-to-asciidoctor-2 (2020-04-08) 1 commit
- - subtree: fix build with AsciiDoctor 2
+  (merged to 'next' on 2020-04-20 at db1ed7a858)
+ + subtree: fix build with AsciiDoctor 2
 
  Doc markup update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pw/rebase-i-more-options (2020-04-07) 7 commits
@@ -216,12 +303,13 @@ of the repositories listed at
 
 
 * bc/constant-memequal (2020-04-09) 1 commit
- - builtin/receive-pack: use constant-time comparison for HMAC value
+  (merged to 'next' on 2020-04-20 at 31180dae7d)
+ + builtin/receive-pack: use constant-time comparison for HMAC value
 
  Validation of push certificate has been made more robust against
  timing attacks.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/revision-show-pulls (2020-04-10) 1 commit
@@ -264,18 +352,19 @@ of the repositories listed at
 
 
 * jk/config-use-size-t (2020-04-10) 6 commits
- - config: reject parsing of files over INT_MAX
- - config: use size_t to store parsed variable baselen
- - git_config_parse_key(): return baselen as size_t
- - config: drop useless length variable in write_pair()
- - parse_config_key(): return subsection len as size_t
- - remote: drop auto-strlen behavior of make_branch() and make_rewrite()
+  (merged to 'next' on 2020-04-20 at 4af9fea74f)
+ + config: reject parsing of files over INT_MAX
+ + config: use size_t to store parsed variable baselen
+ + git_config_parse_key(): return baselen as size_t
+ + config: drop useless length variable in write_pair()
+ + parse_config_key(): return subsection len as size_t
+ + remote: drop auto-strlen behavior of make_branch() and make_rewrite()
 
  The config API made mixed uses of int and size_t types to represent
  length of various pieces of text it parsed, which has been updated
  to use the correct type (i.e. size_t) throughout.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/flush-prompt-before-interative-input (2020-04-10) 2 commits
@@ -326,15 +415,16 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ds/blame-on-bloom (2020-04-13) 4 commits
+* ds/blame-on-bloom (2020-04-16) 3 commits
  - blame: use changed-path Bloom filters
- - commit-graph: write commit-graph in more tests
- - commit: write commit-graph with Bloom filters
+ - tests: write commit-graph with Bloom filters
  - revision: complicated pathspecs disable filters
  (this branch uses gs/commit-graph-path-filter.)
 
  "git blame" learns to take advantage of the "changed-paths" Bloom
  filter stored in the commit-graph file.
+
+ Will merge to 'next'.
 
 
 * dd/iso-8601-updates (2020-04-15) 2 commits
@@ -343,19 +433,20 @@ of the repositories listed at
 
  The approxidate parser learns to parse seconds with fraction.
 
- Will merge to 'next'.
+ Expecting further work.
+ cf. <20200417133647.GA26701@danh.dev>
 
 
-* ds/log-exclude-decoration-config (2020-04-15) 2 commits
- - SQUASH???
+* ds/log-exclude-decoration-config (2020-04-16) 2 commits
  - log: add log.excludeDecoration config option
+ - log-tree: make ref_filter_match() a helper method
 
  The "--decorate-refs" and "--decorate-refs-exclude" options "git
  log" takes have learned a companion configuration variable
  log.excludeDecoration that sits at the lowest priority in the
  family.
 
- Getting there.
+ Will merge to 'next'.
 
 
 * jk/credential-parsing-end-of-host-in-URL (2020-04-15) 1 commit
@@ -368,12 +459,13 @@ of the repositories listed at
 
 
 * lr/freshen-file-fix (2020-04-15) 1 commit
- - freshen_file(): use NULL `times' for implicit current-time
+  (merged to 'next' on 2020-04-20 at e9370b0a81)
+ + freshen_file(): use NULL `times' for implicit current-time
 
  The code that refreshes the last access and modified time of
  on-disk packfiles and loose object files have been updated.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tb/commit-graph-split-strategy (2020-04-15) 7 commits
@@ -388,18 +480,6 @@ of the repositories listed at
  "git commit-graph write" learned different ways to write out split
  files.
 
---------------------------------------------------
-[Stalled]
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
 
 * gs/commit-graph-path-filter (2020-04-09) 16 commits
  - bloom: ignore renames when computing changed paths
@@ -424,7 +504,7 @@ of the repositories listed at
  check for the paths that were modified at each commit using Bloom
  filters.
 
- Getting there.
+ Will merge to 'next'.
 
 
 * ag/rebase-merge-allow-ff-under-abbrev-command (2020-03-30) 2 commits
@@ -492,30 +572,31 @@ of the repositories listed at
 
 
 * dd/ci-musl-libc (2020-04-06) 6 commits
- - travis: build and test on Linux with musl libc and busybox
- - ci/linux32: libify install-dependencies step
- - ci: refactor docker runner script
- - ci/linux32: parameterise command to switch arch
- - ci/lib-docker: preserve required environment variables
- - ci: make MAKEFLAGS available inside the Docker container in the Linux32 job
+ + travis: build and test on Linux with musl libc and busybox
+ + ci/linux32: libify install-dependencies step
+ + ci: refactor docker runner script
+ + ci/linux32: parameterise command to switch arch
+ + ci/lib-docker: preserve required environment variables
+ + ci: make MAKEFLAGS available inside the Docker container in the Linux32 job
  (this branch is used by dd/ci-swap-azure-pipelines-with-github-actions.)
 
  A new CI job to build and run test suite on linux with musl libc
  has been added.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dr/doc-recurse-submodules (2020-04-06) 5 commits
- - doc: --recurse-submodules mostly applies to active submodules
- - doc: be more precise on (fetch|push).recurseSubmodules
- - doc: explain how to deactivate submodule.recurse completely
- - doc: document --recurse-submodules for reset and restore
- - doc: list all commands affected by submodule.recurse
+  (merged to 'next' on 2020-04-20 at 601e10f9a1)
+ + doc: --recurse-submodules mostly applies to active submodules
+ + doc: be more precise on (fetch|push).recurseSubmodules
+ + doc: explain how to deactivate submodule.recurse completely
+ + doc: document --recurse-submodules for reset and restore
+ + doc: list all commands affected by submodule.recurse
 
  Documentation updates around the "--recurse-submodules" option.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dr/push-remoteref-fix (2020-04-06) 2 commits
@@ -533,12 +614,13 @@ of the repositories listed at
 
 
 * jc/doc-test-leaving-early (2020-03-29) 1 commit
- - t/README: suggest how to leave test early with failure
+  (merged to 'next' on 2020-04-20 at 4bd94585d1)
+ + t/README: suggest how to leave test early with failure
 
  Document the recommended way to abort a failing test early (e.g. by
  exiting a loop), which is to say "return 1".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/build-with-right-curl (2020-04-05) 3 commits
@@ -660,32 +742,35 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jx/atomic-push (2020-03-29) 4 commits
- - transport-helper: new method reject_atomic_push()
- - transport-helper: mark failure for atomic push
- - send-pack: mark failure of atomic push properly
- - t5543: never report what we do not push
+* jx/atomic-push (2020-04-17) 5 commits
+  (merged to 'next' on 2020-04-20 at 266d6934d8)
+ + transport-helper: new method reject_atomic_push()
+ + transport-helper: mark failure for atomic push
+ + send-pack: mark failure of atomic push properly
+ + t5543: never report what we do not push
+ + send-pack: fix inconsistent porcelain output
 
  "git push --atomic" used to show failures for refs that weren't
  even pushed, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ma/doc-discard-docbook-xsl-1.73 (2020-03-31) 7 commits
- - user-manual.conf: don't specify [listingblock]
- - INSTALL: drop support for docbook-xsl before 1.74
- - manpage-normal.xsl: fold in manpage-base.xsl
- - manpage-bold-literal.xsl: stop using git.docbook.backslash
- - Doc: drop support for docbook-xsl before 1.73.0
- - Doc: drop support for docbook-xsl before 1.72.0
- - Doc: drop support for docbook-xsl before 1.71.1
+  (merged to 'next' on 2020-04-20 at c280472e02)
+ + user-manual.conf: don't specify [listingblock]
+ + INSTALL: drop support for docbook-xsl before 1.74
+ + manpage-normal.xsl: fold in manpage-base.xsl
+ + manpage-bold-literal.xsl: stop using git.docbook.backslash
+ + Doc: drop support for docbook-xsl before 1.73.0
+ + Doc: drop support for docbook-xsl before 1.72.0
+ + Doc: drop support for docbook-xsl before 1.71.1
 
  Raise the minimum required version of docbook-xsl package to 1.74,
  as 1.74.0 was from late 2008, which is more than 10 years old, and
  drop compatibility cruft from our documentation suite.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pb/rebase-doc-typofix (2020-03-28) 1 commit
@@ -727,7 +812,7 @@ of the repositories listed at
  made its performance characteristics exponential with respect to
  the depth of the tree, which was corrected.
 
- Is this ready for 'next'?
+ Will merge to 'next'.
 
 
 * dd/test-with-busybox (2020-03-26) 8 commits
@@ -749,15 +834,16 @@ of the repositories listed at
 
 
 * dl/libify-a-few (2020-03-24) 2 commits
- - Lib-ify prune-packed
- - Lib-ify fmt-merge-msg
+  (merged to 'next' on 2020-04-20 at 84eb704a32)
+ + Lib-ify prune-packed
+ + Lib-ify fmt-merge-msg
 
  Code in builtin/*, i.e. those can only be called from within
  built-in subcommands, that implements bulk of a couple of
  subcommands have been moved to libgit.a so that they could be used
  by others.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dl/test-must-fail-fixes-3 (2020-03-27) 8 commits
@@ -960,18 +1046,17 @@ of the repositories listed at
 
 
 * jc/log-no-mailmap (2020-03-16) 3 commits
- - log: give --[no-]use-mailmap a more sensible synonym --[no-]mailmap
- - clone: reorder --recursive/--recurse-submodules
- - parse-options: teach "git cmd -h" to show alias as alias
+  (merged to 'next' on 2020-04-20 at b43968e73e)
+ + log: give --[no-]use-mailmap a more sensible synonym --[no-]mailmap
+ + clone: reorder --recursive/--recurse-submodules
+ + parse-options: teach "git cmd -h" to show alias as alias
 
  "git log" learns "--[no-]mailmap" as a synonym to "--[no-]use-mailmap"
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* hn/reftable (2020-04-09) 11 commits
- - SQUASH??? - whitespace errors
- - SQUASH??? - do not forget to clean reftable library
+* hn/reftable (2020-04-20) 10 commits
  - Reftable support for git-core
  - Add reftable library
  - reftable: clarify how empty tables should be written
@@ -980,6 +1065,7 @@ of the repositories listed at
  - Add .gitattributes for the reftable/ directory
  - refs: document how ref_iterator_advance_fn should handle symrefs
  - create .git/refs in files-backend.c
+ - Iterate over the "refs/" namespace in for_each_[raw]ref
  - refs.h: clarify reflog iteration order
 
  A new refs backend "reftable" to replace the traditional
@@ -987,11 +1073,11 @@ of the repositories listed at
  has been implemented and integrated for improved performance and
  atomicity.
 
- At v8.
- cf. <pull.539.v8.git.1585740538.gitgitgadget@gmail.com>
+ At v9
+ cf. <pull.539.v9.git.1587417295.gitgitgadget@gmail.com>
 
 
-* es/bugreport (2020-04-06) 5 commits
+* es/bugreport (2020-04-16) 5 commits
  - bugreport: add compiler info
  - bugreport: add uname info
  - bugreport: gather git version and build info
