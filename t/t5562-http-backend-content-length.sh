@@ -53,15 +53,20 @@ test_expect_success 'setup' '
 	test_commit c1 &&
 	hash_head=$(git rev-parse HEAD) &&
 	hash_prev=$(git rev-parse HEAD~1) &&
-	printf "want %s" "$hash_head" | packetize >fetch_body &&
-	printf 0000 >>fetch_body &&
-	printf "have %s" "$hash_prev" | packetize >>fetch_body &&
-	printf done | packetize >>fetch_body &&
+	{
+		packetize "want $hash_head" &&
+		printf 0000 &&
+		packetize "have $hash_prev" &&
+		packetize "done"
+	} >fetch_body &&
 	test_copy_bytes 10 <fetch_body >fetch_body.trunc &&
 	hash_next=$(git commit-tree -p HEAD -m next HEAD^{tree}) &&
-	printf "%s %s refs/heads/newbranch\\0report-status\\n" "$ZERO_OID" "$hash_next" | packetize >push_body &&
-	printf 0000 >>push_body &&
-	echo "$hash_next" | git pack-objects --stdout >>push_body &&
+	{
+		printf "%s %s refs/heads/newbranch\\0report-status\\n" \
+			"$ZERO_OID" "$hash_next" | packetize &&
+		printf 0000 &&
+		echo "$hash_next" | git pack-objects --stdout
+	} >push_body &&
 	test_copy_bytes 10 <push_body >push_body.trunc &&
 	: >empty_body
 '
