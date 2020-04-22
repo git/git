@@ -53,7 +53,7 @@ test_expect_success \
 
 test_expect_success \
 	'Make initial commit' \
-	'echo "Not an empty file." > file &&
+	'echo "Not an empty file." >file &&
 	 git add file &&
 	 git commit -a -m "Initial commit." &&
 	 git branch b'
@@ -139,7 +139,7 @@ test_expect_success \
 
 test_expect_success \
 	'commitdiff(0): file added' \
-	'echo "New file" > new_file &&
+	'echo "New file" >new_file &&
 	 git add new_file &&
 	 git commit -a -m "File added." &&
 	 gitweb_run "p=.git;a=commitdiff"'
@@ -179,7 +179,7 @@ test_expect_success \
 
 test_expect_success \
 	'commitdiff(0): mode change and modified' \
-	'echo "New line" >> file2 &&
+	'echo "New line" >>file2 &&
 	 test_chmod +x file2 &&
 	 git commit -a -m "Mode change and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
@@ -197,14 +197,14 @@ propter nomen suum.
 EOF
 	 git commit -a -m "File added." &&
 	 git mv file2 file3 &&
-	 echo "Propter nomen suum." >> file3 &&
+	 echo "Propter nomen suum." >>file3 &&
 	 git commit -a -m "File rename and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
 
 test_expect_success \
 	'commitdiff(0): renamed, mode change and modified' \
 	'git mv file3 file2 &&
-	 echo "Propter nomen suum." >> file2 &&
+	 echo "Propter nomen suum." >>file2 &&
 	 test_chmod +x file2 &&
 	 git commit -a -m "File rename, mode change and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
@@ -213,8 +213,8 @@ test_expect_success \
 # commitdiff testing (taken from t4114-apply-typechange.sh)
 
 test_expect_success 'setup typechange commits' '
-	echo "hello world" > foo &&
-	echo "hi planet" > bar &&
+	echo "hello world" >foo &&
+	echo "hi planet" >bar &&
 	git update-index --add foo bar &&
 	git commit -m initial &&
 	git branch initial &&
@@ -223,18 +223,18 @@ test_expect_success 'setup typechange commits' '
 	git commit -m "foo symlinked to bar" &&
 	git branch foo-symlinked-to-bar &&
 	rm -f foo &&
-	echo "how far is the sun?" > foo &&
+	echo "how far is the sun?" >foo &&
 	git update-index foo &&
 	git commit -m "foo back to file" &&
 	git branch foo-back-to-file &&
 	rm -f foo &&
 	git update-index --remove foo &&
 	mkdir foo &&
-	echo "if only I knew" > foo/baz &&
+	echo "if only I knew" >foo/baz &&
 	git update-index --add foo/baz &&
 	git commit -m "foo becomes a directory" &&
 	git branch "foo-becomes-a-directory" &&
-	echo "hello world" > foo/baz &&
+	echo "hello world" >foo/baz &&
 	git update-index foo/baz &&
 	git commit -m "foo/baz is the original foo" &&
 	git branch foo-baz-renamed-from-foo
@@ -324,7 +324,7 @@ test_expect_success 'commitdiff(1): removal of incomplete line' '
 test_expect_success \
 	'Create a merge' \
 	'git checkout b &&
-	 echo "Branch" >> b &&
+	 echo "Branch" >>b &&
 	 git add b &&
 	 git commit -a -m "On branch" &&
 	 git checkout master &&
@@ -342,26 +342,26 @@ test_expect_success \
 test_expect_success \
 	'Prepare large commit' \
 	'git checkout b &&
-	 echo "To be changed" > 01-change &&
-	 echo "To be renamed" > 02-pure-rename-from &&
-	 echo "To be deleted" > 03-delete &&
-	 echo "To be renamed and changed" > 04-rename-from &&
-	 echo "To have mode changed" > 05-mode-change &&
-	 echo "File to symlink" > 06-file-or-symlink &&
-	 echo "To be changed and have mode changed" > 07-change-mode-change	&&
+	 echo "To be changed" >01-change &&
+	 echo "To be renamed" >02-pure-rename-from &&
+	 echo "To be deleted" >03-delete &&
+	 echo "To be renamed and changed" >04-rename-from &&
+	 echo "To have mode changed" >05-mode-change &&
+	 echo "File to symlink" >06-file-or-symlink &&
+	 echo "To be changed and have mode changed" >07-change-mode-change &&
 	 git add 0* &&
 	 git commit -a -m "Prepare large commit" &&
-	 echo "Changed" > 01-change &&
+	 echo "Changed" >01-change &&
 	 git mv 02-pure-rename-from 02-pure-rename-to &&
 	 git rm 03-delete && rm -f 03-delete &&
-	 echo "A new file" > 03-new &&
+	 echo "A new file" >03-new &&
 	 git add 03-new &&
 	 git mv 04-rename-from 04-rename-to &&
-	 echo "Changed" >> 04-rename-to &&
+	 echo "Changed" >>04-rename-to &&
 	 test_chmod +x 05-mode-change &&
 	 rm -f 06-file-or-symlink &&
 	 test_ln_s_add 01-change 06-file-or-symlink &&
-	 echo "Changed and have mode changed" > 07-change-mode-change	&&
+	 echo "Changed and have mode changed" >07-change-mode-change &&
 	 test_chmod +x 07-change-mode-change &&
 	 git commit -a -m "Large commit" &&
 	 git checkout master'
@@ -444,7 +444,7 @@ test_expect_success \
 test_expect_success \
 	'logs: history (implicit HEAD, deleted file)' \
 	'git checkout master &&
-	 echo "to be deleted" > deleted_file &&
+	 echo "to be deleted" >deleted_file &&
 	 git add deleted_file &&
 	 git commit -m "Add file to be deleted" &&
 	 git rm deleted_file &&
@@ -522,7 +522,7 @@ test_expect_success \
 	'. "$TEST_DIRECTORY"/t3901/utf8.txt &&
 	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
 	 test_when_finished "GIT_COMMITTER_NAME=\"C O Mitter\"" &&
-	 echo "UTF-8" >> file &&
+	 echo "UTF-8" >>file &&
 	 git add file &&
 	 git commit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
 	 gitweb_run "p=.git;a=commit"'
@@ -532,7 +532,7 @@ test_expect_success \
 	'. "$TEST_DIRECTORY"/t3901/8859-1.txt &&
 	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
 	 test_when_finished "GIT_COMMITTER_NAME=\"C O Mitter\"" &&
-	 echo "ISO-8859-1" >> file &&
+	 echo "ISO-8859-1" >>file &&
 	 git add file &&
 	 test_config i18n.commitencoding ISO-8859-1 &&
 	 git commit -F "$TEST_DIRECTORY"/t3900/ISO8859-1.txt &&
@@ -675,8 +675,8 @@ test_expect_success \
 
 test_expect_success \
 	'README.html with non-ASCII characters (utf-8)' \
-	'echo "<b>UTF-8 example:</b><br />" > .git/README.html &&
-	 cat "$TEST_DIRECTORY"/t3900/1-UTF-8.txt >> .git/README.html &&
+	'echo "<b>UTF-8 example:</b><br />" >.git/README.html &&
+	 cat "$TEST_DIRECTORY"/t3900/1-UTF-8.txt >>.git/README.html &&
 	 gitweb_run "p=.git;a=summary"'
 
 # ----------------------------------------------------------------------
@@ -704,7 +704,7 @@ test_expect_success HIGHLIGHT \
 test_expect_success HIGHLIGHT \
 	'syntax highlighting (highlighted, shell script)' \
 	'git config gitweb.highlight yes &&
-	 echo "#!/usr/bin/sh" > test.sh &&
+	 echo "#!/usr/bin/sh" >test.sh &&
 	 git add test.sh &&
 	 git commit -m "Add test.sh" &&
 	 gitweb_run "p=.git;a=blob;f=test.sh"'
@@ -712,7 +712,7 @@ test_expect_success HIGHLIGHT \
 test_expect_success HIGHLIGHT \
 	'syntax highlighting (highlighter language autodetection)' \
 	'git config gitweb.highlight yes &&
-	 echo "#!/usr/bin/perl" > test &&
+	 echo "#!/usr/bin/perl" >test &&
 	 git add test &&
 	 git commit -m "Add test" &&
 	 gitweb_run "p=.git;a=blob;f=test"'
@@ -729,11 +729,11 @@ test_expect_success \
 	'git init --bare foo.git &&
 	 git --git-dir=foo.git --work-tree=. add file &&
 	 git --git-dir=foo.git --work-tree=. commit -m "Initial commit" &&
-	 echo "foo" > foo.git/description &&
+	 echo "foo" >foo.git/description &&
 	 mkdir -p foo &&
 	 (cd foo &&
 	  git clone --shared --bare ../foo.git foo-forked.git &&
-	  echo "fork of foo" > foo-forked.git/description)'
+	  echo "fork of foo" >foo-forked.git/description)'
 
 test_expect_success \
 	'forks: projects list' \
@@ -754,8 +754,8 @@ EOF
 test_expect_success \
 	'ctags: tag cloud in projects list' \
 	'mkdir .git/ctags &&
-	 echo "2" > .git/ctags/foo &&
-	 echo "1" > .git/ctags/bar &&
+	 echo "2" >.git/ctags/foo &&
+	 echo "1" >.git/ctags/bar &&
 	gitweb_run'
 
 test_expect_success \
@@ -769,8 +769,8 @@ test_expect_success \
 test_expect_success \
 	'ctags: malformed tag weights' \
 	'mkdir -p .git/ctags &&
-	 echo "not-a-number" > .git/ctags/nan &&
-	 echo "not-a-number-2" > .git/ctags/nan2 &&
+	 echo "not-a-number" >.git/ctags/nan &&
+	 echo "not-a-number-2" >.git/ctags/nan2 &&
 	 echo "0.1" >.git/ctags/floating-point &&
 	 gitweb_run'
 

@@ -52,7 +52,7 @@ test_expect_success 'blank line at end of file; extend at end of file' '
 	git commit --allow-empty -m "Initial empty commit" &&
 	git add file && git commit -m first &&
 	mv second file &&
-	git add file &&	git commit -m second &&
+	git add file && git commit -m second &&
 	git rebase --whitespace=fix HEAD^^ &&
 	git diff --exit-code HEAD^:file expect-first &&
 	test_cmp expect-second file
@@ -118,7 +118,7 @@ test_expect_success 'at beginning of file' '
 	for i in 1 2 3 4 5; do
 		echo $i
 	done >> file &&
-	git commit -m more file	&&
+	git commit -m more file &&
 	git rebase --whitespace=fix HEAD^^ &&
 	test_cmp expect-beginning file
 '
