@@ -57,6 +57,11 @@ format.suffix::
 	`.patch`. Use this variable to change that suffix (make sure to
 	include the dot if you want it).
 
+format.encodeEmailHeaders::
+	Encode email headers that have non-ASCII characters with
+	"Q-encoding" (described in RFC 2047) for email transmission.
+	Defaults to true.
+
 format.pretty::
 	The default pretty format for log/show/whatchanged command,
 	See linkgit:git-log[1], linkgit:git-show[1],

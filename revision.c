@@ -2241,6 +2241,10 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->topo_order = 1;
 		revs->rewrite_parents = 1;
 		revs->graph = graph_init(revs);
+	} else if (!strcmp(arg, "--encode-email-headers")) {
+		revs->encode_email_headers = 1;
+	} else if (!strcmp(arg, "--no-encode-email-headers")) {
+		revs->encode_email_headers = 0;
 	} else if (!strcmp(arg, "--root")) {
 		revs->show_root_diff = 1;
 	} else if (!strcmp(arg, "--no-commit-id")) {
