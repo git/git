@@ -71,9 +71,9 @@ test_expect_success 'by default all branches will be kept updated' '
 	(
 		cd dir_all &&
 		git fetch &&
-		git for-each-ref refs/remotes/origin |
+		git for-each-ref refs/remotes/origin >refs &&
 		sed -e "/HEAD$/d" \
-		    -e "s|/remotes/origin/|/heads/|" >../actual
+		    -e "s|/remotes/origin/|/heads/|" refs >../actual
 	) &&
 	# follow both master and side
 	git for-each-ref refs/heads >expect &&
@@ -87,7 +87,7 @@ test_expect_success 'by default no tags will be kept updated' '
 		git for-each-ref refs/tags >../actual
 	) &&
 	git for-each-ref refs/tags >expect &&
-	test_must_fail test_cmp expect actual &&
+	! test_cmp expect actual &&
 	test_line_count = 2 actual
 '
 
@@ -104,9 +104,9 @@ test_expect_success '--single-branch while HEAD pointing at master' '
 	(
 		cd dir_master &&
 		git fetch --force &&
-		git for-each-ref refs/remotes/origin |
+		git for-each-ref refs/remotes/origin >refs &&
 		sed -e "/HEAD$/d" \
-		    -e "s|/remotes/origin/|/heads/|" >../actual
+		    -e "s|/remotes/origin/|/heads/|" refs >../actual
 	) &&
 	# only follow master
 	git for-each-ref refs/heads/master >expect &&
@@ -126,9 +126,9 @@ test_expect_success '--single-branch while HEAD pointing at master and --no-tags
 	(
 		cd dir_master_no_tags &&
 		git fetch &&
-		git for-each-ref refs/remotes/origin |
+		git for-each-ref refs/remotes/origin >refs &&
 		sed -e "/HEAD$/d" \
-		    -e "s|/remotes/origin/|/heads/|" >../actual
+		    -e "s|/remotes/origin/|/heads/|" refs >../actual
 	) &&
 	# only follow master
 	git for-each-ref refs/heads/master >expect &&
@@ -156,9 +156,9 @@ test_expect_success '--single-branch while HEAD pointing at side' '
 	(
 		cd dir_side &&
 		git fetch &&
-		git for-each-ref refs/remotes/origin |
+		git for-each-ref refs/remotes/origin >refs &&
 		sed -e "/HEAD$/d" \
-		    -e "s|/remotes/origin/|/heads/|" >../actual
+		    -e "s|/remotes/origin/|/heads/|" refs >../actual
 	) &&
 	# only follow side
 	git for-each-ref refs/heads/side >expect &&
@@ -169,9 +169,9 @@ test_expect_success '--single-branch with explicit --branch side' '
 	(
 		cd dir_side2 &&
 		git fetch &&
-		git for-each-ref refs/remotes/origin |
+		git for-each-ref refs/remotes/origin >refs &&
 		sed -e "/HEAD$/d" \
-		    -e "s|/remotes/origin/|/heads/|" >../actual
+		    -e "s|/remotes/origin/|/heads/|" refs >../actual
 	) &&
 	# only follow side
 	git for-each-ref refs/heads/side >expect &&
@@ -223,9 +223,9 @@ test_expect_success '--single-branch with detached' '
 	(
 		cd dir_detached &&
 		git fetch &&
-		git for-each-ref refs/remotes/origin |
+		git for-each-ref refs/remotes/origin >refs &&
 		sed -e "/HEAD$/d" \
-		    -e "s|/remotes/origin/|/heads/|" >../actual
+		    -e "s|/remotes/origin/|/heads/|" refs >../actual
 	) &&
 	# nothing
 	test_must_be_empty actual
