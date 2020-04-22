@@ -9,6 +9,7 @@
 #include "lockfile.h"
 #include "dir.h"
 #include "run-command.h"
+#include "prompt.h"
 
 static void init_color(struct repository *r, struct add_i_state *s,
 		       const char *slot_name, char *dst,
@@ -289,13 +290,12 @@ static ssize_t list_and_choose(struct add_i_state *s,
 		fputs(singleton ? "> " : ">> ", stdout);
 		fflush(stdout);
 
-		if (strbuf_getline(&input, stdin) == EOF) {
+		if (git_read_line_interactively(&input) == EOF) {
 			putchar('\n');
 			if (immediate)
 				res = LIST_AND_CHOOSE_QUIT;
 			break;
 		}
-		strbuf_trim(&input);
 
 		if (!input.len)
 			break;
