@@ -923,6 +923,12 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	cur_chunk = 0;
 	num_chunks = large_offsets_needed ? 5 : 4;
 
+	if (packs.nr - dropped_packs == 0) {
+		error(_("no pack files to index."));
+		result = 1;
+		goto cleanup;
+	}
+
 	written = write_midx_header(f, num_chunks, packs.nr - dropped_packs);
 
 	chunk_ids[cur_chunk] = MIDX_CHUNKID_PACKNAMES;
@@ -1122,6 +1128,15 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 		if (oid_fanout1 > oid_fanout2)
 			midx_report(_("oid fanout out of order: fanout[%d] = %"PRIx32" > %"PRIx32" = fanout[%d]"),
 				    i, oid_fanout1, oid_fanout2, i + 1);
+	}
+
+	if (m->num_objects == 0) {
+		midx_report(_("the midx contains no oid"));
+		/*
+		 * Remaining tests assume that we have objects, so we can
+		 * return here.
+		 */
+		return verify_midx_error;
 	}
 
 	if (flags & MIDX_PROGRESS)
