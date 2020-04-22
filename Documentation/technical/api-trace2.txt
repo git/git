@@ -656,7 +656,8 @@ The "exec_id" field is a command-unique id and is only useful if the
 ------------
 
 `"def_param"`::
-	This event is generated to log a global parameter.
+	This event is generated to log a global parameter, such as a config
+	setting, command-line flag, or environment variable.
 +
 ------------
 {

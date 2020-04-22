@@ -199,6 +199,43 @@ test_expect_success JSON_PP 'event stream, list config' '
 	test_cmp expect actual
 '
 
+# Test listing of all "interesting" environment variables.
+
+test_expect_success JSON_PP 'event stream, list env vars' '
+	test_when_finished "rm trace.event actual expect" &&
+	GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+		GIT_TRACE2_ENV_VARS="A_VAR,OTHER_VAR,MISSING" \
+		A_VAR=1 OTHER_VAR="hello world" test-tool trace2 001return 0 &&
+	perl "$TEST_DIRECTORY/t0212/parse_events.perl" <trace.event >actual &&
+	sed -e "s/^|//" >expect <<-EOF &&
+	|VAR1 = {
+	|  "_SID0_":{
+	|    "argv":[
+	|      "_EXE_",
+	|      "trace2",
+	|      "001return",
+	|      "0"
+	|    ],
+	|    "exit_code":0,
+	|    "hierarchy":"trace2",
+	|    "name":"trace2",
+	|    "params":[
+	|      {
+	|        "param":"A_VAR",
+	|        "value":"1"
+	|      },
+	|      {
+	|        "param":"OTHER_VAR",
+	|        "value":"hello world"
+	|      }
+	|    ],
+	|    "version":"$V"
+	|  }
+	|};
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success JSON_PP 'basic trace2_data' '
 	test_when_finished "rm trace.event actual expect" &&
 	GIT_TRACE2_EVENT="$(pwd)/trace.event" test-tool trace2 006data test_category k1 v1 test_category k2 v2 &&
