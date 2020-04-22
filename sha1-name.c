@@ -1815,8 +1815,8 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 
 			cb.repo = repo;
 			cb.list = &list;
-			refs_for_each_ref(repo->refs, handle_one_ref, &cb);
-			refs_head_ref(repo->refs, handle_one_ref, &cb);
+			refs_for_each_ref(get_main_ref_store(repo), handle_one_ref, &cb);
+			refs_head_ref(get_main_ref_store(repo), handle_one_ref, &cb);
 			commit_list_sort_by_date(&list);
 			return get_oid_oneline(repo, name + 2, oid, list);
 		}
