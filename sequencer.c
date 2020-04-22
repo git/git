@@ -1578,7 +1578,7 @@ static const char *command_to_string(const enum todo_command command)
 
 static char command_to_char(const enum todo_command command)
 {
-	if (command < TODO_COMMENT && todo_command_info[command].c)
+	if (command < TODO_COMMENT)
 		return todo_command_info[command].c;
 	return comment_line_char;
 }
@@ -4963,6 +4963,8 @@ static void todo_list_to_strbuf(struct repository *r, struct todo_list *todo_lis
 		max = num;
 
 	for (item = todo_list->items, i = 0; i < max; i++, item++) {
+		char cmd;
+
 		/* if the item is not a command write it and continue */
 		if (item->command >= TODO_COMMENT) {
 			strbuf_addf(buf, "%.*s\n", item->arg_len,
@@ -4971,8 +4973,9 @@ static void todo_list_to_strbuf(struct repository *r, struct todo_list *todo_lis
 		}
 
 		/* add command to the buffer */
-		if (flags & TODO_LIST_ABBREVIATE_CMDS)
-			strbuf_addch(buf, command_to_char(item->command));
+		cmd = command_to_char(item->command);
+		if ((flags & TODO_LIST_ABBREVIATE_CMDS) && cmd)
+			strbuf_addch(buf, cmd);
 		else
 			strbuf_addstr(buf, command_to_string(item->command));
 
