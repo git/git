@@ -1,4 +1,5 @@
-#!/bin/sh
+# Shell library for testing credential handling including helpers. See t0302
+# for an example of testing a specific helper.
 
 # Try a set of credential helpers; the expected stdin,
 # stdout and stderr should be provided on stdin,
