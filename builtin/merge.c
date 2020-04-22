@@ -597,10 +597,12 @@ static void parse_branch_merge_options(char *bmo)
 static int git_merge_config(const char *k, const char *v, void *cb)
 {
 	int status;
+	const char *str;
 
-	if (branch && starts_with(k, "branch.") &&
-		starts_with(k + 7, branch) &&
-		!strcmp(k + 7 + strlen(branch), ".mergeoptions")) {
+	if (branch &&
+	    skip_prefix(k, "branch.", &str) &&
+	    skip_prefix(str, branch, &str) &&
+	    !strcmp(str, ".mergeoptions")) {
 		free(branch_mergeoptions);
 		branch_mergeoptions = xstrdup(v);
 		return 0;
