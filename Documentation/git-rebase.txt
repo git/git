@@ -279,7 +279,8 @@ See also INCOMPATIBLE OPTIONS below.
 +
 Note that commits which start empty are kept (unless --no-keep-empty
 is specified), and commits which are clean cherry-picks (as determined
-by `git log --cherry-mark ...`) are always dropped.
+by `git log --cherry-mark ...`) are detected and dropped as a
+preliminary step (unless --reapply-cherry-picks is passed).
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -301,6 +302,24 @@ tools generate many empty commits and you want them all removed.
 +
 For commits which do not start empty but become empty after rebasing,
 see the --empty flag.
++
+See also INCOMPATIBLE OPTIONS below.
+
+--reapply-cherry-picks::
+--no-reapply-cherry-picks::
+	Reapply all clean cherry-picks of any upstream commit instead
+	of preemptively dropping them. (If these commits then become
+	empty after rebasing, because they contain a subset of already
+	upstream changes, the behavior towards them is controlled by
+	the `--empty` flag.)
++
+By default (or if `--no-reapply-cherry-picks` is given), these commits
+will be automatically dropped.  Because this necessitates reading all
+upstream commits, this can be expensive in repos with a large number
+of upstream commits that need to be read.
++
+`--reapply-cherry-picks` allows rebase to forgo reading all upstream
+commits, potentially improving performance.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -604,6 +623,7 @@ are incompatible with the following options:
  * --exec
  * --no-keep-empty
  * --empty=
+ * --reapply-cherry-picks
  * --edit-todo
  * --root when used in combination with --onto
 
@@ -1020,7 +1040,8 @@ Only works if the changes (patch IDs based on the diff contents) on
 'subsystem' did.
 
 In that case, the fix is easy because 'git rebase' knows to skip
-changes that are already present in the new upstream.  So if you say
+changes that are already present in the new upstream (unless
+`--reapply-cherry-picks` is given). So if you say
 (assuming you're on 'topic')
 ------------
     $ git rebase subsystem

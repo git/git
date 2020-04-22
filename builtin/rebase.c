@@ -96,6 +96,7 @@ struct rebase_options {
 	struct strbuf git_format_patch_opt;
 	int reschedule_failed_exec;
 	int use_legacy_rebase;
+	int reapply_cherry_picks;
 };
 
 #define REBASE_OPTIONS_INIT {			  	\
@@ -387,6 +388,7 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 	flags |= opts->rebase_cousins > 0 ? TODO_LIST_REBASE_COUSINS : 0;
 	flags |= opts->root_with_onto ? TODO_LIST_ROOT_WITH_ONTO : 0;
 	flags |= command == ACTION_SHORTEN_OIDS ? TODO_LIST_SHORTEN_IDS : 0;
+	flags |= opts->reapply_cherry_picks ? TODO_LIST_REAPPLY_CHERRY_PICKS : 0;
 
 	switch (command) {
 	case ACTION_NONE: {
@@ -1586,6 +1588,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "reschedule-failed-exec",
 			 &reschedule_failed_exec,
 			 N_("automatically re-schedule any `exec` that fails")),
+		OPT_BOOL(0, "reapply-cherry-picks", &options.reapply_cherry_picks,
+			 N_("apply all changes, even those already present upstream")),
 		OPT_END(),
 	};
 	int i;
@@ -1828,6 +1832,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.empty != EMPTY_UNSPECIFIED)
 		imply_merge(&options, "--empty");
+
+	if (options.reapply_cherry_picks)
+		imply_merge(&options, "--reapply-cherry-picks");
 
 	if (gpg_sign)
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
