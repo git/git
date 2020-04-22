@@ -505,7 +505,9 @@ static char *find_header(const char *msg, size_t len, const char *key,
 static int constant_memequal(const char *a, const char *b, size_t n)
 {
 	int res = 0;
-	for (size_t i = 0; i < n; i++)
+	size_t i;
+
+	for (i = 0; i < n; i++)
 		res |= a[i] ^ b[i];
 	return res;
 }
