@@ -69,7 +69,8 @@ You can also run each test individually from command line, like this:
 
 You can pass --verbose (or -v), --debug (or -d), and --immediate
 (or -i) command line argument to the test, or by setting GIT_TEST_OPTS
-appropriately before running "make".
+appropriately before running "make". Short options can be bundled, i.e.
+'-d -v' is the same as '-dv'.
 
 -v::
 --verbose::
