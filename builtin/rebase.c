@@ -1593,6 +1593,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	options.allow_empty_message = 1;
 	git_config(rebase_config, &options);
+	/* options.gpg_sign_opt will be either "-S" or NULL */
+	gpg_sign = options.gpg_sign_opt ? "" : NULL;
+	FREE_AND_NULL(options.gpg_sign_opt);
 
 	if (options.use_legacy_rebase ||
 	    !git_env_bool("GIT_TEST_REBASE_USE_BUILTIN", -1))
@@ -1823,10 +1826,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (options.empty != EMPTY_UNSPECIFIED)
 		imply_merge(&options, "--empty");
 
-	if (gpg_sign) {
-		free(options.gpg_sign_opt);
+	if (gpg_sign)
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
-	}
 
 	if (exec.nr) {
 		int i;
