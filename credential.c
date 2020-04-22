@@ -399,7 +399,14 @@ int credential_from_url_gently(struct credential *c, const char *url,
 	cp = proto_end + 3;
 	at = strchr(cp, '@');
 	colon = strchr(cp, ':');
-	slash = strchrnul(cp, '/');
+
+	/*
+	 * A query or fragment marker before the slash ends the host portion.
+	 * We'll just continue to call this "slash" for simplicity. Notably our
+	 * "trim leading slashes" part won't skip over this part of the path,
+	 * but that's what we'd want.
+	 */
+	slash = cp + strcspn(cp, "/?#");
 
 	if (!at || slash <= at) {
 		/* Case (1) */

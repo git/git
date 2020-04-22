@@ -532,7 +532,7 @@ test_expect_success 'url parser rejects embedded newlines' '
 	url=https://one.example.com?%0ahost=two.example.com/
 	EOF
 	cat >expect <<-\EOF &&
-	warning: url contains a newline in its host component: https://one.example.com?%0ahost=two.example.com/
+	warning: url contains a newline in its path component: https://one.example.com?%0ahost=two.example.com/
 	fatal: credential url cannot be parsed: https://one.example.com?%0ahost=two.example.com/
 	EOF
 	test_i18ncmp expect stderr
@@ -573,6 +573,40 @@ test_expect_success 'credential system refuses to work with missing protocol' '
 	fatal: refusing to work with credential missing protocol field
 	EOF
 	test_i18ncmp expect stderr
+'
+
+# usage: check_host_and_path <url> <expected-host> <expected-path>
+check_host_and_path () {
+	# we always parse the path component, but we need this to make sure it
+	# is passed to the helper
+	test_config credential.useHTTPPath true &&
+	check fill "verbatim user pass" <<-EOF
+	url=$1
+	--
+	protocol=https
+	host=$2
+	path=$3
+	username=user
+	password=pass
+	--
+	verbatim: get
+	verbatim: protocol=https
+	verbatim: host=$2
+	verbatim: path=$3
+	EOF
+}
+
+test_expect_success 'url parser handles bare query marker' '
+	check_host_and_path https://example.com?foo.git example.com ?foo.git
+'
+
+test_expect_success 'url parser handles bare fragment marker' '
+	check_host_and_path https://example.com#foo.git example.com "#foo.git"
+'
+
+test_expect_success 'url parser not confused by encoded markers' '
+	check_host_and_path https://example.com%23%3f%2f/foo.git \
+		"example.com#?/" foo.git
 '
 
 test_done
