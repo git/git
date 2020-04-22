@@ -14,7 +14,7 @@
 #include "pack-revindex.h"
 #include "hash.h"
 #include "path.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "repository.h"
 #include "mem-pool.h"
 

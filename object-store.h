@@ -4,7 +4,7 @@
 #include "cache.h"
 #include "oidmap.h"
 #include "list.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "strbuf.h"
 #include "thread-utils.h"
 

@@ -13,7 +13,7 @@
 #include "remote.h"
 #include "connect.h"
 #include "string-list.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "connected.h"
 #include "argv-array.h"
 #include "version.h"

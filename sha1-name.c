@@ -8,7 +8,7 @@
 #include "refs.h"
 #include "remote.h"
 #include "dir.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "packfile.h"
 #include "object-store.h"
 #include "repository.h"
