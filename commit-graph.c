@@ -1397,7 +1397,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 
 		fd = git_mkstemp_mode(ctx->graph_name, 0444);
 		if (fd < 0) {
-			error(_("unable to create '%s'"), ctx->graph_name);
+			error(_("unable to create temporary graph layer"));
 			return -1;
 		}
 
