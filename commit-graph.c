@@ -1602,8 +1602,8 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 		free(old_graph_name);
 	}
 
-	ALLOC_ARRAY(ctx->commit_graph_filenames_after, ctx->num_commit_graphs_after);
-	ALLOC_ARRAY(ctx->commit_graph_hash_after, ctx->num_commit_graphs_after);
+	CALLOC_ARRAY(ctx->commit_graph_filenames_after, ctx->num_commit_graphs_after);
+	CALLOC_ARRAY(ctx->commit_graph_hash_after, ctx->num_commit_graphs_after);
 
 	for (i = 0; i < ctx->num_commit_graphs_after &&
 		    i < ctx->num_commit_graphs_before; i++)
