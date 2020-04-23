@@ -27,7 +27,7 @@ static void print_bloom_filter(struct bloom_filter *filter) {
 	}
 	printf("Filter_Length:%d\n", (int)filter->len);
 	printf("Filter_Data:");
-	for (i = 0; i < filter->len; i++){
+	for (i = 0; i < filter->len; i++) {
 		printf("%02x|", filter->data[i]);
 	}
 	printf("\n");
@@ -50,13 +50,13 @@ int cmd__bloom(int argc, const char **argv)
 		printf("Murmur3 Hash with seed=0:0x%08x\n", hashed);
 	}
 
-    if (!strcmp(argv[1], "generate_filter")) {
+	if (!strcmp(argv[1], "generate_filter")) {
 		struct bloom_filter filter;
 		int i = 2;
 		filter.len =  (settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
 		filter.data = xcalloc(filter.len, sizeof(unsigned char));
 
-		if (!argv[2]){
+		if (!argv[2]) {
 			die("at least one input string expected");
 		}
 
@@ -68,7 +68,7 @@ int cmd__bloom(int argc, const char **argv)
 		print_bloom_filter(&filter);
 	}
 
-    if (!strcmp(argv[1], "get_filter_for_commit")) {
+	if (!strcmp(argv[1], "get_filter_for_commit")) {
 		struct object_id oid;
 		const char *end;
 		if (parse_oid_hex(argv[2], &oid, &end))
