@@ -69,7 +69,6 @@ static uint8_t oid_version(void)
 static struct commit_graph *alloc_commit_graph(void)
 {
 	struct commit_graph *g = xcalloc(1, sizeof(*g));
-	g->graph_fd = -1;
 
 	return g;
 }
@@ -123,14 +122,13 @@ struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st,
 		return NULL;
 	}
 	graph_map = xmmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	ret = parse_commit_graph(graph_map, fd, graph_size);
+	close(fd);
+	ret = parse_commit_graph(graph_map, graph_size);
 
 	if (ret)
 		ret->odb = odb;
-	else {
+	else
 		munmap(graph_map, graph_size);
-		close(fd);
-	}
 
 	return ret;
 }
@@ -165,8 +163,7 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 	return 0;
 }
 
-struct commit_graph *parse_commit_graph(void *graph_map, int fd,
-					size_t graph_size)
+struct commit_graph *parse_commit_graph(void *graph_map, size_t graph_size)
 {
 	const unsigned char *data, *chunk_lookup;
 	uint32_t i;
@@ -209,7 +206,6 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 
 	graph->hash_len = the_hash_algo->rawsz;
 	graph->num_chunks = *(unsigned char*)(data + 6);
-	graph->graph_fd = fd;
 	graph->data = graph_map;
 	graph->data_len = graph_size;
 
@@ -2129,10 +2125,9 @@ void free_commit_graph(struct commit_graph *g)
 {
 	if (!g)
 		return;
-	if (g->graph_fd >= 0) {
+	if (g->data) {
 		munmap((void *)g->data, g->data_len);
 		g->data = NULL;
-		close(g->graph_fd);
 	}
 	free(g->filename);
 	free(g);

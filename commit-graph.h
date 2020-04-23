@@ -40,8 +40,6 @@ struct tree *get_commit_tree_in_graph(struct repository *r,
 				      const struct commit *c);
 
 struct commit_graph {
-	int graph_fd;
-
 	const unsigned char *data;
 	size_t data_len;
 
@@ -66,8 +64,7 @@ struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st,
 						 struct object_directory *odb);
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
-struct commit_graph *parse_commit_graph(void *graph_map, int fd,
-					size_t graph_size);
+struct commit_graph *parse_commit_graph(void *graph_map, size_t graph_size);
 
 /*
  * Return 1 if and only if the repository has a commit-graph
