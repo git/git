@@ -144,6 +144,35 @@ test_expect_success 'fetch --update-shallow' '
 	)
 '
 
+test_expect_success 'fetch --update-shallow (with fetch.writeCommitGraph)' '
+	(
+	cd shallow &&
+	git checkout master &&
+	commit 8 &&
+	git tag -m foo heavy-tag-for-graph HEAD^ &&
+	git tag light-tag-for-graph HEAD^:tracked
+	) &&
+	test_config -C notshallow fetch.writeCommitGraph true &&
+	(
+	cd notshallow &&
+	git fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/* &&
+	git fsck &&
+	git for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
+	cat <<-EOF >expect.refs &&
+	refs/remotes/shallow/master
+	refs/remotes/shallow/no-shallow
+	refs/tags/heavy-tag
+	refs/tags/heavy-tag-for-graph
+	refs/tags/light-tag
+	refs/tags/light-tag-for-graph
+	EOF
+	test_cmp expect.refs actual.refs &&
+	git log --format=%s shallow/master >actual &&
+	test_write_lines 8 7 6 5 4 3 >expect &&
+	test_cmp expect actual
+	)
+'
+
 test_expect_success POSIXPERM,SANITY 'shallow fetch from a read-only repo' '
 	cp -R .git read-only.git &&
 	test_when_finished "find read-only.git -type d -print | xargs chmod +w" &&
