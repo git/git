@@ -1263,7 +1263,6 @@ struct blame_bloom_data {
 static int bloom_count_queries = 0;
 static int bloom_count_no = 0;
 static int maybe_changed_path(struct repository *r,
-			      struct commit *parent,
 			      struct blame_origin *origin,
 			      struct blame_bloom_data *bd)
 {
@@ -1355,8 +1354,7 @@ static struct blame_origin *find_origin(struct repository *r,
 		if (origin->commit->parents &&
 		    !oidcmp(&parent->object.oid,
 			    &origin->commit->parents->item->object.oid))
-			compute_diff = maybe_changed_path(r, parent,
-							  origin, bd);
+			compute_diff = maybe_changed_path(r, origin, bd);
 
 		if (compute_diff)
 			diff_tree_oid(get_commit_tree_oid(parent),
