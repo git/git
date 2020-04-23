@@ -43,10 +43,21 @@ static void get_bloom_filter_for_commit(const struct object_id *commit_oid)
 	print_bloom_filter(filter);
 }
 
+static const char *bloom_usage = "\n"
+"  test-tool bloom get_murmer3 <string>\n"
+"  test-tool bloom generate_filter <string> [<string>...]\n"
+"  test-tool get_filter_for_commit <commit-hex>\n";
+
 int cmd__bloom(int argc, const char **argv)
 {
+	if (argc < 2)
+		usage(bloom_usage);
+
 	if (!strcmp(argv[1], "get_murmur3")) {
-		uint32_t hashed = murmur3_seeded(0, argv[2], strlen(argv[2]));
+		uint32_t hashed;
+		if (argc < 3)
+			usage(bloom_usage);
+		hashed = murmur3_seeded(0, argv[2], strlen(argv[2]));
 		printf("Murmur3 Hash with seed=0:0x%08x\n", hashed);
 	}
 
@@ -56,9 +67,8 @@ int cmd__bloom(int argc, const char **argv)
 		filter.len =  (settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
 		filter.data = xcalloc(filter.len, sizeof(unsigned char));
 
-		if (!argv[2]) {
-			die("at least one input string expected");
-		}
+		if (argc - 1 < i)
+			usage(bloom_usage);
 
 		while (argv[i]) {
 			add_string_to_filter(argv[i], &filter);
@@ -71,6 +81,8 @@ int cmd__bloom(int argc, const char **argv)
 	if (!strcmp(argv[1], "get_filter_for_commit")) {
 		struct object_id oid;
 		const char *end;
+		if (argc < 3)
+			usage(bloom_usage);
 		if (parse_oid_hex(argv[2], &oid, &end))
 			die("cannot parse oid '%s'", argv[2]);
 		init_bloom_filters();
