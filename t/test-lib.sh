@@ -1618,6 +1618,15 @@ test_lazy_prereq ULIMIT_STACK_SIZE '
 	run_with_limited_stack true
 '
 
+run_with_limited_open_files () {
+	(ulimit -n 32 && "$@")
+}
+
+test_lazy_prereq ULIMIT_FILE_DESCRIPTORS '
+	test_have_prereq !MINGW,!CYGWIN &&
+	run_with_limited_open_files true
+'
+
 build_option () {
 	git version --build-options |
 	sed -ne "s/^$1: //p"
