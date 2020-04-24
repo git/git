@@ -12,7 +12,7 @@
 #include "userdiff.h"
 #include "streaming.h"
 #include "tree-walk.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "packfile.h"
 #include "object-store.h"
 #include "promisor-remote.h"

@@ -1976,10 +1976,9 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 }
 
 /*
- * Given a ref (sha1, refname), check if the ref belongs to the array
- * of sha1s. If the given ref is a tag, check if the given tag points
- * at one of the sha1s in the given sha1 array.
- * the given sha1_array.
+ * Given a ref (oid, refname), check if the ref belongs to the array
+ * of oids. If the given ref is a tag, check if the given tag points
+ * at one of the oids in the given oid array.
  * NEEDSWORK:
  * 1. Only a single level of inderection is obtained, we might want to
  * change this to account for multiple levels (e.g. annotated tags

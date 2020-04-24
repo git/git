@@ -7,6 +7,7 @@
 #include "color.h"
 #include "diff.h"
 #include "compat/terminal.h"
+#include "prompt.h"
 
 enum prompt_mode_type {
 	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_HUNK,
@@ -1158,9 +1159,8 @@ static int read_single_character(struct add_p_state *s)
 		return res;
 	}
 
-	if (strbuf_getline(&s->answer, stdin) == EOF)
+	if (git_read_line_interactively(&s->answer) == EOF)
 		return EOF;
-	strbuf_trim_trailing_newline(&s->answer);
 	return 0;
 }
 

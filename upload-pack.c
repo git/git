@@ -1252,7 +1252,7 @@ static void process_args(struct packet_reader *request,
 			 struct upload_pack_data *data,
 			 struct object_array *want_obj)
 {
-	while (packet_reader_read(request) != PACKET_READ_FLUSH) {
+	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
 		const char *arg = request->line;
 		const char *p;
 
@@ -1321,6 +1321,9 @@ static void process_args(struct packet_reader *request,
 		/* ignore unknown lines maybe? */
 		die("unexpected line: '%s'", arg);
 	}
+
+	if (request->status != PACKET_READ_FLUSH)
+		die(_("expected flush after fetch arguments"));
 }
 
 static int process_haves(struct oid_array *haves, struct oid_array *common,

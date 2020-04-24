@@ -134,7 +134,7 @@ int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_skip(struct repository *repo, struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
-/* #define TODO_LIST_KEEP_EMPTY (1U << 0) */ /* No longer used */
+#define TODO_LIST_KEEP_EMPTY (1U << 0)
 #define TODO_LIST_SHORTEN_IDS (1U << 1)
 #define TODO_LIST_ABBREVIATE_CMDS (1U << 2)
 #define TODO_LIST_REBASE_MERGES (1U << 3)
@@ -150,7 +150,7 @@ int sequencer_remove_state(struct replay_opts *opts);
  * `--onto`, we do not want to re-generate the root commits.
  */
 #define TODO_LIST_ROOT_WITH_ONTO (1U << 6)
-
+#define TODO_LIST_REAPPLY_CHERRY_PICKS (1U << 7)
 
 int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 			  const char **argv, unsigned flags);

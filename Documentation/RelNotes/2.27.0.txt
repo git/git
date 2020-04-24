@@ -47,6 +47,35 @@ UI, Workflows & Features
    exists, and neither --[no-]rebase nor --ff-only is given (which
    would result a merge).
 
+ * "git p4" learned four new hooks and also "--no-verify" option to
+   bypass them (and the existing "p4-pre-submit" hook).
+
+ * "git pull" shares many options with underlying "git fetch", but
+   some of them were not documented and some of those that would make
+   sense to pass down were not passed down.
+
+ * "git rebase" learned the "--no-gpg-sign" option to countermand
+   commit.gpgSign the user may have.
+
+ * The output from "git format-patch" uses RFC 2047 encoding for
+   non-ASCII letters on From: and Subject: headers, so that it can
+   directly be fed to e-mail programs.  A new option has been added
+   to produce these headers in raw.
+
+ * "git log" learned "--show-pulls" that helps pathspec limited
+   history views; a merge commit that takes the whole change from a
+   side branch, which is normally omitted from the output, is shown
+   in addition to the commits that introduce real changes.
+
+ * The interactive input from various codepaths are consolidated and
+   any prompt possibly issued earlier are fflush()ed before we read.
+
+ * Allow "git rebase" to reapply all local commits, even if the may be
+   already in the upstream, without checking first.
+
+ * The 'pack.useSparse' configuration variable now defaults to 'true',
+   enabling an optimization that has been experimental since Git 2.21.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -59,6 +88,19 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git stash" has kept an escape hatch to use the scripted version
    for a few releases, which got stale.  It has been removed.
+
+ * Enable tests that require GnuPG on Windows.
+
+ * Minor test usability improvement.
+
+ * Trace2 enhancement to allow logging of the environment variables.
+
+ * Test clean-up continues.
+
+ * Perf-test update.
+
+ * A Windows-specific test element has been made more robust against
+   misuse from both user's environment and programmer's errors.
 
 
 Fixes since v2.26
@@ -85,6 +127,74 @@ Fixes since v2.26
    was rewritten in C back in 2.20 era, which has been corrected.
    (merge f08132f889 at/rebase-fork-point-regression-fix later to maint).
 
+ * The import-tars importer (in contrib/fast-import/) used to create
+   phony files at the top-level of the repository when the archive
+   contains global PAX headers, which made its own logic to detect and
+   omit the common leading directory ineffective, which has been
+   corrected.
+   (merge c839fcff65 js/import-tars-do-not-make-phony-files-from-pax-headers later to maint).
+
+ * Simplify the commit ancestry connectedness check in a partial clone
+   repository in which "promised" objects are assumed to be obtainable
+   lazily on-demand from promisor remote repositories.
+   (merge 2b98478c6f jt/connectivity-check-optim-in-partial-clone later to maint).
+
+ * The server-end of the v2 protocol to serve "git clone" and "git
+   fetch" was not prepared to see a delim packets at unexpected
+   places, which led to a crash.
+   (merge cacae4329f jk/harden-protocol-v2-delim-handling later to maint).
+
+ * When fed a midx that records no objects, some codepaths tried to
+   loop from 0 through (num_objects-1), which, due to integer
+   arithmetic wrapping around, made it nonsense operation with out of
+   bounds array accesses.  The code has been corrected to reject such
+   an midx file.
+   (merge 796d61cdc0 dr/midx-avoid-int-underflow later to maint).
+
+ * Utitiles run via the run_command() API were not spawned correctly
+   on Cygwin, when the paths to them are given as a full path with
+   backslashes.
+   (merge 05ac8582bc ak/run-command-on-cygwin-fix later to maint).
+
+ * "git pull --rebase" tried to run a rebase even after noticing that
+   the pull results in a fast-forward and no rebase is needed nor
+   sensible, for the past few years due to a mistake nobody noticed.
+   (merge fbae70ddc6 en/pull-do-not-rebase-after-fast-forwarding later to maint).
+
+ * "git rebase" with the merge backend did not work well when the
+   rebase.abbreviateCommands configuration was set.
+   (merge de9f1d3ef4 ag/rebase-merge-allow-ff-under-abbrev-command later to maint).
+
+ * The logic to auto-follow tags by "git clone --single-branch" was
+   not careful to avoid lazy-fetching unnecessary tags, which has been
+   corrected.
+   (merge 167a575e2d jk/use-quick-lookup-in-clone-for-tag-following later to maint).
+
+ * "git rebase -i" did not leave the reflog entries correctly.
+   (merge 1f6965f994 en/sequencer-reflog-action later to maint).
+
+ * The more aggressive updates to remote-tracking branches we had for
+   the past 7 years or so were not reflected in the documentation,
+   which has been corrected.
+   (merge a44088435c pb/pull-fetch-doc later to maint).
+
+ * We've left the command line parsing of "git log :/a/b/" broken for
+   about a full year without anybody noticing, which has been
+   corrected.
+   (merge 0220461071 jc/missing-ref-store-fix later to maint).
+
+ * Misc fixes for Windows.
+   (merge 3efc128cd5 js/mingw-fixes later to maint).
+
+ * "git rebase" (again) learns to honor "--no-keep-empty", which lets
+   the user to discard commits that are empty from the beginning (as
+   opposed to the ones that become empty because of rebasing).  The
+   interactive rebase also marks commits that are empty in the todo.
+   (merge 50ed76148a en/rebase-no-keep-empty later to maint).
+
+ * Parsing the host part out of URL for the credential helper has been corrected.
+   (merge 4c5971e18a jk/credential-parsing-end-of-host-in-URL later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
    (merge 7422b2a0a1 sg/commit-slab-clarify-peek later to maint).
@@ -92,3 +202,16 @@ Fixes since v2.26
    (merge 757c2ba3e2 en/oidset-uninclude-hashmap later to maint).
    (merge 8312aa7d74 jc/config-tar later to maint).
    (merge d00a5bdd50 ss/submodule-foreach-cb later to maint).
+   (merge 64d1022e14 ar/test-style-fixes later to maint).
+   (merge 4a465443a6 ds/doc-clone-filter later to maint).
+   (merge bb2dbe301b jk/t3419-drop-expensive-tests later to maint).
+   (merge d3507cc712 js/test-junit-finalization-fix later to maint).
+   (merge 2149b6748f bc/faq later to maint).
+   (merge 12dc0879f1 jk/test-cleanup later to maint).
+   (merge 344420bf0f pb/rebase-doc-typofix later to maint).
+   (merge 7cd54d37dc dl/wrapper-fix-indentation later to maint).
+   (merge 78725ebda9 jc/allow-strlen-substitution-in-shell-scripts later to maint).
+   (merge 2ecfcdecc6 jm/gitweb-fastcgi-utf8 later to maint).
+   (merge 0740d0a5d3 jk/oid-array-cleanups later to maint).
+   (merge a1aba0c95c js/t0007-typofix later to maint).
+   (merge 76ba7fa225 ma/config-doc-fix later to maint).

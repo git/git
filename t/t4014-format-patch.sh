@@ -1161,6 +1161,59 @@ test_expect_success 'format-patch wraps extremely long from-header (rfc2047)' '
 '
 
 cat >expect <<'EOF'
+From: Foö Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar
+ Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo
+ Bar Foo Bar Foo Bar Foo Bar <author@example.com>
+EOF
+test_expect_success 'format-patch wraps extremely long from-header (non-ASCII without Q-encoding)' '
+	echo content >>file &&
+	git add file &&
+	GIT_AUTHOR_NAME="Foö Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar" \
+	git commit -m author-check &&
+	git format-patch --no-encode-email-headers --stdout -1 >patch &&
+	sed -n "/^From: /p; /^ /p; /^$/q" patch >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+Subject: [PATCH] Foö
+EOF
+test_expect_success 'subject lines are unencoded with --no-encode-email-headers' '
+	echo content >>file &&
+	git add file &&
+	git commit -m "Foö" &&
+	git format-patch --no-encode-email-headers -1 --stdout >patch &&
+	grep ^Subject: patch >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+Subject: [PATCH] Foö
+EOF
+test_expect_success 'subject lines are unencoded with format.encodeEmailHeaders=false' '
+	echo content >>file &&
+	git add file &&
+	git commit -m "Foö" &&
+	git config format.encodeEmailHeaders false &&
+	git format-patch -1 --stdout >patch &&
+	grep ^Subject: patch >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+Subject: [PATCH] =?UTF-8?q?Fo=C3=B6?=
+EOF
+test_expect_success '--encode-email-headers overrides format.encodeEmailHeaders' '
+	echo content >>file &&
+	git add file &&
+	git commit -m "Foö" &&
+	git config format.encodeEmailHeaders false &&
+	git format-patch --encode-email-headers -1 --stdout >patch &&
+	grep ^Subject: patch >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
 Subject: header with . in it
 EOF
 test_expect_success 'subject lines do not have 822 atom-quoting' '

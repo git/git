@@ -220,12 +220,12 @@ Example
 ; affected by the condition
 [includeIf "gitdir:/path/to/group/"]
 	path = foo.inc
-----
 
-	; include only if we are in a worktree where foo-branch is
-	; currently checked out
-	[includeIf "onbranch:foo-branch"]
-		path = foo.inc
+; include only if we are in a worktree where foo-branch is
+; currently checked out
+[includeIf "onbranch:foo-branch"]
+	path = foo.inc
+----
 
 Values
 ~~~~~~

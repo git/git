@@ -34,6 +34,9 @@
 #define SYMMETRIC_LEFT	(1u<<8)
 #define PATCHSAME	(1u<<9)
 #define BOTTOM		(1u<<10)
+
+/* WARNING: This is also used as REACHABLE in commit-graph.c. */
+#define PULL_MERGE	(1u<<15)
 /*
  * Indicates object was reached by traversal. i.e. not given by user on
  * command-line or stdin.
@@ -43,7 +46,7 @@
  */
 #define NOT_USER_GIVEN	(1u<<25)
 #define TRACK_LINEAR	(1u<<26)
-#define ALL_REV_FLAGS	(((1u<<11)-1) | NOT_USER_GIVEN | TRACK_LINEAR)
+#define ALL_REV_FLAGS	(((1u<<11)-1) | NOT_USER_GIVEN | TRACK_LINEAR | PULL_MERGE)
 
 #define TOPO_WALK_EXPLORED	(1u<<27)
 #define TOPO_WALK_INDEGREE	(1u<<28)
@@ -129,6 +132,7 @@ struct rev_info {
 			no_walk:2,
 			remove_empty_trees:1,
 			simplify_history:1,
+			show_pulls:1,
 			topo_order:1,
 			simplify_merges:1,
 			simplify_by_decoration:1,
@@ -203,7 +207,8 @@ struct rev_info {
 			use_terminator:1,
 			missing_newline:1,
 			date_mode_explicit:1,
-			preserve_subject:1;
+			preserve_subject:1,
+			encode_email_headers:1;
 	unsigned int	disable_stdin:1;
 	/* --show-linear-break */
 	unsigned int	track_linear:1,

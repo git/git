@@ -16,7 +16,7 @@
 #include "url.h"
 #include "submodule.h"
 #include "string-list.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "sigchain.h"
 #include "transport-internal.h"
 #include "protocol.h"

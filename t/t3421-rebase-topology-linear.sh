@@ -220,14 +220,13 @@ test_have_prereq !REBASE_P || test_run_rebase failure -p
 test_run_rebase () {
 	result=$1
 	shift
-	test_expect_$result "rebase $* --keep-empty" "
+	test_expect_$result "rebase $* --no-keep-empty drops begin-empty commits" "
 		reset_rebase &&
-		git rebase $* --keep-empty c l &&
-		test_cmp_rev c HEAD~3 &&
-		test_linear_range 'd k l' c..
+		git rebase $* --no-keep-empty c l &&
+		test_cmp_rev c HEAD~2 &&
+		test_linear_range 'd l' c..
 	"
 }
-test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -242,7 +241,6 @@ test_run_rebase () {
 		test_linear_range 'd k l' j..
 	"
 }
-test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p

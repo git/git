@@ -26,7 +26,7 @@
 #include "pack-bitmap.h"
 #include "delta-islands.h"
 #include "reachable.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "argv-array.h"
 #include "list.h"
 #include "packfile.h"

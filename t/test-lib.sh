@@ -78,20 +78,23 @@ then
 	exit 1
 fi
 
-# Parse options while taking care to leave $@ intact, so we will still
-# have all the original command line options when executing the test
-# script again for '--tee' and '--verbose-log' below.
 store_arg_to=
-prev_opt=
-for opt
-do
-	if test -n "$store_arg_to"
+opt_required_arg=
+# $1: option string
+# $2: name of the var where the arg will be stored
+mark_option_requires_arg () {
+	if test -n "$opt_required_arg"
 	then
-		eval $store_arg_to=\$opt
-		store_arg_to=
-		prev_opt=
-		continue
+		echo "error: options that require args cannot be bundled" \
+			"together: '$opt_required_arg' and '$1'" >&2
+		exit 1
 	fi
+	opt_required_arg=$1
+	store_arg_to=$2
+}
+
+parse_option () {
+	local opt="$1"
 
 	case "$opt" in
 	-d|--d|--de|--deb|--debu|--debug)
@@ -101,7 +104,7 @@ do
 	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
 		GIT_TEST_LONG=t; export GIT_TEST_LONG ;;
 	-r)
-		store_arg_to=run_list
+		mark_option_requires_arg "$opt" run_list
 		;;
 	--run=*)
 		run_list=${opt#--*=} ;;
@@ -185,12 +188,42 @@ do
 	*)
 		echo "error: unknown test option '$opt'" >&2; exit 1 ;;
 	esac
+}
 
-	prev_opt=$opt
+# Parse options while taking care to leave $@ intact, so we will still
+# have all the original command line options when executing the test
+# script again for '--tee' and '--verbose-log' later.
+for opt
+do
+	if test -n "$store_arg_to"
+	then
+		eval $store_arg_to=\$opt
+		store_arg_to=
+		opt_required_arg=
+		continue
+	fi
+
+	case "$opt" in
+	--*|-?)
+		parse_option "$opt" ;;
+	-?*)
+		# bundled short options must be fed separately to parse_option
+		opt=${opt#-}
+		while test -n "$opt"
+		do
+			extra=${opt#?}
+			this=${opt%$extra}
+			opt=$extra
+			parse_option "-$this"
+		done
+		;;
+	*)
+		echo "error: unknown test option '$opt'" >&2; exit 1 ;;
+	esac
 done
 if test -n "$store_arg_to"
 then
-	echo "error: $prev_opt requires an argument" >&2
+	echo "error: $opt_required_arg requires an argument" >&2
 	exit 1
 fi
 
@@ -867,6 +900,7 @@ maybe_setup_valgrind () {
 	fi
 }
 
+trace_level_=0
 want_trace () {
 	test "$trace" = t && {
 		test "$verbose" = t || test "$verbose_log" = t
@@ -880,7 +914,7 @@ want_trace () {
 test_eval_inner_ () {
 	# Do not add anything extra (including LF) after '$*'
 	eval "
-		want_trace && set -x
+		want_trace && trace_level_=$(($trace_level_+1)) && set -x
 		$*"
 }
 
@@ -911,7 +945,8 @@ test_eval_ () {
 		test_eval_ret_=$?
 		if want_trace
 		then
-			set +x
+			test 1 = $trace_level_ && set +x
+			trace_level_=$(($trace_level_-1))
 		fi
 	} 2>/dev/null 4>&2
 
@@ -1070,6 +1105,7 @@ finalize_junit_xml () {
 		junit_time=$(test-tool date getnanos $junit_suite_start)
 		sed -e "s/\(<testsuite.*\) time=\"[^\"]*\"/\1/" \
 			-e "s/<testsuite [^>]*/& time=\"$junit_time\"/" \
+			-e '/^ *<\/testsuite/d' \
 			<"$junit_xml_path" >"$junit_xml_path.new"
 		mv "$junit_xml_path.new" "$junit_xml_path"
 

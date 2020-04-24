@@ -12,7 +12,7 @@
 #include "diffcore.h"
 #include "refs.h"
 #include "string-list.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "argv-array.h"
 #include "blob.h"
 #include "thread-utils.h"

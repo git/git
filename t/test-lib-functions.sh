@@ -1362,14 +1362,22 @@ nongit () {
 	)
 } 7>&2 2>&4
 
-# convert stdin to pktline representation; note that empty input becomes an
-# empty packet, not a flush packet (for that you can just print 0000 yourself).
+# convert function arguments or stdin (if not arguments given) to pktline
+# representation. If multiple arguments are given, they are separated by
+# whitespace and put in a single packet. Note that data containing NULs must be
+# given on stdin, and that empty input becomes an empty packet, not a flush
+# packet (for that you can just print 0000 yourself).
 packetize() {
-	cat >packetize.tmp &&
-	len=$(wc -c <packetize.tmp) &&
-	printf '%04x%s' "$(($len + 4))" &&
-	cat packetize.tmp &&
-	rm -f packetize.tmp
+	if test $# -gt 0
+	then
+		packet="$*"
+		printf '%04x%s' "$((4 + ${#packet}))" "$packet"
+	else
+		perl -e '
+			my $packet = do { local $/; <STDIN> };
+			printf "%04x%s", 4 + length($packet), $packet;
+		'
+	fi
 }
 
 # Parse the input as a series of pktlines, writing the result to stdout.
@@ -1542,4 +1550,14 @@ test_bitmap_traversal () {
 	sort "$2" >"$2.normalized" &&
 	test_cmp "$1.normalized" "$2.normalized" &&
 	rm -f "$1.normalized" "$2.normalized"
+}
+
+# Tests for the hidden file attribute on Windows
+test_path_is_hidden () {
+	test_have_prereq MINGW ||
+	BUG "test_path_is_hidden can only be used on Windows"
+
+	# Use the output of `attrib`, ignore the absolute path
+	case "$("$SYSTEMROOT"/system32/attrib "$1")" in *H*?:*) return 0;; esac
+	return 1
 }

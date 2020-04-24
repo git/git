@@ -93,7 +93,7 @@ int ls_refs(struct repository *r, struct argv_array *keys,
 
 	git_config(ls_refs_config, NULL);
 
-	while (packet_reader_read(request) != PACKET_READ_FLUSH) {
+	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
 		const char *arg = request->line;
 		const char *out;
 
@@ -104,6 +104,9 @@ int ls_refs(struct repository *r, struct argv_array *keys,
 		else if (skip_prefix(arg, "ref-prefix ", &out))
 			argv_array_push(&data.prefixes, out);
 	}
+
+	if (request->status != PACKET_READ_FLUSH)
+		die(_("expected flush after ls-refs arguments"));
 
 	head_ref_namespaced(send_ref, &data);
 	for_each_namespaced_ref(send_ref, &data);

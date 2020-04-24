@@ -8,7 +8,7 @@
 #include "pkt-line.h"
 #include "remote.h"
 #include "refs.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "diff.h"
 #include "revision.h"
 #include "commit-slab.h"

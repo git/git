@@ -55,6 +55,10 @@ test_expect_success '"git log -- :/a" should not be ambiguous' '
 	git log -- :/a
 '
 
+test_expect_success '"git log :/any/path/" should not segfault' '
+	test_must_fail git log :/any/path/
+'
+
 # This differs from the ":/a" check above in that :/in looks like a pathspec,
 # but doesn't match an actual file.
 test_expect_success '"git log :/in" should not be ambiguous' '

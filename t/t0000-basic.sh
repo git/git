@@ -833,6 +833,19 @@ then
 	exit 1
 fi
 
+test_expect_success 'lazy prereqs do not turn off tracing' "
+	run_sub_test_lib_test lazy-prereq-and-tracing \
+		'lazy prereqs and -x' -v -x <<-\\EOF &&
+	test_lazy_prereq LAZY true
+
+	test_expect_success lazy 'test_have_prereq LAZY && echo trace'
+
+	test_done
+	EOF
+
+	grep 'echo trace' lazy-prereq-and-tracing/err
+"
+
 test_expect_success 'tests clean up even on failures' "
 	run_sub_test_lib_test_err \
 		failing-cleanup 'Failing tests with cleanup commands' <<-\\EOF &&

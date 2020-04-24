@@ -17,7 +17,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "gpg-interface.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "column.h"
 #include "ref-filter.h"
 
