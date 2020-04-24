@@ -68,9 +68,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	FREE_AND_NULL(midx_name);
 
 	midx_map = xmmap(NULL, midx_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
 
 	FLEX_ALLOC_MEM(m, object_dir, object_dir, strlen(object_dir));
-	m->fd = fd;
 	m->data = midx_map;
 	m->data_len = midx_size;
 	m->local = local;
@@ -184,8 +184,6 @@ static void close_midx(struct multi_pack_index *m)
 {
 	uint32_t i;
 	munmap((unsigned char *)m->data, m->data_len);
-	close(m->fd);
-	m->fd = -1;
 
 	for (i = 0; i < m->num_packs; i++) {
 		if (m->packs[i]) {
