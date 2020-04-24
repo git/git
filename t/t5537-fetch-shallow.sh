@@ -16,7 +16,7 @@ test_expect_success 'setup' '
 	commit 3 &&
 	commit 4 &&
 	git config --global transfer.fsckObjects true &&
-	test_oid_cache <<-EOF
+	test_oid_cache <<-\EOF
 	perl sha1:s/0034shallow %s/0036unshallow %s/
 	perl sha256:s/004cshallow %s/004eunshallow %s/
 	EOF
@@ -25,10 +25,7 @@ test_expect_success 'setup' '
 test_expect_success 'setup shallow clone' '
 	git clone --no-local --depth=2 .git shallow &&
 	git --git-dir=shallow/.git log --format=%s >actual &&
-	cat <<EOF >expect &&
-4
-3
-EOF
+	test_write_lines 4 3 >expect &&
 	test_cmp expect actual
 '
 
@@ -38,10 +35,7 @@ test_expect_success 'clone from shallow clone' '
 	cd shallow2 &&
 	git fsck &&
 	git log --format=%s >actual &&
-	cat <<EOF >expect &&
-4
-3
-EOF
+	test_write_lines 4 3 >expect &&
 	test_cmp expect actual
 	)
 '
@@ -56,11 +50,7 @@ test_expect_success 'fetch from shallow clone' '
 	git fetch &&
 	git fsck &&
 	git log --format=%s origin/master >actual &&
-	cat <<EOF >expect &&
-5
-4
-3
-EOF
+	test_write_lines 5 4 3 >expect &&
 	test_cmp expect actual
 	)
 '
@@ -75,10 +65,7 @@ test_expect_success 'fetch --depth from shallow clone' '
 	git fetch --depth=2 &&
 	git fsck &&
 	git log --format=%s origin/master >actual &&
-	cat <<EOF >expect &&
-6
-5
-EOF
+	test_write_lines 6 5 >expect &&
 	test_cmp expect actual
 	)
 '
@@ -89,12 +76,7 @@ test_expect_success 'fetch --unshallow from shallow clone' '
 	git fetch --unshallow &&
 	git fsck &&
 	git log --format=%s origin/master >actual &&
-	cat <<EOF >expect &&
-6
-5
-4
-3
-EOF
+	test_write_lines 6 5 4 3 >expect &&
 	test_cmp expect actual
 	)
 '
@@ -111,15 +93,10 @@ test_expect_success 'fetch something upstream has but hidden by clients shallow 
 	git fetch ../.git +refs/heads/master:refs/remotes/top/master &&
 	git fsck &&
 	git log --format=%s top/master >actual &&
-	cat <<EOF >expect &&
-add-1-back
-4
-3
-EOF
+	test_write_lines add-1-back 4 3 >expect &&
 	test_cmp expect actual
 	) &&
 	git --git-dir=shallow2/.git cat-file blob $(echo 1|git hash-object --stdin) >/dev/null
-
 '
 
 test_expect_success 'fetch that requires changes in .git/shallow is filtered' '
@@ -133,14 +110,10 @@ test_expect_success 'fetch that requires changes in .git/shallow is filtered' '
 	cd notshallow &&
 	git fetch ../shallow/.git refs/heads/*:refs/remotes/shallow/*&&
 	git for-each-ref --format="%(refname)" >actual.refs &&
-	cat <<EOF >expect.refs &&
-refs/remotes/shallow/no-shallow
-EOF
+	echo refs/remotes/shallow/no-shallow >expect.refs &&
 	test_cmp expect.refs actual.refs &&
 	git log --format=%s shallow/no-shallow >actual &&
-	cat <<EOF >expect &&
-no-shallow
-EOF
+	echo no-shallow >expect &&
 	test_cmp expect actual
 	)
 '
@@ -158,21 +131,15 @@ test_expect_success 'fetch --update-shallow' '
 	git fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/* &&
 	git fsck &&
 	git for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
-	cat <<EOF >expect.refs &&
-refs/remotes/shallow/master
-refs/remotes/shallow/no-shallow
-refs/tags/heavy-tag
-refs/tags/light-tag
-EOF
+	cat <<-\EOF >expect.refs &&
+	refs/remotes/shallow/master
+	refs/remotes/shallow/no-shallow
+	refs/tags/heavy-tag
+	refs/tags/light-tag
+	EOF
 	test_cmp expect.refs actual.refs &&
 	git log --format=%s shallow/master >actual &&
-	cat <<EOF >expect &&
-7
-6
-5
-4
-3
-EOF
+	test_write_lines 7 6 5 4 3 >expect &&
 	test_cmp expect actual
 	)
 '
@@ -183,10 +150,7 @@ test_expect_success POSIXPERM,SANITY 'shallow fetch from a read-only repo' '
 	find read-only.git -print | xargs chmod -w &&
 	git clone --no-local --depth=2 read-only.git from-read-only &&
 	git --git-dir=from-read-only/.git log --format=%s >actual &&
-	cat >expect <<EOF &&
-add-1-back
-4
-EOF
+	test_write_lines add-1-back 4 >expect &&
 	test_cmp expect actual
 '
 
