@@ -35,6 +35,10 @@ int credential_match(const struct credential *want,
 #undef CHECK
 }
 
+
+static int credential_from_potentially_partial_url(struct credential *c,
+						   const char *url);
+
 static int credential_config_callback(const char *var, const char *value,
 				      void *data)
 {
@@ -53,7 +57,13 @@ static int credential_config_callback(const char *var, const char *value,
 		char *url = xmemdupz(key, dot - key);
 		int matched;
 
-		credential_from_url(&want, url);
+		if (credential_from_potentially_partial_url(&want, url) < 0) {
+			warning(_("skipping credential lookup for key: %s"),
+				var);
+			credential_clear(&want);
+			free(url);
+			return 0;
+		}
 		matched = credential_match(&want, c);
 
 		credential_clear(&want);
@@ -428,6 +438,12 @@ static int credential_from_url_1(struct credential *c, const char *url,
 		return -1;
 
 	return 0;
+}
+
+static int credential_from_potentially_partial_url(struct credential *c,
+						   const char *url)
+{
+	return credential_from_url_1(c, url, 1, 0);
 }
 
 int credential_from_url_gently(struct credential *c, const char *url, int quiet)
