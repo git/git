@@ -553,6 +553,11 @@ static int set_time(long hour, long minute, long second, struct tm *tm)
 	return -1;
 }
 
+static int is_date_known(struct tm *tm)
+{
+	return tm->tm_year != -1 && tm->tm_mon != -1 && tm->tm_mday != -1;
+}
+
 static int match_multi_number(timestamp_t num, char c, const char *date,
 			      char *end, struct tm *tm, time_t now)
 {
@@ -571,6 +576,13 @@ static int match_multi_number(timestamp_t num, char c, const char *date,
 		if (num3 < 0)
 			num3 = 0;
 		if (set_time(num, num2, num3, tm) == 0) {
+			/*
+			 * If %H:%M:%S was just parsed followed by: .<num4>
+			 * Consider (& discard) it as fractional second
+			 * if %Y%m%d is parsed before.
+			 */
+			if (*end == '.' && isdigit(end[1]) && is_date_known(tm))
+				strtol(end + 1, &end, 10);
 			break;
 		}
 		return 0;
