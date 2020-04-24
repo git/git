@@ -37,6 +37,10 @@ int credential_match(const struct credential *want,
 #undef CHECK
 }
 
+
+static int credential_from_potentially_partial_url(struct credential *c,
+						   const char *url);
+
 static int credential_config_callback(const char *var, const char *value,
 				      void *data)
 {
@@ -82,6 +86,22 @@ static int select_all(const struct urlmatch_item *a,
 	return 0;
 }
 
+static int match_partial_url(const char *url, void *cb)
+{
+	struct credential *c = cb;
+	struct credential want = CREDENTIAL_INIT;
+	int matches = 0;
+
+	if (credential_from_potentially_partial_url(&want, url) < 0)
+		warning(_("skipping credential lookup for key: credential.%s"),
+			url);
+	else
+		matches = credential_match(&want, c);
+	credential_clear(&want);
+
+	return matches;
+}
+
 static void credential_apply_config(struct credential *c)
 {
 	char *normalized_url;
@@ -101,6 +121,7 @@ static void credential_apply_config(struct credential *c)
 	config.collect_fn = credential_config_callback;
 	config.cascade_fn = NULL;
 	config.select_fn = select_all;
+	config.fallback_match_fn = match_partial_url;
 	config.cb = c;
 
 	credential_format(c, &url);
@@ -466,6 +487,12 @@ static int credential_from_url_1(struct credential *c, const char *url,
 		return -1;
 
 	return 0;
+}
+
+static int credential_from_potentially_partial_url(struct credential *c,
+						   const char *url)
+{
+	return credential_from_url_1(c, url, 1, 0);
 }
 
 int credential_from_url_gently(struct credential *c, const char *url, int quiet)
