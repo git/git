@@ -539,6 +539,20 @@ static int set_date(int year, int month, int day, struct tm *now_tm, time_t now,
 	return -1;
 }
 
+static int set_time(long hour, long minute, long second, struct tm *tm)
+{
+	/* We accept 61st second because of leap second */
+	if (0 <= hour && hour <= 24 &&
+	    0 <= minute && minute < 60 &&
+	    0 <= second && second <= 60) {
+		tm->tm_hour = hour;
+		tm->tm_min = minute;
+		tm->tm_sec = second;
+		return 0;
+	}
+	return -1;
+}
+
 static int match_multi_number(timestamp_t num, char c, const char *date,
 			      char *end, struct tm *tm, time_t now)
 {
@@ -556,10 +570,7 @@ static int match_multi_number(timestamp_t num, char c, const char *date,
 	case ':':
 		if (num3 < 0)
 			num3 = 0;
-		if (num < 25 && num2 >= 0 && num2 < 60 && num3 >= 0 && num3 <= 60) {
-			tm->tm_hour = num;
-			tm->tm_min = num2;
-			tm->tm_sec = num3;
+		if (set_time(num, num2, num3, tm) == 0) {
 			break;
 		}
 		return 0;
