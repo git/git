@@ -29,4 +29,8 @@ fi
 make hdr-check ||
 exit 1
 
+( make sparse 3>&2 2>&1 >&3 ) |
+grep -v -e "^/usr/include" -e "^    [*] new [a-z]* flags$" &&
+exit 1
+
 save_good_tree

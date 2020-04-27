@@ -11,6 +11,16 @@ UBUNTU_COMMON_PKGS="make libssl-dev libcurl4-openssl-dev libexpat-dev
  tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl
  libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl"
 
+install_sparse () {
+	local urlbase=https://dev.azure.com/git/git/_apis/build/builds
+	local id=$(curl -S "$urlbase?definitions=10&statusFilter=completed&resultFilter=succeeded&\$top=1" | jq '.value[].id')
+	local download_url=$(curl -S "$urlbase/$id/artifacts" |
+		jq -r '.value[]|select(.name == "sparse").resource.downloadUrl')
+	curl -o sparse.zip "$download_url"
+	unzip sparse.zip
+	sudo dpkg -i sparse/sparse*.deb
+}
+
 case "$jobname" in
 linux-clang|linux-gcc)
 	sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
@@ -64,6 +74,7 @@ StaticAnalysis)
 	sudo apt-get -q update
 	sudo apt-get -q -y install coccinelle libcurl4-openssl-dev libssl-dev \
 		libexpat-dev gettext make
+	install_sparse
 	;;
 Documentation)
 	sudo apt-get -q update
