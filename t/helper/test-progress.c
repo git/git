@@ -13,19 +13,12 @@
  *
  * See 't0500-progress-display.sh' for examples.
  */
+#define GIT_TEST_PROGRESS_ONLY
 #include "test-tool.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "progress.h"
 #include "strbuf.h"
-
-/*
- * These are defined in 'progress.c', but are not exposed in 'progress.h',
- * because they are exclusively for testing.
- */
-extern int progress_testing;
-extern uint64_t progress_test_ns;
-void progress_test_force_update(void);
 
 int cmd__progress(int argc, const char **argv)
 {
