@@ -1,8 +1,6 @@
 #include "cache.h"
 #include "parse-options.h"
-#include "stdio.h"
 #include "strbuf.h"
-#include "time.h"
 #include "help.h"
 #include "compat/compiler.h"
 
