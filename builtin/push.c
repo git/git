@@ -434,10 +434,8 @@ static int option_parse_recurse_submodules(const struct option *opt,
 
 	if (unset)
 		*recurse_submodules = RECURSE_SUBMODULES_OFF;
-	else if (arg)
-		*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
 	else
-		die("%s missing parameter", opt->long_name);
+		*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
 
 	return 0;
 }
@@ -552,9 +550,8 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		  0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
 		  N_("require old value of ref to be at this value"),
 		  PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option },
-		{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules, "(check|on-demand|no)",
-			N_("control recursive pushing of submodules"),
-			PARSE_OPT_OPTARG, option_parse_recurse_submodules },
+		OPT_CALLBACK(0, "recurse-submodules", &recurse_submodules, "(check|on-demand|no)",
+			     N_("control recursive pushing of submodules"), option_parse_recurse_submodules),
 		OPT_BOOL_F( 0 , "thin", &thin, N_("use thin pack"), PARSE_OPT_NOCOMPLETE),
 		OPT_STRING( 0 , "receive-pack", &receivepack, "receive-pack", N_("receive pack program")),
 		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", N_("receive pack program")),
