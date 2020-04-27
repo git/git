@@ -1055,7 +1055,7 @@ static void graph_output_commit_line(struct git_graph *graph, struct graph_line 
 		graph_update_state(graph, GRAPH_COLLAPSING);
 }
 
-const char merge_chars[] = {'/', '|', '\\'};
+static const char merge_chars[] = {'/', '|', '\\'};
 
 static void graph_output_post_merge_line(struct git_graph *graph, struct graph_line *line)
 {
