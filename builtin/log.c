@@ -166,9 +166,11 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	int quiet = 0, source = 0, mailmap;
 	static struct line_opt_callback_data line_cb = {NULL, NULL, STRING_LIST_INIT_DUP};
 	static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
+	static struct string_list decorate_refs_exclude_config = STRING_LIST_INIT_NODUP;
 	static struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
 	struct decoration_filter decoration_filter = {&decorate_refs_include,
-						      &decorate_refs_exclude};
+						      &decorate_refs_exclude,
+						      &decorate_refs_exclude_config};
 	static struct revision_sources revision_sources;
 
 	const struct option builtin_log_options[] = {
@@ -239,7 +241,19 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	}
 
 	if (decoration_style) {
+		const struct string_list *config_exclude =
+			repo_config_get_value_multi(the_repository,
+						    "log.excludeDecoration");
+
+		if (config_exclude) {
+			struct string_list_item *item;
+			for_each_string_list_item(item, config_exclude)
+				string_list_append(&decorate_refs_exclude_config,
+						   item->string);
+		}
+
 		rev->show_decorations = 1;
+
 		load_ref_decorations(&decoration_filter, decoration_style);
 	}
 

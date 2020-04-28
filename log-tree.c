@@ -81,6 +81,56 @@ const struct name_decoration *get_name_decoration(const struct object *obj)
 	return lookup_decoration(&name_decoration, obj);
 }
 
+static int match_ref_pattern(const char *refname,
+			     const struct string_list_item *item)
+{
+	int matched = 0;
+	if (item->util == NULL) {
+		if (!wildmatch(item->string, refname, 0))
+			matched = 1;
+	} else {
+		const char *rest;
+		if (skip_prefix(refname, item->string, &rest) &&
+		    (!*rest || *rest == '/'))
+			matched = 1;
+	}
+	return matched;
+}
+
+static int ref_filter_match(const char *refname,
+			    const struct decoration_filter *filter)
+{
+	struct string_list_item *item;
+	const struct string_list *exclude_patterns = filter->exclude_ref_pattern;
+	const struct string_list *include_patterns = filter->include_ref_pattern;
+	const struct string_list *exclude_patterns_config =
+				filter->exclude_ref_config_pattern;
+
+	if (exclude_patterns && exclude_patterns->nr) {
+		for_each_string_list_item(item, exclude_patterns) {
+			if (match_ref_pattern(refname, item))
+				return 0;
+		}
+	}
+
+	if (include_patterns && include_patterns->nr) {
+		for_each_string_list_item(item, include_patterns) {
+			if (match_ref_pattern(refname, item))
+				return 1;
+		}
+		return 0;
+	}
+
+	if (exclude_patterns_config && exclude_patterns_config->nr) {
+		for_each_string_list_item(item, exclude_patterns_config) {
+			if (match_ref_pattern(refname, item))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
 static int add_ref_decoration(const char *refname, const struct object_id *oid,
 			      int flags, void *cb_data)
 {
@@ -88,9 +138,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 	enum decoration_type type = DECORATION_NONE;
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
 
-	if (filter && !ref_filter_match(refname,
-			      filter->include_ref_pattern,
-			      filter->exclude_ref_pattern))
+	if (filter && !ref_filter_match(refname, filter))
 		return 0;
 
 	if (starts_with(refname, git_replace_ref_base)) {
@@ -153,6 +201,9 @@ void load_ref_decorations(struct decoration_filter *filter, int flags)
 				normalize_glob_ref(item, NULL, item->string);
 			}
 			for_each_string_list_item(item, filter->include_ref_pattern) {
+				normalize_glob_ref(item, NULL, item->string);
+			}
+			for_each_string_list_item(item, filter->exclude_ref_config_pattern) {
 				normalize_glob_ref(item, NULL, item->string);
 			}
 		}

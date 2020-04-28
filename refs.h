@@ -361,18 +361,6 @@ int for_each_rawref(each_ref_fn fn, void *cb_data);
 void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 			const char *pattern);
 
-/*
- * Returns 0 if refname matches any of the exclude_patterns, or if it doesn't
- * match any of the include_patterns. Returns 1 otherwise.
- *
- * If pattern list is NULL or empty, matching against that list is skipped.
- * This has the effect of matching everything by default, unless the user
- * specifies rules otherwise.
- */
-int ref_filter_match(const char *refname,
-		     const struct string_list *include_patterns,
-		     const struct string_list *exclude_patterns);
-
 static inline const char *has_glob_specials(const char *pattern)
 {
 	return strpbrk(pattern, "?*[");
