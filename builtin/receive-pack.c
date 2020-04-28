@@ -499,12 +499,27 @@ static char *find_header(const char *msg, size_t len, const char *key,
 	return NULL;
 }
 
+/*
+ * Return zero if a and b are equal up to n bytes and nonzero if they are not.
+ * This operation is guaranteed to run in constant time to avoid leaking data.
+ */
+static int constant_memequal(const char *a, const char *b, size_t n)
+{
+	int res = 0;
+	size_t i;
+
+	for (i = 0; i < n; i++)
+		res |= a[i] ^ b[i];
+	return res;
+}
+
 static const char *check_nonce(const char *buf, size_t len)
 {
 	char *nonce = find_header(buf, len, "nonce", NULL);
 	timestamp_t stamp, ostamp;
 	char *bohmac, *expect = NULL;
 	const char *retval = NONCE_BAD;
+	size_t noncelen;
 
 	if (!nonce) {
 		retval = NONCE_MISSING;
@@ -546,8 +561,14 @@ static const char *check_nonce(const char *buf, size_t len)
 		goto leave;
 	}
 
+	noncelen = strlen(nonce);
 	expect = prepare_push_cert_nonce(service_dir, stamp);
-	if (strcmp(expect, nonce)) {
+	if (noncelen != strlen(expect)) {
+		/* This is not even the right size. */
+		retval = NONCE_BAD;
+		goto leave;
+	}
+	if (constant_memequal(expect, nonce, noncelen)) {
 		/* Not what we would have signed earlier */
 		retval = NONCE_BAD;
 		goto leave;
