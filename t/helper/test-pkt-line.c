@@ -67,7 +67,7 @@ static void unpack_sideband(void)
 		case PACKET_READ_NORMAL:
 			band = reader.line[0] & 0xff;
 			if (band < 1 || band > 2)
-				die("unexpected side band %d", band);
+				continue; /* skip non-sideband packets */
 			fd = band;
 
 			write_or_die(fd, reader.line + 1, reader.pktlen - 1);
