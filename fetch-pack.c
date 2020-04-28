@@ -1268,9 +1268,29 @@ static int process_section_header(struct packet_reader *reader,
 	return ret;
 }
 
-static int process_acks(struct fetch_negotiator *negotiator,
-			struct packet_reader *reader,
-			struct oidset *common)
+enum common_found {
+	/*
+	 * No commit was found to be possessed by both the client and the
+	 * server, and "ready" was not received.
+	 */
+	NO_COMMON_FOUND,
+
+	/*
+	 * At least one commit was found to be possessed by both the client and
+	 * the server, and "ready" was not received.
+	 */
+	COMMON_FOUND,
+
+	/*
+	 * "ready" was received, indicating that the server is ready to send
+	 * the packfile without any further negotiation.
+	 */
+	READY
+};
+
+static enum common_found process_acks(struct fetch_negotiator *negotiator,
+				      struct packet_reader *reader,
+				      struct oidset *common)
 {
 	/* received */
 	int received_ready = 0;
@@ -1319,8 +1339,8 @@ static int process_acks(struct fetch_negotiator *negotiator,
 	if (!received_ready && reader->status != PACKET_READ_FLUSH)
 		die(_("expected no other sections to be sent after no 'ready'"));
 
-	/* return 0 if no common, 1 if there are common, or 2 if ready */
-	return received_ready ? 2 : (received_ack ? 1 : 0);
+	return received_ready ? READY :
+		(received_ack ? COMMON_FOUND : NO_COMMON_FOUND);
 }
 
 static void receive_shallow_info(struct fetch_pack_args *args,
@@ -1508,13 +1528,13 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		case FETCH_PROCESS_ACKS:
 			/* Process ACKs/NAKs */
 			switch (process_acks(negotiator, &reader, &common)) {
-			case 2:
+			case READY:
 				state = FETCH_GET_PACK;
 				break;
-			case 1:
+			case COMMON_FOUND:
 				in_vain = 0;
 				/* fallthrough */
-			default:
+			case NO_COMMON_FOUND:
 				state = FETCH_SEND_REQUEST;
 				break;
 			}
