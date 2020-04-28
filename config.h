@@ -254,7 +254,7 @@ int git_config_set_gently(const char *, const char *);
  */
 void git_config_set(const char *, const char *);
 
-int git_config_parse_key(const char *, char **, int *);
+int git_config_parse_key(const char *, char **, size_t *);
 int git_config_key_is_valid(const char *key);
 int git_config_set_multivar_gently(const char *, const char *, const char *, int);
 void git_config_set_multivar(const char *, const char *, const char *, int);
@@ -359,7 +359,7 @@ int git_config_include(const char *name, const char *value, void *data);
  */
 int parse_config_key(const char *var,
 		     const char *section,
-		     const char **subsection, int *subsection_len,
+		     const char **subsection, size_t *subsection_len,
 		     const char **key);
 
 /**

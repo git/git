@@ -1065,7 +1065,7 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 {
 	struct fsck_gitmodules_data *data = vdata;
 	const char *subsection, *key;
-	int subsection_len;
+	size_t subsection_len;
 	char *name;
 
 	if (parse_config_key(var, "submodule", &subsection, &subsection_len, &key) < 0 ||

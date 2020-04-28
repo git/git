@@ -247,7 +247,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 {
 	struct ll_merge_driver *fn;
 	const char *key, *name;
-	int namelen;
+	size_t namelen;
 
 	if (!strcmp(var, "merge.default"))
 		return git_config_string(&default_ll_merge, var, value);

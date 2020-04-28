@@ -242,7 +242,7 @@ static int add_man_viewer_cmd(const char *name,
 static int add_man_viewer_info(const char *var, const char *value)
 {
 	const char *name, *subkey;
-	int namelen;
+	size_t namelen;
 
 	if (parse_config_key(var, "man", &name, &namelen, &subkey) < 0 || !name)
 		return 0;

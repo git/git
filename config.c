@@ -37,6 +37,7 @@ struct config_source {
 	enum config_error_action default_error_action;
 	int linenr;
 	int eof;
+	size_t total_len;
 	struct strbuf value;
 	struct strbuf var;
 	unsigned subsection_case_sensitive : 1;
@@ -309,7 +310,7 @@ int git_config_include(const char *var, const char *value, void *data)
 {
 	struct config_include_data *inc = data;
 	const char *cond, *key;
-	int cond_len;
+	size_t cond_len;
 	int ret;
 
 	/*
@@ -358,12 +359,13 @@ static inline int iskeychar(int c)
  *
  * store_key - pointer to char* which will hold a copy of the key with
  *             lowercase section and variable name
- * baselen - pointer to int which will hold the length of the
+ * baselen - pointer to size_t which will hold the length of the
  *           section + subsection part, can be NULL
  */
-static int git_config_parse_key_1(const char *key, char **store_key, int *baselen_, int quiet)
+static int git_config_parse_key_1(const char *key, char **store_key, size_t *baselen_, int quiet)
 {
-	int i, dot, baselen;
+	size_t i, baselen;
+	int dot;
 	const char *last_dot = strrchr(key, '.');
 
 	/*
@@ -425,7 +427,7 @@ out_free_ret_1:
 	return -CONFIG_INVALID_KEY;
 }
 
-int git_config_parse_key(const char *key, char **store_key, int *baselen)
+int git_config_parse_key(const char *key, char **store_key, size_t *baselen)
 {
 	return git_config_parse_key_1(key, store_key, baselen, 0);
 }
@@ -523,6 +525,19 @@ static int get_next_char(void)
 			c = '\r';
 		}
 	}
+
+	if (c != EOF && ++cf->total_len > INT_MAX) {
+		/*
+		 * This is an absurdly long config file; refuse to parse
+		 * further in order to protect downstream code from integer
+		 * overflows. Note that we can't return an error specifically,
+		 * but we can mark EOF and put trash in the return value,
+		 * which will trigger a parse error.
+		 */
+		cf->eof = 1;
+		return 0;
+	}
+
 	if (c == '\n')
 		cf->linenr++;
 	if (c == EOF) {
@@ -728,7 +743,7 @@ static int git_parse_source(config_fn_t fn, void *data,
 			    const struct config_options *opts)
 {
 	int comment = 0;
-	int baselen = 0;
+	size_t baselen = 0;
 	struct strbuf *var = &cf->var;
 	int error_return = 0;
 	char *error_msg = NULL;
@@ -1539,6 +1554,7 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data,
 	top->prev = cf;
 	top->linenr = 1;
 	top->eof = 0;
+	top->total_len = 0;
 	strbuf_init(&top->value, 1024);
 	strbuf_init(&top->var, 1024);
 	cf = top;
@@ -2383,7 +2399,7 @@ void git_die_config(const char *key, const char *err, ...)
  */
 
 struct config_store_data {
-	int baselen;
+	size_t baselen;
 	char *key;
 	int do_not_match;
 	regex_t *value_regex;
@@ -2509,7 +2525,7 @@ static struct strbuf store_create_section(const char *key,
 					  const struct config_store_data *store)
 {
 	const char *dot;
-	int i;
+	size_t i;
 	struct strbuf sb = STRBUF_INIT;
 
 	dot = memchr(key, '.', store->baselen);
@@ -2522,7 +2538,9 @@ static struct strbuf store_create_section(const char *key,
 		}
 		strbuf_addstr(&sb, "\"]\n");
 	} else {
-		strbuf_addf(&sb, "[%.*s]\n", store->baselen, key);
+		strbuf_addch(&sb, '[');
+		strbuf_add(&sb, key, store->baselen);
+		strbuf_addstr(&sb, "]\n");
 	}
 
 	return sb;
@@ -2545,7 +2563,6 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 {
 	int i;
 	ssize_t ret;
-	int length = strlen(key + store->baselen + 1);
 	const char *quote = "";
 	struct strbuf sb = STRBUF_INIT;
 
@@ -2564,8 +2581,7 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 	if (i && value[i - 1] == ' ')
 		quote = "\"";
 
-	strbuf_addf(&sb, "\t%.*s = %s",
-		    length, key + store->baselen + 1, quote);
+	strbuf_addf(&sb, "\t%s = %s", key + store->baselen + 1, quote);
 
 	for (i = 0; value[i]; i++)
 		switch (value[i]) {
@@ -3238,7 +3254,7 @@ int config_error_nonbool(const char *var)
 
 int parse_config_key(const char *var,
 		     const char *section,
-		     const char **subsection, int *subsection_len,
+		     const char **subsection, size_t *subsection_len,
 		     const char **key)
 {
 	const char *dot;
