@@ -210,8 +210,14 @@ test_expect_success 'test merge stragety constants' '
 		git config core.commitGraph true &&
 		test_line_count = 2 $graphdir/commit-graph-chain &&
 		test_commit 15 &&
-		git commit-graph write --reachable --split --size-multiple=10 --expire-time=1980-01-01 &&
+		touch $graphdir/to-delete.graph $graphdir/to-keep.graph &&
+		test-tool chmtime =1546362000 $graphdir/to-delete.graph &&
+		test-tool chmtime =1546362001 $graphdir/to-keep.graph &&
+		git commit-graph write --reachable --split --size-multiple=10 \
+			--expire-time="2019-01-01 12:00 -05:00" &&
 		test_line_count = 1 $graphdir/commit-graph-chain &&
+		test_path_is_missing $graphdir/to-delete.graph &&
+		test_path_is_file $graphdir/to-keep.graph &&
 		ls $graphdir/graph-*.graph >graph-files &&
 		test_line_count = 3 graph-files
 	) &&
