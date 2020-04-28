@@ -648,6 +648,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 		int short_name;
 		const char *long_name;
 		const char *source;
+		struct strbuf help = STRBUF_INIT;
 		int j;
 
 		if (newopt[i].type != OPTION_ALIAS)
@@ -659,6 +660,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 
 		if (!long_name)
 			BUG("An alias must have long option name");
+		strbuf_addf(&help, _("alias of --%s"), source);
 
 		for (j = 0; j < nr; j++) {
 			const char *name = options[j].long_name;
@@ -669,15 +671,10 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 			if (options[j].type == OPTION_ALIAS)
 				BUG("No please. Nested aliases are not supported.");
 
-			/*
-			 * NEEDSWORK: this is a bit inconsistent because
-			 * usage_with_options() on the original options[] will print
-			 * help string as "alias of %s" but "git cmd -h" will
-			 * print the original help string.
-			 */
 			memcpy(newopt + i, options + j, sizeof(*newopt));
 			newopt[i].short_name = short_name;
 			newopt[i].long_name = long_name;
+			newopt[i].help = strbuf_detach(&help, NULL);
 			break;
 		}
 
