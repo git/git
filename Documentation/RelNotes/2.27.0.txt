@@ -76,6 +76,10 @@ UI, Workflows & Features
  * The 'pack.useSparse' configuration variable now defaults to 'true',
    enabling an optimization that has been experimental since Git 2.21.
 
+ * "git rebase" happens to call some hooks meant for "checkout" and
+   "commit" by this was not a designed behaviour than historical
+   accident.  This has been documented.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -101,6 +105,18 @@ Performance, Internal Implementation, Development Support etc.
 
  * A Windows-specific test element has been made more robust against
    misuse from both user's environment and programmer's errors.
+
+ * Various tests have been updated to work around issues found with
+   shell utilities that come with busybox etc.
+
+ * The config API made mixed uses of int and size_t types to represent
+   length of various pieces of text it parsed, which has been updated
+   to use the correct type (i.e. size_t) throughout.
+
+ * The "--decorate-refs" and "--decorate-refs-exclude" options "git
+   log" takes have learned a companion configuration variable
+   log.excludeDecoration that sits at the lowest priority in the
+   family.
 
 
 Fixes since v2.26
@@ -195,6 +211,81 @@ Fixes since v2.26
  * Parsing the host part out of URL for the credential helper has been corrected.
    (merge 4c5971e18a jk/credential-parsing-end-of-host-in-URL later to maint).
 
+ * Document the recommended way to abort a failing test early (e.g. by
+   exiting a loop), which is to say "return 1".
+   (merge 7cc112dc95 jc/doc-test-leaving-early later to maint).
+
+ * The code that refreshes the last access and modified time of
+   on-disk packfiles and loose object files have been updated.
+   (merge 312cd76130 lr/freshen-file-fix later to maint).
+
+ * Validation of push certificate has been made more robust against
+   timing attacks.
+   (merge 719483e547 bc/constant-memequal later to maint).
+
+ * The custom hash function used by "git fast-import" has been
+   replaced with the one from hashmap.c, which gave us a nice
+   performance boost.
+   (merge d8410a816b jk/fast-import-use-hashmap later to maint).
+
+ * The "git submodule" command did not initialize a few variables it
+   internally uses and was affected by variable settings leaked from
+   the environment.
+   (merge 65d100c4dd lx/submodule-clear-variables later to maint).
+
+ * Raise the minimum required version of docbook-xsl package to 1.74,
+   as 1.74.0 was from late 2008, which is more than 10 years old, and
+   drop compatibility cruft from our documentation suite.
+   (merge 3c255ad660 ma/doc-discard-docbook-xsl-1.73 later to maint).
+
+ * "git log" learns "--[no-]mailmap" as a synonym to "--[no-]use-mailmap"
+   (merge 88acccda38 jc/log-no-mailmap later to maint).
+
+ * "git commit-graph write --expire-time=<timestamp>" did not use the
+   given timestamp correctly, which has been corrected.
+   (merge b09b785c78 ds/commit-graph-expiry-fix later to maint).
+
+ * Tests update to use "test-chmtime" instead of "touch -t".
+   (merge e892a56845 ds/t5319-touch-fix later to maint).
+
+ * "git diff" in a partial clone learned to avoid lazy loading blob
+   objects in more casese when they are not needed.
+   (merge 95acf11a3d jt/avoid-prefetch-when-able-in-diff later to maint).
+
+ * "git push --atomic" used to show failures for refs that weren't
+   even pushed, which has been corrected.
+   (merge dfe1b7f19c jx/atomic-push later to maint).
+
+ * Code in builtin/*, i.e. those can only be called from within
+   built-in subcommands, that implements bulk of a couple of
+   subcommands have been moved to libgit.a so that they could be used
+   by others.
+   (merge 9460fd48b5 dl/libify-a-few later to maint).
+
+ * Allowing the user to split a patch hunk while "git stash -p" does
+   not work well; a band-aid has been added to make this (partially)
+   work better.
+
+ * "git diff-tree --pretty --notes" used to hit an assertion failure,
+   as it forgot to initialize the notes subsystem.
+   (merge 5778b22b3d tb/diff-tree-with-notes later to maint).
+
+ * "git range-diff" fixes.
+   (merge 8d1675eb7f vd/range-diff-with-custom-pretty-format-fix later to maint).
+
+ * "git grep" did not quote a path with unusual character like other
+   commands (like "git diff", "git status") do, but did quote when run
+   from a subdirectory, both of which has been corrected.
+   (merge 45115d8490 mt/grep-cquote-path later to maint).
+
+ * GNU/Hurd is also among the ones that need the fopen() wrapper.
+   (merge 274a1328fb jc/gnu-hurd-lets-fread-read-dirs later to maint).
+
+ * Those fetching over protocol v2 from linux-next and other kernel
+   repositories are reporting that v2 often fetches way too much than
+   needed.
+   (merge 11c7f2a30b jn/demote-proto2-from-default later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
    (merge 7422b2a0a1 sg/commit-slab-clarify-peek later to maint).
@@ -215,3 +306,7 @@ Fixes since v2.26
    (merge 0740d0a5d3 jk/oid-array-cleanups later to maint).
    (merge a1aba0c95c js/t0007-typofix later to maint).
    (merge 76ba7fa225 ma/config-doc-fix later to maint).
+   (merge 826f0c0df2 js/subtree-doc-update-to-asciidoctor-2 later to maint).
+   (merge 88eaf361e0 eb/mboxrd-doc later to maint).
+   (merge 051cc54941 tm/zsh-complete-switch-restore later to maint).
+   (merge 39102cf4fe ms/doc-revision-illustration-fix later to maint).
