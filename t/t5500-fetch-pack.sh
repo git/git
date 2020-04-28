@@ -403,6 +403,36 @@ test_expect_success 'in_vain not triggered before first ACK' '
 	test_i18ngrep "Total 3 " trace
 '
 
+test_expect_success 'in_vain resetted upon ACK' '
+	rm -rf myserver myclient trace &&
+	git init myserver &&
+
+	# Linked list of commits on master. The first is common; the rest are
+	# not.
+	test_commit -C myserver first_master_commit &&
+	git clone "file://$(pwd)/myserver" myclient &&
+	test_commit_bulk -C myclient 255 &&
+
+	# Another linked list of commits on anotherbranch with no connection to
+	# master. The first is common; the rest are not.
+	git -C myserver checkout --orphan anotherbranch &&
+	test_commit -C myserver first_anotherbranch_commit &&
+	git -C myclient fetch origin anotherbranch:refs/heads/anotherbranch &&
+	git -C myclient checkout anotherbranch &&
+	test_commit_bulk -C myclient 255 &&
+
+	# The new commit that the client wants to fetch.
+	git -C myserver checkout master &&
+	test_commit -C myserver to_fetch &&
+
+	# The client will send (as "have"s) all 256 commits in anotherbranch
+	# first. The 256th commit is common between the client and the server,
+	# and should reset in_vain. This allows negotiation to continue until
+	# the client reports that first_anotherbranch_commit is common.
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C myclient fetch --progress origin master &&
+	test_i18ngrep "Total 3 " trace
+'
+
 test_expect_success 'fetch in shallow repo unreachable shallow objects' '
 	(
 		git clone --bare --branch B --single-branch "file://$(pwd)/." no-reflog &&
