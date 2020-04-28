@@ -423,9 +423,8 @@ static int check_updates(struct unpack_trees_options *o)
 				continue;
 			oid_array_append(&to_fetch, &ce->oid);
 		}
-		if (to_fetch.nr)
-			promisor_remote_get_direct(the_repository,
-						   to_fetch.oid, to_fetch.nr);
+		promisor_remote_get_direct(the_repository,
+					   to_fetch.oid, to_fetch.nr);
 		oid_array_clear(&to_fetch);
 	}
 	for (i = 0; i < index->cache_nr; i++) {

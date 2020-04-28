@@ -65,9 +65,25 @@ void free_filespec(struct diff_filespec *);
 void fill_filespec(struct diff_filespec *, const struct object_id *,
 		   int, unsigned short);
 
-#define CHECK_SIZE_ONLY 1
-#define CHECK_BINARY    2
-int diff_populate_filespec(struct repository *, struct diff_filespec *, unsigned int);
+/*
+ * Prefetch the entries in diff_queued_diff. The parameter is a pointer to a
+ * struct repository.
+ */
+void diff_queued_diff_prefetch(void *repository);
+
+struct diff_populate_filespec_options {
+	unsigned check_size_only : 1;
+	unsigned check_binary : 1;
+
+	/*
+	 * If an object is missing, diff_populate_filespec() will invoke this
+	 * callback before attempting to read that object again.
+	 */
+	void (*missing_object_cb)(void *);
+	void *missing_object_data;
+};
+int diff_populate_filespec(struct repository *, struct diff_filespec *,
+			   const struct diff_populate_filespec_options *);
 void diff_free_filespec_data(struct diff_filespec *);
 void diff_free_filespec_blob(struct diff_filespec *);
 int diff_filespec_is_binary(struct repository *, struct diff_filespec *);
@@ -181,5 +197,13 @@ int diffcore_count_changes(struct repository *r,
 			   void **dst_count_p,
 			   unsigned long *src_copied,
 			   unsigned long *literal_added);
+
+/*
+ * If filespec contains an OID and if that object is missing from the given
+ * repository, add that OID to to_fetch.
+ */
+void diff_add_if_missing(struct repository *r,
+			 struct oid_array *to_fetch,
+			 const struct diff_filespec *filespec);
 
 #endif
