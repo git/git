@@ -72,6 +72,11 @@ test_expect_success setup '
 	# Still a no-op.
 	function dummy() {}
 	EOF
+	if test_have_prereq FUNNYNAMES
+	then
+		echo unusual >"\"unusual\" pathname" &&
+		echo unusual >"t/nested \"unusual\" pathname"
+	fi &&
 	git add . &&
 	test_tick &&
 	git commit -m initial
@@ -480,6 +485,48 @@ do
 		echo 3 >expected &&
 		git grep --count -h -e b $H -- ab >actual &&
 		test_cmp expected actual
+	'
+
+	test_expect_success FUNNYNAMES "grep $L should quote unusual pathnames" '
+		cat >expected <<-EOF &&
+		${HC}"\"unusual\" pathname":unusual
+		${HC}"t/nested \"unusual\" pathname":unusual
+		EOF
+		git grep unusual $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success FUNNYNAMES "grep $L in subdir should quote unusual relative pathnames" '
+		cat >expected <<-EOF &&
+		${HC}"nested \"unusual\" pathname":unusual
+		EOF
+		(
+			cd t &&
+			git grep unusual $H
+		) >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success FUNNYNAMES "grep -z $L with unusual pathnames" '
+		cat >expected <<-EOF &&
+		${HC}"unusual" pathname:unusual
+		${HC}t/nested "unusual" pathname:unusual
+		EOF
+		git grep -z unusual $H >actual &&
+		tr "\0" ":" <actual >actual-replace-null &&
+		test_cmp expected actual-replace-null
+	'
+
+	test_expect_success FUNNYNAMES "grep -z $L in subdir with unusual relative pathnames" '
+		cat >expected <<-EOF &&
+		${HC}nested "unusual" pathname:unusual
+		EOF
+		(
+			cd t &&
+			git grep -z unusual $H
+		) >actual &&
+		tr "\0" ":" <actual >actual-replace-null &&
+		test_cmp expected actual-replace-null
 	'
 done
 
