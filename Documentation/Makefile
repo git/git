@@ -150,31 +150,8 @@ endif
 -include ../config.mak.autogen
 -include ../config.mak
 
-#
-# For docbook-xsl ...
-#	-1.68.1,	no extra settings are needed?
-#	1.69.0,		set ASCIIDOC_ROFF?
-#	1.69.1-1.71.0,	set DOCBOOK_SUPPRESS_SP?
-#	1.71.1,		set ASCIIDOC_ROFF?
-#	1.72.0,		set DOCBOOK_XSL_172.
-#	1.73.0-,	no extra settings are needed
-#
-
-ifdef DOCBOOK_XSL_172
-ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
-MANPAGE_XSL = manpage-1.72.xsl
-else
-	ifndef ASCIIDOC_ROFF
-	# docbook-xsl after 1.72 needs the regular XSL, but will not
-	# pass-thru raw roff codes from asciidoc.conf, so turn them off.
-	ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
-	endif
-endif
 ifndef NO_MAN_BOLD_LITERAL
 XMLTO_EXTRA += -m manpage-bold-literal.xsl
-endif
-ifdef DOCBOOK_SUPPRESS_SP
-XMLTO_EXTRA += -m manpage-suppress-sp.xsl
 endif
 
 # Newer DocBook stylesheet emits warning cruft in the output when
