@@ -1143,6 +1143,7 @@ static void add_common(struct strbuf *req_buf, struct oidset *common)
 }
 
 static int add_haves(struct fetch_negotiator *negotiator,
+		     int seen_ack,
 		     struct strbuf *req_buf,
 		     int *haves_to_send, int *in_vain)
 {
@@ -1157,7 +1158,7 @@ static int add_haves(struct fetch_negotiator *negotiator,
 	}
 
 	*in_vain += haves_added;
-	if (!haves_added || *in_vain >= MAX_IN_VAIN) {
+	if (!haves_added || (seen_ack && *in_vain >= MAX_IN_VAIN)) {
 		/* Send Done */
 		packet_buf_write(req_buf, "done\n");
 		ret = 1;
@@ -1173,7 +1174,7 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      struct fetch_pack_args *args,
 			      const struct ref *wants, struct oidset *common,
 			      int *haves_to_send, int *in_vain,
-			      int sideband_all)
+			      int sideband_all, int seen_ack)
 {
 	int ret = 0;
 	struct strbuf req_buf = STRBUF_INIT;
@@ -1230,7 +1231,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 		add_common(&req_buf, common);
 
 		/* Add initial haves */
-		ret = add_haves(negotiator, &req_buf, haves_to_send, in_vain);
+		ret = add_haves(negotiator, seen_ack, &req_buf,
+				haves_to_send, in_vain);
 	}
 
 	/* Send request */
@@ -1464,6 +1466,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	int haves_to_send = INITIAL_FLUSH;
 	struct fetch_negotiator negotiator_alloc;
 	struct fetch_negotiator *negotiator;
+	int seen_ack = 0;
 
 	if (args->no_dependents) {
 		negotiator = NULL;
@@ -1520,7 +1523,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			if (send_fetch_request(negotiator, fd[1], args, ref,
 					       &common,
 					       &haves_to_send, &in_vain,
-					       reader.use_sideband))
+					       reader.use_sideband,
+					       seen_ack))
 				state = FETCH_GET_PACK;
 			else
 				state = FETCH_PROCESS_ACKS;
@@ -1533,6 +1537,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				break;
 			case COMMON_FOUND:
 				in_vain = 0;
+				seen_ack = 1;
 				/* fallthrough */
 			case NO_COMMON_FOUND:
 				state = FETCH_SEND_REQUEST;

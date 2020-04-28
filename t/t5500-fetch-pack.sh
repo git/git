@@ -385,6 +385,24 @@ test_expect_success 'clone shallow with packed refs' '
 	test_cmp count8.expected count8.actual
 '
 
+test_expect_success 'in_vain not triggered before first ACK' '
+	rm -rf myserver myclient trace &&
+	git init myserver &&
+	test_commit -C myserver foo &&
+	git clone "file://$(pwd)/myserver" myclient &&
+
+	# MAX_IN_VAIN is 256. Because of batching, the client will send 496
+	# (16+32+64+128+256) commits, not 256, before giving up. So create 496
+	# irrelevant commits.
+	test_commit_bulk -C myclient 496 &&
+
+	# The new commit that the client wants to fetch.
+	test_commit -C myserver bar &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C myclient fetch --progress origin &&
+	test_i18ngrep "Total 3 " trace
+'
+
 test_expect_success 'fetch in shallow repo unreachable shallow objects' '
 	(
 		git clone --bare --branch B --single-branch "file://$(pwd)/." no-reflog &&
