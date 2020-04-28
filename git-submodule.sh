@@ -48,6 +48,8 @@ depth=
 progress=
 dissociate=
 single_branch=
+jobs=
+recommend_shallow=
 
 die_if_unmatched ()
 {
