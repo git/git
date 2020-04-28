@@ -109,6 +109,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	struct object *tree1, *tree2;
 	static struct rev_info *opt = &log_tree_opt;
 	struct setup_revision_opt s_r_opt;
+	struct userformat_want w;
 	int read_stdin = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
@@ -126,6 +127,14 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 
 	precompose_argv(argc, argv);
 	argc = setup_revisions(argc, argv, opt, &s_r_opt);
+
+	memset(&w, 0, sizeof(w));
+	userformat_find_requirements(NULL, &w);
+
+	if (!opt->show_notes_given && w.notes)
+		opt->show_notes = 1;
+	if (opt->show_notes)
+		load_display_notes(&opt->notes_opt);
 
 	while (--argc > 0) {
 		const char *arg = *++argv;

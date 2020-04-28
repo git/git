@@ -1,0 +1,12 @@
+$ git diff-tree --pretty --notes note
+commit a6f364368ca320bc5a92e18912e16fa6b3dff598
+Author: A U Thor <author@example.com>
+Date:   Mon Jun 26 00:06:00 2006 +0000
+
+    update mode (file2)
+
+Notes:
+    note
+
+:100644 100755 01e79c32a8c99c557f0757da7cb6d65b3414466d 01e79c32a8c99c557f0757da7cb6d65b3414466d M	file2
+$
