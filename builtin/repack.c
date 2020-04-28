@@ -10,6 +10,7 @@
 #include "argv-array.h"
 #include "midx.h"
 #include "packfile.h"
+#include "prune-packed.h"
 #include "object-store.h"
 #include "promisor-remote.h"
 
