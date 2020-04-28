@@ -120,9 +120,9 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	int prefix_set = 0;
 	struct lock_file lock_file = LOCK_INIT;
 	const struct option read_tree_options[] = {
-		{ OPTION_CALLBACK, 0, "index-output", NULL, N_("file"),
+		OPT_CALLBACK_F(0, "index-output", NULL, N_("file"),
 		  N_("write resulting index to <file>"),
-		  PARSE_OPT_NONEG, index_output_cb },
+		  PARSE_OPT_NONEG, index_output_cb),
 		OPT_BOOL(0, "empty", &read_empty,
 			    N_("only empty the index")),
 		OPT__VERBOSE(&opts.verbose_update, N_("be verbose")),
@@ -140,10 +140,10 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 		  PARSE_OPT_NONEG },
 		OPT_BOOL('u', NULL, &opts.update,
 			 N_("update working tree with merge result")),
-		{ OPTION_CALLBACK, 0, "exclude-per-directory", &opts,
+		OPT_CALLBACK_F(0, "exclude-per-directory", &opts,
 		  N_("gitignore"),
 		  N_("allow explicitly ignored files to be overwritten"),
-		  PARSE_OPT_NONEG, exclude_per_directory_cb },
+		  PARSE_OPT_NONEG, exclude_per_directory_cb),
 		OPT_BOOL('i', NULL, &opts.index_only,
 			 N_("don't check the working tree after merging")),
 		OPT__DRY_RUN(&opts.dry_run, N_("don't update the index or the work tree")),
@@ -151,9 +151,9 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 			 N_("skip applying sparse checkout filter")),
 		OPT_BOOL(0, "debug-unpack", &opts.debug_unpack,
 			 N_("debug unpack-trees")),
-		{ OPTION_CALLBACK, 0, "recurse-submodules", NULL,
+		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
 			    "checkout", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater },
+			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
 		OPT__QUIET(&opts.quiet, N_("suppress feedback messages")),
 		OPT_END()
 	};

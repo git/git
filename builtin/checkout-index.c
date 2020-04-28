@@ -177,9 +177,9 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			N_("write the content to temporary files")),
 		OPT_STRING(0, "prefix", &state.base_dir, N_("string"),
 			N_("when creating files, prepend <string>")),
-		{ OPTION_CALLBACK, 0, "stage", NULL, "(1|2|3|all)",
+		OPT_CALLBACK_F(0, "stage", NULL, "(1|2|3|all)",
 			N_("copy out the files from named stage"),
-			PARSE_OPT_NONEG, option_parse_stage },
+			PARSE_OPT_NONEG, option_parse_stage),
 		OPT_END()
 	};
 

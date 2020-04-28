@@ -241,9 +241,9 @@ static int option_parse_n(const struct option *opt,
 }
 
 static struct option builtin_merge_options[] = {
-	{ OPTION_CALLBACK, 'n', NULL, NULL, NULL,
+	OPT_CALLBACK_F('n', NULL, NULL, NULL,
 		N_("do not show a diffstat at the end of the merge"),
-		PARSE_OPT_NOARG, option_parse_n },
+		PARSE_OPT_NOARG, option_parse_n),
 	OPT_BOOL(0, "stat", &show_diffstat,
 		N_("show a diffstat at the end of the merge")),
 	OPT_BOOL(0, "summary", &show_diffstat, N_("(synonym to --stat)")),
