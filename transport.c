@@ -715,7 +715,15 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 
 	close(data->fd[1]);
 	close(data->fd[0]);
-	ret |= finish_connect(data->conn);
+	/*
+	 * Atomic push may abort the connection early and close the pipe,
+	 * which may cause an error for `finish_connect()`. Ignore this error
+	 * for atomic git-push.
+	 */
+	if (ret || args.atomic)
+		finish_connect(data->conn);
+	else
+		ret = finish_connect(data->conn);
 	data->conn = NULL;
 	data->got_remote_heads = 0;
 
@@ -1239,20 +1247,6 @@ int transport_push(struct repository *r,
 			push_ret = 0;
 		err = push_had_errors(remote_refs);
 		ret = push_ret | err;
-
-		if ((flags & TRANSPORT_PUSH_ATOMIC) && err) {
-			struct ref *it;
-			for (it = remote_refs; it; it = it->next)
-				switch (it->status) {
-				case REF_STATUS_NONE:
-				case REF_STATUS_UPTODATE:
-				case REF_STATUS_OK:
-					it->status = REF_STATUS_ATOMIC_PUSH_FAILED;
-					break;
-				default:
-					break;
-				}
-		}
 
 		if (!quiet || err)
 			transport_print_push_status(transport->url, remote_refs,

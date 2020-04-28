@@ -894,6 +894,7 @@ static int push_refs_with_push(struct transport *transport,
 		case REF_STATUS_REJECT_STALE:
 		case REF_STATUS_REJECT_ALREADY_EXISTS:
 			if (atomic) {
+				reject_atomic_push(remote_refs, mirror);
 				string_list_clear(&cas_options, 0);
 				return 0;
 			} else
@@ -1487,4 +1488,26 @@ int bidirectional_transfer_loop(int input, int output)
 	state.gtp.dest_name = "remote output";
 
 	return tloop_spawnwait_tasks(&state);
+}
+
+void reject_atomic_push(struct ref *remote_refs, int mirror_mode)
+{
+	struct ref *ref;
+
+	/* Mark other refs as failed */
+	for (ref = remote_refs; ref; ref = ref->next) {
+		if (!ref->peer_ref && !mirror_mode)
+			continue;
+
+		switch (ref->status) {
+		case REF_STATUS_NONE:
+		case REF_STATUS_OK:
+		case REF_STATUS_EXPECTING_REPORT:
+			ref->status = REF_STATUS_ATOMIC_PUSH_FAILED;
+			continue;
+		default:
+			break; /* do nothing */
+		}
+	}
+	return;
 }
