@@ -526,10 +526,10 @@ test_expect_success 'repack with minimum size does not alter existing packs' '
 		cd dup &&
 		rm -rf .git/objects/pack &&
 		mv .git/objects/pack-backup .git/objects/pack &&
-		touch -m -t 201901010000 .git/objects/pack/pack-D* &&
-		touch -m -t 201901010001 .git/objects/pack/pack-C* &&
-		touch -m -t 201901010002 .git/objects/pack/pack-B* &&
-		touch -m -t 201901010003 .git/objects/pack/pack-A* &&
+		test-tool chmtime =-5 .git/objects/pack/pack-D* &&
+		test-tool chmtime =-4 .git/objects/pack/pack-C* &&
+		test-tool chmtime =-3 .git/objects/pack/pack-B* &&
+		test-tool chmtime =-2 .git/objects/pack/pack-A* &&
 		ls .git/objects/pack >expect &&
 		MINSIZE=$(test-tool path-utils file-size .git/objects/pack/*pack | sort -n | head -n 1) &&
 		git multi-pack-index repack --batch-size=$MINSIZE &&
