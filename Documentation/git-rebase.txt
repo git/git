@@ -722,9 +722,17 @@ Hooks
 ~~~~~
 
 The apply backend has not traditionally called the post-commit hook,
-while the merge backend has.  However, this was by accident of
-implementation rather than by design.  Both backends should have the
-same behavior, though it is not clear which one is correct.
+while the merge backend has.  Both have called the post-checkout hook,
+though the merge backend has squelched its output.  Further, both
+backends only call the post-checkout hook with the starting point
+commit of the rebase, not the intermediate commits nor the final
+commit.  In each case, the calling of these hooks was by accident of
+implementation rather than by design (both backends were originally
+implemented as shell scripts and happened to invoke other commands
+like 'git checkout' or 'git commit' that would call the hooks).  Both
+backends should have the same behavior, though it is not entirely
+clear which, if any, is correct.  We will likely make rebase stop
+calling either of these hooks in the future.
 
 Interruptability
 ~~~~~~~~~~~~~~~~
