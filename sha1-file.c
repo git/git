@@ -881,9 +881,7 @@ void prepare_alt_odb(struct repository *r)
 /* Returns 1 if we have successfully freshened the file, 0 otherwise. */
 static int freshen_file(const char *fn)
 {
-	struct utimbuf t;
-	t.actime = t.modtime = time(NULL);
-	return !utime(fn, &t);
+	return !utime(fn, NULL);
 }
 
 /*
