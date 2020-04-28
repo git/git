@@ -107,6 +107,17 @@ in linkgit:git-checkout[1] for details.
 	patterns and unconditionally restores any files in
 	`<pathspec>`.
 
+--recurse-submodules::
+--no-recurse-submodules::
+	If `<pathspec>` names an active submodule and the restore location
+	includes the working tree, the submodule will only be updated if
+	this option is given, in which case its working tree will be
+	restored to the commit recorded in the superproject, and any local
+	modifications overwritten. If nothing (or
+	`--no-recurse-submodules`) is used, submodules working trees will
+	not be updated. Just like linkgit:git-checkout[1], this will detach
+	`HEAD` of the submodule.
+
 --overlay::
 --no-overlay::
 	In overlay mode, the command never removes files when

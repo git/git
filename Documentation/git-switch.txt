@@ -181,9 +181,9 @@ name, the guessing is aborted.  You can explicitly give a name with
 --recurse-submodules::
 --no-recurse-submodules::
 	Using `--recurse-submodules` will update the content of all
-	initialized submodules according to the commit recorded in the
+	active submodules according to the commit recorded in the
 	superproject. If nothing (or `--no-recurse-submodules`) is
-	used, the work trees of submodules will not be updated. Just
+	used, submodules working trees will not be updated. Just
 	like linkgit:git-submodule[1], this will detach `HEAD` of the
 	submodules.
 
