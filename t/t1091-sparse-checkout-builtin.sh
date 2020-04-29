@@ -277,15 +277,23 @@ test_expect_success 'cone mode: add parent path' '
 	check_files repo a deep folder1
 '
 
-test_expect_success 'revert to old sparse-checkout on bad update' '
+test_expect_success 'not-up-to-date does not block rest of sparsification' '
+	test_when_finished git -C repo sparse-checkout disable &&
 	test_when_finished git -C repo reset --hard &&
 	git -C repo sparse-checkout set deep &&
+
 	echo update >repo/deep/deeper2/a &&
 	cp repo/.git/info/sparse-checkout expect &&
-	test_must_fail git -C repo sparse-checkout set deep/deeper1 2>err &&
-	test_i18ngrep "cannot set sparse-checkout patterns" err &&
-	test_cmp repo/.git/info/sparse-checkout expect &&
-	check_files repo/deep a deeper1 deeper2
+	test_write_lines "!/deep/*/" "/deep/deeper1/" >>expect &&
+
+	git -C repo sparse-checkout set deep/deeper1 2>err &&
+
+	test_i18ngrep "The following paths are not up to date" err &&
+	test_cmp expect repo/.git/info/sparse-checkout &&
+	check_files repo/deep a deeper1 deeper2 &&
+	check_files repo/deep/deeper1 a deepest &&
+	check_files repo/deep/deeper1/deepest a &&
+	check_files repo/deep/deeper2 a
 '
 
 test_expect_success 'revert to old sparse-checkout on empty update' '
@@ -315,19 +323,96 @@ test_expect_success '.gitignore should not warn about cone mode' '
 	test_i18ngrep ! "disabling cone patterns" err
 '
 
-test_expect_success 'sparse-checkout (init|set|disable) fails with dirty status' '
+test_expect_success 'sparse-checkout (init|set|disable) warns with dirty status' '
 	git clone repo dirty &&
 	echo dirty >dirty/folder1/a &&
-	test_must_fail git -C dirty sparse-checkout init &&
-	test_must_fail git -C dirty sparse-checkout set /folder2/* /deep/deeper1/* &&
-	test_must_fail git -C dirty sparse-checkout disable &&
+
+	git -C dirty sparse-checkout init 2>err &&
+	test_i18ngrep "warning.*The following paths are not up to date" err &&
+
+	git -C dirty sparse-checkout set /folder2/* /deep/deeper1/* 2>err &&
+	test_i18ngrep "warning.*The following paths are not up to date" err &&
+	test_path_is_file dirty/folder1/a &&
+
+	git -C dirty sparse-checkout disable 2>err &&
+	test_must_be_empty err &&
+
 	git -C dirty reset --hard &&
 	git -C dirty sparse-checkout init &&
 	git -C dirty sparse-checkout set /folder2/* /deep/deeper1/* &&
-	git -C dirty sparse-checkout disable
+	test_path_is_missing dirty/folder1/a &&
+	git -C dirty sparse-checkout disable &&
+	test_path_is_file dirty/folder1/a
+'
+
+test_expect_success 'sparse-checkout (init|set|disable) warns with unmerged status' '
+	git clone repo unmerged &&
+
+	cat >input <<-EOF &&
+	0 0000000000000000000000000000000000000000	folder1/a
+	100644 $(git -C unmerged rev-parse HEAD:folder1/a) 1	folder1/a
+	EOF
+	git -C unmerged update-index --index-info <input &&
+
+	git -C unmerged sparse-checkout init 2>err &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+
+	git -C unmerged sparse-checkout set /folder2/* /deep/deeper1/* 2>err &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+	test_path_is_file dirty/folder1/a &&
+
+	git -C unmerged sparse-checkout disable 2>err &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+
+	git -C unmerged reset --hard &&
+	git -C unmerged sparse-checkout init &&
+	git -C unmerged sparse-checkout set /folder2/* /deep/deeper1/* &&
+	git -C unmerged sparse-checkout disable
+'
+
+test_expect_success 'sparse-checkout reapply' '
+	git clone repo tweak &&
+
+	echo dirty >tweak/deep/deeper2/a &&
+
+	cat >input <<-EOF &&
+	0 0000000000000000000000000000000000000000	folder1/a
+	100644 $(git -C tweak rev-parse HEAD:folder1/a) 1	folder1/a
+	EOF
+	git -C tweak update-index --index-info <input &&
+
+	git -C tweak sparse-checkout init --cone 2>err &&
+	test_i18ngrep "warning.*The following paths are not up to date" err &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+
+	git -C tweak sparse-checkout set folder2 deep/deeper1 2>err &&
+	test_i18ngrep "warning.*The following paths are not up to date" err &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+
+	git -C tweak sparse-checkout reapply 2>err &&
+	test_i18ngrep "warning.*The following paths are not up to date" err &&
+	test_path_is_file tweak/deep/deeper2/a &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+	test_path_is_file tweak/folder1/a &&
+
+	git -C tweak checkout HEAD deep/deeper2/a &&
+	git -C tweak sparse-checkout reapply 2>err &&
+	test_i18ngrep ! "warning.*The following paths are not up to date" err &&
+	test_path_is_missing tweak/deep/deeper2/a &&
+	test_i18ngrep "warning.*The following paths are unmerged" err &&
+	test_path_is_file tweak/folder1/a &&
+
+	git -C tweak add folder1/a &&
+	git -C tweak sparse-checkout reapply 2>err &&
+	test_must_be_empty err &&
+	test_path_is_missing tweak/deep/deeper2/a &&
+	test_path_is_missing tweak/folder1/a &&
+
+	git -C tweak sparse-checkout disable
 '
 
 test_expect_success 'cone mode: set with core.ignoreCase=true' '
+	rm repo/.git/info/sparse-checkout &&
 	git -C repo sparse-checkout init --cone &&
 	git -C repo -c core.ignoreCase=true sparse-checkout set folder1 &&
 	cat >expect <<-\EOF &&
