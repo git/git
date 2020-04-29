@@ -256,7 +256,8 @@ See also INCOMPATIBLE OPTIONS below.
 --quit::
 	Abort the rebase operation but HEAD is not reset back to the
 	original branch. The index and working tree are also left
-	unchanged as a result.
+	unchanged as a result. If a temporary stash entry was created
+	using --autostash, it will be saved to the stash reflog.
 
 --apply:
 	Use applying strategies to rebase (calling `git-am`
