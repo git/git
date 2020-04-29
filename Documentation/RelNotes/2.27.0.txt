@@ -80,6 +80,15 @@ UI, Workflows & Features
    "commit" by this was not a designed behaviour than historical
    accident.  This has been documented.
 
+ * "git merge" learns the "--autostash" option.
+
+ * "sparse-checkout" UI improvements.
+
+ * "git update-ref --stdin" learned a handful of new verbs to let the
+   user control ref update transactions more explicitly, which helps
+   as an ingredient to implement two-phase commit-style atomic
+   ref-updates across multiple repositories.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -117,6 +126,16 @@ Performance, Internal Implementation, Development Support etc.
    log" takes have learned a companion configuration variable
    log.excludeDecoration that sits at the lowest priority in the
    family.
+
+ * A new CI job to build and run test suite on linux with musl libc
+   has been added.
+
+ * Update the CI configuration to use GitHub Actions, retiring the one
+   based on Azure Pipelines.
+
+ * The directory traversal code had redundant recursive calls which
+   made its performance characteristics exponential with respect to
+   the depth of the tree, which was corrected.
 
 
 Fixes since v2.26
