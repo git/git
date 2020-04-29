@@ -49,34 +49,6 @@ test_expect_success 'exit with correct error on bad input to --stdin-commits' '
 	test_i18ngrep "invalid commit object id" stderr
 '
 
-graph_expect_commits() {
-	test-tool read-graph >got
-	if ! grep "num_commits: $1" got
-	then
-		echo "graph_expect_commits: expected $1 commit(s), got:"
-		cat got
-		false
-	fi
-}
-
-test_expect_success 'ignores non-commit OIDs to --input=stdin-commits with --no-check-oids' '
-	test_when_finished rm -rf "$objdir/info/commit-graph" &&
-	cd "$TRASH_DIRECTORY/full" &&
-	# write a graph to ensure layers are/are not added appropriately
-	git rev-parse HEAD~1 >base &&
-	git commit-graph write --stdin-commits <base &&
-	graph_expect_commits 2 &&
-	# bad input is rejected
-	echo HEAD >bad &&
-	test_expect_code 1 git commit-graph write --stdin-commits <bad 2>err &&
-	test_i18ngrep "unexpected non-hex object ID: HEAD" err &&
-	graph_expect_commits 2 &&
-	# update with valid commit OID, ignore tree OID
-	git rev-parse HEAD HEAD^{tree} >in &&
-	git commit-graph write --stdin-commits --no-check-oids <in &&
-	graph_expect_commits 3
-'
-
 graph_git_two_modes() {
 	git -c core.commitGraph=true $1 >output
 	git -c core.commitGraph=false $1 >expect

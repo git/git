@@ -11,7 +11,7 @@ static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
 	N_("git commit-graph write [--object-dir <objdir>] [--append] "
 	   "[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] "
-	   "[--[no-]progress] [--[no-]check-oids] <split options>"),
+	   "[--[no-]progress] <split options>"),
 	NULL
 };
 
@@ -23,7 +23,7 @@ static const char * const builtin_commit_graph_verify_usage[] = {
 static const char * const builtin_commit_graph_write_usage[] = {
 	N_("git commit-graph write [--object-dir <objdir>] [--append] "
 	   "[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] "
-	   "[--[no-]progress] [--[no-]check-oids] <split options>"),
+	   "[--[no-]progress] <split options>"),
 	NULL
 };
 
@@ -36,7 +36,6 @@ static struct opts_commit_graph {
 	int split;
 	int shallow;
 	int progress;
-	int check_oids;
 } opts;
 
 static struct object_directory *find_odb(struct repository *r,
@@ -161,8 +160,6 @@ static int graph_write(int argc, const char **argv)
 			N_("allow writing an incremental commit-graph file"),
 			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
 			write_option_parse_split),
-		OPT_BOOL(0, "check-oids", &opts.check_oids,
-			N_("require OIDs to be commits")),
 		OPT_INTEGER(0, "max-commits", &split_opts.max_commits,
 			N_("maximum number of commits in a non-base split commit-graph")),
 		OPT_INTEGER(0, "size-multiple", &split_opts.size_multiple,
@@ -173,7 +170,6 @@ static int graph_write(int argc, const char **argv)
 	};
 
 	opts.progress = isatty(2);
-	opts.check_oids = 1;
 	split_opts.size_multiple = 2;
 	split_opts.max_commits = 0;
 	split_opts.expire_time = 0;
@@ -228,8 +224,7 @@ static int graph_write(int argc, const char **argv)
 
 				oidset_insert(&commits, &oid);
 			}
-			if (opts.check_oids)
-				flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
+			flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
 		}
 
 		UNLEAK(buf);
