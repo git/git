@@ -366,6 +366,8 @@ do
 		test_line_count = 1 graph-files &&
 		echo "$modebits" >expect &&
 		test_modebits $graphdir/graph-*.graph >actual &&
+		test_cmp expect actual &&
+		test_modebits $graphdir/commit-graph-chain >actual &&
 		test_cmp expect actual
 	'
 done <<\EOF

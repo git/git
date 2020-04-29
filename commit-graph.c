@@ -1378,7 +1378,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	if (ctx->split) {
 		char *lock_name = get_chain_filename(ctx->odb);
 
-		hold_lock_file_for_update(&lk, lock_name, LOCK_DIE_ON_ERROR);
+		hold_lock_file_for_update_mode(&lk, lock_name,
+					       LOCK_DIE_ON_ERROR, 0444);
 
 		fd = git_mkstemp_mode(ctx->graph_name, 0444);
 		if (fd < 0) {
