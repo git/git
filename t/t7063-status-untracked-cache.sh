@@ -30,6 +30,30 @@ status_is_clean() {
 	test_must_be_empty ../status.actual
 }
 
+# Ignore_Untracked_Cache, abbreviated to 3 letters because then people can
+# compare commands side-by-side, e.g.
+#    iuc status --porcelain >expect &&
+#    git status --porcelain >actual &&
+#    test_cmp expect actual
+iuc () {
+	git ls-files -s >../current-index-entries
+	git ls-files -t | sed -ne s/^S.//p >../current-sparse-entries
+
+	GIT_INDEX_FILE=.git/tmp_index
+	export GIT_INDEX_FILE
+	git update-index --index-info <../current-index-entries
+	git update-index --skip-worktree $(cat ../current-sparse-entries)
+
+	git -c core.untrackedCache=false "$@"
+	ret=$?
+
+	rm ../current-index-entries
+	rm $GIT_INDEX_FILE
+	unset GIT_INDEX_FILE
+
+	return $ret
+}
+
 test_lazy_prereq UNTRACKED_CACHE '
 	{ git update-index --test-untracked-cache; ret=$?; } &&
 	test $ret -ne 1
@@ -95,6 +119,8 @@ test_expect_success 'status first time (empty cache)' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 3
@@ -115,6 +141,8 @@ test_expect_success 'status second time (fully populated cache)' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -136,6 +164,7 @@ test_expect_success 'modify in root directory, one dir invalidation' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
 A  done/one
 A  one
@@ -145,6 +174,7 @@ A  two
 ?? four
 ?? three
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -183,6 +213,7 @@ test_expect_success 'new .gitignore invalidates recursively' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
 A  done/one
 A  one
@@ -192,6 +223,7 @@ A  two
 ?? dtwo/
 ?? three
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -230,6 +262,7 @@ test_expect_success 'new info/exclude invalidates everything' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
 A  done/one
 A  one
@@ -237,6 +270,7 @@ A  two
 ?? .gitignore
 ?? dtwo/
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -286,6 +320,7 @@ test_expect_success 'status after the move' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
 A  done/one
 A  one
@@ -293,6 +328,7 @@ A  one
 ?? dtwo/
 ?? two
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -343,6 +379,7 @@ test_expect_success 'status after the move' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
 A  done/one
 A  one
@@ -350,6 +387,7 @@ A  two
 ?? .gitignore
 ?? dtwo/
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -390,10 +428,12 @@ test_expect_success 'status after commit' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
 ?? .gitignore
 ?? dtwo/
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -447,12 +487,14 @@ test_expect_success 'test sparse status with untracked cache' '
 	avoid_racy &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../status.actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
  M done/two
 ?? .gitignore
 ?? done/five
 ?? dtwo/
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -487,12 +529,14 @@ test_expect_success 'test sparse status again with untracked cache' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../status.actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
  M done/two
 ?? .gitignore
 ?? done/five
 ?? dtwo/
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -514,6 +558,7 @@ test_expect_success 'test sparse status with untracked cache and subdir' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../status.actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
  M done/two
 ?? .gitignore
@@ -521,6 +566,7 @@ test_expect_success 'test sparse status with untracked cache and subdir' '
 ?? done/sub/
 ?? dtwo/
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 2
@@ -560,6 +606,8 @@ test_expect_success 'test sparse status again with untracked cache and subdir' '
 	: >../trace &&
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../status.actual &&
+	iuc status --porcelain >../status.iuc &&
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual &&
 	cat >../trace.expect <<EOF &&
 node creation: 0
@@ -573,6 +621,7 @@ EOF
 test_expect_success 'move entry in subdir from untracked to cached' '
 	git add dtwo/two &&
 	git status --porcelain >../status.actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
  M done/two
 A  dtwo/two
@@ -580,12 +629,14 @@ A  dtwo/two
 ?? done/five
 ?? done/sub/
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual
 '
 
 test_expect_success 'move entry in subdir from cached to untracked' '
 	git rm --cached dtwo/two &&
 	git status --porcelain >../status.actual &&
+	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
  M done/two
 ?? .gitignore
@@ -593,6 +644,7 @@ test_expect_success 'move entry in subdir from cached to untracked' '
 ?? done/sub/
 ?? dtwo/
 EOF
+	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual
 '
 

@@ -504,7 +504,7 @@ __git_index_files ()
 {
 	local root="$2" match="$3"
 
-	__git_ls_files_helper "$root" "$1" "$match" |
+	__git_ls_files_helper "$root" "$1" "${match:-?}" |
 	awk -F / -v pfx="${2//\\/\\\\}" '{
 		paths[$1] = 1
 	}
