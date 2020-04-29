@@ -7,12 +7,16 @@
 
 P4WHENCE=http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
+UBUNTU_COMMON_PKGS="make libssl-dev libcurl4-openssl-dev libexpat-dev
+ tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl
+ libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl"
 
 case "$jobname" in
 linux-clang|linux-gcc)
 	sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
 	sudo apt-get -q update
-	sudo apt-get -q -y install language-pack-is libsvn-perl apache2
+	sudo apt-get -q -y install language-pack-is libsvn-perl apache2 \
+		$UBUNTU_COMMON_PKGS
 	case "$jobname" in
 	linux-gcc)
 		sudo apt-get -q -y install gcc-8
@@ -59,14 +63,18 @@ osx-clang|osx-gcc)
 StaticAnalysis)
 	sudo apt-get -q update
 	sudo apt-get -q -y install coccinelle libcurl4-openssl-dev libssl-dev \
-		libexpat-dev gettext
+		libexpat-dev gettext make
 	;;
 Documentation)
 	sudo apt-get -q update
-	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns
+	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns make
 
 	test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
-	gem install --version 1.5.8 asciidoctor
+	sudo gem install --version 1.5.8 asciidoctor
+	;;
+linux-gcc-4.8|GETTEXT_POISON)
+	sudo apt-get -q update
+	sudo apt-get -q -y install $UBUNTU_COMMON_PKGS
 	;;
 esac
 
