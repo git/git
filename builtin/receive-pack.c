@@ -28,6 +28,7 @@
 #include "protocol.h"
 #include "commit-reach.h"
 #include "worktree.h"
+#include "shallow.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),

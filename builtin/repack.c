@@ -12,6 +12,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "promisor-remote.h"
+#include "shallow.h"
 
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;

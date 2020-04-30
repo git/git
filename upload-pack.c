@@ -26,6 +26,7 @@
 #include "serve.h"
 #include "commit-graph.h"
 #include "commit-reach.h"
+#include "shallow.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)

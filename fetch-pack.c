@@ -22,6 +22,7 @@
 #include "connected.h"
 #include "fetch-negotiator.h"
 #include "fsck.h"
+#include "shallow.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;

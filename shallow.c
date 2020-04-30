@@ -14,6 +14,7 @@
 #include "commit-slab.h"
 #include "list-objects.h"
 #include "commit-reach.h"
+#include "shallow.h"
 
 void set_alternate_shallow_file(struct repository *r, const char *path, int override)
 {
@@ -36,6 +37,19 @@ int register_shallow(struct repository *r, const struct object_id *oid)
 	if (commit && commit->object.parsed)
 		commit->parents = NULL;
 	return register_commit_graft(r, graft, 0);
+}
+
+int unregister_shallow(const struct object_id *oid)
+{
+	int pos = commit_graft_pos(the_repository, oid->hash);
+	if (pos < 0)
+		return -1;
+	if (pos + 1 < the_repository->parsed_objects->grafts_nr)
+		MOVE_ARRAY(the_repository->parsed_objects->grafts + pos,
+			   the_repository->parsed_objects->grafts + pos + 1,
+			   the_repository->parsed_objects->grafts_nr - pos - 1);
+	the_repository->parsed_objects->grafts_nr--;
+	return 0;
 }
 
 int is_repository_shallow(struct repository *r)
