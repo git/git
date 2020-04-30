@@ -110,7 +110,7 @@ static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
 	return commit_graft_table[index]->oid.hash;
 }
 
-static int commit_graft_pos(struct repository *r, const unsigned char *sha1)
+int commit_graft_pos(struct repository *r, const unsigned char *sha1)
 {
 	return sha1_pos(sha1, r->parsed_objects->grafts,
 			r->parsed_objects->grafts_nr,
