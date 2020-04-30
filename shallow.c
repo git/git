@@ -92,16 +92,16 @@ static void reset_repository_shallow(struct repository *r)
 	stat_validity_clear(r->parsed_objects->shallow_stat);
 }
 
-int commit_shallow_file(struct repository *r, struct lock_file *lk)
+int commit_shallow_file(struct repository *r, struct shallow_lock *lk)
 {
-	int res = commit_lock_file(lk);
+	int res = commit_lock_file(&lk->lock);
 	reset_repository_shallow(r);
 	return res;
 }
 
-void rollback_shallow_file(struct repository *r, struct lock_file *lk)
+void rollback_shallow_file(struct repository *r, struct shallow_lock *lk)
 {
-	rollback_lock_file(lk);
+	rollback_lock_file(&lk->lock);
 	reset_repository_shallow(r);
 }
 
@@ -366,22 +366,22 @@ const char *setup_temporary_shallow(const struct oid_array *extra)
 	return "";
 }
 
-void setup_alternate_shallow(struct lock_file *shallow_lock,
+void setup_alternate_shallow(struct shallow_lock *shallow_lock,
 			     const char **alternate_shallow_file,
 			     const struct oid_array *extra)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
 
-	fd = hold_lock_file_for_update(shallow_lock,
+	fd = hold_lock_file_for_update(&shallow_lock->lock,
 				       git_path_shallow(the_repository),
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update(the_repository);
 	if (write_shallow_commits(&sb, 0, extra)) {
 		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
-				  get_lock_file_path(shallow_lock));
-		*alternate_shallow_file = get_lock_file_path(shallow_lock);
+				  get_lock_file_path(&shallow_lock->lock));
+		*alternate_shallow_file = get_lock_file_path(&shallow_lock->lock);
 	} else
 		/*
 		 * is_repository_shallow() sees empty string as "no
@@ -414,7 +414,7 @@ void advertise_shallow_grafts(int fd)
  */
 void prune_shallow(unsigned options)
 {
-	struct lock_file shallow_lock = LOCK_INIT;
+	struct shallow_lock shallow_lock = SHALLOW_LOCK_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	unsigned flags = SEEN_ONLY;
 	int fd;
@@ -428,14 +428,14 @@ void prune_shallow(unsigned options)
 		strbuf_release(&sb);
 		return;
 	}
-	fd = hold_lock_file_for_update(&shallow_lock,
+	fd = hold_lock_file_for_update(&shallow_lock.lock,
 				       git_path_shallow(the_repository),
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update(the_repository);
 	if (write_shallow_commits_1(&sb, 0, NULL, flags)) {
 		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
-				  get_lock_file_path(&shallow_lock));
+				  get_lock_file_path(&shallow_lock.lock));
 		commit_shallow_file(the_repository, &shallow_lock);
 	} else {
 		unlink(git_path_shallow(the_repository));

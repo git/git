@@ -10,10 +10,25 @@ void set_alternate_shallow_file(struct repository *r, const char *path, int over
 int register_shallow(struct repository *r, const struct object_id *oid);
 int unregister_shallow(const struct object_id *oid);
 int is_repository_shallow(struct repository *r);
+
+/*
+ * Lock for updating the $GIT_DIR/shallow file.
+ *
+ * Use `commit_shallow_file()` to commit an update, or
+ * `rollback_shallow_file()` to roll it back. In either case, any
+ * in-memory cached information about which commits are shallow will be
+ * appropriately invalidated so that future operations reflect the new
+ * state.
+ */
+struct shallow_lock {
+	struct lock_file lock;
+};
+#define SHALLOW_LOCK_INIT { LOCK_INIT }
+
 /* commit $GIT_DIR/shallow and reset stat-validity checks */
-int commit_shallow_file(struct repository *r, struct lock_file *lk);
+int commit_shallow_file(struct repository *r, struct shallow_lock *lk);
 /* rollback $GIT_DIR/shallow and reset stat-validity checks */
-void rollback_shallow_file(struct repository *r, struct lock_file *lk);
+void rollback_shallow_file(struct repository *r, struct shallow_lock *lk);
 
 struct commit_list *get_shallow_commits(struct object_array *heads,
 					int depth, int shallow_flag, int not_shallow_flag);
@@ -22,7 +37,7 @@ struct commit_list *get_shallow_commits_by_rev_list(
 int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 			  const struct oid_array *extra);
 
-void setup_alternate_shallow(struct lock_file *shallow_lock,
+void setup_alternate_shallow(struct shallow_lock *shallow_lock,
 			     const char **alternate_shallow_file,
 			     const struct oid_array *extra);
 
