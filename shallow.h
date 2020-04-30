@@ -10,7 +10,9 @@ void set_alternate_shallow_file(struct repository *r, const char *path, int over
 int register_shallow(struct repository *r, const struct object_id *oid);
 int unregister_shallow(const struct object_id *oid);
 int is_repository_shallow(struct repository *r);
+/* commit $GIT_DIR/shallow and reset stat-validity checks */
 int commit_shallow_file(struct repository *r, struct lock_file *lk);
+/* rollback $GIT_DIR/shallow and reset stat-validity checks */
 void rollback_shallow_file(struct repository *r, struct lock_file *lk);
 
 struct commit_list *get_shallow_commits(struct object_array *heads,
