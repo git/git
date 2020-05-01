@@ -6,6 +6,7 @@
 #include "string-list.h"
 #include "cache.h"
 #include "object-store.h"
+#include "oidset.h"
 
 #define GIT_TEST_COMMIT_GRAPH "GIT_TEST_COMMIT_GRAPH"
 #define GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD "GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD"
@@ -82,10 +83,17 @@ enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_CHECK_OIDS = (1 << 3)
 };
 
+enum commit_graph_split_flags {
+	COMMIT_GRAPH_SPLIT_UNSPECIFIED      = 0,
+	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
+	COMMIT_GRAPH_SPLIT_REPLACE          = 2
+};
+
 struct split_commit_graph_opts {
 	int size_multiple;
 	int max_commits;
 	timestamp_t expire_time;
+	enum commit_graph_split_flags flags;
 };
 
 /*
@@ -99,7 +107,7 @@ int write_commit_graph_reachable(struct object_directory *odb,
 				 const struct split_commit_graph_opts *split_opts);
 int write_commit_graph(struct object_directory *odb,
 		       struct string_list *pack_indexes,
-		       struct string_list *commit_hex,
+		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,
 		       const struct split_commit_graph_opts *split_opts);
 

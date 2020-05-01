@@ -55,6 +55,11 @@ int oidset_insert(struct oidset *set, const struct object_id *oid);
 int oidset_remove(struct oidset *set, const struct object_id *oid);
 
 /**
+ * Returns the number of oids in the set.
+ */
+int oidset_size(struct oidset *set);
+
+/**
  * Remove all entries from the oidset, freeing any resources associated with
  * it.
  */
