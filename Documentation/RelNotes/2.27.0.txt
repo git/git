@@ -89,6 +89,13 @@ UI, Workflows & Features
    as an ingredient to implement two-phase commit-style atomic
    ref-updates across multiple repositories.
 
+ * "git commit-graph write" learned different ways to write out split
+   files.
+
+ * Introduce an extension to the commit-graph to make it efficient to
+   check for the paths that were modified at each commit using Bloom
+   filters.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -136,6 +143,11 @@ Performance, Internal Implementation, Development Support etc.
  * The directory traversal code had redundant recursive calls which
    made its performance characteristics exponential with respect to
    the depth of the tree, which was corrected.
+
+ * "git blame" learns to take advantage of the "changed-paths" Bloom
+   filter stored in the commit-graph file.
+
+ * The "bugreport" tool has been added.
 
 
 Fixes since v2.26
@@ -305,6 +317,44 @@ Fixes since v2.26
    needed.
    (merge 11c7f2a30b jn/demote-proto2-from-default later to maint).
 
+ * The upload-pack protocol v2 gave up too early before finding a
+   common ancestor, resulting in a wasteful fetch from a fork of a
+   project.  This has been corrected to match the behaviour of v0
+   protocol.
+   (merge 2f0a093dd6 jt/v2-fetch-nego-fix later to maint).
+
+ * The build procedure did not use the libcurl library and its include
+   files correctly for a custom-built installation.
+   (merge 0573831950 jk/build-with-right-curl later to maint).
+
+ * Tighten "git mailinfo" to notice and error out when decoded result
+   contains NUL in it.
+   (merge 3919997447 dd/mailinfo-with-nul later to maint).
+
+ * Fix in-core inconsistency after fetching into a shallow repository
+   that broke the code to write out commit-graph.
+   (merge 37b9dcabfc tb/reset-shallow later to maint).
+
+ * The commit-graph code exhausted file descriptors easily when it
+   does not have to.
+   (merge c8828530b7 tb/commit-graph-fd-exhaustion-fix later to maint).
+
+ * The multi-pack-index left mmapped file descriptors open when it
+   does not have to.
+   (merge 6c7ff7cf7f ds/multi-pack-index later to maint).
+
+ * Recent update to Homebrew used by macOS folks breaks build by
+   moving gettext library and necessary headers.
+   (merge a0b3108618 ds/build-homebrew-gettext-fix later to maint).
+
+ * Incompatible options "--root" and "--fork-point" of "git rebase"
+   have been marked and documented as being incompatible.
+   (merge a35413c378 en/rebase-root-and-fork-point-are-incompatible later to maint).
+
+ * Error and verbose trace messages from "git push" did not redact
+   credential material embedded in URLs.
+   (merge d192fa5006 js/anonymise-push-url-in-errors later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
    (merge 7422b2a0a1 sg/commit-slab-clarify-peek later to maint).
@@ -329,3 +379,5 @@ Fixes since v2.26
    (merge 88eaf361e0 eb/mboxrd-doc later to maint).
    (merge 051cc54941 tm/zsh-complete-switch-restore later to maint).
    (merge 39102cf4fe ms/doc-revision-illustration-fix later to maint).
+   (merge 4d9378bfad eb/gitweb-more-trailers later to maint).
+   (merge bdccbf7047 mt/doc-worktree-ref later to maint).
