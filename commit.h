@@ -249,6 +249,8 @@ struct oid_array;
 struct ref;
 int register_shallow(struct repository *r, const struct object_id *oid);
 int unregister_shallow(const struct object_id *oid);
+int commit_shallow_file(struct repository *r, struct lock_file *lk);
+void rollback_shallow_file(struct repository *r, struct lock_file *lk);
 int for_each_commit_graft(each_commit_graft_fn, void *);
 int is_repository_shallow(struct repository *r);
 struct commit_list *get_shallow_commits(struct object_array *heads,

@@ -1629,9 +1629,9 @@ static void update_shallow(struct fetch_pack_args *args,
 	if (args->deepen && alternate_shallow_file) {
 		if (*alternate_shallow_file == '\0') { /* --unshallow */
 			unlink_or_warn(git_path_shallow(the_repository));
-			rollback_lock_file(&shallow_lock);
+			rollback_shallow_file(the_repository, &shallow_lock);
 		} else
-			commit_lock_file(&shallow_lock);
+			commit_shallow_file(the_repository, &shallow_lock);
 		alternate_shallow_file = NULL;
 		return;
 	}
@@ -1655,7 +1655,7 @@ static void update_shallow(struct fetch_pack_args *args,
 			setup_alternate_shallow(&shallow_lock,
 						&alternate_shallow_file,
 						&extra);
-			commit_lock_file(&shallow_lock);
+			commit_shallow_file(the_repository, &shallow_lock);
 			alternate_shallow_file = NULL;
 		}
 		oid_array_clear(&extra);
@@ -1693,7 +1693,7 @@ static void update_shallow(struct fetch_pack_args *args,
 		setup_alternate_shallow(&shallow_lock,
 					&alternate_shallow_file,
 					&extra);
-		commit_lock_file(&shallow_lock);
+		commit_shallow_file(the_repository, &shallow_lock);
 		oid_array_clear(&extra);
 		oid_array_clear(&ref);
 		alternate_shallow_file = NULL;
@@ -1785,7 +1785,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 			error(_("remote did not send all necessary objects"));
 			free_refs(ref_cpy);
 			ref_cpy = NULL;
-			rollback_lock_file(&shallow_lock);
+			rollback_shallow_file(the_repository, &shallow_lock);
 			goto cleanup;
 		}
 		args->connectivity_checked = 1;

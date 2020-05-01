@@ -893,12 +893,12 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	opt.env = tmp_objdir_env(tmp_objdir);
 	setup_alternate_shallow(&shallow_lock, &opt.shallow_file, &extra);
 	if (check_connected(command_singleton_iterator, cmd, &opt)) {
-		rollback_lock_file(&shallow_lock);
+		rollback_shallow_file(the_repository, &shallow_lock);
 		oid_array_clear(&extra);
 		return -1;
 	}
 
-	commit_lock_file(&shallow_lock);
+	commit_shallow_file(the_repository, &shallow_lock);
 
 	/*
 	 * Make sure setup_alternate_shallow() for the next ref does
