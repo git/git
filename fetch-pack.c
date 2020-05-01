@@ -1143,6 +1143,7 @@ static void add_common(struct strbuf *req_buf, struct oidset *common)
 }
 
 static int add_haves(struct fetch_negotiator *negotiator,
+		     int seen_ack,
 		     struct strbuf *req_buf,
 		     int *haves_to_send, int *in_vain)
 {
@@ -1157,7 +1158,7 @@ static int add_haves(struct fetch_negotiator *negotiator,
 	}
 
 	*in_vain += haves_added;
-	if (!haves_added || *in_vain >= MAX_IN_VAIN) {
+	if (!haves_added || (seen_ack && *in_vain >= MAX_IN_VAIN)) {
 		/* Send Done */
 		packet_buf_write(req_buf, "done\n");
 		ret = 1;
@@ -1173,7 +1174,7 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      struct fetch_pack_args *args,
 			      const struct ref *wants, struct oidset *common,
 			      int *haves_to_send, int *in_vain,
-			      int sideband_all)
+			      int sideband_all, int seen_ack)
 {
 	int ret = 0;
 	struct strbuf req_buf = STRBUF_INIT;
@@ -1230,7 +1231,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 		add_common(&req_buf, common);
 
 		/* Add initial haves */
-		ret = add_haves(negotiator, &req_buf, haves_to_send, in_vain);
+		ret = add_haves(negotiator, seen_ack, &req_buf,
+				haves_to_send, in_vain);
 	}
 
 	/* Send request */
@@ -1268,9 +1270,29 @@ static int process_section_header(struct packet_reader *reader,
 	return ret;
 }
 
-static int process_acks(struct fetch_negotiator *negotiator,
-			struct packet_reader *reader,
-			struct oidset *common)
+enum common_found {
+	/*
+	 * No commit was found to be possessed by both the client and the
+	 * server, and "ready" was not received.
+	 */
+	NO_COMMON_FOUND,
+
+	/*
+	 * At least one commit was found to be possessed by both the client and
+	 * the server, and "ready" was not received.
+	 */
+	COMMON_FOUND,
+
+	/*
+	 * "ready" was received, indicating that the server is ready to send
+	 * the packfile without any further negotiation.
+	 */
+	READY
+};
+
+static enum common_found process_acks(struct fetch_negotiator *negotiator,
+				      struct packet_reader *reader,
+				      struct oidset *common)
 {
 	/* received */
 	int received_ready = 0;
@@ -1285,6 +1307,7 @@ static int process_acks(struct fetch_negotiator *negotiator,
 
 		if (skip_prefix(reader->line, "ACK ", &arg)) {
 			struct object_id oid;
+			received_ack = 1;
 			if (!get_oid_hex(arg, &oid)) {
 				struct commit *commit;
 				oidset_insert(common, &oid);
@@ -1319,8 +1342,8 @@ static int process_acks(struct fetch_negotiator *negotiator,
 	if (!received_ready && reader->status != PACKET_READ_FLUSH)
 		die(_("expected no other sections to be sent after no 'ready'"));
 
-	/* return 0 if no common, 1 if there are common, or 2 if ready */
-	return received_ready ? 2 : (received_ack ? 1 : 0);
+	return received_ready ? READY :
+		(received_ack ? COMMON_FOUND : NO_COMMON_FOUND);
 }
 
 static void receive_shallow_info(struct fetch_pack_args *args,
@@ -1444,6 +1467,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	int haves_to_send = INITIAL_FLUSH;
 	struct fetch_negotiator negotiator_alloc;
 	struct fetch_negotiator *negotiator;
+	int seen_ack = 0;
 
 	if (args->no_dependents) {
 		negotiator = NULL;
@@ -1500,7 +1524,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			if (send_fetch_request(negotiator, fd[1], args, ref,
 					       &common,
 					       &haves_to_send, &in_vain,
-					       reader.use_sideband))
+					       reader.use_sideband,
+					       seen_ack))
 				state = FETCH_GET_PACK;
 			else
 				state = FETCH_PROCESS_ACKS;
@@ -1508,13 +1533,14 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		case FETCH_PROCESS_ACKS:
 			/* Process ACKs/NAKs */
 			switch (process_acks(negotiator, &reader, &common)) {
-			case 2:
+			case READY:
 				state = FETCH_GET_PACK;
 				break;
-			case 1:
+			case COMMON_FOUND:
 				in_vain = 0;
+				seen_ack = 1;
 				/* fallthrough */
-			default:
+			case NO_COMMON_FOUND:
 				state = FETCH_SEND_REQUEST;
 				break;
 			}
