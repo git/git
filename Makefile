@@ -1355,17 +1355,22 @@ ifdef NO_CURL
 else
 	ifdef CURLDIR
 		# Try "-Wl,-rpath=$(CURLDIR)/$(lib)" in such a case.
-		BASIC_CFLAGS += -I$(CURLDIR)/include
+		CURL_CFLAGS = -I$(CURLDIR)/include
 		CURL_LIBCURL = -L$(CURLDIR)/$(lib) $(CC_LD_DYNPATH)$(CURLDIR)/$(lib)
 	else
+		CURL_CFLAGS =
 		CURL_LIBCURL =
 	endif
 
-ifdef CURL_LDFLAGS
+	ifndef CURL_LDFLAGS
+		CURL_LDFLAGS = $(eval CURL_LDFLAGS := $$(shell $$(CURL_CONFIG) --libs))$(CURL_LDFLAGS)
+	endif
 	CURL_LIBCURL += $(CURL_LDFLAGS)
-else
-	CURL_LIBCURL += $(shell $(CURL_CONFIG) --libs)
-endif
+
+	ifndef CURL_CFLAGS
+		CURL_CFLAGS = $(eval CURL_CFLAGS := $$(shell $$(CURL_CONFIG) --cflags))$(CURL_CFLAGS)
+	endif
+	BASIC_CFLAGS += $(CURL_CFLAGS)
 
 	REMOTE_CURL_PRIMARY = git-remote-http$X
 	REMOTE_CURL_ALIASES = git-remote-https$X git-remote-ftp$X git-remote-ftps$X
