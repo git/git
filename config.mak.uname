@@ -133,8 +133,17 @@ ifeq ($(uname_S),Darwin)
 	HAVE_BSD_SYSCTL = YesPlease
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 	HAVE_NS_GET_EXECUTABLE_PATH = YesPlease
-	BASIC_CFLAGS += -I/usr/local/include
-	BASIC_LDFLAGS += -L/usr/local/lib
+
+	# Workaround for `gettext` being keg-only and not even being linked via
+	# `brew link --force gettext`, should be obsolete as of
+	# https://github.com/Homebrew/homebrew-core/pull/53489
+	ifeq ($(shell test -d /usr/local/opt/gettext/ && echo y),y)
+		BASIC_CFLAGS += -I/usr/local/include -I/usr/local/opt/gettext/include
+		BASIC_LDFLAGS += -L/usr/local/lib -L/usr/local/opt/gettext/lib
+		ifeq ($(shell test -x /usr/local/opt/gettext/bin/msgfmt && echo y),y)
+			MSGFMT = /usr/local/opt/gettext/bin/msgfmt
+		endif
+	endif
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
