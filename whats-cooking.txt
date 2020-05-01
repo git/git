@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2020, #04; Thu, 30)
-X-master-at: d61d20c9b413225793f8a0b491bbbec61c184e26
-X-next-at: e9eca65c58678cd6523f72e8b97b77f978a3477e
+Subject: What's cooking in git.git (May 2020, #01; Fri, 1)
+X-master-at: b34789c0b0d3b137f0bb516b417bd8d75e0cb306
+X-next-at: 232c24e857ed6ddde51b0435add1905f58948aec
 
-What's cooking in git.git (Apr 2020, #04; Thu, 30)
+What's cooking in git.git (May 2020, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Quite a few topics have been merged to 'next' and also to 'master'.
-There are a few more important topics that need to be merged down to
-'master' before we're comfortable cutting the next maintenance
-update but hopefully we'd get there during this week.
+The sixth batch merged quite a few topics to 'master'; they haven't
+spent the usual "at least a week" in the 'next' branch, but all of
+them looked quite safe and benign.  Knock wood.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,187 +24,236 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* dd/ci-musl-libc (2020-04-06) 6 commits
- + travis: build and test on Linux with musl libc and busybox
- + ci/linux32: libify install-dependencies step
- + ci: refactor docker runner script
- + ci/linux32: parameterise command to switch arch
- + ci/lib-docker: preserve required environment variables
- + ci: make MAKEFLAGS available inside the Docker container in the Linux32 job
- (this branch is used by dd/ci-swap-azure-pipelines-with-github-actions.)
+* dd/mailinfo-with-nul (2020-04-22) 3 commits
+  (merged to 'next' on 2020-04-28 at b1d3e40d49)
+ + mailinfo: disallow NUL character in mail's header
+ + mailinfo.c: avoid strlen on strings that can contains NUL
+ + t4254: merge 2 steps of a single test
 
- A new CI job to build and run test suite on linux with musl libc
- has been added.
+ Tighten "git mailinfo" to notice and error out when decoded result
+ contains NUL in it.
 
 
-* dd/ci-swap-azure-pipelines-with-github-actions (2020-04-10) 14 commits
-  (merged to 'next' on 2020-04-20 at 40d0486c23)
- + ci: let GitHub Actions upload failed tests' directories
- + ci: add a problem matcher for GitHub Actions
- + tests: when run in Bash, annotate test failures with file name/line number
- + ci: retire the Azure Pipelines definition
- + README: add a build badge for the GitHub Actions runs
- + ci: configure GitHub Actions for CI/PR
- + ci: run gem with sudo to install asciidoctor
- + ci: explicit install all required packages
- + ci: fix the `jobname` of the `GETTEXT_POISON` job
- + ci/lib: set TERM environment variable if not exist
- + ci/lib: allow running in GitHub Actions
- + ci/lib: if CI type is unknown, show the environment variables
- + Merge branch 'dd/ci-musl-libc' into HEAD
- + Merge branch 'dd/test-with-busybox' into HEAD
- (this branch uses dd/ci-musl-libc.)
+* dd/sparse-fixes (2020-04-27) 4 commits
+  (merged to 'next' on 2020-04-28 at d809f916ee)
+ + progress.c: silence cgcc suggestion about internal linkage
+ + graph.c: limit linkage of internal variable
+ + compat/regex: move stdlib.h up in inclusion chain
+ + test-parse-pathspec-file.c: s/0/NULL/ for pointer type
 
- Update the CI configuration to use GitHub Actions, retiring the one
- based on Azure Pipelines.
-
- Will merge to 'master', together with dd/ci-musl-libc.
+ Compilation fix.
 
 
-* dl/merge-autostash (2020-04-10) 22 commits
-  (merged to 'next' on 2020-04-22 at 98b991e8f5)
- + pull: pass --autostash to merge
- + t5520: make test_pull_autostash() accept expect_parent_num
- + merge: teach --autostash option
- + sequencer: implement apply_autostash_oid()
- + sequencer: implement save_autostash()
- + sequencer: unlink autostash in apply_autostash()
- + sequencer: extract perform_autostash() from rebase
- + rebase: generify create_autostash()
- + rebase: extract create_autostash()
- + reset: extract reset_head() from rebase
- + rebase: generify reset_head()
- + rebase: use apply_autostash() from sequencer.c
- + sequencer: rename stash_sha1 to stash_oid
- + sequencer: make apply_autostash() accept a path
- + rebase: use read_oneliner()
- + sequencer: make read_oneliner() extern
- + sequencer: configurably warn on non-existent files
- + sequencer: make read_oneliner() accept flags
- + sequencer: make file exists check more efficient
- + sequencer: stop leaking buf
- + t7600: use test_write_lines()
- + Makefile: ASCII-sort += lists
- (this branch is used by dl/merge-autostash-rebase-quit-fix.)
+* dl/test-must-fail-fixes-4 (2020-04-20) 7 commits
+  (merged to 'next' on 2020-04-28 at 6f4804aa09)
+ + t9819: don't use test_must_fail with p4
+ + t9164: use test_must_fail only on git commands
+ + t9160: use test_path_is_missing()
+ + t9141: use test_path_is_missing()
+ + t7508: don't use `test_must_fail test_cmp`
+ + t7408: replace incorrect uses of test_must_fail
+ + t6030: use test_path_is_missing()
 
- "git merge" learns the "--autostash" option.
-
- Will merge to 'master' together with the "rebase --quit" fix.
+ Test clean-up.
 
 
-* dl/merge-autostash-rebase-quit-fix (2020-04-28) 1 commit
-  (merged to 'next' on 2020-04-28 at 24dcf3edc1)
- + rebase: save autostash entry into stash reflog on --quit
- (this branch uses dl/merge-autostash.)
+* ds/blame-on-bloom (2020-04-23) 6 commits
+  (merged to 'next' on 2020-04-28 at 6152eb2eb3)
+ + test-bloom: check that we have expected arguments
+ + test-bloom: fix some whitespace issues
+ + blame: drop unused parameter from maybe_changed_path
+  (merged to 'next' on 2020-04-22 at dc4f24e54b)
+ + blame: use changed-path Bloom filters
+ + tests: write commit-graph with Bloom filters
+ + revision: complicated pathspecs disable filters
+ (this branch is used by ds/line-log-on-bloom; uses gs/commit-graph-path-filter.)
 
- The stash entry created by "git rebase --autosquash" to keep the
- initial dirty state were discarded by mistake upon "git rebase
- --quit", which has been corrected.
-
-
-* en/fill-directory-exponential (2020-04-01) 12 commits
-  (merged to 'next' on 2020-04-22 at e2577e3dc9)
- + completion: fix 'git add' on paths under an untracked directory
- + Fix error-prone fill_directory() API; make it only return matches
- + dir: replace double pathspec matching with single in treat_directory()
- + dir: include DIR_KEEP_UNTRACKED_CONTENTS handling in treat_directory()
- + dir: replace exponential algorithm with a linear one
- + dir: refactor treat_directory to clarify control flow
- + dir: fix confusion based on variable tense
- + dir: fix broken comment
- + dir: consolidate treat_path() and treat_one_path()
- + dir: fix simple typo in comment
- + t3000: add more testcases testing a variety of ls-files issues
- + t7063: more thorough status checking
-
- The directory traversal code had redundant recursive calls which
- made its performance characteristics exponential with respect to
- the depth of the tree, which was corrected.
+ "git blame" learns to take advantage of the "changed-paths" Bloom
+ filter stored in the commit-graph file.
 
 
-* en/sparse-checkout (2020-03-27) 18 commits
-  (merged to 'next' on 2020-04-15 at 3e295e445d)
- + sparse-checkout: provide a new reapply subcommand
- + unpack-trees: failure to set SKIP_WORKTREE bits always just a warning
- + unpack-trees: provide warnings on sparse updates for unmerged paths too
- + unpack-trees: make sparse path messages sound like warnings
- + unpack-trees: split display_error_msgs() into two
- + unpack-trees: rename ERROR_* fields meant for warnings to WARNING_*
- + unpack-trees: move ERROR_WOULD_LOSE_SUBMODULE earlier
- + sparse-checkout: use improved unpack_trees porcelain messages
- + sparse-checkout: use new update_sparsity() function
- + unpack-trees: add a new update_sparsity() function
- + unpack-trees: pull sparse-checkout pattern reading into a new function
- + unpack-trees: do not mark a dirty path with SKIP_WORKTREE
- + unpack-trees: allow check_updates() to work on a different index
- + t1091: make some tests a little more defensive against failures
- + unpack-trees: simplify pattern_list freeing
- + unpack-trees: simplify verify_absent_sparse()
- + unpack-trees: remove unused error type
- + unpack-trees: fix minor typo in comment
+* ds/build-homebrew-gettext-fix (2020-04-27) 1 commit
+  (merged to 'next' on 2020-04-28 at 70c6eca470)
+ + macOS/brew: let the build find gettext headers/libraries/msgfmt
 
- "sparse-checkout" UI improvements.
+ Recent update to Homebrew used by macOS folks breaks build by
+ moving gettext library and necessary headers.
 
 
-* ps/transactional-update-ref-stdin (2020-04-02) 9 commits
-  (merged to 'next' on 2020-04-22 at 5c92add109)
- + update-ref: implement interactive transaction handling
- + update-ref: read commands in a line-wise fashion
- + update-ref: move transaction handling into `update_refs_stdin()`
- + update-ref: pass end pointer instead of strbuf
- + update-ref: drop unused argument for `parse_refname`
- + update-ref: organize commands in an array
- + strbuf: provide function to append whole lines
- + git-update-ref.txt: add missing word
- + refs: fix segfault when aborting empty transaction
+* ds/multi-pack-index (2020-04-24) 1 commit
+  (merged to 'next' on 2020-04-28 at b8f9691cbc)
+ + multi-pack-index: close file descriptor after mmap
 
- "git update-ref --stdin" learned a handful of new verbs to let the
- user control ref update transactions more explicitly, which helps
- as an ingredient to implement two-phase commit-style atomic
- ref-updates across multiple repositories.
+ The multi-pack-index left mmapped file descriptors open when it
+ does not have to.
+
+
+* eb/gitweb-more-trailers (2020-04-24) 1 commit
+  (merged to 'next' on 2020-04-28 at 7b16ac0810)
+ + gitweb: Recognize *-to and Closes/Fixes trailers
+
+ Gitweb updates.
+
+
+* en/rebase-root-and-fork-point-are-incompatible (2020-04-27) 1 commit
+  (merged to 'next' on 2020-04-28 at 8ea4882905)
+ + rebase: display an error if --root and --fork-point are both provided
+
+ Incompatible options "--root" and "--fork-point" of "git rebase"
+ have been marked and documented as being incompatible.
+
+
+* es/bugreport (2020-04-27) 6 commits
+  (merged to 'next' on 2020-04-28 at fdfd36a5d7)
+ + bugreport: drop extraneous includes
+  (merged to 'next' on 2020-04-22 at f5a2ab988e)
+ + bugreport: add compiler info
+ + bugreport: add uname info
+ + bugreport: gather git version and build info
+ + bugreport: add tool to generate debugging info
+ + help: move list_config_help to builtin/help
+ (this branch is used by es/bugreport-with-hooks.)
+
+ The "bugreport" tool.
+
+
+* gs/commit-graph-path-filter (2020-04-09) 16 commits
+  (merged to 'next' on 2020-04-22 at 34b35f43bd)
+ + bloom: ignore renames when computing changed paths
+ + commit-graph: add GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS test flag
+ + t4216: add end to end tests for git log with Bloom filters
+ + revision.c: add trace2 stats around Bloom filter usage
+ + revision.c: use Bloom filters to speed up path based revision walks
+ + commit-graph: add --changed-paths option to write subcommand
+ + commit-graph: reuse existing Bloom filters during write
+ + commit-graph: write Bloom filters to commit graph file
+ + commit-graph: examine commits by generation number
+ + commit-graph: examine changed-path objects in pack order
+ + commit-graph: compute Bloom filters for changed paths
+ + diff: halt tree-diff early after max_changes
+ + bloom.c: core Bloom filter implementation for changed paths.
+ + bloom.c: introduce core Bloom filter constructs
+ + bloom.c: add the murmur3 hash implementation
+ + commit-graph: define and use MAX_NUM_CHUNKS
+ (this branch is used by ds/blame-on-bloom and ds/line-log-on-bloom.)
+
+ Introduce an extension to the commit-graph to make it efficient to
+ check for the paths that were modified at each commit using Bloom
+ filters.
+
+
+* jk/build-with-right-curl (2020-04-05) 3 commits
+  (merged to 'next' on 2020-04-28 at 1718c25b44)
+ + Makefile: avoid running curl-config unnecessarily
+ + Makefile: use curl-config --cflags
+ + Makefile: avoid running curl-config multiple times
+
+ The build procedure did not use the libcurl library and its include
+ files correctly for a custom-built installation.
+ cf. <20200428033611.GB2369457@coredump.intra.peff.net>
+
+
+* js/anonymise-push-url-in-errors (2020-04-28) 1 commit
+  (merged to 'next' on 2020-04-28 at 49539cf116)
+ + push: anonymize URLs in error messages and warnings
+
+ Error and verbose trace messages from "git push" did not redact
+ credential material embedded in URLs.
+
+
+* jt/v2-fetch-nego-fix (2020-04-28) 3 commits
+  (merged to 'next' on 2020-04-28 at c6f9ebf2f7)
+ + fetch-pack: in protocol v2, reset in_vain upon ACK
+ + fetch-pack: in protocol v2, in_vain only after ACK
+ + fetch-pack: return enum from process_acks()
+
+ The upload-pack protocol v2 gave up too early before finding a
+ common ancestor, resulting in a wasteful fetch from a fork of a
+ project.  This has been corrected to match the behaviour of v0
+ protocol.
+
+
+* mt/doc-worktree-ref (2020-04-24) 1 commit
+  (merged to 'next' on 2020-04-28 at d96c05cb0a)
+ + config doc: fix reference to config.worktree info
+
+ Docfix.
+
+
+* tb/commit-graph-fd-exhaustion-fix (2020-04-24) 4 commits
+  (merged to 'next' on 2020-04-28 at 6d5fd6bc49)
+ + commit-graph: close descriptors after mmap
+ + commit-graph.c: gracefully handle file descriptor exhaustion
+ + t/test-lib.sh: make ULIMIT_FILE_DESCRIPTORS available to tests
+ + commit-graph.c: don't use discarded graph_name in error
+ (this branch is tangled with tb/commit-graph-split-strategy.)
+
+ The commit-graph code exhausted file descriptors easily when it
+ does not have to.
+
+
+* tb/commit-graph-split-strategy (2020-04-29) 8 commits
+  (merged to 'next' on 2020-04-29 at 99fa922569)
+ + Revert "commit-graph.c: introduce '--[no-]check-oids'"
+ + commit-graph.c: introduce '--[no-]check-oids'
+ + commit-graph.h: replace 'commit_hex' with 'commits'
+ + oidset: introduce 'oidset_size'
+ + builtin/commit-graph.c: introduce split strategy 'replace'
+ + builtin/commit-graph.c: introduce split strategy 'no-merge'
+ + builtin/commit-graph.c: support for '--split[=<strategy>]'
+ + t/helper/test-read-graph.c: support commit-graph chains
+ (this branch is tangled with tb/commit-graph-fd-exhaustion-fix.)
+
+ "git commit-graph write" learned different ways to write out split
+ files.
+
+
+* tb/reset-shallow (2020-04-24) 2 commits
+  (merged to 'next' on 2020-04-28 at 9510639ae8)
+ + shallow.c: use '{commit,rollback}_shallow_file'
+ + t5537: use test_write_lines and indented heredocs for readability
+ (this branch is used by tb/shallow-cleanup.)
+
+ Fix in-core inconsistency after fetching into a shallow repository
+ that broke the code to write out commit-graph.
 
 --------------------------------------------------
 [New Topics]
 
-* cb/credential-store-warn-bogus-lines (2020-04-28) 2 commits
- - credential-store: warn instead of fatal for bogus lines from store
- - credential-store: document the file format a bit more
+* ds/line-log-on-bloom (2020-05-01) 12 commits
+ - line-log: integrate with changed-path Bloom filters
+ - line-log: try to use generation number-based topo-ordering
+ - line-log: more responsive, incremental 'git log -L'
+ - t4211-line-log: add tests for parent oids
+ - line-log: remove unused fields from 'struct line_log_data'
+ - completion: offer '--(no-)patch' among 'git log' options
+ - bloom: use num_changes not nr for limit detection
+ - bloom: parse commit before computing filters
+ - bloom: de-duplicate directory entries
+ - Documentation: changed-path Bloom filters use byte words
+ - test-bloom: fix usage typo
+ - bloom: fix whitespace around tab length
 
- With the recent tightening of the code that is used to parse
- various parts of a URL for use in the credential subsystem, a
- hand-edited credential-store file causes the credential helper to
- die, which is a bit too harsh to the users.  Demote the error
- behaviour to only warn and keep using well-formed lines instead.
-
-
-* dl/switch-c-option-in-error-message (2020-04-30) 1 commit
- - switch: fix errors and comments related to -c and -C
-
- In error messages that "git switch" mentions its option to create a
- new branch, "-b/-B" options were shown, where "-c/-C" options
- should be, which has been corrected.
-
- Will merge to 'next'.
+ "git log -L..." now takes advantage of the "which paths are touched
+ by this commit?" info stored in the commit-graph system.
 
 
-* es/bugreport-with-hooks (2020-04-30) 2 commits
- - SQUASH???
- - bugreport: collect list of populated hooks
- (this branch uses es/bugreport.)
+* es/restore-staged-from-head-by-default (2020-05-01) 3 commits
+ - restore: default to HEAD when combining --worktree and --staged
+ - fixup! restore: require --source when combining --worktree and --staged
+ - restore: require --source when combining --worktree and --staged
 
- "git bugreport" learned to report enabled hooks in the repository.
+ "git restore --staged --worktree" now defaults to take the contents
+ out of "HEAD", instead of erroring out.
 
- Needs polishing the tests.
 
+* jk/credential-sample-update (2020-05-01) 2 commits
+ - gitcredentials(7): make shell-snippet example more realistic
+ - gitcredentials(7): clarify quoting of helper examples
 
-* tb/shallow-cleanup (2020-04-30) 4 commits
- - shallow: use struct 'shallow_lock' for additional safety
- - shallow.h: document '{commit,rollback}_shallow_file'
- - shallow: extract a header file for shallow-related functions
- - commit: make 'commit_graft_pos' non-static
- (this branch uses tb/reset-shallow.)
-
- Code cleanup.
+ The samples in the credential documentation has been updated to
+ make it clear that we depict what would appear in the .git/config
+ file, by adding appropriate quotes as needed..
 
  Will merge to 'next'.
 
@@ -222,6 +270,52 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cb/credential-store-warn-bogus-lines (2020-04-30) 2 commits
+ - credential-store: warn instead of fatal for bogus lines from store
+ - credential-store: document the file format a bit more
+
+ With the recent tightening of the code that is used to parse
+ various parts of a URL for use in the credential subsystem, a
+ hand-edited credential-store file causes the credential helper to
+ die, which is a bit too harsh to the users.  Demote the error
+ behaviour to only warn and keep using well-formed lines instead.
+
+ Expecting a final reroll.
+ It seems that we decided to do absolute minimum to avoid doing any
+ unnecessary harm.  Ignore malformed lines but without warning.
+ cf. <20200501135757.GF33264@Carlos-MBP>
+
+
+* dl/switch-c-option-in-error-message (2020-04-30) 1 commit
+ - switch: fix errors and comments related to -c and -C
+
+ In error messages that "git switch" mentions its option to create a
+ new branch, "-b/-B" options were shown, where "-c/-C" options
+ should be, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* es/bugreport-with-hooks (2020-04-30) 2 commits
+ - SQUASH???
+ - bugreport: collect list of populated hooks
+
+ "git bugreport" learned to report enabled hooks in the repository.
+
+ Needs polishing the tests.
+
+
+* tb/shallow-cleanup (2020-04-30) 4 commits
+ - shallow: use struct 'shallow_lock' for additional safety
+ - shallow.h: document '{commit,rollback}_shallow_file'
+ - shallow: extract a header file for shallow-related functions
+ - commit: make 'commit_graft_pos' non-static
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
 * bc/wildcard-credential (2020-04-27) 1 commit
   (merged to 'next' on 2020-04-28 at 1a0d6b91dc)
  + credential: fix matching URLs with multiple levels in path
@@ -232,36 +326,12 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dd/mailinfo-with-nul (2020-04-22) 3 commits
-  (merged to 'next' on 2020-04-28 at b1d3e40d49)
- + mailinfo: disallow NUL character in mail's header
- + mailinfo.c: avoid strlen on strings that can contains NUL
- + t4254: merge 2 steps of a single test
-
- Tighten "git mailinfo" to notice and error out when decoded result
- contains NUL in it.
-
- Will merge to 'master'.
-
-
 * ah/userdiff-markdown (2020-04-30) 1 commit
  - userdiff: support Markdown
 
  The userdiff patterns for Markdown documents have been added.
 
  Will merge to 'next'.
-
-
-* dd/sparse-fixes (2020-04-27) 4 commits
-  (merged to 'next' on 2020-04-28 at d809f916ee)
- + progress.c: silence cgcc suggestion about internal linkage
- + graph.c: limit linkage of internal variable
- + compat/regex: move stdlib.h up in inclusion chain
- + test-parse-pathspec-file.c: s/0/NULL/ for pointer type
-
- Compilation fix.
-
- Will merge to 'master'.
 
 
 * mr/bisect-in-c-2 (2020-04-23) 12 commits
@@ -283,102 +353,29 @@ of the repositories listed at
  Any volunteer to review this?
 
 
-* tb/reset-shallow (2020-04-24) 2 commits
-  (merged to 'next' on 2020-04-28 at 9510639ae8)
- + shallow.c: use '{commit,rollback}_shallow_file'
- + t5537: use test_write_lines and indented heredocs for readability
- (this branch is used by tb/shallow-cleanup.)
-
- Fix in-core inconsistency after fetching into a shallow repository
- that broke the code to write out commit-graph.
-
- Will merge to 'master'.
-
-
-* ds/build-homebrew-gettext-fix (2020-04-27) 1 commit
-  (merged to 'next' on 2020-04-28 at 70c6eca470)
- + macOS/brew: let the build find gettext headers/libraries/msgfmt
-
- Recent update to Homebrew used by macOS folks breaks build by
- moving gettext library and necessary headers.
-
- Will merge to 'master'.
-
-
-* tb/commit-graph-fd-exhaustion-fix (2020-04-24) 4 commits
-  (merged to 'next' on 2020-04-28 at 6d5fd6bc49)
- + commit-graph: close descriptors after mmap
- + commit-graph.c: gracefully handle file descriptor exhaustion
- + t/test-lib.sh: make ULIMIT_FILE_DESCRIPTORS available to tests
- + commit-graph.c: don't use discarded graph_name in error
- (this branch is tangled with tb/commit-graph-split-strategy.)
-
- The commit-graph code exhausted file descriptors easily when it
- does not have to.
-
- Will merge to 'master'.
-
-
-* ds/multi-pack-index (2020-04-24) 1 commit
-  (merged to 'next' on 2020-04-28 at b8f9691cbc)
- + multi-pack-index: close file descriptor after mmap
-
- The multi-pack-index left mmapped file descriptors open when it
- does not have to.
-
- Will merge to 'master'.
-
-
-* js/anonymise-push-url-in-errors (2020-04-28) 1 commit
-  (merged to 'next' on 2020-04-28 at 49539cf116)
- + push: anonymize URLs in error messages and warnings
-
- Error and verbose trace messages from "git push" did not redact
- credential material embedded in URLs.
-
- Will merge to 'master'.
-
-
 * js/partial-urlmatch-2.17 (2020-04-29) 3 commits
- - credential: handle `credential.<partial-URL>.<key>` again
- - credential: optionally allow partial URLs in credential_from_url_gently()
- - credential: fix grammar
+  (merged to 'next' on 2020-05-01 at 7c69571f89)
+ + credential: handle `credential.<partial-URL>.<key>` again
+ + credential: optionally allow partial URLs in credential_from_url_gently()
+ + credential: fix grammar
  (this branch is used by js/partial-urlmatch.)
 
  Recent updates broke parsing of "credential.<url>.<key>" where
  <url> is not a full URL (e.g. [credential "https://"] helper = ...)
  stopped working, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/partial-urlmatch (2020-04-29) 3 commits
- - Sync with js/partial-urlmatch-2.17
- - credential: handle `credential.<partial-URL>.<key>` again
- - credential: optionally allow partial URLs in credential_from_url_gently()
+  (merged to 'next' on 2020-05-01 at e7017fcfd1)
+ + Sync with js/partial-urlmatch-2.17
+ + credential: handle `credential.<partial-URL>.<key>` again
+ + credential: optionally allow partial URLs in credential_from_url_gently()
  (this branch uses js/partial-urlmatch-2.17.)
 
  The same as js/partial-urlmatch-2.17, built on more recent codebase
  to avoid unnecessary merge conflicts.
-
- Will merge to 'next'.
-
-
-* eb/gitweb-more-trailers (2020-04-24) 1 commit
-  (merged to 'next' on 2020-04-28 at 7b16ac0810)
- + gitweb: Recognize *-to and Closes/Fixes trailers
-
- Gitweb updates.
-
- Will merge to 'master'.
-
-
-* en/rebase-root-and-fork-point-are-incompatible (2020-04-27) 1 commit
-  (merged to 'next' on 2020-04-28 at 8ea4882905)
- + rebase: display an error if --root and --fork-point are both provided
-
- Incompatible options "--root" and "--fork-point" of "git rebase"
- have been marked and documented as being incompatible.
 
  Will merge to 'master'.
 
@@ -398,29 +395,6 @@ of the repositories listed at
 
  The command line completion (in contrib/) learned to complete
  options that the "git switch" command takes.
-
-
-* jt/v2-fetch-nego-fix (2020-04-28) 3 commits
-  (merged to 'next' on 2020-04-28 at c6f9ebf2f7)
- + fetch-pack: in protocol v2, reset in_vain upon ACK
- + fetch-pack: in protocol v2, in_vain only after ACK
- + fetch-pack: return enum from process_acks()
-
- The upload-pack protocol v2 gave up too early before finding a
- common ancestor, resulting in a wasteful fetch from a fork of a
- project.  This has been corrected to match the behaviour of v0
- protocol.
-
- Will merge to 'master'.
-
-
-* mt/doc-worktree-ref (2020-04-24) 1 commit
-  (merged to 'next' on 2020-04-28 at d96c05cb0a)
- + config doc: fix reference to config.worktree info
-
- Docfix.
-
- Will merge to 'master'.
 
 
 * tb/commit-graph-perm-bits (2020-04-29) 5 commits
@@ -478,21 +452,6 @@ of the repositories listed at
  cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
 
 
-* dl/test-must-fail-fixes-4 (2020-04-20) 7 commits
-  (merged to 'next' on 2020-04-28 at 6f4804aa09)
- + t9819: don't use test_must_fail with p4
- + t9164: use test_must_fail only on git commands
- + t9160: use test_path_is_missing()
- + t9141: use test_path_is_missing()
- + t7508: don't use `test_must_fail test_cmp`
- + t7408: replace incorrect uses of test_must_fail
- + t6030: use test_path_is_missing()
-
- Test clean-up.
-
- Will merge to 'master'.
-
-
 * pw/rebase-i-more-options (2020-04-29) 5 commits
  - rebase: add --reset-author-date
  - rebase -i: support --ignore-date
@@ -501,23 +460,6 @@ of the repositories listed at
  - rebase -i: add --ignore-whitespace flag
 
  "git rebase -i" learns a bit more options.
-
-
-* ds/blame-on-bloom (2020-04-23) 6 commits
-  (merged to 'next' on 2020-04-28 at 6152eb2eb3)
- + test-bloom: check that we have expected arguments
- + test-bloom: fix some whitespace issues
- + blame: drop unused parameter from maybe_changed_path
-  (merged to 'next' on 2020-04-22 at dc4f24e54b)
- + blame: use changed-path Bloom filters
- + tests: write commit-graph with Bloom filters
- + revision: complicated pathspecs disable filters
- (this branch uses gs/commit-graph-path-filter.)
-
- "git blame" learns to take advantage of the "changed-paths" Bloom
- filter stored in the commit-graph file.
-
- Will merge to 'master', together with gs/commit-graph-path-filter.
 
 
 * dd/iso-8601-updates (2020-04-24) 4 commits
@@ -532,51 +474,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* tb/commit-graph-split-strategy (2020-04-29) 8 commits
-  (merged to 'next' on 2020-04-29 at 99fa922569)
- + Revert "commit-graph.c: introduce '--[no-]check-oids'"
- + commit-graph.c: introduce '--[no-]check-oids'
- + commit-graph.h: replace 'commit_hex' with 'commits'
- + oidset: introduce 'oidset_size'
- + builtin/commit-graph.c: introduce split strategy 'replace'
- + builtin/commit-graph.c: introduce split strategy 'no-merge'
- + builtin/commit-graph.c: support for '--split[=<strategy>]'
- + t/helper/test-read-graph.c: support commit-graph chains
- (this branch is tangled with tb/commit-graph-fd-exhaustion-fix.)
-
- "git commit-graph write" learned different ways to write out split
- files.
-
- Will merge to 'master' together with tb/commit-graph-fd-exhaustion-fix
-
-
-* gs/commit-graph-path-filter (2020-04-09) 16 commits
-  (merged to 'next' on 2020-04-22 at 34b35f43bd)
- + bloom: ignore renames when computing changed paths
- + commit-graph: add GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS test flag
- + t4216: add end to end tests for git log with Bloom filters
- + revision.c: add trace2 stats around Bloom filter usage
- + revision.c: use Bloom filters to speed up path based revision walks
- + commit-graph: add --changed-paths option to write subcommand
- + commit-graph: reuse existing Bloom filters during write
- + commit-graph: write Bloom filters to commit graph file
- + commit-graph: examine commits by generation number
- + commit-graph: examine changed-path objects in pack order
- + commit-graph: compute Bloom filters for changed paths
- + diff: halt tree-diff early after max_changes
- + bloom.c: core Bloom filter implementation for changed paths.
- + bloom.c: introduce core Bloom filter constructs
- + bloom.c: add the murmur3 hash implementation
- + commit-graph: define and use MAX_NUM_CHUNKS
- (this branch is used by ds/blame-on-bloom.)
-
- Introduce an extension to the commit-graph to make it efficient to
- check for the paths that were modified at each commit using Bloom
- filters.
-
- Will merge to 'master' together with ds/blame-on-bloom.
-
-
 * jx/proc-receive-hook (2020-04-15) 8 commits
  - SQUASH???
  - doc: add documentation for the proc-receive hook
@@ -589,19 +486,6 @@ of the repositories listed at
 
  "git receive-pack" that accepts requests by "git push" learned to
  outsource most of the ref updates to the new "proc-receive" hook.
-
-
-* jk/build-with-right-curl (2020-04-05) 3 commits
-  (merged to 'next' on 2020-04-28 at 1718c25b44)
- + Makefile: avoid running curl-config unnecessarily
- + Makefile: use curl-config --cflags
- + Makefile: avoid running curl-config multiple times
-
- The build procedure did not use the libcurl library and its include
- files correctly for a custom-built installation.
-
- Will merge to 'master'.
- cf. <20200428033611.GB2369457@coredump.intra.peff.net>
 
 
 * hn/reftable (2020-04-27) 12 commits
@@ -626,22 +510,6 @@ of the repositories listed at
  At v10.  VCbuild may have to be updated to deal with the new lib.
  cf. https://github.com/git/git/runs/624424705?check_suite_focus=true
  cf. <pull.539.v10.git.1588018418.gitgitgadget@gmail.com>
-
-
-* es/bugreport (2020-04-27) 6 commits
-  (merged to 'next' on 2020-04-28 at fdfd36a5d7)
- + bugreport: drop extraneous includes
-  (merged to 'next' on 2020-04-22 at f5a2ab988e)
- + bugreport: add compiler info
- + bugreport: add uname info
- + bugreport: gather git version and build info
- + bugreport: add tool to generate debugging info
- + help: move list_config_help to builtin/help
- (this branch is used by es/bugreport-with-hooks.)
-
- The "bugreport" tool.
-
- Will merge to 'master'.
 
 --------------------------------------------------
 [Discarded]
