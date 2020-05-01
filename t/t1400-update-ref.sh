@@ -1354,15 +1354,6 @@ test_expect_success 'fails with duplicate ref update via symref' '
 	test_cmp expect actual
 '
 
-run_with_limited_open_files () {
-	(ulimit -n 32 && "$@")
-}
-
-test_lazy_prereq ULIMIT_FILE_DESCRIPTORS '
-	test_have_prereq !MINGW,!CYGWIN &&
-	run_with_limited_open_files true
-'
-
 test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction creating branches does not burst open file limit' '
 (
 	for i in $(test_seq 33)
