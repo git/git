@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#define GIT_TEST_PROGRESS_ONLY
 #include "cache.h"
 #include "gettext.h"
 #include "progress.h"
@@ -52,7 +53,6 @@ static volatile sig_atomic_t progress_update;
  */
 int progress_testing;
 uint64_t progress_test_ns = 0;
-void progress_test_force_update(void); /* To silence -Wmissing-prototypes */
 void progress_test_force_update(void)
 {
 	progress_update = 1;
