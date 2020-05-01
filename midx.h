@@ -12,8 +12,6 @@ struct repository;
 struct multi_pack_index {
 	struct multi_pack_index *next;
 
-	int fd;
-
 	const unsigned char *data;
 	size_t data_len;
 
