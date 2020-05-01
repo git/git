@@ -449,12 +449,14 @@ When --fork-point is active, 'fork_point' will be used instead of
 <branch>` command (see linkgit:git-merge-base[1]).  If 'fork_point'
 ends up being empty, the <upstream> will be used as a fallback.
 +
-If either <upstream> or --root is given on the command line, then the
-default is `--no-fork-point`, otherwise the default is `--fork-point`.
+If <upstream> is given on the command line, then the default is
+`--no-fork-point`, otherwise the default is `--fork-point`.
 +
 If your branch was based on <upstream> but <upstream> was rewound and
 your branch contains commits which were dropped, this option can be used
 with `--keep-base` in order to drop those commits from your branch.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --ignore-whitespace::
 --whitespace=<option>::
@@ -636,6 +638,7 @@ In addition, the following pairs of options are incompatible:
  * --preserve-merges and --empty=
  * --keep-base and --onto
  * --keep-base and --root
+ * --fork-point and --root
 
 BEHAVIORAL DIFFERENCES
 -----------------------
