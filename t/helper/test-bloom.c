@@ -44,7 +44,7 @@ static void get_bloom_filter_for_commit(const struct object_id *commit_oid)
 }
 
 static const char *bloom_usage = "\n"
-"  test-tool bloom get_murmer3 <string>\n"
+"  test-tool bloom get_murmur3 <string>\n"
 "  test-tool bloom generate_filter <string> [<string>...]\n"
 "  test-tool get_filter_for_commit <commit-hex>\n";
 
