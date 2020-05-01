@@ -1061,6 +1061,14 @@ parse_done:
 	string_list_clear(&ignore_revs_file_list, 0);
 	string_list_clear(&ignore_rev_list, 0);
 	setup_scoreboard(&sb, path, &o);
+
+	/*
+	 * Changed-path Bloom filters are disabled when looking
+	 * for copies.
+	 */
+	if (!(opt & PICKAXE_BLAME_COPY))
+		setup_blame_bloom_data(&sb, path);
+
 	lno = sb.num_lines;
 
 	if (lno && !range_list.nr)
@@ -1164,5 +1172,7 @@ parse_done:
 		printf("num get patch: %d\n", sb.num_get_patch);
 		printf("num commits: %d\n", sb.num_commits);
 	}
+
+	cleanup_scoreboard(&sb);
 	return 0;
 }

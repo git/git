@@ -650,6 +650,20 @@ static void trace2_bloom_filter_statistics_atexit(void)
 	jw_release(&jw);
 }
 
+static int forbid_bloom_filters(struct pathspec *spec)
+{
+	if (spec->has_wildcard)
+		return 1;
+	if (spec->nr > 1)
+		return 1;
+	if (spec->magic & ~PATHSPEC_LITERAL)
+		return 1;
+	if (spec->nr && (spec->items[0].magic & ~PATHSPEC_LITERAL))
+		return 1;
+
+	return 0;
+}
+
 static void prepare_to_use_bloom_filter(struct rev_info *revs)
 {
 	struct pathspec_item *pi;
@@ -659,7 +673,10 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	int len;
 
 	if (!revs->commits)
-	    return;
+		return;
+
+	if (forbid_bloom_filters(&revs->prune_data))
+		return;
 
 	repo_parse_commit(revs->repo, revs->commits->item);
 

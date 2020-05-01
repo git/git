@@ -40,6 +40,7 @@
 #include "branch.h"
 #include "commit-reach.h"
 #include "wt-status.h"
+#include "commit-graph.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -1700,9 +1701,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 				   head_commit);
 	}
 
-	if (squash)
+	if (squash) {
 		finish(head_commit, remoteheads, NULL, NULL);
-	else
+
+		git_test_write_commit_graph_or_die();
+	} else
 		write_merge_state(remoteheads);
 
 	if (merge_was_ok)
