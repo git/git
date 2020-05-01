@@ -30,7 +30,7 @@ test_expect_success 'Check p4 is in case-folding mode' '
 		cd "$cli" &&
 		>lc/FILE.TXT &&
 		p4 add lc/FILE.TXT &&
-		test_must_fail p4 submit -d "Cannot add file differing only in case" lc/FILE.TXT
+		! p4 submit -d "Cannot add file differing only in case" lc/FILE.TXT
 	)
 '
 
