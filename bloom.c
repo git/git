@@ -29,8 +29,8 @@ static inline unsigned char get_bitmask(uint32_t pos)
 }
 
 static int load_bloom_filter_from_graph(struct commit_graph *g,
-				   struct bloom_filter *filter,
-				   struct commit *c)
+					struct bloom_filter *filter,
+					struct commit *c)
 {
 	uint32_t lex_pos, start_index, end_index;
 
@@ -123,9 +123,9 @@ uint32_t murmur3_seeded(uint32_t seed, const char *data, size_t len)
 }
 
 void fill_bloom_key(const char *data,
-					size_t len,
-					struct bloom_key *key,
-					const struct bloom_filter_settings *settings)
+		    size_t len,
+		    struct bloom_key *key,
+		    const struct bloom_filter_settings *settings)
 {
 	int i;
 	const uint32_t seed0 = 0x293ae76f;
@@ -139,8 +139,8 @@ void fill_bloom_key(const char *data,
 }
 
 void add_key_to_filter(const struct bloom_key *key,
-					   struct bloom_filter *filter,
-					   const struct bloom_filter_settings *settings)
+		       struct bloom_filter *filter,
+		       const struct bloom_filter_settings *settings)
 {
 	int i;
 	uint64_t mod = filter->len * BITS_PER_WORD;
@@ -160,7 +160,7 @@ void init_bloom_filters(void)
 
 struct bloom_filter *get_bloom_filter(struct repository *r,
 				      struct commit *c,
-					  int compute_if_not_present)
+				      int compute_if_not_present)
 {
 	struct bloom_filter *filter;
 	struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
