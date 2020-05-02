@@ -7,6 +7,7 @@ env:
 
 jobs:
   windows-build:
+    if: "!contains(toJSON(github.event.commits.*.message), '[skip ci]') && !contains(toJSON(github.event.pull_request), '[skip pr]')"
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
@@ -70,6 +71,7 @@ jobs:
         name: failed-tests-windows
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   vs-build:
+    if: "!contains(toJSON(github.event.commits.*.message), '[skip ci]') && !contains(toJSON(github.event.pull_request), '[skip pr]')"
     env:
       MSYSTEM: MINGW64
       NO_PERL: 1
@@ -154,6 +156,7 @@ jobs:
                           ${{matrix.nr}} 10 t[0-9]*.sh)
         "@
   regular:
+    if: "!contains(toJSON(github.event.commits.*.message), '[skip ci]') && !contains(toJSON(github.event.pull_request), '[skip pr]')"
     strategy:
       matrix:
         vector:
@@ -189,6 +192,7 @@ jobs:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   dockerized:
+    if: "!contains(toJSON(github.event.commits.*.message), '[skip ci]') && !contains(toJSON(github.event.pull_request), '[skip pr]')"
     strategy:
       matrix:
         vector:
@@ -213,6 +217,7 @@ jobs:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   static-analysis:
+    if: "!contains(toJSON(github.event.commits.*.message), '[skip ci]') && !contains(toJSON(github.event.pull_request), '[skip pr]')"
     env:
       jobname: StaticAnalysis
     runs-on: ubuntu-latest
@@ -221,6 +226,7 @@ jobs:
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
   documentation:
+    if: "!contains(toJSON(github.event.commits.*.message), '[skip ci]') && !contains(toJSON(github.event.pull_request), '[skip pr]')"
     env:
       jobname: Documentation
     runs-on: ubuntu-latest
