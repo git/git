@@ -828,4 +828,44 @@ test_expect_success 'for-each-ref --ignore-case ignores case' '
 	test_cmp expect actual
 '
 
+test_expect_success 'for-each-ref --ignore-case works on multiple sort keys' '
+	# name refs numerically to avoid case-insensitive filesystem conflicts
+	nr=0 &&
+	for email in a A b B
+	do
+		for subject in a A b B
+		do
+			GIT_COMMITTER_EMAIL="$email@example.com" \
+			git tag -m "tag $subject" icase-$(printf %02d $nr) &&
+			nr=$((nr+1))||
+			return 1
+		done
+	done &&
+	git for-each-ref --ignore-case \
+		--format="%(taggeremail) %(subject) %(refname)" \
+		--sort=refname \
+		--sort=subject \
+		--sort=taggeremail \
+		refs/tags/icase-* >actual &&
+	cat >expect <<-\EOF &&
+	<a@example.com> tag a refs/tags/icase-00
+	<a@example.com> tag A refs/tags/icase-01
+	<A@example.com> tag a refs/tags/icase-04
+	<A@example.com> tag A refs/tags/icase-05
+	<a@example.com> tag b refs/tags/icase-02
+	<a@example.com> tag B refs/tags/icase-03
+	<A@example.com> tag b refs/tags/icase-06
+	<A@example.com> tag B refs/tags/icase-07
+	<b@example.com> tag a refs/tags/icase-08
+	<b@example.com> tag A refs/tags/icase-09
+	<B@example.com> tag a refs/tags/icase-12
+	<B@example.com> tag A refs/tags/icase-13
+	<b@example.com> tag b refs/tags/icase-10
+	<b@example.com> tag B refs/tags/icase-11
+	<B@example.com> tag b refs/tags/icase-14
+	<B@example.com> tag B refs/tags/icase-15
+	EOF
+	test_cmp expect actual
+'
+
 test_done

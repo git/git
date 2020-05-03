@@ -2163,6 +2163,12 @@ static int compare_refs(const void *a_, const void *b_, void *ref_sorting)
 	return 0;
 }
 
+void ref_sorting_icase_all(struct ref_sorting *sorting, int flag)
+{
+	for (; sorting; sorting = sorting->next)
+		sorting->ignore_case = !!flag;
+}
+
 void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
 {
 	QSORT_S(array->items, array->nr, compare_refs, sorting);
