@@ -583,17 +583,59 @@ test_atom refs/tags/signed-long contents "subject line
 body contents
 $sig"
 
-cat >expected <<EOF
-$(git rev-parse refs/tags/bogo) <committer@example.com> refs/tags/bogo
-$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
-EOF
+test_expect_success 'set up multiple-sort tags' '
+	for when in 100000 200000
+	do
+		for email in user1 user2
+		do
+			for ref in ref1 ref2
+			do
+				GIT_COMMITTER_DATE="@$when +0000" \
+				GIT_COMMITTER_EMAIL="$email@example.com" \
+				git tag -m "tag $ref-$when-$email" \
+				multi-$ref-$when-$email || return 1
+			done
+		done
+	done
+'
 
 test_expect_success 'Verify sort with multiple keys' '
-	git for-each-ref --format="%(objectname) %(taggeremail) %(refname)" --sort=objectname --sort=taggeremail \
-		refs/tags/bogo refs/tags/master > actual &&
+	cat >expected <<-\EOF &&
+	100000 <user1@example.com> refs/tags/multi-ref2-100000-user1
+	100000 <user1@example.com> refs/tags/multi-ref1-100000-user1
+	100000 <user2@example.com> refs/tags/multi-ref2-100000-user2
+	100000 <user2@example.com> refs/tags/multi-ref1-100000-user2
+	200000 <user1@example.com> refs/tags/multi-ref2-200000-user1
+	200000 <user1@example.com> refs/tags/multi-ref1-200000-user1
+	200000 <user2@example.com> refs/tags/multi-ref2-200000-user2
+	200000 <user2@example.com> refs/tags/multi-ref1-200000-user2
+	EOF
+	git for-each-ref \
+		--format="%(taggerdate:unix) %(taggeremail) %(refname)" \
+		--sort=-refname \
+		--sort=taggeremail \
+		--sort=taggerdate \
+		"refs/tags/multi-*" >actual &&
 	test_cmp expected actual
 '
 
+test_expect_success 'equivalent sorts fall back on refname' '
+	cat >expected <<-\EOF &&
+	100000 <user1@example.com> refs/tags/multi-ref1-100000-user1
+	100000 <user2@example.com> refs/tags/multi-ref1-100000-user2
+	100000 <user1@example.com> refs/tags/multi-ref2-100000-user1
+	100000 <user2@example.com> refs/tags/multi-ref2-100000-user2
+	200000 <user1@example.com> refs/tags/multi-ref1-200000-user1
+	200000 <user2@example.com> refs/tags/multi-ref1-200000-user2
+	200000 <user1@example.com> refs/tags/multi-ref2-200000-user1
+	200000 <user2@example.com> refs/tags/multi-ref2-200000-user2
+	EOF
+	git for-each-ref \
+		--format="%(taggerdate:unix) %(taggeremail) %(refname)" \
+		--sort=taggerdate \
+		"refs/tags/multi-*" >actual &&
+	test_cmp expected actual
+'
 
 test_expect_success 'do not dereference NULL upon %(HEAD) on unborn branch' '
 	test_when_finished "git checkout master" &&
