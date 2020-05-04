@@ -749,7 +749,7 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	eword_t mask;
 	uint32_t i;
 
-	if (type != OBJ_BLOB)
+	if (type != OBJ_BLOB && type != OBJ_TREE)
 		BUG("filter_bitmap_exclude_type: unsupported type '%d'", type);
 
 	/*
@@ -867,6 +867,20 @@ static void filter_bitmap_blob_limit(struct bitmap_index *bitmap_git,
 	bitmap_free(tips);
 }
 
+static void filter_bitmap_tree_depth(struct bitmap_index *bitmap_git,
+				     struct object_list *tip_objects,
+				     struct bitmap *to_filter,
+				     unsigned long limit)
+{
+	if (limit)
+		BUG("filter_bitmap_tree_depth given non-zero limit");
+
+	filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter,
+				   OBJ_TREE);
+	filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter,
+				   OBJ_BLOB);
+}
+
 static int filter_bitmap(struct bitmap_index *bitmap_git,
 			 struct object_list *tip_objects,
 			 struct bitmap *to_filter,
@@ -887,6 +901,15 @@ static int filter_bitmap(struct bitmap_index *bitmap_git,
 			filter_bitmap_blob_limit(bitmap_git, tip_objects,
 						 to_filter,
 						 filter->blob_limit_value);
+		return 0;
+	}
+
+	if (filter->choice == LOFC_TREE_DEPTH &&
+	    filter->tree_exclude_depth == 0) {
+		if (bitmap_git)
+			filter_bitmap_tree_depth(bitmap_git, tip_objects,
+						 to_filter,
+						 filter->tree_exclude_depth);
 		return 0;
 	}
 
