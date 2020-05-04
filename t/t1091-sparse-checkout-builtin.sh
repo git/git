@@ -106,10 +106,8 @@ test_expect_success 'set enables config' '
 		cd empty-config &&
 		test_commit test file &&
 		test_path_is_missing .git/config.worktree &&
-		test_must_fail git sparse-checkout set nothing &&
+		git sparse-checkout set nothing &&
 		test_path_is_file .git/config.worktree &&
-		test_must_fail git config core.sparseCheckout &&
-		git sparse-checkout set "/*" &&
 		test_cmp_config true core.sparseCheckout
 	)
 '
@@ -302,8 +300,8 @@ test_expect_success 'revert to old sparse-checkout on empty update' '
 		echo >file &&
 		git add file &&
 		git commit -m "test" &&
-		test_must_fail git sparse-checkout set nothing 2>err &&
-		test_i18ngrep "Sparse checkout leaves no entry on working directory" err &&
+		git sparse-checkout set nothing 2>err &&
+		test_i18ngrep ! "Sparse checkout leaves no entry on working directory" err &&
 		test_i18ngrep ! ".git/index.lock" err &&
 		git sparse-checkout set file
 	)
