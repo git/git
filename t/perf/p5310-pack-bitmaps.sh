@@ -91,4 +91,9 @@ test_perf 'pack to file (partial bitmap)' '
 	git pack-objects --use-bitmap-index --all pack2b </dev/null >/dev/null
 '
 
+test_perf 'rev-list with tree filter (partial bitmap)' '
+	git rev-list --use-bitmap-index --count --objects --all \
+		--filter=tree:0 >/dev/null
+'
+
 test_done

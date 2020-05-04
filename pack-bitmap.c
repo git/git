@@ -506,7 +506,8 @@ static int should_include(struct commit *commit, void *_data)
 static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 				   struct rev_info *revs,
 				   struct object_list *roots,
-				   struct bitmap *seen)
+				   struct bitmap *seen,
+				   struct list_objects_filter_options *filter)
 {
 	struct bitmap *base = NULL;
 	int needs_walk = 0;
@@ -599,8 +600,9 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		show_data.bitmap_git = bitmap_git;
 		show_data.base = base;
 
-		traverse_commit_list(revs, show_commit, show_object,
-				     &show_data);
+		traverse_commit_list_filtered(filter, revs,
+					      show_commit, show_object,
+					      &show_data, NULL);
 	}
 
 	return base;
@@ -999,7 +1001,8 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 
 	if (haves) {
 		revs->ignore_missing_links = 1;
-		haves_bitmap = find_objects(bitmap_git, revs, haves, NULL);
+		haves_bitmap = find_objects(bitmap_git, revs, haves, NULL,
+					    filter);
 		reset_revision_walk();
 		revs->ignore_missing_links = 0;
 
@@ -1007,7 +1010,8 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 			BUG("failed to perform bitmap walk");
 	}
 
-	wants_bitmap = find_objects(bitmap_git, revs, wants, haves_bitmap);
+	wants_bitmap = find_objects(bitmap_git, revs, wants, haves_bitmap,
+				    filter);
 
 	if (!wants_bitmap)
 		BUG("failed to perform bitmap walk");
