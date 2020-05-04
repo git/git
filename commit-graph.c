@@ -271,8 +271,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		if (data + graph_size - chunk_lookup <
 		    GRAPH_CHUNKLOOKUP_WIDTH) {
 			error(_("commit-graph chunk lookup table entry missing; file may be incomplete"));
-			free(graph);
-			return NULL;
+			goto free_and_return;
 		}
 
 		chunk_id = get_be32(chunk_lookup + 0);
@@ -283,8 +282,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		if (chunk_offset > graph_size - the_hash_algo->rawsz) {
 			error(_("commit-graph improper chunk offset %08x%08x"), (uint32_t)(chunk_offset >> 32),
 			      (uint32_t)chunk_offset);
-			free(graph);
-			return NULL;
+			goto free_and_return;
 		}
 
 		switch (chunk_id) {
@@ -351,8 +349,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 
 		if (chunk_repeated) {
 			error(_("commit-graph chunk id %08x appears multiple times"), chunk_id);
-			free(graph);
-			return NULL;
+			goto free_and_return;
 		}
 
 		if (last_chunk_id == GRAPH_CHUNKID_OIDLOOKUP)
@@ -371,17 +368,20 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		/* We need both the bloom chunks to exist together. Else ignore the data */
 		graph->chunk_bloom_indexes = NULL;
 		graph->chunk_bloom_data = NULL;
-		graph->bloom_filter_settings = NULL;
+		FREE_AND_NULL(graph->bloom_filter_settings);
 	}
 
 	hashcpy(graph->oid.hash, graph->data + graph->data_len - graph->hash_len);
 
-	if (verify_commit_graph_lite(graph)) {
-		free(graph);
-		return NULL;
-	}
+	if (verify_commit_graph_lite(graph))
+		goto free_and_return;
 
 	return graph;
+
+free_and_return:
+	free(graph->bloom_filter_settings);
+	free(graph);
+	return NULL;
 }
 
 static struct commit_graph *load_commit_graph_one(const char *graph_file,
