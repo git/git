@@ -106,12 +106,12 @@ commit or stash your changes before running 'git merge'.
 `MERGE_HEAD` is present unless `MERGE_AUTOSTASH` is also present in
 which case 'git merge --abort' applies the stash entry to the worktree
 whereas 'git reset --merge' will save the stashed changes in the stash
-reflog.
+list.
 
 --quit::
 	Forget about the current merge in progress. Leave the index
 	and the working tree as-is. If `MERGE_AUTOSTASH` is present, the
-	stash entry will be saved to the stash reflog.
+	stash entry will be saved to the stash list.
 
 --continue::
 	After a 'git merge' stops due to conflicts you can conclude the
