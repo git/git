@@ -366,6 +366,51 @@ test_expect_success 'match percent-encoded values' '
 	EOF
 '
 
+test_expect_success 'match percent-encoded UTF-8 values in path' '
+	test_config credential.https://example.com.useHttpPath true &&
+	test_config credential.https://example.com/perú.git.helper "$HELPER" &&
+	check fill <<-\EOF
+	url=https://example.com/per%C3%BA.git
+	--
+	protocol=https
+	host=example.com
+	path=perú.git
+	username=foo
+	password=bar
+	--
+	EOF
+'
+
+test_expect_success 'match percent-encoded values in username' '
+	test_config credential.https://user%2fname@example.com/foo/bar.git.helper "$HELPER" &&
+	check fill <<-\EOF
+	url=https://user%2fname@example.com/foo/bar.git
+	--
+	protocol=https
+	host=example.com
+	username=foo
+	password=bar
+	--
+	EOF
+'
+
+test_expect_success 'fetch with multiple path components' '
+	test_unconfig credential.helper &&
+	test_config credential.https://example.com/foo/repo.git.helper "verbatim foo bar" &&
+	check fill <<-\EOF
+	url=https://example.com/foo/repo.git
+	--
+	protocol=https
+	host=example.com
+	username=foo
+	password=bar
+	--
+	verbatim: get
+	verbatim: protocol=https
+	verbatim: host=example.com
+	EOF
+'
+
 test_expect_success 'pull username from config' '
 	test_config credential.https://example.com.username foo &&
 	check fill <<-\EOF
