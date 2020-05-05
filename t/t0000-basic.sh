@@ -98,6 +98,7 @@ _run_sub_test_lib_test_common () {
 		export TEST_DIRECTORY &&
 		TEST_OUTPUT_DIRECTORY=$(pwd) &&
 		export TEST_OUTPUT_DIRECTORY &&
+		sane_unset GIT_TEST_FAIL_PREREQS &&
 		if test -z "$neg"
 		then
 			./"$name.sh" "$@" >out 2>err
