@@ -654,4 +654,42 @@ test_expect_success 'url parser not confused by encoded markers' '
 		"example.com#?/" foo.git
 '
 
+test_expect_success 'credential config with partial URLs' '
+	echo "echo password=yep" | write_script git-credential-yep &&
+	test_write_lines url=https://user@example.com/repo.git >stdin &&
+	for partial in \
+		example.com \
+		user@example.com \
+		https:// \
+		https://example.com \
+		https://example.com/ \
+		https://user@example.com \
+		https://user@example.com/ \
+		https://example.com/repo.git \
+		https://user@example.com/repo.git \
+		/repo.git
+	do
+		git -c credential.$partial.helper=yep \
+			credential fill <stdin >stdout &&
+		grep yep stdout ||
+		return 1
+	done &&
+
+	for partial in \
+		dont.use.this \
+		http:// \
+		/repo
+	do
+		git -c credential.$partial.helper=yep \
+			credential fill <stdin >stdout &&
+		! grep yep stdout ||
+		return 1
+	done &&
+
+	git -c credential.$partial.helper=yep \
+		-c credential.with%0anewline.username=uh-oh \
+		credential fill <stdin >stdout 2>stderr &&
+	test_i18ngrep "skipping credential lookup for key" stderr
+'
+
 test_done

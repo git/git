@@ -37,6 +37,10 @@ int credential_match(const struct credential *want,
 #undef CHECK
 }
 
+
+static int credential_from_potentially_partial_url(struct credential *c,
+						   const char *url);
+
 static int credential_config_callback(const char *var, const char *value,
 				      void *data)
 {
@@ -377,8 +381,31 @@ static int check_url_component(const char *url, int quiet,
 	return -1;
 }
 
-int credential_from_url_gently(struct credential *c, const char *url,
-			       int quiet)
+/*
+ * Potentially-partial URLs can, but do not have to, contain
+ *
+ * - a protocol (or scheme) of the form "<protocol>://"
+ *
+ * - a host name (the part after the protocol and before the first slash after
+ *   that, if any)
+ *
+ * - a user name and potentially a password (as "<user>[:<password>]@" part of
+ *   the host name)
+ *
+ * - a path (the part after the host name, if any, starting with the slash)
+ *
+ * Missing parts will be left unset in `struct credential`. Thus, `https://`
+ * will have only the `protocol` set, `example.com` only the host name, and
+ * `/git` only the path.
+ *
+ * Note that an empty host name in an otherwise fully-qualified URL (e.g.
+ * `cert:///path/to/cert.pem`) will be treated as unset if we expect the URL to
+ * be potentially partial, and only then (otherwise, the empty string is used).
+ *
+ * The credential_from_url() function does not allow partial URLs.
+ */
+static int credential_from_url_1(struct credential *c, const char *url,
+				 int allow_partial_url, int quiet)
 {
 	const char *at, *colon, *cp, *slash, *host, *proto_end;
 
@@ -391,12 +418,12 @@ int credential_from_url_gently(struct credential *c, const char *url,
 	 *   (3) proto://<user>:<pass>@<host>/...
 	 */
 	proto_end = strstr(url, "://");
-	if (!proto_end || proto_end == url) {
+	if (!allow_partial_url && (!proto_end || proto_end == url)) {
 		if (!quiet)
 			warning(_("url has no scheme: %s"), url);
 		return -1;
 	}
-	cp = proto_end + 3;
+	cp = proto_end ? proto_end + 3 : url;
 	at = strchr(cp, '@');
 	colon = strchr(cp, ':');
 
@@ -427,8 +454,10 @@ int credential_from_url_gently(struct credential *c, const char *url,
 		host = at + 1;
 	}
 
-	c->protocol = xmemdupz(url, proto_end - url);
-	c->host = url_decode_mem(host, slash - host);
+	if (proto_end && proto_end - url > 0)
+		c->protocol = xmemdupz(url, proto_end - url);
+	if (!allow_partial_url || slash - host > 0)
+		c->host = url_decode_mem(host, slash - host);
 	/* Trim leading and trailing slashes from path */
 	while (*slash == '/')
 		slash++;
@@ -448,6 +477,17 @@ int credential_from_url_gently(struct credential *c, const char *url,
 		return -1;
 
 	return 0;
+}
+
+static int credential_from_potentially_partial_url(struct credential *c,
+						   const char *url)
+{
+	return credential_from_url_1(c, url, 1, 0);
+}
+
+int credential_from_url_gently(struct credential *c, const char *url, int quiet)
+{
+	return credential_from_url_1(c, url, 0, quiet);
 }
 
 void credential_from_url(struct credential *c, const char *url)
