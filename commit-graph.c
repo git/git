@@ -1576,7 +1576,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	if (ctx->split) {
 		char *lock_name = get_chain_filename(ctx->odb);
 
-		hold_lock_file_for_update(&lk, lock_name, LOCK_DIE_ON_ERROR);
+		hold_lock_file_for_update_mode(&lk, lock_name,
+					       LOCK_DIE_ON_ERROR, 0444);
 
 		fd = git_mkstemp_mode(ctx->graph_name, 0444);
 		if (fd < 0) {
@@ -1584,9 +1585,16 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			return -1;
 		}
 
+		if (adjust_shared_perm(ctx->graph_name)) {
+			error(_("unable to adjust shared permissions for '%s'"),
+			      ctx->graph_name);
+			return -1;
+		}
+
 		f = hashfd(fd, ctx->graph_name);
 	} else {
-		hold_lock_file_for_update(&lk, ctx->graph_name, LOCK_DIE_ON_ERROR);
+		hold_lock_file_for_update_mode(&lk, ctx->graph_name,
+					       LOCK_DIE_ON_ERROR, 0444);
 		fd = lk.tempfile->fd;
 		f = hashfd(lk.tempfile->fd, lk.tempfile->filename.buf);
 	}

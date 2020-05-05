@@ -37,6 +37,10 @@ graph_read_expect() {
 	test_cmp expect output
 }
 
+test_expect_success POSIXPERM 'tweak umask for modebit tests' '
+	umask 022
+'
+
 test_expect_success 'create commits and write commit-graph' '
 	for i in $(test_seq 3)
 	do
@@ -400,5 +404,25 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'handles file descriptor exhaustion'
 		done
 	)
 '
+
+while read mode modebits
+do
+	test_expect_success POSIXPERM "split commit-graph respects core.sharedrepository $mode" '
+		rm -rf $graphdir $infodir/commit-graph &&
+		git reset --hard commits/1 &&
+		test_config core.sharedrepository "$mode" &&
+		git commit-graph write --split --reachable &&
+		ls $graphdir/graph-*.graph >graph-files &&
+		test_line_count = 1 graph-files &&
+		echo "$modebits" >expect &&
+		test_modebits $graphdir/graph-*.graph >actual &&
+		test_cmp expect actual &&
+		test_modebits $graphdir/commit-graph-chain >actual &&
+		test_cmp expect actual
+	'
+done <<\EOF
+0666 -r--r--r--
+0600 -r--------
+EOF
 
 test_done

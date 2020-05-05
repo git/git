@@ -51,8 +51,10 @@ test_expect_success 'setup' '
 	done &&
 	git commit-graph write --reachable &&
 	mv .git/objects/info/commit-graph commit-graph-full &&
+	chmod u+w commit-graph-full &&
 	git show-ref -s commit-5-5 | git commit-graph write --stdin-commits &&
 	mv .git/objects/info/commit-graph commit-graph-half &&
+	chmod u+w commit-graph-half &&
 	git config core.commitGraph true
 '
 
