@@ -2600,12 +2600,12 @@ proc toggle_or_diff {mode w args} {
 			update_indexinfo \
 				"Unstaging [short_path $path] from commit" \
 				[list $path] \
-				[concat $after [list ui_ready]]
+				[concat $after {ui_ready;}]
 		} elseif {$w eq $ui_workdir} {
 			update_index \
 				"Adding [short_path $path]" \
 				[list $path] \
-				[concat $after [list ui_ready]]
+				[concat $after {ui_ready;}]
 		}
 	} else {
 		set selected_paths($path) 1
