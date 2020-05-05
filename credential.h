@@ -177,8 +177,8 @@ void credential_write(const struct credential *, FILE *);
  * Parse a url into a credential struct, replacing any existing contents.
  *
  * If the url can't be parsed (e.g., a missing "proto://" component), the
- * resulting credential will be empty but we'll still return success from the
- * "gently" form.
+ * resulting credential will be empty and the function will return an
+ * error (even in the "gently" form).
  *
  * If we encounter a component which cannot be represented as a credential
  * value (e.g., because it contains a newline), the "gently" form will return
