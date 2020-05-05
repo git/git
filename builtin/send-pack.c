@@ -165,9 +165,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('n' , "dry-run", &dry_run, N_("dry run")),
 		OPT_BOOL(0, "mirror", &send_mirror, N_("mirror all refs")),
 		OPT_BOOL('f', "force", &force_update, N_("force updates")),
-		{ OPTION_CALLBACK,
-		  0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
-		  PARSE_OPT_OPTARG, option_parse_push_signed },
+		OPT_CALLBACK_F(0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
+		  PARSE_OPT_OPTARG, option_parse_push_signed),
 		OPT_STRING_LIST(0, "push-option", &push_options,
 				N_("server-specific"),
 				N_("option to transmit")),
@@ -177,10 +176,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "stateless-rpc", &stateless_rpc, N_("use stateless RPC protocol")),
 		OPT_BOOL(0, "stdin", &from_stdin, N_("read refs from stdin")),
 		OPT_BOOL(0, "helper-status", &helper_status, N_("print status from remote helper")),
-		{ OPTION_CALLBACK,
-		  0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
+		OPT_CALLBACK_F(0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
 		  N_("require old value of ref to be at this value"),
-		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
+		  PARSE_OPT_OPTARG, parseopt_push_cas_option),
 		OPT_END()
 	};
 
