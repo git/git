@@ -1,20 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2020, #01; Fri, 1)
-X-master-at: b34789c0b0d3b137f0bb516b417bd8d75e0cb306
-X-next-at: 232c24e857ed6ddde51b0435add1905f58948aec
+Subject: What's cooking in git.git (May 2020, #02; Tue, 5)
+X-master-at: 07d8ea56f2ecb64b75b92264770c0a664231ce17
+X-next-at: 55c56c9c57da646085d27e61a3420043978ab4a1
 
-What's cooking in git.git (May 2020, #01; Fri, 1)
+What's cooking in git.git (May 2020, #02; Tue, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The sixth batch merged quite a few topics to 'master'; they haven't
-spent the usual "at least a week" in the 'next' branch, but all of
-them looked quite safe and benign.  Knock wood.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,6 +19,24 @@ of the repositories listed at
 
 --------------------------------------------------
 [Graduated to "master"]
+
+* bc/wildcard-credential (2020-04-27) 1 commit
+  (merged to 'next' on 2020-04-28 at 1a0d6b91dc)
+ + credential: fix matching URLs with multiple levels in path
+
+ Update the parser used for credential.<URL>.<variable>
+ configuration, to handle <URL>s with '/' in them correctly.
+
+
+* dd/iso-8601-updates (2020-04-24) 4 commits
+  (merged to 'next' on 2020-04-28 at 18fba39171)
+ + date.c: allow compact version of ISO-8601 datetime
+ + date.c: skip fractional second part of ISO-8601
+ + date.c: validate and set time in a helper function
+ + date.c: s/is_date/set_date/
+
+ The approxidate parser learns to parse seconds with fraction.
+
 
 * dd/mailinfo-with-nul (2020-04-22) 3 commits
   (merged to 'next' on 2020-04-28 at b1d3e40d49)
@@ -42,6 +56,20 @@ of the repositories listed at
  + test-parse-pathspec-file.c: s/0/NULL/ for pointer type
 
  Compilation fix.
+
+
+* dl/opt-callback-cleanup (2020-04-28) 1 commit
+  (merged to 'next' on 2020-04-28 at aa773e183a)
+ + Use OPT_CALLBACK and OPT_CALLBACK_F
+
+ Code cleanup.
+
+
+* dl/push-recurse-submodules-fix (2020-04-28) 1 commit
+  (merged to 'next' on 2020-04-28 at c2cd20ef9e)
+ + push: unset PARSE_OPT_OPTARG for --recurse-submodules
+
+ Code cleanup.
 
 
 * dl/test-must-fail-fixes-4 (2020-04-20) 7 commits
@@ -153,12 +181,42 @@ of the repositories listed at
  cf. <20200428033611.GB2369457@coredump.intra.peff.net>
 
 
+* jk/test-fail-prereqs-fix (2020-04-28) 1 commit
+  (merged to 'next' on 2020-04-28 at 75787711c0)
+ + t0000: disable GIT_TEST_FAIL_PREREQS in sub-tests
+
+ Test update.
+
+
 * js/anonymise-push-url-in-errors (2020-04-28) 1 commit
   (merged to 'next' on 2020-04-28 at 49539cf116)
  + push: anonymize URLs in error messages and warnings
 
  Error and verbose trace messages from "git push" did not redact
  credential material embedded in URLs.
+
+
+* js/partial-urlmatch (2020-04-29) 3 commits
+  (merged to 'next' on 2020-05-01 at e7017fcfd1)
+ + Sync with js/partial-urlmatch-2.17
+ + credential: handle `credential.<partial-URL>.<key>` again
+ + credential: optionally allow partial URLs in credential_from_url_gently()
+ (this branch uses js/partial-urlmatch-2.17.)
+
+ The same as js/partial-urlmatch-2.17, built on more recent codebase
+ to avoid unnecessary merge conflicts.
+
+
+* js/partial-urlmatch-2.17 (2020-04-29) 3 commits
+  (merged to 'next' on 2020-05-01 at 7c69571f89)
+ + credential: handle `credential.<partial-URL>.<key>` again
+ + credential: optionally allow partial URLs in credential_from_url_gently()
+ + credential: fix grammar
+ (this branch is used by js/partial-urlmatch.)
+
+ Recent updates broke parsing of "credential.<url>.<key>" where
+ <url> is not a full URL (e.g. [credential "https://"] helper = ...)
+ stopped working, which has been corrected.
 
 
 * jt/v2-fetch-nego-fix (2020-04-28) 3 commits
@@ -190,6 +248,19 @@ of the repositories listed at
 
  The commit-graph code exhausted file descriptors easily when it
  does not have to.
+
+
+* tb/commit-graph-perm-bits (2020-04-29) 5 commits
+  (merged to 'next' on 2020-04-29 at 66a87c1fbc)
+ + commit-graph.c: make 'commit-graph-chain's read-only
+ + commit-graph.c: ensure graph layers respect core.sharedRepository
+ + commit-graph.c: write non-split graphs as read-only
+ + lockfile.c: introduce 'hold_lock_file_for_update_mode'
+ + tempfile.c: introduce 'create_tempfile_mode'
+
+ Some of the files commit-graph subsystem keeps on disk did not
+ correctly honor the core.sharedRepository settings and some were
+ left read-write.
 
 
 * tb/commit-graph-split-strategy (2020-04-29) 8 commits
@@ -237,14 +308,17 @@ of the repositories listed at
  "git log -L..." now takes advantage of the "which paths are touched
  by this commit?" info stored in the commit-graph system.
 
+ Expecting a reroll.
+ cf. <4b7e5f51-9fdb-45ac-123e-2589087afa48@gmail.com>
 
-* es/restore-staged-from-head-by-default (2020-05-01) 3 commits
- - restore: default to HEAD when combining --worktree and --staged
- - fixup! restore: require --source when combining --worktree and --staged
- - restore: require --source when combining --worktree and --staged
+
+* es/restore-staged-from-head-by-default (2020-05-05) 1 commit
+ - restore: default to HEAD when combining --staged and --worktree
 
  "git restore --staged --worktree" now defaults to take the contents
  out of "HEAD", instead of erroring out.
+
+ Will merge to 'next'.
 
 
 * jk/credential-sample-update (2020-05-01) 2 commits
@@ -256,6 +330,145 @@ of the repositories listed at
  file, by adding appropriate quotes as needed..
 
  Will merge to 'next'.
+
+
+* jk/for-each-ref-multi-key-sort-fix (2020-05-04) 2 commits
+ - ref-filter: apply fallback refname sort only after all user sorts
+ - ref-filter: apply --ignore-case to all sorting keys
+
+ "git branch" and other "for-each-ref" variants accepted multiple
+ --sort=<key> options in the increasing order of precedence, but it
+ had a few breakages around "--ignore-case" handling, and tiebreaking
+ with the refname, which have been fixed.
+
+ Will merge to 'next'.
+
+
+* js/rebase-autosquash-double-fixup-fix (2020-05-04) 1 commit
+ - rebase --autosquash: fix a potential segfault
+
+ "rebase -i" segfaulted when rearranging a sequence that has a
+ fix-up that applies another fix-up (which may or may not be a
+ fix-up of yet another step).
+
+ Under review.
+ cf. <pull.625.git.1588624804554.gitgitgadget@gmail.com>
+
+
+* jt/commit-graph-plug-memleak (2020-05-04) 1 commit
+ - commit-graph: avoid memory leaks
+
+ Fix a leak noticed by fuzzer.
+
+ Will merge to 'next'.
+
+
+* cb/credential-doc-fixes (2020-05-04) 4 commits
+ - credential: document protocol updates
+ - credential: update gitcredentials documentation
+ - credential: correct order of parameters for credential_match
+ - credential: update description for credential_from_url_gently
+
+ Minor in-code comments and documentation updates around credential
+ API.
+
+ Needs review.
+ cf. <20200505013908.4596-1-carenas@gmail.com>
+
+
+* ds/sparse-allow-empty-working-tree (2020-05-04) 1 commit
+ - sparse-checkout: stop blocking empty workdirs
+
+ The sparse-checkout patterns have been forbidden from excluding all
+ paths, leaving an empty working tree, for a long time.  This
+ limitation has been lifted.
+
+ Will merge to 'next'.
+
+
+* jk/arith-expansion-coding-guidelines (2020-05-04) 1 commit
+ - CodingGuidelines: drop arithmetic expansion advice to use "$x"
+
+ The coding guideline for shell scripts instructed to refer to a
+ variable with dollar-sign inside airthmetic expansion to work
+ around a bug in old versions of dash, which is a thing of the past.
+ Now we are not forbidden from writing $((var+1)).
+
+ Will merge to 'next'.
+
+
+* tb/bitmap-walk-with-tree-zero-filter (2020-05-04) 4 commits
+ - pack-bitmap: pass object filter to fill-in traversal
+ - pack-bitmap.c: support 'tree:0' filtering
+ - pack-bitmap.c: make object filtering functions generic
+ - list-objects-filter: treat NULL filter_options as "disabled"
+
+ The object walk with object filter "--filter=tree:0" can now take
+ advantage of the pack bitmap when available.
+
+ Will merge to 'next'.
+
+
+* tb/commit-graph-no-check-oids (2020-05-04) 8 commits
+ - commit-graph: drop COMMIT_GRAPH_WRITE_CHECK_OIDS flag
+ - t5318: reorder test below 'graph_read_expect'
+ - commit-graph.c: simplify 'fill_oids_from_commits'
+ - builtin/commit-graph.c: dereference tags in builtin
+ - builtin/commit-graph.c: extract 'read_one_commit()'
+ - commit-graph.c: peel refs in 'add_ref_to_set'
+ - commit-graph.c: show progress of finding reachable commits
+ - commit-graph.c: extract 'refs_cb_data'
+
+ Clean-up the commit-graph codepath.
+
+ Expecting a reroll
+ cf. <20200505161649.GG69300@syl.local>
+
+
+* cb/avoid-colliding-with-netbsd-hmac (2020-05-05) 1 commit
+ - builtin/receive-pack: avoid generic function name hmac()
+
+ The <stdlib.h> header on NetBSD brings in its own definition of
+ hmac() function (eek), which conflicts with our own and unrelated
+ function with the same name.  Our function has been renamed to work
+ around the issue.
+
+ Will merge to 'next'.
+
+
+* dl/doc-stash-remove-mention-of-reflog (2020-05-05) 1 commit
+ - Doc: reference the "stash list" in autostash docs
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* dl/test-must-fail-fixes-5 (2020-05-05) 4 commits
+ - lib-submodule-update: pass OVERWRITING_FAIL
+ - lib-submodule-update: prepend "git" to $command
+ - lib-submodule-update: consolidate --recurse-submodules
+ - lib-submodule-update: add space after function name
+
+ The effort to avoid using test_must_fail on non-git command continues.
+
+ Needs review.
+ cf. <cover.1588162842.git.liu.denton@gmail.com>
+
+
+* dd/ci-only-on-selective-branches (2020-05-05) 2 commits
+ - CI: limit GitHub Actions to designated branches
+ - SubmittingPatches: advertise GitHub Actions CI
+
+ Instead of always building all branches of all forks of our project
+ at GitHub via GitHub Actions, only build when branches with known
+ and specific names are updated, and also a pull request.
+
+ Expecting an update.
+ cf. <cover.1588695295.git.congdanhqx@gmail.com>
+ The description talks too much about helping (or not getting in the
+ way of) the current maintainer, but the focus should instead be
+ general contributors.
 
 --------------------------------------------------
 [Stalled]
@@ -270,9 +483,10 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* cb/credential-store-warn-bogus-lines (2020-04-30) 2 commits
- - credential-store: warn instead of fatal for bogus lines from store
- - credential-store: document the file format a bit more
+* cb/credential-store-ignore-bogus-lines (2020-05-02) 2 commits
+  (merged to 'next' on 2020-05-05 at 5b919ec5d6)
+ + credential-store: ignore bogus lines from store file
+ + credential-store: document the file format a bit more
 
  With the recent tightening of the code that is used to parse
  various parts of a URL for use in the credential subsystem, a
@@ -280,20 +494,18 @@ of the repositories listed at
  die, which is a bit too harsh to the users.  Demote the error
  behaviour to only warn and keep using well-formed lines instead.
 
- Expecting a final reroll.
- It seems that we decided to do absolute minimum to avoid doing any
- unnecessary harm.  Ignore malformed lines but without warning.
- cf. <20200501135757.GF33264@Carlos-MBP>
+ Will merge to 'master'.
 
 
 * dl/switch-c-option-in-error-message (2020-04-30) 1 commit
- - switch: fix errors and comments related to -c and -C
+  (merged to 'next' on 2020-05-05 at 472db48735)
+ + switch: fix errors and comments related to -c and -C
 
  In error messages that "git switch" mentions its option to create a
  new branch, "-b/-B" options were shown, where "-c/-C" options
  should be, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/bugreport-with-hooks (2020-04-30) 2 commits
@@ -306,32 +518,24 @@ of the repositories listed at
 
 
 * tb/shallow-cleanup (2020-04-30) 4 commits
- - shallow: use struct 'shallow_lock' for additional safety
- - shallow.h: document '{commit,rollback}_shallow_file'
- - shallow: extract a header file for shallow-related functions
- - commit: make 'commit_graft_pos' non-static
+  (merged to 'next' on 2020-05-05 at 647588a8bd)
+ + shallow: use struct 'shallow_lock' for additional safety
+ + shallow.h: document '{commit,rollback}_shallow_file'
+ + shallow: extract a header file for shallow-related functions
+ + commit: make 'commit_graft_pos' non-static
 
  Code cleanup.
-
- Will merge to 'next'.
-
-
-* bc/wildcard-credential (2020-04-27) 1 commit
-  (merged to 'next' on 2020-04-28 at 1a0d6b91dc)
- + credential: fix matching URLs with multiple levels in path
-
- Update the parser used for credential.<URL>.<variable>
- configuration, to handle <URL>s with '/' in them correctly.
 
  Will merge to 'master'.
 
 
-* ah/userdiff-markdown (2020-04-30) 1 commit
- - userdiff: support Markdown
+* ah/userdiff-markdown (2020-05-02) 1 commit
+  (merged to 'next' on 2020-05-05 at b8e64b75d0)
+ + userdiff: support Markdown
 
  The userdiff patterns for Markdown documents have been added.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mr/bisect-in-c-2 (2020-04-23) 12 commits
@@ -350,34 +554,7 @@ of the repositories listed at
 
  Rewrite of the remainder of "git bisect" script in C continues.
 
- Any volunteer to review this?
-
-
-* js/partial-urlmatch-2.17 (2020-04-29) 3 commits
-  (merged to 'next' on 2020-05-01 at 7c69571f89)
- + credential: handle `credential.<partial-URL>.<key>` again
- + credential: optionally allow partial URLs in credential_from_url_gently()
- + credential: fix grammar
- (this branch is used by js/partial-urlmatch.)
-
- Recent updates broke parsing of "credential.<url>.<key>" where
- <url> is not a full URL (e.g. [credential "https://"] helper = ...)
- stopped working, which has been corrected.
-
- Will merge to 'master'.
-
-
-* js/partial-urlmatch (2020-04-29) 3 commits
-  (merged to 'next' on 2020-05-01 at e7017fcfd1)
- + Sync with js/partial-urlmatch-2.17
- + credential: handle `credential.<partial-URL>.<key>` again
- + credential: optionally allow partial URLs in credential_from_url_gently()
- (this branch uses js/partial-urlmatch-2.17.)
-
- The same as js/partial-urlmatch-2.17, built on more recent codebase
- to avoid unnecessary merge conflicts.
-
- Will merge to 'master'.
+ Needs review.
 
 
 * jk/complete-git-switch (2020-04-28) 11 commits
@@ -396,47 +573,7 @@ of the repositories listed at
  The command line completion (in contrib/) learned to complete
  options that the "git switch" command takes.
 
-
-* tb/commit-graph-perm-bits (2020-04-29) 5 commits
-  (merged to 'next' on 2020-04-29 at 66a87c1fbc)
- + commit-graph.c: make 'commit-graph-chain's read-only
- + commit-graph.c: ensure graph layers respect core.sharedRepository
- + commit-graph.c: write non-split graphs as read-only
- + lockfile.c: introduce 'hold_lock_file_for_update_mode'
- + tempfile.c: introduce 'create_tempfile_mode'
-
- Some of the files commit-graph subsystem keeps on disk did not
- correctly honor the core.sharedRepository settings and some were
- left read-write.
-
- Will merge to 'master'.
-
-
-* dl/opt-callback-cleanup (2020-04-28) 1 commit
-  (merged to 'next' on 2020-04-28 at aa773e183a)
- + Use OPT_CALLBACK and OPT_CALLBACK_F
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* dl/push-recurse-submodules-fix (2020-04-28) 1 commit
-  (merged to 'next' on 2020-04-28 at c2cd20ef9e)
- + push: unset PARSE_OPT_OPTARG for --recurse-submodules
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* jk/test-fail-prereqs-fix (2020-04-28) 1 commit
-  (merged to 'next' on 2020-04-28 at 75787711c0)
- + t0000: disable GIT_TEST_FAIL_PREREQS in sub-tests
-
- Test update.
-
- Will merge to 'master'.
+ Needs review.
 
 
 * dr/push-remoteref-fix (2020-04-23) 1 commit
@@ -461,36 +598,28 @@ of the repositories listed at
 
  "git rebase -i" learns a bit more options.
 
-
-* dd/iso-8601-updates (2020-04-24) 4 commits
-  (merged to 'next' on 2020-04-28 at 18fba39171)
- + date.c: allow compact version of ISO-8601 datetime
- + date.c: skip fractional second part of ISO-8601
- + date.c: validate and set time in a helper function
- + date.c: s/is_date/set_date/
-
- The approxidate parser learns to parse seconds with fraction.
-
- Will merge to 'master'.
+ Needs review.
 
 
-* jx/proc-receive-hook (2020-04-15) 8 commits
- - SQUASH???
+* jx/proc-receive-hook (2020-05-05) 7 commits
  - doc: add documentation for the proc-receive hook
  - receive-pack: new config receive.procReceiveRefs
  - refs.c: refactor to reuse ref_is_hidden()
- - send-pack: extension for client-side status report
+ - receive-pack: feed report options to post-receive
+ - New capability "report-status-v2" for git-push
  - receive-pack: add new proc-receive hook
- - connect: export parse_feature_value()
  - transport: not report a non-head push as a branch
 
  "git receive-pack" that accepts requests by "git push" learned to
  outsource most of the ref updates to the new "proc-receive" hook.
 
+ Needs review.
 
-* hn/reftable (2020-04-27) 12 commits
+
+* hn/reftable (2020-05-04) 12 commits
  - t: use update-ref and show-ref to reading/writing refs
  - Add some reftable testing infrastructure
+ - vcxproj: adjust for the reftable changes
  - Reftable support for git-core
  - Add reftable library
  - reftable: clarify how empty tables should be written
@@ -498,7 +627,6 @@ of the repositories listed at
  - reftable: file format documentation
  - Add .gitattributes for the reftable/ directory
  - refs: document how ref_iterator_advance_fn should handle symrefs
- - create .git/refs in files-backend.c
  - Iterate over the "refs/" namespace in for_each_[raw]ref
  - refs.h: clarify reflog iteration order
 
@@ -507,9 +635,7 @@ of the repositories listed at
  has been implemented and integrated for improved performance and
  atomicity.
 
- At v10.  VCbuild may have to be updated to deal with the new lib.
- cf. https://github.com/git/git/runs/624424705?check_suite_focus=true
- cf. <pull.539.v10.git.1588018418.gitgitgadget@gmail.com>
+ At v11.
 
 --------------------------------------------------
 [Discarded]
@@ -518,3 +644,13 @@ of the repositories listed at
  . credential-store: document the file format a bit more
 
  Now has become a part of Carlo's credential-store fix patches.
+
+
+* js/ci-skip-on-github-workflow (2020-05-02) 1 commit
+ . ci: respect the [skip ci] convention in our GitHub workflow "CI/PR"
+
+ Allow contributors to mark a branch/push that it does not have to
+ be built via GitHub actions, in a way similar to how Travis lets
+ them mark the commits with an embedded "[skip ci]" string.
+
+ Superseded by dd/ci-only-on-selective-branches topic.
