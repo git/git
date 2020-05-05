@@ -96,6 +96,9 @@ UI, Workflows & Features
    check for the paths that were modified at each commit using Bloom
    filters.
 
+ * The approxidate parser learns to parse seconds with fraction and
+   ignore fractional part.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -355,6 +358,20 @@ Fixes since v2.26
    credential material embedded in URLs.
    (merge d192fa5006 js/anonymise-push-url-in-errors later to maint).
 
+ * Update the parser used for credential.<URL>.<variable>
+   configuration, to handle <URL>s with '/' in them correctly.
+   (merge b44d0118ac bc/wildcard-credential later to maint).
+
+ * Recent updates broke parsing of "credential.<url>.<key>" where
+   <url> is not a full URL (e.g. [credential "https://"] helper = ...)
+   stopped working, which has been corrected.
+   (merge 9a121b0d22 js/partial-urlmatch-2.17 later to maint).
+   (merge cd93e6c029 js/partial-urlmatch later to maint).
+
+ * Some of the files commit-graph subsystem keeps on disk did not
+   correctly honor the core.sharedRepository settings and some were
+   left read-write.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
    (merge 7422b2a0a1 sg/commit-slab-clarify-peek later to maint).
@@ -381,3 +398,4 @@ Fixes since v2.26
    (merge 39102cf4fe ms/doc-revision-illustration-fix later to maint).
    (merge 4d9378bfad eb/gitweb-more-trailers later to maint).
    (merge bdccbf7047 mt/doc-worktree-ref later to maint).
+   (merge ce9baf234f dl/push-recurse-submodules-fix later to maint).
