@@ -763,7 +763,6 @@ static int apply_autostash(struct rebase_options *opts)
 static int finish_rebase(struct rebase_options *opts)
 {
 	struct strbuf dir = STRBUF_INIT;
-	const char *argv_gc_auto[] = { "gc", "--auto", NULL };
 	int ret = 0;
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
@@ -773,7 +772,7 @@ static int finish_rebase(struct rebase_options *opts)
 	 * We ignore errors in 'gc --auto', since the
 	 * user should see them.
 	 */
-	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
+	run_auto_gc(!(opts->flags & (REBASE_NO_QUIET|REBASE_VERBOSE)));
 	if (opts->type == REBASE_MERGE) {
 		struct replay_opts replay = REPLAY_OPTS_INIT;
 

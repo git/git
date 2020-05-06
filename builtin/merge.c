@@ -447,7 +447,6 @@ static void finish(struct commit *head_commit,
 		if (verbosity >= 0 && !merge_msg.len)
 			printf(_("No merge message -- not updating HEAD\n"));
 		else {
-			const char *argv_gc_auto[] = { "gc", "--auto", NULL };
 			update_ref(reflog_message.buf, "HEAD", new_head, head,
 				   0, UPDATE_REFS_DIE_ON_ERR);
 			/*
@@ -455,7 +454,7 @@ static void finish(struct commit *head_commit,
 			 * user should see them.
 			 */
 			close_object_store(the_repository->objects);
-			run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
+			run_auto_gc(verbosity < 0);
 		}
 	}
 	if (new_head && show_diffstat) {
