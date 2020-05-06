@@ -1759,7 +1759,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	struct remote *remote = NULL;
 	int result = 0;
 	int prune_tags_ok = 1;
-	struct argv_array argv_gc_auto = ARGV_ARRAY_INIT;
 
 	packet_trace_identity("fetch");
 
@@ -1886,13 +1885,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	close_object_store(the_repository->objects);
 
-	if (enable_auto_gc) {
-		argv_array_pushl(&argv_gc_auto, "gc", "--auto", NULL);
-		if (verbosity < 0)
-			argv_array_push(&argv_gc_auto, "--quiet");
-		run_command_v_opt(argv_gc_auto.argv, RUN_GIT_CMD);
-		argv_array_clear(&argv_gc_auto);
-	}
+	if (enable_auto_gc)
+		run_auto_gc(verbosity < 0);
 
 	return result;
 }

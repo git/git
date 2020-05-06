@@ -218,6 +218,11 @@ LAST_ARG_MUST_BE_NULL
 int run_hook_le(const char *const *env, const char *name, ...);
 int run_hook_ve(const char *const *env, const char *name, va_list args);
 
+/*
+ * Trigger an auto-gc
+ */
+int run_auto_gc(int quiet);
+
 #define RUN_COMMAND_NO_STDIN 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
 #define RUN_COMMAND_STDOUT_TO_STDERR 4

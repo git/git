@@ -1864,3 +1864,16 @@ int run_processes_parallel_tr2(int n, get_next_task_fn get_next_task,
 
 	return result;
 }
+
+int run_auto_gc(int quiet)
+{
+	struct argv_array argv_gc_auto = ARGV_ARRAY_INIT;
+	int status;
+
+	argv_array_pushl(&argv_gc_auto, "gc", "--auto", NULL);
+	if (quiet)
+		argv_array_push(&argv_gc_auto, "--quiet");
+	status = run_command_v_opt(argv_gc_auto.argv, RUN_GIT_CMD);
+	argv_array_clear(&argv_gc_auto);
+	return status;
+}
