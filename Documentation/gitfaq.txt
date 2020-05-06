@@ -223,6 +223,14 @@ a file checked into the repository which is a template or set of defaults which
 can then be copied alongside and modified as appropriate.  This second, modified
 file is usually ignored to prevent accidentally committing it.
 
+[[fetching-and-pulling]]
+How do I know if I want to do a fetch or a pull?::
+	A fetch stores a copy of the latest changes from the remote
+	repository, without modifying the working tree or current branch.
+	You can then at your leisure inspect, merge, rebase on top of, or
+	ignore the upstream changes.  A pull consists of a fetch followed
+	immediately by either a merge or rebase.  See linkgit:git-pull[1].
+
 Hooks
 -----
 
