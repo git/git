@@ -9,7 +9,7 @@
 
 define_commit_slab(bloom_filter_slab, struct bloom_filter);
 
-struct bloom_filter_slab bloom_filters;
+static struct bloom_filter_slab bloom_filters;
 
 struct pathmap_hash_entry {
     struct hashmap_entry entry;
