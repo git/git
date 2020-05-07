@@ -6,7 +6,39 @@ env:
   DEVELOPER: 1
 
 jobs:
+  ci-config:
+      runs-on: ubuntu-latest
+      outputs:
+        enabled: ${{ steps.check-ref.outputs.enabled }}
+      steps:
+        - name: try to clone ci-config branch
+          continue-on-error: true
+          run: |
+            git -c protocol.version=2 clone \
+              --no-tags \
+              --single-branch \
+              -b ci-config \
+              --depth 1 \
+              --no-checkout \
+              --filter=blob:none \
+              https://github.com/${{ github.repository }} \
+              config-repo &&
+              cd config-repo &&
+              git checkout HEAD -- ci/config
+        - id: check-ref
+          name: check whether CI is enabled for ref
+          run: |
+            enabled=yes
+            if test -x config-repo/ci/config/allow-ref &&
+               ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+            then
+              enabled=no
+            fi
+            echo "::set-output name=enabled::$enabled"
+
   windows-build:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
@@ -70,6 +102,8 @@ jobs:
         name: failed-tests-windows
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   vs-build:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
     env:
       MSYSTEM: MINGW64
       NO_PERL: 1
@@ -154,6 +188,8 @@ jobs:
                           ${{matrix.nr}} 10 t[0-9]*.sh)
         "@
   regular:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
     strategy:
       matrix:
         vector:
@@ -189,6 +225,8 @@ jobs:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   dockerized:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
     strategy:
       matrix:
         vector:
@@ -213,6 +251,8 @@ jobs:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   static-analysis:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: StaticAnalysis
     runs-on: ubuntu-latest
@@ -221,6 +261,8 @@ jobs:
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
   documentation:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: Documentation
     runs-on: ubuntu-latest
