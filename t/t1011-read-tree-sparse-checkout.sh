@@ -74,13 +74,19 @@ test_expect_success 'read-tree --no-sparse-checkout with empty .git/info/sparse-
 test_expect_success 'read-tree with empty .git/info/sparse-checkout' '
 	git config core.sparsecheckout true &&
 	echo >.git/info/sparse-checkout &&
-	read_tree_u_must_fail -m -u HEAD &&
+	read_tree_u_must_succeed -m -u HEAD &&
 	git ls-files --stage >result &&
 	test_cmp expected result &&
 	git ls-files -t >result &&
+	cat >expected.swt <<-\EOF &&
+	S init.t
+	S sub/added
+	S sub/addedtoo
+	S subsub/added
+	EOF
 	test_cmp expected.swt result &&
-	test -f init.t &&
-	test -f sub/added
+	! test -f init.t &&
+	! test -f sub/added
 '
 
 test_expect_success 'match directories with trailing slash' '

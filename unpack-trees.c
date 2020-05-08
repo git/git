@@ -1677,8 +1677,6 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	}
 
 	if (!o->skip_sparse_checkout) {
-		int empty_worktree = 1;
-
 		/*
 		 * Sparse checkout loop #2: set NEW_SKIP_WORKTREE on entries not in loop #1
 		 * If they will have NEW_SKIP_WORKTREE, also set CE_SKIP_WORKTREE
@@ -1706,19 +1704,6 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 			if (apply_sparse_checkout(&o->result, ce, o))
 				ret = 1;
-
-			if (!ce_skip_worktree(ce))
-				empty_worktree = 0;
-		}
-		/*
-		 * Sparse checkout is meant to narrow down checkout area
-		 * but it does not make sense to narrow down to empty working
-		 * tree. This is usually a mistake in sparse checkout rules.
-		 * Do not allow users to do that.
-		 */
-		if (o->result.cache_nr && empty_worktree) {
-			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
-			goto done;
 		}
 		if (ret == 1) {
 			/*
@@ -1779,7 +1764,7 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 {
 	enum update_sparsity_result ret = UPDATE_SPARSITY_SUCCESS;
 	struct pattern_list pl;
-	int i, empty_worktree;
+	int i;
 	unsigned old_show_all_errors;
 	int free_pattern_list = 0;
 
@@ -1810,7 +1795,6 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 
 	/* Then loop over entries and update/remove as needed */
 	ret = UPDATE_SPARSITY_SUCCESS;
-	empty_worktree = 1;
 	for (i = 0; i < o->src_index->cache_nr; i++) {
 		struct cache_entry *ce = o->src_index->cache[i];
 
@@ -1824,28 +1808,12 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 
 		if (apply_sparse_checkout(o->src_index, ce, o))
 			ret = UPDATE_SPARSITY_WARNINGS;
-
-		if (!ce_skip_worktree(ce))
-			empty_worktree = 0;
-	}
-
-	/*
-	 * Sparse checkout is meant to narrow down checkout area
-	 * but it does not make sense to narrow down to empty working
-	 * tree. This is usually a mistake in sparse checkout rules.
-	 * Do not allow users to do that.
-	 */
-	if (o->src_index->cache_nr && empty_worktree) {
-		unpack_failed(o, "Sparse checkout leaves no entry on working directory");
-		ret = UPDATE_SPARSITY_INDEX_UPDATE_FAILURES;
-		goto done;
 	}
 
 skip_sparse_checkout:
 	if (check_updates(o, o->src_index))
 		ret = UPDATE_SPARSITY_WORKTREE_UPDATE_FAILURES;
 
-done:
 	display_warning_msgs(o);
 	o->show_all_errors = old_show_all_errors;
 	if (free_pattern_list)
