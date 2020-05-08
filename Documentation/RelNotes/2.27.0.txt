@@ -99,6 +99,15 @@ UI, Workflows & Features
  * The approxidate parser learns to parse seconds with fraction and
    ignore fractional part.
 
+ * The userdiff patterns for Markdown documents have been added.
+
+ * The sparse-checkout patterns have been forbidden from excluding all
+   paths, leaving an empty working tree, for a long time.  This
+   limitation has been lifted.
+
+ * "git restore --staged --worktree" now defaults to take the contents
+   out of "HEAD", instead of erring out.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -372,6 +381,45 @@ Fixes since v2.26
    correctly honor the core.sharedRepository settings and some were
    left read-write.
 
+ * In error messages that "git switch" mentions its option to create a
+   new branch, "-b/-B" options were shown, where "-c/-C" options
+   should be, which has been corrected.
+   (merge 7c16ef7577 dl/switch-c-option-in-error-message later to maint).
+
+ * With the recent tightening of the code that is used to parse
+   various parts of a URL for use in the credential subsystem, a
+   hand-edited credential-store file causes the credential helper to
+   die, which is a bit too harsh to the users.  Demote the error
+   behaviour to just ignore and keep using well-formed lines instead.
+   (merge c03859a665 cb/credential-store-ignore-bogus-lines later to maint).
+
+ * The samples in the credential documentation has been updated to
+   make it clear that we depict what would appear in the .git/config
+   file, by adding appropriate quotes as needed..
+   (merge 177681a07e jk/credential-sample-update later to maint).
+
+ * "git branch" and other "for-each-ref" variants accepted multiple
+   --sort=<key> options in the increasing order of precedence, but it
+   had a few breakages around "--ignore-case" handling, and tie-breaking
+   with the refname, which have been fixed.
+   (merge 7c5045fc18 jk/for-each-ref-multi-key-sort-fix later to maint).
+
+ * The coding guideline for shell scripts instructed to refer to a
+   variable with dollar-sign inside arithmetic expansion to work
+   around a bug in old versions of dash, which is a thing of the past.
+   Now we are not forbidden from writing $((var+1)).
+   (merge 32b5fe7f0e jk/arith-expansion-coding-guidelines later to maint).
+
+ * The <stdlib.h> header on NetBSD brings in its own definition of
+   hmac() function (eek), which conflicts with our own and unrelated
+   function with the same name.  Our function has been renamed to work
+   around the issue.
+   (merge 3013118eb8 cb/avoid-colliding-with-netbsd-hmac later to maint).
+
+ * The basic test did not honor $TEST_SHELL_PATH setting, which has
+   been corrected.
+   (merge 0555e4af58 cb/t0000-use-the-configured-shell later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
    (merge 7422b2a0a1 sg/commit-slab-clarify-peek later to maint).
@@ -399,3 +447,4 @@ Fixes since v2.26
    (merge 4d9378bfad eb/gitweb-more-trailers later to maint).
    (merge bdccbf7047 mt/doc-worktree-ref later to maint).
    (merge ce9baf234f dl/push-recurse-submodules-fix later to maint).
+   (merge 4153274052 bc/doc-credential-helper-value later to maint).
