@@ -1544,6 +1544,9 @@ static struct option *add_checkout_path_options(struct checkout_opts *opts,
 	return newopts;
 }
 
+/* create-branch option (either b or c) */
+static char cb_option = 'b';
+
 static int checkout_main(int argc, const char **argv, const char *prefix,
 			 struct checkout_opts *opts, struct option *options,
 			 const char * const usagestr[])
@@ -1586,7 +1589,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	}
 
 	if ((!!opts->new_branch + !!opts->new_branch_force + !!opts->new_orphan_branch) > 1)
-		die(_("-b, -B and --orphan are mutually exclusive"));
+		die(_("-%c, -%c and --orphan are mutually exclusive"),
+				cb_option, toupper(cb_option));
 
 	if (opts->overlay_mode == 1 && opts->patch_mode)
 		die(_("-p and --overlay are mutually exclusive"));
@@ -1614,7 +1618,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	/*
 	 * From here on, new_branch will contain the branch to be checked out,
 	 * and new_branch_force and new_orphan_branch will tell us which one of
-	 * -b/-B/--orphan is being used.
+	 * -b/-B/-c/-C/--orphan is being used.
 	 */
 	if (opts->new_branch_force)
 		opts->new_branch = opts->new_branch_force;
@@ -1622,7 +1626,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	if (opts->new_orphan_branch)
 		opts->new_branch = opts->new_orphan_branch;
 
-	/* --track without -b/-B/--orphan should DWIM */
+	/* --track without -c/-C/-b/-B/--orphan should DWIM */
 	if (opts->track != BRANCH_TRACK_UNSPECIFIED && !opts->new_branch) {
 		const char *argv0 = argv[0];
 		if (!argc || !strcmp(argv0, "--"))
@@ -1631,7 +1635,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		skip_prefix(argv0, "remotes/", &argv0);
 		argv0 = strchr(argv0, '/');
 		if (!argv0 || !argv0[1])
-			die(_("missing branch name; try -b"));
+			die(_("missing branch name; try -%c"), cb_option);
 		opts->new_branch = argv0 + 1;
 	}
 
@@ -1821,6 +1825,8 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 	options = parse_options_dup(switch_options);
 	options = add_common_options(&opts, options);
 	options = add_common_switch_branch_options(&opts, options);
+
+	cb_option = 'c';
 
 	ret = checkout_main(argc, argv, prefix, &opts,
 			    options, switch_branch_usage);
