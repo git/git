@@ -24,8 +24,8 @@ static int parse_credential_file(const char *fn,
 	}
 
 	while (strbuf_getline_lf(&line, fh) != EOF) {
-		credential_from_url(&entry, line.buf);
-		if (entry.username && entry.password &&
+		if (!credential_from_url_gently(&entry, line.buf, 1) &&
+		    entry.username && entry.password &&
 		    credential_match(c, &entry)) {
 			found_credential = 1;
 			if (match_cb) {
