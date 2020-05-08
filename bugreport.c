@@ -3,6 +3,8 @@
 #include "strbuf.h"
 #include "help.h"
 #include "compat/compiler.h"
+#include "run-command.h"
+
 
 static void get_system_info(struct strbuf *sys_info)
 {
@@ -29,6 +31,53 @@ static void get_system_info(struct strbuf *sys_info)
 	get_compiler_info(sys_info);
 	strbuf_addstr(sys_info, _("libc info: "));
 	get_libc_info(sys_info);
+}
+
+static void get_populated_hooks(struct strbuf *hook_info, int nongit)
+{
+	/*
+	 * NEEDSWORK: Doesn't look like there is a list of all possible hooks;
+	 * so below is a transcription of `git help hooks`. Later, this should
+	 * be replaced with some programmatically generated list (generated from
+	 * doc or else taken from some library which tells us about all the
+	 * hooks)
+	 */
+	static const char *hook[] = {
+		"applypatch-msg",
+		"pre-applypatch",
+		"post-applypatch",
+		"pre-commit",
+		"pre-merge-commit",
+		"prepare-commit-msg",
+		"commit-msg",
+		"post-commit",
+		"pre-rebase",
+		"post-checkout",
+		"post-merge",
+		"pre-push",
+		"pre-receive",
+		"update",
+		"post-receive",
+		"post-update",
+		"push-to-checkout",
+		"pre-auto-gc",
+		"post-rewrite",
+		"sendemail-validate",
+		"fsmonitor-watchman",
+		"p4-pre-submit",
+		"post-index-change",
+	};
+	int i;
+
+	if (nongit) {
+		strbuf_addstr(hook_info,
+			_("not run from a git repository - no hooks to show\n"));
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(hook); i++)
+		if (find_hook(hook[i]))
+			strbuf_addf(hook_info, "%s\n", hook[i]);
 }
 
 static const char * const bugreport_usage[] = {
@@ -113,6 +162,9 @@ int cmd_main(int argc, const char **argv)
 
 	get_header(&buffer, _("System Info"));
 	get_system_info(&buffer);
+
+	get_header(&buffer, _("Enabled Hooks"));
+	get_populated_hooks(&buffer, nongit_ok);
 
 	/* fopen doesn't offer us an O_EXCL alternative, except with glibc. */
 	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY, 0666);
