@@ -384,12 +384,11 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 	grep "want $(cat hash)" trace
 '
 
-# The following two tests must be in this order, or else
-# the first will not fail. It is important that the srv.bare
-# repository did not have tags during clone, but has tags
+# The following two tests must be in this order. It is important that
+# the srv.bare repository did not have tags during clone, but has tags
 # in the fetch.
 
-test_expect_failure 'verify fetch succeeds when asking for new tags' '
+test_expect_success 'verify fetch succeeds when asking for new tags' '
 	git clone --filter=blob:none "file://$(pwd)/srv.bare" tag-test &&
 	for i in I J K
 	do

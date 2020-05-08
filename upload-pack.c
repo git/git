@@ -68,7 +68,6 @@ static const char *pack_objects_hook;
 static int filter_capability_requested;
 static int allow_filter;
 static int allow_ref_in_want;
-static struct list_objects_filter_options filter_options;
 
 static int allow_sideband_all;
 
@@ -103,7 +102,8 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 }
 
 static void create_pack_file(const struct object_array *have_obj,
-			     const struct object_array *want_obj)
+			     const struct object_array *want_obj,
+			     struct list_objects_filter_options *filter_options)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
 	char data[8193], progress[128];
@@ -140,9 +140,9 @@ static void create_pack_file(const struct object_array *have_obj,
 		argv_array_push(&pack_objects.args, "--delta-base-offset");
 	if (use_include_tag)
 		argv_array_push(&pack_objects.args, "--include-tag");
-	if (filter_options.choice) {
+	if (filter_options->choice) {
 		const char *spec =
-			expand_list_objects_filter_spec(&filter_options);
+			expand_list_objects_filter_spec(filter_options);
 		if (pack_objects.use_shell) {
 			struct strbuf buf = STRBUF_INIT;
 			sq_quote_buf(&buf, spec);
@@ -848,7 +848,9 @@ static int process_deepen_not(const char *line, struct string_list *deepen_not, 
 	return 0;
 }
 
-static void receive_needs(struct packet_reader *reader, struct object_array *want_obj)
+static void receive_needs(struct packet_reader *reader,
+			  struct object_array *want_obj,
+			  struct list_objects_filter_options *filter_options)
 {
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
@@ -883,8 +885,8 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 		if (skip_prefix(reader->line, "filter ", &arg)) {
 			if (!filter_capability_requested)
 				die("git upload-pack: filtering capability not negotiated");
-			list_objects_filter_die_if_populated(&filter_options);
-			parse_list_objects_filter(&filter_options, arg);
+			list_objects_filter_die_if_populated(filter_options);
+			parse_list_objects_filter(filter_options, arg);
 			continue;
 		}
 
@@ -1087,10 +1089,13 @@ void upload_pack(struct upload_pack_options *options)
 	struct string_list symref = STRING_LIST_INIT_DUP;
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct packet_reader reader;
+	struct list_objects_filter_options filter_options;
 
 	stateless_rpc = options->stateless_rpc;
 	timeout = options->timeout;
 	daemon_mode = options->daemon_mode;
+
+	memset(&filter_options, 0, sizeof(filter_options));
 
 	git_config(upload_pack_config, NULL);
 
@@ -1114,12 +1119,14 @@ void upload_pack(struct upload_pack_options *options)
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	receive_needs(&reader, &want_obj);
+	receive_needs(&reader, &want_obj, &filter_options);
 	if (want_obj.nr) {
 		struct object_array have_obj = OBJECT_ARRAY_INIT;
 		get_common_commits(&reader, &have_obj, &want_obj);
-		create_pack_file(&have_obj, &want_obj);
+		create_pack_file(&have_obj, &want_obj, &filter_options);
 	}
+
+	list_objects_filter_release(&filter_options);
 }
 
 struct upload_pack_data {
@@ -1133,6 +1140,8 @@ struct upload_pack_data {
 	timestamp_t deepen_since;
 	int deepen_rev_list;
 	int deepen_relative;
+
+	struct list_objects_filter_options filter_options;
 
 	struct packet_writer writer;
 
@@ -1169,6 +1178,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	oid_array_clear(&data->haves);
 	object_array_clear(&data->shallows);
 	string_list_clear(&data->deepen_not, 0);
+	list_objects_filter_release(&data->filter_options);
 }
 
 static int parse_want(struct packet_writer *writer, const char *line,
@@ -1306,8 +1316,8 @@ static void process_args(struct packet_reader *request,
 		}
 
 		if (allow_filter && skip_prefix(arg, "filter ", &p)) {
-			list_objects_filter_die_if_populated(&filter_options);
-			parse_list_objects_filter(&filter_options, p);
+			list_objects_filter_die_if_populated(&data->filter_options);
+			parse_list_objects_filter(&data->filter_options, p);
 			continue;
 		}
 
@@ -1511,7 +1521,7 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 			send_shallow_info(&data, &want_obj);
 
 			packet_writer_write(&data.writer, "packfile\n");
-			create_pack_file(&have_obj, &want_obj);
+			create_pack_file(&have_obj, &want_obj, &data.filter_options);
 			state = FETCH_DONE;
 			break;
 		case FETCH_DONE:
