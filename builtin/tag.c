@@ -485,7 +485,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	}
 	if (!sorting)
 		sorting = ref_default_sorting();
-	sorting->ignore_case = icase;
+	ref_sorting_icase_all(sorting, icase);
 	filter.ignore_case = icase;
 	if (cmdmode == 'l') {
 		int ret;
