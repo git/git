@@ -677,14 +677,16 @@ die () {
 
 file_lineno () {
 	test -z "$GIT_TEST_FRAMEWORK_SELFTEST" && test -n "$BASH" || return 0
-	local i
-	for i in ${!BASH_SOURCE[*]}
-	do
-		case $i,"${BASH_SOURCE[$i]##*/}" in
-		0,t[0-9]*.sh) echo "t/${BASH_SOURCE[$i]}:$LINENO: ${1+$1: }"; return;;
-		*,t[0-9]*.sh) echo "t/${BASH_SOURCE[$i]}:${BASH_LINENO[$(($i-1))]}: ${1+$1: }"; return;;
-		esac
-	done
+	eval '
+		local i
+		for i in ${!BASH_SOURCE[*]}
+		do
+			case $i,"${BASH_SOURCE[$i]##*/}" in
+			0,t[0-9]*.sh) echo "t/${BASH_SOURCE[$i]}:$LINENO: ${1+$1: }"; return;;
+			*,t[0-9]*.sh) echo "t/${BASH_SOURCE[$i]}:${BASH_LINENO[$(($i-1))]}: ${1+$1: }"; return;;
+			esac
+		done
+	'
 }
 
 GIT_EXIT_OK=
