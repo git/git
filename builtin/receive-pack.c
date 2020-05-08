@@ -418,7 +418,7 @@ static int copy_to_sideband(int in, int out, void *arg)
 	return 0;
 }
 
-static void hmac(unsigned char *out,
+static void hmac_hash(unsigned char *out,
 		      const char *key_in, size_t key_len,
 		      const char *text, size_t text_len)
 {
@@ -463,10 +463,10 @@ static char *prepare_push_cert_nonce(const char *path, timestamp_t stamp)
 	unsigned char hash[GIT_MAX_RAWSZ];
 
 	strbuf_addf(&buf, "%s:%"PRItime, path, stamp);
-	hmac(hash, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));
+	hmac_hash(hash, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));
 	strbuf_release(&buf);
 
-	/* RFC 2104 5. HMAC-SHA1-80 */
+	/* RFC 2104 5. HMAC-SHA1 or HMAC-SHA256 */
 	strbuf_addf(&buf, "%"PRItime"-%.*s", stamp, (int)the_hash_algo->hexsz, hash_to_hex(hash));
 	return strbuf_detach(&buf, NULL);
 }
