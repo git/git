@@ -38,6 +38,7 @@ diffpatterns="
 	golang
 	html
 	java
+	markdown
 	matlab
 	objc
 	pascal
