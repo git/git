@@ -22,9 +22,8 @@ The command can also be used to restore the content in the index with
 `--staged`, or restore both the working tree and the index with
 `--staged --worktree`.
 
-By default, the restore sources for working tree and the index are the
-index and `HEAD` respectively. `--source` could be used to specify a
-commit as the restore source.
+By default, if `--staged` is given, the contents are restored from `HEAD`,
+otherwise from the index. Use `--source` to restore from a different commit.
 
 See "Reset, restore and revert" in linkgit:git[1] for the differences
 between the three commands.
@@ -39,10 +38,8 @@ OPTIONS
 	tree. It is common to specify the source tree by naming a
 	commit, branch or tag associated with it.
 +
-If not specified, the default restore source for the working tree is
-the index, and the default restore source for the index is
-`HEAD`. When both `--staged` and `--worktree` are specified,
-`--source` must also be specified.
+If not specified, the contents are restored from `HEAD` if `--staged` is
+given, otherwise from the index.
 
 -p::
 --patch::
