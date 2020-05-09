@@ -973,8 +973,8 @@ test_expect_success '"remote show" does not show symbolic refs' '
 	(
 		cd three &&
 		git remote show origin >output &&
-		! grep "^ *HEAD$" < output &&
-		! grep -i stale < output
+		! grep "^ *HEAD$" <output &&
+		! grep -i stale <output
 	)
 '
 
@@ -1315,7 +1315,7 @@ test_expect_success !WITH_BREAKING_CHANGES 'migrate a remote from named file in 
 		cd seven &&
 		git remote rm origin &&
 		mkdir -p .git/branches &&
-		echo "quux#foom" > .git/branches/origin &&
+		echo "quux#foom" >.git/branches/origin &&
 		git remote rename origin origin &&
 		test_path_is_missing .git/branches/origin &&
 		test "$(git config remote.origin.url)" = "quux" &&
