@@ -58,8 +58,8 @@ sub createProject {
     my $uuid = generate_guid($name);
     $$build_structure{"$prefix${target}_GUID"} = $uuid;
     my $vcxproj = $target;
-    $vcxproj =~ s/(.*\/)?(.*)/$&\/$2.vcxproj/;
-    $vcxproj =~ s/([^\/]*)(\/lib)\/(lib.vcxproj)/$1$2\/$1_$3/;
+    $vcxproj =~ s/(.*\/)?(.*)/$&.proj\/$2.vcxproj/;
+    $vcxproj =~ s/([^\/]*)(\/lib\.proj)\/(lib.vcxproj)/$1$2\/$1_$3/;
     $$build_structure{"$prefix${target}_VCXPROJ"} = $vcxproj;
 
     my @srcs = sort(map("$rel_dir\\$_", @{$$build_structure{"$prefix${name}_SOURCES"}}));
@@ -89,7 +89,9 @@ sub createProject {
     $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
 
-    die "Could not create the directory $target for $label project!\n" unless (-d "$target" || mkdir "$target");
+    my $dir = $vcxproj;
+    $dir =~ s/\/[^\/]*$//;
+    die "Could not create the directory $dir for $label project!\n" unless (-d "$dir" || mkdir "$dir");
 
     open F, ">$vcxproj" or die "Could not open $vcxproj for writing!\n";
     binmode F, ":crlf :utf8";
@@ -236,14 +238,14 @@ EOM
 
       print F << "EOM";
   <ItemGroup>
-    <ProjectReference Include="$cdup\\libgit\\libgit.vcxproj">
+    <ProjectReference Include="$cdup\\libgit.proj\\libgit.vcxproj">
       <Project>$uuid_libgit</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
 EOM
       if (!($name =~ 'xdiff')) {
         print F << "EOM";
-    <ProjectReference Include="$cdup\\xdiff\\lib\\xdiff_lib.vcxproj">
+    <ProjectReference Include="$cdup\\xdiff\\lib.proj\\xdiff_lib.vcxproj">
       <Project>$uuid_xdiff_lib</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
@@ -252,7 +254,7 @@ EOM
       if ($name =~ /(test-(line-buffer|svn-fe)|^git-remote-testsvn)\.exe$/) {
         my $uuid_vcs_svn_lib = $$build_structure{"LIBS_vcs-svn/lib_GUID"};
         print F << "EOM";
-    <ProjectReference Include="$cdup\\vcs-svn\\lib\\vcs-svn_lib.vcxproj">
+    <ProjectReference Include="$cdup\\vcs-svn\\lib.proj\\vcs-svn_lib.vcxproj">
       <Project>$uuid_vcs_svn_lib</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
@@ -329,7 +331,7 @@ sub createGlueProject {
 	my $vcxproj = $build_structure{"APPS_${appname}_VCXPROJ"};
 	$vcxproj =~ s/\//\\/g;
         $appname =~ s/.*\///;
-        print F "\"${appname}\", \"${vcxproj}\", \"${uuid}\"";
+        print F "\"${appname}.proj\", \"${vcxproj}\", \"${uuid}\"";
         print F "$SLN_POST";
     }
     foreach (@libs) {
@@ -339,7 +341,7 @@ sub createGlueProject {
         my $vcxproj = $build_structure{"LIBS_${libname}_VCXPROJ"};
 	$vcxproj =~ s/\//\\/g;
         $libname =~ s/\//_/g;
-        print F "\"${libname}\", \"${vcxproj}\", \"${uuid}\"";
+        print F "\"${libname}.proj\", \"${vcxproj}\", \"${uuid}\"";
         print F "$SLN_POST";
     }
 
