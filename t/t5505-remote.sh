@@ -1155,7 +1155,7 @@ test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file i
 	(
 		cd six &&
 		git remote rm origin &&
-		mkdir .git/branches &&
+		mkdir -p .git/branches &&
 		echo "$origin_url#main" >.git/branches/origin &&
 		git remote rename origin origin &&
 		test_path_is_missing .git/branches/origin &&
@@ -1170,7 +1170,7 @@ test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file i
 	(
 		cd seven &&
 		git remote rm origin &&
-		mkdir .git/branches &&
+		mkdir -p .git/branches &&
 		echo "quux#foom" > .git/branches/origin &&
 		git remote rename origin origin &&
 		test_path_is_missing .git/branches/origin &&
