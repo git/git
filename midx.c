@@ -1370,6 +1370,14 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	struct strbuf base_name = STRBUF_INIT;
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
 
+	/*
+	 * When updating the default for these configuration
+	 * variables in builtin/repack.c, these must be adjusted
+	 * to match.
+	 */
+	int delta_base_offset = 1;
+	int use_delta_islands = 0;
+
 	if (!m)
 		return 0;
 
@@ -1381,11 +1389,19 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	} else if (fill_included_packs_all(m, include_pack))
 		goto cleanup;
 
+	repo_config_get_bool(r, "repack.usedeltabaseoffset", &delta_base_offset);
+	repo_config_get_bool(r, "repack.usedeltaislands", &use_delta_islands);
+
 	argv_array_push(&cmd.args, "pack-objects");
 
 	strbuf_addstr(&base_name, object_dir);
 	strbuf_addstr(&base_name, "/pack/pack");
 	argv_array_push(&cmd.args, base_name.buf);
+
+	if (delta_base_offset)
+		argv_array_push(&cmd.args, "--delta-base-offset");
+	if (use_delta_islands)
+		argv_array_push(&cmd.args, "--delta-islands");
 
 	if (flags & MIDX_PROGRESS)
 		argv_array_push(&cmd.args, "--progress");
