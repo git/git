@@ -1293,15 +1293,26 @@ static int compare_by_mtime(const void *a_, const void *b_)
 	return 0;
 }
 
-static int fill_included_packs_all(struct multi_pack_index *m,
+static int fill_included_packs_all(struct repository *r,
+				   struct multi_pack_index *m,
 				   unsigned char *include_pack)
 {
-	uint32_t i;
+	uint32_t i, count = 0;
+	int pack_kept_objects = 0;
 
-	for (i = 0; i < m->num_packs; i++)
+	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
+
+	for (i = 0; i < m->num_packs; i++) {
+		if (prepare_midx_pack(r, m, i))
+			continue;
+		if (!pack_kept_objects && m->packs[i]->pack_keep)
+			continue;
+
 		include_pack[i] = 1;
+		count++;
+	}
 
-	return m->num_packs < 2;
+	return count < 2;
 }
 
 static int fill_included_packs_batch(struct repository *r,
@@ -1312,6 +1323,9 @@ static int fill_included_packs_batch(struct repository *r,
 	uint32_t i, packs_to_repack;
 	size_t total_size;
 	struct repack_info *pack_info = xcalloc(m->num_packs, sizeof(struct repack_info));
+	int pack_kept_objects = 0;
+
+	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
 	for (i = 0; i < m->num_packs; i++) {
 		pack_info[i].pack_int_id = i;
@@ -1337,6 +1351,8 @@ static int fill_included_packs_batch(struct repository *r,
 		size_t expected_size;
 
 		if (!p)
+			continue;
+		if (!pack_kept_objects && p->pack_keep)
 			continue;
 		if (open_pack_index(p) || !p->num_objects)
 			continue;
@@ -1386,7 +1402,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	if (batch_size) {
 		if (fill_included_packs_batch(r, m, include_pack, batch_size))
 			goto cleanup;
-	} else if (fill_included_packs_all(m, include_pack))
+	} else if (fill_included_packs_all(r, m, include_pack))
 		goto cleanup;
 
 	repo_config_get_bool(r, "repack.usedeltabaseoffset", &delta_base_offset);
