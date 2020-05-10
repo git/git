@@ -234,6 +234,22 @@ test_expect_success 'tree object with duplicate entries' '
 	test_i18ngrep "error in tree .*contains duplicate file entries" out
 '
 
+test_expect_success 'tree object with dublicate names' '
+	test_when_finished "remove_object \$blob" &&
+	test_when_finished "remove_object \$tree" &&
+	test_when_finished "remove_object \$badtree" &&
+	blob=$(echo blob | git hash-object -w --stdin) &&
+	printf "100644 blob %s\t%s\n" $blob x.2 >tree &&
+	tree=$(git mktree <tree) &&
+	printf "100644 blob %s\t%s\n" $blob x.1 >badtree &&
+	printf "100644 blob %s\t%s\n" $blob x >>badtree &&
+	printf "040000 tree %s\t%s\n" $tree x >>badtree &&
+	badtree=$(git mktree <badtree) &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "$badtree" out &&
+	test_i18ngrep "error in tree .*contains duplicate file entries" out
+'
+
 test_expect_success 'unparseable tree object' '
 	test_oid_cache <<-\EOF &&
 	junk sha1:twenty-bytes-of-junk

@@ -523,6 +523,28 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 	}
 }
 
+struct name_stack {
+	const char **names;
+	size_t nr, alloc;
+};
+
+static void name_stack_push(struct name_stack *stack, const char *name)
+{
+	ALLOC_GROW(stack->names, stack->nr + 1, stack->alloc);
+	stack->names[stack->nr++] = name;
+}
+
+static const char *name_stack_pop(struct name_stack *stack)
+{
+	return stack->nr ? stack->names[--stack->nr] : NULL;
+}
+
+static void name_stack_clear(struct name_stack *stack)
+{
+	FREE_AND_NULL(stack->names);
+	stack->nr = stack->alloc = 0;
+}
+
 /*
  * The entries in a tree are ordered in the _path_ order,
  * which means that a directory entry is ordered by adding
@@ -534,7 +556,14 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 #define TREE_UNORDERED (-1)
 #define TREE_HAS_DUPS  (-2)
 
-static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, const char *name2)
+static int is_less_than_slash(unsigned char c)
+{
+	return '\0' < c && c < '/';
+}
+
+static int verify_ordered(unsigned mode1, const char *name1,
+			  unsigned mode2, const char *name2,
+			  struct name_stack *candidates)
 {
 	int len1 = strlen(name1);
 	int len2 = strlen(name2);
@@ -566,6 +595,41 @@ static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, con
 		c1 = '/';
 	if (!c2 && S_ISDIR(mode2))
 		c2 = '/';
+
+	/*
+	 * There can be non-consecutive duplicates due to the implicitly
+	 * add slash, e.g.:
+	 *
+	 *   foo
+	 *   foo.bar
+	 *   foo.bar.baz
+	 *   foo.bar/
+	 *   foo/
+	 *
+	 * Record non-directory candidates (like "foo" and "foo.bar" in
+	 * the example) on a stack and check directory candidates (like
+	 * foo/" and "foo.bar/") against that stack.
+	 */
+	if (!c1 && is_less_than_slash(c2)) {
+		name_stack_push(candidates, name1);
+	} else if (c2 == '/' && is_less_than_slash(c1)) {
+		for (;;) {
+			const char *p;
+			const char *f_name = name_stack_pop(candidates);
+
+			if (!f_name)
+				break;
+			if (!skip_prefix(name2, f_name, &p))
+				break;
+			if (!*p)
+				return TREE_HAS_DUPS;
+			if (is_less_than_slash(*p)) {
+				name_stack_push(candidates, f_name);
+				break;
+			}
+		}
+	}
+
 	return c1 < c2 ? 0 : TREE_UNORDERED;
 }
 
@@ -587,6 +651,7 @@ static int fsck_tree(const struct object_id *oid,
 	struct tree_desc desc;
 	unsigned o_mode;
 	const char *o_name;
+	struct name_stack df_dup_candidates = { NULL };
 
 	if (init_tree_desc_gently(&desc, buffer, size)) {
 		retval += report(options, oid, OBJ_TREE, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
@@ -666,7 +731,8 @@ static int fsck_tree(const struct object_id *oid,
 		}
 
 		if (o_name) {
-			switch (verify_ordered(o_mode, o_name, mode, name)) {
+			switch (verify_ordered(o_mode, o_name, mode, name,
+					       &df_dup_candidates)) {
 			case TREE_UNORDERED:
 				not_properly_sorted = 1;
 				break;
@@ -681,6 +747,8 @@ static int fsck_tree(const struct object_id *oid,
 		o_mode = mode;
 		o_name = name;
 	}
+
+	name_stack_clear(&df_dup_candidates);
 
 	if (has_null_sha1)
 		retval += report(options, oid, OBJ_TREE, FSCK_MSG_NULL_SHA1, "contains entries pointing to null sha1");
