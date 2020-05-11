@@ -100,7 +100,7 @@ test_expect_success EXPENSIVE 'get bloom filter for commit with 513 changes' '
 	rm actual &&
 	rm expect &&
 	mkdir bigDir &&
-	for i in $(test_seq 0 512)
+	for i in $(test_seq 0 511)
 	do
 		echo $i >bigDir/$i
 	done &&
