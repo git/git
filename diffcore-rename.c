@@ -9,63 +9,48 @@
 #include "hashmap.h"
 #include "progress.h"
 #include "promisor-remote.h"
+#include "strmap.h"
 
 /* Table of rename/copy destinations */
 
 static struct diff_rename_dst {
-	struct diff_filespec *two;
-	struct diff_filepair *pair;
+	struct diff_filepair *p;
+	struct diff_filespec *filespec_to_free;
+	int is_rename; /* false -> just a create; true -> rename or copy */
 } *rename_dst;
 static int rename_dst_nr, rename_dst_alloc;
+/* Mapping from break source pathname to break destination index */
+static struct strintmap *break_idx = NULL;
 
-static int find_rename_dst(struct diff_filespec *two)
+static struct diff_rename_dst *locate_rename_dst(struct diff_filepair *p)
 {
-	int first, last;
-
-	first = 0;
-	last = rename_dst_nr;
-	while (last > first) {
-		int next = first + ((last - first) >> 1);
-		struct diff_rename_dst *dst = &(rename_dst[next]);
-		int cmp = strcmp(two->path, dst->two->path);
-		if (!cmp)
-			return next;
-		if (cmp < 0) {
-			last = next;
-			continue;
-		}
-		first = next+1;
-	}
-	return -first - 1;
-}
-
-static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two)
-{
-	int ofs = find_rename_dst(two);
-	return ofs < 0 ? NULL : &rename_dst[ofs];
+	/* Lookup by p->ONE->path */
+	int idx = break_idx ? strintmap_get(break_idx, p->one->path) : -1;
+	return (idx == -1) ? NULL : &rename_dst[idx];
 }
 
 /*
  * Returns 0 on success, -1 if we found a duplicate.
  */
-static int add_rename_dst(struct diff_filespec *two)
+static int add_rename_dst(struct diff_filepair *p)
 {
-	int first = find_rename_dst(two);
-
-	if (first >= 0)
+	/*
+	 * If we have multiple entries at the same path in the destination
+	 * tree (an invalid tree, to be sure), turn off rename detection
+	 * entirely.  Once upon a time, diffcore-rename had double free()
+	 * issues due to such duplicate paths, resulting in segfaults.  See
+	 * commit 4d6be03b95 ("diffcore-rename: avoid processing duplicate
+	 * destinations", 2015-02-26).
+	 */
+	if (rename_dst_nr > 0 &&
+	    !strcmp(rename_dst[rename_dst_nr-1].p->two->path, p->two->path))
 		return -1;
-	first = -first - 1;
 
-	/* insert to make it at "first" */
 	ALLOC_GROW(rename_dst, rename_dst_nr + 1, rename_dst_alloc);
+	rename_dst[rename_dst_nr].p = p;
+	rename_dst[rename_dst_nr].filespec_to_free = NULL;
+	rename_dst[rename_dst_nr].is_rename = 0;
 	rename_dst_nr++;
-	if (first < rename_dst_nr)
-		MOVE_ARRAY(rename_dst + first + 1, rename_dst + first,
-			   rename_dst_nr - first - 1);
-	rename_dst[first].two = alloc_filespec(two->path);
-	fill_filespec(rename_dst[first].two, &two->oid, two->oid_valid,
-		      two->mode);
-	rename_dst[first].pair = NULL;
 	return 0;
 }
 
@@ -88,6 +73,14 @@ static void register_rename_src(struct diff_filepair *p)
 	if (rename_src_nr > 0 &&
 	    !strcmp(rename_src[rename_src_nr-1].p->one->path, p->one->path))
 		return;
+
+	if (p->broken_pair) {
+		if (!break_idx) {
+			break_idx = xmalloc(sizeof(*break_idx));
+			strintmap_init(break_idx, -1);
+		}
+		strintmap_set(break_idx, p->one->path, rename_dst_nr);
+	}
 
 	ALLOC_GROW(rename_src, rename_src_nr + 1, rename_src_alloc);
 	rename_src[rename_src_nr].p = p;
@@ -128,14 +121,14 @@ static void prefetch(void *prefetch_options)
 	struct oid_array to_fetch = OID_ARRAY_INIT;
 
 	for (i = 0; i < rename_dst_nr; i++) {
-		if (rename_dst[i].pair)
+		if (rename_dst[i].p->renamed_pair)
 			/*
 			 * The loop in diffcore_rename() will not need these
 			 * blobs, so skip prefetching.
 			 */
 			continue; /* already found exact match */
 		diff_add_if_missing(options->repo, &to_fetch,
-				    rename_dst[i].two);
+				    rename_dst[i].p->two);
 	}
 	for (i = 0; i < rename_src_nr; i++) {
 		if (options->skip_unmodified &&
@@ -245,26 +238,24 @@ static int estimate_similarity(struct repository *r,
 
 static void record_rename_pair(int dst_index, int src_index, int score)
 {
-	struct diff_filespec *src, *dst;
-	struct diff_filepair *dp;
+	struct diff_filepair *src = rename_src[src_index].p;
+	struct diff_filepair *dst = rename_dst[dst_index].p;
 
-	if (rename_dst[dst_index].pair)
+	if (dst->renamed_pair)
 		die("internal error: dst already matched.");
 
-	src = rename_src[src_index].p->one;
-	src->rename_used++;
-	src->count++;
+	src->one->rename_used++;
+	src->one->count++;
 
-	dst = rename_dst[dst_index].two;
-	dst->count++;
+	rename_dst[dst_index].filespec_to_free = dst->one;
+	rename_dst[dst_index].is_rename = 1;
 
-	dp = diff_queue(NULL, src, dst);
-	dp->renamed_pair = 1;
-	if (!strcmp(src->path, dst->path))
-		dp->score = rename_src[src_index].score;
+	dst->one = src->one;
+	dst->renamed_pair = 1;
+	if (!strcmp(dst->one->path, dst->two->path))
+		dst->score = rename_src[src_index].score;
 	else
-		dp->score = score;
-	rename_dst[dst_index].pair = dp;
+		dst->score = score;
 }
 
 /*
@@ -310,7 +301,7 @@ static int find_identical_files(struct hashmap *srcs,
 				struct diff_options *options)
 {
 	int renames = 0;
-	struct diff_filespec *target = rename_dst[dst_index].two;
+	struct diff_filespec *target = rename_dst[dst_index].p->two;
 	struct file_similarity *p, *best = NULL;
 	int i = 100, best_score = -1;
 	unsigned int hash = hash_filespec(options->repo, target);
@@ -476,7 +467,7 @@ static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, i
 		    (mx[i].score < minimum_score))
 			break; /* there is no more usable pair. */
 		dst = &rename_dst[mx[i].dst];
-		if (dst->pair)
+		if (dst->is_rename)
 			continue; /* already done, either exact or fuzzy. */
 		if (!copies && rename_src[mx[i].src].p->one->rename_used)
 			continue;
@@ -511,7 +502,7 @@ void diffcore_rename(struct diff_options *options)
 			else if (!options->flags.rename_empty &&
 				 is_empty_blob_oid(&p->two->oid))
 				continue;
-			else if (add_rename_dst(p->two) < 0) {
+			else if (add_rename_dst(p) < 0) {
 				warning("skipping rename detection, detected"
 					" duplicate destination '%s'",
 					p->two->path);
@@ -586,10 +577,10 @@ void diffcore_rename(struct diff_options *options)
 	mx = xcalloc(st_mult(NUM_CANDIDATE_PER_DST, num_destinations),
 		     sizeof(*mx));
 	for (dst_cnt = i = 0; i < rename_dst_nr; i++) {
-		struct diff_filespec *two = rename_dst[i].two;
+		struct diff_filespec *two = rename_dst[i].p->two;
 		struct diff_score *m;
 
-		if (rename_dst[i].pair)
+		if (rename_dst[i].is_rename)
 			continue; /* dealt with exact match already. */
 
 		m = &mx[dst_cnt * NUM_CANDIDATE_PER_DST];
@@ -646,22 +637,8 @@ void diffcore_rename(struct diff_options *options)
 			diff_q(&outq, p);
 		}
 		else if (!DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
-			/*
-			 * Creation
-			 *
-			 * We would output this create record if it has
-			 * not been turned into a rename/copy already.
-			 */
-			struct diff_rename_dst *dst = locate_rename_dst(p->two);
-			if (dst && dst->pair) {
-				diff_q(&outq, dst->pair);
-				pair_to_free = p;
-			}
-			else
-				/* no matching rename/copy source, so
-				 * record this as a creation.
-				 */
-				diff_q(&outq, p);
+			/* Creation */
+			diff_q(&outq, p);
 		}
 		else if (DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two)) {
 			/*
@@ -682,8 +659,10 @@ void diffcore_rename(struct diff_options *options)
 			 */
 			if (DIFF_PAIR_BROKEN(p)) {
 				/* broken delete */
-				struct diff_rename_dst *dst = locate_rename_dst(p->one);
-				if (dst && dst->pair)
+				struct diff_rename_dst *dst = locate_rename_dst(p);
+				if (!dst)
+					BUG("tracking failed somehow; failed to find associated dst for broken pair");
+				if (dst->is_rename)
 					/* counterpart is now rename/copy */
 					pair_to_free = p;
 			}
@@ -693,16 +672,14 @@ void diffcore_rename(struct diff_options *options)
 					pair_to_free = p;
 			}
 
-			if (pair_to_free)
-				;
-			else
+			if (!pair_to_free)
 				diff_q(&outq, p);
 		}
 		else if (!diff_unmodified_pair(p))
 			/* all the usual ones need to be kept */
 			diff_q(&outq, p);
 		else
-			/* no need to keep unmodified pairs */
+			/* no need to keep unmodified pairs; FIXME: remove earlier? */
 			pair_to_free = p;
 
 		if (pair_to_free)
@@ -715,11 +692,16 @@ void diffcore_rename(struct diff_options *options)
 	diff_debug_queue("done collapsing", q);
 
 	for (i = 0; i < rename_dst_nr; i++)
-		free_filespec(rename_dst[i].two);
+		if (rename_dst[i].filespec_to_free)
+			free_filespec(rename_dst[i].filespec_to_free);
 
 	FREE_AND_NULL(rename_dst);
 	rename_dst_nr = rename_dst_alloc = 0;
 	FREE_AND_NULL(rename_src);
 	rename_src_nr = rename_src_alloc = 0;
+	if (break_idx) {
+		strintmap_clear(break_idx);
+		FREE_AND_NULL(break_idx);
+	}
 	return;
 }
