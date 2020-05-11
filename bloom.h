@@ -72,6 +72,7 @@ void fill_bloom_key(const char *data,
 		    size_t len,
 		    struct bloom_key *key,
 		    const struct bloom_filter_settings *settings);
+void clear_bloom_key(struct bloom_key *key);
 
 void add_key_to_filter(const struct bloom_key *key,
 		       struct bloom_filter *filter,

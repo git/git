@@ -689,6 +689,9 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	if (!revs->bloom_filter_settings)
 		return;
 
+	if (!revs->pruning.pathspec.nr)
+		return;
+
 	pi = &revs->pruning.pathspec.items[0];
 	last_index = pi->len - 1;
 
@@ -3501,7 +3504,7 @@ int prepare_revision_walk(struct rev_info *revs)
 				       FOR_EACH_OBJECT_PROMISOR_ONLY);
 	}
 
-	if (revs->pruning.pathspec.nr == 1 && !revs->reflog_info)
+	if (!revs->reflog_info)
 		prepare_to_use_bloom_filter(revs);
 	if (revs->no_walk != REVISION_WALK_NO_WALK_UNSORTED)
 		commit_list_sort_by_date(&revs->commits);
