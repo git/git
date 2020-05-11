@@ -2790,6 +2790,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (revs->diffopt.objfind)
 		revs->simplify_history = 0;
 
+	if (revs->line_level_traverse) {
+		if (want_ancestry(revs))
+			revs->limited = 1;
+		revs->topo_order = 1;
+	}
+
 	if (revs->topo_order && !generation_numbers_enabled(the_repository))
 		revs->limited = 1;
 
@@ -2808,11 +2814,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		die("--combined-all-paths makes no sense without -c or --cc");
 
 	revs->diffopt.abbrev = revs->abbrev;
-
-	if (revs->line_level_traverse) {
-		revs->limited = 1;
-		revs->topo_order = 1;
-	}
 
 	diff_setup_done(&revs->diffopt);
 
