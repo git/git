@@ -46,10 +46,7 @@ void sort_and_merge_range_set(struct range_set *);
 struct line_log_data {
 	struct line_log_data *next;
 	char *path;
-	char status;
 	struct range_set ranges;
-	int arg_alloc, arg_nr;
-	const char **args;
 	struct diff_filepair *pair;
 	struct diff_ranges diff;
 };
