@@ -804,6 +804,12 @@ static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size,
 	return 0;
 }
 
+void http_trace_curl_no_data(void)
+{
+	trace_override_envvar(&trace_curl, "1");
+	trace_curl_data = 0;
+}
+
 void setup_curl_trace(CURL *handle)
 {
 	if (!trace_want(&trace_curl))
@@ -993,7 +999,7 @@ static CURL *get_curl_handle(void)
 	warning(_("Protocol restrictions not supported with cURL < 7.19.4"));
 #endif
 	if (getenv("GIT_CURL_VERBOSE"))
-		curl_easy_setopt(result, CURLOPT_VERBOSE, 1L);
+		http_trace_curl_no_data();
 	setup_curl_trace(result);
 	if (getenv("GIT_TRACE_CURL_NO_DATA"))
 		trace_curl_data = 0;
