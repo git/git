@@ -1227,7 +1227,7 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	/* NEEDSWORK leaking like a sieve */
 }
 
-static int process_ranges_arbitrary_commit(struct rev_info *rev, struct commit *commit)
+int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit *commit)
 {
 	struct line_log_data *range = lookup_line_range(rev, commit);
 	int changed = 0;
@@ -1270,7 +1270,7 @@ int line_log_filter(struct rev_info *rev)
 	while (list) {
 		struct commit_list *to_free = NULL;
 		commit = list->item;
-		if (process_ranges_arbitrary_commit(rev, commit)) {
+		if (line_log_process_ranges_arbitrary_commit(rev, commit)) {
 			*pp = list;
 			pp = &list->next;
 		} else

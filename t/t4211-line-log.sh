@@ -263,7 +263,7 @@ test_expect_success 'setup for checking line-log and parent oids' '
 '
 
 # Parent oid should be from immediate parent.
-test_expect_failure 'parent oids without parent rewriting' '
+test_expect_success 'parent oids without parent rewriting' '
 	cat >expect <<-EOF &&
 	$head_oid $prev_oid Modify func2() in file.c
 	$root_oid  Add func1() and func2() in file.c
