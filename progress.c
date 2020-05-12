@@ -265,6 +265,7 @@ static struct progress *start_progress_delay(const char *title, uint64_t total,
 	progress->title_len = utf8_strwidth(title);
 	progress->split = 0;
 	set_progress_signal();
+	trace2_region_enter("progress", title, the_repository);
 	return progress;
 }
 
@@ -319,6 +320,22 @@ static void finish_if_sparse(struct progress *progress)
 void stop_progress(struct progress **p_progress)
 {
 	finish_if_sparse(*p_progress);
+
+	if (p_progress && *p_progress) {
+		trace2_data_intmax("progress", the_repository, "total_objects",
+				   (*p_progress)->total);
+
+		if ((*p_progress)->throughput)
+			trace2_data_intmax("progress", the_repository,
+					   "total_bytes",
+					   (*p_progress)->throughput->curr_total);
+	}
+
+	trace2_region_leave("progress",
+			    p_progress && *p_progress
+				? (*p_progress)->title
+				: NULL,
+			    the_repository);
 
 	stop_progress_msg(p_progress, _("done"));
 }
