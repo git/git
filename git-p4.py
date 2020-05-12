@@ -2537,11 +2537,12 @@ class P4Submit(Command, P4UserMap):
                 ok = self.applyCommit(commit)
             if ok:
                 applied.append(commit)
-            else:
-                if self.prepare_p4_only and i < last:
-                    print("Processing only the first commit due to option" \
-                          " --prepare-p4-only")
+                if self.prepare_p4_only:
+                    if i < last:
+                        print("Processing only the first commit due to option" \
+                                " --prepare-p4-only")
                     break
+            else:
                 if i < last:
                     # prompt for what to do, or use the option/variable
                     if self.conflict_behavior == "ask":
