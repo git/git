@@ -3,7 +3,7 @@
 #include "test-tool.h"
 #include "commit.h"
 
-struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
+static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 
 static void add_string_to_filter(const char *data, struct bloom_filter *filter) {
 		struct bloom_key key;
