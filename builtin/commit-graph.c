@@ -6,6 +6,7 @@
 #include "repository.h"
 #include "commit-graph.h"
 #include "object-store.h"
+#include "progress.h"
 
 static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
@@ -138,15 +139,24 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 	return 0;
 }
 
-static int read_one_commit(struct oidset *commits, const char *hash)
+static int read_one_commit(struct oidset *commits, struct progress *progress,
+			   const char *hash)
 {
+	struct commit *result;
 	struct object_id oid;
 	const char *end;
 
 	if (parse_oid_hex(hash, &oid, &end))
 		return error(_("unexpected non-hex object ID: %s"), hash);
 
-	oidset_insert(commits, &oid);
+	result = lookup_commit_reference_gently(the_repository, &oid, 1);
+	if (result)
+		oidset_insert(commits, &result->object.oid);
+	else
+		return error(_("invalid commit object id: %s"), hash);
+
+	display_progress(progress, oidset_size(commits));
+
 	return 0;
 }
 
@@ -158,6 +168,7 @@ static int graph_write(int argc, const char **argv)
 	struct object_directory *odb = NULL;
 	int result = 0;
 	enum commit_graph_write_flags flags = 0;
+	struct progress *progress = NULL;
 
 	static struct option builtin_commit_graph_write_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
@@ -228,13 +239,18 @@ static int graph_write(int argc, const char **argv)
 	} else if (opts.stdin_commits) {
 		oidset_init(&commits, 0);
 		flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
+		if (opts.progress)
+			progress = start_delayed_progress(
+				_("Collecting commits from input"), 0);
 
 		while (strbuf_getline(&buf, stdin) != EOF) {
-			if (read_one_commit(&commits, buf.buf)) {
+			if (read_one_commit(&commits, progress, buf.buf)) {
 				result = 1;
 				goto cleanup;
 			}
 		}
+
+
 	}
 
 	if (write_commit_graph(odb,
@@ -247,6 +263,8 @@ static int graph_write(int argc, const char **argv)
 cleanup:
 	string_list_clear(&pack_indexes, 0);
 	strbuf_release(&buf);
+	if (progress)
+		stop_progress(&progress);
 	return result;
 }
 
