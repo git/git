@@ -1327,9 +1327,13 @@ static int add_ref_to_set(const char *refname,
 			  const struct object_id *oid,
 			  int flags, void *cb_data)
 {
+	struct object_id peeled;
 	struct refs_cb_data *data = (struct refs_cb_data *)cb_data;
 
-	oidset_insert(data->commits, oid);
+	if (!peel_ref(refname, &peeled))
+		oid = &peeled;
+	if (oid_object_info(the_repository, oid, NULL) == OBJ_COMMIT)
+		oidset_insert(data->commits, oid);
 
 	display_progress(data->progress, oidset_size(data->commits));
 
