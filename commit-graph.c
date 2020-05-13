@@ -1320,6 +1320,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 
 struct refs_cb_data {
 	struct oidset *commits;
+	struct progress *progress;
 };
 
 static int add_ref_to_set(const char *refname,
@@ -1329,6 +1330,9 @@ static int add_ref_to_set(const char *refname,
 	struct refs_cb_data *data = (struct refs_cb_data *)cb_data;
 
 	oidset_insert(data->commits, oid);
+
+	display_progress(data->progress, oidset_size(data->commits));
+
 	return 0;
 }
 
@@ -1342,12 +1346,17 @@ int write_commit_graph_reachable(struct object_directory *odb,
 
 	memset(&data, 0, sizeof(data));
 	data.commits = &commits;
+	if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
+		data.progress = start_delayed_progress(
+			_("Collecting referenced commits"), 0);
 
 	for_each_ref(add_ref_to_set, &data);
 	result = write_commit_graph(odb, NULL, &commits,
 				    flags, split_opts);
 
 	oidset_clear(&commits);
+	if (data.progress)
+		stop_progress(&data.progress);
 	return result;
 }
 
