@@ -18,6 +18,7 @@
 #include "progress.h"
 #include "bloom.h"
 #include "commit-slab.h"
+#include "shallow.h"
 
 void git_test_write_commit_graph_or_die(void)
 {
