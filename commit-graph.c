@@ -1412,45 +1412,18 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 static int fill_oids_from_commits(struct write_commit_graph_context *ctx,
 				  struct oidset *commits)
 {
-	uint32_t i = 0;
-	struct strbuf progress_title = STRBUF_INIT;
 	struct oidset_iter iter;
 	struct object_id *oid;
 
 	if (!oidset_size(commits))
 		return 0;
 
-	if (ctx->report_progress) {
-		strbuf_addf(&progress_title,
-			    Q_("Finding commits for commit graph from %d ref",
-			       "Finding commits for commit graph from %d refs",
-			       oidset_size(commits)),
-			    oidset_size(commits));
-		ctx->progress = start_delayed_progress(
-					progress_title.buf,
-					oidset_size(commits));
-	}
-
 	oidset_iter_init(commits, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
-		struct commit *result;
-
-		display_progress(ctx->progress, ++i);
-
-		result = lookup_commit_reference_gently(ctx->r, oid, 1);
-		if (result) {
-			ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
-			oidcpy(&ctx->oids.list[ctx->oids.nr], &(result->object.oid));
-			ctx->oids.nr++;
-		} else if (ctx->check_oids) {
-			error(_("invalid commit object id: %s"),
-			      oid_to_hex(oid));
-			return -1;
-		}
+		ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
+		oidcpy(&ctx->oids.list[ctx->oids.nr], oid);
+		ctx->oids.nr++;
 	}
-
-	stop_progress(&ctx->progress);
-	strbuf_release(&progress_title);
 
 	return 0;
 }
