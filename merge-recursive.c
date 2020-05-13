@@ -1750,6 +1750,18 @@ static int handle_rename_rename_1to2(struct merge_options *opt,
 			return -1;
 	}
 
+	if (!mfi.clean && mfi.blob.mode == a->mode &&
+	    oideq(&mfi.blob.oid, &a->oid)) {
+		/*
+		 * Getting here means we were attempting to merge a binary
+		 * blob.  Since we can't merge binaries, the merge algorithm
+		 * just takes one side.  But we don't want to copy the
+		 * contents of one side to both paths; we'd rather use the
+		 * original content at the given path for each path.
+		 */
+		oidcpy(&mfi.blob.oid, &b->oid);
+		mfi.blob.mode = b->mode;
+	}
 	add = &ci->ren2->dst_entry->stages[flip_stage(3)];
 	if (is_valid(add)) {
 		add->path = mfi.blob.path = b->path;
