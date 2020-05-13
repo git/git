@@ -161,6 +161,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * The "bugreport" tool has been added.
 
+ * The object walk with object filter "--filter=tree:0" can now take
+   advantage of the pack bitmap when available.
+
+ * Instead of always building all branches at GitHub via Actions,
+   users can specify which branches to build.
+
 
 Fixes since v2.26
 -----------------
@@ -419,6 +425,24 @@ Fixes since v2.26
  * The basic test did not honor $TEST_SHELL_PATH setting, which has
    been corrected.
    (merge 0555e4af58 cb/t0000-use-the-configured-shell later to maint).
+
+ * Minor in-code comments and documentation updates around credential
+   API.
+   (merge 1aed817f99 cb/credential-doc-fixes later to maint).
+
+ * Teach "am", "commit", "merge" and "rebase", when they are run with
+   the "--quiet" option, to pass "--quiet" down to "gc --auto".
+   (merge 7c3e9e8cfb jc/auto-gc-quiet later to maint).
+
+ * The code to skip unmerged paths in the index when sparse checkout
+   is in use would have made out-of-bound access of the in-core index
+   when the last path was unmerged, which has been corrected.
+
+ * Serving a "git fetch" client over "git://" and "ssh://" protocols
+   using the on-wire protocol version 2 was buggy on the server end
+   when the client needs to make a follow-up request to
+   e.g. auto-follow tags.
+   (merge 08450ef791 cc/upload-pack-v2-fetch-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
