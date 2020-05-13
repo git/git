@@ -47,8 +47,10 @@ with `--stdin-commits` or `--reachable`.)
 +
 With the `--stdin-commits` option, generate the new commit graph by
 walking commits starting at the commits specified in stdin as a list
-of OIDs in hex, one OID per line. (Cannot be combined with
-`--stdin-packs` or `--reachable`.)
+of OIDs in hex, one OID per line. OIDs that resolve to non-commits
+(either directly, or by peeling tags) are silently ignored. OIDs that
+are malformed, or do not exist generate an error. (Cannot be combined
+with `--stdin-packs` or `--reachable`.)
 +
 With the `--reachable` option, generate the new commit graph by walking
 commits starting at all refs. (Cannot be combined with `--stdin-commits`

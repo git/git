@@ -7,6 +7,7 @@
 #include "commit-graph.h"
 #include "object-store.h"
 #include "progress.h"
+#include "tag.h"
 
 static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
@@ -142,18 +143,19 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 static int read_one_commit(struct oidset *commits, struct progress *progress,
 			   const char *hash)
 {
-	struct commit *result;
+	struct object *result;
 	struct object_id oid;
 	const char *end;
 
 	if (parse_oid_hex(hash, &oid, &end))
 		return error(_("unexpected non-hex object ID: %s"), hash);
 
-	result = lookup_commit_reference_gently(the_repository, &oid, 1);
-	if (result)
-		oidset_insert(commits, &result->object.oid);
-	else
-		return error(_("invalid commit object id: %s"), hash);
+	result = deref_tag(the_repository, parse_object(the_repository, &oid),
+			   NULL, 0);
+	if (!result)
+		return error(_("invalid object: %s"), hash);
+	else if (object_as_type(the_repository, result, OBJ_COMMIT, 1))
+		oidset_insert(commits, &result->oid);
 
 	display_progress(progress, oidset_size(commits));
 
@@ -238,7 +240,6 @@ static int graph_write(int argc, const char **argv)
 					   strbuf_detach(&buf, NULL));
 	} else if (opts.stdin_commits) {
 		oidset_init(&commits, 0);
-		flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
 		if (opts.progress)
 			progress = start_delayed_progress(
 				_("Collecting commits from input"), 0);

@@ -84,11 +84,18 @@ graph_read_expect() {
 
 test_expect_success 'exit with correct error on bad input to --stdin-commits' '
 	cd "$TRASH_DIRECTORY/full" &&
-	echo HEAD | test_expect_code 1 git commit-graph write --stdin-commits 2>stderr &&
+	# invalid, non-hex OID
+	echo HEAD >in &&
+	test_expect_code 1 git commit-graph write --stdin-commits <in 2>stderr &&
 	test_i18ngrep "unexpected non-hex object ID: HEAD" stderr &&
-	# valid tree OID, but not a commit OID
-	git rev-parse HEAD^{tree} | test_expect_code 1 git commit-graph write --stdin-commits 2>stderr &&
-	test_i18ngrep "invalid commit object id" stderr
+	# non-existent OID
+	echo $ZERO_OID >in &&
+	test_expect_code 1 git commit-graph write --stdin-commits <in 2>stderr &&
+	test_i18ngrep "invalid object" stderr &&
+	# valid commit and tree OID
+	git rev-parse HEAD HEAD^{tree} >in &&
+	git commit-graph write --stdin-commits <in &&
+	graph_read_expect 3
 '
 
 test_expect_success 'write graph' '
