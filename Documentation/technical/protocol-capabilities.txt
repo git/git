@@ -176,6 +176,21 @@ agent strings are purely informative for statistics and debugging
 purposes, and MUST NOT be used to programmatically assume the presence
 or absence of particular features.
 
+object-format
+-------------
+
+This capability, which takes a hash algorithm as an argument, indicates
+that the server supports the given hash algorithms.  It may be sent
+multiple times; if so, the first one given is the one used in the ref
+advertisement.
+
+When provided by the client, this indicates that it intends to use the
+given hash algorithm to communicate.  The algorithm provided must be one
+that the server supports.
+
+If this capability is not provided, it is assumed that the only
+supported algorithm is SHA-1.
+
 symref
 ------
 
