@@ -562,11 +562,11 @@ static int warn_conflicted_path(struct index_state *istate,
 
 	add_rejected_path(o, WARNING_SPARSE_UNMERGED_FILE, conflicting_path);
 
-	/* Find out how many higher stage entries at same path */
-	while (++count < istate->cache_nr &&
-	       !strcmp(conflicting_path,
-		       istate->cache[i+count]->name))
-		/* do nothing */;
+	/* Find out how many higher stage entries are at same path */
+	while ((++count) + i < istate->cache_nr &&
+	       !strcmp(conflicting_path, istate->cache[count + i]->name))
+		; /* do nothing */
+
 	return count;
 }
 
