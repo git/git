@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2020, #03; Fri, 8)
-X-master-at: b994622632154fc3b17fb40a38819ad954a5fb88
-X-next-at: 0e0b3e54bef85529846ce55fa34a67746509a2cd
+Subject: What's cooking in git.git (May 2020, #04; Wed, 13)
+X-master-at: 172e8ff696ea0ebe002bdd1f61a3544fc7f71a61
+X-next-at: e517b1a6695bd6c33127de6780ca7c4351647a1b
 
-What's cooking in git.git (May 2020, #03; Fri, 8)
+What's cooking in git.git (May 2020, #04; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -25,178 +25,15 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ah/userdiff-markdown (2020-05-02) 1 commit
-  (merged to 'next' on 2020-05-05 at b8e64b75d0)
- + userdiff: support Markdown
+* cb/credential-doc-fixes (2020-05-07) 4 commits
+  (merged to 'next' on 2020-05-07 at 993b36071e)
+ + credential: document protocol updates
+ + credential: update gitcredentials documentation
+ + credential: correct order of parameters for credential_match
+ + credential: update description for credential_from_url_gently
 
- The userdiff patterns for Markdown documents have been added.
-
-
-* bc/doc-credential-helper-value (2020-05-06) 1 commit
-  (merged to 'next' on 2020-05-07 at de685cea7b)
- + docs: document credential.helper allowed values
-
- Doc update.
-
-
-* cb/avoid-colliding-with-netbsd-hmac (2020-05-05) 1 commit
-  (merged to 'next' on 2020-05-06 at 5cccb0e1a8)
- + builtin/receive-pack: avoid generic function name hmac()
-
- The <stdlib.h> header on NetBSD brings in its own definition of
- hmac() function (eek), which conflicts with our own and unrelated
- function with the same name.  Our function has been renamed to work
- around the issue.
-
-
-* cb/credential-store-ignore-bogus-lines (2020-05-02) 2 commits
-  (merged to 'next' on 2020-05-05 at 5b919ec5d6)
- + credential-store: ignore bogus lines from store file
- + credential-store: document the file format a bit more
-
- With the recent tightening of the code that is used to parse
- various parts of a URL for use in the credential subsystem, a
- hand-edited credential-store file causes the credential helper to
- die, which is a bit too harsh to the users.  Demote the error
- behaviour to just ignore and keep using well-formed lines instead.
-
-
-* cb/t0000-use-the-configured-shell (2020-05-07) 1 commit
-  (merged to 'next' on 2020-05-07 at c5db4882c4)
- + t/t0000-basic: make sure subtests also use TEST_SHELL_PATH
-
- The basic test did not honor $TEST_SHELL_PATH setting, which has
- been corrected.
-
-
-* cb/test-bash-lineno-fix (2020-05-07) 1 commit
-  (merged to 'next' on 2020-05-07 at 8c07e52d2f)
- + t/test_lib: avoid naked bash arrays in file_lineno
-
- Recent change to show files and line numbers of a breakage during
- test (only available when running the tests with bash) were hurting
- other shells with syntax errors, which has been corrected.
-
-
-* dl/doc-stash-remove-mention-of-reflog (2020-05-05) 1 commit
-  (merged to 'next' on 2020-05-06 at 8b570b7722)
- + Doc: reference the "stash list" in autostash docs
-
- Doc update.
-
-
-* dl/switch-c-option-in-error-message (2020-04-30) 1 commit
-  (merged to 'next' on 2020-05-05 at 472db48735)
- + switch: fix errors and comments related to -c and -C
-
- In error messages that "git switch" mentions its option to create a
- new branch, "-b/-B" options were shown, where "-c/-C" options
- should be, which has been corrected.
-
-
-* ds/sparse-allow-empty-working-tree (2020-05-04) 1 commit
-  (merged to 'next' on 2020-05-06 at de7b38aee5)
- + sparse-checkout: stop blocking empty workdirs
-
- The sparse-checkout patterns have been forbidden from excluding all
- paths, leaving an empty working tree, for a long time.  This
- limitation has been lifted.
-
-
-* es/restore-staged-from-head-by-default (2020-05-05) 1 commit
-  (merged to 'next' on 2020-05-06 at c4abf9b5df)
- + restore: default to HEAD when combining --staged and --worktree
-
- "git restore --staged --worktree" now defaults to take the contents
- out of "HEAD", instead of erring out.
-
-
-* jk/arith-expansion-coding-guidelines (2020-05-04) 1 commit
-  (merged to 'next' on 2020-05-06 at 2325148249)
- + CodingGuidelines: drop arithmetic expansion advice to use "$x"
-
- The coding guideline for shell scripts instructed to refer to a
- variable with dollar-sign inside arithmetic expansion to work
- around a bug in old versions of dash, which is a thing of the past.
- Now we are not forbidden from writing $((var+1)).
-
-
-* jk/credential-sample-update (2020-05-01) 2 commits
-  (merged to 'next' on 2020-05-06 at c72ed30ee5)
- + gitcredentials(7): make shell-snippet example more realistic
- + gitcredentials(7): clarify quoting of helper examples
-
- The samples in the credential documentation has been updated to
- make it clear that we depict what would appear in the .git/config
- file, by adding appropriate quotes as needed..
-
-
-* jk/for-each-ref-multi-key-sort-fix (2020-05-04) 2 commits
-  (merged to 'next' on 2020-05-06 at f4e4ca3cb4)
- + ref-filter: apply fallback refname sort only after all user sorts
- + ref-filter: apply --ignore-case to all sorting keys
-
- "git branch" and other "for-each-ref" variants accepted multiple
- --sort=<key> options in the increasing order of precedence, but it
- had a few breakages around "--ignore-case" handling, and tie-breaking
- with the refname, which have been fixed.
-
-
-* jt/commit-graph-plug-memleak (2020-05-04) 1 commit
-  (merged to 'next' on 2020-05-06 at 0f80a2b561)
- + commit-graph: avoid memory leaks
-
- Fix a leak noticed by fuzzer.
-
---------------------------------------------------
-[New Topics]
-
-* ss/faq-ignore (2020-05-06) 1 commit
-  (merged to 'next' on 2020-05-07 at 6273caaf77)
- + gitfaq: files in .gitignore are tracked
-
- Random bits of FAQ.
-
- Will merge to 'master'.
-
-
-* ss/faq-fetch-pull (2020-05-06) 1 commit
-  (merged to 'next' on 2020-05-07 at d57224374e)
- + gitfaq: fetching and pulling a repository
-
- Random bits of FAQ.
-
- Will merge to 'master'.
-
-
-* jc/auto-gc-quiet (2020-05-07) 2 commits
-  (merged to 'next' on 2020-05-07 at 6cc69513c3)
- + auto-gc: pass --quiet down from am, commit, merge and rebase
- + auto-gc: extract a reusable helper from "git fetch"
-
- Teach "am", "commit", "merge" and "rebase", when they are run with
- the "--quiet" option, to pass "--quiet" down to "gc --auto".
-
- Will merge to 'master'.
-
-
-* jt/t5500-unflake (2020-05-06) 1 commit
- - t5500: count objects through stderr, not trace
-
- Test fix for a topic already in 'master' and meant for 'maint'.
-
- Expecting an update to clarify the log message.
- Otherwise the change itself looked good.
-
-
-* jk/ci-only-on-selected-branches (2020-05-07) 1 commit
-  (merged to 'next' on 2020-05-07 at f3227dd3d3)
- + ci: allow per-branch config for GitHub Actions
-
- Instead of always building all branches at GitHub via Actions,
- users can specify which branches to build.
-
- Will merge to 'master'.
+ Minor in-code comments and documentation updates around credential
+ API.
 
 
 * cc/upload-pack-v2-fetch-fix (2020-05-08) 1 commit
@@ -208,25 +45,12 @@ of the repositories listed at
  when the client needs to make a follow-up request to
  e.g. auto-follow tags.
 
- Will merge to 'master'.
-
-
-* cw/bisect-replay-with-dos (2020-05-08) 1 commit
- - bisect: allow CRLF line endings in "git bisect replay" input
-
- "git bisect replay" had trouble with input files when they used
- CRLF line ending, which has been corrected.
-
- Will merge to 'next'.
-
 
 * dd/bloom-sparse-fix (2020-05-07) 1 commit
   (merged to 'next' on 2020-05-08 at 1067403c01)
  + bloom: fix `make sparse` warning
 
  Code clean-up.
-
- Will merge to 'master'.
 
 
 * ds/sparse-updates-oob-access-fix (2020-05-08) 1 commit
@@ -237,30 +61,36 @@ of the repositories listed at
  is in use would have made out-of-bound access of the in-core index
  when the last path was unmerged, which has been corrected.
 
- Will merge to 'master'.
+
+* jc/auto-gc-quiet (2020-05-07) 2 commits
+  (merged to 'next' on 2020-05-07 at 6cc69513c3)
+ + auto-gc: pass --quiet down from am, commit, merge and rebase
+ + auto-gc: extract a reusable helper from "git fetch"
+
+ Teach "am", "commit", "merge" and "rebase", when they are run with
+ the "--quiet" option, to pass "--quiet" down to "gc --auto".
 
 
-* hn/refs-cleanup (2020-05-08) 4 commits
- - t: use update-ref and show-ref to reading/writing refs
- - refs: document how ref_iterator_advance_fn should handle symrefs
- - Iterate over the "refs/" namespace in for_each_[raw]ref
- - refs.h: clarify reflog iteration order
- (this branch is used by hn/reftable.)
+* jk/ci-only-on-selected-branches (2020-05-07) 1 commit
+  (merged to 'next' on 2020-05-07 at f3227dd3d3)
+ + ci: allow per-branch config for GitHub Actions
 
- Preliminary clean-ups around refs API.
-
- Needs minor rework but otherwise looks ready.
- I splitted these out of the hn/reftable topic, hoping that these
- should be easier to polish and merge quickly than the rest of the
- series.
+ Instead of always building all branches at GitHub via Actions,
+ users can specify which branches to build.
 
 
-* jc/codingstyle-compare-with-null (2020-05-08) 1 commit
- - CodingGuidelines: do not ==/!= compare with 0 or '\0' or NULL
+* ss/faq-fetch-pull (2020-05-06) 1 commit
+  (merged to 'next' on 2020-05-07 at d57224374e)
+ + gitfaq: fetching and pulling a repository
 
- Doc update.
+ Random bits of FAQ.
 
- Will merge to 'next'.
+
+* ss/faq-ignore (2020-05-06) 1 commit
+  (merged to 'next' on 2020-05-07 at 6273caaf77)
+ + gitfaq: files in .gitignore are tracked
+
+ Random bits of FAQ.
 
 
 * ss/submodule-set-url-in-c (2020-05-08) 1 commit
@@ -269,7 +99,179 @@ of the repositories listed at
 
  Rewriting various parts of "git submodule" in C continues.
 
+
+* tb/bitmap-walk-with-tree-zero-filter (2020-05-04) 4 commits
+  (merged to 'next' on 2020-05-06 at fbb3fbbb85)
+ + pack-bitmap: pass object filter to fill-in traversal
+ + pack-bitmap.c: support 'tree:0' filtering
+ + pack-bitmap.c: make object filtering functions generic
+ + list-objects-filter: treat NULL filter_options as "disabled"
+
+ The object walk with object filter "--filter=tree:0" can now take
+ advantage of the pack bitmap when available.
+
+
+* tb/shallow-cleanup (2020-04-30) 4 commits
+  (merged to 'next' on 2020-05-05 at 647588a8bd)
+ + shallow: use struct 'shallow_lock' for additional safety
+ + shallow.h: document '{commit,rollback}_shallow_file'
+ + shallow: extract a header file for shallow-related functions
+ + commit: make 'commit_graft_pos' non-static
+
+ Code cleanup.
+
+--------------------------------------------------
+[New Topics]
+
+* ao/p4-d-f-conflict-recover (2020-05-10) 1 commit
+  (merged to 'next' on 2020-05-11 at a83a2f6178)
+ + git-p4: recover from inconsistent perforce history
+
+ "git p4" learned to recover from a (broken) state where a directory
+ and a file are recorded at the same path in the Perforce repository
+ the same way as their clients do.
+
  Will merge to 'master'.
+
+
+* bk/p4-prepare-p4-only-fix (2020-05-12) 1 commit
+ - git-p4.py: fix --prepare-p4-only error with multiple commits
+
+ The "--prepare-p4-only" option is supposed to stop after replaying
+ one changeset, but kept going (by mistake?)
+
+ Needs review by some p4 folks.
+
+
+* jt/curl-verbose-on-trace-curl (2020-05-11) 2 commits
+  (merged to 'next' on 2020-05-11 at 814e31b9d4)
+ + http, imap-send: stop using CURLOPT_VERBOSE
+ + t5551: test that GIT_TRACE_CURL redacts password
+
+ Rewrite support for GIT_CURL_VERBOSE in terms of GIT_TRACE_CURL.
+
+ Expecting further work on optionally disabling reacting authinfo
+
+
+* mt/grep-sparse-checkout (2020-05-11) 4 commits
+ - config: add setting to ignore sparsity patterns in some cmds
+ - grep: honor sparse checkout patterns
+ - config: load the correct config.worktree file
+ - doc: grep: unify info on configuration variables
+
+ "git grep" has been tweaked to be limited to the sparse checkout
+ paths.
+
+
+* rs/fsck-duplicate-names-in-trees (2020-05-11) 1 commit
+  (merged to 'next' on 2020-05-11 at f603ca2528)
+ + fsck: report non-consecutive duplicate names in trees
+
+ "git fsck" ensures that the paths recorded in tree objects are
+ sorted and without duplicates, but it failed to notice a case where
+ a blob is followed by entries that sort before a tree with the same
+ name.  This has been corrected.
+
+ Will merge to 'master'.
+
+
+* sn/midx-repack-with-config (2020-05-10) 2 commits
+  (merged to 'next' on 2020-05-11 at d73f8f51d6)
+ + multi-pack-index: respect repack.packKeptObjects=false
+ + midx: teach "git multi-pack-index repack" honor "git repack" configurations
+
+ "git multi-pack-index repack" has been taught to honor some
+ repack.* configuration variables.
+
+ Will merge to 'master'.
+
+
+* es/trace-log-progress (2020-05-12) 1 commit
+  (merged to 'next' on 2020-05-13 at a127540258)
+ + trace2: log progress time and throughput
+
+ Teach codepaths that show progress meter to also use the
+ start_progress() and the stop_progress() calls as a "region" to be
+ traced.
+
+ Will merge to 'master'.
+
+
+* js/ci-sdk-download-fix (2020-05-12) 1 commit
+ - ci: avoid pounding on the poor ci-artifacts container
+
+ Instead of downloading Windows SDK for CI jobs for windows builds
+ from an external site (wingit.blob.core.windows.net), use the one
+ created in the windows-build job, to work around quota issues at
+ the external site.
+
+ Will merge to 'next'.
+ Hopefully this can go away once cmake-for-windows-build topic lands?
+
+
+* bc/sha-256-part-2 (2020-05-12) 44 commits
+ - remote-testgit: adapt for object-format
+ - bundle: detect hash algorithm when reading refs
+ - t5300: pass --object-format to git index-pack
+ - t5703: use object-format serve option
+ - t5702: offer an object-format capability in the test
+ - t/helper: initialize the repository for test-sha1-array
+ - remote-curl: avoid truncating refs with ls-remote
+ - t1050: pass algorithm to index-pack when outside repo
+ - builtin/index-pack: add option to specify hash algorithm
+ - remote-curl: detect algorithm for dumb HTTP by size
+ - builtin/ls-remote: initialize repository based on fetch
+ - t5500: make hash independent
+ - serve: advertise object-format capability for protocol v2
+ - connect: parse v2 refs with correct hash algorithm
+ - connect: pass full packet reader when parsing v2 refs
+ - Documentation/technical: document object-format for protocol v2
+ - t1302: expect repo format version 1 for SHA-256
+ - builtin/show-index: provide options to determine hash algo
+ - t5302: modernize test formatting
+ - packfile: compute and use the index CRC offset
+ - t3200: mark assertion with SHA1 prerequisite
+ - setup: set the_repository's hash algo when checking format
+ - fetch-pack: parse and advertise the object-format capability
+ - t5704: send object-format capability with SHA-256
+ - t5562: pass object-format in synthesized test data
+ - builtin/clone: initialize hash algorithm properly
+ - remote-curl: implement object-format extensions
+ - transport-helper: implement object-format extensions
+ - docs: update remote helper docs for object-format extensions
+ - builtin/receive-pack: detect when the server doesn't support our hash
+ - connect: detect algorithm when fetching refs
+ - fetch-pack: detect when the server doesn't support our hash
+ - connect: make parse_feature_value extern
+ - send-pack: detect when the server doesn't support our hash
+ - connect: add function to detect supported v1 hash functions
+ - transport: add a hash algorithm member
+ - pkt-line: add a member for hash algorithm
+ - connect: add function to fetch value of a v2 server capability
+ - connect: add function to parse multiple v1 capability values
+ - remote: advertise the object-format capability on the server side
+ - wrapper: add function to compare strings with different NUL termination
+ - connect: have ref processing code take struct packet_reader
+ - Documentation: document v1 protocol object-format capability
+ - t1050: match object ID paths in a hash-insensitive way
+
+ SHA-256 migration work continues.
+
+
+* dd/t1509-i18n-fix (2020-05-13) 1 commit
+ - t1509: correct i18n test
+
+ A few tests were not i18n clean.
+
+ Will merge to 'next'.
+
+
+* es/bugreport-shell (2020-05-12) 2 commits
+ - bugreport: include user interactive shell
+ - help: add shell-path to --build-options
+ (this branch uses es/bugreport-with-hooks.)
+
+ "git bugreport" learns to report what shell is in use.
 
 --------------------------------------------------
 [Stalled]
@@ -284,59 +286,62 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ds/line-log-on-bloom (2020-05-01) 12 commits
- - line-log: integrate with changed-path Bloom filters
- - line-log: try to use generation number-based topo-ordering
- - line-log: more responsive, incremental 'git log -L'
- - t4211-line-log: add tests for parent oids
- - line-log: remove unused fields from 'struct line_log_data'
- - completion: offer '--(no-)patch' among 'git log' options
- - bloom: use num_changes not nr for limit detection
- - bloom: parse commit before computing filters
- - bloom: de-duplicate directory entries
- - Documentation: changed-path Bloom filters use byte words
- - test-bloom: fix usage typo
- - bloom: fix whitespace around tab length
+* jt/t5500-unflake (2020-05-06) 1 commit
+  (merged to 'next' on 2020-05-13 at 11450265ec)
+ + t5500: count objects through stderr, not trace
 
- "git log -L..." now takes advantage of the "which paths are touched
- by this commit?" info stored in the commit-graph system.
-
- Expecting a reroll.
- cf. <4b7e5f51-9fdb-45ac-123e-2589087afa48@gmail.com>
-
-
-* js/rebase-autosquash-double-fixup-fix (2020-05-05) 1 commit
- - rebase --autosquash: fix a potential segfault
-
- "rebase -i" segfaulted when rearranging a sequence that has a
- fix-up that applies another fix-up (which may or may not be a
- fix-up of yet another step).
-
- Expecting a bit more explanation in the log message.
-
-
-* cb/credential-doc-fixes (2020-05-07) 4 commits
-  (merged to 'next' on 2020-05-07 at 993b36071e)
- + credential: document protocol updates
- + credential: update gitcredentials documentation
- + credential: correct order of parameters for credential_match
- + credential: update description for credential_from_url_gently
-
- Minor in-code comments and documentation updates around credential
- API.
+ Test fix for a topic already in 'master' and meant for 'maint'.
 
  Will merge to 'master'.
 
 
-* tb/bitmap-walk-with-tree-zero-filter (2020-05-04) 4 commits
-  (merged to 'next' on 2020-05-06 at fbb3fbbb85)
- + pack-bitmap: pass object filter to fill-in traversal
- + pack-bitmap.c: support 'tree:0' filtering
- + pack-bitmap.c: make object filtering functions generic
- + list-objects-filter: treat NULL filter_options as "disabled"
+* cw/bisect-replay-with-dos (2020-05-08) 1 commit
+  (merged to 'next' on 2020-05-11 at 2eb0edf56d)
+ + bisect: allow CRLF line endings in "git bisect replay" input
 
- The object walk with object filter "--filter=tree:0" can now take
- advantage of the pack bitmap when available.
+ "git bisect replay" had trouble with input files when they used
+ CRLF line ending, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* jc/codingstyle-compare-with-null (2020-05-08) 1 commit
+  (merged to 'next' on 2020-05-11 at d18f0d930e)
+ + CodingGuidelines: do not ==/!= compare with 0 or '\0' or NULL
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* ds/line-log-on-bloom (2020-05-11) 12 commits
+  (merged to 'next' on 2020-05-11 at 046d49d455)
+ + line-log: integrate with changed-path Bloom filters
+ + line-log: try to use generation number-based topo-ordering
+ + line-log: more responsive, incremental 'git log -L'
+ + t4211-line-log: add tests for parent oids
+ + line-log: remove unused fields from 'struct line_log_data'
+ + completion: offer '--(no-)patch' among 'git log' options
+ + bloom: use num_changes not nr for limit detection
+ + bloom: de-duplicate directory entries
+ + Documentation: changed-path Bloom filters use byte words
+ + bloom: parse commit before computing filters
+ + test-bloom: fix usage typo
+ + bloom: fix whitespace around tab length
+
+ "git log -L..." now takes advantage of the "which paths are touched
+ by this commit?" info stored in the commit-graph system.
+
+ Will merge to 'master'.
+
+
+* js/rebase-autosquash-double-fixup-fix (2020-05-09) 1 commit
+  (merged to 'next' on 2020-05-11 at 3cdf7f7ece)
+ + rebase --autosquash: fix a potential segfault
+
+ "rebase -i" segfaulted when rearranging a sequence that has a
+ fix-up that applies another fix-up (which may or may not be a
+ fix-up of yet another step).
 
  Will merge to 'master'.
 
@@ -371,21 +376,11 @@ of the repositories listed at
 
 
 * es/bugreport-with-hooks (2020-05-07) 1 commit
- - bugreport: collect list of populated hooks
+  (merged to 'next' on 2020-05-11 at 2dd5d90a34)
+ + bugreport: collect list of populated hooks
+ (this branch is used by es/bugreport-shell.)
 
  "git bugreport" learned to report enabled hooks in the repository.
-
- Needs polishing the tests.
-
-
-* tb/shallow-cleanup (2020-04-30) 4 commits
-  (merged to 'next' on 2020-05-05 at 647588a8bd)
- + shallow: use struct 'shallow_lock' for additional safety
- + shallow.h: document '{commit,rollback}_shallow_file'
- + shallow: extract a header file for shallow-related functions
- + commit: make 'commit_graft_pos' non-static
-
- Code cleanup.
 
  Will merge to 'master'.
 
@@ -468,15 +463,31 @@ of the repositories listed at
  Needs review.
 
 
-* hn/reftable (2020-05-08) 8 commits
+* hn/refs-cleanup (2020-05-11) 6 commits
+ - reftable: define version 2 of the spec to accomodate SHA256
+ - reftable: clarify how empty tables should be written
+ - reftable: file format documentation
+ - refs: document how ref_iterator_advance_fn should handle symrefs
+ - t: use update-ref and show-ref to reading/writing refs
+ - refs.h: clarify reflog iteration order
+ (this branch is used by hn/reftable.)
+
+ Preliminary clean-ups around refs API, plus file format
+ specification documentation for the reftable backend.
+
+ I splitted these out of the hn/reftable topic, hoping that these
+ should be easier to polish and merge quickly than the rest of the
+ series.
+
+
+* hn/reftable (2020-05-11) 7 commits
  - Add some reftable testing infrastructure
  - vcxproj: adjust for the reftable changes
  - Reftable support for git-core
  - Add reftable library
- - reftable: clarify how empty tables should be written
- - reftable: define version 2 of the spec to accomodate SHA256
- - reftable: file format documentation
  - Add .gitattributes for the reftable/ directory
+ - Iterate over the "refs/" namespace in for_each_[raw]ref
+ - Write pseudorefs through ref backends.
  (this branch uses hn/refs-cleanup.)
 
  A new refs backend "reftable" to replace the traditional
