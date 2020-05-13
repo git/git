@@ -53,6 +53,11 @@ test_perf 'rev-list count with blob:limit=1k' '
 		--filter=blob:limit=1k >/dev/null
 '
 
+test_perf 'rev-list count with tree:0' '
+	git rev-list --use-bitmap-index --count --objects --all \
+		--filter=tree:0 >/dev/null
+'
+
 test_perf 'simulated partial clone' '
 	git pack-objects --stdout --all --filter=blob:none </dev/null >/dev/null
 '
@@ -84,6 +89,11 @@ test_perf 'clone (partial bitmap)' '
 
 test_perf 'pack to file (partial bitmap)' '
 	git pack-objects --use-bitmap-index --all pack2b </dev/null >/dev/null
+'
+
+test_perf 'rev-list with tree filter (partial bitmap)' '
+	git rev-list --use-bitmap-index --count --objects --all \
+		--filter=tree:0 >/dev/null
 '
 
 test_done

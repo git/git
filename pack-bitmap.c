@@ -506,7 +506,8 @@ static int should_include(struct commit *commit, void *_data)
 static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 				   struct rev_info *revs,
 				   struct object_list *roots,
-				   struct bitmap *seen)
+				   struct bitmap *seen,
+				   struct list_objects_filter_options *filter)
 {
 	struct bitmap *base = NULL;
 	int needs_walk = 0;
@@ -599,8 +600,9 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		show_data.bitmap_git = bitmap_git;
 		show_data.base = base;
 
-		traverse_commit_list(revs, show_commit, show_object,
-				     &show_data);
+		traverse_commit_list_filtered(filter, revs,
+					      show_commit, show_object,
+					      &show_data, NULL);
 	}
 
 	return base;
@@ -715,8 +717,9 @@ static int in_bitmapped_pack(struct bitmap_index *bitmap_git,
 	return 0;
 }
 
-static struct bitmap *find_tip_blobs(struct bitmap_index *bitmap_git,
-				     struct object_list *tip_objects)
+static struct bitmap *find_tip_objects(struct bitmap_index *bitmap_git,
+				       struct object_list *tip_objects,
+				       enum object_type type)
 {
 	struct bitmap *result = bitmap_new();
 	struct object_list *p;
@@ -724,7 +727,7 @@ static struct bitmap *find_tip_blobs(struct bitmap_index *bitmap_git,
 	for (p = tip_objects; p; p = p->next) {
 		int pos;
 
-		if (p->item->type != OBJ_BLOB)
+		if (p->item->type != type)
 			continue;
 
 		pos = bitmap_position(bitmap_git, &p->item->oid);
@@ -737,9 +740,10 @@ static struct bitmap *find_tip_blobs(struct bitmap_index *bitmap_git,
 	return result;
 }
 
-static void filter_bitmap_blob_none(struct bitmap_index *bitmap_git,
-				    struct object_list *tip_objects,
-				    struct bitmap *to_filter)
+static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
+				       struct object_list *tip_objects,
+				       struct bitmap *to_filter,
+				       enum object_type type)
 {
 	struct eindex *eindex = &bitmap_git->ext_index;
 	struct bitmap *tips;
@@ -747,18 +751,21 @@ static void filter_bitmap_blob_none(struct bitmap_index *bitmap_git,
 	eword_t mask;
 	uint32_t i;
 
+	if (type != OBJ_BLOB && type != OBJ_TREE)
+		BUG("filter_bitmap_exclude_type: unsupported type '%d'", type);
+
 	/*
 	 * The non-bitmap version of this filter never removes
-	 * blobs which the other side specifically asked for,
+	 * objects which the other side specifically asked for,
 	 * so we must match that behavior.
 	 */
-	tips = find_tip_blobs(bitmap_git, tip_objects);
+	tips = find_tip_objects(bitmap_git, tip_objects, type);
 
 	/*
 	 * We can use the blob type-bitmap to work in whole words
 	 * for the objects that are actually in the bitmapped packfile.
 	 */
-	for (i = 0, init_type_iterator(&it, bitmap_git, OBJ_BLOB);
+	for (i = 0, init_type_iterator(&it, bitmap_git, type);
 	     i < to_filter->word_alloc && ewah_iterator_next(&mask, &it);
 	     i++) {
 		if (i < tips->word_alloc)
@@ -773,13 +780,21 @@ static void filter_bitmap_blob_none(struct bitmap_index *bitmap_git,
 	 */
 	for (i = 0; i < eindex->count; i++) {
 		uint32_t pos = i + bitmap_git->pack->num_objects;
-		if (eindex->objects[i]->type == OBJ_BLOB &&
+		if (eindex->objects[i]->type == type &&
 		    bitmap_get(to_filter, pos) &&
 		    !bitmap_get(tips, pos))
 			bitmap_unset(to_filter, pos);
 	}
 
 	bitmap_free(tips);
+}
+
+static void filter_bitmap_blob_none(struct bitmap_index *bitmap_git,
+				    struct object_list *tip_objects,
+				    struct bitmap *to_filter)
+{
+	filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter,
+				   OBJ_BLOB);
 }
 
 static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
@@ -820,7 +835,7 @@ static void filter_bitmap_blob_limit(struct bitmap_index *bitmap_git,
 	eword_t mask;
 	uint32_t i;
 
-	tips = find_tip_blobs(bitmap_git, tip_objects);
+	tips = find_tip_objects(bitmap_git, tip_objects, OBJ_BLOB);
 
 	for (i = 0, init_type_iterator(&it, bitmap_git, OBJ_BLOB);
 	     i < to_filter->word_alloc && ewah_iterator_next(&mask, &it);
@@ -854,6 +869,20 @@ static void filter_bitmap_blob_limit(struct bitmap_index *bitmap_git,
 	bitmap_free(tips);
 }
 
+static void filter_bitmap_tree_depth(struct bitmap_index *bitmap_git,
+				     struct object_list *tip_objects,
+				     struct bitmap *to_filter,
+				     unsigned long limit)
+{
+	if (limit)
+		BUG("filter_bitmap_tree_depth given non-zero limit");
+
+	filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter,
+				   OBJ_TREE);
+	filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter,
+				   OBJ_BLOB);
+}
+
 static int filter_bitmap(struct bitmap_index *bitmap_git,
 			 struct object_list *tip_objects,
 			 struct bitmap *to_filter,
@@ -874,6 +903,15 @@ static int filter_bitmap(struct bitmap_index *bitmap_git,
 			filter_bitmap_blob_limit(bitmap_git, tip_objects,
 						 to_filter,
 						 filter->blob_limit_value);
+		return 0;
+	}
+
+	if (filter->choice == LOFC_TREE_DEPTH &&
+	    filter->tree_exclude_depth == 0) {
+		if (bitmap_git)
+			filter_bitmap_tree_depth(bitmap_git, tip_objects,
+						 to_filter,
+						 filter->tree_exclude_depth);
 		return 0;
 	}
 
@@ -963,7 +1001,8 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 
 	if (haves) {
 		revs->ignore_missing_links = 1;
-		haves_bitmap = find_objects(bitmap_git, revs, haves, NULL);
+		haves_bitmap = find_objects(bitmap_git, revs, haves, NULL,
+					    filter);
 		reset_revision_walk();
 		revs->ignore_missing_links = 0;
 
@@ -971,7 +1010,8 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 			BUG("failed to perform bitmap walk");
 	}
 
-	wants_bitmap = find_objects(bitmap_git, revs, wants, haves_bitmap);
+	wants_bitmap = find_objects(bitmap_git, revs, wants, haves_bitmap,
+				    filter);
 
 	if (!wants_bitmap)
 		BUG("failed to perform bitmap walk");
