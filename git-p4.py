@@ -3214,6 +3214,42 @@ class P4Sync(Command, P4UserMap):
             print('Ignoring file outside of prefix: {0}'.format(path))
         return hasPrefix
 
+    def findShadowedFiles(self, files, change):
+        # Perforce allows you commit files and directories with the same name,
+        # so you could have files //depot/foo and //depot/foo/bar both checked
+        # in.  A p4 sync of a repository in this state fails.  Deleting one of
+        # the files recovers the repository.
+        #
+        # Git will not allow the broken state to exist and only the most recent
+        # of the conflicting names is left in the repository.  When one of the
+        # conflicting files is deleted we need to re-add the other one to make
+        # sure the git repository recovers in the same way as perforce.
+        deleted = [f for f in files if f['action'] in self.delete_actions]
+        to_check = set()
+        for f in deleted:
+            path = decode_path(f['path'])
+            to_check.add(path + '/...')
+            while True:
+                path = path.rsplit("/", 1)[0]
+                if path == "/" or path in to_check:
+                    break
+                to_check.add(path)
+        to_check = ['%s@%s' % (wildcard_encode(p), change) for p in to_check
+            if self.hasBranchPrefix(p)]
+        if to_check:
+            stat_result = p4CmdList(["-x", "-", "fstat", "-T",
+                "depotFile,headAction,headRev,headType"], stdin=to_check)
+            for record in stat_result:
+                if record['code'] != 'stat':
+                    continue
+                if record['headAction'] in self.delete_actions:
+                    continue
+                files.append({
+                    'action': 'add',
+                    'path': record['depotFile'],
+                    'rev': record['headRev'],
+                    'type': record['headType']})
+
     def commit(self, details, files, branch, parent = "", allow_empty=False):
         epoch = details["time"]
         author = details["user"]
@@ -3222,11 +3258,14 @@ class P4Sync(Command, P4UserMap):
         if self.verbose:
             print('commit into {0}'.format(branch))
 
+        files = [f for f in files
+            if self.hasBranchPrefix(decode_path(f['path']))]
+        self.findShadowedFiles(files, details['change'])
+
         if self.clientSpecDirs:
             self.clientSpecDirs.update_client_spec_path_cache(files)
 
-        files = [f for (f, path) in ((f, decode_path(f['path'])) for f in files)
-            if self.inClientSpec(path) and self.hasBranchPrefix(path)]
+        files = [f for f in files if self.inClientSpec(decode_path(f['path']))]
 
         if gitConfigBool('git-p4.keepEmptyCommits'):
             allow_empty = True
