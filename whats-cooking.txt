@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2020, #04; Wed, 13)
-X-master-at: 172e8ff696ea0ebe002bdd1f61a3544fc7f71a61
-X-next-at: e517b1a6695bd6c33127de6780ca7c4351647a1b
+Subject: What's cooking in git.git (May 2020, #05; Thu, 14)
+X-master-at: efcab5b7a3d2ce2ae4bf808b335938098b18d960
+X-next-at: 67701bce43065d3b2fbf3423f8cb13c0db322fee
 
-What's cooking in git.git (May 2020, #04; Wed, 13)
+What's cooking in git.git (May 2020, #05; Thu, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-I have been a bit more aggressive than usual in merging topics down
-to 'next' and 'master' this week, in preparation for -rc0, scheduled
-on the 14th.  We may need to apply last-minute fixes to some of
-these topics but let's hope that we can keep them to the minimum.
+2.27-rc0 has been tagged.  I haven't seen much discussion on
+proposed topics for 2.26.3, so haven't merged anything (yet), but
+now the 'master' and 'next' front would be more quiescent, efforts
+focused on regressions, perhaps people can help pick the topics for
+the maintenance track.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,104 +26,6 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cb/credential-doc-fixes (2020-05-07) 4 commits
-  (merged to 'next' on 2020-05-07 at 993b36071e)
- + credential: document protocol updates
- + credential: update gitcredentials documentation
- + credential: correct order of parameters for credential_match
- + credential: update description for credential_from_url_gently
-
- Minor in-code comments and documentation updates around credential
- API.
-
-
-* cc/upload-pack-v2-fetch-fix (2020-05-08) 1 commit
-  (merged to 'next' on 2020-05-08 at d26b87d06d)
- + upload-pack: clear filter_options for each v2 fetch command
-
- Serving a "git fetch" client over "git://" and "ssh://" protocols
- using the on-wire protocol version 2 was buggy on the server end
- when the client needs to make a follow-up request to
- e.g. auto-follow tags.
-
-
-* dd/bloom-sparse-fix (2020-05-07) 1 commit
-  (merged to 'next' on 2020-05-08 at 1067403c01)
- + bloom: fix `make sparse` warning
-
- Code clean-up.
-
-
-* ds/sparse-updates-oob-access-fix (2020-05-08) 1 commit
-  (merged to 'next' on 2020-05-08 at fd007758ea)
- + unpack-trees: avoid array out-of-bounds error
-
- The code to skip unmerged paths in the index when sparse checkout
- is in use would have made out-of-bound access of the in-core index
- when the last path was unmerged, which has been corrected.
-
-
-* jc/auto-gc-quiet (2020-05-07) 2 commits
-  (merged to 'next' on 2020-05-07 at 6cc69513c3)
- + auto-gc: pass --quiet down from am, commit, merge and rebase
- + auto-gc: extract a reusable helper from "git fetch"
-
- Teach "am", "commit", "merge" and "rebase", when they are run with
- the "--quiet" option, to pass "--quiet" down to "gc --auto".
-
-
-* jk/ci-only-on-selected-branches (2020-05-07) 1 commit
-  (merged to 'next' on 2020-05-07 at f3227dd3d3)
- + ci: allow per-branch config for GitHub Actions
-
- Instead of always building all branches at GitHub via Actions,
- users can specify which branches to build.
-
-
-* ss/faq-fetch-pull (2020-05-06) 1 commit
-  (merged to 'next' on 2020-05-07 at d57224374e)
- + gitfaq: fetching and pulling a repository
-
- Random bits of FAQ.
-
-
-* ss/faq-ignore (2020-05-06) 1 commit
-  (merged to 'next' on 2020-05-07 at 6273caaf77)
- + gitfaq: files in .gitignore are tracked
-
- Random bits of FAQ.
-
-
-* ss/submodule-set-url-in-c (2020-05-08) 1 commit
-  (merged to 'next' on 2020-05-08 at 93e390eb33)
- + submodule: port subcommand 'set-url' from shell to C
-
- Rewriting various parts of "git submodule" in C continues.
-
-
-* tb/bitmap-walk-with-tree-zero-filter (2020-05-04) 4 commits
-  (merged to 'next' on 2020-05-06 at fbb3fbbb85)
- + pack-bitmap: pass object filter to fill-in traversal
- + pack-bitmap.c: support 'tree:0' filtering
- + pack-bitmap.c: make object filtering functions generic
- + list-objects-filter: treat NULL filter_options as "disabled"
-
- The object walk with object filter "--filter=tree:0" can now take
- advantage of the pack bitmap when available.
-
-
-* tb/shallow-cleanup (2020-04-30) 4 commits
-  (merged to 'next' on 2020-05-05 at 647588a8bd)
- + shallow: use struct 'shallow_lock' for additional safety
- + shallow.h: document '{commit,rollback}_shallow_file'
- + shallow: extract a header file for shallow-related functions
- + commit: make 'commit_graft_pos' non-static
-
- Code cleanup.
-
---------------------------------------------------
-[New Topics]
-
 * ao/p4-d-f-conflict-recover (2020-05-10) 1 commit
   (merged to 'next' on 2020-05-11 at a83a2f6178)
  + git-p4: recover from inconsistent perforce history
@@ -131,8 +34,129 @@ of the repositories listed at
  and a file are recorded at the same path in the Perforce repository
  the same way as their clients do.
 
- Will merge to 'master'.
 
+* cw/bisect-replay-with-dos (2020-05-08) 1 commit
+  (merged to 'next' on 2020-05-11 at 2eb0edf56d)
+ + bisect: allow CRLF line endings in "git bisect replay" input
+
+ "git bisect replay" had trouble with input files when they used
+ CRLF line ending, which has been corrected.
+
+
+* ds/bloom-cleanup (2020-05-11) 7 commits
+  (merged to 'next' on 2020-05-11 at 046d49d455)
+ + completion: offer '--(no-)patch' among 'git log' options
+ + bloom: use num_changes not nr for limit detection
+ + bloom: de-duplicate directory entries
+ + Documentation: changed-path Bloom filters use byte words
+ + bloom: parse commit before computing filters
+ + test-bloom: fix usage typo
+ + bloom: fix whitespace around tab length
+
+ Code cleanup and typofixes.
+ This is an early part of ds/line-log-on-bloom that has been cooking
+ in 'next'.
+
+
+* es/bugreport-with-hooks (2020-05-07) 1 commit
+  (merged to 'next' on 2020-05-11 at 2dd5d90a34)
+ + bugreport: collect list of populated hooks
+ (this branch is used by es/bugreport-shell.)
+
+ "git bugreport" learned to report enabled hooks in the repository.
+
+
+* es/trace-log-progress (2020-05-12) 1 commit
+  (merged to 'next' on 2020-05-13 at a127540258)
+ + trace2: log progress time and throughput
+
+ Teach codepaths that show progress meter to also use the
+ start_progress() and the stop_progress() calls as a "region" to be
+ traced.
+
+
+* jc/codingstyle-compare-with-null (2020-05-08) 1 commit
+  (merged to 'next' on 2020-05-11 at d18f0d930e)
+ + CodingGuidelines: do not ==/!= compare with 0 or '\0' or NULL
+
+ Doc update.
+
+
+* js/rebase-autosquash-double-fixup-fix (2020-05-09) 1 commit
+  (merged to 'next' on 2020-05-11 at 3cdf7f7ece)
+ + rebase --autosquash: fix a potential segfault
+
+ "rebase -i" segfaulted when rearranging a sequence that has a
+ fix-up that applies another fix-up (which may or may not be a
+ fix-up of yet another step).
+
+
+* jt/t5500-unflake (2020-05-06) 1 commit
+  (merged to 'next' on 2020-05-13 at 11450265ec)
+ + t5500: count objects through stderr, not trace
+
+ Test fix for a topic already in 'master' and meant for 'maint'.
+
+
+* rs/fsck-duplicate-names-in-trees (2020-05-11) 1 commit
+  (merged to 'next' on 2020-05-11 at f603ca2528)
+ + fsck: report non-consecutive duplicate names in trees
+
+ "git fsck" ensures that the paths recorded in tree objects are
+ sorted and without duplicates, but it failed to notice a case where
+ a blob is followed by entries that sort before a tree with the same
+ name.  This has been corrected.
+
+
+* sn/midx-repack-with-config (2020-05-10) 2 commits
+  (merged to 'next' on 2020-05-11 at d73f8f51d6)
+ + multi-pack-index: respect repack.packKeptObjects=false
+ + midx: teach "git multi-pack-index repack" honor "git repack" configurations
+
+ "git multi-pack-index repack" has been taught to honor some
+ repack.* configuration variables.
+
+--------------------------------------------------
+[New Topics]
+
+* cb/no-more-gmtime (2020-05-14) 1 commit
+ - compat: remove gmtime
+
+ Code clean-up by removing a compatibility implementation of a
+ function we no longer use.
+
+ Will merge to 'next'.
+
+
+* cb/t4210-illseq-auto-detect (2020-05-14) 1 commit
+ - t4210: detect REG_ILLSEQ dynamically
+
+ As FreeBSD is not the only platform whose regexp library needs
+ REG_ILLSEQ prerequisite, add a logic to detect the prerequisite
+ automatically.
+
+
+* en/merge-rename-rename-worktree-fix (2020-05-14) 1 commit
+ - merge-recursive: fix rename/rename(1to2) for working tree with a binary
+
+ When a binary file gets renamed and then merged with a minor
+ change, the copy on the working tree while conflict resolution
+ sometimes got "their" version and not "ours".
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
 
 * bk/p4-prepare-p4-only-fix (2020-05-12) 1 commit
  - git-p4.py: fix --prepare-p4-only error with multiple commits
@@ -162,39 +186,7 @@ of the repositories listed at
  "git grep" has been tweaked to be limited to the sparse checkout
  paths.
 
-
-* rs/fsck-duplicate-names-in-trees (2020-05-11) 1 commit
-  (merged to 'next' on 2020-05-11 at f603ca2528)
- + fsck: report non-consecutive duplicate names in trees
-
- "git fsck" ensures that the paths recorded in tree objects are
- sorted and without duplicates, but it failed to notice a case where
- a blob is followed by entries that sort before a tree with the same
- name.  This has been corrected.
-
- Will merge to 'master'.
-
-
-* sn/midx-repack-with-config (2020-05-10) 2 commits
-  (merged to 'next' on 2020-05-11 at d73f8f51d6)
- + multi-pack-index: respect repack.packKeptObjects=false
- + midx: teach "git multi-pack-index repack" honor "git repack" configurations
-
- "git multi-pack-index repack" has been taught to honor some
- repack.* configuration variables.
-
- Will merge to 'master'.
-
-
-* es/trace-log-progress (2020-05-12) 1 commit
-  (merged to 'next' on 2020-05-13 at a127540258)
- + trace2: log progress time and throughput
-
- Teach codepaths that show progress meter to also use the
- start_progress() and the stop_progress() calls as a "region" to be
- traced.
-
- Will merge to 'master'.
+ Expecting a reroll.
 
 
 * js/ci-sdk-download-fix (2020-05-12) 1 commit
@@ -209,7 +201,7 @@ of the repositories listed at
  Hopefully this can go away once cmake-for-windows-build topic lands?
 
 
-* bc/sha-256-part-2 (2020-05-12) 44 commits
+* bc/sha-256-part-2 (2020-05-13) 44 commits
  - remote-testgit: adapt for object-format
  - bundle: detect hash algorithm when reading refs
  - t5300: pass --object-format to git index-pack
@@ -269,84 +261,26 @@ of the repositories listed at
 * es/bugreport-shell (2020-05-12) 2 commits
  - bugreport: include user interactive shell
  - help: add shell-path to --build-options
- (this branch uses es/bugreport-with-hooks.)
 
  "git bugreport" learns to report what shell is in use.
 
---------------------------------------------------
-[Stalled]
 
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
-
-* jt/t5500-unflake (2020-05-06) 1 commit
-  (merged to 'next' on 2020-05-13 at 11450265ec)
- + t5500: count objects through stderr, not trace
-
- Test fix for a topic already in 'master' and meant for 'maint'.
-
- Will merge to 'master'.
-
-
-* cw/bisect-replay-with-dos (2020-05-08) 1 commit
-  (merged to 'next' on 2020-05-11 at 2eb0edf56d)
- + bisect: allow CRLF line endings in "git bisect replay" input
-
- "git bisect replay" had trouble with input files when they used
- CRLF line ending, which has been corrected.
-
- Will merge to 'master'.
-
-
-* jc/codingstyle-compare-with-null (2020-05-08) 1 commit
-  (merged to 'next' on 2020-05-11 at d18f0d930e)
- + CodingGuidelines: do not ==/!= compare with 0 or '\0' or NULL
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* ds/line-log-on-bloom (2020-05-11) 12 commits
+* ds/line-log-on-bloom (2020-05-11) 5 commits
   (merged to 'next' on 2020-05-11 at 046d49d455)
  + line-log: integrate with changed-path Bloom filters
  + line-log: try to use generation number-based topo-ordering
  + line-log: more responsive, incremental 'git log -L'
  + t4211-line-log: add tests for parent oids
  + line-log: remove unused fields from 'struct line_log_data'
- + completion: offer '--(no-)patch' among 'git log' options
- + bloom: use num_changes not nr for limit detection
- + bloom: de-duplicate directory entries
- + Documentation: changed-path Bloom filters use byte words
- + bloom: parse commit before computing filters
- + test-bloom: fix usage typo
- + bloom: fix whitespace around tab length
 
  "git log -L..." now takes advantage of the "which paths are touched
  by this commit?" info stored in the commit-graph system.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
-* js/rebase-autosquash-double-fixup-fix (2020-05-09) 1 commit
-  (merged to 'next' on 2020-05-11 at 3cdf7f7ece)
- + rebase --autosquash: fix a potential segfault
-
- "rebase -i" segfaulted when rearranging a sequence that has a
- fix-up that applies another fix-up (which may or may not be a
- fix-up of yet another step).
-
- Will merge to 'master'.
-
-
-* tb/commit-graph-no-check-oids (2020-05-05) 8 commits
+* tb/commit-graph-no-check-oids (2020-05-14) 9 commits
+ - fixup! builtin/commit-graph.c: extract 'read_one_commit()'
  - commit-graph: drop COMMIT_GRAPH_WRITE_CHECK_OIDS flag
  - t5318: reorder test below 'graph_read_expect'
  - commit-graph.c: simplify 'fill_oids_from_commits'
@@ -357,10 +291,6 @@ of the repositories listed at
  - commit-graph.c: extract 'refs_cb_data'
 
  Clean-up the commit-graph codepath.
-
- Expecting a reroll.
- cf. <20200507204204.GF29683@coredump.intra.peff.net>
- cf. <20200507200305.GB29683@coredump.intra.peff.net>
 
 
 * dl/test-must-fail-fixes-5 (2020-05-05) 4 commits
@@ -373,16 +303,6 @@ of the repositories listed at
 
  Needs review.
  cf. <cover.1588162842.git.liu.denton@gmail.com>
-
-
-* es/bugreport-with-hooks (2020-05-07) 1 commit
-  (merged to 'next' on 2020-05-11 at 2dd5d90a34)
- + bugreport: collect list of populated hooks
- (this branch is used by es/bugreport-shell.)
-
- "git bugreport" learned to report enabled hooks in the repository.
-
- Will merge to 'master'.
 
 
 * mr/bisect-in-c-2 (2020-04-23) 12 commits
