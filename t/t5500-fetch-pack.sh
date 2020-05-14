@@ -386,7 +386,7 @@ test_expect_success 'clone shallow with packed refs' '
 '
 
 test_expect_success 'in_vain not triggered before first ACK' '
-	rm -rf myserver myclient trace &&
+	rm -rf myserver myclient &&
 	git init myserver &&
 	test_commit -C myserver foo &&
 	git clone "file://$(pwd)/myserver" myclient &&
@@ -399,12 +399,12 @@ test_expect_success 'in_vain not triggered before first ACK' '
 	# The new commit that the client wants to fetch.
 	test_commit -C myserver bar &&
 
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C myclient fetch --progress origin &&
-	test_i18ngrep "Total 3 " trace
+	git -C myclient fetch --progress origin 2>log &&
+	test_i18ngrep "remote: Total 3 " log
 '
 
 test_expect_success 'in_vain resetted upon ACK' '
-	rm -rf myserver myclient trace &&
+	rm -rf myserver myclient &&
 	git init myserver &&
 
 	# Linked list of commits on master. The first is common; the rest are
@@ -429,8 +429,8 @@ test_expect_success 'in_vain resetted upon ACK' '
 	# first. The 256th commit is common between the client and the server,
 	# and should reset in_vain. This allows negotiation to continue until
 	# the client reports that first_anotherbranch_commit is common.
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C myclient fetch --progress origin master &&
-	test_i18ngrep "Total 3 " trace
+	git -C myclient fetch --progress origin master 2>log &&
+	test_i18ngrep "Total 3 " log
 '
 
 test_expect_success 'fetch in shallow repo unreachable shallow objects' '
