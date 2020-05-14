@@ -89,8 +89,8 @@ test_expect_success 'get bloom filter for commit with 10 changes' '
 	git add smallDir &&
 	git commit -m "commit with 10 changes" &&
 	cat >expect <<-\EOF &&
-	Filter_Length:25
-	Filter_Data:82|a0|65|47|0c|92|90|c0|a1|40|02|a0|e2|40|e0|04|0a|9a|66|cf|80|19|85|42|23|
+	Filter_Length:14
+	Filter_Data:02|b3|c4|a0|34|e7|fe|eb|cb|47|fe|a0|e8|72|
 	EOF
 	test-tool bloom get_filter_for_commit "$(git rev-parse HEAD)" >actual &&
 	test_cmp expect actual
@@ -100,7 +100,7 @@ test_expect_success EXPENSIVE 'get bloom filter for commit with 513 changes' '
 	rm actual &&
 	rm expect &&
 	mkdir bigDir &&
-	for i in $(test_seq 0 512)
+	for i in $(test_seq 0 511)
 	do
 		echo $i >bigDir/$i
 	done &&

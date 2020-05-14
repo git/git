@@ -1860,6 +1860,7 @@ _git_log ()
 			$merge
 			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
+			--patch --no-patch
 			"
 		return
 		;;

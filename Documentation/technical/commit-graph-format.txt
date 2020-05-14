@@ -97,10 +97,10 @@ CHUNK DATA:
       bit on. The other bits correspond to the position of the last parent.
 
   Bloom Filter Index (ID: {'B', 'I', 'D', 'X'}) (N * 4 bytes) [Optional]
-    * The ith entry, BIDX[i], stores the number of 8-byte word blocks in all
-      Bloom filters from commit 0 to commit i (inclusive) in lexicographic
-      order. The Bloom filter for the i-th commit spans from BIDX[i-1] to
-      BIDX[i] (plus header length), where BIDX[-1] is 0.
+    * The ith entry, BIDX[i], stores the number of bytes in all Bloom filters
+      from commit 0 to commit i (inclusive) in lexicographic order. The Bloom
+      filter for the i-th commit spans from BIDX[i-1] to BIDX[i] (plus header
+      length), where BIDX[-1] is 0.
     * The BIDX chunk is ignored if the BDAT chunk is not present.
 
   Bloom Filter Data (ID: {'B', 'D', 'A', 'T'}) [Optional]
