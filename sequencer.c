@@ -5385,10 +5385,13 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 			todo_list->items[i].command =
 				starts_with(subject, "fixup!") ?
 				TODO_FIXUP : TODO_SQUASH;
-			if (next[i2] < 0)
+			if (tail[i2] < 0) {
+				next[i] = next[i2];
 				next[i2] = i;
-			else
+			} else {
+				next[i] = next[tail[i2]];
 				next[tail[i2]] = i;
+			}
 			tail[i2] = i;
 		} else if (!hashmap_get_from_hash(&subject2item,
 						strhash(subject), subject)) {
