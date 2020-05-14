@@ -56,6 +56,9 @@ repack::
 	file is created, rewrite the multi-pack-index to reference the
 	new pack-file. A later run of 'git multi-pack-index expire' will
 	delete the pack-files that were part of this batch.
++
+If `repack.packKeptObjects` is `false`, then any pack-files with an
+associated `.keep` file will not be selected for the batch to repack.
 
 
 EXAMPLES
