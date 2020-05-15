@@ -1144,17 +1144,16 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 void upload_pack(struct upload_pack_options *options)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
-	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct packet_reader reader;
-	struct list_objects_filter_options filter_options;
+	struct upload_pack_data data;
 
 	stateless_rpc = options->stateless_rpc;
 	timeout = options->timeout;
 	daemon_mode = options->daemon_mode;
 
-	memset(&filter_options, 0, sizeof(filter_options));
-
 	git_config(upload_pack_config, NULL);
+
+	upload_pack_data_init(&data);
 
 	head_ref_namespaced(find_symref, &symref);
 
@@ -1169,21 +1168,24 @@ void upload_pack(struct upload_pack_options *options)
 		for_each_namespaced_ref(check_ref, NULL);
 	}
 	string_list_clear(&symref, 1);
-	if (options->advertise_refs)
-		return;
 
-	packet_reader_init(&reader, 0, NULL, 0,
-			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
+	if (!options->advertise_refs) {
+		packet_reader_init(&reader, 0, NULL, 0,
+				   PACKET_READ_CHOMP_NEWLINE |
+				   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	receive_needs(&reader, &want_obj, &filter_options);
-	if (want_obj.nr) {
-		struct object_array have_obj = OBJECT_ARRAY_INIT;
-		get_common_commits(&reader, &have_obj, &want_obj);
-		create_pack_file(&have_obj, &want_obj, &filter_options);
+		receive_needs(&reader, &data.want_obj, &data.filter_options);
+		if (data.want_obj.nr) {
+			get_common_commits(&reader,
+					   &data.have_obj,
+					   &data.want_obj);
+			create_pack_file(&data.have_obj,
+					 &data.want_obj,
+					 &data.filter_options);
+		}
 	}
 
-	list_objects_filter_release(&filter_options);
+	upload_pack_data_clear(&data);
 }
 
 static int parse_want(struct packet_writer *writer, const char *line,
