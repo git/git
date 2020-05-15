@@ -72,6 +72,62 @@ static int allow_ref_in_want;
 
 static int allow_sideband_all;
 
+struct upload_pack_data {
+	struct string_list wanted_refs;
+	struct object_array want_obj;
+	struct object_array have_obj;
+	struct oid_array haves;
+
+	struct object_array shallows;
+	struct string_list deepen_not;
+	int depth;
+	timestamp_t deepen_since;
+	int deepen_rev_list;
+	int deepen_relative;
+
+	struct list_objects_filter_options filter_options;
+
+	struct packet_writer writer;
+
+	unsigned stateless_rpc : 1;
+
+	unsigned use_thin_pack : 1;
+	unsigned use_ofs_delta : 1;
+	unsigned no_progress : 1;
+	unsigned use_include_tag : 1;
+	unsigned done : 1;
+};
+
+static void upload_pack_data_init(struct upload_pack_data *data)
+{
+	struct string_list wanted_refs = STRING_LIST_INIT_DUP;
+	struct object_array want_obj = OBJECT_ARRAY_INIT;
+	struct object_array have_obj = OBJECT_ARRAY_INIT;
+	struct oid_array haves = OID_ARRAY_INIT;
+	struct object_array shallows = OBJECT_ARRAY_INIT;
+	struct string_list deepen_not = STRING_LIST_INIT_DUP;
+
+	memset(data, 0, sizeof(*data));
+	data->wanted_refs = wanted_refs;
+	data->want_obj = want_obj;
+	data->have_obj = have_obj;
+	data->haves = haves;
+	data->shallows = shallows;
+	data->deepen_not = deepen_not;
+	packet_writer_init(&data->writer, 1);
+}
+
+static void upload_pack_data_clear(struct upload_pack_data *data)
+{
+	string_list_clear(&data->wanted_refs, 1);
+	object_array_clear(&data->want_obj);
+	object_array_clear(&data->have_obj);
+	oid_array_clear(&data->haves);
+	object_array_clear(&data->shallows);
+	string_list_clear(&data->deepen_not, 0);
+	list_objects_filter_release(&data->filter_options);
+}
+
 static void reset_timeout(void)
 {
 	alarm(timeout);
@@ -1128,62 +1184,6 @@ void upload_pack(struct upload_pack_options *options)
 	}
 
 	list_objects_filter_release(&filter_options);
-}
-
-struct upload_pack_data {
-	struct string_list wanted_refs;
-	struct object_array want_obj;
-	struct object_array have_obj;
-	struct oid_array haves;
-
-	struct object_array shallows;
-	struct string_list deepen_not;
-	int depth;
-	timestamp_t deepen_since;
-	int deepen_rev_list;
-	int deepen_relative;
-
-	struct list_objects_filter_options filter_options;
-
-	struct packet_writer writer;
-
-	unsigned stateless_rpc : 1;
-
-	unsigned use_thin_pack : 1;
-	unsigned use_ofs_delta : 1;
-	unsigned no_progress : 1;
-	unsigned use_include_tag : 1;
-	unsigned done : 1;
-};
-
-static void upload_pack_data_init(struct upload_pack_data *data)
-{
-	struct string_list wanted_refs = STRING_LIST_INIT_DUP;
-	struct object_array want_obj = OBJECT_ARRAY_INIT;
-	struct object_array have_obj = OBJECT_ARRAY_INIT;
-	struct oid_array haves = OID_ARRAY_INIT;
-	struct object_array shallows = OBJECT_ARRAY_INIT;
-	struct string_list deepen_not = STRING_LIST_INIT_DUP;
-
-	memset(data, 0, sizeof(*data));
-	data->wanted_refs = wanted_refs;
-	data->want_obj = want_obj;
-	data->have_obj = have_obj;
-	data->haves = haves;
-	data->shallows = shallows;
-	data->deepen_not = deepen_not;
-	packet_writer_init(&data->writer, 1);
-}
-
-static void upload_pack_data_clear(struct upload_pack_data *data)
-{
-	string_list_clear(&data->wanted_refs, 1);
-	object_array_clear(&data->want_obj);
-	object_array_clear(&data->have_obj);
-	oid_array_clear(&data->haves);
-	object_array_clear(&data->shallows);
-	string_list_clear(&data->deepen_not, 0);
-	list_objects_filter_release(&data->filter_options);
 }
 
 static int parse_want(struct packet_writer *writer, const char *line,
