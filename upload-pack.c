@@ -1132,6 +1132,8 @@ void upload_pack(struct upload_pack_options *options)
 
 struct upload_pack_data {
 	struct string_list wanted_refs;
+	struct object_array want_obj;
+	struct object_array have_obj;
 	struct oid_array haves;
 
 	struct object_array shallows;
@@ -1157,12 +1159,16 @@ struct upload_pack_data {
 static void upload_pack_data_init(struct upload_pack_data *data)
 {
 	struct string_list wanted_refs = STRING_LIST_INIT_DUP;
+	struct object_array want_obj = OBJECT_ARRAY_INIT;
+	struct object_array have_obj = OBJECT_ARRAY_INIT;
 	struct oid_array haves = OID_ARRAY_INIT;
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 
 	memset(data, 0, sizeof(*data));
 	data->wanted_refs = wanted_refs;
+	data->want_obj = want_obj;
+	data->have_obj = have_obj;
 	data->haves = haves;
 	data->shallows = shallows;
 	data->deepen_not = deepen_not;
@@ -1172,6 +1178,8 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 static void upload_pack_data_clear(struct upload_pack_data *data)
 {
 	string_list_clear(&data->wanted_refs, 1);
+	object_array_clear(&data->want_obj);
+	object_array_clear(&data->have_obj);
 	oid_array_clear(&data->haves);
 	object_array_clear(&data->shallows);
 	string_list_clear(&data->deepen_not, 0);
@@ -1256,19 +1264,18 @@ static int parse_have(const char *line, struct oid_array *haves)
 }
 
 static void process_args(struct packet_reader *request,
-			 struct upload_pack_data *data,
-			 struct object_array *want_obj)
+			 struct upload_pack_data *data)
 {
 	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
 		const char *arg = request->line;
 		const char *p;
 
 		/* process want */
-		if (parse_want(&data->writer, arg, want_obj))
+		if (parse_want(&data->writer, arg, &data->want_obj))
 			continue;
 		if (allow_ref_in_want &&
 		    parse_want_ref(&data->writer, arg, &data->wanted_refs,
-				   want_obj))
+				   &data->want_obj))
 			continue;
 		/* process have line */
 		if (parse_have(arg, &data->haves))
@@ -1399,17 +1406,16 @@ static int send_acks(struct packet_writer *writer, struct oid_array *acks,
 	return 0;
 }
 
-static int process_haves_and_send_acks(struct upload_pack_data *data,
-				       struct object_array *have_obj,
-				       struct object_array *want_obj)
+static int process_haves_and_send_acks(struct upload_pack_data *data)
 {
 	struct oid_array common = OID_ARRAY_INIT;
 	int ret = 0;
 
-	process_haves(&data->haves, &common, have_obj);
+	process_haves(&data->haves, &common, &data->have_obj);
 	if (data->done) {
 		ret = 1;
-	} else if (send_acks(&data->writer, &common, have_obj, want_obj)) {
+	} else if (send_acks(&data->writer, &common,
+			     &data->have_obj, &data->want_obj)) {
 		packet_writer_delim(&data->writer);
 		ret = 1;
 	} else {
@@ -1441,8 +1447,7 @@ static void send_wanted_ref_info(struct upload_pack_data *data)
 	packet_writer_delim(&data->writer);
 }
 
-static void send_shallow_info(struct upload_pack_data *data,
-			      struct object_array *want_obj)
+static void send_shallow_info(struct upload_pack_data *data)
 {
 	/* No shallow info needs to be sent */
 	if (!data->depth && !data->deepen_rev_list && !data->shallows.nr &&
@@ -1455,10 +1460,10 @@ static void send_shallow_info(struct upload_pack_data *data,
 			       data->deepen_rev_list,
 			       data->deepen_since, &data->deepen_not,
 			       data->deepen_relative,
-			       &data->shallows, want_obj) &&
+			       &data->shallows, &data->want_obj) &&
 	    is_repository_shallow(the_repository))
 		deepen(&data->writer, INFINITE_DEPTH, data->deepen_relative,
-		       &data->shallows, want_obj);
+		       &data->shallows, &data->want_obj);
 
 	packet_delim(1);
 }
@@ -1475,8 +1480,6 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 {
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
-	struct object_array have_obj = OBJECT_ARRAY_INIT;
-	struct object_array want_obj = OBJECT_ARRAY_INIT;
 
 	clear_object_flags(ALL_FLAGS);
 
@@ -1488,9 +1491,9 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 	while (state != FETCH_DONE) {
 		switch (state) {
 		case FETCH_PROCESS_ARGS:
-			process_args(request, &data, &want_obj);
+			process_args(request, &data);
 
-			if (!want_obj.nr) {
+			if (!data.want_obj.nr) {
 				/*
 				 * Request didn't contain any 'want' lines,
 				 * guess they didn't want anything.
@@ -1510,18 +1513,19 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 			}
 			break;
 		case FETCH_SEND_ACKS:
-			if (process_haves_and_send_acks(&data, &have_obj,
-							&want_obj))
+			if (process_haves_and_send_acks(&data))
 				state = FETCH_SEND_PACK;
 			else
 				state = FETCH_DONE;
 			break;
 		case FETCH_SEND_PACK:
 			send_wanted_ref_info(&data);
-			send_shallow_info(&data, &want_obj);
+			send_shallow_info(&data);
 
 			packet_writer_write(&data.writer, "packfile\n");
-			create_pack_file(&have_obj, &want_obj, &data.filter_options);
+			create_pack_file(&data.have_obj,
+					 &data.want_obj,
+					 &data.filter_options);
 			state = FETCH_DONE;
 			break;
 		case FETCH_DONE:
@@ -1530,8 +1534,6 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 	}
 
 	upload_pack_data_clear(&data);
-	object_array_clear(&have_obj);
-	object_array_clear(&want_obj);
 	return 0;
 }
 
