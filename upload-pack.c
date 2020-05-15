@@ -1059,6 +1059,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		" deepen-relative no-progress include-tag multi_ack_detailed";
 	const char *refname_nons = strip_namespace(refname);
 	struct object_id peeled;
+	struct upload_pack_data *data = cb_data;
 
 	if (mark_our_ref(refname_nons, refname, oid))
 		return 0;
@@ -1066,7 +1067,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	if (capabilities) {
 		struct strbuf symref_info = STRBUF_INIT;
 
-		format_symref_info(&symref_info, cb_data);
+		format_symref_info(&symref_info, &data->symref);
 		packet_write_fmt(1, "%s %s%c%s%s%s%s%s%s agent=%s\n",
 			     oid_to_hex(oid), refname_nons,
 			     0, capabilities,
@@ -1161,8 +1162,8 @@ void upload_pack(struct upload_pack_options *options)
 
 	if (options->advertise_refs || !stateless_rpc) {
 		reset_timeout();
-		head_ref_namespaced(send_ref, &data.symref);
-		for_each_namespaced_ref(send_ref, &data.symref);
+		head_ref_namespaced(send_ref, &data);
+		for_each_namespaced_ref(send_ref, &data);
 		advertise_shallow_grafts(1);
 		packet_flush(1);
 	} else {
