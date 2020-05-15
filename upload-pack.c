@@ -917,10 +917,8 @@ static void receive_needs(struct upload_pack_data *data,
 	timestamp_t deepen_since = 0;
 	int deepen_rev_list = 0;
 	int deepen_relative = 0;
-	struct packet_writer writer;
 
 	shallow_nr = 0;
-	packet_writer_init(&writer, 1);
 	for (;;) {
 		struct object *o;
 		const char *features;
@@ -978,7 +976,7 @@ static void receive_needs(struct upload_pack_data *data,
 
 		o = parse_object(the_repository, &oid_buf);
 		if (!o) {
-			packet_writer_error(&writer,
+			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
 					    oid_to_hex(&oid_buf));
 			die("git upload-pack: not our ref %s",
@@ -1001,7 +999,7 @@ static void receive_needs(struct upload_pack_data *data,
 	 * by another process that handled the initial request.
 	 */
 	if (has_non_tip)
-		check_non_tip(&data->want_obj, &writer);
+		check_non_tip(&data->want_obj, &data->writer);
 
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;
@@ -1009,7 +1007,7 @@ static void receive_needs(struct upload_pack_data *data,
 	if (depth == 0 && !deepen_rev_list && shallows.nr == 0)
 		return;
 
-	if (send_shallow_list(&writer, depth, deepen_rev_list, deepen_since,
+	if (send_shallow_list(&data->writer, depth, deepen_rev_list, deepen_since,
 			      &deepen_not, deepen_relative, &shallows,
 			      &data->want_obj))
 		packet_flush(1);
