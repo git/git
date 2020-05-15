@@ -12,7 +12,19 @@ jobs:
     - uses: actions/checkout@v1
     - name: download git-sdk-64-minimal
       shell: bash
-      run: a=git-sdk-64-minimal && mkdir -p $a && curl -# https://wingit.blob.core.windows.net/ci-artifacts/$a.tar.xz | tar -C $a -xJf -
+      run: |
+        ## Get artifact
+        urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
+        id=$(curl "$urlbase?definitions=22&statusFilter=completed&resultFilter=succeeded&\$top=1" |
+          jq -r ".value[] | .id")
+        download_url="$(curl "$urlbase/$id/artifacts" |
+          jq -r '.value[] | select(.name == "git-sdk-64-minimal").resource.downloadUrl')"
+        curl --connect-timeout 10 --retry 5 --retry-delay 0 --retry-max-time 240 \
+          -o artifacts.zip "$download_url"
+
+        ## Unzip and remove the artifact
+        unzip artifacts.zip
+        rm artifacts.zip
     - name: build
       shell: powershell
       env:
@@ -30,6 +42,11 @@ jobs:
       with:
         name: windows-artifacts
         path: artifacts
+    - name: upload git-sdk-64-minimal
+      uses: actions/upload-artifact@v1
+      with:
+        name: git-sdk-64-minimal
+        path: git-sdk-64-minimal
   windows-test:
     runs-on: windows-latest
     needs: [windows-build]
@@ -38,9 +55,6 @@ jobs:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
     - uses: actions/checkout@v1
-    - name: download git-sdk-64-minimal
-      shell: bash
-      run: a=git-sdk-64-minimal && mkdir -p $a && curl -# https://wingit.blob.core.windows.net/ci-artifacts/$a.tar.xz | tar -C $a -xJf -
     - name: download build artifacts
       uses: actions/download-artifact@v1
       with:
@@ -49,6 +63,11 @@ jobs:
     - name: extract build artifacts
       shell: bash
       run: tar xf artifacts.tar.gz
+    - name: download git-sdk-64-minimal
+      uses: actions/download-artifact@v1
+      with:
+        name: git-sdk-64-minimal
+        path: ${{github.workspace}}/git-sdk-64-minimal/
     - name: test
       shell: powershell
       run: |
@@ -79,7 +98,19 @@ jobs:
     - uses: actions/checkout@v1
     - name: download git-sdk-64-minimal
       shell: bash
-      run: a=git-sdk-64-minimal && mkdir -p $a && curl -# https://wingit.blob.core.windows.net/ci-artifacts/$a.tar.xz | tar -C $a -xJf -
+      run: |
+        ## Get artifact
+        urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
+        id=$(curl "$urlbase?definitions=22&statusFilter=completed&resultFilter=succeeded&\$top=1" |
+          jq -r ".value[] | .id")
+        download_url="$(curl "$urlbase/$id/artifacts" |
+          jq -r '.value[] | select(.name == "git-sdk-64-minimal").resource.downloadUrl')"
+        curl --connect-timeout 10 --retry 5 --retry-delay 0 --retry-max-time 240 \
+          -o artifacts.zip "$download_url"
+
+        ## Unzip and remove the artifact
+        unzip artifacts.zip
+        rm artifacts.zip
     - name: generate Visual Studio solution
       shell: powershell
       run: |
@@ -119,15 +150,17 @@ jobs:
         path: artifacts
   vs-test:
     runs-on: windows-latest
-    needs: [vs-build]
+    needs: [vs-build, windows-build]
     strategy:
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
     - uses: actions/checkout@v1
-    - name: download git-64-portable
-      shell: bash
-      run: a=git-64-portable && mkdir -p $a && curl -# https://wingit.blob.core.windows.net/ci-artifacts/$a.tar.xz | tar -C $a -xJf -
+    - name: download git-sdk-64-minimal
+      uses: actions/download-artifact@v1
+      with:
+        name: git-sdk-64-minimal
+        path: ${{github.workspace}}/git-sdk-64-minimal/
     - name: download build artifacts
       uses: actions/download-artifact@v1
       with:
@@ -143,9 +176,9 @@ jobs:
         NO_SVN_TESTS: 1
         GIT_TEST_SKIP_REBASE_P: 1
       run: |
-        & git-64-portable\git-cmd.exe --command=usr\bin\bash.exe -lc @"
+        & .\git-sdk-64-minimal\usr\bin\bash.exe -lc @"
           # Let Git ignore the SDK and the test-cache
-          printf '%s\n' /git-64-portable/ /test-cache/ >>.git/info/exclude
+          printf '%s\n' /git-sdk-64-minimal/ /test-cache/ >>.git/info/exclude
 
           cd t &&
           PATH=\"`$PWD/helper:`$PATH\" &&
