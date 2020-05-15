@@ -1131,7 +1131,6 @@ void upload_pack(struct upload_pack_options *options)
 }
 
 struct upload_pack_data {
-	struct object_array wants;
 	struct string_list wanted_refs;
 	struct oid_array haves;
 
@@ -1157,14 +1156,12 @@ struct upload_pack_data {
 
 static void upload_pack_data_init(struct upload_pack_data *data)
 {
-	struct object_array wants = OBJECT_ARRAY_INIT;
 	struct string_list wanted_refs = STRING_LIST_INIT_DUP;
 	struct oid_array haves = OID_ARRAY_INIT;
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 
 	memset(data, 0, sizeof(*data));
-	data->wants = wants;
 	data->wanted_refs = wanted_refs;
 	data->haves = haves;
 	data->shallows = shallows;
@@ -1174,7 +1171,6 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 
 static void upload_pack_data_clear(struct upload_pack_data *data)
 {
-	object_array_clear(&data->wants);
 	string_list_clear(&data->wanted_refs, 1);
 	oid_array_clear(&data->haves);
 	object_array_clear(&data->shallows);
