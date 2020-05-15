@@ -63,7 +63,6 @@ static int keepalive = 5;
  * otherwise maximum packet size (up to 65520 bytes).
  */
 static int use_sideband;
-static int stateless_rpc;
 static const char *pack_objects_hook;
 
 static int filter_capability_requested;
@@ -449,7 +448,7 @@ static int get_common_commits(struct upload_pack_data *data,
 				packet_write_fmt(1, "ACK %s\n", last_hex);
 				return 0;
 			}
-			if (stateless_rpc)
+			if (data->stateless_rpc)
 				exit(0);
 			got_common = 0;
 			got_other = 0;
@@ -663,7 +662,8 @@ static void check_non_tip(struct upload_pack_data *data)
 	 * uploadpack.allowReachableSHA1InWant,
 	 * non-tip requests can never happen.
 	 */
-	if (!stateless_rpc && !(allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
+	if (!data->stateless_rpc
+	    && !(allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
 		goto error;
 	if (!has_unreachable(&data->want_obj))
 		/* All the non-tip ones are ancestors of what we advertised */
@@ -1074,7 +1074,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 				     " allow-tip-sha1-in-want" : "",
 			     (allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1) ?
 				     " allow-reachable-sha1-in-want" : "",
-			     stateless_rpc ? " no-done" : "",
+			     data->stateless_rpc ? " no-done" : "",
 			     symref_info.buf,
 			     allow_filter ? " filter" : "",
 			     git_user_agent_sanitized());
@@ -1149,7 +1149,6 @@ void upload_pack(struct upload_pack_options *options)
 	struct packet_reader reader;
 	struct upload_pack_data data;
 
-	stateless_rpc = options->stateless_rpc;
 	timeout = options->timeout;
 	daemon_mode = options->daemon_mode;
 
@@ -1157,9 +1156,11 @@ void upload_pack(struct upload_pack_options *options)
 
 	upload_pack_data_init(&data);
 
+	data.stateless_rpc = options->stateless_rpc;
+
 	head_ref_namespaced(find_symref, &data.symref);
 
-	if (options->advertise_refs || !stateless_rpc) {
+	if (options->advertise_refs || !data.stateless_rpc) {
 		reset_timeout();
 		head_ref_namespaced(send_ref, &data);
 		for_each_namespaced_ref(send_ref, &data);
