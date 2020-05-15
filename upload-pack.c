@@ -414,9 +414,8 @@ static int ok_to_give_up(const struct object_array *have_obj,
 					    min_generation);
 }
 
-static int get_common_commits(struct packet_reader *reader,
-			      struct object_array *have_obj,
-			      struct object_array *want_obj)
+static int get_common_commits(struct upload_pack_data *data,
+			      struct packet_reader *reader)
 {
 	struct object_id oid;
 	char last_hex[GIT_MAX_HEXSZ + 1];
@@ -432,12 +431,14 @@ static int get_common_commits(struct packet_reader *reader,
 		reset_timeout();
 
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL) {
-			if (multi_ack == 2 && got_common
-			    && !got_other && ok_to_give_up(have_obj, want_obj)) {
+			if (multi_ack == 2
+			    && got_common
+			    && !got_other
+			    && ok_to_give_up(&data->have_obj, &data->want_obj)) {
 				sent_ready = 1;
 				packet_write_fmt(1, "ACK %s ready\n", last_hex);
 			}
-			if (have_obj->nr == 0 || multi_ack)
+			if (data->have_obj.nr == 0 || multi_ack)
 				packet_write_fmt(1, "NAK\n");
 
 			if (no_done && sent_ready) {
@@ -451,10 +452,11 @@ static int get_common_commits(struct packet_reader *reader,
 			continue;
 		}
 		if (skip_prefix(reader->line, "have ", &arg)) {
-			switch (got_oid(arg, &oid, have_obj)) {
+			switch (got_oid(arg, &oid, &data->have_obj)) {
 			case -1: /* they have what we do not */
 				got_other = 1;
-				if (multi_ack && ok_to_give_up(have_obj, want_obj)) {
+				if (multi_ack
+				    && ok_to_give_up(&data->have_obj, &data->want_obj)) {
 					const char *hex = oid_to_hex(&oid);
 					if (multi_ack == 2) {
 						sent_ready = 1;
@@ -470,14 +472,14 @@ static int get_common_commits(struct packet_reader *reader,
 					packet_write_fmt(1, "ACK %s common\n", last_hex);
 				else if (multi_ack)
 					packet_write_fmt(1, "ACK %s continue\n", last_hex);
-				else if (have_obj->nr == 1)
+				else if (data->have_obj.nr == 1)
 					packet_write_fmt(1, "ACK %s\n", last_hex);
 				break;
 			}
 			continue;
 		}
 		if (!strcmp(reader->line, "done")) {
-			if (have_obj->nr > 0) {
+			if (data->have_obj.nr > 0) {
 				if (multi_ack)
 					packet_write_fmt(1, "ACK %s\n", last_hex);
 				return 0;
@@ -1176,9 +1178,7 @@ void upload_pack(struct upload_pack_options *options)
 
 		receive_needs(&reader, &data.want_obj, &data.filter_options);
 		if (data.want_obj.nr) {
-			get_common_commits(&reader,
-					   &data.have_obj,
-					   &data.want_obj);
+			get_common_commits(&data, &reader);
 			create_pack_file(&data.have_obj,
 					 &data.want_obj,
 					 &data.filter_options);
