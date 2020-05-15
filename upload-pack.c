@@ -907,9 +907,8 @@ static int process_deepen_not(const char *line, struct string_list *deepen_not, 
 	return 0;
 }
 
-static void receive_needs(struct packet_reader *reader,
-			  struct object_array *want_obj,
-			  struct list_objects_filter_options *filter_options)
+static void receive_needs(struct upload_pack_data *data,
+			  struct packet_reader *reader)
 {
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
@@ -944,8 +943,8 @@ static void receive_needs(struct packet_reader *reader,
 		if (skip_prefix(reader->line, "filter ", &arg)) {
 			if (!filter_capability_requested)
 				die("git upload-pack: filtering capability not negotiated");
-			list_objects_filter_die_if_populated(filter_options);
-			parse_list_objects_filter(filter_options, arg);
+			list_objects_filter_die_if_populated(&data->filter_options);
+			parse_list_objects_filter(&data->filter_options, arg);
 			continue;
 		}
 
@@ -990,7 +989,7 @@ static void receive_needs(struct packet_reader *reader,
 			if (!((allow_unadvertised_object_request & ALLOW_ANY_SHA1) == ALLOW_ANY_SHA1
 			      || is_our_ref(o)))
 				has_non_tip = 1;
-			add_object_array(o, NULL, want_obj);
+			add_object_array(o, NULL, &data->want_obj);
 		}
 	}
 
@@ -1002,7 +1001,7 @@ static void receive_needs(struct packet_reader *reader,
 	 * by another process that handled the initial request.
 	 */
 	if (has_non_tip)
-		check_non_tip(want_obj, &writer);
+		check_non_tip(&data->want_obj, &writer);
 
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;
@@ -1012,7 +1011,7 @@ static void receive_needs(struct packet_reader *reader,
 
 	if (send_shallow_list(&writer, depth, deepen_rev_list, deepen_since,
 			      &deepen_not, deepen_relative, &shallows,
-			      want_obj))
+			      &data->want_obj))
 		packet_flush(1);
 	object_array_clear(&shallows);
 }
@@ -1176,7 +1175,7 @@ void upload_pack(struct upload_pack_options *options)
 				   PACKET_READ_CHOMP_NEWLINE |
 				   PACKET_READ_DIE_ON_ERR_PACKET);
 
-		receive_needs(&reader, &data.want_obj, &data.filter_options);
+		receive_needs(&data, &reader);
 		if (data.want_obj.nr) {
 			get_common_commits(&data, &reader);
 			create_pack_file(&data.have_obj,
