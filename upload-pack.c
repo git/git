@@ -161,9 +161,7 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 	return 0;
 }
 
-static void create_pack_file(const struct object_array *have_obj,
-			     const struct object_array *want_obj,
-			     struct list_objects_filter_options *filter_options)
+static void create_pack_file(struct upload_pack_data *pack_data)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
 	char data[8193], progress[128];
@@ -200,9 +198,9 @@ static void create_pack_file(const struct object_array *have_obj,
 		argv_array_push(&pack_objects.args, "--delta-base-offset");
 	if (use_include_tag)
 		argv_array_push(&pack_objects.args, "--include-tag");
-	if (filter_options->choice) {
+	if (pack_data->filter_options.choice) {
 		const char *spec =
-			expand_list_objects_filter_spec(filter_options);
+			expand_list_objects_filter_spec(&pack_data->filter_options);
 		if (pack_objects.use_shell) {
 			struct strbuf buf = STRBUF_INIT;
 			sq_quote_buf(&buf, spec);
@@ -226,13 +224,13 @@ static void create_pack_file(const struct object_array *have_obj,
 	if (shallow_nr)
 		for_each_commit_graft(write_one_shallow, pipe_fd);
 
-	for (i = 0; i < want_obj->nr; i++)
+	for (i = 0; i < pack_data->want_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			oid_to_hex(&want_obj->objects[i].item->oid));
+			oid_to_hex(&pack_data->want_obj.objects[i].item->oid));
 	fprintf(pipe_fd, "--not\n");
-	for (i = 0; i < have_obj->nr; i++)
+	for (i = 0; i < pack_data->have_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			oid_to_hex(&have_obj->objects[i].item->oid));
+			oid_to_hex(&pack_data->have_obj.objects[i].item->oid));
 	for (i = 0; i < extra_edge_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
 			oid_to_hex(&extra_edge_obj.objects[i].item->oid));
@@ -1179,9 +1177,7 @@ void upload_pack(struct upload_pack_options *options)
 		receive_needs(&data, &reader);
 		if (data.want_obj.nr) {
 			get_common_commits(&data, &reader);
-			create_pack_file(&data.have_obj,
-					 &data.want_obj,
-					 &data.filter_options);
+			create_pack_file(&data);
 		}
 	}
 
@@ -1525,9 +1521,7 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 			send_shallow_info(&data);
 
 			packet_writer_write(&data.writer, "packfile\n");
-			create_pack_file(&data.have_obj,
-					 &data.want_obj,
-					 &data.filter_options);
+			create_pack_file(&data);
 			state = FETCH_DONE;
 			break;
 		case FETCH_DONE:
