@@ -911,13 +911,7 @@ static int process_deepen_not(const char *line, struct string_list *deepen_not, 
 static void receive_needs(struct upload_pack_data *data,
 			  struct packet_reader *reader)
 {
-	struct object_array shallows = OBJECT_ARRAY_INIT;
-	struct string_list deepen_not = STRING_LIST_INIT_DUP;
-	int depth = 0;
 	int has_non_tip = 0;
-	timestamp_t deepen_since = 0;
-	int deepen_rev_list = 0;
-	int deepen_relative = 0;
 
 	shallow_nr = 0;
 	for (;;) {
@@ -930,13 +924,13 @@ static void receive_needs(struct upload_pack_data *data,
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
-		if (process_shallow(reader->line, &shallows))
+		if (process_shallow(reader->line, &data->shallows))
 			continue;
-		if (process_deepen(reader->line, &depth))
+		if (process_deepen(reader->line, &data->depth))
 			continue;
-		if (process_deepen_since(reader->line, &deepen_since, &deepen_rev_list))
+		if (process_deepen_since(reader->line, &data->deepen_since, &data->deepen_rev_list))
 			continue;
-		if (process_deepen_not(reader->line, &deepen_not, &deepen_rev_list))
+		if (process_deepen_not(reader->line, &data->deepen_not, &data->deepen_rev_list))
 			continue;
 
 		if (skip_prefix(reader->line, "filter ", &arg)) {
@@ -953,7 +947,7 @@ static void receive_needs(struct upload_pack_data *data,
 			    "expected to get object ID, not '%s'", reader->line);
 
 		if (parse_feature_request(features, "deepen-relative"))
-			deepen_relative = 1;
+			data->deepen_relative = 1;
 		if (parse_feature_request(features, "multi_ack_detailed"))
 			multi_ack = 2;
 		else if (parse_feature_request(features, "multi_ack"))
@@ -1005,14 +999,18 @@ static void receive_needs(struct upload_pack_data *data,
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;
 
-	if (depth == 0 && !deepen_rev_list && shallows.nr == 0)
+	if (data->depth == 0 && !data->deepen_rev_list && data->shallows.nr == 0)
 		return;
 
-	if (send_shallow_list(&data->writer, depth, deepen_rev_list, deepen_since,
-			      &deepen_not, deepen_relative, &shallows,
+	if (send_shallow_list(&data->writer,
+			      data->depth,
+			      data->deepen_rev_list,
+			      data->deepen_since,
+			      &data->deepen_not,
+			      data->deepen_relative,
+			      &data->shallows,
 			      &data->want_obj))
 		packet_flush(1);
-	object_array_clear(&shallows);
 }
 
 /* return non-zero if the ref is hidden, otherwise 0 */
