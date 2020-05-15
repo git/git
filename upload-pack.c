@@ -73,6 +73,7 @@ static int allow_ref_in_want;
 static int allow_sideband_all;
 
 struct upload_pack_data {
+	struct string_list symref;
 	struct string_list wanted_refs;
 	struct object_array want_obj;
 	struct object_array have_obj;
@@ -100,6 +101,7 @@ struct upload_pack_data {
 
 static void upload_pack_data_init(struct upload_pack_data *data)
 {
+	struct string_list symref = STRING_LIST_INIT_DUP;
 	struct string_list wanted_refs = STRING_LIST_INIT_DUP;
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct object_array have_obj = OBJECT_ARRAY_INIT;
@@ -108,6 +110,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 
 	memset(data, 0, sizeof(*data));
+	data->symref = symref;
 	data->wanted_refs = wanted_refs;
 	data->want_obj = want_obj;
 	data->have_obj = have_obj;
@@ -119,6 +122,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 
 static void upload_pack_data_clear(struct upload_pack_data *data)
 {
+	string_list_clear(&data->symref, 1);
 	string_list_clear(&data->wanted_refs, 1);
 	object_array_clear(&data->want_obj);
 	object_array_clear(&data->have_obj);
@@ -1142,7 +1146,6 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 
 void upload_pack(struct upload_pack_options *options)
 {
-	struct string_list symref = STRING_LIST_INIT_DUP;
 	struct packet_reader reader;
 	struct upload_pack_data data;
 
@@ -1154,19 +1157,18 @@ void upload_pack(struct upload_pack_options *options)
 
 	upload_pack_data_init(&data);
 
-	head_ref_namespaced(find_symref, &symref);
+	head_ref_namespaced(find_symref, &data.symref);
 
 	if (options->advertise_refs || !stateless_rpc) {
 		reset_timeout();
-		head_ref_namespaced(send_ref, &symref);
-		for_each_namespaced_ref(send_ref, &symref);
+		head_ref_namespaced(send_ref, &data.symref);
+		for_each_namespaced_ref(send_ref, &data.symref);
 		advertise_shallow_grafts(1);
 		packet_flush(1);
 	} else {
 		head_ref_namespaced(check_ref, NULL);
 		for_each_namespaced_ref(check_ref, NULL);
 	}
-	string_list_clear(&symref, 1);
 
 	if (!options->advertise_refs) {
 		packet_reader_init(&reader, 0, NULL, 0,
