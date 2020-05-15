@@ -654,8 +654,7 @@ error:
 	return 1;
 }
 
-static void check_non_tip(struct object_array *want_obj,
-			  struct packet_writer *writer)
+static void check_non_tip(struct upload_pack_data *data)
 {
 	int i;
 
@@ -666,16 +665,16 @@ static void check_non_tip(struct object_array *want_obj,
 	 */
 	if (!stateless_rpc && !(allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
 		goto error;
-	if (!has_unreachable(want_obj))
+	if (!has_unreachable(&data->want_obj))
 		/* All the non-tip ones are ancestors of what we advertised */
 		return;
 
 error:
 	/* Pick one of them (we know there at least is one) */
-	for (i = 0; i < want_obj->nr; i++) {
-		struct object *o = want_obj->objects[i].item;
+	for (i = 0; i < data->want_obj.nr; i++) {
+		struct object *o = data->want_obj.objects[i].item;
 		if (!is_our_ref(o)) {
-			packet_writer_error(writer,
+			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
 					    oid_to_hex(&o->oid));
 			die("git upload-pack: not our ref %s",
@@ -1003,7 +1002,7 @@ static void receive_needs(struct upload_pack_data *data,
 	 * by another process that handled the initial request.
 	 */
 	if (has_non_tip)
-		check_non_tip(&data->want_obj, &data->writer);
+		check_non_tip(data);
 
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;
