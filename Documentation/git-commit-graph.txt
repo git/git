@@ -58,7 +58,7 @@ With the `--append` option, include all commits that are present in the
 existing commit-graph file.
 +
 With the `--changed-paths` option, compute and write information about the
-paths changed between a commit and it's first parent. This operation can
+paths changed between a commit and its first parent. This operation can
 take a while on large repositories. It provides significant performance gains
 for getting history of a directory or a file with `git log -- <path>`.
 +
