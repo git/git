@@ -68,7 +68,8 @@ test_expect_success "proc-receive: report status v1" '
 	post-receive< <COMMIT-A> <COMMIT-B> refs/heads/master
 	post-receive< <ZERO-OID> <COMMIT-A> refs/for/master/topic1
 	post-receive< <ZERO-OID> <COMMIT-A> refs/heads/foo
-	post-receive< <ZERO-OID> <COMMIT-A> refs/for/master/topic2
+	post-receive< <ZERO-OID> <COMMIT-A> refs/for/changes/23/123/1
+	post-receive< <COMMIT-B> <COMMIT-A> refs/for/changes/24/124/2
 	EOF
 	test_cmp expect actual &&
 
