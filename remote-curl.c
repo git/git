@@ -643,7 +643,7 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 			return 0;
 		}
 		/*
-		 * If avail is non-zerp, the line length for the flush still
+		 * If avail is non-zero, the line length for the flush still
 		 * hasn't been fully sent. Proceed with sending the line
 		 * length.
 		 */
