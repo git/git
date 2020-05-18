@@ -1,3 +1,18 @@
+test_expect_success "setup git config for remote-tracking of special refs" '
+	(
+		cd workbench &&
+		if ! git config --get-all remote.origin.fetch | grep refs/for/
+		then
+			git config --add remote.origin.fetch \
+				"+refs/for/*:refs/t/for/*" &&
+			git config --add remote.origin.fetch \
+				"+refs/pull/*:refs/t/pull/*" &&
+			git config --add remote.origin.fetch \
+				"+refs/changes/*:refs/t/changes/*"
+		fi
+	)
+'
+
 test_expect_success "setup proc-receive hook (multiple rewrites for one ref, no refname for the 1st rewrite, $PROTOCOL)" '
 	write_script "$upstream/hooks/proc-receive" <<-EOF
 	printf >&2 "# proc-receive hook\n"
@@ -56,6 +71,17 @@ test_expect_success "proc-receive: multiple rewrite for one ref, no refname for 
 	<COMMIT-A> refs/heads/master
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success "proc-receive: check remote-tracking #1 ($PROTOCOL)" '
+	git -C workbench show-ref |
+		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
+	make_user_friendly_and_stable_output <out >actual &&
+	cat >expect <<-EOF &&
+	<COMMIT-A> refs/t/for/master/topic
+	EOF
+	test_cmp expect actual &&
+	git -C workbench update-ref -d refs/t/for/master/topic
 '
 
 test_expect_success "setup proc-receive hook (multiple rewrites for one ref, no refname for the 2nd rewrite, $PROTOCOL)" '
@@ -120,6 +146,17 @@ test_expect_success "proc-receive: multiple rewrites for one ref, no refname for
 	test_cmp expect actual
 '
 
+test_expect_success "proc-receive: check remote-tracking #2 ($PROTOCOL)" '
+	git -C workbench show-ref |
+		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
+	make_user_friendly_and_stable_output <out >actual &&
+	cat >expect <<-EOF &&
+	<COMMIT-A> refs/t/for/master/topic
+	EOF
+	test_cmp expect actual &&
+	git -C workbench update-ref -d refs/t/for/master/topic
+'
+
 test_expect_success "setup proc-receive hook (multiple rewrites for one ref, $PROTOCOL)" '
 	write_script "$upstream/hooks/proc-receive" <<-EOF
 	printf >&2 "# proc-receive hook\n"
@@ -166,4 +203,15 @@ test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL)" '
 	<COMMIT-A> refs/heads/master
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success "proc-receive: check remote-tracking #3 ($PROTOCOL)" '
+	git -C workbench show-ref |
+		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
+	make_user_friendly_and_stable_output <out >actual &&
+	cat >expect <<-EOF &&
+	<COMMIT-A> refs/t/for/master/topic
+	EOF
+	test_cmp expect actual &&
+	git -C workbench update-ref -d refs/t/for/master/topic
 '
