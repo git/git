@@ -7,8 +7,9 @@
 # your repository:
 #
 #   git checkout -b ci-config
-#   cp allow-refs.sample allow-refs
-#   $EDITOR allow-refs
+#   cp allow-ref.sample allow-ref
+#   $EDITOR allow-ref
+#   git add allow-ref
 #   git commit -am "implement my ci preferences"
 #   git push
 #
