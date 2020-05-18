@@ -1,3 +1,7 @@
+test_expect_success "setup receive.procReceiveRefs" '
+	git -C "$upstream" config --add receive.procReceiveRefs refs/for
+'
+
 test_expect_success "setup proc-receive hook" '
 	write_script "$upstream/hooks/proc-receive" <<-EOF
 	printf >&2 "# proc-receive hook\n"
