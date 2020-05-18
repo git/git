@@ -45,7 +45,7 @@ OPTIONS
 --suffix <format>::
 	Specify an alternate suffix for the bugreport name, to create a file
 	named 'git-bugreport-<formatted suffix>'. This should take the form of a
-	link:strftime[3] format string; the current local time will be used.
+	strftime(3) format string; the current local time will be used.
 
 GIT
 ---
