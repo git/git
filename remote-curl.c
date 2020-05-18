@@ -1276,7 +1276,7 @@ static void parse_push(struct strbuf *buf)
 	if (ret)
 		exit(128); /* error already reported */
 
- free_specs:
+free_specs:
 	argv_array_clear(&specs);
 }
 
