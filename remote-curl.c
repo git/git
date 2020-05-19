@@ -601,6 +601,8 @@ static int rpc_read_from_out(struct rpc_state *rpc, int options,
 		case PACKET_READ_FLUSH:
 			memcpy(buf - 4, "0000", 4);
 			break;
+		case PACKET_READ_RESPONSE_END:
+			die(_("remote server sent stateless separator"));
 		}
 	}
 

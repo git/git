@@ -127,6 +127,7 @@ enum protocol_version discover_version(struct packet_reader *reader)
 		die_initial_contact(0);
 	case PACKET_READ_FLUSH:
 	case PACKET_READ_DELIM:
+	case PACKET_READ_RESPONSE_END:
 		version = protocol_v0;
 		break;
 	case PACKET_READ_NORMAL:
@@ -310,6 +311,7 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 			state = EXPECTING_DONE;
 			break;
 		case PACKET_READ_DELIM:
+		case PACKET_READ_RESPONSE_END:
 			die(_("invalid packet"));
 		}
 
