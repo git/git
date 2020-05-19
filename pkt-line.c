@@ -306,10 +306,10 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 	return ret;
 }
 
-static int packet_length(const char *linelen)
+int packet_length(const char lenbuf_hex[4])
 {
-	int val = hex2chr(linelen);
-	return (val < 0) ? val : (val << 8) | hex2chr(linelen + 2);
+	int val = hex2chr(lenbuf_hex);
+	return (val < 0) ? val : (val << 8) | hex2chr(lenbuf_hex + 2);
 }
 
 enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
