@@ -223,7 +223,7 @@ a file checked into the repository which is a template or set of defaults which
 can then be copied alongside and modified as appropriate.  This second, modified
 file is usually ignored to prevent accidentally committing it.
 
-[[files-in-.gitignore-are-tracked]]
+[[files-in-gitignore-are-tracked]]
 I asked Git to ignore various files, yet they are still tracked::
 	A `gitignore` file ensures that certain file(s) which are not
 	tracked by Git remain untracked.  However, sometimes particular
