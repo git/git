@@ -620,6 +620,19 @@ test_expect_success 'clone repository with http:// using protocol v2 with incomp
 	test_i18ngrep "bytes of body are still expected" err
 '
 
+test_expect_success 'clone with http:// using protocol v2 and invalid parameters' '
+	test_when_finished "rm -f log" &&
+
+	test_must_fail env GIT_TRACE_PACKET="$(pwd)/log" GIT_TRACE_CURL="$(pwd)/log" \
+		git -c protocol.version=2 \
+		clone --shallow-since=20151012 "$HTTPD_URL/smart/http_parent" http_child_invalid &&
+
+	# Client requested to use protocol v2
+	grep "Git-Protocol: version=2" log &&
+	# Server responded using protocol v2
+	grep "git< version 2" log
+'
+
 test_expect_success 'clone big repository with http:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 

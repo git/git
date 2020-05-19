@@ -703,6 +703,8 @@ static void check_pktline(struct check_pktline_state *state, const char *ptr, si
 				state->remaining = packet_length(state->len_buf);
 				if (state->remaining < 0) {
 					die(_("remote-curl: bad line length character: %.4s"), state->len_buf);
+				} else if (state->remaining == 2) {
+					die(_("remote-curl: unexpected response end packet"));
 				} else if (state->remaining < 4) {
 					state->remaining = 0;
 				} else {
@@ -990,6 +992,9 @@ retry:
 		err = error(_("%d bytes of length header were received"), rpc_in_data.pktline_state.len_filled);
 	if (rpc_in_data.pktline_state.remaining)
 		err = error(_("%d bytes of body are still expected"), rpc_in_data.pktline_state.remaining);
+
+	if (stateless_connect)
+		packet_response_end(rpc->in);
 
 	curl_slist_free_all(headers);
 	free(gzip_body);

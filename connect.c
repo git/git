@@ -406,10 +406,21 @@ out:
 	return ret;
 }
 
+void check_stateless_delimiter(int stateless_rpc,
+			      struct packet_reader *reader,
+			      const char *error)
+{
+	if (!stateless_rpc)
+		return; /* not in stateless mode, no delimiter expected */
+	if (packet_reader_read(reader) != PACKET_READ_RESPONSE_END)
+		die("%s", error);
+}
+
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     struct ref **list, int for_push,
 			     const struct argv_array *ref_prefixes,
-			     const struct string_list *server_options)
+			     const struct string_list *server_options,
+			     int stateless_rpc)
 {
 	int i;
 	*list = NULL;
@@ -445,6 +456,9 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 	if (reader->status != PACKET_READ_FLUSH)
 		die(_("expected flush after ref listing"));
+
+	check_stateless_delimiter(stateless_rpc, reader,
+				  _("expected response end packet after ref listing"));
 
 	return list;
 }

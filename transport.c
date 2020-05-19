@@ -297,7 +297,8 @@ static struct ref *handshake(struct transport *transport, int for_push,
 		if (must_list_refs)
 			get_remote_refs(data->fd[1], &reader, &refs, for_push,
 					ref_prefixes,
-					transport->server_options);
+					transport->server_options,
+					transport->stateless_rpc);
 		break;
 	case protocol_v1:
 	case protocol_v0:

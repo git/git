@@ -405,7 +405,9 @@ Supported if the helper has the "connect" capability.
 	trying to fall back).  After line feed terminating the positive
 	(empty) response, the output of the service starts.  Messages
 	(both request and response) must consist of zero or more
-	PKT-LINEs, terminating in a flush packet. The client must not
+	PKT-LINEs, terminating in a flush packet. Response messages will
+	then have a response end packet after the flush packet to
+	indicate the end of a response.  The client must not
 	expect the server to store any state in between request-response
 	pairs.  After the connection ends, the remote helper exits.
 +
