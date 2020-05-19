@@ -52,15 +52,18 @@ test_expect_success 'setup repository' '
 
 test_expect_success 'config controls ref-in-want advertisement' '
 	test-tool serve-v2 --advertise-capabilities >out &&
-	! grep -a ref-in-want out &&
+	perl -ne "/ref-in-want/ and print" out >out.filter &&
+	test_must_be_empty out.filter &&
 
 	git config uploadpack.allowRefInWant false &&
 	test-tool serve-v2 --advertise-capabilities >out &&
-	! grep -a ref-in-want out &&
+	perl -ne "/ref-in-want/ and print" out >out.filter &&
+	test_must_be_empty out.filter &&
 
 	git config uploadpack.allowRefInWant true &&
 	test-tool serve-v2 --advertise-capabilities >out &&
-	grep -a ref-in-want out
+	perl -ne "/ref-in-want/ and print" out >out.filter &&
+	test_file_not_empty out.filter
 '
 
 test_expect_success 'invalid want-ref line' '
