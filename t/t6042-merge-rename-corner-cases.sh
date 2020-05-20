@@ -1379,4 +1379,59 @@ test_expect_success 'check nested conflicts from rename/rename(2to1)' '
 	)
 '
 
+# Testcase rename/rename(1to2) of a binary file
+#   Commit O: orig
+#   Commit A: orig-A
+#   Commit B: orig-B
+#   Expected: CONFLICT(rename/rename) message, three unstaged entries in the
+#             index, and contents of orig-[AB] at path orig-[AB]
+test_setup_rename_rename_1_to_2_binary () {
+	test_create_repo rename_rename_1_to_2_binary &&
+	(
+		cd rename_rename_1_to_2_binary &&
+
+		echo '* binary' >.gitattributes &&
+		git add .gitattributes &&
+
+		test_seq 1 10 >orig &&
+		git add orig &&
+		git commit -m orig &&
+
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git mv orig orig-A &&
+		test_seq 1 11 >orig-A &&
+		git add orig-A &&
+		git commit -m orig-A &&
+
+		git checkout B &&
+		git mv orig orig-B &&
+		test_seq 0 10 >orig-B &&
+		git add orig-B &&
+		git commit -m orig-B
+
+	)
+}
+
+test_expect_success 'rename/rename(1to2) with a binary file' '
+	test_setup_rename_rename_1_to_2_binary &&
+	(
+		cd rename_rename_1_to_2_binary &&
+
+		git checkout A^0 &&
+
+		test_must_fail git merge -s recursive B^0 &&
+
+		# Make sure the index has the right number of entries
+		git ls-files -s >actual &&
+		test_line_count = 4 actual &&
+
+		git rev-parse A:orig-A B:orig-B >expect &&
+		git hash-object orig-A orig-B >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
