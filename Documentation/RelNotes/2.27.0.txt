@@ -178,6 +178,11 @@ Performance, Internal Implementation, Development Support etc.
    start_progress() and the stop_progress() calls as a "region" to be
    traced.
 
+ * Instead of downloading Windows SDK for CI jobs for windows builds
+   from an external site (wingit.blob.core.windows.net), use the one
+   created in the windows-build job, to work around quota issues at
+   the external site.
+
 
 Fixes since v2.26
 -----------------
@@ -469,6 +474,15 @@ Fixes since v2.26
    a blob is followed by entries that sort before a tree with the same
    name.  This has been corrected.
    (merge 9068cfb20f rs/fsck-duplicate-names-in-trees later to maint).
+
+ * Code clean-up by removing a compatibility implementation of a
+   function we no longer use.
+   (merge 84b0115f0d cb/no-more-gmtime later to maint).
+
+ * When a binary file gets modified and renamed on both sides of history
+   to different locations, both files would be written to the working
+   tree but both would have the contents from "ours".  This has been
+   corrected so that the path from each side gets their original content.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
