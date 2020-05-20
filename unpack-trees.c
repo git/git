@@ -333,10 +333,10 @@ static void load_gitmodules_file(struct index_state *index,
 	}
 }
 
-static struct progress *get_progress(struct unpack_trees_options *o)
+static struct progress *get_progress(struct unpack_trees_options *o,
+				     struct index_state *index)
 {
 	unsigned cnt = 0, total = 0;
-	struct index_state *index = &o->result;
 
 	if (!o->update || !o->verbose_update)
 		return NULL;
@@ -415,7 +415,7 @@ static int check_updates(struct unpack_trees_options *o,
 	if (o->clone)
 		setup_collided_checkout_detection(&state, index);
 
-	progress = get_progress(o);
+	progress = get_progress(o, index);
 
 	git_attr_set_direction(GIT_ATTR_CHECKOUT);
 
