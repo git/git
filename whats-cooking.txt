@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2020, #05; Thu, 14)
+Subject: What's cooking in git.git (May 2020, #06; Tue, 19)
 X-master-at: efcab5b7a3d2ce2ae4bf808b335938098b18d960
-X-next-at: 67701bce43065d3b2fbf3423f8cb13c0db322fee
+X-next-at: ede8c892b8d8194a9b64c2cfd62396141e5199d2
 
-What's cooking in git.git (May 2020, #05; Thu, 14)
+What's cooking in git.git (May 2020, #06; Tue, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,11 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-2.27-rc0 has been tagged.  I haven't seen much discussion on
-proposed topics for 2.26.3, so haven't merged anything (yet), but
-now the 'master' and 'next' front would be more quiescent, efforts
-focused on regressions, perhaps people can help pick the topics for
-the maintenance track.
+Git 2.27-rc1 tomorrow, with topics scheduled to be in 'master'
+(listed below).  I am paying less attention than usual for topics
+that are not in 'next', but it would be good to have well-reviewed
+topics cooking in 'next' when the feature-freeze ends.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,129 +23,239 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ao/p4-d-f-conflict-recover (2020-05-10) 1 commit
-  (merged to 'next' on 2020-05-11 at a83a2f6178)
- + git-p4: recover from inconsistent perforce history
-
- "git p4" learned to recover from a (broken) state where a directory
- and a file are recorded at the same path in the Perforce repository
- the same way as their clients do.
-
-
-* cw/bisect-replay-with-dos (2020-05-08) 1 commit
-  (merged to 'next' on 2020-05-11 at 2eb0edf56d)
- + bisect: allow CRLF line endings in "git bisect replay" input
-
- "git bisect replay" had trouble with input files when they used
- CRLF line ending, which has been corrected.
-
-
-* ds/bloom-cleanup (2020-05-11) 7 commits
-  (merged to 'next' on 2020-05-11 at 046d49d455)
- + completion: offer '--(no-)patch' among 'git log' options
- + bloom: use num_changes not nr for limit detection
- + bloom: de-duplicate directory entries
- + Documentation: changed-path Bloom filters use byte words
- + bloom: parse commit before computing filters
- + test-bloom: fix usage typo
- + bloom: fix whitespace around tab length
-
- Code cleanup and typofixes.
- This is an early part of ds/line-log-on-bloom that has been cooking
- in 'next'.
-
-
-* es/bugreport-with-hooks (2020-05-07) 1 commit
-  (merged to 'next' on 2020-05-11 at 2dd5d90a34)
- + bugreport: collect list of populated hooks
- (this branch is used by es/bugreport-shell.)
-
- "git bugreport" learned to report enabled hooks in the repository.
-
-
-* es/trace-log-progress (2020-05-12) 1 commit
-  (merged to 'next' on 2020-05-13 at a127540258)
- + trace2: log progress time and throughput
-
- Teach codepaths that show progress meter to also use the
- start_progress() and the stop_progress() calls as a "region" to be
- traced.
-
-
-* jc/codingstyle-compare-with-null (2020-05-08) 1 commit
-  (merged to 'next' on 2020-05-11 at d18f0d930e)
- + CodingGuidelines: do not ==/!= compare with 0 or '\0' or NULL
-
- Doc update.
-
-
-* js/rebase-autosquash-double-fixup-fix (2020-05-09) 1 commit
-  (merged to 'next' on 2020-05-11 at 3cdf7f7ece)
- + rebase --autosquash: fix a potential segfault
-
- "rebase -i" segfaulted when rearranging a sequence that has a
- fix-up that applies another fix-up (which may or may not be a
- fix-up of yet another step).
-
-
-* jt/t5500-unflake (2020-05-06) 1 commit
-  (merged to 'next' on 2020-05-13 at 11450265ec)
- + t5500: count objects through stderr, not trace
-
- Test fix for a topic already in 'master' and meant for 'maint'.
-
-
-* rs/fsck-duplicate-names-in-trees (2020-05-11) 1 commit
-  (merged to 'next' on 2020-05-11 at f603ca2528)
- + fsck: report non-consecutive duplicate names in trees
-
- "git fsck" ensures that the paths recorded in tree objects are
- sorted and without duplicates, but it failed to notice a case where
- a blob is followed by entries that sort before a tree with the same
- name.  This has been corrected.
-
-
-* sn/midx-repack-with-config (2020-05-10) 2 commits
-  (merged to 'next' on 2020-05-11 at d73f8f51d6)
- + multi-pack-index: respect repack.packKeptObjects=false
- + midx: teach "git multi-pack-index repack" honor "git repack" configurations
-
- "git multi-pack-index repack" has been taught to honor some
- repack.* configuration variables.
-
---------------------------------------------------
 [New Topics]
 
-* cb/no-more-gmtime (2020-05-14) 1 commit
- - compat: remove gmtime
+* ds/trace-log-progress-fix (2020-05-15) 1 commit
+  (merged to 'next' on 2020-05-15 at d82c1fd03f)
+ + progress: call trace2_region_leave() only after calling _enter()
 
- Code clean-up by removing a compatibility implementation of a
- function we no longer use.
+ Last-minute fix for our recent change to allow use of progress API
+ as a traceable region.
+
+ Will merge to 'master'.
+
+
+* en/sparse-checkout (2020-05-15) 1 commit
+  (merged to 'next' on 2020-05-15 at d4b3058787)
+ + unpack-trees: also allow get_progress() to work on a different index
+
+ Consistency fix to a topic already in 'master'.
+
+ Will merge to 'master'.
+
+
+* jc/fix-tap-output-under-bash (2020-05-15) 3 commits
+  (merged to 'next' on 2020-05-15 at de8f92d652)
+ + Revert "tests: when run in Bash, annotate test failures with file name/line number"
+ + Revert "ci: add a problem matcher for GitHub Actions"
+ + Revert "t/test_lib: avoid naked bash arrays in file_lineno"
+
+ A recent attempt to make the test output nicer to view on CI
+ systems broke TAP output under bash.  The effort has been reverted
+ to be re-attempted in the next cycle.
+
+ Will merge to 'master'.
+
+
+* ak/slab-decl-cleanup (2020-05-18) 1 commit
+  (merged to 'next' on 2020-05-19 at 7de41005de)
+ + commit-slab-decl.h: update include guard
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* an/merge-single-strategy-optim (2020-05-19) 1 commit
+ - merge: optimization to skip evaluate_result for single strategy
+
+ Code optimization for a common case.
 
  Will merge to 'next'.
 
 
-* cb/t4210-illseq-auto-detect (2020-05-14) 1 commit
- - t4210: detect REG_ILLSEQ dynamically
+* cc/upload-pack-data (2020-05-18) 13 commits
+ - upload-pack: use upload_pack_data fields in receive_needs()
+ - upload-pack: pass upload_pack_data to create_pack_file()
+ - upload-pack: remove static variable 'stateless_rpc'
+ - upload-pack: pass upload_pack_data to check_non_tip()
+ - upload-pack: pass upload_pack_data to send_ref()
+ - upload-pack: move symref to upload_pack_data
+ - upload-pack: use upload_pack_data writer in receive_needs()
+ - upload-pack: pass upload_pack_data to receive_needs()
+ - upload-pack: pass upload_pack_data to get_common_commits()
+ - upload-pack: use 'struct upload_pack_data' in upload_pack()
+ - upload-pack: move 'struct upload_pack_data' around
+ - upload-pack: move {want,have}_obj to upload_pack_data
+ - upload-pack: remove unused 'wants' from upload_pack_data
 
- As FreeBSD is not the only platform whose regexp library needs
- REG_ILLSEQ prerequisite, add a logic to detect the prerequisite
- automatically.
+ Code clean-up.
 
 
-* en/merge-rename-rename-worktree-fix (2020-05-14) 1 commit
- - merge-recursive: fix rename/rename(1to2) for working tree with a binary
+* dl/remote-curl-deadlock-fix (2020-05-19) 7 commits
+ - stateless-connect: send response end packet
+ - pkt-line: define PACKET_READ_RESPONSE_END
+ - remote-curl: error on incomplete packet
+ - pkt-line: extern packet_length()
+ - transport: extract common fetch_pack() call
+ - remote-curl: remove label indentation
+ - remote-curl: fix typo
 
- When a binary file gets renamed and then merged with a minor
- change, the copy on the working tree while conflict resolution
- sometimes got "their" version and not "ours".
+ On-the-wire protocol v2 easily falls into a deadlock between the
+ remote-curl helper and the fetch-pack process when the server side
+ prematurely throws an error and disconnects.  The communication has
+ been updated to make it more robust.
 
  Will merge to 'next'.
+
+
+* es/bugreport (2020-05-18) 1 commit
+  (merged to 'next' on 2020-05-19 at ede8c892b8)
+ + git-bugreport.txt: adjust reference to strftime(3)
+
+ Doc fix.
+
+ Will merge to 'master'.
+
+
+* gp/hppa-stack-test-fix (2020-05-18) 1 commit
+ - tests: skip small-stack tests on hppa architecture
+
+ Platform dependent tweak to a test for HP-PA.
+
+ Will merge to 'next'.
+
+
+* jk/ci-only-on-selected-branches (2020-05-18) 1 commit
+ - ci/config: correct instruction for CI preferences
+
+ Dev support.
+
+ Will merge to 'next'.
+
+
+* la/diff-relative-config (2020-05-19) 1 commit
+ - diff: add config option relative
+
+ The commands in the "diff" family learned to honor "diff.relative"
+ configuration variable.
+
+ Almost there.
+ cf. <20200519230124.GA12509@danh.dev>
+
+
+* ma/doc-fixes (2020-05-18) 5 commits
+ - git-sparse-checkout.txt: add missing '
+ - git-credential.txt: use list continuation
+ - git-commit-graph.txt: fix list rendering
+ - git-commit-graph.txt: fix grammo
+ - date-formats.txt: fix list continuation
+
+ Various doc fixes.
+
+ Will merge to 'next'.
+
+
+* dd/t5703-grep-a-fix (2020-05-19) 1 commit
+ - t5703: replace "grep -a" usage by perl
+
+ Update an unconditional use of "grep -a" with a perl script in a test.
+
+ Will merge to 'next'.
+
+
+* ds/multi-pack-verify (2020-05-19) 1 commit
+ - fsck: use ERROR_MULTI_PACK_INDEX
+
+ Fix for a copy-and-paste error introduced during 2.20 era.
+
+ Will merge to 'next'.
+
+
+* jt/avoid-prefetch-when-able-in-diff (2020-05-19) 1 commit
+ - t4067: make rename detection test output raw diff
+
+ Test-coverage enhancement.
+
+ Will merge to 'next' and then to 'master'.
 
 --------------------------------------------------
 [Stalled]
+
+* dr/push-remoteref-fix (2020-04-23) 1 commit
+ - remote.c: fix handling of %(push:remoteref)
+
+ The "%(push:remoteref)" placeholder in the "--format=" argument of
+ "git format-patch" (and friends) only showed what got explicitly
+ configured, not what ref at the receiving end would be updated when
+ "git push" was used, as it ignored the default behaviour (e.g. update
+ the same ref as the source).
+
+ Expecting a reroll.
+ cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
+
+
+* pw/rebase-i-more-options (2020-04-29) 5 commits
+ - rebase: add --reset-author-date
+ - rebase -i: support --ignore-date
+ - sequencer: rename amend_author to author_to_free
+ - rebase -i: support --committer-date-is-author-date
+ - rebase -i: add --ignore-whitespace flag
+
+ "git rebase -i" learns a bit more options.
+
+ Needs review.
+
+
+* jk/complete-git-switch (2020-04-28) 11 commits
+ - completion: complete remote branches for git switch --track
+ - completion: recognize -c/-C when completing for git switch
+ - completion: fix completion for git switch with no options
+ - completion: perform DWIM logic directly in __git_complete_refs
+ - completion: extract function __git_dwim_remote_heads
+ - completion: rename --track option of __git_complete_refs
+ - completion: stop completing refs for git switch --orphan
+ - completion: add tests showing lack of support for git switch -c/-C
+ - completion: add test highlighting subpar git switch --track completion
+ - completion: add test showing subpar git switch completion
+ - completion: add some simple test cases for git switch completion
+
+ The command line completion (in contrib/) learned to complete
+ options that the "git switch" command takes.
+
+ Needs review.
+
+
+* dl/test-must-fail-fixes-5 (2020-05-05) 4 commits
+ - lib-submodule-update: pass OVERWRITING_FAIL
+ - lib-submodule-update: prepend "git" to $command
+ - lib-submodule-update: consolidate --recurse-submodules
+ - lib-submodule-update: add space after function name
+
+ The effort to avoid using test_must_fail on non-git command continues.
+
+ Needs review.
+ cf. <cover.1588162842.git.liu.denton@gmail.com>
+
+
+* mr/bisect-in-c-2 (2020-04-23) 12 commits
+ - bisect--helper: retire `--bisect-autostart` subcommand
+ - bisect--helper: retire `--write-terms` subcommand
+ - bisect--helper: retire `--check-expected-revs` subcommand
+ - bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
+ - bisect--helper: retire `--next-all` subcommand
+ - bisect--helper: retire `--bisect-clean-state` subcommand
+ - bisect--helper: finish porting `bisect_start()` to C
+ - bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
+ - bisect--helper: reimplement `bisect_autostart` shell function in C
+ - bisect--helper: introduce new `write_in_file()` function
+ - bisect--helper: use '-res' in 'cmd_bisect__helper' return
+ - bisect--helper: fix `cmd_*()` function switch default return
+
+ Rewrite of the remainder of "git bisect" script in C continues.
+
+ Needs review.
+
 
 * mk/use-size-t-in-zlib (2018-10-15) 1 commit
  - zlib.c: use size_t for size
@@ -158,13 +267,47 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cb/no-more-gmtime (2020-05-14) 1 commit
+  (merged to 'next' on 2020-05-15 at 160e0ada09)
+ + compat: remove gmtime
+
+ Code clean-up by removing a compatibility implementation of a
+ function we no longer use.
+
+ Will merge to 'master'.
+
+
+* cb/t4210-illseq-auto-detect (2020-05-18) 2 commits
+ - t4210: detect REG_ILLSEQ dynamically and skip affected tests
+ - t/helper: teach test-regex to report pattern errors (like REG_ILLSEQ)
+
+ As FreeBSD is not the only platform whose regexp library needs
+ REG_ILLSEQ prerequisite, add a logic to detect the prerequisite
+ automatically.
+
+ Will merge to 'next'.
+
+
+* en/merge-rename-rename-worktree-fix (2020-05-14) 1 commit
+  (merged to 'next' on 2020-05-15 at 7e1ddfa3c9)
+ + merge-recursive: fix rename/rename(1to2) for working tree with a binary
+
+ When a binary file gets modified and renamed on both sides of history
+ to different locations, both files would be written to the working
+ tree but both would have the contents from "ours".  This has been
+ corrected so that the path from each side gets their original content.
+
+ Will merge to 'master'.
+
+
 * bk/p4-prepare-p4-only-fix (2020-05-12) 1 commit
  - git-p4.py: fix --prepare-p4-only error with multiple commits
 
  The "--prepare-p4-only" option is supposed to stop after replaying
  one changeset, but kept going (by mistake?)
 
- Needs review by some p4 folks.
+ Will merge to 'next'.
+ cf. <CAE5ih797YYxsR2H0TA65w9W-1jF4jQLayja_nGjQMGtc=PB6Jw@mail.gmail.com>
 
 
 * jt/curl-verbose-on-trace-curl (2020-05-11) 2 commits
@@ -174,7 +317,7 @@ of the repositories listed at
 
  Rewrite support for GIT_CURL_VERBOSE in terms of GIT_TRACE_CURL.
 
- Expecting further work on optionally disabling reacting authinfo
+ Expecting further work on optionally disabling redacting authinfo
 
 
 * mt/grep-sparse-checkout (2020-05-11) 4 commits
@@ -189,16 +332,16 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* js/ci-sdk-download-fix (2020-05-12) 1 commit
- - ci: avoid pounding on the poor ci-artifacts container
+* js/ci-sdk-download-fix (2020-05-15) 1 commit
+  (merged to 'next' on 2020-05-15 at 9b28f7ec87)
+ + ci: avoid pounding on the poor ci-artifacts container
 
  Instead of downloading Windows SDK for CI jobs for windows builds
  from an external site (wingit.blob.core.windows.net), use the one
  created in the windows-build job, to work around quota issues at
  the external site.
 
- Will merge to 'next'.
- Hopefully this can go away once cmake-for-windows-build topic lands?
+ Will merge to 'master'.
 
 
 * bc/sha-256-part-2 (2020-05-13) 44 commits
@@ -251,11 +394,12 @@ of the repositories listed at
 
 
 * dd/t1509-i18n-fix (2020-05-13) 1 commit
- - t1509: correct i18n test
+  (merged to 'next' on 2020-05-15 at a6342455c1)
+ + t1509: correct i18n test
 
  A few tests were not i18n clean.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/bugreport-shell (2020-05-12) 2 commits
@@ -263,6 +407,11 @@ of the repositories listed at
  - help: add shell-path to --build-options
 
  "git bugreport" learns to report what shell is in use.
+
+ Will merge to 'next'.
+ We may want to learn more details than just the path, but
+ that can come later.
+ cf. <20200512235924.GC6605@camp.crustytoothpaste.net>
 
 
 * ds/line-log-on-bloom (2020-05-11) 5 commits
@@ -279,8 +428,7 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* tb/commit-graph-no-check-oids (2020-05-14) 9 commits
- - fixup! builtin/commit-graph.c: extract 'read_one_commit()'
+* tb/commit-graph-no-check-oids (2020-05-18) 8 commits
  - commit-graph: drop COMMIT_GRAPH_WRITE_CHECK_OIDS flag
  - t5318: reorder test below 'graph_read_expect'
  - commit-graph.c: simplify 'fill_oids_from_commits'
@@ -292,89 +440,20 @@ of the repositories listed at
 
  Clean-up the commit-graph codepath.
 
-
-* dl/test-must-fail-fixes-5 (2020-05-05) 4 commits
- - lib-submodule-update: pass OVERWRITING_FAIL
- - lib-submodule-update: prepend "git" to $command
- - lib-submodule-update: consolidate --recurse-submodules
- - lib-submodule-update: add space after function name
-
- The effort to avoid using test_must_fail on non-git command continues.
-
- Needs review.
- cf. <cover.1588162842.git.liu.denton@gmail.com>
+ Will merge to 'next'.
 
 
-* mr/bisect-in-c-2 (2020-04-23) 12 commits
- - bisect--helper: retire `--bisect-autostart` subcommand
- - bisect--helper: retire `--write-terms` subcommand
- - bisect--helper: retire `--check-expected-revs` subcommand
- - bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
- - bisect--helper: retire `--next-all` subcommand
- - bisect--helper: retire `--bisect-clean-state` subcommand
- - bisect--helper: finish porting `bisect_start()` to C
- - bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
- - bisect--helper: reimplement `bisect_autostart` shell function in C
- - bisect--helper: introduce new `write_in_file()` function
- - bisect--helper: use '-res' in 'cmd_bisect__helper' return
- - bisect--helper: fix `cmd_*()` function switch default return
-
- Rewrite of the remainder of "git bisect" script in C continues.
-
- Needs review.
-
-
-* jk/complete-git-switch (2020-04-28) 11 commits
- - completion: complete remote branches for git switch --track
- - completion: recognize -c/-C when completing for git switch
- - completion: fix completion for git switch with no options
- - completion: perform DWIM logic directly in __git_complete_refs
- - completion: extract function __git_dwim_remote_heads
- - completion: rename --track option of __git_complete_refs
- - completion: stop completing refs for git switch --orphan
- - completion: add tests showing lack of support for git switch -c/-C
- - completion: add test highlighting subpar git switch --track completion
- - completion: add test showing subpar git switch completion
- - completion: add some simple test cases for git switch completion
-
- The command line completion (in contrib/) learned to complete
- options that the "git switch" command takes.
-
- Needs review.
-
-
-* dr/push-remoteref-fix (2020-04-23) 1 commit
- - remote.c: fix handling of %(push:remoteref)
-
- The "%(push:remoteref)" placeholder in the "--format=" argument of
- "git format-patch" (and friends) only showed what got explicitly
- configured, not what ref at the receiving end would be updated when
- "git push" was used, as it ignored the default behaviour (e.g. update
- the same ref as the source).
-
- Expecting a reroll.
- cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
-
-
-* pw/rebase-i-more-options (2020-04-29) 5 commits
- - rebase: add --reset-author-date
- - rebase -i: support --ignore-date
- - sequencer: rename amend_author to author_to_free
- - rebase -i: support --committer-date-is-author-date
- - rebase -i: add --ignore-whitespace flag
-
- "git rebase -i" learns a bit more options.
-
- Needs review.
-
-
-* jx/proc-receive-hook (2020-05-07) 7 commits
+* jx/proc-receive-hook (2020-05-18) 11 commits
  - doc: add documentation for the proc-receive hook
+ - transport: parse report options for tracking refs
+ - t5411: test updates of remote-tracking branches
  - receive-pack: new config receive.procReceiveRefs
  - refs.c: refactor to reuse ref_is_hidden()
  - receive-pack: feed report options to post-receive
+ - doc: add document for capability report-status-v2
  - New capability "report-status-v2" for git-push
  - receive-pack: add new proc-receive hook
+ - t5411: add basic test cases for proc-receive hook
  - transport: not report a non-head push as a branch
 
  "git receive-pack" that accepts requests by "git push" learned to
@@ -395,18 +474,18 @@ of the repositories listed at
  Preliminary clean-ups around refs API, plus file format
  specification documentation for the reftable backend.
 
- I splitted these out of the hn/reftable topic, hoping that these
- should be easier to polish and merge quickly than the rest of the
- series.
+ Almost there.
 
 
-* hn/reftable (2020-05-11) 7 commits
- - Add some reftable testing infrastructure
+* hn/reftable (2020-05-18) 9 commits
+ - Add reftable testing infrastructure
  - vcxproj: adjust for the reftable changes
+ - Add GIT_DEBUG_REFS debugging mechanism
  - Reftable support for git-core
  - Add reftable library
  - Add .gitattributes for the reftable/ directory
  - Iterate over the "refs/" namespace in for_each_[raw]ref
+ - Move REF_LOG_ONLY to refs-internal.h
  - Write pseudorefs through ref backends.
  (this branch uses hn/refs-cleanup.)
 
