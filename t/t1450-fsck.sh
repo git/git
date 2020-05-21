@@ -261,7 +261,7 @@ check_duplicate_names () {
 
 check_duplicate_names success x x.1 x/
 check_duplicate_names success x x.1.2 x.1/ x/
-check_duplicate_names failure x x.1 x.1.2 x/
+check_duplicate_names success x x.1 x.1.2 x/
 
 test_expect_success 'unparseable tree object' '
 	test_oid_cache <<-\EOF &&
