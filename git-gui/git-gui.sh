@@ -2600,12 +2600,12 @@ proc toggle_or_diff {mode w args} {
 			update_indexinfo \
 				"Unstaging [short_path $path] from commit" \
 				[list $path] \
-				[concat $after [list ui_ready]]
+				[concat $after {ui_ready;}]
 		} elseif {$w eq $ui_workdir} {
 			update_index \
 				"Adding [short_path $path]" \
 				[list $path] \
-				[concat $after [list ui_ready]]
+				[concat $after {ui_ready;}]
 		}
 	} else {
 		set selected_paths($path) 1
@@ -3928,6 +3928,8 @@ bind $ui_comm <$M1B-Key-KP_Subtract> {show_less_context;break}
 bind $ui_comm <$M1B-Key-equal> {show_more_context;break}
 bind $ui_comm <$M1B-Key-plus> {show_more_context;break}
 bind $ui_comm <$M1B-Key-KP_Add> {show_more_context;break}
+bind $ui_comm <$M1B-Key-BackSpace> {event generate %W <Meta-Delete>;break}
+bind $ui_comm <$M1B-Key-Delete> {event generate %W <Meta-d>;break}
 
 bind $ui_diff <$M1B-Key-x> {tk_textCopy %W;break}
 bind $ui_diff <$M1B-Key-X> {tk_textCopy %W;break}
