@@ -621,9 +621,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
 	init_checkout_metadata(&opts.meta, info->refname,
-			       info->commit ? &info->commit->object.oid :
-			       is_null_oid(&info->oid) ? &tree->object.oid :
-			       &info->oid,
+			       info->commit ? &info->commit->object.oid : &null_oid,
 			       NULL);
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
