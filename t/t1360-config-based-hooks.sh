@@ -55,4 +55,15 @@ test_expect_success 'git hook list reorders on duplicate commands' '
 	test_cmp expected actual
 '
 
+test_expect_success 'git hook list --porcelain prints just the command' '
+	cat >expected <<-\EOF &&
+	/path/ghi
+	/path/abc
+	/path/def
+	EOF
+
+	git hook list --porcelain pre-commit >actual &&
+	test_cmp expected actual
+'
+
 test_done

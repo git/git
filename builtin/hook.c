@@ -16,8 +16,11 @@ static int list(int argc, const char **argv, const char *prefix)
 	struct list_head *head, *pos;
 	struct hook *item;
 	struct strbuf hookname = STRBUF_INIT;
+	int porcelain = 0;
 
 	struct option list_options[] = {
+		OPT_BOOL(0, "porcelain", &porcelain,
+			 "format for execution by a script"),
 		OPT_END(),
 	};
 
@@ -28,6 +31,8 @@ static int list(int argc, const char **argv, const char *prefix)
 		usage_msg_opt("a hookname must be provided to operate on.",
 			      builtin_hook_usage, list_options);
 	}
+
+
 
 	strbuf_addstr(&hookname, argv[0]);
 
@@ -41,10 +46,14 @@ static int list(int argc, const char **argv, const char *prefix)
 
 	list_for_each(pos, head) {
 		item = list_entry(pos, struct hook, list);
-		if (item)
-			printf("%s:\t%s\n",
-			       config_scope_name(item->origin),
-			       item->command.buf);
+		if (item) {
+			if (porcelain)
+				printf("%s\n", item->command.buf);
+			else
+				printf("%s:\t%s\n",
+				       config_scope_name(item->origin),
+				       item->command.buf);
+		}
 	}
 
 	clear_hook_list();
