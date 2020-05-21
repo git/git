@@ -22,6 +22,10 @@ existing commit-graph file(s). Occasionally, these files will merge and the
 write may take longer. Having an updated commit-graph file helps performance
 of many Git commands, including `git merge-base`, `git push -f`, and
 `git log --graph`.
++
+* `protocol.version=2` speeds up fetches from repositories with many refs by
+allowing the client to specify which refs to list before the server lists
+them.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the
