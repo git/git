@@ -643,15 +643,18 @@ ifndef::git-format-patch[]
 -R::
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
+endif::git-format-patch[]
 
 --relative[=<path>]::
+--no-relative::
 	When run from a subdirectory of the project, it can be
 	told to exclude changes outside the directory and show
 	pathnames relative to it with this option.  When you are
 	not in a subdirectory (e.g. in a bare repository), you
 	can name which subdirectory to make the output relative
 	to by giving a <path> as an argument.
-endif::git-format-patch[]
+	`--no-relative` can be used to countermand both `diff.relative` config
+	option and previous `--relative`.
 
 -a::
 --text::
