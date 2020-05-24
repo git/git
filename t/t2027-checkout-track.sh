@@ -16,7 +16,7 @@ test_expect_success 'checkout --track -b creates a new tracking branch' '
 	test $(git config --get branch.branch1.merge) = refs/heads/master
 '
 
-test_expect_failure 'checkout --track -b rejects an extra path argument' '
+test_expect_success 'checkout --track -b rejects an extra path argument' '
 	test_must_fail git checkout --track -b branch2 master one.t 2>err &&
 	test_i18ngrep "cannot be used with updating paths" err
 '

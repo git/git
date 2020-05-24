@@ -265,7 +265,7 @@ test_expect_success 'checkout -b rejects an invalid start point' '
 	test_i18ngrep "is not a commit" err
 '
 
-test_expect_failure 'checkout -b rejects an extra path argument' '
+test_expect_success 'checkout -b rejects an extra path argument' '
 	test_must_fail git checkout -b branch5 branch1 file1 2>err &&
 	test_i18ngrep "Cannot update paths and switch to branch" err
 '
