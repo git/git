@@ -204,17 +204,19 @@ static void annotate_refs_with_symref_info(struct ref *ref)
 	string_list_clear(&symref, 0);
 }
 
-static void process_capabilities(const char *line, int *len)
+static void process_capabilities(struct packet_reader *reader, int *linelen)
 {
+	const char *line = reader->line;
 	int nul_location = strlen(line);
-	if (nul_location == *len)
+	if (nul_location == *linelen)
 		return;
 	server_capabilities_v1 = xstrdup(line + nul_location + 1);
-	*len = nul_location;
+	*linelen = nul_location;
 }
 
-static int process_dummy_ref(const char *line)
+static int process_dummy_ref(const struct packet_reader *reader)
 {
+	const char *line = reader->line;
 	struct object_id oid;
 	const char *name;
 
@@ -234,9 +236,11 @@ static void check_no_capabilities(const char *line, int len)
 			line + strlen(line));
 }
 
-static int process_ref(const char *line, int len, struct ref ***list,
-		       unsigned int flags, struct oid_array *extra_have)
+static int process_ref(const struct packet_reader *reader, int len,
+		       struct ref ***list, unsigned int flags,
+		       struct oid_array *extra_have)
 {
+	const char *line = reader->line;
 	struct object_id old_oid;
 	const char *name;
 
@@ -260,9 +264,10 @@ static int process_ref(const char *line, int len, struct ref ***list,
 	return 1;
 }
 
-static int process_shallow(const char *line, int len,
+static int process_shallow(const struct packet_reader *reader, int len,
 			   struct oid_array *shallow_points)
 {
+	const char *line = reader->line;
 	const char *arg;
 	struct object_id old_oid;
 
@@ -315,20 +320,20 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 
 		switch (state) {
 		case EXPECTING_FIRST_REF:
-			process_capabilities(reader->line, &len);
-			if (process_dummy_ref(reader->line)) {
+			process_capabilities(reader, &len);
+			if (process_dummy_ref(reader)) {
 				state = EXPECTING_SHALLOW;
 				break;
 			}
 			state = EXPECTING_REF;
 			/* fallthrough */
 		case EXPECTING_REF:
-			if (process_ref(reader->line, len, &list, flags, extra_have))
+			if (process_ref(reader, len, &list, flags, extra_have))
 				break;
 			state = EXPECTING_SHALLOW;
 			/* fallthrough */
 		case EXPECTING_SHALLOW:
-			if (process_shallow(reader->line, len, shallow_points))
+			if (process_shallow(reader, len, shallow_points))
 				break;
 			die(_("protocol error: unexpected '%s'"), reader->line);
 		case EXPECTING_DONE:
