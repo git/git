@@ -484,6 +484,12 @@ Fixes since v2.26
    tree but both would have the contents from "ours".  This has been
    corrected so that the path from each side gets their original content.
 
+ * Fix for a copy-and-paste error introduced during 2.20 era.
+   (merge e68a5272b1 ds/multi-pack-verify later to maint).
+
+ * Update an unconditional use of "grep -a" with a perl script in a test.
+   (merge 1eb7371236 dd/t5703-grep-a-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
    (merge 7422b2a0a1 sg/commit-slab-clarify-peek later to maint).
