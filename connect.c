@@ -283,7 +283,7 @@ static int process_ref(const struct packet_reader *reader, int len,
 		die(_("protocol error: unexpected capabilities^{}"));
 	} else if (check_ref(name, flags)) {
 		struct ref *ref = alloc_ref(name);
-		memcpy(ref->old_oid.hash, old_oid.hash, reader->hash_algo->rawsz);
+		oidcpy(&ref->old_oid, &old_oid);
 		**list = ref;
 		*list = &ref->next;
 	}
@@ -395,7 +395,7 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list)
 		goto out;
 	}
 
-	if (parse_oid_hex(line_sections.items[i++].string, &old_oid, &end) ||
+	if (parse_oid_hex_algop(line_sections.items[i++].string, &old_oid, &end, reader->hash_algo) ||
 	    *end) {
 		ret = 0;
 		goto out;
@@ -403,7 +403,7 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list)
 
 	ref = alloc_ref(line_sections.items[i++].string);
 
-	oidcpy(&ref->old_oid, &old_oid);
+	memcpy(ref->old_oid.hash, old_oid.hash, reader->hash_algo->rawsz);
 	**list = ref;
 	*list = &ref->next;
 
@@ -416,7 +416,8 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list)
 			struct object_id peeled_oid;
 			char *peeled_name;
 			struct ref *peeled;
-			if (parse_oid_hex(arg, &peeled_oid, &end) || *end) {
+			if (parse_oid_hex_algop(arg, &peeled_oid, &end,
+						reader->hash_algo) || *end) {
 				ret = 0;
 				goto out;
 			}
@@ -424,7 +425,8 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list)
 			peeled_name = xstrfmt("%s^{}", ref->name);
 			peeled = alloc_ref(peeled_name);
 
-			oidcpy(&peeled->old_oid, &peeled_oid);
+			memcpy(peeled->old_oid.hash, peeled_oid.hash,
+			       reader->hash_algo->rawsz);
 			**list = peeled;
 			*list = &peeled->next;
 
@@ -443,6 +445,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     const struct string_list *server_options)
 {
 	int i;
+	const char *hash_name;
 	*list = NULL;
 
 	if (server_supports_v2("ls-refs", 1))
@@ -450,6 +453,14 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 	if (server_supports_v2("agent", 0))
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
+
+	if (server_feature_v2("object-format", &hash_name)) {
+		int hash_algo = hash_algo_by_name(hash_name);
+		if (hash_algo == GIT_HASH_UNKNOWN)
+			die(_("unknown object format '%s' specified by server"), hash_name);
+		reader->hash_algo = &hash_algos[hash_algo];
+		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
+	}
 
 	if (server_options && server_options->nr &&
 	    server_supports_v2("server-option", 1))
