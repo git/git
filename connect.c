@@ -374,7 +374,7 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 }
 
 /* Returns 1 when a valid ref has been added to `list`, 0 otherwise */
-static int process_ref_v2(const char *line, struct ref ***list)
+static int process_ref_v2(struct packet_reader *reader, struct ref ***list)
 {
 	int ret = 1;
 	int i = 0;
@@ -382,6 +382,7 @@ static int process_ref_v2(const char *line, struct ref ***list)
 	struct ref *ref;
 	struct string_list line_sections = STRING_LIST_INIT_DUP;
 	const char *end;
+	const char *line = reader->line;
 
 	/*
 	 * Ref lines have a number of fields which are space deliminated.  The
@@ -469,7 +470,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 	/* Process response from server */
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
-		if (!process_ref_v2(reader->line, &list))
+		if (!process_ref_v2(reader, &list))
 			die(_("invalid ls-refs response: %s"), reader->line);
 	}
 
