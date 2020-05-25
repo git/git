@@ -166,6 +166,9 @@ struct packet_reader {
 
 	unsigned use_sideband : 1;
 	const char *me;
+
+	/* hash algorithm in use */
+	const struct git_hash_algo *hash_algo;
 };
 
 /*
