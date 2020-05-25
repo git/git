@@ -18,7 +18,8 @@
 
 static char *server_capabilities_v1;
 static struct argv_array server_capabilities_v2 = ARGV_ARRAY_INIT;
-static const char *parse_feature_value(const char *, const char *, int *);
+static const char *parse_feature_value(const char *, const char *, int *, int *);
+static const char *next_server_feature_value(const char *feature, int *len, int *offset);
 
 static int check_ref(const char *name, unsigned int flags)
 {
@@ -180,17 +181,16 @@ reject:
 static void annotate_refs_with_symref_info(struct ref *ref)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
-	const char *feature_list = server_capabilities_v1;
+	int offset = 0;
 
-	while (feature_list) {
+	while (1) {
 		int len;
 		const char *val;
 
-		val = parse_feature_value(feature_list, "symref", &len);
+		val = next_server_feature_value("symref", &len, &offset);
 		if (!val)
 			break;
 		parse_one_symref_info(&symref, val, len);
-		feature_list = val + 1;
 	}
 	string_list_sort(&symref);
 
@@ -452,7 +452,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	return list;
 }
 
-static const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp)
+static const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp, int *offset)
 {
 	int len;
 
@@ -460,6 +460,8 @@ static const char *parse_feature_value(const char *feature_list, const char *fea
 		return NULL;
 
 	len = strlen(feature);
+	if (offset)
+		feature_list += *offset;
 	while (*feature_list) {
 		const char *found = strstr(feature_list, feature);
 		if (!found)
@@ -474,9 +476,14 @@ static const char *parse_feature_value(const char *feature_list, const char *fea
 			}
 			/* feature with a value (e.g., "agent=git/1.2.3") */
 			else if (*value == '=') {
+				int end;
+
 				value++;
+				end = strcspn(value, " \t\n");
 				if (lenp)
-					*lenp = strcspn(value, " \t\n");
+					*lenp = end;
+				if (offset)
+					*offset = value + end - feature_list;
 				return value;
 			}
 			/*
@@ -491,12 +498,17 @@ static const char *parse_feature_value(const char *feature_list, const char *fea
 
 int parse_feature_request(const char *feature_list, const char *feature)
 {
-	return !!parse_feature_value(feature_list, feature, NULL);
+	return !!parse_feature_value(feature_list, feature, NULL, NULL);
+}
+
+static const char *next_server_feature_value(const char *feature, int *len, int *offset)
+{
+	return parse_feature_value(server_capabilities_v1, feature, len, offset);
 }
 
 const char *server_feature_value(const char *feature, int *len)
 {
-	return parse_feature_value(server_capabilities_v1, feature, len);
+	return parse_feature_value(server_capabilities_v1, feature, len, NULL);
 }
 
 int server_supports(const char *feature)
