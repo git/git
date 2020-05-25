@@ -460,6 +460,8 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			die(_("unknown object format '%s' specified by server"), hash_name);
 		reader->hash_algo = &hash_algos[hash_algo];
 		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
+	} else {
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
 	}
 
 	if (server_options && server_options->nr &&
