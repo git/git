@@ -84,6 +84,21 @@ int server_supports_v2(const char *c, int die_on_error)
 	return 0;
 }
 
+int server_feature_v2(const char *c, const char **v)
+{
+	int i;
+
+	for (i = 0; i < server_capabilities_v2.argc; i++) {
+		const char *out;
+		if (skip_prefix(server_capabilities_v2.argv[i], c, &out) &&
+		    (*out == '=')) {
+			*v = out + 1;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int server_supports_feature(const char *c, const char *feature,
 			    int die_on_error)
 {
