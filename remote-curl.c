@@ -41,7 +41,9 @@ struct options {
 		deepen_relative : 1,
 		from_promisor : 1,
 		no_dependents : 1,
-		atomic : 1;
+		atomic : 1,
+		object_format : 1;
+	const struct git_hash_algo *hash_algo;
 };
 static struct options options;
 static struct string_list cas_options = STRING_LIST_INIT_DUP;
@@ -190,6 +192,16 @@ static int set_option(const char *name, const char *value)
 	} else if (!strcmp(name, "filter")) {
 		options.filter = xstrdup(value);
 		return 0;
+	} else if (!strcmp(name, "object-format")) {
+		int algo;
+		options.object_format = 1;
+		if (strcmp(value, "true")) {
+			algo = hash_algo_by_name(value);
+			if (algo == GIT_HASH_UNKNOWN)
+				die("unknown object format '%s'", value);
+			options.hash_algo = &hash_algos[algo];
+		}
+		return 0;
 	} else {
 		return 1 /* unsupported */;
 	}
@@ -231,6 +243,7 @@ static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 	case protocol_v0:
 		get_remote_heads(&reader, &list, for_push ? REF_NORMAL : 0,
 				 NULL, &heads->shallow);
+		options.hash_algo = reader.hash_algo;
 		break;
 	case protocol_unknown_version:
 		BUG("unknown protocol version");
@@ -509,6 +522,9 @@ static struct ref *get_refs(int for_push)
 static void output_refs(struct ref *refs)
 {
 	struct ref *posn;
+	if (options.object_format && options.hash_algo) {
+		printf(":object-format %s\n", options.hash_algo->name);
+	}
 	for (posn = refs; posn; posn = posn->next) {
 		if (posn->symref)
 			printf("@%s %s\n", posn->symref, posn->name);
@@ -1439,6 +1455,7 @@ int cmd_main(int argc, const char **argv)
 			printf("option\n");
 			printf("push\n");
 			printf("check-connectivity\n");
+			printf("object-format\n");
 			printf("\n");
 			fflush(stdout);
 		} else if (skip_prefix(buf.buf, "stateless-connect ", &arg)) {
