@@ -8,6 +8,10 @@ test_description='Test repository version check'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
+	test_oid_cache <<-\EOF &&
+	version sha1:0
+	version sha256:1
+	EOF
 	cat >test.patch <<-\EOF &&
 	diff --git a/test.txt b/test.txt
 	new file mode 100644
@@ -23,7 +27,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'gitdir selection on normal repos' '
-	echo 0 >expect &&
+	echo $(test_oid version) >expect &&
 	git config core.repositoryformatversion >actual &&
 	git -C test config core.repositoryformatversion >actual2 &&
 	test_cmp expect actual &&
