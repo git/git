@@ -871,9 +871,10 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 
 	GIT_PROTOCOL=version=2 git upload-pack . <<-EOF >/dev/null
 	0012command=fetch
+	$(echo "object-format=$(test_oid algo)" | packetize)
 	00010013deepen-since 1
-	0032want $(git rev-parse other)
-	0032have $(git rev-parse master)
+	$(echo "want $(git rev-parse other)" | packetize)
+	$(echo "have $(git rev-parse master)" | packetize)
 	0000
 	EOF
 	)
