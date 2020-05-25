@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2020, #07; Wed, 20)
-X-master-at: 87680d32efb6d14f162e54ad3bda4e3d6c908559
-X-next-at: 8d5cacc8d1ede34c079dff20da097c4e1f481d2c
+Subject: What's cooking in git.git (May 2020, #08; Sun, 24)
+X-master-at: d2ecc46c0981fb829fdfb204604ed0a2798cbe07
+X-next-at: 59ed0186f21322539283e0ada8b0e692051b5445
 
-What's cooking in git.git (May 2020, #07; Wed, 20)
+What's cooking in git.git (May 2020, #08; Sun, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.27-rc1 has been tagged.  There are a handful of topics to
-further fix-up what we have been built during this cycle still not
-in 'next', and they will be merged to 'next' later today and then
-down to 'master' before -rc2.
+Git 2.27-rc2 will be tagged soon, but most of the topics planned for
+it are already in 'master'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,114 +23,189 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ak/slab-decl-cleanup (2020-05-18) 1 commit
-  (merged to 'next' on 2020-05-19 at 7de41005de)
- + commit-slab-decl.h: update include guard
-
- Code clean-up.
-
-
-* cb/no-more-gmtime (2020-05-14) 1 commit
-  (merged to 'next' on 2020-05-15 at 160e0ada09)
- + compat: remove gmtime
-
- Code clean-up by removing a compatibility implementation of a
- function we no longer use.
-
-
-* dd/t1509-i18n-fix (2020-05-13) 1 commit
-  (merged to 'next' on 2020-05-15 at a6342455c1)
- + t1509: correct i18n test
-
- A few tests were not i18n clean.
-
-
-* ds/trace-log-progress-fix (2020-05-15) 1 commit
-  (merged to 'next' on 2020-05-15 at d82c1fd03f)
- + progress: call trace2_region_leave() only after calling _enter()
-
- Last-minute fix for our recent change to allow use of progress API
- as a traceable region.
-
-
-* en/merge-rename-rename-worktree-fix (2020-05-14) 1 commit
-  (merged to 'next' on 2020-05-15 at 7e1ddfa3c9)
- + merge-recursive: fix rename/rename(1to2) for working tree with a binary
-
- When a binary file gets modified and renamed on both sides of history
- to different locations, both files would be written to the working
- tree but both would have the contents from "ours".  This has been
- corrected so that the path from each side gets their original content.
-
-
-* en/sparse-checkout (2020-05-15) 1 commit
-  (merged to 'next' on 2020-05-15 at d4b3058787)
- + unpack-trees: also allow get_progress() to work on a different index
-
- Consistency fix to a topic already in 'master'.
-
-
-* es/bugreport (2020-05-18) 1 commit
-  (merged to 'next' on 2020-05-19 at ede8c892b8)
- + git-bugreport.txt: adjust reference to strftime(3)
-
- Doc fix.
-
-
-* jc/fix-tap-output-under-bash (2020-05-15) 3 commits
-  (merged to 'next' on 2020-05-15 at de8f92d652)
- + Revert "tests: when run in Bash, annotate test failures with file name/line number"
- + Revert "ci: add a problem matcher for GitHub Actions"
- + Revert "t/test_lib: avoid naked bash arrays in file_lineno"
-
- A recent attempt to make the test output nicer to view on CI
- systems broke TAP output under bash.  The effort has been reverted
- to be re-attempted in the next cycle.
-
-
-* js/ci-sdk-download-fix (2020-05-15) 1 commit
-  (merged to 'next' on 2020-05-15 at 9b28f7ec87)
- + ci: avoid pounding on the poor ci-artifacts container
-
- Instead of downloading Windows SDK for CI jobs for windows builds
- from an external site (wingit.blob.core.windows.net), use the one
- created in the windows-build job, to work around quota issues at
- the external site.
-
---------------------------------------------------
-[New Topics]
-
 * bc/faq (2020-05-20) 1 commit
- - command-list.txt: add gitfaq to the list of guides
+  (merged to 'next' on 2020-05-21 at ab3fc8fb75)
+ + command-list.txt: add gitfaq to the list of guides
 
  "git help guides" now includes the newly added FAQ document.
 
- Will merge to 'next' and then to 'master'.
-
 
 * cb/bisect-replay-with-dos-fix (2020-05-20) 1 commit
- - bisect: avoid tailing CR characters from revision in replay
+  (merged to 'next' on 2020-05-21 at ebcc6eb30e)
+ + bisect: avoid tailing CR characters from revision in replay
 
  Re-fix longstanding "edited bisect log may confuse bisect replay
  with trailing carriage-return" issue.
 
- Will merge to 'next' and then to 'master'.
+
+* dd/t5703-grep-a-fix (2020-05-19) 1 commit
+  (merged to 'next' on 2020-05-21 at b85828341f)
+ + t5703: replace "grep -a" usage by perl
+
+ Update an unconditional use of "grep -a" with a perl script in a test.
 
 
 * dl/merge-autostash (2020-05-20) 1 commit
- - t5520: avoid alternation in grep's BRE (not POSIX)
+  (merged to 'next' on 2020-05-21 at 985d87225d)
+ + t5520: avoid alternation in grep's BRE (not POSIX)
 
  Test fix.
 
- Will merge to 'next' and then to 'master'.
+
+* ds/multi-pack-verify (2020-05-19) 1 commit
+  (merged to 'next' on 2020-05-21 at a337d6352c)
+ + fsck: use ERROR_MULTI_PACK_INDEX
+
+ Fix for a copy-and-paste error introduced during 2.20 era.
+
+
+* gp/hppa-stack-test-fix (2020-05-18) 1 commit
+  (merged to 'next' on 2020-05-20 at 57ed63b4ad)
+ + tests: skip small-stack tests on hppa architecture
+
+ Platform dependent tweak to a test for HP-PA.
 
 
 * gs/commit-graph-path-filter (2020-05-20) 1 commit
- - t4216: avoid unnecessary subshell in test_bloom_filters_not_used
+  (merged to 'next' on 2020-05-21 at e563529d0a)
+ + t4216: avoid unnecessary subshell in test_bloom_filters_not_used
 
  Test fix.
 
- Will merge to 'next' and then to 'master'.
+
+* jt/avoid-prefetch-when-able-in-diff (2020-05-19) 1 commit
+  (merged to 'next' on 2020-05-21 at 4fa6f05ea4)
+ + t4067: make rename detection test output raw diff
+
+ Test-coverage enhancement.
+
+
+* ma/doc-fixes (2020-05-18) 5 commits
+  (merged to 'next' on 2020-05-21 at 0f5e748d23)
+ + git-sparse-checkout.txt: add missing '
+ + git-credential.txt: use list continuation
+ + git-commit-graph.txt: fix list rendering
+ + git-commit-graph.txt: fix grammo
+ + date-formats.txt: fix list continuation
+
+ Various doc fixes.
+
+--------------------------------------------------
+[New Topics]
+
+* bc/filter-process (2020-05-21) 2 commits
+  (merged to 'next' on 2020-05-24 at 3d51328096)
+ + t2060: add a test for switch with --orphan and --discard-changes
+ + builtin/checkout: simplify metadata initialization
+
+ Code simplification and test coverage enhancement.
+
+ Will cook in 'next'.
+
+
+* cb/bisect-helper-parser-fix (2020-05-24) 1 commit
+  (merged to 'next' on 2020-05-24 at d30e10fa86)
+ + bisect--helper: avoid segfault with bad syntax in `start --term-*`
+
+ The code to parse "git bisect start" command line was lax in
+ validating the arguments.
+
+ Will cook in 'next'.
+
+
+* jn/experimental-opts-into-proto-v2 (2020-05-21) 1 commit
+  (merged to 'next' on 2020-05-24 at 53cd664dfe)
+ + config: let feature.experimental imply protocol.version=2
+
+ "feature.experimental" configuration variable is to let volunteers
+ easily opt into a set of newer features, which use of the v2
+ transport protocol is now a part of.
+
+ Will cook in 'next'.
+
+
+* jx/pkt-line-doc-count-fix (2020-05-21) 1 commit
+  (merged to 'next' on 2020-05-24 at 7115240db4)
+ + doc: fix wrong 4-byte length of pkt-line message
+
+ Docfix.
+
+ Will cook in 'next'.
+
+
+* rs/fsck-duplicate-names-in-trees (2020-05-21) 4 commits
+  (merged to 'next' on 2020-05-24 at 6e1d6ba087)
+ + fsck: detect more in-tree d/f conflicts
+ + t1450: demonstrate undetected in-tree d/f conflict
+ + t1450: increase test coverage of in-tree d/f detection
+ + fsck: fix a typo in a comment
+
+ The check in "git fsck" to ensure that the tree objects are sorted
+ still had corner cases it missed unsorted entries.
+
+ Will cook in 'next'.
+
+
+* ss/submodule-set-branch-in-c (2020-05-24) 2 commits
+ - fixup! submodule: port subcommand 'set-branch' from shell to C
+ - submodule: port subcommand 'set-branch' from shell to C
+
+ Rewrite of parts of the scripted "git submodule" Porcelain command
+ continues; this time it is "git submodule set-branch" subcommand's
+ turn.
+
+ cf. <20200523231838.GB1981@danh.dev>
+
+
+* vs/complete-stash-show-p-fix (2020-05-21) 1 commit
+  (merged to 'next' on 2020-05-24 at fcbff29a0f)
+ + completion: don't override given stash subcommand with -p
+
+ The command line completion script (in contrib/) tried to complete
+ "git stash -p" as if it were "git stash push -p", but it was too
+ aggressive and also affected "git stash show -p", which has been
+ corrected.
+
+ Will cook in 'next'.
+
+
+* cb/t5608-cleanup (2020-05-24) 1 commit
+  (merged to 'next' on 2020-05-24 at 2bfa581890)
+ + t5608: avoid say() and use "skip_all" instead for consistency
+
+ Test fixup.
+
+ Will cook in 'next'.
+
+
+* es/config-hooks (2020-05-21) 4 commits
+ - hook: add --porcelain to list command
+ - hook: add list command
+ - hook: scaffolding for git-hook subcommand
+ - doc: propose hooks managed by the config
+
+
+* rs/checkout-b-track-error (2020-05-24) 2 commits
+ - checkout: improve error messages for -b with extra argument
+ - checkout: add tests for -b and --track
+
+ The error message from "git checkout -b foo -t bar baz" was
+ confusing.
+
+ Will merge to 'next'.
+
+
+* lo/sparse-universal-zero-init (2020-05-24) 1 commit
+  (merged to 'next' on 2020-05-24 at 1f4ea6b348)
+ + sparse: allow '{ 0 }' to be used without warnings
+
+ We've adopted a convention that any on-stack structure can be
+ initialized to have zero values in all fields with "= { 0 }", even
+ when the first field happens to be a pointer, but sparse complained
+ that a null pointer should be spelled NULL for a long time.  Start
+ using -Wno-universal-initializer option to squelch it.
+
+ Will cook in 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -148,19 +221,6 @@ of the repositories listed at
 
  Expecting a reroll.
  cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
-
-
-* pw/rebase-i-more-options (2020-04-29) 5 commits
- - rebase: add --reset-author-date
- - rebase -i: support --ignore-date
- - sequencer: rename amend_author to author_to_free
- - rebase -i: support --committer-date-is-author-date
- - rebase -i: add --ignore-whitespace flag
-
- "git rebase -i" learns a bit more options.
-
- Expecting a reroll.
- cf. <c3dad0e2-e381-499a-af02-ef3f49207c49@gmail.com>
 
 
 * jk/complete-git-switch (2020-04-28) 11 commits
@@ -182,16 +242,19 @@ of the repositories listed at
  Needs review.
 
 
-* dl/test-must-fail-fixes-5 (2020-05-05) 4 commits
+* dl/test-must-fail-fixes-5 (2020-05-21) 5 commits
  - lib-submodule-update: pass OVERWRITING_FAIL
+ - SQUASH???  <20200521112545.GB581643@generichostname>
  - lib-submodule-update: prepend "git" to $command
  - lib-submodule-update: consolidate --recurse-submodules
  - lib-submodule-update: add space after function name
 
  The effort to avoid using test_must_fail on non-git command continues.
 
- Needs review.
- cf. <cover.1588162842.git.liu.denton@gmail.com>
+ Waiting for a review thread to settle.
+ cf. <20200521182928.GA1308647@coredump.intra.peff.net>
+ The last step is a bit too ugly to live; Peff seems to have better
+ ideas.
 
 
 * mr/bisect-in-c-2 (2020-04-23) 12 commits
@@ -210,7 +273,8 @@ of the repositories listed at
 
  Rewrite of the remainder of "git bisect" script in C continues.
 
- Needs review.
+ Expecting a response to reviews.
+ cf. <nycvar.QRO.7.76.6.2005230007260.56@tvgsbejvaqbjf.bet>
 
 
 * mk/use-size-t-in-zlib (2018-10-15) 1 commit
@@ -222,6 +286,19 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* pw/rebase-i-more-options (2020-05-24) 5 commits
+ - rebase: add --reset-author-date
+ - rebase -i: support --ignore-date
+ - sequencer: rename amend_author to author_to_free
+ - rebase -i: support --committer-date-is-author-date
+ - rebase -i: add --ignore-whitespace flag
+
+ "git rebase -i" learns a bit more options.
+
+ Expecting the final touch
+ cf. <20200523155203.GA10163@danh.dev>
+
 
 * an/merge-single-strategy-optim (2020-05-19) 1 commit
   (merged to 'next' on 2020-05-20 at 8d5cacc8d1)
@@ -250,7 +327,7 @@ of the repositories listed at
  Code clean-up.
 
 
-* dl/remote-curl-deadlock-fix (2020-05-19) 7 commits
+* dl/remote-curl-deadlock-fix (2020-05-24) 7 commits
  - stateless-connect: send response end packet
  - pkt-line: define PACKET_READ_RESPONSE_END
  - remote-curl: error on incomplete packet
@@ -267,87 +344,44 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* gp/hppa-stack-test-fix (2020-05-18) 1 commit
-  (merged to 'next' on 2020-05-20 at 57ed63b4ad)
- + tests: skip small-stack tests on hppa architecture
-
- Platform dependent tweak to a test for HP-PA.
-
- Will merge to 'master'.
-
-
 * jk/ci-only-on-selected-branches (2020-05-18) 1 commit
- - ci/config: correct instruction for CI preferences
+  (merged to 'next' on 2020-05-24 at 5f1f5ef66a)
+ + ci/config: correct instruction for CI preferences
 
  Dev support.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* la/diff-relative-config (2020-05-19) 1 commit
+* la/diff-relative-config (2020-05-24) 1 commit
  - diff: add config option relative
 
  The commands in the "diff" family learned to honor "diff.relative"
  configuration variable.
 
- Almost there.
- cf. <20200519230124.GA12509@danh.dev>
-
-
-* ma/doc-fixes (2020-05-18) 5 commits
- - git-sparse-checkout.txt: add missing '
- - git-credential.txt: use list continuation
- - git-commit-graph.txt: fix list rendering
- - git-commit-graph.txt: fix grammo
- - date-formats.txt: fix list continuation
-
- Various doc fixes.
-
- Will merge to 'next' and then to 'master'.
-
-
-* dd/t5703-grep-a-fix (2020-05-19) 1 commit
- - t5703: replace "grep -a" usage by perl
-
- Update an unconditional use of "grep -a" with a perl script in a test.
-
- Will merge to 'next' and then to 'master'.
-
-
-* ds/multi-pack-verify (2020-05-19) 1 commit
- - fsck: use ERROR_MULTI_PACK_INDEX
-
- Fix for a copy-and-paste error introduced during 2.20 era.
-
- Will merge to 'next' and then to 'master'.
-
-
-* jt/avoid-prefetch-when-able-in-diff (2020-05-19) 1 commit
- - t4067: make rename detection test output raw diff
-
- Test-coverage enhancement.
-
- Will merge to 'next' and then to 'master'.
-
-
-* cb/t4210-illseq-auto-detect (2020-05-18) 2 commits
- - t4210: detect REG_ILLSEQ dynamically and skip affected tests
- - t/helper: teach test-regex to report pattern errors (like REG_ILLSEQ)
-
- As FreeBSD is not the only platform whose regexp library needs
- REG_ILLSEQ prerequisite, add a logic to detect the prerequisite
- automatically.
-
  Will merge to 'next'.
 
 
+* cb/t4210-illseq-auto-detect (2020-05-18) 2 commits
+  (merged to 'next' on 2020-05-24 at c03b4095fa)
+ + t4210: detect REG_ILLSEQ dynamically and skip affected tests
+ + t/helper: teach test-regex to report pattern errors (like REG_ILLSEQ)
+
+ As FreeBSD is not the only platform whose regexp library reports
+ a REG_ILLSEQ error when fed invalid UTF-8, add logic to detect that
+ automatically and skip the affected tests.
+
+ Will cook in 'next'.
+
+
 * bk/p4-prepare-p4-only-fix (2020-05-12) 1 commit
- - git-p4.py: fix --prepare-p4-only error with multiple commits
+  (merged to 'next' on 2020-05-24 at c1b4644b04)
+ + git-p4.py: fix --prepare-p4-only error with multiple commits
 
  The "--prepare-p4-only" option is supposed to stop after replaying
  one changeset, but kept going (by mistake?)
 
- Will merge to 'next'.
+ Will cook in 'next'.
  cf. <CAE5ih797YYxsR2H0TA65w9W-1jF4jQLayja_nGjQMGtc=PB6Jw@mail.gmail.com>
 
 
@@ -370,7 +404,8 @@ of the repositories listed at
  "git grep" has been tweaked to be limited to the sparse checkout
  paths.
 
- Expecting a reroll.
+ Expecting further polishing.
+ cf. <CAHd-oW6BoHkMSAQVquHR+H7=g84VE-qmXGYcDmWwFxuLyqZSzg@mail.gmail.com>
 
 
 * bc/sha-256-part-2 (2020-05-13) 44 commits
@@ -423,12 +458,13 @@ of the repositories listed at
 
 
 * es/bugreport-shell (2020-05-12) 2 commits
- - bugreport: include user interactive shell
- - help: add shell-path to --build-options
+  (merged to 'next' on 2020-05-24 at 79c5c8308b)
+ + bugreport: include user interactive shell
+ + help: add shell-path to --build-options
 
  "git bugreport" learns to report what shell is in use.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  We may want to learn more details than just the path, but
  that can come later.
  cf. <20200512235924.GC6605@camp.crustytoothpaste.net>
@@ -449,18 +485,19 @@ of the repositories listed at
 
 
 * tb/commit-graph-no-check-oids (2020-05-18) 8 commits
- - commit-graph: drop COMMIT_GRAPH_WRITE_CHECK_OIDS flag
- - t5318: reorder test below 'graph_read_expect'
- - commit-graph.c: simplify 'fill_oids_from_commits'
- - builtin/commit-graph.c: dereference tags in builtin
- - builtin/commit-graph.c: extract 'read_one_commit()'
- - commit-graph.c: peel refs in 'add_ref_to_set'
- - commit-graph.c: show progress of finding reachable commits
- - commit-graph.c: extract 'refs_cb_data'
+  (merged to 'next' on 2020-05-24 at 72bd1063ca)
+ + commit-graph: drop COMMIT_GRAPH_WRITE_CHECK_OIDS flag
+ + t5318: reorder test below 'graph_read_expect'
+ + commit-graph.c: simplify 'fill_oids_from_commits'
+ + builtin/commit-graph.c: dereference tags in builtin
+ + builtin/commit-graph.c: extract 'read_one_commit()'
+ + commit-graph.c: peel refs in 'add_ref_to_set'
+ + commit-graph.c: show progress of finding reachable commits
+ + commit-graph.c: extract 'refs_cb_data'
 
  Clean-up the commit-graph codepath.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jx/proc-receive-hook (2020-05-18) 11 commits
@@ -483,18 +520,19 @@ of the repositories listed at
 
 
 * hn/refs-cleanup (2020-05-20) 6 commits
- - reftable: define version 2 of the spec to accomodate SHA256
- - reftable: clarify how empty tables should be written
- - reftable: file format documentation
- - refs: improve documentation for ref iterator
- - t: use update-ref and show-ref to reading/writing refs
- - refs.h: clarify reflog iteration order
+  (merged to 'next' on 2020-05-24 at dd9b665698)
+ + reftable: define version 2 of the spec to accomodate SHA256
+ + reftable: clarify how empty tables should be written
+ + reftable: file format documentation
+ + refs: improve documentation for ref iterator
+ + t: use update-ref and show-ref to reading/writing refs
+ + refs.h: clarify reflog iteration order
  (this branch is used by hn/reftable.)
 
  Preliminary clean-ups around refs API, plus file format
  specification documentation for the reftable backend.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * hn/reftable (2020-05-20) 9 commits
