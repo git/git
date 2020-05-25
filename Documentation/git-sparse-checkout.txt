@@ -70,7 +70,7 @@ C-style quoted strings.
 	`core.sparseCheckoutCone` is enabled, the given patterns are interpreted
 	as directory names as in the 'set' subcommand.
 
-'reapply::
+'reapply'::
 	Reapply the sparsity pattern rules to paths in the working tree.
 	Commands like merge or rebase can materialize paths to do their
 	work (e.g. in order to show you a conflict), and other
