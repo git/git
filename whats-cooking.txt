@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2020, #08; Sun, 24)
-X-master-at: d2ecc46c0981fb829fdfb204604ed0a2798cbe07
-X-next-at: 59ed0186f21322539283e0ada8b0e692051b5445
+Subject: What's cooking in git.git (May 2020, #09; Tue, 26)
+X-master-at: 2d5e9f31ac46017895ce6a183467037d29ceb9d3
+X-next-at: 90737beb8258c0a99181b6308eef898d77979c71
 
-What's cooking in git.git (May 2020, #08; Sun, 24)
+What's cooking in git.git (May 2020, #09; Tue, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.27-rc2 will be tagged soon, but most of the topics planned for
-it are already in 'master'.
+Git 2.27-rc2 has been tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,75 +22,101 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/faq (2020-05-20) 1 commit
-  (merged to 'next' on 2020-05-21 at ab3fc8fb75)
- + command-list.txt: add gitfaq to the list of guides
+* ss/faq-ignore (2020-05-25) 1 commit
+  (merged to 'next' on 2020-05-25 at f2f7dd2ff6)
+ + gitfaq: avoid validation error with older asciidoc
 
- "git help guides" now includes the newly added FAQ document.
-
-
-* cb/bisect-replay-with-dos-fix (2020-05-20) 1 commit
-  (merged to 'next' on 2020-05-21 at ebcc6eb30e)
- + bisect: avoid tailing CR characters from revision in replay
-
- Re-fix longstanding "edited bisect log may confuse bisect replay
- with trailing carriage-return" issue.
-
-
-* dd/t5703-grep-a-fix (2020-05-19) 1 commit
-  (merged to 'next' on 2020-05-21 at b85828341f)
- + t5703: replace "grep -a" usage by perl
-
- Update an unconditional use of "grep -a" with a perl script in a test.
-
-
-* dl/merge-autostash (2020-05-20) 1 commit
-  (merged to 'next' on 2020-05-21 at 985d87225d)
- + t5520: avoid alternation in grep's BRE (not POSIX)
-
- Test fix.
-
-
-* ds/multi-pack-verify (2020-05-19) 1 commit
-  (merged to 'next' on 2020-05-21 at a337d6352c)
- + fsck: use ERROR_MULTI_PACK_INDEX
-
- Fix for a copy-and-paste error introduced during 2.20 era.
-
-
-* gp/hppa-stack-test-fix (2020-05-18) 1 commit
-  (merged to 'next' on 2020-05-20 at 57ed63b4ad)
- + tests: skip small-stack tests on hppa architecture
-
- Platform dependent tweak to a test for HP-PA.
-
-
-* gs/commit-graph-path-filter (2020-05-20) 1 commit
-  (merged to 'next' on 2020-05-21 at e563529d0a)
- + t4216: avoid unnecessary subshell in test_bloom_filters_not_used
-
- Test fix.
-
-
-* jt/avoid-prefetch-when-able-in-diff (2020-05-19) 1 commit
-  (merged to 'next' on 2020-05-21 at 4fa6f05ea4)
- + t4067: make rename detection test output raw diff
-
- Test-coverage enhancement.
-
-
-* ma/doc-fixes (2020-05-18) 5 commits
-  (merged to 'next' on 2020-05-21 at 0f5e748d23)
- + git-sparse-checkout.txt: add missing '
- + git-credential.txt: use list continuation
- + git-commit-graph.txt: fix list rendering
- + git-commit-graph.txt: fix grammo
- + date-formats.txt: fix list continuation
-
- Various doc fixes.
+ Doc markup fix.
 
 --------------------------------------------------
 [New Topics]
+
+* en/sparse-with-submodule-doc (2020-05-25) 1 commit
+ - git-sparse-checkout: clarify interactions with submodules
+
+
+* ma/rev-list-options-docfix (2020-05-26) 1 commit
+ - rev-list-options.txt: start a list for `show-pulls`
+
+--------------------------------------------------
+[Stalled]
+
+* dr/push-remoteref-fix (2020-04-23) 1 commit
+ - remote.c: fix handling of %(push:remoteref)
+
+ The "%(push:remoteref)" placeholder in the "--format=" argument of
+ "git format-patch" (and friends) only showed what got explicitly
+ configured, not what ref at the receiving end would be updated when
+ "git push" was used, as it ignored the default behaviour (e.g. update
+ the same ref as the source).
+
+ Expecting a reroll.
+ cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
+
+
+* jk/complete-git-switch (2020-04-28) 11 commits
+ - completion: complete remote branches for git switch --track
+ - completion: recognize -c/-C when completing for git switch
+ - completion: fix completion for git switch with no options
+ - completion: perform DWIM logic directly in __git_complete_refs
+ - completion: extract function __git_dwim_remote_heads
+ - completion: rename --track option of __git_complete_refs
+ - completion: stop completing refs for git switch --orphan
+ - completion: add tests showing lack of support for git switch -c/-C
+ - completion: add test highlighting subpar git switch --track completion
+ - completion: add test showing subpar git switch completion
+ - completion: add some simple test cases for git switch completion
+
+ The command line completion (in contrib/) learned to complete
+ options that the "git switch" command takes.
+
+ Needs review.
+
+
+* dl/test-must-fail-fixes-5 (2020-05-21) 5 commits
+ - lib-submodule-update: pass OVERWRITING_FAIL
+ - SQUASH???  <20200521112545.GB581643@generichostname>
+ - lib-submodule-update: prepend "git" to $command
+ - lib-submodule-update: consolidate --recurse-submodules
+ - lib-submodule-update: add space after function name
+
+ The effort to avoid using test_must_fail on non-git command continues.
+
+ Waiting for a review thread to settle.
+ cf. <20200521182928.GA1308647@coredump.intra.peff.net>
+ The last step is a bit too ugly to live; Peff seems to have better
+ ideas.
+
+
+* mr/bisect-in-c-2 (2020-04-23) 12 commits
+ - bisect--helper: retire `--bisect-autostart` subcommand
+ - bisect--helper: retire `--write-terms` subcommand
+ - bisect--helper: retire `--check-expected-revs` subcommand
+ - bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
+ - bisect--helper: retire `--next-all` subcommand
+ - bisect--helper: retire `--bisect-clean-state` subcommand
+ - bisect--helper: finish porting `bisect_start()` to C
+ - bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
+ - bisect--helper: reimplement `bisect_autostart` shell function in C
+ - bisect--helper: introduce new `write_in_file()` function
+ - bisect--helper: use '-res' in 'cmd_bisect__helper' return
+ - bisect--helper: fix `cmd_*()` function switch default return
+
+ Rewrite of the remainder of "git bisect" script in C continues.
+
+ Expecting a response to reviews.
+ cf. <nycvar.QRO.7.76.6.2005230007260.56@tvgsbejvaqbjf.bet>
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
 
 * bc/filter-process (2020-05-21) 2 commits
   (merged to 'next' on 2020-05-24 at 3d51328096)
@@ -179,20 +204,21 @@ of the repositories listed at
 
 
 * es/config-hooks (2020-05-21) 4 commits
- - hook: add --porcelain to list command
- - hook: add list command
- - hook: scaffolding for git-hook subcommand
- - doc: propose hooks managed by the config
+ . hook: add --porcelain to list command
+ . hook: add list command
+ . hook: scaffolding for git-hook subcommand
+ . doc: propose hooks managed by the config
 
 
 * rs/checkout-b-track-error (2020-05-24) 2 commits
- - checkout: improve error messages for -b with extra argument
- - checkout: add tests for -b and --track
+  (merged to 'next' on 2020-05-26 at 9220e43203)
+ + checkout: improve error messages for -b with extra argument
+ + checkout: add tests for -b and --track
 
  The error message from "git checkout -b foo -t bar baz" was
  confusing.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * lo/sparse-universal-zero-init (2020-05-24) 1 commit
@@ -207,85 +233,6 @@ of the repositories listed at
 
  Will cook in 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* dr/push-remoteref-fix (2020-04-23) 1 commit
- - remote.c: fix handling of %(push:remoteref)
-
- The "%(push:remoteref)" placeholder in the "--format=" argument of
- "git format-patch" (and friends) only showed what got explicitly
- configured, not what ref at the receiving end would be updated when
- "git push" was used, as it ignored the default behaviour (e.g. update
- the same ref as the source).
-
- Expecting a reroll.
- cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
-
-
-* jk/complete-git-switch (2020-04-28) 11 commits
- - completion: complete remote branches for git switch --track
- - completion: recognize -c/-C when completing for git switch
- - completion: fix completion for git switch with no options
- - completion: perform DWIM logic directly in __git_complete_refs
- - completion: extract function __git_dwim_remote_heads
- - completion: rename --track option of __git_complete_refs
- - completion: stop completing refs for git switch --orphan
- - completion: add tests showing lack of support for git switch -c/-C
- - completion: add test highlighting subpar git switch --track completion
- - completion: add test showing subpar git switch completion
- - completion: add some simple test cases for git switch completion
-
- The command line completion (in contrib/) learned to complete
- options that the "git switch" command takes.
-
- Needs review.
-
-
-* dl/test-must-fail-fixes-5 (2020-05-21) 5 commits
- - lib-submodule-update: pass OVERWRITING_FAIL
- - SQUASH???  <20200521112545.GB581643@generichostname>
- - lib-submodule-update: prepend "git" to $command
- - lib-submodule-update: consolidate --recurse-submodules
- - lib-submodule-update: add space after function name
-
- The effort to avoid using test_must_fail on non-git command continues.
-
- Waiting for a review thread to settle.
- cf. <20200521182928.GA1308647@coredump.intra.peff.net>
- The last step is a bit too ugly to live; Peff seems to have better
- ideas.
-
-
-* mr/bisect-in-c-2 (2020-04-23) 12 commits
- - bisect--helper: retire `--bisect-autostart` subcommand
- - bisect--helper: retire `--write-terms` subcommand
- - bisect--helper: retire `--check-expected-revs` subcommand
- - bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
- - bisect--helper: retire `--next-all` subcommand
- - bisect--helper: retire `--bisect-clean-state` subcommand
- - bisect--helper: finish porting `bisect_start()` to C
- - bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
- - bisect--helper: reimplement `bisect_autostart` shell function in C
- - bisect--helper: introduce new `write_in_file()` function
- - bisect--helper: use '-res' in 'cmd_bisect__helper' return
- - bisect--helper: fix `cmd_*()` function switch default return
-
- Rewrite of the remainder of "git bisect" script in C continues.
-
- Expecting a response to reviews.
- cf. <nycvar.QRO.7.76.6.2005230007260.56@tvgsbejvaqbjf.bet>
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
 
 * pw/rebase-i-more-options (2020-05-24) 5 commits
  - rebase: add --reset-author-date
@@ -328,20 +275,21 @@ of the repositories listed at
 
 
 * dl/remote-curl-deadlock-fix (2020-05-24) 7 commits
- - stateless-connect: send response end packet
- - pkt-line: define PACKET_READ_RESPONSE_END
- - remote-curl: error on incomplete packet
- - pkt-line: extern packet_length()
- - transport: extract common fetch_pack() call
- - remote-curl: remove label indentation
- - remote-curl: fix typo
+  (merged to 'next' on 2020-05-26 at 072714ca7f)
+ + stateless-connect: send response end packet
+ + pkt-line: define PACKET_READ_RESPONSE_END
+ + remote-curl: error on incomplete packet
+ + pkt-line: extern packet_length()
+ + transport: extract common fetch_pack() call
+ + remote-curl: remove label indentation
+ + remote-curl: fix typo
 
  On-the-wire protocol v2 easily falls into a deadlock between the
  remote-curl helper and the fetch-pack process when the server side
  prematurely throws an error and disconnects.  The communication has
  been updated to make it more robust.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jk/ci-only-on-selected-branches (2020-05-18) 1 commit
@@ -350,16 +298,17 @@ of the repositories listed at
 
  Dev support.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * la/diff-relative-config (2020-05-24) 1 commit
- - diff: add config option relative
+  (merged to 'next' on 2020-05-26 at b4604e6abc)
+ + diff: add config option relative
 
  The commands in the "diff" family learned to honor "diff.relative"
  configuration variable.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * cb/t4210-illseq-auto-detect (2020-05-18) 2 commits
