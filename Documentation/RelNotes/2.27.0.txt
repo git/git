@@ -24,6 +24,10 @@ Backward compatibility notes
    users may find annoying---those who prefer not to rebase need to
    set the variable to false to squelch the warning.
 
+ * The transport protocol version 2, which was promoted to the default
+   in Git 2.26 release, turned out to have some remaining rough edges,
+   so it has been demoted from the default.
+
 
 UI, Workflows & Features
 
