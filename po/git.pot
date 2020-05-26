@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2020-05-15 09:11+0800\n"
+"POT-Creation-Date: 2020-05-27 07:23+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1299,7 +1299,7 @@ msgid "allow overlapping hunks"
 msgstr ""
 
 #: apply.c:5025 builtin/add.c:323 builtin/check-ignore.c:22
-#: builtin/commit.c:1366 builtin/count-objects.c:98 builtin/fsck.c:774
+#: builtin/commit.c:1366 builtin/count-objects.c:98 builtin/fsck.c:775
 #: builtin/log.c:2186 builtin/mv.c:123 builtin/read-tree.c:128
 msgid "be verbose"
 msgstr ""
@@ -2638,7 +2638,7 @@ msgstr ""
 msgid "unable to fork"
 msgstr ""
 
-#: connected.c:107 builtin/fsck.c:208 builtin/prune.c:45
+#: connected.c:107 builtin/fsck.c:209 builtin/prune.c:45
 msgid "Checking connectivity"
 msgstr ""
 
@@ -3628,7 +3628,7 @@ msgstr ""
 msgid "giving up"
 msgstr ""
 
-#: fetch-pack.c:476 progress.c:340
+#: fetch-pack.c:476 progress.c:336
 msgid "done"
 msgstr ""
 
@@ -4258,7 +4258,7 @@ msgstr ""
 msgid "renamed"
 msgstr ""
 
-#: merge-recursive.c:1577 merge-recursive.c:2472 merge-recursive.c:3117
+#: merge-recursive.c:1577 merge-recursive.c:2484 merge-recursive.c:3129
 #, c-format
 msgid "Refusing to lose dirty file at %s"
 msgstr ""
@@ -4294,12 +4294,12 @@ msgstr ""
 msgid " (left unresolved)"
 msgstr ""
 
-#: merge-recursive.c:1793
+#: merge-recursive.c:1805
 #, c-format
 msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
 msgstr ""
 
-#: merge-recursive.c:2056
+#: merge-recursive.c:2068
 #, c-format
 msgid ""
 "CONFLICT (directory rename split): Unclear where to place %s because "
@@ -4307,172 +4307,172 @@ msgid ""
 "getting a majority of the files."
 msgstr ""
 
-#: merge-recursive.c:2088
+#: merge-recursive.c:2100
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
 "implicit directory rename(s) putting the following path(s) there: %s."
 msgstr ""
 
-#: merge-recursive.c:2098
+#: merge-recursive.c:2110
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Cannot map more than one path to %s; "
 "implicit directory renames tried to put these paths there: %s"
 msgstr ""
 
-#: merge-recursive.c:2190
+#: merge-recursive.c:2202
 #, c-format
 msgid ""
 "CONFLICT (rename/rename): Rename directory %s->%s in %s. Rename directory %s-"
 ">%s in %s"
 msgstr ""
 
-#: merge-recursive.c:2435
+#: merge-recursive.c:2447
 #, c-format
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
 "renamed."
 msgstr ""
 
-#: merge-recursive.c:2961
+#: merge-recursive.c:2973
 #, c-format
 msgid "cannot read object %s"
 msgstr ""
 
-#: merge-recursive.c:2964
+#: merge-recursive.c:2976
 #, c-format
 msgid "object %s is not a blob"
 msgstr ""
 
-#: merge-recursive.c:3028
+#: merge-recursive.c:3040
 msgid "modify"
 msgstr ""
 
-#: merge-recursive.c:3028
+#: merge-recursive.c:3040
 msgid "modified"
 msgstr ""
 
-#: merge-recursive.c:3040
+#: merge-recursive.c:3052
 msgid "content"
 msgstr ""
 
-#: merge-recursive.c:3044
+#: merge-recursive.c:3056
 msgid "add/add"
 msgstr ""
 
-#: merge-recursive.c:3067
+#: merge-recursive.c:3079
 #, c-format
 msgid "Skipped %s (merged same as existing)"
 msgstr ""
 
-#: merge-recursive.c:3089 git-submodule.sh:985
+#: merge-recursive.c:3101 git-submodule.sh:985
 msgid "submodule"
 msgstr ""
 
-#: merge-recursive.c:3090
+#: merge-recursive.c:3102
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr ""
 
-#: merge-recursive.c:3120
+#: merge-recursive.c:3132
 #, c-format
 msgid "Adding as %s instead"
 msgstr ""
 
-#: merge-recursive.c:3203
+#: merge-recursive.c:3215
 #, c-format
 msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
 "moving it to %s."
 msgstr ""
 
-#: merge-recursive.c:3206
+#: merge-recursive.c:3218
 #, c-format
 msgid ""
 "CONFLICT (file location): %s added in %s inside a directory that was renamed "
 "in %s, suggesting it should perhaps be moved to %s."
 msgstr ""
 
-#: merge-recursive.c:3210
+#: merge-recursive.c:3222
 #, c-format
 msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
 "%s; moving it to %s."
 msgstr ""
 
-#: merge-recursive.c:3213
+#: merge-recursive.c:3225
 #, c-format
 msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
 "was renamed in %s, suggesting it should perhaps be moved to %s."
 msgstr ""
 
-#: merge-recursive.c:3327
+#: merge-recursive.c:3339
 #, c-format
 msgid "Removing %s"
 msgstr ""
 
-#: merge-recursive.c:3350
+#: merge-recursive.c:3362
 msgid "file/directory"
 msgstr ""
 
-#: merge-recursive.c:3355
+#: merge-recursive.c:3367
 msgid "directory/file"
 msgstr ""
 
-#: merge-recursive.c:3362
+#: merge-recursive.c:3374
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
 msgstr ""
 
-#: merge-recursive.c:3371
+#: merge-recursive.c:3383
 #, c-format
 msgid "Adding %s"
 msgstr ""
 
-#: merge-recursive.c:3380
+#: merge-recursive.c:3392
 #, c-format
 msgid "CONFLICT (add/add): Merge conflict in %s"
 msgstr ""
 
-#: merge-recursive.c:3424
+#: merge-recursive.c:3436
 msgid "Already up to date!"
 msgstr ""
 
-#: merge-recursive.c:3433
+#: merge-recursive.c:3445
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr ""
 
-#: merge-recursive.c:3537
+#: merge-recursive.c:3549
 msgid "Merging:"
 msgstr ""
 
-#: merge-recursive.c:3550
+#: merge-recursive.c:3562
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: merge-recursive.c:3600
+#: merge-recursive.c:3612
 msgid "merge returned no commit"
 msgstr ""
 
-#: merge-recursive.c:3659
+#: merge-recursive.c:3671
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
 "  %s"
 msgstr ""
 
-#: merge-recursive.c:3756
+#: merge-recursive.c:3768
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr ""
 
-#: merge-recursive.c:3774 builtin/merge.c:705 builtin/merge.c:885
+#: merge-recursive.c:3786 builtin/merge.c:705 builtin/merge.c:885
 msgid "Unable to write index."
 msgstr ""
 
@@ -5305,7 +5305,7 @@ msgid ""
 msgstr ""
 
 #: rebase-interactive.c:110 rerere.c:485 rerere.c:692 sequencer.c:3463
-#: sequencer.c:3489 sequencer.c:5248 builtin/fsck.c:346 builtin/rebase.c:258
+#: sequencer.c:3489 sequencer.c:5248 builtin/fsck.c:347 builtin/rebase.c:258
 #, c-format
 msgid "could not write '%s'"
 msgstr ""
@@ -13309,243 +13309,243 @@ msgstr ""
 msgid "print only refs which don't contain the commit"
 msgstr ""
 
-#: builtin/fsck.c:68 builtin/fsck.c:147 builtin/fsck.c:148
+#: builtin/fsck.c:69 builtin/fsck.c:148 builtin/fsck.c:149
 msgid "unknown"
 msgstr ""
 
 #. TRANSLATORS: e.g. error in tree 01bfda: <more explanation>
-#: builtin/fsck.c:100 builtin/fsck.c:120
+#: builtin/fsck.c:101 builtin/fsck.c:121
 #, c-format
 msgid "error in %s %s: %s"
 msgstr ""
 
 #. TRANSLATORS: e.g. warning in tree 01bfda: <more explanation>
-#: builtin/fsck.c:114
+#: builtin/fsck.c:115
 #, c-format
 msgid "warning in %s %s: %s"
 msgstr ""
 
-#: builtin/fsck.c:143 builtin/fsck.c:146
+#: builtin/fsck.c:144 builtin/fsck.c:147
 #, c-format
 msgid "broken link from %7s %s"
 msgstr ""
 
-#: builtin/fsck.c:155
+#: builtin/fsck.c:156
 msgid "wrong object type in link"
 msgstr ""
 
-#: builtin/fsck.c:171
+#: builtin/fsck.c:172
 #, c-format
 msgid ""
 "broken link from %7s %s\n"
 "              to %7s %s"
 msgstr ""
 
-#: builtin/fsck.c:282
+#: builtin/fsck.c:283
 #, c-format
 msgid "missing %s %s"
 msgstr ""
 
-#: builtin/fsck.c:309
+#: builtin/fsck.c:310
 #, c-format
 msgid "unreachable %s %s"
 msgstr ""
 
-#: builtin/fsck.c:329
+#: builtin/fsck.c:330
 #, c-format
 msgid "dangling %s %s"
 msgstr ""
 
-#: builtin/fsck.c:339
+#: builtin/fsck.c:340
 msgid "could not create lost-found"
 msgstr ""
 
-#: builtin/fsck.c:350
+#: builtin/fsck.c:351
 #, c-format
 msgid "could not finish '%s'"
 msgstr ""
 
-#: builtin/fsck.c:367
+#: builtin/fsck.c:368
 #, c-format
 msgid "Checking %s"
 msgstr ""
 
-#: builtin/fsck.c:405
+#: builtin/fsck.c:406
 #, c-format
 msgid "Checking connectivity (%d objects)"
 msgstr ""
 
-#: builtin/fsck.c:424
+#: builtin/fsck.c:425
 #, c-format
 msgid "Checking %s %s"
 msgstr ""
 
-#: builtin/fsck.c:429
+#: builtin/fsck.c:430
 msgid "broken links"
 msgstr ""
 
-#: builtin/fsck.c:438
+#: builtin/fsck.c:439
 #, c-format
 msgid "root %s"
 msgstr ""
 
-#: builtin/fsck.c:446
+#: builtin/fsck.c:447
 #, c-format
 msgid "tagged %s %s (%s) in %s"
 msgstr ""
 
-#: builtin/fsck.c:475
+#: builtin/fsck.c:476
 #, c-format
 msgid "%s: object corrupt or missing"
 msgstr ""
 
-#: builtin/fsck.c:500
+#: builtin/fsck.c:501
 #, c-format
 msgid "%s: invalid reflog entry %s"
 msgstr ""
 
-#: builtin/fsck.c:514
+#: builtin/fsck.c:515
 #, c-format
 msgid "Checking reflog %s->%s"
 msgstr ""
 
-#: builtin/fsck.c:548
+#: builtin/fsck.c:549
 #, c-format
 msgid "%s: invalid sha1 pointer %s"
 msgstr ""
 
-#: builtin/fsck.c:555
+#: builtin/fsck.c:556
 #, c-format
 msgid "%s: not a commit"
 msgstr ""
 
-#: builtin/fsck.c:609
+#: builtin/fsck.c:610
 msgid "notice: No default references"
 msgstr ""
 
-#: builtin/fsck.c:624
+#: builtin/fsck.c:625
 #, c-format
 msgid "%s: object corrupt or missing: %s"
 msgstr ""
 
-#: builtin/fsck.c:637
+#: builtin/fsck.c:638
 #, c-format
 msgid "%s: object could not be parsed: %s"
 msgstr ""
 
-#: builtin/fsck.c:657
+#: builtin/fsck.c:658
 #, c-format
 msgid "bad sha1 file: %s"
 msgstr ""
 
-#: builtin/fsck.c:672
+#: builtin/fsck.c:673
 msgid "Checking object directory"
 msgstr ""
 
-#: builtin/fsck.c:675
+#: builtin/fsck.c:676
 msgid "Checking object directories"
 msgstr ""
 
-#: builtin/fsck.c:690
+#: builtin/fsck.c:691
 #, c-format
 msgid "Checking %s link"
 msgstr ""
 
-#: builtin/fsck.c:695 builtin/index-pack.c:843
+#: builtin/fsck.c:696 builtin/index-pack.c:843
 #, c-format
 msgid "invalid %s"
 msgstr ""
 
-#: builtin/fsck.c:702
+#: builtin/fsck.c:703
 #, c-format
 msgid "%s points to something strange (%s)"
 msgstr ""
 
-#: builtin/fsck.c:708
+#: builtin/fsck.c:709
 #, c-format
 msgid "%s: detached HEAD points at nothing"
 msgstr ""
 
-#: builtin/fsck.c:712
+#: builtin/fsck.c:713
 #, c-format
 msgid "notice: %s points to an unborn branch (%s)"
 msgstr ""
 
-#: builtin/fsck.c:724
+#: builtin/fsck.c:725
 msgid "Checking cache tree"
 msgstr ""
 
-#: builtin/fsck.c:729
+#: builtin/fsck.c:730
 #, c-format
 msgid "%s: invalid sha1 pointer in cache-tree"
 msgstr ""
 
-#: builtin/fsck.c:738
+#: builtin/fsck.c:739
 msgid "non-tree in cache-tree"
 msgstr ""
 
-#: builtin/fsck.c:769
+#: builtin/fsck.c:770
 msgid "git fsck [<options>] [<object>...]"
 msgstr ""
 
-#: builtin/fsck.c:775
+#: builtin/fsck.c:776
 msgid "show unreachable objects"
 msgstr ""
 
-#: builtin/fsck.c:776
+#: builtin/fsck.c:777
 msgid "show dangling objects"
 msgstr ""
 
-#: builtin/fsck.c:777
+#: builtin/fsck.c:778
 msgid "report tags"
 msgstr ""
 
-#: builtin/fsck.c:778
+#: builtin/fsck.c:779
 msgid "report root nodes"
 msgstr ""
 
-#: builtin/fsck.c:779
+#: builtin/fsck.c:780
 msgid "make index objects head nodes"
 msgstr ""
 
-#: builtin/fsck.c:780
+#: builtin/fsck.c:781
 msgid "make reflogs head nodes (default)"
 msgstr ""
 
-#: builtin/fsck.c:781
+#: builtin/fsck.c:782
 msgid "also consider packs and alternate objects"
 msgstr ""
 
-#: builtin/fsck.c:782
+#: builtin/fsck.c:783
 msgid "check only connectivity"
 msgstr ""
 
-#: builtin/fsck.c:783
+#: builtin/fsck.c:784
 msgid "enable more strict checking"
 msgstr ""
 
-#: builtin/fsck.c:785
+#: builtin/fsck.c:786
 msgid "write dangling objects in .git/lost-found"
 msgstr ""
 
-#: builtin/fsck.c:786 builtin/prune.c:134
+#: builtin/fsck.c:787 builtin/prune.c:134
 msgid "show progress"
 msgstr ""
 
-#: builtin/fsck.c:787
+#: builtin/fsck.c:788
 msgid "show verbose names for reachable objects"
 msgstr ""
 
-#: builtin/fsck.c:846 builtin/index-pack.c:225
+#: builtin/fsck.c:847 builtin/index-pack.c:225
 msgid "Checking objects"
 msgstr ""
 
-#: builtin/fsck.c:874
+#: builtin/fsck.c:875
 #, c-format
 msgid "%s: object missing"
 msgstr ""
 
-#: builtin/fsck.c:885
+#: builtin/fsck.c:886
 #, c-format
 msgid "invalid parameter: expected sha1, got '%s'"
 msgstr ""
@@ -21879,46 +21879,50 @@ msgid "A useful minimum set of commands for Everyday Git"
 msgstr ""
 
 #: command-list.h:203
-msgid "A Git Glossary"
+msgid "Frequently asked questions about using Git"
 msgstr ""
 
 #: command-list.h:204
-msgid "Hooks used by Git"
+msgid "A Git Glossary"
 msgstr ""
 
 #: command-list.h:205
-msgid "Specifies intentionally untracked files to ignore"
+msgid "Hooks used by Git"
 msgstr ""
 
 #: command-list.h:206
-msgid "Defining submodule properties"
+msgid "Specifies intentionally untracked files to ignore"
 msgstr ""
 
 #: command-list.h:207
-msgid "Git namespaces"
+msgid "Defining submodule properties"
 msgstr ""
 
 #: command-list.h:208
-msgid "Git Repository Layout"
+msgid "Git namespaces"
 msgstr ""
 
 #: command-list.h:209
-msgid "Specifying revisions and ranges for Git"
+msgid "Git Repository Layout"
 msgstr ""
 
 #: command-list.h:210
-msgid "Mounting one repository inside another"
+msgid "Specifying revisions and ranges for Git"
 msgstr ""
 
 #: command-list.h:211
-msgid "A tutorial introduction to Git: part two"
+msgid "Mounting one repository inside another"
 msgstr ""
 
 #: command-list.h:212
-msgid "A tutorial introduction to Git"
+msgid "A tutorial introduction to Git: part two"
 msgstr ""
 
 #: command-list.h:213
+msgid "A tutorial introduction to Git"
+msgstr ""
+
+#: command-list.h:214
 msgid "An overview of recommended workflows with Git"
 msgstr ""
 
