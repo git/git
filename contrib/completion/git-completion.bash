@@ -373,7 +373,7 @@ __gitcomp ()
 # Clear the variables caching builtins' options when (re-)sourcing
 # the completion script.
 if [[ -n ${ZSH_VERSION-} ]]; then
-	unset $(set |sed -ne 's/^\(__gitcomp_builtin_[a-zA-Z0-9_][a-zA-Z0-9_]*\)=.*/\1/p') 2>/dev/null
+	unset ${(M)${(k)parameters[@]}:#__gitcomp_builtin_*} 2>/dev/null
 else
 	unset $(compgen -v __gitcomp_builtin_)
 fi
