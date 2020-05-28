@@ -1240,8 +1240,7 @@ test_expect_success '__git_complete_fetch_refspecs - fully qualified & prefix' '
 	test_cmp expected out
 '
 
-#TODO: git switch completion includes unexpected references
-test_expect_failure 'git switch - with no options, complete local branches and unique remote branch names for DWIM logic' '
+test_expect_success 'git switch - with no options, complete local branches and unique remote branch names for DWIM logic' '
 	test_completion "git switch " <<-\EOF
 	branch-in-other Z
 	master Z
@@ -1277,8 +1276,7 @@ test_expect_success 'git switch - with GIT_COMPLETION_CHECKOUT_NO_GUESS=1, compl
 	EOF
 '
 
-#TODO: git switch completion includes unexpected references
-test_expect_failure 'git switch - --guess overrides GIT_COMPLETION_CHECKOUT_NO_GUESS=1, complete local branches and unique remote names for DWIM logic' '
+test_expect_success 'git switch - --guess overrides GIT_COMPLETION_CHECKOUT_NO_GUESS=1, complete local branches and unique remote names for DWIM logic' '
 	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "git switch --guess " <<-\EOF
 	branch-in-other Z
 	master Z
@@ -1287,8 +1285,7 @@ test_expect_failure 'git switch - --guess overrides GIT_COMPLETION_CHECKOUT_NO_G
 	EOF
 '
 
-#TODO: git switch completion includes unexpected references
-test_expect_failure 'git switch - a later --guess overrides previous --no-guess, complete local and remote unique branches for DWIM' '
+test_expect_success 'git switch - a later --guess overrides previous --no-guess, complete local and remote unique branches for DWIM' '
 	test_completion "git switch --no-guess --guess " <<-\EOF
 	branch-in-other Z
 	master Z
@@ -1585,8 +1582,7 @@ test_expect_success 'git checkout - with -B and --no-track, complete all referen
 	EOF
 '
 
-#TODO: -c/-C argument completion should not include all references
-test_expect_failure 'git switch - for -c, complete local branches and unique remote branches' '
+test_expect_success 'git switch - for -c, complete local branches and unique remote branches' '
 	test_completion "git switch -c " <<-\EOF
 	branch-in-other Z
 	master Z
@@ -1595,8 +1591,7 @@ test_expect_failure 'git switch - for -c, complete local branches and unique rem
 	EOF
 '
 
-#TODO: -c/-C argument completion should not include all references
-test_expect_failure 'git switch - for -C, complete local branches and unique remote branches' '
+test_expect_success 'git switch - for -C, complete local branches and unique remote branches' '
 	test_completion "git switch -C " <<-\EOF
 	branch-in-other Z
 	master Z
@@ -1685,8 +1680,7 @@ test_expect_failure 'git checkout - for -B with --no-track, complete local branc
 	EOF
 '
 
-#TODO: --orphan argument completion should not include all references
-test_expect_failure 'git switch - with --orphan completes local branch names and unique remote branch names' '
+test_expect_success 'git switch - with --orphan completes local branch names and unique remote branch names' '
 	test_completion "git switch --orphan " <<-\EOF
 	branch-in-other Z
 	master Z
