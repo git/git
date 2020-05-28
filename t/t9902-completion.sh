@@ -1414,6 +1414,40 @@ test_expect_failure 'git checkout - with -d, complete only references' '
 	EOF
 '
 
+#TODO: --track should only complete fully specified remote branches
+test_expect_failure 'git switch - with --track, complete only remote branches' '
+	test_completion "git switch --track " <<-\EOF
+	other/branch-in-other Z
+	other/master-in-other Z
+	EOF
+'
+
+#TODO: --track should only complete fully specified remote branches
+test_expect_failure 'git checkout - with --track, complete only remote branches' '
+	test_completion "git checkout --track " <<-\EOF
+	other/branch-in-other Z
+	other/master-in-other Z
+	EOF
+'
+
+test_expect_success 'git switch - with --no-track, complete only local branch names' '
+	test_completion "git switch --no-track " <<-\EOF
+	master Z
+	matching-branch Z
+	EOF
+'
+
+test_expect_success 'git checkout - with --no-track, complete only local references' '
+	test_completion "git checkout --no-track " <<-\EOF
+	HEAD Z
+	master Z
+	matching-branch Z
+	matching-tag Z
+	other/branch-in-other Z
+	other/master-in-other Z
+	EOF
+'
+
 test_expect_success 'teardown after ref completion' '
 	git branch -d matching-branch &&
 	git tag -d matching-tag &&
