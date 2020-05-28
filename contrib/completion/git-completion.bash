@@ -749,7 +749,7 @@ __git_refs ()
 # Usage: __git_complete_refs [<option>]...
 # --remote=<remote>: The remote to list refs from, can be the name of a
 #                    configured remote, a path, or a URL.
-# --track: List unique remote branches for 'git checkout's tracking DWIMery.
+# --dwim: List unique remote branches for 'git switch's tracking DWIMery.
 # --pfx=<prefix>: A prefix to be added to each ref.
 # --cur=<word>: The current ref to be completed.  Defaults to the current
 #               word to be completed.
@@ -757,12 +757,14 @@ __git_refs ()
 #                 space.
 __git_complete_refs ()
 {
-	local remote track pfx cur_="$cur" sfx=" "
+	local remote dwim pfx cur_="$cur" sfx=" "
 
 	while test $# != 0; do
 		case "$1" in
 		--remote=*)	remote="${1##--remote=}" ;;
-		--track)	track="yes" ;;
+		--dwim)		dwim="yes" ;;
+		# --track is an old spelling of --dwim
+		--track)	dwim="yes" ;;
 		--pfx=*)	pfx="${1##--pfx=}" ;;
 		--cur=*)	cur_="${1##--cur=}" ;;
 		--sfx=*)	sfx="${1##--sfx=}" ;;
@@ -771,7 +773,7 @@ __git_complete_refs ()
 		shift
 	done
 
-	__gitcomp_direct "$(__git_refs "$remote" "$track" "$pfx" "$cur_" "$sfx")"
+	__gitcomp_direct "$(__git_refs "$remote" "$dwim" "$pfx" "$cur_" "$sfx")"
 }
 
 # __git_refs2 requires 1 argument (to pass to __git_refs)
@@ -1370,12 +1372,12 @@ _git_checkout ()
 	*)
 		# check if --track, --no-track, or --no-guess was specified
 		# if so, disable DWIM mode
-		local flags="--track --no-track --no-guess" track_opt="--track"
+		local flags="--track --no-track --no-guess" dwim_opt="--dwim"
 		if [ "$GIT_COMPLETION_CHECKOUT_NO_GUESS" = "1" ] ||
 		   [ -n "$(__git_find_on_cmdline "$flags")" ]; then
-			track_opt=''
+			dwim_opt=''
 		fi
-		__git_complete_refs $track_opt
+		__git_complete_refs $dwim_opt
 		;;
 	esac
 }
@@ -2225,27 +2227,27 @@ _git_switch ()
 	*)
 		# check if --track, --no-track, or --no-guess was specified
 		# if so, disable DWIM mode
-		local track_opt="--track" only_local_ref=n
+		local dwim_opt="--dwim" only_local_ref=n
 		if [ "$GIT_COMPLETION_CHECKOUT_NO_GUESS" = "1" ] ||
 		   [ -n "$(__git_find_on_cmdline "--track --no-track --no-guess")" ]; then
-			track_opt=''
+			dwim_opt=''
 		fi
 		# explicit --guess enables DWIM mode regardless of
 		# $GIT_COMPLETION_CHECKOUT_NO_GUESS
 		if [ -n "$(__git_find_on_cmdline "--guess")" ]; then
-			track_opt='--track'
+			dwim_opt='--dwim'
 		fi
 		if [ -z "$(__git_find_on_cmdline "-d --detach")" ]; then
 			only_local_ref=y
 		else
 			# --guess --detach is invalid combination, no
 			# dwim will be done when --detach is specified
-			track_opt=
+			dwim_opt=
 		fi
-		if [ $only_local_ref = y -a -z "$track_opt" ]; then
+		if [ $only_local_ref = y -a -z "$dwim_opt" ]; then
 			__gitcomp_direct "$(__git_heads "" "$cur" " ")"
 		else
-			__git_complete_refs $track_opt
+			__git_complete_refs $dwim_opt
 		fi
 		;;
 	esac
