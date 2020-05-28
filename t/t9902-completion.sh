@@ -1277,7 +1277,6 @@ test_expect_success 'git switch - with GIT_COMPLETION_CHECKOUT_NO_GUESS=1, compl
 	EOF
 '
 
-#TODO: --guess/--no-guess ordering is not taken into account
 #TODO: git switch completion includes unexpected references
 test_expect_failure 'git switch - --guess overrides GIT_COMPLETION_CHECKOUT_NO_GUESS=1, complete local branches and unique remote names for DWIM logic' '
 	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "git switch --guess " <<-\EOF
@@ -1288,7 +1287,6 @@ test_expect_failure 'git switch - --guess overrides GIT_COMPLETION_CHECKOUT_NO_G
 	EOF
 '
 
-#TODO: --guess/--no-guess ordering is not taken into account
 #TODO: git switch completion includes unexpected references
 test_expect_failure 'git switch - a later --guess overrides previous --no-guess, complete local and remote unique branches for DWIM' '
 	test_completion "git switch --no-guess --guess " <<-\EOF
@@ -1299,8 +1297,7 @@ test_expect_failure 'git switch - a later --guess overrides previous --no-guess,
 	EOF
 '
 
-#TODO: --guess/--no-guess ordering is not taken into account
-test_expect_failure 'git switch - a later --no-guess overrides previous --guess, complete only local branches' '
+test_expect_success 'git switch - a later --no-guess overrides previous --guess, complete only local branches' '
 	test_completion "git switch --guess --no-guess " <<-\EOF
 	master Z
 	matching-branch Z
@@ -1318,8 +1315,7 @@ test_expect_success 'git checkout - with GIT_COMPLETION_NO_GUESS=1 only complete
 	EOF
 '
 
-#TODO: git checkout does not override variable when --guess is provided
-test_expect_failure 'git checkout - --guess overrides GIT_COMPLETION_NO_GUESS=1, complete refs and unique remote branches for DWIM' '
+test_expect_success 'git checkout - --guess overrides GIT_COMPLETION_NO_GUESS=1, complete refs and unique remote branches for DWIM' '
 	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "git checkout --guess " <<-\EOF
 	HEAD Z
 	branch-in-other Z
@@ -1343,8 +1339,7 @@ test_expect_success 'git checkout - with --no-guess, only completes refs' '
 	EOF
 '
 
-#TODO: --guess/--no-guess ordering is not taken into account
-test_expect_failure 'git checkout - a later --guess overrides previous --no-guess, complete refs and unique remote branches for DWIM' '
+test_expect_success 'git checkout - a later --guess overrides previous --no-guess, complete refs and unique remote branches for DWIM' '
 	test_completion "git checkout --no-guess --guess " <<-\EOF
 	HEAD Z
 	branch-in-other Z
@@ -1544,7 +1539,8 @@ test_expect_failure 'git checkout - with -B, complete all references' '
 	EOF
 '
 
-test_expect_success 'git checkout - with -b and --track, complete all references' '
+#TODO: completing the start point of -b/-B should not include DWIM references
+test_expect_failure 'git checkout - with -b and --track, complete all references' '
 	test_completion "git checkout -b new-branch --track " <<-EOF
 	HEAD Z
 	master Z
@@ -1555,7 +1551,8 @@ test_expect_success 'git checkout - with -b and --track, complete all references
 	EOF
 '
 
-test_expect_success 'git checkout - with -B and --track, complete all references' '
+#TODO: completing the start point of -b/-B should not include DWIM references
+test_expect_failure 'git checkout - with -B and --track, complete all references' '
 	test_completion "git checkout -B new-branch --track " <<-EOF
 	HEAD Z
 	master Z

@@ -1135,6 +1135,40 @@ __git_find_on_cmdline ()
 	done
 }
 
+# Similar to __git_find_on_cmdline, except that it loops backwards and thus
+# prints the *last* word found. Useful for finding which of two options that
+# supersede each other came last, such as "--guess" and "--no-guess".
+#
+# Usage: __git_find_last_on_cmdline [<option>]... "<wordlist>"
+# --show-idx: Optionally show the index of the found word in the $words array.
+__git_find_last_on_cmdline ()
+{
+	local word c=$cword show_idx
+
+	while test $# -gt 1; do
+		case "$1" in
+		--show-idx)	show_idx=y ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
+	local wordlist="$1"
+
+	while [ $c -gt 1 ]; do
+		((c--))
+		for word in $wordlist; do
+			if [ "$word" = "${words[c]}" ]; then
+				if [ -n "$show_idx" ]; then
+					echo "$c $word"
+				else
+					echo "$word"
+				fi
+				return
+			fi
+		done
+	done
+}
+
 # Echo the value of an option set on the command line or config
 #
 # $1: short option name
@@ -1389,6 +1423,46 @@ _git_bundle ()
 	esac
 }
 
+# Helper function to decide whether or not we should enable DWIM logic for
+# git-switch and git-checkout.
+#
+# To decide between the following rules in priority order
+# 1) the last provided of "--guess" or "--no-guess" explicitly enable or
+#    disable completion of DWIM logic respectively.
+# 2) If the --no-track option is provided, take this as a hint to disable the
+#    DWIM completion logic
+# 3) If GIT_COMPLETION_CHECKOUT_NO_GUESS is set, disable the DWIM completion
+#    logic, as requested by the user.
+# 4) Enable DWIM logic otherwise.
+#
+__git_checkout_default_dwim_mode ()
+{
+	local last_option dwim_opt="--dwim"
+
+	if [ "$GIT_COMPLETION_CHECKOUT_NO_GUESS" = "1" ]; then
+		dwim_opt=""
+	fi
+
+	# --no-track disables DWIM, but with lower priority than
+	# --guess/--no-guess
+	if [ -n "$(__git_find_on_cmdline "--no-track")" ]; then
+		dwim_opt=""
+	fi
+
+	# Find the last provided --guess or --no-guess
+	last_option="$(__git_find_last_on_cmdline "--guess --no-guess")"
+	case "$last_option" in
+		--guess)
+			dwim_opt="--dwim"
+			;;
+		--no-guess)
+			dwim_opt=""
+			;;
+	esac
+
+	echo "$dwim_opt"
+}
+
 _git_checkout ()
 {
 	__git_has_doubledash && return
@@ -1401,13 +1475,7 @@ _git_checkout ()
 		__gitcomp_builtin checkout
 		;;
 	*)
-		# check if --track, --no-track, or --no-guess was specified
-		# if so, disable DWIM mode
-		local flags="--track --no-track --no-guess" dwim_opt="--dwim"
-		if [ "$GIT_COMPLETION_CHECKOUT_NO_GUESS" = "1" ] ||
-		   [ -n "$(__git_find_on_cmdline "$flags")" ]; then
-			dwim_opt=''
-		fi
+		local dwim_opt="$(__git_checkout_default_dwim_mode)"
 		__git_complete_refs $dwim_opt
 		;;
 	esac
@@ -2256,18 +2324,7 @@ _git_switch ()
 		__gitcomp_builtin switch
 		;;
 	*)
-		# check if --track, --no-track, or --no-guess was specified
-		# if so, disable DWIM mode
-		local dwim_opt="--dwim" only_local_ref=n
-		if [ "$GIT_COMPLETION_CHECKOUT_NO_GUESS" = "1" ] ||
-		   [ -n "$(__git_find_on_cmdline "--track --no-track --no-guess")" ]; then
-			dwim_opt=''
-		fi
-		# explicit --guess enables DWIM mode regardless of
-		# $GIT_COMPLETION_CHECKOUT_NO_GUESS
-		if [ -n "$(__git_find_on_cmdline "--guess")" ]; then
-			dwim_opt='--dwim'
-		fi
+		local dwim_opt="$(__git_checkout_default_dwim_mode)" only_local_ref=n
 		if [ -z "$(__git_find_on_cmdline "-d --detach")" ]; then
 			only_local_ref=y
 		else
