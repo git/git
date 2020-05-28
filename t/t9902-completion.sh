@@ -1436,8 +1436,7 @@ test_expect_success 'git checkout - with --no-track, complete only local referen
 	EOF
 '
 
-#TODO: completing the start point of -c/-C should not include DWIM references
-test_expect_failure 'git switch - with -c, complete all references' '
+test_expect_success 'git switch - with -c, complete all references' '
 	test_completion "git switch -c new-branch " <<-\EOF
 	HEAD Z
 	master Z
@@ -1448,8 +1447,7 @@ test_expect_failure 'git switch - with -c, complete all references' '
 	EOF
 '
 
-#TODO: completing the start point of -c/-C should not include DWIM references
-test_expect_failure 'git switch - with -C, complete all references' '
+test_expect_success 'git switch - with -C, complete all references' '
 	test_completion "git switch -C new-branch " <<-\EOF
 	HEAD Z
 	master Z
@@ -1460,8 +1458,7 @@ test_expect_failure 'git switch - with -C, complete all references' '
 	EOF
 '
 
-#TODO: completing the start point of -c/-C should include all references, not just local branches
-test_expect_failure 'git switch - with -c and --track, complete all references' '
+test_expect_success 'git switch - with -c and --track, complete all references' '
 	test_completion "git switch -c new-branch --track " <<-EOF
 	HEAD Z
 	master Z
@@ -1472,8 +1469,7 @@ test_expect_failure 'git switch - with -c and --track, complete all references' 
 	EOF
 '
 
-#TODO: completing the start point of -c/-C should include all references, not just local branches
-test_expect_failure 'git switch - with -C and --track, complete all references' '
+test_expect_success 'git switch - with -C and --track, complete all references' '
 	test_completion "git switch -C new-branch --track " <<-EOF
 	HEAD Z
 	master Z
@@ -1484,8 +1480,7 @@ test_expect_failure 'git switch - with -C and --track, complete all references' 
 	EOF
 '
 
-#TODO: completing the start point of -c/-C should include all references, not just local branches
-test_expect_failure 'git switch - with -c and --no-track, complete all references' '
+test_expect_success 'git switch - with -c and --no-track, complete all references' '
 	test_completion "git switch -c new-branch --no-track " <<-\EOF
 	HEAD Z
 	master Z
@@ -1496,8 +1491,7 @@ test_expect_failure 'git switch - with -c and --no-track, complete all reference
 	EOF
 '
 
-#TODO: completing the start point of -c/-C should include all references, not just local branches
-test_expect_failure 'git switch - with -C and --no-track, complete all references' '
+test_expect_success 'git switch - with -C and --no-track, complete all references' '
 	test_completion "git switch -C new-branch --no-track " <<-\EOF
 	HEAD Z
 	master Z
@@ -1508,8 +1502,7 @@ test_expect_failure 'git switch - with -C and --no-track, complete all reference
 	EOF
 '
 
-#TODO: completing the start point of -b/-B should not include DWIM references
-test_expect_failure 'git checkout - with -b, complete all references' '
+test_expect_success 'git checkout - with -b, complete all references' '
 	test_completion "git checkout -b new-branch " <<-\EOF
 	HEAD Z
 	master Z
@@ -1520,8 +1513,7 @@ test_expect_failure 'git checkout - with -b, complete all references' '
 	EOF
 '
 
-#TODO: completing the start point of -b/-B should not include DWIM references
-test_expect_failure 'git checkout - with -B, complete all references' '
+test_expect_success 'git checkout - with -B, complete all references' '
 	test_completion "git checkout -B new-branch " <<-\EOF
 	HEAD Z
 	master Z
@@ -1532,8 +1524,7 @@ test_expect_failure 'git checkout - with -B, complete all references' '
 	EOF
 '
 
-#TODO: completing the start point of -b/-B should not include DWIM references
-test_expect_failure 'git checkout - with -b and --track, complete all references' '
+test_expect_success 'git checkout - with -b and --track, complete all references' '
 	test_completion "git checkout -b new-branch --track " <<-EOF
 	HEAD Z
 	master Z
@@ -1544,8 +1535,7 @@ test_expect_failure 'git checkout - with -b and --track, complete all references
 	EOF
 '
 
-#TODO: completing the start point of -b/-B should not include DWIM references
-test_expect_failure 'git checkout - with -B and --track, complete all references' '
+test_expect_success 'git checkout - with -B and --track, complete all references' '
 	test_completion "git checkout -B new-branch --track " <<-EOF
 	HEAD Z
 	master Z
@@ -1624,8 +1614,7 @@ test_expect_success 'git switch - for -C with --no-track, complete local branche
 	EOF
 '
 
-#TODO: -b/-B argument completion should not include all references
-test_expect_failure 'git checkout - for -b, complete local branches and unique remote branches' '
+test_expect_success 'git checkout - for -b, complete local branches and unique remote branches' '
 	test_completion "git checkout -b " <<-\EOF
 	branch-in-other Z
 	master Z
@@ -1634,8 +1623,7 @@ test_expect_failure 'git checkout - for -b, complete local branches and unique r
 	EOF
 '
 
-#TODO: -b/-B argument completion should not include all references
-test_expect_failure 'git checkout - for -B, complete local branches and unique remote branches' '
+test_expect_success 'git checkout - for -B, complete local branches and unique remote branches' '
 	test_completion "git checkout -B " <<-\EOF
 	branch-in-other Z
 	master Z
@@ -1644,32 +1632,28 @@ test_expect_failure 'git checkout - for -B, complete local branches and unique r
 	EOF
 '
 
-#TODO: -b/-B argument completion should not include all references
-test_expect_failure 'git checkout - for -b with --no-guess, complete local branches only' '
+test_expect_success 'git checkout - for -b with --no-guess, complete local branches only' '
 	test_completion "git checkout --no-guess -b " <<-\EOF
 	master Z
 	matching-branch Z
 	EOF
 '
 
-#TODO: -b/-B argument completion should not include all references
-test_expect_failure 'git checkout - for -B with --no-guess, complete local branches only' '
+test_expect_success 'git checkout - for -B with --no-guess, complete local branches only' '
 	test_completion "git checkout --no-guess -B " <<-\EOF
 	master Z
 	matching-branch Z
 	EOF
 '
 
-#TODO: -b/-B argument completion should not include all references
-test_expect_failure 'git checkout - for -b with --no-track, complete local branches only' '
+test_expect_success 'git checkout - for -b with --no-track, complete local branches only' '
 	test_completion "git checkout --no-track -b " <<-\EOF
 	master Z
 	matching-branch Z
 	EOF
 '
 
-#TODO: -b/-B argument completion should not include all references
-test_expect_failure 'git checkout - for -B with --no-track, complete local branches only' '
+test_expect_success 'git checkout - for -B with --no-track, complete local branches only' '
 	test_completion "git checkout --no-track -B " <<-\EOF
 	master Z
 	matching-branch Z
