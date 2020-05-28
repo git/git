@@ -621,6 +621,26 @@ __git_tags ()
 			"refs/tags/$cur_*" "refs/tags/$cur_*/**"
 }
 
+# List unique branches from refs/remotes used for 'git checkout' and 'git
+# switch' tracking DWIMery.
+# 1: A prefix to be added to each listed branch (optional)
+# 2: List only branches matching this word (optional; list all branches if
+#    unset or empty).
+# 3: A suffix to be appended to each listed branch (optional).
+__git_dwim_remote_heads ()
+{
+	local pfx="${1-}" cur_="${2-}" sfx="${3-}"
+	local fer_pfx="${pfx//\%/%%}" # "escape" for-each-ref format specifiers
+
+	# employ the heuristic used by git checkout and git switch
+	# Try to find a remote branch that cur_es the completion word
+	# but only output if the branch name is unique
+	__git for-each-ref --format="$fer_pfx%(refname:strip=3)$sfx" \
+		--sort="refname:strip=3" \
+		"refs/remotes/*/$cur_*" "refs/remotes/*/$cur_*/**" | \
+	uniq -u
+}
+
 # Lists refs from the local (by default) or from a remote repository.
 # It accepts 0, 1 or 2 arguments:
 # 1: The remote to list refs from (optional; ignored, if set but empty).
@@ -696,13 +716,7 @@ __git_refs ()
 		__git_dir="$dir" __git for-each-ref --format="$fer_pfx%($format)$sfx" \
 			"${refs[@]}"
 		if [ -n "$track" ]; then
-			# employ the heuristic used by git checkout
-			# Try to find a remote branch that matches the completion word
-			# but only output if the branch name is unique
-			__git for-each-ref --format="$fer_pfx%(refname:strip=3)$sfx" \
-				--sort="refname:strip=3" \
-				"refs/remotes/*/$match*" "refs/remotes/*/$match*/**" | \
-			uniq -u
+			__git_dwim_remote_heads "$pfx" "$match" "$sfx"
 		fi
 		return
 	fi
