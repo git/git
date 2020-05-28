@@ -1371,8 +1371,7 @@ test_expect_success 'git switch - with --detach, complete all references' '
 	EOF
 '
 
-#TODO: checkout --detach incorrectly includes DWIM remote branch names
-test_expect_failure 'git checkout - with --detach, complete only references' '
+test_expect_success 'git checkout - with --detach, complete only references' '
 	test_completion "git checkout --detach " <<-\EOF
 	HEAD Z
 	master Z
@@ -1394,8 +1393,7 @@ test_expect_success 'git switch - with -d, complete all references' '
 	EOF
 '
 
-#TODO: checkout -d incorrectly includes DWIM remote branch names
-test_expect_failure 'git checkout - with -d, complete only references' '
+test_expect_success 'git checkout - with -d, complete only references' '
 	test_completion "git checkout -d " <<-\EOF
 	HEAD Z
 	master Z

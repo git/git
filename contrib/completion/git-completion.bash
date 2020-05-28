@@ -1489,7 +1489,12 @@ _git_checkout ()
 		;;
 	*)
 		local dwim_opt="$(__git_checkout_default_dwim_mode)"
-		__git_complete_refs $dwim_opt
+
+		if [ -n "$(__git_find_on_cmdline "-d --detach")" ]; then
+			__git_complete_refs --mode="refs"
+		else
+			__git_complete_refs $dwim_opt --mode="refs"
+		fi
 		;;
 	esac
 }
