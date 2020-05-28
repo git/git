@@ -1669,15 +1669,13 @@ test_expect_success 'git switch - with --orphan completes local branch names and
 	EOF
 '
 
-#TODO: switch --orphan does not take a start-point and thus has nothing to complete
-test_expect_failure 'git switch - --orphan with branch already provided completes nothing else' '
+test_expect_success 'git switch - --orphan with branch already provided completes nothing else' '
 	test_completion "git switch --orphan master " <<-\EOF
 
 	EOF
 '
 
-#TODO: --orphan argument completion should not include all references
-test_expect_failure 'git checkout - with --orphan completes local branch names and unique remote branch names' '
+test_expect_success 'git checkout - with --orphan completes local branch names and unique remote branch names' '
 	test_completion "git checkout --orphan " <<-\EOF
 	branch-in-other Z
 	master Z
@@ -1686,8 +1684,7 @@ test_expect_failure 'git checkout - with --orphan completes local branch names a
 	EOF
 '
 
-#TODO: checkout --orphan start-point completion should not included DWIM remote unique branch names
-test_expect_failure 'git checkout - --orphan with branch already provided completes local refs for a start-point' '
+test_expect_success 'git checkout - --orphan with branch already provided completes local refs for a start-point' '
 	test_completion "git checkout --orphan master " <<-\EOF
 	HEAD Z
 	master Z

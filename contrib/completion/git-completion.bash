@@ -1508,7 +1508,7 @@ _git_checkout ()
 		local prevword prevword="${words[cword-1]}"
 
 		case "$prevword" in
-			-b|-B)
+			-b|-B|--orphan)
 				# Complete local branches (and DWIM branch
 				# remote branch names) for an option argument
 				# specifying a new branch name. This is for
@@ -1522,14 +1522,14 @@ _git_checkout ()
 		esac
 
 		# At this point, we've already handled special completion for
-		# the arguments to -b/-B. There are 3 main things left we can
-		# possibly complete:
-		# 1) a start-point for -b/-B or -d/--detach
+		# the arguments to -b/-B, and --orphan. There are 3 main
+		# things left we can possibly complete:
+		# 1) a start-point for -b/-B, -d/--detach, or --orphan
 		# 2) a remote head, for --track
 		# 3) an arbitrary reference, possibly including DWIM names
 		#
 
-		if [ -n "$(__git_find_on_cmdline "-b -B -d --detach")" ]; then
+		if [ -n "$(__git_find_on_cmdline "-b -B -d --detach --orphan")" ]; then
 			__git_complete_refs --mode="refs"
 		elif [ -n "$(__git_find_on_cmdline "--track")" ]; then
 			__git_complete_refs --mode="remote-heads"
@@ -2387,7 +2387,7 @@ _git_switch ()
 		local prevword prevword="${words[cword-1]}"
 
 		case "$prevword" in
-			-c|-C)
+			-c|-C|--orphan)
 				# Complete local branches (and DWIM branch
 				# remote branch names) for an option argument
 				# specifying a new branch name. This is for
@@ -2400,8 +2400,15 @@ _git_switch ()
 				;;
 		esac
 
+		# Unlike in git checkout, git switch --orphan does not take
+		# a start point. Thus we really have nothing to complete after
+		# the branch name.
+		if [ -n "$(__git_find_on_cmdline "--orphan")" ]; then
+			return
+		fi
+
 		# At this point, we've already handled special completion for
-		# -c/-C. There are 3 main things left to
+		# -c/-C, and --orphan. There are 3 main things left to
 		# complete:
 		# 1) a start-point for -c/-C or -d/--detach
 		# 2) a remote head, for --track
