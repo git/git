@@ -1404,16 +1404,14 @@ test_expect_success 'git checkout - with -d, complete only references' '
 	EOF
 '
 
-#TODO: --track should only complete fully specified remote branches
-test_expect_failure 'git switch - with --track, complete only remote branches' '
+test_expect_success 'git switch - with --track, complete only remote branches' '
 	test_completion "git switch --track " <<-\EOF
 	other/branch-in-other Z
 	other/master-in-other Z
 	EOF
 '
 
-#TODO: --track should only complete fully specified remote branches
-test_expect_failure 'git checkout - with --track, complete only remote branches' '
+test_expect_success 'git checkout - with --track, complete only remote branches' '
 	test_completion "git checkout --track " <<-\EOF
 	other/branch-in-other Z
 	other/master-in-other Z
