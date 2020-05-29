@@ -920,10 +920,14 @@ static int has_valid_directory_prefix(wchar_t *wfilename)
 	return 1;
 }
 
+static int readlink_1(const WCHAR *wpath, BOOL fail_on_unknown_tag,
+		      char *tmpbuf, int *plen, DWORD *ptag);
+
 int mingw_lstat(const char *file_name, struct stat *buf)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
-	WIN32_FIND_DATAW findbuf = { 0 };
+	DWORD reparse_tag = 0;
+	int link_len = 0;
 	wchar_t wfilename[MAX_LONG_PATH];
 	int wlen = xutftowcs_long_path(wfilename, file_name);
 	if (wlen < 0)
@@ -938,20 +942,21 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 	}
 
 	if (GetFileAttributesExW(wfilename, GetFileExInfoStandard, &fdata)) {
-		/* for reparse points, use FindFirstFile to get the reparse tag */
+		/* for reparse points, get the link tag and length */
 		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-			HANDLE handle = FindFirstFileW(wfilename, &findbuf);
-			if (handle == INVALID_HANDLE_VALUE)
-				goto error;
-			FindClose(handle);
+			char tmpbuf[MAX_LONG_PATH];
+
+			if (readlink_1(wfilename, FALSE, tmpbuf, &link_len,
+				       &reparse_tag) < 0)
+				return -1;
 		}
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
 		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes,
-				findbuf.dwReserved0, file_name);
-		buf->st_size = S_ISLNK(buf->st_mode) ? MAX_LONG_PATH :
+				reparse_tag, file_name);
+		buf->st_size = S_ISLNK(buf->st_mode) ? link_len :
 			fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 		filetime_to_timespec(&(fdata.ftLastAccessTime), &(buf->st_atim));
@@ -959,7 +964,7 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 		filetime_to_timespec(&(fdata.ftCreationTime), &(buf->st_ctim));
 		return 0;
 	}
-error:
+
 	switch (GetLastError()) {
 	case ERROR_ACCESS_DENIED:
 	case ERROR_SHARING_VIOLATION:
@@ -2831,17 +2836,13 @@ typedef struct _REPARSE_DATA_BUFFER {
 } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 #endif
 
-int readlink(const char *path, char *buf, size_t bufsiz)
+static int readlink_1(const WCHAR *wpath, BOOL fail_on_unknown_tag,
+		      char *tmpbuf, int *plen, DWORD *ptag)
 {
 	HANDLE handle;
-	WCHAR wpath[MAX_LONG_PATH], *wbuf;
+	WCHAR *wbuf;
 	REPARSE_DATA_BUFFER *b = alloca(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
 	DWORD dummy;
-	char tmpbuf[MAX_LONG_PATH];
-	int len;
-
-	if (xutftowcs_long_path(wpath, path) < 0)
-		return -1;
 
 	/* read reparse point data */
 	handle = CreateFileW(wpath, 0,
@@ -2861,7 +2862,7 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 	CloseHandle(handle);
 
 	/* get target path for symlinks or mount points (aka 'junctions') */
-	switch (b->ReparseTag) {
+	switch ((*ptag = b->ReparseTag)) {
 	case IO_REPARSE_TAG_SYMLINK:
 		wbuf = (WCHAR*) (((char*) b->SymbolicLinkReparseBuffer.PathBuffer)
 				+ b->SymbolicLinkReparseBuffer.SubstituteNameOffset);
@@ -2875,9 +2876,33 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 				+ b->MountPointReparseBuffer.SubstituteNameLength) = 0;
 		break;
 	default:
-		errno = EINVAL;
-		return -1;
+		if (fail_on_unknown_tag) {
+			errno = EINVAL;
+			return -1;
+		} else {
+			*plen = MAX_LONG_PATH;
+			return 0;
+		}
 	}
+
+	if ((*plen =
+	     xwcstoutf(tmpbuf, normalize_ntpath(wbuf), MAX_LONG_PATH)) <  0)
+		return -1;
+	return 0;
+}
+
+int readlink(const char *path, char *buf, size_t bufsiz)
+{
+	WCHAR wpath[MAX_LONG_PATH];
+	char tmpbuf[MAX_LONG_PATH];
+	int len;
+	DWORD tag;
+
+	if (xutftowcs_long_path(wpath, path) < 0)
+		return -1;
+
+	if (readlink_1(wpath, TRUE, tmpbuf, &len, &tag) < 0)
+		return -1;
 
 	/*
 	 * Adapt to strange readlink() API: Copy up to bufsiz *bytes*, potentially
@@ -2886,8 +2911,6 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 	 * so convert to a (hopefully large enough) temporary buffer, then memcpy
 	 * the requested number of bytes (including '\0' for robustness).
 	 */
-	if ((len = xwcstoutf(tmpbuf, normalize_ntpath(wbuf), MAX_LONG_PATH)) < 0)
-		return -1;
 	memcpy(buf, tmpbuf, min(bufsiz, len + 1));
 	return min(bufsiz, len);
 }
