@@ -292,8 +292,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2020-05-15 09:11+0800\n"
-"PO-Revision-Date: 2020-05-23 21:36+0800\n"
+"POT-Creation-Date: 2020-05-27 07:23+0800\n"
+"PO-Revision-Date: 2020-05-30 00:36+0800\n"
 "Last-Translator: Yi-Jyun Pan <pan93412@gmail.com>\n"
 "Language-Team: Chinese (Traditional) <zh-l10n@lists.linux.org.tw>\n"
 "Language: zh_TW\n"
@@ -1660,7 +1660,7 @@ msgid "allow overlapping hunks"
 msgstr "允許重疊的修補檔片段"
 
 #: apply.c:5025 builtin/add.c:323 builtin/check-ignore.c:22
-#: builtin/commit.c:1366 builtin/count-objects.c:98 builtin/fsck.c:774
+#: builtin/commit.c:1366 builtin/count-objects.c:98 builtin/fsck.c:775
 #: builtin/log.c:2186 builtin/mv.c:123 builtin/read-tree.c:128
 msgid "be verbose"
 msgstr "詳細輸出"
@@ -3041,7 +3041,7 @@ msgstr "已阻止奇怪的路徑名 '%s'"
 msgid "unable to fork"
 msgstr "無法 fork"
 
-#: connected.c:107 builtin/fsck.c:208 builtin/prune.c:45
+#: connected.c:107 builtin/fsck.c:209 builtin/prune.c:45
 msgid "Checking connectivity"
 msgstr "正在檢查連通性"
 
@@ -4041,7 +4041,7 @@ msgstr "無效提交 %s"
 msgid "giving up"
 msgstr "放棄"
 
-#: fetch-pack.c:476 progress.c:340
+#: fetch-pack.c:476 progress.c:336
 msgid "done"
 msgstr "完成"
 
@@ -4706,7 +4706,7 @@ msgstr "重新命名"
 msgid "renamed"
 msgstr "重新命名"
 
-#: merge-recursive.c:1577 merge-recursive.c:2472 merge-recursive.c:3117
+#: merge-recursive.c:1577 merge-recursive.c:2484 merge-recursive.c:3129
 #, c-format
 msgid "Refusing to lose dirty file at %s"
 msgstr "拒絕遺失髒檔案 '%s'"
@@ -4745,14 +4745,14 @@ msgstr ""
 msgid " (left unresolved)"
 msgstr " （留下未解決）"
 
-#: merge-recursive.c:1793
+#: merge-recursive.c:1805
 #, c-format
 msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
 msgstr ""
 "衝突（重新命名/重新命名）：在 %3$s 中重新命名 %1$s->%2$s，在 %6$s 中重新命名 "
 "%4$s->%5$s"
 
-#: merge-recursive.c:2056
+#: merge-recursive.c:2068
 #, c-format
 msgid ""
 "CONFLICT (directory rename split): Unclear where to place %s because "
@@ -4762,7 +4762,7 @@ msgstr ""
 "衝突（分割的目錄重新命名）：不清楚 %s 應該放在哪裡，因為目錄 %s 被重新命名到"
 "多個其它目錄，沒有目錄包含大部分檔案。"
 
-#: merge-recursive.c:2088
+#: merge-recursive.c:2100
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
@@ -4771,7 +4771,7 @@ msgstr ""
 "衝突（隱式目錄重新命名）：處於隱式目錄重新命名的現存檔案/目錄 %s，將以下路徑"
 "放在：%s。"
 
-#: merge-recursive.c:2098
+#: merge-recursive.c:2110
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Cannot map more than one path to %s; "
@@ -4780,7 +4780,7 @@ msgstr ""
 "衝突（隱式目錄重新命名）：無法映射一個以上路徑到 %s，隱式目錄重新命名嘗試將這"
 "些路徑放置於此：%s"
 
-#: merge-recursive.c:2190
+#: merge-recursive.c:2202
 #, c-format
 msgid ""
 "CONFLICT (rename/rename): Rename directory %s->%s in %s. Rename directory %s-"
@@ -4789,59 +4789,59 @@ msgstr ""
 "衝突（重新命名/重新命名）：在 %3$s 中重新命名目錄 %1$s->%2$s，在 %6$s 中重新"
 "命名目錄 %4$s->%5$s"
 
-#: merge-recursive.c:2435
+#: merge-recursive.c:2447
 #, c-format
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
 "renamed."
 msgstr "警告：避免應用 %s -> %s 的重新命名到 %s，因為 %s 本身已被重新命名。"
 
-#: merge-recursive.c:2961
+#: merge-recursive.c:2973
 #, c-format
 msgid "cannot read object %s"
 msgstr "不能讀取物件 %s"
 
-#: merge-recursive.c:2964
+#: merge-recursive.c:2976
 #, c-format
 msgid "object %s is not a blob"
 msgstr "物件 %s 不是一個資料物件"
 
-#: merge-recursive.c:3028
+#: merge-recursive.c:3040
 msgid "modify"
 msgstr "修改"
 
-#: merge-recursive.c:3028
+#: merge-recursive.c:3040
 msgid "modified"
 msgstr "修改"
 
-#: merge-recursive.c:3040
+#: merge-recursive.c:3052
 msgid "content"
 msgstr "內容"
 
-#: merge-recursive.c:3044
+#: merge-recursive.c:3056
 msgid "add/add"
 msgstr "新增/新增"
 
-#: merge-recursive.c:3067
+#: merge-recursive.c:3079
 #, c-format
 msgid "Skipped %s (merged same as existing)"
 msgstr "略過 %s（已經做過相同合併）"
 
-#: merge-recursive.c:3089 git-submodule.sh:985
+#: merge-recursive.c:3101 git-submodule.sh:985
 msgid "submodule"
 msgstr "子模組"
 
-#: merge-recursive.c:3090
+#: merge-recursive.c:3102
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "衝突（%s）：合併衝突於 %s"
 
-#: merge-recursive.c:3120
+#: merge-recursive.c:3132
 #, c-format
 msgid "Adding as %s instead"
 msgstr "而是以 %s 為名新增"
 
-#: merge-recursive.c:3203
+#: merge-recursive.c:3215
 #, c-format
 msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
@@ -4849,7 +4849,7 @@ msgid ""
 msgstr ""
 "路徑已更新：%s 新增到 %s，位於一個被重新命名到 %s 的目錄中，將其移動到 %s。"
 
-#: merge-recursive.c:3206
+#: merge-recursive.c:3218
 #, c-format
 msgid ""
 "CONFLICT (file location): %s added in %s inside a directory that was renamed "
@@ -4858,7 +4858,7 @@ msgstr ""
 "衝突（檔案位置）：%s 新增到 %s，位於一個被重新命名為 %s 的目錄中，建議將其移"
 "動到 %s。"
 
-#: merge-recursive.c:3210
+#: merge-recursive.c:3222
 #, c-format
 msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
@@ -4867,7 +4867,7 @@ msgstr ""
 "路徑已更新：%1$s 重新命名為 %3$s 中的 %2$s，而該目錄被重新命名到 %4$s 中，將"
 "其移動到 %5$s。"
 
-#: merge-recursive.c:3213
+#: merge-recursive.c:3225
 #, c-format
 msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
@@ -4876,58 +4876,58 @@ msgstr ""
 "衝突（檔案位置）：%1$s 重新命名為 %3$s 中的 %2$s，而該目錄被重新命名到 %4$s "
 "中，建議將其移動到 %5$s。"
 
-#: merge-recursive.c:3327
+#: merge-recursive.c:3339
 #, c-format
 msgid "Removing %s"
 msgstr "刪除 %s"
 
-#: merge-recursive.c:3350
+#: merge-recursive.c:3362
 msgid "file/directory"
 msgstr "檔案/目錄"
 
-#: merge-recursive.c:3355
+#: merge-recursive.c:3367
 msgid "directory/file"
 msgstr "目錄/檔案"
 
-#: merge-recursive.c:3362
+#: merge-recursive.c:3374
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
 msgstr "衝突（%1$s）：在 %3$s 中有一個名為 %2$s 的目錄。以 %5$s 為名新增 %4$s"
 
-#: merge-recursive.c:3371
+#: merge-recursive.c:3383
 #, c-format
 msgid "Adding %s"
 msgstr "新增 %s"
 
-#: merge-recursive.c:3380
+#: merge-recursive.c:3392
 #, c-format
 msgid "CONFLICT (add/add): Merge conflict in %s"
 msgstr "衝突（add/add）：合併衝突於 %s"
 
-#: merge-recursive.c:3424
+#: merge-recursive.c:3436
 msgid "Already up to date!"
 msgstr "已經是最新的！"
 
-#: merge-recursive.c:3433
+#: merge-recursive.c:3445
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr "無法合併樹 %s 和 %s"
 
-#: merge-recursive.c:3537
+#: merge-recursive.c:3549
 msgid "Merging:"
 msgstr "合併："
 
-#: merge-recursive.c:3550
+#: merge-recursive.c:3562
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] "發現 %u 個共同祖先："
 
-#: merge-recursive.c:3600
+#: merge-recursive.c:3612
 msgid "merge returned no commit"
 msgstr "合併未返回提交"
 
-#: merge-recursive.c:3659
+#: merge-recursive.c:3671
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
@@ -4936,12 +4936,12 @@ msgstr ""
 "您對下列檔案的本機修改將被合併動作覆蓋：\n"
 "  %s"
 
-#: merge-recursive.c:3756
+#: merge-recursive.c:3768
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "不能解析物件 '%s'"
 
-#: merge-recursive.c:3774 builtin/merge.c:705 builtin/merge.c:885
+#: merge-recursive.c:3786 builtin/merge.c:705 builtin/merge.c:885
 msgid "Unable to write index."
 msgstr "不能寫入索引。"
 
@@ -5814,7 +5814,7 @@ msgstr ""
 "\n"
 
 #: rebase-interactive.c:110 rerere.c:485 rerere.c:692 sequencer.c:3463
-#: sequencer.c:3489 sequencer.c:5248 builtin/fsck.c:346 builtin/rebase.c:258
+#: sequencer.c:3489 sequencer.c:5248 builtin/fsck.c:347 builtin/rebase.c:258
 #, c-format
 msgid "could not write '%s'"
 msgstr "不能寫入 '%s'"
@@ -14237,32 +14237,32 @@ msgstr "只列印包含該提交的引用"
 msgid "print only refs which don't contain the commit"
 msgstr "只列印不包含該提交的引用"
 
-#: builtin/fsck.c:68 builtin/fsck.c:147 builtin/fsck.c:148
+#: builtin/fsck.c:69 builtin/fsck.c:148 builtin/fsck.c:149
 msgid "unknown"
 msgstr "未知"
 
 #. TRANSLATORS: e.g. error in tree 01bfda: <more explanation>
-#: builtin/fsck.c:100 builtin/fsck.c:120
+#: builtin/fsck.c:101 builtin/fsck.c:121
 #, c-format
 msgid "error in %s %s: %s"
 msgstr "%s %s 錯誤：%s"
 
 #. TRANSLATORS: e.g. warning in tree 01bfda: <more explanation>
-#: builtin/fsck.c:114
+#: builtin/fsck.c:115
 #, c-format
 msgid "warning in %s %s: %s"
 msgstr "%s %s 警告：%s"
 
-#: builtin/fsck.c:143 builtin/fsck.c:146
+#: builtin/fsck.c:144 builtin/fsck.c:147
 #, c-format
 msgid "broken link from %7s %s"
 msgstr "來自 %7s %s 的損壞的連結"
 
-#: builtin/fsck.c:155
+#: builtin/fsck.c:156
 msgid "wrong object type in link"
 msgstr "連結中錯誤的物件類型"
 
-#: builtin/fsck.c:171
+#: builtin/fsck.c:172
 #, c-format
 msgid ""
 "broken link from %7s %s\n"
@@ -14271,211 +14271,211 @@ msgstr ""
 "損壞的連結來自於 %7s %s\n"
 "              到 %7s %s"
 
-#: builtin/fsck.c:282
+#: builtin/fsck.c:283
 #, c-format
 msgid "missing %s %s"
 msgstr "缺少 %s %s"
 
-#: builtin/fsck.c:309
+#: builtin/fsck.c:310
 #, c-format
 msgid "unreachable %s %s"
 msgstr "無法取得 %s %s"
 
-#: builtin/fsck.c:329
+#: builtin/fsck.c:330
 #, c-format
 msgid "dangling %s %s"
 msgstr "懸空 %s %s"
 
-#: builtin/fsck.c:339
+#: builtin/fsck.c:340
 msgid "could not create lost-found"
 msgstr "不能建立 lost-found"
 
-#: builtin/fsck.c:350
+#: builtin/fsck.c:351
 #, c-format
 msgid "could not finish '%s'"
 msgstr "不能完成 '%s'"
 
-#: builtin/fsck.c:367
+#: builtin/fsck.c:368
 #, c-format
 msgid "Checking %s"
 msgstr "正在檢查 %s"
 
-#: builtin/fsck.c:405
+#: builtin/fsck.c:406
 #, c-format
 msgid "Checking connectivity (%d objects)"
 msgstr "正在檢查連通性（%d 個物件）"
 
-#: builtin/fsck.c:424
+#: builtin/fsck.c:425
 #, c-format
 msgid "Checking %s %s"
 msgstr "正在檢查 %s %s"
 
-#: builtin/fsck.c:429
+#: builtin/fsck.c:430
 msgid "broken links"
 msgstr "損壞的連結"
 
-#: builtin/fsck.c:438
+#: builtin/fsck.c:439
 #, c-format
 msgid "root %s"
 msgstr "根 %s"
 
-#: builtin/fsck.c:446
+#: builtin/fsck.c:447
 #, c-format
 msgid "tagged %s %s (%s) in %s"
 msgstr "標記 %s %s (%s) 於 %s"
 
-#: builtin/fsck.c:475
+#: builtin/fsck.c:476
 #, c-format
 msgid "%s: object corrupt or missing"
 msgstr "%s：物件損壞或遺失"
 
-#: builtin/fsck.c:500
+#: builtin/fsck.c:501
 #, c-format
 msgid "%s: invalid reflog entry %s"
 msgstr "%s：無效的引用日誌條目 %s"
 
-#: builtin/fsck.c:514
+#: builtin/fsck.c:515
 #, c-format
 msgid "Checking reflog %s->%s"
 msgstr "正在檢查引用日誌 %s->%s"
 
-#: builtin/fsck.c:548
+#: builtin/fsck.c:549
 #, c-format
 msgid "%s: invalid sha1 pointer %s"
 msgstr "%s：無效的 sha1 指標 %s"
 
-#: builtin/fsck.c:555
+#: builtin/fsck.c:556
 #, c-format
 msgid "%s: not a commit"
 msgstr "%s：不是一個提交"
 
-#: builtin/fsck.c:609
+#: builtin/fsck.c:610
 msgid "notice: No default references"
 msgstr "注意：無預設引用"
 
-#: builtin/fsck.c:624
+#: builtin/fsck.c:625
 #, c-format
 msgid "%s: object corrupt or missing: %s"
 msgstr "%s：物件損壞或遺失：%s"
 
-#: builtin/fsck.c:637
+#: builtin/fsck.c:638
 #, c-format
 msgid "%s: object could not be parsed: %s"
 msgstr "%s：不能解析物件：%s"
 
-#: builtin/fsck.c:657
+#: builtin/fsck.c:658
 #, c-format
 msgid "bad sha1 file: %s"
 msgstr "壞的 sha1 檔案：%s"
 
-#: builtin/fsck.c:672
+#: builtin/fsck.c:673
 msgid "Checking object directory"
 msgstr "正在檢查物件目錄"
 
-#: builtin/fsck.c:675
+#: builtin/fsck.c:676
 msgid "Checking object directories"
 msgstr "正在檢查物件目錄"
 
-#: builtin/fsck.c:690
+#: builtin/fsck.c:691
 #, c-format
 msgid "Checking %s link"
 msgstr "正在檢查 %s 連結"
 
-#: builtin/fsck.c:695 builtin/index-pack.c:843
+#: builtin/fsck.c:696 builtin/index-pack.c:843
 #, c-format
 msgid "invalid %s"
 msgstr "無效的 %s"
 
-#: builtin/fsck.c:702
+#: builtin/fsck.c:703
 #, c-format
 msgid "%s points to something strange (%s)"
 msgstr "%s 指向奇怪的東西（%s）"
 
-#: builtin/fsck.c:708
+#: builtin/fsck.c:709
 #, c-format
 msgid "%s: detached HEAD points at nothing"
 msgstr "%s：分離開頭指標的指向不存在"
 
-#: builtin/fsck.c:712
+#: builtin/fsck.c:713
 #, c-format
 msgid "notice: %s points to an unborn branch (%s)"
 msgstr "注意：%s 指向一個尚未誕生的分支（%s）"
 
-#: builtin/fsck.c:724
+#: builtin/fsck.c:725
 msgid "Checking cache tree"
 msgstr "正在檢查快取樹"
 
-#: builtin/fsck.c:729
+#: builtin/fsck.c:730
 #, c-format
 msgid "%s: invalid sha1 pointer in cache-tree"
 msgstr "%s：cache-tree 中無效的 sha1 指標"
 
-#: builtin/fsck.c:738
+#: builtin/fsck.c:739
 msgid "non-tree in cache-tree"
 msgstr "cache-tree 中非樹狀物件"
 
-#: builtin/fsck.c:769
+#: builtin/fsck.c:770
 msgid "git fsck [<options>] [<object>...]"
 msgstr "git fsck [<選項>] [<物件>...]"
 
-#: builtin/fsck.c:775
+#: builtin/fsck.c:776
 msgid "show unreachable objects"
 msgstr "顯示無法取得的物件"
 
-#: builtin/fsck.c:776
+#: builtin/fsck.c:777
 msgid "show dangling objects"
 msgstr "顯示懸空的物件"
 
-#: builtin/fsck.c:777
+#: builtin/fsck.c:778
 msgid "report tags"
 msgstr "報告標籤"
 
-#: builtin/fsck.c:778
+#: builtin/fsck.c:779
 msgid "report root nodes"
 msgstr "報告根節點"
 
-#: builtin/fsck.c:779
+#: builtin/fsck.c:780
 msgid "make index objects head nodes"
 msgstr "將索引亦作為檢查的頭節點"
 
-#: builtin/fsck.c:780
+#: builtin/fsck.c:781
 msgid "make reflogs head nodes (default)"
 msgstr "將引用日誌作為檢查的頭節點（預設）"
 
-#: builtin/fsck.c:781
+#: builtin/fsck.c:782
 msgid "also consider packs and alternate objects"
 msgstr "也考慮包和備用物件"
 
-#: builtin/fsck.c:782
+#: builtin/fsck.c:783
 msgid "check only connectivity"
 msgstr "僅檢查連通性"
 
-#: builtin/fsck.c:783
+#: builtin/fsck.c:784
 msgid "enable more strict checking"
 msgstr "啟用更嚴格的檢查"
 
-#: builtin/fsck.c:785
+#: builtin/fsck.c:786
 msgid "write dangling objects in .git/lost-found"
 msgstr "將懸空物件寫入 .git/lost-found 中"
 
-#: builtin/fsck.c:786 builtin/prune.c:134
+#: builtin/fsck.c:787 builtin/prune.c:134
 msgid "show progress"
 msgstr "顯示進度"
 
-#: builtin/fsck.c:787
+#: builtin/fsck.c:788
 msgid "show verbose names for reachable objects"
 msgstr "顯示可以取得物件的詳細名稱"
 
-#: builtin/fsck.c:846 builtin/index-pack.c:225
+#: builtin/fsck.c:847 builtin/index-pack.c:225
 msgid "Checking objects"
 msgstr "正在檢查物件"
 
-#: builtin/fsck.c:874
+#: builtin/fsck.c:875
 #, c-format
 msgid "%s: object missing"
 msgstr "%s：物件缺少"
 
-#: builtin/fsck.c:885
+#: builtin/fsck.c:886
 #, c-format
 msgid "invalid parameter: expected sha1, got '%s'"
 msgstr "無效的參數：期望 sha1，得到 '%s'"
@@ -23111,46 +23111,50 @@ msgid "A useful minimum set of commands for Everyday Git"
 msgstr "每一天 Git 的一組有用的最小指令集合"
 
 #: command-list.h:203
+msgid "Frequently asked questions about using Git"
+msgstr "Git 使用的常見問題"
+
+#: command-list.h:204
 msgid "A Git Glossary"
 msgstr "Git 詞彙表"
 
-#: command-list.h:204
+#: command-list.h:205
 msgid "Hooks used by Git"
 msgstr "Git 使用的掛鉤"
 
-#: command-list.h:205
+#: command-list.h:206
 msgid "Specifies intentionally untracked files to ignore"
 msgstr "忽略指定的未追蹤檔案"
 
-#: command-list.h:206
+#: command-list.h:207
 msgid "Defining submodule properties"
 msgstr "定義子模組屬性"
 
-#: command-list.h:207
+#: command-list.h:208
 msgid "Git namespaces"
 msgstr "Git 名字空間"
 
-#: command-list.h:208
+#: command-list.h:209
 msgid "Git Repository Layout"
 msgstr "Git 版本庫配置"
 
-#: command-list.h:209
+#: command-list.h:210
 msgid "Specifying revisions and ranges for Git"
 msgstr "指定 Git 的版本和版本範圍"
 
-#: command-list.h:210
+#: command-list.h:211
 msgid "Mounting one repository inside another"
 msgstr "在某個版本庫掛載某個版本庫"
 
-#: command-list.h:211
+#: command-list.h:212
 msgid "A tutorial introduction to Git: part two"
 msgstr "一個 Git 教學：第二部分"
 
-#: command-list.h:212
+#: command-list.h:213
 msgid "A tutorial introduction to Git"
 msgstr "一個 Git 教學"
 
-#: command-list.h:213
+#: command-list.h:214
 msgid "An overview of recommended workflows with Git"
 msgstr "Git 推薦的工作流概覽"
 
