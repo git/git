@@ -273,7 +273,14 @@ by users who are located in the same location and time zone.  In this
 case a reasonable offset from UTC could be assumed.
 +
 Unlike the `rfc2822` format, this format is very strict.  Any
-variation in formatting will cause fast-import to reject the value.
+variation in formatting will cause fast-import to reject the value,
+and some sanity checks on the numeric values may also be performed.
+
+`raw-permissive`::
+	This is the same as `raw` except that no sanity checks on
+	the numeric epoch and local offset are performed.  This can
+	be useful when trying to filter or import an existing history
+	with e.g. bogus timezone values.
 
 `rfc2822`::
 	This is the standard email format as described by RFC 2822.
