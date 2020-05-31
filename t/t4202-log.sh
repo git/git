@@ -1692,7 +1692,7 @@ test_expect_success GPG 'log --graph --show-signature for merged tag with missin
 	GNUPGHOME=. git log --graph --show-signature -n1 plain-nokey >actual &&
 	grep "^|\\\  merged tag" actual &&
 	grep "^| | gpg: Signature made" actual &&
-	grep "^| | gpg: Can'"'"'t check signature: \(public key not found\|No public key\)" actual
+	grep -E "^| | gpg: Can'"'"'t check signature: (public key not found|No public key)" actual
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag with bad signature' '

@@ -103,7 +103,7 @@ test_expect_success GPG 'message for merging local tag signed by unknown key' '
 	GNUPGHOME=. git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
 	grep "^# gpg: Signature made" actual &&
-	grep "^# gpg: Can${apos}t check signature: \(public key not found\|No public key\)" actual
+	grep -E "^# gpg: Can${apos}t check signature: (public key not found|No public key)" actual
 '
 
 test_expect_success 'message for merging external branch' '
