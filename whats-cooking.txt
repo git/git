@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2020, #09; Tue, 26)
-X-master-at: 2d5e9f31ac46017895ce6a183467037d29ceb9d3
-X-next-at: 90737beb8258c0a99181b6308eef898d77979c71
+Subject: What's cooking in git.git (May 2020, #10; Sun, 31)
+X-master-at: 56219baf1eae50134ee05eaa64e26e7f1207042c
+X-next-at: 5238fbb8ea3e0d9159ed431f9042d31285ea2d15
 
-What's cooking in git.git (May 2020, #09; Tue, 26)
+What's cooking in git.git (May 2020, #10; Sun, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.27-rc2 has been tagged.
+Git 2.27 final soon.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,21 +22,91 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ss/faq-ignore (2020-05-25) 1 commit
-  (merged to 'next' on 2020-05-25 at f2f7dd2ff6)
- + gitfaq: avoid validation error with older asciidoc
+* bc/sha-256-part-1-of-4 (2020-05-27) 1 commit
+  (merged to 'next' on 2020-05-27 at 7d66fd54f2)
+ + Documentation: correct hash environment variable
 
- Doc markup fix.
+ Docfix.
+
+
+* cb/test-use-ere-for-alternation (2020-05-29) 1 commit
+  (merged to 'next' on 2020-05-29 at d90169ce5e)
+ + t: avoid alternation (not POSIX) in grep's BRE
+
+ Portability fix for tests added recently.
+
+
+* jk/ci-only-on-selected-branches (2020-05-18) 1 commit
+  (merged to 'next' on 2020-05-24 at 5f1f5ef66a)
+ + ci/config: correct instruction for CI preferences
+
+ Dev support.
+
+
+* ma/rev-list-options-docfix (2020-05-26) 1 commit
+  (merged to 'next' on 2020-05-27 at 7cd09af7b1)
+ + rev-list-options.txt: start a list for `show-pulls`
+
+ Docfix.
 
 --------------------------------------------------
 [New Topics]
 
-* en/sparse-with-submodule-doc (2020-05-25) 1 commit
- - git-sparse-checkout: clarify interactions with submodules
+* cc/upload-pack-data-2 (2020-05-27) 12 commits
+ - upload-pack: move pack_objects_hook to upload_pack_data
+ - upload-pack: move allow_sideband_all to upload_pack_data
+ - upload-pack: move allow_ref_in_want to upload_pack_data
+ - upload-pack: move allow_filter to upload_pack_data
+ - upload-pack: move keepalive to upload_pack_data
+ - upload-pack: pass upload_pack_data to upload_pack_config()
+ - upload-pack: change multi_ack to an enum
+ - upload-pack: move multi_ack to upload_pack_data
+ - upload-pack: move filter_capability_requested to upload_pack_data
+ - upload-pack: move use_sideband to upload_pack_data
+ - upload-pack: move static vars to upload_pack_data
+ - upload-pack: actually use some upload_pack_data bitfields
+ (this branch uses cc/upload-pack-data.)
+
+ Further code clean-up.
 
 
-* ma/rev-list-options-docfix (2020-05-26) 1 commit
- - rev-list-options.txt: start a list for `show-pulls`
+* en/fast-import-looser-date (2020-05-31) 1 commit
+  (merged to 'next' on 2020-05-31 at 49de9c07c5)
+ + fast-import: add new --date-format=raw-permissive format
+
+ Some repositories in the wild have commits that record nonsense
+ committer timezone (e.g. rails.git); "git fast-import" learned an
+ option to pass these nonsense timestamps intact to allow recreating
+ existing repositories as-is.
+
+ Will cook in 'next'.
+
+
+* js/checkout-p-new-file (2020-05-27) 1 commit
+  (merged to 'next' on 2020-05-31 at 017c325bf6)
+ + checkout -p: handle new files correctly
+
+ "git checkout -p" did not handle a newly added path at all.
+
+ Will cook in 'next'.
+
+
+* mt/zsh-completion-optim (2020-05-28) 1 commit
+  (merged to 'next' on 2020-05-31 at f5d02a5498)
+ + completion: use native ZSH array pattern matching
+
+ Command line completion (incontrib/) update.
+
+ Will cook in 'next'.
+
+
+* xl/upgrade-repo-format (2020-05-29) 1 commit
+ - fetch: allow adding a filter after initial clone
+
+ Allow runtime upgrade of the repository format version, which needs
+ to be done carefully.
+
+ Almost there.
 
 --------------------------------------------------
 [Stalled]
@@ -52,25 +122,6 @@ of the repositories listed at
 
  Expecting a reroll.
  cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
-
-
-* jk/complete-git-switch (2020-04-28) 11 commits
- - completion: complete remote branches for git switch --track
- - completion: recognize -c/-C when completing for git switch
- - completion: fix completion for git switch with no options
- - completion: perform DWIM logic directly in __git_complete_refs
- - completion: extract function __git_dwim_remote_heads
- - completion: rename --track option of __git_complete_refs
- - completion: stop completing refs for git switch --orphan
- - completion: add tests showing lack of support for git switch -c/-C
- - completion: add test highlighting subpar git switch --track completion
- - completion: add test showing subpar git switch completion
- - completion: add some simple test cases for git switch completion
-
- The command line completion (in contrib/) learned to complete
- options that the "git switch" command takes.
-
- Needs review.
 
 
 * dl/test-must-fail-fixes-5 (2020-05-21) 5 commits
@@ -117,6 +168,36 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* jk/complete-git-switch (2020-05-28) 16 commits
+ - completion: improve handling of --orphan option of switch/checkout
+ - completion: improve handling of -c/-C and -b/-B in switch/checkout
+ - completion: improve handling of --track in switch/checkout
+ - completion: improve handling of --detach in checkout
+ - completion: improve completion for git switch with no options
+ - completion: improve handling of DWIM mode for switch/checkout
+ - completion: perform DWIM logic directly in __git_complete_refs
+ - completion: extract function __git_dwim_remote_heads
+ - completion: replace overloaded track term for __git_complete_refs
+ - completion: add tests showing subpar switch/checkout --orphan logic
+ - completion: add tests showing subpar -c/C argument completion
+ - completion: add tests showing subpar -c/-C startpoint completion
+ - completion: add tests showing subpar switch/checkout --track logic
+ - completion: add tests showing subar checkout --detach logic
+ - completion: add tests showing subpar DWIM logic for switch/checkout
+ - completion: add test showing subpar git switch completion
+
+ The command line completion (in contrib/) learned to complete
+ options that the "git switch" command takes.
+
+
+* en/sparse-with-submodule-doc (2020-05-25) 1 commit
+ - git-sparse-checkout: clarify interactions with submodules
+
+ The effect of sparse checkout settings on submodules is documented.
+
+ Needs review.
+
 
 * bc/filter-process (2020-05-21) 2 commits
   (merged to 'next' on 2020-05-24 at 3d51328096)
@@ -234,7 +315,7 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* pw/rebase-i-more-options (2020-05-24) 5 commits
+* pw/rebase-i-more-options (2020-05-27) 5 commits
  - rebase: add --reset-author-date
  - rebase -i: support --ignore-date
  - sequencer: rename amend_author to author_to_free
@@ -243,8 +324,8 @@ of the repositories listed at
 
  "git rebase -i" learns a bit more options.
 
- Expecting the final touch
- cf. <20200523155203.GA10163@danh.dev>
+ Not quite
+ cf. <nycvar.QRO.7.76.6.2005290437350.56@tvgsbejvaqbjf.bet>
 
 
 * an/merge-single-strategy-optim (2020-05-19) 1 commit
@@ -257,21 +338,25 @@ of the repositories listed at
 
 
 * cc/upload-pack-data (2020-05-18) 13 commits
- - upload-pack: use upload_pack_data fields in receive_needs()
- - upload-pack: pass upload_pack_data to create_pack_file()
- - upload-pack: remove static variable 'stateless_rpc'
- - upload-pack: pass upload_pack_data to check_non_tip()
- - upload-pack: pass upload_pack_data to send_ref()
- - upload-pack: move symref to upload_pack_data
- - upload-pack: use upload_pack_data writer in receive_needs()
- - upload-pack: pass upload_pack_data to receive_needs()
- - upload-pack: pass upload_pack_data to get_common_commits()
- - upload-pack: use 'struct upload_pack_data' in upload_pack()
- - upload-pack: move 'struct upload_pack_data' around
- - upload-pack: move {want,have}_obj to upload_pack_data
- - upload-pack: remove unused 'wants' from upload_pack_data
+  (merged to 'next' on 2020-05-29 at 66008d9209)
+ + upload-pack: use upload_pack_data fields in receive_needs()
+ + upload-pack: pass upload_pack_data to create_pack_file()
+ + upload-pack: remove static variable 'stateless_rpc'
+ + upload-pack: pass upload_pack_data to check_non_tip()
+ + upload-pack: pass upload_pack_data to send_ref()
+ + upload-pack: move symref to upload_pack_data
+ + upload-pack: use upload_pack_data writer in receive_needs()
+ + upload-pack: pass upload_pack_data to receive_needs()
+ + upload-pack: pass upload_pack_data to get_common_commits()
+ + upload-pack: use 'struct upload_pack_data' in upload_pack()
+ + upload-pack: move 'struct upload_pack_data' around
+ + upload-pack: move {want,have}_obj to upload_pack_data
+ + upload-pack: remove unused 'wants' from upload_pack_data
+ (this branch is used by cc/upload-pack-data-2.)
 
  Code clean-up.
+
+ Will cook in 'next'.
 
 
 * dl/remote-curl-deadlock-fix (2020-05-24) 7 commits
@@ -290,15 +375,6 @@ of the repositories listed at
  been updated to make it more robust.
 
  Will cook in 'next'.
-
-
-* jk/ci-only-on-selected-branches (2020-05-18) 1 commit
-  (merged to 'next' on 2020-05-24 at 5f1f5ef66a)
- + ci/config: correct instruction for CI preferences
-
- Dev support.
-
- Will merge to 'master'.
 
 
 * la/diff-relative-config (2020-05-24) 1 commit
@@ -344,23 +420,26 @@ of the repositories listed at
  Expecting further work on optionally disabling redacting authinfo
 
 
-* mt/grep-sparse-checkout (2020-05-11) 4 commits
+* mt/grep-sparse-checkout (2020-05-28) 5 commits
  - config: add setting to ignore sparsity patterns in some cmds
  - grep: honor sparse checkout patterns
- - config: load the correct config.worktree file
+ - config: correctly read worktree configs in submodules
+ - t/helper/test-config: return exit codes consistently
  - doc: grep: unify info on configuration variables
 
  "git grep" has been tweaked to be limited to the sparse checkout
  paths.
 
  Expecting further polishing.
- cf. <CAHd-oW6BoHkMSAQVquHR+H7=g84VE-qmXGYcDmWwFxuLyqZSzg@mail.gmail.com>
+ cf. <cover.1590627264.git.matheus.bernardino@usp.br>
+ cf. <CABPp-BFsCPPNOZ92JQRJeGyNd0e-TCW-LcLyr0i_+VSQJP+GCg@mail.gmail.com>
 
 
-* bc/sha-256-part-2 (2020-05-13) 44 commits
+* bc/sha-256-part-2 (2020-05-27) 44 commits
  - remote-testgit: adapt for object-format
  - bundle: detect hash algorithm when reading refs
  - t5300: pass --object-format to git index-pack
+ - t5704: send object-format capability with SHA-256
  - t5703: use object-format serve option
  - t5702: offer an object-format capability in the test
  - t/helper: initialize the repository for test-sha1-array
@@ -381,7 +460,6 @@ of the repositories listed at
  - t3200: mark assertion with SHA1 prerequisite
  - setup: set the_repository's hash algo when checking format
  - fetch-pack: parse and advertise the object-format capability
- - t5704: send object-format capability with SHA-256
  - t5562: pass object-format in synthesized test data
  - builtin/clone: initialize hash algorithm properly
  - remote-curl: implement object-format extensions
@@ -468,7 +546,9 @@ of the repositories listed at
  Needs review.
 
 
-* hn/refs-cleanup (2020-05-20) 6 commits
+* hn/refs-cleanup (2020-05-27) 7 commits
+  (merged to 'next' on 2020-05-27 at aada2199e1)
+ + reftable doc: use link: and urlencode to avoid dead links
   (merged to 'next' on 2020-05-24 at dd9b665698)
  + reftable: define version 2 of the spec to accomodate SHA256
  + reftable: clarify how empty tables should be written
@@ -482,18 +562,24 @@ of the repositories listed at
  specification documentation for the reftable backend.
 
  Will cook in 'next'.
+ We probably would want to squash the fix at the tip to an earlier
+ step when we rewind the 'next' branch.
 
 
-* hn/reftable (2020-05-20) 9 commits
- - Add reftable testing infrastructure
- - vcxproj: adjust for the reftable changes
- - Add GIT_DEBUG_REFS debugging mechanism
- - Reftable support for git-core
- - Add reftable library
- - Add .gitattributes for the reftable/ directory
- - Iterate over the "refs/" namespace in for_each_[raw]ref
- - Move REF_LOG_ONLY to refs-internal.h
- - Write pseudorefs through ref backends.
+* hn/reftable (2020-05-28) 13 commits
+ . Add reftable testing infrastructure
+ . vcxproj: adjust for the reftable changes
+ . Add GIT_DEBUG_REFS debugging mechanism
+ . Reftable support for git-core
+ . Add reftable library
+ . Add .gitattributes for the reftable/ directory
+ . Iterate over the "refs/" namespace in for_each_[raw]ref
+ . Move REF_LOG_ONLY to refs-internal.h
+ . Treat REVERT_HEAD as a pseudo ref
+ . Treat CHERRY_PICK_HEAD as a pseudo ref
+ . Treat BISECT_HEAD as a pseudo ref
+ . Make refs_ref_exists public
+ . Write pseudorefs through ref backends.
  (this branch uses hn/refs-cleanup.)
 
  A new refs backend "reftable" to replace the traditional
@@ -501,7 +587,7 @@ of the repositories listed at
  has been implemented and integrated for improved performance and
  atomicity.
 
- Needs review.
+ Not quite--does not pass tests by itself.
 
 --------------------------------------------------
 [Discarded]
