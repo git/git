@@ -155,6 +155,27 @@ test_expect_success 'commit-graph write with the --no-progress option' '
 	test_must_be_empty err
 '
 
+test_expect_success 'commit-graph write --stdin-commits progress off for redirected stderr' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git rev-parse commits/5 >in &&
+	git commit-graph write --stdin-commits <in 2>err &&
+	test_must_be_empty err
+'
+
+test_expect_success 'commit-graph write --stdin-commits force progress on for stderr' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git rev-parse commits/5 >in &&
+	GIT_PROGRESS_DELAY=0 git commit-graph write --stdin-commits --progress <in 2>err &&
+	test_i18ngrep "Collecting commits from input" err
+'
+
+test_expect_success 'commit-graph write --stdin-commits with the --no-progress option' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git rev-parse commits/5 >in &&
+	git commit-graph write --stdin-commits --no-progress <in 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'commit-graph verify progress off for redirected stderr' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph verify 2>err &&
