@@ -96,7 +96,7 @@ Basically what the Git client is doing to connect to an 'upload-pack'
 process on the server side over the Git protocol is this:
 
    $ echo -e -n \
-     "0039git-upload-pack /schacon/gitbook.git\0host=example.com\0" |
+     "003agit-upload-pack /schacon/gitbook.git\0host=example.com\0" |
      nc -v example.com 9418
 
 
@@ -171,9 +171,9 @@ with a version number (if "version=1" is sent as an Extra Parameter),
 and a listing of each reference it has (all branches and tags) along
 with the object name that each reference currently points to.
 
-   $ echo -e -n "0044git-upload-pack /schacon/gitbook.git\0host=example.com\0\0version=1\0" |
+   $ echo -e -n "0045git-upload-pack /schacon/gitbook.git\0host=example.com\0\0version=1\0" |
       nc -v example.com 9418
-   000aversion 1
+   000eversion 1
    00887217a7c7e582c46cec22a130adf4b9d7d950fba0 HEAD\0multi_ack thin-pack
 		side-band side-band-64k ofs-delta shallow no-progress include-tag
    00441d3fcd5ced445d1abc402225c0b8a1299641f497 refs/heads/integration
