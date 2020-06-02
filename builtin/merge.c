@@ -1656,7 +1656,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 				}
 				merge_was_ok = 1;
 			}
-			cnt = evaluate_result();
+			cnt = (use_strategies_nr > 1) ? evaluate_result() : 0;
 			if (best_cnt <= 0 || cnt <= best_cnt) {
 				best_strategy = use_strategies[i]->name;
 				best_cnt = cnt;
