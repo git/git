@@ -1,0 +1,52 @@
+Git 2.28 Release Notes
+======================
+
+Updates since v2.27
+-------------------
+
+Backward compatibility notes
+
+ * "feature.experimental" configuration variable is to let volunteers
+   easily opt into a set of newer features, which use of the v2
+   transport protocol is now a part of.
+
+
+UI, Workflows & Features
+
+ * The commands in the "diff" family learned to honor "diff.relative"
+   configuration variable.
+
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Code optimization for a common case.
+   (merge 8777616e4d an/merge-single-strategy-optim later to maint).
+
+ * We've adopted a convention that any on-stack structure can be
+   initialized to have zero values in all fields with "= { 0 }",
+   even when the first field happens to be a pointer, but sparse
+   complained that a null pointer should be spelled NULL for a long
+   time.  Start using -Wno-universal-initializer option to squelch
+   it (the latest sparse has it on by default).
+
+
+
+Fixes since v2.27
+-----------------
+
+ * The "--prepare-p4-only" option of "git p4" is supposed to stop
+   after replaying one changeset, but kept going (by mistake?)
+
+ * The error message from "git checkout -b foo -t bar baz" was
+   confusing.
+
+ * Some repositories in the wild have commits that record nonsense
+   committer timezone (e.g. rails.git); "git fast-import" learned an
+   option to pass these nonsense timestamps intact to allow recreating
+   existing repositories as-is.
+   (merge d42a2fb72f en/fast-import-looser-date later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
+   (merge d63ae31962 cb/t5608-cleanup later to maint).
