@@ -1602,6 +1602,19 @@ test_expect_success 'format patch ignores color.ui' '
 	test_cmp expect actual
 '
 
+test_expect_success 'format patch respects diff.relative' '
+	rm -rf subdir &&
+	mkdir subdir &&
+	echo other content >subdir/file2 &&
+	git add subdir/file2 &&
+	git commit -F msg &&
+	test_unconfig diff.relative &&
+	git format-patch --relative=subdir --stdout -1 >expect &&
+	test_config diff.relative true &&
+	git -C subdir format-patch --stdout -1 >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'cover letter with invalid --cover-from-description and config' '
 	test_config branch.rebuild-1.description "config subject
 

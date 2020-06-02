@@ -48,6 +48,7 @@ static const char *diff_order_file_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
+static int diff_relative;
 static int diff_stat_graph_width;
 static int diff_dirstat_permille_default = 30;
 static struct diff_options default_diff_options;
@@ -384,6 +385,10 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "diff.noprefix")) {
 		diff_no_prefix = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "diff.relative")) {
+		diff_relative = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.statgraphwidth")) {
@@ -4538,6 +4543,7 @@ void repo_diff_setup(struct repository *r, struct diff_options *options)
 	options->interhunkcontext = diff_interhunk_context_default;
 	options->ws_error_highlight = ws_error_highlight_default;
 	options->flags.rename_empty = 1;
+	options->flags.relative_name = diff_relative;
 	options->objfind = NULL;
 
 	/* pathchange left =NULL by default */
@@ -5195,8 +5201,7 @@ static int diff_opt_relative(const struct option *opt,
 {
 	struct diff_options *options = opt->value;
 
-	BUG_ON_OPT_NEG(unset);
-	options->flags.relative_name = 1;
+	options->flags.relative_name = !unset;
 	if (arg)
 		options->prefix = arg;
 	return 0;
@@ -5492,7 +5497,7 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_GROUP(N_("Other diff options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
 			       N_("when run from subdir, exclude changes outside and show relative paths"),
-			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG,
+			       PARSE_OPT_OPTARG,
 			       diff_opt_relative),
 		OPT_BOOL('a', "text", &options->flags.text,
 			 N_("treat all files as text")),
