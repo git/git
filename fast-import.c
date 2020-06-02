@@ -139,6 +139,7 @@ struct hash_list {
 
 typedef enum {
 	WHENSPEC_RAW = 1,
+	WHENSPEC_RAW_PERMISSIVE,
 	WHENSPEC_RFC2822,
 	WHENSPEC_NOW
 } whenspec_type;
@@ -1911,7 +1912,7 @@ static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 	return 1;
 }
 
-static int validate_raw_date(const char *src, struct strbuf *result)
+static int validate_raw_date(const char *src, struct strbuf *result, int strict)
 {
 	const char *orig_src = src;
 	char *endp;
@@ -1920,7 +1921,11 @@ static int validate_raw_date(const char *src, struct strbuf *result)
 	errno = 0;
 
 	num = strtoul(src, &endp, 10);
-	/* NEEDSWORK: perhaps check for reasonable values? */
+	/*
+	 * NEEDSWORK: perhaps check for reasonable values? For example, we
+	 *            could error on values representing times more than a
+	 *            day in the future.
+	 */
 	if (errno || endp == src || *endp != ' ')
 		return -1;
 
@@ -1929,7 +1934,13 @@ static int validate_raw_date(const char *src, struct strbuf *result)
 		return -1;
 
 	num = strtoul(src + 1, &endp, 10);
-	if (errno || endp == src + 1 || *endp || 1400 < num)
+	/*
+	 * NEEDSWORK: check for brokenness other than num > 1400, such as
+	 *            (num % 100) >= 60, or ((num % 100) % 15) != 0 ?
+	 */
+	if (errno || endp == src + 1 || *endp || /* did not parse */
+	    (strict && (1400 < num))             /* parsed a broken timezone */
+	   )
 		return -1;
 
 	strbuf_addstr(result, orig_src);
@@ -1963,7 +1974,11 @@ static char *parse_ident(const char *buf)
 
 	switch (whenspec) {
 	case WHENSPEC_RAW:
-		if (validate_raw_date(ltgt, &ident) < 0)
+		if (validate_raw_date(ltgt, &ident, 1) < 0)
+			die("Invalid raw date \"%s\" in ident: %s", ltgt, buf);
+		break;
+	case WHENSPEC_RAW_PERMISSIVE:
+		if (validate_raw_date(ltgt, &ident, 0) < 0)
 			die("Invalid raw date \"%s\" in ident: %s", ltgt, buf);
 		break;
 	case WHENSPEC_RFC2822:
@@ -3258,6 +3273,8 @@ static void option_date_format(const char *fmt)
 {
 	if (!strcmp(fmt, "raw"))
 		whenspec = WHENSPEC_RAW;
+	else if (!strcmp(fmt, "raw-permissive"))
+		whenspec = WHENSPEC_RAW_PERMISSIVE;
 	else if (!strcmp(fmt, "rfc2822"))
 		whenspec = WHENSPEC_RFC2822;
 	else if (!strcmp(fmt, "now"))
