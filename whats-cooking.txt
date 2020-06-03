@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2020, #10; Sun, 31)
-X-master-at: 56219baf1eae50134ee05eaa64e26e7f1207042c
-X-next-at: 5238fbb8ea3e0d9159ed431f9042d31285ea2d15
+Subject: What's cooking in git.git (Jun 2020, #01; Wed, 3)
+X-master-at: 20514004ddf1a3528de8933bc32f284e175e1012
+X-next-at: ba653c62daa4884fe39d46cecbbcf7d8c13e7b61
 
-What's cooking in git.git (May 2020, #10; Sun, 31)
+What's cooking in git.git (Jun 2020, #01; Wed, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,27 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.27 final soon.
+Git 2.27 has been tagged, and the first batch of topics (including
+the "throw protocol v2 to the experimental group of features" thing)
+have been merged to the 'master' branch.  I'm planning to rewind the
+tip of 'next' in a not-so-distant future.
+
+Seeing a handful of regression reports [*] immediately after a
+feature release is made gives me a mixed feeling: people are eager
+enough to help by reporting issues they encounter, but there are not
+enough people who are eager enough to help by testing the tip of
+'master' before the release.  Are there things we can do to help
+them become early adopters so that they do not have to scramble
+after the release?
+
+    * sparse-checkout
+    cf. <CAD3+_6CUX0RPr-dgfUnfGDNNfqu80SYCskioYnu=MS6aJv2dEQ@mail.gmail.com>
+
+    * untracked with pathspec
+    cf. <CAJmdR_pG74x0Zn43MSm7zXNcoitqjjOy+WnhyGBW+oFjVFLbRQ@mail.gmail.com>
+
+    * shallow point adjustment
+    cf. <20200603034213.GB253041@google.com>
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,52 +42,27 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/sha-256-part-1-of-4 (2020-05-27) 1 commit
-  (merged to 'next' on 2020-05-27 at 7d66fd54f2)
- + Documentation: correct hash environment variable
+* an/merge-single-strategy-optim (2020-05-19) 1 commit
+  (merged to 'next' on 2020-05-20 at 8d5cacc8d1)
+ + merge: optimization to skip evaluate_result for single strategy
 
- Docfix.
-
-
-* cb/test-use-ere-for-alternation (2020-05-29) 1 commit
-  (merged to 'next' on 2020-05-29 at d90169ce5e)
- + t: avoid alternation (not POSIX) in grep's BRE
-
- Portability fix for tests added recently.
+ Code optimization for a common case.
 
 
-* jk/ci-only-on-selected-branches (2020-05-18) 1 commit
-  (merged to 'next' on 2020-05-24 at 5f1f5ef66a)
- + ci/config: correct instruction for CI preferences
+* bk/p4-prepare-p4-only-fix (2020-05-12) 1 commit
+  (merged to 'next' on 2020-05-24 at c1b4644b04)
+ + git-p4.py: fix --prepare-p4-only error with multiple commits
 
- Dev support.
+ The "--prepare-p4-only" option is supposed to stop after replaying
+ one changeset, but kept going (by mistake?)
+ cf. <CAE5ih797YYxsR2H0TA65w9W-1jF4jQLayja_nGjQMGtc=PB6Jw@mail.gmail.com>
 
 
-* ma/rev-list-options-docfix (2020-05-26) 1 commit
-  (merged to 'next' on 2020-05-27 at 7cd09af7b1)
- + rev-list-options.txt: start a list for `show-pulls`
+* cb/t5608-cleanup (2020-05-24) 1 commit
+  (merged to 'next' on 2020-05-24 at 2bfa581890)
+ + t5608: avoid say() and use "skip_all" instead for consistency
 
- Docfix.
-
---------------------------------------------------
-[New Topics]
-
-* cc/upload-pack-data-2 (2020-05-27) 12 commits
- - upload-pack: move pack_objects_hook to upload_pack_data
- - upload-pack: move allow_sideband_all to upload_pack_data
- - upload-pack: move allow_ref_in_want to upload_pack_data
- - upload-pack: move allow_filter to upload_pack_data
- - upload-pack: move keepalive to upload_pack_data
- - upload-pack: pass upload_pack_data to upload_pack_config()
- - upload-pack: change multi_ack to an enum
- - upload-pack: move multi_ack to upload_pack_data
- - upload-pack: move filter_capability_requested to upload_pack_data
- - upload-pack: move use_sideband to upload_pack_data
- - upload-pack: move static vars to upload_pack_data
- - upload-pack: actually use some upload_pack_data bitfields
- (this branch uses cc/upload-pack-data.)
-
- Further code clean-up.
+ Test fixup.
 
 
 * en/fast-import-looser-date (2020-05-31) 1 commit
@@ -79,16 +74,40 @@ of the repositories listed at
  option to pass these nonsense timestamps intact to allow recreating
  existing repositories as-is.
 
- Will cook in 'next'.
+
+* jn/experimental-opts-into-proto-v2 (2020-05-21) 1 commit
+  (merged to 'next' on 2020-05-24 at 53cd664dfe)
+ + config: let feature.experimental imply protocol.version=2
+
+ "feature.experimental" configuration variable is to let volunteers
+ easily opt into a set of newer features, which use of the v2
+ transport protocol is now a part of.
 
 
-* js/checkout-p-new-file (2020-05-27) 1 commit
-  (merged to 'next' on 2020-05-31 at 017c325bf6)
- + checkout -p: handle new files correctly
+* jx/pkt-line-doc-count-fix (2020-05-21) 1 commit
+  (merged to 'next' on 2020-05-24 at 7115240db4)
+ + doc: fix wrong 4-byte length of pkt-line message
 
- "git checkout -p" did not handle a newly added path at all.
+ Docfix.
 
- Will cook in 'next'.
+
+* la/diff-relative-config (2020-05-24) 1 commit
+  (merged to 'next' on 2020-05-26 at b4604e6abc)
+ + diff: add config option relative
+
+ The commands in the "diff" family learned to honor "diff.relative"
+ configuration variable.
+
+
+* lo/sparse-universal-zero-init (2020-05-24) 1 commit
+  (merged to 'next' on 2020-05-24 at 1f4ea6b348)
+ + sparse: allow '{ 0 }' to be used without warnings
+
+ We've adopted a convention that any on-stack structure can be
+ initialized to have zero values in all fields with "= { 0 }", even
+ when the first field happens to be a pointer, but sparse complained
+ that a null pointer should be spelled NULL for a long time.  Start
+ using -Wno-universal-initializer option to squelch it.
 
 
 * mt/zsh-completion-optim (2020-05-28) 1 commit
@@ -97,16 +116,44 @@ of the repositories listed at
 
  Command line completion (incontrib/) update.
 
- Will cook in 'next'.
+
+* rs/checkout-b-track-error (2020-05-24) 2 commits
+  (merged to 'next' on 2020-05-26 at 9220e43203)
+ + checkout: improve error messages for -b with extra argument
+ + checkout: add tests for -b and --track
+
+ The error message from "git checkout -b foo -t bar baz" was
+ confusing.
+
+--------------------------------------------------
+[New Topics]
+
+* jk/diff-memuse-optim-with-stat-unmatch (2020-06-02) 1 commit
+ - diff: discard blob data from stat-unmatched pairs
+
+ Reduce memory usage during "diff --quiet" in a worktree with too
+ many stat-unmatched paths.
+
+ Will merge to 'next'.
 
 
-* xl/upgrade-repo-format (2020-05-29) 1 commit
- - fetch: allow adding a filter after initial clone
+* js/reflog-anonymize-for-clone-and-fetch (2020-06-02) 1 commit
+ - clone/fetch: anonymize URLs in the reflog
 
- Allow runtime upgrade of the repository format version, which needs
- to be done carefully.
+ The reflog entries for "git clone" and "git fetch" did not
+ anonymize the URL they operated on.
+
+ Will merge to 'next'.
+
+
+* tb/t5318-cleanup (2020-06-02) 2 commits
+ - t5318: test that '--stdin-commits' respects '--[no-]progress'
+ - t5318: use 'test_must_be_empty'
+
+ Code cleanup.
 
  Almost there.
+ cf. <20200602180403.GA4791@szeder.dev>
 
 --------------------------------------------------
 [Stalled]
@@ -133,7 +180,7 @@ of the repositories listed at
 
  The effort to avoid using test_must_fail on non-git command continues.
 
- Waiting for a review thread to settle.
+ Expecting a reroll.
  cf. <20200521182928.GA1308647@coredump.intra.peff.net>
  The last step is a bit too ugly to live; Peff seems to have better
  ideas.
@@ -168,6 +215,46 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* cc/upload-pack-data-2 (2020-06-02) 14 commits
+ - fixup! upload-pack: change multi_ack to an enum
+ - upload-pack: move pack_objects_hook to upload_pack_data
+ - upload-pack: move allow_sideband_all to upload_pack_data
+ - upload-pack: move allow_ref_in_want to upload_pack_data
+ - upload-pack: move allow_filter to upload_pack_data
+ - upload-pack: move keepalive to upload_pack_data
+ - upload-pack: pass upload_pack_data to upload_pack_config()
+ - upload-pack: change multi_ack to an enum
+ - upload-pack: move multi_ack to upload_pack_data
+ - upload-pack: move filter_capability_requested to upload_pack_data
+ - upload-pack: move use_sideband to upload_pack_data
+ - upload-pack: move static vars to upload_pack_data
+ - upload-pack: annotate upload_pack_data fields
+ - upload-pack: actually use some upload_pack_data bitfields
+ (this branch uses cc/upload-pack-data.)
+
+ Further code clean-up.
+
+ Almost there.
+
+
+* js/checkout-p-new-file (2020-05-27) 1 commit
+  (merged to 'next' on 2020-05-31 at 017c325bf6)
+ + checkout -p: handle new files correctly
+
+ "git checkout -p" did not handle a newly added path at all.
+
+ Will merge to 'master'.
+
+
+* xl/upgrade-repo-format (2020-05-29) 1 commit
+ - fetch: allow adding a filter after initial clone
+
+ Allow runtime upgrade of the repository format version, which needs
+ to be done carefully.
+
+ Almost there.
+
 
 * jk/complete-git-switch (2020-05-28) 16 commits
  - completion: improve handling of --orphan option of switch/checkout
@@ -206,7 +293,7 @@ of the repositories listed at
 
  Code simplification and test coverage enhancement.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * cb/bisect-helper-parser-fix (2020-05-24) 1 commit
@@ -216,27 +303,7 @@ of the repositories listed at
  The code to parse "git bisect start" command line was lax in
  validating the arguments.
 
- Will cook in 'next'.
-
-
-* jn/experimental-opts-into-proto-v2 (2020-05-21) 1 commit
-  (merged to 'next' on 2020-05-24 at 53cd664dfe)
- + config: let feature.experimental imply protocol.version=2
-
- "feature.experimental" configuration variable is to let volunteers
- easily opt into a set of newer features, which use of the v2
- transport protocol is now a part of.
-
- Will cook in 'next'.
-
-
-* jx/pkt-line-doc-count-fix (2020-05-21) 1 commit
-  (merged to 'next' on 2020-05-24 at 7115240db4)
- + doc: fix wrong 4-byte length of pkt-line message
-
- Docfix.
-
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * rs/fsck-duplicate-names-in-trees (2020-05-21) 4 commits
@@ -249,18 +316,18 @@ of the repositories listed at
  The check in "git fsck" to ensure that the tree objects are sorted
  still had corner cases it missed unsorted entries.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* ss/submodule-set-branch-in-c (2020-05-24) 2 commits
- - fixup! submodule: port subcommand 'set-branch' from shell to C
+* ss/submodule-set-branch-in-c (2020-06-02) 1 commit
  - submodule: port subcommand 'set-branch' from shell to C
 
  Rewrite of parts of the scripted "git submodule" Porcelain command
  continues; this time it is "git submodule set-branch" subcommand's
  turn.
 
- cf. <20200523231838.GB1981@danh.dev>
+ Almost there.
+ cf. <1b851e49-3bb1-3b59-7f24-b903c5514391@gmail.com>
 
 
 * vs/complete-stash-show-p-fix (2020-05-21) 1 commit
@@ -272,16 +339,7 @@ of the repositories listed at
  aggressive and also affected "git stash show -p", which has been
  corrected.
 
- Will cook in 'next'.
-
-
-* cb/t5608-cleanup (2020-05-24) 1 commit
-  (merged to 'next' on 2020-05-24 at 2bfa581890)
- + t5608: avoid say() and use "skip_all" instead for consistency
-
- Test fixup.
-
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * es/config-hooks (2020-05-21) 4 commits
@@ -289,30 +347,6 @@ of the repositories listed at
  . hook: add list command
  . hook: scaffolding for git-hook subcommand
  . doc: propose hooks managed by the config
-
-
-* rs/checkout-b-track-error (2020-05-24) 2 commits
-  (merged to 'next' on 2020-05-26 at 9220e43203)
- + checkout: improve error messages for -b with extra argument
- + checkout: add tests for -b and --track
-
- The error message from "git checkout -b foo -t bar baz" was
- confusing.
-
- Will cook in 'next'.
-
-
-* lo/sparse-universal-zero-init (2020-05-24) 1 commit
-  (merged to 'next' on 2020-05-24 at 1f4ea6b348)
- + sparse: allow '{ 0 }' to be used without warnings
-
- We've adopted a convention that any on-stack structure can be
- initialized to have zero values in all fields with "= { 0 }", even
- when the first field happens to be a pointer, but sparse complained
- that a null pointer should be spelled NULL for a long time.  Start
- using -Wno-universal-initializer option to squelch it.
-
- Will cook in 'next'.
 
 
 * pw/rebase-i-more-options (2020-05-27) 5 commits
@@ -326,15 +360,6 @@ of the repositories listed at
 
  Not quite
  cf. <nycvar.QRO.7.76.6.2005290437350.56@tvgsbejvaqbjf.bet>
-
-
-* an/merge-single-strategy-optim (2020-05-19) 1 commit
-  (merged to 'next' on 2020-05-20 at 8d5cacc8d1)
- + merge: optimization to skip evaluate_result for single strategy
-
- Code optimization for a common case.
-
- Will cook in 'next'.
 
 
 * cc/upload-pack-data (2020-05-18) 13 commits
@@ -356,7 +381,7 @@ of the repositories listed at
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * dl/remote-curl-deadlock-fix (2020-05-24) 7 commits
@@ -374,17 +399,7 @@ of the repositories listed at
  prematurely throws an error and disconnects.  The communication has
  been updated to make it more robust.
 
- Will cook in 'next'.
-
-
-* la/diff-relative-config (2020-05-24) 1 commit
-  (merged to 'next' on 2020-05-26 at b4604e6abc)
- + diff: add config option relative
-
- The commands in the "diff" family learned to honor "diff.relative"
- configuration variable.
-
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * cb/t4210-illseq-auto-detect (2020-05-18) 2 commits
@@ -396,18 +411,7 @@ of the repositories listed at
  a REG_ILLSEQ error when fed invalid UTF-8, add logic to detect that
  automatically and skip the affected tests.
 
- Will cook in 'next'.
-
-
-* bk/p4-prepare-p4-only-fix (2020-05-12) 1 commit
-  (merged to 'next' on 2020-05-24 at c1b4644b04)
- + git-p4.py: fix --prepare-p4-only error with multiple commits
-
- The "--prepare-p4-only" option is supposed to stop after replaying
- one changeset, but kept going (by mistake?)
-
- Will cook in 'next'.
- cf. <CAE5ih797YYxsR2H0TA65w9W-1jF4jQLayja_nGjQMGtc=PB6Jw@mail.gmail.com>
+ Will merge to 'master'.
 
 
 * jt/curl-verbose-on-trace-curl (2020-05-11) 2 commits
@@ -420,7 +424,8 @@ of the repositories listed at
  Expecting further work on optionally disabling redacting authinfo
 
 
-* mt/grep-sparse-checkout (2020-05-28) 5 commits
+* mt/grep-sparse-checkout (2020-06-02) 6 commits
+ - git.c: fix sparse warning
  - config: add setting to ignore sparsity patterns in some cmds
  - grep: honor sparse checkout patterns
  - config: correctly read worktree configs in submodules
@@ -430,7 +435,7 @@ of the repositories listed at
  "git grep" has been tweaked to be limited to the sparse checkout
  paths.
 
- Expecting further polishing.
+ Expecting a reroll.
  cf. <cover.1590627264.git.matheus.bernardino@usp.br>
  cf. <CABPp-BFsCPPNOZ92JQRJeGyNd0e-TCW-LcLyr0i_+VSQJP+GCg@mail.gmail.com>
 
@@ -491,7 +496,7 @@ of the repositories listed at
 
  "git bugreport" learns to report what shell is in use.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  We may want to learn more details than just the path, but
  that can come later.
  cf. <20200512235924.GC6605@camp.crustytoothpaste.net>
@@ -508,7 +513,7 @@ of the repositories listed at
  "git log -L..." now takes advantage of the "which paths are touched
  by this commit?" info stored in the commit-graph system.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * tb/commit-graph-no-check-oids (2020-05-18) 8 commits
@@ -524,7 +529,7 @@ of the repositories listed at
 
  Clean-up the commit-graph codepath.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jx/proc-receive-hook (2020-05-18) 11 commits
@@ -561,7 +566,7 @@ of the repositories listed at
  Preliminary clean-ups around refs API, plus file format
  specification documentation for the reftable backend.
 
- Will cook in 'next'.
+ Will merge to 'master' after squashing the fix in.
  We probably would want to squash the fix at the tip to an earlier
  step when we rewind the 'next' branch.
 
