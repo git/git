@@ -55,8 +55,6 @@ static int shallow_nr;
 static struct object_array extra_edge_obj;
 static const char *pack_objects_hook;
 
-static int allow_ref_in_want;
-
 static int allow_sideband_all;
 
 /*
@@ -104,6 +102,7 @@ struct upload_pack_data {
 	unsigned allow_filter : 1;
 
 	unsigned done : 1;					/* v2 only */
+	unsigned allow_ref_in_want : 1;				/* v2 only */
 };
 
 static void upload_pack_data_init(struct upload_pack_data *data)
@@ -1145,7 +1144,7 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 	} else if (!strcmp("uploadpack.allowfilter", var)) {
 		data->allow_filter = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowrefinwant", var)) {
-		allow_ref_in_want = git_config_bool(var, value);
+		data->allow_ref_in_want = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowsidebandall", var)) {
 		allow_sideband_all = git_config_bool(var, value);
 	} else if (!strcmp("core.precomposeunicode", var)) {
@@ -1289,7 +1288,7 @@ static void process_args(struct packet_reader *request,
 		/* process want */
 		if (parse_want(&data->writer, arg, &data->want_obj))
 			continue;
-		if (allow_ref_in_want &&
+		if (data->allow_ref_in_want &&
 		    parse_want_ref(&data->writer, arg, &data->wanted_refs,
 				   &data->want_obj))
 			continue;
