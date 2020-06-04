@@ -1113,7 +1113,7 @@ static int find_symref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int upload_pack_config(const char *var, const char *value, void *unused)
+static int upload_pack_config(const char *var, const char *value, void *cb_data)
 {
 	if (!strcmp("uploadpack.allowtipsha1inwant", var)) {
 		if (git_config_bool(var, value))
@@ -1158,9 +1158,9 @@ void upload_pack(struct upload_pack_options *options)
 	struct packet_reader reader;
 	struct upload_pack_data data;
 
-	git_config(upload_pack_config, NULL);
-
 	upload_pack_data_init(&data);
+
+	git_config(upload_pack_config, &data);
 
 	data.stateless_rpc = options->stateless_rpc;
 	data.daemon_mode = options->daemon_mode;
@@ -1491,10 +1491,10 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 
 	clear_object_flags(ALL_FLAGS);
 
-	git_config(upload_pack_config, NULL);
-
 	upload_pack_data_init(&data);
 	data.use_sideband = LARGE_PACKET_MAX;
+
+	git_config(upload_pack_config, &data);
 
 	while (state != FETCH_DONE) {
 		switch (state) {
