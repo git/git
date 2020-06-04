@@ -57,7 +57,6 @@ static struct object_array extra_edge_obj;
 static int keepalive = 5;
 static const char *pack_objects_hook;
 
-static int filter_capability_requested;
 static int allow_filter;
 static int allow_ref_in_want;
 
@@ -93,6 +92,7 @@ struct upload_pack_data {
 	unsigned stateless_rpc : 1;				/* v0 only */
 	unsigned no_done : 1;					/* v0 only */
 	unsigned daemon_mode : 1;				/* v0 only */
+	unsigned filter_capability_requested : 1;		/* v0 only */
 
 	unsigned use_thin_pack : 1;
 	unsigned use_ofs_delta : 1;
@@ -943,7 +943,7 @@ static void receive_needs(struct upload_pack_data *data,
 			continue;
 
 		if (skip_prefix(reader->line, "filter ", &arg)) {
-			if (!filter_capability_requested)
+			if (!data->filter_capability_requested)
 				die("git upload-pack: filtering capability not negotiated");
 			list_objects_filter_die_if_populated(&data->filter_options);
 			parse_list_objects_filter(&data->filter_options, arg);
@@ -976,7 +976,7 @@ static void receive_needs(struct upload_pack_data *data,
 		if (parse_feature_request(features, "include-tag"))
 			data->use_include_tag = 1;
 		if (allow_filter && parse_feature_request(features, "filter"))
-			filter_capability_requested = 1;
+			data->filter_capability_requested = 1;
 
 		o = parse_object(the_repository, &oid_buf);
 		if (!o) {
