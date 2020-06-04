@@ -80,7 +80,11 @@ struct upload_pack_data {
 	int deepen_relative;
 
 	unsigned int timeout;					/* v0 only */
-	int multi_ack;						/* v0 only */
+	enum {
+		NO_MULTI_ACK = 0,
+		MULTI_ACK = 1,
+		MULTI_ACK_DETAILED = 2
+	} multi_ack;						/* v0 only */
 
 	/* 0 for no sideband, otherwise DEFAULT_PACKET_MAX or LARGE_PACKET_MAX */
 	int use_sideband;
@@ -441,7 +445,7 @@ static int get_common_commits(struct upload_pack_data *data,
 		reset_timeout(data->timeout);
 
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL) {
-			if (data->multi_ack == 2
+			if (data->multi_ack == MULTI_ACK_DETAILED
 			    && got_common
 			    && !got_other
 			    && ok_to_give_up(&data->have_obj, &data->want_obj)) {
@@ -468,7 +472,7 @@ static int get_common_commits(struct upload_pack_data *data,
 				if (data->multi_ack
 				    && ok_to_give_up(&data->have_obj, &data->want_obj)) {
 					const char *hex = oid_to_hex(&oid);
-					if (data->multi_ack == 2) {
+					if (data->multi_ack == MULTI_ACK_DETAILED) {
 						sent_ready = 1;
 						packet_write_fmt(1, "ACK %s ready\n", hex);
 					} else
@@ -478,7 +482,7 @@ static int get_common_commits(struct upload_pack_data *data,
 			default:
 				got_common = 1;
 				oid_to_hex_r(last_hex, &oid);
-				if (data->multi_ack == 2)
+				if (data->multi_ack == MULTI_ACK_DETAILED)
 					packet_write_fmt(1, "ACK %s common\n", last_hex);
 				else if (data->multi_ack)
 					packet_write_fmt(1, "ACK %s continue\n", last_hex);
@@ -958,9 +962,9 @@ static void receive_needs(struct upload_pack_data *data,
 		if (parse_feature_request(features, "deepen-relative"))
 			data->deepen_relative = 1;
 		if (parse_feature_request(features, "multi_ack_detailed"))
-			data->multi_ack = 2;
+			data->multi_ack = MULTI_ACK_DETAILED;
 		else if (parse_feature_request(features, "multi_ack"))
-			data->multi_ack = 1;
+			data->multi_ack = MULTI_ACK;
 		if (parse_feature_request(features, "no-done"))
 			data->no_done = 1;
 		if (parse_feature_request(features, "thin-pack"))
