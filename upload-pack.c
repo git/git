@@ -55,7 +55,6 @@ static int shallow_nr;
 static struct object_array extra_edge_obj;
 static const char *pack_objects_hook;
 
-static int allow_filter;
 static int allow_ref_in_want;
 
 static int allow_sideband_all;
@@ -102,6 +101,7 @@ struct upload_pack_data {
 	unsigned use_ofs_delta : 1;
 	unsigned no_progress : 1;
 	unsigned use_include_tag : 1;
+	unsigned allow_filter : 1;
 
 	unsigned done : 1;					/* v2 only */
 };
@@ -984,7 +984,8 @@ static void receive_needs(struct upload_pack_data *data,
 			data->no_progress = 1;
 		if (parse_feature_request(features, "include-tag"))
 			data->use_include_tag = 1;
-		if (allow_filter && parse_feature_request(features, "filter"))
+		if (data->allow_filter &&
+		    parse_feature_request(features, "filter"))
 			data->filter_capability_requested = 1;
 
 		o = parse_object(the_repository, &oid_buf);
@@ -1090,7 +1091,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 				     " allow-reachable-sha1-in-want" : "",
 			     data->stateless_rpc ? " no-done" : "",
 			     symref_info.buf,
-			     allow_filter ? " filter" : "",
+			     data->allow_filter ? " filter" : "",
 			     git_user_agent_sanitized());
 		strbuf_release(&symref_info);
 	} else {
@@ -1142,7 +1143,7 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 		if (!data->keepalive)
 			data->keepalive = -1;
 	} else if (!strcmp("uploadpack.allowfilter", var)) {
-		allow_filter = git_config_bool(var, value);
+		data->allow_filter = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowrefinwant", var)) {
 		allow_ref_in_want = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowsidebandall", var)) {
@@ -1334,7 +1335,7 @@ static void process_args(struct packet_reader *request,
 			continue;
 		}
 
-		if (allow_filter && skip_prefix(arg, "filter ", &p)) {
+		if (data->allow_filter && skip_prefix(arg, "filter ", &p)) {
 			list_objects_filter_die_if_populated(&data->filter_options);
 			parse_list_objects_filter(&data->filter_options, p);
 			continue;
