@@ -45,8 +45,6 @@
 static timestamp_t oldest_have;
 
 static int multi_ack;
-static int no_done;
-static int daemon_mode;
 /* Allow specifying sha1 if it is a ref tip. */
 #define ALLOW_TIP_SHA1	01
 /* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
@@ -56,7 +54,6 @@ static int daemon_mode;
 static unsigned int allow_unadvertised_object_request;
 static int shallow_nr;
 static struct object_array extra_edge_obj;
-static unsigned int timeout;
 static int keepalive = 5;
 /* 0 for no sideband,
  * otherwise maximum packet size (up to 65520 bytes).
@@ -88,11 +85,15 @@ struct upload_pack_data {
 	int deepen_rev_list;
 	int deepen_relative;
 
+	unsigned int timeout;					/* v0 only */
+
 	struct list_objects_filter_options filter_options;
 
 	struct packet_writer writer;
 
 	unsigned stateless_rpc : 1;				/* v0 only */
+	unsigned no_done : 1;					/* v0 only */
+	unsigned daemon_mode : 1;				/* v0 only */
 
 	unsigned use_thin_pack : 1;
 	unsigned use_ofs_delta : 1;
@@ -135,7 +136,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	list_objects_filter_release(&data->filter_options);
 }
 
-static void reset_timeout(void)
+static void reset_timeout(unsigned int timeout)
 {
 	alarm(timeout);
 }
@@ -251,7 +252,7 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 		int pe, pu, pollsize;
 		int ret;
 
-		reset_timeout();
+		reset_timeout(pack_data->timeout);
 
 		pollsize = 0;
 		pe = pu = -1;
@@ -433,7 +434,7 @@ static int get_common_commits(struct upload_pack_data *data,
 	for (;;) {
 		const char *arg;
 
-		reset_timeout();
+		reset_timeout(data->timeout);
 
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL) {
 			if (multi_ack == 2
@@ -446,7 +447,7 @@ static int get_common_commits(struct upload_pack_data *data,
 			if (data->have_obj.nr == 0 || multi_ack)
 				packet_write_fmt(1, "NAK\n");
 
-			if (no_done && sent_ready) {
+			if (data->no_done && sent_ready) {
 				packet_write_fmt(1, "ACK %s\n", last_hex);
 				return 0;
 			}
@@ -924,7 +925,7 @@ static void receive_needs(struct upload_pack_data *data,
 		struct object_id oid_buf;
 		const char *arg;
 
-		reset_timeout();
+		reset_timeout(data->timeout);
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
@@ -957,7 +958,7 @@ static void receive_needs(struct upload_pack_data *data,
 		else if (parse_feature_request(features, "multi_ack"))
 			multi_ack = 1;
 		if (parse_feature_request(features, "no-done"))
-			no_done = 1;
+			data->no_done = 1;
 		if (parse_feature_request(features, "thin-pack"))
 			data->use_thin_pack = 1;
 		if (parse_feature_request(features, "ofs-delta"))
@@ -1000,7 +1001,7 @@ static void receive_needs(struct upload_pack_data *data,
 	if (has_non_tip)
 		check_non_tip(data);
 
-	if (!use_sideband && daemon_mode)
+	if (!use_sideband && data->daemon_mode)
 		data->no_progress = 1;
 
 	if (data->depth == 0 && !data->deepen_rev_list && data->shallows.nr == 0)
@@ -1149,19 +1150,18 @@ void upload_pack(struct upload_pack_options *options)
 	struct packet_reader reader;
 	struct upload_pack_data data;
 
-	timeout = options->timeout;
-	daemon_mode = options->daemon_mode;
-
 	git_config(upload_pack_config, NULL);
 
 	upload_pack_data_init(&data);
 
 	data.stateless_rpc = options->stateless_rpc;
+	data.daemon_mode = options->daemon_mode;
+	data.timeout = options->timeout;
 
 	head_ref_namespaced(find_symref, &data.symref);
 
 	if (options->advertise_refs || !data.stateless_rpc) {
-		reset_timeout();
+		reset_timeout(data.timeout);
 		head_ref_namespaced(send_ref, &data);
 		for_each_namespaced_ref(send_ref, &data);
 		advertise_shallow_grafts(1);
