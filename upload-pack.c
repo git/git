@@ -44,7 +44,6 @@
 
 static timestamp_t oldest_have;
 
-static int multi_ack;
 /* Allow specifying sha1 if it is a ref tip. */
 #define ALLOW_TIP_SHA1	01
 /* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
@@ -81,6 +80,7 @@ struct upload_pack_data {
 	int deepen_relative;
 
 	unsigned int timeout;					/* v0 only */
+	int multi_ack;						/* v0 only */
 
 	/* 0 for no sideband, otherwise DEFAULT_PACKET_MAX or LARGE_PACKET_MAX */
 	int use_sideband;
@@ -441,14 +441,14 @@ static int get_common_commits(struct upload_pack_data *data,
 		reset_timeout(data->timeout);
 
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL) {
-			if (multi_ack == 2
+			if (data->multi_ack == 2
 			    && got_common
 			    && !got_other
 			    && ok_to_give_up(&data->have_obj, &data->want_obj)) {
 				sent_ready = 1;
 				packet_write_fmt(1, "ACK %s ready\n", last_hex);
 			}
-			if (data->have_obj.nr == 0 || multi_ack)
+			if (data->have_obj.nr == 0 || data->multi_ack)
 				packet_write_fmt(1, "NAK\n");
 
 			if (data->no_done && sent_ready) {
@@ -465,10 +465,10 @@ static int get_common_commits(struct upload_pack_data *data,
 			switch (got_oid(arg, &oid, &data->have_obj)) {
 			case -1: /* they have what we do not */
 				got_other = 1;
-				if (multi_ack
+				if (data->multi_ack
 				    && ok_to_give_up(&data->have_obj, &data->want_obj)) {
 					const char *hex = oid_to_hex(&oid);
-					if (multi_ack == 2) {
+					if (data->multi_ack == 2) {
 						sent_ready = 1;
 						packet_write_fmt(1, "ACK %s ready\n", hex);
 					} else
@@ -478,9 +478,9 @@ static int get_common_commits(struct upload_pack_data *data,
 			default:
 				got_common = 1;
 				oid_to_hex_r(last_hex, &oid);
-				if (multi_ack == 2)
+				if (data->multi_ack == 2)
 					packet_write_fmt(1, "ACK %s common\n", last_hex);
-				else if (multi_ack)
+				else if (data->multi_ack)
 					packet_write_fmt(1, "ACK %s continue\n", last_hex);
 				else if (data->have_obj.nr == 1)
 					packet_write_fmt(1, "ACK %s\n", last_hex);
@@ -490,7 +490,7 @@ static int get_common_commits(struct upload_pack_data *data,
 		}
 		if (!strcmp(reader->line, "done")) {
 			if (data->have_obj.nr > 0) {
-				if (multi_ack)
+				if (data->multi_ack)
 					packet_write_fmt(1, "ACK %s\n", last_hex);
 				return 0;
 			}
@@ -958,9 +958,9 @@ static void receive_needs(struct upload_pack_data *data,
 		if (parse_feature_request(features, "deepen-relative"))
 			data->deepen_relative = 1;
 		if (parse_feature_request(features, "multi_ack_detailed"))
-			multi_ack = 2;
+			data->multi_ack = 2;
 		else if (parse_feature_request(features, "multi_ack"))
-			multi_ack = 1;
+			data->multi_ack = 1;
 		if (parse_feature_request(features, "no-done"))
 			data->no_done = 1;
 		if (parse_feature_request(features, "thin-pack"))
