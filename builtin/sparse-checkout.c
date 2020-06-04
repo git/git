@@ -99,6 +99,10 @@ static int update_working_directory(struct pattern_list *pl)
 	struct lock_file lock_file = LOCK_INIT;
 	struct repository *r = the_repository;
 
+	/* If no branch has been checked out, there are no updates to make. */
+	if (is_index_unborn(r->index))
+		return UPDATE_SPARSITY_SUCCESS;
+
 	memset(&o, 0, sizeof(o));
 	o.verbose_update = isatty(2);
 	o.update = 1;
