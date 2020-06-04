@@ -55,10 +55,6 @@ static unsigned int allow_unadvertised_object_request;
 static int shallow_nr;
 static struct object_array extra_edge_obj;
 static int keepalive = 5;
-/* 0 for no sideband,
- * otherwise maximum packet size (up to 65520 bytes).
- */
-static int use_sideband;
 static const char *pack_objects_hook;
 
 static int filter_capability_requested;
@@ -86,6 +82,9 @@ struct upload_pack_data {
 	int deepen_relative;
 
 	unsigned int timeout;					/* v0 only */
+
+	/* 0 for no sideband, otherwise DEFAULT_PACKET_MAX or LARGE_PACKET_MAX */
+	int use_sideband;
 
 	struct list_objects_filter_options filter_options;
 
@@ -141,7 +140,8 @@ static void reset_timeout(unsigned int timeout)
 	alarm(timeout);
 }
 
-static void send_client_data(int fd, const char *data, ssize_t sz)
+static void send_client_data(int fd, const char *data, ssize_t sz,
+			     int use_sideband)
 {
 	if (use_sideband) {
 		send_sideband(1, fd, data, sz, use_sideband);
@@ -290,7 +290,8 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 			sz = xread(pack_objects.err, progress,
 				  sizeof(progress));
 			if (0 < sz)
-				send_client_data(2, progress, sz);
+				send_client_data(2, progress, sz,
+						 pack_data->use_sideband);
 			else if (sz == 0) {
 				close(pack_objects.err);
 				pack_objects.err = -1;
@@ -333,7 +334,8 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 			}
 			else
 				buffered = -1;
-			send_client_data(1, data, sz);
+			send_client_data(1, data, sz,
+					 pack_data->use_sideband);
 		}
 
 		/*
@@ -346,7 +348,7 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 		 * protocol to say anything, so those clients are just out of
 		 * luck.
 		 */
-		if (!ret && use_sideband) {
+		if (!ret && pack_data->use_sideband) {
 			static const char buf[] = "0005\1";
 			write_or_die(1, buf, 5);
 		}
@@ -360,15 +362,17 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 	/* flush the data */
 	if (0 <= buffered) {
 		data[0] = buffered;
-		send_client_data(1, data, 1);
+		send_client_data(1, data, 1,
+				 pack_data->use_sideband);
 		fprintf(stderr, "flushed.\n");
 	}
-	if (use_sideband)
+	if (pack_data->use_sideband)
 		packet_flush(1);
 	return;
 
  fail:
-	send_client_data(3, abort_msg, sizeof(abort_msg));
+	send_client_data(3, abort_msg, sizeof(abort_msg),
+			 pack_data->use_sideband);
 	die("git upload-pack: %s", abort_msg);
 }
 
@@ -964,9 +968,9 @@ static void receive_needs(struct upload_pack_data *data,
 		if (parse_feature_request(features, "ofs-delta"))
 			data->use_ofs_delta = 1;
 		if (parse_feature_request(features, "side-band-64k"))
-			use_sideband = LARGE_PACKET_MAX;
+			data->use_sideband = LARGE_PACKET_MAX;
 		else if (parse_feature_request(features, "side-band"))
-			use_sideband = DEFAULT_PACKET_MAX;
+			data->use_sideband = DEFAULT_PACKET_MAX;
 		if (parse_feature_request(features, "no-progress"))
 			data->no_progress = 1;
 		if (parse_feature_request(features, "include-tag"))
@@ -1001,7 +1005,7 @@ static void receive_needs(struct upload_pack_data *data,
 	if (has_non_tip)
 		check_non_tip(data);
 
-	if (!use_sideband && data->daemon_mode)
+	if (!data->use_sideband && data->daemon_mode)
 		data->no_progress = 1;
 
 	if (data->depth == 0 && !data->deepen_rev_list && data->shallows.nr == 0)
@@ -1486,7 +1490,7 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 	git_config(upload_pack_config, NULL);
 
 	upload_pack_data_init(&data);
-	use_sideband = LARGE_PACKET_MAX;
+	data.use_sideband = LARGE_PACKET_MAX;
 
 	while (state != FETCH_DONE) {
 		switch (state) {
