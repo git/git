@@ -53,7 +53,6 @@ static timestamp_t oldest_have;
 static unsigned int allow_unadvertised_object_request;
 static int shallow_nr;
 static struct object_array extra_edge_obj;
-static int keepalive = 5;
 static const char *pack_objects_hook;
 
 static int allow_filter;
@@ -78,6 +77,7 @@ struct upload_pack_data {
 	timestamp_t deepen_since;
 	int deepen_rev_list;
 	int deepen_relative;
+	int keepalive;
 
 	unsigned int timeout;					/* v0 only */
 	enum {
@@ -125,6 +125,8 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	data->shallows = shallows;
 	data->deepen_not = deepen_not;
 	packet_writer_init(&data->writer, 1);
+
+	data->keepalive = 5;
 }
 
 static void upload_pack_data_clear(struct upload_pack_data *data)
@@ -253,7 +255,7 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 
 	while (1) {
 		struct pollfd pfd[2];
-		int pe, pu, pollsize;
+		int pe, pu, pollsize, polltimeout;
 		int ret;
 
 		reset_timeout(pack_data->timeout);
@@ -277,8 +279,11 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 		if (!pollsize)
 			break;
 
-		ret = poll(pfd, pollsize,
-			keepalive < 0 ? -1 : 1000 * keepalive);
+		polltimeout = pack_data->keepalive < 0
+			? -1
+			: 1000 * pack_data->keepalive;
+
+		ret = poll(pfd, pollsize, polltimeout);
 
 		if (ret < 0) {
 			if (errno != EINTR) {
@@ -1115,6 +1120,8 @@ static int find_symref(const char *refname, const struct object_id *oid,
 
 static int upload_pack_config(const char *var, const char *value, void *cb_data)
 {
+	struct upload_pack_data *data = cb_data;
+
 	if (!strcmp("uploadpack.allowtipsha1inwant", var)) {
 		if (git_config_bool(var, value))
 			allow_unadvertised_object_request |= ALLOW_TIP_SHA1;
@@ -1131,9 +1138,9 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 		else
 			allow_unadvertised_object_request &= ~ALLOW_ANY_SHA1;
 	} else if (!strcmp("uploadpack.keepalive", var)) {
-		keepalive = git_config_int(var, value);
-		if (!keepalive)
-			keepalive = -1;
+		data->keepalive = git_config_int(var, value);
+		if (!data->keepalive)
+			data->keepalive = -1;
 	} else if (!strcmp("uploadpack.allowfilter", var)) {
 		allow_filter = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowrefinwant", var)) {
