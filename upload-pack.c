@@ -70,12 +70,16 @@ static int allow_ref_in_want;
 
 static int allow_sideband_all;
 
+/*
+ * Please annotate, and if possible group together, fields used only
+ * for protocol v0 or only for protocol v2.
+ */
 struct upload_pack_data {
-	struct string_list symref;
-	struct string_list wanted_refs;
+	struct string_list symref;				/* v0 only */
 	struct object_array want_obj;
 	struct object_array have_obj;
-	struct oid_array haves;
+	struct oid_array haves;					/* v2 only */
+	struct string_list wanted_refs;				/* v2 only */
 
 	struct object_array shallows;
 	struct string_list deepen_not;
@@ -88,13 +92,14 @@ struct upload_pack_data {
 
 	struct packet_writer writer;
 
-	unsigned stateless_rpc : 1;
+	unsigned stateless_rpc : 1;				/* v0 only */
 
 	unsigned use_thin_pack : 1;
 	unsigned use_ofs_delta : 1;
 	unsigned no_progress : 1;
 	unsigned use_include_tag : 1;
-	unsigned done : 1;
+
+	unsigned done : 1;					/* v2 only */
 };
 
 static void upload_pack_data_init(struct upload_pack_data *data)
