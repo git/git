@@ -453,6 +453,17 @@ int ie_modified(struct index_state *istate,
 	 * then we know it is.
 	 */
 	if ((changed & DATA_CHANGED) &&
+#ifdef GIT_WINDOWS_NATIVE
+	    /*
+	     * Work around Git for Windows v2.27.0 fixing a bug where symlinks'
+	     * target path lengths were not read at all, and instead recorded
+	     * as 4096: now, all symlinks would appear as modified.
+	     *
+	     * So let's just special-case symlinks with a target path length
+	     * (i.e. `sd_size`) of 4096 and force them to be re-checked.
+	     */
+	    (!S_ISLNK(st->st_mode) || ce->ce_stat_data.sd_size != MAX_LONG_PATH) &&
+#endif
 	    (S_ISGITLINK(ce->ce_mode) || ce->ce_stat_data.sd_size != 0))
 		return changed;
 
