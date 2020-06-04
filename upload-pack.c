@@ -53,7 +53,6 @@ static timestamp_t oldest_have;
 static unsigned int allow_unadvertised_object_request;
 static int shallow_nr;
 static struct object_array extra_edge_obj;
-static const char *pack_objects_hook;
 
 /*
  * Please annotate, and if possible group together, fields used only
@@ -87,6 +86,8 @@ struct upload_pack_data {
 	struct list_objects_filter_options filter_options;
 
 	struct packet_writer writer;
+
+	const char *pack_objects_hook;
 
 	unsigned stateless_rpc : 1;				/* v0 only */
 	unsigned no_done : 1;					/* v0 only */
@@ -137,6 +138,8 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	object_array_clear(&data->shallows);
 	string_list_clear(&data->deepen_not, 0);
 	list_objects_filter_release(&data->filter_options);
+
+	free((char *)data->pack_objects_hook);
 }
 
 static void reset_timeout(unsigned int timeout)
@@ -181,10 +184,10 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 	int i;
 	FILE *pipe_fd;
 
-	if (!pack_objects_hook)
+	if (!pack_data->pack_objects_hook)
 		pack_objects.git_cmd = 1;
 	else {
-		argv_array_push(&pack_objects.args, pack_objects_hook);
+		argv_array_push(&pack_objects.args, pack_data->pack_objects_hook);
 		argv_array_push(&pack_objects.args, "git");
 		pack_objects.use_shell = 1;
 	}
@@ -1153,7 +1156,7 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 	if (current_config_scope() != CONFIG_SCOPE_LOCAL &&
 	current_config_scope() != CONFIG_SCOPE_WORKTREE) {
 		if (!strcmp("uploadpack.packobjectshook", var))
-			return git_config_string(&pack_objects_hook, var, value);
+			return git_config_string(&data->pack_objects_hook, var, value);
 	}
 
 	return parse_hide_refs_config(var, value, "uploadpack");
