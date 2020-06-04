@@ -55,8 +55,6 @@ static int shallow_nr;
 static struct object_array extra_edge_obj;
 static const char *pack_objects_hook;
 
-static int allow_sideband_all;
-
 /*
  * Please annotate, and if possible group together, fields used only
  * for protocol v0 or only for protocol v2.
@@ -103,6 +101,7 @@ struct upload_pack_data {
 
 	unsigned done : 1;					/* v2 only */
 	unsigned allow_ref_in_want : 1;				/* v2 only */
+	unsigned allow_sideband_all : 1;			/* v2 only */
 };
 
 static void upload_pack_data_init(struct upload_pack_data *data)
@@ -1146,7 +1145,7 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 	} else if (!strcmp("uploadpack.allowrefinwant", var)) {
 		data->allow_ref_in_want = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowsidebandall", var)) {
-		allow_sideband_all = git_config_bool(var, value);
+		data->allow_sideband_all = git_config_bool(var, value);
 	} else if (!strcmp("core.precomposeunicode", var)) {
 		precomposed_unicode = git_config_bool(var, value);
 	}
@@ -1341,7 +1340,7 @@ static void process_args(struct packet_reader *request,
 		}
 
 		if ((git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
-		     allow_sideband_all) &&
+		     data->allow_sideband_all) &&
 		    !strcmp(arg, "sideband-all")) {
 			data->writer.use_sideband = 1;
 			continue;
