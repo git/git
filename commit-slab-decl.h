@@ -32,6 +32,7 @@ struct slabname {							\
 void init_ ##slabname## _with_stride(struct slabname *s, unsigned stride); \
 void init_ ##slabname(struct slabname *s);				\
 void clear_ ##slabname(struct slabname *s);				\
+void deep_clear_ ##slabname(struct slabname *s, void (*free_fn)(elemtype *ptr)); \
 elemtype *slabname## _at_peek(struct slabname *s, const struct commit *c, int add_if_missing); \
 elemtype *slabname## _at(struct slabname *s, const struct commit *c);	\
 elemtype *slabname## _peek(struct slabname *s, const struct commit *c)
