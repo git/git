@@ -125,7 +125,9 @@ test_expect_success 'setup submodules' '
 test_expect_success 'diff-tree ignores trailing slash on submodule path' '
 	git diff --name-only HEAD^ HEAD submod >expect &&
 	git diff --name-only HEAD^ HEAD submod/ >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	git diff --name-only HEAD^ HEAD -- submod/whatever >actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'diff multiple wildcard pathspecs' '
