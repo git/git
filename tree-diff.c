@@ -29,9 +29,9 @@ static struct combine_diff_path *ll_diff_tree_paths(
 	struct combine_diff_path *p, const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt);
-static int ll_diff_tree_oid(const struct object_id *old_oid,
-			    const struct object_id *new_oid,
-			    struct strbuf *base, struct diff_options *opt);
+static void ll_diff_tree_oid(const struct object_id *old_oid,
+			     const struct object_id *new_oid,
+			     struct strbuf *base, struct diff_options *opt);
 
 /*
  * Compare two tree entries, taking into account only path/S_ISDIR(mode),
@@ -679,9 +679,9 @@ static void try_to_follow_renames(const struct object_id *old_oid,
 	q->nr = 1;
 }
 
-static int ll_diff_tree_oid(const struct object_id *old_oid,
-			    const struct object_id *new_oid,
-			    struct strbuf *base, struct diff_options *opt)
+static void ll_diff_tree_oid(const struct object_id *old_oid,
+			     const struct object_id *new_oid,
+			     struct strbuf *base, struct diff_options *opt)
 {
 	struct combine_diff_path phead, *p;
 	pathchange_fn_t pathchange_old = opt->pathchange;
@@ -697,29 +697,27 @@ static int ll_diff_tree_oid(const struct object_id *old_oid,
 	}
 
 	opt->pathchange = pathchange_old;
-	return 0;
 }
 
-int diff_tree_oid(const struct object_id *old_oid,
-		  const struct object_id *new_oid,
-		  const char *base_str, struct diff_options *opt)
+void diff_tree_oid(const struct object_id *old_oid,
+		   const struct object_id *new_oid,
+		   const char *base_str, struct diff_options *opt)
 {
 	struct strbuf base;
-	int retval;
 
 	strbuf_init(&base, PATH_MAX);
 	strbuf_addstr(&base, base_str);
 
-	retval = ll_diff_tree_oid(old_oid, new_oid, &base, opt);
+	ll_diff_tree_oid(old_oid, new_oid, &base, opt);
 	if (!*base_str && opt->flags.follow_renames && diff_might_be_rename())
 		try_to_follow_renames(old_oid, new_oid, &base, opt);
 
 	strbuf_release(&base);
-
-	return retval;
 }
 
-int diff_root_tree_oid(const struct object_id *new_oid, const char *base, struct diff_options *opt)
+void diff_root_tree_oid(const struct object_id *new_oid,
+			const char *base,
+			struct diff_options *opt)
 {
-	return diff_tree_oid(NULL, new_oid, base, opt);
+	diff_tree_oid(NULL, new_oid, base, opt);
 }
