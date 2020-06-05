@@ -272,6 +272,15 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 	graph->data = graph_map;
 	graph->data_len = graph_size;
 
+	if (graph_size < GRAPH_HEADER_SIZE +
+			 (graph->num_chunks + 1) * GRAPH_CHUNKLOOKUP_WIDTH +
+			 GRAPH_FANOUT_SIZE + the_hash_algo->rawsz) {
+		error(_("commit-graph file is too small to hold %u chunks"),
+		      graph->num_chunks);
+		free(graph);
+		return NULL;
+	}
+
 	last_chunk_id = 0;
 	last_chunk_offset = 8;
 	chunk_lookup = data + 8;
@@ -279,13 +288,6 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		uint32_t chunk_id;
 		uint64_t chunk_offset;
 		int chunk_repeated = 0;
-
-		if (data + graph_size - chunk_lookup <
-		    GRAPH_CHUNKLOOKUP_WIDTH) {
-			error(_("commit-graph chunk lookup table entry missing; file may be incomplete"));
-			free(graph);
-			return NULL;
-		}
 
 		chunk_id = get_be32(chunk_lookup + 0);
 		chunk_offset = get_be64(chunk_lookup + 4);
