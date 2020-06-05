@@ -277,7 +277,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 	last_chunk_id = 0;
 	last_chunk_offset = 8;
 	chunk_lookup = data + 8;
-	for (i = 0; i < graph->num_chunks; i++) {
+	for (i = 0; i <= graph->num_chunks; i++) {
 		uint32_t chunk_id;
 		uint64_t chunk_offset;
 		int chunk_repeated = 0;
