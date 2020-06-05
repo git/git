@@ -230,8 +230,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 	const unsigned char *data, *chunk_lookup;
 	uint32_t i;
 	struct commit_graph *graph;
-	uint64_t last_chunk_offset;
-	uint32_t last_chunk_id;
+	uint64_t next_chunk_offset;
 	uint32_t graph_signature;
 	unsigned char graph_version, hash_version;
 
@@ -281,18 +280,17 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		return NULL;
 	}
 
-	last_chunk_id = 0;
-	last_chunk_offset = 8;
 	chunk_lookup = data + 8;
-	for (i = 0; i <= graph->num_chunks; i++) {
+	next_chunk_offset = get_be64(chunk_lookup + 4);
+	for (i = 0; i < graph->num_chunks; i++) {
 		uint32_t chunk_id;
-		uint64_t chunk_offset;
+		uint64_t chunk_offset = next_chunk_offset;
 		int chunk_repeated = 0;
 
 		chunk_id = get_be32(chunk_lookup + 0);
-		chunk_offset = get_be64(chunk_lookup + 4);
 
 		chunk_lookup += GRAPH_CHUNKLOOKUP_WIDTH;
+		next_chunk_offset = get_be64(chunk_lookup + 4);
 
 		if (chunk_offset > graph_size - the_hash_algo->rawsz) {
 			error(_("commit-graph improper chunk offset %08x%08x"), (uint32_t)(chunk_offset >> 32),
@@ -312,8 +310,11 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		case GRAPH_CHUNKID_OIDLOOKUP:
 			if (graph->chunk_oid_lookup)
 				chunk_repeated = 1;
-			else
+			else {
 				graph->chunk_oid_lookup = data + chunk_offset;
+				graph->num_commits = (next_chunk_offset - chunk_offset)
+						     / graph->hash_len;
+			}
 			break;
 
 		case GRAPH_CHUNKID_DATA:
@@ -368,15 +369,6 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 			free(graph);
 			return NULL;
 		}
-
-		if (last_chunk_id == GRAPH_CHUNKID_OIDLOOKUP)
-		{
-			graph->num_commits = (chunk_offset - last_chunk_offset)
-					     / graph->hash_len;
-		}
-
-		last_chunk_id = chunk_id;
-		last_chunk_offset = chunk_offset;
 	}
 
 	if (graph->chunk_bloom_indexes && graph->chunk_bloom_data) {
