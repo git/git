@@ -597,6 +597,18 @@ int fscache_lstat(const char *filename, struct stat *st)
 	if (!fse)
 		return -1;
 
+	/*
+	 * Special case symbolic links: FindFirstFile()/FindNextFile() did not
+	 * provide us with the length of the target path.
+	 */
+	if (fse->u.s.st_size == MAX_LONG_PATH && S_ISLNK(fse->st_mode)) {
+		char buf[MAX_LONG_PATH];
+		int len = readlink(filename, buf, sizeof(buf) - 1);
+
+		if (len > 0)
+			fse->u.s.st_size = len;
+	}
+
 	/* copy stat data */
 	st->st_ino = 0;
 	st->st_gid = 0;
