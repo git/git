@@ -76,19 +76,19 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 	ssize_t read_result;
 
 	if (!is_directory(git_path("worktrees/%s", id))) {
-		strbuf_addf(reason, _("Removing worktrees/%s: not a valid directory"), id);
+		strbuf_addstr(reason, _("not a valid directory"));
 		return 1;
 	}
 	if (file_exists(git_path("worktrees/%s/locked", id)))
 		return 0;
 	if (stat(git_path("worktrees/%s/gitdir", id), &st)) {
-		strbuf_addf(reason, _("Removing worktrees/%s: gitdir file does not exist"), id);
+		strbuf_addstr(reason, _("gitdir file does not exist"));
 		return 1;
 	}
 	fd = open(git_path("worktrees/%s/gitdir", id), O_RDONLY);
 	if (fd < 0) {
-		strbuf_addf(reason, _("Removing worktrees/%s: unable to read gitdir file (%s)"),
-			    id, strerror(errno));
+		strbuf_addf(reason, _("unable to read gitdir file (%s)"),
+			    strerror(errno));
 		return 1;
 	}
 	len = xsize_t(st.st_size);
@@ -96,8 +96,8 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 
 	read_result = read_in_full(fd, path, len);
 	if (read_result < 0) {
-		strbuf_addf(reason, _("Removing worktrees/%s: unable to read gitdir file (%s)"),
-			    id, strerror(errno));
+		strbuf_addf(reason, _("unable to read gitdir file (%s)"),
+			    strerror(errno));
 		close(fd);
 		free(path);
 		return 1;
@@ -106,15 +106,15 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 
 	if (read_result != len) {
 		strbuf_addf(reason,
-			    _("Removing worktrees/%s: short read (expected %"PRIuMAX" bytes, read %"PRIuMAX")"),
-			    id, (uintmax_t)len, (uintmax_t)read_result);
+			    _("short read (expected %"PRIuMAX" bytes, read %"PRIuMAX")"),
+			    (uintmax_t)len, (uintmax_t)read_result);
 		free(path);
 		return 1;
 	}
 	while (len && (path[len - 1] == '\n' || path[len - 1] == '\r'))
 		len--;
 	if (!len) {
-		strbuf_addf(reason, _("Removing worktrees/%s: invalid gitdir file"), id);
+		strbuf_addstr(reason, _("invalid gitdir file"));
 		free(path);
 		return 1;
 	}
@@ -123,7 +123,7 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 		free(path);
 		if (stat(git_path("worktrees/%s/index", id), &st) ||
 		    st.st_mtime <= expire) {
-			strbuf_addf(reason, _("Removing worktrees/%s: gitdir file points to non-existent location"), id);
+			strbuf_addstr(reason, _("gitdir file points to non-existent location"));
 			return 1;
 		} else {
 			return 0;
@@ -147,7 +147,8 @@ static void prune_worktrees(void)
 		if (!prune_worktree(d->d_name, &reason))
 			continue;
 		if (show_only || verbose)
-			printf("%s\n", reason.buf);
+			printf_ln(_("Removing %s/%s: %s"),
+				  "worktrees", d->d_name, reason.buf);
 		if (show_only)
 			continue;
 		delete_git_dir(d->d_name);
