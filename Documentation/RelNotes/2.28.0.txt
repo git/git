@@ -16,6 +16,8 @@ UI, Workflows & Features
  * The commands in the "diff" family learned to honor "diff.relative"
    configuration variable.
 
+ * The check in "git fsck" to ensure that the tree objects are sorted
+   still had corner cases it missed unsorted entries.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -30,6 +32,17 @@ Performance, Internal Implementation, Development Support etc.
    time.  Start using -Wno-universal-initializer option to squelch
    it (the latest sparse has it on by default).
 
+ * "git log -L..." now takes advantage of the "which paths are touched
+   by this commit?" info stored in the commit-graph system.
+
+ * As FreeBSD is not the only platform whose regexp library reports
+   a REG_ILLSEQ error when fed invalid UTF-8, add logic to detect that
+   automatically and skip the affected tests.
+
+ * "git bugreport" learns to report what shell is in use.
+
+ * Support for GIT_CURL_VERBOSE has been rewritten in terms of
+   GIT_TRACE_CURL.
 
 
 Fixes since v2.27
@@ -46,6 +59,24 @@ Fixes since v2.27
    option to pass these nonsense timestamps intact to allow recreating
    existing repositories as-is.
    (merge d42a2fb72f en/fast-import-looser-date later to maint).
+
+ * The command line completion script (in contrib/) tried to complete
+   "git stash -p" as if it were "git stash push -p", but it was too
+   aggressive and also affected "git stash show -p", which has been
+   corrected.
+   (merge fffd0cf520 vs/complete-stash-show-p-fix later to maint).
+
+ * On-the-wire protocol v2 easily falls into a deadlock between the
+   remote-curl helper and the fetch-pack process when the server side
+   prematurely throws an error and disconnects.  The communication has
+   been updated to make it more robust.
+
+ * "git checkout -p" did not handle a newly added path at all.
+   (merge 2c8bd8471a js/checkout-p-new-file later to maint).
+
+ * The code to parse "git bisect start" command line was lax in
+   validating the arguments.
+   (merge 4d9005ff5d cb/bisect-helper-parser-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
