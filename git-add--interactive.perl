@@ -754,16 +754,18 @@ sub parse_diff_header {
 	my $head = { TEXT => [], DISPLAY => [], TYPE => 'header' };
 	my $mode = { TEXT => [], DISPLAY => [], TYPE => 'mode' };
 	my $deletion = { TEXT => [], DISPLAY => [], TYPE => 'deletion' };
+	my $addition = { TEXT => [], DISPLAY => [], TYPE => 'addition' };
 
 	for (my $i = 0; $i < @{$src->{TEXT}}; $i++) {
 		my $dest =
 		   $src->{TEXT}->[$i] =~ /^(old|new) mode (\d+)$/ ? $mode :
 		   $src->{TEXT}->[$i] =~ /^deleted file/ ? $deletion :
+		   $src->{TEXT}->[$i] =~ /^new file/ ? $addition :
 		   $head;
 		push @{$dest->{TEXT}}, $src->{TEXT}->[$i];
 		push @{$dest->{DISPLAY}}, $src->{DISPLAY}->[$i];
 	}
-	return ($head, $mode, $deletion);
+	return ($head, $mode, $deletion, $addition);
 }
 
 sub hunk_splittable {
@@ -1427,46 +1429,55 @@ my %patch_update_prompt_modes = (
 	stage => {
 		mode => N__("Stage mode change [y,n,q,a,d%s,?]? "),
 		deletion => N__("Stage deletion [y,n,q,a,d%s,?]? "),
+		addition => N__("Stage addition [y,n,q,a,d%s,?]? "),
 		hunk => N__("Stage this hunk [y,n,q,a,d%s,?]? "),
 	},
 	stash => {
 		mode => N__("Stash mode change [y,n,q,a,d%s,?]? "),
 		deletion => N__("Stash deletion [y,n,q,a,d%s,?]? "),
+		addition => N__("Stash addition [y,n,q,a,d%s,?]? "),
 		hunk => N__("Stash this hunk [y,n,q,a,d%s,?]? "),
 	},
 	reset_head => {
 		mode => N__("Unstage mode change [y,n,q,a,d%s,?]? "),
 		deletion => N__("Unstage deletion [y,n,q,a,d%s,?]? "),
+		addition => N__("Unstage addition [y,n,q,a,d%s,?]? "),
 		hunk => N__("Unstage this hunk [y,n,q,a,d%s,?]? "),
 	},
 	reset_nothead => {
 		mode => N__("Apply mode change to index [y,n,q,a,d%s,?]? "),
 		deletion => N__("Apply deletion to index [y,n,q,a,d%s,?]? "),
+		addition => N__("Apply addition to index [y,n,q,a,d%s,?]? "),
 		hunk => N__("Apply this hunk to index [y,n,q,a,d%s,?]? "),
 	},
 	checkout_index => {
 		mode => N__("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Discard addition from worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
 	},
 	checkout_head => {
 		mode => N__("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Discard addition from index and worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	checkout_nothead => {
 		mode => N__("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Apply addition to index and worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	worktree_head => {
 		mode => N__("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Discard addition from worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
 	},
 	worktree_nothead => {
 		mode => N__("Apply mode change to worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Apply deletion to worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Apply addition to worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Apply this hunk to worktree [y,n,q,a,d%s,?]? "),
 	},
 );
@@ -1476,7 +1487,7 @@ sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
-	($head, my $mode, my $deletion) = parse_diff_header($head);
+	($head, my $mode, my $deletion, my $addition) = parse_diff_header($head);
 	for (@{$head->{DISPLAY}}) {
 		print;
 	}
@@ -1490,6 +1501,12 @@ sub patch_update_file {
 			push @{$deletion->{DISPLAY}}, @{$hunk->{DISPLAY}};
 		}
 		@hunk = ($deletion);
+	} elsif (@{$addition->{TEXT}}) {
+		foreach my $hunk (@hunk) {
+			push @{$addition->{TEXT}}, @{$hunk->{TEXT}};
+			push @{$addition->{DISPLAY}}, @{$hunk->{DISPLAY}};
+		}
+		@hunk = ($addition);
 	}
 
 	$num = scalar @hunk;

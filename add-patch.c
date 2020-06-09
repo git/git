@@ -10,7 +10,7 @@
 #include "prompt.h"
 
 enum prompt_mode_type {
-	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_HUNK,
+	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_ADDITION, PROMPT_HUNK,
 	PROMPT_MODE_MAX, /* must be last */
 };
 
@@ -33,6 +33,7 @@ static struct patch_mode patch_mode_add = {
 	.prompt_mode = {
 		N_("Stage mode change [y,n,q,a,d%s,?]? "),
 		N_("Stage deletion [y,n,q,a,d%s,?]? "),
+		N_("Stage addition [y,n,q,a,d%s,?]? "),
 		N_("Stage this hunk [y,n,q,a,d%s,?]? ")
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -54,6 +55,7 @@ static struct patch_mode patch_mode_stash = {
 	.prompt_mode = {
 		N_("Stash mode change [y,n,q,a,d%s,?]? "),
 		N_("Stash deletion [y,n,q,a,d%s,?]? "),
+		N_("Stash addition [y,n,q,a,d%s,?]? "),
 		N_("Stash this hunk [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -77,6 +79,7 @@ static struct patch_mode patch_mode_reset_head = {
 	.prompt_mode = {
 		N_("Unstage mode change [y,n,q,a,d%s,?]? "),
 		N_("Unstage deletion [y,n,q,a,d%s,?]? "),
+		N_("Unstage addition [y,n,q,a,d%s,?]? "),
 		N_("Unstage this hunk [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -99,6 +102,7 @@ static struct patch_mode patch_mode_reset_nothead = {
 	.prompt_mode = {
 		N_("Apply mode change to index [y,n,q,a,d%s,?]? "),
 		N_("Apply deletion to index [y,n,q,a,d%s,?]? "),
+		N_("Apply addition to index [y,n,q,a,d%s,?]? "),
 		N_("Apply this hunk to index [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -121,6 +125,7 @@ static struct patch_mode patch_mode_checkout_index = {
 	.prompt_mode = {
 		N_("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
 		N_("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard addition from worktree [y,n,q,a,d%s,?]? "),
 		N_("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -143,6 +148,7 @@ static struct patch_mode patch_mode_checkout_head = {
 	.prompt_mode = {
 		N_("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
 		N_("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard addition from index and worktree [y,n,q,a,d%s,?]? "),
 		N_("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -164,6 +170,7 @@ static struct patch_mode patch_mode_checkout_nothead = {
 	.prompt_mode = {
 		N_("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
 		N_("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply addition to index and worktree [y,n,q,a,d%s,?]? "),
 		N_("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -186,6 +193,7 @@ static struct patch_mode patch_mode_worktree_head = {
 	.prompt_mode = {
 		N_("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
 		N_("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard addition from index and worktree [y,n,q,a,d%s,?]? "),
 		N_("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -207,6 +215,7 @@ static struct patch_mode patch_mode_worktree_nothead = {
 	.prompt_mode = {
 		N_("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
 		N_("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply addition to index and worktree [y,n,q,a,d%s,?]? "),
 		N_("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
@@ -248,7 +257,7 @@ struct add_p_state {
 		struct hunk head;
 		struct hunk *hunk;
 		size_t hunk_nr, hunk_alloc;
-		unsigned deleted:1, mode_change:1,binary:1;
+		unsigned deleted:1, added:1, mode_change:1,binary:1;
 	} *file_diff;
 	size_t file_diff_nr;
 
@@ -442,7 +451,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	pend = p + plain->len;
 	while (p != pend) {
 		char *eol = memchr(p, '\n', pend - p);
-		const char *deleted = NULL, *mode_change = NULL;
+		const char *deleted = NULL, *added = NULL, *mode_change = NULL;
 
 		if (!eol)
 			eol = pend;
@@ -461,11 +470,12 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		} else if (p == plain->buf)
 			BUG("diff starts with unexpected line:\n"
 			    "%.*s\n", (int)(eol - p), p);
-		else if (file_diff->deleted)
+		else if (file_diff->deleted || file_diff->added)
 			; /* keep the rest of the file in a single "hunk" */
 		else if (starts_with(p, "@@ ") ||
 			 (hunk == &file_diff->head &&
-			  skip_prefix(p, "deleted file", &deleted))) {
+			  (skip_prefix(p, "deleted file", &deleted) ||
+			   skip_prefix(p, "new file", &added)))) {
 			if (marker == '-' || marker == '+')
 				/*
 				 * Should not happen; previous hunk did not end
@@ -485,6 +495,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 
 			if (deleted)
 				file_diff->deleted = 1;
+			else if (added)
+				file_diff->added = 1;
 			else if (parse_hunk_header(s, hunk) < 0)
 				return -1;
 
@@ -537,8 +549,10 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			   starts_with(p, "Binary files "))
 			file_diff->binary = 1;
 
-		if (file_diff->deleted && file_diff->mode_change)
-			BUG("diff contains delete *and* a mode change?!?\n%.*s",
+		if (!!file_diff->deleted + !!file_diff->added +
+		    !!file_diff->mode_change > 1)
+			BUG("diff can only contain delete *or* add *or* a "
+			    "mode change?!?\n%.*s",
 			    (int)(eol - (plain->buf + file_diff->head.start)),
 			    plain->buf + file_diff->head.start);
 
@@ -1397,6 +1411,8 @@ static int patch_update_file(struct add_p_state *s,
 
 		if (file_diff->deleted)
 			prompt_mode_type = PROMPT_DELETION;
+		else if (file_diff->added)
+			prompt_mode_type = PROMPT_ADDITION;
 		else if (file_diff->mode_change && !hunk_index)
 			prompt_mode_type = PROMPT_MODE_CHANGE;
 		else

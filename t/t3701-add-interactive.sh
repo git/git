@@ -412,6 +412,25 @@ test_expect_success 'deleting an empty file' '
 	diff_cmp expected diff
 '
 
+test_expect_success 'adding an empty file' '
+	git init added &&
+	(
+		cd added &&
+		test_commit initial &&
+		>empty &&
+		git add empty &&
+		test_tick &&
+		git commit -m empty &&
+		git tag added-file &&
+		git reset --hard HEAD^ &&
+		test_path_is_missing empty &&
+
+		echo y | git checkout -p added-file -- >actual &&
+		test_path_is_file empty &&
+		test_i18ngrep "Apply addition to index and worktree" actual
+	)
+'
+
 test_expect_success 'split hunk setup' '
 	git reset --hard &&
 	test_write_lines 10 20 30 40 50 60 >test &&
