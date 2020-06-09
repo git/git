@@ -46,10 +46,7 @@ void sort_and_merge_range_set(struct range_set *);
 struct line_log_data {
 	struct line_log_data *next;
 	char *path;
-	char status;
 	struct range_set ranges;
-	int arg_alloc, arg_nr;
-	const char **args;
 	struct diff_filepair *pair;
 	struct diff_ranges diff;
 };
@@ -57,6 +54,8 @@ struct line_log_data {
 void line_log_init(struct rev_info *rev, const char *prefix, struct string_list *args);
 
 int line_log_filter(struct rev_info *rev);
+int line_log_process_ranges_arbitrary_commit(struct rev_info *rev,
+						    struct commit *commit);
 
 int line_log_print(struct rev_info *rev, struct commit *commit);
 

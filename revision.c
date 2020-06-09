@@ -39,6 +39,8 @@ static const char *term_good;
 
 implement_shared_commit_slab(revision_sources, char *);
 
+static inline int want_ancestry(const struct rev_info *revs);
+
 void show_object_with_name(FILE *out, struct object *obj, const char *name)
 {
 	const char *p;
@@ -685,6 +687,9 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 
 	revs->bloom_filter_settings = revs->repo->objects->commit_graph->bloom_filter_settings;
 	if (!revs->bloom_filter_settings)
+		return;
+
+	if (!revs->pruning.pathspec.nr)
 		return;
 
 	pi = &revs->pruning.pathspec.items[0];
@@ -2810,6 +2815,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (revs->diffopt.objfind)
 		revs->simplify_history = 0;
 
+	if (revs->line_level_traverse) {
+		if (want_ancestry(revs))
+			revs->limited = 1;
+		revs->topo_order = 1;
+	}
+
 	if (revs->topo_order && !generation_numbers_enabled(the_repository))
 		revs->limited = 1;
 
@@ -2828,11 +2839,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		die("--combined-all-paths makes no sense without -c or --cc");
 
 	revs->diffopt.abbrev = revs->abbrev;
-
-	if (revs->line_level_traverse) {
-		revs->limited = 1;
-		revs->topo_order = 1;
-	}
 
 	diff_setup_done(&revs->diffopt);
 
@@ -3521,7 +3527,7 @@ int prepare_revision_walk(struct rev_info *revs)
 				       FOR_EACH_OBJECT_PROMISOR_ONLY);
 	}
 
-	if (revs->pruning.pathspec.nr == 1 && !revs->reflog_info)
+	if (!revs->reflog_info)
 		prepare_to_use_bloom_filter(revs);
 	if (revs->no_walk != REVISION_WALK_NO_WALK_UNSORTED)
 		commit_list_sort_by_date(&revs->commits);
@@ -3534,7 +3540,14 @@ int prepare_revision_walk(struct rev_info *revs)
 			sort_in_topological_order(&revs->commits, revs->sort_order);
 	} else if (revs->topo_order)
 		init_topo_walk(revs);
-	if (revs->line_level_traverse)
+	if (revs->line_level_traverse && want_ancestry(revs))
+		/*
+		 * At the moment we can only do line-level log with parent
+		 * rewriting by performing this expensive pre-filtering step.
+		 * If parent rewriting is not requested, then we rather
+		 * perform the line-level log filtering during the regular
+		 * history traversal.
+		 */
 		line_log_filter(revs);
 	if (revs->simplify_merges)
 		simplify_merges(revs);
@@ -3745,6 +3758,22 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 		return commit_ignore;
 	if (commit->object.flags & UNINTERESTING)
 		return commit_ignore;
+	if (revs->line_level_traverse && !want_ancestry(revs)) {
+		/*
+		 * In case of line-level log with parent rewriting
+		 * prepare_revision_walk() already took care of all line-level
+		 * log filtering, and there is nothing left to do here.
+		 *
+		 * If parent rewriting was not requested, then this is the
+		 * place to perform the line-level log filtering.  Notably,
+		 * this check, though expensive, must come before the other,
+		 * cheaper filtering conditions, because the tracked line
+		 * ranges must be adjusted even when the commit will end up
+		 * being ignored based on other conditions.
+		 */
+		if (!line_log_process_ranges_arbitrary_commit(revs, commit))
+			return commit_ignore;
+	}
 	if (revs->min_age != -1 &&
 	    comparison_date(revs, commit) > revs->min_age)
 			return commit_ignore;

@@ -138,6 +138,11 @@ void fill_bloom_key(const char *data,
 		key->hashes[i] = hash0 + i * hash1;
 }
 
+void clear_bloom_key(struct bloom_key *key)
+{
+	FREE_AND_NULL(key->hashes);
+}
+
 void add_key_to_filter(const struct bloom_key *key,
 		       struct bloom_filter *filter,
 		       const struct bloom_filter_settings *settings)

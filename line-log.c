@@ -15,6 +15,7 @@
 #include "userdiff.h"
 #include "line-log.h"
 #include "argv-array.h"
+#include "bloom.h"
 
 static void range_set_grow(struct range_set *rs, size_t extra)
 {
@@ -1146,6 +1147,37 @@ int line_log_print(struct rev_info *rev, struct commit *commit)
 	return 1;
 }
 
+static int bloom_filter_check(struct rev_info *rev,
+			      struct commit *commit,
+			      struct line_log_data *range)
+{
+	struct bloom_filter *filter;
+	struct bloom_key key;
+	int result = 0;
+
+	if (!commit->parents)
+		return 1;
+
+	if (!rev->bloom_filter_settings ||
+	    !(filter = get_bloom_filter(rev->repo, commit, 0)))
+		return 1;
+
+	if (!range)
+		return 0;
+
+	while (!result && range) {
+		fill_bloom_key(range->path, strlen(range->path), &key, rev->bloom_filter_settings);
+
+		if (bloom_filter_contains(filter, &key, rev->bloom_filter_settings))
+			result = 1;
+
+		clear_bloom_key(&key);
+		range = range->next;
+	}
+
+	return result;
+}
+
 static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *commit,
 					  struct line_log_data *range)
 {
@@ -1159,6 +1191,7 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 
 	queue_diffs(range, &rev->diffopt, &queue, commit, parent);
 	changed = process_all_files(&parent_range, rev, &queue, range);
+
 	if (parent)
 		add_line_range(rev, parent, parent_range);
 	free_line_log_data(parent_range);
@@ -1227,13 +1260,17 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	/* NEEDSWORK leaking like a sieve */
 }
 
-static int process_ranges_arbitrary_commit(struct rev_info *rev, struct commit *commit)
+int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit *commit)
 {
 	struct line_log_data *range = lookup_line_range(rev, commit);
 	int changed = 0;
 
 	if (range) {
-		if (!commit->parents || !commit->parents->next)
+		if (commit->parents && !bloom_filter_check(rev, commit, range)) {
+			struct line_log_data *prange = line_log_data_copy(range);
+			add_line_range(rev, commit->parents->item, prange);
+			clear_commit_line_range(rev, commit);
+		} else if (!commit->parents || !commit->parents->next)
 			changed = process_ranges_ordinary_commit(rev, commit, range);
 		else
 			changed = process_ranges_merge_commit(rev, commit, range);
@@ -1270,7 +1307,7 @@ int line_log_filter(struct rev_info *rev)
 	while (list) {
 		struct commit_list *to_free = NULL;
 		commit = list->item;
-		if (process_ranges_arbitrary_commit(rev, commit)) {
+		if (line_log_process_ranges_arbitrary_commit(rev, commit)) {
 			*pp = list;
 			pp = &list->next;
 		} else

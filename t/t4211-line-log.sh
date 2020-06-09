@@ -215,4 +215,72 @@ test_expect_success 'fancy rename following #2' '
 	test_cmp expect actual
 '
 
+# Create the following linear history, where each commit does what its
+# subject line promises:
+#
+#   * 66c6410 Modify func2() in file.c
+#   * 50834e5 Modify other-file
+#   * fe5851c Modify func1() in file.c
+#   * 8c7c7dd Add other-file
+#   * d5f4417 Add func1() and func2() in file.c
+test_expect_success 'setup for checking line-log and parent oids' '
+	git checkout --orphan parent-oids &&
+	git reset --hard &&
+
+	cat >file.c <<-\EOF &&
+	int func1()
+	{
+	    return F1;
+	}
+
+	int func2()
+	{
+	    return F2;
+	}
+	EOF
+	git add file.c &&
+	test_tick &&
+	git commit -m "Add func1() and func2() in file.c" &&
+
+	echo 1 >other-file &&
+	git add other-file &&
+	git commit -m "Add other-file" &&
+
+	sed -e "s/F1/F1 + 1/" file.c >tmp &&
+	mv tmp file.c &&
+	git commit -a -m "Modify func1() in file.c" &&
+
+	echo 2 >other-file &&
+	git commit -a -m "Modify other-file" &&
+
+	sed -e "s/F2/F2 + 2/" file.c >tmp &&
+	mv tmp file.c &&
+	git commit -a -m "Modify func2() in file.c" &&
+
+	head_oid=$(git rev-parse --short HEAD) &&
+	prev_oid=$(git rev-parse --short HEAD^) &&
+	root_oid=$(git rev-parse --short HEAD~4)
+'
+
+# Parent oid should be from immediate parent.
+test_expect_success 'parent oids without parent rewriting' '
+	cat >expect <<-EOF &&
+	$head_oid $prev_oid Modify func2() in file.c
+	$root_oid  Add func1() and func2() in file.c
+	EOF
+	git log --format="%h %p %s" --no-patch -L:func2:file.c >actual &&
+	test_cmp expect actual
+'
+
+# Parent oid should be from the most recent ancestor touching func2(),
+# i.e. in this case from the root commit.
+test_expect_success 'parent oids with parent rewriting' '
+	cat >expect <<-EOF &&
+	$head_oid $root_oid Modify func2() in file.c
+	$root_oid  Add func1() and func2() in file.c
+	EOF
+	git log --format="%h %p %s" --no-patch -L:func2:file.c --parents >actual &&
+	test_cmp expect actual
+'
+
 test_done
