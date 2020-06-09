@@ -598,7 +598,7 @@ static int verify_ordered(unsigned mode1, const char *name1,
 
 	/*
 	 * There can be non-consecutive duplicates due to the implicitly
-	 * add slash, e.g.:
+	 * added slash, e.g.:
 	 *
 	 *   foo
 	 *   foo.bar
@@ -620,7 +620,7 @@ static int verify_ordered(unsigned mode1, const char *name1,
 			if (!f_name)
 				break;
 			if (!skip_prefix(name2, f_name, &p))
-				break;
+				continue;
 			if (!*p)
 				return TREE_HAS_DUPS;
 			if (is_less_than_slash(*p)) {
