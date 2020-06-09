@@ -1464,7 +1464,7 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
 	if (0 < verbosity || getenv("GIT_CURL_VERBOSE"))
-		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+		http_trace_curl_no_data();
 	setup_curl_trace(curl);
 
 	return curl;
