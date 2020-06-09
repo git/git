@@ -866,7 +866,9 @@ test_expect_success 'bisect cannot mix terms' '
 
 test_expect_success 'bisect terms rejects invalid terms' '
 	git bisect reset &&
+	test_must_fail git bisect start --term-good &&
 	test_must_fail git bisect start --term-good invalid..term &&
+	test_must_fail git bisect start --term-bad &&
 	test_must_fail git bisect terms --term-bad invalid..term &&
 	test_must_fail git bisect terms --term-good bad &&
 	test_must_fail git bisect terms --term-good old &&
