@@ -601,6 +601,8 @@ static int rpc_read_from_out(struct rpc_state *rpc, int options,
 		case PACKET_READ_FLUSH:
 			memcpy(buf - 4, "0000", 4);
 			break;
+		case PACKET_READ_RESPONSE_END:
+			die(_("remote server sent stateless separator"));
 		}
 	}
 
@@ -643,7 +645,7 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 			return 0;
 		}
 		/*
-		 * If avail is non-zerp, the line length for the flush still
+		 * If avail is non-zero, the line length for the flush still
 		 * hasn't been fully sent. Proceed with sending the line
 		 * length.
 		 */
@@ -679,9 +681,55 @@ static curlioerr rpc_ioctl(CURL *handle, int cmd, void *clientp)
 }
 #endif
 
+struct check_pktline_state {
+	char len_buf[4];
+	int len_filled;
+	int remaining;
+};
+
+static void check_pktline(struct check_pktline_state *state, const char *ptr, size_t size)
+{
+	while (size) {
+		if (!state->remaining) {
+			int digits_remaining = 4 - state->len_filled;
+			if (digits_remaining > size)
+				digits_remaining = size;
+			memcpy(&state->len_buf[state->len_filled], ptr, digits_remaining);
+			state->len_filled += digits_remaining;
+			ptr += digits_remaining;
+			size -= digits_remaining;
+
+			if (state->len_filled == 4) {
+				state->remaining = packet_length(state->len_buf);
+				if (state->remaining < 0) {
+					die(_("remote-curl: bad line length character: %.4s"), state->len_buf);
+				} else if (state->remaining == 2) {
+					die(_("remote-curl: unexpected response end packet"));
+				} else if (state->remaining < 4) {
+					state->remaining = 0;
+				} else {
+					state->remaining -= 4;
+				}
+				state->len_filled = 0;
+			}
+		}
+
+		if (state->remaining) {
+			int remaining = state->remaining;
+			if (remaining > size)
+				remaining = size;
+			ptr += remaining;
+			size -= remaining;
+			state->remaining -= remaining;
+		}
+	}
+}
+
 struct rpc_in_data {
 	struct rpc_state *rpc;
 	struct active_request_slot *slot;
+	int check_pktline;
+	struct check_pktline_state pktline_state;
 };
 
 /*
@@ -702,6 +750,8 @@ static size_t rpc_in(char *ptr, size_t eltsize,
 		return size;
 	if (size)
 		data->rpc->any_written = 1;
+	if (data->check_pktline)
+		check_pktline(&data->pktline_state, ptr, size);
 	write_or_die(data->rpc->in, ptr, size);
 	return size;
 }
@@ -778,7 +828,7 @@ static curl_off_t xcurl_off_t(size_t len)
  * If flush_received is true, do not attempt to read any more; just use what's
  * in rpc->buf.
  */
-static int post_rpc(struct rpc_state *rpc, int flush_received)
+static int post_rpc(struct rpc_state *rpc, int stateless_connect, int flush_received)
 {
 	struct active_request_slot *slot;
 	struct curl_slist *headers = http_copy_default_headers();
@@ -920,6 +970,8 @@ retry:
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, rpc_in);
 	rpc_in_data.rpc = rpc;
 	rpc_in_data.slot = slot;
+	rpc_in_data.check_pktline = stateless_connect;
+	memset(&rpc_in_data.pktline_state, 0, sizeof(rpc_in_data.pktline_state));
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &rpc_in_data);
 	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
 
@@ -935,6 +987,14 @@ retry:
 
 	if (!rpc->any_written)
 		err = -1;
+
+	if (rpc_in_data.pktline_state.len_filled)
+		err = error(_("%d bytes of length header were received"), rpc_in_data.pktline_state.len_filled);
+	if (rpc_in_data.pktline_state.remaining)
+		err = error(_("%d bytes of body are still expected"), rpc_in_data.pktline_state.remaining);
+
+	if (stateless_connect)
+		packet_response_end(rpc->in);
 
 	curl_slist_free_all(headers);
 	free(gzip_body);
@@ -985,7 +1045,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 			break;
 		rpc->pos = 0;
 		rpc->len = n;
-		err |= post_rpc(rpc, 0);
+		err |= post_rpc(rpc, 0, 0);
 	}
 
 	close(client.in);
@@ -1276,7 +1336,7 @@ static void parse_push(struct strbuf *buf)
 	if (ret)
 		exit(128); /* error already reported */
 
- free_specs:
+free_specs:
 	argv_array_clear(&specs);
 }
 
@@ -1342,7 +1402,7 @@ static int stateless_connect(const char *service_name)
 			BUG("The entire rpc->buf should be larger than LARGE_PACKET_MAX");
 		if (status == PACKET_READ_EOF)
 			break;
-		if (post_rpc(&rpc, status == PACKET_READ_FLUSH))
+		if (post_rpc(&rpc, 1, status == PACKET_READ_FLUSH))
 			/* We would have an err here */
 			break;
 		/* Reset the buffer for next request */

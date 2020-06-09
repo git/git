@@ -99,6 +99,13 @@ void packet_delim(int fd)
 		die_errno(_("unable to write delim packet"));
 }
 
+void packet_response_end(int fd)
+{
+	packet_trace("0002", 4, 1);
+	if (write_in_full(fd, "0002", 4) < 0)
+		die_errno(_("unable to write stateless separator packet"));
+}
+
 int packet_flush_gently(int fd)
 {
 	packet_trace("0000", 4, 1);
@@ -306,10 +313,10 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 	return ret;
 }
 
-static int packet_length(const char *linelen)
+int packet_length(const char lenbuf_hex[4])
 {
-	int val = hex2chr(linelen);
-	return (val < 0) ? val : (val << 8) | hex2chr(linelen + 2);
+	int val = hex2chr(lenbuf_hex);
+	return (val < 0) ? val : (val << 8) | hex2chr(lenbuf_hex + 2);
 }
 
 enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
@@ -337,6 +344,10 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 		packet_trace("0001", 4, 0);
 		*pktlen = 0;
 		return PACKET_READ_DELIM;
+	} else if (len == 2) {
+		packet_trace("0002", 4, 0);
+		*pktlen = 0;
+		return PACKET_READ_RESPONSE_END;
 	} else if (len < 4) {
 		die(_("protocol error: bad line length %d"), len);
 	}

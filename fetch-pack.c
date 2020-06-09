@@ -1451,6 +1451,13 @@ enum fetch_state {
 	FETCH_DONE,
 };
 
+static void do_check_stateless_delimiter(const struct fetch_pack_args *args,
+					 struct packet_reader *reader)
+{
+	check_stateless_delimiter(args->stateless_rpc, reader,
+				  _("git fetch-pack: expected response end packet"));
+}
+
 static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				    int fd[2],
 				    const struct ref *orig_ref,
@@ -1535,6 +1542,10 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			/* Process ACKs/NAKs */
 			switch (process_acks(negotiator, &reader, &common)) {
 			case READY:
+				/*
+				 * Don't check for response delimiter; get_pack() will
+				 * read the rest of this response.
+				 */
 				state = FETCH_GET_PACK;
 				break;
 			case COMMON_FOUND:
@@ -1542,6 +1553,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				seen_ack = 1;
 				/* fallthrough */
 			case NO_COMMON_FOUND:
+				do_check_stateless_delimiter(args, &reader);
 				state = FETCH_SEND_REQUEST;
 				break;
 			}
@@ -1561,6 +1573,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			process_section_header(&reader, "packfile", 0);
 			if (get_pack(args, fd, pack_lockfile, sought, nr_sought))
 				die(_("git fetch-pack: fetch failed."));
+			do_check_stateless_delimiter(args, &reader);
 
 			state = FETCH_DONE;
 			break;

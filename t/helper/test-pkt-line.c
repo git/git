@@ -46,6 +46,9 @@ static void unpack(void)
 		case PACKET_READ_DELIM:
 			printf("0001\n");
 			break;
+		case PACKET_READ_RESPONSE_END:
+			printf("0002\n");
+			break;
 		}
 	}
 }
@@ -75,6 +78,7 @@ static void unpack_sideband(void)
 		case PACKET_READ_FLUSH:
 			return;
 		case PACKET_READ_DELIM:
+		case PACKET_READ_RESPONSE_END:
 			break;
 		}
 	}

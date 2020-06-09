@@ -297,7 +297,8 @@ static struct ref *handshake(struct transport *transport, int for_push,
 		if (must_list_refs)
 			get_remote_refs(data->fd[1], &reader, &refs, for_push,
 					ref_prefixes,
-					transport->server_options);
+					transport->server_options,
+					transport->stateless_rpc);
 		break;
 	case protocol_v1:
 	case protocol_v0:
@@ -369,24 +370,15 @@ static int fetch_refs_via_pack(struct transport *transport,
 		refs_tmp = handshake(transport, 0, NULL, must_list_refs);
 	}
 
-	switch (data->version) {
-	case protocol_v2:
-		refs = fetch_pack(&args, data->fd,
-				  refs_tmp ? refs_tmp : transport->remote_refs,
-				  to_fetch, nr_heads, &data->shallow,
-				  &transport->pack_lockfile, data->version);
-		break;
-	case protocol_v1:
-	case protocol_v0:
-		die_if_server_options(transport);
-		refs = fetch_pack(&args, data->fd,
-				  refs_tmp ? refs_tmp : transport->remote_refs,
-				  to_fetch, nr_heads, &data->shallow,
-				  &transport->pack_lockfile, data->version);
-		break;
-	case protocol_unknown_version:
+	if (data->version == protocol_unknown_version)
 		BUG("unknown protocol version");
-	}
+	else if (data->version <= protocol_v1)
+		die_if_server_options(transport);
+
+	refs = fetch_pack(&args, data->fd,
+			  refs_tmp ? refs_tmp : transport->remote_refs,
+			  to_fetch, nr_heads, &data->shallow,
+			  &transport->pack_lockfile, data->version);
 
 	close(data->fd[0]);
 	close(data->fd[1]);

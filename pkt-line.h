@@ -22,6 +22,7 @@
  */
 void packet_flush(int fd);
 void packet_delim(int fd);
+void packet_response_end(int fd);
 void packet_write_fmt(int fd, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
 void packet_buf_flush(struct strbuf *buf);
 void packet_buf_delim(struct strbuf *buf);
@@ -75,6 +76,15 @@ int packet_read(int fd, char **src_buffer, size_t *src_len, char
 		*buffer, unsigned size, int options);
 
 /*
+ * Convert a four hex digit packet line length header into its numeric
+ * representation.
+ *
+ * If lenbuf_hex contains non-hex characters, return -1. Otherwise, return the
+ * numeric value of the length header.
+ */
+int packet_length(const char lenbuf_hex[4]);
+
+/*
  * Read a packetized line into a buffer like the 'packet_read()' function but
  * returns an 'enum packet_read_status' which indicates the status of the read.
  * The number of bytes read will be assigned to *pktlen if the status of the
@@ -85,6 +95,7 @@ enum packet_read_status {
 	PACKET_READ_NORMAL,
 	PACKET_READ_FLUSH,
 	PACKET_READ_DELIM,
+	PACKET_READ_RESPONSE_END,
 };
 enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 						size_t *src_len, char *buffer,
