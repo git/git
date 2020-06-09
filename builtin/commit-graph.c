@@ -6,6 +6,8 @@
 #include "repository.h"
 #include "commit-graph.h"
 #include "object-store.h"
+#include "progress.h"
+#include "tag.h"
 
 static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
@@ -138,14 +140,37 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 	return 0;
 }
 
+static int read_one_commit(struct oidset *commits, struct progress *progress,
+			   const char *hash)
+{
+	struct object *result;
+	struct object_id oid;
+	const char *end;
+
+	if (parse_oid_hex(hash, &oid, &end))
+		return error(_("unexpected non-hex object ID: %s"), hash);
+
+	result = deref_tag(the_repository, parse_object(the_repository, &oid),
+			   NULL, 0);
+	if (!result)
+		return error(_("invalid object: %s"), hash);
+	else if (object_as_type(the_repository, result, OBJ_COMMIT, 1))
+		oidset_insert(commits, &result->oid);
+
+	display_progress(progress, oidset_size(commits));
+
+	return 0;
+}
+
 static int graph_write(int argc, const char **argv)
 {
-	struct string_list *pack_indexes = NULL;
+	struct string_list pack_indexes = STRING_LIST_INIT_NODUP;
+	struct strbuf buf = STRBUF_INIT;
 	struct oidset commits = OIDSET_INIT;
 	struct object_directory *odb = NULL;
-	struct string_list lines;
 	int result = 0;
 	enum commit_graph_write_flags flags = 0;
+	struct progress *progress = NULL;
 
 	static struct option builtin_commit_graph_write_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
@@ -209,44 +234,38 @@ static int graph_write(int argc, const char **argv)
 		return 0;
 	}
 
-	string_list_init(&lines, 0);
-	if (opts.stdin_packs || opts.stdin_commits) {
-		struct strbuf buf = STRBUF_INIT;
-
+	if (opts.stdin_packs) {
 		while (strbuf_getline(&buf, stdin) != EOF)
-			string_list_append(&lines, strbuf_detach(&buf, NULL));
+			string_list_append(&pack_indexes,
+					   strbuf_detach(&buf, NULL));
+	} else if (opts.stdin_commits) {
+		oidset_init(&commits, 0);
+		if (opts.progress)
+			progress = start_delayed_progress(
+				_("Collecting commits from input"), 0);
 
-		if (opts.stdin_packs)
-			pack_indexes = &lines;
-		if (opts.stdin_commits) {
-			struct string_list_item *item;
-			oidset_init(&commits, lines.nr);
-			for_each_string_list_item(item, &lines) {
-				struct object_id oid;
-				const char *end;
-
-				if (parse_oid_hex(item->string, &oid, &end)) {
-					error(_("unexpected non-hex object ID: "
-						"%s"), item->string);
-					return 1;
-				}
-
-				oidset_insert(&commits, &oid);
+		while (strbuf_getline(&buf, stdin) != EOF) {
+			if (read_one_commit(&commits, progress, buf.buf)) {
+				result = 1;
+				goto cleanup;
 			}
-			flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
 		}
 
-		UNLEAK(buf);
+
 	}
 
 	if (write_commit_graph(odb,
-			       pack_indexes,
+			       opts.stdin_packs ? &pack_indexes : NULL,
 			       opts.stdin_commits ? &commits : NULL,
 			       flags,
 			       &split_opts))
 		result = 1;
 
-	UNLEAK(lines);
+cleanup:
+	string_list_clear(&pack_indexes, 0);
+	strbuf_release(&buf);
+	if (progress)
+		stop_progress(&progress);
 	return result;
 }
 

@@ -881,7 +881,6 @@ struct write_commit_graph_context {
 	unsigned append:1,
 		 report_progress:1,
 		 split:1,
-		 check_oids:1,
 		 changed_paths:1,
 		 order_by_pack:1;
 
@@ -1319,13 +1318,25 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 	stop_progress(&progress);
 }
 
+struct refs_cb_data {
+	struct oidset *commits;
+	struct progress *progress;
+};
+
 static int add_ref_to_set(const char *refname,
 			  const struct object_id *oid,
 			  int flags, void *cb_data)
 {
-	struct oidset *commits = (struct oidset *)cb_data;
+	struct object_id peeled;
+	struct refs_cb_data *data = (struct refs_cb_data *)cb_data;
 
-	oidset_insert(commits, oid);
+	if (!peel_ref(refname, &peeled))
+		oid = &peeled;
+	if (oid_object_info(the_repository, oid, NULL) == OBJ_COMMIT)
+		oidset_insert(data->commits, oid);
+
+	display_progress(data->progress, oidset_size(data->commits));
+
 	return 0;
 }
 
@@ -1334,13 +1345,22 @@ int write_commit_graph_reachable(struct object_directory *odb,
 				 const struct split_commit_graph_opts *split_opts)
 {
 	struct oidset commits = OIDSET_INIT;
+	struct refs_cb_data data;
 	int result;
 
-	for_each_ref(add_ref_to_set, &commits);
+	memset(&data, 0, sizeof(data));
+	data.commits = &commits;
+	if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
+		data.progress = start_delayed_progress(
+			_("Collecting referenced commits"), 0);
+
+	for_each_ref(add_ref_to_set, &data);
 	result = write_commit_graph(odb, NULL, &commits,
 				    flags, split_opts);
 
 	oidset_clear(&commits);
+	if (data.progress)
+		stop_progress(&data.progress);
 	return result;
 }
 
@@ -1392,45 +1412,18 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 static int fill_oids_from_commits(struct write_commit_graph_context *ctx,
 				  struct oidset *commits)
 {
-	uint32_t i = 0;
-	struct strbuf progress_title = STRBUF_INIT;
 	struct oidset_iter iter;
 	struct object_id *oid;
 
 	if (!oidset_size(commits))
 		return 0;
 
-	if (ctx->report_progress) {
-		strbuf_addf(&progress_title,
-			    Q_("Finding commits for commit graph from %d ref",
-			       "Finding commits for commit graph from %d refs",
-			       oidset_size(commits)),
-			    oidset_size(commits));
-		ctx->progress = start_delayed_progress(
-					progress_title.buf,
-					oidset_size(commits));
-	}
-
 	oidset_iter_init(commits, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
-		struct commit *result;
-
-		display_progress(ctx->progress, ++i);
-
-		result = lookup_commit_reference_gently(ctx->r, oid, 1);
-		if (result) {
-			ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
-			oidcpy(&ctx->oids.list[ctx->oids.nr], &(result->object.oid));
-			ctx->oids.nr++;
-		} else if (ctx->check_oids) {
-			error(_("invalid commit object id: %s"),
-			      oid_to_hex(oid));
-			return -1;
-		}
+		ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
+		oidcpy(&ctx->oids.list[ctx->oids.nr], oid);
+		ctx->oids.nr++;
 	}
-
-	stop_progress(&ctx->progress);
-	strbuf_release(&progress_title);
 
 	return 0;
 }
@@ -2017,7 +2010,6 @@ int write_commit_graph(struct object_directory *odb,
 	ctx->append = flags & COMMIT_GRAPH_WRITE_APPEND ? 1 : 0;
 	ctx->report_progress = flags & COMMIT_GRAPH_WRITE_PROGRESS ? 1 : 0;
 	ctx->split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
-	ctx->check_oids = flags & COMMIT_GRAPH_WRITE_CHECK_OIDS ? 1 : 0;
 	ctx->split_opts = split_opts;
 	ctx->changed_paths = flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS ? 1 : 0;
 	ctx->total_bloom_filter_data_size = 0;
