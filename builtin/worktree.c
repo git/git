@@ -67,7 +67,12 @@ static void delete_worktrees_dir_if_empty(void)
 	rmdir(git_path("worktrees")); /* ignore failed removal */
 }
 
-static int should_prune_worktree(const char *id, struct strbuf *reason)
+/*
+ * Return true if worktree entry should be pruned, along with the reason for
+ * pruning. Otherwise, return false and the worktree's path, or NULL if it
+ * cannot be determined. Caller is responsible for freeing returned path.
+ */
+static int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath)
 {
 	struct stat st;
 	char *path;
@@ -75,6 +80,7 @@ static int should_prune_worktree(const char *id, struct strbuf *reason)
 	size_t len;
 	ssize_t read_result;
 
+	*wtpath = NULL;
 	if (!is_directory(git_path("worktrees/%s", id))) {
 		strbuf_addstr(reason, _("not a valid directory"));
 		return 1;
@@ -120,16 +126,17 @@ static int should_prune_worktree(const char *id, struct strbuf *reason)
 	}
 	path[len] = '\0';
 	if (!file_exists(path)) {
-		free(path);
 		if (stat(git_path("worktrees/%s/index", id), &st) ||
 		    st.st_mtime <= expire) {
 			strbuf_addstr(reason, _("gitdir file points to non-existent location"));
+			free(path);
 			return 1;
 		} else {
+			*wtpath = path;
 			return 0;
 		}
 	}
-	free(path);
+	*wtpath = path;
 	return 0;
 }
 
@@ -141,22 +148,52 @@ static void prune_worktree(const char *id, const char *reason)
 		delete_git_dir(id);
 }
 
+static int prune_cmp(const void *a, const void *b)
+{
+	const struct string_list_item *x = a;
+	const struct string_list_item *y = b;
+	int c;
+
+	if ((c = fspathcmp(x->string, y->string)))
+	    return c;
+	/* paths same; sort by .git/worktrees/<id> */
+	return strcmp(x->util, y->util);
+}
+
+static void prune_dups(struct string_list *l)
+{
+	int i;
+
+	QSORT(l->items, l->nr, prune_cmp);
+	for (i = 1; i < l->nr; i++) {
+		if (!fspathcmp(l->items[i].string, l->items[i - 1].string))
+			prune_worktree(l->items[i].util, "duplicate entry");
+	}
+}
+
 static void prune_worktrees(void)
 {
 	struct strbuf reason = STRBUF_INIT;
+	struct string_list kept = STRING_LIST_INIT_NODUP;
 	DIR *dir = opendir(git_path("worktrees"));
 	struct dirent *d;
 	if (!dir)
 		return;
 	while ((d = readdir(dir)) != NULL) {
+		char *path;
 		if (is_dot_or_dotdot(d->d_name))
 			continue;
 		strbuf_reset(&reason);
-		if (!should_prune_worktree(d->d_name, &reason))
-			continue;
-		prune_worktree(d->d_name, reason.buf);
+		if (should_prune_worktree(d->d_name, &reason, &path))
+			prune_worktree(d->d_name, reason.buf);
+		else if (path)
+			string_list_append(&kept, path)->util = xstrdup(d->d_name);
 	}
 	closedir(dir);
+
+	prune_dups(&kept);
+	string_list_clear(&kept, 1);
+
 	if (!show_only)
 		delete_worktrees_dir_if_empty();
 	strbuf_release(&reason);
