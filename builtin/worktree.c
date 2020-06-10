@@ -133,6 +133,14 @@ static int should_prune_worktree(const char *id, struct strbuf *reason)
 	return 0;
 }
 
+static void prune_worktree(const char *id, const char *reason)
+{
+	if (show_only || verbose)
+		printf_ln(_("Removing %s/%s: %s"), "worktrees", id, reason);
+	if (!show_only)
+		delete_git_dir(id);
+}
+
 static void prune_worktrees(void)
 {
 	struct strbuf reason = STRBUF_INIT;
@@ -146,12 +154,7 @@ static void prune_worktrees(void)
 		strbuf_reset(&reason);
 		if (!should_prune_worktree(d->d_name, &reason))
 			continue;
-		if (show_only || verbose)
-			printf_ln(_("Removing %s/%s: %s"),
-				  "worktrees", d->d_name, reason.buf);
-		if (show_only)
-			continue;
-		delete_git_dir(d->d_name);
+		prune_worktree(d->d_name, reason.buf);
 	}
 	closedir(dir);
 	if (!show_only)
