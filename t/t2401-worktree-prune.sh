@@ -104,4 +104,16 @@ test_expect_success 'prune duplicate (linked/linked)' '
 	! test -d .git/worktrees/w2
 '
 
+test_expect_success 'prune duplicate (main/linked)' '
+	test_when_finished rm -fr repo wt &&
+	test_create_repo repo &&
+	test_commit -C repo x &&
+	git -C repo worktree add --detach ../wt &&
+	rm -fr wt &&
+	mv repo wt &&
+	git -C wt worktree prune --verbose >actual &&
+	test_i18ngrep "duplicate entry" actual &&
+	! test -d .git/worktrees/wt
+'
+
 test_done
