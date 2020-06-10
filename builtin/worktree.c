@@ -860,8 +860,7 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 		strbuf_trim_trailing_dir_sep(&dst);
 		strbuf_addstr(&dst, sep);
 	}
-	if (file_exists(dst.buf))
-		die(_("target '%s' already exists"), dst.buf);
+	check_candidate_path(dst.buf, force, worktrees, "move");
 
 	validate_no_submodules(wt);
 
