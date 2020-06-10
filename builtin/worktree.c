@@ -280,34 +280,33 @@ static const char *worktree_basename(const char *path, int *olen)
 	return name;
 }
 
-static void validate_worktree_add(const char *path, const struct add_opts *opts)
+/* check that path is viable location for worktree */
+static void check_candidate_path(const char *path,
+				 int force,
+				 struct worktree **worktrees,
+				 const char *cmd)
 {
-	struct worktree **worktrees;
 	struct worktree *wt;
 	int locked;
 
 	if (file_exists(path) && !is_empty_dir(path))
 		die(_("'%s' already exists"), path);
 
-	worktrees = get_worktrees(0);
 	wt = find_worktree_by_path(worktrees, path);
 	if (!wt)
-		goto done;
+		return;
 
 	locked = !!worktree_lock_reason(wt);
-	if ((!locked && opts->force) || (locked && opts->force > 1)) {
+	if ((!locked && force) || (locked && force > 1)) {
 		if (delete_git_dir(wt->id))
-		    die(_("unable to re-add worktree '%s'"), path);
-		goto done;
+		    die(_("unusable worktree destination '%s'"), path);
+		return;
 	}
 
 	if (locked)
-		die(_("'%s' is a missing but locked worktree;\nuse 'add -f -f' to override, or 'unlock' and 'prune' or 'remove' to clear"), path);
+		die(_("'%s' is a missing but locked worktree;\nuse '%s -f -f' to override, or 'unlock' and 'prune' or 'remove' to clear"), cmd, path);
 	else
-		die(_("'%s' is a missing but already registered worktree;\nuse 'add -f' to override, or 'prune' or 'remove' to clear"), path);
-
-done:
-	free_worktrees(worktrees);
+		die(_("'%s' is a missing but already registered worktree;\nuse '%s -f' to override, or 'prune' or 'remove' to clear"), cmd, path);
 }
 
 static int add_worktree(const char *path, const char *refname,
@@ -324,8 +323,12 @@ static int add_worktree(const char *path, const char *refname,
 	struct commit *commit = NULL;
 	int is_branch = 0;
 	struct strbuf sb_name = STRBUF_INIT;
+	struct worktree **worktrees;
 
-	validate_worktree_add(path, opts);
+	worktrees = get_worktrees(0);
+	check_candidate_path(path, opts->force, worktrees, "add");
+	free_worktrees(worktrees);
+	worktrees = NULL;
 
 	/* is 'refname' a branch or commit? */
 	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
