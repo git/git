@@ -1,7 +1,7 @@
-Core GIT Tests
+Core Git Tests
 ==============
 
-This directory holds many test scripts for core GIT tools.  The
+This directory holds many test scripts for core Git tools.  The
 first part of this short document describes how to run the tests
 and read their output.
 
@@ -1117,21 +1117,21 @@ Tips for Writing Tests
 As with any programming projects, existing programs are the best
 source of the information.  However, do _not_ emulate
 t0000-basic.sh when writing your tests.  The test is special in
-that it tries to validate the very core of GIT.  For example, it
+that it tries to validate the very core of Git.  For example, it
 knows that there will be 256 subdirectories under .git/objects/,
 and it knows that the object ID of an empty tree is a certain
 40-byte string.  This is deliberately done so in t0000-basic.sh
 because the things the very basic core test tries to achieve is
-to serve as a basis for people who are changing the GIT internal
+to serve as a basis for people who are changing the Git internals
 drastically.  For these people, after making certain changes,
 not seeing failures from the basic test _is_ a failure.  And
-such drastic changes to the core GIT that even changes these
+such drastic changes to the core Git that even changes these
 otherwise supposedly stable object IDs should be accompanied by
 an update to t0000-basic.sh.
 
 However, other tests that simply rely on basic parts of the core
-GIT working properly should not have that level of intimate
-knowledge of the core GIT internals.  If all the test scripts
+Git working properly should not have that level of intimate
+knowledge of the core Git internals.  If all the test scripts
 hardcoded the object IDs like t0000-basic.sh does, that defeats
 the purpose of t0000-basic.sh, which is to isolate that level of
 validation in one place.  Your test also ends up needing
