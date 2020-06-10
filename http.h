@@ -216,6 +216,15 @@ int http_get_info_packs(const char *base_url,
 
 struct http_pack_request {
 	char *url;
+
+	/*
+	 * If this is true, finish_http_pack_request() will pass "--keep" to
+	 * index-pack, resulting in the creation of a keep file, and will not
+	 * suppress its stdout (that is, the "keep\t<hash>\n" line will be
+	 * printed to stdout).
+	 */
+	unsigned generate_keep : 1;
+
 	FILE *packfile;
 	struct strbuf tmpfile;
 	struct active_request_slot *slot;
@@ -223,6 +232,8 @@ struct http_pack_request {
 
 struct http_pack_request *new_http_pack_request(
 	const unsigned char *packed_git_hash, const char *base_url);
+struct http_pack_request *new_direct_http_pack_request(
+	const unsigned char *packed_git_hash, char *url);
 int finish_http_pack_request(struct http_pack_request *preq);
 void release_http_pack_request(struct http_pack_request *preq);
 

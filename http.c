@@ -2281,7 +2281,13 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	argv_array_push(&ip.args, "--stdin");
 	ip.git_cmd = 1;
 	ip.in = tmpfile_fd;
-	ip.no_stdout = 1;
+	if (preq->generate_keep) {
+		argv_array_pushf(&ip.args, "--keep=git %"PRIuMAX,
+				 (uintmax_t)getpid());
+		ip.out = 0;
+	} else {
+		ip.no_stdout = 1;
+	}
 
 	if (run_command(&ip)) {
 		ret = -1;
@@ -2307,19 +2313,27 @@ void http_install_packfile(struct packed_git *p,
 }
 
 struct http_pack_request *new_http_pack_request(
-	const unsigned char *packed_git_hash, const char *base_url)
+	const unsigned char *packed_git_hash, const char *base_url) {
+
+	struct strbuf buf = STRBUF_INIT;
+
+	end_url_with_slash(&buf, base_url);
+	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
+		hash_to_hex(packed_git_hash));
+	return new_direct_http_pack_request(packed_git_hash,
+					    strbuf_detach(&buf, NULL));
+}
+
+struct http_pack_request *new_direct_http_pack_request(
+	const unsigned char *packed_git_hash, char *url)
 {
 	off_t prev_posn = 0;
-	struct strbuf buf = STRBUF_INIT;
 	struct http_pack_request *preq;
 
 	preq = xcalloc(1, sizeof(*preq));
 	strbuf_init(&preq->tmpfile, 0);
 
-	end_url_with_slash(&buf, base_url);
-	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
-		hash_to_hex(packed_git_hash));
-	preq->url = strbuf_detach(&buf, NULL);
+	preq->url = url;
 
 	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(packed_git_hash));
 	preq->packfile = fopen(preq->tmpfile.buf, "a");
