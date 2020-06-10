@@ -794,7 +794,7 @@ static void write_promisor_file(const char *keep_name,
 }
 
 static int get_pack(struct fetch_pack_args *args,
-		    int xd[2], char **pack_lockfile,
+		    int xd[2], struct string_list *pack_lockfiles,
 		    struct ref **sought, int nr_sought)
 {
 	struct async demux;
@@ -838,7 +838,7 @@ static int get_pack(struct fetch_pack_args *args,
 	}
 
 	if (do_keep || args->from_promisor) {
-		if (pack_lockfile)
+		if (pack_lockfiles)
 			cmd.out = -1;
 		cmd_name = "index-pack";
 		argv_array_push(&cmd.args, cmd_name);
@@ -863,7 +863,7 @@ static int get_pack(struct fetch_pack_args *args,
 		 * information below. If not, we need index-pack to do it for
 		 * us.
 		 */
-		if (!(do_keep && pack_lockfile) && args->from_promisor)
+		if (!(do_keep && pack_lockfiles) && args->from_promisor)
 			argv_array_push(&cmd.args, "--promisor");
 	}
 	else {
@@ -899,8 +899,9 @@ static int get_pack(struct fetch_pack_args *args,
 	cmd.git_cmd = 1;
 	if (start_command(&cmd))
 		die(_("fetch-pack: unable to fork off %s"), cmd_name);
-	if (do_keep && pack_lockfile) {
-		*pack_lockfile = index_pack_lockfile(cmd.out);
+	if (do_keep && pack_lockfiles) {
+		string_list_append_nodup(pack_lockfiles,
+					 index_pack_lockfile(cmd.out));
 		close(cmd.out);
 	}
 
@@ -922,8 +923,8 @@ static int get_pack(struct fetch_pack_args *args,
 	 * Now that index-pack has succeeded, write the promisor file using the
 	 * obtained .keep filename if necessary
 	 */
-	if (do_keep && pack_lockfile && args->from_promisor)
-		write_promisor_file(*pack_lockfile, sought, nr_sought);
+	if (do_keep && pack_lockfiles && pack_lockfiles->nr && args->from_promisor)
+		write_promisor_file(pack_lockfiles->items[0].string, sought, nr_sought);
 
 	return 0;
 }
@@ -940,7 +941,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 				 const struct ref *orig_ref,
 				 struct ref **sought, int nr_sought,
 				 struct shallow_info *si,
-				 char **pack_lockfile)
+				 struct string_list *pack_lockfiles)
 {
 	struct repository *r = the_repository;
 	struct ref *ref = copy_ref_list(orig_ref);
@@ -1067,7 +1068,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		alternate_shallow_file = setup_temporary_shallow(si->shallow);
 	else
 		alternate_shallow_file = NULL;
-	if (get_pack(args, fd, pack_lockfile, sought, nr_sought))
+	if (get_pack(args, fd, pack_lockfiles, sought, nr_sought))
 		die(_("git fetch-pack: fetch failed."));
 
  all_done:
@@ -1457,7 +1458,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				    struct ref **sought, int nr_sought,
 				    struct oid_array *shallows,
 				    struct shallow_info *si,
-				    char **pack_lockfile)
+				    struct string_list *pack_lockfiles)
 {
 	struct repository *r = the_repository;
 	struct ref *ref = copy_ref_list(orig_ref);
@@ -1559,7 +1560,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 			/* get the pack */
 			process_section_header(&reader, "packfile", 0);
-			if (get_pack(args, fd, pack_lockfile, sought, nr_sought))
+			if (get_pack(args, fd, pack_lockfiles, sought, nr_sought))
 				die(_("git fetch-pack: fetch failed."));
 
 			state = FETCH_DONE;
@@ -1759,7 +1760,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       const struct ref *ref,
 		       struct ref **sought, int nr_sought,
 		       struct oid_array *shallow,
-		       char **pack_lockfile,
+		       struct string_list *pack_lockfiles,
 		       enum protocol_version version)
 {
 	struct ref *ref_cpy;
@@ -1794,11 +1795,11 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		memset(&si, 0, sizeof(si));
 		ref_cpy = do_fetch_pack_v2(args, fd, ref, sought, nr_sought,
 					   &shallows_scratch, &si,
-					   pack_lockfile);
+					   pack_lockfiles);
 	} else {
 		prepare_shallow_info(&si, shallow);
 		ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought,
-					&si, pack_lockfile);
+					&si, pack_lockfiles);
 	}
 	reprepare_packed_git(the_repository);
 
