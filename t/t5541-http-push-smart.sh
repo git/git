@@ -464,6 +464,21 @@ test_expect_success 'push status output scrubs password' '
 	grep "^To $HTTPD_URL/smart/test_repo.git" status
 '
 
+test_expect_success 'clone/fetch scrubs password from reflogs' '
+	cd "$ROOT_PATH" &&
+	git clone "$HTTPD_URL_USER_PASS/smart/test_repo.git" \
+		reflog-test &&
+	cd reflog-test &&
+	test_commit prepare-for-force-fetch &&
+	git switch -c away &&
+	git fetch "$HTTPD_URL_USER_PASS/smart/test_repo.git" \
+		+master:master &&
+	# should have been scrubbed down to vanilla URL
+	git log -g master >reflog &&
+	grep "$HTTPD_URL" reflog &&
+	! grep "$HTTPD_URL_USER_PASS" reflog
+'
+
 test_expect_success 'colorize errors/hints' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_must_fail git -c color.transport=always -c color.advice=always \
