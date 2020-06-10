@@ -67,7 +67,7 @@ static void delete_worktrees_dir_if_empty(void)
 	rmdir(git_path("worktrees")); /* ignore failed removal */
 }
 
-static int prune_worktree(const char *id, struct strbuf *reason)
+static int should_prune_worktree(const char *id, struct strbuf *reason)
 {
 	struct stat st;
 	char *path;
@@ -144,7 +144,7 @@ static void prune_worktrees(void)
 		if (is_dot_or_dotdot(d->d_name))
 			continue;
 		strbuf_reset(&reason);
-		if (!prune_worktree(d->d_name, &reason))
+		if (!should_prune_worktree(d->d_name, &reason))
 			continue;
 		if (show_only || verbose)
 			printf_ln(_("Removing %s/%s: %s"),
