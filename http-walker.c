@@ -439,6 +439,7 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 	target = find_sha1_pack(sha1, repo->packs);
 	if (!target)
 		return -1;
+	close_pack_index(target);
 
 	if (walker->get_verbosely) {
 		fprintf(stderr, "Getting pack %s\n",
@@ -447,10 +448,9 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 			hash_to_hex(sha1));
 	}
 
-	preq = new_http_pack_request(target, repo->base);
+	preq = new_http_pack_request(target->hash, repo->base);
 	if (preq == NULL)
 		goto abort;
-	preq->lst = &repo->packs;
 	preq->slot->results = &results;
 
 	if (start_active_slot(preq->slot)) {
@@ -469,6 +469,7 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 	release_http_pack_request(preq);
 	if (ret)
 		return ret;
+	http_install_packfile(target, &repo->packs);
 
 	return 0;
 

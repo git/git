@@ -216,17 +216,24 @@ int http_get_info_packs(const char *base_url,
 
 struct http_pack_request {
 	char *url;
-	struct packed_git *target;
-	struct packed_git **lst;
 	FILE *packfile;
 	struct strbuf tmpfile;
 	struct active_request_slot *slot;
 };
 
 struct http_pack_request *new_http_pack_request(
-	struct packed_git *target, const char *base_url);
+	const unsigned char *packed_git_hash, const char *base_url);
 int finish_http_pack_request(struct http_pack_request *preq);
 void release_http_pack_request(struct http_pack_request *preq);
+
+/*
+ * Remove p from the given list, and invoke install_packed_git() on it.
+ *
+ * This is a convenience function for users that have obtained a list of packs
+ * from http_get_info_packs() and have chosen a specific pack to fetch.
+ */
+void http_install_packfile(struct packed_git *p,
+			   struct packed_git **list_to_remove_from);
 
 /* Helpers for fetching object */
 struct http_object_request {

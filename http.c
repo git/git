@@ -2268,21 +2268,12 @@ void release_http_pack_request(struct http_pack_request *preq)
 
 int finish_http_pack_request(struct http_pack_request *preq)
 {
-	struct packed_git **lst;
-	struct packed_git *p = preq->target;
 	struct child_process ip = CHILD_PROCESS_INIT;
 	int tmpfile_fd;
 	int ret = 0;
 
-	close_pack_index(p);
-
 	fclose(preq->packfile);
 	preq->packfile = NULL;
-
-	lst = preq->lst;
-	while (*lst != p)
-		lst = &((*lst)->next);
-	*lst = (*lst)->next;
 
 	tmpfile_fd = xopen(preq->tmpfile.buf, O_RDONLY);
 
@@ -2297,15 +2288,26 @@ int finish_http_pack_request(struct http_pack_request *preq)
 		goto cleanup;
 	}
 
-	install_packed_git(the_repository, p);
 cleanup:
 	close(tmpfile_fd);
 	unlink(preq->tmpfile.buf);
 	return ret;
 }
 
+void http_install_packfile(struct packed_git *p,
+			   struct packed_git **list_to_remove_from)
+{
+	struct packed_git **lst = list_to_remove_from;
+
+	while (*lst != p)
+		lst = &((*lst)->next);
+	*lst = (*lst)->next;
+
+	install_packed_git(the_repository, p);
+}
+
 struct http_pack_request *new_http_pack_request(
-	struct packed_git *target, const char *base_url)
+	const unsigned char *packed_git_hash, const char *base_url)
 {
 	off_t prev_posn = 0;
 	struct strbuf buf = STRBUF_INIT;
@@ -2313,14 +2315,13 @@ struct http_pack_request *new_http_pack_request(
 
 	preq = xcalloc(1, sizeof(*preq));
 	strbuf_init(&preq->tmpfile, 0);
-	preq->target = target;
 
 	end_url_with_slash(&buf, base_url);
 	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
-		hash_to_hex(target->hash));
+		hash_to_hex(packed_git_hash));
 	preq->url = strbuf_detach(&buf, NULL);
 
-	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(target->hash));
+	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(packed_git_hash));
 	preq->packfile = fopen(preq->tmpfile.buf, "a");
 	if (!preq->packfile) {
 		error("Unable to open local file %s for pack",
@@ -2344,7 +2345,7 @@ struct http_pack_request *new_http_pack_request(
 		if (http_is_verbose)
 			fprintf(stderr,
 				"Resuming fetch of pack %s at byte %"PRIuMAX"\n",
-				hash_to_hex(target->hash),
+				hash_to_hex(packed_git_hash),
 				(uintmax_t)prev_posn);
 		http_opt_request_remainder(preq->slot->curl, prev_posn);
 	}
