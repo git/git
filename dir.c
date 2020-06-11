@@ -1820,7 +1820,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 * to recurse into untracked/ignored directories if either of the
 	 * following bits is set:
 	 *   - DIR_SHOW_IGNORED_TOO (because then we need to determine if
-	 *                           there are ignored directories below)
+	 *                           there are ignored entries below)
 	 *   - DIR_HIDE_EMPTY_DIRECTORIES (because we have to determine if
 	 *                                 the directory is empty)
 	 */
@@ -1838,10 +1838,11 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		return path_excluded;
 
 	/*
-	 * If we have we don't want to know the all the paths under an
-	 * untracked or ignored directory, we still need to go into the
-	 * directory to determine if it is empty (because an empty directory
-	 * should be path_none instead of path_excluded or path_untracked).
+	 * Even if we don't want to know all the paths under an untracked or
+	 * ignored directory, we may still need to go into the directory to
+	 * determine if it is empty (because with DIR_HIDE_EMPTY_DIRECTORIES,
+	 * an empty directory should be path_none instead of path_excluded or
+	 * path_untracked).
 	 */
 	check_only = ((dir->flags & DIR_HIDE_EMPTY_DIRECTORIES) &&
 		      !(dir->flags & DIR_SHOW_IGNORED_TOO));
