@@ -42,8 +42,6 @@
 #define ALL_FLAGS (THEY_HAVE | OUR_REF | WANTED | COMMON_KNOWN | SHALLOW | \
 		NOT_SHALLOW | CLIENT_SHALLOW | HIDDEN_REF)
 
-static timestamp_t oldest_have;
-
 /* Enum for allowed unadvertised object request (UOR) */
 enum allow_uor {
 	/* Allow specifying sha1 if it is a ref tip. */
@@ -74,6 +72,7 @@ struct upload_pack_data {
 	int deepen_relative;
 	int keepalive;
 	int shallow_nr;
+	timestamp_t oldest_have;
 
 	unsigned int timeout;					/* v0 only */
 	enum {
@@ -414,8 +413,8 @@ static int got_oid(struct upload_pack_data *data,
 			we_knew_they_have = 1;
 		else
 			o->flags |= THEY_HAVE;
-		if (!oldest_have || (commit->date < oldest_have))
-			oldest_have = commit->date;
+		if (!data->oldest_have || (commit->date < data->oldest_have))
+			data->oldest_have = commit->date;
 		for (parents = commit->parents;
 		     parents;
 		     parents = parents->next)
@@ -436,7 +435,7 @@ static int ok_to_give_up(struct upload_pack_data *data)
 		return 0;
 
 	return can_all_from_reach_with_flag(&data->want_obj, THEY_HAVE,
-					    COMMON_KNOWN, oldest_have,
+					    COMMON_KNOWN, data->oldest_have,
 					    min_generation);
 }
 
@@ -1372,8 +1371,8 @@ static int process_haves(struct upload_pack_data *data, struct oid_array *common
 				we_knew_they_have = 1;
 			else
 				o->flags |= THEY_HAVE;
-			if (!oldest_have || (commit->date < oldest_have))
-				oldest_have = commit->date;
+			if (!data->oldest_have || (commit->date < data->oldest_have))
+				data->oldest_have = commit->date;
 			for (parents = commit->parents;
 			     parents;
 			     parents = parents->next)
