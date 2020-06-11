@@ -753,17 +753,16 @@ static void send_unshallow(struct packet_writer *writer,
 
 static int check_ref(const char *refname_full, const struct object_id *oid,
 		     int flag, void *cb_data);
-static void deepen(struct packet_writer *writer, int depth, int deepen_relative,
-		   struct object_array *shallows, struct object_array *want_obj)
+static void deepen(struct upload_pack_data *data, int depth)
 {
 	if (depth == INFINITE_DEPTH && !is_repository_shallow(the_repository)) {
 		int i;
 
-		for (i = 0; i < shallows->nr; i++) {
-			struct object *object = shallows->objects[i].item;
+		for (i = 0; i < data->shallows.nr; i++) {
+			struct object *object = data->shallows.objects[i].item;
 			object->flags |= NOT_SHALLOW;
 		}
-	} else if (deepen_relative) {
+	} else if (data->deepen_relative) {
 		struct object_array reachable_shallows = OBJECT_ARRAY_INIT;
 		struct commit_list *result;
 
@@ -774,23 +773,23 @@ static void deepen(struct packet_writer *writer, int depth, int deepen_relative,
 		head_ref_namespaced(check_ref, NULL);
 		for_each_namespaced_ref(check_ref, NULL);
 
-		get_reachable_list(shallows, &reachable_shallows);
+		get_reachable_list(&data->shallows, &reachable_shallows);
 		result = get_shallow_commits(&reachable_shallows,
 					     depth + 1,
 					     SHALLOW, NOT_SHALLOW);
-		send_shallow(writer, result);
+		send_shallow(&data->writer, result);
 		free_commit_list(result);
 		object_array_clear(&reachable_shallows);
 	} else {
 		struct commit_list *result;
 
-		result = get_shallow_commits(want_obj, depth,
+		result = get_shallow_commits(&data->want_obj, depth,
 					     SHALLOW, NOT_SHALLOW);
-		send_shallow(writer, result);
+		send_shallow(&data->writer, result);
 		free_commit_list(result);
 	}
 
-	send_unshallow(writer, shallows, want_obj);
+	send_unshallow(&data->writer, &data->shallows, &data->want_obj);
 }
 
 static void deepen_by_rev_list(struct packet_writer *writer, int ac,
@@ -815,8 +814,7 @@ static int send_shallow_list(struct upload_pack_data *data)
 	if (data->depth > 0 && data->deepen_rev_list)
 		die("git upload-pack: deepen and deepen-since (or deepen-not) cannot be used together");
 	if (data->depth > 0) {
-		deepen(&data->writer, data->depth, data->deepen_relative,
-		       &data->shallows, &data->want_obj);
+		deepen(data, data->depth);
 		ret = 1;
 	} else if (data->deepen_rev_list) {
 		struct argv_array av = ARGV_ARRAY_INIT;
@@ -1464,8 +1462,7 @@ static void send_shallow_info(struct upload_pack_data *data)
 
 	if (!send_shallow_list(data) &&
 	    is_repository_shallow(the_repository))
-		deepen(&data->writer, INFINITE_DEPTH, data->deepen_relative,
-		       &data->shallows, &data->want_obj);
+		deepen(data, INFINITE_DEPTH);
 
 	packet_delim(1);
 }
