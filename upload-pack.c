@@ -1348,14 +1348,13 @@ static void process_args(struct packet_reader *request,
 		die(_("expected flush after fetch arguments"));
 }
 
-static int process_haves(struct oid_array *haves, struct oid_array *common,
-			 struct object_array *have_obj)
+static int process_haves(struct upload_pack_data *data, struct oid_array *common)
 {
 	int i;
 
 	/* Process haves */
-	for (i = 0; i < haves->nr; i++) {
-		const struct object_id *oid = &haves->oid[i];
+	for (i = 0; i < data->haves.nr; i++) {
+		const struct object_id *oid = &data->haves.oid[i];
 		struct object *o;
 		int we_knew_they_have = 0;
 
@@ -1382,7 +1381,7 @@ static int process_haves(struct oid_array *haves, struct oid_array *common,
 				parents->item->object.flags |= THEY_HAVE;
 		}
 		if (!we_knew_they_have)
-			add_object_array(o, NULL, have_obj);
+			add_object_array(o, NULL, &data->have_obj);
 	}
 
 	return 0;
@@ -1419,7 +1418,7 @@ static int process_haves_and_send_acks(struct upload_pack_data *data)
 	struct oid_array common = OID_ARRAY_INIT;
 	int ret = 0;
 
-	process_haves(&data->haves, &common, &data->have_obj);
+	process_haves(data, &common);
 	if (data->done) {
 		ret = 1;
 	} else if (send_acks(&data->writer, &common,
