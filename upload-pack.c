@@ -792,18 +792,17 @@ static void deepen(struct upload_pack_data *data, int depth)
 	send_unshallow(&data->writer, &data->shallows, &data->want_obj);
 }
 
-static void deepen_by_rev_list(struct packet_writer *writer, int ac,
-			       const char **av,
-			       struct object_array *shallows,
-			       struct object_array *want_obj)
+static void deepen_by_rev_list(struct upload_pack_data *data,
+			       int ac,
+			       const char **av)
 {
 	struct commit_list *result;
 
 	disable_commit_graph(the_repository);
 	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
-	send_shallow(writer, result);
+	send_shallow(&data->writer, result);
 	free_commit_list(result);
-	send_unshallow(writer, shallows, want_obj);
+	send_unshallow(&data->writer, &data->shallows, &data->want_obj);
 }
 
 /* Returns 1 if a shallow list is sent or 0 otherwise */
@@ -835,8 +834,7 @@ static int send_shallow_list(struct upload_pack_data *data)
 			struct object *o = data->want_obj.objects[i].item;
 			argv_array_push(&av, oid_to_hex(&o->oid));
 		}
-		deepen_by_rev_list(&data->writer, av.argc, av.argv,
-				   &data->shallows, &data->want_obj);
+		deepen_by_rev_list(data, av.argc, av.argv);
 		argv_array_clear(&av);
 		ret = 1;
 	} else {
