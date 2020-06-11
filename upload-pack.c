@@ -1387,26 +1387,24 @@ static int process_haves(struct upload_pack_data *data, struct oid_array *common
 	return 0;
 }
 
-static int send_acks(struct packet_writer *writer, struct oid_array *acks,
-		     const struct object_array *have_obj,
-		     struct object_array *want_obj)
+static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
 {
 	int i;
 
-	packet_writer_write(writer, "acknowledgments\n");
+	packet_writer_write(&data->writer, "acknowledgments\n");
 
 	/* Send Acks */
 	if (!acks->nr)
-		packet_writer_write(writer, "NAK\n");
+		packet_writer_write(&data->writer, "NAK\n");
 
 	for (i = 0; i < acks->nr; i++) {
-		packet_writer_write(writer, "ACK %s\n",
+		packet_writer_write(&data->writer, "ACK %s\n",
 				    oid_to_hex(&acks->oid[i]));
 	}
 
-	if (ok_to_give_up(have_obj, want_obj)) {
+	if (ok_to_give_up(&data->have_obj, &data->want_obj)) {
 		/* Send Ready */
-		packet_writer_write(writer, "ready\n");
+		packet_writer_write(&data->writer, "ready\n");
 		return 1;
 	}
 
@@ -1421,8 +1419,7 @@ static int process_haves_and_send_acks(struct upload_pack_data *data)
 	process_haves(data, &common);
 	if (data->done) {
 		ret = 1;
-	} else if (send_acks(&data->writer, &common,
-			     &data->have_obj, &data->want_obj)) {
+	} else if (send_acks(data, &common)) {
 		packet_writer_delim(&data->writer);
 		ret = 1;
 	} else {
