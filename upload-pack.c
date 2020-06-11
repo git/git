@@ -44,13 +44,15 @@
 
 static timestamp_t oldest_have;
 
-/* Values for allow_unadvertised_object_request flags */
-/* Allow specifying sha1 if it is a ref tip. */
-#define ALLOW_TIP_SHA1	01
-/* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
-#define ALLOW_REACHABLE_SHA1	02
-/* Allow request of any sha1. Implies ALLOW_TIP_SHA1 and ALLOW_REACHABLE_SHA1. */
-#define ALLOW_ANY_SHA1	07
+/* Enum for allowed unadvertised object request (UOR) */
+enum allow_uor {
+	/* Allow specifying sha1 if it is a ref tip. */
+	ALLOW_TIP_SHA1 = 0x01,
+	/* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
+	ALLOW_REACHABLE_SHA1 = 0x02,
+	/* Allow request of any sha1. Implies ALLOW_TIP_SHA1 and ALLOW_REACHABLE_SHA1. */
+	ALLOW_ANY_SHA1 = 0x07
+};
 
 /*
  * Please annotate, and if possible group together, fields used only
@@ -83,8 +85,7 @@ struct upload_pack_data {
 	/* 0 for no sideband, otherwise DEFAULT_PACKET_MAX or LARGE_PACKET_MAX */
 	int use_sideband;
 
-	/* See ALLOW_* values defined above */
-	unsigned int allow_unadvertised_object_request;
+	enum allow_uor allow_uor;
 
 	struct list_objects_filter_options filter_options;
 
@@ -517,11 +518,10 @@ static int get_common_commits(struct upload_pack_data *data,
 	}
 }
 
-static int is_our_ref(struct object *o,
-		      unsigned int allow_unadvertised_object_request)
+static int is_our_ref(struct object *o, enum allow_uor allow_uor)
 {
-	int allow_hidden_ref = (allow_unadvertised_object_request &
-			(ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
+	int allow_hidden_ref = (allow_uor &
+				(ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
 	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
 }
 
@@ -531,7 +531,7 @@ static int is_our_ref(struct object *o,
 static int do_reachable_revlist(struct child_process *cmd,
 				struct object_array *src,
 				struct object_array *reachable,
-				unsigned int allow_unadvertised_object_request)
+				enum allow_uor allow_uor)
 {
 	static const char *argv[] = {
 		"rev-list", "--stdin", NULL,
@@ -565,7 +565,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 			continue;
 		if (reachable && o->type == OBJ_COMMIT)
 			o->flags &= ~TMP_MARK;
-		if (!is_our_ref(o, allow_unadvertised_object_request))
+		if (!is_our_ref(o, allow_uor))
 			continue;
 		memcpy(namebuf + 1, oid_to_hex(&o->oid), hexsz);
 		if (write_in_full(cmd->in, namebuf, hexsz + 2) < 0)
@@ -574,7 +574,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 	namebuf[hexsz] = '\n';
 	for (i = 0; i < src->nr; i++) {
 		o = src->objects[i].item;
-		if (is_our_ref(o, allow_unadvertised_object_request)) {
+		if (is_our_ref(o, allow_uor)) {
 			if (reachable)
 				add_object_array(o, NULL, reachable);
 			continue;
@@ -611,7 +611,7 @@ static int get_reachable_list(struct upload_pack_data *data,
 	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (do_reachable_revlist(&cmd, &data->shallows, reachable,
-				 data->allow_unadvertised_object_request) < 0)
+				 data->allow_uor) < 0)
 		return -1;
 
 	while ((i = read_in_full(cmd.out, namebuf, hexsz + 1)) == hexsz + 1) {
@@ -642,15 +642,13 @@ static int get_reachable_list(struct upload_pack_data *data,
 	return 0;
 }
 
-static int has_unreachable(struct object_array *src,
-			   unsigned int allow_unadvertised_object_request)
+static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	char buf[1];
 	int i;
 
-	if (do_reachable_revlist(&cmd, src, NULL,
-				 allow_unadvertised_object_request) < 0)
+	if (do_reachable_revlist(&cmd, src, NULL, allow_uor) < 0)
 		return 1;
 
 	/*
@@ -690,11 +688,9 @@ static void check_non_tip(struct upload_pack_data *data)
 	 * uploadpack.allowReachableSHA1InWant,
 	 * non-tip requests can never happen.
 	 */
-	if (!data->stateless_rpc
-	    && !(data->allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
+	if (!data->stateless_rpc && !(data->allow_uor & ALLOW_REACHABLE_SHA1))
 		goto error;
-	if (!has_unreachable(&data->want_obj,
-			     data->allow_unadvertised_object_request))
+	if (!has_unreachable(&data->want_obj, data->allow_uor))
 		/* All the non-tip ones are ancestors of what we advertised */
 		return;
 
@@ -702,7 +698,7 @@ error:
 	/* Pick one of them (we know there at least is one) */
 	for (i = 0; i < data->want_obj.nr; i++) {
 		struct object *o = data->want_obj.objects[i].item;
-		if (!is_our_ref(o, data->allow_unadvertised_object_request)) {
+		if (!is_our_ref(o, data->allow_uor)) {
 			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
 					    oid_to_hex(&o->oid));
@@ -1001,8 +997,8 @@ static void receive_needs(struct upload_pack_data *data,
 		}
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
-			if (!((data->allow_unadvertised_object_request & ALLOW_ANY_SHA1) == ALLOW_ANY_SHA1
-			      || is_our_ref(o, data->allow_unadvertised_object_request)))
+			if (!((data->allow_uor & ALLOW_ANY_SHA1) == ALLOW_ANY_SHA1
+			      || is_our_ref(o, data->allow_uor)))
 				has_non_tip = 1;
 			add_object_array(o, NULL, &data->want_obj);
 		}
@@ -1081,9 +1077,9 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		packet_write_fmt(1, "%s %s%c%s%s%s%s%s%s agent=%s\n",
 			     oid_to_hex(oid), refname_nons,
 			     0, capabilities,
-			     (data->allow_unadvertised_object_request & ALLOW_TIP_SHA1) ?
+			     (data->allow_uor & ALLOW_TIP_SHA1) ?
 				     " allow-tip-sha1-in-want" : "",
-			     (data->allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1) ?
+			     (data->allow_uor & ALLOW_REACHABLE_SHA1) ?
 				     " allow-reachable-sha1-in-want" : "",
 			     data->stateless_rpc ? " no-done" : "",
 			     symref_info.buf,
@@ -1121,19 +1117,19 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 
 	if (!strcmp("uploadpack.allowtipsha1inwant", var)) {
 		if (git_config_bool(var, value))
-			data->allow_unadvertised_object_request |= ALLOW_TIP_SHA1;
+			data->allow_uor |= ALLOW_TIP_SHA1;
 		else
-			data->allow_unadvertised_object_request &= ~ALLOW_TIP_SHA1;
+			data->allow_uor &= ~ALLOW_TIP_SHA1;
 	} else if (!strcmp("uploadpack.allowreachablesha1inwant", var)) {
 		if (git_config_bool(var, value))
-			data->allow_unadvertised_object_request |= ALLOW_REACHABLE_SHA1;
+			data->allow_uor |= ALLOW_REACHABLE_SHA1;
 		else
-			data->allow_unadvertised_object_request &= ~ALLOW_REACHABLE_SHA1;
+			data->allow_uor &= ~ALLOW_REACHABLE_SHA1;
 	} else if (!strcmp("uploadpack.allowanysha1inwant", var)) {
 		if (git_config_bool(var, value))
-			data->allow_unadvertised_object_request |= ALLOW_ANY_SHA1;
+			data->allow_uor |= ALLOW_ANY_SHA1;
 		else
-			data->allow_unadvertised_object_request &= ~ALLOW_ANY_SHA1;
+			data->allow_uor &= ~ALLOW_ANY_SHA1;
 	} else if (!strcmp("uploadpack.keepalive", var)) {
 		data->keepalive = git_config_int(var, value);
 		if (!data->keepalive)
