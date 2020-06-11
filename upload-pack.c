@@ -808,53 +808,49 @@ static void deepen_by_rev_list(struct packet_writer *writer, int ac,
 }
 
 /* Returns 1 if a shallow list is sent or 0 otherwise */
-static int send_shallow_list(struct packet_writer *writer,
-			     int depth, int deepen_rev_list,
-			     timestamp_t deepen_since,
-			     struct string_list *deepen_not,
-			     int deepen_relative,
-			     struct object_array *shallows,
-			     struct object_array *want_obj)
+static int send_shallow_list(struct upload_pack_data *data)
 {
 	int ret = 0;
 
-	if (depth > 0 && deepen_rev_list)
+	if (data->depth > 0 && data->deepen_rev_list)
 		die("git upload-pack: deepen and deepen-since (or deepen-not) cannot be used together");
-	if (depth > 0) {
-		deepen(writer, depth, deepen_relative, shallows, want_obj);
+	if (data->depth > 0) {
+		deepen(&data->writer, data->depth, data->deepen_relative,
+		       &data->shallows, &data->want_obj);
 		ret = 1;
-	} else if (deepen_rev_list) {
+	} else if (data->deepen_rev_list) {
 		struct argv_array av = ARGV_ARRAY_INIT;
 		int i;
 
 		argv_array_push(&av, "rev-list");
-		if (deepen_since)
-			argv_array_pushf(&av, "--max-age=%"PRItime, deepen_since);
-		if (deepen_not->nr) {
+		if (data->deepen_since)
+			argv_array_pushf(&av, "--max-age=%"PRItime, data->deepen_since);
+		if (data->deepen_not.nr) {
 			argv_array_push(&av, "--not");
-			for (i = 0; i < deepen_not->nr; i++) {
-				struct string_list_item *s = deepen_not->items + i;
+			for (i = 0; i < data->deepen_not.nr; i++) {
+				struct string_list_item *s = data->deepen_not.items + i;
 				argv_array_push(&av, s->string);
 			}
 			argv_array_push(&av, "--not");
 		}
-		for (i = 0; i < want_obj->nr; i++) {
-			struct object *o = want_obj->objects[i].item;
+		for (i = 0; i < data->want_obj.nr; i++) {
+			struct object *o = data->want_obj.objects[i].item;
 			argv_array_push(&av, oid_to_hex(&o->oid));
 		}
-		deepen_by_rev_list(writer, av.argc, av.argv, shallows, want_obj);
+		deepen_by_rev_list(&data->writer, av.argc, av.argv,
+				   &data->shallows, &data->want_obj);
 		argv_array_clear(&av);
 		ret = 1;
 	} else {
-		if (shallows->nr > 0) {
+		if (data->shallows.nr > 0) {
 			int i;
-			for (i = 0; i < shallows->nr; i++)
+			for (i = 0; i < data->shallows.nr; i++)
 				register_shallow(the_repository,
-						 &shallows->objects[i].item->oid);
+						 &data->shallows.objects[i].item->oid);
 		}
 	}
 
-	shallow_nr += shallows->nr;
+	shallow_nr += data->shallows.nr;
 	return ret;
 }
 
@@ -1022,14 +1018,7 @@ static void receive_needs(struct upload_pack_data *data,
 	if (data->depth == 0 && !data->deepen_rev_list && data->shallows.nr == 0)
 		return;
 
-	if (send_shallow_list(&data->writer,
-			      data->depth,
-			      data->deepen_rev_list,
-			      data->deepen_since,
-			      &data->deepen_not,
-			      data->deepen_relative,
-			      &data->shallows,
-			      &data->want_obj))
+	if (send_shallow_list(data))
 		packet_flush(1);
 }
 
@@ -1473,11 +1462,7 @@ static void send_shallow_info(struct upload_pack_data *data)
 
 	packet_writer_write(&data->writer, "shallow-info\n");
 
-	if (!send_shallow_list(&data->writer, data->depth,
-			       data->deepen_rev_list,
-			       data->deepen_since, &data->deepen_not,
-			       data->deepen_relative,
-			       &data->shallows, &data->want_obj) &&
+	if (!send_shallow_list(data) &&
 	    is_repository_shallow(the_repository))
 		deepen(&data->writer, INFINITE_DEPTH, data->deepen_relative,
 		       &data->shallows, &data->want_obj);
