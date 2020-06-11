@@ -307,8 +307,8 @@ test_submodule_content () {
 # to protect the history!
 #
 
-# Internal function; use test_submodule_switch() or
-# test_submodule_forced_switch() instead.
+# Internal function; use test_submodule_switch_func(), test_submodule_switch(),
+# or test_submodule_forced_switch() instead.
 test_submodule_switch_common () {
 	command="$1"
 	######################### Appearing submodule #########################
@@ -566,8 +566,8 @@ test_submodule_switch_common () {
 #   # Do something here that updates the worktree and index to match target,
 #   # but not any submodule directories.
 # }
-# test_submodule_switch "my_func"
-test_submodule_switch () {
+# test_submodule_switch_func "my_func"
+test_submodule_switch_func () {
 	command="$1"
 	test_submodule_switch_common "$command"
 
@@ -587,12 +587,16 @@ test_submodule_switch () {
 	'
 }
 
+test_submodule_switch () {
+	test_submodule_switch_func "git $1"
+}
+
 # Same as test_submodule_switch(), except that throwing away local changes in
 # the superproject is allowed.
 test_submodule_forced_switch () {
 	command="$1"
 	KNOWN_FAILURE_FORCED_SWITCH_TESTS=1
-	test_submodule_switch_common "$command"
+	test_submodule_switch_common "git $command"
 
 	# When forced, a file in the superproject does not prevent creating a
 	# submodule of the same name.

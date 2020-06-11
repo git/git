@@ -17,21 +17,21 @@ git_pull () {
 }
 
 # pulls without conflicts
-test_submodule_switch "git_pull"
+test_submodule_switch_func "git_pull"
 
 git_pull_ff () {
 	reset_branch_to_HEAD "$1" &&
 	git pull --ff
 }
 
-test_submodule_switch "git_pull_ff"
+test_submodule_switch_func "git_pull_ff"
 
 git_pull_ff_only () {
 	reset_branch_to_HEAD "$1" &&
 	git pull --ff-only
 }
 
-test_submodule_switch "git_pull_ff_only"
+test_submodule_switch_func "git_pull_ff_only"
 
 git_pull_noff () {
 	reset_branch_to_HEAD "$1" &&
@@ -40,7 +40,7 @@ git_pull_noff () {
 
 KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
 KNOWN_FAILURE_NOFF_MERGE_ATTEMPTS_TO_MERGE_REMOVED_SUBMODULE_FILES=1
-test_submodule_switch "git_pull_noff"
+test_submodule_switch_func "git_pull_noff"
 
 test_expect_success 'pull --recurse-submodule setup' '
 	test_create_repo child &&

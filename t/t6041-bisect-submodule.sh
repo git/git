@@ -27,6 +27,6 @@ git_bisect () {
 	git bisect bad $BAD
 }
 
-test_submodule_switch "git_bisect"
+test_submodule_switch_func "git_bisect"
 
 test_done

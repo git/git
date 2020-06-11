@@ -26,6 +26,6 @@ git_revert () {
 }
 
 KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
-test_submodule_switch "git_revert"
+test_submodule_switch_func "git_revert"
 
 test_done

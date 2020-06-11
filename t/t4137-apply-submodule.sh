@@ -9,12 +9,12 @@ apply_index () {
 	git diff --ignore-submodules=dirty "..$1" | git apply --index -
 }
 
-test_submodule_switch "apply_index"
+test_submodule_switch_func "apply_index"
 
 apply_3way () {
 	git diff --ignore-submodules=dirty "..$1" | git apply --3way -
 }
 
-test_submodule_switch "apply_3way"
+test_submodule_switch_func "apply_3way"
 
 test_done

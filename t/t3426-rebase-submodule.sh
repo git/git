@@ -20,7 +20,7 @@ git_rebase () {
 	git rebase "$1"
 }
 
-test_submodule_switch "git_rebase"
+test_submodule_switch_func "git_rebase"
 
 git_rebase_interactive () {
 	git status -su >expect &&
@@ -38,7 +38,7 @@ git_rebase_interactive () {
 	git rebase -i "$1"
 }
 
-test_submodule_switch "git_rebase_interactive"
+test_submodule_switch_func "git_rebase_interactive"
 
 test_expect_success 'rebase interactive ignores modified submodules' '
 	test_when_finished "rm -rf super sub" &&
