@@ -392,18 +392,11 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 	die("git upload-pack: %s", abort_msg);
 }
 
-static int got_oid(struct upload_pack_data *data,
-		   const char *hex, struct object_id *oid)
+static int do_got_oid(struct upload_pack_data *data, const struct object_id *oid)
 {
-	struct object *o;
 	int we_knew_they_have = 0;
+	struct object *o = parse_object(the_repository, oid);
 
-	if (get_oid_hex(hex, oid))
-		die("git upload-pack: expected SHA1 object, got '%s'", hex);
-	if (!has_object_file(oid))
-		return -1;
-
-	o = parse_object(the_repository, oid);
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
 	if (o->type == OBJ_COMMIT) {
@@ -425,6 +418,16 @@ static int got_oid(struct upload_pack_data *data,
 		return 1;
 	}
 	return 0;
+}
+
+static int got_oid(struct upload_pack_data *data,
+		   const char *hex, struct object_id *oid)
+{
+	if (get_oid_hex(hex, oid))
+		die("git upload-pack: expected SHA1 object, got '%s'", hex);
+	if (!has_object_file(oid))
+		return -1;
+	return do_got_oid(data, oid);
 }
 
 static int ok_to_give_up(struct upload_pack_data *data)
@@ -1353,33 +1356,13 @@ static int process_haves(struct upload_pack_data *data, struct oid_array *common
 	/* Process haves */
 	for (i = 0; i < data->haves.nr; i++) {
 		const struct object_id *oid = &data->haves.oid[i];
-		struct object *o;
-		int we_knew_they_have = 0;
 
 		if (!has_object_file(oid))
 			continue;
 
 		oid_array_append(common, oid);
 
-		o = parse_object(the_repository, oid);
-		if (!o)
-			die("oops (%s)", oid_to_hex(oid));
-		if (o->type == OBJ_COMMIT) {
-			struct commit_list *parents;
-			struct commit *commit = (struct commit *)o;
-			if (o->flags & THEY_HAVE)
-				we_knew_they_have = 1;
-			else
-				o->flags |= THEY_HAVE;
-			if (!data->oldest_have || (commit->date < data->oldest_have))
-				data->oldest_have = commit->date;
-			for (parents = commit->parents;
-			     parents;
-			     parents = parents->next)
-				parents->item->object.flags |= THEY_HAVE;
-		}
-		if (!we_knew_they_have)
-			add_object_array(o, NULL, &data->have_obj);
+		do_got_oid(data, oid);
 	}
 
 	return 0;
