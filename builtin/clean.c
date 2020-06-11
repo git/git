@@ -924,12 +924,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			     0);
 
 	memset(&dir, 0, sizeof(dir));
-	if (ignored_only)
-		dir.flags |= DIR_SHOW_IGNORED;
-
-	if (ignored && ignored_only)
-		die(_("-x and -X cannot be used together"));
-
 	if (!interactive && !dry_run && !force) {
 		if (config_set)
 			die(_("clean.requireForce set to true and neither -i, -n, nor -f given; "
@@ -946,6 +940,13 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
+	if (ignored && ignored_only)
+		die(_("-x and -X cannot be used together"));
+	if (!ignored)
+		setup_standard_excludes(&dir);
+	if (ignored_only)
+		dir.flags |= DIR_SHOW_IGNORED;
+
 	if (argc) {
 		/*
 		 * Remaining args implies pathspecs specified, and we should
@@ -959,9 +960,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
-
-	if (!ignored)
-		setup_standard_excludes(&dir);
 
 	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++)
