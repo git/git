@@ -715,17 +715,15 @@ static void send_shallow(struct packet_writer *writer,
 	}
 }
 
-static void send_unshallow(struct packet_writer *writer,
-			   const struct object_array *shallows,
-			   struct object_array *want_obj)
+static void send_unshallow(struct upload_pack_data *data)
 {
 	int i;
 
-	for (i = 0; i < shallows->nr; i++) {
-		struct object *object = shallows->objects[i].item;
+	for (i = 0; i < data->shallows.nr; i++) {
+		struct object *object = data->shallows.objects[i].item;
 		if (object->flags & NOT_SHALLOW) {
 			struct commit_list *parents;
-			packet_writer_write(writer, "unshallow %s",
+			packet_writer_write(&data->writer, "unshallow %s",
 					    oid_to_hex(&object->oid));
 			object->flags &= ~CLIENT_SHALLOW;
 			/*
@@ -741,7 +739,7 @@ static void send_unshallow(struct packet_writer *writer,
 			parents = ((struct commit *)object)->parents;
 			while (parents) {
 				add_object_array(&parents->item->object,
-						 NULL, want_obj);
+						 NULL, &data->want_obj);
 				parents = parents->next;
 			}
 			add_object_array(object, NULL, &extra_edge_obj);
@@ -789,7 +787,7 @@ static void deepen(struct upload_pack_data *data, int depth)
 		free_commit_list(result);
 	}
 
-	send_unshallow(&data->writer, &data->shallows, &data->want_obj);
+	send_unshallow(data);
 }
 
 static void deepen_by_rev_list(struct upload_pack_data *data,
@@ -802,7 +800,7 @@ static void deepen_by_rev_list(struct upload_pack_data *data,
 	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
 	send_shallow(&data->writer, result);
 	free_commit_list(result);
-	send_unshallow(&data->writer, &data->shallows, &data->want_obj);
+	send_unshallow(data);
 }
 
 /* Returns 1 if a shallow list is sent or 0 otherwise */
