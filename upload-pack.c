@@ -51,7 +51,6 @@ static timestamp_t oldest_have;
 /* Allow request of any sha1. Implies ALLOW_TIP_SHA1 and ALLOW_REACHABLE_SHA1. */
 #define ALLOW_ANY_SHA1	07
 static unsigned int allow_unadvertised_object_request;
-static struct object_array extra_edge_obj;
 
 /*
  * Please annotate, and if possible group together, fields used only
@@ -66,6 +65,7 @@ struct upload_pack_data {
 
 	struct object_array shallows;
 	struct string_list deepen_not;
+	struct object_array extra_edge_obj;
 	int depth;
 	timestamp_t deepen_since;
 	int deepen_rev_list;
@@ -114,6 +114,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	struct oid_array haves = OID_ARRAY_INIT;
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
+	struct object_array extra_edge_obj = OBJECT_ARRAY_INIT;
 
 	memset(data, 0, sizeof(*data));
 	data->symref = symref;
@@ -123,6 +124,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	data->haves = haves;
 	data->shallows = shallows;
 	data->deepen_not = deepen_not;
+	data->extra_edge_obj = extra_edge_obj;
 	packet_writer_init(&data->writer, 1);
 
 	data->keepalive = 5;
@@ -137,6 +139,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	oid_array_clear(&data->haves);
 	object_array_clear(&data->shallows);
 	string_list_clear(&data->deepen_not, 0);
+	object_array_clear(&data->extra_edge_obj);
 	list_objects_filter_release(&data->filter_options);
 
 	free((char *)data->pack_objects_hook);
@@ -243,9 +246,9 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 	for (i = 0; i < pack_data->have_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
 			oid_to_hex(&pack_data->have_obj.objects[i].item->oid));
-	for (i = 0; i < extra_edge_obj.nr; i++)
+	for (i = 0; i < pack_data->extra_edge_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			oid_to_hex(&extra_edge_obj.objects[i].item->oid));
+			oid_to_hex(&pack_data->extra_edge_obj.objects[i].item->oid));
 	fprintf(pipe_fd, "\n");
 	fflush(pipe_fd);
 	fclose(pipe_fd);
@@ -742,7 +745,7 @@ static void send_unshallow(struct upload_pack_data *data)
 						 NULL, &data->want_obj);
 				parents = parents->next;
 			}
-			add_object_array(object, NULL, &extra_edge_obj);
+			add_object_array(object, NULL, &data->extra_edge_obj);
 		}
 		/* make sure commit traversal conforms to client */
 		register_shallow(the_repository, &object->oid);
