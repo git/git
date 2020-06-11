@@ -393,8 +393,8 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 	die("git upload-pack: %s", abort_msg);
 }
 
-static int got_oid(const char *hex, struct object_id *oid,
-		   struct object_array *have_obj)
+static int got_oid(struct upload_pack_data *data,
+		   const char *hex, struct object_id *oid)
 {
 	struct object *o;
 	int we_knew_they_have = 0;
@@ -422,7 +422,7 @@ static int got_oid(const char *hex, struct object_id *oid,
 			parents->item->object.flags |= THEY_HAVE;
 	}
 	if (!we_knew_they_have) {
-		add_object_array(o, NULL, have_obj);
+		add_object_array(o, NULL, &data->have_obj);
 		return 1;
 	}
 	return 0;
@@ -478,7 +478,7 @@ static int get_common_commits(struct upload_pack_data *data,
 			continue;
 		}
 		if (skip_prefix(reader->line, "have ", &arg)) {
-			switch (got_oid(arg, &oid, &data->have_obj)) {
+			switch (got_oid(data, arg, &oid)) {
 			case -1: /* they have what we do not */
 				got_other = 1;
 				if (data->multi_ack
