@@ -955,8 +955,37 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		remove_directories = 1;
 	}
 
-	if (remove_directories && !ignored_only)
-		dir.flags |= DIR_SHOW_IGNORED_TOO | DIR_KEEP_UNTRACKED_CONTENTS;
+	if (remove_directories && !ignored_only) {
+		/*
+		 * We need to know about ignored files too:
+		 *
+		 * If (ignored), then we will delete ignored files as well.
+		 *
+		 * If (!ignored), then even though we not are doing
+		 * anything with ignored files, we need to know about them
+		 * so that we can avoid deleting a directory of untracked
+		 * files that also contains an ignored file within it.
+		 *
+		 * For the (!ignored) case, since we only need to avoid
+		 * deleting ignored files, we can set
+		 * DIR_SHOW_IGNORED_TOO_MODE_MATCHING in order to avoid
+		 * recursing into a directory which is itself ignored.
+		 */
+		dir.flags |= DIR_SHOW_IGNORED_TOO;
+		if (!ignored)
+			dir.flags |= DIR_SHOW_IGNORED_TOO_MODE_MATCHING;
+
+		/*
+		 * Let the fill_directory() machinery know that we aren't
+		 * just recursing to collect the ignored files; we want all
+		 * the untracked ones so that we can delete them.  (Note:
+		 * we could also set DIR_KEEP_UNTRACKED_CONTENTS when
+		 * ignored_only is true, since DIR_KEEP_UNTRACKED_CONTENTS
+		 * only has effect in combination with DIR_SHOW_IGNORED_TOO.  It makes
+		 * the code clearer to exclude it, though.
+		 */
+		dir.flags |= DIR_KEEP_UNTRACKED_CONTENTS;
+	}
 
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
