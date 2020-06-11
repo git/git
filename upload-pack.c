@@ -428,15 +428,14 @@ static int got_oid(const char *hex, struct object_id *oid,
 	return 0;
 }
 
-static int ok_to_give_up(const struct object_array *have_obj,
-			 struct object_array *want_obj)
+static int ok_to_give_up(struct upload_pack_data *data)
 {
 	uint32_t min_generation = GENERATION_NUMBER_ZERO;
 
-	if (!have_obj->nr)
+	if (!data->have_obj.nr)
 		return 0;
 
-	return can_all_from_reach_with_flag(want_obj, THEY_HAVE,
+	return can_all_from_reach_with_flag(&data->want_obj, THEY_HAVE,
 					    COMMON_KNOWN, oldest_have,
 					    min_generation);
 }
@@ -461,7 +460,7 @@ static int get_common_commits(struct upload_pack_data *data,
 			if (data->multi_ack == MULTI_ACK_DETAILED
 			    && got_common
 			    && !got_other
-			    && ok_to_give_up(&data->have_obj, &data->want_obj)) {
+			    && ok_to_give_up(data)) {
 				sent_ready = 1;
 				packet_write_fmt(1, "ACK %s ready\n", last_hex);
 			}
@@ -483,7 +482,7 @@ static int get_common_commits(struct upload_pack_data *data,
 			case -1: /* they have what we do not */
 				got_other = 1;
 				if (data->multi_ack
-				    && ok_to_give_up(&data->have_obj, &data->want_obj)) {
+				    && ok_to_give_up(data)) {
 					const char *hex = oid_to_hex(&oid);
 					if (data->multi_ack == MULTI_ACK_DETAILED) {
 						sent_ready = 1;
@@ -1402,7 +1401,7 @@ static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
 				    oid_to_hex(&acks->oid[i]));
 	}
 
-	if (ok_to_give_up(&data->have_obj, &data->want_obj)) {
+	if (ok_to_give_up(data)) {
 		/* Send Ready */
 		packet_writer_write(&data->writer, "ready\n");
 		return 1;
