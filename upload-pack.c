@@ -51,7 +51,6 @@ static timestamp_t oldest_have;
 /* Allow request of any sha1. Implies ALLOW_TIP_SHA1 and ALLOW_REACHABLE_SHA1. */
 #define ALLOW_ANY_SHA1	07
 static unsigned int allow_unadvertised_object_request;
-static int shallow_nr;
 static struct object_array extra_edge_obj;
 
 /*
@@ -72,6 +71,7 @@ struct upload_pack_data {
 	int deepen_rev_list;
 	int deepen_relative;
 	int keepalive;
+	int shallow_nr;
 
 	unsigned int timeout;					/* v0 only */
 	enum {
@@ -192,7 +192,7 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 		pack_objects.use_shell = 1;
 	}
 
-	if (shallow_nr) {
+	if (pack_data->shallow_nr) {
 		argv_array_push(&pack_objects.args, "--shallow-file");
 		argv_array_push(&pack_objects.args, "");
 	}
@@ -202,7 +202,7 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 		argv_array_push(&pack_objects.args, "--thin");
 
 	argv_array_push(&pack_objects.args, "--stdout");
-	if (shallow_nr)
+	if (pack_data->shallow_nr)
 		argv_array_push(&pack_objects.args, "--shallow");
 	if (!pack_data->no_progress)
 		argv_array_push(&pack_objects.args, "--progress");
@@ -233,7 +233,7 @@ static void create_pack_file(struct upload_pack_data *pack_data)
 
 	pipe_fd = xfdopen(pack_objects.in, "w");
 
-	if (shallow_nr)
+	if (pack_data->shallow_nr)
 		for_each_commit_graft(write_one_shallow, pipe_fd);
 
 	for (i = 0; i < pack_data->want_obj.nr; i++)
@@ -700,16 +700,16 @@ error:
 	}
 }
 
-static void send_shallow(struct packet_writer *writer,
+static void send_shallow(struct upload_pack_data *data,
 			 struct commit_list *result)
 {
 	while (result) {
 		struct object *object = &result->item->object;
 		if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
-			packet_writer_write(writer, "shallow %s",
+			packet_writer_write(&data->writer, "shallow %s",
 					    oid_to_hex(&object->oid));
 			register_shallow(the_repository, &object->oid);
-			shallow_nr++;
+			data->shallow_nr++;
 		}
 		result = result->next;
 	}
@@ -775,7 +775,7 @@ static void deepen(struct upload_pack_data *data, int depth)
 		result = get_shallow_commits(&reachable_shallows,
 					     depth + 1,
 					     SHALLOW, NOT_SHALLOW);
-		send_shallow(&data->writer, result);
+		send_shallow(data, result);
 		free_commit_list(result);
 		object_array_clear(&reachable_shallows);
 	} else {
@@ -783,7 +783,7 @@ static void deepen(struct upload_pack_data *data, int depth)
 
 		result = get_shallow_commits(&data->want_obj, depth,
 					     SHALLOW, NOT_SHALLOW);
-		send_shallow(&data->writer, result);
+		send_shallow(data, result);
 		free_commit_list(result);
 	}
 
@@ -798,7 +798,7 @@ static void deepen_by_rev_list(struct upload_pack_data *data,
 
 	disable_commit_graph(the_repository);
 	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
-	send_shallow(&data->writer, result);
+	send_shallow(data, result);
 	free_commit_list(result);
 	send_unshallow(data);
 }
@@ -844,7 +844,7 @@ static int send_shallow_list(struct upload_pack_data *data)
 		}
 	}
 
-	shallow_nr += data->shallows.nr;
+	data->shallow_nr += data->shallows.nr;
 	return ret;
 }
 
@@ -922,7 +922,7 @@ static void receive_needs(struct upload_pack_data *data,
 {
 	int has_non_tip = 0;
 
-	shallow_nr = 0;
+	data->shallow_nr = 0;
 	for (;;) {
 		struct object *o;
 		const char *features;
