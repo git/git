@@ -775,11 +775,10 @@ for full details.
 	See `GIT_TRACE2` for available trace output options and
 	link:technical/api-trace2.html[Trace2 documentation] for full details.
 
-`GIT_REDACT_COOKIES`::
-	This can be set to a comma-separated list of strings. When a curl trace
-	is enabled (see `GIT_TRACE_CURL` above), whenever a "Cookies:" header
-	sent by the client is dumped, values of cookies whose key is in that
-	list (case-sensitive) are redacted.
+`GIT_TRACE_REDACT`::
+	By default, when tracing is activated, Git redacts the values of
+	cookies, the "Authorization:" header, and the "Proxy-Authorization:"
+	header. Set this variable to `0` to prevent this redaction.
 
 `GIT_LITERAL_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
