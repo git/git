@@ -84,33 +84,35 @@ int cmd__config(int argc, const char **argv)
 	int i, val;
 	const char *v;
 	const struct string_list *strptr;
-	struct config_set cs;
+	struct config_set cs = { .hash_initialized = 0 };
 	enum test_config_exit_code ret = TC_SUCCESS;
 
-	if (argc == 3 && !strcmp(argv[1], "read_early_config")) {
-		read_early_config(early_config_cb, (void *)argv[2]);
+	argc--; /* skip over "config" */
+	argv++;
+
+	if (argc == 0)
+		goto print_usage_error;
+
+	if (argc == 2 && !strcmp(argv[0], "read_early_config")) {
+		read_early_config(early_config_cb, (void *)argv[1]);
 		return TC_SUCCESS;
 	}
 
 	setup_git_directory();
-
 	git_configset_init(&cs);
 
-	if (argc < 2)
-		goto print_usage_error;
-
-	if (argc == 3 && !strcmp(argv[1], "get_value")) {
-		if (!git_config_get_value(argv[2], &v)) {
+	if (argc == 2 && !strcmp(argv[0], "get_value")) {
+		if (!git_config_get_value(argv[1], &v)) {
 			if (!v)
 				printf("(NULL)\n");
 			else
 				printf("%s\n", v);
 		} else {
-			printf("Value not found for \"%s\"\n", argv[2]);
+			printf("Value not found for \"%s\"\n", argv[1]);
 			ret = TC_VALUE_NOT_FOUND;
 		}
-	} else if (argc == 3 && !strcmp(argv[1], "get_value_multi")) {
-		strptr = git_config_get_value_multi(argv[2]);
+	} else if (argc == 2 && !strcmp(argv[0], "get_value_multi")) {
+		strptr = git_config_get_value_multi(argv[1]);
 		if (strptr) {
 			for (i = 0; i < strptr->nr; i++) {
 				v = strptr->items[i].string;
@@ -120,32 +122,32 @@ int cmd__config(int argc, const char **argv)
 					printf("%s\n", v);
 			}
 		} else {
-			printf("Value not found for \"%s\"\n", argv[2]);
+			printf("Value not found for \"%s\"\n", argv[1]);
 			ret = TC_VALUE_NOT_FOUND;
 		}
-	} else if (argc == 3 && !strcmp(argv[1], "get_int")) {
-		if (!git_config_get_int(argv[2], &val)) {
+	} else if (argc == 2 && !strcmp(argv[0], "get_int")) {
+		if (!git_config_get_int(argv[1], &val)) {
 			printf("%d\n", val);
 		} else {
-			printf("Value not found for \"%s\"\n", argv[2]);
+			printf("Value not found for \"%s\"\n", argv[1]);
 			ret = TC_VALUE_NOT_FOUND;
 		}
-	} else if (argc == 3 && !strcmp(argv[1], "get_bool")) {
-		if (!git_config_get_bool(argv[2], &val)) {
+	} else if (argc == 2 && !strcmp(argv[0], "get_bool")) {
+		if (!git_config_get_bool(argv[1], &val)) {
 			printf("%d\n", val);
 		} else {
-			printf("Value not found for \"%s\"\n", argv[2]);
+			printf("Value not found for \"%s\"\n", argv[1]);
 			ret = TC_VALUE_NOT_FOUND;
 		}
-	} else if (argc == 3 && !strcmp(argv[1], "get_string")) {
-		if (!git_config_get_string_const(argv[2], &v)) {
+	} else if (argc == 2 && !strcmp(argv[0], "get_string")) {
+		if (!git_config_get_string_const(argv[1], &v)) {
 			printf("%s\n", v);
 		} else {
-			printf("Value not found for \"%s\"\n", argv[2]);
+			printf("Value not found for \"%s\"\n", argv[1]);
 			ret = TC_VALUE_NOT_FOUND;
 		}
-	} else if (argc >= 3 && !strcmp(argv[1], "configset_get_value")) {
-		for (i = 3; i < argc; i++) {
+	} else if (argc >= 2 && !strcmp(argv[0], "configset_get_value")) {
+		for (i = 2; i < argc; i++) {
 			int err;
 			if ((err = git_configset_add_file(&cs, argv[i]))) {
 				fprintf(stderr, "Error (%d) reading configuration file %s.\n", err, argv[i]);
@@ -153,17 +155,17 @@ int cmd__config(int argc, const char **argv)
 				goto out;
 			}
 		}
-		if (!git_configset_get_value(&cs, argv[2], &v)) {
+		if (!git_configset_get_value(&cs, argv[1], &v)) {
 			if (!v)
 				printf("(NULL)\n");
 			else
 				printf("%s\n", v);
 		} else {
-			printf("Value not found for \"%s\"\n", argv[2]);
+			printf("Value not found for \"%s\"\n", argv[1]);
 			ret = TC_VALUE_NOT_FOUND;
 		}
-	} else if (argc >= 3 && !strcmp(argv[1], "configset_get_value_multi")) {
-		for (i = 3; i < argc; i++) {
+	} else if (argc >= 2 && !strcmp(argv[0], "configset_get_value_multi")) {
+		for (i = 2; i < argc; i++) {
 			int err;
 			if ((err = git_configset_add_file(&cs, argv[i]))) {
 				fprintf(stderr, "Error (%d) reading configuration file %s.\n", err, argv[i]);
@@ -171,7 +173,7 @@ int cmd__config(int argc, const char **argv)
 				goto out;
 			}
 		}
-		strptr = git_configset_get_value_multi(&cs, argv[2]);
+		strptr = git_configset_get_value_multi(&cs, argv[1]);
 		if (strptr) {
 			for (i = 0; i < strptr->nr; i++) {
 				v = strptr->items[i].string;
@@ -181,10 +183,10 @@ int cmd__config(int argc, const char **argv)
 					printf("%s\n", v);
 			}
 		} else {
-			printf("Value not found for \"%s\"\n", argv[2]);
+			printf("Value not found for \"%s\"\n", argv[1]);
 			ret = TC_VALUE_NOT_FOUND;
 		}
-	} else if (!strcmp(argv[1], "iterate")) {
+	} else if (!strcmp(argv[0], "iterate")) {
 		git_config(iterate_cb, NULL);
 	} else {
 print_usage_error:
