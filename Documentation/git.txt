@@ -180,6 +180,10 @@ If you just want to run git as if it was started in `<path>` then use
 	Do not perform optional operations that require locks. This is
 	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
 
+--[no-]restrict-to-sparse-paths::
+	Overrides the sparse.restrictCmds configuration (see
+	linkgit:git-config[1]) for this execution.
+
 --list-cmds=group[,group...]::
 	List commands by group. This is an internal/experimental
 	option and may change or be removed in the future. Supported
