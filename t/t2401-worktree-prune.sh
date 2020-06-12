@@ -92,4 +92,28 @@ test_expect_success 'not prune proper checkouts' '
 	test -d .git/worktrees/nop
 '
 
+test_expect_success 'prune duplicate (linked/linked)' '
+	test_when_finished rm -fr .git/worktrees w1 w2 &&
+	git worktree add --detach w1 &&
+	git worktree add --detach w2 &&
+	sed "s/w2/w1/" .git/worktrees/w2/gitdir >.git/worktrees/w2/gitdir.new &&
+	mv .git/worktrees/w2/gitdir.new .git/worktrees/w2/gitdir &&
+	git worktree prune --verbose >actual &&
+	test_i18ngrep "duplicate entry" actual &&
+	test -d .git/worktrees/w1 &&
+	! test -d .git/worktrees/w2
+'
+
+test_expect_success 'prune duplicate (main/linked)' '
+	test_when_finished rm -fr repo wt &&
+	test_create_repo repo &&
+	test_commit -C repo x &&
+	git -C repo worktree add --detach ../wt &&
+	rm -fr wt &&
+	mv repo wt &&
+	git -C wt worktree prune --verbose >actual &&
+	test_i18ngrep "duplicate entry" actual &&
+	! test -d .git/worktrees/wt
+'
+
 test_done
