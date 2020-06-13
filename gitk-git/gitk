@@ -3137,7 +3137,7 @@ proc keys {} {
 [mc "<%s-KP->	Decrease font size" $M1T]
 [mc "<%s-minus>	Decrease font size" $M1T]
 [mc "<F5>		Update"]
-[mc "<F7>		Getch"]
+[mc "<F7>		Fetch"]
 " \
 	    -justify left -bg $bgcolor -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
