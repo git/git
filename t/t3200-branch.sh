@@ -323,11 +323,11 @@ test_expect_success 'git branch --list -v with --abbrev' '
 
 test_expect_success 'git branch --column' '
 	COLUMNS=81 git branch --column=column >actual &&
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
   a/b/c     bam       foo       l       * master    mb        o/o       q
   abc       bar       j/k       m/m       master2   n         o/p       r
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'git branch --column with an extremely long branch name' '
@@ -336,7 +336,7 @@ test_expect_success 'git branch --column with an extremely long branch name' '
 	test_when_finished "git branch -d $long" &&
 	git branch $long &&
 	COLUMNS=80 git branch --column=column >actual &&
-	cat >expected <<EOF &&
+	cat >expect <<EOF &&
   a/b/c
   abc
   bam
@@ -355,7 +355,7 @@ test_expect_success 'git branch --column with an extremely long branch name' '
   r
   $long
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'git branch with column.*' '
@@ -364,11 +364,11 @@ test_expect_success 'git branch with column.*' '
 	COLUMNS=80 git branch >actual &&
 	git config --unset column.branch &&
 	git config --unset column.ui &&
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
   a/b/c   bam   foo   l   * master    mb   o/o   q
   abc     bar   j/k   m/m   master2   n    o/p   r
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'git branch --column -v should fail' '
@@ -379,7 +379,7 @@ test_expect_success 'git branch -v with column.ui ignored' '
 	git config column.ui column &&
 	COLUMNS=80 git branch -v | cut -c -10 | sed "s/ *$//" >actual &&
 	git config --unset column.ui &&
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
   a/b/c
   abc
   bam
@@ -397,7 +397,7 @@ test_expect_success 'git branch -v with column.ui ignored' '
   q
   r
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 mv .git/config .git/config-saved
@@ -922,17 +922,17 @@ test_expect_success 'test --unset-upstream on a particular branch' '
 '
 
 test_expect_success 'disabled option --set-upstream fails' '
-    test_must_fail git branch --set-upstream origin/master
+	test_must_fail git branch --set-upstream origin/master
 '
 
 test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '
 	git branch --set-upstream-to refs/heads/my13 my13 2>actual &&
-	cat >expected <<-\EOF &&
+	cat >expect <<-\EOF &&
 	warning: Not setting branch my13 as its own upstream.
 	EOF
 	test_expect_code 1 git config branch.my13.remote &&
 	test_expect_code 1 git config branch.my13.merge &&
-	test_i18ncmp expected actual
+	test_i18ncmp expect actual
 '
 
 # Keep this test last, as it changes the current branch
