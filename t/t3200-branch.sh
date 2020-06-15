@@ -835,32 +835,42 @@ test_expect_success 'branch from tag w/--track causes failure' '
 '
 
 test_expect_success '--set-upstream-to fails on multiple branches' '
-	test_must_fail git branch --set-upstream-to master a b c
+	echo "fatal: too many arguments to set new upstream" >expect &&
+	test_must_fail git branch --set-upstream-to master a b c 2>err &&
+	test_i18ncmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on detached HEAD' '
 	git checkout HEAD^{} &&
-	test_must_fail git branch --set-upstream-to master &&
-	git checkout -
+	test_when_finished git checkout - &&
+	echo "fatal: could not set upstream of HEAD to master when it does not point to any branch." >expect &&
+	test_must_fail git branch --set-upstream-to master 2>err &&
+	test_i18ncmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on a missing dst branch' '
-	test_must_fail git branch --set-upstream-to master does-not-exist
+	echo "fatal: branch '"'"'does-not-exist'"'"' does not exist" >expect &&
+	test_must_fail git branch --set-upstream-to master does-not-exist 2>err &&
+	test_i18ncmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on a missing src branch' '
-	test_must_fail git branch --set-upstream-to does-not-exist master
+	test_must_fail git branch --set-upstream-to does-not-exist master 2>err &&
+	test_i18ngrep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
 '
 
 test_expect_success '--set-upstream-to fails on a non-ref' '
-	test_must_fail git branch --set-upstream-to HEAD^{}
+	echo "fatal: Cannot setup tracking information; starting point '"'"'HEAD^{}'"'"' is not a branch." >expect &&
+	test_must_fail git branch --set-upstream-to HEAD^{} 2>err &&
+	test_i18ncmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on locked config' '
 	test_when_finished "rm -f .git/config.lock" &&
 	>.git/config.lock &&
 	git branch locked &&
-	test_must_fail git branch --set-upstream-to locked
+	test_must_fail git branch --set-upstream-to locked 2>err &&
+	test_i18ngrep "could not lock config file .git/config: File exists" err
 '
 
 test_expect_success 'use --set-upstream-to modify HEAD' '
@@ -881,14 +891,17 @@ test_expect_success 'use --set-upstream-to modify a particular branch' '
 '
 
 test_expect_success '--unset-upstream should fail if given a non-existent branch' '
-	test_must_fail git branch --unset-upstream i-dont-exist
+	echo "fatal: Branch '"'"'i-dont-exist'"'"' has no upstream information" >expect &&
+	test_must_fail git branch --unset-upstream i-dont-exist 2>err &&
+	test_i18ncmp expect err
 '
 
 test_expect_success '--unset-upstream should fail if config is locked' '
 	test_when_finished "rm -f .git/config.lock" &&
 	git branch --set-upstream-to locked &&
 	>.git/config.lock &&
-	test_must_fail git branch --unset-upstream
+	test_must_fail git branch --unset-upstream 2>err &&
+	test_i18ngrep "could not lock config file .git/config: File exists" err
 '
 
 test_expect_success 'test --unset-upstream on HEAD' '
@@ -900,17 +913,23 @@ test_expect_success 'test --unset-upstream on HEAD' '
 	test_must_fail git config branch.master.remote &&
 	test_must_fail git config branch.master.merge &&
 	# fail for a branch without upstream set
-	test_must_fail git branch --unset-upstream
+	echo "fatal: Branch '"'"'master'"'"' has no upstream information" >expect &&
+	test_must_fail git branch --unset-upstream 2>err &&
+	test_i18ncmp expect err
 '
 
 test_expect_success '--unset-upstream should fail on multiple branches' '
-	test_must_fail git branch --unset-upstream a b c
+	echo "fatal: too many arguments to unset upstream" >expect &&
+	test_must_fail git branch --unset-upstream a b c 2>err &&
+	test_i18ncmp expect err
 '
 
 test_expect_success '--unset-upstream should fail on detached HEAD' '
 	git checkout HEAD^{} &&
-	test_must_fail git branch --unset-upstream &&
-	git checkout -
+	test_when_finished git checkout - &&
+	echo "fatal: could not unset upstream of HEAD when it does not point to any branch." >expect &&
+	test_must_fail git branch --unset-upstream 2>err &&
+	test_i18ncmp expect err
 '
 
 test_expect_success 'test --unset-upstream on a particular branch' '
