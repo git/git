@@ -1254,7 +1254,7 @@ void upload_pack(struct upload_pack_options *options)
 		receive_needs(&data, &reader);
 		if (data.want_obj.nr) {
 			get_common_commits(&data, &reader);
-			create_pack_file(&data, 0);
+			create_pack_file(&data, NULL);
 		}
 	}
 
