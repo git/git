@@ -79,6 +79,7 @@ enum wt_status_format {
 
 #define HEAD_DETACHED_AT _("HEAD detached at ")
 #define HEAD_DETACHED_FROM _("HEAD detached from ")
+#define SPARSE_CHECKOUT_DISABLED -1
 
 struct wt_status_state {
 	int merge_in_progress;
@@ -90,6 +91,7 @@ struct wt_status_state {
 	int bisect_in_progress;
 	int revert_in_progress;
 	int detached_at;
+	int sparse_checkout_percentage; /* SPARSE_CHECKOUT_DISABLED if not sparse */
 	char *branch;
 	char *onto;
 	char *detached_from;
