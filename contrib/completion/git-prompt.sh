@@ -74,6 +74,11 @@
 # revert, cherry-pick, or bisect, the prompt will include information
 # related to the operation, often in the form "|<OPERATION-NAME>".
 #
+# When the repository has a sparse-checkout, a notification of the form
+# "|SPARSE" will be included in the prompt.  This can be shortened to a
+# single '?' character by setting GIT_PS1_COMPRESSSPARSESTATE, or omitted
+# by setting GIT_PS1_OMITSPARSESTATE.
+#
 # By default, __git_ps1 will compare HEAD to your SVN upstream if it can
 # find one, or @{upstream} otherwise.  Once you have set
 # GIT_PS1_SHOWUPSTREAM, you can override it on a per-repository basis by
@@ -425,6 +430,13 @@ __git_ps1 ()
 		return $exit
 	fi
 
+	local sparse=""
+	if [ -z "${GIT_PS1_COMPRESSSPARSESTATE}" ] &&
+	   [ -z "${GIT_PS1_OMITSPARSESTATE}" ] &&
+	   [ "$(git config --bool core.sparseCheckout)" == "true" ]; then
+		sparse="|SPARSE"
+	fi
+
 	local r=""
 	local b=""
 	local step=""
@@ -496,6 +508,7 @@ __git_ps1 ()
 	local i=""
 	local s=""
 	local u=""
+	local h=""
 	local c=""
 	local p=""
 
@@ -528,6 +541,11 @@ __git_ps1 ()
 			u="%${ZSH_VERSION+%}"
 		fi
 
+		if [ -n "${GIT_PS1_COMPRESSSPARSESTATE}" ] &&
+		   [ "$(git config --bool core.sparseCheckout)" == "true" ]; then
+			h="?"
+		fi
+
 		if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
 			__git_ps1_show_upstream
 		fi
@@ -546,8 +564,8 @@ __git_ps1 ()
 		b="\${__git_ps1_branch_name}"
 	fi
 
-	local f="$w$i$s$u"
-	local gitstring="$c$b${f:+$z$f}$r$p"
+	local f="$h$w$i$s$u"
+	local gitstring="$c$b${f:+$z$f}${sparse}$r$p"
 
 	if [ $pcmode = yes ]; then
 		if [ "${__git_printf_supports_v-}" != yes ]; then
