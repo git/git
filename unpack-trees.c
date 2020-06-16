@@ -1524,7 +1524,7 @@ static void mark_new_skip_worktree(struct pattern_list *pl,
 	int i;
 
 	/*
-	 * 1. Pretend the narrowest worktree: only unmerged entries
+	 * 1. Pretend the narrowest worktree: only unmerged files and symlinks
 	 * are checked out
 	 */
 	for (i = 0; i < istate->cache_nr; i++) {
@@ -1533,7 +1533,8 @@ static void mark_new_skip_worktree(struct pattern_list *pl,
 		if (select_flag && !(ce->ce_flags & select_flag))
 			continue;
 
-		if (!ce_stage(ce) && !(ce->ce_flags & CE_CONFLICTED))
+		if (!ce_stage(ce) && !(ce->ce_flags & CE_CONFLICTED) &&
+		    !S_ISGITLINK(ce->ce_mode))
 			ce->ce_flags |= skip_wt_flag;
 		else
 			ce->ce_flags &= ~skip_wt_flag;
