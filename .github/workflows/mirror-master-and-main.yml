@@ -1,0 +1,19 @@
+name: Mirror "master" and "main" branches
+on:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Partial clone
+        env:
+          ref: ${{ github.event.ref }}
+        run: git clone --bare --depth=100 --single-branch --branch ${ref#refs/heads/} --filter=blob:none ${{ github.event.repository.html_url }} .
+      - name: Push
+        run: |
+          git config http.https://github.com/.extraheader "Authorization: Basic $(echo -n x-access-token:${{ github.token }} | base64 --wrap=0)"
+          git push origin HEAD:master HEAD:main
