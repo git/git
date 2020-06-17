@@ -303,7 +303,7 @@ static int repo_is_descendant_of(struct repository *r,
 
 			other = with_commit->item;
 			with_commit = with_commit->next;
-			if (repo_in_merge_bases(r, other, commit))
+			if (repo_in_merge_bases_many(r, other, 1, &commit))
 				return 1;
 		}
 		return 0;
@@ -355,7 +355,15 @@ int repo_in_merge_bases(struct repository *r,
 			struct commit *commit,
 			struct commit *reference)
 {
-	return repo_in_merge_bases_many(r, commit, 1, &reference);
+	int res;
+	struct commit_list *list = NULL;
+	struct commit_list **next = &list;
+
+	next = commit_list_append(commit, next);
+	res = repo_is_descendant_of(r, reference, list);
+	free_commit_list(list);
+
+	return res;
 }
 
 struct commit_list *reduce_heads(struct commit_list *heads)
