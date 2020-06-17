@@ -144,10 +144,12 @@ static int commit_gen_cmp(const void *va, const void *vb)
 	const struct commit *a = *(const struct commit **)va;
 	const struct commit *b = *(const struct commit **)vb;
 
+	uint32_t generation_a = commit_graph_generation(a);
+	uint32_t generation_b = commit_graph_generation(b);
 	/* lower generation commits first */
-	if (commit_graph_generation(a) < commit_graph_generation(b))
+	if (generation_a < generation_b)
 		return -1;
-	else if (commit_graph_generation(a) > commit_graph_generation(b))
+	else if (generation_a > generation_b)
 		return 1;
 
 	/* use date as a heuristic when generations are equal */
@@ -729,6 +731,7 @@ static struct commit_list **insert_parent_or_die(struct repository *r,
 static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, uint32_t pos)
 {
 	const unsigned char *commit_data;
+	struct commit_graph_data *graph_data;
 	uint32_t lex_index;
 
 	while (pos < g->num_commits_in_base)
@@ -736,8 +739,10 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 
 	lex_index = pos - g->num_commits_in_base;
 	commit_data = g->chunk_commit_data + GRAPH_DATA_WIDTH * lex_index;
-	commit_graph_data_at(item)->graph_pos = pos;
-	commit_graph_data_at(item)->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
+
+	graph_data = commit_graph_data_at(item);
+	graph_data->graph_pos = pos;
+	graph_data->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
 }
 
 static inline void set_commit_tree(struct commit *c, struct tree *t)
@@ -753,6 +758,7 @@ static int fill_commit_in_graph(struct repository *r,
 	uint32_t *parent_data_ptr;
 	uint64_t date_low, date_high;
 	struct commit_list **pptr;
+	struct commit_graph_data *graph_data;
 	const unsigned char *commit_data;
 	uint32_t lex_index;
 
@@ -766,7 +772,8 @@ static int fill_commit_in_graph(struct repository *r,
 	 * Store the "full" position, but then use the
 	 * "local" position for the rest of the calculation.
 	 */
-	commit_graph_data_at(item)->graph_pos = pos;
+	graph_data = commit_graph_data_at(item);
+	graph_data->graph_pos = pos;
 	lex_index = pos - g->num_commits_in_base;
 
 	commit_data = g->chunk_commit_data + (g->hash_len + 16) * lex_index;
@@ -779,7 +786,7 @@ static int fill_commit_in_graph(struct repository *r,
 	date_low = get_be32(commit_data + g->hash_len + 12);
 	item->date = (timestamp_t)((date_high << 32) | date_low);
 
-	commit_graph_data_at(item)->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
+	graph_data->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
 
 	pptr = &item->parents;
 
@@ -811,8 +818,9 @@ static int fill_commit_in_graph(struct repository *r,
 
 static int find_commit_in_graph(struct commit *item, struct commit_graph *g, uint32_t *pos)
 {
-	if (commit_graph_position(item) != COMMIT_NOT_FROM_GRAPH) {
-		*pos = commit_graph_position(item);
+	uint32_t graph_pos = commit_graph_position(item);
+	if (graph_pos != COMMIT_NOT_FROM_GRAPH) {
+		*pos = graph_pos;
 		return 1;
 	} else {
 		struct commit_graph *cur_g = g;
@@ -867,12 +875,13 @@ static struct tree *load_tree_for_commit(struct repository *r,
 {
 	struct object_id oid;
 	const unsigned char *commit_data;
+	uint32_t graph_pos = commit_graph_position(c);
 
-	while (commit_graph_position(c) < g->num_commits_in_base)
+	while (graph_pos < g->num_commits_in_base)
 		g = g->base_graph;
 
 	commit_data = g->chunk_commit_data +
-			GRAPH_DATA_WIDTH * (commit_graph_position(c) - g->num_commits_in_base);
+			GRAPH_DATA_WIDTH * (graph_pos - g->num_commits_in_base);
 
 	hashcpy(oid.hash, commit_data);
 	set_commit_tree(c, lookup_tree(r, &oid));
@@ -2299,6 +2308,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 		struct commit *graph_commit, *odb_commit;
 		struct commit_list *graph_parents, *odb_parents;
 		uint32_t max_generation = 0;
+		uint32_t generation;
 
 		display_progress(progress, i + 1);
 		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
@@ -2337,8 +2347,9 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 					     oid_to_hex(&graph_parents->item->object.oid),
 					     oid_to_hex(&odb_parents->item->object.oid));
 
-			if (commit_graph_generation(graph_parents->item) > max_generation)
-				max_generation = commit_graph_generation(graph_parents->item);
+			generation = commit_graph_generation(graph_parents->item);
+			if (generation > max_generation)
+				max_generation = generation;
 
 			graph_parents = graph_parents->next;
 			odb_parents = odb_parents->next;
@@ -2368,10 +2379,11 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 		if (max_generation == GENERATION_NUMBER_MAX)
 			max_generation--;
 
-		if (commit_graph_generation(graph_commit) != max_generation + 1)
+		generation = commit_graph_generation(graph_commit);
+		if (generation != max_generation + 1)
 			graph_report(_("commit-graph generation for commit %s is %u != %u"),
 				     oid_to_hex(&cur_oid),
-				     commit_graph_generation(graph_commit),
+				     generation,
 				     max_generation + 1);
 
 		if (graph_commit->date != odb_commit->date)
