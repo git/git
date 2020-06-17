@@ -36,8 +36,6 @@ struct commit {
 	 * or get_commit_tree_oid().
 	 */
 	struct tree *maybe_tree;
-	uint32_t graph_pos;
-	uint32_t generation;
 	unsigned int index;
 };
 

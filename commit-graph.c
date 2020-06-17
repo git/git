@@ -145,9 +145,9 @@ static int commit_gen_cmp(const void *va, const void *vb)
 	const struct commit *b = *(const struct commit **)vb;
 
 	/* lower generation commits first */
-	if (a->generation < b->generation)
+	if (commit_graph_generation(a) < commit_graph_generation(b))
 		return -1;
-	else if (a->generation > b->generation)
+	else if (commit_graph_generation(a) > commit_graph_generation(b))
 		return 1;
 
 	/* use date as a heuristic when generations are equal */
@@ -722,7 +722,7 @@ static struct commit_list **insert_parent_or_die(struct repository *r,
 	c = lookup_commit(r, &oid);
 	if (!c)
 		die(_("could not find commit %s"), oid_to_hex(&oid));
-	c->graph_pos = pos;
+	commit_graph_data_at(c)->graph_pos = pos;
 	return &commit_list_insert(c, pptr)->next;
 }
 
@@ -736,8 +736,8 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 
 	lex_index = pos - g->num_commits_in_base;
 	commit_data = g->chunk_commit_data + GRAPH_DATA_WIDTH * lex_index;
-	item->graph_pos = pos;
-	item->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
+	commit_graph_data_at(item)->graph_pos = pos;
+	commit_graph_data_at(item)->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
 }
 
 static inline void set_commit_tree(struct commit *c, struct tree *t)
@@ -766,7 +766,7 @@ static int fill_commit_in_graph(struct repository *r,
 	 * Store the "full" position, but then use the
 	 * "local" position for the rest of the calculation.
 	 */
-	item->graph_pos = pos;
+	commit_graph_data_at(item)->graph_pos = pos;
 	lex_index = pos - g->num_commits_in_base;
 
 	commit_data = g->chunk_commit_data + (g->hash_len + 16) * lex_index;
@@ -779,7 +779,7 @@ static int fill_commit_in_graph(struct repository *r,
 	date_low = get_be32(commit_data + g->hash_len + 12);
 	item->date = (timestamp_t)((date_high << 32) | date_low);
 
-	item->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
+	commit_graph_data_at(item)->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
 
 	pptr = &item->parents;
 
@@ -811,8 +811,8 @@ static int fill_commit_in_graph(struct repository *r,
 
 static int find_commit_in_graph(struct commit *item, struct commit_graph *g, uint32_t *pos)
 {
-	if (item->graph_pos != COMMIT_NOT_FROM_GRAPH) {
-		*pos = item->graph_pos;
+	if (commit_graph_position(item) != COMMIT_NOT_FROM_GRAPH) {
+		*pos = commit_graph_position(item);
 		return 1;
 	} else {
 		struct commit_graph *cur_g = g;
@@ -868,11 +868,11 @@ static struct tree *load_tree_for_commit(struct repository *r,
 	struct object_id oid;
 	const unsigned char *commit_data;
 
-	while (c->graph_pos < g->num_commits_in_base)
+	while (commit_graph_position(c) < g->num_commits_in_base)
 		g = g->base_graph;
 
 	commit_data = g->chunk_commit_data +
-			GRAPH_DATA_WIDTH * (c->graph_pos - g->num_commits_in_base);
+			GRAPH_DATA_WIDTH * (commit_graph_position(c) - g->num_commits_in_base);
 
 	hashcpy(oid.hash, commit_data);
 	set_commit_tree(c, lookup_tree(r, &oid));
@@ -886,7 +886,7 @@ static struct tree *get_commit_tree_in_graph_one(struct repository *r,
 {
 	if (c->maybe_tree)
 		return c->maybe_tree;
-	if (c->graph_pos == COMMIT_NOT_FROM_GRAPH)
+	if (commit_graph_position(c) == COMMIT_NOT_FROM_GRAPH)
 		BUG("get_commit_tree_in_graph_one called from non-commit-graph commit");
 
 	return load_tree_for_commit(r, g, (struct commit *)c);
@@ -1271,7 +1271,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 			continue;
 		if (ctx->split) {
 			if ((!parse_commit(commit) &&
-			     commit->graph_pos == COMMIT_NOT_FROM_GRAPH) ||
+			     commit_graph_position(commit) == COMMIT_NOT_FROM_GRAPH) ||
 			    flags == COMMIT_GRAPH_SPLIT_REPLACE)
 				add_missing_parents(ctx, commit);
 		} else if (!parse_commit_no_graph(commit))
@@ -1516,7 +1516,7 @@ static uint32_t count_distinct_commits(struct write_commit_graph_context *ctx)
 			if (ctx->split) {
 				struct commit *c = lookup_commit(ctx->r, &ctx->oids.list[i]);
 
-				if (!c || c->graph_pos != COMMIT_NOT_FROM_GRAPH)
+				if (!c || commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH)
 					continue;
 			}
 
@@ -1550,7 +1550,7 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 		ctx->commits.list[ctx->commits.nr] = lookup_commit(ctx->r, &ctx->oids.list[i]);
 
 		if (ctx->split && flags != COMMIT_GRAPH_SPLIT_REPLACE &&
-		    ctx->commits.list[ctx->commits.nr]->graph_pos != COMMIT_NOT_FROM_GRAPH)
+		    commit_graph_position(ctx->commits.list[ctx->commits.nr]) != COMMIT_NOT_FROM_GRAPH)
 			continue;
 
 		if (ctx->split && flags == COMMIT_GRAPH_SPLIT_REPLACE)
@@ -2337,8 +2337,8 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 					     oid_to_hex(&graph_parents->item->object.oid),
 					     oid_to_hex(&odb_parents->item->object.oid));
 
-			if (graph_parents->item->generation > max_generation)
-				max_generation = graph_parents->item->generation;
+			if (commit_graph_generation(graph_parents->item) > max_generation)
+				max_generation = commit_graph_generation(graph_parents->item);
 
 			graph_parents = graph_parents->next;
 			odb_parents = odb_parents->next;
@@ -2348,7 +2348,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 			graph_report(_("commit-graph parent list for commit %s terminates early"),
 				     oid_to_hex(&cur_oid));
 
-		if (!graph_commit->generation) {
+		if (!commit_graph_generation(graph_commit)) {
 			if (generation_zero == GENERATION_NUMBER_EXISTS)
 				graph_report(_("commit-graph has generation number zero for commit %s, but non-zero elsewhere"),
 					     oid_to_hex(&cur_oid));
@@ -2368,10 +2368,10 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 		if (max_generation == GENERATION_NUMBER_MAX)
 			max_generation--;
 
-		if (graph_commit->generation != max_generation + 1)
+		if (commit_graph_generation(graph_commit) != max_generation + 1)
 			graph_report(_("commit-graph generation for commit %s is %u != %u"),
 				     oid_to_hex(&cur_oid),
-				     graph_commit->generation,
+				     commit_graph_generation(graph_commit),
 				     max_generation + 1);
 
 		if (graph_commit->date != odb_commit->date)

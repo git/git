@@ -1272,7 +1272,7 @@ static int maybe_changed_path(struct repository *r,
 	if (!bd)
 		return 1;
 
-	if (origin->commit->generation == GENERATION_NUMBER_INFINITY)
+	if (commit_graph_generation(origin->commit) == GENERATION_NUMBER_INFINITY)
 		return 1;
 
 	filter = get_bloom_filter(r, origin->commit, 0);

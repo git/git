@@ -34,14 +34,14 @@ static int load_bloom_filter_from_graph(struct commit_graph *g,
 {
 	uint32_t lex_pos, start_index, end_index;
 
-	while (c->graph_pos < g->num_commits_in_base)
+	while (commit_graph_position(c) < g->num_commits_in_base)
 		g = g->base_graph;
 
 	/* The commit graph commit 'c' lives in doesn't carry bloom filters. */
 	if (!g->chunk_bloom_indexes)
 		return 0;
 
-	lex_pos = c->graph_pos - g->num_commits_in_base;
+	lex_pos = commit_graph_position(c) - g->num_commits_in_base;
 
 	end_index = get_be32(g->chunk_bloom_indexes + 4 * lex_pos);
 
@@ -193,7 +193,7 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 
 	if (!filter->data) {
 		load_commit_graph_info(r, c);
-		if (c->graph_pos != COMMIT_NOT_FROM_GRAPH &&
+		if (commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH &&
 			r->objects->commit_graph->chunk_bloom_indexes) {
 			if (load_bloom_filter_from_graph(r->objects->commit_graph, filter, c))
 				return filter;
