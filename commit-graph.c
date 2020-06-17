@@ -87,6 +87,58 @@ static int commit_pos_cmp(const void *va, const void *vb)
 	       commit_pos_at(&commit_pos, b);
 }
 
+define_commit_slab(commit_graph_data_slab, struct commit_graph_data);
+static struct commit_graph_data_slab commit_graph_data_slab =
+	COMMIT_SLAB_INIT(1, commit_graph_data_slab);
+
+uint32_t commit_graph_position(const struct commit *c)
+{
+	struct commit_graph_data *data =
+		commit_graph_data_slab_peek(&commit_graph_data_slab, c);
+
+	return data ? data->graph_pos : COMMIT_NOT_FROM_GRAPH;
+}
+
+uint32_t commit_graph_generation(const struct commit *c)
+{
+	struct commit_graph_data *data =
+		commit_graph_data_slab_peek(&commit_graph_data_slab, c);
+
+	if (!data)
+		return GENERATION_NUMBER_INFINITY;
+	else if (data->graph_pos == COMMIT_NOT_FROM_GRAPH)
+		return GENERATION_NUMBER_INFINITY;
+
+	return data->generation;
+}
+
+static struct commit_graph_data *commit_graph_data_at(const struct commit *c)
+{
+	unsigned int i, nth_slab;
+	struct commit_graph_data *data =
+		commit_graph_data_slab_peek(&commit_graph_data_slab, c);
+
+	if (data)
+		return data;
+
+	nth_slab = c->index / commit_graph_data_slab.slab_size;
+	data = commit_graph_data_slab_at(&commit_graph_data_slab, c);
+
+	/*
+	 * commit-slab initializes elements with zero, overwrite this with
+	 * COMMIT_NOT_FROM_GRAPH for graph_pos.
+	 *
+	 * We avoid initializing generation with checking if graph position
+	 * is not COMMIT_NOT_FROM_GRAPH.
+	 */
+	for (i = 0; i < commit_graph_data_slab.slab_size; i++) {
+		commit_graph_data_slab.slab[nth_slab][i].graph_pos =
+			COMMIT_NOT_FROM_GRAPH;
+	}
+
+	return data;
+}
+
 static int commit_gen_cmp(const void *va, const void *vb)
 {
 	const struct commit *a = *(const struct commit **)va;
@@ -1020,7 +1072,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 		else
 			packedDate[0] = 0;
 
-		packedDate[0] |= htonl((*list)->generation << 2);
+		packedDate[0] |= htonl(commit_graph_data_at(*list)->generation << 2);
 
 		packedDate[1] = htonl((*list)->date);
 		hashwrite(f, packedDate, 8);
@@ -1251,9 +1303,11 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 					_("Computing commit graph generation numbers"),
 					ctx->commits.nr);
 	for (i = 0; i < ctx->commits.nr; i++) {
+		uint32_t generation = commit_graph_data_at(ctx->commits.list[i])->generation;
+
 		display_progress(ctx->progress, i + 1);
-		if (ctx->commits.list[i]->generation != GENERATION_NUMBER_INFINITY &&
-		    ctx->commits.list[i]->generation != GENERATION_NUMBER_ZERO)
+		if (generation != GENERATION_NUMBER_INFINITY &&
+		    generation != GENERATION_NUMBER_ZERO)
 			continue;
 
 		commit_list_insert(ctx->commits.list[i], &list);
@@ -1264,22 +1318,26 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 			uint32_t max_generation = 0;
 
 			for (parent = current->parents; parent; parent = parent->next) {
-				if (parent->item->generation == GENERATION_NUMBER_INFINITY ||
-				    parent->item->generation == GENERATION_NUMBER_ZERO) {
+				generation = commit_graph_data_at(parent->item)->generation;
+
+				if (generation == GENERATION_NUMBER_INFINITY ||
+				    generation == GENERATION_NUMBER_ZERO) {
 					all_parents_computed = 0;
 					commit_list_insert(parent->item, &list);
 					break;
-				} else if (parent->item->generation > max_generation) {
-					max_generation = parent->item->generation;
+				} else if (generation > max_generation) {
+					max_generation = generation;
 				}
 			}
 
 			if (all_parents_computed) {
-				current->generation = max_generation + 1;
+				struct commit_graph_data *data = commit_graph_data_at(current);
+
+				data->generation = max_generation + 1;
 				pop_commit(&list);
 
-				if (current->generation > GENERATION_NUMBER_MAX)
-					current->generation = GENERATION_NUMBER_MAX;
+				if (data->generation > GENERATION_NUMBER_MAX)
+					data->generation = GENERATION_NUMBER_MAX;
 			}
 		}
 	}
