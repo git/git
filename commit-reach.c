@@ -283,7 +283,9 @@ struct commit_list *repo_get_merge_bases(struct repository *r,
 /*
  * Is "commit" a descendant of one of the elements on the "with_commit" list?
  */
-int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
+static int repo_is_descendant_of(struct repository *r,
+				 struct commit *commit,
+				 struct commit_list *with_commit)
 {
 	if (!with_commit)
 		return 1;
@@ -301,11 +303,16 @@ int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
 
 			other = with_commit->item;
 			with_commit = with_commit->next;
-			if (in_merge_bases(other, commit))
+			if (repo_in_merge_bases(r, other, commit))
 				return 1;
 		}
 		return 0;
 	}
+}
+
+int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
+{
+	return repo_is_descendant_of(the_repository, commit, with_commit);
 }
 
 /*
