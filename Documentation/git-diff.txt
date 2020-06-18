@@ -11,15 +11,17 @@ SYNOPSIS
 [verse]
 'git diff' [<options>] [<commit>] [--] [<path>...]
 'git diff' [<options>] --cached [<commit>] [--] [<path>...]
-'git diff' [<options>] <commit> <commit> [--] [<path>...]
+'git diff' [<options>] <commit> [<commit>...] <commit> [--] [<path>...]
+'git diff' [<options>] <commit>...<commit> [--] [<path>...]
 'git diff' [<options>] <blob> <blob>
 'git diff' [<options>] --no-index [--] <path> <path>
 
 DESCRIPTION
 -----------
 Show changes between the working tree and the index or a tree, changes
-between the index and a tree, changes between two trees, changes between
-two blob objects, or changes between two files on disk.
+between the index and a tree, changes between two trees, changes resulting
+from a merge, changes between two blob objects, or changes between two
+files on disk.
 
 'git diff' [<options>] [--] [<path>...]::
 
@@ -66,6 +68,15 @@ two blob objects, or changes between two files on disk.
 	This is synonymous to the previous form.  If <commit> on
 	one side is omitted, it will have the same effect as
 	using HEAD instead.
+
+'git diff' [<options>] <commit> [<commit>...] <commit> [--] [<path>...]::
+
+	This form is to view the results of a merge commit.  The first
+	listed <commit> must be the merge itself; the remaining two or
+	more commits should be its parents.  A convenient way to produce
+	the desired set of revisions is to use the {caret}@ suffix.
+	For instance, if `master` names a merge commit, `git diff master
+	master^@` gives the same combined diff as `git show master`.
 
 'git diff' [<options>] <commit>\...<commit> [--] [<path>...]::
 
@@ -196,7 +207,8 @@ linkgit:git-difftool[1],
 linkgit:git-log[1],
 linkgit:gitdiffcore[7],
 linkgit:git-format-patch[1],
-linkgit:git-apply[1]
+linkgit:git-apply[1],
+linkgit:git-show[1]
 
 GIT
 ---
