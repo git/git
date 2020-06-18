@@ -44,6 +44,12 @@ Performance, Internal Implementation, Development Support etc.
  * Support for GIT_CURL_VERBOSE has been rewritten in terms of
    GIT_TRACE_CURL.
 
+ * Preliminary clean-ups around refs API, plus file format
+   specification documentation for the reftable backend.
+
+ * Workaround breakage in MSVC build, where "curl-config --cflags"
+   gives settings appropriate for GCC build.
+
 
 Fixes since v2.27
 -----------------
@@ -78,6 +84,24 @@ Fixes since v2.27
    validating the arguments.
    (merge 4d9005ff5d cb/bisect-helper-parser-fix later to maint).
 
+ * Reduce memory usage during "diff --quiet" in a worktree with too
+   many stat-unmatched paths.
+   (merge d2d7fbe129 jk/diff-memuse-optim-with-stat-unmatch later to maint).
+
+ * The reflog entries for "git clone" and "git fetch" did not
+   anonymize the URL they operated on.
+   (merge 46da295a77 js/reflog-anonymize-for-clone-and-fetch later to maint).
+
+ * The behaviour of "sparse-checkout" in the state "git clone
+   --no-checkout" left was changed accidentally in 2.27, which has
+   been corrected.
+
+ * Use of negative pathspec, while collecting paths including
+   untracked ones in the working tree, was broken.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
    (merge d63ae31962 cb/t5608-cleanup later to maint).
+   (merge 788db145c7 dl/t-readme-spell-git-correctly later to maint).
+   (merge 45a87a83bb dl/python-2.7-is-the-floor-version later to maint).
+   (merge b75a219904 es/advertise-contribution-doc later to maint).
