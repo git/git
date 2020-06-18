@@ -6763,8 +6763,11 @@ void diff_change(struct diff_options *options,
 		return;
 
 	if (options->flags.quick && options->skip_stat_unmatch &&
-	    !diff_filespec_check_stat_unmatch(options->repo, p))
+	    !diff_filespec_check_stat_unmatch(options->repo, p)) {
+		diff_free_filespec_data(p->one);
+		diff_free_filespec_data(p->two);
 		return;
+	}
 
 	options->flags.has_changes = 1;
 }
