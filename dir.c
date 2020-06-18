@@ -364,7 +364,8 @@ static int match_pathspec_item(const struct index_state *istate,
 		return MATCHED_FNMATCH;
 
 	/* Perform checks to see if "name" is a leading string of the pathspec */
-	if (flags & DO_MATCH_LEADING_PATHSPEC) {
+	if ( (flags & DO_MATCH_LEADING_PATHSPEC) &&
+	    !(flags & DO_MATCH_EXCLUDE)) {
 		/* name is a literal prefix of the pathspec */
 		int offset = name[namelen-1] == '/' ? 1 : 0;
 		if ((namelen < matchlen) &&
@@ -401,6 +402,10 @@ static int match_pathspec_item(const struct index_state *istate,
 }
 
 /*
+ * do_match_pathspec() is meant to ONLY be called by
+ * match_pathspec_with_flags(); calling it directly risks pathspecs
+ * like ':!unwanted_path' being ignored.
+ *
  * Given a name and a list of pathspecs, returns the nature of the
  * closest (i.e. most specific) match of the name to any of the
  * pathspecs.
@@ -486,13 +491,12 @@ static int do_match_pathspec(const struct index_state *istate,
 	return retval;
 }
 
-int match_pathspec(const struct index_state *istate,
-		   const struct pathspec *ps,
-		   const char *name, int namelen,
-		   int prefix, char *seen, int is_dir)
+static int match_pathspec_with_flags(const struct index_state *istate,
+				     const struct pathspec *ps,
+				     const char *name, int namelen,
+				     int prefix, char *seen, unsigned flags)
 {
 	int positive, negative;
-	unsigned flags = is_dir ? DO_MATCH_DIRECTORY : 0;
 	positive = do_match_pathspec(istate, ps, name, namelen,
 				     prefix, seen, flags);
 	if (!(ps->magic & PATHSPEC_EXCLUDE) || !positive)
@@ -503,6 +507,16 @@ int match_pathspec(const struct index_state *istate,
 	return negative ? 0 : positive;
 }
 
+int match_pathspec(const struct index_state *istate,
+		   const struct pathspec *ps,
+		   const char *name, int namelen,
+		   int prefix, char *seen, int is_dir)
+{
+	unsigned flags = is_dir ? DO_MATCH_DIRECTORY : 0;
+	return match_pathspec_with_flags(istate, ps, name, namelen,
+					 prefix, seen, flags);
+}
+
 /**
  * Check if a submodule is a superset of the pathspec
  */
@@ -511,11 +525,11 @@ int submodule_path_match(const struct index_state *istate,
 			 const char *submodule_name,
 			 char *seen)
 {
-	int matched = do_match_pathspec(istate, ps, submodule_name,
-					strlen(submodule_name),
-					0, seen,
-					DO_MATCH_DIRECTORY |
-					DO_MATCH_LEADING_PATHSPEC);
+	int matched = match_pathspec_with_flags(istate, ps, submodule_name,
+						strlen(submodule_name),
+						0, seen,
+						DO_MATCH_DIRECTORY |
+						DO_MATCH_LEADING_PATHSPEC);
 	return matched;
 }
 
@@ -1757,9 +1771,11 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 * for matching patterns.
 	 */
 	if (pathspec && !excluded) {
-		matches_how = do_match_pathspec(istate, pathspec, dirname, len,
-						0 /* prefix */, NULL /* seen */,
-						DO_MATCH_LEADING_PATHSPEC);
+		matches_how = match_pathspec_with_flags(istate, pathspec,
+							dirname, len,
+							0 /* prefix */,
+							NULL /* seen */,
+							DO_MATCH_LEADING_PATHSPEC);
 		if (!matches_how)
 			return path_none;
 	}
@@ -2191,9 +2207,9 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 		if (excluded)
 			return path_excluded;
 		if (pathspec &&
-		    !do_match_pathspec(istate, pathspec, path->buf, path->len,
-				       0 /* prefix */, NULL /* seen */,
-				       0 /* flags */))
+		    !match_pathspec(istate, pathspec, path->buf, path->len,
+				    0 /* prefix */, NULL /* seen */,
+				    0 /* is_dir */))
 			return path_none;
 		return path_untracked;
 	}
