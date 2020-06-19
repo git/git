@@ -548,7 +548,9 @@ static void output_refs(struct ref *refs)
 		if (posn->symref)
 			printf("@%s %s\n", posn->symref, posn->name);
 		else
-			printf("%s %s\n", oid_to_hex(&posn->old_oid), posn->name);
+			printf("%s %s\n", hash_to_hex_algop(posn->old_oid.hash,
+							    options.hash_algo),
+					  posn->name);
 	}
 	printf("\n");
 	fflush(stdout);
