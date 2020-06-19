@@ -252,6 +252,19 @@ static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 	return list;
 }
 
+static const struct git_hash_algo *detect_hash_algo(struct discovery *heads)
+{
+	const char *p = memchr(heads->buf, '\t', heads->len);
+	int algo;
+	if (!p)
+		return the_hash_algo;
+
+	algo = hash_algo_by_length((p - heads->buf) / 2);
+	if (algo == GIT_HASH_UNKNOWN)
+		return NULL;
+	return &hash_algos[algo];
+}
+
 static struct ref *parse_info_refs(struct discovery *heads)
 {
 	char *data, *start, *mid;
@@ -261,6 +274,12 @@ static struct ref *parse_info_refs(struct discovery *heads)
 	struct ref *refs = NULL;
 	struct ref *ref = NULL;
 	struct ref *last_ref = NULL;
+
+	options.hash_algo = detect_hash_algo(heads);
+	if (!options.hash_algo)
+		die("%sinfo/refs not valid: could not determine hash algorithm; "
+		    "is this a git repository?",
+		    transport_anonymize_url(url.buf));
 
 	data = heads->buf;
 	start = NULL;
@@ -272,13 +291,13 @@ static struct ref *parse_info_refs(struct discovery *heads)
 		if (data[i] == '\t')
 			mid = &data[i];
 		if (data[i] == '\n') {
-			if (mid - start != the_hash_algo->hexsz)
+			if (mid - start != options.hash_algo->hexsz)
 				die(_("%sinfo/refs not valid: is this a git repository?"),
 				    transport_anonymize_url(url.buf));
 			data[i] = 0;
 			ref_name = mid + 1;
 			ref = alloc_ref(ref_name);
-			get_oid_hex(start, &ref->old_oid);
+			get_oid_hex_algop(start, &ref->old_oid, options.hash_algo);
 			if (!refs)
 				refs = ref;
 			if (last_ref)
