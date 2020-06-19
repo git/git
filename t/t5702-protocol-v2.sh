@@ -348,7 +348,6 @@ test_expect_success 'partial fetch' '
 	rm -rf client "$(pwd)/trace" &&
 	git init client &&
 	SERVER="file://$(pwd)/server" &&
-	test_config -C client extensions.partialClone "$SERVER" &&
 
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		fetch --filter=blob:none "$SERVER" master:refs/heads/other &&
