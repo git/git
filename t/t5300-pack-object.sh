@@ -12,7 +12,8 @@ TRASH=$(pwd)
 
 test_expect_success \
     'setup' \
-    'rm -f .git/index* &&
+    'test_oid_init &&
+     rm -f .git/index* &&
      perl -e "print \"a\" x 4096;" > a &&
      perl -e "print \"b\" x 4096;" > b &&
      perl -e "print \"c\" x 4096;" > c &&
@@ -412,18 +413,18 @@ test_expect_success 'set up pack for non-repo tests' '
 '
 
 test_expect_success 'index-pack --stdin complains of non-repo' '
-	nongit test_must_fail git index-pack --stdin <foo.pack &&
+	nongit test_must_fail git index-pack --object-format=$(test_oid algo) --stdin <foo.pack &&
 	test_path_is_missing non-repo/.git
 '
 
 test_expect_success 'index-pack <pack> works in non-repo' '
-	nongit git index-pack ../foo.pack &&
+	nongit git index-pack --object-format=$(test_oid algo) ../foo.pack &&
 	test_path_is_file foo.idx
 '
 
 test_expect_success 'index-pack --strict <pack> works in non-repo' '
 	rm -f foo.idx &&
-	nongit git index-pack --strict ../foo.pack &&
+	nongit git index-pack --strict --object-format=$(test_oid algo) ../foo.pack &&
 	test_path_is_file foo.idx
 '
 
