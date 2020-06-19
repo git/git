@@ -468,7 +468,7 @@ static void print_current_branch_name(void)
 
 static void reject_rebase_or_bisect_branch(const char *target)
 {
-	struct worktree **worktrees = get_worktrees(0);
+	struct worktree **worktrees = get_worktrees();
 	int i;
 
 	for (i = 0; worktrees[i]; i++) {

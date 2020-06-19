@@ -25,7 +25,7 @@ struct worktree {
  * The caller is responsible for freeing the memory from the returned
  * worktrees by calling free_worktrees().
  */
-struct worktree **get_worktrees(unsigned flags);
+struct worktree **get_worktrees(void);
 
 /*
  * Returns 1 if linked worktrees exist, 0 otherwise.

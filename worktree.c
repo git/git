@@ -123,7 +123,7 @@ static void mark_current_worktree(struct worktree **worktrees)
 	free(git_dir);
 }
 
-struct worktree **get_worktrees(unsigned flags)
+struct worktree **get_worktrees(void)
 {
 	struct worktree **list = NULL;
 	struct strbuf path = STRBUF_INIT;
@@ -398,7 +398,7 @@ const struct worktree *find_shared_symref(const char *symref,
 
 	if (worktrees)
 		free_worktrees(worktrees);
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 
 	for (i = 0; worktrees[i]; i++) {
 		struct worktree *wt = worktrees[i];
@@ -559,7 +559,7 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 	struct worktree **worktrees, **p;
 	int ret = 0;
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct object_id oid;

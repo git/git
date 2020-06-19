@@ -325,7 +325,7 @@ static int add_worktree(const char *path, const char *refname,
 	struct strbuf sb_name = STRBUF_INIT;
 	struct worktree **worktrees;
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	check_candidate_path(path, opts->force, worktrees, "add");
 	free_worktrees(worktrees);
 	worktrees = NULL;
@@ -724,7 +724,7 @@ static int list(int ac, const char **av, const char *prefix)
 	if (ac)
 		usage_with_options(worktree_usage, options);
 	else {
-		struct worktree **worktrees = get_worktrees(0);
+		struct worktree **worktrees = get_worktrees();
 		int path_maxlen = 0, abbrev = DEFAULT_ABBREV, i;
 
 		/* sort worktrees by path but keep main worktree at top */
@@ -758,7 +758,7 @@ static int lock_worktree(int ac, const char **av, const char *prefix)
 	if (ac != 1)
 		usage_with_options(worktree_usage, options);
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	wt = find_worktree(worktrees, prefix, av[0]);
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
@@ -791,7 +791,7 @@ static int unlock_worktree(int ac, const char **av, const char *prefix)
 	if (ac != 1)
 		usage_with_options(worktree_usage, options);
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	wt = find_worktree(worktrees, prefix, av[0]);
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
@@ -865,7 +865,7 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 	strbuf_addstr(&dst, path);
 	free(path);
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	wt = find_worktree(worktrees, prefix, av[0]);
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
@@ -991,7 +991,7 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 	if (ac != 1)
 		usage_with_options(worktree_usage, options);
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	wt = find_worktree(worktrees, prefix, av[0]);
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
