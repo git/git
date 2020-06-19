@@ -23,6 +23,17 @@ static void add_to_ref_list(const struct object_id *oid, const char *name,
 	list->nr++;
 }
 
+static const struct git_hash_algo *detect_hash_algo(struct strbuf *buf)
+{
+	size_t len = strcspn(buf->buf, " \n");
+	int algo;
+
+	algo = hash_algo_by_length(len / 2);
+	if (algo == GIT_HASH_UNKNOWN)
+		return NULL;
+	return &hash_algos[algo];
+}
+
 static int parse_bundle_header(int fd, struct bundle_header *header,
 			       const char *report_path)
 {
@@ -52,12 +63,21 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		}
 		strbuf_rtrim(&buf);
 
+		if (!header->hash_algo) {
+			header->hash_algo = detect_hash_algo(&buf);
+			if (!header->hash_algo) {
+				error(_("unknown hash algorithm length"));
+				status = -1;
+				break;
+			}
+		}
+
 		/*
 		 * Tip lines have object name, SP, and refname.
 		 * Prerequisites have object name that is optionally
 		 * followed by SP and subject line.
 		 */
-		if (parse_oid_hex(buf.buf, &oid, &p) ||
+		if (parse_oid_hex_algop(buf.buf, &oid, &p, header->hash_algo) ||
 		    (*p && !isspace(*p)) ||
 		    (!is_prereq && !*p)) {
 			if (report_path)
