@@ -994,6 +994,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 				opt_ff = "--ff-only";
 				ret = run_merge();
 			}
+			free_commit_list(list);
 		}
 		ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
 
