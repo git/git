@@ -123,13 +123,6 @@ static void mark_current_worktree(struct worktree **worktrees)
 	free(git_dir);
 }
 
-static int compare_worktree(const void *a_, const void *b_)
-{
-	const struct worktree *const *a = a_;
-	const struct worktree *const *b = b_;
-	return fspathcmp((*a)->path, (*b)->path);
-}
-
 struct worktree **get_worktrees(unsigned flags)
 {
 	struct worktree **list = NULL;
@@ -160,13 +153,6 @@ struct worktree **get_worktrees(unsigned flags)
 	}
 	ALLOC_GROW(list, counter + 1, alloc);
 	list[counter] = NULL;
-
-	if (flags & GWT_SORT_LINKED)
-		/*
-		 * don't sort the first item (main worktree), which will
-		 * always be the first
-		 */
-		QSORT(list + 1, counter - 1, compare_worktree);
 
 	mark_current_worktree(list);
 	return list;
