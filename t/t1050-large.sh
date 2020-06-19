@@ -12,6 +12,7 @@ file_size () {
 }
 
 test_expect_success setup '
+	test_oid_init &&
 	# clone does not allow us to pass core.bigfilethreshold to
 	# new repos, so set core.bigfilethreshold globally
 	git config --global core.bigfilethreshold 200k &&
@@ -177,7 +178,8 @@ test_expect_success 'git-show a large file' '
 
 test_expect_success 'index-pack' '
 	git clone file://"$(pwd)"/.git foo &&
-	GIT_DIR=non-existent git index-pack --strict --verify foo/.git/objects/pack/*.pack
+	GIT_DIR=non-existent git index-pack --object-format=$(test_oid algo) \
+		--strict --verify foo/.git/objects/pack/*.pack
 '
 
 test_expect_success 'repack' '
