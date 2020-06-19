@@ -13,6 +13,7 @@ start_git_daemon --export-all --enable=receive-pack
 daemon_parent=$GIT_DAEMON_DOCUMENT_ROOT_PATH/parent
 
 test_expect_success 'create repo to be served by git-daemon' '
+	test_oid_init &&
 	git init "$daemon_parent" &&
 	test_commit -C "$daemon_parent" one
 '
@@ -394,6 +395,7 @@ test_expect_success 'even with handcrafted request, filter does not work if not 
 	# Custom request that tries to filter even though it is not advertised.
 	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
+	object-format=$(test_oid algo)
 	0001
 	want $(git -C server rev-parse master)
 	filter blob:none
