@@ -63,7 +63,7 @@ sub generate_diff {
 	my @mods;
 	while (defined($_ = get_record($diff_fh, "\0"))) {
 		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
-					($::sha1)\s($::sha1)\s
+					($::oid)\s($::oid)\s
 					([MTCRAD])\d*$/xo) {
 			push @mods, {	mode_a => $1, mode_b => $2,
 					sha1_a => $3, sha1_b => $4,

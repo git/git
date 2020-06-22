@@ -874,7 +874,7 @@ sub assert_index_clean {
 		command_noisy('read-tree', $treeish) unless -e $self->{index};
 		my $x = command_oneline('write-tree');
 		my ($y) = (command(qw/cat-file commit/, $treeish) =~
-		           /^tree ($::sha1)/mo);
+		           /^tree ($::oid)/mo);
 		return if $y eq $x;
 
 		warn "Index mismatch: $y != $x\nrereading $treeish\n";
@@ -1020,7 +1020,7 @@ sub do_git_commit {
 		$tree = $self->tmp_index_do(sub {
 		                            command_oneline('write-tree') });
 	}
-	die "Tree is not a valid sha1: $tree\n" if $tree !~ /^$::sha1$/o;
+	die "Tree is not a valid oid $tree\n" if $tree !~ /^$::oid$/o;
 
 	my @exec = ('git', 'commit-tree', $tree);
 	foreach ($self->get_commit_parents($log_entry)) {
@@ -1048,8 +1048,8 @@ sub do_git_commit {
 	close $out_fh or croak $!;
 	waitpid $pid, 0;
 	croak $? if $?;
-	if ($commit !~ /^$::sha1$/o) {
-		die "Failed to commit, invalid sha1: $commit\n";
+	if ($commit !~ /^$::oid$/o) {
+		die "Failed to commit, invalid oid: $commit\n";
 	}
 
 	$self->rev_map_set($log_entry->{revision}, $commit, 1);
@@ -2150,7 +2150,7 @@ sub rebuild {
 	my $svn_uuid = $self->rewrite_uuid || $self->ra_uuid;
 	my $c;
 	while (<$log>) {
-		if ( m{^commit ($::sha1)$} ) {
+		if ( m{^commit ($::oid)$} ) {
 			$c = $1;
 			next;
 		}
