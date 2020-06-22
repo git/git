@@ -1555,13 +1555,9 @@ static void read_v2_anomalous_offsets(struct packed_git *p,
 {
 	const uint32_t *idx1, *idx2;
 	uint32_t i;
-	const uint32_t hashwords = the_hash_algo->rawsz / sizeof(uint32_t);
 
 	/* The address of the 4-byte offset table */
-	idx1 = (((const uint32_t *)p->index_data)
-		+ 2 /* 8-byte header */
-		+ 256 /* fan out */
-		+ hashwords * p->num_objects /* object ID table */
+	idx1 = (((const uint32_t *)((const uint8_t *)p->index_data + p->crc_offset))
 		+ p->num_objects /* CRC32 table */
 		);
 
@@ -1671,6 +1667,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	unsigned char pack_hash[GIT_MAX_RAWSZ];
 	unsigned foreign_nr = 1;	/* zero is a "good" value, assume bad */
 	int report_end_of_input = 0;
+	int hash_algo = 0;
 
 	/*
 	 * index-pack never needs to fetch missing objects except when
@@ -1764,6 +1761,11 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 					die(_("bad %s"), arg);
 			} else if (skip_prefix(arg, "--max-input-size=", &arg)) {
 				max_input_size = strtoumax(arg, NULL, 10);
+			} else if (skip_prefix(arg, "--object-format=", &arg)) {
+				hash_algo = hash_algo_by_name(arg);
+				if (hash_algo == GIT_HASH_UNKNOWN)
+					die(_("unknown hash algorithm '%s'"), arg);
+				repo_set_hash_algo(the_repository, hash_algo);
 			} else
 				usage(index_pack_usage);
 			continue;
@@ -1780,6 +1782,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		die(_("--fix-thin cannot be used without --stdin"));
 	if (from_stdin && !startup_info->have_repository)
 		die(_("--stdin requires a git repository"));
+	if (from_stdin && hash_algo)
+		die(_("--object-format cannot be used with --stdin"));
 	if (!index_name && pack_name)
 		index_name = derive_filename(pack_name, "idx", &index_name_buf);
 

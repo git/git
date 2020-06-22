@@ -70,6 +70,7 @@ struct packed_git {
 	size_t index_size;
 	uint32_t num_objects;
 	uint32_t num_bad_objects;
+	uint32_t crc_offset;
 	unsigned char *bad_object_sha1;
 	int index_version;
 	time_t mtime;

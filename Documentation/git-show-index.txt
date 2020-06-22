@@ -9,7 +9,7 @@ git-show-index - Show packed archive index
 SYNOPSIS
 --------
 [verse]
-'git show-index'
+'git show-index' [--object-format=<hash-algorithm>]
 
 
 DESCRIPTION
@@ -35,6 +35,15 @@ id.
 Note that you can get more information on a packfile by calling
 linkgit:git-verify-pack[1]. However, as this command considers only the
 index file itself, it's both faster and more flexible.
+
+OPTIONS
+-------
+
+--object-format=<hash-algorithm>::
+	Specify the given object format (hash algorithm) for the index file.  The
+	valid values are 'sha1' and (if enabled) 'sha256'.  The default is the
+	algorithm for the current repository (set by `extensions.objectFormat`), or
+	'sha1' if no value is set or outside a repository..
 
 GIT
 ---

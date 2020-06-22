@@ -18,7 +18,7 @@
 
 static char *server_capabilities_v1;
 static struct argv_array server_capabilities_v2 = ARGV_ARRAY_INIT;
-static const char *parse_feature_value(const char *, const char *, int *);
+static const char *next_server_feature_value(const char *feature, int *len, int *offset);
 
 static int check_ref(const char *name, unsigned int flags)
 {
@@ -80,6 +80,21 @@ int server_supports_v2(const char *c, int die_on_error)
 	if (die_on_error)
 		die(_("server doesn't support '%s'"), c);
 
+	return 0;
+}
+
+int server_feature_v2(const char *c, const char **v)
+{
+	int i;
+
+	for (i = 0; i < server_capabilities_v2.argc; i++) {
+		const char *out;
+		if (skip_prefix(server_capabilities_v2.argv[i], c, &out) &&
+		    (*out == '=')) {
+			*v = out + 1;
+			return 1;
+		}
+	}
 	return 0;
 }
 
@@ -181,17 +196,16 @@ reject:
 static void annotate_refs_with_symref_info(struct ref *ref)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
-	const char *feature_list = server_capabilities_v1;
+	int offset = 0;
 
-	while (feature_list) {
+	while (1) {
 		int len;
 		const char *val;
 
-		val = parse_feature_value(feature_list, "symref", &len);
+		val = next_server_feature_value("symref", &len, &offset);
 		if (!val)
 			break;
 		parse_one_symref_info(&symref, val, len);
-		feature_list = val + 1;
 	}
 	string_list_sort(&symref);
 
@@ -205,21 +219,36 @@ static void annotate_refs_with_symref_info(struct ref *ref)
 	string_list_clear(&symref, 0);
 }
 
-static void process_capabilities(const char *line, int *len)
+static void process_capabilities(struct packet_reader *reader, int *linelen)
 {
+	const char *feat_val;
+	int feat_len;
+	const char *line = reader->line;
 	int nul_location = strlen(line);
-	if (nul_location == *len)
+	if (nul_location == *linelen)
 		return;
 	server_capabilities_v1 = xstrdup(line + nul_location + 1);
-	*len = nul_location;
+	*linelen = nul_location;
+
+	feat_val = server_feature_value("object-format", &feat_len);
+	if (feat_val) {
+		char *hash_name = xstrndup(feat_val, feat_len);
+		int hash_algo = hash_algo_by_name(hash_name);
+		if (hash_algo != GIT_HASH_UNKNOWN)
+			reader->hash_algo = &hash_algos[hash_algo];
+		free(hash_name);
+	} else {
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	}
 }
 
-static int process_dummy_ref(const char *line)
+static int process_dummy_ref(const struct packet_reader *reader)
 {
+	const char *line = reader->line;
 	struct object_id oid;
 	const char *name;
 
-	if (parse_oid_hex(line, &oid, &name))
+	if (parse_oid_hex_algop(line, &oid, &name, reader->hash_algo))
 		return 0;
 	if (*name != ' ')
 		return 0;
@@ -235,13 +264,15 @@ static void check_no_capabilities(const char *line, int len)
 			line + strlen(line));
 }
 
-static int process_ref(const char *line, int len, struct ref ***list,
-		       unsigned int flags, struct oid_array *extra_have)
+static int process_ref(const struct packet_reader *reader, int len,
+		       struct ref ***list, unsigned int flags,
+		       struct oid_array *extra_have)
 {
+	const char *line = reader->line;
 	struct object_id old_oid;
 	const char *name;
 
-	if (parse_oid_hex(line, &old_oid, &name))
+	if (parse_oid_hex_algop(line, &old_oid, &name, reader->hash_algo))
 		return 0;
 	if (*name != ' ')
 		return 0;
@@ -261,16 +292,17 @@ static int process_ref(const char *line, int len, struct ref ***list,
 	return 1;
 }
 
-static int process_shallow(const char *line, int len,
+static int process_shallow(const struct packet_reader *reader, int len,
 			   struct oid_array *shallow_points)
 {
+	const char *line = reader->line;
 	const char *arg;
 	struct object_id old_oid;
 
 	if (!skip_prefix(line, "shallow ", &arg))
 		return 0;
 
-	if (get_oid_hex(arg, &old_oid))
+	if (get_oid_hex_algop(arg, &old_oid, reader->hash_algo))
 		die(_("protocol error: expected shallow sha-1, got '%s'"), arg);
 	if (!shallow_points)
 		die(_("repository on the other end cannot be shallow"));
@@ -317,20 +349,20 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 
 		switch (state) {
 		case EXPECTING_FIRST_REF:
-			process_capabilities(reader->line, &len);
-			if (process_dummy_ref(reader->line)) {
+			process_capabilities(reader, &len);
+			if (process_dummy_ref(reader)) {
 				state = EXPECTING_SHALLOW;
 				break;
 			}
 			state = EXPECTING_REF;
 			/* fallthrough */
 		case EXPECTING_REF:
-			if (process_ref(reader->line, len, &list, flags, extra_have))
+			if (process_ref(reader, len, &list, flags, extra_have))
 				break;
 			state = EXPECTING_SHALLOW;
 			/* fallthrough */
 		case EXPECTING_SHALLOW:
-			if (process_shallow(reader->line, len, shallow_points))
+			if (process_shallow(reader, len, shallow_points))
 				break;
 			die(_("protocol error: unexpected '%s'"), reader->line);
 		case EXPECTING_DONE:
@@ -344,7 +376,7 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 }
 
 /* Returns 1 when a valid ref has been added to `list`, 0 otherwise */
-static int process_ref_v2(const char *line, struct ref ***list)
+static int process_ref_v2(struct packet_reader *reader, struct ref ***list)
 {
 	int ret = 1;
 	int i = 0;
@@ -352,6 +384,7 @@ static int process_ref_v2(const char *line, struct ref ***list)
 	struct ref *ref;
 	struct string_list line_sections = STRING_LIST_INIT_DUP;
 	const char *end;
+	const char *line = reader->line;
 
 	/*
 	 * Ref lines have a number of fields which are space deliminated.  The
@@ -364,7 +397,7 @@ static int process_ref_v2(const char *line, struct ref ***list)
 		goto out;
 	}
 
-	if (parse_oid_hex(line_sections.items[i++].string, &old_oid, &end) ||
+	if (parse_oid_hex_algop(line_sections.items[i++].string, &old_oid, &end, reader->hash_algo) ||
 	    *end) {
 		ret = 0;
 		goto out;
@@ -372,7 +405,7 @@ static int process_ref_v2(const char *line, struct ref ***list)
 
 	ref = alloc_ref(line_sections.items[i++].string);
 
-	oidcpy(&ref->old_oid, &old_oid);
+	memcpy(ref->old_oid.hash, old_oid.hash, reader->hash_algo->rawsz);
 	**list = ref;
 	*list = &ref->next;
 
@@ -385,7 +418,8 @@ static int process_ref_v2(const char *line, struct ref ***list)
 			struct object_id peeled_oid;
 			char *peeled_name;
 			struct ref *peeled;
-			if (parse_oid_hex(arg, &peeled_oid, &end) || *end) {
+			if (parse_oid_hex_algop(arg, &peeled_oid, &end,
+						reader->hash_algo) || *end) {
 				ret = 0;
 				goto out;
 			}
@@ -393,7 +427,8 @@ static int process_ref_v2(const char *line, struct ref ***list)
 			peeled_name = xstrfmt("%s^{}", ref->name);
 			peeled = alloc_ref(peeled_name);
 
-			oidcpy(&peeled->old_oid, &peeled_oid);
+			memcpy(peeled->old_oid.hash, peeled_oid.hash,
+			       reader->hash_algo->rawsz);
 			**list = peeled;
 			*list = &peeled->next;
 
@@ -423,6 +458,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     int stateless_rpc)
 {
 	int i;
+	const char *hash_name;
 	*list = NULL;
 
 	if (server_supports_v2("ls-refs", 1))
@@ -430,6 +466,16 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 	if (server_supports_v2("agent", 0))
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
+
+	if (server_feature_v2("object-format", &hash_name)) {
+		int hash_algo = hash_algo_by_name(hash_name);
+		if (hash_algo == GIT_HASH_UNKNOWN)
+			die(_("unknown object format '%s' specified by server"), hash_name);
+		reader->hash_algo = &hash_algos[hash_algo];
+		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
+	} else {
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	}
 
 	if (server_options && server_options->nr &&
 	    server_supports_v2("server-option", 1))
@@ -450,7 +496,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 	/* Process response from server */
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
-		if (!process_ref_v2(reader->line, &list))
+		if (!process_ref_v2(reader, &list))
 			die(_("invalid ls-refs response: %s"), reader->line);
 	}
 
@@ -463,7 +509,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	return list;
 }
 
-static const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp)
+const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp, int *offset)
 {
 	int len;
 
@@ -471,6 +517,8 @@ static const char *parse_feature_value(const char *feature_list, const char *fea
 		return NULL;
 
 	len = strlen(feature);
+	if (offset)
+		feature_list += *offset;
 	while (*feature_list) {
 		const char *found = strstr(feature_list, feature);
 		if (!found)
@@ -485,9 +533,14 @@ static const char *parse_feature_value(const char *feature_list, const char *fea
 			}
 			/* feature with a value (e.g., "agent=git/1.2.3") */
 			else if (*value == '=') {
+				int end;
+
 				value++;
+				end = strcspn(value, " \t\n");
 				if (lenp)
-					*lenp = strcspn(value, " \t\n");
+					*lenp = end;
+				if (offset)
+					*offset = value + end - feature_list;
 				return value;
 			}
 			/*
@@ -500,14 +553,41 @@ static const char *parse_feature_value(const char *feature_list, const char *fea
 	return NULL;
 }
 
+int server_supports_hash(const char *desired, int *feature_supported)
+{
+	int offset = 0;
+	int len;
+	const char *hash;
+
+	hash = next_server_feature_value("object-format", &len, &offset);
+	if (feature_supported)
+		*feature_supported = !!hash;
+	if (!hash) {
+		hash = hash_algos[GIT_HASH_SHA1].name;
+		len = strlen(hash);
+	}
+	while (hash) {
+		if (!xstrncmpz(desired, hash, len))
+			return 1;
+
+		hash = next_server_feature_value("object-format", &len, &offset);
+	}
+	return 0;
+}
+
 int parse_feature_request(const char *feature_list, const char *feature)
 {
-	return !!parse_feature_value(feature_list, feature, NULL);
+	return !!parse_feature_value(feature_list, feature, NULL, NULL);
+}
+
+static const char *next_server_feature_value(const char *feature, int *len, int *offset)
+{
+	return parse_feature_value(server_capabilities_v1, feature, len, offset);
 }
 
 const char *server_feature_value(const char *feature, int *len)
 {
-	return parse_feature_value(server_capabilities_v1, feature, len);
+	return parse_feature_value(server_capabilities_v1, feature, len, NULL);
 }
 
 int server_supports(const char *feature)

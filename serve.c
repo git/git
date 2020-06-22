@@ -22,6 +22,14 @@ static int agent_advertise(struct repository *r,
 	return 1;
 }
 
+static int object_format_advertise(struct repository *r,
+				   struct strbuf *value)
+{
+	if (value)
+		strbuf_addstr(value, r->hash_algo->name);
+	return 1;
+}
+
 struct protocol_capability {
 	/*
 	 * The name of the capability.  The server uses this name when
@@ -57,6 +65,7 @@ static struct protocol_capability capabilities[] = {
 	{ "ls-refs", always_advertise, ls_refs },
 	{ "fetch", upload_pack_advertise, upload_pack_v2 },
 	{ "server-option", always_advertise, NULL },
+	{ "object-format", object_format_advertise, NULL },
 };
 
 static void advertise_capabilities(void)
@@ -153,6 +162,22 @@ int has_capability(const struct argv_array *keys, const char *capability,
 	return 0;
 }
 
+static void check_algorithm(struct repository *r, struct argv_array *keys)
+{
+	int client = GIT_HASH_SHA1, server = hash_algo_by_ptr(r->hash_algo);
+	const char *algo_name;
+
+	if (has_capability(keys, "object-format", &algo_name)) {
+		client = hash_algo_by_name(algo_name);
+		if (client == GIT_HASH_UNKNOWN)
+			die("unknown object format '%s'", algo_name);
+	}
+
+	if (client != server)
+		die("mismatched object format: server %s; client %s\n",
+		    r->hash_algo->name, hash_algos[client].name);
+}
+
 enum request_state {
 	PROCESS_REQUEST_KEYS,
 	PROCESS_REQUEST_DONE,
@@ -224,6 +249,8 @@ static int process_request(void)
 
 	if (!command)
 		die("no command requested");
+
+	check_algorithm(the_repository, &keys);
 
 	command->command(the_repository, &keys, &reader);
 

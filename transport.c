@@ -143,6 +143,9 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 	data->fd = read_bundle_header(transport->url, &data->header);
 	if (data->fd < 0)
 		die(_("could not read bundle '%s'"), transport->url);
+
+	transport->hash_algo = data->header.hash_algo;
+
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct ref_list_entry *e = data->header.references.list + i;
 		struct ref *ref = alloc_ref(e->name);
@@ -157,11 +160,14 @@ static int fetch_refs_from_bundle(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
 	struct bundle_transport_data *data = transport->data;
+	int ret;
 
 	if (!data->get_refs_from_bundle_called)
 		get_refs_from_bundle(transport, 0, NULL);
-	return unbundle(the_repository, &data->header, data->fd,
-			transport->progress ? BUNDLE_VERBOSE : 0);
+	ret = unbundle(the_repository, &data->header, data->fd,
+			   transport->progress ? BUNDLE_VERBOSE : 0);
+	transport->hash_algo = data->header.hash_algo;
+	return ret;
 }
 
 static int close_bundle(struct transport *transport)
@@ -312,6 +318,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 		BUG("unknown protocol version");
 	}
 	data->got_remote_heads = 1;
+	transport->hash_algo = reader.hash_algo;
 
 	if (reader.line_peeked)
 		BUG("buffer must be empty at the end of handshake()");
@@ -989,7 +996,14 @@ struct transport *transport_get(struct remote *remote, const char *url)
 			ret->smart_options->receivepack = remote->receivepack;
 	}
 
+	ret->hash_algo = &hash_algos[GIT_HASH_SHA1];
+
 	return ret;
+}
+
+const struct git_hash_algo *transport_get_hash_algo(struct transport *transport)
+{
+	return transport->hash_algo;
 }
 
 int transport_set_option(struct transport *transport,

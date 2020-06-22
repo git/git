@@ -490,6 +490,7 @@ void packet_reader_init(struct packet_reader *reader, int fd,
 	reader->buffer_size = sizeof(packet_buffer);
 	reader->options = options;
 	reader->me = "git";
+	reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
 }
 
 enum packet_read_status packet_reader_read(struct packet_reader *reader)
