@@ -500,6 +500,7 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.preserve-empty-dirs", 'true');
 		command_noisy('config', "$pfx.placeholder-filename", $$fname);
 	}
+	load_object_format();
 }
 
 sub init_subdir {
@@ -1977,7 +1978,13 @@ sub read_git_config {
 			}
 		}
 	}
+	load_object_format();
 	delete @$opts{@config_only} if @config_only;
+}
+
+sub load_object_format {
+	chomp(my $hash = `git config --get extensions.objectformat`);
+	$::oid_length = 64 if $hash eq 'sha256';
 }
 
 sub extract_metadata {
