@@ -19,6 +19,9 @@ UI, Workflows & Features
  * The check in "git fsck" to ensure that the tree objects are sorted
    still had corner cases it missed unsorted entries.
 
+ * The interface to redact sensitive information in the trace output
+   has been simplified.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -98,6 +101,14 @@ Fixes since v2.27
 
  * Use of negative pathspec, while collecting paths including
    untracked ones in the working tree, was broken.
+
+ * The same worktree directory must be registered only once, but
+   "git worktree move" allowed this invariant to be violated, which
+   has been corrected.
+   (merge 810382ed37 es/worktree-duplicate-paths later to maint).
+
+ * The effect of sparse checkout settings on submodules is documented.
+   (merge e7d7c73249 en/sparse-with-submodule-doc later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
