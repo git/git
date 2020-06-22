@@ -404,6 +404,35 @@ Both standard output and standard error output are forwarded to
 `git send-pack` on the other end, so you can simply `echo` messages
 for the user.
 
+ref-transaction
+~~~~~~~~~~~~~~~
+
+This hook is invoked by any Git command that performs reference
+updates. It executes whenever a reference transaction is prepared,
+committed or aborted and may thus get called multiple times.
+
+The hook takes exactly one argument, which is the current state the
+given reference transaction is in:
+
+    - "prepared": All reference updates have been queued to the
+      transaction and references were locked on disk.
+
+    - "committed": The reference transaction was committed and all
+      references now have their respective new value.
+
+    - "aborted": The reference transaction was aborted, no changes
+      were performed and the locks have been released.
+
+For each reference update that was added to the transaction, the hook
+receives on standard input a line of the format:
+
+  <old-value> SP <new-value> SP <ref-name> LF
+
+The exit status of the hook is ignored for any state except for the
+"prepared" state. In the "prepared" state, a non-zero exit status will
+cause the transaction to be aborted. The hook will not be called with
+"aborted" state in that case.
+
 push-to-checkout
 ~~~~~~~~~~~~~~~~
 
