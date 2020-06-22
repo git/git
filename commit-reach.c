@@ -411,6 +411,7 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 	struct object *o;
 	struct commit *old_commit, *new_commit;
 	struct commit_list *old_commit_list = NULL;
+	int ret;
 
 	/*
 	 * Both new_commit and old_commit must be commit-ish and new_commit is descendant of
@@ -432,7 +433,9 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 		return 0;
 
 	commit_list_insert(old_commit, &old_commit_list);
-	return is_descendant_of(new_commit, old_commit_list);
+	ret = is_descendant_of(new_commit, old_commit_list);
+	free_commit_list(old_commit_list);
+	return ret;
 }
 
 /*
