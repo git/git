@@ -180,7 +180,9 @@ int cmd_main(int argc, const char **argv)
 		die(_("couldn't create a new file at '%s'"), report_path.buf);
 	}
 
-	strbuf_write_fd(&buffer, report);
+	if (write_in_full(report, buffer.buf, buffer.len) < 0)
+		die_errno(_("unable to write to %s"), report_path.buf);
+
 	close(report);
 
 	/*
