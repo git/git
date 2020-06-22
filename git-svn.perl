@@ -2008,10 +2008,10 @@ sub cmt_sha2rev_batch {
 		print $out $sha, "\n";
 
 		while (my $line = <$in>) {
-			if ($first && $line =~ /^[[:xdigit:]]{40}\smissing$/) {
+			if ($first && $line =~ /^$::oid\smissing$/) {
 				last;
 			} elsif ($first &&
-			       $line =~ /^[[:xdigit:]]{40}\scommit\s(\d+)$/) {
+			       $line =~ /^$::oid\scommit\s(\d+)$/) {
 				$first = 0;
 				$size = $1;
 				next;
