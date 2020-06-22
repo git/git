@@ -126,7 +126,9 @@ OPTIONS
 	locked working tree path, specify `--force` twice.
 +
 `move` refuses to move a locked working tree unless `--force` is specified
-twice.
+twice. If the destination is already assigned to some other working tree but is
+missing (for instance, if `<new-path>` was deleted manually), then `--force`
+allows the move to proceed; use --force twice if the destination is locked.
 +
 `remove` refuses to remove an unclean working tree unless `--force` is used.
 To remove a locked working tree, specify `--force` twice.
