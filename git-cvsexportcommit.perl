@@ -22,6 +22,10 @@ die "Need at least one commit identifier!" unless @ARGV;
 my $repo = Git->repository();
 $opt_w = $repo->config('cvsexportcommit.cvsdir') unless defined $opt_w;
 
+my $tmpdir = File::Temp->newdir;
+my $hash_algo = $repo->config('extensions.objectformat') || 'sha1';
+my $hexsz = $hash_algo eq 'sha256' ? 64 : 40;
+
 if ($opt_w || $opt_W) {
 	# Remember where GIT_DIR is before changing to CVS checkout
 	unless ($ENV{GIT_DIR}) {
@@ -96,7 +100,7 @@ foreach my $line (@commit) {
     }
 
     if ($stage eq 'headers') {
-	if ($line =~ m/^parent (\w{40})$/) { # found a parent
+	if ($line =~ m/^parent ([0-9a-f]{$hexsz})$/) { # found a parent
 	    push @parents, $1;
 	} elsif ($line =~ m/^author (.+) \d+ [-+]\d+$/) {
 	    $author = $1;
@@ -111,7 +115,7 @@ foreach my $line (@commit) {
     }
 }
 
-my $noparent = "0000000000000000000000000000000000000000";
+my $noparent = "0" x $hexsz;
 if ($parent) {
     my $found;
     # double check that it's a valid parent
@@ -174,7 +178,7 @@ my $context = $opt_p ? '' : '-C1';
 print "Checking if patch will apply\n";
 
 my @stat;
-open APPLY, "GIT_DIR= git-apply $context --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
+open APPLY, "GIT_INDEX_FILE=$tmpdir/index git-apply $context --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
 @stat=<APPLY>;
 close APPLY || die "Cannot patch";
 my (@bfiles,@files,@afiles,@dfiles);
@@ -329,7 +333,7 @@ print "Applying\n";
 if ($opt_W) {
     system("git checkout -q $commit^0") && die "cannot patch";
 } else {
-    `GIT_DIR= git-apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+    `GIT_INDEX_FILE=$tmpdir/index git-apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
 }
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
@@ -407,7 +411,7 @@ unlink(".cvsexportcommit.diff");
 
 if ($opt_W) {
     system("git checkout $go_back_to") && die "cannot move back to $go_back_to";
-    if (!($go_back_to =~ /^[0-9a-fA-F]{40}$/)) {
+    if (!($go_back_to =~ /^[0-9a-fA-F]{$hexsz}$/)) {
 	system("git symbolic-ref HEAD $go_back_to") &&
 	    die "cannot move back to $go_back_to";
     }
