@@ -209,6 +209,16 @@ test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
 	grep "Authorization: Basic <redacted>" trace
 '
 
+test_expect_success 'GIT_TRACE_CURL does not redact auth details if GIT_TRACE_REDACT=0' '
+	rm -rf redact-auth trace &&
+	set_askpass user@host pass@host &&
+	GIT_TRACE_REDACT=0 GIT_TRACE_CURL="$(pwd)/trace" \
+		git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth &&
+	expect_askpass both user@host &&
+
+	grep "Authorization: Basic [0-9a-zA-Z+/]" trace
+'
+
 test_expect_success 'disable dumb http on server' '
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
 		config http.getanyfile false
@@ -454,37 +464,37 @@ test_expect_success 'fetch by SHA-1 without tag following' '
 		--no-tags origin $(cat bar_hash)
 '
 
-test_expect_success 'GIT_REDACT_COOKIES redacts cookies' '
+test_expect_success 'cookies are redacted by default' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=1" >cookies &&
 	echo "Set-Cookie: Bar=2" >>cookies &&
-	GIT_TRACE_CURL=true GIT_REDACT_COOKIES=Bar,Baz \
+	GIT_TRACE_CURL=true \
 		git -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.git clone 2>err &&
-	grep "Cookie:.*Foo=1" err &&
+	grep "Cookie:.*Foo=<redacted>" err &&
 	grep "Cookie:.*Bar=<redacted>" err &&
+	! grep "Cookie:.*Foo=1" err &&
 	! grep "Cookie:.*Bar=2" err
 '
 
-test_expect_success 'GIT_REDACT_COOKIES redacts cookies when GIT_CURL_VERBOSE=1' '
-	rm -rf clone &&
-	echo "Set-Cookie: Foo=1" >cookies &&
-	echo "Set-Cookie: Bar=2" >>cookies &&
-	GIT_CURL_VERBOSE=1 GIT_REDACT_COOKIES=Bar,Baz \
-		git -c "http.cookieFile=$(pwd)/cookies" clone \
-		$HTTPD_URL/smart/repo.git clone 2>err &&
-	grep "Cookie:.*Foo=1" err &&
-	grep "Cookie:.*Bar=<redacted>" err &&
-	! grep "Cookie:.*Bar=2" err
-'
-
-test_expect_success 'GIT_REDACT_COOKIES handles empty values' '
+test_expect_success 'empty values of cookies are also redacted' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=" >cookies &&
-	GIT_TRACE_CURL=true GIT_REDACT_COOKIES=Foo \
+	GIT_TRACE_CURL=true \
 		git -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.git clone 2>err &&
 	grep "Cookie:.*Foo=<redacted>" err
+'
+
+test_expect_success 'GIT_TRACE_REDACT=0 disables cookie redaction' '
+	rm -rf clone &&
+	echo "Set-Cookie: Foo=1" >cookies &&
+	echo "Set-Cookie: Bar=2" >>cookies &&
+	GIT_TRACE_REDACT=0 GIT_TRACE_CURL=true \
+		git -c "http.cookieFile=$(pwd)/cookies" clone \
+		$HTTPD_URL/smart/repo.git clone 2>err &&
+	grep "Cookie:.*Foo=1" err &&
+	grep "Cookie:.*Bar=2" err
 '
 
 test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
