@@ -24,6 +24,7 @@
 #include "remote.h"
 #include "blob.h"
 #include "commit-slab.h"
+#include "khash.h"
 
 static const char *fast_export_usage[] = {
 	N_("git fast-export [rev-list-opts]"),
@@ -45,6 +46,8 @@ static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 static struct string_list tag_refs = STRING_LIST_INIT_NODUP;
 static struct refspec refspecs = REFSPEC_INIT_FETCH;
 static int anonymize;
+static FILE *anonymized_refnames_handle;
+static FILE *anonymized_paths_handle;
 static struct revision_sources revision_sources;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
@@ -115,6 +118,23 @@ static int has_unshown_parent(struct commit *commit)
 		if (!(parent->item->object.flags & SHOWN) &&
 		    !(parent->item->object.flags & UNINTERESTING))
 			return 1;
+	return 0;
+}
+
+KHASH_INIT(strset, const char *, int, 0, kh_str_hash_func, kh_str_hash_equal);
+
+struct seen_set {
+	kh_strset_t *set;
+};
+
+static int check_and_mark_seen(struct seen_set *seen, const char *str)
+{
+	int hashret;
+	if (!seen->set)
+		seen->set = kh_init_strset();
+	if (kh_get_strset(seen->set, str) < kh_end(seen->set))
+		return 1;
+	kh_put_strset(seen->set, xstrdup(str), &hashret);
 	return 0;
 }
 
@@ -350,15 +370,15 @@ static int depth_first(const void *a_, const void *b_)
 	return (a->status == 'R') - (b->status == 'R');
 }
 
-static void print_path_1(const char *path)
+static void print_path_1(FILE *out, const char *path)
 {
 	int need_quote = quote_c_style(path, NULL, NULL, 0);
 	if (need_quote)
-		quote_c_style(path, NULL, stdout, 0);
+		quote_c_style(path, NULL, out, 0);
 	else if (strchr(path, ' '))
-		printf("\"%s\"", path);
+		fprintf(out, "\"%s\"", path);
 	else
-		printf("%s", path);
+		fprintf(out, "%s", path);
 }
 
 static void *anonymize_path_component(const void *path, size_t *len)
@@ -372,13 +392,22 @@ static void *anonymize_path_component(const void *path, size_t *len)
 static void print_path(const char *path)
 {
 	if (!anonymize)
-		print_path_1(path);
+		print_path_1(stdout, path);
 	else {
 		static struct hashmap paths;
+		static struct seen_set seen;
 		static struct strbuf anon = STRBUF_INIT;
 
 		anonymize_path(&anon, path, &paths, anonymize_path_component);
-		print_path_1(anon.buf);
+		if (anonymized_paths_handle &&
+		    !check_and_mark_seen(&seen, path)) {
+			print_path_1(anonymized_paths_handle, path);
+			fputc(' ', anonymized_paths_handle);
+			print_path_1(anonymized_paths_handle, anon.buf);
+			fputc('\n', anonymized_paths_handle);
+		}
+
+		print_path_1(stdout, anon.buf);
 		strbuf_reset(&anon);
 	}
 }
@@ -515,14 +544,9 @@ static const char *anonymize_refname(const char *refname)
 	};
 	static struct hashmap refs;
 	static struct strbuf anon = STRBUF_INIT;
+	static struct seen_set seen;
+	const char *full_refname = refname;
 	int i;
-
-	/*
-	 * We also leave "master" as a special case, since it does not reveal
-	 * anything interesting.
-	 */
-	if (!strcmp(refname, "refs/heads/master"))
-		return refname;
 
 	strbuf_reset(&anon);
 	for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
@@ -533,6 +557,12 @@ static const char *anonymize_refname(const char *refname)
 	}
 
 	anonymize_path(&anon, refname, &refs, anonymize_ref_component);
+
+	if (anonymized_refnames_handle &&
+	    !check_and_mark_seen(&seen, full_refname))
+		fprintf(anonymized_refnames_handle, "%s %s\n",
+			full_refname, anon.buf);
+
 	return anon.buf;
 }
 
@@ -1144,6 +1174,8 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	char *export_filename = NULL,
 	     *import_filename = NULL,
 	     *import_filename_if_exists = NULL;
+	const char *anonymized_refnames_file = NULL;
+	const char *anonymized_paths_file = NULL;
 	uint32_t lastimportid;
 	struct string_list refspecs_list = STRING_LIST_INIT_NODUP;
 	struct string_list paths_of_changed_objects = STRING_LIST_INIT_DUP;
@@ -1177,6 +1209,12 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST(0, "refspec", &refspecs_list, N_("refspec"),
 			     N_("Apply refspec to exported refs")),
 		OPT_BOOL(0, "anonymize", &anonymize, N_("anonymize output")),
+		OPT_STRING(0, "dump-anonymized-refnames",
+			   &anonymized_refnames_file, N_("file"),
+			   N_("output anonymized refname mapping to <file>")),
+		OPT_STRING(0, "dump-anonymized-paths",
+			   &anonymized_paths_file, N_("file"),
+			   N_("output anonymized path mapping to <file>")),
 		OPT_BOOL(0, "reference-excluded-parents",
 			 &reference_excluded_commits, N_("Reference parents which are not in fast-export stream by object id")),
 		OPT_BOOL(0, "show-original-ids", &show_original_ids,
@@ -1212,6 +1250,11 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 
 		string_list_clear(&refspecs_list, 1);
 	}
+
+	if (anonymized_refnames_file)
+		anonymized_refnames_handle = xfopen(anonymized_refnames_file, "w");
+	if (anonymized_paths_file)
+		anonymized_paths_handle = xfopen(anonymized_paths_file, "w");
 
 	if (use_done_feature)
 		printf("feature done\n");
