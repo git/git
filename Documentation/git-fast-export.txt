@@ -119,6 +119,12 @@ by keeping the marks the same across runs.
 	the shape of the history and stored tree.  See the section on
 	`ANONYMIZING` below.
 
+--dump-anonymized-refnames=<file>::
+	Output the mapping of real refnames to anonymized refnames to
+	<file>. The output will contain one line per ref that appears in
+	the output stream, with the original refname, a space, and its
+	anonymized counterpart. See the section on `ANONYMIZING` below.
+
 --reference-excluded-parents::
 	By default, running a command such as `git fast-export
 	master~5..master` will not include the commit master{tilde}5
@@ -238,6 +244,22 @@ collapse "User 0", "User 1", etc into "User X"). This produces a much
 smaller output, and it is usually easy to quickly confirm that there is
 no private data in the stream.
 
+Reproducing some bugs may require referencing particular commits, which
+becomes challenging after the refnames have all been anonymized. You can
+use `--dump-anonymized-refnames` to output the mapping, and then alter
+your reproduction recipe to use the anonymized names. E.g., if you find
+a bug with `git rev-list v1.0..v2.0` in the private repository, you can
+run:
+
+---------------------------------------------------
+$ git fast-export --anonymize --all --dump-anonymized-refnames=refs.out >stream
+$ grep '^refs/tags/v[12].0' refs.out
+refs/tags/v1.0 refs/tags/ref31
+refs/tags/v2.0 refs/tags/ref50
+---------------------------------------------------
+
+which tells you that `git rev-list ref31..ref50` may produce the same
+bug in the re-imported anonymous repository.
 
 LIMITATIONS
 -----------

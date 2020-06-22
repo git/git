@@ -46,6 +46,20 @@ test_expect_success 'stream omits tag message' '
 	! grep "annotated tag" stream
 '
 
+test_expect_success 'refname mapping can be dumped' '
+	git fast-export --anonymize --all \
+		--dump-anonymized-refnames=refs.out >/dev/null &&
+	# we make no guarantees of the exact anonymized names,
+	# so just check that we have the right number and
+	# that a sample line looks sane.
+	expected_count=$(git for-each-ref | wc -l) &&
+	# Note that master is not anonymized, and so not included
+	# in the mapping.
+	expected_count=$((expected_count - 1)) &&
+	test_line_count = $expected_count refs.out &&
+	grep "^refs/heads/other refs/heads/" refs.out
+'
+
 # NOTE: we chdir to the new, anonymized repository
 # after this. All further tests should assume this.
 test_expect_success 'import stream to new repository' '
