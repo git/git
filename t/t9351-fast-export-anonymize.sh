@@ -26,11 +26,8 @@ test_expect_success 'stream omits path names' '
 	! grep xyzzy stream
 '
 
-test_expect_success 'stream allows master as refname' '
-	grep master stream
-'
-
-test_expect_success 'stream omits other refnames' '
+test_expect_success 'stream omits refnames' '
+	! grep master stream &&
 	! grep other stream &&
 	! grep mytag stream
 '
@@ -53,9 +50,6 @@ test_expect_success 'refname mapping can be dumped' '
 	# so just check that we have the right number and
 	# that a sample line looks sane.
 	expected_count=$(git for-each-ref | wc -l) &&
-	# Note that master is not anonymized, and so not included
-	# in the mapping.
-	expected_count=$((expected_count - 1)) &&
 	test_line_count = $expected_count refs.out &&
 	grep "^refs/heads/other refs/heads/" refs.out
 '
@@ -71,7 +65,8 @@ test_expect_success 'import stream to new repository' '
 test_expect_success 'result has two branches' '
 	git for-each-ref --format="%(refname)" refs/heads >branches &&
 	test_line_count = 2 branches &&
-	other_branch=$(grep -v refs/heads/master branches)
+	main_branch=$(sed -ne "s,refs/heads/master ,,p" ../refs.out) &&
+	other_branch=$(sed -ne "s,refs/heads/other ,,p" ../refs.out)
 '
 
 test_expect_success 'repo has original shape and timestamps' '
@@ -79,7 +74,7 @@ test_expect_success 'repo has original shape and timestamps' '
 		git log --format="%m %ct" --left-right --boundary "$@"
 	} &&
 	(cd .. && shape master...other) >expect &&
-	shape master...$other_branch >actual &&
+	shape $main_branch...$other_branch >actual &&
 	test_cmp expect actual
 '
 
