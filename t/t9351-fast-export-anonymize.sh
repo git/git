@@ -9,7 +9,7 @@ test_expect_success 'setup simple repo' '
 	git checkout -b other HEAD^ &&
 	mkdir subdir &&
 	test_commit subdir/bar &&
-	test_commit subdir/xyzzy &&
+	test_commit quoting "subdir/this needs quoting" &&
 	git tag -m "annotated tag" mytag
 '
 
@@ -23,7 +23,7 @@ test_expect_success 'stream omits path names' '
 	! grep foo stream &&
 	! grep subdir stream &&
 	! grep bar stream &&
-	! grep xyzzy stream
+	! grep quoting stream
 '
 
 test_expect_success 'stream omits refnames' '
@@ -52,6 +52,23 @@ test_expect_success 'refname mapping can be dumped' '
 	expected_count=$(git for-each-ref | wc -l) &&
 	test_line_count = $expected_count refs.out &&
 	grep "^refs/heads/other refs/heads/" refs.out
+'
+
+test_expect_success 'path mapping can be dumped' '
+	git fast-export --anonymize --all \
+		--dump-anonymized-paths=paths.out >/dev/null &&
+	# as above, avoid depending on the exact scheme, but
+	# but check that we have the right number of mappings,
+	# and spot-check one sample.
+	expected_count=$(
+		git rev-list --objects --all |
+		git cat-file --batch-check="%(objecttype) %(rest)" |
+		sed -ne "s/^blob //p" |
+		sort -u |
+		wc -l
+	) &&
+	test_line_count = $expected_count paths.out &&
+	grep "^\"subdir/this needs quoting\" " paths.out
 '
 
 # NOTE: we chdir to the new, anonymized repository

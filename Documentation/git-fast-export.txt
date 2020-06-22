@@ -125,6 +125,14 @@ by keeping the marks the same across runs.
 	the output stream, with the original refname, a space, and its
 	anonymized counterpart. See the section on `ANONYMIZING` below.
 
+--dump-anonymized-paths=<file>::
+	Output the mapping of real paths to anonymized paths to <file>.
+	The output will contain one line per path that appears in the
+	output stream, with the original path, a space, and its
+	anonymized counterpart. Paths may be quoted if they contain a
+	space, or unusual characters; see `core.quotePath` in
+	linkgit:git-config(1). See also `ANONYMIZING` below.
+
 --reference-excluded-parents::
 	By default, running a command such as `git fast-export
 	master~5..master` will not include the commit master{tilde}5
@@ -260,6 +268,10 @@ refs/tags/v2.0 refs/tags/ref50
 
 which tells you that `git rev-list ref31..ref50` may produce the same
 bug in the re-imported anonymous repository.
+
+Likewise, `--dump-anonymized-paths` may be useful for a bug that
+involves pathspecs. E.g., `git rev-list v1.0..v2.0 -- foo.c` requires
+knowing the path corresponding to `foo.c` in the result.
 
 LIMITATIONS
 -----------

@@ -47,6 +47,7 @@ static struct string_list tag_refs = STRING_LIST_INIT_NODUP;
 static struct refspec refspecs = REFSPEC_INIT_FETCH;
 static int anonymize;
 static FILE *anonymized_refnames_handle;
+static FILE *anonymized_paths_handle;
 static struct revision_sources revision_sources;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
@@ -394,9 +395,18 @@ static void print_path(const char *path)
 		print_path_1(stdout, path);
 	else {
 		static struct hashmap paths;
+		static struct seen_set seen;
 		static struct strbuf anon = STRBUF_INIT;
 
 		anonymize_path(&anon, path, &paths, anonymize_path_component);
+		if (anonymized_paths_handle &&
+		    !check_and_mark_seen(&seen, path)) {
+			print_path_1(anonymized_paths_handle, path);
+			fputc(' ', anonymized_paths_handle);
+			print_path_1(anonymized_paths_handle, anon.buf);
+			fputc('\n', anonymized_paths_handle);
+		}
+
 		print_path_1(stdout, anon.buf);
 		strbuf_reset(&anon);
 	}
@@ -1165,6 +1175,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	     *import_filename = NULL,
 	     *import_filename_if_exists = NULL;
 	const char *anonymized_refnames_file = NULL;
+	const char *anonymized_paths_file = NULL;
 	uint32_t lastimportid;
 	struct string_list refspecs_list = STRING_LIST_INIT_NODUP;
 	struct string_list paths_of_changed_objects = STRING_LIST_INIT_DUP;
@@ -1201,6 +1212,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "dump-anonymized-refnames",
 			   &anonymized_refnames_file, N_("file"),
 			   N_("output anonymized refname mapping to <file>")),
+		OPT_STRING(0, "dump-anonymized-paths",
+			   &anonymized_paths_file, N_("file"),
+			   N_("output anonymized path mapping to <file>")),
 		OPT_BOOL(0, "reference-excluded-parents",
 			 &reference_excluded_commits, N_("Reference parents which are not in fast-export stream by object id")),
 		OPT_BOOL(0, "show-original-ids", &show_original_ids,
@@ -1239,6 +1253,8 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 
 	if (anonymized_refnames_file)
 		anonymized_refnames_handle = xfopen(anonymized_refnames_file, "w");
+	if (anonymized_paths_file)
+		anonymized_paths_handle = xfopen(anonymized_paths_file, "w");
 
 	if (use_done_feature)
 		printf("feature done\n");
