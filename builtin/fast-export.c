@@ -369,15 +369,15 @@ static int depth_first(const void *a_, const void *b_)
 	return (a->status == 'R') - (b->status == 'R');
 }
 
-static void print_path_1(const char *path)
+static void print_path_1(FILE *out, const char *path)
 {
 	int need_quote = quote_c_style(path, NULL, NULL, 0);
 	if (need_quote)
-		quote_c_style(path, NULL, stdout, 0);
+		quote_c_style(path, NULL, out, 0);
 	else if (strchr(path, ' '))
-		printf("\"%s\"", path);
+		fprintf(out, "\"%s\"", path);
 	else
-		printf("%s", path);
+		fprintf(out, "%s", path);
 }
 
 static void *anonymize_path_component(const void *path, size_t *len)
@@ -391,13 +391,13 @@ static void *anonymize_path_component(const void *path, size_t *len)
 static void print_path(const char *path)
 {
 	if (!anonymize)
-		print_path_1(path);
+		print_path_1(stdout, path);
 	else {
 		static struct hashmap paths;
 		static struct strbuf anon = STRBUF_INIT;
 
 		anonymize_path(&anon, path, &paths, anonymize_path_component);
-		print_path_1(anon.buf);
+		print_path_1(stdout, anon.buf);
 		strbuf_reset(&anon);
 	}
 }
