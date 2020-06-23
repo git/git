@@ -1025,7 +1025,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			commit_list_insert(head, &list);
 			merge_head = lookup_commit_reference(the_repository,
 							     &merge_heads.oid[0]);
-			if (is_descendant_of(merge_head, list)) {
+			if (repo_is_descendant_of(the_repository,
+						  merge_head, list)) {
 				/* we can fast-forward this without invoking rebase */
 				opt_ff = "--ff-only";
 				ran_ff = 1;

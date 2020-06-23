@@ -283,9 +283,9 @@ struct commit_list *repo_get_merge_bases(struct repository *r,
 /*
  * Is "commit" a descendant of one of the elements on the "with_commit" list?
  */
-static int repo_is_descendant_of(struct repository *r,
-				 struct commit *commit,
-				 struct commit_list *with_commit)
+int repo_is_descendant_of(struct repository *r,
+			  struct commit *commit,
+			  struct commit_list *with_commit)
 {
 	if (!with_commit)
 		return 1;
@@ -308,11 +308,6 @@ static int repo_is_descendant_of(struct repository *r,
 		}
 		return 0;
 	}
-}
-
-int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
-{
-	return repo_is_descendant_of(the_repository, commit, with_commit);
 }
 
 /*
@@ -432,7 +427,8 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 		return 0;
 
 	commit_list_insert(old_commit, &old_commit_list);
-	return is_descendant_of(new_commit, old_commit_list);
+	return repo_is_descendant_of(the_repository,
+				    new_commit, old_commit_list);
 }
 
 /*
@@ -551,7 +547,7 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 {
 	if (filter->with_commit_tag_algo)
 		return contains_tag_algo(commit, list, cache) == CONTAINS_YES;
-	return is_descendant_of(commit, list);
+	return repo_is_descendant_of(the_repository, commit, list);
 }
 
 static int compare_commits_by_gen(const void *_a, const void *_b)
