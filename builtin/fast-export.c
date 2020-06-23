@@ -121,23 +121,32 @@ static int has_unshown_parent(struct commit *commit)
 struct anonymized_entry {
 	struct hashmap_entry hash;
 	const char *orig;
-	size_t orig_len;
 	const char *anon;
-	size_t anon_len;
+};
+
+struct anonymized_entry_key {
+	struct hashmap_entry hash;
+	const char *orig;
+	size_t orig_len;
 };
 
 static int anonymized_entry_cmp(const void *unused_cmp_data,
 				const struct hashmap_entry *eptr,
 				const struct hashmap_entry *entry_or_key,
-				const void *unused_keydata)
+				const void *keydata)
 {
 	const struct anonymized_entry *a, *b;
 
 	a = container_of(eptr, const struct anonymized_entry, hash);
-	b = container_of(entry_or_key, const struct anonymized_entry, hash);
+	if (keydata) {
+		const struct anonymized_entry_key *key = keydata;
+		int equal = !strncmp(a->orig, key->orig, key->orig_len) &&
+			    !a->orig[key->orig_len];
+		return !equal;
+	}
 
-	return a->orig_len != b->orig_len ||
-		memcmp(a->orig, b->orig, a->orig_len);
+	b = container_of(entry_or_key, const struct anonymized_entry, hash);
+	return strcmp(a->orig, b->orig);
 }
 
 /*
@@ -149,7 +158,8 @@ static const char *anonymize_str(struct hashmap *map,
 				 char *(*generate)(const char *, size_t),
 				 const char *orig, size_t len)
 {
-	struct anonymized_entry key, *ret;
+	struct anonymized_entry_key key;
+	struct anonymized_entry *ret;
 
 	if (!map->cmpfn)
 		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
@@ -157,15 +167,13 @@ static const char *anonymize_str(struct hashmap *map,
 	hashmap_entry_init(&key.hash, memhash(orig, len));
 	key.orig = orig;
 	key.orig_len = len;
-	ret = hashmap_get_entry(map, &key, hash, NULL);
+	ret = hashmap_get_entry(map, &key, hash, &key);
 
 	if (!ret) {
 		ret = xmalloc(sizeof(*ret));
 		hashmap_entry_init(&ret->hash, key.hash.hash);
 		ret->orig = xmemdupz(orig, len);
-		ret->orig_len = len;
 		ret->anon = generate(orig, len);
-		ret->anon_len = strlen(ret->anon);
 		hashmap_put(map, &ret->hash);
 	}
 
