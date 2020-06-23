@@ -145,31 +145,30 @@ static int anonymized_entry_cmp(const void *unused_cmp_data,
  * the same anonymized string with another. The actual generation
  * is farmed out to the generate function.
  */
-static const void *anonymize_mem(struct hashmap *map,
-				 void *(*generate)(const void *, size_t *),
-				 const void *orig, size_t *len)
+static const char *anonymize_str(struct hashmap *map,
+				 char *(*generate)(const char *, size_t),
+				 const char *orig, size_t len)
 {
 	struct anonymized_entry key, *ret;
 
 	if (!map->cmpfn)
 		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
 
-	hashmap_entry_init(&key.hash, memhash(orig, *len));
+	hashmap_entry_init(&key.hash, memhash(orig, len));
 	key.orig = orig;
-	key.orig_len = *len;
+	key.orig_len = len;
 	ret = hashmap_get_entry(map, &key, hash, NULL);
 
 	if (!ret) {
 		ret = xmalloc(sizeof(*ret));
 		hashmap_entry_init(&ret->hash, key.hash.hash);
-		ret->orig = xmemdupz(orig, *len);
-		ret->orig_len = *len;
+		ret->orig = xmemdupz(orig, len);
+		ret->orig_len = len;
 		ret->anon = generate(orig, len);
-		ret->anon_len = *len;
+		ret->anon_len = strlen(ret->anon);
 		hashmap_put(map, &ret->hash);
 	}
 
-	*len = ret->anon_len;
 	return ret->anon;
 }
 
@@ -181,13 +180,13 @@ static const void *anonymize_mem(struct hashmap *map,
  */
 static void anonymize_path(struct strbuf *out, const char *path,
 			   struct hashmap *map,
-			   void *(*generate)(const void *, size_t *))
+			   char *(*generate)(const char *, size_t))
 {
 	while (*path) {
 		const char *end_of_component = strchrnul(path, '/');
 		size_t len = end_of_component - path;
-		const char *c = anonymize_mem(map, generate, path, &len);
-		strbuf_add(out, c, len);
+		const char *c = anonymize_str(map, generate, path, len);
+		strbuf_addstr(out, c);
 		path = end_of_component;
 		if (*path)
 			strbuf_addch(out, *path++);
@@ -361,12 +360,12 @@ static void print_path_1(const char *path)
 		printf("%s", path);
 }
 
-static void *anonymize_path_component(const void *path, size_t *len)
+static char *anonymize_path_component(const char *path, size_t len)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
 	strbuf_addf(&out, "path%d", counter++);
-	return strbuf_detach(&out, len);
+	return strbuf_detach(&out, NULL);
 }
 
 static void print_path(const char *path)
@@ -383,7 +382,7 @@ static void print_path(const char *path)
 	}
 }
 
-static void *generate_fake_oid(const void *old, size_t *len)
+static char *generate_fake_oid(const char *old, size_t len)
 {
 	static uint32_t counter = 1; /* avoid null oid */
 	const unsigned hashsz = the_hash_algo->rawsz;
@@ -399,7 +398,7 @@ static const char *anonymize_oid(const char *oid_hex)
 {
 	static struct hashmap objs;
 	size_t len = strlen(oid_hex);
-	return anonymize_mem(&objs, generate_fake_oid, oid_hex, &len);
+	return anonymize_str(&objs, generate_fake_oid, oid_hex, len);
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
@@ -496,12 +495,12 @@ static const char *find_encoding(const char *begin, const char *end)
 	return bol;
 }
 
-static void *anonymize_ref_component(const void *old, size_t *len)
+static char *anonymize_ref_component(const char *old, size_t len)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
 	strbuf_addf(&out, "ref%d", counter++);
-	return strbuf_detach(&out, len);
+	return strbuf_detach(&out, NULL);
 }
 
 static const char *anonymize_refname(const char *refname)
@@ -550,13 +549,13 @@ static char *anonymize_commit_message(const char *old)
 }
 
 static struct hashmap idents;
-static void *anonymize_ident(const void *old, size_t *len)
+static char *anonymize_ident(const char *old, size_t len)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
 	strbuf_addf(&out, "User %d <user%d@example.com>", counter, counter);
 	counter++;
-	return strbuf_detach(&out, len);
+	return strbuf_detach(&out, NULL);
 }
 
 /*
@@ -591,9 +590,9 @@ static void anonymize_ident_line(const char **beg, const char **end)
 		size_t len;
 
 		len = split.mail_end - split.name_begin;
-		ident = anonymize_mem(&idents, anonymize_ident,
-				      split.name_begin, &len);
-		strbuf_add(out, ident, len);
+		ident = anonymize_str(&idents, anonymize_ident,
+				      split.name_begin, len);
+		strbuf_addstr(out, ident);
 		strbuf_addch(out, ' ');
 		strbuf_add(out, split.date_begin, split.tz_end - split.date_begin);
 	} else {
@@ -733,12 +732,12 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	show_progress();
 }
 
-static void *anonymize_tag(const void *old, size_t *len)
+static char *anonymize_tag(const char *old, size_t len)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
 	strbuf_addf(&out, "tag message %d", counter++);
-	return strbuf_detach(&out, len);
+	return strbuf_detach(&out, NULL);
 }
 
 static void handle_tail(struct object_array *commits, struct rev_info *revs,
@@ -808,8 +807,8 @@ static void handle_tag(const char *name, struct tag *tag)
 		name = anonymize_refname(name);
 		if (message) {
 			static struct hashmap tags;
-			message = anonymize_mem(&tags, anonymize_tag,
-						message, &message_size);
+			message = anonymize_str(&tags, anonymize_tag,
+						message, message_size);
 		}
 	}
 
