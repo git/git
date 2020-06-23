@@ -564,10 +564,6 @@ static int prepare_commit_graph(struct repository *r)
 		return !!r->objects->commit_graph;
 	r->objects->commit_graph_attempted = 1;
 
-	if (git_env_bool(GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD, 0))
-		die("dying as requested by the '%s' variable on commit-graph load!",
-		    GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD);
-
 	prepare_repo_settings(r);
 
 	if (!git_env_bool(GIT_TEST_COMMIT_GRAPH, 0) &&
@@ -790,6 +786,14 @@ static int parse_commit_in_graph_one(struct repository *r,
 
 int parse_commit_in_graph(struct repository *r, struct commit *item)
 {
+	static int checked_env = 0;
+
+	if (!checked_env &&
+	    git_env_bool(GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE, 0))
+		die("dying as requested by the '%s' variable on commit-graph parse!",
+		    GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE);
+	checked_env = 1;
+
 	if (!prepare_commit_graph(r))
 		return 0;
 	return parse_commit_in_graph_one(r, r->objects->commit_graph, item);
