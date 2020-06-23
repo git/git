@@ -284,11 +284,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	 * N=1, M=0:
 	 *      tree vs files (diff-index)
 	 *
-	 * N=1, M=0:
-	 *      tree vs cache (diff-index --cached)
-	 *
 	 * N=1, M=0, --cached:
-	 *      tree vs files (diff-index)
+	 *      tree vs cache (diff-index --cached)
 	 *
 	 * N=2, M=0:
 	 *      tree vs tree (diff-tree)
