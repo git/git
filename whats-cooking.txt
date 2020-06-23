@@ -1,247 +1,233 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2020, #03; Wed, 17)
-X-master-at: 101b3204f37606972b40fc17dec84560c22f69f6
-X-next-at: f2d1464379e7567b01b55fbf8432e75d72aa537f
+Subject: What's cooking in git.git (Jun 2020, #04; Mon, 22)
+X-master-at: c9c318d6bf26bcecdca5b6f31683b9d5887a83ee
+X-next-at: 4b34aa94c75220f6f4cd334b08a3fb053128a32d
 
-What's cooking in git.git (Jun 2020, #03; Wed, 17)
+What's cooking in git.git (Jun 2020, #04; Mon, 22)
 --------------------------------------------------
 
-Here are the topics that have been cooking.  Commits prefixed with
-'-' are only in 'pu' (proposed updates) while commits prefixed with
-'+' are in 'next'.  The ones marked with '.' do not appear in any of
+Here are the topics that have been cooking.  Commits prefixed with '-' are
+only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
+with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-You can find the changes described here in the integration branches
-of the repositories listed at
+A few topiocs have graduated to 'master'.  As I expect that the next
+week would be slower than usual due to being summer (and folks in US
+having holidays), I am hoping that I can merge down a handful more
+topics from 'next', perhaps with shorter gestation period than
+usual, by the end of this week.
+
+The 'pu' (proposed updates) branch has been renamed to 'seen' to use
+a more meaningful name (after all, the purpose of it is not to
+contain all proposals, but to merely serve as a place to park what
+the maintainer happened to have seen) and more importantly, to make
+room for topics from those contributors whose two-letter name
+abbreviation needs to be 'pu' under 'pu/$topicName'.
+
+You can find the changes described here in the integration branches of the
+repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* dl/python-2.7-is-the-floor-version (2020-06-08) 1 commit
-  (merged to 'next' on 2020-06-10 at ad3269ff40)
- + CodingGuidelines: specify Python 2.7 is the oldest version
+* cc/upload-pack-data-2 (2020-06-04) 13 commits
+  (merged to 'next' on 2020-06-12 at ee63b70dc2)
+ + upload-pack: move pack_objects_hook to upload_pack_data
+ + upload-pack: move allow_sideband_all to upload_pack_data
+ + upload-pack: move allow_ref_in_want to upload_pack_data
+ + upload-pack: move allow_filter to upload_pack_data
+ + upload-pack: move keepalive to upload_pack_data
+ + upload-pack: pass upload_pack_data to upload_pack_config()
+ + upload-pack: change multi_ack to an enum
+ + upload-pack: move multi_ack to upload_pack_data
+ + upload-pack: move filter_capability_requested to upload_pack_data
+ + upload-pack: move use_sideband to upload_pack_data
+ + upload-pack: move static vars to upload_pack_data
+ + upload-pack: annotate upload_pack_data fields
+ + upload-pack: actually use some upload_pack_data bitfields
+ (this branch is used by cc/upload-pack-data-3 and jt/cdn-offload.)
 
- Document that we do not support Python 2.6 or older.
-
-
-* dl/t-readme-spell-git-correctly (2020-06-08) 1 commit
-  (merged to 'next' on 2020-06-10 at 60144a59ed)
- + t/README: avoid poor-man's small caps GIT
-
- Doc updates.
-
-
-* en/do-match-pathspec-fix (2020-06-05) 1 commit
-  (merged to 'next' on 2020-06-10 at 2e63c8c0fc)
- + dir: fix treatment of negated pathspecs
-
- Use of negative pathspec, while collecting paths including
- untracked ones in the working tree, was broken.
+ Further code clean-up.
 
 
-* en/sparse-checkout (2020-06-05) 1 commit
-  (merged to 'next' on 2020-06-10 at 697a10b031)
- + sparse-checkout: avoid staging deletions of all files
+* en/sparse-with-submodule-doc (2020-06-12) 1 commit
+  (merged to 'next' on 2020-06-17 at 3521be3834)
+ + git-sparse-checkout: clarify interactions with submodules
 
- The behaviour of "sparse-checkout" in the state "git clone
- --no-checkout" left was changed accidentally in 2.27, which has
- been corrected.
+ The effect of sparse checkout settings on submodules is documented.
 
 
-* es/advertise-contribution-doc (2020-06-08) 1 commit
-  (merged to 'next' on 2020-06-10 at c72c7da667)
- + docs: mention MyFirstContribution in more places
+* es/worktree-duplicate-paths (2020-06-10) 7 commits
+  (merged to 'next' on 2020-06-12 at 5f7c822a9d)
+ + worktree: make "move" refuse to move atop missing registered worktree
+ + worktree: generalize candidate worktree path validation
+ + worktree: prune linked worktree referencing main worktree path
+ + worktree: prune duplicate entries referencing same worktree path
+ + worktree: make high-level pruning re-usable
+ + worktree: give "should be pruned?" function more meaningful name
+ + worktree: factor out repeated string literal
+ (this branch is used by es/get-worktrees-unsort.)
 
- Doc updates.
-
-
-* hn/refs-cleanup (2020-06-09) 6 commits
-  (merged to 'next' on 2020-06-09 at abb59f83a2)
- + reftable: define version 2 of the spec to accomodate SHA256
- + reftable: clarify how empty tables should be written
- + reftable: file format documentation
- + refs: improve documentation for ref iterator
- + t: use update-ref and show-ref to reading/writing refs
- + refs.h: clarify reflog iteration order
- (this branch is used by hn/reftable.)
-
- Preliminary clean-ups around refs API, plus file format
- specification documentation for the reftable backend.
+ The same worktree directory must be registered only once, but
+ "git worktree move" allowed this invariant to be violated, which
+ has been corrected.
 
 
-* jk/diff-memuse-optim-with-stat-unmatch (2020-06-02) 1 commit
-  (merged to 'next' on 2020-06-10 at 4cea3bfaac)
- + diff: discard blob data from stat-unmatched pairs
+* jt/redact-all-cookies (2020-06-05) 1 commit
+  (merged to 'next' on 2020-06-12 at 912c337d63)
+ + http: redact all cookies, teach GIT_TRACE_REDACT=0
 
- Reduce memory usage during "diff --quiet" in a worktree with too
- many stat-unmatched paths.
-
-
-* js/fuzz-commit-graph-leakfix (2020-06-08) 1 commit
-  (merged to 'next' on 2020-06-10 at 92944ed7f6)
- + fuzz-commit-graph: properly free graph struct
-
- Leakfix.
-
-
-* js/msvc-build-fix (2020-06-04) 1 commit
-  (merged to 'next' on 2020-06-10 at 167a629359)
- + msvc: fix "REG_STARTEND" issue
-
- Workaround breakage in MSVC build, where "curl-config --cflags"
- gives settings appropriate for GCC build.
-
-
-* js/reflog-anonymize-for-clone-and-fetch (2020-06-04) 1 commit
-  (merged to 'next' on 2020-06-10 at 2901ff943e)
- + clone/fetch: anonymize URLs in the reflog
-
- The reflog entries for "git clone" and "git fetch" did not
- anonymize the URL they operated on.
-
-
-* tb/t5318-cleanup (2020-06-04) 2 commits
-  (merged to 'next' on 2020-06-10 at 5a72620cbe)
- + t5318: test that '--stdin-commits' respects '--[no-]progress'
- + t5318: use 'test_must_be_empty'
-
- Code cleanup.
+ The interface to redact sensitive information in the trace output
+ has been simplified.
 
 --------------------------------------------------
 [New Topics]
 
-* cc/upload-pack-data-3 (2020-06-11) 14 commits
-  (merged to 'next' on 2020-06-17 at 393eff577a)
- + upload-pack: refactor common code into do_got_oid()
- + upload-pack: move oldest_have to upload_pack_data
- + upload-pack: pass upload_pack_data to got_oid()
- + upload-pack: pass upload_pack_data to ok_to_give_up()
- + upload-pack: pass upload_pack_data to send_acks()
- + upload-pack: pass upload_pack_data to process_haves()
- + upload-pack: change allow_unadvertised_object_request to an enum
- + upload-pack: move allow_unadvertised_object_request to upload_pack_data
- + upload-pack: move extra_edge_obj to upload_pack_data
- + upload-pack: move shallow_nr to upload_pack_data
- + upload-pack: pass upload_pack_data to send_unshallow()
- + upload-pack: pass upload_pack_data to deepen_by_rev_list()
- + upload-pack: pass upload_pack_data to deepen()
- + upload-pack: pass upload_pack_data to send_shallow_list()
- (this branch uses cc/upload-pack-data-2)
+* en/sparse-status (2020-06-22) 3 commits
+ - git-prompt: include sparsity state as well
+ - git-prompt: document how in-progress operations affect the prompt
+ - wt-status: show sparse checkout status as well
 
- Code clean-up in the codepath that serves "git fetch" continues.
-
- Will merge to 'master'.
-
-
-* ct/diff-with-merge-base-clarification (2020-06-12) 3 commits
-  (merged to 'next' on 2020-06-17 at e0b54a001c)
- + Documentation: usage for diff combined commits
- + git diff: improve range handling
- + t/t3430: avoid undefined git diff behavior
-
- "git diff" used to take arguments in random and nonsense range
- notation, e.g. "git diff A..B C", "git diff A..B C...D", etc.,
- which has been cleaned up.
-
- Will merge to 'master'.
-
-
-* js/default-branch-name (2020-06-10) 9 commits
- - Document how the default branch name can be overridden
- - fast-export: respect the possibly-overridden default branch name
- - fmt-merge-msg: learn about the possibly-configured default branch name
- - clone: learn about the possibly-configured default branch name
- - submodule: use the (possibly overridden) default branch name
- - testsvn: respect `core.defaultBranchName`
- - send-pack/transport-helper: respect `core.defaultBranchName`
- - remote: respect `core.defaultBranchName`
- - init: allow overriding the default branch name for new repositories
-
- The name of the primary branch in existing repositories, and the
- default name used for the first branch in newly created
- repositories, is made configurable, so that we can eventually wean
- ourselves off of the hardcoded 'master'.
-
- Expecting a reroll.
-
-
-* jt/cdn-offload (2020-06-17) 10 commits
- - upload-pack: fix a sparse '0 as NULL pointer' warning
- - upload-pack: send part of packfile response as uri
- - fetch-pack: support more than one pack lockfile
- - upload-pack: refactor reading of pack-objects out
- - Documentation: add Packfile URIs design doc
- - Documentation: order protocol v2 sections
- - http-fetch: support fetching packfiles by URL
- - http-fetch: refactor into function
- - http: refactor finish_http_pack_request()
- - http: use --stdin when indexing dumb HTTP pack
- (this branch uses cc/upload-pack-data-2)
-
- The "fetch/clone" protocol has been updated to allow the server to
- instruct the clients to grab pre-packaged packfile(s) in addition
- to the packed object data coming over the wire.
+ "git status" learned to report the status of sparse checkout.
 
  Will merge to 'next'.
 
 
-* ss/cmake-build (2020-06-12) 8 commits
- - ci: modification of main.yml to use cmake for vs-build job
- - cmake: support for building git on windows with msvc and clang.
- - cmake: support for building git on windows with mingw
- - cmake: support for testing git when building out of the source tree
- - cmake: support for testing git with ctest
- - cmake: installation support for git
- - cmake: generate the shell/perl/python scripts and templates, translations
- - Introduce CMake support for configuring Git
+* dl/diff-usage-comment-update (2020-06-18) 1 commit
+  (merged to 'next' on 2020-06-19 at b53a12bb66)
+ + builtin/diff: update usage comment
 
- CMake support to build with MSVC for Windows bypassing the Makefile.
-
- Almost there.
-
-
-* ak/commit-graph-to-slab (2020-06-17) 4 commits
- - commit-graph: minimize commit_graph_data_slab access
- - commit: move members graph_pos, generation to a slab
- - commit-graph: introduce commit_graph_data_slab
- - object: drop parsed_object_pool->commit_count
-
- A few fields in "struct commit" that do not have to always be
- present have been moved to commit slabs.
-
-
-* en/clean-cleanups (2020-06-12) 4 commits
-  (merged to 'next' on 2020-06-17 at 2c4ec990a6)
- + clean: optimize and document cases where we recurse into subdirectories
- + clean: consolidate handling of ignored parameters
- + dir, clean: avoid disallowed behavior
- + dir: fix a few confusing comments
-
- "git clean" code clean-up that resulted in a fix of recent
- performance regression.
+ An in-code comment in "git diff" has been updated.
 
  Will merge to 'master'.
 
 
-* dl/branch-cleanup (2020-06-17) 3 commits
- - branch: don't mix --edit-description
- - t3200: test for specific errors
- - t3200: rename "expected" to "expect"
+* ps/ref-transaction-hook (2020-06-19) 1 commit
+  (merged to 'next' on 2020-06-22 at 3a23dcdbdc)
+ + refs: implement reference transaction hook
 
- Code clean-up around "git branch" with a minor bugfix.
+ A new hook.
+
+ Will merge to 'master'.
+
+
+* sk/diff-files-show-i-t-a-as-new (2020-06-22) 1 commit
+  (merged to 'next' on 2020-06-22 at 825a823416)
+ + diff-files: treat "i-t-a" files as "not-in-index"
+
+ "git diff-files" has been taught to say paths that are marked as
+ intent-to-add are new files, not modified from an empty blob.
+
+ Will merge to 'master'.
+
+
+* jk/fast-export-anonym (2020-06-22) 4 commits
+  (merged to 'next' on 2020-06-22 at b517b2f707)
+ + fast-export: allow dumping the path mapping
+ + fast-export: refactor path printing to not rely on stdout
+ + fast-export: anonymize "master" refname
+ + fast-export: allow dumping the refname mapping
+
+ The way refnames are anonymized has been updated and a way to help
+ debugging using the anonymized output hsa been added.
+
+ Will merge to 'master'.
+
+
+* pb/t4014-unslave (2020-06-19) 1 commit
+  (merged to 'next' on 2020-06-19 at 4d328a12d9)
+ + t4014: do not use "slave branch" nomenclature
+
+ A branch name used in a test has been clarified to match what is
+ going on.
+
+ Will merge to 'master'.
+
+
+* rs/commit-reach-leakfix (2020-06-19) 1 commit
+  (merged to 'next' on 2020-06-22 at fcc1e385f0)
+ + commit-reach: plug minor memory leak after using is_descendant_of()
+
+ Leakfix.
+
+ Will merge to 'master'.
+
+
+* rs/pull-leakfix (2020-06-19) 1 commit
+  (merged to 'next' on 2020-06-22 at d80a6b9ca3)
+ + pull: plug minor memory leak after using is_descendant_of()
+
+ Leakfix.
+
+ Will merge to 'master'.
+
+
+* rs/retire-strbuf-write-fd (2020-06-19) 2 commits
+  (merged to 'next' on 2020-06-22 at c175b54f2a)
+ + strbuf: remove unreferenced strbuf_write_fd method.
+ + bugreport.c: replace strbuf_write_fd with write_in_full
+
+ A misdesigned strbuf_write_fd() function has been retired.
+
+ Will merge to 'master'.
+
+
+* bc/sha-256-cvs-svn-updates (2020-06-22) 14 commits
+ - git-cvsexportcommit: port to SHA-256
+ - git-cvsimport: port to SHA-256
+ - git-cvsserver: port to SHA-256
+ - git-svn: set the OID length based on hash algorithm
+ - perl: make SVN code hash independent
+ - perl: make Git::IndexInfo work with SHA-256
+ - perl: create and switch variables for hash constants
+ - t/lib-git-svn: make hash size independent
+ - t9101: make hash independent
+ - t9104: make hash size independent
+ - t9100: make test work with SHA-256
+ - t9108: make test hash independent
+ - t9168: make test hash independent
+ - t9109: make test hash independent
+ (this branch uses bc/sha-256-part-2.)
+
+ CVS/SVN interface have been prepared for SHA-256 transition
 
  Will merge to 'next'.
 
 
-* ds/merge-base-is-ancestor-optim (2020-06-17) 2 commits
- - commit-reach: use fast logic in repo_in_merge_base
- - commit-reach: create repo_is_descendant_of()
+* ds/commit-graph-bloom-updates (2020-06-17) 8 commits
+ - commit-graph: persist existence of changed-paths
+ - commit-graph: change test to die on parse, not load
+ - bloom: enforce a minimum size of 8 bytes
+ - commit-graph: check all leading directories in changed path Bloom filters
+ - commit-graph: check chunk sizes after writing
+ - commit-graph: simplify chunk writes into loop
+ - commit-graph: unify the signatures of all write_graph_chunk_*() functions
+ - commit-graph: place bloom_settings in context
+ (this branch uses sg/commit-graph-cleanups.)
 
- "git merge-base --is-ancestor" is taught to take advantage of the
- commit graph.
+ Updates to the changed-paths bloom filter.
+
+ Being discussed.
+ cf. <20200619171922.GA57283@syl.local>
+
+
+* es/get-worktrees-unsort (2020-06-22) 2 commits
+ - worktree: drop get_worktrees() unused 'flags' argument
+ - worktree: drop get_worktrees() special-purpose sorting option
+
+ API cleanup for get_worktrees()
+
+ Will merge to 'next'.
+
+
+* jl/complete-git-prune (2020-06-22) 1 commit
+ - bash-completion: add git-prune into bash completion
+
+ Add "git prune" to the completion (in contrib/), which could be
+ typed by end-users from the command line.
 
  Will merge to 'next'.
 
@@ -291,7 +277,140 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* dl/test-must-fail-fixes-5 (2020-06-12) 4 commits
+* cc/upload-pack-data-3 (2020-06-11) 14 commits
+  (merged to 'next' on 2020-06-17 at 393eff577a)
+ + upload-pack: refactor common code into do_got_oid()
+ + upload-pack: move oldest_have to upload_pack_data
+ + upload-pack: pass upload_pack_data to got_oid()
+ + upload-pack: pass upload_pack_data to ok_to_give_up()
+ + upload-pack: pass upload_pack_data to send_acks()
+ + upload-pack: pass upload_pack_data to process_haves()
+ + upload-pack: change allow_unadvertised_object_request to an enum
+ + upload-pack: move allow_unadvertised_object_request to upload_pack_data
+ + upload-pack: move extra_edge_obj to upload_pack_data
+ + upload-pack: move shallow_nr to upload_pack_data
+ + upload-pack: pass upload_pack_data to send_unshallow()
+ + upload-pack: pass upload_pack_data to deepen_by_rev_list()
+ + upload-pack: pass upload_pack_data to deepen()
+ + upload-pack: pass upload_pack_data to send_shallow_list()
+
+ Code clean-up in the codepath that serves "git fetch" continues.
+
+ Will merge to 'master'.
+
+
+* ct/diff-with-merge-base-clarification (2020-06-12) 3 commits
+  (merged to 'next' on 2020-06-17 at e0b54a001c)
+ + Documentation: usage for diff combined commits
+ + git diff: improve range handling
+ + t/t3430: avoid undefined git diff behavior
+
+ "git diff" used to take arguments in random and nonsense range
+ notation, e.g. "git diff A..B C", "git diff A..B C...D", etc.,
+ which has been cleaned up.
+
+ Will merge to 'master'.
+
+
+* js/default-branch-name (2020-06-19) 8 commits
+ - Document how the default branch name can be overridden
+ - fmt-merge-msg: learn about the possibly-configured default branch name
+ - clone: learn about the possibly-configured default branch name
+ - submodule: use the (possibly overridden) default branch name
+ - testsvn: respect `core.defaultBranchName`
+ - send-pack/transport-helper: respect `core.defaultBranchName`
+ - remote: respect `core.defaultBranchName`
+ - init: allow overriding the default branch name for new repositories
+
+ The name of the primary branch in existing repositories, and the
+ default name used for the first branch in newly created
+ repositories, is made configurable, so that we can eventually wean
+ ourselves off of the hardcoded 'master'.
+
+ Expecting a reroll.
+
+
+* jt/cdn-offload (2020-06-17) 10 commits
+  (merged to 'next' on 2020-06-18 at e8ba1cc988)
+ + upload-pack: fix a sparse '0 as NULL pointer' warning
+ + upload-pack: send part of packfile response as uri
+ + fetch-pack: support more than one pack lockfile
+ + upload-pack: refactor reading of pack-objects out
+ + Documentation: add Packfile URIs design doc
+ + Documentation: order protocol v2 sections
+ + http-fetch: support fetching packfiles by URL
+ + http-fetch: refactor into function
+ + http: refactor finish_http_pack_request()
+ + http: use --stdin when indexing dumb HTTP pack
+
+ The "fetch/clone" protocol has been updated to allow the server to
+ instruct the clients to grab pre-packaged packfile(s) in addition
+ to the packed object data coming over the wire.
+
+ Will merge to 'master'.
+
+
+* ss/cmake-build (2020-06-12) 8 commits
+ - ci: modification of main.yml to use cmake for vs-build job
+ - cmake: support for building git on windows with msvc and clang.
+ - cmake: support for building git on windows with mingw
+ - cmake: support for testing git when building out of the source tree
+ - cmake: support for testing git with ctest
+ - cmake: installation support for git
+ - cmake: generate the shell/perl/python scripts and templates, translations
+ - Introduce CMake support for configuring Git
+
+ CMake support to build with MSVC for Windows bypassing the Makefile.
+
+ Almost there.
+
+
+* ak/commit-graph-to-slab (2020-06-17) 4 commits
+ - commit-graph: minimize commit_graph_data_slab access
+ - commit: move members graph_pos, generation to a slab
+ - commit-graph: introduce commit_graph_data_slab
+ - object: drop parsed_object_pool->commit_count
+
+ A few fields in "struct commit" that do not have to always be
+ present have been moved to commit slabs.
+
+
+* en/clean-cleanups (2020-06-12) 4 commits
+  (merged to 'next' on 2020-06-17 at 2c4ec990a6)
+ + clean: optimize and document cases where we recurse into subdirectories
+ + clean: consolidate handling of ignored parameters
+ + dir, clean: avoid disallowed behavior
+ + dir: fix a few confusing comments
+
+ "git clean" code clean-up that resulted in a fix of recent
+ performance regression.
+
+ Will merge to 'master'.
+
+
+* dl/branch-cleanup (2020-06-17) 3 commits
+  (merged to 'next' on 2020-06-18 at 76e151342c)
+ + branch: don't mix --edit-description
+ + t3200: test for specific errors
+ + t3200: rename "expected" to "expect"
+
+ Code clean-up around "git branch" with a minor bugfix.
+
+ Will merge to 'master'.
+
+
+* ds/merge-base-is-ancestor-optim (2020-06-17) 2 commits
+  (merged to 'next' on 2020-06-18 at 86b34a3688)
+ + commit-reach: use fast logic in repo_in_merge_base
+ + commit-reach: create repo_is_descendant_of()
+
+ "git merge-base --is-ancestor" is taught to take advantage of the
+ commit graph.
+
+ Will merge to 'master'.
+
+
+* dl/test-must-fail-fixes-5 (2020-06-18) 4 commits
  - lib-submodule-update: use callbacks in test_submodule_switch_common()
  - lib-submodule-update: prepend "git" to $command
  - lib-submodule-update: consolidate --recurse-submodules
@@ -299,45 +418,11 @@ of the repositories listed at
 
  The effort to avoid using test_must_fail on non-git command continues.
 
- Ready???
+ Getting very close.
+ cf. <20200618181533.GA633383@coredump.intra.peff.net>
 
 
-* jt/redact-all-cookies (2020-06-05) 1 commit
-  (merged to 'next' on 2020-06-12 at 912c337d63)
- + http: redact all cookies, teach GIT_TRACE_REDACT=0
-
- The interface to redact sensitive information in the trace output
- has been simplified.
-
- Will merge to 'master'.
-
-
-* es/worktree-duplicate-paths (2020-06-10) 7 commits
-  (merged to 'next' on 2020-06-12 at 5f7c822a9d)
- + worktree: make "move" refuse to move atop missing registered worktree
- + worktree: generalize candidate worktree path validation
- + worktree: prune linked worktree referencing main worktree path
- + worktree: prune duplicate entries referencing same worktree path
- + worktree: make high-level pruning re-usable
- + worktree: give "should be pruned?" function more meaningful name
- + worktree: factor out repeated string literal
-
- The same worktree directory must be registered only once, but
- "git worktree move" allowed this invariant to be violated, which
- has been corrected.
-
- Will merge to 'master'.
-
-
-* sg/commit-graph-cleanups (2020-06-17) 18 commits
- - commit-graph: persist existence of changed-paths
- - commit-graph: change test to die on parse, not load
- - bloom: enforce a minimum size of 8 bytes
- - commit-graph: check all leading directories in changed path Bloom filters
- - commit-graph: check chunk sizes after writing
- - commit-graph: simplify chunk writes into loop
- - commit-graph: unify the signatures of all write_graph_chunk_*() functions
- - commit-graph: place bloom_settings in context
+* sg/commit-graph-cleanups (2020-06-08) 10 commits
  - commit-graph: simplify write_commit_graph_file() #2
  - commit-graph: simplify write_commit_graph_file() #1
  - commit-graph: simplify parse_commit_graph() #2
@@ -348,37 +433,18 @@ of the repositories listed at
  - commit-graph-format.txt: all multi-byte numbers are in network byte order
  - commit-graph: fix parsing the Chunk Lookup table
  - tree-walk.c: don't match submodule entries for 'submod/anything'
+ (this branch is used by ds/commit-graph-bloom-updates.)
 
- Code cleanup.
-
-
-* cc/upload-pack-data-2 (2020-06-04) 13 commits
-  (merged to 'next' on 2020-06-12 at ee63b70dc2)
- + upload-pack: move pack_objects_hook to upload_pack_data
- + upload-pack: move allow_sideband_all to upload_pack_data
- + upload-pack: move allow_ref_in_want to upload_pack_data
- + upload-pack: move allow_filter to upload_pack_data
- + upload-pack: move keepalive to upload_pack_data
- + upload-pack: pass upload_pack_data to upload_pack_config()
- + upload-pack: change multi_ack to an enum
- + upload-pack: move multi_ack to upload_pack_data
- + upload-pack: move filter_capability_requested to upload_pack_data
- + upload-pack: move use_sideband to upload_pack_data
- + upload-pack: move static vars to upload_pack_data
- + upload-pack: annotate upload_pack_data fields
- + upload-pack: actually use some upload_pack_data bitfields
- (this branch is used by cc/upload-pack-data-3 and jt/cdn-offload.)
-
- Further code clean-up.
-
- Will merge to 'master'.
+ The changed-path Bloom filter is improved using ideas from an
+ independent implementation.
 
 
 * xl/upgrade-repo-format (2020-06-05) 4 commits
- - check_repository_format_gently(): refuse extensions for old repositories
- - sparse-checkout: upgrade repository to version 1 when enabling extension
- - fetch: allow adding a filter after initial clone
- - repository: add a helper function to perform repository format upgrade
+  (merged to 'next' on 2020-06-19 at 02bf7a9d8c)
+ + check_repository_format_gently(): refuse extensions for old repositories
+ + sparse-checkout: upgrade repository to version 1 when enabling extension
+ + fetch: allow adding a filter after initial clone
+ + repository: add a helper function to perform repository format upgrade
 
  Allow runtime upgrade of the repository format version, which needs
  to be done carefully.
@@ -387,7 +453,7 @@ of the repositories listed at
  last step of this series, but it is the right thing to do in the
  longer term.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/complete-git-switch (2020-05-28) 16 commits
@@ -415,23 +481,15 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* en/sparse-with-submodule-doc (2020-06-12) 1 commit
-  (merged to 'next' on 2020-06-17 at 3521be3834)
- + git-sparse-checkout: clarify interactions with submodules
-
- The effect of sparse checkout settings on submodules is documented.
-
- Will merge to 'master'.
-
-
 * ss/submodule-set-branch-in-c (2020-06-02) 1 commit
- - submodule: port subcommand 'set-branch' from shell to C
+  (merged to 'next' on 2020-06-18 at 8880b35c5a)
+ + submodule: port subcommand 'set-branch' from shell to C
 
  Rewrite of parts of the scripted "git submodule" Porcelain command
  continues; this time it is "git submodule set-branch" subcommand's
  turn.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/config-hooks (2020-05-21) 4 commits
@@ -473,55 +531,57 @@ of the repositories listed at
  cf. <CABPp-BGdEyEeajYZj_rdxp=MyEQdszuyjVTax=hhYj3fOtRQUQ@mail.gmail.com>
 
 
-* bc/sha-256-part-2 (2020-05-27) 44 commits
- - remote-testgit: adapt for object-format
- - bundle: detect hash algorithm when reading refs
- - t5300: pass --object-format to git index-pack
- - t5704: send object-format capability with SHA-256
- - t5703: use object-format serve option
- - t5702: offer an object-format capability in the test
- - t/helper: initialize the repository for test-sha1-array
- - remote-curl: avoid truncating refs with ls-remote
- - t1050: pass algorithm to index-pack when outside repo
- - builtin/index-pack: add option to specify hash algorithm
- - remote-curl: detect algorithm for dumb HTTP by size
- - builtin/ls-remote: initialize repository based on fetch
- - t5500: make hash independent
- - serve: advertise object-format capability for protocol v2
- - connect: parse v2 refs with correct hash algorithm
- - connect: pass full packet reader when parsing v2 refs
- - Documentation/technical: document object-format for protocol v2
- - t1302: expect repo format version 1 for SHA-256
- - builtin/show-index: provide options to determine hash algo
- - t5302: modernize test formatting
- - packfile: compute and use the index CRC offset
- - t3200: mark assertion with SHA1 prerequisite
- - setup: set the_repository's hash algo when checking format
- - fetch-pack: parse and advertise the object-format capability
- - t5562: pass object-format in synthesized test data
- - builtin/clone: initialize hash algorithm properly
- - remote-curl: implement object-format extensions
- - transport-helper: implement object-format extensions
- - docs: update remote helper docs for object-format extensions
- - builtin/receive-pack: detect when the server doesn't support our hash
- - connect: detect algorithm when fetching refs
- - fetch-pack: detect when the server doesn't support our hash
- - connect: make parse_feature_value extern
- - send-pack: detect when the server doesn't support our hash
- - connect: add function to detect supported v1 hash functions
- - transport: add a hash algorithm member
- - pkt-line: add a member for hash algorithm
- - connect: add function to fetch value of a v2 server capability
- - connect: add function to parse multiple v1 capability values
- - remote: advertise the object-format capability on the server side
- - wrapper: add function to compare strings with different NUL termination
- - connect: have ref processing code take struct packet_reader
- - Documentation: document v1 protocol object-format capability
- - t1050: match object ID paths in a hash-insensitive way
+* bc/sha-256-part-2 (2020-06-19) 44 commits
+  (merged to 'next' on 2020-06-22 at dc153f366d)
+ + remote-testgit: adapt for object-format
+ + bundle: detect hash algorithm when reading refs
+ + t5300: pass --object-format to git index-pack
+ + t5704: send object-format capability with SHA-256
+ + t5703: use object-format serve option
+ + t5702: offer an object-format capability in the test
+ + t/helper: initialize the repository for test-sha1-array
+ + remote-curl: avoid truncating refs with ls-remote
+ + t1050: pass algorithm to index-pack when outside repo
+ + builtin/index-pack: add option to specify hash algorithm
+ + remote-curl: detect algorithm for dumb HTTP by size
+ + builtin/ls-remote: initialize repository based on fetch
+ + t5500: make hash independent
+ + serve: advertise object-format capability for protocol v2
+ + connect: parse v2 refs with correct hash algorithm
+ + connect: pass full packet reader when parsing v2 refs
+ + Documentation/technical: document object-format for protocol v2
+ + t1302: expect repo format version 1 for SHA-256
+ + builtin/show-index: provide options to determine hash algo
+ + t5302: modernize test formatting
+ + packfile: compute and use the index CRC offset
+ + t3200: mark assertion with SHA1 prerequisite
+ + setup: set the_repository's hash algo when checking format
+ + fetch-pack: parse and advertise the object-format capability
+ + t5562: pass object-format in synthesized test data
+ + builtin/clone: initialize hash algorithm properly
+ + remote-curl: implement object-format extensions
+ + transport-helper: implement object-format extensions
+ + docs: update remote helper docs for object-format extensions
+ + builtin/receive-pack: detect when the server doesn't support our hash
+ + connect: detect algorithm when fetching refs
+ + fetch-pack: detect when the server doesn't support our hash
+ + connect: make parse_feature_value extern
+ + send-pack: detect when the server doesn't support our hash
+ + connect: add function to detect supported v1 hash functions
+ + transport: add a hash algorithm member
+ + pkt-line: add a member for hash algorithm
+ + connect: add function to fetch value of a v2 server capability
+ + connect: add function to parse multiple v1 capability values
+ + remote: advertise the object-format capability on the server side
+ + wrapper: add function to compare strings with different NUL termination
+ + connect: have ref processing code take struct packet_reader
+ + Documentation: document v1 protocol object-format capability
+ + t1050: match object ID paths in a hash-insensitive way
+ (this branch is used by bc/sha-256-cvs-svn-updates.)
 
  SHA-256 migration work continues.
 
- Ready???
+ Will merge to 'master'.
 
 
 * jx/proc-receive-hook (2020-05-18) 11 commits
@@ -543,30 +603,35 @@ of the repositories listed at
  Needs review.
 
 
-* hn/reftable (2020-06-17) 18 commits
- . SQUASH??? whitespace breakage fix
- . Add "test-tool dump-reftable" command.
- . Add reftable testing infrastructure
- . vcxproj: adjust for the reftable changes
- . Add GIT_DEBUG_REFS debugging mechanism
- . Hookup unittests for the reftable library.
- . Reftable support for git-core
- . Add reftable library
- . Add .gitattributes for the reftable/ directory
- . Iterate over the "refs/" namespace in for_each_[raw]ref
- . Move REF_LOG_ONLY to refs-internal.h
- . Treat REVERT_HEAD as a pseudo ref
- . Treat CHERRY_PICK_HEAD as a pseudo ref
- . Treat BISECT_HEAD as a pseudo ref
- . Make refs_ref_exists public
- . Write pseudorefs through ref backends.
- . checkout: add '\n' to reflog message
- . lib-t6000.sh: write tag using git-update-ref
+* hn/reftable (2020-06-22) 20 commits
+ - SQUASH??? fix new blank line at EOF
+ - Add "test-tool dump-reftable" command.
+ - Add reftable testing infrastructure
+ - git-prompt: prepare for reftable refs backend
+ - vcxproj: adjust for the reftable changes
+ - Add GIT_DEBUG_REFS debugging mechanism
+ - Hookup unittests for the reftable library.
+ - Reftable support for git-core
+ - Add standalone build infrastructure for reftable
+ - Add reftable library
+ - Add .gitattributes for the reftable/ directory
+ - Iterate over the "refs/" namespace in for_each_[raw]ref
+ - Move REF_LOG_ONLY to refs-internal.h
+ - Treat REVERT_HEAD as a pseudo ref
+ - Treat CHERRY_PICK_HEAD as a pseudo ref
+ - Treat BISECT_HEAD as a pseudo ref
+ - Make refs_ref_exists public
+ - Write pseudorefs through ref backends.
+ - checkout: add '\n' to reflog message
+ - lib-t6000.sh: write tag using git-update-ref
 
  A new refs backend "reftable" to replace the traditional
  combination of packed-refs files and one-file-per-ref loose refs
  has been implemented and integrated for improved performance and
  atomicity.
+
+ Does not seem to play well with the xl/upgrade-repo-format topic;
+ perhaps rework on top of 'master' after that topic graduates?
 
 --------------------------------------------------
 [Discarded]
