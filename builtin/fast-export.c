@@ -555,7 +555,6 @@ static char *anonymize_commit_message(const char *old)
 	return xstrfmt("subject %d\n\nbody\n", counter++);
 }
 
-static struct hashmap idents;
 static char *anonymize_ident(const char *old, size_t len)
 {
 	static int counter;
@@ -572,6 +571,7 @@ static char *anonymize_ident(const char *old, size_t len)
  */
 static void anonymize_ident_line(const char **beg, const char **end)
 {
+	static struct hashmap idents;
 	static struct strbuf buffers[] = { STRBUF_INIT, STRBUF_INIT };
 	static unsigned which_buffer;
 
