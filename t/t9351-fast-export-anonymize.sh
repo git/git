@@ -71,22 +71,18 @@ test_expect_success 'repo has original shape and timestamps' '
 
 test_expect_success 'root tree has original shape' '
 	# the output entries are not necessarily in the same
-	# order, but we know at least that we will have one tree
-	# and one blob, so just check the sorted order
-	cat >expect <<-\EOF &&
-	blob
-	tree
-	EOF
+	# order, but we should at least have the same set of
+	# object types.
+	git -C .. ls-tree HEAD >orig-root &&
+	cut -d" " -f2 <orig-root | sort >expect &&
 	git ls-tree $other_branch >root &&
 	cut -d" " -f2 <root | sort >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'paths in subdir ended up in one tree' '
-	cat >expect <<-\EOF &&
-	blob
-	blob
-	EOF
+	git -C .. ls-tree other:subdir >orig-subdir &&
+	cut -d" " -f2 <orig-subdir | sort >expect &&
 	tree=$(grep tree root | cut -f2) &&
 	git ls-tree $other_branch:$tree >tree &&
 	cut -d" " -f2 <tree >actual &&
