@@ -120,8 +120,8 @@ static int has_unshown_parent(struct commit *commit)
 
 struct anonymized_entry {
 	struct hashmap_entry hash;
-	const char *orig;
 	const char *anon;
+	const char orig[FLEX_ARRAY];
 };
 
 struct anonymized_entry_key {
@@ -170,9 +170,8 @@ static const char *anonymize_str(struct hashmap *map,
 	ret = hashmap_get_entry(map, &key, hash, &key);
 
 	if (!ret) {
-		ret = xmalloc(sizeof(*ret));
+		FLEX_ALLOC_MEM(ret, orig, orig, len);
 		hashmap_entry_init(&ret->hash, key.hash.hash);
-		ret->orig = xmemdupz(orig, len);
 		ret->anon = generate(orig, len);
 		hashmap_put(map, &ret->hash);
 	}
