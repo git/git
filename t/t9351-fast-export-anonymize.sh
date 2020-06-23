@@ -10,6 +10,10 @@ test_expect_success 'setup simple repo' '
 	mkdir subdir &&
 	test_commit subdir/bar &&
 	test_commit subdir/xyzzy &&
+	fake_commit=$(echo $ZERO_OID | sed s/0/a/) &&
+	git update-index --add --cacheinfo 160000,$fake_commit,link1 &&
+	git update-index --add --cacheinfo 160000,$fake_commit,link2 &&
+	git commit -m "add gitlink" &&
 	git tag -m "annotated tag" mytag
 '
 
@@ -24,6 +28,12 @@ test_expect_success 'stream omits path names' '
 	! grep subdir stream &&
 	! grep bar stream &&
 	! grep xyzzy stream
+'
+
+test_expect_success 'stream omits gitlink oids' '
+	# avoid relying on the whole oid to remain hash-agnostic; this is
+	# plenty to be unique within our test case
+	! grep a000000000000000000 stream
 '
 
 test_expect_success 'stream allows master as refname' '
@@ -87,6 +97,11 @@ test_expect_success 'paths in subdir ended up in one tree' '
 	git ls-tree $other_branch:$tree >tree &&
 	cut -d" " -f2 <tree >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'identical gitlinks got identical oid' '
+	awk "/commit/ { print \$3 }" <root | sort -u >commits &&
+	test_line_count = 1 commits
 '
 
 test_expect_success 'tag points to branch tip' '
