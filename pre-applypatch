@@ -2,7 +2,7 @@
 
 . git-sh-setup
 
-# Avoid duplicated test numbers --- checking 'pu' is enough
+# Avoid duplicated test numbers --- checking 'seen' is enough
 # as we will usually add, but never remove them.
 added=$(
 	git diff-index --cached --name-only --diff-filter=A HEAD -- t |
@@ -12,7 +12,7 @@ if test -n "$added"
 then
 	bad=
 	exists=$(
-		git ls-tree --name-only pu:t |
+		git ls-tree --name-only seen:t |
 		sed -ne 's|^\(t[0-9][0-9][0-9][0-9]\)-.*\.sh$|\1|p' |
 		tr "\012" " "
 	)

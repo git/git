@@ -65,7 +65,7 @@ then
 		exit 1
 	fi
 fi
-test -n "$branches" || branches='next master maint jch pu'
+test -n "$branches" || branches='next master maint jch seen'
 test -n "$jobs" || jobs=-j2
 
 find_installed () {

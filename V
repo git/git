@@ -14,7 +14,7 @@ inst_prefix=$(
 	echo $HOME
 )
 
-for v in maint master next pu jch
+for v in maint master next seen jch
 do
 	installed=$(
 		test -f "$inst_prefix/git-$v/bin/git" &&

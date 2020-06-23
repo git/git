@@ -45,7 +45,7 @@ for range in $(
 		fi
 		prev_branch=$branch
 	done
-) pu..jch
+) seen..jch
 do
 	lg=$(git log --oneline "$range")
 	if test -n "$lg"
@@ -59,7 +59,7 @@ if ! next_equiv=$(git rev-parse --verify 'jch^{/^### match next}' 2>/dev/null) |
    ! git diff --stat --exit-code next $next_equiv
 then
 	next_tree=$(git rev-parse next^{tree}) &&
-	next_equiv=$(git rev-list --first-parent master..pu |
+	next_equiv=$(git rev-list --first-parent master..seen |
 			xargs -n1 sh -c '
 				echo $(git rev-parse $1^{tree}) $1
 			' - | sed -n -e "s/^$next_tree //p"
@@ -69,12 +69,12 @@ fi
 if test -n "$next_equiv"
 then
 	jch=$(git rev-list --first-parent master..jch | wc -l) &&
-	pu=$(git rev-list --first-parent master..pu | wc -l) &&
+	seen=$(git rev-list --first-parent master..seen | wc -l) &&
 	next=$(git rev-list --first-parent master..$next_equiv | wc -l) &&
 	if test $jch -le $next
 	then
-		echo "master..$jch..jch..$next..next..$pu..pu"
+		echo "master..$jch..jch..$next..next..$seen..seen"
 	else
-		echo "master..$next..next..$jch..jch..$pu..pu"
+		echo "master..$next..next..$jch..jch..$seen..seen"
 	fi
 fi

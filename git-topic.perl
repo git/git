@@ -8,7 +8,7 @@ use Getopt::Long;
 
 my $topic_pattern = '??*/*';
 my $base = 'next';
-my @stage = qw(next pu);
+my @stage = qw(next seen);
 my @mark = ('.', '?', '-', '+');
 my $all = 0;
 my $merges = 0;

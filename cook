@@ -107,7 +107,7 @@ Returns a hash:
 =cut
 
 sub get_commit {
-	my (@base) = qw(master next pu);
+	my (@base) = qw(master next seen);
 	my $fh;
 	open($fh, '-|',
 	     qw(git for-each-ref),
@@ -182,7 +182,7 @@ sub get_commit {
 		my $co = $commit{$sha1};
 		if (exists $co->{'branch'}{'next'}) {
 			$sign = '+';
-		} elsif (exists $co->{'branch'}{'pu'}) {
+		} elsif (exists $co->{'branch'}{'seen'}) {
 			$sign = '-';
 		} else {
 			$sign = '.';
@@ -254,11 +254,11 @@ sub get_commit {
 		# NEEDSWORK:
 		# This is done a bit too early. We grabbed all
 		# under refs/heads/??/* without caring if they are
-		# merged to 'pu' yet, and it is correct because
+		# merged to 'seen' yet, and it is correct because
 		# we want to describe a topic that is in the old
-		# edition that is tentatively kicked out of 'pu'.
+		# edition that is tentatively kicked out of 'seen'.
 		# However, we do not want to say a topic is used
-		# by a new topic that is not yet in 'pu'!
+		# by a new topic that is not yet in 'seen'!
 		my $relation = describe_relation($topic{$branch});
 		$topic{$branch}{'desc'} = $head . $list;
 		if ($relation) {
@@ -286,9 +286,9 @@ sub blurb_text {
 	$next_at ||= '0' x 40;
 	$text ||= <<'EOF';
 Here are the topics that have been cooking.  Commits prefixed with '-' are
-only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
-The ones marked with '.' do not appear in any of the integration branches,
-but I am still holding onto them.
+only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
+with '+' are in 'next'.  The ones marked with '.' do not appear in any of
+the integration branches, but I am still holding onto them.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -546,7 +546,7 @@ sub update_issue {
 	return $incremental;
 }
 
-sub topic_in_pu {
+sub topic_in_seen {
 	my ($topic_desc) = @_;
 	for my $line (split(/\n/, $topic_desc)) {
 		if ($line =~ /^ [+-] /) {
@@ -624,7 +624,7 @@ sub merge_cooking {
 	for my $topic (sort keys %{$current}) {
 		if (!exists $td->{$topic}) {
 			# Ignore new topics without anything merged
-			if (topic_in_pu($current->{$topic}{'desc'})) {
+			if (topic_in_seen($current->{$topic}{'desc'})) {
 				push @new_topic, $topic;
 			}
 			next;
@@ -737,7 +737,7 @@ sub wildo {
 		if (/^\* (\S+) \(([-0-9]+)\) (\d+) commits?$/) {
 			wildo_flush_topic($in_section, \%what, $topic);
 
-			# tip-date, next-date, topic, count, pu-count
+			# tip-date, next-date, topic, count, seen-count
 			$topic = [$2, $too_recent, $1, $3, 0];
 			$in_desc = undef;
 			next;
@@ -778,10 +778,10 @@ sub wildo {
 		for $topic (sort { (($a->[1] cmp $b->[1]) ||
 				    ($a->[0] cmp $b->[0])) }
 			    @{$what{$what}}) {
-			my ($tip, $next, $name, $count, $pu) = @$topic;
+			my ($tip, $next, $name, $count, $seen) = @$topic;
 			my ($sign);
 			$tip =~ s/^\d{4}-//;
-			if (($next eq $too_recent) || (0 < $pu)) {
+			if (($next eq $too_recent) || (0 < $seen)) {
 				$sign = "-";
 				$next = " " x 6;
 			} else {

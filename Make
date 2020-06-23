@@ -215,7 +215,7 @@ export LANG LC_ALL
 branch=$(determine_branch)
 
 case "$branch" in
-next | maint | master | pu | jch)
+next | maint | master | seen | jch)
 	prefix="$inst_prefix/git-$branch"
 	;;
 snap)

@@ -152,7 +152,7 @@ viewed online at:
 * How various branches are used.
 
 There are four branches in git.git repository that track the source tree
-of git: "master", "maint", "next", and "pu".
+of git: "master", "maint", "next", and "seen".
 
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a
@@ -196,23 +196,23 @@ is merged to "master".  Please help this process by building & using the
 "next" branch for your daily work, and reporting any new bugs you find to
 the mailing list, before the breakage is merged down to the "master".
 
-The "pu" (proposed updates) branch bundles all the remaining topic
-branches the maintainer happens to have seen.  There is no guarantee that
-the maintainer has enough bandwidth to pick up any and all topics that
-are remotely promising from the list traffic, so please do not read
-too much into a topic being on (or not on) the "pu" branch.  This
-branch is mainly to remind the maintainer that the topics in them may
-turn out to be interesting when they are polished, nothing more.  The
-topics on this branch aren't usually complete, well tested, or well
-documented and they often need further work.  When a topic that was
-in "pu" proves to be in a testable shape, it is merged to "next".
+The "seen" (formerly "pu", proposed updates) branch bundles all the
+remaining topic branches the maintainer happens to have seen.  There
+is no guarantee that the maintainer has enough bandwidth to pick up any
+and all topics that are remotely promising from the list traffic, so
+please do not read too much into a topic being on (or not on) the "seen"
+branch.  This branch is mainly to remind the maintainer that the topics
+in them may turn out to be interesting when they are polished, nothing
+more.  The topics on this branch aren't usually complete, well tested,
+or well documented and they often need further work.  When a topic that
+was in "seen" proves to be in a testable shape, it is merged to "next".
 
-You can run "git log --first-parent master..pu" to see what topics are
+You can run "git log --first-parent master..seen" to see what topics are
 currently in flight.  Sometimes, an idea that looked promising turns out
-to be not so good and the topic can be dropped from "pu" in such a case.
+to be not so good and the topic can be dropped from "seen" in such a case.
 The output of the above "git log" talks about a "jch" branch, which is an
-early part of the "pu" branch; that branch contains all topics that
-are in "next" and a bit more (but not all of "pu") and is used by the
+early part of the "seen" branch; that branch contains all topics that
+are in "next" and a bit more (but not all of "seen") and is used by the
 maintainer for his daily work.
 
 The two branches "master" and "maint" are never rewound, and "next"
@@ -222,7 +222,7 @@ using the topics that didn't make the cut in the feature release.
 Some topics that used to be in "next" during the previous cycle may
 get ejected from "next" when this happens.
 
-A natural consequence of how "next" and "pu" bundles topics together
+A natural consequence of how "next" and "seen" bundles topics together
 is that until a topic is merged to "next", updates to it is expected
 by replacing the patch(es) in the topic with an improved version,
 and once a topic is merged to "next", updates to it needs to come as
