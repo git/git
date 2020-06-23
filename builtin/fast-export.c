@@ -387,16 +387,19 @@ static void *generate_fake_oid(const void *old, size_t *len)
 {
 	static uint32_t counter = 1; /* avoid null oid */
 	const unsigned hashsz = the_hash_algo->rawsz;
-	unsigned char *out = xcalloc(hashsz, 1);
-	put_be32(out + hashsz - 4, counter++);
-	return out;
+	struct object_id oid;
+	char *hex = xmallocz(GIT_MAX_HEXSZ);
+
+	oidclr(&oid);
+	put_be32(oid.hash + hashsz - 4, counter++);
+	return oid_to_hex_r(hex, &oid);
 }
 
-static const struct object_id *anonymize_oid(const struct object_id *oid)
+static const char *anonymize_oid(const char *oid_hex)
 {
 	static struct hashmap objs;
-	size_t len = the_hash_algo->rawsz;
-	return anonymize_mem(&objs, generate_fake_oid, oid, &len);
+	size_t len = strlen(oid_hex);
+	return anonymize_mem(&objs, generate_fake_oid, oid_hex, &len);
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
@@ -455,9 +458,9 @@ static void show_filemodify(struct diff_queue_struct *q,
 			 */
 			if (no_data || S_ISGITLINK(spec->mode))
 				printf("M %06o %s ", spec->mode,
-				       oid_to_hex(anonymize ?
-						  anonymize_oid(&spec->oid) :
-						  &spec->oid));
+				       anonymize ?
+				       anonymize_oid(oid_to_hex(&spec->oid)) :
+				       oid_to_hex(&spec->oid));
 			else {
 				struct object *object = lookup_object(the_repository,
 								      &spec->oid);
@@ -712,9 +715,10 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		if (mark)
 			printf(":%d\n", mark);
 		else
-			printf("%s\n", oid_to_hex(anonymize ?
-						  anonymize_oid(&obj->oid) :
-						  &obj->oid));
+			printf("%s\n",
+			       anonymize ?
+			       anonymize_oid(oid_to_hex(&obj->oid)) :
+			       oid_to_hex(&obj->oid));
 		i++;
 	}
 
