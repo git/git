@@ -9,7 +9,7 @@ test_expect_success 'setup simple repo' '
 	git checkout -b other HEAD^ &&
 	mkdir subdir &&
 	test_commit subdir/bar &&
-	test_commit quoting "subdir/this needs quoting" &&
+	test_commit subdir/xyzzy &&
 	git tag -m "annotated tag" mytag
 '
 
@@ -23,11 +23,14 @@ test_expect_success 'stream omits path names' '
 	! grep foo stream &&
 	! grep subdir stream &&
 	! grep bar stream &&
-	! grep quoting stream
+	! grep xyzzy stream
 '
 
-test_expect_success 'stream omits refnames' '
-	! grep master stream &&
+test_expect_success 'stream allows master as refname' '
+	grep master stream
+'
+
+test_expect_success 'stream omits other refnames' '
 	! grep other stream &&
 	! grep mytag stream
 '
@@ -43,34 +46,6 @@ test_expect_success 'stream omits tag message' '
 	! grep "annotated tag" stream
 '
 
-test_expect_success 'refname mapping can be dumped' '
-	git fast-export --anonymize --all \
-		--dump-anonymized-refnames=refs.out >/dev/null &&
-	# we make no guarantees of the exact anonymized names,
-	# so just check that we have the right number and
-	# that a sample line looks sane.
-	expected_count=$(git for-each-ref | wc -l) &&
-	test_line_count = $expected_count refs.out &&
-	grep "^refs/heads/other refs/heads/" refs.out
-'
-
-test_expect_success 'path mapping can be dumped' '
-	git fast-export --anonymize --all \
-		--dump-anonymized-paths=paths.out >/dev/null &&
-	# as above, avoid depending on the exact scheme, but
-	# but check that we have the right number of mappings,
-	# and spot-check one sample.
-	expected_count=$(
-		git rev-list --objects --all |
-		git cat-file --batch-check="%(objecttype) %(rest)" |
-		sed -ne "s/^blob //p" |
-		sort -u |
-		wc -l
-	) &&
-	test_line_count = $expected_count paths.out &&
-	grep "^\"subdir/this needs quoting\" " paths.out
-'
-
 # NOTE: we chdir to the new, anonymized repository
 # after this. All further tests should assume this.
 test_expect_success 'import stream to new repository' '
@@ -82,8 +57,7 @@ test_expect_success 'import stream to new repository' '
 test_expect_success 'result has two branches' '
 	git for-each-ref --format="%(refname)" refs/heads >branches &&
 	test_line_count = 2 branches &&
-	main_branch=$(sed -ne "s,refs/heads/master ,,p" ../refs.out) &&
-	other_branch=$(sed -ne "s,refs/heads/other ,,p" ../refs.out)
+	other_branch=$(grep -v refs/heads/master branches)
 '
 
 test_expect_success 'repo has original shape and timestamps' '
@@ -91,7 +65,7 @@ test_expect_success 'repo has original shape and timestamps' '
 		git log --format="%m %ct" --left-right --boundary "$@"
 	} &&
 	(cd .. && shape master...other) >expect &&
-	shape $main_branch...$other_branch >actual &&
+	shape master...$other_branch >actual &&
 	test_cmp expect actual
 '
 
