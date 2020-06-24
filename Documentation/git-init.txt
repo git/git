@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git init' [-q | --quiet] [--bare] [--template=<template_directory>]
 	  [--separate-git-dir <git dir>] [--object-format=<format>]
+	  [-b <branch-name> | --initial-branch=<branch-name>]
 	  [--shared[=<permissions>]] [directory]
 
 
@@ -66,6 +67,12 @@ repository.  This file acts as filesystem-agnostic Git symbolic link to the
 repository.
 +
 If this is reinitialization, the repository will be moved to the specified path.
+
+-b <branch-name::
+--initial-branch=<branch-name>::
+
+Use the specified name for the initial branch in the newly created repository.
+If not specified, fall back to the default name: `master`.
 
 --shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
 

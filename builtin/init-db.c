@@ -203,6 +203,7 @@ void initialize_repository_version(int hash_algo)
 
 static int create_default_files(const char *template_path,
 				const char *original_git_dir,
+				const char *initial_branch,
 				const struct repository_format *fmt)
 {
 	struct stat st1;
@@ -258,15 +259,26 @@ static int create_default_files(const char *template_path,
 		die("failed to set up refs db: %s", err.buf);
 
 	/*
-	 * Create the default symlink from ".git/HEAD" to the "master"
-	 * branch, if it does not exist yet.
+	 * Point the HEAD symref to the initial branch with if HEAD does
+	 * not yet exist.
 	 */
 	path = git_path_buf(&buf, "HEAD");
 	reinit = (!access(path, R_OK)
 		  || readlink(path, junk, sizeof(junk)-1) != -1);
 	if (!reinit) {
-		if (create_symref("HEAD", "refs/heads/master", NULL) < 0)
+		char *ref;
+
+		if (!initial_branch)
+			initial_branch = "master";
+
+		ref = xstrfmt("refs/heads/%s", initial_branch);
+		if (check_refname_format(ref, 0) < 0)
+			die(_("invalid initial branch name: '%s'"),
+			    initial_branch);
+
+		if (create_symref("HEAD", ref, NULL) < 0)
 			exit(1);
+		free(ref);
 	}
 
 	initialize_repository_version(fmt->hash_algo);
@@ -383,7 +395,8 @@ static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash
 }
 
 int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, int hash, unsigned int flags)
+	    const char *template_dir, int hash, const char *initial_branch,
+	    unsigned int flags)
 {
 	int reinit;
 	int exist_ok = flags & INIT_DB_EXIST_OK;
@@ -425,7 +438,11 @@ int init_db(const char *git_dir, const char *real_git_dir,
 
 	validate_hash_algorithm(&repo_fmt, hash);
 
-	reinit = create_default_files(template_dir, original_git_dir, &repo_fmt);
+	reinit = create_default_files(template_dir, original_git_dir,
+				      initial_branch, &repo_fmt);
+	if (reinit && initial_branch)
+		warning(_("re-init: ignored --initial-branch=%s"),
+			initial_branch);
 
 	create_object_directory();
 
@@ -528,6 +545,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	const char *template_dir = NULL;
 	unsigned int flags = 0;
 	const char *object_format = NULL;
+	const char *initial_branch = NULL;
 	int hash_algo = GIT_HASH_UNKNOWN;
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
@@ -541,6 +559,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		OPT_BIT('q', "quiet", &flags, N_("be quiet"), INIT_DB_QUIET),
 		OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
 			   N_("separate git dir from working tree")),
+		OPT_STRING('b', "initial-branch", &initial_branch, N_("name"),
+			   N_("override the name of the initial branch")),
 		OPT_STRING(0, "object-format", &object_format, N_("hash"),
 			   N_("specify the hash algorithm to use")),
 		OPT_END()
@@ -652,5 +672,6 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	UNLEAK(work_tree);
 
 	flags |= INIT_DB_EXIST_OK;
-	return init_db(git_dir, real_git_dir, template_dir, hash_algo, flags);
+	return init_db(git_dir, real_git_dir, template_dir, hash_algo,
+		       initial_branch, flags);
 }
