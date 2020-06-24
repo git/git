@@ -1981,7 +1981,7 @@ static const char *remote_submodule_branch(const char *path)
 	free(key);
 
 	if (!branch)
-		return "master";
+		return "HEAD";
 
 	if (!strcmp(branch, ".")) {
 		const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
