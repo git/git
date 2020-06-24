@@ -155,6 +155,15 @@ int dwim_ref(const char *str, int len, struct object_id *oid, char **ref);
 int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 
 /*
+ * Retrieves the default branch name for newly-initialized repositories.
+ *
+ * The return value of `repo_default_branch_name()` is an allocated string. The
+ * return value of `git_default_branch_name()` is a singleton.
+ */
+const char *git_default_branch_name(void);
+char *repo_default_branch_name(struct repository *r);
+
+/*
  * A ref_transaction represents a collection of reference updates that
  * should succeed or fail together.
  *

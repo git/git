@@ -477,4 +477,17 @@ test_expect_success '--initial-branch' '
 	grep hello actual
 '
 
+test_expect_success 'overridden default initial branch name (config)' '
+	test_config_global init.defaultBranch nmb &&
+	git init initial-branch-config &&
+	git -C initial-branch-config symbolic-ref HEAD >actual &&
+	grep nmb actual
+'
+
+test_expect_success 'invalid default branch name' '
+	test_config_global init.defaultBranch "with space" &&
+	test_must_fail git init initial-branch-invalid 2>err &&
+	test_i18ngrep "invalid branch name" err
+'
+
 test_done
