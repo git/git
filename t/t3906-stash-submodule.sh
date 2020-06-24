@@ -8,7 +8,12 @@ test_description='stash can handle submodules'
 git_stash () {
 	git status -su >expect &&
 	ls -1pR * >>expect &&
-	git read-tree -u -m "$1" &&
+	may_only_be_test_must_fail "$2" &&
+	$2 git read-tree -u -m "$1" &&
+	if test -n "$2"
+	then
+		return
+	fi &&
 	git stash &&
 	git status -su >actual &&
 	ls -1pR * >>actual &&

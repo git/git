@@ -303,8 +303,12 @@ test_submodule_content () {
 # update" is run. And even then that command doesn't delete the work tree of
 # a removed submodule.
 #
+# The first argument of the callback function will be the name of the submodule.
+#
 # Removing a submodule containing a .git directory must fail even when forced
-# to protect the history!
+# to protect the history! If we are testing this case, the second argument of
+# the callback function will be 'test_must_fail', else it will be the empty
+# string.
 #
 
 # Internal function; use test_submodule_switch_func(), test_submodule_switch(),
@@ -443,7 +447,7 @@ test_submodule_switch_common () {
 		(
 			cd submodule_update &&
 			git branch -t replace_sub1_with_directory origin/replace_sub1_with_directory &&
-			test_must_fail $command replace_sub1_with_directory &&
+			$command replace_sub1_with_directory test_must_fail &&
 			test_superproject_content origin/add_sub1 &&
 			test_submodule_content sub1 origin/add_sub1
 		)
@@ -456,7 +460,7 @@ test_submodule_switch_common () {
 			cd submodule_update &&
 			git branch -t replace_sub1_with_directory origin/replace_sub1_with_directory &&
 			replace_gitfile_with_git_dir sub1 &&
-			test_must_fail $command replace_sub1_with_directory &&
+			$command replace_sub1_with_directory test_must_fail &&
 			test_superproject_content origin/add_sub1 &&
 			test_git_directory_is_unchanged sub1 &&
 			test_submodule_content sub1 origin/add_sub1
@@ -470,7 +474,7 @@ test_submodule_switch_common () {
 		(
 			cd submodule_update &&
 			git branch -t replace_sub1_with_file origin/replace_sub1_with_file &&
-			test_must_fail $command replace_sub1_with_file &&
+			$command replace_sub1_with_file test_must_fail &&
 			test_superproject_content origin/add_sub1 &&
 			test_submodule_content sub1 origin/add_sub1
 		)
@@ -484,7 +488,7 @@ test_submodule_switch_common () {
 			cd submodule_update &&
 			git branch -t replace_sub1_with_file origin/replace_sub1_with_file &&
 			replace_gitfile_with_git_dir sub1 &&
-			test_must_fail $command replace_sub1_with_file &&
+			$command replace_sub1_with_file test_must_fail &&
 			test_superproject_content origin/add_sub1 &&
 			test_git_directory_is_unchanged sub1 &&
 			test_submodule_content sub1 origin/add_sub1
@@ -559,12 +563,25 @@ test_submodule_switch_common () {
 # conditions, set the appropriate KNOWN_FAILURE_* variable used in the tests
 # below to 1.
 #
-# Use as follows:
+# The first argument of the callback function will be the name of the submodule.
+#
+# Removing a submodule containing a .git directory must fail even when forced
+# to protect the history! If we are testing this case, the second argument of
+# the callback function will be 'test_must_fail', else it will be the empty
+# string.
+#
+# The following example uses `git some-command` as an example command to be
+# tested. It updates the worktree and index to match a target, but not any
+# submodule directories.
 #
 # my_func () {
-#   target=$1
-#   # Do something here that updates the worktree and index to match target,
-#   # but not any submodule directories.
+#   ...prepare for `git some-command` to be run...
+#   $2 git some-command "$1" &&
+#   if test -n "$2"
+#   then
+#     return
+#   fi &&
+#   ...check the state after git some-command is run...
 # }
 # test_submodule_switch_func "my_func"
 test_submodule_switch_func () {
@@ -580,23 +597,35 @@ test_submodule_switch_func () {
 			cd submodule_update &&
 			git branch -t add_sub1 origin/add_sub1 &&
 			>sub1 &&
-			test_must_fail $command add_sub1 &&
+			$command add_sub1 test_must_fail &&
 			test_superproject_content origin/no_submodule &&
 			test_must_be_empty sub1
 		)
 	'
 }
 
+# Ensures that the that the arg either contains "test_must_fail" or is empty.
+may_only_be_test_must_fail () {
+	test -z "$1" || test "$1" = test_must_fail || die
+}
+
+git_test_func () {
+	may_only_be_test_must_fail "$2" &&
+	$2 git $gitcmd "$1"
+}
+
 test_submodule_switch () {
-	test_submodule_switch_func "git $1"
+	gitcmd="$1"
+	test_submodule_switch_func "git_test_func"
 }
 
 # Same as test_submodule_switch(), except that throwing away local changes in
 # the superproject is allowed.
 test_submodule_forced_switch () {
-	command="$1"
+	gitcmd="$1"
+	command="git_test_func"
 	KNOWN_FAILURE_FORCED_SWITCH_TESTS=1
-	test_submodule_switch_common "git $command"
+	test_submodule_switch_common "$command"
 
 	# When forced, a file in the superproject does not prevent creating a
 	# submodule of the same name.
