@@ -3,5 +3,5 @@ init.templateDir::
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
 init.defaultBranch::
-	Allows overriding the default branch name when initializing
-	a new repository.
+	Allows overriding the default branch name e.g. when initializing
+	a new repository or when cloning an empty repository.
