@@ -12,7 +12,7 @@ SYNOPSIS
 	[-v [--abbrev=<length> | --no-abbrev]]
 	[--column[=<options>] | --no-column] [--sort=<key>]
 	[(--merged | --no-merged) [<commit>]]
-	[--contains [<commit]] [--no-contains [<commit>]]
+	[--contains [<commit>]] [--no-contains [<commit>]]
 	[--points-at <object>] [--format=<format>]
 	[(-r | --remotes) | (-a | --all)]
 	[--list] [<pattern>...]
