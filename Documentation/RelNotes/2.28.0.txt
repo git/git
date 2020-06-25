@@ -22,6 +22,13 @@ UI, Workflows & Features
  * The interface to redact sensitive information in the trace output
    has been simplified.
 
+ * The command line completion (in contrib/) learned to complete
+   options that the "git switch" command takes.
+
+ * "git diff" used to take arguments in random and nonsense range
+   notation, e.g. "git diff A..B C", "git diff A..B C...D", etc.,
+   which has been cleaned up.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -52,6 +59,22 @@ Performance, Internal Implementation, Development Support etc.
 
  * Workaround breakage in MSVC build, where "curl-config --cflags"
    gives settings appropriate for GCC build.
+
+ * Code clean-up of "git clean" resulted in a fix of recent
+   performance regression.
+
+ * Code clean-up in the codepath that serves "git fetch" continues.
+
+ * "git merge-base --is-ancestor" is taught to take advantage of the
+   commit graph.
+
+ * Rewrite of parts of the scripted "git submodule" Porcelain command
+   continues; this time it is "git submodule set-branch" subcommand's
+   turn.
+
+ * The "fetch/clone" protocol has been updated to allow the server to
+   instruct the clients to grab pre-packaged packfile(s) in addition
+   to the packed object data coming over the wire.
 
 
 Fixes since v2.27
@@ -109,6 +132,13 @@ Fixes since v2.27
 
  * The effect of sparse checkout settings on submodules is documented.
    (merge e7d7c73249 en/sparse-with-submodule-doc later to maint).
+
+ * Code clean-up around "git branch" with a minor bugfix.
+   (merge dc44639904 dl/branch-cleanup later to maint).
+
+ * A branch name used in a test has been clarified to match what is
+   going on.
+   (merge 08dc26061f pb/t4014-unslave later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
