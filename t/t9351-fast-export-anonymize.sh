@@ -22,6 +22,7 @@ test_expect_success 'export anonymized stream' '
 	git fast-export --anonymize --all \
 		--anonymize-map=retain-me \
 		--anonymize-map=xyzzy:custom-name \
+		--anonymize-map=other \
 		>stream
 '
 
@@ -45,12 +46,12 @@ test_expect_success 'stream omits gitlink oids' '
 	! grep a000000000000000000 stream
 '
 
-test_expect_success 'stream allows master as refname' '
-	grep master stream
+test_expect_success 'stream retains other as refname' '
+	grep other stream
 '
 
 test_expect_success 'stream omits other refnames' '
-	! grep other stream &&
+	! grep master stream &&
 	! grep mytag stream
 '
 
@@ -76,7 +77,8 @@ test_expect_success 'import stream to new repository' '
 test_expect_success 'result has two branches' '
 	git for-each-ref --format="%(refname)" refs/heads >branches &&
 	test_line_count = 2 branches &&
-	other_branch=$(grep -v refs/heads/master branches)
+	other_branch=refs/heads/other &&
+	main_branch=$(grep -v $other_branch branches)
 '
 
 test_expect_success 'repo has original shape and timestamps' '
@@ -84,7 +86,7 @@ test_expect_success 'repo has original shape and timestamps' '
 		git log --format="%m %ct" --left-right --boundary "$@"
 	} &&
 	(cd .. && shape master...other) >expect &&
-	shape master...$other_branch >actual &&
+	shape $main_branch...$other_branch >actual &&
 	test_cmp expect actual
 '
 
