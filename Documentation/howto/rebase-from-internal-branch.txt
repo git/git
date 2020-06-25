@@ -4,7 +4,7 @@ Cc:	Petr Baudis <pasky@suse.cz>, Linus Torvalds <torvalds@osdl.org>
 Subject: Re: sending changesets from the middle of a git tree
 Date:	Sun, 14 Aug 2005 18:37:39 -0700
 Abstract: In this article, JC talks about how he rebases the
- public "pu" branch using the core Git tools when he updates
+ public "seen" branch using the core Git tools when he updates
  the "master" branch, and how "rebase" works.  Also discussed
  is how this applies to individual developers who sends patches
  upstream.
@@ -20,8 +20,8 @@ Petr Baudis <pasky@suse.cz> writes:
 > where Junio C Hamano <junkio@cox.net> told me that...
 >> Linus Torvalds <torvalds@osdl.org> writes:
 >>
->> > Junio, maybe you want to talk about how you move patches from your "pu"
->> > branch to the real branches.
+>> > Junio, maybe you want to talk about how you move patches from your
+>> > "seen" branch to the real branches.
 >>
 > Actually, wouldn't this be also precisely for what StGIT is intended to?
 --------------------------------------
@@ -33,12 +33,12 @@ the kind of task StGIT is designed to do.
 I just have done a simpler one, this time using only the core
 Git tools.
 
-I had a handful of commits that were ahead of master in pu, and I
+I had a handful of commits that were ahead of master in 'seen', and I
 wanted to add some documentation bypassing my usual habit of
-placing new things in pu first.  At the beginning, the commit
+placing new things in 'seen' first.  At the beginning, the commit
 ancestry graph looked like this:
 
-                             *"pu" head
+			     *"seen" head
     master --> #1 --> #2 --> #3
 
 So I started from master, made a bunch of edits, and committed:
@@ -50,7 +50,7 @@ So I started from master, made a bunch of edits, and committed:
 
 After the commit, the ancestry graph would look like this:
 
-                              *"pu" head
+			      *"seen" head
     master^ --> #1 --> #2 --> #3
           \
             \---> master
@@ -58,31 +58,31 @@ After the commit, the ancestry graph would look like this:
 The old master is now master^ (the first parent of the master).
 The new master commit holds my documentation updates.
 
-Now I have to deal with "pu" branch.
+Now I have to deal with "seen" branch.
 
 This is the kind of situation I used to have all the time when
 Linus was the maintainer and I was a contributor, when you look
-at "master" branch being the "maintainer" branch, and "pu"
+at "master" branch being the "maintainer" branch, and "seen"
 branch being the "contributor" branch.  Your work started at the
 tip of the "maintainer" branch some time ago, you made a lot of
 progress in the meantime, and now the maintainer branch has some
 other commits you do not have yet.  And "git rebase" was written
 with the explicit purpose of helping to maintain branches like
-"pu".  You _could_ merge master to pu and keep going, but if you
+"seen".  You _could_ merge master to 'seen' and keep going, but if you
 eventually want to cherrypick and merge some but not necessarily
 all changes back to the master branch, it often makes later
 operations for _you_ easier if you rebase (i.e. carry forward
-your changes) "pu" rather than merge.  So I ran "git rebase":
+your changes) "seen" rather than merge.  So I ran "git rebase":
 
-    $ git checkout pu
-    $ git rebase master pu
+    $ git checkout seen
+    $ git rebase master seen
 
 What this does is to pick all the commits since the current
-branch (note that I now am on "pu" branch) forked from the
+branch (note that I now am on "seen" branch) forked from the
 master branch, and forward port these changes.
 
     master^ --> #1 --> #2 --> #3
-          \                                  *"pu" head
+	  \                                  *"seen" head
             \---> master --> #1' --> #2' --> #3'
 
 The diff between master^ and #1 is applied to master and
@@ -92,7 +92,7 @@ commits are made similarly out of #2 and #3 commits.
 
 Old #3 is not recorded in any of the .git/refs/heads/ file
 anymore, so after doing this you will have dangling commit if
-you ran fsck-cache, which is normal.  After testing "pu", you
+you ran fsck-cache, which is normal.  After testing "seen", you
 can run "git prune" to get rid of those original three commits.
 
 While I am talking about "git rebase", I should talk about how
