@@ -45,6 +45,7 @@ static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 static struct string_list tag_refs = STRING_LIST_INIT_NODUP;
 static struct refspec refspecs = REFSPEC_INIT_FETCH;
 static int anonymize;
+static struct hashmap anonymized_seeds;
 static struct revision_sources revision_sources;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
@@ -168,8 +169,18 @@ static const char *anonymize_str(struct hashmap *map,
 	hashmap_entry_init(&key.hash, memhash(orig, len));
 	key.orig = orig;
 	key.orig_len = len;
-	ret = hashmap_get_entry(map, &key, hash, &key);
 
+	/* First check if it's a token the user configured manually... */
+	if (anonymized_seeds.cmpfn)
+		ret = hashmap_get_entry(&anonymized_seeds, &key, hash, &key);
+	else
+		ret = NULL;
+
+	/* ...otherwise check if we've already seen it in this context... */
+	if (!ret)
+		ret = hashmap_get_entry(map, &key, hash, &key);
+
+	/* ...and finally generate a new mapping if necessary */
 	if (!ret) {
 		FLEX_ALLOC_MEM(ret, orig, orig, len);
 		hashmap_entry_init(&ret->hash, key.hash.hash);
@@ -1147,6 +1158,37 @@ static void handle_deletes(void)
 	}
 }
 
+static char *anonymize_seed(void *data)
+{
+	return xstrdup(data);
+}
+
+static int parse_opt_anonymize_map(const struct option *opt,
+				   const char *arg, int unset)
+{
+	struct hashmap *map = opt->value;
+	const char *delim, *value;
+	size_t keylen;
+
+	BUG_ON_OPT_NEG(unset);
+
+	delim = strchr(arg, ':');
+	if (delim) {
+		keylen = delim - arg;
+		value = delim + 1;
+	} else {
+		keylen = strlen(arg);
+		value = arg;
+	}
+
+	if (!keylen || !*value)
+		return error(_("--anonymize-map token cannot be empty"));
+
+	anonymize_str(map, anonymize_seed, arg, keylen, (void *)value);
+
+	return 0;
+}
+
 int cmd_fast_export(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -1188,6 +1230,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST(0, "refspec", &refspecs_list, N_("refspec"),
 			     N_("Apply refspec to exported refs")),
 		OPT_BOOL(0, "anonymize", &anonymize, N_("anonymize output")),
+		OPT_CALLBACK_F(0, "anonymize-map", &anonymized_seeds, N_("from:to"),
+			       N_("convert <from> to <to> in anonymized output"),
+			       PARSE_OPT_NONEG, parse_opt_anonymize_map),
 		OPT_BOOL(0, "reference-excluded-parents",
 			 &reference_excluded_commits, N_("Reference parents which are not in fast-export stream by object id")),
 		OPT_BOOL(0, "show-original-ids", &show_original_ids,
@@ -1214,6 +1259,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	argc = setup_revisions(argc, argv, &revs, NULL);
 	if (argc > 1)
 		usage_with_options (fast_export_usage, options);
+
+	if (anonymized_seeds.cmpfn && !anonymize)
+		die(_("--anonymize-map without --anonymize does not make sense"));
 
 	if (refspecs_list.nr) {
 		int i;

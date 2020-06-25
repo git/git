@@ -6,6 +6,7 @@ test_description='basic tests for fast-export --anonymize'
 test_expect_success 'setup simple repo' '
 	test_commit base &&
 	test_commit foo &&
+	test_commit retain-me &&
 	git checkout -b other HEAD^ &&
 	mkdir subdir &&
 	test_commit subdir/bar &&
@@ -18,7 +19,10 @@ test_expect_success 'setup simple repo' '
 '
 
 test_expect_success 'export anonymized stream' '
-	git fast-export --anonymize --all >stream
+	git fast-export --anonymize --all \
+		--anonymize-map=retain-me \
+		--anonymize-map=xyzzy:custom-name \
+		>stream
 '
 
 # this also covers commit messages
@@ -28,6 +32,11 @@ test_expect_success 'stream omits path names' '
 	! grep subdir stream &&
 	! grep bar stream &&
 	! grep xyzzy stream
+'
+
+test_expect_success 'stream contains user-specified names' '
+	grep retain-me stream &&
+	grep custom-name stream
 '
 
 test_expect_success 'stream omits gitlink oids' '
