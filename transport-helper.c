@@ -410,10 +410,11 @@ static int fetch_with_fetch(struct transport *transport,
 			exit(128);
 
 		if (skip_prefix(buf.buf, "lock ", &name)) {
-			if (transport->pack_lockfile)
+			if (transport->pack_lockfiles.nr)
 				warning(_("%s also locked %s"), data->name, name);
 			else
-				transport->pack_lockfile = xstrdup(name);
+				string_list_append(&transport->pack_lockfiles,
+						   name);
 		}
 		else if (data->check_connectivity &&
 			 data->transport_options.check_self_contained_and_connected &&

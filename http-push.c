@@ -117,6 +117,7 @@ enum transfer_state {
 
 struct transfer_request {
 	struct object *obj;
+	struct packed_git *target;
 	char *url;
 	char *dest;
 	struct remote_lock *lock;
@@ -314,17 +315,18 @@ static void start_fetch_packed(struct transfer_request *request)
 		release_request(request);
 		return;
 	}
+	close_pack_index(target);
+	request->target = target;
 
 	fprintf(stderr,	"Fetching pack %s\n",
 		hash_to_hex(target->hash));
 	fprintf(stderr, " which contains %s\n", oid_to_hex(&request->obj->oid));
 
-	preq = new_http_pack_request(target, repo->url);
+	preq = new_http_pack_request(target->hash, repo->url);
 	if (preq == NULL) {
 		repo->can_update_info_refs = 0;
 		return;
 	}
-	preq->lst = &repo->packs;
 
 	/* Make sure there isn't another open request for this pack */
 	while (check_request) {
@@ -597,6 +599,8 @@ static void finish_request(struct transfer_request *request)
 		}
 		if (fail)
 			repo->can_update_info_refs = 0;
+		else
+			http_install_packfile(request->target, &repo->packs);
 		release_request(request);
 	}
 }
