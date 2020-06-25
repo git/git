@@ -1179,8 +1179,8 @@ look at the section below this one for some context.)
 [[after-approval]]
 === After Review Approval
 
-The Git project has four integration branches: `pu`, `next`, `master`, and
-`maint`. Your change will be placed into `pu` fairly early on by the maintainer
+The Git project has four integration branches: `seen`, `next`, `master`, and
+`maint`. Your change will be placed into `seen` fairly early on by the maintainer
 while it is still in the review process; from there, when it is ready for wider
 testing, it will be merged into `next`. Plenty of early testers use `next` and
 may report issues. Eventually, changes in `next` will make it to `master`,
