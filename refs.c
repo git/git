@@ -562,6 +562,36 @@ void expand_ref_prefix(struct argv_array *prefixes, const char *prefix)
 		argv_array_pushf(prefixes, *p, len, prefix);
 }
 
+char *repo_default_branch_name(struct repository *r)
+{
+	const char *config_key = "init.defaultbranch";
+	const char *config_display_key = "init.defaultBranch";
+	char *ret = NULL, *full_ref;
+
+	if (repo_config_get_string(r, config_key, &ret) < 0)
+		die(_("could not retrieve `%s`"), config_display_key);
+
+	if (!ret)
+		ret = xstrdup("master");
+
+	full_ref = xstrfmt("refs/heads/%s", ret);
+	if (check_refname_format(full_ref, 0))
+		die(_("invalid branch name: %s = %s"), config_display_key, ret);
+	free(full_ref);
+
+	return ret;
+}
+
+const char *git_default_branch_name(void)
+{
+	static char *ret;
+
+	if (!ret)
+		ret = repo_default_branch_name(the_repository);
+
+	return ret;
+}
+
 /*
  * *string and *len will only be substituted, and *string returned (for
  * later free()ing) if the string passed in is a magic short-hand form

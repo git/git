@@ -410,7 +410,7 @@ int send_pack(struct send_pack_args *args,
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
-			"Perhaps you should specify a branch such as 'master'.\n");
+			"Perhaps you should specify a branch.\n");
 		return 0;
 	}
 	if (args->atomic && !atomic_supported)

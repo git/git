@@ -276,7 +276,7 @@ static void read_branches_file(struct remote *remote)
 
 	/*
 	 * The branches file would have URL and optionally
-	 * #branch specified.  The "master" (or specified) branch is
+	 * #branch specified.  The default (or specified) branch is
 	 * fetched and stored in the local branch matching the
 	 * remote name.
 	 */
@@ -284,7 +284,7 @@ static void read_branches_file(struct remote *remote)
 	if (frag)
 		*(frag++) = '\0';
 	else
-		frag = "master";
+		frag = (char *)git_default_branch_name();
 
 	add_url_alias(remote, strbuf_detach(&buf, NULL));
 	strbuf_addf(&buf, "refs/heads/%s:refs/heads/%s",
@@ -2097,8 +2097,16 @@ struct ref *guess_remote_head(const struct ref *head,
 	if (head->symref)
 		return copy_ref(find_ref_by_name(refs, head->symref));
 
-	/* If refs/heads/master could be right, it is. */
+	/* If a remote branch exists with the default branch name, let's use it. */
 	if (!all) {
+		char *ref = xstrfmt("refs/heads/%s", git_default_branch_name());
+
+		r = find_ref_by_name(refs, ref);
+		free(ref);
+		if (r && oideq(&r->old_oid, &head->old_oid))
+			return copy_ref(r);
+
+		/* Fall back to the hard-coded historical default */
 		r = find_ref_by_name(refs, "refs/heads/master");
 		if (r && oideq(&r->old_oid, &head->old_oid))
 			return copy_ref(r);

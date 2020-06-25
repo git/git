@@ -464,4 +464,30 @@ test_expect_success MINGW 'redirect std handles' '
 	grep "Needed a single revision" output.txt
 '
 
+test_expect_success '--initial-branch' '
+	git init --initial-branch=hello initial-branch-option &&
+	git -C initial-branch-option symbolic-ref HEAD >actual &&
+	echo refs/heads/hello >expect &&
+	test_cmp expect actual &&
+
+	: re-initializing should not change the branch name &&
+	git init --initial-branch=ignore initial-branch-option 2>err &&
+	test_i18ngrep "ignored --initial-branch" err &&
+	git -C initial-branch-option symbolic-ref HEAD >actual &&
+	grep hello actual
+'
+
+test_expect_success 'overridden default initial branch name (config)' '
+	test_config_global init.defaultBranch nmb &&
+	git init initial-branch-config &&
+	git -C initial-branch-config symbolic-ref HEAD >actual &&
+	grep nmb actual
+'
+
+test_expect_success 'invalid default branch name' '
+	test_config_global init.defaultBranch "with space" &&
+	test_must_fail git init initial-branch-invalid 2>err &&
+	test_i18ngrep "invalid branch name" err
+'
+
 test_done

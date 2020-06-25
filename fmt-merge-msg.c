@@ -451,10 +451,7 @@ static void fmt_merge_msg_title(struct strbuf *out,
 			strbuf_addf(out, " of %s", srcs.items[i].string);
 	}
 
-	if (!strcmp("master", current_branch))
-		strbuf_addch(out, '\n');
-	else
-		strbuf_addf(out, " into %s\n", current_branch);
+	strbuf_addf(out, " into %s\n", current_branch);
 }
 
 static void fmt_tag_signature(struct strbuf *tagbuf,
