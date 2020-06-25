@@ -154,7 +154,7 @@ static int read_one_commit(struct oidset *commits, struct progress *progress,
 			   NULL, 0);
 	if (!result)
 		return error(_("invalid object: %s"), hash);
-	else if (object_as_type(the_repository, result, OBJ_COMMIT, 1))
+	else if (object_as_type(result, OBJ_COMMIT, 1))
 		oidset_insert(commits, &result->oid);
 
 	display_progress(progress, oidset_size(commits));

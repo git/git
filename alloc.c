@@ -99,23 +99,27 @@ void *alloc_object_node(struct repository *r)
 	return obj;
 }
 
-static unsigned int alloc_commit_index(struct repository *r)
+/*
+ * The returned count is to be used as an index into commit slabs,
+ * that are *NOT* maintained per repository, and that is why a single
+ * global counter is used.
+ */
+static unsigned int alloc_commit_index(void)
 {
-	return r->parsed_objects->commit_count++;
+	static unsigned int parsed_commits_count;
+	return parsed_commits_count++;
 }
 
-void init_commit_node(struct repository *r, struct commit *c)
+void init_commit_node(struct commit *c)
 {
 	c->object.type = OBJ_COMMIT;
-	c->index = alloc_commit_index(r);
-	c->graph_pos = COMMIT_NOT_FROM_GRAPH;
-	c->generation = GENERATION_NUMBER_INFINITY;
+	c->index = alloc_commit_index();
 }
 
 void *alloc_commit_node(struct repository *r)
 {
 	struct commit *c = alloc_node(r->parsed_objects->commit_state, sizeof(struct commit));
-	init_commit_node(r, c);
+	init_commit_node(c);
 	return c;
 }
 

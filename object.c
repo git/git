@@ -157,13 +157,13 @@ void *create_object(struct repository *r, const struct object_id *oid, void *o)
 	return obj;
 }
 
-void *object_as_type(struct repository *r, struct object *obj, enum object_type type, int quiet)
+void *object_as_type(struct object *obj, enum object_type type, int quiet)
 {
 	if (obj->type == type)
 		return obj;
 	else if (obj->type == OBJ_NONE) {
 		if (type == OBJ_COMMIT)
-			init_commit_node(r, (struct commit *) obj);
+			init_commit_node((struct commit *) obj);
 		else
 			obj->type = type;
 		return obj;

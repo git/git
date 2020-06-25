@@ -67,7 +67,7 @@ int cmd__reach(int ac, const char **av)
 			die("failed to load commit for input %s resulting in oid %s\n",
 			    buf.buf, oid_to_hex(&oid));
 
-		c = object_as_type(r, peeled, OBJ_COMMIT, 0);
+		c = object_as_type(peeled, OBJ_COMMIT, 0);
 
 		if (!c)
 			die("failed to load commit for input %s resulting in oid %s\n",
