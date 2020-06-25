@@ -577,7 +577,7 @@ static void get_default_heads(void)
 
 	for_each_rawref(fsck_handle_ref, NULL);
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct strbuf ref = STRBUF_INIT;

@@ -37,7 +37,7 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 
 		*refs = get_submodule_ref_store(gitdir);
 	} else if (skip_prefix(argv[0], "worktree:", &gitdir)) {
-		struct worktree **p, **worktrees = get_worktrees(0);
+		struct worktree **p, **worktrees = get_worktrees();
 
 		for (p = worktrees; *p; p++) {
 			struct worktree *wt = *p;

@@ -672,7 +672,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		given_config_source.file = git_pathdup("config");
 		given_config_source.scope = CONFIG_SCOPE_LOCAL;
 	} else if (use_worktree_config) {
-		struct worktree **worktrees = get_worktrees(0);
+		struct worktree **worktrees = get_worktrees();
 		if (repository_format_worktree_config)
 			given_config_source.file = git_pathdup("config.worktree");
 		else if (worktrees[0] && worktrees[1])
