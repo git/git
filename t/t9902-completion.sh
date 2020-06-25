@@ -494,7 +494,7 @@ test_expect_success '__gitcomp - prefix' '
 '
 
 test_expect_success '__gitcomp - suffix' '
-	test_gitcomp "branch.me" "master maint next pu" "branch." \
+	test_gitcomp "branch.me" "master maint next seen" "branch." \
 		"ma" "." <<-\EOF
 	branch.master.Z
 	branch.maint.Z
@@ -545,7 +545,7 @@ read -r -d "" refs <<-\EOF
 maint
 master
 next
-pu
+seen
 EOF
 
 test_expect_success '__gitcomp_nl - trailing space' '

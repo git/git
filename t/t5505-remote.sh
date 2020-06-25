@@ -988,7 +988,7 @@ test_expect_success 'remote set-branches' '
 	+refs/heads/maint:refs/remotes/scratch/maint
 	+refs/heads/master:refs/remotes/scratch/master
 	+refs/heads/next:refs/remotes/scratch/next
-	+refs/heads/pu:refs/remotes/scratch/pu
+	+refs/heads/seen:refs/remotes/scratch/seen
 	+refs/heads/t/topic:refs/remotes/scratch/t/topic
 	EOF
 	sort <<-\EOF >expect.setup-ffonly &&
@@ -998,7 +998,7 @@ test_expect_success 'remote set-branches' '
 	sort <<-\EOF >expect.respect-ffonly &&
 	refs/heads/master:refs/remotes/scratch/master
 	+refs/heads/next:refs/remotes/scratch/next
-	+refs/heads/pu:refs/remotes/scratch/pu
+	+refs/heads/seen:refs/remotes/scratch/seen
 	EOF
 
 	git clone .git/ setbranches &&
@@ -1016,7 +1016,7 @@ test_expect_success 'remote set-branches' '
 		git config --get-all remote.scratch.fetch >config-result &&
 		sort <config-result >../actual.replace &&
 
-		git remote set-branches --add scratch pu t/topic &&
+		git remote set-branches --add scratch seen t/topic &&
 		git config --get-all remote.scratch.fetch >config-result &&
 		sort <config-result >../actual.add-two &&
 
@@ -1028,7 +1028,7 @@ test_expect_success 'remote set-branches' '
 		git config --get-all remote.scratch.fetch >config-result &&
 		sort <config-result >../actual.setup-ffonly &&
 
-		git remote set-branches --add scratch pu &&
+		git remote set-branches --add scratch seen &&
 		git config --get-all remote.scratch.fetch >config-result &&
 		sort <config-result >../actual.respect-ffonly
 	) &&
