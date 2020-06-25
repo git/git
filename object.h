@@ -66,7 +66,7 @@ struct object_array {
  * builtin/blame.c:                        12-13
  * bisect.c:                                        16
  * bundle.c:                                        16
- * http-push.c:                                     16-----19
+ * http-push.c:                          11-----14
  * commit-graph.c:                                15
  * commit-reach.c:                                  16-----19
  * sha1-name.c:                                              20

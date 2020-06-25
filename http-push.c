@@ -70,10 +70,10 @@ enum XML_Status {
 #define LOCK_REFRESH 30
 
 /* Remember to update object flag allocation in object.h */
-#define LOCAL    (1u<<16)
-#define REMOTE   (1u<<17)
-#define FETCHING (1u<<18)
-#define PUSHING  (1u<<19)
+#define LOCAL    (1u<<11)
+#define REMOTE   (1u<<12)
+#define FETCHING (1u<<13)
+#define PUSHING  (1u<<14)
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
