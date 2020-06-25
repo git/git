@@ -347,7 +347,7 @@ $ git branch -r
   origin/man
   origin/master
   origin/next
-  origin/pu
+  origin/seen
   origin/todo
 ------------------------------------------------
 
