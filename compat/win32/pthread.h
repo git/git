@@ -40,6 +40,11 @@ typedef int pthread_mutexattr_t;
 #define pthread_cond_signal WakeConditionVariable
 #define pthread_cond_broadcast WakeAllConditionVariable
 
+#define pthread_once_t INIT_ONCE
+
+#define PTHREAD_ONCE_INIT INIT_ONCE_STATIC_INIT
+int pthread_once(pthread_once_t *once_control, void (*init_routine)(void));
+
 /*
  * Simple thread creation implementation using pthread API
  */
