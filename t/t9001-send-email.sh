@@ -42,7 +42,8 @@ clean_fake_sendmail () {
 }
 
 test_expect_success $PREREQ 'Extract patches' '
-	patches=$(git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1)
+	patches=$(git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1) &&
+	threaded_patches=$(git format-patch -o threaded -s --in-reply-to="format" HEAD^1)
 '
 
 # Test no confirm early to ensure remaining tests will not hang
@@ -1217,6 +1218,17 @@ test_expect_success $PREREQ 'threading but no chain-reply-to' '
 		--no-chain-reply-to \
 		$patches $patches >stdout &&
 	grep "In-Reply-To: " stdout
+'
+
+test_expect_success $PREREQ 'override in-reply-to if no threading' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--no-thread \
+		--in-reply-to="override" \
+		$threaded_patches >stdout &&
+	grep "In-Reply-To: <override>" stdout
 '
 
 test_expect_success $PREREQ 'sendemail.to works' '
