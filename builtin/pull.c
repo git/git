@@ -1031,6 +1031,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 				ran_ff = 1;
 				ret = run_merge();
 			}
+			free_commit_list(list);
 		}
 		if (!ran_ff)
 			ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
