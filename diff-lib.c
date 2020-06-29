@@ -220,8 +220,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			} else if (revs->diffopt.ita_invisible_in_index &&
 				   ce_intent_to_add(ce)) {
 				diff_addremove(&revs->diffopt, '+', ce->ce_mode,
-					       the_hash_algo->empty_tree, 0,
-					       ce->name, 0);
+					       &null_oid, 0, ce->name, 0);
 				continue;
 			}
 
