@@ -10,6 +10,15 @@ Backward compatibility notes
    easily opt into a set of newer features, which use of the v2
    transport protocol is now a part of.
 
+ * It used to be that setting extensions.* configuration variables
+   alone, while leaving core.repositoryFormatVersion=0, made these
+   settings effective, which was a wrong thing to do.  In version 0,
+   there was no special meaning in extensions.* configuration
+   variables.  This has been corrected.  If you need these repository
+   extensions to be effective, the core.repositoryFormatVersion
+   variable needs to be updated to 1 after vetting these extensions.*
+   variables are set correctly.
+
 
 UI, Workflows & Features
 
@@ -28,6 +37,9 @@ UI, Workflows & Features
  * "git diff" used to take arguments in random and nonsense range
    notation, e.g. "git diff A..B C", "git diff A..B C...D", etc.,
    which has been cleaned up.
+
+ * "git diff-files" has been taught to say paths that are marked as
+   intent-to-add are new files, not modified from an empty blob.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -75,6 +87,9 @@ Performance, Internal Implementation, Development Support etc.
  * The "fetch/clone" protocol has been updated to allow the server to
    instruct the clients to grab pre-packaged packfile(s) in addition
    to the packed object data coming over the wire.
+
+ * A misdesigned strbuf_write_fd() function has been retired.
+
 
 
 Fixes since v2.27
@@ -140,9 +155,14 @@ Fixes since v2.27
    going on.
    (merge 08dc26061f pb/t4014-unslave later to maint).
 
+ * An in-code comment in "git diff" has been updated.
+   (merge c592fd4c83 dl/diff-usage-comment-update later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
    (merge d63ae31962 cb/t5608-cleanup later to maint).
    (merge 788db145c7 dl/t-readme-spell-git-correctly later to maint).
    (merge 45a87a83bb dl/python-2.7-is-the-floor-version later to maint).
    (merge b75a219904 es/advertise-contribution-doc later to maint).
+   (merge 0c9a4f638a rs/pull-leakfix later to maint).
+   (merge d546fe2874 rs/commit-reach-leakfix later to maint).
