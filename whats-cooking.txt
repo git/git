@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2020, #05; Thu, 25)
-X-master-at: f402ea68166bd77f09b176c96005ac7f8886e14b
-X-next-at: b9a2d1a0207fb9ded3fa524f54db3bc322a12cc4
+Subject: What's cooking in git.git (Jun 2020, #06; Mon, 29)
+X-master-at: a08a83db2bf27f015bec9a435f6d73e223c21c5e
+X-next-at: 050319c2ae82f2fac00eac9d80a1d91394d99aec
 
-What's cooking in git.git (Jun 2020, #05; Thu, 25)
+What's cooking in git.git (Jun 2020, #06; Mon, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,8 +12,11 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-A handful of topics have graduated to 'master' and a bunch of topics
-have been merged to 'next'.
+More topics graduate to the 'master' and to the 'next' branches.  I
+expect that this week would be slower than usual due to US holidays
+but hopefully we'd be able to merge most of the impactful topics by
+the -rc0.  Some large-ish topics may have to be left for the next
+cycle, as usual.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -23,237 +26,72 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cc/upload-pack-data-3 (2020-06-11) 14 commits
-  (merged to 'next' on 2020-06-17 at 393eff577a)
- + upload-pack: refactor common code into do_got_oid()
- + upload-pack: move oldest_have to upload_pack_data
- + upload-pack: pass upload_pack_data to got_oid()
- + upload-pack: pass upload_pack_data to ok_to_give_up()
- + upload-pack: pass upload_pack_data to send_acks()
- + upload-pack: pass upload_pack_data to process_haves()
- + upload-pack: change allow_unadvertised_object_request to an enum
- + upload-pack: move allow_unadvertised_object_request to upload_pack_data
- + upload-pack: move extra_edge_obj to upload_pack_data
- + upload-pack: move shallow_nr to upload_pack_data
- + upload-pack: pass upload_pack_data to send_unshallow()
- + upload-pack: pass upload_pack_data to deepen_by_rev_list()
- + upload-pack: pass upload_pack_data to deepen()
- + upload-pack: pass upload_pack_data to send_shallow_list()
+* dl/diff-usage-comment-update (2020-06-23) 2 commits
+  (merged to 'next' on 2020-06-23 at 48d685cd45)
+ + builtin/diff: fix botched update of usage comment
+  (merged to 'next' on 2020-06-19 at b53a12bb66)
+ + builtin/diff: update usage comment
 
- Code clean-up in the codepath that serves "git fetch" continues.
+ An in-code comment in "git diff" has been updated.
 
 
-* ct/diff-with-merge-base-clarification (2020-06-12) 3 commits
-  (merged to 'next' on 2020-06-17 at e0b54a001c)
- + Documentation: usage for diff combined commits
- + git diff: improve range handling
- + t/t3430: avoid undefined git diff behavior
+* rs/commit-reach-leakfix (2020-06-19) 1 commit
+  (merged to 'next' on 2020-06-22 at fcc1e385f0)
+ + commit-reach: plug minor memory leak after using is_descendant_of()
 
- "git diff" used to take arguments in random and nonsense range
- notation, e.g. "git diff A..B C", "git diff A..B C...D", etc.,
- which has been cleaned up.
+ Leakfix.
 
 
-* dl/branch-cleanup (2020-06-17) 3 commits
-  (merged to 'next' on 2020-06-18 at 76e151342c)
- + branch: don't mix --edit-description
- + t3200: test for specific errors
- + t3200: rename "expected" to "expect"
+* rs/pull-leakfix (2020-06-19) 1 commit
+  (merged to 'next' on 2020-06-22 at d80a6b9ca3)
+ + pull: plug minor memory leak after using is_descendant_of()
 
- Code clean-up around "git branch" with a minor bugfix.
+ Leakfix.
 
 
-* ds/merge-base-is-ancestor-optim (2020-06-17) 2 commits
-  (merged to 'next' on 2020-06-18 at 86b34a3688)
- + commit-reach: use fast logic in repo_in_merge_base
- + commit-reach: create repo_is_descendant_of()
- (this branch is used by cb/is-descendant-of.)
+* rs/retire-strbuf-write-fd (2020-06-19) 2 commits
+  (merged to 'next' on 2020-06-22 at c175b54f2a)
+ + strbuf: remove unreferenced strbuf_write_fd method.
+ + bugreport.c: replace strbuf_write_fd with write_in_full
 
- "git merge-base --is-ancestor" is taught to take advantage of the
- commit graph.
+ A misdesigned strbuf_write_fd() function has been retired.
 
 
-* en/clean-cleanups (2020-06-12) 4 commits
-  (merged to 'next' on 2020-06-17 at 2c4ec990a6)
- + clean: optimize and document cases where we recurse into subdirectories
- + clean: consolidate handling of ignored parameters
- + dir, clean: avoid disallowed behavior
- + dir: fix a few confusing comments
+* sk/diff-files-show-i-t-a-as-new (2020-06-22) 1 commit
+  (merged to 'next' on 2020-06-22 at 825a823416)
+ + diff-files: treat "i-t-a" files as "not-in-index"
+ (this branch is used by js/diff-files-i-t-a-fix-for-difftool.)
 
- Code clean-up of "git clean" resulted in a fix of recent
- performance regression.
+ "git diff-files" has been taught to say paths that are marked as
+ intent-to-add are new files, not modified from an empty blob.
 
 
-* jk/complete-git-switch (2020-05-28) 16 commits
-  (merged to 'next' on 2020-06-17 at 5b31140c0a)
- + completion: improve handling of --orphan option of switch/checkout
- + completion: improve handling of -c/-C and -b/-B in switch/checkout
- + completion: improve handling of --track in switch/checkout
- + completion: improve handling of --detach in checkout
- + completion: improve completion for git switch with no options
- + completion: improve handling of DWIM mode for switch/checkout
- + completion: perform DWIM logic directly in __git_complete_refs
- + completion: extract function __git_dwim_remote_heads
- + completion: replace overloaded track term for __git_complete_refs
- + completion: add tests showing subpar switch/checkout --orphan logic
- + completion: add tests showing subpar -c/C argument completion
- + completion: add tests showing subpar -c/-C startpoint completion
- + completion: add tests showing subpar switch/checkout --track logic
- + completion: add tests showing subar checkout --detach logic
- + completion: add tests showing subpar DWIM logic for switch/checkout
- + completion: add test showing subpar git switch completion
+* xl/upgrade-repo-format (2020-06-05) 4 commits
+  (merged to 'next' on 2020-06-19 at 02bf7a9d8c)
+ + check_repository_format_gently(): refuse extensions for old repositories
+ + sparse-checkout: upgrade repository to version 1 when enabling extension
+ + fetch: allow adding a filter after initial clone
+ + repository: add a helper function to perform repository format upgrade
 
- The command line completion (in contrib/) learned to complete
- options that the "git switch" command takes.
+ Allow runtime upgrade of the repository format version, which needs
+ to be done carefully.
 
-
-* jt/cdn-offload (2020-06-17) 10 commits
-  (merged to 'next' on 2020-06-18 at e8ba1cc988)
- + upload-pack: fix a sparse '0 as NULL pointer' warning
- + upload-pack: send part of packfile response as uri
- + fetch-pack: support more than one pack lockfile
- + upload-pack: refactor reading of pack-objects out
- + Documentation: add Packfile URIs design doc
- + Documentation: order protocol v2 sections
- + http-fetch: support fetching packfiles by URL
- + http-fetch: refactor into function
- + http: refactor finish_http_pack_request()
- + http: use --stdin when indexing dumb HTTP pack
-
- The "fetch/clone" protocol has been updated to allow the server to
- instruct the clients to grab pre-packaged packfile(s) in addition
- to the packed object data coming over the wire.
-
-
-* pb/t4014-unslave (2020-06-19) 1 commit
-  (merged to 'next' on 2020-06-19 at 4d328a12d9)
- + t4014: do not use "slave branch" nomenclature
-
- A branch name used in a test has been clarified to match what is
- going on.
-
-
-* ss/submodule-set-branch-in-c (2020-06-02) 1 commit
-  (merged to 'next' on 2020-06-18 at 8880b35c5a)
- + submodule: port subcommand 'set-branch' from shell to C
-
- Rewrite of parts of the scripted "git submodule" Porcelain command
- continues; this time it is "git submodule set-branch" subcommand's
- turn.
+ There is a rather unpleasant backward compatibility worry with the
+ last step of this series, but it is the right thing to do in the
+ longer term.
 
 --------------------------------------------------
 [New Topics]
 
-* bc/http-push-flagsfix (2020-06-23) 1 commit
-  (merged to 'next' on 2020-06-25 at 1dabb1f61b)
- + http-push: ensure unforced pushes fail when data would be lost
+* mt/hash-to-hex-thread-safety (2020-06-26) 2 commits
+ - hex: make hash_to_hex_algop() and friends thread-safe
+ - compat/win32/pthread: add pthread_once()
 
- The code to push changes over "dumb" HTTP had a bad interaction
- with the commit reachability code due to incorrect allocation of
- object flag bits, which has been corrected.
-
- Will merge to 'master'.
-
-
-* cb/is-descendant-of (2020-06-23) 1 commit
-  (merged to 'next' on 2020-06-25 at ca0eaddf5e)
- + commit-reach: avoid is_descendant_of() shim
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jk/fast-export-anonym-alt (2020-06-25) 11 commits
- - fast-export: use local array to store anonymized oid
- - fast-export: anonymize "master" refname
- - fast-export: allow seeding the anonymized mapping
- - fast-export: add a "data" callback parameter to anonymize_str()
- - fast-export: move global "idents" anonymize hashmap into function
- - fast-export: use a flex array to store anonymized entries
- - fast-export: stop storing lengths in anonymized hashmaps
- - fast-export: tighten anonymize_mem() interface to handle only strings
- - fast-export: store anonymized oids as hex strings
- - fast-export: use xmemdupz() for anonymizing oids
- - t9351: derive anonymized tree checks from original repo
-
- "git fast-export --anonymize" learned to take customized mapping to
- allow its users to tweak its output more usable for debugging.
+ hash_to_hex() used a set of rotating static buffers, which was not
+ safe to use in a threaded environment.  This has been made safer by
+ using thread-local storage.
 
  Will merge to 'next'.
-
-
-* js/diff-files-i-t-a-fix-for-difftool (2020-06-25) 2 commits
- - difftool -d: ensure that intent-to-add files are handled correctly
- - diff-files --raw: show correct post-image of intent-to-add files
- (this branch uses sk/diff-files-show-i-t-a-as-new.)
-
- "git difftool" has trouble dealing with paths added to the index
- with the intent-to-add bit.
-
- Will merge to 'next'.
-
-
-* js/pu-to-seen (2020-06-25) 3 commits
-  (merged to 'next' on 2020-06-25 at 06c9e5a885)
- + tests: reference `seen` wherever `pu` was referenced
- + docs: adjust the technical overview for the rename `pu` -> `seen`
- + docs: adjust for the recent rename of `pu` to `seen`
-
- The documentation and some tests have been adjusted for the recent
- renaming of "pu" branch to "seen".
-
- Will merge to 'master'.
-
-
-* mk/pb-pretty-email-without-domain-part-fix (2020-06-23) 1 commit
-  (merged to 'next' on 2020-06-25 at 81a3aca46b)
- + doc: fix author vs. committer copy/paste error
-
- Docfix.
-
- Will merge to 'master'.
-
-
-* mf/submodule-summary-with-correct-repository (2020-06-24) 2 commits
- - submodule: use submodule repository when preparing summary
- - revision: use repository from rev_info when parsing commits
-
- "git diff/show" on a change that involves a submodule used to read
- the information on commits in the submodule from a wrong repository
- and gave a wrong information when the commit-graph is involved.
-
- Needs tests.
-
-
-* rs/pack-bits-in-object-better (2020-06-24) 1 commit
-  (merged to 'next' on 2020-06-25 at b3cb296341)
- + revision: reallocate TOPO_WALK object flags
-
- By renumbering object flag bits, "struct object" managed to lose
- bloated inter-field padding.
-
- Will merge to 'master'.
-
-
-* es/worktree-code-cleanup (2020-06-24) 1 commit
- - worktree: avoid dead-code in conditional
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* ra/send-email-in-reply-to-from-command-line-wins (2020-06-24) 1 commit
- - send-email: restore --in-reply-to superseding behavior
-
- "git send-email --in-reply-to=<msg>" did not use the In-Reply-To:
- header with the value given from the command line, and let it be
- overridden by the value on In-Reply-To: header in the messages
- being sent out (if exists).
-
- Expecting a reroll/redesign.
- Does not behave sensibly for a multi-patch series.
 
 --------------------------------------------------
 [Stalled]
@@ -301,6 +139,120 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bc/http-push-flagsfix (2020-06-23) 1 commit
+  (merged to 'next' on 2020-06-25 at 1dabb1f61b)
+ + http-push: ensure unforced pushes fail when data would be lost
+
+ The code to push changes over "dumb" HTTP had a bad interaction
+ with the commit reachability code due to incorrect allocation of
+ object flag bits, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* cb/is-descendant-of (2020-06-23) 1 commit
+  (merged to 'next' on 2020-06-25 at ca0eaddf5e)
+ + commit-reach: avoid is_descendant_of() shim
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jk/fast-export-anonym-alt (2020-06-25) 11 commits
+  (merged to 'next' on 2020-06-29 at 8a8d83e2ca)
+ + fast-export: use local array to store anonymized oid
+ + fast-export: anonymize "master" refname
+ + fast-export: allow seeding the anonymized mapping
+ + fast-export: add a "data" callback parameter to anonymize_str()
+ + fast-export: move global "idents" anonymize hashmap into function
+ + fast-export: use a flex array to store anonymized entries
+ + fast-export: stop storing lengths in anonymized hashmaps
+ + fast-export: tighten anonymize_mem() interface to handle only strings
+ + fast-export: store anonymized oids as hex strings
+ + fast-export: use xmemdupz() for anonymizing oids
+ + t9351: derive anonymized tree checks from original repo
+
+ "git fast-export --anonymize" learned to take customized mapping to
+ allow its users to tweak its output more usable for debugging.
+
+ Will merge to 'master'.
+
+
+* js/diff-files-i-t-a-fix-for-difftool (2020-06-25) 2 commits
+  (merged to 'next' on 2020-06-29 at a9fcdabb3b)
+ + difftool -d: ensure that intent-to-add files are handled correctly
+ + diff-files --raw: show correct post-image of intent-to-add files
+
+ "git difftool" has trouble dealing with paths added to the index
+ with the intent-to-add bit.
+
+ Will merge to 'master'.
+
+
+* js/pu-to-seen (2020-06-25) 3 commits
+  (merged to 'next' on 2020-06-25 at 06c9e5a885)
+ + tests: reference `seen` wherever `pu` was referenced
+ + docs: adjust the technical overview for the rename `pu` -> `seen`
+ + docs: adjust for the recent rename of `pu` to `seen`
+
+ The documentation and some tests have been adjusted for the recent
+ renaming of "pu" branch to "seen".
+
+ Will merge to 'master'.
+
+
+* mk/pb-pretty-email-without-domain-part-fix (2020-06-23) 1 commit
+  (merged to 'next' on 2020-06-25 at 81a3aca46b)
+ + doc: fix author vs. committer copy/paste error
+
+ Docfix.
+
+ Will merge to 'master'.
+
+
+* mf/submodule-summary-with-correct-repository (2020-06-24) 2 commits
+ - submodule: use submodule repository when preparing summary
+ - revision: use repository from rev_info when parsing commits
+
+ "git diff/show" on a change that involves a submodule used to read
+ the information on commits in the submodule from a wrong repository
+ and gave a wrong information when the commit-graph is involved.
+
+ Needs tests.
+
+
+* rs/pack-bits-in-object-better (2020-06-24) 1 commit
+  (merged to 'next' on 2020-06-25 at b3cb296341)
+ + revision: reallocate TOPO_WALK object flags
+
+ By renumbering object flag bits, "struct object" managed to lose
+ bloated inter-field padding.
+
+ Will merge to 'master'.
+
+
+* es/worktree-code-cleanup (2020-06-24) 1 commit
+  (merged to 'next' on 2020-06-29 at 91ffd85a31)
+ + worktree: avoid dead-code in conditional
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* ra/send-email-in-reply-to-from-command-line-wins (2020-06-29) 1 commit
+ - send-email: restore --in-reply-to superseding behavior
+
+ "git send-email --in-reply-to=<msg>" did not use the In-Reply-To:
+ header with the value given from the command line, and let it be
+ overridden by the value on In-Reply-To: header in the messages
+ being sent out (if exists).
+
+ Expecting a reroll/redesign.
+ Does not behave sensibly for a multi-patch series.
+
+
 * en/sparse-status (2020-06-22) 3 commits
   (merged to 'next' on 2020-06-25 at 404403a075)
  + git-prompt: include sparsity state as well
@@ -312,74 +264,11 @@ repositories listed at
  Will merge to 'master'.
 
 
-* dl/diff-usage-comment-update (2020-06-23) 2 commits
-  (merged to 'next' on 2020-06-23 at 48d685cd45)
- + builtin/diff: fix botched update of usage comment
-  (merged to 'next' on 2020-06-19 at b53a12bb66)
- + builtin/diff: update usage comment
-
- An in-code comment in "git diff" has been updated.
-
- Will merge to 'master'.
-
-
 * ps/ref-transaction-hook (2020-06-19) 1 commit
   (merged to 'next' on 2020-06-22 at 3a23dcdbdc)
  + refs: implement reference transaction hook
 
  A new hook.
-
- Will merge to 'master'.
-
-
-* sk/diff-files-show-i-t-a-as-new (2020-06-22) 1 commit
-  (merged to 'next' on 2020-06-22 at 825a823416)
- + diff-files: treat "i-t-a" files as "not-in-index"
- (this branch is used by js/diff-files-i-t-a-fix-for-difftool.)
-
- "git diff-files" has been taught to say paths that are marked as
- intent-to-add are new files, not modified from an empty blob.
-
- Will merge to 'master'.
-
-
-* jk/fast-export-anonym (2020-06-22) 4 commits
-  (merged to 'next' on 2020-06-22 at b517b2f707)
- + fast-export: allow dumping the path mapping
- + fast-export: refactor path printing to not rely on stdout
- + fast-export: anonymize "master" refname
- + fast-export: allow dumping the refname mapping
-
- The way refnames are anonymized has been updated and a way to help
- debugging using the anonymized output hsa been added.
-
- Will merge to 'master'.
-
-
-* rs/commit-reach-leakfix (2020-06-19) 1 commit
-  (merged to 'next' on 2020-06-22 at fcc1e385f0)
- + commit-reach: plug minor memory leak after using is_descendant_of()
-
- Leakfix.
-
- Will merge to 'master'.
-
-
-* rs/pull-leakfix (2020-06-19) 1 commit
-  (merged to 'next' on 2020-06-22 at d80a6b9ca3)
- + pull: plug minor memory leak after using is_descendant_of()
-
- Leakfix.
-
- Will merge to 'master'.
-
-
-* rs/retire-strbuf-write-fd (2020-06-19) 2 commits
-  (merged to 'next' on 2020-06-22 at c175b54f2a)
- + strbuf: remove unreferenced strbuf_write_fd method.
- + bugreport.c: replace strbuf_write_fd with write_in_full
-
- A misdesigned strbuf_write_fd() function has been retired.
 
  Will merge to 'master'.
 
@@ -400,15 +289,14 @@ repositories listed at
  + t9108: make test hash independent
  + t9168: make test hash independent
  + t9109: make test hash independent
- (this branch uses bc/sha-256-part-2.)
+ (this branch uses bc/sha-256-part-2; is tangled with hn/reftable.)
 
  CVS/SVN interface have been prepared for SHA-256 transition
 
  Will merge to 'master'.
 
 
-* ds/commit-graph-bloom-updates (2020-06-23) 11 commits
- - bloom: enforce a minimum size of 8 bytes
+* ds/commit-graph-bloom-updates (2020-06-26) 10 commits
  - commit-graph: check all leading directories in changed path Bloom filters
  - revision: empty pathspecs should not use Bloom filters
  - revision.c: fix whitespace
@@ -416,15 +304,14 @@ repositories listed at
  - commit-graph: simplify chunk writes into loop
  - commit-graph: unify the signatures of all write_graph_chunk_*() functions
  - commit-graph: persist existence of changed-paths
- - bloom: get_bloom_filter() cleanups
+ - bloom: fix logic in get_bloom_filter()
  - commit-graph: change test to die on parse, not load
  - commit-graph: place bloom_settings in context
  (this branch uses sg/commit-graph-cleanups.)
 
  Updates to the changed-paths bloom filter.
 
- Expecting a reroll.  Saw a lot of good review exchanges.
- cf. <4b08360d-04ab-b614-196b-76124f1d54ef@gmail.com>
+ Will merge to 'next'.
 
 
 * es/get-worktrees-unsort (2020-06-22) 2 commits
@@ -458,6 +345,7 @@ repositories listed at
  + submodule: fall back to remote's HEAD for missing remote.<name>.branch
  + send-pack/transport-helper: avoid mentioning a particular branch
  + fmt-merge-msg: stop treating `master` specially
+ (this branch is used by hn/reftable.)
 
  The name of the primary branch in existing repositories, and the
  default name used for the first branch in newly created
@@ -467,7 +355,7 @@ repositories listed at
  Will merge to 'master'.
 
 
-* ss/cmake-build (2020-06-12) 8 commits
+* ss/cmake-build (2020-06-26) 8 commits
  - ci: modification of main.yml to use cmake for vs-build job
  - cmake: support for building git on windows with msvc and clang.
  - cmake: support for building git on windows with mingw
@@ -479,8 +367,7 @@ repositories listed at
 
  CMake support to build with MSVC for Windows bypassing the Makefile.
 
- Expecting a reroll.
- Almost there.
+ Waiting for a (hopefully final) review.
 
 
 * ak/commit-graph-to-slab (2020-06-17) 4 commits
@@ -497,14 +384,15 @@ repositories listed at
 
 
 * dl/test-must-fail-fixes-5 (2020-06-24) 4 commits
- - lib-submodule-update: pass 'test_must_fail' as an argument
- - lib-submodule-update: prepend "git" to $command
- - lib-submodule-update: consolidate --recurse-submodules
- - lib-submodule-update: add space after function name
+  (merged to 'next' on 2020-06-29 at efe53a7588)
+ + lib-submodule-update: pass 'test_must_fail' as an argument
+ + lib-submodule-update: prepend "git" to $command
+ + lib-submodule-update: consolidate --recurse-submodules
+ + lib-submodule-update: add space after function name
 
  The effort to avoid using test_must_fail on non-git command continues.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/commit-graph-cleanups (2020-06-08) 10 commits
@@ -523,24 +411,10 @@ repositories listed at
  The changed-path Bloom filter is improved using ideas from an
  independent implementation.
 
- Will merge to 'next'.
-
-
-* xl/upgrade-repo-format (2020-06-05) 4 commits
-  (merged to 'next' on 2020-06-19 at 02bf7a9d8c)
- + check_repository_format_gently(): refuse extensions for old repositories
- + sparse-checkout: upgrade repository to version 1 when enabling extension
- + fetch: allow adding a filter after initial clone
- + repository: add a helper function to perform repository format upgrade
-
- Allow runtime upgrade of the repository format version, which needs
- to be done carefully.
-
- There is a rather unpleasant backward compatibility worry with the
- last step of this series, but it is the right thing to do in the
- longer term.
-
- Will merge to 'master'.
+ Under review.
+ cf. <20200627155610.GN2898@szeder.dev>
+ cf. <20200627163335.GO2898@szeder.dev>
+ cf. <20200627155348.GM2898@szeder.dev>
 
 
 * es/config-hooks (2020-05-21) 4 commits
@@ -554,7 +428,7 @@ repositories listed at
  What's the status of this one?  Abandoned?
 
 
-* pw/rebase-i-more-options (2020-05-27) 5 commits
+* pw/rebase-i-more-options (2020-06-26) 5 commits
  - rebase: add --reset-author-date
  - rebase -i: support --ignore-date
  - sequencer: rename amend_author to author_to_free
@@ -563,8 +437,7 @@ repositories listed at
 
  "git rebase -i" learns a bit more options.
 
- Expecting a reroll.
- cf. <nycvar.QRO.7.76.6.2005290437350.56@tvgsbejvaqbjf.bet>
+ Waiting for a (hopefully final) review.
 
 
 * mt/grep-sparse-checkout (2020-06-12) 6 commits
@@ -628,7 +501,7 @@ repositories listed at
  + connect: have ref processing code take struct packet_reader
  + Documentation: document v1 protocol object-format capability
  + t1050: match object ID paths in a hash-insensitive way
- (this branch is used by bc/sha-256-cvs-svn-updates.)
+ (this branch is used by bc/sha-256-cvs-svn-updates and hn/reftable.)
 
  SHA-256 migration work continues.
 
@@ -654,8 +527,8 @@ repositories listed at
  Needs review.
 
 
-* hn/reftable (2020-06-22) 20 commits
- - SQUASH??? fix new blank line at EOF
+* hn/reftable (2020-06-29) 23 commits
+ - fixup! Reftable support for git-core
  - Add "test-tool dump-reftable" command.
  - Add reftable testing infrastructure
  - git-prompt: prepare for reftable refs backend
@@ -674,15 +547,16 @@ repositories listed at
  - Make refs_ref_exists public
  - Write pseudorefs through ref backends.
  - checkout: add '\n' to reflog message
+ - t3432: use git-reflog to inspect the reflog for HEAD
  - lib-t6000.sh: write tag using git-update-ref
+ - Merge branch 'bc/sha-256-part-2' into HEAD
+ - Merge branch 'js/default-branch-name' into HEAD
+ (this branch uses bc/sha-256-part-2 and js/default-branch-name; is tangled with bc/sha-256-cvs-svn-updates.)
 
  A new refs backend "reftable" to replace the traditional
  combination of packed-refs files and one-file-per-ref loose refs
  has been implemented and integrated for improved performance and
  atomicity.
-
- Does not seem to play well with the xl/upgrade-repo-format topic;
- perhaps rework on top of 'master' after that topic graduates?
 
 --------------------------------------------------
 [Discarded]
@@ -712,3 +586,16 @@ repositories listed at
  and specific names are updated, and also a pull request.
 
  Superseded by jk/ci-only-on-selected-branches
+
+
+* jk/fast-export-anonym (2020-06-22) 4 commits
+  (merged to 'next' on 2020-06-22 at b517b2f707)
+ + fast-export: allow dumping the path mapping
+ + fast-export: refactor path printing to not rely on stdout
+ + fast-export: anonymize "master" refname
+ + fast-export: allow dumping the refname mapping
+
+ The way refnames are anonymized has been updated and a way to help
+ debugging using the anonymized output hsa been added.
+
+ Superseded by 'jk/fast-export-anonym-alt'.
