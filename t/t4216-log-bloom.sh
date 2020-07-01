@@ -126,7 +126,7 @@ test_expect_success 'setup - add commit-graph to the chain without Bloom filters
 	test_commit c14 A/anotherFile2 &&
 	test_commit c15 A/B/anotherFile2 &&
 	test_commit c16 A/B/C/anotherFile2 &&
-	GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0 git commit-graph write --reachable --split &&
+	git commit-graph write --reachable --split --no-changed-paths &&
 	test_line_count = 2 .git/objects/info/commit-graphs/commit-graph-chain
 '
 
@@ -150,6 +150,21 @@ test_bloom_filters_used_when_some_filters_are_missing () {
 
 test_expect_success 'Use Bloom filters if they exist in the latest but not all commit graphs in the chain.' '
 	test_bloom_filters_used_when_some_filters_are_missing "-- A/B"
+'
+
+test_expect_success 'persist filter settings' '
+	test_when_finished rm -rf .git/objects/info/commit-graph* &&
+	rm -rf .git/objects/info/commit-graph* &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		GIT_TRACE2_EVENT_NESTING=5 \
+		GIT_TEST_BLOOM_SETTINGS_NUM_HASHES=9 \
+		GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY=15 \
+		git commit-graph write --reachable --changed-paths &&
+	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15}" trace2.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2-auto.txt" \
+		GIT_TRACE2_EVENT_NESTING=5 \
+		git commit-graph write --reachable --changed-paths &&
+	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15}" trace2-auto.txt
 '
 
 test_expect_success 'correctly report changes over limit' '

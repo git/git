@@ -96,6 +96,7 @@ enum commit_graph_write_flags {
 	/* Make sure that each OID in the input is a valid commit OID. */
 	COMMIT_GRAPH_WRITE_CHECK_OIDS = (1 << 3),
 	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 4),
+	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 5),
 };
 
 struct split_commit_graph_opts {

@@ -16,6 +16,8 @@
 #include "progress.h"
 #include "bloom.h"
 #include "commit-slab.h"
+#include "json-writer.h"
+#include "trace2.h"
 
 void git_test_write_commit_graph_or_die(void)
 {
@@ -1108,6 +1110,21 @@ static void write_graph_chunk_bloom_indexes(struct hashfile *f,
 	stop_progress(&progress);
 }
 
+static void trace2_bloom_filter_settings(struct write_commit_graph_context *ctx)
+{
+	struct json_writer jw = JSON_WRITER_INIT;
+
+	jw_object_begin(&jw, 0);
+	jw_object_intmax(&jw, "hash_version", ctx->bloom_settings->hash_version);
+	jw_object_intmax(&jw, "num_hashes", ctx->bloom_settings->num_hashes);
+	jw_object_intmax(&jw, "bits_per_entry", ctx->bloom_settings->bits_per_entry);
+	jw_end(&jw);
+
+	trace2_data_json("bloom", ctx->r, "settings", &jw);
+
+	jw_release(&jw);
+}
+
 static void write_graph_chunk_bloom_data(struct hashfile *f,
 					 struct write_commit_graph_context *ctx)
 {
@@ -1115,6 +1132,8 @@ static void write_graph_chunk_bloom_data(struct hashfile *f,
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
 	struct progress *progress = NULL;
 	int i = 0;
+
+	trace2_bloom_filter_settings(ctx);
 
 	if (ctx->report_progress)
 		progress = start_delayed_progress(
@@ -1547,9 +1566,15 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	int num_chunks = 3;
 	uint64_t chunk_offset;
 	struct object_id file_hash;
-	const struct bloom_filter_settings bloom_settings = DEFAULT_BLOOM_FILTER_SETTINGS;
+	struct bloom_filter_settings bloom_settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 
-	ctx->bloom_settings = &bloom_settings;
+	if (!ctx->bloom_settings) {
+		bloom_settings.bits_per_entry = git_env_ulong("GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY",
+							      bloom_settings.bits_per_entry);
+		bloom_settings.num_hashes = git_env_ulong("GIT_TEST_BLOOM_SETTINGS_NUM_HASHES",
+							  bloom_settings.num_hashes);
+		ctx->bloom_settings = &bloom_settings;
+	}
 
 	if (ctx->split) {
 		struct strbuf tmp_file = STRBUF_INIT;
@@ -1974,8 +1999,22 @@ int write_commit_graph(struct object_directory *odb,
 	ctx->split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
 	ctx->check_oids = flags & COMMIT_GRAPH_WRITE_CHECK_OIDS ? 1 : 0;
 	ctx->split_opts = split_opts;
-	ctx->changed_paths = flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS ? 1 : 0;
 	ctx->total_bloom_filter_data_size = 0;
+
+	if (flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS)
+		ctx->changed_paths = 1;
+	if (!(flags & COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS)) {
+		struct commit_graph *g;
+		prepare_commit_graph_one(ctx->r, ctx->odb);
+
+		g = ctx->r->objects->commit_graph;
+
+		/* We have changed-paths already. Keep them in the next graph */
+		if (g && g->chunk_bloom_data) {
+			ctx->changed_paths = 1;
+			ctx->bloom_settings = g->bloom_filter_settings;
+		}
+	}
 
 	if (ctx->split) {
 		struct commit_graph *g;
