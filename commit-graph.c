@@ -1693,8 +1693,15 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	}
 
 	for (i = 0; i < num_chunks; i++) {
+		uint64_t start_offset = f->total + f->offset;
+
 		if (chunks[i].write_fn(f, ctx))
 			return -1;
+
+		if (f->total + f->offset != start_offset + chunks[i].size)
+			BUG("expected to write %"PRId64" bytes to chunk %"PRIx32", but wrote %"PRId64" instead",
+			    chunks[i].size, chunks[i].id,
+			    f->total + f->offset - start_offset);
 	}
 
 	stop_progress(&ctx->progress);
