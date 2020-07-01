@@ -633,7 +633,6 @@ static unsigned int count_bloom_filter_maybe;
 static unsigned int count_bloom_filter_definitely_not;
 static unsigned int count_bloom_filter_false_positive;
 static unsigned int count_bloom_filter_not_present;
-static unsigned int count_bloom_filter_length_zero;
 
 static void trace2_bloom_filter_statistics_atexit(void)
 {
@@ -641,7 +640,6 @@ static void trace2_bloom_filter_statistics_atexit(void)
 
 	jw_object_begin(&jw, 0);
 	jw_object_intmax(&jw, "filter_not_present", count_bloom_filter_not_present);
-	jw_object_intmax(&jw, "zero_length_filter", count_bloom_filter_length_zero);
 	jw_object_intmax(&jw, "maybe", count_bloom_filter_maybe);
 	jw_object_intmax(&jw, "definitely_not", count_bloom_filter_definitely_not);
 	jw_object_intmax(&jw, "false_positive", count_bloom_filter_false_positive);
@@ -732,11 +730,6 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 
 	if (!filter) {
 		count_bloom_filter_not_present++;
-		return -1;
-	}
-
-	if (!filter->len) {
-		count_bloom_filter_length_zero++;
 		return -1;
 	}
 

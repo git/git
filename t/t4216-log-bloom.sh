@@ -60,7 +60,7 @@ setup () {
 
 test_bloom_filters_used () {
 	log_args=$1
-	bloom_trace_prefix="statistics:{\"filter_not_present\":0,\"zero_length_filter\":0,\"maybe\""
+	bloom_trace_prefix="statistics:{\"filter_not_present\":0,\"maybe\""
 	setup "$log_args" &&
 	grep -q "$bloom_trace_prefix" "$TRASH_DIRECTORY/trace.perf" &&
 	test_cmp log_wo_bloom log_w_bloom &&
@@ -142,7 +142,7 @@ test_expect_success 'setup - add commit-graph to the chain with Bloom filters' '
 
 test_bloom_filters_used_when_some_filters_are_missing () {
 	log_args=$1
-	bloom_trace_prefix="statistics:{\"filter_not_present\":3,\"zero_length_filter\":0,\"maybe\":8,\"definitely_not\":6"
+	bloom_trace_prefix="statistics:{\"filter_not_present\":3,\"maybe\":8,\"definitely_not\":6"
 	setup "$log_args" &&
 	grep -q "$bloom_trace_prefix" "$TRASH_DIRECTORY/trace.perf" &&
 	test_cmp log_wo_bloom log_w_bloom
@@ -150,6 +150,26 @@ test_bloom_filters_used_when_some_filters_are_missing () {
 
 test_expect_success 'Use Bloom filters if they exist in the latest but not all commit graphs in the chain.' '
 	test_bloom_filters_used_when_some_filters_are_missing "-- A/B"
+'
+
+test_expect_success 'correctly report changes over limit' '
+	git init 513changes &&
+	(
+		cd 513changes &&
+		for i in $(test_seq 1 513)
+		do
+			echo $i >file$i.txt || return 1
+		done &&
+		git add . &&
+		git commit -m "files" &&
+		git commit-graph write --reachable --changed-paths &&
+		for i in $(test_seq 1 513)
+		do
+			git -c core.commitGraph=false log -- file$i.txt >expect &&
+			git log -- file$i.txt >actual &&
+			test_cmp expect actual || return 1
+		done
+	)
 '
 
 test_done
