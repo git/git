@@ -891,8 +891,8 @@ struct write_commit_graph_context {
 	const struct bloom_filter_settings *bloom_settings;
 };
 
-static void write_graph_chunk_fanout(struct hashfile *f,
-				     struct write_commit_graph_context *ctx)
+static int write_graph_chunk_fanout(struct hashfile *f,
+				    struct write_commit_graph_context *ctx)
 {
 	int i, count = 0;
 	struct commit **list = ctx->commits.list;
@@ -913,17 +913,21 @@ static void write_graph_chunk_fanout(struct hashfile *f,
 
 		hashwrite_be32(f, count);
 	}
+
+	return 0;
 }
 
-static void write_graph_chunk_oids(struct hashfile *f, int hash_len,
-				   struct write_commit_graph_context *ctx)
+static int write_graph_chunk_oids(struct hashfile *f,
+				  struct write_commit_graph_context *ctx)
 {
 	struct commit **list = ctx->commits.list;
 	int count;
 	for (count = 0; count < ctx->commits.nr; count++, list++) {
 		display_progress(ctx->progress, ++ctx->progress_cnt);
-		hashwrite(f, (*list)->object.oid.hash, (int)hash_len);
+		hashwrite(f, (*list)->object.oid.hash, the_hash_algo->rawsz);
 	}
+
+	return 0;
 }
 
 static const unsigned char *commit_to_sha1(size_t index, void *table)
@@ -932,8 +936,8 @@ static const unsigned char *commit_to_sha1(size_t index, void *table)
 	return commits[index]->object.oid.hash;
 }
 
-static void write_graph_chunk_data(struct hashfile *f, int hash_len,
-				   struct write_commit_graph_context *ctx)
+static int write_graph_chunk_data(struct hashfile *f,
+				  struct write_commit_graph_context *ctx)
 {
 	struct commit **list = ctx->commits.list;
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
@@ -950,7 +954,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 			die(_("unable to parse commit %s"),
 				oid_to_hex(&(*list)->object.oid));
 		tree = get_commit_tree_oid(*list);
-		hashwrite(f, tree->hash, hash_len);
+		hashwrite(f, tree->hash, the_hash_algo->rawsz);
 
 		parent = (*list)->parents;
 
@@ -1030,10 +1034,12 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 
 		list++;
 	}
+
+	return 0;
 }
 
-static void write_graph_chunk_extra_edges(struct hashfile *f,
-					  struct write_commit_graph_context *ctx)
+static int write_graph_chunk_extra_edges(struct hashfile *f,
+					 struct write_commit_graph_context *ctx)
 {
 	struct commit **list = ctx->commits.list;
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
@@ -1082,10 +1088,12 @@ static void write_graph_chunk_extra_edges(struct hashfile *f,
 
 		list++;
 	}
+
+	return 0;
 }
 
-static void write_graph_chunk_bloom_indexes(struct hashfile *f,
-					    struct write_commit_graph_context *ctx)
+static int write_graph_chunk_bloom_indexes(struct hashfile *f,
+					   struct write_commit_graph_context *ctx)
 {
 	struct commit **list = ctx->commits.list;
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
@@ -1108,6 +1116,7 @@ static void write_graph_chunk_bloom_indexes(struct hashfile *f,
 	}
 
 	stop_progress(&progress);
+	return 0;
 }
 
 static void trace2_bloom_filter_settings(struct write_commit_graph_context *ctx)
@@ -1125,8 +1134,8 @@ static void trace2_bloom_filter_settings(struct write_commit_graph_context *ctx)
 	jw_release(&jw);
 }
 
-static void write_graph_chunk_bloom_data(struct hashfile *f,
-					 struct write_commit_graph_context *ctx)
+static int write_graph_chunk_bloom_data(struct hashfile *f,
+					struct write_commit_graph_context *ctx)
 {
 	struct commit **list = ctx->commits.list;
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
@@ -1155,6 +1164,7 @@ static void write_graph_chunk_bloom_data(struct hashfile *f,
 	}
 
 	stop_progress(&progress);
+	return 0;
 }
 
 static int oid_compare(const void *_a, const void *_b)
@@ -1671,8 +1681,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			num_chunks * ctx->commits.nr);
 	}
 	write_graph_chunk_fanout(f, ctx);
-	write_graph_chunk_oids(f, hashsz, ctx);
-	write_graph_chunk_data(f, hashsz, ctx);
+	write_graph_chunk_oids(f, ctx);
+	write_graph_chunk_data(f, ctx);
 	if (ctx->num_extra_edges)
 		write_graph_chunk_extra_edges(f, ctx);
 	if (ctx->changed_paths) {
