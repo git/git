@@ -695,11 +695,11 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 
 	/* remove single trailing slash from path, if needed */
 	if (pi->match[last_index] == '/') {
-	    path_alloc = xstrdup(pi->match);
-	    path_alloc[last_index] = '\0';
-	    path = path_alloc;
+		path_alloc = xstrdup(pi->match);
+		path_alloc[last_index] = '\0';
+		path = path_alloc;
 	} else
-	    path = pi->match;
+		path = pi->match;
 
 	len = strlen(path);
 
