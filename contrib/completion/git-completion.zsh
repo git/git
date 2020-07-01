@@ -9,13 +9,14 @@
 #
 # If your script is somewhere else, you can configure it on your ~/.zshrc:
 #
-#  zstyle ':completion:*:*:git:*' script ~/.git-completion.zsh
+#  zstyle ':completion:*:*:git:*' script ~/.git-completion.bash
 #
 # The recommended way to install this script is to make a copy of it in
 # ~/.zsh/ directory as ~/.zsh/git-completion.zsh and then add the following
 # to your ~/.zshrc file:
 #
 #  fpath=(~/.zsh $fpath)
+#  autoload -Uz compinit && compinit
 
 complete ()
 {
