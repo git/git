@@ -1293,6 +1293,7 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 	HANDLE h;
 	DWORD ret;
 	int len;
+	const char *last_component = NULL;
 
 	if (xutftowcs_path(wpath, path) < 0)
 		return NULL;
@@ -1300,6 +1301,30 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 	h = CreateFileW(wpath, 0,
 			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+	/*
+	 * strbuf_realpath() allows the last path component to not exist. If
+	 * that is the case, now it's time to try without last component.
+	 */
+	if (h == INVALID_HANDLE_VALUE &&
+	    GetLastError() == ERROR_FILE_NOT_FOUND) {
+		/* cut last component off of `wpath` */
+		wchar_t *p = wpath + wcslen(wpath);
+
+		while (p != wpath)
+			if (*(--p) == L'/' || *p == L'\\')
+				break; /* found start of last component */
+
+		if (p != wpath && (last_component = find_last_dir_sep(path))) {
+			last_component++; /* skip directory separator */
+			*p = L'\0';
+			h = CreateFileW(wpath, 0, FILE_SHARE_READ |
+					FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+					NULL, OPEN_EXISTING,
+					FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		}
+	}
+
 	if (h == INVALID_HANDLE_VALUE)
 		return NULL;
 
@@ -1314,6 +1339,13 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 	if (len < 0)
 		return NULL;
 	resolved->len = len;
+
+	if (last_component) {
+		/* Use forward-slash, like `normalize_ntpath()` */
+		strbuf_addch(resolved, '/');
+		strbuf_addstr(resolved, last_component);
+	}
+
 	return resolved->buf;
 
 }
