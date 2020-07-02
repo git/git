@@ -80,7 +80,7 @@ int git_read_line_interactively(struct strbuf *line)
 	int ret;
 
 	fflush(stdout);
-	ret = strbuf_getline_lf(line, stdin);
+	ret = strbuf_getline(line, stdin);
 	if (ret != EOF)
 		strbuf_trim_trailing_newline(line);
 
