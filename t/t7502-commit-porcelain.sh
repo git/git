@@ -623,6 +623,48 @@ test_expect_success 'cleanup commit messages (scissors option,-F,-e, scissors on
 	test_must_be_empty actual
 '
 
+test_expect_success 'helper-editor' '
+
+	write_script lf-to-crlf.sh <<-\EOF
+	sed "s/\$/Q/" <"$1" | tr Q "\\015" >"$1".new &&
+	mv -f "$1".new "$1"
+	EOF
+'
+
+test_expect_success 'cleanup commit messages (scissors option,-F,-e, CR/LF line endings)' '
+
+	test_config core.editor "\"$PWD/lf-to-crlf.sh\"" &&
+	scissors="# ------------------------ >8 ------------------------" &&
+
+	test_write_lines >text \
+	"# Keep this comment" "" " $scissors" \
+	"# Keep this comment, too" "$scissors" \
+	"# Remove this comment" "$scissors" \
+	"Remove this comment, too" &&
+
+	test_write_lines >expect \
+	"# Keep this comment" "" " $scissors" \
+	"# Keep this comment, too" &&
+
+	git commit --cleanup=scissors -e -F text --allow-empty &&
+	git cat-file -p HEAD >raw &&
+	sed -e "1,/^\$/d" raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cleanup commit messages (scissors option,-F,-e, scissors on first line, CR/LF line endings)' '
+
+	scissors="# ------------------------ >8 ------------------------" &&
+	test_write_lines >text \
+	"$scissors" \
+	"# Remove this comment and any following lines" &&
+	cp text /tmp/test2-text &&
+	git commit --cleanup=scissors -e -F text --allow-empty --allow-empty-message &&
+	git cat-file -p HEAD >raw &&
+	sed -e "1,/^\$/d" raw >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'cleanup commit messages (strip option,-F)' '
 
 	echo >>negative &&
