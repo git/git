@@ -4,6 +4,8 @@ test_description='git branch display tests'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
+test_tick
+
 test_expect_success 'make commits' '
 	echo content >file &&
 	git add file &&

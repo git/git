@@ -22,6 +22,8 @@ compare_refs() {
 	eval $fail test_cmp expect actual
 }
 
+test_tick
+
 test_expect_success 'setup repository' '
 	git init server &&
 	(cd server &&
