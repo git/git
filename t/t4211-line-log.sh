@@ -240,10 +240,12 @@ test_expect_success 'setup for checking line-log and parent oids' '
 	EOF
 	git add file.c &&
 	test_tick &&
+	first_tick=$test_tick &&
 	git commit -m "Add func1() and func2() in file.c" &&
 
 	echo 1 >other-file &&
 	git add other-file &&
+	test_tick &&
 	git commit -m "Add other-file" &&
 
 	sed -e "s/F1/F1 + 1/" file.c >tmp &&
@@ -280,6 +282,12 @@ test_expect_success 'parent oids with parent rewriting' '
 	$root_oid  Add func1() and func2() in file.c
 	EOF
 	git log --format="%h %p %s" --no-patch -L:func2:file.c --parents >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'line-log with --before' '
+	echo $root_oid >expect &&
+	git log --format=%h --no-patch -L:func2:file.c --before=$first_tick >actual &&
 	test_cmp expect actual
 '
 
