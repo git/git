@@ -41,6 +41,14 @@ UI, Workflows & Features
  * "git diff-files" has been taught to say paths that are marked as
    intent-to-add are new files, not modified from an empty blob.
 
+ * "git status" learned to report the status of sparse checkout.
+
+ * "git difftool" has trouble dealing with paths added to the index
+   with the intent-to-add bit.
+
+ * "git fast-export --anonymize" learned to take customized mapping to
+   allow its users to tweak its output more usable for debugging.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -90,6 +98,22 @@ Performance, Internal Implementation, Development Support etc.
 
  * A misdesigned strbuf_write_fd() function has been retired.
 
+ * SHA-256 migration work continues, including CVS/SVN interface.
+
+ * A few fields in "struct commit" that do not have to always be
+   present have been moved to commit slabs.
+
+ * API cleanup for get_worktrees()
+
+ * By renumbering object flag bits, "struct object" managed to lose
+   bloated inter-field padding.
+
+ * The name of the primary branch in existing repositories, and the
+   default name used for the first branch in newly created
+   repositories, is made configurable, so that we can eventually wean
+   ourselves off of the hardcoded 'master'.
+
+ * The effort to avoid using test_must_fail on non-git command continues.
 
 
 Fixes since v2.27
@@ -158,6 +182,15 @@ Fixes since v2.27
  * An in-code comment in "git diff" has been updated.
    (merge c592fd4c83 dl/diff-usage-comment-update later to maint).
 
+ * The documentation and some tests have been adjusted for the recent
+   renaming of "pu" branch to "seen".
+   (merge 6dca5dbf93 js/pu-to-seen later to maint).
+
+ * The code to push changes over "dumb" HTTP had a bad interaction
+   with the commit reachability code due to incorrect allocation of
+   object flag bits, which has been corrected.
+   (merge 64472d15e9 bc/http-push-flagsfix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
    (merge d63ae31962 cb/t5608-cleanup later to maint).
@@ -166,3 +199,5 @@ Fixes since v2.27
    (merge b75a219904 es/advertise-contribution-doc later to maint).
    (merge 0c9a4f638a rs/pull-leakfix later to maint).
    (merge d546fe2874 rs/commit-reach-leakfix later to maint).
+   (merge 087bf5409c mk/pb-pretty-email-without-domain-part-fix later to maint).
+   (merge 5f4ee57ad9 es/worktree-code-cleanup later to maint).
