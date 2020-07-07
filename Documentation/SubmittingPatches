@@ -19,7 +19,7 @@ change is relevant to.
   base your work on the tip of the topic.
 
 * A new feature should be based on `master` in general. If the new
-  feature depends on a topic that is in `pu`, but not in `master`,
+  feature depends on a topic that is in `seen`, but not in `master`,
   base your work on the tip of that topic.
 
 * Corrections and enhancements to a topic not yet in `master` should
@@ -28,7 +28,7 @@ change is relevant to.
   into the series.
 
 * In the exceptional case that a new feature depends on several topics
-  not in `master`, start working on `next` or `pu` privately and send
+  not in `master`, start working on `next` or `seen` privately and send
   out patches for discussion. Before the final merge, you may have to
   wait until some of the dependent topics graduate to `master`, and
   rebase your work.
@@ -38,7 +38,7 @@ change is relevant to.
   these parts should be based on their trees.
 
 To find the tip of a topic branch, run `git log --first-parent
-master..pu` and look for the merge commit. The second parent of this
+master..seen` and look for the merge commit. The second parent of this
 commit is the tip of the topic branch.
 
 [[separate-commits]]
@@ -424,7 +424,7 @@ help you find out who they are.
   and cooked further and eventually graduates to `master`.
 
 In any time between the (2)-(3) cycle, the maintainer may pick it up
-from the list and queue it to `pu`, in order to make it easier for
+from the list and queue it to `seen`, in order to make it easier for
 people play with it without having to pick up and apply the patch to
 their trees themselves.
 
@@ -435,7 +435,7 @@ their trees themselves.
   master. `git pull --rebase` will automatically skip already-applied
   patches, and will let you know. This works only if you rebase on top
   of the branch in which your patch has been merged (i.e. it will not
-  tell you if your patch is merged in pu if you rebase on top of
+  tell you if your patch is merged in `seen` if you rebase on top of
   master).
 
 * Read the Git mailing list, the maintainer regularly posts messages
