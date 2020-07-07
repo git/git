@@ -240,7 +240,6 @@ test_expect_success 'i-t-a files shown as new for "diff", "diff-files"; not-new 
 
 	hash_e=$(git hash-object empty) &&
 	hash_n=$(git hash-object not-empty) &&
-	hash_t=$(git hash-object -t tree /dev/null) &&
 
 	cat >expect.diff_p <<-EOF &&
 	diff --git a/empty b/empty
@@ -259,8 +258,8 @@ test_expect_success 'i-t-a files shown as new for "diff", "diff-files"; not-new 
 	 create mode 100644 not-empty
 	EOF
 	cat >expect.diff_a <<-EOF &&
-	:000000 100644 0000000 $(git rev-parse --short $hash_t) A$(printf "\t")empty
-	:000000 100644 0000000 $(git rev-parse --short $hash_t) A$(printf "\t")not-empty
+	:000000 100644 0000000 0000000 A$(printf "\t")empty
+	:000000 100644 0000000 0000000 A$(printf "\t")not-empty
 	EOF
 
 	git add -N empty not-empty &&
