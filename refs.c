@@ -9,6 +9,7 @@
 #include "iterator.h"
 #include "refs.h"
 #include "refs/refs-internal.h"
+#include "run-command.h"
 #include "object-store.h"
 #include "object.h"
 #include "tag.h"
@@ -16,6 +17,7 @@
 #include "worktree.h"
 #include "argv-array.h"
 #include "repository.h"
+#include "sigchain.h"
 
 /*
  * List of all available backends
@@ -1986,10 +1988,65 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 	return 0;
 }
 
+static const char hook_not_found;
+static const char *hook;
+
+static int run_transaction_hook(struct ref_transaction *transaction,
+				const char *state)
+{
+	struct child_process proc = CHILD_PROCESS_INIT;
+	struct strbuf buf = STRBUF_INIT;
+	int ret = 0, i;
+
+	if (hook == &hook_not_found)
+		return ret;
+	if (!hook)
+		hook = find_hook("reference-transaction");
+	if (!hook) {
+		hook = &hook_not_found;
+		return ret;
+	}
+
+	argv_array_pushl(&proc.args, hook, state, NULL);
+	proc.in = -1;
+	proc.stdout_to_stderr = 1;
+	proc.trace2_hook_name = "reference-transaction";
+
+	ret = start_command(&proc);
+	if (ret)
+		return ret;
+
+	sigchain_push(SIGPIPE, SIG_IGN);
+
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "%s %s %s\n",
+			    oid_to_hex(&update->old_oid),
+			    oid_to_hex(&update->new_oid),
+			    update->refname);
+
+		if (write_in_full(proc.in, buf.buf, buf.len) < 0) {
+			if (errno != EPIPE)
+				ret = -1;
+			break;
+		}
+	}
+
+	close(proc.in);
+	sigchain_pop(SIGPIPE);
+	strbuf_release(&buf);
+
+	ret |= finish_command(&proc);
+	return ret;
+}
+
 int ref_transaction_prepare(struct ref_transaction *transaction,
 			    struct strbuf *err)
 {
 	struct ref_store *refs = transaction->ref_store;
+	int ret;
 
 	switch (transaction->state) {
 	case REF_TRANSACTION_OPEN:
@@ -2012,7 +2069,17 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 		return -1;
 	}
 
-	return refs->be->transaction_prepare(refs, transaction, err);
+	ret = refs->be->transaction_prepare(refs, transaction, err);
+	if (ret)
+		return ret;
+
+	ret = run_transaction_hook(transaction, "prepared");
+	if (ret) {
+		ref_transaction_abort(transaction, err);
+		die(_("ref updates aborted by hook"));
+	}
+
+	return 0;
 }
 
 int ref_transaction_abort(struct ref_transaction *transaction,
@@ -2035,6 +2102,8 @@ int ref_transaction_abort(struct ref_transaction *transaction,
 		BUG("unexpected reference transaction state");
 		break;
 	}
+
+	run_transaction_hook(transaction, "aborted");
 
 	ref_transaction_free(transaction);
 	return ret;
@@ -2064,7 +2133,10 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		break;
 	}
 
-	return refs->be->transaction_finish(refs, transaction, err);
+	ret = refs->be->transaction_finish(refs, transaction, err);
+	if (!ret)
+		run_transaction_hook(transaction, "committed");
+	return ret;
 }
 
 int refs_verify_refname_available(struct ref_store *refs,
