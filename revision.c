@@ -725,7 +725,7 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 	if (!revs->repo->objects->commit_graph)
 		return -1;
 
-	if (commit->generation == GENERATION_NUMBER_INFINITY)
+	if (commit_graph_generation(commit) == GENERATION_NUMBER_INFINITY)
 		return -1;
 
 	filter = get_bloom_filter(revs->repo, commit, 0);
@@ -3320,7 +3320,7 @@ static void explore_to_depth(struct rev_info *revs,
 	struct topo_walk_info *info = revs->topo_walk_info;
 	struct commit *c;
 	while ((c = prio_queue_peek(&info->explore_queue)) &&
-	       c->generation >= gen_cutoff)
+	       commit_graph_generation(c) >= gen_cutoff)
 		explore_walk_step(revs);
 }
 
@@ -3336,7 +3336,7 @@ static void indegree_walk_step(struct rev_info *revs)
 	if (parse_commit_gently(c, 1) < 0)
 		return;
 
-	explore_to_depth(revs, c->generation);
+	explore_to_depth(revs, commit_graph_generation(c));
 
 	for (p = c->parents; p; p = p->next) {
 		struct commit *parent = p->item;
@@ -3360,7 +3360,7 @@ static void compute_indegrees_to_depth(struct rev_info *revs,
 	struct topo_walk_info *info = revs->topo_walk_info;
 	struct commit *c;
 	while ((c = prio_queue_peek(&info->indegree_queue)) &&
-	       c->generation >= gen_cutoff)
+	       commit_graph_generation(c) >= gen_cutoff)
 		indegree_walk_step(revs);
 }
 
@@ -3413,6 +3413,7 @@ static void init_topo_walk(struct rev_info *revs)
 	info->min_generation = GENERATION_NUMBER_INFINITY;
 	for (list = revs->commits; list; list = list->next) {
 		struct commit *c = list->item;
+		uint32_t generation;
 
 		if (parse_commit_gently(c, 1))
 			continue;
@@ -3420,8 +3421,9 @@ static void init_topo_walk(struct rev_info *revs)
 		test_flag_and_insert(&info->explore_queue, c, TOPO_WALK_EXPLORED);
 		test_flag_and_insert(&info->indegree_queue, c, TOPO_WALK_INDEGREE);
 
-		if (c->generation < info->min_generation)
-			info->min_generation = c->generation;
+		generation = commit_graph_generation(c);
+		if (generation < info->min_generation)
+			info->min_generation = generation;
 
 		*(indegree_slab_at(&info->indegree, c)) = 1;
 
@@ -3472,6 +3474,7 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 	for (p = commit->parents; p; p = p->next) {
 		struct commit *parent = p->item;
 		int *pi;
+		uint32_t generation;
 
 		if (parent->object.flags & UNINTERESTING)
 			continue;
@@ -3479,8 +3482,9 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 		if (parse_commit_gently(parent, 1) < 0)
 			continue;
 
-		if (parent->generation < info->min_generation) {
-			info->min_generation = parent->generation;
+		generation = commit_graph_generation(parent);
+		if (generation < info->min_generation) {
+			info->min_generation = generation;
 			compute_indegrees_to_depth(revs, info->min_generation);
 		}
 

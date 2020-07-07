@@ -135,4 +135,14 @@ void free_commit_graph(struct commit_graph *);
  */
 void disable_commit_graph(struct repository *r);
 
+struct commit_graph_data {
+	uint32_t graph_pos;
+	uint32_t generation;
+};
+
+/*
+ * Commits should be parsed before accessing generation, graph positions.
+ */
+uint32_t commit_graph_generation(const struct commit *);
+uint32_t commit_graph_position(const struct commit *);
 #endif

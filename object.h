@@ -15,7 +15,6 @@ struct parsed_object_pool {
 	struct alloc_state *commit_state;
 	struct alloc_state *tag_state;
 	struct alloc_state *object_state;
-	unsigned commit_count;
 
 	/* parent substitutions from .git/info/grafts and .git/shallow */
 	struct commit_graft **grafts;
@@ -121,7 +120,7 @@ struct object *lookup_object(struct repository *r, const struct object_id *oid);
 
 void *create_object(struct repository *r, const struct object_id *oid, void *obj);
 
-void *object_as_type(struct repository *r, struct object *obj, enum object_type type, int quiet);
+void *object_as_type(struct object *obj, enum object_type type, int quiet);
 
 /*
  * Returns the object, having parsed it to find out what it is.
