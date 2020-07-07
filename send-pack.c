@@ -363,6 +363,7 @@ int send_pack(struct send_pack_args *args,
 	int atomic_supported = 0;
 	int use_push_options = 0;
 	int push_options_supported = 0;
+	int object_format_supported = 0;
 	unsigned cmds_sent = 0;
 	int ret;
 	struct async demux;
@@ -388,6 +389,9 @@ int send_pack(struct send_pack_args *args,
 		atomic_supported = 1;
 	if (server_supports("push-options"))
 		push_options_supported = 1;
+
+	if (!server_supports_hash(the_hash_algo->name, &object_format_supported))
+		die(_("the receiving end does not support this repository's hash algorithm"));
 
 	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
 		int len;
@@ -429,6 +433,8 @@ int send_pack(struct send_pack_args *args,
 		strbuf_addstr(&cap_buf, " atomic");
 	if (use_push_options)
 		strbuf_addstr(&cap_buf, " push-options");
+	if (object_format_supported)
+		strbuf_addf(&cap_buf, " object-format=%s", the_hash_algo->name);
 	if (agent_supported)
 		strbuf_addf(&cap_buf, " agent=%s", git_user_agent_sanitized());
 

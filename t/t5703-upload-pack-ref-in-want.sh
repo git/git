@@ -27,6 +27,15 @@ check_output () {
 	test_cmp sorted_commits actual_commits
 }
 
+write_command () {
+	echo "command=$1"
+
+	if test "$(test_oid algo)" != sha1
+	then
+		echo "object-format=$(test_oid algo)"
+	fi
+}
+
 # c(o/foo) d(o/bar)
 #        \ /
 #         b   e(baz)  f(master)
@@ -65,7 +74,7 @@ test_expect_success 'config controls ref-in-want advertisement' '
 
 test_expect_success 'invalid want-ref line' '
 	test-tool pkt-line pack >in <<-EOF &&
-	command=fetch
+	$(write_command fetch)
 	0001
 	no-progress
 	want-ref refs/heads/non-existent
@@ -86,7 +95,7 @@ test_expect_success 'basic want-ref' '
 
 	oid=$(git rev-parse a) &&
 	test-tool pkt-line pack >in <<-EOF &&
-	command=fetch
+	$(write_command fetch)
 	0001
 	no-progress
 	want-ref refs/heads/master
@@ -110,7 +119,7 @@ test_expect_success 'multiple want-ref lines' '
 
 	oid=$(git rev-parse b) &&
 	test-tool pkt-line pack >in <<-EOF &&
-	command=fetch
+	$(write_command fetch)
 	0001
 	no-progress
 	want-ref refs/heads/o/foo
@@ -132,7 +141,7 @@ test_expect_success 'mix want and want-ref' '
 	git rev-parse e f >expected_commits &&
 
 	test-tool pkt-line pack >in <<-EOF &&
-	command=fetch
+	$(write_command fetch)
 	0001
 	no-progress
 	want-ref refs/heads/master
@@ -155,7 +164,7 @@ test_expect_success 'want-ref with ref we already have commit for' '
 
 	oid=$(git rev-parse c) &&
 	test-tool pkt-line pack >in <<-EOF &&
-	command=fetch
+	$(write_command fetch)
 	0001
 	no-progress
 	want-ref refs/heads/o/foo

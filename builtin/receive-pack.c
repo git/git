@@ -249,6 +249,7 @@ static void show_ref(const char *path, const struct object_id *oid)
 			strbuf_addf(&cap, " push-cert=%s", push_cert_nonce);
 		if (advertise_push_options)
 			strbuf_addstr(&cap, " push-options");
+		strbuf_addf(&cap, " object-format=%s", the_hash_algo->name);
 		strbuf_addf(&cap, " agent=%s", git_user_agent_sanitized());
 		packet_write_fmt(1, "%s %s%c%s\n",
 			     oid_to_hex(oid), path, 0, cap.buf);
@@ -1624,6 +1625,8 @@ static struct command *read_head_info(struct packet_reader *reader,
 		linelen = strlen(reader->line);
 		if (linelen < reader->pktlen) {
 			const char *feature_list = reader->line + linelen + 1;
+			const char *hash = NULL;
+			int len = 0;
 			if (parse_feature_request(feature_list, "report-status"))
 				report_status = 1;
 			if (parse_feature_request(feature_list, "side-band-64k"))
@@ -1636,6 +1639,13 @@ static struct command *read_head_info(struct packet_reader *reader,
 			if (advertise_push_options
 			    && parse_feature_request(feature_list, "push-options"))
 				use_push_options = 1;
+			hash = parse_feature_value(feature_list, "object-format", &len, NULL);
+			if (!hash) {
+				hash = hash_algos[GIT_HASH_SHA1].name;
+				len = strlen(hash);
+			}
+			if (xstrncmpz(the_hash_algo->name, hash, len))
+				die("error: unsupported object format '%s'", hash);
 		}
 
 		if (!strcmp(reader->line, "push-cert")) {

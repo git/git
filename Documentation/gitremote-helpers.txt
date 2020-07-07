@@ -238,6 +238,9 @@ the remote repository.
 	`--signed-tags=verbatim` to linkgit:git-fast-export[1].  In the
 	absence of this capability, Git will use `--signed-tags=warn-strip`.
 
+'object-format'::
+	This indicates that the helper is able to interact with the remote
+	side using an explicit hash algorithm extension.
 
 
 COMMANDS
@@ -257,12 +260,14 @@ Support for this command is mandatory.
 'list'::
 	Lists the refs, one per line, in the format "<value> <name>
 	[<attr> ...]". The value may be a hex sha1 hash, "@<dest>" for
-	a symref, or "?" to indicate that the helper could not get the
-	value of the ref. A space-separated list of attributes follows
-	the name; unrecognized attributes are ignored. The list ends
-	with a blank line.
+	a symref, ":<keyword> <value>" for a key-value pair, or
+	"?" to indicate that the helper could not get the value of the
+	ref. A space-separated list of attributes follows the name;
+	unrecognized attributes are ignored. The list ends with a
+	blank line.
 +
 See REF LIST ATTRIBUTES for a list of currently defined attributes.
+See REF LIST KEYWORDS for a list of currently defined keywords.
 +
 Supported if the helper has the "fetch" or "import" capability.
 
@@ -432,6 +437,18 @@ attributes are defined.
 	This ref is unchanged since the last import or fetch, although
 	the helper cannot necessarily determine what value that produced.
 
+REF LIST KEYWORDS
+-----------------
+
+The 'list' command may produce a list of key-value pairs.
+The following keys are defined.
+
+'object-format'::
+	The refs are using the given hash algorithm.  This keyword is only
+	used if the server and client both support the object-format
+	extension.
+
+
 OPTIONS
 -------
 
@@ -515,6 +532,14 @@ set by Git if the remote helper has the 'option' capability.
 	When pushing, request the remote server to update refs in a single atomic
 	transaction.  If successful, all refs will be updated, or none will.  If the
 	remote side does not support this capability, the push will fail.
+
+'option object-format' {'true'|algorithm}::
+	If 'true', indicate that the caller wants hash algorithm information
+	to be passed back from the remote.  This mode is used when fetching
+	refs.
++
+If set to an algorithm, indicate that the caller wants to interact with
+the remote side using that algorithm.
 
 SEE ALSO
 --------

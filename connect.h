@@ -18,7 +18,10 @@ int url_is_local_not_ssh(const char *url);
 struct packet_reader;
 enum protocol_version discover_version(struct packet_reader *reader);
 
+int server_supports_hash(const char *desired, int *feature_supported);
+const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp, int *offset);
 int server_supports_v2(const char *c, int die_on_error);
+int server_feature_v2(const char *c, const char **v);
 int server_supports_feature(const char *c, const char *feature,
 			    int die_on_error);
 

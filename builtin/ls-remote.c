@@ -118,6 +118,10 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		transport->server_options = &server_options;
 
 	ref = transport_get_remote_refs(transport, &ref_prefixes);
+	if (ref) {
+		int hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
+		repo_set_hash_algo(the_repository, hash_algo);
+	}
 	if (transport_disconnect(transport)) {
 		UNLEAK(sorting);
 		return 1;

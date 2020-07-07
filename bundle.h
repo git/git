@@ -15,6 +15,7 @@ struct ref_list {
 struct bundle_header {
 	struct ref_list prerequisites;
 	struct ref_list references;
+	const struct git_hash_algo *hash_algo;
 };
 
 int is_bundle(const char *path, int quiet);

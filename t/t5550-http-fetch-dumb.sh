@@ -50,6 +50,24 @@ test_expect_success 'create password-protected repository' '
 	       "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git"
 '
 
+test_expect_success 'create empty remote repository' '
+	git init --bare "$HTTPD_DOCUMENT_ROOT_PATH/empty.git" &&
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH/empty.git" &&
+	 mkdir -p hooks &&
+	 write_script "hooks/post-update" <<-\EOF &&
+	 exec git update-server-info
+	EOF
+	 hooks/post-update
+	)
+'
+
+test_expect_success 'empty dumb HTTP repository has default hash algorithm' '
+	test_when_finished "rm -fr clone-empty" &&
+	git clone $HTTPD_URL/dumb/empty.git clone-empty &&
+	git -C clone-empty rev-parse --show-object-format >empty-format &&
+	test "$(cat empty-format)" = "$(test_oid algo)"
+'
+
 setup_askpass_helper
 
 test_expect_success 'cloning password-protected repository can fail' '
