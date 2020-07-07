@@ -16,7 +16,7 @@ test_expect_success 'merge local branch' '
 	git checkout master &&
 	test_commit master-2 &&
 	git merge local-branch &&
-	check_oneline "Merge branch Qlocal-branchQ"
+	check_oneline "Merge branch Qlocal-branchQ into master"
 '
 
 test_expect_success 'merge octopus branches' '
@@ -26,7 +26,7 @@ test_expect_success 'merge octopus branches' '
 	test_commit octopus-2 &&
 	git checkout master &&
 	git merge octopus-a octopus-b &&
-	check_oneline "Merge branches Qoctopus-aQ and Qoctopus-bQ"
+	check_oneline "Merge branches Qoctopus-aQ and Qoctopus-bQ into master"
 '
 
 test_expect_success 'merge tag' '
@@ -35,7 +35,7 @@ test_expect_success 'merge tag' '
 	git checkout master &&
 	test_commit master-3 &&
 	git merge tag-1 &&
-	check_oneline "Merge tag Qtag-1Q"
+	check_oneline "Merge tag Qtag-1Q into master"
 '
 
 test_expect_success 'ambiguous tag' '
@@ -44,7 +44,7 @@ test_expect_success 'ambiguous tag' '
 	git checkout master &&
 	test_commit master-4 &&
 	git merge ambiguous &&
-	check_oneline "Merge tag QambiguousQ"
+	check_oneline "Merge tag QambiguousQ into master"
 '
 
 test_expect_success 'remote-tracking branch' '
@@ -54,7 +54,7 @@ test_expect_success 'remote-tracking branch' '
 	git checkout master &&
 	test_commit master-5 &&
 	git merge origin/master &&
-	check_oneline "Merge remote-tracking branch Qorigin/masterQ"
+	check_oneline "Merge remote-tracking branch Qorigin/masterQ into master"
 '
 
 test_done

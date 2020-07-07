@@ -183,7 +183,7 @@ set-branch (-d|--default) [--] <path>::
 	Sets the default remote tracking branch for the submodule. The
 	`--branch` option allows the remote branch to be specified. The
 	`--default` option removes the submodule.<name>.branch configuration
-	key, which causes the tracking branch to default to 'master'.
+	key, which causes the tracking branch to default to the remote 'HEAD'.
 
 set-url [--] <path> <newurl>::
 	Sets the URL of the specified submodule to <newurl>. Then, it will
@@ -284,7 +284,7 @@ OPTIONS
 	`.gitmodules` for `update --remote`.  A special value of `.` is used to
 	indicate that the name of the branch in the submodule should be the
 	same name as the current branch in the current repository.  If the
-	option is not specified, it defaults to 'master'.
+	option is not specified, it defaults to the remote 'HEAD'.
 
 -f::
 --force::
@@ -322,10 +322,10 @@ OPTIONS
 	the superproject's recorded SHA-1 to update the submodule, use the
 	status of the submodule's remote-tracking branch.  The remote used
 	is branch's remote (`branch.<name>.remote`), defaulting to `origin`.
-	The remote branch used defaults to `master`, but the branch name may
-	be overridden by setting the `submodule.<name>.branch` option in
-	either `.gitmodules` or `.git/config` (with `.git/config` taking
-	precedence).
+	The remote branch used defaults to the remote `HEAD`, but the branch
+	name may be overridden by setting the `submodule.<name>.branch`
+	option in either `.gitmodules` or `.git/config` (with `.git/config`
+	taking precedence).
 +
 This works for any of the supported update procedures (`--checkout`,
 `--rebase`, etc.).  The only change is the source of the target SHA-1.

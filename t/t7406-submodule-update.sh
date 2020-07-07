@@ -70,6 +70,22 @@ test_expect_success 'setup a submodule tree' '
 	)
 '
 
+test_expect_success 'update --remote falls back to using HEAD' '
+	test_create_repo main-branch-submodule &&
+	test_commit -C main-branch-submodule initial &&
+
+	test_create_repo main-branch &&
+	git -C main-branch submodule add ../main-branch-submodule &&
+	git -C main-branch commit -m add-submodule &&
+
+	git -C main-branch-submodule switch -c hello &&
+	test_commit -C main-branch-submodule world &&
+
+	git clone --recursive main-branch main-branch-clone &&
+	git -C main-branch-clone submodule update --remote main-branch-submodule &&
+	test_path_exists main-branch-clone/main-branch-submodule/world.t
+'
+
 test_expect_success 'submodule update detaching the HEAD ' '
 	(cd super/submodule &&
 	 git reset --hard HEAD~1

@@ -52,12 +52,13 @@ test_expect_success 'test submodule set-branch --branch' '
 '
 
 test_expect_success 'test submodule set-branch --default' '
+	test_commit -C submodule c &&
 	(cd super &&
 		git submodule set-branch --default submodule &&
 		! grep branch .gitmodules &&
 		git submodule update --remote &&
 		cat <<-\EOF >expect &&
-		a
+		c
 		EOF
 		git -C submodule show -s --pretty=%s >actual &&
 		test_cmp expect actual
@@ -65,6 +66,7 @@ test_expect_success 'test submodule set-branch --default' '
 '
 
 test_expect_success 'test submodule set-branch -b' '
+	test_commit -C submodule b &&
 	(cd super &&
 		git submodule set-branch -b topic submodule &&
 		grep "branch = topic" .gitmodules &&
@@ -78,12 +80,13 @@ test_expect_success 'test submodule set-branch -b' '
 '
 
 test_expect_success 'test submodule set-branch -d' '
+	test_commit -C submodule d &&
 	(cd super &&
 		git submodule set-branch -d submodule &&
 		! grep branch .gitmodules &&
 		git submodule update --remote &&
 		cat <<-\EOF >expect &&
-		a
+		d
 		EOF
 		git -C submodule show -s --pretty=%s >actual &&
 		test_cmp expect actual

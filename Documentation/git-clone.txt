@@ -259,7 +259,7 @@ maintain a branch with no references other than a single cloned
 branch. This is useful e.g. to maintain minimal clones of the default
 branch of some repository for search indexing.
 
---recurse-submodules[=<pathspec]::
+--recurse-submodules[=<pathspec>]::
 	After the clone is created, initialize and clone submodules
 	within based on the provided pathspec.  If no pathspec is
 	provided, all submodules are initialized and cloned.

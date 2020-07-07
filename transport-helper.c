@@ -1050,7 +1050,7 @@ static int push_refs(struct transport *transport,
 	if (!remote_refs) {
 		fprintf(stderr,
 			_("No refs in common and none specified; doing nothing.\n"
-			  "Perhaps you should specify a branch such as 'master'.\n"));
+			  "Perhaps you should specify a branch.\n"));
 		return 0;
 	}
 

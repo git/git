@@ -98,6 +98,12 @@ test_expect_success 'push from/to new branch with upstream, matching and simple'
 	test_push_failure upstream
 '
 
+test_expect_success '"matching" fails if none match' '
+	git init --bare empty &&
+	test_must_fail git push empty : 2>actual &&
+	test_i18ngrep "Perhaps you should specify a branch" actual
+'
+
 test_expect_success 'push ambiguously named branch with upstream, matching and simple' '
 	git checkout -b ambiguous &&
 	test_config branch.ambiguous.remote parent1 &&
