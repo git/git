@@ -123,14 +123,7 @@ static void mark_current_worktree(struct worktree **worktrees)
 	free(git_dir);
 }
 
-static int compare_worktree(const void *a_, const void *b_)
-{
-	const struct worktree *const *a = a_;
-	const struct worktree *const *b = b_;
-	return fspathcmp((*a)->path, (*b)->path);
-}
-
-struct worktree **get_worktrees(unsigned flags)
+struct worktree **get_worktrees(void)
 {
 	struct worktree **list = NULL;
 	struct strbuf path = STRBUF_INIT;
@@ -160,13 +153,6 @@ struct worktree **get_worktrees(unsigned flags)
 	}
 	ALLOC_GROW(list, counter + 1, alloc);
 	list[counter] = NULL;
-
-	if (flags & GWT_SORT_LINKED)
-		/*
-		 * don't sort the first item (main worktree), which will
-		 * always be the first
-		 */
-		QSORT(list + 1, counter - 1, compare_worktree);
 
 	mark_current_worktree(list);
 	return list;
@@ -418,7 +404,7 @@ const struct worktree *find_shared_symref(const char *symref,
 
 	if (worktrees)
 		free_worktrees(worktrees);
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 
 	for (i = 0; worktrees[i]; i++) {
 		struct worktree *wt = worktrees[i];
@@ -577,7 +563,7 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 	struct worktree **worktrees, **p;
 	int ret = 0;
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct object_id oid;

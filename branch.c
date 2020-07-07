@@ -370,7 +370,7 @@ int replace_each_worktree_head_symref(const char *oldref, const char *newref,
 				      const char *logmsg)
 {
 	int ret = 0;
-	struct worktree **worktrees = get_worktrees(0);
+	struct worktree **worktrees = get_worktrees();
 	int i;
 
 	for (i = 0; worktrees[i]; i++) {

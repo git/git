@@ -615,7 +615,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		int i;
 
 		memset(&collected, 0, sizeof(collected));
-		worktrees = get_worktrees(0);
+		worktrees = get_worktrees();
 		for (p = worktrees; *p; p++) {
 			if (!all_worktrees && !(*p)->is_current)
 				continue;
