@@ -10,7 +10,7 @@ repository.'
 
 test_expect_success 'start p4d' '
 	start_p4d &&
-	test_might_fail p4 configure set submit.collision.check=0
+	{ p4 configure set submit.collision.check=0 || :; }
 '
 
 test_expect_success 'init depot' '
