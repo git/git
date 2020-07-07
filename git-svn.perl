@@ -5,7 +5,8 @@ use 5.008;
 use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
-		$sha1 $sha1_short $_revision $_repository
+		$oid $oid_short $oid_length
+		$_revision $_repository
 		$_q $_authors $_authors_prog %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
@@ -103,8 +104,9 @@ sub _req_svn {
 	}
 }
 
-$sha1 = qr/[a-f\d]{40}/;
-$sha1_short = qr/[a-f\d]{4,40}/;
+$oid = qr/(?:[a-f\d]{40}(?:[a-f\d]{24})?)/;
+$oid_short = qr/[a-f\d]{4,64}/;
+$oid_length = 40;
 my ($_stdin, $_help, $_edit,
 	$_message, $_file, $_branch_dest,
 	$_template, $_shared,
@@ -498,6 +500,7 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.preserve-empty-dirs", 'true');
 		command_noisy('config', "$pfx.placeholder-filename", $$fname);
 	}
+	load_object_format();
 }
 
 sub init_subdir {
@@ -582,7 +585,7 @@ sub cmd_set_tree {
 		print "Reading from stdin...\n";
 		@commits = ();
 		while (<STDIN>) {
-			if (/\b($sha1_short)\b/o) {
+			if (/\b($oid_short)\b/o) {
 				unshift @commits, $1;
 			}
 		}
@@ -1831,7 +1834,7 @@ sub get_tree_from_treeish {
 	if ($type eq 'commit') {
 		$expected = (grep /^tree /, command(qw/cat-file commit/,
 		                                    $treeish))[0];
-		($expected) = ($expected =~ /^tree ($sha1)$/o);
+		($expected) = ($expected =~ /^tree ($oid)$/o);
 		die "Unable to get tree from $treeish\n" unless $expected;
 	} elsif ($type eq 'tree') {
 		$expected = $treeish;
@@ -1975,7 +1978,13 @@ sub read_git_config {
 			}
 		}
 	}
+	load_object_format();
 	delete @$opts{@config_only} if @config_only;
+}
+
+sub load_object_format {
+	chomp(my $hash = `git config --get extensions.objectformat`);
+	$::oid_length = 64 if $hash eq 'sha256';
 }
 
 sub extract_metadata {
@@ -2006,10 +2015,10 @@ sub cmt_sha2rev_batch {
 		print $out $sha, "\n";
 
 		while (my $line = <$in>) {
-			if ($first && $line =~ /^[[:xdigit:]]{40}\smissing$/) {
+			if ($first && $line =~ /^$::oid\smissing$/) {
 				last;
 			} elsif ($first &&
-			       $line =~ /^[[:xdigit:]]{40}\scommit\s(\d+)$/) {
+			       $line =~ /^$::oid\scommit\s(\d+)$/) {
 				$first = 0;
 				$size = $1;
 				next;
@@ -2036,7 +2045,7 @@ sub working_head_info {
 	my $hash;
 	my %max;
 	while (<$fh>) {
-		if ( m{^commit ($::sha1)$} ) {
+		if ( m{^commit ($::oid)$} ) {
 			unshift @$refs, $hash if $hash and $refs;
 			$hash = $1;
 			next;
