@@ -301,8 +301,10 @@ struct rev_info {
 	struct topo_walk_info *topo_walk_info;
 
 	/* Commit graph bloom filter fields */
-	/* The bloom filter key for the pathspec */
-	struct bloom_key *bloom_key;
+	/* The bloom filter key(s) for the pathspec */
+	struct bloom_key *bloom_keys;
+	int bloom_keys_nr;
+
 	/*
 	 * The bloom filter settings used to generate the key.
 	 * This is loaded from the commit-graph being used.

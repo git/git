@@ -2,14 +2,11 @@
 #define COMMIT_GRAPH_H
 
 #include "git-compat-util.h"
-#include "repository.h"
-#include "string-list.h"
-#include "cache.h"
 #include "object-store.h"
 #include "oidset.h"
 
 #define GIT_TEST_COMMIT_GRAPH "GIT_TEST_COMMIT_GRAPH"
-#define GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD "GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD"
+#define GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE "GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE"
 #define GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS"
 
 /*
@@ -23,6 +20,9 @@ void git_test_write_commit_graph_or_die(void);
 
 struct commit;
 struct bloom_filter_settings;
+struct repository;
+struct raw_object_store;
+struct string_list;
 
 char *get_commit_graph_filename(struct object_directory *odb);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
@@ -92,6 +92,7 @@ enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_PROGRESS   = (1 << 1),
 	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
 	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
+	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
 };
 
 enum commit_graph_split_flags {

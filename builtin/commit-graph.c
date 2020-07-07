@@ -201,6 +201,7 @@ static int graph_write(int argc, const char **argv)
 	};
 
 	opts.progress = isatty(2);
+	opts.enable_changed_paths = -1;
 	split_opts.size_multiple = 2;
 	split_opts.max_commits = 0;
 	split_opts.expire_time = 0;
@@ -221,7 +222,9 @@ static int graph_write(int argc, const char **argv)
 		flags |= COMMIT_GRAPH_WRITE_SPLIT;
 	if (opts.progress)
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
-	if (opts.enable_changed_paths ||
+	if (!opts.enable_changed_paths)
+		flags |= COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS;
+	if (opts.enable_changed_paths == 1 ||
 	    git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 

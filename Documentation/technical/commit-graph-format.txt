@@ -32,7 +32,7 @@ the body into "chunks" and provide a binary lookup table at the beginning
 of the body. The header includes certain values, such as number of chunks
 and hash type.
 
-All 4-byte numbers are in network order.
+All multi-byte numbers are in network byte order.
 
 HEADER:
 
