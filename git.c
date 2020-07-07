@@ -768,7 +768,7 @@ static int run_argv(int *argcp, const char ***argv)
 			 * OK to return. Otherwise, we just pass along the status code.
 			 */
 			i = run_command_v_opt_tr2(args.argv, RUN_SILENT_EXEC_FAILURE |
-						  RUN_CLEAN_ON_EXIT, "git_alias");
+						  RUN_CLEAN_ON_EXIT | RUN_WAIT_AFTER_CLEAN, "git_alias");
 			if (i >= 0 || errno != ENOENT)
 				exit(i);
 			die("could not execute builtin %s", **argv);

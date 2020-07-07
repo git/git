@@ -224,6 +224,7 @@ int run_hook_ve(const char *const *env, const char *name, va_list args);
 #define RUN_SILENT_EXEC_FAILURE 8
 #define RUN_USING_SHELL 16
 #define RUN_CLEAN_ON_EXIT 32
+#define RUN_WAIT_AFTER_CLEAN 64
 
 /**
  * Convenience functions that encapsulate a sequence of
