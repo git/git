@@ -81,6 +81,20 @@ test_expect_success 'fetch --unshallow from shallow clone' '
 	)
 '
 
+test_expect_success 'fetch --unshallow from a full clone' '
+	git clone --no-local --depth=2 .git shallow3 &&
+	(
+	cd shallow3 &&
+	git log --format=%s >actual &&
+	test_write_lines 4 3 >expect &&
+	test_cmp expect actual &&
+	git -c fetch.writeCommitGraph fetch --unshallow &&
+	git log origin/master --format=%s >actual &&
+	test_write_lines 4 3 2 1 >expect &&
+	test_cmp expect actual
+	)
+'
+
 test_expect_success 'fetch something upstream has but hidden by clients shallow boundaries' '
 	# the blob "1" is available in .git but hidden by the
 	# shallow2/.git/shallow and it should be resent

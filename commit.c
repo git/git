@@ -435,6 +435,8 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	pptr = &item->parents;
 
 	graft = lookup_commit_graft(r, &item->object.oid);
+	if (graft)
+		r->parsed_objects->substituted_parent = 1;
 	while (bufptr + parent_entry_len < tail && !memcmp(bufptr, "parent ", 7)) {
 		struct commit *new_parent;
 
