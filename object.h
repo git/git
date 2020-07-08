@@ -25,6 +25,7 @@ struct parsed_object_pool {
 	char *alternate_shallow_file;
 
 	int commit_graft_prepared;
+	int substituted_parent;
 
 	struct buffer_slab *buffer_slab;
 };

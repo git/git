@@ -203,7 +203,8 @@ static int commit_graph_compatible(struct repository *r)
 	}
 
 	prepare_commit_graft(r);
-	if (r->parsed_objects && r->parsed_objects->grafts_nr)
+	if (r->parsed_objects &&
+	    (r->parsed_objects->grafts_nr || r->parsed_objects->substituted_parent))
 		return 0;
 	if (is_repository_shallow(r))
 		return 0;
