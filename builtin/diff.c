@@ -355,9 +355,9 @@ static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
 
 	sym->left = rev->pending.objects[lpos].name;
 	sym->right = rev->pending.objects[rpos].name;
-	sym->base = rev->pending.objects[basepos].name;
 	if (basecount == 0)
 		die(_("%s...%s: no merge base"), sym->left, sym->right);
+	sym->base = rev->pending.objects[basepos].name;
 	bitmap_unset(map, basepos);	/* unmark the base we want */
 	sym->warn = basecount > 1;
 	sym->skip = map;
