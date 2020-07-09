@@ -6,9 +6,8 @@ Updates since v2.27
 
 Backward compatibility notes
 
- * "feature.experimental" configuration variable is to let volunteers
-   easily opt into a set of newer features, which use of the v2
-   transport protocol is now a part of.
+ * "fetch.writeCommitGraph" is deemed to be still a bit too risky and
+   is no longer part of the "feature.experimental" set.
 
  * It used to be that setting extensions.* configuration variables
    alone, while leaving core.repositoryFormatVersion=0, made these
@@ -48,6 +47,10 @@ UI, Workflows & Features
 
  * "git fast-export --anonymize" learned to take customized mapping to
    allow its users to tweak its output more usable for debugging.
+
+ * The command line completion support (in contrib/) used to be
+   prepared to work with "set -u" but recent changes got a bit more
+   sloppy.  This has been corrected.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -191,6 +194,25 @@ Fixes since v2.27
    object flag bits, which has been corrected.
    (merge 64472d15e9 bc/http-push-flagsfix later to maint).
 
+ * "git send-email --in-reply-to=<msg>" did not use the In-Reply-To:
+   header with the value given from the command line, and let it be
+   overridden by the value on In-Reply-To: header in the messages
+   being sent out (if exists).
+   (merge f9f60d7066 ra/send-email-in-reply-to-from-command-line-wins later to maint).
+
+ * "git log -Lx,y:path --before=date" lost track of where the range
+   should be because it didn't take the changes made by the youngest
+   commits that are omitted from the output into account.
+
+ * When "fetch.writeCommitGraph" configuration is set in a shallow
+   repository and a fetch moves the shallow boundary, we wrote out
+   broken commit-graph files that do not match the reality, which has
+   been corrected.
+
+ * "git checkout" failed to catch an error from fstat() after updating
+   a path in the working tree.
+   (merge 35e6e212fd mt/entry-fstat-fallback-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
    (merge d63ae31962 cb/t5608-cleanup later to maint).
@@ -201,3 +223,5 @@ Fixes since v2.27
    (merge d546fe2874 rs/commit-reach-leakfix later to maint).
    (merge 087bf5409c mk/pb-pretty-email-without-domain-part-fix later to maint).
    (merge 5f4ee57ad9 es/worktree-code-cleanup later to maint).
+   (merge 0172f7834a cc/cat-file-usage-update later to maint).
+   (merge 81de0c01cf ma/rebase-doc-typofix later to maint).
