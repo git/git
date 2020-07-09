@@ -259,7 +259,7 @@ See also INCOMPATIBLE OPTIONS below.
 	unchanged as a result. If a temporary stash entry was created
 	using --autostash, it will be saved to the stash list.
 
---apply:
+--apply::
 	Use applying strategies to rebase (calling `git-am`
 	internally).  This option may become a no-op in the future
 	once the merge backend handles everything the apply one does.
