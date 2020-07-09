@@ -1354,12 +1354,13 @@ int write_commit_graph_reachable(struct object_directory *odb,
 			_("Collecting referenced commits"), 0);
 
 	for_each_ref(add_ref_to_set, &data);
+
+	stop_progress(&data.progress);
+
 	result = write_commit_graph(odb, NULL, &commits,
 				    flags, split_opts);
 
 	oidset_clear(&commits);
-	if (data.progress)
-		stop_progress(&data.progress);
 	return result;
 }
 
