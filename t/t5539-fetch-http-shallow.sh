@@ -9,10 +9,12 @@ start_httpd
 commit() {
 	echo "$1" >tracked &&
 	git add tracked &&
+	test_tick &&
 	git commit -m "$1"
 }
 
 test_expect_success 'setup shallow clone' '
+	test_tick=1500000000 &&
 	commit 1 &&
 	commit 2 &&
 	commit 3 &&
@@ -48,7 +50,6 @@ EOF
 test_expect_success 'no shallow lines after receiving ACK ready' '
 	(
 		cd shallow &&
-		test_tick &&
 		for i in $(test_seq 15)
 		do
 			git checkout --orphan unrelated$i &&
@@ -66,6 +67,7 @@ test_expect_success 'no shallow lines after receiving ACK ready' '
 	(
 		cd clone &&
 		git checkout --orphan newnew &&
+		test_tick=1400000000 &&
 		test_commit new-too &&
 		# NEEDSWORK: If the overspecification of the expected result is reduced, we
 		# might be able to run this test in all protocol versions.
