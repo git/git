@@ -14,6 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
+:git-rev-list: 1
 include::rev-list-description.txt[]
 
 'rev-list' is a very essential Git command, since it
