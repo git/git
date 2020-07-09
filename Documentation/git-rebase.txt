@@ -258,7 +258,7 @@ See also INCOMPATIBLE OPTIONS below.
 	original branch. The index and working tree are also left
 	unchanged as a result.
 
---apply:
+--apply::
 	Use applying strategies to rebase (calling `git-am`
 	internally).  This option may become a no-op in the future
 	once the merge backend handles everything the apply one does.
