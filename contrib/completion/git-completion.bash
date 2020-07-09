@@ -50,7 +50,7 @@ esac
 # variable.
 __git_find_repo_path ()
 {
-	if [ -n "$__git_repo_path" ]; then
+	if [ -n "${__git_repo_path-}" ]; then
 		# we already know where it is
 		return
 	fi
@@ -404,12 +404,12 @@ __gitcomp_builtin ()
 	# spaces must be replaced with underscore for multi-word
 	# commands, e.g. "git remote add" becomes remote_add.
 	local cmd="$1"
-	local incl="$2"
-	local excl="$3"
+	local incl="${2-}"
+	local excl="${3-}"
 
 	local var=__gitcomp_builtin_"${cmd/-/_}"
 	local options
-	eval "options=\$$var"
+	eval "options=\${$var-}"
 
 	if [ -z "$options" ]; then
 		# leading and trailing spaces are significant to make
@@ -801,7 +801,7 @@ __git_refs ()
 #                --remote is only compatible with --mode=refs.
 __git_complete_refs ()
 {
-	local remote dwim pfx cur_="$cur" sfx=" " mode="refs"
+	local remote= dwim= pfx= cur_="$cur" sfx=" " mode="refs"
 
 	while test $# != 0; do
 		case "$1" in
@@ -1152,7 +1152,7 @@ __git_find_on_cmdline ()
 	while [ $c -lt $cword ]; do
 		for word in $wordlist; do
 			if [ "$word" = "${words[c]}" ]; then
-				if [ -n "$show_idx" ]; then
+				if [ -n "${show_idx-}" ]; then
 					echo "$c $word"
 				else
 					echo "$word"
@@ -1468,7 +1468,7 @@ __git_checkout_default_dwim_mode ()
 {
 	local last_option dwim_opt="--dwim"
 
-	if [ "$GIT_COMPLETION_CHECKOUT_NO_GUESS" = "1" ]; then
+	if [ "${GIT_COMPLETION_CHECKOUT_NO_GUESS-}" = "1" ]; then
 		dwim_opt=""
 	fi
 
@@ -3350,7 +3350,7 @@ __git_main ()
 		((c++))
 	done
 
-	if [ -z "$command" ]; then
+	if [ -z "${command-}" ]; then
 		case "$prev" in
 		--git-dir|-C|--work-tree)
 			# these need a path argument, let's fall back to
@@ -3385,7 +3385,7 @@ __git_main ()
 			"
 			;;
 		*)
-			if test -n "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
+			if test -n "${GIT_TESTING_PORCELAIN_COMMAND_LIST-}"
 			then
 				__gitcomp "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
 			else
