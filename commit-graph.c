@@ -1157,24 +1157,16 @@ static int write_graph_chunk_bloom_indexes(struct hashfile *f,
 	struct commit **list = ctx->commits.list;
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
 	uint32_t cur_pos = 0;
-	struct progress *progress = NULL;
-	int i = 0;
-
-	if (ctx->report_progress)
-		progress = start_delayed_progress(
-			_("Writing changed paths Bloom filters index"),
-			ctx->commits.nr);
 
 	while (list < last) {
 		struct bloom_filter *filter = get_bloom_filter(ctx->r, *list, 0);
 		size_t len = filter ? filter->len : 0;
 		cur_pos += len;
-		display_progress(progress, ++i);
+		display_progress(ctx->progress, ++ctx->progress_cnt);
 		hashwrite_be32(f, cur_pos);
 		list++;
 	}
 
-	stop_progress(&progress);
 	return 0;
 }
 
@@ -1198,15 +1190,8 @@ static int write_graph_chunk_bloom_data(struct hashfile *f,
 {
 	struct commit **list = ctx->commits.list;
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
-	struct progress *progress = NULL;
-	int i = 0;
 
 	trace2_bloom_filter_settings(ctx);
-
-	if (ctx->report_progress)
-		progress = start_delayed_progress(
-			_("Writing changed paths Bloom filters data"),
-			ctx->commits.nr);
 
 	hashwrite_be32(f, ctx->bloom_settings->hash_version);
 	hashwrite_be32(f, ctx->bloom_settings->num_hashes);
@@ -1215,14 +1200,13 @@ static int write_graph_chunk_bloom_data(struct hashfile *f,
 	while (list < last) {
 		struct bloom_filter *filter = get_bloom_filter(ctx->r, *list, 0);
 		size_t len = filter ? filter->len : 0;
-		display_progress(progress, ++i);
 
+		display_progress(ctx->progress, ++ctx->progress_cnt);
 		if (len)
 			hashwrite(f, filter->data, len * sizeof(unsigned char));
 		list++;
 	}
 
-	stop_progress(&progress);
 	return 0;
 }
 
@@ -1453,12 +1437,13 @@ int write_commit_graph_reachable(struct object_directory *odb,
 			_("Collecting referenced commits"), 0);
 
 	for_each_ref(add_ref_to_set, &data);
+
+	stop_progress(&data.progress);
+
 	result = write_commit_graph(odb, NULL, &commits,
 				    flags, split_opts);
 
 	oidset_clear(&commits);
-	if (data.progress)
-		stop_progress(&data.progress);
 	return result;
 }
 
