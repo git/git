@@ -19,12 +19,12 @@ given commit(s), but exclude commits that are reachable from the one(s)
 given with a '{caret}' in front of them.  The output is given in reverse
 chronological order by default.
 
-You can think of this as a set operation.  Commits given on the command
-line form a set of commits that are reachable from any of them, and then
-commits reachable from any of the ones given with '{caret}' in front are
-subtracted from that set.  The remaining commits are what comes out in the
-command's output.  Various other options and paths parameters can be used
-to further limit the result.
+You can think of this as a set operation. Commits reachable from any of
+the commits given on the command line form a set, and then commits reachable
+from any of the ones given with '{caret}' in front are subtracted from that
+set.  The remaining commits are what comes out in the command's output.
+Various other options and paths parameters can be used to further limit the
+result.
 
 Thus, the following command:
 
