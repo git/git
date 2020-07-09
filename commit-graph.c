@@ -1086,23 +1086,14 @@ static void write_graph_chunk_bloom_indexes(struct hashfile *f,
 	struct commit **list = ctx->commits.list;
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
 	uint32_t cur_pos = 0;
-	struct progress *progress = NULL;
-	int i = 0;
-
-	if (ctx->report_progress)
-		progress = start_delayed_progress(
-			_("Writing changed paths Bloom filters index"),
-			ctx->commits.nr);
 
 	while (list < last) {
 		struct bloom_filter *filter = get_bloom_filter(ctx->r, *list, 0);
 		cur_pos += filter->len;
-		display_progress(progress, ++i);
+		display_progress(ctx->progress, ++ctx->progress_cnt);
 		hashwrite_be32(f, cur_pos);
 		list++;
 	}
-
-	stop_progress(&progress);
 }
 
 static void write_graph_chunk_bloom_data(struct hashfile *f,
@@ -1111,13 +1102,6 @@ static void write_graph_chunk_bloom_data(struct hashfile *f,
 {
 	struct commit **list = ctx->commits.list;
 	struct commit **last = ctx->commits.list + ctx->commits.nr;
-	struct progress *progress = NULL;
-	int i = 0;
-
-	if (ctx->report_progress)
-		progress = start_delayed_progress(
-			_("Writing changed paths Bloom filters data"),
-			ctx->commits.nr);
 
 	hashwrite_be32(f, settings->hash_version);
 	hashwrite_be32(f, settings->num_hashes);
@@ -1125,12 +1109,10 @@ static void write_graph_chunk_bloom_data(struct hashfile *f,
 
 	while (list < last) {
 		struct bloom_filter *filter = get_bloom_filter(ctx->r, *list, 0);
-		display_progress(progress, ++i);
+		display_progress(ctx->progress, ++ctx->progress_cnt);
 		hashwrite(f, filter->data, filter->len * sizeof(unsigned char));
 		list++;
 	}
-
-	stop_progress(&progress);
 }
 
 static int oid_compare(const void *_a, const void *_b)
