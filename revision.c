@@ -1410,7 +1410,8 @@ static int limit_list(struct rev_info *revs)
 				continue;
 			break;
 		}
-		if (revs->min_age != -1 && (commit->date > revs->min_age))
+		if (revs->min_age != -1 && (commit->date > revs->min_age) &&
+		    !revs->line_level_traverse)
 			continue;
 		date = commit->date;
 		p = &commit_list_insert(commit, p)->next;
