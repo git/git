@@ -96,12 +96,6 @@ enum peel_status {
  */
 enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
 
-/*
- * Copy the reflog message msg to sb while cleaning up the whitespaces.
- * Especially, convert LF to space, because reflog file is one line per entry.
- */
-void copy_reflog_msg(struct strbuf *sb, const char *msg);
-
 /**
  * Information needed for a single ref update. Set new_oid to the new
  * value or to null_oid to delete the ref. To check the old value
