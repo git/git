@@ -218,6 +218,13 @@ ssize_t git_config_ssize_t(const char *, const char *);
 int git_config_bool_or_int(const char *, const char *, int *);
 
 /**
+ * Same as `git_config_bool`, except that `is_bool` flag is unset, then if
+ * `dest` parameter is non-NULL, it allocates and copies the value string
+ * into the `dest`, if `dest` is NULL and `is_bool` flag is unset it return 0.
+ */
+int git_config_bool_or_str(const char **, const char *, const char *, int *);
+
+/**
  * Parse a string into a boolean value, respecting keywords like "true" and
  * "false". Integer values are converted into true/false values (when they
  * are non-zero or zero, respectively). Other values cause a die(). If

@@ -1100,6 +1100,20 @@ int git_config_bool_or_int(const char *name, const char *value, int *is_bool)
 	return git_config_int(name, value);
 }
 
+int git_config_bool_or_str(const char **dest, const char *name, const char *value, int *is_bool)
+{
+	int v = git_parse_maybe_bool_text(value);
+	if (0 <= v) {
+		*is_bool = 1;
+		return v;
+	}
+	*is_bool = 0;
+	if (dest != NULL)
+	  return git_config_string(dest, name, value);
+	else
+	  return 0;
+}
+
 int git_config_bool(const char *name, const char *value)
 {
 	int discard;
