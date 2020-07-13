@@ -65,7 +65,7 @@ static int show_scope;
 #define TYPE_PATH		4
 #define TYPE_EXPIRY_DATE	5
 #define TYPE_COLOR		6
-#define TYPE_BOOL_OR_STR        7
+#define TYPE_BOOL_OR_STR	7
 
 #define OPT_CALLBACK_VALUE(s, l, v, h, i) \
 	{ OPTION_CALLBACK, (s), (l), (v), NULL, (h), PARSE_OPT_NOARG | \
@@ -255,12 +255,11 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 			else
 				strbuf_addf(buf, "%d", v);
 		} else if (type == TYPE_BOOL_OR_STR) {
-			int is_bool, v;
-			v = git_config_bool_or_str(NULL, key_, value_, &is_bool);
-			if (is_bool)
-				strbuf_addstr(buf, v ? "true" : "false");
-			else
+			int v = git_parse_maybe_bool(value_);
+			if (v < 0)
 				strbuf_addstr(buf, value_);
+			else
+				strbuf_addstr(buf, v ? "true" : "false");
 		} else if (type == TYPE_PATH) {
 			const char *v;
 			if (git_config_pathname(&v, key_, value_) < 0)
@@ -423,9 +422,8 @@ static char *normalize_value(const char *key, const char *value)
 			return xstrdup(v ? "true" : "false");
 	}
 	if (type == TYPE_BOOL_OR_STR) {
-		int is_bool, v;
-		v = git_config_bool_or_str(NULL, key, value, &is_bool);
-		if (!is_bool)
+		int v = git_parse_maybe_bool(value);
+		if (v < 0)
 			return xstrdup(value);
 		else
 			return xstrdup(v ? "true" : "false");
