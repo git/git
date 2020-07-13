@@ -69,7 +69,7 @@ files on disk.
 	one side is omitted, it will have the same effect as
 	using HEAD instead.
 
-'git diff' [<options>] <commit> [<commit>...] <commit> [--] [<path>...]::
+'git diff' [<options>] <commit> <commit>... <commit> [--] [<path>...]::
 
 	This form is to view the results of a merge commit.  The first
 	listed <commit> must be the merge itself; the remaining two or
