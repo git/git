@@ -8,6 +8,10 @@ GIT_SVN_LC_ALL=${LC_ALL:-$LANG}
 
 . ./lib-git-svn.sh
 
+# Make sure timestamps of commits created by Git interleave
+# with those created by "svn set-tree".
+unset GIT_COMMITTER_DATE
+
 case "$GIT_SVN_LC_ALL" in
 *.UTF-8)
 	test_set_prereq UTF8
