@@ -213,6 +213,14 @@ Fixes since v2.27
    a path in the working tree.
    (merge 35e6e212fd mt/entry-fstat-fallback-fix later to maint).
 
+ * When an aliased command, whose output is piped to a pager by git,
+   gets killed by a signal, the pager got into a funny state, which
+   has been corrected (again).
+   (merge c0d73a59c9 ta/wait-on-aliased-commands-upon-signal later to maint).
+
+ * The code to produce progress output from "git commit-graph --write"
+   had a few breakages, which have been fixed.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
    (merge d63ae31962 cb/t5608-cleanup later to maint).
