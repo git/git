@@ -1171,20 +1171,6 @@ static int has_dir_name(struct index_state *istate,
 				return retval;
 			}
 
-			if (istate->cache_nr > 0 &&
-				ce_namelen(istate->cache[istate->cache_nr - 1]) > len) {
-				/*
-				 * The directory prefix lines up with part of
-				 * a longer file or directory name, but sorts
-				 * after it, so this sub-directory cannot
-				 * collide with a file.
-				 *
-				 * last: xxx/yy-file (because '-' sorts before '/')
-				 * this: xxx/yy/abc
-				 */
-				return retval;
-			}
-
 			/*
 			 * This is a possible collision. Fall through and
 			 * let the regular search code handle it.
