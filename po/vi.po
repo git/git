@@ -9924,11 +9924,11 @@ msgstr "thiếu dòng tác giả trong lần chuyển gia %s"
 #: builtin/am.c:1270
 #, c-format
 msgid "invalid ident line: %.*s"
-msgstr "dòng thụt lề không hợp lệ: %.*s"
+msgstr "dòng định danh không hợp lệ: %.*s"
 
 #: builtin/am.c:1489
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
-msgstr "Kho thiếu đối tượng blob cần thiết để trở về trên “3-way merge”."
+msgstr "Kho thiếu đối tượng blob cần thiết để thực hiện “3-way merge”."
 
 #: builtin/am.c:1491
 msgid "Using index info to reconstruct a base tree..."
@@ -9945,7 +9945,7 @@ msgstr ""
 
 #: builtin/am.c:1516
 msgid "Falling back to patching base and 3-way merge..."
-msgstr "Đang trở lại để vá cơ sở và “hòa trộn 3-đường”…"
+msgstr "Đang dùng phương án dự phòng: vá bản cơ sở và “hòa trộn 3-đường”…"
 
 #: builtin/am.c:1542
 msgid "Failed to merge in the changes."
@@ -16072,11 +16072,11 @@ msgstr "tỷ lệ phần trăm theo cái tạo là weighted"
 #: builtin/log.c:1812
 #, c-format
 msgid "invalid ident line: %s"
-msgstr "dòng thụt lề không hợp lệ: %s"
+msgstr "dòng định danh không hợp lệ: %s"
 
 #: builtin/log.c:1827
 msgid "-n and -k are mutually exclusive"
-msgstr "-n và  -k loại từ lẫn nhau"
+msgstr "-n và -k loại trừ lẫn nhau"
 
 #: builtin/log.c:1829
 msgid "--subject-prefix/--rfc and -k are mutually exclusive"
@@ -25332,7 +25332,7 @@ msgstr "Bạn có thực sự muốn gửi %s? [y|N](có/KHÔNG): "
 #~ msgstr "không thể chép “%s” sang “%s”."
 
 #~ msgid "malformed ident line"
-#~ msgstr "thụt đầu dòng dị hình"
+#~ msgstr "dòng định danh không hợp lệ"
 
 #~ msgid "corrupted author without date information"
 #~ msgstr "tác giả sai hỏng không có thông tin này tháng"
