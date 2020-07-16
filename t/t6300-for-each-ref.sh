@@ -52,6 +52,25 @@ test_atom() {
 		sanitize_pgp <actual >actual.clean &&
 		test_cmp expected actual.clean
 	"
+	# Automatically test "contents:size" atom after testing "contents"
+	if test "$2" = "contents"
+	then
+		case $(git cat-file -t "$ref") in
+		tag)
+			# We cannot use $3 as it expects sanitize_pgp to run
+			expect=$(git cat-file tag $ref | tail -n +6 | wc -c) ;;
+		tree | blob)
+			expect='' ;;
+		commit)
+			expect=$(printf '%s' "$3" | wc -c) ;;
+		esac
+		# Leave $expect unquoted to lose possible leading whitespaces
+		echo $expect >expected
+		test_expect_${4:-sucess} $PREREQ "basic atom: $1 contents:size" '
+			git for-each-ref --format="%(contents:size)" "$ref" >actual &&
+			test_cmp expect actual
+		'
+	fi
 }
 
 hexlen=$(test_oid hexsz)
