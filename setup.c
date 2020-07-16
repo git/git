@@ -447,6 +447,54 @@ static int read_worktree_config(const char *var, const char *value, void *vdata)
 	return 0;
 }
 
+enum extension_result {
+	EXTENSION_ERROR = -1, /* compatible with error(), etc */
+	EXTENSION_UNKNOWN = 0,
+	EXTENSION_OK = 1
+};
+
+/*
+ * Do not add new extensions to this function. It handles extensions which are
+ * respected even in v0-format repositories for historical compatibility.
+ */
+static enum extension_result handle_extension_v0(const char *var,
+						 const char *value,
+						 const char *ext,
+						 struct repository_format *data)
+{
+		if (!strcmp(ext, "noop")) {
+			return EXTENSION_OK;
+		} else if (!strcmp(ext, "preciousobjects")) {
+			data->precious_objects = git_config_bool(var, value);
+			return EXTENSION_OK;
+		} else if (!strcmp(ext, "partialclone")) {
+			if (!value)
+				return config_error_nonbool(var);
+			data->partial_clone = xstrdup(value);
+			return EXTENSION_OK;
+		} else if (!strcmp(ext, "worktreeconfig")) {
+			data->worktree_config = git_config_bool(var, value);
+			return EXTENSION_OK;
+		}
+
+		return EXTENSION_UNKNOWN;
+}
+
+/*
+ * Record any new extensions in this function.
+ */
+static enum extension_result handle_extension(const char *var,
+					      const char *value,
+					      const char *ext,
+					      struct repository_format *data)
+{
+	if (!strcmp(ext, "noop-v1")) {
+		return EXTENSION_OK;
+	}
+
+	return EXTENSION_UNKNOWN;
+}
+
 static int check_repo_format(const char *var, const char *value, void *vdata)
 {
 	struct repository_format *data = vdata;
@@ -455,24 +503,25 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 	if (strcmp(var, "core.repositoryformatversion") == 0)
 		data->version = git_config_int(var, value);
 	else if (skip_prefix(var, "extensions.", &ext)) {
-		data->has_extensions = 1;
-		/*
-		 * record any known extensions here; otherwise,
-		 * we fall through to recording it as unknown, and
-		 * check_repository_format will complain
-		 */
-		if (!strcmp(ext, "noop"))
-			;
-		else if (!strcmp(ext, "preciousobjects"))
-			data->precious_objects = git_config_bool(var, value);
-		else if (!strcmp(ext, "partialclone")) {
-			if (!value)
-				return config_error_nonbool(var);
-			data->partial_clone = xstrdup(value);
-		} else if (!strcmp(ext, "worktreeconfig"))
-			data->worktree_config = git_config_bool(var, value);
-		else
+		switch (handle_extension_v0(var, value, ext, data)) {
+		case EXTENSION_ERROR:
+			return -1;
+		case EXTENSION_OK:
+			return 0;
+		case EXTENSION_UNKNOWN:
+			break;
+		}
+
+		switch (handle_extension(var, value, ext, data)) {
+		case EXTENSION_ERROR:
+			return -1;
+		case EXTENSION_OK:
+			string_list_append(&data->v1_only_extensions, ext);
+			return 0;
+		case EXTENSION_UNKNOWN:
 			string_list_append(&data->unknown_extensions, ext);
+			return 0;
+		}
 	}
 
 	return read_worktree_config(var, value, vdata);
@@ -507,16 +556,11 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 		die("%s", err.buf);
 	}
 
-	if (candidate->version >= 1) {
-		repository_format_precious_objects = candidate->precious_objects;
-		set_repository_format_partial_clone(candidate->partial_clone);
-		repository_format_worktree_config = candidate->worktree_config;
-	} else {
-		repository_format_precious_objects = 0;
-		set_repository_format_partial_clone(NULL);
-		repository_format_worktree_config = 0;
-	}
+	repository_format_precious_objects = candidate->precious_objects;
+	set_repository_format_partial_clone(candidate->partial_clone);
+	repository_format_worktree_config = candidate->worktree_config;
 	string_list_clear(&candidate->unknown_extensions, 0);
+	string_list_clear(&candidate->v1_only_extensions, 0);
 
 	if (repository_format_worktree_config) {
 		/*
@@ -559,13 +603,16 @@ int upgrade_repository_format(int target_version)
 	if (repo_fmt.version >= target_version)
 		return 0;
 
-	if (verify_repository_format(&repo_fmt, &err) < 0 ||
-	    (!repo_fmt.version && repo_fmt.has_extensions)) {
-		warning("unable to upgrade repository format from %d to %d: %s",
-			repo_fmt.version, target_version, err.buf);
+	if (verify_repository_format(&repo_fmt, &err) < 0) {
+		error("cannot upgrade repository format from %d to %d: %s",
+		      repo_fmt.version, target_version, err.buf);
 		strbuf_release(&err);
 		return -1;
 	}
+	if (!repo_fmt.version && repo_fmt.unknown_extensions.nr)
+		return error("cannot upgrade repository format: "
+			     "unknown extension %s",
+			     repo_fmt.unknown_extensions.items[0].string);
 
 	strbuf_addf(&repo_version, "%d", target_version);
 	git_config_set("core.repositoryformatversion", repo_version.buf);
@@ -592,6 +639,7 @@ int read_repository_format(struct repository_format *format, const char *path)
 void clear_repository_format(struct repository_format *format)
 {
 	string_list_clear(&format->unknown_extensions, 0);
+	string_list_clear(&format->v1_only_extensions, 0);
 	free(format->work_tree);
 	free(format->partial_clone);
 	init_repository_format(format);
@@ -614,6 +662,18 @@ int verify_repository_format(const struct repository_format *format,
 		for (i = 0; i < format->unknown_extensions.nr; i++)
 			strbuf_addf(err, "\n\t%s",
 				    format->unknown_extensions.items[i].string);
+		return -1;
+	}
+
+	if (format->version == 0 && format->v1_only_extensions.nr) {
+		int i;
+
+		strbuf_addstr(err,
+			      _("repo version is 0, but v1-only extensions found:"));
+
+		for (i = 0; i < format->v1_only_extensions.nr; i++)
+			strbuf_addf(err, "\n\t%s",
+				    format->v1_only_extensions.items[i].string);
 		return -1;
 	}
 
