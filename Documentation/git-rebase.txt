@@ -450,8 +450,9 @@ See also INCOMPATIBLE OPTIONS below.
 	date. This option implies --force-rebase.
 
 --ignore-date::
-	This flag is passed to 'git am' to change the author date
-	of each rebased commit (see linkgit:git-am[1]).
+	Instead of using the author date of the original commit, use
+	the current time as the	author date of the rebased commit.  This
+	option implies `--force-rebase`.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -589,7 +590,6 @@ INCOMPATIBLE OPTIONS
 The following options:
 
  * --apply
- * --ignore-date
  * --whitespace
  * -C
 
@@ -617,6 +617,7 @@ In addition, the following pairs of options are incompatible:
  * --preserve-merges and --empty=
  * --preserve-merges and --ignore-whitespace
  * --preserve-merges and --committer-date-is-author-date
+ * --preserve-merges and --ignore-date
  * --keep-base and --onto
  * --keep-base and --root
 
