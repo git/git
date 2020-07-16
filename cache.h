@@ -1044,6 +1044,7 @@ struct repository_format {
 	int hash_algo;
 	char *work_tree;
 	struct string_list unknown_extensions;
+	struct string_list v1_only_extensions;
 };
 
 /*
@@ -1057,6 +1058,7 @@ struct repository_format {
 	.is_bare = -1, \
 	.hash_algo = GIT_HASH_SHA1, \
 	.unknown_extensions = STRING_LIST_INIT_DUP, \
+	.v1_only_extensions = STRING_LIST_INIT_DUP, \
 }
 
 /*
