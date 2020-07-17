@@ -118,6 +118,14 @@ Performance, Internal Implementation, Development Support etc.
 
  * The effort to avoid using test_must_fail on non-git command continues.
 
+ * In 2.28-rc0, we corrected a bug that some repository extensions are
+   honored by mistake even in a version 0 repositories (these
+   configuration variables in extensions.* namespace were supposed to
+   have special meaning in repositories whose version numbers are 1 or
+   higher), but this was a bit too big a change.  The behaviour in
+   recent versions of Git where certaion extensions.* were honored by
+   mistake even in version 0 repositories has been restored.
+
 
 Fixes since v2.27
 -----------------
