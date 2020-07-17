@@ -9,15 +9,6 @@ Backward compatibility notes
  * "fetch.writeCommitGraph" is deemed to be still a bit too risky and
    is no longer part of the "feature.experimental" set.
 
- * It used to be that setting extensions.* configuration variables
-   alone, while leaving core.repositoryFormatVersion=0, made these
-   settings effective, which was a wrong thing to do.  In version 0,
-   there was no special meaning in extensions.* configuration
-   variables.  This has been corrected.  If you need these repository
-   extensions to be effective, the core.repositoryFormatVersion
-   variable needs to be updated to 1 after vetting these extensions.*
-   variables are set correctly.
-
 
 UI, Workflows & Features
 
