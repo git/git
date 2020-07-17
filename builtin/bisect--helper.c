@@ -572,7 +572,7 @@ static enum bisect_error bisect_next(struct bisect_terms *terms, const char *pre
 	if (bisect_next_check(terms, terms->term_good))
 		return BISECT_FAILED;
 
-	no_checkout = file_exists(git_path_bisect_head());
+	no_checkout = ref_exists("BISECT_HEAD");
 
 	/* Perform all bisection computation, display and checkout */
 	res = bisect_next_all(the_repository, prefix, no_checkout);
