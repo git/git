@@ -455,7 +455,6 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 	if (strcmp(var, "core.repositoryformatversion") == 0)
 		data->version = git_config_int(var, value);
 	else if (skip_prefix(var, "extensions.", &ext)) {
-		data->has_extensions = 1;
 		/*
 		 * record any known extensions here; otherwise,
 		 * we fall through to recording it as unknown, and
@@ -507,15 +506,9 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 		die("%s", err.buf);
 	}
 
-	if (candidate->version >= 1) {
-		repository_format_precious_objects = candidate->precious_objects;
-		set_repository_format_partial_clone(candidate->partial_clone);
-		repository_format_worktree_config = candidate->worktree_config;
-	} else {
-		repository_format_precious_objects = 0;
-		set_repository_format_partial_clone(NULL);
-		repository_format_worktree_config = 0;
-	}
+	repository_format_precious_objects = candidate->precious_objects;
+	set_repository_format_partial_clone(candidate->partial_clone);
+	repository_format_worktree_config = candidate->worktree_config;
 	string_list_clear(&candidate->unknown_extensions, 0);
 
 	if (repository_format_worktree_config) {
@@ -559,13 +552,16 @@ int upgrade_repository_format(int target_version)
 	if (repo_fmt.version >= target_version)
 		return 0;
 
-	if (verify_repository_format(&repo_fmt, &err) < 0 ||
-	    (!repo_fmt.version && repo_fmt.has_extensions)) {
-		warning("unable to upgrade repository format from %d to %d: %s",
-			repo_fmt.version, target_version, err.buf);
+	if (verify_repository_format(&repo_fmt, &err) < 0) {
+		error("cannot upgrade repository format from %d to %d: %s",
+		      repo_fmt.version, target_version, err.buf);
 		strbuf_release(&err);
 		return -1;
 	}
+	if (!repo_fmt.version && repo_fmt.unknown_extensions.nr)
+		return error("cannot upgrade repository format: "
+			     "unknown extension %s",
+			     repo_fmt.unknown_extensions.items[0].string);
 
 	strbuf_addf(&repo_version, "%d", target_version);
 	git_config_set("core.repositoryformatversion", repo_version.buf);
