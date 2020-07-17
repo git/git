@@ -6,6 +6,17 @@ Welcome to the Git development community.
 This message is written by the maintainer and talks about how Git
 project is managed, and how you can work with it.
 
+The current maintainer is Junio C Hamano <gitster@pobox.com>; please
+do not send any private message to this address, because it is likely
+that such a message will not be seen by any human being.  Spam filters
+learned that legitimate messages to the address come only from a very
+few sender addresses that are known to be good, and messages from all
+others are likely to be spam unless they are also sent to the mailing
+list at the same time (i.e. "Reply-all" to the list message would
+reach the mailbox, but "Reply" will likely be thrown into the spam
+folder).
+
+
 * Mailing list and the community
 
 The development is primarily done on the Git mailing list. Help
