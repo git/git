@@ -43,6 +43,12 @@ void strmap_init_with_options(struct strmap *map,
 void strmap_clear(struct strmap *map, int free_values);
 
 /*
+ * Similar to strmap_clear() but leaves map->map->table allocated and
+ * pre-sized so that subsequent uses won't need as many rehashings.
+ */
+void strmap_partial_clear(struct strmap *map, int free_values);
+
+/*
  * Insert "str" into the map, pointing to "data".
  *
  * If an entry for "str" already exists, its data pointer is overwritten, and

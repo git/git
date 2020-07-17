@@ -64,6 +64,12 @@ void strmap_clear(struct strmap *map, int free_values)
 	hashmap_clear(&map->map);
 }
 
+void strmap_partial_clear(struct strmap *map, int free_values)
+{
+	strmap_free_entries_(map, free_values);
+	hashmap_partial_clear(&map->map);
+}
+
 void *strmap_put(struct strmap *map, const char *str, void *data)
 {
 	struct strmap_entry *entry = find_strmap_entry(map, str);
