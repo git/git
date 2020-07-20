@@ -357,31 +357,10 @@ proc _is_git {path {outdir_var ""}} {
 	if {$outdir_var ne ""} {
 		upvar 1 $outdir_var outdir
 	}
-	if {[file isfile $path]} {
-		set fp [open $path r]
-		gets $fp line
-		close $fp
-		if {[regexp "^gitdir: (.+)$" $line line link_target]} {
-			set path [file join [file dirname $path] $link_target]
-			set path [file normalize $path]
-		}
+	if {[catch {set outdir [git rev-parse --resolve-git-dir $path]}]} {
+		return 0
 	}
-
-	if {[file exists [file join $path HEAD]]
-	 && [file exists [file join $path objects]]
-	 && [file exists [file join $path config]]} {
-		set outdir $path
-		return 1
-	}
-	if {[is_Cygwin]} {
-		if {[file exists [file join $path HEAD]]
-		 && [file exists [file join $path objects.lnk]]
-		 && [file exists [file join $path config.lnk]]} {
-			set outdir $path
-			return 1
-		}
-	}
-	return 0
+	return 1
 }
 
 proc _objdir {path} {
