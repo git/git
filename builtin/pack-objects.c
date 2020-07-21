@@ -1707,6 +1707,8 @@ static int can_reuse_delta(const struct object_id *base_oid,
 static void check_object(struct object_entry *entry)
 {
 	unsigned long canonical_size;
+	enum object_type type;
+	struct object_info oi = {.typep = &type, .sizep = &canonical_size};
 
 	if (IN_PACK(entry)) {
 		struct packed_git *p = IN_PACK(entry);
@@ -1840,8 +1842,10 @@ static void check_object(struct object_entry *entry)
 		unuse_pack(&w_curs);
 	}
 
-	oe_set_type(entry,
-		    oid_object_info(the_repository, &entry->idx.oid, &canonical_size));
+	if (oid_object_info_extended(the_repository, &entry->idx.oid, &oi,
+				     OBJECT_INFO_LOOKUP_REPLACE) < 0)
+		type = -1;
+	oe_set_type(entry, type);
 	if (entry->type_valid) {
 		SET_SIZE(entry, canonical_size);
 	} else {
