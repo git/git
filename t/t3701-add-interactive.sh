@@ -31,7 +31,16 @@ diff_cmp () {
 # indicates a dumb terminal, so we set that variable, too.
 
 force_color () {
-	env GIT_PAGER_IN_USE=true TERM=vt100 "$@"
+	# The first element of $@ may be a shell function, as a result POSIX
+	# does not guarantee that "one-shot assignment" will not persist after
+	# the function call. Thus, we prevent these variables from escaping
+	# this function's context with this subshell.
+	(
+		GIT_PAGER_IN_USE=true &&
+		TERM=vt100 &&
+		export GIT_PAGER_IN_USE TERM &&
+		"$@"
+	)
 }
 
 test_expect_success 'setup (initial)' '
@@ -604,7 +613,7 @@ test_expect_success 'detect bogus diffFilter output' '
 	echo content >test &&
 	test_config interactive.diffFilter "sed 1d" &&
 	printf y >y &&
-	test_must_fail force_color git add -p <y
+	force_color test_must_fail git add -p <y
 '
 
 test_expect_success 'diff.algorithm is passed to `git diff-files`' '

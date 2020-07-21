@@ -399,7 +399,7 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'handles file descriptor exhaustion'
 		for i in $(test_seq 64)
 		do
 			test_commit $i &&
-			test_might_fail run_with_limited_open_files git commit-graph write \
+			run_with_limited_open_files test_might_fail git commit-graph write \
 				--split=no-merge --reachable || return 1
 		done
 	)
