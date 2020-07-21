@@ -433,7 +433,7 @@ __git_ps1 ()
 	local sparse=""
 	if [ -z "${GIT_PS1_COMPRESSSPARSESTATE}" ] &&
 	   [ -z "${GIT_PS1_OMITSPARSESTATE}" ] &&
-	   [ "$(git config --bool core.sparseCheckout)" == "true" ]; then
+	   [ "$(git config --bool core.sparseCheckout)" = "true" ]; then
 		sparse="|SPARSE"
 	fi
 
@@ -542,7 +542,7 @@ __git_ps1 ()
 		fi
 
 		if [ -n "${GIT_PS1_COMPRESSSPARSESTATE}" ] &&
-		   [ "$(git config --bool core.sparseCheckout)" == "true" ]; then
+		   [ "$(git config --bool core.sparseCheckout)" = "true" ]; then
 			h="?"
 		fi
 
