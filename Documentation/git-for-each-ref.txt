@@ -232,12 +232,27 @@ Fields that have name-email-date tuple as its value (`author`,
 `committer`, and `tagger`) can be suffixed with `name`, `email`,
 and `date` to extract the named component.
 
-The complete message in a commit and tag object is `contents`.
-Its first line is `contents:subject`, where subject is the concatenation
-of all lines of the commit message up to the first blank line.  The next
-line is `contents:body`, where body is all of the lines after the first
-blank line.  The optional GPG signature is `contents:signature`.  The
-first `N` lines of the message is obtained using `contents:lines=N`.
+The message in a commit or a tag object is `contents`, from which
+`contents:<part>` can be used to extract various parts out of:
+
+contents:size::
+	The size in bytes of the commit or tag message.
+
+contents:subject::
+	The first paragraph of the message, which typically is a
+	single line, is taken as the "subject" of the commit or the
+	tag message.
+
+contents:body::
+	The remainder of the commit or the tag message that follows
+	the "subject".
+
+contents:signature::
+	The optional GPG signature of the tag.
+
+contents:lines=N::
+	The first `N` lines of the message.
+
 Additionally, the trailers as interpreted by linkgit:git-interpret-trailers[1]
 are obtained as `trailers` (or by using the historical alias
 `contents:trailers`).  Non-trailer lines from the trailer block can be omitted
