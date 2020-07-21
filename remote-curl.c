@@ -121,7 +121,11 @@ static int set_option(const char *name, const char *value)
 	}
 	else if (!strcmp(name, "cas")) {
 		struct strbuf val = STRBUF_INIT;
-		strbuf_addf(&val, "--" CAS_OPT_NAME "=%s", value);
+		strbuf_addstr(&val, "--force-with-lease=");
+		if (*value != '"')
+			strbuf_addstr(&val, value);
+		else if (unquote_c_style(&val, value, NULL))
+			return -1;
 		string_list_append(&cas_options, val.buf);
 		strbuf_release(&val);
 		return 0;
