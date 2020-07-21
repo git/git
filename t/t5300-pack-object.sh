@@ -497,4 +497,40 @@ test_expect_success 'make sure index-pack detects the SHA1 collision (large blob
 	)
 '
 
+test_expect_success 'prefetch objects' '
+	rm -rf server client &&
+
+	git init server &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server protocol.version 2 &&
+
+	echo one >server/one &&
+	git -C server add one &&
+	git -C server commit -m one &&
+	git -C server branch one_branch &&
+
+	echo two_a >server/two_a &&
+	echo two_b >server/two_b &&
+	git -C server add two_a two_b &&
+	git -C server commit -m two &&
+
+	echo three >server/three &&
+	git -C server add three &&
+	git -C server commit -m three &&
+	git -C server branch three_branch &&
+
+	# Clone, fetch "two" with blobs excluded, and re-push it. This requires
+	# the client to have the blobs of "two" - verify that these are
+	# prefetched in one batch.
+	git clone --filter=blob:none --single-branch -b one_branch \
+		"file://$(pwd)/server" client &&
+	test_config -C client protocol.version 2 &&
+	TWO=$(git -C server rev-parse three_branch^) &&
+	git -C client fetch --filter=blob:none origin "$TWO" &&
+	GIT_TRACE_PACKET=$(pwd)/trace git -C client push origin "$TWO":refs/heads/two_branch &&
+	grep "git> done" trace >donelines &&
+	test_line_count = 1 donelines
+'
+
 test_done
