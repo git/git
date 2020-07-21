@@ -422,6 +422,44 @@ test_expect_success 'single-branch tag following respects partial clone' '
 	test_must_fail git -C single rev-parse --verify refs/tags/C
 '
 
+test_expect_success 'fetch from a partial clone, protocol v0' '
+	rm -rf server client trace &&
+
+	# Pretend that the server is a partial clone
+	git init server &&
+	git -C server remote add a_remote "file://$(pwd)/" &&
+	test_config -C server core.repositoryformatversion 1 &&
+	test_config -C server extensions.partialclone a_remote &&
+	test_config -C server protocol.version 0 &&
+	test_commit -C server foo &&
+
+	# Fetch from the server
+	git init client &&
+	test_config -C client protocol.version 0 &&
+	test_commit -C client bar &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "file://$(pwd)/server" &&
+	! grep "version 2" trace
+'
+
+test_expect_success 'fetch from a partial clone, protocol v2' '
+	rm -rf server client trace &&
+
+	# Pretend that the server is a partial clone
+	git init server &&
+	git -C server remote add a_remote "file://$(pwd)/" &&
+	test_config -C server core.repositoryformatversion 1 &&
+	test_config -C server extensions.partialclone a_remote &&
+	test_config -C server protocol.version 2 &&
+	test_commit -C server foo &&
+
+	# Fetch from the server
+	git init client &&
+	test_config -C client protocol.version 2 &&
+	test_commit -C client bar &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "file://$(pwd)/server" &&
+	grep "version 2" trace
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
