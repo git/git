@@ -43,6 +43,8 @@ UI, Workflows & Features
    prepared to work with "set -u" but recent changes got a bit more
    sloppy.  This has been corrected.
 
+ * "git gui" now allows opening work trees from the start-up dialog.
+
 
 Performance, Internal Implementation, Development Support etc.
 
