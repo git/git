@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2020, #03; Thu, 16)
-X-master-at: b6a658bd00c9c29e07f833cabfc0ef12224e277a
-X-next-at: 85f634d5a6a972c5a89293a1aca2a0a727cb6315
+Subject: What's cooking in git.git (Jul 2020, #04; Wed, 22)
+X-master-at: b066807397fd55553f4910ede74839e319b661fd
+X-next-at: 839af2c2686bba67b3e8cea649583ed99b2326e6
 
-What's cooking in git.git (Jul 2020, #03; Thu, 16)
+What's cooking in git.git (Jul 2020, #04; Wed, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,13 +12,9 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.28-rc1 has not been tagged yet.  Hopefully the three patches
-in jn/v0-with-extensions-fix can gain enough support to get merged
-tomorrow for the real -rc1.
-
-As I promised, I am not paying much attention to topics that are not
-relevant to the upcoming release, so the comments on the topics may
-be left stale.
+I just tagged Git 2.28-rc2; we should be pretty in a good shape and
+hopefully the only difference between this and the final would just
+be the translation.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -28,48 +24,31 @@ repositories listed at
 --------------------------------------------------
 [Graduated to 'master']
 
-* ct/diff-with-merge-base-clarification (2020-07-13) 2 commits
-  (merged to 'next' on 2020-07-15 at 041807cbbd)
- + git-diff.txt: reorder possible usages
- + git-diff.txt: don't mark required argument as optional
+* dl/branch-cleanup (2020-07-18) 1 commit
+  (merged to 'next' on 2020-07-18 at 942efa1f99)
+ + t3200: don't grep for `strerror()` string
 
- Doc update.
-
-
-* sg/commit-graph-progress-fix (2020-07-09) 2 commits
-  (merged to 'next' on 2020-07-09 at 3a9f916ca4)
- + commit-graph: fix "Writing out commit graph" progress counter
- + commit-graph: fix progress of reachable commits
-
- The code to produce progress output from "git commit-graph --write"
- had a few breakages, which have been fixed.
+ Last minute fix-up to tests for portability.
 
 
-* ta/wait-on-aliased-commands-upon-signal (2020-07-07) 2 commits
-  (merged to 'next' on 2020-07-09 at de8bde9182)
- + Wait for child on signal death for aliases to externals
- + Wait for child on signal death for aliases to builtins
+* en/sparse-status (2020-07-20) 1 commit
+  (merged to 'next' on 2020-07-20 at 6aa5c12b74)
+ + git-prompt: change == to = for zsh's sake
 
- When an aliased command, whose output is piped to a pager by git,
- gets killed by a signal, the pager got into a funny state, which
- has been corrected (again).
+ Fix to a "git prompt" regression during this development cycle.
 
 
-* tb/commit-graph-no-check-oids (2020-07-15) 1 commit
-  (merged to 'next' on 2020-07-15 at d97ae59198)
- + commit-graph: fix "Collecting commits from input" progress line
+* jc/relnotes-v0-extension-update (2020-07-17) 1 commit
+  (merged to 'next' on 2020-07-18 at 4e03396489)
+ + RelNotes: update the v0 with extension situation
 
- Fix to the code to produce progress bar, which is new in the
- upcoming release.
+ Last minute fix-up to the release notes.
 
---------------------------------------------------
-[New Topics]
 
-* jn/v0-with-extensions-fix (2020-07-16) 3 commits
-  (merged to 'next' on 2020-07-16 at 85f634d5a6)
- + verify_repository_format(): complain about new extensions in v0 repo
+* jn/v0-with-extensions-fix (2020-07-16) 2 commits
  + repository: allow repository format upgrade with extensions
  + Revert "check_repository_format_gently(): refuse extensions for old repositories"
+ (this branch is used by jk/reject-newer-extensions-in-v0.)
 
  In 2.28-rc0, we corrected a bug that some repository extensions are
  honored by mistake even in a version 0 repositories (these
@@ -77,8 +56,167 @@ repositories listed at
  have special meaning in repositories whose version numbers are 1 or
  higher), but this was a bit too big a change.
 
- Will merge to 'master' before -rc1.
 
+* js/pu-to-seen (2020-07-18) 1 commit
+  (merged to 'next' on 2020-07-18 at bb6ee9441b)
+ + gitworkflows.txt: fix broken subsection underline
+
+ Last minute fix-up to documentation.
+
+--------------------------------------------------
+[New Topics]
+
+* jk/reject-newer-extensions-in-v0 (2020-07-16) 1 commit
+  (merged to 'next' on 2020-07-16 at 85f634d5a6)
+ + verify_repository_format(): complain about new extensions in v0 repo
+
+ With the base fix to 2.27 regresion, any new extensions in a v0
+ repository would still be silently honored, which is not quite
+ right.  Instead, complain and die loudly.
+
+ Will cook in 'next'.
+
+
+* en/fill-directory-exponential (2020-07-20) 1 commit
+  (merged to 'next' on 2020-07-22 at 63662d6646)
+ + dir: check pathspecs before returning `path_excluded`
+
+ Fix to a regression introduced during 2.27 cycle.
+
+ Will cook in 'next'.
+
+
+* bc/push-cas-cquoted-refname (2020-07-20) 1 commit
+  (merged to 'next' on 2020-07-21 at fd7bb5c85e)
+ + remote-curl: make --force-with-lease work with non-ASCII ref names
+
+ Pushing a ref whose name contains non-ASCII character with the
+ "--force-with-lease" option did not work over smart HTTP protocol,
+ which has been corrected.
+
+ Will cook in 'next'.
+
+
+* ct/mv-unmerged-path-error (2020-07-20) 1 commit
+  (merged to 'next' on 2020-07-21 at c17007237a)
+ + git-mv: improve error message for conflicted file
+
+ "git mv src dst", when src is an unmerged path, errored out
+ correctly but with an incorrect error message to claim that src is
+ not tracked, which has been clarified.
+
+ Will cook in 'next'.
+
+
+* jt/pack-objects-prefetch-in-batch (2020-07-21) 2 commits
+ - pack-objects: prefetch objects to be packed
+ - pack-objects: refactor to oid_object_info_extended
+
+ While packing many objects in a repository with a promissor remote,
+ lazily fetching missing objects from the promissor remote one by
+ one may be inefficient---the code now attempts to fetch all the
+ missing objects in batch (obviously this won't work for a lazy
+ clone that lazily fetches tree objects as you cannot even enumerate
+ what blobs are missing until you learn which trees are missing).
+
+ Will merge to 'next'.
+
+
+* jt/pretend-object-never-come-from-elsewhere (2020-07-21) 1 commit
+ - sha1-file: make pretend_object_file() not prefetch
+
+ The pretend-object mechanism checks if the given object already
+ exists in the object store before deciding to keep the data
+ in-core, but the check would have triggered lazy fetching of such
+ an object from a promissor remote.
+
+ Will merge to 'next'.
+
+
+* sg/ci-git-path-fix-with-pyenv (2020-07-21) 1 commit
+ - travis-ci: remove bogus 'pyenv' in the Linux jobs
+
+ CI fixup---tests of Python scripts didn't use the version of Git
+ that is being tested.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* jx/proc-receive-hook (2020-05-18) 11 commits
+ - doc: add documentation for the proc-receive hook
+ - transport: parse report options for tracking refs
+ - t5411: test updates of remote-tracking branches
+ - receive-pack: new config receive.procReceiveRefs
+ - refs.c: refactor to reuse ref_is_hidden()
+ - receive-pack: feed report options to post-receive
+ - doc: add document for capability report-status-v2
+ - New capability "report-status-v2" for git-push
+ - receive-pack: add new proc-receive hook
+ - t5411: add basic test cases for proc-receive hook
+ - transport: not report a non-head push as a branch
+
+ "git receive-pack" that accepts requests by "git push" learned to
+ outsource most of the ref updates to the new "proc-receive" hook.
+
+ Needs review.
+
+
+* mf/submodule-summary-with-correct-repository (2020-06-24) 2 commits
+ - submodule: use submodule repository when preparing summary
+ - revision: use repository from rev_info when parsing commits
+
+ "git diff/show" on a change that involves a submodule used to read
+ the information on commits in the submodule from a wrong repository
+ and gave a wrong information when the commit-graph is involved.
+
+ Needs tests.
+
+
+* dr/push-remoteref-fix (2020-04-23) 1 commit
+ - remote.c: fix handling of %(push:remoteref)
+
+ The "%(push:remoteref)" placeholder in the "--format=" argument of
+ "git format-patch" (and friends) only showed what got explicitly
+ configured, not what ref at the receiving end would be updated when
+ "git push" was used, as it ignored the default behaviour (e.g. update
+ the same ref as the source).
+
+ Expecting a reroll.
+ cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
+
+
+* mr/bisect-in-c-2 (2020-07-17) 14 commits
+ - SQUASH??? do not add new users of git_path_bisect_head()
+ - bisect--helper: retire `--bisect-autostart` subcommand
+ - bisect--helper: retire `--write-terms` subcommand
+ - bisect--helper: retire `--check-expected-revs` subcommand
+ - bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
+ - bisect--helper: retire `--next-all` subcommand
+ - bisect--helper: retire `--bisect-clean-state` subcommand
+ - bisect--helper: finish porting `bisect_start()` to C
+ - bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
+ - bisect: call 'clear_commit_marks_all()' in 'bisect_next_all()'
+ - bisect--helper: reimplement `bisect_autostart` shell function in C
+ - bisect--helper: introduce new `write_in_file()` function
+ - bisect--helper: use '-res' in 'cmd_bisect__helper' return
+ - bisect--helper: BUG() in cmd_*() on invalid subcommand
+
+ Rewrite of the remainder of "git bisect" script in C continues.
+
+ Needs more work.
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
 
 * bc/sha-256-part-3 (2020-07-15) 39 commits
  - t: remove test_oid_init in tests
@@ -147,123 +285,60 @@ repositories listed at
  "git fetch" learned the "--[no-]write-fetch-head" option to
  optionally stop describing what was fetched in FETCH_HEAD.
 
+ Will merge to 'next' after the release.
+
 
 * mp/complete-show-color-moved (2020-07-15) 1 commit
  - completion: add show --color-moved[-ws]
 
  Command line completion (in contrib/) update.
 
+ Will merge to 'next' after the release.
+ A follow-up patch to reduce duplication may be warranted.
+
 
 * hn/reftable-prep-part-2 (2020-07-16) 3 commits
- - Make HEAD a PSEUDOREF rather than PER_WORKTREE.
- - Modify pseudo refs through ref backend storage
- - t1400: use git rev-parse for testing PSEUDOREF existence
+ . Make HEAD a PSEUDOREF rather than PER_WORKTREE.
+ . Modify pseudo refs through ref backend storage
+ . t1400: use git rev-parse for testing PSEUDOREF existence
  (this branch uses hn/reftable.)
 
  Further preliminary change to refs API.
 
 
 * jt/avoid-lazy-fetching-upon-have-check (2020-07-16) 1 commit
- - upload-pack: do not lazy-fetch "have" objects
+  (merged to 'next' on 2020-07-20 at 28e85288e5)
+ + upload-pack: do not lazy-fetch "have" objects
 
  Fetching from a lazily cloned repository resulted at the server
  side in attempts to lazy fetch objects that the client side has,
  many of which will not be available from the third-party anyway.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* rc/add-index-entry-optim-fix (2020-07-16) 1 commit
- - read-cache: remove bogus shortcut
+* rs/add-index-entry-optim-fix (2020-07-16) 1 commit
+  (merged to 'next' on 2020-07-20 at 617fe6aecc)
+ + read-cache: remove bogus shortcut
 
  Fix to an ancient bug caused by an over-eager attempt for
  optimization.
 
---------------------------------------------------
-[Stalled]
+ Will cook in 'next'.
 
-* jx/proc-receive-hook (2020-05-18) 11 commits
- - doc: add documentation for the proc-receive hook
- - transport: parse report options for tracking refs
- - t5411: test updates of remote-tracking branches
- - receive-pack: new config receive.procReceiveRefs
- - refs.c: refactor to reuse ref_is_hidden()
- - receive-pack: feed report options to post-receive
- - doc: add document for capability report-status-v2
- - New capability "report-status-v2" for git-push
- - receive-pack: add new proc-receive hook
- - t5411: add basic test cases for proc-receive hook
- - transport: not report a non-head push as a branch
-
- "git receive-pack" that accepts requests by "git push" learned to
- outsource most of the ref updates to the new "proc-receive" hook.
-
- Needs review.
-
-
-* mf/submodule-summary-with-correct-repository (2020-06-24) 2 commits
- - submodule: use submodule repository when preparing summary
- - revision: use repository from rev_info when parsing commits
-
- "git diff/show" on a change that involves a submodule used to read
- the information on commits in the submodule from a wrong repository
- and gave a wrong information when the commit-graph is involved.
-
- Needs tests.
-
-
-* dr/push-remoteref-fix (2020-04-23) 1 commit
- - remote.c: fix handling of %(push:remoteref)
-
- The "%(push:remoteref)" placeholder in the "--format=" argument of
- "git format-patch" (and friends) only showed what got explicitly
- configured, not what ref at the receiving end would be updated when
- "git push" was used, as it ignored the default behaviour (e.g. update
- the same ref as the source).
-
- Expecting a reroll.
- cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
-
-
-* mr/bisect-in-c-2 (2020-07-08) 13 commits
- . bisect--helper: retire `--bisect-autostart` subcommand
- . bisect--helper: retire `--write-terms` subcommand
- . bisect--helper: retire `--check-expected-revs` subcommand
- . bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
- . bisect--helper: retire `--next-all` subcommand
- . bisect--helper: retire `--bisect-clean-state` subcommand
- . bisect--helper: finish porting `bisect_start()` to C
- . bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
- . bisect: call 'clear_commit_marks_all()' in 'bisect_next_all()'
- . bisect--helper: reimplement `bisect_autostart` shell function in C
- . bisect--helper: introduce new `write_in_file()` function
- . bisect--helper: use '-res' in 'cmd_bisect__helper' return
- . bisect--helper: BUG() in cmd_*() on invalid subcommand
-
- Rewrite of the remainder of "git bisect" script in C continues.
-
- Needs more work.
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
 
 * dl/test-must-fail-fixes-6 (2020-07-07) 6 commits
- - test-lib-functions: restrict test_must_fail usage
- - t9400: don't use test_must_fail with cvs
- - t9834: remove use of `test_might_fail p4`
- - t7107: don't use test_must_fail()
- - t5324: reorder `run_with_limited_open_files test_might_fail`
- - t3701: stop using `env` in force_color()
+  (merged to 'next' on 2020-07-20 at bd4a9946a6)
+ + test-lib-functions: restrict test_must_fail usage
+ + t9400: don't use test_must_fail with cvs
+ + t9834: remove use of `test_might_fail p4`
+ + t7107: don't use test_must_fail()
+ + t5324: reorder `run_with_limited_open_files test_might_fail`
+ + t3701: stop using `env` in force_color()
 
  Dev support to limit the use of test_must_fail to only git commands.
+
+ Will cook in 'next'.
 
 
 * ds/maintenance (2020-07-07) 21 commits
@@ -306,13 +381,14 @@ repositories listed at
 
 
 * cc/pretty-contents-size (2020-07-16) 3 commits
- - ref-filter: add support for %(contents:size)
- - t6300: test refs pointing to tree and blob
- - Documentation: clarify %(contents:XXXX) doc
+  (merged to 'next' on 2020-07-20 at e7c4b8f9ae)
+ + ref-filter: add support for %(contents:size)
+ + t6300: test refs pointing to tree and blob
+ + Documentation: clarify %(contents:XXXX) doc
 
  "git for-each-ref --format=<>" learned %(contents:size).
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ls/mergetool-meld-auto-merge (2020-07-12) 2 commits
@@ -322,6 +398,8 @@ repositories listed at
  The 'meld' backend of the "git mergetool" learned to give the
  underlying 'meld' the '--auto-merge' option, which would help
  reduce the amount of text that requires manual merging.
+
+ Expecting a reroll.
 
 
 * pb/log-rev-list-doc (2020-07-08) 6 commits
@@ -340,18 +418,17 @@ repositories listed at
 
 
 * tb/upload-pack-filters (2020-07-06) 4 commits
- - upload-pack.c: introduce 'uploadpack.filter.tree.maxDepth'
- - upload-pack.c: pass 'struct list_objects_filter_options *'
- - upload-pack.c: allow banning certain object filter(s)
- - list_objects_filter_options: introduce 'list_object_filter_config_name'
+ . upload-pack.c: introduce 'uploadpack.filter.tree.maxDepth'
+ . upload-pack.c: pass 'struct list_objects_filter_options *'
+ . upload-pack.c: allow banning certain object filter(s)
+ . list_objects_filter_options: introduce 'list_object_filter_config_name'
 
  The component to respond to "git fetch" request is made more
  configurable to selectively allow or reject object filtering
  specification used for partial cloning.
 
- Waiting for reviews to settle.
- cf. <cover.1593720075.git.me@ttaylorr.com>
- cf. <20200710022609.GC39052@syl.lan>
+ Expecting a reroll.
+ cf. <20200721202740.GA34538@syl.lan>
 
 
 * mt/hash-to-hex-thread-safety (2020-06-26) 2 commits
@@ -397,7 +474,8 @@ repositories listed at
 
  CMake support to build with MSVC for Windows bypassing the Makefile.
 
- Waiting for a (hopefully final) review.
+ Will merge to 'next' after the release.
+ cf. https://github.com/git/git/runs/892824895
 
 
 * sg/commit-graph-cleanups (2020-06-08) 10 commits
