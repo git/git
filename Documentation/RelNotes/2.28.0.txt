@@ -116,7 +116,7 @@ Performance, Internal Implementation, Development Support etc.
    configuration variables in extensions.* namespace were supposed to
    have special meaning in repositories whose version numbers are 1 or
    higher), but this was a bit too big a change.  The behaviour in
-   recent versions of Git where certaion extensions.* were honored by
+   recent versions of Git where certain extensions.* were honored by
    mistake even in version 0 repositories has been restored.
 
 
