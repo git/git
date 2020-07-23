@@ -700,7 +700,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-#define MAX_NUM_TASKS 1
+#define MAX_NUM_TASKS 2
 
 static const char * const builtin_maintenance_usage[] = {
 	N_("git maintenance run [<options>]"),
@@ -711,6 +711,74 @@ static struct maintenance_opts {
 	int auto_flag;
 	int quiet;
 } opts;
+
+static int run_write_commit_graph(void)
+{
+	int result;
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+
+	argv_array_pushl(&cmd, "commit-graph", "write",
+			 "--split", "--reachable", NULL);
+
+	if (opts.quiet)
+		argv_array_push(&cmd, "--no-progress");
+
+	result = run_command_v_opt(cmd.argv, RUN_GIT_CMD);
+	argv_array_clear(&cmd);
+
+	return result;
+}
+
+static int run_verify_commit_graph(void)
+{
+	int result;
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+
+	argv_array_pushl(&cmd, "commit-graph", "verify",
+			 "--shallow", NULL);
+
+	if (opts.quiet)
+		argv_array_push(&cmd, "--no-progress");
+
+	result = run_command_v_opt(cmd.argv, RUN_GIT_CMD);
+	argv_array_clear(&cmd);
+
+	return result;
+}
+
+static int maintenance_task_commit_graph(void)
+{
+	struct repository *r = the_repository;
+	char *chain_path;
+
+	/* Skip commit-graph when --auto is specified. */
+	if (opts.auto_flag)
+		return 0;
+
+	close_object_store(r->objects);
+	if (run_write_commit_graph()) {
+		error(_("failed to write commit-graph"));
+		return 1;
+	}
+
+	if (!run_verify_commit_graph())
+		return 0;
+
+	warning(_("commit-graph verify caught error, rewriting"));
+
+	chain_path = get_commit_graph_chain_filename(r->objects->odb);
+	if (unlink(chain_path)) {
+		UNLEAK(chain_path);
+		die(_("failed to remove commit-graph at %s"), chain_path);
+	}
+	free(chain_path);
+
+	if (!run_write_commit_graph())
+		return 0;
+
+	error(_("failed to rewrite commit-graph"));
+	return 1;
+}
 
 static int maintenance_task_gc(void)
 {
@@ -767,6 +835,10 @@ static void initialize_tasks(void)
 	tasks[num_tasks]->name = "gc";
 	tasks[num_tasks]->fn = maintenance_task_gc;
 	tasks[num_tasks]->enabled = 1;
+	num_tasks++;
+
+	tasks[num_tasks]->name = "commit-graph";
+	tasks[num_tasks]->fn = maintenance_task_commit_graph;
 	num_tasks++;
 }
 
