@@ -17,7 +17,7 @@ test_expect_success 'run [--auto|--quiet]' '
 	GIT_TRACE2_EVENT="$(pwd)/run-auto.txt" git maintenance run --auto &&
 	GIT_TRACE2_EVENT="$(pwd)/run-quiet.txt" git maintenance run --quiet &&
 	grep ",\"gc\"]" run-no-auto.txt  &&
-	grep ",\"gc\",\"--auto\"" run-auto.txt &&
+	! grep ",\"gc\",\"--auto\"" run-auto.txt &&
 	grep ",\"gc\",\"--quiet\"" run-quiet.txt
 '
 

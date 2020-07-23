@@ -1121,9 +1121,17 @@ static int maintenance_task_incremental_repack(void)
 
 typedef int maintenance_task_fn(void);
 
+/*
+ * An auto condition function returns 1 if the task should run
+ * and 0 if the task should NOT run. See needs_to_gc() for an
+ * example.
+ */
+typedef int maintenance_auto_fn(void);
+
 struct maintenance_task {
 	const char *name;
 	maintenance_task_fn *fn;
+	maintenance_auto_fn *auto_condition;
 	int task_order;
 	unsigned enabled:1,
 		 selected:1;
@@ -1175,6 +1183,11 @@ static int maintenance_run(void)
 		if (!opts.tasks_selected && !tasks[i]->enabled)
 			continue;
 
+		if (opts.auto_flag &&
+		    (!tasks[i]->auto_condition ||
+		     !tasks[i]->auto_condition()))
+			continue;
+
 		result = tasks[i]->fn();
 	}
 
@@ -1205,6 +1218,7 @@ static void initialize_tasks(void)
 
 	tasks[num_tasks]->name = "gc";
 	tasks[num_tasks]->fn = maintenance_task_gc;
+	tasks[num_tasks]->auto_condition = need_to_gc;
 	tasks[num_tasks]->enabled = 1;
 	num_tasks++;
 
@@ -1283,6 +1297,7 @@ int cmd_maintenance(int argc, const char **argv, const char *prefix)
 				   builtin_maintenance_options);
 
 	opts.quiet = !isatty(2);
+	gc_config();
 	initialize_tasks();
 
 	argc = parse_options(argc, argv, prefix,
