@@ -699,3 +699,62 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	return 0;
 }
+
+static const char * const builtin_maintenance_usage[] = {
+	N_("git maintenance run [<options>]"),
+	NULL
+};
+
+static struct maintenance_opts {
+	int auto_flag;
+} opts;
+
+static int maintenance_task_gc(void)
+{
+	int result;
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+
+	argv_array_pushl(&cmd, "gc", NULL);
+
+	if (opts.auto_flag)
+		argv_array_pushl(&cmd, "--auto", NULL);
+
+	close_object_store(the_repository->objects);
+	result = run_command_v_opt(cmd.argv, RUN_GIT_CMD);
+	argv_array_clear(&cmd);
+
+	return result;
+}
+
+static int maintenance_run(void)
+{
+	return maintenance_task_gc();
+}
+
+int cmd_maintenance(int argc, const char **argv, const char *prefix)
+{
+	static struct option builtin_maintenance_options[] = {
+		OPT_BOOL(0, "auto", &opts.auto_flag,
+			 N_("run tasks based on the state of the repository")),
+		OPT_END()
+	};
+
+	memset(&opts, 0, sizeof(opts));
+
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(builtin_maintenance_usage,
+				   builtin_maintenance_options);
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_maintenance_options,
+			     builtin_maintenance_usage,
+			     PARSE_OPT_KEEP_UNKNOWN);
+
+	if (argc == 1) {
+		if (!strcmp(argv[0], "run"))
+			return maintenance_run();
+	}
+
+	usage_with_options(builtin_maintenance_usage,
+			   builtin_maintenance_options);
+}
