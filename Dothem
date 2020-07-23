@@ -1,6 +1,7 @@
 #!/bin/sh
 
 NWD=contrib/workdir/git-new-workdir
+MASTER=master
 
 inst_prefix=$(
 	IFS=:
@@ -65,7 +66,7 @@ then
 		exit 1
 	fi
 fi
-test -n "$branches" || branches='next master maint jch seen'
+test -n "$branches" || branches="next $MASTER maint jch seen"
 test -n "$jobs" || jobs=-j2
 
 find_installed () {

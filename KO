@@ -3,6 +3,8 @@
 # Not for general consumption; a script I used to make sure
 # I do not accidentally push a rewound master to public.
 
+MASTER=master
+
 no_fetch= ko=ko
 while :
 do
@@ -19,14 +21,14 @@ then
 	git fetch "$ko"
 fi
 
-mb=$(git merge-base $ko/master master)
-h=$(git rev-parse $mb $ko/master | sort -u | wc -l)
+mb=$(git merge-base $ko/$MASTER $MASTER)
+h=$(git rev-parse $mb $ko/$MASTER | sort -u | wc -l)
 if test "$h" != 1
 then
-	echo "OOOOOPPPPPPPPPPPPPPSSS! master is not $ko/master fast forward."
+	echo "OOOOOPPPPPPPPPPPPPPSSS! $MASTER is not $ko/$MASTER fast forward."
 	exit 1
 fi
-git show-branch --topo-order $ko/master master
+git show-branch --topo-order $ko/$MASTER $MASTER
 git show-branch --topo-order $ko/maint maint
 git show-branch --topo-order $ko/next next
 git show-branch --topo-order $ko/seen seen

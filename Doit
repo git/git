@@ -1,6 +1,8 @@
 #!/bin/sh
 
-test -n "$branches" || branches='next master maint jch seen'
+MASTER=master
+
+test -n "$branches" || branches="next $MASTER maint jch seen"
 
 changed=
 for b in $branches

@@ -1,7 +1,9 @@
 #!/bin/sh
 # Merge later...
 
-: "${target:=maint}" "${here:=master}"
+MASTER=master
+
+: "${target:=maint}" "${here:=$MASTER}"
 
 # Read from RelNotes and find mergeable topics
 search_topics () {

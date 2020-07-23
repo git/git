@@ -1,5 +1,7 @@
 #!/bin/sh
 
+MASTER=master
+
 if test -z "$GIT"
 then
 	case "$(git version 2>/dev/null)" in
@@ -215,7 +217,7 @@ export LANG LC_ALL
 branch=$(determine_branch)
 
 case "$branch" in
-next | maint | master | seen | jch)
+next | maint | $MASTER | seen | jch)
 	prefix="$inst_prefix/git-$branch"
 	;;
 snap)

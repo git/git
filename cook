@@ -1,6 +1,8 @@
 #!/usr/bin/perl -w
 # Maintain "what's cooking" messages
 
+my $MASTER = 'master'; # for now
+
 use strict;
 
 my %reverts = ('next' => {
@@ -66,7 +68,7 @@ sub topic_relation {
 	my $fh;
 	open($fh, '-|',
 	     qw(git log --abbrev), "--format=%m %h",
-	     "$one...$two", "^master")
+	     "$one...$two", "^$MASTER")
 	    or die "$!: open log --left-right";
 	my (@left, @right);
 	while (<$fh>) {
@@ -107,7 +109,7 @@ Returns a hash:
 =cut
 
 sub get_commit {
-	my (@base) = qw(master next seen);
+	my (@base) = ($MASTER, 'next', 'seen');
 	my $fh;
 	open($fh, '-|',
 	     qw(git for-each-ref),
@@ -206,8 +208,8 @@ sub get_commit {
 
 	open($fh, '-|',
 	     qw(git log --first-parent --abbrev),
-	     "--format=%ci %h %p :%s", "master..next")
-	    or die "$!: open log master..next";
+	     "--format=%ci %h %p :%s", "$MASTER..next")
+	    or die "$!: open log $MASTER..next";
 	while (<$fh>) {
 		my ($date, $commit, $parent, $tips);
 		unless (($date, $commit, $parent, $tips) =
@@ -220,7 +222,7 @@ sub get_commit {
 			$co->{'merged'} = " (merged to 'next' on $date at $commit)";
 		}
 	}
-	close($fh) or die "$!: close log master..next";
+	close($fh) or die "$!: close log $MASTER..next";
 
 	for my $branch (keys %topic) {
 		my @log = ();
@@ -300,7 +302,7 @@ EOF
 To: git\@vger.kernel.org
 Bcc: lwn\@lwn.net
 Subject: What's cooking in git.git ($mon $year, #$issue; $dow, $date)
-X-master-at: $master_at
+X-$MASTER-at: $master_at
 X-next-at: $next_at
 
 What's cooking in git.git ($mon $year, #$issue; $dow, $date)
@@ -314,7 +316,7 @@ EOF
 
 my $blurb_match = <<'EOF';
 (?:(?i:\s*[a-z]+: .*|\s.*)\n)*?Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
-X-master-at: ([0-9a-f]{40})
+X-[a-z]*-at: ([0-9a-f]{40})
 X-next-at: ([0-9a-f]{40})
 
 What's cooking in \S+ \(\1 \2, #\3; \4, \5\)
@@ -476,7 +478,7 @@ sub write_cooking {
 	close($fh);
 }
 
-my $graduated = 'Graduated to "master"';
+my $graduated = "Graduated to '$MASTER'";
 my $new_topics = 'New Topics';
 my $discarded = 'Discarded';
 my $cooking_topics = 'Cooking';
@@ -488,11 +490,11 @@ sub update_issue {
 	open($fh, '-|',
 	     qw(git for-each-ref),
 	     "--format=%(refname:short) %(objectname)",
-	     "refs/heads/master",
+	     "refs/heads/$MASTER",
 	     "refs/heads/next") or die "$!: open for-each-ref";
 	while (<$fh>) {
 		my ($branch, $at) = /^(\S+) (\S+)$/;
-		if ($branch eq 'master') { $master_at = $at; }
+		if ($branch eq $MASTER) { $master_at = $at; }
 		if ($branch eq 'next') { $next_at = $at; }
 	}
 	close($fh) or die "$!: close for-each-ref";
@@ -564,11 +566,11 @@ sub tweak_willdo {
 	my $text = $td->{'text'};
 
 	if (!defined $mergetomaster) {
-		my $master = `git describe master`;
+		my $master = `git describe $MASTER`;
 		if ($master =~ /-rc\d+(-\d+-g[0-9a-f]+)?$/) {
 			$mergetomaster = "Will cook in 'next'.";
 		} else {
-			$mergetomaster = "Will merge to 'master'.";
+			$mergetomaster = "Will merge to '$MASTER'.";
 		}
 	}
 
@@ -580,7 +582,7 @@ sub tweak_willdo {
 	if ($desc =~ /^  \(merged to 'next'/m) {
 		$text =~ s/^ Will merge to 'next'\.$/ $mergetomaster/m;
 		$text =~ s/^ Will merge to and (then )?cook in 'next'\.$/ Will cook in 'next'./m;
-		$text =~ s/^ Will merge to 'next' and (then )?to 'master'\.$/ Will merge to 'master'./m;
+		$text =~ s/^ Will merge to 'next' and (then )?to '$MASTER'\.$/ Will merge to '$MASTER'./m;
 	}
 	$td->{'text'} = $text;
 }
@@ -590,7 +592,7 @@ sub tweak_graduated {
 
 	# Remove the "Will merge" marker from topics that have graduated.
 	for ($td->{'text'}) {
-		s/\n Will merge to 'master'\.(\n|$)//s;
+		s/\n Will merge to '$MASTER'\.(\n|$)//s;
 	}
 }
 
@@ -825,12 +827,13 @@ sub havedone {
 	my ($topic, $to_maint, %to_maint, %merged, $in_desc);
 	if (!@ARGV) {
 		open($fh, '-|',
-		     qw(git rev-list --first-parent -1 master Documentation/RelNotes RelNotes))
+		     qw(git rev-list --first-parent -1), $MASTER,
+		     qw(-- Documentation/RelNotes RelNotes))
 		    or die "$!: open rev-list";
 		my ($rev) = <$fh>;
 		close($fh) or die "$!: close rev-list";
 		chomp $rev;
-		@ARGV = ("$rev..master");
+		@ARGV = ("$rev..$MASTER");
 	}
 	open($fh, '-|',
 	     qw(git log --first-parent --oneline --reverse), @ARGV)

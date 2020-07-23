@@ -1,6 +1,8 @@
 #!/bin/sh
 # Announcement message skelton
 #
+MASTER=master
+
 tmpbase=/var/tmp/git-announce.$$
 trap 'rm -f $tmpbase.*' 0
 branch=${1?branch}
@@ -17,7 +19,7 @@ maint)
 	kind="The latest maintenance release" ;;
 mainto/* | maint-[0-9]*)
 	kind="A maintenance release" ;;
-master)
+$MASTER)
 	kind="The latest feature release" ;;
 esac
 
@@ -62,7 +64,7 @@ EOF
 
 (
 	echo "$kind Git $relname is now available$for_testing at the usual places."
-	if test "$branch" = master
+	if test "$branch" = $MASTER
 	then
 		cat <<-EOF
 		It is comprised of $cnt non-merge commits since $previous,
@@ -111,7 +113,7 @@ fmt_people () {
 
 }
 
-if test "$branch" = master
+if test "$branch" = $MASTER
 then
 	cat <<-EOF
 

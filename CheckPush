@@ -1,5 +1,7 @@
 #!/bin/sh
 
+MASTER=master
+
 for range in $(
 	prev_branch=
 	{
@@ -33,7 +35,7 @@ for range in $(
 		'
 		cat <<-EOF
 		maint
-		master
+		$MASTER
 		next
 		EOF
 	} |
@@ -59,7 +61,7 @@ if ! next_equiv=$(git rev-parse --verify 'jch^{/^### match next}' 2>/dev/null) |
    ! git diff --stat --exit-code next $next_equiv
 then
 	next_tree=$(git rev-parse next^{tree}) &&
-	next_equiv=$(git rev-list --first-parent master..seen |
+	next_equiv=$(git rev-list --first-parent $MASTER..seen |
 			xargs -n1 sh -c '
 				echo $(git rev-parse $1^{tree}) $1
 			' - | sed -n -e "s/^$next_tree //p"
@@ -68,13 +70,13 @@ fi
 
 if test -n "$next_equiv"
 then
-	jch=$(git rev-list --first-parent master..jch | wc -l) &&
-	seen=$(git rev-list --first-parent master..seen | wc -l) &&
-	next=$(git rev-list --first-parent master..$next_equiv | wc -l) &&
+	jch=$(git rev-list --first-parent $MASTER..jch | wc -l) &&
+	seen=$(git rev-list --first-parent $MASTER..seen | wc -l) &&
+	next=$(git rev-list --first-parent $MASTER..$next_equiv | wc -l) &&
 	if test $jch -le $next
 	then
-		echo "master..$jch..jch..$next..next..$seen..seen"
+		echo "$MASTER..$jch..jch..$next..next..$seen..seen"
 	else
-		echo "master..$next..next..$jch..jch..$seen..seen"
+		echo "$MASTER..$next..next..$jch..jch..$seen..seen"
 	fi
 fi

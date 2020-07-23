@@ -4,6 +4,8 @@
 # Meta/amlook id1 id2... (from the command line)
 # Meta/amlook --gc
 
+MASTER=master
+
 find_commit () {
 	in= commits=
 
@@ -43,7 +45,7 @@ find_commit () {
 	fi
 	case " $found " in
 	*' maint '*) in=maint ;;
-	*' master '*) in=master ;;
+	*" $MASTER "*) in=$MASTER ;;
 	*' next '*) in=next ;;
 	esac
 	if test -n "$in"

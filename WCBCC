@@ -1,5 +1,6 @@
 #!/bin/sh
 
+MASTER=master
 BASE=${1-HEAD}
 
 (
@@ -12,7 +13,7 @@ BASE=${1-HEAD}
 		echo "$branch"
 	done
 	git -C Meta/ cat-file blob "${BASE}:whats-cooking.txt" |
-	sed -ne 's/^X-master-at: / --not /p' -e '/^$/q' 
+	sed -ne "s/^X-$MASTER-at: / --not /p" -e '/^$/q'
 ) |
 xargs git shortlog -s -e --no-merges |
 sed -e 's/.*</    </' -e '$q' -e 's/$/,/'
