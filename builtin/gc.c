@@ -1185,6 +1185,7 @@ static int maintenance_run(void)
 static void initialize_tasks(void)
 {
 	int i;
+	struct strbuf config_name = STRBUF_INIT;
 	num_tasks = 0;
 
 	for (i = 0; i < MAX_NUM_TASKS; i++)
@@ -1210,6 +1211,18 @@ static void initialize_tasks(void)
 	tasks[num_tasks]->name = "commit-graph";
 	tasks[num_tasks]->fn = maintenance_task_commit_graph;
 	num_tasks++;
+
+	for (i = 0; i < num_tasks; i++) {
+		int config_value;
+
+		strbuf_setlen(&config_name, 0);
+		strbuf_addf(&config_name, "maintenance.%s.enabled", tasks[i]->name);
+
+		if (!git_config_get_bool(config_name.buf, &config_value))
+			tasks[i]->enabled = config_value;
+	}
+
+	strbuf_release(&config_name);
 }
 
 static int task_option_parse(const struct option *opt,
