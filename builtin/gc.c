@@ -700,6 +700,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+#define MAX_NUM_TASKS 1
+
 static const char * const builtin_maintenance_usage[] = {
 	N_("git maintenance run [<options>]"),
 	NULL
@@ -729,9 +731,43 @@ static int maintenance_task_gc(void)
 	return result;
 }
 
+typedef int maintenance_task_fn(void);
+
+struct maintenance_task {
+	const char *name;
+	maintenance_task_fn *fn;
+	unsigned enabled:1;
+};
+
+static struct maintenance_task *tasks[MAX_NUM_TASKS];
+static int num_tasks;
+
 static int maintenance_run(void)
 {
-	return maintenance_task_gc();
+	int i;
+	int result = 0;
+
+	for (i = 0; !result && i < num_tasks; i++) {
+		if (!tasks[i]->enabled)
+			continue;
+		result = tasks[i]->fn();
+	}
+
+	return result;
+}
+
+static void initialize_tasks(void)
+{
+	int i;
+	num_tasks = 0;
+
+	for (i = 0; i < MAX_NUM_TASKS; i++)
+		tasks[i] = xcalloc(1, sizeof(struct maintenance_task));
+
+	tasks[num_tasks]->name = "gc";
+	tasks[num_tasks]->fn = maintenance_task_gc;
+	tasks[num_tasks]->enabled = 1;
+	num_tasks++;
 }
 
 int cmd_maintenance(int argc, const char **argv, const char *prefix)
@@ -751,6 +787,7 @@ int cmd_maintenance(int argc, const char **argv, const char *prefix)
 				   builtin_maintenance_options);
 
 	opts.quiet = !isatty(2);
+	initialize_tasks();
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_maintenance_options,
