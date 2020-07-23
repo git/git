@@ -184,9 +184,9 @@ linux-clang|linux-gcc)
 	if [ "$jobname" = linux-gcc ]
 	then
 		export CC=gcc-8
-		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3"
 	else
-		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python2)"
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python2"
 	fi
 
 	export GIT_TEST_HTTPD=true
