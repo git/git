@@ -73,6 +73,7 @@ struct object_array {
  * list-objects-filter.c:                                      21
  * builtin/fsck.c:           0--3
  * builtin/index-pack.c:                                     2021
+ * builtin/maintenance.c:                           16
  * builtin/pack-objects.c:                                   20
  * builtin/reflog.c:                   10--12
  * builtin/show-branch.c:    0-------------------------------------------26
