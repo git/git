@@ -710,6 +710,7 @@ static const char * const builtin_maintenance_usage[] = {
 static struct maintenance_opts {
 	int auto_flag;
 	int quiet;
+	int tasks_selected;
 } opts;
 
 static int run_write_commit_graph(void)
@@ -804,20 +805,38 @@ typedef int maintenance_task_fn(void);
 struct maintenance_task {
 	const char *name;
 	maintenance_task_fn *fn;
-	unsigned enabled:1;
+	int task_order;
+	unsigned enabled:1,
+		 selected:1;
 };
 
 static struct maintenance_task *tasks[MAX_NUM_TASKS];
 static int num_tasks;
+
+static int compare_tasks_by_selection(const void *a_, const void *b_)
+{
+	const struct maintenance_task *a, *b;
+	a = (const struct maintenance_task *)a_;
+	b = (const struct maintenance_task *)b_;
+
+	return b->task_order - a->task_order;
+}
 
 static int maintenance_run(void)
 {
 	int i;
 	int result = 0;
 
+	if (opts.tasks_selected)
+		QSORT(tasks, num_tasks, compare_tasks_by_selection);
+
 	for (i = 0; !result && i < num_tasks; i++) {
-		if (!tasks[i]->enabled)
+		if (opts.tasks_selected && !tasks[i]->selected)
 			continue;
+
+		if (!opts.tasks_selected && !tasks[i]->enabled)
+			continue;
+
 		result = tasks[i]->fn();
 	}
 
@@ -842,6 +861,44 @@ static void initialize_tasks(void)
 	num_tasks++;
 }
 
+static int task_option_parse(const struct option *opt,
+			     const char *arg, int unset)
+{
+	int i;
+	struct maintenance_task *task = NULL;
+
+	BUG_ON_OPT_NEG(unset);
+
+	if (!arg || !strlen(arg)) {
+		error(_("--task requires a value"));
+		return 1;
+	}
+
+	opts.tasks_selected++;
+
+	for (i = 0; i < MAX_NUM_TASKS; i++) {
+		if (tasks[i] && !strcasecmp(tasks[i]->name, arg)) {
+			task = tasks[i];
+			break;
+		}
+	}
+
+	if (!task) {
+		error(_("'%s' is not a valid task"), arg);
+		return 1;
+	}
+
+	if (task->selected) {
+		error(_("task '%s' cannot be selected multiple times"), arg);
+		return 1;
+	}
+
+	task->selected = 1;
+	task->task_order = opts.tasks_selected;
+
+	return 0;
+}
+
 int cmd_maintenance(int argc, const char **argv, const char *prefix)
 {
 	static struct option builtin_maintenance_options[] = {
@@ -849,6 +906,9 @@ int cmd_maintenance(int argc, const char **argv, const char *prefix)
 			 N_("run tasks based on the state of the repository")),
 		OPT_BOOL(0, "quiet", &opts.quiet,
 			 N_("do not report progress or other information over stderr")),
+		OPT_CALLBACK_F(0, "task", NULL, N_("task"),
+			N_("run a specific task"),
+			PARSE_OPT_NONEG, task_option_parse),
 		OPT_END()
 	};
 
