@@ -951,6 +951,35 @@ struct write_loose_object_data {
 	int batch_size;
 };
 
+static int loose_object_auto_limit = 100;
+
+static int loose_object_count(const struct object_id *oid,
+			       const char *path,
+			       void *data)
+{
+	int *count = (int*)data;
+	if (++(*count) >= loose_object_auto_limit)
+		return 1;
+	return 0;
+}
+
+static int loose_object_auto_condition(void)
+{
+	int count = 0;
+
+	git_config_get_int("maintenance.loose-objects.auto",
+			   &loose_object_auto_limit);
+
+	if (!loose_object_auto_limit)
+		return 0;
+	if (loose_object_auto_limit < 0)
+		return 1;
+
+	return for_each_loose_file_in_objdir(the_repository->objects->odb->path,
+					     loose_object_count,
+					     NULL, NULL, &count);
+}
+
 static int loose_object_exists(const struct object_id *oid,
 			       const char *path,
 			       void *data)
@@ -1285,6 +1314,7 @@ static void initialize_tasks(void)
 
 	tasks[num_tasks]->name = "loose-objects";
 	tasks[num_tasks]->fn = maintenance_task_loose_objects;
+	tasks[num_tasks]->auto_condition = loose_object_auto_condition;
 	num_tasks++;
 
 	tasks[num_tasks]->name = "incremental-repack";
