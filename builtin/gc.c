@@ -29,6 +29,7 @@
 #include "tree.h"
 #include "promisor-remote.h"
 #include "remote.h"
+#include "midx.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -701,7 +702,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-#define MAX_NUM_TASKS 4
+#define MAX_NUM_TASKS 5
 
 static const char * const builtin_maintenance_usage[] = {
 	N_("git maintenance run [<options>]"),
@@ -958,6 +959,120 @@ static int maintenance_task_loose_objects(void)
 	return prune_packed() || pack_loose();
 }
 
+static int multi_pack_index_write(void)
+{
+	int result;
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+	argv_array_pushl(&cmd, "multi-pack-index", "write", NULL);
+
+	if (opts.quiet)
+		argv_array_push(&cmd, "--no-progress");
+
+	result = run_command_v_opt(cmd.argv, RUN_GIT_CMD);
+	argv_array_clear(&cmd);
+
+	return result;
+}
+
+static int rewrite_multi_pack_index(void)
+{
+	struct repository *r = the_repository;
+	char *midx_name = get_midx_filename(r->objects->odb->path);
+
+	unlink(midx_name);
+	free(midx_name);
+
+	if (multi_pack_index_write()) {
+		error(_("failed to rewrite multi-pack-index"));
+		return 1;
+	}
+
+	return 0;
+}
+
+static int multi_pack_index_verify(void)
+{
+	int result;
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+	argv_array_pushl(&cmd, "multi-pack-index", "verify", NULL);
+
+	if (opts.quiet)
+		argv_array_push(&cmd, "--no-progress");
+
+	result = run_command_v_opt(cmd.argv, RUN_GIT_CMD);
+	argv_array_clear(&cmd);
+
+	return result;
+}
+
+static int multi_pack_index_expire(void)
+{
+	int result;
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+	argv_array_pushl(&cmd, "multi-pack-index", "expire", NULL);
+
+	if (opts.quiet)
+		argv_array_push(&cmd, "--no-progress");
+
+	close_object_store(the_repository->objects);
+	result = run_command_v_opt(cmd.argv, RUN_GIT_CMD);
+	argv_array_clear(&cmd);
+
+	return result;
+}
+
+static int multi_pack_index_repack(void)
+{
+	int result;
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+	argv_array_pushl(&cmd, "multi-pack-index", "repack", NULL);
+
+	if (opts.quiet)
+		argv_array_push(&cmd, "--no-progress");
+
+	argv_array_push(&cmd, "--batch-size=0");
+
+	close_object_store(the_repository->objects);
+	result = run_command_v_opt(cmd.argv, RUN_GIT_CMD);
+
+	if (result && multi_pack_index_verify()) {
+		warning(_("multi-pack-index verify failed after repack"));
+		result = rewrite_multi_pack_index();
+	}
+
+	return result;
+}
+
+static int maintenance_task_incremental_repack(void)
+{
+	if (multi_pack_index_write()) {
+		error(_("failed to write multi-pack-index"));
+		return 1;
+	}
+
+	if (multi_pack_index_verify()) {
+		warning(_("multi-pack-index verify failed after initial write"));
+		return rewrite_multi_pack_index();
+	}
+
+	if (multi_pack_index_expire()) {
+		error(_("multi-pack-index expire failed"));
+		return 1;
+	}
+
+	if (multi_pack_index_verify()) {
+		warning(_("multi-pack-index verify failed after expire"));
+		return rewrite_multi_pack_index();
+	}
+
+	if (multi_pack_index_repack()) {
+		error(_("multi-pack-index repack failed"));
+		return 1;
+	}
+
+	return 0;
+}
+
 typedef int maintenance_task_fn(void);
 
 struct maintenance_task {
@@ -1035,6 +1150,10 @@ static void initialize_tasks(void)
 
 	tasks[num_tasks]->name = "loose-objects";
 	tasks[num_tasks]->fn = maintenance_task_loose_objects;
+	num_tasks++;
+
+	tasks[num_tasks]->name = "incremental-repack";
+	tasks[num_tasks]->fn = maintenance_task_incremental_repack;
 	num_tasks++;
 
 	tasks[num_tasks]->name = "gc";
