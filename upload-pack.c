@@ -990,9 +990,9 @@ static int process_deepen_not(const char *line, struct string_list *deepen_not, 
 }
 
 static int allows_filter_choice(struct upload_pack_data *data,
-				enum list_objects_filter_choice c)
+				struct list_objects_filter_options *opts)
 {
-	const char *key = list_object_filter_config_name(c);
+	const char *key = list_object_filter_config_name(opts->choice);
 	struct string_list_item *item = string_list_lookup(&data->allowed_filters,
 							   key);
 	if (item)
@@ -1006,7 +1006,7 @@ static struct list_objects_filter_options *banned_filter(
 {
 	size_t i;
 
-	if (!allows_filter_choice(data, opts->choice))
+	if (!allows_filter_choice(data, opts))
 		return opts;
 
 	if (opts->choice == LOFC_COMBINE)
