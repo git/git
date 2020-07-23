@@ -259,6 +259,14 @@ test_expect_success 'upload-pack fails banned object filters with fallback' '
 	test_i18ngrep "filter '\''blob:none'\'' not supported" err
 '
 
+test_expect_success 'upload-pack limits tree depth filters' '
+	test_config -C srv.bare uploadpackfilter.allow false &&
+	test_config -C srv.bare uploadpackfilter.tree.allow true &&
+	test_config -C srv.bare uploadpackfilter.tree.maxDepth 0 &&
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:1 \
+		"file://$(pwd)/srv.bare" pc3
+'
+
 test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '
 	rm -rf src dst &&
 	git init src &&
