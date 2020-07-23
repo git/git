@@ -701,7 +701,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-#define MAX_NUM_TASKS 3
+#define MAX_NUM_TASKS 4
 
 static const char * const builtin_maintenance_usage[] = {
 	N_("git maintenance run [<options>]"),
@@ -858,6 +858,106 @@ static int maintenance_task_gc(void)
 	return result;
 }
 
+static int prune_packed(void)
+{
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+	argv_array_pushl(&cmd, "prune-packed", NULL);
+
+	if (opts.quiet)
+		argv_array_push(&cmd, "--quiet");
+
+	return run_command_v_opt(cmd.argv, RUN_GIT_CMD);
+}
+
+struct write_loose_object_data {
+	FILE *in;
+	int count;
+	int batch_size;
+};
+
+static int loose_object_exists(const struct object_id *oid,
+			       const char *path,
+			       void *data)
+{
+	return 1;
+}
+
+static int write_loose_object_to_stdin(const struct object_id *oid,
+				       const char *path,
+				       void *data)
+{
+	struct write_loose_object_data *d = (struct write_loose_object_data *)data;
+
+	fprintf(d->in, "%s\n", oid_to_hex(oid));
+
+	return ++(d->count) > d->batch_size;
+}
+
+static int pack_loose(void)
+{
+	struct repository *r = the_repository;
+	int result = 0;
+	struct write_loose_object_data data;
+	struct strbuf prefix = STRBUF_INIT;
+	struct child_process *pack_proc;
+
+	/*
+	 * Do not start pack-objects process
+	 * if there are no loose objects.
+	 */
+	if (!for_each_loose_file_in_objdir(r->objects->odb->path,
+					   loose_object_exists,
+					   NULL, NULL, NULL))
+		return 0;
+
+	pack_proc = xmalloc(sizeof(*pack_proc));
+
+	child_process_init(pack_proc);
+
+	strbuf_addstr(&prefix, r->objects->odb->path);
+	strbuf_addstr(&prefix, "/pack/loose");
+
+	argv_array_pushl(&pack_proc->args, "git", "pack-objects", NULL);
+	if (opts.quiet)
+		argv_array_push(&pack_proc->args, "--quiet");
+	argv_array_push(&pack_proc->args, prefix.buf);
+
+	pack_proc->in = -1;
+
+	if (start_command(pack_proc)) {
+		error(_("failed to start 'git pack-objects' process"));
+		result = 1;
+		goto cleanup;
+	}
+
+	data.in = xfdopen(pack_proc->in, "w");
+	data.count = 0;
+	data.batch_size = 50000;
+
+	for_each_loose_file_in_objdir(r->objects->odb->path,
+				      write_loose_object_to_stdin,
+				      NULL,
+				      NULL,
+				      &data);
+
+	fclose(data.in);
+
+	if (finish_command(pack_proc)) {
+		error(_("failed to finish 'git pack-objects' process"));
+		result = 1;
+	}
+
+cleanup:
+	strbuf_release(&prefix);
+	free(pack_proc);
+	return result;
+}
+
+static int maintenance_task_loose_objects(void)
+{
+	return prune_packed() || pack_loose();
+}
+
 typedef int maintenance_task_fn(void);
 
 struct maintenance_task {
@@ -931,6 +1031,10 @@ static void initialize_tasks(void)
 
 	tasks[num_tasks]->name = "prefetch";
 	tasks[num_tasks]->fn = maintenance_task_prefetch;
+	num_tasks++;
+
+	tasks[num_tasks]->name = "loose-objects";
+	tasks[num_tasks]->fn = maintenance_task_loose_objects;
 	num_tasks++;
 
 	tasks[num_tasks]->name = "gc";
