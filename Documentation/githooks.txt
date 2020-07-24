@@ -404,8 +404,8 @@ Both standard output and standard error output are forwarded to
 `git send-pack` on the other end, so you can simply `echo` messages
 for the user.
 
-ref-transaction
-~~~~~~~~~~~~~~~
+reference-transaction
+~~~~~~~~~~~~~~~~~~~~~
 
 This hook is invoked by any Git command that performs reference
 updates. It executes whenever a reference transaction is prepared,
