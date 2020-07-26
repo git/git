@@ -983,21 +983,25 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 			continue;
 		if (deref)
 			name++;
-		if (!strcmp(name, "tree")) {
+		if (!strcmp(name, "tree"))
 			v->s = xstrdup(oid_to_hex(get_commit_tree_oid(commit)));
-		}
+		else if (!strcmp(name, "tree:short"))
+			v->s = xstrdup(find_unique_abbrev(get_commit_tree_oid(commit), DEFAULT_ABBREV));
 		else if (!strcmp(name, "numparent")) {
 			v->value = commit_list_count(commit->parents);
 			v->s = xstrfmt("%lu", (unsigned long)v->value);
 		}
-		else if (!strcmp(name, "parent")) {
+		else if (starts_with(name, "parent")) {
 			struct commit_list *parents;
 			struct strbuf s = STRBUF_INIT;
 			for (parents = commit->parents; parents; parents = parents->next) {
 				struct commit *parent = parents->item;
 				if (parents != commit->parents)
 					strbuf_addch(&s, ' ');
-				strbuf_addstr(&s, oid_to_hex(&parent->object.oid));
+				if (!strcmp(name, "parent"))
+					strbuf_addstr(&s, oid_to_hex(&parent->object.oid));
+				else if (!strcmp(name, "parent:short"))
+					strbuf_add_unique_abbrev(&s, &parent->object.oid, DEFAULT_ABBREV);
 			}
 			v->s = strbuf_detach(&s, NULL);
 		}
