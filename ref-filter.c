@@ -102,6 +102,10 @@ static struct ref_to_worktree_map {
 	struct worktree **worktrees;
 } ref_to_worktree_map;
 
+static struct email_option{
+	enum { EO_INVALID, EO_RAW, EO_TRIM, EO_LOCALPART } option;
+} email_option;
+
 /*
  * An atom is a valid field atom listed below, possibly prefixed with
  * a "*" to denote deref_tag().
@@ -1040,10 +1044,26 @@ static const char *copy_email(const char *buf)
 	const char *eoemail;
 	if (!email)
 		return xstrdup("");
-	eoemail = strchr(email, '>');
+	switch (email_option.option) {
+	case EO_RAW:
+		eoemail = strchr(email, '>') + 1;
+		break;
+	case EO_TRIM:
+		email++;
+		eoemail = strchr(email, '>');
+		break;
+	case EO_LOCALPART:
+		email++;
+		eoemail = strchr(email, '@');
+		break;
+	case EO_INVALID:
+	default:
+		return xstrdup("");
+	}
+
 	if (!eoemail)
 		return xstrdup("");
-	return xmemdupz(email, eoemail + 1 - email);
+	return xmemdupz(email, eoemail - email);
 }
 
 static char *copy_subject(const char *buf, unsigned long len)
@@ -1113,7 +1133,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
 			continue;
 		if (name[wholen] != 0 &&
 		    strcmp(name + wholen, "name") &&
-		    strcmp(name + wholen, "email") &&
+		    !starts_with(name + wholen, "email") &&
 		    !starts_with(name + wholen, "date"))
 			continue;
 		if (!wholine)
@@ -1124,8 +1144,16 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
 			v->s = copy_line(wholine);
 		else if (!strcmp(name + wholen, "name"))
 			v->s = copy_name(wholine);
-		else if (!strcmp(name + wholen, "email"))
+		else if (starts_with(name + wholen, "email")) {
+			email_option.option = EO_INVALID;
+			if (!strcmp(name + wholen, "email"))
+				email_option.option = EO_RAW;
+			if (!strcmp(name + wholen, "email:trim"))
+				email_option.option = EO_TRIM;
+			if (!strcmp(name + wholen, "email:localpart"))
+				email_option.option = EO_LOCALPART;
 			v->s = copy_email(wholine);
+		}
 		else if (starts_with(name + wholen, "date"))
 			grab_date(wholine, v, name);
 	}
