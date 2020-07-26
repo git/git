@@ -7,7 +7,6 @@ test_description='for-each-ref errors for broken refs'
 ZEROS=$ZERO_OID
 
 test_expect_success setup '
-	test_oid_init &&
 	MISSING=$(test_oid deadbeef) &&
 	git commit --allow-empty -m "Initial" &&
 	git tag testtag &&

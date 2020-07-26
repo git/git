@@ -71,7 +71,6 @@ EOF
 INPUT_END
 
 test_expect_success 'set up master branch' '
-	test_oid_init &&
 	git fast-import <input &&
 	git whatchanged master
 '

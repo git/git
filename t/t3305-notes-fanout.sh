@@ -31,7 +31,6 @@ all_notes_have_fanout() {
 }
 
 test_expect_success 'tweak test environment' '
-	test_oid_init &&
 	git checkout -b nondeterminism &&
 	test_commit A &&
 	git checkout --orphan with_notes;

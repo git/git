@@ -59,7 +59,6 @@ test_rev_parse () {
 ROOT=$(pwd)
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	mkdir -p sub/dir work &&
 	cp -R .git repo.git
 '

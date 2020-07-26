@@ -30,7 +30,6 @@ Initial setup:
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	test_commit A file1 &&
 	test_commit B file1 &&
 	test_commit C file2 &&

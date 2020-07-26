@@ -6,8 +6,6 @@ test_description='git blame corner cases'
 pick_fc='s/^[0-9a-f^]* *\([^ ]*\) *(\([^ ]*\) .*/\1-\2/'
 
 test_expect_success setup '
-	test_oid_init &&
-
 	echo A A A A A >one &&
 	echo B B B B B >two &&
 	echo C C C C C >tres &&

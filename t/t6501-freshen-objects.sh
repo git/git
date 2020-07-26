@@ -45,10 +45,6 @@ maybe_repack () {
 	fi
 }
 
-test_expect_success 'setup' '
-	test_oid_init
-'
-
 for repack in '' true; do
 	title=${repack:+repack}
 	title=${title:-loose}

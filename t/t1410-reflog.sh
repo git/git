@@ -54,7 +54,6 @@ check_dont_have () {
 }
 
 test_expect_success setup '
-	test_oid_init &&
 	mkdir -p A/B &&
 	echo rat >C &&
 	echo ox >A/D &&
