@@ -470,7 +470,16 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 			data->partial_clone = xstrdup(value);
 		} else if (!strcmp(ext, "worktreeconfig"))
 			data->worktree_config = git_config_bool(var, value);
-		else
+		else if (!strcmp(ext, "objectformat")) {
+			int format;
+
+			if (!value)
+				return config_error_nonbool(var);
+			format = hash_algo_by_name(value);
+			if (format == GIT_HASH_UNKNOWN)
+				return error("invalid value for 'extensions.objectformat'");
+			data->hash_algo = format;
+		} else
 			string_list_append(&data->unknown_extensions, ext);
 	}
 
@@ -610,6 +619,11 @@ int verify_repository_format(const struct repository_format *format,
 		for (i = 0; i < format->unknown_extensions.nr; i++)
 			strbuf_addf(err, "\n\t%s",
 				    format->unknown_extensions.items[i].string);
+		return -1;
+	}
+
+	if (format->version <= 0 && format->hash_algo != GIT_HASH_SHA1) {
+		strbuf_addstr(err, _("extensions.objectFormat is not valid in repo v0"));
 		return -1;
 	}
 
