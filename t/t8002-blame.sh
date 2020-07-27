@@ -122,4 +122,15 @@ test_expect_success '--exclude-promisor-objects does not BUG-crash' '
 	test_must_fail git blame --exclude-promisor-objects one
 '
 
+test_expect_success 'blame with uncommitted edits in partial clone does not crash' '
+	git init server &&
+	echo foo >server/file.txt &&
+	git -C server add file.txt &&
+	git -C server commit -m file &&
+
+	git clone --filter=blob:none "file://$(pwd)/server" client &&
+	echo bar >>client/file.txt &&
+	git -C client blame file.txt
+'
+
 test_done
