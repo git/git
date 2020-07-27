@@ -217,7 +217,7 @@ void refresh_fsmonitor(struct index_state *istate)
 				 * Need to use a char * variable because static
 				 * analysis was suggesting to use strbuf_addbuf
 				 * but we don't want to copy the entire strbuf
-				 * only the the chars up to the first NUL
+				 * only the chars up to the first NUL
 				 */
 				buf = query_result.buf;
 				strbuf_addstr(&last_update_token, buf);
