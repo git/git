@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2020, #04; Wed, 22)
-X-master-at: b066807397fd55553f4910ede74839e319b661fd
-X-next-at: 839af2c2686bba67b3e8cea649583ed99b2326e6
+Subject: What's cooking in git.git (Jul 2020, #05; Mon, 27)
+X-master-at: 47ae905ffb98cc4d4fd90083da6bc8dab55d9ecc
+X-next-at: 6104cc2f0b60537336b3f2ee6fc82132e2b84cd3
 
-What's cooking in git.git (Jul 2020, #04; Wed, 22)
+What's cooking in git.git (Jul 2020, #05; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,9 +12,17 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-I just tagged Git 2.28-rc2; we should be pretty in a good shape and
-hopefully the only difference between this and the final would just
-be the translation.
+Git 2.28 has been tagged.  We'll go slow for a few days to gauge the
+initial reaction to it and see if there is no major brown-paper-bag
+issues discovered.  Following that, majority of topics that have
+been cooking in 'next' will be merged to 'master', the tip of 'next'
+will be rewound and rebuilt on top of the updated 'master', near the
+end of this week.  The 'next' branch then will start taking new
+topics after that.
+
+During the next cycle for 2.29, we will decide the direction of
+follow-up work, if any is needed, for the init.defaultBranch topic
+we did the last cycle.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,124 +30,21 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* dl/branch-cleanup (2020-07-18) 1 commit
-  (merged to 'next' on 2020-07-18 at 942efa1f99)
- + t3200: don't grep for `strerror()` string
-
- Last minute fix-up to tests for portability.
-
-
-* en/sparse-status (2020-07-20) 1 commit
-  (merged to 'next' on 2020-07-20 at 6aa5c12b74)
- + git-prompt: change == to = for zsh's sake
-
- Fix to a "git prompt" regression during this development cycle.
-
-
-* jc/relnotes-v0-extension-update (2020-07-17) 1 commit
-  (merged to 'next' on 2020-07-18 at 4e03396489)
- + RelNotes: update the v0 with extension situation
-
- Last minute fix-up to the release notes.
-
-
-* jn/v0-with-extensions-fix (2020-07-16) 2 commits
- + repository: allow repository format upgrade with extensions
- + Revert "check_repository_format_gently(): refuse extensions for old repositories"
- (this branch is used by jk/reject-newer-extensions-in-v0.)
-
- In 2.28-rc0, we corrected a bug that some repository extensions are
- honored by mistake even in a version 0 repositories (these
- configuration variables in extensions.* namespace were supposed to
- have special meaning in repositories whose version numbers are 1 or
- higher), but this was a bit too big a change.
-
-
-* js/pu-to-seen (2020-07-18) 1 commit
-  (merged to 'next' on 2020-07-18 at bb6ee9441b)
- + gitworkflows.txt: fix broken subsection underline
-
- Last minute fix-up to documentation.
-
---------------------------------------------------
 [New Topics]
 
-* jk/reject-newer-extensions-in-v0 (2020-07-16) 1 commit
-  (merged to 'next' on 2020-07-16 at 85f634d5a6)
- + verify_repository_format(): complain about new extensions in v0 repo
+* jb/doc-packfile-name (2020-07-22) 1 commit
+ - pack-write/docs: update regarding pack naming
 
- With the base fix to 2.27 regresion, any new extensions in a v0
- repository would still be silently honored, which is not quite
- right.  Instead, complain and die loudly.
-
- Will cook in 'next'.
-
-
-* en/fill-directory-exponential (2020-07-20) 1 commit
-  (merged to 'next' on 2020-07-22 at 63662d6646)
- + dir: check pathspecs before returning `path_excluded`
-
- Fix to a regression introduced during 2.27 cycle.
-
- Will cook in 'next'.
-
-
-* bc/push-cas-cquoted-refname (2020-07-20) 1 commit
-  (merged to 'next' on 2020-07-21 at fd7bb5c85e)
- + remote-curl: make --force-with-lease work with non-ASCII ref names
-
- Pushing a ref whose name contains non-ASCII character with the
- "--force-with-lease" option did not work over smart HTTP protocol,
- which has been corrected.
-
- Will cook in 'next'.
-
-
-* ct/mv-unmerged-path-error (2020-07-20) 1 commit
-  (merged to 'next' on 2020-07-21 at c17007237a)
- + git-mv: improve error message for conflicted file
-
- "git mv src dst", when src is an unmerged path, errored out
- correctly but with an incorrect error message to claim that src is
- not tracked, which has been clarified.
-
- Will cook in 'next'.
-
-
-* jt/pack-objects-prefetch-in-batch (2020-07-21) 2 commits
- - pack-objects: prefetch objects to be packed
- - pack-objects: refactor to oid_object_info_extended
-
- While packing many objects in a repository with a promissor remote,
- lazily fetching missing objects from the promissor remote one by
- one may be inefficient---the code now attempts to fetch all the
- missing objects in batch (obviously this won't work for a lazy
- clone that lazily fetches tree objects as you cannot even enumerate
- what blobs are missing until you learn which trees are missing).
+ Doc update.
 
  Will merge to 'next'.
 
 
-* jt/pretend-object-never-come-from-elsewhere (2020-07-21) 1 commit
- - sha1-file: make pretend_object_file() not prefetch
+* dd/send-email-config (2020-07-23) 1 commit
+ - git-send-email: die if sendmail.* config is set
 
- The pretend-object mechanism checks if the given object already
- exists in the object store before deciding to keep the data
- in-core, but the check would have triggered lazy fetching of such
- an object from a promissor remote.
-
- Will merge to 'next'.
-
-
-* sg/ci-git-path-fix-with-pyenv (2020-07-21) 1 commit
- - travis-ci: remove bogus 'pyenv' in the Linux jobs
-
- CI fixup---tests of Python scripts didn't use the version of Git
- that is being tested.
-
- Will merge to 'next'.
+ Stop when "sendmail.*" configuration variables are defined, which
+ could be a mistaken attempt to define "sendemail.*" variables.
 
 --------------------------------------------------
 [Stalled]
@@ -218,7 +123,83 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* bc/sha-256-part-3 (2020-07-15) 39 commits
+* jk/reject-newer-extensions-in-v0 (2020-07-16) 1 commit
+  (merged to 'next' on 2020-07-16 at 85f634d5a6)
+ + verify_repository_format(): complain about new extensions in v0 repo
+
+ With the base fix to 2.27 regresion, any new extensions in a v0
+ repository would still be silently honored, which is not quite
+ right.  Instead, complain and die loudly.
+
+ Will cook in 'next'.
+
+
+* en/fill-directory-exponential (2020-07-20) 1 commit
+  (merged to 'next' on 2020-07-22 at 63662d6646)
+ + dir: check pathspecs before returning `path_excluded`
+
+ Fix to a regression introduced during 2.27 cycle.
+
+ Will cook in 'next'.
+
+
+* bc/push-cas-cquoted-refname (2020-07-20) 1 commit
+  (merged to 'next' on 2020-07-21 at fd7bb5c85e)
+ + remote-curl: make --force-with-lease work with non-ASCII ref names
+
+ Pushing a ref whose name contains non-ASCII character with the
+ "--force-with-lease" option did not work over smart HTTP protocol,
+ which has been corrected.
+
+ Will cook in 'next'.
+
+
+* ct/mv-unmerged-path-error (2020-07-20) 1 commit
+  (merged to 'next' on 2020-07-21 at c17007237a)
+ + git-mv: improve error message for conflicted file
+
+ "git mv src dst", when src is an unmerged path, errored out
+ correctly but with an incorrect error message to claim that src is
+ not tracked, which has been clarified.
+
+ Will cook in 'next'.
+
+
+* jt/pack-objects-prefetch-in-batch (2020-07-21) 2 commits
+ - pack-objects: prefetch objects to be packed
+ - pack-objects: refactor to oid_object_info_extended
+
+ While packing many objects in a repository with a promissor remote,
+ lazily fetching missing objects from the promissor remote one by
+ one may be inefficient---the code now attempts to fetch all the
+ missing objects in batch (obviously this won't work for a lazy
+ clone that lazily fetches tree objects as you cannot even enumerate
+ what blobs are missing until you learn which trees are missing).
+
+ Will merge to 'next'.
+
+
+* jt/pretend-object-never-come-from-elsewhere (2020-07-21) 1 commit
+ - sha1-file: make pretend_object_file() not prefetch
+
+ The pretend-object mechanism checks if the given object already
+ exists in the object store before deciding to keep the data
+ in-core, but the check would have triggered lazy fetching of such
+ an object from a promissor remote.
+
+ Will merge to 'next'.
+
+
+* sg/ci-git-path-fix-with-pyenv (2020-07-23) 1 commit
+ - ci: use absolute PYTHON_PATH in the Linux jobs
+
+ CI fixup---tests of Python scripts didn't use the version of Git
+ that is being tested.
+
+ Will merge to 'next'.
+
+
+* bc/sha-256-part-3 (2020-07-22) 39 commits
  - t: remove test_oid_init in tests
  - docs: add documentation for extensions.objectFormat
  - ci: run tests with SHA-256
@@ -285,7 +266,7 @@ repositories listed at
  "git fetch" learned the "--[no-]write-fetch-head" option to
  optionally stop describing what was fetched in FETCH_HEAD.
 
- Will merge to 'next' after the release.
+ Needs more work.
 
 
 * mp/complete-show-color-moved (2020-07-15) 1 commit
@@ -293,14 +274,14 @@ repositories listed at
 
  Command line completion (in contrib/) update.
 
- Will merge to 'next' after the release.
+ Will merge to 'next'.
  A follow-up patch to reduce duplication may be warranted.
 
 
 * hn/reftable-prep-part-2 (2020-07-16) 3 commits
- . Make HEAD a PSEUDOREF rather than PER_WORKTREE.
- . Modify pseudo refs through ref backend storage
- . t1400: use git rev-parse for testing PSEUDOREF existence
+ - Make HEAD a PSEUDOREF rather than PER_WORKTREE.
+ - Modify pseudo refs through ref backend storage
+ - t1400: use git rev-parse for testing PSEUDOREF existence
  (this branch uses hn/reftable.)
 
  Further preliminary change to refs API.
@@ -341,28 +322,25 @@ repositories listed at
  Will cook in 'next'.
 
 
-* ds/maintenance (2020-07-07) 21 commits
+* ds/maintenance (2020-07-23) 18 commits
+ - maintenance: add trace2 regions for task execution
  - midx: use start_delayed_progress()
- - maintenance: add pack-files auto condition
+ - maintenance: add incremental-repack auto condition
  - maintenance: create auto condition for loose-objects
  - maintenance: add auto condition for commit-graph task
  - maintenance: use pointers to check --auto
  - maintenance: create maintenance.<task>.enabled config
- - maintenance: auto-size pack-files batch
- - maintenance: add pack-files task
+ - maintenance: auto-size incremental-repack batch
+ - maintenance: add incremental-repack task
  - maintenance: add loose-objects task
- - maintenance: add fetch task
+ - maintenance: add prefetch task
  - maintenance: take a lock on the objects directory
  - maintenance: add --task option
  - maintenance: add commit-graph task
- - maintenance: initialize task array and hashmap
+ - maintenance: initialize task array
  - maintenance: replace run_auto_gc()
  - maintenance: add --quiet option
  - maintenance: create basic maintenance runner
- - gc: drop the_repository in log location
- - gc: use repo config
- - gc: use repository in too_many_loose_objects()
- - gc: use the_repository less often
 
  A "git gc"'s big brother has been introduced to take care of more
  repository maintenance tasks, not limited to the object database
@@ -417,18 +395,15 @@ repositories listed at
  Will cook in 'next'.
 
 
-* tb/upload-pack-filters (2020-07-06) 4 commits
- . upload-pack.c: introduce 'uploadpack.filter.tree.maxDepth'
- . upload-pack.c: pass 'struct list_objects_filter_options *'
- . upload-pack.c: allow banning certain object filter(s)
- . list_objects_filter_options: introduce 'list_object_filter_config_name'
+* tb/upload-pack-filters (2020-07-22) 4 commits
+ - upload-pack.c: introduce 'uploadpackfilter.tree.maxDepth'
+ - upload-pack.c: pass 'struct list_objects_filter_options *'
+ - upload-pack.c: allow banning certain object filter(s)
+ - list_objects_filter_options: introduce 'list_object_filter_config_name'
 
  The component to respond to "git fetch" request is made more
  configurable to selectively allow or reject object filtering
  specification used for partial cloning.
-
- Expecting a reroll.
- cf. <20200721202740.GA34538@syl.lan>
 
 
 * mt/hash-to-hex-thread-safety (2020-06-26) 2 commits
@@ -474,7 +449,7 @@ repositories listed at
 
  CMake support to build with MSVC for Windows bypassing the Makefile.
 
- Will merge to 'next' after the release.
+ Will merge to 'next'.
  cf. https://github.com/git/git/runs/892824895
 
 
