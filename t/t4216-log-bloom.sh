@@ -60,7 +60,7 @@ setup () {
 
 test_bloom_filters_used () {
 	log_args=$1
-	bloom_trace_prefix="statistics:{\"filter_not_present\":0,\"zero_length_filter\":0,\"maybe\""
+	bloom_trace_prefix="statistics:{\"filter_not_present\":0,\"maybe\""
 	setup "$log_args" &&
 	grep -q "$bloom_trace_prefix" "$TRASH_DIRECTORY/trace.perf" &&
 	test_cmp log_wo_bloom log_w_bloom &&
@@ -112,6 +112,10 @@ test_expect_success 'git log -- multiple path specs does not use Bloom filters' 
 	test_bloom_filters_not_used "-- file4 A/file1"
 '
 
+test_expect_success 'git log -- "." pathspec at root does not use Bloom filters' '
+	test_bloom_filters_not_used "-- ."
+'
+
 test_expect_success 'git log with wildcard that resolves to a single path uses Bloom filters' '
 	test_bloom_filters_used "-- *4" &&
 	test_bloom_filters_used "-- *renamed"
@@ -126,7 +130,7 @@ test_expect_success 'setup - add commit-graph to the chain without Bloom filters
 	test_commit c14 A/anotherFile2 &&
 	test_commit c15 A/B/anotherFile2 &&
 	test_commit c16 A/B/C/anotherFile2 &&
-	GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0 git commit-graph write --reachable --split &&
+	git commit-graph write --reachable --split --no-changed-paths &&
 	test_line_count = 2 .git/objects/info/commit-graphs/commit-graph-chain
 '
 
@@ -142,7 +146,7 @@ test_expect_success 'setup - add commit-graph to the chain with Bloom filters' '
 
 test_bloom_filters_used_when_some_filters_are_missing () {
 	log_args=$1
-	bloom_trace_prefix="statistics:{\"filter_not_present\":3,\"zero_length_filter\":0,\"maybe\":8,\"definitely_not\":6"
+	bloom_trace_prefix="statistics:{\"filter_not_present\":3,\"maybe\":6,\"definitely_not\":8"
 	setup "$log_args" &&
 	grep -q "$bloom_trace_prefix" "$TRASH_DIRECTORY/trace.perf" &&
 	test_cmp log_wo_bloom log_w_bloom
@@ -150,6 +154,41 @@ test_bloom_filters_used_when_some_filters_are_missing () {
 
 test_expect_success 'Use Bloom filters if they exist in the latest but not all commit graphs in the chain.' '
 	test_bloom_filters_used_when_some_filters_are_missing "-- A/B"
+'
+
+test_expect_success 'persist filter settings' '
+	test_when_finished rm -rf .git/objects/info/commit-graph* &&
+	rm -rf .git/objects/info/commit-graph* &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		GIT_TRACE2_EVENT_NESTING=5 \
+		GIT_TEST_BLOOM_SETTINGS_NUM_HASHES=9 \
+		GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY=15 \
+		git commit-graph write --reachable --changed-paths &&
+	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15}" trace2.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2-auto.txt" \
+		GIT_TRACE2_EVENT_NESTING=5 \
+		git commit-graph write --reachable --changed-paths &&
+	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15}" trace2-auto.txt
+'
+
+test_expect_success 'correctly report changes over limit' '
+	git init 513changes &&
+	(
+		cd 513changes &&
+		for i in $(test_seq 1 513)
+		do
+			echo $i >file$i.txt || return 1
+		done &&
+		git add . &&
+		git commit -m "files" &&
+		git commit-graph write --reachable --changed-paths &&
+		for i in $(test_seq 1 513)
+		do
+			git -c core.commitGraph=false log -- file$i.txt >expect &&
+			git log -- file$i.txt >actual &&
+			test_cmp expect actual || return 1
+		done
+	)
 '
 
 test_done

@@ -187,7 +187,7 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 	struct diff_options diffopt;
 	int max_changes = 512;
 
-	if (bloom_filters.slab_size == 0)
+	if (!bloom_filters.slab_size)
 		return NULL;
 
 	filter = bloom_filter_slab_at(&bloom_filters, c);
@@ -195,16 +195,14 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 	if (!filter->data) {
 		load_commit_graph_info(r, c);
 		if (commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH &&
-			r->objects->commit_graph->chunk_bloom_indexes) {
-			if (load_bloom_filter_from_graph(r->objects->commit_graph, filter, c))
-				return filter;
-			else
-				return NULL;
-		}
+			r->objects->commit_graph->chunk_bloom_indexes)
+			load_bloom_filter_from_graph(r->objects->commit_graph, filter, c);
 	}
 
-	if (filter->data || !compute_if_not_present)
+	if (filter->data)
 		return filter;
+	if (!compute_if_not_present)
+		return NULL;
 
 	repo_diff_setup(r, &diffopt);
 	diffopt.flags.recursive = 1;
