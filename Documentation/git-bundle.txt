@@ -9,7 +9,8 @@ git-bundle - Move objects and refs by archive
 SYNOPSIS
 --------
 [verse]
-'git bundle' create [-q | --quiet | --progress | --all-progress] [--all-progress-implied] <file> <git-rev-list-args>
+'git bundle' create [-q | --quiet | --progress | --all-progress] [--all-progress-implied]
+		    [--version=<version>] <file> <git-rev-list-args>
 'git bundle' verify [-q | --quiet] <file>
 'git bundle' list-heads <file> [<refname>...]
 'git bundle' unbundle <file> [<refname>...]
@@ -101,6 +102,12 @@ unbundle <file>::
 	This is used to imply --all-progress whenever progress display
 	is activated.  Unlike --all-progress this flag doesn't actually
 	force any progress display by itself.
+
+--version=<version>::
+	Specify the bundle version.  Version 2 is the older format and can only be
+	used with SHA-1 repositories; the newer version 3 contains capabilities that
+	permit extensions. The default is the oldest supported format, based on the
+	hash algorithm in use.
 
 -q::
 --quiet::

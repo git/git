@@ -4,7 +4,6 @@ test_description='fetch/receive strict mode'
 . ./test-lib.sh
 
 test_expect_success 'setup and inject "corrupt or missing" object' '
-	test_oid_init &&
 	echo hello >greetings &&
 	git add greetings &&
 	git commit -m greetings &&

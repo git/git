@@ -25,7 +25,6 @@ test_description='git rerere
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	cat >a1 <<-\EOF &&
 	Some title
 	==========

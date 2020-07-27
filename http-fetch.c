@@ -86,6 +86,8 @@ int cmd_main(int argc, const char **argv)
 	int packfile = 0;
 	struct object_id packfile_hash;
 
+	setup_git_directory();
+
 	while (arg < argc && argv[arg][0] == '-') {
 		const char *p;
 
@@ -114,8 +116,6 @@ int cmd_main(int argc, const char **argv)
 	}
 	if (argc != arg + 2 - (commits_on_stdin || packfile))
 		usage(http_fetch_usage);
-
-	setup_git_directory();
 
 	git_config(git_default_config, NULL);
 

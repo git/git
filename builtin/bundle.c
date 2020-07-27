@@ -60,6 +60,7 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 	int all_progress_implied = 0;
 	int progress = isatty(STDERR_FILENO);
 	struct argv_array pack_opts;
+	int version = -1;
 
 	struct option options[] = {
 		OPT_SET_INT('q', "quiet", &progress,
@@ -71,6 +72,8 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 		OPT_BOOL(0, "all-progress-implied",
 			 &all_progress_implied,
 			 N_("similar to --all-progress when progress meter is shown")),
+		OPT_INTEGER(0, "version", &version,
+			    N_("specify bundle format version")),
 		OPT_END()
 	};
 	const char* bundle_file;
@@ -91,7 +94,7 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 
 	if (!startup_info->have_repository)
 		die(_("Need a repository to create a bundle."));
-	return !!create_bundle(the_repository, bundle_file, argc, argv, &pack_opts);
+	return !!create_bundle(the_repository, bundle_file, argc, argv, &pack_opts, version);
 }
 
 static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {

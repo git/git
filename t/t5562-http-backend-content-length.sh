@@ -46,7 +46,6 @@ ssize_b100dots() {
 }
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	HTTP_CONTENT_ENCODING="identity" &&
 	export HTTP_CONTENT_ENCODING &&
 	git config http.receivepack true &&
