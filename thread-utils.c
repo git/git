@@ -122,4 +122,15 @@ int dummy_pthread_join(pthread_t pthread, void **retval)
 	return ENOSYS;
 }
 
+int nothreads_pthread_once(pthread_once_t *once_control,
+			   void (*init_routine)(void))
+{
+	if (*once_control == 1)
+		return 0;
+
+	init_routine();
+	*once_control = 1;
+	return 0;
+}
+
 #endif
