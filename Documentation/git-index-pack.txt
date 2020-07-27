@@ -104,8 +104,8 @@ This option cannot be used with --stdin.
 NOTES
 -----
 
-Once the index has been created, the list of object names is sorted
-and the SHA-1 hash of that list is printed to stdout. If --stdin was
+Once the index has been created, the hash that goes into the name of
+the pack/idx file is printed to stdout. If --stdin was
 also used then this is prefixed by either "pack\t", or "keep\t" if a
 new .keep file was successfully created. This is useful to remove a
 .keep file used as a lock to prevent the race with 'git repack'
