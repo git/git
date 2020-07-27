@@ -110,6 +110,10 @@ void rollback_shallow_file(struct repository *r, struct shallow_lock *lk)
  * supports a "valid" flag.
  */
 define_commit_slab(commit_depth, int *);
+static void free_depth_in_slab(int **ptr)
+{
+	FREE_AND_NULL(*ptr);
+}
 struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		int shallow_flag, int not_shallow_flag)
 {
@@ -176,15 +180,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 			}
 		}
 	}
-	for (i = 0; i < depths.slab_count; i++) {
-		int j;
-
-		if (!depths.slab[i])
-			continue;
-		for (j = 0; j < depths.slab_size; j++)
-			free(depths.slab[i][j]);
-	}
-	clear_commit_depth(&depths);
+	deep_clear_commit_depth(&depths, free_depth_in_slab);
 
 	return result;
 }

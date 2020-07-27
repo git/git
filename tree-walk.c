@@ -851,7 +851,14 @@ static int match_entry(const struct pathspec_item *item,
 	if (matchlen > pathlen) {
 		if (match[pathlen] != '/')
 			return 0;
-		if (!S_ISDIR(entry->mode) && !S_ISGITLINK(entry->mode))
+		/*
+		 * Reject non-directories as partial pathnames, except
+		 * when match is a submodule with a trailing slash and
+		 * nothing else (to handle 'submod/' and 'submod'
+		 * uniformly).
+		 */
+		if (!S_ISDIR(entry->mode) &&
+		    (!S_ISGITLINK(entry->mode) || matchlen > pathlen + 1))
 			return 0;
 	}
 
