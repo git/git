@@ -15,9 +15,12 @@ DESCRIPTION
 -----------
 Shows the commit logs.
 
-The command takes options applicable to the `git rev-list`
+:git-log: 1
+include::rev-list-description.txt[]
+
+The command takes options applicable to the linkgit:git-rev-list[1]
 command to control what is shown and how, and options applicable to
-the `git diff-*` commands to control how the changes
+the linkgit:git-diff[1] command to control how the changes
 each commit introduces are shown.
 
 
