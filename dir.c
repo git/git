@@ -2209,13 +2209,13 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 				       baselen, excluded, pathspec);
 	case DT_REG:
 	case DT_LNK:
-		if (excluded)
-			return path_excluded;
 		if (pathspec &&
 		    !match_pathspec(istate, pathspec, path->buf, path->len,
 				    0 /* prefix */, NULL /* seen */,
 				    0 /* is_dir */))
 			return path_none;
+		if (excluded)
+			return path_excluded;
 		return path_untracked;
 	}
 }
