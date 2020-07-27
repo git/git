@@ -57,6 +57,24 @@ uploadpack.allowFilter::
 	If this option is set, `upload-pack` will support partial
 	clone and partial fetch object filtering.
 
+uploadpackfilter.allow::
+	Provides a default value for unspecified object filters (see: the
+	below configuration variable).
+	Defaults to `true`.
+
+uploadpackfilter.<filter>.allow::
+	Explicitly allow or ban the object filter corresponding to
+	`<filter>`, where `<filter>` may be one of: `blob:none`,
+	`blob:limit`, `tree`, `sparse:oid`, or `combine`. If using
+	combined filters, both `combine` and all of the nested filter
+	kinds must be allowed. Defaults to `uploadpackfilter.allow`.
+
+uploadpackfilter.tree.maxDepth::
+	Only allow `--filter=tree=<n>` when `n` is no more than the value of
+	`uploadpackfilter.tree.maxDepth`. If set, this also implies
+	`uploadpackfilter.tree.allow=true`, unless this configuration
+	variable had already been set. Has no effect if unset.
+
 uploadpack.allowRefInWant::
 	If this option is set, `upload-pack` will support the `ref-in-want`
 	feature of the protocol version 2 `fetch` command.  This feature
