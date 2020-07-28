@@ -1914,15 +1914,15 @@ static void find_longest_prefixes_1(struct string_list *out,
 static void find_longest_prefixes(struct string_list *out,
 				  const char **patterns)
 {
-	struct argv_array sorted = ARGV_ARRAY_INIT;
+	struct strvec sorted = STRVEC_INIT;
 	struct strbuf prefix = STRBUF_INIT;
 
-	argv_array_pushv(&sorted, patterns);
+	strvec_pushv(&sorted, patterns);
 	QSORT(sorted.argv, sorted.argc, qsort_strcmp);
 
 	find_longest_prefixes_1(out, &prefix, sorted.argv, sorted.argc);
 
-	argv_array_clear(&sorted);
+	strvec_clear(&sorted);
 	strbuf_release(&prefix);
 }
 

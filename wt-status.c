@@ -913,17 +913,17 @@ static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncom
 	struct strbuf summary = STRBUF_INIT;
 	char *summary_content;
 
-	argv_array_pushf(&sm_summary.env_array, "GIT_INDEX_FILE=%s",
+	strvec_pushf(&sm_summary.env_array, "GIT_INDEX_FILE=%s",
 			 s->index_file);
 
-	argv_array_push(&sm_summary.args, "submodule");
-	argv_array_push(&sm_summary.args, "summary");
-	argv_array_push(&sm_summary.args, uncommitted ? "--files" : "--cached");
-	argv_array_push(&sm_summary.args, "--for-status");
-	argv_array_push(&sm_summary.args, "--summary-limit");
-	argv_array_pushf(&sm_summary.args, "%d", s->submodule_summary);
+	strvec_push(&sm_summary.args, "submodule");
+	strvec_push(&sm_summary.args, "summary");
+	strvec_push(&sm_summary.args, uncommitted ? "--files" : "--cached");
+	strvec_push(&sm_summary.args, "--for-status");
+	strvec_push(&sm_summary.args, "--summary-limit");
+	strvec_pushf(&sm_summary.args, "%d", s->submodule_summary);
 	if (!uncommitted)
-		argv_array_push(&sm_summary.args, s->amend ? "HEAD^" : "HEAD");
+		strvec_push(&sm_summary.args, s->amend ? "HEAD^" : "HEAD");
 
 	sm_summary.git_cmd = 1;
 	sm_summary.no_stdin = 1;
