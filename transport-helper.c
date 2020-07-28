@@ -729,6 +729,49 @@ static int push_update_ref_status(struct strbuf *buf,
 {
 	char *refname, *msg;
 	int status, forced = 0;
+	static struct ref *hint = NULL;
+	static int new_options = 1;
+
+	if (starts_with(buf->buf, "option ")) {
+		struct ref_push_report_options *options;
+		struct object_id old_oid, new_oid;
+		const char *key, *val;
+		char *p;
+
+		if (!hint)
+			die(_("'option' without a matching 'ok/error' directive"));
+		options = hint->report.options;
+		while (options && options->next)
+			options = options->next;
+		if (new_options) {
+			if (!options) {
+				hint->report.options = xcalloc(1, sizeof(struct ref_push_report_options));
+				options = hint->report.options;
+			} else {
+				options->next = xcalloc(1, sizeof(struct ref_push_report_options));
+				options = options->next;
+			}
+			new_options = 0;
+		}
+		assert(options);
+		key = buf->buf + 7;
+		p = strchr(key, ' ');
+		if (p)
+			*p++ = '\0';
+		val = p;
+		if (!strcmp(key, "refname"))
+			options->ref_name = xstrdup_or_null(val);
+		else if (!strcmp(key, "old-oid") && val &&
+			 !parse_oid_hex(val, &old_oid, &val))
+			options->old_oid = oiddup(&old_oid);
+		else if (!strcmp(key, "new-oid") && val &&
+			 !parse_oid_hex(val, &new_oid, &val))
+			options->new_oid = oiddup(&new_oid);
+		else if (!strcmp(key, "forced-update"))
+			options->forced_update = 1;
+		/* Not update remote namespace again. */
+		return 1;
+	}
 
 	if (starts_with(buf->buf, "ok ")) {
 		status = REF_STATUS_OK;
@@ -791,8 +834,11 @@ static int push_update_ref_status(struct strbuf *buf,
 		*ref = find_ref_by_name(remote_refs, refname);
 	if (!*ref) {
 		warning(_("helper reported unexpected status of %s"), refname);
+		hint = NULL;
 		return 1;
 	}
+	hint = *ref;
+	new_options = 1;
 
 	if ((*ref)->status != REF_STATUS_NONE) {
 		/*
@@ -805,7 +851,12 @@ static int push_update_ref_status(struct strbuf *buf,
 
 	(*ref)->status = status;
 	(*ref)->forced_update |= forced;
-	(*ref)->remote_status = msg;
+	if (msg) {
+		if (status == REF_STATUS_OK)
+			(*ref)->report.message = msg;
+		else
+			(*ref)->report.error_message = msg;
+	}
 	return !(status == REF_STATUS_OK);
 }
 
