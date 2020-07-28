@@ -797,7 +797,7 @@ test_configured_prune true  true  unset unset pruned pruned \
 	"--prune origin refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*"
 
 # --prune-tags on its own does nothing, needs --prune as well, same
-# for for fetch.pruneTags without fetch.prune
+# for fetch.pruneTags without fetch.prune
 test_configured_prune unset unset unset unset kept kept     "--prune-tags"
 test_configured_prune unset unset true unset  kept kept     ""
 test_configured_prune unset unset unset true  kept kept     ""

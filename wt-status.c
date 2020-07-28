@@ -2035,7 +2035,7 @@ static void wt_porcelain_print(struct wt_status *s)
  *   [# branch.upstream <upstream><eol>
  *   [# branch.ab +<ahead> -<behind><eol>]]
  *
- *      <commit> ::= the current commit hash or the the literal
+ *      <commit> ::= the current commit hash or the literal
  *                   "(initial)" to indicate an initialized repo
  *                   with no commits.
  *
