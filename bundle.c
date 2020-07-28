@@ -275,9 +275,9 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *
 	int i;
 
 	strvec_pushl(&pack_objects.args,
-			 "pack-objects",
-			 "--stdout", "--thin", "--delta-base-offset",
-			 NULL);
+		     "pack-objects",
+		     "--stdout", "--thin", "--delta-base-offset",
+		     NULL);
 	strvec_pushv(&pack_objects.args, pack_options->argv);
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
@@ -322,8 +322,8 @@ static int compute_and_write_prerequisites(int bundle_fd,
 	int i;
 
 	strvec_pushl(&rls.args,
-			 "rev-list", "--boundary", "--pretty=oneline",
-			 NULL);
+		     "rev-list", "--boundary", "--pretty=oneline",
+		     NULL);
 	for (i = 1; i < argc; i++)
 		strvec_push(&rls.args, argv[i]);
 	rls.out = -1;

@@ -665,7 +665,7 @@ static void parse_extra_args(struct hostinfo *hi, struct strvec *env,
 	if (git_protocol.len > 0) {
 		loginfo("Extended attribute \"protocol\": %s", git_protocol.buf);
 		strvec_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=%s",
-				 git_protocol.buf);
+			     git_protocol.buf);
 	}
 	strbuf_release(&git_protocol);
 }
@@ -915,7 +915,7 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		inet_ntop(addr->sa_family, &sin_addr->sin_addr, buf, sizeof(buf));
 		strvec_pushf(&cld.env_array, "REMOTE_ADDR=%s", buf);
 		strvec_pushf(&cld.env_array, "REMOTE_PORT=%d",
-				 ntohs(sin_addr->sin_port));
+			     ntohs(sin_addr->sin_port));
 #ifndef NO_IPV6
 	} else if (addr->sa_family == AF_INET6) {
 		char buf[128] = "";
@@ -923,7 +923,7 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(buf));
 		strvec_pushf(&cld.env_array, "REMOTE_ADDR=[%s]", buf);
 		strvec_pushf(&cld.env_array, "REMOTE_PORT=%d",
-				 ntohs(sin6_addr->sin6_port));
+			     ntohs(sin6_addr->sin6_port));
 #endif
 	}
 

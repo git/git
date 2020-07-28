@@ -414,10 +414,10 @@ static int add_worktree(const char *path, const char *refname,
 
 	if (!is_branch)
 		strvec_pushl(&cp.args, "update-ref", "HEAD",
-				 oid_to_hex(&commit->object.oid), NULL);
+			     oid_to_hex(&commit->object.oid), NULL);
 	else {
 		strvec_pushl(&cp.args, "symbolic-ref", "HEAD",
-				 symref.buf, NULL);
+			     symref.buf, NULL);
 		if (opts->quiet)
 			strvec_push(&cp.args, "--quiet");
 	}
@@ -466,9 +466,9 @@ done:
 			cp.argv = NULL;
 			cp.trace2_hook_name = "post-checkout";
 			strvec_pushl(&cp.args, absolute_path(hook),
-					 oid_to_hex(&null_oid),
-					 oid_to_hex(&commit->object.oid),
-					 "1", NULL);
+				     oid_to_hex(&null_oid),
+				     oid_to_hex(&commit->object.oid),
+				     "1", NULL);
 			ret = run_command(&cp);
 		}
 	}
@@ -936,13 +936,13 @@ static void check_clean_worktree(struct worktree *wt,
 	validate_no_submodules(wt);
 
 	strvec_pushf(&child_env, "%s=%s/.git",
-			 GIT_DIR_ENVIRONMENT, wt->path);
+		     GIT_DIR_ENVIRONMENT, wt->path);
 	strvec_pushf(&child_env, "%s=%s",
-			 GIT_WORK_TREE_ENVIRONMENT, wt->path);
+		     GIT_WORK_TREE_ENVIRONMENT, wt->path);
 	memset(&cp, 0, sizeof(cp));
 	strvec_pushl(&cp.args, "status",
-			 "--porcelain", "--ignore-submodules=none",
-			 NULL);
+		     "--porcelain", "--ignore-submodules=none",
+		     NULL);
 	cp.env = child_env.argv;
 	cp.git_cmd = 1;
 	cp.dir = wt->path;

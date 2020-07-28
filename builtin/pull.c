@@ -638,7 +638,7 @@ static int rebase_submodules(void)
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	strvec_pushl(&cp.args, "submodule", "update",
-				   "--recursive", "--rebase", NULL);
+		     "--recursive", "--rebase", NULL);
 	argv_push_verbosity(&cp.args);
 
 	return run_command(&cp);
@@ -651,7 +651,7 @@ static int update_submodules(void)
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	strvec_pushl(&cp.args, "submodule", "update",
-				   "--recursive", "--checkout", NULL);
+		     "--recursive", "--checkout", NULL);
 	argv_push_verbosity(&cp.args);
 
 	return run_command(&cp);
@@ -802,7 +802,7 @@ static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 		return -1;
 
 	strvec_pushl(&cp.args, "merge-base", "--fork-point",
-			remote_branch, curr_branch->name, NULL);
+		     remote_branch, curr_branch->name, NULL);
 	cp.no_stdin = 1;
 	cp.no_stderr = 1;
 	cp.git_cmd = 1;

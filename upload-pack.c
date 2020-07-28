@@ -301,8 +301,7 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 			strvec_pushf(&pack_objects.args, "--filter=%s", buf.buf);
 			strbuf_release(&buf);
 		} else {
-			strvec_pushf(&pack_objects.args, "--filter=%s",
-					 spec);
+			strvec_pushf(&pack_objects.args, "--filter=%s", spec);
 		}
 	}
 	if (uri_protocols) {

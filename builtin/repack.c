@@ -366,7 +366,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		strvec_push(&cmd.args, "--honor-pack-keep");
 	for (i = 0; i < keep_pack_list.nr; i++)
 		strvec_pushf(&cmd.args, "--keep-pack=%s",
-				 keep_pack_list.items[i].string);
+			     keep_pack_list.items[i].string);
 	strvec_push(&cmd.args, "--non-empty");
 	strvec_push(&cmd.args, "--all");
 	strvec_push(&cmd.args, "--reflog");
@@ -388,12 +388,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		if (existing_packs.nr && delete_redundant) {
 			if (unpack_unreachable) {
 				strvec_pushf(&cmd.args,
-						"--unpack-unreachable=%s",
-						unpack_unreachable);
+					     "--unpack-unreachable=%s",
+					     unpack_unreachable);
 				strvec_push(&cmd.env_array, "GIT_REF_PARANOIA=1");
 			} else if (pack_everything & LOOSEN_UNREACHABLE) {
 				strvec_push(&cmd.args,
-						"--unpack-unreachable");
+					    "--unpack-unreachable");
 			} else if (keep_unreachable) {
 				strvec_push(&cmd.args, "--keep-unreachable");
 				strvec_push(&cmd.args, "--pack-loose-unreachable");

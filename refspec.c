@@ -222,8 +222,8 @@ void refspec_ref_prefixes(const struct refspec *rs,
 			if (item->pattern) {
 				const char *glob = strchr(prefix, '*');
 				strvec_pushf(ref_prefixes, "%.*s",
-						 (int)(glob - prefix),
-						 prefix);
+					     (int)(glob - prefix),
+					     prefix);
 			} else {
 				expand_ref_prefix(ref_prefixes, prefix);
 			}

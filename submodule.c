@@ -495,7 +495,7 @@ void prepare_submodule_repo_env(struct strvec *out)
 {
 	prepare_submodule_repo_env_no_git_dir(out);
 	strvec_pushf(out, "%s=%s", GIT_DIR_ENVIRONMENT,
-			 DEFAULT_GIT_DIR_ENVIRONMENT);
+		     DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 
 static void prepare_submodule_repo_env_in_gitdir(struct strvec *out)
@@ -687,14 +687,14 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 
 	if (o->flags.reverse_diff) {
 		strvec_pushf(&cp.args, "--src-prefix=%s%s/",
-				 o->b_prefix, path);
+			     o->b_prefix, path);
 		strvec_pushf(&cp.args, "--dst-prefix=%s%s/",
-				 o->a_prefix, path);
+			     o->a_prefix, path);
 	} else {
 		strvec_pushf(&cp.args, "--src-prefix=%s%s/",
-				 o->a_prefix, path);
+			     o->a_prefix, path);
 		strvec_pushf(&cp.args, "--dst-prefix=%s%s/",
-				 o->b_prefix, path);
+			     o->b_prefix, path);
 	}
 	strvec_push(&cp.args, oid_to_hex(old_oid));
 	/*
@@ -1062,7 +1062,7 @@ static int push_submodule(const char *path,
 			const struct string_list_item *item;
 			for_each_string_list_item(item, push_options)
 				strvec_pushf(&cp.args, "--push-option=%s",
-						 item->string);
+					     item->string);
 		}
 
 		if (remote->origin != REMOTE_UNCONFIGURED) {
@@ -1780,7 +1780,7 @@ int bad_to_remove_submodule(const char *path, unsigned flags)
 		return 1;
 
 	strvec_pushl(&cp.args, "status", "--porcelain",
-				   "--ignore-submodules=none", NULL);
+		     "--ignore-submodules=none", NULL);
 
 	if (flags & SUBMODULE_REMOVAL_IGNORE_UNTRACKED)
 		strvec_push(&cp.args, "-uno");
@@ -1847,7 +1847,7 @@ static int submodule_has_dirty_index(const struct submodule *sub)
 
 	cp.git_cmd = 1;
 	strvec_pushl(&cp.args, "diff-index", "--quiet",
-				   "--cached", "HEAD", NULL);
+		     "--cached", "HEAD", NULL);
 	cp.no_stdin = 1;
 	cp.no_stdout = 1;
 	cp.dir = sub->path;
@@ -1867,7 +1867,7 @@ static void submodule_reset_index(const char *path)
 	cp.dir = path;
 
 	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-				   get_super_prefix_or_empty(), path);
+		     get_super_prefix_or_empty(), path);
 	strvec_pushl(&cp.args, "read-tree", "-u", "--reset", NULL);
 
 	strvec_push(&cp.args, empty_tree_oid_hex());
@@ -1948,7 +1948,7 @@ int submodule_move_head(const char *path,
 	cp.dir = path;
 
 	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-			get_super_prefix_or_empty(), path);
+		     get_super_prefix_or_empty(), path);
 	strvec_pushl(&cp.args, "read-tree", "--recurse-submodules", NULL);
 
 	if (flags & SUBMODULE_MOVE_HEAD_DRY_RUN)
@@ -1981,7 +1981,7 @@ int submodule_move_head(const char *path,
 
 			prepare_submodule_repo_env(&cp.env_array);
 			strvec_pushl(&cp.args, "update-ref", "HEAD",
-					 "--no-deref", new_head, NULL);
+				     "--no-deref", new_head, NULL);
 
 			if (run_command(&cp)) {
 				ret = -1;
@@ -2158,8 +2158,8 @@ void absorb_git_dir_into_superproject(const char *path,
 		cp.git_cmd = 1;
 		cp.no_stdin = 1;
 		strvec_pushl(&cp.args, "--super-prefix", sb.buf,
-					   "submodule--helper",
-					   "absorb-git-dirs", NULL);
+			     "submodule--helper",
+			     "absorb-git-dirs", NULL);
 		prepare_submodule_repo_env(&cp.env_array);
 		if (run_command(&cp))
 			die(_("could not recurse into submodule '%s'"), path);
@@ -2197,8 +2197,8 @@ int get_superproject_working_tree(struct strbuf *buf)
 	strvec_pop(&cp.env_array);
 
 	strvec_pushl(&cp.args, "--literal-pathspecs", "-C", "..",
-			"ls-files", "-z", "--stage", "--full-name", "--",
-			subpath, NULL);
+		     "ls-files", "-z", "--stage", "--full-name", "--",
+		     subpath, NULL);
 	strbuf_reset(&sb);
 
 	cp.no_stdin = 1;

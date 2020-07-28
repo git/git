@@ -52,20 +52,20 @@ static int read_patches(const char *range, struct string_list *list,
 	size_t size;
 
 	strvec_pushl(&cp.args, "log", "--no-color", "-p", "--no-merges",
-			"--reverse", "--date-order", "--decorate=no",
-			"--no-prefix",
-			/*
-			 * Choose indicators that are not used anywhere
-			 * else in diffs, but still look reasonable
-			 * (e.g. will not be confusing when debugging)
-			 */
-			"--output-indicator-new=>",
-			"--output-indicator-old=<",
-			"--output-indicator-context=#",
-			"--no-abbrev-commit",
-			"--pretty=medium",
-			"--notes",
-			NULL);
+		     "--reverse", "--date-order", "--decorate=no",
+		     "--no-prefix",
+		     /*
+		      * Choose indicators that are not used anywhere
+		      * else in diffs, but still look reasonable
+		      * (e.g. will not be confusing when debugging)
+		      */
+		     "--output-indicator-new=>",
+		     "--output-indicator-old=<",
+		     "--output-indicator-context=#",
+		     "--no-abbrev-commit",
+		     "--pretty=medium",
+		     "--notes",
+		     NULL);
 	if (other_arg)
 		strvec_pushv(&cp.args, other_arg->argv);
 	strvec_push(&cp.args, range);

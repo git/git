@@ -106,7 +106,7 @@ no_promisor_pack_found:
 	strvec_push(&rev_list.args, "--alternate-refs");
 	if (opt->progress)
 		strvec_pushf(&rev_list.args, "--progress=%s",
-				 _("Checking connectivity"));
+			     _("Checking connectivity"));
 
 	rev_list.git_cmd = 1;
 	rev_list.env = opt->env;

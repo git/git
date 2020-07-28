@@ -1145,7 +1145,7 @@ static int fetch_git(struct discovery *heads,
 	struct strbuf rpc_result = STRBUF_INIT;
 
 	strvec_pushl(&args, "fetch-pack", "--stateless-rpc",
-			 "--stdin", "--lock-pack", NULL);
+		     "--stdin", "--lock-pack", NULL);
 	if (options.followtags)
 		strvec_push(&args, "--include-tag");
 	if (options.thin)
@@ -1166,7 +1166,7 @@ static int fetch_git(struct discovery *heads,
 		strvec_pushf(&args, "--shallow-since=%s", options.deepen_since);
 	for (i = 0; i < options.deepen_not.nr; i++)
 		strvec_pushf(&args, "--shallow-exclude=%s",
-				 options.deepen_not.items[i].string);
+			     options.deepen_not.items[i].string);
 	if (options.deepen_relative && options.depth)
 		strvec_push(&args, "--deepen-relative");
 	if (options.from_promisor)
@@ -1293,7 +1293,7 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 
 	strvec_init(&args);
 	strvec_pushl(&args, "send-pack", "--stateless-rpc", "--helper-status",
-			 NULL);
+		     NULL);
 
 	if (options.thin)
 		strvec_push(&args, "--thin");
@@ -1311,7 +1311,7 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 		strvec_push(&args, "--verbose");
 	for (i = 0; i < options.push_options.nr; i++)
 		strvec_pushf(&args, "--push-option=%s",
-				 options.push_options.items[i].string);
+			     options.push_options.items[i].string);
 	strvec_push(&args, options.progress ? "--progress" : "--no-progress");
 	for_each_string_list_item(cas_option, &cas_options)
 		strvec_push(&args, cas_option->string);

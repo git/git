@@ -941,7 +941,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
 				strvec_push(&args,
-						files->items.items[i].string);
+					    files->items.items[i].string);
 		parse_pathspec(&ps_selected,
 			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 			       PATHSPEC_LITERAL_PATH, "", args.argv);
@@ -979,13 +979,13 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 		struct strvec args = STRVEC_INIT;
 
 		strvec_pushl(&args, "git", "diff", "-p", "--cached",
-				 oid_to_hex(!is_initial ? &oid :
-					    s->r->hash_algo->empty_tree),
-				 "--", NULL);
+			     oid_to_hex(!is_initial ? &oid :
+					s->r->hash_algo->empty_tree),
+			     "--", NULL);
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
 				strvec_push(&args,
-						files->items.items[i].string);
+					    files->items.items[i].string);
 		res = run_command_v_opt(args.argv, 0);
 		strvec_clear(&args);
 	}

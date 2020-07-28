@@ -136,7 +136,7 @@ static struct child_process *get_helper(struct transport *transport)
 
 	if (have_git_dir())
 		strvec_pushf(&helper->env_array, "%s=%s",
-				 GIT_DIR_ENVIRONMENT, get_git_dir());
+			     GIT_DIR_ENVIRONMENT, get_git_dir());
 
 	helper->trace2_child_class = helper->args.argv[0]; /* "remote-<name>" */
 

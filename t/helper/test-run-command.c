@@ -244,10 +244,10 @@ static int quote_stress_test(int argc, const char **argv)
 		strvec_clear(&args);
 		if (msys2)
 			strvec_pushl(&args, "sh", "-c",
-					 "printf %s\\\\0 \"$@\"", "skip", NULL);
+				     "printf %s\\\\0 \"$@\"", "skip", NULL);
 		else
 			strvec_pushl(&args, "test-tool", "run-command",
-					 "quote-echo", NULL);
+				     "quote-echo", NULL);
 		arg_offset = args.argc;
 
 		if (argc > 0) {
@@ -339,7 +339,7 @@ static int inherit_handle(const char *argv0)
 	tmp = xmkstemp(path);
 
 	strvec_pushl(&cp.args,
-			 "test-tool", argv0, "inherited-handle-child", NULL);
+		     "test-tool", argv0, "inherited-handle-child", NULL);
 	cp.in = -1;
 	cp.no_stdout = cp.no_stderr = 1;
 	if (start_command(&cp) < 0)

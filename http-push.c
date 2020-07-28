@@ -1929,7 +1929,7 @@ int cmd_main(int argc, const char **argv)
 		strvec_push(&commit_argv, oid_to_hex(&ref->new_oid));
 		if (!push_all && !is_null_oid(&ref->old_oid))
 			strvec_pushf(&commit_argv, "^%s",
-					 oid_to_hex(&ref->old_oid));
+				     oid_to_hex(&ref->old_oid));
 		repo_init_revisions(the_repository, &revs, setup_git_directory());
 		setup_revisions(commit_argv.argc, commit_argv.argv, &revs, NULL);
 		revs.edge_hint = 0; /* just in case */

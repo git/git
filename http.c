@@ -2276,7 +2276,7 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	ip.in = tmpfile_fd;
 	if (preq->generate_keep) {
 		strvec_pushf(&ip.args, "--keep=git %"PRIuMAX,
-				 (uintmax_t)getpid());
+			     (uintmax_t)getpid());
 		ip.out = 0;
 	} else {
 		ip.no_stdout = 1;
