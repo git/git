@@ -211,9 +211,9 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	env[0] = index_env.buf;
 
 	strvec_pushl(&update_index.args,
-			 "--git-dir", git_dir, "--work-tree", workdir,
-			 "update-index", "--really-refresh", "-q",
-			 "--unmerged", NULL);
+		     "--git-dir", git_dir, "--work-tree", workdir,
+		     "update-index", "--really-refresh", "-q",
+		     "--unmerged", NULL);
 	update_index.no_stdin = 1;
 	update_index.no_stdout = 1;
 	update_index.no_stderr = 1;
@@ -226,8 +226,8 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	run_command(&update_index);
 
 	strvec_pushl(&diff_files.args,
-			 "--git-dir", git_dir, "--work-tree", workdir,
-			 "diff-files", "--name-only", "-z", NULL);
+		     "--git-dir", git_dir, "--work-tree", workdir,
+		     "diff-files", "--name-only", "-z", NULL);
 	diff_files.no_stdin = 1;
 	diff_files.git_cmd = 1;
 	diff_files.use_shell = 0;
@@ -394,7 +394,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	child.dir = prefix;
 	child.out = -1;
 	strvec_pushl(&child.args, "diff", "--raw", "--no-abbrev", "-z",
-			 NULL);
+		     NULL);
 	for (i = 0; i < argc; i++)
 		strvec_push(&child.args, argv[i]);
 	if (start_command(&child))

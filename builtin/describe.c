@@ -505,8 +505,8 @@ static void describe_blob(struct object_id oid, struct strbuf *dst)
 	struct process_commit_data pcd = { null_oid, oid, dst, &revs};
 
 	strvec_pushl(&args, "internal: The first arg is not parsed",
-		"--objects", "--in-commit-order", "--reverse", "HEAD",
-		NULL);
+		     "--objects", "--in-commit-order", "--reverse", "HEAD",
+		     NULL);
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	if (setup_revisions(args.argc, args.argv, &revs, NULL) > 1)
@@ -598,8 +598,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 
 		strvec_init(&args);
 		strvec_pushl(&args, "name-rev",
-				 "--peel-tag", "--name-only", "--no-undefined",
-				 NULL);
+			     "--peel-tag", "--name-only", "--no-undefined",
+			     NULL);
 		if (always)
 			strvec_push(&args, "--always");
 		if (!all) {

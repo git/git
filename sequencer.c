@@ -3133,7 +3133,7 @@ static int do_exec(struct repository *r, const char *command_line)
 	child_argv[0] = command_line;
 	strvec_pushf(&child_env, "GIT_DIR=%s", absolute_path(get_git_dir()));
 	strvec_pushf(&child_env, "GIT_WORK_TREE=%s",
-			 absolute_path(get_git_work_tree()));
+		     absolute_path(get_git_work_tree()));
 	status = run_command_v_opt_cd_env(child_argv, RUN_USING_SHELL, NULL,
 					  child_env.argv);
 
@@ -3552,7 +3552,7 @@ static int do_merge(struct repository *r,
 			strvec_push(&cmd.args, strategy);
 			for (k = 0; k < opts->xopts_nr; k++)
 				strvec_pushf(&cmd.args,
-						 "-X%s", opts->xopts[k]);
+					     "-X%s", opts->xopts[k]);
 		}
 		strvec_push(&cmd.args, "--no-edit");
 		strvec_push(&cmd.args, "--no-ff");
@@ -3566,7 +3566,7 @@ static int do_merge(struct repository *r,
 		/* Add the tips to be merged */
 		for (j = to_merge; j; j = j->next)
 			strvec_push(&cmd.args,
-					oid_to_hex(&j->item->object.oid));
+				    oid_to_hex(&j->item->object.oid));
 
 		strbuf_release(&ref_name);
 		unlink(git_path_cherry_pick_head(r));
@@ -3695,7 +3695,7 @@ void create_autostash(struct repository *r, const char *path,
 		struct object_id oid;
 
 		strvec_pushl(&stash.args,
-				 "stash", "create", "autostash", NULL);
+			     "stash", "create", "autostash", NULL);
 		stash.git_cmd = 1;
 		stash.no_stdin = 1;
 		strbuf_reset(&buf);

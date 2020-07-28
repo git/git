@@ -662,7 +662,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 				strvec_push(&prune, "--no-progress");
 			if (has_promisor_remote())
 				strvec_push(&prune,
-						"--exclude-promisor-objects");
+					    "--exclude-promisor-objects");
 			if (run_command_v_opt(prune.argv, RUN_GIT_CMD))
 				die(FAILED_RUN, prune.argv[0]);
 		}

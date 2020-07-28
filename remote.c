@@ -1914,8 +1914,8 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	strvec_push(&argv, ""); /* ignored */
 	strvec_push(&argv, "--left-right");
 	strvec_pushf(&argv, "%s...%s",
-			 oid_to_hex(&ours->object.oid),
-			 oid_to_hex(&theirs->object.oid));
+		     oid_to_hex(&ours->object.oid),
+		     oid_to_hex(&theirs->object.oid));
 	strvec_push(&argv, "--");
 
 	repo_init_revisions(the_repository, &revs, NULL);

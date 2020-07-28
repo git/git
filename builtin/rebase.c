@@ -348,7 +348,7 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 	strvec_pushl(&make_script_args, "", revisions, NULL);
 	if (opts->restrict_revision)
 		strvec_pushf(&make_script_args, "^%s",
-				 oid_to_hex(&opts->restrict_revision->object.oid));
+			     oid_to_hex(&opts->restrict_revision->object.oid));
 
 	ret = sequencer_make_script(the_repository, &todo_list.buf,
 				    make_script_args.argc, make_script_args.argv,
@@ -858,17 +858,17 @@ static int run_am(struct rebase_options *opts)
 
 	format_patch.git_cmd = 1;
 	strvec_pushl(&format_patch.args, "format-patch", "-k", "--stdout",
-			 "--full-index", "--cherry-pick", "--right-only",
-			 "--src-prefix=a/", "--dst-prefix=b/", "--no-renames",
-			 "--no-cover-letter", "--pretty=mboxrd", "--topo-order",
-			 "--no-base", NULL);
+		     "--full-index", "--cherry-pick", "--right-only",
+		     "--src-prefix=a/", "--dst-prefix=b/", "--no-renames",
+		     "--no-cover-letter", "--pretty=mboxrd", "--topo-order",
+		     "--no-base", NULL);
 	if (opts->git_format_patch_opt.len)
 		strvec_split(&format_patch.args,
-				 opts->git_format_patch_opt.buf);
+			     opts->git_format_patch_opt.buf);
 	strvec_push(&format_patch.args, revisions.buf);
 	if (opts->restrict_revision)
 		strvec_pushf(&format_patch.args, "^%s",
-				 oid_to_hex(&opts->restrict_revision->object.oid));
+			     oid_to_hex(&opts->restrict_revision->object.oid));
 
 	status = run_command(&format_patch);
 	if (status) {

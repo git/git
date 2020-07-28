@@ -529,7 +529,7 @@ static int bisect_start(struct bisect_terms *terms, int no_checkout,
 			struct strvec argv = STRVEC_INIT;
 
 			strvec_pushl(&argv, "checkout", start_head.buf,
-					 "--", NULL);
+				     "--", NULL);
 			if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
 				res = error(_("checking out '%s' failed."
 						 " Try 'git bisect start "

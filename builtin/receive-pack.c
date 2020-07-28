@@ -668,24 +668,24 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 	}
 	if (!is_null_oid(&push_cert_oid)) {
 		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT=%s",
-				 oid_to_hex(&push_cert_oid));
+			     oid_to_hex(&push_cert_oid));
 		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_SIGNER=%s",
-				 sigcheck.signer ? sigcheck.signer : "");
+			     sigcheck.signer ? sigcheck.signer : "");
 		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_KEY=%s",
-				 sigcheck.key ? sigcheck.key : "");
+			     sigcheck.key ? sigcheck.key : "");
 		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_STATUS=%c",
-				 sigcheck.result);
+			     sigcheck.result);
 		if (push_cert_nonce) {
 			strvec_pushf(&proc->env_array,
-					 "GIT_PUSH_CERT_NONCE=%s",
-					 push_cert_nonce);
+				     "GIT_PUSH_CERT_NONCE=%s",
+				     push_cert_nonce);
 			strvec_pushf(&proc->env_array,
-					 "GIT_PUSH_CERT_NONCE_STATUS=%s",
-					 nonce_status);
+				     "GIT_PUSH_CERT_NONCE_STATUS=%s",
+				     nonce_status);
 			if (nonce_status == NONCE_SLOP)
 				strvec_pushf(&proc->env_array,
-						 "GIT_PUSH_CERT_NONCE_SLOP=%ld",
-						 nonce_stamp_slop);
+					     "GIT_PUSH_CERT_NONCE_SLOP=%ld",
+					     nonce_stamp_slop);
 		}
 	}
 }
@@ -721,10 +721,10 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 		int i;
 		for (i = 0; i < feed_state->push_options->nr; i++)
 			strvec_pushf(&proc.env_array,
-				"GIT_PUSH_OPTION_%d=%s", i,
-				feed_state->push_options->items[i].string);
+				     "GIT_PUSH_OPTION_%d=%s", i,
+				     feed_state->push_options->items[i].string);
 		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT=%d",
-				 feed_state->push_options->nr);
+			     feed_state->push_options->nr);
 	} else
 		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT");
 
@@ -1718,7 +1718,7 @@ static const char *pack_lockfile;
 static void push_header_arg(struct strvec *args, struct pack_header *hdr)
 {
 	strvec_pushf(args, "--pack_header=%"PRIu32",%"PRIu32,
-			ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
+		     ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
 }
 
 static const char *unpack(int err_fd, struct shallow_info *si)
@@ -1768,10 +1768,10 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 			strvec_push(&child.args, "-q");
 		if (fsck_objects)
 			strvec_pushf(&child.args, "--strict%s",
-				fsck_msg_types.buf);
+				     fsck_msg_types.buf);
 		if (max_input_size)
 			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
-				(uintmax_t)max_input_size);
+				     (uintmax_t)max_input_size);
 		child.no_stdout = 1;
 		child.err = err_fd;
 		child.git_cmd = 1;
@@ -1787,9 +1787,9 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (xgethostname(hostname, sizeof(hostname)))
 			xsnprintf(hostname, sizeof(hostname), "localhost");
 		strvec_pushf(&child.args,
-				 "--keep=receive-pack %"PRIuMAX" on %s",
-				 (uintmax_t)getpid(),
-				 hostname);
+			     "--keep=receive-pack %"PRIuMAX" on %s",
+			     (uintmax_t)getpid(),
+			     hostname);
 
 		if (!quiet && err_fd)
 			strvec_push(&child.args, "--show-resolving-progress");
@@ -1797,12 +1797,12 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 			strvec_push(&child.args, "--report-end-of-input");
 		if (fsck_objects)
 			strvec_pushf(&child.args, "--strict%s",
-				fsck_msg_types.buf);
+				     fsck_msg_types.buf);
 		if (!reject_thin)
 			strvec_push(&child.args, "--fix-thin");
 		if (max_input_size)
 			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
-				(uintmax_t)max_input_size);
+				     (uintmax_t)max_input_size);
 		child.out = -1;
 		child.err = err_fd;
 		child.git_cmd = 1;

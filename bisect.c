@@ -644,7 +644,7 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 	strvec_pushf(&rev_argv, bad_format, oid_to_hex(current_bad_oid));
 	for (i = 0; i < good_revs.nr; i++)
 		strvec_pushf(&rev_argv, good_format,
-				 oid_to_hex(good_revs.oid + i));
+			     oid_to_hex(good_revs.oid + i));
 	strvec_push(&rev_argv, "--");
 	if (read_paths)
 		read_bisect_paths(&rev_argv);

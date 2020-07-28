@@ -854,8 +854,8 @@ static int get_pack(struct fetch_pack_args *args,
 			if (xgethostname(hostname, sizeof(hostname)))
 				xsnprintf(hostname, sizeof(hostname), "localhost");
 			strvec_pushf(&cmd.args,
-					"--keep=fetch-pack %"PRIuMAX " on %s",
-					(uintmax_t)getpid(), hostname);
+				     "--keep=fetch-pack %"PRIuMAX " on %s",
+				     (uintmax_t)getpid(), hostname);
 		}
 		if (only_packfile && args->check_self_contained_and_connected)
 			strvec_push(&cmd.args, "--check-self-contained-and-connected");
@@ -885,7 +885,7 @@ static int get_pack(struct fetch_pack_args *args,
 
 	if (pass_header)
 		strvec_pushf(&cmd.args, "--pack_header=%"PRIu32",%"PRIu32,
-				 ntohl(header.hdr_version),
+			     ntohl(header.hdr_version),
 				 ntohl(header.hdr_entries));
 	if (fetch_fsck_objects >= 0
 	    ? fetch_fsck_objects
@@ -901,7 +901,7 @@ static int get_pack(struct fetch_pack_args *args,
 			strvec_push(&cmd.args, "--fsck-objects");
 		else
 			strvec_pushf(&cmd.args, "--strict%s",
-					 fsck_msg_types.buf);
+				     fsck_msg_types.buf);
 	}
 
 	cmd.in = demux.out;
@@ -1654,8 +1654,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 		strvec_push(&cmd.args, "http-fetch");
 		strvec_pushf(&cmd.args, "--packfile=%.*s",
-				 (int) the_hash_algo->hexsz,
-				 packfile_uris.items[i].string);
+			     (int) the_hash_algo->hexsz,
+			     packfile_uris.items[i].string);
 		strvec_push(&cmd.args, uri);
 		cmd.git_cmd = 1;
 		cmd.no_stdin = 1;

@@ -499,7 +499,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		strvec_pushf(&cp.env_array, "sm_path=%s", path);
 		strvec_pushf(&cp.env_array, "displaypath=%s", displaypath);
 		strvec_pushf(&cp.env_array, "sha1=%s",
-				oid_to_hex(ce_oid));
+			     oid_to_hex(ce_oid));
 		strvec_pushf(&cp.env_array, "toplevel=%s", toplevel);
 
 		/*
@@ -513,7 +513,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		 */
 		sq_quote_buf(&sb, path);
 		strvec_pushf(&cp.args, "path=%s; %s",
-				 sb.buf, info->argv[0]);
+			     sb.buf, info->argv[0]);
 		strbuf_release(&sb);
 		free(toplevel);
 	} else {
@@ -537,7 +537,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		strvec_pushl(&cpr.args, "--super-prefix", NULL);
 		strvec_pushf(&cpr.args, "%s/", displaypath);
 		strvec_pushl(&cpr.args, "submodule--helper", "foreach", "--recursive",
-				NULL);
+			     NULL);
 
 		if (info->quiet)
 			strvec_push(&cpr.args, "--quiet");
@@ -810,8 +810,8 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	strbuf_release(&buf);
 
 	strvec_pushl(&diff_files_args, "diff-files",
-			 "--ignore-submodules=dirty", "--quiet", "--",
-			 path, NULL);
+		     "--ignore-submodules=dirty", "--quiet", "--",
+		     path, NULL);
 
 	git_config(git_diff_basic_config, NULL);
 
@@ -852,7 +852,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 		strvec_push(&cpr.args, "--super-prefix");
 		strvec_pushf(&cpr.args, "%s/", displaypath);
 		strvec_pushl(&cpr.args, "submodule--helper", "status",
-				 "--recursive", NULL);
+			     "--recursive", NULL);
 
 		if (flags & OPT_CACHED)
 			strvec_push(&cpr.args, "--cached");
@@ -996,7 +996,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	cp.git_cmd = 1;
 	cp.dir = path;
 	strvec_pushl(&cp.args, "submodule--helper",
-			 "print-default-remote", NULL);
+		     "print-default-remote", NULL);
 
 	strbuf_reset(&sb);
 	if (capture_command(&cp, &sb, 0))
@@ -1024,7 +1024,7 @@ static void sync_submodule(const char *path, const char *prefix,
 		strvec_push(&cpr.args, "--super-prefix");
 		strvec_pushf(&cpr.args, "%s/", displaypath);
 		strvec_pushl(&cpr.args, "submodule--helper", "sync",
-				 "--recursive", NULL);
+			     "--recursive", NULL);
 
 		if (flags & OPT_QUIET)
 			strvec_push(&cpr.args, "--quiet");
@@ -1128,7 +1128,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 			struct child_process cp_rm = CHILD_PROCESS_INIT;
 			cp_rm.git_cmd = 1;
 			strvec_pushl(&cp_rm.args, "rm", "-qn",
-					 path, NULL);
+				     path, NULL);
 
 			if (run_command(&cp_rm))
 				die(_("Submodule work tree '%s' contains local "
@@ -1251,7 +1251,7 @@ static int clone_submodule(const char *path, const char *gitdir, const char *url
 		struct string_list_item *item;
 		for_each_string_list_item(item, reference)
 			strvec_pushl(&cp.args, "--reference",
-					 item->string, NULL);
+				     item->string, NULL);
 	}
 	if (dissociate)
 		strvec_push(&cp.args, "--dissociate");

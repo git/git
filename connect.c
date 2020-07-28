@@ -1208,7 +1208,7 @@ static void push_ssh_options(struct strvec *args, struct strvec *env,
 		strvec_push(args, "-o");
 		strvec_push(args, "SendEnv=" GIT_PROTOCOL_ENVIRONMENT);
 		strvec_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
-				 version);
+			     version);
 	}
 
 	if (flags & CONNECT_IPV4) {
@@ -1397,8 +1397,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 			transport_check_allowed("file");
 			conn->trace2_child_class = "transport/file";
 			if (version > 0) {
-				strvec_pushf(&conn->env_array, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
-						 version);
+				strvec_pushf(&conn->env_array,
+					     GIT_PROTOCOL_ENVIRONMENT "=version=%d",
+					     version);
 			}
 		}
 		strvec_push(&conn->args, cmd.buf);

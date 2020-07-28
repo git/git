@@ -1601,7 +1601,7 @@ static int fetch_multiple(struct string_list *list, int max_children)
 	}
 
 	strvec_pushl(&argv, "fetch", "--append", "--no-auto-gc",
-			"--no-write-commit-graph", NULL);
+		     "--no-write-commit-graph", NULL);
 	add_options_to_argv(&argv);
 
 	if (max_children != 1 && list->nr != 1) {

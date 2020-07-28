@@ -291,7 +291,7 @@ static void setup_child_process(struct add_p_state *s,
 
 	cp->git_cmd = 1;
 	strvec_pushf(&cp->env_array,
-			 INDEX_ENVIRONMENT "=%s", s->s.r->index_file);
+		     INDEX_ENVIRONMENT "=%s", s->s.r->index_file);
 }
 
 static int parse_range(const char **p,
@@ -386,10 +386,10 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	if (s->revision) {
 		struct object_id oid;
 		strvec_push(&args,
-				/* could be on an unborn branch */
-				!strcmp("HEAD", s->revision) &&
-				get_oid("HEAD", &oid) ?
-				empty_tree_oid_hex() : s->revision);
+			    /* could be on an unborn branch */
+			    !strcmp("HEAD", s->revision) &&
+			    get_oid("HEAD", &oid) ?
+			    empty_tree_oid_hex() : s->revision);
 	}
 	color_arg_index = args.argc;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */

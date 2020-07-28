@@ -285,9 +285,9 @@ static int verify_signed_buffer(const char *payload, size_t payload_size,
 	strvec_push(&gpg.args, fmt->program);
 	strvec_pushv(&gpg.args, fmt->verify_args);
 	strvec_pushl(&gpg.args,
-			 "--status-fd=1",
-			 "--verify", temp->filename.buf, "-",
-			 NULL);
+		     "--status-fd=1",
+		     "--verify", temp->filename.buf, "-",
+		     NULL);
 
 	if (!gpg_status)
 		gpg_status = &buf;
@@ -435,10 +435,10 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	struct strbuf gpg_status = STRBUF_INIT;
 
 	strvec_pushl(&gpg.args,
-			 use_format->program,
-			 "--status-fd=2",
-			 "-bsau", signing_key,
-			 NULL);
+		     use_format->program,
+		     "--status-fd=2",
+		     "-bsau", signing_key,
+		     NULL);
 
 	bottom = signature->len;
 
