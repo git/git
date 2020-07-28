@@ -60,8 +60,8 @@ int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc);
  * still modify arg in place, but unlike sq_dequote_to_argv, the argv_array
  * will duplicate and take ownership of the strings.
  */
-struct argv_array;
-int sq_dequote_to_argv_array(char *arg, struct argv_array *);
+struct strvec;
+int sq_dequote_to_argv_array(char *arg, struct strvec *);
 
 int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);
 size_t quote_c_style(const char *name, struct strbuf *, FILE *, int no_dq);
