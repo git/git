@@ -127,7 +127,7 @@ struct bundle_transport_data {
 
 static struct ref *get_refs_from_bundle(struct transport *transport,
 					int for_push,
-					const struct argv_array *ref_prefixes)
+					const struct strvec *ref_prefixes)
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;
@@ -283,7 +283,7 @@ static void die_if_server_options(struct transport *transport)
  * remote refs.
  */
 static struct ref *handshake(struct transport *transport, int for_push,
-			     const struct argv_array *ref_prefixes,
+			     const struct strvec *ref_prefixes,
 			     int must_list_refs)
 {
 	struct git_transport_data *data = transport->data;
@@ -327,7 +327,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 }
 
 static struct ref *get_refs_via_connect(struct transport *transport, int for_push,
-					const struct argv_array *ref_prefixes)
+					const struct strvec *ref_prefixes)
 {
 	return handshake(transport, for_push, ref_prefixes, 1);
 }
@@ -1153,7 +1153,7 @@ int transport_push(struct repository *r,
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
-		struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+		struct strvec ref_prefixes = STRVEC_INIT;
 
 		if (check_push_refs(local_refs, rs) < 0)
 			return -1;
@@ -1165,7 +1165,7 @@ int transport_push(struct repository *r,
 							       &ref_prefixes);
 		trace2_region_leave("transport_push", "get_refs_list", r);
 
-		argv_array_clear(&ref_prefixes);
+		strvec_clear(&ref_prefixes);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
@@ -1281,7 +1281,7 @@ int transport_push(struct repository *r,
 }
 
 const struct ref *transport_get_remote_refs(struct transport *transport,
-					    const struct argv_array *ref_prefixes)
+					    const struct strvec *ref_prefixes)
 {
 	if (!transport->got_remote_refs) {
 		transport->remote_refs =

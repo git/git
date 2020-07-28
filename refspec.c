@@ -202,7 +202,7 @@ int valid_fetch_refspec(const char *fetch_refspec_str)
 }
 
 void refspec_ref_prefixes(const struct refspec *rs,
-			  struct argv_array *ref_prefixes)
+			  struct strvec *ref_prefixes)
 {
 	int i;
 	for (i = 0; i < rs->nr; i++) {
@@ -221,7 +221,7 @@ void refspec_ref_prefixes(const struct refspec *rs,
 		if (prefix) {
 			if (item->pattern) {
 				const char *glob = strchr(prefix, '*');
-				argv_array_pushf(ref_prefixes, "%.*s",
+				strvec_pushf(ref_prefixes, "%.*s",
 						 (int)(glob - prefix),
 						 prefix);
 			} else {

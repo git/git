@@ -172,7 +172,7 @@ char *sq_dequote(char *arg)
 
 static int sq_dequote_to_argv_internal(char *arg,
 				       const char ***argv, int *nr, int *alloc,
-				       struct argv_array *array)
+				       struct strvec *array)
 {
 	char *next = arg;
 
@@ -187,7 +187,7 @@ static int sq_dequote_to_argv_internal(char *arg,
 			(*argv)[(*nr)++] = dequoted;
 		}
 		if (array)
-			argv_array_push(array, dequoted);
+			strvec_push(array, dequoted);
 	} while (next);
 
 	return 0;

@@ -14,6 +14,6 @@
 int show_range_diff(const char *range1, const char *range2,
 		    int creation_factor, int dual_color,
 		    const struct diff_options *diffopt,
-		    const struct argv_array *other_arg);
+		    const struct strvec *other_arg);
 
 #endif

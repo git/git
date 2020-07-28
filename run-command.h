@@ -52,15 +52,15 @@ struct child_process {
 	 * Note that the ownership of the memory pointed to by .argv stays with the
 	 * caller, but it should survive until `finish_command` completes. If the
 	 * .argv member is NULL, `start_command` will point it at the .args
-	 * `argv_array` (so you may use one or the other, but you must use exactly
+	 * `strvec` (so you may use one or the other, but you must use exactly
 	 * one). The memory in .args will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
 	 *
 	 */
 	const char **argv;
 
-	struct argv_array args;
-	struct argv_array env_array;
+	struct strvec args;
+	struct strvec env_array;
 	pid_t pid;
 
 	int trace2_child_id;
@@ -107,7 +107,7 @@ struct child_process {
 	 *   variable that will be removed from the child process's environment.
 	 *
 	 * If the .env member is NULL, `start_command` will point it at the
-	 * .env_array `argv_array` (so you may use one or the other, but not both).
+	 * .env_array `strvec` (so you may use one or the other, but not both).
 	 * The memory in .env_array will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
 	 */
@@ -134,7 +134,7 @@ struct child_process {
 	void *clean_on_exit_handler_cbdata;
 };
 
-#define CHILD_PROCESS_INIT { NULL, ARGV_ARRAY_INIT, ARGV_ARRAY_INIT }
+#define CHILD_PROCESS_INIT { NULL, STRVEC_INIT, STRVEC_INIT }
 
 /**
  * The functions: child_process_init, start_command, finish_command,

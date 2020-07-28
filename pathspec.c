@@ -624,7 +624,7 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
 			 unsigned flags, const char *prefix,
 			 const char *file, int nul_term_line)
 {
-	struct argv_array parsed_file = ARGV_ARRAY_INIT;
+	struct strvec parsed_file = STRVEC_INIT;
 	strbuf_getline_fn getline_fn = nul_term_line ? strbuf_getline_nul :
 						       strbuf_getline;
 	struct strbuf buf = STRBUF_INIT;
@@ -643,7 +643,7 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
 				die(_("line is badly quoted: %s"), buf.buf);
 			strbuf_swap(&buf, &unquoted);
 		}
-		argv_array_push(&parsed_file, buf.buf);
+		strvec_push(&parsed_file, buf.buf);
 		strbuf_reset(&buf);
 	}
 
@@ -653,7 +653,7 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
 		fclose(in);
 
 	parse_pathspec(pathspec, magic_mask, flags, prefix, parsed_file.argv);
-	argv_array_clear(&parsed_file);
+	strvec_clear(&parsed_file);
 }
 
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src)

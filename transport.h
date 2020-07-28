@@ -243,7 +243,7 @@ int transport_push(struct repository *repo,
  * ref_prefixes.
  */
 const struct ref *transport_get_remote_refs(struct transport *transport,
-					    const struct argv_array *ref_prefixes);
+					    const struct strvec *ref_prefixes);
 
 /*
  * Fetch the hash algorithm used by a remote.
