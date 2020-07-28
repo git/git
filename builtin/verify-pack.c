@@ -10,24 +10,24 @@
 static int verify_one_pack(const char *path, unsigned int flags, const char *hash_algo)
 {
 	struct child_process index_pack = CHILD_PROCESS_INIT;
-	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
 	struct strbuf arg = STRBUF_INIT, hash_arg = STRBUF_INIT;
 	int verbose = flags & VERIFY_PACK_VERBOSE;
 	int stat_only = flags & VERIFY_PACK_STAT_ONLY;
 	int err;
 
-	argv_array_push(&argv, "index-pack");
+	strvec_push(&argv, "index-pack");
 
 	if (stat_only)
-		argv_array_push(&argv, "--verify-stat-only");
+		strvec_push(&argv, "--verify-stat-only");
 	else if (verbose)
-		argv_array_push(&argv, "--verify-stat");
+		strvec_push(&argv, "--verify-stat");
 	else
-		argv_array_push(&argv, "--verify");
+		strvec_push(&argv, "--verify");
 
 	if (hash_algo) {
 		strbuf_addf(&hash_arg, "--object-format=%s", hash_algo);
-		argv_array_push(&argv, hash_arg.buf);
+		strvec_push(&argv, hash_arg.buf);
 	}
 
 	/*
@@ -38,9 +38,9 @@ static int verify_one_pack(const char *path, unsigned int flags, const char *has
 	if (strbuf_strip_suffix(&arg, ".idx") ||
 	    !ends_with(arg.buf, ".pack"))
 		strbuf_addstr(&arg, ".pack");
-	argv_array_push(&argv, arg.buf);
+	strvec_push(&argv, arg.buf);
 
-	index_pack.argv = argv.argv;
+	index_pack.argv = argv.items;
 	index_pack.git_cmd = 1;
 
 	err = run_command(&index_pack);
@@ -54,7 +54,7 @@ static int verify_one_pack(const char *path, unsigned int flags, const char *has
 		}
 	}
 	strbuf_release(&arg);
-	argv_array_clear(&argv);
+	strvec_clear(&argv);
 
 	return err;
 }

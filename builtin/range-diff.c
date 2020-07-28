@@ -15,7 +15,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 {
 	int creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;
 	struct diff_options diffopt = { NULL };
-	struct argv_array other_arg = ARGV_ARRAY_INIT;
+	struct strvec other_arg = STRVEC_INIT;
 	int simple_color = -1;
 	struct option range_diff_options[] = {
 		OPT_INTEGER(0, "creation-factor", &creation_factor,
@@ -84,7 +84,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	res = show_range_diff(range1.buf, range2.buf, creation_factor,
 			      simple_color < 1, &diffopt, &other_arg);
 
-	argv_array_clear(&other_arg);
+	strvec_clear(&other_arg);
 	strbuf_release(&range1);
 	strbuf_release(&range2);
 

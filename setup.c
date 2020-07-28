@@ -513,6 +513,7 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 		data->version = git_config_int(var, value);
 	else if (skip_prefix(var, "extensions.", &ext)) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 		/*
 		 * record any known extensions here; otherwise,
 		 * we fall through to recording it as unknown, and
@@ -532,6 +533,8 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 			data->ref_storage = xstrdup(value);
 		} else
 =======
+=======
+>>>>>>> upstream/seen
 		switch (handle_extension_v0(var, value, ext, data)) {
 		case EXTENSION_ERROR:
 			return -1;
@@ -548,7 +551,10 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 			string_list_append(&data->v1_only_extensions, ext);
 			return 0;
 		case EXTENSION_UNKNOWN:
+<<<<<<< HEAD
 >>>>>>> upstream/next
+=======
+>>>>>>> upstream/seen
 			string_list_append(&data->unknown_extensions, ext);
 			return 0;
 		}

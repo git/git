@@ -398,7 +398,7 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 	int i, status;
 
 	for (i = 0; i < path_list->nr; i++)
-		argv_array_push(&child.args, path_list->items[i].string);
+		strvec_push(&child.args, path_list->items[i].string);
 	child.dir = prefix;
 	child.use_shell = 1;
 
@@ -467,7 +467,7 @@ static int grep_submodule(struct grep_opt *opt,
 		struct strbuf base = STRBUF_INIT;
 
 		obj_read_lock();
-		object = parse_object_or_die(oid, oid_to_hex(oid));
+		object = parse_object_or_die(oid, NULL);
 		obj_read_unlock();
 		data = read_object_with_reference(&subrepo,
 						  &object->oid, tree_type,

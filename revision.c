@@ -23,7 +23,7 @@
 #include "bisect.h"
 #include "packfile.h"
 #include "worktree.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "commit-reach.h"
 #include "commit-graph.h"
 #include "prio-queue.h"
@@ -1838,7 +1838,7 @@ void repo_init_revisions(struct repository *r,
 
 	revs->repo = r;
 	revs->abbrev = DEFAULT_ABBREV;
-	revs->ignore_merges = 1;
+	revs->ignore_merges = -1;
 	revs->simplify_history = 1;
 	revs->pruning.repo = r;
 	revs->pruning.flags.recursive = 1;
@@ -2116,14 +2116,14 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 }
 
 static void read_pathspec_from_stdin(struct strbuf *sb,
-				     struct argv_array *prune)
+				     struct strvec *prune)
 {
 	while (strbuf_getline(sb, stdin) != EOF)
-		argv_array_push(prune, sb->buf);
+		strvec_push(prune, sb->buf);
 }
 
 static void read_revisions_from_stdin(struct rev_info *revs,
-				      struct argv_array *prune)
+				      struct strvec *prune)
 {
 	struct strbuf sb;
 	int seen_dashdash = 0;
@@ -2366,8 +2366,10 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->diff = 1;
 		revs->diffopt.flags.recursive = 1;
 		revs->diffopt.flags.tree_in_recursive = 1;
-	} else if (!strcmp(arg, "-m")) {
+	} else if (!strcmp(arg, "-m") || !strcmp(arg, "--no-ignore-merges")) {
 		revs->ignore_merges = 0;
+	} else if (!strcmp(arg, "--ignore-merges")) {
+		revs->ignore_merges = 1;
 	} else if (!strcmp(arg, "-c")) {
 		revs->diff = 1;
 		revs->dense_combined_merges = 0;
@@ -2718,7 +2720,7 @@ static void NORETURN diagnose_missing_default(const char *def)
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
 	int i, flags, left, seen_dashdash, got_rev_arg = 0, revarg_opt;
-	struct argv_array prune_data = ARGV_ARRAY_INIT;
+	struct strvec prune_data = STRVEC_INIT;
 	const char *submodule = NULL;
 	int seen_end_of_options = 0;
 
@@ -2737,7 +2739,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			argv[i] = NULL;
 			argc = i;
 			if (argv[i + 1])
-				argv_array_pushv(&prune_data, argv + i + 1);
+				strvec_pushv(&prune_data, argv + i + 1);
 			seen_dashdash = 1;
 			break;
 		}
@@ -2803,14 +2805,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			for (j = i; j < argc; j++)
 				verify_filename(revs->prefix, argv[j], j == i);
 
-			argv_array_pushv(&prune_data, argv + i);
+			strvec_pushv(&prune_data, argv + i);
 			break;
 		}
 		else
 			got_rev_arg = 1;
 	}
 
-	if (prune_data.argc) {
+	if (prune_data.nr) {
 		/*
 		 * If we need to introduce the magic "a lone ':' means no
 		 * pathspec whatsoever", here is the place to do so.
@@ -2826,9 +2828,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		 * }
 		 */
 		parse_pathspec(&revs->prune_data, 0, 0,
-			       revs->prefix, prune_data.argv);
+			       revs->prefix, prune_data.items);
 	}
-	argv_array_clear(&prune_data);
+	strvec_clear(&prune_data);
 
 	if (revs->def == NULL)
 		revs->def = opt ? opt->def : NULL;
@@ -2877,8 +2879,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			copy_pathspec(&revs->diffopt.pathspec,
 				      &revs->prune_data);
 	}
-	if (revs->combine_merges)
+	if (revs->combine_merges && revs->ignore_merges < 0)
 		revs->ignore_merges = 0;
+	if (revs->ignore_merges < 0)
+		revs->ignore_merges = 1;
 	if (revs->combined_all_paths && !revs->combine_merges)
 		die("--combined-all-paths makes no sense without -c or --cc");
 

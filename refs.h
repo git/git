@@ -145,8 +145,8 @@ int refname_match(const char *abbrev_name, const char *full_name);
  * Given a 'prefix' expand it by the rules in 'ref_rev_parse_rules' and add
  * the results to 'prefixes'
  */
-struct argv_array;
-void expand_ref_prefix(struct argv_array *prefixes, const char *prefix);
+struct strvec;
+void expand_ref_prefix(struct strvec *prefixes, const char *prefix);
 
 int expand_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
 int repo_dwim_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
