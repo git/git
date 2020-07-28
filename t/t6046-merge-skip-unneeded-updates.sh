@@ -661,7 +661,7 @@ test_setup_4a () {
 }
 
 # NOTE: For as long as we continue using unpack_trees() without index_only
-#   set to true, it will error out on a case like this claiming the the locally
+#   set to true, it will error out on a case like this claiming that the locally
 #   modified file would be overwritten by the merge.  Getting this testcase
 #   correct requires doing the merge in-memory first, then realizing that no
 #   updates to the file are necessary, and thus that we can just leave the path
