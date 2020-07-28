@@ -946,7 +946,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int is_bundle = 0, is_local;
 	const char *repo_name, *repo, *work_tree, *git_dir;
 	char *path, *dir, *display_repo = NULL;
-	int dest_exists;
+	int dest_exists, real_dest_exists = 0;
 	const struct ref *refs, *remote_head;
 	const struct ref *remote_head_points_at;
 	const struct ref *our_head_points_at;
@@ -1021,6 +1021,14 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		die(_("destination path '%s' already exists and is not "
 			"an empty directory."), dir);
 
+	if (real_git_dir) {
+		real_dest_exists = path_exists(real_git_dir);
+		if (real_dest_exists && !is_empty_dir(real_git_dir))
+			die(_("repository path '%s' already exists and is not "
+				"an empty directory."), real_git_dir);
+	}
+
+
 	strbuf_addf(&reflog_msg, "clone: from %s",
 		    display_repo ? display_repo : repo);
 	free(display_repo);
@@ -1057,7 +1065,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	if (real_git_dir) {
-		if (path_exists(real_git_dir))
+		if (real_dest_exists)
 			junk_git_dir_flags |= REMOVE_DIR_KEEP_TOPLEVEL;
 		junk_git_dir = real_git_dir;
 	} else {

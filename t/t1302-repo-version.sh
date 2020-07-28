@@ -87,6 +87,9 @@ allow 1
 allow 1 noop
 abort 1 no-such-extension
 allow 0 no-such-extension
+allow 0 noop
+abort 0 noop-v1
+allow 1 noop-v1
 EOF
 
 test_expect_success 'precious-objects allowed' '

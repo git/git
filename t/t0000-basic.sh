@@ -1271,4 +1271,22 @@ test_expect_success 'very long name in the index handled sanely' '
 	test $len = 4098
 '
 
+test_expect_success 'test_must_fail on a failing git command' '
+	test_must_fail git notacommand
+'
+
+test_expect_success 'test_must_fail on a failing git command with env' '
+	test_must_fail env var1=a var2=b git notacommand
+'
+
+test_expect_success 'test_must_fail rejects a non-git command' '
+	! test_must_fail grep ^$ notafile 2>err &&
+	grep -F "test_must_fail: only '"'"'git'"'"' is allowed" err
+'
+
+test_expect_success 'test_must_fail rejects a non-git command with env' '
+	! test_must_fail env var1=a var2=b grep ^$ notafile 2>err &&
+	grep -F "test_must_fail: only '"'"'git'"'"' is allowed" err
+'
+
 test_done

@@ -59,15 +59,15 @@ ok($@, "config_bool: non-boolean values fail");
 open STDERR, ">&", $tmpstderr or die "cannot restore STDERR";
 
 # ident
-like($r->ident("aUthor"), qr/^A U Thor <author\@example.com> [0-9]+ \+0000$/,
+like($r->ident("aUthor"), qr/^A U Thor <author\@example.com> [0-9]+ [+-]\d{4}$/,
      "ident scalar: author (type)");
-like($r->ident("cOmmitter"), qr/^C O Mitter <committer\@example.com> [0-9]+ \+0000$/,
+like($r->ident("cOmmitter"), qr/^C O Mitter <committer\@example.com> [0-9]+ [+-]\d{4}$/,
      "ident scalar: committer (type)");
 is($r->ident("invalid"), "invalid", "ident scalar: invalid ident string (no parsing)");
 my ($name, $email, $time_tz) = $r->ident('author');
 is_deeply([$name, $email], ["A U Thor", "author\@example.com"],
 	 "ident array: author");
-like($time_tz, qr/[0-9]+ \+0000/, "ident array: author");
+like($time_tz, qr/[0-9]+ [+-]\d{4}/, "ident array: author");
 is_deeply([$r->ident("Name <email> 123 +0000")], ["Name", "email", "123 +0000"],
 	  "ident array: ident string");
 is_deeply([$r->ident("invalid")], [], "ident array: invalid ident string");

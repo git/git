@@ -479,6 +479,21 @@ test_expect_success 'clone/fetch scrubs password from reflogs' '
 	! grep "$HTTPD_URL_USER_PASS" reflog
 '
 
+test_expect_success 'Non-ASCII branch name can be used with --force-with-lease' '
+	cd "$ROOT_PATH" &&
+	git clone "$HTTPD_URL_USER_PASS/smart/test_repo.git" non-ascii &&
+	cd non-ascii &&
+	git checkout -b rama-de-árbol &&
+	test_commit F &&
+	git push --force-with-lease origin rama-de-árbol &&
+	git ls-remote origin refs/heads/rama-de-árbol >actual &&
+	git ls-remote . refs/heads/rama-de-árbol >expect &&
+	test_cmp expect actual &&
+	git push --delete --force-with-lease origin rama-de-árbol &&
+	git ls-remote origin refs/heads/rama-de-árbol >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'colorize errors/hints' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_must_fail git -c color.transport=always -c color.advice=always \

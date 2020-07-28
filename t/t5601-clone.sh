@@ -271,7 +271,9 @@ test_expect_success 'fetch from gitfile parent' '
 
 test_expect_success 'clone separate gitdir where target already exists' '
 	rm -rf dst &&
-	test_must_fail git clone --separate-git-dir realgitdir src dst
+	echo foo=bar >>realgitdir/config &&
+	test_must_fail git clone --separate-git-dir realgitdir src dst &&
+	grep foo=bar realgitdir/config
 '
 
 test_expect_success 'clone --reference from original' '

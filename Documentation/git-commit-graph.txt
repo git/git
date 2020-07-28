@@ -59,8 +59,18 @@ walking commits starting at all refs. (Cannot be combined with
 With the `--input=append` option, include all commits that are present
 in the existing commit-graph file.
 +
+<<<<<<< HEAD
 If none of the above options are given, then generate the new
 commit-graph by walking over all pack-indexes.
+=======
+With the `--changed-paths` option, compute and write information about the
+paths changed between a commit and its first parent. This operation can
+take a while on large repositories. It provides significant performance gains
+for getting history of a directory or a file with `git log -- <path>`. If
+this option is given, future commit-graph writes will automatically assume
+that this option was intended. Use `--no-changed-paths` to stop storing this
+data.
+>>>>>>> upstream/next
 +
 With the `--split[=<strategy>]` option, write the commit-graph as a
 chain of multiple commit-graph files stored in

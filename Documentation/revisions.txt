@@ -254,6 +254,9 @@ specifying a single revision, using the notation described in the
 previous section, means the set of commits `reachable` from the given
 commit.
 
+Specifying several revisions means the set of commits reachable from
+any of the given commits.
+
 A commit's reachable set is the commit itself and the commits in
 its ancestry chain.
 
