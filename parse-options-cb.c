@@ -205,6 +205,22 @@ int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+int parse_opt_argv_array(const struct option *opt, const char *arg, int unset)
+{
+	struct argv_array *v = opt->value;
+
+	if (unset) {
+		argv_array_clear(v);
+		return 0;
+	}
+
+	if (!arg)
+		return -1;
+
+	argv_array_push(v, arg);
+	return 0;
+}
+
 int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
 {
 	return 0;
