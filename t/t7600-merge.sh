@@ -727,6 +727,8 @@ test_expect_success 'conflicted merge with --autostash, --abort restores stash' 
 	test_cmp file.1 file
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
 test_expect_success 'completed merge (git commit) with --no-commit and --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9 &&
@@ -794,6 +796,7 @@ test_expect_success 'quit merge with --no-commit and --autostash' '
 	test_cmp expect actual
 '
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 test_expect_success 'merge with conflicted --autostash changes' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9y &&

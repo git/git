@@ -644,7 +644,10 @@ static void trace2_bloom_filter_statistics_atexit(void)
 	jw_object_intmax(&jw, "zero_length_filter", count_bloom_filter_length_zero);
 	jw_object_intmax(&jw, "maybe", count_bloom_filter_maybe);
 	jw_object_intmax(&jw, "definitely_not", count_bloom_filter_definitely_not);
+<<<<<<< HEAD
+=======
 	jw_object_intmax(&jw, "false_positive", count_bloom_filter_false_positive);
+>>>>>>> upstream/maint
 	jw_end(&jw);
 
 	trace2_data_json("bloom", the_repository, "statistics", &jw);
@@ -652,6 +655,8 @@ static void trace2_bloom_filter_statistics_atexit(void)
 	jw_release(&jw);
 }
 
+<<<<<<< HEAD
+=======
 static int forbid_bloom_filters(struct pathspec *spec)
 {
 	if (spec->has_wildcard)
@@ -666,6 +671,7 @@ static int forbid_bloom_filters(struct pathspec *spec)
 	return 0;
 }
 
+>>>>>>> upstream/maint
 static void prepare_to_use_bloom_filter(struct rev_info *revs)
 {
 	struct pathspec_item *pi;
@@ -675,10 +681,14 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	int len;
 
 	if (!revs->commits)
+<<<<<<< HEAD
+	    return;
+=======
 		return;
 
 	if (forbid_bloom_filters(&revs->prune_data))
 		return;
+>>>>>>> upstream/maint
 
 	repo_parse_commit(revs->repo, revs->commits->item);
 
@@ -695,7 +705,10 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	pi = &revs->pruning.pathspec.items[0];
 	last_index = pi->len - 1;
 
+<<<<<<< HEAD
+=======
 	/* remove single trailing slash from path, if needed */
+>>>>>>> upstream/maint
 	if (pi->match[last_index] == '/') {
 	    path_alloc = xstrdup(pi->match);
 	    path_alloc[last_index] = '\0';
@@ -782,7 +795,11 @@ static int rev_compare_tree(struct rev_info *revs,
 			return REV_TREE_SAME;
 	}
 
+<<<<<<< HEAD
+	if (revs->pruning.pathspec.nr == 1 && !revs->reflog_info && !nth_parent) {
+=======
 	if (revs->bloom_key && !nth_parent) {
+>>>>>>> upstream/maint
 		bloom_ret = check_maybe_different_in_bloom_filter(revs, commit);
 
 		if (bloom_ret == 0)

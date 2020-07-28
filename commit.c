@@ -912,12 +912,21 @@ static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid
 	return 0;
 }
 
-struct commit *get_fork_point(const char *refname, struct commit *commit)
+int get_fork_point(const char *refname, struct commit *commit, struct commit **fork_point)
 {
 	struct object_id oid;
 	struct rev_collect revs;
 	struct commit_list *bases;
 	int i;
+<<<<<<< HEAD
+	char *full_refname;
+
+	if (dwim_unique_ref(refname, strlen(refname), &oid, &full_refname) < 0) {
+		free(full_refname);
+		return -1;
+	}
+
+=======
 	struct commit *ret = NULL;
 	char *full_refname;
 
@@ -929,12 +938,17 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	default:
 		die("Ambiguous refname: '%s'", refname);
 	}
+>>>>>>> upstream/pu
 
 	memset(&revs, 0, sizeof(revs));
 	revs.initial = 1;
 	for_each_reflog_ent(full_refname, collect_one_reflog_ent, &revs);
 
+<<<<<<< HEAD
+	if (!revs.nr && !get_oid(full_refname, &oid))
+=======
 	if (!revs.nr)
+>>>>>>> upstream/pu
 		add_one_commit(&oid, &revs);
 
 	for (i = 0; i < revs.nr; i++)
@@ -956,12 +970,17 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	if (revs.nr <= i)
 		goto cleanup_return;
 
-	ret = bases->item;
+	*fork_point = bases->item;
 
 cleanup_return:
+	free(full_refname);
 	free_commit_list(bases);
+<<<<<<< HEAD
+	return 0;
+=======
 	free(full_refname);
 	return ret;
+>>>>>>> upstream/pu
 }
 
 /*

@@ -18,4 +18,6 @@ int todo_list_check_against_backup(struct repository *r,
 
 int check_todo_list_from_file(struct repository *r);
 
+int check_todo_list_from_file(struct repository *r);
+
 #endif

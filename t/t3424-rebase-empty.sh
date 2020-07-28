@@ -34,11 +34,19 @@ test_expect_success 'setup test repository' '
 	git commit -m "Five letters ought to be enough for anybody"
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_expect_failure 'rebase (am-backend)' '
+	test_when_finished "git rebase --abort" &&
+	git checkout -B testing localmods &&
+	# rebase (--am) should not drop commits that start empty
+	git rebase upstream &&
+================================
 test_expect_failure 'rebase (apply-backend)' '
 	test_when_finished "git rebase --abort" &&
 	git checkout -B testing localmods &&
 	# rebase (--apply) should not drop commits that start empty
 	git rebase --apply upstream &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 
 	test_write_lines D C B A >expect &&
 	git log --format=%s >actual &&
@@ -54,6 +62,8 @@ test_expect_success 'rebase --merge --empty=drop' '
 	test_cmp expect actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
 test_expect_success 'rebase --merge uses default of --empty=drop' '
 	git checkout -B testing localmods &&
 	git rebase --merge upstream &&
@@ -63,6 +73,7 @@ test_expect_success 'rebase --merge uses default of --empty=drop' '
 	test_cmp expect actual
 '
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_expect_success 'rebase --merge --empty=keep' '
 	git checkout -B testing localmods &&
 	git rebase --merge --empty=keep upstream &&
@@ -83,6 +94,11 @@ test_expect_success 'rebase --merge --empty=ask' '
 	test_cmp expect actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
+
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_expect_success 'rebase --interactive --empty=drop' '
 	git checkout -B testing localmods &&
 	git rebase --interactive --empty=drop upstream &&
@@ -112,6 +128,8 @@ test_expect_success 'rebase --interactive --empty=ask' '
 	test_cmp expect actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
 test_expect_success 'rebase --interactive uses default of --empty=ask' '
 	git checkout -B testing localmods &&
 	test_must_fail git rebase --interactive upstream &&
@@ -167,4 +185,5 @@ test_expect_success 'rebase --merge does not leave state laying around' '
 	test_path_is_missing .git/MERGE_MSG
 '
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_done

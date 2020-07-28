@@ -1062,7 +1062,7 @@ ssize_t git_config_ssize_t(const char *name, const char *value)
 	return ret;
 }
 
-static int git_parse_maybe_bool_text(const char *value)
+int git_parse_maybe_bool_text(const char *value)
 {
 	if (!value)
 		return 1;
@@ -2334,6 +2334,11 @@ int git_config_get_max_percent_split_change(void)
 
 int git_config_get_fsmonitor(void)
 {
+	if (!the_repository->worktree) {
+		core_fsmonitor = 0;
+		return 0;
+	}
+
 	if (git_config_get_pathname("core.fsmonitor", &core_fsmonitor))
 		core_fsmonitor = getenv("GIT_TEST_FSMONITOR");
 
@@ -3314,7 +3319,15 @@ const char *current_config_origin_type(void)
 	}
 }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+const char *scope_to_string(enum config_scope scope)
+=======
 const char *config_scope_name(enum config_scope scope)
+>>>>>>> upstream/pu
+=======
+const char *config_scope_name(enum config_scope scope)
+>>>>>>> upstream/pu
 {
 	switch (scope) {
 	case CONFIG_SCOPE_SYSTEM:

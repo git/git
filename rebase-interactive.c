@@ -13,6 +13,12 @@ N_("You can fix this with 'git rebase --edit-todo' "
 "Or you can abort the rebase with 'git rebase"
 " --abort'.\n");
 
+static const char edit_todo_list_advice[] =
+N_("You can fix this with 'git rebase --edit-todo' "
+"and then run 'git rebase --continue'.\n"
+"Or you can abort the rebase with 'git rebase"
+" --abort'.\n");
+
 enum missing_commit_check_level {
 	MISSING_COMMIT_CHECK_IGNORE = 0,
 	MISSING_COMMIT_CHECK_WARN,
@@ -109,11 +115,16 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 				    -1, flags | TODO_LIST_SHORTEN_IDS | TODO_LIST_APPEND_TODO_HELP))
 		return error_errno(_("could not write '%s'"), todo_file);
 
+<<<<<<< HEAD
+	unlink(todo_backup);
+	if (todo_list_write_to_file(r, todo_list, todo_backup,
+=======
 	if (!incorrect &&
 	    todo_list_write_to_file(r, todo_list, todo_backup,
+>>>>>>> upstream/next
 				    shortrevisions, shortonto, -1,
 				    (flags | TODO_LIST_APPEND_TODO_HELP) & ~TODO_LIST_SHORTEN_IDS) < 0)
-		return error(_("could not write '%s'."), rebase_path_todo_backup());
+		return error(_("could not write '%s'."), todo_backup);
 
 	if (launch_sequence_editor(todo_file, &new_todo->buf, NULL))
 		return -2;
@@ -127,6 +138,10 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 		return -4;
 	}
 
+<<<<<<< HEAD
+	if (todo_list_check(todo_list, new_todo))
+		return -4;
+=======
 	if (incorrect) {
 		if (todo_list_check_against_backup(r, new_todo)) {
 			write_file(rebase_path_dropped(), "%s", "");
@@ -139,6 +154,7 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 		write_file(rebase_path_dropped(), "%s", "");
 		return -4;
 	}
+>>>>>>> upstream/next
 
 	return 0;
 }
@@ -210,6 +226,8 @@ leave_check:
 	return res;
 }
 
+<<<<<<< HEAD
+=======
 int todo_list_check_against_backup(struct repository *r, struct todo_list *todo_list)
 {
 	struct todo_list backup = TODO_LIST_INIT;
@@ -224,6 +242,7 @@ int todo_list_check_against_backup(struct repository *r, struct todo_list *todo_
 	return res;
 }
 
+>>>>>>> upstream/next
 int check_todo_list_from_file(struct repository *r)
 {
 	struct todo_list old_todo = TODO_LIST_INIT, new_todo = TODO_LIST_INIT;
@@ -242,10 +261,17 @@ int check_todo_list_from_file(struct repository *r)
 	res = todo_list_parse_insn_buffer(r, old_todo.buf.buf, &old_todo);
 	if (!res)
 		res = todo_list_parse_insn_buffer(r, new_todo.buf.buf, &new_todo);
+<<<<<<< HEAD
+	if (!res)
+		res = todo_list_check(&old_todo, &new_todo);
+	if (res)
+		fprintf(stderr, _(edit_todo_list_advice));
+=======
 	if (res)
 		fprintf(stderr, _(edit_todo_list_advice));
 	if (!res)
 		res = todo_list_check(&old_todo, &new_todo);
+>>>>>>> upstream/next
 out:
 	todo_list_release(&old_todo);
 	todo_list_release(&new_todo);

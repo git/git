@@ -7,6 +7,9 @@ test_description='Test rebasing, stashing, etc. with submodules'
 
 . ./test-lib.sh
 
+# fsmonitor does not work well with submodules
+GIT_TEST_FSMONITOR=""
+
 test_expect_success setup '
 
 	echo file > file &&

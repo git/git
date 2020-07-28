@@ -212,7 +212,11 @@ test_run_rebase () {
 		test_linear_range 'j d k l' c..
 	"
 }
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_run_rebase failure ''
+================================
 test_run_rebase failure --apply
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase failure -p

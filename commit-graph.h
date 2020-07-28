@@ -11,6 +11,8 @@
 #define GIT_TEST_COMMIT_GRAPH "GIT_TEST_COMMIT_GRAPH"
 #define GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD "GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD"
 #define GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS"
+<<<<<<< HEAD
+=======
 
 /*
  * This method is only used to enhance coverage of the commit-graph
@@ -20,6 +22,7 @@
  * you are doing!
  */
 void git_test_write_commit_graph_or_die(void);
+>>>>>>> upstream/maint
 
 struct commit;
 struct bloom_filter_settings;
@@ -91,13 +94,30 @@ enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_APPEND     = (1 << 0),
 	COMMIT_GRAPH_WRITE_PROGRESS   = (1 << 1),
 	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
+<<<<<<< HEAD
 	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
+=======
+	/* Make sure that each OID in the input is a valid commit OID. */
+	COMMIT_GRAPH_WRITE_CHECK_OIDS = (1 << 3),
+<<<<<<< HEAD
+	COMMIT_GRAPH_WRITE_NO_INPUT   = (1 << 4),
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 5),
+};
+
+enum commit_graph_split_flags {
+	COMMIT_GRAPH_SPLIT_MERGE_AUTO       = 0,
+	COMMIT_GRAPH_SPLIT_MERGE_REQUIRED   = 1,
+	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 2
+=======
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 4),
+>>>>>>> master
 };
 
 enum commit_graph_split_flags {
 	COMMIT_GRAPH_SPLIT_UNSPECIFIED      = 0,
 	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
 	COMMIT_GRAPH_SPLIT_REPLACE          = 2
+>>>>>>> upstream/maint
 };
 
 struct split_commit_graph_opts {

@@ -360,6 +360,7 @@ test_expect_success 'rm succeeds when given a directory with a trailing /' '
 '
 
 test_expect_success 'rm of a populated submodule with different HEAD fails unless forced' '
+	GIT_TEST_FSMONITOR="" &&
 	git reset --hard &&
 	git submodule update &&
 	git -C submod checkout HEAD^ &&

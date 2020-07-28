@@ -275,8 +275,6 @@ See also INCOMPATIBLE OPTIONS below.
 	With ask (implied by --interactive), the rebase will halt when
 	an empty commit is applied allowing you to choose whether to
 	drop it, edit files more, or just commit the empty changes.
-	Other options, like --exec, will use the default of drop unless
-	-i/--interactive is explicitly specified.
 +
 Note that commits which start empty are kept (unless --no-keep-empty
 is specified), and commits which are clean cherry-picks (as determined
@@ -420,7 +418,7 @@ See also INCOMPATIBLE OPTIONS below.
 	Ensure at least <n> lines of surrounding context match before
 	and after each change.  When fewer lines of surrounding
 	context exist they all must match.  By default no context is
-	ever ignored.  Implies --apply.
+	ever ignored.  Implies --am.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -462,7 +460,7 @@ See also INCOMPATIBLE OPTIONS below.
 --whitespace=<option>::
 	These flags are passed to the 'git apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
-	Implies --apply.
+	Implies --am.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -606,7 +604,7 @@ INCOMPATIBLE OPTIONS
 
 The following options:
 
- * --apply
+ * --am
  * --committer-date-is-author-date
  * --ignore-date
  * --ignore-whitespace
@@ -654,40 +652,37 @@ subtle differences in how these two backends behave:
 Empty commits
 ~~~~~~~~~~~~~
 
-The apply backend unfortunately drops intentionally empty commits, i.e.
+The am backend unfortunately drops intentionally empty commits, i.e.
 commits that started empty, though these are rare in practice.  It
 also drops commits that become empty and has no option for controlling
 this behavior.
 
-The merge backend keeps intentionally empty commits by default (though
-with -i they are marked as empty in the todo list editor, or they can
-be dropped automatically with --no-keep-empty).
-
-Similar to the apply backend, by default the merge backend drops
-commits that become empty unless -i/--interactive is specified (in
-which case it stops and asks the user what to do).  The merge backend
-also has an --empty={drop,keep,ask} option for changing the behavior
-of handling commits that become empty.
+The interactive backend keeps intentionally empty commits.  Similar to
+the am backend, by default the interactive backend drops commits that
+become empty unless -i/--interactive is specified (in which case it
+stops and asks the user what to do).  The interactive backend also has
+an --empty={drop,keep,ask} option for changing the behavior of
+handling commits that become empty.
 
 Directory rename detection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Due to the lack of accurate tree information (arising from
 constructing fake ancestors with the limited information available in
-patches), directory rename detection is disabled in the apply backend.
+patches), directory rename detection is disabled in the am backend.
 Disabled directory rename detection means that if one side of history
 renames a directory and the other adds new files to the old directory,
 then the new files will be left behind in the old directory without
 any warning at the time of rebasing that you may want to move these
 files into the new directory.
 
-Directory rename detection works with the merge backend to provide you
-warnings in such cases.
+Directory rename detection works with the merge and interactive
+backends to provide you warnings in such cases.
 
 Context
 ~~~~~~~
 
-The apply backend works by creating a sequence of patches (by calling
+The am backend works by creating a sequence of patches (by calling
 `format-patch` internally), and then applying the patches in sequence
 (calling `am` internally).  Patches are composed of multiple hunks,
 each with line numbers, a context region, and the actual changes.  The
@@ -702,7 +697,7 @@ Setting diff.context to a larger value may prevent such types of
 problems, but increases the chance of spurious conflicts (since it
 will require more lines of matching context to apply).
 
-The merge backend works with a full copy of each relevant file,
+The interactive backend works with a full copy of each relevant file,
 insulating it from these types of problems.
 
 Labelling of conflicts markers
@@ -710,54 +705,26 @@ Labelling of conflicts markers
 
 When there are content conflicts, the merge machinery tries to
 annotate each side's conflict markers with the commits where the
-content came from.  Since the apply backend drops the original
+content came from.  Since the am backend drops the original
 information about the rebased commits and their parents (and instead
 generates new fake commits based off limited information in the
 generated patches), those commits cannot be identified; instead it has
 to fall back to a commit summary.  Also, when merge.conflictStyle is
-set to diff3, the apply backend will use "constructed merge base" to
+set to diff3, the am backend will use "constructed merge base" to
 label the content from the merge base, and thus provide no information
 about the merge base commit whatsoever.
 
-The merge backend works with the full commits on both sides of history
-and thus has no such limitations.
+The interactive backend works with the full commits on both sides of
+history and thus has no such limitations.
 
 Hooks
 ~~~~~
 
-The apply backend has not traditionally called the post-commit hook,
-while the merge backend has.  Both have called the post-checkout hook,
-though the merge backend has squelched its output.  Further, both
-backends only call the post-checkout hook with the starting point
-commit of the rebase, not the intermediate commits nor the final
-commit.  In each case, the calling of these hooks was by accident of
-implementation rather than by design (both backends were originally
-implemented as shell scripts and happened to invoke other commands
-like 'git checkout' or 'git commit' that would call the hooks).  Both
-backends should have the same behavior, though it is not entirely
-clear which, if any, is correct.  We will likely make rebase stop
-calling either of these hooks in the future.
-
-Interruptability
-~~~~~~~~~~~~~~~~
-
-The apply backend has safety problems with an ill-timed interrupt; if
-the user presses Ctrl-C at the wrong time to try to abort the rebase,
-the rebase can enter a state where it cannot be aborted with a
-subsequent `git rebase --abort`.  The merge backend does not appear to
-suffer from the same shortcoming.  (See
-https://lore.kernel.org/git/20200207132152.GC2868@szeder.dev/ for
-details.)
-
-Commit Rewording
-~~~~~~~~~~~~~~~~
-
-When a conflict occurs while rebasing, rebase stops and asks the user
-to resolve.  Since the user may need to make notable changes while
-resolving conflicts, after conflicts are resolved and the user has run
-`git rebase --continue`, the rebase should open an editor and ask the
-user to update the commit message.  The merge backend does this, while
-the apply backend blindly applies the original commit message.
+The am backend has not traditionally called the post-commit hook,
+while the merge/interactive backend has.  However, this was by
+accident of implementation rather than by design.  Both backends
+should have the same behavior, though it is not clear which one is
+correct.
 
 Miscellaneous differences
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -772,9 +739,9 @@ completeness:
 
 * Progress, informational, and error messages: The two backends
   provide slightly different progress and informational messages.
-  Also, the apply backend writes error messages (such as "Your files
-  would be overwritten...") to stdout, while the merge backend writes
-  them to stderr.
+  Also, the am backend writes error messages (such as "Your files
+  would be overwritten...") to stdout, while the interactive backend
+  writes them to stderr.
 
 * State directories: The two backends keep their state in different
   directories under .git/

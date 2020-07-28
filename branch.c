@@ -344,7 +344,11 @@ void remove_merge_branch_state(struct repository *r)
 	unlink(git_path_merge_rr(r));
 	unlink(git_path_merge_msg(r));
 	unlink(git_path_merge_mode(r));
+<<<<<<< HEAD
+	apply_autostash(git_path_merge_autostash(r));
+=======
 	save_autostash(git_path_merge_autostash(r));
+>>>>>>> upstream/maint
 }
 
 void remove_branch_state(struct repository *r, int verbose)

@@ -23,24 +23,40 @@ test_expect_success 'rebase -m' '
 '
 
 test_expect_success 'rebase against master twice' '
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	git rebase --am master >out &&
+================================
 	git rebase --apply master >out &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_i18ngrep "Current branch topic is up to date" out
 '
 
 test_expect_success 'rebase against master twice with --force' '
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	git rebase --force-rebase --am master >out &&
+================================
 	git rebase --force-rebase --apply master >out &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_i18ngrep "Current branch topic is up to date, rebase forced" out
 '
 
 test_expect_success 'rebase against master twice from another branch' '
 	git checkout topic^ &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	git rebase --am master topic >out &&
+================================
 	git rebase --apply master topic >out &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_i18ngrep "Current branch topic is up to date" out
 '
 
 test_expect_success 'rebase fast-forward to master' '
 	git checkout topic^ &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	git rebase --am topic >out &&
+================================
 	git rebase --apply topic >out &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_i18ngrep "Fast-forwarded HEAD to topic" out
 '
 
@@ -89,7 +105,15 @@ test_expect_success 'GIT_REFLOG_ACTION' '
 	git checkout -b reflog-topic start &&
 	test_commit reflog-to-rebase &&
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	git rebase --am reflog-onto &&
+================================
+	git rebase --apply reflog-onto &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
+================================
 	git rebase reflog-onto &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	git log -g --format=%gs -3 >actual &&
 	cat >expect <<-\EOF &&
 	rebase (finish): returning to refs/heads/reflog-topic
@@ -99,7 +123,15 @@ test_expect_success 'GIT_REFLOG_ACTION' '
 	test_cmp expect actual &&
 
 	git checkout -b reflog-prefix reflog-to-rebase &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	GIT_REFLOG_ACTION=change-the-reflog git rebase --am reflog-onto &&
+================================
+	GIT_REFLOG_ACTION=change-the-reflog git rebase --apply reflog-onto &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
+================================
 	GIT_REFLOG_ACTION=change-the-reflog git rebase reflog-onto &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	git log -g --format=%gs -3 >actual &&
 	cat >expect <<-\EOF &&
 	change-the-reflog (finish): returning to refs/heads/reflog-prefix

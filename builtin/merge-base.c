@@ -123,7 +123,13 @@ static int handle_fork_point(int argc, const char **argv)
 
 	derived = lookup_commit_reference(the_repository, &oid);
 
+<<<<<<< HEAD
+	fork_point = NULL;
+	if (get_fork_point(argv[0], derived, &fork_point) < 0)
+		return 1;
+=======
 	fork_point = get_fork_point(argv[0], derived);
+>>>>>>> upstream/pu
 
 	if (!fork_point)
 		return 1;

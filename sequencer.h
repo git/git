@@ -193,9 +193,13 @@ void commit_post_rewrite(struct repository *r,
 
 void create_autostash(struct repository *r, const char *path,
 		      const char *default_reflog_action);
+<<<<<<< HEAD
+int apply_autostash(const char *path);
+=======
 int save_autostash(const char *path);
 int apply_autostash(const char *path);
 int apply_autostash_oid(const char *stash_oid);
+>>>>>>> upstream/maint
 
 #define SUMMARY_INITIAL_COMMIT   (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
@@ -204,9 +208,12 @@ void print_commit_summary(struct repository *repo,
 			  const struct object_id *oid,
 			  unsigned int flags);
 
+<<<<<<< HEAD
+=======
 #define READ_ONELINER_SKIP_IF_EMPTY (1 << 0)
 #define READ_ONELINER_WARN_MISSING (1 << 1)
 
+>>>>>>> upstream/maint
 /*
  * Reads a file that was presumably written by a shell script, i.e. with an
  * end-of-line marker that needs to be stripped.
@@ -214,10 +221,17 @@ void print_commit_summary(struct repository *repo,
  * Note that only the last end-of-line marker is stripped, consistent with the
  * behavior of "$(cat path)" in a shell script.
  *
+<<<<<<< HEAD
+ * Returns 1 if the file was read, 0 if it could not be read.
+ */
+int read_oneliner(struct strbuf *buf, const char *path,
+		  int skip_if_empty, int warn_nonexistence);
+=======
  * Returns 1 if the file was read, 0 if it could not be read or does not exist.
  */
 int read_oneliner(struct strbuf *buf,
 	const char *path, unsigned flags);
+>>>>>>> upstream/maint
 int read_author_script(const char *path, char **name, char **email, char **date,
 		       int allow_missing);
 void parse_strategy_opts(struct replay_opts *opts, char *raw_opts);
@@ -226,5 +240,6 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 void sequencer_post_commit_cleanup(struct repository *r, int verbose);
 int sequencer_get_last_command(struct repository* r,
 			       enum replay_action *action);
-int sequencer_determine_whence(struct repository *r, enum commit_whence *whence);
+int sequencer_determine_whence(struct repository *r, enum commit_whence *whence,
+			       int amending);
 #endif /* SEQUENCER_H */

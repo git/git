@@ -28,7 +28,11 @@ test_pull_autostash_fail () {
 	echo dirty >new_file &&
 	git add new_file &&
 	test_must_fail git pull "$@" . copy 2>err &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	test_i18ngrep "\(uncommitted changes.\)\|\(overwritten by merge:\)" err
+================================
 	test_i18ngrep -E "uncommitted changes.|overwritten by merge:" err
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 }
 
 test_expect_success setup '
@@ -299,7 +303,11 @@ test_expect_success '--rebase (merge) fast forward' '
 test_expect_success '--rebase (am) fast forward' '
 	git reset --hard before-rebase &&
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	git -c rebase.backend=am pull --rebase . ff &&
+================================
 	git -c rebase.backend=apply pull --rebase . ff &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_cmp_rev HEAD ff &&
 
 	# The above only validates the result.  Did we actually bypass rebase?

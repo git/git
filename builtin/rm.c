@@ -235,8 +235,13 @@ static int check_local_mod(struct object_id *head, int index_only)
 }
 
 static int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
+<<<<<<< HEAD
+static int ignore_unmatch = 0, pathspec_file_nul = 0;
+static char *pathspec_from_file = NULL;
+=======
 static int ignore_unmatch = 0, pathspec_file_nul;
 static char *pathspec_from_file;
+>>>>>>> upstream/pu
 
 static struct option builtin_rm_options[] = {
 	OPT__DRY_RUN(&show_only, N_("dry run")),
@@ -279,7 +284,11 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!pathspec.nr)
+<<<<<<< HEAD
+		die(_("Nothing specified, nothing removed"));
+=======
 		die(_("No pathspec was given. Which files should I remove?"));
+>>>>>>> upstream/pu
 
 	if (!index_only)
 		setup_work_tree();

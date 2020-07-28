@@ -377,11 +377,15 @@ static void print_advice(struct repository *r, int show_hint,
 	if (msg) {
 		fprintf(stderr, "%s\n", msg);
 		/*
-		 * A conflict has occurred but the porcelain
-		 * (typically rebase --interactive) wants to take care
-		 * of the commit itself so remove CHERRY_PICK_HEAD
+		 * A conflict has occurred but the porcelain wants to take care
+		 * of the commit itself so remove CHERRY_PICK_HEAD. Note that we
+		 * do not do this for interactive rebases anymore in order to
+		 * preserve the author identity when the user runs 'git commit'
+		 * to commit the conflict resolution rather than relying on
+		 * 'rebase --continue' to do it for them.
 		 */
-		unlink(git_path_cherry_pick_head(r));
+		if (!is_rebase_i(opts))
+			unlink(git_path_cherry_pick_head(r));
 		return;
 	}
 
@@ -420,28 +424,49 @@ static int write_message(const void *buf, size_t len, const char *filename,
 	return 0;
 }
 
+<<<<<<< HEAD
+int read_oneliner(struct strbuf *buf, const char *path,
+		  int skip_if_empty, int warn_nonexistence)
+=======
 int read_oneliner(struct strbuf *buf,
 	const char *path, unsigned flags)
+>>>>>>> upstream/maint
 {
-	int orig_len = buf->len;
+	int ret = 0;
+	struct strbuf file_buf = STRBUF_INIT;
 
+<<<<<<< HEAD
+	if (!warn_nonexistence && !file_exists(path))
+		return 0;
+
+	if (strbuf_read_file(&file_buf, path, 0) < 0) {
+		warning_errno(_("could not read '%s'"), path);
+		goto done;
+=======
 	if (strbuf_read_file(buf, path, 0) < 0) {
 		if ((flags & READ_ONELINER_WARN_MISSING) ||
 		    (errno != ENOENT && errno != ENOTDIR))
 			warning_errno(_("could not read '%s'"), path);
 		return 0;
+>>>>>>> upstream/maint
 	}
 
-	if (buf->len > orig_len && buf->buf[buf->len - 1] == '\n') {
-		if (--buf->len > orig_len && buf->buf[buf->len - 1] == '\r')
-			--buf->len;
-		buf->buf[buf->len] = '\0';
-	}
+	strbuf_trim_trailing_newline(&file_buf);
 
+<<<<<<< HEAD
+	if (skip_if_empty && !file_buf.len)
+		goto done;
+=======
 	if ((flags & READ_ONELINER_SKIP_IF_EMPTY) && buf->len == orig_len)
 		return 0;
+>>>>>>> upstream/maint
 
-	return 1;
+	strbuf_addbuf(buf, &file_buf);
+	ret = 1;
+
+done:
+	strbuf_release(&file_buf);
+	return ret;
 }
 
 static struct tree *empty_tree(struct repository *r)
@@ -1513,10 +1538,17 @@ static int allow_empty(struct repository *r,
 	 *
 	 * (2) we allow ones that were initially empty, and
 	 *     just drop the ones that become empty
+<<<<<<< HEAD
 	 *
 	 * (3) we allow ones that were initially empty, but
 	 *     halt for the ones that become empty;
 	 *
+=======
+	 *
+	 * (3) we allow ones that were initially empty, but
+	 *     halt for the ones that become empty;
+	 *
+>>>>>>> upstream/pu
 	 * (4) we allow both.
 	 */
 	if (!opts->allow_empty)
@@ -1966,12 +1998,17 @@ static int do_pick_commit(struct repository *r,
 		flags |= ALLOW_EMPTY;
 	} else if (allow == 2) {
 		drop_commit = 1;
+<<<<<<< HEAD
+		fprintf(stderr, _("No changes -- Patch already applied.\n"));
+	} // else allow == 0 and there's nothing special to do
+=======
 		unlink(git_path_cherry_pick_head(r));
 		unlink(git_path_merge_msg(r));
 		fprintf(stderr,
 			_("dropping %s %s -- patch contents already upstream\n"),
 			oid_to_hex(&commit->object.oid), msg.subject);
 	} /* else allow == 0 and there's nothing special to do */
+>>>>>>> upstream/pu
 	if (!opts->no_commit && !drop_commit) {
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
 			res = do_commit(r, msg_file, author, opts, flags,
@@ -2482,10 +2519,10 @@ void parse_strategy_opts(struct replay_opts *opts, char *raw_opts)
 static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 {
 	strbuf_reset(buf);
-	if (!read_oneliner(buf, rebase_path_strategy(), 0))
+	if (!read_oneliner(buf, rebase_path_strategy(), 0, 0))
 		return;
 	opts->strategy = strbuf_detach(buf, NULL);
-	if (!read_oneliner(buf, rebase_path_strategy_opts(), 0))
+	if (!read_oneliner(buf, rebase_path_strategy_opts(), 0, 0))
 		return;
 
 	parse_strategy_opts(opts, buf->buf);
@@ -2497,8 +2534,12 @@ static int read_populate_opts(struct replay_opts *opts)
 		struct strbuf buf = STRBUF_INIT;
 		int ret = 0;
 
+<<<<<<< HEAD
+		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(), 1, 0)) {
+=======
 		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(),
 				  READ_ONELINER_SKIP_IF_EMPTY)) {
+>>>>>>> upstream/maint
 			if (!starts_with(buf.buf, "-S"))
 				strbuf_reset(&buf);
 			else {
@@ -2508,8 +2549,12 @@ static int read_populate_opts(struct replay_opts *opts)
 			strbuf_reset(&buf);
 		}
 
+<<<<<<< HEAD
+		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(), 1, 0)) {
+=======
 		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(),
 				  READ_ONELINER_SKIP_IF_EMPTY)) {
+>>>>>>> upstream/maint
 			if (!strcmp(buf.buf, "--rerere-autoupdate"))
 				opts->allow_rerere_auto = RERERE_AUTOUPDATE;
 			else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
@@ -2541,8 +2586,12 @@ static int read_populate_opts(struct replay_opts *opts)
 		strbuf_reset(&buf);
 
 		if (read_oneliner(&opts->current_fixups,
+<<<<<<< HEAD
+				  rebase_path_current_fixups(), 1, 0)) {
+=======
 				  rebase_path_current_fixups(),
 				  READ_ONELINER_SKIP_IF_EMPTY)) {
+>>>>>>> upstream/maint
 			const char *p = opts->current_fixups.buf;
 			opts->current_fixup_count = 1;
 			while ((p = strchr(p, '\n'))) {
@@ -2551,11 +2600,17 @@ static int read_populate_opts(struct replay_opts *opts)
 			}
 		}
 
+<<<<<<< HEAD
+		if (read_oneliner(&buf, rebase_path_squash_onto(), 0, 0)) {
+			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0)
+				return error(_("unusable squash-onto"));
+=======
 		if (read_oneliner(&buf, rebase_path_squash_onto(), 0)) {
 			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0) {
 				ret = error(_("unusable squash-onto"));
 				goto done_rebase_i;
 			}
+>>>>>>> upstream/maint
 			opts->have_squash_onto = 1;
 		}
 
@@ -2910,8 +2965,8 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	int next = todo_list->current, offset, fd;
 
 	/*
-	 * rebase -i writes "git-rebase-todo" without the currently executing
-	 * command, appending it to "done" instead.
+	 * interactive backend writes "git-rebase-todo" without the currently
+	 * executing command, appending it to "done" instead.
 	 */
 	if (is_rebase_i(opts))
 		next++;
@@ -3725,11 +3780,20 @@ void create_autostash(struct repository *r, const char *path,
 	strbuf_release(&buf);
 }
 
+<<<<<<< HEAD
+int apply_autostash(const char *path)
+=======
 static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
+>>>>>>> upstream/maint
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret = 0;
 
+<<<<<<< HEAD
+	if (!read_oneliner(&stash_sha1, path, 1, 0)) {
+		strbuf_release(&stash_sha1);
+		return 0;
+=======
 	if (attempt_apply) {
 		child.git_cmd = 1;
 		child.no_stdout = 1;
@@ -3738,6 +3802,7 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
 		argv_array_push(&child.args, "apply");
 		argv_array_push(&child.args, stash_oid);
 		ret = run_command(&child);
+>>>>>>> upstream/maint
 	}
 
 	if (attempt_apply && !ret)
@@ -3783,7 +3848,11 @@ static int apply_save_autostash(const char *path, int attempt_apply)
 	ret = apply_save_autostash_oid(stash_oid.buf, attempt_apply);
 
 	unlink(path);
+<<<<<<< HEAD
+	strbuf_release(&stash_sha1);
+=======
 	strbuf_release(&stash_oid);
+>>>>>>> upstream/maint
 	return ret;
 }
 
@@ -4088,7 +4157,7 @@ static int pick_commits(struct repository *r,
 		if (todo_list->current < todo_list->nr)
 			return 0;
 
-		if (read_oneliner(&head_ref, rebase_path_head_name(), 0) &&
+		if (read_oneliner(&head_ref, rebase_path_head_name(), 0, 0) &&
 				starts_with(head_ref.buf, "refs/")) {
 			const char *msg;
 			struct object_id head, orig;
@@ -4101,13 +4170,13 @@ cleanup_head_ref:
 				strbuf_release(&buf);
 				return res;
 			}
-			if (!read_oneliner(&buf, rebase_path_orig_head(), 0) ||
+			if (!read_oneliner(&buf, rebase_path_orig_head(), 0, 0) ||
 					get_oid_hex(buf.buf, &orig)) {
 				res = error(_("could not read orig-head"));
 				goto cleanup_head_ref;
 			}
 			strbuf_reset(&buf);
-			if (!read_oneliner(&buf, rebase_path_onto(), 0)) {
+			if (!read_oneliner(&buf, rebase_path_onto(), 0, 0)) {
 				res = error(_("could not read 'onto'"));
 				goto cleanup_head_ref;
 			}
@@ -4140,7 +4209,7 @@ cleanup_head_ref:
 				DIFF_FORMAT_DIFFSTAT;
 			log_tree_opt.disable_stdin = 1;
 
-			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
+			if (read_oneliner(&buf, rebase_path_orig_head(), 0, 0) &&
 			    !get_oid(buf.buf, &orig) &&
 			    !get_oid("HEAD", &head)) {
 				diff_tree_oid(&orig, &head, "",
@@ -4225,7 +4294,7 @@ static int commit_staged_changes(struct repository *r,
 
 		if (get_oid("HEAD", &head))
 			return error(_("cannot amend non-existing commit"));
-		if (!read_oneliner(&rev, rebase_path_amend(), 0))
+		if (!read_oneliner(&rev, rebase_path_amend(), 0, 0))
 			return error(_("invalid file: '%s'"), rebase_path_amend());
 		if (get_oid_hex(rev.buf, &to_amend))
 			return error(_("invalid contents: '%s'"),
@@ -4358,14 +4427,26 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 	if (read_populate_opts(opts))
 		return -1;
 	if (is_rebase_i(opts)) {
+		struct todo_list backup = TODO_LIST_INIT;
+
 		if ((res = read_populate_todo(r, &todo_list, opts)))
 			goto release_todo_list;
 
+<<<<<<< HEAD
+		if (strbuf_read_file(&backup.buf, rebase_path_todo_backup(), 0) > 0) {
+			todo_list_parse_insn_buffer(r, backup.buf.buf, &backup);
+			res = todo_list_check(&backup, &todo_list);
+			todo_list_release(&backup);
+
+			if (res)
+				goto release_todo_list;
+=======
 		if (file_exists(rebase_path_dropped())) {
 			if ((res = todo_list_check_against_backup(r, &todo_list)))
 				goto release_todo_list;
 
 			unlink(rebase_path_dropped());
+>>>>>>> upstream/next
 		}
 
 		if (commit_staged_changes(r, opts, &todo_list)) {
@@ -4394,8 +4475,12 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 		struct strbuf buf = STRBUF_INIT;
 		struct object_id oid;
 
+<<<<<<< HEAD
+		if (read_oneliner(&buf, rebase_path_stopped_sha(), 1, 0) &&
+=======
 		if (read_oneliner(&buf, rebase_path_stopped_sha(),
 				  READ_ONELINER_SKIP_IF_EMPTY) &&
+>>>>>>> upstream/maint
 		    !get_oid_committish(buf.buf, &oid))
 			record_in_rewritten(&oid, peek_command(&todo_list, 0));
 		strbuf_release(&buf);
@@ -5440,7 +5525,8 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 	return 0;
 }
 
-int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
+int sequencer_determine_whence(struct repository *r, enum commit_whence *whence,
+			       int amending)
 {
 	if (file_exists(git_path_cherry_pick_head(r))) {
 		struct object_id cherry_pick_head, rebase_head;
@@ -5456,6 +5542,34 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 			*whence = FROM_CHERRY_PICK_SINGLE;
 
 		return 1;
+	} else if (amending && file_exists(rebase_path_current_fixups()) &&
+		   (file_exists(git_path_squash_msg(r)) ||
+		    file_exists(git_path_merge_msg(r)))) {
+		/*
+		 * If rebase_path_amend() exists the user is running `git
+		 * commit`, if not we're committing a fixup/squash directly from
+		 * the sequencer
+		 */
+		if (file_exists(rebase_path_amend())) {
+			struct strbuf rev = STRBUF_INIT;
+			struct object_id to_amend, head;
+
+			if (get_oid("HEAD", &head))
+				return error(_("amending invalid head")); /* let commit deal with error */
+			if (!read_oneliner(&rev, rebase_path_amend(), 0, 0))
+				return error(_("invalid file: '%s'"),
+					     rebase_path_amend());
+			if (get_oid_hex(rev.buf, &to_amend))
+				return error(_("invalid contents: '%s'"),
+					     rebase_path_amend());
+			if (oideq(&head, &to_amend)) {
+				*whence = FROM_REBASE_FIXUP;
+				return 1;
+			}
+		} else {
+			*whence = FROM_REBASE_FIXUP;
+			return 1;
+		}
 	}
 
 	return 0;

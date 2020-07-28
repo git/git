@@ -1525,6 +1525,21 @@ test_set_port () {
 	eval $var=$port
 }
 
+<<<<<<< HEAD
+test_clear_watchman () {
+	if test -n "$GIT_TEST_FSMONITOR"
+	then
+		watchman watch-list |
+			grep "$TRASH_DIRECTORY" |
+			sed "s/\",//g" |
+			sed "s/\"//g" >repo-list
+
+		while read repo
+		do
+			watchman watch-del "$repo"
+		done <repo-list
+	fi
+=======
 # Compare a file containing rev-list bitmap traversal output to its non-bitmap
 # counterpart. You can't just use test_cmp for this, because the two produce
 # subtly different output:
@@ -1550,6 +1565,7 @@ test_bitmap_traversal () {
 	sort "$2" >"$2.normalized" &&
 	test_cmp "$1.normalized" "$2.normalized" &&
 	rm -f "$1.normalized" "$2.normalized"
+>>>>>>> upstream/pu
 }
 
 # Tests for the hidden file attribute on Windows

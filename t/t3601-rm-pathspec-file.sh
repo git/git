@@ -73,7 +73,11 @@ test_expect_success 'error conditions' '
 
 	>empty_list &&
 	test_must_fail git rm --pathspec-from-file=empty_list 2>err &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	test_i18ngrep -e "Nothing specified, nothing removed" err
+================================
 	test_i18ngrep -e "No pathspec was given. Which files should I remove?" err
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 '
 
 test_done
