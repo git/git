@@ -19,6 +19,7 @@
 #define pthread_mutex_t int
 #define pthread_cond_t int
 #define pthread_key_t int
+#define pthread_once_t int
 
 #define pthread_mutex_init(mutex, attr) dummy_pthread_init(mutex)
 #define pthread_mutex_lock(mutex)
@@ -47,6 +48,12 @@ int dummy_pthread_create(pthread_t *pthread, const void *attr,
 int dummy_pthread_join(pthread_t pthread, void **retval);
 
 int dummy_pthread_init(void *);
+
+#define PTHREAD_ONCE_INIT 0
+#define pthread_once(once, routine) nothreads_pthread_once(once, routine)
+
+int nothreads_pthread_once(pthread_once_t *once_control,
+			   void (*init_routine)(void));
 
 #endif
 

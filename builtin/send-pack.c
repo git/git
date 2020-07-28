@@ -29,10 +29,12 @@ static struct send_pack_args args;
 static void print_helper_status(struct ref *ref)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct ref_push_report_options *options;
 
 	for (; ref; ref = ref->next) {
 		const char *msg = NULL;
 		const char *res;
+		int count = 0;
 
 		switch(ref->status) {
 		case REF_STATUS_NONE:
@@ -86,14 +88,29 @@ static void print_helper_status(struct ref *ref)
 
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%s %s", res, ref->name);
-		if (ref->remote_status)
-			msg = ref->remote_status;
+		if (ref->report.error_message)
+			msg = ref->report.error_message;
 		if (msg) {
 			strbuf_addch(&buf, ' ');
 			quote_two_c_style(&buf, "", msg, 0);
 		}
 		strbuf_addch(&buf, '\n');
 
+		for (options = ref->report.options; options; options = options->next) {
+			if (count++ > 0)
+				strbuf_addf(&buf, "ok %s\n", ref->name);
+			if (options->ref_name)
+				strbuf_addf(&buf, "option refname %s\n",
+					    options->ref_name);
+			if (options->old_oid)
+				strbuf_addf(&buf, "option old-oid %s\n",
+					    oid_to_hex(options->old_oid));
+			if (options->new_oid)
+				strbuf_addf(&buf, "option new-oid %s\n",
+					    oid_to_hex(options->new_oid));
+			if (options->forced_update)
+				strbuf_addstr(&buf, "option forced-update\n");
+		}
 		write_or_die(1, buf.buf, buf.len);
 	}
 	strbuf_release(&buf);

@@ -2907,6 +2907,14 @@ _git_show ()
 		__gitcomp "$__git_diff_submodule_formats" "" "${cur##--submodule=}"
 		return
 		;;
+	--color-moved=*)
+		__gitcomp "$__git_color_moved_opts" "" "${cur##--color-moved=}"
+		return
+		;;
+	--color-moved-ws=*)
+		__gitcomp "$__git_color_moved_ws_opts" "" "${cur##--color-moved-ws=}"
+		return
+		;;
 	--*)
 		__gitcomp "--pretty= --format= --abbrev-commit --no-abbrev-commit
 			--oneline --show-signature --patch
@@ -3382,6 +3390,8 @@ __git_main ()
 			--namespace=
 			--no-replace-objects
 			--help
+			--restrict-to-sparse-paths
+			--no-restrict-to-sparse-paths
 			"
 			;;
 		*)

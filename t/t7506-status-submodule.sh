@@ -25,6 +25,10 @@ sanitize_output () {
 	mv output2 output
 }
 
+sanitize_diff () {
+	sed -e "/^index [0-9a-f,]*\.\.[0-9a-f]*/d" "$1"
+}
+
 
 test_expect_success 'setup' '
 	test_create_repo_with_commit sub &&
@@ -272,7 +276,6 @@ short_sha1_merge_sub1=$(cd sub1 && git rev-parse --short HEAD)
 short_sha1_merge_sub2=$(cd sub2 && git rev-parse --short HEAD)
 cat >diff_expect <<\EOF
 diff --cc .gitmodules
-index badaa4c,44f999a..0000000
 --- a/.gitmodules
 +++ b/.gitmodules
 @@@ -1,3 -1,3 +1,9 @@@
@@ -289,7 +292,6 @@ EOF
 
 cat >diff_submodule_expect <<\EOF
 diff --cc .gitmodules
-index badaa4c,44f999a..0000000
 --- a/.gitmodules
 +++ b/.gitmodules
 @@@ -1,3 -1,3 +1,9 @@@
@@ -309,7 +311,8 @@ test_expect_success 'diff with merge conflict in .gitmodules' '
 		cd super &&
 		git diff >../diff_actual 2>&1
 	) &&
-	test_cmp diff_expect diff_actual
+	sanitize_diff diff_actual >diff_sanitized &&
+	test_cmp diff_expect diff_sanitized
 '
 
 test_expect_success 'diff --submodule with merge conflict in .gitmodules' '
@@ -317,7 +320,8 @@ test_expect_success 'diff --submodule with merge conflict in .gitmodules' '
 		cd super &&
 		git diff --submodule >../diff_submodule_actual 2>&1
 	) &&
-	test_cmp diff_submodule_expect diff_submodule_actual
+	sanitize_diff diff_submodule_actual >diff_sanitized &&
+	test_cmp diff_submodule_expect diff_sanitized
 '
 
 # We'll setup different cases for further testing:

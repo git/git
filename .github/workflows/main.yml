@@ -145,13 +145,6 @@ jobs:
         ## Unzip and remove the artifact
         unzip artifacts.zip
         rm artifacts.zip
-    - name: generate Visual Studio solution
-      shell: powershell
-      run: |
-        & .\git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-          make NDEBUG=1 DEVELOPER=1 vcxproj
-        "@
-        if (!$?) { exit(1) }
     - name: download vcpkg artifacts
       shell: powershell
       run: |
@@ -163,6 +156,17 @@ jobs:
         Remove-Item compat.zip
     - name: add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.0
+    - name: copy dlls to root
+      shell: powershell
+      run: |
+        & compat\vcbuild\vcpkg_copy_dlls.bat release
+        if (!$?) { exit(1) }
+    - name: generate Visual Studio solution
+      shell: bash
+      run: |
+        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows \
+        -DIconv_LIBRARY=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows/lib/libiconv.lib -DIconv_INCLUDE_DIR=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows/include \
+        -DMSGFMT_EXE=`pwd`/git-sdk-64-minimal/mingw64/bin/msgfmt.exe -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON
     - name: MSBuild
       run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
     - name: bundle artifact tar
@@ -171,8 +175,6 @@ jobs:
         MSVC: 1
         VCPKG_ROOT: ${{github.workspace}}\compat\vcbuild\vcpkg
       run: |
-        & compat\vcbuild\vcpkg_copy_dlls.bat release
-        if (!$?) { exit(1) }
         & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
           mkdir -p artifacts &&
           eval \"`$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts 2>&1 | grep ^tar)\"
@@ -203,7 +205,7 @@ jobs:
     - name: extract build artifacts
       shell: bash
       run: tar xf artifacts.tar.gz
-    - name: test (parallel)
+    - name: test
       shell: powershell
       env:
         MSYSTEM: MINGW64
@@ -214,12 +216,19 @@ jobs:
           # Let Git ignore the SDK and the test-cache
           printf '%s\n' /git-sdk-64-minimal/ /test-cache/ >>.git/info/exclude
 
-          cd t &&
-          PATH=\"`$PWD/helper:`$PATH\" &&
-          test-tool.exe run-command testsuite --jobs=10 -V -x --write-junit-xml \
-                  `$(test-tool.exe path-utils slice-tests \
-                          ${{matrix.nr}} 10 t[0-9]*.sh)
+          ci/run-test-slice.sh ${{matrix.nr}} 10
         "@
+    - name: ci/print-test-failures.sh
+      if: failure()
+      shell: powershell
+      run: |
+        & .\git-sdk-64-minimal\usr\bin\bash.exe -lc ci/print-test-failures.sh
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v1
+      with:
+        name: failed-tests-windows
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
   regular:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'

@@ -241,7 +241,6 @@ test_expect_success 'refresh index before checking if it is up-to-date' '
 '
 
 test_expect_success 'choking "git rm" should not let it die with cruft' '
-	test_oid_init &&
 	git reset -q --hard &&
 	test_when_finished "rm -f .git/index.lock && git reset -q --hard" &&
 	i=0 &&

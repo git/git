@@ -28,6 +28,7 @@ struct raw_object_store;
 struct string_list;
 
 char *get_commit_graph_filename(struct object_directory *odb);
+char *get_commit_graph_chain_filename(struct object_directory *odb);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 
 /*
@@ -95,6 +96,7 @@ enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_PROGRESS   = (1 << 1),
 	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
 <<<<<<< HEAD
+<<<<<<< HEAD
 	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
 <<<<<<< HEAD
 =======
@@ -115,13 +117,20 @@ enum commit_graph_split_flags {
 =======
 	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
 >>>>>>> upstream/next
+=======
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
+	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
+>>>>>>> upstream/seen
 };
 
 enum commit_graph_split_flags {
 	COMMIT_GRAPH_SPLIT_UNSPECIFIED      = 0,
 	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
 	COMMIT_GRAPH_SPLIT_REPLACE          = 2
+<<<<<<< HEAD
 >>>>>>> upstream/maint
+=======
+>>>>>>> upstream/seen
 };
 
 struct split_commit_graph_opts {
