@@ -29,8 +29,8 @@ extern const char *empty_argv[];
  */
 struct argv_array {
 	const char **argv;
-	int argc;
-	int alloc;
+	size_t argc;
+	size_t alloc;
 };
 
 #define ARGV_ARRAY_INIT { empty_argv, 0, 0 }
