@@ -13,7 +13,6 @@ start_git_daemon --export-all --enable=receive-pack
 daemon_parent=$GIT_DAEMON_DOCUMENT_ROOT_PATH/parent
 
 test_expect_success 'create repo to be served by git-daemon' '
-	test_oid_init &&
 	git init "$daemon_parent" &&
 	test_commit -C "$daemon_parent" one
 '
@@ -829,7 +828,7 @@ test_expect_success 'part of packfile response provided as URI' '
 	# Ensure that my-blob and other-blob are in separate packfiles.
 	for idx in http_child/.git/objects/pack/*.idx
 	do
-		git verify-pack --verbose $idx >out &&
+		git verify-pack --object-format=$(test_oid algo) --verbose $idx >out &&
 		{
 			grep "^[0-9a-f]\{16,\} " out || :
 		} >out.objectlist &&

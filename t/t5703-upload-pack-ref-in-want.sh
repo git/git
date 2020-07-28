@@ -43,7 +43,6 @@ write_command () {
 #             \ | /
 #               a
 test_expect_success 'setup repository' '
-	test_oid_init &&
 	test_commit a &&
 	git checkout -b o/foo &&
 	test_commit b &&

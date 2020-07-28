@@ -12,7 +12,6 @@ file_size () {
 }
 
 test_expect_success setup '
-	test_oid_init &&
 	# clone does not allow us to pass core.bigfilethreshold to
 	# new repos, so set core.bigfilethreshold globally
 	git config --global core.bigfilethreshold 200k &&

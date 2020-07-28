@@ -14,7 +14,6 @@ corrupt_repo () {
 }
 
 test_expect_success 'setup and corrupt repository' '
-	test_oid_init &&
 	echo file >file &&
 	git add file &&
 	git rev-parse :file &&
