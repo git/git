@@ -349,8 +349,8 @@ static int handle_alias(int *argcp, const char ***argv)
 			child.clean_on_exit = 1;
 			child.wait_after_clean = 1;
 			child.trace2_child_class = "shell_alias";
-			argv_array_push(&child.args, alias_string + 1);
-			argv_array_pushv(&child.args, (*argv) + 1);
+			strvec_push(&child.args, alias_string + 1);
+			strvec_pushv(&child.args, (*argv) + 1);
 
 			trace2_cmd_alias(alias_command, child.args.argv);
 			trace2_cmd_list_config();
@@ -646,7 +646,7 @@ static void strip_extension(const char **argv)
 
 static void handle_builtin(int argc, const char **argv)
 {
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	const char *cmd;
 	struct cmd_struct *builtin;
 
@@ -661,9 +661,9 @@ static void handle_builtin(int argc, const char **argv)
 		argv[0] = cmd = "help";
 
 		for (i = 0; i < argc; i++) {
-			argv_array_push(&args, argv[i]);
+			strvec_push(&args, argv[i]);
 			if (!i)
-				argv_array_push(&args, "--exclude-guides");
+				strvec_push(&args, "--exclude-guides");
 		}
 
 		argc++;
@@ -673,7 +673,7 @@ static void handle_builtin(int argc, const char **argv)
 	builtin = get_builtin(cmd);
 	if (builtin)
 		exit(run_builtin(builtin, argc, argv));
-	argv_array_clear(&args);
+	strvec_clear(&args);
 }
 
 static void execv_dashed_external(const char **argv)
@@ -688,8 +688,8 @@ static void execv_dashed_external(const char **argv)
 		use_pager = check_pager_config(argv[0]);
 	commit_pager_choice();
 
-	argv_array_pushf(&cmd.args, "git-%s", argv[0]);
-	argv_array_pushv(&cmd.args, argv + 1);
+	strvec_pushf(&cmd.args, "git-%s", argv[0]);
+	strvec_pushv(&cmd.args, argv + 1);
 	cmd.clean_on_exit = 1;
 	cmd.wait_after_clean = 1;
 	cmd.silent_exec_failure = 1;
@@ -741,7 +741,7 @@ static int run_argv(int *argcp, const char ***argv)
 		if (!done_alias)
 			handle_builtin(*argcp, *argv);
 		else if (get_builtin(**argv)) {
-			struct argv_array args = ARGV_ARRAY_INIT;
+			struct strvec args = STRVEC_INIT;
 			int i;
 
 			/*
@@ -758,9 +758,9 @@ static int run_argv(int *argcp, const char ***argv)
 
 			commit_pager_choice();
 
-			argv_array_push(&args, "git");
+			strvec_push(&args, "git");
 			for (i = 0; i < *argcp; i++)
-				argv_array_push(&args, (*argv)[i]);
+				strvec_push(&args, (*argv)[i]);
 
 			trace_argv_printf(args.argv, "trace: exec:");
 

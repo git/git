@@ -17,7 +17,7 @@
 #include "alias.h"
 
 static char *server_capabilities_v1;
-static struct argv_array server_capabilities_v2 = ARGV_ARRAY_INIT;
+static struct strvec server_capabilities_v2 = STRVEC_INIT;
 static const char *next_server_feature_value(const char *feature, int *len, int *offset);
 
 static int check_ref(const char *name, unsigned int flags)
@@ -123,7 +123,7 @@ int server_supports_feature(const char *c, const char *feature,
 static void process_capabilities_v2(struct packet_reader *reader)
 {
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL)
-		argv_array_push(&server_capabilities_v2, reader->line);
+		strvec_push(&server_capabilities_v2, reader->line);
 
 	if (reader->status != PACKET_READ_FLUSH)
 		die(_("expected flush after capabilities"));
@@ -453,7 +453,7 @@ void check_stateless_delimiter(int stateless_rpc,
 
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     struct ref **list, int for_push,
-			     const struct argv_array *ref_prefixes,
+			     const struct strvec *ref_prefixes,
 			     const struct string_list *server_options,
 			     int stateless_rpc)
 {
@@ -944,9 +944,9 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 
 	proxy = xmalloc(sizeof(*proxy));
 	child_process_init(proxy);
-	argv_array_push(&proxy->args, git_proxy_command);
-	argv_array_push(&proxy->args, host);
-	argv_array_push(&proxy->args, port);
+	strvec_push(&proxy->args, git_proxy_command);
+	strvec_push(&proxy->args, host);
+	strvec_push(&proxy->args, port);
 	proxy->in = -1;
 	proxy->out = -1;
 	if (start_command(proxy))
@@ -1199,15 +1199,15 @@ static struct child_process *git_connect_git(int fd[2], char *hostandport,
  * Append the appropriate environment variables to `env` and options to
  * `args` for running ssh in Git's SSH-tunneled transport.
  */
-static void push_ssh_options(struct argv_array *args, struct argv_array *env,
+static void push_ssh_options(struct strvec *args, struct strvec *env,
 			     enum ssh_variant variant, const char *port,
 			     enum protocol_version version, int flags)
 {
 	if (variant == VARIANT_SSH &&
 	    version > 0) {
-		argv_array_push(args, "-o");
-		argv_array_push(args, "SendEnv=" GIT_PROTOCOL_ENVIRONMENT);
-		argv_array_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
+		strvec_push(args, "-o");
+		strvec_push(args, "SendEnv=" GIT_PROTOCOL_ENVIRONMENT);
+		strvec_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
 				 version);
 	}
 
@@ -1221,7 +1221,7 @@ static void push_ssh_options(struct argv_array *args, struct argv_array *env,
 		case VARIANT_PLINK:
 		case VARIANT_PUTTY:
 		case VARIANT_TORTOISEPLINK:
-			argv_array_push(args, "-4");
+			strvec_push(args, "-4");
 		}
 	} else if (flags & CONNECT_IPV6) {
 		switch (variant) {
@@ -1233,12 +1233,12 @@ static void push_ssh_options(struct argv_array *args, struct argv_array *env,
 		case VARIANT_PLINK:
 		case VARIANT_PUTTY:
 		case VARIANT_TORTOISEPLINK:
-			argv_array_push(args, "-6");
+			strvec_push(args, "-6");
 		}
 	}
 
 	if (variant == VARIANT_TORTOISEPLINK)
-		argv_array_push(args, "-batch");
+		strvec_push(args, "-batch");
 
 	if (port) {
 		switch (variant) {
@@ -1247,15 +1247,15 @@ static void push_ssh_options(struct argv_array *args, struct argv_array *env,
 		case VARIANT_SIMPLE:
 			die(_("ssh variant 'simple' does not support setting port"));
 		case VARIANT_SSH:
-			argv_array_push(args, "-p");
+			strvec_push(args, "-p");
 			break;
 		case VARIANT_PLINK:
 		case VARIANT_PUTTY:
 		case VARIANT_TORTOISEPLINK:
-			argv_array_push(args, "-P");
+			strvec_push(args, "-P");
 		}
 
-		argv_array_push(args, port);
+		strvec_push(args, port);
 	}
 }
 
@@ -1293,18 +1293,18 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
 		detect.use_shell = conn->use_shell;
 		detect.no_stdin = detect.no_stdout = detect.no_stderr = 1;
 
-		argv_array_push(&detect.args, ssh);
-		argv_array_push(&detect.args, "-G");
+		strvec_push(&detect.args, ssh);
+		strvec_push(&detect.args, "-G");
 		push_ssh_options(&detect.args, &detect.env_array,
 				 VARIANT_SSH, port, version, flags);
-		argv_array_push(&detect.args, ssh_host);
+		strvec_push(&detect.args, ssh_host);
 
 		variant = run_command(&detect) ? VARIANT_SIMPLE : VARIANT_SSH;
 	}
 
-	argv_array_push(&conn->args, ssh);
+	strvec_push(&conn->args, ssh);
 	push_ssh_options(&conn->args, &conn->env_array, variant, port, version, flags);
-	argv_array_push(&conn->args, ssh_host);
+	strvec_push(&conn->args, ssh_host);
 }
 
 /*
@@ -1365,7 +1365,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 		/* remove repo-local variables from the environment */
 		for (var = local_repo_env; *var; var++)
-			argv_array_push(&conn->env_array, *var);
+			strvec_push(&conn->env_array, *var);
 
 		conn->use_shell = 1;
 		conn->in = conn->out = -1;
@@ -1397,11 +1397,11 @@ struct child_process *git_connect(int fd[2], const char *url,
 			transport_check_allowed("file");
 			conn->trace2_child_class = "transport/file";
 			if (version > 0) {
-				argv_array_pushf(&conn->env_array, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
+				strvec_pushf(&conn->env_array, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
 						 version);
 			}
 		}
-		argv_array_push(&conn->args, cmd.buf);
+		strvec_push(&conn->args, cmd.buf);
 
 		if (start_command(conn))
 			die(_("unable to fork"));
