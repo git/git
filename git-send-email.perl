@@ -250,6 +250,7 @@ my $chain_reply_to = 0;
 my $use_xmailer = 1;
 my $validate = 1;
 my $target_xfer_encoding = 'auto';
+my $forbid_sendmail_variables = 1;
 
 my %config_bool_settings = (
     "thread" => \$thread,
@@ -263,6 +264,7 @@ my %config_bool_settings = (
     "multiedit" => \$multiedit,
     "annotate" => \$annotate,
     "xmailer" => \$use_xmailer,
+    "forbidsendmailvariables" => \$forbid_sendmail_variables,
 );
 
 my %config_settings = (
@@ -476,6 +478,12 @@ usage() if $help;
 completion_helper() if $git_completion_helper;
 unless ($rc) {
     usage();
+}
+
+if ($forbid_sendmail_variables && (scalar Git::config_regexp("^sendmail[.]")) != 0) {
+	die __("fatal: found configuration options for 'sendmail'\n" .
+		"git-send-email is configured with the sendemail.* options - note the 'e'.\n" .
+		"Set sendemail.forbidSendmailVariables to false to disable this check.\n");
 }
 
 die __("Cannot run git format-patch from outside a repository\n")

@@ -61,3 +61,8 @@ sendemail.smtpBatchSize::
 sendemail.smtpReloginDelay::
 	Seconds wait before reconnecting to smtp server.
 	See also the `--relogin-delay` option of linkgit:git-send-email[1].
+
+sendemail.forbidSendmailVariables::
+	To avoid common misconfiguration mistakes, linkgit:git-send-email[1]
+	will abort with a warning if any configuration options for "sendmail"
+	exist. Set this variable to bypass the check.
