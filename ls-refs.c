@@ -2,7 +2,7 @@
 #include "repository.h"
 #include "refs.h"
 #include "remote.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "ls-refs.h"
 #include "pkt-line.h"
 #include "config.h"

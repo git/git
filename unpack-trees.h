@@ -2,7 +2,7 @@
 #define UNPACK_TREES_H
 
 #include "cache.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "string-list.h"
 #include "tree-walk.h"
 

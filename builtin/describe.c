@@ -12,7 +12,7 @@
 #include "revision.h"
 #include "diff.h"
 #include "hashmap.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "run-command.h"
 #include "object-store.h"
 #include "list-objects.h"

@@ -2,7 +2,7 @@
 #define RANGE_DIFF_H
 
 #include "diff.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 #define RANGE_DIFF_CREATION_FACTOR_DEFAULT 60
 

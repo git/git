@@ -4,7 +4,7 @@
 #include "refs.h"
 #include "builtin.h"
 #include "color.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "parse-options.h"
 #include "dir.h"
 #include "commit-slab.h"

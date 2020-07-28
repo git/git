@@ -9,7 +9,7 @@
 #include "string-list.h"
 #include "thread-utils.h"
 #include "sigchain.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "refs.h"
 #include "refspec.h"
 #include "transport-internal.h"

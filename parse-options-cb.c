@@ -4,7 +4,7 @@
 #include "commit.h"
 #include "color.h"
 #include "string-list.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "oid-array.h"
 
 /*----- some often used options -----*/

@@ -13,7 +13,7 @@
 #include "refs.h"
 #include "string-list.h"
 #include "oid-array.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "blob.h"
 #include "thread-utils.h"
 #include "quote.h"

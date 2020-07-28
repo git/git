@@ -3,7 +3,7 @@
 
 #include "thread-utils.h"
 
-#include "argv-array.h"
+#include "strvec.h"
 
 /**
  * The run-command API offers a versatile tool to run sub-processes with

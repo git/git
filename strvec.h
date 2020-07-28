@@ -1,5 +1,5 @@
-#ifndef ARGV_ARRAY_H
-#define ARGV_ARRAY_H
+#ifndef STRVEC_H
+#define STRVEC_H
 
 /**
  * The argv-array API allows one to dynamically build and store
@@ -99,4 +99,4 @@ const char **strvec_detach(struct strvec *);
 #define argv_array_clear strvec_clear
 #define argv_array_detach strvec_detach
 
-#endif /* ARGV_ARRAY_H */
+#endif /* STRVEC_H */

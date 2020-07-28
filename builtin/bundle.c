@@ -1,5 +1,5 @@
 #include "builtin.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "parse-options.h"
 #include "cache.h"
 #include "bundle.h"

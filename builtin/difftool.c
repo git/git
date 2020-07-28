@@ -18,7 +18,7 @@
 #include "run-command.h"
 #include "exec-cmd.h"
 #include "parse-options.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "strbuf.h"
 #include "lockfile.h"
 #include "object-store.h"

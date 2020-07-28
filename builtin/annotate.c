@@ -5,7 +5,7 @@
  */
 #include "git-compat-util.h"
 #include "builtin.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 int cmd_annotate(int argc, const char **argv, const char *prefix)
 {

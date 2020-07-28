@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "exec-cmd.h"
 #include "quote.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 #if defined(RUNTIME_PREFIX)
 

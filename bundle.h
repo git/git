@@ -1,7 +1,7 @@
 #ifndef BUNDLE_H
 #define BUNDLE_H
 
-#include "argv-array.h"
+#include "strvec.h"
 #include "cache.h"
 
 struct ref_list {

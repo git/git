@@ -15,7 +15,7 @@
 #include "string-list.h"
 #include "oid-array.h"
 #include "connected.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "version.h"
 #include "tag.h"
 #include "gpg-interface.h"

@@ -4,7 +4,7 @@
 #include "builtin.h"
 #include "dir.h"
 #include "parse-options.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "branch.h"
 #include "refs.h"
 #include "run-command.h"

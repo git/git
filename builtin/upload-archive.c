@@ -7,7 +7,7 @@
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 static const char upload_archive_usage[] =
 	"git upload-archive <repo>";

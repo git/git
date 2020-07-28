@@ -2,7 +2,7 @@
 #include "run-command.h"
 #include "exec-cmd.h"
 #include "sigchain.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "thread-utils.h"
 #include "strbuf.h"
 #include "string-list.h"

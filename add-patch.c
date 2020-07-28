@@ -2,7 +2,7 @@
 #include "add-interactive.h"
 #include "strbuf.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "pathspec.h"
 #include "color.h"
 #include "diff.h"

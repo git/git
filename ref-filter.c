@@ -22,7 +22,7 @@
 #include "commit-reach.h"
 #include "worktree.h"
 #include "hashmap.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 static struct ref_msg {
 	const char *gone;

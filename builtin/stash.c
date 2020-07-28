@@ -7,7 +7,7 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "merge-recursive.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "run-command.h"
 #include "dir.h"
 #include "rerere.h"

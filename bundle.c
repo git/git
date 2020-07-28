@@ -10,7 +10,7 @@
 #include "list-objects.h"
 #include "run-command.h"
 #include "refs.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 static const char bundle_signature[] = "# v2 git bundle\n";
 

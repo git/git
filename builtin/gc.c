@@ -18,7 +18,7 @@
 #include "parse-options.h"
 #include "run-command.h"
 #include "sigchain.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "commit.h"
 #include "commit-graph.h"
 #include "packfile.h"

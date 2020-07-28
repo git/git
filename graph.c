@@ -4,7 +4,7 @@
 #include "color.h"
 #include "graph.h"
 #include "revision.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 /* Internal API */
 

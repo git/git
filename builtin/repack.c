@@ -7,7 +7,7 @@
 #include "sigchain.h"
 #include "strbuf.h"
 #include "string-list.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "midx.h"
 #include "packfile.h"
 #include "prune-packed.h"

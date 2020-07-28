@@ -18,7 +18,7 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "bulk-checkin.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "submodule.h"
 #include "add-interactive.h"
 

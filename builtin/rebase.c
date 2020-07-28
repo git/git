@@ -8,7 +8,7 @@
 #include "builtin.h"
 #include "run-command.h"
 #include "exec-cmd.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "dir.h"
 #include "packfile.h"
 #include "refs.h"

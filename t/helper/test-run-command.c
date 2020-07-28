@@ -12,7 +12,7 @@
 #include "git-compat-util.h"
 #include "cache.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "strbuf.h"
 #include "parse-options.h"
 #include "string-list.h"

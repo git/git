@@ -11,7 +11,7 @@
 #include "remote.h"
 #include "list-objects.h"
 #include "sigchain.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "packfile.h"
 #include "object-store.h"
 #include "commit-reach.h"

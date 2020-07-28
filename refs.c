@@ -15,7 +15,7 @@
 #include "tag.h"
 #include "submodule.h"
 #include "worktree.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "repository.h"
 #include "sigchain.h"
 
