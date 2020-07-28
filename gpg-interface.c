@@ -282,9 +282,9 @@ static int verify_signed_buffer(const char *payload, size_t payload_size,
 	if (!fmt)
 		BUG("bad signature '%s'", signature);
 
-	argv_array_push(&gpg.args, fmt->program);
-	argv_array_pushv(&gpg.args, fmt->verify_args);
-	argv_array_pushl(&gpg.args,
+	strvec_push(&gpg.args, fmt->program);
+	strvec_pushv(&gpg.args, fmt->verify_args);
+	strvec_pushl(&gpg.args,
 			 "--status-fd=1",
 			 "--verify", temp->filename.buf, "-",
 			 NULL);
@@ -434,7 +434,7 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	size_t i, j, bottom;
 	struct strbuf gpg_status = STRBUF_INIT;
 
-	argv_array_pushl(&gpg.args,
+	strvec_pushl(&gpg.args,
 			 use_format->program,
 			 "--status-fd=2",
 			 "-bsau", signing_key,

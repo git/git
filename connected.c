@@ -90,22 +90,22 @@ promisor_pack_found:
 
 no_promisor_pack_found:
 	if (opt->shallow_file) {
-		argv_array_push(&rev_list.args, "--shallow-file");
-		argv_array_push(&rev_list.args, opt->shallow_file);
+		strvec_push(&rev_list.args, "--shallow-file");
+		strvec_push(&rev_list.args, opt->shallow_file);
 	}
-	argv_array_push(&rev_list.args,"rev-list");
-	argv_array_push(&rev_list.args, "--objects");
-	argv_array_push(&rev_list.args, "--stdin");
+	strvec_push(&rev_list.args,"rev-list");
+	strvec_push(&rev_list.args, "--objects");
+	strvec_push(&rev_list.args, "--stdin");
 	if (has_promisor_remote())
-		argv_array_push(&rev_list.args, "--exclude-promisor-objects");
+		strvec_push(&rev_list.args, "--exclude-promisor-objects");
 	if (!opt->is_deepening_fetch) {
-		argv_array_push(&rev_list.args, "--not");
-		argv_array_push(&rev_list.args, "--all");
+		strvec_push(&rev_list.args, "--not");
+		strvec_push(&rev_list.args, "--all");
 	}
-	argv_array_push(&rev_list.args, "--quiet");
-	argv_array_push(&rev_list.args, "--alternate-refs");
+	strvec_push(&rev_list.args, "--quiet");
+	strvec_push(&rev_list.args, "--alternate-refs");
 	if (opt->progress)
-		argv_array_pushf(&rev_list.args, "--progress=%s",
+		strvec_pushf(&rev_list.args, "--progress=%s",
 				 _("Checking connectivity"));
 
 	rev_list.git_cmd = 1;

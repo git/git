@@ -1846,7 +1846,7 @@ int cmd_main(int argc, const char **argv)
 
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
-		struct argv_array commit_argv = ARGV_ARRAY_INIT;
+		struct strvec commit_argv = STRVEC_INIT;
 
 		if (!ref->peer_ref)
 			continue;
@@ -1924,11 +1924,11 @@ int cmd_main(int argc, const char **argv)
 		}
 
 		/* Set up revision info for this refspec */
-		argv_array_push(&commit_argv, ""); /* ignored */
-		argv_array_push(&commit_argv, "--objects");
-		argv_array_push(&commit_argv, oid_to_hex(&ref->new_oid));
+		strvec_push(&commit_argv, ""); /* ignored */
+		strvec_push(&commit_argv, "--objects");
+		strvec_push(&commit_argv, oid_to_hex(&ref->new_oid));
 		if (!push_all && !is_null_oid(&ref->old_oid))
-			argv_array_pushf(&commit_argv, "^%s",
+			strvec_pushf(&commit_argv, "^%s",
 					 oid_to_hex(&ref->old_oid));
 		repo_init_revisions(the_repository, &revs, setup_git_directory());
 		setup_revisions(commit_argv.argc, commit_argv.argv, &revs, NULL);
@@ -1961,7 +1961,7 @@ int cmd_main(int argc, const char **argv)
 			printf("%s %s\n", !rc ? "ok" : "error", ref->name);
 		unlock_remote(ref_lock);
 		check_locks();
-		argv_array_clear(&commit_argv);
+		strvec_clear(&commit_argv);
 	}
 
 	/* Update remote server info if appropriate */
