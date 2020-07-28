@@ -86,17 +86,4 @@ void strvec_clear(struct strvec *);
  */
 const char **strvec_detach(struct strvec *);
 
-/* compatibility for historic argv_array interface */
-#define argv_array strvec
-#define ARGV_ARRAY_INIT STRVEC_INIT
-#define argv_array_init strvec_init
-#define argv_array_push strvec_push
-#define argv_array_pushf strvec_pushf
-#define argv_array_pushl strvec_pushl
-#define argv_array_pushv strvec_pushv
-#define argv_array_pop strvec_pop
-#define argv_array_split strvec_split
-#define argv_array_clear strvec_clear
-#define argv_array_detach strvec_detach
-
 #endif /* STRVEC_H */
