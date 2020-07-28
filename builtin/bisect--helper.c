@@ -4,7 +4,7 @@
 #include "bisect.h"
 #include "refs.h"
 #include "dir.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "run-command.h"
 #include "prompt.h"
 #include "quote.h"

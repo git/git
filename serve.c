@@ -3,7 +3,7 @@
 #include "config.h"
 #include "pkt-line.h"
 #include "version.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "ls-refs.h"
 #include "serve.h"
 #include "upload-pack.h"

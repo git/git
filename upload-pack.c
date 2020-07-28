@@ -18,7 +18,7 @@
 #include "sigchain.h"
 #include "version.h"
 #include "string-list.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "prio-queue.h"
 #include "protocol.h"
 #include "quote.h"

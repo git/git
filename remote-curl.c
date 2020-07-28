@@ -10,7 +10,7 @@
 #include "pkt-line.h"
 #include "string-list.h"
 #include "sideband.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "credential.h"
 #include "oid-array.h"
 #include "send-pack.h"

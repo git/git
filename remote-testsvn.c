@@ -8,7 +8,7 @@
 #include "run-command.h"
 #include "vcs-svn/svndump.h"
 #include "notes.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 static const char *url;
 static int dump_from_file;

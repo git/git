@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "repository.h"
 #include "config.h"
 #include "dir.h"

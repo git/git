@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "strbuf.h"
 
 const char *empty_strvec[] = { NULL };

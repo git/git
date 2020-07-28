@@ -3,7 +3,7 @@
 #include "dir.h"
 #include "pathspec.h"
 #include "attr.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "quote.h"
 
 /*

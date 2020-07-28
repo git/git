@@ -10,7 +10,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "commit-reach.h"
 
 static const char * const builtin_remote_usage[] = {

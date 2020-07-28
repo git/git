@@ -8,7 +8,7 @@
 #include "diffcore.h"
 #include "quote.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "remote.h"
 #include "refs.h"
 #include "submodule.h"

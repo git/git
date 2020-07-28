@@ -2,7 +2,7 @@
 #include "range-diff.h"
 #include "string-list.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "hashmap.h"
 #include "xdiff-interface.h"
 #include "linear-assignment.h"

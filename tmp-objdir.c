@@ -4,7 +4,7 @@
 #include "sigchain.h"
 #include "string-list.h"
 #include "strbuf.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "quote.h"
 #include "object-store.h"
 

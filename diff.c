@@ -20,7 +20,7 @@
 #include "hashmap.h"
 #include "ll-merge.h"
 #include "string-list.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "graph.h"
 #include "packfile.h"
 #include "parse-options.h"

@@ -9,7 +9,7 @@
 #include "run-command.h"
 #include "string-list.h"
 #include "url.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "packfile.h"
 #include "object-store.h"
 #include "protocol.h"

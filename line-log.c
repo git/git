@@ -14,7 +14,7 @@
 #include "graph.h"
 #include "userdiff.h"
 #include "line-log.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "bloom.h"
 
 static void range_set_grow(struct range_set *rs, size_t extra)

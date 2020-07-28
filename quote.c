@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "quote.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 int quote_path_fully = 1;
 

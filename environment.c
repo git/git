@@ -14,7 +14,7 @@
 #include "refs.h"
 #include "fmt-merge-msg.h"
 #include "commit.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "object-store.h"
 #include "chdir-notify.h"
 #include "shallow.h"
