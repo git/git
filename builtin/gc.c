@@ -514,11 +514,11 @@ static void gc_before_repack(void)
 	if (done++)
 		return;
 
-	if (pack_refs && run_command_v_opt(pack_refs_cmd.argv, RUN_GIT_CMD))
-		die(FAILED_RUN, pack_refs_cmd.argv[0]);
+	if (pack_refs && run_command_v_opt(pack_refs_cmd.items, RUN_GIT_CMD))
+		die(FAILED_RUN, pack_refs_cmd.items[0]);
 
-	if (prune_reflogs && run_command_v_opt(reflog.argv, RUN_GIT_CMD))
-		die(FAILED_RUN, reflog.argv[0]);
+	if (prune_reflogs && run_command_v_opt(reflog.items, RUN_GIT_CMD))
+		die(FAILED_RUN, reflog.items[0]);
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
@@ -653,8 +653,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (!repository_format_precious_objects) {
 		close_object_store(the_repository->objects);
-		if (run_command_v_opt(repack.argv, RUN_GIT_CMD))
-			die(FAILED_RUN, repack.argv[0]);
+		if (run_command_v_opt(repack.items, RUN_GIT_CMD))
+			die(FAILED_RUN, repack.items[0]);
 
 		if (prune_expire) {
 			strvec_push(&prune, prune_expire);
@@ -663,19 +663,19 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			if (has_promisor_remote())
 				strvec_push(&prune,
 					    "--exclude-promisor-objects");
-			if (run_command_v_opt(prune.argv, RUN_GIT_CMD))
-				die(FAILED_RUN, prune.argv[0]);
+			if (run_command_v_opt(prune.items, RUN_GIT_CMD))
+				die(FAILED_RUN, prune.items[0]);
 		}
 	}
 
 	if (prune_worktrees_expire) {
 		strvec_push(&prune_worktrees, prune_worktrees_expire);
-		if (run_command_v_opt(prune_worktrees.argv, RUN_GIT_CMD))
-			die(FAILED_RUN, prune_worktrees.argv[0]);
+		if (run_command_v_opt(prune_worktrees.items, RUN_GIT_CMD))
+			die(FAILED_RUN, prune_worktrees.items[0]);
 	}
 
-	if (run_command_v_opt(rerere.argv, RUN_GIT_CMD))
-		die(FAILED_RUN, rerere.argv[0]);
+	if (run_command_v_opt(rerere.items, RUN_GIT_CMD))
+		die(FAILED_RUN, rerere.items[0]);
 
 	report_garbage = report_pack_garbage;
 	reprepare_packed_git(the_repository);
