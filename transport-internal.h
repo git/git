@@ -3,7 +3,7 @@
 
 struct ref;
 struct transport;
-struct argv_array;
+struct strvec;
 
 struct transport_vtable {
 	/**
