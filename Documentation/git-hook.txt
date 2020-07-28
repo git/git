@@ -8,7 +8,7 @@ git-hook - Manage configured hooks
 SYNOPSIS
 --------
 [verse]
-'git hook' list <hook-name>
+'git hook' list [--porcelain] <hook-name>
 
 DESCRIPTION
 -----------
@@ -43,11 +43,20 @@ Local config
 COMMANDS
 --------
 
-list <hook-name>::
+list [--porcelain] <hook-name>::
 
 List the hooks which have been configured for <hook-name>. Hooks appear
 in the order they should be run, and note the config scope where the relevant
 `hook.<hook-name>.command` was specified, not the `hookcmd` (if applicable).
++
+If `--porcelain` is specified, instead print the commands alone, separated by
+newlines, for easy parsing by a script.
+
+OPTIONS
+-------
+--porcelain::
+	With `list`, print the commands in the order they should be run,
+	separated by newlines, for easy parsing by a script.
 
 GIT
 ---
