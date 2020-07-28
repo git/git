@@ -72,9 +72,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	FREE_AND_NULL(midx_name);
 
 	midx_map = xmmap(NULL, midx_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
 
 	FLEX_ALLOC_STR(m, object_dir, object_dir);
-	m->fd = fd;
 	m->data = midx_map;
 	m->data_len = midx_size;
 	m->local = local;
@@ -190,8 +190,6 @@ void close_midx(struct multi_pack_index *m)
 		return;
 
 	munmap((unsigned char *)m->data, m->data_len);
-	close(m->fd);
-	m->fd = -1;
 
 	for (i = 0; i < m->num_packs; i++) {
 		if (m->packs[i])
@@ -923,6 +921,12 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	cur_chunk = 0;
 	num_chunks = large_offsets_needed ? 5 : 4;
 
+	if (packs.nr - dropped_packs == 0) {
+		error(_("no pack files to index."));
+		result = 1;
+		goto cleanup;
+	}
+
 	written = write_midx_header(f, num_chunks, packs.nr - dropped_packs);
 
 	chunk_ids[cur_chunk] = MIDX_CHUNKID_PACKNAMES;
@@ -1124,6 +1128,15 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 				    i, oid_fanout1, oid_fanout2, i + 1);
 	}
 
+	if (m->num_objects == 0) {
+		midx_report(_("the midx contains no oid"));
+		/*
+		 * Remaining tests assume that we have objects, so we can
+		 * return here.
+		 */
+		return verify_midx_error;
+	}
+
 	if (flags & MIDX_PROGRESS)
 		progress = start_sparse_progress(_("Verifying OID order in multi-pack-index"),
 						 m->num_objects - 1);
@@ -1280,15 +1293,26 @@ static int compare_by_mtime(const void *a_, const void *b_)
 	return 0;
 }
 
-static int fill_included_packs_all(struct multi_pack_index *m,
+static int fill_included_packs_all(struct repository *r,
+				   struct multi_pack_index *m,
 				   unsigned char *include_pack)
 {
-	uint32_t i;
+	uint32_t i, count = 0;
+	int pack_kept_objects = 0;
 
-	for (i = 0; i < m->num_packs; i++)
+	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
+
+	for (i = 0; i < m->num_packs; i++) {
+		if (prepare_midx_pack(r, m, i))
+			continue;
+		if (!pack_kept_objects && m->packs[i]->pack_keep)
+			continue;
+
 		include_pack[i] = 1;
+		count++;
+	}
 
-	return m->num_packs < 2;
+	return count < 2;
 }
 
 static int fill_included_packs_batch(struct repository *r,
@@ -1299,6 +1323,9 @@ static int fill_included_packs_batch(struct repository *r,
 	uint32_t i, packs_to_repack;
 	size_t total_size;
 	struct repack_info *pack_info = xcalloc(m->num_packs, sizeof(struct repack_info));
+	int pack_kept_objects = 0;
+
+	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
 	for (i = 0; i < m->num_packs; i++) {
 		pack_info[i].pack_int_id = i;
@@ -1324,6 +1351,8 @@ static int fill_included_packs_batch(struct repository *r,
 		size_t expected_size;
 
 		if (!p)
+			continue;
+		if (!pack_kept_objects && p->pack_keep)
 			continue;
 		if (open_pack_index(p) || !p->num_objects)
 			continue;
@@ -1357,6 +1386,14 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	struct strbuf base_name = STRBUF_INIT;
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
 
+	/*
+	 * When updating the default for these configuration
+	 * variables in builtin/repack.c, these must be adjusted
+	 * to match.
+	 */
+	int delta_base_offset = 1;
+	int use_delta_islands = 0;
+
 	if (!m)
 		return 0;
 
@@ -1365,14 +1402,22 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	if (batch_size) {
 		if (fill_included_packs_batch(r, m, include_pack, batch_size))
 			goto cleanup;
-	} else if (fill_included_packs_all(m, include_pack))
+	} else if (fill_included_packs_all(r, m, include_pack))
 		goto cleanup;
+
+	repo_config_get_bool(r, "repack.usedeltabaseoffset", &delta_base_offset);
+	repo_config_get_bool(r, "repack.usedeltaislands", &use_delta_islands);
 
 	argv_array_push(&cmd.args, "pack-objects");
 
 	strbuf_addstr(&base_name, object_dir);
 	strbuf_addstr(&base_name, "/pack/pack");
 	argv_array_push(&cmd.args, base_name.buf);
+
+	if (delta_base_offset)
+		argv_array_push(&cmd.args, "--delta-base-offset");
+	if (use_delta_islands)
+		argv_array_push(&cmd.args, "--delta-islands");
 
 	if (flags & MIDX_PROGRESS)
 		argv_array_push(&cmd.args, "--progress");

@@ -148,7 +148,7 @@ a space) at the start of each line:
 	top directory.
 
 --recurse-submodules::
-	Recursively calls ls-files on each submodule in the repository.
+	Recursively calls ls-files on each active submodule in the repository.
 	Currently there is only support for the --cached mode.
 
 --abbrev[=<n>]::

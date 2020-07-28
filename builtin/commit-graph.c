@@ -9,11 +9,17 @@
 
 static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
+<<<<<<< HEAD
 	N_("git commit-graph write [--object-dir <objdir>] "
 	   "[--split[=<strategy>]] "
 	   "[--input=<reachable|stdin-packs|stdin-commits|append|none>] "
 	   "[--changed-paths] "
 	   "[--[no-]progress] <split options>"),
+=======
+	N_("git commit-graph write [--object-dir <objdir>] [--append] "
+	   "[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] "
+	   "[--changed-paths] [--[no-]progress] <split options>"),
+>>>>>>> upstream/maint
 	NULL
 };
 
@@ -23,11 +29,17 @@ static const char * const builtin_commit_graph_verify_usage[] = {
 };
 
 static const char * const builtin_commit_graph_write_usage[] = {
+<<<<<<< HEAD
 	N_("git commit-graph write [--object-dir <objdir>] "
 	   "[--split[=<strategy>]] "
 	   "[--input=<reachable|stdin-packs|stdin-commits|append|none>] "
 	   "[--changed-paths] "
 	   "[--[no-]progress] <split options>"),
+=======
+	N_("git commit-graph write [--object-dir <objdir>] [--append] "
+	   "[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] "
+	   "[--changed-paths] [--[no-]progress] <split options>"),
+>>>>>>> upstream/maint
 	NULL
 };
 
@@ -158,6 +170,7 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 	enum commit_graph_split_flags *flags = opt->value;
 
 	opts.split = 1;
+<<<<<<< HEAD
 	if (!arg) {
 		*flags = COMMIT_GRAPH_SPLIT_MERGE_AUTO;
 		return 0;
@@ -167,6 +180,15 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 		*flags = COMMIT_GRAPH_SPLIT_MERGE_REQUIRED;
 	else if (!strcmp(arg, "no-merge"))
 		*flags = COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED;
+=======
+	if (!arg)
+		return 0;
+
+	if (!strcmp(arg, "no-merge"))
+		*flags = COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED;
+	else if (!strcmp(arg, "replace"))
+		*flags = COMMIT_GRAPH_SPLIT_REPLACE;
+>>>>>>> upstream/maint
 	else
 		die(_("unrecognized --split argument, %s"), arg);
 
@@ -176,7 +198,7 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 static int graph_write(int argc, const char **argv)
 {
 	struct string_list *pack_indexes = NULL;
-	struct string_list *commit_hex = NULL;
+	struct oidset commits = OIDSET_INIT;
 	struct object_directory *odb = NULL;
 	struct string_list lines;
 	int result = 0;
@@ -186,6 +208,7 @@ static int graph_write(int argc, const char **argv)
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
 			N_("dir"),
 			N_("The object directory to store the graph")),
+<<<<<<< HEAD
 		OPT_CALLBACK(0, "input", &opts.input, NULL,
 			N_("include commits from this source in the graph"),
 			option_parse_input),
@@ -201,6 +224,16 @@ static int graph_write(int argc, const char **argv)
 		OPT_BIT(0, "append", &opts.input,
 			N_("include all commits already in the commit-graph file"),
 			COMMIT_GRAPH_INPUT_APPEND),
+=======
+		OPT_BOOL(0, "reachable", &opts.reachable,
+			N_("start walk at all refs")),
+		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
+			N_("scan pack-indexes listed by stdin for commits")),
+		OPT_BOOL(0, "stdin-commits", &opts.stdin_commits,
+			N_("start walk at commits listed by stdin")),
+		OPT_BOOL(0, "append", &opts.append,
+			N_("include all commits already in the commit-graph file")),
+>>>>>>> upstream/maint
 		OPT_BOOL(0, "changed-paths", &opts.enable_changed_paths,
 			N_("enable computation for changed paths")),
 		OPT_BOOL(0, "progress", &opts.progress, N_("force progress reporting")),
@@ -213,7 +246,7 @@ static int graph_write(int argc, const char **argv)
 		OPT_INTEGER(0, "size-multiple", &split_opts.size_multiple,
 			N_("maximum ratio between two levels of a split commit-graph")),
 		OPT_EXPIRY_DATE(0, "expire-time", &split_opts.expire_time,
-			N_("maximum number of commits in a non-base split commit-graph")),
+			N_("only expire files older than a given date-time")),
 		OPT_END(),
 	};
 
@@ -264,8 +297,26 @@ static int graph_write(int argc, const char **argv)
 
 		if (opts.input & COMMIT_GRAPH_INPUT_STDIN_PACKS)
 			pack_indexes = &lines;
+<<<<<<< HEAD
 		if (opts.input & COMMIT_GRAPH_INPUT_STDIN_COMMITS) {
 			commit_hex = &lines;
+=======
+		if (opts.stdin_commits) {
+			struct string_list_item *item;
+			oidset_init(&commits, lines.nr);
+			for_each_string_list_item(item, &lines) {
+				struct object_id oid;
+				const char *end;
+
+				if (parse_oid_hex(item->string, &oid, &end)) {
+					error(_("unexpected non-hex object ID: "
+						"%s"), item->string);
+					return 1;
+				}
+
+				oidset_insert(&commits, &oid);
+			}
+>>>>>>> upstream/maint
 			flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
 		}
 
@@ -274,7 +325,7 @@ static int graph_write(int argc, const char **argv)
 
 	if (write_commit_graph(odb,
 			       pack_indexes,
-			       commit_hex,
+			       opts.stdin_commits ? &commits : NULL,
 			       flags,
 			       &split_opts))
 		result = 1;

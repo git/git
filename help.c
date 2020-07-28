@@ -642,9 +642,12 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 		strbuf_addf(buf, "sizeof-long: %d\n", (int)sizeof(long));
 		strbuf_addf(buf, "sizeof-size_t: %d\n", (int)sizeof(size_t));
 <<<<<<< HEAD
+<<<<<<< HEAD
 		strbuf_addf(buf, "shell-path: %s\n", SHELL_PATH);
 =======
 >>>>>>> upstream/pu
+=======
+>>>>>>> upstream/maint
 		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
 	}
 }

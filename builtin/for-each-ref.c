@@ -70,7 +70,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	if (!sorting)
 		sorting = ref_default_sorting();
-	sorting->ignore_case = icase;
+	ref_sorting_icase_all(sorting, icase);
 	filter.ignore_case = icase;
 
 	filter.name_patterns = argv;

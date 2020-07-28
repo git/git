@@ -183,6 +183,19 @@ void trace2_cmd_list_config_fl(const char *file, int line);
 #define trace2_cmd_list_config() trace2_cmd_list_config_fl(__FILE__, __LINE__)
 
 /*
+ * Emit one or more 'def_param' events for "important" environment variables.
+ *
+ * Use the TR2_SYSENV_ENV_VARS setting to register a comma-separated list of
+ * environment variables considered important.  For example:
+ *     git config --system trace2.envVars 'GIT_HTTP_USER_AGENT,GIT_CONFIG'
+ * or:
+ *     GIT_TRACE2_ENV_VARS="GIT_HTTP_USER_AGENT,GIT_CONFIG"
+ */
+void trace2_cmd_list_env_vars_fl(const char *file, int line);
+
+#define trace2_cmd_list_env_vars() trace2_cmd_list_env_vars_fl(__FILE__, __LINE__)
+
+/*
  * Emit a "def_param" event for the given config key/value pair IF
  * we consider the key to be "important".
  *

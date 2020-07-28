@@ -37,6 +37,10 @@ graph_read_expect() {
 	test_cmp expect output
 }
 
+test_expect_success POSIXPERM 'tweak umask for modebit tests' '
+	umask 022
+'
+
 test_expect_success 'create commits and write commit-graph' '
 	for i in $(test_seq 3)
 	do
@@ -211,8 +215,14 @@ test_expect_success 'test merge stragety constants' '
 		git config core.commitGraph true &&
 		test_line_count = 2 $graphdir/commit-graph-chain &&
 		test_commit 15 &&
-		git commit-graph write --reachable --split --size-multiple=10 --expire-time=1980-01-01 &&
+		touch $graphdir/to-delete.graph $graphdir/to-keep.graph &&
+		test-tool chmtime =1546362000 $graphdir/to-delete.graph &&
+		test-tool chmtime =1546362001 $graphdir/to-keep.graph &&
+		git commit-graph write --reachable --split --size-multiple=10 \
+			--expire-time="2019-01-01 12:00 -05:00" &&
 		test_line_count = 1 $graphdir/commit-graph-chain &&
+		test_path_is_missing $graphdir/to-delete.graph &&
+		test_path_is_file $graphdir/to-keep.graph &&
 		ls $graphdir/graph-*.graph >graph-files &&
 		test_line_count = 3 graph-files
 	) &&
@@ -352,6 +362,7 @@ test_expect_success 'split across alternate where alternate is not split' '
 	test_cmp commit-graph .git/objects/info/commit-graph
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success '--split=merge-all always merges incrementals' '
 	test_when_finished rm -rf a b c &&
 	rm -rf $graphdir $infodir/commit-graph &&
@@ -369,6 +380,11 @@ test_expect_success '--split=merge-all always merges incrementals' '
 test_expect_success '--split=no-merge always writes an incremental' '
 	test_when_finished rm -rf a b &&
 	rm -rf $graphdir &&
+================================
+test_expect_success '--split=no-merge always writes an incremental' '
+	test_when_finished rm -rf a b &&
+	rm -rf $graphdir $infodir/commit-graph &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	git reset --hard commits/2 &&
 	git rev-list HEAD~1 >a &&
 	git rev-list HEAD >b &&
@@ -377,6 +393,7 @@ test_expect_success '--split=no-merge always writes an incremental' '
 	test_line_count = 2 $graphdir/commit-graph-chain
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success '--split=no-merge, --input=none writes nothing' '
 	test_when_finished rm -rf a graphs.before graphs.after &&
 	rm -rf $graphdir &&
@@ -403,4 +420,58 @@ test_expect_success '--split=merge-all, --input=none merges the chain' '
 	test_line_count = 1 $graphdir/commit-graph-chain
 '
 
+================================
+test_expect_success '--split=replace replaces the chain' '
+	rm -rf $graphdir $infodir/commit-graph &&
+	git reset --hard commits/3 &&
+	git rev-list -1 HEAD~2 >a &&
+	git rev-list -1 HEAD~1 >b &&
+	git rev-list -1 HEAD >c &&
+	git commit-graph write --split=no-merge --stdin-commits <a &&
+	git commit-graph write --split=no-merge --stdin-commits <b &&
+	git commit-graph write --split=no-merge --stdin-commits <c &&
+	test_line_count = 3 $graphdir/commit-graph-chain &&
+	git commit-graph write --stdin-commits --split=replace <b &&
+	test_path_is_missing $infodir/commit-graph &&
+	test_path_is_file $graphdir/commit-graph-chain &&
+	ls $graphdir/graph-*.graph >graph-files &&
+	test_line_count = 1 graph-files &&
+	verify_chain_files_exist $graphdir &&
+	graph_read_expect 2
+'
+
+test_expect_success ULIMIT_FILE_DESCRIPTORS 'handles file descriptor exhaustion' '
+	git init ulimit &&
+	(
+		cd ulimit &&
+		for i in $(test_seq 64)
+		do
+			test_commit $i &&
+			test_might_fail run_with_limited_open_files git commit-graph write \
+				--split=no-merge --reachable || return 1
+		done
+	)
+'
+
+while read mode modebits
+do
+	test_expect_success POSIXPERM "split commit-graph respects core.sharedrepository $mode" '
+		rm -rf $graphdir $infodir/commit-graph &&
+		git reset --hard commits/1 &&
+		test_config core.sharedrepository "$mode" &&
+		git commit-graph write --split --reachable &&
+		ls $graphdir/graph-*.graph >graph-files &&
+		test_line_count = 1 graph-files &&
+		echo "$modebits" >expect &&
+		test_modebits $graphdir/graph-*.graph >actual &&
+		test_cmp expect actual &&
+		test_modebits $graphdir/commit-graph-chain >actual &&
+		test_cmp expect actual
+	'
+done <<\EOF
+0666 -r--r--r--
+0600 -r--------
+EOF
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 test_done

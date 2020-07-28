@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "parse-options.h"
+<<<<<<< HEAD
 #include "stdio.h"
 #include "strbuf.h"
 #include "time.h"
@@ -25,10 +26,18 @@ static void get_git_remote_https_version_info(struct strbuf *version_info)
 }
 =======
 >>>>>>> upstream/pu
+=======
+#include "strbuf.h"
+#include "help.h"
+#include "compat/compiler.h"
+#include "run-command.h"
+
+>>>>>>> upstream/maint
 
 static void get_system_info(struct strbuf *sys_info)
 {
 	struct utsname uname_info;
+<<<<<<< HEAD
 <<<<<<< HEAD
 	char *shell = NULL;
 
@@ -42,6 +51,8 @@ static void get_system_info(struct strbuf *sys_info)
 	if (uname(&uname_info))
 		strbuf_addf(sys_info, "uname() failed with code %d\n", errno);
 =======
+=======
+>>>>>>> upstream/maint
 
 	/* get git version from native cmd */
 	strbuf_addstr(sys_info, _("git version:\n"));
@@ -53,7 +64,10 @@ static void get_system_info(struct strbuf *sys_info)
 		strbuf_addf(sys_info, _("uname() failed with error '%s' (%d)\n"),
 			    strerror(errno),
 			    errno);
+<<<<<<< HEAD
 >>>>>>> upstream/pu
+=======
+>>>>>>> upstream/maint
 	else
 		strbuf_addf(sys_info, "%s %s %s %s\n",
 			    uname_info.sysname,
@@ -61,6 +75,7 @@ static void get_system_info(struct strbuf *sys_info)
 			    uname_info.version,
 			    uname_info.machine);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	strbuf_addstr(sys_info, "compiler info: ");
 	get_compiler_info(sys_info);
@@ -96,11 +111,18 @@ static void get_safelisted_config(struct strbuf *config_info)
 					    : "source unknown");
 		}
 	}
+=======
+	strbuf_addstr(sys_info, _("compiler info: "));
+	get_compiler_info(sys_info);
+	strbuf_addstr(sys_info, _("libc info: "));
+	get_libc_info(sys_info);
+>>>>>>> upstream/maint
 }
 
 static void get_populated_hooks(struct strbuf *hook_info, int nongit)
 {
 	/*
+<<<<<<< HEAD
 	 * Doesn't look like there is a list of all possible hooks; so below is
 	 * a transcription of `git help hooks`.
 	 */
@@ -319,6 +341,50 @@ static void get_alternates_summary(struct strbuf *alternates_info, int nongit)
 	strbuf_addstr(sys_info, _("libc info: "));
 	get_libc_info(sys_info);
 >>>>>>> upstream/pu
+=======
+	 * NEEDSWORK: Doesn't look like there is a list of all possible hooks;
+	 * so below is a transcription of `git help hooks`. Later, this should
+	 * be replaced with some programmatically generated list (generated from
+	 * doc or else taken from some library which tells us about all the
+	 * hooks)
+	 */
+	static const char *hook[] = {
+		"applypatch-msg",
+		"pre-applypatch",
+		"post-applypatch",
+		"pre-commit",
+		"pre-merge-commit",
+		"prepare-commit-msg",
+		"commit-msg",
+		"post-commit",
+		"pre-rebase",
+		"post-checkout",
+		"post-merge",
+		"pre-push",
+		"pre-receive",
+		"update",
+		"post-receive",
+		"post-update",
+		"push-to-checkout",
+		"pre-auto-gc",
+		"post-rewrite",
+		"sendemail-validate",
+		"fsmonitor-watchman",
+		"p4-pre-submit",
+		"post-index-change",
+	};
+	int i;
+
+	if (nongit) {
+		strbuf_addstr(hook_info,
+			_("not run from a git repository - no hooks to show\n"));
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(hook); i++)
+		if (find_hook(hook[i]))
+			strbuf_addf(hook_info, "%s\n", hook[i]);
+>>>>>>> upstream/maint
 }
 
 static const char * const bugreport_usage[] = {
@@ -346,10 +412,14 @@ static int get_bug_template(struct strbuf *template)
 "You can delete any lines you don't wish to share.\n");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	strbuf_addstr(template, template_text);
 =======
 	strbuf_addstr(template, _(template_text));
 >>>>>>> upstream/pu
+=======
+	strbuf_addstr(template, _(template_text));
+>>>>>>> upstream/maint
 	return 0;
 }
 
@@ -362,6 +432,7 @@ int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf report_path = STRBUF_INIT;
+<<<<<<< HEAD
 <<<<<<< HEAD
 	FILE *report;
 	time_t now = time(NULL);
@@ -378,6 +449,15 @@ int cmd_main(int argc, const char **argv)
 	const char *prefix = NULL;
 	const char *user_relative_path = NULL;
 >>>>>>> upstream/pu
+=======
+	int report = -1;
+	time_t now = time(NULL);
+	char *option_output = NULL;
+	char *option_suffix = "%Y-%m-%d-%H%M";
+	int nongit_ok = 0;
+	const char *prefix = NULL;
+	const char *user_relative_path = NULL;
+>>>>>>> upstream/maint
 
 	const struct option bugreport_options[] = {
 		OPT_STRING('o', "output-directory", &option_output, N_("path"),
@@ -387,6 +467,7 @@ int cmd_main(int argc, const char **argv)
 		OPT_END()
 	};
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	/* Prerequisite for hooks and config checks */
 	setup_git_directory_gently(&nongit_ok);
@@ -400,6 +481,8 @@ int cmd_main(int argc, const char **argv)
 	}
 
 =======
+=======
+>>>>>>> upstream/maint
 	prefix = setup_git_directory_gently(&nongit_ok);
 
 	argc = parse_options(argc, argv, prefix, bugreport_options,
@@ -410,12 +493,16 @@ int cmd_main(int argc, const char **argv)
 		      prefix_filename(prefix,
 				      option_output ? option_output : ""));
 	strbuf_complete(&report_path, '/');
+<<<<<<< HEAD
 >>>>>>> upstream/pu
+=======
+>>>>>>> upstream/maint
 
 	strbuf_addstr(&report_path, "git-bugreport-");
 	strbuf_addftime(&report_path, option_suffix, localtime(&now), 0, 0);
 	strbuf_addstr(&report_path, ".txt");
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	if (!stat(report_path.buf, &statbuf))
 		die("'%s' already exists", report_path.buf);
@@ -459,6 +546,8 @@ int cmd_main(int argc, const char **argv)
 	UNLEAK(report_path);
 	return -launch_editor(report_path.buf, NULL, NULL);
 =======
+=======
+>>>>>>> upstream/maint
 	switch (safe_create_leading_directories(report_path.buf)) {
 	case SCLD_OK:
 	case SCLD_EXISTS:
@@ -474,6 +563,12 @@ int cmd_main(int argc, const char **argv)
 	get_header(&buffer, _("System Info"));
 	get_system_info(&buffer);
 
+<<<<<<< HEAD
+=======
+	get_header(&buffer, _("Enabled Hooks"));
+	get_populated_hooks(&buffer, nongit_ok);
+
+>>>>>>> upstream/maint
 	/* fopen doesn't offer us an O_EXCL alternative, except with glibc. */
 	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY, 0666);
 
@@ -497,5 +592,8 @@ int cmd_main(int argc, const char **argv)
 	UNLEAK(buffer);
 	UNLEAK(report_path);
 	return !!launch_editor(report_path.buf, NULL, NULL);
+<<<<<<< HEAD
 >>>>>>> upstream/pu
+=======
+>>>>>>> upstream/maint
 }

@@ -12,7 +12,7 @@
 #include "parse-options.h"
 #include "exec-cmd.h"
 #include "run-command.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "remote.h"
 #include "dir.h"
 #include "rebase.h"
@@ -110,6 +110,7 @@ static char *opt_ipv4;
 static char *opt_ipv6;
 static int opt_show_forced_updates = -1;
 static char *set_upstream;
+static struct argv_array opt_fetch = ARGV_ARRAY_INIT;
 
 static struct option pull_options[] = {
 	/* Shared options */
@@ -117,17 +118,17 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "progress", &opt_progress, NULL,
 		N_("force progress reporting"),
 		PARSE_OPT_NOARG),
-	{ OPTION_CALLBACK, 0, "recurse-submodules",
+	OPT_CALLBACK_F(0, "recurse-submodules",
 		   &recurse_submodules, N_("on-demand"),
 		   N_("control for recursive fetching of submodules"),
-		   PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules },
+		   PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules),
 
 	/* Options passed to git-merge or git-rebase */
 	OPT_GROUP(N_("Options related to merging")),
-	{ OPTION_CALLBACK, 'r', "rebase", &opt_rebase,
+	OPT_CALLBACK_F('r', "rebase", &opt_rebase,
 	  "(false|true|merges|preserve|interactive)",
 	  N_("incorporate changes by rebasing rather than merging"),
-	  PARSE_OPT_OPTARG, parse_opt_rebase },
+	  PARSE_OPT_OPTARG, parse_opt_rebase),
 	OPT_PASSTHRU('n', NULL, &opt_diffstat, NULL,
 		N_("do not show a diffstat at the end of the merge"),
 		PARSE_OPT_NOARG | PARSE_OPT_NONEG),
@@ -207,6 +208,15 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "depth", &opt_depth, N_("depth"),
 		N_("deepen history of shallow clone"),
 		0),
+	OPT_PASSTHRU_ARGV(0, "shallow-since", &opt_fetch, N_("time"),
+		N_("deepen history of shallow repository based on time"),
+		0),
+	OPT_PASSTHRU_ARGV(0, "shallow-exclude", &opt_fetch, N_("revision"),
+		N_("deepen history of shallow clone, excluding rev"),
+		0),
+	OPT_PASSTHRU_ARGV(0, "deepen", &opt_fetch, N_("n"),
+		N_("deepen history of shallow clone"),
+		0),
 	OPT_PASSTHRU(0, "unshallow", &opt_unshallow, NULL,
 		N_("convert to a complete repository"),
 		PARSE_OPT_NONEG | PARSE_OPT_NOARG),
@@ -216,12 +226,19 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "refmap", &opt_refmap, N_("refmap"),
 		N_("specify fetch refmap"),
 		PARSE_OPT_NONEG),
+	OPT_PASSTHRU_ARGV('o', "server-option", &opt_fetch,
+		N_("server-specific"),
+		N_("option to transmit"),
+		0),
 	OPT_PASSTHRU('4',  "ipv4", &opt_ipv4, NULL,
 		N_("use IPv4 addresses only"),
 		PARSE_OPT_NOARG),
 	OPT_PASSTHRU('6',  "ipv6", &opt_ipv6, NULL,
 		N_("use IPv6 addresses only"),
 		PARSE_OPT_NOARG),
+	OPT_PASSTHRU_ARGV(0, "negotiation-tip", &opt_fetch, N_("revision"),
+		N_("report that we have only objects reachable from this object"),
+		0),
 	OPT_BOOL(0, "show-forced-updates", &opt_show_forced_updates,
 		 N_("check for forced-updates on all updated branches")),
 	OPT_PASSTHRU(0, "set-upstream", &set_upstream, NULL,
@@ -567,6 +584,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 		argv_array_push(&args, "--no-show-forced-updates");
 	if (set_upstream)
 		argv_array_push(&args, set_upstream);
+	argv_array_pushv(&args, opt_fetch.argv);
 
 	if (repo) {
 		argv_array_push(&args, repo);
@@ -993,6 +1011,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	if (opt_rebase) {
 		int ret = 0;
+		int ran_ff = 0;
 		if ((recurse_submodules == RECURSE_SUBMODULES_ON ||
 		     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND) &&
 		    submodule_touches_in_range(the_repository, &rebase_fork_point, &curr_head))
@@ -1009,10 +1028,12 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			if (is_descendant_of(merge_head, list)) {
 				/* we can fast-forward this without invoking rebase */
 				opt_ff = "--ff-only";
+				ran_ff = 1;
 				ret = run_merge();
 			}
 		}
-		ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
+		if (!ran_ff)
+			ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
 
 		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
 			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))

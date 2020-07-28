@@ -184,6 +184,26 @@ testrebase () {
 		git checkout feature-branch
 	'
 
+	test_expect_success "rebase$type: --quit" '
+		test_config rebase.autostash true &&
+		git reset --hard &&
+		git checkout -b rebased-feature-branch feature-branch &&
+		test_when_finished git branch -D rebased-feature-branch &&
+		echo dirty >>file3 &&
+		git diff >expect &&
+		test_must_fail git rebase$type related-onto-branch &&
+		test_path_is_file $dotest/autostash &&
+		test_path_is_missing file3 &&
+		git rebase --quit &&
+		test_when_finished git stash drop &&
+		test_path_is_missing $dotest/autostash &&
+		! grep dirty file3 &&
+		git stash show -p >actual &&
+		test_cmp expect actual &&
+		git reset --hard &&
+		git checkout feature-branch
+	'
+
 	test_expect_success "rebase$type: non-conflicting rebase, conflicting stash" '
 		test_config rebase.autostash true &&
 		git reset --hard &&

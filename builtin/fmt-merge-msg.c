@@ -1,24 +1,14 @@
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
-#include "refs.h"
-#include "object-store.h"
-#include "commit.h"
-#include "diff.h"
-#include "revision.h"
-#include "tag.h"
-#include "string-list.h"
-#include "branch.h"
 #include "fmt-merge-msg.h"
-#include "gpg-interface.h"
-#include "repository.h"
-#include "commit-reach.h"
+#include "parse-options.h"
 
 static const char * const fmt_merge_msg_usage[] = {
 	N_("git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"),
 	NULL
 };
 
+<<<<<<< HEAD
 static int use_branch_desc;
 
 int fmt_merge_msg_config(const char *key, const char *value, void *cb)
@@ -664,6 +654,8 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 	return 0;
 }
 
+=======
+>>>>>>> upstream/maint
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 {
 	const char *inpath = NULL;

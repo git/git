@@ -53,4 +53,25 @@ test_expect_success 'blob:limit filter with specified blob' '
 	test_bitmap_traversal expect actual
 '
 
+test_expect_success 'tree:0 filter' '
+	git rev-list --objects --filter=tree:0 HEAD >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=tree:0 HEAD >actual &&
+	test_bitmap_traversal expect actual
+'
+
+test_expect_success 'tree:0 filter with specified blob, tree' '
+	git rev-list --objects --filter=tree:0 HEAD HEAD:two.t >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=tree:0 HEAD HEAD:two.t >actual &&
+	test_bitmap_traversal expect actual
+'
+
+test_expect_success 'tree:1 filter' '
+	git rev-list --objects --filter=tree:1 HEAD >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=tree:1 HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done

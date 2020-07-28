@@ -486,7 +486,7 @@ test_expect_success 'NUL in property value' '
 	{
 		properties \
 			unimportant "something with a NUL (Q)" \
-			svn:log "commit message"&&
+			svn:log "commit message" &&
 		echo PROPS-END
 	} |
 	q_to_nul >props &&

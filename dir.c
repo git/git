@@ -1760,7 +1760,13 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 *          you CAN'T DO BOTH.
 	 */
 	enum path_treatment state;
+<<<<<<< HEAD
 	int nested_repo = 0, old_ignored_nr, stop_early;
+=======
+	int matches_how = 0;
+	int nested_repo = 0, check_only, stop_early;
+	int old_ignored_nr, old_untracked_nr;
+>>>>>>> upstream/maint
 	/* The "len-1" is to strip the final '/' */
 	enum exist_status status = directory_exists_in_index(istate, dirname, len-1);
 
@@ -1771,6 +1777,25 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	if (status != index_nonexistent)
 		BUG("Unhandled value for directory_exists_in_index: %d\n", status);
 
+<<<<<<< HEAD
+=======
+	/*
+	 * We don't want to descend into paths that don't match the necessary
+	 * patterns.  Clearly, if we don't have a pathspec, then we can't check
+	 * for matching patterns.  Also, if (excluded) then we know we matched
+	 * the exclusion patterns so as an optimization we can skip checking
+	 * for matching patterns.
+	 */
+	if (pathspec && !excluded) {
+		matches_how = do_match_pathspec(istate, pathspec, dirname, len,
+						0 /* prefix */, NULL /* seen */,
+						DO_MATCH_LEADING_PATHSPEC);
+		if (!matches_how)
+			return path_none;
+	}
+
+
+>>>>>>> upstream/maint
 	if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
 		!(dir->flags & DIR_NO_GITLINKS)) {
 		struct strbuf sb = STRBUF_INIT;
@@ -1813,8 +1838,23 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	/* This is the "show_other_directories" case */
 
 	/*
+<<<<<<< HEAD
 	 * We only need to recurse into untracked/ignored directories if
 	 * either of the following bits is set:
+=======
+	 * If we have a pathspec which could match something _below_ this
+	 * directory (e.g. when checking 'subdir/' having a pathspec like
+	 * 'subdir/some/deep/path/file' or 'subdir/widget-*.c'), then we
+	 * need to recurse.
+	 */
+	if (matches_how == MATCHED_RECURSIVELY_LEADING_PATHSPEC)
+		return path_recurse;
+
+	/*
+	 * Other than the path_recurse case immediately above, we only need
+	 * to recurse into untracked/ignored directories if either of the
+	 * following bits is set:
+>>>>>>> upstream/maint
 	 *   - DIR_SHOW_IGNORED_TOO (because then we need to determine if
 	 *                           there are ignored directories below)
 	 *   - DIR_HIDE_EMPTY_DIRECTORIES (because we have to determine if
@@ -1824,6 +1864,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		return excluded ? path_excluded : path_untracked;
 
 	/*
+<<<<<<< HEAD
 	 * If we only want to determine if dirname is empty, then we can
 	 * stop at the first file we find underneath that directory rather
 	 * than continuing to recurse beyond it.  If DIR_SHOW_IGNORED_TOO
@@ -1834,19 +1875,68 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		      !(dir->flags & DIR_SHOW_IGNORED_TOO));
 
 	/*
+=======
+	 * ...and even if DIR_SHOW_IGNORED_TOO is set, we can still avoid
+	 * recursing into ignored directories if the path is excluded and
+	 * DIR_SHOW_IGNORED_TOO_MODE_MATCHING is also set.
+	 */
+	if (excluded &&
+	    (dir->flags & DIR_SHOW_IGNORED_TOO) &&
+	    (dir->flags & DIR_SHOW_IGNORED_TOO_MODE_MATCHING))
+		return path_excluded;
+
+	/*
+	 * If we have we don't want to know the all the paths under an
+	 * untracked or ignored directory, we still need to go into the
+	 * directory to determine if it is empty (because an empty directory
+	 * should be path_none instead of path_excluded or path_untracked).
+	 */
+	check_only = ((dir->flags & DIR_HIDE_EMPTY_DIRECTORIES) &&
+		      !(dir->flags & DIR_SHOW_IGNORED_TOO));
+
+	/*
+	 * However, there's another optimization possible as a subset of
+	 * check_only, based on the cases we have to consider:
+	 *   A) Directory matches no exclude patterns:
+	 *     * Directory is empty => path_none
+	 *     * Directory has an untracked file under it => path_untracked
+	 *     * Directory has only ignored files under it => path_excluded
+	 *   B) Directory matches an exclude pattern:
+	 *     * Directory is empty => path_none
+	 *     * Directory has an untracked file under it => path_excluded
+	 *     * Directory has only ignored files under it => path_excluded
+	 * In case A, we can exit as soon as we've found an untracked
+	 * file but otherwise have to walk all files.  In case B, though,
+	 * we can stop at the first file we find under the directory.
+	 */
+	stop_early = check_only && excluded;
+
+	/*
+>>>>>>> upstream/maint
 	 * If /every/ file within an untracked directory is ignored, then
 	 * we want to treat the directory as ignored (for e.g. status
 	 * --porcelain), without listing the individual ignored files
 	 * underneath.  To do so, we'll save the current ignored_nr, and
 	 * pop all the ones added after it if it turns out the entire
+<<<<<<< HEAD
 	 * directory is ignored.
 	 */
 	old_ignored_nr = dir->ignored_nr;
+=======
+	 * directory is ignored.  Also, when DIR_SHOW_IGNORED_TOO and
+	 * !DIR_KEEP_UNTRACKED_CONTENTS then we don't want to show
+	 * untracked paths so will need to pop all those off the last
+	 * after we traverse.
+	 */
+	old_ignored_nr = dir->ignored_nr;
+	old_untracked_nr = dir->nr;
+>>>>>>> upstream/maint
 
 	/* Actually recurse into dirname now, we'll fixup the state later. */
 	untracked = lookup_untracked(dir->untracked, untracked,
 				     dirname + baselen, len - baselen);
 	state = read_directory_recursive(dir, istate, dirname, len, untracked,
+<<<<<<< HEAD
 					 stop_early, stop_early, pathspec);
 
 	/* There are a variety of reasons we may need to fixup the state... */
@@ -1882,11 +1972,42 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 			 */
 			for (i = old_ignored_nr + 1; i<dir->ignored_nr; ++i)
 				free(dir->ignored[i]);
+=======
+					 check_only, stop_early, pathspec);
+
+	/* There are a variety of reasons we may need to fixup the state... */
+	if (state == path_excluded) {
+		/* state == path_excluded implies all paths under
+		 * dirname were ignored...
+		 *
+		 * if running e.g. `git status --porcelain --ignored=matching`,
+		 * then we want to see the subpaths that are ignored.
+		 *
+		 * if running e.g. just `git status --porcelain`, then
+		 * we just want the directory itself to be listed as ignored
+		 * and not the individual paths underneath.
+		 */
+		int want_ignored_subpaths =
+			((dir->flags & DIR_SHOW_IGNORED_TOO) &&
+			 (dir->flags & DIR_SHOW_IGNORED_TOO_MODE_MATCHING));
+
+		if (want_ignored_subpaths) {
+			/*
+			 * with --ignored=matching, we want the subpaths
+			 * INSTEAD of the directory itself.
+			 */
+			state = path_none;
+		} else {
+			int i;
+			for (i = old_ignored_nr + 1; i<dir->ignored_nr; ++i)
+				FREE_AND_NULL(dir->ignored[i]);
+>>>>>>> upstream/maint
 			dir->ignored_nr = old_ignored_nr;
 		}
 	}
 
 	/*
+<<<<<<< HEAD
 	 * If there is nothing under the current directory and we are not
 	 * hiding empty directories, then we need to report on the
 	 * untracked or ignored status of the directory itself.
@@ -1905,6 +2026,26 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 			    0 /* prefix */, NULL,
 			    0 /* do NOT special case dirs */))
 		state = path_none;
+=======
+	 * We may need to ignore some of the untracked paths we found while
+	 * traversing subdirectories.
+	 */
+	if ((dir->flags & DIR_SHOW_IGNORED_TOO) &&
+	    !(dir->flags & DIR_KEEP_UNTRACKED_CONTENTS)) {
+		int i;
+		for (i = old_untracked_nr + 1; i<dir->nr; ++i)
+			FREE_AND_NULL(dir->entries[i]);
+		dir->nr = old_untracked_nr;
+	}
+
+	/*
+	 * If there is nothing under the current directory and we are not
+	 * hiding empty directories, then we need to report on the
+	 * untracked or ignored status of the directory itself.
+	 */
+	if (state == path_none && !(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
+		state = excluded ? path_excluded : path_untracked;
+>>>>>>> upstream/maint
 
 	return state;
 }
@@ -2063,6 +2204,7 @@ static enum path_treatment treat_path_fast(struct dir_struct *dir,
 	if (!cdir->ucd) {
 		strbuf_addstr(path, cdir->file);
 		return path_untracked;
+<<<<<<< HEAD
 	}
 	strbuf_addstr(path, cdir->ucd->name);
 	/* treat_one_path() does this before it calls treat_directory() */
@@ -2172,6 +2314,115 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 	case DT_LNK:
 		return excluded ? path_excluded : path_untracked;
 	}
+=======
+	}
+	strbuf_addstr(path, cdir->ucd->name);
+	/* treat_one_path() does this before it calls treat_directory() */
+	strbuf_complete(path, '/');
+	if (cdir->ucd->check_only)
+		/*
+		 * check_only is set as a result of treat_directory() getting
+		 * to its bottom. Verify again the same set of directories
+		 * with check_only set.
+		 */
+		return read_directory_recursive(dir, istate, path->buf, path->len,
+						cdir->ucd, 1, 0, pathspec);
+	/*
+	 * We get path_recurse in the first run when
+	 * directory_exists_in_index() returns index_nonexistent. We
+	 * are sure that new changes in the index does not impact the
+	 * outcome. Return now.
+	 */
+	return path_recurse;
+}
+
+static enum path_treatment treat_path(struct dir_struct *dir,
+				      struct untracked_cache_dir *untracked,
+				      struct cached_dir *cdir,
+				      struct index_state *istate,
+				      struct strbuf *path,
+				      int baselen,
+				      const struct pathspec *pathspec)
+{
+	int has_path_in_index, dtype, excluded;
+
+	if (!cdir->d_name)
+		return treat_path_fast(dir, untracked, cdir, istate, path,
+				       baselen, pathspec);
+	if (is_dot_or_dotdot(cdir->d_name) || !fspathcmp(cdir->d_name, ".git"))
+		return path_none;
+	strbuf_setlen(path, baselen);
+	strbuf_addstr(path, cdir->d_name);
+	if (simplify_away(path->buf, path->len, pathspec))
+		return path_none;
+
+	dtype = resolve_dtype(cdir->d_type, istate, path->buf, path->len);
+
+	/* Always exclude indexed files */
+	has_path_in_index = !!index_file_exists(istate, path->buf, path->len,
+						ignore_case);
+	if (dtype != DT_DIR && has_path_in_index)
+		return path_none;
+
+	/*
+	 * When we are looking at a directory P in the working tree,
+	 * there are three cases:
+	 *
+	 * (1) P exists in the index.  Everything inside the directory P in
+	 * the working tree needs to go when P is checked out from the
+	 * index.
+	 *
+	 * (2) P does not exist in the index, but there is P/Q in the index.
+	 * We know P will stay a directory when we check out the contents
+	 * of the index, but we do not know yet if there is a directory
+	 * P/Q in the working tree to be killed, so we need to recurse.
+	 *
+	 * (3) P does not exist in the index, and there is no P/Q in the index
+	 * to require P to be a directory, either.  Only in this case, we
+	 * know that everything inside P will not be killed without
+	 * recursing.
+	 */
+	if ((dir->flags & DIR_COLLECT_KILLED_ONLY) &&
+	    (dtype == DT_DIR) &&
+	    !has_path_in_index &&
+	    (directory_exists_in_index(istate, path->buf, path->len) == index_nonexistent))
+		return path_none;
+
+	excluded = is_excluded(dir, istate, path->buf, &dtype);
+
+	/*
+	 * Excluded? If we don't explicitly want to show
+	 * ignored files, ignore it
+	 */
+	if (excluded && !(dir->flags & (DIR_SHOW_IGNORED|DIR_SHOW_IGNORED_TOO)))
+		return path_excluded;
+
+	switch (dtype) {
+	default:
+		return path_none;
+	case DT_DIR:
+		/*
+		 * WARNING: Do not ignore/amend the return value from
+		 * treat_directory(), and especially do not change it to return
+		 * path_recurse as that can cause exponential slowdown.
+		 * Instead, modify treat_directory() to return the right value.
+		 */
+		strbuf_addch(path, '/');
+		return treat_directory(dir, istate, untracked,
+				       path->buf, path->len,
+				       baselen, excluded, pathspec);
+	case DT_REG:
+	case DT_LNK:
+		if (excluded)
+			return path_excluded;
+		if (pathspec &&
+		    !do_match_pathspec(istate, pathspec, path->buf, path->len,
+				       0 /* prefix */, NULL /* seen */,
+				       0 /* flags */))
+			return path_none;
+		return path_untracked;
+	}
+>>>>>>> upstream/maint
 }
 
 static void add_untracked(struct untracked_cache_dir *dir, const char *name)
@@ -2351,7 +2602,7 @@ static void add_path_to_appropriate_result_list(struct dir_struct *dir,
  * If 'stop_at_first_file' is specified, 'path_excluded' is returned
  * to signal that a file was found. This is the least significant value that
  * indicates that a file was encountered that does not depend on the order of
- * whether an untracked or exluded path was encountered first.
+ * whether an untracked or excluded path was encountered first.
  *
  * Returns the most significant path_treatment value encountered in the scan.
  * If 'stop_at_first_file' is specified, `path_excluded` is the most
@@ -2722,28 +2973,6 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 		read_directory_recursive(dir, istate, path, len, untracked, 0, 0, pathspec);
 	QSORT(dir->entries, dir->nr, cmp_dir_entry);
 	QSORT(dir->ignored, dir->ignored_nr, cmp_dir_entry);
-
-	/*
-	 * If DIR_SHOW_IGNORED_TOO is set, read_directory_recursive() will
-	 * also pick up untracked contents of untracked dirs; by default
-	 * we discard these, but given DIR_KEEP_UNTRACKED_CONTENTS we do not.
-	 */
-	if ((dir->flags & DIR_SHOW_IGNORED_TOO) &&
-		     !(dir->flags & DIR_KEEP_UNTRACKED_CONTENTS)) {
-		int i, j;
-
-		/* remove from dir->entries untracked contents of untracked dirs */
-		for (i = j = 0; j < dir->nr; j++) {
-			if (i &&
-			    check_dir_entry_contains(dir->entries[i - 1], dir->entries[j])) {
-				FREE_AND_NULL(dir->entries[j]);
-			} else {
-				dir->entries[i++] = dir->entries[j];
-			}
-		}
-
-		dir->nr = i;
-	}
 
 	trace_performance_leave("read directory %.*s", len, path);
 	if (dir->untracked) {

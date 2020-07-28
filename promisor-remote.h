@@ -20,6 +20,14 @@ struct promisor_remote {
 void promisor_remote_reinit(void);
 struct promisor_remote *promisor_remote_find(const char *remote_name);
 int has_promisor_remote(void);
+
+/*
+ * Fetches all requested objects from all promisor remotes, trying them one at
+ * a time until all objects are fetched. Returns 0 upon success, and non-zero
+ * otherwise.
+ *
+ * If oid_nr is 0, this function returns 0 (success) immediately.
+ */
 int promisor_remote_get_direct(struct repository *repo,
 			       const struct object_id *oids,
 			       int oid_nr);

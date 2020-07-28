@@ -17,7 +17,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "gpg-interface.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "column.h"
 #include "ref-filter.h"
 
@@ -410,8 +410,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_GROUP(N_("Tag creation options")),
 		OPT_BOOL('a', "annotate", &annotate,
 					N_("annotated tag, needs a message")),
-		{ OPTION_CALLBACK, 'm', "message", &msg, N_("message"),
-		  N_("tag message"), PARSE_OPT_NONEG, parse_msg_arg },
+		OPT_CALLBACK_F('m', "message", &msg, N_("message"),
+			       N_("tag message"), PARSE_OPT_NONEG, parse_msg_arg),
 		OPT_FILENAME('F', "file", &msgfile, N_("read message from file")),
 		OPT_BOOL('e', "edit", &edit_flag, N_("force edit of tag message")),
 		OPT_BOOL('s', "sign", &opt.sign, N_("annotated and GPG-signed tag")),
@@ -485,7 +485,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	}
 	if (!sorting)
 		sorting = ref_default_sorting();
-	sorting->ignore_case = icase;
+	ref_sorting_icase_all(sorting, icase);
 	filter.ignore_case = icase;
 	if (cmdmode == 'l') {
 		int ret;

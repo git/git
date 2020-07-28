@@ -39,11 +39,27 @@
 
 struct object_entry {
 	struct pack_idx_entry idx;
-	struct object_entry *next;
+	struct hashmap_entry ent;
 	uint32_t type : TYPE_BITS,
 		pack_id : PACK_ID_BITS,
 		depth : DEPTH_BITS;
 };
+
+static int object_entry_hashcmp(const void *map_data,
+				const struct hashmap_entry *eptr,
+				const struct hashmap_entry *entry_or_key,
+				const void *keydata)
+{
+	const struct object_id *oid = keydata;
+	const struct object_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct object_entry, ent);
+	if (oid)
+		return oidcmp(&e1->idx.oid, oid);
+
+	e2 = container_of(entry_or_key, const struct object_entry, ent);
+	return oidcmp(&e1->idx.oid, &e2->idx.oid);
+}
 
 struct object_entry_pool {
 	struct object_entry_pool *next_pool;
@@ -178,7 +194,7 @@ static off_t pack_size;
 /* Table of objects we've written. */
 static unsigned int object_entry_alloc = 5000;
 static struct object_entry_pool *blocks;
-static struct object_entry *object_table[1 << 16];
+static struct hashmap object_table;
 static struct mark_set *marks;
 static const char *export_marks_file;
 static const char *import_marks_file;
@@ -455,44 +471,37 @@ static struct object_entry *new_object(struct object_id *oid)
 
 static struct object_entry *find_object(struct object_id *oid)
 {
-	unsigned int h = oid->hash[0] << 8 | oid->hash[1];
-	struct object_entry *e;
-	for (e = object_table[h]; e; e = e->next)
-		if (oideq(oid, &e->idx.oid))
-			return e;
-	return NULL;
+	return hashmap_get_entry_from_hash(&object_table, oidhash(oid), oid,
+					   struct object_entry, ent);
 }
 
 static struct object_entry *insert_object(struct object_id *oid)
 {
-	unsigned int h = oid->hash[0] << 8 | oid->hash[1];
-	struct object_entry *e = object_table[h];
+	struct object_entry *e;
+	unsigned int hash = oidhash(oid);
 
-	while (e) {
-		if (oideq(oid, &e->idx.oid))
-			return e;
-		e = e->next;
+	e = hashmap_get_entry_from_hash(&object_table, hash, oid,
+					struct object_entry, ent);
+	if (!e) {
+		e = new_object(oid);
+		e->idx.offset = 0;
+		hashmap_entry_init(&e->ent, hash);
+		hashmap_add(&object_table, &e->ent);
 	}
 
-	e = new_object(oid);
-	e->next = object_table[h];
-	e->idx.offset = 0;
-	object_table[h] = e;
 	return e;
 }
 
 static void invalidate_pack_id(unsigned int id)
 {
-	unsigned int h;
 	unsigned long lu;
 	struct tag *t;
+	struct hashmap_iter iter;
+	struct object_entry *e;
 
-	for (h = 0; h < ARRAY_SIZE(object_table); h++) {
-		struct object_entry *e;
-
-		for (e = object_table[h]; e; e = e->next)
-			if (e->pack_id == id)
-				e->pack_id = MAX_PACK_ID;
+	hashmap_for_each_entry(&object_table, &iter, e, ent) {
+		if (e->pack_id == id)
+			e->pack_id = MAX_PACK_ID;
 	}
 
 	for (lu = 0; lu < branch_table_sz; lu++) {
@@ -3510,6 +3519,8 @@ int cmd_main(int argc, const char **argv)
 	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
 	marks = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
+
+	hashmap_init(&object_table, object_entry_hashcmp, NULL, 0);
 
 	/*
 	 * We don't parse most options until after we've seen the set of

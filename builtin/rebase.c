@@ -88,6 +88,7 @@ struct rebase_options {
 	const char *action;
 	int signoff;
 	int allow_rerere_autoupdate;
+	int keep_empty;
 	int autosquash;
 	char *gpg_sign_opt;
 	int autostash;
@@ -98,11 +99,13 @@ struct rebase_options {
 	struct strbuf git_format_patch_opt;
 	int reschedule_failed_exec;
 	int use_legacy_rebase;
+	int reapply_cherry_picks;
 };
 
 #define REBASE_OPTIONS_INIT {			  	\
 		.type = REBASE_UNSPECIFIED,	  	\
 		.empty = EMPTY_UNSPECIFIED,	  	\
+		.keep_empty = 1,			\
 		.default_backend = "merge",	  	\
 		.flags = REBASE_NO_QUIET, 		\
 		.git_am_opts = ARGV_ARRAY_INIT,		\
@@ -382,11 +385,13 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 
 	git_config_get_bool("rebase.abbreviatecommands", &abbreviate_commands);
 
+	flags |= opts->keep_empty ? TODO_LIST_KEEP_EMPTY : 0;
 	flags |= abbreviate_commands ? TODO_LIST_ABBREVIATE_CMDS : 0;
 	flags |= opts->rebase_merges ? TODO_LIST_REBASE_MERGES : 0;
 	flags |= opts->rebase_cousins > 0 ? TODO_LIST_REBASE_COUSINS : 0;
 	flags |= opts->root_with_onto ? TODO_LIST_ROOT_WITH_ONTO : 0;
 	flags |= command == ACTION_SHORTEN_OIDS ? TODO_LIST_SHORTEN_IDS : 0;
+	flags |= opts->reapply_cherry_picks ? TODO_LIST_REAPPLY_CHERRY_PICKS : 0;
 
 	switch (command) {
 	case ACTION_NONE: {
@@ -445,6 +450,7 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 	return ret;
 }
 
+static void imply_merge(struct rebase_options *opts, const char *option);
 static int parse_opt_keep_empty(const struct option *opt, const char *arg,
 				int unset)
 {
@@ -452,6 +458,7 @@ static int parse_opt_keep_empty(const struct option *opt, const char *arg,
 
 	BUG_ON_OPT_ARG(arg);
 
+<<<<<<< HEAD
 	/*
 	 * If we ever want to remap --keep-empty to --empty=keep, insert:
 	 * 	opts->empty = unset ? EMPTY_UNSPECIFIED : EMPTY_KEEP;
@@ -459,6 +466,10 @@ static int parse_opt_keep_empty(const struct option *opt, const char *arg,
 <<<<<<< HEAD
 	opts->type = REBASE_INTERACTIVE;
 =======
+=======
+	imply_merge(opts, unset ? "--no-keep-empty" : "--keep-empty");
+	opts->keep_empty = !unset;
+>>>>>>> upstream/maint
 	opts->type = REBASE_MERGE;
 >>>>>>> upstream/pu
 	return 0;
@@ -477,10 +488,10 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_NEGBIT(0, "ff", &opts.flags, N_("allow fast-forward"),
 			   REBASE_FORCE),
-		{ OPTION_CALLBACK, 'k', "keep-empty", &options, NULL,
-			N_("(DEPRECATED) keep empty commits"),
+		OPT_CALLBACK_F('k', "keep-empty", &options, NULL,
+			N_("keep commits which start empty"),
 			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN,
-			parse_opt_keep_empty },
+			parse_opt_keep_empty),
 		OPT_BOOL_F(0, "allow-empty-message", &opts.allow_empty_message,
 			   N_("allow commits with empty messages"),
 			   PARSE_OPT_HIDDEN),
@@ -566,7 +577,7 @@ static void imply_merge(struct rebase_options *opts, const char *option)
 {
 	switch (opts->type) {
 	case REBASE_APPLY:
-		die(_("%s requires an interactive rebase"), option);
+		die(_("%s requires the merge backend"), option);
 		break;
 	case REBASE_MERGE:
 	case REBASE_PRESERVE_MERGES:
@@ -600,8 +611,15 @@ static int read_basic_state(struct rebase_options *opts)
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id oid;
 
+<<<<<<< HEAD
 	if (!read_oneliner(&head_name, state_dir_path("head-name", opts), 0, 1) ||
 	    !read_oneliner(&buf, state_dir_path("onto", opts), 0, 1))
+=======
+	if (!read_oneliner(&head_name, state_dir_path("head-name", opts),
+			   READ_ONELINER_WARN_MISSING) ||
+	    !read_oneliner(&buf, state_dir_path("onto", opts),
+			   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 		return -1;
 	opts->head_name = starts_with(head_name.buf, "refs/") ?
 		xstrdup(head_name.buf) : NULL;
@@ -617,9 +635,17 @@ static int read_basic_state(struct rebase_options *opts)
 	 */
 	strbuf_reset(&buf);
 	if (file_exists(state_dir_path("orig-head", opts))) {
+<<<<<<< HEAD
 		if (!read_oneliner(&buf, state_dir_path("orig-head", opts), 0, 1))
 			return -1;
 	} else if (!read_oneliner(&buf, state_dir_path("head", opts), 0, 1))
+=======
+		if (!read_oneliner(&buf, state_dir_path("orig-head", opts),
+				   READ_ONELINER_WARN_MISSING))
+			return -1;
+	} else if (!read_oneliner(&buf, state_dir_path("head", opts),
+				  READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 		return -1;
 	if (get_oid(buf.buf, &opts->orig_head))
 		return error(_("invalid orig-head: '%s'"), buf.buf);
@@ -639,7 +665,12 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("allow_rerere_autoupdate", opts))) {
 		strbuf_reset(&buf);
+<<<<<<< HEAD
 		if (!read_oneliner(&buf, state_dir_path("allow_rerere_autoupdate", opts), 0, 1))
+=======
+		if (!read_oneliner(&buf, state_dir_path("allow_rerere_autoupdate", opts),
+				   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 			return -1;
 		if (!strcmp(buf.buf, "--rerere-autoupdate"))
 			opts->allow_rerere_autoupdate = RERERE_AUTOUPDATE;
@@ -652,7 +683,12 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("gpg_sign_opt", opts))) {
 		strbuf_reset(&buf);
+<<<<<<< HEAD
 		if (!read_oneliner(&buf, state_dir_path("gpg_sign_opt", opts), 0, 1))
+=======
+		if (!read_oneliner(&buf, state_dir_path("gpg_sign_opt", opts),
+				   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 			return -1;
 		free(opts->gpg_sign_opt);
 		opts->gpg_sign_opt = xstrdup(buf.buf);
@@ -660,7 +696,12 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("strategy", opts))) {
 		strbuf_reset(&buf);
+<<<<<<< HEAD
 		if (!read_oneliner(&buf, state_dir_path("strategy", opts), 0, 1))
+=======
+		if (!read_oneliner(&buf, state_dir_path("strategy", opts),
+				   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 			return -1;
 		free(opts->strategy);
 		opts->strategy = xstrdup(buf.buf);
@@ -668,7 +709,12 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("strategy_opts", opts))) {
 		strbuf_reset(&buf);
+<<<<<<< HEAD
 		if (!read_oneliner(&buf, state_dir_path("strategy_opts", opts), 0, 1))
+=======
+		if (!read_oneliner(&buf, state_dir_path("strategy_opts", opts),
+				   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 			return -1;
 		free(opts->strategy_opts);
 		opts->strategy_opts = xstrdup(buf.buf);
@@ -714,7 +760,6 @@ static int rebase_write_basic_state(struct rebase_options *opts)
 static int finish_rebase(struct rebase_options *opts)
 {
 	struct strbuf dir = STRBUF_INIT;
-	const char *argv_gc_auto[] = { "gc", "--auto", NULL };
 	int ret = 0;
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
@@ -724,7 +769,7 @@ static int finish_rebase(struct rebase_options *opts)
 	 * We ignore errors in 'gc --auto', since the
 	 * user should see them.
 	 */
-	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
+	run_auto_gc(!(opts->flags & (REBASE_NO_QUIET|REBASE_VERBOSE)));
 	if (opts->type == REBASE_MERGE) {
 		struct replay_opts replay = REPLAY_OPTS_INIT;
 
@@ -979,6 +1024,7 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 		opts->allow_rerere_autoupdate ?
 			opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE ?
 			"--rerere-autoupdate" : "--no-rerere-autoupdate" : "");
+	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
 	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
 	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
 	add_var(&script_snippet, "cmd", opts->cmd);
@@ -1347,22 +1393,26 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			    N_("show the patch file being applied or merged"),
 			    ACTION_SHOW_CURRENT_PATCH),
 <<<<<<< HEAD
+<<<<<<< HEAD
 		{ OPTION_CALLBACK, 0, "am", &options, NULL,
 			N_("use apply-mail strategies to rebase"),
 =======
 		{ OPTION_CALLBACK, 0, "apply", &options, NULL,
+=======
+		OPT_CALLBACK_F(0, "apply", &options, NULL,
+>>>>>>> upstream/maint
 			N_("use apply strategies to rebase"),
 >>>>>>> upstream/pu
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			parse_opt_am },
-		{ OPTION_CALLBACK, 'm', "merge", &options, NULL,
+			parse_opt_am),
+		OPT_CALLBACK_F('m', "merge", &options, NULL,
 			N_("use merging strategies to rebase"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			parse_opt_merge },
-		{ OPTION_CALLBACK, 'i', "interactive", &options, NULL,
+			parse_opt_merge),
+		OPT_CALLBACK_F('i', "interactive", &options, NULL,
 			N_("let the user edit the list of commits to rebase"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			parse_opt_interactive },
+			parse_opt_interactive),
 		OPT_SET_INT_F('p', "preserve-merges", &options.type,
 			      N_("(DEPRECATED) try to recreate merges instead of "
 				 "ignoring them"),
@@ -1376,18 +1426,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       N_("how to handle commits that become empty"),
 >>>>>>> upstream/pu
 			       PARSE_OPT_NONEG, parse_opt_empty),
-		{ OPTION_CALLBACK, 'k', "keep-empty", &options, NULL,
-			N_("(DEPRECATED) keep empty commits"),
+		OPT_CALLBACK_F('k', "keep-empty", &options, NULL,
+			N_("keep commits which start empty"),
 			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN,
-			parse_opt_keep_empty },
+			parse_opt_keep_empty),
 		OPT_BOOL(0, "autosquash", &options.autosquash,
 			 N_("move commits that begin with "
 			    "squash!/fixup! under -i")),
 		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
 			N_("GPG-sign commits"),
 			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
-		OPT_BOOL(0, "autostash", &options.autostash,
-			 N_("automatically stash/stash pop before and after")),
+		OPT_AUTOSTASH(&options.autostash),
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
 				N_("add exec lines after each commit of the "
 				   "editable list")),
@@ -1412,6 +1461,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "reschedule-failed-exec",
 			 &reschedule_failed_exec,
 			 N_("automatically re-schedule any `exec` that fails")),
+		OPT_BOOL(0, "reapply-cherry-picks", &options.reapply_cherry_picks,
+			 N_("apply all changes, even those already present upstream")),
 		OPT_END(),
 	};
 	int i;
@@ -1422,6 +1473,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	options.allow_empty_message = 1;
 	git_config(rebase_config, &options);
+	/* options.gpg_sign_opt will be either "-S" or NULL */
+	gpg_sign = options.gpg_sign_opt ? "" : NULL;
+	FREE_AND_NULL(options.gpg_sign_opt);
 
 	if (options.use_legacy_rebase ||
 	    !git_env_bool("GIT_TEST_REBASE_USE_BUILTIN", -1))
@@ -1481,6 +1535,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.root)
 			die(_("cannot combine '--keep-base' with '--root'"));
 	}
+
+	if (options.root && fork_point > 0)
+		die(_("cannot combine '--root' with '--fork-point'"));
 
 	if (action != ACTION_NONE && !in_progress)
 		die(_("No rebase in progress?"));
@@ -1567,6 +1624,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		goto cleanup;
 	}
 	case ACTION_QUIT: {
+		save_autostash(state_dir_path("autostash", &options));
 		if (options.type == REBASE_MERGE) {
 			struct replay_opts replay = REPLAY_OPTS_INIT;
 
@@ -1656,10 +1714,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		imply_merge(&options, "--empty");
 >>>>>>> upstream/pu
 
-	if (gpg_sign) {
-		free(options.gpg_sign_opt);
+	if (options.reapply_cherry_picks)
+		imply_merge(&options, "--reapply-cherry-picks");
+
+	if (gpg_sign)
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
-	}
 
 	if (exec.nr) {
 		int i;

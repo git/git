@@ -295,6 +295,38 @@ static int grep_cmd_config(const char *var, const char *value, void *cb)
 	return st;
 }
 
+static void grep_source_name(struct grep_opt *opt, const char *filename,
+			     int tree_name_len, struct strbuf *out)
+{
+	strbuf_reset(out);
+
+	if (opt->null_following_name) {
+		if (opt->relative && opt->prefix_length) {
+			struct strbuf rel_buf = STRBUF_INIT;
+			const char *rel_name =
+				relative_path(filename + tree_name_len,
+					      opt->prefix, &rel_buf);
+
+			if (tree_name_len)
+				strbuf_add(out, filename, tree_name_len);
+
+			strbuf_addstr(out, rel_name);
+			strbuf_release(&rel_buf);
+		} else {
+			strbuf_addstr(out, filename);
+		}
+		return;
+	}
+
+	if (opt->relative && opt->prefix_length)
+		quote_path_relative(filename + tree_name_len, opt->prefix, out);
+	else
+		quote_c_style(filename + tree_name_len, out, NULL, 0);
+
+	if (tree_name_len)
+		strbuf_insert(out, 0, filename, tree_name_len);
+}
+
 static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 		     const char *filename, int tree_name_len,
 		     const char *path)
@@ -302,13 +334,7 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 	struct strbuf pathbuf = STRBUF_INIT;
 	struct grep_source gs;
 
-	if (opt->relative && opt->prefix_length) {
-		quote_path_relative(filename + tree_name_len, opt->prefix, &pathbuf);
-		strbuf_insert(&pathbuf, 0, filename, tree_name_len);
-	} else {
-		strbuf_addstr(&pathbuf, filename);
-	}
-
+	grep_source_name(opt, filename, tree_name_len, &pathbuf);
 	grep_source_init(&gs, GREP_SOURCE_OID, pathbuf.buf, path, oid);
 	strbuf_release(&pathbuf);
 
@@ -334,11 +360,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	struct strbuf buf = STRBUF_INIT;
 	struct grep_source gs;
 
-	if (opt->relative && opt->prefix_length)
-		quote_path_relative(filename, opt->prefix, &buf);
-	else
-		strbuf_addstr(&buf, filename);
-
+	grep_source_name(opt, filename, 0, &buf);
 	grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename, filename);
 	strbuf_release(&buf);
 
@@ -679,8 +701,6 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 
 	fill_directory(&dir, opt->repo->index, pathspec);
 	for (i = 0; i < dir.nr; i++) {
-		if (!dir_path_match(opt->repo->index, dir.entries[i], pathspec, 0, NULL))
-			continue;
 		hit |= grep_file(opt, dir.entries[i]->name);
 		if (hit && opt->status_only)
 			break;
@@ -886,20 +906,20 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_GROUP(""),
 		OPT_CALLBACK('f', NULL, &opt, N_("file"),
 			N_("read patterns from file"), file_callback),
-		{ OPTION_CALLBACK, 'e', NULL, &opt, N_("pattern"),
-			N_("match <pattern>"), PARSE_OPT_NONEG, pattern_callback },
-		{ OPTION_CALLBACK, 0, "and", &opt, NULL,
-		  N_("combine patterns specified with -e"),
-		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, and_callback },
+		OPT_CALLBACK_F('e', NULL, &opt, N_("pattern"),
+			N_("match <pattern>"), PARSE_OPT_NONEG, pattern_callback),
+		OPT_CALLBACK_F(0, "and", &opt, NULL,
+			N_("combine patterns specified with -e"),
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG, and_callback),
 		OPT_BOOL(0, "or", &dummy, ""),
-		{ OPTION_CALLBACK, 0, "not", &opt, NULL, "",
-		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, not_callback },
-		{ OPTION_CALLBACK, '(', NULL, &opt, NULL, "",
-		  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_NODASH,
-		  open_callback },
-		{ OPTION_CALLBACK, ')', NULL, &opt, NULL, "",
-		  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_NODASH,
-		  close_callback },
+		OPT_CALLBACK_F(0, "not", &opt, NULL, "",
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG, not_callback),
+		OPT_CALLBACK_F('(', NULL, &opt, NULL, "",
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_NODASH,
+			open_callback),
+		OPT_CALLBACK_F(')', NULL, &opt, NULL, "",
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_NODASH,
+			close_callback),
 		OPT__QUIET(&opt.status_only,
 			   N_("indicate hit with exit status without output")),
 		OPT_BOOL(0, "all-match", &opt.all_match,

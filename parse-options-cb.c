@@ -5,7 +5,7 @@
 #include "color.h"
 #include "string-list.h"
 #include "argv-array.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 
 /*----- some often used options -----*/
 

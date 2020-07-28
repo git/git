@@ -101,7 +101,7 @@ static void promisor_remote_move_to_tail(struct promisor_remote *r,
 static int promisor_remote_config(const char *var, const char *value, void *data)
 {
 	const char *name;
-	int namelen;
+	size_t namelen;
 	const char *subkey;
 
 	if (!strcmp(var, "core.partialclonefilter"))
@@ -240,6 +240,9 @@ int promisor_remote_get_direct(struct repository *repo,
 	int remaining_nr = oid_nr;
 	int to_free = 0;
 	int res = -1;
+
+	if (oid_nr == 0)
+		return 0;
 
 	promisor_remote_init();
 

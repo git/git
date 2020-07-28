@@ -49,6 +49,7 @@ static int name_objects;
 #define ERROR_PACK 04
 #define ERROR_REFS 010
 #define ERROR_COMMIT_GRAPH 020
+#define ERROR_MULTI_PACK_INDEX 040
 
 static const char *describe_object(const struct object_id *oid)
 {
@@ -952,7 +953,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			midx_argv[2] = "--object-dir";
 			midx_argv[3] = odb->path;
 			if (run_command(&midx_verify))
-				errors_found |= ERROR_COMMIT_GRAPH;
+				errors_found |= ERROR_MULTI_PACK_INDEX;
 		}
 	}
 

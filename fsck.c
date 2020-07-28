@@ -9,12 +9,14 @@
 #include "tag.h"
 #include "fsck.h"
 #include "refs.h"
+#include "url.h"
 #include "utf8.h"
 #include "decorate.h"
 #include "oidset.h"
 #include "packfile.h"
 #include "submodule-config.h"
 #include "config.h"
+#include "credential.h"
 #include "help.h"
 
 static struct oidset gitmodules_found = OIDSET_INIT;
@@ -521,6 +523,28 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 	}
 }
 
+struct name_stack {
+	const char **names;
+	size_t nr, alloc;
+};
+
+static void name_stack_push(struct name_stack *stack, const char *name)
+{
+	ALLOC_GROW(stack->names, stack->nr + 1, stack->alloc);
+	stack->names[stack->nr++] = name;
+}
+
+static const char *name_stack_pop(struct name_stack *stack)
+{
+	return stack->nr ? stack->names[--stack->nr] : NULL;
+}
+
+static void name_stack_clear(struct name_stack *stack)
+{
+	FREE_AND_NULL(stack->names);
+	stack->nr = stack->alloc = 0;
+}
+
 /*
  * The entries in a tree are ordered in the _path_ order,
  * which means that a directory entry is ordered by adding
@@ -532,7 +556,14 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 #define TREE_UNORDERED (-1)
 #define TREE_HAS_DUPS  (-2)
 
-static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, const char *name2)
+static int is_less_than_slash(unsigned char c)
+{
+	return '\0' < c && c < '/';
+}
+
+static int verify_ordered(unsigned mode1, const char *name1,
+			  unsigned mode2, const char *name2,
+			  struct name_stack *candidates)
 {
 	int len1 = strlen(name1);
 	int len2 = strlen(name2);
@@ -564,6 +595,41 @@ static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, con
 		c1 = '/';
 	if (!c2 && S_ISDIR(mode2))
 		c2 = '/';
+
+	/*
+	 * There can be non-consecutive duplicates due to the implicitly
+	 * add slash, e.g.:
+	 *
+	 *   foo
+	 *   foo.bar
+	 *   foo.bar.baz
+	 *   foo.bar/
+	 *   foo/
+	 *
+	 * Record non-directory candidates (like "foo" and "foo.bar" in
+	 * the example) on a stack and check directory candidates (like
+	 * foo/" and "foo.bar/") against that stack.
+	 */
+	if (!c1 && is_less_than_slash(c2)) {
+		name_stack_push(candidates, name1);
+	} else if (c2 == '/' && is_less_than_slash(c1)) {
+		for (;;) {
+			const char *p;
+			const char *f_name = name_stack_pop(candidates);
+
+			if (!f_name)
+				break;
+			if (!skip_prefix(name2, f_name, &p))
+				break;
+			if (!*p)
+				return TREE_HAS_DUPS;
+			if (is_less_than_slash(*p)) {
+				name_stack_push(candidates, f_name);
+				break;
+			}
+		}
+	}
+
 	return c1 < c2 ? 0 : TREE_UNORDERED;
 }
 
@@ -585,6 +651,7 @@ static int fsck_tree(const struct object_id *oid,
 	struct tree_desc desc;
 	unsigned o_mode;
 	const char *o_name;
+	struct name_stack df_dup_candidates = { NULL };
 
 	if (init_tree_desc_gently(&desc, buffer, size)) {
 		retval += report(options, oid, OBJ_TREE, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
@@ -664,7 +731,8 @@ static int fsck_tree(const struct object_id *oid,
 		}
 
 		if (o_name) {
-			switch (verify_ordered(o_mode, o_name, mode, name)) {
+			switch (verify_ordered(o_mode, o_name, mode, name,
+					       &df_dup_candidates)) {
 			case TREE_UNORDERED:
 				not_properly_sorted = 1;
 				break;
@@ -679,6 +747,8 @@ static int fsck_tree(const struct object_id *oid,
 		o_mode = mode;
 		o_name = name;
 	}
+
+	name_stack_clear(&df_dup_candidates);
 
 	if (has_null_sha1)
 		retval += report(options, oid, OBJ_TREE, FSCK_MSG_NULL_SHA1, "contains entries pointing to null sha1");
@@ -910,6 +980,149 @@ done:
 	return ret;
 }
 
+/*
+ * Like builtin/submodule--helper.c's starts_with_dot_slash, but without
+ * relying on the platform-dependent is_dir_sep helper.
+ *
+ * This is for use in checking whether a submodule URL is interpreted as
+ * relative to the current directory on any platform, since \ is a
+ * directory separator on Windows but not on other platforms.
+ */
+static int starts_with_dot_slash(const char *str)
+{
+	return str[0] == '.' && (str[1] == '/' || str[1] == '\\');
+}
+
+/*
+ * Like starts_with_dot_slash, this is a variant of submodule--helper's
+ * helper of the same name with the twist that it accepts backslash as a
+ * directory separator even on non-Windows platforms.
+ */
+static int starts_with_dot_dot_slash(const char *str)
+{
+	return str[0] == '.' && starts_with_dot_slash(str + 1);
+}
+
+static int submodule_url_is_relative(const char *url)
+{
+	return starts_with_dot_slash(url) || starts_with_dot_dot_slash(url);
+}
+
+/*
+ * Count directory components that a relative submodule URL should chop
+ * from the remote_url it is to be resolved against.
+ *
+ * In other words, this counts "../" components at the start of a
+ * submodule URL.
+ *
+ * Returns the number of directory components to chop and writes a
+ * pointer to the next character of url after all leading "./" and
+ * "../" components to out.
+ */
+static int count_leading_dotdots(const char *url, const char **out)
+{
+	int result = 0;
+	while (1) {
+		if (starts_with_dot_dot_slash(url)) {
+			result++;
+			url += strlen("../");
+			continue;
+		}
+		if (starts_with_dot_slash(url)) {
+			url += strlen("./");
+			continue;
+		}
+		*out = url;
+		return result;
+	}
+}
+/*
+ * Check whether a transport is implemented by git-remote-curl.
+ *
+ * If it is, returns 1 and writes the URL that would be passed to
+ * git-remote-curl to the "out" parameter.
+ *
+ * Otherwise, returns 0 and leaves "out" untouched.
+ *
+ * Examples:
+ *   http::https://example.com/repo.git -> 1, https://example.com/repo.git
+ *   https://example.com/repo.git -> 1, https://example.com/repo.git
+ *   git://example.com/repo.git -> 0
+ *
+ * This is for use in checking for previously exploitable bugs that
+ * required a submodule URL to be passed to git-remote-curl.
+ */
+static int url_to_curl_url(const char *url, const char **out)
+{
+	/*
+	 * We don't need to check for case-aliases, "http.exe", and so
+	 * on because in the default configuration, is_transport_allowed
+	 * prevents URLs with those schemes from being cloned
+	 * automatically.
+	 */
+	if (skip_prefix(url, "http::", out) ||
+	    skip_prefix(url, "https::", out) ||
+	    skip_prefix(url, "ftp::", out) ||
+	    skip_prefix(url, "ftps::", out))
+		return 1;
+	if (starts_with(url, "http://") ||
+	    starts_with(url, "https://") ||
+	    starts_with(url, "ftp://") ||
+	    starts_with(url, "ftps://")) {
+		*out = url;
+		return 1;
+	}
+	return 0;
+}
+
+static int check_submodule_url(const char *url)
+{
+	const char *curl_url;
+
+	if (looks_like_command_line_option(url))
+		return -1;
+
+	if (submodule_url_is_relative(url)) {
+		char *decoded;
+		const char *next;
+		int has_nl;
+
+		/*
+		 * This could be appended to an http URL and url-decoded;
+		 * check for malicious characters.
+		 */
+		decoded = url_decode(url);
+		has_nl = !!strchr(decoded, '\n');
+
+		free(decoded);
+		if (has_nl)
+			return -1;
+
+		/*
+		 * URLs which escape their root via "../" can overwrite
+		 * the host field and previous components, resolving to
+		 * URLs like https::example.com/submodule.git and
+		 * https:///example.com/submodule.git that were
+		 * susceptible to CVE-2020-11008.
+		 */
+		if (count_leading_dotdots(url, &next) > 0 &&
+		    (*next == ':' || *next == '/'))
+			return -1;
+	}
+
+	else if (url_to_curl_url(url, &curl_url)) {
+		struct credential c = CREDENTIAL_INIT;
+		int ret = 0;
+		if (credential_from_url_gently(&c, curl_url, 1) ||
+		    !*c.host)
+			ret = -1;
+		credential_clear(&c);
+		return ret;
+	}
+
+	return 0;
+}
+
 struct fsck_gitmodules_data {
 	const struct object_id *oid;
 	struct fsck_options *options;
@@ -920,7 +1133,7 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 {
 	struct fsck_gitmodules_data *data = vdata;
 	const char *subsection, *key;
-	int subsection_len;
+	size_t subsection_len;
 	char *name;
 
 	if (parse_config_key(var, "submodule", &subsection, &subsection_len, &key) < 0 ||
@@ -935,7 +1148,7 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 				    "disallowed submodule name: %s",
 				    name);
 	if (!strcmp(key, "url") && value &&
-	    looks_like_command_line_option(value))
+	    check_submodule_url(value) < 0)
 		data->ret |= report(data->options,
 				    data->oid, OBJ_BLOB,
 				    FSCK_MSG_GITMODULES_URL,

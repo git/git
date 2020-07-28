@@ -12,9 +12,6 @@ feature.experimental::
 	setting if you are interested in providing feedback on experimental
 	features. The new default values are:
 +
-* `pack.useSparse=true` uses a new algorithm when constructing a pack-file
-which can improve `git push` performance in repos with many files.
-+
 * `fetch.negotiationAlgorithm=skipping` may improve fetch negotiation times by
 skipping more commits at a time, reducing the number of round trips.
 +

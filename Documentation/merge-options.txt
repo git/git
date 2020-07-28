@@ -61,9 +61,12 @@ When not possible, refuse to merge and exit with a non-zero status.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
+--no-gpg-sign::
 	GPG-sign the resulting merge commit. The `keyid` argument is
 	optional and defaults to the committer identity; if specified,
-	it must be stuck to the option without a space.
+	it must be stuck to the option without a space. `--no-gpg-sign`
+	is useful to countermand both `commit.gpgSign` configuration variable,
+	and earlier `--gpg-sign`.
 
 --log[=<n>]::
 --no-log::
@@ -161,9 +164,15 @@ endif::git-pull[]
 --no-autostash::
 	Automatically create a temporary stash entry before the operation
 	begins, and apply it after the operation ends.  This means
+<<<<<<< HEAD
 	that you can run rebase on a dirty worktree.  However, use
 	with care: the final stash application after a successful
 	rebase might result in non-trivial conflicts.
+=======
+	that you can run the operation on a dirty worktree.  However, use
+	with care: the final stash application after a successful
+	merge might result in non-trivial conflicts.
+>>>>>>> upstream/maint
 
 --allow-unrelated-histories::
 	By default, `git merge` command refuses to merge histories

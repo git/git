@@ -198,6 +198,7 @@ gitcore-tutorial                        guide
 gitcvs-migration                        guide
 gitdiffcore                             guide
 giteveryday                             guide
+gitfaq                                  guide
 gitglossary                             guide
 githooks                                guide
 gitignore                               guide

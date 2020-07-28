@@ -134,7 +134,7 @@ int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_skip(struct repository *repo, struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
-/* #define TODO_LIST_KEEP_EMPTY (1U << 0) */ /* No longer used */
+#define TODO_LIST_KEEP_EMPTY (1U << 0)
 #define TODO_LIST_SHORTEN_IDS (1U << 1)
 #define TODO_LIST_ABBREVIATE_CMDS (1U << 2)
 #define TODO_LIST_REBASE_MERGES (1U << 3)
@@ -150,7 +150,7 @@ int sequencer_remove_state(struct replay_opts *opts);
  * `--onto`, we do not want to re-generate the root commits.
  */
 #define TODO_LIST_ROOT_WITH_ONTO (1U << 6)
-
+#define TODO_LIST_REAPPLY_CHERRY_PICKS (1U << 7)
 
 int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 			  const char **argv, unsigned flags);
@@ -193,7 +193,13 @@ void commit_post_rewrite(struct repository *r,
 
 void create_autostash(struct repository *r, const char *path,
 		      const char *default_reflog_action);
+<<<<<<< HEAD
 int apply_autostash(const char *path);
+=======
+int save_autostash(const char *path);
+int apply_autostash(const char *path);
+int apply_autostash_oid(const char *stash_oid);
+>>>>>>> upstream/maint
 
 #define SUMMARY_INITIAL_COMMIT   (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
@@ -202,6 +208,12 @@ void print_commit_summary(struct repository *repo,
 			  const struct object_id *oid,
 			  unsigned int flags);
 
+<<<<<<< HEAD
+=======
+#define READ_ONELINER_SKIP_IF_EMPTY (1 << 0)
+#define READ_ONELINER_WARN_MISSING (1 << 1)
+
+>>>>>>> upstream/maint
 /*
  * Reads a file that was presumably written by a shell script, i.e. with an
  * end-of-line marker that needs to be stripped.
@@ -209,10 +221,17 @@ void print_commit_summary(struct repository *repo,
  * Note that only the last end-of-line marker is stripped, consistent with the
  * behavior of "$(cat path)" in a shell script.
  *
+<<<<<<< HEAD
  * Returns 1 if the file was read, 0 if it could not be read.
  */
 int read_oneliner(struct strbuf *buf, const char *path,
 		  int skip_if_empty, int warn_nonexistence);
+=======
+ * Returns 1 if the file was read, 0 if it could not be read or does not exist.
+ */
+int read_oneliner(struct strbuf *buf,
+	const char *path, unsigned flags);
+>>>>>>> upstream/maint
 int read_author_script(const char *path, char **name, char **email, char **date,
 		       int allow_missing);
 void parse_strategy_opts(struct replay_opts *opts, char *raw_opts);

@@ -169,15 +169,15 @@ static const struct option show_ref_options[] = {
 	  N_("show the HEAD reference, even if it would be filtered out")),
 	OPT_BOOL('d', "dereference", &deref_tags,
 		    N_("dereference tags into object IDs")),
-	{ OPTION_CALLBACK, 's', "hash", &abbrev, N_("n"),
-	  N_("only show SHA1 hash using <n> digits"),
-	  PARSE_OPT_OPTARG, &hash_callback },
+	OPT_CALLBACK_F('s', "hash", &abbrev, N_("n"),
+		       N_("only show SHA1 hash using <n> digits"),
+		       PARSE_OPT_OPTARG, &hash_callback),
 	OPT__ABBREV(&abbrev),
 	OPT__QUIET(&quiet,
 		   N_("do not print results to stdout (useful with --verify)")),
-	{ OPTION_CALLBACK, 0, "exclude-existing", &exclude_existing_arg,
-	  N_("pattern"), N_("show refs from stdin that aren't in local repository"),
-	  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback },
+	OPT_CALLBACK_F(0, "exclude-existing", &exclude_existing_arg,
+		       N_("pattern"), N_("show refs from stdin that aren't in local repository"),
+		       PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback),
 	OPT_END()
 };
 

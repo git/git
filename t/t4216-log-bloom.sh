@@ -1,6 +1,10 @@
 #!/bin/sh
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_description='git log for a path with bloom filters'
+================================
+test_description='git log for a path with Bloom filters'
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 . ./test-lib.sh
 
 GIT_TEST_COMMIT_GRAPH=0
@@ -18,10 +22,15 @@ test_expect_success 'setup test - repo, commits, commit graph, log outputs' '
 	test_commit c7 A/file1 &&
 	test_commit c8 A/B/file2 &&
 	test_commit c9 A/B/C/file3 &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
+	test_commit c10 file_to_be_deleted &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	git checkout -b side HEAD~4 &&
 	test_commit side-1 file4 &&
 	git checkout master &&
 	git merge side &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_commit c10 file5 &&
 	mv file5 file5_renamed &&
 	git add file5_renamed &&
@@ -30,12 +39,25 @@ test_expect_success 'setup test - repo, commits, commit graph, log outputs' '
 '
 graph_read_expect() {
 	OPTIONAL=""
+================================
+	test_commit c11 file5 &&
+	mv file5 file5_renamed &&
+	git add file5_renamed &&
+	git commit -m "rename" &&
+	rm file_to_be_deleted &&
+	git add . &&
+	git commit -m "file removed" &&
+	git commit-graph write --reachable --changed-paths
+'
+graph_read_expect () {
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	NUM_CHUNKS=5
 	cat >expect <<- EOF
 	header: 43475048 1 1 $NUM_CHUNKS 0
 	num_commits: $1
 	chunks: oid_fanout oid_lookup commit_metadata bloom_indexes bloom_data
 	EOF
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test-tool read-graph >output &&
 	test_cmp expect output
 }
@@ -67,6 +89,47 @@ test_bloom_filters_not_used() {
 for path in A A/B A/B/C A/file1 A/B/file2 A/B/C/file3 file4 file5_renamed
 do
 	for option in "" \
+================================
+	test-tool read-graph >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'commit-graph write wrote out the bloom chunks' '
+	graph_read_expect 15
+'
+
+# Turn off any inherited trace2 settings for this test.
+sane_unset GIT_TRACE2 GIT_TRACE2_PERF GIT_TRACE2_EVENT
+sane_unset GIT_TRACE2_PERF_BRIEF
+sane_unset GIT_TRACE2_CONFIG_PARAMS
+
+setup () {
+	rm "$TRASH_DIRECTORY/trace.perf"
+	git -c core.commitGraph=false log --pretty="format:%s" $1 >log_wo_bloom &&
+	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.perf" git -c core.commitGraph=true log --pretty="format:%s" $1 >log_w_bloom
+}
+
+test_bloom_filters_used () {
+	log_args=$1
+	bloom_trace_prefix="statistics:{\"filter_not_present\":0,\"zero_length_filter\":0,\"maybe\""
+	setup "$log_args" &&
+	grep -q "$bloom_trace_prefix" "$TRASH_DIRECTORY/trace.perf" &&
+	test_cmp log_wo_bloom log_w_bloom &&
+    test_path_is_file "$TRASH_DIRECTORY/trace.perf"
+}
+
+test_bloom_filters_not_used () {
+	log_args=$1
+	setup "$log_args" &&
+	! grep -q "statistics:{\"filter_not_present\":" "$TRASH_DIRECTORY/trace.perf" &&
+	test_cmp log_wo_bloom log_w_bloom
+}
+
+for path in A A/B A/B/C A/file1 A/B/file2 A/B/C/file3 file4 file5 file5_renamed file_to_be_deleted
+do
+	for option in "" \
+	      "--all" \
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 		      "--full-history" \
 		      "--full-history --simplify-merges" \
 		      "--simplify-merges" \
@@ -93,6 +156,7 @@ test_expect_success 'git log for path that does not exist. ' '
 	test_bloom_filters_used "-- path_does_not_exist"
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'git log with --walk-reflogs does not use bloom filters' '
 	test_bloom_filters_not_used "--walk-reflogs -- A"
 '
@@ -102,16 +166,35 @@ test_expect_success 'git log -- multiple path specs does not use bloom filters' 
 '
 
 test_expect_success 'git log with wildcard that resolves to a single path uses bloom filters' '
+================================
+test_expect_success 'git log with --walk-reflogs does not use Bloom filters' '
+	test_bloom_filters_not_used "--walk-reflogs -- A"
+'
+
+test_expect_success 'git log -- multiple path specs does not use Bloom filters' '
+	test_bloom_filters_not_used "-- file4 A/file1"
+'
+
+test_expect_success 'git log with wildcard that resolves to a single path uses Bloom filters' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	test_bloom_filters_used "-- *4" &&
 	test_bloom_filters_used "-- *renamed"
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'git log with wildcard that resolves to a multiple paths does not uses bloom filters' '
+================================
+test_expect_success 'git log with wildcard that resolves to a multiple paths does not uses Bloom filters' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	test_bloom_filters_not_used "-- *" &&
 	test_bloom_filters_not_used "-- file*"
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'setup - add commit-graph to the chain without bloom filters' '
+================================
+test_expect_success 'setup - add commit-graph to the chain without Bloom filters' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	test_commit c14 A/anotherFile2 &&
 	test_commit c15 A/B/anotherFile2 &&
 	test_commit c16 A/B/C/anotherFile2 &&
@@ -119,16 +202,25 @@ test_expect_success 'setup - add commit-graph to the chain without bloom filters
 	test_line_count = 2 .git/objects/info/commit-graphs/commit-graph-chain
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'git log does not use bloom filters if the latest graph does not have bloom filters.' '
 	test_bloom_filters_not_used "-- A/B"
 '
 
 test_expect_success 'setup - add commit-graph to the chain with bloom filters' '
+================================
+test_expect_success 'Do not use Bloom filters if the latest graph does not have Bloom filters.' '
+	test_bloom_filters_not_used "-- A/B"
+'
+
+test_expect_success 'setup - add commit-graph to the chain with Bloom filters' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	test_commit c17 A/anotherFile3 &&
 	git commit-graph write --reachable --changed-paths --split &&
 	test_line_count = 3 .git/objects/info/commit-graphs/commit-graph-chain
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_bloom_filters_used_when_some_filters_are_missing() {
 	log_args=$1
 	bloom_trace_prefix="statistics:{\"filter_not_present\":3,\"zero_length_filter\":0,\"maybe\":6,\"definitely_not\":6"
@@ -137,6 +229,17 @@ test_bloom_filters_used_when_some_filters_are_missing() {
 }
 
 test_expect_success 'git log uses bloom filters if they exist in the latest but not all commit graphs in the chain.' '
+================================
+test_bloom_filters_used_when_some_filters_are_missing () {
+	log_args=$1
+	bloom_trace_prefix="statistics:{\"filter_not_present\":3,\"zero_length_filter\":0,\"maybe\":8,\"definitely_not\":6"
+	setup "$log_args" &&
+	grep -q "$bloom_trace_prefix" "$TRASH_DIRECTORY/trace.perf" &&
+	test_cmp log_wo_bloom log_w_bloom
+}
+
+test_expect_success 'Use Bloom filters if they exist in the latest but not all commit graphs in the chain.' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	test_bloom_filters_used_when_some_filters_are_missing "-- A/B"
 '
 

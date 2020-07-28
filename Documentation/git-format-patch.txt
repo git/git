@@ -24,6 +24,7 @@ SYNOPSIS
 		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet]
+		   [--[no-]encode-email-headers]
 		   [--no-notes | --notes[=<ref>]]
 		   [--interdiff=<previous>]
 		   [--range-diff=<previous> [--creation-factor=<percent>]]
@@ -252,6 +253,13 @@ feeding the result to `git send-email`.
 	In addition to the patches, generate a cover letter file
 	containing the branch description, shortlog and the overall diffstat.  You can
 	fill in a description in the file before sending it out.
+
+--encode-email-headers::
+--no-encode-email-headers::
+	Encode email headers that have non-ASCII characters with
+	"Q-encoding" (described in RFC 2047), instead of outputting the
+	headers verbatim. Defaults to the value of the
+	`format.encodeEmailHeaders` configuration variable.
 
 --interdiff=<previous>::
 	As a reviewer aid, insert an interdiff into the cover letter,

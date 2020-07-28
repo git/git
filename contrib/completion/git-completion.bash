@@ -504,7 +504,7 @@ __git_index_files ()
 {
 	local root="$2" match="$3"
 
-	__git_ls_files_helper "$root" "$1" "$match" |
+	__git_ls_files_helper "$root" "$1" "${match:-?}" |
 	awk -F / -v pfx="${2//\\/\\\\}" '{
 		paths[$1] = 1
 	}
@@ -1860,6 +1860,7 @@ _git_log ()
 			$merge
 			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
+			--patch --no-patch
 			"
 		return
 		;;

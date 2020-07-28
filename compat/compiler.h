@@ -7,6 +7,7 @@
 #ifdef __GLIBC__
 #include <gnu/libc-version.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 static inline void get_compiler_info(struct strbuf *info)
 {
@@ -23,12 +24,20 @@ static inline void get_compiler_info(struct strbuf *info)
 #endif
 
 =======
+=======
+>>>>>>> upstream/maint
 #endif
 
 static inline void get_compiler_info(struct strbuf *info)
 {
 	int len = info->len;
+<<<<<<< HEAD
 #ifdef __GNUC__
+=======
+#ifdef __clang__
+	strbuf_addf(info, "clang: %s\n", __clang_version__);
+#elif defined(__GNUC__)
+>>>>>>> upstream/maint
 	strbuf_addf(info, "gnuc: %d.%d\n", __GNUC__, __GNUC_MINOR__);
 #endif
 
@@ -53,5 +62,8 @@ static inline void get_libc_info(struct strbuf *info)
 		strbuf_addstr(info, _("no libc information available\n"));
 }
 
+<<<<<<< HEAD
 >>>>>>> upstream/pu
+=======
+>>>>>>> upstream/maint
 #endif /* COMPILER_H */

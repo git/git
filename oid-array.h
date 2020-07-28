@@ -19,7 +19,7 @@
  *
  * void some_func(void)
  * {
- *     struct sha1_array hashes = OID_ARRAY_INIT;
+ *     struct oid_array hashes = OID_ARRAY_INIT;
  *     struct object_id oid;
  *
  *     // Read objects into our set
@@ -49,8 +49,8 @@
  */
 struct oid_array {
 	struct object_id *oid;
-	int nr;
-	int alloc;
+	size_t nr;
+	size_t alloc;
 	int sorted;
 };
 

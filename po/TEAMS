@@ -56,6 +56,10 @@ Language:	sv (Swedish)
 Repository:	https://github.com/nafmo/git-l10n-sv/
 Leader:		Peter Krefting <peter@softwolves.pp.se>
 
+Language:	tr (Turkish)
+Repository:	https://github.com/bitigchi/git-po/
+Leader:		Emir SARI <bitigchi@me.com>
+
 Language:	vi (Vietnamese)
 Repository:	https://github.com/vnwildman/git/
 Leader:		Trần Ngọc Quân <vnwildman AT gmail.com>

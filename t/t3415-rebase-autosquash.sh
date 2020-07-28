@@ -424,4 +424,20 @@ test_expect_success 'abort last squash' '
 	! grep first actual
 '
 
+test_expect_success 'fixup a fixup' '
+	echo 0to-fixup >file0 &&
+	test_tick &&
+	git commit -m "to-fixup" file0 &&
+	test_tick &&
+	git commit --squash HEAD -m X --allow-empty &&
+	test_tick &&
+	git commit --squash HEAD^ -m Y --allow-empty &&
+	test_tick &&
+	git commit -m "squash! $(git rev-parse HEAD^)" -m Z --allow-empty &&
+	test_tick &&
+	git commit -m "squash! $(git rev-parse HEAD^^)" -m W --allow-empty &&
+	git rebase -ki --autosquash HEAD~5 &&
+	test XZWY = $(git show | tr -cd W-Z)
+'
+
 test_done

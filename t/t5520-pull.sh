@@ -28,7 +28,11 @@ test_pull_autostash_fail () {
 	echo dirty >new_file &&
 	git add new_file &&
 	test_must_fail git pull "$@" . copy 2>err &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_i18ngrep "\(uncommitted changes.\)\|\(overwritten by merge:\)" err
+================================
+	test_i18ngrep -E "uncommitted changes.|overwritten by merge:" err
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 }
 
 test_expect_success setup '

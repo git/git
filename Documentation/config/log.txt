@@ -18,6 +18,12 @@ log.decorate::
 	names are shown. This is the same as the `--decorate` option
 	of the `git log`.
 
+log.excludeDecoration::
+	Exclude the specified patterns from the log decorations. This is
+	similar to the `--decorate-refs-exclude` command-line option, but
+	the config option can be overridden by the `--decorate-refs`
+	option.
+
 log.follow::
 	If `true`, `git log` will act as if the `--follow` option was used when
 	a single <path> is given.  This has the same limitations as `--follow`,

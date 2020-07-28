@@ -94,6 +94,7 @@ int checkout_fast_forward(struct repository *r,
 	opts.verbose_update = 1;
 	opts.merge = 1;
 	opts.fn = twoway_merge;
+	init_checkout_metadata(&opts.meta, NULL, remote, NULL);
 	setup_unpack_trees_porcelain(&opts, "merge");
 
 	if (unpack_trees(nr_trees, t, &opts)) {

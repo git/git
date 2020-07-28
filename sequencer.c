@@ -424,24 +424,42 @@ static int write_message(const void *buf, size_t len, const char *filename,
 	return 0;
 }
 
+<<<<<<< HEAD
 int read_oneliner(struct strbuf *buf, const char *path,
 		  int skip_if_empty, int warn_nonexistence)
+=======
+int read_oneliner(struct strbuf *buf,
+	const char *path, unsigned flags)
+>>>>>>> upstream/maint
 {
 	int ret = 0;
 	struct strbuf file_buf = STRBUF_INIT;
 
+<<<<<<< HEAD
 	if (!warn_nonexistence && !file_exists(path))
 		return 0;
 
 	if (strbuf_read_file(&file_buf, path, 0) < 0) {
 		warning_errno(_("could not read '%s'"), path);
 		goto done;
+=======
+	if (strbuf_read_file(buf, path, 0) < 0) {
+		if ((flags & READ_ONELINER_WARN_MISSING) ||
+		    (errno != ENOENT && errno != ENOTDIR))
+			warning_errno(_("could not read '%s'"), path);
+		return 0;
+>>>>>>> upstream/maint
 	}
 
 	strbuf_trim_trailing_newline(&file_buf);
 
+<<<<<<< HEAD
 	if (skip_if_empty && !file_buf.len)
 		goto done;
+=======
+	if ((flags & READ_ONELINER_SKIP_IF_EMPTY) && buf->len == orig_len)
+		return 0;
+>>>>>>> upstream/maint
 
 	strbuf_addbuf(buf, &file_buf);
 	ret = 1;
@@ -944,6 +962,8 @@ static int run_git_commit(struct repository *r,
 		argv_array_push(&cmd.args, "--amend");
 	if (opts->gpg_sign)
 		argv_array_pushf(&cmd.args, "-S%s", opts->gpg_sign);
+	else
+		argv_array_push(&cmd.args, "--no-gpg-sign");
 	if (defmsg)
 		argv_array_pushl(&cmd.args, "-F", defmsg, NULL);
 	else if (!(flags & EDIT_MSG))
@@ -1583,7 +1603,7 @@ static const char *command_to_string(const enum todo_command command)
 
 static char command_to_char(const enum todo_command command)
 {
-	if (command < TODO_COMMENT && todo_command_info[command].c)
+	if (command < TODO_COMMENT)
 		return todo_command_info[command].c;
 	return comment_line_char;
 }
@@ -2512,8 +2532,14 @@ static int read_populate_opts(struct replay_opts *opts)
 {
 	if (is_rebase_i(opts)) {
 		struct strbuf buf = STRBUF_INIT;
+		int ret = 0;
 
+<<<<<<< HEAD
 		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(), 1, 0)) {
+=======
+		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(),
+				  READ_ONELINER_SKIP_IF_EMPTY)) {
+>>>>>>> upstream/maint
 			if (!starts_with(buf.buf, "-S"))
 				strbuf_reset(&buf);
 			else {
@@ -2523,7 +2549,12 @@ static int read_populate_opts(struct replay_opts *opts)
 			strbuf_reset(&buf);
 		}
 
+<<<<<<< HEAD
 		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(), 1, 0)) {
+=======
+		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(),
+				  READ_ONELINER_SKIP_IF_EMPTY)) {
+>>>>>>> upstream/maint
 			if (!strcmp(buf.buf, "--rerere-autoupdate"))
 				opts->allow_rerere_auto = RERERE_AUTOUPDATE;
 			else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
@@ -2552,10 +2583,15 @@ static int read_populate_opts(struct replay_opts *opts)
 			opts->keep_redundant_commits = 1;
 
 		read_strategy_opts(opts, &buf);
-		strbuf_release(&buf);
+		strbuf_reset(&buf);
 
 		if (read_oneliner(&opts->current_fixups,
+<<<<<<< HEAD
 				  rebase_path_current_fixups(), 1, 0)) {
+=======
+				  rebase_path_current_fixups(),
+				  READ_ONELINER_SKIP_IF_EMPTY)) {
+>>>>>>> upstream/maint
 			const char *p = opts->current_fixups.buf;
 			opts->current_fixup_count = 1;
 			while ((p = strchr(p, '\n'))) {
@@ -2564,13 +2600,23 @@ static int read_populate_opts(struct replay_opts *opts)
 			}
 		}
 
+<<<<<<< HEAD
 		if (read_oneliner(&buf, rebase_path_squash_onto(), 0, 0)) {
 			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0)
 				return error(_("unusable squash-onto"));
+=======
+		if (read_oneliner(&buf, rebase_path_squash_onto(), 0)) {
+			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0) {
+				ret = error(_("unusable squash-onto"));
+				goto done_rebase_i;
+			}
+>>>>>>> upstream/maint
 			opts->have_squash_onto = 1;
 		}
 
-		return 0;
+done_rebase_i:
+		strbuf_release(&buf);
+		return ret;
 	}
 
 	if (!file_exists(git_path_opts_file()))
@@ -3138,7 +3184,7 @@ static int do_exec(struct repository *r, const char *command_line)
 	const char *child_argv[] = { NULL, NULL };
 	int dirty, status;
 
-	fprintf(stderr, "Executing: %s\n", command_line);
+	fprintf(stderr, _("Executing: %s\n"), command_line);
 	child_argv[0] = command_line;
 	argv_array_pushf(&child_env, "GIT_DIR=%s", absolute_path(get_git_dir()));
 	argv_array_pushf(&child_env, "GIT_WORK_TREE=%s",
@@ -3315,6 +3361,7 @@ static int do_reset(struct repository *r,
 	unpack_tree_opts.fn = oneway_merge;
 	unpack_tree_opts.merge = 1;
 	unpack_tree_opts.update = 1;
+	init_checkout_metadata(&unpack_tree_opts.meta, name, &oid, NULL);
 
 	if (repo_read_index_unmerged(r)) {
 		rollback_lock_file(&lock);
@@ -3733,25 +3780,32 @@ void create_autostash(struct repository *r, const char *path,
 	strbuf_release(&buf);
 }
 
+<<<<<<< HEAD
 int apply_autostash(const char *path)
+=======
+static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
+>>>>>>> upstream/maint
 {
-	struct strbuf stash_sha1 = STRBUF_INIT;
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret = 0;
 
+<<<<<<< HEAD
 	if (!read_oneliner(&stash_sha1, path, 1, 0)) {
 		strbuf_release(&stash_sha1);
 		return 0;
+=======
+	if (attempt_apply) {
+		child.git_cmd = 1;
+		child.no_stdout = 1;
+		child.no_stderr = 1;
+		argv_array_push(&child.args, "stash");
+		argv_array_push(&child.args, "apply");
+		argv_array_push(&child.args, stash_oid);
+		ret = run_command(&child);
+>>>>>>> upstream/maint
 	}
-	strbuf_trim(&stash_sha1);
 
-	child.git_cmd = 1;
-	child.no_stdout = 1;
-	child.no_stderr = 1;
-	argv_array_push(&child.args, "stash");
-	argv_array_push(&child.args, "apply");
-	argv_array_push(&child.args, stash_sha1.buf);
-	if (!run_command(&child))
+	if (attempt_apply && !ret)
 		fprintf(stderr, _("Applied autostash.\n"));
 	else {
 		struct child_process store = CHILD_PROCESS_INIT;
@@ -3762,20 +3816,59 @@ int apply_autostash(const char *path)
 		argv_array_push(&store.args, "-m");
 		argv_array_push(&store.args, "autostash");
 		argv_array_push(&store.args, "-q");
-		argv_array_push(&store.args, stash_sha1.buf);
+		argv_array_push(&store.args, stash_oid);
 		if (run_command(&store))
-			ret = error(_("cannot store %s"), stash_sha1.buf);
+			ret = error(_("cannot store %s"), stash_oid);
 		else
 			fprintf(stderr,
-				_("Applying autostash resulted in conflicts.\n"
+				_("%s\n"
 				  "Your changes are safe in the stash.\n"
 				  "You can run \"git stash pop\" or"
-				  " \"git stash drop\" at any time.\n"));
+				  " \"git stash drop\" at any time.\n"),
+				attempt_apply ?
+				_("Applying autostash resulted in conflicts.") :
+				_("Autostash exists; creating a new stash entry."));
 	}
 
-	unlink(path);
-	strbuf_release(&stash_sha1);
 	return ret;
+}
+
+static int apply_save_autostash(const char *path, int attempt_apply)
+{
+	struct strbuf stash_oid = STRBUF_INIT;
+	int ret = 0;
+
+	if (!read_oneliner(&stash_oid, path,
+			   READ_ONELINER_SKIP_IF_EMPTY)) {
+		strbuf_release(&stash_oid);
+		return 0;
+	}
+	strbuf_trim(&stash_oid);
+
+	ret = apply_save_autostash_oid(stash_oid.buf, attempt_apply);
+
+	unlink(path);
+<<<<<<< HEAD
+	strbuf_release(&stash_sha1);
+=======
+	strbuf_release(&stash_oid);
+>>>>>>> upstream/maint
+	return ret;
+}
+
+int save_autostash(const char *path)
+{
+	return apply_save_autostash(path, 0);
+}
+
+int apply_autostash(const char *path)
+{
+	return apply_save_autostash(path, 1);
+}
+
+int apply_autostash_oid(const char *stash_oid)
+{
+	return apply_save_autostash_oid(stash_oid, 1);
 }
 
 static const char *reflog_message(struct replay_opts *opts,
@@ -3783,10 +3876,11 @@ static const char *reflog_message(struct replay_opts *opts,
 {
 	va_list ap;
 	static struct strbuf buf = STRBUF_INIT;
+	char *reflog_action = getenv(GIT_REFLOG_ACTION);
 
 	va_start(ap, fmt);
 	strbuf_reset(&buf);
-	strbuf_addstr(&buf, action_name(opts));
+	strbuf_addstr(&buf, reflog_action ? reflog_action : action_name(opts));
 	if (sub_action)
 		strbuf_addf(&buf, " (%s)", sub_action);
 	if (fmt) {
@@ -3874,8 +3968,11 @@ static int pick_commits(struct repository *r,
 			struct replay_opts *opts)
 {
 	int res = 0, reschedule = 0;
+	char *prev_reflog_action;
 
+	/* Note that 0 for 3rd parameter of setenv means set only if not set */
 	setenv(GIT_REFLOG_ACTION, action_name(opts), 0);
+	prev_reflog_action = xstrdup(getenv(GIT_REFLOG_ACTION));
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_commit ||
 				opts->record_origin || opts->edit));
@@ -3900,7 +3997,7 @@ static int pick_commits(struct repository *r,
 					fclose(f);
 				}
 				if (!opts->quiet)
-					fprintf(stderr, "Rebasing (%d/%d)%s",
+					fprintf(stderr, _("Rebasing (%d/%d)%s"),
 						todo_list->done_nr,
 						todo_list->total_nr,
 						opts->verbose ? "\n" : "\r");
@@ -3920,12 +4017,14 @@ static int pick_commits(struct repository *r,
 		}
 		if (item->command <= TODO_SQUASH) {
 			if (is_rebase_i(opts))
-				setenv("GIT_REFLOG_ACTION", reflog_message(opts,
+				setenv(GIT_REFLOG_ACTION, reflog_message(opts,
 					command_to_string(item->command), NULL),
 					1);
 			res = do_pick_commit(r, item->command, item->commit,
 					     opts, is_final_fixup(todo_list),
 					     &check_todo);
+			if (is_rebase_i(opts))
+				setenv(GIT_REFLOG_ACTION, prev_reflog_action, 1);
 			if (is_rebase_i(opts) && res < 0) {
 				/* Reschedule */
 				advise(_(rescheduled_advice),
@@ -4152,7 +4251,7 @@ cleanup_head_ref:
 			if (!opts->verbose)
 				term_clear_line();
 			fprintf(stderr,
-				"Successfully rebased and updated %s.\n",
+				_("Successfully rebased and updated %s.\n"),
 				head_ref.buf);
 		}
 
@@ -4376,7 +4475,12 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 		struct strbuf buf = STRBUF_INIT;
 		struct object_id oid;
 
+<<<<<<< HEAD
 		if (read_oneliner(&buf, rebase_path_stopped_sha(), 1, 0) &&
+=======
+		if (read_oneliner(&buf, rebase_path_stopped_sha(),
+				  READ_ONELINER_SKIP_IF_EMPTY) &&
+>>>>>>> upstream/maint
 		    !get_oid_committish(buf.buf, &oid))
 			record_in_rewritten(&oid, peek_command(&todo_list, 0));
 		strbuf_release(&buf);
@@ -4678,6 +4782,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 				   struct rev_info *revs, struct strbuf *out,
 				   unsigned flags)
 {
+	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	int rebase_cousins = flags & TODO_LIST_REBASE_COUSINS;
 	int root_with_onto = flags & TODO_LIST_ROOT_WITH_ONTO;
 	struct strbuf buf = STRBUF_INIT, oneline = STRBUF_INIT;
@@ -4732,6 +4837,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		is_empty = is_original_commit_empty(commit);
 		if (!is_empty && (commit->object.flags & PATCHSAME))
 			continue;
+		if (is_empty && !keep_empty)
+			continue;
 
 		strbuf_reset(&oneline);
 		pretty_print_commit(pp, commit, &oneline);
@@ -4743,6 +4850,9 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			strbuf_addf(&buf, "%s %s %s", cmd_pick,
 				    oid_to_hex(&commit->object.oid),
 				    oneline.buf);
+			if (is_empty)
+				strbuf_addf(&buf, " %c empty",
+					    comment_line_char);
 
 			FLEX_ALLOC_STR(entry, string, buf.buf);
 			oidcpy(&entry->entry.oid, &commit->object.oid);
@@ -4906,14 +5016,16 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	struct pretty_print_context pp = {0};
 	struct rev_info revs;
 	struct commit *commit;
+	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	const char *insn = flags & TODO_LIST_ABBREVIATE_CMDS ? "p" : "pick";
 	int rebase_merges = flags & TODO_LIST_REBASE_MERGES;
+	int reapply_cherry_picks = flags & TODO_LIST_REAPPLY_CHERRY_PICKS;
 
 	repo_init_revisions(r, &revs, NULL);
 	revs.verbose_header = 1;
 	if (!rebase_merges)
 		revs.max_parents = 1;
-	revs.cherry_mark = 1;
+	revs.cherry_mark = !reapply_cherry_picks;
 	revs.limited = 1;
 	revs.reverse = 1;
 	revs.right_only = 1;
@@ -4945,9 +5057,13 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 
 		if (!is_empty && (commit->object.flags & PATCHSAME))
 			continue;
+		if (is_empty && !keep_empty)
+			continue;
 		strbuf_addf(out, "%s %s ", insn,
 			    oid_to_hex(&commit->object.oid));
 		pretty_print_commit(&pp, commit, out);
+		if (is_empty)
+			strbuf_addf(out, " %c empty", comment_line_char);
 		strbuf_addch(out, '\n');
 	}
 	return 0;
@@ -5034,6 +5150,8 @@ static void todo_list_to_strbuf(struct repository *r, struct todo_list *todo_lis
 		max = num;
 
 	for (item = todo_list->items, i = 0; i < max; i++, item++) {
+		char cmd;
+
 		/* if the item is not a command write it and continue */
 		if (item->command >= TODO_COMMENT) {
 			strbuf_addf(buf, "%.*s\n", item->arg_len,
@@ -5042,8 +5160,9 @@ static void todo_list_to_strbuf(struct repository *r, struct todo_list *todo_lis
 		}
 
 		/* add command to the buffer */
-		if (flags & TODO_LIST_ABBREVIATE_CMDS)
-			strbuf_addch(buf, command_to_char(item->command));
+		cmd = command_to_char(item->command);
+		if ((flags & TODO_LIST_ABBREVIATE_CMDS) && cmd)
+			strbuf_addch(buf, cmd);
 		else
 			strbuf_addstr(buf, command_to_string(item->command));
 
@@ -5351,10 +5470,13 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 			todo_list->items[i].command =
 				starts_with(subject, "fixup!") ?
 				TODO_FIXUP : TODO_SQUASH;
-			if (next[i2] < 0)
+			if (tail[i2] < 0) {
+				next[i] = next[i2];
 				next[i2] = i;
-			else
+			} else {
+				next[i] = next[tail[i2]];
 				next[tail[i2]] = i;
+			}
 			tail[i2] = i;
 		} else if (!hashmap_get_from_hash(&subject2item,
 						strhash(subject), subject)) {

@@ -3,11 +3,12 @@ CONFIGURATION FILE
 
 The Git configuration file contains a number of variables that affect
 the Git commands' behavior. The files `.git/config` and optionally
-`config.worktree` (see `extensions.worktreeConfig` below) in each
-repository are used to store the configuration for that repository, and
-`$HOME/.gitconfig` is used to store a per-user configuration as
-fallback values for the `.git/config` file. The file `/etc/gitconfig`
-can be used to store a system-wide default configuration.
+`config.worktree` (see the "CONFIGURATION FILE" section of
+linkgit:git-worktree[1]) in each repository are used to store the
+configuration for that repository, and `$HOME/.gitconfig` is used to
+store a per-user configuration as fallback values for the `.git/config`
+file. The file `/etc/gitconfig` can be used to store a system-wide
+default configuration.
 
 The configuration variables are used by both the Git plumbing
 and the porcelains. The variables are divided into sections, wherein
@@ -220,12 +221,12 @@ Example
 ; affected by the condition
 [includeIf "gitdir:/path/to/group/"]
 	path = foo.inc
-----
 
-	; include only if we are in a worktree where foo-branch is
-	; currently checked out
-	[includeIf "onbranch:foo-branch"]
-		path = foo.inc
+; include only if we are in a worktree where foo-branch is
+; currently checked out
+[includeIf "onbranch:foo-branch"]
+	path = foo.inc
+----
 
 Values
 ~~~~~~
@@ -446,6 +447,8 @@ include::config/stash.txt[]
 include::config/submodule.txt[]
 
 include::config/tag.txt[]
+
+include::config/tar.txt[]
 
 include::config/trace2.txt[]
 

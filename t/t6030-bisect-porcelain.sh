@@ -148,7 +148,7 @@ test_expect_success 'bisect start: no ".git/BISECT_START" created if junk rev' '
 	test_must_fail git bisect start $HASH4 foo -- &&
 	git branch > branch.output &&
 	grep "* other" branch.output > /dev/null &&
-	test_must_fail test -e .git/BISECT_START
+	test_path_is_missing .git/BISECT_START
 '
 
 test_expect_success 'bisect start: existing ".git/BISECT_START" not modified if junk rev' '
@@ -166,7 +166,7 @@ test_expect_success 'bisect start: no ".git/BISECT_START" if mistaken rev' '
 	test_must_fail git bisect start $HASH1 $HASH4 -- &&
 	git branch > branch.output &&
 	grep "* other" branch.output > /dev/null &&
-	test_must_fail test -e .git/BISECT_START
+	test_path_is_missing .git/BISECT_START
 '
 
 test_expect_success 'bisect start: no ".git/BISECT_START" if checkout error' '
@@ -175,7 +175,7 @@ test_expect_success 'bisect start: no ".git/BISECT_START" if checkout error' '
 	git branch &&
 	git branch > branch.output &&
 	grep "* other" branch.output > /dev/null &&
-	test_must_fail test -e .git/BISECT_START &&
+	test_path_is_missing .git/BISECT_START &&
 	test -z "$(git for-each-ref "refs/bisect/*")" &&
 	git checkout HEAD hello
 '
@@ -485,7 +485,7 @@ test_expect_success 'optimized merge base checks' '
 	git bisect bad &&
 	git bisect good "$A_HASH" > my_bisect_log4.txt &&
 	test_i18ngrep "merge base must be tested" my_bisect_log4.txt &&
-	test_must_fail test -f ".git/BISECT_ANCESTORS_OK"
+	test_path_is_missing ".git/BISECT_ANCESTORS_OK"
 '
 
 # This creates another side branch called "parallel" with some files
@@ -789,6 +789,13 @@ test_expect_success 'bisect start with one new and old' '
 test_expect_success 'bisect replay with old and new' '
 	git bisect replay log_to_replay.txt >bisect_result &&
 	grep "$HASH2 is the first new commit" bisect_result &&
+	git bisect reset
+'
+
+test_expect_success 'bisect replay with CRLF log' '
+	append_cr <log_to_replay.txt >log_to_replay_crlf.txt &&
+	git bisect replay log_to_replay_crlf.txt >bisect_result_crlf &&
+	grep "$HASH2 is the first new commit" bisect_result_crlf &&
 	git bisect reset
 '
 

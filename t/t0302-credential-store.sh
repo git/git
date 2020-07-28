@@ -107,7 +107,6 @@ test_expect_success 'store: if both xdg and home files exist, only store in home
 	test_must_be_empty "$HOME/.config/git/credentials"
 '
 
-
 test_expect_success 'erase: erase matching credentials from both xdg and home files' '
 	echo "https://home-user:home-pass@example.com" >"$HOME/.git-credentials" &&
 	mkdir -p "$HOME/.config/git" &&
@@ -118,6 +117,96 @@ test_expect_success 'erase: erase matching credentials from both xdg and home fi
 	EOF
 	test_must_be_empty "$HOME/.git-credentials" &&
 	test_must_be_empty "$HOME/.config/git/credentials"
+'
+
+invalid_credential_test() {
+	test_expect_success "get: ignore credentials without $1 as invalid" '
+		echo "$2" >"$HOME/.git-credentials" &&
+		check fill store <<-\EOF
+		protocol=https
+		host=example.com
+		--
+		protocol=https
+		host=example.com
+		username=askpass-username
+		password=askpass-password
+		--
+		askpass: Username for '\''https://example.com'\'':
+		askpass: Password for '\''https://askpass-username@example.com'\'':
+		--
+		EOF
+	'
+}
+
+invalid_credential_test "scheme" ://user:pass@example.com
+invalid_credential_test "valid host/path" https://user:pass@
+invalid_credential_test "username/password" https://pass@example.com
+
+test_expect_success 'get: credentials with DOS line endings are invalid' '
+	printf "https://user:pass@example.com\r\n" >"$HOME/.git-credentials" &&
+	check fill store <<-\EOF
+	protocol=https
+	host=example.com
+	--
+	protocol=https
+	host=example.com
+	username=askpass-username
+	password=askpass-password
+	--
+	askpass: Username for '\''https://example.com'\'':
+	askpass: Password for '\''https://askpass-username@example.com'\'':
+	--
+	EOF
+'
+
+test_expect_success 'get: credentials with path and DOS line endings are valid' '
+	printf "https://user:pass@example.com/repo.git\r\n" >"$HOME/.git-credentials" &&
+	check fill store <<-\EOF
+	url=https://example.com/repo.git
+	--
+	protocol=https
+	host=example.com
+	username=user
+	password=pass
+	--
+	EOF
+'
+
+test_expect_success 'get: credentials with DOS line endings are invalid if path is relevant' '
+	printf "https://user:pass@example.com/repo.git\r\n" >"$HOME/.git-credentials" &&
+	test_config credential.useHttpPath true &&
+	check fill store <<-\EOF
+	url=https://example.com/repo.git
+	--
+	protocol=https
+	host=example.com
+	path=repo.git
+	username=askpass-username
+	password=askpass-password
+	--
+	askpass: Username for '\''https://example.com/repo.git'\'':
+	askpass: Password for '\''https://askpass-username@example.com/repo.git'\'':
+	--
+	EOF
+'
+
+test_expect_success 'get: store file can contain empty/bogus lines' '
+	echo "" >"$HOME/.git-credentials" &&
+	q_to_tab <<-\CREDENTIAL >>"$HOME/.git-credentials" &&
+	#comment
+	Q
+	https://user:pass@example.com
+	CREDENTIAL
+	check fill store <<-\EOF
+	protocol=https
+	host=example.com
+	--
+	protocol=https
+	host=example.com
+	username=user
+	password=pass
+	--
+	EOF
 '
 
 test_done

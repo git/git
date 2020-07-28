@@ -73,9 +73,15 @@ merge.stat::
 merge.autoStash::
 	When set to true, automatically create a temporary stash entry
 	before the operation begins, and apply it after the operation
+<<<<<<< HEAD
 	ends.  This means that you can run rebase on a dirty worktree.
 	However, use with care: the final stash application after a
 	successful rebase might result in non-trivial conflicts.
+=======
+	ends.  This means that you can run merge on a dirty worktree.
+	However, use with care: the final stash application after a
+	successful merge might result in non-trivial conflicts.
+>>>>>>> upstream/maint
 	This option can be overridden by the `--no-autostash` and
 	`--autostash` options of linkgit:git-merge[1].
 	Defaults to false.

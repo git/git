@@ -244,7 +244,7 @@ Continue with resetting the current changes?"]
 		set status_bar_operation [$::main_status \
 			start \
 			[mc "Aborting"] \
-			[mc "files reset"]
+			[mc "files reset"]]
 		fileevent $fd readable [namespace code [list \
 			_reset_wait $fd $status_bar_operation]]
 	} else {

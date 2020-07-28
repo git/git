@@ -126,7 +126,7 @@ test_expect_success 'not_uptodate_dir porcelain checkout error' '
 	git rm rep2 -r &&
 	>rep &&
 	>rep2 &&
-	git add rep rep2&&
+	git add rep rep2 &&
 	git commit -m "added test as a file" &&
 	git checkout master &&
 	>rep/untracked-file &&

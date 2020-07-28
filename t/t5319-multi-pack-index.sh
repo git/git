@@ -42,10 +42,15 @@ test_expect_success 'setup' '
 	EOF
 '
 
-test_expect_success 'write midx with no packs' '
-	test_when_finished rm -f pack/multi-pack-index &&
-	git multi-pack-index --object-dir=. write &&
-	midx_read_expect 0 0 4 .
+test_expect_success "don't write midx with no packs" '
+	test_must_fail git multi-pack-index --object-dir=. write &&
+	test_path_is_missing pack/multi-pack-index
+'
+
+test_expect_success "Warn if a midx contains no oid" '
+	cp "$TEST_DIRECTORY"/t5319/no-objects.midx $objdir/pack/multi-pack-index &&
+	test_must_fail git multi-pack-index verify &&
+	rm $objdir/pack/multi-pack-index
 '
 
 generate_objects () {
@@ -521,15 +526,42 @@ test_expect_success 'repack with minimum size does not alter existing packs' '
 		cd dup &&
 		rm -rf .git/objects/pack &&
 		mv .git/objects/pack-backup .git/objects/pack &&
-		touch -m -t 201901010000 .git/objects/pack/pack-D* &&
-		touch -m -t 201901010001 .git/objects/pack/pack-C* &&
-		touch -m -t 201901010002 .git/objects/pack/pack-B* &&
-		touch -m -t 201901010003 .git/objects/pack/pack-A* &&
+		test-tool chmtime =-5 .git/objects/pack/pack-D* &&
+		test-tool chmtime =-4 .git/objects/pack/pack-C* &&
+		test-tool chmtime =-3 .git/objects/pack/pack-B* &&
+		test-tool chmtime =-2 .git/objects/pack/pack-A* &&
 		ls .git/objects/pack >expect &&
 		MINSIZE=$(test-tool path-utils file-size .git/objects/pack/*pack | sort -n | head -n 1) &&
 		git multi-pack-index repack --batch-size=$MINSIZE &&
 		ls .git/objects/pack >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'repack respects repack.packKeptObjects=false' '
+	test_when_finished rm -f dup/.git/objects/pack/*keep &&
+	(
+		cd dup &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 5 idx-list &&
+		ls .git/objects/pack/*.pack | sed "s/\.pack/.keep/" >keep-list &&
+		test_line_count = 5 keep-list &&
+		for keep in $(cat keep-list)
+		do
+			touch $keep || return 1
+		done &&
+		git multi-pack-index repack --batch-size=0 &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 5 idx-list &&
+		test-tool read-midx .git/objects | grep idx >midx-list &&
+		test_line_count = 5 midx-list &&
+		THIRD_SMALLEST_SIZE=$(test-tool path-utils file-size .git/objects/pack/*pack | sort -n | sed -n 3p) &&
+		BATCH_SIZE=$((THIRD_SMALLEST_SIZE + 1)) &&
+		git multi-pack-index repack --batch-size=$BATCH_SIZE &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 5 idx-list &&
+		test-tool read-midx .git/objects | grep idx >midx-list &&
+		test_line_count = 5 midx-list
 	)
 '
 

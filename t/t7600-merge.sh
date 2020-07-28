@@ -727,6 +727,76 @@ test_expect_success 'conflicted merge with --autostash, --abort restores stash' 
 	test_cmp file.1 file
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
+test_expect_success 'completed merge (git commit) with --no-commit and --autostash' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	git diff >expect &&
+	git merge --no-commit --autostash c2 &&
+	git stash show -p MERGE_AUTOSTASH >actual &&
+	test_cmp expect actual &&
+	git commit 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	git show HEAD:file >merge-result &&
+	test_cmp result.1-5 merge-result &&
+	test_cmp result.1-5-9 file
+'
+
+test_expect_success 'completed merge (git merge --continue) with --no-commit and --autostash' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	git diff >expect &&
+	git merge --no-commit --autostash c2 &&
+	git stash show -p MERGE_AUTOSTASH >actual &&
+	test_cmp expect actual &&
+	git merge --continue 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	git show HEAD:file >merge-result &&
+	test_cmp result.1-5 merge-result &&
+	test_cmp result.1-5-9 file
+'
+
+test_expect_success 'aborted merge (merge --abort) with --no-commit and --autostash' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	git diff >expect &&
+	git merge --no-commit --autostash c2 &&
+	git stash show -p MERGE_AUTOSTASH >actual &&
+	test_cmp expect actual &&
+	git merge --abort 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	git diff >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'aborted merge (reset --hard) with --no-commit and --autostash' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	git diff >expect &&
+	git merge --no-commit --autostash c2 &&
+	git stash show -p MERGE_AUTOSTASH >actual &&
+	test_cmp expect actual &&
+	git reset --hard 2>err &&
+	test_i18ngrep "Autostash exists; creating a new stash entry." err &&
+	git diff --exit-code
+'
+
+test_expect_success 'quit merge with --no-commit and --autostash' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	git diff >expect &&
+	git merge --no-commit --autostash c2 &&
+	git stash show -p MERGE_AUTOSTASH >actual &&
+	test_cmp expect actual &&
+	git diff HEAD >expect &&
+	git merge --quit 2>err &&
+	test_i18ngrep "Autostash exists; creating a new stash entry." err &&
+	git diff HEAD >actual &&
+	test_cmp expect actual
+'
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 test_expect_success 'merge with conflicted --autostash changes' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9y &&

@@ -14,7 +14,7 @@ SYNOPSIS
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
 	[--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
 	[--stdout [--filter=<filter-spec>] | base-name]
-	[--shallow] [--keep-true-parents] [--sparse] < object-list
+	[--shallow] [--keep-true-parents] [--[no-]sparse] < object-list
 
 
 DESCRIPTION
@@ -196,14 +196,16 @@ depth is 4095.
 	Add --no-reuse-object if you want to force a uniform compression
 	level on all data no matter the source.
 
---sparse::
-	Use the "sparse" algorithm to determine which objects to include in
+--[no-]sparse::
+	Toggle the "sparse" algorithm to determine which objects to include in
 	the pack, when combined with the "--revs" option. This algorithm
 	only walks trees that appear in paths that introduce new objects.
 	This can have significant performance benefits when computing
 	a pack to send a small change. However, it is possible that extra
 	objects are added to the pack-file if the included commits contain
-	certain types of direct renames.
+	certain types of direct renames. If this option is not included,
+	it defaults to the value of `pack.useSparse`, which is true unless
+	otherwise specified.
 
 --thin::
 	Create a "thin" pack by omitting the common objects between a

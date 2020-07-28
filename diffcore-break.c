@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "promisor-remote.h"
 
 static int should_break(struct repository *r,
 			struct diff_filespec *src,
@@ -49,6 +50,8 @@ static int should_break(struct repository *r,
 	unsigned long delta_size, max_size;
 	unsigned long src_copied, literal_added, src_removed;
 
+	struct diff_populate_filespec_options options = { 0 };
+
 	*merge_score_p = 0; /* assume no deletion --- "do not break"
 			     * is the default.
 			     */
@@ -62,8 +65,13 @@ static int should_break(struct repository *r,
 	    oideq(&src->oid, &dst->oid))
 		return 0; /* they are the same */
 
-	if (diff_populate_filespec(r, src, 0) ||
-	    diff_populate_filespec(r, dst, 0))
+	if (r == the_repository && has_promisor_remote()) {
+		options.missing_object_cb = diff_queued_diff_prefetch;
+		options.missing_object_data = r;
+	}
+
+	if (diff_populate_filespec(r, src, &options) ||
+	    diff_populate_filespec(r, dst, &options))
 		return 0; /* error but caught downstream */
 
 	max_size = ((src->size > dst->size) ? src->size : dst->size);

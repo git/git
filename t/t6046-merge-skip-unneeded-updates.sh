@@ -71,8 +71,7 @@ test_expect_success '1a-L: Modify(A)/Modify(B), change on B subset of A' '
 
 		git checkout A^0 &&
 
-		test-tool chmtime =-1 b &&
-		test-tool chmtime --get b >old-mtime &&
+		test-tool chmtime --get -3600 b >old-mtime &&
 
 		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
 
@@ -102,8 +101,7 @@ test_expect_success '1a-R: Modify(A)/Modify(B), change on B subset of A' '
 
 		git checkout B^0 &&
 
-		test-tool chmtime =-1 b &&
-		test-tool chmtime --get b >old-mtime &&
+		test-tool chmtime --get -3600 b >old-mtime &&
 		GIT_MERGE_VERBOSITY=3 git merge -s recursive A^0 >out 2>err &&
 
 		# Make sure b WAS updated
@@ -198,8 +196,7 @@ test_expect_success '2a-R: Modify/rename, merge into rename side' '
 
 		git checkout B^0 &&
 
-		test-tool chmtime =-1 c &&
-		test-tool chmtime --get c >old-mtime &&
+		test-tool chmtime --get -3600 c >old-mtime &&
 		GIT_MERGE_VERBOSITY=3 git merge -s recursive A^0 >out 2>err &&
 
 		# Make sure c WAS updated
@@ -266,8 +263,7 @@ test_expect_success '2b-L: Rename+Mod(A)/Mod(B), B mods subset of A' '
 
 		git checkout A^0 &&
 
-		test-tool chmtime =-1 c &&
-		test-tool chmtime --get c >old-mtime &&
+		test-tool chmtime --get -3600 c >old-mtime &&
 		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
@@ -373,8 +369,7 @@ test_expect_success '2c: Modify b & add c VS rename b->c' '
 
 		git checkout A^0 &&
 
-		test-tool chmtime =-1 c &&
-		test-tool chmtime --get c >old-mtime &&
+		test-tool chmtime --get -3600 c >old-mtime &&
 		GIT_MERGE_VERBOSITY=3 &&
 		export GIT_MERGE_VERBOSITY &&
 		test_must_fail git merge -s recursive B^0 >out 2>err &&
@@ -679,8 +674,7 @@ test_expect_failure '4a: Change on A, change on B subset of A, dirty mods presen
 		git checkout A^0 &&
 		echo "File rewritten" >b &&
 
-		test-tool chmtime =-1 b &&
-		test-tool chmtime --get b >old-mtime &&
+		test-tool chmtime --get -3600 b >old-mtime &&
 
 		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
 
@@ -747,8 +741,7 @@ test_expect_success '4b: Rename+Mod(A)/Mod(B), change on B subset of A, dirty mo
 		git checkout A^0 &&
 		echo "File rewritten" >c &&
 
-		test-tool chmtime =-1 c &&
-		test-tool chmtime --get c >old-mtime &&
+		test-tool chmtime --get -3600 c >old-mtime &&
 
 		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
 

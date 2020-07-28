@@ -14,7 +14,7 @@
 #include "pack-revindex.h"
 #include "hash.h"
 #include "path.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "repository.h"
 #include "mem-pool.h"
 
@@ -1700,6 +1700,7 @@ struct checkout {
 	const char *base_dir;
 	int base_dir_len;
 	struct delayed_checkout *delayed_checkout;
+	struct checkout_metadata meta;
 	unsigned force:1,
 		 quiet:1,
 		 not_new:1,

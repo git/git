@@ -77,9 +77,7 @@ _run_sub_test_lib_test_common () {
 		# the sub-test.
 		sane_unset HARNESS_ACTIVE &&
 		cd "$name" &&
-		cat >"$name.sh" <<-EOF &&
-		#!$SHELL_PATH
-
+		write_script "$name.sh" "$TEST_SHELL_PATH" <<-EOF &&
 		test_description='$descr (run in sub test-lib)
 
 		This is run in a sub test-lib so that we do not get incorrect
@@ -94,15 +92,15 @@ _run_sub_test_lib_test_common () {
 		. "\$TEST_DIRECTORY"/test-lib.sh
 		EOF
 		cat >>"$name.sh" &&
-		chmod +x "$name.sh" &&
 		export TEST_DIRECTORY &&
 		TEST_OUTPUT_DIRECTORY=$(pwd) &&
 		export TEST_OUTPUT_DIRECTORY &&
+		sane_unset GIT_TEST_FAIL_PREREQS &&
 		if test -z "$neg"
 		then
 			./"$name.sh" "$@" >out 2>err
 		else
-			!  ./"$name.sh" "$@" >out 2>err
+			! ./"$name.sh" "$@" >out 2>err
 		fi
 	)
 }
@@ -832,6 +830,19 @@ then
 	say "bug in test framework: basic cleanup command does not work reliably"
 	exit 1
 fi
+
+test_expect_success 'lazy prereqs do not turn off tracing' "
+	run_sub_test_lib_test lazy-prereq-and-tracing \
+		'lazy prereqs and -x' -v -x <<-\\EOF &&
+	test_lazy_prereq LAZY true
+
+	test_expect_success lazy 'test_have_prereq LAZY && echo trace'
+
+	test_done
+	EOF
+
+	grep 'echo trace' lazy-prereq-and-tracing/err
+"
 
 test_expect_success 'tests clean up even on failures' "
 	run_sub_test_lib_test_err \

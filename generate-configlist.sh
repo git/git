@@ -11,6 +11,7 @@ EOF
 	sed '/deprecated/d; s/::$//; s/,  */\n/g' |
 	sort |
 <<<<<<< HEAD
+<<<<<<< HEAD
 	while read line
 	do
 		echo "	\"$line\","
@@ -18,6 +19,9 @@ EOF
 =======
 	sed 's/^.*$/	"&",/'
 >>>>>>> upstream/pu
+=======
+	sed 's/^.*$/	"&",/'
+>>>>>>> upstream/maint
 	cat <<EOF
 	NULL,
 };

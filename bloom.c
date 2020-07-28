@@ -1,23 +1,36 @@
 #include "git-compat-util.h"
 #include "bloom.h"
+<<<<<<< HEAD
 #include "commit.h"
 #include "commit-slab.h"
 #include "commit-graph.h"
 #include "object-store.h"
+=======
+>>>>>>> upstream/maint
 #include "diff.h"
 #include "diffcore.h"
 #include "revision.h"
 #include "hashmap.h"
+<<<<<<< HEAD
 
 define_commit_slab(bloom_filter_slab, struct bloom_filter);
 
 struct bloom_filter_slab bloom_filters;
+=======
+#include "commit-graph.h"
+#include "commit.h"
+
+define_commit_slab(bloom_filter_slab, struct bloom_filter);
+
+static struct bloom_filter_slab bloom_filters;
+>>>>>>> upstream/maint
 
 struct pathmap_hash_entry {
     struct hashmap_entry entry;
     const char path[FLEX_ARRAY];
 };
 
+<<<<<<< HEAD
 static uint32_t rotate_right(uint32_t value, int32_t count)
 {
 	uint32_t mask = 8 * sizeof(uint32_t) - 1;
@@ -32,6 +45,58 @@ static uint32_t rotate_right(uint32_t value, int32_t count)
  * Implemented as described in https://en.wikipedia.org/wiki/MurmurHash#Algorithm
  **/
 static uint32_t seed_murmur3(uint32_t seed, const char *data, int len)
+=======
+static uint32_t rotate_left(uint32_t value, int32_t count)
+{
+	uint32_t mask = 8 * sizeof(uint32_t) - 1;
+	count &= mask;
+	return ((value << count) | (value >> ((-count) & mask)));
+}
+
+static inline unsigned char get_bitmask(uint32_t pos)
+{
+	return ((unsigned char)1) << (pos & (BITS_PER_WORD - 1));
+}
+
+static int load_bloom_filter_from_graph(struct commit_graph *g,
+					struct bloom_filter *filter,
+					struct commit *c)
+{
+	uint32_t lex_pos, start_index, end_index;
+
+	while (c->graph_pos < g->num_commits_in_base)
+		g = g->base_graph;
+
+	/* The commit graph commit 'c' lives in doesn't carry bloom filters. */
+	if (!g->chunk_bloom_indexes)
+		return 0;
+
+	lex_pos = c->graph_pos - g->num_commits_in_base;
+
+	end_index = get_be32(g->chunk_bloom_indexes + 4 * lex_pos);
+
+	if (lex_pos > 0)
+		start_index = get_be32(g->chunk_bloom_indexes + 4 * (lex_pos - 1));
+	else
+		start_index = 0;
+
+	filter->len = end_index - start_index;
+	filter->data = (unsigned char *)(g->chunk_bloom_data +
+					sizeof(unsigned char) * start_index +
+					BLOOMDATA_CHUNK_HEADER_SIZE);
+
+	return 1;
+}
+
+/*
+ * Calculate the murmur3 32-bit hash value for the given data
+ * using the given seed.
+ * Produces a uniformly distributed hash value.
+ * Not considered to be cryptographically secure.
+ * Implemented as described in https://en.wikipedia.org/wiki/MurmurHash#Algorithm
+ */
+uint32_t murmur3_seeded(uint32_t seed, const char *data, size_t len)
+>>>>>>> upstream/maint
 {
 	const uint32_t c1 = 0xcc9e2d51;
 	const uint32_t c2 = 0x1b873593;
@@ -53,11 +118,19 @@ static uint32_t seed_murmur3(uint32_t seed, const char *data, int len)
 		uint32_t byte4 = ((uint32_t)data[4*i + 3]) << 24;
 		k = byte1 | byte2 | byte3 | byte4;
 		k *= c1;
+<<<<<<< HEAD
 		k = rotate_right(k, r1);
 		k *= c2;
 
 		seed ^= k;
 		seed = rotate_right(seed, r2) * m + n;
+=======
+		k = rotate_left(k, r1);
+		k *= c2;
+
+		seed ^= k;
+		seed = rotate_left(seed, r2) * m + n;
+>>>>>>> upstream/maint
 	}
 
 	tail = (data + len4 * sizeof(uint32_t));
@@ -72,7 +145,11 @@ static uint32_t seed_murmur3(uint32_t seed, const char *data, int len)
 	case 1:
 		k1 ^= ((uint32_t)tail[0]) << 0;
 		k1 *= c1;
+<<<<<<< HEAD
 		k1 = rotate_right(k1, r1);
+=======
+		k1 = rotate_left(k1, r1);
+>>>>>>> upstream/maint
 		k1 *= c2;
 		seed ^= k1;
 		break;
@@ -88,6 +165,7 @@ static uint32_t seed_murmur3(uint32_t seed, const char *data, int len)
 	return seed;
 }
 
+<<<<<<< HEAD
 static inline unsigned char get_bitmask(uint32_t pos)
 {
 	return ((unsigned char)1) << (pos & (BITS_PER_WORD - 1));
@@ -102,21 +180,38 @@ void fill_bloom_key(const char *data,
 					int len,
 					struct bloom_key *key,
 					struct bloom_filter_settings *settings)
+=======
+void fill_bloom_key(const char *data,
+		    size_t len,
+		    struct bloom_key *key,
+		    const struct bloom_filter_settings *settings)
+>>>>>>> upstream/maint
 {
 	int i;
 	const uint32_t seed0 = 0x293ae76f;
 	const uint32_t seed1 = 0x7e646e2c;
+<<<<<<< HEAD
 	const uint32_t hash0 = seed_murmur3(seed0, data, len);
 	const uint32_t hash1 = seed_murmur3(seed1, data, len);
+=======
+	const uint32_t hash0 = murmur3_seeded(seed0, data, len);
+	const uint32_t hash1 = murmur3_seeded(seed1, data, len);
+>>>>>>> upstream/maint
 
 	key->hashes = (uint32_t *)xcalloc(settings->num_hashes, sizeof(uint32_t));
 	for (i = 0; i < settings->num_hashes; i++)
 		key->hashes[i] = hash0 + i * hash1;
 }
 
+<<<<<<< HEAD
 void add_key_to_filter(struct bloom_key *key,
 					   struct bloom_filter *filter,
 					   struct bloom_filter_settings *settings)
+=======
+void add_key_to_filter(const struct bloom_key *key,
+		       struct bloom_filter *filter,
+		       const struct bloom_filter_settings *settings)
+>>>>>>> upstream/maint
 {
 	int i;
 	uint64_t mod = filter->len * BITS_PER_WORD;
@@ -129,6 +224,7 @@ void add_key_to_filter(struct bloom_key *key,
 	}
 }
 
+<<<<<<< HEAD
 static int load_bloom_filter_from_graph(struct commit_graph *g,
 				   struct bloom_filter *filter,
 				   struct commit *c)
@@ -157,6 +253,24 @@ static int load_bloom_filter_from_graph(struct commit_graph *g,
 					BLOOMDATA_CHUNK_HEADER_SIZE);
 
 	return 1;
+=======
+void init_bloom_filters(void)
+{
+	init_bloom_filter_slab(&bloom_filters);
+}
+
+static int pathmap_cmp(const void *hashmap_cmp_fn_data,
+		       const struct hashmap_entry *eptr,
+		       const struct hashmap_entry *entry_or_key,
+		       const void *keydata)
+{
+	const struct pathmap_hash_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct pathmap_hash_entry, entry);
+	e2 = container_of(entry_or_key, const struct pathmap_hash_entry, entry);
+
+	return strcmp(e1->path, e2->path);
+>>>>>>> upstream/maint
 }
 
 struct bloom_filter *get_bloom_filter(struct repository *r,
@@ -169,7 +283,11 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 	struct diff_options diffopt;
 	int max_changes = 512;
 
+<<<<<<< HEAD
 	if (!bloom_filters.slab_size)
+=======
+	if (bloom_filters.slab_size == 0)
+>>>>>>> upstream/maint
 		return NULL;
 
 	filter = bloom_filter_slab_at(&bloom_filters, c);
@@ -190,15 +308,26 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 
 	repo_diff_setup(r, &diffopt);
 	diffopt.flags.recursive = 1;
+<<<<<<< HEAD
 	diffopt.max_changes = max_changes;
 	diff_setup_done(&diffopt);
 
+=======
+	diffopt.detect_rename = 0;
+	diffopt.max_changes = max_changes;
+	diff_setup_done(&diffopt);
+
+	/* ensure commit is parsed so we have parent information */
+	repo_parse_commit(r, c);
+
+>>>>>>> upstream/maint
 	if (c->parents)
 		diff_tree_oid(&c->parents->item->object.oid, &c->object.oid, "", &diffopt);
 	else
 		diff_tree_oid(NULL, &c->object.oid, "", &diffopt);
 	diffcore_std(&diffopt);
 
+<<<<<<< HEAD
 	if (diff_queued_diff.nr <= max_changes) {
 		struct hashmap pathmap;
 		struct pathmap_hash_entry* e;
@@ -229,6 +358,41 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 				*last_slash = '\0';
 
 			} while (*p);
+=======
+	if (diffopt.num_changes <= max_changes) {
+		struct hashmap pathmap;
+		struct pathmap_hash_entry *e;
+		struct hashmap_iter iter;
+		hashmap_init(&pathmap, pathmap_cmp, NULL, 0);
+
+		for (i = 0; i < diff_queued_diff.nr; i++) {
+			const char *path = diff_queued_diff.queue[i]->two->path;
+
+			/*
+			 * Add each leading directory of the changed file, i.e. for
+			 * 'dir/subdir/file' add 'dir' and 'dir/subdir' as well, so
+			 * the Bloom filter could be used to speed up commands like
+			 * 'git log dir/subdir', too.
+			 *
+			 * Note that directories are added without the trailing '/'.
+			 */
+			do {
+				char *last_slash = strrchr(path, '/');
+
+				FLEX_ALLOC_STR(e, path, path);
+				hashmap_entry_init(&e->entry, strhash(path));
+
+				if (!hashmap_get(&pathmap, &e->entry, NULL))
+					hashmap_add(&pathmap, &e->entry);
+				else
+					free(e);
+
+				if (!last_slash)
+					last_slash = (char*)path;
+				*last_slash = '\0';
+
+			} while (*path);
+>>>>>>> upstream/maint
 
 			diff_free_filepair(diff_queued_diff.queue[i]);
 		}
@@ -256,9 +420,15 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 	return filter;
 }
 
+<<<<<<< HEAD
 int bloom_filter_contains(struct bloom_filter *filter,
 			  struct bloom_key *key,
 			  struct bloom_filter_settings *settings)
+=======
+int bloom_filter_contains(const struct bloom_filter *filter,
+			  const struct bloom_key *key,
+			  const struct bloom_filter_settings *settings)
+>>>>>>> upstream/maint
 {
 	int i;
 	uint64_t mod = filter->len * BITS_PER_WORD;

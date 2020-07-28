@@ -31,10 +31,6 @@ test_perf 'simulated fetch' '
 	} | git pack-objects --revs --stdout >/dev/null
 '
 
-test_perf 'pack to file' '
-	git pack-objects --all pack1 </dev/null >/dev/null
-'
-
 test_perf 'pack to file (bitmap)' '
 	git pack-objects --use-bitmap-index --all pack1b </dev/null >/dev/null
 '
@@ -55,6 +51,11 @@ test_perf 'rev-list count with blob:none' '
 test_perf 'rev-list count with blob:limit=1k' '
 	git rev-list --use-bitmap-index --count --objects --all \
 		--filter=blob:limit=1k >/dev/null
+'
+
+test_perf 'rev-list count with tree:0' '
+	git rev-list --use-bitmap-index --count --objects --all \
+		--filter=tree:0 >/dev/null
 '
 
 test_perf 'simulated partial clone' '
@@ -88,6 +89,11 @@ test_perf 'clone (partial bitmap)' '
 
 test_perf 'pack to file (partial bitmap)' '
 	git pack-objects --use-bitmap-index --all pack2b </dev/null >/dev/null
+'
+
+test_perf 'rev-list with tree filter (partial bitmap)' '
+	git rev-list --use-bitmap-index --count --objects --all \
+		--filter=tree:0 >/dev/null
 '
 
 test_done

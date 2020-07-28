@@ -321,50 +321,6 @@ int ref_exists(const char *refname)
 	return refs_ref_exists(get_main_ref_store(the_repository), refname);
 }
 
-static int match_ref_pattern(const char *refname,
-			     const struct string_list_item *item)
-{
-	int matched = 0;
-	if (item->util == NULL) {
-		if (!wildmatch(item->string, refname, 0))
-			matched = 1;
-	} else {
-		const char *rest;
-		if (skip_prefix(refname, item->string, &rest) &&
-		    (!*rest || *rest == '/'))
-			matched = 1;
-	}
-	return matched;
-}
-
-int ref_filter_match(const char *refname,
-		     const struct string_list *include_patterns,
-		     const struct string_list *exclude_patterns)
-{
-	struct string_list_item *item;
-
-	if (exclude_patterns && exclude_patterns->nr) {
-		for_each_string_list_item(item, exclude_patterns) {
-			if (match_ref_pattern(refname, item))
-				return 0;
-		}
-	}
-
-	if (include_patterns && include_patterns->nr) {
-		int found = 0;
-		for_each_string_list_item(item, include_patterns) {
-			if (match_ref_pattern(refname, item)) {
-				found = 1;
-				break;
-			}
-		}
-
-		if (!found)
-			return 0;
-	}
-	return 1;
-}
-
 static int filter_refs(const char *refname, const struct object_id *oid,
 			   int flags, void *data)
 {
@@ -1866,17 +1822,22 @@ static struct ref_store *ref_store_init(const char *gitdir, const char *be_name,
 
 struct ref_store *get_main_ref_store(struct repository *r)
 {
-	if (r->refs)
-		return r->refs;
+	if (r->refs_private)
+		return r->refs_private;
 
 	if (!r->gitdir)
 		BUG("attempting to get main_ref_store outside of repository");
 
+<<<<<<< HEAD
 	r->refs = ref_store_init(r->gitdir,
 				 r->ref_storage_format ? r->ref_storage_format :
 							 "files",
 				 REF_STORE_ALL_CAPS);
 	return r->refs;
+=======
+	r->refs_private = ref_store_init(r->gitdir, REF_STORE_ALL_CAPS);
+	return r->refs_private;
+>>>>>>> upstream/maint
 }
 
 /*

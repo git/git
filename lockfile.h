@@ -90,6 +90,15 @@
  * functions. In particular, the state diagram and the cleanup
  * machinery are all implemented in the tempfile module.
  *
+ * Permission bits
+ * ---------------
+ *
+ * If you call either `hold_lock_file_for_update_mode` or
+ * `hold_lock_file_for_update_timeout_mode`, you can specify a suggested
+ * mode for the underlying temporary file. Note that the file isn't
+ * guaranteed to have this exact mode, since it may be limited by either
+ * the umask, 'core.sharedRepository', or both. See `adjust_shared_perm`
+ * for more.
  *
  * Error handling
  * --------------
@@ -156,12 +165,20 @@ struct lock_file {
  * file descriptor for writing to it, or -1 on error. If the file is
  * currently locked, retry with quadratic backoff for at least
  * timeout_ms milliseconds. If timeout_ms is 0, try exactly once; if
- * timeout_ms is -1, retry indefinitely. The flags argument and error
- * handling are described above.
+ * timeout_ms is -1, retry indefinitely. The flags argument, error
+ * handling, and mode are described above.
  */
-int hold_lock_file_for_update_timeout(
+int hold_lock_file_for_update_timeout_mode(
 		struct lock_file *lk, const char *path,
-		int flags, long timeout_ms);
+		int flags, long timeout_ms, int mode);
+
+static inline int hold_lock_file_for_update_timeout(
+		struct lock_file *lk, const char *path,
+		int flags, long timeout_ms)
+{
+	return hold_lock_file_for_update_timeout_mode(lk, path, flags,
+						      timeout_ms, 0666);
+}
 
 /*
  * Attempt to create a lockfile for the file at `path` and return a
@@ -173,6 +190,13 @@ static inline int hold_lock_file_for_update(
 		int flags)
 {
 	return hold_lock_file_for_update_timeout(lk, path, flags, 0);
+}
+
+static inline int hold_lock_file_for_update_mode(
+		struct lock_file *lk, const char *path,
+		int flags, int mode)
+{
+	return hold_lock_file_for_update_timeout_mode(lk, path, flags, 0, mode);
 }
 
 /*

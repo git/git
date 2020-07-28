@@ -824,6 +824,8 @@ patterns are available:
 
 - `java` suitable for source code in the Java language.
 
+- `markdown` suitable for Markdown documents.
+
 - `matlab` suitable for source code in the MATLAB and Octave languages.
 
 - `objc` suitable for source code in the Objective-C language.

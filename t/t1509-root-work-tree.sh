@@ -221,7 +221,7 @@ test_expect_success 'setup' '
 	rm -rf /.git &&
 	echo "Initialized empty Git repository in /.git/" > expected &&
 	git init > result &&
-	test_cmp expected result
+	test_i18ncmp expected result
 '
 
 test_vars 'auto gitdir, root' ".git" "/" ""
@@ -246,7 +246,7 @@ test_expect_success 'setup' '
 	cd / &&
 	echo "Initialized empty Git repository in /" > expected &&
 	git init --bare > result &&
-	test_cmp expected result
+	test_i18ncmp expected result
 '
 
 test_vars 'auto gitdir, root' "." "" ""

@@ -1,11 +1,10 @@
 #ifndef OIDSET_H
 #define OIDSET_H
 
-#include "hashmap.h"
 #include "khash.h"
 
 /**
- * This API is similar to sha1-array, in that it maintains a set of object ids
+ * This API is similar to oid-array, in that it maintains a set of object ids
  * in a memory-efficient way. The major differences are:
  *
  *   1. It uses a hash, so we can do online duplicate removal, rather than
@@ -54,6 +53,11 @@ int oidset_insert(struct oidset *set, const struct object_id *oid);
  * Returns 1 if the oid was present in the set, 0 otherwise.
  */
 int oidset_remove(struct oidset *set, const struct object_id *oid);
+
+/**
+ * Returns the number of oids in the set.
+ */
+int oidset_size(struct oidset *set);
 
 /**
  * Remove all entries from the oidset, freeing any resources associated with

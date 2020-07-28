@@ -459,7 +459,7 @@ static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
 static int reflog_expire_config(const char *var, const char *value, void *cb)
 {
 	const char *pattern, *key;
-	int pattern_len;
+	size_t pattern_len;
 	timestamp_t expire;
 	int slot;
 	struct reflog_expire_cfg *ent;

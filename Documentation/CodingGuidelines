@@ -91,15 +91,9 @@ For shell scripts specifically (not exhaustive):
 
    - No shell arrays.
 
-   - No strlen ${#parameter}.
-
    - No pattern replacement ${parameter/pattern/string}.
 
  - We use Arithmetic Expansion $(( ... )).
-
- - Inside Arithmetic Expansion, spell shell variables with $ in front
-   of them, as some shells do not grok $((x)) while accepting $(($x))
-   just fine (e.g. dash older than 0.5.4).
 
  - We do not use Process Substitution <(list) or >(list).
 
@@ -237,6 +231,18 @@ For C programs:
 
         while( condition )
 		func (bar+1);
+
+ - Do not explicitly compare an integral value with constant 0 or '\0',
+   or a pointer value with constant NULL.  For instance, to validate that
+   counted array <ptr, cnt> is initialized but has no elements, write:
+
+	if (!ptr || cnt)
+		BUG("empty array expected");
+
+   and not:
+
+	if (ptr == NULL || cnt != 0);
+		BUG("empty array expected");
 
  - We avoid using braces unnecessarily.  I.e.
 

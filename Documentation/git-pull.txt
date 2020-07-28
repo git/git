@@ -85,8 +85,9 @@ OPTIONS
 	Pass --verbose to git-fetch and git-merge.
 
 --[no-]recurse-submodules[=yes|on-demand|no]::
-	This option controls if new commits of all populated submodules should
-	be fetched and updated, too (see linkgit:git-config[1] and
+	This option controls if new commits of populated submodules should
+	be fetched, and if the working trees of active submodules should be
+	updated, too (see linkgit:git-fetch[1], linkgit:git-config[1] and
 	linkgit:gitmodules[5]).
 +
 If the checkout is done via rebase, local submodule commits are rebased as well.
@@ -220,9 +221,9 @@ branch.<name>.merge options; see linkgit:git-config[1] for details.
 $ git pull origin next
 ------------------------------------------------
 +
-This leaves a copy of `next` temporarily in FETCH_HEAD, but
-does not update any remote-tracking branches. Using remote-tracking
-branches, the same can be done by invoking fetch and merge:
+This leaves a copy of `next` temporarily in FETCH_HEAD, and
+updates the remote-tracking branch `origin/next`.
+The same can be done by invoking fetch and merge:
 +
 ------------------------------------------------
 $ git fetch origin

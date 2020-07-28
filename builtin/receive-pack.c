@@ -13,7 +13,7 @@
 #include "remote.h"
 #include "connect.h"
 #include "string-list.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "connected.h"
 #include "argv-array.h"
 #include "version.h"
@@ -28,6 +28,7 @@
 #include "protocol.h"
 #include "commit-reach.h"
 #include "worktree.h"
+#include "shallow.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -418,7 +419,7 @@ static int copy_to_sideband(int in, int out, void *arg)
 	return 0;
 }
 
-static void hmac(unsigned char *out,
+static void hmac_hash(unsigned char *out,
 		      const char *key_in, size_t key_len,
 		      const char *text, size_t text_len)
 {
@@ -463,10 +464,10 @@ static char *prepare_push_cert_nonce(const char *path, timestamp_t stamp)
 	unsigned char hash[GIT_MAX_RAWSZ];
 
 	strbuf_addf(&buf, "%s:%"PRItime, path, stamp);
-	hmac(hash, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));
+	hmac_hash(hash, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));
 	strbuf_release(&buf);
 
-	/* RFC 2104 5. HMAC-SHA1-80 */
+	/* RFC 2104 5. HMAC-SHA1 or HMAC-SHA256 */
 	strbuf_addf(&buf, "%"PRItime"-%.*s", stamp, (int)the_hash_algo->hexsz, hash_to_hex(hash));
 	return strbuf_detach(&buf, NULL);
 }
@@ -499,12 +500,27 @@ static char *find_header(const char *msg, size_t len, const char *key,
 	return NULL;
 }
 
+/*
+ * Return zero if a and b are equal up to n bytes and nonzero if they are not.
+ * This operation is guaranteed to run in constant time to avoid leaking data.
+ */
+static int constant_memequal(const char *a, const char *b, size_t n)
+{
+	int res = 0;
+	size_t i;
+
+	for (i = 0; i < n; i++)
+		res |= a[i] ^ b[i];
+	return res;
+}
+
 static const char *check_nonce(const char *buf, size_t len)
 {
 	char *nonce = find_header(buf, len, "nonce", NULL);
 	timestamp_t stamp, ostamp;
 	char *bohmac, *expect = NULL;
 	const char *retval = NONCE_BAD;
+	size_t noncelen;
 
 	if (!nonce) {
 		retval = NONCE_MISSING;
@@ -546,8 +562,14 @@ static const char *check_nonce(const char *buf, size_t len)
 		goto leave;
 	}
 
+	noncelen = strlen(nonce);
 	expect = prepare_push_cert_nonce(service_dir, stamp);
-	if (strcmp(expect, nonce)) {
+	if (noncelen != strlen(expect)) {
+		/* This is not even the right size. */
+		retval = NONCE_BAD;
+		goto leave;
+	}
+	if (constant_memequal(expect, nonce, noncelen)) {
 		/* Not what we would have signed earlier */
 		retval = NONCE_BAD;
 		goto leave;
@@ -855,7 +877,7 @@ static void refuse_unconfigured_deny_delete_current(void)
 static int command_singleton_iterator(void *cb_data, struct object_id *oid);
 static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 {
-	struct lock_file shallow_lock = LOCK_INIT;
+	struct shallow_lock shallow_lock = SHALLOW_LOCK_INIT;
 	struct oid_array extra = OID_ARRAY_INIT;
 	struct check_connected_options opt = CHECK_CONNECTED_INIT;
 	uint32_t mask = 1 << (cmd->index % 32);
@@ -872,12 +894,12 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	opt.env = tmp_objdir_env(tmp_objdir);
 	setup_alternate_shallow(&shallow_lock, &opt.shallow_file, &extra);
 	if (check_connected(command_singleton_iterator, cmd, &opt)) {
-		rollback_lock_file(&shallow_lock);
+		rollback_shallow_file(the_repository, &shallow_lock);
 		oid_array_clear(&extra);
 		return -1;
 	}
 
-	commit_lock_file(&shallow_lock);
+	commit_shallow_file(the_repository, &shallow_lock);
 
 	/*
 	 * Make sure setup_alternate_shallow() for the next ref does

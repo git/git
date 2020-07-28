@@ -106,29 +106,37 @@ test_expect_success 'GIT_REFLOG_ACTION' '
 	test_commit reflog-to-rebase &&
 
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	git rebase --am reflog-onto &&
 ================================
 	git rebase --apply reflog-onto &&
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
+================================
+	git rebase reflog-onto &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	git log -g --format=%gs -3 >actual &&
 	cat >expect <<-\EOF &&
-	rebase finished: returning to refs/heads/reflog-topic
-	rebase: reflog-to-rebase
-	rebase: checkout reflog-onto
+	rebase (finish): returning to refs/heads/reflog-topic
+	rebase (pick): reflog-to-rebase
+	rebase (start): checkout reflog-onto
 	EOF
 	test_cmp expect actual &&
 
 	git checkout -b reflog-prefix reflog-to-rebase &&
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	GIT_REFLOG_ACTION=change-the-reflog git rebase --am reflog-onto &&
 ================================
 	GIT_REFLOG_ACTION=change-the-reflog git rebase --apply reflog-onto &&
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
+================================
+	GIT_REFLOG_ACTION=change-the-reflog git rebase reflog-onto &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/maint
 	git log -g --format=%gs -3 >actual &&
 	cat >expect <<-\EOF &&
-	rebase finished: returning to refs/heads/reflog-prefix
-	change-the-reflog: reflog-to-rebase
-	change-the-reflog: checkout reflog-onto
+	change-the-reflog (finish): returning to refs/heads/reflog-prefix
+	change-the-reflog (pick): reflog-to-rebase
+	change-the-reflog (start): checkout reflog-onto
 	EOF
 	test_cmp expect actual
 '
