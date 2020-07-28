@@ -464,7 +464,7 @@ static void read_bisect_paths(struct argv_array *array)
 
 	while (strbuf_getline_lf(&str, fp) != EOF) {
 		strbuf_trim(&str);
-		if (sq_dequote_to_argv_array(str.buf, array))
+		if (sq_dequote_to_strvec(str.buf, array))
 			die(_("Badly quoted content in file '%s': %s"),
 			    filename, str.buf);
 	}
