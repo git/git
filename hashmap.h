@@ -168,7 +168,7 @@ struct hashmap_entry {
  * argument `keydata`, respectively. Otherwise, `keydata` is NULL.
  *
  * When it is too expensive to allocate a user entry (either because it is
- * large or varialbe sized, such that it is not on the stack), then the
+ * large or variable sized, such that it is not on the stack), then the
  * relevant data to check for equality should be passed via `keydata`.
  * In this case `key` can be a stripped down version of the user key data
  * or even just a hashmap_entry having the correct hash.
