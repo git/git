@@ -160,10 +160,10 @@ test_expect_success 'core.logAllRefUpdates=always creates reflog by default' '
 	git reflog exists $outside
 '
 
-test_expect_success 'core.logAllRefUpdates=always creates no reflog for ORIG_HEAD' '
+test_expect_success 'core.logAllRefUpdates=always creates reflog for ORIG_HEAD' '
 	test_config core.logAllRefUpdates always &&
 	git update-ref ORIG_HEAD $A &&
-	test_must_fail git reflog exists ORIG_HEAD
+	git reflog exists ORIG_HEAD
 '
 
 test_expect_success '--no-create-reflog overrides core.logAllRefUpdates=always' '
@@ -475,57 +475,57 @@ test_expect_success 'git cat-file blob master@{2005-05-26 23:42}:F (expect OTHER
 
 test_expect_success 'given old value for missing pseudoref, do not create' '
 	test_must_fail git update-ref PSEUDOREF $A $B 2>err &&
-	test_path_is_missing .git/PSEUDOREF &&
-	test_i18ngrep "could not read ref" err
+	test_must_fail git rev-parse PSEUDOREF &&
+	test_i18ngrep "unable to resolve reference" err
 '
 
 test_expect_success 'create pseudoref' '
 	git update-ref PSEUDOREF $A &&
-	test $A = $(cat .git/PSEUDOREF)
+	test $A = $(git rev-parse PSEUDOREF)
 '
 
 test_expect_success 'overwrite pseudoref with no old value given' '
 	git update-ref PSEUDOREF $B &&
-	test $B = $(cat .git/PSEUDOREF)
+	test $B = $(git rev-parse PSEUDOREF)
 '
 
 test_expect_success 'overwrite pseudoref with correct old value' '
 	git update-ref PSEUDOREF $C $B &&
-	test $C = $(cat .git/PSEUDOREF)
+	test $C = $(git rev-parse PSEUDOREF)
 '
 
 test_expect_success 'do not overwrite pseudoref with wrong old value' '
 	test_must_fail git update-ref PSEUDOREF $D $E 2>err &&
-	test $C = $(cat .git/PSEUDOREF) &&
-	test_i18ngrep "unexpected object ID" err
+	test $C = $(git rev-parse PSEUDOREF) &&
+	test_i18ngrep "cannot lock ref.*expected" err
 '
 
 test_expect_success 'delete pseudoref' '
 	git update-ref -d PSEUDOREF &&
-	test_path_is_missing .git/PSEUDOREF
+	test_must_fail git rev-parse PSEUDOREF
 '
 
 test_expect_success 'do not delete pseudoref with wrong old value' '
 	git update-ref PSEUDOREF $A &&
 	test_must_fail git update-ref -d PSEUDOREF $B 2>err &&
-	test $A = $(cat .git/PSEUDOREF) &&
-	test_i18ngrep "unexpected object ID" err
+	test $A = $(git rev-parse PSEUDOREF) &&
+	test_i18ngrep "cannot lock ref.*expected" err
 '
 
 test_expect_success 'delete pseudoref with correct old value' '
 	git update-ref -d PSEUDOREF $A &&
-	test_path_is_missing .git/PSEUDOREF
+	test_must_fail git rev-parse PSEUDOREF
 '
 
 test_expect_success 'create pseudoref with old OID zero' '
 	git update-ref PSEUDOREF $A $Z &&
-	test $A = $(cat .git/PSEUDOREF)
+	test $A = $(git rev-parse PSEUDOREF)
 '
 
 test_expect_success 'do not overwrite pseudoref with old OID zero' '
 	test_when_finished git update-ref -d PSEUDOREF &&
 	test_must_fail git update-ref PSEUDOREF $B $Z 2>err &&
-	test $A = $(cat .git/PSEUDOREF) &&
+	test $A = $(git rev-parse PSEUDOREF) &&
 	test_i18ngrep "already exists" err
 '
 
