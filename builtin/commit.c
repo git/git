@@ -1005,15 +1005,15 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		return 0;
 
 	if (use_editor) {
-		struct argv_array env = ARGV_ARRAY_INIT;
+		struct strvec env = STRVEC_INIT;
 
-		argv_array_pushf(&env, "GIT_INDEX_FILE=%s", index_file);
+		strvec_pushf(&env, "GIT_INDEX_FILE=%s", index_file);
 		if (launch_editor(git_path_commit_editmsg(), NULL, env.argv)) {
 			fprintf(stderr,
 			_("Please supply the message using either -m or -F option.\n"));
 			exit(1);
 		}
-		argv_array_clear(&env);
+		strvec_clear(&env);
 	}
 
 	if (!no_verify &&

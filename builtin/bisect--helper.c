@@ -165,18 +165,18 @@ static int bisect_reset(const char *commit)
 	}
 
 	if (!file_exists(git_path_bisect_head())) {
-		struct argv_array argv = ARGV_ARRAY_INIT;
+		struct strvec argv = STRVEC_INIT;
 
-		argv_array_pushl(&argv, "checkout", branch.buf, "--", NULL);
+		strvec_pushl(&argv, "checkout", branch.buf, "--", NULL);
 		if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
 			error(_("could not check out original"
 				" HEAD '%s'. Try 'git bisect"
 				" reset <commit>'."), branch.buf);
 			strbuf_release(&branch);
-			argv_array_clear(&argv);
+			strvec_clear(&argv);
 			return -1;
 		}
-		argv_array_clear(&argv);
+		strvec_clear(&argv);
 	}
 
 	strbuf_release(&branch);
@@ -526,9 +526,9 @@ static int bisect_start(struct bisect_terms *terms, int no_checkout,
 		strbuf_read_file(&start_head, git_path_bisect_start(), 0);
 		strbuf_trim(&start_head);
 		if (!no_checkout) {
-			struct argv_array argv = ARGV_ARRAY_INIT;
+			struct strvec argv = STRVEC_INIT;
 
-			argv_array_pushl(&argv, "checkout", start_head.buf,
+			strvec_pushl(&argv, "checkout", start_head.buf,
 					 "--", NULL);
 			if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
 				res = error(_("checking out '%s' failed."

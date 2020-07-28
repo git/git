@@ -316,7 +316,7 @@ static int add_worktree(const char *path, const char *refname,
 	struct strbuf sb = STRBUF_INIT, realpath = STRBUF_INIT;
 	const char *name;
 	struct child_process cp = CHILD_PROCESS_INIT;
-	struct argv_array child_env = ARGV_ARRAY_INIT;
+	struct strvec child_env = STRVEC_INIT;
 	unsigned int counter = 0;
 	int len, ret;
 	struct strbuf symref = STRBUF_INIT;
@@ -408,18 +408,18 @@ static int add_worktree(const char *path, const char *refname,
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
 	write_file(sb.buf, "../..");
 
-	argv_array_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
-	argv_array_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
+	strvec_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
+	strvec_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 	cp.git_cmd = 1;
 
 	if (!is_branch)
-		argv_array_pushl(&cp.args, "update-ref", "HEAD",
+		strvec_pushl(&cp.args, "update-ref", "HEAD",
 				 oid_to_hex(&commit->object.oid), NULL);
 	else {
-		argv_array_pushl(&cp.args, "symbolic-ref", "HEAD",
+		strvec_pushl(&cp.args, "symbolic-ref", "HEAD",
 				 symref.buf, NULL);
 		if (opts->quiet)
-			argv_array_push(&cp.args, "--quiet");
+			strvec_push(&cp.args, "--quiet");
 	}
 
 	cp.env = child_env.argv;
@@ -429,10 +429,10 @@ static int add_worktree(const char *path, const char *refname,
 
 	if (opts->checkout) {
 		cp.argv = NULL;
-		argv_array_clear(&cp.args);
-		argv_array_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
+		strvec_clear(&cp.args);
+		strvec_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
 		if (opts->quiet)
-			argv_array_push(&cp.args, "--quiet");
+			strvec_push(&cp.args, "--quiet");
 		cp.env = child_env.argv;
 		ret = run_command(&cp);
 		if (ret)
@@ -465,7 +465,7 @@ done:
 			cp.env = env;
 			cp.argv = NULL;
 			cp.trace2_hook_name = "post-checkout";
-			argv_array_pushl(&cp.args, absolute_path(hook),
+			strvec_pushl(&cp.args, absolute_path(hook),
 					 oid_to_hex(&null_oid),
 					 oid_to_hex(&commit->object.oid),
 					 "1", NULL);
@@ -473,7 +473,7 @@ done:
 		}
 	}
 
-	argv_array_clear(&child_env);
+	strvec_clear(&child_env);
 	strbuf_release(&sb);
 	strbuf_release(&symref);
 	strbuf_release(&sb_repo);
@@ -619,15 +619,15 @@ static int add(int ac, const char **av, const char *prefix)
 	if (new_branch) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		cp.git_cmd = 1;
-		argv_array_push(&cp.args, "branch");
+		strvec_push(&cp.args, "branch");
 		if (new_branch_force)
-			argv_array_push(&cp.args, "--force");
+			strvec_push(&cp.args, "--force");
 		if (opts.quiet)
-			argv_array_push(&cp.args, "--quiet");
-		argv_array_push(&cp.args, new_branch);
-		argv_array_push(&cp.args, branch);
+			strvec_push(&cp.args, "--quiet");
+		strvec_push(&cp.args, new_branch);
+		strvec_push(&cp.args, branch);
 		if (opt_track)
-			argv_array_push(&cp.args, opt_track);
+			strvec_push(&cp.args, opt_track);
 		if (run_command(&cp))
 			return -1;
 		branch = new_branch;
@@ -924,7 +924,7 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 static void check_clean_worktree(struct worktree *wt,
 				 const char *original_path)
 {
-	struct argv_array child_env = ARGV_ARRAY_INIT;
+	struct strvec child_env = STRVEC_INIT;
 	struct child_process cp;
 	char buf[1];
 	int ret;
@@ -935,12 +935,12 @@ static void check_clean_worktree(struct worktree *wt,
 	 */
 	validate_no_submodules(wt);
 
-	argv_array_pushf(&child_env, "%s=%s/.git",
+	strvec_pushf(&child_env, "%s=%s/.git",
 			 GIT_DIR_ENVIRONMENT, wt->path);
-	argv_array_pushf(&child_env, "%s=%s",
+	strvec_pushf(&child_env, "%s=%s",
 			 GIT_WORK_TREE_ENVIRONMENT, wt->path);
 	memset(&cp, 0, sizeof(cp));
-	argv_array_pushl(&cp.args, "status",
+	strvec_pushl(&cp.args, "status",
 			 "--porcelain", "--ignore-submodules=none",
 			 NULL);
 	cp.env = child_env.argv;
