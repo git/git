@@ -20,7 +20,7 @@ static const char* show_branch_usage[] = {
 
 static int showbranch_use_color = -1;
 
-static struct argv_array default_args = ARGV_ARRAY_INIT;
+static struct strvec default_args = STRVEC_INIT;
 
 /*
  * TODO: convert this use of commit->object.flags to commit-slab
@@ -562,8 +562,8 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 		 * mimic the real argv a bit better.
 		 */
 		if (!default_args.argc)
-			argv_array_push(&default_args, "show-branch");
-		argv_array_push(&default_args, value);
+			strvec_push(&default_args, "show-branch");
+		strvec_push(&default_args, value);
 		return 0;
 	}
 
