@@ -1148,6 +1148,7 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 	rename or copy detection have been requested).
 
 -m::
+--diff-merges::
 	This flag makes the merge commits show the full diff like
 	regular commits; for each merge parent, a separate log entry
 	and diff is generated. An exception is that only diff against
