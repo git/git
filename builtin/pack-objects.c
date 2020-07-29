@@ -3704,7 +3704,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
-		get_object_list(rp.argc, rp.argv);
+		get_object_list(rp.nr, rp.v);
 		strvec_clear(&rp);
 	}
 	cleanup_preferred_base();

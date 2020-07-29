@@ -168,7 +168,7 @@ static int bisect_reset(const char *commit)
 		struct strvec argv = STRVEC_INIT;
 
 		strvec_pushl(&argv, "checkout", branch.buf, "--", NULL);
-		if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
+		if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
 			error(_("could not check out original"
 				" HEAD '%s'. Try 'git bisect"
 				" reset <commit>'."), branch.buf);
@@ -530,7 +530,7 @@ static int bisect_start(struct bisect_terms *terms, int no_checkout,
 
 			strvec_pushl(&argv, "checkout", start_head.buf,
 				     "--", NULL);
-			if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
+			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
 				res = error(_("checking out '%s' failed."
 						 " Try 'git bisect start "
 						 "<valid-branch>'."),

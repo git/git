@@ -269,7 +269,7 @@ int is_submodule_active(struct repository *repo, const char *path)
 			strvec_push(&args, item->string);
 		}
 
-		parse_pathspec(&ps, 0, 0, NULL, args.argv);
+		parse_pathspec(&ps, 0, 0, NULL, args.v);
 		ret = match_pathspec(repo->index, &ps, path, strlen(path), 0, NULL, 1);
 
 		strvec_clear(&args);
@@ -842,7 +842,7 @@ static void collect_changed_submodules(struct repository *r,
 	const struct commit *commit;
 
 	repo_init_revisions(r, &rev, NULL);
-	setup_revisions(argv->argc, argv->argv, &rev, NULL);
+	setup_revisions(argv->nr, argv->v, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die(_("revision walk setup failed"));
 
@@ -1014,7 +1014,7 @@ int find_unpushed_submodules(struct repository *r,
 	struct string_list_item *name;
 	struct strvec argv = STRVEC_INIT;
 
-	/* argv.argv[0] will be ignored by setup_revisions */
+	/* argv.v[0] will be ignored by setup_revisions */
 	strvec_push(&argv, "find_unpushed_submodules");
 	oid_array_for_each_unique(commits, append_oid_to_argv, &argv);
 	strvec_push(&argv, "--not");
@@ -1453,7 +1453,7 @@ static int get_next_submodule(struct child_process *cp,
 				strbuf_addf(err, _("Fetching submodule %s%s\n"),
 					    spf->prefix, ce->name);
 			strvec_init(&cp->args);
-			strvec_pushv(&cp->args, spf->args.argv);
+			strvec_pushv(&cp->args, spf->args.v);
 			strvec_push(&cp->args, default_argv);
 			strvec_push(&cp->args, "--submodule-prefix");
 
@@ -1501,7 +1501,7 @@ static int get_next_submodule(struct child_process *cp,
 		cp->dir = task->repo->gitdir;
 
 		strvec_init(&cp->args);
-		strvec_pushv(&cp->args, spf->args.argv);
+		strvec_pushv(&cp->args, spf->args.v);
 		strvec_push(&cp->args, "on-demand");
 		strvec_push(&cp->args, "--submodule-prefix");
 		strvec_push(&cp->args, submodule_prefix.buf);
@@ -1619,8 +1619,8 @@ int fetch_populated_submodules(struct repository *r,
 		die(_("index file corrupt"));
 
 	strvec_push(&spf.args, "fetch");
-	for (i = 0; i < options->argc; i++)
-		strvec_push(&spf.args, options->argv[i]);
+	for (i = 0; i < options->nr; i++)
+		strvec_push(&spf.args, options->v[i]);
 	strvec_push(&spf.args, "--recurse-submodules-default");
 	/* default value, "--submodule-prefix" and its value are added later */
 

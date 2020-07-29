@@ -248,7 +248,7 @@ static int quote_stress_test(int argc, const char **argv)
 		else
 			strvec_pushl(&args, "test-tool", "run-command",
 				     "quote-echo", NULL);
-		arg_offset = args.argc;
+		arg_offset = args.nr;
 
 		if (argc > 0) {
 			trials = 1;
@@ -275,13 +275,13 @@ static int quote_stress_test(int argc, const char **argv)
 		if (i < skip)
 			continue;
 
-		cp.argv = args.argv;
+		cp.argv = args.v;
 		strbuf_reset(&out);
 		if (pipe_command(&cp, NULL, 0, &out, 0, NULL, 0) < 0)
 			return error("Failed to spawn child process");
 
 		for (j = 0, k = 0; j < arg_count; j++) {
-			const char *arg = args.argv[j + arg_offset];
+			const char *arg = args.v[j + arg_offset];
 
 			if (strcmp(arg, out.buf + k))
 				ret = error("incorrectly quoted arg: '%s', "
@@ -298,7 +298,7 @@ static int quote_stress_test(int argc, const char **argv)
 			fprintf(stderr, "Trial #%d failed. Arguments:\n", i);
 			for (j = 0; j < arg_count; j++)
 				fprintf(stderr, "arg #%d: '%s'\n",
-					(int)j, args.argv[j + arg_offset]);
+					(int)j, args.v[j + arg_offset]);
 
 			strbuf_release(&out);
 			strvec_clear(&args);

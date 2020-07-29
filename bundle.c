@@ -278,7 +278,7 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *
 		     "pack-objects",
 		     "--stdout", "--thin", "--delta-base-offset",
 		     NULL);
-	strvec_pushv(&pack_objects.args, pack_options->argv);
+	strvec_pushv(&pack_objects.args, pack_options->v);
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
 	pack_objects.git_cmd = 1;

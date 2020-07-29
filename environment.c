@@ -164,7 +164,7 @@ static const char *getenv_safe(struct strvec *argv, const char *name)
 		return NULL;
 
 	strvec_push(argv, value);
-	return argv->argv[argv->argc - 1];
+	return argv->v[argv->nr - 1];
 }
 
 void setup_git_env(const char *git_dir)

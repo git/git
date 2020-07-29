@@ -33,7 +33,7 @@ int try_merge_command(struct repository *r,
 	for (j = remotes; j; j = j->next)
 		strvec_push(&args, merge_argument(j->item));
 
-	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
 	strvec_clear(&args);
 
 	discard_index(r->index);

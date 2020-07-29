@@ -36,7 +36,7 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 		char *buf = packet_read_line(0, NULL);
 		if (!buf)
 			break;	/* got a flush */
-		if (sent_argv.argc > MAX_ARGS)
+		if (sent_argv.nr > MAX_ARGS)
 			die("Too many options (>%d)", MAX_ARGS - 1);
 
 		if (!starts_with(buf, arg_cmd))
@@ -45,7 +45,7 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	}
 
 	/* parse all options sent by the client */
-	return write_archive(sent_argv.argc, sent_argv.argv, prefix,
+	return write_archive(sent_argv.nr, sent_argv.v, prefix,
 			     the_repository, NULL, 1);
 }
 

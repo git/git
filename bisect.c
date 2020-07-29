@@ -649,7 +649,7 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 	if (read_paths)
 		read_bisect_paths(&rev_argv);
 
-	setup_revisions(rev_argv.argc, rev_argv.argv, revs, NULL);
+	setup_revisions(rev_argv.nr, rev_argv.v, revs, NULL);
 	/* XXX leak rev_argv, as "revs" may still be pointing to it */
 }
 

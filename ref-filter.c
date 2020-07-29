@@ -1918,9 +1918,9 @@ static void find_longest_prefixes(struct string_list *out,
 	struct strbuf prefix = STRBUF_INIT;
 
 	strvec_pushv(&sorted, patterns);
-	QSORT(sorted.argv, sorted.argc, qsort_strcmp);
+	QSORT(sorted.v, sorted.nr, qsort_strcmp);
 
-	find_longest_prefixes_1(out, &prefix, sorted.argv, sorted.argc);
+	find_longest_prefixes_1(out, &prefix, sorted.v, sorted.nr);
 
 	strvec_clear(&sorted);
 	strbuf_release(&prefix);

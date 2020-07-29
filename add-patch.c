@@ -391,14 +391,14 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			    get_oid("HEAD", &oid) ?
 			    empty_tree_oid_hex() : s->revision);
 	}
-	color_arg_index = args.argc;
+	color_arg_index = args.nr;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */
 	strvec_pushl(&args, "--no-color", "-p", "--", NULL);
 	for (i = 0; i < ps->nr; i++)
 		strvec_push(&args, ps->items[i].original);
 
 	setup_child_process(s, &cp, NULL);
-	cp.argv = args.argv;
+	cp.argv = args.v;
 	res = capture_command(&cp, plain, 0);
 	if (res) {
 		strvec_clear(&args);
@@ -415,8 +415,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		const char *diff_filter = s->s.interactive_diff_filter;
 
 		setup_child_process(s, &colored_cp, NULL);
-		xsnprintf((char *)args.argv[color_arg_index], 8, "--color");
-		colored_cp.argv = args.argv;
+		xsnprintf((char *)args.v[color_arg_index], 8, "--color");
+		colored_cp.argv = args.v;
 		colored = &s->colored;
 		res = capture_command(&colored_cp, colored, 0);
 		strvec_clear(&args);

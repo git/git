@@ -287,7 +287,7 @@ static const char **prepare_shell_cmd(struct strvec *out, const char **argv)
 	}
 
 	strvec_pushv(out, argv);
-	return out->argv;
+	return out->v;
 }
 
 #ifndef GIT_WINDOWS_NATIVE
@@ -426,11 +426,11 @@ static int prepare_cmd(struct strvec *out, const struct child_process *cmd)
 	 * there are dir separator characters, we have exec attempt to invoke
 	 * the command directly.
 	 */
-	if (!has_dir_sep(out->argv[1])) {
-		char *program = locate_in_PATH(out->argv[1]);
+	if (!has_dir_sep(out->v[1])) {
+		char *program = locate_in_PATH(out->v[1]);
 		if (program) {
-			free((char *)out->argv[1]);
-			out->argv[1] = program;
+			free((char *)out->v[1]);
+			out->v[1] = program;
 		} else {
 			strvec_clear(out);
 			errno = ENOENT;
@@ -672,9 +672,9 @@ int start_command(struct child_process *cmd)
 	char *str;
 
 	if (!cmd->argv)
-		cmd->argv = cmd->args.argv;
+		cmd->argv = cmd->args.v;
 	if (!cmd->env)
-		cmd->env = cmd->env_array.argv;
+		cmd->env = cmd->env_array.v;
 
 	/*
 	 * In case of errors we must keep the promise to close FDs
@@ -846,10 +846,10 @@ fail_pipe:
 		 * be used in the event exec failed with ENOEXEC at which point
 		 * we will try to interpret the command using 'sh'.
 		 */
-		execve(argv.argv[1], (char *const *) argv.argv + 1,
+		execve(argv.v[1], (char *const *) argv.v + 1,
 		       (char *const *) childenv);
 		if (errno == ENOEXEC)
-			execve(argv.argv[0], (char *const *) argv.argv,
+			execve(argv.v[0], (char *const *) argv.v,
 			       (char *const *) childenv);
 
 		if (errno == ENOENT) {
@@ -1874,7 +1874,7 @@ int run_auto_gc(int quiet)
 	strvec_pushl(&argv_gc_auto, "gc", "--auto", NULL);
 	if (quiet)
 		strvec_push(&argv_gc_auto, "--quiet");
-	status = run_command_v_opt(argv_gc_auto.argv, RUN_GIT_CMD);
+	status = run_command_v_opt(argv_gc_auto.v, RUN_GIT_CMD);
 	strvec_clear(&argv_gc_auto);
 	return status;
 }

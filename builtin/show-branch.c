@@ -561,7 +561,7 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 		 * default_arg is now passed to parse_options(), so we need to
 		 * mimic the real argv a bit better.
 		 */
-		if (!default_args.argc)
+		if (!default_args.nr)
 			strvec_push(&default_args, "show-branch");
 		strvec_push(&default_args, value);
 		return 0;
@@ -684,9 +684,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	git_config(git_show_branch_config, NULL);
 
 	/* If nothing is specified, try the default first */
-	if (ac == 1 && default_args.argc) {
-		ac = default_args.argc;
-		av = default_args.argv;
+	if (ac == 1 && default_args.nr) {
+		ac = default_args.nr;
+		av = default_args.v;
 	}
 
 	ac = parse_options(ac, av, prefix, builtin_show_branch_options,

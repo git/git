@@ -1470,7 +1470,7 @@ static int update(int argc, const char **argv)
 	for (i = 1; i < argc; i++)
 		strvec_push(&fetch_argv, argv[i]);
 
-	if (strcmp(fetch_argv.argv[fetch_argv.argc-1], "default") == 0) {
+	if (strcmp(fetch_argv.v[fetch_argv.nr-1], "default") == 0) {
 		git_config(get_remote_default, &default_defined);
 		if (!default_defined) {
 			strvec_pop(&fetch_argv);
@@ -1478,7 +1478,7 @@ static int update(int argc, const char **argv)
 		}
 	}
 
-	retval = run_command_v_opt(fetch_argv.argv, RUN_GIT_CMD);
+	retval = run_command_v_opt(fetch_argv.v, RUN_GIT_CMD);
 	strvec_clear(&fetch_argv);
 	return retval;
 }

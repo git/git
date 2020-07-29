@@ -352,7 +352,7 @@ static int handle_alias(int *argcp, const char ***argv)
 			strvec_push(&child.args, alias_string + 1);
 			strvec_pushv(&child.args, (*argv) + 1);
 
-			trace2_cmd_alias(alias_command, child.args.argv);
+			trace2_cmd_alias(alias_command, child.args.v);
 			trace2_cmd_list_config();
 			trace2_cmd_list_env_vars();
 			trace2_cmd_name("_run_shell_alias_");
@@ -667,7 +667,7 @@ static void handle_builtin(int argc, const char **argv)
 		}
 
 		argc++;
-		argv = args.argv;
+		argv = args.v;
 	}
 
 	builtin = get_builtin(cmd);
@@ -701,7 +701,7 @@ static void execv_dashed_external(const char **argv)
 	 * The code in run_command() logs trace2 child_start/child_exit
 	 * events, so we do not need to report exec/exec_result events here.
 	 */
-	trace_argv_printf(cmd.args.argv, "trace: exec:");
+	trace_argv_printf(cmd.args.v, "trace: exec:");
 
 	/*
 	 * If we fail because the command is not found, it is
@@ -762,13 +762,13 @@ static int run_argv(int *argcp, const char ***argv)
 			for (i = 0; i < *argcp; i++)
 				strvec_push(&args, (*argv)[i]);
 
-			trace_argv_printf(args.argv, "trace: exec:");
+			trace_argv_printf(args.v, "trace: exec:");
 
 			/*
 			 * if we fail because the command is not found, it is
 			 * OK to return. Otherwise, we just pass along the status code.
 			 */
-			i = run_command_v_opt_tr2(args.argv, RUN_SILENT_EXEC_FAILURE |
+			i = run_command_v_opt_tr2(args.v, RUN_SILENT_EXEC_FAILURE |
 						  RUN_CLEAN_ON_EXIT | RUN_WAIT_AFTER_CLEAN, "git_alias");
 			if (i >= 0 || errno != ENOENT)
 				exit(i);

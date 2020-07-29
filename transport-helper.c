@@ -138,7 +138,7 @@ static struct child_process *get_helper(struct transport *transport)
 		strvec_pushf(&helper->env_array, "%s=%s",
 			     GIT_DIR_ENVIRONMENT, get_git_dir());
 
-	helper->trace2_child_class = helper->args.argv[0]; /* "remote-<name>" */
+	helper->trace2_child_class = helper->args.v[0]; /* "remote-<name>" */
 
 	code = start_command(helper);
 	if (code < 0 && errno == ENOENT)

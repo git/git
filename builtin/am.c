@@ -812,7 +812,7 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 	strbuf_release(&sb);
 	free(series_dir_buf);
 
-	ret = split_mail_conv(stgit_patch_to_mail, state, patches.argv, keep_cr);
+	ret = split_mail_conv(stgit_patch_to_mail, state, patches.v, keep_cr);
 
 	strvec_clear(&patches);
 	return ret;
@@ -1002,7 +1002,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	}
 	write_state_text(state, "scissors", str);
 
-	sq_quote_argv(&sb, state->git_apply_opts.argv);
+	sq_quote_argv(&sb, state->git_apply_opts.v);
 	write_state_text(state, "apply-opt", sb.buf);
 
 	if (state->rebasing)
@@ -1401,9 +1401,9 @@ static int run_apply(const struct am_state *state, const char *index_file)
 		BUG("init_apply_state() failed");
 
 	strvec_push(&apply_opts, "apply");
-	strvec_pushv(&apply_opts, state->git_apply_opts.argv);
+	strvec_pushv(&apply_opts, state->git_apply_opts.v);
 
-	opts_left = apply_parse_options(apply_opts.argc, apply_opts.argv,
+	opts_left = apply_parse_options(apply_opts.nr, apply_opts.v,
 					&apply_state, &force_apply, &options,
 					NULL);
 
@@ -1428,7 +1428,7 @@ static int run_apply(const struct am_state *state, const char *index_file)
 
 	strvec_push(&apply_paths, am_path(state, "patch"));
 
-	res = apply_all_patches(&apply_state, apply_paths.argc, apply_paths.argv, options);
+	res = apply_all_patches(&apply_state, apply_paths.nr, apply_paths.v, options);
 
 	strvec_clear(&apply_paths);
 	strvec_clear(&apply_opts);
@@ -1455,7 +1455,7 @@ static int build_fake_ancestor(const struct am_state *state, const char *index_f
 
 	cp.git_cmd = 1;
 	strvec_push(&cp.args, "apply");
-	strvec_pushv(&cp.args, state->git_apply_opts.argv);
+	strvec_pushv(&cp.args, state->git_apply_opts.v);
 	strvec_pushf(&cp.args, "--build-fake-ancestor=%s", index_file);
 	strvec_push(&cp.args, am_path(state, "patch"));
 
@@ -2376,10 +2376,10 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 				strvec_push(&paths, mkpath("%s/%s", prefix, argv[i]));
 		}
 
-		if (state.interactive && !paths.argc)
+		if (state.interactive && !paths.nr)
 			die(_("interactive mode requires patches on the command line"));
 
-		am_setup(&state, patch_format, paths.argv, keep_cr);
+		am_setup(&state, patch_format, paths.v, keep_cr);
 
 		strvec_clear(&paths);
 	}

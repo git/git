@@ -509,7 +509,7 @@ static void describe_blob(struct object_id oid, struct strbuf *dst)
 		     NULL);
 
 	repo_init_revisions(the_repository, &revs, NULL);
-	if (setup_revisions(args.argc, args.argv, &revs, NULL) > 1)
+	if (setup_revisions(args.nr, args.v, &revs, NULL) > 1)
 		BUG("setup_revisions could not handle all args?");
 
 	if (prepare_revision_walk(&revs))
@@ -613,7 +613,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			strvec_pushv(&args, argv);
 		else
 			strvec_push(&args, "HEAD");
-		return cmd_name_rev(args.argc, args.argv, prefix);
+		return cmd_name_rev(args.nr, args.v, prefix);
 	}
 
 	hashmap_init(&names, commit_name_neq, NULL, 0);
@@ -659,7 +659,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 
 			repo_init_revisions(the_repository, &revs, prefix);
 			strvec_pushv(&args, diff_index_args);
-			if (setup_revisions(args.argc, args.argv, &revs, NULL) != 1)
+			if (setup_revisions(args.nr, args.v, &revs, NULL) != 1)
 				BUG("malformed internal diff-index command line");
 			result = run_diff_index(&revs, 0);
 

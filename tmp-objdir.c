@@ -283,7 +283,7 @@ const char **tmp_objdir_env(const struct tmp_objdir *t)
 {
 	if (!t)
 		return NULL;
-	return t->env.argv;
+	return t->env.v;
 }
 
 void tmp_objdir_add_as_alternate(const struct tmp_objdir *t)

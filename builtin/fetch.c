@@ -1354,7 +1354,7 @@ static int do_fetch(struct transport *transport,
 
 	if (tags == TAGS_SET || tags == TAGS_DEFAULT) {
 		must_list_refs = 1;
-		if (ref_prefixes.argc)
+		if (ref_prefixes.nr)
 			strvec_push(&ref_prefixes, "refs/tags/");
 	}
 
@@ -1605,7 +1605,7 @@ static int fetch_multiple(struct string_list *list, int max_children)
 	add_options_to_argv(&argv);
 
 	if (max_children != 1 && list->nr != 1) {
-		struct parallel_fetch_state state = { argv.argv, list, 0, 0 };
+		struct parallel_fetch_state state = { argv.v, list, 0, 0 };
 
 		strvec_push(&argv, "--end-of-options");
 		result = run_processes_parallel_tr2(max_children,
@@ -1623,7 +1623,7 @@ static int fetch_multiple(struct string_list *list, int max_children)
 			strvec_push(&argv, name);
 			if (verbosity >= 0)
 				printf(_("Fetching %s\n"), name);
-			if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
+			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
 				error(_("Could not fetch %s"), name);
 				result = 1;
 			}
