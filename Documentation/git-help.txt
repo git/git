@@ -8,7 +8,7 @@ git-help - Display help information about Git
 SYNOPSIS
 --------
 [verse]
-'git help' [-a|--all [--[no-]verbose]] [-g|--guide]
+'git help' [-a|--all [--[no-]verbose]] [-g|--guides]
 	   [-i|--info|-m|--man|-w|--web] [COMMAND|GUIDE]
 
 DESCRIPTION
@@ -21,7 +21,7 @@ on the standard output.
 If the option `--all` or `-a` is given, all available commands are
 printed on the standard output.
 
-If the option `--guide` or `-g` is given, a list of the useful
+If the option `--guides` or `-g` is given, a list of the useful
 Git guides is also printed on the standard output.
 
 If a command, or a guide, is given, a manual page for that command or
