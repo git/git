@@ -752,7 +752,7 @@ static int git_sparse_checkout_init(const char *repo)
 	 */
 	core_apply_sparse_checkout = 1;
 
-	if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
+	if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
 		error(_("failed to initialize sparse-checkout"));
 		result = 1;
 	}
@@ -844,7 +844,7 @@ static int checkout(int submodule_progress)
 					       "--single-branch" :
 					       "--no-single-branch");
 
-		err = run_command_v_opt(args.argv, RUN_GIT_CMD);
+		err = run_command_v_opt(args.v, RUN_GIT_CMD);
 		strvec_clear(&args);
 	}
 

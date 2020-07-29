@@ -70,9 +70,9 @@ int server_supports_v2(const char *c, int die_on_error)
 {
 	int i;
 
-	for (i = 0; i < server_capabilities_v2.argc; i++) {
+	for (i = 0; i < server_capabilities_v2.nr; i++) {
 		const char *out;
-		if (skip_prefix(server_capabilities_v2.argv[i], c, &out) &&
+		if (skip_prefix(server_capabilities_v2.v[i], c, &out) &&
 		    (!*out || *out == '='))
 			return 1;
 	}
@@ -87,9 +87,9 @@ int server_feature_v2(const char *c, const char **v)
 {
 	int i;
 
-	for (i = 0; i < server_capabilities_v2.argc; i++) {
+	for (i = 0; i < server_capabilities_v2.nr; i++) {
 		const char *out;
-		if (skip_prefix(server_capabilities_v2.argv[i], c, &out) &&
+		if (skip_prefix(server_capabilities_v2.v[i], c, &out) &&
 		    (*out == '=')) {
 			*v = out + 1;
 			return 1;
@@ -103,9 +103,9 @@ int server_supports_feature(const char *c, const char *feature,
 {
 	int i;
 
-	for (i = 0; i < server_capabilities_v2.argc; i++) {
+	for (i = 0; i < server_capabilities_v2.nr; i++) {
 		const char *out;
-		if (skip_prefix(server_capabilities_v2.argv[i], c, &out) &&
+		if (skip_prefix(server_capabilities_v2.v[i], c, &out) &&
 		    (!*out || *(out++) == '=')) {
 			if (parse_feature_request(out, feature))
 				return 1;
@@ -488,9 +488,9 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	if (!for_push)
 		packet_write_fmt(fd_out, "peel\n");
 	packet_write_fmt(fd_out, "symrefs\n");
-	for (i = 0; ref_prefixes && i < ref_prefixes->argc; i++) {
+	for (i = 0; ref_prefixes && i < ref_prefixes->nr; i++) {
 		packet_write_fmt(fd_out, "ref-prefix %s\n",
-				 ref_prefixes->argv[i]);
+				 ref_prefixes->v[i]);
 	}
 	packet_flush(fd_out);
 

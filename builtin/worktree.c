@@ -422,7 +422,7 @@ static int add_worktree(const char *path, const char *refname,
 			strvec_push(&cp.args, "--quiet");
 	}
 
-	cp.env = child_env.argv;
+	cp.env = child_env.v;
 	ret = run_command(&cp);
 	if (ret)
 		goto done;
@@ -433,7 +433,7 @@ static int add_worktree(const char *path, const char *refname,
 		strvec_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
 		if (opts->quiet)
 			strvec_push(&cp.args, "--quiet");
-		cp.env = child_env.argv;
+		cp.env = child_env.v;
 		ret = run_command(&cp);
 		if (ret)
 			goto done;
@@ -943,7 +943,7 @@ static void check_clean_worktree(struct worktree *wt,
 	strvec_pushl(&cp.args, "status",
 		     "--porcelain", "--ignore-submodules=none",
 		     NULL);
-	cp.env = child_env.argv;
+	cp.env = child_env.v;
 	cp.git_cmd = 1;
 	cp.dir = wt->path;
 	cp.out = -1;

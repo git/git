@@ -228,7 +228,7 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 		/* pass original pathspec, to be re-parsed */
 		strvec_push(&argv, pathspec->items[i].original);
 
-	status = run_command_v_opt(argv.argv, RUN_GIT_CMD);
+	status = run_command_v_opt(argv.v, RUN_GIT_CMD);
 	strvec_clear(&argv);
 	return status;
 }

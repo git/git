@@ -146,9 +146,9 @@ int has_capability(const struct strvec *keys, const char *capability,
 		   const char **value)
 {
 	int i;
-	for (i = 0; i < keys->argc; i++) {
+	for (i = 0; i < keys->nr; i++) {
 		const char *out;
-		if (skip_prefix(keys->argv[i], capability, &out) &&
+		if (skip_prefix(keys->v[i], capability, &out) &&
 		    (!*out || *out == '=')) {
 			if (value) {
 				if (*out == '=')
@@ -223,7 +223,7 @@ static int process_request(void)
 			 * If no command and no keys were given then the client
 			 * wanted to terminate the connection.
 			 */
-			if (!keys.argc)
+			if (!keys.nr)
 				return 1;
 
 			/*

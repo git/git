@@ -67,7 +67,7 @@ static int read_patches(const char *range, struct string_list *list,
 		     "--notes",
 		     NULL);
 	if (other_arg)
-		strvec_pushv(&cp.args, other_arg->argv);
+		strvec_pushv(&cp.args, other_arg->v);
 	strvec_push(&cp.args, range);
 	cp.out = -1;
 	cp.no_stdin = 1;

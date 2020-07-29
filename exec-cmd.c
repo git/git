@@ -324,7 +324,7 @@ const char **prepare_git_cmd(struct strvec *out, const char **argv)
 {
 	strvec_push(out, "git");
 	strvec_pushv(out, argv);
-	return out->argv;
+	return out->v;
 }
 
 int execv_git_cmd(const char **argv)
@@ -332,10 +332,10 @@ int execv_git_cmd(const char **argv)
 	struct strvec nargv = STRVEC_INIT;
 
 	prepare_git_cmd(&nargv, argv);
-	trace_argv_printf(nargv.argv, "trace: exec:");
+	trace_argv_printf(nargv.v, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
-	sane_execvp("git", (char **)nargv.argv);
+	sane_execvp("git", (char **)nargv.v);
 
 	trace_printf("trace: exec failed: %s\n", strerror(errno));
 

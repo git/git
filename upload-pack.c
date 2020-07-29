@@ -897,7 +897,7 @@ static int send_shallow_list(struct upload_pack_data *data)
 			struct object *o = data->want_obj.objects[i].item;
 			strvec_push(&av, oid_to_hex(&o->oid));
 		}
-		deepen_by_rev_list(data, av.argc, av.argv);
+		deepen_by_rev_list(data, av.nr, av.v);
 		strvec_clear(&av);
 		ret = 1;
 	} else {

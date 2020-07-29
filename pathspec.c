@@ -652,7 +652,7 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
 	if (in != stdin)
 		fclose(in);
 
-	parse_pathspec(pathspec, magic_mask, flags, prefix, parsed_file.argv);
+	parse_pathspec(pathspec, magic_mask, flags, prefix, parsed_file.v);
 	strvec_clear(&parsed_file);
 }
 

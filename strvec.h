@@ -2,10 +2,10 @@
 #define STRVEC_H
 
 /**
- * The argv-array API allows one to dynamically build and store
- * NULL-terminated lists.  An argv-array maintains the invariant that the
- * `argv` member always points to a non-NULL array, and that the array is
- * always NULL-terminated at the element pointed to by `argv[argc]`. This
+ * The strvec API allows one to dynamically build and store
+ * NULL-terminated arrays of strings. A strvec maintains the invariant that the
+ * `items` member always points to a non-NULL array, and that the array is
+ * always NULL-terminated at the element pointed to by `items[nr]`. This
  * makes the result suitable for passing to functions expecting to receive
  * argv from main().
  *
@@ -22,15 +22,15 @@ extern const char *empty_strvec[];
 
 /**
  * A single array. This should be initialized by assignment from
- * `STRVEC_INIT`, or by calling `strvec_init`. The `argv`
- * member contains the actual array; the `argc` member contains the
+ * `STRVEC_INIT`, or by calling `strvec_init`. The `items`
+ * member contains the actual array; the `nr` member contains the
  * number of elements in the array, not including the terminating
  * NULL.
  */
 struct strvec {
-	const char **argv;
-	size_t argc;
-	size_t alloc;
+	const char **v;
+	int nr;
+	int alloc;
 };
 
 #define STRVEC_INIT { empty_strvec, 0, 0 }
@@ -78,7 +78,7 @@ void strvec_split(struct strvec *, const char *);
 void strvec_clear(struct strvec *);
 
 /**
- * Disconnect the `argv` member from the `strvec` struct and
+ * Disconnect the `items` member from the `strvec` struct and
  * return it. The caller is responsible for freeing the memory used
  * by the array, and by the strings it references. After detaching,
  * the `strvec` is in a reinitialized state and can be pushed

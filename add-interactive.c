@@ -944,7 +944,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 					    files->items.items[i].string);
 		parse_pathspec(&ps_selected,
 			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
-			       PATHSPEC_LITERAL_PATH, "", args.argv);
+			       PATHSPEC_LITERAL_PATH, "", args.v);
 		res = run_add_p(s->r, ADD_P_ADD, NULL, &ps_selected);
 		strvec_clear(&args);
 		clear_pathspec(&ps_selected);
@@ -986,7 +986,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 			if (files->selected[i])
 				strvec_push(&args,
 					    files->items.items[i].string);
-		res = run_command_v_opt(args.argv, 0);
+		res = run_command_v_opt(args.v, 0);
 		strvec_clear(&args);
 	}
 

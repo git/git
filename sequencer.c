@@ -2761,7 +2761,7 @@ static int reset_merge(const struct object_id *oid)
 	if (!is_null_oid(oid))
 		strvec_push(&argv, oid_to_hex(oid));
 
-	ret = run_command_v_opt(argv.argv, RUN_GIT_CMD);
+	ret = run_command_v_opt(argv.v, RUN_GIT_CMD);
 	strvec_clear(&argv);
 
 	return ret;
@@ -3135,7 +3135,7 @@ static int do_exec(struct repository *r, const char *command_line)
 	strvec_pushf(&child_env, "GIT_WORK_TREE=%s",
 		     absolute_path(get_git_work_tree()));
 	status = run_command_v_opt_cd_env(child_argv, RUN_USING_SHELL, NULL,
-					  child_env.argv);
+					  child_env.v);
 
 	/* force re-reading of the cache */
 	if (discard_index(r->index) < 0 || repo_read_index(r) < 0)

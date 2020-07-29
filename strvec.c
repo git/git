@@ -6,25 +6,25 @@ const char *empty_strvec[] = { NULL };
 
 void strvec_init(struct strvec *array)
 {
-	array->argv = empty_strvec;
-	array->argc = 0;
+	array->v = empty_strvec;
+	array->nr = 0;
 	array->alloc = 0;
 }
 
 static void strvec_push_nodup(struct strvec *array, const char *value)
 {
-	if (array->argv == empty_strvec)
-		array->argv = NULL;
+	if (array->v == empty_strvec)
+		array->v = NULL;
 
-	ALLOC_GROW(array->argv, array->argc + 2, array->alloc);
-	array->argv[array->argc++] = value;
-	array->argv[array->argc] = NULL;
+	ALLOC_GROW(array->v, array->nr + 2, array->alloc);
+	array->v[array->nr++] = value;
+	array->v[array->nr] = NULL;
 }
 
 const char *strvec_push(struct strvec *array, const char *value)
 {
 	strvec_push_nodup(array, xstrdup(value));
-	return array->argv[array->argc - 1];
+	return array->v[array->nr - 1];
 }
 
 const char *strvec_pushf(struct strvec *array, const char *fmt, ...)
@@ -37,7 +37,7 @@ const char *strvec_pushf(struct strvec *array, const char *fmt, ...)
 	va_end(ap);
 
 	strvec_push_nodup(array, strbuf_detach(&v, NULL));
-	return array->argv[array->argc - 1];
+	return array->v[array->nr - 1];
 }
 
 void strvec_pushl(struct strvec *array, ...)
@@ -51,19 +51,19 @@ void strvec_pushl(struct strvec *array, ...)
 	va_end(ap);
 }
 
-void strvec_pushv(struct strvec *array, const char **argv)
+void strvec_pushv(struct strvec *array, const char **items)
 {
-	for (; *argv; argv++)
-		strvec_push(array, *argv);
+	for (; *items; items++)
+		strvec_push(array, *items);
 }
 
 void strvec_pop(struct strvec *array)
 {
-	if (!array->argc)
+	if (!array->nr)
 		return;
-	free((char *)array->argv[array->argc - 1]);
-	array->argv[array->argc - 1] = NULL;
-	array->argc--;
+	free((char *)array->v[array->nr - 1]);
+	array->v[array->nr - 1] = NULL;
+	array->nr--;
 }
 
 void strvec_split(struct strvec *array, const char *to_split)
@@ -88,21 +88,21 @@ void strvec_split(struct strvec *array, const char *to_split)
 
 void strvec_clear(struct strvec *array)
 {
-	if (array->argv != empty_strvec) {
+	if (array->v != empty_strvec) {
 		int i;
-		for (i = 0; i < array->argc; i++)
-			free((char *)array->argv[i]);
-		free(array->argv);
+		for (i = 0; i < array->nr; i++)
+			free((char *)array->v[i]);
+		free(array->v);
 	}
 	strvec_init(array);
 }
 
 const char **strvec_detach(struct strvec *array)
 {
-	if (array->argv == empty_strvec)
+	if (array->v == empty_strvec)
 		return xcalloc(1, sizeof(const char *));
 	else {
-		const char **ret = array->argv;
+		const char **ret = array->v;
 		strvec_init(array);
 		return ret;
 	}
