@@ -7,7 +7,6 @@ test_description='pack index with 64-bit offsets and object CRC'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	rawsz=$(test_oid rawsz) &&
 	rm -rf .git &&
 	git init &&

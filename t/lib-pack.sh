@@ -35,8 +35,6 @@ pack_header () {
 # have hardcoded some well-known objects. See the case statements below for the
 # complete list.
 pack_obj () {
-	test_oid_init
-
 	case "$1" in
 	# empty blob
 	$EMPTY_BLOB)
@@ -121,7 +119,6 @@ pack_obj () {
 
 # Compute and append pack trailer to "$1"
 pack_trailer () {
-	test_oid_init &&
 	test-tool $(test_oid algo) -b <"$1" >trailer.tmp &&
 	cat trailer.tmp >>"$1" &&
 	rm -f trailer.tmp

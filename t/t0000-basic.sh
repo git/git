@@ -891,10 +891,6 @@ test_expect_success 'test_atexit is run' "
 	test_path_is_missing also-clean-atexit
 "
 
-test_expect_success 'test_oid setup' '
-	test_oid_init
-'
-
 test_expect_success 'test_oid provides sane info by default' '
 	test_oid zero >actual &&
 	grep "^00*\$" actual &&

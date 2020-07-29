@@ -29,7 +29,6 @@ midx_read_expect () {
 }
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	test_oid_cache <<-EOF
 	idxoff sha1:2999
 	idxoff sha256:3739
