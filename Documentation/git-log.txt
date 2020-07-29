@@ -146,11 +146,8 @@ below can be used to show the changes made by each commit.
 	in that case, the output represents the changes the merge
 	brought _into_ the then-current branch.
 
--r::
-	Show recursive diffs.
-
 -t::
-	Show the tree objects in the diff output. This implies `-r`.
+	Show the tree objects in the diff output.
 
 :git-log: 1
 include::diff-options.txt[]
