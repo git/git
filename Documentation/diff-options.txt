@@ -73,6 +73,11 @@ ifndef::git-format-patch[]
 	Synonym for `-p --raw`.
 endif::git-format-patch[]
 
+ifdef::git-log[]
+-t::
+	Show the tree objects in the diff output.
+endif::git-log[]
+
 --indent-heuristic::
 	Enable the heuristic that shifts diff hunk boundaries to make patches
 	easier to read. This is the default.
