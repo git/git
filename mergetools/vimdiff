@@ -46,3 +46,11 @@ translate_merge_tool_path() {
 exit_code_trustable () {
 	true
 }
+
+list_tool_variants () {
+	for prefix in '' g; do
+		for suffix in '' 2 3; do
+			echo "${prefix}vimdiff${suffix}"
+		done
+	done
+}

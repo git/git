@@ -43,7 +43,14 @@ show_tool_names () {
 
 	shown_any=
 	( cd "$MERGE_TOOLS_DIR" && ls ) | {
-		while read toolname
+		while read scriptname
+		do
+			setup_tool "$scriptname" 2>/dev/null
+			variants="$variants$(list_tool_variants)\n"
+		done
+		variants="$(echo "$variants" | sort | uniq)"
+
+		for toolname in $variants
 		do
 			if setup_tool "$toolname" 2>/dev/null &&
 				(eval "$condition" "$toolname")
@@ -157,6 +164,10 @@ setup_tool () {
 		echo "$1"
 	}
 
+	list_tool_variants () {
+		echo "$tool"
+	}
+
 	# Most tools' exit codes cannot be trusted, so By default we ignore
 	# their exit code and check the merged file's modification time in
 	# check_unchanged() to determine whether or not the merge was
@@ -178,18 +189,25 @@ setup_tool () {
 		false
 	}
 
-
-	if ! test -f "$MERGE_TOOLS_DIR/$tool"
+	if test -f "$MERGE_TOOLS_DIR/$tool"
 	then
+		. "$MERGE_TOOLS_DIR/$tool"
+	elif test -f "$MERGE_TOOLS_DIR/${tool%[0-9]}"
+	then
+		. "$MERGE_TOOLS_DIR/${tool%[0-9]}"
+	else
 		setup_user_tool
 		return $?
 	fi
 
-	# Load the redefined functions
-	. "$MERGE_TOOLS_DIR/$tool"
 	# Now let the user override the default command for the tool.  If
 	# they have not done so then this will return 1 which we ignore.
 	setup_user_tool
+
+	if ! list_tool_variants | grep -q "^$tool$"
+	then
+		return 1
+	fi
 
 	if merge_mode && ! can_merge
 	then
