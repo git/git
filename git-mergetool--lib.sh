@@ -304,11 +304,14 @@ list_merge_tool_candidates () {
 		tools="$tools smerge"
 	fi
 	case "${VISUAL:-$EDITOR}" in
+	*nvim*)
+		tools="$tools nvimdiff vimdiff emerge"
+		;;
 	*vim*)
-		tools="$tools vimdiff emerge"
+		tools="$tools vimdiff nvimdiff emerge"
 		;;
 	*)
-		tools="$tools emerge vimdiff"
+		tools="$tools emerge vimdiff nvimdiff"
 		;;
 	esac
 }
