@@ -117,6 +117,13 @@ DIFF FORMATTING
 By default, `git log` does not generate any diff output. The options
 below can be used to show the changes made by each commit.
 
+Note that unless one of `-c`, `--cc`, or `-m` is given, merge commits
+will never show a diff, even if a diff format like `--patch` is
+selected, nor will they match search options like `-S`. The exception is
+when `--first-parent` is in use, in which merges are treated like normal
+single-parent commits (this can be overridden by providing a
+combined-diff option or with `--no-diff-merges`).
+
 -c::
 	With this option, diff output for a merge commit
 	shows the differences from each of the parents to the merge result
