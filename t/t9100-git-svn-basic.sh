@@ -200,8 +200,9 @@ GIT_SVN_ID=alt
 export GIT_SVN_ID
 test_expect_success "$name" \
     'git svn init "$svnrepo" && git svn fetch &&
-     git rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
-     git rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
+     git log --format="tree %T %s" remotes/git-svn |
+	awk "!seen[\$0]++ { print \$1, \$2 }" >a &&
+     git log --format="tree %T" alt >b &&
      test_cmp a b'
 
 name='check imported tree checksums expected tree checksums'
