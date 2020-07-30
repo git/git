@@ -132,6 +132,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
 	struct lock_file lock_file = LOCK_INIT;
+	struct cache_entry *ce;
 
 	git_config(git_default_config, NULL);
 
@@ -220,9 +221,11 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				}
 				argc += last - first;
 			}
-		} else if (cache_name_pos(src, length) < 0)
+		} else if (!(ce = cache_file_exists(src, length, ignore_case))) {
 			bad = _("not under version control");
-		else if (lstat(dst, &st) == 0 &&
+		} else if (ce_stage(ce)) {
+			bad = _("conflicted");
+		} else if (lstat(dst, &st) == 0 &&
 			 (!ignore_case || strcasecmp(src, dst))) {
 			bad = _("destination exists");
 			if (force) {
