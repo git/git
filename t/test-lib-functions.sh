@@ -798,6 +798,37 @@ list_contains () {
 	return 1
 }
 
+# Returns success if the arguments indicate that a command should be
+# accepted by test_must_fail(). If the command is run with env, the env
+# and its corresponding variable settings will be stripped before we
+# test the command being run.
+test_must_fail_acceptable () {
+	if test "$1" = "env"
+	then
+		shift
+		while test $# -gt 0
+		do
+			case "$1" in
+			*?=*)
+				shift
+				;;
+			*)
+				break
+				;;
+			esac
+		done
+	fi
+
+	case "$1" in
+	git|__git*|test-tool|test-svn-fe|test_terminal)
+		return 0
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
 # This is not among top-level (test_expect_success | test_expect_failure)
 # but is a prefix that can be used in the test script, like:
 #
@@ -817,6 +848,17 @@ list_contains () {
 #     Multiple signals can be specified as a comma separated list.
 #     Currently recognized signal names are: sigpipe, success.
 #     (Don't use 'success', use 'test_might_fail' instead.)
+#
+# Do not use this to run anything but "git" and other specific testable
+# commands (see test_must_fail_acceptable()).  We are not in the
+# business of vetting system supplied commands -- in other words, this
+# is wrong:
+#
+#    test_must_fail grep pattern output
+#
+# Instead use '!':
+#
+#    ! grep pattern output
 
 test_must_fail () {
 	case "$1" in
@@ -828,6 +870,11 @@ test_must_fail () {
 		_test_ok=
 		;;
 	esac
+	if ! test_must_fail_acceptable "$@"
+	then
+		echo >&7 "test_must_fail: only 'git' is allowed: $*"
+		return 1
+	fi
 	"$@" 2>&7
 	exit_code=$?
 	if test $exit_code -eq 0 && ! list_contains "$_test_ok" success
