@@ -483,7 +483,7 @@ test_expect_success 'set up merge history' '
 '
 
 cat > expect <<\EOF
-*   Merge branch 'side' into master
+*   Merge branch 'side'
 |\
 | * side-2
 | * side-1
@@ -502,7 +502,7 @@ test_expect_success 'log --graph with merge' '
 '
 
 cat > expect <<\EOF
-| | | *   Merge branch 'side' into master
+| | | *   Merge branch 'side'
 | | | |\
 | | | | * side-2
 | | | | * side-1
@@ -521,7 +521,7 @@ test_expect_success 'log --graph --line-prefix="| | | " with merge' '
 '
 
 cat > expect.colors <<\EOF
-*   Merge branch 'side' into master
+*   Merge branch 'side'
 <BLUE>|<RESET><CYAN>\<RESET>
 <BLUE>|<RESET> * side-2
 <BLUE>|<RESET> * side-1
@@ -555,7 +555,7 @@ cat > expect <<\EOF
 |\  Merge: A B
 | | Author: A U Thor <author@example.com>
 | |
-| |     Merge branch 'side' into master
+| |     Merge branch 'side'
 | |
 | * commit tags/side-2
 | | Author: A U Thor <author@example.com>
@@ -632,11 +632,11 @@ test_expect_success 'set up more tangled history' '
 '
 
 cat > expect <<\EOF
-*   Merge tag 'reach' into master
+*   Merge tag 'reach'
 |\
 | \
 |  \
-*-. \   Merge tags 'octopus-a' and 'octopus-b' into master
+*-. \   Merge tags 'octopus-a' and 'octopus-b'
 |\ \ \
 * | | | seventh
 | | * | octopus-b
@@ -646,14 +646,14 @@ cat > expect <<\EOF
 |/ /
 | * reach
 |/
-*   Merge branch 'tangle' into master
+*   Merge branch 'tangle'
 |\
 | *   Merge branch 'side' (early part) into tangle
 | |\
 | * \   Merge branch 'master' (early part) into tangle
 | |\ \
 | * | | tangle-a
-* | | |   Merge branch 'side' into master
+* | | |   Merge branch 'side'
 |\ \ \ \
 | * | | | side-2
 | | |_|/
@@ -735,16 +735,16 @@ test_expect_success 'log.decorate configuration' '
 
 test_expect_success 'decorate-refs with glob' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach-into-master
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach
+	Merge-tags-octopus-a-and-octopus-b
 	seventh
 	octopus-b (octopus-b)
 	octopus-a (octopus-a)
 	reach
 	EOF
 	cat >expect.no-decorate <<-\EOF &&
-	Merge-tag-reach-into-master
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach
+	Merge-tags-octopus-a-and-octopus-b
 	seventh
 	octopus-b
 	octopus-a
@@ -765,8 +765,8 @@ test_expect_success 'decorate-refs with glob' '
 
 test_expect_success 'decorate-refs without globs' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach-into-master
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach
+	Merge-tags-octopus-a-and-octopus-b
 	seventh
 	octopus-b
 	octopus-a
@@ -779,8 +779,8 @@ test_expect_success 'decorate-refs without globs' '
 
 test_expect_success 'multiple decorate-refs' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach-into-master
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach
+	Merge-tags-octopus-a-and-octopus-b
 	seventh
 	octopus-b (octopus-b)
 	octopus-a (octopus-a)
@@ -794,8 +794,8 @@ test_expect_success 'multiple decorate-refs' '
 
 test_expect_success 'decorate-refs-exclude with glob' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach-into-master (HEAD -> master)
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach (HEAD -> master)
+	Merge-tags-octopus-a-and-octopus-b
 	seventh (tag: seventh)
 	octopus-b (tag: octopus-b)
 	octopus-a (tag: octopus-a)
@@ -811,8 +811,8 @@ test_expect_success 'decorate-refs-exclude with glob' '
 
 test_expect_success 'decorate-refs-exclude without globs' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach-into-master (HEAD -> master)
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach (HEAD -> master)
+	Merge-tags-octopus-a-and-octopus-b
 	seventh (tag: seventh)
 	octopus-b (tag: octopus-b, octopus-b)
 	octopus-a (tag: octopus-a, octopus-a)
@@ -828,8 +828,8 @@ test_expect_success 'decorate-refs-exclude without globs' '
 
 test_expect_success 'multiple decorate-refs-exclude' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach-into-master (HEAD -> master)
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach (HEAD -> master)
+	Merge-tags-octopus-a-and-octopus-b
 	seventh (tag: seventh)
 	octopus-b (tag: octopus-b)
 	octopus-a (tag: octopus-a)
@@ -851,8 +851,8 @@ test_expect_success 'multiple decorate-refs-exclude' '
 
 test_expect_success 'decorate-refs and decorate-refs-exclude' '
 	cat >expect.no-decorate <<-\EOF &&
-	Merge-tag-reach-into-master (master)
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach (master)
+	Merge-tags-octopus-a-and-octopus-b
 	seventh
 	octopus-b
 	octopus-a
@@ -866,8 +866,8 @@ test_expect_success 'decorate-refs and decorate-refs-exclude' '
 
 test_expect_success 'deocrate-refs and log.excludeDecoration' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach-into-master (master)
-	Merge-tags-octopus-a-and-octopus-b-into-master
+	Merge-tag-reach (master)
+	Merge-tags-octopus-a-and-octopus-b
 	seventh
 	octopus-b (octopus-b)
 	octopus-a (octopus-a)
@@ -881,10 +881,10 @@ test_expect_success 'deocrate-refs and log.excludeDecoration' '
 
 test_expect_success 'decorate-refs-exclude and simplify-by-decoration' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach-into-master (HEAD -> master)
+	Merge-tag-reach (HEAD -> master)
 	reach (tag: reach, reach)
 	seventh (tag: seventh)
-	Merge-branch-tangle-into-master
+	Merge-branch-tangle
 	Merge-branch-side-early-part-into-tangle (tangle)
 	tangle-a (tag: tangle-a)
 	EOF
@@ -1068,7 +1068,7 @@ cat >expect <<\EOF
 |\  Merge: MERGE_PARENTS
 | | Author: A U Thor <author@example.com>
 | |
-| |     Merge branch 'tangle' into master
+| |     Merge branch 'tangle'
 | |
 | *   commit COMMIT_OBJECT_NAME
 | |\  Merge: MERGE_PARENTS
@@ -1102,7 +1102,7 @@ cat >expect <<\EOF
 |\ \ \ \  Merge: MERGE_PARENTS
 | | | | | Author: A U Thor <author@example.com>
 | | | | |
-| | | | |     Merge branch 'side' into master
+| | | | |     Merge branch 'side'
 | | | | |
 | * | | | commit COMMIT_OBJECT_NAME
 | | |_|/  Author: A U Thor <author@example.com>
@@ -1343,7 +1343,7 @@ cat >expect <<\EOF
 *** |\  Merge: MERGE_PARENTS
 *** | | Author: A U Thor <author@example.com>
 *** | |
-*** | |     Merge branch 'tangle' into master
+*** | |     Merge branch 'tangle'
 *** | |
 *** | *   commit COMMIT_OBJECT_NAME
 *** | |\  Merge: MERGE_PARENTS
@@ -1377,7 +1377,7 @@ cat >expect <<\EOF
 *** |\ \ \ \  Merge: MERGE_PARENTS
 *** | | | | | Author: A U Thor <author@example.com>
 *** | | | | |
-*** | | | | |     Merge branch 'side' into master
+*** | | | | |     Merge branch 'side'
 *** | | | | |
 *** | * | | | commit COMMIT_OBJECT_NAME
 *** | | |_|/  Author: A U Thor <author@example.com>
@@ -1540,8 +1540,8 @@ cat >expect <<-\EOF
 * reach
 |
 | A	reach.t
-* Merge branch 'tangle' into master
-*   Merge branch 'side' into master
+* Merge branch 'tangle'
+*   Merge branch 'side'
 |\
 | * side-2
 |
@@ -1562,8 +1562,8 @@ cat >expect <<-\EOF
 * reach
 |
 | reach.t
-* Merge branch 'tangle' into master
-*   Merge branch 'side' into master
+* Merge branch 'tangle'
+*   Merge branch 'side'
 |\
 | * side-2
 |

@@ -14,9 +14,9 @@ Testing basic merge operations/option parsing.
     ! [c4] c4
      ! [c5] c5
       ! [c6] c6
-       * [master] Merge commit 'c1' into master
+       * [master] Merge commit 'c1'
 --------
-       - [master] Merge commit 'c1' into master
+       - [master] Merge commit 'c1'
  +     * [c1] commit 1
       +  [c6] c6
      +   [c5] c5
@@ -44,8 +44,8 @@ test_write_lines '1 X' 2 '3 X' 4 '5 X' 6 7 8 '9 X' >result.1-3-5-9
 test_write_lines 1 2 3 4 5 6 7 8 '9 Z' >result.9z
 
 create_merge_msgs () {
-	echo "Merge tag 'c2' into master" >msg.1-5 &&
-	echo "Merge tags 'c2' and 'c3' into master" >msg.1-5-9 &&
+	echo "Merge tag 'c2'" >msg.1-5 &&
+	echo "Merge tags 'c2' and 'c3'" >msg.1-5-9 &&
 	{
 		echo "Squashed commit of the following:" &&
 		echo &&
@@ -258,7 +258,7 @@ test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
 	git commit --no-edit -a &&
 
 	cat >expect <<-\EOF &&
-	Merge tag '"'"'c7'"'"' into master
+	Merge tag '"'"'c7'"'"'
 
 	# ------------------------ >8 ------------------------
 	# Do not modify or remove the line above.
@@ -808,10 +808,10 @@ test_expect_success 'merge with conflicted --autostash changes' '
 '
 
 cat >expected.branch <<\EOF
-Merge branch 'c5-branch' (early part) into master
+Merge branch 'c5-branch' (early part)
 EOF
 cat >expected.tag <<\EOF
-Merge commit 'c5~1' into master
+Merge commit 'c5~1'
 EOF
 
 test_expect_success 'merge early part of c2' '

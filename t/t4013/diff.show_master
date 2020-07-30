@@ -4,7 +4,7 @@ Merge: 9a6d494 c7a2ab9
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:04:00 2006 +0000
 
-    Merge branch 'side' into master
+    Merge branch 'side'
 
 diff --cc dir/sub
 index cead32e,7289e35..992913c

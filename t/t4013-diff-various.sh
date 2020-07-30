@@ -117,12 +117,12 @@ test_expect_success setup '
 
 : <<\EOF
 ! [initial] Initial
- * [master] Merge branch 'side' into master
+ * [master] Merge branch 'side'
   ! [rearrange] Rearranged lines in dir/sub
    ! [side] Side
 ----
   +  [rearrange] Rearranged lines in dir/sub
- -   [master] Merge branch 'side' into master
+ -   [master] Merge branch 'side'
  * + [side] Side
  *   [master^] Third
  *   [master~2] Second
