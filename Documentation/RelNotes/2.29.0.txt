@@ -1,0 +1,67 @@
+Git 2.29 Release Notes
+======================
+
+Updates since v2.28
+-------------------
+
+UI, Workflows & Features
+
+ * "git help log" has been enhanced by sharing more material from the
+   documentation for the underlying "git rev-list" command.
+
+ * "git for-each-ref --format=<>" learned %(contents:size).
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The changed-path Bloom filter is improved using ideas from an
+   independent implementation.
+
+ * Updates to the changed-paths bloom filter.
+
+ * The test framework has been updated so that most tests will run
+   with predictable (artificial) timestamps.
+
+ * Preliminary clean-up of the refs API in preparation for adding a
+   new refs backend "reftable".
+
+ * Dev support to limit the use of test_must_fail to only git commands.
+
+
+Fixes since v2.28
+-----------------
+
+ * "git clone --separate-git-dir=$elsewhere" used to stomp on the
+   contents of the existing directory $elsewhere, which has been
+   taught to fail when $elsewhere is not an empty directory.
+   (merge dfaa209a79 bw/fail-cloning-into-non-empty later to maint).
+
+
+ * With the base fix to 2.27 regresion, any new extensions in a v0
+   repository would still be silently honored, which is not quite
+   right.  Instead, complain and die loudly.
+   (merge ec91ffca04 jk/reject-newer-extensions-in-v0 later to maint).
+
+ * Fetching from a lazily cloned repository resulted at the server
+   side in attempts to lazy fetch objects that the client side has,
+   many of which will not be available from the third-party anyway.
+   (merge 77aa0941ce jt/avoid-lazy-fetching-upon-have-check later to maint).
+
+ * Fix to an ancient bug caused by an over-eager attempt for
+   optimization.
+   (merge a98f7fb366 rs/add-index-entry-optim-fix later to maint).
+
+ * Pushing a ref whose name contains non-ASCII character with the
+   "--force-with-lease" option did not work over smart HTTP protocol,
+   which has been corrected.
+   (merge cd85b447bf bc/push-cas-cquoted-refname later to maint).
+
+ * "git mv src dst", when src is an unmerged path, errored out
+   correctly but with an incorrect error message to claim that src is
+   not tracked, which has been clarified.
+   (merge 9b906af657 ct/mv-unmerged-path-error later to maint).
+
+ * Fix to a regression introduced during 2.27 cycle.
+   (merge cada7308ad en/fill-directory-exponential later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
