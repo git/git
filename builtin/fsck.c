@@ -376,6 +376,7 @@ static void check_object(struct object *obj)
 static void check_connectivity(void)
 {
 	int i, max;
+	struct repository *r = the_repository;
 
 	/* Traverse the pending reachable objects */
 	traverse_reachable();
@@ -401,12 +402,12 @@ static void check_connectivity(void)
 	}
 
 	/* Look up all the requirements, warn about missing objects.. */
-	max = get_max_object_index();
+	max = get_max_object_index(r);
 	if (verbose)
 		fprintf_ln(stderr, _("Checking connectivity (%d objects)"), max);
 
 	for (i = 0; i < max; i++) {
-		struct object *obj = get_indexed_object(i);
+		struct object *obj = get_indexed_object(r, i);
 
 		if (obj)
 			check_object(obj);
@@ -745,7 +746,8 @@ static int fsck_cache_tree(struct cache_tree *it)
 
 static void mark_object_for_connectivity(const struct object_id *oid)
 {
-	struct object *obj = lookup_unknown_object(oid);
+	struct repository *r = the_repository;
+	struct object *obj = lookup_unknown_object(r, oid);
 	obj->flags |= HAS_OBJ;
 }
 

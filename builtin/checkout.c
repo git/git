@@ -1013,6 +1013,7 @@ static void suggest_reattach(struct commit *commit, struct rev_info *revs)
 static void orphaned_commit_warning(struct commit *old_commit, struct commit *new_commit)
 {
 	struct rev_info revs;
+	struct repository *r = the_repository;
 	struct object *object = &old_commit->object;
 
 	repo_init_revisions(the_repository, &revs, NULL);
@@ -1035,7 +1036,7 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 		describe_detached_head(_("Previous HEAD position was"), old_commit);
 
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_all(ALL_REV_FLAGS);
+	clear_commit_marks_all(r, ALL_REV_FLAGS);
 }
 
 static int switch_branches(const struct checkout_opts *opts,

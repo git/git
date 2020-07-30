@@ -31,13 +31,14 @@ static int add_one_ref(const char *path, const struct object_id *oid,
 {
 	struct rev_info *revs = (struct rev_info *)cb_data;
 	struct object *object;
+	struct repository *r = the_repository;
 
 	if ((flag & REF_ISSYMREF) && (flag & REF_ISBROKEN)) {
 		warning("symbolic ref is dangling: %s", path);
 		return 0;
 	}
 
-	object = parse_object_or_die(oid, path);
+	object = parse_object_or_die(r, oid, path);
 	add_pending_object(revs, object, "");
 
 	return 0;
@@ -68,6 +69,7 @@ static void add_recent_object(const struct object_id *oid,
 {
 	struct object *obj;
 	enum object_type type;
+	struct repository *r = the_repository;
 
 	if (mtime <= data->timestamp)
 		return;
@@ -86,7 +88,7 @@ static void add_recent_object(const struct object_id *oid,
 	switch (type) {
 	case OBJ_TAG:
 	case OBJ_COMMIT:
-		obj = parse_object_or_die(oid, NULL);
+		obj = parse_object_or_die(r, oid, NULL);
 		break;
 	case OBJ_TREE:
 		obj = (struct object *)lookup_tree(the_repository, oid);

@@ -1613,6 +1613,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
 	struct commit **list = NULL;
+	struct repository *r = the_repository;
 	struct rev_info rev;
 	struct setup_revision_opt s_r_opt;
 	int nr = 0, total, i;
@@ -2018,7 +2019,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (base_commit) {
 		struct commit *base = get_base_commit(base_commit, list, nr);
 		reset_revision_walk();
-		clear_object_flags(UNINTERESTING);
+		clear_object_flags(r, UNINTERESTING);
 		prepare_bases(&bases, base, list, nr);
 	}
 

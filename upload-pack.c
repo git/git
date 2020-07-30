@@ -595,6 +595,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 		"rev-list", "--stdin", NULL,
 	};
 	struct object *o;
+	struct repository *r = the_repository;
 	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	int i;
 	const unsigned hexsz = the_hash_algo->hexsz;
@@ -617,8 +618,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 
 	namebuf[0] = '^';
 	namebuf[hexsz + 1] = '\n';
-	for (i = get_max_object_index(); 0 < i; ) {
-		o = get_indexed_object(--i);
+	for (i = get_max_object_index(r); 0 < i; ) {
+		o = get_indexed_object(r, --i);
 		if (!o)
 			continue;
 		if (reachable && o->type == OBJ_COMMIT)
@@ -665,6 +666,7 @@ static int get_reachable_list(struct upload_pack_data *data,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int i;
 	struct object *o;
+	struct repository *r = the_repository;
 	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	const unsigned hexsz = the_hash_algo->hexsz;
 
@@ -684,8 +686,8 @@ static int get_reachable_list(struct upload_pack_data *data,
 			o->flags &= ~TMP_MARK;
 		}
 	}
-	for (i = get_max_object_index(); 0 < i; i--) {
-		o = get_indexed_object(i - 1);
+	for (i = get_max_object_index(r); 0 < i; i--) {
+		o = get_indexed_object(r, i - 1);
 		if (o && o->type == OBJ_COMMIT &&
 		    (o->flags & TMP_MARK)) {
 			add_object_array(o, NULL, reachable);
@@ -1086,7 +1088,8 @@ static void receive_needs(struct upload_pack_data *data,
 static int mark_our_ref(const char *refname, const char *refname_full,
 			const struct object_id *oid)
 {
-	struct object *o = lookup_unknown_object(oid);
+	struct repository *r = the_repository;
+	struct object *o = lookup_unknown_object(r, oid);
 
 	if (ref_is_hidden(refname, refname_full)) {
 		o->flags |= HIDDEN_REF;
@@ -1290,6 +1293,8 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 			  struct object_array *want_obj)
 {
 	const char *arg;
+	struct repository *r = the_repository;
+
 	if (skip_prefix(line, "want-ref ", &arg)) {
 		struct object_id oid;
 		struct string_list_item *item;
@@ -1303,7 +1308,7 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 		item = string_list_append(wanted_refs, arg);
 		item->util = oiddup(&oid);
 
-		o = parse_object_or_die(&oid, arg);
+		o = parse_object_or_die(r, &oid, arg);
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
 			add_object_array(o, NULL, want_obj);
@@ -1527,7 +1532,7 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
 
-	clear_object_flags(ALL_FLAGS);
+	clear_object_flags(r, ALL_FLAGS);
 
 	upload_pack_data_init(&data);
 	data.use_sideband = LARGE_PACKET_MAX;

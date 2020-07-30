@@ -10,6 +10,7 @@ int cmd__example_decorate(int argc, const char **argv)
 	struct object_id two_oid = { {2} };
 	struct object_id three_oid = { {3} };
 	struct object *one, *two, *three;
+	struct repository *r = the_repository;
 
 	int decoration_a, decoration_b;
 
@@ -26,8 +27,8 @@ int cmd__example_decorate(int argc, const char **argv)
 	 * Add 2 objects, one with a non-NULL decoration and one with a NULL
 	 * decoration.
 	 */
-	one = lookup_unknown_object(&one_oid);
-	two = lookup_unknown_object(&two_oid);
+	one = lookup_unknown_object(r, &one_oid);
+	two = lookup_unknown_object(r, &two_oid);
 	ret = add_decoration(&n, one, &decoration_a);
 	if (ret)
 		BUG("when adding a brand-new object, NULL should be returned");
@@ -56,7 +57,7 @@ int cmd__example_decorate(int argc, const char **argv)
 	ret = lookup_decoration(&n, two);
 	if (ret != &decoration_b)
 		BUG("lookup should return added declaration");
-	three = lookup_unknown_object(&three_oid);
+	three = lookup_unknown_object(r, &three_oid);
 	ret = lookup_decoration(&n, three);
 	if (ret)
 		BUG("lookup for unknown object should return NULL");

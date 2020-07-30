@@ -10,14 +10,14 @@
 #include "packfile.h"
 #include "commit-graph.h"
 
-unsigned int get_max_object_index(void)
+unsigned int get_max_object_index(struct repository *r)
 {
-	return the_repository->parsed_objects->obj_hash_size;
+	return r->parsed_objects->obj_hash_size;
 }
 
-struct object *get_indexed_object(unsigned int idx)
+struct object *get_indexed_object(struct repository *r, unsigned int idx)
 {
-	return the_repository->parsed_objects->obj_hash[idx];
+	return r->parsed_objects->obj_hash[idx];
 }
 
 static const char *object_type_strings[] = {
@@ -177,12 +177,12 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 	}
 }
 
-struct object *lookup_unknown_object(const struct object_id *oid)
+struct object *lookup_unknown_object(struct repository *r, const struct object_id *oid)
 {
-	struct object *obj = lookup_object(the_repository, oid);
+	struct object *obj = lookup_object(r, oid);
 	if (!obj)
-		obj = create_object(the_repository, oid,
-				    alloc_object_node(the_repository));
+		obj = create_object(r, oid,
+				    alloc_object_node(r));
 	return obj;
 }
 
@@ -236,10 +236,10 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
 	return obj;
 }
 
-struct object *parse_object_or_die(const struct object_id *oid,
+struct object *parse_object_or_die(struct repository *r, const struct object_id *oid,
 				   const char *name)
 {
-	struct object *o = parse_object(the_repository, oid);
+	struct object *o = parse_object(r, oid);
 	if (o)
 		return o;
 
@@ -442,23 +442,23 @@ void object_array_remove_duplicates(struct object_array *array)
 	}
 }
 
-void clear_object_flags(unsigned flags)
+void clear_object_flags(struct repository *r, unsigned flags)
 {
 	int i;
 
-	for (i=0; i < the_repository->parsed_objects->obj_hash_size; i++) {
-		struct object *obj = the_repository->parsed_objects->obj_hash[i];
+	for (i=0; i < r->parsed_objects->obj_hash_size; i++) {
+		struct object *obj = r->parsed_objects->obj_hash[i];
 		if (obj)
 			obj->flags &= ~flags;
 	}
 }
 
-void clear_commit_marks_all(unsigned int flags)
+void clear_commit_marks_all(struct repository *r, unsigned int flags)
 {
 	int i;
 
-	for (i = 0; i < the_repository->parsed_objects->obj_hash_size; i++) {
-		struct object *obj = the_repository->parsed_objects->obj_hash[i];
+	for (i = 0; i < r->parsed_objects->obj_hash_size; i++) {
+		struct object *obj = r->parsed_objects->obj_hash[i];
 		if (obj && obj->type == OBJ_COMMIT)
 			obj->flags &= ~flags;
 	}

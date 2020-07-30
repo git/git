@@ -318,6 +318,7 @@ static int compute_and_write_prerequisites(int bundle_fd,
 {
 	struct child_process rls = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
+	struct repository *r = the_repository;
 	FILE *rls_fout;
 	int i;
 
@@ -336,13 +337,13 @@ static int compute_and_write_prerequisites(int bundle_fd,
 		if (buf.len > 0 && buf.buf[0] == '-') {
 			write_or_die(bundle_fd, buf.buf, buf.len);
 			if (!get_oid_hex(buf.buf + 1, &oid)) {
-				struct object *object = parse_object_or_die(&oid,
+				struct object *object = parse_object_or_die(r, &oid,
 									    buf.buf);
 				object->flags |= UNINTERESTING;
 				add_pending_object(revs, object, buf.buf);
 			}
 		} else if (!get_oid_hex(buf.buf, &oid)) {
-			struct object *object = parse_object_or_die(&oid,
+			struct object *object = parse_object_or_die(r, &oid,
 								    buf.buf);
 			object->flags |= SHOWN;
 		}
@@ -367,6 +368,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 {
 	int i;
 	int ref_count = 0;
+	struct repository *r = the_repository;
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *e = revs->pending.objects + i;
@@ -427,7 +429,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 				 * end up triggering "empty bundle"
 				 * error.
 				 */
-				obj = parse_object_or_die(&oid, e->name);
+				obj = parse_object_or_die(r, &oid, e->name);
 				obj->flags |= SHOWN;
 				add_pending_object(revs, obj, e->name);
 			}
