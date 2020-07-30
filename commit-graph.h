@@ -2,9 +2,6 @@
 #define COMMIT_GRAPH_H
 
 #include "git-compat-util.h"
-#include "repository.h"
-#include "string-list.h"
-#include "cache.h"
 #include "object-store.h"
 #include "oidset.h"
 
@@ -23,6 +20,9 @@ void git_test_write_commit_graph_or_die(void);
 
 struct commit;
 struct bloom_filter_settings;
+struct repository;
+struct raw_object_store;
+struct string_list;
 
 char *get_commit_graph_filename(struct object_directory *odb);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);

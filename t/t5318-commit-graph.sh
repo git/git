@@ -529,7 +529,7 @@ test_expect_success 'detect bad hash version' '
 '
 
 test_expect_success 'detect low chunk count' '
-	corrupt_graph_and_verify $GRAPH_BYTE_CHUNK_COUNT "\02" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CHUNK_COUNT "\01" \
 		"missing the .* chunk"
 '
 
@@ -615,7 +615,8 @@ test_expect_success 'detect invalid checksum hash' '
 
 test_expect_success 'detect incorrect chunk count' '
 	corrupt_graph_and_verify $GRAPH_BYTE_CHUNK_COUNT "\377" \
-		"chunk lookup table entry missing" $GRAPH_CHUNK_LOOKUP_OFFSET
+		"commit-graph file is too small to hold [0-9]* chunks" \
+		$GRAPH_CHUNK_LOOKUP_OFFSET
 '
 
 test_expect_success 'git fsck (checks commit-graph)' '

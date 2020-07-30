@@ -431,11 +431,11 @@ struct combine_diff_path *diff_tree_paths(
 	struct combine_diff_path *p, const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt);
-int diff_tree_oid(const struct object_id *old_oid,
-		  const struct object_id *new_oid,
-		  const char *base, struct diff_options *opt);
-int diff_root_tree_oid(const struct object_id *new_oid, const char *base,
-		       struct diff_options *opt);
+void diff_tree_oid(const struct object_id *old_oid,
+		   const struct object_id *new_oid,
+		   const char *base, struct diff_options *opt);
+void diff_root_tree_oid(const struct object_id *new_oid, const char *base,
+			struct diff_options *opt);
 
 struct combine_diff_path {
 	struct combine_diff_path *next;
