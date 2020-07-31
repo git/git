@@ -65,3 +65,9 @@ Fixes since v2.28
    (merge cada7308ad en/fill-directory-exponential later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
+   (merge 84544f2ea3 sk/typofixes later to maint).
+   (merge b17f411ab5 ar/help-guides-doc later to maint).
+   (merge 98c6871fad rs/grep-simpler-parse-object-or-die-call later to maint).
+   (merge 861c4ce141 en/typofixes later to maint).
+   (merge 60e47f6773 sg/ci-git-path-fix-with-pyenv later to maint).
+   (merge e2bfa50ac3 jb/doc-packfile-name later to maint).
