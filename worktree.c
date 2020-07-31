@@ -66,8 +66,6 @@ static struct worktree *get_main_worktree(void)
 	worktree->is_bare = (is_bare_repository_cfg == 1) ||
 		is_bare_repository();
 	add_head_info(worktree);
-
-	strbuf_release(&worktree_path);
 	return worktree;
 }
 
