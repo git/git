@@ -49,10 +49,8 @@ static struct worktree *get_main_worktree(void)
 	struct worktree *worktree = NULL;
 	struct strbuf worktree_path = STRBUF_INIT;
 
-	strbuf_add_absolute_path(&worktree_path, get_git_common_dir());
-	if (!strbuf_strip_suffix(&worktree_path, "/.git/.") && /* in .git */
-	    !strbuf_strip_suffix(&worktree_path, "/.git")) /* in worktree */
-		strbuf_strip_suffix(&worktree_path, "/."); /* in bare repo */
+	strbuf_add_real_path(&worktree_path, get_git_common_dir());
+	strbuf_strip_suffix(&worktree_path, "/.git");
 
 	worktree = xcalloc(1, sizeof(*worktree));
 	worktree->path = strbuf_detach(&worktree_path, NULL);
