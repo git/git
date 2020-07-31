@@ -82,13 +82,8 @@ static struct worktree *get_linked_worktree(const char *id)
 	if (strbuf_read_file(&worktree_path, path.buf, 0) <= 0)
 		/* invalid gitdir file */
 		goto done;
-
 	strbuf_rtrim(&worktree_path);
-	if (!strbuf_strip_suffix(&worktree_path, "/.git")) {
-		strbuf_reset(&worktree_path);
-		strbuf_add_absolute_path(&worktree_path, ".");
-		strbuf_strip_suffix(&worktree_path, "/.");
-	}
+	strbuf_strip_suffix(&worktree_path, "/.git");
 
 	worktree = xcalloc(1, sizeof(*worktree));
 	worktree->path = strbuf_detach(&worktree_path, NULL);
