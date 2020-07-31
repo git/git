@@ -875,7 +875,6 @@ static void copy_reflog_msg(struct strbuf *sb, const char *msg)
 	char c;
 	int wasspace = 1;
 
-	strbuf_addch(sb, '\t');
 	while ((c = *msg++)) {
 		if (wasspace && isspace(c))
 			continue;

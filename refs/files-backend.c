@@ -1628,8 +1628,10 @@ static int log_ref_write_fd(int fd, const struct object_id *old_oid,
 	int ret = 0;
 
 	strbuf_addf(&sb, "%s %s %s", oid_to_hex(old_oid), oid_to_hex(new_oid), committer);
-	if (msg && *msg)
+	if (msg && *msg) {
+		strbuf_addch(&sb, '\t');
 		strbuf_addstr(&sb, msg);
+	}
 	strbuf_addch(&sb, '\n');
 	if (write_in_full(fd, sb.buf, sb.len) < 0)
 		ret = -1;
