@@ -90,9 +90,6 @@ static struct worktree *get_linked_worktree(const char *id)
 		strbuf_strip_suffix(&worktree_path, "/.");
 	}
 
-	strbuf_reset(&path);
-	strbuf_addf(&path, "%s/worktrees/%s/HEAD", get_git_common_dir(), id);
-
 	worktree = xcalloc(1, sizeof(*worktree));
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	worktree->id = xstrdup(id);
