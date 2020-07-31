@@ -1985,7 +1985,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
  * of oids. If the given ref is a tag, check if the given tag points
  * at one of the oids in the given oid array.
  * NEEDSWORK:
- * 1. Only a single level of inderection is obtained, we might want to
+ * 1. Only a single level of indirection is obtained, we might want to
  * change this to account for multiple levels (e.g. annotated tags
  * pointing to annotated tags pointing to a commit.)
  * 2. As the refs are cached we might know what refname peels to without

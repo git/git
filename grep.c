@@ -1817,7 +1817,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		 * We might set up the shared textconv cache data here, which
 		 * is not thread-safe. Also, get_oid_with_context() and
 		 * parse_object() might be internally called. As they are not
-		 * currenty thread-safe and might be racy with object reading,
+		 * currently thread-safe and might be racy with object reading,
 		 * obj_read_lock() must be called.
 		 */
 		grep_attr_lock();
