@@ -11,6 +11,10 @@ UI, Workflows & Features
 
  * "git for-each-ref --format=<>" learned %(contents:size).
 
+ * "git merge" learned to selectively omit " into <branch>" at the end
+   of the title of default merge message with merge.suppressDest
+   configuration.
+
 
 Performance, Internal Implementation, Development Support etc.
 
