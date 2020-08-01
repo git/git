@@ -10,6 +10,8 @@
 #include "commit-reach.h"
 
 static int use_branch_desc;
+static int suppress_dest_pattern_seen;
+static struct string_list suppress_dest_patterns = STRING_LIST_INIT_DUP;
 
 int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 {
@@ -22,6 +24,14 @@ int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 			merge_log_config = DEFAULT_MERGE_LOG_LEN;
 	} else if (!strcmp(key, "merge.branchdesc")) {
 		use_branch_desc = git_config_bool(key, value);
+	} else if (!strcmp(key, "merge.suppressdest")) {
+		if (!value)
+			return config_error_nonbool(key);
+		if (!*value)
+			string_list_clear(&suppress_dest_patterns, 0);
+		else
+			string_list_append(&suppress_dest_patterns, value);
+		suppress_dest_pattern_seen = 1;
 	} else {
 		return git_default_config(key, value, cb);
 	}
@@ -403,6 +413,24 @@ static void shortlog(const char *name,
 	string_list_clear(&subjects, 0);
 }
 
+/*
+ * See if dest_branch matches with any glob pattern on the
+ * suppress_dest_patterns list.
+ *
+ * We may want to also allow negative matches e.g. ":!glob" like we do
+ * for pathspec, but for now, let's keep it simple and stupid.
+ */
+static int dest_suppressed(const char *dest_branch)
+{
+	struct string_list_item *item;
+
+	for_each_string_list_item(item, &suppress_dest_patterns) {
+		if (!wildmatch(item->string, dest_branch, WM_PATHNAME))
+			return 1;
+	}
+	return 0;
+}
+
 static void fmt_merge_msg_title(struct strbuf *out,
 				const char *current_branch)
 {
@@ -451,7 +479,9 @@ static void fmt_merge_msg_title(struct strbuf *out,
 			strbuf_addf(out, " of %s", srcs.items[i].string);
 	}
 
-	strbuf_addf(out, " into %s\n", current_branch);
+	if (!dest_suppressed(current_branch))
+		strbuf_addf(out, " into %s", current_branch);
+	strbuf_addch(out, '\n');
 }
 
 static void fmt_tag_signature(struct strbuf *tagbuf,
@@ -595,6 +625,9 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 	const char *current_branch;
 	void *current_branch_to_free;
 	struct merge_parents merge_parents;
+
+	if (!suppress_dest_pattern_seen)
+		string_list_append(&suppress_dest_patterns, "master");
 
 	memset(&merge_parents, 0, sizeof(merge_parents));
 
