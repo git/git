@@ -168,9 +168,9 @@ test_expect_failure 'checkout -m after setting text=auto' '
 	git rm -fr . &&
 	rm -f .gitattributes &&
 	git reset --hard initial &&
-	git checkout a -- . &&
+	git restore --source=a -- . &&
 	git checkout -m b &&
-	compare_files expected file
+	git diff --no-index --ignore-cr-at-eol expected file
 '
 
 test_expect_failure 'checkout -m addition of text=auto' '
@@ -183,9 +183,9 @@ test_expect_failure 'checkout -m addition of text=auto' '
 	git rm -fr . &&
 	rm -f .gitattributes file &&
 	git reset --hard initial &&
-	git checkout b -- . &&
+	git restore --source=b -- . &&
 	git checkout -m a &&
-	compare_files expected file
+	git diff --no-index --ignore-cr-at-eol expected file
 '
 
 test_expect_failure 'cherry-pick patch from after text=auto was added' '
