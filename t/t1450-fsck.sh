@@ -701,7 +701,7 @@ test_expect_success 'fsck fails on corrupt packfile' '
 	# at least one of which is not zero, so setting the first byte to 0 is
 	# sufficient.)
 	chmod a+w .git/objects/pack/pack-$pack.pack &&
-	printf '\0' | dd of=.git/objects/pack/pack-$pack.pack bs=1 conv=notrunc seek=12 &&
+	printf "\0" | dd of=.git/objects/pack/pack-$pack.pack bs=1 conv=notrunc seek=12 &&
 
 	test_when_finished "rm -f .git/objects/pack/pack-$pack.*" &&
 	remove_object $hsh &&
