@@ -3529,8 +3529,9 @@ static struct commit_list *reverse_commit_list(struct commit_list *list)
 }
 
 /*
- * Merge the commits h1 and h2, return the resulting virtual
- * commit object and a flag indicating the cleanness of the merge.
+ * Merge the commits h1 and h2, returning a flag (int) indicating the
+ * cleanness of the merge.  Also, if opt->priv->call_depth, create a
+ * virtual commit and write its location to *result.
  */
 static int merge_recursive_internal(struct merge_options *opt,
 				    struct commit *h1,
