@@ -771,13 +771,6 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 */
 
 			add_files_to_cache(NULL, NULL, 0);
-			/*
-			 * NEEDSWORK: carrying over local changes
-			 * when branches have different end-of-line
-			 * normalization (or clean+smudge rules) is
-			 * a pain; plumb in an option to set
-			 * o.renormalize?
-			 */
 			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
 			work = write_in_core_index_as_tree(the_repository);

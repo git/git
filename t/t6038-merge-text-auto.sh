@@ -158,7 +158,7 @@ test_expect_success 'Detect LF/CRLF conflict from addition of text=auto' '
 	compare_files expected file.fuzzy
 '
 
-test_expect_failure 'checkout -m after setting text=auto' '
+test_expect_success 'checkout -m after setting text=auto' '
 	cat <<-\EOF >expected &&
 	first line
 	same line
@@ -173,7 +173,7 @@ test_expect_failure 'checkout -m after setting text=auto' '
 	git diff --no-index --ignore-cr-at-eol expected file
 '
 
-test_expect_failure 'checkout -m addition of text=auto' '
+test_expect_success 'checkout -m addition of text=auto' '
 	cat <<-\EOF >expected &&
 	first line
 	same line
