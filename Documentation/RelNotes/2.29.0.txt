@@ -31,6 +31,18 @@ Performance, Internal Implementation, Development Support etc.
 
  * Dev support to limit the use of test_must_fail to only git commands.
 
+ * While packing many objects in a repository with a promissor remote,
+   lazily fetching missing objects from the promissor remote one by
+   one may be inefficient---the code now attempts to fetch all the
+   missing objects in batch (obviously this won't work for a lazy
+   clone that lazily fetches tree objects as you cannot even enumerate
+   what blobs are missing until you learn which trees are missing).
+
+ * The pretend-object mechanism checks if the given object already
+   exists in the object store before deciding to keep the data
+   in-core, but the check would have triggered lazy fetching of such
+   an object from a promissor remote.
+
 
 Fixes since v2.28
 -----------------
@@ -39,7 +51,6 @@ Fixes since v2.28
    contents of the existing directory $elsewhere, which has been
    taught to fail when $elsewhere is not an empty directory.
    (merge dfaa209a79 bw/fail-cloning-into-non-empty later to maint).
-
 
  * With the base fix to 2.27 regresion, any new extensions in a v0
    repository would still be silently honored, which is not quite
@@ -67,6 +78,9 @@ Fixes since v2.28
 
  * Fix to a regression introduced during 2.27 cycle.
    (merge cada7308ad en/fill-directory-exponential later to maint).
+
+ * Command line completion (in contrib/) update.
+   (merge 688b87c81b mp/complete-show-color-moved later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
