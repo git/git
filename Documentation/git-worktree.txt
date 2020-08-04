@@ -70,20 +70,20 @@ branches from there if `<branch>` is ambiguous but exists on the
 linkgit:git-config[1].
 +
 If `<commit-ish>` is omitted and neither `-b` nor `-B` nor `--detach` used,
-then, as a convenience, the new worktree is associated with a branch
+then, as a convenience, the new working tree is associated with a branch
 (call it `<branch>`) named after `$(basename <path>)`.  If `<branch>`
 doesn't exist, a new branch based on `HEAD` is automatically created as
 if `-b <branch>` was given.  If `<branch>` does exist, it will be
-checked out in the new worktree, if it's not checked out anywhere
-else, otherwise the command will refuse to create the worktree (unless
+checked out in the new working tree, if it's not checked out anywhere
+else, otherwise the command will refuse to create the working tree (unless
 `--force` is used).
 
 list::
 
-List details of each worktree.  The main worktree is listed first, followed by
-each of the linked worktrees.  The output details include if the worktree is
-bare, the revision currently checked out, and the branch currently checked out
-(or "detached HEAD" if none).
+List details of each working tree.  The main working tree is listed first,
+followed by each of the linked working trees.  The output details include
+if the working tree is bare, the revision currently checked out, and the
+branch currently checked out (or "detached HEAD" if none).
 
 lock::
 
@@ -202,7 +202,7 @@ This can also be set up as the default behaviour by using the
 	absolute.
 +
 If the last path components in the working tree's path is unique among
-working trees, it can be used to identify worktrees. For example if
+working trees, it can be used to identify working trees. For example if
 you only have two working trees, at `/abc/def/ghi` and `/abc/def/ggg`,
 then `ghi` or `def/ghi` is enough to point to the former working tree.
 
@@ -221,7 +221,7 @@ shared.
 
 Refs that are per working tree can still be accessed from another
 working tree via two special paths, `main-worktree` and `worktrees`. The
-former gives access to per-worktree refs of the main working tree,
+former gives access to per-working tree refs of the main working tree,
 while the latter to all linked working trees.
 
 For example, `main-worktree/HEAD` or `main-worktree/refs/bisect/good`
@@ -335,8 +335,8 @@ Porcelain Format
 The porcelain format has a line per attribute.  Attributes are listed with a
 label and value separated by a single space.  Boolean attributes (like `bare`
 and `detached`) are listed as a label only, and are only present if and only
-if the value is true.  The first attribute of a worktree is always `worktree`,
-an empty line indicates the end of the record.  For example:
+if the value is true.  The first attribute of a working tree is always
+`worktree`, an empty line indicates the end of the record.  For example:
 
 ------------
 $ git worktree list --porcelain
