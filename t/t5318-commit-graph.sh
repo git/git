@@ -10,8 +10,7 @@ test_expect_success 'setup full repo' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git init &&
 	git config core.commitGraph true &&
-	objdir=".git/objects" &&
-	test_oid_init
+	objdir=".git/objects"
 '
 
 test_expect_success POSIXPERM 'tweak umask for modebit tests' '

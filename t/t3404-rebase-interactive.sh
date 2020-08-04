@@ -1250,7 +1250,7 @@ test_expect_success 'rebase -i error on commits with \ in message' '
 	test_expect_code 1 grep  "	emp" error
 '
 
-test_expect_success SHA1 'short SHA-1 setup' '
+test_expect_success 'short commit ID setup' '
 	test_when_finished "git checkout master" &&
 	git checkout --orphan collide &&
 	git rm -rf . &&
@@ -1262,23 +1262,54 @@ test_expect_success SHA1 'short SHA-1 setup' '
 	)
 '
 
-test_expect_success SHA1 'short SHA-1 collide' '
+if test -n "$GIT_TEST_FIND_COLLIDER"
+then
+	author="$(unset test_tick; test_tick; git var GIT_AUTHOR_IDENT)"
+	committer="$(unset test_tick; test_tick; git var GIT_COMMITTER_IDENT)"
+	blob="$(git rev-parse collide2:collide)"
+	from="$(git rev-parse collide1^0)"
+	repl="commit refs/heads/collider-&\\n"
+	repl="${repl}author $author\\ncommitter $committer\\n"
+	repl="${repl}data <<EOF\\ncollide2 &\\nEOF\\n"
+	repl="${repl}from $from\\nM 100644 $blob collide\\n"
+	test_seq 1 32768 | sed "s|.*|$repl|" >script &&
+	git fast-import <script &&
+	git pack-refs &&
+	git for-each-ref >refs &&
+	grep "^$(test_oid t3404_collision)" <refs >matches &&
+	cat matches &&
+	test_line_count -gt 2 matches || {
+		echo "Could not find a collider" >&2
+		exit 1
+	}
+fi
+
+test_expect_success 'short commit ID collide' '
+	test_oid_cache <<-EOF &&
+	# collision-related constants
+	t3404_collision	sha1:6bcd
+	t3404_collision	sha256:0161
+	t3404_collider	sha1:ac4f2ee
+	t3404_collider	sha256:16697
+	EOF
 	test_when_finished "reset_rebase && git checkout master" &&
 	git checkout collide &&
-	colliding_sha1=6bcda37 &&
-	test $colliding_sha1 = "$(git rev-parse HEAD | cut -c 1-7)" &&
+	colliding_id=$(test_oid t3404_collision) &&
+	hexsz=$(test_oid hexsz) &&
+	test $colliding_id = "$(git rev-parse HEAD | cut -c 1-4)" &&
+	test_config core.abbrev 4 &&
 	(
 		unset test_tick &&
 		test_tick &&
 		set_fake_editor &&
-		FAKE_COMMIT_MESSAGE="collide2 ac4f2ee" \
+		FAKE_COMMIT_MESSAGE="collide2 $(test_oid t3404_collider)" \
 		FAKE_LINES="reword 1 break 2" git rebase -i HEAD~2 &&
-		test $colliding_sha1 = "$(git rev-parse HEAD | cut -c 1-7)" &&
-		grep "^pick $colliding_sha1 " \
+		test $colliding_id = "$(git rev-parse HEAD | cut -c 1-4)" &&
+		grep "^pick $colliding_id " \
 			.git/rebase-merge/git-rebase-todo.tmp &&
-		grep "^pick [0-9a-f]\{40\}" \
+		grep "^pick [0-9a-f]\{$hexsz\}" \
 			.git/rebase-merge/git-rebase-todo &&
-		grep "^pick [0-9a-f]\{40\}" \
+		grep "^pick [0-9a-f]\{$hexsz\}" \
 			.git/rebase-merge/git-rebase-todo.backup &&
 		git rebase --continue
 	) &&

@@ -4,7 +4,6 @@ test_description='test log -L'
 . ./test-lib.sh
 
 test_expect_success 'setup (import history)' '
-	test_oid_init &&
 	git fast-import < "$TEST_DIRECTORY"/t4211/history.export &&
 	git reset --hard
 '

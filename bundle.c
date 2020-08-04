@@ -12,7 +12,16 @@
 #include "refs.h"
 #include "strvec.h"
 
-static const char bundle_signature[] = "# v2 git bundle\n";
+
+static const char v2_bundle_signature[] = "# v2 git bundle\n";
+static const char v3_bundle_signature[] = "# v3 git bundle\n";
+static struct {
+	int version;
+	const char *signature;
+} bundle_sigs[] = {
+	{ 2, v2_bundle_signature },
+	{ 3, v3_bundle_signature },
+};
 
 static void add_to_ref_list(const struct object_id *oid, const char *name,
 		struct ref_list *list)
@@ -23,15 +32,30 @@ static void add_to_ref_list(const struct object_id *oid, const char *name,
 	list->nr++;
 }
 
-static const struct git_hash_algo *detect_hash_algo(struct strbuf *buf)
+static int parse_capability(struct bundle_header *header, const char *capability)
 {
-	size_t len = strcspn(buf->buf, " \n");
-	int algo;
+	const char *arg;
+	if (skip_prefix(capability, "object-format=", &arg)) {
+		int algo = hash_algo_by_name(arg);
+		if (algo == GIT_HASH_UNKNOWN)
+			return error(_("unrecognized bundle hash algorithm: %s"), arg);
+		header->hash_algo = &hash_algos[algo];
+		return 0;
+	}
+	return error(_("unknown capability '%s'"), capability);
+}
 
-	algo = hash_algo_by_length(len / 2);
-	if (algo == GIT_HASH_UNKNOWN)
-		return NULL;
-	return &hash_algos[algo];
+static int parse_bundle_signature(struct bundle_header *header, const char *line)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(bundle_sigs); i++) {
+		if (!strcmp(line, bundle_sigs[i].signature)) {
+			header->version = bundle_sigs[i].version;
+			return 0;
+		}
+	}
+	return -1;
 }
 
 static int parse_bundle_header(int fd, struct bundle_header *header,
@@ -42,13 +66,15 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 
 	/* The bundle header begins with the signature */
 	if (strbuf_getwholeline_fd(&buf, fd, '\n') ||
-	    strcmp(buf.buf, bundle_signature)) {
+	    parse_bundle_signature(header, buf.buf)) {
 		if (report_path)
-			error(_("'%s' does not look like a v2 bundle file"),
+			error(_("'%s' does not look like a v2 or v3 bundle file"),
 			      report_path);
 		status = -1;
 		goto abort;
 	}
+
+	header->hash_algo = the_hash_algo;
 
 	/* The bundle header ends with an empty line */
 	while (!strbuf_getwholeline_fd(&buf, fd, '\n') &&
@@ -57,19 +83,19 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		int is_prereq = 0;
 		const char *p;
 
-		if (*buf.buf == '-') {
-			is_prereq = 1;
-			strbuf_remove(&buf, 0, 1);
-		}
 		strbuf_rtrim(&buf);
 
-		if (!header->hash_algo) {
-			header->hash_algo = detect_hash_algo(&buf);
-			if (!header->hash_algo) {
-				error(_("unknown hash algorithm length"));
+		if (header->version == 3 && *buf.buf == '@') {
+			if (parse_capability(header, buf.buf + 1)) {
 				status = -1;
 				break;
 			}
+			continue;
+		}
+
+		if (*buf.buf == '-') {
+			is_prereq = 1;
+			strbuf_remove(&buf, 0, 1);
 		}
 
 		/*
@@ -449,13 +475,14 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 }
 
 int create_bundle(struct repository *r, const char *path,
-		  int argc, const char **argv, struct strvec *pack_options)
+		  int argc, const char **argv, struct strvec *pack_options, int version)
 {
 	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;
 	int bundle_to_stdout;
 	int ref_count = 0;
 	struct rev_info revs;
+	int min_version = the_hash_algo == &hash_algos[GIT_HASH_SHA1] ? 2 : 3;
 
 	bundle_to_stdout = !strcmp(path, "-");
 	if (bundle_to_stdout)
@@ -464,8 +491,22 @@ int create_bundle(struct repository *r, const char *path,
 		bundle_fd = hold_lock_file_for_update(&lock, path,
 						      LOCK_DIE_ON_ERROR);
 
-	/* write signature */
-	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
+	if (version == -1)
+		version = min_version;
+
+	if (version < 2 || version > 3) {
+		die(_("unsupported bundle version %d"), version);
+	} else if (version < min_version) {
+		die(_("cannot write bundle version %d with algorithm %s"), version, the_hash_algo->name);
+	} else if (version == 2) {
+		write_or_die(bundle_fd, v2_bundle_signature, strlen(v2_bundle_signature));
+	} else {
+		const char *capability = "@object-format=";
+		write_or_die(bundle_fd, v3_bundle_signature, strlen(v3_bundle_signature));
+		write_or_die(bundle_fd, capability, strlen(capability));
+		write_or_die(bundle_fd, the_hash_algo->name, strlen(the_hash_algo->name));
+		write_or_die(bundle_fd, "\n", 1);
+	}
 
 	/* init revs to list objects for pack-objects later */
 	save_commit_buffer = 0;
