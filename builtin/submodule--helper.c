@@ -294,9 +294,9 @@ static char *compute_rev_name(const char *sub_path, const char* object_id)
 		cp.git_cmd = 1;
 		cp.no_stderr = 1;
 
-		argv_array_push(&cp.args, "describe");
-		argv_array_pushv(&cp.args, *d);
-		argv_array_push(&cp.args, object_id);
+		strvec_push(&cp.args, "describe");
+		strvec_pushv(&cp.args, *d);
+		strvec_push(&cp.args, object_id);
 
 		if (!capture_command(&cp, &sb, 0)) {
 			strbuf_strip_suffix(&sb, "\n");
@@ -495,12 +495,12 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		char *toplevel = xgetcwd();
 		struct strbuf sb = STRBUF_INIT;
 
-		argv_array_pushf(&cp.env_array, "name=%s", sub->name);
-		argv_array_pushf(&cp.env_array, "sm_path=%s", path);
-		argv_array_pushf(&cp.env_array, "displaypath=%s", displaypath);
-		argv_array_pushf(&cp.env_array, "sha1=%s",
-				oid_to_hex(ce_oid));
-		argv_array_pushf(&cp.env_array, "toplevel=%s", toplevel);
+		strvec_pushf(&cp.env_array, "name=%s", sub->name);
+		strvec_pushf(&cp.env_array, "sm_path=%s", path);
+		strvec_pushf(&cp.env_array, "displaypath=%s", displaypath);
+		strvec_pushf(&cp.env_array, "sha1=%s",
+			     oid_to_hex(ce_oid));
+		strvec_pushf(&cp.env_array, "toplevel=%s", toplevel);
 
 		/*
 		 * Since the path variable was accessible from the script
@@ -509,15 +509,15 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		 * on windows. And since environment variables are
 		 * case-insensitive in windows, it interferes with the
 		 * existing PATH variable. Hence, to avoid that, we expose
-		 * path via the args argv_array and not via env_array.
+		 * path via the args strvec and not via env_array.
 		 */
 		sq_quote_buf(&sb, path);
-		argv_array_pushf(&cp.args, "path=%s; %s",
-				 sb.buf, info->argv[0]);
+		strvec_pushf(&cp.args, "path=%s; %s",
+			     sb.buf, info->argv[0]);
 		strbuf_release(&sb);
 		free(toplevel);
 	} else {
-		argv_array_pushv(&cp.args, info->argv);
+		strvec_pushv(&cp.args, info->argv);
 	}
 
 	if (!info->quiet)
@@ -534,16 +534,16 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env_array);
 
-		argv_array_pushl(&cpr.args, "--super-prefix", NULL);
-		argv_array_pushf(&cpr.args, "%s/", displaypath);
-		argv_array_pushl(&cpr.args, "submodule--helper", "foreach", "--recursive",
-				NULL);
+		strvec_pushl(&cpr.args, "--super-prefix", NULL);
+		strvec_pushf(&cpr.args, "%s/", displaypath);
+		strvec_pushl(&cpr.args, "submodule--helper", "foreach", "--recursive",
+			     NULL);
 
 		if (info->quiet)
-			argv_array_push(&cpr.args, "--quiet");
+			strvec_push(&cpr.args, "--quiet");
 
-		argv_array_push(&cpr.args, "--");
-		argv_array_pushv(&cpr.args, info->argv);
+		strvec_push(&cpr.args, "--");
+		strvec_pushv(&cpr.args, info->argv);
 
 		if (run_command(&cpr))
 			die(_("run_command returned non-zero status while "
@@ -779,7 +779,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 			     unsigned int flags)
 {
 	char *displaypath;
-	struct argv_array diff_files_args = ARGV_ARRAY_INIT;
+	struct strvec diff_files_args = STRVEC_INIT;
 	struct rev_info rev;
 	int diff_files_result;
 	struct strbuf buf = STRBUF_INIT;
@@ -809,17 +809,17 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	}
 	strbuf_release(&buf);
 
-	argv_array_pushl(&diff_files_args, "diff-files",
-			 "--ignore-submodules=dirty", "--quiet", "--",
-			 path, NULL);
+	strvec_pushl(&diff_files_args, "diff-files",
+		     "--ignore-submodules=dirty", "--quiet", "--",
+		     path, NULL);
 
 	git_config(git_diff_basic_config, NULL);
 
 	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = 0;
-	diff_files_args.argc = setup_revisions(diff_files_args.argc,
-					       diff_files_args.argv,
-					       &rev, NULL);
+	diff_files_args.nr = setup_revisions(diff_files_args.nr,
+					     diff_files_args.v,
+					     &rev, NULL);
 	diff_files_result = run_diff_files(&rev, 0);
 
 	if (!diff_result_code(&rev.diffopt, diff_files_result)) {
@@ -849,23 +849,23 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env_array);
 
-		argv_array_push(&cpr.args, "--super-prefix");
-		argv_array_pushf(&cpr.args, "%s/", displaypath);
-		argv_array_pushl(&cpr.args, "submodule--helper", "status",
-				 "--recursive", NULL);
+		strvec_push(&cpr.args, "--super-prefix");
+		strvec_pushf(&cpr.args, "%s/", displaypath);
+		strvec_pushl(&cpr.args, "submodule--helper", "status",
+			     "--recursive", NULL);
 
 		if (flags & OPT_CACHED)
-			argv_array_push(&cpr.args, "--cached");
+			strvec_push(&cpr.args, "--cached");
 
 		if (flags & OPT_QUIET)
-			argv_array_push(&cpr.args, "--quiet");
+			strvec_push(&cpr.args, "--quiet");
 
 		if (run_command(&cpr))
 			die(_("failed to recurse into submodule '%s'"), path);
 	}
 
 cleanup:
-	argv_array_clear(&diff_files_args);
+	strvec_clear(&diff_files_args);
 	free(displaypath);
 }
 
@@ -995,8 +995,8 @@ static void sync_submodule(const char *path, const char *prefix,
 	prepare_submodule_repo_env(&cp.env_array);
 	cp.git_cmd = 1;
 	cp.dir = path;
-	argv_array_pushl(&cp.args, "submodule--helper",
-			 "print-default-remote", NULL);
+	strvec_pushl(&cp.args, "submodule--helper",
+		     "print-default-remote", NULL);
 
 	strbuf_reset(&sb);
 	if (capture_command(&cp, &sb, 0))
@@ -1021,13 +1021,13 @@ static void sync_submodule(const char *path, const char *prefix,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env_array);
 
-		argv_array_push(&cpr.args, "--super-prefix");
-		argv_array_pushf(&cpr.args, "%s/", displaypath);
-		argv_array_pushl(&cpr.args, "submodule--helper", "sync",
-				 "--recursive", NULL);
+		strvec_push(&cpr.args, "--super-prefix");
+		strvec_pushf(&cpr.args, "%s/", displaypath);
+		strvec_pushl(&cpr.args, "submodule--helper", "sync",
+			     "--recursive", NULL);
 
 		if (flags & OPT_QUIET)
-			argv_array_push(&cpr.args, "--quiet");
+			strvec_push(&cpr.args, "--quiet");
 
 		if (run_command(&cpr))
 			die(_("failed to recurse into submodule '%s'"),
@@ -1127,8 +1127,8 @@ static void deinit_submodule(const char *path, const char *prefix,
 		if (!(flags & OPT_FORCE)) {
 			struct child_process cp_rm = CHILD_PROCESS_INIT;
 			cp_rm.git_cmd = 1;
-			argv_array_pushl(&cp_rm.args, "rm", "-qn",
-					 path, NULL);
+			strvec_pushl(&cp_rm.args, "rm", "-qn",
+				     path, NULL);
 
 			if (run_command(&cp_rm))
 				die(_("Submodule work tree '%s' contains local "
@@ -1156,8 +1156,8 @@ static void deinit_submodule(const char *path, const char *prefix,
 		      displaypath);
 
 	cp_config.git_cmd = 1;
-	argv_array_pushl(&cp_config.args, "config", "--get-regexp", NULL);
-	argv_array_pushf(&cp_config.args, "submodule.%s\\.", sub->name);
+	strvec_pushl(&cp_config.args, "config", "--get-regexp", NULL);
+	strvec_pushf(&cp_config.args, "submodule.%s\\.", sub->name);
 
 	/* remove the .git/config entries (unless the user already did it) */
 	if (!capture_command(&cp_config, &sb_config, 0) && sb_config.len) {
@@ -1239,32 +1239,32 @@ static int clone_submodule(const char *path, const char *gitdir, const char *url
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
-	argv_array_push(&cp.args, "clone");
-	argv_array_push(&cp.args, "--no-checkout");
+	strvec_push(&cp.args, "clone");
+	strvec_push(&cp.args, "--no-checkout");
 	if (quiet)
-		argv_array_push(&cp.args, "--quiet");
+		strvec_push(&cp.args, "--quiet");
 	if (progress)
-		argv_array_push(&cp.args, "--progress");
+		strvec_push(&cp.args, "--progress");
 	if (depth && *depth)
-		argv_array_pushl(&cp.args, "--depth", depth, NULL);
+		strvec_pushl(&cp.args, "--depth", depth, NULL);
 	if (reference->nr) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, reference)
-			argv_array_pushl(&cp.args, "--reference",
-					 item->string, NULL);
+			strvec_pushl(&cp.args, "--reference",
+				     item->string, NULL);
 	}
 	if (dissociate)
-		argv_array_push(&cp.args, "--dissociate");
+		strvec_push(&cp.args, "--dissociate");
 	if (gitdir && *gitdir)
-		argv_array_pushl(&cp.args, "--separate-git-dir", gitdir, NULL);
+		strvec_pushl(&cp.args, "--separate-git-dir", gitdir, NULL);
 	if (single_branch >= 0)
-		argv_array_push(&cp.args, single_branch ?
+		strvec_push(&cp.args, single_branch ?
 					  "--single-branch" :
 					  "--no-single-branch");
 
-	argv_array_push(&cp.args, "--");
-	argv_array_push(&cp.args, url);
-	argv_array_push(&cp.args, path);
+	strvec_push(&cp.args, "--");
+	strvec_push(&cp.args, url);
+	strvec_push(&cp.args, path);
 
 	cp.git_cmd = 1;
 	prepare_submodule_repo_env(&cp.env_array);
@@ -1717,32 +1717,32 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	child->no_stdin = 1;
 	child->stdout_to_stderr = 1;
 	child->err = -1;
-	argv_array_push(&child->args, "submodule--helper");
-	argv_array_push(&child->args, "clone");
+	strvec_push(&child->args, "submodule--helper");
+	strvec_push(&child->args, "clone");
 	if (suc->progress)
-		argv_array_push(&child->args, "--progress");
+		strvec_push(&child->args, "--progress");
 	if (suc->quiet)
-		argv_array_push(&child->args, "--quiet");
+		strvec_push(&child->args, "--quiet");
 	if (suc->prefix)
-		argv_array_pushl(&child->args, "--prefix", suc->prefix, NULL);
+		strvec_pushl(&child->args, "--prefix", suc->prefix, NULL);
 	if (suc->recommend_shallow && sub->recommend_shallow == 1)
-		argv_array_push(&child->args, "--depth=1");
+		strvec_push(&child->args, "--depth=1");
 	if (suc->require_init)
-		argv_array_push(&child->args, "--require-init");
-	argv_array_pushl(&child->args, "--path", sub->path, NULL);
-	argv_array_pushl(&child->args, "--name", sub->name, NULL);
-	argv_array_pushl(&child->args, "--url", url, NULL);
+		strvec_push(&child->args, "--require-init");
+	strvec_pushl(&child->args, "--path", sub->path, NULL);
+	strvec_pushl(&child->args, "--name", sub->name, NULL);
+	strvec_pushl(&child->args, "--url", url, NULL);
 	if (suc->references.nr) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, &suc->references)
-			argv_array_pushl(&child->args, "--reference", item->string, NULL);
+			strvec_pushl(&child->args, "--reference", item->string, NULL);
 	}
 	if (suc->dissociate)
-		argv_array_push(&child->args, "--dissociate");
+		strvec_push(&child->args, "--dissociate");
 	if (suc->depth)
-		argv_array_push(&child->args, suc->depth);
+		strvec_push(&child->args, suc->depth);
 	if (suc->single_branch >= 0)
-		argv_array_push(&child->args, suc->single_branch ?
+		strvec_push(&child->args, suc->single_branch ?
 					      "--single-branch" :
 					      "--no-single-branch");
 

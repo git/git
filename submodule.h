@@ -1,7 +1,7 @@
 #ifndef SUBMODULE_H
 #define SUBMODULE_H
 
-struct argv_array;
+struct strvec;
 struct cache_entry;
 struct diff_options;
 struct index_state;
@@ -84,7 +84,7 @@ int should_update_submodules(void);
 const struct submodule *submodule_from_ce(const struct cache_entry *ce);
 void check_for_new_submodule_commits(struct object_id *oid);
 int fetch_populated_submodules(struct repository *r,
-			       const struct argv_array *options,
+			       const struct strvec *options,
 			       const char *prefix,
 			       int command_line_option,
 			       int default_option,
@@ -143,7 +143,7 @@ void submodule_unset_core_worktree(const struct submodule *sub);
  * a submodule by clearing any repo-specific environment variables, but
  * retaining any config in the environment.
  */
-void prepare_submodule_repo_env(struct argv_array *out);
+void prepare_submodule_repo_env(struct strvec *out);
 
 #define ABSORB_GITDIR_RECURSE_SUBMODULES (1<<0)
 void absorb_git_dir_into_superproject(const char *path,

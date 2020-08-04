@@ -976,7 +976,7 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 
 		imap_info("Starting tunnel '%s'... ", srvc->tunnel);
 
-		argv_array_push(&tunnel.args, srvc->tunnel);
+		strvec_push(&tunnel.args, srvc->tunnel);
 		tunnel.use_shell = 1;
 		tunnel.in = -1;
 		tunnel.out = -1;

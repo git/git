@@ -18,7 +18,7 @@
 #include "run-command.h"
 #include "exec-cmd.h"
 #include "parse-options.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "strbuf.h"
 #include "lockfile.h"
 #include "object-store.h"
@@ -210,10 +210,10 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	strbuf_addf(&index_env, "GIT_INDEX_FILE=%s", index_path);
 	env[0] = index_env.buf;
 
-	argv_array_pushl(&update_index.args,
-			 "--git-dir", git_dir, "--work-tree", workdir,
-			 "update-index", "--really-refresh", "-q",
-			 "--unmerged", NULL);
+	strvec_pushl(&update_index.args,
+		     "--git-dir", git_dir, "--work-tree", workdir,
+		     "update-index", "--really-refresh", "-q",
+		     "--unmerged", NULL);
 	update_index.no_stdin = 1;
 	update_index.no_stdout = 1;
 	update_index.no_stderr = 1;
@@ -225,9 +225,9 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	/* Ignore any errors of update-index */
 	run_command(&update_index);
 
-	argv_array_pushl(&diff_files.args,
-			 "--git-dir", git_dir, "--work-tree", workdir,
-			 "diff-files", "--name-only", "-z", NULL);
+	strvec_pushl(&diff_files.args,
+		     "--git-dir", git_dir, "--work-tree", workdir,
+		     "diff-files", "--name-only", "-z", NULL);
 	diff_files.no_stdin = 1;
 	diff_files.git_cmd = 1;
 	diff_files.use_shell = 0;
@@ -393,10 +393,10 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	child.clean_on_exit = 1;
 	child.dir = prefix;
 	child.out = -1;
-	argv_array_pushl(&child.args, "diff", "--raw", "--no-abbrev", "-z",
-			 NULL);
+	strvec_pushl(&child.args, "diff", "--raw", "--no-abbrev", "-z",
+		     NULL);
 	for (i = 0; i < argc; i++)
-		argv_array_push(&child.args, argv[i]);
+		strvec_push(&child.args, argv[i]);
 	if (start_command(&child))
 		die("could not obtain raw diff");
 	fp = xfdopen(child.out, "r");
@@ -667,7 +667,7 @@ finish:
 static int run_file_diff(int prompt, const char *prefix,
 			 int argc, const char **argv)
 {
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	const char *env[] = {
 		"GIT_PAGER=", "GIT_EXTERNAL_DIFF=git-difftool--helper", NULL,
 		NULL
@@ -680,10 +680,10 @@ static int run_file_diff(int prompt, const char *prefix,
 		env[2] = "GIT_DIFFTOOL_NO_PROMPT=true";
 
 
-	argv_array_push(&args, "diff");
+	strvec_push(&args, "diff");
 	for (i = 0; i < argc; i++)
-		argv_array_push(&args, argv[i]);
-	ret = run_command_v_opt_cd_env(args.argv, RUN_GIT_CMD, prefix, env);
+		strvec_push(&args, argv[i]);
+	ret = run_command_v_opt_cd_env(args.v, RUN_GIT_CMD, prefix, env);
 	exit(ret);
 }
 

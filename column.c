@@ -358,7 +358,7 @@ static struct child_process column_process = CHILD_PROCESS_INIT;
 
 int run_column_filter(int colopts, const struct column_options *opts)
 {
-	struct argv_array *argv;
+	struct strvec *argv;
 
 	if (fd_out != -1)
 		return -1;
@@ -366,14 +366,14 @@ int run_column_filter(int colopts, const struct column_options *opts)
 	child_process_init(&column_process);
 	argv = &column_process.args;
 
-	argv_array_push(argv, "column");
-	argv_array_pushf(argv, "--raw-mode=%d", colopts);
+	strvec_push(argv, "column");
+	strvec_pushf(argv, "--raw-mode=%d", colopts);
 	if (opts && opts->width)
-		argv_array_pushf(argv, "--width=%d", opts->width);
+		strvec_pushf(argv, "--width=%d", opts->width);
 	if (opts && opts->indent)
-		argv_array_pushf(argv, "--indent=%s", opts->indent);
+		strvec_pushf(argv, "--indent=%s", opts->indent);
 	if (opts && opts->padding)
-		argv_array_pushf(argv, "--padding=%d", opts->padding);
+		strvec_pushf(argv, "--padding=%d", opts->padding);
 
 	fflush(stdout);
 	column_process.in = -1;

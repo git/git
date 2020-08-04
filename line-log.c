@@ -14,7 +14,7 @@
 #include "graph.h"
 #include "userdiff.h"
 #include "line-log.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "bloom.h"
 
 static void range_set_grow(struct range_set *rs, size_t extra)
@@ -758,12 +758,12 @@ static void parse_pathspec_from_ranges(struct pathspec *pathspec,
 				       struct line_log_data *range)
 {
 	struct line_log_data *r;
-	struct argv_array array = ARGV_ARRAY_INIT;
+	struct strvec array = STRVEC_INIT;
 	const char **paths;
 
 	for (r = range; r; r = r->next)
-		argv_array_push(&array, r->path);
-	paths = argv_array_detach(&array);
+		strvec_push(&array, r->path);
+	paths = strvec_detach(&array);
 
 	parse_pathspec(pathspec, 0, PATHSPEC_PREFER_FULL, "", paths);
 	/* strings are now owned by pathspec */
