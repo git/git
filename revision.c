@@ -702,6 +702,7 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	len = strlen(path);
 	if (!len) {
 		revs->bloom_filter_settings = NULL;
+		free(path_alloc);
 		return;
 	}
 
