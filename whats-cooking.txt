@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2020, #06; Thu, 30)
-X-master-at: 79bcaf006215b91de981c30c0268467e06faaf39
-X-next-at: 392f21bd87383fb9d4b700d1d69cb3af52040784
+Subject: What's cooking in git.git (Aug 2020, #01; Mon, 3)
+X-master-at: 85b4e0a6dc8407de6f69808d9ee6debdf167ced3
+X-next-at: 39fefa6b823f48851746819838919f3118e4317f
 
-What's cooking in git.git (Jul 2020, #06; Thu, 30)
+What's cooking in git.git (Aug 2020, #01; Mon, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,13 +12,9 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Many topics that have been cooking in 'next' have now been merged to
-'master'.  The tip of 'next' will be rewound and rebuilt on top of
-the updated 'master', perhaps tomorrow.
-
-During the next cycle for 2.29, we will decide the direction of
-follow-up work, if any is needed, for the init.defaultBranch topic
-we did the last cycle.
+Some topics that have been cooking in 'next' during the previous
+cycle, in addition to some fixes to 2.28, have been merged to
+'master', and the tip of 'next' has been rewound.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -26,248 +22,135 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* bc/push-cas-cquoted-refname (2020-07-20) 1 commit
-  (merged to 'next' on 2020-07-21 at fd7bb5c85e)
- + remote-curl: make --force-with-lease work with non-ASCII ref names
+* en/eol-attrs-gotchas (2020-08-03) 4 commits
+ - checkout: support renormalization with checkout -m <paths>
+ - merge: make merge.renormalize work for all uses of merge machinery
+ - t6038: remove problematic test
+ - t6038: make tests fail for the right reason
 
- Pushing a ref whose name contains non-ASCII character with the
- "--force-with-lease" option did not work over smart HTTP protocol,
- which has been corrected.
+ All "mergy" operations that internally use the merge-recursive
+ machinery should honor the merge.renormalize configuration, but
+ many of them didn't.
 
-
-* bw/fail-cloning-into-non-empty (2020-07-10) 1 commit
-  (merged to 'next' on 2020-07-14 at a52b5ce7ab)
- + git clone: don't clone into non-empty directory
-
- "git clone --separate-git-dir=$elsewhere" used to stomp on the
- contents of the existing directory $elsewhere, which has been
- taught to fail when $elsewhere is not an empty directory.
+ Will merge to 'next'.
 
 
-* cc/pretty-contents-size (2020-07-16) 3 commits
-  (merged to 'next' on 2020-07-20 at e7c4b8f9ae)
- + ref-filter: add support for %(contents:size)
- + t6300: test refs pointing to tree and blob
- + Documentation: clarify %(contents:XXXX) doc
+* en/merge-recursive-comment-fixes (2020-08-02) 1 commit
+ - merge-recursive: fix unclear and outright wrong comments
 
- "git for-each-ref --format=<>" learned %(contents:size).
+ Comment fix.
 
-
-* ct/mv-unmerged-path-error (2020-07-20) 1 commit
-  (merged to 'next' on 2020-07-21 at c17007237a)
- + git-mv: improve error message for conflicted file
-
- "git mv src dst", when src is an unmerged path, errored out
- correctly but with an incorrect error message to claim that src is
- not tracked, which has been clarified.
+ Will merge to 'next'.
 
 
-* dl/test-must-fail-fixes-6 (2020-07-07) 6 commits
-  (merged to 'next' on 2020-07-20 at bd4a9946a6)
- + test-lib-functions: restrict test_must_fail usage
- + t9400: don't use test_must_fail with cvs
- + t9834: remove use of `test_might_fail p4`
- + t7107: don't use test_must_fail()
- + t5324: reorder `run_with_limited_open_files test_might_fail`
- + t3701: stop using `env` in force_color()
+* es/adjust-subtree-test-for-merge-msg-update (2020-08-03) 1 commit
+ - Revert "contrib: subtree: adjust test to change in fmt-merge-msg"
 
- Dev support to limit the use of test_must_fail to only git commands.
+ Adjust tests in contrib/ to the recent change to fmt-merge-msg.
+
+ Will merge to 'next'.
 
 
-* ds/commit-graph-bloom-updates (2020-07-01) 10 commits
-  (merged to 'next' on 2020-07-06 at 177e6b362e)
- + commit-graph: check all leading directories in changed path Bloom filters
- + revision: empty pathspecs should not use Bloom filters
- + revision.c: fix whitespace
- + commit-graph: check chunk sizes after writing
- + commit-graph: simplify chunk writes into loop
- + commit-graph: unify the signatures of all write_graph_chunk_*() functions
- + commit-graph: persist existence of changed-paths
- + bloom: fix logic in get_bloom_filter()
- + commit-graph: change test to die on parse, not load
- + commit-graph: place bloom_settings in context
- (this branch uses sg/commit-graph-cleanups.)
+* es/worktree-cleanup (2020-07-31) 4 commits
+ - worktree: retire special-case normalization of main worktree path
+ - worktree: drop bogus and unnecessary path munging
+ - worktree: drop unused code from get_linked_worktree()
+ - worktree: drop pointless strbuf_release()
 
- Updates to the changed-paths bloom filter.
+ Code cleanup around "worktree" API implementation.
+
+ Will merge to 'next'.
 
 
-* en/fill-directory-exponential (2020-07-20) 1 commit
-  (merged to 'next' on 2020-07-22 at 63662d6646)
- + dir: check pathspecs before returning `path_excluded`
+* es/worktree-doc-cleanups (2020-08-03) 5 commits
+ - git-worktree.txt: link to man pages when citing other Git commands
+ - git-worktree.txt: make start of new sentence more obvious
+ - git-worktree.txt: fix minor grammatical issues
+ - git-worktree.txt: consistently use term "working tree"
+ - git-worktree.txt: employ fixed-width typeface consistently
 
- Fix to a regression introduced during 2.27 cycle.
+ Doc cleanup around "worktree".
 
-
-* hn/reftable (2020-07-10) 4 commits
-  (merged to 'next' on 2020-07-14 at e524883fec)
- + reflog: cleanse messages in the refs.c layer
- + bisect: treat BISECT_HEAD as a pseudo ref
- + t3432: use git-reflog to inspect the reflog for HEAD
- + lib-t6000.sh: write tag using git-update-ref
- (this branch is used by hn/reftable-prep-part-2.)
-
- Preliminary clean-up of the refs API in preparation for adding a
- new refs backend "reftable".
+ Will merge to 'next'.
 
 
-* jk/reject-newer-extensions-in-v0 (2020-07-16) 1 commit
-  (merged to 'next' on 2020-07-16 at 85f634d5a6)
- + verify_repository_format(): complain about new extensions in v0 repo
+* ma/t1450-quotefix (2020-08-01) 1 commit
+ - t1450: fix quoting of NUL byte when corrupting pack
 
- With the base fix to 2.27 regresion, any new extensions in a v0
- repository would still be silently honored, which is not quite
- right.  Instead, complain and die loudly.
+ Test fix.
 
-
-* jk/tests-timestamp-fix (2020-07-15) 6 commits
-  (merged to 'next' on 2020-07-16 at 2c69e97b92)
- + t9100: stop depending on commit timestamps
-  (merged to 'next' on 2020-07-14 at 66ee0e6b45)
- + test-lib: set deterministic default author/committer date
- + t9100: explicitly unset GIT_COMMITTER_DATE
- + t5539: make timestamp requirements more explicit
- + t9700: loosen ident timezone regex
-  (merged to 'next' on 2020-07-09 at 633bcd552f)
- + t6000: use test_tick consistently
-
- The test framework has been updated so that most tests will run
- with predictable (artificial) timestamps.
+ Will merge to 'next'.
 
 
-* jt/avoid-lazy-fetching-upon-have-check (2020-07-16) 1 commit
-  (merged to 'next' on 2020-07-20 at 28e85288e5)
- + upload-pack: do not lazy-fetch "have" objects
+* ny/notes-doc-sample-update (2020-08-03) 1 commit
+ - docs: improve the example that illustrates git-notes path names
 
- Fetching from a lazily cloned repository resulted at the server
- side in attempts to lazy fetch objects that the client side has,
- many of which will not be available from the third-party anyway.
+ Doc updates.
 
-
-* pb/log-rev-list-doc (2020-07-08) 6 commits
-  (merged to 'next' on 2020-07-14 at f1104dfb77)
- + git-log.txt: include rev-list-description.txt
- + git-rev-list.txt: move description to separate file
- + git-rev-list.txt: tweak wording in set operations
- + git-rev-list.txt: fix Asciidoc syntax
- + revisions.txt: describe 'rev1 rev2 ...' meaning for ranges
- + git-log.txt: add links to 'rev-list' and 'diff' docs
-
- "git help log" has been enhanced by sharing more material from the
- documentation for the underlying "git rev-list" command.
+ Will merge to 'next'.
 
 
-* rs/add-index-entry-optim-fix (2020-07-16) 1 commit
-  (merged to 'next' on 2020-07-20 at 617fe6aecc)
- + read-cache: remove bogus shortcut
+* pb/guide-docs (2020-08-02) 4 commits
+ - SQUASH???
+ - git.txt: add list of guides
+ - help: drop usage of 'common' and 'useful' for guides
+ - command-list.txt: add missing 'gitcredentials' and 'gitremote-helpers'
 
- Fix to an ancient bug caused by an over-eager attempt for
- optimization.
+ Update "git help guides" documentation organization.
 
 
-* sg/commit-graph-cleanups (2020-06-08) 10 commits
-  (merged to 'next' on 2020-07-06 at 15c9d77eb9)
- + commit-graph: simplify write_commit_graph_file() #2
- + commit-graph: simplify write_commit_graph_file() #1
- + commit-graph: simplify parse_commit_graph() #2
- + commit-graph: simplify parse_commit_graph() #1
- + commit-graph: clean up #includes
- + diff.h: drop diff_tree_oid() & friends' return value
- + commit-slab: add a function to deep free entries on the slab
- + commit-graph-format.txt: all multi-byte numbers are in network byte order
- + commit-graph: fix parsing the Chunk Lookup table
- + tree-walk.c: don't match submodule entries for 'submod/anything'
- (this branch is used by ds/commit-graph-bloom-updates.)
+* rs/bisect-oid-to-hex-fix (2020-08-02) 1 commit
+ - bisect: use oid_to_hex_r() instead of memcpy()+oid_to_hex()
 
- The changed-path Bloom filter is improved using ideas from an
- independent implementation.
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* rs/more-buffered-io (2020-08-02) 3 commits
+ - upload-pack: use buffered I/O to talk to rev-list
+ - midx: use buffered I/O to talk to pack-objects
+ - connected: use buffered I/O to talk to rev-list
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
+
+* ar/help-guides-doc (2020-07-29) 1 commit
+  (merged to 'next' on 2020-07-30 at e4b0370bfa)
+ + git-help.txt: fix mentions of option --guides
+
+ Doc update.
+
+
+* cc/pretty-contents-size (2020-07-31) 1 commit
+  (merged to 'next' on 2020-07-31 at 0ad958f31d)
+ + t6300: fix issues related to %(contents:size)
+
+ Brown-paper-bag fix.
+
 
 * en/typofixes (2020-07-28) 2 commits
   (merged to 'next' on 2020-07-30 at 64776daa9a)
  + hashmap: fix typo in usage docs
  + Remove doubled words in various comments
 
- Will merge to 'master'.
+ Typofixes.
 
 
-* jk/log-fp-implies-m (2020-07-29) 7 commits
- - doc/git-log: clarify handling of merge commit diffs
- - doc/git-log: move "-t" into diff-options list
- - doc/git-log: drop "-r" diff option
- - doc/git-log: move "Diff Formatting" from rev-list-options
- - log: enable "-m" automatically with "--first-parent"
- - revision: add "--no-diff-merges" option to counteract "-m"
- - log: drop "--cc implies -m" logic
+* hn/reftable (2020-07-31) 1 commit
+  (merged to 'next' on 2020-07-31 at 9e34be957e)
+ + refs: move the logic to add \t to reflog to the files backend
 
- "git log --first-parent -p" showed patches only for single-parent
- commits on the first-parent chain; the "--first-parent" option has
- been made to imply "-m".  Use "--no-diff-merges" to restore the
- previous behaviour to omit patches for merge commits.
-
- Will merge to 'next'.
+ Brown-paper-bag fix.
 
 
-* jk/strvec (2020-07-28) 11 commits
- - strvec: rename struct fields
- - strvec: drop argv_array compatibility layer
- - strvec: update documention to avoid argv_array
- - strvec: fix indentation in renamed calls
- - strvec: convert remaining callers away from argv_array name
- - strvec: convert more callers away from argv_array name
- - strvec: convert builtin/ callers away from argv_array name
- - quote: rename sq_dequote_to_argv_array to mention strvec
- - strvec: rename files from argv-array to strvec
- - argv-array: rename to strvec
- - argv-array: use size_t for count and alloc
+* jb/doc-packfile-name (2020-07-22) 1 commit
+  (merged to 'next' on 2020-07-30 at b46c3f6675)
+ + pack-write/docs: update regarding pack naming
 
- The argv_array API is useful for not just managing argv but any
- "vector" (NULL-terminated array) of strings, and has seen adoption
- to a certain degree.  It has been renamed to "strvec" to reduce the
- barrier to adoption.
-
- Will merge to 'next'.
-
-
-* rs/grep-simpler-parse-object-or-die-call (2020-07-28) 1 commit
-  (merged to 'next' on 2020-07-30 at 6d22dd3058)
- + grep: avoid using oid_to_hex() with parse_object_or_die()
-
- Will merge to 'master'.
-
-
-* ar/help-guides-doc (2020-07-29) 1 commit
-  (merged to 'next' on 2020-07-30 at e4b0370bfa)
- + git-help.txt: fix mentions of option --guides
-
- Will merge to 'master'.
-
-
-* sk/typofixes (2020-07-29) 1 commit
-  (merged to 'next' on 2020-07-30 at c56d9e5313)
- + comment: fix spelling mistakes inside comments
-
- Will merge to 'master'.
-
-
-* pd/mergetool-nvimdiff (2020-07-29) 2 commits
- - mergetools: add support for nvimdiff (neovim) family
- - mergetool--lib: improve support for vimdiff-style tool variants
-
- The existing backends for "git mergetool" based on variants of vim
- have been refactored and then support for "nvim" has been added.
-
-
-* al/bisect-first-parent (2020-07-29) 3 commits
- - bisect: combine args passed to find_bisection()
- - bisect: introduce first-parent flag
- - rev-list: allow bisect and first-parent flags
-
- "git bisect" learns the "--first-parent" option to find the first
- breakage along the first-parent chain.
+ Doc update.
 
 
 * jc/fmt-merge-msg-suppress-destination (2020-07-30) 2 commits
@@ -279,7 +162,27 @@ repositories listed at
  of the title of default merge message with merge.suppressDest
  configuration.
 
- Will merge to 'master'.
+
+* rs/grep-simpler-parse-object-or-die-call (2020-07-28) 1 commit
+  (merged to 'next' on 2020-07-30 at 6d22dd3058)
+ + grep: avoid using oid_to_hex() with parse_object_or_die()
+
+ Code clean-up.
+
+
+* sg/ci-git-path-fix-with-pyenv (2020-07-23) 1 commit
+  (merged to 'next' on 2020-07-30 at afe304633d)
+ + ci: use absolute PYTHON_PATH in the Linux jobs
+
+ CI fixup---tests of Python scripts didn't use the version of Git
+ that is being tested.
+
+
+* sk/typofixes (2020-07-29) 1 commit
+  (merged to 'next' on 2020-07-30 at c56d9e5313)
+ + comment: fix spelling mistakes inside comments
+
+ Typofixes.
 
 --------------------------------------------------
 [Stalled]
@@ -361,13 +264,67 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jb/doc-packfile-name (2020-07-22) 1 commit
-  (merged to 'next' on 2020-07-30 at b46c3f6675)
- + pack-write/docs: update regarding pack naming
+* jk/log-fp-implies-m (2020-07-29) 7 commits
+  (merged to 'next' on 2020-08-03 at 39fefa6b82)
+ + doc/git-log: clarify handling of merge commit diffs
+ + doc/git-log: move "-t" into diff-options list
+ + doc/git-log: drop "-r" diff option
+ + doc/git-log: move "Diff Formatting" from rev-list-options
+ + log: enable "-m" automatically with "--first-parent"
+ + revision: add "--no-diff-merges" option to counteract "-m"
+ + log: drop "--cc implies -m" logic
 
- Doc update.
+ Originally merged to 'next' on 2020-08-01
 
- Will merge to 'master'.
+ "git log --first-parent -p" showed patches only for single-parent
+ commits on the first-parent chain; the "--first-parent" option has
+ been made to imply "-m".  Use "--no-diff-merges" to restore the
+ previous behaviour to omit patches for merge commits.
+
+ Waiting for the discussion to settle.
+ cf. <87lfivqvgf.fsf@osv.gnss.ru>
+ If Sergey wants to send in --diff-merges=(none|<num>|c|cc|all)
+ enhancement reasonably soon, I do not mind holding this off for a
+ bit longer out of 'master'.
+
+
+* jk/strvec (2020-07-30) 11 commits
+ - strvec: rename struct fields
+ - strvec: drop argv_array compatibility layer
+ - strvec: update documention to avoid argv_array
+ - strvec: fix indentation in renamed calls
+ - strvec: convert remaining callers away from argv_array name
+ - strvec: convert more callers away from argv_array name
+ - strvec: convert builtin/ callers away from argv_array name
+ - quote: rename sq_dequote_to_argv_array to mention strvec
+ - strvec: rename files from argv-array to strvec
+ - argv-array: rename to strvec
+ - argv-array: use size_t for count and alloc
+ (this branch is used by ds/maintenance.)
+
+ The argv_array API is useful for not just managing argv but any
+ "vector" (NULL-terminated array) of strings, and has seen adoption
+ to a certain degree.  It has been renamed to "strvec" to reduce the
+ barrier to adoption.
+
+ Will merge to 'next'.
+
+
+* pd/mergetool-nvimdiff (2020-07-29) 2 commits
+ - mergetools: add support for nvimdiff (neovim) family
+ - mergetool--lib: improve support for vimdiff-style tool variants
+
+ The existing backends for "git mergetool" based on variants of vim
+ have been refactored and then support for "nvim" has been added.
+
+
+* al/bisect-first-parent (2020-07-29) 3 commits
+ - bisect: combine args passed to find_bisection()
+ - bisect: introduce first-parent flag
+ - rev-list: allow bisect and first-parent flags
+
+ "git bisect" learns the "--first-parent" option to find the first
+ breakage along the first-parent chain.
 
 
 * dd/send-email-config (2020-07-23) 1 commit
@@ -378,8 +335,11 @@ repositories listed at
 
 
 * jt/pack-objects-prefetch-in-batch (2020-07-21) 2 commits
- - pack-objects: prefetch objects to be packed
- - pack-objects: refactor to oid_object_info_extended
+  (merged to 'next' on 2020-08-03 at 29424e614d)
+ + pack-objects: prefetch objects to be packed
+ + pack-objects: refactor to oid_object_info_extended
+
+ Originally merged to 'next' on 2020-08-01
 
  While packing many objects in a repository with a promissor remote,
  lazily fetching missing objects from the promissor remote one by
@@ -388,26 +348,19 @@ repositories listed at
  clone that lazily fetches tree objects as you cannot even enumerate
  what blobs are missing until you learn which trees are missing).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jt/pretend-object-never-come-from-elsewhere (2020-07-21) 1 commit
- - sha1-file: make pretend_object_file() not prefetch
+  (merged to 'next' on 2020-08-03 at 36cd23aae5)
+ + sha1-file: make pretend_object_file() not prefetch
+
+ Originally merged to 'next' on 2020-08-01
 
  The pretend-object mechanism checks if the given object already
  exists in the object store before deciding to keep the data
  in-core, but the check would have triggered lazy fetching of such
  an object from a promissor remote.
-
- Will merge to 'next'.
-
-
-* sg/ci-git-path-fix-with-pyenv (2020-07-23) 1 commit
-  (merged to 'next' on 2020-07-30 at afe304633d)
- + ci: use absolute PYTHON_PATH in the Linux jobs
-
- CI fixup---tests of Python scripts didn't use the version of Git
- that is being tested.
 
  Will merge to 'master'.
 
@@ -458,21 +411,15 @@ repositories listed at
  Will merge to 'next'.
 
 
-* jc/no-update-fetch-head (2020-07-29) 1 commit
- - fetch: optionally allow disabling FETCH_HEAD update
-
- "git fetch" learned the "--[no-]write-fetch-head" option to
- optionally stop describing what was fetched in FETCH_HEAD.
-
- Needs more work.
-
-
 * mp/complete-show-color-moved (2020-07-15) 1 commit
- - completion: add show --color-moved[-ws]
+  (merged to 'next' on 2020-08-03 at c90fea8e5e)
+ + completion: add show --color-moved[-ws]
+
+ Originally merged to 'next' on 2020-08-01
 
  Command line completion (in contrib/) update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  A follow-up patch to reduce duplication may be warranted.
 
 
@@ -484,7 +431,7 @@ repositories listed at
  Further preliminary change to refs API.
 
 
-* ds/maintenance (2020-07-23) 18 commits
+* ds/maintenance (2020-07-30) 20 commits
  - maintenance: add trace2 regions for task execution
  - midx: use start_delayed_progress()
  - maintenance: add incremental-repack auto condition
@@ -494,8 +441,10 @@ repositories listed at
  - maintenance: create maintenance.<task>.enabled config
  - maintenance: auto-size incremental-repack batch
  - maintenance: add incremental-repack task
+ - midx: enable core.multiPackIndex by default
  - maintenance: add loose-objects task
  - maintenance: add prefetch task
+ - fetch: optionally allow disabling FETCH_HEAD update
  - maintenance: take a lock on the objects directory
  - maintenance: add --task option
  - maintenance: add commit-graph task
@@ -503,6 +452,7 @@ repositories listed at
  - maintenance: replace run_auto_gc()
  - maintenance: add --quiet option
  - maintenance: create basic maintenance runner
+ (this branch uses jk/strvec.)
 
  A "git gc"'s big brother has been introduced to take care of more
  repository maintenance tasks, not limited to the object database
@@ -520,15 +470,16 @@ repositories listed at
  Expecting a reroll.
 
 
-* tb/upload-pack-filters (2020-07-22) 4 commits
+* tb/upload-pack-filters (2020-08-03) 3 commits
  - upload-pack.c: introduce 'uploadpackfilter.tree.maxDepth'
- - upload-pack.c: pass 'struct list_objects_filter_options *'
  - upload-pack.c: allow banning certain object filter(s)
  - list_objects_filter_options: introduce 'list_object_filter_config_name'
 
  The component to respond to "git fetch" request is made more
  configurable to selectively allow or reject object filtering
  specification used for partial cloning.
+
+ Will merge to 'next'.
 
 
 * mt/hash-to-hex-thread-safety (2020-06-26) 2 commits
@@ -544,30 +495,33 @@ repositories listed at
 
 
 * ss/cmake-build (2020-06-26) 8 commits
- - ci: modification of main.yml to use cmake for vs-build job
- - cmake: support for building git on windows with msvc and clang.
- - cmake: support for building git on windows with mingw
- - cmake: support for testing git when building out of the source tree
- - cmake: support for testing git with ctest
- - cmake: installation support for git
- - cmake: generate the shell/perl/python scripts and templates, translations
- - Introduce CMake support for configuring Git
+  (merged to 'next' on 2020-08-03 at a0d70165c1)
+ + ci: modification of main.yml to use cmake for vs-build job
+ + cmake: support for building git on windows with msvc and clang.
+ + cmake: support for building git on windows with mingw
+ + cmake: support for testing git when building out of the source tree
+ + cmake: support for testing git with ctest
+ + cmake: installation support for git
+ + cmake: generate the shell/perl/python scripts and templates, translations
+ + Introduce CMake support for configuring Git
+
+ Originally merged to 'next' on 2020-08-01
 
  CMake support to build with MSVC for Windows bypassing the Makefile.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. https://github.com/git/git/runs/892824895
 
 
-* es/config-hooks (2020-07-29) 4 commits
+* es/config-hooks (2020-07-30) 6 commits
+ - hook: add 'run' subcommand
+ - parse-options: parse into argv_array
  - hook: add --porcelain to list command
  - hook: add list command
  - hook: scaffolding for git-hook subcommand
  - doc: propose hooks managed by the config
 
  The "hooks defined in config" topic.
-
- What's the status of this one?  Abandoned?
 
 
 * pw/rebase-i-more-options (2020-07-16) 5 commits
@@ -619,3 +573,12 @@ repositories listed at
  Test update.
 
  Now it is part of jk/tests-timestamp-fix with a larger scope.
+
+
+* jc/no-update-fetch-head (2020-07-29) 1 commit
+ . fetch: optionally allow disabling FETCH_HEAD update
+
+ "git fetch" learned the "--[no-]write-fetch-head" option to
+ optionally stop describing what was fetched in FETCH_HEAD.
+
+ Now it is part of ds/maintenance topic.
