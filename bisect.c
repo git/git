@@ -709,7 +709,7 @@ static enum bisect_error bisect_checkout(const struct object_id *bisect_rev, int
 	char bisect_rev_hex[GIT_MAX_HEXSZ + 1];
 	enum bisect_error res = BISECT_OK;
 
-	memcpy(bisect_rev_hex, oid_to_hex(bisect_rev), the_hash_algo->hexsz + 1);
+	oid_to_hex_r(bisect_rev_hex, bisect_rev);
 	update_ref(NULL, "BISECT_EXPECTED_REV", bisect_rev, NULL, 0, UPDATE_REFS_DIE_ON_ERR);
 
 	argv_checkout[2] = bisect_rev_hex;
