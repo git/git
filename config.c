@@ -3115,7 +3115,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	}
 
 	while (fgets(buf, sizeof(buf), config_file)) {
-		int i;
+		unsigned i;
 		int length;
 		int is_section = 0;
 		char *output = buf;
