@@ -669,7 +669,6 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	struct pathspec_item *pi;
 	char *path_alloc = NULL;
 	const char *path, *p;
-	int last_index;
 	size_t len;
 	int path_component_nr = 1;
 
@@ -692,12 +691,10 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 		return;
 
 	pi = &revs->pruning.pathspec.items[0];
-	last_index = pi->len - 1;
 
 	/* remove single trailing slash from path, if needed */
-	if (pi->match[last_index] == '/') {
-		path_alloc = xstrdup(pi->match);
-		path_alloc[last_index] = '\0';
+	if (pi->len > 0 && pi->match[pi->len - 1] == '/') {
+		path_alloc = xmemdupz(pi->match, pi->len - 1);
 		path = path_alloc;
 	} else
 		path = pi->match;
