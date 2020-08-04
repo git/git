@@ -48,8 +48,8 @@ add <path> [<commit-ish>]::
 
 Create `<path>` and checkout `<commit-ish>` into it. The new working directory
 is linked to the current repository, sharing everything except working
-directory specific files such as `HEAD`, `index`, etc. `-` may also be
-specified as `<commit-ish>`; it is synonymous with `@{-1}`.
+directory specific files such as `HEAD`, `index`, etc. As a convenience,
+`<commit-ish>` may be a bare "`-`", which is synonymous with `@{-1}`.
 +
 If `<commit-ish>` is a branch name (call it `<branch>`) and is not found,
 and neither `-b` nor `-B` nor `--detach` are used, but there does
