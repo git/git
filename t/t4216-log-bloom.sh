@@ -60,7 +60,7 @@ setup () {
 
 test_bloom_filters_used () {
 	log_args=$1
-	bloom_trace_prefix="statistics:{\"filter_not_present\":0,\"maybe\""
+	bloom_trace_prefix="statistics:{\"filter_not_present\":${2:-0},\"maybe\""
 	setup "$log_args" &&
 	grep -q "$bloom_trace_prefix" "$TRASH_DIRECTORY/trace.perf" &&
 	test_cmp log_wo_bloom log_w_bloom &&
@@ -134,8 +134,11 @@ test_expect_success 'setup - add commit-graph to the chain without Bloom filters
 	test_line_count = 2 .git/objects/info/commit-graphs/commit-graph-chain
 '
 
-test_expect_success 'Do not use Bloom filters if the latest graph does not have Bloom filters.' '
-	test_bloom_filters_not_used "-- A/B"
+test_expect_success 'use Bloom filters even if the latest graph does not have Bloom filters' '
+	# Ensure that the number of empty filters is equal to the number of
+	# filters in the latest graph layer to prove that they are loaded (and
+	# ignored).
+	test_bloom_filters_used "-- A/B" 3
 '
 
 test_expect_success 'setup - add commit-graph to the chain with Bloom filters' '
