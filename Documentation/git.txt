@@ -304,6 +304,13 @@ users typically do not use them directly.
 
 include::cmds-purehelpers.txt[]
 
+Guides
+------
+
+The following documentation pages are guides about Git concepts.
+
+include::cmds-guide.txt[]
+
 
 Configuration Mechanism
 -----------------------

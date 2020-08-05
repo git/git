@@ -6,9 +6,14 @@ sub format_one {
 	my ($out, $nameattr) = @_;
 	my ($name, $attr) = @$nameattr;
 	my ($state, $description);
+	my $mansection;
 	$state = 0;
 	open I, '<', "$name.txt" or die "No such file $name.txt";
 	while (<I>) {
+		if (/^git[a-z0-9-]*\(([0-9])\)$/) {
+			$mansection = $1;
+			next;
+		}
 		if (/^NAME$/) {
 			$state = 1;
 			next;
@@ -27,7 +32,7 @@ sub format_one {
 		die "No description found in $name.txt";
 	}
 	if (my ($verify_name, $text) = ($description =~ /^($name) - (.*)/)) {
-		print $out "linkgit:$name\[1\]::\n\t";
+		print $out "linkgit:$name\[$mansection\]::\n\t";
 		if ($attr =~ / deprecated /) {
 			print $out "(deprecated) ";
 		}
