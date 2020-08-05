@@ -195,6 +195,7 @@ git-write-tree                          plumbingmanipulators
 gitattributes                           guide
 gitcli                                  guide
 gitcore-tutorial                        guide
+gitcredentials                          guide
 gitcvs-migration                        guide
 gitdiffcore                             guide
 giteveryday                             guide
@@ -204,6 +205,7 @@ githooks                                guide
 gitignore                               guide
 gitmodules                              guide
 gitnamespaces                           guide
+gitremote-helpers                       guide
 gitrepository-layout                    guide
 gitrevisions                            guide
 gitsubmodules                           guide
