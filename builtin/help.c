@@ -579,7 +579,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	}
 
 	if (show_guides)
-		list_common_guides_help();
+		list_guides_help();
 
 	if (show_all || show_guides) {
 		printf("%s\n", _(git_more_info_string));
