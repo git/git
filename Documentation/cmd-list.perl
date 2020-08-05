@@ -38,12 +38,15 @@ sub format_one {
 	}
 }
 
-while (<>) {
+my ($input, @categories) = @ARGV;
+
+open IN, "<$input";
+while (<IN>) {
 	last if /^### command list/;
 }
 
 my %cmds = ();
-for (sort <>) {
+for (sort <IN>) {
 	next if /^#/;
 
 	chomp;
@@ -51,17 +54,10 @@ for (sort <>) {
 	$attr = '' unless defined $attr;
 	push @{$cmds{$cat}}, [$name, " $attr "];
 }
+close IN;
 
-for my $cat (qw(ancillaryinterrogators
-		ancillarymanipulators
-		mainporcelain
-		plumbinginterrogators
-		plumbingmanipulators
-		synchingrepositories
-		foreignscminterface
-		purehelpers
-		synchelpers)) {
-	my $out = "cmds-$cat.txt";
+for my $out (@categories) {
+	my ($cat) = $out =~ /^cmds-(.*)\.txt$/;
 	open O, '>', "$out+" or die "Cannot open output file $out+";
 	for (@{$cmds{$cat}}) {
 		format_one(\*O, $_);
