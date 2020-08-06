@@ -1203,7 +1203,7 @@ static int edit_hunk_loop(struct add_p_state *s,
 	for (;;) {
 		int res = edit_hunk_manually(s, hunk);
 		if (res == 0) {
-			/* abandonded */
+			/* abandoned */
 			*hunk = backup;
 			return -1;
 		}

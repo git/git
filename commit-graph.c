@@ -18,9 +18,12 @@
 #include "commit-slab.h"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> upstream/seen
+=======
+>>>>>>> upstream/master
 #include "shallow.h"
 #include "json-writer.h"
 #include "trace2.h"

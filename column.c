@@ -107,7 +107,7 @@ static void display_plain(const struct string_list *list,
 		printf("%s%s%s", indent, list->items[i].string, nl);
 }
 
-/* Print a cell to stdout with all necessary leading/traling space */
+/* Print a cell to stdout with all necessary leading/trailing space */
 static int display_cell(struct column_data *data, int initial_width,
 			const char *empty_cell, int x, int y)
 {

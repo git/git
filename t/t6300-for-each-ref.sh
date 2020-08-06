@@ -66,9 +66,9 @@ test_atom() {
 		esac
 		# Leave $expect unquoted to lose possible leading whitespaces
 		echo $expect >expected
-		test_expect_${4:-sucess} $PREREQ "basic atom: $1 contents:size" '
+		test_expect_${4:-success} $PREREQ "basic atom: $1 contents:size" '
 			git for-each-ref --format="%(contents:size)" "$ref" >actual &&
-			test_cmp expect actual
+			test_cmp expected actual
 		'
 	fi
 }
