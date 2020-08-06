@@ -81,7 +81,7 @@ test_expect_success 'fetch --set-upstream http://nosuchdomain.example.com fails 
 
 test_expect_success 'fetch --set-upstream with valid URL sets upstream to URL' '
 	clear_config other other2 &&
-	url="file://'"$PWD"'" &&
+	url="file://$PWD" &&
 	git fetch --set-upstream "$url" &&
 	check_config master "$url" HEAD &&
 	check_config_missing other &&
@@ -158,7 +158,7 @@ test_expect_success 'pull --set-upstream upstream with more than one branch does
 test_expect_success 'pull --set-upstream with valid URL sets upstream to URL' '
 	clear_config master other other2 &&
 	git checkout master &&
-	url="file://'"$PWD"'" &&
+	url="file://$PWD" &&
 	git pull --set-upstream "$url" &&
 	check_config master "$url" HEAD &&
 	check_config_missing other &&
@@ -168,7 +168,7 @@ test_expect_success 'pull --set-upstream with valid URL sets upstream to URL' '
 test_expect_success 'pull --set-upstream with valid URL and branch sets branch' '
 	clear_config master other other2 &&
 	git checkout master &&
-	url="file://'"$PWD"'" &&
+	url="file://$PWD" &&
 	git pull --set-upstream "$url" master &&
 	check_config master "$url" refs/heads/master &&
 	check_config_missing other &&

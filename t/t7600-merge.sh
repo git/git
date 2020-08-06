@@ -246,7 +246,7 @@ test_expect_success 'merge --squash c3 with c7' '
 	#	file
 	EOF
 	git cat-file commit HEAD >raw &&
-	sed -e '1,/^$/d' raw >actual &&
+	sed -e "1,/^$/d" raw >actual &&
 	test_cmp expect actual
 '
 
@@ -268,7 +268,7 @@ test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
 	#	file
 	EOF
 	git cat-file commit HEAD >raw &&
-	sed -e '1,/^$/d' raw >actual &&
+	sed -e "1,/^$/d" raw >actual &&
 	test_i18ncmp expect actual
 '
 
@@ -292,7 +292,7 @@ test_expect_success 'merge c3 with c7 with --squash commit.cleanup = scissors' '
 	#	file
 	EOF
 	git cat-file commit HEAD >raw &&
-	sed -e '1,/^$/d' raw >actual &&
+	sed -e "1,/^$/d" raw >actual &&
 	test_i18ncmp expect actual
 '
 

@@ -213,7 +213,7 @@ test_expect_success 'fetch tags when there is no tags' '
 test_expect_success 'fetch following tags' '
 
 	cd "$D" &&
-	git tag -a -m 'annotated' anno HEAD &&
+	git tag -a -m "annotated" anno HEAD &&
 	git tag light HEAD &&
 
 	mkdir four &&
@@ -331,7 +331,7 @@ test_expect_success 'bundle does not prerequisite objects' '
 test_expect_success 'bundle should be able to create a full history' '
 
 	cd "$D" &&
-	git tag -a -m '1.0' v1.0 master &&
+	git tag -a -m "1.0" v1.0 master &&
 	git bundle create bundle4 v1.0
 
 '
