@@ -3747,10 +3747,13 @@ static int check_to_create(struct apply_state *state,
 {
 	struct stat nst;
 
-	if (state->check_index &&
-	    index_name_pos(state->repo->index, new_name, strlen(new_name)) >= 0 &&
-	    !ok_if_exists)
-		return EXISTS_IN_INDEX;
+	if (state->check_index && !ok_if_exists) {
+		int pos = index_name_pos(state->repo->index, new_name, strlen(new_name));
+		if (pos >= 0 &&
+		    !(state->repo->index->cache[pos]->ce_flags & CE_INTENT_TO_ADD))
+			return EXISTS_IN_INDEX;
+	}
+
 	if (state->cached)
 		return 0;
 
