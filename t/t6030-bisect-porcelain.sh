@@ -448,6 +448,24 @@ test_expect_success 'many merge bases creation' '
 	grep "$SIDE_HASH5" merge_bases.txt
 '
 
+# We want to automatically find the merge that
+# added "line" into hello.
+test_expect_success '"git bisect run --first-parent" simple case' '
+	git rev-list --first-parent $B_HASH ^$HASH4 >first_parent_chain.txt &&
+	write_script test_script.sh <<-\EOF &&
+	grep $(git rev-parse HEAD) first_parent_chain.txt || exit -1
+	! grep line hello >/dev/null
+	EOF
+	git bisect start --first-parent &&
+	test_path_is_file ".git/BISECT_FIRST_PARENT" &&
+	git bisect good $HASH4 &&
+	git bisect bad $B_HASH &&
+	git bisect run ./test_script.sh >my_bisect_log.txt &&
+	grep "$B_HASH is the first bad commit" my_bisect_log.txt &&
+	git bisect reset &&
+	test_path_is_missing .git/BISECT_FIRST_PARENT
+'
+
 test_expect_success 'good merge bases when good and bad are siblings' '
 	git bisect start "$B_HASH" "$A_HASH" > my_bisect_log.txt &&
 	test_i18ngrep "merge base must be tested" my_bisect_log.txt &&

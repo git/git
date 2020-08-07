@@ -15,6 +15,7 @@
 #include "commit-slab.h"
 #include "commit-reach.h"
 #include "object-store.h"
+#include "dir.h"
 
 static struct oid_array good_revs;
 static struct oid_array skipped_revs;
@@ -460,6 +461,7 @@ static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
+static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 static GIT_PATH_FUNC(git_path_head_name, "head-name")
 
 static void read_bisect_paths(struct argv_array *array)
@@ -998,7 +1000,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 	struct object_id *bisect_rev;
 	char *steps_msg;
 	int no_checkout = ref_exists("BISECT_HEAD");
-	int first_parent_only = 0; /* TODO: pass --first-parent flag from git bisect start */
+	int first_parent_only = file_exists(git_path_bisect_first_parent());
 
 	read_bisect_terms(&term_bad, &term_good);
 	if (read_bisect_refs())
@@ -1142,6 +1144,7 @@ int bisect_clean_state(void)
 	unlink_or_warn(git_path_bisect_names());
 	unlink_or_warn(git_path_bisect_run());
 	unlink_or_warn(git_path_bisect_terms());
+	unlink_or_warn(git_path_bisect_first_parent());
 	/* Cleanup head-name if it got left by an old version of git-bisect */
 	unlink_or_warn(git_path_head_name());
 	/*

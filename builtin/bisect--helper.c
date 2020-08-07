@@ -17,6 +17,7 @@ static GIT_PATH_FUNC(git_path_bisect_head, "BISECT_HEAD")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
 static GIT_PATH_FUNC(git_path_head_name, "head-name")
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
+static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 
 static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --next-all"),
@@ -28,7 +29,7 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-next-check <good_term> <bad_term> [<term>]"),
 	N_("git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]"),
 	N_("git bisect--helper --bisect-start [--term-{old,good}=<term> --term-{new,bad}=<term>]"
-					     "[--no-checkout] [<bad> [<good>...]] [--] [<paths>...]"),
+					    " [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]"),
 	NULL
 };
 
@@ -424,6 +425,7 @@ finish:
 static int bisect_start(struct bisect_terms *terms, const char **argv, int argc)
 {
 	int no_checkout = 0;
+	int first_parent_only = 0;
 	int i, has_double_dash = 0, must_write_terms = 0, bad_seen = 0;
 	int flags, pathspec_pos, res = 0;
 	struct string_list revs = STRING_LIST_INIT_DUP;
@@ -453,6 +455,8 @@ static int bisect_start(struct bisect_terms *terms, const char **argv, int argc)
 			break;
 		} else if (!strcmp(arg, "--no-checkout")) {
 			no_checkout = 1;
+		} else if (!strcmp(arg, "--first-parent")) {
+			first_parent_only = 1;
 		} else if (!strcmp(arg, "--term-good") ||
 			 !strcmp(arg, "--term-old")) {
 			i++;
@@ -576,6 +580,9 @@ static int bisect_start(struct bisect_terms *terms, const char **argv, int argc)
 	 * Write new start state
 	 */
 	write_file(git_path_bisect_start(), "%s\n", start_head.buf);
+
+	if (first_parent_only)
+		write_file(git_path_bisect_first_parent(), "\n");
 
 	if (no_checkout) {
 		if (get_oid(start_head.buf, &oid) < 0) {
