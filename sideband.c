@@ -147,7 +147,7 @@ int demultiplex_sideband(const char *me, char *buf, int len,
 	switch (band) {
 	case 3:
 		if (die_on_error)
-			die("remote error: %s", buf + 1);
+			die(_("remote error: %s"), buf + 1);
 		strbuf_addf(scratch, "%s%s", scratch->len ? "\n" : "",
 			    DISPLAY_PREFIX);
 		maybe_colorize_sideband(scratch, buf + 1, len);
