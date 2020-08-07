@@ -899,7 +899,7 @@ test_expect_failure 'rad-check: rename/add/delete conflict' '
 		git ls-files -u >file_count &&
 		test_line_count = 2 file_count &&
 		git ls-files -o >file_count &&
-		test_line_count = 2 file_count &&
+		test_line_count = 3 file_count &&
 
 		git rev-parse >actual \
 			:2:bar :3:bar &&
@@ -967,7 +967,7 @@ test_expect_failure 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 		git ls-files -u >file_count &&
 		test_line_count = 2 file_count &&
 		git ls-files -o >file_count &&
-		test_line_count = 2 file_count &&
+		test_line_count = 3 file_count &&
 
 		git rev-parse >actual \
 			:2:baz :3:baz &&
