@@ -106,4 +106,30 @@ test_expect_success 'hook gets all queued updates in aborted state' '
 	test_cmp expect actual
 '
 
+test_expect_success 'interleaving hook calls succeed' '
+	test_when_finished "rm -r target-repo.git" &&
+
+	git init --bare target-repo.git &&
+
+	write_script target-repo.git/hooks/reference-transaction <<-\EOF &&
+		echo $0 "$@" >>actual
+	EOF
+
+	write_script target-repo.git/hooks/update <<-\EOF &&
+		echo $0 "$@" >>actual
+	EOF
+
+	cat >expect <<-EOF &&
+		hooks/update refs/tags/PRE 0000000000000000000000000000000000000000 63ac8e7bcdb882293465435909f54a96de17d4f7
+		hooks/reference-transaction prepared
+		hooks/reference-transaction committed
+		hooks/update refs/tags/POST 0000000000000000000000000000000000000000 99d53161c3a0a903b6561b9f6c0c665b3a476401
+		hooks/reference-transaction prepared
+		hooks/reference-transaction committed
+	EOF
+
+	git push ./target-repo.git PRE POST &&
+	test_cmp expect target-repo.git/actual
+'
+
 test_done

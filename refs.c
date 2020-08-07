@@ -2001,7 +2001,7 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 	if (hook == &hook_not_found)
 		return ret;
 	if (!hook)
-		hook = find_hook("reference-transaction");
+		hook = xstrdup_or_null(find_hook("reference-transaction"));
 	if (!hook) {
 		hook = &hook_not_found;
 		return ret;
