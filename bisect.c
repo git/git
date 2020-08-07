@@ -989,7 +989,7 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
  * If no_checkout is non-zero, the bisection process does not
  * checkout the trial commit but instead simply updates BISECT_HEAD.
  */
-enum bisect_error bisect_next_all(struct repository *r, const char *prefix, int no_checkout)
+enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 {
 	struct rev_info revs;
 	struct commit_list *tried;
@@ -997,6 +997,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix, int 
 	enum bisect_error res = BISECT_OK;
 	struct object_id *bisect_rev;
 	char *steps_msg;
+	int no_checkout = ref_exists("BISECT_HEAD");
 	int first_parent_only = 0; /* TODO: pass --first-parent flag from git bisect start */
 
 	read_bisect_terms(&term_bad, &term_good);
