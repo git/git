@@ -1042,25 +1042,25 @@ test_expect_failure 'mod6-check: chains of rename/rename(1to2) and rename/rename
 		test_must_be_empty err &&
 
 		git ls-files -s >file_count &&
-		test_line_count = 6 file_count &&
+		test_line_count = 9 file_count &&
 		git ls-files -u >file_count &&
-		test_line_count = 6 file_count &&
+		test_line_count = 9 file_count &&
 		git ls-files -o >file_count &&
 		test_line_count = 3 file_count &&
 
 		test_seq 10 20 >merged-one &&
 		test_seq 51 60 >merged-five &&
 		# Determine what the merge of three would give us.
-		test_seq 30 40 >three-side-A &&
+		test_seq 31 39 >three-base &&
+		test_seq 31 40 >three-side-A &&
 		test_seq 31 39 >three-side-B &&
-		echo forty >three-side-B &&
-		>empty &&
+		echo forty >>three-side-B &&
 		test_must_fail git merge-file \
-			-L "HEAD" \
+			-L "HEAD:four" \
 			-L "" \
-			-L "B^0" \
-			three-side-A empty three-side-B &&
-		sed -e "s/^\([<=>]\)/\1\1\1/" three-side-A >merged-three &&
+			-L "B^0:two" \
+			three-side-A three-base three-side-B &&
+		sed -e "s/^\([<=>]\)/\1\1/" three-side-A >merged-three &&
 
 		# Verify the index is as expected
 		git rev-parse >actual         \
@@ -1075,6 +1075,7 @@ test_expect_failure 'mod6-check: chains of rename/rename(1to2) and rename/rename
 
 		git cat-file -p :2:two >expect &&
 		git cat-file -p :3:two >other &&
+		>empty &&
 		test_must_fail git merge-file    \
 			-L "HEAD"  -L ""  -L "B^0" \
 			expect     empty  other &&
