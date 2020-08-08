@@ -457,7 +457,7 @@ test_expect_success 'handle rename-with-content-merge vs. add' '
 		git checkout A^0 &&
 
 		test_must_fail git merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/add)" out &&
+		test_i18ngrep "CONFLICT (.*/add)" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 2 out &&
@@ -503,7 +503,7 @@ test_expect_success 'handle rename-with-content-merge vs. add, merge other way' 
 		git checkout B^0 &&
 
 		test_must_fail git merge -s recursive A^0 >out &&
-		test_i18ngrep "CONFLICT (rename/add)" out &&
+		test_i18ngrep "CONFLICT (.*/add)" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 2 out &&
@@ -886,12 +886,17 @@ test_expect_failure 'rad-check: rename/add/delete conflict' '
 		git checkout B^0 &&
 		test_must_fail git merge -s recursive A^0 >out 2>err &&
 
-		# Not sure whether the output should contain just one
-		# "CONFLICT (rename/add/delete)" line, or if it should break
-		# it into a pair of "CONFLICT (rename/delete)" and
-		# "CONFLICT (rename/add)"; allow for either.
-		test_i18ngrep "CONFLICT (rename.*add)" out &&
-		test_i18ngrep "CONFLICT (rename.*delete)" out &&
+		# Instead of requiring the output to contain one combined line
+		#   CONFLICT (rename/add/delete)
+		# or perhaps two lines:
+		#   CONFLICT (rename/add): new file collides with rename target
+		#   CONFLICT (rename/delete): rename source removed on other side
+		# and instead of requiring "rename/add" instead of "add/add",
+		# be flexible in the type of console output message(s) reported
+		# for this particular case; we will be more stringent about the
+		# contents of the index and working directory.
+		test_i18ngrep "CONFLICT (.*/add)" out &&
+		test_i18ngrep "CONFLICT (rename.*/delete)" out &&
 		test_must_be_empty err &&
 
 		git ls-files -s >file_count &&
