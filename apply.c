@@ -3740,6 +3740,7 @@ static int check_preimage(struct apply_state *state,
 
 #define EXISTS_IN_INDEX 1
 #define EXISTS_IN_WORKTREE 2
+#define EXISTS_IN_INDEX_AS_ITA 3
 
 static int check_to_create(struct apply_state *state,
 			   const char *new_name,
@@ -3747,11 +3748,21 @@ static int check_to_create(struct apply_state *state,
 {
 	struct stat nst;
 
-	if (state->check_index && !ok_if_exists) {
-		int pos = index_name_pos(state->repo->index, new_name, strlen(new_name));
-		if (pos >= 0 &&
-		    !(state->repo->index->cache[pos]->ce_flags & CE_INTENT_TO_ADD))
-			return EXISTS_IN_INDEX;
+	if (state->check_index && (!ok_if_exists || !state->cached)) {
+		int pos;
+
+		pos = index_name_pos(state->repo->index, new_name, strlen(new_name));
+		if (pos >= 0) {
+			struct cache_entry *ce = state->repo->index->cache[pos];
+
+			/* allow ITA, as they do not yet exist in the index */
+			if (!ok_if_exists && !(ce->ce_flags & CE_INTENT_TO_ADD))
+				return EXISTS_IN_INDEX;
+
+			/* ITA entries can never match working tree files */
+			if (!state->cached && (ce->ce_flags & CE_INTENT_TO_ADD))
+				return EXISTS_IN_INDEX_AS_ITA;
+		}
 	}
 
 	if (state->cached)
@@ -3937,6 +3948,9 @@ static int check_patch(struct apply_state *state, struct patch *patch)
 			break; /* happy */
 		case EXISTS_IN_INDEX:
 			return error(_("%s: already exists in index"), new_name);
+			break;
+		case EXISTS_IN_INDEX_AS_ITA:
+			return error(_("%s: does not match index"), new_name);
 			break;
 		case EXISTS_IN_WORKTREE:
 			return error(_("%s: already exists in working directory"),
