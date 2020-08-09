@@ -316,6 +316,19 @@ test_expect_success 'init with separate gitdir' '
 	test_path_is_dir realgitdir/refs
 '
 
+test_expect_success 'explicit bare & --separate-git-dir incompatible' '
+	test_must_fail git init --bare --separate-git-dir goop.git bare.git 2>err &&
+	test_i18ngrep "mutually exclusive" err
+'
+
+test_expect_success 'implicit bare & --separate-git-dir incompatible' '
+	test_when_finished "rm -rf bare.git" &&
+	mkdir -p bare.git &&
+	test_must_fail env GIT_DIR=. \
+		git -C bare.git init --separate-git-dir goop.git 2>err &&
+	test_i18ngrep "incompatible" err
+'
+
 test_lazy_prereq GETCWD_IGNORES_PERMS '
 	base=GETCWD_TEST_BASE_DIR &&
 	mkdir -p $base/dir &&
