@@ -7,34 +7,34 @@ env:
 
 jobs:
   ci-config:
-      runs-on: ubuntu-latest
-      outputs:
-        enabled: ${{ steps.check-ref.outputs.enabled }}
-      steps:
-        - name: try to clone ci-config branch
-          continue-on-error: true
-          run: |
-            git -c protocol.version=2 clone \
-              --no-tags \
-              --single-branch \
-              -b ci-config \
-              --depth 1 \
-              --no-checkout \
-              --filter=blob:none \
-              https://github.com/${{ github.repository }} \
-              config-repo &&
-              cd config-repo &&
-              git checkout HEAD -- ci/config
-        - id: check-ref
-          name: check whether CI is enabled for ref
-          run: |
-            enabled=yes
-            if test -x config-repo/ci/config/allow-ref &&
-               ! config-repo/ci/config/allow-ref '${{ github.ref }}'
-            then
-              enabled=no
-            fi
-            echo "::set-output name=enabled::$enabled"
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check-ref.outputs.enabled }}
+    steps:
+      - name: try to clone ci-config branch
+        continue-on-error: true
+        run: |
+          git -c protocol.version=2 clone \
+            --no-tags \
+            --single-branch \
+            -b ci-config \
+            --depth 1 \
+            --no-checkout \
+            --filter=blob:none \
+            https://github.com/${{ github.repository }} \
+            config-repo &&
+            cd config-repo &&
+            git checkout HEAD -- ci/config
+      - id: check-ref
+        name: check whether CI is enabled for ref
+        run: |
+          enabled=yes
+          if test -x config-repo/ci/config/allow-ref &&
+             ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+          then
+            enabled=no
+          fi
+          echo "::set-output name=enabled::$enabled"
 
   windows-build:
     needs: ci-config
