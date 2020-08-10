@@ -1565,7 +1565,7 @@ static char *is_busybox_applet(const char *cmd)
 		struct strbuf buf = STRBUF_INIT;
 		char *p;
 
-		argv_array_pushl(&cp.args, busybox_path, "--help", NULL);
+		strvec_pushl(&cp.args, busybox_path, "--help", NULL);
 
 		if (capture_command(&cp, &buf, 2048)) {
 			string_list_append(&applets, "");
