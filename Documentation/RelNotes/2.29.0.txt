@@ -43,6 +43,11 @@ Performance, Internal Implementation, Development Support etc.
    in-core, but the check would have triggered lazy fetching of such
    an object from a promissor remote.
 
+ * The argv_array API is useful for not just managing argv but any
+   "vector" (NULL-terminated array) of strings, and has seen adoption
+   to a certain degree.  It has been renamed to "strvec" to reduce the
+   barrier to adoption.
+
 
 Fixes since v2.28
 -----------------
@@ -82,6 +87,10 @@ Fixes since v2.28
  * Command line completion (in contrib/) update.
    (merge 688b87c81b mp/complete-show-color-moved later to maint).
 
+ * All "mergy" operations that internally use the merge-recursive
+   machinery should honor the merge.renormalize configuration, but
+   many of them didn't.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -89,3 +98,9 @@ Fixes since v2.28
    (merge 861c4ce141 en/typofixes later to maint).
    (merge 60e47f6773 sg/ci-git-path-fix-with-pyenv later to maint).
    (merge e2bfa50ac3 jb/doc-packfile-name later to maint).
+   (merge 918d8ff780 es/worktree-cleanup later to maint).
+   (merge dc156bc31f ma/t1450-quotefix later to maint).
+   (merge 56e743426b en/merge-recursive-comment-fixes later to maint).
+   (merge 7d23ff818f rs/bisect-oid-to-hex-fix later to maint).
+   (merge de20baf2c9 ny/notes-doc-sample-update later to maint).
+   (merge f649aaaf82 so/rev-parser-errormessage-fix later to maint).
