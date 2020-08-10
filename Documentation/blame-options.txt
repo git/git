@@ -36,6 +36,12 @@ include::line-range-format.txt[]
 	START.  `git blame --reverse START` is taken as `git blame
 	--reverse START..HEAD` for convenience.
 
+--first-parent::
+	Follow only the first parent commit upon seeing a merge
+	commit. This option can be used to determine when a line
+	was introduced to a particular integration branch, rather
+	than when it was introduced to the history overall.
+
 -p::
 --porcelain::
 	Show in a format designed for machine consumption.
