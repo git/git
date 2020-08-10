@@ -2880,6 +2880,7 @@ test_setup_9g () {
 }
 
 test_expect_failure '9g: Renamed directory that only contained immediate subdirs, immediate subdirs renamed' '
+	test_setup_9g &&
 	(
 		cd 9g &&
 
@@ -3362,6 +3363,7 @@ test_setup_10e () {
 }
 
 test_expect_failure '10e: Does git complain about untracked file that is not really in the way?' '
+	test_setup_10e &&
 	(
 		cd 10e &&
 
