@@ -906,7 +906,7 @@ test_expect_failure 'rad-check: rename/add/delete conflict' '
 		git rev-parse >expect \
 			B:bar  A:bar  &&
 
-		test_cmp file_is_missing foo &&
+		test_path_is_missing foo &&
 		# bar should have two-way merged contents of the different
 		# versions of bar; check that content from both sides is
 		# present.
@@ -974,8 +974,8 @@ test_expect_failure 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 		git rev-parse >expect \
 			O:foo  O:bar  &&
 
-		test_cmp file_is_missing foo &&
-		test_cmp file_is_missing bar &&
+		test_path_is_missing foo &&
+		test_path_is_missing bar &&
 		# baz should have two-way merged contents of the original
 		# contents of foo and bar; check that content from both sides
 		# is present.
