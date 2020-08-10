@@ -2843,6 +2843,14 @@ test_expect_success '9f: Renamed directory that only contained immediate subdirs
 #   Commit A: priority/{alpha,bravo}/$more_files
 #   Commit B: goal/{a,b}/$more_files, goal/c
 #   Expected: priority/{alpha,bravo}/$more_files, priority/c
+# We currently fail this test because the directory renames we detect are
+#   goal/a/ -> priority/alpha/
+#   goal/b/ -> priority/bravo/
+# We do not detect
+#   goal/   -> priority/
+# because of no files found within goal/, and the fact that "a" != "alpha"
+# and "b" != "bravo".  But I'm not sure it's really a failure given that
+# viewpoint...
 
 test_setup_9g () {
 	test_create_repo 9g &&
