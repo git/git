@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2020, #01; Mon, 3)
-X-master-at: 85b4e0a6dc8407de6f69808d9ee6debdf167ced3
-X-next-at: 39fefa6b823f48851746819838919f3118e4317f
+Subject: What's cooking in git.git (Aug 2020, #02; Mon, 10)
+X-master-at: 4f0a8be78499454eac3985b6e7e144b8376ab0a5
+X-next-at: 1739fa56f16d224373590068a68d990fb82ab9d0
 
-What's cooking in git.git (Aug 2020, #01; Mon, 3)
+What's cooking in git.git (Aug 2020, #02; Mon, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,101 +12,330 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Some topics that have been cooking in 'next' during the previous
-cycle, in addition to some fixes to 2.28, have been merged to
-'master', and the tip of 'next' has been rewound.
-
 You can find the changes described here in the integration branches of the
 repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
 
 * en/eol-attrs-gotchas (2020-08-03) 4 commits
- - checkout: support renormalization with checkout -m <paths>
- - merge: make merge.renormalize work for all uses of merge machinery
- - t6038: remove problematic test
- - t6038: make tests fail for the right reason
+  (merged to 'next' on 2020-08-05 at 46e73f4c94)
+ + checkout: support renormalization with checkout -m <paths>
+ + merge: make merge.renormalize work for all uses of merge machinery
+ + t6038: remove problematic test
+ + t6038: make tests fail for the right reason
 
  All "mergy" operations that internally use the merge-recursive
  machinery should honor the merge.renormalize configuration, but
  many of them didn't.
 
- Will merge to 'next'.
-
 
 * en/merge-recursive-comment-fixes (2020-08-02) 1 commit
- - merge-recursive: fix unclear and outright wrong comments
+  (merged to 'next' on 2020-08-04 at ec14b8ea94)
+ + merge-recursive: fix unclear and outright wrong comments
 
  Comment fix.
 
- Will merge to 'next'.
-
 
 * es/adjust-subtree-test-for-merge-msg-update (2020-08-03) 1 commit
- - Revert "contrib: subtree: adjust test to change in fmt-merge-msg"
+  (merged to 'next' on 2020-08-04 at 634b1fcbac)
+ + Revert "contrib: subtree: adjust test to change in fmt-merge-msg"
 
  Adjust tests in contrib/ to the recent change to fmt-merge-msg.
 
- Will merge to 'next'.
-
 
 * es/worktree-cleanup (2020-07-31) 4 commits
- - worktree: retire special-case normalization of main worktree path
- - worktree: drop bogus and unnecessary path munging
- - worktree: drop unused code from get_linked_worktree()
- - worktree: drop pointless strbuf_release()
+  (merged to 'next' on 2020-08-04 at 798f642f66)
+ + worktree: retire special-case normalization of main worktree path
+ + worktree: drop bogus and unnecessary path munging
+ + worktree: drop unused code from get_linked_worktree()
+ + worktree: drop pointless strbuf_release()
 
  Code cleanup around "worktree" API implementation.
 
- Will merge to 'next'.
+
+* jk/compiler-fixes-and-workarounds (2020-08-04) 3 commits
+  (merged to 'next' on 2020-08-04 at a1caf8edbc)
+ + revision: avoid leak when preparing bloom filter for "/"
+ + revision: avoid out-of-bounds read/write on empty pathspec
+ + config: work around gcc-10 -Wstringop-overflow warning
+
+ Small fixes and workarounds.
 
 
-* es/worktree-doc-cleanups (2020-08-03) 5 commits
- - git-worktree.txt: link to man pages when citing other Git commands
- - git-worktree.txt: make start of new sentence more obvious
- - git-worktree.txt: fix minor grammatical issues
- - git-worktree.txt: consistently use term "working tree"
- - git-worktree.txt: employ fixed-width typeface consistently
+* jk/strvec (2020-07-30) 11 commits
+  (merged to 'next' on 2020-08-04 at 61addb841f)
+ + strvec: rename struct fields
+ + strvec: drop argv_array compatibility layer
+ + strvec: update documention to avoid argv_array
+ + strvec: fix indentation in renamed calls
+ + strvec: convert remaining callers away from argv_array name
+ + strvec: convert more callers away from argv_array name
+ + strvec: convert builtin/ callers away from argv_array name
+ + quote: rename sq_dequote_to_argv_array to mention strvec
+ + strvec: rename files from argv-array to strvec
+ + argv-array: rename to strvec
+ + argv-array: use size_t for count and alloc
+ (this branch is used by ds/maintenance and ds/maintenance-part-2.)
 
- Doc cleanup around "worktree".
+ The argv_array API is useful for not just managing argv but any
+ "vector" (NULL-terminated array) of strings, and has seen adoption
+ to a certain degree.  It has been renamed to "strvec" to reduce the
+ barrier to adoption.
 
- Will merge to 'next'.
+
+* jt/pack-objects-prefetch-in-batch (2020-07-21) 2 commits
+  (merged to 'next' on 2020-08-03 at 29424e614d)
+ + pack-objects: prefetch objects to be packed
+ + pack-objects: refactor to oid_object_info_extended
+
+ Originally merged to 'next' on 2020-08-01
+
+ While packing many objects in a repository with a promissor remote,
+ lazily fetching missing objects from the promissor remote one by
+ one may be inefficient---the code now attempts to fetch all the
+ missing objects in batch (obviously this won't work for a lazy
+ clone that lazily fetches tree objects as you cannot even enumerate
+ what blobs are missing until you learn which trees are missing).
+
+
+* jt/pretend-object-never-come-from-elsewhere (2020-07-21) 1 commit
+  (merged to 'next' on 2020-08-03 at 36cd23aae5)
+ + sha1-file: make pretend_object_file() not prefetch
+
+ Originally merged to 'next' on 2020-08-01
+
+ The pretend-object mechanism checks if the given object already
+ exists in the object store before deciding to keep the data
+ in-core, but the check would have triggered lazy fetching of such
+ an object from a promissor remote.
 
 
 * ma/t1450-quotefix (2020-08-01) 1 commit
- - t1450: fix quoting of NUL byte when corrupting pack
+  (merged to 'next' on 2020-08-04 at 0e762e3553)
+ + t1450: fix quoting of NUL byte when corrupting pack
 
  Test fix.
 
- Will merge to 'next'.
+
+* mp/complete-show-color-moved (2020-07-15) 1 commit
+  (merged to 'next' on 2020-08-03 at c90fea8e5e)
+ + completion: add show --color-moved[-ws]
+
+ Originally merged to 'next' on 2020-08-01
+
+ Command line completion (in contrib/) update.
+ A follow-up patch to reduce duplication may be warranted.
 
 
 * ny/notes-doc-sample-update (2020-08-03) 1 commit
- - docs: improve the example that illustrates git-notes path names
+  (merged to 'next' on 2020-08-04 at a63dcb2c55)
+ + docs: improve the example that illustrates git-notes path names
 
  Doc updates.
 
- Will merge to 'next'.
 
-
-* pb/guide-docs (2020-08-02) 4 commits
- - SQUASH???
- - git.txt: add list of guides
- - help: drop usage of 'common' and 'useful' for guides
- - command-list.txt: add missing 'gitcredentials' and 'gitremote-helpers'
+* pb/guide-docs (2020-08-04) 4 commits
+  (merged to 'next' on 2020-08-05 at 031cab2bc2)
+ + git.txt: add list of guides
+ + Documentation: don't hardcode command categories twice
+ + help: drop usage of 'common' and 'useful' for guides
+ + command-list.txt: add missing 'gitcredentials' and 'gitremote-helpers'
 
  Update "git help guides" documentation organization.
 
 
 * rs/bisect-oid-to-hex-fix (2020-08-02) 1 commit
- - bisect: use oid_to_hex_r() instead of memcpy()+oid_to_hex()
+  (merged to 'next' on 2020-08-04 at dc3c8ea699)
+ + bisect: use oid_to_hex_r() instead of memcpy()+oid_to_hex()
 
  Code cleanup.
 
+
+* so/rev-parser-errormessage-fix (2020-08-04) 1 commit
+  (merged to 'next' on 2020-08-05 at dd9653da77)
+ + revision: fix die() message for "--unpacked="
+
+ Error message fix.
+
+--------------------------------------------------
+[New Topics]
+
+* bc/sha-256-cvs-svn-updates (2020-08-05) 1 commit
+  (merged to 'next' on 2020-08-07 at b1ce7e5ec5)
+ + git-cvsexportcommit: support Perl before 5.10.1
+
+ Portability fix.
+
+ Will merge to 'master'.
+
+
+* ds/maintenance-part-2 (2020-08-06) 9 commits
+ - maintenance: add incremental-repack auto condition
+ - maintenance: auto-size incremental-repack batch
+ - maintenance: add incremental-repack task
+ - midx: use start_delayed_progress()
+ - midx: enable core.multiPackIndex by default
+ - maintenance: create auto condition for loose-objects
+ - maintenance: add loose-objects task
+ - maintenance: add prefetch task
+ - fetch: optionally allow disabling FETCH_HEAD update
+ (this branch uses ds/maintenance.)
+
+
+* jt/has_object (2020-08-06) 4 commits
+  (merged to 'next' on 2020-08-07 at ed08abb693)
+ + fsck: do not lazy fetch known non-promisor object
+ + pack-objects: no fetch when allow-{any,promisor}
+ + apply: do not lazy fetch when applying binary
+ + sha1-file: introduce no-lazy-fetch has_object()
+
+ A new helper function has_object() has been introduced to make it
+ easier to mark object existence checks that do and don't want to
+ trigger lazy fetches, and a few such checks are converted using it.
+
+ Will merge to 'master'.
+
+
+* ma/doc-sha-256-is-experimental (2020-08-06) 1 commit
+ - Documentation: mark `--object-format=sha256` as experimental
+
+ The recent addition of SHA-256 support is marked as experimental in
+ the documentation.
+
+
+* ma/test-quote-cleanup (2020-08-06) 2 commits
+  (merged to 'next' on 2020-08-10 at 63a95c2926)
+ + t4104: modernize and simplify quoting
+ + t: don't spuriously close and reopen quotes
+
+ Test cleanup.
+
+ Will merge to 'master'.
+
+
+* rp/apply-cached-with-i-t-a (2020-08-09) 3 commits
+ - t4140: test apply with i-t-a paths
+ - apply: make i-t-a entries never match worktree
+ - apply: allow "new file" patches on i-t-a entries
+
+ Recent versions of "git diff-files" shows a diff between the index
+ and the working tree for "intent-to-add" paths as a "new file"
+ patch; "git apply --cached" should be able to take "git diff-files"
+ and should act as an equivalent to "git add" for the path, but the
+ command failed to do so for such a path.
+
  Will merge to 'next'.
+
+
+* rp/blame-first-parent-doc (2020-08-06) 1 commit
+  (merged to 'next' on 2020-08-10 at 3fdbebe1ea)
+ + blame-options.txt: document --first-parent option
+
+ The "git blame --first-parent" option was not documented, but now
+ it is.
+
+ Will merge to 'master'.
+
+
+* jc/noop-withstatic-inline (2020-08-06) 1 commit
+ - compat-util: type-check parameters of no-op replacement functions
+
+ A no-op replacement function implemented as a C preprocessor macro
+ does not perform as good a job as one implemented as a "static
+ inline" function in catching errors in parameters; replace the
+ former with the latter in <git-compat-util.h> header.
+
+
+* ps/ref-transaction-hook (2020-08-07) 1 commit
+  (merged to 'next' on 2020-08-10 at d8ad7cc8f6)
+ + refs: fix interleaving hook calls with reference-transaction hook
+
+ The logic to find the ref transaction hook script attempted to
+ cache the path to the found hook without realizing that it needed
+ to keep a copied value, as the API it used returned a transitory
+ buffer space.  This has been corrected.
+
+ Will merge to 'master'.
+ to be followed by a removal of the caching feature, which does not
+ seem to help even as a negative cache.
+
+
+* ss/submodule-summary-in-c (2020-08-06) 5 commits
+ - submodule: port submodule subcommand 'summary' from shell to C
+ - t7421: introduce a test script for verifying 'summary' output
+ - submodule: rename helper functions to avoid ambiguity
+ - submodule: remove extra line feeds between callback struct and macro
+ - submodule: expose the '--for-status' option of summary
+
+ Yet another subcommand of "git submodule" is getting rewritten in C.
+
+
+* am/ci-wsfix (2020-08-10) 1 commit
+ - ci: fix inconsistent indentation
+
+
+* es/init-no-separate-git-dir-in-bare (2020-08-10) 1 commit
+ - init: disallow --separate-git-dir with bare repository
+
+ "git init --separate-git-dir" can be used in an existing repository
+ with a working tree to move its .git/ directory away from the
+ working tree.  Even though this re-init feature makes no sense in
+ an existing bare repository, it was not erroring out.  Now it does.
+
+
+* es/test-cmp-typocatcher (2020-08-09) 1 commit
+ - test_cmp: diagnose incorrect arguments
+
+ Test framework update.
+
+ Will merge to 'next'.
+
+
+* jk/sideband-error-l10n (2020-08-07) 1 commit
+ - sideband: mark "remote error:" prefix for translation
+
+ Mark error message for i18n.
+
+ Will merge to 'next'.
+
+
+* rp/ita-diff-modefix (2020-08-09) 1 commit
+ - diff-lib: use worktree mode in diffs from i-t-a entries
+
+ "git diff [<tree-ish>] $path" for a $path that is marked with i-t-a
+ bit was not showing the mode bits from the working tree.
+
+--------------------------------------------------
+[Stalled]
+
+* pw/rebase-i-more-options (2020-07-16) 5 commits
+ - rebase: add --reset-author-date
+ - rebase -i: support --ignore-date
+ - sequencer: rename amend_author to author_to_free
+ - rebase -i: support --committer-date-is-author-date
+ - rebase -i: add --ignore-whitespace flag
+
+ "git rebase -i" learns a bit more options.
+
+ Waiting for a (hopefully final) review.
+
+
+* mt/grep-sparse-checkout (2020-06-12) 6 commits
+ - config: add setting to ignore sparsity patterns in some cmds
+ - grep: honor sparse checkout patterns
+ - config: correctly read worktree configs in submodules
+ - t/helper/test-config: facilitate addition of new cli options
+ - t/helper/test-config: return exit codes consistently
+ - doc: grep: unify info on configuration variables
+
+ "git grep" has been tweaked to be limited to the sparse checkout
+ paths.
+
+ Review needed on 4/6; otherwise looking sane.
+ cf. <CABPp-BGdEyEeajYZj_rdxp=MyEQdszuyjVTax=hhYj3fOtRQUQ@mail.gmail.com>
 
 
 * rs/more-buffered-io (2020-08-02) 3 commits
@@ -114,78 +343,19 @@ repositories listed at
  - midx: use buffered I/O to talk to pack-objects
  - connected: use buffered I/O to talk to rev-list
 
---------------------------------------------------
-[Graduated to 'master']
-
-* ar/help-guides-doc (2020-07-29) 1 commit
-  (merged to 'next' on 2020-07-30 at e4b0370bfa)
- + git-help.txt: fix mentions of option --guides
-
- Doc update.
+ Expecting a reroll.
 
 
-* cc/pretty-contents-size (2020-07-31) 1 commit
-  (merged to 'next' on 2020-07-31 at 0ad958f31d)
- + t6300: fix issues related to %(contents:size)
+* ls/mergetool-meld-auto-merge (2020-07-12) 2 commits
+ - SQUASH???
+ - Support auto-merge for meld to follow the vim-diff behavior
 
- Brown-paper-bag fix.
+ The 'meld' backend of the "git mergetool" learned to give the
+ underlying 'meld' the '--auto-merge' option, which would help
+ reduce the amount of text that requires manual merging.
 
+ Expecting a reroll.
 
-* en/typofixes (2020-07-28) 2 commits
-  (merged to 'next' on 2020-07-30 at 64776daa9a)
- + hashmap: fix typo in usage docs
- + Remove doubled words in various comments
-
- Typofixes.
-
-
-* hn/reftable (2020-07-31) 1 commit
-  (merged to 'next' on 2020-07-31 at 9e34be957e)
- + refs: move the logic to add \t to reflog to the files backend
-
- Brown-paper-bag fix.
-
-
-* jb/doc-packfile-name (2020-07-22) 1 commit
-  (merged to 'next' on 2020-07-30 at b46c3f6675)
- + pack-write/docs: update regarding pack naming
-
- Doc update.
-
-
-* jc/fmt-merge-msg-suppress-destination (2020-07-30) 2 commits
-  (merged to 'next' on 2020-07-30 at c44f57f46d)
- + fmt-merge-msg: allow merge destination to be omitted again
- + Revert "fmt-merge-msg: stop treating `master` specially"
-
- "git merge" learned to selectively omit " into <branch>" at the end
- of the title of default merge message with merge.suppressDest
- configuration.
-
-
-* rs/grep-simpler-parse-object-or-die-call (2020-07-28) 1 commit
-  (merged to 'next' on 2020-07-30 at 6d22dd3058)
- + grep: avoid using oid_to_hex() with parse_object_or_die()
-
- Code clean-up.
-
-
-* sg/ci-git-path-fix-with-pyenv (2020-07-23) 1 commit
-  (merged to 'next' on 2020-07-30 at afe304633d)
- + ci: use absolute PYTHON_PATH in the Linux jobs
-
- CI fixup---tests of Python scripts didn't use the version of Git
- that is being tested.
-
-
-* sk/typofixes (2020-07-29) 1 commit
-  (merged to 'next' on 2020-07-30 at c56d9e5313)
- + comment: fix spelling mistakes inside comments
-
- Typofixes.
-
---------------------------------------------------
-[Stalled]
 
 * jx/proc-receive-hook (2020-05-18) 11 commits
  . doc: add documentation for the proc-receive hook
@@ -264,6 +434,19 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* es/worktree-doc-cleanups (2020-08-03) 5 commits
+  (merged to 'next' on 2020-08-04 at cbb53ca464)
+ + git-worktree.txt: link to man pages when citing other Git commands
+ + git-worktree.txt: make start of new sentence more obvious
+ + git-worktree.txt: fix minor grammatical issues
+ + git-worktree.txt: consistently use term "working tree"
+ + git-worktree.txt: employ fixed-width typeface consistently
+
+ Doc cleanup around "worktree".
+
+ Will merge to 'master'.
+
+
 * jk/log-fp-implies-m (2020-07-29) 7 commits
   (merged to 'next' on 2020-08-03 at 39fefa6b82)
  + doc/git-log: clarify handling of merge commit diffs
@@ -281,33 +464,8 @@ repositories listed at
  been made to imply "-m".  Use "--no-diff-merges" to restore the
  previous behaviour to omit patches for merge commits.
 
- Waiting for the discussion to settle.
- cf. <87lfivqvgf.fsf@osv.gnss.ru>
- If Sergey wants to send in --diff-merges=(none|<num>|c|cc|all)
- enhancement reasonably soon, I do not mind holding this off for a
- bit longer out of 'master'.
-
-
-* jk/strvec (2020-07-30) 11 commits
- - strvec: rename struct fields
- - strvec: drop argv_array compatibility layer
- - strvec: update documention to avoid argv_array
- - strvec: fix indentation in renamed calls
- - strvec: convert remaining callers away from argv_array name
- - strvec: convert more callers away from argv_array name
- - strvec: convert builtin/ callers away from argv_array name
- - quote: rename sq_dequote_to_argv_array to mention strvec
- - strvec: rename files from argv-array to strvec
- - argv-array: rename to strvec
- - argv-array: use size_t for count and alloc
- (this branch is used by ds/maintenance.)
-
- The argv_array API is useful for not just managing argv but any
- "vector" (NULL-terminated array) of strings, and has seen adoption
- to a certain degree.  It has been renamed to "strvec" to reduce the
- barrier to adoption.
-
- Will merge to 'next'.
+ On hold a bit.
+ cf. <20200804200018.GB2014743@coredump.intra.peff.net>
 
 
 * pd/mergetool-nvimdiff (2020-07-29) 2 commits
@@ -317,14 +475,20 @@ repositories listed at
  The existing backends for "git mergetool" based on variants of vim
  have been refactored and then support for "nvim" has been added.
 
+ Will merge to 'next'.
 
-* al/bisect-first-parent (2020-07-29) 3 commits
+
+* al/bisect-first-parent (2020-08-07) 5 commits
  - bisect: combine args passed to find_bisection()
  - bisect: introduce first-parent flag
+ - cmd_bisect__helper: defer parsing no-checkout flag
  - rev-list: allow bisect and first-parent flags
+ - t6030: modernize "git bisect run" tests
 
  "git bisect" learns the "--first-parent" option to find the first
  breakage along the first-parent chain.
+
+ Will merge to 'next'.
 
 
 * dd/send-email-config (2020-07-23) 1 commit
@@ -333,94 +497,54 @@ repositories listed at
  Stop when "sendmail.*" configuration variables are defined, which
  could be a mistaken attempt to define "sendemail.*" variables.
 
-
-* jt/pack-objects-prefetch-in-batch (2020-07-21) 2 commits
-  (merged to 'next' on 2020-08-03 at 29424e614d)
- + pack-objects: prefetch objects to be packed
- + pack-objects: refactor to oid_object_info_extended
-
- Originally merged to 'next' on 2020-08-01
-
- While packing many objects in a repository with a promissor remote,
- lazily fetching missing objects from the promissor remote one by
- one may be inefficient---the code now attempts to fetch all the
- missing objects in batch (obviously this won't work for a lazy
- clone that lazily fetches tree objects as you cannot even enumerate
- what blobs are missing until you learn which trees are missing).
-
- Will merge to 'master'.
-
-
-* jt/pretend-object-never-come-from-elsewhere (2020-07-21) 1 commit
-  (merged to 'next' on 2020-08-03 at 36cd23aae5)
- + sha1-file: make pretend_object_file() not prefetch
-
- Originally merged to 'next' on 2020-08-01
-
- The pretend-object mechanism checks if the given object already
- exists in the object store before deciding to keep the data
- in-core, but the check would have triggered lazy fetching of such
- an object from a promissor remote.
-
- Will merge to 'master'.
-
-
-* bc/sha-256-part-3 (2020-07-30) 39 commits
- - t: remove test_oid_init in tests
- - docs: add documentation for extensions.objectFormat
- - ci: run tests with SHA-256
- - t: make SHA1 prerequisite depend on default hash
- - t: allow testing different hash algorithms via environment
- - t: add test_oid option to select hash algorithm
- - repository: enable SHA-256 support by default
- - setup: add support for reading extensions.objectformat
- - bundle: add new version for use with SHA-256
- - builtin/verify-pack: implement an --object-format option
- - http-fetch: set up git directory before parsing pack hashes
- - t0410: mark test with SHA1 prerequisite
- - t5308: make test work with SHA-256
- - t9700: make hash size independent
- - t9500: ensure that algorithm info is preserved in config
- - t9350: make hash size independent
- - t9301: make hash size independent
- - t9300: use $ZERO_OID instead of hard-coded object ID
- - t9300: abstract away SHA-1-specific constants
- - t8011: make hash size independent
- - t8003: make hash size independent
- - t8002: make hash size independent
- - t7508: use $ZERO_OID instead of hard-coded constant
- - t7506: avoid checking for SHA-1-specific constants
- - t7405: make hash size independent
- - t7400: make hash size independent
- - t7102: abstract away SHA-1-specific constants
- - t7201: abstract away SHA-1-specific constants
- - t7063: make hash size independent
- - t7003: compute appropriate length constant
- - t6501: avoid hard-coded objects
- - t6500: specify test values for SHA-256
- - t6301: make hash size independent
- - t6101: make hash size independent
- - t6100: make hash size independent
- - t3404: prepare 'short SHA-1 collision' tests for SHA-256
- - t3305: make hash agnostic
- - t1001: use $ZERO_OID
- - t: make test-bloom initialize repository
-
- The final leg of SHA-256 transition.
-
  Will merge to 'next'.
 
 
-* mp/complete-show-color-moved (2020-07-15) 1 commit
-  (merged to 'next' on 2020-08-03 at c90fea8e5e)
- + completion: add show --color-moved[-ws]
+* bc/sha-256-part-3 (2020-07-30) 39 commits
+  (merged to 'next' on 2020-08-04 at 57115e548f)
+ + t: remove test_oid_init in tests
+ + docs: add documentation for extensions.objectFormat
+ + ci: run tests with SHA-256
+ + t: make SHA1 prerequisite depend on default hash
+ + t: allow testing different hash algorithms via environment
+ + t: add test_oid option to select hash algorithm
+ + repository: enable SHA-256 support by default
+ + setup: add support for reading extensions.objectformat
+ + bundle: add new version for use with SHA-256
+ + builtin/verify-pack: implement an --object-format option
+ + http-fetch: set up git directory before parsing pack hashes
+ + t0410: mark test with SHA1 prerequisite
+ + t5308: make test work with SHA-256
+ + t9700: make hash size independent
+ + t9500: ensure that algorithm info is preserved in config
+ + t9350: make hash size independent
+ + t9301: make hash size independent
+ + t9300: use $ZERO_OID instead of hard-coded object ID
+ + t9300: abstract away SHA-1-specific constants
+ + t8011: make hash size independent
+ + t8003: make hash size independent
+ + t8002: make hash size independent
+ + t7508: use $ZERO_OID instead of hard-coded constant
+ + t7506: avoid checking for SHA-1-specific constants
+ + t7405: make hash size independent
+ + t7400: make hash size independent
+ + t7102: abstract away SHA-1-specific constants
+ + t7201: abstract away SHA-1-specific constants
+ + t7063: make hash size independent
+ + t7003: compute appropriate length constant
+ + t6501: avoid hard-coded objects
+ + t6500: specify test values for SHA-256
+ + t6301: make hash size independent
+ + t6101: make hash size independent
+ + t6100: make hash size independent
+ + t3404: prepare 'short SHA-1 collision' tests for SHA-256
+ + t3305: make hash agnostic
+ + t1001: use $ZERO_OID
+ + t: make test-bloom initialize repository
 
- Originally merged to 'next' on 2020-08-01
-
- Command line completion (in contrib/) update.
+ The final leg of SHA-256 transition.
 
  Will merge to 'master'.
- A follow-up patch to reduce duplication may be warranted.
 
 
 * hn/reftable-prep-part-2 (2020-07-27) 3 commits
@@ -430,21 +554,14 @@ repositories listed at
 
  Further preliminary change to refs API.
 
+ Will merge to 'next'.
 
-* ds/maintenance (2020-07-30) 20 commits
+
+* ds/maintenance (2020-08-06) 11 commits
  - maintenance: add trace2 regions for task execution
- - midx: use start_delayed_progress()
- - maintenance: add incremental-repack auto condition
- - maintenance: create auto condition for loose-objects
  - maintenance: add auto condition for commit-graph task
  - maintenance: use pointers to check --auto
  - maintenance: create maintenance.<task>.enabled config
- - maintenance: auto-size incremental-repack batch
- - maintenance: add incremental-repack task
- - midx: enable core.multiPackIndex by default
- - maintenance: add loose-objects task
- - maintenance: add prefetch task
- - fetch: optionally allow disabling FETCH_HEAD update
  - maintenance: take a lock on the objects directory
  - maintenance: add --task option
  - maintenance: add commit-graph task
@@ -452,34 +569,27 @@ repositories listed at
  - maintenance: replace run_auto_gc()
  - maintenance: add --quiet option
  - maintenance: create basic maintenance runner
- (this branch uses jk/strvec.)
+ (this branch is used by ds/maintenance-part-2.)
 
  A "git gc"'s big brother has been introduced to take care of more
  repository maintenance tasks, not limited to the object database
  cleaning.
 
 
-* ls/mergetool-meld-auto-merge (2020-07-12) 2 commits
- - SQUASH???
- - Support auto-merge for meld to follow the vim-diff behavior
-
- The 'meld' backend of the "git mergetool" learned to give the
- underlying 'meld' the '--auto-merge' option, which would help
- reduce the amount of text that requires manual merging.
-
- Expecting a reroll.
-
-
-* tb/upload-pack-filters (2020-08-03) 3 commits
- - upload-pack.c: introduce 'uploadpackfilter.tree.maxDepth'
- - upload-pack.c: allow banning certain object filter(s)
- - list_objects_filter_options: introduce 'list_object_filter_config_name'
+* tb/upload-pack-filters (2020-08-05) 4 commits
+  (merged to 'next' on 2020-08-05 at 918e7092fe)
+ + t5616: use test_i18ngrep for upload-pack errors
+  (merged to 'next' on 2020-08-04 at 3ae57cc90c)
+ + upload-pack.c: introduce 'uploadpackfilter.tree.maxDepth'
+ + upload-pack.c: allow banning certain object filter(s)
+ + list_objects_filter_options: introduce 'list_object_filter_config_name'
 
  The component to respond to "git fetch" request is made more
  configurable to selectively allow or reject object filtering
  specification used for partial cloning.
 
- Will merge to 'next'.
+ Will merge to 'master'.
+ cf. <20200804003722.GA2726931@coredump.intra.peff.net>
 
 
 * mt/hash-to-hex-thread-safety (2020-06-26) 2 commits
@@ -510,7 +620,6 @@ repositories listed at
  CMake support to build with MSVC for Windows bypassing the Makefile.
 
  Will merge to 'master'.
- cf. https://github.com/git/git/runs/892824895
 
 
 * es/config-hooks (2020-07-30) 6 commits
@@ -523,32 +632,11 @@ repositories listed at
 
  The "hooks defined in config" topic.
 
-
-* pw/rebase-i-more-options (2020-07-16) 5 commits
- - rebase: add --reset-author-date
- - rebase -i: support --ignore-date
- - sequencer: rename amend_author to author_to_free
- - rebase -i: support --committer-date-is-author-date
- - rebase -i: add --ignore-whitespace flag
-
- "git rebase -i" learns a bit more options.
-
- Waiting for a (hopefully final) review.
-
-
-* mt/grep-sparse-checkout (2020-06-12) 6 commits
- - config: add setting to ignore sparsity patterns in some cmds
- - grep: honor sparse checkout patterns
- - config: correctly read worktree configs in submodules
- - t/helper/test-config: facilitate addition of new cli options
- - t/helper/test-config: return exit codes consistently
- - doc: grep: unify info on configuration variables
-
- "git grep" has been tweaked to be limited to the sparse checkout
- paths.
-
- Review needed on 4/6; otherwise looking sane.
- cf. <CABPp-BGdEyEeajYZj_rdxp=MyEQdszuyjVTax=hhYj3fOtRQUQ@mail.gmail.com>
+ Expecting a reroll.
+ Now jk/strvec is in 'master', we may want to see the topic reworked
+ on top of it.  Are there unresolved issues, or does the topic need
+ a round of detailed review?
+ cf. <xmqqmu3i9kvg.fsf@gitster.c.googlers.com>
 
 --------------------------------------------------
 [Discarded]
