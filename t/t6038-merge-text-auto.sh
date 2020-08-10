@@ -158,7 +158,7 @@ test_expect_success 'Detect LF/CRLF conflict from addition of text=auto' '
 	compare_files expected file.fuzzy
 '
 
-test_expect_failure 'checkout -m after setting text=auto' '
+test_expect_success 'checkout -m after setting text=auto' '
 	cat <<-\EOF >expected &&
 	first line
 	same line
@@ -168,12 +168,12 @@ test_expect_failure 'checkout -m after setting text=auto' '
 	git rm -fr . &&
 	rm -f .gitattributes &&
 	git reset --hard initial &&
-	git checkout a -- . &&
+	git restore --source=a -- . &&
 	git checkout -m b &&
-	compare_files expected file
+	git diff --no-index --ignore-cr-at-eol expected file
 '
 
-test_expect_failure 'checkout -m addition of text=auto' '
+test_expect_success 'checkout -m addition of text=auto' '
 	cat <<-\EOF >expected &&
 	first line
 	same line
@@ -183,23 +183,9 @@ test_expect_failure 'checkout -m addition of text=auto' '
 	git rm -fr . &&
 	rm -f .gitattributes file &&
 	git reset --hard initial &&
-	git checkout b -- . &&
+	git restore --source=b -- . &&
 	git checkout -m a &&
-	compare_files expected file
-'
-
-test_expect_failure 'cherry-pick patch from after text=auto was added' '
-	append_cr <<-\EOF >expected &&
-	first line
-	same line
-	EOF
-
-	git config merge.renormalize true &&
-	git rm -fr . &&
-	git reset --hard b &&
-	test_must_fail git cherry-pick a >err 2>&1 &&
-	grep "[Nn]othing added" err &&
-	compare_files expected file
+	git diff --no-index --ignore-cr-at-eol expected file
 '
 
 test_expect_success 'Test delete/normalize conflict' '
