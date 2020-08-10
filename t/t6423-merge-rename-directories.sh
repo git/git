@@ -2260,24 +2260,23 @@ test_expect_success '8d: rename/delete...or not?' '
 #   Commit B: w/{b,c}, z/d
 #
 # Possible Resolutions:
-#   w/o dir-rename detection: z/d, CONFLICT(z/b -> y/b vs. w/b),
-#                                  CONFLICT(z/c -> y/c vs. w/c)
-#   Currently expected:       y/d, CONFLICT(z/b -> y/b vs. w/b),
-#                                  CONFLICT(z/c -> y/c vs. w/c)
-#   Optimal:                  ??
+#   if z not considered renamed: z/d, CONFLICT(z/b -> y/b vs. w/b),
+#                                     CONFLICT(z/c -> y/c vs. w/c)
+#   if z->y rename considered:   y/d, CONFLICT(z/b -> y/b vs. w/b),
+#                                     CONFLICT(z/c -> y/c vs. w/c)
+#   Optimal:                     ??
 #
 # Notes: In commit A, directory z got renamed to y.  In commit B, directory z
 #        did NOT get renamed; the directory is still present; instead it is
 #        considered to have just renamed a subset of paths in directory z
-#        elsewhere.  Therefore, the directory rename done in commit A to z/
-#        applies to z/d and maps it to y/d.
+#        elsewhere.  However, this is much like testcase 6b (where commit B
+#        moves all the original paths out of z/ but opted to keep d
+#        within z/).  This makes it hard to judge where d should end up.
 #
 #        It's possible that users would get confused about this, but what
-#        should we do instead?  Silently leaving at z/d seems just as bad or
-#        maybe even worse.  Perhaps we could print a big warning about z/d
-#        and how we're moving to y/d in this case, but when I started thinking
-#        about the ramifications of doing that, I didn't know how to rule out
-#        that opening other weird edge and corner cases so I just punted.
+#        should we do instead?  It's not at all clear to me whether z/d or
+#        y/d or something else is a better resolution here, and other cases
+#        start getting really tricky, so I just picked one.
 
 test_setup_8e () {
 	test_create_repo 8e &&
@@ -4405,7 +4404,7 @@ test_expect_success '13b(info): messages for transitive rename with conflicted c
 #   Commit O: z/{b,c},   x/{d,e}
 #   Commit A: y/{b,c,d}, x/e
 #   Commit B: z/{b,c,d}, x/e
-#   Expected: y/{b,c,d}, with info or conflict messages for d (
+#   Expected: y/{b,c,d}, x/e, with info or conflict messages for d
 #             A: renamed x/d -> z/d; B: renamed z/ -> y/ AND renamed x/d to y/d
 #             One could argue A had partial knowledge of what was done with
 #             d and B had full knowledge, but that's a slippery slope as
