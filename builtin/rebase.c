@@ -8,7 +8,7 @@
 #include "builtin.h"
 #include "run-command.h"
 #include "exec-cmd.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "dir.h"
 #include "packfile.h"
 #include "refs.h"
@@ -84,7 +84,7 @@ struct rebase_options {
 		REBASE_FORCE = 1<<3,
 		REBASE_INTERACTIVE_EXPLICIT = 1<<4,
 	} flags;
-	struct argv_array git_am_opts;
+	struct strvec git_am_opts;
 	const char *action;
 	int signoff;
 	int allow_rerere_autoupdate;
@@ -108,7 +108,7 @@ struct rebase_options {
 		.keep_empty = 1,			\
 		.default_backend = "merge",	  	\
 		.flags = REBASE_NO_QUIET, 		\
-		.git_am_opts = ARGV_ARRAY_INIT,		\
+		.git_am_opts = STRVEC_INIT,		\
 		.git_format_patch_opt = STRBUF_INIT	\
 	}
 
@@ -323,7 +323,7 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 	int ret;
 	const char *head_hash = NULL;
 	char *revisions = NULL, *shortrevisions = NULL;
-	struct argv_array make_script_args = ARGV_ARRAY_INIT;
+	struct strvec make_script_args = STRVEC_INIT;
 	struct todo_list todo_list = TODO_LIST_INIT;
 	struct replay_opts replay = get_replay_opts(opts);
 	struct string_list commands = STRING_LIST_INIT_DUP;
@@ -345,13 +345,13 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 		write_file(path_squash_onto(), "%s\n",
 			   oid_to_hex(opts->squash_onto));
 
-	argv_array_pushl(&make_script_args, "", revisions, NULL);
+	strvec_pushl(&make_script_args, "", revisions, NULL);
 	if (opts->restrict_revision)
-		argv_array_pushf(&make_script_args, "^%s",
-				 oid_to_hex(&opts->restrict_revision->object.oid));
+		strvec_pushf(&make_script_args, "^%s",
+			     oid_to_hex(&opts->restrict_revision->object.oid));
 
 	ret = sequencer_make_script(the_repository, &todo_list.buf,
-				    make_script_args.argc, make_script_args.argv,
+				    make_script_args.nr, make_script_args.v,
 				    flags);
 
 	if (ret)
@@ -372,7 +372,7 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 	free(revisions);
 	free(shortrevisions);
 	todo_list_release(&todo_list);
-	argv_array_clear(&make_script_args);
+	strvec_clear(&make_script_args);
 
 	return ret;
 }
@@ -420,7 +420,7 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 		struct child_process cmd = CHILD_PROCESS_INIT;
 
 		cmd.git_cmd = 1;
-		argv_array_pushl(&cmd.args, "show", "REBASE_HEAD", "--", NULL);
+		strvec_pushl(&cmd.args, "show", "REBASE_HEAD", "--", NULL);
 		ret = run_command(&cmd);
 
 		break;
@@ -811,13 +811,13 @@ static int run_am(struct rebase_options *opts)
 	char *rebased_patches;
 
 	am.git_cmd = 1;
-	argv_array_push(&am.args, "am");
+	strvec_push(&am.args, "am");
 
 	if (opts->action && !strcmp("continue", opts->action)) {
-		argv_array_push(&am.args, "--resolved");
-		argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+		strvec_push(&am.args, "--resolved");
+		strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
 		if (opts->gpg_sign_opt)
-			argv_array_push(&am.args, opts->gpg_sign_opt);
+			strvec_push(&am.args, opts->gpg_sign_opt);
 		status = run_command(&am);
 		if (status)
 			return status;
@@ -825,8 +825,8 @@ static int run_am(struct rebase_options *opts)
 		return move_to_original_branch(opts);
 	}
 	if (opts->action && !strcmp("skip", opts->action)) {
-		argv_array_push(&am.args, "--skip");
-		argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+		strvec_push(&am.args, "--skip");
+		strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
 		status = run_command(&am);
 		if (status)
 			return status;
@@ -834,7 +834,7 @@ static int run_am(struct rebase_options *opts)
 		return move_to_original_branch(opts);
 	}
 	if (opts->action && !strcmp("show-current-patch", opts->action)) {
-		argv_array_push(&am.args, "--show-current-patch");
+		strvec_push(&am.args, "--show-current-patch");
 		return run_command(&am);
 	}
 
@@ -852,29 +852,29 @@ static int run_am(struct rebase_options *opts)
 		status = error_errno(_("could not open '%s' for writing"),
 				     rebased_patches);
 		free(rebased_patches);
-		argv_array_clear(&am.args);
+		strvec_clear(&am.args);
 		return status;
 	}
 
 	format_patch.git_cmd = 1;
-	argv_array_pushl(&format_patch.args, "format-patch", "-k", "--stdout",
-			 "--full-index", "--cherry-pick", "--right-only",
-			 "--src-prefix=a/", "--dst-prefix=b/", "--no-renames",
-			 "--no-cover-letter", "--pretty=mboxrd", "--topo-order",
-			 "--no-base", NULL);
+	strvec_pushl(&format_patch.args, "format-patch", "-k", "--stdout",
+		     "--full-index", "--cherry-pick", "--right-only",
+		     "--src-prefix=a/", "--dst-prefix=b/", "--no-renames",
+		     "--no-cover-letter", "--pretty=mboxrd", "--topo-order",
+		     "--no-base", NULL);
 	if (opts->git_format_patch_opt.len)
-		argv_array_split(&format_patch.args,
-				 opts->git_format_patch_opt.buf);
-	argv_array_push(&format_patch.args, revisions.buf);
+		strvec_split(&format_patch.args,
+			     opts->git_format_patch_opt.buf);
+	strvec_push(&format_patch.args, revisions.buf);
 	if (opts->restrict_revision)
-		argv_array_pushf(&format_patch.args, "^%s",
-				 oid_to_hex(&opts->restrict_revision->object.oid));
+		strvec_pushf(&format_patch.args, "^%s",
+			     oid_to_hex(&opts->restrict_revision->object.oid));
 
 	status = run_command(&format_patch);
 	if (status) {
 		unlink(rebased_patches);
 		free(rebased_patches);
-		argv_array_clear(&am.args);
+		strvec_clear(&am.args);
 
 		reset_head(the_repository, &opts->orig_head, "checkout",
 			   opts->head_name, 0,
@@ -896,20 +896,20 @@ static int run_am(struct rebase_options *opts)
 		status = error_errno(_("could not open '%s' for reading"),
 				     rebased_patches);
 		free(rebased_patches);
-		argv_array_clear(&am.args);
+		strvec_clear(&am.args);
 		return status;
 	}
 
-	argv_array_pushv(&am.args, opts->git_am_opts.argv);
-	argv_array_push(&am.args, "--rebasing");
-	argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
-	argv_array_push(&am.args, "--patch-format=mboxrd");
+	strvec_pushv(&am.args, opts->git_am_opts.v);
+	strvec_push(&am.args, "--rebasing");
+	strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+	strvec_push(&am.args, "--patch-format=mboxrd");
 	if (opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE)
-		argv_array_push(&am.args, "--rerere-autoupdate");
+		strvec_push(&am.args, "--rerere-autoupdate");
 	else if (opts->allow_rerere_autoupdate == RERERE_NOAUTOUPDATE)
-		argv_array_push(&am.args, "--no-rerere-autoupdate");
+		strvec_push(&am.args, "--no-rerere-autoupdate");
 	if (opts->gpg_sign_opt)
-		argv_array_push(&am.args, opts->gpg_sign_opt);
+		strvec_push(&am.args, opts->gpg_sign_opt);
 	status = run_command(&am);
 	unlink(rebased_patches);
 	free(rebased_patches);
@@ -969,7 +969,7 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 	add_var(&script_snippet, "revisions", opts->revisions);
 	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
 		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
-	sq_quote_argv_pretty(&buf, opts->git_am_opts.argv);
+	sq_quote_argv_pretty(&buf, opts->git_am_opts.v);
 	add_var(&script_snippet, "git_am_opt", buf.buf);
 	strbuf_release(&buf);
 	add_var(&script_snippet, "verbose",
@@ -1625,8 +1625,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		allow_preemptive_ff = 0;
 	}
 
-	for (i = 0; i < options.git_am_opts.argc; i++) {
-		const char *option = options.git_am_opts.argv[i], *p;
+	for (i = 0; i < options.git_am_opts.nr; i++) {
+		const char *option = options.git_am_opts.v[i], *p;
 		if (!strcmp(option, "--committer-date-is-author-date") ||
 		    !strcmp(option, "--ignore-date") ||
 		    !strcmp(option, "--whitespace=fix") ||
@@ -1649,7 +1649,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			exit(1);
 
 	if (!(options.flags & REBASE_NO_QUIET))
-		argv_array_push(&options.git_am_opts, "-q");
+		strvec_push(&options.git_am_opts, "-q");
 
 	if (options.empty != EMPTY_UNSPECIFIED)
 		imply_merge(&options, "--empty");
@@ -1721,10 +1721,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (isatty(2) && options.flags & REBASE_NO_QUIET)
 		strbuf_addstr(&options.git_format_patch_opt, " --progress");
 
-	if (options.git_am_opts.argc || options.type == REBASE_APPLY) {
+	if (options.git_am_opts.nr || options.type == REBASE_APPLY) {
 		/* all am options except -q are compatible only with --apply */
-		for (i = options.git_am_opts.argc - 1; i >= 0; i--)
-			if (strcmp(options.git_am_opts.argv[i], "-q"))
+		for (i = options.git_am_opts.nr - 1; i >= 0; i--)
+			if (strcmp(options.git_am_opts.v[i], "-q"))
 				break;
 
 		if (i >= 0) {
@@ -1776,7 +1776,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.type == REBASE_PRESERVE_MERGES)
 			die("cannot combine '--signoff' with "
 			    "'--preserve-merges'");
-		argv_array_push(&options.git_am_opts, "--signoff");
+		strvec_push(&options.git_am_opts, "--signoff");
 		options.flags |= REBASE_FORCE;
 	}
 

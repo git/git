@@ -3,7 +3,7 @@
 
 struct ref;
 struct transport;
-struct argv_array;
+struct strvec;
 
 struct transport_vtable {
 	/**
@@ -30,7 +30,7 @@ struct transport_vtable {
 	 * in the ref's old_sha1 field; otherwise it should be all 0.
 	 **/
 	struct ref *(*get_refs_list)(struct transport *transport, int for_push,
-				     const struct argv_array *ref_prefixes);
+				     const struct strvec *ref_prefixes);
 
 	/**
 	 * Fetch the objects for the given refs. Note that this gets

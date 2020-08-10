@@ -15,7 +15,7 @@
 #include "string-list.h"
 #include "oid-array.h"
 #include "connected.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "version.h"
 #include "tag.h"
 #include "gpg-interface.h"
@@ -667,25 +667,25 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 		nonce_status = check_nonce(push_cert.buf, bogs);
 	}
 	if (!is_null_oid(&push_cert_oid)) {
-		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT=%s",
-				 oid_to_hex(&push_cert_oid));
-		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT_SIGNER=%s",
-				 sigcheck.signer ? sigcheck.signer : "");
-		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT_KEY=%s",
-				 sigcheck.key ? sigcheck.key : "");
-		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT_STATUS=%c",
-				 sigcheck.result);
+		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT=%s",
+			     oid_to_hex(&push_cert_oid));
+		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_SIGNER=%s",
+			     sigcheck.signer ? sigcheck.signer : "");
+		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_KEY=%s",
+			     sigcheck.key ? sigcheck.key : "");
+		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_STATUS=%c",
+			     sigcheck.result);
 		if (push_cert_nonce) {
-			argv_array_pushf(&proc->env_array,
-					 "GIT_PUSH_CERT_NONCE=%s",
-					 push_cert_nonce);
-			argv_array_pushf(&proc->env_array,
-					 "GIT_PUSH_CERT_NONCE_STATUS=%s",
-					 nonce_status);
+			strvec_pushf(&proc->env_array,
+				     "GIT_PUSH_CERT_NONCE=%s",
+				     push_cert_nonce);
+			strvec_pushf(&proc->env_array,
+				     "GIT_PUSH_CERT_NONCE_STATUS=%s",
+				     nonce_status);
 			if (nonce_status == NONCE_SLOP)
-				argv_array_pushf(&proc->env_array,
-						 "GIT_PUSH_CERT_NONCE_SLOP=%ld",
-						 nonce_stamp_slop);
+				strvec_pushf(&proc->env_array,
+					     "GIT_PUSH_CERT_NONCE_SLOP=%ld",
+					     nonce_stamp_slop);
 		}
 	}
 }
@@ -720,16 +720,16 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 	if (feed_state->push_options) {
 		int i;
 		for (i = 0; i < feed_state->push_options->nr; i++)
-			argv_array_pushf(&proc.env_array,
-				"GIT_PUSH_OPTION_%d=%s", i,
-				feed_state->push_options->items[i].string);
-		argv_array_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT=%d",
-				 feed_state->push_options->nr);
+			strvec_pushf(&proc.env_array,
+				     "GIT_PUSH_OPTION_%d=%s", i,
+				     feed_state->push_options->items[i].string);
+		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT=%d",
+			     feed_state->push_options->nr);
 	} else
-		argv_array_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT");
+		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT");
 
 	if (tmp_objdir)
-		argv_array_pushv(&proc.env_array, tmp_objdir_env(tmp_objdir));
+		strvec_pushv(&proc.env_array, tmp_objdir_env(tmp_objdir));
 
 	if (use_sideband) {
 		memset(&muxer, 0, sizeof(muxer));
@@ -931,7 +931,7 @@ static int head_has_history(void)
 }
 
 static const char *push_to_deploy(unsigned char *sha1,
-				  struct argv_array *env,
+				  struct strvec *env,
 				  const char *work_tree)
 {
 	const char *update_refresh[] = {
@@ -950,7 +950,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	struct child_process child = CHILD_PROCESS_INIT;
 
 	child.argv = update_refresh;
-	child.env = env->argv;
+	child.env = env->v;
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
@@ -961,7 +961,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	/* run_command() does not clean up completely; reinitialize */
 	child_process_init(&child);
 	child.argv = diff_files;
-	child.env = env->argv;
+	child.env = env->v;
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
@@ -974,7 +974,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 
 	child_process_init(&child);
 	child.argv = diff_index;
-	child.env = env->argv;
+	child.env = env->v;
 	child.no_stdin = 1;
 	child.no_stdout = 1;
 	child.stdout_to_stderr = 0;
@@ -985,7 +985,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	read_tree[3] = hash_to_hex(sha1);
 	child_process_init(&child);
 	child.argv = read_tree;
-	child.env = env->argv;
+	child.env = env->v;
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.no_stdout = 1;
@@ -1000,11 +1000,11 @@ static const char *push_to_deploy(unsigned char *sha1,
 static const char *push_to_checkout_hook = "push-to-checkout";
 
 static const char *push_to_checkout(unsigned char *hash,
-				    struct argv_array *env,
+				    struct strvec *env,
 				    const char *work_tree)
 {
-	argv_array_pushf(env, "GIT_WORK_TREE=%s", absolute_path(work_tree));
-	if (run_hook_le(env->argv, push_to_checkout_hook,
+	strvec_pushf(env, "GIT_WORK_TREE=%s", absolute_path(work_tree));
+	if (run_hook_le(env->v, push_to_checkout_hook,
 			hash_to_hex(hash), NULL))
 		return "push-to-checkout hook declined";
 	else
@@ -1014,7 +1014,7 @@ static const char *push_to_checkout(unsigned char *hash,
 static const char *update_worktree(unsigned char *sha1, const struct worktree *worktree)
 {
 	const char *retval, *work_tree, *git_dir = NULL;
-	struct argv_array env = ARGV_ARRAY_INIT;
+	struct strvec env = STRVEC_INIT;
 
 	if (worktree && worktree->path)
 		work_tree = worktree->path;
@@ -1030,14 +1030,14 @@ static const char *update_worktree(unsigned char *sha1, const struct worktree *w
 	if (!git_dir)
 		git_dir = get_git_dir();
 
-	argv_array_pushf(&env, "GIT_DIR=%s", absolute_path(git_dir));
+	strvec_pushf(&env, "GIT_DIR=%s", absolute_path(git_dir));
 
 	if (!find_hook(push_to_checkout_hook))
 		retval = push_to_deploy(sha1, &env, work_tree);
 	else
 		retval = push_to_checkout(sha1, &env, work_tree);
 
-	argv_array_clear(&env);
+	strvec_clear(&env);
 	return retval;
 }
 
@@ -1205,11 +1205,11 @@ static void run_update_post_hook(struct command *commands)
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (cmd->error_string || cmd->did_not_exist)
 			continue;
-		if (!proc.args.argc)
-			argv_array_push(&proc.args, hook);
-		argv_array_push(&proc.args, cmd->ref_name);
+		if (!proc.args.nr)
+			strvec_push(&proc.args, hook);
+		strvec_push(&proc.args, cmd->ref_name);
 	}
-	if (!proc.args.argc)
+	if (!proc.args.nr)
 		return;
 
 	proc.no_stdin = 1;
@@ -1715,10 +1715,10 @@ static const char *parse_pack_header(struct pack_header *hdr)
 
 static const char *pack_lockfile;
 
-static void push_header_arg(struct argv_array *args, struct pack_header *hdr)
+static void push_header_arg(struct strvec *args, struct pack_header *hdr)
 {
-	argv_array_pushf(args, "--pack_header=%"PRIu32",%"PRIu32,
-			ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
+	strvec_pushf(args, "--pack_header=%"PRIu32",%"PRIu32,
+		     ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
 }
 
 static const char *unpack(int err_fd, struct shallow_info *si)
@@ -1742,8 +1742,8 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 
 	if (si->nr_ours || si->nr_theirs) {
 		alt_shallow_file = setup_temporary_shallow(si->shallow);
-		argv_array_push(&child.args, "--shallow-file");
-		argv_array_push(&child.args, alt_shallow_file);
+		strvec_push(&child.args, "--shallow-file");
+		strvec_push(&child.args, alt_shallow_file);
 	}
 
 	tmp_objdir = tmp_objdir_create();
@@ -1762,16 +1762,16 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 	tmp_objdir_add_as_alternate(tmp_objdir);
 
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
-		argv_array_push(&child.args, "unpack-objects");
+		strvec_push(&child.args, "unpack-objects");
 		push_header_arg(&child.args, &hdr);
 		if (quiet)
-			argv_array_push(&child.args, "-q");
+			strvec_push(&child.args, "-q");
 		if (fsck_objects)
-			argv_array_pushf(&child.args, "--strict%s",
-				fsck_msg_types.buf);
+			strvec_pushf(&child.args, "--strict%s",
+				     fsck_msg_types.buf);
 		if (max_input_size)
-			argv_array_pushf(&child.args, "--max-input-size=%"PRIuMAX,
-				(uintmax_t)max_input_size);
+			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+				     (uintmax_t)max_input_size);
 		child.no_stdout = 1;
 		child.err = err_fd;
 		child.git_cmd = 1;
@@ -1781,28 +1781,28 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 	} else {
 		char hostname[HOST_NAME_MAX + 1];
 
-		argv_array_pushl(&child.args, "index-pack", "--stdin", NULL);
+		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
 		push_header_arg(&child.args, &hdr);
 
 		if (xgethostname(hostname, sizeof(hostname)))
 			xsnprintf(hostname, sizeof(hostname), "localhost");
-		argv_array_pushf(&child.args,
-				 "--keep=receive-pack %"PRIuMAX" on %s",
-				 (uintmax_t)getpid(),
-				 hostname);
+		strvec_pushf(&child.args,
+			     "--keep=receive-pack %"PRIuMAX" on %s",
+			     (uintmax_t)getpid(),
+			     hostname);
 
 		if (!quiet && err_fd)
-			argv_array_push(&child.args, "--show-resolving-progress");
+			strvec_push(&child.args, "--show-resolving-progress");
 		if (use_sideband)
-			argv_array_push(&child.args, "--report-end-of-input");
+			strvec_push(&child.args, "--report-end-of-input");
 		if (fsck_objects)
-			argv_array_pushf(&child.args, "--strict%s",
-				fsck_msg_types.buf);
+			strvec_pushf(&child.args, "--strict%s",
+				     fsck_msg_types.buf);
 		if (!reject_thin)
-			argv_array_push(&child.args, "--fix-thin");
+			strvec_push(&child.args, "--fix-thin");
 		if (max_input_size)
-			argv_array_pushf(&child.args, "--max-input-size=%"PRIuMAX,
-				(uintmax_t)max_input_size);
+			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+				     (uintmax_t)max_input_size);
 		child.out = -1;
 		child.err = err_fd;
 		child.git_cmd = 1;

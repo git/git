@@ -296,7 +296,7 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 	return NULL;		/* Fallthrough. Deny by default */
 }
 
-typedef int (*daemon_service_fn)(const struct argv_array *env);
+typedef int (*daemon_service_fn)(const struct strvec *env);
 struct daemon_service {
 	const char *name;
 	const char *config_name;
@@ -377,7 +377,7 @@ error_return:
 }
 
 static int run_service(const char *dir, struct daemon_service *service,
-		       struct hostinfo *hi, const struct argv_array *env)
+		       struct hostinfo *hi, const struct strvec *env)
 {
 	const char *path;
 	int enabled = service->enabled;
@@ -462,7 +462,7 @@ static void copy_to_log(int fd)
 
 static int run_service_command(struct child_process *cld)
 {
-	argv_array_push(&cld->args, ".");
+	strvec_push(&cld->args, ".");
 	cld->git_cmd = 1;
 	cld->err = -1;
 	if (start_command(cld))
@@ -476,33 +476,33 @@ static int run_service_command(struct child_process *cld)
 	return finish_command(cld);
 }
 
-static int upload_pack(const struct argv_array *env)
+static int upload_pack(const struct strvec *env)
 {
 	struct child_process cld = CHILD_PROCESS_INIT;
-	argv_array_pushl(&cld.args, "upload-pack", "--strict", NULL);
-	argv_array_pushf(&cld.args, "--timeout=%u", timeout);
+	strvec_pushl(&cld.args, "upload-pack", "--strict", NULL);
+	strvec_pushf(&cld.args, "--timeout=%u", timeout);
 
-	argv_array_pushv(&cld.env_array, env->argv);
+	strvec_pushv(&cld.env_array, env->v);
 
 	return run_service_command(&cld);
 }
 
-static int upload_archive(const struct argv_array *env)
+static int upload_archive(const struct strvec *env)
 {
 	struct child_process cld = CHILD_PROCESS_INIT;
-	argv_array_push(&cld.args, "upload-archive");
+	strvec_push(&cld.args, "upload-archive");
 
-	argv_array_pushv(&cld.env_array, env->argv);
+	strvec_pushv(&cld.env_array, env->v);
 
 	return run_service_command(&cld);
 }
 
-static int receive_pack(const struct argv_array *env)
+static int receive_pack(const struct strvec *env)
 {
 	struct child_process cld = CHILD_PROCESS_INIT;
-	argv_array_push(&cld.args, "receive-pack");
+	strvec_push(&cld.args, "receive-pack");
 
-	argv_array_pushv(&cld.env_array, env->argv);
+	strvec_pushv(&cld.env_array, env->v);
 
 	return run_service_command(&cld);
 }
@@ -633,7 +633,7 @@ static char *parse_host_arg(struct hostinfo *hi, char *extra_args, int buflen)
 	return extra_args;
 }
 
-static void parse_extra_args(struct hostinfo *hi, struct argv_array *env,
+static void parse_extra_args(struct hostinfo *hi, struct strvec *env,
 			     char *extra_args, int buflen)
 {
 	const char *end = extra_args + buflen;
@@ -664,8 +664,8 @@ static void parse_extra_args(struct hostinfo *hi, struct argv_array *env,
 
 	if (git_protocol.len > 0) {
 		loginfo("Extended attribute \"protocol\": %s", git_protocol.buf);
-		argv_array_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=%s",
-				 git_protocol.buf);
+		strvec_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=%s",
+			     git_protocol.buf);
 	}
 	strbuf_release(&git_protocol);
 }
@@ -761,7 +761,7 @@ static int execute(void)
 	int pktlen, len, i;
 	char *addr = getenv("REMOTE_ADDR"), *port = getenv("REMOTE_PORT");
 	struct hostinfo hi;
-	struct argv_array env = ARGV_ARRAY_INIT;
+	struct strvec env = STRVEC_INIT;
 
 	hostinfo_init(&hi);
 
@@ -794,13 +794,13 @@ static int execute(void)
 			 */
 			int rc = run_service(arg, s, &hi, &env);
 			hostinfo_clear(&hi);
-			argv_array_clear(&env);
+			strvec_clear(&env);
 			return rc;
 		}
 	}
 
 	hostinfo_clear(&hi);
-	argv_array_clear(&env);
+	strvec_clear(&env);
 	logerror("Protocol error: '%s'", line);
 	return -1;
 }
@@ -893,7 +893,7 @@ static void check_dead_children(void)
 			cradle = &blanket->next;
 }
 
-static struct argv_array cld_argv = ARGV_ARRAY_INIT;
+static struct strvec cld_argv = STRVEC_INIT;
 static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 {
 	struct child_process cld = CHILD_PROCESS_INIT;
@@ -913,21 +913,21 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		char buf[128] = "";
 		struct sockaddr_in *sin_addr = (void *) addr;
 		inet_ntop(addr->sa_family, &sin_addr->sin_addr, buf, sizeof(buf));
-		argv_array_pushf(&cld.env_array, "REMOTE_ADDR=%s", buf);
-		argv_array_pushf(&cld.env_array, "REMOTE_PORT=%d",
-				 ntohs(sin_addr->sin_port));
+		strvec_pushf(&cld.env_array, "REMOTE_ADDR=%s", buf);
+		strvec_pushf(&cld.env_array, "REMOTE_PORT=%d",
+			     ntohs(sin_addr->sin_port));
 #ifndef NO_IPV6
 	} else if (addr->sa_family == AF_INET6) {
 		char buf[128] = "";
 		struct sockaddr_in6 *sin6_addr = (void *) addr;
 		inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(buf));
-		argv_array_pushf(&cld.env_array, "REMOTE_ADDR=[%s]", buf);
-		argv_array_pushf(&cld.env_array, "REMOTE_PORT=%d",
-				 ntohs(sin6_addr->sin6_port));
+		strvec_pushf(&cld.env_array, "REMOTE_ADDR=[%s]", buf);
+		strvec_pushf(&cld.env_array, "REMOTE_PORT=%d",
+			     ntohs(sin6_addr->sin6_port));
 #endif
 	}
 
-	cld.argv = cld_argv.argv;
+	cld.argv = cld_argv.v;
 	cld.in = incoming;
 	cld.out = dup(incoming);
 
@@ -1476,10 +1476,10 @@ int cmd_main(int argc, const char **argv)
 		write_file(pid_file, "%"PRIuMAX, (uintmax_t) getpid());
 
 	/* prepare argv for serving-processes */
-	argv_array_push(&cld_argv, argv[0]); /* git-daemon */
-	argv_array_push(&cld_argv, "--serve");
+	strvec_push(&cld_argv, argv[0]); /* git-daemon */
+	strvec_push(&cld_argv, "--serve");
 	for (i = 1; i < argc; ++i)
-		argv_array_push(&cld_argv, argv[i]);
+		strvec_push(&cld_argv, argv[i]);
 
 	return serve(&listen_addr, listen_port, cred);
 }

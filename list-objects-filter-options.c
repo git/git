@@ -2,7 +2,7 @@
 #include "commit.h"
 #include "config.h"
 #include "revision.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "list-objects.h"
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"

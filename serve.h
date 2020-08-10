@@ -1,8 +1,8 @@
 #ifndef SERVE_H
 #define SERVE_H
 
-struct argv_array;
-int has_capability(const struct argv_array *keys, const char *capability,
+struct strvec;
+int has_capability(const struct strvec *keys, const char *capability,
 		   const char **value);
 
 struct serve_options {
