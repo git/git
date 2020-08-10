@@ -196,8 +196,7 @@ test_expect_success 'merge new subproj history into sub dir/ with --prefix' '
 		cd "$subtree_test_count" &&
 		git fetch ./"sub proj" master &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
-		check_equal "$(last_commit_message)" \
-			"Merge commit '\''$(git rev-parse FETCH_HEAD)'\'' into master"
+		check_equal "$(last_commit_message)" "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
 '
 
@@ -274,8 +273,7 @@ test_expect_success 'merge new subproj history into subdir/ with a slash appende
 		cd "$test_count" &&
 		git fetch ./subproj master &&
 		git subtree merge --prefix=subdir/ FETCH_HEAD &&
-		check_equal "$(last_commit_message)" \
-			"Merge commit '\''$(git rev-parse FETCH_HEAD)'\'' into master"
+		check_equal "$(last_commit_message)" "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
 '
 
