@@ -583,7 +583,7 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 		git checkout B^0 &&
 
 		test_must_fail git merge -s recursive C^0 >out &&
-		test_i18ngrep "CONFLICT (rename/rename)" out &&
+		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 2 out &&
@@ -959,11 +959,17 @@ test_expect_failure 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 		git checkout A^0 &&
 		test_must_fail git merge -s recursive B^0 >out 2>err &&
 
-		# Not sure whether the output should contain just one
-		# "CONFLICT (rename/rename/delete/delete)" line, or if it
-		# should break it into three: "CONFLICT (rename/rename)" and
-		# two "CONFLICT (rename/delete)" lines; allow for either.
-		test_i18ngrep "CONFLICT (rename/rename)" out &&
+		# Instead of requiring the output to contain one combined line
+		#   CONFLICT (rename/rename/delete/delete)
+		# or perhaps two lines:
+		#   CONFLICT (rename/rename): ...
+		#   CONFLICT (rename/delete): info about pair 1
+		#   CONFLICT (rename/delete): info about pair 2
+		# and instead of requiring "rename/rename" instead of "add/add",
+		# be flexible in the type of console output message(s) reported
+		# for this particular case; we will be more stringent about the
+		# contents of the index and working directory.
+		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
 		test_i18ngrep "CONFLICT (rename.*delete)" out &&
 		test_must_be_empty err &&
 
