@@ -324,7 +324,7 @@ test_expect_success "create $m (logged by config)" '
 test_expect_success "update $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
 	GIT_COMMITTER_DATE="2005-05-26 23:33" \
-	git update-ref HEAD'" $B $A "'-m "Switch" &&
+	git update-ref HEAD $B $A -m "Switch" &&
 	test $B = $(git show-ref -s --verify $m)
 '
 test_expect_success "set $m (logged by config)" '

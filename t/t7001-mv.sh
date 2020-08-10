@@ -177,7 +177,7 @@ test_expect_success "Sergey Vlasov's test case" '
 	date >ab.c &&
 	date >ab/d &&
 	git add ab.c ab &&
-	git commit -m 'initial' &&
+	git commit -m "initial" &&
 	git mv ab a
 '
 

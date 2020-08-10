@@ -14,8 +14,8 @@ test_expect_success 'setup reference tree' '
 	git update-index --add COPYING rezrov &&
 	tree=$(git write-tree) &&
 	echo $tree &&
-	sed -e 's/HOWEVER/However/' <COPYING >COPYING.1 &&
-	sed -e 's/GPL/G.P.L/g' <COPYING >COPYING.2 &&
+	sed -e "s/HOWEVER/However/" <COPYING >COPYING.1 &&
+	sed -e "s/GPL/G.P.L/g" <COPYING >COPYING.2 &&
 	origoid=$(git hash-object COPYING) &&
 	oid1=$(git hash-object COPYING.1) &&
 	oid2=$(git hash-object COPYING.2)

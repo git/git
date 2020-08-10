@@ -63,16 +63,16 @@ test_expect_success "$name" '
 
 
 name='detect node change from file to directory #1'
-test_expect_success "$name" "
+test_expect_success "$name" '
 	mkdir dir/new_file &&
 	mv dir/file dir/new_file/file &&
 	mv dir/new_file dir/file &&
 	git update-index --remove dir/file &&
 	git update-index --add dir/file/file &&
-	git commit -m '$name' &&
+	git commit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch
-"
+'
 
 
 name='detect node change from directory to file #1'

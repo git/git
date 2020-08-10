@@ -122,7 +122,7 @@ test_expect_success 'custom merge backend' '
 	o=$(git unpack-file master^:text) &&
 	a=$(git unpack-file side^:text) &&
 	b=$(git unpack-file master:text) &&
-	sh -c "./custom-merge $o $a $b 0 'text'" &&
+	sh -c "./custom-merge $o $a $b 0 text" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
 	rm -f $o $a $b
@@ -149,7 +149,7 @@ test_expect_success 'custom merge backend' '
 	o=$(git unpack-file master^:text) &&
 	a=$(git unpack-file anchor:text) &&
 	b=$(git unpack-file master:text) &&
-	sh -c "./custom-merge $o $a $b 0 'text'" &&
+	sh -c "./custom-merge $o $a $b 0 text" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
 	sed -e 1,3d -e 4q $a >check-3 &&
