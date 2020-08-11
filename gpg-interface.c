@@ -433,10 +433,10 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	int ret;
 	size_t i, j, bottom;
 
-	argv_array_pushl(&gpg.args,
-			 use_format->program,
-			 "-bsau", signing_key,
-			 NULL);
+	strvec_pushl(&gpg.args,
+		     use_format->program,
+		     "-bsau", signing_key,
+		     NULL);
 
 	bottom = signature->len;
 
