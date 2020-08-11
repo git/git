@@ -954,7 +954,8 @@ struct tree *get_commit_tree_in_graph(struct repository *r, const struct commit 
 }
 
 static int get_bloom_filter_large_in_graph(struct commit_graph *g,
-					   const struct commit *c)
+					   const struct commit *c,
+					   uint32_t max_changed_paths)
 {
 	uint32_t graph_pos = commit_graph_position(c);
 	if (graph_pos == COMMIT_NOT_FROM_GRAPH)
@@ -965,6 +966,17 @@ static int get_bloom_filter_large_in_graph(struct commit_graph *g,
 
 	if (!(g && g->bloom_large))
 		return 0;
+	if (g->bloom_filter_settings->max_changed_paths != max_changed_paths) {
+		/*
+		 * Force all commits which are subject to a different
+		 * 'max_changed_paths' limit to be recomputed from scratch.
+		 *
+		 * Note that this could likely be improved, but is ignored since
+		 * all real-world graphs set the maximum number of changed paths
+		 * at 512.
+		 */
+		return 0;
+	}
 	return bitmap_get(g->bloom_large, graph_pos - g->num_commits_in_base);
 }
 
@@ -1470,6 +1482,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 	int i;
 	struct progress *progress = NULL;
 	int *sorted_commits;
+	int max_new_filters;
 
 	init_bloom_filters();
 	ctx->bloom_large = bitmap_word_alloc(ctx->commits.nr / BITS_IN_EWORD + 1);
@@ -1486,10 +1499,15 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 		ctx->order_by_pack ? commit_pos_cmp : commit_gen_cmp,
 		&ctx->commits);
 
+	max_new_filters = ctx->opts->max_new_filters >= 0 ?
+		ctx->opts->max_new_filters : ctx->commits.nr;
+
 	for (i = 0; i < ctx->commits.nr; i++) {
 		int pos = sorted_commits[i];
 		struct commit *c = ctx->commits.list[pos];
-		if (get_bloom_filter_large_in_graph(ctx->r->objects->commit_graph, c)) {
+		if (get_bloom_filter_large_in_graph(ctx->r->objects->commit_graph,
+						    c,
+						    ctx->bloom_settings->max_changed_paths)) {
 			bitmap_set(ctx->bloom_large, pos);
 			ctx->count_bloom_filter_known_large++;
 		} else {
@@ -1497,7 +1515,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 			struct bloom_filter *filter = get_or_compute_bloom_filter(
 				ctx->r,
 				c,
-				1,
+				ctx->count_bloom_filter_computed < max_new_filters,
 				ctx->bloom_settings,
 				&computed);
 			if (computed) {
@@ -1507,7 +1525,8 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 					ctx->count_bloom_filter_found_large++;
 				}
 			}
-			ctx->total_bloom_filter_data_size += sizeof(unsigned char) * filter->len;
+			if (filter)
+				ctx->total_bloom_filter_data_size += sizeof(unsigned char) * filter->len;
 		}
 		display_progress(progress, i + 1);
 	}

@@ -51,6 +51,21 @@ static int load_bloom_filter_from_graph(struct commit_graph *g,
 	else
 		start_index = 0;
 
+	if ((start_index == end_index) &&
+	    (g->bloom_large && !bitmap_get(g->bloom_large, lex_pos))) {
+		/*
+		 * If the filter is zero-length, either (1) the filter has no
+		 * changes, (2) the filter has too many changes, or (3) it
+		 * wasn't computed (eg., due to '--max-new-filters').
+		 *
+		 * If either (1) or (2) is the case, the 'large' bit will be set
+		 * for this Bloom filter. If it is unset, then it wasn't
+		 * computed. In that case, return nothing, since we don't have
+		 * that filter in the graph.
+		 */
+		return 0;
+	}
+
 	filter->len = end_index - start_index;
 	filter->data = (unsigned char *)(g->chunk_bloom_data +
 					sizeof(unsigned char) * start_index +
