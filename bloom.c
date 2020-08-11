@@ -177,15 +177,19 @@ static int pathmap_cmp(const void *hashmap_cmp_fn_data,
 	return strcmp(e1->path, e2->path);
 }
 
-struct bloom_filter *get_bloom_filter(struct repository *r,
-				      struct commit *c,
-				      int compute_if_not_present)
+struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
+						 struct commit *c,
+						 int compute_if_not_present,
+						 int *computed)
 {
 	struct bloom_filter *filter;
 	struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 	int i;
 	struct diff_options diffopt;
 	int max_changes = 512;
+
+	if (computed)
+		*computed = 0;
 
 	if (!bloom_filters.slab_size)
 		return NULL;
@@ -272,6 +276,9 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 		filter->data = NULL;
 		filter->len = 0;
 	}
+
+	if (computed)
+		*computed = 1;
 
 	free(diff_queued_diff.queue);
 	DIFF_QUEUE_CLEAR(&diff_queued_diff);
