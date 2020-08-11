@@ -68,7 +68,7 @@ const char *git_pager(int stdout_is_tty)
 	return pager;
 }
 
-static void setup_pager_env(struct argv_array *env)
+static void setup_pager_env(struct strvec *env)
 {
 	const char **argv;
 	int i;
@@ -88,7 +88,7 @@ static void setup_pager_env(struct argv_array *env)
 		*cp = '\0';
 		if (!getenv(argv[i])) {
 			*cp = '=';
-			argv_array_push(env, argv[i]);
+			strvec_push(env, argv[i]);
 		}
 	}
 	free(pager_env);
@@ -97,7 +97,7 @@ static void setup_pager_env(struct argv_array *env)
 
 void prepare_pager_args(struct child_process *pager_process, const char *pager)
 {
-	argv_array_push(&pager_process->args, pager);
+	strvec_push(&pager_process->args, pager);
 	pager_process->use_shell = 1;
 	setup_pager_env(&pager_process->env_array);
 	pager_process->trace2_child_class = "pager";
@@ -126,7 +126,7 @@ void setup_pager(void)
 	/* spawn the pager */
 	prepare_pager_args(&pager_process, pager);
 	pager_process.in = -1;
-	argv_array_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
+	strvec_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
 	if (start_command(&pager_process))
 		return;
 

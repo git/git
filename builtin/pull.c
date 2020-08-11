@@ -87,8 +87,8 @@ static char *opt_verify_signatures;
 static int opt_autostash = -1;
 static int config_autostash;
 static int check_trust_level = 1;
-static struct argv_array opt_strategies = ARGV_ARRAY_INIT;
-static struct argv_array opt_strategy_opts = ARGV_ARRAY_INIT;
+static struct strvec opt_strategies = STRVEC_INIT;
+static struct strvec opt_strategy_opts = STRVEC_INIT;
 static char *opt_gpg_sign;
 static int opt_allow_unrelated_histories;
 
@@ -110,7 +110,7 @@ static char *opt_ipv4;
 static char *opt_ipv6;
 static int opt_show_forced_updates = -1;
 static char *set_upstream;
-static struct argv_array opt_fetch = ARGV_ARRAY_INIT;
+static struct strvec opt_fetch = STRVEC_INIT;
 
 static struct option pull_options[] = {
 	/* Shared options */
@@ -251,25 +251,25 @@ static struct option pull_options[] = {
 /**
  * Pushes "-q" or "-v" switches into arr to match the opt_verbosity level.
  */
-static void argv_push_verbosity(struct argv_array *arr)
+static void argv_push_verbosity(struct strvec *arr)
 {
 	int verbosity;
 
 	for (verbosity = opt_verbosity; verbosity > 0; verbosity--)
-		argv_array_push(arr, "-v");
+		strvec_push(arr, "-v");
 
 	for (verbosity = opt_verbosity; verbosity < 0; verbosity++)
-		argv_array_push(arr, "-q");
+		strvec_push(arr, "-q");
 }
 
 /**
  * Pushes "-f" switches into arr to match the opt_force level.
  */
-static void argv_push_force(struct argv_array *arr)
+static void argv_push_force(struct strvec *arr)
 {
 	int force = opt_force;
 	while (force-- > 0)
-		argv_array_push(arr, "-f");
+		strvec_push(arr, "-f");
 }
 
 /**
@@ -524,75 +524,75 @@ static void parse_repo_refspecs(int argc, const char **argv, const char **repo,
  */
 static int run_fetch(const char *repo, const char **refspecs)
 {
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	int ret;
 
-	argv_array_pushl(&args, "fetch", "--update-head-ok", NULL);
+	strvec_pushl(&args, "fetch", "--update-head-ok", NULL);
 
 	/* Shared options */
 	argv_push_verbosity(&args);
 	if (opt_progress)
-		argv_array_push(&args, opt_progress);
+		strvec_push(&args, opt_progress);
 
 	/* Options passed to git-fetch */
 	if (opt_all)
-		argv_array_push(&args, opt_all);
+		strvec_push(&args, opt_all);
 	if (opt_append)
-		argv_array_push(&args, opt_append);
+		strvec_push(&args, opt_append);
 	if (opt_upload_pack)
-		argv_array_push(&args, opt_upload_pack);
+		strvec_push(&args, opt_upload_pack);
 	argv_push_force(&args);
 	if (opt_tags)
-		argv_array_push(&args, opt_tags);
+		strvec_push(&args, opt_tags);
 	if (opt_prune)
-		argv_array_push(&args, opt_prune);
+		strvec_push(&args, opt_prune);
 	if (recurse_submodules != RECURSE_SUBMODULES_DEFAULT)
 		switch (recurse_submodules) {
 		case RECURSE_SUBMODULES_ON:
-			argv_array_push(&args, "--recurse-submodules=on");
+			strvec_push(&args, "--recurse-submodules=on");
 			break;
 		case RECURSE_SUBMODULES_OFF:
-			argv_array_push(&args, "--recurse-submodules=no");
+			strvec_push(&args, "--recurse-submodules=no");
 			break;
 		case RECURSE_SUBMODULES_ON_DEMAND:
-			argv_array_push(&args, "--recurse-submodules=on-demand");
+			strvec_push(&args, "--recurse-submodules=on-demand");
 			break;
 		default:
 			BUG("submodule recursion option not understood");
 		}
 	if (max_children)
-		argv_array_push(&args, max_children);
+		strvec_push(&args, max_children);
 	if (opt_dry_run)
-		argv_array_push(&args, "--dry-run");
+		strvec_push(&args, "--dry-run");
 	if (opt_keep)
-		argv_array_push(&args, opt_keep);
+		strvec_push(&args, opt_keep);
 	if (opt_depth)
-		argv_array_push(&args, opt_depth);
+		strvec_push(&args, opt_depth);
 	if (opt_unshallow)
-		argv_array_push(&args, opt_unshallow);
+		strvec_push(&args, opt_unshallow);
 	if (opt_update_shallow)
-		argv_array_push(&args, opt_update_shallow);
+		strvec_push(&args, opt_update_shallow);
 	if (opt_refmap)
-		argv_array_push(&args, opt_refmap);
+		strvec_push(&args, opt_refmap);
 	if (opt_ipv4)
-		argv_array_push(&args, opt_ipv4);
+		strvec_push(&args, opt_ipv4);
 	if (opt_ipv6)
-		argv_array_push(&args, opt_ipv6);
+		strvec_push(&args, opt_ipv6);
 	if (opt_show_forced_updates > 0)
-		argv_array_push(&args, "--show-forced-updates");
+		strvec_push(&args, "--show-forced-updates");
 	else if (opt_show_forced_updates == 0)
-		argv_array_push(&args, "--no-show-forced-updates");
+		strvec_push(&args, "--no-show-forced-updates");
 	if (set_upstream)
-		argv_array_push(&args, set_upstream);
-	argv_array_pushv(&args, opt_fetch.argv);
+		strvec_push(&args, set_upstream);
+	strvec_pushv(&args, opt_fetch.v);
 
 	if (repo) {
-		argv_array_push(&args, repo);
-		argv_array_pushv(&args, refspecs);
+		strvec_push(&args, repo);
+		strvec_pushv(&args, refspecs);
 	} else if (*refspecs)
 		BUG("refspecs without repo?");
-	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
-	argv_array_clear(&args);
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	strvec_clear(&args);
 	return ret;
 }
 
@@ -637,8 +637,8 @@ static int rebase_submodules(void)
 
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
-	argv_array_pushl(&cp.args, "submodule", "update",
-				   "--recursive", "--rebase", NULL);
+	strvec_pushl(&cp.args, "submodule", "update",
+		     "--recursive", "--rebase", NULL);
 	argv_push_verbosity(&cp.args);
 
 	return run_command(&cp);
@@ -650,8 +650,8 @@ static int update_submodules(void)
 
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
-	argv_array_pushl(&cp.args, "submodule", "update",
-				   "--recursive", "--checkout", NULL);
+	strvec_pushl(&cp.args, "submodule", "update",
+		     "--recursive", "--checkout", NULL);
 	argv_push_verbosity(&cp.args);
 
 	return run_command(&cp);
@@ -663,48 +663,48 @@ static int update_submodules(void)
 static int run_merge(void)
 {
 	int ret;
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 
-	argv_array_pushl(&args, "merge", NULL);
+	strvec_pushl(&args, "merge", NULL);
 
 	/* Shared options */
 	argv_push_verbosity(&args);
 	if (opt_progress)
-		argv_array_push(&args, opt_progress);
+		strvec_push(&args, opt_progress);
 
 	/* Options passed to git-merge */
 	if (opt_diffstat)
-		argv_array_push(&args, opt_diffstat);
+		strvec_push(&args, opt_diffstat);
 	if (opt_log)
-		argv_array_push(&args, opt_log);
+		strvec_push(&args, opt_log);
 	if (opt_signoff)
-		argv_array_push(&args, opt_signoff);
+		strvec_push(&args, opt_signoff);
 	if (opt_squash)
-		argv_array_push(&args, opt_squash);
+		strvec_push(&args, opt_squash);
 	if (opt_commit)
-		argv_array_push(&args, opt_commit);
+		strvec_push(&args, opt_commit);
 	if (opt_edit)
-		argv_array_push(&args, opt_edit);
+		strvec_push(&args, opt_edit);
 	if (cleanup_arg)
-		argv_array_pushf(&args, "--cleanup=%s", cleanup_arg);
+		strvec_pushf(&args, "--cleanup=%s", cleanup_arg);
 	if (opt_ff)
-		argv_array_push(&args, opt_ff);
+		strvec_push(&args, opt_ff);
 	if (opt_verify_signatures)
-		argv_array_push(&args, opt_verify_signatures);
-	argv_array_pushv(&args, opt_strategies.argv);
-	argv_array_pushv(&args, opt_strategy_opts.argv);
+		strvec_push(&args, opt_verify_signatures);
+	strvec_pushv(&args, opt_strategies.v);
+	strvec_pushv(&args, opt_strategy_opts.v);
 	if (opt_gpg_sign)
-		argv_array_push(&args, opt_gpg_sign);
+		strvec_push(&args, opt_gpg_sign);
 	if (opt_autostash == 0)
-		argv_array_push(&args, "--no-autostash");
+		strvec_push(&args, "--no-autostash");
 	else if (opt_autostash == 1)
-		argv_array_push(&args, "--autostash");
+		strvec_push(&args, "--autostash");
 	if (opt_allow_unrelated_histories > 0)
-		argv_array_push(&args, "--allow-unrelated-histories");
+		strvec_push(&args, "--allow-unrelated-histories");
 
-	argv_array_push(&args, "FETCH_HEAD");
-	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
-	argv_array_clear(&args);
+	strvec_push(&args, "FETCH_HEAD");
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	strvec_clear(&args);
 	return ret;
 }
 
@@ -801,8 +801,8 @@ static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 	if (!remote_branch)
 		return -1;
 
-	argv_array_pushl(&cp.args, "merge-base", "--fork-point",
-			remote_branch, curr_branch->name, NULL);
+	strvec_pushl(&cp.args, "merge-base", "--fork-point",
+		     remote_branch, curr_branch->name, NULL);
 	cp.no_stdin = 1;
 	cp.no_stderr = 1;
 	cp.git_cmd = 1;
@@ -862,48 +862,48 @@ static int run_rebase(const struct object_id *curr_head,
 {
 	int ret;
 	struct object_id oct_merge_base;
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 
 	if (!get_octopus_merge_base(&oct_merge_base, curr_head, merge_head, fork_point))
 		if (!is_null_oid(fork_point) && oideq(&oct_merge_base, fork_point))
 			fork_point = NULL;
 
-	argv_array_push(&args, "rebase");
+	strvec_push(&args, "rebase");
 
 	/* Shared options */
 	argv_push_verbosity(&args);
 
 	/* Options passed to git-rebase */
 	if (opt_rebase == REBASE_MERGES)
-		argv_array_push(&args, "--rebase-merges");
+		strvec_push(&args, "--rebase-merges");
 	else if (opt_rebase == REBASE_PRESERVE)
-		argv_array_push(&args, "--preserve-merges");
+		strvec_push(&args, "--preserve-merges");
 	else if (opt_rebase == REBASE_INTERACTIVE)
-		argv_array_push(&args, "--interactive");
+		strvec_push(&args, "--interactive");
 	if (opt_diffstat)
-		argv_array_push(&args, opt_diffstat);
-	argv_array_pushv(&args, opt_strategies.argv);
-	argv_array_pushv(&args, opt_strategy_opts.argv);
+		strvec_push(&args, opt_diffstat);
+	strvec_pushv(&args, opt_strategies.v);
+	strvec_pushv(&args, opt_strategy_opts.v);
 	if (opt_gpg_sign)
-		argv_array_push(&args, opt_gpg_sign);
+		strvec_push(&args, opt_gpg_sign);
 	if (opt_autostash == 0)
-		argv_array_push(&args, "--no-autostash");
+		strvec_push(&args, "--no-autostash");
 	else if (opt_autostash == 1)
-		argv_array_push(&args, "--autostash");
+		strvec_push(&args, "--autostash");
 	if (opt_verify_signatures &&
 	    !strcmp(opt_verify_signatures, "--verify-signatures"))
 		warning(_("ignoring --verify-signatures for rebase"));
 
-	argv_array_push(&args, "--onto");
-	argv_array_push(&args, oid_to_hex(merge_head));
+	strvec_push(&args, "--onto");
+	strvec_push(&args, oid_to_hex(merge_head));
 
 	if (fork_point && !is_null_oid(fork_point))
-		argv_array_push(&args, oid_to_hex(fork_point));
+		strvec_push(&args, oid_to_hex(fork_point));
 	else
-		argv_array_push(&args, oid_to_hex(merge_head));
+		strvec_push(&args, oid_to_hex(merge_head));
 
-	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
-	argv_array_clear(&args);
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	strvec_clear(&args);
 	return ret;
 }
 

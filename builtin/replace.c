@@ -228,13 +228,13 @@ static int export_object(const struct object_id *oid, enum object_type type,
 	if (fd < 0)
 		return error_errno(_("unable to open %s for writing"), filename);
 
-	argv_array_push(&cmd.args, "--no-replace-objects");
-	argv_array_push(&cmd.args, "cat-file");
+	strvec_push(&cmd.args, "--no-replace-objects");
+	strvec_push(&cmd.args, "cat-file");
 	if (raw)
-		argv_array_push(&cmd.args, type_name(type));
+		strvec_push(&cmd.args, type_name(type));
 	else
-		argv_array_push(&cmd.args, "-p");
-	argv_array_push(&cmd.args, oid_to_hex(oid));
+		strvec_push(&cmd.args, "-p");
+	strvec_push(&cmd.args, oid_to_hex(oid));
 	cmd.git_cmd = 1;
 	cmd.out = fd;
 
@@ -502,7 +502,7 @@ static int convert_graft_file(int force)
 	const char *graft_file = get_graft_file(the_repository);
 	FILE *fp = fopen_or_warn(graft_file, "r");
 	struct strbuf buf = STRBUF_INIT, err = STRBUF_INIT;
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 
 	if (!fp)
 		return -1;
@@ -512,10 +512,10 @@ static int convert_graft_file(int force)
 		if (*buf.buf == '#')
 			continue;
 
-		argv_array_split(&args, buf.buf);
-		if (args.argc && create_graft(args.argc, args.argv, force, 1))
+		strvec_split(&args, buf.buf);
+		if (args.nr && create_graft(args.nr, args.v, force, 1))
 			strbuf_addf(&err, "\n\t%s", buf.buf);
-		argv_array_clear(&args);
+		strvec_clear(&args);
 	}
 	fclose(fp);
 

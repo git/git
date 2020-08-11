@@ -2,7 +2,7 @@
 #include "repository.h"
 #include "refs.h"
 #include "remote.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "ls-refs.h"
 #include "pkt-line.h"
 #include "config.h"
@@ -11,15 +11,15 @@
  * Check if one of the prefixes is a prefix of the ref.
  * If no prefixes were provided, all refs match.
  */
-static int ref_match(const struct argv_array *prefixes, const char *refname)
+static int ref_match(const struct strvec *prefixes, const char *refname)
 {
 	int i;
 
-	if (!prefixes->argc)
+	if (!prefixes->nr)
 		return 1; /* no restriction */
 
-	for (i = 0; i < prefixes->argc; i++) {
-		const char *prefix = prefixes->argv[i];
+	for (i = 0; i < prefixes->nr; i++) {
+		const char *prefix = prefixes->v[i];
 
 		if (starts_with(refname, prefix))
 			return 1;
@@ -31,7 +31,7 @@ static int ref_match(const struct argv_array *prefixes, const char *refname)
 struct ls_refs_data {
 	unsigned peel;
 	unsigned symrefs;
-	struct argv_array prefixes;
+	struct strvec prefixes;
 };
 
 static int send_ref(const char *refname, const struct object_id *oid,
@@ -84,7 +84,7 @@ static int ls_refs_config(const char *var, const char *value, void *data)
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-int ls_refs(struct repository *r, struct argv_array *keys,
+int ls_refs(struct repository *r, struct strvec *keys,
 	    struct packet_reader *request)
 {
 	struct ls_refs_data data;
@@ -102,7 +102,7 @@ int ls_refs(struct repository *r, struct argv_array *keys,
 		else if (!strcmp("symrefs", arg))
 			data.symrefs = 1;
 		else if (skip_prefix(arg, "ref-prefix ", &out))
-			argv_array_push(&data.prefixes, out);
+			strvec_push(&data.prefixes, out);
 	}
 
 	if (request->status != PACKET_READ_FLUSH)
@@ -111,6 +111,6 @@ int ls_refs(struct repository *r, struct argv_array *keys,
 	head_ref_namespaced(send_ref, &data);
 	for_each_namespaced_ref(send_ref, &data);
 	packet_flush(1);
-	argv_array_clear(&data.prefixes);
+	strvec_clear(&data.prefixes);
 	return 0;
 }

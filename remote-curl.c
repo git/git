@@ -10,7 +10,7 @@
 #include "pkt-line.h"
 #include "string-list.h"
 #include "sideband.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "credential.h"
 #include "oid-array.h"
 #include "send-pack.h"
@@ -1141,41 +1141,41 @@ static int fetch_git(struct discovery *heads,
 	struct rpc_state rpc;
 	struct strbuf preamble = STRBUF_INIT;
 	int i, err;
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	struct strbuf rpc_result = STRBUF_INIT;
 
-	argv_array_pushl(&args, "fetch-pack", "--stateless-rpc",
-			 "--stdin", "--lock-pack", NULL);
+	strvec_pushl(&args, "fetch-pack", "--stateless-rpc",
+		     "--stdin", "--lock-pack", NULL);
 	if (options.followtags)
-		argv_array_push(&args, "--include-tag");
+		strvec_push(&args, "--include-tag");
 	if (options.thin)
-		argv_array_push(&args, "--thin");
+		strvec_push(&args, "--thin");
 	if (options.verbosity >= 3)
-		argv_array_pushl(&args, "-v", "-v", NULL);
+		strvec_pushl(&args, "-v", "-v", NULL);
 	if (options.check_self_contained_and_connected)
-		argv_array_push(&args, "--check-self-contained-and-connected");
+		strvec_push(&args, "--check-self-contained-and-connected");
 	if (options.cloning)
-		argv_array_push(&args, "--cloning");
+		strvec_push(&args, "--cloning");
 	if (options.update_shallow)
-		argv_array_push(&args, "--update-shallow");
+		strvec_push(&args, "--update-shallow");
 	if (!options.progress)
-		argv_array_push(&args, "--no-progress");
+		strvec_push(&args, "--no-progress");
 	if (options.depth)
-		argv_array_pushf(&args, "--depth=%lu", options.depth);
+		strvec_pushf(&args, "--depth=%lu", options.depth);
 	if (options.deepen_since)
-		argv_array_pushf(&args, "--shallow-since=%s", options.deepen_since);
+		strvec_pushf(&args, "--shallow-since=%s", options.deepen_since);
 	for (i = 0; i < options.deepen_not.nr; i++)
-		argv_array_pushf(&args, "--shallow-exclude=%s",
-				 options.deepen_not.items[i].string);
+		strvec_pushf(&args, "--shallow-exclude=%s",
+			     options.deepen_not.items[i].string);
 	if (options.deepen_relative && options.depth)
-		argv_array_push(&args, "--deepen-relative");
+		strvec_push(&args, "--deepen-relative");
 	if (options.from_promisor)
-		argv_array_push(&args, "--from-promisor");
+		strvec_push(&args, "--from-promisor");
 	if (options.no_dependents)
-		argv_array_push(&args, "--no-dependents");
+		strvec_push(&args, "--no-dependents");
 	if (options.filter)
-		argv_array_pushf(&args, "--filter=%s", options.filter);
-	argv_array_push(&args, url.buf);
+		strvec_pushf(&args, "--filter=%s", options.filter);
+	strvec_push(&args, url.buf);
 
 	for (i = 0; i < nr_heads; i++) {
 		struct ref *ref = to_fetch[i];
@@ -1190,12 +1190,12 @@ static int fetch_git(struct discovery *heads,
 	rpc.service_name = "git-upload-pack",
 	rpc.gzip_request = 1;
 
-	err = rpc_service(&rpc, heads, args.argv, &preamble, &rpc_result);
+	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);
 	if (rpc_result.len)
 		write_or_die(1, rpc_result.buf, rpc_result.len);
 	strbuf_release(&rpc_result);
 	strbuf_release(&preamble);
-	argv_array_clear(&args);
+	strvec_clear(&args);
 	return err;
 }
 
@@ -1267,15 +1267,15 @@ static int push_dav(int nr_spec, const char **specs)
 	size_t i;
 
 	child.git_cmd = 1;
-	argv_array_push(&child.args, "http-push");
-	argv_array_push(&child.args, "--helper-status");
+	strvec_push(&child.args, "http-push");
+	strvec_push(&child.args, "--helper-status");
 	if (options.dry_run)
-		argv_array_push(&child.args, "--dry-run");
+		strvec_push(&child.args, "--dry-run");
 	if (options.verbosity > 1)
-		argv_array_push(&child.args, "--verbose");
-	argv_array_push(&child.args, url.buf);
+		strvec_push(&child.args, "--verbose");
+	strvec_push(&child.args, url.buf);
 	for (i = 0; i < nr_spec; i++)
-		argv_array_push(&child.args, specs[i]);
+		strvec_push(&child.args, specs[i]);
 
 	if (run_command(&child))
 		die(_("git-http-push failed"));
@@ -1286,38 +1286,38 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 {
 	struct rpc_state rpc;
 	int i, err;
-	struct argv_array args;
+	struct strvec args;
 	struct string_list_item *cas_option;
 	struct strbuf preamble = STRBUF_INIT;
 	struct strbuf rpc_result = STRBUF_INIT;
 
-	argv_array_init(&args);
-	argv_array_pushl(&args, "send-pack", "--stateless-rpc", "--helper-status",
-			 NULL);
+	strvec_init(&args);
+	strvec_pushl(&args, "send-pack", "--stateless-rpc", "--helper-status",
+		     NULL);
 
 	if (options.thin)
-		argv_array_push(&args, "--thin");
+		strvec_push(&args, "--thin");
 	if (options.dry_run)
-		argv_array_push(&args, "--dry-run");
+		strvec_push(&args, "--dry-run");
 	if (options.push_cert == SEND_PACK_PUSH_CERT_ALWAYS)
-		argv_array_push(&args, "--signed=yes");
+		strvec_push(&args, "--signed=yes");
 	else if (options.push_cert == SEND_PACK_PUSH_CERT_IF_ASKED)
-		argv_array_push(&args, "--signed=if-asked");
+		strvec_push(&args, "--signed=if-asked");
 	if (options.atomic)
-		argv_array_push(&args, "--atomic");
+		strvec_push(&args, "--atomic");
 	if (options.verbosity == 0)
-		argv_array_push(&args, "--quiet");
+		strvec_push(&args, "--quiet");
 	else if (options.verbosity > 1)
-		argv_array_push(&args, "--verbose");
+		strvec_push(&args, "--verbose");
 	for (i = 0; i < options.push_options.nr; i++)
-		argv_array_pushf(&args, "--push-option=%s",
-				 options.push_options.items[i].string);
-	argv_array_push(&args, options.progress ? "--progress" : "--no-progress");
+		strvec_pushf(&args, "--push-option=%s",
+			     options.push_options.items[i].string);
+	strvec_push(&args, options.progress ? "--progress" : "--no-progress");
 	for_each_string_list_item(cas_option, &cas_options)
-		argv_array_push(&args, cas_option->string);
-	argv_array_push(&args, url.buf);
+		strvec_push(&args, cas_option->string);
+	strvec_push(&args, url.buf);
 
-	argv_array_push(&args, "--stdin");
+	strvec_push(&args, "--stdin");
 	for (i = 0; i < nr_spec; i++)
 		packet_buf_write(&preamble, "%s\n", specs[i]);
 	packet_buf_flush(&preamble);
@@ -1325,12 +1325,12 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-receive-pack",
 
-	err = rpc_service(&rpc, heads, args.argv, &preamble, &rpc_result);
+	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);
 	if (rpc_result.len)
 		write_or_die(1, rpc_result.buf, rpc_result.len);
 	strbuf_release(&rpc_result);
 	strbuf_release(&preamble);
-	argv_array_clear(&args);
+	strvec_clear(&args);
 	return err;
 }
 
@@ -1349,13 +1349,13 @@ static int push(int nr_spec, const char **specs)
 
 static void parse_push(struct strbuf *buf)
 {
-	struct argv_array specs = ARGV_ARRAY_INIT;
+	struct strvec specs = STRVEC_INIT;
 	int ret;
 
 	do {
 		const char *arg;
 		if (skip_prefix(buf->buf, "push ", &arg))
-			argv_array_push(&specs, arg);
+			strvec_push(&specs, arg);
 		else
 			die(_("http transport does not support %s"), buf->buf);
 
@@ -1366,7 +1366,7 @@ static void parse_push(struct strbuf *buf)
 			break;
 	} while (1);
 
-	ret = push(specs.argc, specs.argv);
+	ret = push(specs.nr, specs.v);
 	printf("\n");
 	fflush(stdout);
 
@@ -1374,7 +1374,7 @@ static void parse_push(struct strbuf *buf)
 		exit(128); /* error already reported */
 
 free_specs:
-	argv_array_clear(&specs);
+	strvec_clear(&specs);
 }
 
 static int stateless_connect(const char *service_name)

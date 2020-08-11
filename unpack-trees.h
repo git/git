@@ -2,7 +2,7 @@
 #define UNPACK_TREES_H
 
 #include "cache.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "string-list.h"
 #include "tree-walk.h"
 
@@ -70,7 +70,7 @@ struct unpack_trees_options {
 	struct pathspec *pathspec;
 	merge_fn_t fn;
 	const char *msgs[NB_UNPACK_TREES_WARNING_TYPES];
-	struct argv_array msgs_to_free;
+	struct strvec msgs_to_free;
 	/*
 	 * Store error messages in an array, each case
 	 * corresponding to a error message type

@@ -1,6 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "run-command.h"
 #include "exec-cmd.h"
 #include "config.h"

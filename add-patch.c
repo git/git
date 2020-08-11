@@ -2,7 +2,7 @@
 #include "add-interactive.h"
 #include "strbuf.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "pathspec.h"
 #include "color.h"
 #include "diff.h"
@@ -286,12 +286,12 @@ static void setup_child_process(struct add_p_state *s,
 
 	va_start(ap, cp);
 	while ((arg = va_arg(ap, const char *)))
-		argv_array_push(&cp->args, arg);
+		strvec_push(&cp->args, arg);
 	va_end(ap);
 
 	cp->git_cmd = 1;
-	argv_array_pushf(&cp->env_array,
-			 INDEX_ENVIRONMENT "=%s", s->s.r->index_file);
+	strvec_pushf(&cp->env_array,
+		     INDEX_ENVIRONMENT "=%s", s->s.r->index_file);
 }
 
 static int parse_range(const char **p,
@@ -370,7 +370,7 @@ static int is_octal(const char *p, size_t len)
 
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 {
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	const char *diff_algorithm = s->s.interactive_diff_algorithm;
 	struct strbuf *plain = &s->plain, *colored = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -380,32 +380,32 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	struct hunk *hunk = NULL;
 	int res;
 
-	argv_array_pushv(&args, s->mode->diff_cmd);
+	strvec_pushv(&args, s->mode->diff_cmd);
 	if (diff_algorithm)
-		argv_array_pushf(&args, "--diff-algorithm=%s", diff_algorithm);
+		strvec_pushf(&args, "--diff-algorithm=%s", diff_algorithm);
 	if (s->revision) {
 		struct object_id oid;
-		argv_array_push(&args,
-				/* could be on an unborn branch */
-				!strcmp("HEAD", s->revision) &&
-				get_oid("HEAD", &oid) ?
-				empty_tree_oid_hex() : s->revision);
+		strvec_push(&args,
+			    /* could be on an unborn branch */
+			    !strcmp("HEAD", s->revision) &&
+			    get_oid("HEAD", &oid) ?
+			    empty_tree_oid_hex() : s->revision);
 	}
-	color_arg_index = args.argc;
+	color_arg_index = args.nr;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */
-	argv_array_pushl(&args, "--no-color", "-p", "--", NULL);
+	strvec_pushl(&args, "--no-color", "-p", "--", NULL);
 	for (i = 0; i < ps->nr; i++)
-		argv_array_push(&args, ps->items[i].original);
+		strvec_push(&args, ps->items[i].original);
 
 	setup_child_process(s, &cp, NULL);
-	cp.argv = args.argv;
+	cp.argv = args.v;
 	res = capture_command(&cp, plain, 0);
 	if (res) {
-		argv_array_clear(&args);
+		strvec_clear(&args);
 		return error(_("could not parse diff"));
 	}
 	if (!plain->len) {
-		argv_array_clear(&args);
+		strvec_clear(&args);
 		return 0;
 	}
 	strbuf_complete_line(plain);
@@ -415,11 +415,11 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		const char *diff_filter = s->s.interactive_diff_filter;
 
 		setup_child_process(s, &colored_cp, NULL);
-		xsnprintf((char *)args.argv[color_arg_index], 8, "--color");
-		colored_cp.argv = args.argv;
+		xsnprintf((char *)args.v[color_arg_index], 8, "--color");
+		colored_cp.argv = args.v;
 		colored = &s->colored;
 		res = capture_command(&colored_cp, colored, 0);
-		argv_array_clear(&args);
+		strvec_clear(&args);
 		if (res)
 			return error(_("could not parse colored diff"));
 
@@ -444,7 +444,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		colored_p = colored->buf;
 		colored_pend = colored_p + colored->len;
 	}
-	argv_array_clear(&args);
+	strvec_clear(&args);
 
 	/* parse files and hunks */
 	p = plain->buf;
@@ -1158,7 +1158,7 @@ static int run_apply_check(struct add_p_state *s,
 
 	setup_child_process(s, &cp,
 			    "apply", "--check", NULL);
-	argv_array_pushv(&cp.args, s->mode->apply_check_args);
+	strvec_pushv(&cp.args, s->mode->apply_check_args);
 	if (pipe_command(&cp, s->buf.buf, s->buf.len, NULL, 0, NULL, 0))
 		return error(_("'git apply --cached' failed"));
 
@@ -1619,7 +1619,7 @@ soft_increment:
 					   s->mode->is_reverse);
 		else {
 			setup_child_process(s, &cp, "apply", NULL);
-			argv_array_pushv(&cp.args, s->mode->apply_args);
+			strvec_pushv(&cp.args, s->mode->apply_args);
 			if (pipe_command(&cp, s->buf.buf, s->buf.len,
 					 NULL, 0, NULL, 0))
 				error(_("'git apply' failed"));
