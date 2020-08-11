@@ -116,7 +116,7 @@ struct am_state {
 	int keep; /* enum keep_type */
 	int message_id;
 	int scissors; /* enum scissors_type */
-	struct argv_array git_apply_opts;
+	struct strvec git_apply_opts;
 	const char *resolvemsg;
 	int committer_date_is_author_date;
 	int ignore_date;
@@ -146,7 +146,7 @@ static void am_state_init(struct am_state *state)
 
 	state->scissors = SCISSORS_UNSET;
 
-	argv_array_init(&state->git_apply_opts);
+	strvec_init(&state->git_apply_opts);
 
 	if (!git_config_get_bool("commit.gpgsign", &gpgsign))
 		state->sign_commit = gpgsign ? "" : NULL;
@@ -162,7 +162,7 @@ static void am_state_release(struct am_state *state)
 	free(state->author_email);
 	free(state->author_date);
 	free(state->msg);
-	argv_array_clear(&state->git_apply_opts);
+	strvec_clear(&state->git_apply_opts);
 }
 
 /**
@@ -398,8 +398,8 @@ static void am_load(struct am_state *state)
 		state->scissors = SCISSORS_UNSET;
 
 	read_state_file(&sb, state, "apply-opt", 1);
-	argv_array_clear(&state->git_apply_opts);
-	if (sq_dequote_to_argv_array(sb.buf, &state->git_apply_opts) < 0)
+	strvec_clear(&state->git_apply_opts);
+	if (sq_dequote_to_strvec(sb.buf, &state->git_apply_opts) < 0)
 		die(_("could not parse %s"), am_path(state, "apply-opt"));
 
 	state->rebasing = !!file_exists(am_path(state, "rebasing"));
@@ -452,8 +452,8 @@ static int run_post_rewrite_hook(const struct am_state *state)
 	if (!hook)
 		return 0;
 
-	argv_array_push(&cp.args, hook);
-	argv_array_push(&cp.args, "rebase");
+	strvec_push(&cp.args, hook);
+	strvec_push(&cp.args, "rebase");
 
 	cp.in = xopen(am_path(state, "rewritten"), O_RDONLY);
 	cp.stdout_to_stderr = 1;
@@ -651,16 +651,16 @@ static int split_mail_mbox(struct am_state *state, const char **paths,
 	int ret;
 
 	cp.git_cmd = 1;
-	argv_array_push(&cp.args, "mailsplit");
-	argv_array_pushf(&cp.args, "-d%d", state->prec);
-	argv_array_pushf(&cp.args, "-o%s", state->dir);
-	argv_array_push(&cp.args, "-b");
+	strvec_push(&cp.args, "mailsplit");
+	strvec_pushf(&cp.args, "-d%d", state->prec);
+	strvec_pushf(&cp.args, "-o%s", state->dir);
+	strvec_push(&cp.args, "-b");
 	if (keep_cr)
-		argv_array_push(&cp.args, "--keep-cr");
+		strvec_push(&cp.args, "--keep-cr");
 	if (mboxrd)
-		argv_array_push(&cp.args, "--mboxrd");
-	argv_array_push(&cp.args, "--");
-	argv_array_pushv(&cp.args, paths);
+		strvec_push(&cp.args, "--mboxrd");
+	strvec_push(&cp.args, "--");
+	strvec_pushv(&cp.args, paths);
 
 	ret = capture_command(&cp, &last, 8);
 	if (ret)
@@ -787,7 +787,7 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 	const char *series_dir;
 	char *series_dir_buf;
 	FILE *fp;
-	struct argv_array patches = ARGV_ARRAY_INIT;
+	struct strvec patches = STRVEC_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	int ret;
 
@@ -805,16 +805,16 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 		if (*sb.buf == '#')
 			continue; /* skip comment lines */
 
-		argv_array_push(&patches, mkpath("%s/%s", series_dir, sb.buf));
+		strvec_push(&patches, mkpath("%s/%s", series_dir, sb.buf));
 	}
 
 	fclose(fp);
 	strbuf_release(&sb);
 	free(series_dir_buf);
 
-	ret = split_mail_conv(stgit_patch_to_mail, state, patches.argv, keep_cr);
+	ret = split_mail_conv(stgit_patch_to_mail, state, patches.v, keep_cr);
 
-	argv_array_clear(&patches);
+	strvec_clear(&patches);
 	return ret;
 }
 
@@ -1002,7 +1002,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	}
 	write_state_text(state, "scissors", str);
 
-	sq_quote_argv(&sb, state->git_apply_opts.argv);
+	sq_quote_argv(&sb, state->git_apply_opts.v);
 	write_state_text(state, "apply-opt", sb.buf);
 
 	if (state->rebasing)
@@ -1390,8 +1390,8 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
  */
 static int run_apply(const struct am_state *state, const char *index_file)
 {
-	struct argv_array apply_paths = ARGV_ARRAY_INIT;
-	struct argv_array apply_opts = ARGV_ARRAY_INIT;
+	struct strvec apply_paths = STRVEC_INIT;
+	struct strvec apply_opts = STRVEC_INIT;
 	struct apply_state apply_state;
 	int res, opts_left;
 	int force_apply = 0;
@@ -1400,10 +1400,10 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	if (init_apply_state(&apply_state, the_repository, NULL))
 		BUG("init_apply_state() failed");
 
-	argv_array_push(&apply_opts, "apply");
-	argv_array_pushv(&apply_opts, state->git_apply_opts.argv);
+	strvec_push(&apply_opts, "apply");
+	strvec_pushv(&apply_opts, state->git_apply_opts.v);
 
-	opts_left = apply_parse_options(apply_opts.argc, apply_opts.argv,
+	opts_left = apply_parse_options(apply_opts.nr, apply_opts.v,
 					&apply_state, &force_apply, &options,
 					NULL);
 
@@ -1426,12 +1426,12 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	if (check_apply_state(&apply_state, force_apply))
 		BUG("check_apply_state() failed");
 
-	argv_array_push(&apply_paths, am_path(state, "patch"));
+	strvec_push(&apply_paths, am_path(state, "patch"));
 
-	res = apply_all_patches(&apply_state, apply_paths.argc, apply_paths.argv, options);
+	res = apply_all_patches(&apply_state, apply_paths.nr, apply_paths.v, options);
 
-	argv_array_clear(&apply_paths);
-	argv_array_clear(&apply_opts);
+	strvec_clear(&apply_paths);
+	strvec_clear(&apply_opts);
 	clear_apply_state(&apply_state);
 
 	if (res)
@@ -1454,10 +1454,10 @@ static int build_fake_ancestor(const struct am_state *state, const char *index_f
 	struct child_process cp = CHILD_PROCESS_INIT;
 
 	cp.git_cmd = 1;
-	argv_array_push(&cp.args, "apply");
-	argv_array_pushv(&cp.args, state->git_apply_opts.argv);
-	argv_array_pushf(&cp.args, "--build-fake-ancestor=%s", index_file);
-	argv_array_push(&cp.args, am_path(state, "patch"));
+	strvec_push(&cp.args, "apply");
+	strvec_pushv(&cp.args, state->git_apply_opts.v);
+	strvec_pushf(&cp.args, "--build-fake-ancestor=%s", index_file);
+	strvec_push(&cp.args, am_path(state, "patch"));
 
 	if (run_command(&cp))
 		return -1;
@@ -1676,7 +1676,7 @@ static int do_interactive(struct am_state *state)
 			if (!pager)
 				pager = "cat";
 			prepare_pager_args(&cp, pager);
-			argv_array_push(&cp.args, am_path(state, "patch"));
+			strvec_push(&cp.args, am_path(state, "patch"));
 			run_command(&cp);
 		}
 	}
@@ -2346,7 +2346,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		if (state.signoff == SIGNOFF_EXPLICIT)
 			am_append_signoff(&state);
 	} else {
-		struct argv_array paths = ARGV_ARRAY_INIT;
+		struct strvec paths = STRVEC_INIT;
 		int i;
 
 		/*
@@ -2371,17 +2371,17 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 
 		for (i = 0; i < argc; i++) {
 			if (is_absolute_path(argv[i]) || !prefix)
-				argv_array_push(&paths, argv[i]);
+				strvec_push(&paths, argv[i]);
 			else
-				argv_array_push(&paths, mkpath("%s/%s", prefix, argv[i]));
+				strvec_push(&paths, mkpath("%s/%s", prefix, argv[i]));
 		}
 
-		if (state.interactive && !paths.argc)
+		if (state.interactive && !paths.nr)
 			die(_("interactive mode requires patches on the command line"));
 
-		am_setup(&state, patch_format, paths.argv, keep_cr);
+		am_setup(&state, patch_format, paths.v, keep_cr);
 
-		argv_array_clear(&paths);
+		strvec_clear(&paths);
 	}
 
 	switch (resume.mode) {

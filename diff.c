@@ -20,7 +20,7 @@
 #include "hashmap.h"
 #include "ll-merge.h"
 #include "string-list.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "graph.h"
 #include "packfile.h"
 #include "parse-options.h"
@@ -4192,14 +4192,14 @@ static struct diff_tempfile *prepare_temp_file(struct repository *r,
 }
 
 static void add_external_diff_name(struct repository *r,
-				   struct argv_array *argv,
+				   struct strvec *argv,
 				   const char *name,
 				   struct diff_filespec *df)
 {
 	struct diff_tempfile *temp = prepare_temp_file(r, name, df);
-	argv_array_push(argv, temp->name);
-	argv_array_push(argv, temp->hex);
-	argv_array_push(argv, temp->mode);
+	strvec_push(argv, temp->name);
+	strvec_push(argv, temp->hex);
+	strvec_push(argv, temp->mode);
 }
 
 /* An external diff command takes:
@@ -4216,12 +4216,12 @@ static void run_external_diff(const char *pgm,
 			      const char *xfrm_msg,
 			      struct diff_options *o)
 {
-	struct argv_array argv = ARGV_ARRAY_INIT;
-	struct argv_array env = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
+	struct strvec env = STRVEC_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
 
-	argv_array_push(&argv, pgm);
-	argv_array_push(&argv, name);
+	strvec_push(&argv, pgm);
+	strvec_push(&argv, name);
 
 	if (one && two) {
 		add_external_diff_name(o->repo, &argv, name, one);
@@ -4229,22 +4229,22 @@ static void run_external_diff(const char *pgm,
 			add_external_diff_name(o->repo, &argv, name, two);
 		else {
 			add_external_diff_name(o->repo, &argv, other, two);
-			argv_array_push(&argv, other);
-			argv_array_push(&argv, xfrm_msg);
+			strvec_push(&argv, other);
+			strvec_push(&argv, xfrm_msg);
 		}
 	}
 
-	argv_array_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
-	argv_array_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
+	strvec_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
+	strvec_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
 
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
-	if (run_command_v_opt_cd_env(argv.argv, RUN_USING_SHELL, NULL, env.argv))
+	if (run_command_v_opt_cd_env(argv.v, RUN_USING_SHELL, NULL, env.v))
 		die(_("external diff died, stopping at %s"), name);
 
 	remove_tempfile();
-	argv_array_clear(&argv);
-	argv_array_clear(&env);
+	strvec_clear(&argv);
+	strvec_clear(&env);
 }
 
 static int similarity_index(struct diff_filepair *p)

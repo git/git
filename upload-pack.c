@@ -18,7 +18,7 @@
 #include "sigchain.h"
 #include "version.h"
 #include "string-list.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "prio-queue.h"
 #include "protocol.h"
 #include "quote.h"
@@ -269,45 +269,44 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	if (!pack_data->pack_objects_hook)
 		pack_objects.git_cmd = 1;
 	else {
-		argv_array_push(&pack_objects.args, pack_data->pack_objects_hook);
-		argv_array_push(&pack_objects.args, "git");
+		strvec_push(&pack_objects.args, pack_data->pack_objects_hook);
+		strvec_push(&pack_objects.args, "git");
 		pack_objects.use_shell = 1;
 	}
 
 	if (pack_data->shallow_nr) {
-		argv_array_push(&pack_objects.args, "--shallow-file");
-		argv_array_push(&pack_objects.args, "");
+		strvec_push(&pack_objects.args, "--shallow-file");
+		strvec_push(&pack_objects.args, "");
 	}
-	argv_array_push(&pack_objects.args, "pack-objects");
-	argv_array_push(&pack_objects.args, "--revs");
+	strvec_push(&pack_objects.args, "pack-objects");
+	strvec_push(&pack_objects.args, "--revs");
 	if (pack_data->use_thin_pack)
-		argv_array_push(&pack_objects.args, "--thin");
+		strvec_push(&pack_objects.args, "--thin");
 
-	argv_array_push(&pack_objects.args, "--stdout");
+	strvec_push(&pack_objects.args, "--stdout");
 	if (pack_data->shallow_nr)
-		argv_array_push(&pack_objects.args, "--shallow");
+		strvec_push(&pack_objects.args, "--shallow");
 	if (!pack_data->no_progress)
-		argv_array_push(&pack_objects.args, "--progress");
+		strvec_push(&pack_objects.args, "--progress");
 	if (pack_data->use_ofs_delta)
-		argv_array_push(&pack_objects.args, "--delta-base-offset");
+		strvec_push(&pack_objects.args, "--delta-base-offset");
 	if (pack_data->use_include_tag)
-		argv_array_push(&pack_objects.args, "--include-tag");
+		strvec_push(&pack_objects.args, "--include-tag");
 	if (pack_data->filter_options.choice) {
 		const char *spec =
 			expand_list_objects_filter_spec(&pack_data->filter_options);
 		if (pack_objects.use_shell) {
 			struct strbuf buf = STRBUF_INIT;
 			sq_quote_buf(&buf, spec);
-			argv_array_pushf(&pack_objects.args, "--filter=%s", buf.buf);
+			strvec_pushf(&pack_objects.args, "--filter=%s", buf.buf);
 			strbuf_release(&buf);
 		} else {
-			argv_array_pushf(&pack_objects.args, "--filter=%s",
-					 spec);
+			strvec_pushf(&pack_objects.args, "--filter=%s", spec);
 		}
 	}
 	if (uri_protocols) {
 		for (i = 0; i < uri_protocols->nr; i++)
-			argv_array_pushf(&pack_objects.args, "--uri-protocol=%s",
+			strvec_pushf(&pack_objects.args, "--uri-protocol=%s",
 					 uri_protocols->items[i].string);
 	}
 
@@ -880,26 +879,26 @@ static int send_shallow_list(struct upload_pack_data *data)
 		deepen(data, data->depth);
 		ret = 1;
 	} else if (data->deepen_rev_list) {
-		struct argv_array av = ARGV_ARRAY_INIT;
+		struct strvec av = STRVEC_INIT;
 		int i;
 
-		argv_array_push(&av, "rev-list");
+		strvec_push(&av, "rev-list");
 		if (data->deepen_since)
-			argv_array_pushf(&av, "--max-age=%"PRItime, data->deepen_since);
+			strvec_pushf(&av, "--max-age=%"PRItime, data->deepen_since);
 		if (data->deepen_not.nr) {
-			argv_array_push(&av, "--not");
+			strvec_push(&av, "--not");
 			for (i = 0; i < data->deepen_not.nr; i++) {
 				struct string_list_item *s = data->deepen_not.items + i;
-				argv_array_push(&av, s->string);
+				strvec_push(&av, s->string);
 			}
-			argv_array_push(&av, "--not");
+			strvec_push(&av, "--not");
 		}
 		for (i = 0; i < data->want_obj.nr; i++) {
 			struct object *o = data->want_obj.objects[i].item;
-			argv_array_push(&av, oid_to_hex(&o->oid));
+			strvec_push(&av, oid_to_hex(&o->oid));
 		}
-		deepen_by_rev_list(data, av.argc, av.argv);
-		argv_array_clear(&av);
+		deepen_by_rev_list(data, av.nr, av.v);
+		strvec_clear(&av);
 		ret = 1;
 	} else {
 		if (data->shallows.nr > 0) {
@@ -1521,7 +1520,7 @@ enum fetch_state {
 	FETCH_DONE,
 };
 
-int upload_pack_v2(struct repository *r, struct argv_array *keys,
+int upload_pack_v2(struct repository *r, struct strvec *keys,
 		   struct packet_reader *request)
 {
 	enum fetch_state state = FETCH_PROCESS_ARGS;

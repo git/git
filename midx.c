@@ -1408,21 +1408,21 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	repo_config_get_bool(r, "repack.usedeltabaseoffset", &delta_base_offset);
 	repo_config_get_bool(r, "repack.usedeltaislands", &use_delta_islands);
 
-	argv_array_push(&cmd.args, "pack-objects");
+	strvec_push(&cmd.args, "pack-objects");
 
 	strbuf_addstr(&base_name, object_dir);
 	strbuf_addstr(&base_name, "/pack/pack");
-	argv_array_push(&cmd.args, base_name.buf);
+	strvec_push(&cmd.args, base_name.buf);
 
 	if (delta_base_offset)
-		argv_array_push(&cmd.args, "--delta-base-offset");
+		strvec_push(&cmd.args, "--delta-base-offset");
 	if (use_delta_islands)
-		argv_array_push(&cmd.args, "--delta-islands");
+		strvec_push(&cmd.args, "--delta-islands");
 
 	if (flags & MIDX_PROGRESS)
-		argv_array_push(&cmd.args, "--progress");
+		strvec_push(&cmd.args, "--progress");
 	else
-		argv_array_push(&cmd.args, "-q");
+		strvec_push(&cmd.args, "-q");
 
 	strbuf_release(&base_name);
 

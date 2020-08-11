@@ -763,18 +763,18 @@ static void fill_alternate_refs_command(struct child_process *cmd,
 	if (!git_config_get_value("core.alternateRefsCommand", &value)) {
 		cmd->use_shell = 1;
 
-		argv_array_push(&cmd->args, value);
-		argv_array_push(&cmd->args, repo_path);
+		strvec_push(&cmd->args, value);
+		strvec_push(&cmd->args, repo_path);
 	} else {
 		cmd->git_cmd = 1;
 
-		argv_array_pushf(&cmd->args, "--git-dir=%s", repo_path);
-		argv_array_push(&cmd->args, "for-each-ref");
-		argv_array_push(&cmd->args, "--format=%(objectname)");
+		strvec_pushf(&cmd->args, "--git-dir=%s", repo_path);
+		strvec_push(&cmd->args, "for-each-ref");
+		strvec_push(&cmd->args, "--format=%(objectname)");
 
 		if (!git_config_get_value("core.alternateRefsPrefixes", &value)) {
-			argv_array_push(&cmd->args, "--");
-			argv_array_split(&cmd->args, value);
+			strvec_push(&cmd->args, "--");
+			strvec_split(&cmd->args, value);
 		}
 	}
 

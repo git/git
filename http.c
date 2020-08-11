@@ -2288,13 +2288,13 @@ int finish_http_pack_request(struct http_pack_request *preq)
 
 	tmpfile_fd = xopen(preq->tmpfile.buf, O_RDONLY);
 
-	argv_array_push(&ip.args, "index-pack");
-	argv_array_push(&ip.args, "--stdin");
+	strvec_push(&ip.args, "index-pack");
+	strvec_push(&ip.args, "--stdin");
 	ip.git_cmd = 1;
 	ip.in = tmpfile_fd;
 	if (preq->generate_keep) {
-		argv_array_pushf(&ip.args, "--keep=git %"PRIuMAX,
-				 (uintmax_t)getpid());
+		strvec_pushf(&ip.args, "--keep=git %"PRIuMAX,
+			     (uintmax_t)getpid());
 		ip.out = 0;
 	} else {
 		ip.no_stdout = 1;

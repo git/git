@@ -14,7 +14,7 @@
 #include "refs.h"
 #include "fmt-merge-msg.h"
 #include "commit.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "object-store.h"
 #include "chdir-notify.h"
 #include "shallow.h"
@@ -156,15 +156,15 @@ static char *expand_namespace(const char *raw_namespace)
  * Wrapper of getenv() that returns a strdup value. This value is kept
  * in argv to be freed later.
  */
-static const char *getenv_safe(struct argv_array *argv, const char *name)
+static const char *getenv_safe(struct strvec *argv, const char *name)
 {
 	const char *value = getenv(name);
 
 	if (!value)
 		return NULL;
 
-	argv_array_push(argv, value);
-	return argv->argv[argv->argc - 1];
+	strvec_push(argv, value);
+	return argv->v[argv->nr - 1];
 }
 
 void setup_git_env(const char *git_dir)
@@ -172,7 +172,7 @@ void setup_git_env(const char *git_dir)
 	const char *shallow_file;
 	const char *replace_ref_base;
 	struct set_gitdir_args args = { NULL };
-	struct argv_array to_free = ARGV_ARRAY_INIT;
+	struct strvec to_free = STRVEC_INIT;
 
 	args.commondir = getenv_safe(&to_free, GIT_COMMON_DIR_ENVIRONMENT);
 	args.object_dir = getenv_safe(&to_free, DB_ENVIRONMENT);
@@ -180,7 +180,7 @@ void setup_git_env(const char *git_dir)
 	args.index_file = getenv_safe(&to_free, INDEX_ENVIRONMENT);
 	args.alternate_db = getenv_safe(&to_free, ALTERNATE_DB_ENVIRONMENT);
 	repo_set_gitdir(the_repository, git_dir, &args);
-	argv_array_clear(&to_free);
+	strvec_clear(&to_free);
 
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		read_replace_refs = 0;

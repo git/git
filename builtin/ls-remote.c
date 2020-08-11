@@ -46,7 +46,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	int show_symref_target = 0;
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
-	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+	struct strvec ref_prefixes = STRVEC_INIT;
 	int i;
 	struct string_list server_options = STRING_LIST_INIT_DUP;
 
@@ -94,9 +94,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	}
 
 	if (flags & REF_TAGS)
-		argv_array_push(&ref_prefixes, "refs/tags/");
+		strvec_push(&ref_prefixes, "refs/tags/");
 	if (flags & REF_HEADS)
-		argv_array_push(&ref_prefixes, "refs/heads/");
+		strvec_push(&ref_prefixes, "refs/heads/");
 
 	remote = remote_get(dest);
 	if (!remote) {

@@ -742,9 +742,9 @@ static void update_head(const struct ref *our, const struct ref *remote,
 
 static int git_sparse_checkout_init(const char *repo)
 {
-	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
 	int result = 0;
-	argv_array_pushl(&argv, "-C", repo, "sparse-checkout", "init", NULL);
+	strvec_pushl(&argv, "-C", repo, "sparse-checkout", "init", NULL);
 
 	/*
 	 * We must apply the setting in the current process
@@ -752,12 +752,12 @@ static int git_sparse_checkout_init(const char *repo)
 	 */
 	core_apply_sparse_checkout = 1;
 
-	if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
+	if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
 		error(_("failed to initialize sparse-checkout"));
 		result = 1;
 	}
 
-	argv_array_clear(&argv);
+	strvec_clear(&argv);
 	return result;
 }
 
@@ -819,33 +819,33 @@ static int checkout(int submodule_progress)
 			   oid_to_hex(&oid), "1", NULL);
 
 	if (!err && (option_recurse_submodules.nr > 0)) {
-		struct argv_array args = ARGV_ARRAY_INIT;
-		argv_array_pushl(&args, "submodule", "update", "--require-init", "--recursive", NULL);
+		struct strvec args = STRVEC_INIT;
+		strvec_pushl(&args, "submodule", "update", "--require-init", "--recursive", NULL);
 
 		if (option_shallow_submodules == 1)
-			argv_array_push(&args, "--depth=1");
+			strvec_push(&args, "--depth=1");
 
 		if (max_jobs != -1)
-			argv_array_pushf(&args, "--jobs=%d", max_jobs);
+			strvec_pushf(&args, "--jobs=%d", max_jobs);
 
 		if (submodule_progress)
-			argv_array_push(&args, "--progress");
+			strvec_push(&args, "--progress");
 
 		if (option_verbosity < 0)
-			argv_array_push(&args, "--quiet");
+			strvec_push(&args, "--quiet");
 
 		if (option_remote_submodules) {
-			argv_array_push(&args, "--remote");
-			argv_array_push(&args, "--no-fetch");
+			strvec_push(&args, "--remote");
+			strvec_push(&args, "--no-fetch");
 		}
 
 		if (option_single_branch >= 0)
-			argv_array_push(&args, option_single_branch ?
+			strvec_push(&args, option_single_branch ?
 					       "--single-branch" :
 					       "--no-single-branch");
 
-		err = run_command_v_opt(args.argv, RUN_GIT_CMD);
-		argv_array_clear(&args);
+		err = run_command_v_opt(args.v, RUN_GIT_CMD);
+		strvec_clear(&args);
 	}
 
 	return err;
@@ -961,7 +961,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int err = 0, complete_refs_before_fetch = 1;
 	int submodule_progress;
 
-	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+	struct strvec ref_prefixes = STRVEC_INIT;
 
 	git_config(platform_core_config, NULL);
 
@@ -1213,12 +1213,12 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		transport->smart_options->check_self_contained_and_connected = 1;
 
 
-	argv_array_push(&ref_prefixes, "HEAD");
+	strvec_push(&ref_prefixes, "HEAD");
 	refspec_ref_prefixes(&remote->fetch, &ref_prefixes);
 	if (option_branch)
 		expand_ref_prefix(&ref_prefixes, option_branch);
 	if (!option_no_tags)
-		argv_array_push(&ref_prefixes, "refs/tags/");
+		strvec_push(&ref_prefixes, "refs/tags/");
 
 	refs = transport_get_remote_refs(transport, &ref_prefixes);
 
@@ -1331,6 +1331,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	strbuf_release(&default_refspec);
 	junk_mode = JUNK_LEAVE_ALL;
 
-	argv_array_clear(&ref_prefixes);
+	strvec_clear(&ref_prefixes);
 	return err;
 }

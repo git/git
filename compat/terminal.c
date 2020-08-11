@@ -86,9 +86,9 @@ static void restore_term(void)
 		if (stty_restore.nr == 0)
 			return;
 
-		argv_array_push(&cp.args, "stty");
+		strvec_push(&cp.args, "stty");
 		for (i = 0; i < stty_restore.nr; i++)
-			argv_array_push(&cp.args, stty_restore.items[i].string);
+			strvec_push(&cp.args, stty_restore.items[i].string);
 		run_command(&cp);
 		string_list_clear(&stty_restore, 0);
 		return;
@@ -107,25 +107,25 @@ static int disable_bits(DWORD bits)
 	if (use_stty) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 
-		argv_array_push(&cp.args, "stty");
+		strvec_push(&cp.args, "stty");
 
 		if (bits & ENABLE_LINE_INPUT) {
 			string_list_append(&stty_restore, "icanon");
-			argv_array_push(&cp.args, "-icanon");
+			strvec_push(&cp.args, "-icanon");
 		}
 
 		if (bits & ENABLE_ECHO_INPUT) {
 			string_list_append(&stty_restore, "echo");
-			argv_array_push(&cp.args, "-echo");
+			strvec_push(&cp.args, "-echo");
 		}
 
 		if (bits & ENABLE_PROCESSED_INPUT) {
 			string_list_append(&stty_restore, "-ignbrk");
 			string_list_append(&stty_restore, "intr");
 			string_list_append(&stty_restore, "^c");
-			argv_array_push(&cp.args, "ignbrk");
-			argv_array_push(&cp.args, "intr");
-			argv_array_push(&cp.args, "");
+			strvec_push(&cp.args, "ignbrk");
+			strvec_push(&cp.args, "intr");
+			strvec_push(&cp.args, "");
 		}
 
 		if (run_command(&cp) == 0)
@@ -331,7 +331,7 @@ static int is_known_escape_sequence(const char *sequence)
 		hashmap_init(&sequences, (hashmap_cmp_fn)sequence_entry_cmp,
 			     NULL, 0);
 
-		argv_array_pushl(&cp.args, "infocmp", "-L", "-1", NULL);
+		strvec_pushl(&cp.args, "infocmp", "-L", "-1", NULL);
 		if (pipe_command(&cp, NULL, 0, &buf, 0, NULL, 0))
 			strbuf_setlen(&buf, 0);
 

@@ -1,5 +1,5 @@
 #include "builtin.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "parse-options.h"
 #include "cache.h"
 #include "bundle.h"
@@ -60,7 +60,7 @@ static int parse_options_cmd_bundle(int argc,
 static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 	int all_progress_implied = 0;
 	int progress = isatty(STDERR_FILENO);
-	struct argv_array pack_opts;
+	struct strvec pack_opts;
 
 	struct option options[] = {
 		OPT_SET_INT('q', "quiet", &progress,
@@ -80,15 +80,15 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 			builtin_bundle_create_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
-	argv_array_init(&pack_opts);
+	strvec_init(&pack_opts);
 	if (progress == 0)
-		argv_array_push(&pack_opts, "--quiet");
+		strvec_push(&pack_opts, "--quiet");
 	else if (progress == 1)
-		argv_array_push(&pack_opts, "--progress");
+		strvec_push(&pack_opts, "--progress");
 	else if (progress == 2)
-		argv_array_push(&pack_opts, "--all-progress");
+		strvec_push(&pack_opts, "--all-progress");
 	if (progress && all_progress_implied)
-		argv_array_push(&pack_opts, "--all-progress-implied");
+		strvec_push(&pack_opts, "--all-progress-implied");
 
 	if (!startup_info->have_repository)
 		die(_("Need a repository to create a bundle."));

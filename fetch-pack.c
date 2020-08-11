@@ -837,30 +837,30 @@ static int get_pack(struct fetch_pack_args *args,
 	}
 
 	if (alternate_shallow_file) {
-		argv_array_push(&cmd.args, "--shallow-file");
-		argv_array_push(&cmd.args, alternate_shallow_file);
+		strvec_push(&cmd.args, "--shallow-file");
+		strvec_push(&cmd.args, alternate_shallow_file);
 	}
 
 	if (do_keep || args->from_promisor) {
 		if (pack_lockfiles)
 			cmd.out = -1;
 		cmd_name = "index-pack";
-		argv_array_push(&cmd.args, cmd_name);
-		argv_array_push(&cmd.args, "--stdin");
+		strvec_push(&cmd.args, cmd_name);
+		strvec_push(&cmd.args, "--stdin");
 		if (!args->quiet && !args->no_progress)
-			argv_array_push(&cmd.args, "-v");
+			strvec_push(&cmd.args, "-v");
 		if (args->use_thin_pack)
-			argv_array_push(&cmd.args, "--fix-thin");
+			strvec_push(&cmd.args, "--fix-thin");
 		if (do_keep && (args->lock_pack || unpack_limit)) {
 			char hostname[HOST_NAME_MAX + 1];
 			if (xgethostname(hostname, sizeof(hostname)))
 				xsnprintf(hostname, sizeof(hostname), "localhost");
-			argv_array_pushf(&cmd.args,
-					"--keep=fetch-pack %"PRIuMAX " on %s",
-					(uintmax_t)getpid(), hostname);
+			strvec_pushf(&cmd.args,
+				     "--keep=fetch-pack %"PRIuMAX " on %s",
+				     (uintmax_t)getpid(), hostname);
 		}
 		if (only_packfile && args->check_self_contained_and_connected)
-			argv_array_push(&cmd.args, "--check-self-contained-and-connected");
+			strvec_push(&cmd.args, "--check-self-contained-and-connected");
 		else
 			/*
 			 * We cannot perform any connectivity checks because
@@ -875,19 +875,19 @@ static int get_pack(struct fetch_pack_args *args,
 		 * us.
 		 */
 		if (!(do_keep && pack_lockfiles) && args->from_promisor)
-			argv_array_push(&cmd.args, "--promisor");
+			strvec_push(&cmd.args, "--promisor");
 	}
 	else {
 		cmd_name = "unpack-objects";
-		argv_array_push(&cmd.args, cmd_name);
+		strvec_push(&cmd.args, cmd_name);
 		if (args->quiet || args->no_progress)
-			argv_array_push(&cmd.args, "-q");
+			strvec_push(&cmd.args, "-q");
 		args->check_self_contained_and_connected = 0;
 	}
 
 	if (pass_header)
-		argv_array_pushf(&cmd.args, "--pack_header=%"PRIu32",%"PRIu32,
-				 ntohl(header.hdr_version),
+		strvec_pushf(&cmd.args, "--pack_header=%"PRIu32",%"PRIu32,
+			     ntohl(header.hdr_version),
 				 ntohl(header.hdr_entries));
 	if (fetch_fsck_objects >= 0
 	    ? fetch_fsck_objects
@@ -900,10 +900,10 @@ static int get_pack(struct fetch_pack_args *args,
 			 * checks both broken objects and links, but we only
 			 * want to check for broken objects.
 			 */
-			argv_array_push(&cmd.args, "--fsck-objects");
+			strvec_push(&cmd.args, "--fsck-objects");
 		else
-			argv_array_pushf(&cmd.args, "--strict%s",
-					 fsck_msg_types.buf);
+			strvec_pushf(&cmd.args, "--strict%s",
+				     fsck_msg_types.buf);
 	}
 
 	cmd.in = demux.out;
@@ -1654,11 +1654,11 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		const char *uri = packfile_uris.items[i].string +
 			the_hash_algo->hexsz + 1;
 
-		argv_array_push(&cmd.args, "http-fetch");
-		argv_array_pushf(&cmd.args, "--packfile=%.*s",
-				 (int) the_hash_algo->hexsz,
-				 packfile_uris.items[i].string);
-		argv_array_push(&cmd.args, uri);
+		strvec_push(&cmd.args, "http-fetch");
+		strvec_pushf(&cmd.args, "--packfile=%.*s",
+			     (int) the_hash_algo->hexsz,
+			     packfile_uris.items[i].string);
+		strvec_push(&cmd.args, uri);
 		cmd.git_cmd = 1;
 		cmd.no_stdin = 1;
 		cmd.out = -1;
