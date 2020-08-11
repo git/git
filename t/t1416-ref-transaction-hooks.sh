@@ -7,6 +7,7 @@ test_description='reference transaction hooks'
 test_expect_success setup '
 	mkdir -p .git/hooks &&
 	test_commit PRE &&
+	PRE_OID=$(git rev-parse PRE) &&
 	test_commit POST &&
 	POST_OID=$(git rev-parse POST)
 '
@@ -120,10 +121,10 @@ test_expect_success 'interleaving hook calls succeed' '
 	EOF
 
 	cat >expect <<-EOF &&
-		hooks/update refs/tags/PRE 0000000000000000000000000000000000000000 63ac8e7bcdb882293465435909f54a96de17d4f7
+		hooks/update refs/tags/PRE $ZERO_OID $PRE_OID
 		hooks/reference-transaction prepared
 		hooks/reference-transaction committed
-		hooks/update refs/tags/POST 0000000000000000000000000000000000000000 99d53161c3a0a903b6561b9f6c0c665b3a476401
+		hooks/update refs/tags/POST $ZERO_OID $POST_OID
 		hooks/reference-transaction prepared
 		hooks/reference-transaction committed
 	EOF
