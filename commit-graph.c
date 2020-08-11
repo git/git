@@ -1789,12 +1789,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 
 	chunk_offset = 8 + (num_chunks + 1) * GRAPH_CHUNKLOOKUP_WIDTH;
 	for (i = 0; i <= num_chunks; i++) {
-		uint32_t chunk_write[3];
-
-		chunk_write[0] = htonl(chunks[i].id);
-		chunk_write[1] = htonl(chunk_offset >> 32);
-		chunk_write[2] = htonl(chunk_offset & 0xffffffff);
-		hashwrite(f, chunk_write, 12);
+		hashwrite_be32(f, chunks[i].id);
+		hashwrite_be64(f, chunk_offset);
 
 		chunk_offset += chunks[i].size;
 	}

@@ -775,8 +775,7 @@ static size_t write_midx_large_offsets(struct hashfile *f, uint32_t nr_large_off
 		if (!(offset >> 31))
 			continue;
 
-		hashwrite_be32(f, offset >> 32);
-		hashwrite_be32(f, offset & 0xffffffffUL);
+		hashwrite_be64(f, offset);
 		written += 2 * sizeof(uint32_t);
 
 		nr_large_offset--;
