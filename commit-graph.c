@@ -79,10 +79,18 @@ static void set_commit_pos(struct repository *r, const struct object_id *oid)
 	*commit_pos_at(&commit_pos, commit) = max_pos++;
 }
 
-static int commit_pos_cmp(const void *va, const void *vb)
+struct packed_commit_list {
+	struct commit **list;
+	int nr;
+	int alloc;
+};
+
+static int commit_pos_cmp(const void *va, const void *vb, void *ctx)
 {
-	const struct commit *a = *(const struct commit **)va;
-	const struct commit *b = *(const struct commit **)vb;
+	struct packed_commit_list *commits = ctx;
+
+	const struct commit *a = commits->list[*(int *)va];
+	const struct commit *b = commits->list[*(int *)vb];
 	return commit_pos_at(&commit_pos, a) -
 	       commit_pos_at(&commit_pos, b);
 }
@@ -139,10 +147,12 @@ static struct commit_graph_data *commit_graph_data_at(const struct commit *c)
 	return data;
 }
 
-static int commit_gen_cmp(const void *va, const void *vb)
+static int commit_gen_cmp(const void *va, const void *vb, void *ctx)
 {
-	const struct commit *a = *(const struct commit **)va;
-	const struct commit *b = *(const struct commit **)vb;
+	struct packed_commit_list *commits = ctx;
+
+	const struct commit *a = commits->list[*(int *)va];
+	const struct commit *b = commits->list[*(int *)vb];
 
 	uint32_t generation_a = commit_graph_generation(a);
 	uint32_t generation_b = commit_graph_generation(b);
@@ -922,11 +932,6 @@ struct tree *get_commit_tree_in_graph(struct repository *r, const struct commit 
 	return get_commit_tree_in_graph_one(r, r->objects->commit_graph, c);
 }
 
-struct packed_commit_list {
-	struct commit **list;
-	int nr;
-	int alloc;
-};
 
 struct packed_oid_list {
 	struct object_id *list;
@@ -1408,7 +1413,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 {
 	int i;
 	struct progress *progress = NULL;
-	struct commit **sorted_commits;
+	int *sorted_commits;
 
 	init_bloom_filters();
 
@@ -1418,16 +1423,16 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 			ctx->commits.nr);
 
 	ALLOC_ARRAY(sorted_commits, ctx->commits.nr);
-	COPY_ARRAY(sorted_commits, ctx->commits.list, ctx->commits.nr);
-
-	if (ctx->order_by_pack)
-		QSORT(sorted_commits, ctx->commits.nr, commit_pos_cmp);
-	else
-		QSORT(sorted_commits, ctx->commits.nr, commit_gen_cmp);
+	for (i = 0; i < ctx->commits.nr; i++)
+		sorted_commits[i] = i;
+	QSORT_S(sorted_commits, ctx->commits.nr,
+		ctx->order_by_pack ? commit_pos_cmp : commit_gen_cmp,
+		&ctx->commits);
 
 	for (i = 0; i < ctx->commits.nr; i++) {
 		int computed = 0;
-		struct commit *c = sorted_commits[i];
+		int pos = sorted_commits[i];
+		struct commit *c = ctx->commits.list[pos];
 		struct bloom_filter *filter = get_or_compute_bloom_filter(
 			ctx->r,
 			c,
