@@ -18,7 +18,7 @@
 #include "parse-options.h"
 #include "run-command.h"
 #include "sigchain.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "commit.h"
 #include "commit-graph.h"
 #include "packfile.h"
@@ -50,12 +50,12 @@ static const char *prune_worktrees_expire = "3.months.ago";
 static unsigned long big_pack_threshold;
 static unsigned long max_delta_cache_size = DEFAULT_DELTA_CACHE_SIZE;
 
-static struct argv_array pack_refs_cmd = ARGV_ARRAY_INIT;
-static struct argv_array reflog = ARGV_ARRAY_INIT;
-static struct argv_array repack = ARGV_ARRAY_INIT;
-static struct argv_array prune = ARGV_ARRAY_INIT;
-static struct argv_array prune_worktrees = ARGV_ARRAY_INIT;
-static struct argv_array rerere = ARGV_ARRAY_INIT;
+static struct strvec pack_refs_cmd = STRVEC_INIT;
+static struct strvec reflog = STRVEC_INIT;
+static struct strvec repack = STRVEC_INIT;
+static struct strvec prune = STRVEC_INIT;
+static struct strvec prune_worktrees = STRVEC_INIT;
+static struct strvec rerere = STRVEC_INIT;
 
 static struct tempfile *pidfile;
 static struct lock_file log_lock;
@@ -311,18 +311,18 @@ static uint64_t estimate_repack_memory(struct packed_git *pack)
 
 static int keep_one_pack(struct string_list_item *item, void *data)
 {
-	argv_array_pushf(&repack, "--keep-pack=%s", basename(item->string));
+	strvec_pushf(&repack, "--keep-pack=%s", basename(item->string));
 	return 0;
 }
 
 static void add_repack_all_option(struct string_list *keep_pack)
 {
 	if (prune_expire && !strcmp(prune_expire, "now"))
-		argv_array_push(&repack, "-a");
+		strvec_push(&repack, "-a");
 	else {
-		argv_array_push(&repack, "-A");
+		strvec_push(&repack, "-A");
 		if (prune_expire)
-			argv_array_pushf(&repack, "--unpack-unreachable=%s", prune_expire);
+			strvec_pushf(&repack, "--unpack-unreachable=%s", prune_expire);
 	}
 
 	if (keep_pack)
@@ -331,7 +331,7 @@ static void add_repack_all_option(struct string_list *keep_pack)
 
 static void add_repack_incremental_option(void)
 {
-	argv_array_push(&repack, "--no-write-bitmap-index");
+	strvec_push(&repack, "--no-write-bitmap-index");
 }
 
 static int need_to_gc(void)
@@ -514,11 +514,11 @@ static void gc_before_repack(void)
 	if (done++)
 		return;
 
-	if (pack_refs && run_command_v_opt(pack_refs_cmd.argv, RUN_GIT_CMD))
-		die(FAILED_RUN, pack_refs_cmd.argv[0]);
+	if (pack_refs && run_command_v_opt(pack_refs_cmd.v, RUN_GIT_CMD))
+		die(FAILED_RUN, pack_refs_cmd.v[0]);
 
-	if (prune_reflogs && run_command_v_opt(reflog.argv, RUN_GIT_CMD))
-		die(FAILED_RUN, reflog.argv[0]);
+	if (prune_reflogs && run_command_v_opt(reflog.v, RUN_GIT_CMD))
+		die(FAILED_RUN, reflog.v[0]);
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
@@ -552,12 +552,12 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_gc_usage, builtin_gc_options);
 
-	argv_array_pushl(&pack_refs_cmd, "pack-refs", "--all", "--prune", NULL);
-	argv_array_pushl(&reflog, "reflog", "expire", "--all", NULL);
-	argv_array_pushl(&repack, "repack", "-d", "-l", NULL);
-	argv_array_pushl(&prune, "prune", "--expire", NULL);
-	argv_array_pushl(&prune_worktrees, "worktree", "prune", "--expire", NULL);
-	argv_array_pushl(&rerere, "rerere", "gc", NULL);
+	strvec_pushl(&pack_refs_cmd, "pack-refs", "--all", "--prune", NULL);
+	strvec_pushl(&reflog, "reflog", "expire", "--all", NULL);
+	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
+	strvec_pushl(&prune, "prune", "--expire", NULL);
+	strvec_pushl(&prune_worktrees, "worktree", "prune", "--expire", NULL);
+	strvec_pushl(&rerere, "rerere", "gc", NULL);
 
 	/* default expiry time, overwritten in gc_config */
 	gc_config();
@@ -576,14 +576,14 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		die(_("failed to parse prune expiry value %s"), prune_expire);
 
 	if (aggressive) {
-		argv_array_push(&repack, "-f");
+		strvec_push(&repack, "-f");
 		if (aggressive_depth > 0)
-			argv_array_pushf(&repack, "--depth=%d", aggressive_depth);
+			strvec_pushf(&repack, "--depth=%d", aggressive_depth);
 		if (aggressive_window > 0)
-			argv_array_pushf(&repack, "--window=%d", aggressive_window);
+			strvec_pushf(&repack, "--window=%d", aggressive_window);
 	}
 	if (quiet)
-		argv_array_push(&repack, "-q");
+		strvec_push(&repack, "-q");
 
 	if (auto_gc) {
 		/*
@@ -653,29 +653,29 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (!repository_format_precious_objects) {
 		close_object_store(the_repository->objects);
-		if (run_command_v_opt(repack.argv, RUN_GIT_CMD))
-			die(FAILED_RUN, repack.argv[0]);
+		if (run_command_v_opt(repack.v, RUN_GIT_CMD))
+			die(FAILED_RUN, repack.v[0]);
 
 		if (prune_expire) {
-			argv_array_push(&prune, prune_expire);
+			strvec_push(&prune, prune_expire);
 			if (quiet)
-				argv_array_push(&prune, "--no-progress");
+				strvec_push(&prune, "--no-progress");
 			if (has_promisor_remote())
-				argv_array_push(&prune,
-						"--exclude-promisor-objects");
-			if (run_command_v_opt(prune.argv, RUN_GIT_CMD))
-				die(FAILED_RUN, prune.argv[0]);
+				strvec_push(&prune,
+					    "--exclude-promisor-objects");
+			if (run_command_v_opt(prune.v, RUN_GIT_CMD))
+				die(FAILED_RUN, prune.v[0]);
 		}
 	}
 
 	if (prune_worktrees_expire) {
-		argv_array_push(&prune_worktrees, prune_worktrees_expire);
-		if (run_command_v_opt(prune_worktrees.argv, RUN_GIT_CMD))
-			die(FAILED_RUN, prune_worktrees.argv[0]);
+		strvec_push(&prune_worktrees, prune_worktrees_expire);
+		if (run_command_v_opt(prune_worktrees.v, RUN_GIT_CMD))
+			die(FAILED_RUN, prune_worktrees.v[0]);
 	}
 
-	if (run_command_v_opt(rerere.argv, RUN_GIT_CMD))
-		die(FAILED_RUN, rerere.argv[0]);
+	if (run_command_v_opt(rerere.v, RUN_GIT_CMD))
+		die(FAILED_RUN, rerere.v[0]);
 
 	report_garbage = report_pack_garbage;
 	reprepare_packed_git(the_repository);

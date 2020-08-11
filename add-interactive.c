@@ -935,18 +935,18 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 	opts->prompt = N_("Patch update");
 	count = list_and_choose(s, files, opts);
 	if (count > 0) {
-		struct argv_array args = ARGV_ARRAY_INIT;
+		struct strvec args = STRVEC_INIT;
 		struct pathspec ps_selected = { 0 };
 
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
-				argv_array_push(&args,
-						files->items.items[i].string);
+				strvec_push(&args,
+					    files->items.items[i].string);
 		parse_pathspec(&ps_selected,
 			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
-			       PATHSPEC_LITERAL_PATH, "", args.argv);
+			       PATHSPEC_LITERAL_PATH, "", args.v);
 		res = run_add_p(s->r, ADD_P_ADD, NULL, &ps_selected);
-		argv_array_clear(&args);
+		strvec_clear(&args);
 		clear_pathspec(&ps_selected);
 	}
 
@@ -976,18 +976,18 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	count = list_and_choose(s, files, opts);
 	opts->flags = 0;
 	if (count > 0) {
-		struct argv_array args = ARGV_ARRAY_INIT;
+		struct strvec args = STRVEC_INIT;
 
-		argv_array_pushl(&args, "git", "diff", "-p", "--cached",
-				 oid_to_hex(!is_initial ? &oid :
-					    s->r->hash_algo->empty_tree),
-				 "--", NULL);
+		strvec_pushl(&args, "git", "diff", "-p", "--cached",
+			     oid_to_hex(!is_initial ? &oid :
+					s->r->hash_algo->empty_tree),
+			     "--", NULL);
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
-				argv_array_push(&args,
-						files->items.items[i].string);
-		res = run_command_v_opt(args.argv, 0);
-		argv_array_clear(&args);
+				strvec_push(&args,
+					    files->items.items[i].string);
+		res = run_command_v_opt(args.v, 0);
+		strvec_clear(&args);
 	}
 
 	putchar('\n');

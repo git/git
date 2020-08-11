@@ -12,7 +12,7 @@
 #include "git-compat-util.h"
 #include "cache.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "strbuf.h"
 #include "parse-options.h"
 #include "string-list.h"
@@ -31,7 +31,7 @@ static int parallel_next(struct child_process *cp,
 	if (number_callbacks >= 4)
 		return 0;
 
-	argv_array_pushv(&cp->args, d->argv);
+	strvec_pushv(&cp->args, d->argv);
 	strbuf_addstr(err, "preloaded output of a child\n");
 	number_callbacks++;
 	return 1;
@@ -72,19 +72,19 @@ static int next_test(struct child_process *cp, struct strbuf *err, void *cb,
 		return 0;
 
 	test = suite->tests.items[suite->next++].string;
-	argv_array_pushl(&cp->args, "sh", test, NULL);
+	strvec_pushl(&cp->args, "sh", test, NULL);
 	if (suite->quiet)
-		argv_array_push(&cp->args, "--quiet");
+		strvec_push(&cp->args, "--quiet");
 	if (suite->immediate)
-		argv_array_push(&cp->args, "-i");
+		strvec_push(&cp->args, "-i");
 	if (suite->verbose)
-		argv_array_push(&cp->args, "-v");
+		strvec_push(&cp->args, "-v");
 	if (suite->verbose_log)
-		argv_array_push(&cp->args, "-V");
+		strvec_push(&cp->args, "-V");
 	if (suite->trace)
-		argv_array_push(&cp->args, "-x");
+		strvec_push(&cp->args, "-x");
 	if (suite->write_junit_xml)
-		argv_array_push(&cp->args, "--write-junit-xml");
+		strvec_push(&cp->args, "--write-junit-xml");
 
 	strbuf_addf(err, "Output of '%s':\n", test);
 	*task_cb = (void *)test;
@@ -220,7 +220,7 @@ static int quote_stress_test(int argc, const char **argv)
 	char special[] = ".?*\\^_\"'`{}()[]<>@~&+:;$%"; // \t\r\n\a";
 	int i, j, k, trials = 100, skip = 0, msys2 = 0;
 	struct strbuf out = STRBUF_INIT;
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	struct option options[] = {
 		OPT_INTEGER('n', "trials", &trials, "Number of trials"),
 		OPT_INTEGER('s', "skip", &skip, "Skip <n> trials"),
@@ -241,20 +241,20 @@ static int quote_stress_test(int argc, const char **argv)
 		size_t arg_count, arg_offset;
 		int ret = 0;
 
-		argv_array_clear(&args);
+		strvec_clear(&args);
 		if (msys2)
-			argv_array_pushl(&args, "sh", "-c",
-					 "printf %s\\\\0 \"$@\"", "skip", NULL);
+			strvec_pushl(&args, "sh", "-c",
+				     "printf %s\\\\0 \"$@\"", "skip", NULL);
 		else
-			argv_array_pushl(&args, "test-tool", "run-command",
-					 "quote-echo", NULL);
-		arg_offset = args.argc;
+			strvec_pushl(&args, "test-tool", "run-command",
+				     "quote-echo", NULL);
+		arg_offset = args.nr;
 
 		if (argc > 0) {
 			trials = 1;
 			arg_count = argc;
 			for (j = 0; j < arg_count; j++)
-				argv_array_push(&args, argv[j]);
+				strvec_push(&args, argv[j]);
 		} else {
 			arg_count = 1 + (my_random() % 5);
 			for (j = 0; j < arg_count; j++) {
@@ -268,20 +268,20 @@ static int quote_stress_test(int argc, const char **argv)
 						ARRAY_SIZE(special)];
 				buf[arg_len] = '\0';
 
-				argv_array_push(&args, buf);
+				strvec_push(&args, buf);
 			}
 		}
 
 		if (i < skip)
 			continue;
 
-		cp.argv = args.argv;
+		cp.argv = args.v;
 		strbuf_reset(&out);
 		if (pipe_command(&cp, NULL, 0, &out, 0, NULL, 0) < 0)
 			return error("Failed to spawn child process");
 
 		for (j = 0, k = 0; j < arg_count; j++) {
-			const char *arg = args.argv[j + arg_offset];
+			const char *arg = args.v[j + arg_offset];
 
 			if (strcmp(arg, out.buf + k))
 				ret = error("incorrectly quoted arg: '%s', "
@@ -298,10 +298,10 @@ static int quote_stress_test(int argc, const char **argv)
 			fprintf(stderr, "Trial #%d failed. Arguments:\n", i);
 			for (j = 0; j < arg_count; j++)
 				fprintf(stderr, "arg #%d: '%s'\n",
-					(int)j, args.argv[j + arg_offset]);
+					(int)j, args.v[j + arg_offset]);
 
 			strbuf_release(&out);
-			argv_array_clear(&args);
+			strvec_clear(&args);
 
 			return ret;
 		}
@@ -311,7 +311,7 @@ static int quote_stress_test(int argc, const char **argv)
 	}
 
 	strbuf_release(&out);
-	argv_array_clear(&args);
+	strvec_clear(&args);
 
 	return 0;
 }
@@ -338,8 +338,8 @@ static int inherit_handle(const char *argv0)
 	xsnprintf(path, sizeof(path), "out-XXXXXX");
 	tmp = xmkstemp(path);
 
-	argv_array_pushl(&cp.args,
-			 "test-tool", argv0, "inherited-handle-child", NULL);
+	strvec_pushl(&cp.args,
+		     "test-tool", argv0, "inherited-handle-child", NULL);
 	cp.in = -1;
 	cp.no_stdout = cp.no_stderr = 1;
 	if (start_command(&cp) < 0)
@@ -391,7 +391,7 @@ int cmd__run_command(int argc, const char **argv)
 	while (!strcmp(argv[1], "env")) {
 		if (!argv[2])
 			die("env specifier without a value");
-		argv_array_push(&proc.env_array, argv[2]);
+		strvec_push(&proc.env_array, argv[2]);
 		argv += 2;
 		argc -= 2;
 	}

@@ -9,7 +9,7 @@
 #include "string-list.h"
 #include "thread-utils.h"
 #include "sigchain.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "refs.h"
 #include "refspec.h"
 #include "transport-internal.h"
@@ -130,17 +130,17 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->in = -1;
 	helper->out = -1;
 	helper->err = 0;
-	argv_array_pushf(&helper->args, "remote-%s", data->name);
-	argv_array_push(&helper->args, transport->remote->name);
-	argv_array_push(&helper->args, remove_ext_force(transport->url));
+	strvec_pushf(&helper->args, "remote-%s", data->name);
+	strvec_push(&helper->args, transport->remote->name);
+	strvec_push(&helper->args, remove_ext_force(transport->url));
 	helper->git_cmd = 1;
 	helper->silent_exec_failure = 1;
 
 	if (have_git_dir())
-		argv_array_pushf(&helper->env_array, "%s=%s",
-				 GIT_DIR_ENVIRONMENT, get_git_dir());
+		strvec_pushf(&helper->env_array, "%s=%s",
+			     GIT_DIR_ENVIRONMENT, get_git_dir());
 
-	helper->trace2_child_class = helper->args.argv[0]; /* "remote-<name>" */
+	helper->trace2_child_class = helper->args.v[0]; /* "remote-<name>" */
 
 	code = start_command(helper);
 	if (code < 0 && errno == ENOENT)
@@ -441,13 +441,13 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 	int cat_blob_fd, code;
 	child_process_init(fastimport);
 	fastimport->in = xdup(helper->out);
-	argv_array_push(&fastimport->args, "fast-import");
-	argv_array_push(&fastimport->args, "--allow-unsafe-features");
-	argv_array_push(&fastimport->args, debug ? "--stats" : "--quiet");
+	strvec_push(&fastimport->args, "fast-import");
+	strvec_push(&fastimport->args, "--allow-unsafe-features");
+	strvec_push(&fastimport->args, debug ? "--stats" : "--quiet");
 
 	if (data->bidi_import) {
 		cat_blob_fd = xdup(helper->in);
-		argv_array_pushf(&fastimport->args, "--cat-blob-fd=%d", cat_blob_fd);
+		strvec_pushf(&fastimport->args, "--cat-blob-fd=%d", cat_blob_fd);
 	}
 	fastimport->git_cmd = 1;
 
@@ -468,19 +468,19 @@ static int get_exporter(struct transport *transport,
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
-	argv_array_push(&fastexport->args, "fast-export");
-	argv_array_push(&fastexport->args, "--use-done-feature");
-	argv_array_push(&fastexport->args, data->signed_tags ?
+	strvec_push(&fastexport->args, "fast-export");
+	strvec_push(&fastexport->args, "--use-done-feature");
+	strvec_push(&fastexport->args, data->signed_tags ?
 		"--signed-tags=verbatim" : "--signed-tags=warn-strip");
 	if (data->export_marks)
-		argv_array_pushf(&fastexport->args, "--export-marks=%s.tmp", data->export_marks);
+		strvec_pushf(&fastexport->args, "--export-marks=%s.tmp", data->export_marks);
 	if (data->import_marks)
-		argv_array_pushf(&fastexport->args, "--import-marks=%s", data->import_marks);
+		strvec_pushf(&fastexport->args, "--import-marks=%s", data->import_marks);
 
 	for (i = 0; i < revlist_args->nr; i++)
-		argv_array_push(&fastexport->args, revlist_args->items[i].string);
+		strvec_push(&fastexport->args, revlist_args->items[i].string);
 
-	argv_array_push(&fastexport->args, "--");
+	strvec_push(&fastexport->args, "--");
 
 	fastexport->git_cmd = 1;
 	return start_command(fastexport);
@@ -1107,7 +1107,7 @@ static int has_attribute(const char *attrs, const char *attr)
 }
 
 static struct ref *get_refs_list(struct transport *transport, int for_push,
-				 const struct argv_array *ref_prefixes)
+				 const struct strvec *ref_prefixes)
 {
 	get_helper(transport);
 

@@ -11,7 +11,7 @@
 #include "log-tree.h"
 #include "bisect.h"
 #include "oid-array.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "commit-slab.h"
 #include "commit-reach.h"
 #include "object-store.h"
@@ -456,7 +456,7 @@ static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
 static GIT_PATH_FUNC(git_path_head_name, "head-name")
 
-static void read_bisect_paths(struct argv_array *array)
+static void read_bisect_paths(struct strvec *array)
 {
 	struct strbuf str = STRBUF_INIT;
 	const char *filename = git_path_bisect_names();
@@ -464,7 +464,7 @@ static void read_bisect_paths(struct argv_array *array)
 
 	while (strbuf_getline_lf(&str, fp) != EOF) {
 		strbuf_trim(&str);
-		if (sq_dequote_to_argv_array(str.buf, array))
+		if (sq_dequote_to_strvec(str.buf, array))
 			die(_("Badly quoted content in file '%s': %s"),
 			    filename, str.buf);
 	}
@@ -632,7 +632,7 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 			     const char *bad_format, const char *good_format,
 			     int read_paths)
 {
-	struct argv_array rev_argv = ARGV_ARRAY_INIT;
+	struct strvec rev_argv = STRVEC_INIT;
 	int i;
 
 	repo_init_revisions(r, revs, prefix);
@@ -640,16 +640,16 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 	revs->commit_format = CMIT_FMT_UNSPECIFIED;
 
 	/* rev_argv.argv[0] will be ignored by setup_revisions */
-	argv_array_push(&rev_argv, "bisect_rev_setup");
-	argv_array_pushf(&rev_argv, bad_format, oid_to_hex(current_bad_oid));
+	strvec_push(&rev_argv, "bisect_rev_setup");
+	strvec_pushf(&rev_argv, bad_format, oid_to_hex(current_bad_oid));
 	for (i = 0; i < good_revs.nr; i++)
-		argv_array_pushf(&rev_argv, good_format,
-				 oid_to_hex(good_revs.oid + i));
-	argv_array_push(&rev_argv, "--");
+		strvec_pushf(&rev_argv, good_format,
+			     oid_to_hex(good_revs.oid + i));
+	strvec_push(&rev_argv, "--");
 	if (read_paths)
 		read_bisect_paths(&rev_argv);
 
-	setup_revisions(rev_argv.argc, rev_argv.argv, revs, NULL);
+	setup_revisions(rev_argv.nr, rev_argv.v, revs, NULL);
 	/* XXX leak rev_argv, as "revs" may still be pointing to it */
 }
 

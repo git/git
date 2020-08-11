@@ -27,7 +27,7 @@
 #include "delta-islands.h"
 #include "reachable.h"
 #include "oid-array.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "list.h"
 #include "packfile.h"
 #include "object-store.h"
@@ -3439,7 +3439,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int use_internal_rev_list = 0;
 	int shallow = 0;
 	int all_progress_implied = 0;
-	struct argv_array rp = ARGV_ARRAY_INIT;
+	struct strvec rp = STRVEC_INIT;
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
 	int rev_list_index = 0;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
@@ -3575,36 +3575,36 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		cache_max_small_delta_size = (1U << OE_Z_DELTA_BITS) - 1;
 	}
 
-	argv_array_push(&rp, "pack-objects");
+	strvec_push(&rp, "pack-objects");
 	if (thin) {
 		use_internal_rev_list = 1;
-		argv_array_push(&rp, shallow
+		strvec_push(&rp, shallow
 				? "--objects-edge-aggressive"
 				: "--objects-edge");
 	} else
-		argv_array_push(&rp, "--objects");
+		strvec_push(&rp, "--objects");
 
 	if (rev_list_all) {
 		use_internal_rev_list = 1;
-		argv_array_push(&rp, "--all");
+		strvec_push(&rp, "--all");
 	}
 	if (rev_list_reflog) {
 		use_internal_rev_list = 1;
-		argv_array_push(&rp, "--reflog");
+		strvec_push(&rp, "--reflog");
 	}
 	if (rev_list_index) {
 		use_internal_rev_list = 1;
-		argv_array_push(&rp, "--indexed-objects");
+		strvec_push(&rp, "--indexed-objects");
 	}
 	if (rev_list_unpacked) {
 		use_internal_rev_list = 1;
-		argv_array_push(&rp, "--unpacked");
+		strvec_push(&rp, "--unpacked");
 	}
 
 	if (exclude_promisor_objects) {
 		use_internal_rev_list = 1;
 		fetch_if_missing = 0;
-		argv_array_push(&rp, "--exclude-promisor-objects");
+		strvec_push(&rp, "--exclude-promisor-objects");
 	}
 	if (unpack_unreachable || keep_unreachable || pack_loose_unreachable)
 		use_internal_rev_list = 1;
@@ -3666,7 +3666,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		write_bitmap_index = 0;
 
 	if (use_delta_islands)
-		argv_array_push(&rp, "--topo-order");
+		strvec_push(&rp, "--topo-order");
 
 	if (progress && all_progress_implied)
 		progress = 2;
@@ -3704,8 +3704,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
-		get_object_list(rp.argc, rp.argv);
-		argv_array_clear(&rp);
+		get_object_list(rp.nr, rp.v);
+		strvec_clear(&rp);
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)

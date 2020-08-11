@@ -21,8 +21,8 @@ void open_in_gdb(void)
 	static struct child_process cp = CHILD_PROCESS_INIT;
 	extern char *_pgmptr;
 
-	argv_array_pushl(&cp.args, "mintty", "gdb", NULL);
-	argv_array_pushf(&cp.args, "--pid=%d", getpid());
+	strvec_pushl(&cp.args, "mintty", "gdb", NULL);
+	strvec_pushf(&cp.args, "--pid=%d", getpid());
 	cp.clean_on_exit = 1;
 	if (start_command(&cp) < 0)
 		die_errno("Could not start gdb");
@@ -1565,7 +1565,7 @@ static char *is_busybox_applet(const char *cmd)
 		struct strbuf buf = STRBUF_INIT;
 		char *p;
 
-		argv_array_pushl(&cp.args, busybox_path, "--help", NULL);
+		strvec_pushl(&cp.args, busybox_path, "--help", NULL);
 
 		if (capture_command(&cp, &buf, 2048)) {
 			string_list_append(&applets, "");
