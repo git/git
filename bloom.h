@@ -33,7 +33,7 @@ struct bloom_filter_settings {
 	 * The maximum number of changed paths per commit
 	 * before declaring a Bloom filter to be too-large.
 	 *
-	 * Not written to the commit-graph file.
+	 * Written to the 'BFXL' chunk (instead of 'BDAT').
 	 */
 	uint32_t max_changed_paths;
 };

@@ -41,8 +41,9 @@ void git_test_write_commit_graph_or_die(void)
 #define GRAPH_CHUNKID_EXTRAEDGES 0x45444745 /* "EDGE" */
 #define GRAPH_CHUNKID_BLOOMINDEXES 0x42494458 /* "BIDX" */
 #define GRAPH_CHUNKID_BLOOMDATA 0x42444154 /* "BDAT" */
+#define GRAPH_CHUNKID_BLOOMLARGE 0x4246584c /* "BFXL" */
 #define GRAPH_CHUNKID_BASE 0x42415345 /* "BASE" */
-#define MAX_NUM_CHUNKS 7
+#define MAX_NUM_CHUNKS 8
 
 #define GRAPH_DATA_WIDTH (the_hash_algo->rawsz + 16)
 
@@ -429,6 +430,24 @@ struct commit_graph *parse_commit_graph(struct repository *r,
 				graph->bloom_filter_settings->bits_per_entry = get_be32(data + chunk_offset + 8);
 			}
 			break;
+
+		case GRAPH_CHUNKID_BLOOMLARGE:
+			if (graph->chunk_bloom_large_filters)
+				chunk_repeated = 1;
+			else if (r->settings.commit_graph_read_changed_paths) {
+				size_t alloc = get_be64(chunk_lookup + 4) - chunk_offset - sizeof(uint32_t);
+				graph->chunk_bloom_large_filters = data + chunk_offset + sizeof(uint32_t);
+				graph->bloom_filter_settings->max_changed_paths = get_be32(data + chunk_offset);
+				if (alloc) {
+					size_t j;
+					graph->bloom_large = bitmap_word_alloc(alloc);
+
+					for (j = 0; j < graph->bloom_large->word_alloc; j++)
+						graph->bloom_large->words[j] = get_be64(
+							graph->chunk_bloom_large_filters + j * sizeof(eword_t));
+				}
+			}
+			break;
 		}
 
 		if (chunk_repeated) {
@@ -443,7 +462,9 @@ struct commit_graph *parse_commit_graph(struct repository *r,
 		/* We need both the bloom chunks to exist together. Else ignore the data */
 		graph->chunk_bloom_indexes = NULL;
 		graph->chunk_bloom_data = NULL;
+		graph->chunk_bloom_large_filters = NULL;
 		FREE_AND_NULL(graph->bloom_filter_settings);
+		bitmap_free(graph->bloom_large);
 	}
 
 	hashcpy(graph->oid.hash, graph->data + graph->data_len - graph->hash_len);
@@ -932,6 +953,20 @@ struct tree *get_commit_tree_in_graph(struct repository *r, const struct commit 
 	return get_commit_tree_in_graph_one(r, r->objects->commit_graph, c);
 }
 
+static int get_bloom_filter_large_in_graph(struct commit_graph *g,
+					   const struct commit *c)
+{
+	uint32_t graph_pos = commit_graph_position(c);
+	if (graph_pos == COMMIT_NOT_FROM_GRAPH)
+		return 0;
+
+	while (g && graph_pos < g->num_commits_in_base)
+		g = g->base_graph;
+
+	if (!(g && g->bloom_large))
+		return 0;
+	return bitmap_get(g->bloom_large, graph_pos - g->num_commits_in_base);
+}
 
 struct packed_oid_list {
 	struct object_id *list;
@@ -970,8 +1005,10 @@ struct write_commit_graph_context {
 	size_t total_bloom_filter_data_size;
 	const struct bloom_filter_settings *bloom_settings;
 
+	int count_bloom_filter_known_large;
 	int count_bloom_filter_found_large;
 	int count_bloom_filter_computed;
+	struct bitmap *bloom_large;
 };
 
 static int write_graph_chunk_fanout(struct hashfile *f,
@@ -1235,6 +1272,23 @@ static int write_graph_chunk_bloom_data(struct hashfile *f,
 	return 0;
 }
 
+static int write_graph_chunk_bloom_large(struct hashfile *f,
+					 struct write_commit_graph_context *ctx)
+{
+	size_t i, alloc = ctx->commits.nr / BITS_IN_EWORD;
+	if (ctx->commits.nr % BITS_IN_EWORD)
+		alloc++;
+	if (alloc > ctx->bloom_large->word_alloc)
+		BUG("write_graph_chunk_bloom_large: bitmap not large enough");
+
+	trace2_region_enter("commit-graph", "bloom_large", ctx->r);
+	hashwrite_be32(f, ctx->bloom_settings->max_changed_paths);
+	for (i = 0; i < ctx->bloom_large->word_alloc; i++)
+		hashwrite_be64(f, ctx->bloom_large->words[i]);
+	trace2_region_leave("commit-graph", "bloom_large", ctx->r);
+	return 0;
+}
+
 static int oid_compare(const void *_a, const void *_b)
 {
 	const struct object_id *a = (const struct object_id *)_a;
@@ -1398,6 +1452,8 @@ static void trace2_bloom_filter_write_statistics(struct write_commit_graph_conte
 	struct json_writer jw = JSON_WRITER_INIT;
 
 	jw_object_begin(&jw, 0);
+	jw_object_intmax(&jw, "filter_known_large",
+			 ctx->count_bloom_filter_known_large);
 	jw_object_intmax(&jw, "filter_found_large",
 			 ctx->count_bloom_filter_found_large);
 	jw_object_intmax(&jw, "filter_computed",
@@ -1416,6 +1472,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 	int *sorted_commits;
 
 	init_bloom_filters();
+	ctx->bloom_large = bitmap_word_alloc(ctx->commits.nr / BITS_IN_EWORD + 1);
 
 	if (ctx->report_progress)
 		progress = start_delayed_progress(
@@ -1430,21 +1487,28 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 		&ctx->commits);
 
 	for (i = 0; i < ctx->commits.nr; i++) {
-		int computed = 0;
 		int pos = sorted_commits[i];
 		struct commit *c = ctx->commits.list[pos];
-		struct bloom_filter *filter = get_or_compute_bloom_filter(
-			ctx->r,
-			c,
-			1,
-			ctx->bloom_settings,
-			&computed);
-		if (computed) {
-			ctx->count_bloom_filter_computed++;
-			if (filter && !filter->len)
-				ctx->count_bloom_filter_found_large++;
+		if (get_bloom_filter_large_in_graph(ctx->r->objects->commit_graph, c)) {
+			bitmap_set(ctx->bloom_large, pos);
+			ctx->count_bloom_filter_known_large++;
+		} else {
+			int computed = 0;
+			struct bloom_filter *filter = get_or_compute_bloom_filter(
+				ctx->r,
+				c,
+				1,
+				ctx->bloom_settings,
+				&computed);
+			if (computed) {
+				ctx->count_bloom_filter_computed++;
+				if (filter && !filter->len) {
+					bitmap_set(ctx->bloom_large, pos);
+					ctx->count_bloom_filter_found_large++;
+				}
+			}
+			ctx->total_bloom_filter_data_size += sizeof(unsigned char) * filter->len;
 		}
-		ctx->total_bloom_filter_data_size += sizeof(unsigned char) * filter->len;
 		display_progress(progress, i + 1);
 	}
 
@@ -1763,6 +1827,11 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		chunks[num_chunks].size = sizeof(uint32_t) * 3
 					  + ctx->total_bloom_filter_data_size;
 		chunks[num_chunks].write_fn = write_graph_chunk_bloom_data;
+		num_chunks++;
+		chunks[num_chunks].id = GRAPH_CHUNKID_BLOOMLARGE;
+		chunks[num_chunks].size = sizeof(eword_t) * ctx->bloom_large->word_alloc
+					+ sizeof(uint32_t);
+		chunks[num_chunks].write_fn = write_graph_chunk_bloom_large;
 		num_chunks++;
 	}
 	if (ctx->num_commit_graphs_after > 1) {
@@ -2503,6 +2572,7 @@ void free_commit_graph(struct commit_graph *g)
 	}
 	free(g->filename);
 	free(g->bloom_filter_settings);
+	bitmap_free(g->bloom_large);
 	free(g);
 }
 

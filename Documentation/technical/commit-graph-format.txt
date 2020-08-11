@@ -123,6 +123,18 @@ CHUNK DATA:
       of length zero.
     * The BDAT chunk is present if and only if BIDX is present.
 
+  Large Bloom Filters (ID: {'B', 'F', 'X', 'L'}) [Optional]
+    * It starts with a 32-bit unsigned integer specifying the maximum number of
+      changed-paths that can be stored in a single Bloom filter.
+    * It then contains a list of 64-bit words (the length of this list is
+      determined by the width of the chunk) which is a bitmap. The 'i'th bit is
+      set exactly when the 'i'th commit in the graph has a changed-path Bloom
+      filter with zero entries (either because the commit is empty, or because
+      it contains more than 512 changed paths).
+    * The BFXL chunk is present only when the BIDX and BDAT chunks are
+      also present.
+
+
   Base Graphs List (ID: {'B', 'A', 'S', 'E'}) [Optional]
       This list of H-byte hashes describe a set of B commit-graph files that
       form a commit-graph chain. The graph position for the ith commit in this
