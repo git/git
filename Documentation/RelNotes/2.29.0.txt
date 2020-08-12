@@ -15,6 +15,10 @@ UI, Workflows & Features
    of the title of default merge message with merge.suppressDest
    configuration.
 
+ * The component to respond to "git fetch" request is made more
+   configurable to selectively allow or reject object filtering
+   specification used for partial cloning.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -47,6 +51,10 @@ Performance, Internal Implementation, Development Support etc.
    "vector" (NULL-terminated array) of strings, and has seen adoption
    to a certain degree.  It has been renamed to "strvec" to reduce the
    barrier to adoption.
+
+ * The final leg of SHA-256 transition.
+
+ * CMake support to build with MSVC for Windows bypassing the Makefile.
 
 
 Fixes since v2.28
@@ -90,6 +98,9 @@ Fixes since v2.28
  * All "mergy" operations that internally use the merge-recursive
    machinery should honor the merge.renormalize configuration, but
    many of them didn't.
+
+ * Doc cleanup around "worktree".
+   (merge dc9c144be5 es/worktree-doc-cleanups later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
