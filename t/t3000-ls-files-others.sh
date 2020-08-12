@@ -212,4 +212,20 @@ test_expect_success 'ls-files -o --directory to get immediate paths under one di
 	)
 '
 
+test_expect_success 'ls-files -o avoids listing untracked non-matching gitdir' '
+	test_when_finished "rm -rf nested/untracked/deep/empty" &&
+	(
+		cd nested &&
+
+		git init untracked/deep/empty &&
+		git ls-files --others "untracked/*.c" >actual &&
+
+		cat <<-EOF >expect &&
+		untracked/deep/foo.c
+		EOF
+
+		test_cmp expect actual
+	)
+'
+
 test_done
