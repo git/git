@@ -152,7 +152,7 @@ test_expect_success 'ls-files -o --directory with mix dir/file pathspecs' '
 	)
 '
 
-test_expect_success 'ls-files --o --directory with glob filetype match' '
+test_expect_success 'ls-files -o --directory with glob filetype match' '
 	(
 		cd nested &&
 
@@ -168,7 +168,7 @@ test_expect_success 'ls-files --o --directory with glob filetype match' '
 	)
 '
 
-test_expect_success 'ls-files --o --directory with mix of tracked states' '
+test_expect_success 'ls-files -o --directory with mix of tracked states' '
 	(
 		cd nested &&
 
@@ -184,7 +184,7 @@ test_expect_success 'ls-files --o --directory with mix of tracked states' '
 	)
 '
 
-test_expect_success 'ls-files --o --directory with glob filetype match only' '
+test_expect_success 'ls-files -o --directory with glob filetype match only' '
 	(
 		cd nested &&
 
@@ -198,7 +198,7 @@ test_expect_success 'ls-files --o --directory with glob filetype match only' '
 	)
 '
 
-test_expect_success 'ls-files --o --directory to get immediate paths under one dir only' '
+test_expect_success 'ls-files -o --directory to get immediate paths under one dir only' '
 	(
 		cd nested &&
 
