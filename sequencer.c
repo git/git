@@ -355,7 +355,7 @@ static int get_message(struct commit *commit, struct commit_message *out)
 	subject_len = find_commit_subject(out->message, &subject);
 
 	out->subject = xmemdupz(subject, subject_len);
-	out->label = xstrfmt("%s... %s", abbrev, out->subject);
+	out->label = xstrfmt("%s (%s)", abbrev, out->subject);
 	out->parent_label = xstrfmt("parent of %s", out->label);
 
 	return 0;
