@@ -22,14 +22,13 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		    struct check_connected_options *opt)
 {
 	struct child_process rev_list = CHILD_PROCESS_INIT;
+	FILE *rev_list_in;
 	struct check_connected_options defaults = CHECK_CONNECTED_INIT;
-	char commit[GIT_MAX_HEXSZ + 1];
 	struct object_id oid;
 	int err = 0;
 	struct packed_git *new_pack = NULL;
 	struct transport *transport;
 	size_t base_len;
-	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (!opt)
 		opt = &defaults;
@@ -122,7 +121,8 @@ no_promisor_pack_found:
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	commit[hexsz] = '\n';
+	rev_list_in = xfdopen(rev_list.in, "w");
+
 	do {
 		/*
 		 * If index-pack already checked that:
@@ -135,16 +135,17 @@ no_promisor_pack_found:
 		if (new_pack && find_pack_entry_one(oid.hash, new_pack))
 			continue;
 
-		memcpy(commit, oid_to_hex(&oid), hexsz);
-		if (write_in_full(rev_list.in, commit, hexsz + 1) < 0) {
-			if (errno != EPIPE && errno != EINVAL)
-				error_errno(_("failed write to rev-list"));
-			err = -1;
+		if (fprintf(rev_list_in, "%s\n", oid_to_hex(&oid)) < 0)
 			break;
-		}
 	} while (!fn(cb_data, &oid));
 
-	if (close(rev_list.in))
+	if (ferror(rev_list_in) || fflush(rev_list_in)) {
+		if (errno != EPIPE && errno != EINVAL)
+			error_errno(_("failed write to rev-list"));
+		err = -1;
+	}
+
+	if (fclose(rev_list_in))
 		err = error_errno(_("failed to close rev-list's stdin"));
 
 	sigchain_pop(SIGPIPE);
