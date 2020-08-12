@@ -15,6 +15,7 @@
 #include "commit-slab.h"
 #include "commit-reach.h"
 #include "object-store.h"
+#include "dir.h"
 
 static struct oid_array good_revs;
 static struct oid_array skipped_revs;
@@ -88,15 +89,16 @@ static inline void weight_set(struct commit_list *elem, int weight)
 	**commit_weight_at(&commit_weight, elem->item) = weight;
 }
 
-static int count_interesting_parents(struct commit *commit)
+static int count_interesting_parents(struct commit *commit, unsigned bisect_flags)
 {
 	struct commit_list *p;
 	int count;
 
 	for (count = 0, p = commit->parents; p; p = p->next) {
-		if (p->item->object.flags & UNINTERESTING)
-			continue;
-		count++;
+		if (!(p->item->object.flags & UNINTERESTING))
+			count++;
+		if (bisect_flags & FIND_BISECTION_FIRST_PARENT_ONLY)
+			break;
 	}
 	return count;
 }
@@ -135,7 +137,7 @@ static void show_list(const char *debug, int counted, int nr,
 	for (p = list; p; p = p->next) {
 		struct commit_list *pp;
 		struct commit *commit = p->item;
-		unsigned flags = commit->object.flags;
+		unsigned commit_flags = commit->object.flags;
 		enum object_type type;
 		unsigned long size;
 		char *buf = read_object_file(&commit->object.oid, &type,
@@ -144,9 +146,9 @@ static void show_list(const char *debug, int counted, int nr,
 		int subject_len;
 
 		fprintf(stderr, "%c%c%c ",
-			(flags & TREESAME) ? ' ' : 'T',
-			(flags & UNINTERESTING) ? 'U' : ' ',
-			(flags & COUNTED) ? 'C' : ' ');
+			(commit_flags & TREESAME) ? ' ' : 'T',
+			(commit_flags & UNINTERESTING) ? 'U' : ' ',
+			(commit_flags & COUNTED) ? 'C' : ' ');
 		if (*commit_weight_at(&commit_weight, p->item))
 			fprintf(stderr, "%3d", weight(p));
 		else
@@ -171,9 +173,9 @@ static struct commit_list *best_bisection(struct commit_list *list, int nr)
 	best = list;
 	for (p = list; p; p = p->next) {
 		int distance;
-		unsigned flags = p->item->object.flags;
+		unsigned commit_flags = p->item->object.flags;
 
-		if (flags & TREESAME)
+		if (commit_flags & TREESAME)
 			continue;
 		distance = weight(p);
 		if (nr - distance < distance)
@@ -212,9 +214,9 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 
 	for (p = list, cnt = 0; p; p = p->next) {
 		int distance;
-		unsigned flags = p->item->object.flags;
+		unsigned commit_flags = p->item->object.flags;
 
-		if (flags & TREESAME)
+		if (commit_flags & TREESAME)
 			continue;
 		distance = weight(p);
 		if (nr - distance < distance)
@@ -259,7 +261,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
  */
 static struct commit_list *do_find_bisection(struct commit_list *list,
 					     int nr, int *weights,
-					     int find_all)
+					     unsigned bisect_flags)
 {
 	int n, counted;
 	struct commit_list *p;
@@ -268,12 +270,12 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 
 	for (n = 0, p = list; p; p = p->next) {
 		struct commit *commit = p->item;
-		unsigned flags = commit->object.flags;
+		unsigned commit_flags = commit->object.flags;
 
 		*commit_weight_at(&commit_weight, p->item) = &weights[n++];
-		switch (count_interesting_parents(commit)) {
+		switch (count_interesting_parents(commit, bisect_flags)) {
 		case 0:
-			if (!(flags & TREESAME)) {
+			if (!(commit_flags & TREESAME)) {
 				weight_set(p, 1);
 				counted++;
 				show_list("bisection 2 count one",
@@ -314,11 +316,13 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			continue;
 		if (weight(p) != -2)
 			continue;
+		if (bisect_flags & FIND_BISECTION_FIRST_PARENT_ONLY)
+			BUG("shouldn't be calling count-distance in fp mode");
 		weight_set(p, count_distance(p));
 		clear_distance(list);
 
 		/* Does it happen to be at exactly half-way? */
-		if (!find_all && halfway(p, nr))
+		if (!(bisect_flags & FIND_BISECTION_ALL) && halfway(p, nr))
 			return p;
 		counted++;
 	}
@@ -328,11 +332,14 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 	while (counted < nr) {
 		for (p = list; p; p = p->next) {
 			struct commit_list *q;
-			unsigned flags = p->item->object.flags;
+			unsigned commit_flags = p->item->object.flags;
 
 			if (0 <= weight(p))
 				continue;
-			for (q = p->item->parents; q; q = q->next) {
+
+			for (q = p->item->parents;
+			     q;
+			     q = bisect_flags & FIND_BISECTION_FIRST_PARENT_ONLY ? NULL : q->next) {
 				if (q->item->object.flags & UNINTERESTING)
 					continue;
 				if (0 <= weight(q))
@@ -346,7 +353,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			 * add one for p itself if p is to be counted,
 			 * otherwise inherit it from q directly.
 			 */
-			if (!(flags & TREESAME)) {
+			if (!(commit_flags & TREESAME)) {
 				weight_set(p, weight(q)+1);
 				counted++;
 				show_list("bisection 2 count one",
@@ -356,21 +363,21 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 				weight_set(p, weight(q));
 
 			/* Does it happen to be at exactly half-way? */
-			if (!find_all && halfway(p, nr))
+			if (!(bisect_flags & FIND_BISECTION_ALL) && halfway(p, nr))
 				return p;
 		}
 	}
 
 	show_list("bisection 2 counted all", counted, nr, list);
 
-	if (!find_all)
+	if (!(bisect_flags & FIND_BISECTION_ALL))
 		return best_bisection(list, nr);
 	else
 		return best_bisection_sorted(list, nr);
 }
 
 void find_bisection(struct commit_list **commit_list, int *reaches,
-		    int *all, int find_all)
+		    int *all, unsigned bisect_flags)
 {
 	int nr, on_list;
 	struct commit_list *list, *p, *best, *next, *last;
@@ -386,16 +393,16 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	for (nr = on_list = 0, last = NULL, p = *commit_list;
 	     p;
 	     p = next) {
-		unsigned flags = p->item->object.flags;
+		unsigned commit_flags = p->item->object.flags;
 
 		next = p->next;
-		if (flags & UNINTERESTING) {
+		if (commit_flags & UNINTERESTING) {
 			free(p);
 			continue;
 		}
 		p->next = last;
 		last = p;
-		if (!(flags & TREESAME))
+		if (!(commit_flags & TREESAME))
 			nr++;
 		on_list++;
 	}
@@ -406,9 +413,9 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	weights = xcalloc(on_list, sizeof(*weights));
 
 	/* Do the real work of finding bisection commit. */
-	best = do_find_bisection(list, nr, weights, find_all);
+	best = do_find_bisection(list, nr, weights, bisect_flags);
 	if (best) {
-		if (!find_all) {
+		if (!(bisect_flags & FIND_BISECTION_ALL)) {
 			list->item = best->item;
 			free_commit_list(list->next);
 			best = list;
@@ -454,6 +461,7 @@ static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
+static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 static GIT_PATH_FUNC(git_path_head_name, "head-name")
 
 static void read_bisect_paths(struct strvec *array)
@@ -983,7 +991,7 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
  * If no_checkout is non-zero, the bisection process does not
  * checkout the trial commit but instead simply updates BISECT_HEAD.
  */
-enum bisect_error bisect_next_all(struct repository *r, const char *prefix, int no_checkout)
+enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 {
 	struct rev_info revs;
 	struct commit_list *tried;
@@ -991,21 +999,31 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix, int 
 	enum bisect_error res = BISECT_OK;
 	struct object_id *bisect_rev;
 	char *steps_msg;
+	int no_checkout = ref_exists("BISECT_HEAD");
+	unsigned bisect_flags = 0;
 
 	read_bisect_terms(&term_bad, &term_good);
 	if (read_bisect_refs())
 		die(_("reading bisect refs failed"));
+
+	if (file_exists(git_path_bisect_first_parent()))
+		bisect_flags |= FIND_BISECTION_FIRST_PARENT_ONLY;
+
+	if (skipped_revs.nr)
+		bisect_flags |= FIND_BISECTION_ALL;
 
 	res = check_good_are_ancestors_of_bad(r, prefix, no_checkout);
 	if (res)
 		return res;
 
 	bisect_rev_setup(r, &revs, prefix, "%s", "^%s", 1);
+
+	revs.first_parent_only = !!(bisect_flags & FIND_BISECTION_FIRST_PARENT_ONLY);
 	revs.limited = 1;
 
 	bisect_common(&revs);
 
-	find_bisection(&revs.commits, &reaches, &all, !!skipped_revs.nr);
+	find_bisection(&revs.commits, &reaches, &all, bisect_flags);
 	revs.commits = managed_skipped(revs.commits, &tried);
 
 	if (!revs.commits) {
@@ -1133,6 +1151,7 @@ int bisect_clean_state(void)
 	unlink_or_warn(git_path_bisect_names());
 	unlink_or_warn(git_path_bisect_run());
 	unlink_or_warn(git_path_bisect_terms());
+	unlink_or_warn(git_path_bisect_first_parent());
 	/* Cleanup head-name if it got left by an old version of git-bisect */
 	unlink_or_warn(git_path_head_name());
 	/*

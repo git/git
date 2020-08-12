@@ -263,4 +263,49 @@ test_expect_success 'rev-parse --bisect can default to good/bad refs' '
 	test_cmp expect.sorted actual.sorted
 '
 
+test_output_expect_success '--bisect --first-parent' 'git rev-list --bisect --first-parent E ^F' <<EOF
+e4
+EOF
+
+test_output_expect_success '--first-parent' 'git rev-list --first-parent E ^F' <<EOF
+E
+e1
+e2
+e3
+e4
+e5
+e6
+e7
+e8
+EOF
+
+test_output_expect_success '--bisect-vars --first-parent' 'git rev-list --bisect-vars --first-parent E ^F' <<EOF
+bisect_rev='e5'
+bisect_nr=4
+bisect_good=4
+bisect_bad=3
+bisect_all=9
+bisect_steps=2
+EOF
+
+test_expect_success '--bisect-all --first-parent' '
+	cat >expect.unsorted <<-EOF &&
+	$(git rev-parse E) (tag: E, dist=0)
+	$(git rev-parse e1) (tag: e1, dist=1)
+	$(git rev-parse e2) (tag: e2, dist=2)
+	$(git rev-parse e3) (tag: e3, dist=3)
+	$(git rev-parse e4) (tag: e4, dist=4)
+	$(git rev-parse e5) (tag: e5, dist=4)
+	$(git rev-parse e6) (tag: e6, dist=3)
+	$(git rev-parse e7) (tag: e7, dist=2)
+	$(git rev-parse e8) (tag: e8, dist=1)
+	EOF
+
+	# expect results to be ordered by distance (descending),
+	# commit hash (ascending)
+	sort -k4,4r -k1,1 expect.unsorted >expect &&
+	git rev-list --bisect-all --first-parent E ^F >actual &&
+	test_cmp expect actual
+'
+
 test_done
