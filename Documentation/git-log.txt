@@ -148,13 +148,17 @@ combined-diff option or with `--no-diff-merges`).
 	rename or copy detection have been requested).
 
 -m::
---diff-merges::
 	This flag makes the merge commits show the full diff like
 	regular commits; for each merge parent, a separate log entry
 	and diff is generated. An exception is that only diff against
 	the first parent is shown when `--first-parent` option is given;
 	in that case, the output represents the changes the merge
 	brought _into_ the then-current branch.
+
+--diff-merges=off::
+--no-diff-merges::
+	Disable output of diffs for merge commits (default). Useful to
+	override `-m`, `-c`, or `--cc`.
 
 :git-log: 1
 include::diff-options.txt[]
