@@ -8,7 +8,6 @@
       real funcB  ! grid function b
 
       real ChangeMe
-      integer broken
 
       end subroutine RIGHT
 
