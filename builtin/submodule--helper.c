@@ -612,7 +612,6 @@ struct init_cb {
 	const char *prefix;
 	unsigned int flags;
 };
-
 #define INIT_CB_INIT { NULL, 0 }
 
 static void init_submodule(const char *path, const char *prefix,
@@ -742,7 +741,6 @@ struct status_cb {
 	const char *prefix;
 	unsigned int flags;
 };
-
 #define STATUS_CB_INIT { NULL, 0 }
 
 static void print_status(unsigned int flags, char state, const char *path,
@@ -933,7 +931,6 @@ struct sync_cb {
 	const char *prefix;
 	unsigned int flags;
 };
-
 #define SYNC_CB_INIT { NULL, 0 }
 
 static void sync_submodule(const char *path, const char *prefix,
