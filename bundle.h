@@ -13,6 +13,7 @@ struct ref_list {
 };
 
 struct bundle_header {
+	unsigned version;
 	struct ref_list prerequisites;
 	struct ref_list references;
 	const struct git_hash_algo *hash_algo;
@@ -21,7 +22,8 @@ struct bundle_header {
 int is_bundle(const char *path, int quiet);
 int read_bundle_header(const char *path, struct bundle_header *header);
 int create_bundle(struct repository *r, const char *path,
-		  int argc, const char **argv, struct strvec *pack_options);
+		  int argc, const char **argv, struct strvec *pack_options,
+		  int version);
 int verify_bundle(struct repository *r, struct bundle_header *header, int verbose);
 #define BUNDLE_VERBOSE 1
 int unbundle(struct repository *r, struct bundle_header *header,

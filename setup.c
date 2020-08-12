@@ -490,8 +490,17 @@ static enum extension_result handle_extension(const char *var,
 {
 	if (!strcmp(ext, "noop-v1")) {
 		return EXTENSION_OK;
-	}
+	} else if (!strcmp(ext, "objectformat")) {
+		int format;
 
+		if (!value)
+			return config_error_nonbool(var);
+		format = hash_algo_by_name(value);
+		if (format == GIT_HASH_UNKNOWN)
+			return error("invalid value for 'extensions.objectformat'");
+		data->hash_algo = format;
+		return EXTENSION_OK;
+	}
 	return EXTENSION_UNKNOWN;
 }
 

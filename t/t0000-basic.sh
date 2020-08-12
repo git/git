@@ -891,10 +891,6 @@ test_expect_success 'test_atexit is run' "
 	test_path_is_missing also-clean-atexit
 "
 
-test_expect_success 'test_oid setup' '
-	test_oid_init
-'
-
 test_expect_success 'test_oid provides sane info by default' '
 	test_oid zero >actual &&
 	grep "^00*\$" actual &&
@@ -924,6 +920,17 @@ test_expect_success 'test_oid can look up data for SHA-256' '
 	rawsz="$(test_oid rawsz)" &&
 	hexsz="$(test_oid hexsz)" &&
 	test $(wc -c <actual) -eq 64 &&
+	test "$rawsz" -eq 32 &&
+	test "$hexsz" -eq 64
+'
+
+test_expect_success 'test_oid can look up data for a specified algorithm' '
+	rawsz="$(test_oid --hash=sha1 rawsz)" &&
+	hexsz="$(test_oid --hash=sha1 hexsz)" &&
+	test "$rawsz" -eq 20 &&
+	test "$hexsz" -eq 40 &&
+	rawsz="$(test_oid --hash=sha256 rawsz)" &&
+	hexsz="$(test_oid --hash=sha256 hexsz)" &&
 	test "$rawsz" -eq 32 &&
 	test "$hexsz" -eq 64
 '
