@@ -46,9 +46,13 @@ PATTERNS("elixir",
 	 /* Not real operators, but should be grouped */
 	 "|:?%[A-Za-z0-9_.]\\{\\}?"),
 IPATTERN("fortran",
+	 /* Don't match comment lines */
 	 "!^([C*]|[ \t]*!)\n"
+	 /* Don't match 'module procedure' lines */
 	 "!^[ \t]*MODULE[ \t]+PROCEDURE[ \t]\n"
+	 /* Program, module, block data */
 	 "^[ \t]*((END[ \t]+)?(PROGRAM|MODULE|BLOCK[ \t]+DATA"
+		/* Subroutines and functions */
 		"|([^'\" \t]+[ \t]+)*(SUBROUTINE|FUNCTION))[ \t]+[A-Z].*)$",
 	 /* -- */
 	 "[a-zA-Z][a-zA-Z0-9_]*"
