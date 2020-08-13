@@ -274,14 +274,14 @@ test_expect_success 'blame file with CRLF core.autocrlf=true' '
 	grep "A U Thor" actual
 '
 
-test_expect_success 'blame coalesce' '
+test_expect_success 'setup coalesce tests' '
 	cat >giraffe <<-\EOF &&
 	ABC
 	DEF
 	EOF
 	git add giraffe &&
 	git commit -m "original file" &&
-	oid=$(git rev-parse HEAD) &&
+	orig=$(git rev-parse HEAD) &&
 
 	cat >giraffe <<-\EOF &&
 	ABC
@@ -290,6 +290,7 @@ test_expect_success 'blame coalesce' '
 	EOF
 	git add giraffe &&
 	git commit -m "interior SPLIT line" &&
+	split=$(git rev-parse HEAD) &&
 
 	cat >giraffe <<-\EOF &&
 	ABC
@@ -297,13 +298,16 @@ test_expect_success 'blame coalesce' '
 	EOF
 	git add giraffe &&
 	git commit -m "same contents as original" &&
+	final=$(git rev-parse HEAD)
+'
 
+test_expect_success 'blame coalesce' '
 	cat >expect <<-EOF &&
-	$oid 1 1 2
-	$oid 2 2
+	$orig 1 1 2
+	$orig 2 2
 	EOF
-	git blame --porcelain giraffe >actual.raw &&
-	grep "^$oid" actual.raw >actual &&
+	git blame --porcelain $final giraffe >actual.raw &&
+	grep "^$orig" actual.raw >actual &&
 	test_cmp expect actual
 '
 
