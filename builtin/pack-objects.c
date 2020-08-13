@@ -3048,7 +3048,7 @@ static void show_object__ma_allow_any(struct object *obj, const char *name, void
 	 * Quietly ignore ALL missing objects.  This avoids problems with
 	 * staging them now and getting an odd error later.
 	 */
-	if (!has_object_file(&obj->oid))
+	if (!has_object(the_repository, &obj->oid, 0))
 		return;
 
 	show_object(obj, name, data);
@@ -3062,7 +3062,7 @@ static void show_object__ma_allow_promisor(struct object *obj, const char *name,
 	 * Quietly ignore EXPECTED missing objects.  This avoids problems with
 	 * staging them now and getting an odd error later.
 	 */
-	if (!has_object_file(&obj->oid) && is_promisor_object(&obj->oid))
+	if (!has_object(the_repository, &obj->oid, 0) && is_promisor_object(&obj->oid))
 		return;
 
 	show_object(obj, name, data);

@@ -1133,4 +1133,20 @@ test_expect_success 'am and .gitattibutes' '
 	)
 '
 
+test_expect_success 'apply binary blob in partial clone' '
+	printf "\\000" >binary &&
+	git add binary &&
+	git commit -m "binary blob" &&
+	git format-patch --stdout -m HEAD^ >patch &&
+
+	test_create_repo server &&
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	git clone --filter=blob:none "file://$(pwd)/server" client &&
+	test_when_finished "rm -rf client" &&
+
+	# Exercise to make sure that it works
+	git -C client am ../patch
+'
+
 test_done

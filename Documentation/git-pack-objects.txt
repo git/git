@@ -270,15 +270,18 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 	This option specifies how missing objects are handled.
 +
 The form '--missing=error' requests that pack-objects stop with an error if
-a missing object is encountered.  This is the default action.
+a missing object is encountered.  If the repository is a partial clone, an
+attempt to fetch missing objects will be made before declaring them missing.
+This is the default action.
 +
 The form '--missing=allow-any' will allow object traversal to continue
-if a missing object is encountered.  Missing objects will silently be
-omitted from the results.
+if a missing object is encountered.  No fetch of a missing object will occur.
+Missing objects will silently be omitted from the results.
 +
 The form '--missing=allow-promisor' is like 'allow-any', but will only
 allow object traversal to continue for EXPECTED promisor missing objects.
-Unexpected missing object will raise an error.
+No fetch of a missing object will occur.  An unexpected missing object will
+raise an error.
 
 --exclude-promisor-objects::
 	Omit objects that are known to be in the promisor remote.  (This
