@@ -502,7 +502,7 @@ unset(CMAKE_REQUIRED_INCLUDES)
 #programs
 set(PROGRAMS_BUILT
 	git git-daemon git-http-backend git-sh-i18n--envsubst
-	git-shell git-remote-testsvn)
+	git-shell)
 
 if(NOT CURL_FOUND)
 	list(APPEND excluded_progs git-http-fetch git-http-push)
@@ -567,12 +567,6 @@ parse_makefile_for_sources(libxdiff_SOURCES "XDIFF_OBJS")
 
 list(TRANSFORM libxdiff_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 add_library(xdiff STATIC ${libxdiff_SOURCES})
-
-#libvcs-svn
-parse_makefile_for_sources(libvcs-svn_SOURCES "VCSSVN_OBJS")
-
-list(TRANSFORM libvcs-svn_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
-add_library(vcs-svn STATIC ${libvcs-svn_SOURCES})
 
 if(WIN32)
 	if(NOT MSVC)#use windres when compiling with gcc and clang
@@ -653,9 +647,6 @@ if(CURL_FOUND)
 		target_link_libraries(git-http-push http_obj common-main ${CURL_LIBRARIES} ${EXPAT_LIBRARIES})
 	endif()
 endif()
-
-add_executable(git-remote-testsvn ${CMAKE_SOURCE_DIR}/remote-testsvn.c)
-target_link_libraries(git-remote-testsvn common-main vcs-svn)
 
 set(git_builtin_extra
 	cherry cherry-pick format-patch fsck-objects
@@ -832,12 +823,6 @@ if(BUILD_TESTING)
 add_executable(test-fake-ssh ${CMAKE_SOURCE_DIR}/t/helper/test-fake-ssh.c)
 target_link_libraries(test-fake-ssh common-main)
 
-add_executable(test-line-buffer ${CMAKE_SOURCE_DIR}/t/helper/test-line-buffer.c)
-target_link_libraries(test-line-buffer common-main vcs-svn)
-
-add_executable(test-svn-fe ${CMAKE_SOURCE_DIR}/t/helper/test-svn-fe.c)
-target_link_libraries(test-svn-fe common-main vcs-svn)
-
 #test-tool
 parse_makefile_for_sources(test-tool_SOURCES "TEST_BUILTINS_OBJS")
 
@@ -845,13 +830,13 @@ list(TRANSFORM test-tool_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/t/helper/")
 add_executable(test-tool ${CMAKE_SOURCE_DIR}/t/helper/test-tool.c ${test-tool_SOURCES})
 target_link_libraries(test-tool common-main)
 
-set_target_properties(test-fake-ssh test-line-buffer test-svn-fe test-tool
+set_target_properties(test-fake-ssh test-tool
 			PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/t/helper)
 
 if(MSVC)
-	set_target_properties(test-fake-ssh test-line-buffer test-svn-fe test-tool
+	set_target_properties(test-fake-ssh test-tool
 				PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/t/helper)
-	set_target_properties(test-fake-ssh test-line-buffer test-svn-fe test-tool
+	set_target_properties(test-fake-ssh test-tool
 				PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/t/helper)
 endif()
 
@@ -860,7 +845,7 @@ set(wrapper_scripts
 	git git-upload-pack git-receive-pack git-upload-archive git-shell git-remote-ext)
 
 set(wrapper_test_scripts
-	test-fake-ssh test-line-buffer test-svn-fe test-tool)
+	test-fake-ssh test-tool)
 
 
 foreach(script ${wrapper_scripts})
@@ -961,7 +946,6 @@ if(NOT ${CMAKE_BINARY_DIR}/CMakeCache.txt STREQUAL ${CACHE_PATH})
 	file(COPY ${CMAKE_SOURCE_DIR}/mergetools/tkdiff DESTINATION ${CMAKE_BINARY_DIR}/mergetools/)
 	file(COPY ${CMAKE_SOURCE_DIR}/contrib/completion/git-prompt.sh DESTINATION ${CMAKE_BINARY_DIR}/contrib/completion/)
 	file(COPY ${CMAKE_SOURCE_DIR}/contrib/completion/git-completion.bash DESTINATION ${CMAKE_BINARY_DIR}/contrib/completion/)
-	file(COPY ${CMAKE_SOURCE_DIR}/contrib/svn-fe/svnrdump_sim.py DESTINATION ${CMAKE_BINARY_DIR}/contrib/svn-fe/)
 endif()
 
 file(GLOB test_scipts "${CMAKE_SOURCE_DIR}/t/t[0-9]*.sh")
