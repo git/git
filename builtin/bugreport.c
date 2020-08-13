@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "builtin.h"
 #include "parse-options.h"
 #include "strbuf.h"
 #include "help.h"
@@ -119,7 +119,7 @@ static void get_header(struct strbuf *buf, const char *title)
 	strbuf_addf(buf, "\n\n[%s]\n", title);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_bugreport(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf report_path = STRBUF_INIT;
@@ -127,8 +127,6 @@ int cmd_main(int argc, const char **argv)
 	time_t now = time(NULL);
 	char *option_output = NULL;
 	char *option_suffix = "%Y-%m-%d-%H%M";
-	int nongit_ok = 0;
-	const char *prefix = NULL;
 	const char *user_relative_path = NULL;
 
 	const struct option bugreport_options[] = {
@@ -138,8 +136,6 @@ int cmd_main(int argc, const char **argv)
 			   N_("specify a strftime format suffix for the filename")),
 		OPT_END()
 	};
-
-	prefix = setup_git_directory_gently(&nongit_ok);
 
 	argc = parse_options(argc, argv, prefix, bugreport_options,
 			     bugreport_usage, 0);
@@ -170,7 +166,7 @@ int cmd_main(int argc, const char **argv)
 	get_system_info(&buffer);
 
 	get_header(&buffer, _("Enabled Hooks"));
-	get_populated_hooks(&buffer, nongit_ok);
+	get_populated_hooks(&buffer, !startup_info->have_repository);
 
 	/* fopen doesn't offer us an O_EXCL alternative, except with glibc. */
 	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY, 0666);

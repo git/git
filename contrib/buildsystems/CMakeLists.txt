@@ -501,7 +501,7 @@ unset(CMAKE_REQUIRED_INCLUDES)
 
 #programs
 set(PROGRAMS_BUILT
-	git git-bugreport git-daemon git-fast-import git-http-backend git-sh-i18n--envsubst
+	git git-daemon git-fast-import git-http-backend git-sh-i18n--envsubst
 	git-shell git-remote-testsvn)
 
 if(NOT CURL_FOUND)
@@ -623,9 +623,6 @@ parse_makefile_for_sources(git_SOURCES "BUILTIN_OBJS")
 list(TRANSFORM git_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 add_executable(git ${CMAKE_SOURCE_DIR}/git.c ${git_SOURCES})
 target_link_libraries(git common-main)
-
-add_executable(git-bugreport ${CMAKE_SOURCE_DIR}/bugreport.c)
-target_link_libraries(git-bugreport common-main)
 
 add_executable(git-daemon ${CMAKE_SOURCE_DIR}/daemon.c)
 target_link_libraries(git-daemon common-main)
