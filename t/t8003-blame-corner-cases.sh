@@ -311,4 +311,13 @@ test_expect_success 'blame coalesce' '
 	test_cmp expect actual
 '
 
+test_expect_success 'blame does not coalesce non-adjacent result lines' '
+	cat >expect <<-EOF &&
+	$orig 1) ABC
+	$orig 3) DEF
+	EOF
+	git blame --no-abbrev -s -L1,1 -L3,3 $split giraffe >actual &&
+	test_cmp expect actual
+'
+
 test_done
