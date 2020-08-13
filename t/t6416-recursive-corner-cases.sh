@@ -452,7 +452,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 #
 # So choice 5 at least provides some kind of conflict for the original case,
 # and can merge cleanly as expected with D1 and E3.  It also made things just
-# slightly funny for merging D1 and e$, where E4 is defined as:
+# slightly funny for merging D1 and E4, where E4 is defined as:
 #   Commit E4: Merge B & C, modifying 'a' and renaming to 'a2', and deleting 'a/'
 # in this case, we'll get a rename/rename(1to2) conflict because a~$UNIQUE
 # gets renamed to 'a' in D1 and to 'a2' in E4.  But that's better than having
@@ -1144,7 +1144,7 @@ test_expect_failure 'check symlink add/add' '
 		test_must_fail git merge -s recursive E^0 &&
 
 		git ls-files -s >out &&
-		test_line_count = 2 out &&
+		test_line_count = 3 out &&
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
