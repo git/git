@@ -1,9 +1,12 @@
-#include "cache.h"
+#include "builtin.h"
+#include "parse-options.h"
+
+#ifndef NO_UNIX_SOCKETS
+
 #include "config.h"
 #include "tempfile.h"
 #include "credential.h"
 #include "unix-socket.h"
-#include "parse-options.h"
 
 struct credential_cache_entry {
 	struct credential item;
@@ -257,7 +260,7 @@ static void init_socket_directory(const char *path)
 	free(path_copy);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 {
 	struct tempfile *socket_file;
 	const char *socket_path;
@@ -275,7 +278,7 @@ int cmd_main(int argc, const char **argv)
 
 	git_config_get_bool("credentialcache.ignoresighup", &ignore_sighup);
 
-	argc = parse_options(argc, argv, NULL, options, usage, 0);
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
 	socket_path = argv[0];
 
 	if (!socket_path)
@@ -295,3 +298,21 @@ int cmd_main(int argc, const char **argv)
 
 	return 0;
 }
+
+#else
+
+int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
+{
+	const char * const usage[] = {
+		"git credential-cache--daemon [options] <action>",
+		"",
+		"credential-cache--daemon is disabled in this build of Git",
+		NULL
+	};
+	struct option options[] = { OPT_END() };
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+	die(_("credential-cache--daemon unavailable; no unix socket support"));
+}
+
+#endif /* NO_UNIX_SOCKET */

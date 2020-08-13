@@ -672,7 +672,6 @@ EXTRA_PROGRAMS =
 PROGRAMS += $(EXTRA_PROGRAMS)
 
 PROGRAM_OBJS += bugreport.o
-PROGRAM_OBJS += credential-store.o
 PROGRAM_OBJS += daemon.o
 PROGRAM_OBJS += fast-import.o
 PROGRAM_OBJS += http-backend.o
@@ -1052,6 +1051,9 @@ BUILTIN_OBJS += builtin/checkout-index.o
 BUILTIN_OBJS += builtin/checkout.o
 BUILTIN_OBJS += builtin/clean.o
 BUILTIN_OBJS += builtin/clone.o
+BUILTIN_OBJS += builtin/credential-cache.o
+BUILTIN_OBJS += builtin/credential-cache--daemon.o
+BUILTIN_OBJS += builtin/credential-store.o
 BUILTIN_OBJS += builtin/column.o
 BUILTIN_OBJS += builtin/commit-graph.o
 BUILTIN_OBJS += builtin/commit-tree.o
@@ -1634,11 +1636,8 @@ ifdef NO_INET_PTON
 endif
 ifdef NO_UNIX_SOCKETS
 	BASIC_CFLAGS += -DNO_UNIX_SOCKETS
-	EXCLUDED_PROGRAMS += git-credential-cache git-credential-cache--daemon
 else
 	LIB_OBJS += unix-socket.o
-	PROGRAM_OBJS += credential-cache.o
-	PROGRAM_OBJS += credential-cache--daemon.o
 endif
 
 ifdef NO_ICONV
@@ -2901,7 +2900,6 @@ ifdef MSVC
 	# because it is just a copy/hardlink of git.exe, rather than a unique binary.
 	$(INSTALL) git.pdb '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(INSTALL) git-shell.pdb '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) git-credential-store.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 	$(INSTALL) git-daemon.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 	$(INSTALL) git-fast-import.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 	$(INSTALL) git-http-backend.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'

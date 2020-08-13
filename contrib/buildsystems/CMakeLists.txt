@@ -501,14 +501,8 @@ unset(CMAKE_REQUIRED_INCLUDES)
 
 #programs
 set(PROGRAMS_BUILT
-	git git-bugreport git-credential-store git-daemon git-fast-import git-http-backend git-sh-i18n--envsubst
+	git git-bugreport git-daemon git-fast-import git-http-backend git-sh-i18n--envsubst
 	git-shell git-remote-testsvn)
-
-if(NO_UNIX_SOCKETS)
-	list(APPEND excluded_progs git-credential-cache git-credential-cache--daemon)
-else()
-	list(APPEND PROGRAMS_BUILT git-credential-cache git-credential-cache--daemon)
-endif()
 
 if(NOT CURL_FOUND)
 	list(APPEND excluded_progs git-http-fetch git-http-push)
@@ -633,9 +627,6 @@ target_link_libraries(git common-main)
 add_executable(git-bugreport ${CMAKE_SOURCE_DIR}/bugreport.c)
 target_link_libraries(git-bugreport common-main)
 
-add_executable(git-credential-store ${CMAKE_SOURCE_DIR}/credential-store.c)
-target_link_libraries(git-credential-store common-main)
-
 add_executable(git-daemon ${CMAKE_SOURCE_DIR}/daemon.c)
 target_link_libraries(git-daemon common-main)
 
@@ -671,15 +662,6 @@ endif()
 
 add_executable(git-remote-testsvn ${CMAKE_SOURCE_DIR}/remote-testsvn.c)
 target_link_libraries(git-remote-testsvn common-main vcs-svn)
-
-if(NOT NO_UNIX_SOCKETS)
-	add_executable(git-credential-cache ${CMAKE_SOURCE_DIR}/credential-cache.c)
-	target_link_libraries(git-credential-cache common-main)
-
-	add_executable(git-credential-cache--daemon ${CMAKE_SOURCE_DIR}/credential-cache--daemon.c)
-	target_link_libraries(git-credential-cache--daemon common-main)
-endif()
-
 
 set(git_builtin_extra
 	cherry cherry-pick format-patch fsck-objects
