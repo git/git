@@ -274,10 +274,6 @@ test_expect_success 'blame file with CRLF core.autocrlf=true' '
 	grep "A U Thor" actual
 '
 
-# Tests the splitting and merging of blame entries in blame_coalesce().
-# The output of blame is the same, regardless of whether blame_coalesce() runs
-# or not, so we'd likely only notice a problem if blame crashes or assigned
-# blame to the "splitting" commit ('SPLIT' below).
 test_expect_success 'blame coalesce' '
 	cat >giraffe <<-\EOF &&
 	ABC
@@ -303,10 +299,11 @@ test_expect_success 'blame coalesce' '
 	git commit -m "same contents as original" &&
 
 	cat >expect <<-EOF &&
-	$oid 1) ABC
-	$oid 2) DEF
+	$oid 1 1 2
+	$oid 2 2
 	EOF
-	git -c core.abbrev=40 blame -s giraffe >actual &&
+	git blame --porcelain giraffe >actual.raw &&
+	grep "^$oid" actual.raw >actual &&
 	test_cmp expect actual
 '
 
