@@ -5178,13 +5178,14 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		    struct string_list *commands, unsigned autosquash,
 		    struct todo_list *todo_list)
 {
-	const char *shortonto, *todo_file = rebase_path_todo();
+	char shortonto[GIT_MAX_HEXSZ + 1];
+	const char *todo_file = rebase_path_todo();
 	struct todo_list new_todo = TODO_LIST_INIT;
 	struct strbuf *buf = &todo_list->buf, buf2 = STRBUF_INIT;
 	struct object_id oid = onto->object.oid;
 	int res;
 
-	shortonto = find_unique_abbrev(&oid, DEFAULT_ABBREV);
+	find_unique_abbrev_r(shortonto, &oid, DEFAULT_ABBREV);
 
 	if (buf->len == 0) {
 		struct todo_item *item = append_new_todo(todo_list);
