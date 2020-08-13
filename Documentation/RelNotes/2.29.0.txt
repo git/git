@@ -56,6 +56,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * CMake support to build with MSVC for Windows bypassing the Makefile.
 
+ * A new helper function has_object() has been introduced to make it
+   easier to mark object existence checks that do and don't want to
+   trigger lazy fetches, and a few such checks are converted using it.
+
 
 Fixes since v2.28
 -----------------
@@ -102,6 +106,10 @@ Fixes since v2.28
  * Doc cleanup around "worktree".
    (merge dc9c144be5 es/worktree-doc-cleanups later to maint).
 
+ * The "git blame --first-parent" option was not documented, but now
+   it is.
+   (merge 11bc12ae1e rp/blame-first-parent-doc later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -115,3 +123,4 @@ Fixes since v2.28
    (merge 7d23ff818f rs/bisect-oid-to-hex-fix later to maint).
    (merge de20baf2c9 ny/notes-doc-sample-update later to maint).
    (merge f649aaaf82 so/rev-parser-errormessage-fix later to maint).
+   (merge 6103d58b7f bc/sha-256-cvs-svn-updates later to maint).
