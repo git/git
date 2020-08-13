@@ -501,7 +501,7 @@ unset(CMAKE_REQUIRED_INCLUDES)
 
 #programs
 set(PROGRAMS_BUILT
-	git git-daemon git-fast-import git-http-backend git-sh-i18n--envsubst
+	git git-daemon git-http-backend git-sh-i18n--envsubst
 	git-shell git-remote-testsvn)
 
 if(NOT CURL_FOUND)
@@ -626,9 +626,6 @@ target_link_libraries(git common-main)
 
 add_executable(git-daemon ${CMAKE_SOURCE_DIR}/daemon.c)
 target_link_libraries(git-daemon common-main)
-
-add_executable(git-fast-import ${CMAKE_SOURCE_DIR}/fast-import.c)
-target_link_libraries(git-fast-import common-main)
 
 add_executable(git-http-backend ${CMAKE_SOURCE_DIR}/http-backend.c)
 target_link_libraries(git-http-backend common-main)
