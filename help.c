@@ -375,7 +375,7 @@ void list_cmds_by_config(struct string_list *list)
 {
 	const char *cmd_list;
 
-	if (git_config_get_string_const("completion.commands", &cmd_list))
+	if (git_config_get_string_tmp("completion.commands", &cmd_list))
 		return;
 
 	string_list_sort(list);

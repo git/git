@@ -2020,6 +2020,20 @@ int git_configset_get_string(struct config_set *cs, const char *key, char **dest
 	return git_configset_get_string_const(cs, key, (const char **)dest);
 }
 
+int git_configset_get_string_tmp(struct config_set *cs, const char *key,
+				 const char **dest)
+{
+	const char *value;
+	if (!git_configset_get_value(cs, key, &value)) {
+		if (!value)
+			return config_error_nonbool(key);
+		*dest = value;
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest)
 {
 	const char *value;
@@ -2165,6 +2179,17 @@ int repo_config_get_string(struct repository *repo,
 	return repo_config_get_string_const(repo, key, (const char **)dest);
 }
 
+int repo_config_get_string_tmp(struct repository *repo,
+			       const char *key, const char **dest)
+{
+	int ret;
+	git_config_check_init(repo);
+	ret = git_configset_get_string_tmp(repo->config, key, dest);
+	if (ret < 0)
+		git_die_config(key, NULL);
+	return ret;
+}
+
 int repo_config_get_int(struct repository *repo,
 			const char *key, int *dest)
 {
@@ -2240,6 +2265,11 @@ int git_config_get_string_const(const char *key, const char **dest)
 int git_config_get_string(const char *key, char **dest)
 {
 	return repo_config_get_string(the_repository, key, dest);
+}
+
+int git_config_get_string_tmp(const char *key, const char **dest)
+{
+	return repo_config_get_string_tmp(the_repository, key, dest);
 }
 
 int git_config_get_int(const char *key, int *dest)

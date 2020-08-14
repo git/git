@@ -460,6 +460,7 @@ int git_configset_get_value(struct config_set *cs, const char *key, const char *
 
 int git_configset_get_string_const(struct config_set *cs, const char *key, const char **dest);
 int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
+int git_configset_get_string_tmp(struct config_set *cs, const char *key, const char **dest);
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest);
 int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned long *dest);
 int git_configset_get_bool(struct config_set *cs, const char *key, int *dest);
@@ -478,6 +479,8 @@ int repo_config_get_string_const(struct repository *repo,
 				 const char *key, const char **dest);
 int repo_config_get_string(struct repository *repo,
 			   const char *key, char **dest);
+int repo_config_get_string_tmp(struct repository *repo,
+			       const char *key, const char **dest);
 int repo_config_get_int(struct repository *repo,
 			const char *key, int *dest);
 int repo_config_get_ulong(struct repository *repo,
@@ -536,6 +539,13 @@ int git_config_get_string_const(const char *key, const char **dest);
  * copied into the `dest` parameter is a mutable string.
  */
 int git_config_get_string(const char *key, char **dest);
+
+/**
+ * Similar to `git_config_get_string_const`, but does not allocate any new
+ * memory; on success `dest` will point to memory owned by the config
+ * machinery, which could be invalidated if it is discarded and reloaded.
+ */
+int git_config_get_string_tmp(const char *key, const char **dest);
 
 /**
  * Finds and parses the value to an integer for the configuration variable

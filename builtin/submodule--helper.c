@@ -1511,7 +1511,7 @@ static void determine_submodule_update_strategy(struct repository *r,
 		if (parse_submodule_update_strategy(update, out) < 0)
 			die(_("Invalid update mode '%s' for submodule path '%s'"),
 				update, path);
-	} else if (!repo_config_get_string_const(r, key, &val)) {
+	} else if (!repo_config_get_string_tmp(r, key, &val)) {
 		if (parse_submodule_update_strategy(val, out) < 0)
 			die(_("Invalid update mode '%s' configured for submodule path '%s'"),
 				val, path);
@@ -1667,7 +1667,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	}
 
 	key = xstrfmt("submodule.%s.update", sub->name);
-	if (!repo_config_get_string_const(the_repository, key, &update_string)) {
+	if (!repo_config_get_string_tmp(the_repository, key, &update_string)) {
 		update_type = parse_submodule_update_type(update_string);
 	} else {
 		update_type = sub->update_strategy.type;
@@ -1690,7 +1690,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
-	if (repo_config_get_string_const(the_repository, sb.buf, &url)) {
+	if (repo_config_get_string_tmp(the_repository, sb.buf, &url)) {
 		if (starts_with_dot_slash(sub->url) ||
 		    starts_with_dot_dot_slash(sub->url)) {
 			url = compute_submodule_clone_url(sub->url);
@@ -1976,7 +1976,7 @@ static const char *remote_submodule_branch(const char *path)
 		return NULL;
 
 	key = xstrfmt("submodule.%s.branch", sub->name);
-	if (repo_config_get_string_const(the_repository, key, &branch))
+	if (repo_config_get_string_tmp(the_repository, key, &branch))
 		branch = sub->branch;
 	free(key);
 
