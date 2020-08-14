@@ -1747,8 +1747,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 					      "--no-single-branch");
 
 cleanup:
-	strbuf_reset(&displaypath_sb);
-	strbuf_reset(&sb);
+	strbuf_release(&displaypath_sb);
+	strbuf_release(&sb);
 	if (need_free_url)
 		free((void*)url);
 
