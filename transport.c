@@ -443,6 +443,7 @@ void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int v
 	if (ref->status != REF_STATUS_OK && ref->status != REF_STATUS_UPTODATE)
 		return;
 
+	memset(&rs, 0, sizeof(rs));
 	rs.src = ref->name;
 	rs.dst = NULL;
 
