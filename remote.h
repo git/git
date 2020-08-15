@@ -153,7 +153,7 @@ struct ref {
 		REF_STATUS_EXPECTING_REPORT,
 		REF_STATUS_ATOMIC_PUSH_FAILED
 	} status;
-	char *remote_status;
+	struct ref_push_report report;
 	struct ref *peer_ref; /* when renaming */
 	char name[FLEX_ARRAY]; /* more */
 };
