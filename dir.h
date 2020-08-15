@@ -36,7 +36,7 @@
  *
  * - Use `dir.entries[]`.
  *
- * - Call `clear_directory()` when none of the contained elements are no longer in use.
+ * - Call `clear_directory()` when the contained elements are no longer in use.
  *
  */
 
