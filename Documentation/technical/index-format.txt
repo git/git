@@ -3,8 +3,11 @@ Git index format
 
 == The Git index file has the following format
 
-  All binary numbers are in network byte order. Version 2 is described
-  here unless stated otherwise.
+  All binary numbers are in network byte order.
+  In a repository using the traditional SHA-1, checksums and object IDs
+  (object names) mentioned below are all computed using SHA-1.  Similarly,
+  in SHA-256 repositories, these values are computed using SHA-256.
+  Version 2 is described here unless stated otherwise.
 
    - A 12-byte header consisting of
 
@@ -32,8 +35,7 @@ Git index format
 
      Extension data
 
-   - 160-bit SHA-1 over the content of the index file before this
-     checksum.
+   - Hash checksum over the content of the index file before this checksum.
 
 == Index entry
 
@@ -80,7 +82,7 @@ Git index format
   32-bit file size
     This is the on-disk size from stat(2), truncated to 32-bit.
 
-  160-bit SHA-1 for the represented object
+  Object name for the represented object
 
   A 16-bit 'flags' field split into (high to low bits)
 
@@ -160,8 +162,8 @@ Git index format
 
   - A newline (ASCII 10); and
 
-  - 160-bit object name for the object that would result from writing
-    this span of index as a tree.
+  - Object name for the object that would result from writing this span
+    of index as a tree.
 
   An entry can be in an invalidated state and is represented by having
   a negative number in the entry_count field. In this case, there is no
@@ -198,7 +200,7 @@ Git index format
     stage 1 to 3 (a missing stage is represented by "0" in this field);
     and
 
-  - At most three 160-bit object names of the entry in stages from 1 to 3
+  - At most three object names of the entry in stages from 1 to 3
     (nothing is written for a missing stage).
 
 === Split index
@@ -211,8 +213,8 @@ Git index format
 
   The extension consists of:
 
-  - 160-bit SHA-1 of the shared index file. The shared index file path
-    is $GIT_DIR/sharedindex.<SHA-1>. If all 160 bits are zero, the
+  - Hash of the shared index file. The shared index file path
+    is $GIT_DIR/sharedindex.<hash>. If all bits are zero, the
     index does not require a shared index file.
 
   - An ewah-encoded delete bitmap, each bit represents an entry in the
@@ -253,10 +255,10 @@ Git index format
 
   - 32-bit dir_flags (see struct dir_struct)
 
-  - 160-bit SHA-1 of $GIT_DIR/info/exclude. Null SHA-1 means the file
+  - Hash of $GIT_DIR/info/exclude. A null hash means the file
     does not exist.
 
-  - 160-bit SHA-1 of core.excludesfile. Null SHA-1 means the file does
+  - Hash of core.excludesfile. A null hash means the file does
     not exist.
 
   - NUL-terminated string of per-dir exclude file name. This usually
@@ -285,13 +287,13 @@ The remaining data of each directory block is grouped by type:
   - An ewah bitmap, the n-th bit records "check-only" bit of
     read_directory_recursive() for the n-th directory.
 
-  - An ewah bitmap, the n-th bit indicates whether SHA-1 and stat data
+  - An ewah bitmap, the n-th bit indicates whether hash and stat data
     is valid for the n-th directory and exists in the next data.
 
   - An array of stat data. The n-th data corresponds with the n-th
     "one" bit in the previous ewah bitmap.
 
-  - An array of SHA-1. The n-th SHA-1 corresponds with the n-th "one" bit
+  - An array of hashes. The n-th hash corresponds with the n-th "one" bit
     in the previous ewah bitmap.
 
   - One NUL.
@@ -330,12 +332,12 @@ The remaining data of each directory block is grouped by type:
 
   - 32-bit offset to the end of the index entries
 
-  - 160-bit SHA-1 over the extension types and their sizes (but not
+  - Hash over the extension types and their sizes (but not
 	their contents).  E.g. if we have "TREE" extension that is N-bytes
 	long, "REUC" extension that is M-bytes long, followed by "EOIE",
 	then the hash would be:
 
-	SHA-1("TREE" + <binary representation of N> +
+	Hash("TREE" + <binary representation of N> +
 		"REUC" + <binary representation of M>)
 
 == Index Entry Offset Table
