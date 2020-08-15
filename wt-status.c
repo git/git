@@ -703,7 +703,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 	if (!s->show_untracked_files)
 		return;
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	if (s->show_untracked_files != SHOW_ALL_UNTRACKED_FILES)
 		dir.flags |=
 			DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
@@ -732,7 +732,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 			string_list_insert(&s->ignored, ent->name);
 	}
 
-	clear_directory(&dir);
+	dir_clear(&dir);
 
 	if (advice_status_u_option)
 		s->untracked_in_ms = (getnanotime() - t_begin) / 1000000;

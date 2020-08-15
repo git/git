@@ -864,7 +864,7 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 	int found = 0;
 	struct dir_struct dir;
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	if (include_untracked != INCLUDE_ALL_FILES)
 		setup_standard_excludes(&dir);
 
@@ -877,7 +877,7 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 		strbuf_addch(untracked_files, '\0');
 	}
 
-	clear_directory(&dir);
+	dir_clear(&dir);
 	return found;
 }
 
