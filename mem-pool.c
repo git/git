@@ -102,6 +102,24 @@ void *mem_pool_calloc(struct mem_pool *mem_pool, size_t count, size_t size)
 	return r;
 }
 
+char *mem_pool_strdup(struct mem_pool *pool, const char *str)
+{
+	size_t len = strlen(str) + 1;
+	char *ret = mem_pool_alloc(pool, len);
+
+	return memcpy(ret, str, len);
+}
+
+char *mem_pool_strndup(struct mem_pool *pool, const char *str, size_t len)
+{
+	char *p = memchr(str, '\0', len);
+	size_t actual_len = (p ? p - str : len);
+	char *ret = mem_pool_alloc(pool, actual_len+1);
+
+	ret[actual_len] = '\0';
+	return memcpy(ret, str, actual_len);
+}
+
 int mem_pool_contains(struct mem_pool *mem_pool, void *mem)
 {
 	struct mp_block *p;
