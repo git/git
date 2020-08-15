@@ -42,6 +42,12 @@ void *mem_pool_alloc(struct mem_pool *pool, size_t len);
 void *mem_pool_calloc(struct mem_pool *pool, size_t count, size_t size);
 
 /*
+ * Allocate memory from the memory pool and copy str into it.
+ */
+char *mem_pool_strdup(struct mem_pool *pool, const char *str);
+char *mem_pool_strndup(struct mem_pool *pool, const char *str, size_t len);
+
+/*
  * Move the memory associated with the 'src' pool to the 'dst' pool. The 'src'
  * pool will be empty and not contain any memory. It still needs to be free'd
  * with a call to `mem_pool_discard`.
