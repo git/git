@@ -33,21 +33,13 @@ static struct mp_block *mem_pool_alloc_block(struct mem_pool *mem_pool, size_t b
 	return p;
 }
 
-void mem_pool_init(struct mem_pool **mem_pool, size_t initial_size)
+void mem_pool_init(struct mem_pool *pool, size_t initial_size)
 {
-	struct mem_pool *pool;
-
-	if (*mem_pool)
-		return;
-
-	pool = xcalloc(1, sizeof(*pool));
-
+	memset(pool, 0, sizeof(*pool));
 	pool->block_alloc = BLOCK_GROWTH_SIZE;
 
 	if (initial_size > 0)
 		mem_pool_alloc_block(pool, initial_size, NULL);
-
-	*mem_pool = pool;
 }
 
 void mem_pool_discard(struct mem_pool *mem_pool, int invalidate_memory)
@@ -66,7 +58,8 @@ void mem_pool_discard(struct mem_pool *mem_pool, int invalidate_memory)
 		free(block_to_free);
 	}
 
-	free(mem_pool);
+	mem_pool->mp_block = NULL;
+	mem_pool->pool_alloc = 0;
 }
 
 void *mem_pool_alloc(struct mem_pool *mem_pool, size_t len)
