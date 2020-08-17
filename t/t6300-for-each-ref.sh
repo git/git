@@ -120,6 +120,9 @@ test_atom head tree:short $(git rev-parse --short refs/heads/master^{tree})
 test_atom head tree:short=1 $(git rev-parse --short=1 refs/heads/master^{tree})
 test_atom head tree:short=10 $(git rev-parse --short=10 refs/heads/master^{tree})
 test_atom head parent ''
+test_atom head parent:short ''
+test_atom head parent:short=1 ''
+test_atom head parent:short=10 ''
 test_atom head numparent 0
 test_atom head object ''
 test_atom head type ''
@@ -174,6 +177,9 @@ test_atom tag tree:short ''
 test_atom tag tree:short=1 ''
 test_atom tag tree:short=10 ''
 test_atom tag parent ''
+test_atom tag parent:short ''
+test_atom tag parent:short=1 ''
+test_atom tag parent:short=10 ''
 test_atom tag numparent ''
 test_atom tag object $(git rev-parse refs/tags/testtag^0)
 test_atom tag type 'commit'
