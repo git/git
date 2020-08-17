@@ -361,10 +361,14 @@ N_("\n"
 const char *fmt_ident(const char *name, const char *email,
 		      enum want_ident whose_ident, const char *date_str, int flag)
 {
-	static struct strbuf ident = STRBUF_INIT;
+	static int index;
+	static struct strbuf ident_pool[2] = { STRBUF_INIT, STRBUF_INIT };
 	int strict = (flag & IDENT_STRICT);
 	int want_date = !(flag & IDENT_NO_DATE);
 	int want_name = !(flag & IDENT_NO_NAME);
+
+	struct strbuf *ident = &ident_pool[index];
+	index = (index + 1) % ARRAY_SIZE(ident_pool);
 
 	if (!email) {
 		if (whose_ident == WANT_AUTHOR_IDENT && git_author_email.len)
@@ -421,25 +425,25 @@ const char *fmt_ident(const char *name, const char *email,
 			die(_("name consists only of disallowed characters: %s"), name);
 	}
 
-	strbuf_reset(&ident);
+	strbuf_reset(ident);
 	if (want_name) {
-		strbuf_addstr_without_crud(&ident, name);
-		strbuf_addstr(&ident, " <");
+		strbuf_addstr_without_crud(ident, name);
+		strbuf_addstr(ident, " <");
 	}
-	strbuf_addstr_without_crud(&ident, email);
+	strbuf_addstr_without_crud(ident, email);
 	if (want_name)
-			strbuf_addch(&ident, '>');
+		strbuf_addch(ident, '>');
 	if (want_date) {
-		strbuf_addch(&ident, ' ');
+		strbuf_addch(ident, ' ');
 		if (date_str && date_str[0]) {
-			if (parse_date(date_str, &ident) < 0)
+			if (parse_date(date_str, ident) < 0)
 				die(_("invalid date format: %s"), date_str);
 		}
 		else
-			strbuf_addstr(&ident, ident_default_date());
+			strbuf_addstr(ident, ident_default_date());
 	}
 
-	return ident.buf;
+	return ident->buf;
 }
 
 const char *fmt_name(enum want_ident whose_ident)
