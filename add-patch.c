@@ -457,11 +457,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			eol = pend;
 
 		if (starts_with(p, "diff ")) {
-			s->file_diff_nr++;
-			ALLOC_GROW(s->file_diff, s->file_diff_nr,
+			ALLOC_GROW_BY(s->file_diff, s->file_diff_nr, 1,
 				   file_diff_alloc);
 			file_diff = s->file_diff + s->file_diff_nr - 1;
-			memset(file_diff, 0, sizeof(*file_diff));
 			hunk = &file_diff->head;
 			hunk->start = p - plain->buf;
 			if (colored_p)
@@ -483,11 +481,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 				 */
 				hunk->splittable_into++;
 
-			file_diff->hunk_nr++;
-			ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr,
+			ALLOC_GROW_BY(file_diff->hunk, file_diff->hunk_nr, 1,
 				   file_diff->hunk_alloc);
 			hunk = file_diff->hunk + file_diff->hunk_nr - 1;
-			memset(hunk, 0, sizeof(*hunk));
 
 			hunk->start = p - plain->buf;
 			if (colored)
@@ -511,7 +507,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			if (file_diff->mode_change)
 				BUG("double mode change?\n\n%.*s",
 				    (int)(eol - plain->buf), plain->buf);
-			if (file_diff->hunk_nr++)
+			if (file_diff->hunk_nr)
 				BUG("mode change in the middle?\n\n%.*s",
 				    (int)(eol - plain->buf), plain->buf);
 
@@ -520,9 +516,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			 * is _part of_ the header "hunk".
 			 */
 			file_diff->mode_change = 1;
-			ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr,
+			ALLOC_GROW_BY(file_diff->hunk, file_diff->hunk_nr, 1,
 				   file_diff->hunk_alloc);
-			memset(file_diff->hunk, 0, sizeof(struct hunk));
 			file_diff->hunk->start = p - plain->buf;
 			if (colored_p)
 				file_diff->hunk->colored_start =
