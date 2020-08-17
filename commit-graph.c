@@ -179,7 +179,14 @@ static char *get_chain_filename(struct object_directory *odb)
 
 static uint8_t oid_version(void)
 {
-	return 1;
+	switch (hash_algo_by_ptr(the_hash_algo)) {
+	case GIT_HASH_SHA1:
+		return 1;
+	case GIT_HASH_SHA256:
+		return 2;
+	default:
+		die(_("invalid hash version"));
+	}
 }
 
 static struct commit_graph *alloc_commit_graph(void)
