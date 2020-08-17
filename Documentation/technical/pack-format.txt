@@ -273,7 +273,12 @@ HEADER:
 	    Git only writes or recognizes version 1.
 
 	1-byte Object Id Version
-	    Git only writes or recognizes version 1 (SHA1).
+	    We infer the length of object IDs (OIDs) from this value:
+		1 => SHA-1
+		2 => SHA-256
+	    If the hash type does not match the repository's hash algorithm,
+	    the multi-pack-index file should be ignored with a warning
+	    presented to the user.
 
 	1-byte number of "chunks"
 
