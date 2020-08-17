@@ -247,6 +247,9 @@ contents:subject::
 	The first paragraph of the message, which typically is a
 	single line, is taken as the "subject" of the commit or the
 	tag message.
+	Instead of `contents:subject`, field `subject` can also be used to
+	obtain same results. `:sanitize` can be appended to `subject` for
+	subject line suitable for filename.
 
 contents:body::
 	The remainder of the commit or the tag message that follows
