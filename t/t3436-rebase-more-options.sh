@@ -108,6 +108,62 @@ test_expect_success '--committer-date-is-author-date works when committing confl
 	test_ctime_is_atime -1
 '
 
+# Checking for +0000 in the author date is sufficient since the
+# default timezone is UTC but the timezone used while committing is
+# +0530. The inverted logic in the grep is necessary to check all the
+# author dates in the file.
+test_atime_is_ignored () {
+	git log $1 --format=%ai >authortime &&
+	! grep -v +0000 authortime
+}
+
+test_expect_success '--ignore-date works with apply backend' '
+	git commit --amend --date="$GIT_AUTHOR_DATE" &&
+	git rebase --apply --ignore-date HEAD^ &&
+	test_atime_is_ignored -1
+'
+
+test_expect_success '--ignore-date works with merge backend' '
+	git commit --amend --date="$GIT_AUTHOR_DATE" &&
+	git rebase --ignore-date -m HEAD^ &&
+	test_atime_is_ignored -1
+'
+
+test_expect_success '--ignore-date works after conflict resolution' '
+	test_must_fail git rebase --ignore-date -m \
+		--onto commit2^^ commit2^ commit2 &&
+	echo resolved >foo &&
+	git add foo &&
+	git rebase --continue &&
+	test_atime_is_ignored -1
+'
+
+test_expect_success '--ignore-date works with rebase -r' '
+	git checkout side &&
+	git merge --no-ff commit3 &&
+	git rebase -r --root --ignore-date &&
+	test_atime_is_ignored
+'
+
+test_expect_success '--ignore-date with --committer-date-is-author-date works' '
+	test_must_fail git rebase -m --committer-date-is-author-date \
+		--ignore-date --onto commit2^^ commit2^ commit3 &&
+	git checkout --theirs foo &&
+	git add foo &&
+	git rebase --continue &&
+	test_ctime_is_atime -2 &&
+	test_atime_is_ignored -2
+'
+
+test_expect_success '--ignore-date --committer-date-is-author-date works when forking merge' '
+	GIT_SEQUENCE_EDITOR="echo \"merge -C $(git rev-parse HEAD) commit3\">" \
+		PATH="./test-bin:$PATH" git rebase -i --strategy=test \
+				--ignore-date --committer-date-is-author-date \
+				side side &&
+	test_ctime_is_atime -1 &&
+	test_atime_is_ignored -1
+ '
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged
