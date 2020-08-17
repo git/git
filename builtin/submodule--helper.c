@@ -2101,7 +2101,7 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 {
 	const struct submodule *sub;
 	const char *path;
-	char *cw;
+	const char *cw;
 	struct repository subrepo;
 
 	if (argc != 2)
@@ -2116,7 +2116,7 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 	if (repo_submodule_init(&subrepo, the_repository, sub))
 		die(_("could not get a repository handle for submodule '%s'"), path);
 
-	if (!repo_config_get_string(&subrepo, "core.worktree", &cw)) {
+	if (!repo_config_get_string_tmp(&subrepo, "core.worktree", &cw)) {
 		char *cfg_file, *abs_path;
 		const char *rel_path;
 		struct strbuf sb = STRBUF_INIT;
