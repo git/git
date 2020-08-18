@@ -214,7 +214,7 @@ test_expect_success 'fetching of missing objects works with ref-in-want enabled'
 	rm -rf repo/.git/objects/* &&
 	rm -f trace &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C repo cat-file -p "$HASH" &&
-	grep "git< fetch=.*ref-in-want" trace
+	grep "fetch< fetch=.*ref-in-want" trace
 '
 
 test_expect_success 'fetching of missing objects from another promisor remote' '
