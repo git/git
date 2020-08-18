@@ -2142,4 +2142,33 @@ test_expect_success $PREREQ 'test that send-email works outside a repo' '
 		"$(pwd)/0001-add-master.patch"
 '
 
+test_expect_success $PREREQ 'test that sendmail config is rejected' '
+	test_config sendmail.program sendmail &&
+	test_must_fail git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^ 2>err &&
+	test_i18ngrep "found configuration options for '"'"sendmail"'"'" err
+'
+
+test_expect_success $PREREQ 'test that sendmail config rejection is specific' '
+	test_config resendmail.program sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^
+'
+
+test_expect_success $PREREQ 'test forbidSendmailVariables behavior override' '
+	test_config sendmail.program sendmail &&
+	test_config sendemail.forbidSendmailVariables false &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^
+'
+
 test_done

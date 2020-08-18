@@ -723,6 +723,32 @@ sub config_int {
 	return scalar _config_common({'kind' => '--int'}, @_);
 }
 
+=item config_regexp ( RE )
+
+Retrieve the list of configuration key names matching the regular
+expression C<RE>. The return value is a list of strings matching
+this regex.
+
+=cut
+
+sub config_regexp {
+	my ($self, $regex) = _maybe_self(@_);
+	try {
+		my @cmd = ('config', '--name-only', '--get-regexp', $regex);
+		unshift @cmd, $self if $self;
+		my @matches = command(@cmd);
+		return @matches;
+	} catch Git::Error::Command with {
+		my $E = shift;
+		if ($E->value() == 1) {
+			my @matches = ();
+			return @matches;
+		} else {
+			throw $E;
+		}
+	};
+}
+
 # Common subroutine to implement bulk of what the config* family of methods
 # do. This currently wraps command('config') so it is not so fast.
 sub _config_common {
