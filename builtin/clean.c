@@ -667,7 +667,7 @@ static int filter_by_patterns_cmd(void)
 		if (!confirm.len)
 			break;
 
-		memset(&dir, 0, sizeof(dir));
+		dir_init(&dir);
 		pl = add_pattern_list(&dir, EXC_CMDL, "manual exclude");
 		ignore_list = strbuf_split_max(&confirm, ' ', 0);
 
@@ -698,7 +698,7 @@ static int filter_by_patterns_cmd(void)
 		}
 
 		strbuf_list_free(ignore_list);
-		clear_directory(&dir);
+		dir_clear(&dir);
 	}
 
 	strbuf_release(&confirm);
@@ -923,7 +923,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, builtin_clean_usage,
 			     0);
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	if (!interactive && !dry_run && !force) {
 		if (config_set)
 			die(_("clean.requireForce set to true and neither -i, -n, nor -f given; "
@@ -1021,7 +1021,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		string_list_append(&del_list, rel);
 	}
 
-	clear_directory(&dir);
+	dir_clear(&dir);
 
 	if (interactive && del_list.nr > 0)
 		interactive_main_loop();
