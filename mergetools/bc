@@ -21,3 +21,8 @@ translate_merge_tool_path() {
 		echo bcompare
 	fi
 }
+
+list_tool_variants () {
+	echo bc
+	echo bc3
+}
