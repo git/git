@@ -807,11 +807,9 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	int result = 0;
 
 	midx_name = get_midx_filename(object_dir);
-	if (safe_create_leading_directories(midx_name)) {
-		UNLEAK(midx_name);
+	if (safe_create_leading_directories(midx_name))
 		die_errno(_("unable to create leading directories of %s"),
 			  midx_name);
-	}
 
 	if (m)
 		packs.m = m;
@@ -1051,10 +1049,8 @@ void clear_midx_file(struct repository *r)
 		r->objects->multi_pack_index = NULL;
 	}
 
-	if (remove_path(midx)) {
-		UNLEAK(midx);
+	if (remove_path(midx))
 		die(_("failed to clear multi-pack-index at %s"), midx);
-	}
 
 	free(midx);
 }
