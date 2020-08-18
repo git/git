@@ -707,6 +707,7 @@ static const char * const builtin_maintenance_usage[] = {
 
 struct maintenance_opts {
 	int auto_flag;
+	int quiet;
 };
 
 static int maintenance_task_gc(struct maintenance_opts *opts)
@@ -718,6 +719,10 @@ static int maintenance_task_gc(struct maintenance_opts *opts)
 
 	if (opts->auto_flag)
 		strvec_push(&child.args, "--auto");
+	if (opts->quiet)
+		strvec_push(&child.args, "--quiet");
+	else
+		strvec_push(&child.args, "--no-quiet");
 
 	close_object_store(the_repository->objects);
 	return run_command(&child);
@@ -734,6 +739,8 @@ int cmd_maintenance(int argc, const char **argv, const char *prefix)
 	struct option builtin_maintenance_options[] = {
 		OPT_BOOL(0, "auto", &opts.auto_flag,
 			 N_("run tasks based on the state of the repository")),
+		OPT_BOOL(0, "quiet", &opts.quiet,
+			 N_("do not report progress or other information over stderr")),
 		OPT_END()
 	};
 
@@ -742,6 +749,8 @@ int cmd_maintenance(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_maintenance_usage,
 				   builtin_maintenance_options);
+
+	opts.quiet = !isatty(2);
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_maintenance_options,
