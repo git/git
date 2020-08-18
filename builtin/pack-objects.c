@@ -3357,7 +3357,7 @@ static void get_object_list(int ac, const char **av)
 			if (starts_with(line, "--shallow ")) {
 				struct object_id oid;
 				if (get_oid_hex(line + 10, &oid))
-					die("not an SHA-1 '%s'", line + 10);
+					die("not an object name '%s'", line + 10);
 				register_shallow(the_repository, &oid);
 				use_bitmap_index = 0;
 				continue;
