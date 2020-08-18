@@ -1021,11 +1021,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		string_list_append(&del_list, rel);
 	}
 
-	for (i = 0; i < dir.nr; i++)
-		free(dir.entries[i]);
-
-	for (i = 0; i < dir.ignored_nr; i++)
-		free(dir.ignored[i]);
+	clear_directory(&dir);
 
 	if (interactive && del_list.nr > 0)
 		interactive_main_loop();
