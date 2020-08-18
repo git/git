@@ -7,6 +7,7 @@ test_description='reference transaction hooks'
 test_expect_success setup '
 	mkdir -p .git/hooks &&
 	test_commit PRE &&
+	PRE_OID=$(git rev-parse PRE) &&
 	test_commit POST &&
 	POST_OID=$(git rev-parse POST)
 '
@@ -104,6 +105,32 @@ test_expect_success 'hook gets all queued updates in aborted state' '
 		abort
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success 'interleaving hook calls succeed' '
+	test_when_finished "rm -r target-repo.git" &&
+
+	git init --bare target-repo.git &&
+
+	write_script target-repo.git/hooks/reference-transaction <<-\EOF &&
+		echo $0 "$@" >>actual
+	EOF
+
+	write_script target-repo.git/hooks/update <<-\EOF &&
+		echo $0 "$@" >>actual
+	EOF
+
+	cat >expect <<-EOF &&
+		hooks/update refs/tags/PRE $ZERO_OID $PRE_OID
+		hooks/reference-transaction prepared
+		hooks/reference-transaction committed
+		hooks/update refs/tags/POST $ZERO_OID $POST_OID
+		hooks/reference-transaction prepared
+		hooks/reference-transaction committed
+	EOF
+
+	git push ./target-repo.git PRE POST &&
+	test_cmp expect target-repo.git/actual
 '
 
 test_done
