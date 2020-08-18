@@ -190,11 +190,11 @@ struct rev_info {
 			show_root_diff:1,
 			no_commit_id:1,
 			verbose_header:1,
-			ignore_merges:1,
 			combine_merges:1,
 			combined_all_paths:1,
 			dense_combined_merges:1,
 			always_show_header:1;
+	int             ignore_merges:2;
 
 	/* Format info */
 	int		show_notes;
