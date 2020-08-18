@@ -7,6 +7,10 @@ test_description='Summary support for submodules
 
 This test tries to verify the sanity of summary subcommand of git submodule.
 '
+# NOTE: This test script uses 'git add' instead of 'git submodule add' to add
+# submodules to the superproject. Some submodule subcommands such as init and
+# deinit might not work as expected in this script. t7421 does not have this
+# caveat.
 
 . ./test-lib.sh
 
