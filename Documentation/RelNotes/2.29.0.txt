@@ -19,6 +19,20 @@ UI, Workflows & Features
    configurable to selectively allow or reject object filtering
    specification used for partial cloning.
 
+ * Stop when "sendmail.*" configuration variables are defined, which
+   could be a mistaken attempt to define "sendemail.*" variables.
+
+ * The existing backends for "git mergetool" based on variants of vim
+   have been refactored and then support for "nvim" has been added.
+
+ * "git bisect" learns the "--first-parent" option to find the first
+   breakage along the first-parent chain.
+
+ * "git log --first-parent -p" showed patches only for single-parent
+   commits on the first-parent chain; the "--first-parent" option has
+   been made to imply "-m".  Use "--no-diff-merges" to restore the
+   previous behaviour to omit patches for merge commits.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -59,6 +73,14 @@ Performance, Internal Implementation, Development Support etc.
  * A new helper function has_object() has been introduced to make it
    easier to mark object existence checks that do and don't want to
    trigger lazy fetches, and a few such checks are converted using it.
+
+ * A no-op replacement function implemented as a C preprocessor macro
+   does not perform as good a job as one implemented as a "static
+   inline" function in catching errors in parameters; replace the
+   former with the latter in <git-compat-util.h> header.
+
+ * Test framework update.
+   (merge d572f52a64 es/test-cmp-typocatcher later to maint).
 
 
 Fixes since v2.28
@@ -110,6 +132,19 @@ Fixes since v2.28
    it is.
    (merge 11bc12ae1e rp/blame-first-parent-doc later to maint).
 
+ * The logic to find the ref transaction hook script attempted to
+   cache the path to the found hook without realizing that it needed
+   to keep a copied value, as the API it used returned a transitory
+   buffer space.  This has been corrected.
+   (merge 09b2aa30c9 ps/ref-transaction-hook later to maint).
+
+ * Recent versions of "git diff-files" shows a diff between the index
+   and the working tree for "intent-to-add" paths as a "new file"
+   patch; "git apply --cached" should be able to take "git diff-files"
+   and should act as an equivalent to "git add" for the path, but the
+   command failed to do so for such a path.
+   (merge 4c025c667e rp/apply-cached-with-i-t-a later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -124,3 +159,4 @@ Fixes since v2.28
    (merge de20baf2c9 ny/notes-doc-sample-update later to maint).
    (merge f649aaaf82 so/rev-parser-errormessage-fix later to maint).
    (merge 6103d58b7f bc/sha-256-cvs-svn-updates later to maint).
+   (merge ac900fddb7 ma/stop-progress-null-fix later to maint).
