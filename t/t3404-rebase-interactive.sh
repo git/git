@@ -1791,6 +1791,12 @@ test_expect_success 'correct error message for commit --amend after empty pick' 
 	test_i18ngrep "middle of a rebase -- cannot amend." err
 '
 
+test_expect_success 'todo has correct onto hash' '
+	GIT_SEQUENCE_EDITOR=cat git rebase -i no-conflict-branch~4 no-conflict-branch >actual &&
+	onto=$(git rev-parse --short HEAD~4) &&
+	test_i18ngrep "^# Rebase ..* onto $onto" actual
+'
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged
