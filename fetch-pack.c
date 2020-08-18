@@ -108,24 +108,48 @@ static void for_each_cached_alternate(struct fetch_negotiator *negotiator,
 		cb(negotiator, cache.items[i]);
 }
 
+static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
+					       int mark_tags_complete)
+{
+	enum object_type type;
+	struct object_info info = { .typep = &type };
+
+	while (1) {
+		if (oid_object_info_extended(the_repository, oid, &info,
+					     OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK))
+			return NULL;
+		if (type == OBJ_TAG) {
+			struct tag *tag = (struct tag *)
+				parse_object(the_repository, oid);
+
+			if (!tag->tagged)
+				return NULL;
+			if (mark_tags_complete)
+				tag->object.flags |= COMPLETE;
+			oid = &tag->tagged->oid;
+		} else {
+			break;
+		}
+	}
+	if (type == OBJ_COMMIT)
+		return (struct commit *) parse_object(the_repository, oid);
+	return NULL;
+}
+
 static int rev_list_insert_ref(struct fetch_negotiator *negotiator,
-			       const char *refname,
 			       const struct object_id *oid)
 {
-	struct object *o = deref_tag(the_repository,
-				     parse_object(the_repository, oid),
-				     refname, 0);
+	struct commit *c = deref_without_lazy_fetch(oid, 0);
 
-	if (o && o->type == OBJ_COMMIT)
-		negotiator->add_tip(negotiator, (struct commit *)o);
-
+	if (c)
+		negotiator->add_tip(negotiator, c);
 	return 0;
 }
 
 static int rev_list_insert_ref_oid(const char *refname, const struct object_id *oid,
 				   int flag, void *cb_data)
 {
-	return rev_list_insert_ref(cb_data, refname, oid);
+	return rev_list_insert_ref(cb_data, oid);
 }
 
 enum ack_type {
@@ -201,7 +225,7 @@ static void send_request(struct fetch_pack_args *args,
 static void insert_one_alternate_object(struct fetch_negotiator *negotiator,
 					struct object *obj)
 {
-	rev_list_insert_ref(negotiator, NULL, &obj->oid);
+	rev_list_insert_ref(negotiator, &obj->oid);
 }
 
 #define INITIAL_FLUSH 16
@@ -230,13 +254,12 @@ static void mark_tips(struct fetch_negotiator *negotiator,
 	int i;
 
 	if (!negotiation_tips) {
-		for_each_ref(rev_list_insert_ref_oid, negotiator);
+		for_each_rawref(rev_list_insert_ref_oid, negotiator);
 		return;
 	}
 
 	for (i = 0; i < negotiation_tips->nr; i++)
-		rev_list_insert_ref(negotiator, NULL,
-				    &negotiation_tips->oid[i]);
+		rev_list_insert_ref(negotiator, &negotiation_tips->oid[i]);
 	return;
 }
 
@@ -503,21 +526,11 @@ static struct commit_list *complete;
 
 static int mark_complete(const struct object_id *oid)
 {
-	struct object *o = parse_object(the_repository, oid);
+	struct commit *commit = deref_without_lazy_fetch(oid, 1);
 
-	while (o && o->type == OBJ_TAG) {
-		struct tag *t = (struct tag *) o;
-		if (!t->tagged)
-			break; /* broken repository */
-		o->flags |= COMPLETE;
-		o = parse_object(the_repository, &t->tagged->oid);
-	}
-	if (o && o->type == OBJ_COMMIT) {
-		struct commit *commit = (struct commit *)o;
-		if (!(commit->object.flags & COMPLETE)) {
-			commit->object.flags |= COMPLETE;
-			commit_list_insert(commit, &complete);
-		}
+	if (commit && !(commit->object.flags & COMPLETE)) {
+		commit->object.flags |= COMPLETE;
+		commit_list_insert(commit, &complete);
 	}
 	return 0;
 }
@@ -702,7 +715,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	 */
 	trace2_region_enter("fetch-pack", "mark_complete_local_refs", NULL);
 	if (!args->deepen) {
-		for_each_ref(mark_complete_oid, NULL);
+		for_each_rawref(mark_complete_oid, NULL);
 		for_each_cached_alternate(NULL, mark_alternate_complete);
 		commit_list_sort_by_date(&complete);
 		if (cutoff)
@@ -716,16 +729,12 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	 */
 	trace2_region_enter("fetch-pack", "mark_common_remote_refs", NULL);
 	for (ref = *refs; ref; ref = ref->next) {
-		struct object *o = deref_tag(the_repository,
-					     lookup_object(the_repository,
-					     &ref->old_oid),
-					     NULL, 0);
+		struct commit *c = deref_without_lazy_fetch(&ref->old_oid, 0);
 
-		if (!o || o->type != OBJ_COMMIT || !(o->flags & COMPLETE))
+		if (!c || !(c->object.flags & COMPLETE))
 			continue;
 
-		negotiator->known_common(negotiator,
-					 (struct commit *)o);
+		negotiator->known_common(negotiator, c);
 	}
 	trace2_region_leave("fetch-pack", "mark_common_remote_refs", NULL);
 
