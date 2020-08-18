@@ -193,16 +193,6 @@ mark_action_done () {
 	fi
 }
 
-# Put the last action marked done at the beginning of the todo list
-# again. If there has not been an action marked done yet, leave the list of
-# items on the todo list unchanged.
-reschedule_last_action () {
-	tail -n 1 "$done" | cat - "$todo" >"$todo".new
-	sed -e \$d <"$done" >"$done".new
-	mv -f "$todo".new "$todo"
-	mv -f "$done".new "$done"
-}
-
 append_todo_help () {
 	gettext "
 Commands:
