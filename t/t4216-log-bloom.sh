@@ -30,12 +30,17 @@ test_expect_success 'setup test - repo, commits, commit graph, log outputs' '
 	rm file_to_be_deleted &&
 	git add . &&
 	git commit -m "file removed" &&
-	git commit-graph write --reachable --changed-paths
+	git commit-graph write --reachable --changed-paths &&
+
+	test_oid_cache <<-EOF
+	oid_version sha1:1
+	oid_version sha256:2
+	EOF
 '
 graph_read_expect () {
 	NUM_CHUNKS=5
 	cat >expect <<- EOF
-	header: 43475048 1 1 $NUM_CHUNKS 0
+	header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
 	num_commits: $1
 	chunks: oid_fanout oid_lookup commit_metadata bloom_indexes bloom_data
 	EOF

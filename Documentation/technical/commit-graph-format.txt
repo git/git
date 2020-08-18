@@ -42,8 +42,13 @@ HEADER:
   1-byte version number:
       Currently, the only valid version is 1.
 
-  1-byte Hash Version (1 = SHA-1)
-      We infer the hash length (H) from this value.
+  1-byte Hash Version
+      We infer the hash length (H) from this value:
+	1 => SHA-1
+	2 => SHA-256
+      If the hash type does not match the repository's hash algorithm, the
+      commit-graph file should be ignored with a warning presented to the
+      user.
 
   1-byte number (C) of "chunks"
 

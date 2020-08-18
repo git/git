@@ -5,6 +5,8 @@ test_description='multi-pack-indexes'
 
 objdir=.git/objects
 
+HASH_LEN=$(test_oid rawsz)
+
 midx_read_expect () {
 	NUM_PACKS=$1
 	NUM_OBJECTS=$2
@@ -13,7 +15,7 @@ midx_read_expect () {
 	EXTRA_CHUNKS="$5"
 	{
 		cat <<-EOF &&
-		header: 4d494458 1 $NUM_CHUNKS $NUM_PACKS
+		header: 4d494458 1 $HASH_LEN $NUM_CHUNKS $NUM_PACKS
 		chunks: pack-names oid-fanout oid-lookup object-offsets$EXTRA_CHUNKS
 		num_objects: $NUM_OBJECTS
 		packs:
@@ -46,7 +48,7 @@ test_expect_success "don't write midx with no packs" '
 	test_path_is_missing pack/multi-pack-index
 '
 
-test_expect_success "Warn if a midx contains no oid" '
+test_expect_success SHA1 'warn if a midx contains no oid' '
 	cp "$TEST_DIRECTORY"/t5319/no-objects.midx $objdir/pack/multi-pack-index &&
 	test_must_fail git multi-pack-index verify &&
 	rm $objdir/pack/multi-pack-index
@@ -198,6 +200,40 @@ test_expect_success 'write midx with twelve packs' '
 
 compare_results_with_midx "twelve packs"
 
+test_expect_success 'warn on improper hash version' '
+	git init --object-format=sha1 sha1 &&
+	(
+		cd sha1 &&
+		git config core.multiPackIndex true &&
+		test_commit 1 &&
+		git repack -a &&
+		git multi-pack-index write &&
+		mv .git/objects/pack/multi-pack-index ../mpi-sha1
+	) &&
+	git init --object-format=sha256 sha256 &&
+	(
+		cd sha256 &&
+		git config core.multiPackIndex true &&
+		test_commit 1 &&
+		git repack -a &&
+		git multi-pack-index write &&
+		mv .git/objects/pack/multi-pack-index ../mpi-sha256
+	) &&
+	(
+		cd sha1 &&
+		mv ../mpi-sha256 .git/objects/pack/multi-pack-index &&
+		git log -1 2>err &&
+		test_i18ngrep "multi-pack-index hash version 2 does not match version 1" err
+	) &&
+	(
+		cd sha256 &&
+		mv ../mpi-sha1 .git/objects/pack/multi-pack-index &&
+		git log -1 2>err &&
+		test_i18ngrep "multi-pack-index hash version 1 does not match version 2" err
+	)
+'
+
+
 test_expect_success 'verify multi-pack-index success' '
 	git multi-pack-index verify --object-dir=$objdir
 '
@@ -243,7 +279,6 @@ test_expect_success 'verify bad signature' '
 		"multi-pack-index signature"
 '
 
-HASH_LEN=$(test_oid rawsz)
 NUM_OBJECTS=74
 MIDX_BYTE_VERSION=4
 MIDX_BYTE_OID_VERSION=5
@@ -272,7 +307,7 @@ test_expect_success 'verify bad version' '
 '
 
 test_expect_success 'verify bad OID version' '
-	corrupt_midx_and_verify $MIDX_BYTE_OID_VERSION "\02" $objdir \
+	corrupt_midx_and_verify $MIDX_BYTE_OID_VERSION "\03" $objdir \
 		"hash version"
 '
 

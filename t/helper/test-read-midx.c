@@ -7,14 +7,18 @@
 static int read_midx_file(const char *object_dir)
 {
 	uint32_t i;
-	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	struct multi_pack_index *m;
+
+	setup_git_directory();
+	m = load_multi_pack_index(object_dir, 1);
 
 	if (!m)
 		return 1;
 
-	printf("header: %08x %d %d %d\n",
+	printf("header: %08x %d %d %d %d\n",
 	       m->signature,
 	       m->version,
+	       m->hash_len,
 	       m->num_chunks,
 	       m->num_packs);
 
