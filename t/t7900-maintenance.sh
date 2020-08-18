@@ -220,4 +220,35 @@ test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
 		 --no-progress --batch-size=2147483647 <run-2g.txt
 '
 
+test_expect_success 'maintenance.incremental-repack.auto' '
+	git repack -adk &&
+	git config core.multiPackIndex true &&
+	git multi-pack-index write &&
+	GIT_TRACE2_EVENT="$(pwd)/midx-init.txt" git \
+		-c maintenance.incremental-repack.auto=1 \
+		maintenance run --auto --task=incremental-repack 2>/dev/null &&
+	test_subcommand ! git multi-pack-index write --no-progress <midx-init.txt &&
+	for i in 1 2
+	do
+		test_commit A-$i &&
+		git pack-objects --revs .git/objects/pack/pack <<-\EOF &&
+		HEAD
+		^HEAD~1
+		EOF
+		GIT_TRACE2_EVENT=$(pwd)/trace-A-$i git \
+			-c maintenance.incremental-repack.auto=2 \
+			maintenance run --auto --task=incremental-repack 2>/dev/null &&
+		test_subcommand ! git multi-pack-index write --no-progress <trace-A-$i &&
+		test_commit B-$i &&
+		git pack-objects --revs .git/objects/pack/pack <<-\EOF &&
+		HEAD
+		^HEAD~1
+		EOF
+		GIT_TRACE2_EVENT=$(pwd)/trace-B-$i git \
+			-c maintenance.incremental-repack.auto=2 \
+			maintenance run --auto --task=incremental-repack 2>/dev/null &&
+		test_subcommand git multi-pack-index write --no-progress <trace-B-$i || return 1
+	done
+'
+
 test_done
