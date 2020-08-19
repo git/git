@@ -457,7 +457,7 @@ test_expect_success 'handle rename-with-content-merge vs. add' '
 		git checkout A^0 &&
 
 		test_must_fail git merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/add)" out &&
+		test_i18ngrep "CONFLICT (.*/add)" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 2 out &&
@@ -503,7 +503,7 @@ test_expect_success 'handle rename-with-content-merge vs. add, merge other way' 
 		git checkout B^0 &&
 
 		test_must_fail git merge -s recursive A^0 >out &&
-		test_i18ngrep "CONFLICT (rename/add)" out &&
+		test_i18ngrep "CONFLICT (.*/add)" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 2 out &&
@@ -583,7 +583,7 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 		git checkout B^0 &&
 
 		test_must_fail git merge -s recursive C^0 >out &&
-		test_i18ngrep "CONFLICT (rename/rename)" out &&
+		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 2 out &&
@@ -886,12 +886,17 @@ test_expect_failure 'rad-check: rename/add/delete conflict' '
 		git checkout B^0 &&
 		test_must_fail git merge -s recursive A^0 >out 2>err &&
 
-		# Not sure whether the output should contain just one
-		# "CONFLICT (rename/add/delete)" line, or if it should break
-		# it into a pair of "CONFLICT (rename/delete)" and
-		# "CONFLICT (rename/add)"; allow for either.
-		test_i18ngrep "CONFLICT (rename.*add)" out &&
-		test_i18ngrep "CONFLICT (rename.*delete)" out &&
+		# Instead of requiring the output to contain one combined line
+		#   CONFLICT (rename/add/delete)
+		# or perhaps two lines:
+		#   CONFLICT (rename/add): new file collides with rename target
+		#   CONFLICT (rename/delete): rename source removed on other side
+		# and instead of requiring "rename/add" instead of "add/add",
+		# be flexible in the type of console output message(s) reported
+		# for this particular case; we will be more stringent about the
+		# contents of the index and working directory.
+		test_i18ngrep "CONFLICT (.*/add)" out &&
+		test_i18ngrep "CONFLICT (rename.*/delete)" out &&
 		test_must_be_empty err &&
 
 		git ls-files -s >file_count &&
@@ -899,14 +904,14 @@ test_expect_failure 'rad-check: rename/add/delete conflict' '
 		git ls-files -u >file_count &&
 		test_line_count = 2 file_count &&
 		git ls-files -o >file_count &&
-		test_line_count = 2 file_count &&
+		test_line_count = 3 file_count &&
 
 		git rev-parse >actual \
 			:2:bar :3:bar &&
 		git rev-parse >expect \
 			B:bar  A:bar  &&
 
-		test_cmp file_is_missing foo &&
+		test_path_is_missing foo &&
 		# bar should have two-way merged contents of the different
 		# versions of bar; check that content from both sides is
 		# present.
@@ -954,11 +959,17 @@ test_expect_failure 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 		git checkout A^0 &&
 		test_must_fail git merge -s recursive B^0 >out 2>err &&
 
-		# Not sure whether the output should contain just one
-		# "CONFLICT (rename/rename/delete/delete)" line, or if it
-		# should break it into three: "CONFLICT (rename/rename)" and
-		# two "CONFLICT (rename/delete)" lines; allow for either.
-		test_i18ngrep "CONFLICT (rename/rename)" out &&
+		# Instead of requiring the output to contain one combined line
+		#   CONFLICT (rename/rename/delete/delete)
+		# or perhaps two lines:
+		#   CONFLICT (rename/rename): ...
+		#   CONFLICT (rename/delete): info about pair 1
+		#   CONFLICT (rename/delete): info about pair 2
+		# and instead of requiring "rename/rename" instead of "add/add",
+		# be flexible in the type of console output message(s) reported
+		# for this particular case; we will be more stringent about the
+		# contents of the index and working directory.
+		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
 		test_i18ngrep "CONFLICT (rename.*delete)" out &&
 		test_must_be_empty err &&
 
@@ -967,15 +978,15 @@ test_expect_failure 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 		git ls-files -u >file_count &&
 		test_line_count = 2 file_count &&
 		git ls-files -o >file_count &&
-		test_line_count = 2 file_count &&
+		test_line_count = 3 file_count &&
 
 		git rev-parse >actual \
 			:2:baz :3:baz &&
 		git rev-parse >expect \
 			O:foo  O:bar  &&
 
-		test_cmp file_is_missing foo &&
-		test_cmp file_is_missing bar &&
+		test_path_is_missing foo &&
+		test_path_is_missing bar &&
 		# baz should have two-way merged contents of the original
 		# contents of foo and bar; check that content from both sides
 		# is present.
@@ -1042,25 +1053,25 @@ test_expect_failure 'mod6-check: chains of rename/rename(1to2) and rename/rename
 		test_must_be_empty err &&
 
 		git ls-files -s >file_count &&
-		test_line_count = 6 file_count &&
+		test_line_count = 9 file_count &&
 		git ls-files -u >file_count &&
-		test_line_count = 6 file_count &&
+		test_line_count = 9 file_count &&
 		git ls-files -o >file_count &&
 		test_line_count = 3 file_count &&
 
 		test_seq 10 20 >merged-one &&
 		test_seq 51 60 >merged-five &&
 		# Determine what the merge of three would give us.
-		test_seq 30 40 >three-side-A &&
+		test_seq 31 39 >three-base &&
+		test_seq 31 40 >three-side-A &&
 		test_seq 31 39 >three-side-B &&
-		echo forty >three-side-B &&
-		>empty &&
+		echo forty >>three-side-B &&
 		test_must_fail git merge-file \
-			-L "HEAD" \
+			-L "HEAD:four" \
 			-L "" \
-			-L "B^0" \
-			three-side-A empty three-side-B &&
-		sed -e "s/^\([<=>]\)/\1\1\1/" three-side-A >merged-three &&
+			-L "B^0:two" \
+			three-side-A three-base three-side-B &&
+		sed -e "s/^\([<=>]\)/\1\1/" three-side-A >merged-three &&
 
 		# Verify the index is as expected
 		git rev-parse >actual         \
@@ -1075,6 +1086,7 @@ test_expect_failure 'mod6-check: chains of rename/rename(1to2) and rename/rename
 
 		git cat-file -p :2:two >expect &&
 		git cat-file -p :3:two >other &&
+		>empty &&
 		test_must_fail git merge-file    \
 			-L "HEAD"  -L ""  -L "B^0" \
 			expect     empty  other &&

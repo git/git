@@ -197,7 +197,8 @@ test_expect_success 'Test delete/normalize conflict' '
 	git commit -m "remove file" &&
 	git checkout master &&
 	git reset --hard a^ &&
-	git merge side
+	git merge side &&
+	test_path_is_missing file
 '
 
 test_done
