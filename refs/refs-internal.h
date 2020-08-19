@@ -672,6 +672,9 @@ extern struct ref_storage_be refs_be_packed;
 struct ref_store {
 	/* The backend describing this ref_store's storage scheme: */
 	const struct ref_storage_be *be;
+
+	/* The gitdir that this ref_store applies to: */
+	char *gitdir;
 };
 
 /*
