@@ -17,7 +17,6 @@
 #define MIDX_BYTE_HASH_VERSION 5
 #define MIDX_BYTE_NUM_CHUNKS 6
 #define MIDX_BYTE_NUM_PACKS 8
-#define MIDX_HASH_VERSION 1
 #define MIDX_HEADER_SIZE 12
 #define MIDX_MIN_SIZE (MIDX_HEADER_SIZE + the_hash_algo->rawsz)
 
@@ -35,6 +34,18 @@
 #define MIDX_LARGE_OFFSET_NEEDED 0x80000000
 
 #define PACK_EXPIRED UINT_MAX
+
+static uint8_t oid_version(void)
+{
+	switch (hash_algo_by_ptr(the_hash_algo)) {
+	case GIT_HASH_SHA1:
+		return 1;
+	case GIT_HASH_SHA256:
+		return 2;
+	default:
+		die(_("invalid hash version"));
+	}
+}
 
 static char *get_midx_filename(const char *object_dir)
 {
@@ -90,8 +101,11 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 		      m->version);
 
 	hash_version = m->data[MIDX_BYTE_HASH_VERSION];
-	if (hash_version != MIDX_HASH_VERSION)
-		die(_("hash version %u does not match"), hash_version);
+	if (hash_version != oid_version()) {
+		error(_("multi-pack-index hash version %u does not match version %u"),
+		      hash_version, oid_version());
+		goto cleanup_fail;
+	}
 	m->hash_len = the_hash_algo->rawsz;
 
 	m->num_chunks = m->data[MIDX_BYTE_NUM_CHUNKS];
@@ -418,7 +432,7 @@ static size_t write_midx_header(struct hashfile *f,
 
 	hashwrite_be32(f, MIDX_SIGNATURE);
 	byte_values[0] = MIDX_VERSION;
-	byte_values[1] = MIDX_HASH_VERSION;
+	byte_values[1] = oid_version();
 	byte_values[2] = num_chunks;
 	byte_values[3] = 0; /* unused */
 	hashwrite(f, byte_values, sizeof(byte_values));
@@ -1105,8 +1119,17 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
 	verify_midx_error = 0;
 
-	if (!m)
-		return 0;
+	if (!m) {
+		int result = 0;
+		struct stat sb;
+		char *filename = get_midx_filename(object_dir);
+		if (!stat(filename, &sb)) {
+			error(_("multi-pack-index file exists, but failed to parse"));
+			result = 1;
+		}
+		free(filename);
+		return result;
+	}
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_progress(_("Looking for referenced packfiles"),
