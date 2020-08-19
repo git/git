@@ -256,7 +256,7 @@ test_expect_success 'stop on conflicting pick' '
 	D
 	=======
 	G
-	>>>>>>> $commit... G
+	>>>>>>> $commit (G)
 	EOF
 	git tag new-branch1 &&
 	test_must_fail git rebase -i master &&
