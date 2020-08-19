@@ -33,6 +33,10 @@ UI, Workflows & Features
    been made to imply "-m".  Use "--no-diff-merges" to restore the
    previous behaviour to omit patches for merge commits.
 
+ * The commit labels used to explain each side of conflicted hunks
+   placed by the sequencer machinery have been made more readable by
+   humans.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -66,7 +70,9 @@ Performance, Internal Implementation, Development Support etc.
    to a certain degree.  It has been renamed to "strvec" to reduce the
    barrier to adoption.
 
- * The final leg of SHA-256 transition.
+ * The final leg of SHA-256 transition plus doc updates.  Note that
+   there is no inter-operability between SHA-1 and SHA-256
+   repositories yet.
 
  * CMake support to build with MSVC for Windows bypassing the Makefile.
 
@@ -81,6 +87,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Test framework update.
    (merge d572f52a64 es/test-cmp-typocatcher later to maint).
+
+ * Updates to "git merge" tests, in preparation for a new merge
+   strategy backend.
+
+ * midx and commit-graph files now use the byte defined in their file
+   format specification for identifying the hash function used for
+   object names.
 
 
 Fixes since v2.28
@@ -145,6 +158,31 @@ Fixes since v2.28
    command failed to do so for such a path.
    (merge 4c025c667e rp/apply-cached-with-i-t-a later to maint).
 
+ * "git diff [<tree-ish>] $path" for a $path that is marked with i-t-a
+   bit was not showing the mode bits from the working tree.
+   (merge cb0dd22b82 rp/ita-diff-modefix later to maint).
+
+ * Ring buffer with size 4 used for bin-hex translation resulted in a
+   wrong object name in the sequencer's todo output, which has been
+   corrected.
+   (merge 5da69c0dac ak/sequencer-fix-find-uniq-abbrev later to maint).
+
+ * When given more than one target line ranges, "git blame -La,b
+   -Lc,d" was over-eager to coalesce groups of original lines and
+   showed incorrect results, which has been corrected.
+   (merge c2ebaa27d6 jk/blame-coalesce-fix later to maint).
+
+ * The regexp to identify the function boundary for FORTRAN programs
+   has been updated.
+   (merge 75c3b6b2e8 pb/userdiff-fortran-update later to maint).
+
+ * A few end-user facing messages have been updated to be
+   hash-algorithm agnostic.
+   (merge 4279000d3e jc/object-names-are-not-sha-1 later to maint).
+
+ * "unlink" emulation on MinGW has been optimized.
+   (merge 680e0b4524 jh/mingw-unlink later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -160,3 +198,7 @@ Fixes since v2.28
    (merge f649aaaf82 so/rev-parser-errormessage-fix later to maint).
    (merge 6103d58b7f bc/sha-256-cvs-svn-updates later to maint).
    (merge ac900fddb7 ma/stop-progress-null-fix later to maint).
+   (merge e767963ab6 rs/upload-pack-sigchain-fix later to maint).
+   (merge a831908599 rs/preserve-merges-unused-code-removal later to maint).
+   (merge 6dfefe70a9 jb/commit-graph-doc-fix later to maint).
+   (merge 847b37271e pb/set-url-docfix later to maint).
