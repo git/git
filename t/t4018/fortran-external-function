@@ -1,0 +1,9 @@
+function RIGHT(a, b) result(c)
+
+integer, intent(in) :: ChangeMe
+integer, intent(in) :: b
+integer, intent(out) :: c
+
+c = a+b
+
+end function RIGHT
