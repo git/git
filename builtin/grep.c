@@ -693,7 +693,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 	struct dir_struct dir;
 	int i, hit = 0;
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	if (!use_index)
 		dir.flags |= DIR_NO_GITLINKS;
 	if (exc_std)
@@ -705,6 +705,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 		if (hit && opt->status_only)
 			break;
 	}
+	dir_clear(&dir);
 	return hit;
 }
 
