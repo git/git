@@ -739,7 +739,6 @@ static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
 	return 0;
 
 error:
-	sigchain_pop(SIGPIPE);
 	if (cmd.out >= 0)
 		close(cmd.out);
 	return 1;
