@@ -21,7 +21,7 @@ add_file () {
 		test_tick &&
 		git commit -m "Add $name"
 	done >/dev/null
-	git rev-parse --verify HEAD | cut -c1-7
+	git rev-parse --short HEAD
 	cd "$owd"
 }
 commit_file () {
@@ -125,7 +125,7 @@ commit_file sm1 &&
 head3=$(
 	cd sm1 &&
 	git reset --hard HEAD~2 >/dev/null &&
-	git rev-parse --verify HEAD | cut -c1-7
+	git rev-parse --short HEAD
 )
 
 test_expect_success 'modified submodule(backward)' "
