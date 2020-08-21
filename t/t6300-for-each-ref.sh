@@ -116,7 +116,13 @@ test_atom head objectname:short $(git rev-parse --short refs/heads/master)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
 test_atom head objectname:short=10 $(git rev-parse --short=10 refs/heads/master)
 test_atom head tree $(git rev-parse refs/heads/master^{tree})
+test_atom head tree:short $(git rev-parse --short refs/heads/master^{tree})
+test_atom head tree:short=1 $(git rev-parse --short=1 refs/heads/master^{tree})
+test_atom head tree:short=10 $(git rev-parse --short=10 refs/heads/master^{tree})
 test_atom head parent ''
+test_atom head parent:short ''
+test_atom head parent:short=1 ''
+test_atom head parent:short=10 ''
 test_atom head numparent 0
 test_atom head object ''
 test_atom head type ''
@@ -125,19 +131,26 @@ test_atom head '*objecttype' ''
 test_atom head author 'A U Thor <author@example.com> 1151968724 +0200'
 test_atom head authorname 'A U Thor'
 test_atom head authoremail '<author@example.com>'
+test_atom head authoremail:trim 'author@example.com'
+test_atom head authoremail:localpart 'author'
 test_atom head authordate 'Tue Jul 4 01:18:44 2006 +0200'
 test_atom head committer 'C O Mitter <committer@example.com> 1151968723 +0200'
 test_atom head committername 'C O Mitter'
 test_atom head committeremail '<committer@example.com>'
+test_atom head committeremail:trim 'committer@example.com'
+test_atom head committeremail:localpart 'committer'
 test_atom head committerdate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head tag ''
 test_atom head tagger ''
 test_atom head taggername ''
 test_atom head taggeremail ''
+test_atom head taggeremail:trim ''
+test_atom head taggeremail:localpart ''
 test_atom head taggerdate ''
 test_atom head creator 'C O Mitter <committer@example.com> 1151968723 +0200'
 test_atom head creatordate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head subject 'Initial'
+test_atom head subject:sanitize 'Initial'
 test_atom head contents:subject 'Initial'
 test_atom head body ''
 test_atom head contents:body ''
@@ -161,7 +174,13 @@ test_atom tag objectname:short $(git rev-parse --short refs/tags/testtag)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
 test_atom head objectname:short=10 $(git rev-parse --short=10 refs/heads/master)
 test_atom tag tree ''
+test_atom tag tree:short ''
+test_atom tag tree:short=1 ''
+test_atom tag tree:short=10 ''
 test_atom tag parent ''
+test_atom tag parent:short ''
+test_atom tag parent:short=1 ''
+test_atom tag parent:short=10 ''
 test_atom tag numparent ''
 test_atom tag object $(git rev-parse refs/tags/testtag^0)
 test_atom tag type 'commit'
@@ -170,19 +189,26 @@ test_atom tag '*objecttype' 'commit'
 test_atom tag author ''
 test_atom tag authorname ''
 test_atom tag authoremail ''
+test_atom tag authoremail:trim ''
+test_atom tag authoremail:localpart ''
 test_atom tag authordate ''
 test_atom tag committer ''
 test_atom tag committername ''
 test_atom tag committeremail ''
+test_atom tag committeremail:trim ''
+test_atom tag committeremail:localpart ''
 test_atom tag committerdate ''
 test_atom tag tag 'testtag'
 test_atom tag tagger 'C O Mitter <committer@example.com> 1151968725 +0200'
 test_atom tag taggername 'C O Mitter'
 test_atom tag taggeremail '<committer@example.com>'
+test_atom tag taggeremail:trim 'committer@example.com'
+test_atom tag taggeremail:localpart 'committer'
 test_atom tag taggerdate 'Tue Jul 4 01:18:45 2006 +0200'
 test_atom tag creator 'C O Mitter <committer@example.com> 1151968725 +0200'
 test_atom tag creatordate 'Tue Jul 4 01:18:45 2006 +0200'
 test_atom tag subject 'Tagging at 1151968727'
+test_atom tag subject:sanitize 'Tagging-at-1151968727'
 test_atom tag contents:subject 'Tagging at 1151968727'
 test_atom tag body ''
 test_atom tag contents:body ''
@@ -564,10 +590,14 @@ test_atom refs/tags/taggerless tag 'taggerless'
 test_atom refs/tags/taggerless tagger ''
 test_atom refs/tags/taggerless taggername ''
 test_atom refs/tags/taggerless taggeremail ''
+test_atom refs/tags/taggerless taggeremail:trim ''
+test_atom refs/tags/taggerless taggeremail:localpart ''
 test_atom refs/tags/taggerless taggerdate ''
 test_atom refs/tags/taggerless committer ''
 test_atom refs/tags/taggerless committername ''
 test_atom refs/tags/taggerless committeremail ''
+test_atom refs/tags/taggerless committeremail:trim ''
+test_atom refs/tags/taggerless committeremail:localpart ''
 test_atom refs/tags/taggerless committerdate ''
 test_atom refs/tags/taggerless subject 'Broken tag'
 
@@ -591,6 +621,7 @@ test_expect_success 'create tag with subject and body content' '
 	git tag -F msg subject-body
 '
 test_atom refs/tags/subject-body subject 'the subject line'
+test_atom refs/tags/subject-body subject:sanitize 'the-subject-line'
 test_atom refs/tags/subject-body body 'first body line
 second body line
 '
@@ -611,6 +642,7 @@ test_expect_success 'create tag with multiline subject' '
 	git tag -F msg multiline
 '
 test_atom refs/tags/multiline subject 'first subject line second subject line'
+test_atom refs/tags/multiline subject:sanitize 'first-subject-line-second-subject-line'
 test_atom refs/tags/multiline contents:subject 'first subject line second subject line'
 test_atom refs/tags/multiline body 'first body line
 second body line
@@ -643,6 +675,7 @@ sig='-----BEGIN PGP SIGNATURE-----
 
 PREREQ=GPG
 test_atom refs/tags/signed-empty subject ''
+test_atom refs/tags/signed-empty subject:sanitize ''
 test_atom refs/tags/signed-empty contents:subject ''
 test_atom refs/tags/signed-empty body "$sig"
 test_atom refs/tags/signed-empty contents:body ''
@@ -650,6 +683,7 @@ test_atom refs/tags/signed-empty contents:signature "$sig"
 test_atom refs/tags/signed-empty contents "$sig"
 
 test_atom refs/tags/signed-short subject 'subject line'
+test_atom refs/tags/signed-short subject:sanitize 'subject-line'
 test_atom refs/tags/signed-short contents:subject 'subject line'
 test_atom refs/tags/signed-short body "$sig"
 test_atom refs/tags/signed-short contents:body ''
@@ -658,6 +692,7 @@ test_atom refs/tags/signed-short contents "subject line
 $sig"
 
 test_atom refs/tags/signed-long subject 'subject line'
+test_atom refs/tags/signed-long subject:sanitize 'subject-line'
 test_atom refs/tags/signed-long contents:subject 'subject line'
 test_atom refs/tags/signed-long body "body contents
 $sig"
