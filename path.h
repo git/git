@@ -170,7 +170,6 @@ void report_linked_checkout_garbage(void);
 	}
 
 struct path_cache {
-	const char *cherry_pick_head;
 	const char *revert_head;
 	const char *squash_msg;
 	const char *merge_msg;
@@ -182,9 +181,11 @@ struct path_cache {
 	const char *shallow;
 };
 
-#define PATH_CACHE_INIT { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+#define PATH_CACHE_INIT                                              \
+	{                                                            \
+		NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL \
+	}
 
-const char *git_path_cherry_pick_head(struct repository *r);
 const char *git_path_revert_head(struct repository *r);
 const char *git_path_squash_msg(struct repository *r);
 const char *git_path_merge_msg(struct repository *r);
