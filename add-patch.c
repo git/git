@@ -457,11 +457,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			eol = pend;
 
 		if (starts_with(p, "diff ")) {
-			s->file_diff_nr++;
-			ALLOC_GROW(s->file_diff, s->file_diff_nr,
+			ALLOC_GROW_BY(s->file_diff, s->file_diff_nr, 1,
 				   file_diff_alloc);
 			file_diff = s->file_diff + s->file_diff_nr - 1;
-			memset(file_diff, 0, sizeof(*file_diff));
 			hunk = &file_diff->head;
 			hunk->start = p - plain->buf;
 			if (colored_p)
@@ -483,11 +481,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 				 */
 				hunk->splittable_into++;
 
-			file_diff->hunk_nr++;
-			ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr,
+			ALLOC_GROW_BY(file_diff->hunk, file_diff->hunk_nr, 1,
 				   file_diff->hunk_alloc);
 			hunk = file_diff->hunk + file_diff->hunk_nr - 1;
-			memset(hunk, 0, sizeof(*hunk));
 
 			hunk->start = p - plain->buf;
 			if (colored)
@@ -511,7 +507,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			if (file_diff->mode_change)
 				BUG("double mode change?\n\n%.*s",
 				    (int)(eol - plain->buf), plain->buf);
-			if (file_diff->hunk_nr++)
+			if (file_diff->hunk_nr)
 				BUG("mode change in the middle?\n\n%.*s",
 				    (int)(eol - plain->buf), plain->buf);
 
@@ -520,9 +516,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			 * is _part of_ the header "hunk".
 			 */
 			file_diff->mode_change = 1;
-			ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr,
+			ALLOC_GROW_BY(file_diff->hunk, file_diff->hunk_nr, 1,
 				   file_diff->hunk_alloc);
-			memset(file_diff->hunk, 0, sizeof(struct hunk));
 			file_diff->hunk->start = p - plain->buf;
 			if (colored_p)
 				file_diff->hunk->colored_start =
@@ -1357,6 +1352,15 @@ static int patch_update_file(struct add_p_state *s,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	int colored = !!s->colored.len, quit = 0;
 	enum prompt_mode_type prompt_mode_type;
+	enum {
+		ALLOW_GOTO_PREVIOUS_HUNK = 1 << 0,
+		ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK = 1 << 1,
+		ALLOW_GOTO_NEXT_HUNK = 1 << 2,
+		ALLOW_GOTO_NEXT_UNDECIDED_HUNK = 1 << 3,
+		ALLOW_SEARCH_AND_GOTO = 1 << 4,
+		ALLOW_SPLIT = 1 << 5,
+		ALLOW_EDIT = 1 << 6
+	} permitted = 0;
 
 	if (!file_diff->hunk_nr)
 		return 0;
@@ -1393,22 +1397,35 @@ static int patch_update_file(struct add_p_state *s,
 		fputs(s->buf.buf, stdout);
 
 		strbuf_reset(&s->buf);
-		if (undecided_previous >= 0)
+		if (undecided_previous >= 0) {
+			permitted |= ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK;
 			strbuf_addstr(&s->buf, ",k");
-		if (hunk_index)
+		}
+		if (hunk_index) {
+			permitted |= ALLOW_GOTO_PREVIOUS_HUNK;
 			strbuf_addstr(&s->buf, ",K");
-		if (undecided_next >= 0)
+		}
+		if (undecided_next >= 0) {
+			permitted |= ALLOW_GOTO_NEXT_UNDECIDED_HUNK;
 			strbuf_addstr(&s->buf, ",j");
-		if (hunk_index + 1 < file_diff->hunk_nr)
+		}
+		if (hunk_index + 1 < file_diff->hunk_nr) {
+			permitted |= ALLOW_GOTO_NEXT_HUNK;
 			strbuf_addstr(&s->buf, ",J");
-		if (file_diff->hunk_nr > 1)
+		}
+		if (file_diff->hunk_nr > 1) {
+			permitted |= ALLOW_SEARCH_AND_GOTO;
 			strbuf_addstr(&s->buf, ",g,/");
-		if (hunk->splittable_into > 1)
+		}
+		if (hunk->splittable_into > 1) {
+			permitted |= ALLOW_SPLIT;
 			strbuf_addstr(&s->buf, ",s");
+		}
 		if (hunk_index + 1 > file_diff->mode_change &&
-		    !file_diff->deleted)
+		    !file_diff->deleted) {
+			permitted |= ALLOW_EDIT;
 			strbuf_addstr(&s->buf, ",e");
-
+		}
 		if (file_diff->deleted)
 			prompt_mode_type = PROMPT_DELETION;
 		else if (file_diff->added)
@@ -1457,22 +1474,22 @@ soft_increment:
 				break;
 			}
 		} else if (s->answer.buf[0] == 'K') {
-			if (hunk_index)
+			if (permitted & ALLOW_GOTO_PREVIOUS_HUNK)
 				hunk_index--;
 			else
 				err(s, _("No previous hunk"));
 		} else if (s->answer.buf[0] == 'J') {
-			if (hunk_index + 1 < file_diff->hunk_nr)
+			if (permitted & ALLOW_GOTO_NEXT_HUNK)
 				hunk_index++;
 			else
 				err(s, _("No next hunk"));
 		} else if (s->answer.buf[0] == 'k') {
-			if (undecided_previous >= 0)
+			if (permitted & ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK)
 				hunk_index = undecided_previous;
 			else
 				err(s, _("No previous hunk"));
 		} else if (s->answer.buf[0] == 'j') {
-			if (undecided_next >= 0)
+			if (permitted & ALLOW_GOTO_NEXT_UNDECIDED_HUNK)
 				hunk_index = undecided_next;
 			else
 				err(s, _("No next hunk"));
@@ -1480,7 +1497,7 @@ soft_increment:
 			char *pend;
 			unsigned long response;
 
-			if (file_diff->hunk_nr < 2) {
+			if (!(permitted & ALLOW_SEARCH_AND_GOTO)) {
 				err(s, _("No other hunks to goto"));
 				continue;
 			}
@@ -1517,7 +1534,7 @@ soft_increment:
 			regex_t regex;
 			int ret;
 
-			if (file_diff->hunk_nr < 2) {
+			if (!(permitted & ALLOW_SEARCH_AND_GOTO)) {
 				err(s, _("No other hunks to search"));
 				continue;
 			}
@@ -1562,7 +1579,7 @@ soft_increment:
 			hunk_index = i;
 		} else if (s->answer.buf[0] == 's') {
 			size_t splittable_into = hunk->splittable_into;
-			if (splittable_into < 2)
+			if (!(permitted & ALLOW_SPLIT))
 				err(s, _("Sorry, cannot split this hunk"));
 			else if (!split_hunk(s, file_diff,
 					     hunk - file_diff->hunk))
@@ -1570,7 +1587,7 @@ soft_increment:
 						 _("Split into %d hunks."),
 						 (int)splittable_into);
 		} else if (s->answer.buf[0] == 'e') {
-			if (hunk_index + 1 == file_diff->mode_change)
+			if (!(permitted & ALLOW_EDIT))
 				err(s, _("Sorry, cannot edit this hunk"));
 			else if (edit_hunk_loop(s, file_diff, hunk) >= 0) {
 				hunk->use = USE_HUNK;
