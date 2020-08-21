@@ -150,6 +150,8 @@ static GIT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
  * command-line.
  */
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
+static GIT_PATH_FUNC(rebase_path_cdate_is_adate, "rebase-merge/cdate_is_adate")
+static GIT_PATH_FUNC(rebase_path_ignore_date, "rebase-merge/ignore_date")
 static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
 static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
 static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
@@ -303,6 +305,8 @@ int sequencer_remove_state(struct replay_opts *opts)
 		}
 	}
 
+	free(opts->committer_name);
+	free(opts->committer_email);
 	free(opts->gpg_sign);
 	free(opts->strategy);
 	for (i = 0; i < opts->xopts_nr; i++)
@@ -863,6 +867,22 @@ static char *get_author(const char *message)
 	return NULL;
 }
 
+static const char *author_date_from_env_array(const struct strvec *env)
+{
+	int i;
+	const char *date;
+
+	for (i = 0; i < env->nr; i++)
+		if (skip_prefix(env->v[i],
+				"GIT_AUTHOR_DATE=", &date))
+			return date;
+	/*
+	 * If GIT_AUTHOR_DATE is missing we should have already errored out when
+	 * reading the script
+	 */
+	BUG("GIT_AUTHOR_DATE missing from author script");
+}
+
 static const char staged_changes_advice[] =
 N_("you have staged changes in your working tree\n"
 "If these changes are meant to be squashed into the previous commit, run:\n"
@@ -928,6 +948,14 @@ static int run_git_commit(struct repository *r,
 		return error(_(staged_changes_advice),
 			     gpg_opt, gpg_opt);
 	}
+
+	if (opts->committer_date_is_author_date)
+		strvec_pushf(&cmd.env_array, "GIT_COMMITTER_DATE=%s",
+			     opts->ignore_date ?
+			     "" :
+			     author_date_from_env_array(&cmd.env_array));
+	if (opts->ignore_date)
+		strvec_push(&cmd.env_array, "GIT_AUTHOR_DATE=");
 
 	strvec_push(&cmd.args, "commit");
 
@@ -1308,6 +1336,7 @@ static int try_to_commit(struct repository *r,
 	struct strbuf err = STRBUF_INIT;
 	struct strbuf commit_msg = STRBUF_INIT;
 	char *amend_author = NULL;
+	const char *committer = NULL;
 	const char *hook_commit = NULL;
 	enum commit_msg_cleanup_mode cleanup;
 	int res = 0;
@@ -1399,10 +1428,57 @@ static int try_to_commit(struct repository *r,
 		goto out;
 	}
 
-	reset_ident_date();
+	if (opts->committer_date_is_author_date) {
+		struct ident_split id;
+		struct strbuf date = STRBUF_INIT;
 
-	if (commit_tree_extended(msg->buf, msg->len, &tree, parents,
-				 oid, author, opts->gpg_sign, extra)) {
+		if (!opts->ignore_date) {
+			if (split_ident_line(&id, author, (int)strlen(author)) < 0) {
+				res = error(_("invalid author identity '%s'"),
+					    author);
+				goto out;
+			}
+			if (!id.date_begin) {
+				res = error(_(
+					"corrupt author: missing date information"));
+				goto out;
+			}
+			strbuf_addf(&date, "@%.*s %.*s",
+				    (int)(id.date_end - id.date_begin),
+				    id.date_begin,
+				    (int)(id.tz_end - id.tz_begin),
+				    id.tz_begin);
+		} else {
+			reset_ident_date();
+		}
+		committer = fmt_ident(opts->committer_name,
+				      opts->committer_email,
+				      WANT_COMMITTER_IDENT,
+				      opts->ignore_date ? NULL : date.buf,
+				      IDENT_STRICT);
+		strbuf_release(&date);
+	} else {
+		reset_ident_date();
+	}
+
+	if (opts->ignore_date) {
+		struct ident_split id;
+		char *name, *email;
+
+		if (split_ident_line(&id, author, strlen(author)) < 0) {
+			error(_("invalid author identity '%s'"), author);
+			goto out;
+		}
+		name = xmemdupz(id.name_begin, id.name_end - id.name_begin);
+		email = xmemdupz(id.mail_begin, id.mail_end - id.mail_begin);
+		author = fmt_ident(name, email, WANT_AUTHOR_IDENT, NULL,
+				   IDENT_STRICT);
+		free(name);
+		free(email);
+	}
+
+	if (commit_tree_extended(msg->buf, msg->len, &tree, parents, oid,
+				 author, committer, opts->gpg_sign, extra)) {
 		res = error(_("failed to write commit object"));
 		goto out;
 	}
@@ -2528,6 +2604,16 @@ static int read_populate_opts(struct replay_opts *opts)
 			opts->signoff = 1;
 		}
 
+		if (file_exists(rebase_path_cdate_is_adate())) {
+			opts->allow_ff = 0;
+			opts->committer_date_is_author_date = 1;
+		}
+
+		if (file_exists(rebase_path_ignore_date())) {
+			opts->allow_ff = 0;
+			opts->ignore_date = 1;
+		}
+
 		if (file_exists(rebase_path_reschedule_failed_exec()))
 			opts->reschedule_failed_exec = 1;
 
@@ -2623,6 +2709,10 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_drop_redundant_commits(), "%s", "");
 	if (opts->keep_redundant_commits)
 		write_file(rebase_path_keep_redundant_commits(), "%s", "");
+	if (opts->committer_date_is_author_date)
+		write_file(rebase_path_cdate_is_adate(), "%s", "");
+	if (opts->ignore_date)
+		write_file(rebase_path_ignore_date(), "%s", "");
 	if (opts->reschedule_failed_exec)
 		write_file(rebase_path_reschedule_failed_exec(), "%s", "");
 
@@ -3543,6 +3633,14 @@ static int do_merge(struct repository *r,
 			goto leave_merge;
 		}
 
+		if (opts->committer_date_is_author_date)
+			strvec_pushf(&cmd.env_array, "GIT_COMMITTER_DATE=%s",
+				     opts->ignore_date ?
+				     "" :
+				     author_date_from_env_array(&cmd.env_array));
+		if (opts->ignore_date)
+			strvec_push(&cmd.env_array, "GIT_AUTHOR_DATE=");
+
 		cmd.git_cmd = 1;
 		strvec_push(&cmd.args, "merge");
 		strvec_push(&cmd.args, "-s");
@@ -3906,7 +4004,9 @@ static int pick_commits(struct repository *r,
 	prev_reflog_action = xstrdup(getenv(GIT_REFLOG_ACTION));
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_commit ||
-				opts->record_origin || opts->edit));
+			 opts->record_origin || opts->edit ||
+			 opts->committer_date_is_author_date ||
+			 opts->ignore_date));
 	if (read_and_refresh_cache(r, opts))
 		return -1;
 
@@ -4347,6 +4447,22 @@ static int commit_staged_changes(struct repository *r,
 	return 0;
 }
 
+static int init_committer(struct replay_opts *opts)
+{
+	struct ident_split id;
+	const char *committer;
+
+	committer = git_committer_info(IDENT_STRICT);
+	if (split_ident_line(&id, committer, strlen(committer)) < 0)
+		return error(_("invalid committer '%s'"), committer);
+	opts->committer_name =
+		xmemdupz(id.name_begin, id.name_end - id.name_begin);
+	opts->committer_email =
+		xmemdupz(id.mail_begin, id.mail_end - id.mail_end);
+
+	return 0;
+}
+
 int sequencer_continue(struct repository *r, struct replay_opts *opts)
 {
 	struct todo_list todo_list = TODO_LIST_INIT;
@@ -4358,6 +4474,9 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 	if (read_populate_opts(opts))
 		return -1;
 	if (is_rebase_i(opts)) {
+		if (opts->committer_date_is_author_date && init_committer(opts))
+			return -1;
+
 		if ((res = read_populate_todo(r, &todo_list, opts)))
 			goto release_todo_list;
 
@@ -5250,6 +5369,9 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	}
 
 	res = -1;
+
+	if (opts->committer_date_is_author_date && init_committer(opts))
+		goto cleanup;
 
 	if (checkout_onto(r, opts, onto_name, &oid, orig_head))
 		goto cleanup;
