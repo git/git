@@ -5,8 +5,11 @@
 
 test_description='Summary support for submodules
 
-This test tries to verify the sanity of summary subcommand of git submodule.
+This test script tries to verify the sanity of summary subcommand of git submodule.
 '
+# NEEDSWORK: This test script is old fashioned and may need a big cleanup due to
+# various reasons, one of them being that there are lots of commands taking place
+# outside of 'test_expect_success' block, which is no longer in good-style.
 
 . ./test-lib.sh
 
