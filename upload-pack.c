@@ -603,9 +603,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 		"rev-list", "--stdin", NULL,
 	};
 	struct object *o;
-	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
+	FILE *cmd_in = NULL;
 	int i;
-	const unsigned hexsz = the_hash_algo->hexsz;
 
 	cmd->argv = argv;
 	cmd->git_cmd = 1;
@@ -623,8 +622,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 	if (start_command(cmd))
 		goto error;
 
-	namebuf[0] = '^';
-	namebuf[hexsz + 1] = '\n';
+	cmd_in = xfdopen(cmd->in, "w");
+
 	for (i = get_max_object_index(); 0 < i; ) {
 		o = get_indexed_object(--i);
 		if (!o)
@@ -633,11 +632,9 @@ static int do_reachable_revlist(struct child_process *cmd,
 			o->flags &= ~TMP_MARK;
 		if (!is_our_ref(o, allow_uor))
 			continue;
-		memcpy(namebuf + 1, oid_to_hex(&o->oid), hexsz);
-		if (write_in_full(cmd->in, namebuf, hexsz + 2) < 0)
+		if (fprintf(cmd_in, "^%s\n", oid_to_hex(&o->oid)) < 0)
 			goto error;
 	}
-	namebuf[hexsz] = '\n';
 	for (i = 0; i < src->nr; i++) {
 		o = src->objects[i].item;
 		if (is_our_ref(o, allow_uor)) {
@@ -647,11 +644,12 @@ static int do_reachable_revlist(struct child_process *cmd,
 		}
 		if (reachable && o->type == OBJ_COMMIT)
 			o->flags |= TMP_MARK;
-		memcpy(namebuf, oid_to_hex(&o->oid), hexsz);
-		if (write_in_full(cmd->in, namebuf, hexsz + 1) < 0)
+		if (fprintf(cmd_in, "%s\n", oid_to_hex(&o->oid)) < 0)
 			goto error;
 	}
-	close(cmd->in);
+	if (ferror(cmd_in) || fflush(cmd_in))
+		goto error;
+	fclose(cmd_in);
 	cmd->in = -1;
 	sigchain_pop(SIGPIPE);
 
@@ -660,8 +658,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 error:
 	sigchain_pop(SIGPIPE);
 
-	if (cmd->in >= 0)
-		close(cmd->in);
+	if (cmd_in)
+		fclose(cmd_in);
 	if (cmd->out >= 0)
 		close(cmd->out);
 	return -1;
