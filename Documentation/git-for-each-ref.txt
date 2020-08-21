@@ -222,6 +222,8 @@ worktreepath::
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.
+Field `tree` can also be used with modifier `:short` and
+`:short=<length>` just like `objectname`.
 
 For commit and tag objects, the special `creatordate` and `creator`
 fields will correspond to the appropriate date or name-email-date tuple
