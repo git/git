@@ -1185,7 +1185,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 
 			config_key = xstrfmt("submodule.%s.ignore",
 					     sub->name);
-			if (!git_config_get_string_const(config_key, &value))
+			if (!git_config_get_string_tmp(config_key, &value))
 				ignore_all = !strcmp(value, "all");
 			else if (sub->ignore)
 				ignore_all = !strcmp(sub->ignore, "all");
@@ -1936,7 +1936,7 @@ static void determine_submodule_update_strategy(struct repository *r,
 		if (parse_submodule_update_strategy(update, out) < 0)
 			die(_("Invalid update mode '%s' for submodule path '%s'"),
 				update, path);
-	} else if (!repo_config_get_string_const(r, key, &val)) {
+	} else if (!repo_config_get_string_tmp(r, key, &val)) {
 		if (parse_submodule_update_strategy(val, out) < 0)
 			die(_("Invalid update mode '%s' configured for submodule path '%s'"),
 				val, path);
@@ -2092,7 +2092,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	}
 
 	key = xstrfmt("submodule.%s.update", sub->name);
-	if (!repo_config_get_string_const(the_repository, key, &update_string)) {
+	if (!repo_config_get_string_tmp(the_repository, key, &update_string)) {
 		update_type = parse_submodule_update_type(update_string);
 	} else {
 		update_type = sub->update_strategy.type;
@@ -2115,7 +2115,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
-	if (repo_config_get_string_const(the_repository, sb.buf, &url)) {
+	if (repo_config_get_string_tmp(the_repository, sb.buf, &url)) {
 		if (starts_with_dot_slash(sub->url) ||
 		    starts_with_dot_dot_slash(sub->url)) {
 			url = compute_submodule_clone_url(sub->url);
@@ -2172,8 +2172,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 					      "--no-single-branch");
 
 cleanup:
-	strbuf_reset(&displaypath_sb);
-	strbuf_reset(&sb);
+	strbuf_release(&displaypath_sb);
+	strbuf_release(&sb);
 	if (need_free_url)
 		free((void*)url);
 
@@ -2401,7 +2401,7 @@ static const char *remote_submodule_branch(const char *path)
 		return NULL;
 
 	key = xstrfmt("submodule.%s.branch", sub->name);
-	if (repo_config_get_string_const(the_repository, key, &branch))
+	if (repo_config_get_string_tmp(the_repository, key, &branch))
 		branch = sub->branch;
 	free(key);
 
@@ -2526,7 +2526,7 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 {
 	const struct submodule *sub;
 	const char *path;
-	char *cw;
+	const char *cw;
 	struct repository subrepo;
 
 	if (argc != 2)
@@ -2541,7 +2541,7 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 	if (repo_submodule_init(&subrepo, the_repository, sub))
 		die(_("could not get a repository handle for submodule '%s'"), path);
 
-	if (!repo_config_get_string(&subrepo, "core.worktree", &cw)) {
+	if (!repo_config_get_string_tmp(&subrepo, "core.worktree", &cw)) {
 		char *cfg_file, *abs_path;
 		const char *rel_path;
 		struct strbuf sb = STRBUF_INIT;
