@@ -270,10 +270,9 @@ int commit_tree(const char *msg, size_t msg_len,
 
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
-			 struct commit_list *parents,
-			 struct object_id *ret, const char *author,
-			 const char *sign_commit,
-			 struct commit_extra_header *);
+			 struct commit_list *parents, struct object_id *ret,
+			 const char *author, const char *committer,
+			 const char *sign_commit, struct commit_extra_header *);
 
 struct commit_extra_header *read_commit_extra_headers(struct commit *, const char **);
 

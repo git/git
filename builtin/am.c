@@ -98,6 +98,8 @@ struct am_state {
 	char *author_name;
 	char *author_email;
 	char *author_date;
+	char *committer_name;
+	char *committer_email;
 	char *msg;
 	size_t msg_len;
 
@@ -130,6 +132,8 @@ struct am_state {
  */
 static void am_state_init(struct am_state *state)
 {
+	const char *committer;
+	struct ident_split id;
 	int gpgsign;
 
 	memset(state, 0, sizeof(*state));
@@ -150,6 +154,14 @@ static void am_state_init(struct am_state *state)
 
 	if (!git_config_get_bool("commit.gpgsign", &gpgsign))
 		state->sign_commit = gpgsign ? "" : NULL;
+
+	committer = git_committer_info(IDENT_STRICT);
+	if (split_ident_line(&id, committer, strlen(committer)) < 0)
+		die(_("invalid committer: %s"), committer);
+	state->committer_name =
+		xmemdupz(id.name_begin, id.name_end - id.name_begin);
+	state->committer_email =
+		xmemdupz(id.mail_begin, id.mail_end - id.mail_end);
 }
 
 /**
@@ -161,6 +173,8 @@ static void am_state_release(struct am_state *state)
 	free(state->author_name);
 	free(state->author_email);
 	free(state->author_date);
+	free(state->committer_name);
+	free(state->committer_email);
 	free(state->msg);
 	strvec_clear(&state->git_apply_opts);
 }
@@ -1556,7 +1570,7 @@ static void do_commit(const struct am_state *state)
 	struct object_id tree, parent, commit;
 	const struct object_id *old_oid;
 	struct commit_list *parents = NULL;
-	const char *reflog_msg, *author;
+	const char *reflog_msg, *author, *committer = NULL;
 	struct strbuf sb = STRBUF_INIT;
 
 	if (run_hook_le(NULL, "pre-applypatch", NULL))
@@ -1580,11 +1594,15 @@ static void do_commit(const struct am_state *state)
 			IDENT_STRICT);
 
 	if (state->committer_date_is_author_date)
-		setenv("GIT_COMMITTER_DATE",
-			state->ignore_date ? "" : state->author_date, 1);
+		committer = fmt_ident(state->committer_name,
+				      state->author_email, WANT_COMMITTER_IDENT,
+				      state->ignore_date ? NULL
+							 : state->author_date,
+				      IDENT_STRICT);
 
-	if (commit_tree(state->msg, state->msg_len, &tree, parents, &commit,
-			author, state->sign_commit))
+	if (commit_tree_extended(state->msg, state->msg_len, &tree, parents,
+				 &commit, author, committer, state->sign_commit,
+				 NULL))
 		die(_("failed to write commit object"));
 
 	reflog_msg = getenv("GIT_REFLOG_ACTION");

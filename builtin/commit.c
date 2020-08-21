@@ -1674,8 +1674,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	if (commit_tree_extended(sb.buf, sb.len, &active_cache_tree->oid,
-				 parents, &oid, author_ident.buf, sign_commit,
-				 extra)) {
+				 parents, &oid, author_ident.buf, NULL,
+				 sign_commit, extra)) {
 		rollback_index_files();
 		die(_("failed to write commit object"));
 	}
