@@ -230,7 +230,10 @@ These are intended for working on a mix of annotated and lightweight tags.
 
 Fields that have name-email-date tuple as its value (`author`,
 `committer`, and `tagger`) can be suffixed with `name`, `email`,
-and `date` to extract the named component.
+and `date` to extract the named component.  For email fields (`authoremail`,
+`committeremail` and `taggeremail`), `:trim` can be appended to get the email
+without angle brackets, and `:localpart` to get the part before the `@` symbol
+out of the trimmed email.
 
 The message in a commit or a tag object is `contents`, from which
 `contents:<part>` can be used to extract various parts out of:
