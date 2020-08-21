@@ -16,7 +16,7 @@ add_file () {
 	owd=$(pwd)
 	cd "$sm"
 	for name; do
-		echo "$name" > "$name" &&
+		echo "$name" >"$name" &&
 		git add "$name" &&
 		test_tick &&
 		git commit -m "Add $name"
