@@ -127,8 +127,8 @@ static struct used_atom {
 			unsigned int nobracket : 1, push : 1, push_remote : 1;
 		} remote_ref;
 		struct {
-			enum { C_BARE, C_BODY, C_BODY_DEP, C_LENGTH,
-			       C_LINES, C_SIG, C_SUB, C_TRAILERS } option;
+			enum { C_BARE, C_BODY, C_BODY_DEP, C_LENGTH, C_LINES,
+			       C_SIG, C_SUB, C_SUB_SANITIZE, C_TRAILERS } option;
 			struct process_trailer_options trailer_opts;
 			unsigned int nlines;
 		} contents;
@@ -301,9 +301,12 @@ static int body_atom_parser(const struct ref_format *format, struct used_atom *a
 static int subject_atom_parser(const struct ref_format *format, struct used_atom *atom,
 			       const char *arg, struct strbuf *err)
 {
-	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(subject) does not take arguments"));
-	atom->u.contents.option = C_SUB;
+	if (!arg)
+		atom->u.contents.option = C_SUB;
+	else if (!strcmp(arg, "sanitize"))
+		atom->u.contents.option = C_SUB_SANITIZE;
+	else
+		return strbuf_addf_ret(err, -1, _("unrecognized %%(subject) argument: %s"), arg);
 	return 0;
 }
 
@@ -1282,8 +1285,8 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, void *buf)
 			continue;
 		if (deref)
 			name++;
-		if (strcmp(name, "subject") &&
-		    strcmp(name, "body") &&
+		if (strcmp(name, "body") &&
+		    !starts_with(name, "subject") &&
 		    !starts_with(name, "trailers") &&
 		    !starts_with(name, "contents"))
 			continue;
@@ -1295,7 +1298,11 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, void *buf)
 
 		if (atom->u.contents.option == C_SUB)
 			v->s = copy_subject(subpos, sublen);
-		else if (atom->u.contents.option == C_BODY_DEP)
+		else if (atom->u.contents.option == C_SUB_SANITIZE) {
+			struct strbuf sb = STRBUF_INIT;
+			format_sanitized_subject(&sb, subpos, sublen);
+			v->s = strbuf_detach(&sb, NULL);
+		} else if (atom->u.contents.option == C_BODY_DEP)
 			v->s = xmemdupz(bodypos, bodylen);
 		else if (atom->u.contents.option == C_LENGTH)
 			v->s = xstrfmt("%"PRIuMAX, (uintmax_t)strlen(subpos));
