@@ -163,6 +163,22 @@ test_expect_success 'manual prefetch of missing objects' '
 	test_line_count = 0 observed.oids
 '
 
+test_expect_success 'partial clone with transfer.fsckobjects=1 works with submodules' '
+	test_create_repo submodule &&
+	test_commit -C submodule mycommit &&
+
+	test_create_repo src_with_sub &&
+	test_config -C src_with_sub uploadpack.allowfilter 1 &&
+	test_config -C src_with_sub uploadpack.allowanysha1inwant 1 &&
+
+	git -C src_with_sub submodule add "file://$(pwd)/submodule" mysub &&
+	git -C src_with_sub commit -m "commit with submodule" &&
+
+	git -c transfer.fsckobjects=1 \
+		clone --filter="blob:none" "file://$(pwd)/src_with_sub" dst &&
+	test_when_finished rm -rf dst
+'
+
 test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack --fsck-objects' '
 	git init src &&
 	test_commit -C src x &&
