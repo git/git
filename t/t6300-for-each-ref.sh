@@ -738,61 +738,40 @@ test_expect_success 'set up trailers for next test' '
 '
 
 test_expect_success '%(trailers:unfold) unfolds trailers' '
-	git for-each-ref --format="%(trailers:unfold)" refs/heads/master >actual &&
 	{
 		unfold <trailers
 		echo
 	} >expect &&
+	git for-each-ref --format="%(trailers:unfold)" refs/heads/master >actual &&
+	test_cmp expect actual &&
+	git for-each-ref --format="%(contents:trailers:unfold)" refs/heads/master >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '%(trailers:only) shows only "key: value" trailers' '
-	git for-each-ref --format="%(trailers:only)" refs/heads/master >actual &&
 	{
 		grep -v patch.description <trailers &&
 		echo
 	} >expect &&
+	git for-each-ref --format="%(trailers:only)" refs/heads/master >actual &&
+	test_cmp expect actual &&
+	git for-each-ref --format="%(contents:trailers:only)" refs/heads/master >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '%(trailers:only) and %(trailers:unfold) work together' '
+	{
+		grep -v patch.description <trailers | unfold &&
+		echo
+	} >expect &&
 	git for-each-ref --format="%(trailers:only,unfold)" refs/heads/master >actual &&
-	git for-each-ref --format="%(trailers:unfold,only)" refs/heads/master >reverse &&
-	test_cmp actual reverse &&
-	{
-		grep -v patch.description <trailers | unfold &&
-		echo
-	} >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success '%(contents:trailers:unfold) unfolds trailers' '
-	git for-each-ref --format="%(contents:trailers:unfold)" refs/heads/master >actual &&
-	{
-		unfold <trailers
-		echo
-	} >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success '%(contents:trailers:only) shows only "key: value" trailers' '
-	git for-each-ref --format="%(contents:trailers:only)" refs/heads/master >actual &&
-	{
-		grep -v patch.description <trailers &&
-		echo
-	} >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success '%(contents:trailers:only) and %(contents:trailers:unfold) work together' '
+	test_cmp expect actual &&
+	git for-each-ref --format="%(trailers:unfold,only)" refs/heads/master >actual &&
+	test_cmp actual actual &&
 	git for-each-ref --format="%(contents:trailers:only,unfold)" refs/heads/master >actual &&
-	git for-each-ref --format="%(contents:trailers:unfold,only)" refs/heads/master >reverse &&
-	test_cmp actual reverse &&
-	{
-		grep -v patch.description <trailers | unfold &&
-		echo
-	} >expect &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	git for-each-ref --format="%(contents:trailers:unfold,only)" refs/heads/master >actual &&
+	test_cmp actual actual
 '
 
 test_expect_success '%(trailers) rejects unknown trailers arguments' '
@@ -801,14 +780,7 @@ test_expect_success '%(trailers) rejects unknown trailers arguments' '
 	fatal: unknown %(trailers) argument: unsupported
 	EOF
 	test_must_fail git for-each-ref --format="%(trailers:unsupported)" 2>actual &&
-	test_i18ncmp expect actual
-'
-
-test_expect_success '%(contents:trailers) rejects unknown trailers arguments' '
-	# error message cannot be checked under i18n
-	cat >expect <<-EOF &&
-	fatal: unknown %(trailers) argument: unsupported
-	EOF
+	test_i18ncmp expect actual &&
 	test_must_fail git for-each-ref --format="%(contents:trailers:unsupported)" 2>actual &&
 	test_i18ncmp expect actual
 '
