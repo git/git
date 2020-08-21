@@ -245,3 +245,5 @@ test_at_end_hook_ () {
 test_export () {
 	export "$@"
 }
+
+test_lazy_prereq PERF_EXTRA 'test_bool_env GIT_PERF_EXTRA false'
