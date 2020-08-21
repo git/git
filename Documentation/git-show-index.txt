@@ -44,6 +44,8 @@ OPTIONS
 	valid values are 'sha1' and (if enabled) 'sha256'.  The default is the
 	algorithm for the current repository (set by `extensions.objectFormat`), or
 	'sha1' if no value is set or outside a repository..
++
+include::object-format-disclaimer.txt[]
 
 GIT
 ---
