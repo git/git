@@ -13,31 +13,31 @@ test_expect_success 'repack' '
 	export PACK
 '
 
-test_perf 'index-pack 0 threads' '
+test_perf PERF_EXTRA 'index-pack 0 threads' '
 	rm -rf repo.git &&
 	git init --bare repo.git &&
 	GIT_DIR=repo.git git index-pack --threads=1 --stdin < $PACK
 '
 
-test_perf 'index-pack 1 thread ' '
+test_perf PERF_EXTRA 'index-pack 1 thread ' '
 	rm -rf repo.git &&
 	git init --bare repo.git &&
 	GIT_DIR=repo.git GIT_FORCE_THREADS=1 git index-pack --threads=1 --stdin < $PACK
 '
 
-test_perf 'index-pack 2 threads' '
+test_perf PERF_EXTRA 'index-pack 2 threads' '
 	rm -rf repo.git &&
 	git init --bare repo.git &&
 	GIT_DIR=repo.git git index-pack --threads=2 --stdin < $PACK
 '
 
-test_perf 'index-pack 4 threads' '
+test_perf PERF_EXTRA 'index-pack 4 threads' '
 	rm -rf repo.git &&
 	git init --bare repo.git &&
 	GIT_DIR=repo.git git index-pack --threads=4 --stdin < $PACK
 '
 
-test_perf 'index-pack 8 threads' '
+test_perf PERF_EXTRA 'index-pack 8 threads' '
 	rm -rf repo.git &&
 	git init --bare repo.git &&
 	GIT_DIR=repo.git git index-pack --threads=8 --stdin < $PACK
