@@ -154,25 +154,79 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 {
 	struct ref *hint;
 	int ret;
+	int new_options = 1;
 
 	hint = NULL;
 	ret = receive_unpack_status(reader);
 	while (1) {
+		struct object_id old_oid, new_oid;
+		const char *head;
 		const char *refname;
-		char *msg;
+		char *p;
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
-		if (!starts_with(reader->line, "ok ") && !starts_with(reader->line, "ng ")) {
-			error("invalid ref status from remote: %s", reader->line);
+		head = reader->line;
+		p = strchr(head, ' ');
+		if (!p) {
+			error("invalid status line from remote: %s", reader->line);
 			ret = -1;
 			break;
 		}
+		*p++ = '\0';
 
-		refname = reader->line + 3;
-		msg = strchr(refname, ' ');
-		if (msg)
-			*msg++ = '\0';
+		if (!strcmp(head, "option")) {
+			struct ref_push_report_options *options;
+			const char *key, *val;
 
+			if (!hint) {
+			       if (new_options) {
+					error("'option' without a matching 'ok/ng' directive");
+					new_options = 0;
+				}
+				ret = -1;
+				continue;
+			}
+			options = hint->report.options;
+			while (options && options->next)
+				options = options->next;
+			if (new_options) {
+				if (!options) {
+					hint->report.options = xcalloc(1, sizeof(struct ref_push_report_options));
+					options = hint->report.options;
+				} else {
+					options->next = xcalloc(1, sizeof(struct ref_push_report_options));
+					options = options->next;
+				}
+				new_options = 0;
+			}
+			assert(options);
+			key = p;
+			p = strchr(key, ' ');
+			if (p)
+				*p++ = '\0';
+			val = p;
+			if (!strcmp(key, "refname"))
+				options->ref_name = xstrdup_or_null(val);
+			else if (!strcmp(key, "old-oid") && val &&
+				 !parse_oid_hex(val, &old_oid, &val))
+				options->old_oid = oiddup(&old_oid);
+			else if (!strcmp(key, "new-oid") && val &&
+				 !parse_oid_hex(val, &new_oid, &val))
+				options->new_oid = oiddup(&new_oid);
+			else if (!strcmp(key, "forced-update"))
+				options->forced_update = 1;
+			continue;
+		}
+
+		if (strcmp(head, "ok") && strcmp(head, "ng")) {
+			error("invalid ref status from remote: %s", head);
+			ret = -1;
+			break;
+		}
+		refname = p;
+		p = strchr(refname, ' ');
+		if (p)
+			*p++ = '\0';
 		/* first try searching at our hint, falling back to all refs */
 		if (hint)
 			hint = find_ref_by_name(hint, refname);
@@ -183,19 +237,24 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 					refname);
 			continue;
 		}
-		if (hint->status != REF_STATUS_EXPECTING_REPORT) {
+		if (hint->status != REF_STATUS_EXPECTING_REPORT &&
+		    hint->status != REF_STATUS_OK &&
+		    hint->status != REF_STATUS_REMOTE_REJECT) {
 			warning("remote reported status on unexpected ref: %s",
 					refname);
 			continue;
 		}
-
-		if (reader->line[0] == 'o' && reader->line[1] == 'k')
-			hint->status = REF_STATUS_OK;
-		else
+		if (!strcmp(head, "ng")) {
 			hint->status = REF_STATUS_REMOTE_REJECT;
-		hint->remote_status = xstrdup_or_null(msg);
-		/* start our next search from the next ref */
-		hint = hint->next;
+			if (p)
+				hint->report.error_message = xstrdup(p);
+			else
+				hint->report.error_message = "failed";
+		} else {
+			hint->status = REF_STATUS_OK;
+			hint->report.message = xstrdup_or_null(p);
+		}
+		new_options = 1;
 	}
 	return ret;
 }
@@ -371,7 +430,9 @@ int send_pack(struct send_pack_args *args,
 	struct packet_reader reader;
 
 	/* Does the other end support the reporting? */
-	if (server_supports("report-status"))
+	if (server_supports("report-status-v2"))
+		status_report = 2;
+	else if (server_supports("report-status"))
 		status_report = 1;
 	if (server_supports("delete-refs"))
 		allow_deleting_refs = 1;
@@ -423,8 +484,10 @@ int send_pack(struct send_pack_args *args,
 
 	use_push_options = push_options_supported && args->push_options;
 
-	if (status_report)
+	if (status_report == 1)
 		strbuf_addstr(&cap_buf, " report-status");
+	else if (status_report == 2)
+		strbuf_addstr(&cap_buf, " report-status-v2");
 	if (use_sideband)
 		strbuf_addstr(&cap_buf, " side-band-64k");
 	if (quiet_supported && (args->quiet || !args->progress))

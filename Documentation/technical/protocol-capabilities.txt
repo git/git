@@ -22,9 +22,9 @@ was sent.  Server MUST NOT ignore capabilities that client requested
 and server advertised.  As a consequence of these rules, server MUST
 NOT advertise capabilities it does not understand.
 
-The 'atomic', 'report-status', 'delete-refs', 'quiet', and 'push-cert'
-capabilities are sent and recognized by the receive-pack (push to server)
-process.
+The 'atomic', 'report-status', 'report-status-v2', 'delete-refs', 'quiet',
+and 'push-cert' capabilities are sent and recognized by the receive-pack
+(push to server) process.
 
 The 'ofs-delta' and 'side-band-64k' capabilities are sent and recognized
 by both upload-pack and receive-pack protocols.  The 'agent' capability
@@ -283,6 +283,17 @@ will respond with whether the packfile unpacked successfully and if
 each reference was updated successfully.  If any of those were not
 successful, it will send back an error message.  See pack-protocol.txt
 for example messages.
+
+report-status-v2
+----------------
+
+Capability 'report-status-v2' extends capability 'report-status' by
+adding new option lines in order to support reference rewritten by
+the"proc-receive" hook.  The "proc-receive" hook may handle a command
+for a pseudo-reference which may create or update a reference with
+different name, new-oid, and old-oid.  While the capability
+"report-status" cannot report for such case.  See pack-protocol.txt
+for details.
 
 delete-refs
 -----------
