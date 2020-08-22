@@ -25,6 +25,7 @@
 #include "submodule-config.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "sparse-checkout.h"
 
 static char const * const grep_usage[] = {
 	N_("git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"),
@@ -410,7 +411,7 @@ static int grep_cache(struct grep_opt *opt,
 		      const struct pathspec *pathspec, int cached);
 static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 		     struct tree_desc *tree, struct strbuf *base, int tn_len,
-		     int check_attr);
+		     int is_root_tree);
 
 static int grep_submodule(struct grep_opt *opt,
 			  const struct pathspec *pathspec,
@@ -498,6 +499,7 @@ static int grep_cache(struct grep_opt *opt,
 	int nr;
 	struct strbuf name = STRBUF_INIT;
 	int name_base_len = 0;
+	int sparse_paths_only =	restrict_to_sparse_paths(repo);
 	if (repo->submodule_prefix) {
 		name_base_len = strlen(repo->submodule_prefix);
 		strbuf_addstr(&name, repo->submodule_prefix);
@@ -508,6 +510,10 @@ static int grep_cache(struct grep_opt *opt,
 
 	for (nr = 0; nr < repo->index->cache_nr; nr++) {
 		const struct cache_entry *ce = repo->index->cache[nr];
+
+		if (sparse_paths_only && ce_skip_worktree(ce))
+			continue;
+
 		strbuf_setlen(&name, name_base_len);
 		strbuf_addstr(&name, ce->name);
 
@@ -520,8 +526,7 @@ static int grep_cache(struct grep_opt *opt,
 			 * cache entry are identical, even if worktree file has
 			 * been modified, so use cache version instead
 			 */
-			if (cached || (ce->ce_flags & CE_VALID) ||
-			    ce_skip_worktree(ce)) {
+			if (cached || (ce->ce_flags & CE_VALID)) {
 				if (ce_stage(ce) || ce_intent_to_add(ce))
 					continue;
 				hit |= grep_oid(opt, &ce->oid, name.buf,
@@ -552,9 +557,76 @@ static int grep_cache(struct grep_opt *opt,
 	return hit;
 }
 
-static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
-		     struct tree_desc *tree, struct strbuf *base, int tn_len,
-		     int check_attr)
+static struct pattern_list *get_sparsity_patterns(struct repository *repo)
+{
+	struct pattern_list *patterns;
+	char *sparse_file;
+	int sparse_config, cone_config;
+
+	if (repo_config_get_bool(repo, "core.sparsecheckout", &sparse_config) ||
+	    !sparse_config) {
+		return NULL;
+	}
+
+	sparse_file = repo_git_path(repo, "info/sparse-checkout");
+	patterns = xcalloc(1, sizeof(*patterns));
+
+	if (repo_config_get_bool(repo, "core.sparsecheckoutcone", &cone_config))
+		cone_config = 0;
+	patterns->use_cone_patterns = cone_config;
+
+	if (add_patterns_from_file_to_list(sparse_file, "", 0, patterns, NULL)) {
+		if (file_exists(sparse_file)) {
+			warning(_("failed to load sparse-checkout file: '%s'"),
+				sparse_file);
+		}
+		free(sparse_file);
+		free(patterns);
+		return NULL;
+	}
+
+	free(sparse_file);
+	return patterns;
+}
+
+static int path_in_sparse_checkout(struct strbuf *path, int prefix_len,
+				   unsigned int entry_mode,
+				   struct index_state *istate,
+				   struct pattern_list *sparsity,
+				   enum pattern_match_result parent_match,
+				   enum pattern_match_result *match)
+{
+	int dtype = DT_UNKNOWN;
+	int is_dir = S_ISDIR(entry_mode);
+
+	if (parent_match == MATCHED_RECURSIVE) {
+		*match = parent_match;
+		return 1;
+	}
+
+	if (is_dir && !is_dir_sep(path->buf[path->len - 1]))
+		strbuf_addch(path, '/');
+
+	*match = path_matches_pattern_list(path->buf, path->len,
+					   path->buf + prefix_len, &dtype,
+					   sparsity, istate);
+	if (*match == UNDECIDED)
+		*match = parent_match;
+
+	if (is_dir)
+		strbuf_trim_trailing_dir_sep(path);
+
+	if (*match == NOT_MATCHED &&
+		(!is_dir || (is_dir && sparsity->use_cone_patterns)))
+	     return 0;
+
+	return 1;
+}
+
+static int do_grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
+			struct tree_desc *tree, struct strbuf *base, int tn_len,
+			int check_attr, struct pattern_list *sparsity,
+			enum pattern_match_result default_sparsity_match)
 {
 	struct repository *repo = opt->repo;
 	int hit = 0;
@@ -570,6 +642,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 
 	while (tree_entry(tree, &entry)) {
 		int te_len = tree_entry_len(&entry);
+		enum pattern_match_result sparsity_match = 0;
 
 		if (match != all_entries_interesting) {
 			strbuf_addstr(&name, base->buf + tn_len);
@@ -585,6 +658,19 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 		}
 
 		strbuf_add(base, entry.path, te_len);
+
+		if (sparsity) {
+			struct strbuf path = STRBUF_INIT;
+			strbuf_addstr(&path, base->buf + tn_len);
+
+			if (!path_in_sparse_checkout(&path, old_baselen - tn_len,
+						     entry.mode, repo->index,
+						     sparsity, default_sparsity_match,
+						     &sparsity_match)) {
+				strbuf_setlen(base, old_baselen);
+				continue;
+			}
+		}
 
 		if (S_ISREG(entry.mode)) {
 			hit |= grep_oid(opt, &entry.oid, base->buf, tn_len,
@@ -602,8 +688,8 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 
 			strbuf_addch(base, '/');
 			init_tree_desc(&sub, data, size);
-			hit |= grep_tree(opt, pathspec, &sub, base, tn_len,
-					 check_attr);
+			hit |= do_grep_tree(opt, pathspec, &sub, base, tn_len,
+					    check_attr, sparsity, sparsity_match);
 			free(data);
 		} else if (recurse_submodules && S_ISGITLINK(entry.mode)) {
 			hit |= grep_submodule(opt, pathspec, &entry.oid,
@@ -619,6 +705,32 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 
 	strbuf_release(&name);
 	return hit;
+}
+
+/*
+ * Note: sparsity patterns and paths' attributes will only be considered if
+ * is_root_tree has true value. (Otherwise, we cannot properly perform pattern
+ * matching on paths.)
+ */
+static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
+		     struct tree_desc *tree, struct strbuf *base, int tn_len,
+		     int is_root_tree)
+{
+	struct pattern_list *patterns = NULL;
+	int sparse_paths_only = restrict_to_sparse_paths(opt->repo);
+	int ret;
+
+	if (is_root_tree && sparse_paths_only)
+		patterns = get_sparsity_patterns(opt->repo);
+
+	ret = do_grep_tree(opt, pathspec, tree, base, tn_len, is_root_tree,
+			   patterns, 0);
+
+	if (patterns) {
+		clear_pattern_list(patterns);
+		free(patterns);
+	}
+	return ret;
 }
 
 static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
@@ -1149,6 +1261,12 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (!use_index || untracked) {
 		int use_exclude = (opt_exclude < 0) ? use_index : !!opt_exclude;
+
+		if (opt_restrict_to_sparse_paths >= 0) {
+			die(_("--[no-]restrict-to-sparse-paths is incompatible"
+				  " with --no-index and --untracked"));
+		}
+
 		hit = grep_directory(&opt, &pathspec, use_exclude, use_index);
 	} else if (0 <= opt_exclude) {
 		die(_("--[no-]exclude-standard cannot be used for tracked contents"));
