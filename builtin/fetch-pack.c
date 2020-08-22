@@ -153,10 +153,6 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			args.from_promisor = 1;
 			continue;
 		}
-		if (!strcmp("--no-dependents", arg)) {
-			args.no_dependents = 1;
-			continue;
-		}
 		if (skip_prefix(arg, ("--" CL_ARG__FILTER "="), &arg)) {
 			parse_list_objects_filter(&args.filter_options, arg);
 			continue;

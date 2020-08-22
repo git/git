@@ -433,6 +433,26 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 	grep "want $(cat hash)" trace
 '
 
+test_expect_success 'fetch does not lazy-fetch missing targets of its refs' '
+	rm -rf server client trace &&
+
+	test_create_repo server &&
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	test_commit -C server foo &&
+
+	git clone --filter=blob:none "file://$(pwd)/server" client &&
+	# Make all refs point to nothing by deleting all objects.
+	rm client/.git/objects/pack/* &&
+
+	test_commit -C server bar &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch \
+		--no-tags --recurse-submodules=no \
+		origin refs/tags/bar &&
+	FOO_HASH=$(git -C server rev-parse foo) &&
+	! grep "want $FOO_HASH" trace
+'
+
 # The following two tests must be in this order. It is important that
 # the srv.bare repository did not have tags during clone, but has tags
 # in the fetch.
