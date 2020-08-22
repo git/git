@@ -9,18 +9,21 @@ test_tick
 test_expect_success setup '
 	test_commit file0 &&
 
+	mkdir dir1 &&
+	echo 1 >dir1/file &&
 	echo 1 >fileA.t &&
 	echo 1 >fileB.t &&
 	echo 1 >fileC.t &&
 	echo 1 >fileD.t &&
-	git add fileA.t fileB.t fileC.t fileD.t &&
+	git add dir1 fileA.t fileB.t fileC.t fileD.t &&
 	git commit -m "files 1" &&
 
+	echo 2 >dir1/file &&
 	echo 2 >fileA.t &&
 	echo 2 >fileB.t &&
 	echo 2 >fileC.t &&
 	echo 2 >fileD.t &&
-	git add fileA.t fileB.t fileC.t fileD.t &&
+	git add dir1 fileA.t fileB.t fileC.t fileD.t &&
 	git commit -m "files 2" &&
 
 	git tag checkpoint
@@ -31,7 +34,7 @@ restore_checkpoint () {
 }
 
 verify_expect () {
-	git status --porcelain --untracked-files=no -- fileA.t fileB.t fileC.t fileD.t >actual &&
+	git status --porcelain --untracked-files=no -- dir1 fileA.t fileB.t fileC.t fileD.t >actual &&
 	test_cmp expect actual
 }
 
@@ -132,6 +135,16 @@ test_expect_success 'only touches what was listed' '
 	cat >expect <<-\EOF &&
 	 M fileB.t
 	 M fileC.t
+	EOF
+	verify_expect
+'
+
+test_expect_success 'wildcard pathspec matches file in subdirectory' '
+	restore_checkpoint &&
+
+	echo "*file" | git restore --pathspec-from-file=- --source=HEAD^1 &&
+	cat >expect <<-\EOF &&
+	 M dir1/file
 	EOF
 	verify_expect
 '
