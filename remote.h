@@ -193,6 +193,12 @@ int resolve_remote_symref(struct ref *ref, struct ref *list);
  */
 struct ref *ref_remove_duplicates(struct ref *ref_map);
 
+/*
+ * Remove all entries in the input list which match any negative refspec in
+ * the refspec list.
+ */
+struct ref *apply_negative_refspecs(struct ref *ref_map, struct refspec *rs);
+
 int query_refspecs(struct refspec *rs, struct refspec_item *query);
 char *apply_refspecs(struct refspec *rs, const char *name);
 
@@ -205,7 +211,8 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 /*
  * Given a list of the remote refs and the specification of things to
  * fetch, makes a (separate) list of the refs to fetch and the local
- * refs to store into.
+ * refs to store into. Note that negative refspecs are ignored here, and
+ * should be handled separately.
  *
  * *tail is the pointer to the tail pointer of the list of results
  * beforehand, and will be set to the tail pointer of the list of
