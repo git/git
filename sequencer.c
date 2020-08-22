@@ -904,10 +904,14 @@ static const char *author_date_from_env_array(const struct strvec *env)
 
 	for (i = 0; i < env->nr; i++)
 <<<<<<< HEAD
+<<<<<<< HEAD
 		if (skip_prefix(env->items[i],
 =======
 		if (skip_prefix(env->v[i],
 >>>>>>> upstream/seen
+=======
+		if (skip_prefix(env->v[i],
+>>>>>>> upstream/next
 				"GIT_AUTHOR_DATE=", &date))
 			return date;
 	/*

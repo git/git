@@ -1708,7 +1708,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		const char *option = options.git_am_opts.items[i], *p;
 =======
 		const char *option = options.git_am_opts.v[i], *p;
+<<<<<<< HEAD
 >>>>>>> upstream/seen
+=======
+>>>>>>> upstream/next
 		if (!strcmp(option, "--whitespace=fix") ||
 		    !strcmp(option, "--whitespace=strip"))
 			allow_preemptive_ff = 0;
