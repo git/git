@@ -3511,14 +3511,13 @@ static void parse_argv(void)
 	build_mark_map(&sub_marks_from, &sub_marks_to);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_fast_import(int argc, const char **argv, const char *prefix)
 {
 	unsigned int i;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(fast_import_usage);
 
-	setup_git_directory();
 	reset_pack_idx_option(&pack_idx_opts);
 	git_pack_config();
 
