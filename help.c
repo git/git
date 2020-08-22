@@ -375,7 +375,7 @@ void list_cmds_by_config(struct string_list *list)
 {
 	const char *cmd_list;
 
-	if (git_config_get_string_const("completion.commands", &cmd_list))
+	if (git_config_get_string_tmp("completion.commands", &cmd_list))
 		return;
 
 	string_list_sort(list);
@@ -397,10 +397,10 @@ void list_cmds_by_config(struct string_list *list)
 	}
 }
 
-void list_common_guides_help(void)
+void list_guides_help(void)
 {
 	struct category_description catdesc[] = {
-		{ CAT_guide, N_("The common Git guides are:") },
+		{ CAT_guide, N_("The Git concept guides are:") },
 		{ 0, NULL }
 	};
 	print_cmd_by_category(catdesc, NULL);

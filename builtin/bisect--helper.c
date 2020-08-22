@@ -17,19 +17,30 @@ static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
 static GIT_PATH_FUNC(git_path_head_name, "head-name")
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
+static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 
 static const char * const git_bisect_helper_usage[] = {
+<<<<<<< HEAD
+=======
+	N_("git bisect--helper --next-all"),
+	N_("git bisect--helper --write-terms <bad_term> <good_term>"),
+	N_("git bisect--helper --bisect-clean-state"),
+>>>>>>> upstream/seen
 	N_("git bisect--helper --bisect-reset [<commit>]"),
 	N_("git bisect--helper --bisect-write [--no-log] <state> <revision> <good_term> <bad_term>"),
 	N_("git bisect--helper --bisect-check-and-set-terms <command> <good_term> <bad_term>"),
 	N_("git bisect--helper --bisect-next-check <good_term> <bad_term> [<term>]"),
 	N_("git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]"),
 	N_("git bisect--helper --bisect-start [--term-{old,good}=<term> --term-{new,bad}=<term>]"
+<<<<<<< HEAD
 					     "[--no-checkout] [<bad> [<good>...]] [--] [<paths>...]"),
 	N_("git bisect--helper --bisect-next"),
 	N_("git bisect--helper --bisect-auto-next"),
 	N_("git bisect--helper --bisect-state (bad|new) [<rev>]"),
 	N_("git bisect--helper --bisect-state (good|old) [<rev>...]"),
+=======
+					    " [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]"),
+>>>>>>> upstream/seen
 	NULL
 };
 
@@ -204,7 +215,11 @@ static int bisect_reset(const char *commit)
 		struct strvec argv = STRVEC_INIT;
 
 		strvec_pushl(&argv, "checkout", branch.buf, "--", NULL);
+<<<<<<< HEAD
 		if (run_command_v_opt(argv.items, RUN_GIT_CMD)) {
+=======
+		if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+>>>>>>> upstream/seen
 			error(_("could not check out original"
 				" HEAD '%s'. Try 'git bisect"
 				" reset <commit>'."), branch.buf);
@@ -457,6 +472,7 @@ finish:
 	return res;
 }
 
+<<<<<<< HEAD
 static int add_bisect_ref(const char *refname, const struct object_id *oid,
 			  int flags, void *cb)
 {
@@ -596,7 +612,12 @@ static enum bisect_error bisect_auto_next(struct bisect_terms *terms, const char
 
 static enum bisect_error bisect_start(struct bisect_terms *terms, int no_checkout,
 			const char **argv, int argc)
+=======
+static int bisect_start(struct bisect_terms *terms, const char **argv, int argc)
+>>>>>>> upstream/seen
 {
+	int no_checkout = 0;
+	int first_parent_only = 0;
 	int i, has_double_dash = 0, must_write_terms = 0, bad_seen = 0;
 	int flags, pathspec_pos;
 	enum bisect_error res = BISECT_OK;
@@ -627,6 +648,8 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int no_checkou
 			break;
 		} else if (!strcmp(arg, "--no-checkout")) {
 			no_checkout = 1;
+		} else if (!strcmp(arg, "--first-parent")) {
+			first_parent_only = 1;
 		} else if (!strcmp(arg, "--term-good") ||
 			 !strcmp(arg, "--term-old")) {
 			i++;
@@ -707,7 +730,11 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int no_checkou
 
 			strvec_pushl(&argv, "checkout", start_head.buf,
 				     "--", NULL);
+<<<<<<< HEAD
 			if (run_command_v_opt(argv.items, RUN_GIT_CMD)) {
+=======
+			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+>>>>>>> upstream/seen
 				res = error(_("checking out '%s' failed."
 						 " Try 'git bisect start "
 						 "<valid-branch>'."),
@@ -746,6 +773,9 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int no_checkou
 	 * Write new start state
 	 */
 	write_file(git_path_bisect_start(), "%s\n", start_head.buf);
+
+	if (first_parent_only)
+		write_file(git_path_bisect_first_parent(), "\n");
 
 	if (no_checkout) {
 		if (get_oid(start_head.buf, &oid) < 0) {
@@ -911,7 +941,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_AUTO_NEXT,
 		BISECT_STATE
 	} cmdmode = 0;
-	int no_checkout = 0, res = 0, nolog = 0;
+	int res = 0, nolog = 0;
 	struct option options[] = {
 		OPT_CMDMODE(0, "bisect-reset", &cmdmode,
 			 N_("reset the bisection state"), BISECT_RESET),
@@ -925,6 +955,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("print out the bisect terms"), BISECT_TERMS),
 		OPT_CMDMODE(0, "bisect-start", &cmdmode,
 			 N_("start the bisect session"), BISECT_START),
+<<<<<<< HEAD
 		OPT_CMDMODE(0, "bisect-next", &cmdmode,
 			 N_("find the next bisection commit"), BISECT_NEXT),
 		OPT_CMDMODE(0, "bisect-auto-next", &cmdmode,
@@ -933,6 +964,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("mark the state of ref (or refs)"), BISECT_STATE),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
+=======
+>>>>>>> upstream/seen
 		OPT_BOOL(0, "no-log", &nolog,
 			 N_("no log for BISECT_WRITE")),
 		OPT_END()
@@ -947,6 +980,23 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_bisect_helper_usage, options);
 
 	switch (cmdmode) {
+<<<<<<< HEAD
+=======
+	case NEXT_ALL:
+		res = bisect_next_all(the_repository, prefix);
+		break;
+	case WRITE_TERMS:
+		if (argc != 2)
+			return error(_("--write-terms requires two arguments"));
+		return write_terms(argv[0], argv[1]);
+	case BISECT_CLEAN_STATE:
+		if (argc != 0)
+			return error(_("--bisect-clean-state requires no arguments"));
+		return bisect_clean_state();
+	case CHECK_EXPECTED_REVS:
+		check_expected_revs(argv, argc);
+		return 0;
+>>>>>>> upstream/seen
 	case BISECT_RESET:
 		if (argc > 1)
 			return error(_("--bisect-reset requires either no argument or a commit"));
@@ -976,7 +1026,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		break;
 	case BISECT_START:
 		set_terms(&terms, "bad", "good");
-		res = bisect_start(&terms, no_checkout, argv, argc);
+		res = bisect_start(&terms, argv, argc);
 		break;
 	case BISECT_NEXT:
 		if (argc)

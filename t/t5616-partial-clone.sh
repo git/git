@@ -163,6 +163,22 @@ test_expect_success 'manual prefetch of missing objects' '
 	test_line_count = 0 observed.oids
 '
 
+test_expect_success 'partial clone with transfer.fsckobjects=1 works with submodules' '
+	test_create_repo submodule &&
+	test_commit -C submodule mycommit &&
+
+	test_create_repo src_with_sub &&
+	test_config -C src_with_sub uploadpack.allowfilter 1 &&
+	test_config -C src_with_sub uploadpack.allowanysha1inwant 1 &&
+
+	git -C src_with_sub submodule add "file://$(pwd)/submodule" mysub &&
+	git -C src_with_sub commit -m "commit with submodule" &&
+
+	git -c transfer.fsckobjects=1 \
+		clone --filter="blob:none" "file://$(pwd)/src_with_sub" dst &&
+	test_when_finished rm -rf dst
+'
+
 test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack --fsck-objects' '
 	git init src &&
 	test_commit -C src x &&
@@ -237,7 +253,11 @@ test_expect_success 'implicitly construct combine: filter with repeated flags' '
 
 test_expect_success 'upload-pack fails banned object filters' '
 	test_config -C srv.bare uploadpackfilter.blob:none.allow false &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_must_fail git clone --no-checkout --filter=blob:none \
+================================
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=blob:none \
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 		"file://$(pwd)/srv.bare" pc3 2>err &&
 	test_i18ngrep "filter '\''blob:none'\'' not supported" err
 '
@@ -247,14 +267,22 @@ test_expect_success 'upload-pack fails banned combine object filters' '
 	test_config -C srv.bare uploadpackfilter.combine.allow true &&
 	test_config -C srv.bare uploadpackfilter.tree.allow true &&
 	test_config -C srv.bare uploadpackfilter.blob:none.allow false &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_must_fail git clone --no-checkout --filter=tree:1 \
+================================
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:1 \
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 		--filter=blob:none "file://$(pwd)/srv.bare" pc3 2>err &&
 	test_i18ngrep "filter '\''blob:none'\'' not supported" err
 '
 
 test_expect_success 'upload-pack fails banned object filters with fallback' '
 	test_config -C srv.bare uploadpackfilter.allow false &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_must_fail git clone --no-checkout --filter=blob:none \
+================================
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=blob:none \
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 		"file://$(pwd)/srv.bare" pc3 2>err &&
 	test_i18ngrep "filter '\''blob:none'\'' not supported" err
 '
@@ -264,7 +292,12 @@ test_expect_success 'upload-pack limits tree depth filters' '
 	test_config -C srv.bare uploadpackfilter.tree.allow true &&
 	test_config -C srv.bare uploadpackfilter.tree.maxDepth 0 &&
 	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:1 \
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		"file://$(pwd)/srv.bare" pc3
+================================
+		"file://$(pwd)/srv.bare" pc3 2>err &&
+	test_i18ngrep "tree filter allows max depth 0, but got 1" err
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '
@@ -414,6 +447,26 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 	# to resolve the delta.
 	git -C server rev-parse HEAD~1^{tree} >hash &&
 	grep "want $(cat hash)" trace
+'
+
+test_expect_success 'fetch does not lazy-fetch missing targets of its refs' '
+	rm -rf server client trace &&
+
+	test_create_repo server &&
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	test_commit -C server foo &&
+
+	git clone --filter=blob:none "file://$(pwd)/server" client &&
+	# Make all refs point to nothing by deleting all objects.
+	rm client/.git/objects/pack/* &&
+
+	test_commit -C server bar &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch \
+		--no-tags --recurse-submodules=no \
+		origin refs/tags/bar &&
+	FOO_HASH=$(git -C server rev-parse foo) &&
+	! grep "want $FOO_HASH" trace
 '
 
 # The following two tests must be in this order. It is important that

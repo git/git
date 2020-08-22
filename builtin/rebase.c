@@ -357,7 +357,11 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 			     oid_to_hex(&opts->restrict_revision->object.oid));
 
 	ret = sequencer_make_script(the_repository, &todo_list.buf,
+<<<<<<< HEAD
 				    make_script_args.nr, make_script_args.items,
+=======
+				    make_script_args.nr, make_script_args.v,
+>>>>>>> upstream/seen
 				    flags);
 
 	if (ret)
@@ -944,7 +948,11 @@ static int run_am(struct rebase_options *opts)
 		return status;
 	}
 
+<<<<<<< HEAD
 	strvec_pushv(&am.args, opts->git_am_opts.items);
+=======
+	strvec_pushv(&am.args, opts->git_am_opts.v);
+>>>>>>> upstream/seen
 	strvec_push(&am.args, "--rebasing");
 	strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
 	strvec_push(&am.args, "--patch-format=mboxrd");
@@ -1013,7 +1021,11 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 	add_var(&script_snippet, "revisions", opts->revisions);
 	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
 		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
+<<<<<<< HEAD
 	sq_quote_argv_pretty(&buf, opts->git_am_opts.items);
+=======
+	sq_quote_argv_pretty(&buf, opts->git_am_opts.v);
+>>>>>>> upstream/seen
 	add_var(&script_snippet, "git_am_opt", buf.buf);
 	strbuf_release(&buf);
 	add_var(&script_snippet, "verbose",
@@ -1692,7 +1704,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.flags |= REBASE_FORCE;
 
 	for (i = 0; i < options.git_am_opts.nr; i++) {
+<<<<<<< HEAD
 		const char *option = options.git_am_opts.items[i], *p;
+=======
+		const char *option = options.git_am_opts.v[i], *p;
+>>>>>>> upstream/seen
 		if (!strcmp(option, "--whitespace=fix") ||
 		    !strcmp(option, "--whitespace=strip"))
 			allow_preemptive_ff = 0;
@@ -1808,6 +1824,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	if (options.git_am_opts.argc || options.type == REBASE_AM) {
 		/* all am options except -q are compatible only with --am */
 =======
@@ -1821,6 +1838,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		/* all am options except -q are compatible only with --apply */
 		for (i = options.git_am_opts.nr - 1; i >= 0; i--)
 			if (strcmp(options.git_am_opts.items[i], "-q"))
+>>>>>>> upstream/seen
+=======
+	if (options.git_am_opts.nr || options.type == REBASE_APPLY) {
+		/* all am options except -q are compatible only with --apply */
+		for (i = options.git_am_opts.nr - 1; i >= 0; i--)
+			if (strcmp(options.git_am_opts.v[i], "-q"))
 >>>>>>> upstream/seen
 				break;
 

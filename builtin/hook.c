@@ -5,9 +5,17 @@
 #include "hook.h"
 #include "parse-options.h"
 #include "strbuf.h"
+<<<<<<< HEAD
 
 static const char * const builtin_hook_usage[] = {
 	N_("git hook list <hookname>"),
+=======
+#include "strvec.h"
+
+static const char * const builtin_hook_usage[] = {
+	N_("git hook list <hookname>"),
+	N_("git hook run [(-e|--env)=<var>...] [(-a|--arg)=<arg>...] <hookname>"),
+>>>>>>> upstream/seen
 	NULL
 };
 
@@ -38,7 +46,11 @@ static int list(int argc, const char **argv, const char *prefix)
 
 	head = hook_list(&hookname);
 
+<<<<<<< HEAD
 	if (!head) {
+=======
+	if (list_empty(head)) {
+>>>>>>> upstream/seen
 		printf(_("no commands configured for hook '%s'\n"),
 		       hookname.buf);
 		return 0;
@@ -62,6 +74,35 @@ static int list(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+static int run(int argc, const char **argv, const char *prefix)
+{
+	struct strbuf hookname = STRBUF_INIT;
+	struct strvec env_argv = STRVEC_INIT;
+	struct strvec arg_argv = STRVEC_INIT;
+
+	struct option run_options[] = {
+		OPT_STRVEC('e', "env", &env_argv, N_("var"),
+			   N_("environment variables for hook to use")),
+		OPT_STRVEC('a', "arg", &arg_argv, N_("args"),
+			   N_("argument to pass to hook")),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, run_options,
+			     builtin_hook_usage, 0);
+
+	if (argc < 1)
+		usage_msg_opt(_("a hookname must be provided to operate on."),
+			      builtin_hook_usage, run_options);
+
+	strbuf_addstr(&hookname, argv[0]);
+
+	return run_hooks(env_argv.v, &hookname, &arg_argv);
+}
+
+>>>>>>> upstream/seen
 int cmd_hook(int argc, const char **argv, const char *prefix)
 {
 	struct option builtin_hook_options[] = {
@@ -72,6 +113,11 @@ int cmd_hook(int argc, const char **argv, const char *prefix)
 
 	if (!strcmp(argv[1], "list"))
 		return list(argc - 1, argv + 1, prefix);
+<<<<<<< HEAD
+=======
+	if (!strcmp(argv[1], "run"))
+		return run(argc - 1, argv + 1, prefix);
+>>>>>>> upstream/seen
 
 	usage_with_options(builtin_hook_usage, builtin_hook_options);
 }

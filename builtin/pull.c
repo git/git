@@ -590,14 +590,22 @@ static int run_fetch(const char *repo, const char **refspecs)
 		strvec_push(&args, "--no-show-forced-updates");
 	if (set_upstream)
 		strvec_push(&args, set_upstream);
+<<<<<<< HEAD
 	strvec_pushv(&args, opt_fetch.items);
+=======
+	strvec_pushv(&args, opt_fetch.v);
+>>>>>>> upstream/seen
 
 	if (repo) {
 		strvec_push(&args, repo);
 		strvec_pushv(&args, refspecs);
 	} else if (*refspecs)
 		BUG("refspecs without repo?");
+<<<<<<< HEAD
 	ret = run_command_v_opt(args.items, RUN_GIT_CMD);
+=======
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+>>>>>>> upstream/seen
 	strvec_clear(&args);
 	return ret;
 }
@@ -697,8 +705,13 @@ static int run_merge(void)
 		strvec_push(&args, opt_ff);
 	if (opt_verify_signatures)
 		strvec_push(&args, opt_verify_signatures);
+<<<<<<< HEAD
 	strvec_pushv(&args, opt_strategies.items);
 	strvec_pushv(&args, opt_strategy_opts.items);
+=======
+	strvec_pushv(&args, opt_strategies.v);
+	strvec_pushv(&args, opt_strategy_opts.v);
+>>>>>>> upstream/seen
 	if (opt_gpg_sign)
 		strvec_push(&args, opt_gpg_sign);
 	if (opt_autostash == 0)
@@ -709,7 +722,11 @@ static int run_merge(void)
 		strvec_push(&args, "--allow-unrelated-histories");
 
 	strvec_push(&args, "FETCH_HEAD");
+<<<<<<< HEAD
 	ret = run_command_v_opt(args.items, RUN_GIT_CMD);
+=======
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+>>>>>>> upstream/seen
 	strvec_clear(&args);
 	return ret;
 }
@@ -888,8 +905,13 @@ static int run_rebase(const struct object_id *curr_head,
 		strvec_push(&args, "--interactive");
 	if (opt_diffstat)
 		strvec_push(&args, opt_diffstat);
+<<<<<<< HEAD
 	strvec_pushv(&args, opt_strategies.items);
 	strvec_pushv(&args, opt_strategy_opts.items);
+=======
+	strvec_pushv(&args, opt_strategies.v);
+	strvec_pushv(&args, opt_strategy_opts.v);
+>>>>>>> upstream/seen
 	if (opt_gpg_sign)
 		strvec_push(&args, opt_gpg_sign);
 	if (opt_autostash == 0)
@@ -908,7 +930,11 @@ static int run_rebase(const struct object_id *curr_head,
 	else
 		strvec_push(&args, oid_to_hex(merge_head));
 
+<<<<<<< HEAD
 	ret = run_command_v_opt(args.items, RUN_GIT_CMD);
+=======
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+>>>>>>> upstream/seen
 	strvec_clear(&args);
 	return ret;
 }

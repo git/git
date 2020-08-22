@@ -252,8 +252,10 @@ typedef unsigned long uintptr_t;
 #ifdef PRECOMPOSE_UNICODE
 #include "compat/precompose_utf8.h"
 #else
-#define precompose_str(in,i_nfd2nfc)
-#define precompose_argv(c,v)
+static inline void precompose_argv(int argc, const char **argv)
+{
+	; /* nothing */
+}
 #define probe_utf8_pathname_composition()
 #endif
 
@@ -270,7 +272,9 @@ struct itimerval {
 #endif
 
 #ifdef NO_SETITIMER
-#define setitimer(which,value,ovalue)
+static inline int setitimer(int which, const struct itimerval *value, struct itimerval *newvalue) {
+	; /* nothing */
+}
 #endif
 
 #ifndef NO_LIBGEN_H
@@ -1231,8 +1235,14 @@ int warn_on_fopen_errors(const char *path);
 #endif
 
 #ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-#define flockfile(fh)
-#define funlockfile(fh)
+static inline void flockfile(FILE *fh)
+{
+	; /* nothing */
+}
+static inline void funlockfile(FILE *fh)
+{
+	; /* nothing */
+}
 #define getc_unlocked(fh) getc(fh)
 #endif
 

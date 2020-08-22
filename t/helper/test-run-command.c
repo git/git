@@ -275,13 +275,21 @@ static int quote_stress_test(int argc, const char **argv)
 		if (i < skip)
 			continue;
 
+<<<<<<< HEAD
 		cp.argv = args.items;
+=======
+		cp.argv = args.v;
+>>>>>>> upstream/seen
 		strbuf_reset(&out);
 		if (pipe_command(&cp, NULL, 0, &out, 0, NULL, 0) < 0)
 			return error("Failed to spawn child process");
 
 		for (j = 0, k = 0; j < arg_count; j++) {
+<<<<<<< HEAD
 			const char *arg = args.items[j + arg_offset];
+=======
+			const char *arg = args.v[j + arg_offset];
+>>>>>>> upstream/seen
 
 			if (strcmp(arg, out.buf + k))
 				ret = error("incorrectly quoted arg: '%s', "
@@ -298,7 +306,11 @@ static int quote_stress_test(int argc, const char **argv)
 			fprintf(stderr, "Trial #%d failed. Arguments:\n", i);
 			for (j = 0; j < arg_count; j++)
 				fprintf(stderr, "arg #%d: '%s'\n",
+<<<<<<< HEAD
 					(int)j, args.items[j + arg_offset]);
+=======
+					(int)j, args.v[j + arg_offset]);
+>>>>>>> upstream/seen
 
 			strbuf_release(&out);
 			strvec_clear(&args);

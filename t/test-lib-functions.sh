@@ -820,7 +820,7 @@ test_must_fail_acceptable () {
 	fi
 
 	case "$1" in
-	git|__git*|test-tool|test-svn-fe|test_terminal)
+	git|__git*|test-tool|test_terminal)
 		return 0
 		;;
 	*)
@@ -952,7 +952,13 @@ test_expect_code () {
 # - not all diff versions understand "-u"
 
 test_cmp() {
-	eval "$GIT_TEST_CMP" '"$@"'
+	test $# -eq 2 || BUG "test_cmp requires two arguments"
+	if ! eval "$GIT_TEST_CMP" '"$@"'
+	then
+		test "x$1" = x- || test -e "$1" || BUG "test_cmp '$1' missing"
+		test "x$2" = x- || test -e "$2" || BUG "test_cmp '$2' missing"
+		return 1
+	fi
 }
 
 # Check that the given config key has the expected value.
@@ -981,7 +987,13 @@ test_cmp_config() {
 # test_cmp_bin - helper to compare binary files
 
 test_cmp_bin() {
-	cmp "$@"
+	test $# -eq 2 || BUG "test_cmp_bin requires two arguments"
+	if ! cmp "$@"
+	then
+		test "x$1" = x- || test -e "$1" || BUG "test_cmp_bin '$1' missing"
+		test "x$2" = x- || test -e "$2" || BUG "test_cmp_bin '$2' missing"
+		return 1
+	fi
 }
 
 # Use this instead of test_cmp to compare files that contain expected and
@@ -1631,4 +1643,37 @@ test_path_is_hidden () {
 	# Use the output of `attrib`, ignore the absolute path
 	case "$("$SYSTEMROOT"/system32/attrib "$1")" in *H*?:*) return 0;; esac
 	return 1
+}
+
+# Check that the given command was invoked as part of the
+# trace2-format trace on stdin.
+#
+#	test_subcommand [!] <command> <args>... < <trace>
+#
+# For example, to look for an invocation of "git upload-pack
+# /path/to/repo"
+#
+#	GIT_TRACE2_EVENT=event.log git fetch ... &&
+#	test_subcommand git upload-pack "$PATH" <event.log
+#
+# If the first parameter passed is !, this instead checks that
+# the given command was not called.
+#
+test_subcommand () {
+	local negate=
+	if test "$1" = "!"
+	then
+		negate=t
+		shift
+	fi
+
+	local expr=$(printf '"%s",' "$@")
+	expr="${expr%,}"
+
+	if test -n "$negate"
+	then
+		! grep "\[$expr\]"
+	else
+		grep "\[$expr\]"
+	fi
 }

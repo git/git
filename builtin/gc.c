@@ -28,9 +28,15 @@
 #include "blob.h"
 #include "tree.h"
 #include "promisor-remote.h"
+<<<<<<< HEAD
 #include "remote.h"
 #include "midx.h"
 #include "refs.h"
+=======
+#include "refs.h"
+#include "remote.h"
+#include "midx.h"
+>>>>>>> upstream/seen
 #include "object-store.h"
 
 #define FAILED_RUN "failed to run %s"
@@ -518,11 +524,19 @@ static void gc_before_repack(void)
 	if (done++)
 		return;
 
+<<<<<<< HEAD
 	if (pack_refs && run_command_v_opt(pack_refs_cmd.items, RUN_GIT_CMD))
 		die(FAILED_RUN, pack_refs_cmd.items[0]);
 
 	if (prune_reflogs && run_command_v_opt(reflog.items, RUN_GIT_CMD))
 		die(FAILED_RUN, reflog.items[0]);
+=======
+	if (pack_refs && run_command_v_opt(pack_refs_cmd.v, RUN_GIT_CMD))
+		die(FAILED_RUN, pack_refs_cmd.v[0]);
+
+	if (prune_reflogs && run_command_v_opt(reflog.v, RUN_GIT_CMD))
+		die(FAILED_RUN, reflog.v[0]);
+>>>>>>> upstream/seen
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
@@ -657,8 +671,13 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (!repository_format_precious_objects) {
 		close_object_store(the_repository->objects);
+<<<<<<< HEAD
 		if (run_command_v_opt(repack.items, RUN_GIT_CMD))
 			die(FAILED_RUN, repack.items[0]);
+=======
+		if (run_command_v_opt(repack.v, RUN_GIT_CMD))
+			die(FAILED_RUN, repack.v[0]);
+>>>>>>> upstream/seen
 
 		if (prune_expire) {
 			strvec_push(&prune, prune_expire);
@@ -667,19 +686,33 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			if (has_promisor_remote())
 				strvec_push(&prune,
 					    "--exclude-promisor-objects");
+<<<<<<< HEAD
 			if (run_command_v_opt(prune.items, RUN_GIT_CMD))
 				die(FAILED_RUN, prune.items[0]);
+=======
+			if (run_command_v_opt(prune.v, RUN_GIT_CMD))
+				die(FAILED_RUN, prune.v[0]);
+>>>>>>> upstream/seen
 		}
 	}
 
 	if (prune_worktrees_expire) {
 		strvec_push(&prune_worktrees, prune_worktrees_expire);
+<<<<<<< HEAD
 		if (run_command_v_opt(prune_worktrees.items, RUN_GIT_CMD))
 			die(FAILED_RUN, prune_worktrees.items[0]);
 	}
 
 	if (run_command_v_opt(rerere.items, RUN_GIT_CMD))
 		die(FAILED_RUN, rerere.items[0]);
+=======
+		if (run_command_v_opt(prune_worktrees.v, RUN_GIT_CMD))
+			die(FAILED_RUN, prune_worktrees.v[0]);
+	}
+
+	if (run_command_v_opt(rerere.v, RUN_GIT_CMD))
+		die(FAILED_RUN, rerere.v[0]);
+>>>>>>> upstream/seen
 
 	report_garbage = report_pack_garbage;
 	reprepare_packed_git(the_repository);
@@ -704,18 +737,28 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+<<<<<<< HEAD
 #define MAX_NUM_TASKS 5
 
+=======
+>>>>>>> upstream/seen
 static const char * const builtin_maintenance_usage[] = {
 	N_("git maintenance run [<options>]"),
 	NULL
 };
 
+<<<<<<< HEAD
 static struct maintenance_opts {
 	int auto_flag;
 	int quiet;
 	int tasks_selected;
 } opts;
+=======
+struct maintenance_opts {
+	int auto_flag;
+	int quiet;
+};
+>>>>>>> upstream/seen
 
 /* Remember to update object flag allocation in object.h */
 #define PARENT1		(1u<<16)
@@ -791,6 +834,7 @@ static int should_write_commit_graph(void)
 	return result;
 }
 
+<<<<<<< HEAD
 static int run_write_commit_graph(void)
 {
 	int result;
@@ -826,21 +870,61 @@ static int run_verify_commit_graph(void)
 }
 
 static int maintenance_task_commit_graph(void)
+=======
+static int run_write_commit_graph(struct maintenance_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "commit-graph", "write",
+		     "--split", "--reachable", NULL);
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--no-progress");
+
+	return !!run_command(&child);
+}
+
+static int run_verify_commit_graph(struct maintenance_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "commit-graph", "verify",
+		     "--shallow", NULL);
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--no-progress");
+
+	return !!run_command(&child);
+}
+
+static int maintenance_task_commit_graph(struct maintenance_opts *opts)
+>>>>>>> upstream/seen
 {
 	struct repository *r = the_repository;
 	char *chain_path;
 
+<<<<<<< HEAD
 	/* Skip commit-graph when --auto is specified. */
 	if (opts.auto_flag)
 		return 0;
 
 	close_object_store(r->objects);
 	if (run_write_commit_graph()) {
+=======
+	close_object_store(r->objects);
+	if (run_write_commit_graph(opts)) {
+>>>>>>> upstream/seen
 		error(_("failed to write commit-graph"));
 		return 1;
 	}
 
+<<<<<<< HEAD
 	if (!run_verify_commit_graph())
+=======
+	if (!run_verify_commit_graph(opts))
+>>>>>>> upstream/seen
 		return 0;
 
 	warning(_("commit-graph verify caught error, rewriting"));
@@ -852,13 +936,18 @@ static int maintenance_task_commit_graph(void)
 	}
 	free(chain_path);
 
+<<<<<<< HEAD
 	if (!run_write_commit_graph())
+=======
+	if (!run_write_commit_graph(opts))
+>>>>>>> upstream/seen
 		return 0;
 
 	error(_("failed to rewrite commit-graph"));
 	return 1;
 }
 
+<<<<<<< HEAD
 static int fetch_remote(const char *remote)
 {
 	int result;
@@ -881,6 +970,26 @@ static int fetch_remote(const char *remote)
 }
 
 static int fill_each_remote(struct remote *remote, void *cbdata)
+=======
+static int fetch_remote(const char *remote, struct maintenance_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "fetch", remote, "--prune", "--no-tags",
+		     "--no-write-fetch-head", "--recurse-submodules=no",
+		     "--refmap=", NULL);
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--quiet");
+
+	strvec_pushf(&child.args, "+refs/heads/*:refs/prefetch/%s/*", remote);
+
+	return !!run_command(&child);
+}
+
+static int append_remote(struct remote *remote, void *cbdata)
+>>>>>>> upstream/seen
 {
 	struct string_list *remotes = (struct string_list *)cbdata;
 
@@ -888,18 +997,27 @@ static int fill_each_remote(struct remote *remote, void *cbdata)
 	return 0;
 }
 
+<<<<<<< HEAD
 static int maintenance_task_prefetch(void)
+=======
+static int maintenance_task_prefetch(struct maintenance_opts *opts)
+>>>>>>> upstream/seen
 {
 	int result = 0;
 	struct string_list_item *item;
 	struct string_list remotes = STRING_LIST_INIT_DUP;
 
+<<<<<<< HEAD
 	if (for_each_remote(fill_each_remote, &remotes)) {
+=======
+	if (for_each_remote(append_remote, &remotes)) {
+>>>>>>> upstream/seen
 		error(_("failed to fill remotes"));
 		result = 1;
 		goto cleanup;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Do not modify the result based on the success of the 'fetch'
 	 * operation, as a loss of network could cause 'fetch' to fail
@@ -910,12 +1028,17 @@ static int maintenance_task_prefetch(void)
 	     item && item < remotes.items + remotes.nr;
 	     item++)
 		fetch_remote(item->string);
+=======
+	for_each_string_list_item(item, &remotes)
+		result |= fetch_remote(item->string, opts);
+>>>>>>> upstream/seen
 
 cleanup:
 	string_list_clear(&remotes, 0);
 	return result;
 }
 
+<<<<<<< HEAD
 static int maintenance_task_gc(void)
 {
 	int result;
@@ -944,6 +1067,37 @@ static int prune_packed(void)
 		strvec_push(&cmd, "--quiet");
 
 	return run_command_v_opt(cmd.items, RUN_GIT_CMD);
+=======
+static int maintenance_task_gc(struct maintenance_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_push(&child.args, "gc");
+
+	if (opts->auto_flag)
+		strvec_push(&child.args, "--auto");
+	if (opts->quiet)
+		strvec_push(&child.args, "--quiet");
+	else
+		strvec_push(&child.args, "--no-quiet");
+
+	close_object_store(the_repository->objects);
+	return run_command(&child);
+}
+
+static int prune_packed(struct maintenance_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_push(&child.args, "prune-packed");
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--quiet");
+
+	return !!run_command(&child);
+>>>>>>> upstream/seen
 }
 
 struct write_loose_object_data {
@@ -981,9 +1135,15 @@ static int loose_object_auto_condition(void)
 					     NULL, NULL, &count);
 }
 
+<<<<<<< HEAD
 static int loose_object_exists(const struct object_id *oid,
 			       const char *path,
 			       void *data)
+=======
+static int bail_on_loose(const struct object_id *oid,
+			 const char *path,
+			 void *data)
+>>>>>>> upstream/seen
 {
 	return 1;
 }
@@ -999,19 +1159,28 @@ static int write_loose_object_to_stdin(const struct object_id *oid,
 	return ++(d->count) > d->batch_size;
 }
 
+<<<<<<< HEAD
 static int pack_loose(void)
+=======
+static int pack_loose(struct maintenance_opts *opts)
+>>>>>>> upstream/seen
 {
 	struct repository *r = the_repository;
 	int result = 0;
 	struct write_loose_object_data data;
+<<<<<<< HEAD
 	struct strbuf prefix = STRBUF_INIT;
 	struct child_process *pack_proc;
+=======
+	struct child_process pack_proc = CHILD_PROCESS_INIT;
+>>>>>>> upstream/seen
 
 	/*
 	 * Do not start pack-objects process
 	 * if there are no loose objects.
 	 */
 	if (!for_each_loose_file_in_objdir(r->objects->odb->path,
+<<<<<<< HEAD
 					   loose_object_exists,
 					   NULL, NULL, NULL))
 		return 0;
@@ -1037,6 +1206,27 @@ static int pack_loose(void)
 	}
 
 	data.in = xfdopen(pack_proc->in, "w");
+=======
+					   bail_on_loose,
+					   NULL, NULL, NULL))
+		return 0;
+
+	pack_proc.git_cmd = 1;
+
+	strvec_push(&pack_proc.args, "pack-objects");
+	if (opts->quiet)
+		strvec_push(&pack_proc.args, "--quiet");
+	strvec_pushf(&pack_proc.args, "%s/pack/loose", r->objects->odb->path);
+
+	pack_proc.in = -1;
+
+	if (start_command(&pack_proc)) {
+		error(_("failed to start 'git pack-objects' process"));
+		return 1;
+	}
+
+	data.in = xfdopen(pack_proc.in, "w");
+>>>>>>> upstream/seen
 	data.count = 0;
 	data.batch_size = 50000;
 
@@ -1048,11 +1238,16 @@ static int pack_loose(void)
 
 	fclose(data.in);
 
+<<<<<<< HEAD
 	if (finish_command(pack_proc)) {
+=======
+	if (finish_command(&pack_proc)) {
+>>>>>>> upstream/seen
 		error(_("failed to finish 'git pack-objects' process"));
 		result = 1;
 	}
 
+<<<<<<< HEAD
 cleanup:
 	strbuf_release(&prefix);
 	free(pack_proc);
@@ -1062,6 +1257,14 @@ cleanup:
 static int maintenance_task_loose_objects(void)
 {
 	return prune_packed() || pack_loose();
+=======
+	return result;
+}
+
+static int maintenance_task_loose_objects(struct maintenance_opts *opts)
+{
+	return prune_packed(opts) || pack_loose(opts);
+>>>>>>> upstream/seen
 }
 
 static int incremental_repack_auto_condition(void)
@@ -1093,6 +1296,7 @@ static int incremental_repack_auto_condition(void)
 	return count >= incremental_repack_auto_limit;
 }
 
+<<<<<<< HEAD
 static int multi_pack_index_write(void)
 {
 	int result;
@@ -1109,6 +1313,25 @@ static int multi_pack_index_write(void)
 }
 
 static int rewrite_multi_pack_index(void)
+=======
+static int multi_pack_index_write(struct maintenance_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "multi-pack-index", "write", NULL);
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--no-progress");
+
+	if (run_command(&child))
+		return error(_("failed to write multi-pack-index"));
+
+	return 0;
+}
+
+static int rewrite_multi_pack_index(struct maintenance_opts *opts)
+>>>>>>> upstream/seen
 {
 	struct repository *r = the_repository;
 	char *midx_name = get_midx_filename(r->objects->odb->path);
@@ -1116,6 +1339,7 @@ static int rewrite_multi_pack_index(void)
 	unlink(midx_name);
 	free(midx_name);
 
+<<<<<<< HEAD
 	if (multi_pack_index_write()) {
 		error(_("failed to rewrite multi-pack-index"));
 		return 1;
@@ -1157,6 +1381,49 @@ static int multi_pack_index_expire(void)
 
 #define TWO_GIGABYTES (2147483647)
 #define UNSET_BATCH_SIZE ((unsigned long)-1)
+=======
+	return multi_pack_index_write(opts);
+}
+
+static int multi_pack_index_verify(struct maintenance_opts *opts,
+				   const char *message)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "multi-pack-index", "verify", NULL);
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--no-progress");
+
+	if (run_command(&child)) {
+		warning(_("'git multi-pack-index verify' failed %s"), message);
+		return 1;
+	}
+
+	return 0;
+}
+
+static int multi_pack_index_expire(struct maintenance_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "multi-pack-index", "expire", NULL);
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--no-progress");
+
+	close_object_store(the_repository->objects);
+
+	if (run_command(&child))
+		return error(_("'git multi-pack-index expire' failed"));
+
+	return 0;
+}
+
+#define TWO_GIGABYTES (INT32_MAX)
+>>>>>>> upstream/seen
 
 static off_t get_auto_pack_size(void)
 {
@@ -1196,6 +1463,7 @@ static off_t get_auto_pack_size(void)
 	return result_size;
 }
 
+<<<<<<< HEAD
 static int multi_pack_index_repack(void)
 {
 	int result;
@@ -1254,6 +1522,53 @@ static int maintenance_task_incremental_repack(void)
 }
 
 typedef int maintenance_task_fn(void);
+=======
+static int multi_pack_index_repack(struct maintenance_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "multi-pack-index", "repack", NULL);
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--no-progress");
+
+	strvec_pushf(&child.args, "--batch-size=%"PRIuMAX,
+				  (uintmax_t)get_auto_pack_size());
+
+	close_object_store(the_repository->objects);
+
+	if (run_command(&child))
+		return error(_("'git multi-pack-index repack' failed"));
+
+	return 0;
+}
+
+static int maintenance_task_incremental_repack(struct maintenance_opts *opts)
+{
+	prepare_repo_settings(the_repository);
+	if (!the_repository->settings.core_multi_pack_index) {
+		warning(_("skipping incremental-repack task because core.multiPackIndex is disabled"));
+		return 0;
+	}
+
+	if (multi_pack_index_write(opts))
+		return 1;
+	if (multi_pack_index_verify(opts, "after initial write"))
+		return rewrite_multi_pack_index(opts);
+	if (multi_pack_index_expire(opts))
+		return 1;
+	if (multi_pack_index_verify(opts, "after expire step"))
+		return !!rewrite_multi_pack_index(opts);
+	if (multi_pack_index_repack(opts))
+		return 1;
+	if (multi_pack_index_verify(opts, "after repack step"))
+		return !!rewrite_multi_pack_index(opts);
+	return 0;
+}
+
+typedef int maintenance_task_fn(struct maintenance_opts *opts);
+>>>>>>> upstream/seen
 
 /*
  * An auto condition function returns 1 if the task should run
@@ -1266,6 +1581,7 @@ struct maintenance_task {
 	const char *name;
 	maintenance_task_fn *fn;
 	maintenance_auto_fn *auto_condition;
+<<<<<<< HEAD
 	int task_order;
 	unsigned enabled:1,
 		 selected:1;
@@ -1273,10 +1589,56 @@ struct maintenance_task {
 
 static struct maintenance_task *tasks[MAX_NUM_TASKS];
 static int num_tasks;
+=======
+	unsigned enabled:1,
+		 selected:1;
+	int selected_order;
+};
+
+enum maintenance_task_label {
+	TASK_PREFETCH,
+	TASK_LOOSE_OBJECTS,
+	TASK_INCREMENTAL_REPACK,
+	TASK_GC,
+	TASK_COMMIT_GRAPH,
+
+	/* Leave as final value */
+	TASK__COUNT
+};
+
+static struct maintenance_task tasks[] = {
+	[TASK_PREFETCH] = {
+		"prefetch",
+		maintenance_task_prefetch,
+	},
+	[TASK_LOOSE_OBJECTS] = {
+		"loose-objects",
+		maintenance_task_loose_objects,
+		loose_object_auto_condition,
+	},
+	[TASK_INCREMENTAL_REPACK] = {
+		"incremental-repack",
+		maintenance_task_incremental_repack,
+		incremental_repack_auto_condition,
+	},
+	[TASK_GC] = {
+		"gc",
+		maintenance_task_gc,
+		need_to_gc,
+		1,
+	},
+	[TASK_COMMIT_GRAPH] = {
+		"commit-graph",
+		maintenance_task_commit_graph,
+		should_write_commit_graph,
+	},
+};
+>>>>>>> upstream/seen
 
 static int compare_tasks_by_selection(const void *a_, const void *b_)
 {
 	const struct maintenance_task *a, *b;
+<<<<<<< HEAD
 	a = (const struct maintenance_task *)a_;
 	b = (const struct maintenance_task *)b_;
 
@@ -1286,6 +1648,18 @@ static int compare_tasks_by_selection(const void *a_, const void *b_)
 static int maintenance_run(void)
 {
 	int i;
+=======
+
+	a = (const struct maintenance_task *)&a_;
+	b = (const struct maintenance_task *)&b_;
+
+	return b->selected_order - a->selected_order;
+}
+
+static int maintenance_run(struct maintenance_opts *opts)
+{
+	int i, found_selected = 0;
+>>>>>>> upstream/seen
 	int result = 0;
 	struct lock_file lk;
 	struct repository *r = the_repository;
@@ -1299,7 +1673,11 @@ static int maintenance_run(void)
 		 * recursive process stack. Do not report an error in
 		 * that case.
 		 */
+<<<<<<< HEAD
 		if (!opts.auto_flag && !opts.quiet)
+=======
+		if (!opts->auto_flag && !opts->quiet)
+>>>>>>> upstream/seen
 			error(_("lock file '%s' exists, skipping maintenance"),
 			      lock_path);
 		free(lock_path);
@@ -1307,6 +1685,7 @@ static int maintenance_run(void)
 	}
 	free(lock_path);
 
+<<<<<<< HEAD
 	if (opts.tasks_selected)
 		QSORT(tasks, num_tasks, compare_tasks_by_selection);
 
@@ -1325,12 +1704,39 @@ static int maintenance_run(void)
 		trace2_region_enter("maintenance", tasks[i]->name, r);
 		result = tasks[i]->fn();
 		trace2_region_leave("maintenance", tasks[i]->name, r);
+=======
+	for (i = 0; !found_selected && i < TASK__COUNT; i++)
+		found_selected = tasks[i].selected;
+
+	if (found_selected)
+		QSORT(tasks, TASK__COUNT, compare_tasks_by_selection);
+
+	for (i = 0; i < TASK__COUNT; i++) {
+		if (found_selected && !tasks[i].selected)
+			continue;
+
+		if (!found_selected && !tasks[i].enabled)
+			continue;
+
+		if (opts->auto_flag &&
+		    (!tasks[i].auto_condition ||
+		     !tasks[i].auto_condition()))
+			continue;
+
+		trace2_region_enter("maintenance", tasks[i].name, r);
+		if (tasks[i].fn(opts)) {
+			error(_("task '%s' failed"), tasks[i].name);
+			result = 1;
+		}
+		trace2_region_leave("maintenance", tasks[i].name, r);
+>>>>>>> upstream/seen
 	}
 
 	rollback_lock_file(&lk);
 	return result;
 }
 
+<<<<<<< HEAD
 static void initialize_tasks(void)
 {
 	int i;
@@ -1373,6 +1779,23 @@ static void initialize_tasks(void)
 
 		if (!git_config_get_bool(config_name.buf, &config_value))
 			tasks[i]->enabled = config_value;
+=======
+static void initialize_task_config(void)
+{
+	int i;
+	struct strbuf config_name = STRBUF_INIT;
+	gc_config();
+
+	for (i = 0; i < TASK__COUNT; i++) {
+		int config_value;
+
+		strbuf_setlen(&config_name, 0);
+		strbuf_addf(&config_name, "maintenance.%s.enabled",
+			    tasks[i].name);
+
+		if (!git_config_get_bool(config_name.buf, &config_value))
+			tasks[i].enabled = config_value;
+>>>>>>> upstream/seen
 	}
 
 	strbuf_release(&config_name);
@@ -1381,11 +1804,16 @@ static void initialize_tasks(void)
 static int task_option_parse(const struct option *opt,
 			     const char *arg, int unset)
 {
+<<<<<<< HEAD
 	int i;
+=======
+	int i, num_selected = 0;
+>>>>>>> upstream/seen
 	struct maintenance_task *task = NULL;
 
 	BUG_ON_OPT_NEG(unset);
 
+<<<<<<< HEAD
 	if (!arg || !strlen(arg)) {
 		error(_("--task requires a value"));
 		return 1;
@@ -1397,6 +1825,12 @@ static int task_option_parse(const struct option *opt,
 		if (tasks[i] && !strcasecmp(tasks[i]->name, arg)) {
 			task = tasks[i];
 			break;
+=======
+	for (i = 0; i < TASK__COUNT; i++) {
+		num_selected += tasks[i].selected;
+		if (!strcasecmp(tasks[i].name, arg)) {
+			task = &tasks[i];
+>>>>>>> upstream/seen
 		}
 	}
 
@@ -1411,14 +1845,23 @@ static int task_option_parse(const struct option *opt,
 	}
 
 	task->selected = 1;
+<<<<<<< HEAD
 	task->task_order = opts.tasks_selected;
+=======
+	task->selected_order = num_selected + 1;
+>>>>>>> upstream/seen
 
 	return 0;
 }
 
 int cmd_maintenance(int argc, const char **argv, const char *prefix)
 {
+<<<<<<< HEAD
 	static struct option builtin_maintenance_options[] = {
+=======
+	struct maintenance_opts opts;
+	struct option builtin_maintenance_options[] = {
+>>>>>>> upstream/seen
 		OPT_BOOL(0, "auto", &opts.auto_flag,
 			 N_("run tasks based on the state of the repository")),
 		OPT_BOOL(0, "quiet", &opts.quiet,
@@ -1436,14 +1879,19 @@ int cmd_maintenance(int argc, const char **argv, const char *prefix)
 				   builtin_maintenance_options);
 
 	opts.quiet = !isatty(2);
+<<<<<<< HEAD
 	gc_config();
 	initialize_tasks();
+=======
+	initialize_task_config();
+>>>>>>> upstream/seen
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_maintenance_options,
 			     builtin_maintenance_usage,
 			     PARSE_OPT_KEEP_UNKNOWN);
 
+<<<<<<< HEAD
 	if (argc == 1) {
 		if (!strcmp(argv[0], "run"))
 			return maintenance_run();
@@ -1451,4 +1899,14 @@ int cmd_maintenance(int argc, const char **argv, const char *prefix)
 
 	usage_with_options(builtin_maintenance_usage,
 			   builtin_maintenance_options);
+=======
+	if (argc != 1)
+		usage_with_options(builtin_maintenance_usage,
+				   builtin_maintenance_options);
+
+	if (!strcmp(argv[0], "run"))
+		return maintenance_run(&opts);
+
+	die(_("invalid subcommand: %s"), argv[0]);
+>>>>>>> upstream/seen
 }

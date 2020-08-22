@@ -33,7 +33,11 @@ int try_merge_command(struct repository *r,
 	for (j = remotes; j; j = j->next)
 		strvec_push(&args, merge_argument(j->item));
 
+<<<<<<< HEAD
 	ret = run_command_v_opt(args.items, RUN_GIT_CMD);
+=======
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+>>>>>>> upstream/seen
 	strvec_clear(&args);
 
 	discard_index(r->index);
@@ -80,8 +84,8 @@ int checkout_fast_forward(struct repository *r,
 	}
 
 	memset(&opts, 0, sizeof(opts));
+	dir_init(&dir);
 	if (overwrite_ignore) {
-		memset(&dir, 0, sizeof(dir));
 		dir.flags |= DIR_SHOW_IGNORED;
 		setup_standard_excludes(&dir);
 		opts.dir = &dir;
@@ -102,6 +106,7 @@ int checkout_fast_forward(struct repository *r,
 		clear_unpack_trees_porcelain(&opts);
 		return -1;
 	}
+	dir_clear(&dir);
 	clear_unpack_trees_porcelain(&opts);
 
 	if (write_locked_index(r->index, &lock_file, COMMIT_LOCK))

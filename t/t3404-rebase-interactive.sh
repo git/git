@@ -260,7 +260,11 @@ test_expect_success 'stop on conflicting pick' '
 	D
 	=======
 	G
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	>>>>>>> $(git rev-parse --short HEAD)... G
+================================
+	>>>>>>> $commit (G)
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 	EOF
 	git tag new-branch1 &&
 	test_must_fail git rebase -i master &&
@@ -1838,6 +1842,7 @@ test_expect_success 'correct error message for commit --amend after empty pick' 
 	test_i18ngrep "middle of a rebase -- cannot amend." err
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'correct error message for partial commit after confilct' '
 	test_when_finished "git rebase --abort" &&
 	git checkout D &&
@@ -1882,6 +1887,12 @@ test_expect_success 'correct authorship and message after conflict' '
 	git log --pretty=format:"%an <%ae>%n%ad%n%B" -1 HEAD >actual &&
 	test_cmp expect actual &&
 	git rebase --continue
+================================
+test_expect_success 'todo has correct onto hash' '
+	GIT_SEQUENCE_EDITOR=cat git rebase -i no-conflict-branch~4 no-conflict-branch >actual &&
+	onto=$(git rev-parse --short HEAD~4) &&
+	test_i18ngrep "^# Rebase ..* onto $onto" actual
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 # This must be the last test in this file

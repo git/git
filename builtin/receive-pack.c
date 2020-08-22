@@ -99,6 +99,16 @@ static int keepalive_in_sec = 5;
 
 static struct tmp_objdir *tmp_objdir;
 
+static struct proc_receive_ref {
+	unsigned int want_add:1,
+		     want_delete:1,
+		     want_modify:1;
+	char *ref_prefix;
+	struct proc_receive_ref *next;
+} *proc_receive_ref = NULL;
+
+static void proc_receive_ref_append(const char *prefix);
+
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
 	if (value) {
@@ -232,6 +242,7 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	}
 
 	if (strcmp(var, "receive.procreceiverefs") == 0) {
+<<<<<<< HEAD
 		char *prefix;
 		int len;
 
@@ -242,6 +253,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 		while (len && prefix[len - 1] == '/')
 			prefix[--len] = '\0';
 		string_list_append(&proc_receive_refs, prefix);
+=======
+		if (!value)
+			return config_error_nonbool(var);
+		proc_receive_ref_append(value);
+>>>>>>> upstream/seen
 		return 0;
 	}
 
@@ -339,6 +355,84 @@ struct command {
 	struct object_id new_oid;
 	char ref_name[FLEX_ARRAY]; /* more */
 };
+
+static void proc_receive_ref_append(const char *prefix)
+{
+	struct proc_receive_ref *ref_pattern;
+	char *p;
+	int len;
+
+	ref_pattern = xcalloc(1, sizeof(struct proc_receive_ref));
+	p = strchr(prefix, ':');
+	if (p) {
+		while (prefix < p) {
+			if (*prefix == 'a')
+				ref_pattern->want_add = 1;
+			else if (*prefix == 'd')
+				ref_pattern->want_delete = 1;
+			else if (*prefix == 'm')
+				ref_pattern->want_modify = 1;
+			prefix++;
+		}
+		prefix++;
+	} else {
+		ref_pattern->want_add = 1;
+		ref_pattern->want_delete = 1;
+		ref_pattern->want_modify = 1;
+	}
+	ref_pattern->next = NULL;
+	ref_pattern->ref_prefix = xstrdup(prefix);
+	len = strlen(ref_pattern->ref_prefix);
+	while (len && ref_pattern->ref_prefix[len - 1] == '/')
+		ref_pattern->ref_prefix[--len] = '\0';
+	if (proc_receive_ref == NULL) {
+		proc_receive_ref = ref_pattern;
+	} else {
+		struct proc_receive_ref *end;
+
+		end = proc_receive_ref;
+		while (end->next)
+			end = end->next;
+		end->next = ref_pattern;
+	}
+}
+
+static int proc_receive_ref_matches(struct command *cmd)
+{
+	struct proc_receive_ref *p;
+
+	if (!proc_receive_ref)
+		return 0;
+
+	for (p = proc_receive_ref; p; p = p->next) {
+		const char *match = p->ref_prefix;
+		int neg = 0;
+		const char *remains;
+
+		if (!p->want_add && is_null_oid(&cmd->old_oid))
+			continue;
+		else if (!p->want_delete && is_null_oid(&cmd->new_oid))
+			continue;
+		else if (!p->want_modify &&
+			 !is_null_oid(&cmd->old_oid) &&
+			 !is_null_oid(&cmd->new_oid))
+			continue;
+
+		if (*match == '!') {
+			neg = 1;
+			match++;
+		}
+
+		if (skip_prefix(cmd->ref_name, match, &remains) &&
+		    (!*remains || *remains == '/')) {
+			if (!neg)
+				return 1;
+		} else if (neg) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 static void rp_error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 static void rp_warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
@@ -1252,7 +1346,11 @@ static const char *push_to_deploy(unsigned char *sha1,
 	struct child_process child = CHILD_PROCESS_INIT;
 
 	child.argv = update_refresh;
+<<<<<<< HEAD
 	child.env = env->items;
+=======
+	child.env = env->v;
+>>>>>>> upstream/seen
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
@@ -1263,7 +1361,11 @@ static const char *push_to_deploy(unsigned char *sha1,
 	/* run_command() does not clean up completely; reinitialize */
 	child_process_init(&child);
 	child.argv = diff_files;
+<<<<<<< HEAD
 	child.env = env->items;
+=======
+	child.env = env->v;
+>>>>>>> upstream/seen
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
@@ -1276,7 +1378,11 @@ static const char *push_to_deploy(unsigned char *sha1,
 
 	child_process_init(&child);
 	child.argv = diff_index;
+<<<<<<< HEAD
 	child.env = env->items;
+=======
+	child.env = env->v;
+>>>>>>> upstream/seen
 	child.no_stdin = 1;
 	child.no_stdout = 1;
 	child.stdout_to_stderr = 0;
@@ -1287,7 +1393,11 @@ static const char *push_to_deploy(unsigned char *sha1,
 	read_tree[3] = hash_to_hex(sha1);
 	child_process_init(&child);
 	child.argv = read_tree;
+<<<<<<< HEAD
 	child.env = env->items;
+=======
+	child.env = env->v;
+>>>>>>> upstream/seen
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.no_stdout = 1;
@@ -1306,7 +1416,11 @@ static const char *push_to_checkout(unsigned char *hash,
 				    const char *work_tree)
 {
 	strvec_pushf(env, "GIT_WORK_TREE=%s", absolute_path(work_tree));
+<<<<<<< HEAD
 	if (run_hook_le(env->items, push_to_checkout_hook,
+=======
+	if (run_hook_le(env->v, push_to_checkout_hook,
+>>>>>>> upstream/seen
 			hash_to_hex(hash), NULL))
 		return "push-to-checkout hook declined";
 	else
@@ -1827,6 +1941,7 @@ static void execute_commands(struct command *commands,
 	 * Try to find commands that have special prefix in their reference names,
 	 * and mark them to run an external "proc-receive" hook later.
 	 */
+<<<<<<< HEAD
 	if (proc_receive_refs.nr > 0) {
 		struct strbuf refname_full = STRBUF_INIT;
 		size_t prefix_len;
@@ -1834,19 +1949,29 @@ static void execute_commands(struct command *commands,
 		strbuf_addstr(&refname_full, get_git_namespace());
 		prefix_len = refname_full.len;
 
+=======
+	if (proc_receive_ref) {
+>>>>>>> upstream/seen
 		for (cmd = commands; cmd; cmd = cmd->next) {
 			if (!should_process_cmd(cmd))
 				continue;
 
+<<<<<<< HEAD
 			strbuf_setlen(&refname_full, prefix_len);
 			strbuf_addstr(&refname_full, cmd->ref_name);
 			if (ref_matches(&proc_receive_refs, cmd->ref_name, refname_full.buf)) {
+=======
+			if (proc_receive_ref_matches(cmd)) {
+>>>>>>> upstream/seen
 				cmd->run_proc_receive = RUN_PROC_RECEIVE_SCHEDULED;
 				run_proc_receive = 1;
 			}
 		}
+<<<<<<< HEAD
 
 		strbuf_release(&refname_full);
+=======
+>>>>>>> upstream/seen
 	}
 
 	if (run_receive_hook(commands, "pre-receive", 0, push_options)) {

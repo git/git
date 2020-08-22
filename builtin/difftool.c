@@ -683,7 +683,11 @@ static int run_file_diff(int prompt, const char *prefix,
 	strvec_push(&args, "diff");
 	for (i = 0; i < argc; i++)
 		strvec_push(&args, argv[i]);
+<<<<<<< HEAD
 	ret = run_command_v_opt_cd_env(args.items, RUN_GIT_CMD, prefix, env);
+=======
+	ret = run_command_v_opt_cd_env(args.v, RUN_GIT_CMD, prefix, env);
+>>>>>>> upstream/seen
 	exit(ret);
 }
 

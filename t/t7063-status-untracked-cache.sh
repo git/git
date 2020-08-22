@@ -121,10 +121,13 @@ dthree/
 dtwo/
 three
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 /done/ 0000000000000000000000000000000000000000 recurse valid
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
 /dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
 ================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 three
@@ -211,6 +214,7 @@ core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
 flags 00000006
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 / 0000000000000000000000000000000000000000 recurse valid
 four
 three
@@ -223,6 +227,13 @@ dthree/
 dtwo/
 four
 three
+================================
+/ $ZERO_OID recurse valid
+dthree/
+dtwo/
+four
+three
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 three
@@ -274,10 +285,13 @@ dthree/
 dtwo/
 three
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 /done/ 0000000000000000000000000000000000000000 recurse valid
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
 /dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
 ================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 three
@@ -326,10 +340,13 @@ flags 00000006
 dthree/
 dtwo/
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 /done/ 0000000000000000000000000000000000000000 recurse valid
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
 /dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
 ================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
@@ -348,11 +365,14 @@ core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
 flags 00000006
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 / e6fcc8f2ee31bae321d66afd183fcb7237afae6e recurse
 /done/ 0000000000000000000000000000000000000000 recurse valid
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
 /dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
 ================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 / $(test_oid root) recurse
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
@@ -396,10 +416,13 @@ flags 00000006
 .gitignore
 two
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 /done/ 0000000000000000000000000000000000000000 recurse valid
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
 /dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
 ================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
@@ -418,11 +441,14 @@ core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
 flags 00000006
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 / e6fcc8f2ee31bae321d66afd183fcb7237afae6e recurse
 /done/ 0000000000000000000000000000000000000000 recurse valid
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
 /dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
 ================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 / $(test_oid root) recurse
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
@@ -465,10 +491,13 @@ flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 /done/ 0000000000000000000000000000000000000000 recurse valid
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
 /dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
 ================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 dtwo/
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
@@ -516,10 +545,13 @@ flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 /done/ 0000000000000000000000000000000000000000 recurse valid
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
 /dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
 ================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 dtwo/
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
@@ -582,6 +614,7 @@ flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 /done/ 1946f0437f90c5005533cbe1736a6451ca301714 recurse valid
 five
 /dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
@@ -590,6 +623,11 @@ five
 dtwo/
 /done/ $(test_oid done) recurse valid
 five
+================================
+dtwo/
+/done/ $(test_oid done) recurse valid
+five
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
@@ -659,6 +697,7 @@ flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 /done/ 1946f0437f90c5005533cbe1736a6451ca301714 recurse valid
 five
 sub/
@@ -671,6 +710,12 @@ dtwo/
 /done/ $(test_oid done) recurse valid
 five
 sub/
+================================
+dtwo/
+/done/ $(test_oid done) recurse valid
+five
+sub/
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/sub/ $ZERO_OID recurse check_only valid
 sub/
 /done/sub/sub/ $ZERO_OID recurse check_only valid

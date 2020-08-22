@@ -1989,6 +1989,18 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	return ret;
 }
 
+int has_object(struct repository *r, const struct object_id *oid,
+	       unsigned flags)
+{
+	int quick = !(flags & HAS_OBJECT_RECHECK_PACKED);
+	unsigned object_info_flags = OBJECT_INFO_SKIP_FETCH_OBJECT |
+		(quick ? OBJECT_INFO_QUICK : 0);
+
+	if (!startup_info->have_repository)
+		return 0;
+	return oid_object_info_extended(r, oid, NULL, object_info_flags) >= 0;
+}
+
 int repo_has_object_file_with_flags(struct repository *r,
 				    const struct object_id *oid, int flags)
 {

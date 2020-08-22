@@ -319,9 +319,12 @@ static void finish_if_sparse(struct progress *progress)
 
 void stop_progress(struct progress **p_progress)
 {
+	if (!p_progress)
+		BUG("don't provide NULL to stop_progress");
+
 	finish_if_sparse(*p_progress);
 
-	if (p_progress && *p_progress) {
+	if (*p_progress) {
 		trace2_data_intmax("progress", the_repository, "total_objects",
 				   (*p_progress)->total);
 
@@ -338,7 +341,12 @@ void stop_progress(struct progress **p_progress)
 
 void stop_progress_msg(struct progress **p_progress, const char *msg)
 {
-	struct progress *progress = *p_progress;
+	struct progress *progress;
+
+	if (!p_progress)
+		BUG("don't provide NULL to stop_progress_msg");
+
+	progress = *p_progress;
 	if (!progress)
 		return;
 	*p_progress = NULL;

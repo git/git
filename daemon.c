@@ -482,7 +482,11 @@ static int upload_pack(const struct strvec *env)
 	strvec_pushl(&cld.args, "upload-pack", "--strict", NULL);
 	strvec_pushf(&cld.args, "--timeout=%u", timeout);
 
+<<<<<<< HEAD
 	strvec_pushv(&cld.env_array, env->items);
+=======
+	strvec_pushv(&cld.env_array, env->v);
+>>>>>>> upstream/seen
 
 	return run_service_command(&cld);
 }
@@ -492,7 +496,11 @@ static int upload_archive(const struct strvec *env)
 	struct child_process cld = CHILD_PROCESS_INIT;
 	strvec_push(&cld.args, "upload-archive");
 
+<<<<<<< HEAD
 	strvec_pushv(&cld.env_array, env->items);
+=======
+	strvec_pushv(&cld.env_array, env->v);
+>>>>>>> upstream/seen
 
 	return run_service_command(&cld);
 }
@@ -502,7 +510,11 @@ static int receive_pack(const struct strvec *env)
 	struct child_process cld = CHILD_PROCESS_INIT;
 	strvec_push(&cld.args, "receive-pack");
 
+<<<<<<< HEAD
 	strvec_pushv(&cld.env_array, env->items);
+=======
+	strvec_pushv(&cld.env_array, env->v);
+>>>>>>> upstream/seen
 
 	return run_service_command(&cld);
 }
@@ -927,7 +939,11 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 #endif
 	}
 
+<<<<<<< HEAD
 	cld.argv = cld_argv.items;
+=======
+	cld.argv = cld_argv.v;
+>>>>>>> upstream/seen
 	cld.in = incoming;
 	cld.out = dup(incoming);
 

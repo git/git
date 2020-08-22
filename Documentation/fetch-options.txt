@@ -67,11 +67,18 @@ documented in linkgit:git-config[1].
 ifndef::git-pull[]
 --[no-]write-fetch-head::
 	Write the list of remote refs fetched in the `FETCH_HEAD`
+<<<<<<< HEAD
 	file directly under `$GIT_DIR`.  This is the default unless
 	the configuration variable `fetch.writeFetchHEAD` is set to
 	false.  Passing `--no-write-fetch-head` from the command
 	line tells Git not to write the file.  Under `--dry-run`
 	option, the file is never written.
+=======
+	file directly under `$GIT_DIR`.  This is the default.
+	Passing `--no-write-fetch-head` from the command line tells
+	Git not to write the file.  Under `--dry-run` option, the
+	file is never written.
+>>>>>>> upstream/seen
 endif::git-pull[]
 
 -f::
@@ -96,10 +103,18 @@ ifndef::git-pull[]
 	Allow several <repository> and <group> arguments to be
 	specified. No <refspec>s may be specified.
 
+<<<<<<< HEAD
 --[no-]maintenance::
 --[no-]auto-gc::
 	Run `git maintenance run --auto` at the end to perform garbage
 	collection if needed. This is enabled by default.
+=======
+--[no-]auto-maintenance::
+--[no-]auto-gc::
+	Run `git maintenance run --auto` at the end to perform automatic
+	repository maintenance if needed. (`--[no-]auto-gc` is a synonym.)
+	This is enabled by default.
+>>>>>>> upstream/seen
 
 --[no-]write-commit-graph::
 	Write a commit-graph after fetching. This overrides the config
@@ -197,7 +212,7 @@ ifndef::git-pull[]
 endif::git-pull[]
 
 --set-upstream::
-	If the remote is fetched successfully, pull and add upstream
+	If the remote is fetched successfully, add upstream
 	(tracking) reference, used by argument-less
 	linkgit:git-pull[1] and other commands. For more information,
 	see `branch.<name>.merge` and `branch.<name>.remote` in

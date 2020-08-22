@@ -213,7 +213,7 @@ test_expect_success 'fetch tags when there is no tags' '
 test_expect_success 'fetch following tags' '
 
 	cd "$D" &&
-	git tag -a -m 'annotated' anno HEAD &&
+	git tag -a -m "annotated" anno HEAD &&
 	git tag light HEAD &&
 
 	mkdir four &&
@@ -285,6 +285,7 @@ test_expect_success 'create bundle 1' '
 '
 
 test_expect_success 'header of bundle looks right' '
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	head -n 4 "$D"/bundle1 &&
 	cat >expect <<-EOF &&
 	# v3 git bundle
@@ -294,6 +295,16 @@ test_expect_success 'header of bundle looks right' '
 
 	EOF
 	sed -e "s/$OID_REGEX .*/OID message/g" -e "5q" "$D"/bundle1 >actual &&
+================================
+	cat >expect <<-EOF &&
+	# v3 git bundle
+	@object-format=$(test_oid algo)
+	-OID updated by origin
+	OID refs/heads/master
+
+	EOF
+	sed -e "s/$OID_REGEX/OID/g" -e "5q" "$D"/bundle1 >actual &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 	test_cmp expect actual
 '
 
@@ -336,7 +347,7 @@ test_expect_success 'bundle does not prerequisite objects' '
 test_expect_success 'bundle should be able to create a full history' '
 
 	cd "$D" &&
-	git tag -a -m '1.0' v1.0 master &&
+	git tag -a -m "1.0" v1.0 master &&
 	git bundle create bundle4 v1.0
 
 '
@@ -562,6 +573,7 @@ test_expect_success '--write-fetch-head gets defeated by --dry-run' '
 	! test -f .git/FETCH_HEAD
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'fetch.writeFetchHEAD and FETCH_HEAD' '
 	rm -f .git/FETCH_HEAD &&
 	git -c fetch.writeFetchHEAD=no fetch . &&
@@ -586,6 +598,8 @@ test_expect_success 'fetch.writeFetchHEAD and --write-fetch-head' '
 	test -f .git/FETCH_HEAD
 '
 
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 test_expect_success "should be able to fetch with duplicate refspecs" '
 	mkdir dups &&
 	(

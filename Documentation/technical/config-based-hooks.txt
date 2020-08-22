@@ -1,6 +1,12 @@
 Configuration-based hook management
 ===================================
+<<<<<<< HEAD
 
+=======
+:sectanchors:
+
+[[motivation]]
+>>>>>>> upstream/seen
 == Motivation
 
 Treat hooks as a first-class citizen by replacing the .git/hook/hookname path as
@@ -11,18 +17,31 @@ Redefine "hook" as an event rather than a single script, allowing users to
 perform unrelated actions on a single event.
 
 Take a step closer to safety when copying zipped Git repositories from untrusted
+<<<<<<< HEAD
 users.
+=======
+users by making it more apparent to users which scripts will be run during
+normal Git operations.
+>>>>>>> upstream/seen
 
 Make it easier for users to discover Git's hook feature and automate their
 workflows.
 
+<<<<<<< HEAD
 == User interfaces
 
+=======
+[[user-interfaces]]
+== User interfaces
+
+[[config-schema]]
+>>>>>>> upstream/seen
 === Config schema
 
 Hooks can be introduced by editing the configuration manually. There are two new
 sections added, `hook` and `hookcmd`.
 
+<<<<<<< HEAD
 ==== `hook`
 
 Primarily contains subsections for each hook event. These subsections define
@@ -35,6 +54,23 @@ shell. Hook event subsections can also contain per-hook-event settings.
 
 Also contains top-level hook execution settings, for example,
 `hook.warnHookDir`, `hook.runHookDir`, or `hook.disableAll`.
+=======
+[[config-schema-hook]]
+==== `hook`
+
+Primarily contains subsections for each hook event. These order of these
+subsections defines the hook command execution order; hook commands can be
+specified by setting the value directly to the command if no additional
+configuration is needed, or by setting the value as the name of a `hookcmd`. If
+Git does not find a `hookcmd` whose subsection matches the value of the given
+command string, Git will try to execute the string directly. Hooks are executed
+by passing the resolved command string to the shell. Hook event subsections can
+also contain per-hook-event settings.
+
+Also contains top-level hook execution settings, for example,
+`hook.warnHookDir`, `hook.runHookDir`, or `hook.disableAll`. (These settings are
+described more in <<library,Library>>.)
+>>>>>>> upstream/seen
 
 ----
 [hook "pre-commit"]
@@ -49,6 +85,10 @@ Also contains top-level hook execution settings, for example,
   runHookDir = interactive
 ----
 
+<<<<<<< HEAD
+=======
+[[config-schema-hookcmd]]
+>>>>>>> upstream/seen
 ==== `hookcmd`
 
 Defines a hook command and its attributes, which will be used when a hook event
@@ -65,6 +105,10 @@ it's normally subscribed _except_ `pre-commit`.
   pre-commit-skip = false
 ----
 
+<<<<<<< HEAD
+=======
+[[command-line-api]]
+>>>>>>> upstream/seen
 === Command-line API
 
 Users should be able to view, reorder, and create hook commands via the command
@@ -79,6 +123,10 @@ to run.
 
 *`git hook add <hook-command> <hook-event> <options...>`*
 
+<<<<<<< HEAD
+=======
+[[hook-editor]]
+>>>>>>> upstream/seen
 === Hook editor
 
 The tool which is presented by `git hook edit <hook-command>`. Ideally, this
@@ -86,17 +134,31 @@ tool should be easier to use than manually editing the config, and then produce
 a concise config afterwards. It may take a form similar to `git rebase
 --interactive`.
 
+<<<<<<< HEAD
 == Implementation
 
+=======
+[[implementation]]
+== Implementation
+
+[[library]]
+>>>>>>> upstream/seen
 === Library
 
 `hook.c` and `hook.h` are responsible for interacting with the config files. In
 the case when the code generating a hook event doesn't have special concerns
 about how to run the hooks, the hook library will provide a basic API to call
+<<<<<<< HEAD
 all hooks in config order with an `argv_array` provided by the code which
 generates the hook event:
 
 *`int run_hooks(const char *hookname, struct argv_array *args)`*
+=======
+all hooks in config order with an `strvec` provided by the code which
+generates the hook event:
+
+*`int run_hooks(const char *hookname, struct strvec *args)`*
+>>>>>>> upstream/seen
 
 This call includes the hook command provided by `run-command.h:find_hook()`;
 eventually, this legacy hook will be gated by a config `hook.runHookDir`. The
@@ -148,6 +210,10 @@ struct hookcmd {
 }
 ----
 
+<<<<<<< HEAD
+=======
+[[builtin]]
+>>>>>>> upstream/seen
 === Builtin
 
 `builtin/hook.c` is responsible for providing the frontend. It's responsible for
@@ -156,14 +222,25 @@ configs as appropriate. The builtin frontend is not responsible for calling the
 config directly, so that other areas of Git can rely on the hook library to
 understand the most recent config schema for hooks.
 
+<<<<<<< HEAD
 === Migration path
 
+=======
+[[migration]]
+=== Migration path
+
+[[stage-0]]
+>>>>>>> upstream/seen
 ==== Stage 0
 
 Hooks are called by running `run-command.h:find_hook()` with the hookname and
 executing the result. The hook library and builtin do not exist. Hooks only
 exist as specially named scripts within `.git/hooks/`.
 
+<<<<<<< HEAD
+=======
+[[stage-1]]
+>>>>>>> upstream/seen
 ==== Stage 1
 
 `git hook list --porcelain <hook-event>` is implemented. Users can replace their
@@ -171,6 +248,10 @@ exist as specially named scripts within `.git/hooks/`.
 output. Modifier commands like `git hook add` and `git hook edit` can be
 implemented around this time as well.
 
+<<<<<<< HEAD
+=======
+[[stage-2]]
+>>>>>>> upstream/seen
 ==== Stage 2
 
 `hook.h:run_hooks()` is taught to include `run-command.h:find_hook()` at the
@@ -178,20 +259,35 @@ end; calls to `find_hook()` are replaced with calls to `run_hooks()`. Users can
 opt-in to config-based hooks simply by creating some in their config; otherwise
 users should remain unaffected by the change.
 
+<<<<<<< HEAD
+=======
+[[stage-3]]
+>>>>>>> upstream/seen
 ==== Stage 3
 
 The call to `find_hook()` inside of `run_hooks()` learns to check for a config,
 `hook.runHookDir`. Users can opt into managing their hooks completely via the
 config this way.
 
+<<<<<<< HEAD
+=======
+[[stage-4]]
+>>>>>>> upstream/seen
 ==== Stage 4
 
 `.git/hooks` is removed from the template and the hook directory is considered
 deprecated. To avoid breaking older repos, the default of `hook.runHookDir` is
 not changed, and `find_hook()` is not removed.
 
+<<<<<<< HEAD
 == Caveats
 
+=======
+[[caveats]]
+== Caveats
+
+[[security]]
+>>>>>>> upstream/seen
 === Security and repo config
 
 Part of the motivation behind this refactor is to mitigate hooks as an attack
@@ -203,28 +299,48 @@ generally assumes the repo-level config is secure, which is not true yet. The
 goal is to avoid an overcomplicated design to work around a problem which has
 ceased to exist.
 
+<<<<<<< HEAD
+=======
+[[ease-of-use]]
+>>>>>>> upstream/seen
 === Ease of use
 
 The config schema is nontrivial; that's why it's important for the `git hook`
 modifier commands to be usable. Contributors with UX expertise are encouraged to
 share their suggestions.
 
+<<<<<<< HEAD
+=======
+[[alternatives]]
+>>>>>>> upstream/seen
 == Alternative approaches
 
 A previous summary of alternatives exists in the
 archives.footnote:[https://lore.kernel.org/git/20191116011125.GG22855@google.com]
 
+<<<<<<< HEAD
+=======
+[[status-quo]]
+>>>>>>> upstream/seen
 === Status quo
 
 Today users can implement multihooks themselves by using a "trampoline script"
 as their hook, and pointing that script to a directory or list of other scripts
 they wish to run.
 
+<<<<<<< HEAD
+=======
+[[hook-directories]]
+>>>>>>> upstream/seen
 === Hook directories
 
 Other contributors have suggested Git learn about the existence of a directory
 such as `.git/hooks/<hookname>.d` and execute those hooks in alphabetical order.
 
+<<<<<<< HEAD
+=======
+[[comparison]]
+>>>>>>> upstream/seen
 === Comparison table
 
 .Comparison of alternatives
@@ -262,8 +378,15 @@ such as `.git/hooks/<hookname>.d` and execute those hooks in alphabetical order.
 |No
 |===
 
+<<<<<<< HEAD
 == Future work
 
+=======
+[[future-work]]
+== Future work
+
+[[execution-ordering]]
+>>>>>>> upstream/seen
 === Execution ordering
 
 We may find that config order is insufficient for some users; for example,
@@ -282,6 +405,10 @@ parallelization if some tasks truly depend on others.
 Numerical ordering makes it tricky for Git to generate suggested ordering
 numbers for each command, but is easy to determine a definitive order.
 
+<<<<<<< HEAD
+=======
+[[parallelization]]
+>>>>>>> upstream/seen
 === Parallelization
 
 Users with many hooks might want to run them simultaneously, if the hooks don't
@@ -290,16 +417,30 @@ specify those dependencies. If we decide to solve this problem, we may want to
 look to modern build systems for inspiration on how to manage dependencies and
 parallel tasks.
 
+<<<<<<< HEAD
+=======
+[[securing-hookdir-hooks]]
+>>>>>>> upstream/seen
 === Securing hookdir hooks
 
 With the design as written in this doc, it's still possible for a malicious user
 to modify `.git/config` to include `hook.pre-receive.command = rm -rf /`, then
 zip their repo and send it to another user. It may be necessary to teach Git to
+<<<<<<< HEAD
 only allow one-line hooks like this if they were configured outside of the local
 scope; or another approach, like a list of safe projects, might be useful. It
 may also be sufficient (or at least useful) to teach a `hook.disableAll` config
 or similar flag to the Git executable.
 
+=======
+only allow inlined hooks like this if they were configured outside of the local
+scope (in other words, only run hookcmds, and only allow hookcmds to be
+configured in global or system scope); or another approach, like a list of safe
+projects, might be useful. It may also be sufficient (or at least useful) to
+teach a `hook.disableAll` config or similar flag to the Git executable.
+
+[[submodule-inheritance]]
+>>>>>>> upstream/seen
 === Submodule inheritance
 
 It's possible some submodules may want to run the identical set of hooks that
@@ -308,6 +449,10 @@ a great solution for users who have multiple repos-with-submodules under the
 same user. It would be useful for submodules to learn how to run hooks from
 their superrepo's config, or inherit that hook setting.
 
+<<<<<<< HEAD
+=======
+[[glossary]]
+>>>>>>> upstream/seen
 == Glossary
 
 *hook event*

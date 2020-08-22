@@ -25,8 +25,19 @@ test_expect_success "setup proc-receive hook" '
 # git push         : (B)                   refs/for/master/topic1(A)  foo(A)  refs/for/next/topic(A)  refs/for/master/topic2(A)
 test_expect_success "proc-receive: report status v1" '
 	{
+<<<<<<< HEAD
 		printf "%s %s refs/heads/master\0report-status\n" \
 			$A $B | packetize &&
+=======
+		if test -z "$GIT_DEFAULT_HASH" || test "$GIT_DEFAULT_HASH" = "sha1"
+		then
+			printf "%s %s refs/heads/master\0report-status\n" \
+				$A $B | packetize
+		else
+			printf "%s %s refs/heads/master\0report-status object-format=$GIT_DEFAULT_HASH\n" \
+				$A $B | packetize
+		fi &&
+>>>>>>> upstream/seen
 		printf "%s %s refs/for/master/topic1\n" \
 			$ZERO_OID $A | packetize &&
 		printf "%s %s refs/heads/foo\n" \

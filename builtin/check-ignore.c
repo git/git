@@ -180,7 +180,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 	if (!no_index && read_cache() < 0)
 		die(_("index file corrupt"));
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	setup_standard_excludes(&dir);
 
 	if (stdin_paths) {
@@ -190,7 +190,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 		maybe_flush_or_die(stdout, "ignore to stdout");
 	}
 
-	clear_directory(&dir);
+	dir_clear(&dir);
 
 	return !num_ignored;
 }

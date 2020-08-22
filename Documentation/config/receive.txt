@@ -122,11 +122,24 @@ receive.procReceiveRefs::
 	variable is not defined, the "proc-receive" hook will never be
 	used, and all commands will be executed by the internal
 	`execute_commands` function.
+<<<<<<< HEAD
 
 	For example, if this variable is set to "refs/for", pushing to
 	reference such as "refs/for/master" will not create or update a
 	reference named "refs/for/master", but may create or update a
 	pull request directly by running the hook "proc-receive".
+=======
++
+For example, if this variable is set to "refs/for", pushing to reference
+such as "refs/for/master" will not create or update a reference named
+"refs/for/master", but may create or update a pull request directly by
+running the hook "proc-receive".
++
+Optional modifiers can be provided in the beginning of the value to filter
+commands for specific actions: create (a), mofify (m), delete (d). E.g.:
++
+	git config --system --add receive.procReceiveRefs ad:refs/heads
+>>>>>>> upstream/seen
 
 receive.updateServerInfo::
 	If set to true, git-receive-pack will run git-update-server-info

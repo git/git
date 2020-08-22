@@ -51,7 +51,85 @@ bisect_skip() {
 		esac
 		all="$all $revs"
 	done
+<<<<<<< HEAD
 	eval git bisect--helper --bisect-state 'skip' $all
+=======
+	eval bisect_state 'skip' $all
+}
+
+bisect_state() {
+	bisect_autostart
+	state=$1
+	git bisect--helper --check-and-set-terms $state $TERM_GOOD $TERM_BAD || exit
+	get_terms
+	case "$#,$state" in
+	0,*)
+		die "Please call 'bisect_state' with at least one argument." ;;
+	1,"$TERM_BAD"|1,"$TERM_GOOD"|1,skip)
+		bisected_head=$(bisect_head)
+		rev=$(git rev-parse --verify "$bisected_head") ||
+			die "$(eval_gettext "Bad rev input: \$bisected_head")"
+		git bisect--helper --bisect-write "$state" "$rev" "$TERM_GOOD" "$TERM_BAD" || exit
+		git bisect--helper --check-expected-revs "$rev" ;;
+	2,"$TERM_BAD"|*,"$TERM_GOOD"|*,skip)
+		shift
+		hash_list=''
+		for rev in "$@"
+		do
+			sha=$(git rev-parse --verify "$rev^{commit}") ||
+				die "$(eval_gettext "Bad rev input: \$rev")"
+			hash_list="$hash_list $sha"
+		done
+		for rev in $hash_list
+		do
+			git bisect--helper --bisect-write "$state" "$rev" "$TERM_GOOD" "$TERM_BAD" || exit
+		done
+		git bisect--helper --check-expected-revs $hash_list ;;
+	*,"$TERM_BAD")
+		die "$(eval_gettext "'git bisect \$TERM_BAD' can take only one argument.")" ;;
+	*)
+		usage ;;
+	esac
+	bisect_auto_next
+}
+
+bisect_auto_next() {
+	git bisect--helper --bisect-next-check $TERM_GOOD $TERM_BAD && bisect_next || :
+}
+
+bisect_next() {
+	case "$#" in 0) ;; *) usage ;; esac
+	bisect_autostart
+	git bisect--helper --bisect-next-check $TERM_GOOD $TERM_BAD $TERM_GOOD|| exit
+
+	# Perform all bisection computation, display and checkout
+	git bisect--helper --next-all
+	res=$?
+
+	# Check if we should exit because bisection is finished
+	if test $res -eq 10
+	then
+		bad_rev=$(git show-ref --hash --verify refs/bisect/$TERM_BAD)
+		bad_commit=$(git show-branch $bad_rev)
+		echo "# first $TERM_BAD commit: $bad_commit" >>"$GIT_DIR/BISECT_LOG"
+		exit 0
+	elif test $res -eq 2
+	then
+		echo "# only skipped commits left to test" >>"$GIT_DIR/BISECT_LOG"
+		good_revs=$(git for-each-ref --format="%(objectname)" "refs/bisect/$TERM_GOOD-*")
+		for skipped in $(git rev-list refs/bisect/$TERM_BAD --not $good_revs)
+		do
+			skipped_commit=$(git show-branch $skipped)
+			echo "# possible first $TERM_BAD commit: $skipped_commit" >>"$GIT_DIR/BISECT_LOG"
+		done
+		exit $res
+	fi
+
+	# Check for an error in the bisection process
+	test $res -ne 0 && exit $res
+
+	return 0
+>>>>>>> upstream/seen
 }
 
 bisect_visualize() {

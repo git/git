@@ -38,7 +38,11 @@ static int parse_capability(struct bundle_header *header, const char *capability
 	if (skip_prefix(capability, "object-format=", &arg)) {
 		int algo = hash_algo_by_name(arg);
 		if (algo == GIT_HASH_UNKNOWN)
+<<<<<<< HEAD
 			return error(_("unable to detect hash algorithm"));
+=======
+			return error(_("unrecognized bundle hash algorithm: %s"), arg);
+>>>>>>> upstream/seen
 		header->hash_algo = &hash_algos[algo];
 		return 0;
 	}
@@ -83,6 +87,7 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		int is_prereq = 0;
 		const char *p;
 
+<<<<<<< HEAD
 		if (header->version == 3 && *buf.buf == '@') {
 			buf.buf[--buf.len] = '\0';
 			if (parse_capability(header, buf.buf + 1)) {
@@ -98,6 +103,23 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		}
 		strbuf_rtrim(&buf);
 
+=======
+		strbuf_rtrim(&buf);
+
+		if (header->version == 3 && *buf.buf == '@') {
+			if (parse_capability(header, buf.buf + 1)) {
+				status = -1;
+				break;
+			}
+			continue;
+		}
+
+		if (*buf.buf == '-') {
+			is_prereq = 1;
+			strbuf_remove(&buf, 0, 1);
+		}
+
+>>>>>>> upstream/seen
 		/*
 		 * Tip lines have object name, SP, and refname.
 		 * Prerequisites have object name that is optionally
@@ -304,7 +326,11 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *
 		     "pack-objects",
 		     "--stdout", "--thin", "--delta-base-offset",
 		     NULL);
+<<<<<<< HEAD
 	strvec_pushv(&pack_objects.args, pack_options->items);
+=======
+	strvec_pushv(&pack_objects.args, pack_options->v);
+>>>>>>> upstream/seen
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
 	pack_objects.git_cmd = 1;
@@ -482,7 +508,11 @@ int create_bundle(struct repository *r, const char *path,
 	int bundle_to_stdout;
 	int ref_count = 0;
 	struct rev_info revs;
+<<<<<<< HEAD
 	int default_version = the_hash_algo == &hash_algos[GIT_HASH_SHA1] ? 2 : 3;
+=======
+	int min_version = the_hash_algo == &hash_algos[GIT_HASH_SHA1] ? 2 : 3;
+>>>>>>> upstream/seen
 
 	bundle_to_stdout = !strcmp(path, "-");
 	if (bundle_to_stdout)
@@ -492,11 +522,19 @@ int create_bundle(struct repository *r, const char *path,
 						      LOCK_DIE_ON_ERROR);
 
 	if (version == -1)
+<<<<<<< HEAD
 		version = default_version;
 
 	if (version < 2 || version > 3) {
 		die(_("unsupported bundle version %d"), version);
 	} else if (version < default_version) {
+=======
+		version = min_version;
+
+	if (version < 2 || version > 3) {
+		die(_("unsupported bundle version %d"), version);
+	} else if (version < min_version) {
+>>>>>>> upstream/seen
 		die(_("cannot write bundle version %d with algorithm %s"), version, the_hash_algo->name);
 	} else if (version == 2) {
 		write_or_die(bundle_fd, v2_bundle_signature, strlen(v2_bundle_signature));

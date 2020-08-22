@@ -112,7 +112,11 @@ test_expect_success '--committer-date-is-author-date works when committing confl
 # default timezone is UTC but the timezone used while committing is
 # +0530. The inverted logic in the grep is necessary to check all the
 # author dates in the file.
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_ctime_is_ignored () {
+================================
+test_atime_is_ignored () {
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 	git log $1 --format=%ai >authortime &&
 	! grep -v +0000 authortime
 }
@@ -120,13 +124,21 @@ test_ctime_is_ignored () {
 test_expect_success '--reset-author-date works with apply backend' '
 	git commit --amend --date="$GIT_AUTHOR_DATE" &&
 	git rebase --apply --reset-author-date HEAD^ &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_ctime_is_ignored -1
+================================
+	test_atime_is_ignored -1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 test_expect_success '--reset-author-date works with merge backend' '
 	git commit --amend --date="$GIT_AUTHOR_DATE" &&
 	git rebase --reset-author-date -m HEAD^ &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_ctime_is_ignored -1
+================================
+	test_atime_is_ignored -1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 test_expect_success '--reset-author-date works after conflict resolution' '
@@ -135,14 +147,22 @@ test_expect_success '--reset-author-date works after conflict resolution' '
 	echo resolved >foo &&
 	git add foo &&
 	git rebase --continue &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_ctime_is_ignored -1
+================================
+	test_atime_is_ignored -1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 test_expect_success '--reset-author-date works with rebase -r' '
 	git checkout side &&
 	git merge --no-ff commit3 &&
 	git rebase -r --root --reset-author-date &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_ctime_is_ignored
+================================
+	test_atime_is_ignored
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 test_expect_success '--reset-author-date with --committer-date-is-author-date works' '
@@ -152,7 +172,11 @@ test_expect_success '--reset-author-date with --committer-date-is-author-date wo
 	git add foo &&
 	git rebase --continue &&
 	test_ctime_is_atime -2 &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_ctime_is_ignored -2
+================================
+	test_atime_is_ignored -2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 test_expect_success '--reset-author-date --committer-date-is-author-date works when forking merge' '
@@ -161,7 +185,11 @@ test_expect_success '--reset-author-date --committer-date-is-author-date works w
 				--reset-author-date \
 				--committer-date-is-author-date side side &&
 	test_ctime_is_atime -1 &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_ctime_is_ignored -1
+================================
+	test_atime_is_ignored -1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
  '
 
 test_expect_success '--ignore-date is an alias for --reset-author-date' '
@@ -169,7 +197,11 @@ test_expect_success '--ignore-date is an alias for --reset-author-date' '
 	git rebase --apply --ignore-date HEAD^ &&
 	git commit --allow-empty -m empty --date="$GIT_AUTHOR_DATE" &&
 	git rebase -m --ignore-date HEAD^ &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_ctime_is_ignored -2
+================================
+	test_atime_is_ignored -2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 # This must be the last test in this file

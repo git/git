@@ -185,7 +185,7 @@ int cmd__config(int argc, const char **argv)
 			ret = TC_VALUE_NOT_FOUND;
 		}
 	} else if (argc == 2 && !strcmp(argv[0], "get_string")) {
-		if (!repo_config_get_string_const(repo, argv[1], &v)) {
+		if (!repo_config_get_string_tmp(repo, argv[1], &v)) {
 			printf("%s\n", v);
 		} else {
 			printf("Value not found for \"%s\"\n", argv[1]);

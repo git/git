@@ -478,6 +478,7 @@ static int get_head_names(const struct ref *remote_refs, struct ref_states *stat
 	struct ref *fetch_map = NULL, **fetch_map_tail = &fetch_map;
 	struct refspec_item refspec;
 
+	memset(&refspec, 0, sizeof(refspec));
 	refspec.force = 0;
 	refspec.pattern = 1;
 	refspec.src = refspec.dst = "refs/heads/*";
@@ -1470,7 +1471,11 @@ static int update(int argc, const char **argv)
 	for (i = 1; i < argc; i++)
 		strvec_push(&fetch_argv, argv[i]);
 
+<<<<<<< HEAD
 	if (strcmp(fetch_argv.items[fetch_argv.nr-1], "default") == 0) {
+=======
+	if (strcmp(fetch_argv.v[fetch_argv.nr-1], "default") == 0) {
+>>>>>>> upstream/seen
 		git_config(get_remote_default, &default_defined);
 		if (!default_defined) {
 			strvec_pop(&fetch_argv);
@@ -1478,7 +1483,11 @@ static int update(int argc, const char **argv)
 		}
 	}
 
+<<<<<<< HEAD
 	retval = run_command_v_opt(fetch_argv.items, RUN_GIT_CMD);
+=======
+	retval = run_command_v_opt(fetch_argv.v, RUN_GIT_CMD);
+>>>>>>> upstream/seen
 	strvec_clear(&fetch_argv);
 	return retval;
 }

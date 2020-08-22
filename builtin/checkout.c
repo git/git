@@ -239,6 +239,8 @@ static int checkout_merged(int pos, const struct checkout *state, int *nr_checko
 	mmbuffer_t result_buf;
 	struct object_id threeway[3];
 	unsigned mode = 0;
+	struct ll_merge_options ll_opts;
+	int renormalize = 0;
 
 	memset(threeway, 0, sizeof(threeway));
 	while (pos < active_nr) {
@@ -259,13 +261,12 @@ static int checkout_merged(int pos, const struct checkout *state, int *nr_checko
 	read_mmblob(&ours, &threeway[1]);
 	read_mmblob(&theirs, &threeway[2]);
 
-	/*
-	 * NEEDSWORK: re-create conflicts from merges with
-	 * merge.renormalize set, too
-	 */
+	memset(&ll_opts, 0, sizeof(ll_opts));
+	git_config_get_bool("merge.renormalize", &renormalize);
+	ll_opts.renormalize = renormalize;
 	status = ll_merge(&result_buf, path, &ancestor, "base",
 			  &ours, "ours", &theirs, "theirs",
-			  state->istate, NULL);
+			  state->istate, &ll_opts);
 	free(ancestor.ptr);
 	free(ours.ptr);
 	free(theirs.ptr);
@@ -771,13 +772,6 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 */
 
 			add_files_to_cache(NULL, NULL, 0);
-			/*
-			 * NEEDSWORK: carrying over local changes
-			 * when branches have different end-of-line
-			 * normalization (or clean+smudge rules) is
-			 * a pain; plumb in an option to set
-			 * o.renormalize?
-			 */
 			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
 			work = write_in_core_index_as_tree(the_repository);
@@ -1126,8 +1120,10 @@ static void setup_new_branch_info_and_source_tree(
 	if (!check_refname_format(new_branch_info->path, 0) &&
 	    !read_ref(new_branch_info->path, &branch_rev))
 		oidcpy(rev, &branch_rev);
-	else
+	else {
+		free((char *)new_branch_info->path);
 		new_branch_info->path = NULL; /* not an existing branch */
+	}
 
 	new_branch_info->commit = lookup_commit_reference_gently(the_repository, rev, 1);
 	if (!new_branch_info->commit) {
@@ -1712,6 +1708,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	} else if (opts->pathspec_file_nul) {
 		die(_("--pathspec-file-nul requires --pathspec-from-file"));
 	}
+
+	opts->pathspec.recursive = 1;
 
 	if (opts->pathspec.nr) {
 		if (1 < !!opts->writeout_stage + !!opts->force + !!opts->merge)

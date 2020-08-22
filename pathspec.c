@@ -652,7 +652,11 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
 	if (in != stdin)
 		fclose(in);
 
+<<<<<<< HEAD
 	parse_pathspec(pathspec, magic_mask, flags, prefix, parsed_file.items);
+=======
+	parse_pathspec(pathspec, magic_mask, flags, prefix, parsed_file.v);
+>>>>>>> upstream/seen
 	strvec_clear(&parsed_file);
 }
 

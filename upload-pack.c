@@ -603,9 +603,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 		"rev-list", "--stdin", NULL,
 	};
 	struct object *o;
-	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
+	FILE *cmd_in = NULL;
 	int i;
-	const unsigned hexsz = the_hash_algo->hexsz;
 
 	cmd->argv = argv;
 	cmd->git_cmd = 1;
@@ -623,8 +622,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 	if (start_command(cmd))
 		goto error;
 
-	namebuf[0] = '^';
-	namebuf[hexsz + 1] = '\n';
+	cmd_in = xfdopen(cmd->in, "w");
+
 	for (i = get_max_object_index(); 0 < i; ) {
 		o = get_indexed_object(--i);
 		if (!o)
@@ -633,11 +632,9 @@ static int do_reachable_revlist(struct child_process *cmd,
 			o->flags &= ~TMP_MARK;
 		if (!is_our_ref(o, allow_uor))
 			continue;
-		memcpy(namebuf + 1, oid_to_hex(&o->oid), hexsz);
-		if (write_in_full(cmd->in, namebuf, hexsz + 2) < 0)
+		if (fprintf(cmd_in, "^%s\n", oid_to_hex(&o->oid)) < 0)
 			goto error;
 	}
-	namebuf[hexsz] = '\n';
 	for (i = 0; i < src->nr; i++) {
 		o = src->objects[i].item;
 		if (is_our_ref(o, allow_uor)) {
@@ -647,11 +644,12 @@ static int do_reachable_revlist(struct child_process *cmd,
 		}
 		if (reachable && o->type == OBJ_COMMIT)
 			o->flags |= TMP_MARK;
-		memcpy(namebuf, oid_to_hex(&o->oid), hexsz);
-		if (write_in_full(cmd->in, namebuf, hexsz + 1) < 0)
+		if (fprintf(cmd_in, "%s\n", oid_to_hex(&o->oid)) < 0)
 			goto error;
 	}
-	close(cmd->in);
+	if (ferror(cmd_in) || fflush(cmd_in))
+		goto error;
+	fclose(cmd_in);
 	cmd->in = -1;
 	sigchain_pop(SIGPIPE);
 
@@ -660,8 +658,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 error:
 	sigchain_pop(SIGPIPE);
 
-	if (cmd->in >= 0)
-		close(cmd->in);
+	if (cmd_in)
+		fclose(cmd_in);
 	if (cmd->out >= 0)
 		close(cmd->out);
 	return -1;
@@ -739,7 +737,6 @@ static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
 	return 0;
 
 error:
-	sigchain_pop(SIGPIPE);
 	if (cmd.out >= 0)
 		close(cmd.out);
 	return 1;
@@ -906,7 +903,11 @@ static int send_shallow_list(struct upload_pack_data *data)
 			struct object *o = data->want_obj.objects[i].item;
 			strvec_push(&av, oid_to_hex(&o->oid));
 		}
+<<<<<<< HEAD
 		deepen_by_rev_list(data, av.nr, av.items);
+=======
+		deepen_by_rev_list(data, av.nr, av.v);
+>>>>>>> upstream/seen
 		strvec_clear(&av);
 		ret = 1;
 	} else {
@@ -991,12 +992,33 @@ static int process_deepen_not(const char *line, struct string_list *deepen_not, 
 	return 0;
 }
 
+<<<<<<< HEAD
 static int allows_filter_choice(struct upload_pack_data *data,
 				struct list_objects_filter_options *opts)
+=======
+NORETURN __attribute__((format(printf,2,3)))
+static void send_err_and_die(struct upload_pack_data *data,
+			     const char *fmt, ...)
+{
+	struct strbuf buf = STRBUF_INIT;
+	va_list ap;
+
+	va_start(ap, fmt);
+	strbuf_vaddf(&buf, fmt, ap);
+	va_end(ap);
+
+	packet_writer_error(&data->writer, "%s", buf.buf);
+	die("%s", buf.buf);
+}
+
+static void check_one_filter(struct upload_pack_data *data,
+			     struct list_objects_filter_options *opts)
+>>>>>>> upstream/seen
 {
 	const char *key = list_object_filter_config_name(opts->choice);
 	struct string_list_item *item = string_list_lookup(&data->allowed_filters,
 							   key);
+<<<<<<< HEAD
 	int allowed = -1;
 	if (item)
 		allowed = (intptr_t) item->util;
@@ -1027,10 +1049,42 @@ static struct list_objects_filter_options *banned_filter(
 				return sub;
 		}
 	return NULL;
+=======
+	int allowed;
+
+	if (item)
+		allowed = (intptr_t)item->util;
+	else
+		allowed = data->allow_filter_fallback;
+
+	if (!allowed)
+		send_err_and_die(data, "filter '%s' not supported", key);
+
+	if (opts->choice == LOFC_TREE_DEPTH &&
+	    opts->tree_exclude_depth > data->tree_filter_max_depth)
+		send_err_and_die(data,
+				 "tree filter allows max depth %lu, but got %lu",
+				 data->tree_filter_max_depth,
+				 opts->tree_exclude_depth);
+}
+
+static void check_filter_recurse(struct upload_pack_data *data,
+				 struct list_objects_filter_options *opts)
+{
+	size_t i;
+
+	check_one_filter(data, opts);
+	if (opts->choice != LOFC_COMBINE)
+		return;
+
+	for (i = 0; i < opts->sub_nr; i++)
+		check_filter_recurse(data, &opts->sub[i]);
+>>>>>>> upstream/seen
 }
 
 static void die_if_using_banned_filter(struct upload_pack_data *data)
 {
+<<<<<<< HEAD
 	struct list_objects_filter_options *banned = banned_filter(data,
 								   &data->filter_options);
 	struct strbuf buf = STRBUF_INIT;
@@ -1045,6 +1099,9 @@ static void die_if_using_banned_filter(struct upload_pack_data *data)
 			    data->tree_filter_max_depth,
 			    banned->tree_exclude_depth);
 	die("%s", buf.buf);
+=======
+	check_filter_recurse(data, &data->filter_options);
+>>>>>>> upstream/seen
 }
 
 static void receive_needs(struct upload_pack_data *data,

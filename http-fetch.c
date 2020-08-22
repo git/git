@@ -84,9 +84,14 @@ int cmd_main(int argc, const char **argv)
 	int get_verbosely = 0;
 	int get_recover = 0;
 	int packfile = 0;
+	int nongit;
 	struct object_id packfile_hash;
 
+<<<<<<< HEAD
 	setup_git_directory();
+=======
+	setup_git_directory_gently(&nongit);
+>>>>>>> upstream/seen
 
 	while (arg < argc && argv[arg][0] == '-') {
 		const char *p;
@@ -117,6 +122,12 @@ int cmd_main(int argc, const char **argv)
 	if (argc != arg + 2 - (commits_on_stdin || packfile))
 		usage(http_fetch_usage);
 
+<<<<<<< HEAD
+=======
+	if (nongit)
+		die(_("not a git repository"));
+
+>>>>>>> upstream/seen
 	git_config(git_default_config, NULL);
 
 	if (packfile) {

@@ -249,6 +249,7 @@ test_expect_success 'checkout to detach HEAD (with advice declined)' '
 
 test_expect_success 'checkout to detach HEAD' '
 	git config advice.detachedHead true &&
+	rev=$(git rev-parse --short renamer^) &&
 	git checkout -f renamer && git clean -f &&
 	GIT_TEST_GETTEXT_POISON=false git checkout renamer^ 2>messages &&
 	grep "HEAD is now at $rev" messages &&

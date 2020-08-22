@@ -22,7 +22,62 @@ static uint32_t rotate_right(uint32_t value, int32_t count)
 {
 	uint32_t mask = 8 * sizeof(uint32_t) - 1;
 	count &= mask;
+<<<<<<< HEAD
 	return ((value >> count) | (value << ((-count) & mask)));
+=======
+	return ((value << count) | (value >> ((-count) & mask)));
+}
+
+static inline unsigned char get_bitmask(uint32_t pos)
+{
+	return ((unsigned char)1) << (pos & (BITS_PER_WORD - 1));
+}
+
+static int load_bloom_filter_from_graph(struct commit_graph *g,
+					struct bloom_filter *filter,
+					struct commit *c)
+{
+	uint32_t lex_pos, start_index, end_index;
+	uint32_t graph_pos = commit_graph_position(c);
+
+	while (graph_pos < g->num_commits_in_base)
+		g = g->base_graph;
+
+	/* The commit graph commit 'c' lives in doesn't carry Bloom filters. */
+	if (!g->chunk_bloom_indexes)
+		return 0;
+
+	lex_pos = graph_pos - g->num_commits_in_base;
+
+	end_index = get_be32(g->chunk_bloom_indexes + 4 * lex_pos);
+
+	if (lex_pos > 0)
+		start_index = get_be32(g->chunk_bloom_indexes + 4 * (lex_pos - 1));
+	else
+		start_index = 0;
+
+	if ((start_index == end_index) &&
+	    (g->bloom_large && !bitmap_get(g->bloom_large, lex_pos))) {
+		/*
+		 * If the filter is zero-length, either (1) the filter has no
+		 * changes, (2) the filter has too many changes, or (3) it
+		 * wasn't computed (eg., due to '--max-new-filters').
+		 *
+		 * If either (1) or (2) is the case, the 'large' bit will be set
+		 * for this Bloom filter. If it is unset, then it wasn't
+		 * computed. In that case, return nothing, since we don't have
+		 * that filter in the graph.
+		 */
+		return 0;
+	}
+
+	filter->len = end_index - start_index;
+	filter->data = (unsigned char *)(g->chunk_bloom_data +
+					sizeof(unsigned char) * start_index +
+					BLOOMDATA_CHUNK_HEADER_SIZE);
+
+	return 1;
+>>>>>>> upstream/seen
 }
 
 /*
@@ -153,15 +208,18 @@ static int pathmap_cmp(const void *hashmap_cmp_fn_data,
 	return strcmp(e1->path, e2->path);
 }
 
-struct bloom_filter *get_bloom_filter(struct repository *r,
-				      struct commit *c,
-				      int compute_if_not_present)
+struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
+						 struct commit *c,
+						 int compute_if_not_present,
+						 const struct bloom_filter_settings *settings,
+						 int *computed)
 {
 	struct bloom_filter *filter;
-	struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 	int i;
 	struct diff_options diffopt;
-	int max_changes = 512;
+
+	if (computed)
+		*computed = 0;
 
 	if (!bloom_filters.slab_size)
 		return NULL;
@@ -171,8 +229,8 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 	if (!filter->data) {
 		load_commit_graph_info(r, c);
 		if (commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH &&
-			r->objects->commit_graph->chunk_bloom_indexes)
-			load_bloom_filter_from_graph(r->objects->commit_graph, filter, c);
+			load_bloom_filter_from_graph(r->objects->commit_graph, filter, c))
+				return filter;
 	}
 
 	if (filter->data)
@@ -182,7 +240,12 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 
 	repo_diff_setup(r, &diffopt);
 	diffopt.flags.recursive = 1;
+<<<<<<< HEAD
 	diffopt.max_changes = max_changes;
+=======
+	diffopt.detect_rename = 0;
+	diffopt.max_changes = settings->max_changed_paths;
+>>>>>>> upstream/seen
 	diff_setup_done(&diffopt);
 
 	if (c->parents)
@@ -191,7 +254,11 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 		diff_tree_oid(NULL, &c->object.oid, "", &diffopt);
 	diffcore_std(&diffopt);
 
+<<<<<<< HEAD
 	if (diff_queued_diff.nr <= max_changes) {
+=======
+	if (diff_queued_diff.nr <= settings->max_changed_paths) {
+>>>>>>> upstream/seen
 		struct hashmap pathmap;
 		struct pathmap_hash_entry* e;
 		struct hashmap_iter iter;
@@ -225,15 +292,19 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 			diff_free_filepair(diff_queued_diff.queue[i]);
 		}
 
-		filter->len = (hashmap_get_size(&pathmap) * settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
+		if (hashmap_get_size(&pathmap) > settings->max_changed_paths)
+			goto cleanup;
+
+		filter->len = (hashmap_get_size(&pathmap) * settings->bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
 		filter->data = xcalloc(filter->len, sizeof(unsigned char));
 
 		hashmap_for_each_entry(&pathmap, &iter, e, entry) {
 			struct bloom_key key;
-			fill_bloom_key(e->path, strlen(e->path), &key, &settings);
-			add_key_to_filter(&key, filter, &settings);
+			fill_bloom_key(e->path, strlen(e->path), &key, settings);
+			add_key_to_filter(&key, filter, settings);
 		}
 
+	cleanup:
 		hashmap_free_entries(&pathmap, struct pathmap_hash_entry, entry);
 	} else {
 		for (i = 0; i < diff_queued_diff.nr; i++)
@@ -241,6 +312,9 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 		filter->data = NULL;
 		filter->len = 0;
 	}
+
+	if (computed)
+		*computed = 1;
 
 	free(diff_queued_diff.queue);
 	DIFF_QUEUE_CLEAR(&diff_queued_diff);

@@ -39,6 +39,11 @@
 #     When set to "1", do not include "DWIM" suggestions in git-checkout
 #     and git-switch completion (e.g., completing "foo" when "origin/foo"
 #     exists).
+#
+#   GIT_COMPLETION_SHOW_ALL
+#
+#     When set to "1" suggest all options, including options which are
+#     typically hidden (e.g. '--allow-empty' for 'git commit').
 
 case "$COMP_WORDBREAKS" in
 *:*) : great ;;
@@ -411,10 +416,17 @@ __gitcomp_builtin ()
 	local options
 	eval "options=\${$var-}"
 
+	local completion_helper
+	if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
+		completion_helper="--git-completion-helper-all"
+	else
+		completion_helper="--git-completion-helper"
+	fi
+
 	if [ -z "$options" ]; then
 		# leading and trailing spaces are significant to make
 		# option removal work correctly.
-		options=" $incl $(__git ${cmd/_/ } --git-completion-helper) " || return
+		options=" $incl $(__git ${cmd/_/ } $completion_helper) " || return
 
 		for i in $excl; do
 			options="${options/ $i / }"
@@ -1712,8 +1724,8 @@ _git_diff ()
 }
 
 __git_mergetools_common="diffuse diffmerge ecmerge emerge kdiff3 meld opendiff
-			tkdiff vimdiff gvimdiff xxdiff araxis p4merge bc
-			codecompare smerge
+			tkdiff vimdiff nvimdiff gvimdiff xxdiff araxis p4merge
+			bc codecompare smerge
 "
 
 _git_difftool ()

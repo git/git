@@ -482,7 +482,11 @@ See also INCOMPATIBLE OPTIONS below.
 --committer-date-is-author-date::
 	Instead of using the current time as the committer date, use
 	the author date of the commit being rebased as the committer
+<<<<<<< HEAD
 	date. This option implies --force-rebase.
+=======
+	date. This option implies `--force-rebase`.
+>>>>>>> upstream/seen
 
 --ignore-date::
 --reset-author-date::
@@ -626,10 +630,14 @@ INCOMPATIBLE OPTIONS
 The following options:
 
 <<<<<<< HEAD
+<<<<<<< HEAD
  * --am
  * --committer-date-is-author-date
  * --ignore-date
  * --ignore-whitespace
+=======
+ * --apply
+>>>>>>> upstream/seen
 =======
  * --apply
 >>>>>>> upstream/seen

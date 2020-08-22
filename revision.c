@@ -675,7 +675,6 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	struct pathspec_item *pi;
 	char *path_alloc = NULL;
 	const char *path, *p;
-	int last_index;
 	size_t len;
 	int path_component_nr = 1;
 
@@ -691,10 +690,7 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 
 	repo_parse_commit(revs->repo, revs->commits->item);
 
-	if (!revs->repo->objects->commit_graph)
-		return;
-
-	revs->bloom_filter_settings = revs->repo->objects->commit_graph->bloom_filter_settings;
+	revs->bloom_filter_settings = get_bloom_filter_settings(revs->repo);
 	if (!revs->bloom_filter_settings)
 		return;
 
@@ -702,15 +698,19 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 		return;
 
 	pi = &revs->pruning.pathspec.items[0];
-	last_index = pi->len - 1;
 
 <<<<<<< HEAD
 =======
 	/* remove single trailing slash from path, if needed */
+<<<<<<< HEAD
 >>>>>>> upstream/maint
 	if (pi->match[last_index] == '/') {
 		path_alloc = xstrdup(pi->match);
 		path_alloc[last_index] = '\0';
+=======
+	if (pi->len > 0 && pi->match[pi->len - 1] == '/') {
+		path_alloc = xmemdupz(pi->match, pi->len - 1);
+>>>>>>> upstream/seen
 		path = path_alloc;
 	} else
 		path = pi->match;
@@ -718,6 +718,7 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	len = strlen(path);
 	if (!len) {
 		revs->bloom_filter_settings = NULL;
+		free(path_alloc);
 		return;
 	}
 
@@ -769,7 +770,7 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 	if (commit_graph_generation(commit) == GENERATION_NUMBER_INFINITY)
 		return -1;
 
-	filter = get_bloom_filter(revs->repo, commit, 0);
+	filter = get_bloom_filter(revs->repo, commit);
 
 	if (!filter) {
 		count_bloom_filter_not_present++;
@@ -2358,7 +2359,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--unpacked")) {
 		revs->unpacked = 1;
 	} else if (starts_with(arg, "--unpacked=")) {
-		die("--unpacked=<packfile> no longer supported.");
+		die(_("--unpacked=<packfile> no longer supported"));
 	} else if (!strcmp(arg, "-r")) {
 		revs->diff = 1;
 		revs->diffopt.flags.recursive = 1;
@@ -2368,7 +2369,18 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->diffopt.flags.tree_in_recursive = 1;
 	} else if (!strcmp(arg, "-m") || !strcmp(arg, "--no-ignore-merges")) {
 		revs->ignore_merges = 0;
+<<<<<<< HEAD
 	} else if (!strcmp(arg, "--ignore-merges")) {
+=======
+	} else if ((argcount = parse_long_opt("diff-merges", argv, &optarg))) {
+		if (!strcmp(optarg, "off")) {
+			revs->ignore_merges = 1;
+		} else {
+			die(_("unknown value for --diff-merges: %s"), optarg);
+		}
+		return argcount;
+	} else if (!strcmp(arg, "--no-diff-merges")) {
+>>>>>>> upstream/seen
 		revs->ignore_merges = 1;
 	} else if (!strcmp(arg, "-c")) {
 		revs->diff = 1;
@@ -2828,7 +2840,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		 * }
 		 */
 		parse_pathspec(&revs->prune_data, 0, 0,
+<<<<<<< HEAD
 			       revs->prefix, prune_data.items);
+=======
+			       revs->prefix, prune_data.v);
+>>>>>>> upstream/seen
 	}
 	strvec_clear(&prune_data);
 
@@ -2915,9 +2931,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		die("cannot combine --no-walk with --graph");
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
 		die("cannot use --grep-reflog without --walk-reflogs");
-
-	if (revs->first_parent_only && revs->bisect)
-		die(_("--first-parent is incompatible with --bisect"));
 
 	if (revs->line_level_traverse &&
 	    (revs->diffopt.output_format & ~(DIFF_FORMAT_PATCH | DIFF_FORMAT_NO_OUTPUT)))

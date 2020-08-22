@@ -1,6 +1,10 @@
 #include "config.h"
 #include "list.h"
 #include "strbuf.h"
+<<<<<<< HEAD
+=======
+#include "strvec.h"
+>>>>>>> upstream/seen
 
 struct hook
 {
@@ -10,6 +14,11 @@ struct hook
 };
 
 struct list_head* hook_list(const struct strbuf *hookname);
+<<<<<<< HEAD
+=======
+int run_hooks(const char *const *env, const struct strbuf *hookname,
+	      const struct strvec *args);
+>>>>>>> upstream/seen
 
 void free_hook(struct hook *ptr);
 void clear_hook_list(void);

@@ -6,6 +6,10 @@ test_description='git blame'
 PROG='git blame -c'
 . "$TEST_DIRECTORY"/annotate-tests.sh
 
+test_expect_success 'setup' '
+	hexsz=$(test_oid hexsz)
+'
+
 test_expect_success 'blame untracked file in empty repo' '
 	>untracked &&
 	test_must_fail git blame untracked
@@ -105,7 +109,10 @@ test_expect_success 'blame --abbrev=<n> works' '
 '
 
 test_expect_success 'blame -l aligns regular and boundary commits' '
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	hexsz=$(test_oid hexsz) &&
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 	check_abbrev $hexsz         -l HEAD &&
 	check_abbrev $((hexsz - 1)) -l ^HEAD
 '

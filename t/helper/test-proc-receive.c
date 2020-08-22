@@ -109,6 +109,10 @@ static void proc_receive_read_push_options(struct packet_reader *reader,
 
 int cmd__proc_receive(int argc, const char **argv)
 {
+<<<<<<< HEAD
+=======
+	int nongit_ok = 0;
+>>>>>>> upstream/seen
 	struct packet_reader reader;
 	struct command *commands = NULL;
 	struct string_list push_options = STRING_LIST_INIT_DUP;
@@ -128,10 +132,18 @@ int cmd__proc_receive(int argc, const char **argv)
 		OPT_END()
 	};
 
+<<<<<<< HEAD
 	argc = parse_options(argc, argv, "test-tools", options, proc_receive_usage, 0);
 	if (argc > 0)
 		usage_msg_opt("Too many arguments.", proc_receive_usage, options);
 
+=======
+	setup_git_directory_gently(&nongit_ok);
+
+	argc = parse_options(argc, argv, "test-tools", options, proc_receive_usage, 0);
+	if (argc > 0)
+		usage_msg_opt("Too many arguments.", proc_receive_usage, options);
+>>>>>>> upstream/seen
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);

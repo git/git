@@ -22,7 +22,7 @@ die "Need at least one commit identifier!" unless @ARGV;
 my $repo = Git->repository();
 $opt_w = $repo->config('cvsexportcommit.cvsdir') unless defined $opt_w;
 
-my $tmpdir = File::Temp->newdir;
+my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $hash_algo = $repo->config('extensions.objectformat') || 'sha1';
 my $hexsz = $hash_algo eq 'sha256' ? 64 : 40;
 

@@ -284,8 +284,13 @@ test_expect_success 'A: verify pack' '
 '
 
 test_expect_success 'A: verify diff' '
+	copy=$(git rev-parse --verify master:file2) &&
 	cat >expect <<-EOF &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	:000000 100755 $ZERO_OID $(git rev-parse --verify master:file2) A	copy-of-file2
+================================
+	:000000 100755 $ZERO_OID $copy A	copy-of-file2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 	EOF
 	git diff-tree -M -r master verify--import-marks >actual &&
 	compare_diff_raw expect actual &&

@@ -36,9 +36,18 @@ struct bloom_filter_settings {
 	 */
 >>>>>>> upstream/maint
 	uint32_t bits_per_entry;
+
+	/*
+	 * The maximum number of changed paths per commit
+	 * before declaring a Bloom filter to be too-large.
+	 *
+	 * Written to the 'BFXL' chunk (instead of 'BDAT').
+	 */
+	uint32_t max_changed_paths;
 };
 
-#define DEFAULT_BLOOM_FILTER_SETTINGS { 1, 7, 10 }
+#define DEFAULT_BLOOM_MAX_CHANGES 512
+#define DEFAULT_BLOOM_FILTER_SETTINGS { 1, 7, 10, DEFAULT_BLOOM_MAX_CHANGES }
 #define BITS_PER_WORD 8
 <<<<<<< HEAD
 #define BLOOMDATA_CHUNK_HEADER_SIZE 3*sizeof(uint32_t)
@@ -119,9 +128,14 @@ void add_key_to_filter(const struct bloom_key *key,
 void init_bloom_filters(void);
 >>>>>>> upstream/maint
 
-struct bloom_filter *get_bloom_filter(struct repository *r,
-				      struct commit *c,
-				      int compute_if_not_present);
+struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
+						 struct commit *c,
+						 int compute_if_not_present,
+						 const struct bloom_filter_settings *settings,
+						 int *computed);
+
+#define get_bloom_filter(r, c) get_or_compute_bloom_filter( \
+	(r), (c), 0, NULL, NULL)
 
 <<<<<<< HEAD
 int bloom_filter_contains(struct bloom_filter *filter,

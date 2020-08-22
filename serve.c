@@ -148,7 +148,11 @@ int has_capability(const struct strvec *keys, const char *capability,
 	int i;
 	for (i = 0; i < keys->nr; i++) {
 		const char *out;
+<<<<<<< HEAD
 		if (skip_prefix(keys->items[i], capability, &out) &&
+=======
+		if (skip_prefix(keys->v[i], capability, &out) &&
+>>>>>>> upstream/seen
 		    (!*out || *out == '=')) {
 			if (value) {
 				if (*out == '=')

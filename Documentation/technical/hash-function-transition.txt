@@ -650,7 +650,6 @@ Some initial steps can be implemented independently of one another:
 
 The first user-visible change is the introduction of the objectFormat
 extension (without compatObjectFormat). This requires:
-- implementing the loose-object-idx
 - teaching fsck about this mode of operation
 - using the hash function API (vtable) when computing object names
 - signing objects and verifying signatures
@@ -658,6 +657,7 @@ extension (without compatObjectFormat). This requires:
   repository
 
 Next comes introduction of compatObjectFormat:
+- implementing the loose-object-idx
 - translating object names between object formats
 - translating object content between object formats
 - generating and verifying signatures in the compat format

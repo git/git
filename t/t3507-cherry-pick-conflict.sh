@@ -283,12 +283,12 @@ test_expect_success 'failed cherry-pick describes conflict in work tree' '
 	a
 	=======
 	c
-	>>>>>>> objid picked
+	>>>>>>> objid (picked)
 	EOF
 
 	test_must_fail git cherry-pick picked &&
 
-	sed "s/[a-f0-9]*\.\.\./objid/" foo >actual &&
+	sed "s/[a-f0-9]* (/objid (/" foo >actual &&
 	test_cmp expected actual
 '
 
@@ -298,16 +298,16 @@ test_expect_success 'diff3 -m style' '
 	cat <<-EOF >expected &&
 	<<<<<<< HEAD
 	a
-	||||||| parent of objid picked
+	||||||| parent of objid (picked)
 	b
 	=======
 	c
-	>>>>>>> objid picked
+	>>>>>>> objid (picked)
 	EOF
 
 	test_must_fail git cherry-pick picked &&
 
-	sed "s/[a-f0-9]*\.\.\./objid/" foo >actual &&
+	sed "s/[a-f0-9]* (/objid (/" foo >actual &&
 	test_cmp expected actual
 '
 
@@ -319,7 +319,7 @@ test_expect_success 'revert also handles conflicts sanely' '
 	a
 	=======
 	b
-	>>>>>>> parent of objid picked
+	>>>>>>> parent of objid (picked)
 	EOF
 	{
 		git checkout picked -- foo &&
@@ -345,7 +345,7 @@ test_expect_success 'revert also handles conflicts sanely' '
 	test_must_fail git update-index --refresh -q &&
 	test_must_fail git diff-index --exit-code HEAD &&
 	test_cmp expected-stages actual-stages &&
-	sed "s/[a-f0-9]*\.\.\./objid/" foo >actual &&
+	sed "s/[a-f0-9]* (/objid (/" foo >actual &&
 	test_cmp expected actual
 '
 
@@ -429,16 +429,16 @@ test_expect_success 'revert conflict, diff3 -m style' '
 	cat <<-EOF >expected &&
 	<<<<<<< HEAD
 	a
-	||||||| objid picked
+	||||||| objid (picked)
 	c
 	=======
 	b
-	>>>>>>> parent of objid picked
+	>>>>>>> parent of objid (picked)
 	EOF
 
 	test_must_fail git revert picked &&
 
-	sed "s/[a-f0-9]*\.\.\./objid/" foo >actual &&
+	sed "s/[a-f0-9]* (/objid (/" foo >actual &&
 	test_cmp expected actual
 '
 
@@ -512,7 +512,7 @@ test_expect_success 'commit after failed cherry-pick adds -s at the right place'
 	Signed-off-by: C O Mitter <committer@example.com>
 	# Conflicts:
 	EOF
-	grep -e "^# Conflicts:" -e '^Signed-off-by' .git/COMMIT_EDITMSG >actual &&
+	grep -e "^# Conflicts:" -e "^Signed-off-by" .git/COMMIT_EDITMSG >actual &&
 	test_cmp expect actual &&
 
 	cat <<-\EOF >expected &&
@@ -541,7 +541,7 @@ test_expect_success 'commit --amend -s places the sign-off at the right place' '
 	Signed-off-by: C O Mitter <committer@example.com>
 	Conflicts:
 	EOF
-	grep -e "^Conflicts:" -e '^Signed-off-by' .git/COMMIT_EDITMSG >actual &&
+	grep -e "^Conflicts:" -e "^Signed-off-by" .git/COMMIT_EDITMSG >actual &&
 	test_cmp expect actual
 '
 

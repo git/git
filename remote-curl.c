@@ -41,7 +41,6 @@ struct options {
 		push_cert : 2,
 		deepen_relative : 1,
 		from_promisor : 1,
-		no_dependents : 1,
 		atomic : 1,
 		object_format : 1;
 	const struct git_hash_algo *hash_algo;
@@ -190,9 +189,6 @@ static int set_option(const char *name, const char *value)
 #endif /* LIBCURL_VERSION_NUM >= 0x070a08 */
 	} else if (!strcmp(name, "from-promisor")) {
 		options.from_promisor = 1;
-		return 0;
-	} else if (!strcmp(name, "no-dependents")) {
-		options.no_dependents = 1;
 		return 0;
 	} else if (!strcmp(name, "filter")) {
 		options.filter = xstrdup(value);
@@ -1176,8 +1172,6 @@ static int fetch_git(struct discovery *heads,
 		strvec_push(&args, "--deepen-relative");
 	if (options.from_promisor)
 		strvec_push(&args, "--from-promisor");
-	if (options.no_dependents)
-		strvec_push(&args, "--no-dependents");
 	if (options.filter)
 		strvec_pushf(&args, "--filter=%s", options.filter);
 	strvec_push(&args, url.buf);
@@ -1195,7 +1189,11 @@ static int fetch_git(struct discovery *heads,
 	rpc.service_name = "git-upload-pack",
 	rpc.gzip_request = 1;
 
+<<<<<<< HEAD
 	err = rpc_service(&rpc, heads, args.items, &preamble, &rpc_result);
+=======
+	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);
+>>>>>>> upstream/seen
 	if (rpc_result.len)
 		write_or_die(1, rpc_result.buf, rpc_result.len);
 	strbuf_release(&rpc_result);
@@ -1330,7 +1328,11 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-receive-pack",
 
+<<<<<<< HEAD
 	err = rpc_service(&rpc, heads, args.items, &preamble, &rpc_result);
+=======
+	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);
+>>>>>>> upstream/seen
 	if (rpc_result.len)
 		write_or_die(1, rpc_result.buf, rpc_result.len);
 	strbuf_release(&rpc_result);
@@ -1371,7 +1373,11 @@ static void parse_push(struct strbuf *buf)
 			break;
 	} while (1);
 
+<<<<<<< HEAD
 	ret = push(specs.nr, specs.items);
+=======
+	ret = push(specs.nr, specs.v);
+>>>>>>> upstream/seen
 	printf("\n");
 	fflush(stdout);
 

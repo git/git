@@ -2,6 +2,10 @@
 
 #include "hook.h"
 #include "config.h"
+<<<<<<< HEAD
+=======
+#include "run-command.h"
+>>>>>>> upstream/seen
 
 static LIST_HEAD(hook_head);
 
@@ -78,6 +82,10 @@ static int hook_config_lookup(const char *key, const char *value, void *hook_key
 struct list_head* hook_list(const struct strbuf* hookname)
 {
 	struct strbuf hook_key = STRBUF_INIT;
+<<<<<<< HEAD
+=======
+	const char *legacy_hook_path = NULL;
+>>>>>>> upstream/seen
 
 	if (!hookname)
 		return NULL;
@@ -86,5 +94,50 @@ struct list_head* hook_list(const struct strbuf* hookname)
 
 	git_config(hook_config_lookup, (void*)hook_key.buf);
 
+<<<<<<< HEAD
 	return &hook_head;
 }
+=======
+	legacy_hook_path = find_hook(hookname->buf);
+
+	/* TODO: check hook.runHookDir */
+	if (legacy_hook_path)
+		emplace_hook(&hook_head, legacy_hook_path);
+
+	return &hook_head;
+}
+
+int run_hooks(const char *const *env, const struct strbuf *hookname,
+	      const struct strvec *args)
+{
+	struct list_head *to_run, *pos = NULL, *tmp = NULL;
+	int rc = 0;
+
+	to_run = hook_list(hookname);
+
+	list_for_each_safe(pos, tmp, to_run) {
+		struct child_process hook_proc = CHILD_PROCESS_INIT;
+		struct hook *hook = list_entry(pos, struct hook, list);
+
+		/* add command */
+		strvec_push(&hook_proc.args, hook->command.buf);
+
+		/*
+		 * add passed-in argv, without expanding - let the user get back
+		 * exactly what they put in
+		 */
+		if (args)
+			strvec_pushv(&hook_proc.args, args->v);
+
+		hook_proc.env = env;
+		hook_proc.no_stdin = 1;
+		hook_proc.stdout_to_stderr = 1;
+		hook_proc.trace2_hook_name = hook->command.buf;
+		hook_proc.use_shell = 1;
+
+		rc |= run_command(&hook_proc);
+	}
+
+	return rc;
+}
+>>>>>>> upstream/seen

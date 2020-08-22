@@ -84,6 +84,15 @@ You can set the following variables (also in your config.mak):
 	probably be about linux.git size for optimal results.
 	Both default to the git.git you are running from.
 
+    GIT_PERF_EXTRA
+	Boolean to enable additional tests. Most test scripts are
+	written to detect regressions between two versions of Git, and
+	the output will compare timings for individual tests between
+	those versions. Some scripts have additional tests which are not
+	run by default, that show patterns within a single version of
+	Git (e.g., performance of index-pack as the number of threads
+	changes). These can be enabled with GIT_PERF_EXTRA.
+
 You can also pass the options taken by ordinary git tests; the most
 useful one is:
 

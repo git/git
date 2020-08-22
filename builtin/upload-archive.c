@@ -45,7 +45,11 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	}
 
 	/* parse all options sent by the client */
+<<<<<<< HEAD
 	return write_archive(sent_argv.nr, sent_argv.items, prefix,
+=======
+	return write_archive(sent_argv.nr, sent_argv.v, prefix,
+>>>>>>> upstream/seen
 			     the_repository, NULL, 1);
 }
 
