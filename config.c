@@ -1747,11 +1747,22 @@ static int do_git_config_sequence(const struct config_options *opts,
 		ret += git_config_from_file(fn, repo_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_WORKTREE;
-	if (!opts->ignore_worktree && repository_format_worktree_config) {
-		char *path = git_pathdup("config.worktree");
-		if (!access_or_die(path, R_OK, 0))
-			ret += git_config_from_file(fn, path, data);
-		free(path);
+	if (!opts->ignore_worktree && repo_config && opts->git_dir) {
+		struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
+		struct strbuf buf = STRBUF_INIT;
+
+		read_repository_format(&repo_fmt, repo_config);
+
+		if (!verify_repository_format(&repo_fmt, &buf) &&
+		    repo_fmt.worktree_config) {
+			char *path = mkpathdup("%s/config.worktree", opts->git_dir);
+			if (!access_or_die(path, R_OK, 0))
+				ret += git_config_from_file(fn, path, data);
+			free(path);
+		}
+
+		strbuf_release(&buf);
+		clear_repository_format(&repo_fmt);
 	}
 
 	current_parsing_scope = CONFIG_SCOPE_COMMAND;

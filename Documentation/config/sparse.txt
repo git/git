@@ -1,0 +1,20 @@
+sparse.restrictCmds::
+	Only meaningful in conjunction with core.sparseCheckout. This option
+	extends sparse checkouts (which limit which paths are written to the
+	working tree), so that output and operations are also limited to the
+	sparsity paths where possible and implemented. The purpose of this
+	option is to (1) focus output for the user on the portion of the
+	repository that is of interest to them, and (2) enable potentially
+	dramatic performance improvements, especially in conjunction with
+	partial clones.
++
+When this option is true (default), some git commands may limit their behavior
+to the paths specified by the sparsity patterns, or to the intersection of
+those paths and any (like `*.c`) that the user might also specify on the
+command line. When false, the affected commands will work on full trees,
+ignoring the sparsity patterns. For now, only git-grep honors this setting.
++
+Note: commands which export, integrity check, or create history will always
+operate on full trees (e.g. fast-export, format-patch, fsck, commit, etc.),
+unaffected by any sparsity patterns. Also, writing commands such as
+sparse-checkout and read-tree will not be affected by this configuration.
