@@ -149,10 +149,17 @@ a concise config afterwards. It may take a form similar to `git rebase
 the case when the code generating a hook event doesn't have special concerns
 about how to run the hooks, the hook library will provide a basic API to call
 <<<<<<< HEAD
+<<<<<<< HEAD
 all hooks in config order with an `argv_array` provided by the code which
 generates the hook event:
 
 *`int run_hooks(const char *hookname, struct argv_array *args)`*
+=======
+all hooks in config order with an `strvec` provided by the code which
+generates the hook event:
+
+*`int run_hooks(const char *hookname, struct strvec *args)`*
+>>>>>>> upstream/seen
 =======
 all hooks in config order with an `strvec` provided by the code which
 generates the hook event:

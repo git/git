@@ -2,6 +2,10 @@
 #include "list.h"
 #include "strbuf.h"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+#include "strvec.h"
+>>>>>>> upstream/seen
 =======
 #include "strvec.h"
 >>>>>>> upstream/seen
@@ -18,6 +22,9 @@ struct list_head* hook_list(const struct strbuf *hookname);
 =======
 int run_hooks(const char *const *env, const struct strbuf *hookname,
 	      const struct strvec *args);
+<<<<<<< HEAD
+>>>>>>> upstream/seen
+=======
 >>>>>>> upstream/seen
 
 void free_hook(struct hook *ptr);
