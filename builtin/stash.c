@@ -745,7 +745,11 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 			strvec_push(&revision_args, argv[i]);
 	}
 
+<<<<<<< HEAD
+	ret = get_stash_info(&info, stash_args.nr, stash_args.items);
+=======
 	ret = get_stash_info(&info, stash_args.nr, stash_args.v);
+>>>>>>> upstream/seen
 	strvec_clear(&stash_args);
 	if (ret)
 		return -1;
@@ -767,7 +771,11 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+<<<<<<< HEAD
+	argc = setup_revisions(revision_args.nr, revision_args.items, &rev, NULL);
+=======
 	argc = setup_revisions(revision_args.nr, revision_args.v, &rev, NULL);
+>>>>>>> upstream/seen
 	if (argc > 1) {
 		free_stash_info(&info);
 		usage_with_options(git_stash_show_usage, options);
@@ -864,7 +872,7 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 	int found = 0;
 	struct dir_struct dir;
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	if (include_untracked != INCLUDE_ALL_FILES)
 		setup_standard_excludes(&dir);
 
@@ -875,12 +883,9 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 		strbuf_addstr(untracked_files, ent->name);
 		/* NUL-terminate: will be fed to update-index -z */
 		strbuf_addch(untracked_files, '\0');
-		free(ent);
 	}
 
-	free(dir.entries);
-	free(dir.ignored);
-	clear_directory(&dir);
+	dir_clear(&dir);
 	return found;
 }
 
@@ -1611,5 +1616,9 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	/* Assume 'stash push' */
 	strvec_push(&args, "push");
 	strvec_pushv(&args, argv);
+<<<<<<< HEAD
+	return !!push_stash(args.nr, args.items, prefix, 1);
+=======
 	return !!push_stash(args.nr, args.v, prefix, 1);
+>>>>>>> upstream/seen
 }

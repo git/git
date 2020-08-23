@@ -72,7 +72,11 @@ int server_supports_v2(const char *c, int die_on_error)
 
 	for (i = 0; i < server_capabilities_v2.nr; i++) {
 		const char *out;
+<<<<<<< HEAD
+		if (skip_prefix(server_capabilities_v2.items[i], c, &out) &&
+=======
 		if (skip_prefix(server_capabilities_v2.v[i], c, &out) &&
+>>>>>>> upstream/seen
 		    (!*out || *out == '='))
 			return 1;
 	}
@@ -89,7 +93,11 @@ int server_feature_v2(const char *c, const char **v)
 
 	for (i = 0; i < server_capabilities_v2.nr; i++) {
 		const char *out;
+<<<<<<< HEAD
+		if (skip_prefix(server_capabilities_v2.items[i], c, &out) &&
+=======
 		if (skip_prefix(server_capabilities_v2.v[i], c, &out) &&
+>>>>>>> upstream/seen
 		    (*out == '=')) {
 			*v = out + 1;
 			return 1;
@@ -105,7 +113,11 @@ int server_supports_feature(const char *c, const char *feature,
 
 	for (i = 0; i < server_capabilities_v2.nr; i++) {
 		const char *out;
+<<<<<<< HEAD
+		if (skip_prefix(server_capabilities_v2.items[i], c, &out) &&
+=======
 		if (skip_prefix(server_capabilities_v2.v[i], c, &out) &&
+>>>>>>> upstream/seen
 		    (!*out || *(out++) == '=')) {
 			if (parse_feature_request(out, feature))
 				return 1;
@@ -490,7 +502,11 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	packet_write_fmt(fd_out, "symrefs\n");
 	for (i = 0; ref_prefixes && i < ref_prefixes->nr; i++) {
 		packet_write_fmt(fd_out, "ref-prefix %s\n",
+<<<<<<< HEAD
+				 ref_prefixes->items[i]);
+=======
 				 ref_prefixes->v[i]);
+>>>>>>> upstream/seen
 	}
 	packet_flush(fd_out);
 
@@ -1052,7 +1068,7 @@ static const char *get_ssh_command(void)
 	if ((ssh = getenv("GIT_SSH_COMMAND")))
 		return ssh;
 
-	if (!git_config_get_string_const("core.sshcommand", &ssh))
+	if (!git_config_get_string_tmp("core.sshcommand", &ssh))
 		return ssh;
 
 	return NULL;
@@ -1071,7 +1087,7 @@ static void override_ssh_variant(enum ssh_variant *ssh_variant)
 {
 	const char *variant = getenv("GIT_SSH_VARIANT");
 
-	if (!variant && git_config_get_string_const("ssh.variant", &variant))
+	if (!variant && git_config_get_string_tmp("ssh.variant", &variant))
 		return;
 
 	if (!strcmp(variant, "auto"))

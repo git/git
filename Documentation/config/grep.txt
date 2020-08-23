@@ -16,9 +16,23 @@ grep.extendedRegexp::
 	other than 'default'.
 
 grep.threads::
-	Number of grep worker threads to use.
-	See `grep.threads` in linkgit:git-grep[1] for more information.
+	Number of grep worker threads to use. See `--threads`
+ifndef::git-grep[]
+	in linkgit:git-grep[1]
+endif::git-grep[]
+	for more information.
+
+grep.fullName::
+	If set to true, enable `--full-name` option by default.
 
 grep.fallbackToNoIndex::
 	If set to true, fall back to git grep --no-index if git grep
 	is executed outside of a git repository.  Defaults to false.
+
+ifdef::git-grep[]
+sparse.restrictCmds::
+	See base definition in linkgit:git-config[1]. grep honors
+	sparse.restrictCmds by limiting searches to the sparsity paths in three
+	cases: when searching the working tree, when searching the index with
+	--cached, and when searching a specified commit.
+endif::git-grep[]

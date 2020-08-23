@@ -7,7 +7,6 @@ test_description='git fast-export'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-
 	echo break it > file0 &&
 	git add file0 &&
 	test_tick &&

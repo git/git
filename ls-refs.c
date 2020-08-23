@@ -19,7 +19,11 @@ static int ref_match(const struct strvec *prefixes, const char *refname)
 		return 1; /* no restriction */
 
 	for (i = 0; i < prefixes->nr; i++) {
+<<<<<<< HEAD
+		const char *prefix = prefixes->items[i];
+=======
 		const char *prefix = prefixes->v[i];
+>>>>>>> upstream/seen
 
 		if (starts_with(refname, prefix))
 			return 1;

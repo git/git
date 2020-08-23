@@ -25,7 +25,10 @@ linux-gcc)
 	make test
 	;;
 linux-clang)
+<<<<<<< HEAD
+=======
 	export GIT_TEST_DEFAULT_HASH=sha1
+>>>>>>> upstream/seen
 	make test
 	export GIT_TEST_DEFAULT_HASH=sha256
 	make test

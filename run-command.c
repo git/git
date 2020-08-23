@@ -287,7 +287,11 @@ static const char **prepare_shell_cmd(struct strvec *out, const char **argv)
 	}
 
 	strvec_pushv(out, argv);
+<<<<<<< HEAD
+	return out->items;
+=======
 	return out->v;
+>>>>>>> upstream/seen
 }
 
 #ifndef GIT_WINDOWS_NATIVE
@@ -426,11 +430,19 @@ static int prepare_cmd(struct strvec *out, const struct child_process *cmd)
 	 * there are dir separator characters, we have exec attempt to invoke
 	 * the command directly.
 	 */
+<<<<<<< HEAD
+	if (!has_dir_sep(out->items[1])) {
+		char *program = locate_in_PATH(out->items[1]);
+		if (program) {
+			free((char *)out->items[1]);
+			out->items[1] = program;
+=======
 	if (!has_dir_sep(out->v[1])) {
 		char *program = locate_in_PATH(out->v[1]);
 		if (program) {
 			free((char *)out->v[1]);
 			out->v[1] = program;
+>>>>>>> upstream/seen
 		} else {
 			strvec_clear(out);
 			errno = ENOENT;
@@ -672,9 +684,15 @@ int start_command(struct child_process *cmd)
 	char *str;
 
 	if (!cmd->argv)
+<<<<<<< HEAD
+		cmd->argv = cmd->args.items;
+	if (!cmd->env)
+		cmd->env = cmd->env_array.items;
+=======
 		cmd->argv = cmd->args.v;
 	if (!cmd->env)
 		cmd->env = cmd->env_array.v;
+>>>>>>> upstream/seen
 
 	/*
 	 * In case of errors we must keep the promise to close FDs
@@ -846,10 +864,17 @@ fail_pipe:
 		 * be used in the event exec failed with ENOEXEC at which point
 		 * we will try to interpret the command using 'sh'.
 		 */
+<<<<<<< HEAD
+		execve(argv.items[1], (char *const *) argv.items + 1,
+		       (char *const *) childenv);
+		if (errno == ENOEXEC)
+			execve(argv.items[0], (char *const *) argv.items,
+=======
 		execve(argv.v[1], (char *const *) argv.v + 1,
 		       (char *const *) childenv);
 		if (errno == ENOEXEC)
 			execve(argv.v[0], (char *const *) argv.v,
+>>>>>>> upstream/seen
 			       (char *const *) childenv);
 
 		if (errno == ENOENT) {
@@ -1866,15 +1891,25 @@ int run_processes_parallel_tr2(int n, get_next_task_fn get_next_task,
 	return result;
 }
 
-int run_auto_gc(int quiet)
+int run_auto_maintenance(int quiet)
 {
-	struct strvec argv_gc_auto = STRVEC_INIT;
-	int status;
+	struct child_process maint = CHILD_PROCESS_INIT;
 
-	strvec_pushl(&argv_gc_auto, "gc", "--auto", NULL);
+<<<<<<< HEAD
+	strvec_pushl(&argv_gc_auto, "maintenance", "run", "--auto", NULL);
 	if (quiet)
 		strvec_push(&argv_gc_auto, "--quiet");
-	status = run_command_v_opt(argv_gc_auto.v, RUN_GIT_CMD);
+	else
+		strvec_push(&argv_gc_auto, "--no-quiet");
+
+	status = run_command_v_opt(argv_gc_auto.items, RUN_GIT_CMD);
 	strvec_clear(&argv_gc_auto);
 	return status;
+=======
+	maint.git_cmd = 1;
+	strvec_pushl(&maint.args, "maintenance", "run", "--auto", NULL);
+	strvec_push(&maint.args, quiet ? "--quiet" : "--no-quiet");
+
+	return run_command(&maint);
+>>>>>>> upstream/seen
 }

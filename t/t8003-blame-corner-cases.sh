@@ -315,7 +315,11 @@ test_expect_success 'blame does not coalesce non-adjacent result lines' '
 	$orig 1) ABC
 	$orig 3) DEF
 	EOF
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	git -c core.abbrev=$(test_oid hexsz) blame -s giraffe >actual &&
+================================
 	git blame --no-abbrev -s -L1,1 -L3,3 $split giraffe >actual &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 	test_cmp expect actual
 '
 

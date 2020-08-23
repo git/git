@@ -92,6 +92,8 @@ struct rebase_options {
 	int autosquash;
 	char *gpg_sign_opt;
 	int autostash;
+	int committer_date_is_author_date;
+	int ignore_date;
 	char *cmd;
 	int allow_empty_message;
 	int rebase_merges, rebase_cousins;
@@ -130,8 +132,12 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 	replay.quiet = !(opts->flags & REBASE_NO_QUIET);
 	replay.verbose = opts->flags & REBASE_VERBOSE;
 	replay.reschedule_failed_exec = opts->reschedule_failed_exec;
+	replay.committer_date_is_author_date =
+					opts->committer_date_is_author_date;
+	replay.ignore_date = opts->ignore_date;
 	replay.gpg_sign = xstrdup_or_null(opts->gpg_sign_opt);
 	replay.strategy = opts->strategy;
+
 	if (opts->strategy_opts)
 		parse_strategy_opts(&replay, opts->strategy_opts);
 
@@ -351,7 +357,11 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 			     oid_to_hex(&opts->restrict_revision->object.oid));
 
 	ret = sequencer_make_script(the_repository, &todo_list.buf,
+<<<<<<< HEAD
+				    make_script_args.nr, make_script_args.items,
+=======
 				    make_script_args.nr, make_script_args.v,
+>>>>>>> upstream/seen
 				    flags);
 
 	if (ret)
@@ -458,9 +468,20 @@ static int parse_opt_keep_empty(const struct option *opt, const char *arg,
 
 	BUG_ON_OPT_ARG(arg);
 
+<<<<<<< HEAD
+	/*
+	 * If we ever want to remap --keep-empty to --empty=keep, insert:
+	 * 	opts->empty = unset ? EMPTY_UNSPECIFIED : EMPTY_KEEP;
+	 */
+<<<<<<< HEAD
+	opts->type = REBASE_INTERACTIVE;
+=======
+=======
 	imply_merge(opts, unset ? "--no-keep-empty" : "--keep-empty");
 	opts->keep_empty = !unset;
+>>>>>>> upstream/maint
 	opts->type = REBASE_MERGE;
+>>>>>>> upstream/pu
 	return 0;
 }
 
@@ -600,10 +621,15 @@ static int read_basic_state(struct rebase_options *opts)
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id oid;
 
+<<<<<<< HEAD
+	if (!read_oneliner(&head_name, state_dir_path("head-name", opts), 0, 1) ||
+	    !read_oneliner(&buf, state_dir_path("onto", opts), 0, 1))
+=======
 	if (!read_oneliner(&head_name, state_dir_path("head-name", opts),
 			   READ_ONELINER_WARN_MISSING) ||
 	    !read_oneliner(&buf, state_dir_path("onto", opts),
 			   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 		return -1;
 	opts->head_name = starts_with(head_name.buf, "refs/") ?
 		xstrdup(head_name.buf) : NULL;
@@ -619,11 +645,17 @@ static int read_basic_state(struct rebase_options *opts)
 	 */
 	strbuf_reset(&buf);
 	if (file_exists(state_dir_path("orig-head", opts))) {
+<<<<<<< HEAD
+		if (!read_oneliner(&buf, state_dir_path("orig-head", opts), 0, 1))
+			return -1;
+	} else if (!read_oneliner(&buf, state_dir_path("head", opts), 0, 1))
+=======
 		if (!read_oneliner(&buf, state_dir_path("orig-head", opts),
 				   READ_ONELINER_WARN_MISSING))
 			return -1;
 	} else if (!read_oneliner(&buf, state_dir_path("head", opts),
 				  READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 		return -1;
 	if (get_oid(buf.buf, &opts->orig_head))
 		return error(_("invalid orig-head: '%s'"), buf.buf);
@@ -643,8 +675,12 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("allow_rerere_autoupdate", opts))) {
 		strbuf_reset(&buf);
+<<<<<<< HEAD
+		if (!read_oneliner(&buf, state_dir_path("allow_rerere_autoupdate", opts), 0, 1))
+=======
 		if (!read_oneliner(&buf, state_dir_path("allow_rerere_autoupdate", opts),
 				   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 			return -1;
 		if (!strcmp(buf.buf, "--rerere-autoupdate"))
 			opts->allow_rerere_autoupdate = RERERE_AUTOUPDATE;
@@ -657,8 +693,12 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("gpg_sign_opt", opts))) {
 		strbuf_reset(&buf);
+<<<<<<< HEAD
+		if (!read_oneliner(&buf, state_dir_path("gpg_sign_opt", opts), 0, 1))
+=======
 		if (!read_oneliner(&buf, state_dir_path("gpg_sign_opt", opts),
 				   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 			return -1;
 		free(opts->gpg_sign_opt);
 		opts->gpg_sign_opt = xstrdup(buf.buf);
@@ -666,8 +706,12 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("strategy", opts))) {
 		strbuf_reset(&buf);
+<<<<<<< HEAD
+		if (!read_oneliner(&buf, state_dir_path("strategy", opts), 0, 1))
+=======
 		if (!read_oneliner(&buf, state_dir_path("strategy", opts),
 				   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 			return -1;
 		free(opts->strategy);
 		opts->strategy = xstrdup(buf.buf);
@@ -675,8 +719,12 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("strategy_opts", opts))) {
 		strbuf_reset(&buf);
+<<<<<<< HEAD
+		if (!read_oneliner(&buf, state_dir_path("strategy_opts", opts), 0, 1))
+=======
 		if (!read_oneliner(&buf, state_dir_path("strategy_opts", opts),
 				   READ_ONELINER_WARN_MISSING))
+>>>>>>> upstream/maint
 			return -1;
 		free(opts->strategy_opts);
 		opts->strategy_opts = xstrdup(buf.buf);
@@ -728,10 +776,10 @@ static int finish_rebase(struct rebase_options *opts)
 	apply_autostash(state_dir_path("autostash", opts));
 	close_object_store(the_repository->objects);
 	/*
-	 * We ignore errors in 'gc --auto', since the
+	 * We ignore errors in 'git maintenance run --auto', since the
 	 * user should see them.
 	 */
-	run_auto_gc(!(opts->flags & (REBASE_NO_QUIET|REBASE_VERBOSE)));
+	run_auto_maintenance(!(opts->flags & (REBASE_NO_QUIET|REBASE_VERBOSE)));
 	if (opts->type == REBASE_MERGE) {
 		struct replay_opts replay = REPLAY_OPTS_INIT;
 
@@ -900,7 +948,11 @@ static int run_am(struct rebase_options *opts)
 		return status;
 	}
 
+<<<<<<< HEAD
+	strvec_pushv(&am.args, opts->git_am_opts.items);
+=======
 	strvec_pushv(&am.args, opts->git_am_opts.v);
+>>>>>>> upstream/seen
 	strvec_push(&am.args, "--rebasing");
 	strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
 	strvec_push(&am.args, "--patch-format=mboxrd");
@@ -969,7 +1021,11 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 	add_var(&script_snippet, "revisions", opts->revisions);
 	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
 		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
+<<<<<<< HEAD
+	sq_quote_argv_pretty(&buf, opts->git_am_opts.items);
+=======
 	sq_quote_argv_pretty(&buf, opts->git_am_opts.v);
+>>>>>>> upstream/seen
 	add_var(&script_snippet, "git_am_opt", buf.buf);
 	strbuf_release(&buf);
 	add_var(&script_snippet, "verbose",
@@ -1162,7 +1218,11 @@ static int parse_opt_am(const struct option *opt, const char *arg, int unset)
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
 
+<<<<<<< HEAD
+	opts->type = REBASE_AM;
+=======
 	opts->type = REBASE_APPLY;
+>>>>>>> upstream/pu
 
 	return 0;
 }
@@ -1289,6 +1349,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct strbuf revisions = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id merge_base;
+	int ignore_whitespace = 0;
 	enum action action = ACTION_NONE;
 	const char *gpg_sign = NULL;
 	struct string_list exec = STRING_LIST_INIT_NODUP;
@@ -1318,16 +1379,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
 		OPT_BOOL(0, "signoff", &options.signoff,
 			 N_("add a Signed-off-by: line to each commit")),
-		OPT_PASSTHRU_ARGV(0, "ignore-whitespace", &options.git_am_opts,
-				  NULL, N_("passed to 'git am'"),
-				  PARSE_OPT_NOARG),
-		OPT_PASSTHRU_ARGV(0, "committer-date-is-author-date",
-				  &options.git_am_opts, NULL,
-				  N_("passed to 'git am'"), PARSE_OPT_NOARG),
-		OPT_PASSTHRU_ARGV(0, "ignore-date", &options.git_am_opts, NULL,
-				  N_("passed to 'git am'"), PARSE_OPT_NOARG),
+		OPT_BOOL(0, "committer-date-is-author-date",
+			 &options.committer_date_is_author_date,
+			 N_("make committer date match author date")),
+		OPT_BOOL(0, "reset-author-date", &options.ignore_date,
+			 N_("ignore author date and use current date")),
+		OPT_HIDDEN_BOOL(0, "ignore-date", &options.ignore_date,
+				N_("synonym of --reset-author-date")),
 		OPT_PASSTHRU_ARGV('C', NULL, &options.git_am_opts, N_("n"),
 				  N_("passed to 'git apply'"), 0),
+		OPT_BOOL(0, "ignore-whitespace", &ignore_whitespace,
+			 N_("ignore changes in whitespace")),
 		OPT_PASSTHRU_ARGV(0, "whitespace", &options.git_am_opts,
 				  N_("action"), N_("passed to 'git apply'"), 0),
 		OPT_BIT('f', "force-rebase", &options.flags,
@@ -1350,8 +1412,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "show-current-patch", &action,
 			    N_("show the patch file being applied or merged"),
 			    ACTION_SHOW_CURRENT_PATCH),
+<<<<<<< HEAD
+<<<<<<< HEAD
+		{ OPTION_CALLBACK, 0, "am", &options, NULL,
+			N_("use apply-mail strategies to rebase"),
+=======
+		{ OPTION_CALLBACK, 0, "apply", &options, NULL,
+=======
 		OPT_CALLBACK_F(0, "apply", &options, NULL,
+>>>>>>> upstream/maint
 			N_("use apply strategies to rebase"),
+>>>>>>> upstream/pu
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			parse_opt_am),
 		OPT_CALLBACK_F('m', "merge", &options, NULL,
@@ -1367,8 +1438,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				 "ignoring them"),
 			      REBASE_PRESERVE_MERGES, PARSE_OPT_HIDDEN),
 		OPT_RERERE_AUTOUPDATE(&options.allow_rerere_autoupdate),
+<<<<<<< HEAD
+		OPT_CALLBACK_F(0, "empty", &options, N_("{drop,keep,ask}"),
+			       N_("how to handle empty commits"),
+=======
 		OPT_CALLBACK_F(0, "empty", &options, "{drop,keep,ask}",
 			       N_("how to handle commits that become empty"),
+>>>>>>> upstream/pu
 			       PARSE_OPT_NONEG, parse_opt_empty),
 		OPT_CALLBACK_F('k', "keep-empty", &options, NULL,
 			N_("keep commits which start empty"),
@@ -1624,12 +1700,19 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	    options.autosquash) {
 		allow_preemptive_ff = 0;
 	}
+	if (options.committer_date_is_author_date || options.ignore_date)
+		options.flags |= REBASE_FORCE;
 
 	for (i = 0; i < options.git_am_opts.nr; i++) {
+<<<<<<< HEAD
+		const char *option = options.git_am_opts.items[i], *p;
+=======
 		const char *option = options.git_am_opts.v[i], *p;
-		if (!strcmp(option, "--committer-date-is-author-date") ||
-		    !strcmp(option, "--ignore-date") ||
-		    !strcmp(option, "--whitespace=fix") ||
+<<<<<<< HEAD
+>>>>>>> upstream/seen
+=======
+>>>>>>> upstream/next
+		if (!strcmp(option, "--whitespace=fix") ||
 		    !strcmp(option, "--whitespace=strip"))
 			allow_preemptive_ff = 0;
 		else if (skip_prefix(option, "-C", &p)) {
@@ -1652,7 +1735,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strvec_push(&options.git_am_opts, "-q");
 
 	if (options.empty != EMPTY_UNSPECIFIED)
+<<<<<<< HEAD
+		imply_interactive(&options, "--empty");
+=======
 		imply_merge(&options, "--empty");
+>>>>>>> upstream/pu
 
 	if (options.reapply_cherry_picks)
 		imply_merge(&options, "--reapply-cherry-picks");
@@ -1680,6 +1767,23 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("Unknown mode: %s"), rebase_merges);
 		options.rebase_merges = 1;
 		imply_merge(&options, "--rebase-merges");
+	}
+
+	if (options.type == REBASE_APPLY) {
+		if (ignore_whitespace)
+			strvec_push(&options.git_am_opts,
+				    "--ignore-whitespace");
+		if (options.committer_date_is_author_date)
+			strvec_push(&options.git_am_opts,
+				    "--committer-date-is-author-date");
+		if (options.ignore_date)
+			strvec_push(&options.git_am_opts, "--ignore-date");
+	} else {
+		/* REBASE_MERGE and PRESERVE_MERGES */
+		if (ignore_whitespace) {
+			string_list_append(&strategy_options,
+					   "ignore-space-change");
+		}
 	}
 
 	if (strategy_options.nr) {
@@ -1721,26 +1825,59 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (isatty(2) && options.flags & REBASE_NO_QUIET)
 		strbuf_addstr(&options.git_format_patch_opt, " --progress");
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+	if (options.git_am_opts.argc || options.type == REBASE_AM) {
+		/* all am options except -q are compatible only with --am */
+=======
+	if (options.git_am_opts.argc || options.type == REBASE_APPLY) {
+		/* all am options except -q are compatible only with --apply */
+>>>>>>> upstream/pu
+		for (i = options.git_am_opts.argc - 1; i >= 0; i--)
+			if (strcmp(options.git_am_opts.argv[i], "-q"))
+=======
+	if (options.git_am_opts.nr || options.type == REBASE_APPLY) {
+		/* all am options except -q are compatible only with --apply */
+		for (i = options.git_am_opts.nr - 1; i >= 0; i--)
+			if (strcmp(options.git_am_opts.items[i], "-q"))
+>>>>>>> upstream/seen
+=======
 	if (options.git_am_opts.nr || options.type == REBASE_APPLY) {
 		/* all am options except -q are compatible only with --apply */
 		for (i = options.git_am_opts.nr - 1; i >= 0; i--)
 			if (strcmp(options.git_am_opts.v[i], "-q"))
+>>>>>>> upstream/seen
 				break;
 
 		if (i >= 0) {
+<<<<<<< HEAD
+			if (is_interactive(&options))
+				die(_("cannot combine am options with either "
+				      "interactive or merge options"));
+			else
+				options.type = REBASE_AM;
+=======
 			if (is_merge(&options))
 				die(_("cannot combine apply options with "
 				      "merge options"));
 			else
 				options.type = REBASE_APPLY;
+>>>>>>> upstream/pu
 		}
 	}
 
 	if (options.type == REBASE_UNSPECIFIED) {
 		if (!strcmp(options.default_backend, "merge"))
+<<<<<<< HEAD
+			imply_interactive(&options, "--merge");
+		else if (!strcmp(options.default_backend, "am"))
+			options.type = REBASE_AM;
+=======
 			imply_merge(&options, "--merge");
 		else if (!strcmp(options.default_backend, "apply"))
 			options.type = REBASE_APPLY;
+>>>>>>> upstream/pu
 		else
 			die(_("Unknown rebase backend: %s"),
 			    options.default_backend);
@@ -1766,7 +1903,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		else
 			options.empty = EMPTY_DROP;
 	}
+<<<<<<< HEAD
+	if (reschedule_failed_exec > 0 && !is_interactive(&options))
+=======
 	if (reschedule_failed_exec > 0 && !is_merge(&options))
+>>>>>>> upstream/pu
 		die(_("--reschedule-failed-exec requires "
 		      "--exec or --interactive"));
 	if (reschedule_failed_exec >= 0)
@@ -1911,8 +2052,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		struct commit *head =
 			lookup_commit_reference(the_repository,
 						&options.orig_head);
-		options.restrict_revision =
-			get_fork_point(options.upstream_name, head);
+		options.restrict_revision = NULL;
+		if (get_fork_point(options.upstream_name, head, &options.restrict_revision) < 0)
+			die(_("could not get fork point"));
 	}
 
 	if (repo_read_index(the_repository) < 0)

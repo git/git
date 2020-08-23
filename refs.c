@@ -22,7 +22,7 @@
 /*
  * List of all available backends
  */
-static struct ref_storage_be *refs_backends = &refs_be_files;
+static struct ref_storage_be *refs_backends = &refs_be_reftable;
 
 static struct ref_storage_be *find_ref_storage_backend(const char *name)
 {
@@ -313,7 +313,7 @@ int read_ref(const char *refname, struct object_id *oid)
 	return read_ref_full(refname, RESOLVE_REF_READING, oid, NULL);
 }
 
-static int refs_ref_exists(struct ref_store *refs, const char *refname)
+int refs_ref_exists(struct ref_store *refs, const char *refname)
 {
 	return !!refs_resolve_ref_unsafe(refs, refname, RESOLVE_REF_READING, NULL, NULL);
 }
@@ -625,6 +625,20 @@ int repo_dwim_ref(struct repository *r, const char *str, int len,
 int dwim_ref(const char *str, int len, struct object_id *oid, char **ref)
 {
 	return repo_dwim_ref(the_repository, str, len, oid, ref);
+}
+
+int dwim_unique_ref(const char* str, int len, struct object_id *oid, char **ref)
+{
+	struct object_id discard;
+	switch (dwim_ref(str, len, &discard, ref)) {
+	case 0:
+		return error(_("no such ref: '%s'"), str);
+	case 1:
+		break; /* good */
+	default:
+		return error(_("ambiguous refname: '%s'"), str);
+	}
+	return 0;
 }
 
 int expand_ref(struct repository *repo, const char *str, int len,
@@ -1277,14 +1291,14 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
 	return 0;
 }
 
-int ref_is_hidden(const char *refname, const char *refname_full)
+int ref_matches(struct string_list *match_refs, const char *refname, const char *refname_full)
 {
 	int i;
 
-	if (!hide_refs)
+	if (!match_refs)
 		return 0;
-	for (i = hide_refs->nr - 1; i >= 0; i--) {
-		const char *match = hide_refs->items[i].string;
+	for (i = match_refs->nr - 1; i >= 0; i--) {
+		const char *match = match_refs->items[i].string;
 		const char *subject;
 		int neg = 0;
 		const char *p;
@@ -1308,6 +1322,11 @@ int ref_is_hidden(const char *refname, const char *refname_full)
 			return !neg;
 	}
 	return 0;
+}
+
+int ref_is_hidden(const char *refname, const char *refname_full)
+{
+	return ref_matches(hide_refs, refname, refname_full);
 }
 
 const char *find_descendant_ref(const char *dirname,
@@ -1527,11 +1546,37 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 	return refs_for_each_rawref(get_main_ref_store(the_repository), fn, cb_data);
 }
 
+static int refs_read_special_head(struct ref_store *ref_store,
+				  const char *refname, struct object_id *oid,
+				  struct strbuf *referent, unsigned int *type)
+{
+	struct strbuf full_path = STRBUF_INIT;
+	struct strbuf content = STRBUF_INIT;
+	int result = -1;
+	strbuf_addf(&full_path, "%s/%s", ref_store->gitdir, refname);
+
+	if (strbuf_read_file(&content, full_path.buf, 0) < 0)
+		goto done;
+
+	result = parse_loose_ref_contents(content.buf, oid, referent, type);
+
+done:
+	strbuf_release(&full_path);
+	strbuf_release(&content);
+	return result;
+}
+
 int refs_read_raw_ref(struct ref_store *ref_store,
 		      const char *refname, struct object_id *oid,
 		      struct strbuf *referent, unsigned int *type)
 {
-	return ref_store->be->read_raw_ref(ref_store, refname, oid, referent, type);
+	if (!strcmp(refname, "FETCH_HEAD") || !strcmp(refname, "MERGE_HEAD")) {
+		return refs_read_special_head(ref_store, refname, oid, referent,
+					      type);
+	}
+
+	return ref_store->be->read_raw_ref(ref_store, refname, oid, referent,
+					   type);
 }
 
 /* This function needs to return a meaningful errno on failure */
@@ -1725,13 +1770,13 @@ static struct ref_store *lookup_ref_store_map(struct hashmap *map,
  * Create, record, and return a ref_store instance for the specified
  * gitdir.
  */
-static struct ref_store *ref_store_init(const char *gitdir,
+static struct ref_store *ref_store_init(const char *gitdir, const char *be_name,
 					unsigned int flags)
 {
-	const char *be_name = "files";
-	struct ref_storage_be *be = find_ref_storage_backend(be_name);
+	struct ref_storage_be *be;
 	struct ref_store *refs;
 
+	be = find_ref_storage_backend(be_name);
 	if (!be)
 		BUG("reference backend %s is unknown", be_name);
 
@@ -1747,8 +1792,16 @@ struct ref_store *get_main_ref_store(struct repository *r)
 	if (!r->gitdir)
 		BUG("attempting to get main_ref_store outside of repository");
 
+<<<<<<< HEAD
+	r->refs = ref_store_init(r->gitdir,
+				 r->ref_storage_format ? r->ref_storage_format :
+							 "files",
+				 REF_STORE_ALL_CAPS);
+	return r->refs;
+=======
 	r->refs_private = ref_store_init(r->gitdir, REF_STORE_ALL_CAPS);
 	return r->refs_private;
+>>>>>>> upstream/maint
 }
 
 /*
@@ -1802,7 +1855,7 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 		goto done;
 
 	/* assume that add_submodule_odb() has been called */
-	refs = ref_store_init(submodule_sb.buf,
+	refs = ref_store_init(submodule_sb.buf, "files", /* XXX */
 			      REF_STORE_READ | REF_STORE_ODB);
 	register_ref_store_map(&submodule_ref_stores, "submodule",
 			       refs, submodule);
@@ -1816,6 +1869,7 @@ done:
 
 struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 {
+	const char *format = "files"; /* XXX */
 	struct ref_store *refs;
 	const char *id;
 
@@ -1829,9 +1883,9 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 
 	if (wt->id)
 		refs = ref_store_init(git_common_path("worktrees/%s", wt->id),
-				      REF_STORE_ALL_CAPS);
+				      format, REF_STORE_ALL_CAPS);
 	else
-		refs = ref_store_init(get_git_common_dir(),
+		refs = ref_store_init(get_git_common_dir(), format,
 				      REF_STORE_ALL_CAPS);
 
 	if (refs)

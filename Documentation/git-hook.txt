@@ -1,0 +1,63 @@
+git-hook(1)
+===========
+
+NAME
+----
+git-hook - Manage configured hooks
+
+SYNOPSIS
+--------
+[verse]
+'git hook' list [--porcelain] <hook-name>
+
+DESCRIPTION
+-----------
+You can list, add, and modify hooks with this command.
+
+This command parses the default configuration files for sections "hook" and
+"hookcmd". "hook" is used to describe the commands which will be run during a
+particular hook event; commands are run in config order. "hookcmd" is used to
+describe attributes of a specific command. If additional attributes don't need
+to be specified, a command to run can be specified directly in the "hook"
+section; if a "hookcmd" by that name isn't found, Git will attempt to run the
+provided value directly. For example:
+
+Global config
+----
+  [hook "post-commit"]
+    command = "linter"
+    command = "~/typocheck.sh"
+
+  [hookcmd "linter"]
+    command = "/bin/linter --c"
+----
+
+Local config
+----
+  [hook "prepare-commit-msg"]
+    command = "linter"
+  [hook "post-commit"]
+    command = "python ~/run-test-suite.py"
+----
+
+COMMANDS
+--------
+
+list [--porcelain] <hook-name>::
+
+List the hooks which have been configured for <hook-name>. Hooks appear
+in the order they should be run, and note the config scope where the relevant
+`hook.<hook-name>.command` was specified, not the `hookcmd` (if applicable).
++
+If `--porcelain` is specified, instead print the commands alone, separated by
+newlines, for easy parsing by a script.
+
+OPTIONS
+-------
+--porcelain::
+	With `list`, print the commands in the order they should be run,
+	separated by newlines, for easy parsing by a script.
+
+GIT
+---
+Part of the linkgit:git[1] suite

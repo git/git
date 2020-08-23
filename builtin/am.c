@@ -98,6 +98,8 @@ struct am_state {
 	char *author_name;
 	char *author_email;
 	char *author_date;
+	char *committer_name;
+	char *committer_email;
 	char *msg;
 	size_t msg_len;
 
@@ -130,6 +132,8 @@ struct am_state {
  */
 static void am_state_init(struct am_state *state)
 {
+	const char *committer;
+	struct ident_split id;
 	int gpgsign;
 
 	memset(state, 0, sizeof(*state));
@@ -150,6 +154,14 @@ static void am_state_init(struct am_state *state)
 
 	if (!git_config_get_bool("commit.gpgsign", &gpgsign))
 		state->sign_commit = gpgsign ? "" : NULL;
+
+	committer = git_committer_info(IDENT_STRICT);
+	if (split_ident_line(&id, committer, strlen(committer)) < 0)
+		die(_("invalid committer: %s"), committer);
+	state->committer_name =
+		xmemdupz(id.name_begin, id.name_end - id.name_begin);
+	state->committer_email =
+		xmemdupz(id.mail_begin, id.mail_end - id.mail_end);
 }
 
 /**
@@ -161,6 +173,8 @@ static void am_state_release(struct am_state *state)
 	free(state->author_name);
 	free(state->author_email);
 	free(state->author_date);
+	free(state->committer_name);
+	free(state->committer_email);
 	free(state->msg);
 	strvec_clear(&state->git_apply_opts);
 }
@@ -812,7 +826,11 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 	strbuf_release(&sb);
 	free(series_dir_buf);
 
+<<<<<<< HEAD
+	ret = split_mail_conv(stgit_patch_to_mail, state, patches.items, keep_cr);
+=======
 	ret = split_mail_conv(stgit_patch_to_mail, state, patches.v, keep_cr);
+>>>>>>> upstream/seen
 
 	strvec_clear(&patches);
 	return ret;
@@ -1002,7 +1020,11 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	}
 	write_state_text(state, "scissors", str);
 
+<<<<<<< HEAD
+	sq_quote_argv(&sb, state->git_apply_opts.items);
+=======
 	sq_quote_argv(&sb, state->git_apply_opts.v);
+>>>>>>> upstream/seen
 	write_state_text(state, "apply-opt", sb.buf);
 
 	if (state->rebasing)
@@ -1401,9 +1423,15 @@ static int run_apply(const struct am_state *state, const char *index_file)
 		BUG("init_apply_state() failed");
 
 	strvec_push(&apply_opts, "apply");
+<<<<<<< HEAD
+	strvec_pushv(&apply_opts, state->git_apply_opts.items);
+
+	opts_left = apply_parse_options(apply_opts.nr, apply_opts.items,
+=======
 	strvec_pushv(&apply_opts, state->git_apply_opts.v);
 
 	opts_left = apply_parse_options(apply_opts.nr, apply_opts.v,
+>>>>>>> upstream/seen
 					&apply_state, &force_apply, &options,
 					NULL);
 
@@ -1428,7 +1456,11 @@ static int run_apply(const struct am_state *state, const char *index_file)
 
 	strvec_push(&apply_paths, am_path(state, "patch"));
 
+<<<<<<< HEAD
+	res = apply_all_patches(&apply_state, apply_paths.nr, apply_paths.items, options);
+=======
 	res = apply_all_patches(&apply_state, apply_paths.nr, apply_paths.v, options);
+>>>>>>> upstream/seen
 
 	strvec_clear(&apply_paths);
 	strvec_clear(&apply_opts);
@@ -1455,7 +1487,11 @@ static int build_fake_ancestor(const struct am_state *state, const char *index_f
 
 	cp.git_cmd = 1;
 	strvec_push(&cp.args, "apply");
+<<<<<<< HEAD
+	strvec_pushv(&cp.args, state->git_apply_opts.items);
+=======
 	strvec_pushv(&cp.args, state->git_apply_opts.v);
+>>>>>>> upstream/seen
 	strvec_pushf(&cp.args, "--build-fake-ancestor=%s", index_file);
 	strvec_push(&cp.args, am_path(state, "patch"));
 
@@ -1556,7 +1592,7 @@ static void do_commit(const struct am_state *state)
 	struct object_id tree, parent, commit;
 	const struct object_id *old_oid;
 	struct commit_list *parents = NULL;
-	const char *reflog_msg, *author;
+	const char *reflog_msg, *author, *committer = NULL;
 	struct strbuf sb = STRBUF_INIT;
 
 	if (run_hook_le(NULL, "pre-applypatch", NULL))
@@ -1580,11 +1616,15 @@ static void do_commit(const struct am_state *state)
 			IDENT_STRICT);
 
 	if (state->committer_date_is_author_date)
-		setenv("GIT_COMMITTER_DATE",
-			state->ignore_date ? "" : state->author_date, 1);
+		committer = fmt_ident(state->committer_name,
+				      state->author_email, WANT_COMMITTER_IDENT,
+				      state->ignore_date ? NULL
+							 : state->author_date,
+				      IDENT_STRICT);
 
-	if (commit_tree(state->msg, state->msg_len, &tree, parents, &commit,
-			author, state->sign_commit))
+	if (commit_tree_extended(state->msg, state->msg_len, &tree, parents,
+				 &commit, author, committer, state->sign_commit,
+				 NULL))
 		die(_("failed to write commit object"));
 
 	reflog_msg = getenv("GIT_REFLOG_ACTION");
@@ -1795,7 +1835,7 @@ next:
 	if (!state->rebasing) {
 		am_destroy(state);
 		close_object_store(the_repository->objects);
-		run_auto_gc(state->quiet);
+		run_auto_maintenance(state->quiet);
 	}
 }
 
@@ -2379,7 +2419,11 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		if (state.interactive && !paths.nr)
 			die(_("interactive mode requires patches on the command line"));
 
+<<<<<<< HEAD
+		am_setup(&state, patch_format, paths.items, keep_cr);
+=======
 		am_setup(&state, patch_format, paths.v, keep_cr);
+>>>>>>> upstream/seen
 
 		strvec_clear(&paths);
 	}

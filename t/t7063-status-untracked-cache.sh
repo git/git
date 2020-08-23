@@ -4,6 +4,9 @@ test_description='test untracked cache'
 
 . ./test-lib.sh
 
+# fsmonitor changes the expected behvaior of GIT_TRACE_UNTRACKED_STATS
+GIT_TEST_FSMONITOR=""
+
 # On some filesystems (e.g. FreeBSD's ext2 and ufs) directory mtime
 # is updated lazily after contents in the directory changes, which
 # forces the untracked cache code to take the slow path.  A test
@@ -117,11 +120,20 @@ flags 00000006
 dthree/
 dtwo/
 three
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 three
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 
 test_expect_success 'status first time (empty cache)' '
@@ -179,8 +191,6 @@ test_expect_success 'modify in root directory, one dir invalidation' '
 A  done/one
 A  one
 A  two
-?? dthree/
-?? dtwo/
 ?? four
 ?? three
 EOF
@@ -203,16 +213,33 @@ info/exclude $EMPTY_BLOB
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
 flags 00000006
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/ 0000000000000000000000000000000000000000 recurse valid
+four
+three
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
 / $ZERO_OID recurse valid
 dthree/
 dtwo/
 four
 three
+================================
+/ $ZERO_OID recurse valid
+dthree/
+dtwo/
+four
+three
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 three
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -257,11 +284,20 @@ flags 00000006
 dthree/
 dtwo/
 three
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 three
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -278,6 +314,7 @@ A  done/one
 A  one
 A  two
 ?? .gitignore
+?? dthree/
 ?? dtwo/
 EOF
 	test_cmp ../status.expect ../status.iuc &&
@@ -300,11 +337,21 @@ exclude_per_dir .gitignore
 flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
+dthree/
 dtwo/
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -317,11 +364,21 @@ info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
 flags 00000006
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/ e6fcc8f2ee31bae321d66afd183fcb7237afae6e recurse
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 / $(test_oid root) recurse
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -335,7 +392,6 @@ test_expect_success 'status after the move' '
 A  done/one
 A  one
 ?? .gitignore
-?? dtwo/
 ?? two
 EOF
 	test_cmp ../status.expect ../status.iuc &&
@@ -358,12 +414,20 @@ exclude_per_dir .gitignore
 flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
-dtwo/
 two
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -376,11 +440,21 @@ info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
 flags 00000006
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/ e6fcc8f2ee31bae321d66afd183fcb7237afae6e recurse
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 / $(test_oid root) recurse
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -395,7 +469,6 @@ A  done/one
 A  one
 A  two
 ?? .gitignore
-?? dtwo/
 EOF
 	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
@@ -417,11 +490,20 @@ exclude_per_dir .gitignore
 flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 dtwo/
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -441,7 +523,6 @@ test_expect_success 'status after commit' '
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
 ?? .gitignore
-?? dtwo/
 EOF
 	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../actual &&
@@ -463,11 +544,20 @@ exclude_per_dir .gitignore
 flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 dtwo/
 /done/ $ZERO_OID recurse valid
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -502,7 +592,6 @@ test_expect_success 'test sparse status with untracked cache' '
  M done/two
 ?? .gitignore
 ?? done/five
-?? dtwo/
 EOF
 	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual &&
@@ -524,12 +613,25 @@ exclude_per_dir .gitignore
 flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/done/ 1946f0437f90c5005533cbe1736a6451ca301714 recurse valid
+five
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
 dtwo/
 /done/ $(test_oid done) recurse valid
 five
+================================
+dtwo/
+/done/ $(test_oid done) recurse valid
+five
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect ../actual
 '
@@ -544,7 +646,6 @@ test_expect_success 'test sparse status again with untracked cache' '
  M done/two
 ?? .gitignore
 ?? done/five
-?? dtwo/
 EOF
 	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual &&
@@ -574,7 +675,6 @@ test_expect_success 'test sparse status with untracked cache and subdir' '
 ?? .gitignore
 ?? done/five
 ?? done/sub/
-?? dtwo/
 EOF
 	test_cmp ../status.expect ../status.iuc &&
 	test_cmp ../status.expect ../status.actual &&
@@ -596,10 +696,26 @@ exclude_per_dir .gitignore
 flags 00000006
 / $(test_oid root) recurse valid
 .gitignore
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+/done/ 1946f0437f90c5005533cbe1736a6451ca301714 recurse valid
+five
+sub/
+/done/sub/ 0000000000000000000000000000000000000000 recurse check_only valid
+/done/sub/sub/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+================================
 dtwo/
 /done/ $(test_oid done) recurse valid
 five
 sub/
+================================
+dtwo/
+/done/ $(test_oid done) recurse valid
+five
+sub/
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 /done/sub/ $ZERO_OID recurse check_only valid
 sub/
 /done/sub/sub/ $ZERO_OID recurse check_only valid
@@ -607,6 +723,7 @@ file
 /dthree/ $ZERO_OID recurse check_only valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 EOF
 	test_cmp ../expect-from-test-dump ../actual
 '
@@ -677,6 +794,23 @@ test_expect_success 'setting core.untrackedCache to true and using git status cr
 	test_cmp ../expect-no-uc ../actual &&
 	git status &&
 	test-tool dump-untracked-cache >../actual &&
+	cat >../expect-from-test-dump <<EOF &&
+info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
+core.excludesfile 0000000000000000000000000000000000000000
+exclude_per_dir .gitignore
+flags 00000006
+/ e6fcc8f2ee31bae321d66afd183fcb7237afae6e recurse valid
+.gitignore
+dthree/
+dtwo/
+/done/ 1946f0437f90c5005533cbe1736a6451ca301714 recurse valid
+five
+sub/
+/done/sub/ 0000000000000000000000000000000000000000 recurse check_only valid
+/done/sub/sub/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+EOF
 	test_cmp ../expect-from-test-dump ../actual
 '
 
@@ -705,6 +839,7 @@ test_expect_success 'using --untracked-cache does not fail when core.untrackedCa
 '
 
 test_expect_success 'setting core.untrackedCache to keep' '
+	touch ../expect-from-test-dump &&
 	git config core.untrackedCache keep &&
 	git update-index --untracked-cache &&
 	test-tool dump-untracked-cache >../actual &&

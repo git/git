@@ -14,12 +14,16 @@ static const char *const builtin_config_usage[] = {
 
 static char *key;
 static regex_t *key_regexp;
-static regex_t *regexp;
+static struct {
+	enum { none, regexp, boolean } mode;
+	regex_t *regexp;
+	int do_not_match; /* used with `regexp` */
+	int boolean;
+} cmd_line_value;
 static int show_keys;
 static int omit_values;
 static int use_key_regexp;
 static int do_all;
-static int do_not_match;
 static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
@@ -65,6 +69,7 @@ static int show_scope;
 #define TYPE_PATH		4
 #define TYPE_EXPIRY_DATE	5
 #define TYPE_COLOR		6
+#define TYPE_BOOL_OR_STR	7
 
 #define OPT_CALLBACK_VALUE(s, l, v, h, i) \
 	{ OPTION_CALLBACK, (s), (l), (v), NULL, (h), PARSE_OPT_NOARG | \
@@ -94,6 +99,8 @@ static int option_parse_type(const struct option *opt, const char *arg,
 			new_type = TYPE_INT;
 		else if (!strcmp(arg, "bool-or-int"))
 			new_type = TYPE_BOOL_OR_INT;
+		else if (!strcmp(arg, "bool-or-str"))
+			new_type = TYPE_BOOL_OR_STR;
 		else if (!strcmp(arg, "path"))
 			new_type = TYPE_PATH;
 		else if (!strcmp(arg, "expiry-date"))
@@ -149,6 +156,7 @@ static struct option builtin_config_options[] = {
 	OPT_CALLBACK_VALUE(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL),
 	OPT_CALLBACK_VALUE(0, "int", &type, N_("value is decimal number"), TYPE_INT),
 	OPT_CALLBACK_VALUE(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
+	OPT_CALLBACK_VALUE(0, "bool-or-str", &type, N_("value is --bool or string"), TYPE_BOOL_OR_STR),
 	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH),
 	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE),
 	OPT_GROUP(N_("Other")),
@@ -194,7 +202,15 @@ static void show_config_origin(struct strbuf *buf)
 static void show_config_scope(struct strbuf *buf)
 {
 	const char term = end_nul ? '\0' : '\t';
+<<<<<<< HEAD
+<<<<<<< HEAD
+	const char *scope = scope_to_string(current_config_scope());
+=======
 	const char *scope = config_scope_name(current_config_scope());
+>>>>>>> upstream/pu
+=======
+	const char *scope = config_scope_name(current_config_scope());
+>>>>>>> upstream/pu
 
 	strbuf_addstr(buf, N_(scope));
 	strbuf_addch(buf, term);
@@ -250,6 +266,12 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 				strbuf_addstr(buf, v ? "true" : "false");
 			else
 				strbuf_addf(buf, "%d", v);
+		} else if (type == TYPE_BOOL_OR_STR) {
+			int v = git_parse_maybe_bool(value_);
+			if (v < 0)
+				strbuf_addstr(buf, value_);
+			else
+				strbuf_addstr(buf, v ? "true" : "false");
 		} else if (type == TYPE_PATH) {
 			const char *v;
 			if (git_config_pathname(&v, key_, value_) < 0)
@@ -286,14 +308,63 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		return 0;
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
-	if (regexp != NULL &&
-	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+	if (cmd_line_value.mode == regexp &&
+	    (cmd_line_value.do_not_match ^
+	     !!regexec(cmd_line_value.regexp, value_ ? value_ : "",
+		       0, NULL, 0)))
+		return 0;
+	if (cmd_line_value.mode == boolean &&
+	    git_parse_maybe_bool(value_) != cmd_line_value.boolean)
 		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
 	strbuf_init(&values->items[values->nr], 0);
 
 	return format_config(&values->items[values->nr++], key_, value_);
+}
+
+static int handle_value_regex(const char *regex_)
+{
+	if (!regex_) {
+		cmd_line_value.mode = none;
+		return 0;
+	}
+
+	if (type == TYPE_BOOL) {
+		int boolval = git_parse_maybe_bool(regex_);
+		if (boolval >= 0) {
+			cmd_line_value.mode = boolean;
+			cmd_line_value.boolean = boolval;
+			return 0;
+		}
+		die(_("value_regex '%s' cannot be canonicalized "
+		      "to a boolean value"), regex_);
+	}
+
+	if (type == TYPE_BOOL_OR_INT) {
+		int boolval = git_parse_maybe_bool_text(regex_);
+		if (boolval >= 0) {
+			cmd_line_value.mode = boolean;
+			cmd_line_value.boolean = boolval;
+			return 0;
+		}
+	}
+
+	cmd_line_value.mode = regexp;
+
+	if (regex_[0] == '!') {
+		cmd_line_value.do_not_match = 1;
+		regex_++;
+	}
+
+	cmd_line_value.regexp = xmalloc(sizeof(*cmd_line_value.regexp));
+	if (regcomp(cmd_line_value.regexp, regex_, REG_EXTENDED)) {
+		error(_("invalid pattern: %s"), regex_);
+		FREE_AND_NULL(cmd_line_value.regexp);
+		return CONFIG_INVALID_PATTERN;
+	}
+
+	return 0;
 }
 
 static int get_value(const char *key_, const char *regex_)
@@ -333,20 +404,9 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	if (regex_) {
-		if (regex_[0] == '!') {
-			do_not_match = 1;
-			regex_++;
-		}
-
-		regexp = (regex_t*)xmalloc(sizeof(regex_t));
-		if (regcomp(regexp, regex_, REG_EXTENDED)) {
-			error(_("invalid pattern: %s"), regex_);
-			FREE_AND_NULL(regexp);
-			ret = CONFIG_INVALID_PATTERN;
-			goto free_strings;
-		}
-	}
+	ret = handle_value_regex(regex_);
+	if (ret)
+		goto free_strings;
 
 	config_with_options(collect_config, &values,
 			    &given_config_source, &config_options);
@@ -377,9 +437,9 @@ free_strings:
 		regfree(key_regexp);
 		free(key_regexp);
 	}
-	if (regexp) {
-		regfree(regexp);
-		free(regexp);
+	if (cmd_line_value.regexp) {
+		regfree(cmd_line_value.regexp);
+		free(cmd_line_value.regexp);
 	}
 
 	return ret;
@@ -408,6 +468,13 @@ static char *normalize_value(const char *key, const char *value)
 		v = git_config_bool_or_int(key, value, &is_bool);
 		if (!is_bool)
 			return xstrfmt("%d", v);
+		else
+			return xstrdup(v ? "true" : "false");
+	}
+	if (type == TYPE_BOOL_OR_STR) {
+		int v = git_parse_maybe_bool(value);
+		if (v < 0)
+			return xstrdup(value);
 		else
 			return xstrdup(v ? "true" : "false");
 	}

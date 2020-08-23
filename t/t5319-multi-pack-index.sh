@@ -3,6 +3,7 @@
 test_description='multi-pack-indexes'
 . ./test-lib.sh
 
+GIT_TEST_MULTI_PACK_INDEX=0
 objdir=.git/objects
 
 HASH_LEN=$(test_oid rawsz)
@@ -173,12 +174,12 @@ test_expect_success 'write progress off for redirected stderr' '
 '
 
 test_expect_success 'write force progress on for stderr' '
-	git multi-pack-index --object-dir=$objdir --progress write 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir --progress write 2>err &&
 	test_file_not_empty err
 '
 
 test_expect_success 'write with the --no-progress option' '
-	git multi-pack-index --object-dir=$objdir --no-progress write 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir --no-progress write 2>err &&
 	test_line_count = 0 err
 '
 
@@ -368,17 +369,17 @@ test_expect_success 'git-fsck incorrect offset' '
 '
 
 test_expect_success 'repack progress off for redirected stderr' '
-	git multi-pack-index --object-dir=$objdir repack 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir repack 2>err &&
 	test_line_count = 0 err
 '
 
 test_expect_success 'repack force progress on for stderr' '
-	git multi-pack-index --object-dir=$objdir --progress repack 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir --progress repack 2>err &&
 	test_file_not_empty err
 '
 
 test_expect_success 'repack with the --no-progress option' '
-	git multi-pack-index --object-dir=$objdir --no-progress repack 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir --no-progress repack 2>err &&
 	test_line_count = 0 err
 '
 
@@ -522,7 +523,7 @@ test_expect_success 'expire progress off for redirected stderr' '
 test_expect_success 'expire force progress on for stderr' '
 	(
 		cd dup &&
-		git multi-pack-index --progress expire 2>err &&
+		GIT_PROGRESS_DELAY=0 git multi-pack-index --progress expire 2>err &&
 		test_file_not_empty err
 	)
 '
@@ -530,7 +531,7 @@ test_expect_success 'expire force progress on for stderr' '
 test_expect_success 'expire with the --no-progress option' '
 	(
 		cd dup &&
-		git multi-pack-index --no-progress expire 2>err &&
+		GIT_PROGRESS_DELAY=0 git multi-pack-index --no-progress expire 2>err &&
 		test_line_count = 0 err
 	)
 '
@@ -677,6 +678,7 @@ test_expect_success 'expire respects .keep files' '
 '
 
 test_expect_success 'repack --batch-size=0 repacks everything' '
+	cp -r dup dup2 &&
 	(
 		cd dup &&
 		rm .git/objects/pack/*.keep &&
@@ -693,6 +695,23 @@ test_expect_success 'repack --batch-size=0 repacks everything' '
 		git multi-pack-index repack --batch-size=0 &&
 		ls -al .git/objects/pack/*idx >new-idx-list &&
 		test_cmp idx-list new-idx-list
+	)
+'
+
+test_expect_success 'repack --batch-size=<large> repacks everything' '
+	(
+		cd dup2 &&
+		rm .git/objects/pack/*.keep &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 2 idx-list &&
+		git multi-pack-index repack --batch-size=2000000 &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 3 idx-list &&
+		test-tool read-midx .git/objects | grep idx >midx-list &&
+		test_line_count = 3 midx-list &&
+		git multi-pack-index expire &&
+		ls -al .git/objects/pack/*idx >idx-list &&
+		test_line_count = 1 idx-list
 	)
 '
 

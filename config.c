@@ -1062,7 +1062,7 @@ ssize_t git_config_ssize_t(const char *name, const char *value)
 	return ret;
 }
 
-static int git_parse_maybe_bool_text(const char *value)
+int git_parse_maybe_bool_text(const char *value)
 {
 	if (!value)
 		return 1;
@@ -1747,11 +1747,22 @@ static int do_git_config_sequence(const struct config_options *opts,
 		ret += git_config_from_file(fn, repo_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_WORKTREE;
-	if (!opts->ignore_worktree && repository_format_worktree_config) {
-		char *path = git_pathdup("config.worktree");
-		if (!access_or_die(path, R_OK, 0))
-			ret += git_config_from_file(fn, path, data);
-		free(path);
+	if (!opts->ignore_worktree && repo_config && opts->git_dir) {
+		struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
+		struct strbuf buf = STRBUF_INIT;
+
+		read_repository_format(&repo_fmt, repo_config);
+
+		if (!verify_repository_format(&repo_fmt, &buf) &&
+		    repo_fmt.worktree_config) {
+			char *path = mkpathdup("%s/config.worktree", opts->git_dir);
+			if (!access_or_die(path, R_OK, 0))
+				ret += git_config_from_file(fn, path, data);
+			free(path);
+		}
+
+		strbuf_release(&buf);
+		clear_repository_format(&repo_fmt);
 	}
 
 	current_parsing_scope = CONFIG_SCOPE_COMMAND;
@@ -2006,18 +2017,27 @@ const struct string_list *git_configset_get_value_multi(struct config_set *cs, c
 	return e ? &e->value_list : NULL;
 }
 
-int git_configset_get_string_const(struct config_set *cs, const char *key, const char **dest)
+int git_configset_get_string(struct config_set *cs, const char *key, char **dest)
 {
 	const char *value;
 	if (!git_configset_get_value(cs, key, &value))
-		return git_config_string(dest, key, value);
+		return git_config_string((const char **)dest, key, value);
 	else
 		return 1;
 }
 
-int git_configset_get_string(struct config_set *cs, const char *key, char **dest)
+int git_configset_get_string_tmp(struct config_set *cs, const char *key,
+				 const char **dest)
 {
-	return git_configset_get_string_const(cs, key, (const char **)dest);
+	const char *value;
+	if (!git_configset_get_value(cs, key, &value)) {
+		if (!value)
+			return config_error_nonbool(key);
+		*dest = value;
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest)
@@ -2147,22 +2167,26 @@ const struct string_list *repo_config_get_value_multi(struct repository *repo,
 	return git_configset_get_value_multi(repo->config, key);
 }
 
-int repo_config_get_string_const(struct repository *repo,
-				 const char *key, const char **dest)
+int repo_config_get_string(struct repository *repo,
+			   const char *key, char **dest)
 {
 	int ret;
 	git_config_check_init(repo);
-	ret = git_configset_get_string_const(repo->config, key, dest);
+	ret = git_configset_get_string(repo->config, key, dest);
 	if (ret < 0)
 		git_die_config(key, NULL);
 	return ret;
 }
 
-int repo_config_get_string(struct repository *repo,
-			   const char *key, char **dest)
+int repo_config_get_string_tmp(struct repository *repo,
+			       const char *key, const char **dest)
 {
+	int ret;
 	git_config_check_init(repo);
-	return repo_config_get_string_const(repo, key, (const char **)dest);
+	ret = git_configset_get_string_tmp(repo->config, key, dest);
+	if (ret < 0)
+		git_die_config(key, NULL);
+	return ret;
 }
 
 int repo_config_get_int(struct repository *repo,
@@ -2232,14 +2256,14 @@ const struct string_list *git_config_get_value_multi(const char *key)
 	return repo_config_get_value_multi(the_repository, key);
 }
 
-int git_config_get_string_const(const char *key, const char **dest)
-{
-	return repo_config_get_string_const(the_repository, key, dest);
-}
-
 int git_config_get_string(const char *key, char **dest)
 {
 	return repo_config_get_string(the_repository, key, dest);
+}
+
+int git_config_get_string_tmp(const char *key, const char **dest)
+{
+	return repo_config_get_string_tmp(the_repository, key, dest);
 }
 
 int git_config_get_int(const char *key, int *dest)
@@ -2274,7 +2298,7 @@ int git_config_get_pathname(const char *key, const char **dest)
 
 int git_config_get_expiry(const char *key, const char **output)
 {
-	int ret = git_config_get_string_const(key, output);
+	int ret = git_config_get_string(key, (char **)output);
 	if (ret)
 		return ret;
 	if (strcmp(*output, "now")) {
@@ -2287,11 +2311,11 @@ int git_config_get_expiry(const char *key, const char **output)
 
 int git_config_get_expiry_in_days(const char *key, timestamp_t *expiry, timestamp_t now)
 {
-	char *expiry_string;
+	const char *expiry_string;
 	intmax_t days;
 	timestamp_t when;
 
-	if (git_config_get_string(key, &expiry_string))
+	if (git_config_get_string_tmp(key, &expiry_string))
 		return 1; /* no such thing */
 
 	if (git_parse_signed(expiry_string, &days, maximum_signed_value_of_type(int))) {
@@ -2334,6 +2358,11 @@ int git_config_get_max_percent_split_change(void)
 
 int git_config_get_fsmonitor(void)
 {
+	if (!the_repository->worktree) {
+		core_fsmonitor = 0;
+		return 0;
+	}
+
 	if (git_config_get_pathname("core.fsmonitor", &core_fsmonitor))
 		core_fsmonitor = getenv("GIT_TEST_FSMONITOR");
 
@@ -3314,7 +3343,15 @@ const char *current_config_origin_type(void)
 	}
 }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+const char *scope_to_string(enum config_scope scope)
+=======
 const char *config_scope_name(enum config_scope scope)
+>>>>>>> upstream/pu
+=======
+const char *config_scope_name(enum config_scope scope)
+>>>>>>> upstream/pu
 {
 	switch (scope) {
 	case CONFIG_SCOPE_SYSTEM:

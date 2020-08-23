@@ -287,7 +287,12 @@ static struct option builtin_merge_options[] = {
 	OPT_SET_INT(0, "progress", &show_progress, N_("force progress reporting"), 1),
 	{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, N_("key-id"),
 	  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
+<<<<<<< HEAD
+	OPT_BOOL(0, "autostash", &autostash,
+	      N_("automatically stash/stash pop before and after")),
+=======
 	OPT_AUTOSTASH(&autostash),
+>>>>>>> upstream/maint
 	OPT_BOOL(0, "overwrite-ignore", &overwrite_ignore, N_("update ignored files (default)")),
 	OPT_BOOL(0, "signoff", &signoff, N_("add Signed-off-by:")),
 	OPT_BOOL(0, "no-verify", &no_verify, N_("bypass pre-merge-commit and commit-msg hooks")),
@@ -443,6 +448,7 @@ static void finish(struct commit *head_commit,
 		strbuf_addf(&reflog_message, "%s: %s",
 			getenv("GIT_REFLOG_ACTION"), msg);
 	}
+	apply_autostash(git_path_merge_autostash(the_repository));
 	if (squash) {
 		squash_message(head_commit, remoteheads);
 	} else {
@@ -456,7 +462,7 @@ static void finish(struct commit *head_commit,
 			 * user should see them.
 			 */
 			close_object_store(the_repository->objects);
-			run_auto_gc(verbosity < 0);
+			run_auto_maintenance(verbosity < 0);
 		}
 	}
 	if (new_head && show_diffstat) {
@@ -1300,11 +1306,15 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		/* Invoke 'git reset --merge' */
 		ret = cmd_reset(nargc, nargv, prefix);
+<<<<<<< HEAD
+		apply_autostash(git_path_merge_autostash(the_repository));
+=======
 
 		if (stash_oid.len)
 			apply_autostash_oid(stash_oid.buf);
 
 		strbuf_release(&stash_oid);
+>>>>>>> upstream/maint
 		goto done;
 	}
 
@@ -1348,7 +1358,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		else
 			die(_("You have not concluded your merge (MERGE_HEAD exists)."));
 	}
-	if (file_exists(git_path_cherry_pick_head(the_repository))) {
+	if (ref_exists("CHERRY_PICK_HEAD")) {
 		if (advice_resolve_conflict)
 			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 			    "Please, commit your changes before you merge."));

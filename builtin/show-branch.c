@@ -686,7 +686,11 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_args.nr) {
 		ac = default_args.nr;
+<<<<<<< HEAD
+		av = default_args.items;
+=======
 		av = default_args.v;
+>>>>>>> upstream/seen
 	}
 
 	ac = parse_options(ac, av, prefix, builtin_show_branch_options,

@@ -1120,8 +1120,10 @@ static void setup_new_branch_info_and_source_tree(
 	if (!check_refname_format(new_branch_info->path, 0) &&
 	    !read_ref(new_branch_info->path, &branch_rev))
 		oidcpy(rev, &branch_rev);
-	else
+	else {
+		free((char *)new_branch_info->path);
 		new_branch_info->path = NULL; /* not an existing branch */
+	}
 
 	new_branch_info->commit = lookup_commit_reference_gently(the_repository, rev, 1);
 	if (!new_branch_info->commit) {
@@ -1706,6 +1708,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	} else if (opts->pathspec_file_nul) {
 		die(_("--pathspec-file-nul requires --pathspec-from-file"));
 	}
+
+	opts->pathspec.recursive = 1;
 
 	if (opts->pathspec.nr) {
 		if (1 < !!opts->writeout_stage + !!opts->force + !!opts->merge)

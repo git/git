@@ -109,6 +109,10 @@ test_expect_success 'blame --abbrev=<n> works' '
 '
 
 test_expect_success 'blame -l aligns regular and boundary commits' '
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	hexsz=$(test_oid hexsz) &&
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 	check_abbrev $hexsz         -l HEAD &&
 	check_abbrev $((hexsz - 1)) -l ^HEAD
 '

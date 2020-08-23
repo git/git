@@ -503,8 +503,8 @@ The reference discovery phase is done nearly the same way as it is in the
 fetching protocol. Each reference obj-id and name on the server is sent
 in packet-line format to the client, followed by a flush-pkt.  The only
 real difference is that the capability listing is different - the only
-possible values are 'report-status', 'delete-refs', 'ofs-delta' and
-'push-options'.
+possible values are 'report-status', 'report-status-v2', 'delete-refs',
+'ofs-delta', 'atomic' and 'push-options'.
 
 Reference Update Request and Packfile Transfer
 ----------------------------------------------
@@ -625,7 +625,7 @@ Report Status
 -------------
 
 After receiving the pack data from the sender, the receiver sends a
-report if 'report-status' capability is in effect.
+report if 'report-status' or 'report-status-v2' capability is in effect.
 It is a short listing of what happened in that update.  It will first
 list the status of the packfile unpacking as either 'unpack ok' or
 'unpack [error]'.  Then it will list the status for each of the references
@@ -645,6 +645,43 @@ update was successful, or 'ng [refname] [error]' if the update was not.
   command-fail      = PKT-LINE("ng" SP refname SP error-msg)
 
   error-msg         = 1*(OCTET) ; where not "ok"
+----
+
+New capability "report-status-v2" extends the protocol by adding new option
+lines in order to support reporting of reference rewritten by the
+"proc-receive" hook.  The "proc-receive" hook may handle a command for a
+pseudo-reference which may create or update one or more references, and each
+reference may have different name, different new-oid, and different old-oid.
+
+----
+  report-status-v2  = unpack-status
+		      1*(command-status-v2)
+		      flush-pkt
+
+  unpack-status     = PKT-LINE("unpack" SP unpack-result)
+  unpack-result     = "ok" / error-msg
+
+  command-status-v2 = command-ok-v2 / command-fail-v2
+  command-ok-v2     = command-ok
+		      *option-line
+  command-fail-v2   = command-fail
+		      *option-line
+
+  command-ok        = PKT-LINE("ok" SP refname)
+  command-fail      = PKT-LINE("ng" SP refname SP error-msg)
+
+  error-msg         = 1*(OCTET) ; where not "ok"
+
+  option-line       = *1(option-refname)
+		      *1(option-old-oid)
+		      *1(option-new-oid)
+		      *1(option-forced-update)
+
+  option-refname    = PKT-LINE("option" SP "refname" SP refname)
+  option-old-oid    = PKT-LINE("option" SP "old-oid" SP obj-id)
+  option-new-oid    = PKT-LINE("option" SP "new-oid" SP obj-id)
+  option-force      = PKT-LINE("option" SP "forced-update")
+
 ----
 
 Updates can be unsuccessful for a number of reasons.  The reference can have

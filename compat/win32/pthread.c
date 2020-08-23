@@ -56,3 +56,21 @@ pthread_t pthread_self(void)
 	t.tid = GetCurrentThreadId();
 	return t;
 }
+
+/* Adapted from libav's compat/w32pthreads.h. */
+int pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
+{
+	BOOL pending = FALSE;
+	int ret = 0;
+
+	if (!InitOnceBeginInitialize(once_control, 0, &pending, NULL)) {
+		ret = err_win_to_posix(GetLastError());
+	} else if (pending) {
+		init_routine();
+		if (!InitOnceComplete(once_control, 0, NULL))
+			ret = err_win_to_posix(GetLastError());
+	}
+
+	/* POSIX doesn't allow pthread_once() to return EINTR */
+	return ret == EINTR ? EIO : ret;
+}

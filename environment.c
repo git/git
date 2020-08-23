@@ -35,8 +35,8 @@ int repository_format_precious_objects;
 int repository_format_worktree_config;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
-const char *apply_default_whitespace;
-const char *apply_default_ignorewhitespace;
+char *apply_default_whitespace;
+char *apply_default_ignorewhitespace;
 const char *git_attributes_file;
 const char *git_hooks_path;
 int zlib_compression_level = Z_BEST_SPEED;
@@ -164,7 +164,11 @@ static const char *getenv_safe(struct strvec *argv, const char *name)
 		return NULL;
 
 	strvec_push(argv, value);
+<<<<<<< HEAD
+	return argv->items[argv->nr - 1];
+=======
 	return argv->v[argv->nr - 1];
+>>>>>>> upstream/seen
 }
 
 void setup_git_env(const char *git_dir)

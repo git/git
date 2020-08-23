@@ -4,10 +4,13 @@
 #include "git-compat-util.h"
 #include "object-store.h"
 #include "oidset.h"
+#include "ewah/ewok.h"
 
 #define GIT_TEST_COMMIT_GRAPH "GIT_TEST_COMMIT_GRAPH"
 #define GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE "GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE"
 #define GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS"
+<<<<<<< HEAD
+=======
 
 /*
  * This method is only used to enhance coverage of the commit-graph
@@ -17,6 +20,7 @@
  * you are doing!
  */
 void git_test_write_commit_graph_or_die(void);
+>>>>>>> upstream/maint
 
 struct commit;
 struct bloom_filter_settings;
@@ -25,6 +29,7 @@ struct raw_object_store;
 struct string_list;
 
 char *get_commit_graph_filename(struct object_directory *odb);
+char *get_commit_graph_chain_filename(struct object_directory *odb);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 
 /*
@@ -71,15 +76,20 @@ struct commit_graph {
 	const unsigned char *chunk_base_graphs;
 	const unsigned char *chunk_bloom_indexes;
 	const unsigned char *chunk_bloom_data;
+	const unsigned char *chunk_bloom_large_filters;
+
+	struct bitmap *bloom_large;
 
 	struct bloom_filter_settings *bloom_filter_settings;
 };
 
-struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st,
+struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
+						 int fd, struct stat *st,
 						 struct object_directory *odb);
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
-struct commit_graph *parse_commit_graph(void *graph_map, size_t graph_size);
+struct commit_graph *parse_commit_graph(struct repository *r,
+					void *graph_map, size_t graph_size);
 
 /*
  * Return 1 if and only if the repository has a commit-graph
@@ -87,25 +97,64 @@ struct commit_graph *parse_commit_graph(void *graph_map, size_t graph_size);
  */
 int generation_numbers_enabled(struct repository *r);
 
+struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r);
+
 enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_APPEND     = (1 << 0),
 	COMMIT_GRAPH_WRITE_PROGRESS   = (1 << 1),
 	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
+<<<<<<< HEAD
+=======
+	/* Make sure that each OID in the input is a valid commit OID. */
+	COMMIT_GRAPH_WRITE_CHECK_OIDS = (1 << 3),
+<<<<<<< HEAD
+	COMMIT_GRAPH_WRITE_NO_INPUT   = (1 << 4),
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 5),
+};
+
+enum commit_graph_split_flags {
+	COMMIT_GRAPH_SPLIT_MERGE_AUTO       = 0,
+	COMMIT_GRAPH_SPLIT_MERGE_REQUIRED   = 1,
+	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 2
+=======
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 4),
+>>>>>>> master
+=======
+	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
+>>>>>>> upstream/next
+=======
 	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
 	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
+>>>>>>> upstream/seen
+=======
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
+	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
+>>>>>>> upstream/master
 };
 
 enum commit_graph_split_flags {
 	COMMIT_GRAPH_SPLIT_UNSPECIFIED      = 0,
 	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
 	COMMIT_GRAPH_SPLIT_REPLACE          = 2
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> upstream/maint
+=======
+>>>>>>> upstream/seen
+=======
+>>>>>>> upstream/master
 };
 
-struct split_commit_graph_opts {
+struct commit_graph_opts {
 	int size_multiple;
 	int max_commits;
 	timestamp_t expire_time;
 	enum commit_graph_split_flags flags;
+	int max_new_filters;
 };
 
 /*
@@ -116,12 +165,12 @@ struct split_commit_graph_opts {
  */
 int write_commit_graph_reachable(struct object_directory *odb,
 				 enum commit_graph_write_flags flags,
-				 const struct split_commit_graph_opts *split_opts);
+				 const struct commit_graph_opts *opts);
 int write_commit_graph(struct object_directory *odb,
 		       struct string_list *pack_indexes,
 		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,
-		       const struct split_commit_graph_opts *split_opts);
+		       const struct commit_graph_opts *opts);
 
 #define COMMIT_GRAPH_VERIFY_SHALLOW	(1 << 0)
 

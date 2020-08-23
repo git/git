@@ -16,6 +16,7 @@ compiler:
 
 matrix:
   include:
+    - env: jobname=GIT_TEST_GETTEXT_POISON
     - env: jobname=GETTEXT_POISON
       os: linux
       compiler:
@@ -32,6 +33,7 @@ matrix:
       services:
         - docker
       before_install:
+      script: ci/run-linux32-docker.sh
       script: ci/run-docker.sh
     - env: jobname=linux-musl
       os: linux

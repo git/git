@@ -1931,7 +1931,11 @@ int cmd_main(int argc, const char **argv)
 			strvec_pushf(&commit_argv, "^%s",
 				     oid_to_hex(&ref->old_oid));
 		repo_init_revisions(the_repository, &revs, setup_git_directory());
+<<<<<<< HEAD
+		setup_revisions(commit_argv.nr, commit_argv.items, &revs, NULL);
+=======
 		setup_revisions(commit_argv.nr, commit_argv.v, &revs, NULL);
+>>>>>>> upstream/seen
 		revs.edge_hint = 0; /* just in case */
 
 		/* Generate a list of objects that need to be pushed */

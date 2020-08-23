@@ -10,12 +10,16 @@ test_expect_success 'setup full repo' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git init &&
 	git config core.commitGraph true &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	objdir=".git/objects"
+================================
 	objdir=".git/objects" &&
 
 	test_oid_cache <<-EOF
 	oid_version sha1:1
 	oid_version sha256:2
 	EOF
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 test_expect_success POSIXPERM 'tweak umask for modebit tests' '
@@ -272,7 +276,7 @@ graph_git_behavior 'cleared graph, commit 8 vs merge 2' full commits/8 merge/2
 
 test_expect_success 'build graph from latest pack with closure' '
 	cd "$TRASH_DIRECTORY/full" &&
-	cat new-idx | git commit-graph write --stdin-packs &&
+	cat new-idx | git commit-graph write --input=stdin-packs &&
 	test_path_is_file $objdir/info/commit-graph &&
 	graph_read_expect "9" "extra_edges"
 '
@@ -285,7 +289,7 @@ test_expect_success 'build graph from commits with closure' '
 	git tag -a -m "merge" tag/merge merge/2 &&
 	git rev-parse tag/merge >commits-in &&
 	git rev-parse merge/1 >>commits-in &&
-	cat commits-in | git commit-graph write --stdin-commits &&
+	cat commits-in | git commit-graph write --input=stdin-commits &&
 	test_path_is_file $objdir/info/commit-graph &&
 	graph_read_expect "6"
 '

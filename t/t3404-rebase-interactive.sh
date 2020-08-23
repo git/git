@@ -30,31 +30,35 @@ Initial setup:
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'setup' '
-	test_commit A file1 &&
-	test_commit B file1 &&
-	test_commit C file2 &&
-	test_commit D file1 &&
-	test_commit E file3 &&
-	git checkout -b branch1 A &&
-	test_commit F file4 &&
-	test_commit G file1 &&
-	test_commit H file5 &&
-	git checkout -b branch2 F &&
-	test_commit I file6 &&
-	git checkout -b conflict-branch A &&
-	test_commit one conflict &&
-	test_commit two conflict &&
-	test_commit three conflict &&
-	test_commit four conflict &&
-	git checkout -b no-conflict-branch A &&
-	test_commit J fileJ &&
-	test_commit K fileK &&
-	test_commit L fileL &&
-	test_commit M fileM &&
-	git checkout -b no-ff-branch A &&
-	test_commit N fileN &&
-	test_commit O fileO &&
-	test_commit P fileP
+	(
+		GIT_AUTHOR_NAME="Original Author" &&
+		GIT_AUTHOR_EMAIL="original.author@example.com" &&
+		test_commit A file1 &&
+		test_commit B file1 &&
+		test_commit C file2 &&
+		test_commit D file1 &&
+		test_commit E file3 &&
+		git checkout -b branch1 A &&
+		test_commit F file4 &&
+		test_commit G file1 &&
+		test_commit H file5 &&
+		git checkout -b branch2 F &&
+		test_commit I file6 &&
+		git checkout -b conflict-branch A &&
+		test_commit one conflict &&
+		test_commit two conflict &&
+		test_commit three conflict &&
+		test_commit four conflict &&
+		git checkout -b no-conflict-branch A &&
+		test_commit J fileJ &&
+		test_commit K fileK &&
+		test_commit L fileL &&
+		test_commit M fileM &&
+		git checkout -b no-ff-branch A &&
+		test_commit N fileN &&
+		test_commit O fileO &&
+		test_commit P fileP
+	)
 '
 
 # "exec" commands are run with the user shell by default, but this may
@@ -256,7 +260,11 @@ test_expect_success 'stop on conflicting pick' '
 	D
 	=======
 	G
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	>>>>>>> $(git rev-parse --short HEAD)... G
+================================
 	>>>>>>> $commit (G)
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 	EOF
 	git tag new-branch1 &&
 	test_must_fail git rebase -i master &&
@@ -744,6 +752,7 @@ test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 '
 
 test_expect_success 'submodule rebase setup' '
+	GIT_TEST_FSMONITOR="" &&
 	git checkout A &&
 	mkdir sub &&
 	(
@@ -1138,7 +1147,11 @@ test_expect_success C_LOCALE_OUTPUT 'rebase --edit-todo does not work on non-int
 	git checkout conflict-branch &&
 	(
 		set_fake_editor &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+		test_must_fail git rebase -f --am --onto HEAD~2 HEAD~ &&
+================================
 		test_must_fail git rebase -f --apply --onto HEAD~2 HEAD~ &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 		test_must_fail git rebase --edit-todo
 	) &&
 	git rebase --abort
@@ -1501,7 +1514,11 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ig
 	(
 		set_fake_editor &&
 		FAKE_LINES="break 1 2 3 4 5" git rebase -i --root &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+		FAKE_LINES="1 2 3 4" git rebase --edit-todo 2>actual &&
+================================
 		FAKE_LINES="1 2 3 4" git rebase --edit-todo &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 		git rebase --continue 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
@@ -1516,12 +1533,18 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	To avoid this message, use "drop" to explicitly remove a commit.
+	EOF
+	tail -n4 expect >expect.2 &&
+================================
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master~4)
 	To avoid this message, use "drop" to explicitly remove a commit.
 	EOF
 	head -n4 expect >expect.2 &&
 	tail -n1 expect >>expect.2 &&
 	tail -n4 expect.2 >expect.3 &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 	test_config rebase.missingCommitsCheck warn &&
 	rebase_setup_and_clean missing-commit &&
 	(
@@ -1530,12 +1553,20 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 			git rebase -i --root &&
 		cp .git/rebase-merge/git-rebase-todo.backup orig &&
 		FAKE_LINES="2 3 4" git rebase --edit-todo 2>actual.2 &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+		head -n5 actual.2 >actual &&
+================================
 		head -n6 actual.2 >actual &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 		test_i18ncmp expect actual &&
 		cp orig .git/rebase-merge/git-rebase-todo &&
 		FAKE_LINES="1 2 3 4" git rebase --edit-todo 2>actual.2 &&
 		head -n4 actual.2 >actual &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+		test_i18ncmp expect.2 actual &&
+================================
 		test_i18ncmp expect.3 actual &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 		git rebase --continue 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
@@ -1550,7 +1581,10 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master~4)
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 	To avoid this message, use "drop" to explicitly remove a commit.
 
 	Use '\''git config rebase.missingCommitsCheck'\'' to change the level of warnings.
@@ -1559,9 +1593,13 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 	You can fix this with '\''git rebase --edit-todo'\'' and then run '\''git rebase --continue'\''.
 	Or you can abort the rebase with '\''git rebase --abort'\''.
 	EOF
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	tail -n10 expect >expect.2 &&
+================================
 	tail -n11 expect >expect.2 &&
 	head -n3 expect.2 >expect.3 &&
 	tail -n7 expect.2 >>expect.3 &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 	test_config rebase.missingCommitsCheck error &&
 	rebase_setup_and_clean missing-commit &&
 	(
@@ -1573,6 +1611,15 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 			git rebase --edit-todo 2>actual &&
 		test_i18ncmp expect actual &&
 		test_must_fail git rebase --continue 2>actual &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+		test_i18ncmp expect actual &&
+		cp orig .git/rebase-merge/git-rebase-todo &&
+		test_must_fail env FAKE_LINES="1 2 3 4" \
+			git rebase --edit-todo 2>actual &&
+		test_i18ncmp expect.2 actual &&
+		test_must_fail git rebase --continue 2>actual &&
+		test_i18ncmp expect.2 actual &&
+================================
 		test_i18ncmp expect.2 actual &&
 		test_must_fail git rebase --edit-todo &&
 		cp orig .git/rebase-merge/git-rebase-todo &&
@@ -1581,6 +1628,7 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 		test_i18ncmp expect.3 actual &&
 		test_must_fail git rebase --continue 2>actual &&
 		test_i18ncmp expect.3 actual &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 		cp orig .git/rebase-merge/git-rebase-todo &&
 		FAKE_LINES="1 2 3 4 drop 5" git rebase --edit-todo &&
 		git rebase --continue 2>actual
@@ -1591,6 +1639,8 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 		actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
 test_expect_success 'rebase.missingCommitsCheck = error after resolving conflicts' '
 	test_config rebase.missingCommitsCheck error &&
 	(
@@ -1616,6 +1666,7 @@ test_expect_success 'rebase.missingCommitsCheck = error when editing for a secon
 	)
 '
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 test_expect_success 'respects rebase.abbreviateCommands with fixup, squash and exec' '
 	rebase_setup_and_clean abbrevcmd &&
 	test_commit "first" file1.txt "first line" first &&
@@ -1791,10 +1842,57 @@ test_expect_success 'correct error message for commit --amend after empty pick' 
 	test_i18ngrep "middle of a rebase -- cannot amend." err
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_expect_success 'correct error message for partial commit after confilct' '
+	test_when_finished "git rebase --abort" &&
+	git checkout D &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="2 3" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	echo x >file1 &&
+	echo y >file2 &&
+	git add file1 file2 &&
+	test_must_fail git commit file1 2>err &&
+	test_i18ngrep "cannot do a partial commit during a rebase." err
+'
+
+test_expect_success 'correct error message for commit --amend after conflict' '
+	test_when_finished "git rebase --abort" &&
+	git checkout D &&
+	(
+		set_fake_editor &&
+		FAKE_LINES=3 &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	echo x>file1 &&
+	test_must_fail git commit -a --amend 2>err &&
+	test_i18ngrep "middle of a rebase -- cannot amend." err
+'
+
+test_expect_success 'correct authorship and message after conflict' '
+	git checkout D &&
+	(
+		set_fake_editor &&
+		FAKE_LINES=3 &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	echo x >file1 &&
+	git commit -a &&
+	git log --pretty=format:"%an <%ae>%n%ad%n%B" -1 D >expect &&
+	git log --pretty=format:"%an <%ae>%n%ad%n%B" -1 HEAD >actual &&
+	test_cmp expect actual &&
+	git rebase --continue
+================================
 test_expect_success 'todo has correct onto hash' '
 	GIT_SEQUENCE_EDITOR=cat git rebase -i no-conflict-branch~4 no-conflict-branch >actual &&
 	onto=$(git rev-parse --short HEAD~4) &&
 	test_i18ngrep "^# Rebase ..* onto $onto" actual
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 '
 
 # This must be the last test in this file

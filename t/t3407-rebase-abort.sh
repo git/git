@@ -96,6 +96,16 @@ testrebase() {
 	'
 }
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+testrebase " --am" .git/rebase-apply
+testrebase " --merge" .git/rebase-merge
+
+test_expect_success 'rebase --am --quit' '
+	cd "$work_dir" &&
+	# Clean up the state from the previous one
+	git reset --hard pre-rebase &&
+	test_must_fail git rebase --am master &&
+================================
 testrebase " --apply" .git/rebase-apply
 testrebase " --merge" .git/rebase-merge
 
@@ -104,6 +114,7 @@ test_expect_success 'rebase --apply --quit' '
 	# Clean up the state from the previous one
 	git reset --hard pre-rebase &&
 	test_must_fail git rebase --apply master &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_path_is_dir .git/rebase-apply &&
 	head_before=$(git rev-parse HEAD) &&
 	git rebase --quit &&

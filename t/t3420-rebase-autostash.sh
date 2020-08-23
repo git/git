@@ -254,7 +254,11 @@ test_expect_success "rebase: noop rebase" '
 	git checkout feature-branch
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+testrebase " --am" .git/rebase-apply
+================================
 testrebase " --apply" .git/rebase-apply
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 testrebase " --merge" .git/rebase-merge
 testrebase " --interactive" .git/rebase-merge
 

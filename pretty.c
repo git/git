@@ -12,6 +12,7 @@
 #include "reflog-walk.h"
 #include "gpg-interface.h"
 #include "trailer.h"
+#include "format-support.h"
 
 static char *user_format;
 static struct cmt_fmt_map {
@@ -833,40 +834,6 @@ static void parse_commit_header(struct format_commit_context *context)
 	context->commit_header_parsed = 1;
 }
 
-static int istitlechar(char c)
-{
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-		(c >= '0' && c <= '9') || c == '.' || c == '_';
-}
-
-static void format_sanitized_subject(struct strbuf *sb, const char *msg)
-{
-	size_t trimlen;
-	size_t start_len = sb->len;
-	int space = 2;
-
-	for (; *msg && *msg != '\n'; msg++) {
-		if (istitlechar(*msg)) {
-			if (space == 1)
-				strbuf_addch(sb, '-');
-			space = 0;
-			strbuf_addch(sb, *msg);
-			if (*msg == '.')
-				while (*(msg+1) == '.')
-					msg++;
-		} else
-			space |= 1;
-	}
-
-	/* trim any trailing '.' or '-' characters */
-	trimlen = 0;
-	while (sb->len - trimlen > start_len &&
-		(sb->buf[sb->len - 1 - trimlen] == '.'
-		|| sb->buf[sb->len - 1 - trimlen] == '-'))
-		trimlen++;
-	strbuf_remove(sb, sb->len - trimlen, trimlen);
-}
-
 const char *format_subject(struct strbuf *sb, const char *msg,
 			   const char *line_separator)
 {
@@ -1155,7 +1122,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	const struct commit *commit = c->commit;
 	const char *msg = c->message;
 	struct commit_list *p;
-	const char *arg;
+	const char *arg, *eol;
 	size_t res;
 	char **slot;
 
@@ -1405,7 +1372,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		format_subject(sb, msg + c->subject_off, " ");
 		return 1;
 	case 'f':	/* sanitized subject */
-		format_sanitized_subject(sb, msg + c->subject_off);
+		eol = strchrnul(msg + c->subject_off, '\n');
+		format_sanitized_subject(sb, msg + c->subject_off, eol - (msg + c->subject_off));
 		return 1;
 	case 'b':	/* body */
 		strbuf_addstr(sb, msg + c->body_off);

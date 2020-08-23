@@ -23,12 +23,14 @@ enum fetch_negotiation_setting {
 	FETCH_NEGOTIATION_NONE = 0,
 	FETCH_NEGOTIATION_DEFAULT = 1,
 	FETCH_NEGOTIATION_SKIPPING = 2,
+	FETCH_NEGOTIATION_NOOP = 3,
 };
 
 struct repo_settings {
 	int initialized;
 
 	int core_commit_graph;
+	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
 
@@ -37,6 +39,8 @@ struct repo_settings {
 
 	int pack_use_sparse;
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
+
+	int core_multi_pack_index;
 };
 
 struct repository {
@@ -73,6 +77,9 @@ struct repository {
 	 * the ref object.
 	 */
 	struct ref_store *refs_private;
+
+	/* The format to use for the ref database. */
+	char *ref_storage_format;
 
 	/*
 	 * Contains path to often used file names.

@@ -820,7 +820,7 @@ test_must_fail_acceptable () {
 	fi
 
 	case "$1" in
-	git|__git*|test-tool|test-svn-fe|test_terminal)
+	git|__git*|test-tool|test_terminal)
 		return 0
 		;;
 	*)
@@ -1592,6 +1592,21 @@ test_set_port () {
 	eval $var=$port
 }
 
+<<<<<<< HEAD
+test_clear_watchman () {
+	if test -n "$GIT_TEST_FSMONITOR"
+	then
+		watchman watch-list |
+			grep "$TRASH_DIRECTORY" |
+			sed "s/\",//g" |
+			sed "s/\"//g" >repo-list
+
+		while read repo
+		do
+			watchman watch-del "$repo"
+		done <repo-list
+	fi
+=======
 # Compare a file containing rev-list bitmap traversal output to its non-bitmap
 # counterpart. You can't just use test_cmp for this, because the two produce
 # subtly different output:
@@ -1617,6 +1632,7 @@ test_bitmap_traversal () {
 	sort "$2" >"$2.normalized" &&
 	test_cmp "$1.normalized" "$2.normalized" &&
 	rm -f "$1.normalized" "$2.normalized"
+>>>>>>> upstream/pu
 }
 
 # Tests for the hidden file attribute on Windows
@@ -1627,4 +1643,37 @@ test_path_is_hidden () {
 	# Use the output of `attrib`, ignore the absolute path
 	case "$("$SYSTEMROOT"/system32/attrib "$1")" in *H*?:*) return 0;; esac
 	return 1
+}
+
+# Check that the given command was invoked as part of the
+# trace2-format trace on stdin.
+#
+#	test_subcommand [!] <command> <args>... < <trace>
+#
+# For example, to look for an invocation of "git upload-pack
+# /path/to/repo"
+#
+#	GIT_TRACE2_EVENT=event.log git fetch ... &&
+#	test_subcommand git upload-pack "$PATH" <event.log
+#
+# If the first parameter passed is !, this instead checks that
+# the given command was not called.
+#
+test_subcommand () {
+	local negate=
+	if test "$1" = "!"
+	then
+		negate=t
+		shift
+	fi
+
+	local expr=$(printf '"%s",' "$@")
+	expr="${expr%,}"
+
+	if test -n "$negate"
+	then
+		! grep "\[$expr\]"
+	else
+		grep "\[$expr\]"
+	fi
 }

@@ -194,7 +194,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 		char *key;
 
 		key = xstrfmt("submodule.%s.ignore", submodule->name);
-		if (repo_config_get_string_const(the_repository, key, &ignore))
+		if (repo_config_get_string_tmp(the_repository, key, &ignore))
 			ignore = submodule->ignore;
 		free(key);
 
@@ -269,7 +269,11 @@ int is_submodule_active(struct repository *repo, const char *path)
 			strvec_push(&args, item->string);
 		}
 
+<<<<<<< HEAD
+		parse_pathspec(&ps, 0, 0, NULL, args.items);
+=======
 		parse_pathspec(&ps, 0, 0, NULL, args.v);
+>>>>>>> upstream/seen
 		ret = match_pathspec(repo->index, &ps, path, strlen(path), 0, NULL, 1);
 
 		strvec_clear(&args);
@@ -438,13 +442,14 @@ void handle_ignore_submodules_arg(struct diff_options *diffopt,
 	 */
 }
 
-static int prepare_submodule_summary(struct rev_info *rev, const char *path,
-		struct commit *left, struct commit *right,
-		struct commit_list *merge_bases)
+static int prepare_submodule_diff_summary(struct repository *r, struct rev_info *rev,
+					  const char *path,
+					  struct commit *left, struct commit *right,
+					  struct commit_list *merge_bases)
 {
 	struct commit_list *list;
 
-	repo_init_revisions(the_repository, rev, NULL);
+	repo_init_revisions(r, rev, NULL);
 	setup_revisions(0, NULL, rev, NULL);
 	rev->left_right = 1;
 	rev->first_parent_only = 1;
@@ -459,7 +464,7 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 	return prepare_revision_walk(rev);
 }
 
-static void print_submodule_summary(struct repository *r, struct rev_info *rev, struct diff_options *o)
+static void print_submodule_diff_summary(struct repository *r, struct rev_info *rev, struct diff_options *o)
 {
 	static const char format[] = "  %m %s";
 	struct strbuf sb = STRBUF_INIT;
@@ -610,7 +615,7 @@ output_header:
 	strbuf_release(&sb);
 }
 
-void show_submodule_summary(struct diff_options *o, const char *path,
+void show_submodule_diff_summary(struct diff_options *o, const char *path,
 		struct object_id *one, struct object_id *two,
 		unsigned dirty_submodule)
 {
@@ -632,12 +637,12 @@ void show_submodule_summary(struct diff_options *o, const char *path,
 		goto out;
 
 	/* Treat revision walker failure the same as missing commits */
-	if (prepare_submodule_summary(&rev, path, left, right, merge_bases)) {
+	if (prepare_submodule_diff_summary(sub, &rev, path, left, right, merge_bases)) {
 		diff_emit_submodule_error(o, "(revision walker failed)\n");
 		goto out;
 	}
 
-	print_submodule_summary(sub, &rev, o);
+	print_submodule_diff_summary(sub, &rev, o);
 
 out:
 	if (merge_bases)
@@ -842,7 +847,11 @@ static void collect_changed_submodules(struct repository *r,
 	const struct commit *commit;
 
 	repo_init_revisions(r, &rev, NULL);
+<<<<<<< HEAD
+	setup_revisions(argv->nr, argv->items, &rev, NULL);
+=======
 	setup_revisions(argv->nr, argv->v, &rev, NULL);
+>>>>>>> upstream/seen
 	if (prepare_revision_walk(&rev))
 		die(_("revision walk setup failed"));
 
@@ -1014,7 +1023,11 @@ int find_unpushed_submodules(struct repository *r,
 	struct string_list_item *name;
 	struct strvec argv = STRVEC_INIT;
 
+<<<<<<< HEAD
+	/* argv.items[0] will be ignored by setup_revisions */
+=======
 	/* argv.v[0] will be ignored by setup_revisions */
+>>>>>>> upstream/seen
 	strvec_push(&argv, "find_unpushed_submodules");
 	oid_array_for_each_unique(commits, append_oid_to_argv, &argv);
 	strvec_push(&argv, "--not");
@@ -1299,7 +1312,7 @@ static int get_fetch_recurse_config(const struct submodule *submodule,
 
 		int fetch_recurse = submodule->fetch_recurse;
 		key = xstrfmt("submodule.%s.fetchRecurseSubmodules", submodule->name);
-		if (!repo_config_get_string_const(spf->r, key, &value)) {
+		if (!repo_config_get_string_tmp(spf->r, key, &value)) {
 			fetch_recurse = parse_fetch_recurse_submodules_arg(key, value);
 		}
 		free(key);
@@ -1453,7 +1466,11 @@ static int get_next_submodule(struct child_process *cp,
 				strbuf_addf(err, _("Fetching submodule %s%s\n"),
 					    spf->prefix, ce->name);
 			strvec_init(&cp->args);
+<<<<<<< HEAD
+			strvec_pushv(&cp->args, spf->args.items);
+=======
 			strvec_pushv(&cp->args, spf->args.v);
+>>>>>>> upstream/seen
 			strvec_push(&cp->args, default_argv);
 			strvec_push(&cp->args, "--submodule-prefix");
 
@@ -1501,7 +1518,11 @@ static int get_next_submodule(struct child_process *cp,
 		cp->dir = task->repo->gitdir;
 
 		strvec_init(&cp->args);
+<<<<<<< HEAD
+		strvec_pushv(&cp->args, spf->args.items);
+=======
 		strvec_pushv(&cp->args, spf->args.v);
+>>>>>>> upstream/seen
 		strvec_push(&cp->args, "on-demand");
 		strvec_push(&cp->args, "--submodule-prefix");
 		strvec_push(&cp->args, submodule_prefix.buf);
@@ -1620,7 +1641,11 @@ int fetch_populated_submodules(struct repository *r,
 
 	strvec_push(&spf.args, "fetch");
 	for (i = 0; i < options->nr; i++)
+<<<<<<< HEAD
+		strvec_push(&spf.args, options->items[i]);
+=======
 		strvec_push(&spf.args, options->v[i]);
+>>>>>>> upstream/seen
 	strvec_push(&spf.args, "--recurse-submodules-default");
 	/* default value, "--submodule-prefix" and its value are added later */
 

@@ -52,6 +52,20 @@ N_("You asked to amend the most recent commit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
 "remove the commit entirely with \"git reset HEAD^\".\n");
 
+static const char empty_rebase_fixup_advice[] =
+N_("The fixup would make the commit empty\n"
+"If you wish to commit it anyway use:\n"
+"\n"
+"    git commit --amend --allow-empty\n"
+"    git rebase --continue\n"
+"\n"
+"To remove the commit entirely use:\n"
+"\n"
+"    git reset HEAD^\n"
+"    git rebase --continue\n"
+"\n"
+"Otherwise, please use 'git rebase --skip' to skip it\n");
+
 static const char empty_cherry_pick_advice[] =
 N_("The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
 "If you wish to commit it anyway, use:\n"
@@ -181,8 +195,14 @@ static void determine_whence(struct wt_status *s)
 {
 	if (file_exists(git_path_merge_head(the_repository)))
 		whence = FROM_MERGE;
-	else if (!sequencer_determine_whence(the_repository, &whence))
-		whence = FROM_COMMIT;
+	else {
+		int res = sequencer_determine_whence(the_repository, &whence,
+						     amend);
+		if (res < 0)
+			die(_("could not read sequencer state"));
+		else if (!res)
+			whence = FROM_COMMIT;
+	}
 	if (s)
 		s->whence = whence;
 }
@@ -192,7 +212,6 @@ static void status_init_config(struct wt_status *s, config_fn_t fn)
 	wt_status_prepare(the_repository, s);
 	init_diff_ui_defaults();
 	git_config(fn, s);
-	determine_whence(s);
 	s->hints = advice_status_hints; /* must come after git_config() */
 }
 
@@ -847,21 +866,19 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS &&
 				!merge_contains_scissors)
 				wt_status_add_cut_line(s->fp);
-			status_printf_ln(s, GIT_COLOR_NORMAL,
-			    whence == FROM_MERGE
-				? _("\n"
-					"It looks like you may be committing a merge.\n"
-					"If this is not correct, please remove the file\n"
-					"	%s\n"
-					"and try again.\n")
-				: _("\n"
-					"It looks like you may be committing a cherry-pick.\n"
-					"If this is not correct, please remove the file\n"
-					"	%s\n"
-					"and try again.\n"),
+			status_printf_ln(
+				s, GIT_COLOR_NORMAL,
 				whence == FROM_MERGE ?
-					git_path_merge_head(the_repository) :
-					git_path_cherry_pick_head(the_repository));
+					      _("\n"
+					  "It looks like you may be committing a merge.\n"
+					  "If this is not correct, please run\n"
+					  "	git update-ref -d MERGE_HEAD\n"
+					  "and try again.\n") :
+					      _("\n"
+					  "It looks like you may be committing a cherry-pick.\n"
+					  "If this is not correct, please run\n"
+					  "	git update-ref -d CHERRY_PICK_HEAD\n"
+					  "and try again.\n"));
 		}
 
 		fprintf(s->fp, "\n");
@@ -968,9 +985,12 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	if (!committable && whence != FROM_MERGE && !allow_empty &&
 	    !(amend && is_a_merge(current_head))) {
 		s->hints = advice_status_hints;
+		fprintf(stderr, "\nwhence = %d\n", whence);
 		s->display_comment_prefix = old_display_comment_prefix;
 		run_status(stdout, index_file, prefix, 0, s);
-		if (amend)
+		if (whence == FROM_REBASE_FIXUP)
+			fputs(_(empty_rebase_fixup_advice), stderr);
+		else if (amend)
 			fputs(_(empty_amend_advice), stderr);
 		else if (is_from_cherry_pick(whence) ||
 			 whence == FROM_REBASE_PICK) {
@@ -1008,7 +1028,11 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		struct strvec env = STRVEC_INIT;
 
 		strvec_pushf(&env, "GIT_INDEX_FILE=%s", index_file);
+<<<<<<< HEAD
+		if (launch_editor(git_path_commit_editmsg(), NULL, env.items)) {
+=======
 		if (launch_editor(git_path_commit_editmsg(), NULL, env.v)) {
+>>>>>>> upstream/seen
 			fprintf(stderr,
 			_("Please supply the message using either -m or -F option.\n"));
 			exit(1);
@@ -1152,6 +1176,8 @@ static void finalize_deferred_config(struct wt_status *s)
 
 	if (s->ahead_behind_flags == AHEAD_BEHIND_UNSPECIFIED)
 		s->ahead_behind_flags = AHEAD_BEHIND_FULL;
+
+	determine_whence(s);
 }
 
 static int parse_and_validate_options(int argc, const char *argv[],
@@ -1674,8 +1700,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	if (commit_tree_extended(sb.buf, sb.len, &active_cache_tree->oid,
-				 parents, &oid, author_ident.buf, sign_commit,
-				 extra)) {
+				 parents, &oid, author_ident.buf, NULL,
+				 sign_commit, extra)) {
 		rollback_index_files();
 		die(_("failed to write commit object"));
 	}
@@ -1694,6 +1720,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	unlink(git_path_merge_mode(the_repository));
 	unlink(git_path_squash_msg(the_repository));
 
+	apply_autostash(git_path_merge_autostash(the_repository));
+
 	if (commit_index_files())
 		die(_("repository has been updated, but unable to write\n"
 		      "new_index file. Check that disk is not full and quota is\n"
@@ -1702,7 +1730,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	git_test_write_commit_graph_or_die();
 
 	repo_rerere(the_repository, 0);
-	run_auto_gc(quiet);
+	run_auto_maintenance(quiet);
 	run_commit_hook(use_editor, get_index_file(), "post-commit", NULL);
 	if (amend && !no_post_rewrite) {
 		commit_post_rewrite(the_repository, current_head, &oid);

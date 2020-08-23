@@ -912,12 +912,21 @@ static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid
 	return 0;
 }
 
-struct commit *get_fork_point(const char *refname, struct commit *commit)
+int get_fork_point(const char *refname, struct commit *commit, struct commit **fork_point)
 {
 	struct object_id oid;
 	struct rev_collect revs;
 	struct commit_list *bases;
 	int i;
+<<<<<<< HEAD
+	char *full_refname;
+
+	if (dwim_unique_ref(refname, strlen(refname), &oid, &full_refname) < 0) {
+		free(full_refname);
+		return -1;
+	}
+
+=======
 	struct commit *ret = NULL;
 	char *full_refname;
 
@@ -929,12 +938,17 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	default:
 		die("Ambiguous refname: '%s'", refname);
 	}
+>>>>>>> upstream/pu
 
 	memset(&revs, 0, sizeof(revs));
 	revs.initial = 1;
 	for_each_reflog_ent(full_refname, collect_one_reflog_ent, &revs);
 
+<<<<<<< HEAD
+	if (!revs.nr && !get_oid(full_refname, &oid))
+=======
 	if (!revs.nr)
+>>>>>>> upstream/pu
 		add_one_commit(&oid, &revs);
 
 	for (i = 0; i < revs.nr; i++)
@@ -956,12 +970,17 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	if (revs.nr <= i)
 		goto cleanup_return;
 
-	ret = bases->item;
+	*fork_point = bases->item;
 
 cleanup_return:
+	free(full_refname);
 	free_commit_list(bases);
+<<<<<<< HEAD
+	return 0;
+=======
 	free(full_refname);
 	return ret;
+>>>>>>> upstream/pu
 }
 
 /*
@@ -1316,8 +1335,8 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 	int result;
 
 	append_merge_tag_headers(parents, &tail);
-	result = commit_tree_extended(msg, msg_len, tree, parents, ret,
-				      author, sign_commit, extra);
+	result = commit_tree_extended(msg, msg_len, tree, parents, ret, author,
+				      NULL, sign_commit, extra);
 	free_commit_extra_headers(extra);
 	return result;
 }
@@ -1440,7 +1459,8 @@ N_("Warning: commit message did not conform to UTF-8.\n"
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
 			 struct commit_list *parents, struct object_id *ret,
-			 const char *author, const char *sign_commit,
+			 const char *author, const char *committer,
+			 const char *sign_commit,
 			 struct commit_extra_header *extra)
 {
 	int result;
@@ -1473,7 +1493,9 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	if (!author)
 		author = git_author_info(IDENT_STRICT);
 	strbuf_addf(&buffer, "author %s\n", author);
-	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_STRICT));
+	if (!committer)
+		committer = git_committer_info(IDENT_STRICT);
+	strbuf_addf(&buffer, "committer %s\n", committer);
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
 
@@ -1643,7 +1665,11 @@ int run_commit_hook(int editor_is_used, const char *index_file,
 		strvec_push(&hook_env, "GIT_EDITOR=:");
 
 	va_start(args, name);
+<<<<<<< HEAD
+	ret = run_hook_ve(hook_env.items, name, args);
+=======
 	ret = run_hook_ve(hook_env.v, name, args);
+>>>>>>> upstream/seen
 	va_end(args);
 	strvec_clear(&hook_env);
 

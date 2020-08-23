@@ -193,7 +193,11 @@ test_expect_success 'prompt - rebase am' '
 	printf " (b2|REBASE 1/3)" >expected &&
 	git checkout b2 &&
 	test_when_finished "git checkout master" &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+	test_must_fail git rebase --am b1 b2 &&
+================================
 	test_must_fail git rebase --apply b1 b2 &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_when_finished "git rebase --abort" &&
 	__git_ps1 >"$actual" &&
 	test_cmp expected "$actual"

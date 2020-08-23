@@ -513,7 +513,11 @@ static int convert_graft_file(int force)
 			continue;
 
 		strvec_split(&args, buf.buf);
+<<<<<<< HEAD
+		if (args.nr && create_graft(args.nr, args.items, force, 1))
+=======
 		if (args.nr && create_graft(args.nr, args.v, force, 1))
+>>>>>>> upstream/seen
 			strbuf_addf(&err, "\n\t%s", buf.buf);
 		strvec_clear(&args);
 	}

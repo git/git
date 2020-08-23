@@ -439,7 +439,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 	if (object->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)object;
 
-		if (parse_commit(commit) < 0)
+		if (repo_parse_commit(revs->repo, commit) < 0)
 			die("unable to parse commit %s", name);
 		if (flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
@@ -642,7 +642,10 @@ static void trace2_bloom_filter_statistics_atexit(void)
 	jw_object_intmax(&jw, "filter_not_present", count_bloom_filter_not_present);
 	jw_object_intmax(&jw, "maybe", count_bloom_filter_maybe);
 	jw_object_intmax(&jw, "definitely_not", count_bloom_filter_definitely_not);
+<<<<<<< HEAD
+=======
 	jw_object_intmax(&jw, "false_positive", count_bloom_filter_false_positive);
+>>>>>>> upstream/maint
 	jw_end(&jw);
 
 	trace2_data_json("bloom", the_repository, "statistics", &jw);
@@ -650,6 +653,8 @@ static void trace2_bloom_filter_statistics_atexit(void)
 	jw_release(&jw);
 }
 
+<<<<<<< HEAD
+=======
 static int forbid_bloom_filters(struct pathspec *spec)
 {
 	if (spec->has_wildcard)
@@ -664,6 +669,7 @@ static int forbid_bloom_filters(struct pathspec *spec)
 	return 0;
 }
 
+>>>>>>> upstream/maint
 static void prepare_to_use_bloom_filter(struct rev_info *revs)
 {
 	struct pathspec_item *pi;
@@ -673,17 +679,18 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	int path_component_nr = 1;
 
 	if (!revs->commits)
+<<<<<<< HEAD
+	    return;
+=======
 		return;
 
 	if (forbid_bloom_filters(&revs->prune_data))
 		return;
+>>>>>>> upstream/maint
 
 	repo_parse_commit(revs->repo, revs->commits->item);
 
-	if (!revs->repo->objects->commit_graph)
-		return;
-
-	revs->bloom_filter_settings = revs->repo->objects->commit_graph->bloom_filter_settings;
+	revs->bloom_filter_settings = get_bloom_filter_settings(revs->repo);
 	if (!revs->bloom_filter_settings)
 		return;
 
@@ -692,9 +699,18 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 
 	pi = &revs->pruning.pathspec.items[0];
 
+<<<<<<< HEAD
+=======
 	/* remove single trailing slash from path, if needed */
+<<<<<<< HEAD
+>>>>>>> upstream/maint
+	if (pi->match[last_index] == '/') {
+		path_alloc = xstrdup(pi->match);
+		path_alloc[last_index] = '\0';
+=======
 	if (pi->len > 0 && pi->match[pi->len - 1] == '/') {
 		path_alloc = xmemdupz(pi->match, pi->len - 1);
+>>>>>>> upstream/seen
 		path = path_alloc;
 	} else
 		path = pi->match;
@@ -754,7 +770,7 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 	if (commit_graph_generation(commit) == GENERATION_NUMBER_INFINITY)
 		return -1;
 
-	filter = get_bloom_filter(revs->repo, commit, 0);
+	filter = get_bloom_filter(revs->repo, commit);
 
 	if (!filter) {
 		count_bloom_filter_not_present++;
@@ -805,7 +821,15 @@ static int rev_compare_tree(struct rev_info *revs,
 			return REV_TREE_SAME;
 	}
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+	if (revs->pruning.pathspec.nr == 1 && !revs->reflog_info && !nth_parent) {
+=======
+	if (revs->bloom_key && !nth_parent) {
+>>>>>>> upstream/maint
+=======
 	if (revs->bloom_keys_nr && !nth_parent) {
+>>>>>>> upstream/next
 		bloom_ret = check_maybe_different_in_bloom_filter(revs, commit);
 
 		if (bloom_ret == 0)
@@ -1012,7 +1036,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 					ts->treesame[0] = 1;
 			}
 		}
-		if (parse_commit(p) < 0)
+		if (repo_parse_commit(revs->repo, p) < 0)
 			die("cannot simplify commit %s (because of %s)",
 			    oid_to_hex(&commit->object.oid),
 			    oid_to_hex(&p->object.oid));
@@ -1057,7 +1081,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 				 * IOW, we pretend this parent is a
 				 * "root" commit.
 				 */
-				if (parse_commit(p) < 0)
+				if (repo_parse_commit(revs->repo, p) < 0)
 					die("cannot simplify commit %s (invalid %s)",
 					    oid_to_hex(&commit->object.oid),
 					    oid_to_hex(&p->object.oid));
@@ -1125,7 +1149,7 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 			parent = parent->next;
 			if (p)
 				p->object.flags |= UNINTERESTING;
-			if (parse_commit_gently(p, 1) < 0)
+			if (repo_parse_commit_gently(revs->repo, p, 1) < 0)
 				continue;
 			if (p->parents)
 				mark_parents_uninteresting(p);
@@ -1156,7 +1180,7 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 		struct commit *p = parent->item;
 		int gently = revs->ignore_missing_links ||
 			     revs->exclude_promisor_objects;
-		if (parse_commit_gently(p, gently) < 0) {
+		if (repo_parse_commit_gently(revs->repo, p, gently) < 0) {
 			if (revs->exclude_promisor_objects &&
 			    is_promisor_object(&p->object.oid)) {
 				if (revs->first_parent_only)
@@ -2343,8 +2367,11 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->diff = 1;
 		revs->diffopt.flags.recursive = 1;
 		revs->diffopt.flags.tree_in_recursive = 1;
-	} else if (!strcmp(arg, "-m")) {
+	} else if (!strcmp(arg, "-m") || !strcmp(arg, "--no-ignore-merges")) {
 		revs->ignore_merges = 0;
+<<<<<<< HEAD
+	} else if (!strcmp(arg, "--ignore-merges")) {
+=======
 	} else if ((argcount = parse_long_opt("diff-merges", argv, &optarg))) {
 		if (!strcmp(optarg, "off")) {
 			revs->ignore_merges = 1;
@@ -2353,6 +2380,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		}
 		return argcount;
 	} else if (!strcmp(arg, "--no-diff-merges")) {
+>>>>>>> upstream/seen
 		revs->ignore_merges = 1;
 	} else if (!strcmp(arg, "-c")) {
 		revs->diff = 1;
@@ -2812,7 +2840,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		 * }
 		 */
 		parse_pathspec(&revs->prune_data, 0, 0,
+<<<<<<< HEAD
+			       revs->prefix, prune_data.items);
+=======
 			       revs->prefix, prune_data.v);
+>>>>>>> upstream/seen
 	}
 	strvec_clear(&prune_data);
 
@@ -3324,7 +3356,7 @@ static void explore_walk_step(struct rev_info *revs)
 	if (!c)
 		return;
 
-	if (parse_commit_gently(c, 1) < 0)
+	if (repo_parse_commit_gently(revs->repo, c, 1) < 0)
 		return;
 
 	if (revs->sort_order == REV_SORT_BY_AUTHOR_DATE)
@@ -3362,7 +3394,7 @@ static void indegree_walk_step(struct rev_info *revs)
 	if (!c)
 		return;
 
-	if (parse_commit_gently(c, 1) < 0)
+	if (repo_parse_commit_gently(revs->repo, c, 1) < 0)
 		return;
 
 	explore_to_depth(revs, commit_graph_generation(c));
@@ -3444,7 +3476,7 @@ static void init_topo_walk(struct rev_info *revs)
 		struct commit *c = list->item;
 		uint32_t generation;
 
-		if (parse_commit_gently(c, 1))
+		if (repo_parse_commit_gently(revs->repo, c, 1))
 			continue;
 
 		test_flag_and_insert(&info->explore_queue, c, TOPO_WALK_EXPLORED);
@@ -3508,7 +3540,7 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 		if (parent->object.flags & UNINTERESTING)
 			continue;
 
-		if (parse_commit_gently(parent, 1) < 0)
+		if (repo_parse_commit_gently(revs->repo, parent, 1) < 0)
 			continue;
 
 		generation = commit_graph_generation(parent);

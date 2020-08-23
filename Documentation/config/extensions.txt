@@ -1,7 +1,11 @@
 extensions.objectFormat::
 	Specify the hash algorithm to use.  The acceptable values are `sha1` and
 	`sha256`.  If not specified, `sha1` is assumed.  It is an error to specify
+<<<<<<< HEAD
+	this key unless `core.repositoryformatversion` is 1.
+=======
 	this key unless `core.repositoryFormatVersion` is 1.
+>>>>>>> upstream/seen
 +
 Note that this setting should only be set by linkgit:git-init[1] or
 linkgit:git-clone[1].  Trying to change it after initialization will not

@@ -164,9 +164,15 @@ endif::git-pull[]
 --no-autostash::
 	Automatically create a temporary stash entry before the operation
 	begins, and apply it after the operation ends.  This means
+<<<<<<< HEAD
+	that you can run rebase on a dirty worktree.  However, use
+	with care: the final stash application after a successful
+	rebase might result in non-trivial conflicts.
+=======
 	that you can run the operation on a dirty worktree.  However, use
 	with care: the final stash application after a successful
 	merge might result in non-trivial conflicts.
+>>>>>>> upstream/maint
 
 --allow-unrelated-histories::
 	By default, `git merge` command refuses to merge histories

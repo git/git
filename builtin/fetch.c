@@ -56,6 +56,7 @@ static int prune_tags = -1; /* unspecified */
 #define PRUNE_TAGS_BY_DEFAULT 0 /* do we prune tags by default? */
 
 static int all, append, dry_run, force, keep, multiple, update_head_ok;
+static int write_fetch_head = 1;
 static int verbosity, deepen_relative, set_upstream;
 static int progress = -1;
 static int enable_auto_gc = 1;
@@ -79,6 +80,7 @@ static struct list_objects_filter_options filter_options;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
 static int fetch_write_commit_graph = -1;
+static int stdin_refspecs = 0;
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
 {
@@ -118,6 +120,10 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 
+	if (!strcmp(k, "fetch.writefetchhead")) {
+		write_fetch_head = git_config_bool(k, v);
+		return 0;
+	}
 	return git_default_config(k, v, cb);
 }
 
@@ -162,6 +168,8 @@ static struct option builtin_fetch_options[] = {
 		    PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules),
 	OPT_BOOL(0, "dry-run", &dry_run,
 		 N_("dry run")),
+	OPT_BOOL(0, "write-fetch-head", &write_fetch_head,
+		 N_("write fetched references to the FETCH_HEAD file")),
 	OPT_BOOL('k', "keep", &keep, N_("keep downloaded pack")),
 	OPT_BOOL('u', "update-head-ok", &update_head_ok,
 		    N_("allow updating of HEAD ref")),
@@ -196,12 +204,20 @@ static struct option builtin_fetch_options[] = {
 	OPT_STRING_LIST(0, "negotiation-tip", &negotiation_tip, N_("revision"),
 			N_("report that we have only objects reachable from this object")),
 	OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+<<<<<<< HEAD
+	OPT_BOOL(0, "maintenance", &enable_auto_gc,
+=======
+	OPT_BOOL(0, "auto-maintenance", &enable_auto_gc,
+>>>>>>> upstream/seen
+		 N_("run 'maintenance --auto' after fetching")),
 	OPT_BOOL(0, "auto-gc", &enable_auto_gc,
-		 N_("run 'gc --auto' after fetching")),
+		 N_("run 'maintenance --auto' after fetching")),
 	OPT_BOOL(0, "show-forced-updates", &fetch_show_forced_updates,
 		 N_("check for forced-updates on all updated branches")),
 	OPT_BOOL(0, "write-commit-graph", &fetch_write_commit_graph,
 		 N_("write the commit-graph after fetching")),
+	OPT_BOOL(0, "stdin", &stdin_refspecs,
+		 N_("accept refspecs from stdin")),
 	OPT_END()
 };
 
@@ -439,6 +455,7 @@ static struct ref *get_ref_map(struct remote *remote,
 	struct ref *orefs = NULL, **oref_tail = &orefs;
 
 	struct hashmap existing_refs;
+	int existing_refs_populated = 0;
 
 	if (rs->nr) {
 		struct refspec *fetch_refspec;
@@ -530,16 +547,29 @@ static struct ref *get_ref_map(struct remote *remote,
 		tail = &rm->next;
 	}
 
-	ref_map = ref_remove_duplicates(ref_map);
+	/*
+	 * apply negative refspecs first, before we remove duplicates. This is
+	 * necessary as negative refspecs might remove an otherwise conflicting
+	 * duplicate.
+	 */
+	if (rs->nr)
+		ref_map = apply_negative_refspecs(ref_map, rs);
+	else
+		ref_map = apply_negative_refspecs(ref_map, &remote->fetch);
 
-	refname_hash_init(&existing_refs);
-	for_each_ref(add_one_refname, &existing_refs);
+	ref_map = ref_remove_duplicates(ref_map);
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		if (rm->peer_ref) {
 			const char *refname = rm->peer_ref->name;
 			struct refname_hash_entry *peer_item;
 			unsigned int hash = strhash(refname);
+
+			if (!existing_refs_populated) {
+				refname_hash_init(&existing_refs);
+				for_each_ref(add_one_refname, &existing_refs);
+				existing_refs_populated = 1;
+			}
 
 			peer_item = hashmap_get_entry_from_hash(&existing_refs,
 						hash, refname,
@@ -550,7 +580,8 @@ static struct ref *get_ref_map(struct remote *remote,
 			}
 		}
 	}
-	hashmap_free_entries(&existing_refs, struct refname_hash_entry, ent);
+	if (existing_refs_populated)
+		hashmap_free_entries(&existing_refs, struct refname_hash_entry, ent);
 
 	return ref_map;
 }
@@ -645,7 +676,7 @@ static void prepare_format_display(struct ref *ref_map)
 	struct ref *rm;
 	const char *format = "full";
 
-	git_config_get_string_const("fetch.output", &format);
+	git_config_get_string_tmp("fetch.output", &format);
 	if (!strcasecmp(format, "full"))
 		compact_format = 0;
 	else if (!strcasecmp(format, "compact"))
@@ -893,7 +924,9 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	const char *what, *kind;
 	struct ref *rm;
 	char *url;
-	const char *filename = dry_run ? "/dev/null" : git_path_fetch_head(the_repository);
+	const char *filename = (!write_fetch_head
+				? "/dev/null"
+				: git_path_fetch_head(the_repository));
 	int want_status;
 	int summary_width = transport_summary_width(ref_map);
 
@@ -1327,7 +1360,7 @@ static int do_fetch(struct transport *transport,
 	}
 
 	/* if not appending, truncate FETCH_HEAD */
-	if (!append && !dry_run) {
+	if (!append && write_fetch_head) {
 		retcode = truncate_fetch_head();
 		if (retcode)
 			goto cleanup;
@@ -1594,7 +1627,7 @@ static int fetch_multiple(struct string_list *list, int max_children)
 	int i, result = 0;
 	struct strvec argv = STRVEC_INIT;
 
-	if (!append && !dry_run) {
+	if (!append && write_fetch_head) {
 		int errcode = truncate_fetch_head();
 		if (errcode)
 			return errcode;
@@ -1605,7 +1638,11 @@ static int fetch_multiple(struct string_list *list, int max_children)
 	add_options_to_argv(&argv);
 
 	if (max_children != 1 && list->nr != 1) {
+<<<<<<< HEAD
+		struct parallel_fetch_state state = { argv.items, list, 0, 0 };
+=======
 		struct parallel_fetch_state state = { argv.v, list, 0, 0 };
+>>>>>>> upstream/seen
 
 		strvec_push(&argv, "--end-of-options");
 		result = run_processes_parallel_tr2(max_children,
@@ -1623,7 +1660,11 @@ static int fetch_multiple(struct string_list *list, int max_children)
 			strvec_push(&argv, name);
 			if (verbosity >= 0)
 				printf(_("Fetching %s\n"), name);
+<<<<<<< HEAD
+			if (run_command_v_opt(argv.items, RUN_GIT_CMD)) {
+=======
 			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+>>>>>>> upstream/seen
 				error(_("Could not fetch %s"), name);
 				result = 1;
 			}
@@ -1675,7 +1716,8 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	return;
 }
 
-static int fetch_one(struct remote *remote, int argc, const char **argv, int prune_tags_ok)
+static int fetch_one(struct remote *remote, int argc, const char **argv,
+		     int prune_tags_ok, int use_stdin_refspecs)
 {
 	struct refspec rs = REFSPEC_INIT_FETCH;
 	int i;
@@ -1732,6 +1774,13 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 		}
 	}
 
+	if (use_stdin_refspecs) {
+		struct strbuf line = STRBUF_INIT;
+		while (strbuf_getline_lf(&line, stdin) != EOF)
+			refspec_append(&rs, line.buf);
+		strbuf_release(&line);
+	}
+
 	if (server_options.nr)
 		gtransport->server_options = &server_options;
 
@@ -1766,12 +1815,18 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		free(anon);
 	}
 
-	fetch_config_from_gitmodules(&submodule_fetch_jobs_config,
-				     &recurse_submodules);
 	git_config(git_fetch_config, NULL);
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_fetch_options, builtin_fetch_usage, 0);
+	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {
+		int *sfjc = submodule_fetch_jobs_config == -1
+			    ? &submodule_fetch_jobs_config : NULL;
+		int *rs = recurse_submodules == RECURSE_SUBMODULES_DEFAULT
+			  ? &recurse_submodules : NULL;
+
+		fetch_config_from_gitmodules(sfjc, rs);
+	}
 
 	if (deepen_relative) {
 		if (deepen_relative < 0)
@@ -1794,6 +1849,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		die(_("depth %s is not a positive number"), depth);
 	if (depth || deepen_since || deepen_not.nr)
 		deepen = 1;
+
+	/* FETCH_HEAD never gets updated in --dry-run mode */
+	if (dry_run)
+		write_fetch_head = 0;
 
 	if (all) {
 		if (argc == 1)
@@ -1828,13 +1887,17 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (remote) {
 		if (filter_options.choice || has_promisor_remote())
 			fetch_one_setup_partial(remote);
-		result = fetch_one(remote, argc, argv, prune_tags_ok);
+		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs);
 	} else {
 		int max_children = max_jobs;
 
 		if (filter_options.choice)
 			die(_("--filter can only be used with the remote "
 			      "configured in extensions.partialclone"));
+
+		if (stdin_refspecs)
+			die(_("--stdin can only be used when fetching "
+			      "from one remote"));
 
 		if (max_children < 0)
 			max_children = fetch_parallel_config;
@@ -1882,7 +1945,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	close_object_store(the_repository->objects);
 
 	if (enable_auto_gc)
-		run_auto_gc(verbosity < 0);
+		run_auto_maintenance(verbosity < 0);
 
 	return result;
 }

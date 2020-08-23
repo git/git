@@ -39,11 +39,11 @@ COMMANDS
 --------
 'write'::
 
-Write a commit-graph file based on the commits found in packfiles.
+Write a commit-graph file based on the specified sources of input:
 +
-With the `--stdin-packs` option, generate the new commit graph by
+With the `--input=stdin-packs` option, generate the new commit graph by
 walking objects only in the specified pack-indexes. (Cannot be combined
-with `--stdin-commits` or `--reachable`.)
+with `--input=stdin-commits` or `--input=reachable`.)
 +
 With the `--stdin-commits` option, generate the new commit graph by
 walking commits starting at the commits specified in stdin as a list
@@ -52,13 +52,17 @@ of OIDs in hex, one OID per line. OIDs that resolve to non-commits
 are malformed, or do not exist generate an error. (Cannot be combined
 with `--stdin-packs` or `--reachable`.)
 +
-With the `--reachable` option, generate the new commit graph by walking
-commits starting at all refs. (Cannot be combined with `--stdin-commits`
-or `--stdin-packs`.)
+With the `--input=reachable` option, generate the new commit graph by
+walking commits starting at all refs. (Cannot be combined with
+`--input=stdin-commits` or `--input=stdin-packs`.)
 +
-With the `--append` option, include all commits that are present in the
-existing commit-graph file.
+With the `--input=append` option, include all commits that are present
+in the existing commit-graph file.
 +
+<<<<<<< HEAD
+If none of the above options are given, then generate the new
+commit-graph by walking over all pack-indexes.
+=======
 With the `--changed-paths` option, compute and write information about the
 paths changed between a commit and its first parent. This operation can
 take a while on large repositories. It provides significant performance gains
@@ -66,6 +70,11 @@ for getting history of a directory or a file with `git log -- <path>`. If
 this option is given, future commit-graph writes will automatically assume
 that this option was intended. Use `--no-changed-paths` to stop storing this
 data.
+>>>>>>> upstream/next
++
+With the `--max-new-filters=<n>` option, generate at most `n` new Bloom
+filters (if `--changed-paths` is specified). If `n` is `-1`, no limit is
+enforced. Overrides the `commitGraph.maxNewFilters` configuration.
 +
 With the `--split[=<strategy>]` option, write the commit-graph as a
 chain of multiple commit-graph files stored in
@@ -74,12 +83,17 @@ strategy and other splitting options. The new commits not already in the
 commit-graph are added in a new "tip" file. This file is merged with the
 existing file if the following merge conditions are met:
 +
-* If `--split=no-merge` is specified, a merge is never performed, and
-the remaining options are ignored. `--split=replace` overwrites the
-existing chain with a new one. A bare `--split` defers to the remaining
-options. (Note that merging a chain of commit graphs replaces the
-existing chain with a length-1 chain where the first and only
-incremental holds the entire graph).
+* If `--split=merge-always` is specified, then a merge is always
+conducted, and the remaining options are ignored. Conversely, if
+`--split=no-merge` is specified, a merge is never performed, and the
+remaining options are ignored. A bare `--split` defers to the remaining
+options.
+>>>>>>> upstream/pu
++
+With the `--changed-paths` option, compute and write information about the
+paths changed between a commit and it's first parent. This operation can
+take a while on large repositories. It provides significant performance gains
+for getting history of a directory or a file with `git log -- <path>`.
 +
 * If `--size-multiple=<X>` is not specified, let `X` equal 2. If the new
 tip file would have `N` commits and the previous tip has `M` commits and
@@ -117,20 +131,20 @@ $ git commit-graph write
   using commits in `<pack-index>`.
 +
 ------------------------------------------------
-$ echo <pack-index> | git commit-graph write --stdin-packs
+$ echo <pack-index> | git commit-graph write --input=stdin-packs
 ------------------------------------------------
 
 * Write a commit-graph file containing all reachable commits.
 +
 ------------------------------------------------
-$ git show-ref -s | git commit-graph write --stdin-commits
+$ git show-ref -s | git commit-graph write --input=stdin-commits
 ------------------------------------------------
 
 * Write a commit-graph file containing all commits in the current
   commit-graph file along with those reachable from `HEAD`.
 +
 ------------------------------------------------
-$ git rev-parse HEAD | git commit-graph write --stdin-commits --append
+$ git rev-parse HEAD | git commit-graph write --input=stdin-commits --input=append
 ------------------------------------------------
 
 

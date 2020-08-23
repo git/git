@@ -437,12 +437,18 @@ void base_ref_iterator_free(struct ref_iterator *iter);
 /* Virtual function declarations for ref_iterators: */
 
 /*
+<<<<<<< HEAD
  * backend-specific implementation of ref_iterator_advance. For symrefs, the
  * function should set REF_ISSYMREF, and it should also dereference the symref
  * to provide the OID referent. If DO_FOR_EACH_INCLUDE_BROKEN is set, symrefs
  * with non-existent referents and refs pointing to non-existent object names
  * should also be returned. If DO_FOR_EACH_PER_WORKTREE_ONLY, only
  * REF_TYPE_PER_WORKTREE refs should be returned.
+=======
+ * backend-specific implementation of ref_iterator_advance.
+ * For symrefs, the function should set REF_ISSYMREF, and it should also dereference
+ * the symref to provide the OID referent.
+>>>>>>> master
  */
 typedef int ref_iterator_advance_fn(struct ref_iterator *ref_iterator);
 
@@ -662,17 +668,27 @@ struct ref_storage_be {
 };
 
 extern struct ref_storage_be refs_be_files;
+extern struct ref_storage_be refs_be_reftable;
 extern struct ref_storage_be refs_be_packed;
 
 /*
  * A representation of the reference store for the main repository or
  * a submodule. The ref_store instances for submodules are kept in a
- * linked list.
+ * hash map; see get_submodule_ref_store() for more info.
  */
 struct ref_store {
 	/* The backend describing this ref_store's storage scheme: */
 	const struct ref_storage_be *be;
+
+	/* The gitdir that this ref_store applies to: */
+	char *gitdir;
 };
+
+/*
+ * Parse contents of a loose ref file.
+ */
+int parse_loose_ref_contents(const char *buf, struct object_id *oid,
+			     struct strbuf *referent, unsigned int *type);
 
 /*
  * Fill in the generic part of refs and add it to our collection of

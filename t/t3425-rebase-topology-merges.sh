@@ -54,7 +54,11 @@ test_run_rebase () {
 		test_linear_range 'n o' e..
 	"
 }
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_run_rebase success --am
+================================
 test_run_rebase success --apply
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_run_rebase success -m
 test_run_rebase success -i
 
@@ -70,7 +74,11 @@ test_run_rebase () {
 		test_linear_range "\'"$expected"\'" d..
 	"
 }
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_run_rebase success 'n o e' --am
+================================
 test_run_rebase success 'n o e' --apply
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_run_rebase success 'n o e' -m
 test_run_rebase success 'n o e' -i
 
@@ -86,7 +94,11 @@ test_run_rebase () {
 		test_linear_range "\'"$expected"\'" c..
 	"
 }
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_run_rebase success 'd n o e' --am
+================================
 test_run_rebase success 'd n o e' --apply
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_run_rebase success 'd n o e' -m
 test_run_rebase success 'd n o e' -i
 
@@ -102,7 +114,11 @@ test_run_rebase () {
 		test_linear_range "\'"$expected"\'" c..
 	"
 }
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_run_rebase success 'd n o e' --am
+================================
 test_run_rebase success 'd n o e' --apply
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_run_rebase success 'd n o e' -m
 test_run_rebase success 'd n o e' -i
 

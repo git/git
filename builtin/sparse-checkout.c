@@ -140,7 +140,11 @@ static char *escaped_pattern(char *pattern)
 	struct strbuf final = STRBUF_INIT;
 
 	while (*p) {
+<<<<<<< HEAD
+		if (*p == '*' || *p == '\\')
+=======
 		if (is_glob_special(*p))
+>>>>>>> upstream/next
 			strbuf_addch(&final, '\\');
 
 		strbuf_addch(&final, *p);
@@ -349,7 +353,9 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 {
 	struct pattern_entry *e = xmalloc(sizeof(*e));
 	e->patternlen = path->len;
-	e->pattern = strbuf_detach(path, NULL);
+	e->pattern = dup_and_filter_pattern(path->buf);
+	strbuf_release(path);
+
 	hashmap_entry_init(&e->ent,
 			   ignore_case ?
 			   strihash(e->pattern) :
@@ -381,6 +387,7 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 
 static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 {
+	int i;
 	strbuf_trim(line);
 
 	strbuf_trim_trailing_dir_sep(line);
@@ -390,6 +397,27 @@ static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 
 	if (!line->len)
 		return;
+
+	for (i = 0; i < line->len; i++) {
+		if (line->buf[i] == '*') {
+			strbuf_insert(line, i, "\\", 1);
+			i++;
+		}
+
+		if (line->buf[i] == '\\') {
+			if (i < line->len - 1 && line->buf[i + 1] == '\\')
+				i++;
+			else
+				strbuf_insert(line, i, "\\", 1);
+
+			i++;
+		}
+	}
+
+	if (line->buf[0] == '"' && line->buf[line->len - 1] == '"') {
+		strbuf_remove(line, 0, 1);
+		strbuf_remove(line, line->len - 1, 1);
+	}
 
 	if (line->buf[0] != '/')
 		strbuf_insertstr(line, 0, "/");

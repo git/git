@@ -66,12 +66,20 @@ test_rebase 'G F C D B A' --onto D master
 test_rebase 'G F C B A' --keep-base refs/heads/master
 test_rebase 'G F C B A' --keep-base master
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_expect_success "git rebase --fork-point with ambigous refname" "
+================================
 test_expect_success 'git rebase --fork-point with ambigous refname' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	git checkout master &&
 	git checkout -b one &&
 	git checkout side &&
 	git tag one &&
 	test_must_fail git rebase --fork-point --onto D one
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+"
+================================
 '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 
 test_done

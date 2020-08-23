@@ -54,7 +54,11 @@ test_expect_success 'setup simulated porcelain' '
 	cat >read-porcelain.pl <<-\EOF
 	my $field = shift;
 	while (<>) {
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+		if (/^[0-9a-f]{40,64} /) {
+================================
 		if (/^[0-9a-f]{40,} /) {
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/seen
 			flush();
 			$hash = $&;
 		} elsif (/^$field (.*)/) {

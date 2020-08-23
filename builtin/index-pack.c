@@ -1798,9 +1798,22 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 
 	if (HAVE_THREADS && !nr_threads) {
 		nr_threads = online_cpus();
-		/* An experiment showed that more threads does not mean faster */
-		if (nr_threads > 3)
-			nr_threads = 3;
+		/*
+		 * Experiments show that going above 20 threads doesn't help,
+		 * no matter how many cores you have. Below that, we tend to
+		 * max at half the number of online_cpus(), presumably because
+		 * half of those are hyperthreads rather than full cores. We'll
+		 * never reduce the level below "3", though, to match a
+		 * historical value that nobody complained about.
+		 */
+		if (nr_threads < 4)
+			; /* too few cores to consider capping */
+		else if (nr_threads < 6)
+			nr_threads = 3; /* historic cap */
+		else if (nr_threads < 40)
+			nr_threads /= 2;
+		else
+			nr_threads = 20; /* hard cap */
 	}
 
 	curr_pack = open_pack_file(pack_name);

@@ -15,6 +15,9 @@ This test tries to verify the sanity of --submodule=diff option of git diff.
 # Tested non-UTF-8 encoding
 test_encoding="ISO8859-1"
 
+# fsmonitor does not work well with submodules
+GIT_TEST_FSMONITOR=""
+
 # String "added" in German (translated with Google Translate), encoded in UTF-8,
 # used in sample commit log messages in add_file() function below.
 added=$(printf "hinzugef\303\274gt")

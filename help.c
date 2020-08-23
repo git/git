@@ -375,7 +375,7 @@ void list_cmds_by_config(struct string_list *list)
 {
 	const char *cmd_list;
 
-	if (git_config_get_string_const("completion.commands", &cmd_list))
+	if (git_config_get_string_tmp("completion.commands", &cmd_list))
 		return;
 
 	string_list_sort(list);
@@ -641,7 +641,17 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 			strbuf_addstr(buf, "no commit associated with this build\n");
 		strbuf_addf(buf, "sizeof-long: %d\n", (int)sizeof(long));
 		strbuf_addf(buf, "sizeof-size_t: %d\n", (int)sizeof(size_t));
+<<<<<<< HEAD
 		strbuf_addf(buf, "shell-path: %s\n", SHELL_PATH);
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+		strbuf_addf(buf, "shell-path: %s\n", SHELL_PATH);
+=======
+>>>>>>> upstream/pu
+=======
+>>>>>>> upstream/maint
+>>>>>>> master
 		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
 	}
 }

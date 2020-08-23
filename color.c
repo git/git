@@ -201,9 +201,15 @@ int color_parse(const char *value, char *dst)
 static char *color_output(char *out, int len, const struct color *c, int background)
 {
 	int offset = 0;
+<<<<<<< HEAD
+	if (background) {
+		offset = COLOR_BACKGROUND_OFFSET;
+	}
+=======
 
 	if (background)
 		offset = COLOR_BACKGROUND_OFFSET;
+>>>>>>> upstream/pu
 	switch (c->type) {
 	case COLOR_UNSPECIFIED:
 	case COLOR_NORMAL:

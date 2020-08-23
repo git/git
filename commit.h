@@ -95,7 +95,6 @@ static inline int parse_commit_no_graph(struct commit *commit)
 
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define parse_commit_internal(item, quiet, use) repo_parse_commit_internal(the_repository, item, quiet, use)
-#define parse_commit_gently(item, quiet) repo_parse_commit_gently(the_repository, item, quiet)
 #define parse_commit(item) repo_parse_commit(the_repository, item)
 #endif
 
@@ -240,7 +239,7 @@ int register_commit_graft(struct repository *r, struct commit_graft *, int);
 void prepare_commit_graft(struct repository *r);
 struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid);
 
-struct commit *get_fork_point(const char *refname, struct commit *commit);
+int get_fork_point(const char *refname, struct commit *commit, struct commit **fork_point);
 
 /* largest positive number a signed 32-bit integer can contain */
 #define INFINITE_DEPTH 0x7fffffff
@@ -270,10 +269,9 @@ int commit_tree(const char *msg, size_t msg_len,
 
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
-			 struct commit_list *parents,
-			 struct object_id *ret, const char *author,
-			 const char *sign_commit,
-			 struct commit_extra_header *);
+			 struct commit_list *parents, struct object_id *ret,
+			 const char *author, const char *committer,
+			 const char *sign_commit, struct commit_extra_header *);
 
 struct commit_extra_header *read_commit_extra_headers(struct commit *, const char **);
 

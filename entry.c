@@ -510,8 +510,6 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state,
 			/* If it is a gitlink, leave it alone! */
 			if (S_ISGITLINK(ce->ce_mode))
 				return 0;
-			if (!state->force)
-				return error("%s is a directory", path.buf);
 			remove_subtree(&path);
 		} else if (unlink(path.buf))
 			return error_errno("unable to unlink old '%s'", path.buf);

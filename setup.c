@@ -512,6 +512,29 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 	if (strcmp(var, "core.repositoryformatversion") == 0)
 		data->version = git_config_int(var, value);
 	else if (skip_prefix(var, "extensions.", &ext)) {
+<<<<<<< HEAD
+<<<<<<< HEAD
+		/*
+		 * record any known extensions here; otherwise,
+		 * we fall through to recording it as unknown, and
+		 * check_repository_format will complain
+		 */
+		if (!strcmp(ext, "noop"))
+			;
+		else if (!strcmp(ext, "preciousobjects"))
+			data->precious_objects = git_config_bool(var, value);
+		else if (!strcmp(ext, "partialclone")) {
+			if (!value)
+				return config_error_nonbool(var);
+			data->partial_clone = xstrdup(value);
+		} else if (!strcmp(ext, "worktreeconfig")) {
+			data->worktree_config = git_config_bool(var, value);
+		} else if (!strcmp(ext, "refstorage")) {
+			data->ref_storage = xstrdup(value);
+		} else
+=======
+=======
+>>>>>>> upstream/seen
 		switch (handle_extension_v0(var, value, ext, data)) {
 		case EXTENSION_ERROR:
 			return -1;
@@ -528,6 +551,10 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 			string_list_append(&data->v1_only_extensions, ext);
 			return 0;
 		case EXTENSION_UNKNOWN:
+<<<<<<< HEAD
+>>>>>>> upstream/next
+=======
+>>>>>>> upstream/seen
 			string_list_append(&data->unknown_extensions, ext);
 			return 0;
 		}
@@ -651,6 +678,7 @@ void clear_repository_format(struct repository_format *format)
 	string_list_clear(&format->v1_only_extensions, 0);
 	free(format->work_tree);
 	free(format->partial_clone);
+	free(format->ref_storage);
 	init_repository_format(format);
 }
 
@@ -1308,8 +1336,11 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				gitdir = DEFAULT_GIT_DIR_ENVIRONMENT;
 			setup_git_env(gitdir);
 		}
-		if (startup_info->have_repository)
+		if (startup_info->have_repository) {
 			repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
+			the_repository->ref_storage_format =
+				xstrdup_or_null(repo_fmt.ref_storage);
+		}
 	}
 
 	strbuf_release(&dir);

@@ -28,7 +28,11 @@ extern const char *empty_strvec[];
  * NULL.
  */
 struct strvec {
+<<<<<<< HEAD
+	const char **items;
+=======
 	const char **v;
+>>>>>>> upstream/seen
 	int nr;
 	int alloc;
 };

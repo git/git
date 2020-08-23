@@ -52,13 +52,21 @@ test_expect_success 'rebase --interactive: directory rename detected' '
 	)
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+test_expect_failure 'rebase --am: directory rename detected' '
+================================
 test_expect_failure 'rebase --apply: directory rename detected' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	(
 		cd dir-rename &&
 
 		git checkout B^0 &&
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+		git -c merge.directoryRenames=true rebase --am A &&
+================================
 		git -c merge.directoryRenames=true rebase --apply A &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&

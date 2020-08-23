@@ -164,22 +164,28 @@ test_expect_success 'correct advice upon multi cherry-pick picking an empty comm
 	test_i18ngrep "git cherry-pick --skip" err
 '
 
-test_expect_success 'fixup that empties commit fails' '
+test_expect_success 'correct advice when fixup empties commit' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 fixup 2" git rebase -i \
-			goodbye^ reverted-goodbye
-	)
+			goodbye^ reverted-goodbye 2>err
+	) &&
+	test_i18ngrep "git rebase --skip" err &&
+	test_must_fail git commit --amend --no-edit 2>err &&
+	test_i18ngrep "git rebase --skip" err
 '
 
-test_expect_success 'squash that empties commit fails' '
+test_expect_success 'correct advice when squash empties commit' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 squash 2" git rebase -i \
-			goodbye^ reverted-goodbye
-	)
+			goodbye^ reverted-goodbye 2>err
+	) &&
+	test_i18ngrep "git rebase --skip" err &&
+	test_must_fail git commit --amend --no-edit 2>err &&
+	test_i18ngrep "git rebase --skip" err
 '
 
 # Must be the last test in this file

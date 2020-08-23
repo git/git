@@ -355,7 +355,11 @@ struct git_graph *graph_init(struct rev_info *opt)
 			parse_graph_colors_config(&custom_colors, string);
 			free(string);
 			/* graph_set_column_colors takes a max-index, not a count */
+<<<<<<< HEAD
+			graph_set_column_colors(custom_colors.items,
+=======
 			graph_set_column_colors(custom_colors.v,
+>>>>>>> upstream/seen
 						custom_colors.nr - 1);
 		}
 	}

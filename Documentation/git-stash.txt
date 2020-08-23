@@ -44,9 +44,12 @@ created stash, `stash@{1}` is the one before it, `stash@{2.hours.ago}`
 is also possible). Stashes may also be referenced by specifying just the
 stash index (e.g. the integer `n` is equivalent to `stash@{n}`).
 
+<<<<<<< HEAD
+=======
 COMMANDS
 --------
 
+>>>>>>> upstream/pu
 push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--pathspec-from-file=<file> [--pathspec-file-nul]] [--] [<pathspec>...]::
 
 	Save your local modifications to a new 'stash entry' and roll them
@@ -153,6 +156,21 @@ OPTIONS
 -------
 -a::
 --all::
+<<<<<<< HEAD
+	All ignored and untracked files are also stashed and then cleaned
+	up with `git clean`.
+
+-u::
+--include-untracked::
+	All untracked files are also stashed and then cleaned up with
+	`git clean`.
+
+--index::
+	Tries to reinstate not only the working tree's changes, but also
+	the index's ones. However, this can fail, when you have conflicts
+	(which are stored in the index, where you therefore can no longer
+	apply the changes as they were originally).
+=======
 	This option is only valid for `push` and `save` commands.
 +
 All ignored and untracked files are also stashed and then cleaned
@@ -172,10 +190,24 @@ Tries to reinstate not only the working tree's changes, but also
 the index's ones. However, this can fail, when you have conflicts
 (which are stored in the index, where you therefore can no longer
 apply the changes as they were originally).
+>>>>>>> upstream/pu
 
 -k::
 --keep-index::
 --no-keep-index::
+<<<<<<< HEAD
+	All changes already added to the index are left intact.
+
+-p::
+--patch::
+	Interactively select hunks from the diff between HEAD and the
+	working tree to be stashed.  The stash entry is constructed such
+	that its index state is the same as the index state of your
+	repository, and its worktree contains only the changes you selected
+	interactively.  The selected changes are then rolled back from your
+	worktree. See the ``Interactive Mode'' section of linkgit:git-add[1]
+	to learn how to operate the `--patch` mode.
+=======
 	This option is only valid for `push` and `save` commands.
 +
 All changes already added to the index are left intact.
@@ -191,11 +223,38 @@ repository, and its worktree contains only the changes you selected
 interactively.  The selected changes are then rolled back from your
 worktree. See the ``Interactive Mode'' section of linkgit:git-add[1]
 to learn how to operate the `--patch` mode.
+>>>>>>> upstream/pu
 +
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
 
 --pathspec-from-file=<file>::
+<<<<<<< HEAD
+	Pathspec is passed in `<file>` instead of commandline args. If
+	`<file>` is exactly `-` then standard input is used. Pathspec
+	elements are separated by LF or CR/LF. Pathspec elements can be
+	quoted as explained for the configuration variable `core.quotePath`
+	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+	global `--literal-pathspecs`.
+
+--pathspec-file-nul::
+	Only meaningful with `--pathspec-from-file`. Pathspec elements are
+	separated with NUL character and all other characters are taken
+	literally (including newlines and quotes).
+
+-q::
+--quiet::
+	Quiet, suppress feedback messages.
+
+\--::
+	Separates pathspec from options for disambiguation purposes.
+
+<pathspec>...::
+	The new stash entry records the modified states only for the files
+	that match the pathspec.  The index entries and working tree files
+	are then rolled back to the state in HEAD only for these files,
+	too, leaving files that do not match the pathspec intact.
+=======
 	This option is only valid for `push` command.
 +
 Pathspec is passed in `<file>` instead of commandline args. If
@@ -231,15 +290,21 @@ The new stash entry records the modified states only for the files
 that match the pathspec.  The index entries and working tree files
 are then rolled back to the state in HEAD only for these files,
 too, leaving files that do not match the pathspec intact.
+>>>>>>> upstream/pu
 +
 For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
 <stash>::
+<<<<<<< HEAD
+	A reference of the form `stash@{<revision>}`. When no `<stash>` is
+	given, the latest stash is assumed (that is, `stash@{0}`).
+=======
 	This option is only valid for `apply`, `branch`, `drop`, `pop`,
 	`show` commands.
 +
 A reference of the form `stash@{<revision>}`. When no `<stash>` is
 given, the latest stash is assumed (that is, `stash@{0}`).
+>>>>>>> upstream/pu
 
 DISCUSSION
 ----------
