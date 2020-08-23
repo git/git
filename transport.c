@@ -439,6 +439,10 @@ static void update_tracking_ref(struct remote *remote, char *refname,
 	struct refspec_item rs;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+	memset(&rs, 0, sizeof(rs));
+>>>>>>> upstream/seen
 =======
 	memset(&rs, 0, sizeof(rs));
 >>>>>>> upstream/seen

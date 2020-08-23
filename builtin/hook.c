@@ -6,10 +6,13 @@
 #include "parse-options.h"
 #include "strbuf.h"
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 static const char * const builtin_hook_usage[] = {
 	N_("git hook list <hookname>"),
 =======
+=======
+>>>>>>> upstream/seen
 #include "strvec.h"
 
 static const char * const builtin_hook_usage[] = {
