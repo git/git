@@ -1402,6 +1402,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	uint32_t i;
 	unsigned char *include_pack;
 	struct child_process cmd = CHILD_PROCESS_INIT;
+	FILE *cmd_in;
 	struct strbuf base_name = STRBUF_INIT;
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
 
@@ -1454,6 +1455,8 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 		goto cleanup;
 	}
 
+	cmd_in = xfdopen(cmd.in, "w");
+
 	for (i = 0; i < m->num_objects; i++) {
 		struct object_id oid;
 		uint32_t pack_int_id = nth_midxed_pack_int_id(m, i);
@@ -1462,10 +1465,9 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 			continue;
 
 		nth_midxed_object_oid(&oid, m, i);
-		xwrite(cmd.in, oid_to_hex(&oid), the_hash_algo->hexsz);
-		xwrite(cmd.in, "\n", 1);
+		fprintf(cmd_in, "%s\n", oid_to_hex(&oid));
 	}
-	close(cmd.in);
+	fclose(cmd_in);
 
 	if (finish_command(&cmd)) {
 		error(_("could not finish pack-objects"));
