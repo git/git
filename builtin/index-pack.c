@@ -34,7 +34,6 @@ struct object_stat {
 
 struct base_data {
 	struct base_data *base;
-	struct base_data *child;
 	struct object_entry *obj;
 	void *data;
 	unsigned long size;
@@ -44,7 +43,6 @@ struct base_data {
 
 struct thread_local {
 	pthread_t thread;
-	struct base_data *base_cache;
 	size_t base_cache_used;
 	int pack_fd;
 };
@@ -380,27 +378,37 @@ static void free_base_data(struct base_data *c)
 	}
 }
 
-static void prune_base_data(struct base_data *retain)
+static void prune_base_data(struct base_data *youngest_child)
 {
 	struct base_data *b;
 	struct thread_local *data = get_thread_data();
-	for (b = data->base_cache;
-	     data->base_cache_used > delta_base_cache_limit && b;
-	     b = b->child) {
-		if (b->data && b != retain)
-			free_base_data(b);
+	struct base_data **ancestry = NULL;
+	size_t nr = 0, alloc = 0;
+	ssize_t i;
+
+	if (data->base_cache_used <= delta_base_cache_limit)
+		return;
+
+	/*
+	 * Free all ancestors of youngest_child until we have enough space,
+	 * starting with the oldest. (We cannot free youngest_child itself.)
+	 */
+	for (b = youngest_child->base; b != NULL; b = b->base) {
+		ALLOC_GROW(ancestry, nr + 1, alloc);
+		ancestry[nr++] = b;
 	}
+	for (i = nr - 1;
+	     i >= 0 && data->base_cache_used > delta_base_cache_limit;
+	     i--) {
+		if (ancestry[i]->data)
+			free_base_data(ancestry[i]);
+	}
+	free(ancestry);
 }
 
 static void link_base_data(struct base_data *base, struct base_data *c)
 {
-	if (base)
-		base->child = c;
-	else
-		get_thread_data()->base_cache = c;
-
 	c->base = base;
-	c->child = NULL;
 	if (c->data)
 		get_thread_data()->base_cache_used += c->size;
 	prune_base_data(c);
@@ -408,11 +416,6 @@ static void link_base_data(struct base_data *base, struct base_data *c)
 
 static void unlink_base_data(struct base_data *c)
 {
-	struct base_data *base = c->base;
-	if (base)
-		base->child = NULL;
-	else
-		get_thread_data()->base_cache = NULL;
 	free_base_data(c);
 }
 
