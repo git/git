@@ -927,7 +927,7 @@ static struct base_data *make_base(struct object_entry *obj,
 static struct base_data *resolve_delta(struct object_entry *delta_obj,
 				       struct base_data *base)
 {
-	void *base_data, *delta_data, *result_data;
+	void *delta_data, *result_data;
 	struct base_data *result;
 	unsigned long result_size;
 
@@ -942,8 +942,8 @@ static struct base_data *resolve_delta(struct object_entry *delta_obj,
 		obj_stat[i].base_object_no = j;
 	}
 	delta_data = get_data_from_pack(delta_obj);
-	base_data = get_base_data(base);
-	result_data = patch_delta(base_data, base->size,
+	assert(base->data);
+	result_data = patch_delta(base->data, base->size,
 				  delta_data, delta_obj->size, &result_size);
 	free(delta_data);
 	if (!result_data)
@@ -1003,6 +1003,7 @@ static struct base_data *find_unresolved_deltas_1(struct base_data *base,
 			    (uintmax_t)child->idx.offset,
 			    oid_to_hex(&base->obj->idx.oid));
 
+		get_base_data(base);
 		result = resolve_delta(child, base);
 		if (base->ref_first == base->ref_last && base->ofs_last == -1)
 			free_base_data(base);
@@ -1017,6 +1018,7 @@ static struct base_data *find_unresolved_deltas_1(struct base_data *base,
 
 		assert(child->real_type == OBJ_OFS_DELTA);
 		child->real_type = base->obj->real_type;
+		get_base_data(base);
 		result = resolve_delta(child, base);
 		if (base->ofs_first == base->ofs_last)
 			free_base_data(base);
