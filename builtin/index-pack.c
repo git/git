@@ -1211,15 +1211,7 @@ static void resolve_deltas(void)
 		cleanup_thread();
 		return;
 	}
-
-	for (i = 0; i < nr_objects; i++) {
-		struct object_entry *obj = &objects[i];
-
-		if (is_delta_type(obj->type))
-			continue;
-		resolve_base(obj);
-		display_progress(progress, nr_resolved_deltas);
-	}
+	threaded_second_pass(&nothread_data);
 }
 
 /*
