@@ -1394,7 +1394,7 @@ static int fill_included_packs_batch(struct repository *r,
 
 	free(pack_info);
 
-	if (total_size < batch_size || packs_to_repack < 2)
+	if (packs_to_repack < 2)
 		return 1;
 
 	return 0;
