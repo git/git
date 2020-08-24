@@ -37,6 +37,16 @@ UI, Workflows & Features
    placed by the sequencer machinery have been made more readable by
    humans.
 
+ * The "--batch-size" option of "git multi-pack-index repack" command
+   is now used to specify that very small packfiles are collected into
+   one until the total size roughly exceeds it.
+
+ * The recent addition of SHA-256 support is marked as experimental in
+   the documentation.
+
+ * "git fetch" learned --no-write-fetch-head option to avoid writing
+   the FETCH_HEAD file.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -183,6 +193,29 @@ Fixes since v2.28
  * "unlink" emulation on MinGW has been optimized.
    (merge 680e0b4524 jh/mingw-unlink later to maint).
 
+ * The purpose of "git init --separate-git-dir" is to initialize a
+   new project with the repository separate from the working tree,
+   or, in the case of an existing project, to move the repository
+   (the .git/ directory) out of the working tree. It does not make
+   sense to use --separate-git-dir with a bare repository for which
+   there is no working tree, so disallow its use with bare
+   repositories.
+   (merge ccf236a23a es/init-no-separate-git-dir-in-bare later to maint).
+
+ * "ls-files -o" mishandled the top-level directory of another git
+   working tree that hangs in the current git working tree.
+   (merge ab282aa548 en/dir-nonbare-embedded later to maint).
+
+ * Fix some incorrect UNLEAK() annotations.
+   (merge 3e19816dc0 jk/unleak-fixes later to maint).
+
+ * Use more buffered I/O where we used to call many small write(2)s.
+   (merge a698d67b08 rs/more-buffered-io later to maint).
+
+ * The patch-id computation did not ignore the "incomplete last line"
+   marker like whitespaces.
+   (merge 82a62015a7 rs/patch-id-with-incomplete-line later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -202,3 +235,5 @@ Fixes since v2.28
    (merge a831908599 rs/preserve-merges-unused-code-removal later to maint).
    (merge 6dfefe70a9 jb/commit-graph-doc-fix later to maint).
    (merge 847b37271e pb/set-url-docfix later to maint).
+   (merge 748f733d54 mt/checkout-entry-dead-code-removal later to maint).
+   (merge ce820cbd58 dl/subtree-docs later to maint).
