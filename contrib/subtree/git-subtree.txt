@@ -139,12 +139,12 @@ OPTIONS
 
 -m <message>::
 --message=<message>::
-	This option is only valid for add, merge and pull (unsure).
+	This option is only valid for add, merge, pull, and split --rejoin.
 	Specify <message> as the commit message for the merge commit.
 
 
-OPTIONS FOR add, merge, push, pull
-----------------------------------
+OPTIONS FOR add, merge, and pull
+--------------------------------
 --squash::
 	This option is only valid for add, merge, and pull
 	commands.
