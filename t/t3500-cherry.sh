@@ -55,4 +55,27 @@ test_expect_success \
      expr "$(echo $(git cherry master my-topic-branch) )" : "+ [^ ]* - .*"
 '
 
+test_expect_success 'cherry ignores whitespace' '
+	git switch --orphan=upstream-with-space &&
+	test_commit initial file &&
+	>expect &&
+	git switch --create=feature-without-space &&
+
+	# A spaceless file on the feature branch.  Expect a match upstream.
+	printf space >file &&
+	git add file &&
+	git commit -m"file without space" &&
+	git log --format="- %H" -1 >>expect &&
+
+	# A further change.  Should not match upstream.
+	test_commit change file &&
+	git log --format="+ %H" -1 >>expect &&
+
+	git switch upstream-with-space &&
+	# Same as the spaceless file, just with spaces and on upstream.
+	test_commit "file with space" file "s p a c e" file-with-space &&
+	git cherry upstream-with-space feature-without-space >actual &&
+	test_cmp expect actual
+'
+
 test_done
