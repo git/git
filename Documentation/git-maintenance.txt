@@ -70,6 +70,21 @@ gc::
 	be disruptive in some situations, as it deletes stale data. See
 	linkgit:git-gc[1] for more details on garbage collection in Git.
 
+loose-objects::
+	The `loose-objects` job cleans up loose objects and places them into
+	pack-files. In order to prevent race conditions with concurrent Git
+	commands, it follows a two-step process. First, it deletes any loose
+	objects that already exist in a pack-file; concurrent Git processes
+	will examine the pack-file for the object data instead of the loose
+	object. Second, it creates a new pack-file (starting with "loose-")
+	containing a batch of loose objects. The batch size is limited to 50
+	thousand objects to prevent the job from taking too long on a
+	repository with many loose objects. The `gc` task writes unreachable
+	objects as loose objects to be cleaned up by a later step only if
+	they are not re-added to a pack-file; for this reason it is not
+	advisable to enable both the `loose-objects` and `gc` tasks at the
+	same time.
+
 OPTIONS
 -------
 --auto::
