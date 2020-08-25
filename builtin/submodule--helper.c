@@ -982,7 +982,6 @@ static char* verify_submodule_committish(const char *sm_path,
 static void print_submodule_summary(struct summary_cb *info, char* errmsg,
 				    int total_commits, const char *displaypath,
 				    const char *src_abbrev, const char *dst_abbrev,
-				    int missing_src, int missing_dst,
 				    struct module_cb *p)
 {
 	if (p->status == 'T') {
@@ -1154,8 +1153,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 
 	print_submodule_summary(info, errmsg, total_commits,
 				displaypath, src_abbrev,
-				dst_abbrev, missing_src,
-				missing_dst, p);
+				dst_abbrev, p);
 
 	free(displaypath);
 	free(src_abbrev);
