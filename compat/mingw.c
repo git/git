@@ -2633,6 +2633,18 @@ static size_t append_system_bin_dirs(char *path, size_t size)
 }
 #endif
 
+static int is_system32_path(const char *path)
+{
+	WCHAR system32[MAX_PATH], wpath[MAX_PATH];
+
+	if (xutftowcs_path(wpath, path) < 0 ||
+	    !GetSystemDirectoryW(system32, ARRAY_SIZE(system32)) ||
+	    _wcsicmp(system32, wpath))
+		return 0;
+
+	return 1;
+}
+
 static void setup_windows_environment(void)
 {
 	char *tmp = getenv("TMPDIR");
@@ -2673,7 +2685,8 @@ static void setup_windows_environment(void)
 			strbuf_addstr(&buf, tmp);
 			if ((tmp = getenv("HOMEPATH"))) {
 				strbuf_addstr(&buf, tmp);
-				if (is_directory(buf.buf))
+				if (!is_system32_path(buf.buf) &&
+				    is_directory(buf.buf))
 					setenv("HOME", buf.buf, 1);
 				else
 					tmp = NULL; /* use $USERPROFILE */
