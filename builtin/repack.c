@@ -133,7 +133,11 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list,
 static void remove_redundant_pack(const char *dir_name, const char *base_name)
 {
 	struct strbuf buf = STRBUF_INIT;
-	strbuf_addf(&buf, "%s/%s.pack", dir_name, base_name);
+	struct multi_pack_index *m = get_multi_pack_index(the_repository);
+	strbuf_addf(&buf, "%s.pack", base_name);
+	if (m && midx_contains_pack(m, buf.buf))
+		clear_midx_file(the_repository);
+	strbuf_insertf(&buf, 0, "%s/", dir_name);
 	unlink_pack_path(buf.buf, 1);
 	strbuf_release(&buf);
 }
@@ -286,7 +290,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int keep_unreachable = 0;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
 	int no_update_server_info = 0;
-	int midx_cleared = 0;
 	struct pack_objects_args po_args = {NULL};
 
 	struct option builtin_repack_options[] = {
@@ -438,11 +441,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	for_each_string_list_item(item, &names) {
 		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
 			char *fname, *fname_old;
-
-			if (!midx_cleared) {
-				clear_midx_file(the_repository);
-				midx_cleared = 1;
-			}
 
 			fname = mkpathdup("%s/pack-%s%s", packdir,
 						item->string, exts[ext].name);
