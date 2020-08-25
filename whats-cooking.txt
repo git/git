@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2020, #05; Fri, 21)
-X-master-at: 675a4aaf3b226c0089108221b96559e0baae5de9
-X-next-at: ade71fd49b68a1c786ec40be7b66ba922c60ee98
+Subject: What's cooking in git.git (Aug 2020, #06; Mon, 24)
+X-master-at: e9b77c84a0a0df029f2a3a8114e9f22186e7da24
+X-next-at: 40977abb4059c11004726852a79df64f4553944d
 
-What's cooking in git.git (Aug 2020, #05; Fri, 21)
+What's cooking in git.git (Aug 2020, #06; Mon, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -20,143 +20,22 @@ repositories listed at
 --------------------------------------------------
 [Graduated to 'master']
 
-* ak/sequencer-fix-find-uniq-abbrev (2020-08-13) 1 commit
-  (merged to 'next' on 2020-08-17 at 6ce0f1d111)
- + rebase -i: fix possibly wrong onto hash in todo
+* dl/subtree-docs (2020-08-18) 2 commits
+  (merged to 'next' on 2020-08-19 at e1a8ea9d46)
+ + contrib/subtree: document 'push' does not take '--squash'
+ + contrib/subtree: fix "unsure" for --message in the document
 
- Ring buffer with size 4 used for bin-hex translation resulted in a
- wrong object name in the sequencer's todo output, which has been
- corrected.
-
-
-* bc/sha-256-doc-updates (2020-08-13) 2 commits
-  (merged to 'next' on 2020-08-17 at 7154a0ce3c)
- + docs: fix step in transition plan
- + docs: document SHA-256 pack and indices
-
- Further update of docs to adjust to the recent SHA-256 work.
+ Doc updates for subtree (in contrib/)
 
 
-* ds/sha256-leftover-bits (2020-08-17) 3 commits
-  (merged to 'next' on 2020-08-17 at a8e6f9f3f4)
- + multi-pack-index: use hash version byte
- + commit-graph: use the "hash version" byte
- + t/README: document GIT_TEST_DEFAULT_HASH
+* ds/midx-repack-to-batch-size (2020-08-11) 1 commit
+  (merged to 'next' on 2020-08-17 at eee94634aa)
+ + multi-pack-index: repack batches below --batch-size
 
- midx and commit-graph files now use the byte defined in their file
- format specification for identifying the hash function used for
- object names.
+ The "--batch-size" option of "git multi-pack-index repack" command
+ is now used to specify that very small packfiles are collected into
+ one until the total size roughly exceeds it.
 
-
-* en/merge-tests (2020-08-10) 11 commits
-  (merged to 'next' on 2020-08-13 at eab952350b)
- + t6425: be more flexible with rename/delete conflict messages
- + t642[23]: be more flexible for add/add conflicts involving pair renames
- + t6422, t6426: be more flexible for add/add conflicts involving renames
- + t6423: add an explanation about why one of the tests does not pass
- + t6416, t6423: clarify some comments and fix some typos
- + t6422: fix multiple errors with the mod6 test expectations
- + t6423: fix test setup for a couple tests
- + t6416, t6422: fix incorrect untracked file count
- + t6422: fix bad check against missing file
- + t6418: tighten delete/normalize conflict testcase
- + Collect merge-related tests to t64xx
-
- Updates to "git merge" tests, in preparation for a new merge
- strategy backend.
-
-
-* en/sequencer-merge-labels (2020-08-14) 1 commit
-  (merged to 'next' on 2020-08-17 at 2010e329ed)
- + sequencer: avoid garbled merge machinery messages due to commit labels
-
- The commit labels used to explain each side of conflicted hunks
- placed by the sequencer machinery have been made more readable by
- humans.
-
-
-* jb/commit-graph-doc-fix (2020-08-13) 1 commit
-  (merged to 'next' on 2020-08-17 at d83ee98955)
- + docs: commit-graph: fix some whitespace in the diagram
-
- Docfix.
-
-
-* jc/object-names-are-not-sha-1 (2020-08-14) 1 commit
-  (merged to 'next' on 2020-08-17 at 400fe9e831)
- + messages: avoid SHA-1 in end-user facing messages
-
- A few end-user facing messages have been updated to be
- hash-algorithm agnostic.
-
-
-* jh/mingw-unlink (2020-08-17) 1 commit
-  (merged to 'next' on 2020-08-17 at fb53a3d1a1)
- + mingw: improve performance of mingw_unlink()
-
- "unlink" emulation on MinGW has been optimized.
-
-
-* jk/blame-coalesce-fix (2020-08-13) 3 commits
-  (merged to 'next' on 2020-08-17 at 122c701ec7)
- + blame: only coalesce lines that are adjacent in result
- + t8003: factor setup out of coalesce test
- + t8003: check output of coalesced blame
-
- When given more than one target line ranges, "git blame -La,b
- -Lc,d" was over-eager to coalesce groups of original lines and
- showed incorrect results, which has been corrected.
-
-
-* ma/sha-256-docs (2020-08-17) 4 commits
-  (merged to 'next' on 2020-08-17 at 6861142a20)
- + shallow.txt: document SHA-256 shallow format
- + protocol-capabilities.txt: clarify "allow-x-sha1-in-want" re SHA-256
- + index-format.txt: document SHA-256 index format
- + http-protocol.txt: document SHA-256 "want"/"have" format
-
- Further update of docs to adjust to the recent SHA-256 work.
-
-
-* pb/set-url-docfix (2020-08-13) 1 commit
-  (merged to 'next' on 2020-08-17 at 19b56c6ebb)
- + fetch, pull doc: correct description of '--set-upstream'
-
- Doc fix.
-
-
-* pb/userdiff-fortran-update (2020-08-13) 2 commits
-  (merged to 'next' on 2020-08-17 at 534af3f35a)
- + userdiff: improve Fortran xfuncname regex
- + userdiff: add tests for Fortran xfuncname regex
-
- The regexp to identify the function boundary for FORTRAN programs
- has been updated.
-
-
-* rp/ita-diff-modefix (2020-08-09) 1 commit
-  (merged to 'next' on 2020-08-17 at c03a9cfb6e)
- + diff-lib: use worktree mode in diffs from i-t-a entries
-
- "git diff [<tree-ish>] $path" for a $path that is marked with i-t-a
- bit was not showing the mode bits from the working tree.
-
-
-* rs/preserve-merges-unused-code-removal (2020-08-12) 1 commit
-  (merged to 'next' on 2020-08-17 at b96393455c)
- + rebase: remove unused function reschedule_last_action
-
- Code clean-up.
-
-
-* rs/upload-pack-sigchain-fix (2020-08-11) 1 commit
-  (merged to 'next' on 2020-08-17 at 997473f309)
- + upload-pack: remove superfluous sigchain_pop() call
-
- Code clean-up.
-
---------------------------------------------------
-[New Topics]
 
 * en/dir-clear (2020-08-18) 2 commits
   (merged to 'next' on 2020-08-19 at 18c5b69293)
@@ -165,20 +44,68 @@ repositories listed at
 
  Leakfix with code clean-up.
 
- Will merge to 'master'.
+
+* en/dir-nonbare-embedded (2020-08-12) 2 commits
+  (merged to 'next' on 2020-08-17 at ab180b7fcb)
+ + dir: avoid prematurely marking nonbare repositories as matches
+ + t3000: fix some test description typos
+
+ "ls-files -o" mishandled the top-level directory of another git
+ working tree that hangs in the current git working tree.
 
 
-* hn/refs-pseudorefs (2020-08-21) 4 commits
- - sequencer: treat REVERT_HEAD as a pseudo ref
- - builtin/commit: suggest update-ref for pseudoref removal
- - sequencer: treat CHERRY_PICK_HEAD as a pseudo ref
- - refs: make refs_ref_exists public
- (this branch uses hn/refs-fetch-head-is-special.)
+* es/init-no-separate-git-dir-in-bare (2020-08-10) 1 commit
+  (merged to 'next' on 2020-08-17 at 80498c8659)
+ + init: disallow --separate-git-dir with bare repository
 
- Accesses to two pseudorefs have been updated to properly use ref
- API.
+ The purpose of "git init --separate-git-dir" is to initialize a
+ new project with the repository separate from the working tree,
+ or, in the case of an existing project, to move the repository
+ (the .git/ directory) out of the working tree. It does not make
+ sense to use --separate-git-dir with a bare repository for which
+ there is no working tree, so disallow its use with bare
+ repositories.
 
- Will merge to 'next'.
+
+* jc/no-update-fetch-head (2020-08-18) 1 commit
+  (merged to 'next' on 2020-08-19 at 68e1374ed6)
+ + fetch: optionally allow disabling FETCH_HEAD update
+ (this branch is used by ds/maintenance-part-1, ds/maintenance-part-2 and jt/lazy-fetch.)
+
+ "git fetch" learned --no-write-fetch-head option to avoid writing
+ the FETCH_HEAD file.
+
+
+* jk/unleak-fixes (2020-08-13) 2 commits
+  (merged to 'next' on 2020-08-17 at f9bd296b25)
+ + ls-remote: simplify UNLEAK() usage
+ + stop calling UNLEAK() before die()
+
+ Fix some incorrect UNLEAK() annotations.
+
+
+* ma/doc-sha-256-is-experimental (2020-08-17) 1 commit
+  (merged to 'next' on 2020-08-19 at 9ccf6c399c)
+ + Documentation: mark `--object-format=sha256` as experimental
+
+ The recent addition of SHA-256 support is marked as experimental in
+ the documentation.
+
+
+* mt/checkout-entry-dead-code-removal (2020-08-18) 1 commit
+  (merged to 'next' on 2020-08-19 at 58866e5299)
+ + checkout_entry(): remove unreachable error() call
+
+ Code clean-up.
+
+
+* rs/more-buffered-io (2020-08-17) 3 commits
+  (merged to 'next' on 2020-08-19 at 6d23a23bb2)
+ + upload-pack: use buffered I/O to talk to rev-list
+ + midx: use buffered I/O to talk to pack-objects
+ + connected: use buffered I/O to talk to rev-list
+
+ Use more buffered I/O where we used to call many small write(2)s.
 
 
 * rs/patch-id-with-incomplete-line (2020-08-18) 1 commit
@@ -188,62 +115,70 @@ repositories listed at
  The patch-id computation did not ignore the "incomplete last line"
  marker like whitespaces.
 
+--------------------------------------------------
+[New Topics]
+
+* jk/refspecs-cleanup (2020-08-17) 2 commits
+  (merged to 'next' on 2020-08-24 at 807a080ebf)
+ + refspec: make sure stack refspec_item variables are zeroed
+ + refspec: fix documentation referring to refspec_item
+ (this branch is used by jk/refspecs-negative.)
+
+ Preliminary code clean-up before introducing "negative refspec".
+
  Will merge to 'master'.
 
 
-* rz/complete-more-options (2020-08-19) 2 commits
-  (merged to 'next' on 2020-08-21 at ba8f4c8cb1)
- + completion: add GIT_COMPLETION_SHOW_ALL env var
- + parse-options: add --git-completion-helper-all
+* rs/checkout-no-overlay-pathspec-fix (2020-08-22) 1 commit
+ - checkout, restore: make pathspec recursive
 
- Command line completion (in contrib/) usually omits redundant,
- deprecated and/or dangerous options from its output; it learned to
- optionally include all of them.
-
- Will merge to 'master'.
-
-
-* jt/promisor-pack-fix (2020-08-20) 1 commit
- - fetch-pack: in partial clone, pass --promisor
-
- Updates into a lazy/partial clone with a submodule did not work
- well with transfer.fsckobjects set.
-
-
-* hv/ref-filter-trailers-atom-parsing-fix (2020-08-21) 2 commits
- - ref-filter: 'contents:trailers' show error if `:` is missing
- - t6300: unify %(trailers) and %(contents:trailers) tests
-
- The parser for "git for-each-ref --format=..." was too loose when
- parsing the "%(trailers...)" atom, and forgot that "trailers" and
- "trailers:<modifers>" are the only two allowed forms, which has
- been corrected.
+ "git restore/checkout --no-overlay" with wildcarded pathspec
+ mistakenly removed matching paths in subdirectories, which has been
+ corrected.
 
  Will merge to 'next'.
 
 
-* jc/ident-whose-ident (2020-08-21) 1 commit
- - ident: say whose identity is missing when giving user.name hint
+* al/bisect-first-parent (2020-08-22) 1 commit
+  (merged to 'next' on 2020-08-24 at f95fbf45a6)
+ + bisect: add first-parent option to documentation
 
- Error message update.
+ Finishing touches.
 
-
-* jk/index-pack-w-more-threads (2020-08-21) 3 commits
- - index-pack: adjust default threading cap
- - p5302: count up to online-cpus for thread tests
- - p5302: disable thread-count parameter tests by default
-
- Long ago, we decided to use 3 threads by default when running the
- index-pack task in parallel, which has been adjusted a bit upwards.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* rp/apply-cached-doc (2020-08-20) 1 commit
- - git-apply.txt: update descriptions of --cached, --index
+* js/no-builtins-on-disk-option (2020-08-24) 3 commits
+ - ci: stop linking built-ins to the dashed versions
+ - install: optionally skip linking/copying the built-ins
+ - msvc: copy the correct `.pdb` files in the Makefile target `install`
 
- The description of --cached/--index options in "git apply --help"
- has been updated.
+ The installation procedure learned to optionally omit "git-foo"
+ executable files for each 'foo' built-in subcommand, which are only
+ required by old timers that still rely on the age old promise that
+ prepending "git --exec-path" output to PATH early in their script
+ will keep the "git-foo" calls they wrote working.
+
+ The old attempt to remove these executables from the disk failed in
+ the 1.6 era; it may be worth attempting again, but I think it is
+ worth to keep this topic separate from such a policy change to help
+ it graduate early.
+
+ cf. https://public-inbox.org/git/7vprnzt7d5.fsf@gitster.siamese.dyndns.org/
+
+
+* jt/threaded-index-pack (2020-08-24) 8 commits
+ - fixup! index-pack: make quantum of work smaller
+ - index-pack: make quantum of work smaller
+ - index-pack: make resolve_delta() assume base data
+ - index-pack: calculate {ref,ofs}_{first,last} early
+ - index-pack: remove redundant child field
+ - index-pack: unify threaded and unthreaded code
+ - index-pack: remove redundant parameter
+ - Documentation: deltaBaseCacheLimit is per-thread
+
+ "git index-pack" learned to resolve deltified objects with greater
+ parallelism.
 
 --------------------------------------------------
 [Stalled]
@@ -331,15 +266,94 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* hn/refs-pseudorefs (2020-08-21) 4 commits
+  (merged to 'next' on 2020-08-24 at 3579abe8ff)
+ + sequencer: treat REVERT_HEAD as a pseudo ref
+ + builtin/commit: suggest update-ref for pseudoref removal
+ + sequencer: treat CHERRY_PICK_HEAD as a pseudo ref
+ + refs: make refs_ref_exists public
+ (this branch uses hn/refs-fetch-head-is-special.)
+
+ Accesses to two pseudorefs have been updated to properly use ref
+ API.
+
+ Will merge to 'master'.
+
+
+* rz/complete-more-options (2020-08-19) 2 commits
+  (merged to 'next' on 2020-08-21 at ba8f4c8cb1)
+ + completion: add GIT_COMPLETION_SHOW_ALL env var
+ + parse-options: add --git-completion-helper-all
+
+ Command line completion (in contrib/) usually omits redundant,
+ deprecated and/or dangerous options from its output; it learned to
+ optionally include all of them.
+
+ Will merge to 'master'.
+
+
+* jt/promisor-pack-fix (2020-08-20) 1 commit
+  (merged to 'next' on 2020-08-24 at cd26d30d8d)
+ + fetch-pack: in partial clone, pass --promisor
+
+ Updates into a lazy/partial clone with a submodule did not work
+ well with transfer.fsckobjects set.
+
+ Will merge to 'master'.
+
+
+* hv/ref-filter-trailers-atom-parsing-fix (2020-08-21) 2 commits
+  (merged to 'next' on 2020-08-24 at 79b27f3263)
+ + ref-filter: 'contents:trailers' show error if `:` is missing
+ + t6300: unify %(trailers) and %(contents:trailers) tests
+
+ The parser for "git for-each-ref --format=..." was too loose when
+ parsing the "%(trailers...)" atom, and forgot that "trailers" and
+ "trailers:<modifers>" are the only two allowed forms, which has
+ been corrected.
+
+ Will merge to 'master'.
+
+
+* jc/ident-whose-ident (2020-08-21) 1 commit
+ - ident: say whose identity is missing when giving user.name hint
+
+ Error message update.
+
+ Will merge to 'next'.
+
+
+* jk/index-pack-w-more-threads (2020-08-21) 3 commits
+  (merged to 'next' on 2020-08-24 at 18f18a5b66)
+ + index-pack: adjust default threading cap
+ + p5302: count up to online-cpus for thread tests
+ + p5302: disable thread-count parameter tests by default
+
+ Long ago, we decided to use 3 threads by default when running the
+ index-pack task in parallel, which has been adjusted a bit upwards.
+
+ Will merge to 'master'.
+
+
+* rp/apply-cached-doc (2020-08-20) 1 commit
+ - git-apply.txt: update descriptions of --cached, --index
+
+ The description of --cached/--index options in "git apply --help"
+ has been updated.
+
+ Will merge to 'next'.
+
+
 * dd/diff-customize-index-line-abbrev (2020-08-21) 2 commits
- - diff: index-line: respect --abbrev in object's name
- - t4013: improve diff-post-processor logic
+  (merged to 'next' on 2020-08-24 at 74e842a2c8)
+ + diff: index-line: respect --abbrev in object's name
+ + t4013: improve diff-post-processor logic
 
  The output from the "diff" family of the commands had abbreviated
  object names of blobs involved in the patch, but its length was not
  affected by the --abbrev option.  Now it is.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * hn/refs-fetch-head-is-special (2020-08-19) 4 commits
@@ -372,6 +386,8 @@ repositories listed at
  learned a few more tricks, e.g. the ":short" suffix that applies to
  "objectname" now also can be used for "parent", "tree", etc.
 
+ Will merge to 'next'.
+
 
 * jk/leakfix (2020-08-17) 7 commits
   (merged to 'next' on 2020-08-21 at a8b25a2657)
@@ -388,10 +404,9 @@ repositories listed at
  Will merge to 'master'.
 
 
-* jk/refspecs-negative (2020-08-17) 3 commits
+* jk/refspecs-negative (2020-08-21) 1 commit
  - refspec: add support for negative refspecs
- - refspec: make sure stack refspec_item variables are zeroed
- - refspec: fix documentation referring to refspec_item
+ (this branch uses jk/refspecs-cleanup.)
 
  "negative refspecs"
 
@@ -407,7 +422,11 @@ repositories listed at
 * mr/diff-hide-stat-wo-textual-change (2020-08-19) 1 commit
  - diff: teach --stat to ignore uninteresting modifications
 
- Looking good.
+ "git diff --stat -w" showed 0-line changes for paths whose changes
+ were only whitespaces, which was not intuitive.  We now omit such
+ paths from the stat output.
+
+ Will merge to 'next'.
 
 
 * pw/add-p-allowed-options-fix (2020-08-17) 2 commits
@@ -416,19 +435,7 @@ repositories listed at
 
  "git add -p" update.
 
- Doubts?
- cf. <pull.702.git.1597670589.gitgitgadget@gmail.com>
- cf. <744e464f-6378-ef68-01c1-3b8bf63c54a4@gmail.com>
-
-
-* dl/subtree-docs (2020-08-18) 2 commits
-  (merged to 'next' on 2020-08-19 at e1a8ea9d46)
- + contrib/subtree: document 'push' does not take '--squash'
- + contrib/subtree: fix "unsure" for --message in the document
-
- Doc updates for subtree (in contrib/)
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * en/mem-pool (2020-08-18) 3 commits
@@ -442,17 +449,6 @@ repositories listed at
  Will merge to 'master'.
 
 
-* jc/no-update-fetch-head (2020-08-18) 1 commit
-  (merged to 'next' on 2020-08-19 at 68e1374ed6)
- + fetch: optionally allow disabling FETCH_HEAD update
- (this branch is used by ds/maintenance-part-1, ds/maintenance-part-2 and jt/lazy-fetch.)
-
- "git fetch" learned --no-write-fetch-head option to avoid writing
- the FETCH_HEAD file.
-
- Will merge to 'master'.
-
-
 * jt/lazy-fetch (2020-08-18) 7 commits
  - fetch-pack: remove no_dependents code
  - promisor-remote: lazy-fetch objects in subprocess
@@ -461,36 +457,26 @@ repositories listed at
  - fetch: avoid reading submodule config until needed
  - fetch: allow refspecs specified through stdin
  - negotiator/noop: add noop fetch negotiator
- (this branch uses jc/no-update-fetch-head; is tangled with ds/maintenance-part-1 and ds/maintenance-part-2.)
 
  Updates to on-demand fetching code in lazily cloned repositories.
 
-
-* mt/checkout-entry-dead-code-removal (2020-08-18) 1 commit
-  (merged to 'next' on 2020-08-19 at 58866e5299)
- + checkout_entry(): remove unreachable error() call
-
- Code clean-up.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* jx/proc-receive-hook (2020-08-17) 10 commits
+* jx/proc-receive-hook (2020-08-24) 10 commits
  - doc: add documentation for the proc-receive hook
  - transport: parse report options for tracking refs
  - t5411: test updates of remote-tracking branches
  - receive-pack: new config receive.procReceiveRefs
- - receive-pack: feed report options to post-receive
  - doc: add document for capability report-status-v2
  - New capability "report-status-v2" for git-push
+ - receive-pack: feed report options to post-receive
  - receive-pack: add new proc-receive hook
  - t5411: add basic test cases for proc-receive hook
  - transport: not report a non-head push as a branch
 
  "git receive-pack" that accepts requests by "git push" learned to
  outsource most of the ref updates to the new "proc-receive" hook.
-
- Needs review.
 
 
 * pw/rebase-i-more-options (2020-08-19) 5 commits
@@ -502,28 +488,6 @@ repositories listed at
  + rebase -i: add --ignore-whitespace flag
 
  "git rebase -i" learns a bit more options.
-
- Will merge to 'master'.
-
-
-* rs/more-buffered-io (2020-08-17) 3 commits
-  (merged to 'next' on 2020-08-19 at 6d23a23bb2)
- + upload-pack: use buffered I/O to talk to rev-list
- + midx: use buffered I/O to talk to pack-objects
- + connected: use buffered I/O to talk to rev-list
-
- Use more buffered I/O where we used to call many small write(2)s.
-
- Will merge to 'master'.
-
-
-* ds/midx-repack-to-batch-size (2020-08-11) 1 commit
-  (merged to 'next' on 2020-08-17 at eee94634aa)
- + multi-pack-index: repack batches below --batch-size
-
- The "--batch-size" option of "git multi-pack-index repack" command
- is now used to specify that very small packfiles are collected into
- one until the total size roughly exceeds it.
 
  Will merge to 'master'.
 
@@ -551,17 +515,6 @@ repositories listed at
  cf. <20200811220503.GC66656@syl.lan>
 
 
-* en/dir-nonbare-embedded (2020-08-12) 2 commits
-  (merged to 'next' on 2020-08-17 at ab180b7fcb)
- + dir: avoid prematurely marking nonbare repositories as matches
- + t3000: fix some test description typos
-
- "ls-files -o" mishandled the top-level directory of another git
- working tree that hangs in the current git working tree.
-
- Will merge to 'master'.
-
-
 * jk/slimmed-down (2020-08-13) 5 commits
  - drop vcs-svn experiment
  - make git-fast-import a builtin
@@ -571,17 +524,7 @@ repositories listed at
 
  Trim an unused binary and turn a bunch of commands into built-in.
 
- In general this is a good thing to do, modulo 'bugreport'.
-
-
-* jk/unleak-fixes (2020-08-13) 2 commits
-  (merged to 'next' on 2020-08-17 at f9bd296b25)
- + ls-remote: simplify UNLEAK() usage
- + stop calling UNLEAK() before die()
-
- Fix some incorrect UNLEAK() annotations.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * ss/t7401-modernize (2020-08-21) 5 commits
@@ -593,7 +536,7 @@ repositories listed at
 
  Test clean-up.
 
- Looking good.
+ Will merge to 'next'.
 
 
 * ds/maintenance-part-2 (2020-08-18) 8 commits
@@ -605,20 +548,10 @@ repositories listed at
  - maintenance: create auto condition for loose-objects
  - maintenance: add loose-objects task
  - maintenance: add prefetch task
- (this branch uses ds/maintenance-part-1 and jc/no-update-fetch-head; is tangled with jt/lazy-fetch.)
+ (this branch uses ds/maintenance-part-1.)
 
  "git maintenance", an extended big brother of "git gc", continues
  to evolve.
-
-
-* ma/doc-sha-256-is-experimental (2020-08-17) 1 commit
-  (merged to 'next' on 2020-08-19 at 9ccf6c399c)
- + Documentation: mark `--object-format=sha256` as experimental
-
- The recent addition of SHA-256 support is marked as experimental in
- the documentation.
-
- Will merge to 'master'.
 
 
 * ss/submodule-summary-in-c (2020-08-12) 4 commits
@@ -634,24 +567,10 @@ repositories listed at
 
 
 * am/ci-wsfix (2020-08-21) 1 commit
- - ci: fix inconsistent indentation
+  (merged to 'next' on 2020-08-24 at 8491e031f1)
+ + ci: fix inconsistent indentation
 
  Aesthetic fix to a CI configuration file.
-
- Will merge to 'next'.
-
-
-* es/init-no-separate-git-dir-in-bare (2020-08-10) 1 commit
-  (merged to 'next' on 2020-08-17 at 80498c8659)
- + init: disallow --separate-git-dir with bare repository
-
- The purpose of "git init --separate-git-dir" is to initialize a
- new project with the repository separate from the working tree,
- or, in the case of an existing project, to move the repository
- (the .git/ directory) out of the working tree. It does not make
- sense to use --separate-git-dir with a bare repository for which
- there is no working tree, so disallow its use with bare
- repositories.
 
  Will merge to 'master'.
 
@@ -668,11 +587,13 @@ repositories listed at
  - maintenance: replace run_auto_gc()
  - maintenance: add --quiet option
  - maintenance: create basic maintenance runner
- (this branch is used by ds/maintenance-part-2; uses jc/no-update-fetch-head; is tangled with jt/lazy-fetch.)
+ (this branch is used by ds/maintenance-part-2.)
 
  A "git gc"'s big brother has been introduced to take care of more
  repository maintenance tasks, not limited to the object database
  cleaning.
+
+ Comments?
 
 
 * es/config-hooks (2020-07-30) 6 commits
