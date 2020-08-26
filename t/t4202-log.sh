@@ -1850,6 +1850,16 @@ test_expect_success 'log does not default to HEAD when rev input is given' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'do not default to HEAD with ignored object on cmdline' '
+	git log --ignore-missing $ZERO_OID >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'do not default to HEAD with ignored object on stdin' '
+	echo $ZERO_OID | git log --ignore-missing --stdin >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'set up --source tests' '
 	git checkout --orphan source-a &&
 	test_commit one &&
