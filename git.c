@@ -839,6 +839,8 @@ int cmd_main(int argc, const char **argv)
 	 * that one cannot handle it.
 	 */
 	if (skip_prefix(cmd, "git-", &cmd)) {
+		warn_on_dashed_git(argv[0]);
+
 		argv[0] = cmd;
 		handle_builtin(argc, argv);
 		die(_("cannot handle %s as a builtin"), cmd);
