@@ -36,7 +36,7 @@ test_expect_success 'setup' '
 
 	mkdir test-bin &&
 	write_script test-bin/git-merge-test <<-\EOF
-	exec git-merge-recursive "$@"
+	exec git merge-recursive "$@"
 	EOF
 '
 
