@@ -274,11 +274,9 @@ static int run_credential_helper(struct credential *c,
 				 int want_output)
 {
 	struct child_process helper = CHILD_PROCESS_INIT;
-	const char *argv[] = { NULL, NULL };
 	FILE *fp;
 
-	argv[0] = cmd;
-	helper.argv = argv;
+	strvec_push(&helper.args, cmd);
 	helper.use_shell = 1;
 	helper.in = -1;
 	if (want_output)
