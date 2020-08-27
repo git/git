@@ -1035,7 +1035,7 @@ static void print_submodule_summary(struct summary_cb *info, char *errmsg,
 static void generate_submodule_summary(struct summary_cb *info,
 				       struct module_cb *p)
 {
-	char *displaypath, *src_abbrev, *dst_abbrev;
+	char *displaypath, *src_abbrev = NULL, *dst_abbrev;
 	int missing_src = 0, missing_dst = 0;
 	char *errmsg = NULL;
 	int total_commits = -1;
@@ -1061,8 +1061,9 @@ static void generate_submodule_summary(struct summary_cb *info,
 	}
 
 	if (S_ISGITLINK(p->mod_src)) {
-		src_abbrev = verify_submodule_committish(p->sm_path,
-							 oid_to_hex(&p->oid_src));
+		if (p->status != 'D')
+			src_abbrev = verify_submodule_committish(p->sm_path,
+								 oid_to_hex(&p->oid_src));
 		if (!src_abbrev) {
 			missing_src = 1;
 			/*
