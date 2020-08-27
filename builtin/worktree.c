@@ -1030,6 +1030,19 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 	return ret;
 }
 
+static int repair(int ac, const char **av, const char *prefix)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	int rc = 0;
+
+	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
+	if (ac)
+		usage_with_options(worktree_usage, options);
+	return rc;
+}
+
 int cmd_worktree(int ac, const char **av, const char *prefix)
 {
 	struct option options[] = {
@@ -1056,5 +1069,7 @@ int cmd_worktree(int ac, const char **av, const char *prefix)
 		return move_worktree(ac - 1, av + 1, prefix);
 	if (!strcmp(av[1], "remove"))
 		return remove_worktree(ac - 1, av + 1, prefix);
+	if (!strcmp(av[1], "repair"))
+		return repair(ac - 1, av + 1, prefix);
 	usage_with_options(worktree_usage, options);
 }

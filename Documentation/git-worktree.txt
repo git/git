@@ -15,6 +15,7 @@ SYNOPSIS
 'git worktree move' <worktree> <new-path>
 'git worktree prune' [-n] [-v] [--expire <expire>]
 'git worktree remove' [-f] <worktree>
+'git worktree repair'
 'git worktree unlock' <worktree>
 
 DESCRIPTION
@@ -109,6 +110,11 @@ Remove a working tree. Only clean working trees (no untracked files
 and no modification in tracked files) can be removed. Unclean working
 trees or ones with submodules can be removed with `--force`. The main
 working tree cannot be removed.
+
+repair::
+
+Repair working tree administrative files, if possible, if they have
+become corrupted or outdated due to external factors.
 
 unlock::
 
