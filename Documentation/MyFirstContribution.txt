@@ -319,14 +319,14 @@ function body:
 ...
 
 	git_config(git_default_config, NULL);
-	if (git_config_get_string_const("user.name", &cfg_name) > 0)
+	if (git_config_get_string_tmp("user.name", &cfg_name) > 0)
 		printf(_("No name is found in config\n"));
 	else
 		printf(_("Your name: %s\n"), cfg_name);
 ----
 
 `git_config()` will grab the configuration from config files known to Git and
-apply standard precedence rules. `git_config_get_string_const()` will look up
+apply standard precedence rules. `git_config_get_string_tmp()` will look up
 a specific key ("user.name") and give you the value. There are a number of
 single-key lookup functions like this one; you can see them all (and more info
 about how to use `git_config()`) in `Documentation/technical/api-config.txt`.

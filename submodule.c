@@ -194,7 +194,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 		char *key;
 
 		key = xstrfmt("submodule.%s.ignore", submodule->name);
-		if (repo_config_get_string_const(the_repository, key, &ignore))
+		if (repo_config_get_string_tmp(the_repository, key, &ignore))
 			ignore = submodule->ignore;
 		free(key);
 
@@ -1299,7 +1299,7 @@ static int get_fetch_recurse_config(const struct submodule *submodule,
 
 		int fetch_recurse = submodule->fetch_recurse;
 		key = xstrfmt("submodule.%s.fetchRecurseSubmodules", submodule->name);
-		if (!repo_config_get_string_const(spf->r, key, &value)) {
+		if (!repo_config_get_string_tmp(spf->r, key, &value)) {
 			fetch_recurse = parse_fetch_recurse_submodules_arg(key, value);
 		}
 		free(key);
