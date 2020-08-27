@@ -97,6 +97,17 @@ static int keepalive_in_sec = 5;
 
 static struct tmp_objdir *tmp_objdir;
 
+static struct proc_receive_ref {
+	unsigned int want_add:1,
+		     want_delete:1,
+		     want_modify:1,
+		     negative_ref:1;
+	char *ref_prefix;
+	struct proc_receive_ref *next;
+} *proc_receive_ref;
+
+static void proc_receive_ref_append(const char *prefix);
+
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
 	if (value) {
@@ -229,6 +240,13 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (strcmp(var, "receive.procreceiverefs") == 0) {
+		if (!value)
+			return config_error_nonbool(var);
+		proc_receive_ref_append(value);
+		return 0;
+	}
+
 	return git_default_config(var, value, cb);
 }
 
@@ -323,6 +341,79 @@ struct command {
 	struct object_id new_oid;
 	char ref_name[FLEX_ARRAY]; /* more */
 };
+
+static void proc_receive_ref_append(const char *prefix)
+{
+	struct proc_receive_ref *ref_pattern;
+	char *p;
+	int len;
+
+	ref_pattern = xcalloc(1, sizeof(struct proc_receive_ref));
+	p = strchr(prefix, ':');
+	if (p) {
+		while (prefix < p) {
+			if (*prefix == 'a')
+				ref_pattern->want_add = 1;
+			else if (*prefix == 'd')
+				ref_pattern->want_delete = 1;
+			else if (*prefix == 'm')
+				ref_pattern->want_modify = 1;
+			else if (*prefix == '!')
+				ref_pattern->negative_ref = 1;
+			prefix++;
+		}
+		prefix++;
+	} else {
+		ref_pattern->want_add = 1;
+		ref_pattern->want_delete = 1;
+		ref_pattern->want_modify = 1;
+	}
+	len = strlen(prefix);
+	while (len && prefix[len - 1] == '/')
+		len--;
+	ref_pattern->ref_prefix = xmemdupz(prefix, len);
+	if (!proc_receive_ref) {
+		proc_receive_ref = ref_pattern;
+	} else {
+		struct proc_receive_ref *end;
+
+		end = proc_receive_ref;
+		while (end->next)
+			end = end->next;
+		end->next = ref_pattern;
+	}
+}
+
+static int proc_receive_ref_matches(struct command *cmd)
+{
+	struct proc_receive_ref *p;
+
+	if (!proc_receive_ref)
+		return 0;
+
+	for (p = proc_receive_ref; p; p = p->next) {
+		const char *match = p->ref_prefix;
+		const char *remains;
+
+		if (!p->want_add && is_null_oid(&cmd->old_oid))
+			continue;
+		else if (!p->want_delete && is_null_oid(&cmd->new_oid))
+			continue;
+		else if (!p->want_modify &&
+			 !is_null_oid(&cmd->old_oid) &&
+			 !is_null_oid(&cmd->new_oid))
+			continue;
+
+		if (skip_prefix(cmd->ref_name, match, &remains) &&
+		    (!*remains || *remains == '/')) {
+			if (!p->negative_ref)
+				return 1;
+		} else if (p->negative_ref) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 static void rp_error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 static void rp_warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
@@ -1812,14 +1903,15 @@ static void execute_commands(struct command *commands,
 	 * Try to find commands that have special prefix in their reference names,
 	 * and mark them to run an external "proc-receive" hook later.
 	 */
-	for (cmd = commands; cmd; cmd = cmd->next) {
-		if (!should_process_cmd(cmd))
-			continue;
+	if (proc_receive_ref) {
+		for (cmd = commands; cmd; cmd = cmd->next) {
+			if (!should_process_cmd(cmd))
+				continue;
 
-		/* TODO: replace the fixed prefix by looking up git config variables. */
-		if (!strncmp(cmd->ref_name, "refs/for/", 9)) {
-			cmd->run_proc_receive = RUN_PROC_RECEIVE_SCHEDULED;
-			run_proc_receive = 1;
+			if (proc_receive_ref_matches(cmd)) {
+				cmd->run_proc_receive = RUN_PROC_RECEIVE_SCHEDULED;
+				run_proc_receive = 1;
+			}
 		}
 	}
 
