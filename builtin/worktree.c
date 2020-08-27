@@ -924,7 +924,6 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 static void check_clean_worktree(struct worktree *wt,
 				 const char *original_path)
 {
-	struct argv_array child_env = ARGV_ARRAY_INIT;
 	struct child_process cp;
 	char buf[1];
 	int ret;
@@ -935,15 +934,14 @@ static void check_clean_worktree(struct worktree *wt,
 	 */
 	validate_no_submodules(wt);
 
-	argv_array_pushf(&child_env, "%s=%s/.git",
+	child_process_init(&cp);
+	argv_array_pushf(&cp.env_array, "%s=%s/.git",
 			 GIT_DIR_ENVIRONMENT, wt->path);
-	argv_array_pushf(&child_env, "%s=%s",
+	argv_array_pushf(&cp.env_array, "%s=%s",
 			 GIT_WORK_TREE_ENVIRONMENT, wt->path);
-	memset(&cp, 0, sizeof(cp));
 	argv_array_pushl(&cp.args, "status",
 			 "--porcelain", "--ignore-submodules=none",
 			 NULL);
-	cp.env = child_env.argv;
 	cp.git_cmd = 1;
 	cp.dir = wt->path;
 	cp.out = -1;
