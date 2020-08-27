@@ -47,6 +47,10 @@ UI, Workflows & Features
  * "git fetch" learned --no-write-fetch-head option to avoid writing
    the FETCH_HEAD file.
 
+ * Command line completion (in contrib/) usually omits redundant,
+   deprecated and/or dangerous options from its output; it learned to
+   optionally include all of them.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -104,6 +108,10 @@ Performance, Internal Implementation, Development Support etc.
  * midx and commit-graph files now use the byte defined in their file
    format specification for identifying the hash function used for
    object names.
+
+ * The FETCH_HEAD is now always read from the filesystem regardless of
+   the ref backend in use, as its format is much richer than the
+   normal refs, and written directly by "git fetch" as a plain file..
 
 
 Fixes since v2.28
@@ -237,3 +245,4 @@ Fixes since v2.28
    (merge 847b37271e pb/set-url-docfix later to maint).
    (merge 748f733d54 mt/checkout-entry-dead-code-removal later to maint).
    (merge ce820cbd58 dl/subtree-docs later to maint).
+   (merge 55fe225dde jk/leakfix later to maint).
