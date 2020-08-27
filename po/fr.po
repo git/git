@@ -6503,7 +6503,7 @@ msgstr "'%s' ne peut pas être résolue comme une branche"
 #: remote.c:1088
 #, c-format
 msgid "unable to delete '%s': remote ref does not exist"
-msgstr "suppression d '%s' impossible : la référence distante n'existe pas"
+msgstr "suppression de '%s' impossible : la référence distante n'existe pas"
 
 #: remote.c:1100
 #, c-format
