@@ -437,26 +437,47 @@ int transport_refs_pushed(struct ref *ref)
 	return 0;
 }
 
-void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose)
+static void update_one_tracking_ref(struct remote *remote, char *refname,
+				    struct object_id *new_oid, int deletion,
+				    int verbose)
 {
 	struct refspec_item rs;
 
-	if (ref->status != REF_STATUS_OK && ref->status != REF_STATUS_UPTODATE)
-		return;
-
-	rs.src = ref->name;
+	rs.src = refname;
 	rs.dst = NULL;
 
 	if (!remote_find_tracking(remote, &rs)) {
 		if (verbose)
 			fprintf(stderr, "updating local tracking ref '%s'\n", rs.dst);
-		if (ref->deletion) {
+		if (deletion)
 			delete_ref(NULL, rs.dst, NULL, 0);
-		} else
-			update_ref("update by push", rs.dst, &ref->new_oid,
+		else
+			update_ref("update by push", rs.dst, new_oid,
 				   NULL, 0, 0);
 		free(rs.dst);
 	}
+}
+
+void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose)
+{
+	char *refname;
+	struct object_id *new_oid;
+	struct ref_push_report *report;
+
+	if (ref->status != REF_STATUS_OK && ref->status != REF_STATUS_UPTODATE)
+		return;
+
+	report = ref->report;
+	if (!report)
+		update_one_tracking_ref(remote, ref->name, &ref->new_oid,
+					ref->deletion, verbose);
+	else
+		for (; report; report = report->next) {
+			refname = report->ref_name ? (char *)report->ref_name : ref->name;
+			new_oid = report->new_oid ? report->new_oid : &ref->new_oid;
+			update_one_tracking_ref(remote, refname, new_oid,
+						is_null_oid(new_oid), verbose);
+		}
 }
 
 static void print_ref_status(char flag, const char *summary,
