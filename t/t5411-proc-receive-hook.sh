@@ -78,6 +78,15 @@ run_proc_receive_hook_test() {
 # Initialize the upstream repository and local workbench.
 setup_upstream_and_workbench
 
+# Load test cases that only need to be executed once.
+for t in  "$TEST_DIRECTORY"/t5411/once-*.sh
+do
+	. "$t"
+done
+
+# Initialize the upstream repository and local workbench.
+setup_upstream_and_workbench
+
 # Run test cases for 'proc-receive' hook on local file protocol.
 run_proc_receive_hook_test local
 

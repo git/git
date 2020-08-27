@@ -29,10 +29,12 @@ static struct send_pack_args args;
 static void print_helper_status(struct ref *ref)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct ref_push_report *report;
 
 	for (; ref; ref = ref->next) {
 		const char *msg = NULL;
 		const char *res;
+		int count = 0;
 
 		switch(ref->status) {
 		case REF_STATUS_NONE:
@@ -94,6 +96,23 @@ static void print_helper_status(struct ref *ref)
 		}
 		strbuf_addch(&buf, '\n');
 
+		if (ref->status == REF_STATUS_OK) {
+			for (report = ref->report; report; report = report->next) {
+				if (count++ > 0)
+					strbuf_addf(&buf, "ok %s\n", ref->name);
+				if (report->ref_name)
+					strbuf_addf(&buf, "option refname %s\n",
+						report->ref_name);
+				if (report->old_oid)
+					strbuf_addf(&buf, "option old-oid %s\n",
+						oid_to_hex(report->old_oid));
+				if (report->new_oid)
+					strbuf_addf(&buf, "option new-oid %s\n",
+						oid_to_hex(report->new_oid));
+				if (report->forced_update)
+					strbuf_addstr(&buf, "option forced-update\n");
+			}
+		}
 		write_or_die(1, buf.buf, buf.len);
 	}
 	strbuf_release(&buf);
