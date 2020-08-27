@@ -93,6 +93,14 @@ int for_each_remote(each_remote_fn fn, void *priv);
 
 int remote_has_url(struct remote *remote, const char *url);
 
+struct ref_push_report {
+	const char *ref_name;
+	struct object_id *old_oid;
+	struct object_id *new_oid;
+	unsigned int forced_update:1;
+	struct ref_push_report *next;
+};
+
 struct ref {
 	struct ref *next;
 	struct object_id old_oid;
