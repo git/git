@@ -694,6 +694,7 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 
 struct receive_hook_feed_state {
 	struct command *cmd;
+	struct ref_push_report *report;
 	int skip_broken;
 	struct strbuf buf;
 	const struct string_list *push_options;
@@ -781,11 +782,31 @@ static int feed_receive_hook(void *state_, const char **bufp, size_t *sizep)
 		cmd = cmd->next;
 	if (!cmd)
 		return -1; /* EOF */
+	if (!bufp)
+		return 0; /* OK, can feed something. */
 	strbuf_reset(&state->buf);
-	strbuf_addf(&state->buf, "%s %s %s\n",
-		    oid_to_hex(&cmd->old_oid), oid_to_hex(&cmd->new_oid),
-		    cmd->ref_name);
-	state->cmd = cmd->next;
+	if (!state->report)
+		state->report = cmd->report;
+	if (state->report) {
+		struct object_id *old_oid;
+		struct object_id *new_oid;
+		const char *ref_name;
+
+		old_oid = state->report->old_oid ? state->report->old_oid : &cmd->old_oid;
+		new_oid = state->report->new_oid ? state->report->new_oid : &cmd->new_oid;
+		ref_name = state->report->ref_name ? state->report->ref_name : cmd->ref_name;
+		strbuf_addf(&state->buf, "%s %s %s\n",
+			    oid_to_hex(old_oid), oid_to_hex(new_oid),
+			    ref_name);
+		state->report = state->report->next;
+		if (!state->report)
+			state->cmd = cmd->next;
+	} else {
+		strbuf_addf(&state->buf, "%s %s %s\n",
+			    oid_to_hex(&cmd->old_oid), oid_to_hex(&cmd->new_oid),
+			    cmd->ref_name);
+		state->cmd = cmd->next;
+	}
 	if (bufp) {
 		*bufp = state->buf.buf;
 		*sizep = state->buf.len;
@@ -804,6 +825,7 @@ static int run_receive_hook(struct command *commands,
 	strbuf_init(&state.buf, 0);
 	state.cmd = commands;
 	state.skip_broken = skip_broken;
+	state.report = NULL;
 	if (feed_receive_hook(&state, NULL, NULL))
 		return 0;
 	state.cmd = commands;
