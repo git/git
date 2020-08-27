@@ -667,12 +667,21 @@ extern struct ref_storage_be refs_be_packed;
 /*
  * A representation of the reference store for the main repository or
  * a submodule. The ref_store instances for submodules are kept in a
- * linked list.
+ * hash map; see get_submodule_ref_store() for more info.
  */
 struct ref_store {
 	/* The backend describing this ref_store's storage scheme: */
 	const struct ref_storage_be *be;
+
+	/* The gitdir that this ref_store applies to: */
+	char *gitdir;
 };
+
+/*
+ * Parse contents of a loose ref file.
+ */
+int parse_loose_ref_contents(const char *buf, struct object_id *oid,
+			     struct strbuf *referent, unsigned int *type);
 
 /*
  * Fill in the generic part of refs and add it to our collection of

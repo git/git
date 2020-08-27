@@ -1527,11 +1527,37 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 	return refs_for_each_rawref(get_main_ref_store(the_repository), fn, cb_data);
 }
 
+static int refs_read_special_head(struct ref_store *ref_store,
+				  const char *refname, struct object_id *oid,
+				  struct strbuf *referent, unsigned int *type)
+{
+	struct strbuf full_path = STRBUF_INIT;
+	struct strbuf content = STRBUF_INIT;
+	int result = -1;
+	strbuf_addf(&full_path, "%s/%s", ref_store->gitdir, refname);
+
+	if (strbuf_read_file(&content, full_path.buf, 0) < 0)
+		goto done;
+
+	result = parse_loose_ref_contents(content.buf, oid, referent, type);
+
+done:
+	strbuf_release(&full_path);
+	strbuf_release(&content);
+	return result;
+}
+
 int refs_read_raw_ref(struct ref_store *ref_store,
 		      const char *refname, struct object_id *oid,
 		      struct strbuf *referent, unsigned int *type)
 {
-	return ref_store->be->read_raw_ref(ref_store, refname, oid, referent, type);
+	if (!strcmp(refname, "FETCH_HEAD") || !strcmp(refname, "MERGE_HEAD")) {
+		return refs_read_special_head(ref_store, refname, oid, referent,
+					      type);
+	}
+
+	return ref_store->be->read_raw_ref(ref_store, refname, oid, referent,
+					   type);
 }
 
 /* This function needs to return a meaningful errno on failure */
