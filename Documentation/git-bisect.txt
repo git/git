@@ -16,7 +16,7 @@ DESCRIPTION
 The command takes various subcommands, and different options depending
 on the subcommand:
 
- git bisect start [--term-{old,good}=<term> --term-{new,bad}=<term>]
+ git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]
 		  [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]
  git bisect (bad|new|<term-new>) [<rev>]
  git bisect (good|old|<term-old>) [<rev>...]
