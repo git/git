@@ -133,7 +133,7 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list,
 static void remove_redundant_pack(const char *dir_name, const char *base_name)
 {
 	struct strbuf buf = STRBUF_INIT;
-	struct multi_pack_index *m = get_multi_pack_index(the_repository);
+	struct multi_pack_index *m = get_local_multi_pack_index(the_repository);
 	strbuf_addf(&buf, "%s.pack", base_name);
 	if (m && midx_contains_pack(m, buf.buf))
 		clear_midx_file(the_repository);

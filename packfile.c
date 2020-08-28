@@ -1027,6 +1027,17 @@ struct multi_pack_index *get_multi_pack_index(struct repository *r)
 	return r->objects->multi_pack_index;
 }
 
+struct multi_pack_index *get_local_multi_pack_index(struct repository *r)
+{
+	struct multi_pack_index *m = get_multi_pack_index(r);
+
+	/* no need to iterate; we always put the local one first (if any) */
+	if (m && m->local)
+		return m;
+
+	return NULL;
+}
+
 struct packed_git *get_all_packs(struct repository *r)
 {
 	struct multi_pack_index *m;

@@ -402,8 +402,12 @@ int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, i
 	m = load_multi_pack_index(object_dir, local);
 
 	if (m) {
-		m->next = r->objects->multi_pack_index;
-		r->objects->multi_pack_index = m;
+		struct multi_pack_index *mp = r->objects->multi_pack_index;
+		if (mp) {
+			m->next = mp->next;
+			mp->next = m;
+		} else
+			r->objects->multi_pack_index = m;
 		return 1;
 	}
 
