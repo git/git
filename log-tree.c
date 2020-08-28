@@ -917,7 +917,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	}
 
 	/* More than one parent? */
-	if (parents && parents->next) {
+	if (parents->next) {
 		if (opt->ignore_merges)
 			return 0;
 		else if (opt->combine_merges)
