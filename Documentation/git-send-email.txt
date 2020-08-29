@@ -494,7 +494,11 @@ edit ~/.gitconfig to specify your account settings:
 	smtpServerPort = 587
 ----
 
-If you have multifactor authentication setup on your gmail account, you will
+If you do not have multi-factor authentication set up on your Gmail account, you
+will need to allow less secure app access. Visit
+https://myaccount.google.com/lesssecureapps to enable it.
+
+If you have multi-factor authentication set up on your Gmail account, you will
 need to generate an app-specific password for use with 'git send-email'. Visit
 https://security.google.com/settings/security/apppasswords to create it.
 
