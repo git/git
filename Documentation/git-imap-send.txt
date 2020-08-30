@@ -85,9 +85,16 @@ Using direct mode with SSL:
     user = bob
     pass = p4ssw0rd
     port = 123
-    sslverify = false
+    ; sslVerify = false
 .........................
 
+
+[NOTE]
+You may want to use `sslVerify=false`
+while troubleshooting, if you suspect that the reason you are
+having trouble connecting is because the certificate you use at
+the private server `example.com` you are trying to set up (or
+have set up) may not be verified correctly.
 
 Using Gmail's IMAP interface:
 
@@ -97,9 +104,9 @@ Using Gmail's IMAP interface:
 	host = imaps://imap.gmail.com
 	user = user@gmail.com
 	port = 993
-	sslverify = false
 ---------
 
+[NOTE]
 You might need to instead use: `folder = "[Google Mail]/Drafts"` if you get an error
 that the "Folder doesn't exist".
 
