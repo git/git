@@ -110,6 +110,10 @@ Using Gmail's IMAP interface:
 You might need to instead use: `folder = "[Google Mail]/Drafts"` if you get an error
 that the "Folder doesn't exist".
 
+[NOTE]
+If your Gmail account is set to another language than English, the name of the "Drafts"
+folder will be localized.
+
 Once the commits are ready to be sent, run the following command:
 
   $ git format-patch --cover-letter -M --stdout origin/master | git imap-send
