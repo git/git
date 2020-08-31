@@ -405,6 +405,17 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	test_path_is_dir realgitdir/refs
 '
 
+test_expect_success 're-init to move gitdir with linked worktrees' '
+	test_when_finished "rm -rf mainwt linkwt seprepo" &&
+	git init mainwt &&
+	test_commit -C mainwt gumby &&
+	git -C mainwt worktree add --detach ../linkwt &&
+	git -C mainwt init --separate-git-dir ../seprepo &&
+	git -C mainwt rev-parse --git-common-dir >expect &&
+	git -C linkwt rev-parse --git-common-dir >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success MINGW '.git hidden' '
 	rm -rf newdir &&
 	(
