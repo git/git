@@ -204,6 +204,7 @@ CONFIGURATION
 -------------
 
 include::config/rebase.txt[]
+include::config/sequencer.txt[]
 
 OPTIONS
 -------
