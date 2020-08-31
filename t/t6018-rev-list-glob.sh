@@ -345,6 +345,11 @@ test_expect_success 'rev-list should succeed with empty output with empty glob' 
 	test_must_be_empty actual
 '
 
+test_expect_success 'rev-list should succeed with empty output when ignoring missing' '
+	git rev-list --ignore-missing $ZERO_OID >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'shortlog accepts --glob/--tags/--remotes' '
 
 	compare shortlog "subspace/one subspace/two" --branches=subspace &&

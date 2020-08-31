@@ -2017,7 +2017,7 @@ static int handle_dotdot(const char *arg,
 	return ret;
 }
 
-int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsigned revarg_opt)
+static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int flags, unsigned revarg_opt)
 {
 	struct object_context oc;
 	char *mark;
@@ -2090,6 +2090,14 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	add_pending_object_with_path(revs, object, arg, oc.mode, oc.path);
 	free(oc.path);
 	return 0;
+}
+
+int handle_revision_arg(const char *arg, struct rev_info *revs, int flags, unsigned revarg_opt)
+{
+	int ret = handle_revision_arg_1(arg, revs, flags, revarg_opt);
+	if (!ret)
+		revs->rev_input_given = 1;
+	return ret;
 }
 
 static void read_pathspec_from_stdin(struct strbuf *sb,
@@ -2703,7 +2711,7 @@ static void NORETURN diagnose_missing_default(const char *def)
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
-	int i, flags, left, seen_dashdash, got_rev_arg = 0, revarg_opt;
+	int i, flags, left, seen_dashdash, revarg_opt;
 	struct strvec prune_data = STRVEC_INIT;
 	const char *submodule = NULL;
 	int seen_end_of_options = 0;
@@ -2792,8 +2800,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			strvec_pushv(&prune_data, argv + i);
 			break;
 		}
-		else
-			got_rev_arg = 1;
 	}
 
 	if (prune_data.nr) {
@@ -2822,7 +2828,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		opt->tweak(revs, opt);
 	if (revs->show_merge)
 		prepare_show_merge(revs);
-	if (revs->def && !revs->pending.nr && !revs->rev_input_given && !got_rev_arg) {
+	if (revs->def && !revs->pending.nr && !revs->rev_input_given) {
 		struct object_id oid;
 		struct object *object;
 		struct object_context oc;
