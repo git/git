@@ -51,6 +51,10 @@ UI, Workflows & Features
    deprecated and/or dangerous options from its output; it learned to
    optionally include all of them.
 
+ * The output from the "diff" family of the commands had abbreviated
+   object names of blobs involved in the patch, but its length was not
+   affected by the --abbrev option.  Now it is.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -112,6 +116,10 @@ Performance, Internal Implementation, Development Support etc.
  * The FETCH_HEAD is now always read from the filesystem regardless of
    the ref backend in use, as its format is much richer than the
    normal refs, and written directly by "git fetch" as a plain file..
+
+ * A handful of places in in-tree code still relied on being able to
+   execute the git subcommands, especially built-ins, in "git-foo"
+   form, which have been corrected.
 
 
 Fixes since v2.28
@@ -223,6 +231,37 @@ Fixes since v2.28
  * The patch-id computation did not ignore the "incomplete last line"
    marker like whitespaces.
    (merge 82a62015a7 rs/patch-id-with-incomplete-line later to maint).
+
+ * Updates into a lazy/partial clone with a submodule did not work
+   well with transfer.fsckobjects set.
+
+ * The parser for "git for-each-ref --format=..." was too loose when
+   parsing the "%(trailers...)" atom, and forgot that "trailers" and
+   "trailers:<modifiers>" are the only two allowed forms, which has
+   been corrected.
+   (merge 2c22e102f8 hv/ref-filter-trailers-atom-parsing-fix later to maint).
+
+ * Long ago, we decided to use 3 threads by default when running the
+   index-pack task in parallel, which has been adjusted a bit upwards.
+   (merge fbff95b67f jk/index-pack-w-more-threads later to maint).
+
+ * "git restore/checkout --no-overlay" with wildcarded pathspec
+   mistakenly removed matching paths in subdirectories, which has been
+   corrected.
+   (merge bfda204ade rs/checkout-no-overlay-pathspec-fix later to maint).
+
+ * The description of --cached/--index options in "git apply --help"
+   has been updated.
+   (merge d064702be3 rp/apply-cached-doc later to maint).
+
+ * Feeding "$ZERO_OID" to "git log --ignore-missing --stdin", and
+   running "git log --ignore-missing $ZERO_OID" fell back to start
+   digging from HEAD; it has been corrected to become a no-op, like
+   "git log --tags=no-tag-matches-this-pattern" does.
+   (merge 04a0e98515 jk/rev-input-given-fix later to maint).
+
+ * Various callers of run_command API has been modernized.
+   (merge afbdba391e jc/run-command-use-embedded-args later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
