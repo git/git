@@ -866,13 +866,16 @@ static int get_pack(struct fetch_pack_args *args,
 			 * have this responsibility.
 			 */
 			args->check_self_contained_and_connected = 0;
-		/*
-		 * If we're obtaining the filename of a lockfile, we'll use
-		 * that filename to write a .promisor file with more
-		 * information below. If not, we need index-pack to do it for
-		 * us.
-		 */
-		if (!(do_keep && pack_lockfiles) && args->from_promisor)
+
+		if (args->from_promisor)
+			/*
+			 * write_promisor_file() may be called afterwards but
+			 * we still need index-pack to know that this is a
+			 * promisor pack. For example, if transfer.fsckobjects
+			 * is true, index-pack needs to know that .gitmodules
+			 * is a promisor object (so that it won't complain if
+			 * it is missing).
+			 */
 			strvec_push(&cmd.args, "--promisor");
 	}
 	else {
