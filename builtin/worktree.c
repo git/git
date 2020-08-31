@@ -1043,15 +1043,18 @@ static void report_repair(int iserr, const char *path, const char *msg, void *cb
 
 static int repair(int ac, const char **av, const char *prefix)
 {
+	const char **p;
+	const char *self[] = { ".", NULL };
 	struct option options[] = {
 		OPT_END()
 	};
 	int rc = 0;
 
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
-	if (ac)
-		usage_with_options(worktree_usage, options);
 	repair_worktrees(report_repair, &rc);
+	p = ac > 0 ? av : self;
+	for (; *p; p++)
+		repair_worktree_at_path(*p, report_repair, &rc);
 	return rc;
 }
 

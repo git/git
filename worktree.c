@@ -632,3 +632,77 @@ void repair_worktrees(worktree_repair_fn fn, void *cb_data)
 		repair_gitfile(*wt, fn, cb_data);
 	free_worktrees(worktrees);
 }
+
+static int is_main_worktree_path(const char *path)
+{
+	struct strbuf target = STRBUF_INIT;
+	struct strbuf maindir = STRBUF_INIT;
+	int cmp;
+
+	strbuf_add_real_path(&target, path);
+	strbuf_strip_suffix(&target, "/.git");
+	strbuf_add_real_path(&maindir, get_git_common_dir());
+	strbuf_strip_suffix(&maindir, "/.git");
+	cmp = fspathcmp(maindir.buf, target.buf);
+
+	strbuf_release(&maindir);
+	strbuf_release(&target);
+	return !cmp;
+}
+
+/*
+ * Repair <repo>/worktrees/<id>/gitdir if missing, corrupt, or not pointing at
+ * the worktree's path.
+ */
+void repair_worktree_at_path(const char *path,
+			     worktree_repair_fn fn, void *cb_data)
+{
+	struct strbuf dotgit = STRBUF_INIT;
+	struct strbuf realdotgit = STRBUF_INIT;
+	struct strbuf gitdir = STRBUF_INIT;
+	struct strbuf olddotgit = STRBUF_INIT;
+	char *backlink = NULL;
+	const char *repair = NULL;
+	int err;
+
+	if (!fn)
+		fn = repair_noop;
+
+	if (is_main_worktree_path(path))
+		goto done;
+
+	strbuf_addf(&dotgit, "%s/.git", path);
+	if (!strbuf_realpath(&realdotgit, dotgit.buf, 0)) {
+		fn(1, path, _("not a valid path"), cb_data);
+		goto done;
+	}
+
+	backlink = xstrdup_or_null(read_gitfile_gently(realdotgit.buf, &err));
+	if (err == READ_GITFILE_ERR_NOT_A_FILE) {
+		fn(1, realdotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
+		goto done;
+	} else if (err) {
+		fn(1, realdotgit.buf, _("unable to locate repository; .git file broken"), cb_data);
+		goto done;
+	}
+
+	strbuf_addf(&gitdir, "%s/gitdir", backlink);
+	if (strbuf_read_file(&olddotgit, gitdir.buf, 0) < 0)
+		repair = _("gitdir unreadable");
+	else {
+		strbuf_rtrim(&olddotgit);
+		if (fspathcmp(olddotgit.buf, realdotgit.buf))
+			repair = _("gitdir incorrect");
+	}
+
+	if (repair) {
+		fn(0, gitdir.buf, repair, cb_data);
+		write_file(gitdir.buf, "%s", realdotgit.buf);
+	}
+done:
+	free(backlink);
+	strbuf_release(&olddotgit);
+	strbuf_release(&gitdir);
+	strbuf_release(&realdotgit);
+	strbuf_release(&dotgit);
+}
