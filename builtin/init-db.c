@@ -642,6 +642,30 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	if (!git_dir)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 
+	/*
+	 * When --separate-git-dir is used inside a linked worktree, take
+	 * care to ensure that the common .git/ directory is relocated, not
+	 * the worktree-specific .git/worktrees/<id>/ directory.
+	 */
+	if (real_git_dir) {
+		int err;
+		const char *p;
+		struct strbuf sb = STRBUF_INIT;
+
+		p = read_gitfile_gently(git_dir, &err);
+		if (p && get_common_dir(&sb, p)) {
+			struct strbuf mainwt = STRBUF_INIT;
+
+			strbuf_addbuf(&mainwt, &sb);
+			strbuf_strip_suffix(&mainwt, "/.git");
+			if (chdir(mainwt.buf) < 0)
+				die_errno(_("cannot chdir to %s"), mainwt.buf);
+			strbuf_release(&mainwt);
+			git_dir = strbuf_detach(&sb, NULL);
+		}
+		strbuf_release(&sb);
+	}
+
 	if (is_bare_repository_cfg < 0)
 		is_bare_repository_cfg = guess_repository_type(git_dir);
 

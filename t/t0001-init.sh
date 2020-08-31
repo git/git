@@ -329,6 +329,15 @@ test_expect_success 'implicit bare & --separate-git-dir incompatible' '
 	test_i18ngrep "incompatible" err
 '
 
+test_expect_success 'bare & --separate-git-dir incompatible within worktree' '
+	test_when_finished "rm -rf bare.git linkwt seprepo" &&
+	test_commit gumby &&
+	git clone --bare . bare.git &&
+	git -C bare.git worktree add --detach ../linkwt &&
+	test_must_fail git -C linkwt init --separate-git-dir seprepo 2>err &&
+	test_i18ngrep "incompatible" err
+'
+
 test_lazy_prereq GETCWD_IGNORES_PERMS '
 	base=GETCWD_TEST_BASE_DIR &&
 	mkdir -p $base/dir &&
@@ -405,15 +414,23 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	test_path_is_dir realgitdir/refs
 '
 
-test_expect_success 're-init to move gitdir with linked worktrees' '
+sep_git_dir_worktree ()  {
 	test_when_finished "rm -rf mainwt linkwt seprepo" &&
 	git init mainwt &&
 	test_commit -C mainwt gumby &&
 	git -C mainwt worktree add --detach ../linkwt &&
-	git -C mainwt init --separate-git-dir ../seprepo &&
+	git -C "$1" init --separate-git-dir ../seprepo &&
 	git -C mainwt rev-parse --git-common-dir >expect &&
 	git -C linkwt rev-parse --git-common-dir >actual &&
 	test_cmp expect actual
+}
+
+test_expect_success 're-init to move gitdir with linked worktrees' '
+	sep_git_dir_worktree mainwt
+'
+
+test_expect_success 're-init to move gitdir within linked worktree' '
+	sep_git_dir_worktree linkwt
 '
 
 test_expect_success MINGW '.git hidden' '
