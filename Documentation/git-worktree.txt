@@ -98,7 +98,10 @@ with `--reason`.
 move::
 
 Move a working tree to a new location. Note that the main working tree
-or linked working trees containing submodules cannot be moved.
+or linked working trees containing submodules cannot be moved with this
+command. (The `git worktree repair` command, however, can reestablish
+the connection with linked working trees if you move the main working
+tree manually.)
 
 prune::
 
@@ -115,6 +118,11 @@ repair::
 
 Repair working tree administrative files, if possible, if they have
 become corrupted or outdated due to external factors.
++
+For instance, if the main working tree (or bare repository) is moved,
+linked working trees will be unable to locate it. Running `repair` in
+the main working tree will reestablish the connection from linked
+working trees back to the main working tree.
 
 unlock::
 
