@@ -1709,6 +1709,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		die(_("--pathspec-file-nul requires --pathspec-from-file"));
 	}
 
+	opts->pathspec.recursive = 1;
+
 	if (opts->pathspec.nr) {
 		if (1 < !!opts->writeout_stage + !!opts->force + !!opts->merge)
 			die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
