@@ -23,8 +23,8 @@ jobs:
             --filter=blob:none \
             https://github.com/${{ github.repository }} \
             config-repo &&
-            cd config-repo &&
-            git checkout HEAD -- ci/config
+          cd config-repo &&
+          git checkout HEAD -- ci/config
       - id: check-ref
         name: check whether CI is enabled for ref
         run: |
