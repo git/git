@@ -397,10 +397,10 @@ static void parse_treeish_arg(const char **argv,
 		const char *colon = strchrnul(name, ':');
 		int refnamelen = colon - name;
 
-		if (!dwim_ref(name, refnamelen, &oid, &ref))
+		if (!dwim_ref(name, refnamelen, &oid, &ref, 0))
 			die(_("no such ref: %.*s"), refnamelen, name);
 	} else {
-		dwim_ref(name, strlen(name), &oid, &ref);
+		dwim_ref(name, strlen(name), &oid, &ref, 0);
 	}
 
 	if (get_oid(name, &oid))

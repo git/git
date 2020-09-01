@@ -1567,6 +1567,13 @@ struct interpret_branch_name_options {
 	 * allowed, even ones to refs outside of those namespaces.
 	 */
 	unsigned allowed;
+
+	/*
+	 * If ^{upstream} or ^{push} (or equivalent) is requested, and the
+	 * branch in question does not have such a reference, return -1 instead
+	 * of die()-ing.
+	 */
+	unsigned nonfatal_dangling_mark : 1;
 };
 int repo_interpret_branch_name(struct repository *r,
 			       const char *str, int len,
