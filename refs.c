@@ -601,7 +601,8 @@ static char *substitute_branch_name(struct repository *r,
 				    const char **string, int *len)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int ret = repo_interpret_branch_name(r, *string, *len, &buf, 0);
+	struct interpret_branch_name_options options = { 0 } ;
+	int ret = repo_interpret_branch_name(r, *string, *len, &buf, &options);
 
 	if (ret == *len) {
 		size_t size;

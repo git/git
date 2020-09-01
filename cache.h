@@ -1555,21 +1555,25 @@ int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
  *
  * If the input was ok but there are not N branch switches in the
  * reflog, it returns 0.
- *
- * If "allowed" is non-zero, it is a treated as a bitfield of allowable
- * expansions: local branches ("refs/heads/"), remote branches
- * ("refs/remotes/"), or "HEAD". If no "allowed" bits are set, any expansion is
- * allowed, even ones to refs outside of those namespaces.
  */
 #define INTERPRET_BRANCH_LOCAL (1<<0)
 #define INTERPRET_BRANCH_REMOTE (1<<1)
 #define INTERPRET_BRANCH_HEAD (1<<2)
+struct interpret_branch_name_options {
+	/*
+	 * If "allowed" is non-zero, it is a treated as a bitfield of allowable
+	 * expansions: local branches ("refs/heads/"), remote branches
+	 * ("refs/remotes/"), or "HEAD". If no "allowed" bits are set, any expansion is
+	 * allowed, even ones to refs outside of those namespaces.
+	 */
+	unsigned allowed;
+};
 int repo_interpret_branch_name(struct repository *r,
 			       const char *str, int len,
 			       struct strbuf *buf,
-			       unsigned allowed);
-#define interpret_branch_name(str, len, buf, allowed) \
-	repo_interpret_branch_name(the_repository, str, len, buf, allowed)
+			       const struct interpret_branch_name_options *options);
+#define interpret_branch_name(str, len, buf, options) \
+	repo_interpret_branch_name(the_repository, str, len, buf, options)
 
 int validate_headref(const char *ref);
 
