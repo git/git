@@ -625,4 +625,6 @@ core.abbrev::
 	computed based on the approximate number of packed objects
 	in your repository, which hopefully is enough for
 	abbreviated object names to stay unique for some time.
+	If set to "no", no abbreviation is made and the object names
+	are shown in their full length.
 	The minimum length is 4.
