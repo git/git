@@ -543,8 +543,9 @@ Git Diffs
 
 `GIT_EXTERNAL_DIFF`::
 	When the environment variable `GIT_EXTERNAL_DIFF` is set, the
-	program named by it is called, instead of the diff invocation
-	described above.  For a path that is added, removed, or modified,
+	program named by it is called to generate diffs, and Git
+	does not use its builtin diff machinery.
+	For a path that is added, removed, or modified,
 	`GIT_EXTERNAL_DIFF` is called with 7 parameters:
 
 	path old-file old-hex old-mode new-file new-hex new-mode
