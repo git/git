@@ -1,6 +1,8 @@
 #ifndef REFS_H
 #define REFS_H
 
+#include "cache.h"
+
 struct object_id;
 struct ref_store;
 struct repository;
@@ -151,7 +153,11 @@ void expand_ref_prefix(struct argv_array *prefixes, const char *prefix);
 int expand_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
 int repo_dwim_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
 int repo_dwim_log(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-int dwim_ref(const char *str, int len, struct object_id *oid, char **ref);
+static inline int dwim_ref(const char *str, int len, struct object_id *oid,
+			   char **ref)
+{
+	return repo_dwim_ref(the_repository, str, len, oid, ref);
+}
 int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 
 /*

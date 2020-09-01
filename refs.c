@@ -623,11 +623,6 @@ int repo_dwim_ref(struct repository *r, const char *str, int len,
 	return refs_found;
 }
 
-int dwim_ref(const char *str, int len, struct object_id *oid, char **ref)
-{
-	return repo_dwim_ref(the_repository, str, len, oid, ref);
-}
-
 int expand_ref(struct repository *repo, const char *str, int len,
 	       struct object_id *oid, char **ref)
 {
