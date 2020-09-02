@@ -183,7 +183,7 @@ test_expect_success 'missing CLI object, but promised, passes fsck' '
 '
 
 test_expect_success 'fetching of missing objects' '
-	rm -rf repo &&
+	rm -rf repo err &&
 	test_create_repo server &&
 	test_commit -C server foo &&
 	git -C server repack -a -d --write-bitmap-index &&
@@ -194,7 +194,10 @@ test_expect_success 'fetching of missing objects' '
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "origin" &&
-	git -C repo cat-file -p "$HASH" &&
+	git -C repo cat-file -p "$HASH" 2>err &&
+
+	# Ensure that no spurious FETCH_HEAD messages are written
+	! grep FETCH_HEAD err &&
 
 	# Ensure that the .promisor file is written, and check that its
 	# associated packfile contains the object

@@ -543,16 +543,18 @@ test_expect_success 'fetch into the current branch with --update-head-ok' '
 
 '
 
-test_expect_success 'fetch --dry-run does not touch FETCH_HEAD' '
-	rm -f .git/FETCH_HEAD &&
-	git fetch --dry-run . &&
-	! test -f .git/FETCH_HEAD
+test_expect_success 'fetch --dry-run does not touch FETCH_HEAD, but still prints what would be written' '
+	rm -f .git/FETCH_HEAD err &&
+	git fetch --dry-run . 2>err &&
+	! test -f .git/FETCH_HEAD &&
+	grep FETCH_HEAD err
 '
 
-test_expect_success '--no-write-fetch-head does not touch FETCH_HEAD' '
-	rm -f .git/FETCH_HEAD &&
-	git fetch --no-write-fetch-head . &&
-	! test -f .git/FETCH_HEAD
+test_expect_success '--no-write-fetch-head does not touch FETCH_HEAD, and does not print what would be written' '
+	rm -f .git/FETCH_HEAD err &&
+	git fetch --no-write-fetch-head . 2>err &&
+	! test -f .git/FETCH_HEAD &&
+	! grep FETCH_HEAD err
 '
 
 test_expect_success '--write-fetch-head gets defeated by --dry-run' '
