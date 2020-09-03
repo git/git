@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2020, #01; Tue, 1)
-X-master-at: e19713638985533ce461db072b49112da5bd2042
-X-next-at: d5648e830df7306a9eb9019e75db9a350e6c48b3
+Subject: What's cooking in git.git (Sep 2020, #02; Thu, 3)
+X-master-at: 3a238e539bcdfe3f9eb5010fd218640c1b499f7a
+X-next-at: f4bc123cb7519b4205da0f439b0cefc5a5f176ac
 
-What's cooking in git.git (Sep 2020, #01; Tue, 1)
+What's cooking in git.git (Sep 2020, #02; Thu, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -20,155 +20,96 @@ repositories listed at
 --------------------------------------------------
 [Graduated to 'master']
 
-* al/bisect-first-parent (2020-08-22) 1 commit
-  (merged to 'next' on 2020-08-24 at f95fbf45a6)
- + bisect: add first-parent option to documentation
-
- Finishing touches.
-
-
-* am/ci-wsfix (2020-08-21) 1 commit
-  (merged to 'next' on 2020-08-24 at 8491e031f1)
- + ci: fix inconsistent indentation
-
- Aesthetic fix to a CI configuration file.
-
-
-* dd/diff-customize-index-line-abbrev (2020-08-21) 2 commits
-  (merged to 'next' on 2020-08-24 at 74e842a2c8)
- + diff: index-line: respect --abbrev in object's name
- + t4013: improve diff-post-processor logic
-
- The output from the "diff" family of the commands had abbreviated
- object names of blobs involved in the patch, but its length was not
- affected by the --abbrev option.  Now it is.
-
-
-* hn/refs-pseudorefs (2020-08-21) 4 commits
-  (merged to 'next' on 2020-08-24 at 3579abe8ff)
- + sequencer: treat REVERT_HEAD as a pseudo ref
- + builtin/commit: suggest update-ref for pseudoref removal
- + sequencer: treat CHERRY_PICK_HEAD as a pseudo ref
- + refs: make refs_ref_exists public
-
- Accesses to two pseudorefs have been updated to properly use ref
- API.
-
-
-* hv/ref-filter-trailers-atom-parsing-fix (2020-08-21) 2 commits
-  (merged to 'next' on 2020-08-24 at 79b27f3263)
- + ref-filter: 'contents:trailers' show error if `:` is missing
- + t6300: unify %(trailers) and %(contents:trailers) tests
-
- The parser for "git for-each-ref --format=..." was too loose when
- parsing the "%(trailers...)" atom, and forgot that "trailers" and
- "trailers:<modifiers>" are the only two allowed forms, which has
- been corrected.
-
-
-* jc/ident-whose-ident (2020-08-21) 1 commit
-  (merged to 'next' on 2020-08-27 at caf5149c28)
- + ident: say whose identity is missing when giving user.name hint
-
- Error message update.
-
-
-* jk/index-pack-w-more-threads (2020-08-21) 3 commits
-  (merged to 'next' on 2020-08-24 at 18f18a5b66)
- + index-pack: adjust default threading cap
- + p5302: count up to online-cpus for thread tests
- + p5302: disable thread-count parameter tests by default
-
- Long ago, we decided to use 3 threads by default when running the
- index-pack task in parallel, which has been adjusted a bit upwards.
-
-
-* jk/refspecs-cleanup (2020-08-17) 2 commits
-  (merged to 'next' on 2020-08-24 at 807a080ebf)
- + refspec: make sure stack refspec_item variables are zeroed
- + refspec: fix documentation referring to refspec_item
- (this branch is used by jk/refspecs-negative.)
-
- Preliminary code clean-up before introducing "negative refspec".
-
-
-* jk/rev-input-given-fix (2020-08-26) 1 commit
-  (merged to 'next' on 2020-08-27 at da291a327c)
- + revision: set rev_input_given in handle_revision_arg()
-
- Feeding "$ZERO_OID" to "git log --ignore-missing --stdin", and
- running "git log --ignore-missing $ZERO_OID" fell back to start
- digging from HEAD; it has been corrected to become a no-op, like
- "git log --tags=no-tag-matches-this-pattern" does.
-
-
-* jt/promisor-pack-fix (2020-08-20) 1 commit
-  (merged to 'next' on 2020-08-24 at cd26d30d8d)
- + fetch-pack: in partial clone, pass --promisor
-
- Updates into a lazy/partial clone with a submodule did not work
- well with transfer.fsckobjects set.
-
-
-* ps/ref-transaction-hook (2020-08-25) 1 commit
-  (merged to 'next' on 2020-08-27 at 49b3fb8349)
- + refs: remove lookup cache for reference-transaction hook
-
- Code simplification by removing ineffective optimization.
-
-
-* rp/apply-cached-doc (2020-08-20) 1 commit
-  (merged to 'next' on 2020-08-27 at 1d610f08ea)
- + git-apply.txt: update descriptions of --cached, --index
-
- The description of --cached/--index options in "git apply --help"
- has been updated.
-
-
-* rs/checkout-no-overlay-pathspec-fix (2020-08-22) 1 commit
-  (merged to 'next' on 2020-08-27 at 277e39346d)
- + checkout, restore: make pathspec recursive
-
- "git restore/checkout --no-overlay" with wildcarded pathspec
- mistakenly removed matching paths in subdirectories, which has been
- corrected.
-
---------------------------------------------------
-[New Topics]
-
 * hl/bisect-doc-clarify-bad-good-ordering (2020-08-28) 1 commit
   (merged to 'next' on 2020-08-31 at 11ce613916)
  + bisect: swap command-line options in documentation
 
  Doc update.
 
- Will merge to 'master'.
-
 
 * jc/post-checkout-doc (2020-08-27) 1 commit
- - doc: clarify how exit status of post-checkout hook is used
+  (merged to 'next' on 2020-09-02 at bb06b5f978)
+ + doc: clarify how exit status of post-checkout hook is used
 
  Doc update.
 
- Will merge to 'next'.
+
+* jc/run-command-use-embedded-args (2020-08-26) 1 commit
+  (merged to 'next' on 2020-08-27 at c2b688e8e9)
+ + run_command: teach API users to use embedded 'args' more
+
+ Various callers of run_command API has been modernized.
 
 
-* jt/interpret-branch-name-fallback (2020-08-29) 2 commits
-  (merged to 'next' on 2020-08-31 at 01f5dc8cc0)
- + wt-status: tolerate dangling marks
- + sha1-name: replace unsigned int with option struct
+* jc/undash-in-tree-git-callers (2020-08-27) 3 commits
+  (merged to 'next' on 2020-08-27 at 671fa2f87e)
+ + credential-cache: use child_process.args
+ + cvsexportcommit: do not run git programs in dashed form
+ + transport-helper: do not run git-remote-ext etc. in dashed form
+ (this branch is used by jc/war-on-dashed-git.)
 
- "git status" has trouble showing where it came from by interpreting
- reflog entries that recordcertain events, e.g. "checkout @{u}", and
- gives a hard/fatal error.  Even though it inherently is impossible
- to give a correct answer because the reflog entries lose some
- information (e.g. "@{u}" does not record what branch the user was
- on hence which branch 'the upstream' needs to be computed, and even
- if the record were available, the relationship between branches may
- have changed), at least hide the error to allow "status" show its
- output.
+ A handful of places in in-tree code still relied on being able to
+ execute the git subcommands, especially built-ins, in "git-foo"
+ form, which have been corrected.
 
- Will merge to 'master'.
+
+* jk/slimmed-down (2020-08-13) 5 commits
+  (merged to 'next' on 2020-08-27 at bc8e9450c6)
+ + drop vcs-svn experiment
+ + make git-fast-import a builtin
+ + make git-bugreport a builtin
+ + make credential helpers builtins
+ + Makefile: drop builtins from MSVC pdb list
+
+ Trim an unused binary and turn a bunch of commands into built-in.
+
+
+* jk/xrealloc-avoid-use-after-free (2020-09-02) 1 commit
+  (merged to 'next' on 2020-09-02 at a1ad92fe1c)
+ + xrealloc: do not reuse pointer freed by zero-length realloc()
+
+ It was possible for xrealloc() to send a non-NULL pointer that has
+ been freed, which has been fixed.
+
+
+* jt/fetch-pack-loosen-validation-with-packfile-uri (2020-08-24) 3 commits
+  (merged to 'next' on 2020-08-27 at efd171f172)
+ + fetch-pack: make packfile URIs work with transfer.fsckobjects
+ + fetch-pack: document only_packfile in get_pack()
+ + (various): document from_promisor parameter
+
+ Bugfix for "git fetch" when the packfile URI capability is in use.
+
+
+* jt/lazy-fetch (2020-09-02) 8 commits
+  (merged to 'next' on 2020-09-02 at 1f8cd016d4)
+ + fetch: no FETCH_HEAD display if --no-write-fetch-head
+  (merged to 'next' on 2020-08-27 at 85f2319ba1)
+ + fetch-pack: remove no_dependents code
+ + promisor-remote: lazy-fetch objects in subprocess
+ + fetch-pack: do not lazy-fetch during ref iteration
+ + fetch: only populate existing_refs if needed
+ + fetch: avoid reading submodule config until needed
+ + fetch: allow refspecs specified through stdin
+ + negotiator/noop: add noop fetch negotiator
+
+ Updates to on-demand fetching code in lazily cloned repositories.
+
+
+* mr/diff-hide-stat-wo-textual-change (2020-08-19) 1 commit
+  (merged to 'next' on 2020-08-27 at b9e97254ae)
+ + diff: teach --stat to ignore uninteresting modifications
+
+ "git diff --stat -w" showed 0-line changes for paths whose changes
+ were only whitespaces, which was not intuitive.  We now omit such
+ paths from the stat output.
+
+
+* pb/doc-external-diff-env (2020-09-01) 1 commit
+  (merged to 'next' on 2020-09-02 at a789fe3fd9)
+ + git.txt: correct stale 'GIT_EXTERNAL_DIFF' description
+
+ Doc update.
 
 
 * pb/doc-sequence-editor-configuration (2020-08-31) 1 commit
@@ -177,28 +118,78 @@ repositories listed at
 
  Doc update.
 
+
+* pw/add-p-allowed-options-fix (2020-08-17) 2 commits
+  (merged to 'next' on 2020-08-27 at 6cd62753f7)
+ + add -p: fix checking of user input
+ + add -p: use ALLOC_GROW_BY instead of ALLOW_GROW
+
+ "git add -p" update.
+
+
+* pw/rebase-i-more-options (2020-08-26) 6 commits
+  (merged to 'next' on 2020-08-27 at c55cfeb247)
+ + t3436: do not run git-merge-recursive in dashed form
+  (merged to 'next' on 2020-08-21 at ade71fd49b)
+ + rebase: add --reset-author-date
+ + rebase -i: support --ignore-date
+ + rebase -i: support --committer-date-is-author-date
+ + am: stop exporting GIT_COMMITTER_DATE
+ + rebase -i: add --ignore-whitespace flag
+
+ "git rebase -i" learns a bit more options.
+
+
+* so/pretty-abbrev-doc (2020-08-27) 1 commit
+  (merged to 'next' on 2020-08-31 at d664bd0c06)
+ + pretty-options.txt: fix --no-abbrev-commit description
+
+ Documentation update for "--no-abbrev-commit".
+
+
+* ss/t7401-modernize (2020-08-21) 5 commits
+  (merged to 'next' on 2020-08-27 at 516cba9c64)
+ + t7401: add a NEEDSWORK
+ + t7401: change indentation for enhanced readability
+ + t7401: change syntax of test_i18ncmp calls for clarity
+ + t7401: use 'short' instead of 'verify' and cut in rev-parse calls
+ + t7401: modernize style
+
+ Test clean-up.
+
+--------------------------------------------------
+[New Topics]
+
+* js/ci-squelch-false-failure (2020-09-02) 2 commits
+  (merged to 'next' on 2020-09-03 at 254f390305)
+ + ci: avoid ugly "failure" in the `ci-config` job
+ + ci: fix indentation of the `ci-config` job
+
+ CI noise reduction.
+
  Will merge to 'master'.
 
 
-* pb/imap-send-updates (2020-08-31) 3 commits
- - git-imap-send.txt: add note about localized Gmail folders
- - git-imap-send.txt: do verify SSL certificate for gmail.com
- - git-imap-send.txt: don't duplicate 'Examples' sections
+* pb/clang-json-compilation-database (2020-09-02) 1 commit
+ - Makefile: add support for generating JSON compilation database
 
- "git imap-send" updates.
+ Developer support.
 
- Will merge to 'next'.
+ Waiting for a response to a sanity check.
+ cf. <xmqq1rjkccw8.fsf@gitster.c.googlers.com>
 
 
-* so/separate-field-for-m-and-diff-merges (2020-08-31) 1 commit
-  (merged to 'next' on 2020-08-31 at 8def2984ca)
- + revision: add separate field for "-m" of "diff-index -m"
+* os/vcbuild (2020-09-03) 2 commits
+  (merged to 'next' on 2020-09-03 at 0216ec9cb9)
+ + vcbuild: fix batch file name in README
+ + vcbuild: fix library name for expat with make MSVC=1
 
- Internal API clean-up to handle two options "diff-index" and "log"
- have, which happen to share the same short form, more sensibly.
+ Fix build procedure for MSVC.
 
  Will merge to 'master'.
 
+--------------------------------------------------
+[Stalled]
 
 * vv/send-email-with-less-secure-apps-access (2020-08-29) 1 commit
  - Documentation/git-send-email.txt: Mention less secure app access might need to enable.
@@ -210,37 +201,8 @@ repositories listed at
  cf. <xmqqft85i72s.fsf@gitster.c.googlers.com>
 
 
-* ew/decline-core-abbrev (2020-09-01) 1 commit
- - core.abbrev <off|false|no> disables abbreviations
-
- Allow the configuration to specify no abbreviation regardless of
- the hash algorithm.
-
- Expecting a reroll.  The intent is very good.
-
-
-* jk/xrealloc-avoid-use-after-free (2020-09-01) 1 commit
- - xrealloc: do not reuse pointer freed by zero-length realloc()
-
- It was possible for xrealloc() to send a non-NULL pointer that has
- been freed, which has been fixed.
-
- Expecting a reroll.
-
-
-* pb/doc-external-diff-env (2020-09-01) 1 commit
- - git.txt: correct stale 'GIT_EXTERNAL_DIFF' description
-
- Doc update.
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
-
 * jc/war-on-dashed-git (2020-08-27) 1 commit
  - git: catch an attempt to run "git-foo"
- (this branch uses jc/undash-in-tree-git-callers.)
 
  The first step to remove on-disk binaries for built-in subcommands
  by soliciting objections.
@@ -288,21 +250,6 @@ repositories listed at
  cf. <xmqqmu3i9kvg.fsf@gitster.c.googlers.com>
 
 
-* mt/grep-sparse-checkout (2020-06-12) 6 commits
- - config: add setting to ignore sparsity patterns in some cmds
- - grep: honor sparse checkout patterns
- - config: correctly read worktree configs in submodules
- - t/helper/test-config: facilitate addition of new cli options
- - t/helper/test-config: return exit codes consistently
- - doc: grep: unify info on configuration variables
-
- "git grep" has been tweaked to be limited to the sparse checkout
- paths.
-
- Review needed on 4/6; otherwise looking sane.
- cf. <CABPp-BGdEyEeajYZj_rdxp=MyEQdszuyjVTax=hhYj3fOtRQUQ@mail.gmail.com>
-
-
 * ls/mergetool-meld-auto-merge (2020-07-12) 2 commits
  - SQUASH???
  - Support auto-merge for meld to follow the vim-diff behavior
@@ -348,6 +295,69 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mt/grep-sparse-checkout (2020-09-02) 8 commits
+ - config: add setting to ignore sparsity patterns in some cmds
+ - grep: honor sparse checkout patterns
+ - config: correctly read worktree configs in submodules
+ - t/helper/test-config: unify exit labels
+ - t/helper/test-config: check argc before accessing argv
+ - t/helper/test-config: be consistent with exit codes
+ - t1308-config-set: avoid false positives when using test-config
+ - doc: grep: unify info on configuration variables
+
+ "git grep" has been tweaked to be limited to the sparse checkout
+ paths.
+
+
+* jt/interpret-branch-name-fallback (2020-09-02) 3 commits
+  (merged to 'next' on 2020-09-03 at 28914ab788)
+ + wt-status: tolerate dangling marks
+ + refs: move dwim_ref() to header file
+ + sha1-name: replace unsigned int with option struct
+
+ "git status" has trouble showing where it came from by interpreting
+ reflog entries that recordcertain events, e.g. "checkout @{u}", and
+ gives a hard/fatal error.  Even though it inherently is impossible
+ to give a correct answer because the reflog entries lose some
+ information (e.g. "@{u}" does not record what branch the user was
+ on hence which branch 'the upstream' needs to be computed, and even
+ if the record were available, the relationship between branches may
+ have changed), at least hide the error to allow "status" show its
+ output.
+
+ Will merge to 'master'.
+
+
+* pb/imap-send-updates (2020-08-31) 3 commits
+  (merged to 'next' on 2020-09-02 at 899fca3919)
+ + git-imap-send.txt: add note about localized Gmail folders
+ + git-imap-send.txt: do verify SSL certificate for gmail.com
+ + git-imap-send.txt: don't duplicate 'Examples' sections
+
+ "git imap-send" updates.
+
+ Will merge to 'master'.
+
+
+* so/separate-field-for-m-and-diff-merges (2020-08-31) 1 commit
+  (merged to 'next' on 2020-08-31 at 8def2984ca)
+ + revision: add separate field for "-m" of "diff-index -m"
+
+ Internal API clean-up to handle two options "diff-index" and "log"
+ have, which happen to share the same short form, more sensibly.
+
+ Will merge to 'master'.
+
+
+* ew/decline-core-abbrev (2020-09-01) 1 commit
+ - core.abbrev <off|false|no> disables abbreviations
+
+ Allow the configuration to specify no abbreviation regardless of
+ the hash algorithm.
+
+ Expecting a reroll.  The intent is very good.
+
+
 * mr/bisect-in-c-2 (2020-08-31) 13 commits
  - bisect--helper: retire `--bisect-autostart` subcommand
  - bisect--helper: retire `--write-terms` subcommand
@@ -365,19 +375,8 @@ repositories listed at
 
  Rewrite of the "git bisect" script in C continues.
 
-
-* jc/undash-in-tree-git-callers (2020-08-27) 3 commits
-  (merged to 'next' on 2020-08-27 at 671fa2f87e)
- + credential-cache: use child_process.args
- + cvsexportcommit: do not run git programs in dashed form
- + transport-helper: do not run git-remote-ext etc. in dashed form
- (this branch is used by jc/war-on-dashed-git.)
-
- A handful of places in in-tree code still relied on being able to
- execute the git subcommands, especially built-ins, in "git-foo"
- form, which have been corrected.
-
- Will merge to 'master'.
+ At v7; getting close
+ cf. <nycvar.QRO.7.76.6.2009031403510.56@tvgsbejvaqbjf.bet>
 
 
 * tb/repack-clearing-midx (2020-08-28) 2 commits
@@ -394,15 +393,6 @@ repositories listed at
  Will merge to 'master'.
 
 
-* jc/run-command-use-embedded-args (2020-08-26) 1 commit
-  (merged to 'next' on 2020-08-27 at c2b688e8e9)
- + run_command: teach API users to use embedded 'args' more
-
- Various callers of run_command API has been modernized.
-
- Will merge to 'master'.
-
-
 * es/worktree-repair (2020-08-31) 5 commits
   (merged to 'next' on 2020-08-31 at 604825c5e4)
  + init: make --separate-git-dir work from within linked worktree
@@ -411,8 +401,10 @@ repositories listed at
  + worktree: teach "repair" to fix worktree back-links to main worktree
  + worktree: add skeleton "repair" command
 
- "git worktree repair" command to correct on-disk pointers between
- the repository and its secondary working trees.
+ "git worktree" gained a "repair" subcommand to help users recover
+ after moving the worktrees or repository manually without telling
+ Git.  Also, "git init --separate-git-dir" no longer corrupts
+ administrative data related to linked worktrees.
 
  Will merge to 'master'.
 
@@ -426,24 +418,16 @@ repositories listed at
  Will merge to 'master'.
 
 
-* so/pretty-abbrev-doc (2020-08-27) 1 commit
-  (merged to 'next' on 2020-08-31 at d664bd0c06)
- + pretty-options.txt: fix --no-abbrev-commit description
-
- Documentation update for "--no-abbrev-commit".
-
- Will merge to 'master'.
-
-
 * ss/submodule-summary-in-c-fixes (2020-08-27) 3 commits
- - t7421: eliminate 'grep' check in t7421.4 for mingw compatibility
- - submodule: fix style in function definition
- - submodule: eliminate unused parameters from print_submodule_summary()
+  (merged to 'next' on 2020-09-02 at 7f959811b8)
+ + t7421: eliminate 'grep' check in t7421.4 for mingw compatibility
+ + submodule: fix style in function definition
+ + submodule: eliminate unused parameters from print_submodule_summary()
  (this branch uses ss/submodule-summary-in-c.)
 
  Fixups to a topic in 'next'.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/no-builtins-on-disk-option (2020-08-24) 3 commits
@@ -462,7 +446,10 @@ repositories listed at
  worth to keep this topic separate from such a policy change to help
  it graduate early.
 
- cf. https://public-inbox.org/git/7vprnzt7d5.fsf@gitster.siamese.dyndns.org/
+ Expecting a reroll to update log message for the last one.
+ as it confused at least two reviewers.
+ cf. <xmqqwo1baop3.fsf@gitster.c.googlers.com>
+ cf. <20200903104537.GA27325@szeder.dev>
 
 
 * jt/threaded-index-pack (2020-08-27) 9 commits
@@ -484,73 +471,27 @@ repositories listed at
 
 
 * hv/ref-filter-misc (2020-08-28) 8 commits
- - ref-filter: add `sanitize` option for 'subject' atom
- - pretty: refactor `format_sanitized_subject()`
- - ref-filter: add `short` modifier to 'parent' atom
- - ref-filter: add `short` modifier to 'tree' atom
- - ref-filter: rename `objectname` related functions and fields
- - ref-filter: modify error messages in `grab_objectname()`
- - ref-filter: refactor `grab_objectname()`
- - ref-filter: support different email formats
+  (merged to 'next' on 2020-09-02 at 9a8bb84f20)
+ + ref-filter: add `sanitize` option for 'subject' atom
+ + pretty: refactor `format_sanitized_subject()`
+ + ref-filter: add `short` modifier to 'parent' atom
+ + ref-filter: add `short` modifier to 'tree' atom
+ + ref-filter: rename `objectname` related functions and fields
+ + ref-filter: modify error messages in `grab_objectname()`
+ + ref-filter: refactor `grab_objectname()`
+ + ref-filter: support different email formats
 
  The "--format=" option to the "for-each-ref" command and friends
  learned a few more tricks, e.g. the ":short" suffix that applies to
  "objectname" now also can be used for "parent", "tree", etc.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/refspecs-negative (2020-08-21) 1 commit
  - refspec: add support for negative refspecs
 
  "negative refspecs"
-
-
-* jt/fetch-pack-loosen-validation-with-packfile-uri (2020-08-24) 3 commits
-  (merged to 'next' on 2020-08-27 at efd171f172)
- + fetch-pack: make packfile URIs work with transfer.fsckobjects
- + fetch-pack: document only_packfile in get_pack()
- + (various): document from_promisor parameter
-
- Bugfix for "git fetch" when the packfile URI capability is in use.
-
- Will merge to 'master'.
-
-
-* mr/diff-hide-stat-wo-textual-change (2020-08-19) 1 commit
-  (merged to 'next' on 2020-08-27 at b9e97254ae)
- + diff: teach --stat to ignore uninteresting modifications
-
- "git diff --stat -w" showed 0-line changes for paths whose changes
- were only whitespaces, which was not intuitive.  We now omit such
- paths from the stat output.
-
- Will merge to 'master'.
-
-
-* pw/add-p-allowed-options-fix (2020-08-17) 2 commits
-  (merged to 'next' on 2020-08-27 at 6cd62753f7)
- + add -p: fix checking of user input
- + add -p: use ALLOC_GROW_BY instead of ALLOW_GROW
-
- "git add -p" update.
-
- Will merge to 'master'.
-
-
-* jt/lazy-fetch (2020-08-18) 7 commits
-  (merged to 'next' on 2020-08-27 at 85f2319ba1)
- + fetch-pack: remove no_dependents code
- + promisor-remote: lazy-fetch objects in subprocess
- + fetch-pack: do not lazy-fetch during ref iteration
- + fetch: only populate existing_refs if needed
- + fetch: avoid reading submodule config until needed
- + fetch: allow refspecs specified through stdin
- + negotiator/noop: add noop fetch negotiator
-
- Updates to on-demand fetching code in lazily cloned repositories.
-
- Will merge to 'master'.
 
 
 * jx/proc-receive-hook (2020-08-27) 10 commits
@@ -569,47 +510,6 @@ repositories listed at
  outsource most of the ref updates to the new "proc-receive" hook.
 
  Looking good.
-
-
-* pw/rebase-i-more-options (2020-08-26) 6 commits
-  (merged to 'next' on 2020-08-27 at c55cfeb247)
- + t3436: do not run git-merge-recursive in dashed form
-  (merged to 'next' on 2020-08-21 at ade71fd49b)
- + rebase: add --reset-author-date
- + rebase -i: support --ignore-date
- + rebase -i: support --committer-date-is-author-date
- + am: stop exporting GIT_COMMITTER_DATE
- + rebase -i: add --ignore-whitespace flag
-
- "git rebase -i" learns a bit more options.
-
- Will merge to 'master'.
-
-
-* jk/slimmed-down (2020-08-13) 5 commits
-  (merged to 'next' on 2020-08-27 at bc8e9450c6)
- + drop vcs-svn experiment
- + make git-fast-import a builtin
- + make git-bugreport a builtin
- + make credential helpers builtins
- + Makefile: drop builtins from MSVC pdb list
-
- Trim an unused binary and turn a bunch of commands into built-in.
-
- Will merge to 'master'.
-
-
-* ss/t7401-modernize (2020-08-21) 5 commits
-  (merged to 'next' on 2020-08-27 at 516cba9c64)
- + t7401: add a NEEDSWORK
- + t7401: change indentation for enhanced readability
- + t7401: change syntax of test_i18ncmp calls for clarity
- + t7401: use 'short' instead of 'verify' and cut in rev-parse calls
- + t7401: modernize style
-
- Test clean-up.
-
- Will merge to 'master'.
 
 
 * ds/maintenance-part-2 (2020-08-25) 8 commits
@@ -665,7 +565,7 @@ repositories listed at
 [Discarded]
 
 * jc/remove-pack-redundant (2020-08-25) 1 commit
- - pack-redundant: gauge the usage before proposing its removal
+ . pack-redundant: gauge the usage before proposing its removal
 
  The first step to remove "git pack-redundant" by soliciting
  objections.
