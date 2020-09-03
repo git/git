@@ -462,6 +462,12 @@ all::
 # the global variable _wpgmptr containing the absolute path of the current
 # executable (this is the case on Windows).
 #
+# Define GENERATE_COMPILATION_DATABASE to "yes" to generate JSON compilation
+# database entries during compilation if your compiler supports it, using the
+# `-MJ` flag. The JSON entries will be placed in the `compile_commands/`
+# directory, and the JSON compilation database 'compile_commands.json' will be
+# created at the root of the repository.
+#
 # Define DEVELOPER to enable more compiler warnings. Compiler version
 # and family are auto detected, but could be overridden by defining
 # COMPILER_FEATURES (see config.mak.dev). You can still set
@@ -1255,6 +1261,27 @@ else
 ifneq ($(COMPUTE_HEADER_DEPENDENCIES),no)
 $(error please set COMPUTE_HEADER_DEPENDENCIES to yes, no, or auto \
 (not "$(COMPUTE_HEADER_DEPENDENCIES)"))
+endif
+endif
+
+ifndef GENERATE_COMPILATION_DATABASE
+GENERATE_COMPILATION_DATABASE = no
+endif
+
+ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
+compdb_check = $(shell $(CC) $(ALL_CFLAGS) \
+	-c -MJ /dev/null \
+	-x c /dev/null -o /dev/null 2>&1; \
+	echo $$?)
+ifneq ($(compdb_check),0)
+override GENERATE_COMPILATION_DATABASE = no
+$(warning GENERATE_COMPILATION_DATABASE is set to "yes", but your compiler does not \
+support generating compilation database entries)
+endif
+else
+ifneq ($(GENERATE_COMPILATION_DATABASE),no)
+$(error please set GENERATE_COMPILATION_DATABASE to "yes" or "no" \
+(not "$(GENERATE_COMPILATION_DATABASE)"))
 endif
 endif
 
@@ -2381,16 +2408,30 @@ missing_dep_dirs =
 dep_args =
 endif
 
+compdb_dir = compile_commands
+
+ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
+missing_compdb_dir = $(compdb_dir)
+$(missing_compdb_dir):
+	@mkdir -p $@
+
+compdb_file = $(compdb_dir)/$(subst /,-,$@.json)
+compdb_args = -MJ $(compdb_file)
+else
+missing_compdb_dir =
+compdb_args =
+endif
+
 ASM_SRC := $(wildcard $(OBJECTS:o=S))
 ASM_OBJ := $(ASM_SRC:S=o)
 C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
 
 .SUFFIXES:
 
-$(C_OBJ): %.o: %.c GIT-CFLAGS $(missing_dep_dirs)
-	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
-$(ASM_OBJ): %.o: %.S GIT-CFLAGS $(missing_dep_dirs)
-	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
+$(C_OBJ): %.o: %.c GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
+	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(compdb_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
+$(ASM_OBJ): %.o: %.S GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
+	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(compdb_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
 
 %.s: %.c GIT-CFLAGS FORCE
 	$(QUIET_CC)$(CC) -o $@ -S $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
@@ -2411,6 +2452,14 @@ else
 # building an object for the first time.
 
 $(OBJECTS): $(LIB_H) $(GENERATED_H)
+endif
+
+ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
+all:: compile_commands.json
+compile_commands.json:
+	@$(RM) $@
+	$(QUIET_GEN)sed -e '1s/^/[/' -e '$$s/,$$/]/' $(compdb_dir)/*.o.json > $@+
+	@if test -s $@+; then mv $@+ $@; else $(RM) $@+; fi
 endif
 
 exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
@@ -3117,7 +3166,7 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) $(FUZZ_PROGRAMS)
 	$(RM) $(HCC)
-	$(RM) -r bin-wrappers $(dep_dirs)
+	$(RM) -r bin-wrappers $(dep_dirs) $(compdb_dir) compile_commands.json
 	$(RM) -r po/build/
 	$(RM) *.pyc *.pyo */*.pyc */*.pyo $(GENERATED_H) $(ETAGS_TARGET) tags cscope*
 	$(RM) -r $(GIT_TARNAME) .doc-tmp-dir
