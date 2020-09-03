@@ -45,9 +45,13 @@ struct replay_opts {
 	int verbose;
 	int quiet;
 	int reschedule_failed_exec;
+	int committer_date_is_author_date;
+	int ignore_date;
 
 	int mainline;
 
+	char *committer_name;
+	char *committer_email;
 	char *gpg_sign;
 	enum commit_msg_cleanup_mode default_msg_cleanup;
 	int explicit_cleanup;
