@@ -3,7 +3,7 @@
 USAGE='[help|start|bad|good|new|old|terms|skip|next|reset|visualize|view|replay|log|run]'
 LONG_USAGE='git bisect help
 	print this long help message.
-git bisect start [--term-{old,good}=<term> --term-{new,bad}=<term>]
+git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]
 		 [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]
 	reset bisect state and start bisection.
 git bisect (bad|new) [<rev>]
