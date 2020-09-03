@@ -638,7 +638,6 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	struct child_process child_process = CHILD_PROCESS_INIT;
 	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
-	const char *argv[] = { NULL, NULL };
 
 	/* apply % substitution to cmd */
 	struct strbuf cmd = STRBUF_INIT;
@@ -656,9 +655,7 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	strbuf_expand(&cmd, params->cmd, strbuf_expand_dict_cb, &dict);
 	strbuf_release(&path);
 
-	argv[0] = cmd.buf;
-
-	child_process.argv = argv;
+	strvec_push(&child_process.args, cmd.buf);
 	child_process.use_shell = 1;
 	child_process.in = -1;
 	child_process.out = out;

@@ -1726,14 +1726,6 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 int submodule_uses_gitfile(const char *path)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	const char *argv[] = {
-		"submodule",
-		"foreach",
-		"--quiet",
-		"--recursive",
-		"test -f .git",
-		NULL,
-	};
 	struct strbuf buf = STRBUF_INIT;
 	const char *git_dir;
 
@@ -1746,7 +1738,10 @@ int submodule_uses_gitfile(const char *path)
 	strbuf_release(&buf);
 
 	/* Now test that all nested submodules use a gitfile too */
-	cp.argv = argv;
+	strvec_pushl(&cp.args,
+		     "submodule", "foreach", "--quiet",	"--recursive",
+		     "test -f .git", NULL);
+
 	prepare_submodule_repo_env(&cp.env_array);
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
