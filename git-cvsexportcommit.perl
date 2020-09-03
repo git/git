@@ -30,7 +30,7 @@ if ($opt_w || $opt_W) {
 	# Remember where GIT_DIR is before changing to CVS checkout
 	unless ($ENV{GIT_DIR}) {
 		# No GIT_DIR set. Figure it out for ourselves
-		my $gd =`git-rev-parse --git-dir`;
+		my $gd =`git rev-parse --git-dir`;
 		chomp($gd);
 		$ENV{GIT_DIR} = $gd;
 	}
@@ -66,7 +66,7 @@ if ($opt_d) {
 # resolve target commit
 my $commit;
 $commit = pop @ARGV;
-$commit = safe_pipe_capture('git-rev-parse', '--verify', "$commit^0");
+$commit = safe_pipe_capture('git', 'rev-parse', '--verify', "$commit^0");
 chomp $commit;
 if ($?) {
     die "The commit reference $commit did not resolve!";
@@ -76,7 +76,7 @@ if ($?) {
 my $parent;
 if (@ARGV) {
     $parent = pop @ARGV;
-    $parent =  safe_pipe_capture('git-rev-parse', '--verify', "$parent^0");
+    $parent =  safe_pipe_capture('git', 'rev-parse', '--verify', "$parent^0");
     chomp $parent;
     if ($?) {
 	die "The parent reference did not resolve!";
@@ -84,7 +84,7 @@ if (@ARGV) {
 }
 
 # find parents from the commit itself
-my @commit  = safe_pipe_capture('git-cat-file', 'commit', $commit);
+my @commit  = safe_pipe_capture('git', 'cat-file', 'commit', $commit);
 my @parents;
 my $committer;
 my $author;
@@ -162,9 +162,9 @@ if ($opt_a) {
 close MSG;
 
 if ($parent eq $noparent) {
-    `git-diff-tree --binary -p --root $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
+    `git diff-tree --binary -p --root $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
 } else {
-    `git-diff-tree --binary -p $parent $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
+    `git diff-tree --binary -p $parent $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
 }
 
 ## apply non-binary changes
@@ -178,7 +178,7 @@ my $context = $opt_p ? '' : '-C1';
 print "Checking if patch will apply\n";
 
 my @stat;
-open APPLY, "GIT_INDEX_FILE=$tmpdir/index git-apply $context --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
+open APPLY, "GIT_INDEX_FILE=$tmpdir/index git apply $context --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
 @stat=<APPLY>;
 close APPLY || die "Cannot patch";
 my (@bfiles,@files,@afiles,@dfiles);
@@ -333,7 +333,7 @@ print "Applying\n";
 if ($opt_W) {
     system("git checkout -q $commit^0") && die "cannot patch";
 } else {
-    `GIT_INDEX_FILE=$tmpdir/index git-apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+    `GIT_INDEX_FILE=$tmpdir/index git apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
 }
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
