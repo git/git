@@ -232,9 +232,6 @@ static int set_git_option(struct git_transport_options *opts,
 	} else if (!strcmp(name, TRANS_OPT_FROM_PROMISOR)) {
 		opts->from_promisor = !!value;
 		return 0;
-	} else if (!strcmp(name, TRANS_OPT_NO_DEPENDENTS)) {
-		opts->no_dependents = !!value;
-		return 0;
 	} else if (!strcmp(name, TRANS_OPT_LIST_OBJECTS_FILTER)) {
 		list_objects_filter_die_if_populated(&opts->filter_options);
 		parse_list_objects_filter(&opts->filter_options, value);
@@ -359,7 +356,6 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.cloning = transport->cloning;
 	args.update_shallow = data->options.update_shallow;
 	args.from_promisor = data->options.from_promisor;
-	args.no_dependents = data->options.no_dependents;
 	args.filter_options = data->options.filter_options;
 	args.stateless_rpc = transport->stateless_rpc;
 	args.server_options = transport->server_options;

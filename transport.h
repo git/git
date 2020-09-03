@@ -19,8 +19,6 @@ struct git_transport_options {
 	/* see documentation of corresponding flag in fetch-pack.h */
 	unsigned from_promisor : 1;
 
-	unsigned no_dependents : 1;
-
 	/*
 	 * If this transport supports connect or stateless-connect,
 	 * the corresponding field in struct fetch_pack_args is copied
@@ -203,12 +201,6 @@ void transport_check_allowed(const char *type);
 
 /* Indicate that these objects are being fetched by a promisor */
 #define TRANS_OPT_FROM_PROMISOR "from-promisor"
-
-/*
- * Indicate that only the objects wanted need to be fetched, not their
- * dependents
- */
-#define TRANS_OPT_NO_DEPENDENTS "no-dependents"
 
 /* Filter objects for partial clone and fetch */
 #define TRANS_OPT_LIST_OBJECTS_FILTER "filter"
