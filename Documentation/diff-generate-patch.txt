@@ -10,7 +10,8 @@ linkgit:git-diff-tree[1], or
 linkgit:git-diff-files[1]
 with the `-p` option produces patch text.
 You can customize the creation of patch text via the
-`GIT_EXTERNAL_DIFF` and the `GIT_DIFF_OPTS` environment variables.
+`GIT_EXTERNAL_DIFF` and the `GIT_DIFF_OPTS` environment variables
+(see linkgit:git[1]).
 
 What the -p option produces is slightly different from the traditional
 diff format:
