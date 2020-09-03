@@ -39,7 +39,10 @@ struct options {
 		/* One of the SEND_PACK_PUSH_CERT_* constants. */
 		push_cert : 2,
 		deepen_relative : 1,
+
+		/* see documentation of corresponding flag in fetch-pack.h */
 		from_promisor : 1,
+
 		no_dependents : 1,
 		atomic : 1,
 		object_format : 1;

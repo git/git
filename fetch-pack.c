@@ -794,6 +794,10 @@ static void write_promisor_file(const char *keep_name,
 	strbuf_release(&promisor_name);
 }
 
+/*
+ * Pass 1 as "only_packfile" if the pack received is the only pack in this
+ * fetch request (that is, if there were no packfile URIs provided).
+ */
 static int get_pack(struct fetch_pack_args *args,
 		    int xd[2], struct string_list *pack_lockfiles,
 		    int only_packfile,
@@ -895,7 +899,7 @@ static int get_pack(struct fetch_pack_args *args,
 	    : transfer_fsck_objects >= 0
 	    ? transfer_fsck_objects
 	    : 0) {
-		if (args->from_promisor)
+		if (args->from_promisor || !only_packfile)
 			/*
 			 * We cannot use --strict in index-pack because it
 			 * checks both broken objects and links, but we only

@@ -40,6 +40,14 @@ struct fetch_pack_args {
 	unsigned cloning:1;
 	unsigned update_shallow:1;
 	unsigned deepen:1;
+
+	/*
+	 * Indicate that the remote of this request is a promisor remote. The
+	 * pack received does not need all referred-to objects to be present in
+	 * the local object store, and fetch-pack will store the pack received
+	 * together with a ".promisor" file indicating that the aforementioned
+	 * pack is a promisor pack.
+	 */
 	unsigned from_promisor:1;
 
 	/*

@@ -15,7 +15,10 @@ struct git_transport_options {
 	unsigned self_contained_and_connected : 1;
 	unsigned update_shallow : 1;
 	unsigned deepen_relative : 1;
+
+	/* see documentation of corresponding flag in fetch-pack.h */
 	unsigned from_promisor : 1;
+
 	unsigned no_dependents : 1;
 
 	/*
