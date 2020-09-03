@@ -121,6 +121,13 @@ Performance, Internal Implementation, Development Support etc.
    execute the git subcommands, especially built-ins, in "git-foo"
    form, which have been corrected.
 
+ * An unused binary has been discarded, and and a bunch of commands
+   have been turned into into built-in.
+
+ * A handful of places in in-tree code still relied on being able to
+   execute the git subcommands, especially built-ins, in "git-foo"
+   form, which have been corrected.
+
 
 Fixes since v2.28
 -----------------
@@ -263,6 +270,22 @@ Fixes since v2.28
  * Various callers of run_command API has been modernized.
    (merge afbdba391e jc/run-command-use-embedded-args later to maint).
 
+ * List of options offered and accepted by "git add -i/-p" were
+   inconsistent, which have been corrected.
+   (merge ce910287e7 pw/add-p-allowed-options-fix later to maint).
+
+ * Various callers of run_command API has been modernized.
+   (merge afbdba391e jc/run-command-use-embedded-args later to maint).
+
+ * "git diff --stat -w" showed 0-line changes for paths whose changes
+   were only whitespaces, which was not intuitive.  We now omit such
+   paths from the stat output.
+   (merge 1cf3d5db9b mr/diff-hide-stat-wo-textual-change later to maint).
+
+ * It was possible for xrealloc() to send a non-NULL pointer that has
+   been freed, which has been fixed.
+   (merge 6479ea4a8a jk/xrealloc-avoid-use-after-free later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -285,3 +308,6 @@ Fixes since v2.28
    (merge 748f733d54 mt/checkout-entry-dead-code-removal later to maint).
    (merge ce820cbd58 dl/subtree-docs later to maint).
    (merge 55fe225dde jk/leakfix later to maint).
+   (merge ee22a29215 so/pretty-abbrev-doc later to maint).
+   (merge 3100fd5588 jc/post-checkout-doc later to maint).
+   (merge 17bae89476 pb/doc-external-diff-env later to maint).
