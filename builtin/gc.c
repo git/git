@@ -28,6 +28,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "promisor-remote.h"
+#include "refs.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -710,6 +711,86 @@ struct maintenance_run_opts {
 	int quiet;
 };
 
+/* Remember to update object flag allocation in object.h */
+#define SEEN		(1u<<0)
+
+struct cg_auto_data {
+	int num_not_in_graph;
+	int limit;
+};
+
+static int dfs_on_ref(const char *refname,
+		      const struct object_id *oid, int flags,
+		      void *cb_data)
+{
+	struct cg_auto_data *data = (struct cg_auto_data *)cb_data;
+	int result = 0;
+	struct object_id peeled;
+	struct commit_list *stack = NULL;
+	struct commit *commit;
+
+	if (!peel_ref(refname, &peeled))
+		oid = &peeled;
+	if (oid_object_info(the_repository, oid, NULL) != OBJ_COMMIT)
+		return 0;
+
+	commit = lookup_commit(the_repository, oid);
+	if (!commit)
+		return 0;
+	if (parse_commit(commit))
+		return 0;
+
+	commit_list_append(commit, &stack);
+
+	while (!result && stack) {
+		struct commit_list *parent;
+
+		commit = pop_commit(&stack);
+
+		for (parent = commit->parents; parent; parent = parent->next) {
+			if (parse_commit(parent->item) ||
+			    commit_graph_position(parent->item) != COMMIT_NOT_FROM_GRAPH ||
+			    parent->item->object.flags & SEEN)
+				continue;
+
+			parent->item->object.flags |= SEEN;
+			data->num_not_in_graph++;
+
+			if (data->num_not_in_graph >= data->limit) {
+				result = 1;
+				break;
+			}
+
+			commit_list_append(parent->item, &stack);
+		}
+	}
+
+	free_commit_list(stack);
+	return result;
+}
+
+static int should_write_commit_graph(void)
+{
+	int result;
+	struct cg_auto_data data;
+
+	data.num_not_in_graph = 0;
+	data.limit = 100;
+	git_config_get_int("maintenance.commit-graph.auto",
+			   &data.limit);
+
+	if (!data.limit)
+		return 0;
+	if (data.limit < 0)
+		return 1;
+
+	result = for_each_ref(dfs_on_ref, &data);
+
+	clear_commit_marks_all(SEEN);
+
+	return result;
+}
+
 static int run_write_commit_graph(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
@@ -790,6 +871,7 @@ static struct maintenance_task tasks[] = {
 	[TASK_COMMIT_GRAPH] = {
 		"commit-graph",
 		maintenance_task_commit_graph,
+		should_write_commit_graph,
 	},
 };
 
