@@ -153,7 +153,7 @@ void refspec_init(struct refspec *rs, int fetch)
 	rs->fetch = fetch;
 }
 
-void refspec_append(struct refspec *rs, const char *refspec)
+static void refspec_append_nodup(struct refspec *rs, char *refspec)
 {
 	struct refspec_item item;
 
@@ -163,7 +163,21 @@ void refspec_append(struct refspec *rs, const char *refspec)
 	rs->items[rs->nr++] = item;
 
 	ALLOC_GROW(rs->raw, rs->raw_nr + 1, rs->raw_alloc);
-	rs->raw[rs->raw_nr++] = xstrdup(refspec);
+	rs->raw[rs->raw_nr++] = refspec;
+}
+
+void refspec_append(struct refspec *rs, const char *refspec)
+{
+	refspec_append_nodup(rs, xstrdup(refspec));
+}
+
+void refspec_appendf(struct refspec *rs, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	refspec_append_nodup(rs, xstrvfmt(fmt, ap));
+	va_end(ap);
 }
 
 void refspec_appendn(struct refspec *rs, const char **refspecs, int nr)
