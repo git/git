@@ -139,6 +139,36 @@ sub is_path_ignored {
 	return 0;
 }
 
+############################################################
+
+=item is_empty_commit()
+
+Return 1 if all given $paths are ignored, so that this commit end up in an empty commit
+
+Input:  $path - array of strings (Paths) in a commit
+
+Output: { 1 if true, 0 if false }
+
+=cut
+
+############################################################
+sub is_empty_commit {
+	my ( $self, $paths ) = @_;
+	my $path;
+	my $ignored;
+	unless ( defined( $self->{include_regex} ) ) {
+		return 0;
+	}
+
+	foreach $path ( keys %$paths ) {
+		$ignored = $self->is_path_ignored($path);
+		if ( !$ignored ) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 sub set_path_strip {
 	my ($self, $path) = @_;
 	$self->{path_strip} = qr/^\Q$path\E(\/|$)/ if length $path;
