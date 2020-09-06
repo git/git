@@ -31,15 +31,17 @@ sub new {
 	# override options set in an [svn-remote "..."] section
 	$repo_id = $git_svn->{repo_id};
 	my $k = "svn-remote.$repo_id.ignore-paths";
-	my $v = eval { command_oneline('config', '--get', $k) };
-	$self->{ignore_regex} = $v;
+	my @config = eval { command( 'config', '--get-all', $k ) };
+	chomp(@config);	# Replace all \n\r on the end
+	$self->{ignore_regex} = '(?:'.join('|', @config).')';
 
 	$k = "svn-remote.$repo_id.include-paths";
-	$v = eval { command_oneline('config', '--get', $k) };
-	$self->{include_regex} = $v;
+	@config = eval { command( 'config', '--get-all', $k ) };
+	chomp(@config);	# Replace all \n\r on the end
+	$self->{include_regex} = '(?:'.join('|', @config).')';
 
 	$k = "svn-remote.$repo_id.preserve-empty-dirs";
-	$v = eval { command_oneline('config', '--get', '--bool', $k) };
+	my $v = eval { command_oneline('config', '--get', '--bool', $k) };
 	if ($v && $v eq 'true') {
 		$_preserve_empty_dirs = 1;
 		$k = "svn-remote.$repo_id.placeholder-filename";
