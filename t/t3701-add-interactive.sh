@@ -560,6 +560,13 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	diff_cmp expected diff
 '
 
+test_expect_success 'index is refreshed after applying patch' '
+	git reset --hard &&
+	echo content >test &&
+	printf y | git add -p &&
+	git diff-files --exit-code
+'
+
 test_expect_success 'diffs can be colorized' '
 	git reset --hard &&
 
