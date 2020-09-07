@@ -349,7 +349,7 @@ sub handleLinkLine
         } elsif ("$part" eq "-lcurl") {
             push(@libs, "libcurl.lib");
         } elsif ("$part" eq "-lexpat") {
-            push(@libs, "expat.lib");
+            push(@libs, "libexpat.lib");
         } elsif ("$part" eq "-liconv") {
             push(@libs, "libiconv.lib");
         } elsif ($part =~ /^[-\/]/) {
