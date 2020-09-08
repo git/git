@@ -208,6 +208,15 @@ Options for Files
 	Only the names of the variables are listed, not their value,
 	even if they are set.
 
+--path-format=(absolute|relative)::
+	Controls the behavior of certain other options following it on the command
+	line. If specified as absolute, the paths printed by those options will be
+	absolute and canonical. If specified as relative, the paths will be relative
+	to the current working directory if that is possible.  The default is option
+	specific.
+
+The following options are modified by `--path-format`:
+
 --git-dir::
 	Show `$GIT_DIR` if defined. Otherwise show the path to
 	the .git directory. The path shown, when relative, is
@@ -217,12 +226,41 @@ If `$GIT_DIR` is not defined and the current directory
 is not detected to lie in a Git repository or work tree
 print a message to stderr and exit with nonzero status.
 
+--git-common-dir::
+	Show `$GIT_COMMON_DIR` if defined, else `$GIT_DIR`.
+
+--resolve-git-dir <path>::
+	Check if <path> is a valid repository or a gitfile that
+	points at a valid repository, and print the location of the
+	repository.  If <path> is a gitfile then the resolved path
+	to the real repository is printed.
+
+--git-path <path>::
+	Resolve "$GIT_DIR/<path>" and takes other path relocation
+	variables such as $GIT_OBJECT_DIRECTORY,
+	$GIT_INDEX_FILE... into account. For example, if
+	$GIT_OBJECT_DIRECTORY is set to /foo/bar then "git rev-parse
+	--git-path objects/abc" returns /foo/bar/abc.
+
+--show-toplevel::
+	Show the (by default, absolute) path of the top-level directory
+	of the working tree. If there is no working tree, report an error.
+
+--show-superproject-working-tree::
+	Show the absolute path of the root of the superproject's
+	working tree (if exists) that uses the current repository as
+	its submodule.  Outputs nothing if the current repository is
+	not used as a submodule by any project.
+
+--shared-index-path::
+	Show the path to the shared index file in split index mode, or
+	empty if not in split-index mode.
+
+The following options are unaffected by `--path-format`:
+
 --absolute-git-dir::
 	Like `--git-dir`, but its output is always the canonicalized
 	absolute path.
-
---git-common-dir::
-	Show `$GIT_COMMON_DIR` if defined, else `$GIT_DIR`.
 
 --is-inside-git-dir::
 	When the current working directory is below the repository
@@ -238,19 +276,6 @@ print a message to stderr and exit with nonzero status.
 --is-shallow-repository::
 	When the repository is shallow print "true", otherwise "false".
 
---resolve-git-dir <path>::
-	Check if <path> is a valid repository or a gitfile that
-	points at a valid repository, and print the location of the
-	repository.  If <path> is a gitfile then the resolved path
-	to the real repository is printed.
-
---git-path <path>::
-	Resolve "$GIT_DIR/<path>" and takes other path relocation
-	variables such as $GIT_OBJECT_DIRECTORY,
-	$GIT_INDEX_FILE... into account. For example, if
-	$GIT_OBJECT_DIRECTORY is set to /foo/bar then "git rev-parse
-	--git-path objects/abc" returns /foo/bar/abc.
-
 --show-cdup::
 	When the command is invoked from a subdirectory, show the
 	path of the top-level directory relative to the current
@@ -260,20 +285,6 @@ print a message to stderr and exit with nonzero status.
 	When the command is invoked from a subdirectory, show the
 	path of the current directory relative to the top-level
 	directory.
-
---show-toplevel::
-	Show the absolute path of the top-level directory of the working
-	tree. If there is no working tree, report an error.
-
---show-superproject-working-tree::
-	Show the absolute path of the root of the superproject's
-	working tree (if exists) that uses the current repository as
-	its submodule.  Outputs nothing if the current repository is
-	not used as a submodule by any project.
-
---shared-index-path::
-	Show the path to the shared index file in split index mode, or
-	empty if not in split-index mode.
 
 --show-object-format[=(storage|input|output)]::
 	Show the object format (hash algorithm) used for the repository
