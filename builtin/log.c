@@ -1595,16 +1595,20 @@ static void infer_range_diff_ranges(struct strbuf *r1,
 				    struct commit *head)
 {
 	const char *head_oid = oid_to_hex(&head->object.oid);
+	int prev_is_range = !!strstr(prev, "..");
 
-	if (!strstr(prev, "..")) {
-		strbuf_addf(r1, "%s..%s", head_oid, prev);
-		strbuf_addf(r2, "%s..%s", prev, head_oid);
-	} else if (!origin) {
-		die(_("failed to infer range-diff ranges"));
-	} else {
+	if (prev_is_range)
 		strbuf_addstr(r1, prev);
-		strbuf_addf(r2, "%s..%s",
-			    oid_to_hex(&origin->object.oid), head_oid);
+	else
+		strbuf_addf(r1, "%s..%s", head_oid, prev);
+
+	if (origin)
+		strbuf_addf(r2, "%s..%s", oid_to_hex(&origin->object.oid), head_oid);
+	else if (prev_is_range)
+		die(_("failed to infer range-diff origin of current series"));
+	else {
+		warning(_("using '%s' as range-diff origin of current series"), prev);
+		strbuf_addf(r2, "%s..%s", prev, head_oid);
 	}
 }
 
