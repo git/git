@@ -1206,7 +1206,8 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	if (rev->idiff_oid1) {
 		fprintf_ln(rev->diffopt.file, "%s", rev->idiff_title);
-		show_interdiff(rev, 0);
+		show_interdiff(rev->idiff_oid1, rev->idiff_oid2, 0,
+			       &rev->diffopt);
 	}
 
 	if (rev->rdiff1) {

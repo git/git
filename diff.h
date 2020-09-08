@@ -600,7 +600,12 @@ int index_differs_from(struct repository *r, const char *def,
 		       const struct diff_flags *flags,
 		       int ita_invisible_in_index);
 
-void show_interdiff(struct rev_info *, int indent);
+/*
+ * Emit an interdiff of two object ID's to 'diff_options.file' optionally
+ * indented by 'indent' spaces.
+ */
+void show_interdiff(const struct object_id *, const struct object_id *,
+		    int indent, struct diff_options *);
 
 /*
  * Fill the contents of the filespec "df", respecting any textconv defined by

@@ -577,19 +577,20 @@ static struct strbuf *idiff_prefix_cb(struct diff_options *opt, void *data)
 	return data;
 }
 
-void show_interdiff(struct rev_info *rev, int indent)
+void show_interdiff(const struct object_id *oid1, const struct object_id *oid2,
+		    int indent, struct diff_options *diffopt)
 {
 	struct diff_options opts;
 	struct strbuf prefix = STRBUF_INIT;
 
-	memcpy(&opts, &rev->diffopt, sizeof(opts));
+	memcpy(&opts, diffopt, sizeof(opts));
 	opts.output_format = DIFF_FORMAT_PATCH;
 	opts.output_prefix = idiff_prefix_cb;
 	strbuf_addchars(&prefix, ' ', indent);
 	opts.output_prefix_data = &prefix;
 	diff_setup_done(&opts);
 
-	diff_tree_oid(rev->idiff_oid1, rev->idiff_oid2, "", &opts);
+	diff_tree_oid(oid1, oid2, "", &opts);
 	diffcore_std(&opts);
 	diff_flush(&opts);
 
