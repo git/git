@@ -33,7 +33,6 @@
 #include "commit-slab.h"
 #include "repository.h"
 #include "commit-reach.h"
-#include "interdiff.h"
 #include "range-diff.h"
 
 #define MAIL_DEFAULT_WRAP 72

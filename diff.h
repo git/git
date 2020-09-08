@@ -600,6 +600,8 @@ int index_differs_from(struct repository *r, const char *def,
 		       const struct diff_flags *flags,
 		       int ita_invisible_in_index);
 
+void show_interdiff(struct rev_info *, int indent);
+
 /*
  * Fill the contents of the filespec "df", respecting any textconv defined by
  * its userdiff driver.  The "driver" parameter must come from a

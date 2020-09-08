@@ -15,7 +15,6 @@
 #include "sequencer.h"
 #include "line-log.h"
 #include "help.h"
-#include "interdiff.h"
 #include "range-diff.h"
 
 static struct decoration name_decoration = { "object names" };
