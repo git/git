@@ -89,6 +89,29 @@ int validate_worktree(const struct worktree *wt,
 void update_worktree_location(struct worktree *wt,
 			      const char *path_);
 
+typedef void (* worktree_repair_fn)(int iserr, const char *path,
+				    const char *msg, void *cb_data);
+
+/*
+ * Visit each registered linked worktree and repair corruptions. For each
+ * repair made or error encountered while attempting a repair, the callback
+ * function, if non-NULL, is called with the path of the worktree and a
+ * description of the repair or error, along with the callback user-data.
+ */
+void repair_worktrees(worktree_repair_fn, void *cb_data);
+
+/*
+ * Repair administrative files corresponding to the worktree at the given path.
+ * The worktree's .git file pointing at the repository must be intact for the
+ * repair to succeed. Useful for re-associating an orphaned worktree with the
+ * repository if the worktree has been moved manually (without using "git
+ * worktree move"). For each repair made or error encountered while attempting
+ * a repair, the callback function, if non-NULL, is called with the path of the
+ * worktree and a description of the repair or error, along with the callback
+ * user-data.
+ */
+void repair_worktree_at_path(const char *, worktree_repair_fn, void *cb_data);
+
 /*
  * Free up the memory for worktree(s)
  */
