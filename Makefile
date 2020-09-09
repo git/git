@@ -2992,6 +2992,9 @@ quick-install-html:
 
 ### Maintainer's dist rules
 
+# Allow tweaking to hide local environment effects, like perm bits.
+# With GNU tar, "--mode=u+rwX,og+rX,og-w" would be a good idea, for example.
+TAR_DIST_EXTRA_OPTS =
 GIT_TARNAME = git-$(GIT_VERSION)
 dist: git-archive$(X) configure
 	./git-archive --format=tar \
@@ -3000,7 +3003,7 @@ dist: git-archive$(X) configure
 	@cp configure $(GIT_TARNAME)
 	@echo $(GIT_VERSION) > $(GIT_TARNAME)/version
 	@$(MAKE) -C git-gui TARDIR=../$(GIT_TARNAME)/git-gui dist-version
-	$(TAR) rf $(GIT_TARNAME).tar \
+	$(TAR) rf $(GIT_TARNAME).tar $(TAR_DIST_EXTRA_OPTS) \
 		$(GIT_TARNAME)/configure \
 		$(GIT_TARNAME)/version \
 		$(GIT_TARNAME)/git-gui/version
@@ -3014,7 +3017,7 @@ ifdef DC_SHA1_SUBMODULE
 		$(GIT_TARNAME)/sha1collisiondetection/lib/
 	@cp sha1collisiondetection/lib/ubc_check.[ch] \
 		$(GIT_TARNAME)/sha1collisiondetection/lib/
-	$(TAR) rf $(GIT_TARNAME).tar \
+	$(TAR) rf $(GIT_TARNAME).tar $(TAR_DIST_EXTRA_OPTS) \
 		$(GIT_TARNAME)/sha1collisiondetection/LICENSE.txt \
 		$(GIT_TARNAME)/sha1collisiondetection/lib/sha1.[ch] \
 		$(GIT_TARNAME)/sha1collisiondetection/lib/ubc_check.[ch]
@@ -3048,7 +3051,7 @@ dist-doc:
 	$(RM) -r .doc-tmp-dir
 	mkdir .doc-tmp-dir
 	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
-	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar .
+	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar $(TAR_DIST_EXTRA_OPTS) .
 	gzip -n -9 -f $(htmldocs).tar
 	:
 	$(RM) -r .doc-tmp-dir
@@ -3058,7 +3061,7 @@ dist-doc:
 		man5dir=../.doc-tmp-dir/man5 \
 		man7dir=../.doc-tmp-dir/man7 \
 		install
-	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
+	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar $(TAR_DIST_EXTRA_OPTS) .
 	gzip -n -9 -f $(manpages).tar
 	$(RM) -r .doc-tmp-dir
 
