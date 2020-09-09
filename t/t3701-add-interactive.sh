@@ -814,6 +814,44 @@ test_expect_success 'checkout -p works with pathological context lines' '
 	test_cmp expect a
 '
 
+# This should be called from a subshell as it sets a temporary editor
+setup_new_file() {
+	write_script new-file-editor.sh <<-\EOF &&
+	sed /^#/d "$1" >patch &&
+	sed /^+c/d patch >"$1"
+	EOF
+	test_set_editor "$(pwd)/new-file-editor.sh" &&
+	test_write_lines a b c d e f >new-file &&
+	test_write_lines a b d e f >new-file-expect &&
+	test_write_lines "@@ -0,0 +1,6 @@" +a +b +c +d +e +f >patch-expect
+}
+
+test_expect_success 'add -N followed by add -p patch editing' '
+	git reset --hard &&
+	(
+		setup_new_file &&
+		git add -N new-file &&
+		test_write_lines e n q | git add -p &&
+		git cat-file blob :new-file >actual &&
+		test_cmp new-file-expect actual &&
+		test_cmp patch-expect patch
+	)
+'
+
+test_expect_success 'checkout -p patch editing of added file' '
+	git reset --hard &&
+	(
+		setup_new_file &&
+		git add new-file &&
+		git commit -m "add new file" &&
+		git rm new-file &&
+		git commit -m "remove new file" &&
+		test_write_lines e n q | git checkout -p HEAD^ &&
+		test_cmp new-file-expect new-file &&
+		test_cmp patch-expect patch
+	)
+'
+
 test_expect_success 'show help from add--helper' '
 	git reset --hard &&
 	cat >expect <<-EOF &&
