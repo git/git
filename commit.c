@@ -1632,12 +1632,9 @@ size_t ignore_non_trailer(const char *buf, size_t len)
 }
 
 int run_commit_hook(int editor_is_used, const char *index_file,
-		    const char *name, ...)
+		    const char *name, struct strvec *args)
 {
 	struct strvec hook_env = STRVEC_INIT;
-	va_list args;
-	const char *arg;
-	struct strvec hook_args = STRVEC_INIT;
 	struct strbuf hook_name = STRBUF_INIT;
 	int ret;
 
@@ -1651,14 +1648,8 @@ int run_commit_hook(int editor_is_used, const char *index_file,
 	if (!editor_is_used)
 		strvec_push(&hook_env, "GIT_EDITOR=:");
 
-	va_start(args, name);
-	while ((arg = va_arg(args, const char *)))
-		strvec_push(&hook_args, arg);
-	va_end(args);
-
-	ret = run_hooks(hook_env.v, &hook_name, &hook_args);
+	ret = run_hooks(hook_env.v, &hook_name, args);
 	strvec_clear(&hook_env);
-	strvec_clear(&hook_args);
 	strbuf_release(&hook_name);
 
 	return ret;

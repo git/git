@@ -1153,22 +1153,23 @@ static int run_prepare_commit_msg_hook(struct repository *r,
 				       const char *commit)
 {
 	int ret = 0;
-	const char *name, *arg1 = NULL, *arg2 = NULL;
+	struct strvec args = STRVEC_INIT;
+	const char *name = git_path_commit_editmsg();
 
-	name = git_path_commit_editmsg();
+	strvec_push(&args, name);
 	if (write_message(msg->buf, msg->len, name, 0))
 		return -1;
 
 	if (commit) {
-		arg1 = "commit";
-		arg2 = commit;
+		strvec_push(&args, "commit");
+		strvec_push(&args, commit);
 	} else {
-		arg1 = "message";
+		strvec_push(&args, "message");
 	}
-	if (run_commit_hook(0, r->index_file, "prepare-commit-msg", name,
-			    arg1, arg2, NULL))
+	if (run_commit_hook(0, r->index_file, "prepare-commit-msg", &args))
 		ret = error(_("'prepare-commit-msg' hook failed"));
 
+	strvec_clear(&args);
 	return ret;
 }
 
