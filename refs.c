@@ -598,10 +598,14 @@ const char *git_default_branch_name(void)
  * to name a branch.
  */
 static char *substitute_branch_name(struct repository *r,
-				    const char **string, int *len)
+				    const char **string, int *len,
+				    int nonfatal_dangling_mark)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int ret = repo_interpret_branch_name(r, *string, *len, &buf, 0);
+	struct interpret_branch_name_options options = {
+		.nonfatal_dangling_mark = nonfatal_dangling_mark
+	};
+	int ret = repo_interpret_branch_name(r, *string, *len, &buf, &options);
 
 	if (ret == *len) {
 		size_t size;
@@ -614,17 +618,13 @@ static char *substitute_branch_name(struct repository *r,
 }
 
 int repo_dwim_ref(struct repository *r, const char *str, int len,
-		  struct object_id *oid, char **ref)
+		  struct object_id *oid, char **ref, int nonfatal_dangling_mark)
 {
-	char *last_branch = substitute_branch_name(r, &str, &len);
+	char *last_branch = substitute_branch_name(r, &str, &len,
+						   nonfatal_dangling_mark);
 	int   refs_found  = expand_ref(r, str, len, oid, ref);
 	free(last_branch);
 	return refs_found;
-}
-
-int dwim_ref(const char *str, int len, struct object_id *oid, char **ref)
-{
-	return repo_dwim_ref(the_repository, str, len, oid, ref);
 }
 
 int expand_ref(struct repository *repo, const char *str, int len,
@@ -665,7 +665,7 @@ int repo_dwim_log(struct repository *r, const char *str, int len,
 		  struct object_id *oid, char **log)
 {
 	struct ref_store *refs = get_main_ref_store(r);
-	char *last_branch = substitute_branch_name(r, &str, &len);
+	char *last_branch = substitute_branch_name(r, &str, &len, 0);
 	const char **p;
 	int logs_found = 0;
 	struct strbuf path = STRBUF_INIT;
