@@ -959,7 +959,7 @@ enum diff_cmd {
 	DIFF_FILES
 };
 
-static char* verify_submodule_committish(const char *sm_path,
+static char *verify_submodule_committish(const char *sm_path,
 					 const char *committish)
 {
 	struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
@@ -979,10 +979,9 @@ static char* verify_submodule_committish(const char *sm_path,
 	return strbuf_detach(&result, NULL);
 }
 
-static void print_submodule_summary(struct summary_cb *info, char* errmsg,
+static void print_submodule_summary(struct summary_cb *info, char *errmsg,
 				    int total_commits, const char *displaypath,
 				    const char *src_abbrev, const char *dst_abbrev,
-				    int missing_src, int missing_dst,
 				    struct module_cb *p)
 {
 	if (p->status == 'T') {
@@ -1036,7 +1035,7 @@ static void print_submodule_summary(struct summary_cb *info, char* errmsg,
 static void generate_submodule_summary(struct summary_cb *info,
 				       struct module_cb *p)
 {
-	char *displaypath, *src_abbrev, *dst_abbrev;
+	char *displaypath, *src_abbrev = NULL, *dst_abbrev;
 	int missing_src = 0, missing_dst = 0;
 	char *errmsg = NULL;
 	int total_commits = -1;
@@ -1057,13 +1056,14 @@ static void generate_submodule_summary(struct summary_cb *info,
 		} else {
 			/* for a submodule removal (mode:0000000), don't warn */
 			if (p->mod_dst)
-				warning(_("unexpected mode %d\n"), p->mod_dst);
+				warning(_("unexpected mode %o\n"), p->mod_dst);
 		}
 	}
 
 	if (S_ISGITLINK(p->mod_src)) {
-		src_abbrev = verify_submodule_committish(p->sm_path,
-							 oid_to_hex(&p->oid_src));
+		if (p->status != 'D')
+			src_abbrev = verify_submodule_committish(p->sm_path,
+								 oid_to_hex(&p->oid_src));
 		if (!src_abbrev) {
 			missing_src = 1;
 			/*
@@ -1154,8 +1154,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 
 	print_submodule_summary(info, errmsg, total_commits,
 				displaypath, src_abbrev,
-				dst_abbrev, missing_src,
-				missing_dst, p);
+				dst_abbrev, p);
 
 	free(displaypath);
 	free(src_abbrev);
