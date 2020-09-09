@@ -12,7 +12,6 @@ jobs:
       enabled: ${{ steps.check-ref.outputs.enabled }}
     steps:
       - name: try to clone ci-config branch
-        continue-on-error: true
         run: |
           git -c protocol.version=2 clone \
             --no-tags \
@@ -23,8 +22,8 @@ jobs:
             --filter=blob:none \
             https://github.com/${{ github.repository }} \
             config-repo &&
-            cd config-repo &&
-            git checkout HEAD -- ci/config
+          cd config-repo &&
+          git checkout HEAD -- ci/config || : ignore
       - id: check-ref
         name: check whether CI is enabled for ref
         run: |
