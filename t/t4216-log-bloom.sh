@@ -283,5 +283,58 @@ test_expect_success 'correctly report commits with no changed paths' '
 		grep "\"filter_trunc_large\":0" trace
 	)
 '
+test_bloom_filters_computed () {
+	commit_graph_args=$1
+	rm -f "$TRASH_DIRECTORY/trace.event" &&
+	GIT_TRACE2_EVENT="$TRASH_DIRECTORY/trace.event" git commit-graph write \
+		$commit_graph_args &&
+	grep "\"filter_not_computed\":$2" "$TRASH_DIRECTORY/trace.event" &&
+	grep "\"filter_trunc_large\":$3" "$TRASH_DIRECTORY/trace.event" &&
+	grep "\"filter_computed\":$4" "$TRASH_DIRECTORY/trace.event"
+}
+
+test_expect_success 'Bloom generation is limited by --max-new-filters' '
+	(
+		cd limits &&
+		test_commit c2 filter &&
+		test_commit c3 filter &&
+		test_commit c4 no-filter &&
+		test_bloom_filters_computed "--reachable --changed-paths --split=replace --max-new-filters=2" \
+			3 0 2
+	)
+'
+
+test_expect_success 'Bloom generation backfills previously-skipped filters' '
+	(
+		cd limits &&
+		test_bloom_filters_computed "--reachable --changed-paths --split=replace --max-new-filters=1" \
+			4 0 1
+	)
+'
+
+test_expect_success 'Bloom generation backfills empty commits' '
+	git init empty &&
+	test_when_finished "rm -fr empty" &&
+	(
+		cd empty &&
+		for i in $(test_seq 1 6)
+		do
+			git commit --allow-empty -m "$i"
+		done &&
+
+		# Generate Bloom filters for empty commits 1-6, two at a time.
+		test_bloom_filters_computed "--reachable --changed-paths --max-new-filters=2" \
+			4 0 2 &&
+		test_bloom_filters_computed "--reachable --changed-paths --max-new-filters=2" \
+			4 0 2 &&
+		test_bloom_filters_computed "--reachable --changed-paths --max-new-filters=2" \
+			4 0 2 &&
+
+		# Finally, make sure that once all commits have filters, that
+		# none are subsequently recomputed.
+		test_bloom_filters_computed "--reachable --changed-paths --max-new-filters=2" \
+			6 0 0
+	)
+'
 
 test_done
