@@ -5,9 +5,11 @@
 #include "hook.h"
 #include "parse-options.h"
 #include "strbuf.h"
+#include "strvec.h"
 
 static const char * const builtin_hook_usage[] = {
 	N_("git hook list <hookname>"),
+	N_("git hook run [(-e|--env)=<var>...] [(-a|--arg)=<arg>...] <hookname>"),
 	NULL
 };
 
@@ -62,6 +64,32 @@ static int list(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static int run(int argc, const char **argv, const char *prefix)
+{
+	struct strbuf hookname = STRBUF_INIT;
+	struct strvec envs = STRVEC_INIT;
+	struct strvec args = STRVEC_INIT;
+
+	struct option run_options[] = {
+		OPT_STRVEC('e', "env", &envs, N_("var"),
+			   N_("environment variables for hook to use")),
+		OPT_STRVEC('a', "arg", &args, N_("args"),
+			   N_("argument to pass to hook")),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, run_options,
+			     builtin_hook_usage, 0);
+
+	if (argc < 1)
+		usage_msg_opt(_("a hookname must be provided to operate on."),
+			      builtin_hook_usage, run_options);
+
+	strbuf_addstr(&hookname, argv[0]);
+
+	return run_hooks(envs.v, &hookname, &args);
+}
+
 int cmd_hook(int argc, const char **argv, const char *prefix)
 {
 	struct option builtin_hook_options[] = {
@@ -72,6 +100,8 @@ int cmd_hook(int argc, const char **argv, const char *prefix)
 
 	if (!strcmp(argv[1], "list"))
 		return list(argc - 1, argv + 1, prefix);
+	if (!strcmp(argv[1], "run"))
+		return run(argc - 1, argv + 1, prefix);
 
 	usage_with_options(builtin_hook_usage, builtin_hook_options);
 }

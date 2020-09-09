@@ -84,4 +84,32 @@ test_expect_success 'git hook list --porcelain prints just the command' '
 	test_cmp expected actual
 '
 
+test_expect_success 'inline hook definitions execute oneliners' '
+	test_config hook.pre-commit.command "echo \"Hello World\"" &&
+
+	echo "Hello World" >expected &&
+
+	# hooks are run with stdout_to_stderr = 1
+	git hook run pre-commit 2>actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'inline hook definitions resolve paths' '
+	cat >~/sample-hook.sh <<-EOF &&
+	echo \"Sample Hook\"
+	EOF
+
+	test_when_finished "rm ~/sample-hook.sh" &&
+
+	chmod +x ~/sample-hook.sh &&
+
+	test_config hook.pre-commit.command "~/sample-hook.sh" &&
+
+	echo \"Sample Hook\" >expected &&
+
+	# hooks are run with stdout_to_stderr = 1
+	git hook run pre-commit 2>actual &&
+	test_cmp expected actual
+'
+
 test_done
