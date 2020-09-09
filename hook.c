@@ -111,6 +111,15 @@ struct list_head* hook_list(const struct strbuf* hookname)
 	return &hook_head;
 }
 
+int hook_exists(const char *hookname)
+{
+	const char *value = NULL;
+	struct strbuf hook_key = STRBUF_INIT;
+	strbuf_addf(&hook_key, "hook.%s.command", hookname);
+
+	return (!git_config_get_value(hook_key.buf, &value)) || !!find_hook(hookname);
+}
+
 int run_hooks(const char *const *env, const struct strbuf *hookname,
 	      const struct strvec *args)
 {

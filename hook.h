@@ -11,6 +11,7 @@ struct hook
 };
 
 struct list_head* hook_list(const struct strbuf *hookname);
+int hook_exists(const char *hookname);
 int run_hooks(const char *const *env, const struct strbuf *hookname,
 	      const struct strvec *args);
 
