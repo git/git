@@ -55,6 +55,15 @@ UI, Workflows & Features
    object names of blobs involved in the patch, but its length was not
    affected by the --abbrev option.  Now it is.
 
+ * "git worktree" gained a "repair" subcommand to help users recover
+   after moving the worktrees or repository manually without telling
+   Git.  Also, "git init --separate-git-dir" no longer corrupts
+   administrative data related to linked worktrees.
+
+ * The "--format=" option to the "for-each-ref" command and friends
+   learned a few more tricks, e.g. the ":short" suffix that applies to
+   "objectname" now also can be used for "parent", "tree", etc.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -127,6 +136,14 @@ Performance, Internal Implementation, Development Support etc.
  * A handful of places in in-tree code still relied on being able to
    execute the git subcommands, especially built-ins, in "git-foo"
    form, which have been corrected.
+
+ * When a packfile is removed by "git repack", multi-pack-index gets
+   cleared; the code was taught to do so less aggressively by first
+   checking if the midx actually refers to a pack that no longer
+   exists.
+
+ * Internal API clean-up to handle two options "diff-index" and "log"
+   have, which happen to share the same short form, more sensibly.
 
 
 Fixes since v2.28
@@ -286,6 +303,16 @@ Fixes since v2.28
    been freed, which has been fixed.
    (merge 6479ea4a8a jk/xrealloc-avoid-use-after-free later to maint).
 
+ * "git status" has trouble showing where it came from by interpreting
+   reflog entries that recordcertain events, e.g. "checkout @{u}", and
+   gives a hard/fatal error.  Even though it inherently is impossible
+   to give a correct answer because the reflog entries lose some
+   information (e.g. "@{u}" does not record what branch the user was
+   on hence which branch 'the upstream' needs to be computed, and even
+   if the record were available, the relationship between branches may
+   have changed), at least hide the error to allow "status" show its
+   output.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -311,3 +338,4 @@ Fixes since v2.28
    (merge ee22a29215 so/pretty-abbrev-doc later to maint).
    (merge 3100fd5588 jc/post-checkout-doc later to maint).
    (merge 17bae89476 pb/doc-external-diff-env later to maint).
+   (merge 27ed6ccc12 jk/worktree-check-clean-leakfix later to maint).
