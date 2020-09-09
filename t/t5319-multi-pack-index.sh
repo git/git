@@ -382,10 +382,50 @@ test_expect_success 'repack with the --no-progress option' '
 	test_line_count = 0 err
 '
 
-test_expect_success 'repack removes multi-pack-index' '
+test_expect_success 'repack removes multi-pack-index when deleting packs' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
-	GIT_TEST_MULTI_PACK_INDEX=0 git repack -adf &&
+	# Set GIT_TEST_MULTI_PACK_INDEX to 0 to avoid writing a new
+	# multi-pack-index after repacking, but set "core.multiPackIndex" to
+	# true so that "git repack" can read the existing MIDX.
+	GIT_TEST_MULTI_PACK_INDEX=0 git -c core.multiPackIndex repack -adf &&
 	test_path_is_missing $objdir/pack/multi-pack-index
+'
+
+test_expect_success 'repack preserves multi-pack-index when creating packs' '
+	git init preserve &&
+	test_when_finished "rm -fr preserve" &&
+	(
+		cd preserve &&
+		packdir=.git/objects/pack &&
+		midx=$packdir/multi-pack-index &&
+
+		test_commit 1 &&
+		pack1=$(git pack-objects --all $packdir/pack) &&
+		touch $packdir/pack-$pack1.keep &&
+		test_commit 2 &&
+		pack2=$(git pack-objects --revs $packdir/pack) &&
+		touch $packdir/pack-$pack2.keep &&
+
+		git multi-pack-index write &&
+		cp $midx $midx.bak &&
+
+		cat >pack-input <<-EOF &&
+		HEAD
+		^HEAD~1
+		EOF
+		test_commit 3 &&
+		pack3=$(git pack-objects --revs $packdir/pack <pack-input) &&
+		test_commit 4 &&
+		pack4=$(git pack-objects --revs $packdir/pack <pack-input) &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 git -c core.multiPackIndex repack -ad &&
+		ls -la $packdir &&
+		test_path_is_file $packdir/pack-$pack1.pack &&
+		test_path_is_file $packdir/pack-$pack2.pack &&
+		test_path_is_missing $packdir/pack-$pack3.pack &&
+		test_path_is_missing $packdir/pack-$pack4.pack &&
+		test_cmp_bin $midx.bak $midx
+	)
 '
 
 compare_results_with_midx "after repack"
