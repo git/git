@@ -699,10 +699,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		config_options.respect_includes = !given_config_source.file;
 	else
 		config_options.respect_includes = respect_includes_opt;
-	if (!nongit) {
-		config_options.commondir = get_git_common_dir();
-		config_options.git_dir = get_git_dir();
-	}
+	if (!nongit)
+		config_options.repo = the_repository;
 
 	if (end_nul) {
 		term = '\0';
