@@ -80,10 +80,10 @@ test_expect_success 'setup' '
 	test_path_is_file sub2/a
 '
 
-# The test below checks a special case: the sparsity patterns exclude '/b'
+# The two tests below check a special case: the sparsity patterns exclude '/b'
 # and sparse checkout is enabled, but the path exists in the working tree (e.g.
 # manually created after `git sparse-checkout init`). In this case, grep should
-# skip it.
+# skip the file by default, but not with --no-restrict-to-sparse-paths.
 test_expect_success 'grep in working tree should honor sparse checkout' '
 	cat >expect <<-EOF &&
 	a:text
@@ -91,6 +91,16 @@ test_expect_success 'grep in working tree should honor sparse checkout' '
 	echo "new-text" >b &&
 	test_when_finished "rm b" &&
 	git grep "text" >actual &&
+	test_cmp expect actual
+'
+test_expect_success 'grep w/ --no-restrict-to-sparse-paths for sparsely excluded but present paths' '
+	cat >expect <<-EOF &&
+	a:text
+	b:new-text
+	EOF
+	echo "new-text" >b &&
+	test_when_finished "rm b" &&
+	git --no-restrict-to-sparse-paths grep "text" >actual &&
 	test_cmp expect actual
 '
 
@@ -157,13 +167,22 @@ test_expect_success 'grep <tree-ish> should ignore sparsity patterns' '
 '
 
 # Note that sub2/ is present in the worktree but it is excluded by the sparsity
-# patterns, so grep should not recurse into it.
+# patterns, so grep should only recurse into it with --no-restrict-to-sparse-paths.
 test_expect_success 'grep --recurse-submodules should honor sparse checkout in submodule' '
 	cat >expect <<-EOF &&
 	a:text
 	sub/B/b:text
 	EOF
 	git grep --recurse-submodules "text" >actual &&
+	test_cmp expect actual
+'
+test_expect_success 'grep --recurse-submodules should search in excluded submodules w/ --no-restrict-to-sparse-paths' '
+	cat >expect <<-EOF &&
+	a:text
+	sub/B/b:text
+	sub2/a:text
+	EOF
+	git --no-restrict-to-sparse-paths grep --recurse-submodules "text" >actual &&
 	test_cmp expect actual
 '
 
@@ -191,5 +210,112 @@ test_expect_success 'grep --recurse-submodules <commit-ish> should honor sparse 
 	git grep --recurse-submodules "text" tag-to-commit >actual_tag-to-commit &&
 	test_cmp expect_tag-to-commit actual_tag-to-commit
 '
+
+for cmd in 'git --no-restrict-to-sparse-paths grep' \
+	   'git -c sparse.restrictCmds=false grep' \
+	   'git -c sparse.restrictCmds=true --no-restrict-to-sparse-paths grep'
+do
+
+	test_expect_success "$cmd --cached should ignore sparsity patterns" '
+		cat >expect <<-EOF &&
+		a:text
+		b:text
+		dir/c:text
+		EOF
+		$cmd --cached "text" >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "$cmd <commit-ish> should ignore sparsity patterns" '
+		commit=$(git rev-parse HEAD) &&
+		cat >expect_commit <<-EOF &&
+		$commit:a:text
+		$commit:b:text
+		$commit:dir/c:text
+		EOF
+		cat >expect_tag-to-commit <<-EOF &&
+		tag-to-commit:a:text
+		tag-to-commit:b:text
+		tag-to-commit:dir/c:text
+		EOF
+		$cmd "text" $commit >actual_commit &&
+		test_cmp expect_commit actual_commit &&
+		$cmd "text" tag-to-commit >actual_tag-to-commit &&
+		test_cmp expect_tag-to-commit actual_tag-to-commit
+	'
+done
+
+test_expect_success 'grep --recurse-submodules --cached w/ --no-restrict-to-sparse-paths' '
+	cat >expect <<-EOF &&
+	a:text
+	b:text
+	dir/c:text
+	sub/A/a:text
+	sub/B/b:text
+	sub2/a:text
+	EOF
+	git --no-restrict-to-sparse-paths grep --recurse-submodules --cached \
+		"text" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'grep --recurse-submodules <commit-ish> w/ --no-restrict-to-sparse-paths' '
+	commit=$(git rev-parse HEAD) &&
+	cat >expect_commit <<-EOF &&
+	$commit:a:text
+	$commit:b:text
+	$commit:dir/c:text
+	$commit:sub/A/a:text
+	$commit:sub/B/b:text
+	$commit:sub2/a:text
+	EOF
+	cat >expect_tag-to-commit <<-EOF &&
+	tag-to-commit:a:text
+	tag-to-commit:b:text
+	tag-to-commit:dir/c:text
+	tag-to-commit:sub/A/a:text
+	tag-to-commit:sub/B/b:text
+	tag-to-commit:sub2/a:text
+	EOF
+	git --no-restrict-to-sparse-paths grep --recurse-submodules "text" \
+		$commit >actual_commit &&
+	test_cmp expect_commit actual_commit &&
+	git --no-restrict-to-sparse-paths grep --recurse-submodules "text" \
+		tag-to-commit >actual_tag-to-commit &&
+	test_cmp expect_tag-to-commit actual_tag-to-commit
+'
+
+test_expect_success 'should respect the sparse.restrictCmds values from submodules' '
+	cat >expect <<-EOF &&
+	a:text
+	sub/A/a:text
+	sub/B/b:text
+	EOF
+	test_config -C sub sparse.restrictCmds false &&
+	git grep --cached --recurse-submodules "text" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'should propagate --[no]-restrict-to-sparse-paths to submodules' '
+	cat >expect <<-EOF &&
+	a:text
+	b:text
+	dir/c:text
+	sub/A/a:text
+	sub/B/b:text
+	sub2/a:text
+	EOF
+	test_config -C sub sparse.restrictCmds true &&
+	git --no-restrict-to-sparse-paths grep --cached --recurse-submodules "text" >actual &&
+	test_cmp expect actual
+'
+
+for opt in '--untracked' '--no-index'
+do
+	test_expect_success "--[no]-restrict-to-sparse-paths and $opt are incompatible" "
+		test_must_fail git --restrict-to-sparse-paths grep $opt . 2>actual &&
+		test_i18ngrep 'restrict-to-sparse-paths is incompatible with' actual
+	"
+done
 
 test_done

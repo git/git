@@ -1928,6 +1928,8 @@ test_expect_success 'double dash "git" itself' '
 	--namespace=
 	--no-replace-objects Z
 	--help Z
+	--restrict-to-sparse-paths Z
+	--no-restrict-to-sparse-paths Z
 	EOF
 '
 
@@ -1970,7 +1972,7 @@ test_expect_success 'general options' '
 	test_completion "git --nam" "--namespace=" &&
 	test_completion "git --bar" "--bare " &&
 	test_completion "git --inf" "--info-path " &&
-	test_completion "git --no-r" "--no-replace-objects "
+	test_completion "git --no-rep" "--no-replace-objects "
 '
 
 test_expect_success 'general options plus command' '
