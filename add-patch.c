@@ -266,6 +266,20 @@ struct add_p_state {
 	const char *revision;
 };
 
+static void add_p_state_clear(struct add_p_state *s)
+{
+	size_t i;
+
+	strbuf_release(&s->answer);
+	strbuf_release(&s->buf);
+	strbuf_release(&s->plain);
+	strbuf_release(&s->colored);
+	for (i = 0; i < s->file_diff_nr; i++)
+		free(s->file_diff[i].hunk);
+	free(s->file_diff);
+	clear_add_i_state(&s->s);
+}
+
 static void err(struct add_p_state *s, const char *fmt, ...)
 {
 	va_list args;
@@ -1690,9 +1704,7 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 	     repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
 					  NULL, NULL, NULL) < 0) ||
 	    parse_diff(&s, ps) < 0) {
-		strbuf_release(&s.plain);
-		strbuf_release(&s.colored);
-		clear_add_i_state(&s.s);
+		add_p_state_clear(&s);
 		return -1;
 	}
 
@@ -1707,10 +1719,6 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 	else if (binary_count == s.file_diff_nr)
 		fprintf(stderr, _("Only binary files changed.\n"));
 
-	strbuf_release(&s.answer);
-	strbuf_release(&s.buf);
-	strbuf_release(&s.plain);
-	strbuf_release(&s.colored);
-	clear_add_i_state(&s.s);
+	add_p_state_clear(&s);
 	return 0;
 }
