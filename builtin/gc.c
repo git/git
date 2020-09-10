@@ -28,6 +28,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "promisor-remote.h"
+#include "refs.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -698,4 +699,339 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		unlink(git_path("gc.log"));
 
 	return 0;
+}
+
+static const char * const builtin_maintenance_run_usage[] = {
+	N_("git maintenance run [--auto] [--[no-]quiet] [--task=<task>]"),
+	NULL
+};
+
+struct maintenance_run_opts {
+	int auto_flag;
+	int quiet;
+};
+
+/* Remember to update object flag allocation in object.h */
+#define SEEN		(1u<<0)
+
+struct cg_auto_data {
+	int num_not_in_graph;
+	int limit;
+};
+
+static int dfs_on_ref(const char *refname,
+		      const struct object_id *oid, int flags,
+		      void *cb_data)
+{
+	struct cg_auto_data *data = (struct cg_auto_data *)cb_data;
+	int result = 0;
+	struct object_id peeled;
+	struct commit_list *stack = NULL;
+	struct commit *commit;
+
+	if (!peel_ref(refname, &peeled))
+		oid = &peeled;
+	if (oid_object_info(the_repository, oid, NULL) != OBJ_COMMIT)
+		return 0;
+
+	commit = lookup_commit(the_repository, oid);
+	if (!commit)
+		return 0;
+	if (parse_commit(commit))
+		return 0;
+
+	commit_list_append(commit, &stack);
+
+	while (!result && stack) {
+		struct commit_list *parent;
+
+		commit = pop_commit(&stack);
+
+		for (parent = commit->parents; parent; parent = parent->next) {
+			if (parse_commit(parent->item) ||
+			    commit_graph_position(parent->item) != COMMIT_NOT_FROM_GRAPH ||
+			    parent->item->object.flags & SEEN)
+				continue;
+
+			parent->item->object.flags |= SEEN;
+			data->num_not_in_graph++;
+
+			if (data->num_not_in_graph >= data->limit) {
+				result = 1;
+				break;
+			}
+
+			commit_list_append(parent->item, &stack);
+		}
+	}
+
+	free_commit_list(stack);
+	return result;
+}
+
+static int should_write_commit_graph(void)
+{
+	int result;
+	struct cg_auto_data data;
+
+	data.num_not_in_graph = 0;
+	data.limit = 100;
+	git_config_get_int("maintenance.commit-graph.auto",
+			   &data.limit);
+
+	if (!data.limit)
+		return 0;
+	if (data.limit < 0)
+		return 1;
+
+	result = for_each_ref(dfs_on_ref, &data);
+
+	clear_commit_marks_all(SEEN);
+
+	return result;
+}
+
+static int run_write_commit_graph(struct maintenance_run_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "commit-graph", "write",
+		     "--split", "--reachable", NULL);
+
+	if (opts->quiet)
+		strvec_push(&child.args, "--no-progress");
+
+	return !!run_command(&child);
+}
+
+static int maintenance_task_commit_graph(struct maintenance_run_opts *opts)
+{
+	close_object_store(the_repository->objects);
+	if (run_write_commit_graph(opts)) {
+		error(_("failed to write commit-graph"));
+		return 1;
+	}
+
+	return 0;
+}
+
+static int maintenance_task_gc(struct maintenance_run_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_push(&child.args, "gc");
+
+	if (opts->auto_flag)
+		strvec_push(&child.args, "--auto");
+	if (opts->quiet)
+		strvec_push(&child.args, "--quiet");
+	else
+		strvec_push(&child.args, "--no-quiet");
+
+	close_object_store(the_repository->objects);
+	return run_command(&child);
+}
+
+typedef int maintenance_task_fn(struct maintenance_run_opts *opts);
+
+/*
+ * An auto condition function returns 1 if the task should run
+ * and 0 if the task should NOT run. See needs_to_gc() for an
+ * example.
+ */
+typedef int maintenance_auto_fn(void);
+
+struct maintenance_task {
+	const char *name;
+	maintenance_task_fn *fn;
+	maintenance_auto_fn *auto_condition;
+	unsigned enabled:1;
+
+	/* -1 if not selected. */
+	int selected_order;
+};
+
+enum maintenance_task_label {
+	TASK_GC,
+	TASK_COMMIT_GRAPH,
+
+	/* Leave as final value */
+	TASK__COUNT
+};
+
+static struct maintenance_task tasks[] = {
+	[TASK_GC] = {
+		"gc",
+		maintenance_task_gc,
+		need_to_gc,
+		1,
+	},
+	[TASK_COMMIT_GRAPH] = {
+		"commit-graph",
+		maintenance_task_commit_graph,
+		should_write_commit_graph,
+	},
+};
+
+static int compare_tasks_by_selection(const void *a_, const void *b_)
+{
+	const struct maintenance_task *a, *b;
+
+	a = (const struct maintenance_task *)&a_;
+	b = (const struct maintenance_task *)&b_;
+
+	return b->selected_order - a->selected_order;
+}
+
+static int maintenance_run_tasks(struct maintenance_run_opts *opts)
+{
+	int i, found_selected = 0;
+	int result = 0;
+	struct lock_file lk;
+	struct repository *r = the_repository;
+	char *lock_path = xstrfmt("%s/maintenance", r->objects->odb->path);
+
+	if (hold_lock_file_for_update(&lk, lock_path, LOCK_NO_DEREF) < 0) {
+		/*
+		 * Another maintenance command is running.
+		 *
+		 * If --auto was provided, then it is likely due to a
+		 * recursive process stack. Do not report an error in
+		 * that case.
+		 */
+		if (!opts->auto_flag && !opts->quiet)
+			warning(_("lock file '%s' exists, skipping maintenance"),
+				lock_path);
+		free(lock_path);
+		return 0;
+	}
+	free(lock_path);
+
+	for (i = 0; !found_selected && i < TASK__COUNT; i++)
+		found_selected = tasks[i].selected_order >= 0;
+
+	if (found_selected)
+		QSORT(tasks, TASK__COUNT, compare_tasks_by_selection);
+
+	for (i = 0; i < TASK__COUNT; i++) {
+		if (found_selected && tasks[i].selected_order < 0)
+			continue;
+
+		if (!found_selected && !tasks[i].enabled)
+			continue;
+
+		if (opts->auto_flag &&
+		    (!tasks[i].auto_condition ||
+		     !tasks[i].auto_condition()))
+			continue;
+
+		trace2_region_enter("maintenance", tasks[i].name, r);
+		if (tasks[i].fn(opts)) {
+			error(_("task '%s' failed"), tasks[i].name);
+			result = 1;
+		}
+		trace2_region_leave("maintenance", tasks[i].name, r);
+	}
+
+	rollback_lock_file(&lk);
+	return result;
+}
+
+static void initialize_task_config(void)
+{
+	int i;
+	struct strbuf config_name = STRBUF_INIT;
+	gc_config();
+
+	for (i = 0; i < TASK__COUNT; i++) {
+		int config_value;
+
+		strbuf_setlen(&config_name, 0);
+		strbuf_addf(&config_name, "maintenance.%s.enabled",
+			    tasks[i].name);
+
+		if (!git_config_get_bool(config_name.buf, &config_value))
+			tasks[i].enabled = config_value;
+	}
+
+	strbuf_release(&config_name);
+}
+
+static int task_option_parse(const struct option *opt,
+			     const char *arg, int unset)
+{
+	int i, num_selected = 0;
+	struct maintenance_task *task = NULL;
+
+	BUG_ON_OPT_NEG(unset);
+
+	for (i = 0; i < TASK__COUNT; i++) {
+		if (tasks[i].selected_order >= 0)
+			num_selected++;
+		if (!strcasecmp(tasks[i].name, arg)) {
+			task = &tasks[i];
+		}
+	}
+
+	if (!task) {
+		error(_("'%s' is not a valid task"), arg);
+		return 1;
+	}
+
+	if (task->selected_order >= 0) {
+		error(_("task '%s' cannot be selected multiple times"), arg);
+		return 1;
+	}
+
+	task->selected_order = num_selected + 1;
+
+	return 0;
+}
+
+static int maintenance_run(int argc, const char **argv, const char *prefix)
+{
+	int i;
+	struct maintenance_run_opts opts;
+	struct option builtin_maintenance_run_options[] = {
+		OPT_BOOL(0, "auto", &opts.auto_flag,
+			 N_("run tasks based on the state of the repository")),
+		OPT_BOOL(0, "quiet", &opts.quiet,
+			 N_("do not report progress or other information over stderr")),
+		OPT_CALLBACK_F(0, "task", NULL, N_("task"),
+			N_("run a specific task"),
+			PARSE_OPT_NONEG, task_option_parse),
+		OPT_END()
+	};
+	memset(&opts, 0, sizeof(opts));
+
+	opts.quiet = !isatty(2);
+	initialize_task_config();
+
+	for (i = 0; i < TASK__COUNT; i++)
+		tasks[i].selected_order = -1;
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_maintenance_run_options,
+			     builtin_maintenance_run_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+
+	if (argc != 0)
+		usage_with_options(builtin_maintenance_run_usage,
+				   builtin_maintenance_run_options);
+	return maintenance_run_tasks(&opts);
+}
+
+static const char builtin_maintenance_usage[] = N_("git maintenance run [<options>]");
+
+int cmd_maintenance(int argc, const char **argv, const char *prefix)
+{
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(builtin_maintenance_usage);
+
+	if (!strcmp(argv[1], "run"))
+		return maintenance_run(argc - 1, argv + 1, prefix);
+
+	die(_("invalid subcommand: %s"), argv[1]);
 }
