@@ -1738,15 +1738,12 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 
 	for (i = 0; i < argc; i++) {
 		if (!strcmp(argv[i], "tag")) {
-			char *tag;
 			i++;
 			if (i >= argc)
 				die(_("You need to specify a tag name."));
 
-			tag = xstrfmt("refs/tags/%s:refs/tags/%s",
-				      argv[i], argv[i]);
-			refspec_append(&rs, tag);
-			free(tag);
+			refspec_appendf(&rs, "refs/tags/%s:refs/tags/%s",
+					argv[i], argv[i]);
 		} else {
 			refspec_append(&rs, argv[i]);
 		}

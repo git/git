@@ -287,19 +287,15 @@ static void read_branches_file(struct remote *remote)
 		frag = (char *)git_default_branch_name();
 
 	add_url_alias(remote, strbuf_detach(&buf, NULL));
-	strbuf_addf(&buf, "refs/heads/%s:refs/heads/%s",
-		    frag, remote->name);
-	refspec_append(&remote->fetch, buf.buf);
+	refspec_appendf(&remote->fetch, "refs/heads/%s:refs/heads/%s",
+			frag, remote->name);
 
 	/*
 	 * Cogito compatible push: push current HEAD to remote #branch
 	 * (master if missing)
 	 */
-	strbuf_reset(&buf);
-	strbuf_addf(&buf, "HEAD:refs/heads/%s", frag);
-	refspec_append(&remote->push, buf.buf);
+	refspec_appendf(&remote->push, "HEAD:refs/heads/%s", frag);
 	remote->fetch_tags = 1; /* always auto-follow */
-	strbuf_release(&buf);
 }
 
 static int handle_config(const char *key, const char *value, void *cb)
