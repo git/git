@@ -259,8 +259,6 @@ static void wt_longstatus_print_trailer(struct wt_status *s)
 	status_printf_ln(s, color(WT_STATUS_HEADER, s), "%s", "");
 }
 
-#define quote_path quote_path_relative
-
 static const char *wt_status_unmerged_status_string(int stagemask)
 {
 	switch (stagemask) {
