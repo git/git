@@ -30,6 +30,11 @@
  * iterate -> iterate over all values using git_config(), and print some
  *            data for each
  *
+ * Exit codes:
+ *     0:   success
+ *     1:   value not found for the given config key
+ *     2:   config file path given as argument is inaccessible or doesn't exist
+ *
  * Examples:
  *
  * To print the value with highest priority for key "foo.bAr Baz.rock":
@@ -80,10 +85,10 @@ int cmd__config(int argc, const char **argv)
 
 	git_configset_init(&cs);
 
-	if (argc < 2) {
-		fprintf(stderr, "Please, provide a command name on the command-line\n");
-		goto exit1;
-	} else if (argc == 3 && !strcmp(argv[1], "get_value")) {
+	if (argc < 2)
+		die("Please, provide a command name on the command-line");
+
+	if (argc == 3 && !strcmp(argv[1], "get_value")) {
 		if (!git_config_get_value(argv[2], &v)) {
 			if (!v)
 				printf("(NULL)\n");
