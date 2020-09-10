@@ -178,7 +178,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 	if (is_mount_point(path)) {
 #ifndef CAN_UNLINK_MOUNT_POINTS
 		if (!quiet) {
-			quote_path_relative(path->buf, prefix, &quoted);
+			quote_path(path->buf, prefix, &quoted, 0);
 			printf(dry_run ?
 			       _(msg_would_skip_mount_point) :
 			       _(msg_skip_mount_point), quoted.buf);
@@ -187,7 +187,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 #else
 		if (!dry_run && unlink(path->buf)) {
 			int saved_errno = errno;
-			quote_path_relative(path->buf, prefix, &quoted);
+			quote_path(path->buf, prefix, &quoted, 0);
 			errno = saved_errno;
 			warning_errno(_(msg_warn_remove_failed), quoted.buf);
 			*dir_gone = 0;
