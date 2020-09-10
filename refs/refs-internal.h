@@ -697,4 +697,9 @@ int parse_loose_ref_contents(const char *buf, struct object_id *oid,
 void base_ref_store_init(struct ref_store *refs,
 			 const struct ref_storage_be *be);
 
+/*
+ * Support GIT_TRACE_REFS by optionally wrapping the given ref_store instance.
+ */
+struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_store *store);
+
 #endif /* REFS_REFS_INTERNAL_H */
