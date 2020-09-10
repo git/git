@@ -256,7 +256,7 @@ static size_t next_quote_pos(const char *s, ssize_t maxlen)
  *     Return value is the same as in (1).
  */
 static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
-				    struct strbuf *sb, FILE *fp, int no_dq)
+				    struct strbuf *sb, FILE *fp, unsigned flags)
 {
 #undef EMIT
 #define EMIT(c)                                 \
@@ -272,6 +272,7 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		count += (l);                           \
 	} while (0)
 
+	int no_dq = !!(flags & CQUOTE_NODQ);
 	size_t len, count = 0;
 	const char *p = name;
 
@@ -309,19 +310,21 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 	return count;
 }
 
-size_t quote_c_style(const char *name, struct strbuf *sb, FILE *fp, int nodq)
+size_t quote_c_style(const char *name, struct strbuf *sb, FILE *fp, unsigned flags)
 {
-	return quote_c_style_counted(name, -1, sb, fp, nodq);
+	return quote_c_style_counted(name, -1, sb, fp, flags);
 }
 
-void quote_two_c_style(struct strbuf *sb, const char *prefix, const char *path, int nodq)
+void quote_two_c_style(struct strbuf *sb, const char *prefix, const char *path,
+		       unsigned flags)
 {
+	int nodq = !!(flags & CQUOTE_NODQ);
 	if (quote_c_style(prefix, NULL, NULL, 0) ||
 	    quote_c_style(path, NULL, NULL, 0)) {
 		if (!nodq)
 			strbuf_addch(sb, '"');
-		quote_c_style(prefix, sb, NULL, 1);
-		quote_c_style(path, sb, NULL, 1);
+		quote_c_style(prefix, sb, NULL, CQUOTE_NODQ);
+		quote_c_style(path, sb, NULL, CQUOTE_NODQ);
 		if (!nodq)
 			strbuf_addch(sb, '"');
 	} else {
@@ -367,7 +370,8 @@ char *quote_path(const char *in, const char *prefix, struct strbuf *out, unsigne
 	 */
 	if (force_dq)
 		strbuf_addch(out, '"');
-	quote_c_style_counted(rel, strlen(rel), out, NULL, force_dq);
+	quote_c_style_counted(rel, strlen(rel), out, NULL,
+			      force_dq ? CQUOTE_NODQ : 0);
 	if (force_dq)
 		strbuf_addch(out, '"');
 	strbuf_release(&sb);
