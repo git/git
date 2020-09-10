@@ -356,16 +356,21 @@ char *quote_path(const char *in, const char *prefix, struct strbuf *out, unsigne
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *rel = relative_path(in, prefix, &sb);
-	strbuf_reset(out);
-	quote_c_style_counted(rel, strlen(rel), out, NULL, 0);
-	strbuf_release(&sb);
+	int force_dq = ((flags & QUOTE_PATH_QUOTE_SP) && strchr(rel, ' '));
 
-	if ((flags & QUOTE_PATH_QUOTE_SP) &&
-	    (out->buf[0] != '"' && strchr(out->buf, ' '))) {
-		/* Ensure the whole thing is quoted if the path has SP in it */
-		strbuf_insertstr(out, 0, "\"");
+	strbuf_reset(out);
+
+	/*
+	 * If the caller wants us to enclose the output in a dq-pair
+	 * whether quote_c_style_counted() needs to, we do it ourselves
+	 * and tell quote_c_style_counted() not to.
+	 */
+	if (force_dq)
 		strbuf_addch(out, '"');
-	}
+	quote_c_style_counted(rel, strlen(rel), out, NULL, force_dq);
+	if (force_dq)
+		strbuf_addch(out, '"');
+	strbuf_release(&sb);
 
 	return out->buf;
 }
