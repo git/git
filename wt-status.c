@@ -1882,21 +1882,12 @@ static void wt_shortstatus_status(struct string_list_item *it,
 		const char *one;
 
 		if (d->rename_source) {
-			one = quote_path(d->rename_source, s->prefix, &onebuf, 0);
-			if (*one != '"' && strchr(one, ' ') != NULL) {
-				putchar('"');
-				strbuf_addch(&onebuf, '"');
-				one = onebuf.buf;
-			}
+			one = quote_path(d->rename_source, s->prefix, &onebuf,
+					 QUOTE_PATH_QUOTE_SP);
 			printf("%s -> ", one);
 			strbuf_release(&onebuf);
 		}
-		one = quote_path(it->string, s->prefix, &onebuf, 0);
-		if (*one != '"' && strchr(one, ' ') != NULL) {
-			putchar('"');
-			strbuf_addch(&onebuf, '"');
-			one = onebuf.buf;
-		}
+		one = quote_path(it->string, s->prefix, &onebuf, QUOTE_PATH_QUOTE_SP);
 		printf("%s\n", one);
 		strbuf_release(&onebuf);
 	}
