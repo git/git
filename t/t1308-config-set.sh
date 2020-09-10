@@ -7,18 +7,15 @@ test_description='Test git config-set API in different settings'
 # 'check_config get_* section.key value' verifies that the entry for
 # section.key is 'value'
 check_config () {
-	if test "$1" = expect_code
-	then
-		expect_code="$2" && shift && shift
-	else
-		expect_code=0
-	fi &&
-	op=$1 key=$2 && shift && shift &&
-	if test $# != 0
-	then
-		printf "%s\n" "$@"
-	fi >expect &&
-	test_expect_code $expect_code test-tool config "$op" "$key" >actual &&
+	test-tool config "$1" "$2" >actual &&
+	shift && shift &&
+	printf "%s\n" "$@" >expect &&
+	test_cmp expect actual
+}
+
+check_not_found () {
+	test_expect_code 1 test-tool config "$1" "$2" >actual &&
+	echo "Value not found for \"$2\"" >expect &&
 	test_cmp expect actual
 }
 
@@ -108,7 +105,7 @@ test_expect_success 'key with case insensitive section header & variable' '
 '
 
 test_expect_success 'find value with misspelled key' '
-	check_config expect_code 1 get_value "my.fOo Bar.hi" "Value not found for \"my.fOo Bar.hi\""
+	check_not_found get_value "my.fOo Bar.hi"
 '
 
 test_expect_success 'find value with the highest priority' '
@@ -121,7 +118,7 @@ test_expect_success 'find integer value for a key' '
 
 test_expect_success 'find string value for a key' '
 	check_config get_string case.baz hask &&
-	check_config expect_code 1 get_string case.ba "Value not found for \"case.ba\""
+	check_not_found get_string case.ba
 '
 
 test_expect_success 'check line error when NULL string is queried' '
@@ -130,7 +127,8 @@ test_expect_success 'check line error when NULL string is queried' '
 '
 
 test_expect_success 'find integer if value is non parse-able' '
-	check_config expect_code 128 get_int lamb.head
+	test_expect_code 128 test-tool config get_int lamb.head 2>result &&
+	test_i18ngrep "fatal: bad numeric config value .none. for .lamb\.head." result
 '
 
 test_expect_success 'find bool value for the entered key' '
