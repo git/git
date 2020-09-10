@@ -210,7 +210,7 @@ int sq_dequote_to_argv_array(char *arg, struct argv_array *array)
  */
 #define X8(x)   x, x, x, x, x, x, x, x
 #define X16(x)  X8(x), X8(x)
-static signed char const sq_lookup[256] = {
+static signed char const cq_lookup[256] = {
 	/*           0    1    2    3    4    5    6    7 */
 	/* 0x00 */   1,   1,   1,   1,   1,   1,   1, 'a',
 	/* 0x08 */ 'b', 't', 'n', 'v', 'f', 'r',   1,   1,
@@ -223,9 +223,9 @@ static signed char const sq_lookup[256] = {
 	/* 0x80 */ /* set to 0 */
 };
 
-static inline int sq_must_quote(char c)
+static inline int cq_must_quote(char c)
 {
-	return sq_lookup[(unsigned char)c] + quote_path_fully > 0;
+	return cq_lookup[(unsigned char)c] + quote_path_fully > 0;
 }
 
 /* returns the longest prefix not needing a quote up to maxlen if positive.
@@ -235,9 +235,9 @@ static size_t next_quote_pos(const char *s, ssize_t maxlen)
 {
 	size_t len;
 	if (maxlen < 0) {
-		for (len = 0; !sq_must_quote(s[len]); len++);
+		for (len = 0; !cq_must_quote(s[len]); len++);
 	} else {
-		for (len = 0; len < maxlen && !sq_must_quote(s[len]); len++);
+		for (len = 0; len < maxlen && !cq_must_quote(s[len]); len++);
 	}
 	return len;
 }
@@ -291,8 +291,8 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		ch = (unsigned char)*p++;
 		if (maxlen >= 0)
 			maxlen -= len + 1;
-		if (sq_lookup[ch] >= ' ') {
-			EMIT(sq_lookup[ch]);
+		if (cq_lookup[ch] >= ' ') {
+			EMIT(cq_lookup[ch]);
 		} else {
 			EMIT(((ch >> 6) & 03) + '0');
 			EMIT(((ch >> 3) & 07) + '0');
