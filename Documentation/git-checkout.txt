@@ -198,6 +198,7 @@ Use `--no-guess` to disable this.
 	Create the new branch's reflog; see linkgit:git-branch[1] for
 	details.
 
+-d::
 --detach::
 	Rather than checking out a branch to work on it, check out a
 	commit for inspection and discardable experiments.

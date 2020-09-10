@@ -32,6 +32,18 @@ A repository has one main working tree (if it's not a
 bare repository) and zero or more linked working trees. When you are done
 with a linked working tree, remove it with `git worktree remove`.
 
+In its simplest form, `git worktree add <path>` automatically creates a
+new branch whose name is the final component of `<path>`, which is
+convenient if you plan to work on a new topic. For instance, `git
+worktree add ../hotfix` creates new branch `hotfix` and checks it out at
+path `../hotfix`. To instead work on an existing branch in a new working
+tree, use `git worktree add <path> <branch>`. On the other hand, if you
+just plan to make some experimental changes or do testing without
+disturbing existing development, it is often convenient to create a
+'throwaway' working tree not associated with any branch. For instance,
+`git worktree add -d <path>` creates a new working tree with a detached
+`HEAD` at the same commit as the current branch.
+
 If a working tree is deleted without using `git worktree remove`, then
 its associated administrative files, which reside in the repository
 (see "DETAILS" below), will eventually be removed automatically (see
@@ -164,6 +176,7 @@ To remove a locked working tree, specify `--force` twice.
 	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
 	`<commit-ish>`.
 
+-d::
 --detach::
 	With `add`, detach `HEAD` in the new working tree. See "DETACHED HEAD"
 	in linkgit:git-checkout[1].
