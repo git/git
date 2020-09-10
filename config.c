@@ -1217,6 +1217,10 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 			return config_error_nonbool(var);
 		if (!strcasecmp(value, "auto"))
 			default_abbrev = -1;
+		else if (!strcasecmp(value, "false") ||
+			 !strcasecmp(value, "no") ||
+			 !strcasecmp(value, "off"))
+			default_abbrev = the_hash_algo->hexsz;
 		else {
 			int abbrev = git_config_int(var, value);
 			if (abbrev < minimum_abbrev || abbrev > the_hash_algo->hexsz)
