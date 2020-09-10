@@ -64,8 +64,11 @@ struct argv_array;
 int sq_dequote_to_argv_array(char *arg, struct argv_array *);
 
 int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);
-size_t quote_c_style(const char *name, struct strbuf *, FILE *, int no_dq);
-void quote_two_c_style(struct strbuf *, const char *, const char *, int);
+
+/* Bits in the flags parameter to quote_c_style() */
+#define CQUOTE_NODQ 01
+size_t quote_c_style(const char *name, struct strbuf *, FILE *, unsigned);
+void quote_two_c_style(struct strbuf *, const char *, const char *, unsigned);
 
 void write_name_quoted(const char *name, FILE *, int terminator);
 void write_name_quoted_relative(const char *name, const char *prefix,
