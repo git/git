@@ -259,8 +259,6 @@ static void wt_longstatus_print_trailer(struct wt_status *s)
 	status_printf_ln(s, color(WT_STATUS_HEADER, s), "%s", "");
 }
 
-#define quote_path quote_path_relative
-
 static const char *wt_status_unmerged_status_string(int stagemask)
 {
 	switch (stagemask) {
@@ -338,7 +336,7 @@ static void wt_longstatus_print_unmerged_data(struct wt_status *s,
 		memset(padding, ' ', label_width);
 	}
 
-	one = quote_path(it->string, s->prefix, &onebuf);
+	one = quote_path(it->string, s->prefix, &onebuf, 0);
 	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
 
 	how = wt_status_unmerged_status_string(d->stagemask);
@@ -404,8 +402,8 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 	if (d->rename_status == status)
 		one_name = d->rename_source;
 
-	one = quote_path(one_name, s->prefix, &onebuf);
-	two = quote_path(two_name, s->prefix, &twobuf);
+	one = quote_path(one_name, s->prefix, &onebuf, 0);
+	two = quote_path(two_name, s->prefix, &twobuf, 0);
 
 	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
 	what = wt_status_diff_status_string(status);
@@ -966,7 +964,7 @@ static void wt_longstatus_print_other(struct wt_status *s,
 		struct string_list_item *it;
 		const char *path;
 		it = &(l->items[i]);
-		path = quote_path(it->string, s->prefix, &buf);
+		path = quote_path(it->string, s->prefix, &buf, 0);
 		if (column_active(s->colopts)) {
 			string_list_append(&output, path);
 			continue;
@@ -1850,7 +1848,7 @@ static void wt_shortstatus_unmerged(struct string_list_item *it,
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
-		one = quote_path(it->string, s->prefix, &onebuf);
+		one = quote_path(it->string, s->prefix, &onebuf, QUOTE_PATH_QUOTE_SP);
 		printf(" %s\n", one);
 		strbuf_release(&onebuf);
 	}
@@ -1879,21 +1877,12 @@ static void wt_shortstatus_status(struct string_list_item *it,
 		const char *one;
 
 		if (d->rename_source) {
-			one = quote_path(d->rename_source, s->prefix, &onebuf);
-			if (*one != '"' && strchr(one, ' ') != NULL) {
-				putchar('"');
-				strbuf_addch(&onebuf, '"');
-				one = onebuf.buf;
-			}
+			one = quote_path(d->rename_source, s->prefix, &onebuf,
+					 QUOTE_PATH_QUOTE_SP);
 			printf("%s -> ", one);
 			strbuf_release(&onebuf);
 		}
-		one = quote_path(it->string, s->prefix, &onebuf);
-		if (*one != '"' && strchr(one, ' ') != NULL) {
-			putchar('"');
-			strbuf_addch(&onebuf, '"');
-			one = onebuf.buf;
-		}
+		one = quote_path(it->string, s->prefix, &onebuf, QUOTE_PATH_QUOTE_SP);
 		printf("%s\n", one);
 		strbuf_release(&onebuf);
 	}
@@ -1907,7 +1896,7 @@ static void wt_shortstatus_other(struct string_list_item *it,
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
-		one = quote_path(it->string, s->prefix, &onebuf);
+		one = quote_path(it->string, s->prefix, &onebuf, QUOTE_PATH_QUOTE_SP);
 		color_fprintf(s->fp, color(WT_STATUS_UNTRACKED, s), "%s", sign);
 		printf(" %s\n", one);
 		strbuf_release(&onebuf);
@@ -2224,9 +2213,9 @@ static void wt_porcelain_v2_print_changed_entry(
 		 */
 		sep_char = '\t';
 		eol_char = '\n';
-		path = quote_path(it->string, s->prefix, &buf);
+		path = quote_path(it->string, s->prefix, &buf, 0);
 		if (d->rename_source)
-			path_from = quote_path(d->rename_source, s->prefix, &buf_from);
+			path_from = quote_path(d->rename_source, s->prefix, &buf_from, 0);
 	}
 
 	if (path_from)
@@ -2312,7 +2301,7 @@ static void wt_porcelain_v2_print_unmerged_entry(
 	if (s->null_termination)
 		path_index = it->string;
 	else
-		path_index = quote_path(it->string, s->prefix, &buf_index);
+		path_index = quote_path(it->string, s->prefix, &buf_index, 0);
 
 	fprintf(s->fp, "%c %s %s %06o %06o %06o %06o %s %s %s %s%c",
 			unmerged_prefix, key, submodule_token,
@@ -2345,7 +2334,7 @@ static void wt_porcelain_v2_print_other(
 		path = it->string;
 		eol_char = '\0';
 	} else {
-		path = quote_path(it->string, s->prefix, &buf);
+		path = quote_path(it->string, s->prefix, &buf, 0);
 		eol_char = '\n';
 	}
 
