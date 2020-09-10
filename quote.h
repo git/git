@@ -72,8 +72,7 @@ void write_name_quoted_relative(const char *name, const char *prefix,
 				FILE *fp, int terminator);
 
 /* quote path as relative to the given prefix */
-char *quote_path_relative(const char *in, const char *prefix,
-			  struct strbuf *out);
+char *quote_path(const char *in, const char *prefix, struct strbuf *out);
 
 /* quoting as a string literal for other languages */
 void perl_quote_buf(struct strbuf *sb, const char *src);
