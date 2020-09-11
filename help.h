@@ -45,6 +45,9 @@ void get_version_info(struct strbuf *buf, int show_build_options);
  */
 NORETURN void help_unknown_ref(const char *ref, const char *cmd, const char *error);
 
+/* When the cmd_main() sees "git-foo", check if the user intended */
+void warn_on_dashed_git(const char *);
+
 static inline void list_config_item(struct string_list *list,
 				    const char *prefix,
 				    const char *str)

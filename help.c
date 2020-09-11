@@ -720,3 +720,37 @@ NORETURN void help_unknown_ref(const char *ref, const char *cmd,
 	string_list_clear(&suggested_refs, 0);
 	exit(1);
 }
+
+static struct cmdname_help *find_cmdname_help(const char *name)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(command_list); i++) {
+		if (!strcmp(command_list[i].name, name))
+			return &command_list[i];
+	}
+	return NULL;
+}
+
+void warn_on_dashed_git(const char *cmd)
+{
+	struct cmdname_help *cmdname;
+	static const char *still_in_use_var = "GIT_I_STILL_USE_DASHED_GIT";
+	static const char *still_in_use_msg =
+		N_("Use of '%s' in the dashed-form is nominated for removal.\n"
+		   "If you still use it, export '%s=true'\n"
+		   "and send an e-mail to <git@vger.kernel.org>\n"
+		   "to let us know and stop our removal plan.  Thanks.\n");
+
+	if (!cmd)
+		return; /* git-help is OK */
+
+	cmdname = find_cmdname_help(cmd);
+	if (cmdname && (cmdname->category & CAT_onpath))
+		return; /* git-upload-pack and friends are OK */
+
+	if (!git_env_bool(still_in_use_var, 0)) {
+		fprintf(stderr, _(still_in_use_msg), cmd, still_in_use_var);
+		exit(1);
+	}
+}

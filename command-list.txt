@@ -39,6 +39,9 @@
 # mainporcelain commands are completable so you don't need this
 # attribute.
 #
+# "onpath" attribute is used to mark that the command MUST appear
+# on $PATH (typically in /usr/bin) due to protocol requirement.
+#
 # As part of the Git man page list, the man(5/7) guides are also
 # specified here, which can only have "guide" attribute and nothing
 # else.
@@ -145,7 +148,7 @@ git-quiltimport                         foreignscminterface
 git-range-diff                          mainporcelain
 git-read-tree                           plumbingmanipulators
 git-rebase                              mainporcelain           history
-git-receive-pack                        synchelpers
+git-receive-pack                        synchelpers        onpath
 git-reflog                              ancillarymanipulators           complete
 git-remote                              ancillarymanipulators           complete
 git-repack                              ancillarymanipulators           complete
@@ -160,7 +163,7 @@ git-rev-parse                           plumbinginterrogators
 git-rm                                  mainporcelain           worktree
 git-send-email                          foreignscminterface             complete
 git-send-pack                           synchingrepositories
-git-shell                               synchelpers
+git-shell                               synchelpers        onpath
 git-shortlog                            mainporcelain
 git-show                                mainporcelain           info
 git-show-branch                         ancillaryinterrogators          complete
@@ -183,8 +186,8 @@ git-unpack-objects                      plumbingmanipulators
 git-update-index                        plumbingmanipulators
 git-update-ref                          plumbingmanipulators
 git-update-server-info                  synchingrepositories
-git-upload-archive                      synchelpers
-git-upload-pack                         synchelpers
+git-upload-archive                      synchelpers        onpath
+git-upload-pack                         synchelpers        onpath
 git-var                                 plumbinginterrogators
 git-verify-commit                       ancillaryinterrogators
 git-verify-pack                         plumbinginterrogators
