@@ -45,6 +45,17 @@ run::
 	config options are true. By default, only `maintenance.gc.enabled`
 	is true.
 
+start::
+	Start running maintenance on the current repository. This performs
+	the same config updates as the `register` subcommand, then updates
+	the background scheduler to run `git maintenance run --scheduled`
+	on an hourly basis.
+
+stop::
+	Halt the background maintenance schedule. The current repository
+	is not removed from the list of maintained repositories, in case
+	the background maintenance is restarted later.
+
 unregister::
 	Remove the current repository from background maintenance. This
 	only removes the repository from the configured list. It does not
