@@ -19,6 +19,50 @@ test_expect_success 'clone -o' '
 
 '
 
+test_expect_success 'disallows --bare with --origin' '
+
+	test_expect_code 128 git clone -o foo --bare parent clone-bare-o 2>err &&
+	test_debug "cat err" &&
+	test_i18ngrep "\-\-bare and --origin foo options are incompatible" err
+
+'
+
+test_expect_success 'disallows --bare with --separate-git-dir' '
+
+	test_expect_code 128 git clone --bare --separate-git-dir dot-git-destiation parent clone-bare-sgd 2>err &&
+	test_debug "cat err" &&
+	test_i18ngrep "\-\-bare and --separate-git-dir are incompatible" err
+
+'
+
+test_expect_success 'uses "origin" for default remote name' '
+
+	git clone parent clone-default-origin &&
+	(cd clone-default-origin && git rev-parse --verify refs/remotes/origin/master)
+
+'
+
+test_expect_success 'prefers --template config over normal config' '
+
+	template="$TRASH_DIRECTORY/template-with-config" &&
+	mkdir "$template" &&
+	git config --file "$template/config" foo.bar from_template &&
+	test_config_global foo.bar from_global &&
+	git clone "--template=$template" parent clone-template-config &&
+	(cd clone-template-config && test "$(git config --local foo.bar)" = "from_template")
+
+'
+
+test_expect_success 'prefers -c config over --template config' '
+
+	template="$TRASH_DIRECTORY/template-with-ignored-config" &&
+	mkdir "$template" &&
+	git config --file "$template/config" foo.bar from_template &&
+	git clone "--template=$template" -c foo.bar=inline parent clone-template-inline-config &&
+	(cd clone-template-inline-config && test "$(git config --local foo.bar)" = "inline")
+
+'
+
 test_expect_success 'redirected clone does not show progress' '
 
 	git clone "file://$(pwd)/parent" clone-redirected >out 2>err &&
