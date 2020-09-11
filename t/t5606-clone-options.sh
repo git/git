@@ -19,6 +19,14 @@ test_expect_success 'clone -o' '
 
 '
 
+test_expect_success 'rejects invalid -o/--origin' '
+
+	test_expect_code 128 git clone -o "bad...name" parent clone-bad-name 2>err &&
+	test_debug "cat err" &&
+	test_i18ngrep "'\''bad...name'\'' is not a valid origin name" err
+
+'
+
 test_expect_success 'disallows --bare with --origin' '
 
 	test_expect_code 128 git clone -o foo --bare parent clone-bare-o 2>err &&

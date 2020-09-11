@@ -967,6 +967,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const struct ref *ref;
 	struct strbuf key = STRBUF_INIT;
 	struct strbuf default_refspec = STRBUF_INIT;
+	struct strbuf resolved_refspec = STRBUF_INIT;
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
 	const char *src_ref_prefix = "refs/heads/";
@@ -1010,6 +1011,12 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (!option_origin)
 		option_origin = "origin";
+
+	strbuf_addf(&resolved_refspec, "refs/heads/test:refs/remotes/%s/test", option_origin);
+	if (!valid_fetch_refspec(resolved_refspec.buf))
+		/* TRANSLATORS: %s will be the user-provided --origin / -o option */
+		die(_("'%s' is not a valid origin name"), option_origin);
+	strbuf_release(&resolved_refspec);
 
 	repo_name = argv[0];
 
