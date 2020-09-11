@@ -1029,7 +1029,6 @@ extern int grafts_replace_parents;
 #define GIT_REPO_VERSION 0
 #define GIT_REPO_VERSION_READ 1
 extern int repository_format_precious_objects;
-extern int repository_format_worktree_config;
 
 /*
  * You _have_ to initialize a `struct repository_format` using

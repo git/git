@@ -222,8 +222,8 @@ static int include_by_gitdir(const struct config_options *opts,
 	const char *git_dir;
 	int already_tried_absolute = 0;
 
-	if (opts->git_dir)
-		git_dir = opts->git_dir;
+	if (opts->repo && opts->repo->gitdir)
+		git_dir = opts->repo->gitdir;
 	else
 		goto done;
 
@@ -1724,10 +1724,10 @@ static int do_git_config_sequence(const struct config_options *opts,
 	char *repo_config;
 	enum config_scope prev_parsing_scope = current_parsing_scope;
 
-	if (opts->commondir)
-		repo_config = mkpathdup("%s/config", opts->commondir);
-	else if (opts->git_dir)
-		BUG("git_dir without commondir");
+	if (opts->repo && opts->repo->commondir)
+		repo_config = mkpathdup("%s/config", opts->repo->commondir);
+	else if (opts->repo && opts->repo->gitdir)
+		BUG("gitdir without commondir");
 	else
 		repo_config = NULL;
 
@@ -1751,11 +1751,13 @@ static int do_git_config_sequence(const struct config_options *opts,
 		ret += git_config_from_file(fn, repo_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_WORKTREE;
-	if (!opts->ignore_worktree && repository_format_worktree_config) {
-		char *path = git_pathdup("config.worktree");
-		if (!access_or_die(path, R_OK, 0))
-			ret += git_config_from_file(fn, path, data);
-		free(path);
+	if (!opts->ignore_worktree && opts->repo && opts->repo->gitdir &&
+	    opts->repo->worktree_config_extension) {
+		struct strbuf path = STRBUF_INIT;
+		strbuf_repo_git_path(&path, opts->repo, "config.worktree");
+		if (!access_or_die(path.buf, R_OK, 0))
+			ret += git_config_from_file(fn, path.buf, data);
+		strbuf_release(&path);
 	}
 
 	current_parsing_scope = CONFIG_SCOPE_COMMAND;
@@ -1828,27 +1830,35 @@ void read_early_config(config_fn_t cb, void *data)
 	struct config_options opts = {0};
 	struct strbuf commondir = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
+	struct repository the_early_repo = {0};
+	int early_repo_initialized = 0;
 
 	opts.respect_includes = 1;
 
 	if (have_git_dir()) {
-		opts.commondir = get_git_common_dir();
-		opts.git_dir = get_git_dir();
+		opts.repo = the_repository;
 	/*
 	 * When setup_git_directory() was not yet asked to discover the
 	 * GIT_DIR, we ask discover_git_directory() to figure out whether there
 	 * is any repository config we should use (but unlike
-	 * setup_git_directory_gently(), no global state is changed, most
+	 * setup_git_directory_gently(), no global state is changed; most
 	 * notably, the current working directory is still the same after the
 	 * call).
+	 *
+	 * NEEDSWORK: There is some duplicate work between
+	 * discover_git_directory and repo_init. Update to use a variant of
+	 * repo_init that does its own repository discovery once available.
 	 */
-	} else if (!discover_git_directory(&commondir, &gitdir)) {
-		opts.commondir = commondir.buf;
-		opts.git_dir = gitdir.buf;
+	} else if (!discover_git_directory(&commondir, &gitdir) &&
+		   !repo_init(&the_early_repo, gitdir.buf, NULL)) {
+		opts.repo = &the_early_repo;
+		early_repo_initialized = 1;
 	}
 
 	config_with_options(cb, data, NULL, &opts);
 
+	if (early_repo_initialized)
+		repo_clear(&the_early_repo);
 	strbuf_release(&commondir);
 	strbuf_release(&gitdir);
 }
@@ -2101,8 +2111,7 @@ static void repo_read_config(struct repository *repo)
 	struct config_options opts = { 0 };
 
 	opts.respect_includes = 1;
-	opts.commondir = repo->commondir;
-	opts.git_dir = repo->gitdir;
+	opts.repo = repo;
 
 	if (!repo->config)
 		repo->config = xcalloc(1, sizeof(struct config_set));

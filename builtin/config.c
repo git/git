@@ -694,7 +694,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		given_config_source.scope = CONFIG_SCOPE_LOCAL;
 	} else if (use_worktree_config) {
 		struct worktree **worktrees = get_worktrees();
-		if (repository_format_worktree_config)
+		if (!nongit && the_repository->worktree_config_extension)
 			given_config_source.file = git_pathdup("config.worktree");
 		else if (worktrees[0] && worktrees[1])
 			die(_("--worktree cannot be used with multiple "
@@ -720,10 +720,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		config_options.respect_includes = !given_config_source.file;
 	else
 		config_options.respect_includes = respect_includes_opt;
-	if (!nongit) {
-		config_options.commondir = get_git_common_dir();
-		config_options.git_dir = get_git_dir();
-	}
+	if (!nongit)
+		config_options.repo = the_repository;
 
 	if (end_nul) {
 		term = '\0';

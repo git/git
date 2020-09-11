@@ -21,6 +21,7 @@
  */
 
 struct object_id;
+struct repository;
 
 /* git_config_parse_key() returns these negated: */
 #define CONFIG_INVALID_KEY 1
@@ -87,8 +88,7 @@ struct config_options {
 	unsigned int ignore_worktree : 1;
 	unsigned int ignore_cmdline : 1;
 	unsigned int system_gently : 1;
-	const char *commondir;
-	const char *git_dir;
+	struct repository *repo;
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
 	enum config_error_action {

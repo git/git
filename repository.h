@@ -139,6 +139,7 @@ struct repository {
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;
+	unsigned worktree_config_extension:1;
 };
 
 extern struct repository *the_repository;

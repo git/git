@@ -567,11 +567,11 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 
 	repository_format_precious_objects = candidate->precious_objects;
 	set_repository_format_partial_clone(candidate->partial_clone);
-	repository_format_worktree_config = candidate->worktree_config;
+	the_repository->worktree_config_extension = candidate->worktree_config;
 	string_list_clear(&candidate->unknown_extensions, 0);
 	string_list_clear(&candidate->v1_only_extensions, 0);
 
-	if (repository_format_worktree_config) {
+	if (the_repository->worktree_config_extension) {
 		/*
 		 * pick up core.bare and core.worktree from per-worktree
 		 * config if present
