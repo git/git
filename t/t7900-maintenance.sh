@@ -9,7 +9,7 @@ GIT_TEST_MULTI_PACK_INDEX=0
 
 test_expect_success 'help text' '
 	test_expect_code 129 git maintenance -h 2>err &&
-	test_i18ngrep "usage: git maintenance run" err &&
+	test_i18ngrep "usage: git maintenance <subcommand>" err &&
 	test_expect_code 128 git maintenance barf 2>err &&
 	test_i18ngrep "invalid subcommand: barf" err
 '
@@ -24,6 +24,19 @@ test_expect_success 'run [--auto|--quiet]' '
 	test_subcommand git gc --quiet <run-no-auto.txt &&
 	test_subcommand ! git gc --auto --quiet <run-auto.txt &&
 	test_subcommand git gc --no-quiet <run-no-quiet.txt
+'
+
+test_expect_success 'maintenance.auto config option' '
+	GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
+	test_subcommand git maintenance run --auto --quiet <default &&
+	GIT_TRACE2_EVENT="$(pwd)/true" \
+		git -c maintenance.auto=true \
+		commit --quiet --allow-empty -m 2 &&
+	test_subcommand git maintenance run --auto --quiet  <true &&
+	GIT_TRACE2_EVENT="$(pwd)/false" \
+		git -c maintenance.auto=false \
+		commit --quiet --allow-empty -m 3 &&
+	test_subcommand ! git maintenance run --auto --quiet  <false
 '
 
 test_expect_success 'maintenance.<task>.enabled' '
@@ -249,6 +262,105 @@ test_expect_success 'maintenance.incremental-repack.auto' '
 			maintenance run --auto --task=incremental-repack 2>/dev/null &&
 		test_subcommand git multi-pack-index write --no-progress <trace-B-$i || return 1
 	done
+'
+
+test_expect_success '--auto and --schedule incompatible' '
+	test_must_fail git maintenance run --auto --schedule=daily 2>err &&
+	test_i18ngrep "at most one" err
+'
+
+test_expect_success 'invalid --schedule value' '
+	test_must_fail git maintenance run --schedule=annually 2>err &&
+	test_i18ngrep "unrecognized --schedule" err
+'
+
+test_expect_success '--schedule inheritance weekly -> daily -> hourly' '
+	git config maintenance.loose-objects.enabled true &&
+	git config maintenance.loose-objects.schedule hourly &&
+	git config maintenance.commit-graph.enabled true &&
+	git config maintenance.commit-graph.schedule daily &&
+	git config maintenance.incremental-repack.enabled true &&
+	git config maintenance.incremental-repack.schedule weekly &&
+
+	GIT_TRACE2_EVENT="$(pwd)/hourly.txt" \
+		git maintenance run --schedule=hourly 2>/dev/null &&
+	test_subcommand git prune-packed --quiet <hourly.txt &&
+	test_subcommand ! git commit-graph write --split --reachable \
+		--no-progress <hourly.txt &&
+	test_subcommand ! git multi-pack-index write --no-progress <hourly.txt &&
+
+	GIT_TRACE2_EVENT="$(pwd)/daily.txt" \
+		git maintenance run --schedule=daily 2>/dev/null &&
+	test_subcommand git prune-packed --quiet <daily.txt &&
+	test_subcommand git commit-graph write --split --reachable \
+		--no-progress <daily.txt &&
+	test_subcommand ! git multi-pack-index write --no-progress <daily.txt &&
+
+	GIT_TRACE2_EVENT="$(pwd)/weekly.txt" \
+		git maintenance run --schedule=weekly 2>/dev/null &&
+	test_subcommand git prune-packed --quiet <weekly.txt &&
+	test_subcommand git commit-graph write --split --reachable \
+		--no-progress <weekly.txt &&
+	test_subcommand git multi-pack-index write --no-progress <weekly.txt
+'
+
+test_expect_success 'register and unregister' '
+	test_when_finished git config --global --unset-all maintenance.repo &&
+	git config --global --add maintenance.repo /existing1 &&
+	git config --global --add maintenance.repo /existing2 &&
+	git config --global --get-all maintenance.repo >before &&
+
+	# We still have maintenance.<task>.schedule config set,
+	# so this does not update the local schedule
+	git maintenance register &&
+	test_must_fail git config maintenance.auto &&
+
+	# Clear previous maintenance.<task>.schedule values
+	for task in loose-objects commit-graph incremental-repack
+	do
+		git config --unset maintenance.$task.schedule || return 1
+	done &&
+	git maintenance register &&
+	test_cmp_config false maintenance.auto &&
+	test_cmp_config false maintenance.gc.enabled &&
+	test_cmp_config true maintenance.prefetch.enabled &&
+	test_cmp_config hourly maintenance.commit-graph.schedule &&
+	test_cmp_config daily maintenance.incremental-repack.schedule &&
+	git config --global --get-all maintenance.repo >actual &&
+	cp before after &&
+	pwd >>after &&
+	test_cmp after actual &&
+	git maintenance unregister &&
+	git config --global --get-all maintenance.repo >actual &&
+	test_cmp before actual
+'
+
+test_expect_success 'start from empty cron table' '
+	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance start &&
+
+	# start registers the repo
+	git config --get --global maintenance.repo "$(pwd)" &&
+
+	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=daily" cron.txt &&
+	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=hourly" cron.txt &&
+	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=weekly" cron.txt
+'
+
+test_expect_success 'stop from existing schedule' '
+	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance stop &&
+
+	# stop does not unregister the repo
+	git config --get --global maintenance.repo "$(pwd)" &&
+
+	# Operation is idempotent
+	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance stop &&
+	test_must_be_empty cron.txt
+'
+
+test_expect_success 'start preserves existing schedule' '
+	echo "Important information!" >cron.txt &&
+	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance start &&
+	grep "Important information!" cron.txt
 '
 
 test_done

@@ -1,9 +1,19 @@
+maintenance.auto::
+	This boolean config option controls whether some commands run
+	`git maintenance run --auto` after doing their normal work. Defaults
+	to true.
+
 maintenance.<task>.enabled::
 	This boolean config option controls whether the maintenance task
 	with name `<task>` is run when no `--task` option is specified to
 	`git maintenance run`. These config values are ignored if a
 	`--task` option exists. By default, only `maintenance.gc.enabled`
 	is true.
+
+maintenance.<task>.schedule::
+	This config option controls whether or not the given `<task>` runs
+	during a `git maintenance run --schedule=<frequency>` command. The
+	value must be one of "hourly", "daily", or "weekly".
 
 maintenance.commit-graph.auto::
 	This integer config option controls how often the `commit-graph` task
