@@ -583,6 +583,55 @@ static void handle_ref_opt(const char *pattern, const char *prefix)
 	clear_ref_exclusion(&ref_excludes);
 }
 
+enum format_type {
+	/* We would like a relative path. */
+	FORMAT_RELATIVE,
+	/* We would like a canonical absolute path. */
+	FORMAT_CANONICAL,
+	/* We would like the default behavior. */
+	FORMAT_DEFAULT,
+};
+
+enum default_type {
+	/* Our default is a relative path. */
+	DEFAULT_RELATIVE,
+	/* Our default is a relative path if there's a shared root. */
+	DEFAULT_RELATIVE_IF_SHARED,
+	/* Our default is a canonical absolute path. */
+	DEFAULT_CANONICAL,
+	/* Our default is not to modify the item. */
+	DEFAULT_UNMODIFIED,
+};
+
+static void print_path(const char *path, const char *prefix, enum format_type format, enum default_type def)
+{
+	char *cwd = NULL;
+	/*
+	 * We don't ever produce a relative path if prefix is NULL, so set the
+	 * prefix to the current directory so that we can produce a relative
+	 * path whenever possible.  If we're using RELATIVE_IF_SHARED mode, then
+	 * we want an absolute path unless the two share a common prefix, so don't
+	 * set it in that case, since doing so causes a relative path to always
+	 * be produced if possible.
+	 */
+	if (!prefix && (format != FORMAT_DEFAULT || def != DEFAULT_RELATIVE_IF_SHARED))
+		prefix = cwd = xgetcwd();
+	if (format == FORMAT_DEFAULT && def == DEFAULT_UNMODIFIED) {
+		puts(path);
+	} else if (format == FORMAT_RELATIVE ||
+		  (format == FORMAT_DEFAULT && def == DEFAULT_RELATIVE) ||
+		  (format == FORMAT_DEFAULT && def == DEFAULT_RELATIVE_IF_SHARED)) {
+		struct strbuf buf = STRBUF_INIT;
+		puts(relative_path(path, prefix, &buf));
+		strbuf_reset(&buf);
+	} else {
+		char *real = real_pathdup(path, 1);
+		puts(real);
+		free(real);
+	}
+	free(cwd);
+}
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
@@ -595,6 +644,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	struct object_context unused;
 	struct strbuf buf = STRBUF_INIT;
 	const int hexsz = the_hash_algo->hexsz;
+	enum format_type format = FORMAT_DEFAULT;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -650,8 +700,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!argv[i + 1])
 				die("--git-path requires an argument");
 			strbuf_reset(&buf);
-			puts(relative_path(git_path("%s", argv[i + 1]),
-					   prefix, &buf));
+			print_path(git_path("%s", argv[i + 1]), prefix, format, DEFAULT_RELATIVE_IF_SHARED);
 			i++;
 			continue;
 		}
@@ -681,6 +730,16 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				/* Pass on the "--" if we show anything but files.. */
 				if (filter & (DO_FLAGS | DO_REVS))
 					show_file(arg, 0);
+				continue;
+			}
+			if (opt_with_value(arg, "--path-format", &arg)) {
+				if (!strcmp(arg, "absolute")) {
+					format = FORMAT_CANONICAL;
+				} else if (!strcmp(arg, "relative")) {
+					format = FORMAT_RELATIVE;
+				} else {
+					die("unknown argument to --path-format: %s", arg);
+				}
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
@@ -803,7 +862,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--show-toplevel")) {
 				const char *work_tree = get_git_work_tree();
 				if (work_tree)
-					puts(work_tree);
+					print_path(work_tree, prefix, format, DEFAULT_CANONICAL);
 				else
 					die("this operation must be run in a work tree");
 				continue;
@@ -811,7 +870,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--show-superproject-working-tree")) {
 				struct strbuf superproject = STRBUF_INIT;
 				if (get_superproject_working_tree(&superproject))
-					puts(superproject.buf);
+					print_path(superproject.buf, prefix, format, DEFAULT_CANONICAL);
 				strbuf_release(&superproject);
 				continue;
 			}
@@ -846,16 +905,18 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				const char *gitdir = getenv(GIT_DIR_ENVIRONMENT);
 				char *cwd;
 				int len;
+				enum format_type wanted = format;
 				if (arg[2] == 'g') {	/* --git-dir */
 					if (gitdir) {
-						puts(gitdir);
+						print_path(gitdir, prefix, format, DEFAULT_UNMODIFIED);
 						continue;
 					}
 					if (!prefix) {
-						puts(".git");
+						print_path(".git", prefix, format, DEFAULT_UNMODIFIED);
 						continue;
 					}
 				} else {		/* --absolute-git-dir */
+					wanted = FORMAT_CANONICAL;
 					if (!gitdir && !prefix)
 						gitdir = ".git";
 					if (gitdir) {
@@ -868,14 +929,14 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				}
 				cwd = xgetcwd();
 				len = strlen(cwd);
-				printf("%s%s.git\n", cwd, len && cwd[len-1] != '/' ? "/" : "");
+				strbuf_reset(&buf);
+				strbuf_addf(&buf, "%s%s.git", cwd, len && cwd[len-1] != '/' ? "/" : "");
 				free(cwd);
+				print_path(buf.buf, prefix, wanted, DEFAULT_CANONICAL);
 				continue;
 			}
 			if (!strcmp(arg, "--git-common-dir")) {
-				strbuf_reset(&buf);
-				puts(relative_path(get_git_common_dir(),
-						   prefix, &buf));
+				print_path(get_git_common_dir(), prefix, format, DEFAULT_RELATIVE_IF_SHARED);
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-git-dir")) {
@@ -905,8 +966,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				if (the_index.split_index) {
 					const struct object_id *oid = &the_index.split_index->base_oid;
 					const char *path = git_path("sharedindex.%s", oid_to_hex(oid));
-					strbuf_reset(&buf);
-					puts(relative_path(path, prefix, &buf));
+					print_path(path, prefix, format, DEFAULT_RELATIVE);
 				}
 				continue;
 			}

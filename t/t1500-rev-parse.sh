@@ -3,6 +3,16 @@
 test_description='test git rev-parse'
 . ./test-lib.sh
 
+test_one () {
+	dir="$1" &&
+	expect="$2" &&
+	shift &&
+	shift &&
+	echo "$expect" >expect &&
+	git -C "$dir" rev-parse "$@" >actual
+	test_cmp expect actual
+}
+
 # usage: [options] label is-bare is-inside-git is-inside-work prefix git-dir absolute-git-dir
 test_rev_parse () {
 	d=
@@ -60,7 +70,13 @@ ROOT=$(pwd)
 
 test_expect_success 'setup' '
 	mkdir -p sub/dir work &&
-	cp -R .git repo.git
+	cp -R .git repo.git &&
+	git checkout -b main &&
+	test_commit abc &&
+	git checkout -b side &&
+	test_commit def &&
+	git checkout main &&
+	git worktree add worktree side
 '
 
 test_rev_parse toplevel false false true '' .git "$ROOT/.git"
@@ -87,6 +103,24 @@ test_rev_parse -C work -g ../repo.git -b f 'GIT_DIR=../repo.git, core.bare = fal
 test_rev_parse -C work -g ../repo.git -b t 'GIT_DIR=../repo.git, core.bare = true' true false false ''
 
 test_rev_parse -C work -g ../repo.git -b u 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
+
+test_expect_success 'rev-parse --path-format=absolute' '
+	test_one "." "$ROOT/.git" --path-format=absolute --git-dir &&
+	test_one "." "$ROOT/.git" --path-format=absolute --git-common-dir &&
+	test_one "worktree" "$ROOT/.git/worktrees/worktree" --path-format=absolute --git-dir &&
+	test_one "worktree" "$ROOT/.git" --path-format=absolute --git-common-dir &&
+	test_one "." "$ROOT" --path-format=absolute --show-toplevel &&
+	test_one "." "$ROOT/.git/objects" --path-format=absolute --git-path objects
+'
+
+test_expect_success 'rev-parse --path-format=relative' '
+	test_one "." ".git" --path-format=relative --git-dir &&
+	test_one "." ".git" --path-format=relative --git-common-dir &&
+	test_one "worktree" "../.git/worktrees/worktree" --path-format=relative --git-dir &&
+	test_one "worktree" "../.git" --path-format=relative --git-common-dir &&
+	test_one "." "./" --path-format=relative --show-toplevel &&
+	test_one "." ".git/objects" --path-format=relative --git-path objects
+'
 
 test_expect_success 'git-common-dir from worktree root' '
 	echo .git >expect &&
