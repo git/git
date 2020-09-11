@@ -43,13 +43,6 @@ test_expect_success 'disallows --bare with --separate-git-dir' '
 
 '
 
-test_expect_success 'uses "origin" for default remote name' '
-
-	git clone parent clone-default-origin &&
-	(cd clone-default-origin && git rev-parse --verify refs/remotes/origin/master)
-
-'
-
 test_expect_success 'prefers --template config over normal config' '
 
 	template="$TRASH_DIRECTORY/template-with-config" &&
@@ -68,6 +61,28 @@ test_expect_success 'prefers -c config over --template config' '
 	git config --file "$template/config" foo.bar from_template &&
 	git clone "--template=$template" -c foo.bar=inline parent clone-template-inline-config &&
 	(cd clone-template-inline-config && test "$(git config --local foo.bar)" = "inline")
+
+'
+
+test_expect_success 'uses "origin" for default remote name' '
+
+	git clone parent clone-default-origin &&
+	(cd clone-default-origin && git rev-parse --verify refs/remotes/origin/master)
+
+'
+
+test_expect_success 'prefers config "clone.defaultRemoteName" over default' '
+
+	test_config_global clone.defaultRemoteName from_config &&
+	git clone parent clone-config-origin &&
+	(cd clone-config-origin && git rev-parse --verify refs/remotes/from_config/master)
+
+'
+
+test_expect_success 'prefers --origin over -c config' '
+
+	git clone -c clone.defaultRemoteName=inline --origin from_option parent clone-o-and-inline-config &&
+	(cd clone-o-and-inline-config && git rev-parse --verify refs/remotes/from_option/master)
 
 '
 

@@ -1,0 +1,4 @@
+clone.defaultRemoteName::
+	The name of the remote to create when cloning a repository.  Defaults to
+	`origin`, and can be overridden by passing the `--origin` command-line
+	option to linkgit:git-clone[1].
