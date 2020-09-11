@@ -309,7 +309,23 @@ test_expect_success 'register and unregister' '
 	git config --global --add maintenance.repo /existing1 &&
 	git config --global --add maintenance.repo /existing2 &&
 	git config --global --get-all maintenance.repo >before &&
+
+	# We still have maintenance.<task>.schedule config set,
+	# so this does not update the local schedule
 	git maintenance register &&
+	test_must_fail git config maintenance.auto &&
+
+	# Clear previous maintenance.<task>.schedule values
+	for task in loose-objects commit-graph incremental-repack
+	do
+		git config --unset maintenance.$task.schedule || return 1
+	done &&
+	git maintenance register &&
+	test_cmp_config false maintenance.auto &&
+	test_cmp_config false maintenance.gc.enabled &&
+	test_cmp_config true maintenance.prefetch.enabled &&
+	test_cmp_config hourly maintenance.commit-graph.schedule &&
+	test_cmp_config daily maintenance.incremental-repack.schedule &&
 	git config --global --get-all maintenance.repo >actual &&
 	cp before after &&
 	pwd >>after &&
