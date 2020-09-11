@@ -36,6 +36,7 @@
 #include "help.h"
 #include "commit-reach.h"
 #include "commit-graph.h"
+#include "hook.h"
 
 static const char * const builtin_commit_usage[] = {
 	N_("git commit [<options>] [--] <pathspec>..."),
@@ -690,8 +691,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	struct strbuf committer_ident = STRBUF_INIT;
 	int committable;
 	struct strbuf sb = STRBUF_INIT;
-	const char *hook_arg1 = NULL;
-	const char *hook_arg2 = NULL;
+	struct strvec hook_args = STRVEC_INIT;
 	int clean_message_contents = (cleanup_mode != COMMIT_MSG_CLEANUP_NONE);
 	int old_display_comment_prefix;
 	int merge_contains_scissors = 0;
@@ -699,7 +699,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	/* This checks and barfs if author is badly specified */
 	determine_author_info(author_ident);
 
-	if (!no_verify && run_commit_hook(use_editor, index_file, "pre-commit", NULL))
+	if (!no_verify && run_commit_hook(use_editor, index_file, "pre-commit",
+					  &hook_args))
 		return 0;
 
 	if (squash_message) {
@@ -721,27 +722,28 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		}
 	}
 
+	strvec_push(&hook_args, git_path_commit_editmsg());
+
 	if (have_option_m && !fixup_message) {
 		strbuf_addbuf(&sb, &message);
-		hook_arg1 = "message";
+		strvec_push(&hook_args, "message");
 	} else if (logfile && !strcmp(logfile, "-")) {
 		if (isatty(0))
 			fprintf(stderr, _("(reading log message from standard input)\n"));
 		if (strbuf_read(&sb, 0, 0) < 0)
 			die_errno(_("could not read log from standard input"));
-		hook_arg1 = "message";
+		strvec_push(&hook_args, "message");
 	} else if (logfile) {
 		if (strbuf_read_file(&sb, logfile, 0) < 0)
 			die_errno(_("could not read log file '%s'"),
 				  logfile);
-		hook_arg1 = "message";
+		strvec_push(&hook_args, "message");
 	} else if (use_message) {
 		char *buffer;
 		buffer = strstr(use_message_buffer, "\n\n");
 		if (buffer)
 			strbuf_addstr(&sb, skip_blank_lines(buffer + 2));
-		hook_arg1 = "commit";
-		hook_arg2 = use_message;
+		strvec_pushl(&hook_args, "commit", use_message, NULL);
 	} else if (fixup_message) {
 		struct pretty_print_context ctx = {0};
 		struct commit *commit;
@@ -753,7 +755,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 				      &sb, &ctx);
 		if (have_option_m)
 			strbuf_addbuf(&sb, &message);
-		hook_arg1 = "message";
+		strvec_push(&hook_args, "message");
 	} else if (!stat(git_path_merge_msg(the_repository), &statbuf)) {
 		size_t merge_msg_start;
 
@@ -764,9 +766,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
 			if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
 				die_errno(_("could not read SQUASH_MSG"));
-			hook_arg1 = "squash";
+			strvec_push(&hook_args, "squash");
 		} else
-			hook_arg1 = "merge";
+			strvec_push(&hook_args, "merge");
 
 		merge_msg_start = sb.len;
 		if (strbuf_read_file(&sb, git_path_merge_msg(the_repository), 0) < 0)
@@ -780,11 +782,11 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	} else if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
 			die_errno(_("could not read SQUASH_MSG"));
-		hook_arg1 = "squash";
+		strvec_push(&hook_args, "squash");
 	} else if (template_file) {
 		if (strbuf_read_file(&sb, template_file, 0) < 0)
 			die_errno(_("could not read '%s'"), template_file);
-		hook_arg1 = "template";
+		strvec_push(&hook_args, "template");
 		clean_message_contents = 0;
 	}
 
@@ -793,11 +795,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	 * just set the argument(s) to the prepare-commit-msg hook.
 	 */
 	else if (whence == FROM_MERGE)
-		hook_arg1 = "merge";
-	else if (is_from_cherry_pick(whence) || whence == FROM_REBASE_PICK) {
-		hook_arg1 = "commit";
-		hook_arg2 = "CHERRY_PICK_HEAD";
-	}
+		strvec_push(&hook_args, "merge");
+	else if (is_from_cherry_pick(whence) || whence == FROM_REBASE_PICK)
+		strvec_pushl(&hook_args, "commit", "CHERRY_PICK_HEAD", NULL);
 
 	if (squash_message) {
 		/*
@@ -805,8 +805,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		 * then we're possibly hijacking other commit log options.
 		 * Reset the hook args to tell the real story.
 		 */
-		hook_arg1 = "message";
-		hook_arg2 = "";
+		strvec_clear(&hook_args);
+		strvec_pushl(&hook_args, git_path_commit_editmsg(), "message", NULL);
 	}
 
 	s->fp = fopen_for_writing(git_path_commit_editmsg());
@@ -983,7 +983,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		return 0;
 	}
 
-	if (!no_verify && find_hook("pre-commit")) {
+	if (!no_verify && hook_exists("pre-commit")) {
 		/*
 		 * Re-read the index as pre-commit hook could have updated it,
 		 * and write it out as a tree.  We must do this before we invoke
@@ -998,8 +998,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		return 0;
 	}
 
-	if (run_commit_hook(use_editor, index_file, "prepare-commit-msg",
-			    git_path_commit_editmsg(), hook_arg1, hook_arg2, NULL))
+	if (run_commit_hook(use_editor, index_file, "prepare-commit-msg", &hook_args))
 		return 0;
 
 	if (use_editor) {
@@ -1014,8 +1013,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		strvec_clear(&env);
 	}
 
+	strvec_clear(&hook_args);
+	strvec_push(&hook_args, git_path_commit_editmsg());
 	if (!no_verify &&
-	    run_commit_hook(use_editor, index_file, "commit-msg", git_path_commit_editmsg(), NULL)) {
+	    run_commit_hook(use_editor, index_file, "commit-msg", &hook_args)) {
 		return 0;
 	}
 

@@ -21,6 +21,7 @@
 #include "commit-reach.h"
 #include "run-command.h"
 #include "shallow.h"
+#include "hook.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -1631,11 +1632,13 @@ size_t ignore_non_trailer(const char *buf, size_t len)
 }
 
 int run_commit_hook(int editor_is_used, const char *index_file,
-		    const char *name, ...)
+		    const char *name, struct strvec *args)
 {
 	struct strvec hook_env = STRVEC_INIT;
-	va_list args;
+	struct strbuf hook_name = STRBUF_INIT;
 	int ret;
+
+	strbuf_addstr(&hook_name, name);
 
 	strvec_pushf(&hook_env, "GIT_INDEX_FILE=%s", index_file);
 
@@ -1645,10 +1648,9 @@ int run_commit_hook(int editor_is_used, const char *index_file,
 	if (!editor_is_used)
 		strvec_push(&hook_env, "GIT_EDITOR=:");
 
-	va_start(args, name);
-	ret = run_hook_ve(hook_env.v, name, args);
-	va_end(args);
+	ret = run_hooks(hook_env.v, &hook_name, args);
 	strvec_clear(&hook_env);
+	strbuf_release(&hook_name);
 
 	return ret;
 }

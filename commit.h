@@ -9,6 +9,7 @@
 #include "string-list.h"
 #include "pretty.h"
 #include "commit-slab.h"
+#include "strvec.h"
 
 #define COMMIT_NOT_FROM_GRAPH 0xFFFFFFFF
 #define GENERATION_NUMBER_INFINITY 0xFFFFFFFF
@@ -351,7 +352,7 @@ void verify_merge_signature(struct commit *commit, int verbose,
 int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused);
 int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void *unused);
 
-LAST_ARG_MUST_BE_NULL
-int run_commit_hook(int editor_is_used, const char *index_file, const char *name, ...);
+int run_commit_hook(int editor_is_used, const char *index_file,
+		    const char *name, struct strvec *args);
 
 #endif /* COMMIT_H */
