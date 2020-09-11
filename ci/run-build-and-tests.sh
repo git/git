@@ -10,7 +10,7 @@ windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
 *) ln -s "$cache_dir/.prove" t/.prove;;
 esac
 
-make
+make SKIP_DASHED_BUILT_INS=YesPlease
 case "$jobname" in
 linux-gcc)
 	make test
