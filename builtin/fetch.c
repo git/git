@@ -539,6 +539,16 @@ static struct ref *get_ref_map(struct remote *remote,
 		tail = &rm->next;
 	}
 
+	/*
+	 * apply negative refspecs first, before we remove duplicates. This is
+	 * necessary as negative refspecs might remove an otherwise conflicting
+	 * duplicate.
+	 */
+	if (rs->nr)
+		ref_map = apply_negative_refspecs(ref_map, rs);
+	else
+		ref_map = apply_negative_refspecs(ref_map, &remote->fetch);
+
 	ref_map = ref_remove_duplicates(ref_map);
 
 	for (rm = ref_map; rm; rm = rm->next) {

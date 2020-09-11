@@ -8,6 +8,7 @@ static struct refspec_item s_tag_refspec = {
 	1,
 	0,
 	0,
+	0,
 	"refs/tags/*",
 	"refs/tags/*"
 };
@@ -32,9 +33,16 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 	if (*lhs == '+') {
 		item->force = 1;
 		lhs++;
+	} else if (*lhs == '^') {
+		item->negative = 1;
+		lhs++;
 	}
 
 	rhs = strrchr(lhs, ':');
+
+	/* negative refspecs only have one side */
+	if (item->negative && rhs)
+		return 0;
 
 	/*
 	 * Before going on, special case ":" (or "+:") as a refspec
@@ -55,7 +63,7 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 
 	llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
 	if (1 <= llen && memchr(lhs, '*', llen)) {
-		if ((rhs && !is_glob) || (!rhs && fetch))
+		if ((rhs && !is_glob) || (!rhs && !item->negative && fetch))
 			return 0;
 		is_glob = 1;
 	} else if (rhs && is_glob) {
@@ -65,6 +73,28 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 	item->pattern = is_glob;
 	item->src = xstrndup(lhs, llen);
 	flags = REFNAME_ALLOW_ONELEVEL | (is_glob ? REFNAME_REFSPEC_PATTERN : 0);
+
+	if (item->negative) {
+		struct object_id unused;
+
+		/*
+		 * Negative refspecs only have a LHS, which indicates a ref
+		 * (or pattern of refs) to exclude from other matches. This
+		 * can either be a simple ref, a glob pattern, or even an
+		 * exact sha1 match.
+		 */
+		if (!*item->src)
+			return 0; /* negative refspecs must not be empty */
+		else if (llen == the_hash_algo->hexsz && !get_oid_hex(item->src, &unused))
+			item->exact_sha1 = 1; /* ok */
+		else if (!check_refname_format(item->src, flags))
+			; /* valid looking ref is ok */
+		else
+			return 0;
+
+		/* other rules for negative refspecs don't apply */
+		return 1;
+	}
 
 	if (fetch) {
 		struct object_id unused;
@@ -223,7 +253,7 @@ void refspec_ref_prefixes(const struct refspec *rs,
 		const struct refspec_item *item = &rs->items[i];
 		const char *prefix = NULL;
 
-		if (item->exact_sha1)
+		if (item->exact_sha1 || item->negative)
 			continue;
 		if (rs->fetch == REFSPEC_FETCH)
 			prefix = item->src;
