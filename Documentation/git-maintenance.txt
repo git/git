@@ -161,6 +161,50 @@ OPTIONS
 	`maintenance.<task>.enabled` configured as `true` are considered.
 	See the 'TASKS' section for the list of accepted `<task>` values.
 
+
+TROUBLESHOOTING
+---------------
+The `git maintenance` command is designed to simplify the repository
+maintenance patterns while minimizing user wait time during Git commands.
+A variety of configuration options are available to allow customizing this
+process. The default maintenance options focus on operations that complete
+quickly, even on large repositories.
+
+Users may find some cases where scheduled maintenance tasks do not run as
+frequently as intended. Each `git maintenance run` command takes a lock on
+the repository's object database, and this prevents other concurrent
+`git maintenance run` commands from running on the same repository. Without
+this safeguard, competing processes could leave the repository in an
+unpredictable state.
+
+The background maintenance schedule runs `git maintenance run` processes
+on an hourly basis. Each run executes the "hourly" tasks. At midnight,
+that process also executes the "daily" tasks. At midnight on the first day
+of the week, that process also executes the "weekly" tasks. A single
+process iterates over each registered repository, performing the scheduled
+tasks for that frequency. Depending on the number of registered
+repositories and their sizes, this process may take longer than an hour.
+In this case, multiple `git maintenance run` commands may run on the same
+repository at the same time, colliding on the object database lock. This
+results in one of the two tasks not running.
+
+If you find that some maintenance windows are taking longer than one hour
+to complete, then consider reducing the complexity of your maintenance
+tasks. For example, the `gc` task is much slower than the
+`incremental-repack` task. However, this comes at a cost of a slightly
+larger object database. Consider moving more expensive tasks to be run
+less frequently.
+
+Expert users may consider scheduling their own maintenance tasks using a
+different schedule than is available through `git maintenance start` and
+Git configuration options. These users should be aware of the object
+database lock and how concurrent `git maintenance run` commands behave.
+Further, the `git gc` command should not be combined with
+`git maintenance run` commands. `git gc` modifies the object database
+but does not take the lock in the same way as `git maintenance run`. If
+possible, use `git maintenance run --task=gc` instead of `git gc`.
+
+
 GIT
 ---
 Part of the linkgit:git[1] suite
