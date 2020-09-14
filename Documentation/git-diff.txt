@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git diff' [<options>] [<commit>] [--] [<path>...]
 'git diff' [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]
-'git diff' [<options>] <commit> [<commit>...] <commit> [--] [<path>...]
+'git diff' [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]
 'git diff' [<options>] <commit>...<commit> [--] [<path>...]
 'git diff' [<options>] <blob> <blob>
 'git diff' [<options>] --no-index [--] <path> <path>
@@ -62,10 +62,14 @@ of <commit> and HEAD.  `git diff --merge-base A` is equivalent to
 	branch name to compare with the tip of a different
 	branch.
 
-'git diff' [<options>] <commit> <commit> [--] [<path>...]::
+'git diff' [<options>] [--merge-base] <commit> <commit> [--] [<path>...]::
 
 	This is to view the changes between two arbitrary
 	<commit>.
++
+If --merge-base is given, use the merge base of the two commits for the
+"before" side.  `git diff --merge-base A B` is equivalent to
+`git diff $(git merge-base A B) B`.
 
 'git diff' [<options>] <commit> <commit>... <commit> [--] [<path>...]::
 

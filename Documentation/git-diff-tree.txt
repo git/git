@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
-	      [-t] [-r] [-c | --cc] [--combined-all-paths] [--root]
+	      [-t] [-r] [-c | --cc] [--combined-all-paths] [--root] [--merge-base]
 	      [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
 
 DESCRIPTION
@@ -42,6 +42,11 @@ include::diff-options.txt[]
 --root::
 	When `--root` is specified the initial commit will be shown as a big
 	creation event. This is equivalent to a diff against the NULL tree.
+
+--merge-base::
+	Instead of comparing the <tree-ish>s directly, use the merge
+	base between the two <tree-ish>s as the "before" side.  There
+	must be two <tree-ish>s given and they must both be commits.
 
 --stdin::
 	When `--stdin` is specified, the command does not take

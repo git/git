@@ -156,4 +156,38 @@ do
 	'
 done
 
+for cmd in diff-tree diff
+do
+	test_expect_success "$cmd --merge-base with two commits" '
+		git $cmd commit-C master >expect &&
+		git $cmd --merge-base br2 master >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "$cmd --merge-base commit and non-commit" '
+		test_must_fail git $cmd --merge-base br2 master^{tree} 2>err &&
+		test_i18ngrep "fatal: --merge-base only works with commits" err
+	'
+
+	test_expect_success "$cmd --merge-base with no merge bases and two commits" '
+		test_must_fail git $cmd --merge-base br2 br3 2>err &&
+		test_i18ngrep "fatal: no merge base found" err
+	'
+
+	test_expect_success "$cmd --merge-base with multiple merge bases and two commits" '
+		test_must_fail git $cmd --merge-base master br1 2>err &&
+		test_i18ngrep "fatal: multiple merge bases found" err
+	'
+done
+
+test_expect_success 'diff-tree --merge-base with one commit' '
+	test_must_fail git diff-tree --merge-base master 2>err &&
+	test_i18ngrep "fatal: --merge-base only works with two commits" err
+'
+
+test_expect_success 'diff --merge-base with range' '
+	test_must_fail git diff --merge-base br2..br3 2>err &&
+	test_i18ngrep "fatal: --merge-base does not work with ranges" err
+'
+
 test_done
