@@ -1531,6 +1531,10 @@ static void add_options_to_argv(struct argv_array *argv)
 		argv_array_push(argv, "-v");
 	else if (verbosity < 0)
 		argv_array_push(argv, "-q");
+	if (family == TRANSPORT_FAMILY_IPV4)
+		argv_array_push(argv, "--ipv4");
+	else if (family == TRANSPORT_FAMILY_IPV6)
+		argv_array_push(argv, "--ipv6");
 
 }
 
