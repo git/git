@@ -171,6 +171,42 @@ test_expect_success 'Assert that --contains only works on commits, not trees & b
 	test_must_fail git branch --no-contains $blob
 '
 
+test_expect_success 'multiple branch --contains' '
+	git checkout -b side2 master &&
+	>feature &&
+	git add feature &&
+	git commit -m "add feature" &&
+	git checkout -b next master &&
+	git merge side &&
+	git branch --contains side --contains side2 >actual &&
+	cat >expect <<-\EOF &&
+	* next
+	  side
+	  side2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'multiple branch --no-contains' '
+	git branch --no-contains side --no-contains side2 >actual &&
+	cat >expect <<-\EOF &&
+	  master
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'branch --contains combined with --no-contains' '
+	git checkout -b seen master &&
+	git merge side &&
+	git merge side2 &&
+	git branch --contains side --no-contains side2 >actual &&
+	cat >expect <<-\EOF &&
+	  next
+	  side
+	EOF
+	test_cmp expect actual
+'
+
 # We want to set up a case where the walk for the tracking info
 # of one branch crosses the tip of another branch (and make sure
 # that the latter walk does not mess up our flag to see if it was
@@ -198,17 +234,6 @@ test_expect_success 'branch --merged with --verbose' '
 	  zzz    $(git rev-parse --short zzz   ) second on master
 	EOF
 	test_i18ncmp expect actual
-'
-
-test_expect_success 'branch --contains combined with --no-contains' '
-	git branch --contains zzz --no-contains topic >actual &&
-	cat >expect <<-\EOF &&
-	  master
-	  side
-	  zzz
-	EOF
-	test_cmp expect actual
-
 '
 
 test_done
