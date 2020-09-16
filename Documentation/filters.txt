@@ -1,0 +1,3 @@
+When combining multiple `--contains` and `--no-contains` filters, only
+references that contain at least one of the `--contains` commits and
+contain none of the `--no-contains` commits are shown.

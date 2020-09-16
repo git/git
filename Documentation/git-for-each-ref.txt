@@ -408,6 +408,11 @@ Note also that multiple copies of an object may be present in the object
 database; in this case, it is undefined which copy's size or delta base
 will be reported.
 
+NOTES
+-----
+
+include::filters.txt[]
+
 SEE ALSO
 --------
 linkgit:git-show-ref[1]

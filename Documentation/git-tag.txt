@@ -377,6 +377,11 @@ $ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 
 include::date-formats.txt[]
 
+NOTES
+-----
+
+include::filters.txt[]
+
 SEE ALSO
 --------
 linkgit:git-check-ref-format[1].
