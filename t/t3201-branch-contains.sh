@@ -187,10 +187,28 @@ test_expect_success 'multiple branch --contains' '
 	test_cmp expect actual
 '
 
+test_expect_success 'multiple branch --merged' '
+	git branch --merged next --merged master >actual &&
+	cat >expect <<-\EOF &&
+	  master
+	* next
+	  side
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'multiple branch --no-contains' '
 	git branch --no-contains side --no-contains side2 >actual &&
 	cat >expect <<-\EOF &&
 	  master
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'multiple branch --no-merged' '
+	git branch --no-merged next --no-merged master >actual &&
+	cat >expect <<-\EOF &&
+	  side2
 	EOF
 	test_cmp expect actual
 '
@@ -203,6 +221,15 @@ test_expect_success 'branch --contains combined with --no-contains' '
 	cat >expect <<-\EOF &&
 	  next
 	  side
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'branch --merged combined with --no-merged' '
+	git branch --merged seen --no-merged next >actual &&
+	cat >expect <<-\EOF &&
+	* seen
+	  side2
 	EOF
 	test_cmp expect actual
 '
