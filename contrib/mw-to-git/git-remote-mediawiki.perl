@@ -9,7 +9,7 @@
 # License: GPL v2 or later
 
 # Gateway between Git and MediaWiki.
-# Documentation & bugtracker: https://github.com/moy/Git-Mediawiki/
+# Documentation & bugtracker: https://github.com/Git-Mediawiki/Git-Mediawiki
 
 use strict;
 use MediaWiki::API;
