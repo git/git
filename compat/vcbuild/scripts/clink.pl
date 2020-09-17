@@ -67,7 +67,7 @@ while (@ARGV) {
 		}
 		push(@args, $lib);
 	} elsif ("$arg" eq "-lexpat") {
-		push(@args, "expat.lib");
+		push(@args, "libexpat.lib");
 	} elsif ("$arg" =~ /^-L/ && "$arg" ne "-LTCG") {
 		$arg =~ s/^-L/-LIBPATH:/;
 		push(@lflags, $arg);
