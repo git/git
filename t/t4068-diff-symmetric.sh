@@ -64,27 +64,27 @@ test_expect_success 'diff with two merge bases' '
 '
 
 test_expect_success 'diff with no merge bases' '
-	test_must_fail git diff br2...br3 >tmp 2>err &&
+	test_must_fail git diff br2...br3 2>err &&
 	test_i18ngrep "fatal: br2...br3: no merge base" err
 '
 
 test_expect_success 'diff with too many symmetric differences' '
-	test_must_fail git diff br1...master br2...br3 >tmp 2>err &&
+	test_must_fail git diff br1...master br2...br3 2>err &&
 	test_i18ngrep "usage" err
 '
 
 test_expect_success 'diff with symmetric difference and extraneous arg' '
-	test_must_fail git diff master br1...master >tmp 2>err &&
+	test_must_fail git diff master br1...master 2>err &&
 	test_i18ngrep "usage" err
 '
 
 test_expect_success 'diff with two ranges' '
-	test_must_fail git diff master br1..master br2..br3 >tmp 2>err &&
+	test_must_fail git diff master br1..master br2..br3 2>err &&
 	test_i18ngrep "usage" err
 '
 
 test_expect_success 'diff with ranges and extra arg' '
-	test_must_fail git diff master br1..master commit-D >tmp 2>err &&
+	test_must_fail git diff master br1..master commit-D 2>err &&
 	test_i18ngrep "usage" err
 '
 
