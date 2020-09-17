@@ -73,6 +73,10 @@ do
 		git rev-list --objects --all >/dev/null
 	'
 
+	test_perf "abbrev-commit ($nr_packs)" '
+		git rev-list --abbrev-commit HEAD >/dev/null
+	'
+
 	# This simulates the interesting part of the repack, which is the
 	# actual pack generation, without smudging the on-disk setup
 	# between trials.
