@@ -30,7 +30,9 @@ SUBCOMMANDS
 -----------
 
 run::
-	Run one or more maintenance tasks.
+	Run one or more maintenance tasks. If one or more `--task=<task>`
+	options are specified, then those tasks are run in the provided
+	order. Otherwise, only the `gc` task is run.
 
 TASKS
 -----
@@ -62,6 +64,11 @@ OPTIONS
 
 --quiet::
 	Do not report progress or other information over `stderr`.
+
+--task=<task>::
+	If this option is specified one or more times, then only run the
+	specified tasks in the specified order. See the 'TASKS' section
+	for the list of accepted `<task>` values.
 
 GIT
 ---
