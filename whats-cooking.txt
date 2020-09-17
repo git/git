@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2020, #03; Wed, 9)
+Subject: What's cooking in git.git (Sep 2020, #04; Wed, 16)
 X-master-at: 54e85e7af1ac9e9a92888060d6811ae767fea1bc
-X-next-at: a41e38b8ca5c1f61d7a6b4dd5e741fcd76907bf1
+X-next-at: b0816b6eb02694af330100c8a4ada87e1fe15e2e
 
-What's cooking in git.git (Sep 2020, #03; Wed, 9)
+What's cooking in git.git (Sep 2020, #04; Wed, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -18,131 +18,183 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* es/worktree-repair (2020-08-31) 5 commits
-  (merged to 'next' on 2020-08-31 at 604825c5e4)
- + init: make --separate-git-dir work from within linked worktree
- + init: teach --separate-git-dir to repair linked worktrees
- + worktree: teach "repair" to fix outgoing links to worktrees
- + worktree: teach "repair" to fix worktree back-links to main worktree
- + worktree: add skeleton "repair" command
+* kk/build-portability-fix (2020-09-09) 1 commit
+  (merged to 'next' on 2020-09-16 at 63f2672632)
+ + Fit to Plan 9's ANSI/POSIX compatibility layer
 
- "git worktree" gained a "repair" subcommand to help users recover
- after moving the worktrees or repository manually without telling
- Git.  Also, "git init --separate-git-dir" no longer corrupts
- administrative data related to linked worktrees.
+ Portability tweak for some shell scripts used while building.
+
+ Will merge to 'master'.
 
 
-* hv/ref-filter-misc (2020-08-28) 8 commits
-  (merged to 'next' on 2020-09-02 at 9a8bb84f20)
- + ref-filter: add `sanitize` option for 'subject' atom
- + pretty: refactor `format_sanitized_subject()`
- + ref-filter: add `short` modifier to 'parent' atom
- + ref-filter: add `short` modifier to 'tree' atom
- + ref-filter: rename `objectname` related functions and fields
- + ref-filter: modify error messages in `grab_objectname()`
- + ref-filter: refactor `grab_objectname()`
- + ref-filter: support different email formats
+* al/ref-filter-merged-and-no-merged (2020-09-16) 3 commits
+  (merged to 'next' on 2020-09-16 at b04e306660)
+ + ref-filter: allow merged and no-merged filters
+ + Doc: cover multiple contains/no-contains filters
+ + t3201: test multiple branch filter combinations
 
- The "--format=" option to the "for-each-ref" command and friends
- learned a few more tricks, e.g. the ":short" suffix that applies to
- "objectname" now also can be used for "parent", "tree", etc.
+ "git for-each-ref" and friends that list refs used to allow only
+ one --merged or --no-merged to filter them; they learned to take
+ combination of both kind of filtering.
+
+ Will merge to 'master'.
 
 
-* jk/worktree-check-clean-leakfix (2020-08-27) 1 commit
-  (merged to 'next' on 2020-08-31 at 220fc43629)
- + worktree: fix leak in check_clean_worktree()
+* bc/faq-misc (2020-09-14) 3 commits
+ - docs: explain how to deal with files that are always modified
+ - docs: explain why reverts are not always applied on merge
+ - docs: explain why squash merges are broken with long-running branches
 
- Leakfix.
+ More FAQ entries.
 
-
-* js/ci-squelch-false-failure (2020-09-02) 2 commits
-  (merged to 'next' on 2020-09-03 at 254f390305)
- + ci: avoid ugly "failure" in the `ci-config` job
- + ci: fix indentation of the `ci-config` job
-
- CI noise reduction.
+ Expecting a reroll.
+ cf. <20200913171206.GO241078@camp.crustytoothpaste.net>
 
 
-* jt/interpret-branch-name-fallback (2020-09-02) 3 commits
-  (merged to 'next' on 2020-09-03 at 28914ab788)
- + wt-status: tolerate dangling marks
- + refs: move dwim_ref() to header file
- + sha1-name: replace unsigned int with option struct
+* sb/clone-origin (2020-09-11) 4 commits
+ - clone: allow configurable default for `-o`/`--origin`
+ - clone: validate --origin option before use
+ - clone: call git_config before parse_options
+ - clone: add tests for --template and some disallowed option pairs
 
- "git status" has trouble showing where it came from by interpreting
- reflog entries that recordcertain events, e.g. "checkout @{u}", and
- gives a hard/fatal error.  Even though it inherently is impossible
- to give a correct answer because the reflog entries lose some
- information (e.g. "@{u}" does not record what branch the user was
- on hence which branch 'the upstream' needs to be computed, and even
- if the record were available, the relationship between branches may
- have changed), at least hide the error to allow "status" show its
- output.
+ "git clone" learned clone.defaultremotename configuration variable
+ to customize what nickname to use to call the remote the repository
+ was cloned from.
+
+ Expecting an update.
 
 
-* os/vcbuild (2020-09-08) 3 commits
-  (merged to 'next' on 2020-09-08 at 56551401c2)
- + contrib/buildsystems: fix expat library name for generated vcxproj
-  (merged to 'next' on 2020-09-03 at 0216ec9cb9)
- + vcbuild: fix batch file name in README
- + vcbuild: fix library name for expat with make MSVC=1
-
- Fix build procedure for MSVC.
-
-
-* pb/imap-send-updates (2020-08-31) 3 commits
-  (merged to 'next' on 2020-09-02 at 899fca3919)
- + git-imap-send.txt: add note about localized Gmail folders
- + git-imap-send.txt: do verify SSL certificate for gmail.com
- + git-imap-send.txt: don't duplicate 'Examples' sections
-
- "git imap-send" updates.
+* sk/force-if-includes (2020-09-14) 8 commits
+ - SQUASH???
+ - t: add tests for "force-if-includes"
+ - doc: add reference for "--[no-]force-if-includes"
+ - builtin/push: add option "--[no-]force-if-includes"
+ - transport-helper: update ref status for "force-if-includes"
+ - send-pack: check ref status for "force-if-includes"
+ - transport: add flag for "--[no-]force-if-includes"
+ - remote: add reflog check for "force-if-includes"
 
 
-* so/separate-field-for-m-and-diff-merges (2020-08-31) 1 commit
-  (merged to 'next' on 2020-08-31 at 8def2984ca)
- + revision: add separate field for "-m" of "diff-index -m"
+* ab/mediawiki-fixes (2020-09-16) 15 commits
+ - remote-mediawiki tests: annotate failing tests
+ - remote-mediawiki: fix duplicate revisions being imported
+ - remote-mediawiki tests: use CLI installer
+ - remote-mediawiki tests: use inline PerlIO for readability
+ - remote-mediawiki tests: replace deprecated Perl construct
+ - remote-mediawiki tests: use a more idiomatic dispatch table
+ - remote-mediawiki tests: use "$dir/" instead of "$dir."
+ - remote-mediawiki tests: change `[]` to `test`
+ - remote-mediawiki tests: guard test_cmp with test_path_is_file
+ - remote-mediawiki tests: use test_cmp in tests
+ - remote-mediawiki tests: use a 10 character password
+ - remote-mediawiki tests: use the login/password variables
+ - remote-mediawiki doc: bump recommended PHP version to 7.3
+ - remote-mediawiki doc: link to MediaWiki's current version
+ - remote-mediawiki doc: correct link to GitHub project
 
- Internal API clean-up to handle two options "diff-index" and "log"
- have, which happen to share the same short form, more sensibly.
+ Modernization and fixes to MediaWiki remote backend.
 
-
-* ss/submodule-summary-in-c (2020-08-12) 4 commits
-  (merged to 'next' on 2020-08-17 at 9bc352cb70)
- + submodule: port submodule subcommand 'summary' from shell to C
- + t7421: introduce a test script for verifying 'summary' output
- + submodule: rename helper functions to avoid ambiguity
- + submodule: remove extra line feeds between callback struct and macro
- (this branch is used by ss/submodule-summary-in-c-fixes.)
-
- Yet another subcommand of "git submodule" is getting rewritten in C.
-
-
-* ss/submodule-summary-in-c-fixes (2020-08-27) 3 commits
-  (merged to 'next' on 2020-09-02 at 7f959811b8)
- + t7421: eliminate 'grep' check in t7421.4 for mingw compatibility
- + submodule: fix style in function definition
- + submodule: eliminate unused parameters from print_submodule_summary()
- (this branch uses ss/submodule-summary-in-c.)
-
- Fixups to a topic in 'next'.
+ Will merge to 'next'.
 
 
-* tb/repack-clearing-midx (2020-08-28) 2 commits
-  (merged to 'next' on 2020-08-28 at 4204c0cb5e)
- + midx: traverse the local MIDX first
-  (merged to 'next' on 2020-08-27 at a465875cbb)
- + builtin/repack.c: invalidate MIDX only when necessary
+* ar/fetch-ipversion-in-all (2020-09-15) 1 commit
+ - fetch: pass --ipv4 and --ipv6 options to sub-fetches
 
- When a packfile is removed by "git repack", multi-pack-index gets
- cleared; the code was taught to do so less aggressively by first
- checking if the midx actually refers to a pack that no longer
- exists.
+ "git fetch --all --ipv4/--ipv6" forgot to pass the protocol options
+ to instances of the "git fetch" that talk to individual remotes,
+ which has been corrected.
+
+
+* ar/fetch-transfer-ipversion (2020-09-16) 1 commit
+ - config: option transfer.ipversion to set transport protocol version for network fetches
+
+ Adds transfer.ipversion configuration variable.
+
+ Needs more work.
+
+
+* bc/clone-with-git-default-hash-fix (2020-09-15) 1 commit
+ - builtin/clone: avoid failure with GIT_DEFAULT_HASH
+
+ "git clone" that clones from SHA-1 repository, while
+ GIT_DEFAULT_HASH set to use SHA-256 already, resulted in an
+ unusable repository that half-claims to be SHA-256 repository
+ with SHA-1 objects and refs.  This has been corrected.
+
+ Expecting a reroll.
+
+
+* cd/commit-graph-doc (2020-09-15) 1 commit
+  (merged to 'next' on 2020-09-16 at b0816b6eb0)
+ + commit-graph-format.txt: fix no-parent value
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* hn/reftable (2020-09-16) 13 commits
+ - reftable: "test-tool dump-reftable" command.
+ - reftable: rest of library
+ - reftable: file level tests
+ - reftable: read reftable files
+ - reftable: write reftable files
+ - reftable: a generic binary tree implementation
+ - reftable: reading/writing blocks
+ - reftable: (de)serialization for the polymorphic record type.
+ - reftable: utility functions
+ - reftable: add a barebones unittest framework
+ - vcxproj: adjust for the reftable changes
+ - reftable: define the public API
+ - reftable: add LICENSE
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* vv/send-email-with-less-secure-apps-access (2020-08-29) 1 commit
+ - Documentation/git-send-email.txt: Mention less secure app access might need to enable.
+
+ Doc update.
+
+ Expecting a reroll.
+ cf. <xmqqwo1hi9nv.fsf@gitster.c.googlers.com>
+ cf. <xmqqft85i72s.fsf@gitster.c.googlers.com>
+
+
+* jc/war-on-dashed-git (2020-08-27) 1 commit
+ - git: catch an attempt to run "git-foo"
+
+ The first step to remove on-disk binaries for built-in subcommands
+ by soliciting objections.
+
+ On hold for now.
+
+
+* dr/push-remoteref-fix (2020-04-23) 1 commit
+ - remote.c: fix handling of %(push:remoteref)
+
+ The "%(push:remoteref)" placeholder in the "--format=" argument of
+ "git format-patch" (and friends) only showed what got explicitly
+ configured, not what ref at the receiving end would be updated when
+ "git push" was used, as it ignored the default behaviour (e.g. update
+ the same ref as the source).
+
+ Discard for now.
+ cf. <xmqqv9gu7c61.fsf@gitster.c.googlers.com>
+ cf. <20200911214358.acl3hy2e763begoo@feanor>
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
 
 * al/t3200-back-on-a-branch (2020-09-08) 1 commit
   (merged to 'next' on 2020-09-09 at 833e2fc60c)
@@ -160,7 +212,8 @@ repositories listed at
  or relative path.
 
 
-* ds/maintenance-part-3 (2020-09-06) 6 commits
+* ds/maintenance-part-3 (2020-09-11) 7 commits
+ - maintenance: add troubleshooting guide to docs
  - maintenance: recommended schedule in register/start
  - maintenance: add start/stop subcommands
  - maintenance: add [un]register subcommands
@@ -183,26 +236,28 @@ repositories listed at
 
 
 * es/format-patch-interdiff-cleanup (2020-09-08) 3 commits
- - format-patch: use 'origin' as start of current-series-range when known
- - diff-lib: tighten show_interdiff()'s interface
- - diff: move show_interdiff() from its own file to diff-lib
+  (merged to 'next' on 2020-09-16 at d919bb3d1f)
+ + format-patch: use 'origin' as start of current-series-range when known
+ + diff-lib: tighten show_interdiff()'s interface
+ + diff: move show_interdiff() from its own file to diff-lib
 
- Code cleanup with a slight behaviour change when "format-patch
- --range-diff=<prev> origin..HEAD" gives a single revision to
- <prev>.
+ Code cleanup and teach "format-patch --range-diff=<prev>
+ <origin>..HEAD" not ignore <origin> when <prev> is a single
+ version.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/wt-add-detach (2020-09-06) 3 commits
- - git-worktree.txt: discuss branch-based vs. throwaway worktrees
- - worktree: teach `add` to recognize -d as shorthand for --detach
- - git-checkout.txt: document -d short option for --detach
+  (merged to 'next' on 2020-09-10 at abd83f90e7)
+ + git-worktree.txt: discuss branch-based vs. throwaway worktrees
+ + worktree: teach `add` to recognize -d as shorthand for --detach
+ + git-checkout.txt: document -d short option for --detach
 
- "git worktree add" learns the "--detach" option to create a new
- worktree without being on a branch.
+ "git worktree add" learns that the "-d" is a synonym to "--detach"
+ option to create a new worktree without being on a branch.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * hn/refs-ref-log-only-bit (2020-09-08) 1 commit
@@ -226,23 +281,21 @@ repositories listed at
  Will merge to 'master'.
 
 
-* jc/quote-path-cleanup (2020-09-08) 6 commits
- - quote: turn 'nodq' parameter into a set of flags
- - quote: rename misnamed sq_lookup[] to cq_lookup[]
- - wt-status: consistently quote paths in "status --short" output
- - quote_path: optionally allow quoting a path with SP in it
- - quote_path: give flags parameter to quote_path()
- - quote_path: rename quote_path_relative() to quote_path()
+* jc/quote-path-cleanup (2020-09-10) 7 commits
+  (merged to 'next' on 2020-09-10 at 3bfde81846)
+ + quote: turn 'nodq' parameter into a set of flags
+ + quote: rename misnamed sq_lookup[] to cq_lookup[]
+ + wt-status: consistently quote paths in "status --short" output
+ + quote_path: code clarification
+ + quote_path: optionally allow quoting a path with SP in it
+ + quote_path: give flags parameter to quote_path()
+ + quote_path: rename quote_path_relative() to quote_path()
 
  "git status --short" quoted a path with SP in it when tracked, but
  not those that are untracked, ignored or unmerged.  They are all
  shown quoted consistently.
 
- Undecided.
- This is more involved than alternatives proposed by brian and Réne
- and I am not sure extra changes to the codebase is a net positive.
- cf. <20200908013013.1099937-1-sandals@crustytoothpaste.net>
- cf. <3a72c5f2-35cc-a865-d5f2-02706c48d8ec@web.de>
+ Will merge to 'master'.
 
 
 * jk/add-i-fixes (2020-09-08) 2 commits
@@ -256,28 +309,31 @@ repositories listed at
 
 
 * os/collect-changed-submodules-optim (2020-09-06) 1 commit
- - submodule: suppress checking for file name and ref ambiguity for object ids
+  (merged to 'next' on 2020-09-10 at b6d9ed060e)
+ + submodule: suppress checking for file name and ref ambiguity for object ids
 
  Optimization around submodule handling.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * os/fetch-submodule-optim (2020-09-06) 1 commit
- - fetch: do not look for submodule changes in unchanged refs
+  (merged to 'next' on 2020-09-16 at fa39e3f211)
+ + fetch: do not look for submodule changes in unchanged refs
 
  Optimization around submodule handling.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pw/add-p-edit-ita-path (2020-09-09) 1 commit
- - add -p: fix editing of intent-to-add paths
+  (merged to 'next' on 2020-09-16 at 7540ed3c0e)
+ + add -p: fix editing of intent-to-add paths
 
  "add -p" did not allow editing paths that were only added in
  intent.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pw/add-p-leakfix (2020-09-08) 1 commit
@@ -330,77 +386,36 @@ repositories listed at
 
 
 * hn/refs-trace-backend (2020-09-09) 1 commit
- - refs: add GIT_TRACE_REFS debugging mechanism
+  (merged to 'next' on 2020-09-16 at f2e065ec17)
+ + refs: add GIT_TRACE_REFS debugging mechanism
 
  Developer support.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/dist-tarball-tweak (2020-09-09) 1 commit
- - Makefile: allow extra tweaking of distribution tarball
+  (merged to 'next' on 2020-09-10 at 36cbe7ee9e)
+ + Makefile: allow extra tweaking of distribution tarball
 
  Allow maintainers to tweak $(TAR) invocations done while making
  distribution tarballs.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mt/config-fail-nongit-early (2020-09-09) 1 commit
- - config: complain about --worktree outside of a git repo
+  (merged to 'next' on 2020-09-10 at 6f77f65b4e)
+ + config: complain about --worktree outside of a git repo
 
  Unlike "git config --local", "git config --worktree" did not fail
  early and cleanly when started outside a git repository.
 
- Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
-
-* vv/send-email-with-less-secure-apps-access (2020-08-29) 1 commit
- - Documentation/git-send-email.txt: Mention less secure app access might need to enable.
-
- Doc update.
-
- Expecting a reroll.
- cf. <xmqqwo1hi9nv.fsf@gitster.c.googlers.com>
- cf. <xmqqft85i72s.fsf@gitster.c.googlers.com>
+ Will merge to 'master'.
 
 
-* jc/war-on-dashed-git (2020-08-27) 1 commit
- - git: catch an attempt to run "git-foo"
-
- The first step to remove on-disk binaries for built-in subcommands
- by soliciting objections.
-
- On hold for now.
-
-
-* dr/push-remoteref-fix (2020-04-23) 1 commit
- - remote.c: fix handling of %(push:remoteref)
-
- The "%(push:remoteref)" placeholder in the "--format=" argument of
- "git format-patch" (and friends) only showed what got explicitly
- configured, not what ref at the receiving end would be updated when
- "git push" was used, as it ignored the default behaviour (e.g. update
- the same ref as the source).
-
- Expecting a reroll.
- cf. <20200416152145.wp2zeibxmuyas6y6@feanor>
- cf. <xmqqv9gu7c61.fsf@gitster.c.googlers.com>
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
-
-* tb/bloom-improvements (2020-09-09) 12 commits
+* tb/bloom-improvements (2020-09-16) 13 commits
+ - commit-graph: introduce 'commitGraph.maxNewFilters'
  - builtin/commit-graph.c: introduce '--max-new-filters=<n>'
  - commit-graph: rename 'split_commit_graph_opts'
  - bloom: encode out-of-bounds filters as non-empty
@@ -418,6 +433,8 @@ repositories listed at
  filters that are computed from scratch with the --max-new-filters
  option.
 
+ Will merge to 'next'.
+
 
 * es/config-hooks (2020-09-09) 9 commits
  - run_commit_hook: take strvec instead of varargs
@@ -433,25 +450,27 @@ repositories listed at
  The "hooks defined in config" topic.
 
 
-* ls/mergetool-meld-auto-merge (2020-09-09) 1 commit
- - Support auto-merge for meld to follow the vim-diff behavior
+* ls/mergetool-meld-auto-merge (2020-09-16) 1 commit
+  (merged to 'next' on 2020-09-16 at 01985a671b)
+ + mergetool: allow auto-merge for meld to follow the vim-diff behavior
 
  The 'meld' backend of the "git mergetool" learned to give the
  underlying 'meld' the '--auto-merge' option, which would help
  reduce the amount of text that requires manual merging.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mf/submodule-summary-with-correct-repository (2020-06-24) 2 commits
- - submodule: use submodule repository when preparing summary
- - revision: use repository from rev_info when parsing commits
+  (merged to 'next' on 2020-09-10 at 7853fe7e12)
+ + submodule: use submodule repository when preparing summary
+ + revision: use repository from rev_info when parsing commits
 
  "git diff/show" on a change that involves a submodule used to read
  the information on commits in the submodule from a wrong repository
  and gave a wrong information when the commit-graph is involved.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqzh667ca4.fsf@gitster.c.googlers.com>
 
 
@@ -464,12 +483,13 @@ repositories listed at
  Will merge to 'master'.
 
 
-* mt/grep-sparse-checkout (2020-09-02) 8 commits
+* mt/grep-sparse-checkout (2020-09-10) 9 commits
  - config: add setting to ignore sparsity patterns in some cmds
  - grep: honor sparse checkout patterns
  - config: correctly read worktree configs in submodules
+ - config: make do_git_config_sequence receive a 'struct repository'
  - t/helper/test-config: unify exit labels
- - t/helper/test-config: check argc before accessing argv
+ - t/helper/test-config: diagnose missing arguments
  - t/helper/test-config: be consistent with exit codes
  - t1308-config-set: avoid false positives when using test-config
  - doc: grep: unify info on configuration variables
@@ -531,18 +551,19 @@ repositories listed at
 
 
 * jt/threaded-index-pack (2020-09-08) 7 commits
- - index-pack: make quantum of work smaller
- - index-pack: make resolve_delta() assume base data
- - index-pack: calculate {ref,ofs}_{first,last} early
- - index-pack: remove redundant child field
- - index-pack: unify threaded and unthreaded code
- - index-pack: remove redundant parameter
- - Documentation: deltaBaseCacheLimit is per-thread
+  (merged to 'next' on 2020-09-16 at 8542385cc0)
+ + index-pack: make quantum of work smaller
+ + index-pack: make resolve_delta() assume base data
+ + index-pack: calculate {ref,ofs}_{first,last} early
+ + index-pack: remove redundant child field
+ + index-pack: unify threaded and unthreaded code
+ + index-pack: remove redundant parameter
+ + Documentation: deltaBaseCacheLimit is per-thread
 
  "git index-pack" learned to resolve deltified objects with greater
  parallelism.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/refspecs-negative (2020-08-21) 1 commit
@@ -602,7 +623,8 @@ repositories listed at
  repository maintenance tasks, not limited to the object database
  cleaning.
 
- Will merge to 'next'.
+ On hold.
+ cf. <0b35829f-a83b-a093-2dc5-0e7d3b42fd15@gmail.com>
 
 --------------------------------------------------
 [Discarded]
