@@ -30,9 +30,11 @@ SUBCOMMANDS
 -----------
 
 run::
-	Run one or more maintenance tasks. If one or more `--task=<task>`
-	options are specified, then those tasks are run in the provided
-	order. Otherwise, only the `gc` task is run.
+	Run one or more maintenance tasks. If one or more `--task` options
+	are specified, then those tasks are run in that order. Otherwise,
+	the tasks are determined by which `maintenance.<task>.enabled`
+	config options are true. By default, only `maintenance.gc.enabled`
+	is true.
 
 TASKS
 -----
@@ -67,8 +69,10 @@ OPTIONS
 
 --task=<task>::
 	If this option is specified one or more times, then only run the
-	specified tasks in the specified order. See the 'TASKS' section
-	for the list of accepted `<task>` values.
+	specified tasks in the specified order. If no `--task=<task>`
+	arguments are specified, then only the tasks with
+	`maintenance.<task>.enabled` configured as `true` are considered.
+	See the 'TASKS' section for the list of accepted `<task>` values.
 
 GIT
 ---
