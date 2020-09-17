@@ -699,3 +699,61 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	return 0;
 }
+
+static const char * const builtin_maintenance_run_usage[] = {
+	N_("git maintenance run [--auto]"),
+	NULL
+};
+
+struct maintenance_run_opts {
+	int auto_flag;
+};
+
+static int maintenance_task_gc(struct maintenance_run_opts *opts)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.git_cmd = 1;
+	strvec_push(&child.args, "gc");
+
+	if (opts->auto_flag)
+		strvec_push(&child.args, "--auto");
+
+	close_object_store(the_repository->objects);
+	return run_command(&child);
+}
+
+static int maintenance_run(int argc, const char **argv, const char *prefix)
+{
+	struct maintenance_run_opts opts;
+	struct option builtin_maintenance_run_options[] = {
+		OPT_BOOL(0, "auto", &opts.auto_flag,
+			 N_("run tasks based on the state of the repository")),
+		OPT_END()
+	};
+	memset(&opts, 0, sizeof(opts));
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_maintenance_run_options,
+			     builtin_maintenance_run_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+
+	if (argc != 0)
+		usage_with_options(builtin_maintenance_run_usage,
+				   builtin_maintenance_run_options);
+	return maintenance_task_gc(&opts);
+}
+
+static const char builtin_maintenance_usage[] = N_("git maintenance run [<options>]");
+
+int cmd_maintenance(int argc, const char **argv, const char *prefix)
+{
+	if (argc < 2 ||
+	    (argc == 2 && !strcmp(argv[1], "-h")))
+		usage(builtin_maintenance_usage);
+
+	if (!strcmp(argv[1], "run"))
+		return maintenance_run(argc - 1, argv + 1, prefix);
+
+	die(_("invalid subcommand: %s"), argv[1]);
+}
