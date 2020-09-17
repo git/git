@@ -27,7 +27,7 @@ include::diff-options.txt[]
 	The id of a tree object to diff against.
 
 --cached::
-	do not consider the on-disk file at all
+	Do not consider the on-disk file at all.
 
 -m::
 	By default, files recorded in the index but not checked
