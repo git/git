@@ -325,15 +325,37 @@ test_expect_success 'Bloom generation is limited by --max-new-filters' '
 '
 
 test_expect_success 'Bloom generation backfills previously-skipped filters' '
+	# Check specifying commitGraph.maxNewFilters over "git config" works.
+	test_config -C limits commitGraph.maxNewFilters 1 &&
 	(
 		cd limits &&
 
 		rm -f trace.event &&
 		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
 			git commit-graph write --reachable --changed-paths \
-				--split=replace --max-new-filters=1 &&
+				--split=replace &&
 		test_filter_computed 1 trace.event &&
 		test_filter_not_computed 4 trace.event &&
+		test_filter_trunc_empty 0 trace.event &&
+		test_filter_trunc_large 0 trace.event
+	)
+'
+
+test_expect_success '--max-new-filters overrides configuration' '
+	git init override &&
+	test_when_finished "rm -fr override" &&
+	test_config -C override commitGraph.maxNewFilters 2 &&
+	(
+		cd override &&
+		test_commit one &&
+		test_commit two &&
+
+		rm -f trace.event &&
+		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+			git commit-graph write --reachable --changed-paths \
+				--max-new-filters=1 &&
+		test_filter_computed 1 trace.event &&
+		test_filter_not_computed 1 trace.event &&
 		test_filter_trunc_empty 0 trace.event &&
 		test_filter_trunc_large 0 trace.event
 	)

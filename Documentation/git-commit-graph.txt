@@ -71,7 +71,8 @@ With the `--max-new-filters=<n>` option, generate at most `n` new Bloom
 filters (if `--changed-paths` is specified). If `n` is `-1`, no limit is
 enforced. Only commits present in the new layer count against this
 limit. To retroactively compute Bloom filters over earlier layers, it is
-advised to use `--split=replace`.
+advised to use `--split=replace`.  Overrides the `commitGraph.maxNewFilters`
+configuration.
 +
 With the `--split[=<strategy>]` option, write the commit-graph as a
 chain of multiple commit-graph files stored in

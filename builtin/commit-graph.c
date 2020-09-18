@@ -181,6 +181,18 @@ static int write_option_max_new_filters(const struct option *opt,
 	return 0;
 }
 
+static int git_commit_graph_write_config(const char *var, const char *value,
+					 void *cb)
+{
+	if (!strcmp(var, "commitgraph.maxnewfilters"))
+		write_opts.max_new_filters = git_config_int(var, value);
+	/*
+	 * No need to fall-back to 'git_default_config', since this was already
+	 * called in 'cmd_commit_graph()'.
+	 */
+	return 0;
+}
+
 static int graph_write(int argc, const char **argv)
 {
 	struct string_list pack_indexes = STRING_LIST_INIT_NODUP;
@@ -230,6 +242,8 @@ static int graph_write(int argc, const char **argv)
 	write_opts.max_new_filters = -1;
 
 	trace2_cmd_mode("write");
+
+	git_config(git_commit_graph_write_config, &opts);
 
 	argc = parse_options(argc, argv, NULL,
 			     builtin_commit_graph_write_options,
