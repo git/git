@@ -70,10 +70,7 @@ additional rules:
   a) If renames split a directory into two or more others, the directory
      with the most renames, "wins".
 
-  b) Avoid directory-rename-detection for a path, if that path is the
-     source of a rename on either side of a merge.
-
-  c) Only apply implicit directory renames to directories if the other side
+  b) Only apply implicit directory renames to directories if the other side
      of history is the one doing the renaming.
 
 Limitations -- support in different commands
