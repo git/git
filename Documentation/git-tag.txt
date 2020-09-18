@@ -380,7 +380,7 @@ include::date-formats.txt[]
 NOTES
 -----
 
-include::filters.txt[]
+include::ref-reachability-filters.txt[]
 
 SEE ALSO
 --------

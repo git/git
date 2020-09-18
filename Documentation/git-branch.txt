@@ -368,7 +368,7 @@ serve four related but different purposes:
 - `--no-merged` is used to find branches which are candidates for merging
   into HEAD, since those branches are not fully contained by HEAD.
 
-include::filters.txt[]
+include::ref-reachability-filters.txt[]
 
 SEE ALSO
 --------

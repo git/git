@@ -409,7 +409,7 @@ will be reported.
 NOTES
 -----
 
-include::filters.txt[]
+include::ref-reachability-filters.txt[]
 
 SEE ALSO
 --------
