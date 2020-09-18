@@ -305,4 +305,74 @@ test_expect_success 'correctly report commits with no changed paths' '
 	)
 '
 
+test_expect_success 'Bloom generation is limited by --max-new-filters' '
+	(
+		cd limits &&
+		test_commit c2 filter &&
+		test_commit c3 filter &&
+		test_commit c4 no-filter &&
+
+		rm -f trace.event &&
+		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+			git commit-graph write --reachable --split=replace \
+				--changed-paths --max-new-filters=2 &&
+
+		test_filter_computed 2 trace.event &&
+		test_filter_not_computed 3 trace.event &&
+		test_filter_trunc_empty 0 trace.event &&
+		test_filter_trunc_large 0 trace.event
+	)
+'
+
+test_expect_success 'Bloom generation backfills previously-skipped filters' '
+	(
+		cd limits &&
+
+		rm -f trace.event &&
+		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+			git commit-graph write --reachable --changed-paths \
+				--split=replace --max-new-filters=1 &&
+		test_filter_computed 1 trace.event &&
+		test_filter_not_computed 4 trace.event &&
+		test_filter_trunc_empty 0 trace.event &&
+		test_filter_trunc_large 0 trace.event
+	)
+'
+
+test_expect_success 'Bloom generation backfills empty commits' '
+	git init empty &&
+	test_when_finished "rm -fr empty" &&
+	(
+		cd empty &&
+		for i in $(test_seq 1 6)
+		do
+			git commit --allow-empty -m "$i"
+		done &&
+
+		# Generate Bloom filters for empty commits 1-6, two at a time.
+		for i in $(test_seq 1 3)
+		do
+			rm -f trace.event &&
+			GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+				git commit-graph write --reachable \
+					--changed-paths --max-new-filters=2 &&
+			test_filter_computed 2 trace.event &&
+			test_filter_not_computed 4 trace.event &&
+			test_filter_trunc_empty 2 trace.event &&
+			test_filter_trunc_large 0 trace.event
+		done &&
+
+		# Finally, make sure that once all commits have filters, that
+		# none are subsequently recomputed.
+		rm -f trace.event &&
+		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+			git commit-graph write --reachable \
+				--changed-paths --max-new-filters=2 &&
+		test_filter_computed 0 trace.event &&
+		test_filter_not_computed 6 trace.event &&
+		test_filter_trunc_empty 0 trace.event &&
+		test_filter_trunc_large 0 trace.event
+	)
+'
+
 test_done
