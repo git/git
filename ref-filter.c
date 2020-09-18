@@ -2231,19 +2231,18 @@ void ref_array_clear(struct ref_array *array)
 	}
 }
 
-static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata, int reachable)
+#define EXCLUDE_REACHED 0
+#define INCLUDE_REACHED 1
+static void reach_filter(struct ref_array *array,
+			 struct commit_list *check_reachable,
+			 int include_reached)
 {
 	struct rev_info revs;
 	int i, old_nr;
-	struct ref_array *array = ref_cbdata->array;
 	struct commit **to_clear = xcalloc(sizeof(struct commit *), array->nr);
-	struct commit_list *rl;
+	struct commit_list *cr;
 
-	struct commit_list *check_reachable_list = reachable ?
-		ref_cbdata->filter->reachable_from :
-		ref_cbdata->filter->unreachable_from;
-
-	if (!check_reachable_list)
+	if (!check_reachable)
 		return;
 
 	repo_init_revisions(the_repository, &revs, NULL);
@@ -2254,8 +2253,8 @@ static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata, int reachable)
 		to_clear[i] = item->commit;
 	}
 
-	for (rl = check_reachable_list; rl; rl = rl->next) {
-		struct commit *merge_commit = rl->item;
+	for (cr = check_reachable; cr; cr = cr->next) {
+		struct commit *merge_commit = cr->item;
 		merge_commit->object.flags |= UNINTERESTING;
 		add_pending_object(&revs, &merge_commit->object, "");
 	}
@@ -2273,7 +2272,7 @@ static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata, int reachable)
 
 		int is_merged = !!(commit->object.flags & UNINTERESTING);
 
-		if (is_merged == reachable)
+		if (is_merged == include_reached)
 			array->items[array->nr++] = array->items[i];
 		else
 			free_array_item(item);
@@ -2281,8 +2280,8 @@ static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata, int reachable)
 
 	clear_commit_marks_many(old_nr, to_clear, ALL_REV_FLAGS);
 
-	while (check_reachable_list) {
-		struct commit *merge_commit = pop_commit(&check_reachable_list);
+	while (check_reachable) {
+		struct commit *merge_commit = pop_commit(&check_reachable);
 		clear_commit_marks(merge_commit, ALL_REV_FLAGS);
 	}
 
@@ -2337,8 +2336,8 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	clear_contains_cache(&ref_cbdata.no_contains_cache);
 
 	/*  Filters that need revision walking */
-	do_merge_filter(&ref_cbdata, DO_MERGE_FILTER_REACHABLE);
-	do_merge_filter(&ref_cbdata, DO_MERGE_FILTER_UNREACHABLE);
+	reach_filter(array, filter->reachable_from, INCLUDE_REACHED);
+	reach_filter(array, filter->unreachable_from, EXCLUDE_REACHED);
 
 	return ret;
 }

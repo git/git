@@ -23,9 +23,6 @@
 #define FILTER_REFS_DETACHED_HEAD  0x0020
 #define FILTER_REFS_KIND_MASK      (FILTER_REFS_ALL | FILTER_REFS_DETACHED_HEAD)
 
-#define DO_MERGE_FILTER_UNREACHABLE 0
-#define DO_MERGE_FILTER_REACHABLE   1
-
 struct atom_value;
 
 struct ref_sorting {
