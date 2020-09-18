@@ -30,8 +30,10 @@ test_expect_success 'setup test - repo, commits, commit graph, log outputs' '
 	rm file_to_be_deleted &&
 	git add . &&
 	git commit -m "file removed" &&
+	git commit --allow-empty -m "empty" &&
 	git commit-graph write --reachable --changed-paths
 '
+
 graph_read_expect () {
 	NUM_CHUNKS=5
 	cat >expect <<- EOF
@@ -44,7 +46,7 @@ graph_read_expect () {
 }
 
 test_expect_success 'commit-graph write wrote out the bloom chunks' '
-	graph_read_expect 15
+	graph_read_expect 16
 '
 
 # Turn off any inherited trace2 settings for this test.
@@ -151,7 +153,7 @@ test_expect_success 'setup - add commit-graph to the chain with Bloom filters' '
 
 test_bloom_filters_used_when_some_filters_are_missing () {
 	log_args=$1
-	bloom_trace_prefix="statistics:{\"filter_not_present\":3,\"maybe\":6,\"definitely_not\":8"
+	bloom_trace_prefix="statistics:{\"filter_not_present\":3,\"maybe\":6,\"definitely_not\":9"
 	setup "$log_args" &&
 	grep -q "$bloom_trace_prefix" "$TRASH_DIRECTORY/trace.perf" &&
 	test_cmp log_wo_bloom log_w_bloom
@@ -180,8 +182,16 @@ test_max_changed_paths () {
 	grep "\"max_changed_paths\":$1" $2
 }
 
+test_filter_not_computed () {
+	grep "\"key\":\"filter-not-computed\",\"value\":\"$1\"" $2
+}
+
 test_filter_computed () {
 	grep "\"key\":\"filter-computed\",\"value\":\"$1\"" $2
+}
+
+test_filter_trunc_empty () {
+	grep "\"key\":\"filter-trunc-empty\",\"value\":\"$1\"" $2
 }
 
 test_filter_trunc_large () {
@@ -275,6 +285,23 @@ test_expect_success 'correctly report changes over limit' '
 			git log -- $path >actual &&
 			test_cmp expect actual || return 1
 		done
+	)
+'
+
+test_expect_success 'correctly report commits with no changed paths' '
+	git init empty &&
+	test_when_finished "rm -fr empty" &&
+	(
+		cd empty &&
+
+		git commit --allow-empty -m "initial commit" &&
+
+		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+			git commit-graph write --reachable --changed-paths &&
+		test_filter_computed 1 trace.event &&
+		test_filter_not_computed 0 trace.event &&
+		test_filter_trunc_empty 1 trace.event &&
+		test_filter_trunc_large 0 trace.event
 	)
 '
 
