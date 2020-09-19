@@ -9,6 +9,7 @@ struct repository;
 struct archiver_args {
 	struct repository *repo;
 	const char *refname;
+	const char *prefix;
 	const char *base;
 	size_t baselen;
 	struct tree *tree;
@@ -20,6 +21,7 @@ struct archiver_args {
 	unsigned int worktree_attributes : 1;
 	unsigned int convert : 1;
 	int compression_level;
+	struct string_list extra_files;
 };
 
 /* main api */
