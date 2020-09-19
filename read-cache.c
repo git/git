@@ -2101,7 +2101,7 @@ static unsigned long load_cache_entries_threaded(struct index_state *istate, con
 		nr = 0;
 		for (j = p->ieot_start; j < p->ieot_start + p->ieot_blocks; j++)
 			nr += p->ieot->entries[j].nr;
-		istate->ce_mem_pool = xmalloc(sizeof(*istate->ce_mem_pool));
+		p->ce_mem_pool = xmalloc(sizeof(*istate->ce_mem_pool));
 		if (istate->version == 4) {
 			mem_pool_init(p->ce_mem_pool,
 				estimate_cache_size_from_compressed(nr));
