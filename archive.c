@@ -70,10 +70,12 @@ static void format_subst(const struct commit *commit,
 	free(to_free);
 }
 
-void *object_file_to_archive(const struct archiver_args *args,
-			     const char *path, const struct object_id *oid,
-			     unsigned int mode, enum object_type *type,
-			     unsigned long *sizep)
+static void *object_file_to_archive(const struct archiver_args *args,
+				    const char *path,
+				    const struct object_id *oid,
+				    unsigned int mode,
+				    enum object_type *type,
+				    unsigned long *sizep)
 {
 	void *buffer;
 	const struct commit *commit = args->convert ? args->commit : NULL;
@@ -145,6 +147,9 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 	write_archive_entry_fn_t write_entry = c->write_entry;
 	int err;
 	const char *path_without_prefix;
+	unsigned long size;
+	void *buffer;
+	enum object_type type;
 
 	args->convert = 0;
 	strbuf_reset(&path);
@@ -167,7 +172,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-		err = write_entry(args, oid, path.buf, path.len, mode);
+		err = write_entry(args, oid, path.buf, path.len, mode, NULL, 0);
 		if (err)
 			return err;
 		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -175,7 +180,19 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 	if (args->verbose)
 		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-	return write_entry(args, oid, path.buf, path.len, mode);
+
+	/* Stream it? */
+	if (S_ISREG(mode) && !args->convert &&
+	    oid_object_info(args->repo, oid, &size) == OBJ_BLOB &&
+	    size > big_file_threshold)
+		return write_entry(args, oid, path.buf, path.len, mode, NULL, size);
+
+	buffer = object_file_to_archive(args, path.buf, oid, mode, &type, &size);
+	if (!buffer)
+		return error(_("cannot read %s"), oid_to_hex(oid));
+	err = write_entry(args, oid, path.buf, path.len, mode, buffer, size);
+	free(buffer);
+	return err;
 }
 
 static void queue_directory(const unsigned char *sha1,
@@ -265,7 +282,7 @@ int write_archive_entries(struct archiver_args *args,
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)len, args->base);
 		err = write_entry(args, &args->tree->object.oid, args->base,
-				  len, 040777);
+				  len, 040777, NULL, 0);
 		if (err)
 			return err;
 	}

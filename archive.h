@@ -49,12 +49,9 @@ void init_archivers(void);
 typedef int (*write_archive_entry_fn_t)(struct archiver_args *args,
 					const struct object_id *oid,
 					const char *path, size_t pathlen,
-					unsigned int mode);
+					unsigned int mode,
+					void *buffer, unsigned long size);
 
 int write_archive_entries(struct archiver_args *args, write_archive_entry_fn_t write_entry);
-void *object_file_to_archive(const struct archiver_args *args,
-			     const char *path, const struct object_id *oid,
-			     unsigned int mode, enum object_type *type,
-			     unsigned long *sizep);
 
 #endif	/* ARCHIVE_H */
