@@ -244,7 +244,12 @@ static int check_to_send_update(const struct ref *ref, const struct send_pack_ar
 		return CHECK_REF_STATUS_REJECTED;
 	case REF_STATUS_UPTODATE:
 		return CHECK_REF_UPTODATE;
+
 	default:
+	case REF_STATUS_EXPECTING_REPORT:
+		/* already passed checks on the local side */
+	case REF_STATUS_OK:
+		/* of course this is OK */
 		return 0;
 	}
 }
@@ -447,13 +452,6 @@ int send_pack(struct send_pack_args *args,
 		if (ref->deletion && !allow_deleting_refs)
 			ref->status = REF_STATUS_REJECT_NODELETE;
 
-	if (!args->dry_run)
-		advertise_shallow_grafts_buf(&req_buf);
-
-	if (!args->dry_run && push_cert_nonce)
-		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
-					       cap_buf.buf, push_cert_nonce);
-
 	/*
 	 * Clear the status for each ref and see if we need to send
 	 * the pack data.
@@ -489,31 +487,35 @@ int send_pack(struct send_pack_args *args,
 			ref->status = REF_STATUS_EXPECTING_REPORT;
 	}
 
+	if (!args->dry_run)
+		advertise_shallow_grafts_buf(&req_buf);
+
 	/*
 	 * Finally, tell the other end!
 	 */
-	for (ref = remote_refs; ref; ref = ref->next) {
-		char *old_hex, *new_hex;
+	if (!args->dry_run && push_cert_nonce)
+		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
+					       cap_buf.buf, push_cert_nonce);
+	else if (!args->dry_run)
+		for (ref = remote_refs; ref; ref = ref->next) {
+			char *old_hex, *new_hex;
 
-		if (args->dry_run || push_cert_nonce)
-			continue;
+			if (check_to_send_update(ref, args) < 0)
+				continue;
 
-		if (check_to_send_update(ref, args) < 0)
-			continue;
-
-		old_hex = oid_to_hex(&ref->old_oid);
-		new_hex = oid_to_hex(&ref->new_oid);
-		if (!cmds_sent) {
-			packet_buf_write(&req_buf,
-					 "%s %s %s%c%s",
-					 old_hex, new_hex, ref->name, 0,
-					 cap_buf.buf);
-			cmds_sent = 1;
-		} else {
-			packet_buf_write(&req_buf, "%s %s %s",
-					 old_hex, new_hex, ref->name);
+			old_hex = oid_to_hex(&ref->old_oid);
+			new_hex = oid_to_hex(&ref->new_oid);
+			if (!cmds_sent) {
+				packet_buf_write(&req_buf,
+						 "%s %s %s%c%s",
+						 old_hex, new_hex, ref->name, 0,
+						 cap_buf.buf);
+				cmds_sent = 1;
+			} else {
+				packet_buf_write(&req_buf, "%s %s %s",
+						 old_hex, new_hex, ref->name);
+			}
 		}
-	}
 
 	if (use_push_options) {
 		struct string_list_item *item;
