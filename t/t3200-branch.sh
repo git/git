@@ -1287,6 +1287,7 @@ test_expect_success 'detect typo in branch name when using --edit-description' '
 '
 
 test_expect_success 'refuse --edit-description on unborn branch for now' '
+	test_when_finished "git checkout master" &&
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"
 	EOF
