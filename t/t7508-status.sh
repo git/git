@@ -814,6 +814,33 @@ test_expect_success 'status -s without relative paths' '
 
 '
 
+cat >expect <<\EOF
+ M dir1/modified
+A  dir2/added
+A  "file with spaces"
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? "file with spaces 2"
+?? untracked
+EOF
+
+test_expect_success 'status -s without relative paths' '
+	test_when_finished "git rm --cached \"file with spaces\"; rm -f file*" &&
+	>"file with spaces" &&
+	>"file with spaces 2" &&
+	>"expect with spaces" &&
+	git add "file with spaces" &&
+
+	git status -s >output &&
+	test_cmp expect output &&
+
+	git status -s --ignored >output &&
+	grep "^!! \"expect with spaces\"$" output &&
+	grep -v "^!! " output >output-wo-ignored &&
+	test_cmp expect output-wo-ignored
+'
+
 test_expect_success 'dry-run of partial commit excluding new file in index' '
 	cat >expect <<EOF &&
 On branch master
