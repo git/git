@@ -61,26 +61,27 @@ static struct refspec rs = REFSPEC_INIT_PUSH;
 
 static struct string_list push_options_config = STRING_LIST_INIT_DUP;
 
-static const char *map_refspec(const char *ref,
-			       struct remote *remote, struct ref *local_refs)
+static void refspec_append_mapped(struct refspec *refspec, const char *ref,
+				  struct remote *remote, struct ref *local_refs)
 {
 	const char *branch_name;
 	struct ref *matched = NULL;
 
 	/* Does "ref" uniquely name our ref? */
-	if (count_refspec_match(ref, local_refs, &matched) != 1)
-		return ref;
+	if (count_refspec_match(ref, local_refs, &matched) != 1) {
+		refspec_append(refspec, ref);
+		return;
+	}
 
 	if (remote->push.nr) {
 		struct refspec_item query;
 		memset(&query, 0, sizeof(struct refspec_item));
 		query.src = matched->name;
 		if (!query_refspecs(&remote->push, &query) && query.dst) {
-			struct strbuf buf = STRBUF_INIT;
-			strbuf_addf(&buf, "%s%s:%s",
-				    query.force ? "+" : "",
-				    query.src, query.dst);
-			return strbuf_detach(&buf, NULL);
+			refspec_appendf(refspec, "%s%s:%s",
+					query.force ? "+" : "",
+					query.src, query.dst);
+			return;
 		}
 	}
 
@@ -88,14 +89,13 @@ static const char *map_refspec(const char *ref,
 	    skip_prefix(matched->name, "refs/heads/", &branch_name)) {
 		struct branch *branch = branch_get(branch_name);
 		if (branch->merge_nr == 1 && branch->merge[0]->src) {
-			struct strbuf buf = STRBUF_INIT;
-			strbuf_addf(&buf, "%s:%s",
-				    ref, branch->merge[0]->src);
-			return strbuf_detach(&buf, NULL);
+			refspec_appendf(refspec, "%s:%s",
+					ref, branch->merge[0]->src);
+			return;
 		}
 	}
 
-	return ref;
+	refspec_append(refspec, ref);
 }
 
 static void set_refspecs(const char **refs, int nr, const char *repo)
@@ -107,30 +107,26 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 	for (i = 0; i < nr; i++) {
 		const char *ref = refs[i];
 		if (!strcmp("tag", ref)) {
-			struct strbuf tagref = STRBUF_INIT;
 			if (nr <= ++i)
 				die(_("tag shorthand without <tag>"));
 			ref = refs[i];
 			if (deleterefs)
-				strbuf_addf(&tagref, ":refs/tags/%s", ref);
+				refspec_appendf(&rs, ":refs/tags/%s", ref);
 			else
-				strbuf_addf(&tagref, "refs/tags/%s", ref);
-			ref = strbuf_detach(&tagref, NULL);
+				refspec_appendf(&rs, "refs/tags/%s", ref);
 		} else if (deleterefs) {
-			struct strbuf delref = STRBUF_INIT;
 			if (strchr(ref, ':'))
 				die(_("--delete only accepts plain target ref names"));
-			strbuf_addf(&delref, ":%s", ref);
-			ref = strbuf_detach(&delref, NULL);
+			refspec_appendf(&rs, ":%s", ref);
 		} else if (!strchr(ref, ':')) {
 			if (!remote) {
 				/* lazily grab remote and local_refs */
 				remote = remote_get(repo);
 				local_refs = get_local_heads();
 			}
-			ref = map_refspec(ref, remote, local_refs);
-		}
-		refspec_append(&rs, ref);
+			refspec_append_mapped(&rs, ref, remote, local_refs);
+		} else
+			refspec_append(&rs, ref);
 	}
 }
 
@@ -192,8 +188,6 @@ static const char message_detached_head_die[] =
 static void setup_push_upstream(struct remote *remote, struct branch *branch,
 				int triangular, int simple)
 {
-	struct strbuf refspec = STRBUF_INIT;
-
 	if (!branch)
 		die(_(message_detached_head_die), remote->name);
 	if (!branch->merge_nr || !branch->merge || !branch->remote_name)
@@ -219,18 +213,14 @@ static void setup_push_upstream(struct remote *remote, struct branch *branch,
 			die_push_simple(branch, remote);
 	}
 
-	strbuf_addf(&refspec, "%s:%s", branch->refname, branch->merge[0]->src);
-	refspec_append(&rs, refspec.buf);
+	refspec_appendf(&rs, "%s:%s", branch->refname, branch->merge[0]->src);
 }
 
 static void setup_push_current(struct remote *remote, struct branch *branch)
 {
-	struct strbuf refspec = STRBUF_INIT;
-
 	if (!branch)
 		die(_(message_detached_head_die), remote->name);
-	strbuf_addf(&refspec, "%s:%s", branch->refname, branch->refname);
-	refspec_append(&rs, refspec.buf);
+	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
 }
 
 static int is_workflow_triangular(struct remote *remote)
