@@ -80,7 +80,7 @@ EOF
 	)
 '
 
-test_expect_failure 'update shelved changelist and re-unshelve' '
+test_expect_success 'update shelved changelist and re-unshelve' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$cli" &&
