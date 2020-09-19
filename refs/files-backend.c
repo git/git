@@ -39,13 +39,6 @@
 #define REF_NEEDS_COMMIT (1 << 6)
 
 /*
- * Used as a flag in ref_update::flags when we want to log a ref
- * update but not actually perform it.  This is used when a symbolic
- * ref update is split up.
- */
-#define REF_LOG_ONLY (1 << 7)
-
-/*
  * Used as a flag in ref_update::flags when the ref_update was via an
  * update to HEAD.
  */
