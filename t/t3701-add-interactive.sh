@@ -569,12 +569,20 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	diff_cmp expected diff
 '
 
+test_expect_success 'index is refreshed after applying patch' '
+	git reset --hard &&
+	echo content >test &&
+	printf y | git add -p &&
+	git diff-files --exit-code
+'
+
 test_expect_success 'diffs can be colorized' '
 	git reset --hard &&
 
 	echo content >test &&
 	printf y >y &&
 	force_color git add -p >output 2>&1 <y &&
+	git diff-files --exit-code &&
 
 	# We do not want to depend on the exact coloring scheme
 	# git uses for diffs, so just check that we saw some kind of color.

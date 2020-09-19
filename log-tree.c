@@ -917,26 +917,15 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	}
 
 	/* More than one parent? */
-	if (parents && parents->next) {
+	if (parents->next) {
 		if (opt->ignore_merges)
 			return 0;
 		else if (opt->combine_merges)
 			return do_diff_combined(opt, commit);
-		else if (opt->first_parent_only) {
-			/*
-			 * Generate merge log entry only for the first
-			 * parent, showing summary diff of the others
-			 * we merged _in_.
-			 */
-			parse_commit_or_die(parents->item);
-			diff_tree_oid(get_commit_tree_oid(parents->item),
-				      oid, "", &opt->diffopt);
-			log_tree_diff_flush(opt);
-			return !opt->loginfo;
+		else if (!opt->first_parent_only) {
+			/* If we show multiple diffs, show the parent info */
+			log->parent = parents->item;
 		}
-
-		/* If we show individual diffs, show the parent info */
-		log->parent = parents->item;
 	}
 
 	showed_log = 0;
@@ -952,7 +941,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 
 		/* Set up the log info for the next parent, if any.. */
 		parents = parents->next;
-		if (!parents)
+		if (!parents || opt->first_parent_only)
 			break;
 		log->parent = parents->item;
 		opt->loginfo = log;

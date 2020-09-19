@@ -432,14 +432,11 @@ static size_t write_midx_header(struct hashfile *f,
 				unsigned char num_chunks,
 				uint32_t num_packs)
 {
-	unsigned char byte_values[4];
-
 	hashwrite_be32(f, MIDX_SIGNATURE);
-	byte_values[0] = MIDX_VERSION;
-	byte_values[1] = oid_version();
-	byte_values[2] = num_chunks;
-	byte_values[3] = 0; /* unused */
-	hashwrite(f, byte_values, sizeof(byte_values));
+	hashwrite_u8(f, MIDX_VERSION);
+	hashwrite_u8(f, oid_version());
+	hashwrite_u8(f, num_chunks);
+	hashwrite_u8(f, 0); /* unused */
 	hashwrite_be32(f, num_packs);
 
 	return MIDX_HEADER_SIZE;

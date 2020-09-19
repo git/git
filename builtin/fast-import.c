@@ -739,7 +739,6 @@ static void start_packfile(void)
 {
 	struct strbuf tmp_file = STRBUF_INIT;
 	struct packed_git *p;
-	struct pack_header hdr;
 	int pack_fd;
 
 	pack_fd = odb_mkstemp(&tmp_file, "pack/tmp_pack_XXXXXX");
@@ -750,13 +749,8 @@ static void start_packfile(void)
 	p->do_not_close = 1;
 	pack_file = hashfd(pack_fd, p->pack_name);
 
-	hdr.hdr_signature = htonl(PACK_SIGNATURE);
-	hdr.hdr_version = htonl(2);
-	hdr.hdr_entries = 0;
-	hashwrite(pack_file, &hdr, sizeof(hdr));
-
 	pack_data = p;
-	pack_size = sizeof(hdr);
+	pack_size = write_pack_header(pack_file, 0);
 	object_count = 0;
 
 	REALLOC_ARRAY(all_packs, pack_id + 1);

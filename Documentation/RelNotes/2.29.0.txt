@@ -64,6 +64,9 @@ UI, Workflows & Features
    learned a few more tricks, e.g. the ":short" suffix that applies to
    "objectname" now also can be used for "parent", "tree", etc.
 
+ * "git worktree add" learns that the "-d" is a synonym to "--detach"
+   option to create a new worktree without being on a branch.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -144,6 +147,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Internal API clean-up to handle two options "diff-index" and "log"
    have, which happen to share the same short form, more sensibly.
+
+ * The "add -i/-p" machinery has been written in C but it is not used
+   by default yet.  It is made default to those who are participating
+   in feature.experimental experiment.
+
+ * Allow maintainers to tweak $(TAR) invocations done while making
+   distribution tarballs.
 
 
 Fixes since v2.28
@@ -304,7 +314,7 @@ Fixes since v2.28
    (merge 6479ea4a8a jk/xrealloc-avoid-use-after-free later to maint).
 
  * "git status" has trouble showing where it came from by interpreting
-   reflog entries that recordcertain events, e.g. "checkout @{u}", and
+   reflog entries that record certain events, e.g. "checkout @{u}", and
    gives a hard/fatal error.  Even though it inherently is impossible
    to give a correct answer because the reflog entries lose some
    information (e.g. "@{u}" does not record what branch the user was
@@ -312,6 +322,19 @@ Fixes since v2.28
    if the record were available, the relationship between branches may
    have changed), at least hide the error to allow "status" show its
    output.
+
+ * "git status --short" quoted a path with SP in it when tracked, but
+   not those that are untracked, ignored or unmerged.  They are all
+   shown quoted consistently.
+
+ * "git diff/show" on a change that involves a submodule used to read
+   the information on commits in the submodule from a wrong repository
+   and gave a wrong information when the commit-graph is involved.
+   (merge 85a1ec2c32 mf/submodule-summary-with-correct-repository later to maint).
+
+ * Unlike "git config --local", "git config --worktree" did not fail
+   early and cleanly when started outside a git repository.
+   (merge 378fe5fc3d mt/config-fail-nongit-early later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
@@ -339,3 +362,7 @@ Fixes since v2.28
    (merge 3100fd5588 jc/post-checkout-doc later to maint).
    (merge 17bae89476 pb/doc-external-diff-env later to maint).
    (merge 27ed6ccc12 jk/worktree-check-clean-leakfix later to maint).
+   (merge 1302badd16 ea/blame-use-oideq later to maint).
+   (merge e6d5a11fed al/t3200-back-on-a-branch later to maint).
+   (merge 324efcf6b6 pw/add-p-leakfix later to maint).
+   (merge 1c6ffb546b jk/add-i-fixes later to maint).
