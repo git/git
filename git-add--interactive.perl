@@ -714,7 +714,7 @@ sub parse_diff {
 	if (defined $patch_mode_revision) {
 		push @diff_cmd, get_diff_reference($patch_mode_revision);
 	}
-	my @diff = run_cmd_pipe("git", @diff_cmd, "--", $path);
+	my @diff = run_cmd_pipe("git", @diff_cmd, qw(--no-color --), $path);
 	my @colored = ();
 	if ($diff_use_color) {
 		my @display_cmd = ("git", @diff_cmd, qw(--color --), $path);
