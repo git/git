@@ -503,8 +503,7 @@ static void write_hash_cache(struct hashfile *f,
 
 	for (i = 0; i < index_nr; ++i) {
 		struct object_entry *entry = (struct object_entry *)index[i];
-		uint32_t hash_value = htonl(entry->hash);
-		hashwrite(f, &hash_value, sizeof(hash_value));
+		hashwrite_be32(f, entry->hash);
 	}
 }
 
