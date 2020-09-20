@@ -589,6 +589,7 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb);
 int run_diff_files(struct rev_info *revs, unsigned int option);
 
 #define DIFF_INDEX_CACHED 01
+#define DIFF_INDEX_MERGE_BASE 02
 int run_diff_index(struct rev_info *revs, unsigned int option);
 
 int do_diff_cache(const struct object_id *, struct diff_options *);

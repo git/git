@@ -33,6 +33,8 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 
 		if (!strcmp(arg, "--cached"))
 			option |= DIFF_INDEX_CACHED;
+		else if (!strcmp(arg, "--merge-base"))
+			option |= DIFF_INDEX_MERGE_BASE;
 		else
 			usage(diff_cache_usage);
 	}

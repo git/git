@@ -561,13 +561,26 @@ int run_diff_index(struct rev_info *revs, unsigned int option)
 {
 	struct object_array_entry *ent;
 	int cached = !!(option & DIFF_INDEX_CACHED);
+	int merge_base = !!(option & DIFF_INDEX_MERGE_BASE);
+	struct object_id oid;
+	const char *name;
+	char merge_base_hex[GIT_MAX_HEXSZ + 1];
 
 	if (revs->pending.nr != 1)
 		BUG("run_diff_index must be passed exactly one tree");
 
 	trace_performance_enter();
 	ent = revs->pending.objects;
-	if (diff_cache(revs, &ent->item->oid, ent->name, cached))
+
+	if (merge_base) {
+		diff_get_merge_base(revs, &oid);
+		name = oid_to_hex_r(merge_base_hex, &oid);
+	} else {
+		oidcpy(&oid, &ent->item->oid);
+		name = ent->name;
+	}
+
+	if (diff_cache(revs, &oid, name, cached))
 		exit(128);
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "c/", cached ? "i/" : "w/");

@@ -97,4 +97,63 @@ test_expect_success 'diff --merge-base with three commits' '
 	test_i18ngrep "usage" err
 '
 
+for cmd in diff-index diff
+do
+	test_expect_success "$cmd --merge-base with one commit" '
+		git checkout master &&
+		git $cmd commit-C >expect &&
+		git $cmd --merge-base br2 >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "$cmd --merge-base with one commit and unstaged changes" '
+		git checkout master &&
+		test_when_finished git reset --hard &&
+		echo unstaged >>c &&
+		git $cmd commit-C >expect &&
+		git $cmd --merge-base br2 >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "$cmd --merge-base with one commit and staged and unstaged changes" '
+		git checkout master &&
+		test_when_finished git reset --hard &&
+		echo staged >>c &&
+		git add c &&
+		echo unstaged >>c &&
+		git $cmd commit-C >expect &&
+		git $cmd --merge-base br2 >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "$cmd --merge-base --cached with one commit and staged and unstaged changes" '
+		git checkout master &&
+		test_when_finished git reset --hard &&
+		echo staged >>c &&
+		git add c &&
+		echo unstaged >>c &&
+		git $cmd --cached commit-C >expect &&
+		git $cmd --cached --merge-base br2 >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "$cmd --merge-base with non-commit" '
+		git checkout master &&
+		test_must_fail git $cmd --merge-base master^{tree} 2>err &&
+		test_i18ngrep "fatal: --merge-base only works with commits" err
+	'
+
+	test_expect_success "$cmd --merge-base with no merge bases and one commit" '
+		git checkout master &&
+		test_must_fail git $cmd --merge-base br3 2>err &&
+		test_i18ngrep "fatal: no merge base found" err
+	'
+
+	test_expect_success "$cmd --merge-base with multiple merge bases and one commit" '
+		git checkout master &&
+		test_must_fail git $cmd --merge-base br1 2>err &&
+		test_i18ngrep "fatal: multiple merge bases found" err
+	'
+done
+
 test_done

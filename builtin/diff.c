@@ -139,6 +139,8 @@ static int builtin_diff_index(struct rev_info *revs,
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--cached") || !strcmp(arg, "--staged"))
 			option |= DIFF_INDEX_CACHED;
+		else if (!strcmp(arg, "--merge-base"))
+			option |= DIFF_INDEX_MERGE_BASE;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
