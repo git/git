@@ -512,9 +512,10 @@ static int diff_cache(struct rev_info *revs,
 	return unpack_trees(1, &t, &opts);
 }
 
-int run_diff_index(struct rev_info *revs, int cached)
+int run_diff_index(struct rev_info *revs, unsigned int option)
 {
 	struct object_array_entry *ent;
+	int cached = !!(option & DIFF_INDEX_CACHED);
 
 	if (revs->pending.nr != 1)
 		BUG("run_diff_index must be passed exactly one tree");

@@ -134,11 +134,11 @@ static int builtin_diff_blobs(struct rev_info *revs,
 static int builtin_diff_index(struct rev_info *revs,
 			      int argc, const char **argv)
 {
-	int cached = 0;
+	unsigned int option = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--cached") || !strcmp(arg, "--staged"))
-			cached = 1;
+			option |= DIFF_INDEX_CACHED;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
@@ -151,7 +151,7 @@ static int builtin_diff_index(struct rev_info *revs,
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
-	if (!cached) {
+	if (!(option & DIFF_INDEX_CACHED)) {
 		setup_work_tree();
 		if (read_cache_preload(&revs->diffopt.pathspec) < 0) {
 			perror("read_cache_preload");
@@ -161,7 +161,7 @@ static int builtin_diff_index(struct rev_info *revs,
 		perror("read_cache");
 		return -1;
 	}
-	return run_diff_index(revs, cached);
+	return run_diff_index(revs, option);
 }
 
 static int builtin_diff_tree(struct rev_info *revs,

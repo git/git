@@ -585,7 +585,9 @@ const char *diff_aligned_abbrev(const struct object_id *sha1, int);
 /* report racily-clean paths as modified */
 #define DIFF_RACY_IS_MODIFIED 02
 int run_diff_files(struct rev_info *revs, unsigned int option);
-int run_diff_index(struct rev_info *revs, int cached);
+
+#define DIFF_INDEX_CACHED 01
+int run_diff_index(struct rev_info *revs, unsigned int option);
 
 int do_diff_cache(const struct object_id *, struct diff_options *);
 int diff_flush_patch_id(struct diff_options *, struct object_id *, int, int);
