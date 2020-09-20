@@ -241,6 +241,38 @@ How do I know if I want to do a fetch or a pull?::
 	ignore the upstream changes.  A pull consists of a fetch followed
 	immediately by either a merge or rebase.  See linkgit:git-pull[1].
 
+Merging and Rebasing
+--------------------
+
+[[long-running-squash-merge]]
+What kinds of problems can occur when merging long-lived branches with squash merges?::
+	In general, there are a variety of problems that can occur when using squash
+	merges to merge two branches multiple times.  These can include seeing extra
+	commits in `git log` output, with a GUI, or when using the `...` notation to
+	express a range, as well as the possibility of needing to re-resolve conflicts
+	again and again.
++
+When Git does a normal merge between two branches, it considers exactly three
+points: the two branches and a third commit, called the _merge base_, which is
+usually the common ancestor of the commits.  The result of the merge is the sum
+of the changes between the merge base and each head.  When you merge two
+branches with a regular merge commit, this results in a new commit which will
+end up as a merge base when they're merged again, because there is now a new
+common ancestor.  Git doesn't have to consider changes that occurred before the
+merge base, so you don't have to re-resolve any conflicts you resolved before.
++
+When you perform a squash merge, a merge commit isn't created; instead, the
+changes from one side are applied as a regular commit to the other side.  This
+means that the merge base for these branches won't have changed, and so when Git
+goes to perform its next merge, it considers all of the changes that it
+considered the last time plus the new changes.  That means any conflicts may
+need to be re-resolved.  Similarly, anything using the `...` notation in `git
+diff`, `git log`, or a GUI will result in showing all of the changes since the
+original merge base.
++
+As a consequence, if you want to merge two long-lived branches repeatedly, it's
+best to always use a regular merge commit.
+
 Hooks
 -----
 
