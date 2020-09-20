@@ -1692,7 +1692,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 "
 
 __git_diff_difftool_options="--cached --staged --pickaxe-all --pickaxe-regex
-			--base --ours --theirs --no-index --relative
+			--base --ours --theirs --no-index --relative --merge-base
 			$__git_diff_common_options"
 
 _git_diff ()
