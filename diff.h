@@ -580,6 +580,8 @@ void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
  */
 const char *diff_aligned_abbrev(const struct object_id *sha1, int);
 
+void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb);
+
 /* do not report anything on removed paths */
 #define DIFF_SILENT_ON_REMOVED 01
 /* report racily-clean paths as modified */
