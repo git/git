@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='behavior of diff with symmetric-diff setups'
+test_description='behavior of diff with symmetric-diff setups and --merge-base'
 
 . ./test-lib.sh
 
@@ -85,6 +85,15 @@ test_expect_success 'diff with two ranges' '
 
 test_expect_success 'diff with ranges and extra arg' '
 	test_must_fail git diff master br1..master commit-D 2>err &&
+	test_i18ngrep "usage" err
+'
+
+test_expect_success 'diff --merge-base with no commits' '
+	test_must_fail git diff --merge-base
+'
+
+test_expect_success 'diff --merge-base with three commits' '
+	test_must_fail git diff --merge-base br1 br2 master 2>err &&
 	test_i18ngrep "usage" err
 '
 
