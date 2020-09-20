@@ -273,6 +273,27 @@ original merge base.
 As a consequence, if you want to merge two long-lived branches repeatedly, it's
 best to always use a regular merge commit.
 
+[[merge-two-revert-one]]
+If I make a change on two branches but revert it on one, why does the merge of those branches include the change?::
+	By default, when Git does a merge, it uses a strategy called the recursive
+	strategy, which does a fancy three-way merge.  In such a case, when Git
+	performs the merge, it considers exactly three points: the two heads and a
+	third point, called the _merge base_, which is usually the common ancestor of
+	those commits.  Git does not consider the history or the individual commits
+	that have happened on those branches at all.
++
+As a result, if both sides have a change and one side has reverted that change,
+the result is to include the change.  This is because the code has changed on
+one side and there is no net change on the other, and in this scenario, Git
+adopts the change.
++
+If this is a problem for you, you can do a rebase instead, rebasing the branch
+with the revert onto the other branch.  A rebase in this scenario will revert
+the change, because a rebase applies each individual commit, including the
+revert.  Note that rebases rewrite history, so you should avoid rebasing
+published branches unless you're sure you're comfortable with that.  See the
+NOTES section in linkgit:git-rebase[1] for more details.
+
 Hooks
 -----
 
