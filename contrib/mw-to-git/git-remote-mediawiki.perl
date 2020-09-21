@@ -369,12 +369,14 @@ sub get_mw_pages {
 	return %pages;
 }
 
-# usage: $out = run_git("command args");
-#        $out = run_git("command args", "raw"); # don't interpret output as UTF-8.
-sub run_git {
+# usage: $out = run_git_quoted(["command", "args", ...]);
+#        $out = run_git_quoted(["command", "args", ...], "raw"); # don't interpret output as UTF-8.
+#        $out = run_git_unquoted(["command args"); # don't quote arguments
+#        $out = run_git_unquoted(["command args", "raw"); # ditto but raw instead of UTF-8 as above
+sub _run_git {
 	my $args = shift;
 	my $encoding = (shift || 'encoding(UTF-8)');
-	open(my $git, "-|:${encoding}", "git ${args}")
+	open(my $git, "-|:${encoding}", @$args)
 	    or die "Unable to fork: $!\n";
 	my $res = do {
 		local $/ = undef;
@@ -385,6 +387,15 @@ sub run_git {
 	return $res;
 }
 
+sub run_git_quoted {
+    _run_git(["git", @{$_[0]}], $_[1]);
+}
+
+sub run_git_unquoted {
+    _run_git(["git $_[0]"], $_[1]);
+}
+
+BEGIN { *run_git = \&run_git_unquoted }
 
 sub get_all_mediafiles {
 	my $pages = shift;
