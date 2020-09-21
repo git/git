@@ -395,8 +395,6 @@ sub run_git_unquoted {
     _run_git(["git $_[0]"], $_[1]);
 }
 
-BEGIN { *run_git = \&run_git_unquoted }
-
 sub get_all_mediafiles {
 	my $pages = shift;
 	# Attach list of all pages for media files from the API,
@@ -522,8 +520,11 @@ sub download_mw_mediafile {
 }
 
 sub get_last_local_revision {
-	# Get note regarding last mediawiki revision
-	my $note = run_git("notes --ref=${remotename}/mediawiki show refs/mediawiki/${remotename}/master 2>/dev/null");
+	# Get note regarding last mediawiki revision.
+	#
+	# It's OK to use run_git_unquoted() here because $remotename is
+	# supplied by the local git itself.
+	my $note = run_git_unquoted("notes --ref=${remotename}/mediawiki show refs/mediawiki/${remotename}/master 2>/dev/null");
 	my @note_info = split(/ /, $note);
 
 	my $lastrevision_number;
@@ -1188,10 +1189,16 @@ sub mw_push_revision {
 	my $mw_revision = $last_remote_revid;
 
 	# Get sha1 of commit pointed by local HEAD
-	my $HEAD_sha1 = run_git("rev-parse ${local} 2>/dev/null");
+	#
+	# It's OK to use run_git_unquoted() because $local is supplied
+	# by the local git itself.
+	my $HEAD_sha1 = run_git_unquoted("rev-parse ${local} 2>/dev/null");
 	chomp($HEAD_sha1);
 	# Get sha1 of commit pointed by remotes/$remotename/master
-	my $remoteorigin_sha1 = run_git("rev-parse refs/remotes/${remotename}/master 2>/dev/null");
+	#
+	# It's OK to use run_git_unquoted() here because $remotename is
+	# supplied by the local git itself.
+	my $remoteorigin_sha1 = run_git_unquoted("rev-parse refs/remotes/${remotename}/master 2>/dev/null");
 	chomp($remoteorigin_sha1);
 
 	if ($last_local_revid > 0 &&
