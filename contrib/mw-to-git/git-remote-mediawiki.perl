@@ -371,8 +371,8 @@ sub get_mw_pages {
 
 # usage: $out = run_git_quoted(["command", "args", ...]);
 #        $out = run_git_quoted(["command", "args", ...], "raw"); # don't interpret output as UTF-8.
-#        $out = run_git_unquoted(["command args"); # don't quote arguments
-#        $out = run_git_unquoted(["command args", "raw"); # ditto but raw instead of UTF-8 as above
+#        $out = run_git_quoted_nostderr(["command", "args", ...]); # discard stderr
+#        $out = run_git_quoted_nostderr(["command", "args", ...], "raw"); # ditto but raw instead of UTF-8 as above
 sub _run_git {
 	my $args = shift;
 	my $encoding = (shift || 'encoding(UTF-8)');
@@ -391,8 +391,8 @@ sub run_git_quoted {
     _run_git(["git", @{$_[0]}], $_[1]);
 }
 
-sub run_git_unquoted {
-    _run_git(["git $_[0]"], $_[1]);
+sub run_git_quoted_nostderr {
+    _run_git(['sh', '-c', 'git "$@" 2>/dev/null', '--', @{$_[0]}], $_[1]);
 }
 
 sub get_all_mediafiles {
@@ -521,10 +521,8 @@ sub download_mw_mediafile {
 
 sub get_last_local_revision {
 	# Get note regarding last mediawiki revision.
-	#
-	# It's OK to use run_git_unquoted() here because $remotename is
-	# supplied by the local git itself.
-	my $note = run_git_unquoted("notes --ref=${remotename}/mediawiki show refs/mediawiki/${remotename}/master 2>/dev/null");
+	my $note = run_git_quoted_nostderr(["notes", "--ref=${remotename}/mediawiki",
+					    "show", "refs/mediawiki/${remotename}/master"]);
 	my @note_info = split(/ /, $note);
 
 	my $lastrevision_number;
@@ -1189,16 +1187,10 @@ sub mw_push_revision {
 	my $mw_revision = $last_remote_revid;
 
 	# Get sha1 of commit pointed by local HEAD
-	#
-	# It's OK to use run_git_unquoted() because $local is supplied
-	# by the local git itself.
-	my $HEAD_sha1 = run_git_unquoted("rev-parse ${local} 2>/dev/null");
+	my $HEAD_sha1 = run_git_quoted_nostderr(["rev-parse", $local]);
 	chomp($HEAD_sha1);
 	# Get sha1 of commit pointed by remotes/$remotename/master
-	#
-	# It's OK to use run_git_unquoted() here because $remotename is
-	# supplied by the local git itself.
-	my $remoteorigin_sha1 = run_git_unquoted("rev-parse refs/remotes/${remotename}/master 2>/dev/null");
+	my $remoteorigin_sha1 = run_git_quoted_nostderr(["rev-parse", "refs/remotes/${remotename}/master"]);
 	chomp($remoteorigin_sha1);
 
 	if ($last_local_revid > 0 &&
