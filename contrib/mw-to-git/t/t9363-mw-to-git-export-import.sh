@@ -27,8 +27,8 @@ test_git_reimport () {
 
 # Don't bother with permissions, be administrator by default
 test_expect_success 'setup config' '
-	git config --global remote.origin.mwLogin WikiAdmin &&
-	git config --global remote.origin.mwPassword AdminPass &&
+	git config --global remote.origin.mwLogin "$WIKI_ADMIN" &&
+	git config --global remote.origin.mwPassword "$WIKI_PASSW" &&
 	test_might_fail git config --global --unset remote.origin.mediaImport
 '
 
