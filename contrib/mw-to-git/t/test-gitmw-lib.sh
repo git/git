@@ -13,7 +13,8 @@
 
 . ./test.config
 
-WIKI_URL=http://"$SERVER_ADDR:$PORT/$WIKI_DIR_NAME"
+WIKI_BASE_URL=http://$SERVER_ADDR:$PORT
+WIKI_URL=$WIKI_BASE_URL/$WIKI_DIR_NAME
 CURR_DIR=$(pwd)
 TEST_OUTPUT_DIRECTORY=$(pwd)
 TEST_DIRECTORY="$CURR_DIR"/../../../t
@@ -291,28 +292,59 @@ stop_lighttpd () {
 	test -f "$WEB_TMP/pid" && kill $(cat "$WEB_TMP/pid")
 }
 
-# Create the SQLite database of the MediaWiki. If the database file already
-# exists, it will be deleted.
-# This script should be runned from the directory where $FILES_FOLDER is
-# located.
-create_db () {
-	rm -f "$TMP/$DB_FILE"
+wiki_delete_db () {
+	rm -rf \
+	   "$FILES_FOLDER_DB"/* || error "Couldn't delete $FILES_FOLDER_DB/"
+}
 
-	echo "Generating the SQLite database file. It can take some time ..."
-	# Run the php script to generate the SQLite database file
-	# with cURL calls.
-	php "$FILES_FOLDER/$DB_INSTALL_SCRIPT" $(basename "$DB_FILE" .sqlite) \
-		"$WIKI_ADMIN" "$WIKI_PASSW" "$TMP" "$PORT"
+wiki_delete_db_backup () {
+	rm -rf \
+	   "$FILES_FOLDER_POST_INSTALL_DB"/* || error "Couldn't delete $FILES_FOLDER_POST_INSTALL_DB/"
+}
 
-	if ! test -f "$TMP/$DB_FILE"
+# Install MediaWiki using its install.php script. If the database file
+# already exists, it will be deleted.
+install_mediawiki () {
+
+	localsettings="$WIKI_DIR_INST/$WIKI_DIR_NAME/LocalSettings.php"
+	if test -f "$localsettings"
 	then
-		error "Can't create database file $TMP/$DB_FILE. Try to run ./install-wiki.sh delete first."
+		error "We already installed the wiki, since $localsettings exists" \
+		      "perhaps you wanted to run 'delete' first?"
 	fi
 
-	# Copy the generated database file into the directory the
-	# user indicated.
-	cp "$TMP/$DB_FILE" "$FILES_FOLDER" ||
-		error "Unable to copy $TMP/$DB_FILE to $FILES_FOLDER"
+	wiki_delete_db
+	wiki_delete_db_backup
+	mkdir \
+		"$FILES_FOLDER_DB/" \
+		"$FILES_FOLDER_POST_INSTALL_DB/"
+
+	install_script="$WIKI_DIR_INST/$WIKI_DIR_NAME/maintenance/install.php"
+	echo "Installing MediaWiki using $install_script. This may take some time ..."
+
+	php "$WIKI_DIR_INST/$WIKI_DIR_NAME/maintenance/install.php" \
+	    --server $WIKI_BASE_URL \
+	    --scriptpath /wiki \
+	    --lang en \
+	    --dbtype sqlite \
+	    --dbpath $PWD/$FILES_FOLDER_DB/ \
+	    --pass "$WIKI_PASSW" \
+	    Git-MediaWiki-Test \
+	    "$WIKI_ADMIN" ||
+		error "Couldn't run $install_script, see errors above. Try to run ./install-wiki.sh delete first."
+	cat <<-'EOF' >>$localsettings
+# Custom settings added by test-gitmw-lib.sh
+#
+# Uploading text files is needed for
+# t9363-mw-to-git-export-import.sh
+$wgEnableUploads = true;
+$wgFileExtensions[] = 'txt';
+EOF
+
+	# Copy the initially generated database file into our backup
+	# folder
+	cp -R "$FILES_FOLDER_DB/"* "$FILES_FOLDER_POST_INSTALL_DB/" ||
+		error "Unable to copy $FILES_FOLDER_DB/* to $FILES_FOLDER_POST_INSTALL_DB/*"
 }
 
 # Install a wiki in your web server directory.
@@ -321,7 +353,6 @@ wiki_install () {
 		start_lighttpd
 	fi
 
-	SERVER_ADDR=$SERVER_ADDR:$PORT
 	# In this part, we change directory to $TMP in order to download,
 	# unpack and copy the files of MediaWiki
 	(
@@ -332,9 +363,11 @@ wiki_install () {
 		Please create it and launch the script again."
 	fi
 
-	# Fetch MediaWiki's archive if not already present in the TMP directory
+	# Fetch MediaWiki's archive if not already present in the
+	# download directory
+	mkdir -p "$FILES_FOLDER_DOWNLOAD"
 	MW_FILENAME="mediawiki-$MW_VERSION_MAJOR.$MW_VERSION_MINOR.tar.gz"
-	cd "$TMP"
+	cd "$FILES_FOLDER_DOWNLOAD"
 	if ! test -f $MW_FILENAME
 	then
 		echo "Downloading $MW_VERSION_MAJOR.$MW_VERSION_MINOR sources ..."
@@ -355,49 +388,12 @@ wiki_install () {
 		error "Unable to extract WikiMedia's files from $archive_abs_path to "\
 			"$WIKI_DIR_INST/$WIKI_DIR_NAME"
 	) || exit 1
+	echo Extracted in "$WIKI_DIR_INST/$WIKI_DIR_NAME"
 
-	create_db
-
-	# Copy the generic LocalSettings.php in the web server's directory
-	# And modify parameters according to the ones set at the top
-	# of this script.
-	# Note that LocalSettings.php is never modified.
-	if ! test -f "$FILES_FOLDER/LocalSettings.php"
-	then
-		error "Can't find $FILES_FOLDER/LocalSettings.php " \
-			"in the current folder. "\
-		"Please run the script inside its folder."
-	fi
-	cp "$FILES_FOLDER/LocalSettings.php" \
-		"$FILES_FOLDER/LocalSettings-tmp.php" ||
-		error "Unable to copy $FILES_FOLDER/LocalSettings.php " \
-		"to $FILES_FOLDER/LocalSettings-tmp.php"
-
-	# Parse and set the LocalSettings file of the user according to the
-	# CONFIGURATION VARIABLES section at the beginning of this script
-	file_swap="$FILES_FOLDER/LocalSettings-swap.php"
-	sed "s,@WG_SCRIPT_PATH@,/$WIKI_DIR_NAME," \
-		"$FILES_FOLDER/LocalSettings-tmp.php" > "$file_swap"
-	mv "$file_swap" "$FILES_FOLDER/LocalSettings-tmp.php"
-	sed "s,@WG_SERVER@,http://$SERVER_ADDR," \
-		"$FILES_FOLDER/LocalSettings-tmp.php" > "$file_swap"
-	mv "$file_swap" "$FILES_FOLDER/LocalSettings-tmp.php"
-	sed "s,@WG_SQLITE_DATADIR@,$TMP," \
-		"$FILES_FOLDER/LocalSettings-tmp.php" > "$file_swap"
-	mv "$file_swap" "$FILES_FOLDER/LocalSettings-tmp.php"
-	sed "s,@WG_SQLITE_DATAFILE@,$( basename $DB_FILE .sqlite)," \
-		"$FILES_FOLDER/LocalSettings-tmp.php" > "$file_swap"
-	mv "$file_swap" "$FILES_FOLDER/LocalSettings-tmp.php"
-
-	mv "$FILES_FOLDER/LocalSettings-tmp.php" \
-		"$WIKI_DIR_INST/$WIKI_DIR_NAME/LocalSettings.php" ||
-		error "Unable to move $FILES_FOLDER/LocalSettings-tmp.php" \
-		"in $WIKI_DIR_INST/$WIKI_DIR_NAME"
-	echo "File $FILES_FOLDER/LocalSettings.php is set in" \
-		" $WIKI_DIR_INST/$WIKI_DIR_NAME"
+	install_mediawiki
 
 	echo "Your wiki has been installed. You can check it at
-		http://$SERVER_ADDR/$WIKI_DIR_NAME"
+		$WIKI_URL"
 }
 
 # Reset the database of the wiki and the password of the admin
@@ -405,13 +401,18 @@ wiki_install () {
 # Warning: This function must be called only in a subdirectory of t/ directory
 wiki_reset () {
 	# Copy initial database of the wiki
-	if ! test -f "../$FILES_FOLDER/$DB_FILE"
+	if ! test -d "../$FILES_FOLDER_DB"
 	then
-		error "Can't find ../$FILES_FOLDER/$DB_FILE in the current folder."
+		error "No wiki database at ../$FILES_FOLDER_DB, not installed yet?"
 	fi
-	cp "../$FILES_FOLDER/$DB_FILE" "$TMP" ||
-		error "Can't copy ../$FILES_FOLDER/$DB_FILE in $TMP"
-	echo "File $FILES_FOLDER/$DB_FILE is set in $TMP"
+	if ! test -d "../$FILES_FOLDER_POST_INSTALL_DB"
+	then
+		error "No wiki backup database at ../$FILES_FOLDER_POST_INSTALL_DB, failed installation?"
+	fi
+	wiki_delete_db
+	cp -R "../$FILES_FOLDER_POST_INSTALL_DB/"* "../$FILES_FOLDER_DB/" ||
+		error "Can't copy ../$FILES_FOLDER_POST_INSTALL_DB/* to ../$FILES_FOLDER_DB/*"
+	echo "File $FILES_FOLDER_DB/* has been reset"
 }
 
 # Delete the wiki created in the web server's directory and all its content
@@ -425,13 +426,7 @@ wiki_delete () {
 		rm -rf "$WIKI_DIR_INST/$WIKI_DIR_NAME" ||
 			error "Wiki's directory $WIKI_DIR_INST/" \
 			"$WIKI_DIR_NAME could not be deleted"
-		# Delete the wiki's SQLite database.
-		rm -f "$TMP/$DB_FILE" ||
-			error "Database $TMP/$DB_FILE could not be deleted."
 	fi
-
-	# Delete the wiki's SQLite database
-	rm -f "$TMP/$DB_FILE" || error "Database $TMP/$DB_FILE could not be deleted."
-	rm -f "$FILES_FOLDER/$DB_FILE"
-	rm -rf "$TMP/mediawiki-$MW_VERSION_MAJOR.$MW_VERSION_MINOR.tar.gz"
+	wiki_delete_db
+	wiki_delete_db_backup
 }
