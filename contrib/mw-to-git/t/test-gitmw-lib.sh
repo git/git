@@ -65,7 +65,7 @@ test_check_precond () {
 	GIT_EXEC_PATH=$(cd "$(dirname "$0")" && cd "../.." && pwd)
 	PATH="$GIT_EXEC_PATH"'/bin-wrapper:'"$PATH"
 
-	if [ ! -d "$WIKI_DIR_INST/$WIKI_DIR_NAME" ];
+	if ! test -d "$WIKI_DIR_INST/$WIKI_DIR_NAME"
 	then
 		skip_all='skipping gateway git-mw tests, no mediawiki found'
 		test_done
@@ -304,7 +304,8 @@ create_db () {
 	php "$FILES_FOLDER/$DB_INSTALL_SCRIPT" $(basename "$DB_FILE" .sqlite) \
 		"$WIKI_ADMIN" "$WIKI_PASSW" "$TMP" "$PORT"
 
-	if [ ! -f "$TMP/$DB_FILE" ] ; then
+	if ! test -f "$TMP/$DB_FILE"
+	then
 		error "Can't create database file $TMP/$DB_FILE. Try to run ./install-wiki.sh delete first."
 	fi
 
@@ -325,7 +326,8 @@ wiki_install () {
 	# unpack and copy the files of MediaWiki
 	(
 	mkdir -p "$WIKI_DIR_INST/$WIKI_DIR_NAME"
-	if [ ! -d "$WIKI_DIR_INST/$WIKI_DIR_NAME" ] ; then
+	if ! test -d "$WIKI_DIR_INST/$WIKI_DIR_NAME"
+	then
 		error "Folder $WIKI_DIR_INST/$WIKI_DIR_NAME doesn't exist.
 		Please create it and launch the script again."
 	fi
@@ -333,7 +335,8 @@ wiki_install () {
 	# Fetch MediaWiki's archive if not already present in the TMP directory
 	MW_FILENAME="mediawiki-$MW_VERSION_MAJOR.$MW_VERSION_MINOR.tar.gz"
 	cd "$TMP"
-	if [ ! -f $MW_FILENAME ] ; then
+	if ! test -f $MW_FILENAME
+	then
 		echo "Downloading $MW_VERSION_MAJOR.$MW_VERSION_MINOR sources ..."
 		wget "http://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/$MW_FILENAME" ||
 			error "Unable to download "\
@@ -359,7 +362,8 @@ wiki_install () {
 	# And modify parameters according to the ones set at the top
 	# of this script.
 	# Note that LocalSettings.php is never modified.
-	if [ ! -f "$FILES_FOLDER/LocalSettings.php" ] ; then
+	if ! test -f "$FILES_FOLDER/LocalSettings.php"
+	then
 		error "Can't find $FILES_FOLDER/LocalSettings.php " \
 			"in the current folder. "\
 		"Please run the script inside its folder."
@@ -401,7 +405,8 @@ wiki_install () {
 # Warning: This function must be called only in a subdirectory of t/ directory
 wiki_reset () {
 	# Copy initial database of the wiki
-	if [ ! -f "../$FILES_FOLDER/$DB_FILE" ] ; then
+	if ! test -f "../$FILES_FOLDER/$DB_FILE"
+	then
 		error "Can't find ../$FILES_FOLDER/$DB_FILE in the current folder."
 	fi
 	cp "../$FILES_FOLDER/$DB_FILE" "$TMP" ||
