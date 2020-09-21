@@ -25,7 +25,6 @@
 use MediaWiki::API;
 use Getopt::Long;
 use DateTime::Format::ISO8601;
-use open ':encoding(utf8)';
 use constant SLASH_REPLACEMENT => "%2F";
 
 #Parsing of the config file
@@ -86,7 +85,7 @@ sub wiki_getpage {
 	# Replace spaces by underscore in the page name
 	$pagename =~ s/ /_/g;
 	$pagename =~ s/\//%2F/g;
-	open(my $file, ">$destdir/$pagename.mw");
+	open(my $file, ">:encoding(UTF-8)", "$destdir/$pagename.mw");
 	print $file "$content";
 	close ($file);
 
@@ -171,7 +170,7 @@ sub wiki_getallpagename {
 				cmlimit => 500 },
 		)
 		|| die $mw->{error}->{code}.": ".$mw->{error}->{details};
-		open(my $file, ">all.txt");
+		open(my $file, ">:encoding(UTF-8)", "all.txt");
 		foreach my $page (@{$mw_pages}) {
 			print $file "$page->{title}\n";
 		}
@@ -184,7 +183,7 @@ sub wiki_getallpagename {
 				aplimit => 500,
 			})
 		|| die $mw->{error}->{code}.": ".$mw->{error}->{details};
-		open(my $file, ">all.txt");
+		open(my $file, ">:encoding(UTF-8)", "all.txt");
 		foreach my $page (@{$mw_pages}) {
 			print $file "$page->{title}\n";
 		}
