@@ -343,10 +343,10 @@ wiki_install () {
 			"http://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/"\
 			"$MW_FILENAME. "\
 			"Please fix your connection and launch the script again."
-		echo "$MW_FILENAME downloaded in $(pwd). "\
-			"You can delete it later if you want."
+		echo "$MW_FILENAME downloaded in $(pwd)/;" \
+		     "you can delete it later if you want."
 	else
-		echo "Reusing existing $MW_FILENAME downloaded in $(pwd)."
+		echo "Reusing existing $MW_FILENAME downloaded in $(pwd)/"
 	fi
 	archive_abs_path=$(pwd)/$MW_FILENAME
 	cd "$WIKI_DIR_INST/$WIKI_DIR_NAME/" ||
