@@ -56,38 +56,38 @@ my $url = $ARGV[1];
 
 # Accept both space-separated and multiple keys in config file.
 # Spaces should be written as _ anyway because we'll use chomp.
-my @tracked_pages = split(/[ \n]/, run_git("config --get-all remote.${remotename}.pages"));
+my @tracked_pages = split(/[ \n]/, run_git_quoted(["config", "--get-all", "remote.${remotename}.pages"]));
 chomp(@tracked_pages);
 
 # Just like @tracked_pages, but for MediaWiki categories.
-my @tracked_categories = split(/[ \n]/, run_git("config --get-all remote.${remotename}.categories"));
+my @tracked_categories = split(/[ \n]/, run_git_quoted(["config", "--get-all", "remote.${remotename}.categories"]));
 chomp(@tracked_categories);
 
 # Just like @tracked_categories, but for MediaWiki namespaces.
-my @tracked_namespaces = split(/[ \n]/, run_git("config --get-all remote.${remotename}.namespaces"));
+my @tracked_namespaces = split(/[ \n]/, run_git_quoted(["config", "--get-all", "remote.${remotename}.namespaces"]));
 for (@tracked_namespaces) { s/_/ /g; }
 chomp(@tracked_namespaces);
 
 # Import media files on pull
-my $import_media = run_git("config --get --bool remote.${remotename}.mediaimport");
+my $import_media = run_git_quoted(["config", "--get", "--bool", "remote.${remotename}.mediaimport"]);
 chomp($import_media);
 $import_media = ($import_media eq 'true');
 
 # Export media files on push
-my $export_media = run_git("config --get --bool remote.${remotename}.mediaexport");
+my $export_media = run_git_quoted(["config", "--get", "--bool", "remote.${remotename}.mediaexport"]);
 chomp($export_media);
 $export_media = !($export_media eq 'false');
 
-my $wiki_login = run_git("config --get remote.${remotename}.mwLogin");
+my $wiki_login = run_git_quoted(["config", "--get", "remote.${remotename}.mwLogin"]);
 # Note: mwPassword is discouraged. Use the credential system instead.
-my $wiki_passwd = run_git("config --get remote.${remotename}.mwPassword");
-my $wiki_domain = run_git("config --get remote.${remotename}.mwDomain");
+my $wiki_passwd = run_git_quoted(["config", "--get", "remote.${remotename}.mwPassword"]);
+my $wiki_domain = run_git_quoted(["config", "--get", "remote.${remotename}.mwDomain"]);
 chomp($wiki_login);
 chomp($wiki_passwd);
 chomp($wiki_domain);
 
 # Import only last revisions (both for clone and fetch)
-my $shallow_import = run_git("config --get --bool remote.${remotename}.shallow");
+my $shallow_import = run_git_quoted(["config", "--get", "--bool", "remote.${remotename}.shallow"]);
 chomp($shallow_import);
 $shallow_import = ($shallow_import eq 'true');
 
@@ -97,9 +97,9 @@ $shallow_import = ($shallow_import eq 'true');
 # Possible values:
 # - by_rev: perform one query per new revision on the remote wiki
 # - by_page: query each tracked page for new revision
-my $fetch_strategy = run_git("config --get remote.${remotename}.fetchStrategy");
+my $fetch_strategy = run_git_quoted(["config", "--get", "remote.${remotename}.fetchStrategy"]);
 if (!$fetch_strategy) {
-	$fetch_strategy = run_git('config --get mediawiki.fetchStrategy');
+	$fetch_strategy = run_git_quoted(["config", "--get", "mediawiki.fetchStrategy"]);
 }
 chomp($fetch_strategy);
 if (!$fetch_strategy) {
@@ -123,9 +123,9 @@ my %basetimestamps;
 # will get the history with information lost). If the import is
 # deterministic, this means everybody gets the same sha1 for each
 # MediaWiki revision.
-my $dumb_push = run_git("config --get --bool remote.${remotename}.dumbPush");
+my $dumb_push = run_git_quoted(["config", "--get", "--bool", "remote.${remotename}.dumbPush"]);
 if (!$dumb_push) {
-	$dumb_push = run_git('config --get --bool mediawiki.dumbPush');
+	$dumb_push = run_git_quoted(["config", "--get", "--bool", "mediawiki.dumbPush"]);
 }
 chomp($dumb_push);
 $dumb_push = ($dumb_push eq 'true');
@@ -984,7 +984,7 @@ sub mw_import_revids {
 }
 
 sub error_non_fast_forward {
-	my $advice = run_git('config --bool advice.pushNonFastForward');
+	my $advice = run_git_quoted(["config", "--bool", "advice.pushNonFastForward"]);
 	chomp($advice);
 	if ($advice ne 'false') {
 		# Native git-push would show this after the summary.
@@ -1028,7 +1028,7 @@ sub mw_upload_file {
 		}
 	} else {
 		# Don't let perl try to interpret file content as UTF-8 => use "raw"
-		my $content = run_git("cat-file blob ${new_sha1}", 'raw');
+		my $content = run_git_quoted(["cat-file", "blob", $new_sha1], 'raw');
 		if ($content ne EMPTY) {
 			$mediawiki = connect_maybe($mediawiki, $remotename, $url);
 			$mediawiki->{config}->{upload_url} =
@@ -1098,7 +1098,7 @@ sub mw_push_file {
 			# with this content instead:
 			$file_content = DELETED_CONTENT;
 		} else {
-			$file_content = run_git("cat-file blob ${new_sha1}");
+			$file_content = run_git_quoted(["cat-file", "blob", $new_sha1]);
 		}
 
 		$mediawiki = connect_maybe($mediawiki, $remotename, $url);
@@ -1211,7 +1211,7 @@ sub mw_push_revision {
 		my $parsed_sha1 = $remoteorigin_sha1;
 		# Find a path from last MediaWiki commit to pushed commit
 		print {*STDERR} "Computing path from local to remote ...\n";
-		my @local_ancestry = split(/\n/, run_git("rev-list --boundary --parents ${local} ^${parsed_sha1}"));
+		my @local_ancestry = split(/\n/, run_git_quoted(["rev-list", "--boundary", "--parents", $local, "^${parsed_sha1}"]));
 		my %local_ancestry;
 		foreach my $line (@local_ancestry) {
 			if (my ($child, $parents) = $line =~ /^-?([a-f0-9]+) ([a-f0-9 ]+)/) {
@@ -1235,7 +1235,7 @@ sub mw_push_revision {
 		# No remote mediawiki revision. Export the whole
 		# history (linearized with --first-parent)
 		print {*STDERR} "Warning: no common ancestor, pushing complete history\n";
-		my $history = run_git("rev-list --first-parent --children ${local}");
+		my $history = run_git_quoted(["rev-list", "--first-parent", "--children", $local]);
 		my @history = split(/\n/, $history);
 		@history = @history[1..$#history];
 		foreach my $line (reverse @history) {
@@ -1247,12 +1247,12 @@ sub mw_push_revision {
 	foreach my $commit_info_split (@commit_pairs) {
 		my $sha1_child = @{$commit_info_split}[0];
 		my $sha1_commit = @{$commit_info_split}[1];
-		my $diff_infos = run_git("diff-tree -r --raw -z ${sha1_child} ${sha1_commit}");
+		my $diff_infos = run_git_quoted(["diff-tree", "-r", "--raw", "-z", $sha1_child, $sha1_commit]);
 		# TODO: we could detect rename, and encode them with a #redirect on the wiki.
 		# TODO: for now, it's just a delete+add
 		my @diff_info_list = split(/\0/, $diff_infos);
 		# Keep the subject line of the commit message as mediawiki comment for the revision
-		my $commit_msg = run_git(qq(log --no-walk --format="%s" ${sha1_commit}));
+		my $commit_msg = run_git_quoted(["log", "--no-walk", '--format="%s"', $sha1_commit]);
 		chomp($commit_msg);
 		# Push every blob
 		while (@diff_info_list) {
@@ -1277,7 +1277,10 @@ sub mw_push_revision {
 			}
 		}
 		if (!$dumb_push) {
-			run_git(qq(notes --ref=${remotename}/mediawiki add -f -m "mediawiki_revision: ${mw_revision}" ${sha1_commit}));
+			run_git_quoted(["notes", "--ref=${remotename}/mediawiki",
+					"add", "-f", "-m",
+					"mediawiki_revision: ${mw_revision}",
+					$sha1_commit]);
 		}
 	}
 
@@ -1318,7 +1321,7 @@ sub get_mw_namespace_id {
 		# already cached. Namespaces are stored in form:
 		# "Name_of_namespace:Id_namespace", ex.: "File:6".
 		my @temp = split(/\n/,
-				 run_git("config --get-all remote.${remotename}.namespaceCache"));
+				 run_git_quoted(["config", "--get-all", "remote.${remotename}.namespaceCache"]));
 		chomp(@temp);
 		foreach my $ns (@temp) {
 			my ($n, $id) = split(/:/, $ns);
@@ -1372,7 +1375,7 @@ sub get_mw_namespace_id {
 
 	# Store explicitly requested namespaces on disk
 	if (!exists $cached_mw_namespace_id{$name}) {
-		run_git(qq(config --add remote.${remotename}.namespaceCache "${name}:${store_id}"));
+		run_git_quoted(["config", "--add", "remote.${remotename}.namespaceCache", "${name}:${store_id}"]);
 		$cached_mw_namespace_id{$name} = 1;
 	}
 	return $id;
