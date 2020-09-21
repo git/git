@@ -24,7 +24,6 @@
 
 use MediaWiki::API;
 use Getopt::Long;
-use encoding 'utf8';
 use DateTime::Format::ISO8601;
 use open ':encoding(utf8)';
 use constant SLASH_REPLACEMENT => "%2F";
@@ -222,4 +221,4 @@ my %functions_to_call = (
 	getallpagename => \&wiki_getallpagename,
 );
 die "$0 ERROR: wrong argument" unless exists $functions_to_call{$fct_to_call};
-$functions_to_call{$fct_to_call}->(@ARGV);
+$functions_to_call{$fct_to_call}->(map { utf8::decode($_); $_ } @ARGV);
