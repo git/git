@@ -67,6 +67,19 @@ UI, Workflows & Features
  * "git worktree add" learns that the "-d" is a synonym to "--detach"
    option to create a new worktree without being on a branch.
 
+ * "format-patch --range-diff=<prev> <origin>..HEAD" has been taught
+   not to ignore <origin> when <prev> is a single version.
+
+ * "add -p" now allows editing paths that were only added in intent.
+
+ * The 'meld' backend of the "git mergetool" learned to give the
+   underlying 'meld' the '--auto-merge' option, which would help
+   reduce the amount of text that requires manual merging.
+
+ * "git for-each-ref" and friends that list refs used to allow only
+   one --merged or --no-merged to filter them; they learned to take
+   combination of both kind of filtering.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -154,6 +167,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Allow maintainers to tweak $(TAR) invocations done while making
    distribution tarballs.
+
+ * "git index-pack" learned to resolve deltified objects with greater
+   parallelism.
 
 
 Fixes since v2.28
@@ -336,6 +352,20 @@ Fixes since v2.28
    early and cleanly when started outside a git repository.
    (merge 378fe5fc3d mt/config-fail-nongit-early later to maint).
 
+ * There is a logic to estimate how many objects are in the
+   repository, which is mean to run once per process invocation, but
+   it ran every time the estimated value was requested.
+   (merge 67bb65de5d jk/dont-count-existing-objects-twice later to maint).
+
+ * "git remote set-head" that failed still said something that hints
+   the operation went through, which was misleading.
+   (merge 5a07c6c3c2 cs/don-t-pretend-a-failed-remote-set-head-succeeded later to maint).
+
+ * "git fetch --all --ipv4/--ipv6" forgot to pass the protocol options
+   to instances of the "git fetch" that talk to individual remotes,
+   which has been corrected.
+   (merge 4e735c1326 ar/fetch-ipversion-in-all later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -366,3 +396,4 @@ Fixes since v2.28
    (merge e6d5a11fed al/t3200-back-on-a-branch later to maint).
    (merge 324efcf6b6 pw/add-p-leakfix later to maint).
    (merge 1c6ffb546b jk/add-i-fixes later to maint).
+   (merge e40e936551 cd/commit-graph-doc later to maint).

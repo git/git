@@ -2015,8 +2015,8 @@ test_expect_success '--merged can be used in non-list mode' '
 	test_cmp expect actual
 '
 
-test_expect_success '--merged is incompatible with --no-merged' '
-	test_must_fail git tag --merged HEAD --no-merged HEAD
+test_expect_success '--merged is compatible with --no-merged' '
+	git tag --merged HEAD --no-merged HEAD
 '
 
 test_expect_success '--merged shows merged tags' '

@@ -966,8 +966,10 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				ref->force = rm->peer_ref->force;
 			}
 
-			if (recurse_submodules != RECURSE_SUBMODULES_OFF)
+			if (recurse_submodules != RECURSE_SUBMODULES_OFF &&
+			    (!rm->peer_ref || !oideq(&ref->old_oid, &ref->new_oid))) {
 				check_for_new_submodule_commits(&rm->old_oid);
+			}
 
 			if (!strcmp(rm->name, "HEAD")) {
 				kind = "";
@@ -1550,7 +1552,10 @@ static void add_options_to_argv(struct strvec *argv)
 		strvec_push(argv, "-v");
 	else if (verbosity < 0)
 		strvec_push(argv, "-q");
-
+	if (family == TRANSPORT_FAMILY_IPV4)
+		strvec_push(argv, "--ipv4");
+	else if (family == TRANSPORT_FAMILY_IPV6)
+		strvec_push(argv, "--ipv6");
 }
 
 /* Fetch multiple remotes in parallel */

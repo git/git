@@ -923,6 +923,7 @@ unsigned long repo_approximate_object_count(struct repository *r)
 			count += p->num_objects;
 		}
 		r->objects->approximate_object_count = count;
+		r->objects->approximate_object_count_valid = 1;
 	}
 	return r->objects->approximate_object_count;
 }

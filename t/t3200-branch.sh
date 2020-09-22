@@ -1299,10 +1299,6 @@ test_expect_success '--merged catches invalid object names' '
 	test_must_fail git branch --merged 0000000000000000000000000000000000000000
 '
 
-test_expect_success '--merged is incompatible with --no-merged' '
-	test_must_fail git branch --merged HEAD --no-merged HEAD
-'
-
 test_expect_success '--list during rebase' '
 	test_when_finished "reset_rebase" &&
 	git checkout master &&

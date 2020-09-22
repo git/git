@@ -65,6 +65,7 @@ static int show_scope;
 #define TYPE_PATH		4
 #define TYPE_EXPIRY_DATE	5
 #define TYPE_COLOR		6
+#define TYPE_BOOL_OR_STR	7
 
 #define OPT_CALLBACK_VALUE(s, l, v, h, i) \
 	{ OPTION_CALLBACK, (s), (l), (v), NULL, (h), PARSE_OPT_NOARG | \
@@ -94,6 +95,8 @@ static int option_parse_type(const struct option *opt, const char *arg,
 			new_type = TYPE_INT;
 		else if (!strcmp(arg, "bool-or-int"))
 			new_type = TYPE_BOOL_OR_INT;
+		else if (!strcmp(arg, "bool-or-str"))
+			new_type = TYPE_BOOL_OR_STR;
 		else if (!strcmp(arg, "path"))
 			new_type = TYPE_PATH;
 		else if (!strcmp(arg, "expiry-date"))
@@ -149,6 +152,7 @@ static struct option builtin_config_options[] = {
 	OPT_CALLBACK_VALUE(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL),
 	OPT_CALLBACK_VALUE(0, "int", &type, N_("value is decimal number"), TYPE_INT),
 	OPT_CALLBACK_VALUE(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
+	OPT_CALLBACK_VALUE(0, "bool-or-str", &type, N_("value is --bool or string"), TYPE_BOOL_OR_STR),
 	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH),
 	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE),
 	OPT_GROUP(N_("Other")),
@@ -250,6 +254,12 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 				strbuf_addstr(buf, v ? "true" : "false");
 			else
 				strbuf_addf(buf, "%d", v);
+		} else if (type == TYPE_BOOL_OR_STR) {
+			int v = git_parse_maybe_bool(value_);
+			if (v < 0)
+				strbuf_addstr(buf, value_);
+			else
+				strbuf_addstr(buf, v ? "true" : "false");
 		} else if (type == TYPE_PATH) {
 			const char *v;
 			if (git_config_pathname(&v, key_, value_) < 0)
@@ -408,6 +418,13 @@ static char *normalize_value(const char *key, const char *value)
 		v = git_config_bool_or_int(key, value, &is_bool);
 		if (!is_bool)
 			return xstrfmt("%d", v);
+		else
+			return xstrdup(v ? "true" : "false");
+	}
+	if (type == TYPE_BOOL_OR_STR) {
+		int v = git_parse_maybe_bool(value);
+		if (v < 0)
+			return xstrdup(value);
 		else
 			return xstrdup(v ? "true" : "false");
 	}

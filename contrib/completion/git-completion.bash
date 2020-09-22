@@ -1784,6 +1784,10 @@ _git_format_patch ()
 			" "" "${cur##--thread=}"
 		return
 		;;
+	--base=*|--interdiff=*|--range-diff=*)
+		__git_complete_refs --cur="${cur#--*=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin format-patch "$__git_format_patch_extra_options"
 		return
