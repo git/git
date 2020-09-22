@@ -437,8 +437,8 @@ test_expect_success 'check %(if:notequals=<string>)' '
 	test_cmp expect actual
 '
 
-test_expect_success '--merged is incompatible with --no-merged' '
-	test_must_fail git for-each-ref --merged HEAD --no-merged HEAD
+test_expect_success '--merged is compatible with --no-merged' '
+	git for-each-ref --merged HEAD --no-merged HEAD
 '
 
 test_expect_success 'validate worktree atom' '
