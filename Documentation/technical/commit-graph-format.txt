@@ -82,7 +82,7 @@ CHUNK DATA:
   Commit Data (ID: {'C', 'D', 'A', 'T' }) (N * (H + 16) bytes)
     * The first H bytes are for the OID of the root tree.
     * The next 8 bytes are for the positions of the first two parents
-      of the ith commit. Stores value 0x7000000 if no parent in that
+      of the ith commit. Stores value 0x70000000 if no parent in that
       position. If there are more than two parents, the second value
       has its most-significant bit on and the other bits store an array
       position into the Extra Edge List chunk.
