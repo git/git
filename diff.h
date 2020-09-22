@@ -601,6 +601,13 @@ int index_differs_from(struct repository *r, const char *def,
 		       int ita_invisible_in_index);
 
 /*
+ * Emit an interdiff of two object ID's to 'diff_options.file' optionally
+ * indented by 'indent' spaces.
+ */
+void show_interdiff(const struct object_id *, const struct object_id *,
+		    int indent, struct diff_options *);
+
+/*
  * Fill the contents of the filespec "df", respecting any textconv defined by
  * its userdiff driver.  The "driver" parameter must come from a
  * previous call to get_textconv(), and therefore should either be NULL or have
