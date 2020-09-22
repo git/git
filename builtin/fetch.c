@@ -1552,7 +1552,10 @@ static void add_options_to_argv(struct strvec *argv)
 		strvec_push(argv, "-v");
 	else if (verbosity < 0)
 		strvec_push(argv, "-q");
-
+	if (family == TRANSPORT_FAMILY_IPV4)
+		strvec_push(argv, "--ipv4");
+	else if (family == TRANSPORT_FAMILY_IPV6)
+		strvec_push(argv, "--ipv6");
 }
 
 /* Fetch multiple remotes in parallel */
