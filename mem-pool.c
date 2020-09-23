@@ -13,11 +13,13 @@ static struct trace_key trace_mem_pool = TRACE_KEY_INIT(MEMPOOL);
  * `insert_after`. If `insert_after` is NULL, then insert block at the
  * head of the linked list.
  */
-static struct mp_block *mem_pool_alloc_block(struct mem_pool *mem_pool, size_t block_alloc, struct mp_block *insert_after)
+static struct mp_block *mem_pool_alloc_block(struct mem_pool *pool,
+					     size_t block_alloc,
+					     struct mp_block *insert_after)
 {
 	struct mp_block *p;
 
-	mem_pool->pool_alloc += sizeof(struct mp_block) + block_alloc;
+	pool->pool_alloc += sizeof(struct mp_block) + block_alloc;
 	p = xmalloc(st_add(sizeof(struct mp_block), block_alloc));
 
 	p->next_free = (char *)p->space;
@@ -27,39 +29,32 @@ static struct mp_block *mem_pool_alloc_block(struct mem_pool *mem_pool, size_t b
 		p->next_block = insert_after->next_block;
 		insert_after->next_block = p;
 	} else {
-		p->next_block = mem_pool->mp_block;
-		mem_pool->mp_block = p;
+		p->next_block = pool->mp_block;
+		pool->mp_block = p;
 	}
 
 	return p;
 }
 
-void mem_pool_init(struct mem_pool **mem_pool, size_t initial_size)
+void mem_pool_init(struct mem_pool *pool, size_t initial_size)
 {
-	struct mem_pool *pool;
-
-	if (*mem_pool)
-		return;
-
-	pool = xcalloc(1, sizeof(*pool));
-
+	memset(pool, 0, sizeof(*pool));
 	pool->block_alloc = BLOCK_GROWTH_SIZE;
 
 	if (initial_size > 0)
 		mem_pool_alloc_block(pool, initial_size, NULL);
 
-	*mem_pool = pool;
 	trace_printf_key(&trace_mem_pool, "mem_pool (%p): init (%"PRIuMAX") initial size\n",
 		pool, (uintmax_t)initial_size);
 }
 
-void mem_pool_discard(struct mem_pool *mem_pool, int invalidate_memory)
+void mem_pool_discard(struct mem_pool *pool, int invalidate_memory)
 {
 	struct mp_block *block, *block_to_free;
 
 	trace_printf_key(&trace_mem_pool, "mem_pool (%p): discard (%"PRIuMAX") unused\n",
-		mem_pool, (uintmax_t)(mem_pool->mp_block->end - mem_pool->mp_block->next_free));
-	block = mem_pool->mp_block;
+		pool, (uintmax_t)(pool->mp_block->end - pool->mp_block->next_free));
+	block = pool->mp_block;
 	while (block)
 	{
 		block_to_free = block;
@@ -71,10 +66,11 @@ void mem_pool_discard(struct mem_pool *mem_pool, int invalidate_memory)
 		free(block_to_free);
 	}
 
-	free(mem_pool);
+	pool->mp_block = NULL;
+	pool->pool_alloc = 0;
 }
 
-void *mem_pool_alloc(struct mem_pool *mem_pool, size_t len)
+void *mem_pool_alloc(struct mem_pool *pool, size_t len)
 {
 	struct mp_block *p = NULL;
 	void *r;
@@ -83,15 +79,15 @@ void *mem_pool_alloc(struct mem_pool *mem_pool, size_t len)
 	if (len & (sizeof(uintmax_t) - 1))
 		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
 
-	if (mem_pool->mp_block &&
-	    mem_pool->mp_block->end - mem_pool->mp_block->next_free >= len)
-		p = mem_pool->mp_block;
+	if (pool->mp_block &&
+	    pool->mp_block->end - pool->mp_block->next_free >= len)
+		p = pool->mp_block;
 
 	if (!p) {
-		if (len >= (mem_pool->block_alloc / 2))
-			return mem_pool_alloc_block(mem_pool, len, mem_pool->mp_block);
+		if (len >= (pool->block_alloc / 2))
+			return mem_pool_alloc_block(pool, len, pool->mp_block);
 
-		p = mem_pool_alloc_block(mem_pool, mem_pool->block_alloc, NULL);
+		p = mem_pool_alloc_block(pool, pool->block_alloc, NULL);
 	}
 
 	r = p->next_free;
@@ -99,20 +95,38 @@ void *mem_pool_alloc(struct mem_pool *mem_pool, size_t len)
 	return r;
 }
 
-void *mem_pool_calloc(struct mem_pool *mem_pool, size_t count, size_t size)
+void *mem_pool_calloc(struct mem_pool *pool, size_t count, size_t size)
 {
 	size_t len = st_mult(count, size);
-	void *r = mem_pool_alloc(mem_pool, len);
+	void *r = mem_pool_alloc(pool, len);
 	memset(r, 0, len);
 	return r;
 }
 
-int mem_pool_contains(struct mem_pool *mem_pool, void *mem)
+char *mem_pool_strdup(struct mem_pool *pool, const char *str)
+{
+	size_t len = strlen(str) + 1;
+	char *ret = mem_pool_alloc(pool, len);
+
+	return memcpy(ret, str, len);
+}
+
+char *mem_pool_strndup(struct mem_pool *pool, const char *str, size_t len)
+{
+	char *p = memchr(str, '\0', len);
+	size_t actual_len = (p ? p - str : len);
+	char *ret = mem_pool_alloc(pool, actual_len+1);
+
+	ret[actual_len] = '\0';
+	return memcpy(ret, str, actual_len);
+}
+
+int mem_pool_contains(struct mem_pool *pool, void *mem)
 {
 	struct mp_block *p;
 
 	/* Check if memory is allocated in a block */
-	for (p = mem_pool->mp_block; p; p = p->next_block)
+	for (p = pool->mp_block; p; p = p->next_block)
 		if ((mem >= ((void *)p->space)) &&
 		    (mem < ((void *)p->end)))
 			return 1;
