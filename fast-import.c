@@ -526,14 +526,6 @@ static unsigned int hc_str(const char *s, size_t len)
 	return r;
 }
 
-static char *pool_strdup(const char *s)
-{
-	size_t len = strlen(s) + 1;
-	char *r = mem_pool_alloc(&fi_mem_pool, len);
-	memcpy(r, s, len);
-	return r;
-}
-
 static void insert_mark(struct mark_set *s, uintmax_t idnum, struct object_entry *oe)
 {
 	while ((idnum >> s->shift) >= 1024) {
@@ -615,7 +607,7 @@ static struct branch *new_branch(const char *name)
 		die("Branch name doesn't conform to GIT standards: %s", name);
 
 	b = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct branch));
-	b->name = pool_strdup(name);
+	b->name = mem_pool_strdup(&fi_mem_pool, name);
 	b->table_next_branch = branch_table[hc];
 	b->branch_tree.versions[0].mode = S_IFDIR;
 	b->branch_tree.versions[1].mode = S_IFDIR;
@@ -2806,7 +2798,7 @@ static void parse_new_tag(const char *arg)
 
 	t = mem_pool_alloc(&fi_mem_pool, sizeof(struct tag));
 	memset(t, 0, sizeof(struct tag));
-	t->name = pool_strdup(arg);
+	t->name = mem_pool_strdup(&fi_mem_pool, arg);
 	if (last_tag)
 		last_tag->next_tag = t;
 	else
