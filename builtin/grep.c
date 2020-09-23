@@ -319,7 +319,7 @@ static void grep_source_name(struct grep_opt *opt, const char *filename,
 	}
 
 	if (opt->relative && opt->prefix_length)
-		quote_path_relative(filename + tree_name_len, opt->prefix, out);
+		quote_path(filename + tree_name_len, opt->prefix, out, 0);
 	else
 		quote_c_style(filename + tree_name_len, out, NULL, 0);
 
