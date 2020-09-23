@@ -22,16 +22,16 @@
 remote="$1"
 url="$2"
 
-z40=0000000000000000000000000000000000000000
+zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
 
 while read local_ref local_oid remote_ref remote_oid
 do
-	if test "$local_oid" = $z40
+	if test "$local_oid" = "$zero"
 	then
 		# Handle delete
 		:
 	else
-		if test "$remote_oid" = $z40
+		if test "$remote_oid" = "$zero"
 		then
 			# New branch, examine all commits
 			range="$local_oid"
