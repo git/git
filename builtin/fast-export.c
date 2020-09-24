@@ -405,12 +405,12 @@ static char *generate_fake_oid(void *data)
 {
 	static uint32_t counter = 1; /* avoid null oid */
 	const unsigned hashsz = the_hash_algo->rawsz;
-	unsigned char out[GIT_MAX_RAWSZ];
+	struct object_id oid;
 	char *hex = xmallocz(GIT_MAX_HEXSZ);
 
-	hashclr(out);
-	put_be32(out + hashsz - 4, counter++);
-	return hash_to_hex_algop_r(hex, out, the_hash_algo);
+	oidclr(&oid);
+	put_be32(oid.hash + hashsz - 4, counter++);
+	return oid_to_hex_r(hex, &oid);
 }
 
 static const char *anonymize_oid(const char *oid_hex)
