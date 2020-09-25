@@ -21,6 +21,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m X &&
 	git tag X &&
+	git tag -a -m "X (annotated)" XT &&
 
 	git blame --line-porcelain file >blame_raw &&
 
@@ -33,18 +34,34 @@ test_expect_success setup '
 	test_cmp expect actual
 '
 
-# Ignore X, make sure A is blamed for line 1 and B for line 2.
-test_expect_success ignore_rev_changing_lines '
-	git blame --line-porcelain --ignore-rev X file >blame_raw &&
-
-	grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse A >expect &&
-	test_cmp expect actual &&
-
-	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse B >expect &&
-	test_cmp expect actual
+# Ensure bogus --ignore-rev requests are caught
+test_expect_success 'validate --ignore-rev' '
+	test_must_fail git blame --ignore-rev X^{tree} file
 '
+
+# Ensure bogus --ignore-revs-file requests are caught
+test_expect_success 'validate --ignore-revs-file' '
+	git rev-parse X^{tree} >ignore_x &&
+	test_must_fail git blame --ignore-revs-file ignore_x file
+'
+
+for I in X XT
+do
+	# Ignore X (or XT), make sure A is blamed for line 1 and B for line 2.
+	# Giving X (i.e. commit) and XT (i.e. annotated tag to commit) should
+	# produce the same result.
+	test_expect_success "ignore_rev_changing_lines ($I)" '
+		git blame --line-porcelain --ignore-rev $I file >blame_raw &&
+
+		grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
+		git rev-parse A >expect &&
+		test_cmp expect actual &&
+
+		grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
+		git rev-parse B >expect &&
+		test_cmp expect actual
+	'
+done
 
 # For ignored revs that have added 'unblamable' lines, attribute those to the
 # ignored commit.
