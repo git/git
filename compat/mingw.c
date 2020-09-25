@@ -3370,7 +3370,7 @@ static void setup_windows_environment(void)
 #endif
 
 	if (!getenv("LC_ALL") && !getenv("LC_CTYPE") && !getenv("LANG"))
-		setenv("LC_CTYPE", "C", 1);
+		setenv("LC_CTYPE", "C.UTF-8", 1);
 
 	/*
 	 * Change 'core.symlinks' default to false, unless native symlinks are
