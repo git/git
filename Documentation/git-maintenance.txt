@@ -85,6 +85,24 @@ loose-objects::
 	advisable to enable both the `loose-objects` and `gc` tasks at the
 	same time.
 
+incremental-repack::
+	The `incremental-repack` job repacks the object directory
+	using the `multi-pack-index` feature. In order to prevent race
+	conditions with concurrent Git commands, it follows a two-step
+	process. First, it calls `git multi-pack-index expire` to delete
+	pack-files unreferenced by the `multi-pack-index` file. Second, it
+	calls `git multi-pack-index repack` to select several small
+	pack-files and repack them into a bigger one, and then update the
+	`multi-pack-index` entries that refer to the small pack-files to
+	refer to the new pack-file. This prepares those small pack-files
+	for deletion upon the next run of `git multi-pack-index expire`.
+	The selection of the small pack-files is such that the expected
+	size of the big pack-file is at least the batch size; see the
+	`--batch-size` option for the `repack` subcommand in
+	linkgit:git-multi-pack-index[1]. The default batch-size is zero,
+	which is a special case that attempts to repack all pack-files
+	into a single pack-file.
+
 OPTIONS
 -------
 --auto::
