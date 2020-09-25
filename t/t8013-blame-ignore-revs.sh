@@ -31,7 +31,7 @@ test_expect_success setup '
 	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
 	git rev-parse X >expect &&
 	test_cmp expect actual
-	'
+'
 
 # Ignore X, make sure A is blamed for line 1 and B for line 2.
 test_expect_success ignore_rev_changing_lines '
@@ -44,7 +44,7 @@ test_expect_success ignore_rev_changing_lines '
 	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
 	git rev-parse B >expect &&
 	test_cmp expect actual
-	'
+'
 
 # For ignored revs that have added 'unblamable' lines, attribute those to the
 # ignored commit.
@@ -67,7 +67,7 @@ test_expect_success ignore_rev_adding_unblamable_lines '
 
 	grep -E "^[0-9a-f]+ [0-9]+ 4" blame_raw | sed -e "s/ .*//" >actual &&
 	test_cmp expect actual
-	'
+'
 
 # Ignore X and Y, both in separate files.  Lines 1 == A, 2 == B.
 test_expect_success ignore_revs_from_files '
@@ -82,7 +82,7 @@ test_expect_success ignore_revs_from_files '
 	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
 	git rev-parse B >expect &&
 	test_cmp expect actual
-	'
+'
 
 # Ignore X from the config option, Y from a file.
 test_expect_success ignore_revs_from_configs_and_files '
@@ -96,7 +96,7 @@ test_expect_success ignore_revs_from_configs_and_files '
 	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
 	git rev-parse B >expect &&
 	test_cmp expect actual
-	'
+'
 
 # Override blame.ignoreRevsFile (ignore_x) with an empty string.  X should be
 # blamed now for lines 1 and 2, since we are no longer ignoring X.
@@ -120,7 +120,7 @@ test_expect_success bad_files_and_revs '
 	echo NOREV >ignore_norev &&
 	test_must_fail git blame file --ignore-revs-file ignore_norev 2>err &&
 	test_i18ngrep "invalid object name: NOREV" err
-	'
+'
 
 # For ignored revs that have added 'unblamable' lines, mark those lines with a
 # '*'
@@ -138,7 +138,7 @@ test_expect_success mark_unblamable_lines '
 
 	sed -n "4p" blame_raw | cut -c1 >actual &&
 	test_cmp expect actual
-	'
+'
 
 # Commit Z will touch the first two lines.  Y touched all four.
 # 	A--B--X--Y--Z
@@ -171,7 +171,7 @@ test_expect_success mark_ignored_lines '
 
 	sed -n "4p" blame_raw | cut -c1 >actual &&
 	! test_cmp expect actual
-	'
+'
 
 # For ignored revs that added 'unblamable' lines and more recent commits changed
 # the blamable lines, mark the unblamable lines with a
@@ -190,7 +190,7 @@ test_expect_success mark_unblamable_lines_intermediate '
 
 	sed -n "4p" blame_raw | cut -c1 >actual &&
 	test_cmp expect actual
-	'
+'
 
 # The heuristic called by guess_line_blames() tries to find the size of a
 # blame_entry 'e' in the parent's address space.  Those calculations need to
@@ -227,7 +227,7 @@ test_expect_success ignored_chunk_negative_parent_size '
 	git tag C &&
 
 	git blame file --ignore-rev B >blame_raw
-	'
+'
 
 # Resetting the repo and creating:
 #
@@ -269,6 +269,6 @@ test_expect_success ignore_merge '
 	grep -E "^[0-9a-f]+ [0-9]+ 9" blame_raw | sed -e "s/ .*//" >actual &&
 	git rev-parse C >expect &&
 	test_cmp expect actual
-	'
+'
 
 test_done
