@@ -154,25 +154,79 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 {
 	struct ref *hint;
 	int ret;
+	struct ref_push_report *report = NULL;
+	int new_report = 0;
+	int once = 0;
 
 	hint = NULL;
 	ret = receive_unpack_status(reader);
 	while (1) {
+		struct object_id old_oid, new_oid;
+		const char *head;
 		const char *refname;
-		char *msg;
+		char *p;
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
-		if (!starts_with(reader->line, "ok ") && !starts_with(reader->line, "ng ")) {
-			error("invalid ref status from remote: %s", reader->line);
+		head = reader->line;
+		p = strchr(head, ' ');
+		if (!p) {
+			error("invalid status line from remote: %s", reader->line);
 			ret = -1;
 			break;
 		}
+		*p++ = '\0';
 
-		refname = reader->line + 3;
-		msg = strchr(refname, ' ');
-		if (msg)
-			*msg++ = '\0';
+		if (!strcmp(head, "option")) {
+			const char *key, *val;
 
+			if (!hint || !(report || new_report)) {
+				if (!once++)
+					error("'option' without a matching 'ok/ng' directive");
+				ret = -1;
+				continue;
+			}
+			if (new_report) {
+				if (!hint->report) {
+					hint->report = xcalloc(1, sizeof(struct ref_push_report));
+					report = hint->report;
+				} else {
+					report = hint->report;
+					while (report->next)
+						report = report->next;
+					report->next = xcalloc(1, sizeof(struct ref_push_report));
+					report = report->next;
+				}
+				new_report = 0;
+			}
+			key = p;
+			p = strchr(key, ' ');
+			if (p)
+				*p++ = '\0';
+			val = p;
+			if (!strcmp(key, "refname"))
+				report->ref_name = xstrdup_or_null(val);
+			else if (!strcmp(key, "old-oid") && val &&
+				 !parse_oid_hex(val, &old_oid, &val))
+				report->old_oid = oiddup(&old_oid);
+			else if (!strcmp(key, "new-oid") && val &&
+				 !parse_oid_hex(val, &new_oid, &val))
+				report->new_oid = oiddup(&new_oid);
+			else if (!strcmp(key, "forced-update"))
+				report->forced_update = 1;
+			continue;
+		}
+
+		report = NULL;
+		new_report = 0;
+		if (strcmp(head, "ok") && strcmp(head, "ng")) {
+			error("invalid ref status from remote: %s", head);
+			ret = -1;
+			break;
+		}
+		refname = p;
+		p = strchr(refname, ' ');
+		if (p)
+			*p++ = '\0';
 		/* first try searching at our hint, falling back to all refs */
 		if (hint)
 			hint = find_ref_by_name(hint, refname);
@@ -180,22 +234,27 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 			hint = find_ref_by_name(refs, refname);
 		if (!hint) {
 			warning("remote reported status on unknown ref: %s",
-					refname);
+				refname);
 			continue;
 		}
-		if (hint->status != REF_STATUS_EXPECTING_REPORT) {
+		if (hint->status != REF_STATUS_EXPECTING_REPORT &&
+		    hint->status != REF_STATUS_OK &&
+		    hint->status != REF_STATUS_REMOTE_REJECT) {
 			warning("remote reported status on unexpected ref: %s",
-					refname);
+				refname);
 			continue;
 		}
-
-		if (reader->line[0] == 'o' && reader->line[1] == 'k')
-			hint->status = REF_STATUS_OK;
-		else
+		if (!strcmp(head, "ng")) {
 			hint->status = REF_STATUS_REMOTE_REJECT;
-		hint->remote_status = xstrdup_or_null(msg);
-		/* start our next search from the next ref */
-		hint = hint->next;
+			if (p)
+				hint->remote_status = xstrdup(p);
+			else
+				hint->remote_status = "failed";
+		} else {
+			hint->status = REF_STATUS_OK;
+			hint->remote_status = xstrdup_or_null(p);
+			new_report = 1;
+		}
 	}
 	return ret;
 }
@@ -371,7 +430,9 @@ int send_pack(struct send_pack_args *args,
 	struct packet_reader reader;
 
 	/* Does the other end support the reporting? */
-	if (server_supports("report-status"))
+	if (server_supports("report-status-v2"))
+		status_report = 2;
+	else if (server_supports("report-status"))
 		status_report = 1;
 	if (server_supports("delete-refs"))
 		allow_deleting_refs = 1;
@@ -423,8 +484,10 @@ int send_pack(struct send_pack_args *args,
 
 	use_push_options = push_options_supported && args->push_options;
 
-	if (status_report)
+	if (status_report == 1)
 		strbuf_addstr(&cap_buf, " report-status");
+	else if (status_report == 2)
+		strbuf_addstr(&cap_buf, " report-status-v2");
 	if (use_sideband)
 		strbuf_addstr(&cap_buf, " side-band-64k");
 	if (quiet_supported && (args->quiet || !args->progress))
