@@ -2841,6 +2841,13 @@ _git_reset ()
 
 _git_restore ()
 {
+	case "$prev" in
+	-s)
+		__git_complete_refs
+		return
+		;;
+	esac
+
 	case "$cur" in
 	--conflict=*)
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
