@@ -127,4 +127,26 @@ test_expect_success 'loose-objects task' '
 	test_cmp packs-between packs-after
 '
 
+test_expect_success 'maintenance.loose-objects.auto' '
+	git repack -adk &&
+	GIT_TRACE2_EVENT="$(pwd)/trace-lo1.txt" \
+		git -c maintenance.loose-objects.auto=1 maintenance \
+		run --auto --task=loose-objects 2>/dev/null &&
+	test_subcommand ! git prune-packed --quiet <trace-lo1.txt &&
+	printf data-A | git hash-object -t blob --stdin -w &&
+	GIT_TRACE2_EVENT="$(pwd)/trace-loA" \
+		git -c maintenance.loose-objects.auto=2 \
+		maintenance run --auto --task=loose-objects 2>/dev/null &&
+	test_subcommand ! git prune-packed --quiet <trace-loA &&
+	printf data-B | git hash-object -t blob --stdin -w &&
+	GIT_TRACE2_EVENT="$(pwd)/trace-loB" \
+		git -c maintenance.loose-objects.auto=2 \
+		maintenance run --auto --task=loose-objects 2>/dev/null &&
+	test_subcommand git prune-packed --quiet <trace-loB &&
+	GIT_TRACE2_EVENT="$(pwd)/trace-loC" \
+		git -c maintenance.loose-objects.auto=2 \
+		maintenance run --auto --task=loose-objects 2>/dev/null &&
+	test_subcommand git prune-packed --quiet <trace-loC
+'
+
 test_done
