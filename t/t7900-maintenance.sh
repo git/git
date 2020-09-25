@@ -181,10 +181,42 @@ test_expect_success 'incremental-repack task' '
 	test_line_count = 4 packs-between &&
 
 	# the job deletes the two old packs, and does not write
-	# a new one because only one pack remains.
+	# a new one because the batch size is not high enough to
+	# pack the largest pack-file.
 	git maintenance run --task=incremental-repack &&
 	ls .git/objects/pack/*.pack >packs-after &&
-	test_line_count = 1 packs-after
+	test_line_count = 2 packs-after
+'
+
+test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
+	for i in $(test_seq 1 5)
+	do
+		test-tool genrandom foo$i $((512 * 1024 * 1024 + 1)) >>big ||
+		return 1
+	done &&
+	git add big &&
+	git commit -m "Add big file (1)" &&
+
+	# ensure any possible loose objects are in a pack-file
+	git maintenance run --task=loose-objects &&
+
+	rm big &&
+	for i in $(test_seq 6 10)
+	do
+		test-tool genrandom foo$i $((512 * 1024 * 1024 + 1)) >>big ||
+		return 1
+	done &&
+	git add big &&
+	git commit -m "Add big file (2)" &&
+
+	# ensure any possible loose objects are in a pack-file
+	git maintenance run --task=loose-objects &&
+
+	# Now run the incremental-repack task and check the batch-size
+	GIT_TRACE2_EVENT="$(pwd)/run-2g.txt" git maintenance run \
+		--task=incremental-repack 2>/dev/null &&
+	test_subcommand git multi-pack-index repack \
+		 --no-progress --batch-size=2147483647 <run-2g.txt
 '
 
 test_done
