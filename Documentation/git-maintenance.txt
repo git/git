@@ -1,0 +1,79 @@
+git-maintenance(1)
+==================
+
+NAME
+----
+git-maintenance - Run tasks to optimize Git repository data
+
+
+SYNOPSIS
+--------
+[verse]
+'git maintenance' run [<options>]
+
+
+DESCRIPTION
+-----------
+Run tasks to optimize Git repository data, speeding up other Git commands
+and reducing storage requirements for the repository.
+
+Git commands that add repository data, such as `git add` or `git fetch`,
+are optimized for a responsive user experience. These commands do not take
+time to optimize the Git data, since such optimizations scale with the full
+size of the repository while these user commands each perform a relatively
+small action.
+
+The `git maintenance` command provides flexibility for how to optimize the
+Git repository.
+
+SUBCOMMANDS
+-----------
+
+run::
+	Run one or more maintenance tasks. If one or more `--task` options
+	are specified, then those tasks are run in that order. Otherwise,
+	the tasks are determined by which `maintenance.<task>.enabled`
+	config options are true. By default, only `maintenance.gc.enabled`
+	is true.
+
+TASKS
+-----
+
+commit-graph::
+	The `commit-graph` job updates the `commit-graph` files incrementally,
+	then verifies that the written data is correct. The incremental
+	write is safe to run alongside concurrent Git processes since it
+	will not expire `.graph` files that were in the previous
+	`commit-graph-chain` file. They will be deleted by a later run based
+	on the expiration delay.
+
+gc::
+	Clean up unnecessary files and optimize the local repository. "GC"
+	stands for "garbage collection," but this task performs many
+	smaller tasks. This task can be expensive for large repositories,
+	as it repacks all Git objects into a single pack-file. It can also
+	be disruptive in some situations, as it deletes stale data. See
+	linkgit:git-gc[1] for more details on garbage collection in Git.
+
+OPTIONS
+-------
+--auto::
+	When combined with the `run` subcommand, run maintenance tasks
+	only if certain thresholds are met. For example, the `gc` task
+	runs when the number of loose objects exceeds the number stored
+	in the `gc.auto` config setting, or when the number of pack-files
+	exceeds the `gc.autoPackLimit` config setting.
+
+--quiet::
+	Do not report progress or other information over `stderr`.
+
+--task=<task>::
+	If this option is specified one or more times, then only run the
+	specified tasks in the specified order. If no `--task=<task>`
+	arguments are specified, then only the tasks with
+	`maintenance.<task>.enabled` configured as `true` are considered.
+	See the 'TASKS' section for the list of accepted `<task>` values.
+
+GIT
+---
+Part of the linkgit:git[1] suite
