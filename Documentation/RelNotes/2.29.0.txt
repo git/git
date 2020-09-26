@@ -80,6 +80,17 @@ UI, Workflows & Features
    one --merged or --no-merged to filter them; they learned to take
    combination of both kind of filtering.
 
+ * "git maintenance", a "git gc"'s big brother, has been introduced to
+   take care of more repository maintenance tasks, not limited to the
+   object database cleaning.
+
+ * "git receive-pack" that accepts requests by "git push" learned to
+   outsource most of the ref updates to the new "proc-receive" hook.
+
+ * "git push" that wants to be atomic and wants to send push
+   certificate learned not to prepare and sign the push certificate
+   when it fails the local check (hence due to atomicity it is known
+   that no certificate is needed).
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -170,6 +181,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git index-pack" learned to resolve deltified objects with greater
    parallelism.
+
+ * "diff-highlight" (in contrib/) had a logic to flush its output upon
+   seeing a blank line but the way it detected a blank line was broken.
 
 
 Fixes since v2.28
@@ -365,6 +379,11 @@ Fixes since v2.28
    to instances of the "git fetch" that talk to individual remotes,
    which has been corrected.
    (merge 4e735c1326 ar/fetch-ipversion-in-all later to maint).
+
+ * The "unshelve" subcommand of "git p4" used incorrectly used
+   commit^N where it meant to say commit~N to name the Nth generation
+   ancestor, which has been corrected.
+   (merge 0acbf5997f ld/p4-unshelve-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).

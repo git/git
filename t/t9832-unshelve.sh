@@ -29,8 +29,11 @@ test_expect_success 'init depot' '
 	)
 '
 
+# Create an initial clone, with a commit unrelated to the P4 change
+# on HEAD
 test_expect_success 'initial clone' '
-	git p4 clone --dest="$git" //depot/@all
+	git p4 clone --dest="$git" //depot/@all &&
+    test_commit -C "$git" "unrelated"
 '
 
 test_expect_success 'create shelved changelist' '
