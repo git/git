@@ -465,7 +465,7 @@ test_expect_success 'am changes committer and keeps author' '
 test_expect_success 'am --signoff adds Signed-off-by: line' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
-	git checkout -b master2 first &&
+	git checkout -b topic_2 first &&
 	git am --signoff <patch2 &&
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\n\n" \
@@ -479,7 +479,7 @@ test_expect_success 'am --signoff adds Signed-off-by: line' '
 '
 
 test_expect_success 'am stays in branch' '
-	echo refs/heads/master2 >expected &&
+	echo refs/heads/topic_2 >expected &&
 	git symbolic-ref HEAD >actual &&
 	test_cmp expected actual
 '
@@ -540,7 +540,7 @@ test_expect_success 'am without --keep removes Re: and [PATCH] stuff' '
 	git reset --hard HEAD^ &&
 	git am <patch4 &&
 	git rev-parse HEAD >expected &&
-	git rev-parse master2 >actual &&
+	git rev-parse topic_2 >actual &&
 	test_cmp expected actual
 '
 
@@ -567,7 +567,7 @@ test_expect_success 'am --keep-non-patch really keeps the non-patch part' '
 test_expect_success 'setup am -3' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
-	git checkout -b base3way master2 &&
+	git checkout -b base3way topic_2 &&
 	sed -n -e "3,\$p" msg >file &&
 	head -n 9 msg >>file &&
 	git add file &&
