@@ -53,6 +53,19 @@ OPTIONS
 +
  - `author`, commits are grouped by author
  - `committer`, commits are grouped by committer (the same as `-c`)
+ - `trailer:<field>`, the `<field>` is interpreted as a case-insensitive
+   commit message trailer (see linkgit:git-interpret-trailers[1]). For
+   example, if your project uses `Reviewed-by` trailers, you might want
+   to see who has been reviewing with
+   `git shortlog -ns --group=trailer:reviewed-by`.
++
+Note that commits that do not include the trailer will not be counted.
+Likewise, commits with multiple trailers (e.g., multiple signoffs) may
+be counted more than once.
++
+The contents of each trailer value are taken literally and completely.
+No mailmap is applied, and the `-e` option has no effect (if the trailer
+contains a username and email, they are both always shown).
 
 -c::
 --committer::

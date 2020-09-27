@@ -9,6 +9,7 @@
 #include "mailmap.h"
 #include "shortlog.h"
 #include "parse-options.h"
+#include "trailer.h"
 
 static char const * const shortlog_usage[] = {
 	N_("git shortlog [<options>] [<revision-range>] [[--] <path>...]"),
@@ -136,6 +137,8 @@ static void read_from_stdin(struct shortlog *log)
 	case SHORTLOG_GROUP_COMMITTER:
 		match = committer_match;
 		break;
+	case SHORTLOG_GROUP_TRAILER:
+		die(_("using --group=trailer with stdin is not supported"));
 	default:
 		BUG("unhandled shortlog group");
 	}
@@ -161,6 +164,37 @@ static void read_from_stdin(struct shortlog *log)
 	strbuf_release(&ident);
 	strbuf_release(&mapped_ident);
 	strbuf_release(&oneline);
+}
+
+static void insert_records_from_trailers(struct shortlog *log,
+					 struct commit *commit,
+					 struct pretty_print_context *ctx,
+					 const char *oneline)
+{
+	struct trailer_iterator iter;
+	const char *commit_buffer, *body;
+
+	/*
+	 * Using format_commit_message("%B") would be simpler here, but
+	 * this saves us copying the message.
+	 */
+	commit_buffer = logmsg_reencode(commit, NULL, ctx->output_encoding);
+	body = strstr(commit_buffer, "\n\n");
+	if (!body)
+		return;
+
+	trailer_iterator_init(&iter, body);
+	while (trailer_iterator_advance(&iter)) {
+		const char *value = iter.val.buf;
+
+		if (strcasecmp(iter.key.buf, log->trailer))
+			continue;
+
+		insert_one_record(log, value, oneline);
+	}
+	trailer_iterator_release(&iter);
+
+	unuse_commit_buffer(commit, commit_buffer);
 }
 
 void shortlog_add_commit(struct shortlog *log, struct commit *commit)
@@ -196,6 +230,9 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 				      log->email ? "%cN <%cE>" : "%cN",
 				      &ident, &ctx);
 		insert_one_record(log, ident.buf, oneline_str);
+		break;
+	case SHORTLOG_GROUP_TRAILER:
+		insert_records_from_trailers(log, commit, &ctx, oneline_str);
 		break;
 	}
 
@@ -263,12 +300,17 @@ static int parse_wrap_args(const struct option *opt, const char *arg, int unset)
 static int parse_group_option(const struct option *opt, const char *arg, int unset)
 {
 	struct shortlog *log = opt->value;
+	const char *field;
 
 	if (unset || !strcasecmp(arg, "author"))
 		log->group = SHORTLOG_GROUP_AUTHOR;
 	else if (!strcasecmp(arg, "committer"))
 		log->group = SHORTLOG_GROUP_COMMITTER;
-	else
+	else if (skip_prefix(arg, "trailer:", &field)) {
+		log->group = SHORTLOG_GROUP_TRAILER;
+		free(log->trailer);
+		log->trailer = xstrdup(field);
+	} else
 		return error(_("unknown group type: %s"), arg);
 
 	return 0;

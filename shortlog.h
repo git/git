@@ -19,7 +19,9 @@ struct shortlog {
 	enum {
 		SHORTLOG_GROUP_AUTHOR = 0,
 		SHORTLOG_GROUP_COMMITTER,
+		SHORTLOG_GROUP_TRAILER,
 	} group;
+	char *trailer;
 
 	char *common_repo_prefix;
 	int email;
