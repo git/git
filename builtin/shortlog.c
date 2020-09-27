@@ -129,7 +129,17 @@ static void read_from_stdin(struct shortlog *log)
 	static const char *committer_match[2] = { "Commit: ", "committer " };
 	const char **match;
 
-	match = log->committer ? committer_match : author_match;
+	switch (log->group) {
+	case SHORTLOG_GROUP_AUTHOR:
+		match = author_match;
+		break;
+	case SHORTLOG_GROUP_COMMITTER:
+		match = committer_match;
+		break;
+	default:
+		BUG("unhandled shortlog group");
+	}
+
 	while (strbuf_getline_lf(&ident, stdin) != EOF) {
 		const char *v;
 		if (!skip_prefix(ident.buf, match[0], &v) &&
@@ -158,7 +168,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	struct strbuf ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
-	const char *fmt;
+	const char *oneline_str;
 
 	ctx.fmt = CMIT_FMT_USERFORMAT;
 	ctx.abbrev = log->abbrev;
@@ -166,19 +176,28 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	ctx.date_mode.type = DATE_NORMAL;
 	ctx.output_encoding = get_log_output_encoding();
 
-	fmt = log->committer ?
-		(log->email ? "%cN <%cE>" : "%cN") :
-		(log->email ? "%aN <%aE>" : "%aN");
-
-	format_commit_message(commit, fmt, &ident, &ctx);
 	if (!log->summary) {
 		if (log->user_format)
 			pretty_print_commit(&ctx, commit, &oneline);
 		else
 			format_commit_message(commit, "%s", &oneline, &ctx);
 	}
+	oneline_str = oneline.len ? oneline.buf : "<none>";
 
-	insert_one_record(log, ident.buf, oneline.len ? oneline.buf : "<none>");
+	switch (log->group) {
+	case SHORTLOG_GROUP_AUTHOR:
+		format_commit_message(commit,
+				      log->email ? "%aN <%aE>" : "%aN",
+				      &ident, &ctx);
+		insert_one_record(log, ident.buf, oneline_str);
+		break;
+	case SHORTLOG_GROUP_COMMITTER:
+		format_commit_message(commit,
+				      log->email ? "%cN <%cE>" : "%cN",
+				      &ident, &ctx);
+		insert_one_record(log, ident.buf, oneline_str);
+		break;
+	}
 
 	strbuf_release(&ident);
 	strbuf_release(&oneline);
@@ -241,6 +260,21 @@ static int parse_wrap_args(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int parse_group_option(const struct option *opt, const char *arg, int unset)
+{
+	struct shortlog *log = opt->value;
+
+	if (unset || !strcasecmp(arg, "author"))
+		log->group = SHORTLOG_GROUP_AUTHOR;
+	else if (!strcasecmp(arg, "committer"))
+		log->group = SHORTLOG_GROUP_COMMITTER;
+	else
+		return error(_("unknown group type: %s"), arg);
+
+	return 0;
+}
+
+
 void shortlog_init(struct shortlog *log)
 {
 	memset(log, 0, sizeof(*log));
@@ -260,8 +294,9 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	int nongit = !startup_info->have_repository;
 
 	const struct option options[] = {
-		OPT_BOOL('c', "committer", &log.committer,
-			 N_("Group by committer rather than author")),
+		OPT_SET_INT('c', "committer", &log.group,
+			    N_("Group by committer rather than author"),
+			    SHORTLOG_GROUP_COMMITTER),
 		OPT_BOOL('n', "numbered", &log.sort_by_number,
 			 N_("sort output according to the number of commits per author")),
 		OPT_BOOL('s', "summary", &log.summary,
@@ -271,6 +306,8 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK_F('w', NULL, &log, N_("<w>[,<i1>[,<i2>]]"),
 			N_("Linewrap output"), PARSE_OPT_OPTARG,
 			&parse_wrap_args),
+		OPT_CALLBACK(0, "group", &log, N_("field"),
+			N_("Group by field"), parse_group_option),
 		OPT_END(),
 	};
 

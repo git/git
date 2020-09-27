@@ -47,9 +47,16 @@ OPTIONS
 
 	Each pretty-printed commit will be rewrapped before it is shown.
 
+--group=<type>::
+	Group commits based on `<type>`. If no `--group` option is
+	specified, the default is `author`. `<type>` is one of:
++
+ - `author`, commits are grouped by author
+ - `committer`, commits are grouped by committer (the same as `-c`)
+
 -c::
 --committer::
-	Collect and show committer identities instead of authors.
+	This is an alias for `--group=committer`.
 
 -w[<width>[,<indent1>[,<indent2>]]]::
 	Linewrap the output by wrapping each line at `width`.  The first

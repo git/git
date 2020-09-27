@@ -15,7 +15,11 @@ struct shortlog {
 	int in2;
 	int user_format;
 	int abbrev;
-	int committer;
+
+	enum {
+		SHORTLOG_GROUP_AUTHOR = 0,
+		SHORTLOG_GROUP_COMMITTER,
+	} group;
 
 	char *common_repo_prefix;
 	int email;

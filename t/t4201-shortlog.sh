@@ -215,4 +215,9 @@ test_expect_success 'shortlog --committer (external)' '
 	test_cmp expect actual
 '
 
+test_expect_success '--group=committer is the same as --committer' '
+	git shortlog -ns --group=committer HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
