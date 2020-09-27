@@ -1227,7 +1227,7 @@ static int split_commit_in_progress(struct wt_status *s)
  * The function assumes that the line does not contain useless spaces
  * before or after the command.
  */
-static void abbrev_sha1_in_line(struct strbuf *line)
+static void abbrev_oid_in_line(struct strbuf *line)
 {
 	struct strbuf **split;
 	int i;
@@ -1277,7 +1277,7 @@ static int read_rebase_todolist(const char *fname, struct string_list *lines)
 		strbuf_trim(&line);
 		if (!line.len)
 			continue;
-		abbrev_sha1_in_line(&line);
+		abbrev_oid_in_line(&line);
 		string_list_append(lines, line.buf);
 	}
 	fclose(f);
@@ -1570,9 +1570,9 @@ static void wt_status_get_detached_from(struct repository *r,
 	}
 
 	if (dwim_ref(cb.buf.buf, cb.buf.len, &oid, &ref) == 1 &&
-	    /* sha1 is a commit? match without further lookup */
+	    /* oid is a commit? match without further lookup */
 	    (oideq(&cb.noid, &oid) ||
-	     /* perhaps sha1 is a tag, try to dereference to a commit */
+	     /* perhaps oid is a tag, try to dereference to a commit */
 	     ((commit = lookup_commit_reference_gently(r, &oid, 1)) != NULL &&
 	      oideq(&cb.noid, &commit->object.oid)))) {
 		const char *from = ref;
