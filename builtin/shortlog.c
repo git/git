@@ -166,6 +166,60 @@ static void read_from_stdin(struct shortlog *log)
 	strbuf_release(&oneline);
 }
 
+struct strset_item {
+	struct hashmap_entry ent;
+	char value[FLEX_ARRAY];
+};
+
+struct strset {
+	struct hashmap map;
+};
+
+#define STRSET_INIT { { NULL } }
+
+static int strset_item_hashcmp(const void *hash_data,
+			       const struct hashmap_entry *entry,
+			       const struct hashmap_entry *entry_or_key,
+			       const void *keydata)
+{
+	const struct strset_item *a, *b;
+
+	a = container_of(entry, const struct strset_item, ent);
+	if (keydata)
+		return strcmp(a->value, keydata);
+
+	b = container_of(entry_or_key, const struct strset_item, ent);
+	return strcmp(a->value, b->value);
+}
+
+/*
+ * Adds "str" to the set if it was not already present; returns true if it was
+ * already there.
+ */
+static int strset_check_and_add(struct strset *ss, const char *str)
+{
+	unsigned int hash = strhash(str);
+	struct strset_item *item;
+
+	if (!ss->map.table)
+		hashmap_init(&ss->map, strset_item_hashcmp, NULL, 0);
+
+	if (hashmap_get_from_hash(&ss->map, hash, str))
+		return 1;
+
+	FLEX_ALLOC_STR(item, value, str);
+	hashmap_entry_init(&item->ent, hash);
+	hashmap_add(&ss->map, &item->ent);
+	return 0;
+}
+
+static void strset_clear(struct strset *ss)
+{
+	if (!ss->map.table)
+		return;
+	hashmap_free_entries(&ss->map, struct strset_item, ent);
+}
+
 static void insert_records_from_trailers(struct shortlog *log,
 					 struct commit *commit,
 					 struct pretty_print_context *ctx,
@@ -173,6 +227,7 @@ static void insert_records_from_trailers(struct shortlog *log,
 {
 	struct trailer_iterator iter;
 	const char *commit_buffer, *body;
+	struct strset dups = STRSET_INIT;
 
 	/*
 	 * Using format_commit_message("%B") would be simpler here, but
@@ -190,10 +245,13 @@ static void insert_records_from_trailers(struct shortlog *log,
 		if (strcasecmp(iter.key.buf, log->trailer))
 			continue;
 
+		if (strset_check_and_add(&dups, value))
+			continue;
 		insert_one_record(log, value, oneline);
 	}
 	trailer_iterator_release(&iter);
 
+	strset_clear(&dups);
 	unuse_commit_buffer(commit, commit_buffer);
 }
 

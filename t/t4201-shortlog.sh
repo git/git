@@ -234,4 +234,32 @@ test_expect_success 'shortlog --group=trailer:signed-off-by' '
 	test_cmp expect actual
 '
 
+test_expect_success 'shortlog de-duplicates trailers in a single commit' '
+	git commit --allow-empty -F - <<-\EOF &&
+	subject one
+
+	this message has two distinct values, plus a repeat
+
+	Repeated-trailer: Foo
+	Repeated-trailer: Bar
+	Repeated-trailer: Foo
+	EOF
+
+	git commit --allow-empty -F - <<-\EOF &&
+	subject two
+
+	similar to the previous, but without the second distinct value
+
+	Repeated-trailer: Foo
+	Repeated-trailer: Foo
+	EOF
+
+	cat >expect <<-\EOF &&
+	     2	Foo
+	     1	Bar
+	EOF
+	git shortlog -ns --group=trailer:repeated-trailer -2 HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done

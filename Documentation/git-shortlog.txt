@@ -61,7 +61,8 @@ OPTIONS
 +
 Note that commits that do not include the trailer will not be counted.
 Likewise, commits with multiple trailers (e.g., multiple signoffs) may
-be counted more than once.
+be counted more than once (but only once per unique trailer value in
+that commit).
 +
 The contents of each trailer value are taken literally and completely.
 No mailmap is applied, and the `-e` option has no effect (if the trailer
