@@ -98,8 +98,8 @@ static void insert_one_record(struct shortlog *log,
 	}
 }
 
-static int parse_stdin_ident(struct shortlog *log,
-			     struct strbuf *out, const char *in)
+static int parse_ident(struct shortlog *log,
+		       struct strbuf *out, const char *in)
 {
 	const char *mailbuf, *namebuf;
 	size_t namelen, maillen;
@@ -156,7 +156,7 @@ static void read_from_stdin(struct shortlog *log)
 			; /* discard blanks */
 
 		strbuf_reset(&mapped_ident);
-		if (parse_stdin_ident(log, &mapped_ident, v) < 0)
+		if (parse_ident(log, &mapped_ident, v) < 0)
 			continue;
 
 		insert_one_record(log, mapped_ident.buf, oneline.buf);
