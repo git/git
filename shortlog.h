@@ -17,11 +17,11 @@ struct shortlog {
 	int abbrev;
 
 	enum {
-		SHORTLOG_GROUP_AUTHOR = 0,
-		SHORTLOG_GROUP_COMMITTER,
-		SHORTLOG_GROUP_TRAILER,
-	} group;
-	char *trailer;
+		SHORTLOG_GROUP_AUTHOR = (1 << 0),
+		SHORTLOG_GROUP_COMMITTER = (1 << 1),
+		SHORTLOG_GROUP_TRAILER = (1 << 2),
+	} groups;
+	struct string_list trailers;
 
 	char *common_repo_prefix;
 	int email;

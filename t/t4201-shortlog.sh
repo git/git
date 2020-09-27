@@ -282,4 +282,78 @@ test_expect_success 'shortlog de-duplicates trailers in a single commit' '
 	test_cmp expect actual
 '
 
+test_expect_success 'shortlog can match multiple groups' '
+	git commit --allow-empty -F - <<-\EOF &&
+	subject one
+
+	this has two trailers that are distinct from the author; it will count
+	3 times in the output
+
+	Some-trailer: User A <a@example.com>
+	Another-trailer: User B <b@example.com>
+	EOF
+
+	git commit --allow-empty -F - <<-\EOF &&
+	subject two
+
+	this one has two trailers, one of which is a duplicate with the author;
+	it will only be counted once for them
+
+	Another-trailer: A U Thor <author@example.com>
+	Some-trailer: User B <b@example.com>
+	EOF
+
+	cat >expect <<-\EOF &&
+	     2	A U Thor
+	     2	User B
+	     1	User A
+	EOF
+	git shortlog -ns \
+		--group=author \
+		--group=trailer:some-trailer \
+		--group=trailer:another-trailer \
+		-2 HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'set up option selection tests' '
+	git commit --allow-empty -F - <<-\EOF
+	subject
+
+	body
+
+	Trailer-one: value-one
+	Trailer-two: value-two
+	EOF
+'
+
+test_expect_success '--no-group resets group list to author' '
+	cat >expect <<-\EOF &&
+	     1	A U Thor
+	EOF
+	git shortlog -ns \
+		--group=committer \
+		--group=trailer:trailer-one \
+		--no-group \
+		-1 HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-group resets trailer list' '
+	cat >expect <<-\EOF &&
+	     1	value-two
+	EOF
+	git shortlog -ns \
+		--group=trailer:trailer-one \
+		--no-group \
+		--group=trailer:trailer-two \
+		-1 HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin with multiple groups reports error' '
+	git log >log &&
+	test_must_fail git shortlog --group=author --group=committer <log
+'
+
 test_done

@@ -130,7 +130,10 @@ static void read_from_stdin(struct shortlog *log)
 	static const char *committer_match[2] = { "Commit: ", "committer " };
 	const char **match;
 
-	switch (log->group) {
+	if (HAS_MULTI_BITS(log->groups))
+		die(_("using multiple --group options with stdin is not supported"));
+
+	switch (log->groups) {
 	case SHORTLOG_GROUP_AUTHOR:
 		match = author_match;
 		break;
@@ -221,13 +224,13 @@ static void strset_clear(struct strset *ss)
 }
 
 static void insert_records_from_trailers(struct shortlog *log,
+					 struct strset *dups,
 					 struct commit *commit,
 					 struct pretty_print_context *ctx,
 					 const char *oneline)
 {
 	struct trailer_iterator iter;
 	const char *commit_buffer, *body;
-	struct strset dups = STRSET_INIT;
 	struct strbuf ident = STRBUF_INIT;
 
 	/*
@@ -243,21 +246,20 @@ static void insert_records_from_trailers(struct shortlog *log,
 	while (trailer_iterator_advance(&iter)) {
 		const char *value = iter.val.buf;
 
-		if (strcasecmp(iter.key.buf, log->trailer))
+		if (!string_list_has_string(&log->trailers, iter.key.buf))
 			continue;
 
 		strbuf_reset(&ident);
 		if (!parse_ident(log, &ident, value))
 			value = ident.buf;
 
-		if (strset_check_and_add(&dups, value))
+		if (strset_check_and_add(dups, value))
 			continue;
 		insert_one_record(log, value, oneline);
 	}
 	trailer_iterator_release(&iter);
 
 	strbuf_release(&ident);
-	strset_clear(&dups);
 	unuse_commit_buffer(commit, commit_buffer);
 }
 
@@ -265,6 +267,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 {
 	struct strbuf ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
+	struct strset dups = STRSET_INIT;
 	struct pretty_print_context ctx = {0};
 	const char *oneline_str;
 
@@ -282,24 +285,29 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	}
 	oneline_str = oneline.len ? oneline.buf : "<none>";
 
-	switch (log->group) {
-	case SHORTLOG_GROUP_AUTHOR:
+	if (log->groups & SHORTLOG_GROUP_AUTHOR) {
+		strbuf_reset(&ident);
 		format_commit_message(commit,
 				      log->email ? "%aN <%aE>" : "%aN",
 				      &ident, &ctx);
-		insert_one_record(log, ident.buf, oneline_str);
-		break;
-	case SHORTLOG_GROUP_COMMITTER:
+		if (!HAS_MULTI_BITS(log->groups) ||
+		    !strset_check_and_add(&dups, ident.buf))
+			insert_one_record(log, ident.buf, oneline_str);
+	}
+	if (log->groups & SHORTLOG_GROUP_COMMITTER) {
+		strbuf_reset(&ident);
 		format_commit_message(commit,
 				      log->email ? "%cN <%cE>" : "%cN",
 				      &ident, &ctx);
-		insert_one_record(log, ident.buf, oneline_str);
-		break;
-	case SHORTLOG_GROUP_TRAILER:
-		insert_records_from_trailers(log, commit, &ctx, oneline_str);
-		break;
+		if (!HAS_MULTI_BITS(log->groups) ||
+		    !strset_check_and_add(&dups, ident.buf))
+			insert_one_record(log, ident.buf, oneline_str);
+	}
+	if (log->groups & SHORTLOG_GROUP_TRAILER) {
+		insert_records_from_trailers(log, &dups, commit, &ctx, oneline_str);
 	}
 
+	strset_clear(&dups);
 	strbuf_release(&ident);
 	strbuf_release(&oneline);
 }
@@ -366,14 +374,16 @@ static int parse_group_option(const struct option *opt, const char *arg, int uns
 	struct shortlog *log = opt->value;
 	const char *field;
 
-	if (unset || !strcasecmp(arg, "author"))
-		log->group = SHORTLOG_GROUP_AUTHOR;
+	if (unset) {
+		log->groups = 0;
+		string_list_clear(&log->trailers, 0);
+	} else if (!strcasecmp(arg, "author"))
+		log->groups |= SHORTLOG_GROUP_AUTHOR;
 	else if (!strcasecmp(arg, "committer"))
-		log->group = SHORTLOG_GROUP_COMMITTER;
+		log->groups |= SHORTLOG_GROUP_COMMITTER;
 	else if (skip_prefix(arg, "trailer:", &field)) {
-		log->group = SHORTLOG_GROUP_TRAILER;
-		free(log->trailer);
-		log->trailer = xstrdup(field);
+		log->groups |= SHORTLOG_GROUP_TRAILER;
+		string_list_append(&log->trailers, field);
 	} else
 		return error(_("unknown group type: %s"), arg);
 
@@ -391,6 +401,8 @@ void shortlog_init(struct shortlog *log)
 	log->wrap = DEFAULT_WRAPLEN;
 	log->in1 = DEFAULT_INDENT1;
 	log->in2 = DEFAULT_INDENT2;
+	log->trailers.strdup_strings = 1;
+	log->trailers.cmp = strcasecmp;
 }
 
 int cmd_shortlog(int argc, const char **argv, const char *prefix)
@@ -400,9 +412,9 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	int nongit = !startup_info->have_repository;
 
 	const struct option options[] = {
-		OPT_SET_INT('c', "committer", &log.group,
-			    N_("Group by committer rather than author"),
-			    SHORTLOG_GROUP_COMMITTER),
+		OPT_BIT('c', "committer", &log.groups,
+			N_("Group by committer rather than author"),
+			SHORTLOG_GROUP_COMMITTER),
 		OPT_BOOL('n', "numbered", &log.sort_by_number,
 			 N_("sort output according to the number of commits per author")),
 		OPT_BOOL('s', "summary", &log.summary,
@@ -453,6 +465,10 @@ parse_done:
 	log.user_format = rev.commit_format == CMIT_FMT_USERFORMAT;
 	log.abbrev = rev.abbrev;
 	log.file = rev.diffopt.file;
+
+	if (!log.groups)
+		log.groups = SHORTLOG_GROUP_AUTHOR;
+	string_list_sort(&log.trailers);
 
 	/* assume HEAD if from a tty */
 	if (!nongit && !rev.pending.nr && isatty(0))
