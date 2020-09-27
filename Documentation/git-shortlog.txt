@@ -64,9 +64,10 @@ Likewise, commits with multiple trailers (e.g., multiple signoffs) may
 be counted more than once (but only once per unique trailer value in
 that commit).
 +
-The contents of each trailer value are taken literally and completely.
-No mailmap is applied, and the `-e` option has no effect (if the trailer
-contains a username and email, they are both always shown).
+Shortlog will attempt to parse each trailer value as a `name <email>`
+identity. If successful, the mailmap is applied and the email is omitted
+unless the `--email` option is specified. If the value cannot be parsed
+as an identity, it will be taken literally and completely.
 
 -c::
 --committer::

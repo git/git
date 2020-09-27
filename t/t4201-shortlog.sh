@@ -230,7 +230,27 @@ test_expect_success 'shortlog --group=trailer:signed-off-by' '
 	     2	C O Mitter <committer@example.com>
 	     1	SOB One <sob@example.com>
 	EOF
+	git shortlog -nse --group=trailer:signed-off-by HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'trailer idents are split' '
+	cat >expect <<-\EOF &&
+	     2	C O Mitter
+	     1	SOB One
+	EOF
 	git shortlog -ns --group=trailer:signed-off-by HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'trailer idents are mailmapped' '
+	cat >expect <<-\EOF &&
+	     2	C O Mitter
+	     1	Another Name
+	EOF
+	echo "Another Name <sob@example.com>" >mail.map &&
+	git -c mailmap.file=mail.map shortlog -ns \
+		--group=trailer:signed-off-by HEAD >actual &&
 	test_cmp expect actual
 '
 

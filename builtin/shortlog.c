@@ -228,6 +228,7 @@ static void insert_records_from_trailers(struct shortlog *log,
 	struct trailer_iterator iter;
 	const char *commit_buffer, *body;
 	struct strset dups = STRSET_INIT;
+	struct strbuf ident = STRBUF_INIT;
 
 	/*
 	 * Using format_commit_message("%B") would be simpler here, but
@@ -245,12 +246,17 @@ static void insert_records_from_trailers(struct shortlog *log,
 		if (strcasecmp(iter.key.buf, log->trailer))
 			continue;
 
+		strbuf_reset(&ident);
+		if (!parse_ident(log, &ident, value))
+			value = ident.buf;
+
 		if (strset_check_and_add(&dups, value))
 			continue;
 		insert_one_record(log, value, oneline);
 	}
 	trailer_iterator_release(&iter);
 
+	strbuf_release(&ident);
 	strset_clear(&dups);
 	unuse_commit_buffer(commit, commit_buffer);
 }
