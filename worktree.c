@@ -365,15 +365,15 @@ int is_worktree_being_bisected(const struct worktree *wt,
 			       const char *target)
 {
 	struct wt_status_state state;
-	int found_rebase;
+	int found_bisect;
 
 	memset(&state, 0, sizeof(state));
-	found_rebase = wt_status_check_bisect(wt, &state) &&
-		state.branch &&
-		starts_with(target, "refs/heads/") &&
-		!strcmp(state.branch, target + strlen("refs/heads/"));
+	found_bisect = wt_status_check_bisect(wt, &state) &&
+		       state.branch &&
+		       starts_with(target, "refs/heads/") &&
+		       !strcmp(state.branch, target + strlen("refs/heads/"));
 	wt_status_state_free_buffers(&state);
-	return found_rebase;
+	return found_bisect;
 }
 
 /*
