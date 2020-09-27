@@ -778,9 +778,14 @@ void wt_status_collect(struct wt_status *s)
 
 void wt_status_collect_free_buffers(struct wt_status *s)
 {
-	free(s->state.branch);
-	free(s->state.onto);
-	free(s->state.detached_from);
+	wt_status_state_free_buffers(&s->state);
+}
+
+void wt_status_state_free_buffers(struct wt_status_state *state)
+{
+	FREE_AND_NULL(state->branch);
+	FREE_AND_NULL(state->onto);
+	FREE_AND_NULL(state->detached_from);
 }
 
 static void wt_longstatus_print_unmerged(struct wt_status *s)

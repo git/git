@@ -357,8 +357,7 @@ int is_worktree_being_rebased(const struct worktree *wt,
 		 state.branch &&
 		 starts_with(target, "refs/heads/") &&
 		 !strcmp(state.branch, target + strlen("refs/heads/")));
-	free(state.branch);
-	free(state.onto);
+	wt_status_state_free_buffers(&state);
 	return found_rebase;
 }
 
@@ -373,7 +372,7 @@ int is_worktree_being_bisected(const struct worktree *wt,
 		state.branch &&
 		starts_with(target, "refs/heads/") &&
 		!strcmp(state.branch, target + strlen("refs/heads/"));
-	free(state.branch);
+	wt_status_state_free_buffers(&state);
 	return found_rebase;
 }
 
