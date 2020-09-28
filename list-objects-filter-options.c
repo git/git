@@ -344,11 +344,19 @@ void partial_clone_register(
 	const char *remote,
 	struct list_objects_filter_options *filter_options)
 {
+	struct promisor_remote *promisor_remote;
 	char *cfg_name;
 	char *filter_name;
 
 	/* Check if it is already registered */
-	if (!promisor_remote_find(remote)) {
+	if ((promisor_remote = promisor_remote_find(remote))) {
+		if (promisor_remote->partial_clone_filter)
+			/*
+			 * Remote is already registered and a filter is already
+			 * set, so we don't need to do anything here.
+			 */
+			return;
+	} else {
 		if (upgrade_repository_format(1) < 0)
 			die(_("unable to upgrade repository format to support partial clone"));
 
