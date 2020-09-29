@@ -92,6 +92,13 @@ UI, Workflows & Features
    when it fails the local check (hence due to atomicity it is known
    that no certificate is needed).
 
+ * "git commit-graph write" learned to limit the number of bloom
+   filters that are computed from scratch with the --max-new-filters
+   option.
+
+ * The transport protocol v2 has become the default again.
+
+
 Performance, Internal Implementation, Development Support etc.
 
  * The changed-path Bloom filter is improved using ideas from an
@@ -384,6 +391,23 @@ Fixes since v2.28
    commit^N where it meant to say commit~N to name the Nth generation
    ancestor, which has been corrected.
    (merge 0acbf5997f ld/p4-unshelve-fix later to maint).
+
+ * "git clone" that clones from SHA-1 repository, while
+   GIT_DEFAULT_HASH set to use SHA-256 already, resulted in an
+   unusable repository that half-claims to be SHA-256 repository
+   with SHA-1 objects and refs.  This has been corrected.
+
+ * Adjust sample hooks for hash algorithm other than SHA-1.
+   (merge d8d3d632f4 dl/zero-oid-in-hooks later to maint).
+
+ * "git range-diff" showed incorrect diffstat, which has been
+   corrected.
+
+ * Earlier we taught "git pull" to warn when the user does not say the
+   histories need to be merged, rebased or accepts only fast-
+   forwarding, but the warning triggered for those who have set the
+   pull.ff configuration variable.
+   (merge 54200cef86 ah/pull later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
