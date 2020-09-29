@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2020, #07; Fri, 25)
-X-master-at: 9bc233ae1cf19a49e51842c7959d80a675dbd1c0
-X-next-at: 665beee440013dbe19c071d4645a0311b5a18ec2
+Subject: What's cooking in git.git (Sep 2020, #08; Tue, 29)
+X-master-at: 306ee63a703ad67c54ba1209dc11dd9ea500dc1f
+X-next-at: fda3e449589e6e1698cd98ab4cab9214fe925eec
 
-What's cooking in git.git (Sep 2020, #07; Fri, 25)
+What's cooking in git.git (Sep 2020, #08; Tue, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -20,87 +20,33 @@ repositories listed at
 --------------------------------------------------
 [Graduated to 'master']
 
-* ds/maintenance-part-1 (2020-09-17) 11 commits
-  (merged to 'next' on 2020-09-18 at 4c367d3cf6)
- + maintenance: add trace2 regions for task execution
- + maintenance: add auto condition for commit-graph task
- + maintenance: use pointers to check --auto
- + maintenance: create maintenance.<task>.enabled config
- + maintenance: take a lock on the objects directory
- + maintenance: add --task option
- + maintenance: add commit-graph task
- + maintenance: initialize task array
- + maintenance: replace run_auto_gc()
- + maintenance: add --quiet option
- + maintenance: create basic maintenance runner
- (this branch is used by ds/maintenance-part-2 and ds/maintenance-part-3.)
+* ah/pull (2020-09-24) 1 commit
+  (merged to 'next' on 2020-09-25 at b5ddf0cf8b)
+ + pull: don't warn if pull.ff has been set
 
- A "git gc"'s big brother has been introduced to take care of more
- repository maintenance tasks, not limited to the object database
- cleaning.
+ Earlier we taught "git pull" to warn when the user does not say the
+ histories need to be merged, rebased or accepts only fast-
+ forwarding, but the warning triggered for those who have set the
+ pull.ff configuration variable.
 
 
-* hx/push-atomic-with-cert (2020-09-19) 1 commit
-  (merged to 'next' on 2020-09-22 at 64561eea5b)
- + send-pack: run GPG after atomic push checking
+* bc/clone-with-git-default-hash-fix (2020-09-22) 1 commit
+  (merged to 'next' on 2020-09-22 at 62ea45c20e)
+ + builtin/clone: avoid failure with GIT_DEFAULT_HASH
 
- "git push" that wants to be atomic and wants to send push
- certificate learned not to prepare and sign the push certificate
- when it fails the local check (hence due to atomicity it is known
- that no certificate is needed).
-
-
-* jk/diff-highlight-blank-match-fix (2020-09-21) 1 commit
-  (merged to 'next' on 2020-09-22 at 03ac708501)
- + diff-highlight: correctly match blank lines for flush
-
- "diff-highlight" (in contrib/) had a logic to flush its output upon
- seeing a blank line but the way it detected a blank line was broken.
+ "git clone" that clones from SHA-1 repository, while
+ GIT_DEFAULT_HASH set to use SHA-256 already, resulted in an
+ unusable repository that half-claims to be SHA-256 repository
+ with SHA-1 objects and refs.  This has been corrected.
 
 
-* jx/proc-receive-hook (2020-08-27) 10 commits
-  (merged to 'next' on 2020-09-18 at 344c89be7e)
- + doc: add documentation for the proc-receive hook
- + transport: parse report options for tracking refs
- + t5411: test updates of remote-tracking branches
- + receive-pack: new config receive.procReceiveRefs
- + doc: add document for capability report-status-v2
- + New capability "report-status-v2" for git-push
- + receive-pack: feed report options to post-receive
- + receive-pack: add new proc-receive hook
- + t5411: add basic test cases for proc-receive hook
- + transport: not report a non-head push as a branch
+* bc/faq-misc (2020-09-20) 3 commits
+  (merged to 'next' on 2020-09-22 at a81b728010)
+ + docs: explain how to deal with files that are always modified
+ + docs: explain why reverts are not always applied on merge
+ + docs: explain why squash merges are broken with long-running branches
 
- "git receive-pack" that accepts requests by "git push" learned to
- outsource most of the ref updates to the new "proc-receive" hook.
-
-
-* ld/p4-unshelve-fix (2020-09-19) 2 commits
-  (merged to 'next' on 2020-09-22 at c7709a34ec)
- + git-p4: use HEAD~$n to find parent commit for unshelve
- + git-p4 unshelve: adding a commit breaks git-p4 unshelve
-
- The "unshelve" subcommand of "git p4" used incorrectly used
- commit^N where it meant to say commit~N to name the Nth generation
- ancestor, which has been corrected.
-
-
-* rs/misc-cleanups (2020-09-19) 1 commit
-  (merged to 'next' on 2020-09-22 at d034fbfab0)
- + pack-write: use hashwrite_be32() in write_idx_file()
-
- Code cleanup.
-
---------------------------------------------------
-[New Topics]
-
-* cc/bisect-start-fix (2020-09-25) 1 commit
- - bisect: don't use invalid oid as rev when starting
-
- "git bisect start X Y", when X and Y are not valid committish
- object names, should take X and Y as pathspec, but didn't.
-
- Will merge to 'next'.
+ More FAQ entries.
 
 
 * dl/zero-oid-in-hooks (2020-09-23) 3 commits
@@ -111,40 +57,40 @@ repositories listed at
 
  Adjust sample hooks for hash algorithm other than SHA-1.
 
- Will merge to 'master'.
+
+* jc/t1506-rev-parse-leaves-range-endpoint-unpeeled (2020-09-25) 1 commit
+  (merged to 'next' on 2020-09-25 at e5233774ba)
+ + t1506: rev-parse A..B and A...B
+
+ Test update.
 
 
-* mt/parallel-checkout-part-1 (2020-09-22) 19 commits
- - ci: run test round with parallel-checkout enabled
- - parallel-checkout: add tests related to .gitattributes
- - parallel-checkout: add tests related to clone collisions
- - parallel-checkout: add tests for basic operations
- - checkout-index: add parallel checkout support
- - builtin/checkout.c: complete parallel checkout support
- - make_transient_cache_entry(): optionally alloc from mem_pool
- - parallel-checkout: support progress displaying
- - parallel-checkout: make it truly parallel
- - unpack-trees: add basic support for parallel checkout
- - entry: add checkout_entry_ca() which takes preloaded conv_attrs
- - entry: move conv_attrs lookup up to checkout_entry()
- - entry: extract cache_entry update from write_entry()
- - entry: make fstat_output() and read_blob_entry() public
- - entry: extract a header file for entry.c functions
- - convert: add conv_attrs classification
- - convert: add get_stream_filter_ca() variant
- - convert: add [async_]convert_to_working_tree_ca() variants
- - convert: make convert_attrs() and convert structs public
+* jk/make-protocol-v2-the-default (2020-09-25) 1 commit
+  (merged to 'next' on 2020-09-25 at 21a5f9e880)
+ + protocol: re-enable v2 protocol by default
 
- Parallel checkout.
+ The transport protocol v2 has become the default again.
 
 
-* jk/drop-unaligned-loads (2020-09-24) 2 commits
- - Revert "fast-export: use local array to store anonymized oid"
- - bswap.h: drop unaligned loads
+* tb/bloom-improvements (2020-09-18) 13 commits
+  (merged to 'next' on 2020-09-22 at 520d531ad8)
+ + commit-graph: introduce 'commitGraph.maxNewFilters'
+ + builtin/commit-graph.c: introduce '--max-new-filters=<n>'
+ + commit-graph: rename 'split_commit_graph_opts'
+ + bloom: encode out-of-bounds filters as non-empty
+ + bloom/diff: properly short-circuit on max_changes
+ + bloom: use provided 'struct bloom_filter_settings'
+ + bloom: split 'get_bloom_filter()' in two
+ + commit-graph.c: store maximum changed paths
+ + commit-graph: respect 'commitGraph.readChangedPaths'
+ + t/helper/test-read-graph.c: prepare repo settings
+ + commit-graph: pass a 'struct repository *' in more places
+ + t4216: use an '&&'-chain
+ + commit-graph: introduce 'get_bloom_filter_settings()'
 
- Compilation fix around type punning.
-
- Will merge to 'next'.
+ "git commit-graph write" learned to limit the number of bloom
+ filters that are computed from scratch with the --max-new-filters
+ option.
 
 
 * tg/range-diff-same-file-fix (2020-09-24) 1 commit
@@ -154,111 +100,100 @@ repositories listed at
  "git range-diff" showed incorrect diffstat, which has been
  corrected.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* al/ref-filter-merged-and-no-merged (2020-09-26) 1 commit
+  (merged to 'next' on 2020-09-29 at 748a286753)
+ + ref-filter: plug memory leak in reach_filter()
 
-* ah/pull (2020-09-24) 1 commit
-  (merged to 'next' on 2020-09-25 at b5ddf0cf8b)
- + pull: don't warn if pull.ff has been set
-
- Earlier we taught "git pull" to warn when the user does not say the
- histories need to be merged, rebased or accepts only fast-
- forwarding, but the warning triggered for those who have set the
- pull.ff configuration variable.
+ Hotfix.
 
  Will merge to 'master'.
 
 
-* jc/blame-ignore-fix (2020-09-24) 2 commits
- - blame: validate and peel the object names on the ignore list
- - t8013: minimum preparatory clean-up
+* au/complete-restore-s (2020-09-26) 2 commits
+  (merged to 'next' on 2020-09-29 at 7bbf508562)
+ + completion: complete refs after 'git restore -s'
+ + completion: use "prev" variable instead of introducing "prevword"
 
- "git blame --ignore-rev/--ignore-revs-file" failed to validate
- their input are valid revision, and failed to take into account
- that the user may want to give an annotated tag instead of a
- commit, which has been corrected.
+ The command line completion (in contrib/) learned that "git restore
+ -s <TAB>" is often followed by a refname.
+
+ Will merge to 'master'.
+
+
+* eg/mailinfo-doc-scissors (2020-09-28) 1 commit
+  (merged to 'next' on 2020-09-29 at 4694f22fe9)
+ + Doc: show example scissors line
+
+ The explanation of the "scissors line" has been clarified.
+
+ Will merge to 'master'.
+
+
+* jc/fmt-merge-msg-suppress-destination (2020-09-27) 1 commit
+  (merged to 'next' on 2020-09-29 at 2b1f8ee654)
+ + config/fmt-merge-msg.txt: drop space in quote
+
+ Docfix.
+
+ Will merge to 'master'.
+
+
+* jk/format-auto-base-when-able (2020-09-26) 1 commit
+ - format-patch: teach format.useAutoBase "whenAble" option
+
+ "git format-patch" learns to take "if-able" as a possible value for
+ its "--base" option, and "whenAble" as a possible value for the
+ format.useAutoBase configuration variable to become no-op when the
+ automatically computed base does not make sense.
+
+
+* ma/worktree-cleanups (2020-09-27) 7 commits
+ - worktree: use skip_prefix to parse target
+ - worktree: rename copy-pasted variable
+ - worktree: update renamed variable in comment
+ - worktree: inline `worktree_ref()` into its only caller
+ - wt-status: introduce wt_status_state_free_buffers()
+ - wt-status: print to s->fp, not stdout
+ - wt-status: replace sha1 mentions with oid
+
+ Code clean-up.
 
  Will merge to 'next'.
 
 
-* jk/make-protocol-v2-the-default (2020-09-25) 1 commit
-  (merged to 'next' on 2020-09-25 at 21a5f9e880)
- + protocol: re-enable v2 protocol by default
+* mt/delta-base-cache-races (2020-09-28) 2 commits
+  (merged to 'next' on 2020-09-29 at ee2d60c077)
+ + packfile: fix memory leak in add_delta_base_cache()
+ + packfile: fix race condition on unpack_entry()
 
- The transport protocol v2 has become the default again.
+ A race that leads to an access to a free'd data was corrected in
+ the codepath that reads pack files.
+
+ Will merge to 'master'.
+
+
+* nl/credential-crlf (2020-09-28) 3 commits
+ - docs: make notes regarding credential line reading
+ - credentials: make line reading Windows compatible
+ - credential.c: fix credential reading with regards to CR/LF
+
+ cf. <pull.710.v2.git.git.1601293224.gitgitgadget@gmail.com>
+
+
+* tb/upload-pack-filters (2020-09-27) 1 commit
+  (merged to 'next' on 2020-09-29 at 3dde767170)
+ + config/uploadpack.txt: fix typo in `--filter=tree:<n>`
+
+ Hotfix.
 
  Will merge to 'master'.
 
 
-* jk/shortlog-group-by-trailer (2020-09-25) 8 commits
- - shortlog: allow multiple groups to be specified
- - shortlog: parse trailer idents
- - shortlog: rename parse_stdin_ident()
- - shortlog: de-duplicate trailer values
- - shortlog: match commit trailers with --group
- - trailer: add interface for iterating over commit trailers
- - shortlog: refactor committer/author grouping
- - shortlog: change "author" variables to "ident"
-
- "git shortlog" has been taught to group commits by the contents of
- the trailer lines, like "Reviewed-by:", "Coauthored-by:", etc.
-
- Will merge to 'next'.
-
-
-* js/cmake-vs (2020-09-25) 10 commits
- - hashmap_for_each_entry(): work around MSVC's run-time check failure #3
- - cmake (Windows): recommend using Visual Studio's built-in CMake support
- - cmake (Windows): initialize vcpkg/build dependencies automatically
- - cmake (Windows): complain when encountering an unknown compiler
- - cmake (Windows): let the `.dll` files are found when running the tests
- - cmake: quote the path accurately when editing `test-lib.sh`
- - cmake: fall back to using `vcpkg`'s `msgfmt.exe` on Windows
- - cmake: ensure that the `vcpkg` packages are found on Windows
- - cmake: do find Git for Windows' shell interpreter
- - cmake: ignore files generated by CMake as run in Visual Studio
-
- Using the CMake support we added some time ago for real with Visual
- Studio build revealed there were lot of usability improvements
- possible, which have been carried out.
-
- Expecting a reroll.
- cf. <CAKiG+9V=BGX4k_dM-5JzYmko0cZfYXuSxEk5-UuHZpAqaWoU_A@mail.gmail.com>
- cf. <CAPig+cTPi1yi7WQf_eWa+bFRJEdtULFO3yYqJh3nm=_CtEe6CQ@mail.gmail.com>
- cf. <xmqq8scxln10.fsf@gitster.c.googlers.com>
-
-
-* sv/t7001-modernize (2020-09-25) 11 commits
- - t7001: move cleanup code from outside the tests into them
- - t7001: use `test` rather than `[`
- - t7001: use here-docs instead of echo
- - t7001: put each command on a separate line
- - t7001: use ': >' rather than 'touch'
- - t7001: change (cd <path> && git foo) to (git -C <path> foo)
- - t7001: remove whitespace after redirect operators
- - t7001: change the style for cd according to subshell
- - t7001: remove unnecessary blank lines
- - t7001: use TAB instead of spaces
- - t7001: convert tests from the old style to the current style
-
- Test script modernization.
-
- Expecting a reroll.
- cf. <20200925170256.11490-1-shubhunic@gmail.com>
-
-
-* jc/sequencer-stopped-sha-simplify (2020-09-25) 1 commit
- - sequencer: stop abbreviating stopped-sha file
-
-
-* jc/t1506-rev-parse-leaves-range-endpoint-unpeeled (2020-09-25) 1 commit
-  (merged to 'next' on 2020-09-25 at e5233774ba)
- + t1506: rev-parse A..B and A...B
-
- Test update.
-
- Will merge to 'master'.
-
+* so/combine-diff-simplify (2020-09-29) 1 commit
+ - diff: get rid of redundant 'dense' argument
 
 --------------------------------------------------
 [Stalled]
@@ -306,6 +241,130 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cc/bisect-start-fix (2020-09-25) 1 commit
+  (merged to 'next' on 2020-09-29 at 637011d04a)
+ + bisect: don't use invalid oid as rev when starting
+
+ "git bisect start X Y", when X and Y are not valid committish
+ object names, should take X and Y as pathspec, but didn't.
+
+ Will merge to 'master'.
+
+
+* mt/parallel-checkout-part-1 (2020-09-22) 19 commits
+ - ci: run test round with parallel-checkout enabled
+ - parallel-checkout: add tests related to .gitattributes
+ - parallel-checkout: add tests related to clone collisions
+ - parallel-checkout: add tests for basic operations
+ - checkout-index: add parallel checkout support
+ - builtin/checkout.c: complete parallel checkout support
+ - make_transient_cache_entry(): optionally alloc from mem_pool
+ - parallel-checkout: support progress displaying
+ - parallel-checkout: make it truly parallel
+ - unpack-trees: add basic support for parallel checkout
+ - entry: add checkout_entry_ca() which takes preloaded conv_attrs
+ - entry: move conv_attrs lookup up to checkout_entry()
+ - entry: extract cache_entry update from write_entry()
+ - entry: make fstat_output() and read_blob_entry() public
+ - entry: extract a header file for entry.c functions
+ - convert: add conv_attrs classification
+ - convert: add get_stream_filter_ca() variant
+ - convert: add [async_]convert_to_working_tree_ca() variants
+ - convert: make convert_attrs() and convert structs public
+
+ Parallel checkout.
+
+
+* jk/drop-unaligned-loads (2020-09-24) 2 commits
+  (merged to 'next' on 2020-09-29 at 29c05387a0)
+ + Revert "fast-export: use local array to store anonymized oid"
+ + bswap.h: drop unaligned loads
+
+ Compilation fix around type punning.
+
+ Will merge to 'master'.
+
+
+* jc/blame-ignore-fix (2020-09-24) 2 commits
+  (merged to 'next' on 2020-09-29 at 96fbdb57fb)
+ + blame: validate and peel the object names on the ignore list
+ + t8013: minimum preparatory clean-up
+
+ "git blame --ignore-rev/--ignore-revs-file" failed to validate
+ their input are valid revision, and failed to take into account
+ that the user may want to give an annotated tag instead of a
+ commit, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* jk/shortlog-group-by-trailer (2020-09-27) 8 commits
+  (merged to 'next' on 2020-09-29 at 3706b06db5)
+ + shortlog: allow multiple groups to be specified
+ + shortlog: parse trailer idents
+ + shortlog: rename parse_stdin_ident()
+ + shortlog: de-duplicate trailer values
+ + shortlog: match commit trailers with --group
+ + trailer: add interface for iterating over commit trailers
+ + shortlog: add grouping option
+ + shortlog: change "author" variables to "ident"
+
+ "git shortlog" has been taught to group commits by the contents of
+ the trailer lines, like "Reviewed-by:", "Coauthored-by:", etc.
+
+ Will merge to 'master'.
+
+
+* js/cmake-vs (2020-09-28) 11 commits
+ - cmake: fix typo in message when `msgfmt` was not found
+ - hashmap_for_each_entry(): workaround MSVC's runtime check failure #3
+ - cmake (Windows): recommend using Visual Studio's built-in CMake support
+ - cmake (Windows): initialize vcpkg/build dependencies automatically
+ - cmake (Windows): complain when encountering an unknown compiler
+ - cmake (Windows): let the `.dll` files be found when running the tests
+ - cmake: quote the path accurately when editing `test-lib.sh`
+ - cmake: fall back to using `vcpkg`'s `msgfmt.exe` on Windows
+ - cmake: ensure that the `vcpkg` packages are found on Windows
+ - cmake: do find Git for Windows' shell interpreter
+ - cmake: ignore files generated by CMake as run in Visual Studio
+
+ Using the CMake support we added some time ago for real with Visual
+ Studio build revealed there were lot of usability improvements
+ possible, which have been carried out.
+
+ Expecting a (hopefully) final reroll.
+ cf. <nycvar.QRO.7.76.6.2009291406310.50@tvgsbejvaqbjf.bet>
+ cf. <nycvar.QRO.7.76.6.2009291407130.50@tvgsbejvaqbjf.bet>
+
+
+* sv/t7001-modernize (2020-09-25) 11 commits
+ - t7001: move cleanup code from outside the tests into them
+ - t7001: use `test` rather than `[`
+ - t7001: use here-docs instead of echo
+ - t7001: put each command on a separate line
+ - t7001: use ': >' rather than 'touch'
+ - t7001: change (cd <path> && git foo) to (git -C <path> foo)
+ - t7001: remove whitespace after redirect operators
+ - t7001: change the style for cd according to subshell
+ - t7001: remove unnecessary blank lines
+ - t7001: use TAB instead of spaces
+ - t7001: convert tests from the old style to the current style
+
+ Test script modernization.
+
+ Expecting a reroll.
+ cf. <20200925170256.11490-1-shubhunic@gmail.com>
+
+
+* jc/sequencer-stopped-sha-simplify (2020-09-25) 1 commit
+  (merged to 'next' on 2020-09-29 at 9af3360572)
+ + sequencer: stop abbreviating stopped-sha file
+
+ Code simplification.
+
+ Will merge to 'master'.
+
+
 * rs/archive-add-file (2020-09-19) 3 commits
  - Makefile: use git-archive --add-file
  - archive: add --add-file
@@ -315,7 +374,7 @@ repositories listed at
  files into a snapshot from a tree-ish.
 
 
-* js/default-branch-name-part-2 (2020-09-21) 5 commits
+* js/default-branch-name-part-2 (2020-09-26) 5 commits
  - t9902: avoid using the branch name `master`
  - tests: avoid variations of the `master` branch name
  - t3200: avoid variations of the `master` branch name
@@ -325,7 +384,7 @@ repositories listed at
  Update the tests to drop word 'master' from them
 
 
-* jt/keep-partial-clone-filter-upon-lazy-fetch (2020-09-21) 2 commits
+* jt/keep-partial-clone-filter-upon-lazy-fetch (2020-09-28) 2 commits
  - fetch: do not override partial clone filter
  - promisor-remote: remove unused variable
 
@@ -353,21 +412,13 @@ repositories listed at
  cf. <xmqqblhyepup.fsf@gitster.c.googlers.com>
 
 
-* bc/faq-misc (2020-09-20) 3 commits
-  (merged to 'next' on 2020-09-22 at a81b728010)
- + docs: explain how to deal with files that are always modified
- + docs: explain why reverts are not always applied on merge
- + docs: explain why squash merges are broken with long-running branches
-
- More FAQ entries.
-
- Will merge to 'master'.
-
-
-* sb/clone-origin (2020-09-11) 4 commits
+* sb/clone-origin (2020-09-29) 7 commits
  - clone: allow configurable default for `-o`/`--origin`
+ - clone: read new remote name from remote_name instead of option_origin
  - clone: validate --origin option before use
- - clone: call git_config before parse_options
+ - refs: consolidate remote name validation
+ - remote: add tests for add and rename with invalid names
+ - clone: use more conventional config/option layering
  - clone: add tests for --template and some disallowed option pairs
 
  "git clone" learned clone.defaultremotename configuration variable
@@ -377,7 +428,8 @@ repositories listed at
  Expecting an update.
 
 
-* sk/force-if-includes (2020-09-23) 3 commits
+* sk/force-if-includes (2020-09-27) 4 commits
+ - SQUASH??? name an array in singular and avoid commenting obvious
  - t, doc: update tests, reference for "--force-if-includes"
  - push: parse and set flag for "--force-if-includes"
  - push: add reflog check for "--force-if-includes"
@@ -388,8 +440,8 @@ repositories listed at
  being force-pushed was created after examining the commit at the
  tip of the remote ref that is about to be force-replaced.
 
- Expecting a reroll.
- cf. <20200923112606.GA71705@mail.clickyotomy.dev>
+ On hold.
+ Seems to trigger gotchas in the reachability logic in commit-graph.
 
 
 * ab/mediawiki-fixes (2020-09-21) 18 commits
@@ -424,18 +476,6 @@ repositories listed at
  Adds transfer.ipversion configuration variable.
 
  Needs more work.
-
-
-* bc/clone-with-git-default-hash-fix (2020-09-22) 1 commit
-  (merged to 'next' on 2020-09-22 at 62ea45c20e)
- + builtin/clone: avoid failure with GIT_DEFAULT_HASH
-
- "git clone" that clones from SHA-1 repository, while
- GIT_DEFAULT_HASH set to use SHA-256 already, resulted in an
- unusable repository that half-claims to be SHA-256 repository
- with SHA-1 objects and refs.  This has been corrected.
-
- Will merge to 'master'.
 
 
 * hn/reftable (2020-09-22) 14 commits
@@ -479,29 +519,6 @@ repositories listed at
  other scheduling system configuration) for it.
 
 
-* tb/bloom-improvements (2020-09-18) 13 commits
-  (merged to 'next' on 2020-09-22 at 520d531ad8)
- + commit-graph: introduce 'commitGraph.maxNewFilters'
- + builtin/commit-graph.c: introduce '--max-new-filters=<n>'
- + commit-graph: rename 'split_commit_graph_opts'
- + bloom: encode out-of-bounds filters as non-empty
- + bloom/diff: properly short-circuit on max_changes
- + bloom: use provided 'struct bloom_filter_settings'
- + bloom: split 'get_bloom_filter()' in two
- + commit-graph.c: store maximum changed paths
- + commit-graph: respect 'commitGraph.readChangedPaths'
- + t/helper/test-read-graph.c: prepare repo settings
- + commit-graph: pass a 'struct repository *' in more places
- + t4216: use an '&&'-chain
- + commit-graph: introduce 'get_bloom_filter_settings()'
-
- "git commit-graph write" learned to limit the number of bloom
- filters that are computed from scratch with the --max-new-filters
- option.
-
- Will merge to 'master'.
-
-
 * es/config-hooks (2020-09-09) 9 commits
  - run_commit_hook: take strvec instead of varargs
  - commit: use config-based hooks
@@ -541,17 +558,17 @@ repositories listed at
 
 
 * mr/bisect-in-c-2 (2020-09-24) 6 commits
- - bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
- - bisect: call 'clear_commit_marks_all()' in 'bisect_next_all()'
- - bisect--helper: reimplement `bisect_autostart` shell function in C
- - bisect--helper: introduce new `write_in_file()` function
- - bisect--helper: use '-res' in 'cmd_bisect__helper' return
- - bisect--helper: BUG() in cmd_*() on invalid subcommand
+  (merged to 'next' on 2020-09-29 at a15f1729d2)
+ + bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
+ + bisect: call 'clear_commit_marks_all()' in 'bisect_next_all()'
+ + bisect--helper: reimplement `bisect_autostart` shell function in C
+ + bisect--helper: introduce new `write_in_file()` function
+ + bisect--helper: use '-res' in 'cmd_bisect__helper' return
+ + bisect--helper: BUG() in cmd_*() on invalid subcommand
 
  Rewrite of the "git bisect" script in C continues.
 
- Will merge to 'next'.
- At v9.  Looking good so far.
+ Will merge to 'master'.
 
 
 * js/no-builtins-on-disk-option (2020-09-21) 3 commits
