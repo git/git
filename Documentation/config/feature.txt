@@ -14,10 +14,6 @@ feature.experimental::
 +
 * `fetch.negotiationAlgorithm=skipping` may improve fetch negotiation times by
 skipping more commits at a time, reducing the number of round trips.
-+
-* `protocol.version=2` speeds up fetches from repositories with many refs by
-allowing the client to specify which refs to list before the server lists
-them.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the
