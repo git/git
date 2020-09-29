@@ -1,0 +1,84 @@
+name: Monitor component updates
+
+# Git for Windows is a slightly modified subset of MSYS2. Some of its
+# components are maintained by Git for Windows, others by MSYS2. To help
+# keeping the former up to date, this workflow monitors the Atom/RSS feeds
+# and opens new tickets for each new component version.
+
+on:
+  schedule:
+    - cron: "23 8,11,14,17 * * *"
+  workflow_dispatch:
+
+env:
+  CHARACTER_LIMIT: 5000
+  MAX_AGE: 48h
+
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    environment: monitor-components
+    strategy:
+      matrix:
+        component:
+          - label: git
+            feed: https://github.com/git/git/tags.atom
+          - label: git-lfs
+            feed: https://github.com/git-lfs/git-lfs/tags.atom
+          - label: gcm-core
+            feed: https://github.com/microsoft/git-credential-manager-core/tags.atom
+          - label: tig
+            feed: https://github.com/jonas/tig/tags.atom
+          - label: cygwin
+            feed: https://github.com/cygwin/cygwin/releases.atom
+            title-pattern: ^(?!.*newlib)
+          - label: msys2-runtime-package
+            feed: https://github.com/msys2/MSYS2-packages/commits/master/msys2-runtime.atom
+          - label: msys2-runtime
+            feed: https://github.com/msys2/msys2-runtime/commits/HEAD.atom
+            aggregate: true
+          - label: openssh
+            feed: https://github.com/openssh/openssh-portable/tags.atom
+          - label: openssl
+            feed: https://github.com/openssl/openssl/tags.atom
+            title-pattern: ^(?!.*alpha)
+          - label: gnutls
+            feed: https://gnutls.org/news.atom
+          - label: heimdal
+            feed: https://github.com/heimdal/heimdal/tags.atom
+          - label: git-sizer
+            feed: https://github.com/github/git-sizer/tags.atom
+          - label: gitflow
+            feed: https://github.com/petervanderdoes/gitflow-avh/tags.atom
+          - label: curl
+            feed: https://github.com/curl/curl/tags.atom
+          - label: libgpg-error
+            feed: https://github.com/gpg/libgpg-error/releases.atom
+            title-pattern: ^libgpg-error-[0-9\.]*$
+          - label: libgcrypt
+            feed: https://github.com/gpg/libgcrypt/releases.atom
+            title-pattern: ^libgcrypt-[0-9\.]*$
+          - label: gpg
+            feed: https://github.com/gpg/gnupg/releases.atom
+          - label: mintty
+            feed: https://github.com/mintty/mintty/releases.atom
+          - label: p7zip
+            feed: https://sourceforge.net/projects/p7zip/rss?path=/p7zip
+          - label: bash
+            feed: https://git.savannah.gnu.org/cgit/bash.git/atom/?h=master
+            aggregate: true
+          - label: perl
+            feed: https://github.com/Perl/perl5/tags.atom
+            title-pattern: ^(?!.*(5\.[0-9]+[13579]|RC))
+      fail-fast: false
+    steps:
+      - uses: git-for-windows/rss-to-issues@v0
+        with:
+          feed: ${{matrix.component.feed}}
+          prefix: "[New ${{matrix.component.label}} version]"
+          labels: component-update
+          github-token: ${{ secrets.MONITOR_COMPONENTS_PAT }}
+          character-limit: ${{ env.CHARACTER_LIMIT }}
+          max-age: ${{ env.MAX_AGE }}
+          aggregate: ${{matrix.component.aggregate}}
+          title-pattern: ${{matrix.component.title-pattern}}
