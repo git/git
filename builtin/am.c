@@ -2180,6 +2180,8 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	};
 	int new_value = SHOW_PATCH_RAW;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (arg) {
 		for (new_value = 0; new_value < ARRAY_SIZE(valid_modes); new_value++) {
 			if (!strcmp(arg, valid_modes[new_value]))

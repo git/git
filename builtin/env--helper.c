@@ -17,6 +17,8 @@ static int option_parse_type(const struct option *opt, const char *arg,
 {
 	enum cmdmode *cmdmode = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (!strcmp(arg, "bool"))
 		*cmdmode = ENV_HELPER_TYPE_BOOL;
 	else if (!strcmp(arg, "ulong"))

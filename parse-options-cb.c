@@ -105,6 +105,8 @@ int parse_opt_commit(const struct option *opt, const char *arg, int unset)
 	struct commit *commit;
 	struct commit **target = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (!arg)
 		return -1;
 	if (get_oid(arg, &oid))
