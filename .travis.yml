@@ -1,4 +1,6 @@
-language: c
+language:
+  - c
+  - perl
 
 cache:
   directories:
