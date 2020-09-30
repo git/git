@@ -31,7 +31,6 @@ use File::Basename qw(basename);
 use File::Temp qw(tempfile);
 use Time::HiRes qw(gettimeofday tv_interval);
 use Digest::MD5 qw(md5_hex);
-use IPC::Run qw(run start finish);
 
 binmode STDOUT, ':utf8';
 
@@ -7412,6 +7411,147 @@ sub exit_if_unmodified_since {
 	}
 }
 
+sub run_child {
+	# Per discussion in PR#206 we do not want to add dependencies on
+	# external Perl modules that git does not use already, so reinvent
+	# a small wheel for a specific purpose: run a child program and
+	# collect both its stderr, stdout and exit code.
+	# Inspired by examples at http://pleac.sourceforge.net/pleac_perl/processmanagementetc.html
+
+	# Caller gets references to pipe()s we open here to grab
+	# outputs from the child, and closes them eventually.
+	my $CHILDIN_R;
+	my $CHILDIN_W;
+	my $CHILDOUT_R;
+	my $CHILDOUT_W;
+	my $CHILDERR_R;
+	my $CHILDERR_W;
+	pipe ($CHILDIN_R,  $CHILDIN_W);  # Caller might write to this pipe and it becomes child's STDIN, or can close() it early
+	pipe ($CHILDOUT_R, $CHILDOUT_W); # Caller reads this from child's STDOUT
+	pipe ($CHILDERR_R, $CHILDERR_W); # Caller reads this from child's STDERR
+
+	if (! scalar(@_) ) {
+		warn("run_child(): No arguments passed as a program to run");
+		return undef;
+	}
+	my (@cmd) = @_; # whether a list of many args or one array arg remains, capture that
+
+	my $childpid;
+
+	if ($childpid = fork) {
+		# parent
+		### Our callers reap children so we do not handle the signal here!
+		###   $SIG{CHLD} = sub { use POSIX qw(:sys_wait_h); 1 while ( waitpid(-1, WNOHANG)) > 0 };
+		close($CHILDIN_R);
+		close($CHILDOUT_W);
+		close($CHILDERR_W);
+	} else {
+		die "cannot fork: $!" unless defined $childpid; # defined and zero
+		# child
+		open(STDIN,  "<&=", $CHILDIN_R)       or die "Couldn't redirect STDIN: $!";
+		open(STDOUT, ">&=", $CHILDOUT_W)      or die "Couldn't redirect STDOUT: $!";
+		open(STDERR, ">&=", $CHILDERR_W)      or die "Couldn't redirect STDERR: $!";
+		close($CHILDIN_W);
+		close($CHILDOUT_R);
+		close($CHILDERR_R);
+		exec(@cmd) or die "Couldn't run $cmd[0] : $!\n";
+		die "Strangely, exec() failed in run_child() : $!\n";
+		# should not get past this point
+	}
+
+	# continue in parent:
+	return ($childpid, $CHILDIN_W, $CHILDOUT_R, $CHILDERR_R);
+	# caller writes to _W, reads from _R's; then reaps the pid
+}
+
+sub run_child_pipes {
+	# Each arg is a separate array of prog+args lists to run, piping from left
+	# to right. No stdin is passed to the stack, and only last command's stdout
+	# is returned; and all commands' stderrs in order from left to right.
+	# One argument (one program to run) is also a valid use-case; no pipe then.
+	# Uses run_child() defined above until each launched process dies.
+	# Returns a quadlet of ($worstwaitcode, $bufout, $buferr, @(allwaitcodes) ).
+	# Note that the strings can remain undef if there was nothing read from
+	# child on that channel; exit code can be -1 for Perl execution errors.
+
+	if (scalar @_ < 1) { return undef; }
+
+	my $bufout;
+	my $buferr;
+
+	my @CHILDCMD;
+	my @CHILDPID;
+	my @CHILDIN;
+	my @CHILDOUT;
+	my @CHILDERR;
+
+	# Generalized for two or more children
+	my $cmdcount = scalar @_;
+	my $i;
+	for ($i = 0; $i < $cmdcount; $i += 1) {
+		my $cmd = $_[$i];
+		($CHILDPID[$i], $CHILDIN[$i], $CHILDOUT[$i], $CHILDERR[$i]) = run_child( @{$cmd} )
+			or die "Could not run_child(" . join(' ', @{$cmd}) . "): $!";
+		$CHILDCMD[$i] = $cmd;
+		#warn "Ran child $i (PID $CHILDPID[$i]): " . join(' ', @$cmd) . "\n" if $DEBUG;
+	}
+
+	close($CHILDIN[0]);
+
+	# Temporary vars used below because in tests Perl did not
+	# like array expansions in such context, braces or not...
+
+	# Pipe all from left except the rightmost
+	for ($i = 0; $i < $cmdcount - 1; $i += 1) {
+		my $tmpCHILDOUT = $CHILDOUT[$i];
+		my $tmpCHILDIN = $CHILDIN[$i+1];
+		while (<$tmpCHILDOUT>) {
+			#print STDERR "Piped [$i=>".($i+1)."]: $_\n" if $DEBUG;
+			print $tmpCHILDIN $_;
+		}
+		close($tmpCHILDOUT);
+		close($tmpCHILDIN);
+	}
+
+	for ($i = 0; $i < $cmdcount; $i += 1) {
+		my $tmpCHILDERR = $CHILDERR[$i];
+		while (<$tmpCHILDERR>) {
+			#print STDERR "Got ERR [$i]: $_\n" if $DEBUG;
+			$buferr .= $_;
+		}
+		close($tmpCHILDERR);
+	}
+
+	$i = $cmdcount-1;
+	my $tmpCHILDOUT = $CHILDOUT[$i];
+	while (<$tmpCHILDOUT>) {
+		#print STDERR "Got OUT [$i]: $_\n" if $DEBUG;
+		$bufout .= $_;
+	}
+	close($tmpCHILDOUT);
+
+	### Eventually caller should reap all child processes to get the exit codes:
+	my @CWC;
+	my $worstcode;
+	for ($i = 0; $i < $cmdcount; $i += 1) {
+		#print STDERR "Reaping child [$i] : $CHILDPID[$i]\n" if $DEBUG;
+		my $wp;
+		$wp = waitpid($CHILDPID[$i], 0);
+		$CWC[$i] = $? ;
+		#print STDERR "Got EXITCODE [$i] : $CWC[$i] / $wp\n" if $DEBUG;
+		if ($CWC[$i] >= 0) {
+			if (!defined($worstcode) || ($CWC[$i] >= $worstcode)) {
+				$worstcode = $CWC[$i];
+			}
+		}
+	}
+	### Note that return code from waitpid() is a 16-bit int passing both
+	### the 8-bit exit code and signal that caused child to die (if any).
+	#my $childexitcode = $childwaitcode >> 8;
+
+	return ($worstcode, $bufout, $buferr, @CWC);
+}
+
 sub git_snapshot_ls_check {
 	# A helper for git_snapshot() error-classification as defined below
 	# Returns shell exit-code of "git ls" (if under 256) or HTTP code
@@ -7448,9 +7588,23 @@ sub git_snapshot_ls_check {
 		$ENV{'GIT_INDEX_FILE'} = $tempfilename;
 		undef $ENV{'GIT_TEST_GETTEXT_POISON'} if $DEBUG;
 		printf STDERR "Using GIT_INDEX_FILE='$tempfilename'\n" if $DEBUG;
+
+		my $tmpgitlsout;
+		my $tmpgitlserr;
+		my $tmpgitlscode;
+		my @tmpgitcodes;
 		my @cmdtmp = @cmdls;
 		push( @cmdtmp, ( 'read-tree', "$hash" ) );
-		run \@cmdtmp or die "Can not populate a tmp file for git_snapshot_ls_check()"; # Populate GIT_INDEX_FILE
+		# Populate GIT_INDEX_FILE
+		($tmpgitlscode, $tmpgitlsout, $tmpgitlserr, @tmpgitcodes) = run_child_pipes(\@cmdtmp);
+		if ($tmpgitlscode != 0) {
+			die "Can not populate a tmp file for git_snapshot_ls_check()" .
+				(defined($tmpgitlscode) ? "; got wait-code $tmpgitlscode" : "") .
+				(defined($tmpgitlsout) ? "\nSTDOUT:\n===\n$tmpgitlsout\n===" : "\nSTDOUT: <undef>") .
+				(defined($tmpgitlserr) ? "\nSTDERR:\n===\n$tmpgitlserr\n===" : "\nSTDERR: <undef>") .
+				"\n";
+		}
+
 		push( @cmdls, (
 			'ls-files', '--abbrev',
 			'--',
@@ -7470,8 +7624,8 @@ sub git_snapshot_ls_check {
 	my $gitlscode;
 	my $readSizels = -1;
 	eval {
-		run \@cmdls, '>', \$gitlsout, '2>', \$gitlserr;
-		$gitlscode = $?;
+		my @gitcodes;
+		($gitlscode, $gitlsout, $gitlserr, @gitcodes) = run_child_pipes(\@cmdls);
 		$readSizels = length $gitlsout if ($gitlsout);
 		if (! defined ($readSizels) ) { $readSizels = -1; }
 		if ( ($gitlscode >> 8) == 0 ) {
@@ -7619,18 +7773,18 @@ sub git_snapshot {
 	# Note: run() returns TRUE if exit-code is 0, FALSE otherwise,
 	# and raises exceptions for worse conditions with die()
 	eval {
+		my @gitcodes;
 		if (exists $known_snapshot_formats{$format}{'compressor'}) {
-			run \@cmd, '2>', \$giterr, '|', \@{$known_snapshot_formats{$format}{'compressor'}}, '>', \$gitout;
+			($gitcode, $gitout, $giterr, @gitcodes) = run_child_pipes(\@cmd, \@{$known_snapshot_formats{$format}{'compressor'}});
 		} else {
-			run \@cmd, '>', \$gitout, '2>', \$giterr;
+			($gitcode, $gitout, $giterr, @gitcodes) = run_child_pipes(\@cmd);
 		}
-		$gitcode = $?;
 		$readSize = length $gitout if ($gitout);
 		if (! defined ($readSize) ) { $readSize = -1; }
 		1;  # always return true to indicate success
 	}
 	or do {
-		$gitcode = $?;
+		if (!defined $gitcode) { $gitcode = "<undef>"; } # eval above did not run_child_pipes()?
 		$readSize = length $gitout if ($gitout);
 		if (! defined ($readSize) ) { $readSize = -1; }
 		my $error = $@ || 'Unknown failure';
