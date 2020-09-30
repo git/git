@@ -2580,8 +2580,8 @@ static int for_each_good_bisect_ref(struct ref_store *refs, each_ref_fn fn, void
 }
 
 static int handle_revision_pseudo_opt(const char *submodule,
-				struct rev_info *revs,
-				int argc, const char **argv, int *flags)
+				      struct rev_info *revs,
+				      const char **argv, int *flags)
 {
 	const char *arg = argv[0];
 	const char *optarg;
@@ -2752,7 +2752,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			int opts;
 
 			opts = handle_revision_pseudo_opt(submodule,
-						revs, argc - i, argv + i,
+						revs, argv + i,
 						&flags);
 			if (opts > 0) {
 				i += opts - 1;
