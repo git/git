@@ -5,12 +5,13 @@
 extern const struct refspec_item *tag_refspec;
 
 /**
- * A struct refspec_item holds the parsed interpretation of a refspec.  If it will
- * force updates (starts with a '+'), force is true.  If it is a pattern
- * (sides end with '*') pattern is true.  src and dest are the two sides
- * (including '*' characters if present); if there is only one side, it is src,
- * and dst is NULL; if sides exist but are empty (i.e., the refspec either
- * starts or ends with ':'), the corresponding side is "".
+ * A struct refspec_item holds the parsed interpretation of a refspec.  If it
+ * will force updates (starts with a '+'), force is true.  If it is a pattern
+ * (sides end with '*') pattern is true.  If it is a negative refspec, (starts
+ * with '^'), negative is true.  src and dest are the two sides (including '*'
+ * characters if present); if there is only one side, it is src, and dst is
+ * NULL; if sides exist but are empty (i.e., the refspec either starts or ends
+ * with ':'), the corresponding side is "".
  *
  * remote_find_tracking(), given a remote and a struct refspec_item with either src
  * or dst filled out, will fill out the other such that the result is in the
@@ -22,6 +23,7 @@ struct refspec_item {
 	unsigned pattern : 1;
 	unsigned matching : 1;
 	unsigned exact_sha1 : 1;
+	unsigned negative : 1;
 
 	char *src;
 	char *dst;
