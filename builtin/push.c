@@ -379,7 +379,7 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 	return 1;
 }
 
-static int do_push(const char *repo, int flags,
+static int do_push(int flags,
 		   const struct string_list *push_options,
 		   struct remote *remote)
 {
@@ -629,7 +629,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		if (strchr(item->string, '\n'))
 			die(_("push options must not have new line characters"));
 
-	rc = do_push(repo, flags, push_options, remote);
+	rc = do_push(flags, push_options, remote);
 	string_list_clear(&push_options_cmdline, 0);
 	string_list_clear(&push_options_config, 0);
 	if (rc == -1)
