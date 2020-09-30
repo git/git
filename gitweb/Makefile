@@ -114,9 +114,6 @@ endif
 
 GITWEB_FILES += static/git-logo.png static/git-favicon.png
 
-# Co-bundle the perl IPC::Run module, in case the target OS has none
-GITWEB_MODULES += IPC/Run.pm IPC/Run/IO.pm IPC/Run/Timer.pm IPC/Run/Debug.pm
-
 # JavaScript files that are composed (concatenated) to form gitweb.js
 #
 # js/lib/common-lib.js should be always first, then js/lib/*.js,
@@ -184,7 +181,6 @@ test-installed:
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebdir_SQ)'
 	$(INSTALL) -m 755 $(GITWEB_PROGRAMS) '$(DESTDIR_SQ)$(gitwebdir_SQ)'
-	for F in $(GITWEB_MODULES) ; do D="`dirname "$$F"`" && $(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebdir_SQ)'"/$$D" && $(INSTALL) -m 644 "$$F" '$(DESTDIR_SQ)$(gitwebdir_SQ)'"/$$D" ; done
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
 	$(INSTALL) -m 644 $(GITWEB_FILES) '$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
 
