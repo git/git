@@ -152,7 +152,11 @@ endif()
 
 find_program(MSGFMT_EXE msgfmt)
 if(NOT MSGFMT_EXE)
-	message(WARNING "Text Translations won't be build")
+	set(MSGFMT_EXE ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg/downloads/tools/msys2/msys64/usr/bin/msgfmt.exe)
+	if(NOT EXISTS ${MSGFMT_EXE})
+		message(WARNING "Text Translations won't be built")
+		unset(MSGFMT_EXE)
+	endif()
 endif()
 
 #Force all visual studio outputs to CMAKE_BINARY_DIR
