@@ -16,7 +16,6 @@ linux-clang|linux-gcc)
 	sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
 	sudo apt-get -q update
 	sudo apt-get -q -y install language-pack-is libsvn-perl apache2 \
-		libipc-run-perl \
 		$UBUNTU_COMMON_PKGS
 	case "$jobname" in
 	linux-gcc)
@@ -60,8 +59,6 @@ osx-clang|osx-gcc)
 		brew link gcc@9
 		;;
 	esac
-	brew install cpanm
-	cpanm --sudo 'IPC::Run'
 	;;
 StaticAnalysis)
 	sudo apt-get -q update
