@@ -7790,7 +7790,7 @@ sub git_snapshot {
 		my $error = $@ || 'Unknown failure';
 		print $cgi->header(-status => '500 Execute git-archive failed');
 		if ($DEBUG) {
-			printf STDERR "Execute git-archive failed with exit-code $gitcode (" + $error + ")";
+			printf STDERR "Execute git-archive failed with exit-code $gitcode ($error)";
 			if ($giterr) {
 				printf STDERR ":\n" . $giterr . "\n";
 				# Assume smaller stdouts do not carry a tarball, may be compressed...
