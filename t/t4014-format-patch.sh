@@ -2037,9 +2037,25 @@ test_expect_success 'format-patch errors out when history involves criss-cross' 
 	test_must_fail 	git format-patch --base=auto -1
 '
 
+test_expect_success 'format-patch format.useAutoBase whenAble history involves criss-cross' '
+	test_config format.useAutoBase whenAble &&
+	git format-patch -1 >patch &&
+	! grep "^base-commit:" patch
+'
+
 test_expect_success 'format-patch format.useAutoBase option' '
 	git checkout local &&
 	test_config format.useAutoBase true &&
+	git format-patch --stdout -1 >patch &&
+	grep "^base-commit:" patch >actual &&
+	git rev-parse upstream >commit-id-base &&
+	echo "base-commit: $(cat commit-id-base)" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format-patch format.useAutoBase option with whenAble' '
+	git checkout local &&
+	test_config format.useAutoBase whenAble &&
 	git format-patch --stdout -1 >patch &&
 	grep "^base-commit:" patch >actual &&
 	git rev-parse upstream >commit-id-base &&
@@ -2058,6 +2074,12 @@ test_expect_success 'format-patch --base overrides format.useAutoBase' '
 
 test_expect_success 'format-patch --no-base overrides format.useAutoBase' '
 	test_config format.useAutoBase true &&
+	git format-patch --stdout --no-base -1 >patch &&
+	! grep "^base-commit:" patch
+'
+
+test_expect_success 'format-patch --no-base overrides format.useAutoBase whenAble' '
+	test_config format.useAutoBase whenAble &&
 	git format-patch --stdout --no-base -1 >patch &&
 	! grep "^base-commit:" patch
 '
