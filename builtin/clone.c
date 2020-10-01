@@ -53,7 +53,7 @@ static int option_shallow_submodules;
 static int deepen;
 static char *option_template, *option_depth, *option_since;
 static char *option_origin = NULL;
-static char *remote_name = "origin";
+static char *remote_name = NULL;
 static char *option_branch = NULL;
 static struct string_list option_not = STRING_LIST_INIT_NODUP;
 static const char *real_git_dir;
@@ -854,6 +854,10 @@ static int checkout(int submodule_progress)
 
 static int git_clone_config(const char *k, const char *v, void *cb)
 {
+	if (!strcmp(k, "clone.defaultremotename")) {
+		free(remote_name);
+		remote_name = xstrdup(v);
+	}
 	return git_default_config(k, v, cb);
 }
 
@@ -1010,12 +1014,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		option_no_checkout = 1;
 	}
 
-	if (option_origin)
-		remote_name = option_origin;
-
-	if (!valid_remote_name(remote_name))
-		die(_("'%s' is not a valid remote name"), remote_name);
-
 	repo_name = argv[0];
 
 	path = get_repo_path(repo_name, &is_bundle);
@@ -1157,6 +1155,19 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	 * injected by --template and --config, respectively.
 	 */
 	git_config(git_clone_config, NULL);
+
+	/*
+	 * apply the remote name provided by --origin only after this second
+	 * call to git_config, to ensure it overrides all config-based values.
+	 */
+	if (option_origin != NULL)
+		remote_name = xstrdup(option_origin);
+
+	if (remote_name == NULL)
+		remote_name = xstrdup("origin");
+
+	if (!valid_remote_name(remote_name))
+		die(_("'%s' is not a valid remote name"), remote_name);
 
 	if (option_bare) {
 		if (option_mirror)
@@ -1358,6 +1369,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	junk_mode = JUNK_LEAVE_REPO;
 	err = checkout(submodule_progress);
 
+	free(remote_name);
 	strbuf_release(&reflog_msg);
 	strbuf_release(&branch_top);
 	strbuf_release(&key);
