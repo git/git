@@ -179,6 +179,13 @@ test_expect_success 'rename errors out early when deleting non-existent branch' 
 	)
 '
 
+test_expect_success 'rename errors out early when when new name is invalid' '
+	test_config remote.foo.vcs bar &&
+	echo "fatal: '\''invalid...name'\'' is not a valid remote name" >expect &&
+	test_must_fail git remote rename foo invalid...name 2>actual &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'add existing foreign_vcs remote' '
 	test_config remote.foo.vcs bar &&
 	echo "fatal: remote foo already exists." >expect &&
@@ -191,6 +198,12 @@ test_expect_success 'add existing foreign_vcs remote' '
 	test_config remote.bar.vcs bar &&
 	echo "fatal: remote bar already exists." >expect &&
 	test_must_fail git remote rename foo bar 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'add invalid foreign_vcs remote' '
+	echo "fatal: '\''invalid...name'\'' is not a valid remote name" >expect &&
+	test_must_fail git remote add invalid...name bar 2>actual &&
 	test_i18ncmp expect actual
 '
 
