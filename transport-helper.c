@@ -938,6 +938,11 @@ static void set_common_push_options(struct transport *transport,
 		if (set_helper_option(transport, TRANS_OPT_ATOMIC, "true") != 0)
 			die(_("helper %s does not support --atomic"), name);
 
+	if (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES)
+		if (set_helper_option(transport, TRANS_OPT_FORCE_IF_INCLUDES, "true") != 0)
+			die(_("helper %s does not support --%s"),
+			    name, TRANS_OPT_FORCE_IF_INCLUDES);
+
 	if (flags & TRANSPORT_PUSH_OPTIONS) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, transport->push_options)

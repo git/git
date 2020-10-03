@@ -44,7 +44,8 @@ struct options {
 		from_promisor : 1,
 
 		atomic : 1,
-		object_format : 1;
+		object_format : 1,
+		force_if_includes : 1;
 	const struct git_hash_algo *hash_algo;
 };
 static struct options options;
@@ -130,6 +131,14 @@ static int set_option(const char *name, const char *value)
 			return -1;
 		string_list_append(&cas_options, val.buf);
 		strbuf_release(&val);
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_FORCE_IF_INCLUDES)) {
+		if (!strcmp(value, "true"))
+			options.force_if_includes = 1;
+		else if (!strcmp(value, "false"))
+			options.force_if_includes = 0;
+		else
+			return -1;
 		return 0;
 	} else if (!strcmp(name, "cloning")) {
 		if (!strcmp(value, "true"))
@@ -1317,6 +1326,9 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 	for_each_string_list_item(cas_option, &cas_options)
 		strvec_push(&args, cas_option->string);
 	strvec_push(&args, url.buf);
+
+	if (options.force_if_includes)
+		strvec_push(&args, "--force-if-includes");
 
 	strvec_push(&args, "--stdin");
 	for (i = 0; i < nr_spec; i++)

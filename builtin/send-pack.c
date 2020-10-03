@@ -178,6 +178,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int progress = -1;
 	int from_stdin = 0;
 	struct push_cas_option cas = {0};
+	int force_if_includes = 0;
 	struct packet_reader reader;
 
 	struct option options[] = {
@@ -203,6 +204,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK_F(0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
 		  N_("require old value of ref to be at this value"),
 		  PARSE_OPT_OPTARG, parseopt_push_cas_option),
+		OPT_BOOL(0, TRANS_OPT_FORCE_IF_INCLUDES, &force_if_includes,
+			 N_("require remote updates to be integrated locally")),
 		OPT_END()
 	};
 
@@ -303,6 +306,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 
 	if (!is_empty_cas(&cas))
 		apply_push_cas(&cas, remote, remote_refs);
+
+	if (!is_empty_cas(&cas) && force_if_includes)
+		cas.use_force_if_includes = 1;
 
 	set_ref_status_for_push(remote_refs, args.send_mirror,
 		args.force_update);
