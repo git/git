@@ -2953,9 +2953,12 @@ proc savestuff {w} {
 }
 
 proc resizeclistpanes {win w} {
-    global oldwidth use_ttk
+    global oldwidth oldsash use_ttk
     if {[info exists oldwidth($win)]} {
-        if {$use_ttk} {
+	if {[info exists oldsash($win)]} {
+	    set s0 [lindex $oldsash($win) 0]
+	    set s1 [lindex $oldsash($win) 1]
+        } elseif {$use_ttk} {
             set s0 [$win sashpos 0]
             set s1 [$win sashpos 1]
         } else {
@@ -2989,14 +2992,17 @@ proc resizeclistpanes {win w} {
             $win sash place 0 $sash0 [lindex $s0 1]
             $win sash place 1 $sash1 [lindex $s1 1]
         }
+	set oldsash($win) [list $sash0 $sash1]
     }
     set oldwidth($win) $w
 }
 
 proc resizecdetpanes {win w} {
-    global oldwidth use_ttk
+    global oldwidth oldsash use_ttk
     if {[info exists oldwidth($win)]} {
-        if {$use_ttk} {
+	if {[info exists oldsash($win)]} {
+	    set s0 $oldsash($win)
+        } elseif {$use_ttk} {
             set s0 [$win sashpos 0]
         } else {
             set s0 [$win sash coord 0]
@@ -3018,6 +3024,7 @@ proc resizecdetpanes {win w} {
         } else {
             $win sash place 0 $sash0 [lindex $s0 1]
         }
+	set oldsash($win) $sash0
     }
     set oldwidth($win) $w
 }
