@@ -13,7 +13,7 @@ SYNOPSIS
 	   [--repo=<repository>] [-f | --force] [-d | --delete] [--prune] [-v | --verbose]
 	   [-u | --set-upstream] [-o <string> | --push-option=<string>]
 	   [--[no-]signed|--signed=(true|false|if-asked)]
-	   [--force-with-lease[=<refname>[:<expect>]]]
+	   [--force-with-lease[=<refname>[:<expect>]] [--force-if-includes]]
 	   [--no-verify] [<repository> [<refspec>...]]
 
 DESCRIPTION
@@ -320,6 +320,14 @@ seen and are willing to overwrite, then rewrite history, and finally
 force push changes to `master` if the remote version is still at
 `base`, regardless of what your local `remotes/origin/master` has been
 updated to in the background.
++
+Alternatively, specifying `--force-if-includes` as an ancillary option
+along with `--force-with-lease[=<refname>]` (i.e., without saying what
+exact commit the ref on the remote side must be pointing at, or which
+refs on the remote side are being protected) at the time of "push" will
+verify if updates from the remote-tracking refs that may have been
+implicitly updated in the background are integrated locally before
+allowing a forced update.
 
 -f::
 --force::
@@ -340,6 +348,22 @@ strictly behind their remote counterpart).  To force a push to only
 one branch, use a `+` in front of the refspec to push (e.g `git push
 origin +master` to force a push to the `master` branch). See the
 `<refspec>...` section above for details.
+
+--[no-]force-if-includes::
+	Force an update only if the tip of the remote-tracking ref
+	has been integrated locally.
++
+This option enables a check that verifies if the tip of the
+remote-tracking ref is reachable from one of the "reflog" entries of
+the local branch based in it for a rewrite. The check ensures that any
+updates from the remote have been incorporated locally by rejecting the
+forced update if that is not the case.
++
+If the option is passed without specifying `--force-with-lease`, or
+specified along with `--force-with-lease=<refname>:<expect>`, it is
+a "no-op".
++
+Specifying `--no-force-if-includes` disables this behavior.
 
 --repo=<repository>::
 	This option is equivalent to the <repository> argument. If both
