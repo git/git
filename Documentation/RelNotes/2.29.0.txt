@@ -98,6 +98,18 @@ UI, Workflows & Features
 
  * The transport protocol v2 has become the default again.
 
+ * The installation procedure learned to optionally omit "git-foo"
+   executable files for each 'foo' built-in subcommand, which are only
+   required by old timers that still rely on the age old promise that
+   prepending "git --exec-path" output to PATH early in their script
+   will keep the "git-foo" calls they wrote working.
+
+ * The command line completion (in contrib/) learned that "git restore
+   -s <TAB>" is often followed by a refname.
+
+ * "git shortlog" has been taught to group commits by the contents of
+   the trailer lines, like "Reviewed-by:", "Coauthored-by:", etc.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -409,6 +421,26 @@ Fixes since v2.28
    pull.ff configuration variable.
    (merge 54200cef86 ah/pull later to maint).
 
+ * Compilation fix around type punning.
+   (merge 176380fd11 jk/drop-unaligned-loads later to maint).
+
+ * "git blame --ignore-rev/--ignore-revs-file" failed to validate
+   their input are valid revision, and failed to take into account
+   that the user may want to give an annotated tag instead of a
+   commit, which has been corrected.
+   (merge 610e2b9240 jc/blame-ignore-fix later to maint).
+
+ * "git bisect start X Y", when X and Y are not valid committish
+   object names, should take X and Y as pathspec, but didn't.
+   (merge 73c6de06af cc/bisect-start-fix later to maint).
+
+ * The explanation of the "scissors line" has been clarified.
+   (merge 287416dba6 eg/mailinfo-doc-scissors later to maint).
+
+ * A race that leads to an access to a free'd data was corrected in
+   the codepath that reads pack files.
+   (merge bda959c476 mt/delta-base-cache-races later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -440,3 +472,4 @@ Fixes since v2.28
    (merge 324efcf6b6 pw/add-p-leakfix later to maint).
    (merge 1c6ffb546b jk/add-i-fixes later to maint).
    (merge e40e936551 cd/commit-graph-doc later to maint).
+   (merge 0512eabd91 jc/sequencer-stopped-sha-simplify later to maint).
