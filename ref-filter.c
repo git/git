@@ -2239,11 +2239,13 @@ static void reach_filter(struct ref_array *array,
 {
 	struct rev_info revs;
 	int i, old_nr;
-	struct commit **to_clear = xcalloc(sizeof(struct commit *), array->nr);
+	struct commit **to_clear;
 	struct commit_list *cr;
 
 	if (!check_reachable)
 		return;
+
+	to_clear = xcalloc(sizeof(struct commit *), array->nr);
 
 	repo_init_revisions(the_repository, &revs, NULL);
 
