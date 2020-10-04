@@ -2,8 +2,7 @@
 #define TRAILER_H
 
 #include "list.h"
-
-struct strbuf;
+#include "strbuf.h"
 
 enum trailer_where {
 	WHERE_DEFAULT,
@@ -102,5 +101,47 @@ void trailer_info_release(struct trailer_info *info);
  */
 void format_trailers_from_commit(struct strbuf *out, const char *msg,
 				 const struct process_trailer_options *opts);
+
+/*
+ * An interface for iterating over the trailers found in a particular commit
+ * message. Use like:
+ *
+ *   struct trailer_iterator iter;
+ *   trailer_iterator_init(&iter, msg);
+ *   while (trailer_iterator_advance(&iter))
+ *      ... do something with iter.key and iter.val ...
+ *   trailer_iterator_release(&iter);
+ */
+struct trailer_iterator {
+	struct strbuf key;
+	struct strbuf val;
+
+	/* private */
+	struct trailer_info info;
+	size_t cur;
+};
+
+/*
+ * Initialize "iter" in preparation for walking over the trailers in the commit
+ * message "msg". The "msg" pointer must remain valid until the iterator is
+ * released.
+ *
+ * After initializing, note that key/val will not yet point to any trailer.
+ * Call advance() to parse the first one (if any).
+ */
+void trailer_iterator_init(struct trailer_iterator *iter, const char *msg);
+
+/*
+ * Advance to the next trailer of the iterator. Returns 0 if there is no such
+ * trailer, and 1 otherwise. The key and value of the trailer can be
+ * fetched from the iter->key and iter->value fields (which are valid
+ * only until the next advance).
+ */
+int trailer_iterator_advance(struct trailer_iterator *iter);
+
+/*
+ * Release all resources associated with the trailer iteration.
+ */
+void trailer_iterator_release(struct trailer_iterator *iter);
 
 #endif /* TRAILER_H */
