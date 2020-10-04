@@ -120,7 +120,7 @@ static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
 static GIT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
 /*
  * When we stop at a given patch via the "edit" command, this file contains
- * the abbreviated commit name of the corresponding patch.
+ * the commit object name of the corresponding patch.
  */
 static GIT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
 /*
@@ -3111,11 +3111,12 @@ static int make_patch(struct repository *r,
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct rev_info log_tree_opt;
-	const char *subject, *p;
+	const char *subject;
+	char hex[GIT_MAX_HEXSZ + 1];
 	int res = 0;
 
-	p = short_commit_name(commit);
-	if (write_message(p, strlen(p), rebase_path_stopped_sha(), 1) < 0)
+	oid_to_hex_r(hex, &commit->object.oid);
+	if (write_message(hex, strlen(hex), rebase_path_stopped_sha(), 1) < 0)
 		return -1;
 	res |= write_rebase_head(&commit->object.oid);
 
@@ -4527,7 +4528,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 
 		if (read_oneliner(&buf, rebase_path_stopped_sha(),
 				  READ_ONELINER_SKIP_IF_EMPTY) &&
-		    !get_oid_committish(buf.buf, &oid))
+		    !get_oid_hex(buf.buf, &oid))
 			record_in_rewritten(&oid, peek_command(&todo_list, 0));
 		strbuf_release(&buf);
 	}
