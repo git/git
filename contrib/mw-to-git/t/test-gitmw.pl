@@ -24,9 +24,7 @@
 
 use MediaWiki::API;
 use Getopt::Long;
-use encoding 'utf8';
 use DateTime::Format::ISO8601;
-use open ':encoding(utf8)';
 use constant SLASH_REPLACEMENT => "%2F";
 
 #Parsing of the config file
@@ -87,7 +85,7 @@ sub wiki_getpage {
 	# Replace spaces by underscore in the page name
 	$pagename =~ s/ /_/g;
 	$pagename =~ s/\//%2F/g;
-	open(my $file, ">$destdir/$pagename.mw");
+	open(my $file, ">:encoding(UTF-8)", "$destdir/$pagename.mw");
 	print $file "$content";
 	close ($file);
 
@@ -172,7 +170,7 @@ sub wiki_getallpagename {
 				cmlimit => 500 },
 		)
 		|| die $mw->{error}->{code}.": ".$mw->{error}->{details};
-		open(my $file, ">all.txt");
+		open(my $file, ">:encoding(UTF-8)", "all.txt");
 		foreach my $page (@{$mw_pages}) {
 			print $file "$page->{title}\n";
 		}
@@ -185,7 +183,7 @@ sub wiki_getallpagename {
 				aplimit => 500,
 			})
 		|| die $mw->{error}->{code}.": ".$mw->{error}->{details};
-		open(my $file, ">all.txt");
+		open(my $file, ">:encoding(UTF-8)", "all.txt");
 		foreach my $page (@{$mw_pages}) {
 			print $file "$page->{title}\n";
 		}
@@ -214,12 +212,12 @@ my $fct_to_call = shift;
 
 wiki_login($wiki_admin, $wiki_admin_pass);
 
-my %functions_to_call = qw(
-	upload_file    wiki_upload_file
-	get_page       wiki_getpage
-	delete_page    wiki_delete_page
-	edit_page      wiki_editpage
-	getallpagename wiki_getallpagename
+my %functions_to_call = (
+	upload_file    => \&wiki_upload_file,
+	get_page       => \&wiki_getpage,
+	delete_page    => \&wiki_delete_page,
+	edit_page      => \&wiki_editpage,
+	getallpagename => \&wiki_getallpagename,
 );
 die "$0 ERROR: wrong argument" unless exists $functions_to_call{$fct_to_call};
-&{$functions_to_call{$fct_to_call}}(@ARGV);
+$functions_to_call{$fct_to_call}->(map { utf8::decode($_); $_ } @ARGV);
