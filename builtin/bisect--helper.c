@@ -484,14 +484,13 @@ static int bisect_start(struct bisect_terms *terms, const char **argv, int argc)
 			terms->term_bad = xstrdup(arg);
 		} else if (starts_with(arg, "--")) {
 			return error(_("unrecognized option: '%s'"), arg);
-		} else {
-			char *commit_id = xstrfmt("%s^{commit}", arg);
-			if (get_oid(commit_id, &oid) && has_double_dash)
-				die(_("'%s' does not appear to be a valid "
-				      "revision"), arg);
-
+		} else if (!get_oidf(&oid, "%s^{commit}", arg)) {
 			string_list_append(&revs, oid_to_hex(&oid));
-			free(commit_id);
+		} else if (has_double_dash) {
+			die(_("'%s' does not appear to be a valid "
+			      "revision"), arg);
+		} else {
+			break;
 		}
 	}
 	pathspec_pos = i;
