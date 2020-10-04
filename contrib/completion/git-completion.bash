@@ -1508,6 +1508,22 @@ _git_checkout ()
 {
 	__git_has_doubledash && return
 
+	local dwim_opt="$(__git_checkout_default_dwim_mode)"
+
+	case "$prev" in
+	-b|-B|--orphan)
+		# Complete local branches (and DWIM branch
+		# remote branch names) for an option argument
+		# specifying a new branch name. This is for
+		# convenience, assuming new branches are
+		# possibly based on pre-existing branch names.
+		__git_complete_refs $dwim_opt --mode="heads"
+		return
+		;;
+	*)
+		;;
+	esac
+
 	case "$cur" in
 	--conflict=*)
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
@@ -1516,23 +1532,6 @@ _git_checkout ()
 		__gitcomp_builtin checkout
 		;;
 	*)
-		local dwim_opt="$(__git_checkout_default_dwim_mode)"
-		local prevword prevword="${words[cword-1]}"
-
-		case "$prevword" in
-			-b|-B|--orphan)
-				# Complete local branches (and DWIM branch
-				# remote branch names) for an option argument
-				# specifying a new branch name. This is for
-				# convenience, assuming new branches are
-				# possibly based on pre-existing branch names.
-				__git_complete_refs $dwim_opt --mode="heads"
-				return
-				;;
-			*)
-				;;
-		esac
-
 		# At this point, we've already handled special completion for
 		# the arguments to -b/-B, and --orphan. There are 3 main
 		# things left we can possibly complete:
@@ -2392,6 +2391,22 @@ _git_status ()
 
 _git_switch ()
 {
+	local dwim_opt="$(__git_checkout_default_dwim_mode)"
+
+	case "$prev" in
+	-c|-C|--orphan)
+		# Complete local branches (and DWIM branch
+		# remote branch names) for an option argument
+		# specifying a new branch name. This is for
+		# convenience, assuming new branches are
+		# possibly based on pre-existing branch names.
+		__git_complete_refs $dwim_opt --mode="heads"
+		return
+		;;
+	*)
+		;;
+	esac
+
 	case "$cur" in
 	--conflict=*)
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
@@ -2400,23 +2415,6 @@ _git_switch ()
 		__gitcomp_builtin switch
 		;;
 	*)
-		local dwim_opt="$(__git_checkout_default_dwim_mode)"
-		local prevword prevword="${words[cword-1]}"
-
-		case "$prevword" in
-			-c|-C|--orphan)
-				# Complete local branches (and DWIM branch
-				# remote branch names) for an option argument
-				# specifying a new branch name. This is for
-				# convenience, assuming new branches are
-				# possibly based on pre-existing branch names.
-				__git_complete_refs $dwim_opt --mode="heads"
-				return
-				;;
-			*)
-				;;
-		esac
-
 		# Unlike in git checkout, git switch --orphan does not take
 		# a start point. Thus we really have nothing to complete after
 		# the branch name.
@@ -2843,6 +2841,13 @@ _git_reset ()
 
 _git_restore ()
 {
+	case "$prev" in
+	-s)
+		__git_complete_refs
+		return
+		;;
+	esac
+
 	case "$cur" in
 	--conflict=*)
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
