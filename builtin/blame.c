@@ -27,6 +27,7 @@
 #include "object-store.h"
 #include "blame.h"
 #include "refs.h"
+#include "tag.h"
 
 static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
 
@@ -803,6 +804,26 @@ static int is_a_rev(const char *name)
 	return OBJ_NONE < oid_object_info(the_repository, &oid, NULL);
 }
 
+static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
+{
+	struct repository *r = ((struct blame_scoreboard *)cbdata)->repo;
+	struct object_id oid;
+
+	oidcpy(&oid, oid_ret);
+	while (1) {
+		struct object *obj;
+		int kind = oid_object_info(r, &oid, NULL);
+		if (kind == OBJ_COMMIT) {
+			oidcpy(oid_ret, &oid);
+			return 0;
+		}
+		if (kind != OBJ_TAG)
+			return -1;
+		obj = deref_tag(r, parse_object(r, &oid), NULL, 0);
+		oidcpy(&oid, &obj->oid);
+	}
+}
+
 static void build_ignorelist(struct blame_scoreboard *sb,
 			     struct string_list *ignore_revs_file_list,
 			     struct string_list *ignore_rev_list)
@@ -815,10 +836,12 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 		if (!strcmp(i->string, ""))
 			oidset_clear(&sb->ignore_list);
 		else
-			oidset_parse_file(&sb->ignore_list, i->string);
+			oidset_parse_file_carefully(&sb->ignore_list, i->string,
+						    peel_to_commit_oid, sb);
 	}
 	for_each_string_list_item(i, ignore_rev_list) {
-		if (get_oid_committish(i->string, &oid))
+		if (get_oid_committish(i->string, &oid) ||
+		    peel_to_commit_oid(&oid, sb))
 			die(_("cannot find revision %s to ignore"), i->string);
 		oidset_insert(&sb->ignore_list, &oid);
 	}
