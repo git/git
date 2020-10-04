@@ -225,10 +225,10 @@ presence of the .url field.
 Workflow for a third party library
 ----------------------------------
 
-  # add a submodule
+  # Add a submodule
   git submodule add <url> <path>
 
-  # occasionally update the submodule to a new version:
+  # Occasionally update the submodule to a new version:
   git -C <path> checkout <new version>
   git add <path>
   git commit -m "update submodule to new version"
@@ -246,20 +246,23 @@ Workflow for an artificially split repo
   # regular commands recurse into submodules by default
   git config --global submodule.recurse true
 
-  # Unlike the other commands below clone still needs
+  # Unlike most other commands below, clone still needs
   # its own recurse flag:
   git clone --recurse <URL> <directory>
   cd <directory>
 
   # Get to know the code:
   git grep foo
-  git ls-files
+  git ls-files --recurse-submodules
+
+[NOTE]
+`git ls-files` also requires its own `--recurse-submodules` flag.
 
   # Get new code
   git fetch
   git pull --rebase
 
-  # change worktree
+  # Change worktree
   git checkout
   git reset
 
@@ -267,12 +270,12 @@ Implementation details
 ----------------------
 
 When cloning or pulling a repository containing submodules the submodules
-will not be checked out by default; You can instruct 'clone' to recurse
-into submodules. The 'init' and 'update' subcommands of 'git submodule'
+will not be checked out by default; you can instruct `clone` to recurse
+into submodules. The `init` and `update` subcommands of `git submodule`
 will maintain submodules checked out and at an appropriate revision in
-your working tree. Alternatively you can set 'submodule.recurse' to have
-'checkout' recursing into submodules (note that 'submodule.recurse' also
-affects other git commands, see linkgit:git-config[1] for a complete list).
+your working tree. Alternatively you can set `submodule.recurse` to have
+`checkout` recursing into submodules (note that `submodule.recurse` also
+affects other Git commands, see linkgit:git-config[1] for a complete list).
 
 
 SEE ALSO
