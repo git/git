@@ -72,10 +72,9 @@ conversion, even with this flag.
 	is useful in order to associate commits with mailing list discussions.
 
 --scissors::
-	Remove everything in body before a scissors line.  A line that
-	mainly consists of scissors (either ">8" or "8<") and perforation
-	(dash "-") marks is called a scissors line, and is used to request
-	the reader to cut the message at that line.  If such a line
+	Remove everything in body before a scissors line (e.g. "-- >8 --").
+	The line represents scissors and perforation marks, and is used to
+	request the reader to cut the message at that line.  If that line
 	appears in the body of the message before the patch, everything
 	before it (including the scissors line itself) is ignored when
 	this option is used.
