@@ -814,7 +814,7 @@ may have uses for this information
 	'original-oid' SP <object-identifier> LF
 ....
 
-where `<object-identifer>` is any string not containing LF.
+where `<object-identifier>` is any string not containing LF.
 
 `tag`
 ~~~~~
