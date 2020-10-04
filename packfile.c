@@ -1475,7 +1475,7 @@ void clear_delta_base_cache(void)
 static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	void *base, unsigned long base_size, enum object_type type)
 {
-	struct delta_base_cache_entry *ent = xmalloc(sizeof(*ent));
+	struct delta_base_cache_entry *ent;
 	struct list_head *lru, *tmp;
 
 	/*
@@ -1483,8 +1483,10 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	 * is unpacking the same object, in unpack_entry() (since its phases I
 	 * and III might run concurrently across multiple threads).
 	 */
-	if (in_delta_base_cache(p, base_offset))
+	if (in_delta_base_cache(p, base_offset)) {
+		free(base);
 		return;
+	}
 
 	delta_base_cached += base_size;
 
@@ -1496,6 +1498,7 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 		release_delta_base_cache(f);
 	}
 
+	ent = xmalloc(sizeof(*ent));
 	ent->key.p = p;
 	ent->key.base_offset = base_offset;
 	ent->type = type;
@@ -1776,11 +1779,9 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		void *external_base = NULL;
 		unsigned long delta_size, base_size = size;
 		int i;
+		off_t base_obj_offset = obj_offset;
 
 		data = NULL;
-
-		if (base)
-			add_delta_base_cache(p, obj_offset, base, base_size, type);
 
 		if (!base) {
 			/*
@@ -1819,24 +1820,33 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			      "at offset %"PRIuMAX" from %s",
 			      (uintmax_t)curpos, p->pack_name);
 			data = NULL;
-			free(external_base);
-			continue;
+		} else {
+			data = patch_delta(base, base_size, delta_data,
+					   delta_size, &size);
+
+			/*
+			 * We could not apply the delta; warn the user, but
+			 * keep going. Our failure will be noticed either in
+			 * the next iteration of the loop, or if this is the
+			 * final delta, in the caller when we return NULL.
+			 * Those code paths will take care of making a more
+			 * explicit warning and retrying with another copy of
+			 * the object.
+			 */
+			if (!data)
+				error("failed to apply delta");
 		}
 
-		data = patch_delta(base, base_size,
-				   delta_data, delta_size,
-				   &size);
-
 		/*
-		 * We could not apply the delta; warn the user, but keep going.
-		 * Our failure will be noticed either in the next iteration of
-		 * the loop, or if this is the final delta, in the caller when
-		 * we return NULL. Those code paths will take care of making
-		 * a more explicit warning and retrying with another copy of
-		 * the object.
+		 * We delay adding `base` to the cache until the end of the loop
+		 * because unpack_compressed_entry() momentarily releases the
+		 * obj_read_mutex, giving another thread the chance to access
+		 * the cache. Therefore, if `base` was already there, this other
+		 * thread could free() it (e.g. to make space for another entry)
+		 * before we are done using it.
 		 */
-		if (!data)
-			error("failed to apply delta");
+		if (!external_base)
+			add_delta_base_cache(p, base_obj_offset, base, base_size, type);
 
 		free(delta_data);
 		free(external_base);
