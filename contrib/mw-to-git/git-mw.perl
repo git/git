@@ -6,7 +6,7 @@
 # License: GPL v2 or later
 
 # Set of tools for git repo with a mediawiki remote.
-# Documentation & bugtracker: https://github.com/moy/Git-Mediawiki/
+# Documentation & bugtracker: https://github.com/Git-Mediawiki/Git-Mediawiki
 
 use strict;
 use warnings;

@@ -73,6 +73,15 @@ void oidset_clear(struct oidset *set);
  */
 void oidset_parse_file(struct oidset *set, const char *path);
 
+/*
+ * Similar to the above, but with a callback which can (1) return non-zero to
+ * signal displeasure with the object and (2) replace object ID with something
+ * else (meant to be used to "peel").
+ */
+typedef int (*oidset_parse_tweak_fn)(struct object_id *, void *);
+void oidset_parse_file_carefully(struct oidset *set, const char *path,
+				 oidset_parse_tweak_fn fn, void *cbdata);
+
 struct oidset_iter {
 	kh_oid_set_t *set;
 	khiter_t iter;

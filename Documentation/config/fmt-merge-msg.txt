@@ -13,7 +13,7 @@ merge.suppressDest::
 	By adding a glob that matches the names of integration
 	branches to this multi-valued configuration variable, the
 	default merge message computed for merges into these
-	integration branches will omit " into <branch name>" from
+	integration branches will omit "into <branch name>" from
 	its title.
 +
 An element with an empty value can be used to clear the list
