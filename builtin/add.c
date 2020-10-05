@@ -239,7 +239,7 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	return status;
 }
 
-int interactive_add(int argc, const char **argv, const char *prefix, int patch)
+int interactive_add(const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
 
@@ -451,7 +451,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (add_interactive) {
 		if (pathspec_from_file)
 			die(_("--pathspec-from-file is incompatible with --interactive/--patch"));
-		exit(interactive_add(argc - 1, argv + 1, prefix, patch_interactive));
+		exit(interactive_add(argv + 1, prefix, patch_interactive));
 	}
 	if (legacy_stash_p) {
 		struct pathspec pathspec;
