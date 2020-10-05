@@ -321,7 +321,7 @@ int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
 {
 	struct commit_list *bases;
 	int ret = 0, i;
-	uint32_t generation, min_generation = GENERATION_NUMBER_INFINITY;
+	uint32_t generation, max_generation = GENERATION_NUMBER_ZERO;
 
 	if (repo_parse_commit(r, commit))
 		return ret;
@@ -330,12 +330,12 @@ int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
 			return ret;
 
 		generation = commit_graph_generation(reference[i]);
-		if (generation < min_generation)
-			min_generation = generation;
+		if (generation > max_generation)
+			max_generation = generation;
 	}
 
 	generation = commit_graph_generation(commit);
-	if (generation > min_generation)
+	if (generation > max_generation)
 		return ret;
 
 	bases = paint_down_to_common(r, commit,
