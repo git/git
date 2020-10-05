@@ -452,11 +452,11 @@ struct combine_diff_path {
 		st_mult(sizeof(struct combine_diff_parent), (n)))
 
 void show_combined_diff(struct combine_diff_path *elem, int num_parent,
-			int dense, struct rev_info *);
+			struct rev_info *);
 
-void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, int dense, struct rev_info *rev);
+void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, struct rev_info *rev);
 
-void diff_tree_combined_merge(const struct commit *commit, int dense, struct rev_info *rev);
+void diff_tree_combined_merge(const struct commit *commit, struct rev_info *rev);
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
 

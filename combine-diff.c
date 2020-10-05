@@ -923,7 +923,6 @@ static void dump_quoted_path(const char *head,
 
 static void show_combined_header(struct combine_diff_path *elem,
 				 int num_parent,
-				 int dense,
 				 struct rev_info *rev,
 				 const char *line_prefix,
 				 int mode_differs,
@@ -939,6 +938,7 @@ static void show_combined_header(struct combine_diff_path *elem,
 	int added = 0;
 	int deleted = 0;
 	int i;
+	int dense = rev->dense_combined_merges;
 
 	if (rev->loginfo && !rev->no_commit_id)
 		show_log(rev);
@@ -1012,7 +1012,7 @@ static void show_combined_header(struct combine_diff_path *elem,
 }
 
 static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
-			    int dense, int working_tree_file,
+			    int working_tree_file,
 			    struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
@@ -1145,7 +1145,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		}
 	}
 	if (is_binary) {
-		show_combined_header(elem, num_parent, dense, rev,
+		show_combined_header(elem, num_parent, rev,
 				     line_prefix, mode_differs, 0);
 		printf("Binary files differ\n");
 		free(result);
@@ -1200,10 +1200,10 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 				     textconv, elem->path, opt->xdl_opts);
 	}
 
-	show_hunks = make_hunks(sline, cnt, num_parent, dense);
+	show_hunks = make_hunks(sline, cnt, num_parent, rev->dense_combined_merges);
 
 	if (show_hunks || mode_differs || working_tree_file) {
-		show_combined_header(elem, num_parent, dense, rev,
+		show_combined_header(elem, num_parent, rev,
 				     line_prefix, mode_differs, 1);
 		dump_sline(sline, line_prefix, cnt, num_parent,
 			   opt->use_color, result_deleted);
@@ -1284,7 +1284,6 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
  */
 void show_combined_diff(struct combine_diff_path *p,
 		       int num_parent,
-		       int dense,
 		       struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
@@ -1294,7 +1293,7 @@ void show_combined_diff(struct combine_diff_path *p,
 				  DIFF_FORMAT_NAME_STATUS))
 		show_raw_diff(p, num_parent, rev);
 	else if (opt->output_format & DIFF_FORMAT_PATCH)
-		show_patch_diff(p, num_parent, dense, 1, rev);
+		show_patch_diff(p, num_parent, 1, rev);
 }
 
 static void free_combined_pair(struct diff_filepair *pair)
@@ -1454,7 +1453,6 @@ static struct combine_diff_path *find_paths_multitree(
 
 void diff_tree_combined(const struct object_id *oid,
 			const struct oid_array *parents,
-			int dense,
 			struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
@@ -1581,8 +1579,7 @@ void diff_tree_combined(const struct object_id *oid,
 				printf("%s%c", diff_line_prefix(opt),
 				       opt->line_termination);
 			for (p = paths; p; p = p->next)
-				show_patch_diff(p, num_parent, dense,
-						0, rev);
+				show_patch_diff(p, num_parent, 0, rev);
 		}
 	}
 
@@ -1600,7 +1597,7 @@ void diff_tree_combined(const struct object_id *oid,
 	clear_pathspec(&diffopts.pathspec);
 }
 
-void diff_tree_combined_merge(const struct commit *commit, int dense,
+void diff_tree_combined_merge(const struct commit *commit,
 			      struct rev_info *rev)
 {
 	struct commit_list *parent = get_saved_parents(rev, commit);
@@ -1610,6 +1607,6 @@ void diff_tree_combined_merge(const struct commit *commit, int dense,
 		oid_array_append(&parents, &parent->item->object.oid);
 		parent = parent->next;
 	}
-	diff_tree_combined(&commit->object.oid, &parents, dense, rev);
+	diff_tree_combined(&commit->object.oid, &parents, rev);
 	oid_array_clear(&parents);
 }
