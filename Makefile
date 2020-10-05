@@ -3057,32 +3057,29 @@ quick-install-html:
 # With GNU tar, "--mode=u+rwX,og+rX,og-w" would be a good idea, for example.
 TAR_DIST_EXTRA_OPTS =
 GIT_TARNAME = git-$(GIT_VERSION)
+GIT_ARCHIVE_EXTRA_FILES = \
+	--prefix=$(GIT_TARNAME)/ \
+	--add-file=configure \
+	--add-file=$(GIT_TARNAME)/version \
+	--prefix=$(GIT_TARNAME)/git-gui/ \
+	--add-file=$(GIT_TARNAME)/git-gui/version
+ifdef DC_SHA1_SUBMODULE
+GIT_ARCHIVE_EXTRA_FILES += \
+	--prefix=$(GIT_TARNAME)/sha1collisiondetection/ \
+	--add-file=sha1collisiondetection/LICENSE.txt \
+	--prefix=$(GIT_TARNAME)/sha1collisiondetection/lib/ \
+	--add-file=sha1collisiondetection/lib/sha1.c \
+	--add-file=sha1collisiondetection/lib/sha1.h \
+	--add-file=sha1collisiondetection/lib/ubc_check.c \
+	--add-file=sha1collisiondetection/lib/ubc_check.h
+endif
 dist: git-archive$(X) configure
-	./git-archive --format=tar \
-		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
-	@cp configure $(GIT_TARNAME)
 	@echo $(GIT_VERSION) > $(GIT_TARNAME)/version
 	@$(MAKE) -C git-gui TARDIR=../$(GIT_TARNAME)/git-gui dist-version
-	$(TAR) rf $(GIT_TARNAME).tar $(TAR_DIST_EXTRA_OPTS) \
-		$(GIT_TARNAME)/configure \
-		$(GIT_TARNAME)/version \
-		$(GIT_TARNAME)/git-gui/version
-ifdef DC_SHA1_SUBMODULE
-	@mkdir -p $(GIT_TARNAME)/sha1collisiondetection/lib
-	@cp sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/
-	@cp sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/
-	@cp sha1collisiondetection/lib/sha1.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/
-	@cp sha1collisiondetection/lib/ubc_check.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/
-	$(TAR) rf $(GIT_TARNAME).tar $(TAR_DIST_EXTRA_OPTS) \
-		$(GIT_TARNAME)/sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/sha1.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/ubc_check.[ch]
-endif
+	./git-archive --format=tar \
+		$(GIT_ARCHIVE_EXTRA_FILES) \
+		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
 	@$(RM) -r $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 

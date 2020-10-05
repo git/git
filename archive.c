@@ -70,10 +70,12 @@ static void format_subst(const struct commit *commit,
 	free(to_free);
 }
 
-void *object_file_to_archive(const struct archiver_args *args,
-			     const char *path, const struct object_id *oid,
-			     unsigned int mode, enum object_type *type,
-			     unsigned long *sizep)
+static void *object_file_to_archive(const struct archiver_args *args,
+				    const char *path,
+				    const struct object_id *oid,
+				    unsigned int mode,
+				    enum object_type *type,
+				    unsigned long *sizep)
 {
 	void *buffer;
 	const struct commit *commit = args->convert ? args->commit : NULL;
@@ -145,6 +147,9 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 	write_archive_entry_fn_t write_entry = c->write_entry;
 	int err;
 	const char *path_without_prefix;
+	unsigned long size;
+	void *buffer;
+	enum object_type type;
 
 	args->convert = 0;
 	strbuf_reset(&path);
@@ -167,7 +172,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-		err = write_entry(args, oid, path.buf, path.len, mode);
+		err = write_entry(args, oid, path.buf, path.len, mode, NULL, 0);
 		if (err)
 			return err;
 		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -175,7 +180,19 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 	if (args->verbose)
 		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-	return write_entry(args, oid, path.buf, path.len, mode);
+
+	/* Stream it? */
+	if (S_ISREG(mode) && !args->convert &&
+	    oid_object_info(args->repo, oid, &size) == OBJ_BLOB &&
+	    size > big_file_threshold)
+		return write_entry(args, oid, path.buf, path.len, mode, NULL, size);
+
+	buffer = object_file_to_archive(args, path.buf, oid, mode, &type, &size);
+	if (!buffer)
+		return error(_("cannot read %s"), oid_to_hex(oid));
+	err = write_entry(args, oid, path.buf, path.len, mode, buffer, size);
+	free(buffer);
+	return err;
 }
 
 static void queue_directory(const unsigned char *sha1,
@@ -249,6 +266,11 @@ static int queue_or_write_archive_entry(const struct object_id *oid,
 				   stage, context);
 }
 
+struct extra_file_info {
+	char *base;
+	struct stat stat;
+};
+
 int write_archive_entries(struct archiver_args *args,
 		write_archive_entry_fn_t write_entry)
 {
@@ -256,6 +278,10 @@ int write_archive_entries(struct archiver_args *args,
 	struct unpack_trees_options opts;
 	struct tree_desc t;
 	int err;
+	struct strbuf path_in_archive = STRBUF_INIT;
+	struct strbuf content = STRBUF_INIT;
+	struct object_id fake_oid = null_oid;
+	int i;
 
 	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
 		size_t len = args->baselen;
@@ -265,7 +291,7 @@ int write_archive_entries(struct archiver_args *args,
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)len, args->base);
 		err = write_entry(args, &args->tree->object.oid, args->base,
-				  len, 040777);
+				  len, 040777, NULL, 0);
 		if (err)
 			return err;
 	}
@@ -301,6 +327,33 @@ int write_archive_entries(struct archiver_args *args,
 		free(context.bottom);
 		context.bottom = next;
 	}
+
+	for (i = 0; i < args->extra_files.nr; i++) {
+		struct string_list_item *item = args->extra_files.items + i;
+		char *path = item->string;
+		struct extra_file_info *info = item->util;
+
+		put_be64(fake_oid.hash, i + 1);
+
+		strbuf_reset(&path_in_archive);
+		if (info->base)
+			strbuf_addstr(&path_in_archive, info->base);
+		strbuf_addstr(&path_in_archive, basename(path));
+
+		strbuf_reset(&content);
+		if (strbuf_read_file(&content, path, info->stat.st_size) < 0)
+			err = error_errno(_("could not read '%s'"), path);
+		else
+			err = write_entry(args, &fake_oid, path_in_archive.buf,
+					  path_in_archive.len,
+					  info->stat.st_mode,
+					  content.buf, content.len);
+		if (err)
+			break;
+	}
+	strbuf_release(&path_in_archive);
+	strbuf_release(&content);
+
 	return err;
 }
 
@@ -440,6 +493,42 @@ static void parse_treeish_arg(const char **argv,
 	ar_args->time = archive_time;
 }
 
+static void extra_file_info_clear(void *util, const char *str)
+{
+	struct extra_file_info *info = util;
+	free(info->base);
+	free(info);
+}
+
+static int add_file_cb(const struct option *opt, const char *arg, int unset)
+{
+	struct archiver_args *args = opt->value;
+	const char **basep = (const char **)opt->defval;
+	const char *base = *basep;
+	char *path;
+	struct string_list_item *item;
+	struct extra_file_info *info;
+
+	if (unset) {
+		string_list_clear_func(&args->extra_files,
+				       extra_file_info_clear);
+		return 0;
+	}
+
+	if (!arg)
+		return -1;
+
+	path = prefix_filename(args->prefix, arg);
+	item = string_list_append_nodup(&args->extra_files, path);
+	item->util = info = xmalloc(sizeof(*info));
+	info->base = xstrdup_or_null(base);
+	if (stat(path, &info->stat))
+		die(_("File not found: %s"), path);
+	if (!S_ISREG(info->stat.st_mode))
+		die(_("Not a regular file: %s"), path);
+	return 0;
+}
+
 #define OPT__COMPR(s, v, h, p) \
 	OPT_SET_INT_F(s, NULL, v, h, p, PARSE_OPT_NONEG)
 #define OPT__COMPR_HIDDEN(s, v, p) \
@@ -464,6 +553,9 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_STRING(0, "format", &format, N_("fmt"), N_("archive format")),
 		OPT_STRING(0, "prefix", &base, N_("prefix"),
 			N_("prepend prefix to each pathname in the archive")),
+		{ OPTION_CALLBACK, 0, "add-file", args, N_("file"),
+		  N_("add untracked file to archive"), 0, add_file_cb,
+		  (intptr_t)&base },
 		OPT_STRING('o', "output", &output, N_("file"),
 			N_("write the archive to this file")),
 		OPT_BOOL(0, "worktree-attributes", &worktree_attributes,
@@ -498,6 +590,8 @@ static int parse_archive_args(int argc, const char **argv,
 		die(_("Option --exec can only be used together with --remote"));
 	if (output)
 		die(_("Unexpected option --output"));
+	if (is_remote && args->extra_files.nr)
+		die(_("Options --add-file and --remote cannot be used together"));
 
 	if (!base)
 		base = "";
@@ -544,11 +638,14 @@ int write_archive(int argc, const char **argv, const char *prefix,
 {
 	const struct archiver *ar = NULL;
 	struct archiver_args args;
+	int rc;
 
 	git_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
 	git_config(git_default_config, NULL);
 
 	args.repo = repo;
+	args.prefix = prefix;
+	string_list_init(&args.extra_files, 1);
 	argc = parse_archive_args(argc, argv, &ar, &args, name_hint, remote);
 	if (!startup_info->have_repository) {
 		/*
@@ -562,7 +659,11 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	parse_treeish_arg(argv, &args, prefix, remote);
 	parse_pathspec_arg(argv + 1, &args);
 
-	return ar->write_archive(ar, &args);
+	rc = ar->write_archive(ar, &args);
+
+	string_list_clear_func(&args.extra_files, extra_file_info_clear);
+
+	return rc;
 }
 
 static int match_extension(const char *filename, const char *ext)
