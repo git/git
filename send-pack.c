@@ -68,20 +68,20 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struc
 	int i;
 	int rc;
 
-	argv_array_push(&po.args, "pack-objects");
-	argv_array_push(&po.args, "--all-progress-implied");
-	argv_array_push(&po.args, "--revs");
-	argv_array_push(&po.args, "--stdout");
+	strvec_push(&po.args, "pack-objects");
+	strvec_push(&po.args, "--all-progress-implied");
+	strvec_push(&po.args, "--revs");
+	strvec_push(&po.args, "--stdout");
 	if (args->use_thin_pack)
-		argv_array_push(&po.args, "--thin");
+		strvec_push(&po.args, "--thin");
 	if (args->use_ofs_delta)
-		argv_array_push(&po.args, "--delta-base-offset");
+		strvec_push(&po.args, "--delta-base-offset");
 	if (args->quiet || !args->progress)
-		argv_array_push(&po.args, "-q");
+		strvec_push(&po.args, "-q");
 	if (args->progress)
-		argv_array_push(&po.args, "--progress");
+		strvec_push(&po.args, "--progress");
 	if (is_repository_shallow(the_repository))
-		argv_array_push(&po.args, "--shallow");
+		strvec_push(&po.args, "--shallow");
 	po.in = -1;
 	po.out = args->stateless_rpc ? -1 : fd;
 	po.git_cmd = 1;

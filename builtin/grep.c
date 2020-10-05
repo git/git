@@ -319,7 +319,7 @@ static void grep_source_name(struct grep_opt *opt, const char *filename,
 	}
 
 	if (opt->relative && opt->prefix_length)
-		quote_path_relative(filename + tree_name_len, opt->prefix, out);
+		quote_path(filename + tree_name_len, opt->prefix, out, 0);
 	else
 		quote_c_style(filename + tree_name_len, out, NULL, 0);
 
@@ -397,7 +397,7 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 	int i, status;
 
 	for (i = 0; i < path_list->nr; i++)
-		argv_array_push(&child.args, path_list->items[i].string);
+		strvec_push(&child.args, path_list->items[i].string);
 	child.dir = prefix;
 	child.use_shell = 1;
 

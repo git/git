@@ -18,7 +18,7 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "bulk-checkin.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "submodule.h"
 #include "add-interactive.h"
 
@@ -188,7 +188,7 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 			const struct pathspec *pathspec)
 {
 	int status, i;
-	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
 	int use_builtin_add_i =
 		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
 
@@ -218,18 +218,18 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 		return !!run_add_p(the_repository, mode, revision, pathspec);
 	}
 
-	argv_array_push(&argv, "add--interactive");
+	strvec_push(&argv, "add--interactive");
 	if (patch_mode)
-		argv_array_push(&argv, patch_mode);
+		strvec_push(&argv, patch_mode);
 	if (revision)
-		argv_array_push(&argv, revision);
-	argv_array_push(&argv, "--");
+		strvec_push(&argv, revision);
+	strvec_push(&argv, "--");
 	for (i = 0; i < pathspec->nr; i++)
 		/* pass original pathspec, to be re-parsed */
-		argv_array_push(&argv, pathspec->items[i].original);
+		strvec_push(&argv, pathspec->items[i].original);
 
-	status = run_command_v_opt(argv.argv, RUN_GIT_CMD);
-	argv_array_clear(&argv);
+	status = run_command_v_opt(argv.v, RUN_GIT_CMD);
+	strvec_clear(&argv);
 	return status;
 }
 

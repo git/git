@@ -7,7 +7,7 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "merge-recursive.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "run-command.h"
 #include "dir.h"
 #include "rerere.h"
@@ -277,8 +277,8 @@ static int diff_tree_binary(struct strbuf *out, struct object_id *w_commit)
 	 * however it should be done together with apply_cached.
 	 */
 	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "diff-tree", "--binary", NULL);
-	argv_array_pushf(&cp.args, "%s^2^..%s^2", w_commit_hex, w_commit_hex);
+	strvec_pushl(&cp.args, "diff-tree", "--binary", NULL);
+	strvec_pushf(&cp.args, "%s^2^..%s^2", w_commit_hex, w_commit_hex);
 
 	return pipe_command(&cp, NULL, 0, out, 0, NULL, 0);
 }
@@ -293,7 +293,7 @@ static int apply_cached(struct strbuf *out)
 	 * buffer.
 	 */
 	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "apply", "--cached", NULL);
+	strvec_pushl(&cp.args, "apply", "--cached", NULL);
 	return pipe_command(&cp, out->buf, out->len, NULL, 0, NULL, 0);
 }
 
@@ -306,7 +306,7 @@ static int reset_head(void)
 	 * API for resetting.
 	 */
 	cp.git_cmd = 1;
-	argv_array_push(&cp.args, "reset");
+	strvec_push(&cp.args, "reset");
 
 	return run_command(&cp);
 }
@@ -335,9 +335,9 @@ static int get_newly_staged(struct strbuf *out, struct object_id *c_tree)
 	 * converted together with update_index.
 	 */
 	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "diff-index", "--cached", "--name-only",
-			 "--diff-filter=A", NULL);
-	argv_array_push(&cp.args, c_tree_hex);
+	strvec_pushl(&cp.args, "diff-index", "--cached", "--name-only",
+		     "--diff-filter=A", NULL);
+	strvec_push(&cp.args, c_tree_hex);
 	return pipe_command(&cp, NULL, 0, out, 0, NULL, 0);
 }
 
@@ -350,7 +350,7 @@ static int update_index(struct strbuf *out)
 	 * function exposed in order to remove this forking.
 	 */
 	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "update-index", "--add", "--stdin", NULL);
+	strvec_pushl(&cp.args, "update-index", "--add", "--stdin", NULL);
 	return pipe_command(&cp, out->buf, out->len, NULL, 0, NULL, 0);
 }
 
@@ -365,10 +365,10 @@ static int restore_untracked(struct object_id *u_tree)
 	 * run_command to fork processes that will not interfere.
 	 */
 	cp.git_cmd = 1;
-	argv_array_push(&cp.args, "read-tree");
-	argv_array_push(&cp.args, oid_to_hex(u_tree));
-	argv_array_pushf(&cp.env_array, "GIT_INDEX_FILE=%s",
-			 stash_index_path.buf);
+	strvec_push(&cp.args, "read-tree");
+	strvec_push(&cp.args, oid_to_hex(u_tree));
+	strvec_pushf(&cp.env_array, "GIT_INDEX_FILE=%s",
+		     stash_index_path.buf);
 	if (run_command(&cp)) {
 		remove_path(stash_index_path.buf);
 		return -1;
@@ -376,9 +376,9 @@ static int restore_untracked(struct object_id *u_tree)
 
 	child_process_init(&cp);
 	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "checkout-index", "--all", NULL);
-	argv_array_pushf(&cp.env_array, "GIT_INDEX_FILE=%s",
-			 stash_index_path.buf);
+	strvec_pushl(&cp.args, "checkout-index", "--all", NULL);
+	strvec_pushf(&cp.env_array, "GIT_INDEX_FILE=%s",
+		     stash_index_path.buf);
 
 	res = run_command(&cp);
 	remove_path(stash_index_path.buf);
@@ -499,11 +499,11 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		 */
 		cp.git_cmd = 1;
 		cp.dir = prefix;
-		argv_array_pushf(&cp.env_array, GIT_WORK_TREE_ENVIRONMENT"=%s",
-				 absolute_path(get_git_work_tree()));
-		argv_array_pushf(&cp.env_array, GIT_DIR_ENVIRONMENT"=%s",
-				 absolute_path(get_git_dir()));
-		argv_array_push(&cp.args, "status");
+		strvec_pushf(&cp.env_array, GIT_WORK_TREE_ENVIRONMENT"=%s",
+			     absolute_path(get_git_work_tree()));
+		strvec_pushf(&cp.env_array, GIT_DIR_ENVIRONMENT"=%s",
+			     absolute_path(get_git_dir()));
+		strvec_push(&cp.args, "status");
 		run_command(&cp);
 	}
 
@@ -546,9 +546,9 @@ static int do_drop_stash(struct stash_info *info, int quiet)
 	 */
 
 	cp_reflog.git_cmd = 1;
-	argv_array_pushl(&cp_reflog.args, "reflog", "delete", "--updateref",
-			 "--rewrite", NULL);
-	argv_array_push(&cp_reflog.args, info->revision.buf);
+	strvec_pushl(&cp_reflog.args, "reflog", "delete", "--updateref",
+		     "--rewrite", NULL);
+	strvec_push(&cp_reflog.args, info->revision.buf);
 	ret = run_command(&cp_reflog);
 	if (!ret) {
 		if (!quiet)
@@ -566,8 +566,8 @@ static int do_drop_stash(struct stash_info *info, int quiet)
 	cp.git_cmd = 1;
 	/* Even though --quiet is specified, rev-parse still outputs the hash */
 	cp.no_stdout = 1;
-	argv_array_pushl(&cp.args, "rev-parse", "--verify", "--quiet", NULL);
-	argv_array_pushf(&cp.args, "%s@{0}", ref_stash);
+	strvec_pushl(&cp.args, "rev-parse", "--verify", "--quiet", NULL);
+	strvec_pushf(&cp.args, "%s@{0}", ref_stash);
 	ret = run_command(&cp);
 
 	/* do_clear_stash if we just dropped the last stash entry */
@@ -663,9 +663,9 @@ static int branch_stash(int argc, const char **argv, const char *prefix)
 		return -1;
 
 	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "checkout", "-b", NULL);
-	argv_array_push(&cp.args, branch);
-	argv_array_push(&cp.args, oid_to_hex(&info.b_commit));
+	strvec_pushl(&cp.args, "checkout", "-b", NULL);
+	strvec_push(&cp.args, branch);
+	strvec_push(&cp.args, oid_to_hex(&info.b_commit));
 	ret = run_command(&cp);
 	if (!ret)
 		ret = do_apply_stash(prefix, &info, 1, 0);
@@ -692,11 +692,11 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 		return 0;
 
 	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "log", "--format=%gd: %gs", "-g",
-			 "--first-parent", "-m", NULL);
-	argv_array_pushv(&cp.args, argv);
-	argv_array_push(&cp.args, ref_stash);
-	argv_array_push(&cp.args, "--");
+	strvec_pushl(&cp.args, "log", "--format=%gd: %gs", "-g",
+		     "--first-parent", "-m", NULL);
+	strvec_pushv(&cp.args, argv);
+	strvec_push(&cp.args, ref_stash);
+	strvec_push(&cp.args, "--");
 	return run_command(&cp);
 }
 
@@ -727,8 +727,8 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	int ret = 0;
 	struct stash_info info;
 	struct rev_info rev;
-	struct argv_array stash_args = ARGV_ARRAY_INIT;
-	struct argv_array revision_args = ARGV_ARRAY_INIT;
+	struct strvec stash_args = STRVEC_INIT;
+	struct strvec revision_args = STRVEC_INIT;
 	struct option options[] = {
 		OPT_END()
 	};
@@ -737,16 +737,16 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	git_config(git_diff_ui_config, NULL);
 	init_revisions(&rev, prefix);
 
-	argv_array_push(&revision_args, argv[0]);
+	strvec_push(&revision_args, argv[0]);
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-')
-			argv_array_push(&stash_args, argv[i]);
+			strvec_push(&stash_args, argv[i]);
 		else
-			argv_array_push(&revision_args, argv[i]);
+			strvec_push(&revision_args, argv[i]);
 	}
 
-	ret = get_stash_info(&info, stash_args.argc, stash_args.argv);
-	argv_array_clear(&stash_args);
+	ret = get_stash_info(&info, stash_args.nr, stash_args.v);
+	strvec_clear(&stash_args);
 	if (ret)
 		return -1;
 
@@ -754,7 +754,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	 * The config settings are applied only if there are not passed
 	 * any options.
 	 */
-	if (revision_args.argc == 1) {
+	if (revision_args.nr == 1) {
 		if (show_stat)
 			rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT;
 
@@ -767,7 +767,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	argc = setup_revisions(revision_args.argc, revision_args.argv, &rev, NULL);
+	argc = setup_revisions(revision_args.nr, revision_args.v, &rev, NULL);
 	if (argc > 1) {
 		free_stash_info(&info);
 		usage_with_options(git_stash_show_usage, options);
@@ -842,12 +842,12 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 	return do_store_stash(&obj, stash_msg, quiet);
 }
 
-static void add_pathspecs(struct argv_array *args,
+static void add_pathspecs(struct strvec *args,
 			  const struct pathspec *ps) {
 	int i;
 
 	for (i = 0; i < ps->nr; i++)
-		argv_array_push(args, ps->items[i].original);
+		strvec_push(args, ps->items[i].original);
 }
 
 /*
@@ -960,9 +960,9 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 	struct index_state istate = { NULL };
 
 	cp_upd_index.git_cmd = 1;
-	argv_array_pushl(&cp_upd_index.args, "update-index", "-z", "--add",
-			 "--remove", "--stdin", NULL);
-	argv_array_pushf(&cp_upd_index.env_array, "GIT_INDEX_FILE=%s",
+	strvec_pushl(&cp_upd_index.args, "update-index", "-z", "--add",
+		     "--remove", "--stdin", NULL);
+	strvec_pushf(&cp_upd_index.env_array, "GIT_INDEX_FILE=%s",
 			 stash_index_path.buf);
 
 	strbuf_addf(&untracked_msg, "untracked files on %s\n", msg->buf);
@@ -1003,9 +1003,9 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 	remove_path(stash_index_path.buf);
 
 	cp_read_tree.git_cmd = 1;
-	argv_array_pushl(&cp_read_tree.args, "read-tree", "HEAD", NULL);
-	argv_array_pushf(&cp_read_tree.env_array, "GIT_INDEX_FILE=%s",
-			 stash_index_path.buf);
+	strvec_pushl(&cp_read_tree.args, "read-tree", "HEAD", NULL);
+	strvec_pushf(&cp_read_tree.env_array, "GIT_INDEX_FILE=%s",
+		     stash_index_path.buf);
 	if (run_command(&cp_read_tree)) {
 		ret = -1;
 		goto done;
@@ -1034,8 +1034,8 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 	}
 
 	cp_diff_tree.git_cmd = 1;
-	argv_array_pushl(&cp_diff_tree.args, "diff-tree", "-p", "-U1", "HEAD",
-			 oid_to_hex(&info->w_tree), "--", NULL);
+	strvec_pushl(&cp_diff_tree.args, "diff-tree", "-p", "-U1", "HEAD",
+		     oid_to_hex(&info->w_tree), "--", NULL);
 	if (pipe_command(&cp_diff_tree, NULL, 0, out_patch, 0, NULL, 0)) {
 		ret = -1;
 		goto done;
@@ -1088,11 +1088,11 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 	}
 
 	cp_upd_index.git_cmd = 1;
-	argv_array_pushl(&cp_upd_index.args, "update-index",
-			 "--ignore-skip-worktree-entries",
-			 "-z", "--add", "--remove", "--stdin", NULL);
-	argv_array_pushf(&cp_upd_index.env_array, "GIT_INDEX_FILE=%s",
-			 stash_index_path.buf);
+	strvec_pushl(&cp_upd_index.args, "update-index",
+		     "--ignore-skip-worktree-entries",
+		     "-z", "--add", "--remove", "--stdin", NULL);
+	strvec_pushf(&cp_upd_index.env_array, "GIT_INDEX_FILE=%s",
+		     stash_index_path.buf);
 
 	if (pipe_command(&cp_upd_index, diff_output.buf, diff_output.len,
 			 NULL, 0, NULL, 0)) {
@@ -1342,10 +1342,10 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			cp.git_cmd = 1;
-			argv_array_pushl(&cp.args, "clean", "--force",
-					 "--quiet", "-d", NULL);
+			strvec_pushl(&cp.args, "clean", "--force",
+				     "--quiet", "-d", NULL);
 			if (include_untracked == INCLUDE_ALL_FILES)
-				argv_array_push(&cp.args, "-x");
+				strvec_push(&cp.args, "-x");
 			if (run_command(&cp)) {
 				ret = -1;
 				goto done;
@@ -1359,12 +1359,12 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			struct strbuf out = STRBUF_INIT;
 
 			cp_add.git_cmd = 1;
-			argv_array_push(&cp_add.args, "add");
+			strvec_push(&cp_add.args, "add");
 			if (!include_untracked)
-				argv_array_push(&cp_add.args, "-u");
+				strvec_push(&cp_add.args, "-u");
 			if (include_untracked == INCLUDE_ALL_FILES)
-				argv_array_push(&cp_add.args, "--force");
-			argv_array_push(&cp_add.args, "--");
+				strvec_push(&cp_add.args, "--force");
+			strvec_push(&cp_add.args, "--");
 			add_pathspecs(&cp_add.args, ps);
 			if (run_command(&cp_add)) {
 				ret = -1;
@@ -1372,9 +1372,9 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			}
 
 			cp_diff.git_cmd = 1;
-			argv_array_pushl(&cp_diff.args, "diff-index", "-p",
-					 "--cached", "--binary", "HEAD", "--",
-					 NULL);
+			strvec_pushl(&cp_diff.args, "diff-index", "-p",
+				     "--cached", "--binary", "HEAD", "--",
+				     NULL);
 			add_pathspecs(&cp_diff.args, ps);
 			if (pipe_command(&cp_diff, NULL, 0, &out, 0, NULL, 0)) {
 				ret = -1;
@@ -1382,8 +1382,8 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			}
 
 			cp_apply.git_cmd = 1;
-			argv_array_pushl(&cp_apply.args, "apply", "--index",
-					 "-R", NULL);
+			strvec_pushl(&cp_apply.args, "apply", "--index",
+				     "-R", NULL);
 			if (pipe_command(&cp_apply, out.buf, out.len, NULL, 0,
 					 NULL, 0)) {
 				ret = -1;
@@ -1392,8 +1392,8 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		} else {
 			struct child_process cp = CHILD_PROCESS_INIT;
 			cp.git_cmd = 1;
-			argv_array_pushl(&cp.args, "reset", "--hard", "-q",
-					 "--no-recurse-submodules", NULL);
+			strvec_pushl(&cp.args, "reset", "--hard", "-q",
+				     "--no-recurse-submodules", NULL);
 			if (run_command(&cp)) {
 				ret = -1;
 				goto done;
@@ -1404,10 +1404,10 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			cp.git_cmd = 1;
-			argv_array_pushl(&cp.args, "checkout", "--no-overlay",
-					 oid_to_hex(&info.i_tree), "--", NULL);
+			strvec_pushl(&cp.args, "checkout", "--no-overlay",
+				     oid_to_hex(&info.i_tree), "--", NULL);
 			if (!ps->nr)
-				argv_array_push(&cp.args, ":/");
+				strvec_push(&cp.args, ":/");
 			else
 				add_pathspecs(&cp.args, ps);
 			if (run_command(&cp)) {
@@ -1420,7 +1420,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		struct child_process cp = CHILD_PROCESS_INIT;
 
 		cp.git_cmd = 1;
-		argv_array_pushl(&cp.args, "apply", "-R", NULL);
+		strvec_pushl(&cp.args, "apply", "-R", NULL);
 
 		if (pipe_command(&cp, patch.buf, patch.len, NULL, 0, NULL, 0)) {
 			if (!quiet)
@@ -1434,7 +1434,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			cp.git_cmd = 1;
-			argv_array_pushl(&cp.args, "reset", "-q", "--", NULL);
+			strvec_pushl(&cp.args, "reset", "-q", "--", NULL);
 			add_pathspecs(&cp.args, ps);
 			if (run_command(&cp)) {
 				ret = -1;
@@ -1560,7 +1560,7 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 {
 	pid_t pid = getpid();
 	const char *index_file;
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 
 	struct option options[] = {
 		OPT_END()
@@ -1609,7 +1609,7 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 			      git_stash_usage, options);
 
 	/* Assume 'stash push' */
-	argv_array_push(&args, "push");
-	argv_array_pushv(&args, argv);
-	return !!push_stash(args.argc, args.argv, prefix, 1);
+	strvec_push(&args, "push");
+	strvec_pushv(&args, argv);
+	return !!push_stash(args.nr, args.v, prefix, 1);
 }

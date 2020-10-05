@@ -2,7 +2,7 @@
 #include "range-diff.h"
 #include "string-list.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "hashmap.h"
 #include "xdiff-interface.h"
 #include "linear-assignment.h"
@@ -41,7 +41,7 @@ static size_t find_end_of_line(char *buffer, unsigned long size)
  * as struct object_id (will need to be free()d).
  */
 static int read_patches(const char *range, struct string_list *list,
-			const struct argv_array *other_arg)
+			const struct strvec *other_arg)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT, contents = STRBUF_INIT;
@@ -51,24 +51,24 @@ static int read_patches(const char *range, struct string_list *list,
 	int offset, len;
 	size_t size;
 
-	argv_array_pushl(&cp.args, "log", "--no-color", "-p", "--no-merges",
-			"--reverse", "--date-order", "--decorate=no",
-			"--no-prefix",
-			/*
-			 * Choose indicators that are not used anywhere
-			 * else in diffs, but still look reasonable
-			 * (e.g. will not be confusing when debugging)
-			 */
-			"--output-indicator-new=>",
-			"--output-indicator-old=<",
-			"--output-indicator-context=#",
-			"--no-abbrev-commit",
-			"--pretty=medium",
-			"--notes",
-			NULL);
+	strvec_pushl(&cp.args, "log", "--no-color", "-p", "--no-merges",
+		     "--reverse", "--date-order", "--decorate=no",
+		     "--no-prefix",
+		     /*
+		      * Choose indicators that are not used anywhere
+		      * else in diffs, but still look reasonable
+		      * (e.g. will not be confusing when debugging)
+		      */
+		     "--output-indicator-new=>",
+		     "--output-indicator-old=<",
+		     "--output-indicator-context=#",
+		     "--no-abbrev-commit",
+		     "--pretty=medium",
+		     "--notes",
+		     NULL);
 	if (other_arg)
-		argv_array_pushv(&cp.args, other_arg->argv);
-	argv_array_push(&cp.args, range);
+		strvec_pushv(&cp.args, other_arg->v);
+	strvec_push(&cp.args, range);
 	cp.out = -1;
 	cp.no_stdin = 1;
 	cp.git_cmd = 1;
@@ -523,7 +523,7 @@ static struct strbuf *output_prefix_cb(struct diff_options *opt, void *data)
 int show_range_diff(const char *range1, const char *range2,
 		    int creation_factor, int dual_color,
 		    const struct diff_options *diffopt,
-		    const struct argv_array *other_arg)
+		    const struct strvec *other_arg)
 {
 	int res = 0;
 

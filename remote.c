@@ -11,7 +11,7 @@
 #include "tag.h"
 #include "string-list.h"
 #include "mergesort.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "commit-reach.h"
 #include "advice.h"
 
@@ -1885,7 +1885,7 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	struct object_id oid;
 	struct commit *ours, *theirs;
 	struct rev_info revs;
-	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
 
 	/* Cannot stat if what we used to build on no longer exists */
 	if (read_ref(base, &oid))
@@ -1911,15 +1911,15 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 		BUG("stat_branch_pair: invalid abf '%d'", abf);
 
 	/* Run "rev-list --left-right ours...theirs" internally... */
-	argv_array_push(&argv, ""); /* ignored */
-	argv_array_push(&argv, "--left-right");
-	argv_array_pushf(&argv, "%s...%s",
-			 oid_to_hex(&ours->object.oid),
-			 oid_to_hex(&theirs->object.oid));
-	argv_array_push(&argv, "--");
+	strvec_push(&argv, ""); /* ignored */
+	strvec_push(&argv, "--left-right");
+	strvec_pushf(&argv, "%s...%s",
+		     oid_to_hex(&ours->object.oid),
+		     oid_to_hex(&theirs->object.oid));
+	strvec_push(&argv, "--");
 
 	repo_init_revisions(the_repository, &revs, NULL);
-	setup_revisions(argv.argc, argv.argv, &revs, NULL);
+	setup_revisions(argv.nr, argv.v, &revs, NULL);
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 
@@ -1938,7 +1938,7 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	clear_commit_marks(ours, ALL_REV_FLAGS);
 	clear_commit_marks(theirs, ALL_REV_FLAGS);
 
-	argv_array_clear(&argv);
+	strvec_clear(&argv);
 	return 1;
 }
 

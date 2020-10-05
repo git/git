@@ -4,13 +4,13 @@
 #include "sigchain.h"
 #include "string-list.h"
 #include "strbuf.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "quote.h"
 #include "object-store.h"
 
 struct tmp_objdir {
 	struct strbuf path;
-	struct argv_array env;
+	struct strvec env;
 };
 
 /*
@@ -24,7 +24,7 @@ static struct tmp_objdir *the_tmp_objdir;
 static void tmp_objdir_free(struct tmp_objdir *t)
 {
 	strbuf_release(&t->path);
-	argv_array_clear(&t->env);
+	strvec_clear(&t->env);
 	free(t);
 }
 
@@ -79,7 +79,7 @@ static void remove_tmp_objdir_on_signal(int signo)
  * separated by PATH_SEP (which is what separate values in
  * GIT_ALTERNATE_OBJECT_DIRECTORIES).
  */
-static void env_append(struct argv_array *env, const char *key, const char *val)
+static void env_append(struct strvec *env, const char *key, const char *val)
 {
 	struct strbuf quoted = STRBUF_INIT;
 	const char *old;
@@ -97,16 +97,16 @@ static void env_append(struct argv_array *env, const char *key, const char *val)
 
 	old = getenv(key);
 	if (!old)
-		argv_array_pushf(env, "%s=%s", key, val);
+		strvec_pushf(env, "%s=%s", key, val);
 	else
-		argv_array_pushf(env, "%s=%s%c%s", key, old, PATH_SEP, val);
+		strvec_pushf(env, "%s=%s%c%s", key, old, PATH_SEP, val);
 
 	strbuf_release(&quoted);
 }
 
-static void env_replace(struct argv_array *env, const char *key, const char *val)
+static void env_replace(struct strvec *env, const char *key, const char *val)
 {
-	argv_array_pushf(env, "%s=%s", key, val);
+	strvec_pushf(env, "%s=%s", key, val);
 }
 
 static int setup_tmp_objdir(const char *root)
@@ -131,7 +131,7 @@ struct tmp_objdir *tmp_objdir_create(void)
 
 	t = xmalloc(sizeof(*t));
 	strbuf_init(&t->path, 0);
-	argv_array_init(&t->env);
+	strvec_init(&t->env);
 
 	strbuf_addf(&t->path, "%s/incoming-XXXXXX", get_object_directory());
 
@@ -283,7 +283,7 @@ const char **tmp_objdir_env(const struct tmp_objdir *t)
 {
 	if (!t)
 		return NULL;
-	return t->env.argv;
+	return t->env.v;
 }
 
 void tmp_objdir_add_as_alternate(const struct tmp_objdir *t)

@@ -15,7 +15,7 @@
 #include "tag.h"
 #include "submodule.h"
 #include "worktree.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "repository.h"
 #include "sigchain.h"
 
@@ -553,13 +553,13 @@ int refname_match(const char *abbrev_name, const char *full_name)
  * Given a 'prefix' expand it by the rules in 'ref_rev_parse_rules' and add
  * the results to 'prefixes'
  */
-void expand_ref_prefix(struct argv_array *prefixes, const char *prefix)
+void expand_ref_prefix(struct strvec *prefixes, const char *prefix)
 {
 	const char **p;
 	int len = strlen(prefix);
 
 	for (p = ref_rev_parse_rules; *p; p++)
-		argv_array_pushf(prefixes, *p, len, prefix);
+		strvec_pushf(prefixes, *p, len, prefix);
 }
 
 char *repo_default_branch_name(struct repository *r)
@@ -2037,7 +2037,7 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 		return ret;
 	}
 
-	argv_array_pushl(&proc.args, hook, state, NULL);
+	strvec_pushl(&proc.args, hook, state, NULL);
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
 	proc.trace2_hook_name = "reference-transaction";

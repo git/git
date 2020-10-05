@@ -10,7 +10,7 @@
 #include "list-objects.h"
 #include "run-command.h"
 #include "refs.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 static const char bundle_signature[] = "# v2 git bundle\n";
 
@@ -269,16 +269,16 @@ out:
 
 
 /* Write the pack data to bundle_fd */
-static int write_pack_data(int bundle_fd, struct rev_info *revs, struct argv_array *pack_options)
+static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *pack_options)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
 	int i;
 
-	argv_array_pushl(&pack_objects.args,
-			 "pack-objects",
-			 "--stdout", "--thin", "--delta-base-offset",
-			 NULL);
-	argv_array_pushv(&pack_objects.args, pack_options->argv);
+	strvec_pushl(&pack_objects.args,
+		     "pack-objects",
+		     "--stdout", "--thin", "--delta-base-offset",
+		     NULL);
+	strvec_pushv(&pack_objects.args, pack_options->v);
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
 	pack_objects.git_cmd = 1;
@@ -321,11 +321,11 @@ static int compute_and_write_prerequisites(int bundle_fd,
 	FILE *rls_fout;
 	int i;
 
-	argv_array_pushl(&rls.args,
-			 "rev-list", "--boundary", "--pretty=oneline",
-			 NULL);
+	strvec_pushl(&rls.args,
+		     "rev-list", "--boundary", "--pretty=oneline",
+		     NULL);
 	for (i = 1; i < argc; i++)
-		argv_array_push(&rls.args, argv[i]);
+		strvec_push(&rls.args, argv[i]);
 	rls.out = -1;
 	rls.git_cmd = 1;
 	if (start_command(&rls))
@@ -449,7 +449,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 }
 
 int create_bundle(struct repository *r, const char *path,
-		  int argc, const char **argv, struct argv_array *pack_options)
+		  int argc, const char **argv, struct strvec *pack_options)
 {
 	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;

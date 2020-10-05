@@ -146,9 +146,9 @@ static int query_fsmonitor(int version, const char *last_update, struct strbuf *
 	if (!core_fsmonitor)
 		return -1;
 
-	argv_array_push(&cp.args, core_fsmonitor);
-	argv_array_pushf(&cp.args, "%d", version);
-	argv_array_pushf(&cp.args, "%s", last_update);
+	strvec_push(&cp.args, core_fsmonitor);
+	strvec_pushf(&cp.args, "%d", version);
+	strvec_pushf(&cp.args, "%s", last_update);
 	cp.use_shell = 1;
 	cp.dir = get_git_work_tree();
 
