@@ -110,6 +110,18 @@ UI, Workflows & Features
  * "git shortlog" has been taught to group commits by the contents of
    the trailer lines, like "Reviewed-by:", "Coauthored-by:", etc.
 
+ * "git archive" learns the "--add-file" option to include untracked
+   files into a snapshot from a tree-ish.
+
+ * "git fetch" and "git push" support negative refspecs.
+
+ * "git format-patch" learns to take "whenAble" as a possible value
+   for the format.useAutoBase configuration variable to become no-op
+   when the  automatically computed base does not make sense.
+
+ * Credential helpers are now allowed to terminate lines with CRLF
+   line ending, as well as LF line ending.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -441,6 +453,23 @@ Fixes since v2.28
    the codepath that reads pack files.
    (merge bda959c476 mt/delta-base-cache-races later to maint).
 
+ * in_merge_bases_many(), a way to see if a commit is reachable from
+   any commit in a set of commits, was totally broken when the
+   commit-graph feature was in use, which has been corrected.
+   (merge 8791bf1841 ds/in-merge-bases-many-optim-bug later to maint).
+
+ * "git submodule update --quiet" did not squelch underlying "rebase"
+   and "pull" commands.
+   (merge 3ad0401e9e td/submodule-update-quiet later to maint).
+
+ * The lazy fetching done internally to make missing objects available
+   in a partial clone incorrectly made permanent damage to the partial
+   clone filter in the repository, which has been corrected.
+
+ * "log -c --find-object=X" did not work well to find a merge that
+   involves a change to an object X from only one parent.
+   (merge 957876f17d jk/diff-cc-oidfind-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 84544f2ea3 sk/typofixes later to maint).
    (merge b17f411ab5 ar/help-guides-doc later to maint).
@@ -473,3 +502,5 @@ Fixes since v2.28
    (merge 1c6ffb546b jk/add-i-fixes later to maint).
    (merge e40e936551 cd/commit-graph-doc later to maint).
    (merge 0512eabd91 jc/sequencer-stopped-sha-simplify later to maint).
+   (merge d01141de5a so/combine-diff-simplify later to maint).
+   (merge 3be01e5ab1 sn/fast-import-doc later to maint).
