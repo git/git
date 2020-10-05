@@ -805,9 +805,15 @@ enum cover_from_description {
 	COVER_FROM_AUTO
 };
 
+enum auto_base_setting {
+	AUTO_BASE_NEVER,
+	AUTO_BASE_ALWAYS,
+	AUTO_BASE_WHEN_ABLE
+};
+
 static enum thread_level thread;
 static int do_signoff;
-static int base_auto;
+static enum auto_base_setting auto_base;
 static char *from;
 static const char *signature = git_version_string;
 static const char *signature_file;
@@ -906,7 +912,11 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "format.outputdirectory"))
 		return git_config_string(&config_output_directory, var, value);
 	if (!strcmp(var, "format.useautobase")) {
-		base_auto = git_config_bool(var, value);
+		if (value && !strcasecmp(value, "whenAble")) {
+			auto_base = AUTO_BASE_WHEN_ABLE;
+			return 0;
+		}
+		auto_base = git_config_bool(var, value) ? AUTO_BASE_ALWAYS : AUTO_BASE_NEVER;
 		return 0;
 	}
 	if (!strcmp(var, "format.from")) {
@@ -1425,6 +1435,23 @@ static int from_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int base_callback(const struct option *opt, const char *arg, int unset)
+{
+	const char **base_commit = opt->value;
+
+	if (unset) {
+		auto_base = AUTO_BASE_NEVER;
+		*base_commit = NULL;
+	} else if (!strcmp(arg, "auto")) {
+		auto_base = AUTO_BASE_ALWAYS;
+		*base_commit = NULL;
+	} else {
+		auto_base = AUTO_BASE_NEVER;
+		*base_commit = arg;
+	}
+	return 0;
+}
+
 struct base_tree_info {
 	struct object_id base_commit;
 	int nr_patch_id, alloc_patch_id;
@@ -1437,13 +1464,36 @@ static struct commit *get_base_commit(const char *base_commit,
 {
 	struct commit *base = NULL;
 	struct commit **rev;
-	int i = 0, rev_nr = 0;
+	int i = 0, rev_nr = 0, auto_select, die_on_failure;
 
-	if (base_commit && strcmp(base_commit, "auto")) {
+	switch (auto_base) {
+	case AUTO_BASE_NEVER:
+		if (base_commit) {
+			auto_select = 0;
+			die_on_failure = 1;
+		} else {
+			/* no base information is requested */
+			return NULL;
+		}
+		break;
+	case AUTO_BASE_ALWAYS:
+	case AUTO_BASE_WHEN_ABLE:
+		if (base_commit) {
+			BUG("requested automatic base selection but a commit was provided");
+		} else {
+			auto_select = 1;
+			die_on_failure = auto_base == AUTO_BASE_ALWAYS;
+		}
+		break;
+	default:
+		BUG("unexpected automatic base selection method");
+	}
+
+	if (!auto_select) {
 		base = lookup_commit_reference_by_name(base_commit);
 		if (!base)
 			die(_("unknown commit %s"), base_commit);
-	} else if ((base_commit && !strcmp(base_commit, "auto"))) {
+	} else {
 		struct branch *curr_branch = branch_get(NULL);
 		const char *upstream = branch_get_upstream(curr_branch, NULL);
 		if (upstream) {
@@ -1451,19 +1501,32 @@ static struct commit *get_base_commit(const char *base_commit,
 			struct commit *commit;
 			struct object_id oid;
 
-			if (get_oid(upstream, &oid))
-				die(_("failed to resolve '%s' as a valid ref"), upstream);
+			if (get_oid(upstream, &oid)) {
+				if (die_on_failure)
+					die(_("failed to resolve '%s' as a valid ref"), upstream);
+				else
+					return NULL;
+			}
 			commit = lookup_commit_or_die(&oid, "upstream base");
 			base_list = get_merge_bases_many(commit, total, list);
 			/* There should be one and only one merge base. */
-			if (!base_list || base_list->next)
-				die(_("could not find exact merge base"));
+			if (!base_list || base_list->next) {
+				if (die_on_failure) {
+					die(_("could not find exact merge base"));
+				} else {
+					free_commit_list(base_list);
+					return NULL;
+				}
+			}
 			base = base_list->item;
 			free_commit_list(base_list);
 		} else {
-			die(_("failed to get upstream, if you want to record base commit automatically,\n"
-			      "please use git branch --set-upstream-to to track a remote branch.\n"
-			      "Or you could specify base commit by --base=<base-commit-id> manually"));
+			if (die_on_failure)
+				die(_("failed to get upstream, if you want to record base commit automatically,\n"
+				      "please use git branch --set-upstream-to to track a remote branch.\n"
+				      "Or you could specify base commit by --base=<base-commit-id> manually"));
+			else
+				return NULL;
 		}
 	}
 
@@ -1480,8 +1543,14 @@ static struct commit *get_base_commit(const char *base_commit,
 		for (i = 0; i < rev_nr / 2; i++) {
 			struct commit_list *merge_base;
 			merge_base = get_merge_bases(rev[2 * i], rev[2 * i + 1]);
-			if (!merge_base || merge_base->next)
-				die(_("failed to find exact merge base"));
+			if (!merge_base || merge_base->next) {
+				if (die_on_failure) {
+					die(_("failed to find exact merge base"));
+				} else {
+					free(rev);
+					return NULL;
+				}
+			}
 
 			rev[i] = merge_base->item;
 		}
@@ -1491,12 +1560,24 @@ static struct commit *get_base_commit(const char *base_commit,
 		rev_nr = DIV_ROUND_UP(rev_nr, 2);
 	}
 
-	if (!in_merge_bases(base, rev[0]))
-		die(_("base commit should be the ancestor of revision list"));
+	if (!in_merge_bases(base, rev[0])) {
+		if (die_on_failure) {
+			die(_("base commit should be the ancestor of revision list"));
+		} else {
+			free(rev);
+			return NULL;
+		}
+	}
 
 	for (i = 0; i < total; i++) {
-		if (base == list[i])
-			die(_("base commit shouldn't be in revision list"));
+		if (base == list[i]) {
+			if (die_on_failure) {
+				die(_("base commit shouldn't be in revision list"));
+			} else {
+				free(rev);
+				return NULL;
+			}
+		}
 	}
 
 	free(rev);
@@ -1639,6 +1720,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *branch_name = NULL;
 	char *base_commit = NULL;
 	struct base_tree_info bases;
+	struct commit *base;
 	int show_progress = 0;
 	struct progress *progress = NULL;
 	struct oid_array idiff_prev = OID_ARRAY_INIT;
@@ -1715,8 +1797,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    PARSE_OPT_OPTARG, thread_callback),
 		OPT_STRING(0, "signature", &signature, N_("signature"),
 			    N_("add a signature")),
-		OPT_STRING(0, "base", &base_commit, N_("base-commit"),
-			   N_("add prerequisite tree info to the patch series")),
+		OPT_CALLBACK_F(0, "base", &base_commit, N_("base-commit"),
+			       N_("add prerequisite tree info to the patch series"),
+			       0, base_callback),
 		OPT_FILENAME(0, "signature-file", &signature_file,
 				N_("add a signature from a file")),
 		OPT__QUIET(&quiet, N_("don't print the patch filenames")),
@@ -1752,9 +1835,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
 	s_r_opt.revarg_opt = REVARG_COMMITTISH;
-
-	if (base_auto)
-		base_commit = "auto";
 
 	if (default_attach) {
 		rev.mime_boundary = default_attach;
@@ -2019,8 +2099,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	memset(&bases, 0, sizeof(bases));
-	if (base_commit) {
-		struct commit *base = get_base_commit(base_commit, list, nr);
+	base = get_base_commit(base_commit, list, nr);
+	if (base) {
 		reset_revision_walk();
 		clear_object_flags(UNINTERESTING);
 		prepare_bases(&bases, base, list, nr);
