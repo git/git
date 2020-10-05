@@ -193,6 +193,14 @@ check_forbidden_symlink gitmodules vanilla .gitmodules
 check_forbidden_symlink gitmodules ntfs ".gitmodules ."
 check_forbidden_symlink gitmodules hfs ".${u200c}gitmodules"
 
+check_forbidden_symlink gitattributes vanilla .gitattributes
+check_forbidden_symlink gitattributes ntfs ".gitattributes ."
+check_forbidden_symlink gitattributes hfs ".${u200c}gitattributes"
+
+check_forbidden_symlink gitignore vanilla .gitignore
+check_forbidden_symlink gitignore ntfs ".gitignore ."
+check_forbidden_symlink gitignore hfs ".${u200c}gitignore"
+
 test_expect_success 'fsck detects non-blob .gitmodules' '
 	git init non-blob &&
 	(
