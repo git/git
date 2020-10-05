@@ -1450,6 +1450,42 @@ static struct combine_diff_path *find_paths_multitree(
 	return paths_head.next;
 }
 
+static int match_objfind(struct combine_diff_path *path,
+			 int num_parent,
+			 const struct oidset *set)
+{
+	int i;
+	if (oidset_contains(set, &path->oid))
+		return 1;
+	for (i = 0; i < num_parent; i++) {
+		if (oidset_contains(set, &path->parent[i].oid))
+			return 1;
+	}
+	return 0;
+}
+
+static struct combine_diff_path *combined_objfind(struct diff_options *opt,
+						  struct combine_diff_path *paths,
+						  int num_parent)
+{
+	struct combine_diff_path *ret = NULL, **tail = &ret;
+	struct combine_diff_path *p = paths;
+
+	while (p) {
+		struct combine_diff_path *next = p->next;
+
+		if (match_objfind(p, num_parent, opt->objfind)) {
+			p->next = NULL;
+			*tail = p;
+			tail = &p->next;
+		} else {
+			free(p);
+		}
+		p = next;
+	}
+
+	return ret;
+}
 
 void diff_tree_combined(const struct object_id *oid,
 			const struct oid_array *parents,
@@ -1504,9 +1540,9 @@ void diff_tree_combined(const struct object_id *oid,
 			opt->flags.follow_renames	||
 			opt->break_opt != -1	||
 			opt->detect_rename	||
-			(opt->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK)	||
+			(opt->pickaxe_opts &
+			 (DIFF_PICKAXE_KINDS_MASK & ~DIFF_PICKAXE_KIND_OBJFIND)) ||
 			opt->filter;
-
 
 	if (need_generic_pathscan) {
 		/*
@@ -1520,6 +1556,9 @@ void diff_tree_combined(const struct object_id *oid,
 	else {
 		int stat_opt;
 		paths = find_paths_multitree(oid, parents, &diffopts);
+
+		if (opt->pickaxe_opts & DIFF_PICKAXE_KIND_OBJFIND)
+			paths = combined_objfind(opt, paths, num_parent);
 
 		/*
 		 * show stat against the first parent even
