@@ -542,37 +542,37 @@ test_expect_success '__gitcomp - doesnt fail because of invalid variable name' '
 '
 
 read -r -d "" refs <<-\EOF
+main
 maint
-master
 next
 seen
 EOF
 
 test_expect_success '__gitcomp_nl - trailing space' '
 	test_gitcomp_nl "m" "$refs" <<-EOF
+	main Z
 	maint Z
-	master Z
 	EOF
 '
 
 test_expect_success '__gitcomp_nl - prefix' '
 	test_gitcomp_nl "--fixup=m" "$refs" "--fixup=" "m" <<-EOF
+	--fixup=main Z
 	--fixup=maint Z
-	--fixup=master Z
 	EOF
 '
 
 test_expect_success '__gitcomp_nl - suffix' '
 	test_gitcomp_nl "branch.ma" "$refs" "branch." "ma" "." <<-\EOF
+	branch.main.Z
 	branch.maint.Z
-	branch.master.Z
 	EOF
 '
 
 test_expect_success '__gitcomp_nl - no suffix' '
 	test_gitcomp_nl "ma" "$refs" "" "ma" "" <<-\EOF
+	mainZ
 	maintZ
-	masterZ
 	EOF
 '
 

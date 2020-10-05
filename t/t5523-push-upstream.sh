@@ -41,20 +41,20 @@ test_expect_success 'push -u --dry-run master:otherX' '
 	check_config master upstream refs/heads/other
 '
 
-test_expect_success 'push -u master2:master2' '
-	git branch master2 &&
-	git push -u upstream master2:master2 &&
-	check_config master2 upstream refs/heads/master2
+test_expect_success 'push -u topic_2:topic_2' '
+	git branch topic_2 &&
+	git push -u upstream topic_2:topic_2 &&
+	check_config topic_2 upstream refs/heads/topic_2
 '
 
-test_expect_success 'push -u master2:other2' '
-	git push -u upstream master2:other2 &&
-	check_config master2 upstream refs/heads/other2
+test_expect_success 'push -u topic_2:other2' '
+	git push -u upstream topic_2:other2 &&
+	check_config topic_2 upstream refs/heads/other2
 '
 
-test_expect_success 'push -u :master2' '
-	git push -u upstream :master2 &&
-	check_config master2 upstream refs/heads/other2
+test_expect_success 'push -u :topic_2' '
+	git push -u upstream :topic_2 &&
+	check_config topic_2 upstream refs/heads/other2
 '
 
 test_expect_success 'push -u --all' '
