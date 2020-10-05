@@ -21,7 +21,7 @@ void free_worktrees(struct worktree **worktrees)
 }
 
 /**
- * Update head_sha1, head_ref and is_detached of the given worktree
+ * Update head_oid, head_ref and is_detached of the given worktree
  */
 static void add_head_info(struct worktree *wt)
 {
@@ -352,13 +352,12 @@ int is_worktree_being_rebased(const struct worktree *wt,
 
 	memset(&state, 0, sizeof(state));
 	found_rebase = wt_status_check_rebase(wt, &state) &&
-		((state.rebase_in_progress ||
-		  state.rebase_interactive_in_progress) &&
-		 state.branch &&
-		 starts_with(target, "refs/heads/") &&
-		 !strcmp(state.branch, target + strlen("refs/heads/")));
-	free(state.branch);
-	free(state.onto);
+		       (state.rebase_in_progress ||
+			state.rebase_interactive_in_progress) &&
+		       state.branch &&
+		       skip_prefix(target, "refs/heads/", &target) &&
+		       !strcmp(state.branch, target);
+	wt_status_state_free_buffers(&state);
 	return found_rebase;
 }
 
@@ -366,15 +365,15 @@ int is_worktree_being_bisected(const struct worktree *wt,
 			       const char *target)
 {
 	struct wt_status_state state;
-	int found_rebase;
+	int found_bisect;
 
 	memset(&state, 0, sizeof(state));
-	found_rebase = wt_status_check_bisect(wt, &state) &&
-		state.branch &&
-		starts_with(target, "refs/heads/") &&
-		!strcmp(state.branch, target + strlen("refs/heads/"));
-	free(state.branch);
-	return found_rebase;
+	found_bisect = wt_status_check_bisect(wt, &state) &&
+		       state.branch &&
+		       skip_prefix(target, "refs/heads/", &target) &&
+		       !strcmp(state.branch, target);
+	wt_status_state_free_buffers(&state);
+	return found_bisect;
 }
 
 /*
@@ -537,18 +536,10 @@ void strbuf_worktree_ref(const struct worktree *wt,
 	strbuf_addstr(sb, refname);
 }
 
-const char *worktree_ref(const struct worktree *wt, const char *refname)
-{
-	static struct strbuf sb = STRBUF_INIT;
-
-	strbuf_reset(&sb);
-	strbuf_worktree_ref(wt, &sb, refname);
-	return sb.buf;
-}
-
 int other_head_refs(each_ref_fn fn, void *cb_data)
 {
 	struct worktree **worktrees, **p;
+	struct strbuf refname = STRBUF_INIT;
 	int ret = 0;
 
 	worktrees = get_worktrees();
@@ -560,15 +551,18 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 		if (wt->is_current)
 			continue;
 
+		strbuf_reset(&refname);
+		strbuf_worktree_ref(wt, &refname, "HEAD");
 		if (!refs_read_ref_full(get_main_ref_store(the_repository),
-					worktree_ref(wt, "HEAD"),
+					refname.buf,
 					RESOLVE_REF_READING,
 					&oid, &flag))
-			ret = fn(worktree_ref(wt, "HEAD"), &oid, flag, cb_data);
+			ret = fn(refname.buf, &oid, flag, cb_data);
 		if (ret)
 			break;
 	}
 	free_worktrees(worktrees);
+	strbuf_release(&refname);
 	return ret;
 }
 
