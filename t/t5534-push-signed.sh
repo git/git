@@ -282,10 +282,9 @@ test_expect_success GPG 'failed atomic push does not execute GPG' '
 	EOF
 	test_must_fail env PATH="$TRASH_DIRECTORY:$PATH" git push \
 			--signed --atomic --porcelain \
-			dst noop ff noff >out 2>&1 &&
+			dst noop ff noff >out 2>err &&
 
-	test_i18ngrep ! "gpg failed to sign" out &&
-	sed -n -e "/^To dst/,$ p" out >actual &&
+	test_i18ngrep ! "gpg failed to sign" err &&
 	cat >expect <<-EOF &&
 	To dst
 	=	refs/heads/noop:refs/heads/noop	[up to date]
@@ -293,7 +292,7 @@ test_expect_success GPG 'failed atomic push does not execute GPG' '
 	!	refs/heads/noff:refs/heads/noff	[rejected] (non-fast-forward)
 	Done
 	EOF
-	test_i18ncmp expect actual
+	test_cmp expect out
 '
 
 test_done
