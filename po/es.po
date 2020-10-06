@@ -143,7 +143,7 @@ msgstr "revertir conjunto de cambios en stage a la versión de HEAD"
 
 #: add-interactive.c:1008
 msgid "pick hunks and update selectively"
-msgstr "elegir hunks y actualizar de forma selectiva"
+msgstr "elegir fragmentos y actualizar de forma selectiva"
 
 #: add-interactive.c:1010
 msgid "view diff between HEAD and index"
@@ -168,7 +168,7 @@ msgstr "selecciona un rango de objetos"
 
 #: add-interactive.c:1026
 msgid "select multiple ranges"
-msgstr "selecciona multiples rangos"
+msgstr "selecciona múltiples rangos"
 
 #: add-interactive.c:1028 add-interactive.c:1073
 msgid "select item based on unique prefix"
@@ -247,7 +247,7 @@ msgstr "¿Agregar al stage [y,n,q,a,d%s,?]? "
 #: add-patch.c:37 git-add--interactive.perl:1433
 #, c-format, perl-format
 msgid "Stage this hunk [y,n,q,a,d%s,?]? "
-msgstr "¿Aplicar stage a este hunk [y,n,q,a,d%s,?]? "
+msgstr "¿Aplicar stage a este fragmento [y,n,q,a,d%s,?]? "
 
 #: add-patch.c:39
 msgid ""
@@ -290,7 +290,7 @@ msgstr "¿Agregar al stash [y,n,q,a,d%s,?]? "
 #: add-patch.c:59 git-add--interactive.perl:1439
 #, c-format, perl-format
 msgid "Stash this hunk [y,n,q,a,d%s,?]? "
-msgstr "¿Aplicar stash a este hunk [y,n,q,a,d%s,?]? "
+msgstr "¿Aplicar stash a este fragmento [y,n,q,a,d%s,?]? "
 
 #: add-patch.c:61
 msgid ""
@@ -332,7 +332,7 @@ msgstr "¿Quitar adición al stage [y,n,q,a,d%s,?]? "
 #: add-patch.c:83 git-add--interactive.perl:1445
 #, c-format, perl-format
 msgid "Unstage this hunk [y,n,q,a,d%s,?]? "
-msgstr "¿Sacar este hunk del stage [y,n,q,a,d%s,?]? "
+msgstr "¿Sacar este fragmento del stage [y,n,q,a,d%s,?]? "
 
 #: add-patch.c:85
 msgid ""
@@ -375,7 +375,7 @@ msgstr "¿Aplicar adición al índice [y,n,q,a,d%s,?]? "
 #: add-patch.c:106 git-add--interactive.perl:1451
 #, c-format, perl-format
 msgid "Apply this hunk to index [y,n,q,a,d%s,?]? "
-msgstr "¿Aplicar este hunk al índice [y,n,q,a,d%s,?]? "
+msgstr "¿Aplicar este fragmento al índice [y,n,q,a,d%s,?]? "
 
 #: add-patch.c:108 add-patch.c:176 add-patch.c:221
 msgid ""
@@ -421,7 +421,7 @@ msgstr "¿Descartar adición del árbol de trabajo [y,n,q,a,d%s,?]? "
 #: git-add--interactive.perl:1475
 #, c-format, perl-format
 msgid "Discard this hunk from worktree [y,n,q,a,d%s,?]? "
-msgstr "¿Descartar este hunk del árbol de trabajo [y,n,q,a,d%s,?]? "
+msgstr "¿Descartar este fragmento del árbol de trabajo [y,n,q,a,d%s,?]? "
 
 #: add-patch.c:131 add-patch.c:154 add-patch.c:199
 msgid ""
@@ -501,7 +501,7 @@ msgstr "¿Aplicar adición al índice y al árbol de trabajo [y,n,q,a,d%s,?]? "
 #: add-patch.c:174 add-patch.c:219 git-add--interactive.perl:1469
 #, c-format, perl-format
 msgid "Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "
-msgstr "¿Aplicar este hunk al índice y árbol de trabajo [y,n,q,a,d,/%s,?]? "
+msgstr "¿Aplicar este fragmento al índice y árbol de trabajo [y,n,q,a,d,/%s,?]? "
 
 #: add-patch.c:179
 msgid ""
@@ -534,12 +534,12 @@ msgstr ""
 #: add-patch.c:328
 #, c-format
 msgid "could not parse hunk header '%.*s'"
-msgstr "no se puede analizar hunk header '%.*s'"
+msgstr "no se puede analizar fragmento header '%.*s'"
 
 #: add-patch.c:347 add-patch.c:351
 #, c-format
 msgid "could not parse colored hunk header '%.*s'"
-msgstr "no se puede analizar hunk header '%.*s'"
+msgstr "no se puede analizar fragmento header '%.*s'"
 
 #: add-patch.c:405
 msgid "could not parse diff"
@@ -590,7 +590,7 @@ msgstr ""
 
 #: add-patch.c:1067 git-add--interactive.perl:1114
 msgid "Manual hunk edit mode -- see bottom for a quick guide.\n"
-msgstr "Modo de edición manual de hunk -- vea abajo para una guía rápida.\n"
+msgstr "Modo de edición manual de fragmento -- vea abajo para una guía rápida.\n"
 
 #: add-patch.c:1071
 #, c-format
@@ -618,7 +618,7 @@ msgstr ""
 
 #: add-patch.c:1118
 msgid "could not parse hunk header"
-msgstr "no se puede analizar hunk header"
+msgstr "no se puede analizar fragmento header"
 
 #: add-patch.c:1163
 msgid "'git apply --cached' failed"
@@ -645,7 +645,7 @@ msgstr ""
 
 #: add-patch.c:1275
 msgid "The selected hunks do not apply to the index!"
-msgstr "¡Los hunks seleccionados no aplican al índice!"
+msgstr "¡Los fragmentos seleccionados no aplican al índice!"
 
 #: add-patch.c:1276 git-add--interactive.perl:1345
 msgid "Apply them to the worktree anyway? "
@@ -679,39 +679,39 @@ msgstr ""
 
 #: add-patch.c:1463 add-patch.c:1473
 msgid "No previous hunk"
-msgstr "No el anterior hunk"
+msgstr "No el anterior fragmento"
 
 #: add-patch.c:1468 add-patch.c:1478
 msgid "No next hunk"
-msgstr "No el siguiente hunk"
+msgstr "No hay fragmento siguiente"
 
 #: add-patch.c:1484
 msgid "No other hunks to goto"
-msgstr "No hay más pedazos para el ir"
+msgstr "No hay más fragmentos para ir"
 
 #: add-patch.c:1495 git-add--interactive.perl:1594
 msgid "go to which hunk (<ret> to see more)? "
-msgstr "¿a que hunk ir (<enter> para ver más)? "
+msgstr "¿a qué fragmento ir (<enter> para ver más)? "
 
 #: add-patch.c:1496 git-add--interactive.perl:1596
 msgid "go to which hunk? "
-msgstr "¿a que hunk ir? "
+msgstr "¿a qué fragmento ir? "
 
 #: add-patch.c:1507
 #, c-format
 msgid "Invalid number: '%s'"
-msgstr "Numero inválido: '%s'"
+msgstr "Número inválido: '%s'"
 
 #: add-patch.c:1512
 #, c-format
 msgid "Sorry, only %d hunk available."
 msgid_plural "Sorry, only %d hunks available."
-msgstr[0] "Lo siento, solo %d hunk disponible."
-msgstr[1] "Lo siento, solo %d hunks disponibles."
+msgstr[0] "Lo siento, sólo %d fragmentos disponible."
+msgstr[1] "Lo siento, sólo %d fragmentos disponibles."
 
 #: add-patch.c:1521
 msgid "No other hunks to search"
-msgstr "No hay más pedazos para buscar"
+msgstr "No hay más fragmentos para buscar"
 
 #: add-patch.c:1527 git-add--interactive.perl:1640
 msgid "search for regex? "
@@ -724,20 +724,20 @@ msgstr "Regexp para la búsqueda mal formado %s: %s"
 
 #: add-patch.c:1559
 msgid "No hunk matches the given pattern"
-msgstr "No hay hunks que concuerden con el patrón entregado."
+msgstr "No hay fragmentos que concuerden con el patrón entregado."
 
 #: add-patch.c:1566
 msgid "Sorry, cannot split this hunk"
-msgstr "Perdón, no se puede dividir este pedazo"
+msgstr "Perdón, no se puede dividir este fragmento"
 
 #: add-patch.c:1570
 #, c-format
 msgid "Split into %d hunks."
-msgstr "Cortar en %d hunk."
+msgstr "Cortar en %d fragmentos."
 
 #: add-patch.c:1574
 msgid "Sorry, cannot edit this hunk"
-msgstr "Perdón, no se puede editar este pedazo"
+msgstr "Perdón, no se puede editar este fragmento"
 
 #: add-patch.c:1625
 msgid "'git apply' failed"
@@ -938,7 +938,7 @@ msgstr "modo inválido en la línea %d: %s"
 #: apply.c:1282
 #, c-format
 msgid "inconsistent header lines %d and %d"
-msgstr "header inconsistente en las líneas %d y %d"
+msgstr "cabecera inconsistente en las líneas %d y %d"
 
 #: apply.c:1372
 #, c-format
@@ -970,7 +970,7 @@ msgstr "recount: línea inesperada: %.*s"
 #: apply.c:1550
 #, c-format
 msgid "patch fragment without header at line %d: %.*s"
-msgstr "fragmento de parche sin header en la línea %d: %.*s"
+msgstr "fragmento de parche sin cabecera en la línea %d: %.*s"
 
 #: apply.c:1753
 msgid "new file depends on old contents"
@@ -1313,12 +1313,12 @@ msgstr "no se puede abrir %s"
 #: apply.c:4575
 #, c-format
 msgid "Hunk #%d applied cleanly."
-msgstr "Hunk #%d aplicado limpiamente."
+msgstr "Fragmento #%d aplicado limpiamente."
 
 #: apply.c:4579
 #, c-format
 msgid "Rejected hunk #%d."
-msgstr "Hunk #%d rechazado."
+msgstr "Fragmento #%d rechazado."
 
 #: apply.c:4698
 #, c-format
@@ -1391,7 +1391,7 @@ msgstr "en lugar de aplicar el parche, mostrar diffstat para la entrada"
 
 #: apply.c:4983
 msgid "show number of added and deleted lines in decimal notation"
-msgstr "mostrar el numero de líneas agregadas y eliminadas en notación decimal"
+msgstr "mostrar el número de líneas agregadas y eliminadas en notación decimal"
 
 #: apply.c:4985
 msgid "instead of applying the patch, output a summary for the input"
@@ -1465,11 +1465,11 @@ msgstr "no espera al menos una línea del contexto"
 
 #: apply.c:5022
 msgid "leave the rejected hunks in corresponding *.rej files"
-msgstr "dejar los hunks rechazados en los archivos *.rej correspontientes"
+msgstr "dejar los fragmentos rechazados en los archivos *.rej correspontientes"
 
 #: apply.c:5024
 msgid "allow overlapping hunks"
-msgstr "permitir solapamiento de hunks"
+msgstr "permitir solapamiento de fragmentos"
 
 #: apply.c:5025 builtin/add.c:323 builtin/check-ignore.c:22
 #: builtin/commit.c:1366 builtin/count-objects.c:98 builtin/fsck.c:775
@@ -1485,7 +1485,7 @@ msgstr ""
 
 #: apply.c:5030
 msgid "do not trust the line counts in the hunk headers"
-msgstr "no confiar en el conteo de líneas en los headers del hunk"
+msgstr "no confiar en el conteo de líneas en las cabeceras del fragmento"
 
 #: apply.c:5032 builtin/am.c:2247
 msgid "root"
@@ -2016,7 +2016,7 @@ msgstr "largo del algoritmo hash desconocido"
 #: bundle.c:84
 #, c-format
 msgid "unrecognized header: %s%s (%d)"
-msgstr "header no reconocido %s%s (%d)"
+msgstr "cabecera no reconocida %s%s (%d)"
 
 #: bundle.c:110 rerere.c:480 rerere.c:690 sequencer.c:2270 sequencer.c:3034
 #: builtin/commit.c:814
@@ -2909,7 +2909,7 @@ msgstr "Verificando conectividad"
 
 #: connected.c:121
 msgid "Could not run 'git rev-list'"
-msgstr "No se pudo correr 'git rev-list'"
+msgstr "No se pudo ejecutar 'git rev-list'"
 
 #: connected.c:141
 msgid "failed write to rev-list"
@@ -3159,7 +3159,7 @@ msgstr "falló al cargar isla de regex para '%s': %s"
 #: delta-islands.c:390
 #, c-format
 msgid "island regex from config has too many capture groups (max=%d)"
-msgstr "regex isla de config tiene muchos grupos de captura (max=%d)"
+msgstr "regex isla de config tiene demasiados grupos de captura (max=%d)"
 
 #: delta-islands.c:467
 #, c-format
@@ -3592,15 +3592,15 @@ msgstr "ignora cambios cuyas líneas son todas en blanco"
 
 #: diff.c:5466
 msgid "heuristic to shift diff hunk boundaries for easy reading"
-msgstr "heurística para cambiar los límites de hunk para una fácil lectura"
+msgstr "heurística para cambiar los límites de fragmento para una fácil lectura"
 
 #: diff.c:5469
 msgid "generate diff using the \"patience diff\" algorithm"
-msgstr "genera un diff usando algoritmo \"patience diff\""
+msgstr "genera un diff usando  el algoritmo \"patience diff\""
 
 #: diff.c:5473
 msgid "generate diff using the \"histogram diff\" algorithm"
-msgstr "genera un diff usando algoritmo \"histogram diff\""
+msgstr "genera un diff usando el algoritmo \"histogram diff\""
 
 #: diff.c:5475
 msgid "<algorithm>"
@@ -3769,12 +3769,12 @@ msgstr "Output a un archivo específico"
 #: diff.c:6205
 msgid "inexact rename detection was skipped due to too many files."
 msgstr ""
-"detección de cambio de nombre inexacta fue saltada por haber muchos archivos."
+"detección de cambio de nombre inexacta fue saltada por haber demasiados archivos."
 
 #: diff.c:6208
 msgid "only found copies from modified paths due to too many files."
 msgstr ""
-"solo se encontraron copias de rutas modificadas por haber muchos archivos."
+"solo se encontraron copias de rutas modificadas por haber demasiados archivos."
 
 #: diff.c:6211
 #, c-format
@@ -3879,7 +3879,7 @@ msgstr "no se pudo configurar GIT_DIR a '%s'"
 #: exec-cmd.c:363
 #, c-format
 msgid "too many args to run %s"
-msgstr "demasiados argumentos para correr %s"
+msgstr "demasiados argumentos para ejecutar %s"
 
 #: fetch-pack.c:152
 msgid "git fetch-pack: expected shallow list"
@@ -3976,7 +3976,7 @@ msgstr "fetch-pack: no se puede extraer un demultiplexor de banda lateral"
 
 #: fetch-pack.c:829
 msgid "protocol error: bad pack header"
-msgstr "error de protocolo: paquete de header erróneo"
+msgstr "error de protocolo: paquete de cabecera erróneo"
 
 #: fetch-pack.c:910
 #, c-format
@@ -4058,7 +4058,7 @@ msgstr "no se puede escribir request al remoto"
 #: fetch-pack.c:1304
 #, c-format
 msgid "error reading section header '%s'"
-msgstr "error leyendo sección header '%s'"
+msgstr "error leyendo sección cabecera '%s'"
 
 #: fetch-pack.c:1310
 #, c-format
@@ -5523,7 +5523,7 @@ msgstr "no es posible agregar '%s' al index"
 #: read-cache.c:805
 #, c-format
 msgid "unable to stat '%s'"
-msgstr "incapaz de correr stat en '%s'"
+msgstr "incapaz de ejecutar stat en '%s'"
 
 #: read-cache.c:1330
 #, c-format
@@ -6530,7 +6530,7 @@ msgstr "falló al hacer flush '%s'"
 #: rerere.c:503 rerere.c:1039
 #, c-format
 msgid "could not parse conflict hunks in '%s'"
-msgstr "no se pudo analizar hunks en conflicto en '%s'"
+msgstr "no se pudieron analizar fragmentos en conflicto en '%s'"
 
 #: rerere.c:684
 #, c-format
@@ -7837,12 +7837,12 @@ msgstr "archivo de objeto %s está vacío"
 #: sha1-file.c:1274 sha1-file.c:2454
 #, c-format
 msgid "corrupt loose object '%s'"
-msgstr "objeto perdido corrupto '%s'"
+msgstr "objeto suelto corrupto '%s'"
 
 #: sha1-file.c:1276 sha1-file.c:2458
 #, c-format
 msgid "garbage at end of loose object '%s'"
-msgstr "basura al final del objeto perdido '%s'"
+msgstr "basura al final del objeto suelto '%s'"
 
 #: sha1-file.c:1318
 msgid "invalid object type"
@@ -7851,22 +7851,22 @@ msgstr "tipo de objeto inválido"
 #: sha1-file.c:1402
 #, c-format
 msgid "unable to unpack %s header with --allow-unknown-type"
-msgstr "no es posible desempacar header %s con --allow-unknown-type"
+msgstr "no es posible desempacar cabecera %s con --allow-unknown-type"
 
 #: sha1-file.c:1405
 #, c-format
 msgid "unable to unpack %s header"
-msgstr "incapaz de desempaquetar header %s"
+msgstr "incapaz de desempaquetar cabecera %s"
 
 #: sha1-file.c:1411
 #, c-format
 msgid "unable to parse %s header with --allow-unknown-type"
-msgstr "no es posible analizar header %s con --allow-unknown-type"
+msgstr "no es posible analizar cabecera %s con --allow-unknown-type"
 
 #: sha1-file.c:1414
 #, c-format
 msgid "unable to parse %s header"
-msgstr "incapaz de analizar header %s"
+msgstr "incapaz de analizar cabecera %s"
 
 #: sha1-file.c:1640
 #, c-format
@@ -7881,7 +7881,7 @@ msgstr "reemplazo %s no encontrado para %s"
 #: sha1-file.c:1648
 #, c-format
 msgid "loose object %s (stored in %s) is corrupt"
-msgstr "objeto perdido %s (guardado en %s) está corrompido"
+msgstr "objeto suelto %s (guardado en %s) está corrompido"
 
 #: sha1-file.c:1652
 #, c-format
@@ -8002,12 +8002,12 @@ msgstr "no es posible hacer mmap a %s"
 #: sha1-file.c:2494
 #, c-format
 msgid "unable to unpack header of %s"
-msgstr "incapaz de desempaquetar header de %s"
+msgstr "incapaz de desempaquetar cabecera de %s"
 
 #: sha1-file.c:2500
 #, c-format
 msgid "unable to parse header of %s"
-msgstr "incapaz de analizar header de %s"
+msgstr "incapaz de analizar cabecera de %s"
 
 #: sha1-file.c:2511
 #, c-format
@@ -9019,7 +9019,7 @@ msgstr "carácter inválido en el nombre del host"
 
 #: urlmatch.c:292 urlmatch.c:303
 msgid "invalid port number"
-msgstr "numero de puerto inválido"
+msgstr "número de puerto inválido"
 
 #: urlmatch.c:371
 msgid "invalid '..' path segment"
@@ -9688,7 +9688,7 @@ msgstr "selección interactiva"
 
 #: builtin/add.c:326 builtin/checkout.c:1533 builtin/reset.c:308
 msgid "select hunks interactively"
-msgstr "elegir hunks de forma interactiva"
+msgstr "seleccionar fragmentos de forma interactiva"
 
 #: builtin/add.c:327
 msgid "edit current diff and apply"
@@ -10015,7 +10015,7 @@ msgid ""
 "already introduced the same changes; you might want to skip this patch."
 msgstr ""
 "Sin cambios - ¿olvidaste usar 'git add'?\n"
-"Si no hay nada en el área de stage, las posibilidad es que algo mas\n"
+"Si no hay nada en el área de stage, las posibilidad es que algo más\n"
 "ya haya introducido el mismo cambio; tal vez quieras omitir este parche."
 
 #: builtin/am.c:1821
@@ -11660,7 +11660,7 @@ msgstr ""
 #: builtin/checkout.c:1167
 #, c-format
 msgid "'%s' matched multiple (%d) remote tracking branches"
-msgstr "'%s' concordó con multiples (%d) ramas de rastreo remoto"
+msgstr "'%s' concordó con múltiples (%d) ramas de rastreo remoto"
 
 #: builtin/checkout.c:1233
 msgid "only one reference expected"
@@ -11998,7 +11998,7 @@ msgid ""
 "           - (empty) select nothing\n"
 msgstr ""
 "Ayuda rápida:\n"
-"1          - selecciona un objeto por numero\n"
+"1          - selecciona un objeto por número\n"
 "foo        - selecciona un objeto basado en un prefijo único\n"
 "           - (vacío) no elegir nada\n"
 
@@ -12061,7 +12061,7 @@ msgid ""
 msgstr ""
 "clean               - comenzar la limpieza\n"
 "filtrar por patrón   - excluye objetos del borrado \n"
-"elegir por números   - selecciona objetos a ser borrados por numero\n"
+"elegir por números   - selecciona objetos a ser borrados por número\n"
 "preguntar cada uno     - confirmar cada borrado (como \"rm -i\")\n"
 "quit                - parar limpieza\n"
 "help                - esta ventana\n"
@@ -12170,7 +12170,7 @@ msgstr "inicializar submódulos en el clonado"
 
 #: builtin/clone.c:110
 msgid "number of submodules cloned in parallel"
-msgstr "numero de submódulos clonados en paralelo"
+msgstr "número de submódulos clonados en paralelo"
 
 #: builtin/clone.c:111 builtin/init-db.c:551
 msgid "template-directory"
@@ -12228,7 +12228,7 @@ msgstr "crear un clon superficial desde el tiempo específico"
 #: builtin/clone.c:129 builtin/fetch.c:173 builtin/fetch.c:196
 #: builtin/pull.c:214 builtin/pull.c:239 builtin/rebase.c:1304
 msgid "revision"
-msgstr "revision"
+msgstr "revisión"
 
 #: builtin/clone.c:130 builtin/fetch.c:174 builtin/pull.c:215
 msgid "deepen history of shallow clone, excluding rev"
@@ -12405,7 +12405,7 @@ msgstr "repositorio '%s' no existe"
 #: builtin/clone.c:1011 builtin/fetch.c:1794
 #, c-format
 msgid "depth %s is not a positive number"
-msgstr "profundidad %s no es un numero positivo"
+msgstr "profundidad %s no es un número positivo"
 
 #: builtin/clone.c:1021
 #, c-format
@@ -12448,15 +12448,15 @@ msgstr ""
 
 #: builtin/clone.c:1164
 msgid "--depth is ignored in local clones; use file:// instead."
-msgstr "--depth es ignorada en clonaciones locales; usa file:// más bien."
+msgstr "--depth es ignorada en clonaciones locales; usa file:// en su lugar."
 
 #: builtin/clone.c:1166
 msgid "--shallow-since is ignored in local clones; use file:// instead."
-msgstr "--shallow-since es ignorado en el clon local; use file:// ."
+msgstr "--shallow-since es ignorado en el clon local; use file:// en su lugar."
 
 #: builtin/clone.c:1168
 msgid "--shallow-exclude is ignored in local clones; use file:// instead."
-msgstr "--shallow-exclude es ignorado en clones locales; use file://."
+msgstr "--shallow-exclude es ignorado en clones locales; use file:// en su lugar."
 
 #: builtin/clone.c:1170
 msgid "--filter is ignored in local clones; use file:// instead."
@@ -12485,7 +12485,7 @@ msgstr "git column [<opciones>]"
 
 #: builtin/column.c:27
 msgid "lookup config vars"
-msgstr "revisa las variables de configuraciones"
+msgstr "revisa las variables de configuración"
 
 #: builtin/column.c:28 builtin/column.c:29
 msgid "layout to use"
@@ -13011,7 +13011,7 @@ msgstr "calcular todos los valores delante/atrás"
 
 #: builtin/commit.c:1376
 msgid "version"
-msgstr "version"
+msgstr "versión"
 
 #: builtin/commit.c:1376 builtin/commit.c:1535 builtin/push.c:549
 #: builtin/worktree.c:722
@@ -13077,7 +13077,7 @@ msgstr ""
 
 #: builtin/commit.c:1499
 msgid "suppress summary after successful commit"
-msgstr "suprime summary tras un commit exitoso"
+msgstr "suprime resumen tras un commit exitoso"
 
 #: builtin/commit.c:1500
 msgid "show diff in commit message template"
@@ -13354,7 +13354,7 @@ msgstr "valor es \"true\" o \"false\""
 
 #: builtin/config.c:150
 msgid "value is decimal number"
-msgstr "valor es un numero decimal"
+msgstr "valor es un número decimal"
 
 #: builtin/config.c:151
 msgid "value is --bool or --int"
@@ -13480,7 +13480,7 @@ msgid ""
 "extension worktreeConfig is enabled. Please read \"CONFIGURATION FILE\"\n"
 "section in \"git help worktree\" for details"
 msgstr ""
-"--worktree no puede ser usado con multiples árboles de trabajo a menos que "
+"--worktree no puede ser usado con múltiples árboles de trabajo a menos que "
 "la\n"
 "extensión worktreeConfig esté habilitada. Por favor lea \"CONFIGURATION FILE"
 "\"\n"
@@ -14798,7 +14798,7 @@ msgstr ""
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
-"Hay muchos objetos sueltos inalcanzables; ejecute 'git prune' para "
+"Hay demasiados objetos sueltos inalcanzables; ejecute 'git prune' para "
 "eliminarlos."
 
 #: builtin/grep.c:30
@@ -15792,7 +15792,7 @@ msgstr "%s: modo cover from description inválido"
 
 #: builtin/log.c:842
 msgid "format.headers without value"
-msgstr "formate.headers. sin valor"
+msgstr "format.headers sin valor"
 
 #: builtin/log.c:957
 msgid "name of output directory is too long"
@@ -16876,7 +16876,7 @@ msgstr ""
 
 #: builtin/multi-pack-index.c:50 builtin/prune-packed.c:25
 msgid "too many arguments"
-msgstr "muchos argumentos"
+msgstr "demasiados argumentos"
 
 #: builtin/multi-pack-index.c:60
 msgid "--batch-size option is only for 'repack' subcommand"
@@ -17519,7 +17519,7 @@ msgstr "Contando objetos"
 #: builtin/pack-objects.c:2199
 #, c-format
 msgid "unable to parse object header of %s"
-msgstr "incapaz de analizar header del objeto %s"
+msgstr "incapaz de analizar cabecera del objeto %s"
 
 #: builtin/pack-objects.c:2269 builtin/pack-objects.c:2285
 #: builtin/pack-objects.c:2295
@@ -17601,11 +17601,11 @@ msgstr "no se puede abrir índice de paquetes"
 #: builtin/pack-objects.c:3155
 #, c-format
 msgid "loose object at %s could not be examined"
-msgstr "objeto perdido en %s no pudo ser examinado"
+msgstr "objeto suelto en %s no pudo ser examinado"
 
 #: builtin/pack-objects.c:3240
 msgid "unable to force loose object"
-msgstr "incapaz de forzar un objeto perdido"
+msgstr "incapaz de forzar un objeto suelto"
 
 #: builtin/pack-objects.c:3333
 #, c-format
@@ -17767,7 +17767,7 @@ msgstr "escribir un índice de bitmap si es posible"
 
 #: builtin/pack-objects.c:3531
 msgid "handling for missing objects"
-msgstr "manejo de objetos perdidos"
+msgstr "manejo de objetos faltantes"
 
 #: builtin/pack-objects.c:3534
 msgid "do not pack objects in promisor packfiles"
@@ -17842,7 +17842,7 @@ msgstr "empaquetar todo"
 
 #: builtin/pack-refs.c:17
 msgid "prune loose refs (default)"
-msgstr "recortar refs perdidos (default)"
+msgstr "recortar refs sueltos (default)"
 
 #: builtin/prune-packed.c:6
 msgid "git prune-packed [-n | --dry-run] [-q | --quiet]"
@@ -19797,7 +19797,7 @@ msgstr "empaquetar todo en un único paquete"
 
 #: builtin/repack.c:296
 msgid "same as -a, and turn unreachable objects loose"
-msgstr "lo mismo que -a, y pierde objetos inaccesibles"
+msgstr "lo mismo que -a, y pierde objetos inalcanzables"
 
 #: builtin/repack.c:299
 msgid "remove redundant packs, and run git-prune-packed"
@@ -19902,7 +19902,7 @@ msgstr ""
 "WARNING: archivo. Pero la operación falló, y el intento\n"
 "WARNING: de renombrarlos a sus nombres originales\n"
 "WARNING: también falló.\n"
-"WARNING: Por favor renombralos en %s manualmente:\n"
+"WARNING: Por favor renómbralos en %s manualmente:\n"
 
 #: builtin/repack.c:536
 #, c-format
@@ -20006,7 +20006,7 @@ msgstr "mktree no devolvió un nombre de objeto"
 #: builtin/replace.c:298
 #, c-format
 msgid "unable to fstat %s"
-msgstr "incapaz de correr fstat %s"
+msgstr "incapaz de ejecutar fstat %s"
 
 #: builtin/replace.c:303
 msgid "unable to write object to database"
@@ -20021,7 +20021,7 @@ msgstr "nombre de objeto no válido: '%s'"
 #: builtin/replace.c:326
 #, c-format
 msgid "unable to get object type for %s"
-msgstr "no es obtener tipo de objeto para %s"
+msgstr "no es posible obtener tipo de objeto para %s"
 
 #: builtin/replace.c:342
 msgid "editing object file failed"
@@ -22639,8 +22639,8 @@ msgid ""
 "\n"
 "\tchmod 0700 %s"
 msgstr ""
-"Los permisos en tu directorio de socket son demasiado flojos; otros\n"
-"usuarios pueden leer sus credenciales almacenadas en caché. Considera "
+"Los permisos en tu directorio de socket son demasiado débiles; otros\n"
+"usuarios pueden leer tus credenciales almacenadas en caché. Considera "
 "ejecutar:\n"
 "\n"
 "\tchmod 0700 %s"
@@ -22930,7 +22930,7 @@ msgstr "no se puede desinflar el request; zlib end error %d"
 #: remote-curl.c:1029
 #, c-format
 msgid "%d bytes of length header were received"
-msgstr "%d bytes de header de longitud fueron recibidos"
+msgstr "%d bytes de longitud de cabecera fueron recibidos"
 
 #: remote-curl.c:1031
 #, c-format
@@ -24507,7 +24507,7 @@ msgstr ""
 #: git-add--interactive.perl:1113
 #, perl-format
 msgid "failed to open hunk edit file for writing: %s"
-msgstr "falló al abrir el archivo de adición del hunk para escritura: %s"
+msgstr "falló al abrir el archivo de edición del fragmento para escritura: %s"
 
 #: git-add--interactive.perl:1120
 #, perl-format
@@ -24525,7 +24525,7 @@ msgstr ""
 #: git-add--interactive.perl:1142
 #, perl-format
 msgid "failed to open hunk edit file for reading: %s"
-msgstr "falló al abrir el archivo de edición del hunk para lectura: %s"
+msgstr "falló al abrir el archivo de edición del fragmento para lectura: %s"
 
 #: git-add--interactive.perl:1250
 msgid ""
@@ -24665,7 +24665,7 @@ msgstr ""
 
 #: git-add--interactive.perl:1344
 msgid "The selected hunks do not apply to the index!\n"
-msgstr "¡Los hunks seleccionados no aplican al índice!\n"
+msgstr "¡Los fragmentos seleccionados no aplican al índice!\n"
 
 #: git-add--interactive.perl:1359
 #, perl-format
@@ -24690,27 +24690,27 @@ msgstr "¿Aplicar adición al árbol de trabajo [y,n,q,a,d%s,?]? "
 #: git-add--interactive.perl:1481
 #, perl-format
 msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
-msgstr "¿Aplicar este hunk al árbol de trabajo [y,n,q,a,d,/%s,?]? "
+msgstr "¿Aplicar este fragmento al árbol de trabajo [y,n,q,a,d,/%s,?]? "
 
 #: git-add--interactive.perl:1587
 msgid "No other hunks to goto\n"
-msgstr "No hay más pedazos para el ir\n"
+msgstr "No hay más fragmentos para el ir\n"
 
 #: git-add--interactive.perl:1605
 #, perl-format
 msgid "Invalid number: '%s'\n"
-msgstr "Numero inválido: '%s'\n"
+msgstr "Número inválido: '%s'\n"
 
 #: git-add--interactive.perl:1610
 #, perl-format
 msgid "Sorry, only %d hunk available.\n"
 msgid_plural "Sorry, only %d hunks available.\n"
-msgstr[0] "Lo siento, solo %d hunk disponible.\n"
-msgstr[1] "Lo siento, solo %d hunks disponibles.\n"
+msgstr[0] "Lo siento, solo %d fragmento disponible.\n"
+msgstr[1] "Lo siento, solo %d fragmentos disponibles.\n"
 
 #: git-add--interactive.perl:1636
 msgid "No other hunks to search\n"
-msgstr "No hay más pedazos para buscar\n"
+msgstr "No hay más fragmentos para buscar\n"
 
 #: git-add--interactive.perl:1653
 #, perl-format
@@ -24719,30 +24719,30 @@ msgstr "Regexp para la búsqueda mal formado %s: %s\n"
 
 #: git-add--interactive.perl:1663
 msgid "No hunk matches the given pattern\n"
-msgstr "No hay hunks que concuerden con el patrón entregado.\n"
+msgstr "No hay fragmentos que concuerden con el patrón entregado.\n"
 
 #: git-add--interactive.perl:1675 git-add--interactive.perl:1697
 msgid "No previous hunk\n"
-msgstr "No el anterior hunk\n"
+msgstr "No hay fragmento anteriore\n"
 
 #: git-add--interactive.perl:1684 git-add--interactive.perl:1703
 msgid "No next hunk\n"
-msgstr "No el siguiente hunk\n"
+msgstr "No hay fragmento siguiente\n"
 
 #: git-add--interactive.perl:1709
 msgid "Sorry, cannot split this hunk\n"
-msgstr "Perdón, no se puede dividir este pedazo\n"
+msgstr "Perdón, no se puede dividir este fragmento\n"
 
 #: git-add--interactive.perl:1715
 #, perl-format
 msgid "Split into %d hunk.\n"
 msgid_plural "Split into %d hunks.\n"
-msgstr[0] "Cortar en %d hunk.\n"
-msgstr[1] "Cortar en  %d hunks.\n"
+msgstr[0] "Cortar en %d fragmento.\n"
+msgstr[1] "Cortar en %d fragmentos.\n"
 
 #: git-add--interactive.perl:1725
 msgid "Sorry, cannot edit this hunk\n"
-msgstr "Perdón, no se puede editar este pedazo\n"
+msgstr "Perdón, no se puede editar este fragmento\n"
 
 #. TRANSLATORS: please do not translate the command names
 #. 'status', 'update', 'revert', etc.
@@ -25316,7 +25316,7 @@ msgstr "¿Realmente deseas mandar %s?[y|N]: "
 
 #, c-format
 #~ msgid "Stage this hunk [y,n,a,q,d%s,?]? "
-#~ msgstr "¿Aplicar stage a este hunk [y,n,a,q,d%s,?]? "
+#~ msgstr "¿Aplicar stage a este fragmento [y,n,a,q,d%s,?]? "
 
 #~ msgid ""
 #~ "If the patch applies cleanly, the edited hunk will immediately be\n"
@@ -25453,7 +25453,7 @@ msgstr "¿Realmente deseas mandar %s?[y|N]: "
 #~ "--filter can only be used with the remote configured in extensions."
 #~ "partialClone"
 #~ msgstr ""
-#~ "--filter solo puede ser usado con el remoto configurado en extensions."
+#~ "--filter solo puede ser usado con el remoto configurado en extensiones."
 #~ "partialClone"
 
 #~ msgid "verify commit-msg hook"
