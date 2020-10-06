@@ -121,6 +121,12 @@ elif test "$1" = "--gc"
 then
 	shift
 	garbage_collect "$@"
+elif test "$1" == "--squash"
+then
+	L=notes/amlog &&
+	git notes --ref=$L prune &&
+	C=$(echo amlog | git commit-tree refs/$L^{tree}) &&
+	git update-ref refs/$L $C
 else
 	for msg
 	do
