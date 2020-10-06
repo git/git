@@ -5,12 +5,18 @@ version=$(git describe --exact) &&
 label=$(echo "$version" | sed -e 's|^v||') &&
 version=$(echo "$label" | sed -e 's|-|.|g') || exit
 
-make clean && make $j CFLAGS="-O2 -Wno-format-zero-length" dist &&
+TAR_DIST_EXTRA_OPTS="--owner=root:0 --group=root:0 --mode=u+rwX,og+rX,og-w"
+
+make clean &&
+make $j CFLAGS="-O2 -Wno-format-zero-length" \
+	TAR_DIST_EXTRA_OPTS="$TAR_DIST_EXTRA_OPTS" dist &&
 
 ASCIIDOC_NO_ROFF=YesPlease \
 ASCIIDOC8=YesPlease \
 MAN_BASE_URL="git-htmldocs/" \
-make $j dist-doc || exit
+make $j \
+	TAR_DIST_EXTRA_OPTS="$TAR_DIST_EXTRA_OPTS" \
+	dist-doc || exit
 # The above used to be
 # MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
 
