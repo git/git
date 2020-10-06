@@ -1688,6 +1688,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--submodule --submodule= --ignore-submodules
 			--indent-heuristic --no-indent-heuristic
 			--textconv --no-textconv
+			--patch --no-patch
 "
 
 _git_diff ()
@@ -2031,11 +2032,9 @@ _git_log ()
 			--no-walk --no-walk= --do-walk
 			--parents --children
 			--expand-tabs --expand-tabs= --no-expand-tabs
-			--patch
 			$merge
 			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
-			--patch --no-patch
 			"
 		return
 		;;
@@ -2938,7 +2937,7 @@ _git_show ()
 		;;
 	--*)
 		__gitcomp "--pretty= --format= --abbrev-commit --no-abbrev-commit
-			--oneline --show-signature --patch
+			--oneline --show-signature
 			--expand-tabs --expand-tabs= --no-expand-tabs
 			$__git_diff_common_options
 			"
