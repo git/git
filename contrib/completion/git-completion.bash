@@ -3020,7 +3020,10 @@ _git_stash ()
 		list,--*)
 			__gitcomp "--name-status --oneline --patch-with-stat"
 			;;
-		show,--*|branch,--*)
+		show,--*)
+			__gitcomp "$__git_diff_common_options"
+			;;
+		branch,--*)
 			;;
 		branch,*)
 			if [ $cword -eq 3 ]; then
