@@ -1028,6 +1028,10 @@ static void *threaded_second_pass(void *data)
 		struct object_entry *child_obj;
 		struct base_data *child;
 
+		counter_lock();
+		display_progress(progress, nr_resolved_deltas);
+		counter_unlock();
+
 		work_lock();
 		if (list_empty(&work_head)) {
 			/*
