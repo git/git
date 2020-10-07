@@ -40,6 +40,10 @@ OPTIONS
 +
 If not specified, the contents are restored from `HEAD` if `--staged` is
 given, otherwise from the index.
++
+As a special case, you may use `"A...B"` as a shortcut for the
+merge base of `A` and `B` if there is exactly one merge base. You can
+leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 -p::
 --patch::
