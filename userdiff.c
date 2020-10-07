@@ -200,7 +200,7 @@ PATTERNS("csharp",
 	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
 IPATTERN("css",
 	 "![:;][[:space:]]*$\n"
-	 "^[_a-z0-9].*$",
+	 "^[:[@.#]?[_a-z0-9].*$",
 	 /* -- */
 	 /*
 	  * This regex comes from W3C CSS specs. Should theoretically also
