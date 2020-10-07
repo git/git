@@ -59,6 +59,13 @@ test_expect_success PERL 'git checkout -p HEAD with change already staged' '
 	verify_state dir/foo head head
 '
 
+test_expect_success PERL 'git checkout -p HEAD^...' '
+	# the third n is to get out in case it mistakenly does not apply
+	test_write_lines n y n | git checkout -p HEAD^... &&
+	verify_saved_state bar &&
+	verify_state dir/foo parent parent
+'
+
 test_expect_success PERL 'git checkout -p HEAD^' '
 	# the third n is to get out in case it mistakenly does not apply
 	test_write_lines n y n | git checkout -p HEAD^ &&

@@ -60,6 +60,14 @@ test_expect_success PERL 'git restore -p --source=HEAD^' '
 	verify_state dir/foo parent index
 '
 
+test_expect_success PERL 'git restore -p --source=HEAD^...' '
+	set_state dir/foo work index &&
+	# the third n is to get out in case it mistakenly does not apply
+	test_write_lines n y n | git restore -p --source=HEAD^... &&
+	verify_saved_state bar &&
+	verify_state dir/foo parent index
+'
+
 test_expect_success PERL 'git restore -p handles deletion' '
 	set_state dir/foo work index &&
 	rm dir/foo &&
