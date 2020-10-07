@@ -888,18 +888,15 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 }
 
 /*
- * Walk from current node up
- * to top parent if necessary to deflate the node. In normal
- * situation, its parent node would be already deflated, so it just
- * needs to apply delta.
+ * Ensure that this node has been reconstructed and return its contents.
  *
- * In the worst case scenario, parent node is no longer deflated because
- * we're running out of delta_base_cache_limit; we need to re-deflate
- * parents, possibly up to the top base.
- *
- * All deflated objects here are subject to be freed if we exceed
- * delta_base_cache_limit, just like in find_unresolved_deltas(), we
- * just need to make sure the last node is not freed.
+ * In the typical and best case, this node would already be reconstructed
+ * (through the invocation to resolve_delta() in threaded_second_pass()) and it
+ * would not be pruned. However, if pruning of this node was necessary due to
+ * reaching delta_base_cache_limit, this function will find the closest
+ * ancestor with reconstructed data that has not been pruned (or if there is
+ * none, the ultimate base object), and reconstruct each node in the delta
+ * chain in order to generate the reconstructed data for this node.
  */
 static void *get_base_data(struct base_data *c)
 {
