@@ -1,0 +1,70 @@
+name: Monitor component updates
+
+# Git for Windows is a slightly modified subset of MSYS2. Some of its
+# components are maintained by Git for Windows, others by MSYS2. To help
+# keeping the former up to date, this workflow monitors the Atom/RSS feeds
+# and opens new tickets for each new component version.
+
+on:
+  schedule:
+    - cron: "23 8,11,14,17 * * *"
+  workflow_dispatch:
+
+env:
+  CHARACTER_LIMIT: "5000"
+  LAST_TIME: "48h"
+
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component:
+          - label: git
+            feed: https://github.com/git/git/tags.atom
+          - label: git-lfs
+            feed: https://github.com/git-lfs/git-lfs/tags.atom
+          - label: gcm-core
+            feed: https://github.com/microsoft/git-credential-manager-core/tags.atom
+          - label: tig
+            feed: https://github.com/jonas/tig/tags.atom
+          - label: cygwin
+            feed: https://github.com/cygwin/cygwin/releases.atom
+          - label: msys2-runtime-package
+            feed: https://github.com/msys2/MSYS2-packages/commits/master/msys2-runtime.atom
+          - label: msys2-runtime
+            feed: https://github.com/msys2/msys2-runtime/commits/HEAD.atom
+          - label: openssh
+            feed: https://github.com/openssh/openssh-portable/tags.atom
+          - label: openssl
+            feed: https://github.com/openssl/openssl/tags.atom
+          - label: gnutls
+            feed: https://gnutls.org/news.atom
+          - label: heimdal
+            feed: https://github.com/heimdal/heimdal/tags.atom
+          - label: git-sizer
+            feed: https://github.com/github/git-sizer/tags.atom
+          - label: gitflow
+            feed: https://github.com/petervanderdoes/gitflow-avh/tags.atom
+          - label: curl
+            feed: https://github.com/curl/curl/tags.atom
+          - label: gpg
+            feed: https://github.com/gpg/gnupg/releases.atom
+          - label: mintty
+            feed: https://github.com/mintty/mintty/releases.atom
+          - label: p7zip
+            feed: https://sourceforge.net/projects/p7zip/rss?path=/p7zip
+          - label: bash
+            feed: https://git.savannah.gnu.org/cgit/bash.git/atom/?h=master
+          - label: perl
+            feed: https://github.com/Perl/perl5/tags.atom
+      fail-fast: false
+    steps:
+      - uses: guilhem/rss-issues-action@e910ad1171d9b3ca3e55c3c08862aae06ce35697
+        with:
+          feed: ${{matrix.component.feed}}
+          prefix: "[New ${{matrix.component.label}} version]"
+          labels: component-update
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          characterLimit: ${{ env.CHARACTER_LIMIT }}
+          lastTime: ${{ env.LAST_TIME }}
