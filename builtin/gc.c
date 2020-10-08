@@ -737,8 +737,14 @@ static int dfs_on_ref(const char *refname,
 	commit = lookup_commit(the_repository, oid);
 	if (!commit)
 		return 0;
-	if (parse_commit(commit))
+	if (parse_commit(commit) ||
+	    commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
 		return 0;
+
+	data->num_not_in_graph++;
+
+	if (data->num_not_in_graph >= data->limit)
+		return 1;
 
 	commit_list_append(commit, &stack);
 
