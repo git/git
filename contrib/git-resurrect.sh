@@ -27,7 +27,7 @@ n,dry-run            don't recreate the branch"
 
 search_reflog () {
 	sed -ne 's~^\([^ ]*\) .*	checkout: moving from '"$1"' .*~\1~p' \
-                < "$GIT_DIR"/logs/HEAD
+		< "$GIT_DIR"/logs/HEAD
 }
 
 search_reflog_merges () {
@@ -41,9 +41,9 @@ _x40="[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]"
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
 search_merges () {
-        git rev-list --all --grep="Merge branch '$1'" \
-                --pretty=tformat:"%P %s" |
-        sed -ne "/^$_x40 \($_x40\) Merge .*/ {s//\1/p;$early_exit}"
+	git rev-list --all --grep="Merge branch '$1'" \
+		--pretty=tformat:"%P %s" |
+	sed -ne "/^$_x40 \($_x40\) Merge .*/ {s//\1/p;$early_exit}"
 }
 
 search_merge_targets () {
