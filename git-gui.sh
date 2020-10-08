@@ -720,7 +720,9 @@ proc rmsel_tag {text} {
 		-background [$text cget -background] \
 		-foreground [$text cget -foreground] \
 		-borderwidth 0
-	$text tag conf in_sel -background lightgray
+	$text tag conf in_sel\
+		-background $color::select_bg \
+		-foreground $color::select_fg
 	bind $text <Motion> break
 	return $text
 }
@@ -863,6 +865,7 @@ proc apply_config {} {
 			set NS ttk
 			bind [winfo class .] <<ThemeChanged>> [list InitTheme]
 			pave_toplevel .
+			color::sync_with_theme
 		}
 	}
 }
@@ -3272,7 +3275,7 @@ pack .vpane -anchor n -side top -fill both -expand 1
 textframe .vpane.files.workdir -height 100 -width 200
 tlabel .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
 	-background lightsalmon -foreground black
-ttext $ui_workdir -background white -foreground black \
+ttext $ui_workdir \
 	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
@@ -3294,7 +3297,7 @@ textframe .vpane.files.index -height 100 -width 200
 tlabel .vpane.files.index.title \
 	-text [mc "Staged Changes (Will Commit)"] \
 	-background lightgreen -foreground black
-ttext $ui_index -background white -foreground black \
+ttext $ui_index \
 	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
@@ -3321,7 +3324,9 @@ if {!$use_ttk} {
 
 foreach i [list $ui_index $ui_workdir] {
 	rmsel_tag $i
-	$i tag conf in_diff -background [$i tag cget in_sel -background]
+	$i tag conf in_diff \
+		-background $color::select_bg \
+		-foreground $color::select_fg
 }
 unset i
 
@@ -3429,7 +3434,7 @@ if {![is_enabled nocommit]} {
 }
 
 textframe .vpane.lower.commarea.buffer.frame
-ttext $ui_comm -background white -foreground black \
+ttext $ui_comm \
 	-borderwidth 1 \
 	-undo true \
 	-maxundo 20 \
@@ -3558,7 +3563,7 @@ bind .vpane.lower.diff.header.path <Button-1> {do_file_open $current_diff_path}
 #
 textframe .vpane.lower.diff.body
 set ui_diff .vpane.lower.diff.body.t
-ttext $ui_diff -background white -foreground black \
+ttext $ui_diff \
 	-borderwidth 0 \
 	-width 80 -height 5 -wrap none \
 	-font font_diff \
