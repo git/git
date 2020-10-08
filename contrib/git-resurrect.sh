@@ -37,19 +37,18 @@ search_reflog_merges () {
 	)
 }
 
-_x40="[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]"
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+oid_pattern=$(git hash-object --stdin </dev/null | sed -e 's/./[0-9a-f]/g')
 
 search_merges () {
 	git rev-list --all --grep="Merge branch '$1'" \
 		--pretty=tformat:"%P %s" |
-	sed -ne "/^$_x40 \($_x40\) Merge .*/ {s//\1/p;$early_exit}"
+	sed -ne "/^$oid_pattern \($oid_pattern\) Merge .*/ {s//\1/p;$early_exit}"
 }
 
 search_merge_targets () {
 	git rev-list --all --grep="Merge branch '[^']*' into $branch\$" \
 		--pretty=tformat:"%H %s" --all |
-	sed -ne "/^\($_x40\) Merge .*/ {s//\1/p;$early_exit} "
+	sed -ne "/^\($oid_pattern\) Merge .*/ {s//\1/p;$early_exit} "
 }
 
 dry_run=
