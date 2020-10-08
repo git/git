@@ -70,7 +70,7 @@ repository.
 +
 If this is reinitialization, the repository will be moved to the specified path.
 
--b <branch-name::
+-b <branch-name>::
 --initial-branch=<branch-name>::
 
 Use the specified name for the initial branch in the newly created repository.
