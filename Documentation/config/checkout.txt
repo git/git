@@ -16,3 +16,8 @@ will checkout the `<something>` branch on another remote,
 and by linkgit:git-worktree[1] when `git worktree add` refers to a
 remote branch. This setting might be used for other checkout-like
 commands or functionality in the future.
+
+checkout.guess::
+	Provides the default value for the `--guess` or `--no-guess`
+	option in `git checkout` and `git switch`. See
+	linkgit:git-switch[1] and linkgit:git-checkout[1].

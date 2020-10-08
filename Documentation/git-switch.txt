@@ -103,6 +103,9 @@ ambiguous but exists on the 'origin' remote. See also
 `checkout.defaultRemote` in linkgit:git-config[1].
 +
 `--guess` is the default behavior. Use `--no-guess` to disable it.
++
+The default behavior can be set via the `checkout.guess` configuration
+variable.
 
 -f::
 --force::
