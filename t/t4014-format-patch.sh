@@ -81,16 +81,16 @@ test_expect_success 'format-patch --ignore-if-in-upstream handles tags' '
 '
 
 test_expect_success "format-patch doesn't consider merge commits" '
-	git checkout -b slave master &&
+	git checkout -b feature master &&
 	echo "Another line" >>file &&
 	test_tick &&
-	git commit -am "Slave change #1" &&
+	git commit -am "Feature branch change #1" &&
 	echo "Yet another line" >>file &&
 	test_tick &&
-	git commit -am "Slave change #2" &&
+	git commit -am "Feature branch change #2" &&
 	git checkout -b merger master &&
 	test_tick &&
-	git merge --no-ff slave &&
+	git merge --no-ff feature &&
 	git format-patch -3 --stdout >patch &&
 	grep "^From " patch >from &&
 	test_line_count = 3 from
@@ -2037,9 +2037,25 @@ test_expect_success 'format-patch errors out when history involves criss-cross' 
 	test_must_fail 	git format-patch --base=auto -1
 '
 
+test_expect_success 'format-patch format.useAutoBase whenAble history involves criss-cross' '
+	test_config format.useAutoBase whenAble &&
+	git format-patch -1 >patch &&
+	! grep "^base-commit:" patch
+'
+
 test_expect_success 'format-patch format.useAutoBase option' '
 	git checkout local &&
 	test_config format.useAutoBase true &&
+	git format-patch --stdout -1 >patch &&
+	grep "^base-commit:" patch >actual &&
+	git rev-parse upstream >commit-id-base &&
+	echo "base-commit: $(cat commit-id-base)" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format-patch format.useAutoBase option with whenAble' '
+	git checkout local &&
+	test_config format.useAutoBase whenAble &&
 	git format-patch --stdout -1 >patch &&
 	grep "^base-commit:" patch >actual &&
 	git rev-parse upstream >commit-id-base &&
@@ -2058,6 +2074,12 @@ test_expect_success 'format-patch --base overrides format.useAutoBase' '
 
 test_expect_success 'format-patch --no-base overrides format.useAutoBase' '
 	test_config format.useAutoBase true &&
+	git format-patch --stdout --no-base -1 >patch &&
+	! grep "^base-commit:" patch
+'
+
+test_expect_success 'format-patch --no-base overrides format.useAutoBase whenAble' '
+	test_config format.useAutoBase whenAble &&
 	git format-patch --stdout --no-base -1 >patch &&
 	! grep "^base-commit:" patch
 '

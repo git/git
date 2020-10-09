@@ -16,7 +16,7 @@
 #include "rerere.h"
 #include "merge-recursive.h"
 #include "refs.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "quote.h"
 #include "trailer.h"
 #include "log-tree.h"
@@ -120,7 +120,7 @@ static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
 static GIT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
 /*
  * When we stop at a given patch via the "edit" command, this file contains
- * the abbreviated commit name of the corresponding patch.
+ * the commit object name of the corresponding patch.
  */
 static GIT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
 /*
@@ -150,6 +150,8 @@ static GIT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
  * command-line.
  */
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
+static GIT_PATH_FUNC(rebase_path_cdate_is_adate, "rebase-merge/cdate_is_adate")
+static GIT_PATH_FUNC(rebase_path_ignore_date, "rebase-merge/ignore_date")
 static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
 static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
 static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
@@ -247,10 +249,19 @@ static int has_conforming_footer(struct strbuf *sb, struct strbuf *sob,
 	struct trailer_info info;
 	size_t i;
 	int found_sob = 0, found_sob_last = 0;
+	char saved_char;
 
 	opts.no_divider = 1;
 
+	if (ignore_footer) {
+		saved_char = sb->buf[sb->len - ignore_footer];
+		sb->buf[sb->len - ignore_footer] = '\0';
+	}
+
 	trailer_info_get(&info, sb->buf, &opts);
+
+	if (ignore_footer)
+		sb->buf[sb->len - ignore_footer] = saved_char;
 
 	if (info.trailer_start == info.trailer_end)
 		return 0;
@@ -303,6 +314,8 @@ int sequencer_remove_state(struct replay_opts *opts)
 		}
 	}
 
+	free(opts->committer_name);
+	free(opts->committer_email);
 	free(opts->gpg_sign);
 	free(opts->strategy);
 	for (i = 0; i < opts->xopts_nr; i++)
@@ -355,7 +368,7 @@ static int get_message(struct commit *commit, struct commit_message *out)
 	subject_len = find_commit_subject(out->message, &subject);
 
 	out->subject = xmemdupz(subject, subject_len);
-	out->label = xstrfmt("%s... %s", abbrev, out->subject);
+	out->label = xstrfmt("%s (%s)", abbrev, out->subject);
 	out->parent_label = xstrfmt("parent of %s", out->label);
 
 	return 0;
@@ -381,7 +394,8 @@ static void print_advice(struct repository *r, int show_hint,
 		 * (typically rebase --interactive) wants to take care
 		 * of the commit itself so remove CHERRY_PICK_HEAD
 		 */
-		unlink(git_path_cherry_pick_head(r));
+		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
+				NULL, 0);
 		return;
 	}
 
@@ -830,10 +844,10 @@ finish:
 
 /*
  * Read a GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL AND GIT_AUTHOR_DATE from a
- * file with shell quoting into struct argv_array. Returns -1 on
+ * file with shell quoting into struct strvec. Returns -1 on
  * error, 0 otherwise.
  */
-static int read_env_script(struct argv_array *env)
+static int read_env_script(struct strvec *env)
 {
 	char *name, *email, *date;
 
@@ -841,9 +855,9 @@ static int read_env_script(struct argv_array *env)
 			       &name, &email, &date, 0))
 		return -1;
 
-	argv_array_pushf(env, "GIT_AUTHOR_NAME=%s", name);
-	argv_array_pushf(env, "GIT_AUTHOR_EMAIL=%s", email);
-	argv_array_pushf(env, "GIT_AUTHOR_DATE=%s", date);
+	strvec_pushf(env, "GIT_AUTHOR_NAME=%s", name);
+	strvec_pushf(env, "GIT_AUTHOR_EMAIL=%s", email);
+	strvec_pushf(env, "GIT_AUTHOR_DATE=%s", date);
 	free(name);
 	free(email);
 	free(date);
@@ -861,6 +875,22 @@ static char *get_author(const char *message)
 		return xmemdupz(a, len);
 
 	return NULL;
+}
+
+static const char *author_date_from_env_array(const struct strvec *env)
+{
+	int i;
+	const char *date;
+
+	for (i = 0; i < env->nr; i++)
+		if (skip_prefix(env->v[i],
+				"GIT_AUTHOR_DATE=", &date))
+			return date;
+	/*
+	 * If GIT_AUTHOR_DATE is missing we should have already errored out when
+	 * reading the script
+	 */
+	BUG("GIT_AUTHOR_DATE missing from author script");
 }
 
 static const char staged_changes_advice[] =
@@ -913,8 +943,7 @@ static int run_command_silent_on_success(struct child_process *cmd)
  * interactive rebase: in that case, we will want to retain the
  * author metadata.
  */
-static int run_git_commit(struct repository *r,
-			  const char *defmsg,
+static int run_git_commit(const char *defmsg,
 			  struct replay_opts *opts,
 			  unsigned int flags)
 {
@@ -929,34 +958,42 @@ static int run_git_commit(struct repository *r,
 			     gpg_opt, gpg_opt);
 	}
 
-	argv_array_push(&cmd.args, "commit");
+	if (opts->committer_date_is_author_date)
+		strvec_pushf(&cmd.env_array, "GIT_COMMITTER_DATE=%s",
+			     opts->ignore_date ?
+			     "" :
+			     author_date_from_env_array(&cmd.env_array));
+	if (opts->ignore_date)
+		strvec_push(&cmd.env_array, "GIT_AUTHOR_DATE=");
+
+	strvec_push(&cmd.args, "commit");
 
 	if (!(flags & VERIFY_MSG))
-		argv_array_push(&cmd.args, "-n");
+		strvec_push(&cmd.args, "-n");
 	if ((flags & AMEND_MSG))
-		argv_array_push(&cmd.args, "--amend");
+		strvec_push(&cmd.args, "--amend");
 	if (opts->gpg_sign)
-		argv_array_pushf(&cmd.args, "-S%s", opts->gpg_sign);
+		strvec_pushf(&cmd.args, "-S%s", opts->gpg_sign);
 	else
-		argv_array_push(&cmd.args, "--no-gpg-sign");
+		strvec_push(&cmd.args, "--no-gpg-sign");
 	if (defmsg)
-		argv_array_pushl(&cmd.args, "-F", defmsg, NULL);
+		strvec_pushl(&cmd.args, "-F", defmsg, NULL);
 	else if (!(flags & EDIT_MSG))
-		argv_array_pushl(&cmd.args, "-C", "HEAD", NULL);
+		strvec_pushl(&cmd.args, "-C", "HEAD", NULL);
 	if ((flags & CLEANUP_MSG))
-		argv_array_push(&cmd.args, "--cleanup=strip");
+		strvec_push(&cmd.args, "--cleanup=strip");
 	if ((flags & EDIT_MSG))
-		argv_array_push(&cmd.args, "-e");
+		strvec_push(&cmd.args, "-e");
 	else if (!(flags & CLEANUP_MSG) &&
 		 !opts->signoff && !opts->record_origin &&
 		 !opts->explicit_cleanup)
-		argv_array_push(&cmd.args, "--cleanup=verbatim");
+		strvec_push(&cmd.args, "--cleanup=verbatim");
 
 	if ((flags & ALLOW_EMPTY))
-		argv_array_push(&cmd.args, "--allow-empty");
+		strvec_push(&cmd.args, "--allow-empty");
 
 	if (!(flags & EDIT_MSG))
-		argv_array_push(&cmd.args, "--allow-empty-message");
+		strvec_push(&cmd.args, "--allow-empty-message");
 
 	if (is_rebase_i(opts) && !(flags & EDIT_MSG))
 		return run_command_silent_on_success(&cmd);
@@ -1308,6 +1345,7 @@ static int try_to_commit(struct repository *r,
 	struct strbuf err = STRBUF_INIT;
 	struct strbuf commit_msg = STRBUF_INIT;
 	char *amend_author = NULL;
+	const char *committer = NULL;
 	const char *hook_commit = NULL;
 	enum commit_msg_cleanup_mode cleanup;
 	int res = 0;
@@ -1399,10 +1437,57 @@ static int try_to_commit(struct repository *r,
 		goto out;
 	}
 
-	reset_ident_date();
+	if (opts->committer_date_is_author_date) {
+		struct ident_split id;
+		struct strbuf date = STRBUF_INIT;
 
-	if (commit_tree_extended(msg->buf, msg->len, &tree, parents,
-				 oid, author, opts->gpg_sign, extra)) {
+		if (!opts->ignore_date) {
+			if (split_ident_line(&id, author, (int)strlen(author)) < 0) {
+				res = error(_("invalid author identity '%s'"),
+					    author);
+				goto out;
+			}
+			if (!id.date_begin) {
+				res = error(_(
+					"corrupt author: missing date information"));
+				goto out;
+			}
+			strbuf_addf(&date, "@%.*s %.*s",
+				    (int)(id.date_end - id.date_begin),
+				    id.date_begin,
+				    (int)(id.tz_end - id.tz_begin),
+				    id.tz_begin);
+		} else {
+			reset_ident_date();
+		}
+		committer = fmt_ident(opts->committer_name,
+				      opts->committer_email,
+				      WANT_COMMITTER_IDENT,
+				      opts->ignore_date ? NULL : date.buf,
+				      IDENT_STRICT);
+		strbuf_release(&date);
+	} else {
+		reset_ident_date();
+	}
+
+	if (opts->ignore_date) {
+		struct ident_split id;
+		char *name, *email;
+
+		if (split_ident_line(&id, author, strlen(author)) < 0) {
+			error(_("invalid author identity '%s'"), author);
+			goto out;
+		}
+		name = xmemdupz(id.name_begin, id.name_end - id.name_begin);
+		email = xmemdupz(id.mail_begin, id.mail_end - id.mail_begin);
+		author = fmt_ident(name, email, WANT_AUTHOR_IDENT, NULL,
+				   IDENT_STRICT);
+		free(name);
+		free(email);
+	}
+
+	if (commit_tree_extended(msg->buf, msg->len, &tree, parents, oid,
+				 author, committer, opts->gpg_sign, extra)) {
 		res = error(_("failed to write commit object"));
 		goto out;
 	}
@@ -1455,7 +1540,8 @@ static int do_commit(struct repository *r,
 				    author, opts, flags, &oid);
 		strbuf_release(&sb);
 		if (!res) {
-			unlink(git_path_cherry_pick_head(r));
+			refs_delete_ref(get_main_ref_store(r), "",
+					"CHERRY_PICK_HEAD", NULL, 0);
 			unlink(git_path_merge_msg(r));
 			if (!is_rebase_i(opts))
 				print_commit_summary(r, NULL, &oid,
@@ -1467,7 +1553,7 @@ static int do_commit(struct repository *r,
 		if (is_rebase_i(opts) && oid)
 			if (write_rebase_head(oid))
 			    return -1;
-		return run_git_commit(r, msg_file, opts, flags);
+		return run_git_commit(msg_file, opts, flags);
 	}
 
 	return res;
@@ -1966,7 +2052,8 @@ static int do_pick_commit(struct repository *r,
 		flags |= ALLOW_EMPTY;
 	} else if (allow == 2) {
 		drop_commit = 1;
-		unlink(git_path_cherry_pick_head(r));
+		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
+				NULL, 0);
 		unlink(git_path_merge_msg(r));
 		fprintf(stderr,
 			_("dropping %s %s -- patch contents already upstream\n"),
@@ -1981,7 +2068,7 @@ static int do_pick_commit(struct repository *r,
 		*check_todo = !!(flags & EDIT_MSG);
 		if (!res && reword) {
 fast_forward_edit:
-			res = run_git_commit(r, NULL, opts, EDIT_MSG |
+			res = run_git_commit(NULL, opts, EDIT_MSG |
 					     VERIFY_MSG | AMEND_MSG |
 					     (flags & ALLOW_EMPTY));
 			*check_todo = 1;
@@ -2305,15 +2392,19 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int need_cleanup = 0;
 
-	if (file_exists(git_path_cherry_pick_head(r))) {
-		if (!unlink(git_path_cherry_pick_head(r)) && verbose)
+	if (refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD")) {
+		if (!refs_delete_ref(get_main_ref_store(r), "",
+				     "CHERRY_PICK_HEAD", NULL, 0) &&
+		    verbose)
 			warning(_("cancelling a cherry picking in progress"));
 		opts.action = REPLAY_PICK;
 		need_cleanup = 1;
 	}
 
-	if (file_exists(git_path_revert_head(r))) {
-		if (!unlink(git_path_revert_head(r)) && verbose)
+	if (refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD")) {
+		if (!refs_delete_ref(get_main_ref_store(r), "", "REVERT_HEAD",
+				     NULL, 0) &&
+		    verbose)
 			warning(_("cancelling a revert in progress"));
 		opts.action = REPLAY_REVERT;
 		need_cleanup = 1;
@@ -2528,6 +2619,16 @@ static int read_populate_opts(struct replay_opts *opts)
 			opts->signoff = 1;
 		}
 
+		if (file_exists(rebase_path_cdate_is_adate())) {
+			opts->allow_ff = 0;
+			opts->committer_date_is_author_date = 1;
+		}
+
+		if (file_exists(rebase_path_ignore_date())) {
+			opts->allow_ff = 0;
+			opts->ignore_date = 1;
+		}
+
 		if (file_exists(rebase_path_reschedule_failed_exec()))
 			opts->reschedule_failed_exec = 1;
 
@@ -2623,6 +2724,10 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_drop_redundant_commits(), "%s", "");
 	if (opts->keep_redundant_commits)
 		write_file(rebase_path_keep_redundant_commits(), "%s", "");
+	if (opts->committer_date_is_author_date)
+		write_file(rebase_path_cdate_is_adate(), "%s", "");
+	if (opts->ignore_date)
+		write_file(rebase_path_ignore_date(), "%s", "");
 	if (opts->reschedule_failed_exec)
 		write_file(rebase_path_reschedule_failed_exec(), "%s", "");
 
@@ -2671,8 +2776,9 @@ static int create_seq_dir(struct repository *r)
 	enum replay_action action;
 	const char *in_progress_error = NULL;
 	const char *in_progress_advice = NULL;
-	unsigned int advise_skip = file_exists(git_path_revert_head(r)) ||
-				file_exists(git_path_cherry_pick_head(r));
+	unsigned int advise_skip =
+		refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD") ||
+		refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD");
 
 	if (!sequencer_get_last_command(r, &action)) {
 		switch (action) {
@@ -2754,15 +2860,15 @@ static int rollback_is_safe(void)
 static int reset_merge(const struct object_id *oid)
 {
 	int ret;
-	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
 
-	argv_array_pushl(&argv, "reset", "--merge", NULL);
+	strvec_pushl(&argv, "reset", "--merge", NULL);
 
 	if (!is_null_oid(oid))
-		argv_array_push(&argv, oid_to_hex(oid));
+		strvec_push(&argv, oid_to_hex(oid));
 
-	ret = run_command_v_opt(argv.argv, RUN_GIT_CMD);
-	argv_array_clear(&argv);
+	ret = run_command_v_opt(argv.v, RUN_GIT_CMD);
+	strvec_clear(&argv);
 
 	return ret;
 }
@@ -2771,8 +2877,8 @@ static int rollback_single_pick(struct repository *r)
 {
 	struct object_id head_oid;
 
-	if (!file_exists(git_path_cherry_pick_head(r)) &&
-	    !file_exists(git_path_revert_head(r)))
+	if (!refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD") &&
+	    !refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD"))
 		return error(_("no cherry-pick or revert in progress"));
 	if (read_ref_full("HEAD", 0, &head_oid, NULL))
 		return error(_("cannot resolve HEAD"));
@@ -2866,7 +2972,7 @@ int sequencer_skip(struct repository *r, struct replay_opts *opts)
 	 */
 	switch (opts->action) {
 	case REPLAY_REVERT:
-		if (!file_exists(git_path_revert_head(r))) {
+		if (!refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD")) {
 			if (action != REPLAY_REVERT)
 				return error(_("no revert in progress"));
 			if (!rollback_is_safe())
@@ -2874,7 +2980,8 @@ int sequencer_skip(struct repository *r, struct replay_opts *opts)
 		}
 		break;
 	case REPLAY_PICK:
-		if (!file_exists(git_path_cherry_pick_head(r))) {
+		if (!refs_ref_exists(get_main_ref_store(r),
+				     "CHERRY_PICK_HEAD")) {
 			if (action != REPLAY_PICK)
 				return error(_("no cherry-pick in progress"));
 			if (!rollback_is_safe())
@@ -3012,11 +3119,12 @@ static int make_patch(struct repository *r,
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct rev_info log_tree_opt;
-	const char *subject, *p;
+	const char *subject;
+	char hex[GIT_MAX_HEXSZ + 1];
 	int res = 0;
 
-	p = short_commit_name(commit);
-	if (write_message(p, strlen(p), rebase_path_stopped_sha(), 1) < 0)
+	oid_to_hex_r(hex, &commit->object.oid);
+	if (write_message(hex, strlen(hex), rebase_path_stopped_sha(), 1) < 0)
 		return -1;
 	res |= write_rebase_head(&commit->object.oid);
 
@@ -3125,17 +3233,17 @@ static int error_failed_squash(struct repository *r,
 
 static int do_exec(struct repository *r, const char *command_line)
 {
-	struct argv_array child_env = ARGV_ARRAY_INIT;
+	struct strvec child_env = STRVEC_INIT;
 	const char *child_argv[] = { NULL, NULL };
 	int dirty, status;
 
 	fprintf(stderr, _("Executing: %s\n"), command_line);
 	child_argv[0] = command_line;
-	argv_array_pushf(&child_env, "GIT_DIR=%s", absolute_path(get_git_dir()));
-	argv_array_pushf(&child_env, "GIT_WORK_TREE=%s",
-			 absolute_path(get_git_work_tree()));
+	strvec_pushf(&child_env, "GIT_DIR=%s", absolute_path(get_git_dir()));
+	strvec_pushf(&child_env, "GIT_WORK_TREE=%s",
+		     absolute_path(get_git_work_tree()));
 	status = run_command_v_opt_cd_env(child_argv, RUN_USING_SHELL, NULL,
-					  child_env.argv);
+					  child_env.v);
 
 	/* force re-reading of the cache */
 	if (discard_index(r->index) < 0 || repo_read_index(r) < 0)
@@ -3165,7 +3273,7 @@ static int do_exec(struct repository *r, const char *command_line)
 		status = 1;
 	}
 
-	argv_array_clear(&child_env);
+	strvec_clear(&child_env);
 
 	return status;
 }
@@ -3543,33 +3651,42 @@ static int do_merge(struct repository *r,
 			goto leave_merge;
 		}
 
+		if (opts->committer_date_is_author_date)
+			strvec_pushf(&cmd.env_array, "GIT_COMMITTER_DATE=%s",
+				     opts->ignore_date ?
+				     "" :
+				     author_date_from_env_array(&cmd.env_array));
+		if (opts->ignore_date)
+			strvec_push(&cmd.env_array, "GIT_AUTHOR_DATE=");
+
 		cmd.git_cmd = 1;
-		argv_array_push(&cmd.args, "merge");
-		argv_array_push(&cmd.args, "-s");
+		strvec_push(&cmd.args, "merge");
+		strvec_push(&cmd.args, "-s");
 		if (!strategy)
-			argv_array_push(&cmd.args, "octopus");
+			strvec_push(&cmd.args, "octopus");
 		else {
-			argv_array_push(&cmd.args, strategy);
+			strvec_push(&cmd.args, strategy);
 			for (k = 0; k < opts->xopts_nr; k++)
-				argv_array_pushf(&cmd.args,
-						 "-X%s", opts->xopts[k]);
+				strvec_pushf(&cmd.args,
+					     "-X%s", opts->xopts[k]);
 		}
-		argv_array_push(&cmd.args, "--no-edit");
-		argv_array_push(&cmd.args, "--no-ff");
-		argv_array_push(&cmd.args, "--no-log");
-		argv_array_push(&cmd.args, "--no-stat");
-		argv_array_push(&cmd.args, "-F");
-		argv_array_push(&cmd.args, git_path_merge_msg(r));
+		strvec_push(&cmd.args, "--no-edit");
+		strvec_push(&cmd.args, "--no-ff");
+		strvec_push(&cmd.args, "--no-log");
+		strvec_push(&cmd.args, "--no-stat");
+		strvec_push(&cmd.args, "-F");
+		strvec_push(&cmd.args, git_path_merge_msg(r));
 		if (opts->gpg_sign)
-			argv_array_push(&cmd.args, opts->gpg_sign);
+			strvec_push(&cmd.args, opts->gpg_sign);
 
 		/* Add the tips to be merged */
 		for (j = to_merge; j; j = j->next)
-			argv_array_push(&cmd.args,
-					oid_to_hex(&j->item->object.oid));
+			strvec_push(&cmd.args,
+				    oid_to_hex(&j->item->object.oid));
 
 		strbuf_release(&ref_name);
-		unlink(git_path_cherry_pick_head(r));
+		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
+				NULL, 0);
 		rollback_lock_file(&lock);
 
 		rollback_lock_file(&lock);
@@ -3640,7 +3757,7 @@ static int do_merge(struct repository *r,
 		 * command needs to be rescheduled).
 		 */
 	fast_forward_edit:
-		ret = !!run_git_commit(r, git_path_merge_msg(r), opts,
+		ret = !!run_git_commit(git_path_merge_msg(r), opts,
 				       run_commit_flags);
 
 leave_merge:
@@ -3694,8 +3811,8 @@ void create_autostash(struct repository *r, const char *path,
 		struct child_process stash = CHILD_PROCESS_INIT;
 		struct object_id oid;
 
-		argv_array_pushl(&stash.args,
-				 "stash", "create", "autostash", NULL);
+		strvec_pushl(&stash.args,
+			     "stash", "create", "autostash", NULL);
 		stash.git_cmd = 1;
 		stash.no_stdin = 1;
 		strbuf_reset(&buf);
@@ -3734,9 +3851,9 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
 		child.git_cmd = 1;
 		child.no_stdout = 1;
 		child.no_stderr = 1;
-		argv_array_push(&child.args, "stash");
-		argv_array_push(&child.args, "apply");
-		argv_array_push(&child.args, stash_oid);
+		strvec_push(&child.args, "stash");
+		strvec_push(&child.args, "apply");
+		strvec_push(&child.args, stash_oid);
 		ret = run_command(&child);
 	}
 
@@ -3746,12 +3863,12 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
 		struct child_process store = CHILD_PROCESS_INIT;
 
 		store.git_cmd = 1;
-		argv_array_push(&store.args, "stash");
-		argv_array_push(&store.args, "store");
-		argv_array_push(&store.args, "-m");
-		argv_array_push(&store.args, "autostash");
-		argv_array_push(&store.args, "-q");
-		argv_array_push(&store.args, stash_oid);
+		strvec_push(&store.args, "stash");
+		strvec_push(&store.args, "store");
+		strvec_push(&store.args, "-m");
+		strvec_push(&store.args, "autostash");
+		strvec_push(&store.args, "-q");
+		strvec_push(&store.args, stash_oid);
 		if (run_command(&store))
 			ret = error(_("cannot store %s"), stash_oid);
 		else
@@ -3831,9 +3948,9 @@ static int run_git_checkout(struct repository *r, struct replay_opts *opts,
 
 	cmd.git_cmd = 1;
 
-	argv_array_push(&cmd.args, "checkout");
-	argv_array_push(&cmd.args, commit);
-	argv_array_pushf(&cmd.env_array, GIT_REFLOG_ACTION "=%s", action);
+	strvec_push(&cmd.args, "checkout");
+	strvec_push(&cmd.args, commit);
+	strvec_pushf(&cmd.env_array, GIT_REFLOG_ACTION "=%s", action);
 
 	if (opts->verbose)
 		ret = run_command(&cmd);
@@ -3906,7 +4023,9 @@ static int pick_commits(struct repository *r,
 	prev_reflog_action = xstrdup(getenv(GIT_REFLOG_ACTION));
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_commit ||
-				opts->record_origin || opts->edit));
+			 opts->record_origin || opts->edit ||
+			 opts->committer_date_is_author_date ||
+			 opts->ignore_date));
 	if (read_and_refresh_cache(r, opts))
 		return -1;
 
@@ -4157,9 +4276,9 @@ cleanup_head_ref:
 
 			child.in = open(rebase_path_rewritten_list(), O_RDONLY);
 			child.git_cmd = 1;
-			argv_array_push(&child.args, "notes");
-			argv_array_push(&child.args, "copy");
-			argv_array_push(&child.args, "--for-rewrite=rebase");
+			strvec_push(&child.args, "notes");
+			strvec_push(&child.args, "copy");
+			strvec_push(&child.args, "--for-rewrite=rebase");
 			/* we don't care if this copying failed */
 			run_command(&child);
 
@@ -4170,8 +4289,8 @@ cleanup_head_ref:
 					O_RDONLY);
 				hook.stdout_to_stderr = 1;
 				hook.trace2_hook_name = "post-rewrite";
-				argv_array_push(&hook.args, post_rewrite_hook);
-				argv_array_push(&hook.args, "rebase");
+				strvec_push(&hook.args, post_rewrite_hook);
+				strvec_push(&hook.args, "rebase");
 				/* we don't care if this hook failed */
 				run_command(&hook);
 			}
@@ -4201,8 +4320,8 @@ static int continue_single_pick(struct repository *r)
 {
 	const char *argv[] = { "commit", NULL };
 
-	if (!file_exists(git_path_cherry_pick_head(r)) &&
-	    !file_exists(git_path_revert_head(r)))
+	if (!refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD") &&
+	    !refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD"))
 		return error(_("no cherry-pick or revert in progress"));
 	return run_command_v_opt(argv, RUN_GIT_CMD);
 }
@@ -4318,15 +4437,16 @@ static int commit_staged_changes(struct repository *r,
 	}
 
 	if (is_clean) {
-		const char *cherry_pick_head = git_path_cherry_pick_head(r);
-
-		if (file_exists(cherry_pick_head) && unlink(cherry_pick_head))
+		if (refs_ref_exists(get_main_ref_store(r),
+				    "CHERRY_PICK_HEAD") &&
+		    refs_delete_ref(get_main_ref_store(r), "",
+				    "CHERRY_PICK_HEAD", NULL, 0))
 			return error(_("could not remove CHERRY_PICK_HEAD"));
 		if (!final_fixup)
 			return 0;
 	}
 
-	if (run_git_commit(r, final_fixup ? NULL : rebase_path_message(),
+	if (run_git_commit(final_fixup ? NULL : rebase_path_message(),
 			   opts, flags))
 		return error(_("could not commit staged changes."));
 	unlink(rebase_path_amend());
@@ -4347,6 +4467,22 @@ static int commit_staged_changes(struct repository *r,
 	return 0;
 }
 
+static int init_committer(struct replay_opts *opts)
+{
+	struct ident_split id;
+	const char *committer;
+
+	committer = git_committer_info(IDENT_STRICT);
+	if (split_ident_line(&id, committer, strlen(committer)) < 0)
+		return error(_("invalid committer '%s'"), committer);
+	opts->committer_name =
+		xmemdupz(id.name_begin, id.name_end - id.name_begin);
+	opts->committer_email =
+		xmemdupz(id.mail_begin, id.mail_end - id.mail_end);
+
+	return 0;
+}
+
 int sequencer_continue(struct repository *r, struct replay_opts *opts)
 {
 	struct todo_list todo_list = TODO_LIST_INIT;
@@ -4358,6 +4494,9 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 	if (read_populate_opts(opts))
 		return -1;
 	if (is_rebase_i(opts)) {
+		if (opts->committer_date_is_author_date && init_committer(opts))
+			return -1;
+
 		if ((res = read_populate_todo(r, &todo_list, opts)))
 			goto release_todo_list;
 
@@ -4379,8 +4518,9 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 
 	if (!is_rebase_i(opts)) {
 		/* Verify that the conflict has been resolved */
-		if (file_exists(git_path_cherry_pick_head(r)) ||
-		    file_exists(git_path_revert_head(r))) {
+		if (refs_ref_exists(get_main_ref_store(r),
+				    "CHERRY_PICK_HEAD") ||
+		    refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD")) {
 			res = continue_single_pick(r);
 			if (res)
 				goto release_todo_list;
@@ -4396,7 +4536,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 
 		if (read_oneliner(&buf, rebase_path_stopped_sha(),
 				  READ_ONELINER_SKIP_IF_EMPTY) &&
-		    !get_oid_committish(buf.buf, &oid))
+		    !get_oid_hex(buf.buf, &oid))
 			record_in_rewritten(&oid, peek_command(&todo_list, 0));
 		strbuf_release(&buf);
 	}
@@ -5178,13 +5318,14 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		    struct string_list *commands, unsigned autosquash,
 		    struct todo_list *todo_list)
 {
-	const char *shortonto, *todo_file = rebase_path_todo();
+	char shortonto[GIT_MAX_HEXSZ + 1];
+	const char *todo_file = rebase_path_todo();
 	struct todo_list new_todo = TODO_LIST_INIT;
 	struct strbuf *buf = &todo_list->buf, buf2 = STRBUF_INIT;
 	struct object_id oid = onto->object.oid;
 	int res;
 
-	shortonto = find_unique_abbrev(&oid, DEFAULT_ABBREV);
+	find_unique_abbrev_r(shortonto, &oid, DEFAULT_ABBREV);
 
 	if (buf->len == 0) {
 		struct todo_item *item = append_new_todo(todo_list);
@@ -5249,6 +5390,9 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	}
 
 	res = -1;
+
+	if (opts->committer_date_is_author_date && init_committer(opts))
+		goto cleanup;
 
 	if (checkout_onto(r, opts, onto_name, &oid, orig_head))
 		goto cleanup;
@@ -5442,7 +5586,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 
 int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 {
-	if (file_exists(git_path_cherry_pick_head(r))) {
+	if (refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD")) {
 		struct object_id cherry_pick_head, rebase_head;
 
 		if (file_exists(git_path_seq_dir()))

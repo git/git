@@ -110,6 +110,36 @@ test_expect_success 'in_merge_bases:miss' '
 	test_three_modes in_merge_bases
 '
 
+test_expect_success 'in_merge_bases_many:hit' '
+	cat >input <<-\EOF &&
+	A:commit-6-8
+	X:commit-6-9
+	X:commit-5-7
+	EOF
+	echo "in_merge_bases_many(A,X):1" >expect &&
+	test_three_modes in_merge_bases_many
+'
+
+test_expect_success 'in_merge_bases_many:miss' '
+	cat >input <<-\EOF &&
+	A:commit-6-8
+	X:commit-7-7
+	X:commit-8-6
+	EOF
+	echo "in_merge_bases_many(A,X):0" >expect &&
+	test_three_modes in_merge_bases_many
+'
+
+test_expect_success 'in_merge_bases_many:miss-heuristic' '
+	cat >input <<-\EOF &&
+	A:commit-6-8
+	X:commit-7-5
+	X:commit-6-6
+	EOF
+	echo "in_merge_bases_many(A,X):0" >expect &&
+	test_three_modes in_merge_bases_many
+'
+
 test_expect_success 'is_descendant_of:hit' '
 	cat >input <<-\EOF &&
 	A:commit-5-7

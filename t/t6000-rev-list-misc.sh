@@ -8,6 +8,7 @@ test_expect_success setup '
 	echo content1 >wanted_file &&
 	echo content2 >unwanted_file &&
 	git add wanted_file unwanted_file &&
+	test_tick &&
 	git commit -m one
 '
 
@@ -21,6 +22,7 @@ test_expect_success 'rev-list --objects with pathspecs and deeper paths' '
 	mkdir foo &&
 	>foo/file &&
 	git add foo/file &&
+	test_tick &&
 	git commit -m two &&
 
 	git rev-list --objects HEAD -- foo >output &&
@@ -69,6 +71,7 @@ test_expect_success '--no-object-names and --object-names are last-one-wins' '
 '
 
 test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
+	test_tick &&
 	git commit --allow-empty -m another &&
 	git tag -a -m "annotated" v1.0 &&
 	git rev-list --objects ^v1.0^ v1.0 >expect &&
@@ -84,10 +87,10 @@ test_expect_success 'propagate uninteresting flag down correctly' '
 test_expect_success 'symleft flag bit is propagated down from tag' '
 	git log --format="%m %s" --left-right v1.0...master >actual &&
 	cat >expect <<-\EOF &&
-	> two
-	> one
 	< another
 	< that
+	> two
+	> one
 	EOF
 	test_cmp expect actual
 '
@@ -125,8 +128,8 @@ test_expect_success 'rev-list can negate index objects' '
 	test_cmp expect actual
 '
 
-test_expect_success '--bisect and --first-parent can not be combined' '
-	test_must_fail git rev-list --bisect --first-parent HEAD
+test_expect_success '--bisect and --first-parent can be combined' '
+	git rev-list --bisect --first-parent HEAD
 '
 
 test_expect_success '--header shows a NUL after each commit' '

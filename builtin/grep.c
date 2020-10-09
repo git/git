@@ -319,7 +319,7 @@ static void grep_source_name(struct grep_opt *opt, const char *filename,
 	}
 
 	if (opt->relative && opt->prefix_length)
-		quote_path_relative(filename + tree_name_len, opt->prefix, out);
+		quote_path(filename + tree_name_len, opt->prefix, out, 0);
 	else
 		quote_c_style(filename + tree_name_len, out, NULL, 0);
 
@@ -397,7 +397,7 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 	int i, status;
 
 	for (i = 0; i < path_list->nr; i++)
-		argv_array_push(&child.args, path_list->items[i].string);
+		strvec_push(&child.args, path_list->items[i].string);
 	child.dir = prefix;
 	child.use_shell = 1;
 
@@ -466,7 +466,7 @@ static int grep_submodule(struct grep_opt *opt,
 		struct strbuf base = STRBUF_INIT;
 
 		obj_read_lock();
-		object = parse_object_or_die(oid, oid_to_hex(oid));
+		object = parse_object_or_die(oid, NULL);
 		obj_read_unlock();
 		data = read_object_with_reference(&subrepo,
 						  &object->oid, tree_type,
@@ -693,7 +693,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 	struct dir_struct dir;
 	int i, hit = 0;
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	if (!use_index)
 		dir.flags |= DIR_NO_GITLINKS;
 	if (exc_std)
@@ -705,6 +705,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 		if (hit && opt->status_only)
 			break;
 	}
+	dir_clear(&dir);
 	return hit;
 }
 

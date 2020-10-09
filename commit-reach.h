@@ -27,7 +27,9 @@ struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
 
 struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 
-int is_descendant_of(struct commit *commit, struct commit_list *with_commit);
+int repo_is_descendant_of(struct repository *r,
+			  struct commit *commit,
+			  struct commit_list *with_commit);
 int repo_in_merge_bases(struct repository *r,
 			struct commit *commit,
 			struct commit *reference);

@@ -92,7 +92,7 @@ test_expect_success 'A: create pack from stdin' '
 	EOF
 
 	reset refs/tags/to-be-deleted
-	from 0000000000000000000000000000000000000000
+	from $ZERO_OID
 
 	tag nested
 	mark :6
@@ -102,7 +102,7 @@ test_expect_success 'A: create pack from stdin' '
 	EOF
 
 	reset refs/tags/nested
-	from 0000000000000000000000000000000000000000
+	from $ZERO_OID
 
 	tag nested
 	mark :7
@@ -284,8 +284,9 @@ test_expect_success 'A: verify pack' '
 '
 
 test_expect_success 'A: verify diff' '
+	copy=$(git rev-parse --verify master:file2) &&
 	cat >expect <<-EOF &&
-	:000000 100755 0000000000000000000000000000000000000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 A	copy-of-file2
+	:000000 100755 $ZERO_OID $copy A	copy-of-file2
 	EOF
 	git diff-tree -M -r master verify--import-marks >actual &&
 	compare_diff_raw expect actual &&
@@ -364,7 +365,7 @@ test_expect_success 'B: fail on invalid blob sha1' '
 	COMMIT
 
 	from refs/heads/master
-	M 755 0000000000000000000000000000000000000001 zero1
+	M 755 $(echo $ZERO_OID | sed -e "s/0$/1/") zero1
 
 	INPUT_END
 
@@ -528,6 +529,7 @@ test_expect_success 'B: fail on invalid committer (5)' '
 test_expect_success 'C: incremental import create pack from stdin' '
 	newf=$(echo hi newf | git hash-object -w --stdin) &&
 	oldf=$(git rev-parse --verify master:file2) &&
+	thrf=$(git rev-parse --verify master:file3) &&
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	commit refs/heads/branch
@@ -570,10 +572,11 @@ test_expect_success 'C: verify commit' '
 '
 
 test_expect_success 'C: validate rename result' '
+	zero=$ZERO_OID &&
 	cat >expect <<-EOF &&
-	:000000 100755 0000000000000000000000000000000000000000 f1fb5da718392694d0076d677d6d0e364c79b0bc A	file2/newf
-	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 R100	file2	file2/oldf
-	:100644 000000 0d92e9f3374ae2947c23aa477cbc68ce598135f1 0000000000000000000000000000000000000000 D	file3
+	:000000 100755 $zero $newf A	file2/newf
+	:100644 100644 $oldf $oldf R100	file2	file2/oldf
+	:100644 000000 $thrf $zero D	file3
 	EOF
 	git diff-tree -M -r master branch >actual &&
 	compare_diff_raw expect actual
@@ -614,9 +617,11 @@ test_expect_success 'D: verify pack' '
 '
 
 test_expect_success 'D: validate new files added' '
+	f5id=$(echo "$file5_data" | git hash-object --stdin) &&
+	f6id=$(echo "$file6_data" | git hash-object --stdin) &&
 	cat >expect <<-EOF &&
-	:000000 100755 0000000000000000000000000000000000000000 e74b7d465e52746be2b4bae983670711e6e66657 A	newdir/exec.sh
-	:000000 100644 0000000000000000000000000000000000000000 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 A	newdir/interesting
+	:000000 100755 $ZERO_OID $f6id A	newdir/exec.sh
+	:000000 100644 $ZERO_OID $f5id A	newdir/interesting
 	EOF
 	git diff-tree -M -r branch^ branch >actual &&
 	compare_diff_raw expect actual
@@ -779,12 +784,13 @@ test_expect_success 'H: verify pack' '
 '
 
 test_expect_success 'H: validate old files removed, new files added' '
+	f4id=$(git rev-parse HEAD:file4) &&
 	cat >expect <<-EOF &&
-	:100755 000000 f1fb5da718392694d0076d677d6d0e364c79b0bc 0000000000000000000000000000000000000000 D	file2/newf
-	:100644 000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 0000000000000000000000000000000000000000 D	file2/oldf
-	:100755 000000 85df50785d62d3b05ab03d9cbf7e4a0b49449730 0000000000000000000000000000000000000000 D	file4
-	:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 R100	newdir/interesting	h/e/l/lo
-	:100755 000000 e74b7d465e52746be2b4bae983670711e6e66657 0000000000000000000000000000000000000000 D	newdir/exec.sh
+	:100755 000000 $newf $zero D	file2/newf
+	:100644 000000 $oldf $zero D	file2/oldf
+	:100755 000000 $f4id $zero D	file4
+	:100644 100644 $f5id $f5id R100	newdir/interesting	h/e/l/lo
+	:100755 000000 $f6id $zero D	newdir/exec.sh
 	EOF
 	git diff-tree -M -r H^ H >actual &&
 	compare_diff_raw expect actual
@@ -935,14 +941,15 @@ test_expect_success 'L: verify internal tree sorting' '
 	INPUT_END
 
 	cat >expect <<-EXPECT_END &&
-	:100644 100644 4268632... 55d3a52... M	b.
-	:040000 040000 0ae5cac... 443c768... M	b
-	:100644 100644 4268632... 55d3a52... M	ba
+	:100644 100644 M	b.
+	:040000 040000 M	b
+	:100644 100644 M	ba
 	EXPECT_END
 
 	git fast-import <input &&
 	GIT_PRINT_SHA1_ELLIPSIS="yes" git diff-tree --abbrev --raw L^ L >output &&
-	test_cmp expect output
+	cut -d" " -f1,2,5 output >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'L: nested tree copy does not corrupt deltas' '
@@ -1004,7 +1011,7 @@ test_expect_success 'M: rename file in same subdirectory' '
 	INPUT_END
 
 	cat >expect <<-EOF &&
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc R100	file2/newf	file2/n.e.w.f
+	:100755 100755 $newf $newf R100	file2/newf	file2/n.e.w.f
 	EOF
 	git fast-import <input &&
 	git diff-tree -M -r M1^ M1 >actual &&
@@ -1025,7 +1032,7 @@ test_expect_success 'M: rename file to new subdirectory' '
 	INPUT_END
 
 	cat >expect <<-EOF &&
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc R100	file2/newf	i/am/new/to/you
+	:100755 100755 $newf $newf R100	file2/newf	i/am/new/to/you
 	EOF
 	git fast-import <input &&
 	git diff-tree -M -r M2^ M2 >actual &&
@@ -1046,7 +1053,7 @@ test_expect_success 'M: rename subdirectory to new subdirectory' '
 	INPUT_END
 
 	cat >expect <<-EOF &&
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc R100	i/am/new/to/you	other/sub/am/new/to/you
+	:100755 100755 $newf $newf R100	i/am/new/to/you	other/sub/am/new/to/you
 	EOF
 	git fast-import <input &&
 	git diff-tree -M -r M3^ M3 >actual &&
@@ -1067,11 +1074,11 @@ test_expect_success 'M: rename root to subdirectory' '
 	INPUT_END
 
 	cat >expect <<-EOF &&
-	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 R100	file2/oldf	sub/file2/oldf
-	:100755 100755 85df50785d62d3b05ab03d9cbf7e4a0b49449730 85df50785d62d3b05ab03d9cbf7e4a0b49449730 R100	file4	sub/file4
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc R100	i/am/new/to/you	sub/i/am/new/to/you
-	:100755 100755 e74b7d465e52746be2b4bae983670711e6e66657 e74b7d465e52746be2b4bae983670711e6e66657 R100	newdir/exec.sh	sub/newdir/exec.sh
-	:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 R100	newdir/interesting	sub/newdir/interesting
+	:100644 100644 $oldf $oldf R100	file2/oldf	sub/file2/oldf
+	:100755 100755 $f4id $f4id R100	file4	sub/file4
+	:100755 100755 $newf $newf R100	i/am/new/to/you	sub/i/am/new/to/you
+	:100755 100755 $f6id $f6id R100	newdir/exec.sh	sub/newdir/exec.sh
+	:100644 100644 $f5id $f5id R100	newdir/interesting	sub/newdir/interesting
 	EOF
 	git fast-import <input &&
 	git diff-tree -M -r M4^ M4 >actual &&
@@ -1097,7 +1104,7 @@ test_expect_success 'N: copy file in same subdirectory' '
 	INPUT_END
 
 	cat >expect <<-EOF &&
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file2/n.e.w.f
+	:100755 100755 $newf $newf C100	file2/newf	file2/n.e.w.f
 	EOF
 	git fast-import <input &&
 	git diff-tree -C --find-copies-harder -r N1^ N1 >actual &&
@@ -1129,9 +1136,9 @@ test_expect_success 'N: copy then modify subdirectory' '
 	INPUT_END
 
 	cat >expect <<-EOF &&
-	:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 C100	newdir/interesting	file3/file5
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file3/newf
-	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	file3/oldf
+	:100644 100644 $f5id $f5id C100	newdir/interesting	file3/file5
+	:100755 100755 $newf $newf C100	file2/newf	file3/newf
+	:100644 100644 $oldf $oldf C100	file2/oldf	file3/oldf
 	EOF
 	git fast-import <input &&
 	git diff-tree -C --find-copies-harder -r N2^^ N2 >actual &&
@@ -1162,9 +1169,9 @@ test_expect_success 'N: copy dirty subdirectory' '
 '
 
 test_expect_success 'N: copy directory by id' '
-	cat >expect <<-\EOF &&
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file3/newf
-	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	file3/oldf
+	cat >expect <<-EOF &&
+	:100755 100755 $newf $newf C100	file2/newf	file3/newf
+	:100644 100644 $oldf $oldf C100	file2/oldf	file3/oldf
 	EOF
 	subdir=$(git rev-parse refs/heads/branch^0:file2) &&
 	cat >input <<-INPUT_END &&
@@ -1183,9 +1190,9 @@ test_expect_success 'N: copy directory by id' '
 '
 
 test_expect_success PIPE 'N: read and copy directory' '
-	cat >expect <<-\EOF &&
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file3/newf
-	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	file3/oldf
+	cat >expect <<-EOF &&
+	:100755 100755 $newf $newf C100	file2/newf	file3/newf
+	:100644 100644 $oldf $oldf C100	file2/oldf	file3/oldf
 	EOF
 	git update-ref -d refs/heads/N4 &&
 	rm -f backflow &&
@@ -1254,9 +1261,9 @@ test_expect_success PIPE 'N: empty directory reads as missing' '
 '
 
 test_expect_success 'N: copy root directory by tree hash' '
-	cat >expect <<-\EOF &&
-	:100755 000000 f1fb5da718392694d0076d677d6d0e364c79b0bc 0000000000000000000000000000000000000000 D	file3/newf
-	:100644 000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 0000000000000000000000000000000000000000 D	file3/oldf
+	cat >expect <<-EOF &&
+	:100755 000000 $newf $zero D	file3/newf
+	:100644 000000 $oldf $zero D	file3/oldf
 	EOF
 	root=$(git rev-parse refs/heads/branch^0^{tree}) &&
 	cat >input <<-INPUT_END &&
@@ -1275,12 +1282,12 @@ test_expect_success 'N: copy root directory by tree hash' '
 '
 
 test_expect_success 'N: copy root by path' '
-	cat >expect <<-\EOF &&
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	oldroot/file2/newf
-	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	oldroot/file2/oldf
-	:100755 100755 85df50785d62d3b05ab03d9cbf7e4a0b49449730 85df50785d62d3b05ab03d9cbf7e4a0b49449730 C100	file4	oldroot/file4
-	:100755 100755 e74b7d465e52746be2b4bae983670711e6e66657 e74b7d465e52746be2b4bae983670711e6e66657 C100	newdir/exec.sh	oldroot/newdir/exec.sh
-	:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 C100	newdir/interesting	oldroot/newdir/interesting
+	cat >expect <<-EOF &&
+	:100755 100755 $newf $newf C100	file2/newf	oldroot/file2/newf
+	:100644 100644 $oldf $oldf C100	file2/oldf	oldroot/file2/oldf
+	:100755 100755 $f4id $f4id C100	file4	oldroot/file4
+	:100755 100755 $f6id $f6id C100	newdir/exec.sh	oldroot/newdir/exec.sh
+	:100644 100644 $f5id $f5id C100	newdir/interesting	oldroot/newdir/interesting
 	EOF
 	cat >input <<-INPUT_END &&
 	commit refs/heads/N-copy-root-path
@@ -1340,10 +1347,10 @@ test_expect_success 'N: delete directory by copying' '
 '
 
 test_expect_success 'N: modify copied tree' '
-	cat >expect <<-\EOF &&
-	:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 C100	newdir/interesting	file3/file5
-	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file3/newf
-	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	file3/oldf
+	cat >expect <<-EOF &&
+	:100644 100644 $f5id $f5id C100	newdir/interesting	file3/file5
+	:100755 100755 $newf $newf C100	file2/newf	file3/newf
+	:100644 100644 $oldf $oldf C100	file2/oldf	file3/oldf
 	EOF
 	subdir=$(git rev-parse refs/heads/branch^0:file2) &&
 	cat >input <<-INPUT_END &&
@@ -2726,7 +2733,7 @@ test_expect_success 'R: corrupt lines do not mess marks file' '
 	rm -f io.marks &&
 	blob=$(echo hi | git hash-object --stdin) &&
 	cat >expect <<-EOF &&
-	:3 0000000000000000000000000000000000000000
+	:3 $ZERO_OID
 	:1 $blob
 	:2 $blob
 	EOF
@@ -3077,7 +3084,7 @@ test_expect_success 'T: delete branch' '
 	git branch to-delete &&
 	git fast-import <<-EOF &&
 	reset refs/heads/to-delete
-	from 0000000000000000000000000000000000000000
+	from $ZERO_OID
 	EOF
 	test_must_fail git rev-parse --verify refs/heads/to-delete
 '
@@ -3117,6 +3124,9 @@ test_expect_success 'U: initialize for U tests' '
 
 	INPUT_END
 
+	f7id=$(echo "blob 1" | git hash-object --stdin) &&
+	f8id=$(echo "sleep well" | git hash-object --stdin) &&
+	f9id=$(echo "au revoir" | git hash-object --stdin) &&
 	git fast-import <input
 '
 
@@ -3137,7 +3147,7 @@ test_expect_success 'U: filedelete file succeeds' '
 
 test_expect_success 'U: validate file delete result' '
 	cat >expect <<-EOF &&
-	:100644 000000 2907ebb4bf85d91bf0716bb3bd8a68ef48d6da76 0000000000000000000000000000000000000000 D	good/night.txt
+	:100644 000000 $f8id $ZERO_OID D	good/night.txt
 	EOF
 
 	git diff-tree -M -r U^1 U >actual &&
@@ -3162,7 +3172,7 @@ test_expect_success 'U: filedelete directory succeeds' '
 
 test_expect_success 'U: validate directory delete result' '
 	cat >expect <<-EOF &&
-	:100644 000000 69cb75792f55123d8389c156b0b41c2ff00ed507 0000000000000000000000000000000000000000 D	good/bye.txt
+	:100644 000000 $f9id $ZERO_OID D	good/bye.txt
 	EOF
 
 	git diff-tree -M -r U^1 U >actual &&
@@ -3187,7 +3197,7 @@ test_expect_success 'U: filedelete root succeeds' '
 
 test_expect_success 'U: validate root delete result' '
 	cat >expect <<-EOF &&
-	:100644 000000 c18147dc648481eeb65dc5e66628429a64843327 0000000000000000000000000000000000000000 D	hello.c
+	:100644 000000 $f7id $ZERO_OID D	hello.c
 	EOF
 
 	git diff-tree -M -r U^1 U >actual &&

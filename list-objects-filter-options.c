@@ -2,7 +2,7 @@
 #include "commit.h"
 #include "config.h"
 #include "revision.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "list-objects.h"
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
@@ -14,6 +14,29 @@ static int parse_combine_filter(
 	struct list_objects_filter_options *filter_options,
 	const char *arg,
 	struct strbuf *errbuf);
+
+const char *list_object_filter_config_name(enum list_objects_filter_choice c)
+{
+	switch (c) {
+	case LOFC_DISABLED:
+		/* we have no name for "no filter at all" */
+		break;
+	case LOFC_BLOB_NONE:
+		return "blob:none";
+	case LOFC_BLOB_LIMIT:
+		return "blob:limit";
+	case LOFC_TREE_DEPTH:
+		return "tree";
+	case LOFC_SPARSE_OID:
+		return "sparse:oid";
+	case LOFC_COMBINE:
+		return "combine";
+	case LOFC__COUNT:
+		/* not a real filter type; just the count of all filters */
+		break;
+	}
+	BUG("list_object_filter_choice_name: invalid argument '%d'", c);
+}
 
 /*
  * Parse value of the argument to the "filter" keyword.
@@ -321,12 +344,21 @@ void partial_clone_register(
 	const char *remote,
 	struct list_objects_filter_options *filter_options)
 {
+	struct promisor_remote *promisor_remote;
 	char *cfg_name;
 	char *filter_name;
 
 	/* Check if it is already registered */
-	if (!promisor_remote_find(remote)) {
-		git_config_set("core.repositoryformatversion", "1");
+	if ((promisor_remote = promisor_remote_find(remote))) {
+		if (promisor_remote->partial_clone_filter)
+			/*
+			 * Remote is already registered and a filter is already
+			 * set, so we don't need to do anything here.
+			 */
+			return;
+	} else {
+		if (upgrade_repository_format(1) < 0)
+			die(_("unable to upgrade repository format to support partial clone"));
 
 		/* Add promisor config for the remote */
 		cfg_name = xstrfmt("remote.%s.promisor", remote);

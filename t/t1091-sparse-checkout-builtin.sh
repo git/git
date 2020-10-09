@@ -100,6 +100,28 @@ test_expect_success 'clone --sparse' '
 	check_files clone a
 '
 
+test_expect_success 'interaction with clone --no-checkout (unborn index)' '
+	git clone --no-checkout "file://$(pwd)/repo" clone_no_checkout &&
+	git -C clone_no_checkout sparse-checkout init --cone &&
+	git -C clone_no_checkout sparse-checkout set folder1 &&
+
+	git -C clone_no_checkout sparse-checkout list >actual &&
+	cat >expect <<-\EOF &&
+	folder1
+	EOF
+	test_cmp expect actual &&
+
+	# nothing checked out, expect "No such file or directory"
+	! ls clone_no_checkout/* >actual &&
+	test_must_be_empty actual &&
+	test_path_is_missing clone_no_checkout/.git/index &&
+
+	# No branch is checked out until we manually switch to one
+	git -C clone_no_checkout switch master &&
+	test_path_is_file clone_no_checkout/.git/index &&
+	check_files clone_no_checkout a folder1
+'
+
 test_expect_success 'set enables config' '
 	git init empty-config &&
 	(
@@ -347,7 +369,7 @@ test_expect_success 'sparse-checkout (init|set|disable) warns with unmerged stat
 	git clone repo unmerged &&
 
 	cat >input <<-EOF &&
-	0 0000000000000000000000000000000000000000	folder1/a
+	0 $ZERO_OID	folder1/a
 	100644 $(git -C unmerged rev-parse HEAD:folder1/a) 1	folder1/a
 	EOF
 	git -C unmerged update-index --index-info <input &&
@@ -374,7 +396,7 @@ test_expect_success 'sparse-checkout reapply' '
 	echo dirty >tweak/deep/deeper2/a &&
 
 	cat >input <<-EOF &&
-	0 0000000000000000000000000000000000000000	folder1/a
+	0 $ZERO_OID	folder1/a
 	100644 $(git -C tweak rev-parse HEAD:folder1/a) 1	folder1/a
 	EOF
 	git -C tweak update-index --index-info <input &&

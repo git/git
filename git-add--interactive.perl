@@ -714,7 +714,7 @@ sub parse_diff {
 	if (defined $patch_mode_revision) {
 		push @diff_cmd, get_diff_reference($patch_mode_revision);
 	}
-	my @diff = run_cmd_pipe("git", @diff_cmd, "--", $path);
+	my @diff = run_cmd_pipe("git", @diff_cmd, qw(--no-color --), $path);
 	my @colored = ();
 	if ($diff_use_color) {
 		my @display_cmd = ("git", @diff_cmd, qw(--color --), $path);
@@ -754,8 +754,13 @@ sub parse_diff_header {
 	my $head = { TEXT => [], DISPLAY => [], TYPE => 'header' };
 	my $mode = { TEXT => [], DISPLAY => [], TYPE => 'mode' };
 	my $deletion = { TEXT => [], DISPLAY => [], TYPE => 'deletion' };
+	my $addition;
 
 	for (my $i = 0; $i < @{$src->{TEXT}}; $i++) {
+		if ($src->{TEXT}->[$i] =~ /^new file/) {
+			$addition = 1;
+			$head->{TYPE} = 'addition';
+		}
 		my $dest =
 		   $src->{TEXT}->[$i] =~ /^(old|new) mode (\d+)$/ ? $mode :
 		   $src->{TEXT}->[$i] =~ /^deleted file/ ? $deletion :
@@ -763,7 +768,7 @@ sub parse_diff_header {
 		push @{$dest->{TEXT}}, $src->{TEXT}->[$i];
 		push @{$dest->{DISPLAY}}, $src->{DISPLAY}->[$i];
 	}
-	return ($head, $mode, $deletion);
+	return ($head, $mode, $deletion, $addition);
 }
 
 sub hunk_splittable {
@@ -1427,46 +1432,55 @@ my %patch_update_prompt_modes = (
 	stage => {
 		mode => N__("Stage mode change [y,n,q,a,d%s,?]? "),
 		deletion => N__("Stage deletion [y,n,q,a,d%s,?]? "),
+		addition => N__("Stage addition [y,n,q,a,d%s,?]? "),
 		hunk => N__("Stage this hunk [y,n,q,a,d%s,?]? "),
 	},
 	stash => {
 		mode => N__("Stash mode change [y,n,q,a,d%s,?]? "),
 		deletion => N__("Stash deletion [y,n,q,a,d%s,?]? "),
+		addition => N__("Stash addition [y,n,q,a,d%s,?]? "),
 		hunk => N__("Stash this hunk [y,n,q,a,d%s,?]? "),
 	},
 	reset_head => {
 		mode => N__("Unstage mode change [y,n,q,a,d%s,?]? "),
 		deletion => N__("Unstage deletion [y,n,q,a,d%s,?]? "),
+		addition => N__("Unstage addition [y,n,q,a,d%s,?]? "),
 		hunk => N__("Unstage this hunk [y,n,q,a,d%s,?]? "),
 	},
 	reset_nothead => {
 		mode => N__("Apply mode change to index [y,n,q,a,d%s,?]? "),
 		deletion => N__("Apply deletion to index [y,n,q,a,d%s,?]? "),
+		addition => N__("Apply addition to index [y,n,q,a,d%s,?]? "),
 		hunk => N__("Apply this hunk to index [y,n,q,a,d%s,?]? "),
 	},
 	checkout_index => {
 		mode => N__("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Discard addition from worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
 	},
 	checkout_head => {
 		mode => N__("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Discard addition from index and worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	checkout_nothead => {
 		mode => N__("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Apply addition to index and worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	worktree_head => {
 		mode => N__("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Discard addition from worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
 	},
 	worktree_nothead => {
 		mode => N__("Apply mode change to worktree [y,n,q,a,d%s,?]? "),
 		deletion => N__("Apply deletion to worktree [y,n,q,a,d%s,?]? "),
+		addition => N__("Apply addition to worktree [y,n,q,a,d%s,?]? "),
 		hunk => N__("Apply this hunk to worktree [y,n,q,a,d%s,?]? "),
 	},
 );
@@ -1476,7 +1490,7 @@ sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
-	($head, my $mode, my $deletion) = parse_diff_header($head);
+	($head, my $mode, my $deletion, my $addition) = parse_diff_header($head);
 	for (@{$head->{DISPLAY}}) {
 		print;
 	}
@@ -1499,6 +1513,7 @@ sub patch_update_file {
 		my ($prev, $next, $other, $undecided, $i);
 		$other = '';
 
+		last if ($ix and !$num);
 		if ($num <= $ix) {
 			$ix = 0;
 		}
@@ -1531,35 +1546,51 @@ sub patch_update_file {
 				last;
 			}
 		}
-		last if (!$undecided);
+		last if (!$undecided && ($num || !$addition));
 
-		if ($hunk[$ix]{TYPE} eq 'hunk' &&
-		    hunk_splittable($hunk[$ix]{TEXT})) {
-			$other .= ',s';
+		if ($num) {
+			if ($hunk[$ix]{TYPE} eq 'hunk' &&
+			    hunk_splittable($hunk[$ix]{TEXT})) {
+				$other .= ',s';
+			}
+			if ($hunk[$ix]{TYPE} eq 'hunk') {
+				$other .= ',e';
+			}
+			for (@{$hunk[$ix]{DISPLAY}}) {
+				print;
+			}
 		}
-		if ($hunk[$ix]{TYPE} eq 'hunk') {
-			$other .= ',e';
-		}
-		for (@{$hunk[$ix]{DISPLAY}}) {
-			print;
-		}
-		print colored $prompt_color, "(", ($ix+1), "/$num) ",
-			sprintf(__($patch_update_prompt_modes{$patch_mode}{$hunk[$ix]{TYPE}}), $other);
+		my $type = $num ? $hunk[$ix]{TYPE} : $head->{TYPE};
+		print colored $prompt_color, "(", ($ix+1), "/", ($num ? $num : 1), ") ",
+			sprintf(__($patch_update_prompt_modes{$patch_mode}{$type}), $other);
 
 		my $line = prompt_single_character;
 		last unless defined $line;
 		if ($line) {
 			if ($line =~ /^y/i) {
-				$hunk[$ix]{USE} = 1;
+				if ($num) {
+					$hunk[$ix]{USE} = 1;
+				} else {
+					$head->{USE} = 1;
+				}
 			}
 			elsif ($line =~ /^n/i) {
-				$hunk[$ix]{USE} = 0;
+				if ($num) {
+					$hunk[$ix]{USE} = 0;
+				} else {
+					$head->{USE} = 0;
+				}
 			}
 			elsif ($line =~ /^a/i) {
-				while ($ix < $num) {
-					if (!defined $hunk[$ix]{USE}) {
-						$hunk[$ix]{USE} = 1;
+				if ($num) {
+					while ($ix < $num) {
+						if (!defined $hunk[$ix]{USE}) {
+							$hunk[$ix]{USE} = 1;
+						}
+						$ix++;
 					}
+				} else {
+					$head->{USE} = 1;
 					$ix++;
 				}
 				next;
@@ -1596,19 +1627,28 @@ sub patch_update_file {
 				next;
 			}
 			elsif ($line =~ /^d/i) {
-				while ($ix < $num) {
-					if (!defined $hunk[$ix]{USE}) {
-						$hunk[$ix]{USE} = 0;
+				if ($num) {
+					while ($ix < $num) {
+						if (!defined $hunk[$ix]{USE}) {
+							$hunk[$ix]{USE} = 0;
+						}
+						$ix++;
 					}
+				} else {
+					$head->{USE} = 0;
 					$ix++;
 				}
 				next;
 			}
 			elsif ($line =~ /^q/i) {
-				for ($i = 0; $i < $num; $i++) {
-					if (!defined $hunk[$i]{USE}) {
-						$hunk[$i]{USE} = 0;
+				if ($num) {
+					for ($i = 0; $i < $num; $i++) {
+						if (!defined $hunk[$i]{USE}) {
+							$hunk[$i]{USE} = 0;
+						}
 					}
+				} elsif (!defined $head->{USE}) {
+					$head->{USE} = 0;
 				}
 				$quit = 1;
 				last;
@@ -1726,7 +1766,7 @@ sub patch_update_file {
 		}
 	}
 
-	@hunk = coalesce_overlapping_hunks(@hunk);
+	@hunk = coalesce_overlapping_hunks(@hunk) if ($num);
 
 	my $n_lofs = 0;
 	my @result = ();
@@ -1736,7 +1776,7 @@ sub patch_update_file {
 		}
 	}
 
-	if (@result) {
+	if (@result or $head->{USE}) {
 		my @patch = reassemble_patch($head->{TEXT}, @result);
 		my $apply_routine = $patch_mode_flavour{APPLY};
 		&$apply_routine(@patch);

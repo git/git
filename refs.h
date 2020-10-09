@@ -1,6 +1,8 @@
 #ifndef REFS_H
 #define REFS_H
 
+#include "cache.h"
+
 struct object_id;
 struct ref_store;
 struct repository;
@@ -105,6 +107,8 @@ int refs_verify_refname_available(struct ref_store *refs,
 				  const struct string_list *skip,
 				  struct strbuf *err);
 
+int refs_ref_exists(struct ref_store *refs, const char *refname);
+
 int ref_exists(const char *refname);
 
 int should_autocreate_reflog(const char *refname);
@@ -145,14 +149,29 @@ int refname_match(const char *abbrev_name, const char *full_name);
  * Given a 'prefix' expand it by the rules in 'ref_rev_parse_rules' and add
  * the results to 'prefixes'
  */
-struct argv_array;
-void expand_ref_prefix(struct argv_array *prefixes, const char *prefix);
+struct strvec;
+void expand_ref_prefix(struct strvec *prefixes, const char *prefix);
 
 int expand_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-int repo_dwim_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
+int repo_dwim_ref(struct repository *r, const char *str, int len,
+		  struct object_id *oid, char **ref, int nonfatal_dangling_mark);
 int repo_dwim_log(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-int dwim_ref(const char *str, int len, struct object_id *oid, char **ref);
+static inline int dwim_ref(const char *str, int len, struct object_id *oid,
+			   char **ref, int nonfatal_dangling_mark)
+{
+	return repo_dwim_ref(the_repository, str, len, oid, ref,
+			     nonfatal_dangling_mark);
+}
 int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
+
+/*
+ * Retrieves the default branch name for newly-initialized repositories.
+ *
+ * The return value of `repo_default_branch_name()` is an allocated string. The
+ * return value of `git_default_branch_name()` is a singleton.
+ */
+const char *git_default_branch_name(void);
+char *repo_default_branch_name(struct repository *r);
 
 /*
  * A ref_transaction represents a collection of reference updates that
@@ -432,19 +451,35 @@ int delete_refs(const char *msg, struct string_list *refnames,
 int refs_delete_reflog(struct ref_store *refs, const char *refname);
 int delete_reflog(const char *refname);
 
-/* iterate over reflog entries */
+/*
+ * Callback to process a reflog entry found by the iteration functions (see
+ * below)
+ */
 typedef int each_reflog_ent_fn(
 		struct object_id *old_oid, struct object_id *new_oid,
 		const char *committer, timestamp_t timestamp,
 		int tz, const char *msg, void *cb_data);
 
+/* Iterate over reflog entries in the log for `refname`. */
+
+/* oldest entry first */
 int refs_for_each_reflog_ent(struct ref_store *refs, const char *refname,
 			     each_reflog_ent_fn fn, void *cb_data);
+
+/* youngest entry first */
 int refs_for_each_reflog_ent_reverse(struct ref_store *refs,
 				     const char *refname,
 				     each_reflog_ent_fn fn,
 				     void *cb_data);
+
+/*
+ * Iterate over reflog entries in the log for `refname` in the main ref store.
+ */
+
+/* oldest entry first */
 int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_data);
+
+/* youngest entry first */
 int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void *cb_data);
 
 /*

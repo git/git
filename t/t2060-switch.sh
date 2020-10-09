@@ -68,6 +68,14 @@ test_expect_success 'new orphan branch from empty' '
 	test_cmp expected tracked-files
 '
 
+test_expect_success 'orphan branch works with --discard-changes' '
+	test_when_finished git switch master &&
+	echo foo >foo.txt &&
+	git switch --discard-changes --orphan new-orphan2 &&
+	git ls-files >tracked-files &&
+	test_must_be_empty tracked-files
+'
+
 test_expect_success 'switching ignores file of same branch name' '
 	test_when_finished git switch master &&
 	: >first-branch &&

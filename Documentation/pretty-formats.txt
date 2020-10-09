@@ -196,8 +196,8 @@ The placeholders are:
 '%ce':: committer email
 '%cE':: committer email (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
-'%cl':: author email local-part (the part before the '@' sign)
-'%cL':: author local-part (see '%cl') respecting .mailmap, see
+'%cl':: committer email local-part (the part before the '@' sign)
+'%cL':: committer local-part (see '%cl') respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
 '%cd':: committer date (format respects --date= option)
 '%cD':: committer date, RFC2822 style

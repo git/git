@@ -42,7 +42,8 @@ clean_fake_sendmail () {
 }
 
 test_expect_success $PREREQ 'Extract patches' '
-	patches=$(git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1)
+	patches=$(git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1) &&
+	threaded_patches=$(git format-patch -o threaded -s --in-reply-to="format" HEAD^1)
 '
 
 # Test no confirm early to ensure remaining tests will not hang
@@ -1219,6 +1220,17 @@ test_expect_success $PREREQ 'threading but no chain-reply-to' '
 	grep "In-Reply-To: " stdout
 '
 
+test_expect_success $PREREQ 'override in-reply-to if no threading' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--no-thread \
+		--in-reply-to="override" \
+		$threaded_patches >stdout &&
+	grep "In-Reply-To: <override>" stdout
+'
+
 test_expect_success $PREREQ 'sendemail.to works' '
 	git config --replace-all sendemail.to "Somebody <somebody@ex.com>" &&
 	git send-email \
@@ -1539,7 +1551,7 @@ test_expect_success $PREREQ '8-bit and sendemail.transferencoding=quoted-printab
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1556,7 +1568,7 @@ test_expect_success $PREREQ '8-bit and sendemail.transferencoding=base64' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1582,7 +1594,7 @@ test_expect_success $PREREQ 'convert from quoted-printable to base64' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-qp \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1612,7 +1624,7 @@ test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=quoted-printabl
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-crlf \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1629,7 +1641,7 @@ test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=base64' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-crlf \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -2128,6 +2140,35 @@ test_expect_success $PREREQ 'test that send-email works outside a repo' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		"$(pwd)/0001-add-master.patch"
+'
+
+test_expect_success $PREREQ 'test that sendmail config is rejected' '
+	test_config sendmail.program sendmail &&
+	test_must_fail git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^ 2>err &&
+	test_i18ngrep "found configuration options for '"'"sendmail"'"'" err
+'
+
+test_expect_success $PREREQ 'test that sendmail config rejection is specific' '
+	test_config resendmail.program sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^
+'
+
+test_expect_success $PREREQ 'test forbidSendmailVariables behavior override' '
+	test_config sendmail.program sendmail &&
+	test_config sendemail.forbidSendmailVariables false &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^
 '
 
 test_done

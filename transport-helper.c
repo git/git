@@ -9,7 +9,7 @@
 #include "string-list.h"
 #include "thread-utils.h"
 #include "sigchain.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "refs.h"
 #include "refspec.h"
 #include "transport-internal.h"
@@ -32,7 +32,8 @@ struct helper_data {
 		signed_tags : 1,
 		check_connectivity : 1,
 		no_disconnect_req : 1,
-		no_private_update : 1;
+		no_private_update : 1,
+		object_format : 1;
 
 	/*
 	 * As an optimization, the transport code may invoke fetch before
@@ -127,17 +128,17 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->in = -1;
 	helper->out = -1;
 	helper->err = 0;
-	argv_array_pushf(&helper->args, "git-remote-%s", data->name);
-	argv_array_push(&helper->args, transport->remote->name);
-	argv_array_push(&helper->args, remove_ext_force(transport->url));
-	helper->git_cmd = 0;
+	strvec_pushf(&helper->args, "remote-%s", data->name);
+	strvec_push(&helper->args, transport->remote->name);
+	strvec_push(&helper->args, remove_ext_force(transport->url));
+	helper->git_cmd = 1;
 	helper->silent_exec_failure = 1;
 
 	if (have_git_dir())
-		argv_array_pushf(&helper->env_array, "%s=%s",
-				 GIT_DIR_ENVIRONMENT, get_git_dir());
+		strvec_pushf(&helper->env_array, "%s=%s",
+			     GIT_DIR_ENVIRONMENT, get_git_dir());
 
-	helper->trace2_child_class = helper->args.argv[0]; /* "remote-<name>" */
+	helper->trace2_child_class = helper->args.v[0]; /* "remote-<name>" */
 
 	code = start_command(helper);
 	if (code < 0 && errno == ENOENT)
@@ -207,6 +208,8 @@ static struct child_process *get_helper(struct transport *transport)
 			data->import_marks = xstrdup(arg);
 		} else if (starts_with(capname, "no-private-update")) {
 			data->no_private_update = 1;
+		} else if (starts_with(capname, "object-format")) {
+			data->object_format = 1;
 		} else if (mandatory) {
 			die(_("unknown mandatory capability %s; this remote "
 			      "helper probably needs newer version of Git"),
@@ -410,10 +413,11 @@ static int fetch_with_fetch(struct transport *transport,
 			exit(128);
 
 		if (skip_prefix(buf.buf, "lock ", &name)) {
-			if (transport->pack_lockfile)
+			if (transport->pack_lockfiles.nr)
 				warning(_("%s also locked %s"), data->name, name);
 			else
-				transport->pack_lockfile = xstrdup(name);
+				string_list_append(&transport->pack_lockfiles,
+						   name);
 		}
 		else if (data->check_connectivity &&
 			 data->transport_options.check_self_contained_and_connected &&
@@ -435,13 +439,13 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 	int cat_blob_fd, code;
 	child_process_init(fastimport);
 	fastimport->in = xdup(helper->out);
-	argv_array_push(&fastimport->args, "fast-import");
-	argv_array_push(&fastimport->args, "--allow-unsafe-features");
-	argv_array_push(&fastimport->args, debug ? "--stats" : "--quiet");
+	strvec_push(&fastimport->args, "fast-import");
+	strvec_push(&fastimport->args, "--allow-unsafe-features");
+	strvec_push(&fastimport->args, debug ? "--stats" : "--quiet");
 
 	if (data->bidi_import) {
 		cat_blob_fd = xdup(helper->in);
-		argv_array_pushf(&fastimport->args, "--cat-blob-fd=%d", cat_blob_fd);
+		strvec_pushf(&fastimport->args, "--cat-blob-fd=%d", cat_blob_fd);
 	}
 	fastimport->git_cmd = 1;
 
@@ -462,17 +466,17 @@ static int get_exporter(struct transport *transport,
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
-	argv_array_push(&fastexport->args, "fast-export");
-	argv_array_push(&fastexport->args, "--use-done-feature");
-	argv_array_push(&fastexport->args, data->signed_tags ?
+	strvec_push(&fastexport->args, "fast-export");
+	strvec_push(&fastexport->args, "--use-done-feature");
+	strvec_push(&fastexport->args, data->signed_tags ?
 		"--signed-tags=verbatim" : "--signed-tags=warn-strip");
 	if (data->export_marks)
-		argv_array_pushf(&fastexport->args, "--export-marks=%s.tmp", data->export_marks);
+		strvec_pushf(&fastexport->args, "--export-marks=%s.tmp", data->export_marks);
 	if (data->import_marks)
-		argv_array_pushf(&fastexport->args, "--import-marks=%s", data->import_marks);
+		strvec_pushf(&fastexport->args, "--import-marks=%s", data->import_marks);
 
 	for (i = 0; i < revlist_args->nr; i++)
-		argv_array_push(&fastexport->args, revlist_args->items[i].string);
+		strvec_push(&fastexport->args, revlist_args->items[i].string);
 
 	fastexport->git_cmd = 1;
 	return start_command(fastexport);
@@ -719,12 +723,60 @@ static int fetch(struct transport *transport,
 	return -1;
 }
 
+struct push_update_ref_state {
+	struct ref *hint;
+	struct ref_push_report *report;
+	int new_report;
+};
+
 static int push_update_ref_status(struct strbuf *buf,
-				   struct ref **ref,
+				   struct push_update_ref_state *state,
 				   struct ref *remote_refs)
 {
 	char *refname, *msg;
 	int status, forced = 0;
+
+	if (starts_with(buf->buf, "option ")) {
+		struct object_id old_oid, new_oid;
+		const char *key, *val;
+		char *p;
+
+		if (!state->hint || !(state->report || state->new_report))
+			die(_("'option' without a matching 'ok/error' directive"));
+		if (state->new_report) {
+			if (!state->hint->report) {
+				state->hint->report = xcalloc(1, sizeof(struct ref_push_report));
+				state->report = state->hint->report;
+			} else {
+				state->report = state->hint->report;
+				while (state->report->next)
+					state->report = state->report->next;
+				state->report->next = xcalloc(1, sizeof(struct ref_push_report));
+				state->report = state->report->next;
+			}
+			state->new_report = 0;
+		}
+		key = buf->buf + 7;
+		p = strchr(key, ' ');
+		if (p)
+			*p++ = '\0';
+		val = p;
+		if (!strcmp(key, "refname"))
+			state->report->ref_name = xstrdup_or_null(val);
+		else if (!strcmp(key, "old-oid") && val &&
+			 !parse_oid_hex(val, &old_oid, &val))
+			state->report->old_oid = oiddup(&old_oid);
+		else if (!strcmp(key, "new-oid") && val &&
+			 !parse_oid_hex(val, &new_oid, &val))
+			state->report->new_oid = oiddup(&new_oid);
+		else if (!strcmp(key, "forced-update"))
+			state->report->forced_update = 1;
+		/* Not update remote namespace again. */
+		return 1;
+	}
+
+	state->report = NULL;
+	state->new_report = 0;
 
 	if (starts_with(buf->buf, "ok ")) {
 		status = REF_STATUS_OK;
@@ -781,16 +833,16 @@ static int push_update_ref_status(struct strbuf *buf,
 		}
 	}
 
-	if (*ref)
-		*ref = find_ref_by_name(*ref, refname);
-	if (!*ref)
-		*ref = find_ref_by_name(remote_refs, refname);
-	if (!*ref) {
+	if (state->hint)
+		state->hint = find_ref_by_name(state->hint, refname);
+	if (!state->hint)
+		state->hint = find_ref_by_name(remote_refs, refname);
+	if (!state->hint) {
 		warning(_("helper reported unexpected status of %s"), refname);
 		return 1;
 	}
 
-	if ((*ref)->status != REF_STATUS_NONE) {
+	if (state->hint->status != REF_STATUS_NONE) {
 		/*
 		 * Earlier, the ref was marked not to be pushed, so ignore the ref
 		 * status reported by the remote helper if the latter is 'no match'.
@@ -799,9 +851,11 @@ static int push_update_ref_status(struct strbuf *buf,
 			return 1;
 	}
 
-	(*ref)->status = status;
-	(*ref)->forced_update |= forced;
-	(*ref)->remote_status = msg;
+	if (status == REF_STATUS_OK)
+		state->new_report = 1;
+	state->hint->status = status;
+	state->hint->forced_update |= forced;
+	state->hint->remote_status = msg;
 	return !(status == REF_STATUS_OK);
 }
 
@@ -809,37 +863,57 @@ static int push_update_refs_status(struct helper_data *data,
 				    struct ref *remote_refs,
 				    int flags)
 {
+	struct ref *ref;
+	struct ref_push_report *report;
 	struct strbuf buf = STRBUF_INIT;
-	struct ref *ref = remote_refs;
-	int ret = 0;
+	struct push_update_ref_state state = { remote_refs, NULL, 0 };
 
 	for (;;) {
-		char *private;
-
 		if (recvline(data, &buf)) {
-			ret = 1;
-			break;
+			strbuf_release(&buf);
+			return 1;
 		}
-
 		if (!buf.len)
 			break;
-
-		if (push_update_ref_status(&buf, &ref, remote_refs))
-			continue;
-
-		if (flags & TRANSPORT_PUSH_DRY_RUN || !data->rs.nr || data->no_private_update)
-			continue;
-
-		/* propagate back the update to the remote namespace */
-		private = apply_refspecs(&data->rs, ref->name);
-		if (!private)
-			continue;
-		update_ref("update by helper", private, &ref->new_oid, NULL,
-			   0, 0);
-		free(private);
+		push_update_ref_status(&buf, &state, remote_refs);
 	}
 	strbuf_release(&buf);
-	return ret;
+
+	if (flags & TRANSPORT_PUSH_DRY_RUN || !data->rs.nr || data->no_private_update)
+		return 0;
+
+	/* propagate back the update to the remote namespace */
+	for (ref = remote_refs; ref; ref = ref->next) {
+		char *private;
+
+		if (ref->status != REF_STATUS_OK)
+			continue;
+
+		if (!ref->report) {
+			private = apply_refspecs(&data->rs, ref->name);
+			if (!private)
+				continue;
+			update_ref("update by helper", private, &(ref->new_oid),
+				   NULL, 0, 0);
+			free(private);
+		} else {
+			for (report = ref->report; report; report = report->next) {
+				private = apply_refspecs(&data->rs,
+							 report->ref_name
+							 ? report->ref_name
+							 : ref->name);
+				if (!private)
+					continue;
+				update_ref("update by helper", private,
+					   report->new_oid
+					   ? report->new_oid
+					   : &(ref->new_oid),
+					   NULL, 0, 0);
+				free(private);
+			}
+		}
+	}
+	return 0;
 }
 
 static void set_common_push_options(struct transport *transport,
@@ -1046,7 +1120,7 @@ static int push_refs(struct transport *transport,
 	if (!remote_refs) {
 		fprintf(stderr,
 			_("No refs in common and none specified; doing nothing.\n"
-			  "Perhaps you should specify a branch such as 'master'.\n"));
+			  "Perhaps you should specify a branch.\n"));
 		return 0;
 	}
 
@@ -1078,7 +1152,7 @@ static int has_attribute(const char *attrs, const char *attr)
 }
 
 static struct ref *get_refs_list(struct transport *transport, int for_push,
-				 const struct argv_array *ref_prefixes)
+				 const struct strvec *ref_prefixes)
 {
 	get_helper(transport);
 
@@ -1103,6 +1177,12 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 	data->get_refs_list_called = 1;
 	helper = get_helper(transport);
 
+	if (data->object_format) {
+		write_str_in_full(helper->in, "option object-format\n");
+		if (recvline(data, &buf) || strcmp(buf.buf, "ok"))
+			exit(128);
+	}
+
 	if (data->push && for_push)
 		write_str_in_full(helper->in, "list for-push\n");
 	else
@@ -1115,6 +1195,17 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 
 		if (!*buf.buf)
 			break;
+		else if (buf.buf[0] == ':') {
+			const char *value;
+			if (skip_prefix(buf.buf, ":object-format ", &value)) {
+				int algo = hash_algo_by_name(value);
+				if (algo == GIT_HASH_UNKNOWN)
+					die(_("unsupported object format '%s'"),
+					    value);
+				transport->hash_algo = &hash_algos[algo];
+			}
+			continue;
+		}
 
 		eov = strchr(buf.buf, ' ');
 		if (!eov)
@@ -1127,7 +1218,7 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 		if (buf.buf[0] == '@')
 			(*tail)->symref = xstrdup(buf.buf + 1);
 		else if (buf.buf[0] != '?')
-			get_oid_hex(buf.buf, &(*tail)->old_oid);
+			get_oid_hex_algop(buf.buf, &(*tail)->old_oid, transport->hash_algo);
 		if (eon) {
 			if (has_attribute(eon + 1, "unchanged")) {
 				(*tail)->status |= REF_STATUS_UPTODATE;

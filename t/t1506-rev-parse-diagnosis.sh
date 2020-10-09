@@ -190,6 +190,24 @@ test_expect_success 'dotdot is not an empty set' '
 	test_cmp expect actual
 '
 
+test_expect_success 'dotdot does not peel endpoints' '
+	git tag -a -m "annote" annotated HEAD &&
+	A=$(git rev-parse annotated) &&
+	H=$(git rev-parse annotated^0) &&
+	{
+		echo $A && echo ^$A
+	} >expect-with-two-dots &&
+	{
+		echo $A && echo $A && echo ^$H
+	} >expect-with-merge-base &&
+
+	git rev-parse annotated..annotated >actual-with-two-dots &&
+	test_cmp expect-with-two-dots actual-with-two-dots &&
+
+	git rev-parse annotated...annotated >actual-with-merge-base &&
+	test_cmp expect-with-merge-base actual-with-merge-base
+'
+
 test_expect_success 'arg before dashdash must be a revision (missing)' '
 	test_must_fail git rev-parse foobar -- 2>stderr &&
 	test_i18ngrep "bad revision" stderr
@@ -207,7 +225,7 @@ test_expect_success 'arg before dashdash must be a revision (ambiguous)' '
 	{
 		# we do not want to use rev-parse here, because
 		# we are testing it
-		cat .git/refs/heads/foobar &&
+		git show-ref -s refs/heads/foobar &&
 		printf "%s\n" --
 	} >expect &&
 	git rev-parse foobar -- >actual &&

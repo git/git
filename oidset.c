@@ -43,6 +43,12 @@ int oidset_size(struct oidset *set)
 
 void oidset_parse_file(struct oidset *set, const char *path)
 {
+	oidset_parse_file_carefully(set, path, NULL, NULL);
+}
+
+void oidset_parse_file_carefully(struct oidset *set, const char *path,
+				 oidset_parse_tweak_fn fn, void *cbdata)
+{
 	FILE *fp;
 	struct strbuf sb = STRBUF_INIT;
 	struct object_id oid;
@@ -66,7 +72,8 @@ void oidset_parse_file(struct oidset *set, const char *path)
 		if (!sb.len)
 			continue;
 
-		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
+		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0' ||
+		    (fn && fn(&oid, cbdata)))
 			die("invalid object name: %s", sb.buf);
 		oidset_insert(set, &oid);
 	}

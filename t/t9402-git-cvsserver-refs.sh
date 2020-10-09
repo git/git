@@ -178,7 +178,7 @@ test_expect_success 'setup v1.2 on b1' '
 	mkdir cdir &&
 	echo "cdir/cfile" >cdir/cfile &&
 	git add -A cdir adir t3 t2 &&
-	git commit -q -m 'v1.2' &&
+	git commit -q -m "v1.2" &&
 	git tag v1.2 &&
 	git push --tags gitcvs.git b1:b1
 '

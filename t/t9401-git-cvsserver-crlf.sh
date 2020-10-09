@@ -167,10 +167,10 @@ test_expect_success 'adding files' '
 
 test_expect_success 'updating' '
     git pull gitcvs.git &&
-    echo 'hi' > subdir/newfile.bin &&
-    echo 'junk' > subdir/file.h &&
-    echo 'hi' > subdir/newfile.c &&
-    echo 'hello' >> binfile.bin &&
+    echo "hi" >subdir/newfile.bin &&
+    echo "junk" >subdir/file.h &&
+    echo "hi" >subdir/newfile.c &&
+    echo "hello" >>binfile.bin &&
     git add subdir/newfile.bin subdir/file.h subdir/newfile.c binfile.bin &&
     git commit -q -m "Add and change some files" &&
     git push gitcvs.git >/dev/null &&

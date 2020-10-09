@@ -22,7 +22,6 @@ test_expect_success setup '
 	# Copy notes to remote-notes
 	git fetch . refs/notes/*:refs/remote-notes/origin/* &&
 
-	test_oid_init &&
 	test_oid_cache <<-EOF
 	hash4a sha1:5e93d24084d32e1cb61f7070505b9d2530cca987
 	hash3a sha1:8366731eeee53787d2bdf8fc1eff7d94757e8da0

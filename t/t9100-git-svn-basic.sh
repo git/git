@@ -63,16 +63,16 @@ test_expect_success "$name" '
 
 
 name='detect node change from file to directory #1'
-test_expect_success "$name" "
+test_expect_success "$name" '
 	mkdir dir/new_file &&
 	mv dir/file dir/new_file/file &&
 	mv dir/new_file dir/file &&
 	git update-index --remove dir/file &&
 	git update-index --add dir/file/file &&
-	git commit -m '$name' &&
+	git commit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch
-"
+'
 
 
 name='detect node change from directory to file #1'
@@ -200,17 +200,19 @@ GIT_SVN_ID=alt
 export GIT_SVN_ID
 test_expect_success "$name" \
     'git svn init "$svnrepo" && git svn fetch &&
-     git rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
-     git rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
+     git log --format="tree %T %s" remotes/git-svn |
+	awk "!seen[\$0]++ { print \$1, \$2 }" >a &&
+     git log --format="tree %T" alt >b &&
      test_cmp a b'
 
 name='check imported tree checksums expected tree checksums'
 rm -f expected
 if test_have_prereq UTF8
 then
-	echo tree dc68b14b733e4ec85b04ab6f712340edc5dc936e > expected
+	echo tree dc68b14b733e4ec85b04ab6f712340edc5dc936e > expected.sha1
+	echo tree b95b55b29d771f5eb73aa9b9d52d02fe11a2538c2feb0829f754ce20a91d98eb > expected.sha256
 fi
-cat >> expected <<\EOF
+cat >> expected.sha1 <<\EOF
 tree c3322890dcf74901f32d216f05c5044f670ce632
 tree d3ccd5035feafd17b030c5732e7808cc49122853
 tree d03e1630363d4881e68929d532746b20b0986b83
@@ -220,8 +222,20 @@ tree 149d63cd5878155c846e8c55d7d8487de283f89e
 tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
+cat >> expected.sha256 <<\EOF
+tree 8d12756699d0b5b110514240a0ff141f6cbf8891fd69ab05e5594196fb437c9f
+tree 8187168d33f7d4ccb8c1cc6e99532810aaccb47658f35d19b3803072d1128d7a
+tree 74e535d85da8ee25eb23d7b506790c5ab3ccdb1ba0826bd57625ed44ef361650
+tree 6fd7dd963e3cdca0cbd6368ed3cfcc8037cc154d2e7719d9d369a0952364fd95
+tree 1fd6cec6aa95102d69266e20419bb62ec2a06372d614b9850ef23ff204103bb4
+tree 6fd7dd963e3cdca0cbd6368ed3cfcc8037cc154d2e7719d9d369a0952364fd95
+tree deb2b7ac79cd8ce6f52af6a5a0a08691e94ba74a2ed55966bb27dbec551730eb
+tree 59e2e936761188476a7752034e8aa0a822b34050c8504b0dfd946407f4bc9215
+EOF
 
-test_expect_success POSIXPERM,SYMLINKS "$name" "test_cmp expected a"
+test_expect_success POSIXPERM,SYMLINKS "$name" '
+	test_cmp expected.$(test_oid algo) a
+'
 
 test_expect_success 'exit if remote refs are ambigious' '
         git config --add svn-remote.svn.fetch \

@@ -22,9 +22,9 @@ was sent.  Server MUST NOT ignore capabilities that client requested
 and server advertised.  As a consequence of these rules, server MUST
 NOT advertise capabilities it does not understand.
 
-The 'atomic', 'report-status', 'delete-refs', 'quiet', and 'push-cert'
-capabilities are sent and recognized by the receive-pack (push to server)
-process.
+The 'atomic', 'report-status', 'report-status-v2', 'delete-refs', 'quiet',
+and 'push-cert' capabilities are sent and recognized by the receive-pack
+(push to server) process.
 
 The 'ofs-delta' and 'side-band-64k' capabilities are sent and recognized
 by both upload-pack and receive-pack protocols.  The 'agent' capability
@@ -176,6 +176,21 @@ agent strings are purely informative for statistics and debugging
 purposes, and MUST NOT be used to programmatically assume the presence
 or absence of particular features.
 
+object-format
+-------------
+
+This capability, which takes a hash algorithm as an argument, indicates
+that the server supports the given hash algorithms.  It may be sent
+multiple times; if so, the first one given is the one used in the ref
+advertisement.
+
+When provided by the client, this indicates that it intends to use the
+given hash algorithm to communicate.  The algorithm provided must be one
+that the server supports.
+
+If this capability is not provided, it is assumed that the only
+supported algorithm is SHA-1.
+
 symref
 ------
 
@@ -269,6 +284,17 @@ each reference was updated successfully.  If any of those were not
 successful, it will send back an error message.  See pack-protocol.txt
 for example messages.
 
+report-status-v2
+----------------
+
+Capability 'report-status-v2' extends capability 'report-status' by
+adding new "option" directives in order to support reference rewritten by
+the "proc-receive" hook.  The "proc-receive" hook may handle a command
+for a pseudo-reference which may create or update a reference with
+different name, new-oid, and old-oid.  While the capability
+'report-status' cannot report for such case.  See pack-protocol.txt
+for details.
+
 delete-refs
 -----------
 
@@ -309,15 +335,19 @@ allow-tip-sha1-in-want
 ----------------------
 
 If the upload-pack server advertises this capability, fetch-pack may
-send "want" lines with SHA-1s that exist at the server but are not
-advertised by upload-pack.
+send "want" lines with object names that exist at the server but are not
+advertised by upload-pack. For historical reasons, the name of this
+capability contains "sha1". Object names are always given using the
+object format negotiated through the 'object-format' capability.
 
 allow-reachable-sha1-in-want
 ----------------------------
 
 If the upload-pack server advertises this capability, fetch-pack may
-send "want" lines with SHA-1s that exist at the server but are not
-advertised by upload-pack.
+send "want" lines with object names that exist at the server but are not
+advertised by upload-pack. For historical reasons, the name of this
+capability contains "sha1". Object names are always given using the
+object format negotiated through the 'object-format' capability.
 
 push-cert=<nonce>
 -----------------

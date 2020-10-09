@@ -31,7 +31,16 @@ diff_cmp () {
 # indicates a dumb terminal, so we set that variable, too.
 
 force_color () {
-	env GIT_PAGER_IN_USE=true TERM=vt100 "$@"
+	# The first element of $@ may be a shell function, as a result POSIX
+	# does not guarantee that "one-shot assignment" will not persist after
+	# the function call. Thus, we prevent these variables from escaping
+	# this function's context with this subshell.
+	(
+		GIT_PAGER_IN_USE=true &&
+		TERM=vt100 &&
+		export GIT_PAGER_IN_USE TERM &&
+		"$@"
+	)
 }
 
 test_expect_success 'setup (initial)' '
@@ -412,6 +421,25 @@ test_expect_success 'deleting an empty file' '
 	diff_cmp expected diff
 '
 
+test_expect_success 'adding an empty file' '
+	git init added &&
+	(
+		cd added &&
+		test_commit initial &&
+		>empty &&
+		git add empty &&
+		test_tick &&
+		git commit -m empty &&
+		git tag added-file &&
+		git reset --hard HEAD^ &&
+		test_path_is_missing empty &&
+
+		echo y | git checkout -p added-file -- >actual &&
+		test_path_is_file empty &&
+		test_i18ngrep "Apply addition to index and worktree" actual
+	)
+'
+
 test_expect_success 'split hunk setup' '
 	git reset --hard &&
 	test_write_lines 10 20 30 40 50 60 >test &&
@@ -541,12 +569,20 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	diff_cmp expected diff
 '
 
+test_expect_success 'index is refreshed after applying patch' '
+	git reset --hard &&
+	echo content >test &&
+	printf y | git add -p &&
+	git diff-files --exit-code
+'
+
 test_expect_success 'diffs can be colorized' '
 	git reset --hard &&
 
 	echo content >test &&
 	printf y >y &&
 	force_color git add -p >output 2>&1 <y &&
+	git diff-files --exit-code &&
 
 	# We do not want to depend on the exact coloring scheme
 	# git uses for diffs, so just check that we saw some kind of color.
@@ -585,7 +621,7 @@ test_expect_success 'detect bogus diffFilter output' '
 	echo content >test &&
 	test_config interactive.diffFilter "sed 1d" &&
 	printf y >y &&
-	test_must_fail force_color git add -p <y
+	force_color test_must_fail git add -p <y
 '
 
 test_expect_success 'diff.algorithm is passed to `git diff-files`' '
@@ -784,6 +820,44 @@ test_expect_success 'checkout -p works with pathological context lines' '
 	test_write_lines s n n y q | git checkout -p &&
 	test_write_lines a b a b a a b a b a >expect &&
 	test_cmp expect a
+'
+
+# This should be called from a subshell as it sets a temporary editor
+setup_new_file() {
+	write_script new-file-editor.sh <<-\EOF &&
+	sed /^#/d "$1" >patch &&
+	sed /^+c/d patch >"$1"
+	EOF
+	test_set_editor "$(pwd)/new-file-editor.sh" &&
+	test_write_lines a b c d e f >new-file &&
+	test_write_lines a b d e f >new-file-expect &&
+	test_write_lines "@@ -0,0 +1,6 @@" +a +b +c +d +e +f >patch-expect
+}
+
+test_expect_success 'add -N followed by add -p patch editing' '
+	git reset --hard &&
+	(
+		setup_new_file &&
+		git add -N new-file &&
+		test_write_lines e n q | git add -p &&
+		git cat-file blob :new-file >actual &&
+		test_cmp new-file-expect actual &&
+		test_cmp patch-expect patch
+	)
+'
+
+test_expect_success 'checkout -p patch editing of added file' '
+	git reset --hard &&
+	(
+		setup_new_file &&
+		git add new-file &&
+		git commit -m "add new file" &&
+		git rm new-file &&
+		git commit -m "remove new file" &&
+		test_write_lines e n q | git checkout -p HEAD^ &&
+		test_cmp new-file-expect new-file &&
+		test_cmp patch-expect patch
+	)
 '
 
 test_expect_success 'show help from add--helper' '

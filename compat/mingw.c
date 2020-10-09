@@ -18,8 +18,8 @@ void open_in_gdb(void)
 	static struct child_process cp = CHILD_PROCESS_INIT;
 	extern char *_pgmptr;
 
-	argv_array_pushl(&cp.args, "mintty", "gdb", NULL);
-	argv_array_pushf(&cp.args, "--pid=%d", getpid());
+	strvec_pushl(&cp.args, "mintty", "gdb", NULL);
+	strvec_pushf(&cp.args, "--pid=%d", getpid());
 	cp.clean_on_exit = 1;
 	if (start_command(&cp) < 0)
 		die_errno("Could not start gdb");
@@ -289,6 +289,9 @@ int mingw_unlink(const char *pathname)
 	wchar_t wpathname[MAX_PATH];
 	if (xutftowcs_path(wpathname, pathname) < 0)
 		return -1;
+
+	if (DeleteFileW(wpathname))
+		return 0;
 
 	/* read-only files cannot be removed */
 	_wchmod(wpathname, 0666);

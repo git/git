@@ -603,7 +603,7 @@ test_expect_success 'cvs server does not run with vanilla git-shell' '
 		cd cvswork &&
 		CVS_SERVER=$WORKDIR/remote-cvs &&
 		export CVS_SERVER &&
-		test_must_fail cvs log merge
+		! cvs log merge
 	)
 '
 

@@ -542,4 +542,24 @@ test_expect_success 'merge-msg with "merging" an annotated tag' '
 	test_cmp expected .git/MERGE_MSG
 '
 
+test_expect_success 'merge.suppressDest configuration' '
+	git checkout -B side master &&
+	git commit --allow-empty -m "One step ahead" &&
+	git checkout master &&
+	git fetch . side &&
+
+	git -c merge.suppressDest="" fmt-merge-msg <.git/FETCH_HEAD >full.1 &&
+	head -n1 full.1 >actual &&
+	grep -e "Merge branch .side. into master" actual &&
+
+	git -c merge.suppressDest="mast" fmt-merge-msg <.git/FETCH_HEAD >full.2 &&
+	head -n1 full.2 >actual &&
+	grep -e "Merge branch .side. into master$" actual &&
+
+	git -c merge.suppressDest="ma??er" fmt-merge-msg <.git/FETCH_HEAD >full.3 &&
+	head -n1 full.3 >actual &&
+	grep -e "Merge branch .side." actual &&
+	! grep -e " into master$" actual
+'
+
 test_done

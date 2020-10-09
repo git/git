@@ -48,8 +48,7 @@ protocol.version::
 	If set, clients will attempt to communicate with a server
 	using the specified protocol version.  If the server does
 	not support it, communication falls back to version 0.
-	If unset, the default is `0`, unless `feature.experimental`
-	is enabled, in which case the default is `2`.
+	If unset, the default is `2`.
 	Supported versions:
 +
 --

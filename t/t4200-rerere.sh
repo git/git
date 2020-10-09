@@ -25,7 +25,6 @@ test_description='git rerere
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	cat >a1 <<-\EOF &&
 	Some title
 	==========
@@ -364,7 +363,7 @@ test_expect_success 'set up an unresolved merge' '
 	git reset --hard &&
 	git checkout version2 &&
 	fifth=$(git rev-parse fifth) &&
-	echo "$fifth		branch 'fifth' of ." |
+	echo "$fifth		branch fifth of ." |
 	git fmt-merge-msg >msg &&
 	ancestor=$(git merge-base version2 fifth) &&
 	test_must_fail git merge-recursive "$ancestor" -- HEAD fifth &&

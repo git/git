@@ -1,6 +1,12 @@
 Git pack format
 ===============
 
+== Checksums and object IDs
+
+In a repository using the traditional SHA-1, pack checksums, index checksums,
+and object IDs (object names) mentioned below are all computed using SHA-1.
+Similarly, in SHA-256 repositories, these values are computed using SHA-256.
+
 == pack-*.pack files have the following format:
 
    - A header appears at the beginning and consists of the following:
@@ -26,7 +32,7 @@ Git pack format
 
      (deltified representation)
      n-byte type and length (3-bit type, (n-1)*7+4-bit length)
-     20-byte base object name if OBJ_REF_DELTA or a negative relative
+     base object name if OBJ_REF_DELTA or a negative relative
 	 offset from the delta object's position in the pack if this
 	 is an OBJ_OFS_DELTA object
      compressed delta data
@@ -34,7 +40,7 @@ Git pack format
      Observation: length of each object is encoded in a variable
      length format and is not constrained to 32-bit or anything.
 
-  - The trailer records 20-byte SHA-1 checksum of all of the above.
+  - The trailer records a pack checksum of all of the above.
 
 === Object types
 
@@ -58,8 +64,8 @@ ofs-delta and ref-delta, which is only valid in a pack file.
 
 Both ofs-delta and ref-delta store the "delta" to be applied to
 another object (called 'base object') to reconstruct the object. The
-difference between them is, ref-delta directly encodes 20-byte base
-object name. If the base object is in the same pack, ofs-delta encodes
+difference between them is, ref-delta directly encodes base object
+name. If the base object is in the same pack, ofs-delta encodes
 the offset of the base object in the pack instead.
 
 The base object could also be deltified if it's in the same pack.
@@ -143,14 +149,14 @@ This is the instruction reserved for future expansion.
     object is stored in the packfile as the offset from the
     beginning.
 
-    20-byte object name.
+    one object name of the appropriate size.
 
   - The file is concluded with a trailer:
 
-    A copy of the 20-byte SHA-1 checksum at the end of
-    corresponding packfile.
+    A copy of the pack checksum at the end of the corresponding
+    packfile.
 
-    20-byte SHA-1-checksum of all of the above.
+    Index checksum of all of the above.
 
 Pack Idx file:
 
@@ -198,7 +204,7 @@ Pack file entry: <+
         If it is not DELTA, then deflated bytes (the size above
 		is the size before compression).
 	If it is REF_DELTA, then
-	  20-byte base object name SHA-1 (the size above is the
+	  base object name (the size above is the
 		size of the delta data that follows).
           delta data, deflated.
 	If it is OFS_DELTA, then
@@ -227,9 +233,9 @@ Pack file entry: <+
 
   - A 256-entry fan-out table just like v1.
 
-  - A table of sorted 20-byte SHA-1 object names.  These are
-    packed together without offset values to reduce the cache
-    footprint of the binary search for a specific object name.
+  - A table of sorted object names.  These are packed together
+    without offset values to reduce the cache footprint of the
+    binary search for a specific object name.
 
   - A table of 4-byte CRC32 values of the packed object data.
     This is new in v2 so compressed data can be copied directly
@@ -248,10 +254,10 @@ Pack file entry: <+
 
   - The same trailer as a v1 pack file:
 
-    A copy of the 20-byte SHA-1 checksum at the end of
+    A copy of the pack checksum at the end of
     corresponding packfile.
 
-    20-byte SHA-1-checksum of all of the above.
+    Index checksum of all of the above.
 
 == multi-pack-index (MIDX) files have the following format:
 
@@ -273,7 +279,12 @@ HEADER:
 	    Git only writes or recognizes version 1.
 
 	1-byte Object Id Version
-	    Git only writes or recognizes version 1 (SHA1).
+	    We infer the length of object IDs (OIDs) from this value:
+		1 => SHA-1
+		2 => SHA-256
+	    If the hash type does not match the repository's hash algorithm,
+	    the multi-pack-index file should be ignored with a warning
+	    presented to the user.
 
 	1-byte number of "chunks"
 
@@ -329,4 +340,4 @@ CHUNK DATA:
 
 TRAILER:
 
-	20-byte SHA1-checksum of the above contents.
+	Index checksum of the above contents.

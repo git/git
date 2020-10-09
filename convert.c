@@ -195,7 +195,7 @@ static enum eol output_eol(enum crlf_action crlf_action)
 	return core_eol;
 }
 
-static void check_global_conv_flags_eol(const char *path, enum crlf_action crlf_action,
+static void check_global_conv_flags_eol(const char *path,
 			    struct text_stat *old_stats, struct text_stat *new_stats,
 			    int conv_flags)
 {
@@ -547,7 +547,7 @@ static int crlf_to_git(const struct index_state *istate,
 			new_stats.crlf += new_stats.lonelf;
 			new_stats.lonelf = 0;
 		}
-		check_global_conv_flags_eol(path, crlf_action, &stats, &new_stats, conv_flags);
+		check_global_conv_flags_eol(path, &stats, &new_stats, conv_flags);
 	}
 	if (!convert_crlf_into_lf)
 		return 0;
@@ -638,7 +638,6 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	struct child_process child_process = CHILD_PROCESS_INIT;
 	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
-	const char *argv[] = { NULL, NULL };
 
 	/* apply % substitution to cmd */
 	struct strbuf cmd = STRBUF_INIT;
@@ -656,9 +655,7 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	strbuf_expand(&cmd, params->cmd, strbuf_expand_dict_cb, &dict);
 	strbuf_release(&path);
 
-	argv[0] = cmd.buf;
-
-	child_process.argv = argv;
+	strvec_push(&child_process.args, cmd.buf);
 	child_process.use_shell = 1;
 	child_process.in = -1;
 	child_process.out = out;

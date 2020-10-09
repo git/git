@@ -18,7 +18,7 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "bulk-checkin.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "submodule.h"
 #include "add-interactive.h"
 
@@ -188,13 +188,19 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 			const struct pathspec *pathspec)
 {
 	int status, i;
-	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
 	int use_builtin_add_i =
 		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
 
-	if (use_builtin_add_i < 0)
-		git_config_get_bool("add.interactive.usebuiltin",
-				    &use_builtin_add_i);
+	if (use_builtin_add_i < 0) {
+		int experimental;
+		if (!git_config_get_bool("add.interactive.usebuiltin",
+					 &use_builtin_add_i))
+			; /* ok */
+		else if (!git_config_get_bool("feature.experimental", &experimental) &&
+			 experimental)
+			use_builtin_add_i = 1;
+	}
 
 	if (use_builtin_add_i == 1) {
 		enum add_p_mode mode;
@@ -218,22 +224,22 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 		return !!run_add_p(the_repository, mode, revision, pathspec);
 	}
 
-	argv_array_push(&argv, "add--interactive");
+	strvec_push(&argv, "add--interactive");
 	if (patch_mode)
-		argv_array_push(&argv, patch_mode);
+		strvec_push(&argv, patch_mode);
 	if (revision)
-		argv_array_push(&argv, revision);
-	argv_array_push(&argv, "--");
+		strvec_push(&argv, revision);
+	strvec_push(&argv, "--");
 	for (i = 0; i < pathspec->nr; i++)
 		/* pass original pathspec, to be re-parsed */
-		argv_array_push(&argv, pathspec->items[i].original);
+		strvec_push(&argv, pathspec->items[i].original);
 
-	status = run_command_v_opt(argv.argv, RUN_GIT_CMD);
-	argv_array_clear(&argv);
+	status = run_command_v_opt(argv.v, RUN_GIT_CMD);
+	strvec_clear(&argv);
 	return status;
 }
 
-int interactive_add(int argc, const char **argv, const char *prefix, int patch)
+int interactive_add(const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
 
@@ -445,7 +451,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (add_interactive) {
 		if (pathspec_from_file)
 			die(_("--pathspec-from-file is incompatible with --interactive/--patch"));
-		exit(interactive_add(argc - 1, argv + 1, prefix, patch_interactive));
+		exit(interactive_add(argv + 1, prefix, patch_interactive));
 	}
 	if (legacy_stash_p) {
 		struct pathspec pathspec;
@@ -534,11 +540,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	die_in_unpopulated_submodule(&the_index, prefix);
 	die_path_inside_submodule(&the_index, &pathspec);
 
+	dir_init(&dir);
 	if (add_new_files) {
 		int baselen;
 
 		/* Set up the default git porcelain excludes */
-		memset(&dir, 0, sizeof(dir));
 		if (!ignored_too) {
 			dir.flags |= DIR_COLLECT_IGNORED;
 			setup_standard_excludes(&dir);
@@ -611,7 +617,7 @@ finish:
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
+	dir_clear(&dir);
 	UNLEAK(pathspec);
-	UNLEAK(dir);
 	return exit_status;
 }

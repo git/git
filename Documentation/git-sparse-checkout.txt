@@ -200,10 +200,32 @@ directory.
 SUBMODULES
 ----------
 
-If your repository contains one or more submodules, then those submodules will
-appear based on which you initialized with the `git submodule` command. If
-your sparse-checkout patterns exclude an initialized submodule, then that
-submodule will still appear in your working directory.
+If your repository contains one or more submodules, then submodules
+are populated based on interactions with the `git submodule` command.
+Specifically, `git submodule init -- <path>` will ensure the submodule
+at `<path>` is present, while `git submodule deinit [-f] -- <path>`
+will remove the files for the submodule at `<path>` (including any
+untracked files, uncommitted changes, and unpushed history).  Similar
+to how sparse-checkout removes files from the working tree but still
+leaves entries in the index, deinitialized submodules are removed from
+the working directory but still have an entry in the index.
+
+Since submodules may have unpushed changes or untracked files,
+removing them could result in data loss.  Thus, changing sparse
+inclusion/exclusion rules will not cause an already checked out
+submodule to be removed from the working copy.  Said another way, just
+as `checkout` will not cause submodules to be automatically removed or
+initialized even when switching between branches that remove or add
+submodules, using `sparse-checkout` to reduce or expand the scope of
+"interesting" files will not cause submodules to be automatically
+deinitialized or initialized either.
+
+Further, the above facts mean that there are multiple reasons that
+"tracked" files might not be present in the working copy: sparsity
+pattern application from sparse-checkout, and submodule initialization
+state.  Thus, commands like `git grep` that work on tracked files in
+the working copy may return results that are limited by either or both
+of these restrictions.
 
 
 SEE ALSO

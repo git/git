@@ -10,8 +10,6 @@ test_description='Test diff raw-output.
 
 . "$TEST_DIRECTORY"/lib-read-tree-m-3way.sh
 
-test_oid_init
-
 test_oid_cache <<\EOF
 aa_1 sha1:ccba72ad3888a3520b39efcf780b9ee64167535d
 aa_1 sha256:9febfbf18197819b2735c45291f138525d2476d59470f98239647544586ba403

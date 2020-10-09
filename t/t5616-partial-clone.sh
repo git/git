@@ -163,6 +163,22 @@ test_expect_success 'manual prefetch of missing objects' '
 	test_line_count = 0 observed.oids
 '
 
+test_expect_success 'partial clone with transfer.fsckobjects=1 works with submodules' '
+	test_create_repo submodule &&
+	test_commit -C submodule mycommit &&
+
+	test_create_repo src_with_sub &&
+	test_config -C src_with_sub uploadpack.allowfilter 1 &&
+	test_config -C src_with_sub uploadpack.allowanysha1inwant 1 &&
+
+	git -C src_with_sub submodule add "file://$(pwd)/submodule" mysub &&
+	git -C src_with_sub commit -m "commit with submodule" &&
+
+	git -c transfer.fsckobjects=1 \
+		clone --filter="blob:none" "file://$(pwd)/src_with_sub" dst &&
+	test_when_finished rm -rf dst
+'
+
 test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack --fsck-objects' '
 	git init src &&
 	test_commit -C src x &&
@@ -233,6 +249,39 @@ test_expect_success 'implicitly construct combine: filter with repeated flags' '
 	sort -u types >unique_types.actual &&
 	test_write_lines commit tree >unique_types.expected &&
 	test_cmp unique_types.expected unique_types.actual
+'
+
+test_expect_success 'upload-pack fails banned object filters' '
+	test_config -C srv.bare uploadpackfilter.blob:none.allow false &&
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=blob:none \
+		"file://$(pwd)/srv.bare" pc3 2>err &&
+	test_i18ngrep "filter '\''blob:none'\'' not supported" err
+'
+
+test_expect_success 'upload-pack fails banned combine object filters' '
+	test_config -C srv.bare uploadpackfilter.allow false &&
+	test_config -C srv.bare uploadpackfilter.combine.allow true &&
+	test_config -C srv.bare uploadpackfilter.tree.allow true &&
+	test_config -C srv.bare uploadpackfilter.blob:none.allow false &&
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:1 \
+		--filter=blob:none "file://$(pwd)/srv.bare" pc3 2>err &&
+	test_i18ngrep "filter '\''blob:none'\'' not supported" err
+'
+
+test_expect_success 'upload-pack fails banned object filters with fallback' '
+	test_config -C srv.bare uploadpackfilter.allow false &&
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=blob:none \
+		"file://$(pwd)/srv.bare" pc3 2>err &&
+	test_i18ngrep "filter '\''blob:none'\'' not supported" err
+'
+
+test_expect_success 'upload-pack limits tree depth filters' '
+	test_config -C srv.bare uploadpackfilter.allow false &&
+	test_config -C srv.bare uploadpackfilter.tree.allow true &&
+	test_config -C srv.bare uploadpackfilter.tree.maxDepth 0 &&
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:1 \
+		"file://$(pwd)/srv.bare" pc3 2>err &&
+	test_i18ngrep "tree filter allows max depth 0, but got 1" err
 '
 
 test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '
@@ -384,6 +433,26 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 	grep "want $(cat hash)" trace
 '
 
+test_expect_success 'fetch does not lazy-fetch missing targets of its refs' '
+	rm -rf server client trace &&
+
+	test_create_repo server &&
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	test_commit -C server foo &&
+
+	git clone --filter=blob:none "file://$(pwd)/server" client &&
+	# Make all refs point to nothing by deleting all objects.
+	rm client/.git/objects/pack/* &&
+
+	test_commit -C server bar &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch \
+		--no-tags --recurse-submodules=no \
+		origin refs/tags/bar &&
+	FOO_HASH=$(git -C server rev-parse foo) &&
+	! grep "want $FOO_HASH" trace
+'
+
 # The following two tests must be in this order. It is important that
 # the srv.bare repository did not have tags during clone, but has tags
 # in the fetch.
@@ -420,6 +489,44 @@ test_expect_success 'single-branch tag following respects partial clone' '
 	git -C single rev-parse --verify refs/tags/B &&
 	git -C single rev-parse --verify refs/tags/A &&
 	test_must_fail git -C single rev-parse --verify refs/tags/C
+'
+
+test_expect_success 'fetch from a partial clone, protocol v0' '
+	rm -rf server client trace &&
+
+	# Pretend that the server is a partial clone
+	git init server &&
+	git -C server remote add a_remote "file://$(pwd)/" &&
+	test_config -C server core.repositoryformatversion 1 &&
+	test_config -C server extensions.partialclone a_remote &&
+	test_config -C server protocol.version 0 &&
+	test_commit -C server foo &&
+
+	# Fetch from the server
+	git init client &&
+	test_config -C client protocol.version 0 &&
+	test_commit -C client bar &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "file://$(pwd)/server" &&
+	! grep "version 2" trace
+'
+
+test_expect_success 'fetch from a partial clone, protocol v2' '
+	rm -rf server client trace &&
+
+	# Pretend that the server is a partial clone
+	git init server &&
+	git -C server remote add a_remote "file://$(pwd)/" &&
+	test_config -C server core.repositoryformatversion 1 &&
+	test_config -C server extensions.partialclone a_remote &&
+	test_config -C server protocol.version 2 &&
+	test_commit -C server foo &&
+
+	# Fetch from the server
+	git init client &&
+	test_config -C client protocol.version 2 &&
+	test_commit -C client bar &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "file://$(pwd)/server" &&
+	grep "version 2" trace
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh

@@ -60,15 +60,16 @@ test_rebase_same_head_ () {
 		fi &&
 		oldhead=\$(git rev-parse HEAD) &&
 		test_when_finished 'git reset --hard \$oldhead' &&
-		cp .git/logs/HEAD expect &&
+		git reflog HEAD >expect &&
 		git rebase$flag $* >stdout &&
+		git reflog HEAD >actual &&
 		if test $what = work
 		then
 			old=\$(wc -l <expect) &&
-			test_line_count '-gt' \$old .git/logs/HEAD
+			test_line_count '-gt' \$old actual
 		elif test $what = noop
 		then
-			test_cmp expect .git/logs/HEAD
+			test_cmp expect actual
 		fi &&
 		newhead=\$(git rev-parse HEAD) &&
 		if test $cmp = same

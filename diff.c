@@ -20,7 +20,7 @@
 #include "hashmap.h"
 #include "ll-merge.h"
 #include "string-list.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "graph.h"
 #include "packfile.h"
 #include "parse-options.h"
@@ -482,14 +482,14 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 
 static char *quote_two(const char *one, const char *two)
 {
-	int need_one = quote_c_style(one, NULL, NULL, 1);
-	int need_two = quote_c_style(two, NULL, NULL, 1);
+	int need_one = quote_c_style(one, NULL, NULL, CQUOTE_NODQ);
+	int need_two = quote_c_style(two, NULL, NULL, CQUOTE_NODQ);
 	struct strbuf res = STRBUF_INIT;
 
 	if (need_one + need_two) {
 		strbuf_addch(&res, '"');
-		quote_c_style(one, &res, NULL, 1);
-		quote_c_style(two, &res, NULL, 1);
+		quote_c_style(one, &res, NULL, CQUOTE_NODQ);
+		quote_c_style(two, &res, NULL, CQUOTE_NODQ);
 		strbuf_addch(&res, '"');
 	} else {
 		strbuf_addstr(&res, one);
@@ -3153,16 +3153,19 @@ static void show_dirstat_by_line(struct diffstat_t *data, struct diff_options *o
 	gather_dirstat(options, &dir, changed, "", 0);
 }
 
+static void free_diffstat_file(struct diffstat_file *f)
+{
+	free(f->print_name);
+	free(f->name);
+	free(f->from_name);
+	free(f);
+}
+
 void free_diffstat_info(struct diffstat_t *diffstat)
 {
 	int i;
-	for (i = 0; i < diffstat->nr; i++) {
-		struct diffstat_file *f = diffstat->files[i];
-		free(f->print_name);
-		free(f->name);
-		free(f->from_name);
-		free(f);
-	}
+	for (i = 0; i < diffstat->nr; i++)
+		free_diffstat_file(diffstat->files[i]);
 	free(diffstat->files);
 }
 
@@ -3429,7 +3432,7 @@ static void builtin_diff(const char *name_a,
 	if (o->submodule_format == DIFF_SUBMODULE_LOG &&
 	    (!one->mode || S_ISGITLINK(one->mode)) &&
 	    (!two->mode || S_ISGITLINK(two->mode))) {
-		show_submodule_summary(o, one->path ? one->path : two->path,
+		show_submodule_diff_summary(o, one->path ? one->path : two->path,
 				&one->oid, &two->oid,
 				two->dirty_submodule);
 		return;
@@ -3660,7 +3663,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 {
 	mmfile_t mf1, mf2;
 	struct diffstat_file *data;
-	int same_contents;
+	int may_differ;
 	int complete_rewrite = 0;
 
 	if (!DIFF_PAIR_UNMERGED(p)) {
@@ -3678,12 +3681,14 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		return;
 	}
 
-	same_contents = oideq(&one->oid, &two->oid);
+	/* saves some reads if true, not a guarantee of diff outcome */
+	may_differ = !(one->oid_valid && two->oid_valid &&
+			oideq(&one->oid, &two->oid));
 
 	if (diff_filespec_is_binary(o->repo, one) ||
 	    diff_filespec_is_binary(o->repo, two)) {
 		data->is_binary = 1;
-		if (same_contents) {
+		if (!may_differ) {
 			data->added = 0;
 			data->deleted = 0;
 		} else {
@@ -3699,7 +3704,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		data->added = count_lines(two->data, two->size);
 	}
 
-	else if (!same_contents) {
+	else if (may_differ) {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
@@ -3718,6 +3723,27 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		if (xdi_diff_outf(&mf1, &mf2, discard_hunk_line,
 				  diffstat_consume, diffstat, &xpp, &xecfg))
 			die("unable to generate diffstat for %s", one->path);
+
+		if (DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two)) {
+			struct diffstat_file *file =
+				diffstat->files[diffstat->nr - 1];
+			/*
+			 * Omit diffstats of modified files where nothing changed.
+			 * Even if may_differ, this might be the case due to
+			 * ignoring whitespace changes, etc.
+			 *
+			 * But note that we special-case additions, deletions,
+			 * renames, and mode changes as adding an empty file,
+			 * for example is still of interest.
+			 */
+			if ((p->status == DIFF_STATUS_MODIFIED)
+				&& !file->added
+				&& !file->deleted
+				&& one->mode == two->mode) {
+				free_diffstat_file(file);
+				diffstat->nr--;
+			}
+		}
 	}
 
 	diff_free_filespec_data(one);
@@ -4192,14 +4218,14 @@ static struct diff_tempfile *prepare_temp_file(struct repository *r,
 }
 
 static void add_external_diff_name(struct repository *r,
-				   struct argv_array *argv,
+				   struct strvec *argv,
 				   const char *name,
 				   struct diff_filespec *df)
 {
 	struct diff_tempfile *temp = prepare_temp_file(r, name, df);
-	argv_array_push(argv, temp->name);
-	argv_array_push(argv, temp->hex);
-	argv_array_push(argv, temp->mode);
+	strvec_push(argv, temp->name);
+	strvec_push(argv, temp->hex);
+	strvec_push(argv, temp->mode);
 }
 
 /* An external diff command takes:
@@ -4216,12 +4242,12 @@ static void run_external_diff(const char *pgm,
 			      const char *xfrm_msg,
 			      struct diff_options *o)
 {
-	struct argv_array argv = ARGV_ARRAY_INIT;
-	struct argv_array env = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
+	struct strvec env = STRVEC_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
 
-	argv_array_push(&argv, pgm);
-	argv_array_push(&argv, name);
+	strvec_push(&argv, pgm);
+	strvec_push(&argv, name);
 
 	if (one && two) {
 		add_external_diff_name(o->repo, &argv, name, one);
@@ -4229,22 +4255,22 @@ static void run_external_diff(const char *pgm,
 			add_external_diff_name(o->repo, &argv, name, two);
 		else {
 			add_external_diff_name(o->repo, &argv, other, two);
-			argv_array_push(&argv, other);
-			argv_array_push(&argv, xfrm_msg);
+			strvec_push(&argv, other);
+			strvec_push(&argv, xfrm_msg);
 		}
 	}
 
-	argv_array_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
-	argv_array_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
+	strvec_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
+	strvec_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
 
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
-	if (run_command_v_opt_cd_env(argv.argv, RUN_USING_SHELL, NULL, env.argv))
+	if (run_command_v_opt_cd_env(argv.v, RUN_USING_SHELL, NULL, env.v))
 		die(_("external diff died, stopping at %s"), name);
 
 	remove_tempfile();
-	argv_array_clear(&argv);
-	argv_array_clear(&env);
+	strvec_clear(&argv);
+	strvec_clear(&env);
 }
 
 static int similarity_index(struct diff_filepair *p)
@@ -4319,7 +4345,10 @@ static void fill_metainfo(struct strbuf *msg,
 	}
 	if (one && two && !oideq(&one->oid, &two->oid)) {
 		const unsigned hexsz = the_hash_algo->hexsz;
-		int abbrev = o->flags.full_index ? hexsz : DEFAULT_ABBREV;
+		int abbrev = o->abbrev ? o->abbrev : DEFAULT_ABBREV;
+
+		if (o->flags.full_index)
+			abbrev = hexsz;
 
 		if (o->flags.binary) {
 			mmfile_t mf;
@@ -6044,6 +6073,8 @@ static void patch_id_consume(void *priv, char *line, unsigned long len)
 	struct patch_id_t *data = priv;
 	int new_len;
 
+	if (len > 12 && starts_with(line, "\\ "))
+		return;
 	new_len = remove_space(line, len);
 
 	the_hash_algo->update_fn(data->ctx, line, new_len);
@@ -6763,8 +6794,11 @@ void diff_change(struct diff_options *options,
 		return;
 
 	if (options->flags.quick && options->skip_stat_unmatch &&
-	    !diff_filespec_check_stat_unmatch(options->repo, p))
+	    !diff_filespec_check_stat_unmatch(options->repo, p)) {
+		diff_free_filespec_data(p->one);
+		diff_free_filespec_data(p->two);
 		return;
+	}
 
 	options->flags.has_changes = 1;
 }

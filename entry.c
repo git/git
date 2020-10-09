@@ -113,8 +113,7 @@ static int fstat_output(int fd, const struct checkout *state, struct stat *st)
 	/* use fstat() only when path == ce->name */
 	if (fstat_is_reliable() &&
 	    state->refresh_cache && !state->base_dir_len) {
-		fstat(fd, st);
-		return 1;
+		return !fstat(fd, st);
 	}
 	return 0;
 }
@@ -511,8 +510,6 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state,
 			/* If it is a gitlink, leave it alone! */
 			if (S_ISGITLINK(ce->ce_mode))
 				return 0;
-			if (!state->force)
-				return error("%s is a directory", path.buf);
 			remove_subtree(&path);
 		} else if (unlink(path.buf))
 			return error_errno("unable to unlink old '%s'", path.buf);

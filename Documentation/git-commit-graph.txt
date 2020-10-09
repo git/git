@@ -47,8 +47,10 @@ with `--stdin-commits` or `--reachable`.)
 +
 With the `--stdin-commits` option, generate the new commit graph by
 walking commits starting at the commits specified in stdin as a list
-of OIDs in hex, one OID per line. (Cannot be combined with
-`--stdin-packs` or `--reachable`.)
+of OIDs in hex, one OID per line. OIDs that resolve to non-commits
+(either directly, or by peeling tags) are silently ignored. OIDs that
+are malformed, or do not exist generate an error. (Cannot be combined
+with `--stdin-packs` or `--reachable`.)
 +
 With the `--reachable` option, generate the new commit graph by walking
 commits starting at all refs. (Cannot be combined with `--stdin-commits`
@@ -60,7 +62,17 @@ existing commit-graph file.
 With the `--changed-paths` option, compute and write information about the
 paths changed between a commit and its first parent. This operation can
 take a while on large repositories. It provides significant performance gains
-for getting history of a directory or a file with `git log -- <path>`.
+for getting history of a directory or a file with `git log -- <path>`. If
+this option is given, future commit-graph writes will automatically assume
+that this option was intended. Use `--no-changed-paths` to stop storing this
+data.
++
+With the `--max-new-filters=<n>` option, generate at most `n` new Bloom
+filters (if `--changed-paths` is specified). If `n` is `-1`, no limit is
+enforced. Only commits present in the new layer count against this
+limit. To retroactively compute Bloom filters over earlier layers, it is
+advised to use `--split=replace`.  Overrides the `commitGraph.maxNewFilters`
+configuration.
 +
 With the `--split[=<strategy>]` option, write the commit-graph as a
 chain of multiple commit-graph files stored in

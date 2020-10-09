@@ -168,7 +168,7 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 		return 0;
 
 	if (!(obj->flags & HAS_OBJ)) {
-		if (parent && !has_object_file(&obj->oid)) {
+		if (parent && !has_object(the_repository, &obj->oid, 1)) {
 			printf_ln(_("broken link from %7s %s\n"
 				    "              to %7s %s"),
 				  printable_type(&parent->oid, parent->type),
@@ -241,7 +241,7 @@ static void mark_unreachable_referents(const struct object_id *oid)
 		enum object_type type = oid_object_info(the_repository,
 							&obj->oid, NULL);
 		if (type > 0)
-			object_as_type(the_repository, obj, type, 0);
+			object_as_type(obj, type, 0);
 	}
 
 	options.walk = mark_used;
@@ -577,7 +577,7 @@ static void get_default_heads(void)
 
 	for_each_rawref(fsck_handle_ref, NULL);
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct strbuf ref = STRBUF_INIT;

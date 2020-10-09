@@ -12,7 +12,7 @@
 #include "revision.h"
 #include "diff.h"
 #include "hashmap.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "run-command.h"
 #include "object-store.h"
 #include "list-objects.h"
@@ -501,15 +501,15 @@ static void process_object(struct object *obj, const char *path, void *data)
 static void describe_blob(struct object_id oid, struct strbuf *dst)
 {
 	struct rev_info revs;
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	struct process_commit_data pcd = { null_oid, oid, dst, &revs};
 
-	argv_array_pushl(&args, "internal: The first arg is not parsed",
-		"--objects", "--in-commit-order", "--reverse", "HEAD",
-		NULL);
+	strvec_pushl(&args, "internal: The first arg is not parsed",
+		     "--objects", "--in-commit-order", "--reverse", "HEAD",
+		     NULL);
 
 	repo_init_revisions(the_repository, &revs, NULL);
-	if (setup_revisions(args.argc, args.argv, &revs, NULL) > 1)
+	if (setup_revisions(args.nr, args.v, &revs, NULL) > 1)
 		BUG("setup_revisions could not handle all args?");
 
 	if (prepare_revision_walk(&revs))
@@ -594,26 +594,26 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 
 	if (contains) {
 		struct string_list_item *item;
-		struct argv_array args;
+		struct strvec args;
 
-		argv_array_init(&args);
-		argv_array_pushl(&args, "name-rev",
-				 "--peel-tag", "--name-only", "--no-undefined",
-				 NULL);
+		strvec_init(&args);
+		strvec_pushl(&args, "name-rev",
+			     "--peel-tag", "--name-only", "--no-undefined",
+			     NULL);
 		if (always)
-			argv_array_push(&args, "--always");
+			strvec_push(&args, "--always");
 		if (!all) {
-			argv_array_push(&args, "--tags");
+			strvec_push(&args, "--tags");
 			for_each_string_list_item(item, &patterns)
-				argv_array_pushf(&args, "--refs=refs/tags/%s", item->string);
+				strvec_pushf(&args, "--refs=refs/tags/%s", item->string);
 			for_each_string_list_item(item, &exclude_patterns)
-				argv_array_pushf(&args, "--exclude=refs/tags/%s", item->string);
+				strvec_pushf(&args, "--exclude=refs/tags/%s", item->string);
 		}
 		if (argc)
-			argv_array_pushv(&args, argv);
+			strvec_pushv(&args, argv);
 		else
-			argv_array_push(&args, "HEAD");
-		return cmd_name_rev(args.argc, args.argv, prefix);
+			strvec_push(&args, "HEAD");
+		return cmd_name_rev(args.nr, args.v, prefix);
 	}
 
 	hashmap_init(&names, commit_name_neq, NULL, 0);
@@ -624,7 +624,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	if (argc == 0) {
 		if (broken) {
 			struct child_process cp = CHILD_PROCESS_INIT;
-			argv_array_pushv(&cp.args, diff_index_args);
+			strvec_pushv(&cp.args, diff_index_args);
 			cp.git_cmd = 1;
 			cp.no_stdin = 1;
 			cp.no_stdout = 1;
@@ -646,7 +646,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		} else if (dirty) {
 			struct lock_file index_lock = LOCK_INIT;
 			struct rev_info revs;
-			struct argv_array args = ARGV_ARRAY_INIT;
+			struct strvec args = STRVEC_INIT;
 			int fd, result;
 
 			setup_work_tree();
@@ -658,8 +658,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 				repo_update_index_if_able(the_repository, &index_lock);
 
 			repo_init_revisions(the_repository, &revs, prefix);
-			argv_array_pushv(&args, diff_index_args);
-			if (setup_revisions(args.argc, args.argv, &revs, NULL) != 1)
+			strvec_pushv(&args, diff_index_args);
+			if (setup_revisions(args.nr, args.v, &revs, NULL) != 1)
 				BUG("malformed internal diff-index command line");
 			result = run_diff_index(&revs, 0);
 

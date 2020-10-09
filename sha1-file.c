@@ -763,18 +763,18 @@ static void fill_alternate_refs_command(struct child_process *cmd,
 	if (!git_config_get_value("core.alternateRefsCommand", &value)) {
 		cmd->use_shell = 1;
 
-		argv_array_push(&cmd->args, value);
-		argv_array_push(&cmd->args, repo_path);
+		strvec_push(&cmd->args, value);
+		strvec_push(&cmd->args, repo_path);
 	} else {
 		cmd->git_cmd = 1;
 
-		argv_array_pushf(&cmd->args, "--git-dir=%s", repo_path);
-		argv_array_push(&cmd->args, "for-each-ref");
-		argv_array_push(&cmd->args, "--format=%(objectname)");
+		strvec_pushf(&cmd->args, "--git-dir=%s", repo_path);
+		strvec_push(&cmd->args, "for-each-ref");
+		strvec_push(&cmd->args, "--format=%(objectname)");
 
 		if (!git_config_get_value("core.alternateRefsPrefixes", &value)) {
-			argv_array_push(&cmd->args, "--");
-			argv_array_split(&cmd->args, value);
+			strvec_push(&cmd->args, "--");
+			strvec_split(&cmd->args, value);
 		}
 	}
 
@@ -1600,7 +1600,8 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 	struct cached_object *co;
 
 	hash_object_file(the_hash_algo, buf, len, type_name(type), oid);
-	if (has_object_file(oid) || find_cached_object(oid))
+	if (has_object_file_with_flags(oid, OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT) ||
+	    find_cached_object(oid))
 		return 0;
 	ALLOC_GROW(cached_objects, cached_object_nr + 1, cached_object_alloc);
 	co = &cached_objects[cached_object_nr++];
@@ -1986,6 +1987,18 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	free(buf);
 
 	return ret;
+}
+
+int has_object(struct repository *r, const struct object_id *oid,
+	       unsigned flags)
+{
+	int quick = !(flags & HAS_OBJECT_RECHECK_PACKED);
+	unsigned object_info_flags = OBJECT_INFO_SKIP_FETCH_OBJECT |
+		(quick ? OBJECT_INFO_QUICK : 0);
+
+	if (!startup_info->have_repository)
+		return 0;
+	return oid_object_info_extended(r, oid, NULL, object_info_flags) >= 0;
 }
 
 int repo_has_object_file_with_flags(struct repository *r,

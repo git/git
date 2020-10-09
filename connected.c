@@ -22,14 +22,13 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		    struct check_connected_options *opt)
 {
 	struct child_process rev_list = CHILD_PROCESS_INIT;
+	FILE *rev_list_in;
 	struct check_connected_options defaults = CHECK_CONNECTED_INIT;
-	char commit[GIT_MAX_HEXSZ + 1];
 	struct object_id oid;
 	int err = 0;
 	struct packed_git *new_pack = NULL;
 	struct transport *transport;
 	size_t base_len;
-	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (!opt)
 		opt = &defaults;
@@ -43,10 +42,12 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 
 	if (transport && transport->smart_options &&
 	    transport->smart_options->self_contained_and_connected &&
-	    transport->pack_lockfile &&
-	    strip_suffix(transport->pack_lockfile, ".keep", &base_len)) {
+	    transport->pack_lockfiles.nr == 1 &&
+	    strip_suffix(transport->pack_lockfiles.items[0].string,
+			 ".keep", &base_len)) {
 		struct strbuf idx_file = STRBUF_INIT;
-		strbuf_add(&idx_file, transport->pack_lockfile, base_len);
+		strbuf_add(&idx_file, transport->pack_lockfiles.items[0].string,
+			   base_len);
 		strbuf_addstr(&idx_file, ".idx");
 		new_pack = add_packed_git(idx_file.buf, idx_file.len, 1);
 		strbuf_release(&idx_file);
@@ -88,23 +89,23 @@ promisor_pack_found:
 
 no_promisor_pack_found:
 	if (opt->shallow_file) {
-		argv_array_push(&rev_list.args, "--shallow-file");
-		argv_array_push(&rev_list.args, opt->shallow_file);
+		strvec_push(&rev_list.args, "--shallow-file");
+		strvec_push(&rev_list.args, opt->shallow_file);
 	}
-	argv_array_push(&rev_list.args,"rev-list");
-	argv_array_push(&rev_list.args, "--objects");
-	argv_array_push(&rev_list.args, "--stdin");
+	strvec_push(&rev_list.args,"rev-list");
+	strvec_push(&rev_list.args, "--objects");
+	strvec_push(&rev_list.args, "--stdin");
 	if (has_promisor_remote())
-		argv_array_push(&rev_list.args, "--exclude-promisor-objects");
+		strvec_push(&rev_list.args, "--exclude-promisor-objects");
 	if (!opt->is_deepening_fetch) {
-		argv_array_push(&rev_list.args, "--not");
-		argv_array_push(&rev_list.args, "--all");
+		strvec_push(&rev_list.args, "--not");
+		strvec_push(&rev_list.args, "--all");
 	}
-	argv_array_push(&rev_list.args, "--quiet");
-	argv_array_push(&rev_list.args, "--alternate-refs");
+	strvec_push(&rev_list.args, "--quiet");
+	strvec_push(&rev_list.args, "--alternate-refs");
 	if (opt->progress)
-		argv_array_pushf(&rev_list.args, "--progress=%s",
-				 _("Checking connectivity"));
+		strvec_pushf(&rev_list.args, "--progress=%s",
+			     _("Checking connectivity"));
 
 	rev_list.git_cmd = 1;
 	rev_list.env = opt->env;
@@ -120,7 +121,8 @@ no_promisor_pack_found:
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	commit[hexsz] = '\n';
+	rev_list_in = xfdopen(rev_list.in, "w");
+
 	do {
 		/*
 		 * If index-pack already checked that:
@@ -133,16 +135,17 @@ no_promisor_pack_found:
 		if (new_pack && find_pack_entry_one(oid.hash, new_pack))
 			continue;
 
-		memcpy(commit, oid_to_hex(&oid), hexsz);
-		if (write_in_full(rev_list.in, commit, hexsz + 1) < 0) {
-			if (errno != EPIPE && errno != EINVAL)
-				error_errno(_("failed write to rev-list"));
-			err = -1;
+		if (fprintf(rev_list_in, "%s\n", oid_to_hex(&oid)) < 0)
 			break;
-		}
 	} while (!fn(cb_data, &oid));
 
-	if (close(rev_list.in))
+	if (ferror(rev_list_in) || fflush(rev_list_in)) {
+		if (errno != EPIPE && errno != EINVAL)
+			error_errno(_("failed write to rev-list"));
+		err = -1;
+	}
+
+	if (fclose(rev_list_in))
 		err = error_errno(_("failed to close rev-list's stdin"));
 
 	sigchain_pop(SIGPIPE);

@@ -31,7 +31,10 @@ test_expect_success 'create_symref(FOO, refs/heads/master)' '
 test_expect_success 'delete_refs(FOO, refs/tags/new-tag)' '
 	git rev-parse FOO -- &&
 	git rev-parse refs/tags/new-tag -- &&
-	$RUN delete-refs 0 nothing FOO refs/tags/new-tag &&
+	m=$(git rev-parse master) &&
+	REF_NO_DEREF=1 &&
+	$RUN delete-refs $REF_NO_DEREF nothing FOO refs/tags/new-tag &&
+	test_must_fail git rev-parse --symbolic-full-name FOO &&
 	test_must_fail git rev-parse FOO -- &&
 	test_must_fail git rev-parse refs/tags/new-tag --
 '

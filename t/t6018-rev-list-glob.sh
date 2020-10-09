@@ -32,11 +32,11 @@ test_expect_success 'setup' '
 	git checkout -b someref master &&
 	commit some &&
 	git checkout master &&
-	commit master2 &&
+	commit topic_2 &&
 	git tag foo/bar master &&
-	commit master3 &&
+	commit topic_3 &&
 	git update-ref refs/remotes/foo/baz master &&
-	commit master4 &&
+	commit topic_4 &&
 	git update-ref refs/remotes/upstream/one subspace/one &&
 	git update-ref refs/remotes/upstream/two subspace/two &&
 	git update-ref refs/remotes/upstream/x subspace-x &&
@@ -342,6 +342,11 @@ test_expect_success 'rev-list should succeed with empty output with empty --all'
 
 test_expect_success 'rev-list should succeed with empty output with empty glob' '
 	git rev-list --glob=does-not-match-anything >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'rev-list should succeed with empty output when ignoring missing' '
+	git rev-list --ignore-missing $ZERO_OID >actual &&
 	test_must_be_empty actual
 '
 

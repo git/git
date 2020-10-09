@@ -45,7 +45,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	int show_symref_target = 0;
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
-	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+	struct strvec ref_prefixes = STRVEC_INIT;
 	int i;
 	struct string_list server_options = STRING_LIST_INIT_DUP;
 
@@ -83,6 +83,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 	dest = argv[0];
 
+	UNLEAK(sorting);
+
 	if (argc > 1) {
 		int i;
 		pattern = xcalloc(argc, sizeof(const char *));
@@ -92,9 +94,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	}
 
 	if (flags & REF_TAGS)
-		argv_array_push(&ref_prefixes, "refs/tags/");
+		strvec_push(&ref_prefixes, "refs/tags/");
 	if (flags & REF_HEADS)
-		argv_array_push(&ref_prefixes, "refs/heads/");
+		strvec_push(&ref_prefixes, "refs/heads/");
 
 	remote = remote_get(dest);
 	if (!remote) {
@@ -107,7 +109,6 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 
 	if (get_url) {
 		printf("%s\n", *remote->url);
-		UNLEAK(sorting);
 		return 0;
 	}
 
@@ -118,10 +119,12 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		transport->server_options = &server_options;
 
 	ref = transport_get_remote_refs(transport, &ref_prefixes);
-	if (transport_disconnect(transport)) {
-		UNLEAK(sorting);
-		return 1;
+	if (ref) {
+		int hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
+		repo_set_hash_algo(the_repository, hash_algo);
 	}
+	if (transport_disconnect(transport))
+		return 1;
 
 	if (!dest && !quiet)
 		fprintf(stderr, "From %s\n", *remote->url);
@@ -146,7 +149,6 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		status = 0; /* we found something */
 	}
 
-	UNLEAK(sorting);
 	ref_array_clear(&ref_array);
 	return status;
 }

@@ -19,24 +19,23 @@
  * CE_SKIP_WORKTREE marked. If you want to exclude files, make sure you have
  * loaded the index first.
  *
- * - Prepare `struct dir_struct dir` and clear it with `memset(&dir, 0,
- * sizeof(dir))`.
+ * - Prepare `struct dir_struct dir` using `dir_init()` function.
  *
  * - To add single exclude pattern, call `add_pattern_list()` and then
  *   `add_pattern()`.
  *
  * - To add patterns from a file (e.g. `.git/info/exclude`), call
- *   `add_patterns_from_file()` , and/or set `dir.exclude_per_dir`.  A
- *   short-hand function `setup_standard_excludes()` can be used to set
- *   up the standard set of exclude settings.
+ *   `add_patterns_from_file()` , and/or set `dir.exclude_per_dir`.
  *
- * - Set options described in the Data Structure section above.
+ * - A short-hand function `setup_standard_excludes()` can be used to set
+ *   up the standard set of exclude settings, instead of manually calling
+ *   the add_pattern*() family of functions.
  *
- * - Call `read_directory()`.
+ * - Call `fill_directory()`.
  *
- * - Use `dir.entries[]`.
+ * - Use `dir.entries[]` and `dir.ignored[]`.
  *
- * - Call `clear_directory()` when none of the contained elements are no longer in use.
+ * - Call `dir_clear()` when the contained elements are no longer in use.
  *
  */
 
@@ -362,6 +361,8 @@ int match_pathspec(const struct index_state *istate,
 int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
 int within_depth(const char *name, int namelen, int depth, int max_depth);
 
+void dir_init(struct dir_struct *dir);
+
 int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,
 		   const struct pathspec *pathspec);
@@ -428,7 +429,7 @@ void parse_path_pattern(const char **string, int *patternlen, unsigned *flags, i
 void add_pattern(const char *string, const char *base,
 		 int baselen, struct pattern_list *pl, int srcpos);
 void clear_pattern_list(struct pattern_list *pl);
-void clear_directory(struct dir_struct *dir);
+void dir_clear(struct dir_struct *dir);
 
 int repo_file_exists(struct repository *repo, const char *path);
 int file_exists(const char *);

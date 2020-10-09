@@ -68,8 +68,8 @@ test_submodule_switch_recursing_with_args "checkout"
 
 test_submodule_forced_switch_recursing_with_args "checkout -f"
 
-test_submodule_switch "git checkout"
+test_submodule_switch "checkout"
 
-test_submodule_forced_switch "git checkout -f"
+test_submodule_forced_switch "checkout -f"
 
 test_done

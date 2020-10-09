@@ -85,15 +85,15 @@ As a given feature goes from experimental to stable, it also
 
 There is a fourth official branch that is used slightly differently:
 
-* 'pu' (proposed updates) is an integration branch for things that are
-  not quite ready for inclusion yet (see "Integration Branches"
-  below).
+* 'seen' (patches seen by the maintainer) is an integration branch for
+  things that are not quite ready for inclusion yet (see "Integration
+  Branches" below).
 
 Each of the four branches is usually a direct descendant of the one
 above it.
 
 Conceptually, the feature enters at an unstable branch (usually 'next'
-or 'pu'), and "graduates" to 'master' for the next release once it is
+or 'seen'), and "graduates" to 'master' for the next release once it is
 considered stable enough.
 
 
@@ -207,7 +207,7 @@ If you make it (very) clear that this branch is going to be deleted
 right after the testing, you can even publish this branch, for example
 to give the testers a chance to work with it, or other developers a
 chance to see if their in-progress work will be compatible.  `git.git`
-has such an official throw-away integration branch called 'pu'.
+has such an official throw-away integration branch called 'seen'.
 
 
 Branch management for a release
@@ -291,8 +291,8 @@ This will not happen if the content of the branches was verified as
 described in the previous section.
 
 
-Branch management for next and pu after a feature release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Branch management for next and seen after a feature release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After a feature release, the integration branch 'next' may optionally be
 rewound and rebuilt from the tip of 'master' using the surviving
@@ -319,8 +319,8 @@ so.
 If you do this, then you should make a public announcement indicating
 that 'next' was rewound and rebuilt.
 
-The same rewind and rebuild process may be followed for 'pu'. A public
-announcement is not necessary since 'pu' is a throw-away branch, as
+The same rewind and rebuild process may be followed for 'seen'. A public
+announcement is not necessary since 'seen' is a throw-away branch, as
 described above.
 
 

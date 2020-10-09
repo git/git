@@ -3,48 +3,43 @@
 #include "promisor-remote.h"
 #include "config.h"
 #include "transport.h"
+#include "strvec.h"
 
 static char *repository_format_partial_clone;
-static const char *core_partial_clone_filter_default;
 
 void set_repository_format_partial_clone(char *partial_clone)
 {
 	repository_format_partial_clone = xstrdup_or_null(partial_clone);
 }
 
-static int fetch_refs(const char *remote_name, struct ref *ref)
-{
-	struct remote *remote;
-	struct transport *transport;
-	int res;
-
-	remote = remote_get(remote_name);
-	if (!remote->url[0])
-		die(_("Remote with no URL"));
-	transport = transport_get(remote, remote->url[0]);
-
-	transport_set_option(transport, TRANS_OPT_FROM_PROMISOR, "1");
-	transport_set_option(transport, TRANS_OPT_NO_DEPENDENTS, "1");
-	res = transport_fetch_refs(transport, ref);
-
-	return res;
-}
-
 static int fetch_objects(const char *remote_name,
 			 const struct object_id *oids,
 			 int oid_nr)
 {
-	struct ref *ref = NULL;
+	struct child_process child = CHILD_PROCESS_INIT;
 	int i;
+	FILE *child_in;
+
+	child.git_cmd = 1;
+	child.in = -1;
+	strvec_pushl(&child.args, "-c", "fetch.negotiationAlgorithm=noop",
+		     "fetch", remote_name, "--no-tags",
+		     "--no-write-fetch-head", "--recurse-submodules=no",
+		     "--filter=blob:none", "--stdin", NULL);
+	if (start_command(&child))
+		die(_("promisor-remote: unable to fork off fetch subprocess"));
+	child_in = xfdopen(child.in, "w");
 
 	for (i = 0; i < oid_nr; i++) {
-		struct ref *new_ref = alloc_ref(oid_to_hex(&oids[i]));
-		oidcpy(&new_ref->old_oid, &oids[i]);
-		new_ref->exact_oid = 1;
-		new_ref->next = ref;
-		ref = new_ref;
+		if (fputs(oid_to_hex(&oids[i]), child_in) < 0)
+			die_errno(_("promisor-remote: could not write to fetch subprocess"));
+		if (fputc('\n', child_in) < 0)
+			die_errno(_("promisor-remote: could not write to fetch subprocess"));
 	}
-	return fetch_refs(remote_name, ref);
+
+	if (fclose(child_in) < 0)
+		die_errno(_("promisor-remote: could not close stdin to fetch subprocess"));
+	return finish_command(&child) ? -1 : 0;
 }
 
 static struct promisor_remote *promisors;
@@ -103,10 +98,6 @@ static int promisor_remote_config(const char *var, const char *value, void *data
 	const char *name;
 	size_t namelen;
 	const char *subkey;
-
-	if (!strcmp(var, "core.partialclonefilter"))
-		return git_config_string(&core_partial_clone_filter_default,
-					 var, value);
 
 	if (parse_config_key(var, "remote", &name, &namelen, &subkey) < 0)
 		return 0;

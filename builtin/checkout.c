@@ -239,6 +239,8 @@ static int checkout_merged(int pos, const struct checkout *state, int *nr_checko
 	mmbuffer_t result_buf;
 	struct object_id threeway[3];
 	unsigned mode = 0;
+	struct ll_merge_options ll_opts;
+	int renormalize = 0;
 
 	memset(threeway, 0, sizeof(threeway));
 	while (pos < active_nr) {
@@ -259,13 +261,12 @@ static int checkout_merged(int pos, const struct checkout *state, int *nr_checko
 	read_mmblob(&ours, &threeway[1]);
 	read_mmblob(&theirs, &threeway[2]);
 
-	/*
-	 * NEEDSWORK: re-create conflicts from merges with
-	 * merge.renormalize set, too
-	 */
+	memset(&ll_opts, 0, sizeof(ll_opts));
+	git_config_get_bool("merge.renormalize", &renormalize);
+	ll_opts.renormalize = renormalize;
 	status = ll_merge(&result_buf, path, &ancestor, "base",
 			  &ours, "ours", &theirs, "theirs",
-			  state->istate, NULL);
+			  state->istate, &ll_opts);
 	free(ancestor.ptr);
 	free(ours.ptr);
 	free(theirs.ptr);
@@ -621,9 +622,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
 	init_checkout_metadata(&opts.meta, info->refname,
-			       info->commit ? &info->commit->object.oid :
-			       is_null_oid(&info->oid) ? &tree->object.oid :
-			       &info->oid,
+			       info->commit ? &info->commit->object.oid : &null_oid,
 			       NULL);
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
@@ -652,7 +651,7 @@ static void setup_branch_path(struct branch_info *branch)
 	 * If this is a ref, resolve it; otherwise, look up the OID for our
 	 * expression.  Failure here is okay.
 	 */
-	if (!dwim_ref(branch->name, strlen(branch->name), &branch->oid, &branch->refname))
+	if (!dwim_ref(branch->name, strlen(branch->name), &branch->oid, &branch->refname, 0))
 		repo_get_oid_committish(the_repository, branch->name, &branch->oid);
 
 	strbuf_branchname(&buf, branch->name, INTERPRET_BRANCH_LOCAL);
@@ -773,13 +772,6 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 */
 
 			add_files_to_cache(NULL, NULL, 0);
-			/*
-			 * NEEDSWORK: carrying over local changes
-			 * when branches have different end-of-line
-			 * normalization (or clean+smudge rules) is
-			 * a pain; plumb in an option to set
-			 * o.renormalize?
-			 */
 			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
 			work = write_in_core_index_as_tree(the_repository);
@@ -1128,8 +1120,10 @@ static void setup_new_branch_info_and_source_tree(
 	if (!check_refname_format(new_branch_info->path, 0) &&
 	    !read_ref(new_branch_info->path, &branch_rev))
 		oidcpy(rev, &branch_rev);
-	else
+	else {
+		free((char *)new_branch_info->path);
 		new_branch_info->path = NULL; /* not an existing branch */
+	}
 
 	new_branch_info->commit = lookup_commit_reference_gently(the_repository, rev, 1);
 	if (!new_branch_info->commit) {
@@ -1351,7 +1345,7 @@ static void die_expecting_a_branch(const struct branch_info *branch_info)
 	struct object_id oid;
 	char *to_free;
 
-	if (dwim_ref(branch_info->name, strlen(branch_info->name), &oid, &to_free) == 1) {
+	if (dwim_ref(branch_info->name, strlen(branch_info->name), &oid, &to_free, 0) == 1) {
 		const char *ref = to_free;
 
 		if (skip_prefix(ref, "refs/tags/", &ref))
@@ -1714,6 +1708,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	} else if (opts->pathspec_file_nul) {
 		die(_("--pathspec-file-nul requires --pathspec-from-file"));
 	}
+
+	opts->pathspec.recursive = 1;
 
 	if (opts->pathspec.nr) {
 		if (1 < !!opts->writeout_stage + !!opts->force + !!opts->merge)

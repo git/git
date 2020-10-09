@@ -90,6 +90,7 @@
 /git-ls-tree
 /git-mailinfo
 /git-mailsplit
+/git-maintenance
 /git-merge
 /git-merge-base
 /git-merge-index
@@ -134,7 +135,6 @@
 /git-remote-fd
 /git-remote-ext
 /git-remote-testpy
-/git-remote-testsvn
 /git-repack
 /git-replace
 /git-request-pull
@@ -197,6 +197,7 @@
 /git.spec
 *.exe
 *.[aos]
+*.o.json
 *.py[co]
 .depend/
 *.gcda
@@ -218,6 +219,7 @@
 /tags
 /TAGS
 /cscope*
+/compile_commands.json
 *.hcc
 *.obj
 *.lib
@@ -240,3 +242,4 @@ Release/
 /git.VC.VC.opendb
 /git.VC.db
 *.dSYM
+/contrib/buildsystems/out

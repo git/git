@@ -93,6 +93,14 @@ int for_each_remote(each_remote_fn fn, void *priv);
 
 int remote_has_url(struct remote *remote, const char *url);
 
+struct ref_push_report {
+	const char *ref_name;
+	struct object_id *old_oid;
+	struct object_id *new_oid;
+	unsigned int forced_update:1;
+	struct ref_push_report *next;
+};
+
 struct ref {
 	struct ref *next;
 	struct object_id old_oid;
@@ -140,6 +148,7 @@ struct ref {
 		REF_STATUS_ATOMIC_PUSH_FAILED
 	} status;
 	char *remote_status;
+	struct ref_push_report *report;
 	struct ref *peer_ref; /* when renaming */
 	char name[FLEX_ARRAY]; /* more */
 };
@@ -168,7 +177,7 @@ void free_refs(struct ref *ref);
 
 struct oid_array;
 struct packet_reader;
-struct argv_array;
+struct strvec;
 struct string_list;
 struct ref **get_remote_heads(struct packet_reader *reader,
 			      struct ref **list, unsigned int flags,
@@ -178,8 +187,9 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 /* Used for protocol v2 in order to retrieve refs from a remote */
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     struct ref **list, int for_push,
-			     const struct argv_array *ref_prefixes,
-			     const struct string_list *server_options);
+			     const struct strvec *ref_prefixes,
+			     const struct string_list *server_options,
+			     int stateless_rpc);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 
@@ -191,6 +201,12 @@ int resolve_remote_symref(struct ref *ref, struct ref *list);
  * pointer to the head of the resulting list.
  */
 struct ref *ref_remove_duplicates(struct ref *ref_map);
+
+/*
+ * Remove all entries in the input list which match any negative refspec in
+ * the refspec list.
+ */
+struct ref *apply_negative_refspecs(struct ref *ref_map, struct refspec *rs);
 
 int query_refspecs(struct refspec *rs, struct refspec_item *query);
 char *apply_refspecs(struct refspec *rs, const char *name);
@@ -204,7 +220,8 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 /*
  * Given a list of the remote refs and the specification of things to
  * fetch, makes a (separate) list of the refs to fetch and the local
- * refs to store into.
+ * refs to store into. Note that negative refspecs are ignored here, and
+ * should be handled separately.
  *
  * *tail is the pointer to the tail pointer of the list of results
  * beforehand, and will be set to the tail pointer of the list of

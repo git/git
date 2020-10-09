@@ -340,6 +340,8 @@ include::config/column.txt[]
 
 include::config/commit.txt[]
 
+include::config/commitgraph.txt[]
+
 include::config/credential.txt[]
 
 include::config/completion.txt[]
@@ -347,6 +349,8 @@ include::config/completion.txt[]
 include::config/diff.txt[]
 
 include::config/difftool.txt[]
+
+include::config/extensions.txt[]
 
 include::config/fastimport.txt[]
 
@@ -395,6 +399,8 @@ include::config/log.txt[]
 include::config/mailinfo.txt[]
 
 include::config/mailmap.txt[]
+
+include::config/maintenance.txt[]
 
 include::config/man.txt[]
 

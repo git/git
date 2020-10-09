@@ -146,9 +146,9 @@ static int query_fsmonitor(int version, const char *last_update, struct strbuf *
 	if (!core_fsmonitor)
 		return -1;
 
-	argv_array_push(&cp.args, core_fsmonitor);
-	argv_array_pushf(&cp.args, "%d", version);
-	argv_array_pushf(&cp.args, "%s", last_update);
+	strvec_push(&cp.args, core_fsmonitor);
+	strvec_pushf(&cp.args, "%d", version);
+	strvec_pushf(&cp.args, "%s", last_update);
 	cp.use_shell = 1;
 	cp.dir = get_git_work_tree();
 
@@ -217,7 +217,7 @@ void refresh_fsmonitor(struct index_state *istate)
 				 * Need to use a char * variable because static
 				 * analysis was suggesting to use strbuf_addbuf
 				 * but we don't want to copy the entire strbuf
-				 * only the the chars up to the first NUL
+				 * only the chars up to the first NUL
 				 */
 				buf = query_result.buf;
 				strbuf_addstr(&last_update_token, buf);

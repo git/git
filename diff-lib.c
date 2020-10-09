@@ -177,9 +177,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			i--;
 
 			if (revs->combine_merges && num_compare_stages == 2) {
-				show_combined_diff(dpath, 2,
-						   revs->dense_combined_merges,
-						   revs);
+				show_combined_diff(dpath, 2, revs);
 				free(dpath);
 				continue;
 			}
@@ -219,9 +217,9 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 			} else if (revs->diffopt.ita_invisible_in_index &&
 				   ce_intent_to_add(ce)) {
-				diff_addremove(&revs->diffopt, '+', ce->ce_mode,
-					       the_hash_algo->empty_tree, 0,
-					       ce->name, 0);
+				newmode = ce_mode_from_stat(ce, st.st_mode);
+				diff_addremove(&revs->diffopt, '+', newmode,
+					       &null_oid, 0, ce->name, 0);
 				continue;
 			}
 
@@ -361,7 +359,7 @@ static int show_modified(struct rev_info *revs,
 		p->parent[1].status = DIFF_STATUS_MODIFIED;
 		p->parent[1].mode = old_entry->ce_mode;
 		oidcpy(&p->parent[1].oid, &old_entry->oid);
-		show_combined_diff(p, 2, revs->dense_combined_merges, revs);
+		show_combined_diff(p, 2, revs);
 		free(p);
 		return 0;
 	}
@@ -405,14 +403,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	/* if the entry is not checked out, don't examine work tree */
 	cached = o->index_only ||
 		(idx && ((idx->ce_flags & CE_VALID) || ce_skip_worktree(idx)));
-	/*
-	 * Backward compatibility wart - "diff-index -m" does
-	 * not mean "do not ignore merges", but "match_missing".
-	 *
-	 * But with the revision flag parsing, that's found in
-	 * "!revs->ignore_merges".
-	 */
-	match_missing = !revs->ignore_merges;
+
+	match_missing = revs->match_missing;
 
 	if (cached && idx && ce_stage(idx)) {
 		struct diff_filepair *pair;
@@ -570,4 +562,29 @@ int index_differs_from(struct repository *r,
 	run_diff_index(&rev, 1);
 	object_array_clear(&rev.pending);
 	return (rev.diffopt.flags.has_changes != 0);
+}
+
+static struct strbuf *idiff_prefix_cb(struct diff_options *opt, void *data)
+{
+	return data;
+}
+
+void show_interdiff(const struct object_id *oid1, const struct object_id *oid2,
+		    int indent, struct diff_options *diffopt)
+{
+	struct diff_options opts;
+	struct strbuf prefix = STRBUF_INIT;
+
+	memcpy(&opts, diffopt, sizeof(opts));
+	opts.output_format = DIFF_FORMAT_PATCH;
+	opts.output_prefix = idiff_prefix_cb;
+	strbuf_addchars(&prefix, ' ', indent);
+	opts.output_prefix_data = &prefix;
+	diff_setup_done(&opts);
+
+	diff_tree_oid(oid1, oid2, "", &opts);
+	diffcore_std(&opts);
+	diff_flush(&opts);
+
+	strbuf_release(&prefix);
 }

@@ -179,7 +179,7 @@ allowed-groups, to describe which heads can be pushed into by
 whom.  The format of each file would look like this:
 
     refs/heads/master   junio
-    +refs/heads/pu      junio
+    +refs/heads/seen    junio
     refs/heads/cogito$  pasky
     refs/heads/bw/.*    linus
     refs/heads/tmp/.*   .*
@@ -187,6 +187,6 @@ whom.  The format of each file would look like this:
 
 With this, Linus can push or create "bw/penguin" or "bw/zebra"
 or "bw/panda" branches, Pasky can do only "cogito", and JC can
-do master and pu branches and make versioned tags.  And anybody
-can do tmp/blah branches. The '+' sign at the pu record means
+do master and "seen" branches and make versioned tags.  And anybody
+can do tmp/blah branches. The '+' sign at the "seen" record means
 that JC can make non-fast-forward pushes on it.

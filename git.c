@@ -346,11 +346,13 @@ static int handle_alias(int *argcp, const char ***argv)
 			commit_pager_choice();
 
 			child.use_shell = 1;
+			child.clean_on_exit = 1;
+			child.wait_after_clean = 1;
 			child.trace2_child_class = "shell_alias";
-			argv_array_push(&child.args, alias_string + 1);
-			argv_array_pushv(&child.args, (*argv) + 1);
+			strvec_push(&child.args, alias_string + 1);
+			strvec_pushv(&child.args, (*argv) + 1);
 
-			trace2_cmd_alias(alias_command, child.args.argv);
+			trace2_cmd_alias(alias_command, child.args.v);
 			trace2_cmd_list_config();
 			trace2_cmd_list_env_vars();
 			trace2_cmd_name("_run_shell_alias_");
@@ -477,6 +479,7 @@ static struct cmd_struct commands[] = {
 	{ "bisect--helper", cmd_bisect__helper, RUN_SETUP },
 	{ "blame", cmd_blame, RUN_SETUP },
 	{ "branch", cmd_branch, RUN_SETUP | DELAY_PAGER_CONFIG },
+	{ "bugreport", cmd_bugreport, RUN_SETUP_GENTLY },
 	{ "bundle", cmd_bundle, RUN_SETUP_GENTLY | NO_PARSEOPT },
 	{ "cat-file", cmd_cat_file, RUN_SETUP },
 	{ "check-attr", cmd_check_attr, RUN_SETUP },
@@ -497,6 +500,9 @@ static struct cmd_struct commands[] = {
 	{ "config", cmd_config, RUN_SETUP_GENTLY | DELAY_PAGER_CONFIG },
 	{ "count-objects", cmd_count_objects, RUN_SETUP },
 	{ "credential", cmd_credential, RUN_SETUP_GENTLY | NO_PARSEOPT },
+	{ "credential-cache", cmd_credential_cache },
+	{ "credential-cache--daemon", cmd_credential_cache_daemon },
+	{ "credential-store", cmd_credential_store },
 	{ "describe", cmd_describe, RUN_SETUP },
 	{ "diff", cmd_diff, NO_PARSEOPT },
 	{ "diff-files", cmd_diff_files, RUN_SETUP | NEED_WORK_TREE | NO_PARSEOPT },
@@ -505,6 +511,7 @@ static struct cmd_struct commands[] = {
 	{ "difftool", cmd_difftool, RUN_SETUP_GENTLY },
 	{ "env--helper", cmd_env__helper },
 	{ "fast-export", cmd_fast_export, RUN_SETUP },
+	{ "fast-import", cmd_fast_import, RUN_SETUP | NO_PARSEOPT },
 	{ "fetch", cmd_fetch, RUN_SETUP },
 	{ "fetch-pack", cmd_fetch_pack, RUN_SETUP | NO_PARSEOPT },
 	{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
@@ -527,6 +534,7 @@ static struct cmd_struct commands[] = {
 	{ "ls-tree", cmd_ls_tree, RUN_SETUP },
 	{ "mailinfo", cmd_mailinfo, RUN_SETUP_GENTLY | NO_PARSEOPT },
 	{ "mailsplit", cmd_mailsplit, NO_PARSEOPT },
+	{ "maintenance", cmd_maintenance, RUN_SETUP_GENTLY | NO_PARSEOPT },
 	{ "merge", cmd_merge, RUN_SETUP | NEED_WORK_TREE },
 	{ "merge-base", cmd_merge_base, RUN_SETUP },
 	{ "merge-file", cmd_merge_file, RUN_SETUP_GENTLY },
@@ -574,7 +582,7 @@ static struct cmd_struct commands[] = {
 	{ "shortlog", cmd_shortlog, RUN_SETUP_GENTLY | USE_PAGER },
 	{ "show", cmd_show, RUN_SETUP },
 	{ "show-branch", cmd_show_branch, RUN_SETUP },
-	{ "show-index", cmd_show_index },
+	{ "show-index", cmd_show_index, RUN_SETUP_GENTLY },
 	{ "show-ref", cmd_show_ref, RUN_SETUP },
 	{ "sparse-checkout", cmd_sparse_checkout, RUN_SETUP | NEED_WORK_TREE },
 	{ "stage", cmd_add, RUN_SETUP | NEED_WORK_TREE },
@@ -644,7 +652,7 @@ static void strip_extension(const char **argv)
 
 static void handle_builtin(int argc, const char **argv)
 {
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	const char *cmd;
 	struct cmd_struct *builtin;
 
@@ -659,19 +667,19 @@ static void handle_builtin(int argc, const char **argv)
 		argv[0] = cmd = "help";
 
 		for (i = 0; i < argc; i++) {
-			argv_array_push(&args, argv[i]);
+			strvec_push(&args, argv[i]);
 			if (!i)
-				argv_array_push(&args, "--exclude-guides");
+				strvec_push(&args, "--exclude-guides");
 		}
 
 		argc++;
-		argv = args.argv;
+		argv = args.v;
 	}
 
 	builtin = get_builtin(cmd);
 	if (builtin)
 		exit(run_builtin(builtin, argc, argv));
-	argv_array_clear(&args);
+	strvec_clear(&args);
 }
 
 static void execv_dashed_external(const char **argv)
@@ -686,8 +694,8 @@ static void execv_dashed_external(const char **argv)
 		use_pager = check_pager_config(argv[0]);
 	commit_pager_choice();
 
-	argv_array_pushf(&cmd.args, "git-%s", argv[0]);
-	argv_array_pushv(&cmd.args, argv + 1);
+	strvec_pushf(&cmd.args, "git-%s", argv[0]);
+	strvec_pushv(&cmd.args, argv + 1);
 	cmd.clean_on_exit = 1;
 	cmd.wait_after_clean = 1;
 	cmd.silent_exec_failure = 1;
@@ -699,7 +707,7 @@ static void execv_dashed_external(const char **argv)
 	 * The code in run_command() logs trace2 child_start/child_exit
 	 * events, so we do not need to report exec/exec_result events here.
 	 */
-	trace_argv_printf(cmd.args.argv, "trace: exec:");
+	trace_argv_printf(cmd.args.v, "trace: exec:");
 
 	/*
 	 * If we fail because the command is not found, it is
@@ -739,7 +747,7 @@ static int run_argv(int *argcp, const char ***argv)
 		if (!done_alias)
 			handle_builtin(*argcp, *argv);
 		else if (get_builtin(**argv)) {
-			struct argv_array args = ARGV_ARRAY_INIT;
+			struct strvec args = STRVEC_INIT;
 			int i;
 
 			/*
@@ -756,18 +764,18 @@ static int run_argv(int *argcp, const char ***argv)
 
 			commit_pager_choice();
 
-			argv_array_push(&args, "git");
+			strvec_push(&args, "git");
 			for (i = 0; i < *argcp; i++)
-				argv_array_push(&args, (*argv)[i]);
+				strvec_push(&args, (*argv)[i]);
 
-			trace_argv_printf(args.argv, "trace: exec:");
+			trace_argv_printf(args.v, "trace: exec:");
 
 			/*
 			 * if we fail because the command is not found, it is
 			 * OK to return. Otherwise, we just pass along the status code.
 			 */
-			i = run_command_v_opt_tr2(args.argv, RUN_SILENT_EXEC_FAILURE |
-						  RUN_CLEAN_ON_EXIT, "git_alias");
+			i = run_command_v_opt_tr2(args.v, RUN_SILENT_EXEC_FAILURE |
+						  RUN_CLEAN_ON_EXIT | RUN_WAIT_AFTER_CLEAN, "git_alias");
 			if (i >= 0 || errno != ENOENT)
 				exit(i);
 			die("could not execute builtin %s", **argv);

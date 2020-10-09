@@ -287,8 +287,6 @@ struct diff_options {
 
 	/* If non-zero, then stop computing after this many changes. */
 	int max_changes;
-	/* For internal use only. */
-	int num_changes;
 
 	int ita_invisible_in_index;
 /* white-space error highlighting */
@@ -431,11 +429,11 @@ struct combine_diff_path *diff_tree_paths(
 	struct combine_diff_path *p, const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt);
-int diff_tree_oid(const struct object_id *old_oid,
-		  const struct object_id *new_oid,
-		  const char *base, struct diff_options *opt);
-int diff_root_tree_oid(const struct object_id *new_oid, const char *base,
-		       struct diff_options *opt);
+void diff_tree_oid(const struct object_id *old_oid,
+		   const struct object_id *new_oid,
+		   const char *base, struct diff_options *opt);
+void diff_root_tree_oid(const struct object_id *new_oid, const char *base,
+			struct diff_options *opt);
 
 struct combine_diff_path {
 	struct combine_diff_path *next;
@@ -454,11 +452,11 @@ struct combine_diff_path {
 		st_mult(sizeof(struct combine_diff_parent), (n)))
 
 void show_combined_diff(struct combine_diff_path *elem, int num_parent,
-			int dense, struct rev_info *);
+			struct rev_info *);
 
-void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, int dense, struct rev_info *rev);
+void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, struct rev_info *rev);
 
-void diff_tree_combined_merge(const struct commit *commit, int dense, struct rev_info *rev);
+void diff_tree_combined_merge(const struct commit *commit, struct rev_info *rev);
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
 
@@ -599,6 +597,13 @@ int diff_no_index(struct rev_info *,
 int index_differs_from(struct repository *r, const char *def,
 		       const struct diff_flags *flags,
 		       int ita_invisible_in_index);
+
+/*
+ * Emit an interdiff of two object ID's to 'diff_options.file' optionally
+ * indented by 'indent' spaces.
+ */
+void show_interdiff(const struct object_id *, const struct object_id *,
+		    int indent, struct diff_options *);
 
 /*
  * Fill the contents of the filespec "df", respecting any textconv defined by

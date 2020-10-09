@@ -3529,8 +3529,9 @@ static struct commit_list *reverse_commit_list(struct commit_list *list)
 }
 
 /*
- * Merge the commits h1 and h2, return the resulting virtual
- * commit object and a flag indicating the cleanness of the merge.
+ * Merge the commits h1 and h2, returning a flag (int) indicating the
+ * cleanness of the merge.  Also, if opt->priv->call_depth, create a
+ * virtual commit and write its location to *result.
  */
 static int merge_recursive_internal(struct merge_options *opt,
 				    struct commit *h1,
@@ -3791,9 +3792,12 @@ int merge_recursive_generic(struct merge_options *opt,
 static void merge_recursive_config(struct merge_options *opt)
 {
 	char *value = NULL;
+	int renormalize = 0;
 	git_config_get_int("merge.verbosity", &opt->verbosity);
 	git_config_get_int("diff.renamelimit", &opt->rename_limit);
 	git_config_get_int("merge.renamelimit", &opt->rename_limit);
+	git_config_get_bool("merge.renormalize", &renormalize);
+	opt->renormalize = renormalize;
 	if (!git_config_get_string("diff.renames", &value)) {
 		opt->detect_renames = git_config_rename("diff.renames", value);
 		free(value);

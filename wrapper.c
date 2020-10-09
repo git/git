@@ -105,14 +105,25 @@ char *xstrndup(const char *str, size_t len)
 	return xmemdupz(str, p ? p - str : len);
 }
 
+int xstrncmpz(const char *s, const char *t, size_t len)
+{
+	int res = strncmp(s, t, len);
+	if (res)
+		return res;
+	return s[len] == '\0' ? 0 : 1;
+}
+
 void *xrealloc(void *ptr, size_t size)
 {
 	void *ret;
 
+	if (!size) {
+		free(ptr);
+		return xmalloc(0);
+	}
+
 	memory_limit_check(size, 0);
 	ret = realloc(ptr, size);
-	if (!ret && !size)
-		ret = realloc(ptr, 1);
 	if (!ret)
 		die("Out of memory, realloc failed");
 	return ret;

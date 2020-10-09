@@ -23,8 +23,10 @@ test_expect_success 'config --worktree without extension' '
 '
 
 test_expect_success 'enable worktreeConfig extension' '
+	git config core.repositoryformatversion 1 &&
 	git config extensions.worktreeConfig true &&
-	test_cmp_config true extensions.worktreeConfig
+	test_cmp_config true extensions.worktreeConfig &&
+	test_cmp_config 1 core.repositoryformatversion
 '
 
 test_expect_success 'config is shared as before' '

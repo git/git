@@ -304,6 +304,13 @@ users typically do not use them directly.
 
 include::cmds-purehelpers.txt[]
 
+Guides
+------
+
+The following documentation pages are guides about Git concepts.
+
+include::cmds-guide.txt[]
+
 
 Configuration Mechanism
 -----------------------
@@ -497,7 +504,8 @@ double-quotes and respecting backslash escapes. E.g., the value
 	If this variable is set, the default hash algorithm for new
 	repositories will be set to this value. This value is currently
 	ignored when cloning; the setting of the remote repository
-	is used instead. The default is "sha1".
+	is used instead. The default is "sha1". THIS VARIABLE IS
+	EXPERIMENTAL! See `--object-format` in linkgit:git-init[1].
 
 Git Commits
 ~~~~~~~~~~~
@@ -543,8 +551,9 @@ Git Diffs
 
 `GIT_EXTERNAL_DIFF`::
 	When the environment variable `GIT_EXTERNAL_DIFF` is set, the
-	program named by it is called, instead of the diff invocation
-	described above.  For a path that is added, removed, or modified,
+	program named by it is called to generate diffs, and Git
+	does not use its builtin diff machinery.
+	For a path that is added, removed, or modified,
 	`GIT_EXTERNAL_DIFF` is called with 7 parameters:
 
 	path old-file old-hex old-mode new-file new-hex new-mode
@@ -596,6 +605,12 @@ other
 	It is used by several Git commands when, on interactive mode,
 	an editor is to be launched. See also linkgit:git-var[1]
 	and the `core.editor` option in linkgit:git-config[1].
+
+`GIT_SEQUENCE_EDITOR`::
+	This environment variable overrides the configured Git editor
+	when editing the todo list of an interactive rebase. See also
+	linkit::git-rebase[1] and the `sequence.editor` option in
+	linkit::git-config[1].
 
 `GIT_SSH`::
 `GIT_SSH_COMMAND`::
@@ -707,6 +722,10 @@ of clones and fetches.
 	time of each Git command.
 	See `GIT_TRACE` for available trace output options.
 
+`GIT_TRACE_REFS`::
+	Enables trace messages for operations on the ref database.
+	See `GIT_TRACE` for available trace output options.
+
 `GIT_TRACE_SETUP`::
 	Enables trace messages printing the .git, working tree and current
 	working directory after Git has completed its setup phase.
@@ -721,8 +740,6 @@ of clones and fetches.
 	Enables a curl full trace dump of all incoming and outgoing data,
 	including descriptive information, of the git transport protocol.
 	This is similar to doing curl `--trace-ascii` on the command line.
-	This option overrides setting the `GIT_CURL_VERBOSE` environment
-	variable.
 	See `GIT_TRACE` for available trace output options.
 
 `GIT_TRACE_CURL_NO_DATA`::
@@ -777,11 +794,10 @@ for full details.
 	See `GIT_TRACE2` for available trace output options and
 	link:technical/api-trace2.html[Trace2 documentation] for full details.
 
-`GIT_REDACT_COOKIES`::
-	This can be set to a comma-separated list of strings. When a curl trace
-	is enabled (see `GIT_TRACE_CURL` above), whenever a "Cookies:" header
-	sent by the client is dumped, values of cookies whose key is in that
-	list (case-sensitive) are redacted.
+`GIT_TRACE_REDACT`::
+	By default, when tracing is activated, Git redacts the values of
+	cookies, the "Authorization:" header, and the "Proxy-Authorization:"
+	header. Set this variable to `0` to prevent this redaction.
 
 `GIT_LITERAL_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all

@@ -25,8 +25,8 @@ people using 80-column terminals.
 
 --no-abbrev-commit::
 	Show the full 40-byte hexadecimal commit object name. This negates
-	`--abbrev-commit` and those options which imply it such as
-	"--oneline". It also overrides the `log.abbrevCommit` variable.
+	`--abbrev-commit`, either explicit or implied by other options such
+	as "--oneline". It also overrides the `log.abbrevCommit` variable.
 
 --oneline::
 	This is a shorthand for "--pretty=oneline --abbrev-commit"

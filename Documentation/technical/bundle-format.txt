@@ -7,6 +7,8 @@ The Git bundle format is a format that represents both refs and Git objects.
 We will use ABNF notation to define the Git bundle format. See
 protocol-common.txt for the details.
 
+A v2 bundle looks like this:
+
 ----
 bundle    = signature *prerequisite *reference LF pack
 signature = "# v2 git bundle" LF
@@ -18,9 +20,28 @@ reference    = obj-id SP refname LF
 pack         = ... ; packfile
 ----
 
+A v3 bundle looks like this:
+
+----
+bundle    = signature *capability *prerequisite *reference LF pack
+signature = "# v3 git bundle" LF
+
+capability   = "@" key ["=" value] LF
+prerequisite = "-" obj-id SP comment LF
+comment      = *CHAR
+reference    = obj-id SP refname LF
+key          = 1*(ALPHA / DIGIT / "-")
+value        = *(%01-09 / %0b-FF)
+
+pack         = ... ; packfile
+----
+
 == Semantics
 
-A Git bundle consists of three parts.
+A Git bundle consists of several parts.
+
+* "Capabilities", which are only in the v3 format, indicate functionality that
+	the bundle requires to be read properly.
 
 * "Prerequisites" lists the objects that are NOT included in the bundle and the
   reader of the bundle MUST already have, in order to use the data in the
@@ -46,3 +67,10 @@ put any string here. The reader of the bundle MUST ignore the comment.
 Note that the prerequisites does not represent a shallow-clone boundary. The
 semantics of the prerequisites and the shallow-clone boundaries are different,
 and the Git bundle v2 format cannot represent a shallow clone repository.
+
+== Capabilities
+
+Because there is no opportunity for negotiation, unknown capabilities cause 'git
+bundle' to abort.  The only known capability is `object-format`, which specifies
+the hash algorithm in use, and can take the same values as the
+`extensions.objectFormat` configuration value.

@@ -36,8 +36,6 @@ struct commit {
 	 * or get_commit_tree_oid().
 	 */
 	struct tree *maybe_tree;
-	uint32_t graph_pos;
-	uint32_t generation;
 	unsigned int index;
 };
 
@@ -97,7 +95,6 @@ static inline int parse_commit_no_graph(struct commit *commit)
 
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define parse_commit_internal(item, quiet, use) repo_parse_commit_internal(the_repository, item, quiet, use)
-#define parse_commit_gently(item, quiet) repo_parse_commit_gently(the_repository, item, quiet)
 #define parse_commit(item) repo_parse_commit(the_repository, item)
 #endif
 
@@ -251,7 +248,7 @@ struct oid_array;
 struct ref;
 int for_each_commit_graft(each_commit_graft_fn, void *);
 
-int interactive_add(int argc, const char **argv, const char *prefix, int patch);
+int interactive_add(const char **argv, const char *prefix, int patch);
 int run_add_interactive(const char *revision, const char *patch_mode,
 			const struct pathspec *pathspec);
 
@@ -272,10 +269,9 @@ int commit_tree(const char *msg, size_t msg_len,
 
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
-			 struct commit_list *parents,
-			 struct object_id *ret, const char *author,
-			 const char *sign_commit,
-			 struct commit_extra_header *);
+			 struct commit_list *parents, struct object_id *ret,
+			 const char *author, const char *committer,
+			 const char *sign_commit, struct commit_extra_header *);
 
 struct commit_extra_header *read_commit_extra_headers(struct commit *, const char **);
 

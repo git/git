@@ -54,13 +54,8 @@ struct ref_filter {
 	struct oid_array points_at;
 	struct commit_list *with_commit;
 	struct commit_list *no_commit;
-
-	enum {
-		REF_FILTER_MERGED_NONE = 0,
-		REF_FILTER_MERGED_INCLUDE,
-		REF_FILTER_MERGED_OMIT
-	} merge;
-	struct commit *merge_commit;
+	struct commit_list *reachable_from;
+	struct commit_list *unreachable_from;
 
 	unsigned int with_commit_tag_algo : 1,
 		match_as_path : 1,

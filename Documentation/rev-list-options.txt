@@ -128,8 +128,7 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	because merges into a topic branch tend to be only about
 	adjusting to updated upstream from time to time, and
 	this option allows you to ignore the individual commits
-	brought in to your history by such a merge. Cannot be
-	combined with --bisect.
+	brought in to your history by such a merge.
 
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
@@ -207,7 +206,7 @@ ifndef::git-rev-list[]
 	Pretend as if the bad bisection ref `refs/bisect/bad`
 	was listed and as if it was followed by `--not` and the good
 	bisection refs `refs/bisect/good-*` on the command
-	line. Cannot be combined with --first-parent.
+	line.
 endif::git-rev-list[]
 
 --stdin::
@@ -743,7 +742,7 @@ outputs 'midpoint', the output of the two commands
 would be of roughly the same length.  Finding the change which
 introduces a regression is thus reduced to a binary search: repeatedly
 generate and test new 'midpoint's until the commit chain is of length
-one. Cannot be combined with --first-parent.
+one.
 
 --bisect-vars::
 	This calculates the same as `--bisect`, except that refs in
@@ -1115,50 +1114,5 @@ ifdef::git-rev-list[]
 	`--cherry-mark`, omit patch equivalent commits from these
 	counts and print the count for equivalent commits separated
 	by a tab.
-endif::git-rev-list[]
-endif::git-shortlog[]
-
-ifndef::git-shortlog[]
-ifndef::git-rev-list[]
-Diff Formatting
-~~~~~~~~~~~~~~~
-
-Listed below are options that control the formatting of diff output.
-Some of them are specific to linkgit:git-rev-list[1], however other diff
-options may be given. See linkgit:git-diff-files[1] for more options.
-
--c::
-	With this option, diff output for a merge commit
-	shows the differences from each of the parents to the merge result
-	simultaneously instead of showing pairwise diff between a parent
-	and the result one at a time. Furthermore, it lists only files
-	which were modified from all parents.
-
---cc::
-	This flag implies the `-c` option and further compresses the
-	patch output by omitting uninteresting hunks whose contents in
-	the parents have only two variants and the merge result picks
-	one of them without modification.
-
---combined-all-paths::
-	This flag causes combined diffs (used for merge commits) to
-	list the name of the file from all parents.  It thus only has
-	effect when -c or --cc are specified, and is likely only
-	useful if filename changes are detected (i.e. when either
-	rename or copy detection have been requested).
-
--m::
-	This flag makes the merge commits show the full diff like
-	regular commits; for each merge parent, a separate log entry
-	and diff is generated. An exception is that only diff against
-	the first parent is shown when `--first-parent` option is given;
-	in that case, the output represents the changes the merge
-	brought _into_ the then-current branch.
-
--r::
-	Show recursive diffs.
-
--t::
-	Show the tree objects in the diff output. This implies `-r`.
 endif::git-rev-list[]
 endif::git-shortlog[]
