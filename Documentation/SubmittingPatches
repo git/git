@@ -290,12 +290,14 @@ identify them), to solicit comments and reviews.
 :git-ml: footnote:[The mailing list: git@vger.kernel.org]
 
 After the list reached a consensus that it is a good idea to apply the
-patch, re-send it with "To:" set to the maintainer{current-maintainer} and "cc:" the
-list{git-ml} for inclusion.
+patch, re-send it with "To:" set to the maintainer{current-maintainer}
+and "cc:" the list{git-ml} for inclusion.  This is especially relevant
+when the maintainer did not heavily participate in the discussion and
+instead left the review to trusted others.
 
 Do not forget to add trailers such as `Acked-by:`, `Reviewed-by:` and
 `Tested-by:` lines as necessary to credit people who helped your
-patch.
+patch, and "cc:" them when sending such a final version for inclusion.
 
 [[sign-off]]
 === Certify your work by adding your "Signed-off-by: " line
