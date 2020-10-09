@@ -1,16 +1,27 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2020, #01; Mon, 5)
-X-master-at: d98273ba77e1ab9ec755576bc86c716a97bf59d7
-X-next-at: c238dab514479c86f2794b853c4f3b6271c1e0d6
+Subject: What's cooking in git.git (Oct 2020, #02; Fri, 9)
+X-master-at: d4a392452e292ff924e79ec8458611c0f679d6d4
+X-next-at: fa9743e501541a5315e5d4873d4e0245bccccd89
 
-What's cooking in git.git (Oct 2020, #01; Mon, 5)
+What's cooking in git.git (Oct 2020, #02; Fri, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+The first release candidate for this cycle, Git v2.29.0-rc1, has
+been tagged.  This -rc1 turned out to be a bit more ambitious than
+usual in how I handled young-but-small topics.  I would have left
+them out, saying "their benefit is low and don't have to be in the
+upcoming release", in past cycles.  But this time, I tried to cram
+them in -rc1, with an updated excluse "their scope is so small that
+they cannot be so wrong to delay the release even if we later find
+problems in them, so there is no point in delaying".
+
+We'll see how well it turns out.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -20,332 +31,228 @@ repositories listed at
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/mediawiki-fixes (2020-09-21) 18 commits
-  (merged to 'next' on 2020-09-25 at 878693716e)
- + remote-mediawiki: use "sh" to eliminate unquoted commands
- + remote-mediawiki: annotate unquoted uses of run_git()
- + remote-mediawiki: convert to quoted run_git() invocation
- + remote-mediawiki: provide a list form of run_git()
- + remote-mediawiki tests: annotate failing tests
- + remote-mediawiki: fix duplicate revisions being imported
- + remote-mediawiki tests: use CLI installer
- + remote-mediawiki tests: use inline PerlIO for readability
- + remote-mediawiki tests: replace deprecated Perl construct
- + remote-mediawiki tests: use a more idiomatic dispatch table
- + remote-mediawiki tests: use "$dir/" instead of "$dir."
- + remote-mediawiki tests: change `[]` to `test`
- + remote-mediawiki tests: use test_cmp in tests
- + remote-mediawiki tests: use a 10 character password
- + remote-mediawiki tests: use the login/password variables
- + remote-mediawiki doc: don't hardcode Debian PHP versions
- + remote-mediawiki doc: link to MediaWiki's current version
- + remote-mediawiki doc: correct link to GitHub project
+* dl/makefile-sort (2020-10-08) 1 commit
+  (merged to 'next' on 2020-10-08 at a303ef6d14)
+ + Makefile: ASCII-sort += lists
 
- Modernization and fixes to MediaWiki remote backend.
+ Makefile clean-up.
 
 
-* al/ref-filter-merged-and-no-merged (2020-09-26) 1 commit
-  (merged to 'next' on 2020-09-29 at 748a286753)
- + ref-filter: plug memory leak in reach_filter()
+* dl/mingw-header-cleanup (2020-10-07) 1 commit
+  (merged to 'next' on 2020-10-08 at 35516a8b50)
+ + compat/mingw.h: drop extern from function declaration
 
- Hotfix.
+ Header clean-up.
 
 
-* au/complete-restore-s (2020-09-26) 2 commits
-  (merged to 'next' on 2020-09-29 at 7bbf508562)
- + completion: complete refs after 'git restore -s'
- + completion: use "prev" variable instead of introducing "prevword"
+* hx/push-atomic-with-cert (2020-10-06) 1 commit
+  (merged to 'next' on 2020-10-08 at 0729586aa5)
+ + t5534: split stdout and stderr redirection
 
- The command line completion (in contrib/) learned that "git restore
- -s <TAB>" is often followed by a refname.
+ Hotfix to a recently added test script.
 
 
-* cc/bisect-start-fix (2020-09-25) 1 commit
-  (merged to 'next' on 2020-09-29 at 637011d04a)
- + bisect: don't use invalid oid as rev when starting
+* ja/misc-doc-fixes (2020-10-08) 4 commits
+  (merged to 'next' on 2020-10-08 at 167d6696bc)
+ + doc: fix the bnf like style of some commands
+ + doc: git-remote fix ups
+ + doc: use linkgit macro where needed.
+ + git-bisect-lk2009: make continuation of list indented
 
- "git bisect start X Y", when X and Y are not valid committish
- object names, should take X and Y as pathspec, but didn't.
+ Doc fixes.
 
 
-* ds/in-merge-bases-many-optim-bug (2020-10-02) 1 commit
-  (merged to 'next' on 2020-10-04 at b736873ada)
- + commit-reach: fix in_merge_bases_many bug
- (this branch is used by sk/force-if-includes.)
+* jk/index-pack-hotfixes (2020-10-07) 3 commits
+  (merged to 'next' on 2020-10-08 at 46f5340c07)
+ + index-pack: make get_base_data() comment clearer
+ + index-pack: drop type_cas mutex
+ + index-pack: restore "resolving deltas" progress meter
 
- in_merge_bases_many(), a way to see if a commit is reachable from
- any commit in a set of commits, was totally broken when the
- commit-graph feature was in use, which has been corrected.
+ Hotfix and clean-up for the jt/threaded-index-pack topic that has
+ graduated to v2.29-rc0.
 
 
-* eg/mailinfo-doc-scissors (2020-09-28) 1 commit
-  (merged to 'next' on 2020-09-29 at 4694f22fe9)
- + Doc: show example scissors line
+* js/ci-ghwf-dedup-tests (2020-10-08) 2 commits
+  (merged to 'next' on 2020-10-08 at 83db2c0a89)
+ + ci: do not skip tagged revisions in GitHub workflows
+ + ci: skip GitHub workflow runs for already-tested commits/trees
 
- The explanation of the "scissors line" has been clarified.
+ The logic to skip testing on the tagged commit and the tag itself
+ was not quite consistent which led to failure of Windows test
+ tasks.  It has been revamped to consistently skip revisions that
+ have already been tested, based on the tree object of the revision.
 
 
-* jc/blame-ignore-fix (2020-09-24) 2 commits
-  (merged to 'next' on 2020-09-29 at 96fbdb57fb)
- + blame: validate and peel the object names on the ignore list
- + t8013: minimum preparatory clean-up
+* js/default-branch-name-part-3 (2020-10-08) 2 commits
+  (merged to 'next' on 2020-10-08 at 1c02be024d)
+ + tests: avoid using the branch name `main`
+ + t1415: avoid using `main` as ref name
 
- "git blame --ignore-rev/--ignore-revs-file" failed to validate
- their input are valid revision, and failed to take into account
- that the user may want to give an annotated tag instead of a
- commit, which has been corrected.
+ Test preparation for the switch of default branch name continues.
 
 
-* jc/fmt-merge-msg-suppress-destination (2020-09-27) 1 commit
-  (merged to 'next' on 2020-09-29 at 2b1f8ee654)
- + config/fmt-merge-msg.txt: drop space in quote
+* js/ghwf-setup-msbuild-update (2020-10-07) 1 commit
+  (merged to 'next' on 2020-10-08 at d4c704f844)
+ + GitHub workflow: automatically follow minor updates of setup-msbuild
 
- Docfix.
+ CI update.
 
 
-* jc/sequencer-stopped-sha-simplify (2020-09-25) 1 commit
-  (merged to 'next' on 2020-09-29 at 9af3360572)
- + sequencer: stop abbreviating stopped-sha file
+* js/no-builtins-on-disk-option (2020-10-07) 1 commit
+  (merged to 'next' on 2020-10-08 at 4033181bc4)
+ + help: do not expect built-in commands to be hardlinked
 
- Code simplification.
-
-
-* jk/diff-cc-oidfind-fix (2020-09-30) 1 commit
-  (merged to 'next' on 2020-10-04 at 637072574f)
- + combine-diff: handle --find-object in multitree code path
-
- "log -c --find-object=X" did not work well to find a merge that
- involves a change to an object X from only one parent.
-
-
-* jk/drop-unaligned-loads (2020-09-24) 2 commits
-  (merged to 'next' on 2020-09-29 at 29c05387a0)
- + Revert "fast-export: use local array to store anonymized oid"
- + bswap.h: drop unaligned loads
-
- Compilation fix around type punning.
-
-
-* jk/format-auto-base-when-able (2020-10-01) 1 commit
-  (merged to 'next' on 2020-10-04 at ab8f65b8c5)
- + format-patch: teach format.useAutoBase "whenAble" option
-
- "git format-patch" learns to take "whenAble" as a possible value
- for the format.useAutoBase configuration variable to become no-op
- when the  automatically computed base does not make sense.
-
-
-* jk/refspecs-negative (2020-09-30) 1 commit
-  (merged to 'next' on 2020-10-04 at 2948e90fab)
- + refspec: add support for negative refspecs
-
- "git fetch" and "git push" support negative refspecs.
-
-
-* jk/shortlog-group-by-trailer (2020-09-27) 8 commits
-  (merged to 'next' on 2020-09-29 at 3706b06db5)
- + shortlog: allow multiple groups to be specified
- + shortlog: parse trailer idents
- + shortlog: rename parse_stdin_ident()
- + shortlog: de-duplicate trailer values
- + shortlog: match commit trailers with --group
- + trailer: add interface for iterating over commit trailers
- + shortlog: add grouping option
- + shortlog: change "author" variables to "ident"
-
- "git shortlog" has been taught to group commits by the contents of
- the trailer lines, like "Reviewed-by:", "Coauthored-by:", etc.
-
-
-* jk/unused (2020-09-30) 10 commits
-  (merged to 'next' on 2020-10-01 at 440a7a0a7a)
- + dir.c: drop unused "untracked" from treat_path_fast()
- + sequencer: handle ignore_footer when parsing trailers
- + test-advise: check argument count with argc instead of argv
- + sparse-checkout: fill in some options boilerplate
- + sequencer: drop repository argument from run_git_commit()
- + push: drop unused repo argument to do_push()
- + assert PARSE_OPT_NONEG in parse-options callbacks
- + env--helper: write to opt->value in parseopt helper
- + drop unused argc parameters
- + convert: drop unused crlf_action from check_global_conv_flags_eol()
-
- Code cleanup.
-
-
-* js/cmake-vs (2020-09-30) 10 commits
-  (merged to 'next' on 2020-10-01 at 40be8c6094)
- + hashmap_for_each_entry(): workaround MSVC's runtime check failure #3
- + cmake (Windows): recommend using Visual Studio's built-in CMake support
- + cmake (Windows): initialize vcpkg/build dependencies automatically
- + cmake (Windows): complain when encountering an unknown compiler
- + cmake (Windows): let the `.dll` files be found when running the tests
- + cmake: quote the path accurately when editing `test-lib.sh`
- + cmake: fall back to using `vcpkg`'s `msgfmt.exe` on Windows
- + cmake: ensure that the `vcpkg` packages are found on Windows
- + cmake: do find Git for Windows' shell interpreter
- + cmake: ignore files generated by CMake as run in Visual Studio
-
- Using the CMake support we added some time ago for real with Visual
- Studio build revealed there were lot of usability improvements
- possible, which have been carried out.
-
-
-* js/default-branch-name-part-2 (2020-09-26) 5 commits
-  (merged to 'next' on 2020-09-30 at 3fb4047ce3)
- + t9902: avoid using the branch name `master`
- + tests: avoid variations of the `master` branch name
- + t3200: avoid variations of the `master` branch name
- + fast-export: avoid using unnecessary language in a code comment
- + t/test-terminal: avoid non-inclusive language
-
- Update the tests to drop word 'master' from them.
-
-
-* js/no-builtins-on-disk-option (2020-09-21) 3 commits
-  (merged to 'next' on 2020-09-25 at 6b976da4d2)
- + ci: stop linking built-ins to the dashed versions
- + Optionally skip linking/copying the built-ins
- + msvc: copy the correct `.pdb` files in the Makefile target `install`
-
- The installation procedure learned to optionally omit "git-foo"
- executable files for each 'foo' built-in subcommand, which are only
- required by old timers that still rely on the age old promise that
- prepending "git --exec-path" output to PATH early in their script
- will keep the "git-foo" calls they wrote working.
-
- The old attempt to remove these executables from the disk failed in
- the 1.6 era; it may be worth attempting again, but I think it is
- worth to keep this topic separate from such a policy change to help
- it graduate early.
-
-
-* jt/keep-partial-clone-filter-upon-lazy-fetch (2020-09-28) 2 commits
-  (merged to 'next' on 2020-10-01 at 77c4c6094c)
- + fetch: do not override partial clone filter
- + promisor-remote: remove unused variable
-
- The lazy fetching done internally to make missing objects available
- in a partial clone incorrectly made permanent damage to the partial
- clone filter in the repository, which has been corrected.
-
-
-* ma/worktree-cleanups (2020-09-27) 7 commits
-  (merged to 'next' on 2020-10-01 at 369dcfb161)
- + worktree: use skip_prefix to parse target
- + worktree: rename copy-pasted variable
- + worktree: update renamed variable in comment
- + worktree: inline `worktree_ref()` into its only caller
- + wt-status: introduce wt_status_state_free_buffers()
- + wt-status: print to s->fp, not stdout
- + wt-status: replace sha1 mentions with oid
-
- Code clean-up.
-
-
-* mr/bisect-in-c-2 (2020-09-24) 6 commits
-  (merged to 'next' on 2020-09-29 at a15f1729d2)
- + bisect--helper: reimplement `bisect_next` and `bisect_auto_next` shell functions in C
- + bisect: call 'clear_commit_marks_all()' in 'bisect_next_all()'
- + bisect--helper: reimplement `bisect_autostart` shell function in C
- + bisect--helper: introduce new `write_in_file()` function
- + bisect--helper: use '-res' in 'cmd_bisect__helper' return
- + bisect--helper: BUG() in cmd_*() on invalid subcommand
-
- Rewrite of the "git bisect" script in C continues.
-
-
-* mt/delta-base-cache-races (2020-09-28) 2 commits
-  (merged to 'next' on 2020-09-29 at ee2d60c077)
- + packfile: fix memory leak in add_delta_base_cache()
- + packfile: fix race condition on unpack_entry()
-
- A race that leads to an access to a free'd data was corrected in
- the codepath that reads pack files.
-
-
-* nl/credential-crlf (2020-10-03) 1 commit
-  (merged to 'next' on 2020-10-04 at 213256c1e6)
- + credential: treat CR/LF as line endings in the credential protocol
-
- Loosen the parser in the receiving end of the credential protocol
- to allow credential helper to terminate lines with CRLF line
- ending, as well as LF line ending.
-
-
-* pb/submodule-doc-fix (2020-10-04) 1 commit
-  (merged to 'next' on 2020-10-04 at c535486479)
- + gitsubmodules doc: invoke 'ls-files' with '--recurse-submodules'
-
- Doc update.
-
-
-* pm/gitk-update (2020-10-03) 11 commits
-  (merged to 'next' on 2020-10-04 at fd505ccfc1)
- + Merge remote-tracking branch 'paulus/master' into pm/gitk-update
- + gitk: Resize panes correctly when reducing window size
- + gitk: replace tabs with spaces
- + gitk: fix the context menu not appearing in the presence of submodule diffs
- + gitk: Un-hide selection in areas with non-default background color
- + gitk: add diff lines background colors
- + gitk: be prepared to be run in a bare repository
- + gitk: Preserve window dimensions on exit when not using ttk themes
- + gitk: don't highlight files after submodules as submodules
- + gitk: fix branch name encoding error
- + gitk: rename "commit summary" to "commit reference"
-
- "gitk" update.
-
-
-* rs/archive-add-file (2020-09-19) 3 commits
-  (merged to 'next' on 2020-10-04 at fffc088553)
- + Makefile: use git-archive --add-file
- + archive: add --add-file
- + archive: read short blobs in archive.c::write_archive_entry()
-
- "git archive" learns the "--add-file" option to include untracked
- files into a snapshot from a tree-ish.
-
-
-* sn/fast-import-doc (2020-10-04) 1 commit
-  (merged to 'next' on 2020-10-04 at fdf196b997)
- + fast-import: fix typo in documentation
-
- Doc update.
-
-
-* so/combine-diff-simplify (2020-09-29) 1 commit
-  (merged to 'next' on 2020-09-30 at d45e33ebb0)
- + diff: get rid of redundant 'dense' argument
-
- Code simplification.
-
-
-* tb/upload-pack-filters (2020-09-27) 1 commit
-  (merged to 'next' on 2020-09-29 at 3dde767170)
- + config/uploadpack.txt: fix typo in `--filter=tree:<n>`
-
- Hotfix.
-
-
-* td/submodule-update-quiet (2020-10-01) 1 commit
-  (merged to 'next' on 2020-10-01 at 4ae8bee636)
- + submodule update: silence underlying merge/rebase with "--quiet"
-
- "git submodule update --quiet" did not squelch underlying "rebase"
- and "pull" commands.
+ Hotfix to breakage introduced in the topic in v2.29-rc0
 
 --------------------------------------------------
 [New Topics]
 
-* mk/diff-ignore-regex (2020-10-01) 2 commits
- - t: add -I<regex> tests
- - diff: add -I<regex> that ignores matching changes
+* ag/merge-strategies-in-c (2020-10-06) 11 commits
+ - sequencer: use the "octopus" merge strategy without forking
+ - sequencer: use the "resolve" strategy without forking
+ - merge: use the "octopus" strategy without forking
+ - merge: use the "resolve" strategy without forking
+ - merge-octopus: rewrite in C
+ - merge-recursive: move better_branch_name() to merge.c
+ - merge-resolve: rewrite in C
+ - merge-index: don't fork if the requested program is `git-merge-one-file'
+ - merge-index: libify merge_one_path() and merge_all()
+ - merge-one-file: rewrite in C
+ - t6027: modernise tests
 
- "git diff" family of commands learned the "-I<regex>" option to
- ignore hunks whose changed lines all match the given pattern.
+ The resolve and octopus merge strategy backends have been rewritten
+ in C.
 
- Expecting review response.
+
+* jk/symlinked-dotgitx-files (2020-10-06) 8 commits
+  (merged to 'next' on 2020-10-08 at b9e128a280)
+ + fsck: complain when .gitattributes or .gitignore is a symlink
+ + verify_path(): disallow symlinks in .gitattributes and .gitignore
+ + t0060: test obscured .gitattributes and .gitignore matching
+ + t7450: test .gitmodules symlink matching against obscured names
+ + t7450: test verify_path() handling of gitmodules
+ + t7415: rename to expand scope
+ + fsck_tree(): wrap some long lines
+ + fsck_tree(): fix shadowed variable
+
+ "git fsck" and the corresponding check done during the transport
+ learned to ensure that in-tree files like `.gitignore` and
+ `.gitattributes` are not symbolic links.
+
+ Will cook in 'next'.
+
+
+* dl/checkout-guess (2020-10-08) 2 commits
+  (merged to 'next' on 2020-10-08 at c9a6bc9a54)
+ + checkout: learn to respect checkout.guess
+ + Documentation/config/checkout: replace sq with backticks
+
+ "git checkout" learned to use checkout.guess configuration variable
+ and enable/disable its "--[no-]guess" option accordingly.
+
+ Will cook in 'next'.
+
+
+* dl/checkout-p-merge-base (2020-10-07) 4 commits
+  (merged to 'next' on 2020-10-08 at 807e047d68)
+ + t2016: add a NEEDSWORK about the PERL prerequisite
+ + add-patch: add NEEDSWORK about comparing commits
+ + Doc: document "A...B" form for <tree-ish> in checkout and switch
+ + builtin/checkout: fix `git checkout -p HEAD...` bug
+
+ "git checkout -p A...B [-- <path>]" did not work, even though the
+ same command without "-p" correctly used the merge-base between
+ commits A and B.
+
+ Will cook in 'next'.
+
+
+* dl/resurrect-update-for-sha256 (2020-10-08) 2 commits
+ - contrib/git-resurrect.sh: use hash-agnostic OID pattern
+ - contrib/git-resurrect.sh: indent with tabs
+
+ "git resurrect" script (in contrib/) learned that the object names
+ may be longer than 40-hex depending on the hash function in use.
+
+
+* ds/commit-graph-merging-fix (2020-10-08) 1 commit
+ - commit-graph: ignore duplicates when merging layers
+
+ When "git commit-graph" detects the same commit recorded more than
+ once while it is merging the layers, it used to die.  The code now
+ ignores all but one of them and continues.
+
+ Shouldn't it make sure all copies match, or discard all of them, to
+ avoid random corruptions kept in the repository?
+
+
+* ds/maintenance-commit-graph-auto-fix (2020-10-08) 1 commit
+ - maintenance: test commit-graph auto condition
+
+ Test-coverage enhancement of running commit-graph task "git
+ maintenance" as needed led to discovery and fix of a bug.
+
+
+* js/userdiff-php (2020-10-07) 1 commit
+  (merged to 'next' on 2020-10-08 at 988c7ea068)
+ + userdiff: PHP: catch "abstract" and "final" functions
+
+ Userdiff for PHP update.
+
+ Will cook in 'next'.
+
+
+* kb/userdiff-rust-macro-rules (2020-10-07) 1 commit
+  (merged to 'next' on 2020-10-08 at 949063bcae)
+ + userdiff: recognize 'macro_rules!' as starting a Rust function block
+
+ Userdiff for Rust update.
+
+ Will cook in 'next'.
+
+
+* rk/completion-stash (2020-10-07) 2 commits
+  (merged to 'next' on 2020-10-08 at ad60933f40)
+ + git-completion.bash: stash-show: complete $__git_diff_common_options
+ + git-completion.bash: __git_diff_common_options: add --[no-]patch
+
+ The command line completion script (in contrib/) learned that "git
+ stash show" takes the options "git diff" takes.
+
+ Will cook in 'next'.
+
+
+* sd/userdiff-css-update (2020-10-08) 1 commit
+  (merged to 'next' on 2020-10-08 at 69b7e9df5d)
+ + userdiff: expand detected chunk headers for css
+
+ Userdiff for CSS update.
+
+ Will cook in 'next'.
+
+
+* ss/submodule-add-in-c (2020-10-07) 3 commits
+ - t7400: add test to check 'submodule add' for tracked paths
+ - submodule: port submodule subcommand 'add' from shell to C
+ - dir: change the scope of function 'directory_exists_in_index()'
+
+ "git submodule add" being rewritten in C.
+
+
+* ak/corrected-commit-date (2020-10-08) 10 commits
+ - doc: add corrected commit date info
+ - commit-reach: use corrected commit dates in paint_down_to_common()
+ - commit-graph: use generation v2 only if entire chain does
+ - commit-graph: implement generation data chunk
+ - commit-graph: implement corrected commit date
+ - commit-graph: add a slab to store topological levels
+ - commit-graph: return 64-bit generation number
+ - commit-graph: consolidate fill_commit_graph_info
+ - revision: parse parent in indegree_walk_step()
+ - commit-graph: fix regression when computing Bloom filters
+
+ The commit-graph learned to use corrected commit dates instead of
+ the generation number to help topological revision traversal.
 
 --------------------------------------------------
 [Stalled]
@@ -439,6 +346,17 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mk/diff-ignore-regex (2020-10-01) 2 commits
+ - t: add -I<regex> tests
+ - diff: add -I<regex> that ignores matching changes
+
+ "git diff" family of commands learned the "-I<regex>" option to
+ ignore hunks whose changed lines all match the given pattern.
+
+ Expecting a reroll.
+ cf. <20201007194821.GA20549@larwa.hq.kempniu.pl>
+
+
 * mt/parallel-checkout-part-1 (2020-10-05) 20 commits
   (merged to 'next' on 2020-10-05 at 571e16d68a)
  + parallel-checkout: drop unused checkout state parameter
@@ -483,24 +401,22 @@ repositories listed at
  "git diff A...B" learned "git diff --merge-base A B", which is a
  longer short-hand to say the same thing.
 
- Expecting a reroll.
- cf. <xmqqblhyepup.fsf@gitster.c.googlers.com>
-
 
 * sb/clone-origin (2020-09-30) 7 commits
- - clone: allow configurable default for `-o`/`--origin`
- - clone: read new remote name from remote_name instead of option_origin
- - clone: validate --origin option before use
- - refs: consolidate remote name validation
- - remote: add tests for add and rename with invalid names
- - clone: use more conventional config/option layering
- - clone: add tests for --template and some disallowed option pairs
+  (merged to 'next' on 2020-10-06 at 7178c9af9c)
+ + clone: allow configurable default for `-o`/`--origin`
+ + clone: read new remote name from remote_name instead of option_origin
+ + clone: validate --origin option before use
+ + refs: consolidate remote name validation
+ + remote: add tests for add and rename with invalid names
+ + clone: use more conventional config/option layering
+ + clone: add tests for --template and some disallowed option pairs
 
  "git clone" learned clone.defaultremotename configuration variable
  to customize what nickname to use to call the remote the repository
  was cloned from.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * sk/force-if-includes (2020-10-03) 4 commits
@@ -516,7 +432,7 @@ repositories listed at
  being force-pushed was created after examining the commit at the
  tip of the remote ref that is about to be force-replaced.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * hn/reftable (2020-10-01) 13 commits
