@@ -638,6 +638,25 @@ static void list_builtins(struct string_list *out, unsigned int exclude_option)
 	}
 }
 
+void load_builtin_commands(const char *prefix, struct cmdnames *cmds)
+{
+	const char *name;
+	int i;
+
+	/*
+	 * Callers can ask for a subset of the commands based on a certain
+	 * prefix, which is then dropped from the added names. The names in
+	 * the `commands[]` array do not have the `git-` prefix, though,
+	 * therefore we must expect the `prefix` to at least start with `git-`.
+	 */
+	if (!skip_prefix(prefix, "git-", &prefix))
+		BUG("prefix '%s' must start with 'git-'", prefix);
+
+	for (i = 0; i < ARRAY_SIZE(commands); i++)
+		if (skip_prefix(commands[i].cmd, prefix, &name))
+			add_cmdname(cmds, name, strlen(name));
+}
+
 #ifdef STRIP_EXTENSION
 static void strip_extension(const char **argv)
 {
