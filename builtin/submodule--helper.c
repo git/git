@@ -1308,7 +1308,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	};
 
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper summary [<options>] [commit] [--] [<path>]"),
+		N_("git submodule--helper summary [<options>] [<commit>] [--] [<path>]"),
 		NULL
 	};
 
