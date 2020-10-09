@@ -606,7 +606,7 @@ int main(int argc, const char **argv);
  * Call this function to open a new MinTTY (this assumes you are in Git for
  * Windows' SDK) with a GDB that attaches to the current process right away.
  */
-extern void open_in_gdb(void);
+void open_in_gdb(void);
 
 /*
  * Used by Pthread API implementation for Windows
