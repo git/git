@@ -76,8 +76,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2020-10-06 09:14+0800\n"
-"PO-Revision-Date: 2020-10-07 21:50+0200\n"
+"POT-Creation-Date: 2020-10-10 09:32+0800\n"
+"PO-Revision-Date: 2020-10-10 13:10+0200\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -1769,7 +1769,8 @@ msgstr "Option --output inattendue"
 
 #: archive.c:594
 msgid "Options --add-file and --remote cannot be used together"
-msgstr "Les options --add-file et --remote ne peuvent pas être utilisées ensemble"
+msgstr ""
+"Les options --add-file et --remote ne peuvent pas être utilisées ensemble"
 
 #: archive.c:616
 #, c-format
@@ -4392,43 +4393,43 @@ msgstr "Commandes bas niveau / Synchronisation de dépôts"
 msgid "Low-level Commands / Internal Helpers"
 msgstr "Commandes bas niveau / Assistants internes"
 
-#: help.c:298
+#: help.c:300
 #, c-format
 msgid "available git commands in '%s'"
 msgstr "commandes git disponibles dans '%s'"
 
-#: help.c:305
+#: help.c:307
 msgid "git commands available from elsewhere on your $PATH"
 msgstr "commandes git disponibles depuis un autre endroit de votre $PATH"
 
-#: help.c:314
+#: help.c:316
 msgid "These are common Git commands used in various situations:"
 msgstr "Ci-dessous les commandes Git habituelles dans diverses situations :"
 
-#: help.c:363 git.c:99
+#: help.c:365 git.c:99
 #, c-format
 msgid "unsupported command listing type '%s'"
 msgstr "type de liste de commandes non supporté '%s'"
 
-#: help.c:403
+#: help.c:405
 msgid "The Git concept guides are:"
 msgstr "Les guides des concepts de Git sont :"
 
-#: help.c:427
+#: help.c:429
 msgid "See 'git help <command>' to read about a specific subcommand"
 msgstr ""
 "Référez-vous à 'git help <commande>' pour des informations sur une sous-"
 "commande spécifique"
 
-#: help.c:432
+#: help.c:434
 msgid "External commands"
 msgstr "Commandes externes"
 
-#: help.c:447
+#: help.c:449
 msgid "Command aliases"
 msgstr "Alias de commande"
 
-#: help.c:511
+#: help.c:513
 #, c-format
 msgid ""
 "'%s' appears to be a git command, but we were not\n"
@@ -4437,33 +4438,33 @@ msgstr ""
 "'%s' semble être une commande git, mais elle n'a pas pu\n"
 "être exécutée. Peut-être git-%s est-elle cassée ?"
 
-#: help.c:570
+#: help.c:572
 msgid "Uh oh. Your system reports no Git commands at all."
 msgstr "Ahem. Votre système n'indique aucune commande Git."
 
-#: help.c:592
+#: help.c:594
 #, c-format
 msgid "WARNING: You called a Git command named '%s', which does not exist."
 msgstr ""
 "ATTENTION : vous avez invoqué une commande Git nommée '%s' qui n'existe pas."
 
-#: help.c:597
+#: help.c:599
 #, c-format
 msgid "Continuing under the assumption that you meant '%s'."
 msgstr "Continuons en supposant que vous avez voulu dire '%s'."
 
-#: help.c:602
+#: help.c:604
 #, c-format
 msgid "Continuing in %0.1f seconds, assuming that you meant '%s'."
 msgstr ""
 "Continuons dans %0.1f secondes en supposant que vous avez voulu dire '%s'."
 
-#: help.c:610
+#: help.c:612
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
 msgstr "git : '%s' n'est pas une commande git. Voir 'git --help'."
 
-#: help.c:614
+#: help.c:616
 msgid ""
 "\n"
 "The most similar command is"
@@ -4477,16 +4478,16 @@ msgstr[1] ""
 "\n"
 "Les commandes les plus ressemblantes sont"
 
-#: help.c:654
+#: help.c:656
 msgid "git version [<options>]"
 msgstr "git version [<options>]"
 
-#: help.c:709
+#: help.c:711
 #, c-format
 msgid "%s: %s - %s"
 msgstr "%s: %s - %s"
 
-#: help.c:713
+#: help.c:715
 msgid ""
 "\n"
 "Did you mean this?"
@@ -5120,7 +5121,9 @@ msgstr "la version d'index multi-paquet %d n'est pas reconnue"
 #: midx.c:105
 #, c-format
 msgid "multi-pack-index hash version %u does not match version %u"
-msgstr "la version d'empreinte d'index multi-paquet %u ne correspond pas à la version %u"
+msgstr ""
+"la version d'empreinte d'index multi-paquet %u ne correspond pas à la "
+"version %u"
 
 #: midx.c:122
 msgid "invalid chunk offset (too large)"
@@ -5161,7 +5164,8 @@ msgstr "mauvais pack-int-id : %u (%u paquets au total)"
 
 #: midx.c:272
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
-msgstr "l'index multi-paquet stock un décalage en 64-bit, mais off_t est trop petit"
+msgstr ""
+"l'index multi-paquet stock un décalage en 64-bit, mais off_t est trop petit"
 
 #: midx.c:300
 msgid "error preparing packfile from multi-pack-index"
@@ -5638,15 +5642,19 @@ msgstr "impossible d'analyser le format --pretty"
 
 #: promisor-remote.c:30
 msgid "promisor-remote: unable to fork off fetch subprocess"
-msgstr "promisor-remote : impossible de créer un sous-processus de récupération"
+msgstr ""
+"promisor-remote : impossible de créer un sous-processus de récupération"
 
 #: promisor-remote.c:35 promisor-remote.c:37
 msgid "promisor-remote: could not write to fetch subprocess"
-msgstr "promisor-remote : impossible d'écrire vers un sous-processus de récupération"
+msgstr ""
+"promisor-remote : impossible d'écrire vers un sous-processus de récupération"
 
 #: promisor-remote.c:41
 msgid "promisor-remote: could not close stdin to fetch subprocess"
-msgstr "promisor-remote : impossible de fermer l'entrée standard du sous-processus de récupération"
+msgstr ""
+"promisor-remote : impossible de fermer l'entrée standard du sous-processus "
+"de récupération"
 
 #: promisor-remote.c:53
 #, c-format
@@ -7852,7 +7860,8 @@ msgstr "extensions de dépôt inconnues trouvées :"
 
 #: setup.c:681
 msgid "repo version is 0, but v1-only extensions found:"
-msgstr "la version du dépôt est 0, mais des extensions uniquement v1 trouvées :"
+msgstr ""
+"la version du dépôt est 0, mais des extensions uniquement v1 trouvées :"
 
 #: setup.c:700
 #, c-format
@@ -8183,7 +8192,7 @@ msgstr "%s n'est pas un objet valide"
 msgid "%s is not a valid '%s' object"
 msgstr "%s n'est pas un objet '%s' valide"
 
-#: sha1-file.c:2288 builtin/index-pack.c:197
+#: sha1-file.c:2288 builtin/index-pack.c:192
 #, c-format
 msgid "unable to open %s"
 msgstr "impossible d'ouvrir %s"
@@ -10585,7 +10594,10 @@ msgid ""
 "git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
 "=<term>] [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] "
 "[<paths>...]"
-msgstr "git bisect--helper --bisect-start [--term-{new,bad}=<terme> --term-{old,good}=<terme>][--no-checkout] [--first-parent] [<mauvais> [<bon>...]] [--] [<chemins>...]"
+msgstr ""
+"git bisect--helper --bisect-start [--term-{new,bad}=<terme> --term-{old,good}"
+"=<terme>][--no-checkout] [--first-parent] [<mauvais> [<bon>...]] [--] "
+"[<chemins>...]"
 
 #: builtin/bisect--helper.c:33
 msgid "git bisect--helper --bisect-next"
@@ -10826,7 +10838,9 @@ msgstr "trouver le prochain commit de bissection"
 
 #: builtin/bisect--helper.c:888
 msgid "verify the next bisection state then checkout the next bisection commit"
-msgstr "vérifier le prochain état de bissection puis extraire le prochain commit de bissection"
+msgstr ""
+"vérifier le prochain état de bissection puis extraire le prochain commit de "
+"bissection"
 
 #: builtin/bisect--helper.c:890
 msgid "start the bisection if it has not yet been started"
@@ -10915,7 +10929,9 @@ msgstr ""
 
 #: builtin/blame.c:868
 msgid "Do not show object names of boundary commits (Default: off)"
-msgstr "Ne pas montrer les noms des objets pour les commits de limite (Défaut : désactivé)"
+msgstr ""
+"Ne pas montrer les noms des objets pour les commits de limite (Défaut : "
+"désactivé)"
 
 #: builtin/blame.c:869
 msgid "Do not treat root commits as boundaries (Default: off)"
@@ -12949,31 +12965,6 @@ msgstr "La branche distante %s n'a pas été trouvée dans le dépôt amont %s"
 msgid "You appear to have cloned an empty repository."
 msgstr "Vous semblez avoir cloné un dépôt vide."
 
-#: builtin/credential-cache.c:154
-msgid "credential-cache unavailable; no unix socket support"
-msgstr "credential-cache non disponible ; pas de gestion des socket unix"
-
-#: builtin/credential-cache--daemon.c:226
-#, c-format
-msgid ""
-"The permissions on your socket directory are too loose; other\n"
-"users may be able to read your cached credentials. Consider running:\n"
-"\n"
-"\tchmod 0700 %s"
-msgstr ""
-"Les permissions de votre répertoire de socket sont trop permissives ;\n"
-"les autres utilisateurs pourraient lire vos identifiants secrets. Lancez :\n"
-"\n"
-"    chmod 0700 %s"
-
-#: builtin/credential-cache--daemon.c:275
-msgid "print debugging messages to stderr"
-msgstr "afficher les messages de debug sur stderr"
-
-#: builtin/credential-cache--daemon.c:315
-msgid "credential-cache--daemon unavailable; no unix socket support"
-msgstr "credential-cache-daemon non disponible ; pas de gestion des sockets unix"
-
 #: builtin/column.c:10
 msgid "git column [<options>]"
 msgstr "git column [<options>]"
@@ -13017,7 +13008,10 @@ msgid ""
 "git commit-graph write [--object-dir <objdir>] [--append] [--"
 "split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
-msgstr "git commit-graph write [--object-dir <répertoire-d'objet>] [--append] [--split[=<stratégie>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress] <options de division>"
+msgstr ""
+"git commit-graph write [--object-dir <répertoire-d'objet>] [--append] [--"
+"split[=<stratégie>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <options de division>"
 
 #: builtin/commit-graph.c:64
 #, c-format
@@ -14062,6 +14056,32 @@ msgstr "git count-objects [-v] [-H | --human-readable]"
 #: builtin/count-objects.c:100
 msgid "print sizes in human readable format"
 msgstr "affiche les tailles dans un format humainement lisible"
+
+#: builtin/credential-cache--daemon.c:226
+#, c-format
+msgid ""
+"The permissions on your socket directory are too loose; other\n"
+"users may be able to read your cached credentials. Consider running:\n"
+"\n"
+"\tchmod 0700 %s"
+msgstr ""
+"Les permissions de votre répertoire de socket sont trop permissives ;\n"
+"les autres utilisateurs pourraient lire vos identifiants secrets. Lancez :\n"
+"\n"
+"    chmod 0700 %s"
+
+#: builtin/credential-cache--daemon.c:275
+msgid "print debugging messages to stderr"
+msgstr "afficher les messages de debug sur stderr"
+
+#: builtin/credential-cache--daemon.c:315
+msgid "credential-cache--daemon unavailable; no unix socket support"
+msgstr ""
+"credential-cache-daemon non disponible ; pas de gestion des sockets unix"
+
+#: builtin/credential-cache.c:154
+msgid "credential-cache unavailable; no unix socket support"
+msgstr "credential-cache non disponible ; pas de gestion des socket unix"
 
 #: builtin/describe.c:26
 msgid "git describe [<options>] [<commit-ish>...]"
@@ -15172,7 +15192,7 @@ msgstr "Vérification des répertoires d'objet"
 msgid "Checking %s link"
 msgstr "Vérification du lien %s"
 
-#: builtin/fsck.c:696 builtin/index-pack.c:871
+#: builtin/fsck.c:696 builtin/index-pack.c:865
 #, c-format
 msgid "invalid %s"
 msgstr "%s invalide"
@@ -15258,7 +15278,7 @@ msgstr "afficher la progression"
 msgid "show verbose names for reachable objects"
 msgstr "afficher les noms étendus pour les objets inaccessibles"
 
-#: builtin/fsck.c:847 builtin/index-pack.c:267
+#: builtin/fsck.c:847 builtin/index-pack.c:261
 msgid "Checking objects"
 msgstr "Vérification des objets"
 
@@ -15447,7 +15467,7 @@ msgstr "nombre de fils spécifié invalide (%d) pour %s"
 #. variable for tweaking threads, currently
 #. grep.threads
 #.
-#: builtin/grep.c:287 builtin/index-pack.c:1581 builtin/index-pack.c:1771
+#: builtin/grep.c:287 builtin/index-pack.c:1576 builtin/index-pack.c:1766
 #: builtin/pack-objects.c:2936
 #, c-format
 msgid "no threads support, ignoring %s"
@@ -15689,7 +15709,7 @@ msgstr "option de combinaison invalide, ignore --threads"
 msgid "no threads support, ignoring --threads"
 msgstr "pas de support des fils, ignore --threads"
 
-#: builtin/grep.c:1088 builtin/index-pack.c:1578 builtin/pack-objects.c:2933
+#: builtin/grep.c:1088 builtin/index-pack.c:1573 builtin/pack-objects.c:2933
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr "nombre de fils spécifié invalide (%d)"
@@ -15858,300 +15878,300 @@ msgstr "usage : %s%s"
 msgid "'git help config' for more information"
 msgstr "'git help config' pour plus d'information"
 
-#: builtin/index-pack.c:227
+#: builtin/index-pack.c:221
 #, c-format
 msgid "object type mismatch at %s"
 msgstr "type d'objet non correspondant à %s"
 
-#: builtin/index-pack.c:247
+#: builtin/index-pack.c:241
 #, c-format
 msgid "did not receive expected object %s"
 msgstr "objet attendu non reçu %s"
 
-#: builtin/index-pack.c:250
+#: builtin/index-pack.c:244
 #, c-format
 msgid "object %s: expected type %s, found %s"
 msgstr "objet %s : type attendu %s, reçu %s"
 
-#: builtin/index-pack.c:300
+#: builtin/index-pack.c:294
 #, c-format
 msgid "cannot fill %d byte"
 msgid_plural "cannot fill %d bytes"
 msgstr[0] "impossible de remplir %d octet"
 msgstr[1] "impossible de remplir %d octets"
 
-#: builtin/index-pack.c:310
+#: builtin/index-pack.c:304
 msgid "early EOF"
 msgstr "fin de fichier prématurée"
 
-#: builtin/index-pack.c:311
+#: builtin/index-pack.c:305
 msgid "read error on input"
 msgstr "erreur de lecture sur l'entrée"
 
-#: builtin/index-pack.c:323
+#: builtin/index-pack.c:317
 msgid "used more bytes than were available"
 msgstr "plus d'octets utilisés que disponibles"
 
-#: builtin/index-pack.c:330 builtin/pack-objects.c:619
+#: builtin/index-pack.c:324 builtin/pack-objects.c:619
 msgid "pack too large for current definition of off_t"
 msgstr "le paquet est trop grand pour la définition actuelle de off_t"
 
-#: builtin/index-pack.c:333 builtin/unpack-objects.c:95
+#: builtin/index-pack.c:327 builtin/unpack-objects.c:95
 msgid "pack exceeds maximum allowed size"
 msgstr "le paquet dépasse la taille maximale permise"
 
-#: builtin/index-pack.c:348 builtin/repack.c:254
+#: builtin/index-pack.c:342 builtin/repack.c:254
 #, c-format
 msgid "unable to create '%s'"
 msgstr "impossible de créer '%s'"
 
-#: builtin/index-pack.c:354
+#: builtin/index-pack.c:348
 #, c-format
 msgid "cannot open packfile '%s'"
 msgstr "impossible d'ouvrir le fichier paquet '%s'"
 
-#: builtin/index-pack.c:368
+#: builtin/index-pack.c:362
 msgid "pack signature mismatch"
 msgstr "la signature du paquet ne correspond pas"
 
-#: builtin/index-pack.c:370
+#: builtin/index-pack.c:364
 #, c-format
 msgid "pack version %<PRIu32> unsupported"
 msgstr "la version de paquet %<PRIu32> non supportée"
 
-#: builtin/index-pack.c:388
+#: builtin/index-pack.c:382
 #, c-format
 msgid "pack has bad object at offset %<PRIuMAX>: %s"
 msgstr "le paquet a un mauvais objet à l'offset %<PRIuMAX> : %s"
 
-#: builtin/index-pack.c:494
+#: builtin/index-pack.c:488
 #, c-format
 msgid "inflate returned %d"
 msgstr "la décompression (inflate) a retourné %d"
 
-#: builtin/index-pack.c:543
+#: builtin/index-pack.c:537
 msgid "offset value overflow for delta base object"
 msgstr "dépassement de la valeur d'offset pour l'objet delta de base"
 
-#: builtin/index-pack.c:551
+#: builtin/index-pack.c:545
 msgid "delta base offset is out of bound"
 msgstr "l'objet delta de base est hors limite"
 
-#: builtin/index-pack.c:559
+#: builtin/index-pack.c:553
 #, c-format
 msgid "unknown object type %d"
 msgstr "type d'objet inconnu %d"
 
-#: builtin/index-pack.c:590
+#: builtin/index-pack.c:584
 msgid "cannot pread pack file"
 msgstr "impossible de lire (pread) le fichier paquet"
 
-#: builtin/index-pack.c:592
+#: builtin/index-pack.c:586
 #, c-format
 msgid "premature end of pack file, %<PRIuMAX> byte missing"
 msgid_plural "premature end of pack file, %<PRIuMAX> bytes missing"
 msgstr[0] "fin prématurée du fichier paquet, %<PRIuMAX> octet lu"
 msgstr[1] "fin prématurée du fichier paquet, %<PRIuMAX> octets lus"
 
-#: builtin/index-pack.c:618
+#: builtin/index-pack.c:612
 msgid "serious inflate inconsistency"
 msgstr "grave incohérence dans la décompression (inflate)"
 
-#: builtin/index-pack.c:763 builtin/index-pack.c:769 builtin/index-pack.c:793
-#: builtin/index-pack.c:832 builtin/index-pack.c:841
+#: builtin/index-pack.c:757 builtin/index-pack.c:763 builtin/index-pack.c:787
+#: builtin/index-pack.c:826 builtin/index-pack.c:835
 #, c-format
 msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr "COLLISION SHA1 TROUVÉE AVEC %s !"
 
-#: builtin/index-pack.c:766 builtin/pack-objects.c:171
+#: builtin/index-pack.c:760 builtin/pack-objects.c:171
 #: builtin/pack-objects.c:231 builtin/pack-objects.c:326
 #, c-format
 msgid "unable to read %s"
 msgstr "impossible de lire %s"
 
-#: builtin/index-pack.c:830
+#: builtin/index-pack.c:824
 #, c-format
 msgid "cannot read existing object info %s"
 msgstr "impossible de lire l'information existante de l'objet %s"
 
-#: builtin/index-pack.c:838
+#: builtin/index-pack.c:832
 #, c-format
 msgid "cannot read existing object %s"
 msgstr "impossible de lire l'objet existant %s"
 
-#: builtin/index-pack.c:852
+#: builtin/index-pack.c:846
 #, c-format
 msgid "invalid blob object %s"
 msgstr "objet blob invalide %s"
 
-#: builtin/index-pack.c:855 builtin/index-pack.c:874
+#: builtin/index-pack.c:849 builtin/index-pack.c:868
 msgid "fsck error in packed object"
 msgstr "erreur de fsck dans l'objet empaqueté"
 
-#: builtin/index-pack.c:876
+#: builtin/index-pack.c:870
 #, c-format
 msgid "Not all child objects of %s are reachable"
 msgstr "Tous les objets enfants de %s ne sont pas accessibles"
 
-#: builtin/index-pack.c:940 builtin/index-pack.c:987
+#: builtin/index-pack.c:931 builtin/index-pack.c:978
 msgid "failed to apply delta"
 msgstr "échec d'application du delta"
 
-#: builtin/index-pack.c:1166
+#: builtin/index-pack.c:1161
 msgid "Receiving objects"
 msgstr "Réception d'objets"
 
-#: builtin/index-pack.c:1166
+#: builtin/index-pack.c:1161
 msgid "Indexing objects"
 msgstr "Indexation d'objets"
 
-#: builtin/index-pack.c:1200
+#: builtin/index-pack.c:1195
 msgid "pack is corrupted (SHA1 mismatch)"
 msgstr "le paquet est corrompu (SHA1 ne correspond pas)"
 
-#: builtin/index-pack.c:1205
+#: builtin/index-pack.c:1200
 msgid "cannot fstat packfile"
 msgstr "impossible d'obtenir le statut (fstat) du fichier paquet"
 
-#: builtin/index-pack.c:1208
+#: builtin/index-pack.c:1203
 msgid "pack has junk at the end"
 msgstr "le paquet est invalide à la fin"
 
-#: builtin/index-pack.c:1220
+#: builtin/index-pack.c:1215
 msgid "confusion beyond insanity in parse_pack_objects()"
 msgstr "confusion extrême dans parse_pack_objects()"
 
-#: builtin/index-pack.c:1243
+#: builtin/index-pack.c:1238
 msgid "Resolving deltas"
 msgstr "Résolution des deltas"
 
-#: builtin/index-pack.c:1254 builtin/pack-objects.c:2697
+#: builtin/index-pack.c:1249 builtin/pack-objects.c:2697
 #, c-format
 msgid "unable to create thread: %s"
 msgstr "impossible de créer le fil : %s"
 
-#: builtin/index-pack.c:1287
+#: builtin/index-pack.c:1282
 msgid "confusion beyond insanity"
 msgstr "confusion extrême"
 
-#: builtin/index-pack.c:1293
+#: builtin/index-pack.c:1288
 #, c-format
 msgid "completed with %d local object"
 msgid_plural "completed with %d local objects"
 msgstr[0] "complété avec %d objet local"
 msgstr[1] "complété avec %d objets locaux"
 
-#: builtin/index-pack.c:1305
+#: builtin/index-pack.c:1300
 #, c-format
 msgid "Unexpected tail checksum for %s (disk corruption?)"
 msgstr ""
 "Somme de contrôle de fin inattendue pour %s (corruption sur le disque ?)"
 
-#: builtin/index-pack.c:1309
+#: builtin/index-pack.c:1304
 #, c-format
 msgid "pack has %d unresolved delta"
 msgid_plural "pack has %d unresolved deltas"
 msgstr[0] "le paquet a %d delta non résolu"
 msgstr[1] "le paquet a %d deltas non résolus"
 
-#: builtin/index-pack.c:1333
+#: builtin/index-pack.c:1328
 #, c-format
 msgid "unable to deflate appended object (%d)"
 msgstr "impossible de compresser l'objet ajouté (%d)"
 
-#: builtin/index-pack.c:1429
+#: builtin/index-pack.c:1424
 #, c-format
 msgid "local object %s is corrupt"
 msgstr "l'objet local %s est corrompu"
 
-#: builtin/index-pack.c:1449
+#: builtin/index-pack.c:1444
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "le nom de fichier paquet '%s' ne se termine pas par '.pack'"
 
-#: builtin/index-pack.c:1474
+#: builtin/index-pack.c:1469
 #, c-format
 msgid "cannot write %s file '%s'"
 msgstr "impossible d'écrire le fichier %s '%s'"
 
-#: builtin/index-pack.c:1482
+#: builtin/index-pack.c:1477
 #, c-format
 msgid "cannot close written %s file '%s'"
 msgstr "impossible de fermer le fichier %s écrit '%s'"
 
-#: builtin/index-pack.c:1506
+#: builtin/index-pack.c:1501
 msgid "error while closing pack file"
 msgstr "erreur en fermeture du fichier paquet"
 
-#: builtin/index-pack.c:1520
+#: builtin/index-pack.c:1515
 msgid "cannot store pack file"
 msgstr "impossible de stocker le fichier paquet"
 
-#: builtin/index-pack.c:1528
+#: builtin/index-pack.c:1523
 msgid "cannot store index file"
 msgstr "impossible de stocker le fichier d'index"
 
-#: builtin/index-pack.c:1572 builtin/pack-objects.c:2944
+#: builtin/index-pack.c:1567 builtin/pack-objects.c:2944
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "mauvais pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1636
+#: builtin/index-pack.c:1631
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Impossible d'ouvrir le fichier paquet existant '%s'"
 
-#: builtin/index-pack.c:1638
+#: builtin/index-pack.c:1633
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Impossible d'ouvrir le fichier paquet d'index existant pour '%s'"
 
-#: builtin/index-pack.c:1686
+#: builtin/index-pack.c:1681
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "pas un delta : %d objet"
 msgstr[1] "pas un delta : %d objets"
 
-#: builtin/index-pack.c:1693
+#: builtin/index-pack.c:1688
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "longueur chaînée = %d : %lu objet"
 msgstr[1] "longueur chaînée = %d : %lu objets"
 
-#: builtin/index-pack.c:1733
+#: builtin/index-pack.c:1728
 msgid "Cannot come back to cwd"
 msgstr "Impossible de revenir au répertoire de travail courant"
 
-#: builtin/index-pack.c:1782 builtin/index-pack.c:1785
-#: builtin/index-pack.c:1801 builtin/index-pack.c:1805
+#: builtin/index-pack.c:1777 builtin/index-pack.c:1780
+#: builtin/index-pack.c:1796 builtin/index-pack.c:1800
 #, c-format
 msgid "bad %s"
 msgstr "mauvais %s"
 
-#: builtin/index-pack.c:1811 builtin/init-db.c:391 builtin/init-db.c:623
+#: builtin/index-pack.c:1806 builtin/init-db.c:391 builtin/init-db.c:623
 #, c-format
 msgid "unknown hash algorithm '%s'"
 msgstr "algorithme d'empreinte inconnu '%s'"
 
-#: builtin/index-pack.c:1826
+#: builtin/index-pack.c:1821
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin ne peut pas être utilisé sans --stdin"
 
-#: builtin/index-pack.c:1828
+#: builtin/index-pack.c:1823
 msgid "--stdin requires a git repository"
 msgstr "--stdin requiert un dépôt git"
 
-#: builtin/index-pack.c:1830
+#: builtin/index-pack.c:1825
 msgid "--object-format cannot be used with --stdin"
 msgstr "--object-format ne peut pas être utilisé avec --stdin"
 
-#: builtin/index-pack.c:1836
+#: builtin/index-pack.c:1831
 msgid "--verify with no packfile name given"
 msgstr "--verify sans nom de fichier paquet donné"
 
-#: builtin/index-pack.c:1897 builtin/unpack-objects.c:582
+#: builtin/index-pack.c:1892 builtin/unpack-objects.c:582
 msgid "fsck error in pack objects"
 msgstr "erreur de fsck dans les objets paquets"
 
@@ -16520,12 +16540,15 @@ msgstr "impossible d'obtenir l'id du patch"
 
 #: builtin/log.c:1690
 msgid "failed to infer range-diff origin of current series"
-msgstr "échec d'inférence de l'origine de différence d'intervalles de la série actuelle"
+msgstr ""
+"échec d'inférence de l'origine de différence d'intervalles de la série "
+"actuelle"
 
 #: builtin/log.c:1692
 #, c-format
 msgid "using '%s' as range-diff origin of current series"
-msgstr "utilisation de '%s' comme une différence d'intervalle pour la série actuelle"
+msgstr ""
+"utilisation de '%s' comme une différence d'intervalle pour la série actuelle"
 
 #: builtin/log.c:1736
 msgid "use [PATCH n/m] even with a single patch"
@@ -17657,7 +17680,8 @@ msgstr "git name-rev [<options>] --stdin"
 
 #: builtin/name-rev.c:524
 msgid "print only ref-based names (no object names)"
-msgstr "afficher seulement les noms basés sur des références (pas de nom d'objet)"
+msgstr ""
+"afficher seulement les noms basés sur des références (pas de nom d'objet)"
 
 #: builtin/name-rev.c:525
 msgid "only use tags to name the commits"
@@ -21299,7 +21323,8 @@ msgstr "git log --pretty=short | git shortlog [<options>]"
 
 #: builtin/shortlog.c:134
 msgid "using multiple --group options with stdin is not supported"
-msgstr "l'utilisation de plusieurs options --group avec stdin n'est pas supportée"
+msgstr ""
+"l'utilisation de plusieurs options --group avec stdin n'est pas supportée"
 
 #: builtin/shortlog.c:144
 msgid "using --group=trailer with stdin is not supported"
@@ -22053,11 +22078,14 @@ msgstr "mode %o inattendu\n"
 
 #: builtin/submodule--helper.c:1300
 msgid "use the commit stored in the index instead of the submodule HEAD"
-msgstr "utiliser le commit stocké dans l'index au lieu de la HEAD du sous-module"
+msgstr ""
+"utiliser le commit stocké dans l'index au lieu de la HEAD du sous-module"
 
 #: builtin/submodule--helper.c:1302
 msgid "to compare the commit in the index with that in the submodule HEAD"
-msgstr "pour comparer le commit dans l'index au lieu de celui dans la HEAD du sous-module"
+msgstr ""
+"pour comparer le commit dans l'index au lieu de celui dans la HEAD du sous-"
+"module"
 
 #: builtin/submodule--helper.c:1304
 msgid "skip submodules with 'ignore_config' value set to 'all'"
@@ -22068,7 +22096,7 @@ msgid "limit the summary size"
 msgstr "limiter la taille du résumé"
 
 #: builtin/submodule--helper.c:1311
-msgid "git submodule--helper summary [<options>] [commit] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
 msgstr "git submodule--helper summary [<options>] [<commit>] [--] [<chemin>]"
 
 #: builtin/submodule--helper.c:1335
@@ -22411,7 +22439,7 @@ msgstr "--branch ou --default requis"
 msgid "--branch and --default are mutually exclusive"
 msgstr "--branch et --default sont mutuellement exclusifs"
 
-#: builtin/submodule--helper.c:2792 git.c:438 git.c:691
+#: builtin/submodule--helper.c:2792 git.c:438 git.c:710
 #, c-format
 msgid "%s doesn't support --super-prefix"
 msgstr "%s ne gère pas --super-prefix"
@@ -22469,8 +22497,10 @@ msgid ""
 "\t\t[--format=<format>] [--merged <commit>] [--no-merged <commit>] "
 "[<pattern>...]"
 msgstr ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--points-at <objet>]\n"
-"\t\t[--format=<format>] [--merged <commit>] [--no-merged <commit>] [<motif>...]"
+"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"points-at <objet>]\n"
+"\t\t[--format=<format>] [--merged <commit>] [--no-merged <commit>] "
+"[<motif>...]"
 
 #: builtin/tag.c:30
 msgid "git tag -v [--format=<format>] <tagname>..."
@@ -23483,17 +23513,17 @@ msgstr "échec inconnu d'écriture sur la sortie standard"
 msgid "close failed on standard output"
 msgstr "échec de fermeture de la sortie standard"
 
-#: git.c:800
+#: git.c:819
 #, c-format
 msgid "alias loop detected: expansion of '%s' does not terminate:%s"
 msgstr "boucle d'alias détectée : l'expansion de '%s' ne finit jamais : %s"
 
-#: git.c:850
+#: git.c:869
 #, c-format
 msgid "cannot handle %s as a builtin"
 msgstr "impossible d'utiliser %s comme une fonction intégrée"
 
-#: git.c:863
+#: git.c:882
 #, c-format
 msgid ""
 "usage: %s\n"
@@ -23502,13 +23532,13 @@ msgstr ""
 "usage : %s\n"
 "\n"
 
-#: git.c:883
+#: git.c:902
 #, c-format
 msgid "expansion of alias '%s' failed; '%s' is not a git command\n"
 msgstr ""
 "l'expansion de l'alias '%s' a échoué : '%s' n'est pas une commande git\n"
 
-#: git.c:895
+#: git.c:914
 #, c-format
 msgid "failed to run command '%s': %s\n"
 msgstr "échec au lancement de la commande '%s' : %s\n"
@@ -25516,8 +25546,10 @@ msgid ""
 "Set sendemail.forbidSendmailVariables to false to disable this check.\n"
 msgstr ""
 "fatal : options de configuration trouvées pour 'sendmail'\n"
-"git-send-mail est configuré avec des options sendemail.* - veuillez noter le 'e'.\n"
-"Positionnez sendemail.forbidSendmailVariables à false pour désactiver cette vérification.\n"
+"git-send-mail est configuré avec des options sendemail.* - veuillez noter le "
+"'e'.\n"
+"Positionnez sendemail.forbidSendmailVariables à false pour désactiver cette "
+"vérification.\n"
 
 #: git-send-email.perl:489 git-send-email.perl:691
 msgid "Cannot run git format-patch from outside a repository\n"
