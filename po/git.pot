@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2020-10-06 09:14+0800\n"
+"POT-Creation-Date: 2020-10-10 09:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3973,72 +3973,72 @@ msgstr ""
 msgid "Low-level Commands / Internal Helpers"
 msgstr ""
 
-#: help.c:298
+#: help.c:300
 #, c-format
 msgid "available git commands in '%s'"
 msgstr ""
 
-#: help.c:305
+#: help.c:307
 msgid "git commands available from elsewhere on your $PATH"
 msgstr ""
 
-#: help.c:314
+#: help.c:316
 msgid "These are common Git commands used in various situations:"
 msgstr ""
 
-#: help.c:363 git.c:99
+#: help.c:365 git.c:99
 #, c-format
 msgid "unsupported command listing type '%s'"
 msgstr ""
 
-#: help.c:403
+#: help.c:405
 msgid "The Git concept guides are:"
 msgstr ""
 
-#: help.c:427
+#: help.c:429
 msgid "See 'git help <command>' to read about a specific subcommand"
 msgstr ""
 
-#: help.c:432
+#: help.c:434
 msgid "External commands"
 msgstr ""
 
-#: help.c:447
+#: help.c:449
 msgid "Command aliases"
 msgstr ""
 
-#: help.c:511
+#: help.c:513
 #, c-format
 msgid ""
 "'%s' appears to be a git command, but we were not\n"
 "able to execute it. Maybe git-%s is broken?"
 msgstr ""
 
-#: help.c:570
+#: help.c:572
 msgid "Uh oh. Your system reports no Git commands at all."
 msgstr ""
 
-#: help.c:592
+#: help.c:594
 #, c-format
 msgid "WARNING: You called a Git command named '%s', which does not exist."
 msgstr ""
 
-#: help.c:597
+#: help.c:599
 #, c-format
 msgid "Continuing under the assumption that you meant '%s'."
 msgstr ""
 
-#: help.c:602
+#: help.c:604
 #, c-format
 msgid "Continuing in %0.1f seconds, assuming that you meant '%s'."
 msgstr ""
 
-#: help.c:610
+#: help.c:612
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
 msgstr ""
 
-#: help.c:614
+#: help.c:616
 msgid ""
 "\n"
 "The most similar command is"
@@ -4048,16 +4048,16 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: help.c:654
+#: help.c:656
 msgid "git version [<options>]"
 msgstr ""
 
-#: help.c:709
+#: help.c:711
 #, c-format
 msgid "%s: %s - %s"
 msgstr ""
 
-#: help.c:713
+#: help.c:715
 msgid ""
 "\n"
 "Did you mean this?"
@@ -7450,7 +7450,7 @@ msgstr ""
 msgid "%s is not a valid '%s' object"
 msgstr ""
 
-#: sha1-file.c:2288 builtin/index-pack.c:197
+#: sha1-file.c:2288 builtin/index-pack.c:192
 #, c-format
 msgid "unable to open %s"
 msgstr ""
@@ -11815,27 +11815,6 @@ msgstr ""
 msgid "You appear to have cloned an empty repository."
 msgstr ""
 
-#: builtin/credential-cache.c:154
-msgid "credential-cache unavailable; no unix socket support"
-msgstr ""
-
-#: builtin/credential-cache--daemon.c:226
-#, c-format
-msgid ""
-"The permissions on your socket directory are too loose; other\n"
-"users may be able to read your cached credentials. Consider running:\n"
-"\n"
-"\tchmod 0700 %s"
-msgstr ""
-
-#: builtin/credential-cache--daemon.c:275
-msgid "print debugging messages to stderr"
-msgstr ""
-
-#: builtin/credential-cache--daemon.c:315
-msgid "credential-cache--daemon unavailable; no unix socket support"
-msgstr ""
-
 #: builtin/column.c:10
 msgid "git column [<options>]"
 msgstr ""
@@ -12843,6 +12822,27 @@ msgstr ""
 
 #: builtin/count-objects.c:100
 msgid "print sizes in human readable format"
+msgstr ""
+
+#: builtin/credential-cache--daemon.c:226
+#, c-format
+msgid ""
+"The permissions on your socket directory are too loose; other\n"
+"users may be able to read your cached credentials. Consider running:\n"
+"\n"
+"\tchmod 0700 %s"
+msgstr ""
+
+#: builtin/credential-cache--daemon.c:275
+msgid "print debugging messages to stderr"
+msgstr ""
+
+#: builtin/credential-cache--daemon.c:315
+msgid "credential-cache--daemon unavailable; no unix socket support"
+msgstr ""
+
+#: builtin/credential-cache.c:154
+msgid "credential-cache unavailable; no unix socket support"
 msgstr ""
 
 #: builtin/describe.c:26
@@ -13896,7 +13896,7 @@ msgstr ""
 msgid "Checking %s link"
 msgstr ""
 
-#: builtin/fsck.c:696 builtin/index-pack.c:871
+#: builtin/fsck.c:696 builtin/index-pack.c:865
 #, c-format
 msgid "invalid %s"
 msgstr ""
@@ -13981,7 +13981,7 @@ msgstr ""
 msgid "show verbose names for reachable objects"
 msgstr ""
 
-#: builtin/fsck.c:847 builtin/index-pack.c:267
+#: builtin/fsck.c:847 builtin/index-pack.c:261
 msgid "Checking objects"
 msgstr ""
 
@@ -14156,7 +14156,7 @@ msgstr ""
 #. variable for tweaking threads, currently
 #. grep.threads
 #.
-#: builtin/grep.c:287 builtin/index-pack.c:1581 builtin/index-pack.c:1771
+#: builtin/grep.c:287 builtin/index-pack.c:1576 builtin/index-pack.c:1766
 #: builtin/pack-objects.c:2936
 #, c-format
 msgid "no threads support, ignoring %s"
@@ -14390,7 +14390,7 @@ msgstr ""
 msgid "no threads support, ignoring --threads"
 msgstr ""
 
-#: builtin/grep.c:1088 builtin/index-pack.c:1578 builtin/pack-objects.c:2933
+#: builtin/grep.c:1088 builtin/index-pack.c:1573 builtin/pack-objects.c:2933
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr ""
@@ -14551,299 +14551,299 @@ msgstr ""
 msgid "'git help config' for more information"
 msgstr ""
 
-#: builtin/index-pack.c:227
+#: builtin/index-pack.c:221
 #, c-format
 msgid "object type mismatch at %s"
 msgstr ""
 
-#: builtin/index-pack.c:247
+#: builtin/index-pack.c:241
 #, c-format
 msgid "did not receive expected object %s"
 msgstr ""
 
-#: builtin/index-pack.c:250
+#: builtin/index-pack.c:244
 #, c-format
 msgid "object %s: expected type %s, found %s"
 msgstr ""
 
-#: builtin/index-pack.c:300
+#: builtin/index-pack.c:294
 #, c-format
 msgid "cannot fill %d byte"
 msgid_plural "cannot fill %d bytes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/index-pack.c:310
+#: builtin/index-pack.c:304
 msgid "early EOF"
 msgstr ""
 
-#: builtin/index-pack.c:311
+#: builtin/index-pack.c:305
 msgid "read error on input"
 msgstr ""
 
-#: builtin/index-pack.c:323
+#: builtin/index-pack.c:317
 msgid "used more bytes than were available"
 msgstr ""
 
-#: builtin/index-pack.c:330 builtin/pack-objects.c:619
+#: builtin/index-pack.c:324 builtin/pack-objects.c:619
 msgid "pack too large for current definition of off_t"
 msgstr ""
 
-#: builtin/index-pack.c:333 builtin/unpack-objects.c:95
+#: builtin/index-pack.c:327 builtin/unpack-objects.c:95
 msgid "pack exceeds maximum allowed size"
 msgstr ""
 
-#: builtin/index-pack.c:348 builtin/repack.c:254
+#: builtin/index-pack.c:342 builtin/repack.c:254
 #, c-format
 msgid "unable to create '%s'"
 msgstr ""
 
-#: builtin/index-pack.c:354
+#: builtin/index-pack.c:348
 #, c-format
 msgid "cannot open packfile '%s'"
 msgstr ""
 
-#: builtin/index-pack.c:368
+#: builtin/index-pack.c:362
 msgid "pack signature mismatch"
 msgstr ""
 
-#: builtin/index-pack.c:370
+#: builtin/index-pack.c:364
 #, c-format
 msgid "pack version %<PRIu32> unsupported"
 msgstr ""
 
-#: builtin/index-pack.c:388
+#: builtin/index-pack.c:382
 #, c-format
 msgid "pack has bad object at offset %<PRIuMAX>: %s"
 msgstr ""
 
-#: builtin/index-pack.c:494
+#: builtin/index-pack.c:488
 #, c-format
 msgid "inflate returned %d"
 msgstr ""
 
-#: builtin/index-pack.c:543
+#: builtin/index-pack.c:537
 msgid "offset value overflow for delta base object"
 msgstr ""
 
-#: builtin/index-pack.c:551
+#: builtin/index-pack.c:545
 msgid "delta base offset is out of bound"
 msgstr ""
 
-#: builtin/index-pack.c:559
+#: builtin/index-pack.c:553
 #, c-format
 msgid "unknown object type %d"
 msgstr ""
 
-#: builtin/index-pack.c:590
+#: builtin/index-pack.c:584
 msgid "cannot pread pack file"
 msgstr ""
 
-#: builtin/index-pack.c:592
+#: builtin/index-pack.c:586
 #, c-format
 msgid "premature end of pack file, %<PRIuMAX> byte missing"
 msgid_plural "premature end of pack file, %<PRIuMAX> bytes missing"
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/index-pack.c:618
+#: builtin/index-pack.c:612
 msgid "serious inflate inconsistency"
 msgstr ""
 
-#: builtin/index-pack.c:763 builtin/index-pack.c:769 builtin/index-pack.c:793
-#: builtin/index-pack.c:832 builtin/index-pack.c:841
+#: builtin/index-pack.c:757 builtin/index-pack.c:763 builtin/index-pack.c:787
+#: builtin/index-pack.c:826 builtin/index-pack.c:835
 #, c-format
 msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr ""
 
-#: builtin/index-pack.c:766 builtin/pack-objects.c:171
+#: builtin/index-pack.c:760 builtin/pack-objects.c:171
 #: builtin/pack-objects.c:231 builtin/pack-objects.c:326
 #, c-format
 msgid "unable to read %s"
 msgstr ""
 
-#: builtin/index-pack.c:830
+#: builtin/index-pack.c:824
 #, c-format
 msgid "cannot read existing object info %s"
 msgstr ""
 
-#: builtin/index-pack.c:838
+#: builtin/index-pack.c:832
 #, c-format
 msgid "cannot read existing object %s"
 msgstr ""
 
-#: builtin/index-pack.c:852
+#: builtin/index-pack.c:846
 #, c-format
 msgid "invalid blob object %s"
 msgstr ""
 
-#: builtin/index-pack.c:855 builtin/index-pack.c:874
+#: builtin/index-pack.c:849 builtin/index-pack.c:868
 msgid "fsck error in packed object"
 msgstr ""
 
-#: builtin/index-pack.c:876
+#: builtin/index-pack.c:870
 #, c-format
 msgid "Not all child objects of %s are reachable"
 msgstr ""
 
-#: builtin/index-pack.c:940 builtin/index-pack.c:987
+#: builtin/index-pack.c:931 builtin/index-pack.c:978
 msgid "failed to apply delta"
 msgstr ""
 
-#: builtin/index-pack.c:1166
+#: builtin/index-pack.c:1161
 msgid "Receiving objects"
 msgstr ""
 
-#: builtin/index-pack.c:1166
+#: builtin/index-pack.c:1161
 msgid "Indexing objects"
 msgstr ""
 
-#: builtin/index-pack.c:1200
+#: builtin/index-pack.c:1195
 msgid "pack is corrupted (SHA1 mismatch)"
 msgstr ""
 
-#: builtin/index-pack.c:1205
+#: builtin/index-pack.c:1200
 msgid "cannot fstat packfile"
 msgstr ""
 
-#: builtin/index-pack.c:1208
+#: builtin/index-pack.c:1203
 msgid "pack has junk at the end"
 msgstr ""
 
-#: builtin/index-pack.c:1220
+#: builtin/index-pack.c:1215
 msgid "confusion beyond insanity in parse_pack_objects()"
 msgstr ""
 
-#: builtin/index-pack.c:1243
+#: builtin/index-pack.c:1238
 msgid "Resolving deltas"
 msgstr ""
 
-#: builtin/index-pack.c:1254 builtin/pack-objects.c:2697
+#: builtin/index-pack.c:1249 builtin/pack-objects.c:2697
 #, c-format
 msgid "unable to create thread: %s"
 msgstr ""
 
-#: builtin/index-pack.c:1287
+#: builtin/index-pack.c:1282
 msgid "confusion beyond insanity"
 msgstr ""
 
-#: builtin/index-pack.c:1293
+#: builtin/index-pack.c:1288
 #, c-format
 msgid "completed with %d local object"
 msgid_plural "completed with %d local objects"
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/index-pack.c:1305
+#: builtin/index-pack.c:1300
 #, c-format
 msgid "Unexpected tail checksum for %s (disk corruption?)"
 msgstr ""
 
-#: builtin/index-pack.c:1309
+#: builtin/index-pack.c:1304
 #, c-format
 msgid "pack has %d unresolved delta"
 msgid_plural "pack has %d unresolved deltas"
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/index-pack.c:1333
+#: builtin/index-pack.c:1328
 #, c-format
 msgid "unable to deflate appended object (%d)"
 msgstr ""
 
-#: builtin/index-pack.c:1429
+#: builtin/index-pack.c:1424
 #, c-format
 msgid "local object %s is corrupt"
 msgstr ""
 
-#: builtin/index-pack.c:1449
+#: builtin/index-pack.c:1444
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr ""
 
-#: builtin/index-pack.c:1474
+#: builtin/index-pack.c:1469
 #, c-format
 msgid "cannot write %s file '%s'"
 msgstr ""
 
-#: builtin/index-pack.c:1482
+#: builtin/index-pack.c:1477
 #, c-format
 msgid "cannot close written %s file '%s'"
 msgstr ""
 
-#: builtin/index-pack.c:1506
+#: builtin/index-pack.c:1501
 msgid "error while closing pack file"
 msgstr ""
 
-#: builtin/index-pack.c:1520
+#: builtin/index-pack.c:1515
 msgid "cannot store pack file"
 msgstr ""
 
-#: builtin/index-pack.c:1528
+#: builtin/index-pack.c:1523
 msgid "cannot store index file"
 msgstr ""
 
-#: builtin/index-pack.c:1572 builtin/pack-objects.c:2944
+#: builtin/index-pack.c:1567 builtin/pack-objects.c:2944
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr ""
 
-#: builtin/index-pack.c:1636
+#: builtin/index-pack.c:1631
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr ""
 
-#: builtin/index-pack.c:1638
+#: builtin/index-pack.c:1633
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr ""
 
-#: builtin/index-pack.c:1686
+#: builtin/index-pack.c:1681
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/index-pack.c:1693
+#: builtin/index-pack.c:1688
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/index-pack.c:1733
+#: builtin/index-pack.c:1728
 msgid "Cannot come back to cwd"
 msgstr ""
 
-#: builtin/index-pack.c:1782 builtin/index-pack.c:1785
-#: builtin/index-pack.c:1801 builtin/index-pack.c:1805
+#: builtin/index-pack.c:1777 builtin/index-pack.c:1780
+#: builtin/index-pack.c:1796 builtin/index-pack.c:1800
 #, c-format
 msgid "bad %s"
 msgstr ""
 
-#: builtin/index-pack.c:1811 builtin/init-db.c:391 builtin/init-db.c:623
+#: builtin/index-pack.c:1806 builtin/init-db.c:391 builtin/init-db.c:623
 #, c-format
 msgid "unknown hash algorithm '%s'"
 msgstr ""
 
-#: builtin/index-pack.c:1826
+#: builtin/index-pack.c:1821
 msgid "--fix-thin cannot be used without --stdin"
 msgstr ""
 
-#: builtin/index-pack.c:1828
+#: builtin/index-pack.c:1823
 msgid "--stdin requires a git repository"
 msgstr ""
 
-#: builtin/index-pack.c:1830
+#: builtin/index-pack.c:1825
 msgid "--object-format cannot be used with --stdin"
 msgstr ""
 
-#: builtin/index-pack.c:1836
+#: builtin/index-pack.c:1831
 msgid "--verify with no packfile name given"
 msgstr ""
 
-#: builtin/index-pack.c:1897 builtin/unpack-objects.c:582
+#: builtin/index-pack.c:1892 builtin/unpack-objects.c:582
 msgid "fsck error in pack objects"
 msgstr ""
 
@@ -20306,7 +20306,7 @@ msgid "limit the summary size"
 msgstr ""
 
 #: builtin/submodule--helper.c:1311
-msgid "git submodule--helper summary [<options>] [commit] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
 msgstr ""
 
 #: builtin/submodule--helper.c:1335
@@ -20623,7 +20623,7 @@ msgstr ""
 msgid "--branch and --default are mutually exclusive"
 msgstr ""
 
-#: builtin/submodule--helper.c:2792 git.c:438 git.c:691
+#: builtin/submodule--helper.c:2792 git.c:438 git.c:710
 #, c-format
 msgid "%s doesn't support --super-prefix"
 msgstr ""
@@ -21603,29 +21603,29 @@ msgstr ""
 msgid "close failed on standard output"
 msgstr ""
 
-#: git.c:800
+#: git.c:819
 #, c-format
 msgid "alias loop detected: expansion of '%s' does not terminate:%s"
 msgstr ""
 
-#: git.c:850
+#: git.c:869
 #, c-format
 msgid "cannot handle %s as a builtin"
 msgstr ""
 
-#: git.c:863
+#: git.c:882
 #, c-format
 msgid ""
 "usage: %s\n"
 "\n"
 msgstr ""
 
-#: git.c:883
+#: git.c:902
 #, c-format
 msgid "expansion of alias '%s' failed; '%s' is not a git command\n"
 msgstr ""
 
-#: git.c:895
+#: git.c:914
 #, c-format
 msgid "failed to run command '%s': %s\n"
 msgstr ""
