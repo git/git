@@ -159,10 +159,6 @@ static pthread_mutex_t deepest_delta_mutex;
 #define deepest_delta_lock()	lock_mutex(&deepest_delta_mutex)
 #define deepest_delta_unlock()	unlock_mutex(&deepest_delta_mutex)
 
-static pthread_mutex_t type_cas_mutex;
-#define type_cas_lock()		lock_mutex(&type_cas_mutex)
-#define type_cas_unlock()	unlock_mutex(&type_cas_mutex)
-
 static pthread_key_t key;
 
 static inline void lock_mutex(pthread_mutex_t *mutex)
@@ -186,7 +182,6 @@ static void init_thread(void)
 	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&counter_mutex, NULL);
 	pthread_mutex_init(&work_mutex, NULL);
-	pthread_mutex_init(&type_cas_mutex, NULL);
 	if (show_stat)
 		pthread_mutex_init(&deepest_delta_mutex, NULL);
 	pthread_key_create(&key, NULL);
@@ -209,7 +204,6 @@ static void cleanup_thread(void)
 	pthread_mutex_destroy(&read_mutex);
 	pthread_mutex_destroy(&counter_mutex);
 	pthread_mutex_destroy(&work_mutex);
-	pthread_mutex_destroy(&type_cas_mutex);
 	if (show_stat)
 		pthread_mutex_destroy(&deepest_delta_mutex);
 	for (i = 0; i < nr_threads; i++)
@@ -894,18 +888,15 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 }
 
 /*
- * Walk from current node up
- * to top parent if necessary to deflate the node. In normal
- * situation, its parent node would be already deflated, so it just
- * needs to apply delta.
+ * Ensure that this node has been reconstructed and return its contents.
  *
- * In the worst case scenario, parent node is no longer deflated because
- * we're running out of delta_base_cache_limit; we need to re-deflate
- * parents, possibly up to the top base.
- *
- * All deflated objects here are subject to be freed if we exceed
- * delta_base_cache_limit, just like in find_unresolved_deltas(), we
- * just need to make sure the last node is not freed.
+ * In the typical and best case, this node would already be reconstructed
+ * (through the invocation to resolve_delta() in threaded_second_pass()) and it
+ * would not be pruned. However, if pruning of this node was necessary due to
+ * reaching delta_base_cache_limit, this function will find the closest
+ * ancestor with reconstructed data that has not been pruned (or if there is
+ * none, the ultimate base object), and reconstruct each node in the delta
+ * chain in order to generate the reconstructed data for this node.
  */
 static void *get_base_data(struct base_data *c)
 {
@@ -1027,6 +1018,10 @@ static void *threaded_second_pass(void *data)
 		struct base_data *parent = NULL;
 		struct object_entry *child_obj;
 		struct base_data *child;
+
+		counter_lock();
+		display_progress(progress, nr_resolved_deltas);
+		counter_unlock();
 
 		work_lock();
 		if (list_empty(&work_head)) {

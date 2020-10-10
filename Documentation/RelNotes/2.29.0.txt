@@ -156,7 +156,7 @@ Performance, Internal Implementation, Development Support etc.
    barrier to adoption.
 
  * The final leg of SHA-256 transition plus doc updates.  Note that
-   there is no inter-operability between SHA-1 and SHA-256
+   there is no interoperability between SHA-1 and SHA-256
    repositories yet.
 
  * CMake support to build with MSVC for Windows bypassing the Makefile.
@@ -183,10 +183,6 @@ Performance, Internal Implementation, Development Support etc.
  * The FETCH_HEAD is now always read from the filesystem regardless of
    the ref backend in use, as its format is much richer than the
    normal refs, and written directly by "git fetch" as a plain file..
-
- * A handful of places in in-tree code still relied on being able to
-   execute the git subcommands, especially built-ins, in "git-foo"
-   form, which have been corrected.
 
  * An unused binary has been discarded, and and a bunch of commands
    have been turned into into built-in.
@@ -216,9 +212,24 @@ Performance, Internal Implementation, Development Support etc.
  * "diff-highlight" (in contrib/) had a logic to flush its output upon
    seeing a blank line but the way it detected a blank line was broken.
 
+ * The logic to skip testing on the tagged commit and the tag itself
+   was not quite consistent which led to failure of Windows test
+   tasks.  It has been revamped to consistently skip revisions that
+   have already been tested, based on the tree object of the revision.
+
 
 Fixes since v2.28
 -----------------
+
+ * The "mediawiki" remote backend which lives in contrib/mw-to-git/
+   and is not built with git by default, had an RCE bug allowing a
+   malicious MediaWiki server operator to inject arbitrary commands
+   for execution by a cloning client. This has been fixed.
+
+   The bug was discovered and reported by Joern Schneeweisz of GitLab
+   to the git-security mailing list. Its practical impact due to the
+   obscurity of git-remote-mediawiki was deemed small enough to forgo
+   a dedicated security release.
 
  * "git clone --separate-git-dir=$elsewhere" used to stomp on the
    contents of the existing directory $elsewhere, which has been
@@ -355,15 +366,12 @@ Fixes since v2.28
    "git log --tags=no-tag-matches-this-pattern" does.
    (merge 04a0e98515 jk/rev-input-given-fix later to maint).
 
- * Various callers of run_command API has been modernized.
+ * Various callers of run_command API have been modernized.
    (merge afbdba391e jc/run-command-use-embedded-args later to maint).
 
  * List of options offered and accepted by "git add -i/-p" were
    inconsistent, which have been corrected.
    (merge ce910287e7 pw/add-p-allowed-options-fix later to maint).
-
- * Various callers of run_command API has been modernized.
-   (merge afbdba391e jc/run-command-use-embedded-args later to maint).
 
  * "git diff --stat -w" showed 0-line changes for paths whose changes
    were only whitespaces, which was not intuitive.  We now omit such
@@ -381,7 +389,7 @@ Fixes since v2.28
    information (e.g. "@{u}" does not record what branch the user was
    on hence which branch 'the upstream' needs to be computed, and even
    if the record were available, the relationship between branches may
-   have changed), at least hide the error to allow "status" show its
+   have changed), at least hide the error and allow "status" to show its
    output.
 
  * "git status --short" quoted a path with SP in it when tracked, but
@@ -398,7 +406,7 @@ Fixes since v2.28
    (merge 378fe5fc3d mt/config-fail-nongit-early later to maint).
 
  * There is a logic to estimate how many objects are in the
-   repository, which is mean to run once per process invocation, but
+   repository, which is meant to run once per process invocation, but
    it ran every time the estimated value was requested.
    (merge 67bb65de5d jk/dont-count-existing-objects-twice later to maint).
 
@@ -411,8 +419,8 @@ Fixes since v2.28
    which has been corrected.
    (merge 4e735c1326 ar/fetch-ipversion-in-all later to maint).
 
- * The "unshelve" subcommand of "git p4" used incorrectly used
-   commit^N where it meant to say commit~N to name the Nth generation
+ * The "unshelve" subcommand of "git p4" incorrectly used commit^N
+   where it meant to say commit~N to name the Nth generation
    ancestor, which has been corrected.
    (merge 0acbf5997f ld/p4-unshelve-fix later to maint).
 

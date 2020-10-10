@@ -663,7 +663,7 @@ test_expect_failure 'merge-recursive rename vs. rename/symlink' '
 
 test_expect_success 'merging with triple rename across D/F conflict' '
 	git reset --hard HEAD &&
-	git checkout -b main &&
+	git checkout -b topic &&
 	git rm -rf . &&
 
 	echo "just a file" >sub1 &&
@@ -682,7 +682,7 @@ test_expect_success 'merging with triple rename across D/F conflict' '
 	test_tick &&
 	git commit -a -m changesimplefile &&
 
-	git checkout main &&
+	git checkout topic &&
 	git rm sub1 &&
 	git mv sub2 sub1 &&
 	test_tick &&
