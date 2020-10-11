@@ -676,8 +676,11 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 		} else
 			strbuf_addstr(&sb, "(error)");
 	}
-	printf("%s\n", sb.buf);
 
+	if (!is_main_worktree(wt) && worktree_lock_reason(wt))
+		strbuf_addstr(&sb, " locked");
+
+	printf("%s\n", sb.buf);
 	strbuf_release(&sb);
 }
 
