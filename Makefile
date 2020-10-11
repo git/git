@@ -3053,9 +3053,6 @@ quick-install-html:
 
 ### Maintainer's dist rules
 
-# Allow tweaking to hide local environment effects, like perm bits.
-# With GNU tar, "--mode=u+rwX,og+rX,og-w" would be a good idea, for example.
-TAR_DIST_EXTRA_OPTS =
 GIT_TARNAME = git-$(GIT_VERSION)
 GIT_ARCHIVE_EXTRA_FILES = \
 	--prefix=$(GIT_TARNAME)/ \
