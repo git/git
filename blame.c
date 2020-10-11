@@ -2670,7 +2670,7 @@ static struct commit *find_single_final(struct rev_info *revs,
 		if (obj->flags & UNINTERESTING)
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (obj->type != OBJ_COMMIT)
+		if (!obj || obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (found)
 			die("More than one commit to dig from %s and %s?",
@@ -2701,7 +2701,7 @@ static struct commit *dwim_reverse_initial(struct rev_info *revs,
 	/* Is that sole rev a committish? */
 	obj = revs->pending.objects[0].item;
 	obj = deref_tag(revs->repo, obj, NULL, 0);
-	if (obj->type != OBJ_COMMIT)
+	if (!obj || obj->type != OBJ_COMMIT)
 		return NULL;
 
 	/* Do we have HEAD? */
@@ -2737,7 +2737,7 @@ static struct commit *find_single_initial(struct rev_info *revs,
 		if (!(obj->flags & UNINTERESTING))
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (obj->type != OBJ_COMMIT)
+		if (!obj || obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (found)
 			die("More than one commit to dig up from, %s and %s?",

@@ -820,6 +820,8 @@ static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
 		if (kind != OBJ_TAG)
 			return -1;
 		obj = deref_tag(r, parse_object(r, &oid), NULL, 0);
+		if (!obj)
+			return -1;
 		oidcpy(&oid, &obj->oid);
 	}
 }
