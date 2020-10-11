@@ -65,7 +65,7 @@ jobs:
                 core.setOutput('enabled', ' but skip');
                 break;
               }
-              if (tree_id === run.head_commit.tree_id) {
+              if (run.head_commit && tree_id === run.head_commit.tree_id) {
                 core.warning(`Successful run for the tree ${tree_id}: ${run.html_url}`);
                 core.setOutput('enabled', ' but skip');
                 break;
