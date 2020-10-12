@@ -52,6 +52,14 @@ test_expect_success 'run --task=<task>' '
 	test_subcommand git commit-graph write --split --reachable --no-progress <run-both.txt
 '
 
+test_expect_success 'core.commitGraph=false prevents write process' '
+	GIT_TRACE2_EVENT="$(pwd)/no-commit-graph.txt" \
+		git -c core.commitGraph=false maintenance run \
+		--task=commit-graph 2>/dev/null &&
+	test_subcommand ! git commit-graph write --split --reachable --no-progress \
+		<no-commit-graph.txt
+'
+
 test_expect_success 'commit-graph auto condition' '
 	COMMAND="maintenance run --task=commit-graph --auto --quiet" &&
 

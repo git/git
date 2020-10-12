@@ -813,6 +813,10 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 
 static int maintenance_task_commit_graph(struct maintenance_run_opts *opts)
 {
+	prepare_repo_settings(the_repository);
+	if (!the_repository->settings.core_commit_graph)
+		return 0;
+
 	close_object_store(the_repository->objects);
 	if (run_write_commit_graph(opts)) {
 		error(_("failed to write commit-graph"));
