@@ -38,6 +38,8 @@ jobs:
             feed: https://github.com/openssh/openssh-portable/tags.atom
           - label: openssl
             feed: https://github.com/openssl/openssl/tags.atom
+          - label: gnutls
+            feed: https://gnutls.org/news.atom
           - label: heimdal
             feed: https://github.com/heimdal/heimdal/tags.atom
           - label: git-sizer
