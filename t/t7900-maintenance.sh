@@ -354,11 +354,14 @@ test_expect_success 'register and unregister' '
 	git config --global --add maintenance.repo /existing1 &&
 	git config --global --add maintenance.repo /existing2 &&
 	git config --global --get-all maintenance.repo >before &&
+
 	git maintenance register &&
-	git config --global --get-all maintenance.repo >actual &&
-	cp before after &&
-	pwd >>after &&
-	test_cmp after actual &&
+	test_cmp_config false maintenance.auto &&
+	git config --global --get-all maintenance.repo >between &&
+	cp before expect &&
+	pwd >>expect &&
+	test_cmp expect between &&
+
 	git maintenance unregister &&
 	git config --global --get-all maintenance.repo >actual &&
 	test_cmp before actual
@@ -390,6 +393,15 @@ test_expect_success 'start preserves existing schedule' '
 	echo "Important information!" >cron.txt &&
 	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance start &&
 	grep "Important information!" cron.txt
+'
+
+test_expect_success 'register preserves existing strategy' '
+	git config maintenance.strategy none &&
+	git maintenance register &&
+	test_config maintenance.strategy none &&
+	git config --unset maintenance.strategy &&
+	git maintenance register &&
+	test_config maintenance.strategy incremental
 '
 
 test_done
