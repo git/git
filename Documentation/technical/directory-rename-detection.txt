@@ -73,6 +73,9 @@ additional rules:
   b) Only apply implicit directory renames to directories if the other side
      of history is the one doing the renaming.
 
+  c) Do not perform directory rename detection for directories which had no
+     new paths added to them.
+
 Limitations -- support in different commands
 --------------------------------------------
 
