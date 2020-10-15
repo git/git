@@ -1308,11 +1308,34 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts)
 	return result;
 }
 
-static void initialize_task_config(void)
+static void initialize_maintenance_strategy(void)
+{
+	char *config_str;
+
+	if (git_config_get_string("maintenance.strategy", &config_str))
+		return;
+
+	if (!strcasecmp(config_str, "incremental")) {
+		tasks[TASK_GC].schedule = SCHEDULE_NONE;
+		tasks[TASK_COMMIT_GRAPH].enabled = 1;
+		tasks[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY;
+		tasks[TASK_PREFETCH].enabled = 1;
+		tasks[TASK_PREFETCH].schedule = SCHEDULE_HOURLY;
+		tasks[TASK_INCREMENTAL_REPACK].enabled = 1;
+		tasks[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY;
+		tasks[TASK_LOOSE_OBJECTS].enabled = 1;
+		tasks[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY;
+	}
+}
+
+static void initialize_task_config(int schedule)
 {
 	int i;
 	struct strbuf config_name = STRBUF_INIT;
 	gc_config();
+
+	if (schedule)
+		initialize_maintenance_strategy();
 
 	for (i = 0; i < TASK__COUNT; i++) {
 		int config_value;
@@ -1389,7 +1412,6 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 
 	opts.quiet = !isatty(2);
-	initialize_task_config();
 
 	for (i = 0; i < TASK__COUNT; i++)
 		tasks[i].selected_order = -1;
@@ -1401,6 +1423,8 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 
 	if (opts.auto_flag && opts.schedule)
 		die(_("use at most one of --auto and --schedule=<frequency>"));
+
+	initialize_task_config(opts.schedule);
 
 	if (argc != 0)
 		usage_with_options(builtin_maintenance_run_usage,

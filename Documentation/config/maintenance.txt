@@ -3,6 +3,21 @@ maintenance.auto::
 	`git maintenance run --auto` after doing their normal work. Defaults
 	to true.
 
+maintenance.strategy::
+	This string config option provides a way to specify one of a few
+	recommended schedules for background maintenance. This only affects
+	which tasks are run during `git maintenance run --schedule=X`
+	commands, provided no `--task=<task>` arguments are provided.
+	Further, if a `maintenance.<task>.schedule` config value is set,
+	then that value is used instead of the one provided by
+	`maintenance.strategy`. The possible strategy strings are:
++
+* `none`: This default setting implies no task are run at any schedule.
+* `incremental`: This setting optimizes for performing small maintenance
+  activities that do not delete any data. This does not schedule the `gc`
+  task, but runs the `prefetch` and `commit-graph` tasks hourly and the
+  `loose-objects` and `incremental-repack` tasks daily.
+
 maintenance.<task>.enabled::
 	This boolean config option controls whether the maintenance task
 	with name `<task>` is run when no `--task` option is specified to

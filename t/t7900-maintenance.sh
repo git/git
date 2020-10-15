@@ -300,6 +300,55 @@ test_expect_success '--schedule inheritance weekly -> daily -> hourly' '
 	test_subcommand git multi-pack-index write --no-progress <weekly.txt
 '
 
+test_expect_success 'maintenance.strategy inheritance' '
+	for task in commit-graph loose-objects incremental-repack
+	do
+		git config --unset maintenance.$task.schedule || return 1
+	done &&
+
+	test_when_finished git config --unset maintenance.strategy &&
+	git config maintenance.strategy incremental &&
+
+	GIT_TRACE2_EVENT="$(pwd)/incremental-hourly.txt" \
+		git maintenance run --schedule=hourly --quiet &&
+	GIT_TRACE2_EVENT="$(pwd)/incremental-daily.txt" \
+		git maintenance run --schedule=daily --quiet &&
+
+	test_subcommand git commit-graph write --split --reachable \
+		--no-progress <incremental-hourly.txt &&
+	test_subcommand ! git prune-packed --quiet <incremental-hourly.txt &&
+	test_subcommand ! git multi-pack-index write --no-progress \
+		<incremental-hourly.txt &&
+
+	test_subcommand git commit-graph write --split --reachable \
+		--no-progress <incremental-daily.txt &&
+	test_subcommand git prune-packed --quiet <incremental-daily.txt &&
+	test_subcommand git multi-pack-index write --no-progress \
+		<incremental-daily.txt &&
+
+	# Modify defaults
+	git config maintenance.commit-graph.schedule daily &&
+	git config maintenance.loose-objects.schedule hourly &&
+	git config maintenance.incremental-repack.enabled false &&
+
+	GIT_TRACE2_EVENT="$(pwd)/modified-hourly.txt" \
+		git maintenance run --schedule=hourly --quiet &&
+	GIT_TRACE2_EVENT="$(pwd)/modified-daily.txt" \
+		git maintenance run --schedule=daily --quiet &&
+
+	test_subcommand ! git commit-graph write --split --reachable \
+		--no-progress <modified-hourly.txt &&
+	test_subcommand git prune-packed --quiet <modified-hourly.txt &&
+	test_subcommand ! git multi-pack-index write --no-progress \
+		<modified-hourly.txt &&
+
+	test_subcommand git commit-graph write --split --reachable \
+		--no-progress <modified-daily.txt &&
+	test_subcommand git prune-packed --quiet <modified-daily.txt &&
+	test_subcommand ! git multi-pack-index write --no-progress \
+		<modified-daily.txt
+'
+
 test_expect_success 'register and unregister' '
 	test_when_finished git config --global --unset-all maintenance.repo &&
 	git config --global --add maintenance.repo /existing1 &&
