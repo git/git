@@ -4227,6 +4227,201 @@ test_expect_success '12e: Rename/merge subdir into the root, variant 2' '
 	)
 '
 
+# Testcase 12f, Rebase of patches with big directory rename
+#   Commit O:
+#              dir/subdir/{a,b,c,d,e_O,Makefile_TOP_O}
+#              dir/subdir/tweaked/{f,g,h,Makefile_SUB_O}
+#              dir/unchanged/<LOTS OF FILES>
+#   Commit A:
+#     (Remove f & g, move e into newsubdir, rename dir/->folder/, modify files)
+#              folder/subdir/{a,b,c,d,Makefile_TOP_A}
+#              folder/subdir/newsubdir/e_A
+#              folder/subdir/tweaked/{h,Makefile_SUB_A}
+#              folder/unchanged/<LOTS OF FILES>
+#   Commit B1:
+#     (add newfile.{c,py}, modify underscored files)
+#              dir/{a,b,c,d,e_B1,Makefile_TOP_B1,newfile.c}
+#              dir/tweaked/{f,g,h,Makefile_SUB_B1,newfile.py}
+#              dir/unchanged/<LOTS OF FILES>
+#   Commit B2:
+#     (Modify e further, add newfile.rs)
+#              dir/{a,b,c,d,e_B2,Makefile_TOP_B1,newfile.c,newfile.rs}
+#              dir/tweaked/{f,g,h,Makefile_SUB_B1,newfile.py}
+#              dir/unchanged/<LOTS OF FILES>
+#   Expected:
+#          B1-picked:
+#              folder/subdir/{a,b,c,d,Makefile_TOP_Merge1,newfile.c}
+#              folder/subdir/newsubdir/e_Merge1
+#              folder/subdir/tweaked/{h,Makefile_SUB_Merge1,newfile.py}
+#              folder/unchanged/<LOTS OF FILES>
+#          B2-picked:
+#              folder/subdir/{a,b,c,d,Makefile_TOP_Merge1,newfile.c,newfile.rs}
+#              folder/subdir/newsubdir/e_Merge2
+#              folder/subdir/tweaked/{h,Makefile_SUB_Merge1,newfile.py}
+#              folder/unchanged/<LOTS OF FILES>
+#
+# Notes: This testcase happens to exercise lots of the
+#        optimization-specific codepaths in merge-ort, and also
+#        demonstrated a failing of the directory rename detection algorithm
+#        in merge-recursive; newfile.c should not get pushed into
+#        folder/subdir/newsubdir/, yet merge-recursive put it there because
+#        the rename of dir/subdir/{a,b,c,d} -> folder/subdir/{a,b,c,d}
+#        looks like
+#            dir/ -> folder/,
+#        whereas the rename of dir/subdir/e -> folder/subdir/newsubdir/e
+#        looks like
+#            dir/subdir/ -> folder/subdir/newsubdir/
+#        and if we note that newfile.c is found in dir/subdir/, we might
+#        overlook the dir/ -> folder/ rule that has more weight.
+
+test_setup_12f () {
+	test_create_repo 12f &&
+	(
+		cd 12f &&
+
+		mkdir -p dir/unchanged &&
+		mkdir -p dir/subdir/tweaked &&
+		echo a >dir/subdir/a &&
+		echo b >dir/subdir/b &&
+		echo c >dir/subdir/c &&
+		echo d >dir/subdir/d &&
+		test_seq 1 10 >dir/subdir/e &&
+		test_seq 10 20 >dir/subdir/Makefile &&
+		echo f >dir/subdir/tweaked/f &&
+		echo g >dir/subdir/tweaked/g &&
+		echo h >dir/subdir/tweaked/h &&
+		test_seq 20 30 >dir/subdir/tweaked/Makefile &&
+		for i in `test_seq 1 88`; do
+			echo content $i >dir/unchanged/file_$i
+		done &&
+		git add . &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git rm dir/subdir/tweaked/f dir/subdir/tweaked/g &&
+		test_seq 2 10 >dir/subdir/e &&
+		test_seq 11 20 >dir/subdir/Makefile &&
+		test_seq 21 30 >dir/subdir/tweaked/Makefile &&
+		mkdir dir/subdir/newsubdir &&
+		git mv dir/subdir/e dir/subdir/newsubdir/ &&
+		git mv dir folder &&
+		git add . &&
+		git commit -m "A" &&
+
+		git switch B &&
+		mkdir dir/subdir/newsubdir/ &&
+		echo c code >dir/subdir/newfile.c &&
+		echo python code >dir/subdir/newsubdir/newfile.py &&
+		test_seq 1 11 >dir/subdir/e &&
+		test_seq 10 21 >dir/subdir/Makefile &&
+		test_seq 20 31 >dir/subdir/tweaked/Makefile &&
+		git add . &&
+		git commit -m "B1" &&
+
+		echo rust code >dir/subdir/newfile.rs &&
+		test_seq 1 12 >dir/subdir/e &&
+		git add . &&
+		git commit -m "B2"
+	)
+}
+
+test_expect_failure '12f: Trivial directory resolve, caching, all kinds of fun' '
+	test_setup_12f &&
+	(
+		cd 12f &&
+
+		git checkout A^0 &&
+		git branch Bmod B &&
+
+		git -c merge.directoryRenames=true rebase A Bmod &&
+
+		echo Checking the pick of B1... &&
+
+		test_must_fail git rev-parse Bmod~1:dir &&
+
+		git ls-tree -r Bmod~1 >out &&
+		test_line_count = 98 out &&
+
+		git diff --name-status A Bmod~1 >actual &&
+		q_to_tab >expect <<-\EOF &&
+		MQfolder/subdir/Makefile
+		AQfolder/subdir/newfile.c
+		MQfolder/subdir/newsubdir/e
+		AQfolder/subdir/newsubdir/newfile.py
+		MQfolder/subdir/tweaked/Makefile
+		EOF
+		test_cmp expect actual &&
+
+		# Three-way merged files
+		test_seq  2 11 >e_Merge1 &&
+		test_seq 11 21 >Makefile_TOP &&
+		test_seq 21 31 >Makefile_SUB &&
+		git hash-object >expect      \
+			e_Merge1             \
+			Makefile_TOP         \
+			Makefile_SUB         &&
+		git rev-parse >actual              \
+			Bmod~1:folder/subdir/newsubdir/e     \
+			Bmod~1:folder/subdir/Makefile        \
+			Bmod~1:folder/subdir/tweaked/Makefile &&
+		test_cmp expect actual &&
+
+		# New files showed up at the right location with right contents
+		git rev-parse >expect                \
+			B~1:dir/subdir/newfile.c            \
+			B~1:dir/subdir/newsubdir/newfile.py &&
+		git rev-parse >actual                      \
+			Bmod~1:folder/subdir/newfile.c            \
+			Bmod~1:folder/subdir/newsubdir/newfile.py &&
+		test_cmp expect actual &&
+
+		# Removed files
+		test_path_is_missing folder/subdir/tweaked/f &&
+		test_path_is_missing folder/subdir/tweaked/g &&
+
+		# Unchanged files or directories
+		git rev-parse >actual        \
+			Bmod~1:folder/subdir/a          \
+			Bmod~1:folder/subdir/b          \
+			Bmod~1:folder/subdir/c          \
+			Bmod~1:folder/subdir/d          \
+			Bmod~1:folder/unchanged         \
+			Bmod~1:folder/subdir/tweaked/h &&
+		git rev-parse >expect          \
+			O:dir/subdir/a         \
+			O:dir/subdir/b         \
+			O:dir/subdir/c         \
+			O:dir/subdir/d         \
+			O:dir/unchanged        \
+			O:dir/subdir/tweaked/h &&
+		test_cmp expect actual &&
+
+		echo Checking the pick of B2... &&
+
+		test_must_fail git rev-parse Bmod:dir &&
+
+		git ls-tree -r Bmod >out &&
+		test_line_count = 99 out &&
+
+		git diff --name-status Bmod~1 Bmod >actual &&
+		q_to_tab >expect <<-\EOF &&
+		AQfolder/subdir/newfile.rs
+		MQfolder/subdir/newsubdir/e
+		EOF
+		test_cmp expect actual &&
+
+		# Three-way merged file
+		test_seq  2 12 >e_Merge2 &&
+		git hash-object e_Merge2 >expect &&
+		git rev-parse Bmod:folder/subdir/newsubdir/e >actual &&
+		test_cmp expect actual
+	)
+'
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #
