@@ -15,6 +15,7 @@ DEVELOPER_CFLAGS += -Wpointer-arith
 DEVELOPER_CFLAGS += -Wstrict-prototypes
 DEVELOPER_CFLAGS += -Wunused
 DEVELOPER_CFLAGS += -Wvla
+DEVELOPER_CFLAGS += -fno-common
 
 DEVELOPER_CFLAGS += -DENABLE_SHA256
 
