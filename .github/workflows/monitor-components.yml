@@ -7,7 +7,7 @@ name: Monitor component updates
 
 on:
   schedule:
-    - cron: "11,31,51 * * * *"
+    - cron: "* 8,11,14,17 * * *"
   workflow_dispatch:
 
 env:
