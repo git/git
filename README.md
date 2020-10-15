@@ -29,7 +29,7 @@ CVS users may also want to read [Documentation/gitcvs-migration.txt][]
 (`man gitcvs-migration` or `git help cvs-migration` if git is
 installed).
 
-The user discussion and development of Git take place on the Git
+The user discussion and development of Git take place on the GIT
 mailing list -- everyone is welcome to post bug reports, feature
 requests, comments and patches to git@vger.kernel.org (read
 [Documentation/SubmittingPatches][] for instructions on patch submission).
