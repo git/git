@@ -35,6 +35,10 @@ static void git_apply_config(void)
 	git_config(git_xmerge_config, NULL);
 }
 
+/*
+ * Completes the code
+ */
+
 static int parse_whitespace_option(struct apply_state *state, const char *option)
 {
 	if (!option) {
