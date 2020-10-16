@@ -507,6 +507,9 @@ documentation is consistent with other Git and UNIX manpages; this makes life
 easier for your user, who can skip to the section they know contains the
 information they need.
 
+NOTE: Before trying to build the docs, make sure you have the package `asciidoc`
+installed.
+
 Now that you've written your manpage, you'll need to build it explicitly. We
 convert your AsciiDoc to troff which is man-readable like so:
 
@@ -521,8 +524,6 @@ or
 $ make -C Documentation/ git-psuh.1
 $ man Documentation/git-psuh.1
 ----
-
-NOTE: You may need to install the package `asciidoc` to get this to work.
 
 While this isn't as satisfying as running through `git help`, you can at least
 check that your help page looks right.
