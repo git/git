@@ -1,6 +1,44 @@
 # Functions for supporting the use of themed Tk widgets in git-gui.
 # Copyright (C) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
 
+
+namespace eval color {
+	# Variable colors
+	# Preffered way to set widget colors is using add_option.
+	# In some cases, like with tags in_diff/in_sel, we use these colors.
+	variable select_bg		lightgray
+	variable select_fg		black
+
+	proc sync_with_theme {} {
+		set base_bg		[ttk::style lookup . -background]
+		set base_fg		[ttk::style lookup . -foreground]
+		set text_bg		[ttk::style lookup Treeview -background]
+		set text_fg		[ttk::style lookup Treeview -foreground]
+		set select_bg	[ttk::style lookup Default -selectbackground]
+		set select_fg	[ttk::style lookup Default -selectforeground]
+
+		set color::select_bg $select_bg
+		set color::select_fg $select_fg
+
+		proc add_option {key val} {
+			option add $key $val widgetDefault
+		}
+		# Add options for plain Tk widgets
+		# Using `option add` instead of tk_setPalette to avoid unintended
+		# consequences.
+		if {![is_MacOSX]} {
+			add_option *Menu.Background $base_bg
+			add_option *Menu.Foreground $base_fg
+			add_option *Menu.activeBackground $select_bg
+			add_option *Menu.activeForeground $select_fg
+		}
+		add_option *Text.Background $text_bg
+		add_option *Text.Foreground $text_fg
+		add_option *Text.HighlightBackground $base_bg
+		add_option *Text.HighlightColor $select_bg
+	}
+}
+
 proc ttk_get_current_theme {} {
 	# Handle either current Tk or older versions of 8.5
 	if {[catch {set theme [ttk::style theme use]}]} {
