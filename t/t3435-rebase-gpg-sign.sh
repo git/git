@@ -89,4 +89,11 @@ test_expect_success 'rebase -r, merge strategy, commit.gpgsign=false --gpg-sign 
 	git verify-commit HEAD
 '
 
+test_expect_success "rebase -r, merge strategy, commit.gpgsign=true --no-gpg-sign won't sign commit" '
+	git reset --hard merged &&
+	git config commit.gpgsign true &&
+	git rebase -fr --no-gpg-sign -s resolve --root &&
+	test_must_fail git verify-commit HEAD
+'
+
 test_done
