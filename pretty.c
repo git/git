@@ -1579,6 +1579,7 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	enum {
 		NO_MAGIC,
 		ADD_LF_BEFORE_NON_EMPTY,
+		ADD_LF_AFTER_NON_EMPTY,
 		DEL_LF_BEFORE_EMPTY,
 		ADD_SP_BEFORE_NON_EMPTY
 	} magic = NO_MAGIC;
@@ -1589,6 +1590,9 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 		break;
 	case '+':
 		magic = ADD_LF_BEFORE_NON_EMPTY;
+		break;
+	case '*':
+		magic = ADD_LF_AFTER_NON_EMPTY;
 		break;
 	case ' ':
 		magic = ADD_SP_BEFORE_NON_EMPTY;
@@ -1613,6 +1617,8 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	} else if (orig_len != sb->len) {
 		if (magic == ADD_LF_BEFORE_NON_EMPTY)
 			strbuf_insertstr(sb, orig_len, "\n");
+		else if (magic == ADD_LF_AFTER_NON_EMPTY)
+			strbuf_insertstr(sb, sb->len, "\n");
 		else if (magic == ADD_SP_BEFORE_NON_EMPTY)
 			strbuf_insertstr(sb, orig_len, " ");
 	}
