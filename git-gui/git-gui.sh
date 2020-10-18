@@ -2146,6 +2146,7 @@ set all_icons(U$ui_index)   file_merge
 set all_icons(T$ui_index)   file_statechange
 
 set all_icons(_$ui_workdir) file_plain
+set all_icons(A$ui_workdir) file_plain
 set all_icons(M$ui_workdir) file_mod
 set all_icons(D$ui_workdir) file_question
 set all_icons(U$ui_workdir) file_merge
@@ -2172,6 +2173,7 @@ foreach i {
 		{A_ {mc "Staged for commit"}}
 		{AM {mc "Portions staged for commit"}}
 		{AD {mc "Staged for commit, missing"}}
+		{AA {mc "Intended to be added"}}
 
 		{_D {mc "Missing"}}
 		{D_ {mc "Staged for removal"}}
