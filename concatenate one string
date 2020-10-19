@@ -1,0 +1,19 @@
+#include<stdio.h>
+#include<string.h>
+int main()
+
+{
+    char str1[100],str2[100];
+    int i,j;
+    printf("\n Enter First String\n");
+    gets(str1);
+    printf("\n Enter Second String\n");
+    gets(str2);
+    for(i=strlen(str1),j=0;str2[j]!='\0';i++,j++)
+    {
+        str1[i]=str2[j];
+    }
+    str1[i]='\0';
+    printf("\n Concatenated String-->%s",str1);
+    return 0;
+}
