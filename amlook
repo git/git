@@ -29,6 +29,8 @@ find_commit () {
 		return
 	fi
 
+	echo "$commits"
+
 	found=$(
 		echo "$commits" |
 		while read commit
