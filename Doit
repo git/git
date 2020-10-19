@@ -18,5 +18,5 @@ do
 	changed="$changed $b"
 done
 
-Meta/Dothem -j32 &&
-Meta/Dothem -j32 --dash --branches="$changed" --scratch --force CC=clang 
+Meta/Dothem -j8 &&
+Meta/Dothem -j8 --dash --branches="$changed" --scratch --force CC=clang
