@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2020, #02; Fri, 9)
-X-master-at: d4a392452e292ff924e79ec8458611c0f679d6d4
-X-next-at: fa9743e501541a5315e5d4873d4e0245bccccd89
+Subject: What's cooking in git.git (Oct 2020, #03; Mon, 19)
+X-master-at: 2a809eccbc6099183176b3c4760f857d09a50599
+X-next-at: 2f331ef7c587c4f07226542c52ca9977814df1a5
 
-What's cooking in git.git (Oct 2020, #02; Fri, 9)
+What's cooking in git.git (Oct 2020, #03; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,100 +12,394 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first release candidate for this cycle, Git v2.29.0-rc1, has
-been tagged.  This -rc1 turned out to be a bit more ambitious than
-usual in how I handled young-but-small topics.  I would have left
-them out, saying "their benefit is low and don't have to be in the
-upcoming release", in past cycles.  But this time, I tried to cram
-them in -rc1, with an updated excluse "their scope is so small that
-they cannot be so wrong to delay the release even if we later find
-problems in them, so there is no point in delaying".
+Git 2.29 final has been tagged.  We will hopefully either (1) not
+see brown-paper-bag breakages at all, or (2) will see some but can
+immediately deal with them, in coming couple of days.  After that,
+the 2.30 cycle will gain steam, starting next week.  Let's see.
 
-We'll see how well it turns out.
+Copies of the source code to Git live in many repositories, and the
+following is a list of the ones I push into.  Some repositories have
+only a subset of branches.
 
-You can find the changes described here in the integration branches of the
-repositories listed at
+With maint, master, next, seen, todo:
 
-    http://git-blame.blogspot.com/p/git-public-repositories.html
+	git://git.kernel.org/pub/scm/git/git.git/
+	git://repo.or.cz/alt-git.git/
+	https://kernel.googlesource.com/pub/scm/git/git/
+	https://github.com/git/git/
 
---------------------------------------------------
-[Graduated to 'master']
+With all the integration branches and topics broken out:
 
-* dl/makefile-sort (2020-10-08) 1 commit
-  (merged to 'next' on 2020-10-08 at a303ef6d14)
- + Makefile: ASCII-sort += lists
+	https://github.com/gitster/git/
 
- Makefile clean-up.
+Even though the preformatted documentation in HTML and man format
+are not sources, they are published in these repositories for
+convenience (replace "htmldocs" with "manpages" for the manual
+pages):
 
+	git://git.kernel.org/pub/scm/git/git-htmldocs.git/
+	https://github.com/gitster/git-htmldocs.git/
 
-* dl/mingw-header-cleanup (2020-10-07) 1 commit
-  (merged to 'next' on 2020-10-08 at 35516a8b50)
- + compat/mingw.h: drop extern from function declaration
+Release tarballs are available at:
 
- Header clean-up.
-
-
-* hx/push-atomic-with-cert (2020-10-06) 1 commit
-  (merged to 'next' on 2020-10-08 at 0729586aa5)
- + t5534: split stdout and stderr redirection
-
- Hotfix to a recently added test script.
-
-
-* ja/misc-doc-fixes (2020-10-08) 4 commits
-  (merged to 'next' on 2020-10-08 at 167d6696bc)
- + doc: fix the bnf like style of some commands
- + doc: git-remote fix ups
- + doc: use linkgit macro where needed.
- + git-bisect-lk2009: make continuation of list indented
-
- Doc fixes.
-
-
-* jk/index-pack-hotfixes (2020-10-07) 3 commits
-  (merged to 'next' on 2020-10-08 at 46f5340c07)
- + index-pack: make get_base_data() comment clearer
- + index-pack: drop type_cas mutex
- + index-pack: restore "resolving deltas" progress meter
-
- Hotfix and clean-up for the jt/threaded-index-pack topic that has
- graduated to v2.29-rc0.
-
-
-* js/ci-ghwf-dedup-tests (2020-10-08) 2 commits
-  (merged to 'next' on 2020-10-08 at 83db2c0a89)
- + ci: do not skip tagged revisions in GitHub workflows
- + ci: skip GitHub workflow runs for already-tested commits/trees
-
- The logic to skip testing on the tagged commit and the tag itself
- was not quite consistent which led to failure of Windows test
- tasks.  It has been revamped to consistently skip revisions that
- have already been tested, based on the tree object of the revision.
-
-
-* js/default-branch-name-part-3 (2020-10-08) 2 commits
-  (merged to 'next' on 2020-10-08 at 1c02be024d)
- + tests: avoid using the branch name `main`
- + t1415: avoid using `main` as ref name
-
- Test preparation for the switch of default branch name continues.
-
-
-* js/ghwf-setup-msbuild-update (2020-10-07) 1 commit
-  (merged to 'next' on 2020-10-08 at d4c704f844)
- + GitHub workflow: automatically follow minor updates of setup-msbuild
-
- CI update.
-
-
-* js/no-builtins-on-disk-option (2020-10-07) 1 commit
-  (merged to 'next' on 2020-10-08 at 4033181bc4)
- + help: do not expect built-in commands to be hardlinked
-
- Hotfix to breakage introduced in the topic in v2.29-rc0
+	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
 [New Topics]
+
+* cw/ci-ghwf-check-ws-errors (2020-10-09) 1 commit
+  (merged to 'next' on 2020-10-15 at 159e0f0277)
+ + ci: github action - add check for whitespace errors
+
+ Dev support.
+
+ Will cook in 'next'.
+
+
+* en/strmap (2020-10-13) 10 commits
+ - strmap: enable allocations to come from a mem_pool
+ - strmap: add a strset sub-type
+ - strmap: add functions facilitating use as a string->int map
+ - strmap: enable faster clearing and reusing of strmaps
+ - strmap: add more utility functions
+ - strmap: new utility functions
+ - hashmap: introduce a new hashmap_partial_clear()
+ - hashmap: allow re-use after hashmap_free()
+ - hashmap: adjust spacing to fix argument alignment
+ - hashmap: add usage documentation explaining hashmap_free[_entries]()
+
+ A speciailization of hashmap that uses a string as key has been
+ introduced.  Hopefully it will see wider use over time.
+
+ Will merge to 'next'.
+
+
+* en/test-selector (2020-10-18) 3 commits
+ - test-lib: reduce verbosity of skipped tests
+ - t6006, t6012: adjust tests to use 'setup' instead of synonyms
+ - test-lib: allow selecting tests by substring/glob with --run
+
+ Our test scripts can be told to run only individual pieces while
+ skipping others with the "--run=..." option; they were taught to
+ take a substring of test title, in addition to numbers, to name the
+ test pices to run.
+
+ Will merge to 'next'.
+
+
+* jk/report-fn-typedef (2020-10-16) 1 commit
+ - usage: define a type for a reporting function
+
+ Code clean-up.
+
+ Needs to get its log message updated.
+
+
+* mr/bisect-in-c-3 (2020-10-16) 7 commits
+ - bisect--helper: retire `--bisect-autostart` subcommand
+ - bisect--helper: retire `--write-terms` subcommand
+ - bisect--helper: retire `--check-expected-revs` subcommand
+ - bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
+ - bisect--helper: retire `--next-all` subcommand
+ - bisect--helper: retire `--bisect-clean-state` subcommand
+ - bisect--helper: finish porting `bisect_start()` to C
+
+ Rewriting "git bisect" in C continues.
+
+ How ready is this one?
+
+
+* rs/dist-doc-with-git-archive (2020-10-12) 2 commits
+  (merged to 'next' on 2020-10-15 at cb1029e046)
+ + Makefile: remove the unused variable TAR_DIST_EXTRA_OPTS
+ + Makefile: use git init/add/commit/archive for dist-doc
+
+ Use "git archive" more to produce the release tarball.
+
+ Will cook in 'next'.
+
+
+* rs/tighten-callers-of-deref-tag (2020-10-12) 3 commits
+  (merged to 'next' on 2020-10-15 at a0df4a45cb)
+ + line-log: handle deref_tag() returning NULL
+ + blame: handle deref_tag() returning NULL
+ + grep: handle deref_tag() returning NULL
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* rs/worktree-list-show-locked (2020-10-12) 1 commit
+  (merged to 'next' on 2020-10-15 at 3917e61c28)
+ + worktree: teach `list` to annotate locked worktree
+
+ "git worktree list" now shows if each worktree is locked.  This
+ possibly may open us to show other kinds of states in the future.
+
+ Will cook in 'next'.
+
+
+* sc/sequencer-gpg-octopus (2020-10-18) 3 commits
+ - t3435: add tests for rebase -r GPG signing
+ - sequencer: pass explicit --no-gpg-sign to merge
+ - sequencer: fix gpg option passed to merge subcommand
+
+ "git rebase --rebase-merges" did not correctly pass --gpg-sign
+ command line option to underying "git merge" when replaying a merge
+ using non-default merge strategy or when replaying an octopus merge
+ (because replaying a two-head merge with the default strategy was
+ done in a separate codepath, the problem did not trigger for most
+ users), which has been corrected.
+
+ Will merge to 'next'.
+
+
+* sm/curl-retry (2020-10-13) 3 commits
+ - http: automatically retry some requests
+ - replace CURLOPT_FILE With CURLOPT_WRITEDATA
+ - remote-curl: add testing for intelligent retry for HTTP
+
+ The http transport has been taught to retry a failed request that
+ may reasonably be retried.
+
+ Need to pick up reroll.
+
+
+* as/sample-push-to-checkout-hook (2020-10-16) 1 commit
+ - hook: add sample template for push-to-checkout
+
+ Add a sample 'push-to-checkout' hook, that performs the same as
+ what the built-in default action does.
+
+ Will merge to 'next'.
+
+
+* as/tests-cleanup (2020-10-18) 1 commit
+ - t2200,t9832: avoid using 'git' upstream in a pipe
+
+ Micro clean-up of a couple of test scripts.
+
+ Will merge to 'next'.
+
+
+* bk/sob-dco (2020-10-18) 3 commits
+ - SubmittingPatches: clarify DCO is our --signoff rule
+ - Documentation: clarify and expand description of --signoff
+ - doc: preparatory clean-up of description on the sign-off option
+
+ Document that the meaning of a Signed-off-by trailer can vary from
+ project to project in the end-user documentation, and clarify what
+ it means to this project.
+
+
+* ct/t0000-use-test-path-is-file (2020-10-18) 1 commit
+ - t0000: use test_path_is_file instead of "test -f"
+
+ Micro clean-up of a test script.
+
+
+* en/dir-rename-tests (2020-10-16) 4 commits
+ - t6423: more involved rules for renaming directories into each other
+ - t6423: update directory rename detection tests with new rule
+ - t6423: more involved directory rename test
+ - directory-rename-detection.txt: update references to regression tests
+
+ More preliminary tests have been added to document desired outcome
+ of various "directory rename" situations.
+
+ Will merge to 'next'.
+
+
+* en/t7518-unflake (2020-10-18) 1 commit
+ - t7518: fix flaky grep invocation
+
+ Work around flakiness in a test.
+
+ Will merge to 'next'.
+
+
+* es/test-cmp-typocatcher (2020-10-16) 1 commit
+ - Revert "test_cmp: diagnose incorrect arguments"
+
+ A test helper "test_cmp A B" was taught to diagnose missing files A
+ or B as a bug in test, but some tests legitimately wanted to notice
+ a failure to even create file B as an error, in addition to leaving
+ the expected result in it, and were misdiagnosed as a bug.  This
+ has been corrected.
+
+ Will merge to 'next'.
+
+
+* es/tutorial-mention-asciidoc-early (2020-10-16) 1 commit
+ - MyFirstContribution: clarify asciidoc dependency
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* jk/fast-import-marks-alloc-fix (2020-10-15) 1 commit
+ - fast-import: fix over-allocation of marks storage
+
+ "git fast-import" wasted a lot of memory when many marks were in use.
+
+ Will merge to 'next'.
+
+
+* jk/fast-import-marks-cleanup (2020-10-16) 1 commit
+ - fast-import: remove duplicated option-parsing line
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jk/no-common (2020-10-16) 1 commit
+ - config.mak.dev: build with -fno-common
+
+ Dev support to catch a tentative definition of a variable in our C
+ code as an error.
+
+ Will merge to 'next'.
+
+
+* js/ci-ghwf-dedup-tests (2020-10-12) 2 commits
+ - ci: make the "skip-if-redundant" check more defensive
+ - ci: work around old records of GitHub runs
+
+ GitHub Actions automated test improvement to skip tests on a tree
+ identical to what has already been tested.
+
+ Will merge to 'next'.
+
+
+* lo/zsh-completion (2020-10-16) 1 commit
+ - completion: fix zsh installation instructions
+
+ Update instructions for command line completion (in contrib/) for zsh.
+
+ Will merge to 'next'.
+
+
+* nk/diff-files-vs-fsmonitor (2020-10-18) 4 commits
+ - t/perf: add fsmonitor perf test for git diff
+ - t/perf/p7519-fsmonitor.sh: warm cache on first git status
+ - t/perf/README: elaborate on output format
+ - fsmonitor: use fsmonitor data in `git diff`
+
+ "git diff" and other commands that share the same machinery to
+ compare with working tree files have been taught to take advantage
+ of the fsmonitor data when available.
+
+ Will merge to 'next'.
+
+
+* nk/dir-c-comment-update (2020-10-16) 1 commit
+ - dir.c: fix comments to agree with argument name
+
+ Update stale in-code comment.
+
+ Will merge to 'next'.
+
+
+* tk/credential-config (2020-10-16) 1 commit
+ - credential: load default config
+
+ "git credential' didn't honor the core.askPass configuration
+ variable (among other things), which has been corrected.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* sv/t7001-modernize (2020-09-25) 11 commits
+ - t7001: move cleanup code from outside the tests into them
+ - t7001: use `test` rather than `[`
+ - t7001: use here-docs instead of echo
+ - t7001: put each command on a separate line
+ - t7001: use ': >' rather than 'touch'
+ - t7001: change (cd <path> && git foo) to (git -C <path> foo)
+ - t7001: remove whitespace after redirect operators
+ - t7001: change the style for cd according to subshell
+ - t7001: remove unnecessary blank lines
+ - t7001: use TAB instead of spaces
+ - t7001: convert tests from the old style to the current style
+
+ Test script modernization.
+
+ Expecting a reroll.
+ cf. <20200925170256.11490-1-shubhunic@gmail.com>
+
+
+* ew/decline-core-abbrev (2020-09-01) 1 commit
+ - core.abbrev <off|false|no> disables abbreviations
+
+ Allow the configuration to specify no abbreviation regardless of
+ the hash algorithm.
+
+ Expecting a reroll.  The intent is very good.
+
+
+* bc/rev-parse-path-format (2020-10-09) 2 commits
+ - rev-parse: add option for absolute or relative path formatting
+ - abspath: add a function to resolve paths with missing components
+
+ "git rev-parse" can be explicitly told to give output as absolute
+ or relative path.
+
+
+* ar/fetch-transfer-ipversion (2020-09-16) 1 commit
+ - config: option transfer.ipversion to set transport protocol version for network fetches
+
+ Adds transfer.ipversion configuration variable.
+
+ Needs more work.
+
+
+* vv/send-email-with-less-secure-apps-access (2020-08-29) 1 commit
+ - Documentation/git-send-email.txt: Mention less secure app access might need to enable.
+
+ Doc update.
+
+ Expecting a reroll.
+ cf. <xmqqwo1hi9nv.fsf@gitster.c.googlers.com>
+ cf. <xmqqft85i72s.fsf@gitster.c.googlers.com>
+
+
+* jc/war-on-dashed-git (2020-08-27) 1 commit
+ - git: catch an attempt to run "git-foo"
+
+ The first step to remove on-disk binaries for built-in subcommands
+ by soliciting objections.
+
+ On hold for now.
+
+
+* dr/push-remoteref-fix (2020-04-23) 1 commit
+ - remote.c: fix handling of %(push:remoteref)
+
+ The "%(push:remoteref)" placeholder in the "--format=" argument of
+ "git format-patch" (and friends) only showed what got explicitly
+ configured, not what ref at the receiving end would be updated when
+ "git push" was used, as it ignored the default behaviour (e.g. update
+ the same ref as the source).
+
+ Discard for now.
+ cf. <xmqqv9gu7c61.fsf@gitster.c.googlers.com>
+ cf. <20200911214358.acl3hy2e763begoo@feanor>
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
 
 * ag/merge-strategies-in-c (2020-10-06) 11 commits
  - sequencer: use the "octopus" merge strategy without forking
@@ -175,22 +469,25 @@ repositories listed at
  may be longer than 40-hex depending on the hash function in use.
 
 
-* ds/commit-graph-merging-fix (2020-10-08) 1 commit
+* ds/commit-graph-merging-fix (2020-10-09) 2 commits
+ - commit-graph: don't write commit-graph when disabled
  - commit-graph: ignore duplicates when merging layers
 
  When "git commit-graph" detects the same commit recorded more than
  once while it is merging the layers, it used to die.  The code now
  ignores all but one of them and continues.
 
- Shouldn't it make sure all copies match, or discard all of them, to
- avoid random corruptions kept in the repository?
+ Will merge to 'next'.
 
 
-* ds/maintenance-commit-graph-auto-fix (2020-10-08) 1 commit
+* ds/maintenance-commit-graph-auto-fix (2020-10-12) 2 commits
+ - maintenance: core.commitGraph=false prevents writes
  - maintenance: test commit-graph auto condition
 
  Test-coverage enhancement of running commit-graph task "git
  maintenance" as needed led to discovery and fix of a bug.
+
+ Will merge to 'next'.
 
 
 * js/userdiff-php (2020-10-07) 1 commit
@@ -254,107 +551,17 @@ repositories listed at
  The commit-graph learned to use corrected commit dates instead of
  the generation number to help topological revision traversal.
 
---------------------------------------------------
-[Stalled]
-
-* sv/t7001-modernize (2020-09-25) 11 commits
- - t7001: move cleanup code from outside the tests into them
- - t7001: use `test` rather than `[`
- - t7001: use here-docs instead of echo
- - t7001: put each command on a separate line
- - t7001: use ': >' rather than 'touch'
- - t7001: change (cd <path> && git foo) to (git -C <path> foo)
- - t7001: remove whitespace after redirect operators
- - t7001: change the style for cd according to subshell
- - t7001: remove unnecessary blank lines
- - t7001: use TAB instead of spaces
- - t7001: convert tests from the old style to the current style
-
- Test script modernization.
-
- Expecting a reroll.
- cf. <20200925170256.11490-1-shubhunic@gmail.com>
+ How ready is this?
 
 
-* ew/decline-core-abbrev (2020-09-01) 1 commit
- - core.abbrev <off|false|no> disables abbreviations
-
- Allow the configuration to specify no abbreviation regardless of
- the hash algorithm.
-
- Expecting a reroll.  The intent is very good.
-
-
-* bc/rev-parse-path-format (2020-09-08) 1 commit
- - rev-parse: add option for absolute or relative path formatting
-
- "git rev-parse" can be explicitly told to give output as absolute
- or relative path.
-
- Expecting a reroll.
- cf. <20200909222333.GH241078@camp.crustytoothpaste.net>
-
-
-* ar/fetch-transfer-ipversion (2020-09-16) 1 commit
- - config: option transfer.ipversion to set transport protocol version for network fetches
-
- Adds transfer.ipversion configuration variable.
-
- Needs more work.
-
-
-* vv/send-email-with-less-secure-apps-access (2020-08-29) 1 commit
- - Documentation/git-send-email.txt: Mention less secure app access might need to enable.
-
- Doc update.
-
- Expecting a reroll.
- cf. <xmqqwo1hi9nv.fsf@gitster.c.googlers.com>
- cf. <xmqqft85i72s.fsf@gitster.c.googlers.com>
-
-
-* jc/war-on-dashed-git (2020-08-27) 1 commit
- - git: catch an attempt to run "git-foo"
-
- The first step to remove on-disk binaries for built-in subcommands
- by soliciting objections.
-
- On hold for now.
-
-
-* dr/push-remoteref-fix (2020-04-23) 1 commit
- - remote.c: fix handling of %(push:remoteref)
-
- The "%(push:remoteref)" placeholder in the "--format=" argument of
- "git format-patch" (and friends) only showed what got explicitly
- configured, not what ref at the receiving end would be updated when
- "git push" was used, as it ignored the default behaviour (e.g. update
- the same ref as the source).
-
- Discard for now.
- cf. <xmqqv9gu7c61.fsf@gitster.c.googlers.com>
- cf. <20200911214358.acl3hy2e763begoo@feanor>
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
-
-* mk/diff-ignore-regex (2020-10-01) 2 commits
- - t: add -I<regex> tests
+* mk/diff-ignore-regex (2020-10-16) 2 commits
  - diff: add -I<regex> that ignores matching changes
+ - merge-base, xdiff: zero out xpparam_t structures
 
  "git diff" family of commands learned the "-I<regex>" option to
  ignore hunks whose changed lines all match the given pattern.
 
  Expecting a reroll.
- cf. <20201007194821.GA20549@larwa.hq.kempniu.pl>
 
 
 * mt/parallel-checkout-part-1 (2020-10-05) 20 commits
@@ -458,9 +665,10 @@ repositories listed at
  cf. <nycvar.QRO.7.76.6.2010021557570.50@tvgsbejvaqbjf.bet>
 
 
-* ds/maintenance-part-3 (2020-10-05) 7 commits
+* ds/maintenance-part-3 (2020-10-16) 8 commits
  - maintenance: add troubleshooting guide to docs
- - maintenance: use default schedule if not configured
+ - maintenance: use 'incremental' strategy by default
+ - maintenance: create maintenance.strategy config
  - maintenance: add start/stop subcommands
  - maintenance: add [un]register subcommands
  - for-each-repo: run subcommands on configured repos
@@ -471,24 +679,18 @@ repositories listed at
  Parts of "git maintenance" to ease writing crontab entries (and
  other scheduling system configuration) for it.
 
- cf. <20201005195701.14268-1-martin.agren@gmail.com>
 
-
-* es/config-hooks (2020-09-09) 9 commits
- - run_commit_hook: take strvec instead of varargs
- - commit: use config-based hooks
- - hook: replace run-command.h:find_hook
+* es/config-hooks (2020-10-16) 8 commits
+ - hook: replace find_hook() with hook_exists()
  - hook: add 'run' subcommand
  - parse-options: parse into strvec
- - hook: add --porcelain to list command
+ - hook: implement hookcmd.<name>.skip
+ - hook: include hookdir hook in list
  - hook: add list command
  - hook: scaffolding for git-hook subcommand
  - doc: propose hooks managed by the config
 
  The "hooks defined in config" topic.
-
- Expecting a reroll.
- cf. <20201005212751.GH331156@google.com>
 
 
 * mt/grep-sparse-checkout (2020-09-10) 9 commits
