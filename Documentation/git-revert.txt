@@ -99,7 +99,7 @@ effect to your index in a row.
 
 -s::
 --signoff::
-	Add Signed-off-by line at the end of the commit message.
+	Add a `Signed-off-by` trailer at the end of the commit message.
 	See the signoff option in linkgit:git-commit[1] for more information.
 
 --strategy=<strategy>::
