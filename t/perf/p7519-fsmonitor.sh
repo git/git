@@ -114,7 +114,8 @@ test_expect_success "setup for fsmonitor" '
 	fi &&
 
 	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
-	git update-index --fsmonitor
+	git update-index --fsmonitor &&
+	git status  # Warm caches
 '
 
 if test -n "$GIT_PERF_7519_DROP_CACHE"; then
