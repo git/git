@@ -169,6 +169,10 @@ test_fsmonitor_suite() {
 	test_perf_w_drop_caches "diff -- 10000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
 		git diff -- 10000_files
 	'
+
+	test_perf_w_drop_caches "add (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git add  --all
+	'
 }
 
 test_fsmonitor_suite
