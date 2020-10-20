@@ -234,6 +234,10 @@ struct diff_options {
 	 */
 	const char *pickaxe;
 
+	/* -I<regex> */
+	regex_t **ignore_regex;
+	size_t ignore_regex_nr, ignore_regex_alloc;
+
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	const char *line_prefix;
