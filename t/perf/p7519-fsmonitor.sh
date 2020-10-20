@@ -115,6 +115,13 @@ test_expect_success "setup for fsmonitor" '
 
 	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
 	git update-index --fsmonitor &&
+	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
+	for i in $(test_seq 1 10); do touch 10_files/$i; done &&
+	for i in $(test_seq 1 100); do touch 100_files/$i; done &&
+	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
+	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
+	git add 1_file 10_files 100_files 1000_files 10000_files &&
+	git commit -m "Add files" &&
 	git status  # Warm caches
 '
 
@@ -140,6 +147,38 @@ fi
 
 test_perf "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
 	git status -uall
+'
+
+if test -n "$GIT_PERF_7519_DROP_CACHE"; then
+	test-tool drop-caches
+fi
+
+test_perf "diff (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff
+'
+
+if test -n "$GIT_PERF_7519_DROP_CACHE"; then
+	test-tool drop-caches
+fi
+
+test_perf "diff -- 0_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 1_file
+'
+
+test_perf "diff -- 10_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 10_files
+'
+
+test_perf "diff -- 100_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 100_files
+'
+
+test_perf "diff -- 1000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 1000_files
+'
+
+test_perf "diff -- 10000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 10000_files
 '
 
 test_expect_success "setup without fsmonitor" '
@@ -170,6 +209,38 @@ fi
 
 test_perf "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
 	git status -uall
+'
+
+if test -n "$GIT_PERF_7519_DROP_CACHE"; then
+	test-tool drop-caches
+fi
+
+test_perf "diff (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff
+'
+
+if test -n "$GIT_PERF_7519_DROP_CACHE"; then
+	test-tool drop-caches
+fi
+
+test_perf "diff -- 0_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 1_file
+'
+
+test_perf "diff -- 10_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 10_files
+'
+
+test_perf "diff -- 100_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 100_files
+'
+
+test_perf "diff -- 1000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 1000_files
+'
+
+test_perf "diff -- 10000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	git diff -- 10000_files
 '
 
 if test_have_prereq WATCHMAN
