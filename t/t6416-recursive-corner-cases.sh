@@ -3,6 +3,7 @@
 test_description='recursive merge corner cases involving criss-cross merges'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-merge.sh
 
 #
 #  L1  L2
@@ -1069,7 +1070,7 @@ test_expect_success 'setup symlink modify/modify' '
 	)
 '
 
-test_expect_failure 'check symlink modify/modify' '
+test_expect_merge_algorithm failure success 'check symlink modify/modify' '
 	(
 		cd symlink-modify-modify &&
 
@@ -1135,7 +1136,7 @@ test_expect_success 'setup symlink add/add' '
 	)
 '
 
-test_expect_failure 'check symlink add/add' '
+test_expect_merge_algorithm failure success 'check symlink add/add' '
 	(
 		cd symlink-add-add &&
 
@@ -1223,7 +1224,7 @@ test_expect_success 'setup submodule modify/modify' '
 	)
 '
 
-test_expect_failure 'check submodule modify/modify' '
+test_expect_merge_algorithm failure success 'check submodule modify/modify' '
 	(
 		cd submodule-modify-modify &&
 
@@ -1311,7 +1312,7 @@ test_expect_success 'setup submodule add/add' '
 	)
 '
 
-test_expect_failure 'check submodule add/add' '
+test_expect_merge_algorithm failure success 'check submodule add/add' '
 	(
 		cd submodule-add-add &&
 
@@ -1386,7 +1387,7 @@ test_expect_success 'setup conflicting entry types (submodule vs symlink)' '
 	)
 '
 
-test_expect_failure 'check conflicting entry types (submodule vs symlink)' '
+test_expect_merge_algorithm failure success 'check conflicting entry types (submodule vs symlink)' '
 	(
 		cd submodule-symlink-add-add &&
 
