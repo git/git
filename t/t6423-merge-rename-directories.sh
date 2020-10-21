@@ -1271,17 +1271,32 @@ test_expect_success '6a: Tricky rename/delete' '
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*z/c.*y/c" out &&
 
-		git ls-files -s >out &&
-		test_line_count = 2 out &&
-		git ls-files -u >out &&
-		test_line_count = 1 out &&
-		git ls-files -o >out &&
-		test_line_count = 1 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git ls-files -s >out &&
+			test_line_count = 3 out &&
+			git ls-files -u >out &&
+			test_line_count = 2 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
 
-		git rev-parse >actual \
-			:0:y/b :3:y/c &&
-		git rev-parse >expect \
-			 O:z/b  O:z/c &&
+			git rev-parse >actual \
+				:0:y/b :1:y/c :3:y/c &&
+			git rev-parse >expect \
+				 O:z/b  O:z/c  O:z/c
+		else
+			git ls-files -s >out &&
+			test_line_count = 2 out &&
+			git ls-files -u >out &&
+			test_line_count = 1 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
+
+			git rev-parse >actual \
+				:0:y/b :3:y/c &&
+			git rev-parse >expect \
+				 O:z/b  O:z/c
+		fi &&
 		test_cmp expect actual
 	)
 '
@@ -1934,17 +1949,32 @@ test_expect_success '7d: transitive rename involved in rename/delete; how is it 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*x/d.*y/d" out &&
 
-		git ls-files -s >out &&
-		test_line_count = 3 out &&
-		git ls-files -u >out &&
-		test_line_count = 1 out &&
-		git ls-files -o >out &&
-		test_line_count = 1 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git ls-files -s >out &&
+			test_line_count = 4 out &&
+			git ls-files -u >out &&
+			test_line_count = 2 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
 
-		git rev-parse >actual \
-			:0:y/b :0:y/c :3:y/d &&
-		git rev-parse >expect \
-			 O:z/b  O:z/c  O:x/d &&
+			git rev-parse >actual \
+				:0:y/b :0:y/c :1:y/d :3:y/d &&
+			git rev-parse >expect \
+				 O:z/b  O:z/c  O:x/d  O:x/d
+		else
+			git ls-files -s >out &&
+			test_line_count = 3 out &&
+			git ls-files -u >out &&
+			test_line_count = 1 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
+
+			git rev-parse >actual \
+				:0:y/b :0:y/c :3:y/d &&
+			git rev-parse >expect \
+				 O:z/b  O:z/c  O:x/d
+		fi &&
 		test_cmp expect actual
 	)
 '
