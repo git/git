@@ -2981,15 +2981,12 @@ endif
 	} && \
 	for p in $(filter $(install_bindir_programs),$(BUILT_INS)); do \
 		$(RM) "$$bindir/$$p" && \
-		if test -z "$(SKIP_DASHED_BUILT_INS)"; \
-		then \
-			test -n "$(INSTALL_SYMLINKS)" && \
-			ln -s "git$X" "$$bindir/$$p" || \
-			{ test -z "$(NO_INSTALL_HARDLINKS)" && \
-			  ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
-			  ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
-			  cp "$$bindir/git$X" "$$bindir/$$p" || exit; }; \
-		fi \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "git$X" "$$bindir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+		  ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
+		  ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
+		  cp "$$bindir/git$X" "$$bindir/$$p" || exit; }; \
 	done && \
 	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
