@@ -1,0 +1,6 @@
+function RIGHT {
+    function InvalidSyntax{
+        :
+        echo 'ChangeMe'
+    }
+}
