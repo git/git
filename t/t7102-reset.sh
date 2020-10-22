@@ -82,15 +82,15 @@ test_expect_success 'reset --hard message (ISO8859-1 logoutputencoding)' '
 	test_i18ncmp .expected .actual
 '
 
->.diff_expect
->.cached_expect
-cat >.cat_expect <<EOF
-secondfile:
-1st line 2nd file
-2nd line 2nd file
-EOF
-
 test_expect_success 'giving a non existing revision should fail' '
+	>.diff_expect &&
+	>.cached_expect &&
+	cat >.cat_expect <<-\EOF &&
+	secondfile:
+	1st line 2nd file
+	2nd line 2nd file
+	EOF
+
 	test_must_fail git reset aaaaaa &&
 	test_must_fail git reset --mixed aaaaaa &&
 	test_must_fail git reset --soft aaaaaa &&
@@ -191,38 +191,38 @@ test_expect_success 'resetting to HEAD with no changes should succeed and do not
 		check_changes $head5
 '
 
->.diff_expect
-cat >.cached_expect <<EOF
-diff --git a/secondfile b/secondfile
-index $head5p1s..$head5s 100644
---- a/secondfile
-+++ b/secondfile
-@@ -1 +1,2 @@
--2nd file
-+1st line 2nd file
-+2nd line 2nd file
-EOF
-cat >.cat_expect <<EOF
-secondfile:
-1st line 2nd file
-2nd line 2nd file
-EOF
 test_expect_success '--soft reset only should show changes in diff --cached' '
+	>.diff_expect &&
+	cat >.cached_expect <<-EOF &&
+	diff --git a/secondfile b/secondfile
+	index $head5p1s..$head5s 100644
+	--- a/secondfile
+	+++ b/secondfile
+	@@ -1 +1,2 @@
+	-2nd file
+	+1st line 2nd file
+	+2nd line 2nd file
+	EOF
+	cat >.cat_expect <<-\EOF &&
+	secondfile:
+	1st line 2nd file
+	2nd line 2nd file
+	EOF
 	git reset --soft HEAD^ &&
 	check_changes $head5p1 &&
 	test "$(git rev-parse ORIG_HEAD)" = \
 			$head5
 '
 
->.diff_expect
->.cached_expect
-cat >.cat_expect <<EOF
-secondfile:
-1st line 2nd file
-2nd line 2nd file
-3rd line 2nd file
-EOF
 test_expect_success 'changing files and redo the last commit should succeed' '
+	>.diff_expect &&
+	>.cached_expect &&
+	cat >.cat_expect <<-\EOF &&
+	secondfile:
+	1st line 2nd file
+	2nd line 2nd file
+	3rd line 2nd file
+	EOF
 	echo "3rd line 2nd file" >>secondfile &&
 	git commit -a -C ORIG_HEAD &&
 	head4=$(git rev-parse --verify HEAD) &&
@@ -231,54 +231,54 @@ test_expect_success 'changing files and redo the last commit should succeed' '
 			$head5
 '
 
->.diff_expect
->.cached_expect
-cat >.cat_expect <<EOF
-first:
-1st file
-2nd line 1st file
-second:
-2nd file
-EOF
 test_expect_success '--hard reset should change the files and undo commits permanently' '
+	>.diff_expect &&
+	>.cached_expect &&
+	cat >.cat_expect <<-\EOF &&
+	first:
+	1st file
+	2nd line 1st file
+	second:
+	2nd file
+	EOF
 	git reset --hard HEAD~2 &&
 	check_changes $head5p2 &&
 	test "$(git rev-parse ORIG_HEAD)" = \
 			$head4
 '
 
->.diff_expect
-cat >.cached_expect <<EOF
-diff --git a/first b/first
-deleted file mode 100644
-index $head5p2f..0000000
---- a/first
-+++ /dev/null
-@@ -1,2 +0,0 @@
--1st file
--2nd line 1st file
-diff --git a/second b/second
-deleted file mode 100644
-index $head5p1s..0000000
---- a/second
-+++ /dev/null
-@@ -1 +0,0 @@
--2nd file
-diff --git a/secondfile b/secondfile
-new file mode 100644
-index 0000000..$head5s
---- /dev/null
-+++ b/secondfile
-@@ -0,0 +1,2 @@
-+1st line 2nd file
-+2nd line 2nd file
-EOF
-cat >.cat_expect <<EOF
-secondfile:
-1st line 2nd file
-2nd line 2nd file
-EOF
 test_expect_success 'redoing changes adding them without commit them should succeed' '
+	>.diff_expect &&
+	cat >.cached_expect <<-EOF &&
+	diff --git a/first b/first
+	deleted file mode 100644
+	index $head5p2f..0000000
+	--- a/first
+	+++ /dev/null
+	@@ -1,2 +0,0 @@
+	-1st file
+	-2nd line 1st file
+	diff --git a/second b/second
+	deleted file mode 100644
+	index $head5p1s..0000000
+	--- a/second
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-2nd file
+	diff --git a/secondfile b/secondfile
+	new file mode 100644
+	index 0000000..$head5s
+	--- /dev/null
+	+++ b/secondfile
+	@@ -0,0 +1,2 @@
+	+1st line 2nd file
+	+2nd line 2nd file
+	EOF
+	cat >.cat_expect <<-\EOF &&
+	secondfile:
+	1st line 2nd file
+	2nd line 2nd file
+	EOF
 	git rm first &&
 	git mv second secondfile &&
 
@@ -288,46 +288,45 @@ test_expect_success 'redoing changes adding them without commit them should succ
 	check_changes $head5p2
 '
 
-cat >.diff_expect <<EOF
-diff --git a/first b/first
-deleted file mode 100644
-index $head5p2f..0000000
---- a/first
-+++ /dev/null
-@@ -1,2 +0,0 @@
--1st file
--2nd line 1st file
-diff --git a/second b/second
-deleted file mode 100644
-index $head5p1s..0000000
---- a/second
-+++ /dev/null
-@@ -1 +0,0 @@
--2nd file
-EOF
->.cached_expect
-cat >.cat_expect <<EOF
-secondfile:
-1st line 2nd file
-2nd line 2nd file
-EOF
 test_expect_success '--mixed reset to HEAD should unadd the files' '
+	cat >.diff_expect <<-EOF &&
+	diff --git a/first b/first
+	deleted file mode 100644
+	index $head5p2f..0000000
+	--- a/first
+	+++ /dev/null
+	@@ -1,2 +0,0 @@
+	-1st file
+	-2nd line 1st file
+	diff --git a/second b/second
+	deleted file mode 100644
+	index $head5p1s..0000000
+	--- a/second
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-2nd file
+	EOF
+	>.cached_expect &&
+	cat >.cat_expect <<-\EOF &&
+	secondfile:
+	1st line 2nd file
+	2nd line 2nd file
+	EOF
 	git reset &&
 	check_changes $head5p2 &&
 	test "$(git rev-parse ORIG_HEAD)" = $head5p2
 '
 
->.diff_expect
->.cached_expect
-cat >.cat_expect <<EOF
-secondfile:
-1st line 2nd file
-2nd line 2nd file
-EOF
 test_expect_success 'redoing the last two commits should succeed' '
+	>.diff_expect &&
+	>.cached_expect &&
+	cat >.cat_expect <<-\EOF &&
+	secondfile:
+	1st line 2nd file
+	2nd line 2nd file
+	EOF
 	git add secondfile &&
 	git reset --hard $head5p2 &&
-
 	git rm first &&
 	git mv second secondfile &&
 	git commit -a -m "remove 1st and rename 2nd" &&
@@ -340,15 +339,15 @@ test_expect_success 'redoing the last two commits should succeed' '
 	check_changes $head5
 '
 
->.diff_expect
->.cached_expect
-cat >.cat_expect <<EOF
-secondfile:
-1st line 2nd file
-2nd line 2nd file
-3rd line in branch2
-EOF
 test_expect_success '--hard reset to HEAD should clear a failed merge' '
+	>.diff_expect &&
+	>.cached_expect &&
+	cat >.cat_expect <<-\EOF &&
+	secondfile:
+	1st line 2nd file
+	2nd line 2nd file
+	3rd line in branch2
+	EOF
 	git branch branch1 &&
 	git branch branch2 &&
 
@@ -366,14 +365,14 @@ test_expect_success '--hard reset to HEAD should clear a failed merge' '
 	check_changes $head3
 '
 
->.diff_expect
->.cached_expect
-cat >.cat_expect <<EOF
-secondfile:
-1st line 2nd file
-2nd line 2nd file
-EOF
 test_expect_success '--hard reset to ORIG_HEAD should clear a fast-forward merge' '
+	>.diff_expect &&
+	>.cached_expect &&
+	cat >.cat_expect <<-\EOF &&
+	secondfile:
+	1st line 2nd file
+	2nd line 2nd file
+	EOF
 	git reset --hard HEAD^ &&
 	check_changes $head5 &&
 
@@ -460,12 +459,11 @@ test_expect_success 'resetting an unmodified path is a no-op' '
 	git diff-index --cached --exit-code HEAD
 '
 
-cat >expect <<EOF
-Unstaged changes after reset:
-M	file2
-EOF
-
 test_expect_success '--mixed refreshes the index' '
+	cat >expect <<-\EOF &&
+	Unstaged changes after reset:
+	M	file2
+	EOF
 	echo 123 >>file2 &&
 	git reset --mixed HEAD >output &&
 	test_i18ncmp expect output
