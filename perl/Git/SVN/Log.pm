@@ -1,6 +1,6 @@
 package Git::SVN::Log;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Git::SVN::Utils qw(fatal);
 use Git qw(command
            command_oneline

@@ -1,7 +1,7 @@
 package Git::SVN::Editor;
 use vars qw/@ISA $_rmdir $_cp_similarity $_find_copies_harder $_rename_limit/;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use SVN::Core;
 use SVN::Delta;
 use Carp qw/croak/;
