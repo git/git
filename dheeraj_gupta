@@ -1,0 +1,11 @@
+This topic branch re-adds the deprecated --stdin/-z options to `git
+reset`. Those patches were overridden by a different set of options in
+the upstream Git project before we could propose `--stdin`.
+
+We offered this in MinGit to applications that wanted a safer way to
+pass lots of pathspecs to Git, and these applications will need to be
+adjusted.
+
+Instead of `--stdin`, `--pathspec-from-file=-` should be used, and
+instead of `-z`, `--pathspec-file-nul`.
+
