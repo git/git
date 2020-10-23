@@ -76,20 +76,20 @@ test_expect_success '--committer-date-is-author-date works with apply backend' '
 	test_ctime_is_atime -1
 '
 
-test_expect_failure '--committer-date-is-author-date works with merge backend' '
+test_expect_success '--committer-date-is-author-date works with merge backend' '
 	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
 	git rebase -m --committer-date-is-author-date HEAD^ &&
 	test_ctime_is_atime -1
 '
 
-test_expect_failure '--committer-date-is-author-date works with rebase -r' '
+test_expect_success '--committer-date-is-author-date works with rebase -r' '
 	git checkout side &&
 	GIT_AUTHOR_DATE="@1234 +0300" git merge --no-ff commit3 &&
 	git rebase -r --root --committer-date-is-author-date &&
 	test_ctime_is_atime
 '
 
-test_expect_failure '--committer-date-is-author-date works when forking merge' '
+test_expect_success '--committer-date-is-author-date works when forking merge' '
 	git checkout side &&
 	GIT_AUTHOR_DATE="@1234 +0300" git merge --no-ff commit3 &&
 	PATH="./test-bin:$PATH" git rebase -r --root --strategy=test \
@@ -145,7 +145,7 @@ test_expect_success '--reset-author-date works with rebase -r' '
 	test_atime_is_ignored
 '
 
-test_expect_failure '--reset-author-date with --committer-date-is-author-date works' '
+test_expect_success '--reset-author-date with --committer-date-is-author-date works' '
 	test_must_fail git rebase -m --committer-date-is-author-date \
 		--reset-author-date --onto commit2^^ commit2^ commit3 &&
 	git checkout --theirs foo &&
