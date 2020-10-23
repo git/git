@@ -70,7 +70,7 @@ test_ctime_is_atime () {
 	test_cmp authortime committertime
 }
 
-test_expect_failure '--committer-date-is-author-date works with apply backend' '
+test_expect_success '--committer-date-is-author-date works with apply backend' '
 	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
 	git rebase --apply --committer-date-is-author-date HEAD^ &&
 	test_ctime_is_atime -1

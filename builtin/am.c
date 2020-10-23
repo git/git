@@ -161,7 +161,7 @@ static void am_state_init(struct am_state *state)
 	state->committer_name =
 		xmemdupz(id.name_begin, id.name_end - id.name_begin);
 	state->committer_email =
-		xmemdupz(id.mail_begin, id.mail_end - id.mail_end);
+		xmemdupz(id.mail_begin, id.mail_end - id.mail_begin);
 }
 
 /**
@@ -1595,7 +1595,7 @@ static void do_commit(const struct am_state *state)
 
 	if (state->committer_date_is_author_date)
 		committer = fmt_ident(state->committer_name,
-				      state->author_email, WANT_COMMITTER_IDENT,
+				      state->committer_email, WANT_COMMITTER_IDENT,
 				      state->ignore_date ? NULL
 							 : state->author_date,
 				      IDENT_STRICT);
