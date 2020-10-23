@@ -1,8 +1,0 @@
-(
-	foo &&
-# LINT: missing "&&" from 'bar'
-	bar
-	baz &&
-# LINT: final statement before closing ")" legitimately lacks "&&"
-	wop
-)

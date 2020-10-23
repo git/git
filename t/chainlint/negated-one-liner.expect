@@ -1,5 +1,0 @@
-! (foo && bar) &&
-! (foo && bar) >baz &&
-
-?!SEMI?!! (foo; bar) &&
-?!SEMI?!! (foo; bar) >baz

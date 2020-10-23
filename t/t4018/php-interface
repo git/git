@@ -1,4 +1,0 @@
-interface RIGHT
-{
-    public function foo($ChangeMe);
-}

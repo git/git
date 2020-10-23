@@ -1,4 +1,0 @@
-function RIGHT()
-{
-    return 'ChangeMe';
-}

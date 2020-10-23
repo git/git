@@ -1,3 +1,0 @@
-$ git diff --no-index --raw dir2 dir
-:000000 100644 0000000... 0000000... A	dir/sub
-$

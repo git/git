@@ -1,5 +1,0 @@
-print *, "Hello World?"
-
-DO10I = 1,10
-DO 10 I = 1,10
-DO 1 0 I = 1,10

@@ -1,9 +1,0 @@
-defmodule MyApp.RIGHT do
-  @moduledoc """
-  Foo bar
-  """
-
-  def ChangeMe(a) where is_map(a) do
-    a
-  end
-end

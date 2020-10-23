@@ -1,8 +1,0 @@
-defmodule Foo do
-  def fun(RIGHT) do
-     # Code
-     # Code
-     # Code
-     ChangeMe
-  end
-end

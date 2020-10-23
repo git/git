@@ -1,9 +1,0 @@
-From 1234567890123456789012345678901234567890 Mon Sep 17 00:00:00 2001
-From: "A U Thor" <somebody@example.com> (this is \(really\) a comment (honestly))
-Date: Sun, 25 May 2008 00:38:18 -0700
-Subject: [PATCH] testing comments
-
-
-
----
-patch

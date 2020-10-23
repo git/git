@@ -1,7 +1,0 @@
-class Foo:
-    async def RIGHT(self, x: int):
-        return [
-            1,
-            2,
-            ChangeMe,
-        ]

@@ -1,5 +1,0 @@
-RIGHT label.control-label {
-    margin:10px;   
-    padding:10px;
-    border : 10px ChangeMe #C6C6C6;
-}

@@ -1,4 +1,0 @@
-sub RIGHT
-{
-	print "ChangeMe\n";
-}

@@ -1,6 +1,0 @@
- Documentation/git-ls-tree.txt |   20 +-
- ls-tree.c                     |  333 +++++++++++++++++++++++------------------
- t/t3100-ls-tree-restrict.sh   |    3 
- tree.c                        |    2 
- tree.h                        |    1 
- 5 files changed, 199 insertions(+), 160 deletions(-)

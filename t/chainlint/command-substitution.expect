@@ -1,9 +1,0 @@
-(
-	foo &&
-	bar=$(gobble) &&
-	baz
->) &&
-(
-?!AMP?!	bar=$(gobble blocks)
-	baz
->)

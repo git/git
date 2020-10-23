@@ -1,3 +1,0 @@
-clean.requireForce::
-	A boolean to make git-clean do nothing unless given -f,
-	-i or -n.   Defaults to true.

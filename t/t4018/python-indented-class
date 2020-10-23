@@ -1,5 +1,0 @@
-if TYPE_CHECKING:
-    class RIGHT:
-        # comment
-        # another comment
-        # ChangeMe

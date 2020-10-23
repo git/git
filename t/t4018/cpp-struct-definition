@@ -1,9 +1,0 @@
-struct RIGHT {
-	unsigned
-	/* this bit field looks like a label and should not be picked up */
-		decoy_bitfield: 2,
-		more : 1;
-	int filler;
-
-	int ChangeMe;
-};

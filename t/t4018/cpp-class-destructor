@@ -1,4 +1,0 @@
-RIGHT::~RIGHT()
-{
-	ChangeMe;
-}

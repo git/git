@@ -1,9 +1,0 @@
-/ {
-	label_1: node1@ff00 {
-		RIGHT@deadf00,4000 {
-			boolean-prop1;
-
-			ChangeMe;
-		};
-	};
-};

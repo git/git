@@ -1,5 +1,0 @@
-pub(self) fn RIGHT<T>(x: &[T]) where T: Debug {
-    let _ = x;
-    // a comment
-    let a = ChangeMe;
-}

@@ -1,9 +1,0 @@
-(
-# LINT: line contains here-doc and opens multi-line $(...)
-	x=$(bobble <<-\END &&
-		fossil
-		vegetable
-		END
-		wiffle)
-	echo $x
-)

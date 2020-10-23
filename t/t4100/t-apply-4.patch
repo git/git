@@ -1,7 +1,0 @@
-ceede59ea90cebad52ba9c8263fef3fb6ef17593 (from 368f99d57e8ed17243f2e164431449d48bfca2fb)
-diff --git a/t/t0000-basic.sh b/t/t0000-basic.sh
-old mode 100644
-new mode 100755
-diff --git a/t/test-lib.sh b/t/test-lib.sh
-old mode 100644
-new mode 100755

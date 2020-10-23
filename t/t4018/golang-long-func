@@ -1,5 +1,0 @@
-func RIGHT(aVeryVeryVeryLongVariableName AVeryVeryVeryLongType,
-	anotherLongVariableName AnotherLongType) {
-	a := 5
-	b := ChangeMe
-}

@@ -1,5 +1,0 @@
-(
-	x=$(bobble &&
-?!AMP?!>>		wiffle)
-	echo $x
->)

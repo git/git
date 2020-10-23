@@ -1,4 +1,0 @@
-template<class T> int RIGHT(T arg)
-{
-	ChangeMe;
-}

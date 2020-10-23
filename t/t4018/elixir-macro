@@ -1,5 +1,0 @@
-defmacro foo(RIGHT) do
-  # Code
-  # Code
-  ChangeMe
-end

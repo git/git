@@ -1,8 +1,0 @@
-/ {
-	label_1: node1 {
-		RIGHT {
-			prop-array = <1>, <4>;
-			ChangeMe = <0xffeedd00>;
-		};
-	};
-};

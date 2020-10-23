@@ -1,3 +1,0 @@
-$ git diff --no-index --name-status -- dir2 dir
-A	dir/sub
-$

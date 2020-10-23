@@ -1,9 +1,0 @@
-Git v1.7.11.1 Release Notes
-===========================
-
-Fixes since v1.7.11
--------------------
-
- * The cross links in the HTML version of manual pages were broken.
-
-Also contains minor typofixes and documentation updates.

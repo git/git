@@ -1,5 +1,0 @@
-classdef RIGHT
-    properties
-        ChangeMe
-    end
-end

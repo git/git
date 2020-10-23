@@ -1,6 +1,0 @@
-(
-# LINT: "|| exit {n}" valid subshell escape without hurting &&-chain
-	foo || exit 1
-	bar &&
-	baz
-)

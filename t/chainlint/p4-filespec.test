@@ -1,5 +1,0 @@
-(
-# LINT: Perforce revspec in filespec not misinterpreted as in-line comment
-	p4 print -1 //depot/fiddle#42 >file &&
-	foobar
-)

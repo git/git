@@ -1,8 +1,0 @@
-public class Beer
-{
-	int special;
-	public static void main(String RIGHT[])
-	{
-		System.out.print("ChangeMe");
-	}
-}

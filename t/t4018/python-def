@@ -1,4 +1,0 @@
-def RIGHT(pi: int = 3.14):
-    while True:
-        break
-    return ChangeMe()

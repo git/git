@@ -1,5 +1,0 @@
-#[derive(Debug)]
-pub(super) struct RIGHT<'a> {
-    name: &'a str,
-    age: ChangeMe,
-}

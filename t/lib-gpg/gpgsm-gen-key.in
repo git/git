@@ -1,8 +1,0 @@
-Key-Type: RSA
-Key-Length: 2048
-Key-Usage: sign
-Serial: random
-Name-DN: CN=C O Mitter, O=Example, SN=C O, GN=Mitter
-Name-Email: committer@example.com
-Not-Before: 1970-01-01 00:00:00
-Not-After: 3000-01-01 00:00:00

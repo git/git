@@ -1,8 +1,0 @@
-type Test struct {
-	a Type
-}
-
-func (t *Test) RIGHT(a Type) (Type, error) {
-	t.a = a
-	return ChangeMe, nil
-}

@@ -1,4 +1,0 @@
-Git v1.7.4.5 Release Notes
-==========================
-
-This contains only minor documentation fixes accumulated since 1.7.4.4.

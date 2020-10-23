@@ -1,6 +1,0 @@
-mailinfo.scissors::
-	If true, makes linkgit:git-mailinfo[1] (and therefore
-	linkgit:git-am[1]) act by default as if the --scissors option
-	was provided on the command-line. When active, this features
-	removes everything from the message body before a scissors
-	line (i.e. consisting mainly of ">8", "8<" and "-").

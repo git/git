@@ -1,4 +1,0 @@
-This teaches mailinfo the scissors -- >8 -- mark; the command ignores
-everything before it in the message body.
-
-Signed-off-by: Junio C Hamano <gitster@pobox.com>

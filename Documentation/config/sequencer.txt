@@ -1,5 +1,0 @@
-sequence.editor::
-	Text editor used by `git rebase -i` for editing the rebase instruction file.
-	The value is meant to be interpreted by the shell when it is used.
-	It can be overridden by the `GIT_SEQUENCE_EDITOR` environment variable.
-	When not configured the default commit message editor is used instead.

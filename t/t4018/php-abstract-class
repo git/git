@@ -1,4 +1,0 @@
-abstract class RIGHT
-{
-    const FOO = 'ChangeMe';
-}
