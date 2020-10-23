@@ -375,9 +375,9 @@ test_expect_success 'git branch --column -v should fail' '
 	test_must_fail git branch --column -v
 '
 
-test_expect_success 'git branch -v with column.ui ignored' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'git branch -v with column.ui ignored' '
 	git config column.ui column &&
-	COLUMNS=80 git branch -v | cut -c -9 | sed "s/ *$//" >actual &&
+	COLUMNS=80 git branch -v | cut -c -8 | sed "s/ *$//" >actual &&
 	git config --unset column.ui &&
 	cat >expect <<\EOF &&
   a/b/c
