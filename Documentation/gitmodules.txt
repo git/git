@@ -98,6 +98,14 @@ submodule.<name>.shallow::
 	shallow clone (with a history depth of 1) unless the user explicitly
 	asks for a non-shallow clone.
 
+NOTES
+-----
+
+Note that Git does not allow the `.gitmodules` file within a working
+tree to be a symbolic link, and will refuse to check out such a tree
+entry. This keeps behavior consistent when the file is accessed from the
+index or a tree versus from the filesystem, and helps Git reliably
+enforce security checks of the file contents.
 
 EXAMPLES
 --------
