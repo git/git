@@ -3498,7 +3498,7 @@ if [[ -n ${ZSH_VERSION-} ]] &&
 
 		local IFS=$'\n'
 		compset -P '*[=:]'
-		compadd -Q -- ${=1} && _ret=0
+		compadd -Q -- ${${=1}% } && _ret=0
 	}
 
 	__gitcomp_nl ()
