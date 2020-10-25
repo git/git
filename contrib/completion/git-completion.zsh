@@ -4,13 +4,6 @@
 #
 # Copyright (c) 2012-2013 Felipe Contreras <felipe.contreras@gmail.com>
 #
-# You need git's bash completion script installed somewhere, by default it
-# would be the location bash-completion uses.
-#
-# If your script is somewhere else, you can configure it on your ~/.zshrc:
-#
-#  zstyle ':completion:*:*:git:*' script ~/.git-completion.bash
-#
 # The recommended way to install this script is to make a copy of it as a
 # file named '_git' inside any directory in your fpath.
 #
@@ -18,6 +11,15 @@
 # and then add the following to your ~/.zshrc file:
 #
 #  fpath=(~/.zsh $fpath)
+#
+# You need git's bash completion script installed. By default bash-completion's
+# location will be used (e.g. /usr/share/bash-completion/completions/git).
+#
+# If your bash completion script is somewhere else, you can specify the
+# location in your ~/.zshrc:
+#
+#  zstyle ':completion:*:*:git:*' script ~/.git-completion.bash
+#
 
 complete ()
 {
