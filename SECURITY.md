@@ -13,11 +13,7 @@ currently being supported with security updates.
 |4.0.x| :x:               |
 
 
-
-## Reporting a Vulnerability
-
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Use this section to tell people how to report a 
+Các bác sĩ cho biết 
+Cho họ biết nơi để đi, tần suất họ có thể mong đợi nhận được thông tin cập nhật 
+lỗ hổng được báo cáo, điều gì sẽ xảy ra nếu lỗ hổng được chấp nhận 
