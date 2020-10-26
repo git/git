@@ -141,7 +141,11 @@ test_perf_w_drop_caches () {
 }
 
 test_fsmonitor_suite() {
-	DESC="fsmonitor=$INTEGRATION_SCRIPT"
+	if test -n "$INTEGRATION_SCRIPT"; then
+		DESC="fsmonitor=$(basename $INTEGRATION_SCRIPT)"
+	else
+		DESC="fsmonitor=disabled"
+	fi
 
 	test_perf_w_drop_caches "status ($DESC)" '
 		git status
