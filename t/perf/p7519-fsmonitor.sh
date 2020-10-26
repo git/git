@@ -165,6 +165,11 @@ test_fsmonitor_suite() {
 		git status -uall
 	'
 
+	test_perf_w_drop_caches "status (dirty) ($DESC)" '
+		git ls-files | head -100000 | xargs -d "\n" touch -h &&
+		git status
+	'
+
 	test_perf_w_drop_caches "diff ($DESC)" '
 		git diff
 	'
