@@ -3,6 +3,7 @@
 test_description='merge-recursive backend test'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-merge.sh
 
 test_expect_success 'setup 1' '
 
@@ -641,7 +642,7 @@ test_expect_success 'merge-recursive copy vs. rename' '
 	test_cmp expected actual
 '
 
-test_expect_failure 'merge-recursive rename vs. rename/symlink' '
+test_expect_merge_algorithm failure success 'merge-recursive rename vs. rename/symlink' '
 
 	git checkout -f rename &&
 	git merge rename-ln &&

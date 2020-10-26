@@ -23,6 +23,7 @@ test_description="merge cases"
 #                     files that might be renamed into each other's paths.)
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-merge.sh
 
 
 ###########################################################################
@@ -666,7 +667,7 @@ test_setup_4a () {
 #   correct requires doing the merge in-memory first, then realizing that no
 #   updates to the file are necessary, and thus that we can just leave the path
 #   alone.
-test_expect_failure '4a: Change on A, change on B subset of A, dirty mods present' '
+test_expect_merge_algorithm failure success '4a: Change on A, change on B subset of A, dirty mods present' '
 	test_setup_4a &&
 	(
 		cd 4a &&

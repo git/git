@@ -26,6 +26,7 @@ test_description="recursive merge with directory renames"
 #                     files that might be renamed into each other's paths.)
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-merge.sh
 
 
 ###########################################################################
@@ -1339,7 +1340,7 @@ test_setup_6b1 () {
 	)
 }
 
-test_expect_failure '6b1: Same renames done on both sides, plus another rename' '
+test_expect_merge_algorithm failure success '6b1: Same renames done on both sides, plus another rename' '
 	test_setup_6b1 &&
 	(
 		cd 6b1 &&
@@ -1412,7 +1413,7 @@ test_setup_6b2 () {
 	)
 }
 
-test_expect_failure '6b2: Same rename done on both sides' '
+test_expect_merge_algorithm failure success '6b2: Same rename done on both sides' '
 	test_setup_6b2 &&
 	(
 		cd 6b2 &&
@@ -3471,7 +3472,7 @@ test_setup_10e () {
 	)
 }
 
-test_expect_failure '10e: Does git complain about untracked file that is not really in the way?' '
+test_expect_merge_algorithm failure success '10e: Does git complain about untracked file that is not really in the way?' '
 	test_setup_10e &&
 	(
 		cd 10e &&
@@ -4104,7 +4105,7 @@ test_setup_12b1 () {
 	)
 }
 
-test_expect_failure '12b1: Moving two directory hierarchies into each other' '
+test_expect_merge_algorithm failure success '12b1: Moving two directory hierarchies into each other' '
 	test_setup_12b1 &&
 	(
 		cd 12b1 &&
@@ -4272,7 +4273,7 @@ test_setup_12c1 () {
 	)
 }
 
-test_expect_failure '12c1: Moving one directory hierarchy into another w/ content merge' '
+test_expect_merge_algorithm failure success '12c1: Moving one directory hierarchy into another w/ content merge' '
 	test_setup_12c1 &&
 	(
 		cd 12c1 &&
@@ -4632,7 +4633,7 @@ test_setup_12f () {
 	)
 }
 
-test_expect_failure '12f: Trivial directory resolve, caching, all kinds of fun' '
+test_expect_merge_algorithm failure success '12f: Trivial directory resolve, caching, all kinds of fun' '
 	test_setup_12f &&
 	(
 		cd 12f &&
