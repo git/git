@@ -65,8 +65,8 @@ test_expect_success '--ignore-whitespace is remembered when continuing' '
 '
 
 test_ctime_is_atime () {
-	git log $1 --format=%ai >authortime &&
-	git log $1 --format=%ci >committertime &&
+	git log $1 --format="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> %ai" >authortime &&
+	git log $1 --format="%cn <%ce> %ci" >committertime &&
 	test_cmp authortime committertime
 }
 
