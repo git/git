@@ -1177,10 +1177,18 @@ test_expect_success '5d: Directory/file/file conflict due to directory rename' '
 		git ls-files -u >out &&
 		test_line_count = 1 out &&
 		git ls-files -o >out &&
-		test_line_count = 2 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			test_line_count = 1 out &&
 
-		git rev-parse >actual \
-			:0:y/b :0:y/c :0:z/d :0:y/f :2:y/d :0:y/d/e &&
+			git rev-parse >actual \
+			    :0:y/b :0:y/c :0:z/d :0:y/f :2:y/d~HEAD :0:y/d/e
+		else
+			test_line_count = 2 out &&
+
+			git rev-parse >actual \
+			    :0:y/b :0:y/c :0:z/d :0:y/f :2:y/d      :0:y/d/e
+		fi &&
 		git rev-parse >expect \
 			 O:z/b  O:z/c  B:z/d  B:z/f  A:y/d  B:y/d/e &&
 		test_cmp expect actual &&
@@ -2017,17 +2025,32 @@ test_expect_success '7e: transitive rename in rename/delete AND dirs in the way'
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*x/d.*y/d" out &&
 
-		git ls-files -s >out &&
-		test_line_count = 5 out &&
-		git ls-files -u >out &&
-		test_line_count = 1 out &&
-		git ls-files -o >out &&
-		test_line_count = 2 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git ls-files -s >out &&
+			test_line_count = 6 out &&
+			git ls-files -u >out &&
+			test_line_count = 2 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
 
-		git rev-parse >actual \
-			:0:x/d/f :0:y/d/g :0:y/b :0:y/c :3:y/d &&
-		git rev-parse >expect \
-			 A:x/d/f  A:y/d/g  O:z/b  O:z/c  O:x/d &&
+			git rev-parse >actual \
+				:0:x/d/f :0:y/d/g :0:y/b :0:y/c :1:y/d~B^0 :3:y/d~B^0 &&
+			git rev-parse >expect \
+				 A:x/d/f  A:y/d/g  O:z/b  O:z/c  O:x/d      O:x/d
+		else
+			git ls-files -s >out &&
+			test_line_count = 5 out &&
+			git ls-files -u >out &&
+			test_line_count = 1 out &&
+			git ls-files -o >out &&
+			test_line_count = 2 out &&
+
+			git rev-parse >actual \
+				:0:x/d/f :0:y/d/g :0:y/b :0:y/c :3:y/d &&
+			git rev-parse >expect \
+				 A:x/d/f  A:y/d/g  O:z/b  O:z/c  O:x/d
+		fi &&
 		test_cmp expect actual &&
 
 		git hash-object y/d~B^0 >actual &&
