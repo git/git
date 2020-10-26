@@ -128,8 +128,7 @@ setup_for_fsmonitor() {
 	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
 	git update-index --fsmonitor 2>error &&
 	cat error &&
-	[ ! -s error ] && # ensure no silent error
-	git status  # Warm caches
+	[ ! -s error ] # ensure no silent error
 }
 
 test_perf_w_drop_caches () {
@@ -146,6 +145,11 @@ test_fsmonitor_suite() {
 	else
 		DESC="fsmonitor=disabled"
 	fi
+
+	test_expect_success "test_initialization" '
+		git reset --hard &&
+		git status  # Warm caches
+	'
 
 	test_perf_w_drop_caches "status ($DESC)" '
 		git status
