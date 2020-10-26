@@ -94,7 +94,13 @@ test_expect_success "one time repo setup" '
 	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
 	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
 	git add 1_file 10_files 100_files 1000_files 10000_files &&
-	git commit -m "Add files"
+	git commit -m "Add files" &&
+
+	# If Watchman exists, watch the work tree and attempt a query.
+	if test_have_prereq WATCHMAN; then
+		watchman watch "$GIT_WORK_TREE" &&
+		watchman watch-list | grep -q -F "$GIT_WORK_TREE"
+	fi
 '
 
 test_expect_success "setup for fsmonitor" '
@@ -105,17 +111,13 @@ test_expect_success "setup for fsmonitor" '
 	else
 		#
 		# Choose integration script based on existence of Watchman.
-		# If Watchman exists, watch the work tree and attempt a query.
-		# If everything succeeds, use Watchman integration script,
-		# else fall back to an empty integration script.
+		# Fall back to an empty integration script.
 		#
 		mkdir .git/hooks &&
 		if test_have_prereq WATCHMAN
 		then
 			INTEGRATION_SCRIPT=".git/hooks/fsmonitor-watchman" &&
-			cp "$TEST_DIRECTORY/../templates/hooks--fsmonitor-watchman.sample" "$INTEGRATION_SCRIPT" &&
-			watchman watch "$GIT_WORK_TREE" &&
-			watchman watch-list | grep -q -F "$GIT_WORK_TREE"
+			cp "$TEST_DIRECTORY/../templates/hooks--fsmonitor-watchman.sample" "$INTEGRATION_SCRIPT"
 		else
 			INTEGRATION_SCRIPT=".git/hooks/fsmonitor-empty" &&
 			write_script "$INTEGRATION_SCRIPT"<<-\EOF
