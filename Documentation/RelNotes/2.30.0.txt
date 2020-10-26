@@ -1,0 +1,22 @@
+Git 2.30 Release Notes
+======================
+
+Updates since v2.29
+-------------------
+
+UI, Workflows & Features
+
+
+Performance, Internal Implementation, Development Support etc.
+
+
+Fixes since v2.29
+-----------------
+
+ * In 2.29, "--committer-date-is-author-date" option of "rebase" and
+   "am" subcommands lost the e-mail address by mistake, which has been
+   corrected.
+   (merge 5f35edd9d7 jk/committer-date-is-author-date-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
