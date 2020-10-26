@@ -4725,20 +4725,22 @@ test_expect_success '12e: Rename/merge subdir into the root, variant 2' '
 #              folder/subdir/newsubdir/e_Merge2
 #              folder/subdir/tweaked/{h,Makefile_SUB_Merge1,newfile.py}
 #              folder/unchanged/<LOTS OF FILES>
-#
-# Notes: This testcase happens to exercise lots of the
-#        optimization-specific codepaths in merge-ort, and also
-#        demonstrated a failing of the directory rename detection algorithm
-#        in merge-recursive; newfile.c should not get pushed into
-#        folder/subdir/newsubdir/, yet merge-recursive put it there because
-#        the rename of dir/subdir/{a,b,c,d} -> folder/subdir/{a,b,c,d}
-#        looks like
-#            dir/ -> folder/,
-#        whereas the rename of dir/subdir/e -> folder/subdir/newsubdir/e
-#        looks like
-#            dir/subdir/ -> folder/subdir/newsubdir/
-#        and if we note that newfile.c is found in dir/subdir/, we might
-#        overlook the dir/ -> folder/ rule that has more weight.
+# Things being checked here:
+#   1. dir/subdir/newfile.c does not get pushed into folder/subdir/newsubdir/.
+#      dir/subdir/{a,b,c,d} -> folder/subdir/{a,b,c,d} looks like
+#          dir/ -> folder/,
+#      whereas dir/subdir/e -> folder/subdir/newsubdir/e looks like
+#          dir/subdir/ -> folder/subdir/newsubdir/
+#      and if we note that newfile.c is found in dir/subdir/, we might overlook
+#      the dir/ -> folder/ rule that has more weight.  Older git versions did
+#      this.
+#   2. The code to do trivial directory resolves.  Note that
+#      dir/subdir/unchanged/ is unchanged and can be deleted, and files in the
+#      new folder/subdir/unchanged/ are not needed as a target to any renames.
+#      Thus, in the second collect_merge_info_callback() we can just resolve
+#      these two directories trivially without recursing.)
+#   3. Exercising the codepaths for caching renames and deletes from one cherry
+#      pick and re-applying them in the subsequent one.
 
 test_setup_12f () {
 	test_create_repo 12f &&
@@ -4803,7 +4805,7 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 		git checkout A^0 &&
 		git branch Bmod B &&
 
-		git -c merge.directoryRenames=true rebase A Bmod &&
+		GIT_TRACE2_PERF="$(pwd)/trace.output" git -c merge.directoryRenames=true rebase A Bmod &&
 
 		echo Checking the pick of B1... &&
 
@@ -4884,7 +4886,12 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 		test_seq  2 12 >e_Merge2 &&
 		git hash-object e_Merge2 >expect &&
 		git rev-parse Bmod:folder/subdir/newsubdir/e >actual &&
-		test_cmp expect actual
+		test_cmp expect actual &&
+
+		grep region_enter.*collect_merge_info trace.output >collect &&
+		test_line_count = 4 collect &&
+		grep region_enter.*process_entries$ trace.output >process &&
+		test_line_count = 2 process
 	)
 '
 
