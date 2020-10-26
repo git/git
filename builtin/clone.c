@@ -32,6 +32,7 @@
 #include "connected.h"
 #include "packfile.h"
 #include "list-objects-filter-options.h"
+#include "submodule.h"
 
 /*
  * Overall FIXMEs:
@@ -71,6 +72,8 @@ static struct list_objects_filter_options filter_options;
 static struct string_list server_options = STRING_LIST_INIT_NODUP;
 static int option_remote_submodules;
 
+static int recurse_submodules_option_given;
+
 static int recurse_submodules_cb(const struct option *opt,
 				 const char *arg, int unset)
 {
@@ -81,7 +84,7 @@ static int recurse_submodules_cb(const struct option *opt,
 	else
 		string_list_append((struct string_list *)opt->value,
 				   (const char *)opt->defval);
-
+	recurse_submodules_option_given = 1;
 	return 0;
 }
 
@@ -941,6 +944,13 @@ static int path_exists(const char *path)
 	return !stat(path, &sb);
 }
 
+static int git_clone_config(const char *var, const char *value, void *cb)
+{
+	if (starts_with(var, "submodule."))
+		return git_default_submodule_config(var, value, NULL);
+	return git_default_config(var, value, cb);
+}
+
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
 	int is_bundle = 0, is_local;
@@ -1126,7 +1136,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	write_config(&option_config);
 
-	git_config(git_default_config, NULL);
+	git_config(git_clone_config, NULL);
+	if (!recurse_submodules_option_given && should_update_submodules())
+		string_list_append(&option_recurse_submodules, ".");
 
 	if (option_bare) {
 		if (option_mirror)
