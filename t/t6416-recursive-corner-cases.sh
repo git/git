@@ -786,7 +786,7 @@ test_expect_success 'merge of D1 & E3 succeeds' '
 	)
 '
 
-test_expect_success 'merge of D1 & E4 notifies user a and a2 are related' '
+test_expect_merge_algorithm failure success 'merge of D1 & E4 puts merge of a and a2 in both a and a2' '
 	test_when_finished "git -C directory-file reset --hard" &&
 	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
@@ -804,7 +804,7 @@ test_expect_success 'merge of D1 & E4 notifies user a and a2 are related' '
 		test_line_count = 1 out &&
 
 		git rev-parse >expect                  \
-			A:ignore-me  B:a   D1:a  E4:a2 &&
+			A:ignore-me  B:a   E4:a2  E4:a2 &&
 		git rev-parse   >actual                \
 			:0:ignore-me :1:a~Temporary\ merge\ branch\ 2  :2:a  :3:a2 &&
 		test_cmp expect actual
