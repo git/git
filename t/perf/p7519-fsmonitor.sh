@@ -103,7 +103,7 @@ test_expect_success "one time repo setup" '
 	fi
 '
 
-test_expect_success "setup for fsmonitor" '
+setup_for_fsmonitor() {
 	# set INTEGRATION_SCRIPT depending on the environment
 	if test -n "$GIT_PERF_7519_FSMONITOR"
 	then
@@ -130,7 +130,7 @@ test_expect_success "setup for fsmonitor" '
 	cat error &&
 	[ ! -s error ] && # ensure no silent error
 	git status  # Warm caches
-'
+}
 
 test_perf_w_drop_caches () {
 	if test -n "$GIT_PERF_7519_DROP_CACHE"; then
@@ -187,6 +187,10 @@ test_fsmonitor_suite() {
 		git add  --all
 	'
 }
+
+test_expect_success "setup for fsmonitor" '
+	setup_for_fsmonitor
+'
 
 test_fsmonitor_suite
 
