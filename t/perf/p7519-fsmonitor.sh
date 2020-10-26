@@ -94,7 +94,7 @@ test_expect_success "one time repo setup" '
 	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
 	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
 	git add 1_file 10_files 100_files 1000_files 10000_files &&
-	git commit -m "Add files" &&
+	git commit -qm "Add files" &&
 
 	# If Watchman exists, watch the work tree and attempt a query.
 	if test_have_prereq WATCHMAN; then
