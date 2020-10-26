@@ -141,43 +141,45 @@ test_perf_w_drop_caches () {
 }
 
 test_fsmonitor_suite() {
-	test_perf_w_drop_caches "status (fsmonitor=$INTEGRATION_SCRIPT)" '
+	DESC="fsmonitor=$INTEGRATION_SCRIPT"
+
+	test_perf_w_drop_caches "status ($DESC)" '
 		git status
 	'
 
-	test_perf_w_drop_caches "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "status -uno ($DESC)" '
 		git status -uno
 	'
 
-	test_perf_w_drop_caches "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "status -uall ($DESC)" '
 		git status -uall
 	'
 
-	test_perf_w_drop_caches "diff (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "diff ($DESC)" '
 		git diff
 	'
 
-	test_perf_w_drop_caches "diff -- 0_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "diff -- 0_files ($DESC)" '
 		git diff -- 1_file
 	'
 
-	test_perf_w_drop_caches "diff -- 10_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "diff -- 10_files ($DESC)" '
 		git diff -- 10_files
 	'
 
-	test_perf_w_drop_caches "diff -- 100_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "diff -- 100_files ($DESC)" '
 		git diff -- 100_files
 	'
 
-	test_perf_w_drop_caches "diff -- 1000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "diff -- 1000_files ($DESC)" '
 		git diff -- 1000_files
 	'
 
-	test_perf_w_drop_caches "diff -- 10000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "diff -- 10000_files ($DESC)" '
 		git diff -- 10000_files
 	'
 
-	test_perf_w_drop_caches "add (fsmonitor=$INTEGRATION_SCRIPT)" '
+	test_perf_w_drop_caches "add ($DESC)" '
 		git add  --all
 	'
 }
