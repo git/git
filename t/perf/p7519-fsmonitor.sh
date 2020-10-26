@@ -68,7 +68,7 @@ then
 	fi
 fi
 
-test_expect_success "setup for fsmonitor" '
+test_expect_success "one time repo setup" '
 	# set untrackedCache depending on the environment
 	if test -n "$GIT_PERF_7519_UNTRACKED_CACHE"
 	then
@@ -88,6 +88,16 @@ test_expect_success "setup for fsmonitor" '
 		git config core.splitIndex "$GIT_PERF_7519_SPLIT_INDEX"
 	fi &&
 
+	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
+	for i in $(test_seq 1 10); do touch 10_files/$i; done &&
+	for i in $(test_seq 1 100); do touch 100_files/$i; done &&
+	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
+	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
+	git add 1_file 10_files 100_files 1000_files 10000_files &&
+	git commit -m "Add files"
+'
+
+test_expect_success "setup for fsmonitor" '
 	# set INTEGRATION_SCRIPT depending on the environment
 	if test -n "$GIT_PERF_7519_FSMONITOR"
 	then
@@ -115,13 +125,6 @@ test_expect_success "setup for fsmonitor" '
 
 	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
 	git update-index --fsmonitor &&
-	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
-	for i in $(test_seq 1 10); do touch 10_files/$i; done &&
-	for i in $(test_seq 1 100); do touch 100_files/$i; done &&
-	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
-	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
-	git add 1_file 10_files 100_files 1000_files 10000_files &&
-	git commit -m "Add files" &&
 	git status  # Warm caches
 '
 
