@@ -126,7 +126,9 @@ test_expect_success "setup for fsmonitor" '
 	fi &&
 
 	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
-	git update-index --fsmonitor &&
+	git update-index --fsmonitor 2>error &&
+	cat error &&
+	[ ! -s error ] && # ensure no silent error
 	git status  # Warm caches
 '
 
