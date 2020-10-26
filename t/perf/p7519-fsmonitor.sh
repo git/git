@@ -22,7 +22,9 @@ test_description="Test core.fsmonitor"
 #
 # GIT_PERF_7519_UNTRACKED_CACHE: used to configure core.untrackedCache
 # GIT_PERF_7519_SPLIT_INDEX: used to configure core.splitIndex
-# GIT_PERF_7519_FSMONITOR: used to configure core.fsMonitor
+# GIT_PERF_7519_FSMONITOR: used to configure core.fsMonitor. May be an
+#   absolute path to an integration. May be a space delimited list of
+#   absolute paths to integrations.
 #
 # The big win for using fsmonitor is the elimination of the need to scan the
 # working directory looking for changed and untracked files. If the file
@@ -105,9 +107,9 @@ test_expect_success "one time repo setup" '
 
 setup_for_fsmonitor() {
 	# set INTEGRATION_SCRIPT depending on the environment
-	if test -n "$GIT_PERF_7519_FSMONITOR"
+	if test -n "$INTEGRATION_PATH"
 	then
-		INTEGRATION_SCRIPT="$GIT_PERF_7519_FSMONITOR"
+		INTEGRATION_SCRIPT="$INTEGRATION_PATH"
 	else
 		#
 		# Choose integration script based on existence of Watchman.
@@ -192,11 +194,15 @@ test_fsmonitor_suite() {
 	'
 }
 
-test_expect_success "setup for fsmonitor" '
-	setup_for_fsmonitor
-'
-
-test_fsmonitor_suite
+if test -n "$GIT_PERF_7519_FSMONITOR"; then
+	for INTEGRATION_PATH in $GIT_PERF_7519_FSMONITOR; do
+		test_expect_success "setup for fsmonitor $INTEGRATION_PATH" 'setup_for_fsmonitor'
+		test_fsmonitor_suite
+	done
+else
+	test_expect_success "setup for fsmonitor" 'setup_for_fsmonitor'
+	test_fsmonitor_suite
+fi
 
 test_expect_success "setup without fsmonitor" '
 	unset INTEGRATION_SCRIPT &&
