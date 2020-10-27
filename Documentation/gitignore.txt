@@ -149,6 +149,11 @@ not tracked by Git remain untracked.
 To stop tracking a file that is currently tracked, use
 'git rm --cached'.
 
+Note that Git does not allow a `.gitignore` file within the working tree
+to be a symbolic link, and will refuse to check out such a tree entry.
+This keeps behavior consistent when the file is accessed from the index
+or a tree versus from the filesystem.
+
 EXAMPLES
 --------
 

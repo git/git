@@ -172,9 +172,22 @@ static struct test_data dirname_data[] = {
 	{ NULL,              NULL     }
 };
 
-static int is_dotgitmodules(const char *path)
+static int check_dotgitx(const char *x, const char **argv,
+			 int (*is_hfs)(const char *),
+			 int (*is_ntfs)(const char *))
 {
-	return is_hfs_dotgitmodules(path) || is_ntfs_dotgitmodules(path);
+	int res = 0, expect = 1;
+	for (; *argv; argv++) {
+		if (!strcmp("--not", *argv))
+			expect = !expect;
+		else if (expect != (is_hfs(*argv) || is_ntfs(*argv)))
+			res = error("'%s' is %s.git%s", *argv,
+				    expect ? "not " : "", x);
+		else
+			fprintf(stderr, "ok: '%s' is %s.git%s\n",
+				*argv, expect ? "" : "not ", x);
+	}
+	return !!res;
 }
 
 static int cmp_by_st_size(const void *a, const void *b)
@@ -382,17 +395,19 @@ int cmd__path_utils(int argc, const char **argv)
 		return test_function(dirname_data, posix_dirname, argv[1]);
 
 	if (argc > 2 && !strcmp(argv[1], "is_dotgitmodules")) {
-		int res = 0, expect = 1, i;
-		for (i = 2; i < argc; i++)
-			if (!strcmp("--not", argv[i]))
-				expect = !expect;
-			else if (expect != is_dotgitmodules(argv[i]))
-				res = error("'%s' is %s.gitmodules", argv[i],
-					    expect ? "not " : "");
-			else
-				fprintf(stderr, "ok: '%s' is %s.gitmodules\n",
-					argv[i], expect ? "" : "not ");
-		return !!res;
+		return check_dotgitx("modules", argv + 2,
+				     is_hfs_dotgitmodules,
+				     is_ntfs_dotgitmodules);
+	}
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitignore")) {
+		return check_dotgitx("ignore", argv + 2,
+				     is_hfs_dotgitignore,
+				     is_ntfs_dotgitignore);
+	}
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitattributes")) {
+		return check_dotgitx("attributes", argv + 2,
+				     is_hfs_dotgitattributes,
+				     is_ntfs_dotgitattributes);
 	}
 
 	if (argc > 2 && !strcmp(argv[1], "file-size")) {

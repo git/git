@@ -1241,6 +1241,13 @@ to:
 [attr]binary -diff -merge -text
 ------------
 
+NOTES
+-----
+
+Note that Git does not allow a `.gitattributes` file within the working
+tree to be a symbolic link, and will refuse to check out such a tree
+entry.  This keeps behavior consistent when the file is accessed from
+the index or a tree versus from the filesystem.
 
 EXAMPLES
 --------

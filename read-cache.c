@@ -947,7 +947,9 @@ static int verify_dotfile(const char *rest, unsigned mode)
 			return 0;
 		if (S_ISLNK(mode)) {
 			rest += 3;
-			if (skip_iprefix(rest, "modules", &rest) &&
+			if ((skip_iprefix(rest, "modules", &rest) ||
+			     skip_iprefix(rest, "ignore", &rest) ||
+			     skip_iprefix(rest, "attributes", &rest)) &&
 			    (*rest == '\0' || is_dir_sep(*rest)))
 				return 0;
 		}
@@ -980,7 +982,9 @@ inside:
 				if (is_hfs_dotgit(path))
 					return 0;
 				if (S_ISLNK(mode)) {
-					if (is_hfs_dotgitmodules(path))
+					if (is_hfs_dotgitmodules(path) ||
+					    is_hfs_dotgitignore(path) ||
+					    is_hfs_dotgitattributes(path))
 						return 0;
 				}
 			}
@@ -992,7 +996,9 @@ inside:
 				if (is_ntfs_dotgit(path))
 					return 0;
 				if (S_ISLNK(mode)) {
-					if (is_ntfs_dotgitmodules(path))
+					if (is_ntfs_dotgitmodules(path) ||
+					    is_ntfs_dotgitignore(path) ||
+					    is_ntfs_dotgitattributes(path))
 						return 0;
 				}
 			}

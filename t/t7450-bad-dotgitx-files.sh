@@ -1,9 +1,16 @@
 #!/bin/sh
 
-test_description='check handling of .. in submodule names
+test_description='check forbidden or malicious patterns in .git* files
 
-Exercise the name-checking function on a variety of names, and then give a
-real-world setup that confirms we catch this in practice.
+Such as:
+
+  - presence of .. in submodule names;
+    Exercise the name-checking function on a variety of names, and then give a
+    real-world setup that confirms we catch this in practice.
+
+  - nested submodule names
+
+  - symlinked .gitmodules, etc
 '
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
@@ -132,31 +139,67 @@ test_expect_success 'index-pack --strict works for non-repo pack' '
 	grep gitmodulesName output
 '
 
-test_expect_success 'fsck detects symlinked .gitmodules file' '
-	git init symlink &&
-	(
-		cd symlink &&
+check_forbidden_symlink () {
+	name=$1
+	type=$2
+	path=$3
+	dir=symlink-$name-$type
 
-		# Make the tree directly to avoid index restrictions.
-		#
-		# Because symlinks store the target as a blob, choose
-		# a pathname that could be parsed as a .gitmodules file
-		# to trick naive non-symlink-aware checking.
-		tricky="[foo]bar=true" &&
-		content=$(git hash-object -w ../.gitmodules) &&
-		target=$(printf "$tricky" | git hash-object -w --stdin) &&
-		{
-			printf "100644 blob $content\t$tricky\n" &&
-			printf "120000 blob $target\t.gitmodules\n"
-		} | git mktree &&
+	test_expect_success "set up repo with symlinked $name ($type)" '
+		git init $dir &&
+		(
+			cd $dir &&
 
-		# Check not only that we fail, but that it is due to the
-		# symlink detector; this grep string comes from the config
-		# variable name and will not be translated.
-		test_must_fail git fsck 2>output &&
-		test_i18ngrep gitmodulesSymlink output
-	)
-'
+			# Make the tree directly to avoid index restrictions.
+			#
+			# Because symlinks store the target as a blob, choose
+			# a pathname that could be parsed as a .gitmodules file
+			# to trick naive non-symlink-aware checking.
+			tricky="[foo]bar=true" &&
+			content=$(git hash-object -w ../.gitmodules) &&
+			target=$(printf "$tricky" | git hash-object -w --stdin) &&
+			{
+				printf "100644 blob $content\t$tricky\n" &&
+				printf "120000 blob $target\t$path\n"
+			} >bad-tree
+		) &&
+		tree=$(git -C $dir mktree <$dir/bad-tree)
+	'
+
+	test_expect_success "fsck detects symlinked $name ($type)" '
+		(
+			cd $dir &&
+
+			# Check not only that we fail, but that it is due to the
+			# symlink detector
+			test_must_fail git fsck 2>output &&
+			test_i18ngrep "tree $tree: ${name}Symlink" output
+		)
+	'
+
+	test_expect_success "refuse to load symlinked $name into index ($type)" '
+		test_must_fail \
+			git -C $dir \
+			    -c core.protectntfs \
+			    -c core.protecthfs \
+			    read-tree $tree 2>err &&
+		test_i18ngrep "invalid path.*$name" err &&
+		git -C $dir ls-files -s >out &&
+		test_must_be_empty out
+	'
+}
+
+check_forbidden_symlink gitmodules vanilla .gitmodules
+check_forbidden_symlink gitmodules ntfs ".gitmodules ."
+check_forbidden_symlink gitmodules hfs ".${u200c}gitmodules"
+
+check_forbidden_symlink gitattributes vanilla .gitattributes
+check_forbidden_symlink gitattributes ntfs ".gitattributes ."
+check_forbidden_symlink gitattributes hfs ".${u200c}gitattributes"
+
+check_forbidden_symlink gitignore vanilla .gitignore
+check_forbidden_symlink gitignore ntfs ".gitignore ."
+check_forbidden_symlink gitignore hfs ".${u200c}gitignore"
 
 test_expect_success 'fsck detects non-blob .gitmodules' '
 	git init non-blob &&
