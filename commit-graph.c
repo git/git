@@ -2008,7 +2008,7 @@ static int commit_compare(const void *_a, const void *_b)
 
 static void sort_and_scan_merged_commits(struct write_commit_graph_context *ctx)
 {
-	uint32_t i;
+	uint32_t i, dedup_i = 0;
 
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
@@ -2023,16 +2023,26 @@ static void sort_and_scan_merged_commits(struct write_commit_graph_context *ctx)
 
 		if (i && oideq(&ctx->commits.list[i - 1]->object.oid,
 			  &ctx->commits.list[i]->object.oid)) {
-			die(_("unexpected duplicate commit id %s"),
-			    oid_to_hex(&ctx->commits.list[i]->object.oid));
+			/*
+			 * Silently ignore duplicates. These were likely
+			 * created due to a commit appearing in multiple
+			 * layers of the chain, which is unexpected but
+			 * not invalid. We should make sure there is a
+			 * unique copy in the new layer.
+			 */
 		} else {
 			unsigned int num_parents;
+
+			ctx->commits.list[dedup_i] = ctx->commits.list[i];
+			dedup_i++;
 
 			num_parents = commit_list_count(ctx->commits.list[i]->parents);
 			if (num_parents > 2)
 				ctx->num_extra_edges += num_parents - 1;
 		}
 	}
+
+	ctx->commits.nr = dedup_i;
 
 	stop_progress(&ctx->progress);
 }
@@ -2150,6 +2160,11 @@ int write_commit_graph(struct object_directory *odb,
 	int replace = 0;
 	struct bloom_filter_settings bloom_settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 
+	prepare_repo_settings(the_repository);
+	if (!the_repository->settings.core_commit_graph) {
+		warning(_("attempting to write a commit-graph, but 'core.commitGraph' is disabled"));
+		return 0;
+	}
 	if (!commit_graph_compatible(the_repository))
 		return 0;
 
