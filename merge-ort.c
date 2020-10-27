@@ -17,6 +17,8 @@
 #include "cache.h"
 #include "merge-ort.h"
 
+#include "diff.h"
+#include "diffcore.h"
 #include "strmap.h"
 #include "tree.h"
 
@@ -215,7 +217,48 @@ void merge_finalize(struct merge_options *opt,
 
 static void merge_start(struct merge_options *opt, struct merge_result *result)
 {
-	die("Not yet implemented.");
+	/* Sanity checks on opt */
+	assert(opt->repo);
+
+	assert(opt->branch1 && opt->branch2);
+
+	assert(opt->detect_directory_renames >= MERGE_DIRECTORY_RENAMES_NONE &&
+	       opt->detect_directory_renames <= MERGE_DIRECTORY_RENAMES_TRUE);
+	assert(opt->rename_limit >= -1);
+	assert(opt->rename_score >= 0 && opt->rename_score <= MAX_SCORE);
+	assert(opt->show_rename_progress >= 0 && opt->show_rename_progress <= 1);
+
+	assert(opt->xdl_opts >= 0);
+	assert(opt->recursive_variant >= MERGE_VARIANT_NORMAL &&
+	       opt->recursive_variant <= MERGE_VARIANT_THEIRS);
+
+	/*
+	 * detect_renames, verbosity, buffer_output, and obuf are ignored
+	 * fields that were used by "recursive" rather than "ort" -- but
+	 * sanity check them anyway.
+	 */
+	assert(opt->detect_renames >= -1 &&
+	       opt->detect_renames <= DIFF_DETECT_COPY);
+	assert(opt->verbosity >= 0 && opt->verbosity <= 5);
+	assert(opt->buffer_output <= 2);
+	assert(opt->obuf.len == 0);
+
+	assert(opt->priv == NULL);
+
+	/* Initialization of opt->priv, our internal merge data */
+	opt->priv = xcalloc(1, sizeof(*opt->priv));
+
+	/*
+	 * Although we initialize opt->priv->paths with strdup_strings=0,
+	 * that's just to avoid making yet another copy of an allocated
+	 * string.  Putting the entry into paths means we are taking
+	 * ownership, so we will later free it.
+	 *
+	 * In contrast, conflicted just has a subset of keys from paths, so
+	 * we don't want to free those (it'd be a duplicate free).
+	 */
+	strmap_init_with_options(&opt->priv->paths, NULL, 0);
+	strmap_init_with_options(&opt->priv->conflicted, NULL, 0);
 }
 
 /*
