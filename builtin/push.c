@@ -290,6 +290,12 @@ static const char message_advice_ref_needs_force[] =
 	   "or update a remote ref to make it point at a non-commit object,\n"
 	   "without using the '--force' option.\n");
 
+static const char message_advice_ref_needs_update[] =
+	N_("Updates were rejected because the tip of the remote-tracking\n"
+	   "branch has been updated since the last checkout. You may want\n"
+	   "to integrate those changes locally (e.g., 'git pull ...')\n"
+	   "before forcing an update.\n");
+
 static void advise_pull_before_push(void)
 {
 	if (!advice_push_non_ff_current || !advice_push_update_rejected)
@@ -323,6 +329,13 @@ static void advise_ref_needs_force(void)
 	if (!advice_push_needs_force || !advice_push_update_rejected)
 		return;
 	advise(_(message_advice_ref_needs_force));
+}
+
+static void advise_ref_needs_update(void)
+{
+	if (!advice_push_ref_needs_update || !advice_push_update_rejected)
+		return;
+	advise(_(message_advice_ref_needs_update));
 }
 
 static int push_with_options(struct transport *transport, struct refspec *rs,
@@ -374,6 +387,8 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 		advise_ref_fetch_first();
 	} else if (reject_reasons & REJECT_NEEDS_FORCE) {
 		advise_ref_needs_force();
+	} else if (reject_reasons & REJECT_REF_NEEDS_UPDATE) {
+		advise_ref_needs_update();
 	}
 
 	return 1;
@@ -510,6 +525,12 @@ static int git_push_config(const char *k, const char *v, void *cb)
 		if (!v)
 			return config_error_nonbool(k);
 		return color_parse(v, push_colors[slot]);
+	} else if (!strcmp(k, "push.useforceifincludes")) {
+		if (git_config_bool(k, v))
+			*flags |= TRANSPORT_PUSH_FORCE_IF_INCLUDES;
+		else
+			*flags &= ~TRANSPORT_PUSH_FORCE_IF_INCLUDES;
+		return 0;
 	}
 
 	return git_default_config(k, v, NULL);
@@ -541,6 +562,9 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK_F(0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
 			       N_("require old value of ref to be at this value"),
 			       PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option),
+		OPT_BIT(0, TRANS_OPT_FORCE_IF_INCLUDES, &flags,
+			N_("require remote updates to be integrated locally"),
+			TRANSPORT_PUSH_FORCE_IF_INCLUDES),
 		OPT_CALLBACK(0, "recurse-submodules", &recurse_submodules, "(check|on-demand|no)",
 			     N_("control recursive pushing of submodules"), option_parse_recurse_submodules),
 		OPT_BOOL_F( 0 , "thin", &thin, N_("use thin pack"), PARSE_OPT_NOCOMPLETE),
@@ -624,6 +648,9 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	}
 	if ((flags & TRANSPORT_PUSH_ALL) && (flags & TRANSPORT_PUSH_MIRROR))
 		die(_("--all and --mirror are incompatible"));
+
+	if (!is_empty_cas(&cas) && (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES))
+		cas.use_force_if_includes = 1;
 
 	for_each_string_list_item(item, push_options)
 		if (strchr(item->string, '\n'))
