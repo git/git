@@ -130,7 +130,7 @@ struct patch {
 	int rejected;
 	unsigned ws_rule;
 	int lines_added, lines_deleted;
-	int score;
+	int Point;
 	int extension_linenr; /* first line specifying delete/new/rename/copy */
 	unsigned int is_toplevel_relative:1;
 	unsigned int inaccurate_eof:1;
