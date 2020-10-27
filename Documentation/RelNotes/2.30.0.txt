@@ -6,8 +6,39 @@ Updates since v2.29
 
 UI, Workflows & Features
 
+ * Userdiff for PHP update.
+
+ * Userdiff for Rust update.
+
+ * Userdiff for CSS update.
+
+ * The command line completion script (in contrib/) learned that "git
+   stash show" takes the options "git diff" takes.
+
+ * "git worktree list" now shows if each worktree is locked.  This
+   possibly may open us to show other kinds of states in the future.
+
+ * "git maintenance", an extended big brother of "git gc", continues
+   to evolve.
+
+ * "git push --force-with-lease[=<ref>]" can easily be misused to lose
+   commits unless the user takes good care of their own "git fetch".
+   A new option "--force-if-includes" attempts to ensure that what is
+   being force-pushed was created after examining the commit at the
+   tip of the remote ref that is about to be force-replaced.
+
+ * "git clone" learned clone.defaultremotename configuration variable
+   to customize what nickname to use to call the remote the repository
+   was cloned from.
+
+ * "git checkout" learned to use checkout.guess configuration variable
+   and enable/disable its "--[no-]guess" option accordingly.
+
 
 Performance, Internal Implementation, Development Support etc.
+
+ * Use "git archive" more to produce the release tarball.
+
 
 
 Fixes since v2.29
@@ -18,5 +49,12 @@ Fixes since v2.29
    corrected.
    (merge 5f35edd9d7 jk/committer-date-is-author-date-fix later to maint).
 
+ * "git checkout -p A...B [-- <path>]" did not work, even though the
+   same command without "-p" correctly used the merge-base between
+   commits A and B.
+   (merge 35166b1fb5 dl/checkout-p-merge-base later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
+   (merge 32c83afc2c cw/ci-ghwf-check-ws-errors later to maint).
+   (merge 5eb2ed691b rs/tighten-callers-of-deref-tag later to maint).
