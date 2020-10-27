@@ -33,8 +33,7 @@ fill () {
 
 
 test_expect_success setup '
-
-	fill x y z > same &&
+	fill x y z >same &&
 	fill 1 2 3 4 5 6 7 8 >one &&
 	fill a b c d e >two &&
 	git add same one two &&
@@ -56,14 +55,13 @@ test_expect_success setup '
 
 	git checkout -b simple master &&
 	rm -f one &&
-	fill a c e > two &&
+	fill a c e >two &&
 	git commit -a -m "Simple D one, M two" &&
 
 	git checkout master
 '
 
-test_expect_success "checkout from non-existing branch" '
-
+test_expect_success 'checkout from non-existing branch' '
 	git checkout -b delete-me master &&
 	git update-ref -d --no-deref refs/heads/delete-me &&
 	test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
@@ -71,8 +69,7 @@ test_expect_success "checkout from non-existing branch" '
 	test refs/heads/master = "$(git symbolic-ref HEAD)"
 '
 
-test_expect_success "checkout with dirty tree without -m" '
-
+test_expect_success 'checkout with dirty tree without -m' '
 	fill 0 1 2 3 4 5 6 7 8 >one &&
 	if git checkout side
 	then
@@ -81,11 +78,9 @@ test_expect_success "checkout with dirty tree without -m" '
 	else
 		echo "happy - failed correctly"
 	fi
-
 '
 
-test_expect_success "checkout with unrelated dirty tree without -m" '
-
+test_expect_success 'checkout with unrelated dirty tree without -m' '
 	git checkout -f master &&
 	fill 0 1 2 3 4 5 6 7 8 >same &&
 	cp same kept &&
@@ -95,13 +90,12 @@ test_expect_success "checkout with unrelated dirty tree without -m" '
 	test_cmp messages.expect messages
 '
 
-test_expect_success "checkout -m with dirty tree" '
-
+test_expect_success 'checkout -m with dirty tree' '
 	git checkout -f master &&
 	git clean -f &&
 
 	fill 0 1 2 3 4 5 6 7 8 >one &&
-	git checkout -m side > messages &&
+	git checkout -m side >messages &&
 
 	test "$(git symbolic-ref HEAD)" = "refs/heads/side" &&
 
@@ -120,8 +114,7 @@ test_expect_success "checkout -m with dirty tree" '
 	test_must_be_empty current.index
 '
 
-test_expect_success "checkout -m with dirty tree, renamed" '
-
+test_expect_success 'checkout -m with dirty tree, renamed' '
 	git checkout -f master && git clean -f &&
 
 	fill 1 2 3 4 5 7 8 >one &&
@@ -139,11 +132,9 @@ test_expect_success "checkout -m with dirty tree, renamed" '
 	! test -f one &&
 	git diff --cached >current &&
 	test_must_be_empty current
-
 '
 
 test_expect_success 'checkout -m with merge conflict' '
-
 	git checkout -f master && git clean -f &&
 
 	fill 1 T 3 4 5 6 S 8 >one &&
@@ -166,10 +157,10 @@ test_expect_success 'checkout -m with merge conflict' '
 '
 
 test_expect_success 'format of merge conflict from checkout -m' '
+	git checkout -f master &&
+	git clean -f &&
 
-	git checkout -f master && git clean -f &&
-
-	fill b d > two &&
+	fill b d >two &&
 	git checkout -m simple &&
 
 	git ls-files >current &&
@@ -190,10 +181,11 @@ test_expect_success 'format of merge conflict from checkout -m' '
 '
 
 test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
+	git checkout -f master &&
+	git reset --hard &&
+	git clean -f &&
 
-	git checkout -f master && git reset --hard && git clean -f &&
-
-	fill b d > two &&
+	fill b d >two &&
 	git checkout --merge --conflict=diff3 simple &&
 
 	cat <<-EOF >expect &&
@@ -216,8 +208,9 @@ test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
 '
 
 test_expect_success 'switch to another branch while carrying a deletion' '
-
-	git checkout -f master && git reset --hard && git clean -f &&
+	git checkout -f master &&
+	git reset --hard &&
+	git clean -f &&
 	git rm two &&
 
 	test_must_fail git checkout simple 2>errs &&
@@ -228,10 +221,10 @@ test_expect_success 'switch to another branch while carrying a deletion' '
 '
 
 test_expect_success 'checkout to detach HEAD (with advice declined)' '
-
 	git config advice.detachedHead false &&
 	rev=$(git rev-parse --short renamer^) &&
-	git checkout -f renamer && git clean -f &&
+	git checkout -f renamer &&
+	git clean -f &&
 	git checkout renamer^ 2>messages &&
 	test_i18ngrep "HEAD is now at $rev" messages &&
 	test_line_count = 1 messages &&
@@ -250,7 +243,8 @@ test_expect_success 'checkout to detach HEAD (with advice declined)' '
 test_expect_success 'checkout to detach HEAD' '
 	git config advice.detachedHead true &&
 	rev=$(git rev-parse --short renamer^) &&
-	git checkout -f renamer && git clean -f &&
+	git checkout -f renamer &&
+	git clean -f &&
 	GIT_TEST_GETTEXT_POISON=false git checkout renamer^ 2>messages &&
 	grep "HEAD is now at $rev" messages &&
 	test_line_count -gt 1 messages &&
@@ -267,8 +261,8 @@ test_expect_success 'checkout to detach HEAD' '
 '
 
 test_expect_success 'checkout to detach HEAD with branchname^' '
-
-	git checkout -f master && git clean -f &&
+	git checkout -f master &&
+	git clean -f &&
 	git checkout renamer^ &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
@@ -283,8 +277,8 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 '
 
 test_expect_success 'checkout to detach HEAD with :/message' '
-
-	git checkout -f master && git clean -f &&
+	git checkout -f master &&
+	git clean -f &&
 	git checkout ":/Initial" &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
@@ -299,8 +293,8 @@ test_expect_success 'checkout to detach HEAD with :/message' '
 '
 
 test_expect_success 'checkout to detach HEAD with HEAD^0' '
-
-	git checkout -f master && git clean -f &&
+	git checkout -f master &&
+	git clean -f &&
 	git checkout HEAD^0 &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
@@ -315,7 +309,6 @@ test_expect_success 'checkout to detach HEAD with HEAD^0' '
 '
 
 test_expect_success 'checkout with ambiguous tag/branch names' '
-
 	git tag both side &&
 	git branch both master &&
 	git reset --hard &&
@@ -327,11 +320,9 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 	test "z$H" = "z$M" &&
 	name=$(git symbolic-ref HEAD 2>/dev/null) &&
 	test "z$name" = zrefs/heads/both
-
 '
 
 test_expect_success 'checkout with ambiguous tag/branch names' '
-
 	git reset --hard &&
 	git checkout master &&
 
@@ -351,26 +342,19 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 	else
 		: happy
 	fi
-
 '
 
 test_expect_success 'switch branches while in subdirectory' '
-
 	git reset --hard &&
 	git checkout master &&
 
 	mkdir subs &&
-	(
-		cd subs &&
-		git checkout side
-	) &&
+	git -C subs checkout side &&
 	! test -f subs/one &&
 	rm -fr subs
-
 '
 
 test_expect_success 'checkout specific path while in subdirectory' '
-
 	git reset --hard &&
 	git checkout side &&
 	mkdir subs &&
@@ -380,30 +364,26 @@ test_expect_success 'checkout specific path while in subdirectory' '
 
 	git checkout master &&
 	mkdir -p subs &&
-	(
-		cd subs &&
-		git checkout side -- bero
-	) &&
+	git -C subs checkout side -- bero &&
 	test -f subs/bero
-
 '
 
-test_expect_success \
-    'checkout w/--track sets up tracking' '
+test_expect_success 'checkout w/--track sets up tracking' '
     git config branch.autosetupmerge false &&
     git checkout master &&
     git checkout --track -b track1 &&
     test "$(git config branch.track1.remote)" &&
-    test "$(git config branch.track1.merge)"'
+    test "$(git config branch.track1.merge)"
+'
 
-test_expect_success \
-    'checkout w/autosetupmerge=always sets up tracking' '
+test_expect_success 'checkout w/autosetupmerge=always sets up tracking' '
     test_when_finished git config branch.autosetupmerge false &&
     git config branch.autosetupmerge always &&
     git checkout master &&
     git checkout -b track2 &&
     test "$(git config branch.track2.remote)" &&
-    test "$(git config branch.track2.merge)"'
+    test "$(git config branch.track2.merge)"
+'
 
 test_expect_success 'checkout w/--track from non-branch HEAD fails' '
     git checkout master^0 &&
@@ -435,8 +415,7 @@ test_expect_success 'detach a symbolic link HEAD' '
     test "z$(git rev-parse --verify refs/heads/master)" = "z$here"
 '
 
-test_expect_success \
-    'checkout with --track fakes a sensible -b <name>' '
+test_expect_success 'checkout with --track fakes a sensible -b <name>' '
     git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" &&
     git update-ref refs/remotes/origin/koala/bear renamer &&
 
@@ -457,9 +436,9 @@ test_expect_success \
     test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"
 '
 
-test_expect_success \
-    'checkout with --track, but without -b, fails with too short tracked name' '
-    test_must_fail git checkout --track renamer'
+test_expect_success 'checkout with --track, but without -b, fails with too short tracked name' '
+    test_must_fail git checkout --track renamer
+'
 
 setup_conflicting_index () {
 	rm -f .git/index &&
@@ -609,7 +588,6 @@ test_expect_success 'failing checkout -b should not break working tree' '
 	test $(git symbolic-ref HEAD) = refs/heads/master &&
 	git diff --exit-code &&
 	git diff --cached --exit-code
-
 '
 
 test_expect_success 'switch out of non-branch' '
