@@ -79,6 +79,14 @@ static int checkout_file(const char *name, const char *prefix)
 		return errs > 0 ? -1 : 0;
 	}
 
+	/*
+	 * At this point we know we didn't try to check anything out. If it was
+	 * because we did find an entry but it was stage 0, that's not an
+	 * error.
+	 */
+	if (has_same_name && checkout_stage == CHECKOUT_ALL)
+		return 0;
+
 	if (!state.quiet) {
 		fprintf(stderr, "git checkout-index: %s ", name);
 		if (!has_same_name)
