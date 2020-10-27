@@ -351,6 +351,10 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 <tree-ish>::
 	Tree to checkout from (when paths are given). If not specified,
 	the index will be used.
++
+As a special case, you may use `"A...B"` as a shortcut for the
+merge base of `A` and `B` if there is exactly one merge base. You can
+leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 \--::
 	Do not interpret any more arguments as options.

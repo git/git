@@ -471,6 +471,19 @@ static int checkout_paths(const struct checkout_opts *opts,
 
 	if (opts->patch_mode) {
 		const char *patch_mode;
+		const char *rev = new_branch_info->name;
+		char rev_oid[GIT_MAX_HEXSZ + 1];
+
+		/*
+		 * Since rev can be in the form of `<a>...<b>` (which is not
+		 * recognized by diff-index), we will always replace the name
+		 * with the hex of the commit (whether it's in `...` form or
+		 * not) for the run_add_interactive() machinery to work
+		 * properly. However, there is special logic for the HEAD case
+		 * so we mustn't replace that.
+		 */
+		if (rev && strcmp(rev, "HEAD"))
+			rev = oid_to_hex_r(rev_oid, &new_branch_info->commit->object.oid);
 
 		if (opts->checkout_index && opts->checkout_worktree)
 			patch_mode = "--patch=checkout";
@@ -481,7 +494,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		else
 			BUG("either flag must have been set, worktree=%d, index=%d",
 			    opts->checkout_worktree, opts->checkout_index);
-		return run_add_interactive(new_branch_info->name, patch_mode, &opts->pathspec);
+		return run_add_interactive(rev, patch_mode, &opts->pathspec);
 	}
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
