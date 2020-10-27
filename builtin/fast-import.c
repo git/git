@@ -150,7 +150,7 @@ struct recent_command {
 	char *buf;
 };
 
-typedef void (*mark_set_inserter_t)(struct mark_set *s, struct object_id *oid, uintmax_t mark);
+typedef void (*mark_set_inserter_t)(struct mark_set **s, struct object_id *oid, uintmax_t mark);
 typedef void (*each_mark_fn_t)(uintmax_t mark, void *obj, void *cbp);
 
 /* Configured limits on output */
@@ -526,13 +526,15 @@ static unsigned int hc_str(const char *s, size_t len)
 	return r;
 }
 
-static void insert_mark(struct mark_set *s, uintmax_t idnum, struct object_entry *oe)
+static void insert_mark(struct mark_set **top, uintmax_t idnum, struct object_entry *oe)
 {
+	struct mark_set *s = *top;
+
 	while ((idnum >> s->shift) >= 1024) {
 		s = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
-		s->shift = marks->shift + 10;
-		s->data.sets[0] = marks;
-		marks = s;
+		s->shift = (*top)->shift + 10;
+		s->data.sets[0] = *top;
+		*top = s;
 	}
 	while (s->shift) {
 		uintmax_t i = idnum >> s->shift;
@@ -944,7 +946,7 @@ static int store_object(
 
 	e = insert_object(&oid);
 	if (mark)
-		insert_mark(marks, mark, e);
+		insert_mark(&marks, mark, e);
 	if (e->idx.offset) {
 		duplicate_count_by_type[type]++;
 		return 1;
@@ -1142,7 +1144,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	e = insert_object(&oid);
 
 	if (mark)
-		insert_mark(marks, mark, e);
+		insert_mark(&marks, mark, e);
 
 	if (e->idx.offset) {
 		duplicate_count_by_type[OBJ_BLOB]++;
@@ -1717,7 +1719,7 @@ static void dump_marks(void)
 	}
 }
 
-static void insert_object_entry(struct mark_set *s, struct object_id *oid, uintmax_t mark)
+static void insert_object_entry(struct mark_set **s, struct object_id *oid, uintmax_t mark)
 {
 	struct object_entry *e;
 	e = find_object(oid);
@@ -1734,12 +1736,12 @@ static void insert_object_entry(struct mark_set *s, struct object_id *oid, uintm
 	insert_mark(s, mark, e);
 }
 
-static void insert_oid_entry(struct mark_set *s, struct object_id *oid, uintmax_t mark)
+static void insert_oid_entry(struct mark_set **s, struct object_id *oid, uintmax_t mark)
 {
 	insert_mark(s, mark, xmemdupz(oid, sizeof(*oid)));
 }
 
-static void read_mark_file(struct mark_set *s, FILE *f, mark_set_inserter_t inserter)
+static void read_mark_file(struct mark_set **s, FILE *f, mark_set_inserter_t inserter)
 {
 	char line[512];
 	while (fgets(line, sizeof(line), f)) {
@@ -1772,7 +1774,7 @@ static void read_marks(void)
 		goto done; /* Marks file does not exist */
 	else
 		die_errno("cannot read '%s'", import_marks_file);
-	read_mark_file(marks, f, insert_object_entry);
+	read_mark_file(&marks, f, insert_object_entry);
 	fclose(f);
 done:
 	import_marks_file_done = 1;
@@ -3228,7 +3230,7 @@ static void parse_alias(void)
 		die(_("Expected 'to' command, got %s"), command_buf.buf);
 	e = find_object(&b.oid);
 	assert(e);
-	insert_mark(marks, next_mark, e);
+	insert_mark(&marks, next_mark, e);
 }
 
 static char* make_fast_import_path(const char *path)
@@ -3321,13 +3323,14 @@ static void option_rewrite_submodules(const char *arg, struct string_list *list)
 	*f = '\0';
 	f++;
 	ms = xcalloc(1, sizeof(*ms));
-	string_list_insert(list, s)->util = ms;
 
 	fp = fopen(f, "r");
 	if (!fp)
 		die_errno("cannot read '%s'", f);
-	read_mark_file(ms, fp, insert_oid_entry);
+	read_mark_file(&ms, fp, insert_oid_entry);
 	fclose(fp);
+
+	string_list_insert(list, s)->util = ms;
 }
 
 static int parse_one_option(const char *option)
