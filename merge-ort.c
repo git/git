@@ -23,6 +23,23 @@
 #include "tree.h"
 #include "xdiff-interface.h"
 
+/*
+ * We have many arrays of size 3.  Whenever we have such an array, the
+ * indices refer to one of the sides of the three-way merge.  This is so
+ * pervasive that the constants 0, 1, and 2 are used in many places in the
+ * code (especially in arithmetic operations to find the other side's index
+ * or to compute a relevant mask), but sometimes these enum names are used
+ * to aid code clarity.
+ *
+ * See also 'filemask' and 'dirmask' in struct conflict_info; the "ith side"
+ * referred to there is one of these three sides.
+ */
+enum merge_side {
+	MERGE_BASE = 0,
+	MERGE_SIDE1 = 1,
+	MERGE_SIDE2 = 2
+};
+
 struct merge_options_internal {
 	/*
 	 * paths: primary data structure in all of merge ort.
@@ -184,12 +201,128 @@ static int err(struct merge_options *opt, const char *err, ...)
 	return -1;
 }
 
+static int collect_merge_info_callback(int n,
+				       unsigned long mask,
+				       unsigned long dirmask,
+				       struct name_entry *names,
+				       struct traverse_info *info)
+{
+	/*
+	 * n is 3.  Always.
+	 * common ancestor (mbase) has mask 1, and stored in index 0 of names
+	 * head of side 1  (side1) has mask 2, and stored in index 1 of names
+	 * head of side 2  (side2) has mask 4, and stored in index 2 of names
+	 */
+	struct merge_options *opt = info->data;
+	struct merge_options_internal *opti = opt->priv;
+	struct conflict_info *ci;
+	struct name_entry *p;
+	size_t len;
+	char *fullpath;
+	unsigned filemask = mask & ~dirmask;
+	unsigned mbase_null = !(mask & 1);
+	unsigned side1_null = !(mask & 2);
+	unsigned side2_null = !(mask & 4);
+
+	/* n = 3 is a fundamental assumption. */
+	if (n != 3)
+		BUG("Called collect_merge_info_callback wrong");
+
+	/*
+	 * A bunch of sanity checks verifying that traverse_trees() calls
+	 * us the way I expect.  Could just remove these at some point,
+	 * though maybe they are helpful to future code readers.
+	 */
+	assert(mbase_null == is_null_oid(&names[0].oid));
+	assert(side1_null == is_null_oid(&names[1].oid));
+	assert(side2_null == is_null_oid(&names[2].oid));
+	assert(!mbase_null || !side1_null || !side2_null);
+	assert(mask > 0 && mask < 8);
+
+	/*
+	 * Get the name of the relevant filepath, which we'll pass to
+	 * setup_path_info() for tracking.
+	 */
+	p = names;
+	while (!p->mode)
+		p++;
+	len = traverse_path_len(info, p->pathlen);
+
+	/* +1 in both of the following lines to include the NUL byte */
+	fullpath = xmalloc(len + 1);
+	make_traverse_path(fullpath, len + 1, info, p->path, p->pathlen);
+
+	/*
+	 * TODO: record information about the path other than all zeros,
+	 * so we can resolve later in process_entries.
+	 */
+	ci = xcalloc(1, sizeof(struct conflict_info));
+	strmap_put(&opti->paths, fullpath, ci);
+
+	/* If dirmask, recurse into subdirectories */
+	if (dirmask) {
+		struct traverse_info newinfo;
+		struct tree_desc t[3];
+		void *buf[3] = {NULL, NULL, NULL};
+		const char *original_dir_name;
+		int i, ret;
+
+		ci->match_mask &= filemask;
+		newinfo = *info;
+		newinfo.prev = info;
+		newinfo.name = p->path;
+		newinfo.namelen = p->pathlen;
+		newinfo.pathlen = st_add3(newinfo.pathlen, p->pathlen, 1);
+
+		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++) {
+			const struct object_id *oid = NULL;
+			if (dirmask & 1)
+				oid = &names[i].oid;
+			buf[i] = fill_tree_descriptor(opt->repo, t + i, oid);
+			dirmask >>= 1;
+		}
+
+		original_dir_name = opti->current_dir_name;
+		opti->current_dir_name = fullpath;
+		ret = traverse_trees(NULL, 3, t, &newinfo);
+		opti->current_dir_name = original_dir_name;
+
+		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++)
+			free(buf[i]);
+
+		if (ret < 0)
+			return -1;
+	}
+
+	return mask;
+}
+
 static int collect_merge_info(struct merge_options *opt,
 			      struct tree *merge_base,
 			      struct tree *side1,
 			      struct tree *side2)
 {
-	die("Not yet implemented.");
+	int ret;
+	struct tree_desc t[3];
+	struct traverse_info info;
+	const char *toplevel_dir_placeholder = "";
+
+	opt->priv->current_dir_name = toplevel_dir_placeholder;
+	setup_traverse_info(&info, toplevel_dir_placeholder);
+	info.fn = collect_merge_info_callback;
+	info.data = opt;
+	info.show_all_errors = 1;
+
+	parse_tree(merge_base);
+	parse_tree(side1);
+	parse_tree(side2);
+	init_tree_desc(t + 0, merge_base->buffer, merge_base->size);
+	init_tree_desc(t + 1, side1->buffer, side1->size);
+	init_tree_desc(t + 2, side2->buffer, side2->size);
+
+	ret = traverse_trees(NULL, 3, t, &info);
+
+	return ret;
 }
 
 static int detect_and_process_renames(struct merge_options *opt,
