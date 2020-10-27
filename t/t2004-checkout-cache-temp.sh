@@ -88,7 +88,7 @@ test_expect_success 'checkout all stage 2 to temporary files' '
 	done
 '
 
-test_expect_failure 'checkout all stages of unknown path' '
+test_expect_success 'checkout all stages of unknown path' '
 	rm -f path* .merge_* actual &&
 	test_must_fail git checkout-index --stage=all --temp \
 		-- does-not-exist 2>stderr &&
