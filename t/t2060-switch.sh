@@ -85,9 +85,12 @@ test_expect_success 'switching ignores file of same branch name' '
 	test_cmp expected actual
 '
 
-test_expect_success 'guess and create branch ' '
+test_expect_success 'guess and create branch' '
 	test_when_finished git switch master &&
 	test_must_fail git switch --no-guess foo &&
+	test_config checkout.guess false &&
+	test_must_fail git switch foo &&
+	test_config checkout.guess true &&
 	git switch foo &&
 	echo refs/heads/foo >expected &&
 	git symbolic-ref HEAD >actual &&
