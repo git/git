@@ -3399,7 +3399,6 @@ static int parse_one_feature(const char *feature, int from_stream)
 		option_rewrite_submodules(arg, &sub_marks_to);
 	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
 		option_rewrite_submodules(arg, &sub_marks_from);
-	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
 	} else if (!strcmp(feature, "cat-blob")) {
