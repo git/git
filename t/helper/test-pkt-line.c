@@ -100,7 +100,7 @@ static int send_split_sideband(void)
 
 static int receive_sideband(void)
 {
-	return recv_sideband("sideband: ", 0, 1);
+	return recv_sideband("sideband", 0, 1);
 }
 
 int cmd__pkt_line(int argc, const char **argv)
