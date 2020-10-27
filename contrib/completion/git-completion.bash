@@ -1467,14 +1467,15 @@ _git_bundle ()
 # Helper function to decide whether or not we should enable DWIM logic for
 # git-switch and git-checkout.
 #
-# To decide between the following rules in priority order
-# 1) the last provided of "--guess" or "--no-guess" explicitly enable or
-#    disable completion of DWIM logic respectively.
-# 2) If the --no-track option is provided, take this as a hint to disable the
-#    DWIM completion logic
-# 3) If GIT_COMPLETION_CHECKOUT_NO_GUESS is set, disable the DWIM completion
-#    logic, as requested by the user.
-# 4) Enable DWIM logic otherwise.
+# To decide between the following rules in decreasing priority order:
+# - the last provided of "--guess" or "--no-guess" explicitly enable or
+#   disable completion of DWIM logic respectively.
+# - If checkout.guess is false, disable completion of DWIM logic.
+# - If the --no-track option is provided, take this as a hint to disable the
+#   DWIM completion logic
+# - If GIT_COMPLETION_CHECKOUT_NO_GUESS is set, disable the DWIM completion
+#   logic, as requested by the user.
+# - Enable DWIM logic otherwise.
 #
 __git_checkout_default_dwim_mode ()
 {
@@ -1485,8 +1486,14 @@ __git_checkout_default_dwim_mode ()
 	fi
 
 	# --no-track disables DWIM, but with lower priority than
-	# --guess/--no-guess
+	# --guess/--no-guess/checkout.guess
 	if [ -n "$(__git_find_on_cmdline "--no-track")" ]; then
+		dwim_opt=""
+	fi
+
+	# checkout.guess = false disables DWIM, but with lower priority than
+	# --guess/--no-guess
+	if [ "$(__git config --type=bool checkout.guess)" = "false" ]; then
 		dwim_opt=""
 	fi
 
