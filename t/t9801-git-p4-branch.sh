@@ -67,7 +67,7 @@ test_expect_success 'import main, no branch detection' '
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
-		git rev-list master >wc &&
+		git rev-list master -- >wc &&
 		test_line_count = 4 wc
 	)
 '
@@ -78,7 +78,7 @@ test_expect_success 'import branch1, no branch detection' '
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
-		git rev-list master >wc &&
+		git rev-list master -- >wc &&
 		test_line_count = 2 wc
 	)
 '
@@ -89,7 +89,7 @@ test_expect_success 'import branch2, no branch detection' '
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
-		git rev-list master >wc &&
+		git rev-list master -- >wc &&
 		test_line_count = 2 wc
 	)
 '
@@ -100,7 +100,7 @@ test_expect_success 'import depot, no branch detection' '
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
-		git rev-list master >wc &&
+		git rev-list master -- >wc &&
 		test_line_count = 8 wc
 	)
 '
@@ -114,7 +114,7 @@ test_expect_success 'import depot, branch detection' '
 		git log --oneline --graph --decorate --all &&
 
 		# 4 main commits
-		git rev-list master >wc &&
+		git rev-list master -- >wc &&
 		test_line_count = 4 wc &&
 
 		# 3 main, 1 integrate, 1 on branch2
@@ -137,7 +137,7 @@ test_expect_success 'import depot, branch detection, branchList branch definitio
 		git log --oneline --graph --decorate --all &&
 
 		# 4 main commits
-		git rev-list master >wc &&
+		git rev-list master -- >wc &&
 		test_line_count = 4 wc &&
 
 		# 3 main, 1 integrate, 1 on branch2
