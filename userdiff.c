@@ -147,7 +147,7 @@ PATTERNS("perl",
 	 "|=~|!~"
 	 "|<<|<>|<=>|>>"),
 PATTERNS("php",
-	 "^[\t ]*(((public|protected|private|static)[\t ]+)*function.*)$\n"
+	 "^[\t ]*(((public|protected|private|static|abstract|final)[\t ]+)*function.*)$\n"
 	 "^[\t ]*((((final|abstract)[\t ]+)?class|interface|trait).*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
