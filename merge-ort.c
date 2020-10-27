@@ -185,6 +185,26 @@ struct conflict_info {
 	unsigned match_mask:3;
 };
 
+/*
+ * For the next three macros, see warning for conflict_info.merged.
+ *
+ * In each of the below, mi is a struct merged_info*, and ci was defined
+ * as a struct conflict_info* (but we need to verify ci isn't actually
+ * pointed at a struct merged_info*).
+ *
+ * INITIALIZE_CI: Assign ci to mi but only if it's safe; set to NULL otherwise.
+ * VERIFY_CI: Ensure that something we assigned to a conflict_info* is one.
+ * ASSIGN_AND_VERIFY_CI: Similar to VERIFY_CI but do assignment first.
+ */
+#define INITIALIZE_CI(ci, mi) do {                                           \
+	(ci) = (!(mi) || (mi)->clean) ? NULL : (struct conflict_info *)(mi); \
+} while (0)
+#define VERIFY_CI(ci) assert(ci && !ci->merged.clean);
+#define ASSIGN_AND_VERIFY_CI(ci, mi) do {    \
+	(ci) = (struct conflict_info *)(mi);  \
+	assert((ci) && !(mi)->clean);        \
+} while (0)
+
 static int err(struct merge_options *opt, const char *err, ...)
 {
 	va_list params;
@@ -201,6 +221,65 @@ static int err(struct merge_options *opt, const char *err, ...)
 	return -1;
 }
 
+static void setup_path_info(struct merge_options *opt,
+			    struct string_list_item *result,
+			    const char *current_dir_name,
+			    int current_dir_name_len,
+			    char *fullpath, /* we'll take over ownership */
+			    struct name_entry *names,
+			    struct name_entry *merged_version,
+			    unsigned is_null,     /* boolean */
+			    unsigned df_conflict, /* boolean */
+			    unsigned filemask,
+			    unsigned dirmask,
+			    int resolved          /* boolean */)
+{
+	/* result->util is void*, so mi is a convenience typed variable */
+	struct merged_info *mi;
+
+	assert(!is_null || resolved);
+	assert(!df_conflict || !resolved); /* df_conflict implies !resolved */
+	assert(resolved == (merged_version != NULL));
+
+	mi = xcalloc(1, resolved ? sizeof(struct merged_info) :
+				   sizeof(struct conflict_info));
+	mi->directory_name = current_dir_name;
+	mi->basename_offset = current_dir_name_len;
+	mi->clean = !!resolved;
+	if (resolved) {
+		mi->result.mode = merged_version->mode;
+		oidcpy(&mi->result.oid, &merged_version->oid);
+		mi->is_null = !!is_null;
+	} else {
+		int i;
+		struct conflict_info *ci;
+
+		ASSIGN_AND_VERIFY_CI(ci, mi);
+		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++) {
+			ci->pathnames[i] = fullpath;
+			ci->stages[i].mode = names[i].mode;
+			oidcpy(&ci->stages[i].oid, &names[i].oid);
+		}
+		ci->filemask = filemask;
+		ci->dirmask = dirmask;
+		ci->df_conflict = !!df_conflict;
+		if (dirmask)
+			/*
+			 * Assume is_null for now, but if we have entries
+			 * under the directory then when it is complete in
+			 * write_completed_directory() it'll update this.
+			 * Also, for D/F conflicts, we have to handle the
+			 * directory first, then clear this bit and process
+			 * the file to see how it is handled -- that occurs
+			 * near the top of process_entry().
+			 */
+			mi->is_null = 1;
+	}
+	strmap_put(&opt->priv->paths, fullpath, mi);
+	result->string = fullpath;
+	result->util = mi;
+}
+
 static int collect_merge_info_callback(int n,
 				       unsigned long mask,
 				       unsigned long dirmask,
@@ -215,10 +294,12 @@ static int collect_merge_info_callback(int n,
 	 */
 	struct merge_options *opt = info->data;
 	struct merge_options_internal *opti = opt->priv;
-	struct conflict_info *ci;
+	struct string_list_item pi;  /* Path Info */
+	struct conflict_info *ci; /* typed alias to pi.util (which is void*) */
 	struct name_entry *p;
 	size_t len;
 	char *fullpath;
+	const char *dirname = opti->current_dir_name;
 	unsigned filemask = mask & ~dirmask;
 	unsigned match_mask = 0; /* will be updated below */
 	unsigned mbase_null = !(mask & 1);
@@ -287,13 +368,15 @@ static int collect_merge_info_callback(int n,
 	make_traverse_path(fullpath, len + 1, info, p->path, p->pathlen);
 
 	/*
-	 * TODO: record information about the path other than all zeros,
-	 * so we can resolve later in process_entries.
+	 * Record information about the path so we can resolve later in
+	 * process_entries.
 	 */
-	ci = xcalloc(1, sizeof(struct conflict_info));
-	ci->df_conflict = df_conflict;
+	setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
+			names, NULL, 0, df_conflict, filemask, dirmask, 0);
+
+	ci = pi.util;
+	VERIFY_CI(ci);
 	ci->match_mask = match_mask;
-	strmap_put(&opti->paths, fullpath, ci);
 
 	/* If dirmask, recurse into subdirectories */
 	if (dirmask) {
@@ -337,7 +420,7 @@ static int collect_merge_info_callback(int n,
 		}
 
 		original_dir_name = opti->current_dir_name;
-		opti->current_dir_name = fullpath;
+		opti->current_dir_name = pi.string;
 		ret = traverse_trees(NULL, 3, t, &newinfo);
 		opti->current_dir_name = original_dir_name;
 
