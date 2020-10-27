@@ -194,8 +194,7 @@ static int add(int argc, const char **argv)
 	if (remote_is_configured(remote, 1))
 		die(_("remote %s already exists."), name);
 
-	strbuf_addf(&buf2, "refs/heads/test:refs/remotes/%s/test", name);
-	if (!valid_fetch_refspec(buf2.buf))
+	if (!valid_remote_name(name))
 		die(_("'%s' is not a valid remote name"), name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
@@ -696,11 +695,9 @@ static int mv(int argc, const char **argv)
 	if (remote_is_configured(newremote, 1))
 		die(_("remote %s already exists."), rename.new_name);
 
-	strbuf_addf(&buf, "refs/heads/test:refs/remotes/%s/test", rename.new_name);
-	if (!valid_fetch_refspec(buf.buf))
+	if (!valid_remote_name(rename.new_name))
 		die(_("'%s' is not a valid remote name"), rename.new_name);
 
-	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s", rename.old_name);
 	strbuf_addf(&buf2, "remote.%s", rename.new_name);
 	if (git_config_rename_section(buf.buf, buf2.buf) < 1)

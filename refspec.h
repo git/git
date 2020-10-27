@@ -64,6 +64,7 @@ void refspec_appendn(struct refspec *rs, const char **refspecs, int nr);
 void refspec_clear(struct refspec *rs);
 
 int valid_fetch_refspec(const char *refspec);
+int valid_remote_name(const char *name);
 
 struct strvec;
 /*
