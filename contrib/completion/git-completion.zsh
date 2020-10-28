@@ -243,8 +243,12 @@ _git ()
 
 	if (( $+functions[__${service}_zsh_main] )); then
 		__${service}_zsh_main
-	else
+	elif (( $+functions[__${service}_main] )); then
 		emulate ksh -c __${service}_main
+	elif (( $+functions[_${service}] )); then
+		emulate ksh -c _${service}
+	elif ((	$+functions[_${service//-/_}] )); then
+		emulate ksh -c _${service//-/_}
 	fi
 
 	let _ret && _default && _ret=0
