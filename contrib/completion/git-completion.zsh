@@ -105,6 +105,11 @@ __gitcomp_direct ()
 	compadd -Q -- ${${=1}% } && _ret=0
 }
 
+__gitcomp_direct_append ()
+{
+	__gitcomp_direct "$@"
+}
+
 __gitcomp_nl ()
 {
 	emulate -L zsh
