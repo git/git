@@ -68,7 +68,8 @@ EOF
 		cd "$git" &&
 		change=$(last_shelved_change) &&
 		git p4 unshelve $change &&
-		git show refs/remotes/p4-unshelved/$change | grep -q "Further description" &&
+		git show refs/remotes/p4-unshelved/$change >actual &&
+		grep -q "Further description" actual &&
 		git cherry-pick refs/remotes/p4-unshelved/$change &&
 		test_path_is_file file2 &&
 		test_cmp file1 "$cli"/file1 &&
