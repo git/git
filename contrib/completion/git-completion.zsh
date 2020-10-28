@@ -235,10 +235,13 @@ __git_zsh_main ()
 
 	case $state in
 	(command)
-		_alternative \
-                         'alias-commands:alias:__git_zsh_cmd_alias' \
-                         'common-commands:common:__git_zsh_cmd_common' \
-                         'all-commands:all:__git_zsh_cmd_all' && _ret=0
+		_tags common-commands alias-commands all-commands
+		while _tags; do
+			_requested common-commands && __git_zsh_cmd_common
+			_requested alias-commands && __git_zsh_cmd_alias
+			_requested all-commands && __git_zsh_cmd_all
+			let _ret || break
+		done
 		;;
 	(arg)
 		local command="${words[1]}" __git_dir
