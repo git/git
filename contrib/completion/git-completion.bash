@@ -3510,6 +3510,14 @@ if [[ -n ${ZSH_VERSION-} ]] &&
 		compadd -Q -S "${4- }" -p "${2-}" -- ${=1} && _ret=0
 	}
 
+	__gitcomp_nl_append ()
+	{
+		emulate -L zsh
+
+		local IFS=$'\n'
+		compadd -Q -S "${4- }" -p "${2-}" -- ${=1} && _ret=0
+	}
+
 	__gitcomp_file_direct ()
 	{
 		emulate -L zsh
