@@ -136,7 +136,7 @@ __gitcomp_file ()
 {
 	emulate -L zsh
 
-	compadd -p "${2-}" -f -- ${(f)1} && _ret=0
+	compadd -f -p "${2-}" -- ${(f)1} && _ret=0
 }
 
 __git_zsh_bash_func ()
