@@ -124,6 +124,7 @@ __gitcomp_nl_append ()
 	emulate -L zsh
 
 	local IFS=$'\n'
+	compset -P '*[=:]'
 	compadd -Q -S "${4- }" -p "${2-}" -- ${=1} && _ret=0
 }
 
@@ -132,7 +133,6 @@ __gitcomp_file_direct ()
 	emulate -L zsh
 
 	local IFS=$'\n'
-	compset -P '*[=:]'
 	compadd -f -- ${=1} && _ret=0
 }
 
@@ -141,7 +141,6 @@ __gitcomp_file ()
 	emulate -L zsh
 
 	local IFS=$'\n'
-	compset -P '*[=:]'
 	compadd -p "${2-}" -f -- ${=1} && _ret=0
 }
 
