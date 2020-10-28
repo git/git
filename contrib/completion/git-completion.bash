@@ -416,14 +416,13 @@ __gitcomp_builtin ()
 	local options
 	eval "options=\${$var-}"
 
-	local completion_helper
-	if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
-		completion_helper="--git-completion-helper-all"
-	else
-		completion_helper="--git-completion-helper"
-	fi
-
 	if [ -z "$options" ]; then
+		local completion_helper
+		if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
+			completion_helper="--git-completion-helper-all"
+		else
+			completion_helper="--git-completion-helper"
+		fi
 		# leading and trailing spaces are significant to make
 		# option removal work correctly.
 		options=" $incl $(__git ${cmd/_/ } $completion_helper) " || return
