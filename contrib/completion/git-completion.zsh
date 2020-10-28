@@ -101,7 +101,7 @@ __gitcomp_direct ()
 	emulate -L zsh
 
 	compset -P '*[=:]'
-	compadd -Q -- ${${(f)1}% } && _ret=0
+	compadd -Q -S '' -- ${(f)1} && _ret=0
 }
 
 __gitcomp_direct_append ()
