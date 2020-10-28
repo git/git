@@ -134,20 +134,32 @@ __gitcomp_file_direct ()
 	__gitcomp_file "$1" ""
 }
 
+__git_complete_command ()
+{
+	emulate -L zsh
+
+	local command="$1"
+	local completion_func="_git_${command//-/_}"
+	if (( $+functions[$completion_func] )); then
+		emulate ksh -c $completion_func
+		return 0
+	else
+		return 1
+	fi
+}
+
 __git_zsh_bash_func ()
 {
 	emulate -L ksh
 
 	local command=$1
 
-	local completion_func="_git_${command//-/_}"
-	declare -f $completion_func >/dev/null && $completion_func && return
+	__git_complete_command "$command" && return
 
 	local expansion=$(__git_aliased_command "$command")
 	if [ -n "$expansion" ]; then
 		words[1]=$expansion
-		completion_func="_git_${expansion//-/_}"
-		declare -f $completion_func >/dev/null && $completion_func
+		__git_complete_command "$expansion"
 	fi
 }
 
