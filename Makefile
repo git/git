@@ -820,8 +820,8 @@ TEST_SHELL_PATH = $(SHELL_PATH)
 LIB_FILE = libgit.a
 XDIFF_LIB = xdiff/lib.a
 
-GENERATED_H += config-list.h
 GENERATED_H += command-list.h
+GENERATED_H += config-list.h
 
 LIB_H := $(sort $(patsubst ./%,%,$(shell git ls-files '*.h' ':!t/' ':!Documentation/' 2>/dev/null || \
 	$(FIND) . \
@@ -998,9 +998,9 @@ LIB_OBJS += sigchain.o
 LIB_OBJS += split-index.o
 LIB_OBJS += stable-qsort.o
 LIB_OBJS += strbuf.o
-LIB_OBJS += strvec.o
 LIB_OBJS += streaming.o
 LIB_OBJS += string-list.o
+LIB_OBJS += strvec.o
 LIB_OBJS += sub-process.o
 LIB_OBJS += submodule-config.o
 LIB_OBJS += submodule.o
@@ -1066,15 +1066,15 @@ BUILTIN_OBJS += builtin/checkout-index.o
 BUILTIN_OBJS += builtin/checkout.o
 BUILTIN_OBJS += builtin/clean.o
 BUILTIN_OBJS += builtin/clone.o
-BUILTIN_OBJS += builtin/credential-cache.o
-BUILTIN_OBJS += builtin/credential-cache--daemon.o
-BUILTIN_OBJS += builtin/credential-store.o
 BUILTIN_OBJS += builtin/column.o
 BUILTIN_OBJS += builtin/commit-graph.o
 BUILTIN_OBJS += builtin/commit-tree.o
 BUILTIN_OBJS += builtin/commit.o
 BUILTIN_OBJS += builtin/config.o
 BUILTIN_OBJS += builtin/count-objects.o
+BUILTIN_OBJS += builtin/credential-cache--daemon.o
+BUILTIN_OBJS += builtin/credential-cache.o
+BUILTIN_OBJS += builtin/credential-store.o
 BUILTIN_OBJS += builtin/credential.o
 BUILTIN_OBJS += builtin/describe.o
 BUILTIN_OBJS += builtin/diff-files.o
@@ -2981,15 +2981,12 @@ endif
 	} && \
 	for p in $(filter $(install_bindir_programs),$(BUILT_INS)); do \
 		$(RM) "$$bindir/$$p" && \
-		if test -z "$(SKIP_DASHED_BUILT_INS)"; \
-		then \
-			test -n "$(INSTALL_SYMLINKS)" && \
-			ln -s "git$X" "$$bindir/$$p" || \
-			{ test -z "$(NO_INSTALL_HARDLINKS)" && \
-			  ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
-			  ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
-			  cp "$$bindir/git$X" "$$bindir/$$p" || exit; }; \
-		fi \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "git$X" "$$bindir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+		  ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
+		  ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
+		  cp "$$bindir/git$X" "$$bindir/$$p" || exit; }; \
 	done && \
 	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
@@ -3053,36 +3050,30 @@ quick-install-html:
 
 ### Maintainer's dist rules
 
-# Allow tweaking to hide local environment effects, like perm bits.
-# With GNU tar, "--mode=u+rwX,og+rX,og-w" would be a good idea, for example.
-TAR_DIST_EXTRA_OPTS =
 GIT_TARNAME = git-$(GIT_VERSION)
+GIT_ARCHIVE_EXTRA_FILES = \
+	--prefix=$(GIT_TARNAME)/ \
+	--add-file=configure \
+	--add-file=$(GIT_TARNAME)/version \
+	--prefix=$(GIT_TARNAME)/git-gui/ \
+	--add-file=$(GIT_TARNAME)/git-gui/version
+ifdef DC_SHA1_SUBMODULE
+GIT_ARCHIVE_EXTRA_FILES += \
+	--prefix=$(GIT_TARNAME)/sha1collisiondetection/ \
+	--add-file=sha1collisiondetection/LICENSE.txt \
+	--prefix=$(GIT_TARNAME)/sha1collisiondetection/lib/ \
+	--add-file=sha1collisiondetection/lib/sha1.c \
+	--add-file=sha1collisiondetection/lib/sha1.h \
+	--add-file=sha1collisiondetection/lib/ubc_check.c \
+	--add-file=sha1collisiondetection/lib/ubc_check.h
+endif
 dist: git-archive$(X) configure
-	./git-archive --format=tar \
-		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
-	@cp configure $(GIT_TARNAME)
 	@echo $(GIT_VERSION) > $(GIT_TARNAME)/version
 	@$(MAKE) -C git-gui TARDIR=../$(GIT_TARNAME)/git-gui dist-version
-	$(TAR) rf $(GIT_TARNAME).tar $(TAR_DIST_EXTRA_OPTS) \
-		$(GIT_TARNAME)/configure \
-		$(GIT_TARNAME)/version \
-		$(GIT_TARNAME)/git-gui/version
-ifdef DC_SHA1_SUBMODULE
-	@mkdir -p $(GIT_TARNAME)/sha1collisiondetection/lib
-	@cp sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/
-	@cp sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/
-	@cp sha1collisiondetection/lib/sha1.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/
-	@cp sha1collisiondetection/lib/ubc_check.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/
-	$(TAR) rf $(GIT_TARNAME).tar $(TAR_DIST_EXTRA_OPTS) \
-		$(GIT_TARNAME)/sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/sha1.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/ubc_check.[ch]
-endif
+	./git-archive --format=tar \
+		$(GIT_ARCHIVE_EXTRA_FILES) \
+		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
 	@$(RM) -r $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
@@ -3108,11 +3099,15 @@ artifacts-tar:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) \
 htmldocs = git-htmldocs-$(GIT_VERSION)
 manpages = git-manpages-$(GIT_VERSION)
 .PHONY: dist-doc distclean
-dist-doc:
+dist-doc: git$X
 	$(RM) -r .doc-tmp-dir
 	mkdir .doc-tmp-dir
 	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
-	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar $(TAR_DIST_EXTRA_OPTS) .
+	./git -C .doc-tmp-dir init
+	./git -C .doc-tmp-dir add .
+	./git -C .doc-tmp-dir commit -m htmldocs
+	./git -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
+		> $(htmldocs).tar
 	gzip -n -9 -f $(htmldocs).tar
 	:
 	$(RM) -r .doc-tmp-dir
@@ -3122,7 +3117,11 @@ dist-doc:
 		man5dir=../.doc-tmp-dir/man5 \
 		man7dir=../.doc-tmp-dir/man7 \
 		install
-	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar $(TAR_DIST_EXTRA_OPTS) .
+	./git -C .doc-tmp-dir init
+	./git -C .doc-tmp-dir add .
+	./git -C .doc-tmp-dir commit -m manpages
+	./git -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
+		> $(manpages).tar
 	gzip -n -9 -f $(manpages).tar
 	$(RM) -r .doc-tmp-dir
 

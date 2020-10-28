@@ -203,8 +203,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	for (i = 1; i < ents; i++)
 		oid_array_append(&parents, &ent[i].item->oid);
-	diff_tree_combined(&ent[0].item->oid, &parents,
-			   revs->dense_combined_merges, revs);
+	diff_tree_combined(&ent[0].item->oid, &parents, revs);
 	oid_array_clear(&parents);
 	return 0;
 }

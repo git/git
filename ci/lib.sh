@@ -149,6 +149,7 @@ then
 	CI_REPO_SLUG="$GITHUB_REPOSITORY"
 	CI_JOB_ID="$GITHUB_RUN_ID"
 	CC="${CC:-gcc}"
+	DONT_SKIP_TAGS=t
 
 	cache_dir="$HOME/none"
 
@@ -167,6 +168,7 @@ good_trees_file="$cache_dir/good-trees"
 
 mkdir -p "$cache_dir"
 
+test -n "${DONT_SKIP_TAGS-}" ||
 skip_branch_tip_with_tag
 skip_good_tree
 

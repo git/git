@@ -76,24 +76,24 @@ test_expect_success 'reflog of worktrees/xx/HEAD' '
 	test_cmp expected actual.wt2
 '
 
-test_expect_success 'for-each-ref from main repo' '
+test_expect_success 'for-each-ref from main worktree' '
 	mkdir fer1 &&
 	git -C fer1 init repo &&
 	test_commit -C fer1/repo initial &&
 	git -C fer1/repo worktree add ../second &&
-	git -C fer1/repo update-ref refs/bisect/main HEAD &&
-	git -C fer1/repo update-ref refs/rewritten/main HEAD &&
-	git -C fer1/repo update-ref refs/worktree/main HEAD &&
-	git -C fer1/repo for-each-ref --format="%(refname)" | grep main >actual &&
+	git -C fer1/repo update-ref refs/bisect/first HEAD &&
+	git -C fer1/repo update-ref refs/rewritten/first HEAD &&
+	git -C fer1/repo update-ref refs/worktree/first HEAD &&
+	git -C fer1/repo for-each-ref --format="%(refname)" | grep first >actual &&
 	cat >expected <<-\EOF &&
-	refs/bisect/main
-	refs/rewritten/main
-	refs/worktree/main
+	refs/bisect/first
+	refs/rewritten/first
+	refs/worktree/first
 	EOF
 	test_cmp expected actual
 '
 
-test_expect_success 'for-each-ref from linked repo' '
+test_expect_success 'for-each-ref from linked worktree' '
 	mkdir fer2 &&
 	git -C fer2 init repo &&
 	test_commit -C fer2/repo initial &&

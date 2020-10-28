@@ -1022,4 +1022,16 @@ test_expect_success 'git clone passes the parallel jobs config on to submodules'
 	rm -rf super4
 '
 
+test_expect_success 'submodule update --quiet passes quietness to merge/rebase' '
+	(cd super &&
+	 test_commit -C rebasing message &&
+	 git submodule update --rebase --quiet >out 2>err &&
+	 test_must_be_empty out &&
+	 test_must_be_empty err &&
+	 git submodule update --rebase -v >out 2>err &&
+	 test_file_not_empty out &&
+	 test_must_be_empty err
+	)
+'
+
 test_done

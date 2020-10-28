@@ -15,7 +15,7 @@ export GIT_TEST_PROTOCOL_VERSION
 
 build_script () {
 	script="$1" &&
-	for i in one three_file master master2 one_tree three two two2 three2
+	for i in one three_file master topic_2 one_tree three two two2 three2
 	do
 		echo "s/$(test_oid --hash=sha1 "$i")/$(test_oid "$i")/g" >>"$script"
 	done
@@ -52,8 +52,8 @@ test_expect_success setup '
 	two sha1:525b7fb068d59950d185a8779dc957c77eed73ba
 	two sha256:3b21de3440cd38c2a9e9b464adb923f7054949ed4c918e1a0ac4c95cd52774db
 
-	master2 sha1:754b754407bf032e9a2f9d5a9ad05ca79a6b228f
-	master2 sha256:6c7abaea8a6d8ef4d89877e68462758dc6774690fbbbb0e6d7dd57415c9abde0
+	topic_2 sha1:754b754407bf032e9a2f9d5a9ad05ca79a6b228f
+	topic_2 sha256:6c7abaea8a6d8ef4d89877e68462758dc6774690fbbbb0e6d7dd57415c9abde0
 
 	two2 sha1:6134ee8f857693b96ff1cc98d3e2fd62b199e5a8
 	two2 sha256:87a2d3ee29c83a3dc7afd41c0606b11f67603120b910a7be7840accdc18344d4

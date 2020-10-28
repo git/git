@@ -9,6 +9,7 @@ struct repository;
 struct archiver_args {
 	struct repository *repo;
 	const char *refname;
+	const char *prefix;
 	const char *base;
 	size_t baselen;
 	struct tree *tree;
@@ -20,6 +21,7 @@ struct archiver_args {
 	unsigned int worktree_attributes : 1;
 	unsigned int convert : 1;
 	int compression_level;
+	struct string_list extra_files;
 };
 
 /* main api */
@@ -49,12 +51,9 @@ void init_archivers(void);
 typedef int (*write_archive_entry_fn_t)(struct archiver_args *args,
 					const struct object_id *oid,
 					const char *path, size_t pathlen,
-					unsigned int mode);
+					unsigned int mode,
+					void *buffer, unsigned long size);
 
 int write_archive_entries(struct archiver_args *args, write_archive_entry_fn_t write_entry);
-void *object_file_to_archive(const struct archiver_args *args,
-			     const char *path, const struct object_id *oid,
-			     unsigned int mode, enum object_type *type,
-			     unsigned long *sizep);
 
 #endif	/* ARCHIVE_H */

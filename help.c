@@ -263,6 +263,8 @@ void load_command_list(const char *prefix,
 	const char *env_path = getenv("PATH");
 	const char *exec_path = git_exec_path();
 
+	load_builtin_commands(prefix, main_cmds);
+
 	if (exec_path) {
 		list_commands_in_dir(main_cmds, exec_path, prefix);
 		QSORT(main_cmds->names, main_cmds->cnt, cmdname_compare);

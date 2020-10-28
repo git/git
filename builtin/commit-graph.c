@@ -128,6 +128,8 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 {
 	enum commit_graph_split_flags *flags = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	opts.split = 1;
 	if (!arg)
 		return 0;

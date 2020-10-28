@@ -683,7 +683,8 @@ test_expect_success 'partial clone' '
 
 test_expect_success 'partial clone with -o' '
 	partial_clone_server server &&
-	git clone -o blah --filter=blob:limit=0 "file://$(pwd)/server" client
+	git clone -o blah --filter=blob:limit=0 "file://$(pwd)/server" client &&
+	test_cmp_config -C client "blob:limit=0" --get-all remote.blah.partialclonefilter
 '
 
 test_expect_success 'partial clone: warn if server does not support object filtering' '

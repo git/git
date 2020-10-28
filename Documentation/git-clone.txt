@@ -183,8 +183,9 @@ objects from the source repository into a pack in the cloned repository.
 
 -o <name>::
 --origin <name>::
-	Instead of using the remote name `origin` to keep track
-	of the upstream repository, use `<name>`.
+	Instead of using the remote name `origin` to keep track of the upstream
+	repository, use `<name>`.  Overrides `clone.defaultRemoteName` from the
+	config.
 
 -b <name>::
 --branch <name>::

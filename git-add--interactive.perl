@@ -1830,6 +1830,13 @@ sub process_args {
 				$arg = shift @ARGV or die __("missing --");
 				if ($arg ne '--') {
 					$patch_mode_revision = $arg;
+
+					# NEEDSWORK: Instead of comparing to the literal "HEAD",
+					# compare the commit objects instead so that other ways of
+					# saying the same thing (such as "@") are also handled
+					# appropriately.
+					#
+					# This applies to the cases below too.
 					$patch_mode = ($arg eq 'HEAD' ?
 						       'reset_head' : 'reset_nothead');
 					$arg = shift @ARGV or die __("missing --");

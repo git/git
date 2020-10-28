@@ -32,11 +32,11 @@ test_expect_success 'setup' '
 	git checkout -b someref master &&
 	commit some &&
 	git checkout master &&
-	commit master2 &&
+	commit topic_2 &&
 	git tag foo/bar master &&
-	commit master3 &&
+	commit topic_3 &&
 	git update-ref refs/remotes/foo/baz master &&
-	commit master4 &&
+	commit topic_4 &&
 	git update-ref refs/remotes/upstream/one subspace/one &&
 	git update-ref refs/remotes/upstream/two subspace/two &&
 	git update-ref refs/remotes/upstream/x subspace-x &&

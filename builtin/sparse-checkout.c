@@ -46,11 +46,23 @@ static void write_patterns_to_file(FILE *fp, struct pattern_list *pl)
 	}
 }
 
+static char const * const builtin_sparse_checkout_list_usage[] = {
+	N_("git sparse-checkout list"),
+	NULL
+};
+
 static int sparse_checkout_list(int argc, const char **argv)
 {
+	static struct option builtin_sparse_checkout_list_options[] = {
+		OPT_END(),
+	};
 	struct pattern_list pl;
 	char *sparse_filename;
 	int res;
+
+	argc = parse_options(argc, argv, NULL,
+			     builtin_sparse_checkout_list_options,
+			     builtin_sparse_checkout_list_usage, 0);
 
 	memset(&pl, 0, sizeof(pl));
 
@@ -560,16 +572,41 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix,
 	return modify_pattern_list(argc, argv, m);
 }
 
+static char const * const builtin_sparse_checkout_reapply_usage[] = {
+	N_("git sparse-checkout reapply"),
+	NULL
+};
+
 static int sparse_checkout_reapply(int argc, const char **argv)
 {
+	static struct option builtin_sparse_checkout_reapply_options[] = {
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, NULL,
+			     builtin_sparse_checkout_reapply_options,
+			     builtin_sparse_checkout_reapply_usage, 0);
+
 	repo_read_index(the_repository);
 	return update_working_directory(NULL);
 }
 
+static char const * const builtin_sparse_checkout_disable_usage[] = {
+	N_("git sparse-checkout disable"),
+	NULL
+};
+
 static int sparse_checkout_disable(int argc, const char **argv)
 {
+	static struct option builtin_sparse_checkout_disable_options[] = {
+		OPT_END(),
+	};
 	struct pattern_list pl;
 	struct strbuf match_all = STRBUF_INIT;
+
+	argc = parse_options(argc, argv, NULL,
+			     builtin_sparse_checkout_disable_options,
+			     builtin_sparse_checkout_disable_usage, 0);
 
 	repo_read_index(the_repository);
 
