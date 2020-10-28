@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2012 Felipe Contreras
+# Copyright (c) 2012-2020 Felipe Contreras
 #
 
 test_description='test bash completion'
