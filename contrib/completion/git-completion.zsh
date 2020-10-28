@@ -124,9 +124,7 @@ __gitcomp_nl_append ()
 
 __gitcomp_file_direct ()
 {
-	emulate -L zsh
-
-	compadd -f -- ${(f)1} && _ret=0
+	__gitcomp_file "$1" ''
 }
 
 __gitcomp_file ()
