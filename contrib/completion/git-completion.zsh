@@ -13,7 +13,7 @@
 #  fpath=(~/.zsh $fpath)
 #
 # You need git's bash completion script installed. By default bash-completion's
-# location will be used (e.g. /usr/share/bash-completion/completions/git).
+# location will be used (e.g. pkg-config --variable=completionsdir bash-completion).
 #
 # If your bash completion script is somewhere else, you can specify the
 # location in your ~/.zshrc:
@@ -33,12 +33,16 @@ zstyle -T ':completion:*:*:git:*' tag-order && \
 zstyle -s ":completion:*:*:git:*" script script
 if [ -z "$script" ]; then
 	local -a locations
-	local e
+	local e bash_completion
+
+	bash_completion=$(pkg-config --variable=completionsdir bash-completion 2>/dev/null) ||
+		bash_completion='/usr/share/bash-completion/completions/'
+
 	locations=(
 		"$(dirname ${funcsourcetrace[1]%:*})"/git-completion.bash
-		'/etc/bash_completion.d/git' # fedora, old debian
-		'/usr/share/bash-completion/completions/git' # arch, ubuntu, new debian
-		'/usr/share/bash-completion/git' # gentoo
+		"$HOME/.local/share/bash-completion/completions/git"
+		"$bash_completion/git"
+		'/etc/bash_completion.d/git' # old debian
 		)
 	for e in $locations; do
 		test -f $e && script="$e" && break
