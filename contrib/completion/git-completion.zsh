@@ -119,10 +119,7 @@ __gitcomp_nl ()
 
 __gitcomp_nl_append ()
 {
-	emulate -L zsh
-
-	compset -P '*[=:]'
-	compadd -Q -S "${4- }" -p "${2-}" -- ${(f)1} && _ret=0
+	__gitcomp_nl "$@"
 }
 
 __gitcomp_file_direct ()
