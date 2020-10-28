@@ -59,10 +59,32 @@ __gitcomp ()
 	case "$cur_" in
 	--*=)
 		;;
+	--no-*)
+		local c IFS=$' \t\n'
+		local -a array
+		for c in ${=1}; do
+			if [[ $c == "--" ]]; then
+				continue
+			fi
+			c="$c${4-}"
+			case $c in
+			--*=|*.) ;;
+			*) c="$c " ;;
+			esac
+			array+=("$c")
+		done
+		compset -P '*[=:]'
+		compadd -Q -S '' -p "${2-}" -a -- array && _ret=0
+		;;
 	*)
 		local c IFS=$' \t\n'
 		local -a array
 		for c in ${=1}; do
+			if [[ $c == "--" ]]; then
+				c="--no-...${4-}"
+				array+=("$c ")
+				break
+			fi
 			c="$c${4-}"
 			case $c in
 			--*=*|*.) ;;
