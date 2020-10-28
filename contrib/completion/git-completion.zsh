@@ -196,8 +196,9 @@ __git_zsh_cmd_common ()
 __git_zsh_cmd_alias ()
 {
 	local -a list
-	list=(${${${(0)"$(git config -z --get-regexp '^alias\.')"}#alias.}%$'\n'*})
-	_describe -t alias-commands 'aliases' list $* && _ret=0
+	list=(${${(0)"$(git config -z --get-regexp '^alias\.*')"}#alias.})
+	list=(${(f)"$(printf "%s:alias for '%s'\n" ${(f@)list})"})
+	_describe -t alias-commands 'aliases' list && _ret=0
 }
 
 __git_zsh_cmd_all ()
