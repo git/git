@@ -21,12 +21,6 @@
 #  zstyle ':completion:*:*:git:*' script ~/.git-completion.bash
 #
 
-complete ()
-{
-	# do nothing
-	return 0
-}
-
 zstyle -T ':completion:*:*:git:*' tag-order && \
 	zstyle ':completion:*:*:git:*' tag-order 'common-commands'
 
@@ -48,7 +42,11 @@ if [ -z "$script" ]; then
 		test -f $e && script="$e" && break
 	done
 fi
+
+local old_complete="$functions[complete]"
+functions[complete]=:
 GIT_SOURCING_ZSH_COMPLETION=y . "$script"
+functions[complete]="$old_complete"
 
 __gitcomp ()
 {
