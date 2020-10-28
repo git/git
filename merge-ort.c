@@ -519,16 +519,45 @@ static int string_list_df_name_compare(const char *one, const char *two)
 	return onelen - twolen;
 }
 
+struct directory_versions {
+	struct string_list versions;
+};
+
+static void record_entry_for_tree(struct directory_versions *dir_metadata,
+				  const char *path,
+				  struct merged_info *mi)
+{
+	const char *basename;
+
+	if (mi->is_null)
+		/* nothing to record */
+		return;
+
+	basename = path + mi->basename_offset;
+	assert(strchr(basename, '/') == NULL);
+	string_list_append(&dir_metadata->versions,
+			   basename)->util = &mi->result;
+}
+
 /* Per entry merge function */
 static void process_entry(struct merge_options *opt,
 			  const char *path,
-			  struct conflict_info *ci)
+			  struct conflict_info *ci,
+			  struct directory_versions *dir_metadata)
 {
 	VERIFY_CI(ci);
 	assert(ci->filemask >= 0 && ci->filemask <= 7);
 	/* ci->match_mask == 7 was handled in collect_merge_info_callback() */
 	assert(ci->match_mask == 0 || ci->match_mask == 3 ||
 	       ci->match_mask == 5 || ci->match_mask == 6);
+
+	if (ci->dirmask) {
+		record_entry_for_tree(dir_metadata, path, &ci->merged);
+		if (ci->filemask == 0)
+			/* nothing else to handle */
+			return;
+		assert(ci->df_conflict);
+	}
 
 	if (ci->df_conflict) {
 		die("Not yet implemented.");
@@ -598,6 +627,7 @@ static void process_entry(struct merge_options *opt,
 	 */
 	if (!ci->merged.clean)
 		strmap_put(&opt->priv->conflicted, path, ci);
+	record_entry_for_tree(dir_metadata, path, &ci->merged);
 }
 
 static void process_entries(struct merge_options *opt,
@@ -607,6 +637,7 @@ static void process_entries(struct merge_options *opt,
 	struct strmap_entry *e;
 	struct string_list plist = STRING_LIST_INIT_NODUP;
 	struct string_list_item *entry;
+	struct directory_versions dir_metadata = { STRING_LIST_INIT_NODUP };
 
 	if (strmap_empty(&opt->priv->paths)) {
 		oidcpy(result_oid, opt->repo->hash_algo->empty_tree);
@@ -636,13 +667,16 @@ static void process_entries(struct merge_options *opt,
 		 */
 		struct merged_info *mi = entry->util;
 
-		if (!mi->clean) {
+		if (mi->clean)
+			record_entry_for_tree(&dir_metadata, path, mi);
+		else {
 			struct conflict_info *ci = (struct conflict_info *)mi;
-			process_entry(opt, path, ci);
+			process_entry(opt, path, ci, &dir_metadata);
 		}
 	}
 
 	string_list_clear(&plist, 0);
+	string_list_clear(&dir_metadata.versions, 0);
 	die("Tree creation not yet implemented");
 }
 
