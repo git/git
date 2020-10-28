@@ -46,3 +46,5 @@ ifeq ($(filter gcc5,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wno-uninitialized
 endif
 endif
+
+GIT_TEST_PERL_FATAL_WARNINGS = YesPlease
