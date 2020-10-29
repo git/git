@@ -111,7 +111,8 @@ Please remember to always state
  - how the last two are different.
 
 See http://www.chiark.greenend.org.uk/~sgtatham/bugs.html for further
-hints.
+hints.  Our `git bugreport` tool gives you a handy way you can use to
+make sure you do not forget these points when filing a bug report.
 
 If you think you found a security-sensitive issue and want to disclose
 it to us without announcing it to wider public, please contact us at
@@ -172,7 +173,7 @@ named with three dotted decimal digits (e.g. "1.8.5"), but we have
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
 
-The last such release was 2.27 done on Jun 1st, 2020.  You can expect
+The last such release was 2.29 done on Oct 19th, 2020.  You can expect
 that the tip of the "master" branch is always more stable than any of
 the released versions.
 
@@ -185,8 +186,8 @@ of last-minute issues.  The maintenance releases used to be named with
 four dotted decimal, named after the feature release they are updates
 to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
 feature release).  These days, maintenance releases are named by
-incrementing the last digit of three-dotted decimal name (e.g. "2.26.1"
-was the first maintenance release for the "2.26" series).
+incrementing the last digit of three-dotted decimal name (e.g. "2.29.2"
+was the second maintenance release for the "2.29" series).
 
 New features never go to the 'maint' branch.  It is merged into "master"
 primarily to propagate the description in the release notes forward.
