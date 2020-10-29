@@ -105,4 +105,22 @@ test_crlf_subject_body_and_contents tag --list tag-crlf*
 
 test_crlf_subject_body_and_contents for-each-ref refs/heads/crlf*
 
+test_expect_success 'log: --oneline works with messages using CRLF' '
+	for branch in $LIB_CRLF_BRANCHES
+	do
+		cat .crlf-subject-${branch}.txt >expect &&
+		printf "\n" >>expect &&
+		git log --oneline -1 ${branch} >tmp-branch &&
+		git log --oneline -1 tag-${branch} >tmp-tag &&
+		cut -d" " -f2- <tmp-branch >actual-branch &&
+		cut -d" " -f2- <tmp-tag >actual-tag &&
+		test_cmp expect actual-branch &&
+		test_cmp expect actual-tag || return 1
+	done
+'
+
+test_crlf_subject_body_and_contents log --all --reverse --grep Subject
+
+test_crlf_subject_body_and_contents show $LIB_CRLF_BRANCHES
+
 test_done
