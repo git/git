@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2020, #04; Tue, 27)
-X-master-at: f9b6481aedae587b1380736fb8f21785119aeb48
-X-next-at: 6691a3f2fe6b2727a10cb93899847c6d6cd6ab69
+Subject: What's cooking in git.git (Oct 2020, #05; Thu, 29)
+X-master-at: ad27df6a5cff694add500ab8c7f97234feb4a91f
+X-next-at: ac1ea6bc6f5e42993b67661c5b0e2e7396ac2607
 
-What's cooking in git.git (Oct 2020, #04; Tue, 27)
+What's cooking in git.git (Oct 2020, #05; Thu, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,9 +12,9 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first batch of topics in this cycle are merged to 'master', and
-the tip of 'next' has been rewound and rebuilt.  A handful of new
-topics are also in 'next'.
+Git 2.29.2 has been tagged.  About 30+ topics are in 'next' waiting
+their turns to graduate to 'master', while a handful more of topics
+in 'seen' are marked to graduate to 'next'.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into.  Some repositories have
@@ -44,443 +44,30 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* cc/doc-filter-branch-typofix (2020-10-20) 1 commit
-  (merged to 'next' on 2020-10-23 at fc3c91dbc4)
- + filter-branch doc: fix filter-repo typo
-
- Docfix.
-
-
-* cw/ci-ghwf-check-ws-errors (2020-10-09) 1 commit
-  (merged to 'next' on 2020-10-26 at e7f8479a06)
- + ci: github action - add check for whitespace errors
-
- Originally merged to 'next' on 2020-10-15
-
- Dev support.
-
-
-* dl/checkout-guess (2020-10-08) 2 commits
-  (merged to 'next' on 2020-10-26 at ba63e6e268)
- + checkout: learn to respect checkout.guess
- + Documentation/config/checkout: replace sq with backticks
-
- Originally merged to 'next' on 2020-10-08
-
- "git checkout" learned to use checkout.guess configuration variable
- and enable/disable its "--[no-]guess" option accordingly.
-
-
-* dl/checkout-p-merge-base (2020-10-07) 4 commits
-  (merged to 'next' on 2020-10-26 at 1c401bcb0b)
- + t2016: add a NEEDSWORK about the PERL prerequisite
- + add-patch: add NEEDSWORK about comparing commits
- + Doc: document "A...B" form for <tree-ish> in checkout and switch
- + builtin/checkout: fix `git checkout -p HEAD...` bug
-
- Originally merged to 'next' on 2020-10-08
-
- "git checkout -p A...B [-- <path>]" did not work, even though the
- same command without "-p" correctly used the merge-base between
- commits A and B.
-
-
-* ds/maintenance-part-2 (2020-09-25) 8 commits
-  (merged to 'next' on 2020-10-26 at 226ac6646d)
- + maintenance: add incremental-repack auto condition
- + maintenance: auto-size incremental-repack batch
- + maintenance: add incremental-repack task
- + midx: use start_delayed_progress()
- + midx: enable core.multiPackIndex by default
- + maintenance: create auto condition for loose-objects
- + maintenance: add loose-objects task
- + maintenance: add prefetch task
- (this branch is used by ds/maintenance-part-3.)
-
- Originally merged to 'next' on 2020-10-04
-
- "git maintenance", an extended big brother of "git gc", continues
- to evolve.
-
-
-* jk/committer-date-is-author-date-fix (2020-10-23) 3 commits
-  (merged to 'next' on 2020-10-23 at ee490e95b8)
- + rebase: fix broken email with --committer-date-is-author-date
- + am: fix broken email with --committer-date-is-author-date
- + t3436: check --committer-date-is-author-date result more carefully
- (this branch is used by jk/committer-date-is-author-date-fix-simplify.)
-
- In 2.29, "--committer-date-is-author-date" option of "rebase" and
- "am" subcommands lost the e-mail address by mistake, which has been
- corrected.
-
-
-* js/no-builtins-on-disk-option (2020-10-21) 1 commit
-  (merged to 'next' on 2020-10-22 at 88cec4a607)
- + SKIP_DASHED_BUILT_INS: do not skip the bin/ programs
-
- Brown-paper-bag fix.
-
-
-* js/userdiff-php (2020-10-07) 1 commit
-  (merged to 'next' on 2020-10-26 at 21dc182f78)
- + userdiff: PHP: catch "abstract" and "final" functions
-
- Originally merged to 'next' on 2020-10-08
-
- Userdiff for PHP update.
-
-
-* kb/userdiff-rust-macro-rules (2020-10-07) 1 commit
-  (merged to 'next' on 2020-10-26 at 681f75320c)
- + userdiff: recognize 'macro_rules!' as starting a Rust function block
-
- Originally merged to 'next' on 2020-10-08
-
- Userdiff for Rust update.
-
-
-* rk/completion-stash (2020-10-07) 2 commits
-  (merged to 'next' on 2020-10-26 at d694e89155)
- + git-completion.bash: stash-show: complete $__git_diff_common_options
- + git-completion.bash: __git_diff_common_options: add --[no-]patch
-
- Originally merged to 'next' on 2020-10-08
-
- The command line completion script (in contrib/) learned that "git
- stash show" takes the options "git diff" takes.
-
-
-* rs/dist-doc-with-git-archive (2020-10-12) 2 commits
-  (merged to 'next' on 2020-10-26 at 1391e1ae82)
- + Makefile: remove the unused variable TAR_DIST_EXTRA_OPTS
- + Makefile: use git init/add/commit/archive for dist-doc
-
- Originally merged to 'next' on 2020-10-15
-
- Use "git archive" more to produce the release tarball.
-
-
-* rs/tighten-callers-of-deref-tag (2020-10-12) 3 commits
-  (merged to 'next' on 2020-10-26 at b33d5986e5)
- + line-log: handle deref_tag() returning NULL
- + blame: handle deref_tag() returning NULL
- + grep: handle deref_tag() returning NULL
-
- Originally merged to 'next' on 2020-10-15
-
- Code clean-up.
-
-
-* rs/worktree-list-show-locked (2020-10-12) 1 commit
-  (merged to 'next' on 2020-10-26 at 398e14f216)
- + worktree: teach `list` to annotate locked worktree
-
- Originally merged to 'next' on 2020-10-15
-
- "git worktree list" now shows if each worktree is locked.  This
- possibly may open us to show other kinds of states in the future.
-
-
-* sb/clone-origin (2020-09-30) 7 commits
-  (merged to 'next' on 2020-10-26 at 83fbb58da1)
- + clone: allow configurable default for `-o`/`--origin`
- + clone: read new remote name from remote_name instead of option_origin
- + clone: validate --origin option before use
- + refs: consolidate remote name validation
- + remote: add tests for add and rename with invalid names
- + clone: use more conventional config/option layering
- + clone: add tests for --template and some disallowed option pairs
-
- Originally merged to 'next' on 2020-10-06
-
- "git clone" learned clone.defaultremotename configuration variable
- to customize what nickname to use to call the remote the repository
- was cloned from.
-
-
-* sd/userdiff-css-update (2020-10-08) 1 commit
-  (merged to 'next' on 2020-10-26 at 253e1d021b)
- + userdiff: expand detected chunk headers for css
-
- Originally merged to 'next' on 2020-10-08
-
- Userdiff for CSS update.
-
-
-* sk/force-if-includes (2020-10-03) 4 commits
-  (merged to 'next' on 2020-10-26 at 648422f517)
- + t, doc: update tests, reference for "--force-if-includes"
- + push: parse and set flag for "--force-if-includes"
- + push: add reflog check for "--force-if-includes"
- + Merge branch 'ds/in-merge-bases-many-optim-bug' into sk/force-if-includes
-
- Originally merged to 'next' on 2020-10-04
-
- "git push --force-with-lease[=<ref>]" can easily be misused to lose
- commits unless the user takes good care of their own "git fetch".
- A new option "--force-if-includes" attempts to ensure that what is
- being force-pushed was created after examining the commit at the
- tip of the remote ref that is about to be force-replaced.
-
---------------------------------------------------
 [New Topics]
 
-* cm/t7xxx-cleanup (2020-10-22) 6 commits
-  (merged to 'next' on 2020-10-26 at 8b58e54942)
- + t7102: prepare expected output inside test_expect_* block
- + t7201: put each command on a separate line
- + t7201: use 'git -C' to avoid subshell
- + t7102,t7201: remove whitespace after redirect operator
- + t7102,t7201: remove unnecessary blank spaces in test body
- + t7101,t7102,t7201: modernize test formatting
+* jk/sideband-more-error-checking (2020-10-29) 1 commit
+ - sideband: diagnose more sideband anomalies
+ (this branch uses js/avoid-split-sideband-message.)
 
- Originally merged to 'next' on 2020-10-23
-
- Micro clean-up.
-
- Will merge to 'master'.
-
-
-* js/avoid-split-sideband-message (2020-10-27) 3 commits
-  (merged to 'next' on 2020-10-27 at 06b2f75522)
- + test-pkt-line: drop colon from sideband identity
-  (merged to 'next' on 2020-10-26 at 1b550f3245)
- + sideband: report unhandled incomplete sideband messages as bugs
- + sideband: avoid reporting incomplete sideband messages
-
- The side-band status report can be sent at the same time as the
- primary payload multiplexed, but the demultiplexer on the receiving
- end incorrectly split a single status report into two, which has
- been corrected.
-
- Will merge to 'master'.
-
-
-* jt/apply-reverse-twice (2020-10-20) 1 commit
-  (merged to 'next' on 2020-10-26 at f060893eb7)
- + apply: when -R, also reverse list of sections
-
- "git apply -R" did not handle patches that touch the same path
- twice correctly, which has been corrected.  This is most relevant
- in a patch that changes a path from a regular file to a symbolic
- link (and vice versa).
-
- Will merge to 'master'.
-
-
-* av/fsmonitor-cleanup (2020-10-21) 2 commits
- - fsmonitor: make output of test-dump-fsmonitor more concise
- - fsmonitor: stop inline'ing mark_fsmonitor_valid / _invalid
-
- Code clean-up.
-
- Unneeded?
- cf. <20201022183822.GA781760@nand.local>
-
-
-* bc/svn-hash-oid-fix (2020-10-21) 1 commit
-  (merged to 'next' on 2020-10-26 at 743b549d5d)
- + svn: use correct variable name for short OID
-
- A recent oid->hash conversion missed one spot, breaking "git svn".
-
- Will merge to 'master'.
-
-
-* en/sequencer-rollback-lock-cleanup (2020-10-21) 1 commit
-  (merged to 'next' on 2020-10-26 at 1234e8297f)
- + sequencer: remove duplicate rollback_lock_file() call
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jc/sequencer-stopped-sha-simplify (2020-10-21) 1 commit
- - sequencer: tolerate abbreviated stopped-sha file
-
- Recently the format of an internal state file "rebase -i" uses has
- been tightened up for consistency, which would hurt those who start
- "rebase -i" with old git and then continue with new git.  Loosen
- the reader side a bit (which we may want to tighten again in a year
- or so).
-
- Is this a real issue, or just a theoretical one?
- cf. <xmqqd01b429a.fsf@gitster.c.googlers.com>
-
-
-* jk/perl-warning (2020-10-21) 1 commit
- - perl: check for perl warnings while running tests
-
- Dev support.
-
- Will merge to 'next'.
- cf. <20201022032400.GC1480820@coredump.intra.peff.net>
-
-
-* js/default-branch-name-part-4-minus-1 (2020-10-23) 9 commits
-  (merged to 'next' on 2020-10-26 at 0a66b76c66)
- + t1400: prepare for `main` being default branch name
- + tests: prepare aligned mentions of the default branch name
- + t9902: prepare a test for the upcoming default branch name
- + t3200: prepare for `main` being shorter than `master`
- + t5703: adjust a test case for the upcoming default branch name
- + t6200: adjust suppression pattern to also match "main"
- + tests: start moving to a different default main branch name
- + t9801: use `--` in preparation for default branch rename
- + fmt-merge-msg: also suppress "into main" by default
-
- Adjust tests so that they won't scream when the default initial
- branch name is changed to 'main'.
-
- Will merge to 'master'.
-
-
-* js/t7006-cleanup (2020-10-21) 1 commit
-  (merged to 'next' on 2020-10-26 at b8582f842d)
- + t7006: Use test_path_is_* functions in test script
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* pb/ref-filter-with-crlf (2020-10-22) 2 commits
- - log, show: add tests for messages containing CRLF
- - ref-filter: handle CRLF at end-of-line more gracefully
-
- A commit and tag object may have CR at the end of each and
- every line (you can create such an object with hash-object or
- using --cleanup=verbatim to decline the default clean-up
- action), but it would make it impossible to have a blank line
- to separate the title from the body of the message.  Be lenient
- and accept a line with lone CR on it as a blank line, too.
+ The code to detect premature EOF in the sideband demultiplexer has
+ been cleaned up.
 
  Will merge to 'next'.
 
 
-* ve/userdiff-bash (2020-10-22) 1 commit
-  (merged to 'next' on 2020-10-26 at 2b34be98fe)
- + userdiff: support Bash
+* js/default-branch-name-adjust-t5411 (2020-10-28) 4 commits
+ - t5411: finish preparing for `main` being the default branch name
+ - t5411: adjust the remaining support files for init.defaultBranch=main
+ - t5411: start adjusting the support files for init.defaultBranch=main
+ - t5411: start using the default branch name "main"
+ (this branch uses js/default-branch-name-part-4-minus-1.)
 
- The userdiff pattern learned to identify the function definition in
- POSIX shells and bash.
+ Prepare a test script to transition of the default branch name to
+ 'main'.
 
- Will merge to 'master'.
-
-
-* ab/git-remote-exit-code (2020-10-27) 1 commit
- - remote: add meaningful exit code on missing/existing
-
- Exit codes from "git remote add" etc. were not usable by scripted
- callers.
-
-
-* en/merge-ort-api-null-impl (2020-10-26) 4 commits
- - merge,rebase,revert: select ort or recursive by config or environment
- - fast-rebase: demonstrate merge-ort's API via temporary/hidden command
- - merge-ort-wrappers: new convience wrappers to mimic the old merge API
- - merge-ort: barebones API of new merge strategy with empty implementation
-
- Preparation for a new merge strategy.
-
-
-* en/merge-tests (2020-10-26) 9 commits
- - t6423: add more details about direct resolution of directories
- - t6423: note improved ort handling with untracked files
- - t6423, t6436: note improved ort handling with dirty files
- - merge tests: expect slight differences in output for recursive vs. ort
- - t6423: expect improved conflict markers labels in the ort backend
- - t6404, t6423: expect improved rename/delete handling in ort backend
- - t6416: correct expectation for rename/rename(1to2) + directory/file
- - merge tests: expect improved directory/file conflict handling in ort
- - t/: new helper for tests that pass with ort but fail with recursive
- (this branch uses en/dir-rename-tests.)
-
- Preparation for a new merge strategy.
-
-
-* jk/committer-date-is-author-date-fix-simplify (2020-10-26) 1 commit
- - am, sequencer: stop parsing our own committer ident
-
- Code symplification.
-
-
-* sj/untracked-files-in-submodule-directory-is-not-dirty (2020-10-26) 1 commit
- - diff: do not show submodule with untracked files as "-dirty"
-
- "git diff" showed a submodule working tree with untracked cruft as
- "Submodule commit <objectname>-dirty", but a natural expectation is
- that the "-dirty" indicator would align with "git describe --dirty",
- which does not consider having untracked files in the working tree
- as source of dirtiness.  The inconsistency has been fixed.
-
- Needs doc update.
-
-
-* fc/zsh-completion (2020-10-26) 29 commits
- - zsh: update copyright notices
- - completion: bash: remove old compat wrappers
- - completion: bash: cleanup cygwin check
- - completion: bash: trivial cleanup
- - completion: zsh: add simple version check
- - completion: zsh: trivial simplification
- - completion: zsh: add alias descriptions
- - completion: zsh: improve command tags
- - completion: zsh: refactor command completion
- - completion: zsh: shuffle functions around
- - completion: zsh: simplify file_direct
- - completion: zsh: simplify nl_append
- - completion: zsh: trivial cleanup
- - completion: zsh: simplify direct compadd
- - completion: zsh: simplify compadd functions
- - completion: zsh: fix splitting of words
- - completion: zsh: add missing direct_append
- - completion: fix conflict with bashcomp
- - completion: zsh: fix completion for --no-.. options
- - completion: bash: remove zsh wrapper
- - completion: bash: synchronize zsh wrapper
- - completion: zsh: fix for command aliasing
- - completion: prompt: fix color for Zsh
- - completion: zsh: update slave script locations
- - completion: zsh: fix for directories with spaces
- - completion: zsh: reorganize install instructions
- - completion: zsh: fix bash script extension
- - completion: zsh: fix name due to broken autoloading
- - completion: zsh: fix __gitcomp_direct()
-
-
-* jc/doc-final-resend (2020-10-26) 1 commit
- - SubmittingPatches: clarify the purpose of the final resend
-
-
-* nk/perf-fsmonitor (2020-10-26) 10 commits
- - t/perf/fsmonitor: add benchmark for dirty status
- - t/perf/fsmonitor: perf comparison of multiple fsmonitor integrations
- - t/perf/fsmonitor: initialize test with git reset
- - t/perf/fsmonitor: factor setup for fsmonitor into function
- - t/perf/fsmonitor: silence initial git commit
- - t/perf/fsmonitor: shorten DESC to basename
- - t/perf/fsmonitor: factor description out for readability
- - t/perf/fsmonitor: improve error message if typoing hook name
- - t/perf/fsmonitor: move watchman setup to one-time-repo-setup
- - t/perf/fsmonitor: separate one time repo initialization
- (this branch uses nk/diff-files-vs-fsmonitor.)
-
-
-* jk/checkout-index-errors (2020-10-27) 2 commits
- - checkout-index: propagate errors to exit code
- - checkout-index: drop error message from empty --stage=all
-
-
-* pw/rebase-i-orig-head (2020-10-27) 4 commits
- - rebase -i: simplify get_revision_ranges()
- - rebase -i: use struct object_id when writing state
- - rebase -i: use struct object_id rather than looking up commit
- - rebase -i: stop overwriting ORIG_HEAD buffer
+ Other than a minor nit, overall it looked sensible.
+ cf. <xmqq5z6u9kkv.fsf@gitster.c.googlers.com>
 
 --------------------------------------------------
 [Stalled]
@@ -606,6 +193,292 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* cm/t7xxx-cleanup (2020-10-22) 6 commits
+  (merged to 'next' on 2020-10-26 at 8b58e54942)
+ + t7102: prepare expected output inside test_expect_* block
+ + t7201: put each command on a separate line
+ + t7201: use 'git -C' to avoid subshell
+ + t7102,t7201: remove whitespace after redirect operator
+ + t7102,t7201: remove unnecessary blank spaces in test body
+ + t7101,t7102,t7201: modernize test formatting
+
+ Originally merged to 'next' on 2020-10-23
+
+ Micro clean-up.
+
+ Will merge to 'master'.
+
+
+* js/avoid-split-sideband-message (2020-10-27) 3 commits
+  (merged to 'next' on 2020-10-27 at 06b2f75522)
+ + test-pkt-line: drop colon from sideband identity
+  (merged to 'next' on 2020-10-26 at 1b550f3245)
+ + sideband: report unhandled incomplete sideband messages as bugs
+ + sideband: avoid reporting incomplete sideband messages
+ (this branch is used by jk/sideband-more-error-checking.)
+
+ The side-band status report can be sent at the same time as the
+ primary payload multiplexed, but the demultiplexer on the receiving
+ end incorrectly split a single status report into two, which has
+ been corrected.
+
+ Will merge to 'master'.
+
+
+* jt/apply-reverse-twice (2020-10-20) 1 commit
+  (merged to 'next' on 2020-10-26 at f060893eb7)
+ + apply: when -R, also reverse list of sections
+
+ "git apply -R" did not handle patches that touch the same path
+ twice correctly, which has been corrected.  This is most relevant
+ in a patch that changes a path from a regular file to a symbolic
+ link (and vice versa).
+
+ Will merge to 'master'.
+
+
+* av/fsmonitor-cleanup (2020-10-21) 2 commits
+ - fsmonitor: make output of test-dump-fsmonitor more concise
+ - fsmonitor: stop inline'ing mark_fsmonitor_valid / _invalid
+
+ Code clean-up.
+
+ Unneeded?  Perhaps will drop.
+ cf. <20201022183822.GA781760@nand.local>
+
+
+* bc/svn-hash-oid-fix (2020-10-21) 1 commit
+  (merged to 'next' on 2020-10-26 at 743b549d5d)
+ + svn: use correct variable name for short OID
+
+ A recent oid->hash conversion missed one spot, breaking "git svn".
+
+ Will merge to 'master'.
+
+
+* en/sequencer-rollback-lock-cleanup (2020-10-21) 1 commit
+  (merged to 'next' on 2020-10-26 at 1234e8297f)
+ + sequencer: remove duplicate rollback_lock_file() call
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jc/sequencer-stopped-sha-simplify (2020-10-21) 1 commit
+ - sequencer: tolerate abbreviated stopped-sha file
+
+ Recently the format of an internal state file "rebase -i" uses has
+ been tightened up for consistency, which would hurt those who start
+ "rebase -i" with old git and then continue with new git.  Loosen
+ the reader side a bit (which we may want to tighten again in a year
+ or so).
+
+ Is this a real issue, or just a theoretical one?  Perhaps drop?
+ cf. <xmqqd01b429a.fsf@gitster.c.googlers.com>
+
+
+* jk/perl-warning (2020-10-21) 1 commit
+  (merged to 'next' on 2020-10-28 at 5fcb98f2ff)
+ + perl: check for perl warnings while running tests
+
+ Dev support.
+
+ Will merge to 'master'.
+ cf. <20201022032400.GC1480820@coredump.intra.peff.net>
+
+
+* js/default-branch-name-part-4-minus-1 (2020-10-23) 9 commits
+  (merged to 'next' on 2020-10-26 at 0a66b76c66)
+ + t1400: prepare for `main` being default branch name
+ + tests: prepare aligned mentions of the default branch name
+ + t9902: prepare a test for the upcoming default branch name
+ + t3200: prepare for `main` being shorter than `master`
+ + t5703: adjust a test case for the upcoming default branch name
+ + t6200: adjust suppression pattern to also match "main"
+ + tests: start moving to a different default main branch name
+ + t9801: use `--` in preparation for default branch rename
+ + fmt-merge-msg: also suppress "into main" by default
+ (this branch is used by js/default-branch-name-adjust-t5411.)
+
+ Adjust tests so that they won't scream when the default initial
+ branch name is changed to 'main'.
+
+ Will merge to 'master'.
+
+
+* js/t7006-cleanup (2020-10-21) 1 commit
+  (merged to 'next' on 2020-10-26 at b8582f842d)
+ + t7006: Use test_path_is_* functions in test script
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* pb/ref-filter-with-crlf (2020-10-29) 2 commits
+ - log, show: add tests for messages containing CRLF
+ - ref-filter: handle CRLF at end-of-line more gracefully
+
+ A commit and tag object may have CR at the end of each and
+ every line (you can create such an object with hash-object or
+ using --cleanup=verbatim to decline the default clean-up
+ action), but it would make it impossible to have a blank line
+ to separate the title from the body of the message.  Be lenient
+ and accept a line with lone CR on it as a blank line, too.
+
+ Will merge to 'next'.
+
+
+* ve/userdiff-bash (2020-10-22) 1 commit
+  (merged to 'next' on 2020-10-26 at 2b34be98fe)
+ + userdiff: support Bash
+
+ The userdiff pattern learned to identify the function definition in
+ POSIX shells and bash.
+
+ Will merge to 'master'.
+
+
+* ab/git-remote-exit-code (2020-10-27) 1 commit
+ - remote: add meaningful exit code on missing/existing
+
+ Exit codes from "git remote add" etc. were not usable by scripted
+ callers.
+
+ Will merge to 'next'.
+
+
+* en/merge-ort-api-null-impl (2020-10-29) 4 commits
+ - merge,rebase,revert: select ort or recursive by config or environment
+ - fast-rebase: demonstrate merge-ort's API via new test-tool command
+ - merge-ort-wrappers: new convience wrappers to mimic the old merge API
+ - merge-ort: barebones API of new merge strategy with empty implementation
+
+ Preparation for a new merge strategy.
+
+ Looking good.
+
+
+* en/merge-tests (2020-10-26) 9 commits
+ - t6423: add more details about direct resolution of directories
+ - t6423: note improved ort handling with untracked files
+ - t6423, t6436: note improved ort handling with dirty files
+ - merge tests: expect slight differences in output for recursive vs. ort
+ - t6423: expect improved conflict markers labels in the ort backend
+ - t6404, t6423: expect improved rename/delete handling in ort backend
+ - t6416: correct expectation for rename/rename(1to2) + directory/file
+ - merge tests: expect improved directory/file conflict handling in ort
+ - t/: new helper for tests that pass with ort but fail with recursive
+ (this branch uses en/dir-rename-tests.)
+
+ Preparation for a new merge strategy.
+
+
+* jk/committer-date-is-author-date-fix-simplify (2020-10-26) 1 commit
+ - am, sequencer: stop parsing our own committer ident
+
+ Code symplification.
+
+ Will merge to 'next'.
+
+
+* sj/untracked-files-in-submodule-directory-is-not-dirty (2020-10-26) 1 commit
+ - diff: do not show submodule with untracked files as "-dirty"
+
+ "git diff" showed a submodule working tree with untracked cruft as
+ "Submodule commit <objectname>-dirty", but a natural expectation is
+ that the "-dirty" indicator would align with "git describe --dirty",
+ which does not consider having untracked files in the working tree
+ as source of dirtiness.  The inconsistency has been fixed.
+
+ Needs doc update.
+
+
+* fc/zsh-completion (2020-10-28) 29 commits
+ - zsh: update copyright notices
+ - completion: bash: remove old compat wrappers
+ - completion: bash: cleanup cygwin check
+ - completion: bash: trivial cleanup
+ - completion: zsh: add simple version check
+ - completion: zsh: trivial simplification
+ - completion: zsh: add alias descriptions
+ - completion: zsh: improve command tags
+ - completion: zsh: refactor command completion
+ - completion: zsh: shuffle functions around
+ - completion: zsh: simplify file_direct
+ - completion: zsh: simplify nl_append
+ - completion: zsh: trivial cleanup
+ - completion: zsh: simplify direct compadd
+ - completion: zsh: simplify compadd functions
+ - completion: zsh: fix splitting of words
+ - completion: zsh: add missing direct_append
+ - completion: fix conflict with bashcomp
+ - completion: zsh: fix completion for --no-.. options
+ - completion: bash: remove zsh wrapper
+ - completion: bash: synchronize zsh wrapper
+ - completion: zsh: fix for command aliasing
+ - completion: prompt: fix color for Zsh
+ - completion: zsh: update slave script locations
+ - completion: zsh: fix for directories with spaces
+ - completion: zsh: reorganize install instructions
+ - completion: zsh: fix bash script extension
+ - completion: zsh: fix name due to broken autoloading
+ - completion: zsh: fix __gitcomp_direct()
+
+ Zsh autocompletion (in contrib/) update.
+
+ Will merge to 'next'.
+
+
+* jc/doc-final-resend (2020-10-26) 1 commit
+ - SubmittingPatches: clarify the purpose of the final resend
+
+ Update developer doc.
+
+ Will merge to 'next'.
+
+
+* nk/perf-fsmonitor (2020-10-26) 10 commits
+ - t/perf/fsmonitor: add benchmark for dirty status
+ - t/perf/fsmonitor: perf comparison of multiple fsmonitor integrations
+ - t/perf/fsmonitor: initialize test with git reset
+ - t/perf/fsmonitor: factor setup for fsmonitor into function
+ - t/perf/fsmonitor: silence initial git commit
+ - t/perf/fsmonitor: shorten DESC to basename
+ - t/perf/fsmonitor: factor description out for readability
+ - t/perf/fsmonitor: improve error message if typoing hook name
+ - t/perf/fsmonitor: move watchman setup to one-time-repo-setup
+ - t/perf/fsmonitor: separate one time repo initialization
+ (this branch uses nk/diff-files-vs-fsmonitor.)
+
+ Add t/perf support for fsmonitor.
+
+
+* jk/checkout-index-errors (2020-10-27) 2 commits
+ - checkout-index: propagate errors to exit code
+ - checkout-index: drop error message from empty --stage=all
+ (this branch is used by mt/parallel-checkout-part-1.)
+
+ "git checkout-index" did not consistently signal an error with its
+ exit status.
+
+ Will merge to 'next'.
+
+
+* pw/rebase-i-orig-head (2020-10-27) 4 commits
+ - rebase -i: simplify get_revision_ranges()
+ - rebase -i: use struct object_id when writing state
+ - rebase -i: use struct object_id rather than looking up commit
+ - rebase -i: stop overwriting ORIG_HEAD buffer
+
+ "git rebase -i" did not
+
+ Expecting an update to the log message, but otherwise the change
+ looked sensible.
+ cf. <xmqq7drbbcj5.fsf@gitster.c.googlers.com>
+
+
 * en/strmap (2020-10-13) 10 commits
  - strmap: enable allocations to come from a mem_pool
  - strmap: add a strset sub-type
@@ -650,17 +523,18 @@ Release tarballs are available at:
 
 
 * mr/bisect-in-c-3 (2020-10-16) 7 commits
- - bisect--helper: retire `--bisect-autostart` subcommand
- - bisect--helper: retire `--write-terms` subcommand
- - bisect--helper: retire `--check-expected-revs` subcommand
- - bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
- - bisect--helper: retire `--next-all` subcommand
- - bisect--helper: retire `--bisect-clean-state` subcommand
- - bisect--helper: finish porting `bisect_start()` to C
+  (merged to 'next' on 2020-10-28 at 435792b62f)
+ + bisect--helper: retire `--bisect-autostart` subcommand
+ + bisect--helper: retire `--write-terms` subcommand
+ + bisect--helper: retire `--check-expected-revs` subcommand
+ + bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
+ + bisect--helper: retire `--next-all` subcommand
+ + bisect--helper: retire `--bisect-clean-state` subcommand
+ + bisect--helper: finish porting `bisect_start()` to C
 
  Rewriting "git bisect" in C continues.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sc/sequencer-gpg-octopus (2020-10-18) 3 commits
@@ -690,11 +564,12 @@ Release tarballs are available at:
 
 
 * as/tests-cleanup (2020-10-18) 1 commit
- - t2200,t9832: avoid using 'git' upstream in a pipe
+  (merged to 'next' on 2020-10-28 at fd199beb31)
+ + t2200,t9832: avoid using 'git' upstream in a pipe
 
  Micro clean-up of a couple of test scripts.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bk/sob-dco (2020-10-20) 4 commits
@@ -723,16 +598,17 @@ Release tarballs are available at:
 
 
 * en/dir-rename-tests (2020-10-16) 4 commits
- - t6423: more involved rules for renaming directories into each other
- - t6423: update directory rename detection tests with new rule
- - t6423: more involved directory rename test
- - directory-rename-detection.txt: update references to regression tests
+  (merged to 'next' on 2020-10-28 at 7bbe123e70)
+ + t6423: more involved rules for renaming directories into each other
+ + t6423: update directory rename detection tests with new rule
+ + t6423: more involved directory rename test
+ + directory-rename-detection.txt: update references to regression tests
  (this branch is used by en/merge-tests.)
 
  More preliminary tests have been added to document desired outcome
  of various "directory rename" situations.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/t7518-unflake (2020-10-18) 1 commit
@@ -760,11 +636,12 @@ Release tarballs are available at:
 
 
 * es/tutorial-mention-asciidoc-early (2020-10-16) 1 commit
- - MyFirstContribution: clarify asciidoc dependency
+  (merged to 'next' on 2020-10-28 at 96e0d84d94)
+ + MyFirstContribution: clarify asciidoc dependency
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/fast-import-marks-alloc-fix (2020-10-15) 1 commit
@@ -818,20 +695,21 @@ Release tarballs are available at:
 
 
 * nk/diff-files-vs-fsmonitor (2020-10-20) 7 commits
- - p7519-fsmonitor: add a git add benchmark
- - p7519-fsmonitor: refactor to avoid code duplication
- - perf lint: add make test-lint to perf tests
- - t/perf: add fsmonitor perf test for git diff
- - t/perf/p7519-fsmonitor.sh: warm cache on first git status
- - t/perf/README: elaborate on output format
- - fsmonitor: use fsmonitor data in `git diff`
+  (merged to 'next' on 2020-10-28 at d3af804056)
+ + p7519-fsmonitor: add a git add benchmark
+ + p7519-fsmonitor: refactor to avoid code duplication
+ + perf lint: add make test-lint to perf tests
+ + t/perf: add fsmonitor perf test for git diff
+ + t/perf/p7519-fsmonitor.sh: warm cache on first git status
+ + t/perf/README: elaborate on output format
+ + fsmonitor: use fsmonitor data in `git diff`
  (this branch is used by nk/perf-fsmonitor.)
 
  "git diff" and other commands that share the same machinery to
  compare with working tree files have been taught to take advantage
  of the fsmonitor data when available.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nk/dir-c-comment-update (2020-10-16) 1 commit
@@ -888,7 +766,10 @@ Release tarballs are available at:
  learned to ensure that in-tree files like `.gitignore` and
  `.gitattributes` are not symbolic links.
 
- Will merge to 'master'.
+ It seems that there are real projects with .gitignore recorded as
+ symlinks, which may need to loosen the fsck setting.  Do we need
+ to introduce a class that is separate from symlinked .gitmodules
+ that probably is with potential consequences that is more grave?
 
 
 * dl/resurrect-update-for-sha256 (2020-10-08) 2 commits
@@ -965,8 +846,7 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* mt/parallel-checkout-part-1 (2020-10-22) 20 commits
- - parallel-checkout: drop unused checkout state parameter
+* mt/parallel-checkout-part-1 (2020-10-29) 19 commits
  - ci: run test round with parallel-checkout enabled
  - parallel-checkout: add tests related to .gitattributes
  - parallel-checkout: add tests related to clone collisions
@@ -986,11 +866,9 @@ Release tarballs are available at:
  - convert: add get_stream_filter_ca() variant
  - convert: add [async_]convert_to_working_tree_ca() variants
  - convert: make convert_attrs() and convert structs public
+ (this branch uses jk/checkout-index-errors.)
 
  Parallel checkout.
-
- Ejected from 'next'
- cf. <CAHd-oW568aNLYYMBDPJiUsWzh2xxtm8gnqLEiX_RTDa81BL_yw@mail.gmail.com>
 
 
 * dl/diff-merge-base (2020-09-21) 10 commits
