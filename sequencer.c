@@ -4478,7 +4478,7 @@ static int init_committer(struct replay_opts *opts)
 	opts->committer_name =
 		xmemdupz(id.name_begin, id.name_end - id.name_begin);
 	opts->committer_email =
-		xmemdupz(id.mail_begin, id.mail_end - id.mail_end);
+		xmemdupz(id.mail_begin, id.mail_end - id.mail_begin);
 
 	return 0;
 }
