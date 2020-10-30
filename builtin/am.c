@@ -98,8 +98,6 @@ struct am_state {
 	char *author_name;
 	char *author_email;
 	char *author_date;
-	char *committer_name;
-	char *committer_email;
 	char *msg;
 	size_t msg_len;
 
@@ -132,8 +130,6 @@ struct am_state {
  */
 static void am_state_init(struct am_state *state)
 {
-	const char *committer;
-	struct ident_split id;
 	int gpgsign;
 
 	memset(state, 0, sizeof(*state));
@@ -154,14 +150,6 @@ static void am_state_init(struct am_state *state)
 
 	if (!git_config_get_bool("commit.gpgsign", &gpgsign))
 		state->sign_commit = gpgsign ? "" : NULL;
-
-	committer = git_committer_info(IDENT_STRICT);
-	if (split_ident_line(&id, committer, strlen(committer)) < 0)
-		die(_("invalid committer: %s"), committer);
-	state->committer_name =
-		xmemdupz(id.name_begin, id.name_end - id.name_begin);
-	state->committer_email =
-		xmemdupz(id.mail_begin, id.mail_end - id.mail_begin);
 }
 
 /**
@@ -173,8 +161,6 @@ static void am_state_release(struct am_state *state)
 	free(state->author_name);
 	free(state->author_email);
 	free(state->author_date);
-	free(state->committer_name);
-	free(state->committer_email);
 	free(state->msg);
 	strvec_clear(&state->git_apply_opts);
 }
@@ -1594,8 +1580,9 @@ static void do_commit(const struct am_state *state)
 			IDENT_STRICT);
 
 	if (state->committer_date_is_author_date)
-		committer = fmt_ident(state->committer_name,
-				      state->committer_email, WANT_COMMITTER_IDENT,
+		committer = fmt_ident(getenv("GIT_COMMITTER_NAME"),
+				      getenv("GIT_COMMITTER_EMAIL"),
+				      WANT_COMMITTER_IDENT,
 				      state->ignore_date ? NULL
 							 : state->author_date,
 				      IDENT_STRICT);
