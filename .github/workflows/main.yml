@@ -41,35 +41,39 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            // Figure out workflow ID, commit and tree
-            const { data: run } = await github.actions.getWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId,
-            });
-            const workflow_id = run.workflow_id;
-            const head_sha = run.head_sha;
-            const tree_id = run.head_commit.tree_id;
+            try {
+              // Figure out workflow ID, commit and tree
+              const { data: run } = await github.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+              });
+              const workflow_id = run.workflow_id;
+              const head_sha = run.head_sha;
+              const tree_id = run.head_commit.tree_id;
 
-            // See whether there is a successful run for that commit or tree
-            const { data: runs } = await github.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 500,
-              status: 'success',
-              workflow_id,
-            });
-            for (const run of runs.workflow_runs) {
-              if (head_sha === run.head_sha) {
-                core.warning(`Successful run for the commit ${head_sha}: ${run.html_url}`);
-                core.setOutput('enabled', ' but skip');
-                break;
+              // See whether there is a successful run for that commit or tree
+              const { data: runs } = await github.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 500,
+                status: 'success',
+                workflow_id,
+              });
+              for (const run of runs.workflow_runs) {
+                if (head_sha === run.head_sha) {
+                  core.warning(`Successful run for the commit ${head_sha}: ${run.html_url}`);
+                  core.setOutput('enabled', ' but skip');
+                  break;
+                }
+                if (run.head_commit && tree_id === run.head_commit.tree_id) {
+                  core.warning(`Successful run for the tree ${tree_id}: ${run.html_url}`);
+                  core.setOutput('enabled', ' but skip');
+                  break;
+                }
               }
-              if (tree_id === run.head_commit.tree_id) {
-                core.warning(`Successful run for the tree ${tree_id}: ${run.html_url}`);
-                core.setOutput('enabled', ' but skip');
-                break;
-              }
+            } catch (e) {
+              core.warning(e);
             }
 
   windows-build:
