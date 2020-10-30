@@ -34,11 +34,16 @@ UI, Workflows & Features
  * "git checkout" learned to use checkout.guess configuration variable
    and enable/disable its "--[no-]guess" option accordingly.
 
+ * "git resurrect" script (in contrib/) learned that the object names
+   may be longer than 40-hex depending on the hash function in use.
+
 
 Performance, Internal Implementation, Development Support etc.
 
  * Use "git archive" more to produce the release tarball.
 
+ * GitHub Actions automated test improvement to skip tests on a tree
+   identical to what has already been tested.
 
 
 Fixes since v2.29
