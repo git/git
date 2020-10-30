@@ -203,6 +203,17 @@ The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
 linkgit:git-config[1]).
 
+EXIT STATUS
+-----------
+
+On success, the exit status is `0`.
+
+When subcommands such as 'add', 'rename', and 'remove' can't find the
+remote in question, the exit status is `2`. When the remote already
+exists, the exit status is `3`.
+
+On any other error, the exit status may be any other non-zero value.
+
 EXAMPLES
 --------
 

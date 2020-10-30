@@ -145,8 +145,8 @@ test_expect_success 'remove remote protects local branches' '
 test_expect_success 'remove errors out early when deleting non-existent branch' '
 	(
 		cd test &&
-		echo "fatal: No such remote: '\''foo'\''" >expect &&
-		test_must_fail git remote rm foo 2>actual &&
+		echo "error: No such remote: '\''foo'\''" >expect &&
+		test_expect_code 2 git remote rm foo 2>actual &&
 		test_i18ncmp expect actual
 	)
 '
@@ -173,8 +173,8 @@ test_expect_success 'remove remote with a branch without configured merge' '
 test_expect_success 'rename errors out early when deleting non-existent branch' '
 	(
 		cd test &&
-		echo "fatal: No such remote: '\''foo'\''" >expect &&
-		test_must_fail git remote rename foo bar 2>actual &&
+		echo "error: No such remote: '\''foo'\''" >expect &&
+		test_expect_code 2 git remote rename foo bar 2>actual &&
 		test_i18ncmp expect actual
 	)
 '
@@ -188,16 +188,16 @@ test_expect_success 'rename errors out early when when new name is invalid' '
 
 test_expect_success 'add existing foreign_vcs remote' '
 	test_config remote.foo.vcs bar &&
-	echo "fatal: remote foo already exists." >expect &&
-	test_must_fail git remote add foo bar 2>actual &&
+	echo "error: remote foo already exists." >expect &&
+	test_expect_code 3 git remote add foo bar 2>actual &&
 	test_i18ncmp expect actual
 '
 
 test_expect_success 'add existing foreign_vcs remote' '
 	test_config remote.foo.vcs bar &&
 	test_config remote.bar.vcs bar &&
-	echo "fatal: remote bar already exists." >expect &&
-	test_must_fail git remote rename foo bar 2>actual &&
+	echo "error: remote bar already exists." >expect &&
+	test_expect_code 3 git remote rename foo bar 2>actual &&
 	test_i18ncmp expect actual
 '
 
