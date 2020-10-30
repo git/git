@@ -2,3 +2,6 @@
 	path = sha1collisiondetection
 	url = https://github.com/cr-marcstevens/sha1collisiondetection.git
 	branch = master
+[submodule "xdiff"]
+	path = xdiff
+	url = https://github.com/j143/xdiff
