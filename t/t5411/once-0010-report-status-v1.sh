@@ -69,11 +69,11 @@ test_expect_success "proc-receive: report status v1" '
 	proc-receive> option forced-update
 	proc-receive> ng refs/for/next/topic target branch not exist
 	000eunpack ok
-	0019ok refs/heads/main
-	001eok refs/for/main/topic1
+	0017ok refs/heads/main
+	001cok refs/for/main/topic1
 	0016ok refs/heads/foo
 	0033ng refs/for/next/topic target branch not exist
-	001eok refs/for/main/topic2
+	001cok refs/for/main/topic2
 	0000# post-receive hook
 	post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
 	post-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic1
