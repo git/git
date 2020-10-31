@@ -1090,7 +1090,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 		  nr), nr, steps_msg);
 	free(steps_msg);
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_all(ALL_REV_FLAGS);
+	repo_clear_commit_marks(the_repository, ALL_REV_FLAGS);
 
 	return bisect_checkout(bisect_rev, no_checkout);
 }

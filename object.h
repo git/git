@@ -191,8 +191,9 @@ void object_array_clear(struct object_array *array);
 void clear_object_flags(unsigned flags);
 
 /*
- * Clear the specified object flags from all in-core commit objects.
+ * Clear the specified object flags from all in-core commit objects from
+ * the specified repository.
  */
-void clear_commit_marks_all(unsigned int flags);
+void repo_clear_commit_marks(struct repository *r, unsigned int flags);
 
 #endif /* OBJECT_H */
