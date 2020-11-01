@@ -48,7 +48,6 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	struct hashfile *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
 	off_t last_obj_offset = 0;
-	uint32_t array[256];
 	int i, fd;
 	uint32_t index_version;
 
@@ -106,10 +105,9 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 				break;
 			next++;
 		}
-		array[i] = htonl(next - sorted_by_sha);
+		hashwrite_be32(f, next - sorted_by_sha);
 		list = next;
 	}
-	hashwrite(f, array, 256 * 4);
 
 	/*
 	 * Write the actual SHA1 entries..
