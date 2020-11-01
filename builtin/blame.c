@@ -1083,6 +1083,7 @@ parse_done:
 	sb.contents_from = contents_from;
 	sb.reverse = reverse;
 	sb.repo = the_repository;
+	sb.path = path;
 	build_ignorelist(&sb, &ignore_revs_file_list, &ignore_rev_list);
 	string_list_clear(&ignore_revs_file_list, 0);
 	string_list_clear(&ignore_rev_list, 0);
@@ -1112,7 +1113,7 @@ parse_done:
 		if ((!lno && (top || bottom)) || lno < bottom)
 			die(Q_("file %s has only %lu line",
 			       "file %s has only %lu lines",
-			       lno), path, lno);
+			       lno), sb.path, lno);
 		if (bottom < 1)
 			bottom = 1;
 		if (top < 1 || lno < top)
@@ -1137,7 +1138,6 @@ parse_done:
 	string_list_clear(&range_list, 0);
 
 	sb.ent = NULL;
-	sb.path = path;
 
 	if (blame_move_score)
 		sb.move_score = blame_move_score;
