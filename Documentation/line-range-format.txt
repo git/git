@@ -27,4 +27,6 @@ regular expression that denotes the range from the first funcname line
 that matches '<funcname>', up to the next funcname line. `:<funcname>`
 searches from the end of the previous `-L` range, if any, otherwise
 from the start of file. `^:<funcname>` searches from the start of
-file.
+file. The function names are determined in the same way as `git diff`
+works out patch hunk headers (see 'Defining a custom hunk-header'
+in linkgit:gitattributes[5]).
