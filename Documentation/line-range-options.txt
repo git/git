@@ -1,8 +1,8 @@
 -L<start>,<end>:<file>::
 -L:<funcname>:<file>::
 
-	Trace the evolution of the line range given by '<start>,<end>'
-	(or the function name regex '<funcname>') within the '<file>'. You may
+	Trace the evolution of the line range given by '<start>,<end>',
+	or by the function name regex '<funcname>', within the '<file>'. You may
 	not give any pathspec limiters.  This is currently limited to
 	a walk starting from a single revision, i.e., you may only
 	give zero or one positive revision arguments, and
