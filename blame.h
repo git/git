@@ -181,7 +181,6 @@ const char *blame_nth_line(struct blame_scoreboard *sb, long lno);
 
 void init_scoreboard(struct blame_scoreboard *sb);
 void setup_scoreboard(struct blame_scoreboard *sb,
-		      const char *path,
 		      struct blame_origin **orig);
 void setup_blame_bloom_data(struct blame_scoreboard *sb,
 			    const char *path);

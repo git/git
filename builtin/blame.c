@@ -1087,7 +1087,7 @@ parse_done:
 	build_ignorelist(&sb, &ignore_revs_file_list, &ignore_rev_list);
 	string_list_clear(&ignore_revs_file_list, 0);
 	string_list_clear(&ignore_rev_list, 0);
-	setup_scoreboard(&sb, path, &o);
+	setup_scoreboard(&sb, &o);
 
 	/*
 	 * Changed-path Bloom filters are disabled when looking
