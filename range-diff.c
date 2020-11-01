@@ -266,7 +266,7 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
 		}
 	}
 
-	hashmap_free(&map);
+	hashmap_clear(&map);
 }
 
 static void diffsize_consume(void *data, char *line, unsigned long len)

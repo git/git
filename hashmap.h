@@ -96,7 +96,7 @@
  *         }
  *
  *         if (!strcmp("end", action)) {
- *             hashmap_free_entries(&map, struct long2string, ent);
+ *             hashmap_clear_and_free(&map, struct long2string, ent);
  *             break;
  *         }
  *     }
@@ -237,7 +237,7 @@ void hashmap_init(struct hashmap *map,
 
 /* internal functions for clearing or freeing hashmap */
 void hashmap_partial_clear_(struct hashmap *map, ssize_t offset);
-void hashmap_free_(struct hashmap *map, ssize_t offset);
+void hashmap_clear_(struct hashmap *map, ssize_t offset);
 
 /*
  * Frees a hashmap structure and allocated memory for the table, but does not
@@ -253,40 +253,50 @@ void hashmap_free_(struct hashmap *map, ssize_t offset);
  *      free(e->somefield);
  *      free(e);
  *    }
- *    hashmap_free(map);
+ *    hashmap_clear(map);
  *
  * instead of
  *
  *    hashmap_for_each_entry(map, hashmap_iter, e, hashmap_entry_name) {
  *      free(e->somefield);
  *    }
- *    hashmap_free_entries(map, struct my_entry_struct, hashmap_entry_name);
+ *    hashmap_clear_and_free(map, struct my_entry_struct, hashmap_entry_name);
  *
  * to avoid the implicit extra loop over the entries.  However, if there are
  * no special fields in your entry that need to be freed beyond the entry
  * itself, it is probably simpler to avoid the explicit loop and just call
- * hashmap_free_entries().
+ * hashmap_clear_and_free().
  */
-#define hashmap_free(map) hashmap_free_(map, -1)
+#define hashmap_clear(map) hashmap_clear_(map, -1)
 
 /*
- * Basically the same as calling hashmap_free() followed by hashmap_init(),
- * but doesn't incur the overhead of deallocating and reallocating
- * map->table; it leaves map->table allocated and the same size but zeroes
- * it out so it's ready for use again as an empty map.  As with
- * hashmap_free(), you may need to free the entries yourself before calling
- * this function.
+ * Similar to hashmap_clear(), except that the table is no deallocated; it
+ * is merely zeroed out but left the same size as before.  If the hashmap
+ * will be reused, this avoids the overhead of deallocating and
+ * reallocating map->table.  As with hashmap_clear(), you may need to free
+ * the entries yourself before calling this function.
  */
 #define hashmap_partial_clear(map) hashmap_partial_clear_(map, -1)
 
 /*
- * Frees @map and all entries.  @type is the struct type of the entry
- * where @member is the hashmap_entry struct used to associate with @map.
+ * Similar to hashmap_clear() but also frees all entries.  @type is the
+ * struct type of the entry where @member is the hashmap_entry struct used
+ * to associate with @map.
  *
- * See usage note above hashmap_free().
+ * See usage note above hashmap_clear().
  */
-#define hashmap_free_entries(map, type, member) \
-	hashmap_free_(map, offsetof(type, member));
+#define hashmap_clear_and_free(map, type, member) \
+	hashmap_clear_(map, offsetof(type, member))
+
+/*
+ * Similar to hashmap_partial_clear() but also frees all entries.  @type is
+ * the struct type of the entry where @member is the hashmap_entry struct
+ * used to associate with @map.
+ *
+ * See usage note above hashmap_clear().
+ */
+#define hashmap_partial_clear_and_free(map, type, member) \
+	hashmap_partial_clear_(map, offsetof(type, member))
 
 /* hashmap_entry functions */
 

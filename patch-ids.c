@@ -71,7 +71,7 @@ int init_patch_ids(struct repository *r, struct patch_ids *ids)
 
 int free_patch_ids(struct patch_ids *ids)
 {
-	hashmap_free_entries(&ids->patches, struct patch_id, ent);
+	hashmap_clear_and_free(&ids->patches, struct patch_id, ent);
 	return 0;
 }
 

@@ -532,7 +532,7 @@ void raw_object_store_clear(struct raw_object_store *o)
 	close_object_store(o);
 	o->packed_git = NULL;
 
-	hashmap_free(&o->pack_map);
+	hashmap_clear(&o->pack_map);
 }
 
 void parsed_object_pool_clear(struct parsed_object_pool *o)
