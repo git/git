@@ -1094,7 +1094,7 @@ parse_done:
 	 * for copies.
 	 */
 	if (!(opt & PICKAXE_BLAME_COPY))
-		setup_blame_bloom_data(&sb, path);
+		setup_blame_bloom_data(&sb);
 
 	lno = sb.num_lines;
 

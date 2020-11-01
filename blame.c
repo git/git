@@ -2887,8 +2887,7 @@ struct blame_entry *blame_entry_prepend(struct blame_entry *head,
 	return new_head;
 }
 
-void setup_blame_bloom_data(struct blame_scoreboard *sb,
-			    const char *path)
+void setup_blame_bloom_data(struct blame_scoreboard *sb)
 {
 	struct blame_bloom_data *bd;
 	struct bloom_filter_settings *bs;
@@ -2908,7 +2907,7 @@ void setup_blame_bloom_data(struct blame_scoreboard *sb,
 	bd->nr = 0;
 	ALLOC_ARRAY(bd->keys, bd->alloc);
 
-	add_bloom_key(bd, path);
+	add_bloom_key(bd, sb->path);
 
 	sb->bloom_data = bd;
 }
