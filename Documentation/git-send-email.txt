@@ -313,7 +313,7 @@ Automating
 	the value of `sendemail.identity`.
 
 --[no-]signed-off-by-cc::
-	If this is set, add emails found in Signed-off-by: or Cc: lines to the
+	If this is set, add emails found in the `Signed-off-by` trailer or Cc: lines to the
 	cc list. Default is the value of `sendemail.signedoffbycc` configuration
 	value; if that is unspecified, default to --signed-off-by-cc.
 
@@ -340,7 +340,7 @@ Automating
   except for self (use 'self' for that).
 - 'bodycc' will avoid including anyone mentioned in Cc lines in the
   patch body (commit message) except for self (use 'self' for that).
-- 'sob' will avoid including anyone mentioned in Signed-off-by lines except
+- 'sob' will avoid including anyone mentioned in the Signed-off-by trailers except
   for self (use 'self' for that).
 - 'misc-by' will avoid including anyone mentioned in Acked-by,
   Reviewed-by, Tested-by and other "-by" lines in the patch body,
