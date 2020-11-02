@@ -287,7 +287,7 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 		}
 
 	cleanup:
-		hashmap_free_entries(&pathmap, struct pathmap_hash_entry, entry);
+		hashmap_clear_and_free(&pathmap, struct pathmap_hash_entry, entry);
 	} else {
 		for (i = 0; i < diff_queued_diff.nr; i++)
 			diff_free_filepair(diff_queued_diff.queue[i]);

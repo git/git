@@ -1963,7 +1963,7 @@ void git_configset_clear(struct config_set *cs)
 		free(entry->key);
 		string_list_clear(&entry->value_list, 1);
 	}
-	hashmap_free_entries(&cs->config_hash, struct config_set_element, ent);
+	hashmap_clear_and_free(&cs->config_hash, struct config_set_element, ent);
 	cs->hash_initialized = 0;
 	free(cs->list.items);
 	cs->list.nr = 0;

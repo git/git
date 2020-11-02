@@ -817,8 +817,8 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 
 clear_hashmaps:
 	warning(_("disabling cone pattern matching"));
-	hashmap_free_entries(&pl->parent_hashmap, struct pattern_entry, ent);
-	hashmap_free_entries(&pl->recursive_hashmap, struct pattern_entry, ent);
+	hashmap_clear_and_free(&pl->parent_hashmap, struct pattern_entry, ent);
+	hashmap_clear_and_free(&pl->recursive_hashmap, struct pattern_entry, ent);
 	pl->use_cone_patterns = 0;
 }
 
@@ -921,8 +921,8 @@ void clear_pattern_list(struct pattern_list *pl)
 		free(pl->patterns[i]);
 	free(pl->patterns);
 	free(pl->filebuf);
-	hashmap_free_entries(&pl->recursive_hashmap, struct pattern_entry, ent);
-	hashmap_free_entries(&pl->parent_hashmap, struct pattern_entry, ent);
+	hashmap_clear_and_free(&pl->recursive_hashmap, struct pattern_entry, ent);
+	hashmap_clear_and_free(&pl->parent_hashmap, struct pattern_entry, ent);
 
 	memset(pl, 0, sizeof(*pl));
 }

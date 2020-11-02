@@ -183,7 +183,7 @@ static void free_individual_entries(struct hashmap *map, ssize_t entry_offset)
 	while ((e = hashmap_iter_next(&iter)))
 		/*
 		 * like container_of, but using caller-calculated
-		 * offset (caller being hashmap_free_entries)
+		 * offset (caller being hashmap_clear_and_free)
 		 */
 		free((char *)e - entry_offset);
 }
@@ -199,11 +199,11 @@ void hashmap_partial_clear_(struct hashmap *map, ssize_t entry_offset)
 	map->private_size = 0;
 }
 
-void hashmap_free_(struct hashmap *map, ssize_t entry_offset)
+void hashmap_clear_(struct hashmap *map, ssize_t entry_offset)
 {
 	if (!map || !map->table)
 		return;
-	if (entry_offset >= 0)  /* called by hashmap_free_entries */
+	if (entry_offset >= 0)  /* called by hashmap_clear_and_free */
 		free_individual_entries(map, entry_offset);
 	free(map->table);
 	memset(map, 0, sizeof(*map));

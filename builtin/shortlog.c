@@ -220,7 +220,7 @@ static void strset_clear(struct strset *ss)
 {
 	if (!ss->map.table)
 		return;
-	hashmap_free_entries(&ss->map, struct strset_item, ent);
+	hashmap_clear_and_free(&ss->map, struct strset_item, ent);
 }
 
 static void insert_records_from_trailers(struct shortlog *log,
