@@ -210,6 +210,9 @@ struct hashmap {
 
 /* hashmap functions */
 
+#define HASHMAP_INIT(fn, data) { .cmpfn = fn, .cmpfn_data = data, \
+				 .do_count_items = 1 }
+
 /*
  * Initializes a hashmap structure.
  *
