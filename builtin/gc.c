@@ -739,8 +739,14 @@ static int dfs_on_ref(const char *refname,
 	commit = lookup_commit(the_repository, oid);
 	if (!commit)
 		return 0;
-	if (parse_commit(commit))
+	if (parse_commit(commit) ||
+	    commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
 		return 0;
+
+	data->num_not_in_graph++;
+
+	if (data->num_not_in_graph >= data->limit)
+		return 1;
 
 	commit_list_append(commit, &stack);
 
@@ -809,6 +815,10 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 
 static int maintenance_task_commit_graph(struct maintenance_run_opts *opts)
 {
+	prepare_repo_settings(the_repository);
+	if (!the_repository->settings.core_commit_graph)
+		return 0;
+
 	close_object_store(the_repository->objects);
 	if (run_write_commit_graph(opts)) {
 		error(_("failed to write commit-graph"));
