@@ -228,9 +228,9 @@ struct hashmap {
  * prevent expensive resizing. If 0, the table is dynamically resized.
  */
 void hashmap_init(struct hashmap *map,
-			 hashmap_cmp_fn equals_function,
-			 const void *equals_function_data,
-			 size_t initial_size);
+		  hashmap_cmp_fn equals_function,
+		  const void *equals_function_data,
+		  size_t initial_size);
 
 /* internal function for freeing hashmap */
 void hashmap_free_(struct hashmap *map, ssize_t offset);
@@ -288,7 +288,7 @@ void hashmap_free_(struct hashmap *map, ssize_t offset);
  * and if it is on stack, you can just let it go out of scope).
  */
 static inline void hashmap_entry_init(struct hashmap_entry *e,
-					unsigned int hash)
+				      unsigned int hash)
 {
 	e->hash = hash;
 	e->next = NULL;
@@ -330,8 +330,8 @@ static inline unsigned int hashmap_get_size(struct hashmap *map)
  * to `hashmap_cmp_fn` to decide whether the entry matches the key.
  */
 struct hashmap_entry *hashmap_get(const struct hashmap *map,
-				const struct hashmap_entry *key,
-				const void *keydata);
+				  const struct hashmap_entry *key,
+				  const void *keydata);
 
 /*
  * Returns the hashmap entry for the specified hash code and key data,
@@ -364,7 +364,7 @@ static inline struct hashmap_entry *hashmap_get_from_hash(
  * call to `hashmap_get` or `hashmap_get_next`.
  */
 struct hashmap_entry *hashmap_get_next(const struct hashmap *map,
-			const struct hashmap_entry *entry);
+				       const struct hashmap_entry *entry);
 
 /*
  * Adds a hashmap entry. This allows to add duplicate entries (i.e.
@@ -384,7 +384,7 @@ void hashmap_add(struct hashmap *map, struct hashmap_entry *entry);
  * Returns the replaced entry, or NULL if not found (i.e. the entry was added).
  */
 struct hashmap_entry *hashmap_put(struct hashmap *map,
-				struct hashmap_entry *entry);
+				  struct hashmap_entry *entry);
 
 /*
  * Adds or replaces a hashmap entry contained within @keyvar,
@@ -406,8 +406,8 @@ struct hashmap_entry *hashmap_put(struct hashmap *map,
  * Argument explanation is the same as in `hashmap_get`.
  */
 struct hashmap_entry *hashmap_remove(struct hashmap *map,
-					const struct hashmap_entry *key,
-					const void *keydata);
+				     const struct hashmap_entry *key,
+				     const void *keydata);
 
 /*
  * Removes a hashmap entry contained within @keyvar,
@@ -449,7 +449,7 @@ struct hashmap_entry *hashmap_iter_next(struct hashmap_iter *iter);
 
 /* Initializes the iterator and returns the first entry, if any. */
 static inline struct hashmap_entry *hashmap_iter_first(struct hashmap *map,
-		struct hashmap_iter *iter)
+						       struct hashmap_iter *iter)
 {
 	hashmap_iter_init(map, iter);
 	return hashmap_iter_next(iter);
