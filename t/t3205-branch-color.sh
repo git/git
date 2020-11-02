@@ -28,12 +28,12 @@ test_expect_success 'regular output shows colors' '
 	test_cmp expect actual
 '
 
-test_expect_success 'verbose output shows colors' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'verbose output shows colors' '
 	oid=$(git rev-parse --short HEAD) &&
 	cat >expect <<-EOF &&
-	* <CYAN>master               <RESET> $oid foo
-	  <BLUE>other                <RESET> $oid foo
-	  <YELLOW>remotes/origin/master<RESET> $oid foo
+	* <CYAN>main               <RESET> $oid foo
+	  <BLUE>other              <RESET> $oid foo
+	  <YELLOW>remotes/origin/main<RESET> $oid foo
 	EOF
 	git branch --color -v -a >actual.raw &&
 	test_decode_color <actual.raw >actual &&

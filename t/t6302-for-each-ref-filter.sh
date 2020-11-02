@@ -113,9 +113,9 @@ test_expect_success '%(color) must fail' '
 	test_must_fail git for-each-ref --format="%(color)%(refname)"
 '
 
-test_expect_success 'left alignment is default' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'left alignment is default' '
 	cat >expect <<-\EOF &&
-	refname is refs/heads/master  |refs/heads/master
+	refname is refs/heads/main    |refs/heads/main
 	refname is refs/heads/side    |refs/heads/side
 	refname is refs/odd/spot      |refs/odd/spot
 	refname is refs/tags/annotated-tag|refs/tags/annotated-tag
@@ -131,9 +131,9 @@ test_expect_success 'left alignment is default' '
 	test_cmp expect actual
 '
 
-test_expect_success 'middle alignment' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'middle alignment' '
 	cat >expect <<-\EOF &&
-	| refname is refs/heads/master |refs/heads/master
+	|  refname is refs/heads/main  |refs/heads/main
 	|  refname is refs/heads/side  |refs/heads/side
 	|   refname is refs/odd/spot   |refs/odd/spot
 	|refname is refs/tags/annotated-tag|refs/tags/annotated-tag
@@ -149,9 +149,9 @@ test_expect_success 'middle alignment' '
 	test_cmp expect actual
 '
 
-test_expect_success 'right alignment' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'right alignment' '
 	cat >expect <<-\EOF &&
-	|  refname is refs/heads/master|refs/heads/master
+	|    refname is refs/heads/main|refs/heads/main
 	|    refname is refs/heads/side|refs/heads/side
 	|      refname is refs/odd/spot|refs/odd/spot
 	|refname is refs/tags/annotated-tag|refs/tags/annotated-tag
@@ -168,7 +168,7 @@ test_expect_success 'right alignment' '
 '
 
 cat >expect <<-\EOF
-|       refname is refs/heads/master       |refs/heads/master
+|        refname is refs/heads/main        |refs/heads/main
 |        refname is refs/heads/side        |refs/heads/side
 |         refname is refs/odd/spot         |refs/odd/spot
 |    refname is refs/tags/annotated-tag    |refs/tags/annotated-tag
@@ -184,7 +184,7 @@ EOF
 test_align_permutations() {
 	while read -r option
 	do
-		test_expect_success "align:$option" '
+		test_expect_success PREPARE_FOR_MAIN_BRANCH "align:$option" '
 			git for-each-ref --format="|%(align:$option)refname is %(refname)%(end)|%(refname)" >actual &&
 			test_cmp expect actual
 		'
@@ -213,9 +213,9 @@ EOF
 
 # Individual atoms inside %(align:...) and %(end) must not be quoted.
 
-test_expect_success 'alignment with format quote' "
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'alignment with format quote' "
 	cat >expect <<-\EOF &&
-	|'      '\''master| A U Thor'\''      '|
+	|'       '\''main| A U Thor'\''       '|
 	|'       '\''side| A U Thor'\''       '|
 	|'     '\''odd/spot| A U Thor'\''     '|
 	|'      '\''annotated-tag| '\''       '|
@@ -231,9 +231,9 @@ test_expect_success 'alignment with format quote' "
 	test_cmp expect actual
 "
 
-test_expect_success 'nested alignment with quote formatting' "
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'nested alignment with quote formatting' "
 	cat >expect <<-\EOF &&
-	|'         master               '|
+	|'           main               '|
 	|'           side               '|
 	|'       odd/spot               '|
 	|'  annotated-tag               '|

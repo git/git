@@ -556,7 +556,7 @@ test_expect_success 'merge.suppressDest configuration' '
 	head -n1 full.2 >actual &&
 	grep -e "Merge branch .side. into master$" actual &&
 
-	git -c merge.suppressDest="ma??er" fmt-merge-msg <.git/FETCH_HEAD >full.3 &&
+	git -c merge.suppressDest="ma?*[rn]" fmt-merge-msg <.git/FETCH_HEAD >full.3 &&
 	head -n1 full.3 >actual &&
 	grep -e "Merge branch .side." actual &&
 	! grep -e " into master$" actual
