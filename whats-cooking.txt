@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2020, #05; Thu, 29)
-X-master-at: ad27df6a5cff694add500ab8c7f97234feb4a91f
-X-next-at: ac1ea6bc6f5e42993b67661c5b0e2e7396ac2607
+Subject: What's cooking in git.git (Nov 2020, #01; Mon, 2)
+X-master-at: 7f7ebe054af6d831b999d6c2241b9227c4e4e08d
+X-next-at: 8a58376a318e85947bf4bf3a28f36953a18963f5
 
-What's cooking in git.git (Oct 2020, #05; Thu, 29)
+What's cooking in git.git (Nov 2020, #01; Mon, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,9 +12,9 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.29.2 has been tagged.  About 30+ topics are in 'next' waiting
-their turns to graduate to 'master', while a handful more of topics
-in 'seen' are marked to graduate to 'next'.
+The third batch of topics in this cycle are in 'master' now,
+including some microprojects by candidates for the Outreachy
+program.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into.  Some repositories have
@@ -44,30 +44,382 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* as/sample-push-to-checkout-hook (2020-10-16) 1 commit
+  (merged to 'next' on 2020-10-26 at 644026c2f6)
+ + hook: add sample template for push-to-checkout
+
+ Add a sample 'push-to-checkout' hook, that performs the same as
+ what the built-in default action does.
+
+
+* bc/svn-hash-oid-fix (2020-10-21) 1 commit
+  (merged to 'next' on 2020-10-26 at 743b549d5d)
+ + svn: use correct variable name for short OID
+
+ A recent oid->hash conversion missed one spot, breaking "git svn".
+
+
+* bk/sob-dco (2020-10-20) 4 commits
+  (merged to 'next' on 2020-10-26 at d0e5066a7e)
+ + Documentation: stylistically normalize references to Signed-off-by:
+ + SubmittingPatches: clarify DCO is our --signoff rule
+ + Documentation: clarify and expand description of --signoff
+ + doc: preparatory clean-up of description on the sign-off option
+
+ Document that the meaning of a Signed-off-by trailer can vary from
+ project to project in the end-user documentation, and clarify what
+ it means to this project.
+
+
+* cm/t7xxx-cleanup (2020-10-22) 6 commits
+  (merged to 'next' on 2020-10-26 at 8b58e54942)
+ + t7102: prepare expected output inside test_expect_* block
+ + t7201: put each command on a separate line
+ + t7201: use 'git -C' to avoid subshell
+ + t7102,t7201: remove whitespace after redirect operator
+ + t7102,t7201: remove unnecessary blank spaces in test body
+ + t7101,t7102,t7201: modernize test formatting
+
+ Originally merged to 'next' on 2020-10-23
+
+ Micro clean-up.
+
+
+* ct/t0000-use-test-path-is-file (2020-10-18) 1 commit
+  (merged to 'next' on 2020-10-26 at 9b70aa748f)
+ + t0000: use test_path_is_file instead of "test -f"
+
+ Originally merged to 'next' on 2020-10-23
+
+ Micro clean-up of a test script.
+
+
+* dl/diff-merge-base (2020-09-21) 10 commits
+  (merged to 'next' on 2020-10-26 at 114d94030b)
+ + contrib/completion: complete `git diff --merge-base`
+ + builtin/diff-tree: learn --merge-base
+ + builtin/diff-index: learn --merge-base
+ + t4068: add --merge-base tests
+ + diff-lib: define diff_get_merge_base()
+ + diff-lib: accept option flags in run_diff_index()
+ + contrib/completion: extract common diff/difftool options
+ + git-diff.txt: backtick quote command text
+ + git-diff-index.txt: make --cached description a proper sentence
+ + t4068: remove unnecessary >tmp
+
+ "git diff A...B" learned "git diff --merge-base A B", which is a
+ longer short-hand to say the same thing.
+
+
+* dl/resurrect-update-for-sha256 (2020-10-08) 2 commits
+  (merged to 'next' on 2020-10-26 at 7e94297aa4)
+ + contrib/git-resurrect.sh: use hash-agnostic OID pattern
+ + contrib/git-resurrect.sh: indent with tabs
+
+ Originally merged to 'next' on 2020-10-23
+
+ "git resurrect" script (in contrib/) learned that the object names
+ may be longer than 40-hex depending on the hash function in use.
+
+
+* ds/commit-graph-merging-fix (2020-10-09) 2 commits
+  (merged to 'next' on 2020-10-26 at a0cf763826)
+ + commit-graph: don't write commit-graph when disabled
+ + commit-graph: ignore duplicates when merging layers
+
+ When "git commit-graph" detects the same commit recorded more than
+ once while it is merging the layers, it used to die.  The code now
+ ignores all but one of them and continues.
+
+
+* ds/maintenance-commit-graph-auto-fix (2020-10-12) 2 commits
+  (merged to 'next' on 2020-10-26 at 429d1371d8)
+ + maintenance: core.commitGraph=false prevents writes
+ + maintenance: test commit-graph auto condition
+
+ Test-coverage enhancement of running commit-graph task "git
+ maintenance" as needed led to discovery and fix of a bug.
+
+
+* en/sequencer-rollback-lock-cleanup (2020-10-21) 1 commit
+  (merged to 'next' on 2020-10-26 at 1234e8297f)
+ + sequencer: remove duplicate rollback_lock_file() call
+
+ Code clean-up.
+
+
+* en/t7518-unflake (2020-10-18) 1 commit
+  (merged to 'next' on 2020-10-26 at 443459f7ca)
+ + t7518: fix flaky grep invocation
+
+ Originally merged to 'next' on 2020-10-23
+
+ Work around flakiness in a test.
+
+
+* en/test-selector (2020-10-18) 3 commits
+  (merged to 'next' on 2020-10-26 at 3d6e77c3ff)
+ + test-lib: reduce verbosity of skipped tests
+ + t6006, t6012: adjust tests to use 'setup' instead of synonyms
+ + test-lib: allow selecting tests by substring/glob with --run
+
+ Our test scripts can be told to run only individual pieces while
+ skipping others with the "--run=..." option; they were taught to
+ take a substring of test title, in addition to numbers, to name the
+ test pieces to run.
+
+
+* es/test-cmp-typocatcher (2020-10-20) 1 commit
+  (merged to 'next' on 2020-10-26 at 62d89db753)
+ + Revert "test_cmp: diagnose incorrect arguments"
+
+ A test helper "test_cmp A B" was taught to diagnose missing files A
+ or B as a bug in test, but some tests legitimately wanted to notice
+ a failure to even create file B as an error, in addition to leaving
+ the expected result in it, and were misdiagnosed as a bug.  This
+ has been corrected.
+
+
+* es/tutorial-mention-asciidoc-early (2020-10-16) 1 commit
+  (merged to 'next' on 2020-10-28 at 96e0d84d94)
+ + MyFirstContribution: clarify asciidoc dependency
+
+ Doc update.
+
+
+* jc/doc-final-resend (2020-10-26) 1 commit
+  (merged to 'next' on 2020-10-30 at 2dd2c8a0d9)
+ + SubmittingPatches: clarify the purpose of the final resend
+
+ Update developer doc.
+
+
+* jk/fast-import-marks-alloc-fix (2020-10-15) 1 commit
+  (merged to 'next' on 2020-10-26 at 2f0a73fd48)
+ + fast-import: fix over-allocation of marks storage
+
+ "git fast-import" wasted a lot of memory when many marks were in use.
+
+
+* jk/fast-import-marks-cleanup (2020-10-16) 1 commit
+  (merged to 'next' on 2020-10-26 at 1ba987dd54)
+ + fast-import: remove duplicated option-parsing line
+
+ Code clean-up.
+
+
+* jk/no-common (2020-10-16) 1 commit
+  (merged to 'next' on 2020-10-26 at c888cb8b28)
+ + config.mak.dev: build with -fno-common
+
+ Dev support to catch a tentative definition of a variable in our C
+ code as an error.
+
+
+* jk/report-fn-typedef (2020-10-16) 1 commit
+  (merged to 'next' on 2020-10-26 at fa4e128b65)
+ + usage: define a type for a reporting function
+
+ Code clean-up.
+
+
+* js/avoid-split-sideband-message (2020-10-27) 3 commits
+  (merged to 'next' on 2020-10-27 at 06b2f75522)
+ + test-pkt-line: drop colon from sideband identity
+  (merged to 'next' on 2020-10-26 at 1b550f3245)
+ + sideband: report unhandled incomplete sideband messages as bugs
+ + sideband: avoid reporting incomplete sideband messages
+ (this branch is used by jk/sideband-more-error-checking.)
+
+ The side-band status report can be sent at the same time as the
+ primary payload multiplexed, but the demultiplexer on the receiving
+ end incorrectly split a single status report into two, which has
+ been corrected.
+
+
+* js/ci-ghwf-dedup-tests (2020-10-12) 2 commits
+  (merged to 'next' on 2020-10-26 at 4832a8f40b)
+ + ci: make the "skip-if-redundant" check more defensive
+ + ci: work around old records of GitHub runs
+
+ Originally merged to 'next' on 2020-10-23
+
+ GitHub Actions automated test improvement to skip tests on a tree
+ identical to what has already been tested.
+
+
+* js/default-branch-name-part-4-minus-1 (2020-10-23) 9 commits
+  (merged to 'next' on 2020-10-26 at 0a66b76c66)
+ + t1400: prepare for `main` being default branch name
+ + tests: prepare aligned mentions of the default branch name
+ + t9902: prepare a test for the upcoming default branch name
+ + t3200: prepare for `main` being shorter than `master`
+ + t5703: adjust a test case for the upcoming default branch name
+ + t6200: adjust suppression pattern to also match "main"
+ + tests: start moving to a different default main branch name
+ + t9801: use `--` in preparation for default branch rename
+ + fmt-merge-msg: also suppress "into main" by default
+ (this branch is used by js/default-branch-name-adjust-t5411.)
+
+ Adjust tests so that they won't scream when the default initial
+ branch name is changed to 'main'.
+
+
+* js/t7006-cleanup (2020-10-21) 1 commit
+  (merged to 'next' on 2020-10-26 at b8582f842d)
+ + t7006: Use test_path_is_* functions in test script
+
+ Code clean-up.
+
+
+* jt/apply-reverse-twice (2020-10-20) 1 commit
+  (merged to 'next' on 2020-10-26 at f060893eb7)
+ + apply: when -R, also reverse list of sections
+
+ "git apply -R" did not handle patches that touch the same path
+ twice correctly, which has been corrected.  This is most relevant
+ in a patch that changes a path from a regular file to a symbolic
+ link (and vice versa).
+
+
+* lo/zsh-completion (2020-10-16) 1 commit
+  (merged to 'next' on 2020-10-26 at 100dc6adde)
+ + completion: fix zsh installation instructions
+
+ Update instructions for command line completion (in contrib/) for zsh.
+
+
+* mk/diff-ignore-regex (2020-10-20) 2 commits
+  (merged to 'next' on 2020-10-26 at c68727da93)
+ + diff: add -I<regex> that ignores matching changes
+ + merge-base, xdiff: zero out xpparam_t structures
+
+ "git diff" family of commands learned the "-I<regex>" option to
+ ignore hunks whose changed lines all match the given pattern.
+
+
+* nk/dir-c-comment-update (2020-10-16) 1 commit
+  (merged to 'next' on 2020-10-26 at 3a4cb82ad6)
+ + dir.c: fix comments to agree with argument name
+
+ Update stale in-code comment.
+
+
+* sc/sequencer-gpg-octopus (2020-10-18) 3 commits
+  (merged to 'next' on 2020-10-26 at e1c956e52a)
+ + t3435: add tests for rebase -r GPG signing
+ + sequencer: pass explicit --no-gpg-sign to merge
+ + sequencer: fix gpg option passed to merge subcommand
+
+ "git rebase --rebase-merges" did not correctly pass --gpg-sign
+ command line option to underlying "git merge" when replaying a merge
+ using non-default merge strategy or when replaying an octopus merge
+ (because replaying a two-head merge with the default strategy was
+ done in a separate codepath, the problem did not trigger for most
+ users), which has been corrected.
+
+
+* tk/credential-config (2020-10-16) 1 commit
+  (merged to 'next' on 2020-10-26 at 6ab486f389)
+ + credential: load default config
+
+ "git credential' didn't honor the core.askPass configuration
+ variable (among other things), which has been corrected.
+
+
+* ve/userdiff-bash (2020-10-22) 1 commit
+  (merged to 'next' on 2020-10-26 at 2b34be98fe)
+ + userdiff: support Bash
+
+ The userdiff pattern learned to identify the function definition in
+ POSIX shells and bash.
+
+--------------------------------------------------
 [New Topics]
 
-* jk/sideband-more-error-checking (2020-10-29) 1 commit
- - sideband: diagnose more sideband anomalies
- (this branch uses js/avoid-split-sideband-message.)
-
- The code to detect premature EOF in the sideband demultiplexer has
- been cleaned up.
-
- Will merge to 'next'.
+* dd/upload-pack-stateless-eof (2020-10-30) 1 commit
+ - upload-pack: allow stateless client EOF just prior to haves
 
 
-* js/default-branch-name-adjust-t5411 (2020-10-28) 4 commits
- - t5411: finish preparing for `main` being the default branch name
- - t5411: adjust the remaining support files for init.defaultBranch=main
- - t5411: start adjusting the support files for init.defaultBranch=main
- - t5411: start using the default branch name "main"
- (this branch uses js/default-branch-name-part-4-minus-1.)
+* js/trace2-session-id (2020-10-31) 11 commits
+ - upload-pack.c: fix a sparse warning
+ - receive-pack: log received client trace2 SID
+ - send-pack: advertise trace2 SID in capabilities
+ - upload-pack, serve: log received client trace2 SID
+ - fetch-pack: advertise trace2 SID in capabilities
+ - transport: log received server trace2 SID
+ - serve: advertise trace2 SID in v2 capabilities
+ - receive-pack: advertise trace2 SID in v0 capabilities
+ - upload-pack: advertise trace2 SID in v0 capabilities
+ - docs: new trace2.advertiseSID option
+ - docs: new capability to advertise trace2 SIDs
 
- Prepare a test script to transition of the default branch name to
- 'main'.
 
- Other than a minor nit, overall it looked sensible.
- cf. <xmqq5z6u9kkv.fsf@gitster.c.googlers.com>
+* so/format-patch-doc-on-default-diff-format (2020-10-31) 1 commit
+ - doc/diff-options: fix out of place mentions of '--patch/-p'
+
+
+* jc/sparse-error-for-developer-build (2020-10-31) 1 commit
+ - Makefile: enable -Wsparse-error for DEVELOPER build
+
+
+* pb/blame-funcname-range-userdiff (2020-11-01) 8 commits
+ - blame: simplify 'setup_blame_bloom_data' interface
+ - blame: simplify 'setup_scoreboard' interface
+ - blame: enable funcname blaming with userdiff driver
+ - line-log: mention both modes in 'blame' and 'log' short help
+ - doc: add more pointers to gitattributes(5) for userdiff
+ - blame-options.txt: also mention 'funcname' in '-L' description
+ - doc: line-range: improve formatting
+ - doc: log, gitk: move '-L' description to 'line-range-options.txt'
+
+
+* rs/clear-commit-marks-in-repo (2020-10-31) 2 commits
+ - bisect: clear flags in passed repository
+ - object: allow clear_commit_marks_all to handle any repo
+
+
+* rs/empty-stash-check-fix (2020-11-01) 1 commit
+ - stash: simplify reflog emptiness check
+
+
+* rs/pack-write-hashwrite-simplify (2020-11-01) 1 commit
+ - pack-write: use hashwrite_be32() instead of double-buffering array
+
+
+* sd/prompt-local-variable (2020-11-01) 1 commit
+ - git-prompt.sh: localize `option` in __git_ps1_show_upstream
+
+
+* so/log-diff-merge (2020-11-01) 26 commits
+ - doc/rev-list-options: document --first-parent implies --diff-merges=first-parent
+ - doc/diff-generate-patch: mention new --diff-merges option
+ - doc/git-log: describe new --diff-merges options
+ - t4013: add test for --diff-merges=first-parent
+ - diff-merges: implement new values for --diff-merges
+ - diff-merges: make -m/-c/--cc explicitly mutually exclusive
+ - diff-merges: refactor opt settings into separate functions
+ - diff-merges: get rid of now empty diff_merges_init_revs()
+ - diff-merges: group diff-merge flags next to each other inside 'rev_info'
+ - diff-merges: split 'ignore_merges' field
+ - diff-merges: fix -m to properly override -c/--cc
+ - t4013: add tests for -m failing to override -c/--cc
+ - t4013: support test_expect_failure through ':failure' magic
+ - diff-merges: revise revs->diff flag handling
+ - diff-merges: introduce revs->first_parent_merges flag
+ - diff-merges: new function diff_merges_set_dense_combined_if_unset()
+ - diff-merges: new function diff_merges_suppress()
+ - diff-merges: re-arrange functions to match the order they are called in
+ - diff-merges: rename diff_merges_default_to_enable() to match semantics
+ - diff-merges: move checks for first_parent_only out of the module
+ - diff-merges: rename all functions to have common prefix
+ - revision: move diff merges functions to its own diff-merges.c
+ - revision: provide implementation for diff merges tweaks
+ - revision: factor out initialization of diff-merge related settings
+ - revision: factor out setup of diff-merge related settings
+ - revision: factor out parsing of diff-merge related options
 
 --------------------------------------------------
 [Stalled]
@@ -191,48 +543,54 @@ Release tarballs are available at:
  updated to use "size_t".
 
 --------------------------------------------------
+[Needs Review]
+
+* ag/merge-strategies-in-c (2020-10-06) 11 commits
+ . sequencer: use the "octopus" merge strategy without forking
+ . sequencer: use the "resolve" strategy without forking
+ . merge: use the "octopus" strategy without forking
+ . merge: use the "resolve" strategy without forking
+ . merge-octopus: rewrite in C
+ . merge-recursive: move better_branch_name() to merge.c
+ . merge-resolve: rewrite in C
+ . merge-index: don't fork if the requested program is `git-merge-one-file'
+ . merge-index: libify merge_one_path() and merge_all()
+ . merge-one-file: rewrite in C
+ . t6027: modernise tests
+
+ The resolve and octopus merge strategy backends have been rewritten
+ in C.
+
+
+* ss/submodule-add-in-c (2020-10-07) 3 commits
+ . t7400: add test to check 'submodule add' for tracked paths
+ . submodule: port submodule subcommand 'add' from shell to C
+ . dir: change the scope of function 'directory_exists_in_index()'
+
+ "git submodule add" being rewritten in C.
+
+--------------------------------------------------
 [Cooking]
 
-* cm/t7xxx-cleanup (2020-10-22) 6 commits
-  (merged to 'next' on 2020-10-26 at 8b58e54942)
- + t7102: prepare expected output inside test_expect_* block
- + t7201: put each command on a separate line
- + t7201: use 'git -C' to avoid subshell
- + t7102,t7201: remove whitespace after redirect operator
- + t7102,t7201: remove unnecessary blank spaces in test body
- + t7101,t7102,t7201: modernize test formatting
+* jk/sideband-more-error-checking (2020-10-29) 1 commit
+  (merged to 'next' on 2020-10-30 at 8131784691)
+ + sideband: diagnose more sideband anomalies
 
- Originally merged to 'next' on 2020-10-23
-
- Micro clean-up.
+ The code to detect premature EOF in the sideband demultiplexer has
+ been cleaned up.
 
  Will merge to 'master'.
 
 
-* js/avoid-split-sideband-message (2020-10-27) 3 commits
-  (merged to 'next' on 2020-10-27 at 06b2f75522)
- + test-pkt-line: drop colon from sideband identity
-  (merged to 'next' on 2020-10-26 at 1b550f3245)
- + sideband: report unhandled incomplete sideband messages as bugs
- + sideband: avoid reporting incomplete sideband messages
- (this branch is used by jk/sideband-more-error-checking.)
+* js/default-branch-name-adjust-t5411 (2020-10-31) 4 commits
+  (merged to 'next' on 2020-11-02 at d625eda73c)
+ + t5411: finish preparing for `main` being the default branch name
+ + t5411: adjust the remaining support files for init.defaultBranch=main
+ + t5411: start adjusting the support files for init.defaultBranch=main
+ + t5411: start using the default branch name "main"
 
- The side-band status report can be sent at the same time as the
- primary payload multiplexed, but the demultiplexer on the receiving
- end incorrectly split a single status report into two, which has
- been corrected.
-
- Will merge to 'master'.
-
-
-* jt/apply-reverse-twice (2020-10-20) 1 commit
-  (merged to 'next' on 2020-10-26 at f060893eb7)
- + apply: when -R, also reverse list of sections
-
- "git apply -R" did not handle patches that touch the same path
- twice correctly, which has been corrected.  This is most relevant
- in a patch that changes a path from a regular file to a symbolic
- link (and vice versa).
+ Prepare a test script to transition of the default branch name to
+ 'main'.
 
  Will merge to 'master'.
 
@@ -247,26 +605,9 @@ Release tarballs are available at:
  cf. <20201022183822.GA781760@nand.local>
 
 
-* bc/svn-hash-oid-fix (2020-10-21) 1 commit
-  (merged to 'next' on 2020-10-26 at 743b549d5d)
- + svn: use correct variable name for short OID
-
- A recent oid->hash conversion missed one spot, breaking "git svn".
-
- Will merge to 'master'.
-
-
-* en/sequencer-rollback-lock-cleanup (2020-10-21) 1 commit
-  (merged to 'next' on 2020-10-26 at 1234e8297f)
- + sequencer: remove duplicate rollback_lock_file() call
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * jc/sequencer-stopped-sha-simplify (2020-10-21) 1 commit
- - sequencer: tolerate abbreviated stopped-sha file
+  (merged to 'next' on 2020-11-02 at ba3dd9eaf4)
+ + sequencer: tolerate abbreviated stopped-sha file
 
  Recently the format of an internal state file "rebase -i" uses has
  been tightened up for consistency, which would hurt those who start
@@ -274,8 +615,7 @@ Release tarballs are available at:
  the reader side a bit (which we may want to tighten again in a year
  or so).
 
- Is this a real issue, or just a theoretical one?  Perhaps drop?
- cf. <xmqqd01b429a.fsf@gitster.c.googlers.com>
+ Will merge to 'master'
 
 
 * jk/perl-warning (2020-10-21) 1 commit
@@ -288,37 +628,10 @@ Release tarballs are available at:
  cf. <20201022032400.GC1480820@coredump.intra.peff.net>
 
 
-* js/default-branch-name-part-4-minus-1 (2020-10-23) 9 commits
-  (merged to 'next' on 2020-10-26 at 0a66b76c66)
- + t1400: prepare for `main` being default branch name
- + tests: prepare aligned mentions of the default branch name
- + t9902: prepare a test for the upcoming default branch name
- + t3200: prepare for `main` being shorter than `master`
- + t5703: adjust a test case for the upcoming default branch name
- + t6200: adjust suppression pattern to also match "main"
- + tests: start moving to a different default main branch name
- + t9801: use `--` in preparation for default branch rename
- + fmt-merge-msg: also suppress "into main" by default
- (this branch is used by js/default-branch-name-adjust-t5411.)
-
- Adjust tests so that they won't scream when the default initial
- branch name is changed to 'main'.
-
- Will merge to 'master'.
-
-
-* js/t7006-cleanup (2020-10-21) 1 commit
-  (merged to 'next' on 2020-10-26 at b8582f842d)
- + t7006: Use test_path_is_* functions in test script
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * pb/ref-filter-with-crlf (2020-10-29) 2 commits
- - log, show: add tests for messages containing CRLF
- - ref-filter: handle CRLF at end-of-line more gracefully
+  (merged to 'next' on 2020-10-30 at 8be77584c5)
+ + log, show: add tests for messages containing CRLF
+ + ref-filter: handle CRLF at end-of-line more gracefully
 
  A commit and tag object may have CR at the end of each and
  every line (you can create such an object with hash-object or
@@ -327,26 +640,17 @@ Release tarballs are available at:
  to separate the title from the body of the message.  Be lenient
  and accept a line with lone CR on it as a blank line, too.
 
- Will merge to 'next'.
-
-
-* ve/userdiff-bash (2020-10-22) 1 commit
-  (merged to 'next' on 2020-10-26 at 2b34be98fe)
- + userdiff: support Bash
-
- The userdiff pattern learned to identify the function definition in
- POSIX shells and bash.
-
  Will merge to 'master'.
 
 
 * ab/git-remote-exit-code (2020-10-27) 1 commit
- - remote: add meaningful exit code on missing/existing
+  (merged to 'next' on 2020-10-30 at 1fc119404b)
+ + remote: add meaningful exit code on missing/existing
 
  Exit codes from "git remote add" etc. were not usable by scripted
  callers.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/merge-ort-api-null-impl (2020-10-29) 4 commits
@@ -376,11 +680,12 @@ Release tarballs are available at:
 
 
 * jk/committer-date-is-author-date-fix-simplify (2020-10-26) 1 commit
- - am, sequencer: stop parsing our own committer ident
+  (merged to 'next' on 2020-10-30 at 9ba3fad57d)
+ + am, sequencer: stop parsing our own committer ident
 
- Code symplification.
+ Code simplification.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sj/untracked-files-in-submodule-directory-is-not-dirty (2020-10-26) 1 commit
@@ -396,47 +701,40 @@ Release tarballs are available at:
 
 
 * fc/zsh-completion (2020-10-28) 29 commits
- - zsh: update copyright notices
- - completion: bash: remove old compat wrappers
- - completion: bash: cleanup cygwin check
- - completion: bash: trivial cleanup
- - completion: zsh: add simple version check
- - completion: zsh: trivial simplification
- - completion: zsh: add alias descriptions
- - completion: zsh: improve command tags
- - completion: zsh: refactor command completion
- - completion: zsh: shuffle functions around
- - completion: zsh: simplify file_direct
- - completion: zsh: simplify nl_append
- - completion: zsh: trivial cleanup
- - completion: zsh: simplify direct compadd
- - completion: zsh: simplify compadd functions
- - completion: zsh: fix splitting of words
- - completion: zsh: add missing direct_append
- - completion: fix conflict with bashcomp
- - completion: zsh: fix completion for --no-.. options
- - completion: bash: remove zsh wrapper
- - completion: bash: synchronize zsh wrapper
- - completion: zsh: fix for command aliasing
- - completion: prompt: fix color for Zsh
- - completion: zsh: update slave script locations
- - completion: zsh: fix for directories with spaces
- - completion: zsh: reorganize install instructions
- - completion: zsh: fix bash script extension
- - completion: zsh: fix name due to broken autoloading
- - completion: zsh: fix __gitcomp_direct()
+  (merged to 'next' on 2020-11-02 at 2c5e3a73ad)
+ + zsh: update copyright notices
+ + completion: bash: remove old compat wrappers
+ + completion: bash: cleanup cygwin check
+ + completion: bash: trivial cleanup
+ + completion: zsh: add simple version check
+ + completion: zsh: trivial simplification
+ + completion: zsh: add alias descriptions
+ + completion: zsh: improve command tags
+ + completion: zsh: refactor command completion
+ + completion: zsh: shuffle functions around
+ + completion: zsh: simplify file_direct
+ + completion: zsh: simplify nl_append
+ + completion: zsh: trivial cleanup
+ + completion: zsh: simplify direct compadd
+ + completion: zsh: simplify compadd functions
+ + completion: zsh: fix splitting of words
+ + completion: zsh: add missing direct_append
+ + completion: fix conflict with bashcomp
+ + completion: zsh: fix completion for --no-.. options
+ + completion: bash: remove zsh wrapper
+ + completion: bash: synchronize zsh wrapper
+ + completion: zsh: fix for command aliasing
+ + completion: prompt: fix color for Zsh
+ + completion: zsh: update slave script locations
+ + completion: zsh: fix for directories with spaces
+ + completion: zsh: reorganize install instructions
+ + completion: zsh: fix bash script extension
+ + completion: zsh: fix name due to broken autoloading
+ + completion: zsh: fix __gitcomp_direct()
 
  Zsh autocompletion (in contrib/) update.
 
- Will merge to 'next'.
-
-
-* jc/doc-final-resend (2020-10-26) 1 commit
- - SubmittingPatches: clarify the purpose of the final resend
-
- Update developer doc.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nk/perf-fsmonitor (2020-10-26) 10 commits
@@ -456,14 +754,15 @@ Release tarballs are available at:
 
 
 * jk/checkout-index-errors (2020-10-27) 2 commits
- - checkout-index: propagate errors to exit code
- - checkout-index: drop error message from empty --stage=all
+  (merged to 'next' on 2020-10-30 at 77dddffe1b)
+ + checkout-index: propagate errors to exit code
+ + checkout-index: drop error message from empty --stage=all
  (this branch is used by mt/parallel-checkout-part-1.)
 
  "git checkout-index" did not consistently signal an error with its
  exit status.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pw/rebase-i-orig-head (2020-10-27) 4 commits
@@ -479,13 +778,16 @@ Release tarballs are available at:
  cf. <xmqq7drbbcj5.fsf@gitster.c.googlers.com>
 
 
-* en/strmap (2020-10-13) 10 commits
+* en/strmap (2020-11-02) 13 commits
+ - Use new HASHMAP_INIT macro to simplify hashmap initialization
+ - strmap: take advantage of FLEXPTR_ALLOC_STR when relevant
  - strmap: enable allocations to come from a mem_pool
  - strmap: add a strset sub-type
  - strmap: add functions facilitating use as a string->int map
  - strmap: enable faster clearing and reusing of strmaps
  - strmap: add more utility functions
  - strmap: new utility functions
+ - hashmap: provide deallocation function names
  - hashmap: introduce a new hashmap_partial_clear()
  - hashmap: allow re-use after hashmap_free()
  - hashmap: adjust spacing to fix argument alignment
@@ -494,32 +796,9 @@ Release tarballs are available at:
  A speciailization of hashmap that uses a string as key has been
  introduced.  Hopefully it will see wider use over time.
 
- On hold.
+ Rerolled.
  cf. <20201023080202.GA4012156@coredump.intra.peff.net>
  cf. <CABPp-BFV8ZAu5vLarG2mX8gT5bfV31oqbd-vjAQF_YDcyNSRiw@mail.gmail.com>
-
-
-* en/test-selector (2020-10-18) 3 commits
-  (merged to 'next' on 2020-10-26 at 3d6e77c3ff)
- + test-lib: reduce verbosity of skipped tests
- + t6006, t6012: adjust tests to use 'setup' instead of synonyms
- + test-lib: allow selecting tests by substring/glob with --run
-
- Our test scripts can be told to run only individual pieces while
- skipping others with the "--run=..." option; they were taught to
- take a substring of test title, in addition to numbers, to name the
- test pices to run.
-
- Will merge to 'master'.
-
-
-* jk/report-fn-typedef (2020-10-16) 1 commit
-  (merged to 'next' on 2020-10-26 at fa4e128b65)
- + usage: define a type for a reporting function
-
- Code clean-up.
-
- Will merge to 'master'.
 
 
 * mr/bisect-in-c-3 (2020-10-16) 7 commits
@@ -537,62 +816,11 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* sc/sequencer-gpg-octopus (2020-10-18) 3 commits
-  (merged to 'next' on 2020-10-26 at e1c956e52a)
- + t3435: add tests for rebase -r GPG signing
- + sequencer: pass explicit --no-gpg-sign to merge
- + sequencer: fix gpg option passed to merge subcommand
-
- "git rebase --rebase-merges" did not correctly pass --gpg-sign
- command line option to underying "git merge" when replaying a merge
- using non-default merge strategy or when replaying an octopus merge
- (because replaying a two-head merge with the default strategy was
- done in a separate codepath, the problem did not trigger for most
- users), which has been corrected.
-
- Will merge to 'master'.
-
-
-* as/sample-push-to-checkout-hook (2020-10-16) 1 commit
-  (merged to 'next' on 2020-10-26 at 644026c2f6)
- + hook: add sample template for push-to-checkout
-
- Add a sample 'push-to-checkout' hook, that performs the same as
- what the built-in default action does.
-
- Will merge to 'master'.
-
-
 * as/tests-cleanup (2020-10-18) 1 commit
   (merged to 'next' on 2020-10-28 at fd199beb31)
  + t2200,t9832: avoid using 'git' upstream in a pipe
 
  Micro clean-up of a couple of test scripts.
-
- Will merge to 'master'.
-
-
-* bk/sob-dco (2020-10-20) 4 commits
-  (merged to 'next' on 2020-10-26 at d0e5066a7e)
- + Documentation: stylistically normalize references to Signed-off-by:
- + SubmittingPatches: clarify DCO is our --signoff rule
- + Documentation: clarify and expand description of --signoff
- + doc: preparatory clean-up of description on the sign-off option
-
- Document that the meaning of a Signed-off-by trailer can vary from
- project to project in the end-user documentation, and clarify what
- it means to this project.
-
- Will merge to 'master'.
-
-
-* ct/t0000-use-test-path-is-file (2020-10-18) 1 commit
-  (merged to 'next' on 2020-10-26 at 9b70aa748f)
- + t0000: use test_path_is_file instead of "test -f"
-
- Originally merged to 'next' on 2020-10-23
-
- Micro clean-up of a test script.
 
  Will merge to 'master'.
 
@@ -607,89 +835,6 @@ Release tarballs are available at:
 
  More preliminary tests have been added to document desired outcome
  of various "directory rename" situations.
-
- Will merge to 'master'.
-
-
-* en/t7518-unflake (2020-10-18) 1 commit
-  (merged to 'next' on 2020-10-26 at 443459f7ca)
- + t7518: fix flaky grep invocation
-
- Originally merged to 'next' on 2020-10-23
-
- Work around flakiness in a test.
-
- Will merge to 'master'.
-
-
-* es/test-cmp-typocatcher (2020-10-20) 1 commit
-  (merged to 'next' on 2020-10-26 at 62d89db753)
- + Revert "test_cmp: diagnose incorrect arguments"
-
- A test helper "test_cmp A B" was taught to diagnose missing files A
- or B as a bug in test, but some tests legitimately wanted to notice
- a failure to even create file B as an error, in addition to leaving
- the expected result in it, and were misdiagnosed as a bug.  This
- has been corrected.
-
- Will merge to 'master'.
-
-
-* es/tutorial-mention-asciidoc-early (2020-10-16) 1 commit
-  (merged to 'next' on 2020-10-28 at 96e0d84d94)
- + MyFirstContribution: clarify asciidoc dependency
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* jk/fast-import-marks-alloc-fix (2020-10-15) 1 commit
-  (merged to 'next' on 2020-10-26 at 2f0a73fd48)
- + fast-import: fix over-allocation of marks storage
-
- "git fast-import" wasted a lot of memory when many marks were in use.
-
- Will merge to 'master'.
-
-
-* jk/fast-import-marks-cleanup (2020-10-16) 1 commit
-  (merged to 'next' on 2020-10-26 at 1ba987dd54)
- + fast-import: remove duplicated option-parsing line
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jk/no-common (2020-10-16) 1 commit
-  (merged to 'next' on 2020-10-26 at c888cb8b28)
- + config.mak.dev: build with -fno-common
-
- Dev support to catch a tentative definition of a variable in our C
- code as an error.
-
- Will merge to 'master'.
-
-
-* js/ci-ghwf-dedup-tests (2020-10-12) 2 commits
-  (merged to 'next' on 2020-10-26 at 4832a8f40b)
- + ci: make the "skip-if-redundant" check more defensive
- + ci: work around old records of GitHub runs
-
- Originally merged to 'next' on 2020-10-23
-
- GitHub Actions automated test improvement to skip tests on a tree
- identical to what has already been tested.
-
- Will merge to 'master'.
-
-
-* lo/zsh-completion (2020-10-16) 1 commit
-  (merged to 'next' on 2020-10-26 at 100dc6adde)
- + completion: fix zsh installation instructions
-
- Update instructions for command line completion (in contrib/) for zsh.
 
  Will merge to 'master'.
 
@@ -710,42 +855,6 @@ Release tarballs are available at:
  of the fsmonitor data when available.
 
  Will merge to 'master'.
-
-
-* nk/dir-c-comment-update (2020-10-16) 1 commit
-  (merged to 'next' on 2020-10-26 at 3a4cb82ad6)
- + dir.c: fix comments to agree with argument name
-
- Update stale in-code comment.
-
- Will merge to 'master'.
-
-
-* tk/credential-config (2020-10-16) 1 commit
-  (merged to 'next' on 2020-10-26 at 6ab486f389)
- + credential: load default config
-
- "git credential' didn't honor the core.askPass configuration
- variable (among other things), which has been corrected.
-
- Will merge to 'master'.
-
-
-* ag/merge-strategies-in-c (2020-10-06) 11 commits
- - sequencer: use the "octopus" merge strategy without forking
- - sequencer: use the "resolve" strategy without forking
- - merge: use the "octopus" strategy without forking
- - merge: use the "resolve" strategy without forking
- - merge-octopus: rewrite in C
- - merge-recursive: move better_branch_name() to merge.c
- - merge-resolve: rewrite in C
- - merge-index: don't fork if the requested program is `git-merge-one-file'
- - merge-index: libify merge_one_path() and merge_all()
- - merge-one-file: rewrite in C
- - t6027: modernise tests
-
- The resolve and octopus merge strategy backends have been rewritten
- in C.
 
 
 * jk/symlinked-dotgitx-files (2020-10-23) 9 commits
@@ -772,50 +881,6 @@ Release tarballs are available at:
  that probably is with potential consequences that is more grave?
 
 
-* dl/resurrect-update-for-sha256 (2020-10-08) 2 commits
-  (merged to 'next' on 2020-10-26 at 7e94297aa4)
- + contrib/git-resurrect.sh: use hash-agnostic OID pattern
- + contrib/git-resurrect.sh: indent with tabs
-
- Originally merged to 'next' on 2020-10-23
-
- "git resurrect" script (in contrib/) learned that the object names
- may be longer than 40-hex depending on the hash function in use.
-
- Will merge to 'master'.
-
-
-* ds/commit-graph-merging-fix (2020-10-09) 2 commits
-  (merged to 'next' on 2020-10-26 at a0cf763826)
- + commit-graph: don't write commit-graph when disabled
- + commit-graph: ignore duplicates when merging layers
-
- When "git commit-graph" detects the same commit recorded more than
- once while it is merging the layers, it used to die.  The code now
- ignores all but one of them and continues.
-
- Will merge to 'master'.
-
-
-* ds/maintenance-commit-graph-auto-fix (2020-10-12) 2 commits
-  (merged to 'next' on 2020-10-26 at 429d1371d8)
- + maintenance: core.commitGraph=false prevents writes
- + maintenance: test commit-graph auto condition
-
- Test-coverage enhancement of running commit-graph task "git
- maintenance" as needed led to discovery and fix of a bug.
-
- Will merge to 'master'.
-
-
-* ss/submodule-add-in-c (2020-10-07) 3 commits
- - t7400: add test to check 'submodule add' for tracked paths
- - submodule: port submodule subcommand 'add' from shell to C
- - dir: change the scope of function 'directory_exists_in_index()'
-
- "git submodule add" being rewritten in C.
-
-
 * ak/corrected-commit-date (2020-10-08) 10 commits
  - doc: add corrected commit date info
  - commit-reach: use corrected commit dates in paint_down_to_common()
@@ -833,17 +898,6 @@ Release tarballs are available at:
 
  Almost there.
  cf. <685afed6-f01f-5d22-80d4-00fdc11caf0a@gmail.com>
-
-
-* mk/diff-ignore-regex (2020-10-20) 2 commits
-  (merged to 'next' on 2020-10-26 at c68727da93)
- + diff: add -I<regex> that ignores matching changes
- + merge-base, xdiff: zero out xpparam_t structures
-
- "git diff" family of commands learned the "-I<regex>" option to
- ignore hunks whose changed lines all match the given pattern.
-
- Will merge to 'master'.
 
 
 * mt/parallel-checkout-part-1 (2020-10-29) 19 commits
@@ -869,25 +923,6 @@ Release tarballs are available at:
  (this branch uses jk/checkout-index-errors.)
 
  Parallel checkout.
-
-
-* dl/diff-merge-base (2020-09-21) 10 commits
-  (merged to 'next' on 2020-10-26 at 114d94030b)
- + contrib/completion: complete `git diff --merge-base`
- + builtin/diff-tree: learn --merge-base
- + builtin/diff-index: learn --merge-base
- + t4068: add --merge-base tests
- + diff-lib: define diff_get_merge_base()
- + diff-lib: accept option flags in run_diff_index()
- + contrib/completion: extract common diff/difftool options
- + git-diff.txt: backtick quote command text
- + git-diff-index.txt: make --cached description a proper sentence
- + t4068: remove unnecessary >tmp
-
- "git diff A...B" learned "git diff --merge-base A B", which is a
- longer short-hand to say the same thing.
-
- Will merge to 'master'.
 
 
 * ds/maintenance-part-3 (2020-10-16) 8 commits
