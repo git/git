@@ -11,15 +11,10 @@ test_description='Merge logic in fetch'
 GIT_TEST_PROTOCOL_VERSION=0
 export GIT_TEST_PROTOCOL_VERSION
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
-
-test_have_prereq PREPARE_FOR_MAIN_BRANCH || {
-	test_skip="In transit for the default branch name 'main'"
-	test_done
-}
 
 build_script () {
 	script="$1" &&
