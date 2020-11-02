@@ -952,13 +952,7 @@ test_expect_code () {
 # - not all diff versions understand "-u"
 
 test_cmp() {
-	test $# -eq 2 || BUG "test_cmp requires two arguments"
-	if ! eval "$GIT_TEST_CMP" '"$@"'
-	then
-		test "x$1" = x- || test -e "$1" || BUG "test_cmp '$1' missing"
-		test "x$2" = x- || test -e "$2" || BUG "test_cmp '$2' missing"
-		return 1
-	fi
+	eval "$GIT_TEST_CMP" '"$@"'
 }
 
 # Check that the given config key has the expected value.
@@ -987,13 +981,7 @@ test_cmp_config() {
 # test_cmp_bin - helper to compare binary files
 
 test_cmp_bin() {
-	test $# -eq 2 || BUG "test_cmp_bin requires two arguments"
-	if ! cmp "$@"
-	then
-		test "x$1" = x- || test -e "$1" || BUG "test_cmp_bin '$1' missing"
-		test "x$2" = x- || test -e "$2" || BUG "test_cmp_bin '$2' missing"
-		return 1
-	fi
+	cmp "$@"
 }
 
 # Use this instead of test_cmp to compare files that contain expected and
