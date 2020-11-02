@@ -190,7 +190,7 @@ int demultiplex_sideband(const char *me, char *buf, int len,
 		return 0;
 	case 1:
 		*sideband_type = SIDEBAND_PRIMARY;
-		break;
+		return 1;
 	default:
 		strbuf_addf(scratch, "%s%s: protocol error: bad band #%d",
 			    scratch->len ? "\n" : "", me, band);
