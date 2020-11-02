@@ -10,8 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git diff' [<options>] [<commit>] [--] [<path>...]
-'git diff' [<options>] --cached [<commit>] [--] [<path>...]
-'git diff' [<options>] <commit> [<commit>...] <commit> [--] [<path>...]
+'git diff' [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]
+'git diff' [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]
 'git diff' [<options>] <commit>...<commit> [--] [<path>...]
 'git diff' [<options>] <blob> <blob>
 'git diff' [<options>] --no-index [--] <path> <path>
@@ -40,7 +40,7 @@ files on disk.
 	or when running the command outside a working tree
 	controlled by Git. This form implies `--exit-code`.
 
-'git diff' [<options>] --cached [<commit>] [--] [<path>...]::
+'git diff' [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]::
 
 	This form is to view the changes you staged for the next
 	commit relative to the named <commit>.  Typically you
@@ -49,6 +49,10 @@ files on disk.
 	If HEAD does not exist (e.g. unborn branches) and
 	<commit> is not given, it shows all staged changes.
 	--staged is a synonym of --cached.
++
+If --merge-base is given, instead of using <commit>, use the merge base
+of <commit> and HEAD.  `git diff --merge-base A` is equivalent to
+`git diff $(git merge-base A HEAD)`.
 
 'git diff' [<options>] <commit> [--] [<path>...]::
 
@@ -58,23 +62,27 @@ files on disk.
 	branch name to compare with the tip of a different
 	branch.
 
-'git diff' [<options>] <commit> <commit> [--] [<path>...]::
+'git diff' [<options>] [--merge-base] <commit> <commit> [--] [<path>...]::
 
 	This is to view the changes between two arbitrary
 	<commit>.
++
+If --merge-base is given, use the merge base of the two commits for the
+"before" side.  `git diff --merge-base A B` is equivalent to
+`git diff $(git merge-base A B) B`.
 
 'git diff' [<options>] <commit> <commit>... <commit> [--] [<path>...]::
 
 	This form is to view the results of a merge commit.  The first
 	listed <commit> must be the merge itself; the remaining two or
 	more commits should be its parents.  A convenient way to produce
-	the desired set of revisions is to use the {caret}@ suffix.
+	the desired set of revisions is to use the `^@` suffix.
 	For instance, if `master` names a merge commit, `git diff master
 	master^@` gives the same combined diff as `git show master`.
 
 'git diff' [<options>] <commit>..<commit> [--] [<path>...]::
 
-	This is synonymous to the earlier form (without the "..") for
+	This is synonymous to the earlier form (without the `..`) for
 	viewing the changes between two arbitrary <commit>.  If <commit> on
 	one side is omitted, it will have the same effect as
 	using HEAD instead.
@@ -83,20 +91,20 @@ files on disk.
 
 	This form is to view the changes on the branch containing
 	and up to the second <commit>, starting at a common ancestor
-	of both <commit>.  "git diff A\...B" is equivalent to
-	"git diff $(git merge-base A B) B".  You can omit any one
+	of both <commit>.  `git diff A...B` is equivalent to
+	`git diff $(git merge-base A B) B`.  You can omit any one
 	of <commit>, which has the same effect as using HEAD instead.
 
 Just in case you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
-in the last two forms that use ".." notations, can be any
-<tree>.
+in the `--merge-base` case and in the last two forms that use `..`
+notations, can be any <tree>.
 
 For a more complete list of ways to spell <commit>, see
 "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 However, "diff" is about comparing two _endpoints_, not ranges,
-and the range notations ("<commit>..<commit>" and
-"<commit>\...<commit>") do not mean a range as defined in the
+and the range notations (`<commit>..<commit>` and
+`<commit>...<commit>`) do not mean a range as defined in the
 "SPECIFYING RANGES" section in linkgit:gitrevisions[7].
 
 'git diff' [<options>] <blob> <blob>::
@@ -144,9 +152,9 @@ $ git diff HEAD       <3>
 +
 <1> Changes in the working tree not yet staged for the next commit.
 <2> Changes between the index and your last commit; what you
-    would be committing if you run "git commit" without "-a" option.
+    would be committing if you run `git commit` without `-a` option.
 <3> Changes in the working tree since your last commit; what you
-    would be committing if you run "git commit -a"
+    would be committing if you run `git commit -a`
 
 Comparing with arbitrary commits::
 +
