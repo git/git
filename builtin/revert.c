@@ -172,6 +172,11 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 				NULL);
 	}
 
+	if (!opts->strategy && opts->default_strategy) {
+		opts->strategy = opts->default_strategy;
+		opts->default_strategy = NULL;
+	}
+
 	if (opts->allow_ff)
 		verify_opt_compatible(me, "--ff",
 				"--signoff", opts->signoff,
@@ -202,6 +207,8 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	/* These option values will be free()d */
 	opts->gpg_sign = xstrdup_or_null(opts->gpg_sign);
 	opts->strategy = xstrdup_or_null(opts->strategy);
+	if (!opts->strategy && getenv("GIT_TEST_MERGE_ALGORITHM"))
+		opts->strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
 
 	if (cmd == 'q') {
 		int ret = sequencer_remove_state(opts);

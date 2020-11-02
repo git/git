@@ -57,6 +57,7 @@ struct replay_opts {
 	int explicit_cleanup;
 
 	/* Merge strategy */
+	char *default_strategy;  /* from config options */
 	char *strategy;
 	char **xopts;
 	size_t xopts_nr, xopts_alloc;
