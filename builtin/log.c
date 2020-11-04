@@ -1942,11 +1942,18 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (rev.show_notes)
 		load_display_notes(&rev.notes_opt);
 
-	if (use_stdout + !!output_directory > 1)
-		die(_("--stdout and --output-directory are mutually exclusive"));
+	if (use_stdout + rev.diffopt.close_file + !!output_directory > 1)
+		die(_("--stdout, --output, and --output-directory are mutually exclusive"));
 
 	if (use_stdout) {
 		setup_pager();
+	} else if (rev.diffopt.close_file) {
+		/*
+		 * The diff code parsed --output; it has already opened the
+		 * file, but but we must instruct it not to close after each
+		 * diff.
+		 */
+		rev.diffopt.close_file = 0;
 	} else {
 		int saved;
 
