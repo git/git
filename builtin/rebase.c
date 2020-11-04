@@ -370,8 +370,9 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 
 		split_exec_commands(opts->cmd, &commands);
 		ret = complete_action(the_repository, &replay, flags,
-			shortrevisions, opts->onto_name, opts->onto, head_hash,
-			&commands, opts->autosquash, &todo_list);
+			shortrevisions, opts->onto_name, opts->onto,
+			&opts->orig_head, &commands, opts->autosquash,
+			&todo_list);
 	}
 
 	string_list_clear(&commands, 0);
