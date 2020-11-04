@@ -296,7 +296,8 @@ static int get_revision_ranges(struct commit *upstream, struct commit *onto,
 }
 
 static int init_basic_state(struct replay_opts *opts, const char *head_name,
-			    struct commit *onto, const char *orig_head)
+			    struct commit *onto,
+			    const struct object_id *orig_head)
 {
 	FILE *interactive;
 
@@ -340,7 +341,7 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 
 	if (init_basic_state(&replay,
 			     opts->head_name ? opts->head_name : "detached HEAD",
-			     opts->onto, head_hash)) {
+			     opts->onto, &opts->orig_head)) {
 		free(revisions);
 		free(shortrevisions);
 
