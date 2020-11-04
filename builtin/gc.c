@@ -794,7 +794,7 @@ static int should_write_commit_graph(void)
 
 	result = for_each_ref(dfs_on_ref, &data);
 
-	clear_commit_marks_all(SEEN);
+	repo_clear_commit_marks(the_repository, SEEN);
 
 	return result;
 }
