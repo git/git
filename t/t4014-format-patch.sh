@@ -1919,6 +1919,19 @@ test_expect_success 'format-patch -o overrides format.outputDirectory' '
 	test_path_is_dir patchset
 '
 
+test_expect_success 'format-patch forbids multiple outputs' '
+	rm -fr outdir &&
+	test_must_fail \
+		git format-patch --stdout --output-directory=outdir
+'
+
+test_expect_success 'configured outdir does not conflict with output options' '
+	rm -fr outdir &&
+	test_config format.outputDirectory outdir &&
+	git format-patch --stdout &&
+	test_path_is_missing outdir
+'
+
 test_expect_success 'format-patch --base' '
 	git checkout patchid &&
 
