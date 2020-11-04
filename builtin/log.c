@@ -1153,7 +1153,7 @@ static void get_notes_args(struct strvec *arg, struct rev_info *rev)
 	}
 }
 
-static void make_cover_letter(struct rev_info *rev, int use_stdout,
+static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			      struct commit *origin,
 			      int nr, struct commit **list,
 			      const char *branch_name,
@@ -1173,7 +1173,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	committer = git_committer_info(0);
 
-	if (!use_stdout &&
+	if (use_separate_file &&
 	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter", rev, quiet))
 		die(_("failed to create cover-letter file"));
 
@@ -2117,7 +2117,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
-		make_cover_letter(&rev, use_stdout,
+		make_cover_letter(&rev, !!output_directory,
 				  origin, nr, list, branch_name, quiet);
 		print_bases(&bases, rev.diffopt.file);
 		print_signature(rev.diffopt.file);
@@ -2172,7 +2172,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			gen_message_id(&rev, oid_to_hex(&commit->object.oid));
 		}
 
-		if (!use_stdout &&
+		if (output_directory &&
 		    open_next_file(rev.numbered_files ? NULL : commit, NULL, &rev, quiet))
 			die(_("failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
@@ -2185,7 +2185,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		 * the log; when using one file per patch, we do
 		 * not want the extra blank line.
 		 */
-		if (!use_stdout)
+		if (output_directory)
 			rev.shown_one = 0;
 		if (shown) {
 			print_bases(&bases, rev.diffopt.file);
@@ -2196,7 +2196,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			else
 				print_signature(rev.diffopt.file);
 		}
-		if (!use_stdout)
+		if (output_directory)
 			fclose(rev.diffopt.file);
 	}
 	stop_progress(&progress);
