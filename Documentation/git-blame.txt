@@ -87,7 +87,9 @@ include::blame-options.txt[]
 
 --abbrev=<n>::
 	Instead of using the default 7+1 hexadecimal digits as the
-	abbreviated object name, use <n>+1 digits. Note that 1 column
+	abbreviated object name, use <m>+1 digits, where <m> is at
+	least <n> but ensures the commit object names are unique.
+	Note that 1 column
 	is used for a caret to mark the boundary commit.
 
 
