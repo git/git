@@ -138,6 +138,7 @@ __git_ps1_show_upstream ()
 	done <<< "$output"
 
 	# parse configuration values
+	local option
 	for option in ${GIT_PS1_SHOWUPSTREAM}; do
 		case "$option" in
 		git|svn) upstream="$option" ;;
