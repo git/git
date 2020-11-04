@@ -36,9 +36,9 @@ endif::git-format-patch[]
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
-	the usual three. Implies `--patch`.
+	the usual three.
 ifndef::git-format-patch[]
-	Implies `-p`.
+	Implies `--patch`.
 endif::git-format-patch[]
 
 --output=<file>::
@@ -441,7 +441,10 @@ endif::git-format-patch[]
 
 --binary::
 	In addition to `--full-index`, output a binary diff that
-	can be applied with `git-apply`. Implies `--patch`.
+	can be applied with `git-apply`.
+ifndef::git-format-patch[]
+	Implies `--patch`.
+endif::git-format-patch[]
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
