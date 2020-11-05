@@ -70,27 +70,36 @@ void strmap_partial_clear(struct strmap *map, int free_values)
 	hashmap_partial_clear(&map->map);
 }
 
+static struct strmap_entry *create_entry(struct strmap *map,
+					 const char *str,
+					 void *data)
+{
+	struct strmap_entry *entry;
+	const char *key = str;
+
+	entry = xmalloc(sizeof(*entry));
+	hashmap_entry_init(&entry->ent, strhash(str));
+
+	if (map->strdup_strings)
+		key = xstrdup(str);
+	entry->key = key;
+	entry->value = data;
+	return entry;
+}
+
 void *strmap_put(struct strmap *map, const char *str, void *data)
 {
 	struct strmap_entry *entry = find_strmap_entry(map, str);
-	void *old = NULL;
 
 	if (entry) {
-		old = entry->value;
+		void *old = entry->value;
 		entry->value = data;
-	} else {
-		const char *key = str;
-
-		entry = xmalloc(sizeof(*entry));
-		hashmap_entry_init(&entry->ent, strhash(str));
-
-		if (map->strdup_strings)
-			key = xstrdup(str);
-		entry->key = key;
-		entry->value = data;
-		hashmap_add(&map->map, &entry->ent);
+		return old;
 	}
-	return old;
+
+	entry = create_entry(map, str, data);
+	hashmap_add(&map->map, &entry->ent);
+	return NULL;
 }
 
 struct strmap_entry *strmap_get_entry(struct strmap *map, const char *str)
