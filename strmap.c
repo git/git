@@ -143,3 +143,20 @@ void strintmap_incr(struct strintmap *map, const char *str, intptr_t amt)
 	else
 		strintmap_set(map, str, map->default_value + amt);
 }
+
+int strset_add(struct strset *set, const char *str)
+{
+	/*
+	 * Cannot use strmap_put() because it'll return NULL in both cases:
+	 *   - cannot find str: NULL means "not found"
+	 *   - does find str: NULL is the value associated with str
+	 */
+	struct strmap_entry *entry = find_strmap_entry(&set->map, str);
+
+	if (entry)
+		return 0;
+
+	entry = create_entry(&set->map, str, NULL);
+	hashmap_add(&set->map.map, &entry->ent);
+	return 1;
+}
