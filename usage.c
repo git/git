@@ -108,33 +108,33 @@ static int die_is_recursing_builtin(void)
 
 /* If we are in a dlopen()ed .so write to a global variable would segfault
  * (ugh), so keep things static. */
-static NORETURN_PTR void (*usage_routine)(const char *err, va_list params) = usage_builtin;
-static NORETURN_PTR void (*die_routine)(const char *err, va_list params) = die_builtin;
-static void (*error_routine)(const char *err, va_list params) = error_builtin;
-static void (*warn_routine)(const char *err, va_list params) = warn_builtin;
+static NORETURN_PTR report_fn usage_routine = usage_builtin;
+static NORETURN_PTR report_fn die_routine = die_builtin;
+static report_fn error_routine = error_builtin;
+static report_fn warn_routine = warn_builtin;
 static int (*die_is_recursing)(void) = die_is_recursing_builtin;
 
-void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params))
+void set_die_routine(NORETURN_PTR report_fn routine)
 {
 	die_routine = routine;
 }
 
-void set_error_routine(void (*routine)(const char *err, va_list params))
+void set_error_routine(report_fn routine)
 {
 	error_routine = routine;
 }
 
-void (*get_error_routine(void))(const char *err, va_list params)
+report_fn get_error_routine(void)
 {
 	return error_routine;
 }
 
-void set_warn_routine(void (*routine)(const char *warn, va_list params))
+void set_warn_routine(report_fn routine)
 {
 	warn_routine = routine;
 }
 
-void (*get_warn_routine(void))(const char *warn, va_list params)
+report_fn get_warn_routine(void)
 {
 	return warn_routine;
 }

@@ -626,8 +626,10 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 	void *current_branch_to_free;
 	struct merge_parents merge_parents;
 
-	if (!suppress_dest_pattern_seen)
+	if (!suppress_dest_pattern_seen) {
+		string_list_append(&suppress_dest_patterns, "main");
 		string_list_append(&suppress_dest_patterns, "master");
+	}
 
 	memset(&merge_parents, 0, sizeof(merge_parents));
 

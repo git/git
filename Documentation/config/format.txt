@@ -79,7 +79,7 @@ format.thread::
 
 format.signOff::
 	A boolean value which lets you enable the `-s/--signoff` option of
-	format-patch by default. *Note:* Adding the Signed-off-by: line to a
+	format-patch by default. *Note:* Adding the `Signed-off-by` trailer to a
 	patch should be a conscious act and means that you certify you have
 	the rights to submit this work under the same open source license.
 	Please see the 'SubmittingPatches' document for further discussion.

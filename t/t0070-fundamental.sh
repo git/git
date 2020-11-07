@@ -34,4 +34,10 @@ test_expect_success 'check for a bug in the regex routines' '
 	test-tool regex --bug
 '
 
+test_expect_success 'incomplete sideband messages are reassembled' '
+	test-tool pkt-line send-split-sideband >split-sideband &&
+	test-tool pkt-line receive-sideband <split-sideband 2>err &&
+	grep "Hello, world" err
+'
+
 test_done

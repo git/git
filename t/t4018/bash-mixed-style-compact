@@ -1,0 +1,4 @@
+function RIGHT(){
+    :
+    echo 'ChangeMe'
+}

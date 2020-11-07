@@ -802,6 +802,9 @@ patterns are available:
 
 - `ada` suitable for source code in the Ada language.
 
+- `bash` suitable for source code in the Bourne-Again SHell language.
+  Covers a superset of POSIX shell function definitions.
+
 - `bibtex` suitable for files with BibTeX coded references.
 
 - `cpp` suitable for source code in the C and C++ languages.

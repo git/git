@@ -53,6 +53,43 @@ test_expect_success 'run --task=<task>' '
 	test_subcommand git commit-graph write --split --reachable --no-progress <run-both.txt
 '
 
+test_expect_success 'core.commitGraph=false prevents write process' '
+	GIT_TRACE2_EVENT="$(pwd)/no-commit-graph.txt" \
+		git -c core.commitGraph=false maintenance run \
+		--task=commit-graph 2>/dev/null &&
+	test_subcommand ! git commit-graph write --split --reachable --no-progress \
+		<no-commit-graph.txt
+'
+
+test_expect_success 'commit-graph auto condition' '
+	COMMAND="maintenance run --task=commit-graph --auto --quiet" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/cg-no.txt" \
+		git -c maintenance.commit-graph.auto=1 $COMMAND &&
+	GIT_TRACE2_EVENT="$(pwd)/cg-negative-means-yes.txt" \
+		git -c maintenance.commit-graph.auto="-1" $COMMAND &&
+
+	test_commit first &&
+
+	GIT_TRACE2_EVENT="$(pwd)/cg-zero-means-no.txt" \
+		git -c maintenance.commit-graph.auto=0 $COMMAND &&
+	GIT_TRACE2_EVENT="$(pwd)/cg-one-satisfied.txt" \
+		git -c maintenance.commit-graph.auto=1 $COMMAND &&
+
+	git commit --allow-empty -m "second" &&
+	git commit --allow-empty -m "third" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/cg-two-satisfied.txt" \
+		git -c maintenance.commit-graph.auto=2 $COMMAND &&
+
+	COMMIT_GRAPH_WRITE="git commit-graph write --split --reachable --no-progress" &&
+	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-no.txt &&
+	test_subcommand $COMMIT_GRAPH_WRITE <cg-negative-means-yes.txt &&
+	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-zero-means-no.txt &&
+	test_subcommand $COMMIT_GRAPH_WRITE <cg-one-satisfied.txt &&
+	test_subcommand $COMMIT_GRAPH_WRITE <cg-two-satisfied.txt
+'
+
 test_expect_success 'run --task=bogus' '
 	test_must_fail git maintenance run --task=bogus 2>err &&
 	test_i18ngrep "is not a valid task" err
