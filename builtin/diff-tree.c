@@ -111,7 +111,6 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	struct setup_revision_opt s_r_opt;
 	struct userformat_want w;
 	int read_stdin = 0;
-	int merge_base = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(diff_tree_usage);
@@ -144,17 +143,8 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 			read_stdin = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--merge-base")) {
-			merge_base = 1;
-			continue;
-		}
 		usage(diff_tree_usage);
 	}
-
-	if (read_stdin && merge_base)
-		die(_("--stdin and --merge-base are mutually exclusive"));
-	if (merge_base && opt->pending.nr != 2)
-		die(_("--merge-base only works with two commits"));
 
 	/*
 	 * NOTE!  We expect "a..b" to expand to "^a b" but it is
@@ -175,12 +165,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	case 2:
 		tree1 = opt->pending.objects[0].item;
 		tree2 = opt->pending.objects[1].item;
-		if (merge_base) {
-			struct object_id oid;
-
-			diff_get_merge_base(opt, &oid);
-			tree1 = lookup_object(the_repository, &oid);
-		} else if (tree2->flags & UNINTERESTING) {
+		if (tree2->flags & UNINTERESTING) {
 			SWAP(tree2, tree1);
 		}
 		diff_tree_oid(&tree1->oid, &tree2->oid, "", &opt->diffopt);

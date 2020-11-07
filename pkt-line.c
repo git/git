@@ -471,9 +471,6 @@ int recv_sideband(const char *me, int in_stream, int out)
 			write_or_die(out, buf + 1, len - 1);
 			break;
 		default: /* errors: message already written */
-			if (scratch.len > 0)
-				BUG("unhandled incomplete sideband: '%s'",
-				    scratch.buf);
 			return sideband_type;
 		}
 	}

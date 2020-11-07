@@ -26,7 +26,7 @@
 static const char builtin_diff_usage[] =
 "git diff [<options>] [<commit>] [--] [<path>...]\n"
 "   or: git diff [<options>] --cached [<commit>] [--] [<path>...]\n"
-"   or: git diff [<options>] <commit> [--merge-base] [<commit>...] <commit> [--] [<path>...]\n"
+"   or: git diff [<options>] <commit> [<commit>...] <commit> [--] [<path>...]\n"
 "   or: git diff [<options>] <commit>...<commit>] [--] [<path>...]\n"
 "   or: git diff [<options>] <blob> <blob>]\n"
 "   or: git diff [<options>] --no-index [--] <path> <path>]\n"
@@ -134,13 +134,11 @@ static int builtin_diff_blobs(struct rev_info *revs,
 static int builtin_diff_index(struct rev_info *revs,
 			      int argc, const char **argv)
 {
-	unsigned int option = 0;
+	int cached = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--cached") || !strcmp(arg, "--staged"))
-			option |= DIFF_INDEX_CACHED;
-		else if (!strcmp(arg, "--merge-base"))
-			option |= DIFF_INDEX_MERGE_BASE;
+			cached = 1;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
@@ -153,7 +151,7 @@ static int builtin_diff_index(struct rev_info *revs,
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
-	if (!(option & DIFF_INDEX_CACHED)) {
+	if (!cached) {
 		setup_work_tree();
 		if (read_cache_preload(&revs->diffopt.pathspec) < 0) {
 			perror("read_cache_preload");
@@ -163,7 +161,7 @@ static int builtin_diff_index(struct rev_info *revs,
 		perror("read_cache");
 		return -1;
 	}
-	return run_diff_index(revs, option);
+	return run_diff_index(revs, cached);
 }
 
 static int builtin_diff_tree(struct rev_info *revs,
@@ -172,34 +170,19 @@ static int builtin_diff_tree(struct rev_info *revs,
 			     struct object_array_entry *ent1)
 {
 	const struct object_id *(oid[2]);
-	struct object_id mb_oid;
-	int merge_base = 0;
+	int swap = 0;
 
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--merge-base"))
-			merge_base = 1;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+	if (argc > 1)
+		usage(builtin_diff_usage);
 
-	if (merge_base) {
-		diff_get_merge_base(revs, &mb_oid);
-		oid[0] = &mb_oid;
-		oid[1] = &revs->pending.objects[1].item->oid;
-	} else {
-		int swap = 0;
-
-		/*
-		 * We saw two trees, ent0 and ent1.  If ent1 is uninteresting,
-		 * swap them.
-		 */
-		if (ent1->item->flags & UNINTERESTING)
-			swap = 1;
-		oid[swap] = &ent0->item->oid;
-		oid[1 - swap] = &ent1->item->oid;
-	}
+	/*
+	 * We saw two trees, ent0 and ent1.  If ent1 is uninteresting,
+	 * swap them.
+	 */
+	if (ent1->item->flags & UNINTERESTING)
+		swap = 1;
+	oid[swap] = &ent0->item->oid;
+	oid[1 - swap] = &ent1->item->oid;
 	diff_tree_oid(oid[0], oid[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;

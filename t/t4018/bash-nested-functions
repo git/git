@@ -1,6 +1,0 @@
-outer() {
-    RIGHT() {
-        :
-        echo 'ChangeMe'
-    }
-}

@@ -567,11 +567,8 @@ char *repo_default_branch_name(struct repository *r)
 	const char *config_key = "init.defaultbranch";
 	const char *config_display_key = "init.defaultBranch";
 	char *ret = NULL, *full_ref;
-	const char *env = getenv("GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME");
 
-	if (env && *env)
-		ret = xstrdup(env);
-	else if (repo_config_get_string(r, config_key, &ret) < 0)
+	if (repo_config_get_string(r, config_key, &ret) < 0)
 		die(_("could not retrieve `%s`"), config_display_key);
 
 	if (!ret)

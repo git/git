@@ -4699,13 +4699,8 @@ static int apply_patch(struct apply_state *state,
 			reverse_patches(patch);
 		if (use_patch(state, patch)) {
 			patch_stats(state, patch);
-			if (!list || !state->apply_in_reverse) {
-				*listp = patch;
-				listp = &patch->next;
-			} else {
-				patch->next = list;
-				list = patch;
-			}
+			*listp = patch;
+			listp = &patch->next;
 
 			if ((patch->new_name &&
 			     ends_with_path_components(patch->new_name,

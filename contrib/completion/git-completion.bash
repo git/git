@@ -1698,10 +1698,6 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--patch --no-patch
 "
 
-__git_diff_difftool_options="--cached --staged --pickaxe-all --pickaxe-regex
-			--base --ours --theirs --no-index --relative --merge-base
-			$__git_diff_common_options"
-
 _git_diff ()
 {
 	__git_has_doubledash && return
@@ -1724,7 +1720,10 @@ _git_diff ()
 		return
 		;;
 	--*)
-		__gitcomp "$__git_diff_difftool_options"
+		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
+			--base --ours --theirs --no-index
+			$__git_diff_common_options
+			"
 		return
 		;;
 	esac
@@ -1746,7 +1745,11 @@ _git_difftool ()
 		return
 		;;
 	--*)
-		__gitcomp_builtin difftool "$__git_diff_difftool_options"
+		__gitcomp_builtin difftool "$__git_diff_common_options
+					--base --cached --ours --theirs
+					--pickaxe-all --pickaxe-regex
+					--relative --staged
+					"
 		return
 		;;
 	esac

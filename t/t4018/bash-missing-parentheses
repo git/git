@@ -1,6 +1,0 @@
-function RIGHT {
-    functionInvalidSyntax {
-        :
-        echo 'ChangeMe'
-    }
-}
