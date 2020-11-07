@@ -1227,7 +1227,7 @@ static int merging_a_throwaway_tag(struct commit *commit)
 	if (!merge_remote_util(commit) ||
 	    !merge_remote_util(commit)->obj ||
 	    merge_remote_util(commit)->obj->type != OBJ_TAG)
-		return is_throwaway_tag;
+		return 0;
 
 	/*
 	 * Now we know we are merging a tag object.  Are we downstream
@@ -1480,12 +1480,13 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!use_strategies) {
-		if (!remoteheads)
-			; /* already up-to-date */
-		else if (!remoteheads->next)
-			add_strategies(pull_twohead, DEFAULT_TWOHEAD);
-		else
-			add_strategies(pull_octopus, DEFAULT_OCTOPUS);
+		if (remoteheads) {
+			/* not up-to-date */
+			if (remoteheads->next)
+				add_strategies(pull_octopus, DEFAULT_OCTOPUS);
+			else
+				add_strategies(pull_twohead, DEFAULT_TWOHEAD);
+		}
 	}
 
 	for (i = 0; i < use_strategies_nr; i++) {
@@ -1495,15 +1496,15 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			allow_trivial = 0;
 	}
 
-	if (!remoteheads)
-		; /* already up-to-date */
-	else if (!remoteheads->next)
-		common = get_merge_bases(head_commit, remoteheads->item);
-	else {
-		struct commit_list *list = remoteheads;
-		commit_list_insert(head_commit, &list);
-		common = get_octopus_merge_bases(list);
-		free(list);
+	if (remoteheads) {
+		/* not up-to-date */
+		if (remoteheads->next) {
+			struct commit_list *list = remoteheads;
+			commit_list_insert(head_commit, &list);
+			common = get_octopus_merge_bases(list);
+			free(list);
+		} else
+			common = get_merge_bases(head_commit, remoteheads->item);
 	}
 
 	update_ref("updating ORIG_HEAD", "ORIG_HEAD",
@@ -1562,31 +1563,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		finish(head_commit, remoteheads, &commit->object.oid, msg.buf);
 		remove_merge_branch_state(the_repository);
 		goto done;
-	} else if (!remoteheads->next && common->next)
-		;
-		/*
-		 * We are not doing octopus and not fast-forward.  Need
-		 * a real merge.
-		 */
-	else if (!remoteheads->next && !common->next && option_commit) {
-		/*
-		 * We are not doing octopus, not fast-forward, and have
-		 * only one common.
-		 */
-		refresh_cache(REFRESH_QUIET);
-		if (allow_trivial && fast_forward != FF_ONLY) {
-			/* See if it is really trivial. */
-			git_committer_info(IDENT_STRICT);
-			printf(_("Trying really trivial in-index merge...\n"));
-			if (!read_tree_trivial(&common->item->object.oid,
-					       &head_commit->object.oid,
-					       &remoteheads->item->object.oid)) {
-				ret = merge_trivial(head_commit, remoteheads);
-				goto done;
-			}
-			printf(_("Nope.\n"));
-		}
-	} else {
+	} else if (remoteheads->next || (!common->next && !option_commit)) {
 		/*
 		 * An octopus.  If we can reach all the remote we are up
 		 * to date.
@@ -1611,6 +1588,24 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (up_to_date) {
 			finish_up_to_date(_("Already up to date. Yeeah!"));
 			goto done;
+		}
+	} else if (!common->next) {
+		/*
+		 * We are not doing octopus, not fast-forward, and have
+		 * only one common.
+		 */
+		refresh_cache(REFRESH_QUIET);
+		if (allow_trivial && fast_forward != FF_ONLY) {
+			/* See if it is really trivial. */
+			git_committer_info(IDENT_STRICT);
+			printf(_("Trying really trivial in-index merge...\n"));
+			if (!read_tree_trivial(&common->item->object.oid,
+					       &head_commit->object.oid,
+					       &remoteheads->item->object.oid)) {
+				ret = merge_trivial(head_commit, remoteheads);
+				goto done;
+			}
+			printf(_("Nope.\n"));
 		}
 	}
 
@@ -1705,9 +1700,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 				use_strategies[0]->name);
 		ret = 2;
 		goto done;
-	} else if (best_strategy == wt_strategy)
-		; /* We already have its result in the working tree. */
-	else {
+	} else if (best_strategy != wt_strategy) {
+		/* We do not have its result in the working tree. */
 		printf(_("Rewinding the tree to pristine...\n"));
 		restore_state(&head_commit->object.oid, &stash);
 		printf(_("Using the %s to prepare resolving by hand.\n"),
