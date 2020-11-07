@@ -13,6 +13,7 @@
 #include "submodule.h"
 #include "dir.h"
 #include "fsmonitor.h"
+#include "commit-reach.h"
 
 /*
  * diff-files
@@ -510,16 +511,74 @@ static int diff_cache(struct rev_info *revs,
 	return unpack_trees(1, &t, &opts);
 }
 
-int run_diff_index(struct rev_info *revs, int cached)
+void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
+{
+	int i;
+	struct commit *mb_child[2] = {0};
+	struct commit_list *merge_bases;
+
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object *obj = revs->pending.objects[i].item;
+		if (obj->flags)
+			die(_("--merge-base does not work with ranges"));
+		if (obj->type != OBJ_COMMIT)
+			die(_("--merge-base only works with commits"));
+	}
+
+	/*
+	 * This check must go after the for loop above because A...B
+	 * ranges produce three pending commits, resulting in a
+	 * misleading error message.
+	 */
+	if (revs->pending.nr < 1 || revs->pending.nr > 2)
+		BUG("unexpected revs->pending.nr: %d", revs->pending.nr);
+
+	for (i = 0; i < revs->pending.nr; i++)
+		mb_child[i] = lookup_commit_reference(the_repository, &revs->pending.objects[i].item->oid);
+	if (revs->pending.nr == 1) {
+		struct object_id oid;
+
+		if (get_oid("HEAD", &oid))
+			die(_("unable to get HEAD"));
+
+		mb_child[1] = lookup_commit_reference(the_repository, &oid);
+	}
+
+	merge_bases = repo_get_merge_bases(the_repository, mb_child[0], mb_child[1]);
+	if (!merge_bases)
+		die(_("no merge base found"));
+	if (merge_bases->next)
+		die(_("multiple merge bases found"));
+
+	oidcpy(mb, &merge_bases->item->object.oid);
+
+	free_commit_list(merge_bases);
+}
+
+int run_diff_index(struct rev_info *revs, unsigned int option)
 {
 	struct object_array_entry *ent;
+	int cached = !!(option & DIFF_INDEX_CACHED);
+	int merge_base = !!(option & DIFF_INDEX_MERGE_BASE);
+	struct object_id oid;
+	const char *name;
+	char merge_base_hex[GIT_MAX_HEXSZ + 1];
 
 	if (revs->pending.nr != 1)
 		BUG("run_diff_index must be passed exactly one tree");
 
 	trace_performance_enter();
 	ent = revs->pending.objects;
-	if (diff_cache(revs, &ent->item->oid, ent->name, cached))
+
+	if (merge_base) {
+		diff_get_merge_base(revs, &oid);
+		name = oid_to_hex_r(merge_base_hex, &oid);
+	} else {
+		oidcpy(&oid, &ent->item->oid);
+		name = ent->name;
+	}
+
+	if (diff_cache(revs, &oid, name, cached))
 		exit(128);
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "c/", cached ? "i/" : "w/");

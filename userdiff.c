@@ -23,6 +23,27 @@ IPATTERN("ada",
 	 "[a-zA-Z][a-zA-Z0-9_]*"
 	 "|[-+]?[0-9][0-9#_.aAbBcCdDeEfF]*([eE][+-]?[0-9_]+)?"
 	 "|=>|\\.\\.|\\*\\*|:=|/=|>=|<=|<<|>>|<>"),
+PATTERNS("bash",
+	 /* Optional leading indentation */
+	 "^[ \t]*"
+	 /* Start of captured text */
+	 "("
+	 "("
+	     /* POSIX identifier with mandatory parentheses */
+	     "[a-zA-Z_][a-zA-Z0-9_]*[ \t]*\\([ \t]*\\))"
+	 "|"
+	     /* Bashism identifier with optional parentheses */
+	     "(function[ \t]+[a-zA-Z_][a-zA-Z0-9_]*(([ \t]*\\([ \t]*\\))|([ \t]+))"
+	 ")"
+	 /* Optional whitespace */
+	 "[ \t]*"
+	 /* Compound command starting with `{`, `(`, `((` or `[[` */
+	 "(\\{|\\(\\(?|\\[\\[)"
+	 /* End of captured text */
+	 ")",
+	 /* -- */
+	 /* Characters not in the default $IFS value */
+	 "[^ \t]+"),
 PATTERNS("dts",
 	 "!;\n"
 	 "!=\n"

@@ -213,28 +213,28 @@ cat >test/expect <<EOF
   Push  URL: $(pwd)/one
   HEAD branch: master
   Remote branches:
-    master new (next fetch will store in remotes/origin)
-    side   tracked
+    main new (next fetch will store in remotes/origin)
+    side tracked
   Local branches configured for 'git pull':
-    ahead    merges with remote master
-    master   merges with remote master
+    ahead    merges with remote main
+    main     merges with remote main
     octopus  merges with remote topic-a
                 and with remote topic-b
                 and with remote topic-c
     rebase  rebases onto remote master
   Local refs configured for 'git push':
-    master pushes to master   (local out of date)
-    master pushes to upstream (create)
+    main pushes to main     (local out of date)
+    main pushes to upstream (create)
 * remote two
   Fetch URL: ../two
   Push  URL: ../three
   HEAD branch: master
   Local refs configured for 'git push':
-    ahead  forces to master  (fast-forwardable)
-    master pushes to another (up to date)
+    ahead forces to main    (fast-forwardable)
+    main  pushes to another (up to date)
 EOF
 
-test_expect_success 'show' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'show' '
 	(
 		cd test &&
 		git config --add remote.origin.fetch refs/heads/master:refs/heads/upstream &&
@@ -277,15 +277,15 @@ cat >test/expect <<EOF
     master
     side
   Local branches configured for 'git pull':
-    ahead  merges with remote master
-    master merges with remote master
+    ahead merges with remote main
+    main  merges with remote main
   Local refs configured for 'git push' (status not queried):
     (matching)           pushes to (matching)
-    refs/heads/master    pushes to refs/heads/upstream
+    refs/heads/main      pushes to refs/heads/upstream
     refs/tags/lastbackup forces to refs/tags/lastbackup
 EOF
 
-test_expect_success 'show -n' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'show -n' '
 	mv one one.unreachable &&
 	(
 		cd test &&
@@ -328,7 +328,7 @@ test_expect_success 'set-head --auto' '
 	)
 '
 
-test_expect_success 'set-head --auto has no problem w/multiple HEADs' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'set-head --auto has no problem w/multiple HEADs' '
 	(
 		cd test &&
 		git fetch two "refs/heads/*:refs/remotes/two/*" &&
@@ -1348,7 +1348,7 @@ test_expect_success 'unqualified <dst> refspec DWIM and advice' '
 	)
 '
 
-test_expect_success 'refs/remotes/* <src> refspec and unqualified <dst> DWIM and advice' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'refs/remotes/* <src> refspec and unqualified <dst> DWIM and advice' '
 	(
 		cd two &&
 		git tag -a -m "Some tag" my-tag master &&

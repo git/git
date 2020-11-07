@@ -59,6 +59,7 @@ commit by giving the same set of parameters (options and paths).
 If you make a commit and then find a mistake immediately after
 that, you can recover from it with 'git reset'.
 
+:git-commit: 1
 
 OPTIONS
 -------
@@ -163,14 +164,7 @@ The `-m` option is mutually exclusive with `-c`, `-C`, and `-F`.
 	message, the commit is aborted.  This has no effect when a message
 	is given by other means, e.g. with the `-m` or `-F` options.
 
--s::
---signoff::
-	Add Signed-off-by line by the committer at the end of the commit
-	log message.  The meaning of a signoff depends on the project,
-	but it typically certifies that committer has
-	the rights to submit this work under the same license and
-	agrees to a Developer Certificate of Origin
-	(see http://developercertificate.org/ for more information).
+include::signoff-option.txt[]
 
 -n::
 --no-verify::

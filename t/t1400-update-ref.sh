@@ -585,10 +585,10 @@ test_expect_success 'stdin fails on unbalanced quotes' '
 	grep "fatal: badly quoted argument: \\\"master" err
 '
 
-test_expect_success 'stdin fails on invalid escape' '
-	echo "create $a \"ma\zter\"" >stdin &&
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'stdin fails on invalid escape' '
+	echo "create $a \"ma\zn\"" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: badly quoted argument: \\\"ma\\\\zter\\\"" err
+	grep "fatal: badly quoted argument: \\\"ma\\\\zn\\\"" err
 '
 
 test_expect_success 'stdin fails on junk after quoted argument' '
@@ -704,9 +704,9 @@ test_expect_success 'stdin succeeds with quoted argument' '
 	test_cmp expect actual
 '
 
-test_expect_success 'stdin succeeds with escaped character' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'stdin succeeds with escaped character' '
 	git update-ref -d $a &&
-	echo "create $a \"ma\\163ter\"" >stdin &&
+	echo "create $a \"ma\\151n\"" >stdin &&
 	git update-ref --stdin <stdin &&
 	git rev-parse $m >expect &&
 	git rev-parse $a >actual &&

@@ -234,6 +234,10 @@ struct diff_options {
 	 */
 	const char *pickaxe;
 
+	/* -I<regex> */
+	regex_t **ignore_regex;
+	size_t ignore_regex_nr, ignore_regex_alloc;
+
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	const char *line_prefix;
@@ -578,12 +582,17 @@ void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
  */
 const char *diff_aligned_abbrev(const struct object_id *sha1, int);
 
+void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb);
+
 /* do not report anything on removed paths */
 #define DIFF_SILENT_ON_REMOVED 01
 /* report racily-clean paths as modified */
 #define DIFF_RACY_IS_MODIFIED 02
 int run_diff_files(struct rev_info *revs, unsigned int option);
-int run_diff_index(struct rev_info *revs, int cached);
+
+#define DIFF_INDEX_CACHED 01
+#define DIFF_INDEX_MERGE_BASE 02
+int run_diff_index(struct rev_info *revs, unsigned int option);
 
 int do_diff_cache(const struct object_id *, struct diff_options *);
 int diff_flush_patch_id(struct diff_options *, struct object_id *, int, int);

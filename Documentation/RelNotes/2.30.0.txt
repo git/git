@@ -37,6 +37,18 @@ UI, Workflows & Features
  * "git resurrect" script (in contrib/) learned that the object names
    may be longer than 40-hex depending on the hash function in use.
 
+ * "git diff A...B" learned "git diff --merge-base A B", which is a
+   longer short-hand to say the same thing.
+
+ * A sample 'push-to-checkout' hook, that performs the same as
+   what the built-in default action does, has been added.
+
+ * "git diff" family of commands learned the "-I<regex>" option to
+   ignore hunks whose changed lines all match the given pattern.
+
+ * The userdiff pattern learned to identify the function definition in
+   POSIX shells and bash.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -44,6 +56,17 @@ Performance, Internal Implementation, Development Support etc.
 
  * GitHub Actions automated test improvement to skip tests on a tree
    identical to what has already been tested.
+
+ * Test-coverage for running commit-graph task "git maintenance" has
+   been extended.
+
+ * Our test scripts can be told to run only individual pieces while
+   skipping others with the "--run=..." option; they were taught to
+   take a substring of test title, in addition to numbers, to name the
+   test pieces to run.
+
+ * Adjust tests so that they won't scream when the default initial
+   branch name is changed to 'main'.
 
 
 Fixes since v2.29
@@ -59,7 +82,64 @@ Fixes since v2.29
    commits A and B.
    (merge 35166b1fb5 dl/checkout-p-merge-base later to maint).
 
+ * The side-band status report can be sent at the same time as the
+   primary payload multiplexed, but the demultiplexer on the receiving
+   end incorrectly split a single status report into two, which has
+   been corrected.
+   (merge 712b0377db js/avoid-split-sideband-message later to maint).
+
+ * "git fast-import" wasted a lot of memory when many marks were in use.
+   (merge 3f018ec716 jk/fast-import-marks-alloc-fix later to maint).
+
+ * A test helper "test_cmp A B" was taught to diagnose missing files A
+   or B as a bug in test, but some tests legitimately wanted to notice
+   a failure to even create file B as an error, in addition to leaving
+   the expected result in it, and were misdiagnosed as a bug.  This
+   has been corrected.
+   (merge 262d5ad5a5 es/test-cmp-typocatcher later to maint).
+
+ * When "git commit-graph" detects the same commit recorded more than
+   once while it is merging the layers, it used to die.  The code now
+   ignores all but one of them and continues.
+   (merge 85102ac71b ds/commit-graph-merging-fix later to maint).
+
+ * The meaning of a Signed-off-by trailer can vary from project to
+   project; this and also what it means to this project has been
+   clarified in the documentation.
+   (merge 3abd4a67d9 bk/sob-dco later to maint).
+
+ * "git credential' didn't honor the core.askPass configuration
+   variable (among other things), which has been corrected.
+   (merge 567ad2c0f9 tk/credential-config later to maint).
+
+ * Dev support to catch a tentative definition of a variable in our C
+   code as an error.
+   (merge 5539183622 jk/no-common later to maint).
+
+ * "git rebase --rebase-merges" did not correctly pass --gpg-sign
+   command line option to underlying "git merge" when replaying a merge
+   using non-default merge strategy or when replaying an octopus merge
+   (because replaying a two-head merge with the default strategy was
+   done in a separate codepath, the problem did not trigger for most
+   users), which has been corrected.
+   (merge 43ad4f2eca sc/sequencer-gpg-octopus later to maint).
+
+ * "git apply -R" did not handle patches that touch the same path
+   twice correctly, which has been corrected.  This is most relevant
+   in a patch that changes a path from a regular file to a symbolic
+   link (and vice versa).
+   (merge b0f266de11 jt/apply-reverse-twice later to maint).
+
+ * A recent oid->hash conversion missed one spot, breaking "git svn".
+   (merge 03bb366de4 bc/svn-hash-oid-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
    (merge 32c83afc2c cw/ci-ghwf-check-ws-errors later to maint).
    (merge 5eb2ed691b rs/tighten-callers-of-deref-tag later to maint).
+   (merge 6db29ab213 jk/fast-import-marks-cleanup later to maint).
+   (merge e5cf6d3df4 nk/dir-c-comment-update later to maint).
+   (merge 5710dcce74 jk/report-fn-typedef later to maint).
+   (merge 9a82db1056 en/sequencer-rollback-lock-cleanup later to maint).
+   (merge 4e1bee9a99 js/t7006-cleanup later to maint).
+   (merge f5bcde6c58 es/tutorial-mention-asciidoc-early later to maint).
