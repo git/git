@@ -4186,7 +4186,7 @@ class P4Clone(P4Sync):
 
         # create a master branch and check out a work tree
         if gitBranchExists(self.branch):
-            system([ "git", "branch", "master", self.branch ])
+            system([ "git", "branch", currentGitBranch(), self.branch ])
             if not self.cloneBare:
                 system([ "git", "checkout", "-f" ])
         else:
