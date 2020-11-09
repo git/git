@@ -49,6 +49,22 @@ UI, Workflows & Features
  * The userdiff pattern learned to identify the function definition in
    POSIX shells and bash.
 
+ * "git checkout-index" did not consistently signal an error with its
+   exit status, but now it does.
+
+ * A commit and tag object may have CR at the end of each and
+   every line (you can create such an object with hash-object or
+   using --cleanup=verbatim to decline the default clean-up
+   action), but it would make it impossible to have a blank line
+   to separate the title from the body of the message.  We are now
+   more lenient and accept a line with lone CR on it as a blank line,
+   too.
+
+ * Exit codes from "git remote add" etc. were not usable by scripted
+   callers, but now they are.
+
+ * Zsh autocompletion (in contrib/) update.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -67,6 +83,24 @@ Performance, Internal Implementation, Development Support etc.
 
  * Adjust tests so that they won't scream when the default initial
    branch name is changed to 'main'.
+
+ * Rewriting "git bisect" in C continues.
+
+ * More preliminary tests have been added to document desired outcome
+   of various "directory rename" situations.
+
+ * Micro clean-up of a couple of test scripts.
+
+ * "git diff" and other commands that share the same machinery to
+   compare with working tree files have been taught to take advantage
+   of the fsmonitor data when available.
+
+ * The code to detect premature EOF in the sideband demultiplexer has
+   been cleaned up.
+
+ * Test scripts are being prepared to transition of the default branch
+   name to 'main'.
+
 
 
 Fixes since v2.29
