@@ -36,6 +36,7 @@ const char *archive_format_from_filename(const char *filename);
 
 #define ARCHIVER_WANT_COMPRESSION_LEVELS 1
 #define ARCHIVER_REMOTE 2
+#define ARCHIVER_HIGH_COMPRESSION_LEVELS 4
 struct archiver {
 	const char *name;
 	int (*write_archive)(const struct archiver *, struct archiver_args *);
