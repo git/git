@@ -1097,14 +1097,19 @@ static const char *copy_email(const char *buf, struct used_atom *atom)
 
 static char *copy_subject(const char *buf, unsigned long len)
 {
-	char *r = xmemdupz(buf, len);
+	struct strbuf sb = STRBUF_INIT;
 	int i;
 
-	for (i = 0; i < len; i++)
-		if (r[i] == '\n')
-			r[i] = ' ';
+	for (i = 0; i < len; i++) {
+		if (buf[i] == '\r' && i + 1 < len && buf[i + 1] == '\n')
+			continue; /* ignore CR in CRLF */
 
-	return r;
+		if (buf[i] == '\n')
+			strbuf_addch(&sb, ' ');
+		else
+			strbuf_addch(&sb, buf[i]);
+	}
+	return strbuf_detach(&sb, NULL);
 }
 
 static void grab_date(const char *buf, struct atom_value *v, const char *atomname)
@@ -1228,20 +1233,23 @@ static void find_subpos(const char *buf,
 
 	/* subject is first non-empty line */
 	*sub = buf;
-	/* subject goes to first empty line */
-	while (buf < *sig && *buf && *buf != '\n') {
-		eol = strchrnul(buf, '\n');
-		if (*eol)
-			eol++;
-		buf = eol;
+	/* subject goes to first empty line before signature begins */
+	if ((eol = strstr(*sub, "\n\n"))) {
+		eol = eol < *sig ? eol : *sig;
+	/* check if message uses CRLF */
+	} else if (! (eol = strstr(*sub, "\r\n\r\n"))) {
+		/* treat whole message as subject */
+		eol = strrchr(*sub, '\0');
 	}
+	buf = eol;
 	*sublen = buf - *sub;
 	/* drop trailing newline, if present */
-	if (*sublen && (*sub)[*sublen - 1] == '\n')
+	while (*sublen && ((*sub)[*sublen - 1] == '\n' ||
+			   (*sub)[*sublen - 1] == '\r'))
 		*sublen -= 1;
 
 	/* skip any empty lines */
-	while (*buf == '\n')
+	while (*buf == '\n' || *buf == '\r')
 		buf++;
 	*body = buf;
 	*bodylen = strlen(buf);
