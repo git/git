@@ -20,7 +20,7 @@ test_expect_success 'two-way setup' '
 	git branch side &&
 	git tag -f branch-point &&
 
-	echo file2 is not tracked on the master anymore &&
+	echo file2 is not tracked on the master branch anymore &&
 	rm -f file2 subdir/file2 &&
 	git update-index --remove file2 subdir/file2 &&
 	git commit -a -m "master removes file2 and subdir/file2"
