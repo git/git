@@ -14,7 +14,7 @@ jobs:
     steps:
     - name: Set commit count
       shell: bash
-      run: echo "::set-env name=COMMIT_DEPTH::$((1+$COMMITS))"
+      run: echo "COMMIT_DEPTH=$((1+$COMMITS))" >>$GITHUB_ENV
       env:
         COMMITS: ${{ github.event.pull_request.commits }}
 
