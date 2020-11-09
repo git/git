@@ -416,14 +416,13 @@ __gitcomp_builtin ()
 	local options
 	eval "options=\${$var-}"
 
-	local completion_helper
-	if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
-		completion_helper="--git-completion-helper-all"
-	else
-		completion_helper="--git-completion-helper"
-	fi
-
 	if [ -z "$options" ]; then
+		local completion_helper
+		if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
+			completion_helper="--git-completion-helper-all"
+		else
+			completion_helper="--git-completion-helper"
+		fi
 		# leading and trailing spaces are significant to make
 		# option removal work correctly.
 		options=" $incl $(__git ${cmd/_/ } $completion_helper) " || return
@@ -3464,88 +3463,8 @@ __gitk_main ()
 	__git_complete_revlist
 }
 
-if [[ -n ${ZSH_VERSION-} ]] &&
-   # Don't define these functions when sourced from 'git-completion.zsh',
-   # it has its own implementations.
-   [[ -z ${GIT_SOURCING_ZSH_COMPLETION-} ]]; then
-	echo "WARNING: this script is deprecated, please see git-completion.zsh" 1>&2
-
-	autoload -U +X compinit && compinit
-
-	__gitcomp ()
-	{
-		emulate -L zsh
-
-		local cur_="${3-$cur}"
-
-		case "$cur_" in
-		--*=)
-			;;
-		*)
-			local c IFS=$' \t\n'
-			local -a array
-			for c in ${=1}; do
-				c="$c${4-}"
-				case $c in
-				--*=*|*.) ;;
-				*) c="$c " ;;
-				esac
-				array[${#array[@]}+1]="$c"
-			done
-			compset -P '*[=:]'
-			compadd -Q -S '' -p "${2-}" -a -- array && _ret=0
-			;;
-		esac
-	}
-
-	__gitcomp_direct ()
-	{
-		emulate -L zsh
-
-		local IFS=$'\n'
-		compset -P '*[=:]'
-		compadd -Q -- ${=1} && _ret=0
-	}
-
-	__gitcomp_nl ()
-	{
-		emulate -L zsh
-
-		local IFS=$'\n'
-		compset -P '*[=:]'
-		compadd -Q -S "${4- }" -p "${2-}" -- ${=1} && _ret=0
-	}
-
-	__gitcomp_file_direct ()
-	{
-		emulate -L zsh
-
-		local IFS=$'\n'
-		compset -P '*[=:]'
-		compadd -f -- ${=1} && _ret=0
-	}
-
-	__gitcomp_file ()
-	{
-		emulate -L zsh
-
-		local IFS=$'\n'
-		compset -P '*[=:]'
-		compadd -p "${2-}" -f -- ${=1} && _ret=0
-	}
-
-	_git ()
-	{
-		local _ret=1 cur cword prev
-		cur=${words[CURRENT]}
-		prev=${words[CURRENT-1]}
-		let cword=CURRENT-1
-		emulate ksh -c __${service}_main
-		let _ret && _default && _ret=0
-		return _ret
-	}
-
-	compdef _git git gitk
+if [[ -n ${ZSH_VERSION-} && -z ${GIT_SOURCING_ZSH_COMPLETION-} ]]; then
+	echo "ERROR: this script is obsolete, please see git-completion.zsh" 1>&2
 	return
 fi
 
@@ -3567,18 +3486,6 @@ __git_complete ()
 		|| complete -o default -o nospace -F $wrapper $1
 }
 
-# wrapper for backwards compatibility
-_git ()
-{
-	__git_wrap__git_main
-}
-
-# wrapper for backwards compatibility
-_gitk ()
-{
-	__git_wrap__gitk_main
-}
-
 __git_complete git __git_main
 __git_complete gitk __gitk_main
 
@@ -3586,6 +3493,6 @@ __git_complete gitk __gitk_main
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 #
-if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
-__git_complete git.exe __git_main
+if [ "$OSTYPE" = cygwin ]; then
+	__git_complete git.exe __git_main
 fi
