@@ -81,7 +81,12 @@ test_expect_success 'modify/delete + directory/file conflict' '
 
 	test 5 -eq $(git ls-files -s | wc -l) &&
 	test 4 -eq $(git ls-files -u | wc -l) &&
-	test 1 -eq $(git ls-files -o | wc -l) &&
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		test 0 -eq $(git ls-files -o | wc -l)
+	else
+		test 1 -eq $(git ls-files -o | wc -l)
+	fi &&
 
 	test_path_is_file letters/file &&
 	test_path_is_file letters.txt &&
@@ -97,7 +102,12 @@ test_expect_success 'modify/delete + directory/file conflict; other way' '
 
 	test 5 -eq $(git ls-files -s | wc -l) &&
 	test 4 -eq $(git ls-files -u | wc -l) &&
-	test 1 -eq $(git ls-files -o | wc -l) &&
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		test 0 -eq $(git ls-files -o | wc -l)
+	else
+		test 1 -eq $(git ls-files -o | wc -l)
+	fi &&
 
 	test_path_is_file letters/file &&
 	test_path_is_file letters.txt &&
