@@ -21,4 +21,15 @@ test_expect_success 'checkout-index -h in broken repository' '
 	test_i18ngrep "[Uu]sage" broken/usage
 '
 
+test_expect_success 'checkout-index reports errors (cmdline)' '
+	test_must_fail git checkout-index -- does-not-exist 2>stderr &&
+	test_i18ngrep not.in.the.cache stderr
+'
+
+test_expect_success 'checkout-index reports errors (stdin)' '
+	echo does-not-exist |
+	test_must_fail git checkout-index --stdin 2>stderr &&
+	test_i18ngrep not.in.the.cache stderr
+'
+
 test_done
