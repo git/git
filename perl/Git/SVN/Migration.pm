@@ -33,7 +33,7 @@ package Git::SVN::Migration;
 #              possible if noMetadata or useSvmProps are set; but should
 #              be no problem for users that use the (sensible) defaults.
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Basename qw/dirname basename/;

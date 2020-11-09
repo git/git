@@ -499,6 +499,12 @@ then
 	export GIT_INDEX_VERSION
 fi
 
+if test -n "$GIT_TEST_PERL_FATAL_WARNINGS"
+then
+	GIT_PERL_FATAL_WARNINGS=1
+	export GIT_PERL_FATAL_WARNINGS
+fi
+
 # Add libc MALLOC and MALLOC_PERTURB test
 # only if we are not executing the test with valgrind
 if test -n "$valgrind" ||
