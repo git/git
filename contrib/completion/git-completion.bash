@@ -1120,11 +1120,16 @@ __git_pretty_aliases ()
 # __git_aliased_command requires 1 argument
 __git_aliased_command ()
 {
-	local cur=$1 last word cmdline
+	local cur=$1 list word cmdline
 
 	while [[ -n "$cur" ]]; do
+		if [[ "$list" == *"$cur "* ]]; then
+			# loop detected
+			return
+		fi
+
 		cmdline=$(__git config --get "alias.$cur")
-		last=$cur
+		list="$cur $list"
 		cur=
 
 		for word in $cmdline; do
@@ -1148,7 +1153,7 @@ __git_aliased_command ()
 		done
 	done
 
-	cur=$last
+	cur="${list%% *}"
 	if [[ "$cur" != "$1" ]]; then
 		echo "$cur"
 	fi
