@@ -29,6 +29,7 @@ static struct test_cmd cmds[] = {
 	{ "dump-split-index", cmd__dump_split_index },
 	{ "dump-untracked-cache", cmd__dump_untracked_cache },
 	{ "example-decorate", cmd__example_decorate },
+	{ "fast-rebase", cmd__fast_rebase },
 	{ "genrandom", cmd__genrandom },
 	{ "genzeros", cmd__genzeros },
 	{ "hashmap", cmd__hashmap },
