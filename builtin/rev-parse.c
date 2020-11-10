@@ -622,6 +622,12 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
+		if (as_is) {
+			if (show_file(arg, output_prefix) && as_is < 2)
+				verify_filename(prefix, arg, 0);
+			continue;
+		}
+
 		if (!strcmp(arg, "--local-env-vars")) {
 			int i;
 			for (i = 0; local_repo_env[i]; i++)
@@ -653,11 +659,6 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			puts(relative_path(git_path("%s", argv[i + 1]),
 					   prefix, &buf));
 			i++;
-			continue;
-		}
-		if (as_is) {
-			if (show_file(arg, output_prefix) && as_is < 2)
-				verify_filename(prefix, arg, 0);
 			continue;
 		}
 		if (!strcmp(arg,"-n")) {

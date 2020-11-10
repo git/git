@@ -254,4 +254,13 @@ test_expect_success 'escaped char does not trigger wildcard rule' '
 	test_must_fail git rev-parse "foo\\*bar"
 '
 
+test_expect_success 'arg after dashdash not interpreted as option' '
+	cat >expect <<-\EOF &&
+	--
+	--local-env-vars
+	EOF
+	git rev-parse -- --local-env-vars >actual &&
+	test_cmp expect actual
+'
+
 test_done
