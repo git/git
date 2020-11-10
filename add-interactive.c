@@ -365,7 +365,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 
 			if (from < 0 || from >= items->items.nr ||
 			    (singleton && from + 1 != to)) {
-				color_fprintf_ln(stdout, s->error_color,
+				color_fprintf_ln(stderr, s->error_color,
 						 _("Huh (%s)?"), p);
 				break;
 			} else if (singleton) {
