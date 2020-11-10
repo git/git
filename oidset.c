@@ -72,9 +72,10 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 		if (!sb.len)
 			continue;
 
-		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0' ||
-		    (fn && fn(&oid, cbdata)))
+		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
 			die("invalid object name: %s", sb.buf);
+		if (fn && fn(&oid, cbdata))
+			continue;
 		oidset_insert(set, &oid);
 	}
 	if (ferror(fp))
