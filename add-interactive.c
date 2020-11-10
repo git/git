@@ -194,7 +194,8 @@ static ssize_t find_unique(const char *string, struct prefix_item_list *list)
 	else if (index + 1 < list->sorted.nr &&
 		 starts_with(list->sorted.items[index + 1].string, string))
 		return -1;
-	else if (index < list->sorted.nr)
+	else if (index < list->sorted.nr &&
+		 starts_with(list->sorted.items[index].string, string))
 		item = list->sorted.items[index].util;
 	else
 		return -1;
