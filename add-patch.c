@@ -661,9 +661,14 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		else
 			new_offset += delta;
 
-		strbuf_addf(out, "@@ -%lu,%lu +%lu,%lu @@",
-			    old_offset, header->old_count,
-			    new_offset, header->new_count);
+		strbuf_addf(out, "@@ -%lu", old_offset);
+		if (header->old_count != 1)
+			strbuf_addf(out, ",%lu", header->old_count);
+		strbuf_addf(out, " +%lu", new_offset);
+		if (header->new_count != 1)
+			strbuf_addf(out, ",%lu", header->new_count);
+		strbuf_addstr(out, " @@");
+
 		if (len)
 			strbuf_add(out, p, len);
 		else if (colored)
