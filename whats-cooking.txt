@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2020, #02; Mon, 9)
-X-master-at: e4d83eee9239207622e2b1cc43967da5051c189c
-X-next-at: ecc2c50aac43ae8229607396347f6663b03b4deb
+Subject: What's cooking in git.git (Nov 2020, #03; Wed, 11)
+X-master-at: e31aba42fb12bdeb0f850829e008e1e3f43af500
+X-next-at: 0fa62a7daddba87a59a9564aaffb6655a191a679
 
-What's cooking in git.git (Nov 2020, #02; Mon, 9)
+What's cooking in git.git (Nov 2020, #03; Wed, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,9 +12,7 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The third and fourth batches of topics in this cycle are in 'master' now,
-including some microprojects by candidates for the Outreachy
-program.
+The fifth batch of topics have been merged to 'master'.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into.  Some repositories have
@@ -46,355 +44,11 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/git-remote-exit-code (2020-10-27) 1 commit
-  (merged to 'next' on 2020-10-30 at 1fc119404b)
- + remote: add meaningful exit code on missing/existing
-
- Exit codes from "git remote add" etc. were not usable by scripted
- callers.
-
-
-* as/tests-cleanup (2020-10-18) 1 commit
-  (merged to 'next' on 2020-10-28 at fd199beb31)
- + t2200,t9832: avoid using 'git' upstream in a pipe
-
- Micro clean-up of a couple of test scripts.
-
-
-* en/dir-rename-tests (2020-10-16) 4 commits
-  (merged to 'next' on 2020-10-28 at 7bbe123e70)
- + t6423: more involved rules for renaming directories into each other
- + t6423: update directory rename detection tests with new rule
- + t6423: more involved directory rename test
- + directory-rename-detection.txt: update references to regression tests
- (this branch is used by en/merge-tests.)
-
- More preliminary tests have been added to document desired outcome
- of various "directory rename" situations.
-
-
-* fc/zsh-completion (2020-10-28) 29 commits
-  (merged to 'next' on 2020-11-02 at 2c5e3a73ad)
- + zsh: update copyright notices
- + completion: bash: remove old compat wrappers
- + completion: bash: cleanup cygwin check
- + completion: bash: trivial cleanup
- + completion: zsh: add simple version check
- + completion: zsh: trivial simplification
- + completion: zsh: add alias descriptions
- + completion: zsh: improve command tags
- + completion: zsh: refactor command completion
- + completion: zsh: shuffle functions around
- + completion: zsh: simplify file_direct
- + completion: zsh: simplify nl_append
- + completion: zsh: trivial cleanup
- + completion: zsh: simplify direct compadd
- + completion: zsh: simplify compadd functions
- + completion: zsh: fix splitting of words
- + completion: zsh: add missing direct_append
- + completion: fix conflict with bashcomp
- + completion: zsh: fix completion for --no-.. options
- + completion: bash: remove zsh wrapper
- + completion: bash: synchronize zsh wrapper
- + completion: zsh: fix for command aliasing
- + completion: prompt: fix color for Zsh
- + completion: zsh: update slave script locations
- + completion: zsh: fix for directories with spaces
- + completion: zsh: reorganize install instructions
- + completion: zsh: fix bash script extension
- + completion: zsh: fix name due to broken autoloading
- + completion: zsh: fix __gitcomp_direct()
-
- Zsh autocompletion (in contrib/) update.
-
-
-* jk/checkout-index-errors (2020-10-27) 2 commits
-  (merged to 'next' on 2020-10-30 at 77dddffe1b)
- + checkout-index: propagate errors to exit code
- + checkout-index: drop error message from empty --stage=all
- (this branch is used by mt/parallel-checkout-part-1.)
-
- "git checkout-index" did not consistently signal an error with its
- exit status.
-
-
-* jk/committer-date-is-author-date-fix-simplify (2020-10-26) 1 commit
-  (merged to 'next' on 2020-10-30 at 9ba3fad57d)
- + am, sequencer: stop parsing our own committer ident
-
- Code simplification.
-
-
-* jk/perl-warning (2020-10-21) 1 commit
-  (merged to 'next' on 2020-10-28 at 5fcb98f2ff)
- + perl: check for perl warnings while running tests
-
- Dev support.
- cf. <20201022032400.GC1480820@coredump.intra.peff.net>
-
-
-* jk/sideband-more-error-checking (2020-10-29) 1 commit
-  (merged to 'next' on 2020-10-30 at 8131784691)
- + sideband: diagnose more sideband anomalies
-
- The code to detect premature EOF in the sideband demultiplexer has
- been cleaned up.
-
-
-* js/default-branch-name-adjust-t5411 (2020-10-31) 4 commits
-  (merged to 'next' on 2020-11-02 at d625eda73c)
- + t5411: finish preparing for `main` being the default branch name
- + t5411: adjust the remaining support files for init.defaultBranch=main
- + t5411: start adjusting the support files for init.defaultBranch=main
- + t5411: start using the default branch name "main"
-
- Prepare a test script to transition of the default branch name to
- 'main'.
-
-
-* mr/bisect-in-c-3 (2020-10-16) 7 commits
-  (merged to 'next' on 2020-10-28 at 435792b62f)
- + bisect--helper: retire `--bisect-autostart` subcommand
- + bisect--helper: retire `--write-terms` subcommand
- + bisect--helper: retire `--check-expected-revs` subcommand
- + bisect--helper: reimplement `bisect_state` & `bisect_head` shell functions in C
- + bisect--helper: retire `--next-all` subcommand
- + bisect--helper: retire `--bisect-clean-state` subcommand
- + bisect--helper: finish porting `bisect_start()` to C
-
- Rewriting "git bisect" in C continues.
-
-
-* nk/diff-files-vs-fsmonitor (2020-10-20) 7 commits
-  (merged to 'next' on 2020-10-28 at d3af804056)
- + p7519-fsmonitor: add a git add benchmark
- + p7519-fsmonitor: refactor to avoid code duplication
- + perf lint: add make test-lint to perf tests
- + t/perf: add fsmonitor perf test for git diff
- + t/perf/p7519-fsmonitor.sh: warm cache on first git status
- + t/perf/README: elaborate on output format
- + fsmonitor: use fsmonitor data in `git diff`
- (this branch is used by nk/perf-fsmonitor.)
-
- "git diff" and other commands that share the same machinery to
- compare with working tree files have been taught to take advantage
- of the fsmonitor data when available.
-
-
-* pb/ref-filter-with-crlf (2020-10-29) 2 commits
-  (merged to 'next' on 2020-10-30 at 8be77584c5)
- + log, show: add tests for messages containing CRLF
- + ref-filter: handle CRLF at end-of-line more gracefully
-
- A commit and tag object may have CR at the end of each and
- every line (you can create such an object with hash-object or
- using --cleanup=verbatim to decline the default clean-up
- action), but it would make it impossible to have a blank line
- to separate the title from the body of the message.  Be lenient
- and accept a line with lone CR on it as a blank line, too.
-
---------------------------------------------------
-[New Topics]
-
-* dd/upload-pack-stateless-eof (2020-10-30) 1 commit
-  (merged to 'next' on 2020-11-09 at 01a1f1d4fd)
- + upload-pack: allow stateless client EOF just prior to haves
-
- "git fetch --depth=<n>" over the stateless RPC / smart HTTP
- transport handled EOF from the client poorly at the server end.
-
- Will merge to 'master'.
-
-
-* js/trace2-session-id (2020-11-02) 11 commits
- - receive-pack: log received client trace2 SID
- - send-pack: advertise trace2 SID in capabilities
- - upload-pack, serve: log received client trace2 SID
- - fetch-pack: advertise trace2 SID in capabilities
- - transport: log received server trace2 SID
- - serve: advertise trace2 SID in v2 capabilities
- - receive-pack: advertise trace2 SID in v0 capabilities
- - upload-pack: advertise trace2 SID in v0 capabilities
- - trace2: add a public function for getting the SID
- - docs: new trace2.advertiseSID option
- - docs: new capability to advertise trace2 SIDs
-
- The transport layer was taught to optionally exchange the session
- ID assigned by the trace2 subsystem during fetch/push transactions.
-
-
-* so/format-patch-doc-on-default-diff-format (2020-10-31) 1 commit
-  (merged to 'next' on 2020-11-04 at 692e0b2f7a)
- + doc/diff-options: fix out of place mentions of '--patch/-p'
-
- Docfix.
-
- Will merge to 'master'.
-
-
-* jc/sparse-error-for-developer-build (2020-10-31) 1 commit
- - Makefile: enable -Wsparse-error for DEVELOPER build
-
- "make DEVELOPER=1 sparse" used to run sparse and let it emit
- warnings; now such warnings will cause an error.
-
- Will merge to 'next'.
-
-
-* pb/blame-funcname-range-userdiff (2020-11-01) 8 commits
- - blame: simplify 'setup_blame_bloom_data' interface
- - blame: simplify 'setup_scoreboard' interface
- - blame: enable funcname blaming with userdiff driver
- - line-log: mention both modes in 'blame' and 'log' short help
- - doc: add more pointers to gitattributes(5) for userdiff
- - blame-options.txt: also mention 'funcname' in '-L' description
- - doc: line-range: improve formatting
- - doc: log, gitk: move '-L' description to 'line-range-options.txt'
-
- "git blame -L :funcname -- path" did not work well for a path for
- which a userdiff driver is defined.
-
- Will merge to 'next'.
-
-
-* rs/clear-commit-marks-in-repo (2020-10-31) 2 commits
-  (merged to 'next' on 2020-11-04 at cb1e1d73cf)
- + bisect: clear flags in passed repository
- + object: allow clear_commit_marks_all to handle any repo
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/pack-write-hashwrite-simplify (2020-11-01) 1 commit
-  (merged to 'next' on 2020-11-04 at 7194d3e811)
- + pack-write: use hashwrite_be32() instead of double-buffering array
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* sd/prompt-local-variable (2020-11-01) 1 commit
-  (merged to 'next' on 2020-11-04 at ddc4192867)
- + git-prompt.sh: localize `option` in __git_ps1_show_upstream
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* so/log-diff-merge (2020-11-09) 27 commits
- - doc/git-show: include --diff-merges description
- - doc/rev-list-options: document --first-parent implies --diff-merges=first-parent
- - doc/diff-generate-patch: mention new --diff-merges option
- - doc/git-log: describe new --diff-merges options
- - t4013: add test for --diff-merges=first-parent
- - diff-merges: implement new values for --diff-merges
- - diff-merges: make -m/-c/--cc explicitly mutually exclusive
- - diff-merges: refactor opt settings into separate functions
- - diff-merges: get rid of now empty diff_merges_init_revs()
- - diff-merges: group diff-merge flags next to each other inside 'rev_info'
- - diff-merges: split 'ignore_merges' field
- - diff-merges: fix -m to properly override -c/--cc
- - t4013: add tests for -m failing to override -c/--cc
- - t4013: support test_expect_failure through ':failure' magic
- - diff-merges: revise revs->diff flag handling
- - diff-merges: introduce revs->first_parent_merges flag
- - diff-merges: new function diff_merges_set_dense_combined_if_unset()
- - diff-merges: new function diff_merges_suppress()
- - diff-merges: re-arrange functions to match the order they are called in
- - diff-merges: rename diff_merges_default_to_enable() to match semantics
- - diff-merges: move checks for first_parent_only out of the module
- - diff-merges: rename all functions to have common prefix
- - revision: move diff merges functions to its own diff-merges.c
- - revision: provide implementation for diff merges tweaks
- - revision: factor out initialization of diff-merge related settings
- - revision: factor out setup of diff-merge related settings
- - revision: factor out parsing of diff-merge related options
-
- "git log" learned a new "--diff-merges=<how>" option.
-
-
 * cw/ci-ghwf-check-ws-errors (2020-11-03) 1 commit
   (merged to 'next' on 2020-11-04 at dc1121823c)
  + ci: make the whitespace checker more robust
 
  Dev support update.
-
- Will merge to 'master'.
-
-
-* ds/maintenance-part-4 (2020-11-04) 4 commits
- - maintenance: use Windows scheduled tasks
- - maintenance: use launchctl on macOS
- - maintenance: include 'cron' details in docs
- - maintenance: extract platform-specific scheduling
- (this branch uses ds/maintenance-part-3.)
-
- Follow-up on the "maintenance part-3" which introduced scheduled
- maintenance tasks to support platforms whose native scheduling
- methods are not 'cron'.
-
-
-* en/merge-ort-impl (2020-11-06) 21 commits
- - merge-ort: free data structures in merge_finalize()
- - merge-ort: add implementation of record_unmerged_index_entries()
- - tree: enable cmp_cache_name_compare() to be used elsewhere
- - merge-ort: add implementation of checkout()
- - merge-ort: basic outline for merge_switch_to_result()
- - merge-ort: step 3 of tree writing -- handling subdirectories as we go
- - merge-ort: step 2 of tree writing -- function to create tree object
- - merge-ort: step 1 of tree writing -- record basenames, modes, and oids
- - merge-ort: have process_entries operate in a defined order
- - merge-ort: add a preliminary simple process_entries() implementation
- - merge-ort: avoid recursing into identical trees
- - merge-ort: record stage and auxiliary info for every path
- - merge-ort: compute a few more useful fields for collect_merge_info
- - merge-ort: avoid repeating fill_tree_descriptor() on the same tree
- - merge-ort: implement a very basic collect_merge_info()
- - merge-ort: add an err() function similar to one from merge-recursive
- - merge-ort: use histogram diff
- - merge-ort: port merge_start() from merge-recursive
- - merge-ort: add some high-level algorithm structure
- - merge-ort: setup basic internal data structures
- - Merge branch 'en/strmap' into en/merge-ort-impl
- (this branch uses en/merge-ort-api-null-impl and en/strmap.)
-
-
-* js/default-branch-name-adjust-t5515 (2020-11-02) 4 commits
-  (merged to 'next' on 2020-11-09 at 568ba5aba5)
- + t5515: use `main` as the name of the main branch for testing (conclusion)
- + t5515: use `main` as the name of the main branch for testing (part 3)
- + t5515: use `main` as the name of the main branch for testing (part 2)
- + t5515: use `main` as the name of the main branch for testing (part 1)
-
- Prepare a test script to transition of the default branch name to
- 'main'.
-
- Will merge to 'master'.
-
-
-* jt/push-with-base (2020-11-02) 5 commits
- . SQUASH???
- . Doc: push with --base
- . remote-curl: teach --base for http(s)://
- . push: teach --base for ssh:// and file://
- . connect: refactor building of Extra Parameters
-
- "git push" learns a way to tell an object that it expects the other
- side to have and is usable as a common ancestor, which can be used
- by the other side to shrink its initial ref advertisement.
-
-
-* rs/worktree-list-show-locked (2020-11-03) 1 commit
-  (merged to 'next' on 2020-11-04 at 5f4fa51a91)
- + t2402: fix typo
-
- Typofix.
-
- Will merge to 'master'.
 
 
 * jc/abbrev-doc (2020-11-04) 1 commit
@@ -405,68 +59,16 @@ Release tarballs are available at:
  output may be longer than "<n>" hexdigits, which has been
  clarified.
 
- Will merge to 'master'.
 
+* jc/sequencer-stopped-sha-simplify (2020-10-21) 1 commit
+  (merged to 'next' on 2020-11-02 at ba3dd9eaf4)
+ + sequencer: tolerate abbreviated stopped-sha file
 
-* jc/line-log-takes-no-pathspec (2020-11-04) 1 commit
-  (merged to 'next' on 2020-11-09 at 47c2c88b9d)
- + log: diagnose -L used with pathspec as an error
-
- "git log -L<range>:<path>" is documented to take no pathspec, but
- this was not enforced by the command line option parser, which has
- been corrected.
-
- Will merge to 'master'.
-
-
-* jk/format-patch-output (2020-11-04) 3 commits
-  (merged to 'next' on 2020-11-09 at 1f1bb6ebff)
- + format-patch: support --output option
- + format-patch: tie file-opening logic to output_directory
- + format-patch: refactor output selection
-
- "git format-patch --output=there" did not work as expected and
- instead crashed.  The option is now supported.
-
- Will merge to 'master'.
-
-
-* rs/empty-reflog-check-fix (2020-11-01) 1 commit
-  (merged to 'next' on 2020-11-09 at 3da6b6fef0)
- + stash: simplify reflog emptiness check
-
- The code to see if "git stash drop" can safely remove refs/stash
- has been made more carerful.
-
- Will merge to 'master'.
-
-
-* mc/typofix (2020-11-05) 1 commit
-  (merged to 'next' on 2020-11-09 at ed6106b6e3)
- + doc: fixing two trivial typos in Documentation/
-
- Docfix.
-
- Will merge to 'master'.
-
-
-* jc/format-patch-name-max (2020-11-06) 1 commit
- - format-patch: make output filename configurable
-
- The maximum length of output filenames "git format-patch" creates
- has become configurable (used to be capped at 64).
-
- Will merge to 'next'?
-
-
-* jk/diff-release-filespec-fix (2020-11-06) 1 commit
-  (merged to 'next' on 2020-11-09 at 6d89b9602d)
- + diff: allow passing NULL to diff_free_filespec_data()
-
- Running "git diff" while allowing external diff in a state with
- unmerged paths used to segfault, which has been corrected.
-
- Will merge to 'master'.
+ Recently the format of an internal state file "rebase -i" uses has
+ been tightened up for consistency, which would hurt those who start
+ "rebase -i" with old git and then continue with new git.  Loosen
+ the reader side a bit (which we may want to tighten again in a year
+ or so).
 
 
 * js/ci-github-set-env (2020-11-06) 1 commit
@@ -475,35 +77,6 @@ Release tarballs are available at:
 
  CI update.
 
- Will merge to 'master'.
-
-
-* js/test-file-size (2020-11-06) 1 commit
-  (merged to 'next' on 2020-11-09 at b3594d0150)
- + tests: consolidate the `file_size` function into `test-lib-functions.sh`
-
- Test clean-up.
-
- Will merge to 'master'.
-
-
-* jx/t5411-flake-fix (2020-11-09) 1 commit
- . t5411: consistent result for proc-receive broken test
-
- A flakey test has been cleaned up.
-
- This merely is sweeping an underlying breakage under the rug.
- cf. <20201109231246.GA677345@coredump.intra.peff.net>
-
-
-* dg/bswap-msvc (2020-11-09) 1 commit
-  (merged to 'next' on 2020-11-09 at 91a67b86f7)
- + compat/bswap.h: simplify MSVC endianness detection
-
- Code simplification.
-
- Will merge to 'master'.
-
 
 * js/p4-default-branch (2020-11-09) 1 commit
   (merged to 'next' on 2020-11-09 at a4b08b45da)
@@ -511,7 +84,12 @@ Release tarballs are available at:
 
  "git p4" now honors init.defaultBranch configuration.
 
- Will merge to 'master'.
+
+* js/test-file-size (2020-11-06) 1 commit
+  (merged to 'next' on 2020-11-09 at b3594d0150)
+ + tests: consolidate the `file_size` function into `test-lib-functions.sh`
+
+ Test clean-up.
 
 
 * js/test-whitespace-fixes (2020-11-09) 6 commits
@@ -525,16 +103,153 @@ Release tarballs are available at:
 
  Test code clean-up.
 
+
+* mc/typofix (2020-11-05) 1 commit
+  (merged to 'next' on 2020-11-09 at ed6106b6e3)
+ + doc: fixing two trivial typos in Documentation/
+
+ Docfix.
+
+
+* rs/clear-commit-marks-in-repo (2020-10-31) 2 commits
+  (merged to 'next' on 2020-11-04 at cb1e1d73cf)
+ + bisect: clear flags in passed repository
+ + object: allow clear_commit_marks_all to handle any repo
+
+ Code clean-up.
+
+
+* rs/pack-write-hashwrite-simplify (2020-11-01) 1 commit
+  (merged to 'next' on 2020-11-04 at 7194d3e811)
+ + pack-write: use hashwrite_be32() instead of double-buffering array
+
+ Code clean-up.
+
+
+* rs/worktree-list-show-locked (2020-11-03) 1 commit
+  (merged to 'next' on 2020-11-04 at 5f4fa51a91)
+ + t2402: fix typo
+
+ Typofix.
+
+
+* sd/prompt-local-variable (2020-11-01) 1 commit
+  (merged to 'next' on 2020-11-04 at ddc4192867)
+ + git-prompt.sh: localize `option` in __git_ps1_show_upstream
+
+ Code clean-up.
+
+
+* so/format-patch-doc-on-default-diff-format (2020-10-31) 1 commit
+  (merged to 'next' on 2020-11-04 at 692e0b2f7a)
+ + doc/diff-options: fix out of place mentions of '--patch/-p'
+
+ Docfix.
+
+--------------------------------------------------
+[New Topics]
+
+* ps/update-ref-multi-transaction (2020-11-10) 4 commits
+ - update-ref: disallow "start" for ongoing transactions
+ - p1400: use `git-update-ref --stdin` to test multiple transactions
+ - update-ref: allow creation of multiple transactions
+ - t1400: avoid touching refs on filesystem
+
+ "git update-ref --stdin" learns to take multiple transactions in a
+ single session.
+
+
+* fc/bash-completion-alias-of-alias (2020-11-09) 2 commits
+  (merged to 'next' on 2020-11-10 at 75f1f2b8a8)
+ + completion: bash: check for alias loop
+ + completion: bash: support recursive aliases
+
+ The command line completion script (in contrib/) learned to expand
+ commands that are alias of alias.
+
  Will merge to 'master'.
 
 
-* rs/archive-high-compression (2020-11-09) 1 commit
- - archive: support compression levels beyond 9
+* jc/blame-ignore-fix (2020-11-10) 1 commit
+  (merged to 'next' on 2020-11-10 at 384ace449d)
+ + blame: silently ignore invalid ignore file objects
 
- "git archive" now allows compression level higher than "-9"
- when generating tar.gz output.
+ "git blame --ignore-revs-file=<file>" learned to ignore a
+ non-existent object name in the input, instead of complaining.
 
- Will merge to 'next'?
+ Will merge to 'master'.
+
+
+* jk/rev-parse-end-of-options (2020-11-10) 3 commits
+  (merged to 'next' on 2020-11-11 at 2d517d1608)
+ + rev-parse: handle --end-of-options
+ + rev-parse: put all options under the "-" check
+ + rev-parse: don't accept options after dashdash
+
+ "git rev-parse" learned the "--end-of-options" to help scripts to
+ safely take a parameter that is supposed to be a revision, e.g.
+ "git rev-parse --verify -q --end-of-options $rev".
+
+ Will merge to 'master'.
+
+
+* fc/bash-completion-post-2.29 (2020-11-10) 26 commits
+ - completion: bash: shuffle __gitcomp functions
+ - completion: bash: cleanup __gitcomp* invocations
+ - completion: bash: add __gitcomp_opts
+ - completion: bash: improve __gitcomp description
+ - completion: bash: rename _get_comp_words_by_ref()
+ - completion: bash: trivial cleanup
+ - completion: bash: cleanup _get_comp_words_by_ref()
+ - completion: bash: refactor _get_comp_words_by_ref()
+ - completion: bash: simplify _get_comp_words_by_ref()
+ - test: completion: switch __gitcomp_nl prefix test
+ - completion: bash: simplify config_variable_name
+ - completion: bash: improve __gitcomp suffix code
+ - completion: bash: change suffix check in __gitcomp
+ - completion: bash: simplify __gitcomp
+ - completion: bash: refactor __gitcomp
+ - completion: bash: simplify equal suffix check
+ - completion: bash: factor out check in __gitcomp
+ - completion: bash: get rid of any non-append code
+ - completion: bash: get rid of _append() functions
+ - completion: bash: remove non-append functionality
+ - test: completion: add run_func() helper
+ - test: completion: fix currently typed words
+ - completion: bash: do not modify COMP_WORDBREAKS
+ - completion: bash: fix for suboptions with value
+ - completion: bash: add correct suffix in variables
+ - completion: bash: fix prefix detection in branch.*
+
+
+* js/add-i-color-fix (2020-11-11) 11 commits
+ - add -i: verify in the tests that colors can be overridden
+ - add -p: prefer color.diff.context over color.diff.plain
+ - add -i (Perl version): include indentation in the colored header
+ - add -i (built-in): use the same indentation as the Perl version
+ - add -p (built-in): do not color the progress indicator separately
+ - add -i (built-in): use correct names to load color.diff.* config
+ - add -i (built-in): prevent the `reset` "color" from being configured
+ - add -i: use `reset_color` consistently
+ - add -p (built-in): imitate `xdl_format_hunk_hdr()` generating hunk headers
+ - add -i (built-in): send error messages to stderr
+ - add -i (built-in): do show an error message for incorrect inputs
+
+ "git add -i" failed to honor custom colors configured to show
+ patches, which has been corrected.
+
+ The last step may want to be polished further.
+ cf. <20201111023549.GB806755@coredump.intra.peff.net>
+
+
+* ab/config-mak-uname-simplify (2020-11-11) 2 commits
+ - config.mak.uname: remove unused NEEDS_SSL_WITH_CURL flag
+ - config.mak.uname: remove unused the NO_R_TO_GCC_LINKER flag
+
+
+* pd/mergetool-nvimdiff (2020-11-11) 2 commits
+ - mergetool: avoid letting `list_tool_variants` break user-defined setups
+ - mergetools/bc: add `bc4` to the alias list for Beyond Compare
 
 --------------------------------------------------
 [Stalled]
@@ -744,6 +459,228 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* dd/upload-pack-stateless-eof (2020-10-30) 1 commit
+  (merged to 'next' on 2020-11-09 at 01a1f1d4fd)
+ + upload-pack: allow stateless client EOF just prior to haves
+
+ "git fetch --depth=<n>" over the stateless RPC / smart HTTP
+ transport handled EOF from the client poorly at the server end.
+
+ Will merge to 'master'.
+
+
+* js/trace2-session-id (2020-11-02) 11 commits
+ - receive-pack: log received client trace2 SID
+ - send-pack: advertise trace2 SID in capabilities
+ - upload-pack, serve: log received client trace2 SID
+ - fetch-pack: advertise trace2 SID in capabilities
+ - transport: log received server trace2 SID
+ - serve: advertise trace2 SID in v2 capabilities
+ - receive-pack: advertise trace2 SID in v0 capabilities
+ - upload-pack: advertise trace2 SID in v0 capabilities
+ - trace2: add a public function for getting the SID
+ - docs: new trace2.advertiseSID option
+ - docs: new capability to advertise trace2 SIDs
+
+ The transport layer was taught to optionally exchange the session
+ ID assigned by the trace2 subsystem during fetch/push transactions.
+
+
+* jc/sparse-error-for-developer-build (2020-10-31) 1 commit
+  (merged to 'next' on 2020-11-10 at 8cfbe66736)
+ + Makefile: enable -Wsparse-error for DEVELOPER build
+
+ "make DEVELOPER=1 sparse" used to run sparse and let it emit
+ warnings; now such warnings will cause an error.
+
+ Will merge to 'master'.
+
+
+* pb/blame-funcname-range-userdiff (2020-11-01) 8 commits
+  (merged to 'next' on 2020-11-10 at 221bb3f773)
+ + blame: simplify 'setup_blame_bloom_data' interface
+ + blame: simplify 'setup_scoreboard' interface
+ + blame: enable funcname blaming with userdiff driver
+ + line-log: mention both modes in 'blame' and 'log' short help
+ + doc: add more pointers to gitattributes(5) for userdiff
+ + blame-options.txt: also mention 'funcname' in '-L' description
+ + doc: line-range: improve formatting
+ + doc: log, gitk: move '-L' description to 'line-range-options.txt'
+
+ "git blame -L :funcname -- path" did not work well for a path for
+ which a userdiff driver is defined.
+
+ Will merge to 'master'.
+
+
+* so/log-diff-merge (2020-11-09) 27 commits
+ - doc/git-show: include --diff-merges description
+ - doc/rev-list-options: document --first-parent implies --diff-merges=first-parent
+ - doc/diff-generate-patch: mention new --diff-merges option
+ - doc/git-log: describe new --diff-merges options
+ - t4013: add test for --diff-merges=first-parent
+ - diff-merges: implement new values for --diff-merges
+ - diff-merges: make -m/-c/--cc explicitly mutually exclusive
+ - diff-merges: refactor opt settings into separate functions
+ - diff-merges: get rid of now empty diff_merges_init_revs()
+ - diff-merges: group diff-merge flags next to each other inside 'rev_info'
+ - diff-merges: split 'ignore_merges' field
+ - diff-merges: fix -m to properly override -c/--cc
+ - t4013: add tests for -m failing to override -c/--cc
+ - t4013: support test_expect_failure through ':failure' magic
+ - diff-merges: revise revs->diff flag handling
+ - diff-merges: introduce revs->first_parent_merges flag
+ - diff-merges: new function diff_merges_set_dense_combined_if_unset()
+ - diff-merges: new function diff_merges_suppress()
+ - diff-merges: re-arrange functions to match the order they are called in
+ - diff-merges: rename diff_merges_default_to_enable() to match semantics
+ - diff-merges: move checks for first_parent_only out of the module
+ - diff-merges: rename all functions to have common prefix
+ - revision: move diff merges functions to its own diff-merges.c
+ - revision: provide implementation for diff merges tweaks
+ - revision: factor out initialization of diff-merge related settings
+ - revision: factor out setup of diff-merge related settings
+ - revision: factor out parsing of diff-merge related options
+
+ "git log" learned a new "--diff-merges=<how>" option.
+
+
+* ds/maintenance-part-4 (2020-11-04) 4 commits
+ - maintenance: use Windows scheduled tasks
+ - maintenance: use launchctl on macOS
+ - maintenance: include 'cron' details in docs
+ - maintenance: extract platform-specific scheduling
+ (this branch uses ds/maintenance-part-3.)
+
+ Follow-up on the "maintenance part-3" which introduced scheduled
+ maintenance tasks to support platforms whose native scheduling
+ methods are not 'cron'.
+
+
+* en/merge-ort-impl (2020-11-11) 21 commits
+ - merge-ort: free data structures in merge_finalize()
+ - merge-ort: add implementation of record_unmerged_index_entries()
+ - tree: enable cmp_cache_name_compare() to be used elsewhere
+ - merge-ort: add implementation of checkout()
+ - merge-ort: basic outline for merge_switch_to_result()
+ - merge-ort: step 3 of tree writing -- handling subdirectories as we go
+ - merge-ort: step 2 of tree writing -- function to create tree object
+ - merge-ort: step 1 of tree writing -- record basenames, modes, and oids
+ - merge-ort: have process_entries operate in a defined order
+ - merge-ort: add a preliminary simple process_entries() implementation
+ - merge-ort: avoid recursing into identical trees
+ - merge-ort: record stage and auxiliary info for every path
+ - merge-ort: compute a few more useful fields for collect_merge_info
+ - merge-ort: avoid repeating fill_tree_descriptor() on the same tree
+ - merge-ort: implement a very basic collect_merge_info()
+ - merge-ort: add an err() function similar to one from merge-recursive
+ - merge-ort: use histogram diff
+ - merge-ort: port merge_start() from merge-recursive
+ - merge-ort: add some high-level algorithm structure
+ - merge-ort: setup basic internal data structures
+ - Merge branch 'en/strmap' into en/merge-ort-impl
+ (this branch uses en/merge-ort-api-null-impl and en/strmap.)
+
+
+* js/default-branch-name-adjust-t5515 (2020-11-02) 4 commits
+  (merged to 'next' on 2020-11-09 at 568ba5aba5)
+ + t5515: use `main` as the name of the main branch for testing (conclusion)
+ + t5515: use `main` as the name of the main branch for testing (part 3)
+ + t5515: use `main` as the name of the main branch for testing (part 2)
+ + t5515: use `main` as the name of the main branch for testing (part 1)
+
+ Prepare a test script to transition of the default branch name to
+ 'main'.
+
+ Will merge to 'master'.
+
+
+* jc/line-log-takes-no-pathspec (2020-11-04) 1 commit
+  (merged to 'next' on 2020-11-09 at 47c2c88b9d)
+ + log: diagnose -L used with pathspec as an error
+
+ "git log -L<range>:<path>" is documented to take no pathspec, but
+ this was not enforced by the command line option parser, which has
+ been corrected.
+
+ Will merge to 'master'.
+
+
+* jk/format-patch-output (2020-11-04) 3 commits
+  (merged to 'next' on 2020-11-09 at 1f1bb6ebff)
+ + format-patch: support --output option
+ + format-patch: tie file-opening logic to output_directory
+ + format-patch: refactor output selection
+
+ "git format-patch --output=there" did not work as expected and
+ instead crashed.  The option is now supported.
+
+ Will merge to 'master'.
+
+
+* rs/empty-reflog-check-fix (2020-11-01) 1 commit
+  (merged to 'next' on 2020-11-09 at 3da6b6fef0)
+ + stash: simplify reflog emptiness check
+
+ The code to see if "git stash drop" can safely remove refs/stash
+ has been made more carerful.
+
+ Will merge to 'master'.
+
+
+* jc/format-patch-name-max (2020-11-09) 1 commit
+  (merged to 'next' on 2020-11-11 at 17e19bb17a)
+ + format-patch: make output filename configurable
+
+ The maximum length of output filenames "git format-patch" creates
+ has become configurable (used to be capped at 64).
+
+ Will merge to 'master'.
+
+
+* jk/diff-release-filespec-fix (2020-11-11) 2 commits
+ - t7800: simplify difftool test
+  (merged to 'next' on 2020-11-09 at 6d89b9602d)
+ + diff: allow passing NULL to diff_free_filespec_data()
+
+ Running "git diff" while allowing external diff in a state with
+ unmerged paths used to segfault, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* jx/t5411-flake-fix (2020-11-11) 3 commits
+ - receive-pack: use default version 0 for proc-receive
+ - receive-pack: gently write messages to proc-receive
+ - t5411: new helper filter_out_user_friendly_and_stable_output
+
+ The exchange between receive-pack and proc-receive hook did not
+ carefully check for errors.
+
+ Will merge to 'next'?
+
+
+* dg/bswap-msvc (2020-11-11) 2 commits
+  (merged to 'next' on 2020-11-11 at 6b9e819b17)
+ + compat/bswap.h: don't assume MSVC is little-endian
+  (merged to 'next' on 2020-11-09 at 91a67b86f7)
+ + compat/bswap.h: simplify MSVC endianness detection
+
+ Code simplification.
+
+ Will merge to 'master'.
+
+
+* rs/archive-high-compression (2020-11-09) 1 commit
+  (merged to 'next' on 2020-11-10 at 9bee80950e)
+ + archive: support compression levels beyond 9
+
+ "git archive" now allows compression level higher than "-9"
+ when generating tar.gz output.
+
+ Will merge to 'master'.
+
+
 * av/fsmonitor-cleanup (2020-10-21) 2 commits
  - fsmonitor: make output of test-dump-fsmonitor more concise
  - fsmonitor: stop inline'ing mark_fsmonitor_valid / _invalid
@@ -755,29 +692,17 @@ Release tarballs are available at:
  cf. <20201022183822.GA781760@nand.local>
 
 
-* jc/sequencer-stopped-sha-simplify (2020-10-21) 1 commit
-  (merged to 'next' on 2020-11-02 at ba3dd9eaf4)
- + sequencer: tolerate abbreviated stopped-sha file
-
- Recently the format of an internal state file "rebase -i" uses has
- been tightened up for consistency, which would hurt those who start
- "rebase -i" with old git and then continue with new git.  Loosen
- the reader side a bit (which we may want to tighten again in a year
- or so).
-
- Will merge to 'master'
-
-
 * en/merge-ort-api-null-impl (2020-11-02) 4 commits
- - merge,rebase,revert: select ort or recursive by config or environment
- - fast-rebase: demonstrate merge-ort's API via new test-tool command
- - merge-ort-wrappers: new convience wrappers to mimic the old merge API
- - merge-ort: barebones API of new merge strategy with empty implementation
+  (merged to 'next' on 2020-11-10 at ed9eed1558)
+ + merge,rebase,revert: select ort or recursive by config or environment
+ + fast-rebase: demonstrate merge-ort's API via new test-tool command
+ + merge-ort-wrappers: new convience wrappers to mimic the old merge API
+ + merge-ort: barebones API of new merge strategy with empty implementation
  (this branch is used by en/merge-ort-impl.)
 
  Preparation for a new merge strategy.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/merge-tests (2020-10-26) 9 commits
@@ -828,18 +753,19 @@ Release tarballs are available at:
 
 
 * pw/rebase-i-orig-head (2020-11-04) 4 commits
- - rebase -i: simplify get_revision_ranges()
- - rebase -i: use struct object_id when writing state
- - rebase -i: use struct object_id rather than looking up commit
- - rebase -i: stop overwriting ORIG_HEAD buffer
+  (merged to 'next' on 2020-11-10 at 038a5295f5)
+ + rebase -i: simplify get_revision_ranges()
+ + rebase -i: use struct object_id when writing state
+ + rebase -i: use struct object_id rather than looking up commit
+ + rebase -i: stop overwriting ORIG_HEAD buffer
 
  "git rebase -i" did not store ORIG_HEAD correctly.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqq7drbbcj5.fsf@gitster.c.googlers.com>
 
 
-* en/strmap (2020-11-06) 15 commits
+* en/strmap (2020-11-11) 15 commits
  - shortlog: use strset from strmap.h
  - Use new HASHMAP_INIT macro to simplify hashmap initialization
  - strmap: take advantage of FLEXPTR_ALLOC_STR when relevant
@@ -860,7 +786,7 @@ Release tarballs are available at:
  A speciailization of hashmap that uses a string as key has been
  introduced.  Hopefully it will see wider use over time.
 
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
 * jk/symlinked-dotgitx-files (2020-10-23) 9 commits
@@ -909,20 +835,21 @@ Release tarballs are available at:
 
 
 * ds/maintenance-part-3 (2020-10-16) 8 commits
- - maintenance: add troubleshooting guide to docs
- - maintenance: use 'incremental' strategy by default
- - maintenance: create maintenance.strategy config
- - maintenance: add start/stop subcommands
- - maintenance: add [un]register subcommands
- - for-each-repo: run subcommands on configured repos
- - maintenance: add --schedule option and config
- - maintenance: optionally skip --auto process
+  (merged to 'next' on 2020-11-10 at fe9475c696)
+ + maintenance: add troubleshooting guide to docs
+ + maintenance: use 'incremental' strategy by default
+ + maintenance: create maintenance.strategy config
+ + maintenance: add start/stop subcommands
+ + maintenance: add [un]register subcommands
+ + for-each-repo: run subcommands on configured repos
+ + maintenance: add --schedule option and config
+ + maintenance: optionally skip --auto process
  (this branch is used by ds/maintenance-part-4.)
 
  Parts of "git maintenance" to ease writing crontab entries (and
  other scheduling system configuration) for it.
 
- Will merge to 'next'?
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Discarded]
@@ -931,3 +858,15 @@ Release tarballs are available at:
  . shortlog: drop custom strset implementation
 
  Now a part of the en/strmap topic.
+
+
+* jt/push-with-base (2020-11-02) 5 commits
+ . SQUASH???
+ . Doc: push with --base
+ . remote-curl: teach --base for http(s)://
+ . push: teach --base for ssh:// and file://
+ . connect: refactor building of Extra Parameters
+
+ "git push" learns a way to tell an object that it expects the other
+ side to have and is usable as a common ancestor, which can be used
+ by the other side to shrink its initial ref advertisement.
