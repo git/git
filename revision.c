@@ -124,11 +124,6 @@ static int path_and_oids_cmp(const void *hashmap_cmp_fn_data,
 	return strcmp(e1->path, e2->path);
 }
 
-static void paths_and_oids_init(struct hashmap *map)
-{
-	hashmap_init(map, path_and_oids_cmp, NULL, 0);
-}
-
 static void paths_and_oids_clear(struct hashmap *map)
 {
 	struct hashmap_iter iter;
@@ -139,7 +134,7 @@ static void paths_and_oids_clear(struct hashmap *map)
 		free(entry->path);
 	}
 
-	hashmap_free_entries(map, struct path_and_oids_entry, ent);
+	hashmap_clear_and_free(map, struct path_and_oids_entry, ent);
 }
 
 static void paths_and_oids_insert(struct hashmap *map,
@@ -213,7 +208,7 @@ void mark_trees_uninteresting_sparse(struct repository *r,
 				     struct oidset *trees)
 {
 	unsigned has_interesting = 0, has_uninteresting = 0;
-	struct hashmap map;
+	struct hashmap map = HASHMAP_INIT(path_and_oids_cmp, NULL);
 	struct hashmap_iter map_iter;
 	struct path_and_oids_entry *entry;
 	struct object_id *oid;
@@ -236,8 +231,6 @@ void mark_trees_uninteresting_sparse(struct repository *r,
 	/* Do not walk unless we have both types of trees. */
 	if (!has_uninteresting || !has_interesting)
 		return;
-
-	paths_and_oids_init(&map);
 
 	oidset_iter_init(trees, &iter);
 	while ((oid = oidset_iter_next(&iter))) {

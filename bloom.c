@@ -229,10 +229,9 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 	diffcore_std(&diffopt);
 
 	if (diff_queued_diff.nr <= settings->max_changed_paths) {
-		struct hashmap pathmap;
+		struct hashmap pathmap = HASHMAP_INIT(pathmap_cmp, NULL);
 		struct pathmap_hash_entry *e;
 		struct hashmap_iter iter;
-		hashmap_init(&pathmap, pathmap_cmp, NULL, 0);
 
 		for (i = 0; i < diff_queued_diff.nr; i++) {
 			const char *path = diff_queued_diff.queue[i]->two->path;
@@ -287,7 +286,7 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 		}
 
 	cleanup:
-		hashmap_free_entries(&pathmap, struct pathmap_hash_entry, entry);
+		hashmap_clear_and_free(&pathmap, struct pathmap_hash_entry, entry);
 	} else {
 		for (i = 0; i < diff_queued_diff.nr; i++)
 			diff_free_filepair(diff_queued_diff.queue[i]);
