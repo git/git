@@ -2651,7 +2651,7 @@ static int read_populate_opts(struct replay_opts *opts)
 		}
 
 		if (read_oneliner(&buf, rebase_path_squash_onto(), 0)) {
-			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0) {
+			if (get_oid_committish(buf.buf, &opts->squash_onto) < 0) {
 				ret = error(_("unusable squash-onto"));
 				goto done_rebase_i;
 			}
