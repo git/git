@@ -1058,6 +1058,7 @@ static void receive_needs(struct upload_pack_data *data,
 		const char *features;
 		struct object_id oid_buf;
 		const char *arg;
+		int feature_len;
 
 		reset_timeout(data->timeout);
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
@@ -1109,6 +1110,13 @@ static void receive_needs(struct upload_pack_data *data,
 		if (data->allow_filter &&
 		    parse_feature_request(features, "filter"))
 			data->filter_capability_requested = 1;
+
+		arg = parse_feature_value(features, "session-id", &feature_len, NULL);
+		if (arg) {
+			char *client_sid = xstrndup(arg, feature_len);
+			trace2_data_string("transfer", NULL, "client-sid", client_sid);
+			free(client_sid);
+		}
 
 		o = parse_object(the_repository, &oid_buf);
 		if (!o) {

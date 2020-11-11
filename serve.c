@@ -201,6 +201,7 @@ static int process_request(void)
 	struct packet_reader reader;
 	struct strvec keys = STRVEC_INIT;
 	struct protocol_capability *command = NULL;
+	const char *client_sid;
 
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
@@ -263,6 +264,9 @@ static int process_request(void)
 		die("no command requested");
 
 	check_algorithm(the_repository, &keys);
+
+	if (has_capability(&keys, "session-id", &client_sid))
+		trace2_data_string("transfer", NULL, "client-sid", client_sid);
 
 	command->command(the_repository, &keys, &reader);
 

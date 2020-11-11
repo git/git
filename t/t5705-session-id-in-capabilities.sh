@@ -17,11 +17,14 @@ test_expect_success 'setup repos for session ID capability tests' '
 for PROTO in 0 1 2
 do
 	test_expect_success "session IDs not advertised by default (fetch v${PROTO})" '
-		test_when_finished "rm -rf local tr2-client-events" &&
+		test_when_finished "rm -rf local tr2-client-events tr2-server-events" &&
 		cp -r "$LOCAL_PRISTINE" local &&
 		GIT_TRACE2_EVENT="$(pwd)/tr2-client-events" \
-		git -c protocol.version=$PROTO -C local fetch origin &&
-		test -z "$(grep \"key\":\"server-sid\" tr2-client-events)"
+		git -c protocol.version=$PROTO -C local fetch \
+			--upload-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-upload-pack" \
+			origin &&
+		test -z "$(grep \"key\":\"server-sid\" tr2-client-events)" &&
+		test -z "$(grep \"key\":\"client-sid\" tr2-server-events)"
 	'
 
 	test_expect_success "session IDs not advertised by default (push v${PROTO})" '
@@ -43,11 +46,14 @@ test_expect_success 'enable SID advertisement' '
 for PROTO in 0 1 2
 do
 	test_expect_success "session IDs advertised (fetch v${PROTO})" '
-		test_when_finished "rm -rf local tr2-client-events" &&
+		test_when_finished "rm -rf local tr2-client-events tr2-server-events" &&
 		cp -r "$LOCAL_PRISTINE" local &&
 		GIT_TRACE2_EVENT="$(pwd)/tr2-client-events" \
-		git -c protocol.version=$PROTO -C local fetch origin &&
-		grep \"key\":\"server-sid\" tr2-client-events
+		git -c protocol.version=$PROTO -C local fetch \
+			--upload-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-upload-pack" \
+			origin &&
+		grep \"key\":\"server-sid\" tr2-client-events &&
+		grep \"key\":\"client-sid\" tr2-server-events
 	'
 
 	test_expect_success "session IDs advertised (push v${PROTO})" '
