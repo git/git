@@ -109,6 +109,10 @@ names an existing object that is a commit-ish (i.e. a commit, or an
 annotated tag that points at a commit).  To make sure that `$VAR`
 names an existing object of any type, `git rev-parse "$VAR^{object}"`
 can be used.
++
+Note that if you are verifying a name from an untrusted source, it is
+wise to use `--end-of-options` so that the name argument is not mistaken
+for another option.
 
 -q::
 --quiet::
@@ -446,7 +450,7 @@ $ git rev-parse --verify HEAD
 * Print the commit object name from the revision in the $REV shell variable:
 +
 ------------
-$ git rev-parse --verify $REV^{commit}
+$ git rev-parse --verify --end-of-options $REV^{commit}
 ------------
 +
 This will error out if $REV is empty or not a valid revision.
@@ -454,7 +458,7 @@ This will error out if $REV is empty or not a valid revision.
 * Similar to above:
 +
 ------------
-$ git rev-parse --default master --verify $REV
+$ git rev-parse --default master --verify --end-of-options $REV
 ------------
 +
 but if $REV is empty, the commit object name from master will be printed.
