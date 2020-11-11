@@ -672,7 +672,7 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		if (len)
 			strbuf_add(out, p, len);
 		else if (colored)
-			strbuf_addf(out, "%s\n", GIT_COLOR_RESET);
+			strbuf_addf(out, "%s\n", s->s.reset_color);
 		else
 			strbuf_addch(out, '\n');
 	}
@@ -1065,7 +1065,7 @@ static void recolor_hunk(struct add_p_state *s, struct hunk *hunk)
 			      s->s.file_new_color :
 			      s->s.context_color);
 		strbuf_add(&s->colored, plain + current, eol - current);
-		strbuf_addstr(&s->colored, GIT_COLOR_RESET);
+		strbuf_addstr(&s->colored, s->s.reset_color);
 		if (next > eol)
 			strbuf_add(&s->colored, plain + eol, next - eol);
 		current = next;
