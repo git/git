@@ -500,4 +500,6 @@ void trace2_collect_process_info(enum trace2_process_info_reason reason);
 	} while (0)
 #endif
 
+const char *trace2_session_id(void);
+
 #endif /* TRACE2_H */
