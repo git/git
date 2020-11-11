@@ -1192,7 +1192,12 @@ static int run_proc_receive_hook(struct command *commands,
 		goto cleanup;
 	}
 
-	if (version != 1) {
+	switch (version) {
+	case 0:
+		/* fallthrough */
+	case 1:
+		break;
+	default:
 		strbuf_addf(&errmsg, "proc-receive version '%d' is not supported",
 			    version);
 		code = -1;

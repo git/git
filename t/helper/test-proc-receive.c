@@ -45,8 +45,14 @@ static void proc_receive_verison(struct packet_reader *reader) {
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
+		/* Ignore version negotiation for version 0 */
+		if (version == 0)
+			continue;
+
 		if (reader->pktlen > 8 && starts_with(reader->line, "version=")) {
 			server_version = atoi(reader->line+8);
+			if (server_version != 1)
+				die("bad protocol version: %d", server_version);
 			linelen = strlen(reader->line);
 			if (linelen < reader->pktlen) {
 				const char *feature_list = reader->line + linelen + 1;
@@ -58,15 +64,13 @@ static void proc_receive_verison(struct packet_reader *reader) {
 		}
 	}
 
-	if (server_version != 1)
-		die("bad protocol version: %d", server_version);
-
 	if (die_write_version)
 		die("die with the --die-write-version option");
 
-	packet_write_fmt(1, "version=%d%c%s\n",
-			 version, '\0',
-			 use_push_options && !no_push_options ? "push-options": "");
+	if (version != 0)
+		packet_write_fmt(1, "version=%d%c%s\n",
+				 version, '\0',
+				 use_push_options && !no_push_options ? "push-options": "");
 	packet_flush(1);
 }
 
