@@ -783,6 +783,10 @@ test_line_count () {
 	fi
 }
 
+test_file_size () {
+	test-tool path-utils file-size "$1"
+}
+
 # Returns success if a comma separated string of keywords ($1) contains a
 # given keyword ($2).
 # Examples:
