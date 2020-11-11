@@ -151,12 +151,11 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 int cmd__hashmap(int argc, const char **argv)
 {
 	struct strbuf line = STRBUF_INIT;
-	struct hashmap map;
 	int icase;
+	struct hashmap map = HASHMAP_INIT(test_entry_cmp, &icase);
 
 	/* init hash map */
 	icase = argc > 1 && !strcmp("ignorecase", argv[1]);
-	hashmap_init(&map, test_entry_cmp, &icase, 0);
 
 	/* process commands from stdin */
 	while (strbuf_getline(&line, stdin) != EOF) {
