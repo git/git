@@ -61,7 +61,7 @@ test_expect_success '"list" all worktrees --porcelain' '
 	test_cmp expect actual
 '
 
-test_expect_success '"list" all worktress with locked annotation' '
+test_expect_success '"list" all worktrees with locked annotation' '
 	test_when_finished "rm -rf locked unlocked out && git worktree prune" &&
 	git worktree add --detach locked master &&
 	git worktree add --detach unlocked master &&
