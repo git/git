@@ -492,3 +492,16 @@ form `object-format=X`) to notify the client that the server is able to deal
 with objects using hash algorithm X.  If not specified, the server is assumed to
 only handle SHA-1.  If the client would like to use a hash algorithm other than
 SHA-1, it should specify its object-format string.
+
+session-id=<session id>
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The server may advertise a session ID that can be used to identify this process
+across multiple requests. The client may advertise its own session ID back to
+the server as well.
+
+Session IDs should be unique to a given process. They must fit within a
+packet-line, and must not contain non-printable or whitespace characters. The
+current implementation uses trace2 session IDs (see
+link:api-trace2.html[api-trace2] for details), but this may change and users of
+the session ID should not rely on this fact.
