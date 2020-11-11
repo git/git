@@ -167,6 +167,21 @@ Fixes since v2.29
  * A recent oid->hash conversion missed one spot, breaking "git svn".
    (merge 03bb366de4 bc/svn-hash-oid-fix later to maint).
 
+ * The documentation on the "--abbrev=<n>" option did not say the
+   output may be longer than "<n>" hexdigits, which has been
+   clarified.
+   (merge cda34e0d0c jc/abbrev-doc later to maint).
+
+ * "git p4" now honors init.defaultBranch configuration.
+   (merge 1b09d1917f js/p4-default-branch later to maint).
+
+ * Recently the format of an internal state file "rebase -i" uses has
+   been tightened up for consistency, which would hurt those who start
+   "rebase -i" with old git and then continue with new git.  Loosen
+   the reader side a bit (which we may want to tighten again in a year
+   or so).
+   (merge c779386182 jc/sequencer-stopped-sha-simplify later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
    (merge 32c83afc2c cw/ci-ghwf-check-ws-errors later to maint).
@@ -177,3 +192,10 @@ Fixes since v2.29
    (merge 9a82db1056 en/sequencer-rollback-lock-cleanup later to maint).
    (merge 4e1bee9a99 js/t7006-cleanup later to maint).
    (merge f5bcde6c58 es/tutorial-mention-asciidoc-early later to maint).
+   (merge 714d491af0 so/format-patch-doc-on-default-diff-format later to maint).
+   (merge 0795df4b9b rs/clear-commit-marks-in-repo later to maint).
+   (merge 9542d56379 sd/prompt-local-variable later to maint).
+   (merge 06d43fad18 rs/pack-write-hashwrite-simplify later to maint).
+   (merge b7e20b4373 mc/typofix later to maint).
+   (merge f6bcd9a8a4 js/test-whitespace-fixes later to maint).
+   (merge 53b67a801b js/test-file-size later to maint).
