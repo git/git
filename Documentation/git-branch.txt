@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git branch' [--color[=<when>] | --no-color] [--show-current]
-	[-v [--abbrev=<length> | --no-abbrev]]
+	[-v [--abbrev=<n> | --no-abbrev]]
 	[--column[=<options>] | --no-column] [--sort=<key>]
 	[--merged [<commit>]] [--no-merged [<commit>]]
 	[--contains [<commit>]] [--no-contains [<commit>]]
@@ -194,8 +194,10 @@ This option is only applicable in non-verbose mode.
 	Be more quiet when creating or deleting a branch, suppressing
 	non-error messages.
 
---abbrev=<length>::
-	Alter the sha1's minimum display length in the output listing.
+--abbrev=<n>::
+	In the verbose listing that show the commit object name,
+	show the shortest prefix that is at least '<n>' hexdigits
+	long that uniquely refers the object.
 	The default value is 7 and can be overridden by the `core.abbrev`
 	config option.
 
