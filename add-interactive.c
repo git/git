@@ -12,10 +12,10 @@
 #include "prompt.h"
 
 static void init_color(struct repository *r, struct add_i_state *s,
-		       const char *slot_name, char *dst,
+		       const char *section_and_slot, char *dst,
 		       const char *default_color)
 {
-	char *key = xstrfmt("color.interactive.%s", slot_name);
+	char *key = xstrfmt("color.%s", section_and_slot);
 	const char *value;
 
 	if (!s->use_color)
@@ -40,17 +40,20 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 			git_config_colorbool("color.interactive", value);
 	s->use_color = want_color(s->use_color);
 
-	init_color(r, s, "header", s->header_color, GIT_COLOR_BOLD);
-	init_color(r, s, "help", s->help_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s, "prompt", s->prompt_color, GIT_COLOR_BOLD_BLUE);
-	init_color(r, s, "error", s->error_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s, "fraginfo", s->fraginfo_color,
+	init_color(r, s, "interactive.header", s->header_color, GIT_COLOR_BOLD);
+	init_color(r, s, "interactive.help", s->help_color, GIT_COLOR_BOLD_RED);
+	init_color(r, s, "interactive.prompt", s->prompt_color,
+		   GIT_COLOR_BOLD_BLUE);
+	init_color(r, s, "interactive.error", s->error_color,
+		   GIT_COLOR_BOLD_RED);
+
+	init_color(r, s, "diff.frag", s->fraginfo_color,
 		   diff_get_color(s->use_color, DIFF_FRAGINFO));
-	init_color(r, s, "context", s->context_color,
+	init_color(r, s, "diff.context", s->context_color,
 		diff_get_color(s->use_color, DIFF_CONTEXT));
-	init_color(r, s, "old", s->file_old_color,
+	init_color(r, s, "diff.old", s->file_old_color,
 		diff_get_color(s->use_color, DIFF_FILE_OLD));
-	init_color(r, s, "new", s->file_new_color,
+	init_color(r, s, "diff.new", s->file_new_color,
 		diff_get_color(s->use_color, DIFF_FILE_NEW));
 
 	strlcpy(s->reset_color,
