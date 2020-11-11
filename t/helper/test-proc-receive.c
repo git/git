@@ -10,8 +10,11 @@ static const char *proc_receive_usage[] = {
 	NULL
 };
 
-static int die_version;
-static int die_readline;
+static int die_read_version;
+static int die_write_version;
+static int die_read_commands;
+static int die_read_push_options;
+static int die_write_report;
 static int no_push_options;
 static int use_atomic;
 static int use_push_options;
@@ -33,6 +36,9 @@ struct command {
 static void proc_receive_verison(struct packet_reader *reader) {
 	int server_version = 0;
 
+	if (die_read_version)
+		die("die with the --die-read-version option");
+
 	for (;;) {
 		int linelen;
 
@@ -52,8 +58,11 @@ static void proc_receive_verison(struct packet_reader *reader) {
 		}
 	}
 
-	if (server_version != 1 || die_version)
+	if (server_version != 1)
 		die("bad protocol version: %d", server_version);
+
+	if (die_write_version)
+		die("die with the --die-write-version option");
 
 	packet_write_fmt(1, "version=%d%c%s\n",
 			 version, '\0',
@@ -75,11 +84,13 @@ static void proc_receive_read_commands(struct packet_reader *reader,
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
+		if (die_read_commands)
+			die("die with the --die-read-commands option");
+
 		if (parse_oid_hex(reader->line, &old_oid, &p) ||
 		    *p++ != ' ' ||
 		    parse_oid_hex(p, &new_oid, &p) ||
-		    *p++ != ' ' ||
-		    die_readline)
+		    *p++ != ' ')
 			die("protocol error: expected 'old new ref', got '%s'",
 			    reader->line);
 		refname = p;
@@ -99,6 +110,9 @@ static void proc_receive_read_push_options(struct packet_reader *reader,
 	if (no_push_options || !use_push_options)
 	       return;
 
+	if (die_read_push_options)
+		die("die with the --die-read-push-options option");
+
 	while (1) {
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
@@ -117,10 +131,16 @@ int cmd__proc_receive(int argc, const char **argv)
 	struct option options[] = {
 		OPT_BOOL(0, "no-push-options", &no_push_options,
 			 "disable push options"),
-		OPT_BOOL(0, "die-version", &die_version,
-			 "die during version negotiation"),
-		OPT_BOOL(0, "die-readline", &die_readline,
-			 "die when readline"),
+		OPT_BOOL(0, "die-read-version", &die_read_version,
+			 "die when reading version"),
+		OPT_BOOL(0, "die-write-version", &die_write_version,
+			 "die when writing version"),
+		OPT_BOOL(0, "die-read-commands", &die_read_commands,
+			 "die when reading commands"),
+		OPT_BOOL(0, "die-read-push-options", &die_read_push_options,
+			 "die when reading push-options"),
+		OPT_BOOL(0, "die-write-report", &die_write_report,
+			 "die when writing report"),
 		OPT_STRING_LIST('r', "return", &returns, "old/new/ref/status/msg",
 				"return of results"),
 		OPT__VERBOSE(&verbose, "be verbose"),
@@ -136,7 +156,7 @@ int cmd__proc_receive(int argc, const char **argv)
 		usage_msg_opt("Too many arguments.", proc_receive_usage, options);
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
+			   PACKET_READ_GENTLE_ON_EOF);
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 	proc_receive_verison(&reader);
@@ -166,6 +186,8 @@ int cmd__proc_receive(int argc, const char **argv)
 				fprintf(stderr, "proc-receive> %s\n", item->string);
 	}
 
+	if (die_write_report)
+		die("die with the --die-write-report option");
 	if (returns.nr)
 		for_each_string_list_item(item, &returns)
 			packet_write_fmt(1, "%s\n", item->string);
