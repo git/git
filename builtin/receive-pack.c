@@ -2039,6 +2039,7 @@ static struct command *read_head_info(struct packet_reader *reader,
 		if (linelen < reader->pktlen) {
 			const char *feature_list = reader->line + linelen + 1;
 			const char *hash = NULL;
+			const char *client_sid;
 			int len = 0;
 			if (parse_feature_request(feature_list, "report-status"))
 				report_status = 1;
@@ -2061,6 +2062,12 @@ static struct command *read_head_info(struct packet_reader *reader,
 			}
 			if (xstrncmpz(the_hash_algo->name, hash, len))
 				die("error: unsupported object format '%s'", hash);
+			client_sid = parse_feature_value(feature_list, "session-id", &len, NULL);
+			if (client_sid) {
+				char *sid = xstrndup(client_sid, len);
+				trace2_data_string("transfer", NULL, "client-sid", client_sid);
+				free(sid);
+			}
 		}
 
 		if (!strcmp(reader->line, "push-cert")) {
