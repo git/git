@@ -14,6 +14,7 @@ struct strmap_entry {
 	struct hashmap_entry ent;
 	const char *key;
 	void *value;
+	/* strmap_entry may be allocated extra space to store the key at end */
 };
 
 int cmp_strmap_entry(const void *hashmap_cmp_fn_data,
