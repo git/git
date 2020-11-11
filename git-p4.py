@@ -1668,7 +1668,7 @@ class P4Submit(Command, P4UserMap):
     Submit after inspect the message file.
 
     The `p4-post-changelist` hook is invoked after the submit has successfully
-    occured in P4. It takes no parameters and is meant primarily for notification
+    occurred in P4. It takes no parameters and is meant primarily for notification
     and cannot affect the outcome of the git p4 submit action.
     """
 
