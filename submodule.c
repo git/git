@@ -499,12 +499,6 @@ void prepare_submodule_repo_env(struct strvec *out)
 		     DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 
-static void prepare_submodule_repo_env_in_gitdir(struct strvec *out)
-{
-	prepare_submodule_repo_env_no_git_dir(out);
-	strvec_pushf(out, "%s=.", GIT_DIR_ENVIRONMENT);
-}
-
 /*
  * Initialize a repository struct for a submodule based on the provided 'path'.
  *
@@ -1455,8 +1449,8 @@ static int get_next_submodule(struct child_process *cp,
 		if (task->repo) {
 			struct strbuf submodule_prefix = STRBUF_INIT;
 			child_process_init(cp);
-			cp->dir = task->repo->gitdir;
-			prepare_submodule_repo_env_in_gitdir(&cp->env_array);
+			cp->dir = task->repo->worktree;
+			prepare_submodule_repo_env(&cp->env_array);
 			cp->git_cmd = 1;
 			if (!spf->quiet)
 				strbuf_addf(err, _("Fetching submodule %s%s\n"),
@@ -1505,9 +1499,9 @@ static int get_next_submodule(struct child_process *cp,
 			    spf->prefix, task->sub->path);
 
 		child_process_init(cp);
-		prepare_submodule_repo_env_in_gitdir(&cp->env_array);
+		prepare_submodule_repo_env(&cp->env_array);
 		cp->git_cmd = 1;
-		cp->dir = task->repo->gitdir;
+		cp->dir = task->repo->worktree;
 
 		strvec_init(&cp->args);
 		strvec_pushv(&cp->args, spf->args.v);
