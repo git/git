@@ -242,7 +242,7 @@ test_expect_success 'branch --merged combined with --no-merged' '
 # Here "topic" tracks "master" with one extra commit, and "zzz" points to the
 # same tip as master The name "zzz" must come alphabetically after "topic"
 # as we process them in that order.
-test_expect_success 'branch --merged with --verbose' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'branch --merged with --verbose' '
 	git branch --track topic master &&
 	git branch zzz topic &&
 	git checkout topic &&
@@ -256,9 +256,9 @@ test_expect_success 'branch --merged with --verbose' '
 	test_cmp expect actual &&
 	git branch --verbose --merged topic >actual &&
 	cat >expect <<-EOF &&
-	  master $(git rev-parse --short master) second on master
-	* topic  $(git rev-parse --short topic ) [ahead 1] foo
-	  zzz    $(git rev-parse --short zzz   ) second on master
+	  main  $(git rev-parse --short main) second on main
+	* topic $(git rev-parse --short topic ) [ahead 1] foo
+	  zzz   $(git rev-parse --short zzz   ) second on main
 	EOF
 	test_i18ncmp expect actual
 '

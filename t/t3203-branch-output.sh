@@ -329,7 +329,7 @@ test_expect_success '--color overrides auto-color' '
 	test_cmp expect.color actual
 '
 
-test_expect_success 'verbose output lists worktree path' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH 'verbose output lists worktree path' '
 	one=$(git rev-parse --short HEAD) &&
 	two=$(git rev-parse --short master) &&
 	cat >expect <<-EOF &&
@@ -337,7 +337,7 @@ test_expect_success 'verbose output lists worktree path' '
 	  ambiguous                    $one one
 	  branch-one                   $two two
 	+ branch-two                   $one ($(pwd)/worktree_dir) one
-	  master                       $two two
+	  main                         $two two
 	  ref-to-branch                $two two
 	  ref-to-remote                $two two
 	EOF

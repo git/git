@@ -88,6 +88,13 @@ test_expect_success 'symlink becomes file' '
 	'
 test_debug 'cat patch'
 
+test_expect_success 'symlink becomes file, in reverse' '
+	git checkout -f foo-symlinked-to-bar &&
+	git diff-tree -p HEAD foo-back-to-file > patch &&
+	git checkout foo-back-to-file &&
+	git apply -R --index < patch
+	'
+
 test_expect_success 'binary file becomes symlink' '
 	git checkout -f foo-becomes-binary &&
 	git diff-tree -p --binary HEAD foo-symlinked-to-bar > patch &&

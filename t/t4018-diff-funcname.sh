@@ -27,6 +27,7 @@ test_expect_success 'setup' '
 
 diffpatterns="
 	ada
+	bash
 	bibtex
 	cpp
 	csharp

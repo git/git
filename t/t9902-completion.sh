@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2012 Felipe Contreras
+# Copyright (c) 2012-2020 Felipe Contreras
 #
 
 test_description='test bash completion'
@@ -1055,13 +1055,13 @@ test_expect_success 'teardown after filtering matching refs' '
 	git -C otherrepo branch -D matching/branch-in-other
 '
 
-test_expect_success '__git_refs - for-each-ref format specifiers in prefix' '
+test_expect_success PREPARE_FOR_MAIN_BRANCH '__git_refs - for-each-ref format specifiers in prefix' '
 	cat >expected <<-EOF &&
 	evil-%%-%42-%(refname)..master
 	EOF
 	(
-		cur="evil-%%-%42-%(refname)..mas" &&
-		__git_refs "" "" "evil-%%-%42-%(refname).." mas >"$actual"
+		cur="evil-%%-%42-%(refname)..mai" &&
+		__git_refs "" "" "evil-%%-%42-%(refname).." mai >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '

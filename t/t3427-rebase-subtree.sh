@@ -19,7 +19,7 @@ commit_message() {
 #                             \
 # README ---------------------- Add subproject master - topic_4 - files_subtree/topic_5
 #
-# Where the merge moves the files master[123].t into the subdirectory
+# Where the merge moves the files topic_[123].t into the subdirectory
 # files_subtree/ and topic_4 as well as files_subtree/topic_5 add files to that
 # directory directly.
 #

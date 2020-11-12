@@ -32,6 +32,10 @@ test_expect_success 'apply same filename with independent changes' '
 
 test_expect_success 'apply same filename with overlapping changes' '
 	git reset --hard &&
+
+	# Store same_fn so that we can check apply -R in next test
+	cp same_fn same_fn1 &&
+
 	modify "s/^d/z/" same_fn &&
 	git diff > patch0 &&
 	git add same_fn &&
@@ -41,6 +45,11 @@ test_expect_success 'apply same filename with overlapping changes' '
 	git reset --hard &&
 	git apply patch0 &&
 	test_cmp same_fn same_fn2
+'
+
+test_expect_success 'apply same filename with overlapping changes, in reverse' '
+	git apply -R patch0 &&
+	test_cmp same_fn same_fn1
 '
 
 test_expect_success 'apply same new filename after rename' '

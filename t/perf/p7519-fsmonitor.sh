@@ -114,32 +114,68 @@ test_expect_success "setup for fsmonitor" '
 	fi &&
 
 	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
-	git update-index --fsmonitor
+	git update-index --fsmonitor &&
+	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
+	for i in $(test_seq 1 10); do touch 10_files/$i; done &&
+	for i in $(test_seq 1 100); do touch 100_files/$i; done &&
+	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
+	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
+	git add 1_file 10_files 100_files 1000_files 10000_files &&
+	git commit -m "Add files" &&
+	git status  # Warm caches
 '
 
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
+test_perf_w_drop_caches () {
+	if test -n "$GIT_PERF_7519_DROP_CACHE"; then
+		test-tool drop-caches
+	fi
 
-test_perf "status (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status
-'
+	test_perf "$@"
+}
 
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
+test_fsmonitor_suite() {
+	test_perf_w_drop_caches "status (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git status
+	'
 
-test_perf "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status -uno
-'
+	test_perf_w_drop_caches "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git status -uno
+	'
 
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
+	test_perf_w_drop_caches "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git status -uall
+	'
 
-test_perf "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status -uall
-'
+	test_perf_w_drop_caches "diff (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git diff
+	'
+
+	test_perf_w_drop_caches "diff -- 0_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git diff -- 1_file
+	'
+
+	test_perf_w_drop_caches "diff -- 10_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git diff -- 10_files
+	'
+
+	test_perf_w_drop_caches "diff -- 100_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git diff -- 100_files
+	'
+
+	test_perf_w_drop_caches "diff -- 1000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git diff -- 1000_files
+	'
+
+	test_perf_w_drop_caches "diff -- 10000_files (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git diff -- 10000_files
+	'
+
+	test_perf_w_drop_caches "add (fsmonitor=$INTEGRATION_SCRIPT)" '
+		git add  --all
+	'
+}
+
+test_fsmonitor_suite
 
 test_expect_success "setup without fsmonitor" '
 	unset INTEGRATION_SCRIPT &&
@@ -147,29 +183,7 @@ test_expect_success "setup without fsmonitor" '
 	git update-index --no-fsmonitor
 '
 
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
-
-test_perf "status (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status
-'
-
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
-
-test_perf "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status -uno
-'
-
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
-
-test_perf "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status -uall
-'
+test_fsmonitor_suite
 
 if test_have_prereq WATCHMAN
 then

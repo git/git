@@ -314,8 +314,6 @@ int sequencer_remove_state(struct replay_opts *opts)
 		}
 	}
 
-	free(opts->committer_name);
-	free(opts->committer_email);
 	free(opts->gpg_sign);
 	free(opts->strategy);
 	for (i = 0; i < opts->xopts_nr; i++)
@@ -1460,8 +1458,8 @@ static int try_to_commit(struct repository *r,
 		} else {
 			reset_ident_date();
 		}
-		committer = fmt_ident(opts->committer_name,
-				      opts->committer_email,
+		committer = fmt_ident(getenv("GIT_COMMITTER_NAME"),
+				      getenv("GIT_COMMITTER_EMAIL"),
 				      WANT_COMMITTER_IDENT,
 				      opts->ignore_date ? NULL : date.buf,
 				      IDENT_STRICT);
@@ -2653,7 +2651,7 @@ static int read_populate_opts(struct replay_opts *opts)
 		}
 
 		if (read_oneliner(&buf, rebase_path_squash_onto(), 0)) {
-			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0) {
+			if (get_oid_committish(buf.buf, &opts->squash_onto) < 0) {
 				ret = error(_("unusable squash-onto"));
 				goto done_rebase_i;
 			}
@@ -3677,7 +3675,9 @@ static int do_merge(struct repository *r,
 		strvec_push(&cmd.args, "-F");
 		strvec_push(&cmd.args, git_path_merge_msg(r));
 		if (opts->gpg_sign)
-			strvec_push(&cmd.args, opts->gpg_sign);
+			strvec_pushf(&cmd.args, "-S%s", opts->gpg_sign);
+		else
+			strvec_push(&cmd.args, "--no-gpg-sign");
 
 		/* Add the tips to be merged */
 		for (j = to_merge; j; j = j->next)
@@ -3689,7 +3689,6 @@ static int do_merge(struct repository *r,
 				NULL, 0);
 		rollback_lock_file(&lock);
 
-		rollback_lock_file(&lock);
 		ret = run_command(&cmd);
 
 		/* force re-reading of the cache */
@@ -4467,22 +4466,6 @@ static int commit_staged_changes(struct repository *r,
 	return 0;
 }
 
-static int init_committer(struct replay_opts *opts)
-{
-	struct ident_split id;
-	const char *committer;
-
-	committer = git_committer_info(IDENT_STRICT);
-	if (split_ident_line(&id, committer, strlen(committer)) < 0)
-		return error(_("invalid committer '%s'"), committer);
-	opts->committer_name =
-		xmemdupz(id.name_begin, id.name_end - id.name_begin);
-	opts->committer_email =
-		xmemdupz(id.mail_begin, id.mail_end - id.mail_begin);
-
-	return 0;
-}
-
 int sequencer_continue(struct repository *r, struct replay_opts *opts)
 {
 	struct todo_list todo_list = TODO_LIST_INIT;
@@ -4494,9 +4477,6 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 	if (read_populate_opts(opts))
 		return -1;
 	if (is_rebase_i(opts)) {
-		if (opts->committer_date_is_author_date && init_committer(opts))
-			return -1;
-
 		if ((res = read_populate_todo(r, &todo_list, opts)))
 			goto release_todo_list;
 
@@ -5390,9 +5370,6 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	}
 
 	res = -1;
-
-	if (opts->committer_date_is_author_date && init_committer(opts))
-		goto cleanup;
 
 	if (checkout_onto(r, opts, onto_name, &oid, orig_head))
 		goto cleanup;

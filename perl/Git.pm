@@ -9,7 +9,7 @@ package Git;
 
 use 5.008;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 
 use File::Temp ();
 use File::Spec ();

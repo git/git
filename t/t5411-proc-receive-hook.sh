@@ -5,13 +5,16 @@
 
 test_description='Test proc-receive hook'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/t5411/common-functions.sh
 
 setup_upstream_and_workbench () {
-	# Refs of upstream : master(A)
-	# Refs of workbench: master(A)  tags/v123
+	# Refs of upstream : main(A)
+	# Refs of workbench: main(A)  tags/v123
 	test_expect_success "setup upstream and workbench" '
 		rm -rf upstream.git &&
 		rm -rf workbench &&
@@ -25,10 +28,10 @@ setup_upstream_and_workbench () {
 			git config core.abbrev 7 &&
 			git tag -m "v123" v123 $A &&
 			git remote add origin ../upstream.git &&
-			git push origin master &&
-			git update-ref refs/heads/master $A $B &&
+			git push origin main &&
+			git update-ref refs/heads/main $A $B &&
 			git -C ../upstream.git update-ref \
-				refs/heads/master $A $B
+				refs/heads/main $A $B
 		) &&
 		TAG=$(git -C workbench rev-parse v123) &&
 
@@ -99,8 +102,8 @@ start_httpd
 # Re-initialize the upstream repository and local workbench.
 setup_upstream_and_workbench
 
-# Refs of upstream : master(A)
-# Refs of workbench: master(A)  tags/v123
+# Refs of upstream : main(A)
+# Refs of workbench: main(A)  tags/v123
 test_expect_success "setup for HTTP protocol" '
 	git -C upstream.git config http.receivepack true &&
 	upstream="$HTTPD_DOCUMENT_ROOT_PATH/upstream.git" &&

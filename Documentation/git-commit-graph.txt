@@ -39,7 +39,9 @@ COMMANDS
 --------
 'write'::
 
-Write a commit-graph file based on the commits found in packfiles.
+Write a commit-graph file based on the commits found in packfiles. If
+the config option `core.commitGraph` is disabled, then this command will
+output a warning, then return success without writing a commit-graph file.
 +
 With the `--stdin-packs` option, generate the new commit graph by
 walking objects only in the specified pack-indexes. (Cannot be combined

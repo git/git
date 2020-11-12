@@ -164,7 +164,7 @@ can also be used to refuse the commit after inspecting the message
 file.
 
 The default 'commit-msg' hook, when enabled, detects duplicate
-"Signed-off-by" lines, and aborts the commit if one is found.
+`Signed-off-by` trailers, and aborts the commit if one is found.
 
 post-commit
 ~~~~~~~~~~~
@@ -655,7 +655,7 @@ p4-post-changelist
 This hook is invoked by `git-p4 submit`.
 
 The `p4-post-changelist` hook is invoked after the submit has
-successfully occured in P4. It takes no parameters and is meant
+successfully occurred in P4. It takes no parameters and is meant
 primarily for notification and cannot affect the outcome of the
 git p4 submit action.
 

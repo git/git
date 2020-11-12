@@ -1042,7 +1042,7 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 		describe_detached_head(_("Previous HEAD position was"), old_commit);
 
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_all(ALL_REV_FLAGS);
+	repo_clear_commit_marks(the_repository, ALL_REV_FLAGS);
 }
 
 static int switch_branches(const struct checkout_opts *opts,

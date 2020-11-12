@@ -1277,20 +1277,114 @@ test_expect_success '6a: Tricky rename/delete' '
 	)
 '
 
-# Testcase 6b, Same rename done on both sides
+# Testcase 6b1, Same rename done on both sides
+#   (Related to testcase 6b2 and 8e)
+#   Commit O: z/{b,c,d,e}
+#   Commit A: y/{b,c,d}, x/e
+#   Commit B: y/{b,c,d}, z/{e,f}
+#   Expected: y/{b,c,d,f}, x/e
+#   Note: Directory rename detection says A renamed z/ -> y/ (3 paths renamed
+#         to y/ and only 1 renamed to x/), therefore the new file 'z/f' in B
+#         should be moved to 'y/f'.
+#
+#         This is a bit of an edge case where any behavior might surprise users,
+#         whether that is treating A as renaming z/ -> y/, treating A as renaming
+#         z/ -> x/, or treating A as not doing any directory rename.  However, I
+#         think this answer is the least confusing and most consistent with the
+#         rules elsewhere.
+#
+#         A note about z/ -> x/, since it may not be clear how that could come
+#         about: If we were to ignore files renamed by both sides
+#         (i.e. z/{b,c,d}), as directory rename detection did in git-2.18 thru
+#         at least git-2.28, then we would note there are no renames from z/ to
+#         y/ and one rename from z/ to x/ and thus come to the conclusion that
+#         A renamed z/ -> x/.  This seems more confusing for end users than a
+#         rename of z/ to y/, it makes directory rename detection behavior
+#         harder for them to predict.  As such, we modified the rule, changed
+#         the behavior on testcases 6b2 and 8e, and introduced this 6b1 testcase.
+
+test_setup_6b1 () {
+	test_create_repo 6b1 &&
+	(
+		cd 6b1 &&
+
+		mkdir z &&
+		echo b >z/b &&
+		echo c >z/c &&
+		echo d >z/d &&
+		echo e >z/e &&
+		git add z &&
+		test_tick &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git mv z y &&
+		mkdir x &&
+		git mv y/e x/e &&
+		test_tick &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		git mv z y &&
+		mkdir z &&
+		git mv y/e z/e &&
+		echo f >z/f &&
+		git add z/f &&
+		test_tick &&
+		git commit -m "B"
+	)
+}
+
+test_expect_failure '6b1: Same renames done on both sides, plus another rename' '
+	test_setup_6b1 &&
+	(
+		cd 6b1 &&
+
+		git checkout A^0 &&
+
+		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 5 out &&
+		git ls-files -u >out &&
+		test_line_count = 0 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		git rev-parse >actual \
+			HEAD:y/b HEAD:y/c HEAD:y/d HEAD:x/e HEAD:y/f &&
+		git rev-parse >expect \
+			O:z/b    O:z/c    O:z/d    O:z/e    B:z/f &&
+		test_cmp expect actual
+	)
+'
+
+# Testcase 6b2, Same rename done on both sides
 #   (Related to testcases 6c and 8e)
 #   Commit O: z/{b,c}
 #   Commit A: y/{b,c}
 #   Commit B: y/{b,c}, z/d
-#   Expected: y/{b,c}, z/d
-#   Note: If we did directory rename detection here, we'd move z/d into y/,
-#         but B did that rename and still decided to put the file into z/,
-#         so we probably shouldn't apply directory rename detection for it.
+#   Expected: y/{b,c,d}
+#   Alternate: y/{b,c}, z/d
+#   Note: Directory rename detection says A renamed z/ -> y/, therefore the new
+#         file 'z/d' in B should be moved to 'y/d'.
+#
+#         We could potentially ignore the renames of z/{b,c} on side A since
+#         those were renamed on both sides.  However, it's a bit of a corner
+#         case because what if there was also a z/e that side A moved to x/e
+#         and side B left alone?  If we used the "ignore renames done on both
+#         sides" logic, then we'd compute that A renamed z/ -> x/, and move
+#         z/d to x/d.  That seems more surprising and uglier than allowing
+#         the z/ -> y/ rename.
 
-test_setup_6b () {
-	test_create_repo 6b &&
+test_setup_6b2 () {
+	test_create_repo 6b2 &&
 	(
-		cd 6b &&
+		cd 6b2 &&
 
 		mkdir z &&
 		echo b >z/b &&
@@ -1318,10 +1412,10 @@ test_setup_6b () {
 	)
 }
 
-test_expect_success '6b: Same rename done on both sides' '
-	test_setup_6b &&
+test_expect_failure '6b2: Same rename done on both sides' '
+	test_setup_6b2 &&
 	(
-		cd 6b &&
+		cd 6b2 &&
 
 		git checkout A^0 &&
 
@@ -1335,7 +1429,7 @@ test_expect_success '6b: Same rename done on both sides' '
 		test_line_count = 1 out &&
 
 		git rev-parse >actual \
-			HEAD:y/b HEAD:y/c HEAD:z/d &&
+			HEAD:y/b HEAD:y/c HEAD:y/d &&
 		git rev-parse >expect \
 			O:z/b    O:z/c    B:z/d &&
 		test_cmp expect actual
@@ -1343,7 +1437,7 @@ test_expect_success '6b: Same rename done on both sides' '
 '
 
 # Testcase 6c, Rename only done on same side
-#   (Related to testcases 6b and 8e)
+#   (Related to testcases 6b1, 6b2, and 8e)
 #   Commit O: z/{b,c}
 #   Commit A: z/{b,c} (no change)
 #   Commit B: y/{b,c}, z/d
@@ -2269,14 +2363,22 @@ test_expect_success '8d: rename/delete...or not?' '
 # Notes: In commit A, directory z got renamed to y.  In commit B, directory z
 #        did NOT get renamed; the directory is still present; instead it is
 #        considered to have just renamed a subset of paths in directory z
-#        elsewhere.  However, this is much like testcase 6b (where commit B
-#        moves all the original paths out of z/ but opted to keep d
-#        within z/).  This makes it hard to judge where d should end up.
+#        elsewhere.  This is much like testcase 6b2 (where commit B moves all
+#        the original paths out of z/ but opted to keep d within z/).
 #
-#        It's possible that users would get confused about this, but what
-#        should we do instead?  It's not at all clear to me whether z/d or
-#        y/d or something else is a better resolution here, and other cases
-#        start getting really tricky, so I just picked one.
+#        It was not clear in the past what should be done with this testcase;
+#        in fact, I noted that I "just picked one" previously.  However,
+#        following the new logic for testcase 6b2, we should take the rename
+#        and move z/d to y/d.
+#
+#        6b1, 6b2, and this case are definitely somewhat fuzzy in terms of
+#        whether they are optimal for end users, but (a) the default for
+#        directory rename detection is to mark these all as conflicts
+#        anyway, (b) it feels like this is less prone to higher order corner
+#        case confusion, and (c) the current algorithm requires less global
+#        knowledge (i.e. less coupling in the algorithm between renames done
+#        on both sides) which thus means users are better able to predict
+#        the behavior, and predict it without computing as many details.
 
 test_setup_8e () {
 	test_create_repo 8e &&
@@ -3947,31 +4049,35 @@ test_expect_success '12a: Moving one directory hierarchy into another' '
 	)
 '
 
-# Testcase 12b, Moving two directory hierarchies into each other
+# Testcase 12b1, Moving two directory hierarchies into each other
 #   (Related to testcases 1c and 12c)
 #   Commit O: node1/{leaf1, leaf2}, node2/{leaf3, leaf4}
 #   Commit A: node1/{leaf1, leaf2, node2/{leaf3, leaf4}}
 #   Commit B: node2/{leaf3, leaf4, node1/{leaf1, leaf2}}
-#   Expected: node1/node2/node1/{leaf1, leaf2},
-#             node2/node1/node2/{leaf3, leaf4}
-#   NOTE: Without directory renames, we would expect
-#                   node2/node1/{leaf1, leaf2},
-#                   node1/node2/{leaf3, leaf4}
-#         with directory rename detection, we note that
+#   Expected: node1/node2/{leaf3, leaf4}
+#             node2/node1/{leaf1, leaf2}
+#   NOTE: If there were new files added to the old node1/ or node2/ directories,
+#         then we would need to detect renames for those directories and would
+#         find that:
 #             commit A renames node2/ -> node1/node2/
 #             commit B renames node1/ -> node2/node1/
-#         therefore, applying those directory renames to the initial result
-#         (making all four paths experience a transitive renaming), yields
-#         the expected result.
-#
-#         You may ask, is it weird to have two directories rename each other?
-#         To which, I can do no more than shrug my shoulders and say that
-#         even simple rules give weird results when given weird inputs.
+#         Applying those directory renames to the initial result (making all
+#         four paths experience a transitive renaming), yields
+#             node1/node2/node1/{leaf1, leaf2}
+#             node2/node1/node2/{leaf3, leaf4}
+#         as the result.  It may be really weird to have two directories
+#         rename each other, but simple rules give weird results when given
+#         weird inputs.  HOWEVER, the "If" at the beginning of those NOTE was
+#         false; there were no new files added and thus there is no directory
+#         rename detection to perform.  As such, we just have simple renames
+#         and the expected answer is:
+#             node1/node2/{leaf3, leaf4}
+#             node2/node1/{leaf1, leaf2}
 
-test_setup_12b () {
-	test_create_repo 12b &&
+test_setup_12b1 () {
+	test_create_repo 12b1 &&
 	(
-		cd 12b &&
+		cd 12b1 &&
 
 		mkdir -p node1 node2 &&
 		echo leaf1 >node1/leaf1 &&
@@ -3998,10 +4104,10 @@ test_setup_12b () {
 	)
 }
 
-test_expect_success '12b: Moving two directory hierarchies into each other' '
-	test_setup_12b &&
+test_expect_failure '12b1: Moving two directory hierarchies into each other' '
+	test_setup_12b1 &&
 	(
-		cd 12b &&
+		cd 12b1 &&
 
 		git checkout A^0 &&
 
@@ -4011,10 +4117,10 @@ test_expect_success '12b: Moving two directory hierarchies into each other' '
 		test_line_count = 4 out &&
 
 		git rev-parse >actual \
-			HEAD:node1/node2/node1/leaf1 \
-			HEAD:node1/node2/node1/leaf2 \
-			HEAD:node2/node1/node2/leaf3 \
-			HEAD:node2/node1/node2/leaf4 &&
+			HEAD:node2/node1/leaf1 \
+			HEAD:node2/node1/leaf2 \
+			HEAD:node1/node2/leaf3 \
+			HEAD:node1/node2/leaf4 &&
 		git rev-parse >expect \
 			O:node1/leaf1 \
 			O:node1/leaf2 \
@@ -4024,7 +4130,104 @@ test_expect_success '12b: Moving two directory hierarchies into each other' '
 	)
 '
 
-# Testcase 12c, Moving two directory hierarchies into each other w/ content merge
+# Testcase 12b2, Moving two directory hierarchies into each other
+#   (Related to testcases 1c and 12c)
+#   Commit O: node1/{leaf1, leaf2}, node2/{leaf3, leaf4}
+#   Commit A: node1/{leaf1, leaf2, leaf5, node2/{leaf3, leaf4}}
+#   Commit B: node2/{leaf3, leaf4, leaf6, node1/{leaf1, leaf2}}
+#   Expected: node1/node2/{node1/{leaf1, leaf2}, leaf6}
+#             node2/node1/{node2/{leaf3, leaf4}, leaf5}
+#   NOTE: Without directory renames, we would expect
+#             A: node2/leaf3 -> node1/node2/leaf3
+#             A: node2/leaf1 -> node1/node2/leaf4
+#             A: Adds           node1/leaf5
+#             B: node1/leaf1 -> node2/node1/leaf1
+#             B: node1/leaf2 -> node2/node1/leaf2
+#             B: Adds           node2/leaf6
+#         with directory rename detection, we note that
+#             commit A renames node2/ -> node1/node2/
+#             commit B renames node1/ -> node2/node1/
+#         therefore, applying A's directory rename to the paths added in B gives:
+#             B: node1/leaf1 -> node1/node2/node1/leaf1
+#             B: node1/leaf2 -> node1/node2/node1/leaf2
+#             B: Adds           node1/node2/leaf6
+#         and applying B's directory rename to the paths added in A gives:
+#             A: node2/leaf3 -> node2/node1/node2/leaf3
+#             A: node2/leaf1 -> node2/node1/node2/leaf4
+#             A: Adds           node2/node1/leaf5
+#         resulting in the expected
+#             node1/node2/{node1/{leaf1, leaf2}, leaf6}
+#             node2/node1/{node2/{leaf3, leaf4}, leaf5}
+#
+#         You may ask, is it weird to have two directories rename each other?
+#         To which, I can do no more than shrug my shoulders and say that
+#         even simple rules give weird results when given weird inputs.
+
+test_setup_12b2 () {
+	test_create_repo 12b2 &&
+	(
+		cd 12b2 &&
+
+		mkdir -p node1 node2 &&
+		echo leaf1 >node1/leaf1 &&
+		echo leaf2 >node1/leaf2 &&
+		echo leaf3 >node2/leaf3 &&
+		echo leaf4 >node2/leaf4 &&
+		git add node1 node2 &&
+		test_tick &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git mv node2/ node1/ &&
+		echo leaf5 >node1/leaf5 &&
+		git add node1/leaf5 &&
+		test_tick &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		git mv node1/ node2/ &&
+		echo leaf6 >node2/leaf6 &&
+		git add node2/leaf6 &&
+		test_tick &&
+		git commit -m "B"
+	)
+}
+
+test_expect_success '12b2: Moving two directory hierarchies into each other' '
+	test_setup_12b2 &&
+	(
+		cd 12b2 &&
+
+		git checkout A^0 &&
+
+		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 6 out &&
+
+		git rev-parse >actual \
+			HEAD:node1/node2/node1/leaf1 \
+			HEAD:node1/node2/node1/leaf2 \
+			HEAD:node2/node1/node2/leaf3 \
+			HEAD:node2/node1/node2/leaf4 \
+			HEAD:node2/node1/leaf5       \
+			HEAD:node1/node2/leaf6       &&
+		git rev-parse >expect \
+			O:node1/leaf1 \
+			O:node1/leaf2 \
+			O:node2/leaf3 \
+			O:node2/leaf4 \
+			A:node1/leaf5 \
+			B:node2/leaf6 &&
+		test_cmp expect actual
+	)
+'
+
+# Testcase 12c1, Moving two directory hierarchies into each other w/ content merge
 #   (Related to testcase 12b)
 #   Commit O: node1/{       leaf1_1, leaf2_1}, node2/{leaf3_1, leaf4_1}
 #   Commit A: node1/{       leaf1_2, leaf2_2,  node2/{leaf3_2, leaf4_2}}
@@ -4032,13 +4235,13 @@ test_expect_success '12b: Moving two directory hierarchies into each other' '
 #   Expected: Content merge conflicts for each of:
 #               node1/node2/node1/{leaf1, leaf2},
 #               node2/node1/node2/{leaf3, leaf4}
-#   NOTE: This is *exactly* like 12c, except that every path is modified on
+#   NOTE: This is *exactly* like 12b1, except that every path is modified on
 #         each side of the merge.
 
-test_setup_12c () {
-	test_create_repo 12c &&
+test_setup_12c1 () {
+	test_create_repo 12c1 &&
 	(
-		cd 12c &&
+		cd 12c1 &&
 
 		mkdir -p node1 node2 &&
 		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf1\n" >node1/leaf1 &&
@@ -4069,15 +4272,111 @@ test_setup_12c () {
 	)
 }
 
-test_expect_success '12c: Moving one directory hierarchy into another w/ content merge' '
-	test_setup_12c &&
+test_expect_failure '12c1: Moving one directory hierarchy into another w/ content merge' '
+	test_setup_12c1 &&
 	(
-		cd 12c &&
+		cd 12c1 &&
 
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 &&
 
+		git ls-files -u >out &&
+		test_line_count = 12 out &&
+
+		git rev-parse >actual \
+			:1:node2/node1/leaf1 \
+			:1:node2/node1/leaf2 \
+			:1:node1/node2/leaf3 \
+			:1:node1/node2/leaf4 \
+			:2:node2/node1/leaf1 \
+			:2:node2/node1/leaf2 \
+			:2:node1/node2/leaf3 \
+			:2:node1/node2/leaf4 \
+			:3:node2/node1/leaf1 \
+			:3:node2/node1/leaf2 \
+			:3:node1/node2/leaf3 \
+			:3:node1/node2/leaf4 &&
+		git rev-parse >expect \
+			O:node1/leaf1 \
+			O:node1/leaf2 \
+			O:node2/leaf3 \
+			O:node2/leaf4 \
+			A:node1/leaf1 \
+			A:node1/leaf2 \
+			A:node1/node2/leaf3 \
+			A:node1/node2/leaf4 \
+			B:node2/node1/leaf1 \
+			B:node2/node1/leaf2 \
+			B:node2/leaf3 \
+			B:node2/leaf4 &&
+		test_cmp expect actual
+	)
+'
+
+# Testcase 12c2, Moving two directory hierarchies into each other w/ content merge
+#   (Related to testcase 12b)
+#   Commit O: node1/{       leaf1_1, leaf2_1}, node2/{leaf3_1, leaf4_1}
+#   Commit A: node1/{       leaf1_2, leaf2_2,  node2/{leaf3_2, leaf4_2}, leaf5}
+#   Commit B: node2/{node1/{leaf1_3, leaf2_3},        leaf3_3, leaf4_3,  leaf6}
+#   Expected: Content merge conflicts for each of:
+#               node1/node2/node1/{leaf1, leaf2}
+#               node2/node1/node2/{leaf3, leaf4}
+#             plus
+#               node2/node1/leaf5
+#               node1/node2/leaf6
+#   NOTE: This is *exactly* like 12b2, except that every path from O is modified
+#         on each side of the merge.
+
+test_setup_12c2 () {
+	test_create_repo 12c2 &&
+	(
+		cd 12c2 &&
+
+		mkdir -p node1 node2 &&
+		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf1\n" >node1/leaf1 &&
+		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf2\n" >node1/leaf2 &&
+		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf3\n" >node2/leaf3 &&
+		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf4\n" >node2/leaf4 &&
+		git add node1 node2 &&
+		test_tick &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git mv node2/ node1/ &&
+		for i in `git ls-files`; do echo side A >>$i; done &&
+		git add -u &&
+		echo leaf5 >node1/leaf5 &&
+		git add node1/leaf5 &&
+		test_tick &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		git mv node1/ node2/ &&
+		for i in `git ls-files`; do echo side B >>$i; done &&
+		git add -u &&
+		echo leaf6 >node2/leaf6 &&
+		git add node2/leaf6 &&
+		test_tick &&
+		git commit -m "B"
+	)
+}
+
+test_expect_success '12c2: Moving one directory hierarchy into another w/ content merge' '
+	test_setup_12c2 &&
+	(
+		cd 12c2 &&
+
+		git checkout A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 14 out &&
 		git ls-files -u >out &&
 		test_line_count = 12 out &&
 
@@ -4093,7 +4392,9 @@ test_expect_success '12c: Moving one directory hierarchy into another w/ content
 			:3:node1/node2/node1/leaf1 \
 			:3:node1/node2/node1/leaf2 \
 			:3:node2/node1/node2/leaf3 \
-			:3:node2/node1/node2/leaf4 &&
+			:3:node2/node1/node2/leaf4 \
+			:0:node2/node1/leaf5       \
+			:0:node1/node2/leaf6       &&
 		git rev-parse >expect \
 			O:node1/leaf1 \
 			O:node1/leaf2 \
@@ -4106,7 +4407,9 @@ test_expect_success '12c: Moving one directory hierarchy into another w/ content
 			B:node2/node1/leaf1 \
 			B:node2/node1/leaf2 \
 			B:node2/leaf3 \
-			B:node2/leaf4 &&
+			B:node2/leaf4 \
+			A:node1/leaf5 \
+			B:node2/leaf6 &&
 		test_cmp expect actual
 	)
 '
@@ -4224,6 +4527,201 @@ test_expect_success '12e: Rename/merge subdir into the root, variant 2' '
 		test_must_fail git rev-parse HEAD:a/b/bar.t &&
 		test_path_is_missing a/ &&
 		test_path_is_file bar.t
+	)
+'
+
+# Testcase 12f, Rebase of patches with big directory rename
+#   Commit O:
+#              dir/subdir/{a,b,c,d,e_O,Makefile_TOP_O}
+#              dir/subdir/tweaked/{f,g,h,Makefile_SUB_O}
+#              dir/unchanged/<LOTS OF FILES>
+#   Commit A:
+#     (Remove f & g, move e into newsubdir, rename dir/->folder/, modify files)
+#              folder/subdir/{a,b,c,d,Makefile_TOP_A}
+#              folder/subdir/newsubdir/e_A
+#              folder/subdir/tweaked/{h,Makefile_SUB_A}
+#              folder/unchanged/<LOTS OF FILES>
+#   Commit B1:
+#     (add newfile.{c,py}, modify underscored files)
+#              dir/{a,b,c,d,e_B1,Makefile_TOP_B1,newfile.c}
+#              dir/tweaked/{f,g,h,Makefile_SUB_B1,newfile.py}
+#              dir/unchanged/<LOTS OF FILES>
+#   Commit B2:
+#     (Modify e further, add newfile.rs)
+#              dir/{a,b,c,d,e_B2,Makefile_TOP_B1,newfile.c,newfile.rs}
+#              dir/tweaked/{f,g,h,Makefile_SUB_B1,newfile.py}
+#              dir/unchanged/<LOTS OF FILES>
+#   Expected:
+#          B1-picked:
+#              folder/subdir/{a,b,c,d,Makefile_TOP_Merge1,newfile.c}
+#              folder/subdir/newsubdir/e_Merge1
+#              folder/subdir/tweaked/{h,Makefile_SUB_Merge1,newfile.py}
+#              folder/unchanged/<LOTS OF FILES>
+#          B2-picked:
+#              folder/subdir/{a,b,c,d,Makefile_TOP_Merge1,newfile.c,newfile.rs}
+#              folder/subdir/newsubdir/e_Merge2
+#              folder/subdir/tweaked/{h,Makefile_SUB_Merge1,newfile.py}
+#              folder/unchanged/<LOTS OF FILES>
+#
+# Notes: This testcase happens to exercise lots of the
+#        optimization-specific codepaths in merge-ort, and also
+#        demonstrated a failing of the directory rename detection algorithm
+#        in merge-recursive; newfile.c should not get pushed into
+#        folder/subdir/newsubdir/, yet merge-recursive put it there because
+#        the rename of dir/subdir/{a,b,c,d} -> folder/subdir/{a,b,c,d}
+#        looks like
+#            dir/ -> folder/,
+#        whereas the rename of dir/subdir/e -> folder/subdir/newsubdir/e
+#        looks like
+#            dir/subdir/ -> folder/subdir/newsubdir/
+#        and if we note that newfile.c is found in dir/subdir/, we might
+#        overlook the dir/ -> folder/ rule that has more weight.
+
+test_setup_12f () {
+	test_create_repo 12f &&
+	(
+		cd 12f &&
+
+		mkdir -p dir/unchanged &&
+		mkdir -p dir/subdir/tweaked &&
+		echo a >dir/subdir/a &&
+		echo b >dir/subdir/b &&
+		echo c >dir/subdir/c &&
+		echo d >dir/subdir/d &&
+		test_seq 1 10 >dir/subdir/e &&
+		test_seq 10 20 >dir/subdir/Makefile &&
+		echo f >dir/subdir/tweaked/f &&
+		echo g >dir/subdir/tweaked/g &&
+		echo h >dir/subdir/tweaked/h &&
+		test_seq 20 30 >dir/subdir/tweaked/Makefile &&
+		for i in `test_seq 1 88`; do
+			echo content $i >dir/unchanged/file_$i
+		done &&
+		git add . &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git rm dir/subdir/tweaked/f dir/subdir/tweaked/g &&
+		test_seq 2 10 >dir/subdir/e &&
+		test_seq 11 20 >dir/subdir/Makefile &&
+		test_seq 21 30 >dir/subdir/tweaked/Makefile &&
+		mkdir dir/subdir/newsubdir &&
+		git mv dir/subdir/e dir/subdir/newsubdir/ &&
+		git mv dir folder &&
+		git add . &&
+		git commit -m "A" &&
+
+		git switch B &&
+		mkdir dir/subdir/newsubdir/ &&
+		echo c code >dir/subdir/newfile.c &&
+		echo python code >dir/subdir/newsubdir/newfile.py &&
+		test_seq 1 11 >dir/subdir/e &&
+		test_seq 10 21 >dir/subdir/Makefile &&
+		test_seq 20 31 >dir/subdir/tweaked/Makefile &&
+		git add . &&
+		git commit -m "B1" &&
+
+		echo rust code >dir/subdir/newfile.rs &&
+		test_seq 1 12 >dir/subdir/e &&
+		git add . &&
+		git commit -m "B2"
+	)
+}
+
+test_expect_failure '12f: Trivial directory resolve, caching, all kinds of fun' '
+	test_setup_12f &&
+	(
+		cd 12f &&
+
+		git checkout A^0 &&
+		git branch Bmod B &&
+
+		git -c merge.directoryRenames=true rebase A Bmod &&
+
+		echo Checking the pick of B1... &&
+
+		test_must_fail git rev-parse Bmod~1:dir &&
+
+		git ls-tree -r Bmod~1 >out &&
+		test_line_count = 98 out &&
+
+		git diff --name-status A Bmod~1 >actual &&
+		q_to_tab >expect <<-\EOF &&
+		MQfolder/subdir/Makefile
+		AQfolder/subdir/newfile.c
+		MQfolder/subdir/newsubdir/e
+		AQfolder/subdir/newsubdir/newfile.py
+		MQfolder/subdir/tweaked/Makefile
+		EOF
+		test_cmp expect actual &&
+
+		# Three-way merged files
+		test_seq  2 11 >e_Merge1 &&
+		test_seq 11 21 >Makefile_TOP &&
+		test_seq 21 31 >Makefile_SUB &&
+		git hash-object >expect      \
+			e_Merge1             \
+			Makefile_TOP         \
+			Makefile_SUB         &&
+		git rev-parse >actual              \
+			Bmod~1:folder/subdir/newsubdir/e     \
+			Bmod~1:folder/subdir/Makefile        \
+			Bmod~1:folder/subdir/tweaked/Makefile &&
+		test_cmp expect actual &&
+
+		# New files showed up at the right location with right contents
+		git rev-parse >expect                \
+			B~1:dir/subdir/newfile.c            \
+			B~1:dir/subdir/newsubdir/newfile.py &&
+		git rev-parse >actual                      \
+			Bmod~1:folder/subdir/newfile.c            \
+			Bmod~1:folder/subdir/newsubdir/newfile.py &&
+		test_cmp expect actual &&
+
+		# Removed files
+		test_path_is_missing folder/subdir/tweaked/f &&
+		test_path_is_missing folder/subdir/tweaked/g &&
+
+		# Unchanged files or directories
+		git rev-parse >actual        \
+			Bmod~1:folder/subdir/a          \
+			Bmod~1:folder/subdir/b          \
+			Bmod~1:folder/subdir/c          \
+			Bmod~1:folder/subdir/d          \
+			Bmod~1:folder/unchanged         \
+			Bmod~1:folder/subdir/tweaked/h &&
+		git rev-parse >expect          \
+			O:dir/subdir/a         \
+			O:dir/subdir/b         \
+			O:dir/subdir/c         \
+			O:dir/subdir/d         \
+			O:dir/unchanged        \
+			O:dir/subdir/tweaked/h &&
+		test_cmp expect actual &&
+
+		echo Checking the pick of B2... &&
+
+		test_must_fail git rev-parse Bmod:dir &&
+
+		git ls-tree -r Bmod >out &&
+		test_line_count = 99 out &&
+
+		git diff --name-status Bmod~1 Bmod >actual &&
+		q_to_tab >expect <<-\EOF &&
+		AQfolder/subdir/newfile.rs
+		MQfolder/subdir/newsubdir/e
+		EOF
+		test_cmp expect actual &&
+
+		# Three-way merged file
+		test_seq  2 12 >e_Merge2 &&
+		git hash-object e_Merge2 >expect &&
+		git rev-parse Bmod:folder/subdir/newsubdir/e >actual &&
+		test_cmp expect actual
 	)
 '
 
