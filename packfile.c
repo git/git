@@ -148,7 +148,7 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 		 *  - hash of the packfile
 		 *  - file checksum
 		 */
-		if (idx_size != 4 * 256 + (size_t)nr * (hashsz + 4) + hashsz + hashsz)
+		if (idx_size != st_add(4 * 256 + hashsz + hashsz, st_mult(nr, hashsz + 4)))
 			return error("wrong index v1 file size in %s", path);
 	} else if (version == 2) {
 		/*
@@ -164,10 +164,10 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 		 * variable sized table containing 8-byte entries
 		 * for offsets larger than 2^31.
 		 */
-		size_t min_size = 8 + 4*256 + (size_t)nr*(hashsz + 4 + 4) + hashsz + hashsz;
+		size_t min_size = st_add(8 + 4*256 + hashsz + hashsz, st_mult(nr, hashsz + 4 + 4));
 		size_t max_size = min_size;
 		if (nr)
-			max_size += ((size_t)nr - 1)*8;
+			max_size = st_add(max_size, st_mult(nr - 1, 8));
 		if (idx_size < min_size || idx_size > max_size)
 			return error("wrong index v2 file size in %s", path);
 		if (idx_size != min_size &&
