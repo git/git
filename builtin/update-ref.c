@@ -436,6 +436,8 @@ static void update_refs_stdin(void)
 		switch (state) {
 		case UPDATE_REFS_OPEN:
 		case UPDATE_REFS_STARTED:
+			if (state == UPDATE_REFS_STARTED && cmd->state == UPDATE_REFS_STARTED)
+				die("cannot restart ongoing transaction");
 			/* Do not downgrade a transaction to a non-transaction. */
 			if (cmd->state >= state)
 				state = cmd->state;

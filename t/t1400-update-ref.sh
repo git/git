@@ -1583,4 +1583,15 @@ test_expect_success 'transaction can commit after abort' '
 	test_cmp expect actual
 '
 
+test_expect_success 'transaction cannot restart ongoing transaction' '
+	cat >stdin <<-EOF &&
+	start
+	create refs/heads/restart $A
+	start
+	commit
+	EOF
+	test_must_fail git update-ref --stdin <stdin >actual &&
+	test_must_fail git show-ref --verify refs/heads/restart
+'
+
 test_done
