@@ -1533,4 +1533,54 @@ test_expect_success 'transaction with prepare aborts by default' '
 	test_must_fail git show-ref --verify -q $b
 '
 
+test_expect_success 'transaction can commit multiple times' '
+	cat >stdin <<-EOF &&
+	start
+	create refs/heads/branch-1 $A
+	commit
+	start
+	create refs/heads/branch-2 $B
+	commit
+	EOF
+	git update-ref --stdin <stdin >actual &&
+	printf "%s: ok\n" start commit start commit >expect &&
+	test_cmp expect actual &&
+	echo "$A" >expect &&
+	git rev-parse refs/heads/branch-1 >actual &&
+	test_cmp expect actual &&
+	echo "$B" >expect &&
+	git rev-parse refs/heads/branch-2 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'transaction can create and delete' '
+	cat >stdin <<-EOF &&
+	start
+	create refs/heads/create-and-delete $A
+	commit
+	start
+	delete refs/heads/create-and-delete $A
+	commit
+	EOF
+	git update-ref --stdin <stdin >actual &&
+	printf "%s: ok\n" start commit start commit >expect &&
+	test_must_fail git show-ref --verify refs/heads/create-and-delete
+'
+
+test_expect_success 'transaction can commit after abort' '
+	cat >stdin <<-EOF &&
+	start
+	create refs/heads/abort $A
+	abort
+	start
+	create refs/heads/abort $A
+	commit
+	EOF
+	git update-ref --stdin <stdin >actual &&
+	printf "%s: ok\n" start abort start commit >expect &&
+	echo "$A" >expect &&
+	git rev-parse refs/heads/abort >actual &&
+	test_cmp expect actual
+'
+
 test_done
