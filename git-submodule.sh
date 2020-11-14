@@ -416,13 +416,15 @@ is_tip_reachable () (
 fetch_in_submodule () (
 	sanitize_submodule_env &&
 	cd "$1" &&
-	case "$2" in
-	'')
-		git fetch ;;
-	*)
-		shift
-		git fetch $(get_default_remote) "$@" ;;
-	esac
+	if test $# -eq 3
+	then
+		echo "$3" | git fetch --stdin "$2"
+	elif test "$2" -ne ""
+	then
+		git fetch "$2"
+	else
+		git fetch
+	fi
 )
 
 #
