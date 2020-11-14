@@ -8,7 +8,7 @@ struct repository;
 
 struct archiver_args {
 	struct repository *repo;
-	const char *refname;
+	char *refname;
 	const char *prefix;
 	const char *base;
 	size_t baselen;
