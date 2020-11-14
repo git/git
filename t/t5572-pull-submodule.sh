@@ -144,6 +144,35 @@ test_expect_success 'pull --rebase --recurse-submodules fails if both sides reco
 	test_i18ngrep "locally recorded submodule modifications" err
 '
 
+test_expect_success 'pull --rebase --recurse-submodules (no submodule changes, no fork-point)' '
+	# This tests the following scenario :
+	# - local submodule does not have new commits
+	# - local superproject has new commits that *do not* change the submodule pointer
+	# - upstream superproject has new commits that *do not* change the submodule pointer
+	# - local superproject branch has no fork-point with its remote-tracking counter-part
+
+	# create upstream superproject
+	test_create_repo submodule &&
+	test_commit -C submodule first_in_sub &&
+
+	test_create_repo superprojet &&
+	test_commit -C superprojet first_in_super &&
+	git -C superprojet submodule add ../submodule &&
+	git -C superprojet commit -m "add submodule" &&
+	test_commit -C superprojet third_in_super &&
+
+	# clone superproject
+	git clone --recurse-submodules superprojet superclone &&
+
+	# add commits upstream
+	test_commit -C superprojet fourth_in_super &&
+
+	# create topic branch in clone, not based on any remote-tracking branch
+	git -C superclone checkout -b feat HEAD~1 &&
+	test_commit -C superclone first_on_feat &&
+	git -C superclone pull --rebase --recurse-submodules origin master
+'
+
 # NOTE:
 #
 # This test is particular because there is only a single commit in the upstream superproject
