@@ -101,7 +101,12 @@ test_expect_success " --[no-]recurse-submodule and submodule.recurse" '
 	test_path_is_file super/sub/merge_strategy_4.t
 '
 
-test_expect_success 'recursive rebasing pull' '
+test_expect_success 'pull --rebase --recurse-submodules (remote superproject submodule changes, local submodule changes)' '
+	# This tests the following scenario :
+	# - local submodule has new commits
+	# - local superproject does not have new commits
+	# - upstream superproject has new commits that change the submodule pointer
+
 	# change upstream
 	test_commit -C child rebase_strategy &&
 	git -C parent submodule update --remote &&
@@ -116,7 +121,10 @@ test_expect_success 'recursive rebasing pull' '
 	test_path_is_file super/sub/local_stuff.t
 '
 
-test_expect_success 'pull rebase recursing fails with conflicts' '
+test_expect_success 'pull --rebase --recurse-submodules fails if both sides record submodule changes' '
+	# This tests the following scenario :
+	# - local superproject has new commits that change the submodule pointer
+	# - upstream superproject has new commits that change the submodule pointer
 
 	# local changes in submodule recorded in superproject:
 	test_commit -C super/sub local_stuff_2 &&
