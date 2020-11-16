@@ -202,6 +202,16 @@ static int write_oid(const struct object_id *oid, struct packed_git *pack,
 	return 0;
 }
 
+static struct {
+	const char *name;
+	unsigned optional:1;
+} exts[] = {
+	{".pack"},
+	{".idx"},
+	{".bitmap", 1},
+	{".promisor", 1},
+};
+
 static void repack_promisor_objects(const struct pack_objects_args *args,
 				    struct string_list *names)
 {
@@ -265,15 +275,6 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 
 int cmd_repack(int argc, const char **argv, const char *prefix)
 {
-	struct {
-		const char *name;
-		unsigned optional:1;
-	} exts[] = {
-		{".pack"},
-		{".idx"},
-		{".bitmap", 1},
-		{".promisor", 1},
-	};
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
 	struct string_list names = STRING_LIST_INIT_DUP;
