@@ -49,8 +49,10 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 
 	init_color(r, s, "diff.frag", s->fraginfo_color,
 		   diff_get_color(s->use_color, DIFF_FRAGINFO));
-	init_color(r, s, "diff.context", s->context_color,
-		diff_get_color(s->use_color, DIFF_CONTEXT));
+	init_color(r, s, "diff.context", s->context_color, "fall back");
+	if (!strcmp(s->context_color, "fall back"))
+		init_color(r, s, "diff.plain", s->context_color,
+			   diff_get_color(s->use_color, DIFF_CONTEXT));
 	init_color(r, s, "diff.old", s->file_old_color,
 		diff_get_color(s->use_color, DIFF_FILE_OLD));
 	init_color(r, s, "diff.new", s->file_new_color,

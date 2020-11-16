@@ -30,9 +30,9 @@ my ($fraginfo_color) =
 	$diff_use_color ? (
 		$repo->get_color('color.diff.frag', 'cyan'),
 	) : ();
-my ($diff_plain_color) =
+my ($diff_context_color) =
 	$diff_use_color ? (
-		$repo->get_color('color.diff.plain', ''),
+		$repo->get_color($repo->config('color.diff.context') ? 'color.diff.context' : 'color.diff.plain', ''),
 	) : ();
 my ($diff_old_color) =
 	$diff_use_color ? (
@@ -1046,7 +1046,7 @@ sub color_diff {
 		colored((/^@/  ? $fraginfo_color :
 			 /^\+/ ? $diff_new_color :
 			 /^-/  ? $diff_old_color :
-			 $diff_plain_color),
+			 $diff_context_color),
 			$_);
 	} @_;
 }
