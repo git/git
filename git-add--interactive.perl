@@ -483,10 +483,8 @@ sub list_and_choose {
 		my $last_lf = 0;
 
 		if ($opts->{HEADER}) {
-			if (!$opts->{LIST_FLAT}) {
-				print "     ";
-			}
-			print colored $header_color, "$opts->{HEADER}\n";
+			my $indent = $opts->{LIST_FLAT} ? "" : "     ";
+			print colored $header_color, "$indent$opts->{HEADER}\n";
 		}
 		for ($i = 0; $i < @stuff; $i++) {
 			my $chosen = $chosen[$i] ? '*' : ' ';
