@@ -212,6 +212,27 @@ static struct {
 	{".promisor", 1},
 };
 
+static unsigned populate_pack_exts(char *name)
+{
+	struct stat statbuf;
+	struct strbuf path = STRBUF_INIT;
+	unsigned ret = 0;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(exts); i++) {
+		strbuf_reset(&path);
+		strbuf_addf(&path, "%s-%s%s", packtmp, name, exts[i].name);
+
+		if (stat(path.buf, &statbuf))
+			continue;
+
+		ret |= (1 << i);
+	}
+
+	strbuf_release(&path);
+	return ret;
+}
+
 static void repack_promisor_objects(const struct pack_objects_args *args,
 				    struct string_list *names)
 {
@@ -240,11 +261,12 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 
 	out = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, out) != EOF) {
+		struct string_list_item *item;
 		char *promisor_name;
 		int fd;
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
-		string_list_append(names, line.buf);
+		item = string_list_append(names, line.buf);
 
 		/*
 		 * pack-objects creates the .pack and .idx files, but not the
@@ -263,6 +285,9 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 		if (fd < 0)
 			die_errno(_("unable to create '%s'"), promisor_name);
 		close(fd);
+
+		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
+
 		free(promisor_name);
 	}
 	fclose(out);
@@ -429,6 +454,10 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (!names.nr && !po_args.quiet)
 		printf_ln(_("Nothing new to pack."));
+
+	for_each_string_list_item(item, &names) {
+		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
+	}
 
 	close_object_store(the_repository->objects);
 
