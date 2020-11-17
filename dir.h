@@ -361,7 +361,10 @@ int match_pathspec(const struct index_state *istate,
 int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
 int within_depth(const char *name, int namelen, int depth, int max_depth);
 
-void dir_init(struct dir_struct *dir);
+static inline void dir_init(struct dir_struct *dir)
+{
+	memset(dir, 0, sizeof(*dir));
+}
 
 int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,

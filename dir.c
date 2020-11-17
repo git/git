@@ -54,11 +54,6 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 static int resolve_dtype(int dtype, struct index_state *istate,
 			 const char *path, int len);
 
-void dir_init(struct dir_struct *dir)
-{
-	memset(dir, 0, sizeof(*dir));
-}
-
 int count_slashes(const char *s)
 {
 	int cnt = 0;
@@ -167,14 +162,14 @@ static size_t common_prefix_len(const struct pathspec *pathspec)
 			char c = pathspec->items[n].match[i];
 			if (c != pathspec->items[0].match[i])
 				break;
-			if (c == '/')
-				len = i + 1;
 			i++;
+			if (c == '/')
+				len = i;
 		}
 		if (n == 0 || len < max) {
 			max = len;
 			if (!max)
-				break;
+				return 0;
 		}
 	}
 	return max;
