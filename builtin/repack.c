@@ -306,7 +306,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct string_list rollback = STRING_LIST_INIT_NODUP;
 	struct string_list existing_packs = STRING_LIST_INIT_DUP;
 	struct strbuf line = STRBUF_INIT;
-	int i, ext, ret, failed;
+	int i, ext, ret;
 	FILE *out;
 
 	/* variables to be filled by option parsing */
@@ -463,109 +463,34 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	/*
 	 * Ok we have prepared all new packfiles.
-	 * First see if there are packs of the same name and if so
-	 * if we can move them out of the way (this can happen if we
-	 * repacked immediately after packing fully.
 	 */
-	failed = 0;
 	for_each_string_list_item(item, &names) {
 		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
 			char *fname, *fname_old;
 
-			fname = mkpathdup("%s/pack-%s%s", packdir,
-						item->string, exts[ext].name);
-			if (!file_exists(fname)) {
-				free(fname);
-				continue;
-			}
-
-			fname_old = mkpathdup("%s/old-%s%s", packdir,
-						item->string, exts[ext].name);
-			if (file_exists(fname_old))
-				if (unlink(fname_old))
-					failed = 1;
-
-			if (!failed && rename(fname, fname_old)) {
-				free(fname);
-				free(fname_old);
-				failed = 1;
-				break;
-			} else {
-				string_list_append(&rollback, fname);
-				free(fname_old);
-			}
-		}
-		if (failed)
-			break;
-	}
-	if (failed) {
-		struct string_list rollback_failure = STRING_LIST_INIT_DUP;
-		for_each_string_list_item(item, &rollback) {
-			char *fname, *fname_old;
-			fname = mkpathdup("%s/%s", packdir, item->string);
-			fname_old = mkpathdup("%s/old-%s", packdir, item->string);
-			if (rename(fname_old, fname))
-				string_list_append(&rollback_failure, fname);
-			free(fname);
-			free(fname_old);
-		}
-
-		if (rollback_failure.nr) {
-			int i;
-			fprintf(stderr,
-				_("WARNING: Some packs in use have been renamed by\n"
-				  "WARNING: prefixing old- to their name, in order to\n"
-				  "WARNING: replace them with the new version of the\n"
-				  "WARNING: file.  But the operation failed, and the\n"
-				  "WARNING: attempt to rename them back to their\n"
-				  "WARNING: original names also failed.\n"
-				  "WARNING: Please rename them in %s manually:\n"), packdir);
-			for (i = 0; i < rollback_failure.nr; i++)
-				fprintf(stderr, "WARNING:   old-%s -> %s\n",
-					rollback_failure.items[i].string,
-					rollback_failure.items[i].string);
-		}
-		exit(1);
-	}
-
-	/* Now the ones with the same name are out of the way... */
-	for_each_string_list_item(item, &names) {
-		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
-			char *fname, *fname_old;
-			struct stat statbuffer;
-			int exists = 0;
 			fname = mkpathdup("%s/pack-%s%s",
 					packdir, item->string, exts[ext].name);
 			fname_old = mkpathdup("%s-%s%s",
 					packtmp, item->string, exts[ext].name);
-			if (!stat(fname_old, &statbuffer)) {
-				statbuffer.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
-				chmod(fname_old, statbuffer.st_mode);
-				exists = 1;
-			}
-			if (exists || !exts[ext].optional) {
+
+			if (((uintptr_t)item->util) & (1 << ext)) {
+				struct stat statbuffer;
+				if (!stat(fname_old, &statbuffer)) {
+					statbuffer.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+					chmod(fname_old, statbuffer.st_mode);
+				}
+
 				if (rename(fname_old, fname))
 					die_errno(_("renaming '%s' failed"), fname_old);
-			}
+			} else if (!exts[ext].optional)
+				die(_("missing required file: %s"), fname_old);
+			else if (unlink(fname) < 0 && errno != ENOENT)
+				die_errno(_("could not unlink: %s"), fname);
+
 			free(fname);
 			free(fname_old);
 		}
 	}
-
-	/* Remove the "old-" files */
-	for_each_string_list_item(item, &names) {
-		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
-			char *fname;
-			fname = mkpathdup("%s/old-%s%s",
-					  packdir,
-					  item->string,
-					  exts[ext].name);
-			if (remove_path(fname))
-				warning(_("failed to remove '%s'"), fname);
-			free(fname);
-		}
-	}
-
 	/* End of pack replacement. */
 
 	reprepare_packed_git(the_repository);
