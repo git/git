@@ -4376,8 +4376,6 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		unpack_unreachable_expiration = 0;
 
 	if (pfd.have_revs && pfd.revs.filter.choice) {
-		if (!pack_to_stdout)
-			die(_("cannot use --filter without --stdout"));
 		if (stdin_packs)
 			die(_("cannot use --filter with --stdin-packs"));
 	}
