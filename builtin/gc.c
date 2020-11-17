@@ -1253,10 +1253,8 @@ static struct maintenance_task tasks[] = {
 
 static int compare_tasks_by_selection(const void *a_, const void *b_)
 {
-	const struct maintenance_task *a, *b;
-
-	a = (const struct maintenance_task *)&a_;
-	b = (const struct maintenance_task *)&b_;
+	const struct maintenance_task *a = a_;
+	const struct maintenance_task *b = b_;
 
 	return b->selected_order - a->selected_order;
 }
