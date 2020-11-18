@@ -8,7 +8,7 @@ test_description='merge conflict in crlf repo
 
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -27,7 +27,7 @@ test_expect_success setup '
 	echo line from b | append_cr >file &&
 	git commit -m "add line from b" file &&
 	git tag b &&
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'Check "ours" is CRLF' '

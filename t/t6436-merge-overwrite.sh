@@ -4,7 +4,7 @@ test_description='git-merge
 
 Do not overwrite changes.'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -196,7 +196,7 @@ test_expect_success 'set up unborn branch and content' '
 '
 
 test_expect_success 'will not clobber WT/index when merging into unborn' '
-	git merge master &&
+	git merge main &&
 	grep foo tracked-file &&
 	git show :tracked-file >expect &&
 	grep foo expect &&
