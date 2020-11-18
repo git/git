@@ -2764,7 +2764,6 @@ void init_scoreboard(struct blame_scoreboard *sb)
 }
 
 void setup_scoreboard(struct blame_scoreboard *sb,
-		      const char *path,
 		      struct blame_origin **orig)
 {
 	const char *final_commit_name = NULL;
@@ -2803,7 +2802,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		setup_work_tree();
 		sb->final = fake_working_tree_commit(sb->repo,
 						     &sb->revs->diffopt,
-						     path, sb->contents_from);
+						     sb->path, sb->contents_from);
 		add_pending_object(sb->revs, &(sb->final->object), ":");
 	}
 
@@ -2846,12 +2845,12 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		sb->final_buf_size = o->file.size;
 	}
 	else {
-		o = get_origin(sb->final, path);
+		o = get_origin(sb->final, sb->path);
 		if (fill_blob_sha1_and_mode(sb->repo, o))
-			die(_("no such path %s in %s"), path, final_commit_name);
+			die(_("no such path %s in %s"), sb->path, final_commit_name);
 
 		if (sb->revs->diffopt.flags.allow_textconv &&
-		    textconv_object(sb->repo, path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
+		    textconv_object(sb->repo, sb->path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
 				    &sb->final_buf_size))
 			;
 		else
@@ -2861,7 +2860,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),
 			    oid_to_hex(&o->blob_oid),
-			    path);
+			    sb->path);
 	}
 	sb->num_read_blob++;
 	prepare_lines(sb);
@@ -2888,8 +2887,7 @@ struct blame_entry *blame_entry_prepend(struct blame_entry *head,
 	return new_head;
 }
 
-void setup_blame_bloom_data(struct blame_scoreboard *sb,
-			    const char *path)
+void setup_blame_bloom_data(struct blame_scoreboard *sb)
 {
 	struct blame_bloom_data *bd;
 	struct bloom_filter_settings *bs;
@@ -2909,7 +2907,7 @@ void setup_blame_bloom_data(struct blame_scoreboard *sb,
 	bd->nr = 0;
 	ALLOC_ARRAY(bd->keys, bd->alloc);
 
-	add_bloom_key(bd, path);
+	add_bloom_key(bd, sb->path);
 
 	sb->bloom_data = bd;
 }

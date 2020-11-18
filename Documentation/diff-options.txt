@@ -704,7 +704,10 @@ endif::git-format-patch[]
 
 -W::
 --function-context::
-	Show whole surrounding functions of changes.
+	Show whole function as context lines for each change.
+	The function names are determined in the same way as
+	`git diff` works out patch hunk headers (see 'Defining a
+	custom hunk-header' in linkgit:gitattributes[5]).
 
 ifndef::git-format-patch[]
 ifndef::git-log[]

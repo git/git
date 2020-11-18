@@ -891,7 +891,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "contents", &contents_from, N_("file"), N_("Use <file>'s contents as the final image")),
 		OPT_CALLBACK_F('C', NULL, &opt, N_("score"), N_("Find line copies within and across files"), PARSE_OPT_OPTARG, blame_copy_callback),
 		OPT_CALLBACK_F('M', NULL, &opt, N_("score"), N_("Find line movements within and across files"), PARSE_OPT_OPTARG, blame_move_callback),
-		OPT_STRING_LIST('L', NULL, &range_list, N_("n,m"), N_("Process only line range n,m, counting from 1")),
+		OPT_STRING_LIST('L', NULL, &range_list, N_("range"),
+				N_("Process only line range <start>,<end> or function :<funcname>")),
 		OPT__ABBREV(&abbrev),
 		OPT_END()
 	};
@@ -1082,17 +1083,18 @@ parse_done:
 	sb.contents_from = contents_from;
 	sb.reverse = reverse;
 	sb.repo = the_repository;
+	sb.path = path;
 	build_ignorelist(&sb, &ignore_revs_file_list, &ignore_rev_list);
 	string_list_clear(&ignore_revs_file_list, 0);
 	string_list_clear(&ignore_rev_list, 0);
-	setup_scoreboard(&sb, path, &o);
+	setup_scoreboard(&sb, &o);
 
 	/*
 	 * Changed-path Bloom filters are disabled when looking
 	 * for copies.
 	 */
 	if (!(opt & PICKAXE_BLAME_COPY))
-		setup_blame_bloom_data(&sb, path);
+		setup_blame_bloom_data(&sb);
 
 	lno = sb.num_lines;
 
@@ -1111,7 +1113,7 @@ parse_done:
 		if ((!lno && (top || bottom)) || lno < bottom)
 			die(Q_("file %s has only %lu line",
 			       "file %s has only %lu lines",
-			       lno), path, lno);
+			       lno), sb.path, lno);
 		if (bottom < 1)
 			bottom = 1;
 		if (top < 1 || lno < top)
@@ -1136,7 +1138,6 @@ parse_done:
 	string_list_clear(&range_list, 0);
 
 	sb.ent = NULL;
-	sb.path = path;
 
 	if (blame_move_score)
 		sb.move_score = blame_move_score;
