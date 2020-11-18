@@ -2,6 +2,9 @@
 
 test_description='Combination of submodules and multiple worktrees'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 base_path=$(pwd -P)

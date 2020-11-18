@@ -5,6 +5,9 @@
 
 test_description='Test of the various options to git rm.'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Setup some files to be removed, some with funny characters

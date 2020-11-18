@@ -9,6 +9,9 @@ This test tries to verify basic sanity of the init, update and status
 subcommands of git submodule.
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'submodule deinit works on empty repository' '

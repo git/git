@@ -4,6 +4,9 @@
 # t9602/README.
 
 test_description='git cvsimport handling of branches and tags'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-cvs.sh
 
 setup_cvs_test_repository t9602

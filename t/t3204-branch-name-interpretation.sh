@@ -6,6 +6,9 @@ Branch name arguments are usually names which are taken to be inside of
 refs/heads/, but we interpret some magic syntax like @{-1}, @{upstream}, etc.
 This script aims to check the behavior of those corner cases.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 expect_branch() {

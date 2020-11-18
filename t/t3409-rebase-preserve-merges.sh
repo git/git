@@ -6,6 +6,9 @@ test_description='git rebase -p should preserve merges
 
 Run "git rebase -p" and check that merges are properly carried along
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if ! test_have_prereq REBASE_P; then

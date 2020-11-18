@@ -2,6 +2,9 @@
 
 test_description='test automatic tag following'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # End state of the repository:

@@ -2,6 +2,9 @@
 
 test_description='ancestor culling and limiting by parent number'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check_revlist () {

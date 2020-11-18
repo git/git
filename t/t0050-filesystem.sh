@@ -2,6 +2,9 @@
 
 test_description='Various filesystem issues'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 auml=$(printf '\303\244')

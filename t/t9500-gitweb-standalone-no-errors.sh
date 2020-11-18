@@ -10,6 +10,9 @@ commandline, and checks that it would not write any errors
 or warnings to log.'
 
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./gitweb-lib.sh
 
 # ----------------------------------------------------------------------

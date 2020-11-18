@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test git rev-parse'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # usage: [options] label is-bare is-inside-git is-inside-work prefix git-dir absolute-git-dir

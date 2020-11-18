@@ -20,6 +20,9 @@ one tagged as v1.0.0.  They all have one regular file each.
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if ! test_have_prereq SHA1

@@ -11,6 +11,9 @@ test_description='test describe'
 #
 # First parent of a merge commit is on the same line, second parent below.
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check_describe () {

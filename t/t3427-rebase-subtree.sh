@@ -4,6 +4,9 @@ test_description='git rebase tests for -Xsubtree
 
 This test runs git rebase and tests the subtree strategy.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 

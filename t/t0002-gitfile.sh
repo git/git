@@ -4,6 +4,9 @@ test_description='.git file
 
 Verify that plumbing commands work when .git is a file
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 objpath() {

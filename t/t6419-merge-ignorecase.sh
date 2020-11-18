@@ -2,6 +2,9 @@
 
 test_description='git-merge with case-changing rename on case-insensitive file system'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if ! test_have_prereq CASE_INSENSITIVE_FS

@@ -10,6 +10,9 @@ on detached working trees
 '
 
 TEST_NO_CREATE_REPO=1
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'submodule on detached working tree' '

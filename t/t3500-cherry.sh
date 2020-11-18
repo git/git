@@ -8,6 +8,9 @@ test_description='git cherry should detect patches integrated upstream
 This test cherry-picks one local change of two into master branch, and
 checks that git cherry only returns the second patch in the local branch
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 GIT_AUTHOR_EMAIL=bogus_email_address

@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='Test merge without common ancestors'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # This scenario is based on a real-world repository of Shawn Pearce.

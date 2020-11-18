@@ -5,6 +5,9 @@
 
 test_description='Testing multi_ack pack fetching'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test fetch-pack/upload-pack pair.

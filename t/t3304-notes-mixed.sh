@@ -2,6 +2,9 @@
 
 test_description='Test notes trees that also contain non-notes'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 number_of_commits=100

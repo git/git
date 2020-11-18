@@ -9,6 +9,9 @@ test_description='git pack-refs should not change the branch semantic
 This test runs git pack-refs and git show-ref and checks that the branch
 semantic is still the same.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'enable reflogs' '

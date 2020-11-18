@@ -32,6 +32,9 @@
 #       tag has been removed.
 
 test_description='git cvsimport handling of vendor branches'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-cvs.sh
 
 setup_cvs_test_repository t9601

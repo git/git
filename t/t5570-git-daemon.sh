@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test fetching over git protocol'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-git-daemon.sh

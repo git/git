@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='git cvsimport basic tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-cvs.sh
 
 if ! test_have_prereq NOT_ROOT; then

@@ -4,6 +4,9 @@
 #
 
 test_description='git svn reset clears memoized caches'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-svn.sh
 
 svn_ver="$(svn --version --quiet)"

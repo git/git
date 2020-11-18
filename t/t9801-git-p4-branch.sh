@@ -2,6 +2,9 @@
 
 test_description='git p4 tests for p4 branches'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '

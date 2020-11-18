@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='git log for a path with Bloom filters'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 GIT_TEST_COMMIT_GRAPH=0

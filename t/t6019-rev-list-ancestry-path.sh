@@ -21,6 +21,9 @@ test_description='--ancestry-path'
 #  --ancestry-path G..M -- G.t == L
 #  --ancestry-path --simplify-merges G^..M -- G.t == G L
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_merge () {

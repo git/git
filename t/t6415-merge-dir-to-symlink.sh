@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='merging when a directory was replaced with a symlink'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'create a commit where dir a/b changed to symlink' '

@@ -9,6 +9,9 @@ test_description='git-cvsserver -kb modes
 tests -kb mode for binary files when accessing a git
 repository using cvs CLI client via git-cvsserver server'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 marked_as () {

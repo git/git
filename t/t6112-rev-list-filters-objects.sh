@@ -2,6 +2,9 @@
 
 test_description='git rev-list using object filtering'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test the blob:none filter.

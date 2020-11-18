@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='check handling of .gitmodule path with dash'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'create submodule with dash in path' '

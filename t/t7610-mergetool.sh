@@ -7,6 +7,9 @@ test_description='git mergetool
 
 Testing basic merge tool invocation'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # All the mergetool test work by checking out a temporary branch based

@@ -2,6 +2,9 @@
 
 test_description='pushing to a repository using the atomic push option'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 mk_repo_pair () {

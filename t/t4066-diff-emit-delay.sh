@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test combined/stat/moved interaction'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # This test covers a weird 3-way interaction between "--cc -p", which will run

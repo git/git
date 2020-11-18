@@ -26,6 +26,9 @@ they are rounded down (see, e.g., Documentation/diff-generate-patch.txt, which
 mentions this in a different context).
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 get_expected_stages () {

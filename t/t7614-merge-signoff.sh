@@ -5,6 +5,9 @@ test_description='git merge --signoff
 This test runs git merge --signoff and makes sure that it works.
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Setup test files

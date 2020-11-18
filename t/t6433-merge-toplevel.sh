@@ -2,6 +2,9 @@
 
 test_description='"git merge" top-level frontend'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 t3033_reset () {

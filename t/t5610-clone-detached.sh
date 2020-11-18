@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test cloning a repository with detached HEAD'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 head_is_detached() {

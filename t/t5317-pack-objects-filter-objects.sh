@@ -2,6 +2,9 @@
 
 test_description='git pack-objects using object filtering'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test blob:none filter.

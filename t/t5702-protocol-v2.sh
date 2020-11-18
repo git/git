@@ -4,6 +4,9 @@ test_description='test git wire-protocol version 2'
 
 TEST_NO_CREATE_REPO=1
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test protocol v2 with 'git://' transport

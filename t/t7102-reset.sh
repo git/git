@@ -7,6 +7,9 @@ test_description='git reset
 
 Documented tests for git reset'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 commit_msg () {

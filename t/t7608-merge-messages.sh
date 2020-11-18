@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test auto-generated merge messages'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check_oneline() {

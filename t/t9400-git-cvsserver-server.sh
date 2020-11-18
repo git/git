@@ -8,6 +8,9 @@ test_description='git-cvsserver access
 tests read access to a git repository with the
 cvs CLI client via git-cvsserver server'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then

@@ -8,6 +8,9 @@ test_description='merging symlinks on filesystem w/o symlink support.
 This tests that git merge-recursive writes merge results as plain files
 if core.symlinks is false.'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '

@@ -2,6 +2,9 @@
 
 test_description='combined diff show only paths that are different to all parents'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # verify that diffc.expect matches output of

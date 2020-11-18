@@ -3,6 +3,9 @@
 # Copyright (c) 2009 Eric Wong
 #
 test_description='git svn initial master branch is "trunk" if possible'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-svn.sh
 
 test_expect_success 'setup test repository' '

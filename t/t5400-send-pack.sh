@@ -6,6 +6,9 @@
 test_description='See why rewinding head breaks send-pack
 
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 cnt=64

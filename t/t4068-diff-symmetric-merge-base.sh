@@ -2,6 +2,9 @@
 
 test_description='behavior of diff with symmetric-diff setups and --merge-base'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # build these situations:

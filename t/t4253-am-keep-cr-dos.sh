@@ -6,6 +6,9 @@
 test_description='git-am mbox with dos line ending.
 
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Three patches which will be added as files with dos line ending.

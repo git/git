@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='check various push.default settings'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup bare remotes' '

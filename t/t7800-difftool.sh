@@ -8,6 +8,9 @@ test_description='git-difftool
 Testing basic diff tool invocation
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 difftool_test_setup ()

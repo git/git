@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='merging with large rename matrix'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 count() {

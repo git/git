@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='Merge-recursive rename/delete conflict message'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'rename/delete' '

@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test fetching of oddly-named refs'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # afterwards we will have:

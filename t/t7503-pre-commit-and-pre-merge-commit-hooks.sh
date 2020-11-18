@@ -2,6 +2,9 @@
 
 test_description='pre-commit and pre-merge-commit hooks'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 HOOKDIR="$(git rev-parse --git-dir)/hooks"
