@@ -2,7 +2,7 @@
 
 test_description='git p4 tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./lib-git-p4.sh
@@ -229,7 +229,7 @@ test_expect_success 'clone --bare should make a bare repository' '
 		git config --get --bool core.bare true &&
 		git rev-parse --verify refs/remotes/p4/master &&
 		git rev-parse --verify refs/remotes/p4/HEAD &&
-		git rev-parse --verify refs/heads/master &&
+		git rev-parse --verify refs/heads/main &&
 		git rev-parse --verify HEAD
 	)
 '
