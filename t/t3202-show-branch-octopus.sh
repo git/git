@@ -2,7 +2,7 @@
 
 test_description='test show-branch with more than 8 heads'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -18,7 +18,7 @@ test_expect_success 'setup' '
 
 	for i in $numbers
 	do
-		git checkout -b branch$i master &&
+		git checkout -b branch$i main &&
 		> file$i &&
 		git add file$i &&
 		test_tick &&

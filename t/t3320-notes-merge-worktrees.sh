@@ -5,7 +5,7 @@
 
 test_description='Test merging of notes trees in multiple worktrees'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -39,8 +39,8 @@ test_expect_success 'modify notes ref ourselves (x)' '
 '
 
 test_expect_success 'create some new worktrees' '
-	git worktree add -b newbranch worktree master &&
-	git worktree add -b newbranch2 worktree2 master
+	git worktree add -b newbranch worktree main &&
+	git worktree add -b newbranch2 worktree2 main
 '
 
 test_expect_success 'merge z into y fails and sets NOTES_MERGE_REF' '
