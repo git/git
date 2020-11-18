@@ -2,7 +2,7 @@
 
 test_description='restore basic functionality'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -18,7 +18,7 @@ test_expect_success 'setup' '
 	echo ignored >ignored &&
 	echo /ignored >.gitignore &&
 	git add one two .gitignore &&
-	git update-ref refs/heads/one master
+	git update-ref refs/heads/one main
 '
 
 test_expect_success 'restore without pathspec is not ok' '
@@ -94,7 +94,7 @@ test_expect_success 'restore --ignore-unmerged ignores unmerged entries' '
 		git switch -c first &&
 		echo first >unmerged &&
 		git commit -am first &&
-		git switch -c second master &&
+		git switch -c second main &&
 		echo second >unmerged &&
 		git commit -am second &&
 		test_must_fail git merge first &&

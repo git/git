@@ -2,7 +2,7 @@
 
 test_description='undoing resolution'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -62,7 +62,7 @@ test_expect_success setup '
 	test_commit fourth fi/le fourth &&
 	git checkout add-add &&
 	test_commit fifth add-differently &&
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'add records switch clears' '
@@ -186,8 +186,8 @@ test_expect_success 'rerere forget (binary)' '
 '
 
 test_expect_success 'rerere forget (add-add conflict)' '
-	git checkout -f master &&
-	echo master >add-differently &&
+	git checkout -f main &&
+	echo main >add-differently &&
 	git add add-differently &&
 	git commit -m "add differently" &&
 	test_must_fail git merge fifth &&
