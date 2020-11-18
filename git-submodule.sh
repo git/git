@@ -20,7 +20,6 @@ USAGE="[--quiet] [--cached]
 OPTIONS_SPEC=
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
-. git-parse-remote
 require_work_tree
 wt_prefix=$(git rev-parse --show-prefix)
 cd_to_toplevel
@@ -416,13 +415,15 @@ is_tip_reachable () (
 fetch_in_submodule () (
 	sanitize_submodule_env &&
 	cd "$1" &&
-	case "$2" in
-	'')
-		git fetch ;;
-	*)
-		shift
-		git fetch $(get_default_remote) "$@" ;;
-	esac
+	if test $# -eq 3
+	then
+		echo "$3" | git fetch --stdin "$2"
+	elif test "$2" -ne ""
+	then
+		git fetch "$2"
+	else
+		git fetch
+	fi
 )
 
 #
@@ -576,7 +577,7 @@ cmd_update()
 				fetch_in_submodule "$sm_path" $depth ||
 				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
 			fi
-			remote_name=$(sanitize_submodule_env; cd "$sm_path" && get_default_remote)
+			remote_name=$(sanitize_submodule_env; cd "$sm_path" && git submodule--helper print-default-remote)
 			sha1=$(sanitize_submodule_env; cd "$sm_path" &&
 				git rev-parse --verify "${remote_name}/${branch}") ||
 			die "$(eval_gettext "Unable to find current \${remote_name}/\${branch} revision in submodule path '\$sm_path'")"
