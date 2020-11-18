@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test_description='check handling of .gitmodule path with dash'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -39,7 +39,7 @@ test_expect_success MINGW 'submodule paths disallows trailing spaces' '
 	sed "s/sub/sub /" <tree >tree.new &&
 	tree=$(git -C super mktree <tree.new) &&
 	commit=$(echo with space | git -C super commit-tree $tree) &&
-	git -C super update-ref refs/heads/master $commit &&
+	git -C super update-ref refs/heads/main $commit &&
 
 	test_must_fail git clone --recurse-submodules super dst 2>err &&
 	test_i18ngrep "sub " err
