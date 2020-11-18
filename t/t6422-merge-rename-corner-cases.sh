@@ -4,6 +4,7 @@ test_description="recursive merge corner cases w/ renames but not criss-crosses"
 # t6036 has corner cases that involve both criss-cross merges and renames
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-merge.sh
 
 test_setup_rename_delete_untracked () {
 	test_create_repo rename-delete-untracked &&
@@ -312,14 +313,17 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 		git ls-files -u >out &&
 		test_line_count = 1 out &&
 		git ls-files -o >out &&
-		test_line_count = 2 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			test_line_count = 1 out
+		else
+			test_line_count = 2 out
+		fi &&
 
 		echo 0 >expect &&
 		git cat-file -p base:file >>expect &&
 		echo 7 >>expect &&
 		test_cmp expect newfile~HEAD &&
-
-		test $(git rev-parse :2:newfile) = $(git hash-object expect) &&
 
 		test_path_is_file newfile/realfile &&
 		test_path_is_file newfile~HEAD
@@ -343,7 +347,12 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 		git ls-files -u >out &&
 		test_line_count = 3 out &&
 		git ls-files -o >out &&
-		test_line_count = 2 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			test_line_count = 1 out
+		else
+			test_line_count = 2 out
+		fi &&
 
 		git cat-file -p left-conflict:newfile >left &&
 		git cat-file -p base:file    >base &&
@@ -355,10 +364,16 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 			left base right &&
 		test_cmp left newfile~HEAD &&
 
-		git rev-parse >expect                                 \
-			base:file   left-conflict:newfile  right:file &&
-		git rev-parse >actual                                 \
-			:1:newfile  :2:newfile             :3:newfile &&
+		git rev-parse >expect   \
+			base:file       left-conflict:newfile right:file &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git rev-parse >actual \
+				:1:newfile~HEAD :2:newfile~HEAD :3:newfile~HEAD
+		else
+			git rev-parse >actual \
+				:1:newfile      :2:newfile      :3:newfile
+		fi &&
 		test_cmp expect actual &&
 
 		test_path_is_file newfile/realfile &&
@@ -878,7 +893,7 @@ test_setup_rad () {
 	)
 }
 
-test_expect_failure 'rad-check: rename/add/delete conflict' '
+test_expect_merge_algorithm failure success 'rad-check: rename/add/delete conflict' '
 	test_setup_rad &&
 	(
 		cd rad &&
@@ -951,7 +966,7 @@ test_setup_rrdd () {
 	)
 }
 
-test_expect_failure 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
+test_expect_merge_algorithm failure success 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 	test_setup_rrdd &&
 	(
 		cd rrdd &&
@@ -1040,7 +1055,7 @@ test_setup_mod6 () {
 	)
 }
 
-test_expect_failure 'mod6-check: chains of rename/rename(1to2) and rename/rename(2to1)' '
+test_expect_merge_algorithm failure success 'mod6-check: chains of rename/rename(1to2) and rename/rename(2to1)' '
 	test_setup_mod6 &&
 	(
 		cd mod6 &&

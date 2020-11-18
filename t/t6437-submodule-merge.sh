@@ -127,7 +127,12 @@ test_expect_success 'merging should conflict for non fast-forward' '
 	 git checkout -b test-nonforward b &&
 	 (cd sub &&
 	  git rev-parse sub-d > ../expect) &&
-	 test_must_fail git merge c 2> actual  &&
+	  if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	  then
+		test_must_fail git merge c >actual
+	  else
+		test_must_fail git merge c 2> actual
+	  fi &&
 	 grep $(cat expect) actual > /dev/null &&
 	 git reset --hard)
 '
@@ -138,9 +143,21 @@ test_expect_success 'merging should fail for ambiguous common parent' '
 	(cd sub &&
 	 git checkout -b ambiguous sub-b &&
 	 git merge sub-c &&
-	 git rev-parse sub-d > ../expect1 &&
-	 git rev-parse ambiguous > ../expect2) &&
-	test_must_fail git merge c 2> actual &&
+	 if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	 then
+		git rev-parse --short sub-d >../expect1 &&
+		git rev-parse --short ambiguous >../expect2
+	 else
+		git rev-parse sub-d > ../expect1 &&
+		git rev-parse ambiguous > ../expect2
+	 fi
+	 ) &&
+	 if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	 then
+		test_must_fail git merge c >actual
+	 else
+		test_must_fail git merge c 2> actual
+	 fi &&
 	grep $(cat expect1) actual > /dev/null &&
 	grep $(cat expect2) actual > /dev/null &&
 	git reset --hard)
