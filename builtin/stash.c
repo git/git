@@ -534,11 +534,22 @@ static int apply_stash(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
+static int reject_reflog_ent(struct object_id *ooid, struct object_id *noid,
+			     const char *email, timestamp_t timestamp, int tz,
+			     const char *message, void *cb_data)
+{
+	return 1;
+}
+
+static int reflog_is_empty(const char *refname)
+{
+	return !for_each_reflog_ent(refname, reject_reflog_ent, NULL);
+}
+
 static int do_drop_stash(struct stash_info *info, int quiet)
 {
 	int ret;
 	struct child_process cp_reflog = CHILD_PROCESS_INIT;
-	struct child_process cp = CHILD_PROCESS_INIT;
 
 	/*
 	 * reflog does not provide a simple function for deleting refs. One will
@@ -559,19 +570,7 @@ static int do_drop_stash(struct stash_info *info, int quiet)
 			     info->revision.buf);
 	}
 
-	/*
-	 * This could easily be replaced by get_oid, but currently it will throw
-	 * a fatal error when a reflog is empty, which we can not recover from.
-	 */
-	cp.git_cmd = 1;
-	/* Even though --quiet is specified, rev-parse still outputs the hash */
-	cp.no_stdout = 1;
-	strvec_pushl(&cp.args, "rev-parse", "--verify", "--quiet", NULL);
-	strvec_pushf(&cp.args, "%s@{0}", ref_stash);
-	ret = run_command(&cp);
-
-	/* do_clear_stash if we just dropped the last stash entry */
-	if (ret)
+	if (reflog_is_empty(ref_stash))
 		do_clear_stash();
 
 	return 0;
