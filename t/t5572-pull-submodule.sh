@@ -148,8 +148,8 @@ test_expect_success 'branch has no merge base with remote-tracking counterpart' 
 
 	git clone parent child &&
 
-	# Reset master so that it has no merge base with
-	# refs/remotes/origin/master.
+	# Reset main so that it has no merge base with
+	# refs/remotes/origin/main.
 	OTHER=$(git -C child commit-tree -m bar \
 		$(git -C child rev-parse HEAD^{tree})) &&
 	git -C child reset --hard "$OTHER" &&
