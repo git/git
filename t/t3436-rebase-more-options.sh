@@ -28,7 +28,7 @@ test_expect_success 'setup' '
 	test_commit commit2 foo foo2 &&
 	test_commit commit3 foo foo3 &&
 
-	git checkout --orphan master &&
+	git checkout --orphan main &&
 	rm foo &&
 	test_write_lines "line 1" "        line 2" "line 3" >file &&
 	git commit -am "add file" &&

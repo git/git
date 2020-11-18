@@ -12,13 +12,13 @@ Initial setup:
 
     -- B --                   (first)
    /       \
- A - C - D - E - H            (master)
+ A - C - D - E - H            (main)
    \    \       /
     \    F - G                (second)
      \
       Conflicting-G
 '
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -40,7 +40,7 @@ test_expect_success 'setup' '
 	git checkout -b first &&
 	test_commit B &&
 	b=$(git rev-parse --short HEAD) &&
-	git checkout master &&
+	git checkout main &&
 	test_commit C &&
 	c=$(git rev-parse --short HEAD) &&
 	test_commit D &&
@@ -55,7 +55,7 @@ test_expect_success 'setup' '
 	f=$(git rev-parse --short HEAD) &&
 	test_commit G &&
 	g=$(git rev-parse --short HEAD) &&
-	git checkout master &&
+	git checkout main &&
 	git merge --no-commit G &&
 	test_tick &&
 	git commit -m H &&
@@ -85,7 +85,7 @@ test_expect_success 'create completely different structure' '
 	EOF
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
-	git rebase -i -r A master &&
+	git rebase -i -r A main &&
 	test_cmp_graph <<-\EOF
 	*   Merge the topic branch '\''onebranch'\''
 	|\
@@ -186,7 +186,7 @@ test_expect_success 'fast-forward merge -c still rewords' '
 '
 
 test_expect_success 'with a branch tip that was cherry-picked already' '
-	git checkout -b already-upstream master &&
+	git checkout -b already-upstream main &&
 	base="$(git rev-parse --verify HEAD)" &&
 
 	test_commit A1 &&
@@ -214,7 +214,7 @@ test_expect_success 'with a branch tip that was cherry-picked already' '
 '
 
 test_expect_success 'do not rebase cousins unless asked for' '
-	git checkout -b cousins master &&
+	git checkout -b cousins main &&
 	before="$(git rev-parse --verify HEAD)" &&
 	test_tick &&
 	git rebase -r HEAD^ &&
@@ -343,7 +343,7 @@ test_expect_success 'a "merge" into a root commit is a fast-forward' '
 test_expect_success 'A root commit can be a cousin, treat it that way' '
 	git checkout --orphan khnum &&
 	test_commit yama &&
-	git checkout -b asherah master &&
+	git checkout -b asherah main &&
 	test_commit shamkat &&
 	git merge --allow-unrelated-histories khnum &&
 	test_tick &&
@@ -370,7 +370,7 @@ test_expect_success 'labels that are object IDs are rewritten' '
 	git checkout -b third B &&
 	test_commit I &&
 	third=$(git rev-parse HEAD) &&
-	git checkout -b labels master &&
+	git checkout -b labels main &&
 	git merge --no-commit third &&
 	test_tick &&
 	git commit -m "Merge commit '\''$third'\'' into labels" &&
