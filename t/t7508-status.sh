@@ -37,11 +37,11 @@ test_expect_success 'create upstream branch' '
 	git checkout -b upstream &&
 	test_commit upstream1 &&
 	test_commit upstream2 &&
-	# leave the first commit on master as root because several
+	# leave the first commit on main as root because several
 	# tests depend on this case; for our upstream we only
 	# care about commit counts anyway, so a totally divergent
 	# history is OK
-	git checkout --orphan master
+	git checkout --orphan main
 '
 
 test_expect_success 'setup' '
@@ -88,7 +88,7 @@ EOF
 
 test_expect_success 'status --column' '
 	cat >expect <<\EOF &&
-# On branch master
+# On branch main
 # Your branch and '\''upstream'\'' have diverged,
 # and have 1 and 2 different commits each, respectively.
 #   (use "git pull" to merge the remote branch into yours)
@@ -119,7 +119,7 @@ test_expect_success 'status --column status.displayCommentPrefix=false' '
 '
 
 cat >expect <<\EOF
-# On branch master
+# On branch main
 # Your branch and 'upstream' have diverged,
 # and have 1 and 2 different commits each, respectively.
 #   (use "git pull" to merge the remote branch into yours)
@@ -193,7 +193,7 @@ test_expect_success 'commit ignores status.displayCommentPrefix=false in COMMIT_
 '
 
 cat >expect <<\EOF
-On branch master
+On branch main
 Your branch and 'upstream' have diverged,
 and have 1 and 2 different commits each, respectively.
 
@@ -266,7 +266,7 @@ test_expect_success 'status with gitignore' '
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -331,7 +331,7 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -368,7 +368,7 @@ output*
 EOF
 
 cat >expect <<\EOF
-## master...upstream [ahead 1, behind 2]
+## main...upstream [ahead 1, behind 2]
  M dir1/modified
 A  dir2/added
 ?? dir1/untracked
@@ -401,7 +401,7 @@ test_expect_success 'setup dir3' '
 
 test_expect_success 'status -uno' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -429,7 +429,7 @@ test_expect_success 'status (status.showUntrackedFiles no)' '
 
 test_expect_success 'status -uno (advice.statusHints false)' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
 
@@ -463,7 +463,7 @@ test_expect_success 'status -s (status.showUntrackedFiles no)' '
 
 test_expect_success 'status -unormal' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -518,7 +518,7 @@ test_expect_success 'status -s (status.showUntrackedFiles normal)' '
 
 test_expect_success 'status -uall' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -578,7 +578,7 @@ test_expect_success 'status -s (status.showUntrackedFiles all)' '
 
 test_expect_success 'status with relative paths' '
 	cat >expect <<\EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -646,7 +646,7 @@ test_expect_success 'setup unique colors' '
 
 test_expect_success TTY 'status with color.ui' '
 	cat >expect <<\EOF &&
-On branch <GREEN>master<RESET>
+On branch <GREEN>main<RESET>
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -706,7 +706,7 @@ test_expect_success TTY 'status -s with color.status' '
 '
 
 cat >expect <<\EOF
-## <YELLOW>master<RESET>...<CYAN>upstream<RESET> [ahead <YELLOW>1<RESET>, behind <CYAN>2<RESET>]
+## <YELLOW>main<RESET>...<CYAN>upstream<RESET> [ahead <YELLOW>1<RESET>, behind <CYAN>2<RESET>]
  <RED>M<RESET> dir1/modified
 <GREEN>A<RESET>  dir2/added
 <BLUE>??<RESET> dir1/untracked
@@ -757,7 +757,7 @@ test_expect_success 'status --porcelain respects -b' '
 
 	git status --porcelain -b >output &&
 	{
-		echo "## master...upstream [ahead 1, behind 2]" &&
+		echo "## main...upstream [ahead 1, behind 2]" &&
 		cat expect
 	} >tmp &&
 	mv tmp expect &&
@@ -769,7 +769,7 @@ test_expect_success 'status --porcelain respects -b' '
 
 test_expect_success 'status without relative paths' '
 	cat >expect <<\EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -843,7 +843,7 @@ test_expect_success 'status -s without relative paths' '
 
 test_expect_success 'dry-run of partial commit excluding new file in index' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -897,7 +897,7 @@ test_expect_success 'setup status submodule summary' '
 
 test_expect_success 'status submodule summary is disabled by default' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -954,7 +954,7 @@ head=$(cd sm && git rev-parse --short=7 --verify HEAD)
 
 test_expect_success 'status submodule summary' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1013,7 +1013,7 @@ test_expect_success 'status -s submodule summary' '
 
 test_expect_success 'status submodule summary (clean submodule): commit' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1061,7 +1061,7 @@ test_expect_success 'status -z implies porcelain' '
 
 test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1113,7 +1113,7 @@ touch .gitmodules
 
 test_expect_success '--ignore-submodules=untracked suppresses submodules with untracked content' '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1222,7 +1222,7 @@ test_expect_success '.git/config ignore=dirty suppresses submodules with modifie
 
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodules with modified content" '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1279,7 +1279,7 @@ head2=$(cd sm && git commit -q -m "2nd commit" foo && git rev-parse --short=7 --
 
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodule summary" '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1360,7 +1360,7 @@ test_expect_success ".git/config ignore=dirty doesn't suppress submodule summary
 '
 
 cat > expect << EOF
-; On branch master
+; On branch main
 ; Your branch and 'upstream' have diverged,
 ; and have 2 and 2 different commits each, respectively.
 ;   (use "git pull" to merge the remote branch into yours)
@@ -1408,7 +1408,7 @@ test_expect_success "status (core.commentchar with two chars with submodule summ
 
 test_expect_success "--ignore-submodules=all suppresses submodule summary" '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1434,7 +1434,7 @@ EOF
 
 test_expect_success '.gitmodules ignore=all suppresses unstaged submodule summary' '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1554,7 +1554,7 @@ test_expect_success 'git commit --dry-run will show a staged but ignored submodu
 	git reset HEAD^ &&
 	git add sm &&
 	cat >expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
