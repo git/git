@@ -74,7 +74,7 @@ static inline uint64_t git_bswap64(uint64_t x)
 }
 #endif
 
-#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64) || defined(_M_ARM64))
 
 #include <stdlib.h>
 
