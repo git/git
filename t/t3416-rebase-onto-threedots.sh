@@ -15,7 +15,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 #
 #	    F---G topic                             G'
 #	   /                                       /
-# A---B---C---D---E master      -->       A---B---C---D---E
+# A---B---C---D---E master        -->       A---B---C---D---E
 #      \   \ /
 #	\   x
 #	 \ / \
