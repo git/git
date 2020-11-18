@@ -39,10 +39,10 @@ test_expect_success 'validate --ignore-rev' '
 	test_must_fail git blame --ignore-rev X^{tree} file
 '
 
-# Ensure bogus --ignore-revs-file requests are caught
+# Ensure bogus --ignore-revs-file requests are silently accepted
 test_expect_success 'validate --ignore-revs-file' '
 	git rev-parse X^{tree} >ignore_x &&
-	test_must_fail git blame --ignore-revs-file ignore_x file
+	git blame --ignore-revs-file ignore_x file
 '
 
 for I in X XT
