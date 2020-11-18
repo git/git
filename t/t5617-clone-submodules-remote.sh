@@ -2,7 +2,7 @@
 
 test_description='Test cloning repos with submodules using remote-tracking branches'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -10,7 +10,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 pwd=$(pwd)
 
 test_expect_success 'setup' '
-	git checkout -b master &&
+	git checkout -b main &&
 	test_commit commit1 &&
 	mkdir sub &&
 	(
@@ -42,7 +42,7 @@ test_expect_success 'clone with --remote-submodules' '
 	git clone --recurse-submodules --remote-submodules "file://$pwd/." super_clone &&
 	(
 		cd super_clone/sub &&
-		git diff --exit-code remotes/origin/master
+		git diff --exit-code remotes/origin/main
 	)
 '
 
@@ -60,7 +60,7 @@ test_expect_success 'clone with --single-branch' '
 	git clone --recurse-submodules --single-branch "file://$pwd/." super_clone &&
 	(
 		cd super_clone/sub &&
-		git rev-parse --verify origin/master &&
+		git rev-parse --verify origin/main &&
 		test_must_fail git rev-parse --verify origin/other
 	)
 '

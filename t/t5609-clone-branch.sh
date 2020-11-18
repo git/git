@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test_description='clone --branch option'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -23,7 +23,7 @@ test_expect_success 'setup' '
 	 echo one >file && git add file && git commit -m one &&
 	 git checkout -b two &&
 	 echo two >file && git add file && git commit -m two &&
-	 git checkout master) &&
+	 git checkout main) &&
 	mkdir empty &&
 	(cd empty && git init)
 '
@@ -31,7 +31,7 @@ test_expect_success 'setup' '
 test_expect_success 'vanilla clone chooses HEAD' '
 	git clone parent clone &&
 	(cd clone &&
-	 check_HEAD master &&
+	 check_HEAD main &&
 	 check_file one
 	)
 '
@@ -56,7 +56,7 @@ test_expect_success 'clone -b sets up tracking' '
 
 test_expect_success 'clone -b does not munge remotes/origin/HEAD' '
 	(cd clone-two &&
-	 echo refs/remotes/origin/master >expect &&
+	 echo refs/remotes/origin/main >expect &&
 	 git symbolic-ref refs/remotes/origin/HEAD >actual &&
 	 test_cmp expect actual
 	)
