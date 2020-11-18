@@ -423,7 +423,7 @@ write_script () {
 # - Explicitly using test_have_prereq.
 #
 # - Implicitly by specifying the prerequisite tag in the calls to
-#   test_expect_{success,failure,code}.
+#   test_expect_{success,failure} and test_external{,_without_stderr}.
 #
 # The single parameter is the prerequisite tag (a simple word, in all
 # capital letters by convention).
