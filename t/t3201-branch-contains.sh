@@ -245,7 +245,7 @@ test_expect_success 'branch --merged combined with --no-merged' '
 # Here "topic" tracks "main" with one extra commit, and "zzz" points to the
 # same tip as main The name "zzz" must come alphabetically after "topic"
 # as we process them in that order.
-test_expect_success PREPARE_FOR_MAIN_BRANCH 'branch --merged with --verbose' '
+test_expect_success 'branch --merged with --verbose' '
 	git branch --track topic main &&
 	git branch zzz topic &&
 	git checkout topic &&
