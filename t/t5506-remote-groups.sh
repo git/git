@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test_description='git remote group handling'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -34,8 +34,8 @@ repo_fetched() {
 test_expect_success 'setup' '
 	mkdir one && (cd one && git init) &&
 	mkdir two && (cd two && git init) &&
-	git remote add -m master one one &&
-	git remote add -m master two two
+	git remote add -m main one one &&
+	git remote add -m main two two
 '
 
 test_expect_success 'no group updates all' '

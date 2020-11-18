@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test_description='fetch/push involving alternates'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -48,7 +48,7 @@ test_expect_success setup '
 test_expect_success 'pushing into a repository with the same alternate' '
 	(
 		cd one &&
-		git push ../receiver master:refs/heads/it
+		git push ../receiver main:refs/heads/it
 	) &&
 	(
 		cd receiver &&
@@ -60,7 +60,7 @@ test_expect_success 'pushing into a repository with the same alternate' '
 test_expect_success 'fetching from a repository with the same alternate' '
 	(
 		cd fetcher &&
-		git fetch ../one master:refs/heads/it &&
+		git fetch ../one main:refs/heads/it &&
 		count_objects >../fetcher.count
 	) &&
 	test_cmp one.count fetcher.count
