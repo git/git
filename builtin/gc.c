@@ -31,6 +31,7 @@
 #include "refs.h"
 #include "remote.h"
 #include "object-store.h"
+#include "exec-cmd.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -703,14 +704,51 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static const char * const builtin_maintenance_run_usage[] = {
-	N_("git maintenance run [--auto] [--[no-]quiet] [--task=<task>]"),
+static const char *const builtin_maintenance_run_usage[] = {
+	N_("git maintenance run [--auto] [--[no-]quiet] [--task=<task>] [--schedule]"),
 	NULL
 };
+
+enum schedule_priority {
+	SCHEDULE_NONE = 0,
+	SCHEDULE_WEEKLY = 1,
+	SCHEDULE_DAILY = 2,
+	SCHEDULE_HOURLY = 3,
+};
+
+static enum schedule_priority parse_schedule(const char *value)
+{
+	if (!value)
+		return SCHEDULE_NONE;
+	if (!strcasecmp(value, "hourly"))
+		return SCHEDULE_HOURLY;
+	if (!strcasecmp(value, "daily"))
+		return SCHEDULE_DAILY;
+	if (!strcasecmp(value, "weekly"))
+		return SCHEDULE_WEEKLY;
+	return SCHEDULE_NONE;
+}
+
+static int maintenance_opt_schedule(const struct option *opt, const char *arg,
+				    int unset)
+{
+	enum schedule_priority *priority = opt->value;
+
+	if (unset)
+		die(_("--no-schedule is not allowed"));
+
+	*priority = parse_schedule(arg);
+
+	if (!*priority)
+		die(_("unrecognized --schedule argument '%s'"), arg);
+
+	return 0;
+}
 
 struct maintenance_run_opts {
 	int auto_flag;
 	int quiet;
+	enum schedule_priority schedule;
 };
 
 /* Remember to update object flag allocation in object.h */
@@ -1168,6 +1206,8 @@ struct maintenance_task {
 	maintenance_auto_fn *auto_condition;
 	unsigned enabled:1;
 
+	enum schedule_priority schedule;
+
 	/* -1 if not selected. */
 	int selected_order;
 };
@@ -1263,6 +1303,9 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts)
 		     !tasks[i].auto_condition()))
 			continue;
 
+		if (opts->schedule && tasks[i].schedule < opts->schedule)
+			continue;
+
 		trace2_region_enter("maintenance", tasks[i].name, r);
 		if (tasks[i].fn(opts)) {
 			error(_("task '%s' failed"), tasks[i].name);
@@ -1275,21 +1318,54 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts)
 	return result;
 }
 
-static void initialize_task_config(void)
+static void initialize_maintenance_strategy(void)
+{
+	char *config_str;
+
+	if (git_config_get_string("maintenance.strategy", &config_str))
+		return;
+
+	if (!strcasecmp(config_str, "incremental")) {
+		tasks[TASK_GC].schedule = SCHEDULE_NONE;
+		tasks[TASK_COMMIT_GRAPH].enabled = 1;
+		tasks[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY;
+		tasks[TASK_PREFETCH].enabled = 1;
+		tasks[TASK_PREFETCH].schedule = SCHEDULE_HOURLY;
+		tasks[TASK_INCREMENTAL_REPACK].enabled = 1;
+		tasks[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY;
+		tasks[TASK_LOOSE_OBJECTS].enabled = 1;
+		tasks[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY;
+	}
+}
+
+static void initialize_task_config(int schedule)
 {
 	int i;
 	struct strbuf config_name = STRBUF_INIT;
 	gc_config();
 
+	if (schedule)
+		initialize_maintenance_strategy();
+
 	for (i = 0; i < TASK__COUNT; i++) {
 		int config_value;
+		char *config_str;
 
-		strbuf_setlen(&config_name, 0);
+		strbuf_reset(&config_name);
 		strbuf_addf(&config_name, "maintenance.%s.enabled",
 			    tasks[i].name);
 
 		if (!git_config_get_bool(config_name.buf, &config_value))
 			tasks[i].enabled = config_value;
+
+		strbuf_reset(&config_name);
+		strbuf_addf(&config_name, "maintenance.%s.schedule",
+			    tasks[i].name);
+
+		if (!git_config_get_string(config_name.buf, &config_str)) {
+			tasks[i].schedule = parse_schedule(config_str);
+			free(config_str);
+		}
 	}
 
 	strbuf_release(&config_name);
@@ -1333,6 +1409,9 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 	struct option builtin_maintenance_run_options[] = {
 		OPT_BOOL(0, "auto", &opts.auto_flag,
 			 N_("run tasks based on the state of the repository")),
+		OPT_CALLBACK(0, "schedule", &opts.schedule, N_("frequency"),
+			     N_("run tasks based on frequency"),
+			     maintenance_opt_schedule),
 		OPT_BOOL(0, "quiet", &opts.quiet,
 			 N_("do not report progress or other information over stderr")),
 		OPT_CALLBACK_F(0, "task", NULL, N_("task"),
@@ -1343,7 +1422,6 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 
 	opts.quiet = !isatty(2);
-	initialize_task_config();
 
 	for (i = 0; i < TASK__COUNT; i++)
 		tasks[i].selected_order = -1;
@@ -1353,13 +1431,196 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 			     builtin_maintenance_run_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
+	if (opts.auto_flag && opts.schedule)
+		die(_("use at most one of --auto and --schedule=<frequency>"));
+
+	initialize_task_config(opts.schedule);
+
 	if (argc != 0)
 		usage_with_options(builtin_maintenance_run_usage,
 				   builtin_maintenance_run_options);
 	return maintenance_run_tasks(&opts);
 }
 
-static const char builtin_maintenance_usage[] = N_("git maintenance run [<options>]");
+static int maintenance_register(void)
+{
+	char *config_value;
+	struct child_process config_set = CHILD_PROCESS_INIT;
+	struct child_process config_get = CHILD_PROCESS_INIT;
+
+	/* There is no current repository, so skip registering it */
+	if (!the_repository || !the_repository->gitdir)
+		return 0;
+
+	/* Disable foreground maintenance */
+	git_config_set("maintenance.auto", "false");
+
+	/* Set maintenance strategy, if unset */
+	if (!git_config_get_string("maintenance.strategy", &config_value))
+		free(config_value);
+	else
+		git_config_set("maintenance.strategy", "incremental");
+
+	config_get.git_cmd = 1;
+	strvec_pushl(&config_get.args, "config", "--global", "--get", "maintenance.repo",
+		     the_repository->worktree ? the_repository->worktree
+					      : the_repository->gitdir,
+			 NULL);
+	config_get.out = -1;
+
+	if (start_command(&config_get))
+		return error(_("failed to run 'git config'"));
+
+	/* We already have this value in our config! */
+	if (!finish_command(&config_get))
+		return 0;
+
+	config_set.git_cmd = 1;
+	strvec_pushl(&config_set.args, "config", "--add", "--global", "maintenance.repo",
+		     the_repository->worktree ? the_repository->worktree
+					      : the_repository->gitdir,
+		     NULL);
+
+	return run_command(&config_set);
+}
+
+static int maintenance_unregister(void)
+{
+	struct child_process config_unset = CHILD_PROCESS_INIT;
+
+	if (!the_repository || !the_repository->gitdir)
+		return error(_("no current repository to unregister"));
+
+	config_unset.git_cmd = 1;
+	strvec_pushl(&config_unset.args, "config", "--global", "--unset",
+		     "maintenance.repo",
+		     the_repository->worktree ? the_repository->worktree
+					      : the_repository->gitdir,
+		     NULL);
+
+	return run_command(&config_unset);
+}
+
+#define BEGIN_LINE "# BEGIN GIT MAINTENANCE SCHEDULE"
+#define END_LINE "# END GIT MAINTENANCE SCHEDULE"
+
+static int update_background_schedule(int run_maintenance)
+{
+	int result = 0;
+	int in_old_region = 0;
+	struct child_process crontab_list = CHILD_PROCESS_INIT;
+	struct child_process crontab_edit = CHILD_PROCESS_INIT;
+	FILE *cron_list, *cron_in;
+	const char *crontab_name;
+	struct strbuf line = STRBUF_INIT;
+	struct lock_file lk;
+	char *lock_path = xstrfmt("%s/schedule", the_repository->objects->odb->path);
+
+	if (hold_lock_file_for_update(&lk, lock_path, LOCK_NO_DEREF) < 0)
+		return error(_("another process is scheduling background maintenance"));
+
+	crontab_name = getenv("GIT_TEST_CRONTAB");
+	if (!crontab_name)
+		crontab_name = "crontab";
+
+	strvec_split(&crontab_list.args, crontab_name);
+	strvec_push(&crontab_list.args, "-l");
+	crontab_list.in = -1;
+	crontab_list.out = dup(lk.tempfile->fd);
+	crontab_list.git_cmd = 0;
+
+	if (start_command(&crontab_list)) {
+		result = error(_("failed to run 'crontab -l'; your system might not support 'cron'"));
+		goto cleanup;
+	}
+
+	/* Ignore exit code, as an empty crontab will return error. */
+	finish_command(&crontab_list);
+
+	/*
+	 * Read from the .lock file, filtering out the old
+	 * schedule while appending the new schedule.
+	 */
+	cron_list = fdopen(lk.tempfile->fd, "r");
+	rewind(cron_list);
+
+	strvec_split(&crontab_edit.args, crontab_name);
+	crontab_edit.in = -1;
+	crontab_edit.git_cmd = 0;
+
+	if (start_command(&crontab_edit)) {
+		result = error(_("failed to run 'crontab'; your system might not support 'cron'"));
+		goto cleanup;
+	}
+
+	cron_in = fdopen(crontab_edit.in, "w");
+	if (!cron_in) {
+		result = error(_("failed to open stdin of 'crontab'"));
+		goto done_editing;
+	}
+
+	while (!strbuf_getline_lf(&line, cron_list)) {
+		if (!in_old_region && !strcmp(line.buf, BEGIN_LINE))
+			in_old_region = 1;
+		if (in_old_region)
+			continue;
+		fprintf(cron_in, "%s\n", line.buf);
+		if (in_old_region && !strcmp(line.buf, END_LINE))
+			in_old_region = 0;
+	}
+
+	if (run_maintenance) {
+		struct strbuf line_format = STRBUF_INIT;
+		const char *exec_path = git_exec_path();
+
+		fprintf(cron_in, "%s\n", BEGIN_LINE);
+		fprintf(cron_in,
+			"# The following schedule was created by Git\n");
+		fprintf(cron_in, "# Any edits made in this region might be\n");
+		fprintf(cron_in,
+			"# replaced in the future by a Git command.\n\n");
+
+		strbuf_addf(&line_format,
+			    "%%s %%s * * %%s \"%s/git\" --exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%%s\n",
+			    exec_path, exec_path);
+		fprintf(cron_in, line_format.buf, "0", "1-23", "*", "hourly");
+		fprintf(cron_in, line_format.buf, "0", "0", "1-6", "daily");
+		fprintf(cron_in, line_format.buf, "0", "0", "0", "weekly");
+		strbuf_release(&line_format);
+
+		fprintf(cron_in, "\n%s\n", END_LINE);
+	}
+
+	fflush(cron_in);
+	fclose(cron_in);
+	close(crontab_edit.in);
+
+done_editing:
+	if (finish_command(&crontab_edit)) {
+		result = error(_("'crontab' died"));
+		goto cleanup;
+	}
+	fclose(cron_list);
+
+cleanup:
+	rollback_lock_file(&lk);
+	return result;
+}
+
+static int maintenance_start(void)
+{
+	if (maintenance_register())
+		warning(_("failed to add repo to global config"));
+
+	return update_background_schedule(1);
+}
+
+static int maintenance_stop(void)
+{
+	return update_background_schedule(0);
+}
+
+static const char builtin_maintenance_usage[] =	N_("git maintenance <subcommand> [<options>]");
 
 int cmd_maintenance(int argc, const char **argv, const char *prefix)
 {
@@ -1369,6 +1630,14 @@ int cmd_maintenance(int argc, const char **argv, const char *prefix)
 
 	if (!strcmp(argv[1], "run"))
 		return maintenance_run(argc - 1, argv + 1, prefix);
+	if (!strcmp(argv[1], "start"))
+		return maintenance_start();
+	if (!strcmp(argv[1], "stop"))
+		return maintenance_stop();
+	if (!strcmp(argv[1], "register"))
+		return maintenance_register();
+	if (!strcmp(argv[1], "unregister"))
+		return maintenance_unregister();
 
 	die(_("invalid subcommand: %s"), argv[1]);
 }
