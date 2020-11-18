@@ -5,7 +5,7 @@
 
 test_description='Test git rev-parse with different parent options'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -21,7 +21,7 @@ test_expect_success 'setup' '
 	test_commit second &&
 	git checkout --orphan tmp &&
 	test_commit start2 &&
-	git checkout master &&
+	git checkout main &&
 	git merge -m next --allow-unrelated-histories start2 &&
 	test_commit final &&
 

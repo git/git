@@ -2,7 +2,7 @@
 
 test_description='ancestor culling and limiting by parent number'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -48,7 +48,7 @@ test_expect_success 'setup roots, merges and octopuses' '
 	test_commit seven &&
 	git checkout -b yetanotherbranch four &&
 	test_commit eight &&
-	git checkout master &&
+	git checkout main &&
 	test_tick &&
 	git merge --allow-unrelated-histories -m normalmerge newroot &&
 	git tag normalmerge &&
@@ -59,7 +59,7 @@ test_expect_success 'setup roots, merges and octopuses' '
 	test_tick &&
 	git merge -m tetrapus sidebranch anotherbranch yetanotherbranch &&
 	git tag tetrapus &&
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'rev-list roots' '
@@ -126,7 +126,7 @@ test_expect_success 'dodecapus' '
 		roots="$roots root$i" ||
 		return
 	done &&
-	git checkout master &&
+	git checkout main &&
 	test_tick &&
 	git merge -m dodecapus $roots &&
 	git tag dodecapus &&

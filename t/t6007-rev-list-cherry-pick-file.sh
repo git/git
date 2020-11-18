@@ -2,7 +2,7 @@
 
 test_description='test git rev-list --cherry-pick -- file'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -34,7 +34,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "E" &&
 	git tag E &&
-	git checkout master &&
+	git checkout main &&
 	git checkout branch foo &&
 	test_tick &&
 	git commit -m "B" &&
@@ -236,7 +236,7 @@ test_expect_success '--cherry-pick with independent, but identical branches' '
 	test_tick &&
 	git commit -m "independent, too" foo &&
 	test -z "$(git rev-list --left-right --cherry-pick \
-		HEAD...master -- foo)"
+		HEAD...main -- foo)"
 '
 
 cat >expect <<EOF
