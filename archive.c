@@ -529,10 +529,12 @@ static int add_file_cb(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-#define OPT__COMPR(s, v, h, p) \
-	OPT_SET_INT_F(s, NULL, v, h, p, PARSE_OPT_NONEG)
-#define OPT__COMPR_HIDDEN(s, v, p) \
-	OPT_SET_INT_F(s, NULL, v, "", p, PARSE_OPT_NONEG | PARSE_OPT_HIDDEN)
+static int number_callback(const struct option *opt, const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	*(int *)opt->value = strtol(arg, NULL, 10);
+	return 0;
+}
 
 static int parse_archive_args(int argc, const char **argv,
 		const struct archiver **ar, struct archiver_args *args,
@@ -561,16 +563,8 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_BOOL(0, "worktree-attributes", &worktree_attributes,
 			N_("read .gitattributes in working directory")),
 		OPT__VERBOSE(&verbose, N_("report archived files on stderr")),
-		OPT__COMPR('0', &compression_level, N_("store only"), 0),
-		OPT__COMPR('1', &compression_level, N_("compress faster"), 1),
-		OPT__COMPR_HIDDEN('2', &compression_level, 2),
-		OPT__COMPR_HIDDEN('3', &compression_level, 3),
-		OPT__COMPR_HIDDEN('4', &compression_level, 4),
-		OPT__COMPR_HIDDEN('5', &compression_level, 5),
-		OPT__COMPR_HIDDEN('6', &compression_level, 6),
-		OPT__COMPR_HIDDEN('7', &compression_level, 7),
-		OPT__COMPR_HIDDEN('8', &compression_level, 8),
-		OPT__COMPR('9', &compression_level, N_("compress better"), 9),
+		OPT_NUMBER_CALLBACK(&compression_level,
+			N_("set compression level"), number_callback),
 		OPT_GROUP(""),
 		OPT_BOOL('l', "list", &list,
 			N_("list supported archive formats")),
@@ -617,7 +611,9 @@ static int parse_archive_args(int argc, const char **argv,
 
 	args->compression_level = Z_DEFAULT_COMPRESSION;
 	if (compression_level != -1) {
-		if ((*ar)->flags & ARCHIVER_WANT_COMPRESSION_LEVELS)
+		int levels_ok = (*ar)->flags & ARCHIVER_WANT_COMPRESSION_LEVELS;
+		int high_ok = (*ar)->flags & ARCHIVER_HIGH_COMPRESSION_LEVELS;
+		if (levels_ok && (compression_level <= 9 || high_ok))
 			args->compression_level = compression_level;
 		else {
 			die(_("Argument not supported for format '%s': -%d"),
