@@ -1,6 +1,6 @@
-# master --tags ../.git
-0567da4d5edd2ff4bb292a465ba9e64dcad9536b		../
-6c9dec2b923228c9ff994c6cfe4ae16c12408dc5	not-for-merge	tag 'tag-master' of ../
+# main branches-default
+b4ab76b1a01ea602209932134a44f1e6bd610832		branch 'main' of ../
+ecf3b3627b498bdcb735cc4343bf165f76964e9a	not-for-merge	tag 'tag-main' of ../
 8e32a6d901327a23ef831511badce7bf3bf46689	not-for-merge	tag 'tag-one' of ../
 22feea448b023a2d864ef94b013735af34d238ba	not-for-merge	tag 'tag-one-tree' of ../
 c61a82b60967180544e3c19f819ddbd0c9f89899	not-for-merge	tag 'tag-three' of ../
