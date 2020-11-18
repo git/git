@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test_description='git send-email'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -1171,10 +1171,10 @@ test_expect_success $PREREQ '--compose-encoding adds correct MIME for subject' '
 '
 
 test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
-	echo master >master &&
-	git add master &&
-	git commit -m"add master" &&
-	test_must_fail git send-email --dry-run master 2>errors &&
+	echo main >main &&
+	git add main &&
+	git commit -m"add main" &&
+	test_must_fail git send-email --dry-run main 2>errors &&
 	grep disambiguate errors
 '
 
@@ -1188,7 +1188,7 @@ test_expect_success $PREREQ 'feed two files' '
 		outdir/000?-*.patch 2>errors >out &&
 	grep "^Subject: " out >subjects &&
 	test "z$(sed -n -e 1p subjects)" = "zSubject: [PATCH 1/2] Second." &&
-	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add master"
+	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add main"
 '
 
 test_expect_success $PREREQ 'in-reply-to but no threading' '
@@ -2040,7 +2040,7 @@ test_expect_success $PREREQ 'setup expected-list' '
 	--cc="Cc2 <cc2@example.com>" \
 	--bcc="bcc1@example.com" \
 	--bcc="bcc2@example.com" \
-	0001-add-master.patch | replace_variable_fields \
+	0001-add-main.patch | replace_variable_fields \
 	>expected-list
 '
 
@@ -2052,7 +2052,7 @@ test_expect_success $PREREQ 'use email list in --cc --to and --bcc' '
 	--to="to3@example.com" \
 	--cc="Cc 1 <cc1@example.com>, Cc2 <cc2@example.com>" \
 	--bcc="bcc1@example.com, bcc2@example.com" \
-	0001-add-master.patch | replace_variable_fields \
+	0001-add-main.patch | replace_variable_fields \
 	>actual-list &&
 	test_cmp expected-list actual-list
 '
@@ -2068,7 +2068,7 @@ test_expect_success $PREREQ 'aliases work with email list' '
 	--to="To 1 <to1@example.com>, to2, to3@example.com" \
 	--cc="cc1, Cc2 <cc2@example.com>" \
 	--bcc="bcc1@example.com, bcc2@example.com" \
-	0001-add-master.patch | replace_variable_fields \
+	0001-add-main.patch | replace_variable_fields \
 	>actual-list &&
 	test_cmp expected-list actual-list
 '
@@ -2092,7 +2092,7 @@ test_expect_success $PREREQ 'leading and trailing whitespaces are removed' '
 	--cc="Cc2 <cc2@example.com>" \
 	--bcc="$BCC1" \
 	--bcc="bcc2@example.com" \
-	0001-add-master.patch | replace_variable_fields \
+	0001-add-main.patch | replace_variable_fields \
 	>actual-list &&
 	test_cmp expected-list actual-list
 '
@@ -2111,8 +2111,8 @@ test_expect_success $PREREQ 'invoke hook' '
 		false
 		;;
 	esac &&
-	test -f 0001-add-master.patch &&
-	grep "add master" "$1"
+	test -f 0001-add-main.patch &&
+	grep "add main" "$1"
 	EOF
 
 	mkdir subdir &&
@@ -2124,10 +2124,10 @@ test_expect_success $PREREQ 'invoke hook' '
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/../fake.sendmail" \
-			../0001-add-master.patch &&
+			../0001-add-main.patch &&
 
 		# Verify error message when a patch is rejected by the hook
-		sed -e "s/add master/x/" ../0001-add-master.patch >../another.patch &&
+		sed -e "s/add main/x/" ../0001-add-main.patch >../another.patch &&
 		test_must_fail git send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
@@ -2142,7 +2142,7 @@ test_expect_success $PREREQ 'test that send-email works outside a repo' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		"$(pwd)/0001-add-master.patch"
+		"$(pwd)/0001-add-main.patch"
 '
 
 test_expect_success $PREREQ 'test that sendmail config is rejected' '

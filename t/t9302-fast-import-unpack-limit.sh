@@ -5,7 +5,7 @@ test_description='test git fast-import unpack limit'
 test_expect_success 'create loose objects on import' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
-	commit refs/heads/master
+	commit refs/heads/main
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data <<COMMIT
 	initial
@@ -23,12 +23,12 @@ test_expect_success 'create loose objects on import' '
 test_expect_success 'bigger packs are preserved' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
-	commit refs/heads/master
+	commit refs/heads/main
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data <<COMMIT
 	incremental should create a pack
 	COMMIT
-	from refs/heads/master^0
+	from refs/heads/main^0
 
 	commit refs/heads/branch
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -48,7 +48,7 @@ test_expect_success 'bigger packs are preserved' '
 test_expect_success 'lookups after checkpoint works' '
 	hello_id=$(echo hello | git hash-object --stdin -t blob) &&
 	id="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" &&
-	before=$(git rev-parse refs/heads/master^0) &&
+	before=$(git rev-parse refs/heads/main^0) &&
 	(
 		cat <<-INPUT_END &&
 		blob
@@ -56,13 +56,13 @@ test_expect_success 'lookups after checkpoint works' '
 		data 6
 		hello
 
-		commit refs/heads/master
+		commit refs/heads/main
 		mark :2
 		committer $id
 		data <<COMMIT
 		checkpoint after this
 		COMMIT
-		from refs/heads/master^0
+		from refs/heads/main^0
 		M 100644 :1 hello
 
 		# pre-checkpoint
@@ -86,10 +86,10 @@ test_expect_success 'lookups after checkpoint works' '
 				n=$(($n + 1))
 			fi &&
 			sleep 1 &&
-			from=$(git rev-parse refs/heads/master^0)
+			from=$(git rev-parse refs/heads/main^0)
 		done &&
 		cat <<-INPUT_END &&
-		commit refs/heads/master
+		commit refs/heads/main
 		committer $id
 		data <<COMMIT
 		make sure from "unpacked sha1 reference" works, too
