@@ -35,7 +35,7 @@ const char *list_object_filter_config_name(enum list_objects_filter_choice c)
 		/* not a real filter type; just the count of all filters */
 		break;
 	}
-	BUG("list_object_filter_choice_name: invalid argument '%d'", c);
+	BUG("list_object_filter_config_name: invalid argument '%d'", c);
 }
 
 /*
