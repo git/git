@@ -1597,7 +1597,7 @@ static void read_v2_anomalous_offsets(struct packed_git *p,
 
 	/* The address of the 4-byte offset table */
 	idx1 = (((const uint32_t *)((const uint8_t *)p->index_data + p->crc_offset))
-		+ p->num_objects /* CRC32 table */
+		+ (size_t)p->num_objects /* CRC32 table */
 		);
 
 	/* The address of the 8-byte offset table */
