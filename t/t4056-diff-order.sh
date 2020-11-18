@@ -2,7 +2,7 @@
 
 test_description='diff order'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -109,7 +109,7 @@ done
 test_expect_success 'setup for testing combine-diff order' '
 	git checkout -b tmp HEAD~ &&
 	create_files 3 &&
-	git checkout master &&
+	git checkout main &&
 	git merge --no-commit -s ours tmp &&
 	create_files 5
 '

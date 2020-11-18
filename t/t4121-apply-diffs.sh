@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test_description='git apply for contextually independent diffs'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -26,7 +26,7 @@ test_expect_success 'setup' \
 	git commit -a -q -m 2 &&
 	echo 9 >>file &&
 	git commit -a -q -m 3 &&
-	git checkout master'
+	git checkout main'
 
 test_expect_success \
 	'check if contextually independent diffs for the same file apply' \

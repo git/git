@@ -3,7 +3,7 @@
 test_description='Test diff indent heuristic.
 
 '
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -269,7 +269,7 @@ test_expect_success 'diff-index: nice spaces with --indent-heuristic' '
 	git reset --soft HEAD~ &&
 	git diff-index --indent-heuristic -p old -- spaces.txt >out-diff-index-compacted &&
 	compare_diff spaces-compacted-expect out-diff-index-compacted &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-index: nice spaces with diff.indentHeuristic=true' '
@@ -277,7 +277,7 @@ test_expect_success 'diff-index: nice spaces with diff.indentHeuristic=true' '
 	git reset --soft HEAD~ &&
 	git -c diff.indentHeuristic=true diff-index -p old -- spaces.txt >out-diff-index-compacted2 &&
 	compare_diff spaces-compacted-expect out-diff-index-compacted2 &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-index: ugly spaces with --no-indent-heuristic' '
@@ -285,7 +285,7 @@ test_expect_success 'diff-index: ugly spaces with --no-indent-heuristic' '
 	git reset --soft HEAD~ &&
 	git diff-index --no-indent-heuristic -p old -- spaces.txt >out-diff-index &&
 	compare_diff spaces-expect out-diff-index &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-index: ugly spaces with diff.indentHeuristic=false' '
@@ -293,7 +293,7 @@ test_expect_success 'diff-index: ugly spaces with diff.indentHeuristic=false' '
 	git reset --soft HEAD~ &&
 	git -c diff.indentHeuristic=false diff-index -p old -- spaces.txt >out-diff-index2 &&
 	compare_diff spaces-expect out-diff-index2 &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-index: --indent-heuristic overrides config' '
@@ -301,7 +301,7 @@ test_expect_success 'diff-index: --indent-heuristic overrides config' '
 	git reset --soft HEAD~ &&
 	git -c diff.indentHeuristic=false diff-index --indent-heuristic -p old -- spaces.txt >out-diff-index-compacted3 &&
 	compare_diff spaces-compacted-expect out-diff-index-compacted3 &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-index: --no-indent-heuristic overrides config' '
@@ -309,7 +309,7 @@ test_expect_success 'diff-index: --no-indent-heuristic overrides config' '
 	git reset --soft HEAD~ &&
 	git -c diff.indentHeuristic=true diff-index --no-indent-heuristic -p old -- spaces.txt >out-diff-index3 &&
 	compare_diff spaces-expect out-diff-index3 &&
-	git checkout -f master
+	git checkout -f main
 '
 
 # --- diff-files tests ----------------------------------------------------
@@ -320,7 +320,7 @@ test_expect_success 'diff-files: nice spaces with --indent-heuristic' '
 	git diff-files --indent-heuristic -p spaces.txt >out-diff-files-raw &&
 	grep -v index out-diff-files-raw >out-diff-files-compacted &&
 	compare_diff spaces-compacted-expect out-diff-files-compacted &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-files: nice spaces with diff.indentHeuristic=true' '
@@ -329,7 +329,7 @@ test_expect_success 'diff-files: nice spaces with diff.indentHeuristic=true' '
 	git -c diff.indentHeuristic=true diff-files -p spaces.txt >out-diff-files-raw2 &&
 	grep -v index out-diff-files-raw2 >out-diff-files-compacted2 &&
 	compare_diff spaces-compacted-expect out-diff-files-compacted2 &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-files: ugly spaces with --no-indent-heuristic' '
@@ -338,7 +338,7 @@ test_expect_success 'diff-files: ugly spaces with --no-indent-heuristic' '
 	git diff-files --no-indent-heuristic -p spaces.txt >out-diff-files-raw &&
 	grep -v index out-diff-files-raw >out-diff-files &&
 	compare_diff spaces-expect out-diff-files &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-files: ugly spaces with diff.indentHeuristic=false' '
@@ -347,7 +347,7 @@ test_expect_success 'diff-files: ugly spaces with diff.indentHeuristic=false' '
 	git -c diff.indentHeuristic=false diff-files -p spaces.txt >out-diff-files-raw2 &&
 	grep -v index out-diff-files-raw2 >out-diff-files &&
 	compare_diff spaces-expect out-diff-files &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-files: --indent-heuristic overrides config' '
@@ -356,7 +356,7 @@ test_expect_success 'diff-files: --indent-heuristic overrides config' '
 	git -c diff.indentHeuristic=false diff-files --indent-heuristic -p spaces.txt >out-diff-files-raw3 &&
 	grep -v index out-diff-files-raw3 >out-diff-files-compacted &&
 	compare_diff spaces-compacted-expect out-diff-files-compacted &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'diff-files: --no-indent-heuristic overrides config' '
@@ -365,7 +365,7 @@ test_expect_success 'diff-files: --no-indent-heuristic overrides config' '
 	git -c diff.indentHeuristic=true diff-files --no-indent-heuristic -p spaces.txt >out-diff-files-raw4 &&
 	grep -v index out-diff-files-raw4 >out-diff-files &&
 	compare_diff spaces-expect out-diff-files &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_done

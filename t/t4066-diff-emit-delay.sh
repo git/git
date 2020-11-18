@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test_description='test combined/stat/moved interaction'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -16,7 +16,7 @@ test_expect_success 'set up history with a merge' '
 	test_commit B &&
 	git checkout -b side HEAD^ &&
 	test_commit C &&
-	git merge -m M master &&
+	git merge -m M main &&
 	test_commit D
 '
 

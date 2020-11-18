@@ -2,7 +2,7 @@
 
 test_description='.mailmap configurations'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -197,7 +197,7 @@ test_expect_success 'No mailmap files, but configured' '
 
 test_expect_success 'setup mailmap blob tests' '
 	git checkout -b map &&
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout main" &&
 	cat >just-bugs <<- EOF &&
 	Blob Guy <bugs@company.xx>
 	EOF
