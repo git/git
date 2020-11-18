@@ -2,7 +2,7 @@
 
 test_description='sparse checkout tests
 
-* (tag: removed, master) removed
+* (tag: removed, main) removed
 | D	sub/added
 * (HEAD, tag: top) modified and added
 | M	init.t

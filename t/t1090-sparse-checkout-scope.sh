@@ -2,7 +2,7 @@
 
 test_description='sparse checkout scope tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -23,18 +23,18 @@ test_expect_success 'create feature branch' '
 	git commit -m "modification"
 '
 
-test_expect_success 'perform sparse checkout of master' '
+test_expect_success 'perform sparse checkout of main' '
 	git config --local --bool core.sparsecheckout true &&
 	echo "!/*" >.git/info/sparse-checkout &&
 	echo "/a" >>.git/info/sparse-checkout &&
 	echo "/c" >>.git/info/sparse-checkout &&
-	git checkout master &&
+	git checkout main &&
 	test_path_is_file a &&
 	test_path_is_missing b &&
 	test_path_is_file c
 '
 
-test_expect_success 'merge feature branch into sparse checkout of master' '
+test_expect_success 'merge feature branch into sparse checkout of main' '
 	git merge feature &&
 	test_path_is_file a &&
 	test_path_is_missing b &&
@@ -42,10 +42,10 @@ test_expect_success 'merge feature branch into sparse checkout of master' '
 	test "$(cat c)" = "modified"
 '
 
-test_expect_success 'return to full checkout of master' '
+test_expect_success 'return to full checkout of main' '
 	git checkout feature &&
 	echo "/*" >.git/info/sparse-checkout &&
-	git checkout master &&
+	git checkout main &&
 	test_path_is_file a &&
 	test_path_is_file b &&
 	test_path_is_file c &&

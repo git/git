@@ -5,7 +5,7 @@
 
 test_description='Test git config in different settings'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -1057,8 +1057,8 @@ test_expect_success 'check split_cmdline return' "
 	echo foo > foo &&
 	git add foo &&
 	git commit -m 'initial commit' &&
-	git config branch.master.mergeoptions 'echo \"' &&
-	test_must_fail git merge master
+	git config branch.main.mergeoptions 'echo \"' &&
+	test_must_fail git merge main
 "
 
 test_expect_success 'git -c "key=value" support' '
@@ -1772,11 +1772,11 @@ test_expect_success '--show-origin blob' '
 
 test_expect_success '--show-origin blob ref' '
 	cat >expect <<-\EOF &&
-	blob:master:custom.conf	user.custom=true
+	blob:main:custom.conf	user.custom=true
 	EOF
 	git add "$CUSTOM_CONFIG_FILE" &&
 	git commit -m "new config file" &&
-	git config --blob=master:"$CUSTOM_CONFIG_FILE" --show-origin --list >output &&
+	git config --blob=main:"$CUSTOM_CONFIG_FILE" --show-origin --list >output &&
 	test_cmp expect output
 '
 
