@@ -63,6 +63,9 @@ UI, Workflows & Features
  * Exit codes from "git remote add" etc. were not usable by scripted
    callers, but now they are.
 
+ * "git archive" now allows compression level higher than "-9"
+   when generating tar.gz output.
+
  * Zsh autocompletion (in contrib/) update.
 
 
@@ -101,6 +104,8 @@ Performance, Internal Implementation, Development Support etc.
  * Test scripts are being prepared to transition of the default branch
    name to 'main'.
 
+ * "git fetch --depth=<n>" over the stateless RPC / smart HTTP
+   transport handled EOF from the client poorly at the server end.
 
 
 Fixes since v2.29
@@ -181,6 +186,36 @@ Fixes since v2.29
    the reader side a bit (which we may want to tighten again in a year
    or so).
    (merge c779386182 jc/sequencer-stopped-sha-simplify later to maint).
+
+ * The code to see if "git stash drop" can safely remove refs/stash
+   has been made more carerful.
+   (merge 4f44c5659b rs/empty-reflog-check-fix later to maint).
+
+ * "git log -L<range>:<path>" is documented to take no pathspec, but
+   this was not enforced by the command line option parser, which has
+   been corrected.
+   (merge 39664cb0ac jc/line-log-takes-no-pathspec later to maint).
+
+ * "git format-patch --output=there" did not work as expected and
+   instead crashed.  The option is now supported.
+   (merge dc1672dd10 jk/format-patch-output later to maint).
+
+ * Define ARM64 compiled with MSVC to be little-endian.
+   (merge 0c038fc65a dg/bswap-msvc later to maint).
+
+ * "git rebase -i" did not store ORIG_HEAD correctly.
+   (merge 8843302307 pw/rebase-i-orig-head later to maint).
+
+ * "git blame -L :funcname -- path" did not work well for a path for
+   which a userdiff driver is defined.
+
+ * "make DEVELOPER=1 sparse" used to run sparse and let it emit
+   warnings; now such warnings will cause an error.
+   (merge 521dc56270 jc/sparse-error-for-developer-build later to maint).
+
+ * "git blame --ignore-revs-file=<file>" learned to ignore a
+   non-existent object name in the input, instead of complaining.
+   (merge c714d05875 jc/blame-ignore-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
