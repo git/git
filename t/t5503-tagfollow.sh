@@ -14,7 +14,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 #   L - A ------ O ------ B
 #    \   \                 \
 #     \   C - origin/cat    \
-#      origin/master         master
+#      origin/master           master
 
 test_expect_success setup '
 	test_tick &&
