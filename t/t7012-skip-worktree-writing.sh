@@ -149,7 +149,7 @@ test_expect_success '--ignore-skip-worktree-entries leaves worktree alone' '
 		--diff-filter=D -- keep-me.t
 '
 
-test_expect_failure 'stash restore in sparse checkout' '
+test_expect_success 'stash restore in sparse checkout' '
 	test_create_repo stash-restore &&
 	(
 		cd stash-restore &&

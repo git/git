@@ -363,11 +363,22 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	 * relevant trees, and the merge logic always stages whatever merges
 	 * cleanly.  We want to unstage those changes, unless it corresponds
 	 * to a file that didn't exist as of orig_tree.
+	 *
+	 * However, if any SKIP_WORKTREE path is modified relative to
+	 * orig_tree, then we want to clear the SKIP_WORKTREE bit and write
+	 * it to the worktree before unstaging.
 	 */
 
+	struct checkout state = CHECKOUT_INIT;
 	struct diff_options diff_opts;
 	struct lock_file lock = LOCK_INIT;
 	int i;
+
+	/* If any entries have skip_worktree set, we'll have to check 'em out */
+	state.force = 1;
+	state.quiet = 1;
+	state.refresh_cache = 1;
+	state.istate = &the_index;
 
 	/*
 	 * Step 1: get a difference between orig_tree (which corresponding
@@ -395,7 +406,42 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 				     strlen(p->two->path));
 
 		/*
-		 * Step 2: "unstage" changes, as long as they are still tracked
+		 * Step 2: Place changes in the working tree
+		 *
+		 * Stash is about restoring changes *to the working tree*.
+		 * So if the merge successfully got a new version of some
+		 * path, but left it out of the working tree, then clear the
+		 * SKIP_WORKTREE bit and write it to the working tree.
+		 */
+		if (pos >= 0 && ce_skip_worktree(active_cache[pos])) {
+			struct stat st;
+
+			ce = active_cache[pos];
+			if (!lstat(ce->name, &st)) {
+				/* Conflicting path present; relocate it */
+				struct strbuf new_path = STRBUF_INIT;
+				int fd;
+
+				strbuf_addf(&new_path,
+					    "%s.stash.XXXXXX", ce->name);
+				fd = xmkstemp(new_path.buf);
+				close(fd);
+				printf(_("WARNING: Untracked file in way of "
+					 "tracked file!  Renaming\n "
+					 "           %s -> %s\n"
+					 "         to make room.\n"),
+				       ce->name, new_path.buf);
+				if (rename(ce->name, new_path.buf))
+					die("Failed to move %s to %s\n",
+					    ce->name, new_path.buf);
+				strbuf_release(&new_path);
+			}
+			checkout_entry(ce, &state, NULL, NULL);
+			ce->ce_flags &= ~CE_SKIP_WORKTREE;
+		}
+
+		/*
+		 * Step 3: "unstage" changes, as long as they are still tracked
 		 */
 		if (p->one->oid_valid) {
 			/*
@@ -417,7 +463,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	diff_flush(&diff_opts);
 
 	/*
-	 * Step 3: write the new index to disk
+	 * Step 4: write the new index to disk
 	 */
 	repo_hold_locked_index(the_repository, &lock, LOCK_DIE_ON_ERROR);
 	if (write_locked_index(&the_index, &lock,
