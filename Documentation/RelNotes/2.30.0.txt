@@ -68,6 +68,13 @@ UI, Workflows & Features
 
  * Zsh autocompletion (in contrib/) update.
 
+ * The maximum length of output filenames "git format-patch" creates
+   has become configurable (used to be capped at 64).
+
+ * "git rev-parse" learned the "--end-of-options" to help scripts to
+   safely take a parameter that is supposed to be a revision, e.g.
+   "git rev-parse --verify -q --end-of-options $rev".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -106,6 +113,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git fetch --depth=<n>" over the stateless RPC / smart HTTP
    transport handled EOF from the client poorly at the server end.
+
+ * A specialization of hashmap that uses a string as key has been
+   introduced.  Hopefully it will see wider use over time.
 
 
 Fixes since v2.29
@@ -216,6 +226,16 @@ Fixes since v2.29
  * "git blame --ignore-revs-file=<file>" learned to ignore a
    non-existent object name in the input, instead of complaining.
    (merge c714d05875 jc/blame-ignore-fix later to maint).
+
+ * Running "git diff" while allowing external diff in a state with
+   unmerged paths used to segfault, which has been corrected.
+   (merge d66851806f jk/diff-release-filespec-fix later to maint).
+
+ * Build configuration cleanup.
+   (merge b990f02fd8 ab/config-mak-uname-simplify later to maint).
+
+ * Fix regression introduced when nvimdiff support in mergetool was added.
+   (merge 12026f46e7 pd/mergetool-nvimdiff later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
