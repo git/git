@@ -57,7 +57,7 @@ static void color_set(char *dst, const char *color_bytes)
  * We could let the compiler do this, but without C99 initializers
  * the code gets unwieldy and unreadable, so...
  */
-void init_grep_defaults(struct repository *repo)
+void init_grep_defaults(void)
 {
 	struct grep_opt *opt = &grep_defaults;
 	static int run_once;
@@ -67,7 +67,6 @@ void init_grep_defaults(struct repository *repo)
 	run_once++;
 
 	memset(opt, 0, sizeof(*opt));
-	opt->repo = repo;
 	opt->relative = 1;
 	opt->pathname = 1;
 	opt->max_depth = -1;

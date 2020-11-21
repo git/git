@@ -394,7 +394,7 @@ First some setup. Add `init_grep_defaults()` to `init_walken_defaults()` and add
 ----
 static void init_walken_defaults(void)
 {
-	init_grep_defaults(the_repository);
+	init_grep_defaults();
 }
 
 ...
