@@ -726,6 +726,6 @@ void free_name_hash(struct index_state *istate)
 		return;
 	istate->name_hash_initialized = 0;
 
-	hashmap_free(&istate->name_hash);
-	hashmap_free_entries(&istate->dir_hash, struct dir_entry, ent);
+	hashmap_clear(&istate->name_hash);
+	hashmap_clear_and_free(&istate->dir_hash, struct dir_entry, ent);
 }
