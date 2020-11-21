@@ -14,7 +14,31 @@ static int grep_source_load(struct grep_source *gs);
 static int grep_source_is_binary(struct grep_source *gs,
 				 struct index_state *istate);
 
-static struct grep_opt grep_defaults;
+static void std_output(struct grep_opt *opt, const void *buf, size_t size)
+{
+	fwrite(buf, size, 1, stdout);
+}
+
+static struct grep_opt grep_defaults = {
+	.relative = 1,
+	.pathname = 1,
+	.max_depth = -1,
+	.pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED,
+	.colors = {
+		[GREP_COLOR_CONTEXT] = "",
+		[GREP_COLOR_FILENAME] = "",
+		[GREP_COLOR_FUNCTION] = "",
+		[GREP_COLOR_LINENO] = "",
+		[GREP_COLOR_COLUMNNO] = "",
+		[GREP_COLOR_MATCH_CONTEXT] = GIT_COLOR_BOLD_RED,
+		[GREP_COLOR_MATCH_SELECTED] = GIT_COLOR_BOLD_RED,
+		[GREP_COLOR_SELECTED] = "",
+		[GREP_COLOR_SEP] = GIT_COLOR_CYAN,
+	},
+	.only_matching = 0,
+	.color = -1,
+	.output = std_output,
+};
 
 #ifdef USE_LIBPCRE2
 static pcre2_general_context *pcre2_global_context;
@@ -42,47 +66,9 @@ static const char *color_grep_slots[] = {
 	[GREP_COLOR_SEP]	    = "separator",
 };
 
-static void std_output(struct grep_opt *opt, const void *buf, size_t size)
-{
-	fwrite(buf, size, 1, stdout);
-}
-
 static void color_set(char *dst, const char *color_bytes)
 {
 	xsnprintf(dst, COLOR_MAXLEN, "%s", color_bytes);
-}
-
-/*
- * Initialize the grep_defaults template with hardcoded defaults.
- * We could let the compiler do this, but without C99 initializers
- * the code gets unwieldy and unreadable, so...
- */
-void init_grep_defaults(void)
-{
-	struct grep_opt *opt = &grep_defaults;
-	static int run_once;
-
-	if (run_once)
-		return;
-	run_once++;
-
-	memset(opt, 0, sizeof(*opt));
-	opt->relative = 1;
-	opt->pathname = 1;
-	opt->max_depth = -1;
-	opt->pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
-	color_set(opt->colors[GREP_COLOR_CONTEXT], "");
-	color_set(opt->colors[GREP_COLOR_FILENAME], "");
-	color_set(opt->colors[GREP_COLOR_FUNCTION], "");
-	color_set(opt->colors[GREP_COLOR_LINENO], "");
-	color_set(opt->colors[GREP_COLOR_COLUMNNO], "");
-	color_set(opt->colors[GREP_COLOR_MATCH_CONTEXT], GIT_COLOR_BOLD_RED);
-	color_set(opt->colors[GREP_COLOR_MATCH_SELECTED], GIT_COLOR_BOLD_RED);
-	color_set(opt->colors[GREP_COLOR_SELECTED], "");
-	color_set(opt->colors[GREP_COLOR_SEP], GIT_COLOR_CYAN);
-	opt->only_matching = 0;
-	opt->color = -1;
-	opt->output = std_output;
 }
 
 static int parse_pattern_type_arg(const char *opt, const char *arg)
