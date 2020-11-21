@@ -728,6 +728,19 @@ test_expect_success 'add -N and difftool -d' '
 	git difftool --dir-diff --extcmd ls
 '
 
+test_expect_success 'difftool --cached with unmerged files' '
+	test_when_finished git reset --hard &&
+
+	test_commit conflicting &&
+	test_commit conflict-a conflict.t a &&
+	git reset --hard conflicting &&
+	test_commit conflict-b conflict.t b &&
+	test_must_fail git merge conflict-a &&
+
+	git difftool --cached --no-prompt >output &&
+	test_must_be_empty output
+'
+
 test_expect_success 'outside worktree' '
 	echo 1 >1 &&
 	echo 2 >2 &&
