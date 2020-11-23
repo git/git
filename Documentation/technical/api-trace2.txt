@@ -466,7 +466,7 @@ completed.)
 
 `"error"`::
 	This event is emitted when one of the `error()`, `die()`,
-	or `usage()` functions are called.
+	`warning()`, or `usage()` functions are called.
 +
 ------------
 {
