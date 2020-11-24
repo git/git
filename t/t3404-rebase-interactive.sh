@@ -12,7 +12,7 @@ Initial setup:
 
      one - two - three - four (conflict-branch)
    /
- A - B - C - D - E            (master)
+ A - B - C - D - E            (primary)
  | \
  |   F - G - H                (branch1)
  |     \
@@ -30,6 +30,7 @@ Initial setup:
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'setup' '
+	git switch -C primary &&
 	test_commit A file1 &&
 	test_commit B file1 &&
 	test_commit C file2 &&
@@ -65,7 +66,7 @@ SHELL=
 export SHELL
 
 test_expect_success 'rebase --keep-empty' '
-	git checkout -b emptybranch master &&
+	git checkout -b emptybranch primary &&
 	git commit --allow-empty -m "empty" &&
 	git rebase --keep-empty -i HEAD~2 &&
 	git log --oneline >actual &&
@@ -86,7 +87,7 @@ test_expect_success 'rebase -i with empty todo list' '
 '
 
 test_expect_success 'rebase -i with the exec command' '
-	git checkout master &&
+	git checkout primary &&
 	(
 	set_fake_editor &&
 	FAKE_LINES="1 exec_>touch-one
@@ -103,12 +104,12 @@ test_expect_success 'rebase -i with the exec command' '
 	test_path_is_file touch-three &&
 	test_path_is_file "touch-file  name with spaces" &&
 	test_path_is_file touch-after-semicolon &&
-	test_cmp_rev master HEAD &&
+	test_cmp_rev primary HEAD &&
 	rm -f touch-*
 '
 
 test_expect_success 'rebase -i with the exec command runs from tree root' '
-	git checkout master &&
+	git checkout primary &&
 	mkdir subdir && (cd subdir &&
 	set_fake_editor &&
 	FAKE_LINES="1 exec_>touch-subdir" \
@@ -121,7 +122,7 @@ test_expect_success 'rebase -i with the exec command runs from tree root' '
 test_expect_success 'rebase -i with exec allows git commands in subdirs' '
 	test_when_finished "rm -rf subdir" &&
 	test_when_finished "git rebase --abort ||:" &&
-	git checkout master &&
+	git checkout primary &&
 	mkdir subdir && (cd subdir &&
 	set_fake_editor &&
 	FAKE_LINES="1 x_cd_subdir_&&_git_rev-parse_--is-inside-work-tree" \
@@ -139,13 +140,13 @@ test_expect_success 'rebase -i sets work tree properly' '
 '
 
 test_expect_success 'rebase -i with the exec command checks tree cleanness' '
-	git checkout master &&
+	git checkout primary &&
 	(
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="exec_echo_foo_>file1 1" \
 			git rebase -i HEAD^
 	) &&
-	test_cmp_rev master^ HEAD &&
+	test_cmp_rev primary^ HEAD &&
 	git reset --hard &&
 	git rebase --continue
 '
@@ -168,7 +169,7 @@ test_expect_success 'rebase -x with newline in command fails' '
 '
 
 test_expect_success 'rebase -i with exec of inexistent command' '
-	git checkout master &&
+	git checkout primary &&
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -259,8 +260,8 @@ test_expect_success 'stop on conflicting pick' '
 	>>>>>>> $commit (G)
 	EOF
 	git tag new-branch1 &&
-	test_must_fail git rebase -i master &&
-	test "$(git rev-parse HEAD~3)" = "$(git rev-parse master)" &&
+	test_must_fail git rebase -i primary &&
+	test "$(git rev-parse HEAD~3)" = "$(git rev-parse primary)" &&
 	test_cmp expect .git/rebase-merge/patch &&
 	test_cmp expect2 file1 &&
 	test "$(git diff --name-status |
@@ -287,7 +288,7 @@ test_expect_success 'abort' '
 test_expect_success 'abort with error when new base cannot be checked out' '
 	git rm --cached file1 &&
 	git commit -m "remove file in base" &&
-	test_must_fail git rebase -i master > output 2>&1 &&
+	test_must_fail git rebase -i primary > output 2>&1 &&
 	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" \
 		output &&
 	test_i18ngrep "file1" output &&
@@ -301,7 +302,7 @@ test_expect_success 'retain authorship' '
 	test_tick &&
 	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
 	git tag twerp &&
-	git rebase -i --onto master HEAD^ &&
+	git rebase -i --onto primary HEAD^ &&
 	git show HEAD | grep "^Author: Twerp Snog"
 '
 
@@ -336,10 +337,10 @@ test_expect_success 'squash' '
 	(
 		set_fake_editor &&
 		FAKE_LINES="1 squash 2" EXPECT_HEADER_COUNT=2 \
-			git rebase -i --onto master HEAD~2
+			git rebase -i --onto primary HEAD~2
 	) &&
 	test B = $(cat file7) &&
-	test_cmp_rev HEAD^ master
+	test_cmp_rev HEAD^ primary
 '
 
 test_expect_success 'retain authorship when squashing' '
@@ -366,12 +367,12 @@ test_expect_failure REBASE_P 'exchange two commits with -p' '
 '
 
 test_expect_success REBASE_P 'preserve merges with -p' '
-	git checkout -b to-be-preserved master^ &&
+	git checkout -b to-be-preserved primary^ &&
 	: > unrelated-file &&
 	git add unrelated-file &&
 	test_tick &&
 	git commit -m "unrelated" &&
-	git checkout -b another-branch master &&
+	git checkout -b another-branch primary &&
 	echo B > file1 &&
 	test_tick &&
 	git commit -m J file1 &&
@@ -394,7 +395,7 @@ test_expect_success REBASE_P 'preserve merges with -p' '
 	git commit -m M file1 &&
 	git checkout -b to-be-rebased &&
 	test_tick &&
-	git rebase -i -p --onto branch1 master &&
+	git rebase -i -p --onto branch1 primary &&
 	git update-index --refresh &&
 	git diff-files --quiet &&
 	git diff-index --quiet --cached HEAD -- &&
@@ -437,7 +438,7 @@ test_expect_success '--continue tries to commit' '
 '
 
 test_expect_success 'verbose flag is heeded, even after --continue' '
-	git reset --hard master@{1} &&
+	git reset --hard primary@{1} &&
 	test_tick &&
 	test_must_fail git rebase -v -i --onto new-branch1 HEAD^ &&
 	echo resolved > file1 &&
@@ -802,7 +803,7 @@ test_expect_success 'rebase -i continue with unstaged submodule' '
 '
 
 test_expect_success 'avoid unnecessary reset' '
-	git checkout master &&
+	git checkout primary &&
 	git reset --hard &&
 	test-tool chmtime =123456789 file3 &&
 	git update-index --refresh &&
@@ -814,14 +815,14 @@ test_expect_success 'avoid unnecessary reset' '
 '
 
 test_expect_success 'reword' '
-	git checkout -b reword-branch master &&
+	git checkout -b reword-branch primary &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" \
 			git rebase -i A &&
 		git show HEAD | grep "E changed" &&
-		test $(git rev-parse master) != $(git rev-parse HEAD) &&
-		test_cmp_rev master^ HEAD^ &&
+		test $(git rev-parse primary) != $(git rev-parse HEAD) &&
+		test_cmp_rev primary^ HEAD^ &&
 		FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" \
 			git rebase -i A &&
 		git show HEAD^ | grep "D changed" &&
@@ -918,7 +919,7 @@ test_expect_success 'rebase-i history with funny messages' '
 '
 
 test_expect_success 'prepare for rebase -i --exec' '
-	git checkout master &&
+	git checkout primary &&
 	git checkout -b execute &&
 	test_commit one_exec main.txt one_exec &&
 	test_commit two_exec main.txt two_exec &&
@@ -1027,7 +1028,7 @@ test_expect_success 'rebase -i --exec without <CMD>' '
 	git reset --hard execute &&
 	test_must_fail git rebase -i --exec 2>actual &&
 	test_i18ngrep "requires a value" actual &&
-	git checkout master
+	git checkout primary
 '
 
 test_expect_success 'rebase -i --root re-order and drop commits' '
@@ -1079,7 +1080,7 @@ test_expect_success 'rebase -i --root fixup root commit' '
 
 test_expect_success 'rebase -i --root reword original root commit' '
 	test_when_finished "test_might_fail git rebase --abort" &&
-	git checkout -b reword-original-root-branch master &&
+	git checkout -b reword-original-root-branch primary &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="reword 1 2" FAKE_COMMIT_MESSAGE="A changed" \
@@ -1091,7 +1092,7 @@ test_expect_success 'rebase -i --root reword original root commit' '
 
 test_expect_success 'rebase -i --root reword new root commit' '
 	test_when_finished "test_might_fail git rebase --abort" &&
-	git checkout -b reword-now-root-branch master &&
+	git checkout -b reword-now-root-branch primary &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="reword 3 1" FAKE_COMMIT_MESSAGE="C changed" \
@@ -1251,7 +1252,7 @@ test_expect_success 'rebase -i error on commits with \ in message' '
 '
 
 test_expect_success 'short commit ID setup' '
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout primary" &&
 	git checkout --orphan collide &&
 	git rm -rf . &&
 	(
@@ -1292,7 +1293,7 @@ test_expect_success 'short commit ID collide' '
 	t3404_collider	sha1:ac4f2ee
 	t3404_collider	sha256:16697
 	EOF
-	test_when_finished "reset_rebase && git checkout master" &&
+	test_when_finished "reset_rebase && git checkout primary" &&
 	git checkout collide &&
 	colliding_id=$(test_oid t3404_collision) &&
 	hexsz=$(test_oid hexsz) &&
@@ -1416,11 +1417,11 @@ test_expect_success 'rebase --continue removes CHERRY_PICK_HEAD' '
 
 rebase_setup_and_clean () {
 	test_when_finished "
-		git checkout master &&
+		git checkout primary &&
 		test_might_fail git branch -D $1 &&
 		test_might_fail git rebase --abort
 	" &&
-	git checkout -b $1 ${2:-master}
+	git checkout -b $1 ${2:-primary}
 }
 
 test_expect_success 'drop' '
@@ -1451,7 +1452,7 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = warn' '
 	cat >expect <<-EOF &&
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
 	To avoid this message, use "drop" to explicitly remove a commit.
 	EOF
 	test_config rebase.missingCommitsCheck warn &&
@@ -1469,8 +1470,8 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
 	cat >expect <<-EOF &&
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master~2)
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~2)
 	To avoid this message, use "drop" to explicitly remove a commit.
 
 	Use '\''git config rebase.missingCommitsCheck'\'' to change the level of warnings.
@@ -1512,11 +1513,11 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ig
 
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = warn' '
 	cat >expect <<-EOF &&
-	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 master~4)
+	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master~4)
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	To avoid this message, use "drop" to explicitly remove a commit.
 	EOF
 	head -n4 expect >expect.2 &&
@@ -1546,11 +1547,11 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = error' '
 	cat >expect <<-EOF &&
-	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 master~4)
+	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master~4)
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	To avoid this message, use "drop" to explicitly remove a commit.
 
 	Use '\''git config rebase.missingCommitsCheck'\'' to change the level of warnings.
@@ -1635,7 +1636,7 @@ test_expect_success 'respects rebase.abbreviateCommands with fixup, squash and e
 	(
 		set_cat_todo_editor &&
 		test_must_fail git rebase -i --exec "git show HEAD" \
-			--autosquash master >actual
+			--autosquash primary >actual
 	) &&
 	test_cmp expected actual
 '
@@ -1646,7 +1647,7 @@ test_expect_success 'static check of bad command' '
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 2 3 bad 4 5" \
 		git rebase -i --root 2>actual &&
-		test_i18ngrep "badcmd $(git rev-list --oneline -1 master~1)" \
+		test_i18ngrep "badcmd $(git rev-list --oneline -1 primary~1)" \
 				actual &&
 		test_i18ngrep "You can fix this with .git rebase --edit-todo.." \
 				actual &&
@@ -1798,13 +1799,13 @@ test_expect_success 'todo has correct onto hash' '
 '
 
 test_expect_success 'ORIG_HEAD is updated correctly' '
-	test_when_finished "git checkout master && git branch -D test-orig-head" &&
+	test_when_finished "git checkout primary && git branch -D test-orig-head" &&
 	git checkout -b test-orig-head A &&
 	git commit --allow-empty -m A1 &&
 	git commit --allow-empty -m A2 &&
 	git commit --allow-empty -m A3 &&
 	git commit --allow-empty -m A4 &&
-	git rebase master &&
+	git rebase primary &&
 	test_cmp_rev ORIG_HEAD test-orig-head@{1}
 '
 
