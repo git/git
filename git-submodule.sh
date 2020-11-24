@@ -412,17 +412,17 @@ is_tip_reachable () (
 	test -z "$rev"
 )
 
+# usage: fetch_in_submodule <module_path> [<depth>] [<sha1>]
+# Because arguments are positional, use an empty string to omit <depth>
+# but include <sha1>.
 fetch_in_submodule () (
 	sanitize_submodule_env &&
 	cd "$1" &&
 	if test $# -eq 3
 	then
-		echo "$3" | git fetch --stdin "$2"
-	elif test "$2" -ne ""
-	then
-		git fetch "$2"
+		echo "$3" | git fetch --stdin ${2:+"$2"}
 	else
-		git fetch
+		git fetch ${2:+"$2"}
 	fi
 )
 
@@ -603,7 +603,7 @@ cmd_update()
 				# Now we tried the usual fetch, but $sha1 may
 				# not be reachable from any of the refs
 				is_tip_reachable "$sm_path" "$sha1" ||
-				fetch_in_submodule "$sm_path" $depth "$sha1" ||
+				fetch_in_submodule "$sm_path" "$depth" "$sha1" ||
 				die "$(eval_gettext "Fetched in submodule path '\$displaypath', but it did not contain \$sha1. Direct fetching of that commit failed.")"
 			fi
 
