@@ -9,15 +9,15 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] name [value [value_regex]]
+'git config' [<file-option>] [--type=<type>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] name [value [value-pattern]]
 'git config' [<file-option>] [--type=<type>] --add name value
-'git config' [<file-option>] [--type=<type>] --replace-all name value [value_regex]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] --get name [value_regex]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] --get-all name [value_regex]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--name-only] --get-regexp name_regex [value_regex]
+'git config' [<file-option>] [--type=<type>] [--fixed-value] --replace-all name value [value-pattern]
+'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get name [value-pattern]
+'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get-all name [value-pattern]
+'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] [--name-only] --get-regexp name_regex [value-pattern]
 'git config' [<file-option>] [--type=<type>] [-z|--null] --get-urlmatch name URL
-'git config' [<file-option>] --unset name [value_regex]
-'git config' [<file-option>] --unset-all name [value_regex]
+'git config' [<file-option>] [--fixed-value] --unset name [value-pattern]
+'git config' [<file-option>] [--fixed-value] --unset-all name [value-pattern]
 'git config' [<file-option>] --rename-section old_name new_name
 'git config' [<file-option>] --remove-section name
 'git config' [<file-option>] [--show-origin] [--show-scope] [-z|--null] [--name-only] -l | --list
@@ -33,10 +33,13 @@ escaped.
 
 Multiple lines can be added to an option by using the `--add` option.
 If you want to update or unset an option which can occur on multiple
-lines, a POSIX regexp `value_regex` needs to be given.  Only the
-existing values that match the regexp are updated or unset.  If
-you want to handle the lines that do *not* match the regex, just
-prepend a single exclamation mark in front (see also <<EXAMPLES>>).
+lines, a `value-pattern` (which is an extended regular expression,
+unless the `--fixed-value` option is given) needs to be given.  Only the
+existing values that match the pattern are updated or unset.  If
+you want to handle the lines that do *not* match the pattern, just
+prepend a single exclamation mark in front (see also <<EXAMPLES>>),
+but note that this only works when the `--fixed-value` option is not
+in use.
 
 The `--type=<type>` option instructs 'git config' to ensure that incoming and
 outgoing values are canonicalize-able under the given <type>.  If no
@@ -73,11 +76,11 @@ OPTIONS
 
 --replace-all::
 	Default behavior is to replace at most one line. This replaces
-	all lines matching the key (and optionally the value_regex).
+	all lines matching the key (and optionally the `value-pattern`).
 
 --add::
 	Adds a new line to the option without altering any existing
-	values.  This is the same as providing '^$' as the value_regex
+	values.  This is the same as providing '^$' as the `value-pattern`
 	in `--replace-all`.
 
 --get::
@@ -164,6 +167,12 @@ See also <<FILES>>.
 -l::
 --list::
 	List all variables set in config file, along with their values.
+
+--fixed-value::
+	When used with the `value-pattern` argument, treat `value-pattern` as
+	an exact string instead of a regular expression. This will restrict
+	the name/value pairs that are matched to only those where the value
+	is exactly equal to the `value-pattern`.
 
 --type <type>::
   'git config' will ensure that any input or output is valid under the given
