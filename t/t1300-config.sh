@@ -1917,4 +1917,43 @@ test_expect_success '--replace-all does not invent newlines' '
 	test_cmp expect .git/config
 '
 
+test_expect_success 'set all config with value-pattern' '
+	test_when_finished rm -f config initial &&
+	git config --file=initial abc.key one &&
+
+	# no match => add new entry
+	cp initial config &&
+	git config --file=config abc.key two a+ &&
+	git config --file=config --list >actual &&
+	cat >expect <<-\EOF &&
+	abc.key=one
+	abc.key=two
+	EOF
+	test_cmp expect actual &&
+
+	# multiple matches => failure
+	test_must_fail git config --file=config abc.key three o+ 2>err &&
+	test_i18ngrep "has multiple values" err &&
+
+	# multiple values, no match => add
+	git config --file=config abc.key three a+ &&
+	git config --file=config --list >actual &&
+	cat >expect <<-\EOF &&
+	abc.key=one
+	abc.key=two
+	abc.key=three
+	EOF
+	test_cmp expect actual &&
+
+	# single match => replace
+	git config --file=config abc.key four h+ &&
+	git config --file=config --list >actual &&
+	cat >expect <<-\EOF &&
+	abc.key=one
+	abc.key=two
+	abc.key=four
+	EOF
+	test_cmp expect actual
+'
+
 test_done
