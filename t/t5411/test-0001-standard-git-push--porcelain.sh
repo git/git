@@ -37,16 +37,15 @@ test_expect_success "git-push --atomic ($PROTOCOL/porcelain)" '
 		main \
 		$B:refs/heads/next \
 		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out |
-		sed -n \
-			-e "s/^# GETTEXT POISON #//" \
-			-e "/^To / { s/   */ /g; p; }" \
-			-e "/^! / { s/   */ /g; p; }" \
-			>actual &&
+	filter_out_user_friendly_and_stable_output \
+		-e "s/^# GETTEXT POISON #//" \
+		-e "/^To / { p; }" \
+		-e "/^! / { p; }" \
+		<out >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
-	! refs/heads/main:refs/heads/main [rejected] (non-fast-forward)
-	! <COMMIT-B>:refs/heads/next [rejected] (atomic push failed)
+	!    refs/heads/main:refs/heads/main    [rejected] (non-fast-forward)
+	!    <COMMIT-B>:refs/heads/next    [rejected] (atomic push failed)
 	EOF
 	test_cmp expect actual &&
 	git -C "$upstream" show-ref >out &&

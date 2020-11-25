@@ -36,11 +36,10 @@ test_expect_success "git-push --atomic ($PROTOCOL)" '
 		main \
 		$B:refs/heads/next \
 		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out |
-		sed -n \
-			-e "/^To / { s/   */ /g; p; }" \
-			-e "/^ ! / { s/   */ /g; p; }" \
-			>actual &&
+	filter_out_user_friendly_and_stable_output \
+		-e "/^To / { p; }" \
+		-e "/^ ! / { p; }" \
+		<out >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
 	 ! [rejected] main -> main (non-fast-forward)
