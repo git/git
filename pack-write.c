@@ -151,13 +151,10 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		while (nr_large_offset) {
 			struct pack_idx_entry *obj = *list++;
 			uint64_t offset = obj->offset;
-			uint32_t split[2];
 
 			if (!need_large_offset(offset, opts))
 				continue;
-			split[0] = htonl(offset >> 32);
-			split[1] = htonl(offset & 0xffffffff);
-			hashwrite(f, split, 8);
+			hashwrite_be64(f, offset);
 			nr_large_offset--;
 		}
 	}

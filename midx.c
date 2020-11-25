@@ -785,9 +785,7 @@ static size_t write_midx_large_offsets(struct hashfile *f, uint32_t nr_large_off
 		if (!(offset >> 31))
 			continue;
 
-		hashwrite_be32(f, offset >> 32);
-		hashwrite_be32(f, offset & 0xffffffffUL);
-		written += 2 * sizeof(uint32_t);
+		written += hashwrite_be64(f, offset);
 
 		nr_large_offset--;
 	}
@@ -975,8 +973,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 			    chunk_offsets[i]);
 
 		hashwrite_be32(f, chunk_ids[i]);
-		hashwrite_be32(f, chunk_offsets[i] >> 32);
-		hashwrite_be32(f, chunk_offsets[i]);
+		hashwrite_be64(f, chunk_offsets[i]);
 
 		written += MIDX_CHUNKLOOKUP_WIDTH;
 	}
