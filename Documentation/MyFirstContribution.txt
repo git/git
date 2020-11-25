@@ -1143,10 +1143,24 @@ After a few days, you will hopefully receive a reply to your patchset with some
 comments. Woohoo! Now you can get back to work.
 
 It's good manners to reply to each comment, notifying the reviewer that you have
-made the change requested, feel the original is better, or that the comment
+made the change suggested, feel the original is better, or that the comment
 inspired you to do something a new way which is superior to both the original
 and the suggested change. This way reviewers don't need to inspect your v2 to
 figure out whether you implemented their comment or not.
+
+Reviewers may ask you about what you wrote in the patchset, either in
+the proposed commit log message or in the changes themselves.  You
+should answer these questions in your response messages, but often the
+reason why reviewers asked these questions to understand what you meant
+to write is because your patchset needed clarification to be understood.
+
+Do not be satisfied by just answering their questions in your response
+and hear them say that they now understand what you wanted to say.
+Update your patches to clarify the points reviewers had trouble with,
+and prepare your v2; the words you used to explain your v1 to answer
+reviewers' questions may be useful thing to use.  Your goal is to make
+your v2 clear enough so that it becomes unnecessary for you to give the
+same explanation to the next person who reads it.
 
 If you are going to push back on a comment, be polite and explain why you feel
 your original is better; be prepared that the reviewer may still disagree with
