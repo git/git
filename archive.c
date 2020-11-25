@@ -658,6 +658,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	rc = ar->write_archive(ar, &args);
 
 	string_list_clear_func(&args.extra_files, extra_file_info_clear);
+	free(args.refname);
 
 	return rc;
 }
