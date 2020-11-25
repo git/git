@@ -547,7 +547,7 @@ test_expect_success 'repack --batch-size=0 repacks everything' '
 	)
 '
 
-test_expect_success 'load reverse index when missing .idx' '
+test_expect_success 'load reverse index when missing .idx, .pack' '
 	git init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
@@ -560,9 +560,15 @@ test_expect_success 'load reverse index when missing .idx' '
 		git multi-pack-index write &&
 
 		git rev-parse HEAD >tip &&
+		pack=$(ls .git/objects/pack/pack-*.pack) &&
 		idx=$(ls .git/objects/pack/pack-*.idx) &&
 
 		mv $idx $idx.bak &&
+		git cat-file --batch-check="%(objectsize:disk)" <tip &&
+
+		mv $idx.bak $idx &&
+
+		mv $pack $pack.bak &&
 		git cat-file --batch-check="%(objectsize:disk)" <tip
 	)
 '
