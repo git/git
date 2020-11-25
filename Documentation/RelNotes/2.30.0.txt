@@ -75,6 +75,9 @@ UI, Workflows & Features
    safely take a parameter that is supposed to be a revision, e.g.
    "git rev-parse --verify -q --end-of-options $rev".
 
+ * The command line completion script (in contrib/) learned to expand
+   commands that are alias of alias.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -116,6 +119,14 @@ Performance, Internal Implementation, Development Support etc.
 
  * A specialization of hashmap that uses a string as key has been
    introduced.  Hopefully it will see wider use over time.
+
+ * "git bisect start/next" in a large span of history spends a lot of
+   time trying to come up with exactly the half-way point; this can be
+   optimized by stopping when we see a commit that is close enough to
+   the half-way point.
+
+ * A lazily defined test prerequisite can now be defined in terms of
+   another lazily defined test prerequisite.
 
 
 Fixes since v2.29
@@ -237,6 +248,23 @@ Fixes since v2.29
  * Fix regression introduced when nvimdiff support in mergetool was added.
    (merge 12026f46e7 pd/mergetool-nvimdiff later to maint).
 
+ * The exchange between receive-pack and proc-receive hook did not
+   carefully check for errors.
+
+ * The code was not prepared to deal with pack .idx file that is
+   larger than 4GB.
+   (merge 81c4c5cf2e jk/4gb-idx later to maint).
+
+ * "git fetch" did not work correctly with nested submodules where the
+   innermost submodule that is not of interest got updated in the
+   upstream, which has been corrected.
+   (merge 1b7ac4e6d4 pk/subsub-fetch-fix later to maint).
+
+ * Since jgit does not yet work with SHA-256 repositories, mark the
+   tests that uses it not to run unless we are testing with ShA-1
+   repositories.
+   (merge ea699b4adc sg/t5310-jgit-wants-sha1 later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
    (merge 32c83afc2c cw/ci-ghwf-check-ws-errors later to maint).
@@ -254,3 +282,7 @@ Fixes since v2.29
    (merge b7e20b4373 mc/typofix later to maint).
    (merge f6bcd9a8a4 js/test-whitespace-fixes later to maint).
    (merge 53b67a801b js/test-file-size later to maint).
+   (merge 970909c2a7 rs/hashwrite-be64 later to maint).
+   (merge 5a923bb1f0 ma/list-object-filter-opt-msgfix later to maint).
+   (merge 1c3e412916 rs/archive-plug-leak-refname later to maint).
+   (merge d44e5267ea rs/plug-diff-cache-leak later to maint).
