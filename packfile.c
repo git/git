@@ -148,7 +148,7 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 		 *  - hash of the packfile
 		 *  - file checksum
 		 */
-		if (idx_size != 4 * 256 + nr * (hashsz + 4) + hashsz + hashsz)
+		if (idx_size != st_add(4 * 256 + hashsz + hashsz, st_mult(nr, hashsz + 4)))
 			return error("wrong index v1 file size in %s", path);
 	} else if (version == 2) {
 		/*
@@ -164,10 +164,10 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 		 * variable sized table containing 8-byte entries
 		 * for offsets larger than 2^31.
 		 */
-		unsigned long min_size = 8 + 4*256 + nr*(hashsz + 4 + 4) + hashsz + hashsz;
-		unsigned long max_size = min_size;
+		size_t min_size = st_add(8 + 4*256 + hashsz + hashsz, st_mult(nr, hashsz + 4 + 4));
+		size_t max_size = min_size;
 		if (nr)
-			max_size += (nr - 1)*8;
+			max_size = st_add(max_size, st_mult(nr - 1, 8));
 		if (idx_size < min_size || idx_size > max_size)
 			return error("wrong index v2 file size in %s", path);
 		if (idx_size != min_size &&
@@ -1933,14 +1933,14 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 	const unsigned int hashsz = the_hash_algo->rawsz;
 	index += 4 * 256;
 	if (p->index_version == 1) {
-		return ntohl(*((uint32_t *)(index + (hashsz + 4) * n)));
+		return ntohl(*((uint32_t *)(index + (hashsz + 4) * (size_t)n)));
 	} else {
 		uint32_t off;
-		index += 8 + p->num_objects * (hashsz + 4);
+		index += 8 + (size_t)p->num_objects * (hashsz + 4);
 		off = ntohl(*((uint32_t *)(index + 4 * n)));
 		if (!(off & 0x80000000))
 			return off;
-		index += p->num_objects * 4 + (off & 0x7fffffff) * 8;
+		index += (size_t)p->num_objects * 4 + (off & 0x7fffffff) * 8;
 		check_pack_index_ptr(p, index);
 		return get_be64(index);
 	}

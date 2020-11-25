@@ -130,7 +130,7 @@ static void create_pack_revindex(struct packed_git *p)
 
 	if (p->index_version > 1) {
 		const uint32_t *off_32 =
-			(uint32_t *)(index + 8 + p->num_objects * (hashsz + 4));
+			(uint32_t *)(index + 8 + (size_t)p->num_objects * (hashsz + 4));
 		const uint32_t *off_64 = off_32 + p->num_objects;
 		for (i = 0; i < num_ent; i++) {
 			const uint32_t off = ntohl(*off_32++);
