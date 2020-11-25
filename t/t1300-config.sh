@@ -1956,4 +1956,18 @@ test_expect_success 'set all config with value-pattern' '
 	test_cmp expect actual
 '
 
+test_expect_success '--replace-all and value-pattern' '
+	test_when_finished rm -f config &&
+	git config --file=config --add abc.key one &&
+	git config --file=config --add abc.key two &&
+	git config --file=config --add abc.key three &&
+	git config --file=config --replace-all abc.key four "o+" &&
+	git config --file=config --list >actual &&
+	cat >expect <<-\EOF &&
+	abc.key=four
+	abc.key=three
+	EOF
+	test_cmp expect actual
+'
+
 test_done
