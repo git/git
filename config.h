@@ -296,7 +296,7 @@ int git_config_set_multivar_in_file_gently(const char *, const char *, const cha
 void git_config_set_multivar_in_file(const char *config_filename,
 				     const char *key,
 				     const char *value,
-				     const char *value_regex,
+				     const char *value_pattern,
 				     unsigned flags);
 
 /**
