@@ -1994,4 +1994,54 @@ test_expect_success 'refuse --fixed-value for incompatible actions' '
 	test_must_fail git config --file=config --fixed-value --unset-all dev.null
 '
 
+test_expect_success '--fixed-value uses exact string matching' '
+	test_when_finished rm -f config initial &&
+	META="a+b*c?d[e]f.g" &&
+	git config --file=initial fixed.test "$META" &&
+
+	cp initial config &&
+	git config --file=config fixed.test bogus "$META" &&
+	git config --file=config --list >actual &&
+	cat >expect <<-EOF &&
+	fixed.test=$META
+	fixed.test=bogus
+	EOF
+	test_cmp expect actual &&
+
+	cp initial config &&
+	git config --file=config --fixed-value fixed.test bogus "$META" &&
+	git config --file=config --list >actual &&
+	cat >expect <<-\EOF &&
+	fixed.test=bogus
+	EOF
+	test_cmp expect actual &&
+
+	cp initial config &&
+	test_must_fail git config --file=config --unset fixed.test "$META" &&
+	git config --file=config --fixed-value --unset fixed.test "$META" &&
+	test_must_fail git config --file=config fixed.test &&
+
+	cp initial config &&
+	test_must_fail git config --file=config --unset-all fixed.test "$META" &&
+	git config --file=config --fixed-value --unset-all fixed.test "$META" &&
+	test_must_fail git config --file=config fixed.test &&
+
+	cp initial config &&
+	git config --file=config --replace-all fixed.test bogus "$META" &&
+	git config --file=config --list >actual &&
+	cat >expect <<-EOF &&
+	fixed.test=$META
+	fixed.test=bogus
+	EOF
+	test_cmp expect actual &&
+
+	git config --file=config --fixed-value --replace-all fixed.test bogus "$META" &&
+	git config --file=config --list >actual &&
+	cat >expect <<-EOF &&
+	fixed.test=bogus
+	fixed.test=bogus
+	EOF
+	test_cmp expect actual
+'
+
 test_done

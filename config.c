@@ -2415,6 +2415,7 @@ struct config_store_data {
 	size_t baselen;
 	char *key;
 	int do_not_match;
+	const char *fixed_value;
 	regex_t *value_pattern;
 	int multi_replace;
 	struct {
@@ -2444,6 +2445,8 @@ static int matches(const char *key, const char *value,
 {
 	if (strcmp(key, store->key))
 		return 0; /* not ours */
+	if (store->fixed_value)
+		return !strcmp(store->fixed_value, value);
 	if (!store->value_pattern)
 		return 1; /* always matches */
 	if (store->value_pattern == CONFIG_REGEX_NONE)
@@ -2816,6 +2819,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			store.value_pattern = NULL;
 		else if (value_pattern == CONFIG_REGEX_NONE)
 			store.value_pattern = CONFIG_REGEX_NONE;
+		else if (flags & CONFIG_FLAGS_FIXED_VALUE)
+			store.fixed_value = value_pattern;
 		else {
 			if (value_pattern[0] == '!') {
 				store.do_not_match = 1;

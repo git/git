@@ -269,6 +269,13 @@ int git_config_key_is_valid(const char *key);
  */
 #define CONFIG_FLAGS_MULTI_REPLACE (1 << 0)
 
+/*
+ * When CONFIG_FLAGS_FIXED_VALUE is specified, match key/value pairs
+ * by string comparison (not regex match) to the provided value_pattern
+ * parameter.
+ */
+#define CONFIG_FLAGS_FIXED_VALUE (1 << 1)
+
 int git_config_set_multivar_gently(const char *, const char *, const char *, unsigned);
 void git_config_set_multivar(const char *, const char *, const char *, unsigned);
 int git_config_set_multivar_in_file_gently(const char *, const char *, const char *, const char *, unsigned);
