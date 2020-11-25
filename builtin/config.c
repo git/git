@@ -14,6 +14,7 @@ static const char *const builtin_config_usage[] = {
 
 static char *key;
 static regex_t *key_regexp;
+static const char *value_pattern;
 static regex_t *regexp;
 static int show_keys;
 static int omit_values;
@@ -298,6 +299,8 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		return 0;
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
+	if (fixed_value && strcmp(value_pattern, (value_?value_:"")))
+		return 0;
 	if (regexp != NULL &&
 	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
 		return 0;
@@ -308,7 +311,7 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 	return format_config(&values->items[values->nr++], key_, value_);
 }
 
-static int get_value(const char *key_, const char *regex_)
+static int get_value(const char *key_, const char *regex_, unsigned flags)
 {
 	int ret = CONFIG_GENERIC_ERROR;
 	struct strbuf_list values = {NULL};
@@ -345,7 +348,9 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	if (regex_) {
+	if (regex_ && (flags & CONFIG_FLAGS_FIXED_VALUE))
+		value_pattern = regex_;
+	else if (regex_) {
 		if (regex_[0] == '!') {
 			do_not_match = 1;
 			regex_++;
@@ -890,19 +895,19 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1]);
+		return get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_ALL) {
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1]);
+		return get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_REGEXP) {
 		show_keys = 1;
 		use_key_regexp = 1;
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1]);
+		return get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_URLMATCH) {
 		check_argc(argc, 2, 2);
