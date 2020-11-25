@@ -34,6 +34,7 @@ static int respect_includes_opt = -1;
 static struct config_options config_options;
 static int show_origin;
 static int show_scope;
+static int fixed_value;
 
 #define ACTION_GET (1<<0)
 #define ACTION_GET_ALL (1<<1)
@@ -144,6 +145,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "rename-section", &actions, N_("rename section: old-name new-name"), ACTION_RENAME_SECTION),
 	OPT_BIT(0, "remove-section", &actions, N_("remove a section: name"), ACTION_REMOVE_SECTION),
 	OPT_BIT('l', "list", &actions, N_("list all"), ACTION_LIST),
+	OPT_BOOL(0, "fixed-value", &fixed_value, N_("use string equality when comparing values to 'value-pattern'")),
 	OPT_BIT('e', "edit", &actions, N_("open an editor"), ACTION_EDIT),
 	OPT_BIT(0, "get-color", &actions, N_("find the color configured: slot [default]"), ACTION_GET_COLOR),
 	OPT_BIT(0, "get-colorbool", &actions, N_("find the color setting: slot [stdout-is-tty]"), ACTION_GET_COLORBOOL),
@@ -764,6 +766,40 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	if (default_value && !(actions & ACTION_GET)) {
 		error(_("--default is only applicable to --get"));
 		usage_builtin_config();
+	}
+
+	/* check usage of --fixed-value */
+	if (fixed_value) {
+		int allowed_usage = 0;
+
+		switch (actions) {
+		/* git config --get <name> <value-pattern> */
+		case ACTION_GET:
+		/* git config --get-all <name> <value-pattern> */
+		case ACTION_GET_ALL:
+		/* git config --get-regexp <name-pattern> <value-pattern> */
+		case ACTION_GET_REGEXP:
+		/* git config --unset <name> <value-pattern> */
+		case ACTION_UNSET:
+		/* git config --unset-all <name> <value-pattern> */
+		case ACTION_UNSET_ALL:
+			allowed_usage = argc > 1 && !!argv[1];
+			break;
+
+		/* git config <name> <value> <value-pattern> */
+		case ACTION_SET_ALL:
+		/* git config --replace-all <name> <value> <value-pattern> */
+		case ACTION_REPLACE_ALL:
+			allowed_usage = argc > 2 && !!argv[2];
+			break;
+
+		/* other options don't allow --fixed-value */
+		}
+
+		if (!allowed_usage) {
+			error(_("--fixed-value only applies with 'value-pattern'"));
+			usage_builtin_config();
+		}
 	}
 
 	if (actions & PAGING_ACTIONS)

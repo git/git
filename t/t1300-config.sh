@@ -1970,4 +1970,28 @@ test_expect_success '--replace-all and value-pattern' '
 	test_cmp expect actual
 '
 
+test_expect_success 'refuse --fixed-value for incompatible actions' '
+	test_when_finished rm -f config &&
+	git config --file=config dev.null bogus &&
+
+	# These modes do not allow --fixed-value at all
+	test_must_fail git config --file=config --fixed-value --add dev.null bogus &&
+	test_must_fail git config --file=config --fixed-value --get-urlmatch dev.null bogus &&
+	test_must_fail git config --file=config --fixed-value --get-urlmatch dev.null bogus &&
+	test_must_fail git config --file=config --fixed-value --rename-section dev null &&
+	test_must_fail git config --file=config --fixed-value --remove-section dev &&
+	test_must_fail git config --file=config --fixed-value --list &&
+	test_must_fail git config --file=config --fixed-value --get-color dev.null &&
+	test_must_fail git config --file=config --fixed-value --get-colorbool dev.null &&
+
+	# These modes complain when --fixed-value has no value-pattern
+	test_must_fail git config --file=config --fixed-value dev.null bogus &&
+	test_must_fail git config --file=config --fixed-value --replace-all dev.null bogus &&
+	test_must_fail git config --file=config --fixed-value --get dev.null &&
+	test_must_fail git config --file=config --fixed-value --get-all dev.null &&
+	test_must_fail git config --file=config --fixed-value --get-regexp "dev.*" &&
+	test_must_fail git config --file=config --fixed-value --unset dev.null &&
+	test_must_fail git config --file=config --fixed-value --unset-all dev.null
+'
+
 test_done
