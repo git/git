@@ -1446,10 +1446,6 @@ static int maintenance_register(void)
 	struct child_process config_set = CHILD_PROCESS_INIT;
 	struct child_process config_get = CHILD_PROCESS_INIT;
 
-	/* There is no current repository, so skip registering it */
-	if (!the_repository || !the_repository->gitdir)
-		return 0;
-
 	/* Disable foreground maintenance */
 	git_config_set("maintenance.auto", "false");
 
@@ -1485,9 +1481,6 @@ static int maintenance_register(void)
 static int maintenance_unregister(void)
 {
 	struct child_process config_unset = CHILD_PROCESS_INIT;
-
-	if (!the_repository || !the_repository->gitdir)
-		return error(_("no current repository to unregister"));
 
 	config_unset.git_cmd = 1;
 	strvec_pushl(&config_unset.args, "config", "--global", "--unset",
