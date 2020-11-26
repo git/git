@@ -58,6 +58,8 @@ test_refspec fetch 'HEAD~4:refs/remotes/frotz/new'		invalid
 
 test_refspec push 'HEAD'
 test_refspec fetch 'HEAD'
+test_refspec push '@'
+test_refspec fetch '@'
 test_refspec push 'refs/heads/ nitfol'				invalid
 test_refspec fetch 'refs/heads/ nitfol'				invalid
 
