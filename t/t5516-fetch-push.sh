@@ -457,8 +457,7 @@ test_expect_success 'push with HEAD nonexisting at remote' '
 test_expect_success 'push with +HEAD' '
 
 	mk_test testrepo heads/master &&
-	git checkout master &&
-	git checkout -b local &&
+	git checkout -b local master &&
 	test_when_finished "git checkout master; git branch -D local" &&
 	git push testrepo master local &&
 	check_push_result testrepo $the_commit heads/master &&
