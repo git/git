@@ -449,6 +449,7 @@ test_expect_success 'push with HEAD nonexisting at remote' '
 
 	mk_test testrepo heads/master &&
 	git checkout -b local master &&
+	test_when_finished "git checkout master; git branch -D local" &&
 	git push testrepo HEAD &&
 	check_push_result testrepo $the_commit heads/local
 '
@@ -457,8 +458,8 @@ test_expect_success 'push with +HEAD' '
 
 	mk_test testrepo heads/master &&
 	git checkout master &&
-	git branch -D local &&
 	git checkout -b local &&
+	test_when_finished "git checkout master; git branch -D local" &&
 	git push testrepo master local &&
 	check_push_result testrepo $the_commit heads/master &&
 	check_push_result testrepo $the_commit heads/local &&
@@ -488,6 +489,7 @@ test_expect_success 'push with config remote.*.push = HEAD' '
 	mk_test testrepo heads/local &&
 	git checkout master &&
 	git branch -f local $the_commit &&
+	test_when_finished "git branch -D local" &&
 	(
 		cd testrepo &&
 		git checkout local &&
