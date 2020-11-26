@@ -391,6 +391,7 @@ static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash
 			die(_("unknown hash algorithm '%s'"), env);
 		repo_fmt->hash_algo = env_algo;
 	}
+	repo_set_hash_algo(the_repository, repo_fmt->hash_algo);
 }
 
 int init_db(const char *git_dir, const char *real_git_dir,
