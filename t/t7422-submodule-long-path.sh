@@ -25,7 +25,8 @@ pwdlen=$(echo "$pwd" | wc -c)
 longpath=$(echo $longpath180 | cut -c 1-$((170-$pwdlen)))
 
 test_expect_success 'submodule with a long path' '
-	git init --bare remote &&
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=long init --bare remote &&
 	test_create_repo bundle1 &&
 	(
 		cd bundle1 &&
@@ -37,6 +38,7 @@ test_expect_success 'submodule with a long path' '
 		cd home &&
 		git clone ../remote test &&
 		cd test &&
+		git checkout -B long &&
 		git submodule add ../bundle1 $longpath &&
 		test_commit "sogood" &&
 		(
@@ -44,14 +46,14 @@ test_expect_success 'submodule with a long path' '
 			git rev-parse --verify HEAD >actual &&
 			test_cmp ../../../expect actual
 		) &&
-		git push origin master
+		git push origin long
 	) &&
 	mkdir home2 &&
 	(
 		cd home2 &&
 		git clone ../remote test &&
 		cd test &&
-		git checkout master &&
+		git checkout long &&
 		git submodule update --init &&
 		(
 			cd $longpath &&
@@ -62,7 +64,8 @@ test_expect_success 'submodule with a long path' '
 '
 
 test_expect_success 'recursive submodule with a long path' '
-	git init --bare super &&
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=long init --bare super &&
 	test_create_repo child &&
 	(
 		cd child &&
@@ -80,6 +83,7 @@ test_expect_success 'recursive submodule with a long path' '
 		cd home3 &&
 		git clone ../super test &&
 		cd test &&
+		git checkout -B long &&
 		git submodule add ../parent foo &&
 		git submodule update --init --recursive &&
 		test_commit "sogood" &&
@@ -88,7 +92,7 @@ test_expect_success 'recursive submodule with a long path' '
 			git rev-parse --verify HEAD >actual &&
 			test_cmp ../../../../expect actual
 		) &&
-		git push origin master
+		git push origin long
 	) &&
 	mkdir home4 &&
 	(
