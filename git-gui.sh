@@ -2305,11 +2305,10 @@ proc do_quit {{rc {1}}} {
 		if {$GITGUI_BCK_exists && ![$ui_comm edit modified]} {
 			file rename -force [gitdir GITGUI_BCK] $save
 			set GITGUI_BCK_exists 0
-		} else {
+		} elseif {[$ui_comm edit modified]} {
 			set msg [string trim [$ui_comm get 0.0 end]]
 			regsub -all -line {[ \r\t]+$} $msg {} msg
-			if {(![string match amend* $commit_type]
-				|| [$ui_comm edit modified])
+			if {![string match amend* $commit_type]
 				&& $msg ne {}} {
 				catch {
 					set fd [open $save w]
