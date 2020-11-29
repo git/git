@@ -182,30 +182,6 @@ its `init_log_defaults()` sets its own state (`decoration_style`) and asks
 `grep` and `diff` to initialize themselves by calling each of their
 initialization functions.
 
-For our first example within `git walken`, we don't intend to use any other
-components within Git, and we don't have any configuration to do.  However, we
-may want to add some later, so for now, we can add an empty placeholder. Create
-a new function in `builtin/walken.c`:
-
-----
-static void init_walken_defaults(void)
-{
-	/*
-	 * We don't actually need the same components `git log` does; leave this
-	 * empty for now.
-	 */
-}
-----
-
-Make sure to add a line invoking it inside of `cmd_walken()`.
-
-----
-int cmd_walken(int argc, const char **argv, const char *prefix)
-{
-	init_walken_defaults();
-}
-----
-
 ==== Configuring From `.gitconfig`
 
 Next, we should have a look at any relevant configuration settings (i.e.,
