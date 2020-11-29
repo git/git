@@ -66,11 +66,6 @@ static const char *color_grep_slots[] = {
 	[GREP_COLOR_SEP]	    = "separator",
 };
 
-static void color_set(char *dst, const char *color_bytes)
-{
-	xsnprintf(dst, COLOR_MAXLEN, "%s", color_bytes);
-}
-
 static int parse_pattern_type_arg(const char *opt, const char *arg)
 {
 	if (!strcmp(arg, "default"))
@@ -99,6 +94,14 @@ int grep_config(const char *var, const char *value, void *cb)
 
 	if (userdiff_config(var, value) < 0)
 		return -1;
+
+	/*
+	 * The instance of grep_opt that we set up here is copied by
+	 * grep_init() to be used by each individual invocation.
+	 * When populating a new field of this structure here, be
+	 * sure to think about ownership -- e.g., you might need to
+	 * override the shallow copy in grep_init() with a deep copy.
+	 */
 
 	if (!strcmp(var, "grep.extendedregexp")) {
 		opt->extended_regexp_option = git_config_bool(var, value);
@@ -157,9 +160,6 @@ int grep_config(const char *var, const char *value, void *cb)
  */
 void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix)
 {
-	struct grep_opt *def = &grep_defaults;
-	int i;
-
 #if defined(USE_LIBPCRE2)
 	if (!pcre2_global_context)
 		pcre2_global_context = pcre2_general_context_create(
@@ -171,26 +171,13 @@ void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix
 	pcre_free = free;
 #endif
 
-	memset(opt, 0, sizeof(*opt));
+	*opt = grep_defaults;
+
 	opt->repo = repo;
 	opt->prefix = prefix;
 	opt->prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
 	opt->pattern_tail = &opt->pattern_list;
 	opt->header_tail = &opt->header_list;
-
-	opt->only_matching = def->only_matching;
-	opt->color = def->color;
-	opt->extended_regexp_option = def->extended_regexp_option;
-	opt->pattern_type_option = def->pattern_type_option;
-	opt->linenum = def->linenum;
-	opt->columnnum = def->columnnum;
-	opt->max_depth = def->max_depth;
-	opt->pathname = def->pathname;
-	opt->relative = def->relative;
-	opt->output = def->output;
-
-	for (i = 0; i < NR_GREP_COLORS; i++)
-		color_set(opt->colors[i], def->colors[i]);
 }
 
 void grep_destroy(void)
