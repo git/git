@@ -915,8 +915,9 @@ static int get_pack(struct fetch_pack_args *args,
 	if (start_command(&cmd))
 		die(_("fetch-pack: unable to fork off %s"), cmd_name);
 	if (do_keep && pack_lockfiles) {
-		string_list_append_nodup(pack_lockfiles,
-					 index_pack_lockfile(cmd.out));
+		char *pack_lockfile = index_pack_lockfile(cmd.out);
+		if (pack_lockfile)
+			string_list_append_nodup(pack_lockfiles, pack_lockfile);
 		close(cmd.out);
 	}
 
