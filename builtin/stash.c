@@ -419,7 +419,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 			ret = apply_cached(&out);
 			strbuf_release(&out);
 			if (ret)
-				return error(_("conflicts in index."
+				return error(_("conflicts in index. "
 					       "Try without --index."));
 
 			discard_cache();
