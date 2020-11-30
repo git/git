@@ -128,6 +128,14 @@ Performance, Internal Implementation, Development Support etc.
  * A lazily defined test prerequisite can now be defined in terms of
    another lazily defined test prerequisite.
 
+ * Expectation for the original contributor after responding to a
+   review comment to use the explanation in a patch update has been
+   described.
+
+ * Multiple "credential-store" backends can race to lock the same
+   file, causing everybody else but one to fail---reattempt locking
+   with some timeout to reduce the rate of the failure.
+
 
 Fixes since v2.29
 -----------------
@@ -265,6 +273,16 @@ Fixes since v2.29
    repositories.
    (merge ea699b4adc sg/t5310-jgit-wants-sha1 later to maint).
 
+ * Config parser fix for "git notes".
+   (merge 45fef1599a na/notes-displayref-is-not-boolean later to maint).
+
+ * Move a definition of compatibility wrapper from cache.h to
+   git-compat-util.h
+   (merge a76b138daa hn/sleep-millisec-decl later to maint).
+
+ * Error message fix.
+   (merge eaf5341538 km/stash-error-message-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
    (merge 32c83afc2c cw/ci-ghwf-check-ws-errors later to maint).
@@ -286,3 +304,6 @@ Fixes since v2.29
    (merge 5a923bb1f0 ma/list-object-filter-opt-msgfix later to maint).
    (merge 1c3e412916 rs/archive-plug-leak-refname later to maint).
    (merge d44e5267ea rs/plug-diff-cache-leak later to maint).
+   (merge 793c1464d3 ab/gc-keep-base-option later to maint).
+   (merge b86339b12b mt/worktree-error-message-fix later to maint).
+   (merge e01ae2a4a7 js/pull-rebase-use-advise later to maint).
