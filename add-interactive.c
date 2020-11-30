@@ -12,10 +12,10 @@
 #include "prompt.h"
 
 static void init_color(struct repository *r, struct add_i_state *s,
-		       const char *slot_name, char *dst,
+		       const char *section_and_slot, char *dst,
 		       const char *default_color)
 {
-	char *key = xstrfmt("color.interactive.%s", slot_name);
+	char *key = xstrfmt("color.%s", section_and_slot);
 	const char *value;
 
 	if (!s->use_color)
@@ -40,19 +40,26 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 			git_config_colorbool("color.interactive", value);
 	s->use_color = want_color(s->use_color);
 
-	init_color(r, s, "header", s->header_color, GIT_COLOR_BOLD);
-	init_color(r, s, "help", s->help_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s, "prompt", s->prompt_color, GIT_COLOR_BOLD_BLUE);
-	init_color(r, s, "error", s->error_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s, "reset", s->reset_color, GIT_COLOR_RESET);
-	init_color(r, s, "fraginfo", s->fraginfo_color,
+	init_color(r, s, "interactive.header", s->header_color, GIT_COLOR_BOLD);
+	init_color(r, s, "interactive.help", s->help_color, GIT_COLOR_BOLD_RED);
+	init_color(r, s, "interactive.prompt", s->prompt_color,
+		   GIT_COLOR_BOLD_BLUE);
+	init_color(r, s, "interactive.error", s->error_color,
+		   GIT_COLOR_BOLD_RED);
+
+	init_color(r, s, "diff.frag", s->fraginfo_color,
 		   diff_get_color(s->use_color, DIFF_FRAGINFO));
-	init_color(r, s, "context", s->context_color,
-		diff_get_color(s->use_color, DIFF_CONTEXT));
-	init_color(r, s, "old", s->file_old_color,
+	init_color(r, s, "diff.context", s->context_color, "fall back");
+	if (!strcmp(s->context_color, "fall back"))
+		init_color(r, s, "diff.plain", s->context_color,
+			   diff_get_color(s->use_color, DIFF_CONTEXT));
+	init_color(r, s, "diff.old", s->file_old_color,
 		diff_get_color(s->use_color, DIFF_FILE_OLD));
-	init_color(r, s, "new", s->file_new_color,
+	init_color(r, s, "diff.new", s->file_new_color,
 		diff_get_color(s->use_color, DIFF_FILE_NEW));
+
+	strlcpy(s->reset_color,
+		s->use_color ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
 
 	FREE_AND_NULL(s->interactive_diff_filter);
 	git_config_get_string("interactive.difffilter",
@@ -194,7 +201,8 @@ static ssize_t find_unique(const char *string, struct prefix_item_list *list)
 	else if (index + 1 < list->sorted.nr &&
 		 starts_with(list->sorted.items[index + 1].string, string))
 		return -1;
-	else if (index < list->sorted.nr)
+	else if (index < list->sorted.nr &&
+		 starts_with(list->sorted.items[index].string, string))
 		item = list->sorted.items[index].util;
 	else
 		return -1;
@@ -364,7 +372,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 
 			if (from < 0 || from >= items->items.nr ||
 			    (singleton && from + 1 != to)) {
-				color_fprintf_ln(stdout, s->error_color,
+				color_fprintf_ln(stderr, s->error_color,
 						 _("Huh (%s)?"), p);
 				break;
 			} else if (singleton) {
@@ -1131,7 +1139,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	print_file_item_data.color = data.color;
 	print_file_item_data.reset = data.reset;
 
-	strbuf_addstr(&header, "      ");
+	strbuf_addstr(&header, "     ");
 	strbuf_addf(&header, print_file_item_data.modified_fmt,
 		    _("staged"), _("unstaged"), _("path"));
 	opts.list_opts.header = header.buf;
