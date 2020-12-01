@@ -136,6 +136,7 @@ My public git.git repositories are (mirrored) at:
   https://kernel.googlesource.com/pub/scm/git/git
   git://repo.or.cz/alt-git.git/
   https://github.com/git/git/
+  https://gitlab.com/git-vcs/git/
 
 This one shows not just the main integration branches, but also
 individual topics broken out:
