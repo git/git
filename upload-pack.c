@@ -321,6 +321,7 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	pack_objects.in = -1;
 	pack_objects.out = -1;
 	pack_objects.err = -1;
+	pack_objects.clean_on_exit = 1;
 
 	if (start_command(&pack_objects))
 		die("git upload-pack: unable to fork git-pack-objects");
