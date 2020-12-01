@@ -1,19 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2020, #05; Wed, 25)
-X-master-at: e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0
-X-next-at: a3fc446d84ab72dffeba6e9dfb89723fd0545d16
+Subject: What's cooking in git.git (Nov 2020, #06; Mon, 30)
+X-master-at: 72ffeb997eaf999f6938b2a7e0d9a75dcceaa311
+X-next-at: 1209160524d6229d60c3301df9152cf1aa58ff6d
 
-What's cooking in git.git (Nov 2020, #05; Wed, 25)
+What's cooking in git.git (Nov 2020, #06; Mon, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The number of topics merged for the next release since Git 2.29 has 
-just passed 100 after the 8th batch of them have graduated.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into.  Some repositories have
@@ -45,193 +42,6 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/config-mak-uname-simplify (2020-11-11) 2 commits
-  (merged to 'next' on 2020-11-12 at e1bd51ee71)
- + config.mak.uname: remove unused NEEDS_SSL_WITH_CURL flag
- + config.mak.uname: remove unused the NO_R_TO_GCC_LINKER flag
-
- Build configuration cleanup.
-
-
-* en/strmap (2020-11-11) 15 commits
-  (merged to 'next' on 2020-11-12 at 41519a5f5c)
- + shortlog: use strset from strmap.h
- + Use new HASHMAP_INIT macro to simplify hashmap initialization
- + strmap: take advantage of FLEXPTR_ALLOC_STR when relevant
- + strmap: enable allocations to come from a mem_pool
- + strmap: add a strset sub-type
- + strmap: split create_entry() out of strmap_put()
- + strmap: add functions facilitating use as a string->int map
- + strmap: enable faster clearing and reusing of strmaps
- + strmap: add more utility functions
- + strmap: new utility functions
- + hashmap: provide deallocation function names
- + hashmap: introduce a new hashmap_partial_clear()
- + hashmap: allow re-use after hashmap_free()
- + hashmap: adjust spacing to fix argument alignment
- + hashmap: add usage documentation explaining hashmap_free[_entries]()
- (this branch is used by en/merge-ort-impl.)
-
- A specialization of hashmap that uses a string as key has been
- introduced.  Hopefully it will see wider use over time.
-
-
-* fc/bash-completion-alias-of-alias (2020-11-17) 3 commits
-  (merged to 'next' on 2020-11-18 at 4241203041)
- + completion: bash: improve alias loop detection
-  (merged to 'next' on 2020-11-10 at 75f1f2b8a8)
- + completion: bash: check for alias loop
- + completion: bash: support recursive aliases
-
- The command line completion script (in contrib/) learned to expand
- commands that are alias of alias.
-
-
-* jc/ci-github-set-env (2020-11-17) 1 commit
-  (merged to 'next' on 2020-11-19 at 00ff5e06ac)
- + ci: avoid `set-env` construct in print-test-failures.sh
-
- Another CI adjustment.
-
-
-* jc/format-patch-name-max (2020-11-09) 1 commit
-  (merged to 'next' on 2020-11-11 at 17e19bb17a)
- + format-patch: make output filename configurable
-
- The maximum length of output filenames "git format-patch" creates
- has become configurable (used to be capped at 64).
-
-
-* jk/4gb-idx (2020-11-16) 5 commits
-  (merged to 'next' on 2020-11-18 at 2f99b73bda)
- + packfile: detect overflow in .idx file size checks
- + block-sha1: take a size_t length parameter
- + fsck: correctly compute checksums on idx files larger than 4GB
- + use size_t to store pack .idx byte offsets
- + compute pack .idx byte offsets using size_t
-
- The code was not prepared to deal with pack .idx file that is
- larger than 4GB.
-
-
-* jk/diff-release-filespec-fix (2020-11-11) 2 commits
-  (merged to 'next' on 2020-11-12 at 3b21625881)
- + t7800: simplify difftool test
-  (merged to 'next' on 2020-11-09 at 6d89b9602d)
- + diff: allow passing NULL to diff_free_filespec_data()
- (this branch is used by js/default-branch-name-tests-final-stretch.)
-
- Running "git diff" while allowing external diff in a state with
- unmerged paths used to segfault, which has been corrected.
-
-
-* jk/rev-parse-end-of-options (2020-11-10) 3 commits
-  (merged to 'next' on 2020-11-11 at 2d517d1608)
- + rev-parse: handle --end-of-options
- + rev-parse: put all options under the "-" check
- + rev-parse: don't accept options after dashdash
-
- "git rev-parse" learned the "--end-of-options" to help scripts to
- safely take a parameter that is supposed to be a revision, e.g.
- "git rev-parse --verify -q --end-of-options $rev".
-
-
-* jx/t5411-flake-fix (2020-11-11) 3 commits
-  (merged to 'next' on 2020-11-18 at badb1fefe5)
- + receive-pack: use default version 0 for proc-receive
- + receive-pack: gently write messages to proc-receive
- + t5411: new helper filter_out_user_friendly_and_stable_output
-
- The exchange between receive-pack and proc-receive hook did not
- carefully check for errors.
-
-
-* ma/list-object-filter-opt-msgfix (2020-11-16) 1 commit
-  (merged to 'next' on 2020-11-18 at 7cf396ee81)
- + list-objects-filter-options: fix function name in BUG
-
- Error message fix.
- We can further update it to lose the hand-maintained function name
- from the message, but that can be done separately.
-
-
-* pd/mergetool-nvimdiff (2020-11-11) 2 commits
-  (merged to 'next' on 2020-11-12 at aff20da3a2)
- + mergetool: avoid letting `list_tool_variants` break user-defined setups
- + mergetools/bc: add `bc4` to the alias list for Beyond Compare
-
- Fix regression introduced when nvimdiff support in mergetool was added.
-
-
-* pk/subsub-fetch-fix (2020-11-12) 1 commit
-  (merged to 'next' on 2020-11-18 at bdd3b21b7c)
- + submodules: fix of regression on fetching of non-init subsub-repo
-
- "git fetch" did not work correctly with nested submodules where the
- innermost submodule that is not of interest got updated in the
- upstream, which has been corrected.
-
-
-* rs/archive-plug-leak-refname (2020-11-16) 1 commit
-  (merged to 'next' on 2020-11-19 at 270ba7b8be)
- + archive: release refname after use
-
- Memleak fix.
-
-
-* rs/gc-sort-func-cast-fix (2020-11-18) 1 commit
-  (merged to 'next' on 2020-11-19 at 04529851e5)
- + gc: fix cast in compare_tasks_by_selection()
-
- Fix broken sorting of maintenance tasks.
-
-
-* rs/hashwrite-be64 (2020-11-12) 3 commits
-  (merged to 'next' on 2020-11-18 at 60385c6fa1)
- + pack-write: use hashwrite_be64()
- + midx: use hashwrite_be64()
- + csum-file: add hashwrite_be64()
-
- Code simplification.
-
-
-* rs/plug-diff-cache-leak (2020-11-16) 1 commit
-  (merged to 'next' on 2020-11-23 at a9666bbac3)
- + diff-lib: plug minor memory leaks in do_diff_cache()
-
- Memleak fix.
-
-
-* sg/bisect-approximately-halfway (2020-11-12) 1 commit
-  (merged to 'next' on 2020-11-18 at b13026a0f3)
- + bisect: loosen halfway() check for a large number of commits
-
- "git bisect start/next" in a large span of history spends a lot of
- time trying to come up with exactly the half-way point; this can be
- optimized by stopping when we see a commit that is close enough to
- the half-way point.
-
-
-* sg/t5310-jgit-wants-sha1 (2020-11-16) 1 commit
-  (merged to 'next' on 2020-11-19 at 72fb4e7155)
- + t5310-pack-bitmaps: skip JGit tests with SHA256
-
- Since jgit does not yet work with SHA-256 repositories, mark the
- tests that uses it not to run unless we are testing with ShA-1
- repositories.
-
-
-* sg/tests-prereq (2020-11-18) 2 commits
-  (merged to 'next' on 2020-11-23 at e8926781aa)
- + tests: fix description of 'test_set_prereq'
- + tests: make sure nested lazy prereqs work reliably
-
- A lazily defined test prerequisite can now be defined in terms of
- another lazily defined test prerequisite.
-
---------------------------------------------------
-[New Topics]
-
 * ab/gc-keep-base-option (2020-11-21) 2 commits
   (merged to 'next' on 2020-11-25 at ac76ddcfe7)
  + gc: rename keep_base_pack variable for --keep-largest-pack
@@ -239,13 +49,13 @@ Release tarballs are available at:
 
  Fix an option name in "gc" documentation.
 
- Will merge to 'master'.
 
+* hn/sleep-millisec-decl (2020-11-24) 1 commit
+  (merged to 'next' on 2020-11-25 at d11de8b987)
+ + move sleep_millisec to git-compat-util.h
 
-* en/stash-apply-sparse-checkout (2020-11-21) 3 commits
- - stash: fix stash application in sparse-checkouts
- - stash: remove unnecessary process forking
- - t7012: add a testcase demonstrating stash apply bugs in sparse checkouts
+ Move a definition of compatibility wrapper from cache.h to
+ git-compat-util.h
 
 
 * jc/do-not-just-explain-but-update-your-patch (2020-11-24) 1 commit
@@ -256,77 +66,36 @@ Release tarballs are available at:
  review comment to use the explanation in a patch update has been
  described.
 
- Will merge to 'master'.
+
+* js/pull-rebase-use-advise (2020-11-19) 1 commit
+  (merged to 'next' on 2020-11-25 at 05db775119)
+ + pull: colorize the hint about setting `pull.rebase`
+
+ UI improvement.
 
 
-* jk/stop-pack-objects-when-push-is-killed (2020-11-21) 1 commit
-  (merged to 'next' on 2020-11-25 at f73fb999cd)
- + send-pack: kill pack-objects helper on signal or exit
+* js/t1309-master-to-topic (2020-11-19) 1 commit
+  (merged to 'next' on 2020-11-25 at 044da285ef)
+ + t1309: use a neutral branch name in the `onbranch` test cases
 
- Receiving "git push" that is killed may leave zombie pack-objects
- process behind, which has been corrected.
-
- Will merge to 'master'.
+ Test preparation.
 
 
-* ma/grep-init-default (2020-11-24) 4 commits
- - MyFirstObjectWalk: drop `init_walken_defaults()`
- - grep: copy struct in one fell swoop
- - grep: use designated initializers for `grep_defaults`
- - grep: don't set up a "default" repo for grep
+* js/t2106-cleanup (2020-11-18) 3 commits
+  (merged to 'next' on 2020-11-23 at b1bcd5d8b2)
+ + t2106: ensure that the checkout fails for the expected reason
+ + t2106: make test independent of the current main branch name
+ + t2106: adjust style to the current conventions
 
- Code clean-up.
-
- Expecting a (hopefully final) reroll.
- cf. <xmqqlfepg9dq.fsf@gitster.c.googlers.com>
+ A test script got cleaned up and then made not to depend on the
+ value of init.defaultBranch.
 
 
-* mt/worktree-error-message-fix (2020-11-21) 1 commit
-  (merged to 'next' on 2020-11-25 at bc887168ff)
- + worktree: fix order of arguments in error message
+* js/t3040-cleanup (2020-11-18) 1 commit
+  (merged to 'next' on 2020-11-23 at 88951eae2f)
+ + t3040: remove stale note
 
- Fix formulation of an error message with two placeholders in "git
- worktree add" subcommand.
-
- Will merge to 'master'.
-
-
-* na/notes-displayref-is-not-boolean (2020-11-23) 2 commits
-  (merged to 'next' on 2020-11-25 at b0dda46b56)
- + t3301: test proper exit response to no-value notes.displayRef.
- + notes.c: fix a segfault in notes_display_config()
-
- Config parser fix for "git notes".
-
- Will merge to 'master'.
-
-
-* fc/atmark-in-refspec (2020-11-24) 1 commit
- - refspec: make @ a synonym of HEAD
-
- "@" sometimes worked (e.g. "git push origin @:there") as a part of
- a refspec element, but "git push orign @" did not work, which has
- been corrected.
-
-
-* hn/sleep-millisec-decl (2020-11-24) 1 commit
-  (merged to 'next' on 2020-11-25 at d11de8b987)
- + move sleep_millisec to git-compat-util.h
-
- Move a definition of compatibility wrapper from cache.h to
- git-compat-util.h
-
- Will merge to 'master'.
-
-
-* js/init-defaultbranch-advice (2020-11-24) 4 commits
- - init: provide useful advice about init.defaultBranch
- - get_default_branch_name(): prepare for showing some advice
- - branch -m: allow renaming a yet-unborn branch
- - init: document `init.defaultBranch` better
-
- Our users are going to be trained to prepare for future change of
- init.defaultBranch configuration variable.
+ Cleanup.
 
 
 * js/t3404-master-to-primary (2020-11-24) 1 commit
@@ -336,16 +105,13 @@ Release tarballs are available at:
  A test script got cleaned up and then made not to depend on the
  value of init.defaultBranch.
 
- Will merge to 'master'.
 
+* js/t4015-wo-master (2020-11-19) 1 commit
+  (merged to 'next' on 2020-11-23 at b85c36ffb4)
+ + t4015: let the test pass with any default branch name
 
-* jt/trace-error-on-warning (2020-11-24) 1 commit
- - usage: add trace2 entry upon warning()
-
- Like die() and error(), a call to warning() will also trigger a
- trace2 event.
-
- Will merge to 'next'.
+ A test script got cleaned up not to depend on the value of
+ init.defaultBranch.
 
 
 * km/stash-error-message-fix (2020-11-24) 1 commit
@@ -354,18 +120,21 @@ Release tarballs are available at:
 
  Error message fix.
 
- Will merge to 'master'.
+
+* mt/worktree-error-message-fix (2020-11-21) 1 commit
+  (merged to 'next' on 2020-11-25 at bc887168ff)
+ + worktree: fix order of arguments in error message
+
+ Fix formulation of an error message with two placeholders in "git
+ worktree add" subcommand.
 
 
-* ps/config-env-pairs (2020-11-24) 2 commits
- - config: allow specifying config entries via envvar pairs
- - config: extract function to parse config pairs
+* na/notes-displayref-is-not-boolean (2020-11-23) 2 commits
+  (merged to 'next' on 2020-11-25 at b0dda46b56)
+ + t3301: test proper exit response to no-value notes.displayRef.
+ + notes.c: fix a segfault in notes_display_config()
 
- Introduce a way to feed configuration variable-value pairs via
- environment variables.
-
- Getting there.
- cf. <X74CigYS7AUtMo9Q@tanuki>
+ Config parser fix for "git notes".
 
 
 * sa/credential-store-timeout (2020-11-25) 1 commit
@@ -376,27 +145,35 @@ Release tarballs are available at:
  file, causing everybody else but one to fail---reattempt locking
  with some timeout to reduce the rate of the failure.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* nk/perf-fsmonitor-cleanup (2020-11-30) 1 commit
+ - perf/fsmonitor: use test_must_be_empty helper
 
-* tb/idx-midx-race-fix (2020-11-25) 2 commits
- - midx.c: protect against disappearing packs
- - packfile.c: protect against disappearing indexes
-
- Processes that access packdata while the .idx file gets removed
- (e.g. while repacking) did not fail or fall back gracefully as they
- could.
+ Test clean-up.
 
  Will merge to 'next'.
 
 
-* rs/stop-pack-objects-when-fetch-is-killed (2020-11-25) 1 commit
- - upload-pack: kill pack-objects helper on signal or exit
+* rs/fetch-pack-invalid-lockfile (2020-11-30) 1 commit
+ - fetch-pack: disregard invalid pack lockfiles
 
- "git upload-pack" that is killed may leave zombie pack-objects
- process behind, which has been corrected.
+ "fetch-pack" could pass NULL pointer to unlink(2) when it sees an
+ invalid filename; the error checking has been tightened to make
+ this impossible.
 
- Needs to be replaced with signed-off and/or improved version.
+ Will merge to 'next'.
+
+
+* rs/maintenance-run-outside-repo (2020-11-30) 1 commit
+ - maintenance: fix SEGFAULT when no repository
+
+ "git maintenance run/start/stop" needed to be run in a repository
+ to hold the lockfile they use, but didn't make sure they are
+ actually in a repository, which has been corrected.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -688,6 +465,7 @@ Release tarballs are available at:
 
  Needs review.
 
+
 * en/merge-ort-impl (2020-11-11) 21 commits
  - merge-ort: free data structures in merge_finalize()
  - merge-ort: add implementation of record_unmerged_index_entries()
@@ -712,9 +490,100 @@ Release tarballs are available at:
  - Merge branch 'en/strmap' into en/merge-ort-impl
 
  Needs review.
+ A reroll exists.
+ cf. <pull.923.git.git.1606635803.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Cooking]
+
+* en/stash-apply-sparse-checkout (2020-11-21) 3 commits
+ - stash: fix stash application in sparse-checkouts
+ - stash: remove unnecessary process forking
+ - t7012: add a testcase demonstrating stash apply bugs in sparse checkouts
+
+
+* jk/stop-pack-objects-when-push-is-killed (2020-11-21) 1 commit
+  (merged to 'next' on 2020-11-25 at f73fb999cd)
+ + send-pack: kill pack-objects helper on signal or exit
+
+ Receiving "git push" that is killed may leave zombie pack-objects
+ process behind, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* ma/grep-init-default (2020-11-30) 4 commits
+ - MyFirstObjectWalk: drop `init_walken_defaults()`
+ - grep: copy struct in one fell swoop
+ - grep: use designated initializers for `grep_defaults`
+ - grep: don't set up a "default" repo for grep
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* fc/atmark-in-refspec (2020-11-30) 3 commits
+ - refspec: make @ a synonym of HEAD
+ - tests: push: trivial cleanup
+ - tests: push: improve cleanup of HEAD tests
+
+ "@" sometimes worked (e.g. "git push origin @:there") as a part of
+ a refspec element, but "git push orign @" did not work, which has
+ been corrected.
+
+
+* js/init-defaultbranch-advice (2020-11-24) 4 commits
+ - init: provide useful advice about init.defaultBranch
+ - get_default_branch_name(): prepare for showing some advice
+ - branch -m: allow renaming a yet-unborn branch
+ - init: document `init.defaultBranch` better
+
+ Our users are going to be trained to prepare for future change of
+ init.defaultBranch configuration variable.
+
+
+* jt/trace-error-on-warning (2020-11-24) 1 commit
+  (merged to 'next' on 2020-11-30 at 1ab8a970f8)
+ + usage: add trace2 entry upon warning()
+
+ Like die() and error(), a call to warning() will also trigger a
+ trace2 event.
+
+ Will merge to 'master'.
+
+
+* ps/config-env-pairs (2020-11-24) 2 commits
+ - config: allow specifying config entries via envvar pairs
+ - config: extract function to parse config pairs
+
+ Introduce a way to feed configuration variable-value pairs via
+ environment variables.
+
+ Getting there.
+ cf. <X74CigYS7AUtMo9Q@tanuki>
+
+
+* tb/idx-midx-race-fix (2020-11-25) 2 commits
+  (merged to 'next' on 2020-11-30 at 493ded178e)
+ + midx.c: protect against disappearing packs
+ + packfile.c: protect against disappearing indexes
+
+ Processes that access packdata while the .idx file gets removed
+ (e.g. while repacking) did not fail or fall back gracefully as they
+ could.
+
+ Will merge to 'master'.
+
+
+* rs/stop-pack-objects-when-fetch-is-killed (2020-11-25) 1 commit
+ - upload-pack: kill pack-objects helper on signal or exit
+
+ "git upload-pack" that is killed may leave zombie pack-objects
+ process behind, which has been corrected.
+
+ Needs to be replaced with signed-off and/or improved version.
+
 
 * tb/pack-bitmap (2020-11-21) 24 commits
  - pack-bitmap-write: better reuse bitmaps
@@ -836,37 +705,6 @@ Release tarballs are available at:
  "git init" creates.
 
 
-* js/t2106-cleanup (2020-11-18) 3 commits
-  (merged to 'next' on 2020-11-23 at b1bcd5d8b2)
- + t2106: ensure that the checkout fails for the expected reason
- + t2106: make test independent of the current main branch name
- + t2106: adjust style to the current conventions
-
- A test script got cleaned up and then made not to depend on the
- value of init.defaultBranch.
-
- Will merge to 'master'.
-
-
-* js/t3040-cleanup (2020-11-18) 1 commit
-  (merged to 'next' on 2020-11-23 at 88951eae2f)
- + t3040: remove stale note
-
- Cleanup.
-
- Will merge to 'master'.
-
-
-* js/t4015-wo-master (2020-11-19) 1 commit
-  (merged to 'next' on 2020-11-23 at b85c36ffb4)
- + t4015: let the test pass with any default branch name
-
- A test script got cleaned up not to depend on the value of
- init.defaultBranch.
-
- Will merge to 'master'.
-
-
 * ds/config-literal-value (2020-11-25) 8 commits
  - config doc: value-pattern is not necessarily a regexp
  - config: implement --fixed-value with --get*
@@ -896,24 +734,6 @@ Release tarballs are available at:
  Blocked by ds/config-literal-value.
 
 
-* js/pull-rebase-use-advise (2020-11-19) 1 commit
-  (merged to 'next' on 2020-11-25 at 05db775119)
- + pull: colorize the hint about setting `pull.rebase`
-
- UI improvement.
-
- Will merge to 'master'.
-
-
-* js/t1309-master-to-topic (2020-11-19) 1 commit
-  (merged to 'next' on 2020-11-25 at 044da285ef)
- + t1309: use a neutral branch name in the `onbranch` test cases
-
- Test preparation.
-
- Will merge to 'master'.
-
-
 * ag/merge-strategies-in-c (2020-11-24) 13 commits
  - sequencer: use the "octopus" merge strategy without forking
  - sequencer: use the "resolve" strategy without forking
@@ -936,34 +756,36 @@ Release tarballs are available at:
 
 
 * ps/update-ref-multi-transaction (2020-11-16) 4 commits
- - update-ref: disallow "start" for ongoing transactions
- - p1400: use `git-update-ref --stdin` to test multiple transactions
- - update-ref: allow creation of multiple transactions
- - t1400: avoid touching refs on filesystem
+  (merged to 'next' on 2020-11-30 at c1c3e23374)
+ + update-ref: disallow "start" for ongoing transactions
+ + p1400: use `git-update-ref --stdin` to test multiple transactions
+ + update-ref: allow creation of multiple transactions
+ + t1400: avoid touching refs on filesystem
 
  "git update-ref --stdin" learns to take multiple transactions in a
  single session.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/add-i-color-fix (2020-11-16) 11 commits
- - add -i: verify in the tests that colors can be overridden
- - add -p: prefer color.diff.context over color.diff.plain
- - add -i (Perl version): color header to match the C version
- - add -i (built-in): use the same indentation as the Perl version
- - add -p (built-in): do not color the progress indicator separately
- - add -i (built-in): use correct names to load color.diff.* config
- - add -i (built-in): prevent the `reset` "color" from being configured
- - add -i: use `reset_color` consistently
- - add -p (built-in): imitate `xdl_format_hunk_hdr()` generating hunk headers
- - add -i (built-in): send error messages to stderr
- - add -i (built-in): do show an error message for incorrect inputs
+  (merged to 'next' on 2020-11-30 at 5cb8202cd4)
+ + add -i: verify in the tests that colors can be overridden
+ + add -p: prefer color.diff.context over color.diff.plain
+ + add -i (Perl version): color header to match the C version
+ + add -i (built-in): use the same indentation as the Perl version
+ + add -p (built-in): do not color the progress indicator separately
+ + add -i (built-in): use correct names to load color.diff.* config
+ + add -i (built-in): prevent the `reset` "color" from being configured
+ + add -i: use `reset_color` consistently
+ + add -p (built-in): imitate `xdl_format_hunk_hdr()` generating hunk headers
+ + add -i (built-in): send error messages to stderr
+ + add -i (built-in): do show an error message for incorrect inputs
 
  "git add -i" failed to honor custom colors configured to show
  patches, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <20201117015149.GC19433@coredump.intra.peff.net>
 
 
@@ -1028,56 +850,3 @@ Release tarballs are available at:
  cf. <85y2jiqq3c.fsf@gmail.com>
  cf. <685afed6-f01f-5d22-80d4-00fdc11caf0a@gmail.com>
  cf. <20201103053629.GA13228@Abhishek-Arch>
-
---------------------------------------------------
-[Discarded]
-
-* jk/use-strset-in-shortlog (2020-11-05) 1 commit
- . shortlog: drop custom strset implementation
-
- Now a part of the en/strmap topic.
-
-
-* jt/push-with-base (2020-11-02) 5 commits
- . SQUASH???
- . Doc: push with --base
- . remote-curl: teach --base for http(s)://
- . push: teach --base for ssh:// and file://
- . connect: refactor building of Extra Parameters
-
- "git push" learns a way to tell an object that it expects the other
- side to have and is usable as a common ancestor, which can be used
- by the other side to shrink its initial ref advertisement.
-
-
-* rs/chdir-notify-unleak (2020-11-16) 1 commit
- . chdir-notify: UNLEAK registrated callback entries
-
- Mark some stuff on list_head chain with UNLEAK() macro to squelch
- leak checker.
-
- Retracted.
- cf. <3b2afb7a-57aa-025c-806f-ae3faa0ed077@web.de>
-
-
-* av/fsmonitor-cleanup (2020-10-21) 2 commits
- . fsmonitor: make output of test-dump-fsmonitor more concise
- . fsmonitor: stop inline'ing mark_fsmonitor_valid / _invalid
-
- Code clean-up.
-
- Unneeded?
- cf. <20201022183822.GA781760@nand.local>
-
-
-* jc/init-doc-default-branch (2020-11-18) 1 commit
- . "init" doc: mention the configurability more clearly
-
- Doc update.
-
-
-* ds/treeless-clone-wo-submodule-recursing (2020-11-21) 1 commit
- . clone: --filter=tree:0 implies fetch.recurseSubmodules=no
-
- Retracted.
- cf. <8a31af0e-4440-d957-11fb-48c4d2abd5c7@gmail.com>
