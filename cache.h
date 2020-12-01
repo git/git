@@ -1255,7 +1255,11 @@ int adjust_shared_perm(const char *path);
  * safe_create_leading_directories() temporarily changes path while it
  * is working but restores it before returning.
  * safe_create_leading_directories_const() doesn't modify path, even
- * temporarily.
+ * temporarily. Both these variants adjust the permissions of the
+ * created directories to honor core.sharedRepository, so they are best
+ * suited for files inside the git dir. For working tree files, use
+ * safe_create_leading_directories_no_share() instead, as it ignores
+ * the core.sharedRepository setting.
  */
 enum scld_error {
 	SCLD_OK = 0,
@@ -1266,6 +1270,7 @@ enum scld_error {
 };
 enum scld_error safe_create_leading_directories(char *path);
 enum scld_error safe_create_leading_directories_const(const char *path);
+enum scld_error safe_create_leading_directories_no_share(char *path);
 
 /*
  * Callback function for raceproof_create_file(). This function is

@@ -4409,7 +4409,7 @@ static int create_one_file(struct apply_state *state,
 		return 0;
 
 	if (errno == ENOENT) {
-		if (safe_create_leading_directories(path))
+		if (safe_create_leading_directories_no_share(path))
 			return 0;
 		res = try_create_file(state, path, mode, buf, size);
 		if (res < 0)

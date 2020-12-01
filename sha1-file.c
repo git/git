@@ -291,7 +291,7 @@ int mkdir_in_gitdir(const char *path)
 	return adjust_shared_perm(path);
 }
 
-enum scld_error safe_create_leading_directories(char *path)
+static enum scld_error safe_create_leading_directories_1(char *path, int share)
 {
 	char *next_component = path + offset_1st_component(path);
 	enum scld_error ret = SCLD_OK;
@@ -337,12 +337,22 @@ enum scld_error safe_create_leading_directories(char *path)
 				ret = SCLD_VANISHED;
 			else
 				ret = SCLD_FAILED;
-		} else if (adjust_shared_perm(path)) {
+		} else if (share && adjust_shared_perm(path)) {
 			ret = SCLD_PERMS;
 		}
 		*slash = slash_character;
 	}
 	return ret;
+}
+
+enum scld_error safe_create_leading_directories(char *path)
+{
+	return safe_create_leading_directories_1(path, 1);
+}
+
+enum scld_error safe_create_leading_directories_no_share(char *path)
+{
+	return safe_create_leading_directories_1(path, 0);
 }
 
 enum scld_error safe_create_leading_directories_const(const char *path)
