@@ -906,7 +906,7 @@ test_expect_success '__git_refs - after --opt= - full refs' '
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__git refs - exluding refs' '
+test_expect_success '__git refs - excluding refs' '
 	cat >expected <<-EOF &&
 	^HEAD
 	^master
@@ -922,7 +922,7 @@ test_expect_success '__git refs - exluding refs' '
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__git refs - exluding full refs' '
+test_expect_success '__git refs - excluding full refs' '
 	cat >expected <<-EOF &&
 	^refs/heads/master
 	^refs/heads/matching-branch
