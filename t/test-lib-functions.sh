@@ -955,7 +955,7 @@ test_expect_code () {
 # - cmp's output is not nearly as easy to read as diff -u
 # - not all diff versions understand "-u"
 
-test_cmp() {
+test_cmp () {
 	eval "$GIT_TEST_CMP" '"$@"'
 }
 
@@ -968,7 +968,7 @@ test_cmp() {
 #
 #    test_cmp_config foo core.bar
 #
-test_cmp_config() {
+test_cmp_config () {
 	local GD &&
 	if test "$1" = "-C"
 	then
@@ -984,7 +984,7 @@ test_cmp_config() {
 
 # test_cmp_bin - helper to compare binary files
 
-test_cmp_bin() {
+test_cmp_bin () {
 	cmp "$@"
 }
 
@@ -1418,7 +1418,7 @@ nongit () {
 # whitespace and put in a single packet. Note that data containing NULs must be
 # given on stdin, and that empty input becomes an empty packet, not a flush
 # packet (for that you can just print 0000 yourself).
-packetize() {
+packetize () {
 	if test $# -gt 0
 	then
 		packet="$*"
