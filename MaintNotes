@@ -132,16 +132,16 @@ leaking out before we're ready to make public announcements.
 
 My public git.git repositories are (mirrored) at:
 
-  git://git.kernel.org/pub/scm/git/git.git/
+  https://git.kernel.org/pub/scm/git/git.git/
   https://kernel.googlesource.com/pub/scm/git/git
-  git://repo.or.cz/alt-git.git/
+  https://repo.or.cz/alt-git.git/
   https://github.com/git/git/
   https://gitlab.com/git-vcs/git/
 
 This one shows not just the main integration branches, but also
 individual topics broken out:
 
-  git://github.com/gitster/git/
+  https://github.com/gitster/git/
 
 A few web interfaces are found at:
 
@@ -152,8 +152,8 @@ A few web interfaces are found at:
 Preformatted documentation from the tip of the "master" branch can be
 found in:
 
-  git://git.kernel.org/pub/scm/git/git-{htmldocs,manpages}.git/
-  git://repo.or.cz/git-{htmldocs,manpages}.git/
+  https://git.kernel.org/pub/scm/git/git-{htmldocs,manpages}.git/
+  https://repo.or.cz/git-{htmldocs,manpages}.git/
   https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 The manual pages formatted in HTML for the tip of 'master' can be
