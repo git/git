@@ -29,4 +29,13 @@
 #define vsprintf(buf,fmt,arg) BANNED(vsprintf)
 #endif
 
+#undef gmtime
+#define gmtime(t) BANNED(gmtime)
+#undef localtime
+#define localtime(t) BANNED(localtime)
+#undef ctime
+#define ctime(t) BANNED(ctime)
+#undef asctime
+#define asctime(t) BANNED(asctime)
+
 #endif /* BANNED_H */
