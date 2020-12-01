@@ -116,6 +116,7 @@ __gitcomp_file ()
 {
 	emulate -L zsh
 
+	compset -P '*[=:]'
 	compadd -f -p "${2-}" -- ${(f)1} && _ret=0
 }
 
