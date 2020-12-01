@@ -35,7 +35,11 @@
 #define localtime(t) BANNED(localtime)
 #undef ctime
 #define ctime(t) BANNED(ctime)
+#undef ctime_r
+#define ctime_r(t, buf) BANNED(ctime_r)
 #undef asctime
 #define asctime(t) BANNED(asctime)
+#undef asctime_r
+#define asctime_r(t, buf) BANNED(asctime_r)
 
 #endif /* BANNED_H */
