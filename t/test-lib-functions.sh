@@ -367,9 +367,9 @@ test_chmod () {
 	git update-index --add "--chmod=$@"
 }
 
-# Get the modebits from a file.
+# Get the modebits from a file or directory.
 test_modebits () {
-	ls -l "$1" | sed -e 's|^\(..........\).*|\1|'
+	ls -ld "$1" | sed -e 's|^\(..........\).*|\1|'
 }
 
 # Unset a configuration variable, but don't fail if it doesn't exist.
