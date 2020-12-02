@@ -129,8 +129,7 @@ setup_for_fsmonitor() {
 
 	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
 	git update-index --fsmonitor 2>error &&
-	cat error &&
-	[ ! -s error ] # ensure no silent error
+	test_must_be_empty error  # ensure no silent error
 }
 
 test_perf_w_drop_caches () {
