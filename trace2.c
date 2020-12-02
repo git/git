@@ -792,3 +792,8 @@ void trace2_printf(const char *fmt, ...)
 	va_end(ap);
 }
 #endif
+
+const char *trace2_session_id(void)
+{
+	return tr2_sid_get();
+}

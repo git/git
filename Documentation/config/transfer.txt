@@ -69,3 +69,7 @@ transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
 	not set, the value of this variable is used instead.
 	The default value is 100.
+
+transfer.advertiseSID::
+	Boolean. When true, client and server processes will advertise their
+	unique session IDs to their remote counterpart. Defaults to false.

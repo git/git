@@ -425,6 +425,7 @@ int send_pack(struct send_pack_args *args,
 	int use_sideband = 0;
 	int quiet_supported = 0;
 	int agent_supported = 0;
+	int advertise_sid = 0;
 	int use_atomic = 0;
 	int atomic_supported = 0;
 	int use_push_options = 0;
@@ -435,6 +436,8 @@ int send_pack(struct send_pack_args *args,
 	struct async demux;
 	const char *push_cert_nonce = NULL;
 	struct packet_reader reader;
+
+	git_config_get_bool("transfer.advertisesid", &advertise_sid);
 
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status-v2"))
@@ -451,6 +454,8 @@ int send_pack(struct send_pack_args *args,
 		quiet_supported = 1;
 	if (server_supports("agent"))
 		agent_supported = 1;
+	if (!server_supports("session-id"))
+		advertise_sid = 0;
 	if (server_supports("no-thin"))
 		args->use_thin_pack = 0;
 	if (server_supports("atomic"))
@@ -507,6 +512,8 @@ int send_pack(struct send_pack_args *args,
 		strbuf_addf(&cap_buf, " object-format=%s", the_hash_algo->name);
 	if (agent_supported)
 		strbuf_addf(&cap_buf, " agent=%s", git_user_agent_sanitized());
+	if (advertise_sid)
+		strbuf_addf(&cap_buf, " session-id=%s", trace2_session_id());
 
 	/*
 	 * NEEDSWORK: why does delete-refs have to be so specific to
