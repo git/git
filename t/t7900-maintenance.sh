@@ -189,13 +189,15 @@ test_expect_success 'incremental-repack task' '
 '
 
 test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
+	test_config core.compression 0 &&
+
 	for i in $(test_seq 1 5)
 	do
 		test-tool genrandom foo$i $((512 * 1024 * 1024 + 1)) >>big ||
 		return 1
 	done &&
 	git add big &&
-	git commit -m "Add big file (1)" &&
+	git commit -qm "Add big file (1)" &&
 
 	# ensure any possible loose objects are in a pack-file
 	git maintenance run --task=loose-objects &&
@@ -207,7 +209,7 @@ test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
 		return 1
 	done &&
 	git add big &&
-	git commit -m "Add big file (2)" &&
+	git commit -qm "Add big file (2)" &&
 
 	# ensure any possible loose objects are in a pack-file
 	git maintenance run --task=loose-objects &&
