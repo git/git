@@ -210,6 +210,8 @@ struct conflict_info {
 	unsigned match_mask:3;
 };
 
+/*** Function Grouping: various utility functions ***/
+
 /*
  * For the next three macros, see warning for conflict_info.merged.
  *
@@ -289,6 +291,8 @@ static int err(struct merge_options *opt, const char *err, ...)
 
 	return -1;
 }
+
+/*** Function Grouping: functions related to collect_merge_info() ***/
 
 static void setup_path_info(struct merge_options *opt,
 			    struct string_list_item *result,
@@ -544,6 +548,15 @@ static int collect_merge_info(struct merge_options *opt,
 	return ret;
 }
 
+/*** Function Grouping: functions related to threeway content merges ***/
+
+/*** Function Grouping: functions related to detect_and_process_renames(), ***
+ *** which are split into directory and regular rename detection sections. ***/
+
+/*** Function Grouping: functions related to directory rename detection ***/
+
+/*** Function Grouping: functions related to regular rename detection ***/
+
 static int detect_and_process_renames(struct merge_options *opt,
 				      struct tree *merge_base,
 				      struct tree *side1,
@@ -560,6 +573,8 @@ static int detect_and_process_renames(struct merge_options *opt,
 	 */
 	return clean;
 }
+
+/*** Function Grouping: functions related to process_entries() ***/
 
 static int string_list_df_name_compare(const char *one, const char *two)
 {
@@ -1039,6 +1054,8 @@ static void process_entries(struct merge_options *opt,
 	string_list_clear(&dir_metadata.offsets, 0);
 }
 
+/*** Function Grouping: functions related to merge_switch_to_result() ***/
+
 static int checkout(struct merge_options *opt,
 		    struct tree *prev,
 		    struct tree *next)
@@ -1226,6 +1243,8 @@ void merge_finalize(struct merge_options *opt,
 	FREE_AND_NULL(opti);
 }
 
+/*** Function Grouping: helper functions for merge_incore_*() ***/
+
 static void merge_start(struct merge_options *opt, struct merge_result *result)
 {
 	/* Sanity checks on opt */
@@ -1275,6 +1294,8 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	strmap_init_with_options(&opt->priv->conflicted, NULL, 0);
 	string_list_init(&opt->priv->paths_to_free, 0);
 }
+
+/*** Function Grouping: merge_incore_*() and their internal variants ***/
 
 /*
  * Originally from merge_trees_internal(); heavily adapted, though.
