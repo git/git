@@ -251,6 +251,14 @@ test_expect_success 'implicitly construct combine: filter with repeated flags' '
 	test_cmp unique_types.expected unique_types.actual
 '
 
+test_expect_success 'upload-pack complains of bogus filter config' '
+	printf 0000 |
+	test_must_fail git \
+		-c uploadpackfilter.tree.maxdepth \
+		upload-pack . >/dev/null 2>err &&
+	test_i18ngrep "unable to parse.*tree.maxdepth" err
+'
+
 test_expect_success 'upload-pack fails banned object filters' '
 	test_config -C srv.bare uploadpackfilter.blob:none.allow false &&
 	test_must_fail ok=sigpipe git clone --no-checkout --filter=blob:none \

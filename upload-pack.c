@@ -1307,7 +1307,8 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 			return git_config_string(&data->pack_objects_hook, var, value);
 	}
 
-	parse_object_filter_config(var, value, data);
+	if (parse_object_filter_config(var, value, data) < 0)
+		return -1;
 
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
