@@ -550,6 +550,18 @@ static int collect_merge_info(struct merge_options *opt,
 
 /*** Function Grouping: functions related to threeway content merges ***/
 
+static int handle_content_merge(struct merge_options *opt,
+				const char *path,
+				const struct version_info *o,
+				const struct version_info *a,
+				const struct version_info *b,
+				const char *pathnames[3],
+				const int extra_marker_size,
+				struct version_info *result)
+{
+	die("Not yet implemented");
+}
+
 /*** Function Grouping: functions related to detect_and_process_renames(), ***
  *** which are split into directory and regular rename detection sections. ***/
 
@@ -957,6 +969,8 @@ static void process_entry(struct merge_options *opt,
 		ci->merged.clean = 0;
 		ci->merged.result.mode = ci->stages[1].mode;
 		oidcpy(&ci->merged.result.oid, &ci->stages[1].oid);
+		/* When we fix above, we'll call handle_content_merge() */
+		(void)handle_content_merge;
 	} else if (ci->filemask == 3 || ci->filemask == 5) {
 		/* Modify/delete */
 		die("Not yet implemented.");
