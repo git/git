@@ -105,6 +105,15 @@ struct merge_options_internal {
 	struct string_list paths_to_free;
 
 	/*
+	 * output: special messages and conflict notices for various paths
+	 *
+	 * This is a map of pathnames (a subset of the keys in "paths" above)
+	 * to strbufs.  It gathers various warning/conflict/notice messages
+	 * for later processing.
+	 */
+	struct strmap output;
+
+	/*
 	 * current_dir_name: temporary var used in collect_merge_info_callback()
 	 *
 	 * Used to set merged_info.directory_name; see documentation for that
@@ -274,6 +283,27 @@ static void clear_internal_opts(struct merge_options_internal *opti,
 	opti->paths_to_free.strdup_strings = 1;
 	string_list_clear(&opti->paths_to_free, 0);
 	opti->paths_to_free.strdup_strings = 0;
+
+	if (!reinitialize) {
+		struct hashmap_iter iter;
+		struct strmap_entry *e;
+
+		/* Release and free each strbuf found in output */
+		strmap_for_each_entry(&opti->output, &iter, e) {
+			struct strbuf *sb = e->value;
+			strbuf_release(sb);
+			/*
+			 * While strictly speaking we don't need to free(sb)
+			 * here because we could pass free_values=1 when
+			 * calling strmap_clear() on opti->output, that would
+			 * require strmap_clear to do another
+			 * strmap_for_each_entry() loop, so we just free it
+			 * while we're iterating anyway.
+			 */
+			free(sb);
+		}
+		strmap_clear(&opti->output, 0);
+	}
 }
 
 static int err(struct merge_options *opt, const char *err, ...)
@@ -290,6 +320,27 @@ static int err(struct merge_options *opt, const char *err, ...)
 	strbuf_release(&sb);
 
 	return -1;
+}
+
+__attribute__((format (printf, 4, 5)))
+static void path_msg(struct merge_options *opt,
+		     const char *path,
+		     int omittable_hint, /* skippable under --remerge-diff */
+		     const char *fmt, ...)
+{
+	va_list ap;
+	struct strbuf *sb = strmap_get(&opt->priv->output, path);
+	if (!sb) {
+		sb = xmalloc(sizeof(*sb));
+		strbuf_init(sb, 0);
+		strmap_put(&opt->priv->output, path, sb);
+	}
+
+	va_start(ap, fmt);
+	strbuf_vaddf(sb, fmt, ap);
+	va_end(ap);
+
+	strbuf_addch(sb, '\n');
 }
 
 /*** Function Grouping: functions related to collect_merge_info() ***/
@@ -973,7 +1024,23 @@ static void process_entry(struct merge_options *opt,
 		(void)handle_content_merge;
 	} else if (ci->filemask == 3 || ci->filemask == 5) {
 		/* Modify/delete */
-		die("Not yet implemented.");
+		const char *modify_branch, *delete_branch;
+		int side = (ci->filemask == 5) ? 2 : 1;
+		int index = opt->priv->call_depth ? 0 : side;
+
+		ci->merged.result.mode = ci->stages[index].mode;
+		oidcpy(&ci->merged.result.oid, &ci->stages[index].oid);
+		ci->merged.clean = 0;
+
+		modify_branch = (side == 1) ? opt->branch1 : opt->branch2;
+		delete_branch = (side == 1) ? opt->branch2 : opt->branch1;
+
+		path_msg(opt, path, 0,
+			 _("CONFLICT (modify/delete): %s deleted in %s "
+			   "and modified in %s.  Version %s of %s left "
+			   "in tree."),
+			 path, delete_branch, modify_branch,
+			 modify_branch, path);
 	} else if (ci->filemask == 2 || ci->filemask == 4) {
 		/* Added on one side */
 		int side = (ci->filemask == 4) ? 2 : 1;
@@ -1240,7 +1307,29 @@ void merge_switch_to_result(struct merge_options *opt,
 	}
 
 	if (display_update_msgs) {
-		/* TODO: print out CONFLICT and other informational messages. */
+		struct merge_options_internal *opti = result->priv;
+		struct hashmap_iter iter;
+		struct strmap_entry *e;
+		struct string_list olist = STRING_LIST_INIT_NODUP;
+		int i;
+
+		/* Hack to pre-allocate olist to the desired size */
+		ALLOC_GROW(olist.items, strmap_get_size(&opti->output),
+			   olist.alloc);
+
+		/* Put every entry from output into olist, then sort */
+		strmap_for_each_entry(&opti->output, &iter, e) {
+			string_list_append(&olist, e->key)->util = e->value;
+		}
+		string_list_sort(&olist);
+
+		/* Iterate over the items, printing them */
+		for (i = 0; i < olist.nr; ++i) {
+			struct strbuf *sb = olist.items[i].util;
+
+			printf("%s", sb->buf);
+		}
+		string_list_clear(&olist, 0);
 	}
 
 	merge_finalize(opt, result);
@@ -1307,6 +1396,13 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	strmap_init_with_options(&opt->priv->paths, NULL, 0);
 	strmap_init_with_options(&opt->priv->conflicted, NULL, 0);
 	string_list_init(&opt->priv->paths_to_free, 0);
+
+	/*
+	 * keys & strbufs in output will sometimes need to outlive "paths",
+	 * so it will have a copy of relevant keys.  It's probably a small
+	 * subset of the overall paths that have special output.
+	 */
+	strmap_init(&opt->priv->output);
 }
 
 /*** Function Grouping: merge_incore_*() and their internal variants ***/
