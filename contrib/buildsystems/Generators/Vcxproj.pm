@@ -76,7 +76,7 @@ sub createProject {
 
     my $libs_release = "\n    ";
     my $libs_debug = "\n    ";
-    if (!$static_library) {
+    if (!$static_library && $name ne 'headless-git') {
       $libs_release = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib|vcs-svn\/lib\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
       $libs_debug = $libs_release;
       $libs_debug =~ s/zlib\.lib/zlibd\.lib/g;
@@ -254,7 +254,7 @@ EOM
     print F << "EOM";
   </ItemGroup>
 EOM
-    if (!$static_library || $target =~ 'vcs-svn' || $target =~ 'xdiff') {
+    if ((!$static_library || $target =~ 'vcs-svn' || $target =~ 'xdiff') && !($name =~ /headless-git/)) {
       my $uuid_libgit = $$build_structure{"LIBS_libgit_GUID"};
       my $uuid_xdiff_lib = $$build_structure{"LIBS_xdiff/lib_GUID"};
 
