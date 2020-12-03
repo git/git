@@ -136,6 +136,8 @@ Performance, Internal Implementation, Development Support etc.
    file, causing everybody else but one to fail---reattempt locking
    with some timeout to reduce the rate of the failure.
 
+ * "git-parse-remote" shell script library outlived its usefulness.
+
 
 Fixes since v2.29
 -----------------
@@ -263,11 +265,6 @@ Fixes since v2.29
    larger than 4GB.
    (merge 81c4c5cf2e jk/4gb-idx later to maint).
 
- * "git fetch" did not work correctly with nested submodules where the
-   innermost submodule that is not of interest got updated in the
-   upstream, which has been corrected.
-   (merge 1b7ac4e6d4 pk/subsub-fetch-fix later to maint).
-
  * Since jgit does not yet work with SHA-256 repositories, mark the
    tests that uses it not to run unless we are testing with ShA-1
    repositories.
@@ -282,6 +279,20 @@ Fixes since v2.29
 
  * Error message fix.
    (merge eaf5341538 km/stash-error-message-fix later to maint).
+
+ * "git pull --rebase --recurse-submodules" checked for local changes
+   in a wrong range and failed to run correctly when it should.
+   (merge 5176f20ffe pb/pull-rebase-recurse-submodules later to maint).
+
+ * "git push" that is killed may leave a pack-objects process behind,
+   still computing to find a good compression, wasting cycles.  This
+   has been corrected.
+   (merge 8b59935114 jk/stop-pack-objects-when-push-is-killed later to maint).
+
+ * "git fetch" that is killed may leave a pack-objects process behind,
+   still computing to find a good compression, wasting cycles.  This
+   has been corrected.
+   (merge 309a4028e7 jk/stop-pack-objects-when-fetch-is-killed later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
