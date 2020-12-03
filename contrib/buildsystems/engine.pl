@@ -370,6 +370,7 @@ sub handleLinkLine
 #    exit(1);
     foreach (@objfiles) {
         my $sourcefile = $_;
+        $sourcefile =~ s/^headless-git\.o$/compat\/win32\/headless.c/;
         $sourcefile =~ s/\.o$/.c/;
         $sourcefile =~ s/\.res$/.rc/;
         push(@sources, $sourcefile);
