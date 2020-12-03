@@ -423,7 +423,7 @@ write_script () {
 # - Explicitly using test_have_prereq.
 #
 # - Implicitly by specifying the prerequisite tag in the calls to
-#   test_expect_{success,failure,code}.
+#   test_expect_{success,failure} and test_external{,_without_stderr}.
 #
 # The single parameter is the prerequisite tag (a simple word, in all
 # capital letters by convention).
@@ -474,15 +474,15 @@ test_lazy_prereq () {
 
 test_run_lazy_prereq_ () {
 	script='
-mkdir -p "$TRASH_DIRECTORY/prereq-test-dir" &&
+mkdir -p "$TRASH_DIRECTORY/prereq-test-dir-'"$1"'" &&
 (
-	cd "$TRASH_DIRECTORY/prereq-test-dir" &&'"$2"'
+	cd "$TRASH_DIRECTORY/prereq-test-dir-'"$1"'" &&'"$2"'
 )'
 	say >&3 "checking prerequisite: $1"
 	say >&3 "$script"
 	test_eval_ "$script"
 	eval_ret=$?
-	rm -rf "$TRASH_DIRECTORY/prereq-test-dir"
+	rm -rf "$TRASH_DIRECTORY/prereq-test-dir-$1"
 	if test "$eval_ret" = 0; then
 		say >&3 "prerequisite $1 ok"
 	else

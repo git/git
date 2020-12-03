@@ -28,6 +28,7 @@ SYNOPSIS
 		   [--no-notes | --notes[=<ref>]]
 		   [--interdiff=<previous>]
 		   [--range-diff=<previous> [--creation-factor=<percent>]]
+		   [--filename-max-length=<n>]
 		   [--progress]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
@@ -199,6 +200,13 @@ populated with placeholder text.
 	line, instead use '[<subject prefix>]'. This
 	allows for useful naming of a patch series, and can be
 	combined with the `--numbered` option.
+
+--filename-max-length=<n>::
+	Instead of the standard 64 bytes, chomp the generated output
+	filenames at around '<n>' bytes (too short a value will be
+	silently raised to a reasonable length).  Defaults to the
+	value of the `format.filenameMaxLength` configuration
+	variable, or 64 if unconfigured.
 
 --rfc::
 	Alias for `--subject-prefix="RFC PATCH"`. RFC means "Request For

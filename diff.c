@@ -4115,6 +4115,9 @@ void diff_free_filespec_blob(struct diff_filespec *s)
 
 void diff_free_filespec_data(struct diff_filespec *s)
 {
+	if (!s)
+		return;
+
 	diff_free_filespec_blob(s);
 	FREE_AND_NULL(s->cnt_data);
 }
@@ -6312,9 +6315,9 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 			if (o->color_moved == COLOR_MOVED_ZEBRA_DIM)
 				dim_moved_lines(o);
 
-			hashmap_free_entries(&add_lines, struct moved_entry,
+			hashmap_clear_and_free(&add_lines, struct moved_entry,
 						ent);
-			hashmap_free_entries(&del_lines, struct moved_entry,
+			hashmap_clear_and_free(&del_lines, struct moved_entry,
 						ent);
 		}
 

@@ -2230,7 +2230,7 @@ void ref_array_clear(struct ref_array *array)
 	used_atom_cnt = 0;
 
 	if (ref_to_worktree_map.worktrees) {
-		hashmap_free_entries(&(ref_to_worktree_map.map),
+		hashmap_clear_and_free(&(ref_to_worktree_map.map),
 					struct ref_to_worktree_entry, ent);
 		free_worktrees(ref_to_worktree_map.worktrees);
 		ref_to_worktree_map.worktrees = NULL;

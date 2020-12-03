@@ -479,6 +479,24 @@ test_expect_success 'blame -L ^:RE (absolute: end-of-file)' '
 	check_count -f hello.c -L$n -L^:ma.. F 4 G 1 H 1
 '
 
+test_expect_success 'setup -L :funcname with userdiff driver' '
+	echo "fortran-* diff=fortran" >.gitattributes &&
+	fortran_file=fortran-external-function &&
+	orig_file="$TEST_DIRECTORY/t4018/$fortran_file" &&
+	cp $orig_file . &&
+	git add $fortran_file &&
+	GIT_AUTHOR_NAME="A" GIT_AUTHOR_EMAIL="A@test.git" \
+	git commit -m "add fortran file" &&
+	sed -e "s/ChangeMe/IWasChanged/" <"$orig_file" >$fortran_file &&
+	git add $fortran_file &&
+	GIT_AUTHOR_NAME="B" GIT_AUTHOR_EMAIL="B@test.git" \
+	git commit -m "change fortran file"
+'
+
+test_expect_success 'blame -L :funcname with userdiff driver' '
+	check_count -f fortran-external-function -L:RIGHT A 7 B 1
+'
+
 test_expect_success 'setup incremental' '
 	(
 	GIT_AUTHOR_NAME=I &&

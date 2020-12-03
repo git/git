@@ -1354,4 +1354,6 @@ static inline void *container_of_or_null_offset(void *ptr, size_t offset)
 	((uintptr_t)&(ptr)->member - (uintptr_t)(ptr))
 #endif /* !__GNUC__ */
 
+void sleep_millisec(int millisec);
+
 #endif

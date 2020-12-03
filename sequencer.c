@@ -14,7 +14,8 @@
 #include "diff.h"
 #include "revision.h"
 #include "rerere.h"
-#include "merge-recursive.h"
+#include "merge-ort.h"
+#include "merge-ort-wrappers.h"
 #include "refs.h"
 #include "strvec.h"
 #include "quote.h"
@@ -204,6 +205,20 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 
+	if (!opts->default_strategy && !strcmp(k, "pull.twohead")) {
+		int ret = git_config_string((const char**)&opts->default_strategy, k, v);
+		if (ret == 0) {
+			/*
+			 * pull.twohead is allowed to be multi-valued; we only
+			 * care about the first value.
+			 */
+			char *tmp = strchr(opts->default_strategy, ' ');
+			if (tmp)
+				*tmp = '\0';
+		}
+		return ret;
+	}
+
 	status = git_gpg_config(k, v, NULL);
 	if (status)
 		return status;
@@ -315,6 +330,7 @@ int sequencer_remove_state(struct replay_opts *opts)
 	}
 
 	free(opts->gpg_sign);
+	free(opts->default_strategy);
 	free(opts->strategy);
 	for (i = 0; i < opts->xopts_nr; i++)
 		free(opts->xopts[i]);
@@ -593,8 +609,9 @@ static int do_recursive_merge(struct repository *r,
 			      struct replay_opts *opts)
 {
 	struct merge_options o;
+	struct merge_result result;
 	struct tree *next_tree, *base_tree, *head_tree;
-	int clean;
+	int clean, show_output;
 	int i;
 	struct lock_file index_lock = LOCK_INIT;
 
@@ -618,12 +635,27 @@ static int do_recursive_merge(struct repository *r,
 	for (i = 0; i < opts->xopts_nr; i++)
 		parse_merge_opt(&o, opts->xopts[i]);
 
-	clean = merge_trees(&o,
-			    head_tree,
-			    next_tree, base_tree);
-	if (is_rebase_i(opts) && clean <= 0)
-		fputs(o.obuf.buf, stdout);
-	strbuf_release(&o.obuf);
+	if (opts->strategy && !strcmp(opts->strategy, "ort")) {
+		memset(&result, 0, sizeof(result));
+		merge_incore_nonrecursive(&o, base_tree, head_tree, next_tree,
+					    &result);
+		show_output = !is_rebase_i(opts) || !result.clean;
+		/*
+		 * TODO: merge_switch_to_result will update index/working tree;
+		 * we only really want to do that if !result.clean || this is
+		 * the final patch to be picked.  But determining this is the
+		 * final patch would take some work, and "head_tree" would need
+		 * to be replace with the tree the index matched before we
+		 * started doing any picks.
+		 */
+		merge_switch_to_result(&o, head_tree, &result, 1, show_output);
+		clean = result.clean;
+	} else {
+		clean = merge_trees(&o, head_tree, next_tree, base_tree);
+		if (is_rebase_i(opts) && clean <= 0)
+			fputs(o.obuf.buf, stdout);
+		strbuf_release(&o.obuf);
+	}
 	if (clean < 0) {
 		rollback_lock_file(&index_lock);
 		return clean;
@@ -1989,7 +2021,10 @@ static int do_pick_commit(struct repository *r,
 
 	if (is_rebase_i(opts) && write_author_script(msg.message) < 0)
 		res = -1;
-	else if (!opts->strategy || !strcmp(opts->strategy, "recursive") || command == TODO_REVERT) {
+	else if (!opts->strategy ||
+		 !strcmp(opts->strategy, "recursive") ||
+		 !strcmp(opts->strategy, "ort") ||
+		 command == TODO_REVERT) {
 		res = do_recursive_merge(r, base, next, base_label, next_label,
 					 &head, &msgbuf, opts);
 		if (res < 0)
@@ -2690,7 +2725,7 @@ static void write_strategy_opts(struct replay_opts *opts)
 }
 
 int write_basic_state(struct replay_opts *opts, const char *head_name,
-		      struct commit *onto, const char *orig_head)
+		      struct commit *onto, const struct object_id *orig_head)
 {
 	if (head_name)
 		write_file(rebase_path_head_name(), "%s\n", head_name);
@@ -2698,7 +2733,8 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_onto(), "%s\n",
 			   oid_to_hex(&onto->object.oid));
 	if (orig_head)
-		write_file(rebase_path_orig_head(), "%s\n", orig_head);
+		write_file(rebase_path_orig_head(), "%s\n",
+			   oid_to_hex(orig_head));
 
 	if (opts->quiet)
 		write_file(rebase_path_quiet(), "%s", "");
@@ -3483,7 +3519,9 @@ static int do_merge(struct repository *r,
 	struct commit_list *bases, *j, *reversed = NULL;
 	struct commit_list *to_merge = NULL, **tail = &to_merge;
 	const char *strategy = !opts->xopts_nr &&
-		(!opts->strategy || !strcmp(opts->strategy, "recursive")) ?
+		(!opts->strategy ||
+		 !strcmp(opts->strategy, "recursive") ||
+		 !strcmp(opts->strategy, "ort")) ?
 		NULL : opts->strategy;
 	struct merge_options o;
 	int merge_arg_len, oneline_offset, can_fast_forward, ret, k;
@@ -3721,7 +3759,20 @@ static int do_merge(struct repository *r,
 	o.branch2 = ref_name.buf;
 	o.buffer_output = 2;
 
-	ret = merge_recursive(&o, head_commit, merge_commit, reversed, &i);
+	if (opts->strategy && !strcmp(opts->strategy, "ort")) {
+		/*
+		 * TODO: Should use merge_incore_recursive() and
+		 * merge_switch_to_result(), skipping the call to
+		 * merge_switch_to_result() when we don't actually need to
+		 * update the index and working copy immediately.
+		 */
+		ret = merge_ort_recursive(&o,
+					  head_commit, merge_commit, reversed,
+					  &i);
+	} else {
+		ret = merge_recursive(&o, head_commit, merge_commit, reversed,
+				      &i);
+	}
 	if (ret <= 0)
 		fputs(o.obuf.buf, stdout);
 	strbuf_release(&o.obuf);
@@ -3964,13 +4015,9 @@ static int run_git_checkout(struct repository *r, struct replay_opts *opts,
 
 static int checkout_onto(struct repository *r, struct replay_opts *opts,
 			 const char *onto_name, const struct object_id *onto,
-			 const char *orig_head)
+			 const struct object_id *orig_head)
 {
-	struct object_id oid;
 	const char *action = reflog_message(opts, "start", "checkout %s", onto_name);
-
-	if (get_oid(orig_head, &oid))
-		return error(_("%s: not a valid OID"), orig_head);
 
 	if (run_git_checkout(r, opts, oid_to_hex(onto), action)) {
 		apply_autostash(rebase_path_autostash());
@@ -3978,7 +4025,7 @@ static int checkout_onto(struct repository *r, struct replay_opts *opts,
 		return error(_("could not detach HEAD"));
 	}
 
-	return update_ref(NULL, "ORIG_HEAD", &oid, NULL, 0, UPDATE_REFS_MSG_ON_ERR);
+	return update_ref(NULL, "ORIG_HEAD", orig_head, NULL, 0, UPDATE_REFS_MSG_ON_ERR);
 }
 
 static int stopped_at_head(struct repository *r)
@@ -5038,7 +5085,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 
 	oidmap_free(&commit2todo, 1);
 	oidmap_free(&state.commit2label, 1);
-	hashmap_free_entries(&state.labels, struct labels_entry, entry);
+	hashmap_clear_and_free(&state.labels, struct labels_entry, entry);
 	strbuf_release(&state.buf);
 
 	return 0;
@@ -5294,7 +5341,7 @@ static int skip_unnecessary_picks(struct repository *r,
 
 int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
-		    struct commit *onto, const char *orig_head,
+		    struct commit *onto, const struct object_id *orig_head,
 		    struct string_list *commands, unsigned autosquash,
 		    struct todo_list *todo_list)
 {
@@ -5554,7 +5601,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 	for (i = 0; i < todo_list->nr; i++)
 		free(subjects[i]);
 	free(subjects);
-	hashmap_free_entries(&subject2item, struct subject2item_entry, entry);
+	hashmap_clear_and_free(&subject2item, struct subject2item_entry, entry);
 
 	clear_commit_todo_item(&commit_todo);
 

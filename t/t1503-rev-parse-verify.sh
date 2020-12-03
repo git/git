@@ -144,4 +144,17 @@ test_expect_success SYMLINKS 'ref resolution not confused by broken symlinks' '
 	test_must_fail git rev-parse --verify broken
 '
 
+test_expect_success 'options can appear after --verify' '
+	git rev-parse --verify HEAD >expect &&
+	git rev-parse --verify -q HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'verify respects --end-of-options' '
+	git update-ref refs/heads/-tricky HEAD &&
+	git rev-parse --verify HEAD >expect &&
+	git rev-parse --verify --end-of-options -tricky >actual &&
+	test_cmp expect actual
+'
+
 test_done

@@ -254,4 +254,29 @@ test_expect_success 'escaped char does not trigger wildcard rule' '
 	test_must_fail git rev-parse "foo\\*bar"
 '
 
+test_expect_success 'arg after dashdash not interpreted as option' '
+	cat >expect <<-\EOF &&
+	--
+	--local-env-vars
+	EOF
+	git rev-parse -- --local-env-vars >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'arg after end-of-options not interpreted as option' '
+	test_must_fail git rev-parse --end-of-options --not-real -- 2>err &&
+	test_i18ngrep bad.revision.*--not-real err
+'
+
+test_expect_success 'end-of-options still allows --' '
+	cat >expect <<-EOF &&
+	--end-of-options
+	$(git rev-parse --verify HEAD)
+	--
+	path
+	EOF
+	git rev-parse --end-of-options HEAD -- path >actual &&
+	test_cmp expect actual
+'
+
 test_done

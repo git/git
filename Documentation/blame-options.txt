@@ -11,11 +11,12 @@
 
 -L <start>,<end>::
 -L :<funcname>::
-	Annotate only the given line range. May be specified multiple times.
-	Overlapping ranges are allowed.
+	Annotate only the line range given by '<start>,<end>',
+	or by the function name regex '<funcname>'.
+	May be specified multiple times. Overlapping ranges are allowed.
 +
-<start> and <end> are optional. ``-L <start>'' or ``-L <start>,'' spans from
-<start> to end of file. ``-L ,<end>'' spans from start of file to <end>.
+'<start>' and '<end>' are optional. `-L <start>` or `-L <start>,` spans from
+'<start>' to end of file. `-L ,<end>` spans from start of file to '<end>'.
 +
 include::line-range-format.txt[]
 

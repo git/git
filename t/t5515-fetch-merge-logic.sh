@@ -11,11 +11,14 @@ test_description='Merge logic in fetch'
 GIT_TEST_PROTOCOL_VERSION=0
 export GIT_TEST_PROTOCOL_VERSION
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 build_script () {
 	script="$1" &&
-	for i in one three_file master topic_2 one_tree three two two2 three2
+	for i in one three_file main topic_2 one_tree three two two2 three2
 	do
 		echo "s/$(test_oid --hash=sha1 "$i")/$(test_oid "$i")/g" >>"$script"
 	done
@@ -40,8 +43,8 @@ test_expect_success setup '
 	three_file sha1:0e3b14047d3ee365f4f2a1b673db059c3972589c
 	three_file sha256:bc4447d50c07497a8bfe6eef817f2364ecca9d471452e43b52756cc1a908bd32
 
-	master sha1:6c9dec2b923228c9ff994c6cfe4ae16c12408dc5
-	master sha256:8521c3072461fcfe8f32d67f95cc6e6b832a2db2fa29769ffc788bce85ebcd75
+	main sha1:ecf3b3627b498bdcb735cc4343bf165f76964e9a
+	main sha256:fff666109892bb4b1c80cd1649d2d8762a0663db8b5d46c8be98360b64fbba5f
 
 	one_tree sha1:22feea448b023a2d864ef94b013735af34d238ba
 	one_tree sha256:6e4743f4ef2356b881dda5e91f5c7cdffe870faf350bf7b312f80a20935f5d83
@@ -52,8 +55,8 @@ test_expect_success setup '
 	two sha1:525b7fb068d59950d185a8779dc957c77eed73ba
 	two sha256:3b21de3440cd38c2a9e9b464adb923f7054949ed4c918e1a0ac4c95cd52774db
 
-	topic_2 sha1:754b754407bf032e9a2f9d5a9ad05ca79a6b228f
-	topic_2 sha256:6c7abaea8a6d8ef4d89877e68462758dc6774690fbbbb0e6d7dd57415c9abde0
+	topic_2 sha1:b4ab76b1a01ea602209932134a44f1e6bd610832
+	topic_2 sha256:380ebae0113f877ce46fcdf39d5bc33e4dc0928db5c5a4d5fdc78381c4d55ae3
 
 	two2 sha1:6134ee8f857693b96ff1cc98d3e2fd62b199e5a8
 	two2 sha256:87a2d3ee29c83a3dc7afd41c0606b11f67603120b910a7be7840accdc18344d4
@@ -80,9 +83,9 @@ test_expect_success setup '
 	git tag -a -m "Tag Three file" tag-three-file HEAD^{tree}:file &&
 	git branch three &&
 
-	echo master >> file &&
-	git commit -a -m Master &&
-	git tag -a -m "Tag Master" tag-master &&
+	echo main >> file &&
+	git commit -a -m Main &&
+	git tag -a -m "Tag Main" tag-main &&
 
 	git checkout three &&
 
@@ -91,7 +94,7 @@ test_expect_success setup '
 	git config remote.origin.url ../.git/ &&
 
 	git config remote.config-explicit.url ../.git/ &&
-	git config remote.config-explicit.fetch refs/heads/master:remotes/rem/master &&
+	git config remote.config-explicit.fetch refs/heads/main:remotes/rem/main &&
 	git config --add remote.config-explicit.fetch refs/heads/one:remotes/rem/one &&
 	git config --add remote.config-explicit.fetch two:remotes/rem/two &&
 	git config --add remote.config-explicit.fetch refs/heads/three:remotes/rem/three &&
@@ -104,7 +107,7 @@ test_expect_success setup '
 	mkdir -p .git/remotes &&
 	{
 		echo "URL: ../.git/"
-		echo "Pull: refs/heads/master:remotes/rem/master"
+		echo "Pull: refs/heads/main:remotes/rem/main"
 		echo "Pull: refs/heads/one:remotes/rem/one"
 		echo "Pull: two:remotes/rem/two"
 		echo "Pull: refs/heads/three:remotes/rem/three"
@@ -149,7 +152,7 @@ done > tests
 # but does depend on Pull: or fetch lines.
 # Use two branches completely unrelated from the arguments,
 # the clone default and one without branch properties
-for branch in master br-unconfig ; do
+for branch in main br-unconfig ; do
     echo $branch
     for remote in $remotes ; do
 	echo $branch $remote
@@ -158,7 +161,7 @@ done >> tests
 
 # Merge logic does not depend on branch properties
 # neither in the Pull: or .fetch config
-for branch in master br-unconfig ; do
+for branch in main br-unconfig ; do
     cat <<EOF
 $branch ../.git
 $branch ../.git one

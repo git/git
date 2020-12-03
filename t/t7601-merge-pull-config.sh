@@ -29,8 +29,11 @@ test_expect_success 'setup' '
 
 test_expect_success 'pull.rebase not set' '
 	git reset --hard c0 &&
-	git pull . c1 2>err &&
-	test_i18ngrep "Pulling without specifying how to reconcile" err
+	git -c color.advice=always pull . c1 2>err &&
+	test_decode_color <err >decoded &&
+	test_i18ngrep "<YELLOW>hint: " decoded &&
+	test_i18ngrep "Pulling without specifying how to reconcile" decoded
+
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=true' '

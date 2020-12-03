@@ -63,7 +63,20 @@ UI, Workflows & Features
  * Exit codes from "git remote add" etc. were not usable by scripted
    callers, but now they are.
 
+ * "git archive" now allows compression level higher than "-9"
+   when generating tar.gz output.
+
  * Zsh autocompletion (in contrib/) update.
+
+ * The maximum length of output filenames "git format-patch" creates
+   has become configurable (used to be capped at 64).
+
+ * "git rev-parse" learned the "--end-of-options" to help scripts to
+   safely take a parameter that is supposed to be a revision, e.g.
+   "git rev-parse --verify -q --end-of-options $rev".
+
+ * The command line completion script (in contrib/) learned to expand
+   commands that are alias of alias.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -101,6 +114,29 @@ Performance, Internal Implementation, Development Support etc.
  * Test scripts are being prepared to transition of the default branch
    name to 'main'.
 
+ * "git fetch --depth=<n>" over the stateless RPC / smart HTTP
+   transport handled EOF from the client poorly at the server end.
+
+ * A specialization of hashmap that uses a string as key has been
+   introduced.  Hopefully it will see wider use over time.
+
+ * "git bisect start/next" in a large span of history spends a lot of
+   time trying to come up with exactly the half-way point; this can be
+   optimized by stopping when we see a commit that is close enough to
+   the half-way point.
+
+ * A lazily defined test prerequisite can now be defined in terms of
+   another lazily defined test prerequisite.
+
+ * Expectation for the original contributor after responding to a
+   review comment to use the explanation in a patch update has been
+   described.
+
+ * Multiple "credential-store" backends can race to lock the same
+   file, causing everybody else but one to fail---reattempt locking
+   with some timeout to reduce the rate of the failure.
+
+ * "git-parse-remote" shell script library outlived its usefulness.
 
 
 Fixes since v2.29
@@ -182,6 +218,82 @@ Fixes since v2.29
    or so).
    (merge c779386182 jc/sequencer-stopped-sha-simplify later to maint).
 
+ * The code to see if "git stash drop" can safely remove refs/stash
+   has been made more carerful.
+   (merge 4f44c5659b rs/empty-reflog-check-fix later to maint).
+
+ * "git log -L<range>:<path>" is documented to take no pathspec, but
+   this was not enforced by the command line option parser, which has
+   been corrected.
+   (merge 39664cb0ac jc/line-log-takes-no-pathspec later to maint).
+
+ * "git format-patch --output=there" did not work as expected and
+   instead crashed.  The option is now supported.
+   (merge dc1672dd10 jk/format-patch-output later to maint).
+
+ * Define ARM64 compiled with MSVC to be little-endian.
+   (merge 0c038fc65a dg/bswap-msvc later to maint).
+
+ * "git rebase -i" did not store ORIG_HEAD correctly.
+   (merge 8843302307 pw/rebase-i-orig-head later to maint).
+
+ * "git blame -L :funcname -- path" did not work well for a path for
+   which a userdiff driver is defined.
+
+ * "make DEVELOPER=1 sparse" used to run sparse and let it emit
+   warnings; now such warnings will cause an error.
+   (merge 521dc56270 jc/sparse-error-for-developer-build later to maint).
+
+ * "git blame --ignore-revs-file=<file>" learned to ignore a
+   non-existent object name in the input, instead of complaining.
+   (merge c714d05875 jc/blame-ignore-fix later to maint).
+
+ * Running "git diff" while allowing external diff in a state with
+   unmerged paths used to segfault, which has been corrected.
+   (merge d66851806f jk/diff-release-filespec-fix later to maint).
+
+ * Build configuration cleanup.
+   (merge b990f02fd8 ab/config-mak-uname-simplify later to maint).
+
+ * Fix regression introduced when nvimdiff support in mergetool was added.
+   (merge 12026f46e7 pd/mergetool-nvimdiff later to maint).
+
+ * The exchange between receive-pack and proc-receive hook did not
+   carefully check for errors.
+
+ * The code was not prepared to deal with pack .idx file that is
+   larger than 4GB.
+   (merge 81c4c5cf2e jk/4gb-idx later to maint).
+
+ * Since jgit does not yet work with SHA-256 repositories, mark the
+   tests that uses it not to run unless we are testing with ShA-1
+   repositories.
+   (merge ea699b4adc sg/t5310-jgit-wants-sha1 later to maint).
+
+ * Config parser fix for "git notes".
+   (merge 45fef1599a na/notes-displayref-is-not-boolean later to maint).
+
+ * Move a definition of compatibility wrapper from cache.h to
+   git-compat-util.h
+   (merge a76b138daa hn/sleep-millisec-decl later to maint).
+
+ * Error message fix.
+   (merge eaf5341538 km/stash-error-message-fix later to maint).
+
+ * "git pull --rebase --recurse-submodules" checked for local changes
+   in a wrong range and failed to run correctly when it should.
+   (merge 5176f20ffe pb/pull-rebase-recurse-submodules later to maint).
+
+ * "git push" that is killed may leave a pack-objects process behind,
+   still computing to find a good compression, wasting cycles.  This
+   has been corrected.
+   (merge 8b59935114 jk/stop-pack-objects-when-push-is-killed later to maint).
+
+ * "git fetch" that is killed may leave a pack-objects process behind,
+   still computing to find a good compression, wasting cycles.  This
+   has been corrected.
+   (merge 309a4028e7 jk/stop-pack-objects-when-fetch-is-killed later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
    (merge 32c83afc2c cw/ci-ghwf-check-ws-errors later to maint).
@@ -199,3 +311,10 @@ Fixes since v2.29
    (merge b7e20b4373 mc/typofix later to maint).
    (merge f6bcd9a8a4 js/test-whitespace-fixes later to maint).
    (merge 53b67a801b js/test-file-size later to maint).
+   (merge 970909c2a7 rs/hashwrite-be64 later to maint).
+   (merge 5a923bb1f0 ma/list-object-filter-opt-msgfix later to maint).
+   (merge 1c3e412916 rs/archive-plug-leak-refname later to maint).
+   (merge d44e5267ea rs/plug-diff-cache-leak later to maint).
+   (merge 793c1464d3 ab/gc-keep-base-option later to maint).
+   (merge b86339b12b mt/worktree-error-message-fix later to maint).
+   (merge e01ae2a4a7 js/pull-rebase-use-advise later to maint).

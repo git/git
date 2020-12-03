@@ -877,13 +877,13 @@ test_expect_success 'rename empty' '
 test_expect_success 'combined diff with autocrlf conversion' '
 
 	git reset --hard &&
-	echo >x hello &&
-	git commit -m "one side" x &&
+	test_commit "one side" x hello one-side &&
 	git checkout HEAD^ &&
 	echo >x goodbye &&
 	git commit -m "the other side" x &&
 	git config core.autocrlf true &&
-	test_must_fail git merge master &&
+	test_must_fail git merge one-side >actual &&
+	test_i18ngrep "Automatic merge failed" actual &&
 
 	git diff >actual.raw &&
 	sed -e "1,/^@@@/d" actual.raw >actual &&

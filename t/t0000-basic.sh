@@ -840,6 +840,27 @@ then
 	exit 1
 fi
 
+test_lazy_prereq NESTED_INNER '
+	>inner &&
+	rm -f outer
+'
+test_lazy_prereq NESTED_PREREQ '
+	>outer &&
+	test_have_prereq NESTED_INNER &&
+	echo "can create new file in cwd" >file &&
+	test -f outer &&
+	test ! -f inner
+'
+test_expect_success NESTED_PREREQ 'evaluating nested lazy prereqs dont interfere with each other' '
+	nestedworks=yes
+'
+
+if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" && test "$nestedworks" != yes
+then
+	say 'bug in test framework: nested lazy prerequisites do not work'
+	exit 1
+fi
+
 test_expect_success 'lazy prereqs do not turn off tracing' "
 	run_sub_test_lib_test lazy-prereq-and-tracing \
 		'lazy prereqs and -x' -v -x <<-\\EOF &&

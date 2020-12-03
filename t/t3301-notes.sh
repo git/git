@@ -672,6 +672,11 @@ test_expect_success 'notes.displayRef respects order' '
 	test_cmp expect-both-reversed actual
 '
 
+test_expect_success 'notes.displayRef with no value handled gracefully' '
+	test_must_fail git -c notes.displayRef log -0 --notes &&
+	test_must_fail git -c notes.displayRef diff-tree --notes HEAD
+'
+
 test_expect_success 'GIT_NOTES_DISPLAY_REF works' '
 	GIT_NOTES_DISPLAY_REF=refs/notes/commits:refs/notes/other \
 		git log -2 >actual &&
