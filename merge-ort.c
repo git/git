@@ -17,7 +17,9 @@
 #include "cache.h"
 #include "merge-ort.h"
 
+#include "blob.h"
 #include "cache-tree.h"
+#include "commit-reach.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
