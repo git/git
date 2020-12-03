@@ -528,6 +528,8 @@ else
 endif
 	X = .exe
 
+	EXTRA_PROGRAMS += headless-git$X
+
 compat/msvc.o: compat/msvc.c compat/mingw.c GIT-CFLAGS
 endif
 ifeq ($(uname_S),Interix)
@@ -707,6 +709,7 @@ ifeq ($(uname_S),MINGW)
 	COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO=0 -DDETECT_MSYS_TTY \
 		-DENSURE_MSYSTEM_IS_SET -fstack-protector-strong
 	EXTLIBS += -lntdll
+	EXTRA_PROGRAMS += headless-git$X
 	INSTALL = /bin/install
 	INTERNAL_QSORT = YesPlease
 	HAVE_LIBCHARSET_H = YesPlease
