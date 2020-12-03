@@ -281,7 +281,15 @@ test_expect_success 'upload-pack limits tree depth filters' '
 	test_config -C srv.bare uploadpackfilter.tree.maxDepth 0 &&
 	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:1 \
 		"file://$(pwd)/srv.bare" pc3 2>err &&
-	test_i18ngrep "tree filter allows max depth 0, but got 1" err
+	test_i18ngrep "tree filter allows max depth 0, but got 1" err &&
+
+	git clone --no-checkout --filter=tree:0 "file://$(pwd)/srv.bare" pc4 &&
+
+	test_config -C srv.bare uploadpackfilter.tree.maxDepth 5 &&
+	git clone --no-checkout --filter=tree:5 "file://$(pwd)/srv.bare" pc5 &&
+	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:6 \
+		"file://$(pwd)/srv.bare" pc6 2>err &&
+	test_i18ngrep "tree filter allows max depth 5, but got 6" err
 '
 
 test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '

@@ -154,7 +154,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	string_list_clear(&data->deepen_not, 0);
 	object_array_clear(&data->extra_edge_obj);
 	list_objects_filter_release(&data->filter_options);
-	string_list_clear(&data->allowed_filters, 1);
+	string_list_clear(&data->allowed_filters, 0);
 
 	free((char *)data->pack_objects_hook);
 }
