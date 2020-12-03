@@ -1074,7 +1074,7 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 	}
 
 	if (current_config_scope() != CONFIG_SCOPE_LOCAL &&
-	current_config_scope() != CONFIG_SCOPE_WORKTREE) {
+	    current_config_scope() != CONFIG_SCOPE_WORKTREE) {
 		if (!strcmp("uploadpack.packobjectshook", var))
 			return git_config_string(&pack_objects_hook, var, value);
 	}
