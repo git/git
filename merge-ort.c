@@ -166,6 +166,13 @@ struct conflict_info {
 	unsigned df_conflict:1;
 
 	/*
+	 * Whether this path is/was involved in a non-content conflict other
+	 * than a directory/file conflict (e.g. rename/rename, rename/delete,
+	 * file location based on possible directory rename).
+	 */
+	unsigned path_conflict:1;
+
+	/*
 	 * For filemask and dirmask, the ith bit corresponds to whether the
 	 * ith entry is a file (filemask) or a directory (dirmask).  Thus,
 	 * filemask & dirmask is always zero, and filemask | dirmask is at
