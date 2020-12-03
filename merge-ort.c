@@ -58,6 +58,8 @@ struct merge_options_internal {
 	 *   * these keys serve to intern all the path strings, which allows
 	 *     us to do pointer comparison on directory names instead of
 	 *     strcmp; we just have to be careful to use the interned strings.
+	 *     (Technically paths_to_free may track some strings that were
+	 *      removed from froms paths.)
 	 *
 	 * The values of paths:
 	 *   * either a pointer to a merged_info, or a conflict_info struct
@@ -91,6 +93,16 @@ struct merge_options_internal {
 	 * relevant entries.
 	 */
 	struct strmap conflicted;
+
+	/*
+	 * paths_to_free: additional list of strings to free
+	 *
+	 * If keys are removed from "paths", they are added to paths_to_free
+	 * to ensure they are later freed.  We avoid free'ing immediately since
+	 * other places (e.g. conflict_info.pathnames[]) may still be
+	 * referencing these paths.
+	 */
+	struct string_list paths_to_free;
 
 	/*
 	 * current_dir_name: temporary var used in collect_merge_info_callback()
@@ -249,6 +261,17 @@ static void clear_internal_opts(struct merge_options_internal *opti,
 	 * don't free the keys and we pass 0 for free_values.
 	 */
 	strmap_clear(&opti->conflicted, 0);
+
+	/*
+	 * opti->paths_to_free is similar to opti->paths; we created it with
+	 * strdup_strings = 0 to avoid making _another_ copy of the fullpath
+	 * but now that we've used it and have no other references to these
+	 * strings, it is time to deallocate them.  We do so by temporarily
+	 * setting strdup_strings to 1.
+	 */
+	opti->paths_to_free.strdup_strings = 1;
+	string_list_clear(&opti->paths_to_free, 0);
+	opti->paths_to_free.strdup_strings = 0;
 }
 
 static int err(struct merge_options *opt, const char *err, ...)
@@ -1243,13 +1266,14 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	 * Although we initialize opt->priv->paths with strdup_strings=0,
 	 * that's just to avoid making yet another copy of an allocated
 	 * string.  Putting the entry into paths means we are taking
-	 * ownership, so we will later free it.
+	 * ownership, so we will later free it.  paths_to_free is similar.
 	 *
 	 * In contrast, conflicted just has a subset of keys from paths, so
 	 * we don't want to free those (it'd be a duplicate free).
 	 */
 	strmap_init_with_options(&opt->priv->paths, NULL, 0);
 	strmap_init_with_options(&opt->priv->conflicted, NULL, 0);
+	string_list_init(&opt->priv->paths_to_free, 0);
 }
 
 /*
