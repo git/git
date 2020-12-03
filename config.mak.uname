@@ -498,6 +498,8 @@ else
 endif
 	X = .exe
 
+	EXTRA_PROGRAMS += headless-git$X
+
 compat/msvc.o: compat/msvc.c compat/mingw.c GIT-CFLAGS
 endif
 ifeq ($(uname_S),Interix)
@@ -641,6 +643,7 @@ ifeq ($(uname_S),MINGW)
 	RC = windres -O coff
 	NATIVE_CRLF = YesPlease
 	X = .exe
+	EXTRA_PROGRAMS += headless-git$X
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	htmldir = doc/git/html/
 	prefix =
