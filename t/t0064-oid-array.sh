@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='basic tests for the SHA1 array implementation'
+test_description='basic tests for the oid array implementation'
 . ./test-lib.sh
 
 echoid () {
