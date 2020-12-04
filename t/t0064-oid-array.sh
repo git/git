@@ -27,6 +27,7 @@ test_expect_success 'ordered enumeration with duplicate suppression' '
 	{
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
+		echoid append 88 44 aa 55 &&
 		echo for_each_unique
 	} | test-tool oid-array >actual &&
 	test_cmp expect actual
@@ -54,15 +55,17 @@ test_expect_success 'lookup with duplicates' '
 	{
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
+		echoid append 88 44 aa 55 &&
 		echoid lookup 55
 	} | test-tool oid-array >actual &&
 	n=$(cat actual) &&
-	test "$n" -ge 2 &&
-	test "$n" -le 3
+	test "$n" -ge 3 &&
+	test "$n" -le 5
 '
 
 test_expect_success 'lookup non-existing entry with duplicates' '
 	{
+		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echoid lookup 66
