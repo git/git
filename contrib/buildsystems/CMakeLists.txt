@@ -65,9 +65,9 @@ if(USE_VCPKG)
 	set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg")
 	if(NOT EXISTS ${VCPKG_DIR})
 		message("Initializing vcpkg and building the Git's dependencies (this will take a while...)")
-		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat)
+		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat ${VCPKG_ARCH})
 	endif()
-	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/x64-windows")
+	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/${VCPKG_ARCH}")
 
 	# In the vcpkg edition, we need this to be able to link to libcurl
 	set(CURL_NO_CURL_CMAKE ON)
@@ -1207,7 +1207,7 @@ string(REPLACE "@USE_GETTEXT_SCHEME@" "" git_build_options "${git_build_options}
 string(REPLACE "@USE_LIBPCRE2@" "" git_build_options "${git_build_options}")
 string(REPLACE "@X@" "${EXE_EXTENSION}" git_build_options "${git_build_options}")
 if(USE_VCPKG)
-	string(APPEND git_build_options "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")
+	string(APPEND git_build_options "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/${VCPKG_ARCH}/bin\"\n")
 endif()
 file(WRITE ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS ${git_build_options})
 
