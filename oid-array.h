@@ -1,5 +1,5 @@
-#ifndef SHA1_ARRAY_H
-#define SHA1_ARRAY_H
+#ifndef OID_ARRAY_H
+#define OID_ARRAY_H
 
 /**
  * The API provides storage and manipulation of sets of object identifiers.
@@ -106,4 +106,4 @@ void oid_array_filter(struct oid_array *array,
 		      for_each_oid_fn want,
 		      void *cbdata);
 
-#endif /* SHA1_ARRAY_H */
+#endif /* OID_ARRAY_H */
