@@ -114,6 +114,16 @@ macro(parse_makefile_for_scripts list_var regex lang)
 	endif()
 endmacro()
 
+macro(parse_makefile_for_executables list_var regex)
+	file(STRINGS ${CMAKE_SOURCE_DIR}/Makefile ${list_var} REGEX "^${regex} \\+= git-(.*)")
+	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
+	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
+	string(REPLACE "git-" "" ${list_var} ${${list_var}}) #strip `git-` prefix
+	string(REPLACE "\$X" ";" ${list_var} ${${list_var}}) #strip $X, ; is for converting the string into a list
+	list(TRANSFORM ${list_var} STRIP) #remove trailing/leading whitespaces for each element in list
+	list(REMOVE_ITEM ${list_var} "") #remove empty list elements
+endmacro()
+
 include(CheckTypeSize)
 include(CheckCSourceRuns)
 include(CheckCSourceCompiles)
@@ -673,10 +683,7 @@ if(CURL_FOUND)
 	endif()
 endif()
 
-set(git_builtin_extra
-	cherry cherry-pick format-patch fsck-objects
-	init merge-subtree restore show
-	stage status switch whatchanged)
+parse_makefile_for_executables(git_builtin_extra "BUILT_INS")
 
 #Creating hardlinks
 foreach(s ${git_SOURCES} ${git_builtin_extra})
