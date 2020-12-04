@@ -106,4 +106,9 @@ void oid_array_filter(struct oid_array *array,
 		      for_each_oid_fn want,
 		      void *cbdata);
 
+/**
+ * Sort the array in order of ascending object id.
+ */
+void oid_array_sort(struct oid_array *array);
+
 #endif /* OID_ARRAY_H */
