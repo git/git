@@ -1806,7 +1806,7 @@ _git_fsck ()
 
 _git_gitk ()
 {
-	_gitk
+	__gitk_main
 }
 
 # Lists matching symbol names from a tag (as in ctags) file.
