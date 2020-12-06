@@ -127,5 +127,5 @@ set features=
 goto :EOF
 
 :curl_features
-set features=[core,openssl]
+set features=[core,ssl]
 goto :EOF
