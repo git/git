@@ -932,8 +932,8 @@ struct tree *get_commit_tree_in_graph(struct repository *r, const struct commit 
 
 struct packed_commit_list {
 	struct commit **list;
-	int nr;
-	int alloc;
+	size_t nr;
+	size_t alloc;
 };
 
 struct write_commit_graph_context {
