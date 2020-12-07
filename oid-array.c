@@ -67,11 +67,8 @@ int oid_array_for_each_unique(struct oid_array *array,
 
 	oid_array_sort(array);
 
-	for (i = 0; i < array->nr; i++) {
-		int ret;
-		if (i > 0 && oideq(array->oid + i, array->oid + i - 1))
-			continue;
-		ret = fn(array->oid + i, data);
+	for (i = 0; i < array->nr; i = oid_array_next_unique(array, i)) {
+		int ret = fn(array->oid + i, data);
 		if (ret)
 			return ret;
 	}
