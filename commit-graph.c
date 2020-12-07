@@ -936,17 +936,11 @@ struct packed_commit_list {
 	int alloc;
 };
 
-struct packed_oid_list {
-	struct object_id *list;
-	int nr;
-	int alloc;
-};
-
 struct write_commit_graph_context {
 	struct repository *r;
 	struct object_directory *odb;
 	char *graph_name;
-	struct packed_oid_list oids;
+	struct oid_array oids;
 	struct packed_commit_list commits;
 	int num_extra_edges;
 	unsigned long approx_nr_objects;
@@ -1240,13 +1234,6 @@ static int write_graph_chunk_bloom_data(struct hashfile *f,
 	return 0;
 }
 
-static int oid_compare(const void *_a, const void *_b)
-{
-	const struct object_id *a = (const struct object_id *)_a;
-	const struct object_id *b = (const struct object_id *)_b;
-	return oidcmp(a, b);
-}
-
 static int add_packed_commits(const struct object_id *oid,
 			      struct packed_git *pack,
 			      uint32_t pos,
@@ -1267,10 +1254,7 @@ static int add_packed_commits(const struct object_id *oid,
 	if (type != OBJ_COMMIT)
 		return 0;
 
-	ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
-	oidcpy(&(ctx->oids.list[ctx->oids.nr]), oid);
-	ctx->oids.nr++;
-
+	oid_array_append(&ctx->oids, oid);
 	set_commit_pos(ctx->r, oid);
 
 	return 0;
@@ -1281,9 +1265,7 @@ static void add_missing_parents(struct write_commit_graph_context *ctx, struct c
 	struct commit_list *parent;
 	for (parent = commit->parents; parent; parent = parent->next) {
 		if (!(parent->item->object.flags & REACHABLE)) {
-			ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
-			oidcpy(&ctx->oids.list[ctx->oids.nr], &(parent->item->object.oid));
-			ctx->oids.nr++;
+			oid_array_append(&ctx->oids, &parent->item->object.oid);
 			parent->item->object.flags |= REACHABLE;
 		}
 	}
@@ -1302,7 +1284,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 					ctx->oids.nr);
 	for (i = 0; i < ctx->oids.nr; i++) {
 		display_progress(ctx->progress, i + 1);
-		commit = lookup_commit(ctx->r, &ctx->oids.list[i]);
+		commit = lookup_commit(ctx->r, &ctx->oids.oid[i]);
 		if (commit)
 			commit->object.flags |= REACHABLE;
 	}
@@ -1319,7 +1301,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 					0);
 	for (i = 0; i < ctx->oids.nr; i++) {
 		display_progress(ctx->progress, i + 1);
-		commit = lookup_commit(ctx->r, &ctx->oids.list[i]);
+		commit = lookup_commit(ctx->r, &ctx->oids.oid[i]);
 
 		if (!commit)
 			continue;
@@ -1339,7 +1321,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 					ctx->oids.nr);
 	for (i = 0; i < ctx->oids.nr; i++) {
 		display_progress(ctx->progress, i + 1);
-		commit = lookup_commit(ctx->r, &ctx->oids.list[i]);
+		commit = lookup_commit(ctx->r, &ctx->oids.oid[i]);
 
 		if (commit)
 			commit->object.flags &= ~REACHABLE;
@@ -1567,9 +1549,7 @@ static int fill_oids_from_commits(struct write_commit_graph_context *ctx,
 
 	oidset_iter_init(commits, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
-		ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
-		oidcpy(&ctx->oids.list[ctx->oids.nr], oid);
-		ctx->oids.nr++;
+		oid_array_append(&ctx->oids, oid);
 	}
 
 	return 0;
@@ -1599,16 +1579,14 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 		ctx->progress = start_delayed_progress(
 			_("Finding extra edges in commit graph"),
 			ctx->oids.nr);
-	QSORT(ctx->oids.list, ctx->oids.nr, oid_compare);
-	for (i = 0; i < ctx->oids.nr; i++) {
+	oid_array_sort(&ctx->oids);
+	for (i = 0; i < ctx->oids.nr; i = oid_array_next_unique(&ctx->oids, i)) {
 		unsigned int num_parents;
 
 		display_progress(ctx->progress, i + 1);
-		if (i > 0 && oideq(&ctx->oids.list[i - 1], &ctx->oids.list[i]))
-			continue;
 
 		ALLOC_GROW(ctx->commits.list, ctx->commits.nr + 1, ctx->commits.alloc);
-		ctx->commits.list[ctx->commits.nr] = lookup_commit(ctx->r, &ctx->oids.list[i]);
+		ctx->commits.list[ctx->commits.nr] = lookup_commit(ctx->r, &ctx->oids.oid[i]);
 
 		if (ctx->split && flags != COMMIT_GRAPH_SPLIT_REPLACE &&
 		    commit_graph_position(ctx->commits.list[ctx->commits.nr]) != COMMIT_NOT_FROM_GRAPH)
@@ -2199,26 +2177,16 @@ int write_commit_graph(struct object_directory *odb,
 	}
 
 	ctx->approx_nr_objects = approximate_object_count();
-	ctx->oids.alloc = ctx->approx_nr_objects / 32;
 
-	if (ctx->split && opts && ctx->oids.alloc > opts->max_commits)
-		ctx->oids.alloc = opts->max_commits;
-
-	if (ctx->append) {
+	if (ctx->append)
 		prepare_commit_graph_one(ctx->r, ctx->odb);
-		if (ctx->r->objects->commit_graph)
-			ctx->oids.alloc += ctx->r->objects->commit_graph->num_commits;
-	}
-
-	if (ctx->oids.alloc < 1024)
-		ctx->oids.alloc = 1024;
-	ALLOC_ARRAY(ctx->oids.list, ctx->oids.alloc);
 
 	if (ctx->append && ctx->r->objects->commit_graph) {
 		struct commit_graph *g = ctx->r->objects->commit_graph;
 		for (i = 0; i < g->num_commits; i++) {
-			const unsigned char *hash = g->chunk_oid_lookup + g->hash_len * i;
-			hashcpy(ctx->oids.list[ctx->oids.nr++].hash, hash);
+			struct object_id oid;
+			hashcpy(oid.hash, g->chunk_oid_lookup + g->hash_len * i);
+			oid_array_append(&ctx->oids, &oid);
 		}
 	}
 
@@ -2274,7 +2242,7 @@ int write_commit_graph(struct object_directory *odb,
 cleanup:
 	free(ctx->graph_name);
 	free(ctx->commits.list);
-	free(ctx->oids.list);
+	oid_array_clear(&ctx->oids);
 
 	if (ctx->commit_graph_filenames_after) {
 		for (i = 0; i < ctx->num_commit_graphs_after; i++) {
