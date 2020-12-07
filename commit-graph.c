@@ -1588,35 +1588,6 @@ static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 }
 
-static uint32_t count_distinct_commits(struct write_commit_graph_context *ctx)
-{
-	uint32_t i, count_distinct = 1;
-
-	if (ctx->report_progress)
-		ctx->progress = start_delayed_progress(
-			_("Counting distinct commits in commit graph"),
-			ctx->oids.nr);
-	display_progress(ctx->progress, 0); /* TODO: Measure QSORT() progress */
-	QSORT(ctx->oids.list, ctx->oids.nr, oid_compare);
-
-	for (i = 1; i < ctx->oids.nr; i++) {
-		display_progress(ctx->progress, i + 1);
-		if (!oideq(&ctx->oids.list[i - 1], &ctx->oids.list[i])) {
-			if (ctx->split) {
-				struct commit *c = lookup_commit(ctx->r, &ctx->oids.list[i]);
-
-				if (!c || commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH)
-					continue;
-			}
-
-			count_distinct++;
-		}
-	}
-	stop_progress(&ctx->progress);
-
-	return count_distinct;
-}
-
 static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 {
 	uint32_t i;
@@ -1628,6 +1599,7 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 		ctx->progress = start_delayed_progress(
 			_("Finding extra edges in commit graph"),
 			ctx->oids.nr);
+	QSORT(ctx->oids.list, ctx->oids.nr, oid_compare);
 	for (i = 0; i < ctx->oids.nr; i++) {
 		unsigned int num_parents;
 
@@ -2155,7 +2127,7 @@ int write_commit_graph(struct object_directory *odb,
 		       const struct commit_graph_opts *opts)
 {
 	struct write_commit_graph_context *ctx;
-	uint32_t i, count_distinct = 0;
+	uint32_t i;
 	int res = 0;
 	int replace = 0;
 	struct bloom_filter_settings bloom_settings = DEFAULT_BLOOM_FILTER_SETTINGS;
@@ -2267,17 +2239,6 @@ int write_commit_graph(struct object_directory *odb,
 	}
 
 	close_reachable(ctx);
-
-	count_distinct = count_distinct_commits(ctx);
-
-	if (count_distinct >= GRAPH_EDGE_LAST_MASK) {
-		error(_("the commit graph format cannot write %d commits"), count_distinct);
-		res = -1;
-		goto cleanup;
-	}
-
-	ctx->commits.alloc = count_distinct;
-	ALLOC_ARRAY(ctx->commits.list, ctx->commits.alloc);
 
 	copy_oids_to_commits(ctx);
 
