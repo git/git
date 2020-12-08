@@ -333,6 +333,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 		struct commit *commit = bb.commits[i-1];
 		struct bb_commit *ent = bb_data_at(&bb.data, commit);
 		struct commit *child;
+		int reused = 0;
 
 		fill_bitmap_commit(ent, commit);
 
@@ -348,10 +349,15 @@ void bitmap_writer_build(struct packing_data *to_pack)
 
 			if (child_ent->bitmap)
 				bitmap_or(child_ent->bitmap, ent->bitmap);
-			else
+			else if (reused)
 				child_ent->bitmap = bitmap_dup(ent->bitmap);
+			else {
+				child_ent->bitmap = ent->bitmap;
+				reused = 1;
+			}
 		}
-		bitmap_free(ent->bitmap);
+		if (!reused)
+			bitmap_free(ent->bitmap);
 		ent->bitmap = NULL;
 	}
 	bitmap_builder_clear(&bb);
