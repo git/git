@@ -110,8 +110,6 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 /**
  * Compute the actual bitmaps
  */
-static struct object **seen_objects;
-static unsigned int seen_objects_nr, seen_objects_alloc;
 
 static inline void push_bitmapped_commit(struct commit *commit, struct ewah_bitmap *reused)
 {
@@ -127,21 +125,6 @@ static inline void push_bitmapped_commit(struct commit *commit, struct ewah_bitm
 	writer.selected_nr++;
 }
 
-static inline void mark_as_seen(struct object *object)
-{
-	ALLOC_GROW(seen_objects, seen_objects_nr + 1, seen_objects_alloc);
-	seen_objects[seen_objects_nr++] = object;
-}
-
-static inline void reset_all_seen(void)
-{
-	unsigned int i;
-	for (i = 0; i < seen_objects_nr; ++i) {
-		seen_objects[i]->flags &= ~(SEEN | ADDED | SHOWN);
-	}
-	seen_objects_nr = 0;
-}
-
 static uint32_t find_object_pos(const struct object_id *oid)
 {
 	struct object_entry *entry = packlist_find(writer.to_pack, oid);
@@ -152,60 +135,6 @@ static uint32_t find_object_pos(const struct object_id *oid)
 	}
 
 	return oe_in_pack_pos(writer.to_pack, entry);
-}
-
-static void show_object(struct object *object, const char *name, void *data)
-{
-	struct bitmap *base = data;
-	bitmap_set(base, find_object_pos(&object->oid));
-	mark_as_seen(object);
-}
-
-static void show_commit(struct commit *commit, void *data)
-{
-	mark_as_seen((struct object *)commit);
-}
-
-static int
-add_to_include_set(struct bitmap *base, struct commit *commit)
-{
-	khiter_t hash_pos;
-	uint32_t bitmap_pos = find_object_pos(&commit->object.oid);
-
-	if (bitmap_get(base, bitmap_pos))
-		return 0;
-
-	hash_pos = kh_get_oid_map(writer.bitmaps, commit->object.oid);
-	if (hash_pos < kh_end(writer.bitmaps)) {
-		struct bitmapped_commit *bc = kh_value(writer.bitmaps, hash_pos);
-		bitmap_or_ewah(base, bc->bitmap);
-		return 0;
-	}
-
-	bitmap_set(base, bitmap_pos);
-	return 1;
-}
-
-static int
-should_include(struct commit *commit, void *_data)
-{
-	struct bitmap *base = _data;
-
-	if (!add_to_include_set(base, commit)) {
-		struct commit_list *parent = commit->parents;
-
-		mark_as_seen((struct object *)commit);
-
-		while (parent) {
-			parent->item->object.flags |= SEEN;
-			mark_as_seen((struct object *)parent->item);
-			parent = parent->next;
-		}
-
-		return 0;
-	}
-
-	return 1;
 }
 
 static void compute_xor_offsets(void)
@@ -248,79 +177,188 @@ static void compute_xor_offsets(void)
 	}
 }
 
+struct bb_commit {
+	struct commit_list *children;
+	struct bitmap *bitmap;
+	unsigned selected:1;
+	unsigned idx; /* within selected array */
+};
+
+define_commit_slab(bb_data, struct bb_commit);
+
+struct bitmap_builder {
+	struct bb_data data;
+	struct commit **commits;
+	size_t commits_nr, commits_alloc;
+};
+
+static void bitmap_builder_init(struct bitmap_builder *bb,
+				struct bitmap_writer *writer)
+{
+	struct rev_info revs;
+	struct commit *commit;
+	unsigned int i;
+
+	memset(bb, 0, sizeof(*bb));
+	init_bb_data(&bb->data);
+
+	reset_revision_walk();
+	repo_init_revisions(writer->to_pack->repo, &revs, NULL);
+	revs.topo_order = 1;
+
+	for (i = 0; i < writer->selected_nr; i++) {
+		struct commit *c = writer->selected[i].commit;
+		struct bb_commit *ent = bb_data_at(&bb->data, c);
+		ent->selected = 1;
+		ent->idx = i;
+		add_pending_object(&revs, &c->object, "");
+	}
+
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
+
+	while ((commit = get_revision(&revs))) {
+		struct commit_list *p;
+
+		parse_commit_or_die(commit);
+
+		ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
+		bb->commits[bb->commits_nr++] = commit;
+
+		for (p = commit->parents; p; p = p->next) {
+			struct bb_commit *ent = bb_data_at(&bb->data, p->item);
+			commit_list_insert(commit, &ent->children);
+		}
+	}
+}
+
+static void bitmap_builder_clear(struct bitmap_builder *bb)
+{
+	clear_bb_data(&bb->data);
+	free(bb->commits);
+	bb->commits_nr = bb->commits_alloc = 0;
+}
+
+static void fill_bitmap_tree(struct bitmap *bitmap,
+			     struct tree *tree)
+{
+	uint32_t pos;
+	struct tree_desc desc;
+	struct name_entry entry;
+
+	/*
+	 * If our bit is already set, then there is nothing to do. Both this
+	 * tree and all of its children will be set.
+	 */
+	pos = find_object_pos(&tree->object.oid);
+	if (bitmap_get(bitmap, pos))
+		return;
+	bitmap_set(bitmap, pos);
+
+	if (parse_tree(tree) < 0)
+		die("unable to load tree object %s",
+		    oid_to_hex(&tree->object.oid));
+	init_tree_desc(&desc, tree->buffer, tree->size);
+
+	while (tree_entry(&desc, &entry)) {
+		switch (object_type(entry.mode)) {
+		case OBJ_TREE:
+			fill_bitmap_tree(bitmap,
+					 lookup_tree(the_repository, &entry.oid));
+			break;
+		case OBJ_BLOB:
+			bitmap_set(bitmap, find_object_pos(&entry.oid));
+			break;
+		default:
+			/* Gitlink, etc; not reachable */
+			break;
+		}
+	}
+
+	free_tree_buffer(tree);
+}
+
+static void fill_bitmap_commit(struct bb_commit *ent,
+			       struct commit *commit)
+{
+	if (!ent->bitmap)
+		ent->bitmap = bitmap_new();
+
+	/*
+	 * mark ourselves, but do not bother with parents; their values
+	 * will already have been propagated to us
+	 */
+	bitmap_set(ent->bitmap, find_object_pos(&commit->object.oid));
+	fill_bitmap_tree(ent->bitmap, get_commit_tree(commit));
+}
+
+static void store_selected(struct bb_commit *ent, struct commit *commit)
+{
+	struct bitmapped_commit *stored = &writer.selected[ent->idx];
+	khiter_t hash_pos;
+	int hash_ret;
+
+	/*
+	 * the "reuse bitmaps" phase may have stored something here, but
+	 * our new algorithm doesn't use it. Drop it.
+	 */
+	if (stored->bitmap)
+		ewah_free(stored->bitmap);
+
+	stored->bitmap = bitmap_to_ewah(ent->bitmap);
+
+	hash_pos = kh_put_oid_map(writer.bitmaps, commit->object.oid, &hash_ret);
+	if (hash_ret == 0)
+		die("Duplicate entry when writing index: %s",
+		    oid_to_hex(&commit->object.oid));
+	kh_value(writer.bitmaps, hash_pos) = stored;
+}
+
 void bitmap_writer_build(struct packing_data *to_pack)
 {
-	static const double REUSE_BITMAP_THRESHOLD = 0.2;
-
-	int i, reuse_after, need_reset;
-	struct bitmap *base = bitmap_new();
-	struct rev_info revs;
+	struct bitmap_builder bb;
+	size_t i;
+	int nr_stored = 0; /* for progress */
 
 	writer.bitmaps = kh_init_oid_map();
 	writer.to_pack = to_pack;
 
 	if (writer.show_progress)
 		writer.progress = start_progress("Building bitmaps", writer.selected_nr);
+	trace2_region_enter("pack-bitmap-write", "building_bitmaps_total",
+			    the_repository);
 
-	repo_init_revisions(to_pack->repo, &revs, NULL);
-	revs.tag_objects = 1;
-	revs.tree_objects = 1;
-	revs.blob_objects = 1;
-	revs.no_walk = 0;
+	bitmap_builder_init(&bb, &writer);
+	for (i = bb.commits_nr; i > 0; i--) {
+		struct commit *commit = bb.commits[i-1];
+		struct bb_commit *ent = bb_data_at(&bb.data, commit);
+		struct commit *child;
 
-	revs.include_check = should_include;
-	reset_revision_walk();
+		fill_bitmap_commit(ent, commit);
 
-	reuse_after = writer.selected_nr * REUSE_BITMAP_THRESHOLD;
-	need_reset = 0;
+		if (ent->selected) {
+			store_selected(ent, commit);
+			nr_stored++;
+			display_progress(writer.progress, nr_stored);
+		}
 
-	for (i = writer.selected_nr - 1; i >= 0; --i) {
-		struct bitmapped_commit *stored;
-		struct object *object;
+		while ((child = pop_commit(&ent->children))) {
+			struct bb_commit *child_ent =
+				bb_data_at(&bb.data, child);
 
-		khiter_t hash_pos;
-		int hash_ret;
-
-		stored = &writer.selected[i];
-		object = (struct object *)stored->commit;
-
-		if (stored->bitmap == NULL) {
-			if (i < writer.selected_nr - 1 &&
-			    (need_reset ||
-			     !in_merge_bases(writer.selected[i + 1].commit,
-					     stored->commit))) {
-			    bitmap_reset(base);
-			    reset_all_seen();
-			}
-
-			add_pending_object(&revs, object, "");
-			revs.include_check_data = base;
-
-			if (prepare_revision_walk(&revs))
-				die("revision walk setup failed");
-
-			traverse_commit_list(&revs, show_commit, show_object, base);
-
-			object_array_clear(&revs.pending);
-
-			stored->bitmap = bitmap_to_ewah(base);
-			need_reset = 0;
-		} else
-			need_reset = 1;
-
-		if (i >= reuse_after)
-			stored->flags |= BITMAP_FLAG_REUSE;
-
-		hash_pos = kh_put_oid_map(writer.bitmaps, object->oid, &hash_ret);
-		if (hash_ret == 0)
-			die("Duplicate entry when writing index: %s",
-			    oid_to_hex(&object->oid));
-
-		kh_value(writer.bitmaps, hash_pos) = stored;
-		display_progress(writer.progress, writer.selected_nr - i);
+			if (child_ent->bitmap)
+				bitmap_or(child_ent->bitmap, ent->bitmap);
+			else
+				child_ent->bitmap = bitmap_dup(ent->bitmap);
+		}
+		bitmap_free(ent->bitmap);
+		ent->bitmap = NULL;
 	}
+	bitmap_builder_clear(&bb);
 
-	bitmap_free(base);
+	trace2_region_leave("pack-bitmap-write", "building_bitmaps_total",
+			    the_repository);
+
 	stop_progress(&writer.progress);
 
 	compute_xor_offsets();
