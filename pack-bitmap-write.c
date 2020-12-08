@@ -195,10 +195,13 @@ struct bitmap_builder {
 };
 
 static void bitmap_builder_init(struct bitmap_builder *bb,
-				struct bitmap_writer *writer)
+				struct bitmap_writer *writer,
+				struct bitmap_index *old_bitmap)
 {
 	struct rev_info revs;
 	struct commit *commit;
+	struct commit_list *reusable = NULL;
+	struct commit_list *r;
 	unsigned int i, num_maximal = 0;
 
 	memset(bb, 0, sizeof(*bb));
@@ -233,6 +236,31 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 		parse_commit_or_die(commit);
 
 		c_ent = bb_data_at(&bb->data, commit);
+
+		/*
+		 * If there is no commit_mask, there is no reason to iterate
+		 * over this commit; it is not selected (if it were, it would
+		 * not have a blank commit mask) and all its children have
+		 * existing bitmaps (see the comment starting with "This commit
+		 * has an existing bitmap" below), so it does not contribute
+		 * anything to the final bitmap file or its descendants.
+		 */
+		if (!c_ent->commit_mask)
+			continue;
+
+		if (old_bitmap && bitmap_for_commit(old_bitmap, commit)) {
+			/*
+			 * This commit has an existing bitmap, so we can
+			 * get its bits immediately without an object
+			 * walk. That is, it is reusable as-is and there is no
+			 * need to continue walking beyond it.
+			 *
+			 * Mark it as such and add it to bb->commits separately
+			 * to avoid allocating a position in the commit mask.
+			 */
+			commit_list_insert(commit, &reusable);
+			goto next;
+		}
 
 		if (c_ent->maximal) {
 			num_maximal++;
@@ -278,14 +306,22 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 			}
 		}
 
+next:
 		bitmap_free(c_ent->commit_mask);
 		c_ent->commit_mask = NULL;
+	}
+
+	for (r = reusable; r; r = r->next) {
+		ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
+		bb->commits[bb->commits_nr++] = r->item;
 	}
 
 	trace2_data_intmax("pack-bitmap-write", the_repository,
 			   "num_selected_commits", writer->selected_nr);
 	trace2_data_intmax("pack-bitmap-write", the_repository,
 			   "num_maximal_commits", num_maximal);
+
+	free_commit_list(reusable);
 }
 
 static void bitmap_builder_clear(struct bitmap_builder *bb)
@@ -420,7 +456,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	else
 		mapping = NULL;
 
-	bitmap_builder_init(&bb, &writer);
+	bitmap_builder_init(&bb, &writer, old_bitmap);
 	for (i = bb.commits_nr; i > 0; i--) {
 		struct commit *commit = bb.commits[i-1];
 		struct bb_commit *ent = bb_data_at(&bb.data, commit);
