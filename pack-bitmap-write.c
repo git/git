@@ -179,7 +179,7 @@ static void compute_xor_offsets(void)
 }
 
 struct bb_commit {
-	struct commit_list *children;
+	struct commit_list *reverse_edges;
 	struct bitmap *bitmap;
 	unsigned selected:1;
 	unsigned idx; /* within selected array */
@@ -228,7 +228,7 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 
 		for (p = commit->parents; p; p = p->next) {
 			struct bb_commit *ent = bb_data_at(&bb->data, p->item);
-			commit_list_insert(commit, &ent->children);
+			commit_list_insert(commit, &ent->reverse_edges);
 		}
 	}
 }
@@ -358,7 +358,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 			display_progress(writer.progress, nr_stored);
 		}
 
-		while ((child = pop_commit(&ent->children))) {
+		while ((child = pop_commit(&ent->reverse_edges))) {
 			struct bb_commit *child_ent =
 				bb_data_at(&bb.data, child);
 
