@@ -22,10 +22,11 @@ has_any () {
 
 test_expect_success 'setup repo with moderate-sized history' '
 	test_commit_bulk --id=file 100 &&
+	git branch -M second &&
 	git checkout -b other HEAD~5 &&
 	test_commit_bulk --id=side 10 &&
-	git checkout master &&
-	bitmaptip=$(git rev-parse master) &&
+	git checkout second &&
+	bitmaptip=$(git rev-parse second) &&
 	blob=$(echo tagged-blob | git hash-object -w --stdin) &&
 	git tag tagged-blob $blob &&
 	git config repack.writebitmaps true
@@ -63,8 +64,8 @@ rev_list_tests() {
 	'
 
 	test_expect_success "counting non-linear history ($state)" '
-		git rev-list --count other...master >expect &&
-		git rev-list --use-bitmap-index --count other...master >actual &&
+		git rev-list --count other...second >expect &&
+		git rev-list --use-bitmap-index --count other...second >actual &&
 		test_cmp expect actual
 	'
 
@@ -128,7 +129,7 @@ test_expect_success 'setup further non-bitmapped commits' '
 rev_list_tests 'partial bitmap'
 
 test_expect_success 'fetch (partial bitmap)' '
-	git --git-dir=clone.git fetch origin master:master &&
+	git --git-dir=clone.git fetch origin second:second &&
 	git rev-parse HEAD >expect &&
 	git --git-dir=clone.git rev-parse HEAD >actual &&
 	test_cmp expect actual
@@ -230,7 +231,7 @@ test_expect_success 'full repack, reusing previous bitmaps' '
 '
 
 test_expect_success 'fetch (full bitmap)' '
-	git --git-dir=clone.git fetch origin master:master &&
+	git --git-dir=clone.git fetch origin second:second &&
 	git rev-parse HEAD >expect &&
 	git --git-dir=clone.git rev-parse HEAD >actual &&
 	test_cmp expect actual
@@ -349,7 +350,7 @@ test_expect_success 'truncated bitmap fails gracefully (ewah)' '
 	git rev-list --use-bitmap-index --count --all >expect &&
 	bitmap=$(ls .git/objects/pack/*.bitmap) &&
 	test_when_finished "rm -f $bitmap" &&
-	test_copy_bytes 512 <$bitmap >$bitmap.tmp &&
+	test_copy_bytes 256 <$bitmap >$bitmap.tmp &&
 	mv -f $bitmap.tmp $bitmap &&
 	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
 	test_cmp expect actual &&
