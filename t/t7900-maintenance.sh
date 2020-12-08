@@ -441,7 +441,7 @@ test_expect_success 'register preserves existing strategy' '
 	test_config maintenance.strategy incremental
 '
 
-test_execpt_success 'fails when running outside of a repository' '
+test_expect_success 'fails when running outside of a repository' '
 	nongit test_must_fail git maintenance run &&
 	nongit test_must_fail git maintenance stop &&
 	nongit test_must_fail git maintenance start &&
