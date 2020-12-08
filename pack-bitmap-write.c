@@ -199,7 +199,7 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 {
 	struct rev_info revs;
 	struct commit *commit;
-	unsigned int i, num_maximal;
+	unsigned int i, num_maximal = 0;
 
 	memset(bb, 0, sizeof(*bb));
 	init_bb_data(&bb->data);
@@ -207,6 +207,7 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 	reset_revision_walk();
 	repo_init_revisions(writer->to_pack->repo, &revs, NULL);
 	revs.topo_order = 1;
+	revs.first_parent_only = 1;
 
 	for (i = 0; i < writer->selected_nr; i++) {
 		struct commit *c = writer->selected[i].commit;
@@ -221,13 +222,12 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 
 		add_pending_object(&revs, &c->object, "");
 	}
-	num_maximal = writer->selected_nr;
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 
 	while ((commit = get_revision(&revs))) {
-		struct commit_list *p;
+		struct commit_list *p = commit->parents;
 		struct bb_commit *c_ent;
 
 		parse_commit_or_die(commit);
@@ -235,16 +235,12 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 		c_ent = bb_data_at(&bb->data, commit);
 
 		if (c_ent->maximal) {
-			if (!c_ent->selected) {
-				bitmap_set(c_ent->commit_mask, num_maximal);
-				num_maximal++;
-			}
-
+			num_maximal++;
 			ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
 			bb->commits[bb->commits_nr++] = commit;
 		}
 
-		for (p = commit->parents; p; p = p->next) {
+		if (p) {
 			struct bb_commit *p_ent = bb_data_at(&bb->data, p->item);
 			int c_not_p, p_not_c;
 

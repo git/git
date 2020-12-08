@@ -23,12 +23,12 @@ has_any () {
 # To ensure the logic for "maximal commits" is exercised, make
 # the repository a bit more complicated.
 #
-#    other                         master
+#    other                         second
 #      *                             *
 # (99 commits)                  (99 commits)
 #      *                             *
 #      |\                           /|
-#      | * octo-other  octo-master * |
+#      | * octo-other  octo-second * |
 #      |/|\_________  ____________/|\|
 #      | \          \/  __________/  |
 #      |  | ________/\ /             |
@@ -43,23 +43,24 @@ has_any () {
 #                                   \|
 #                                    * (base)
 #
+# We only push bits down the first-parent history, which
+# makes some of these commits unimportant!
+#
 # The important part for the maximal commit algorithm is how
 # the bitmasks are extended. Assuming starting bit positions
-# for master (bit 0) and other (bit 1), and some flexibility
-# in the order that merge bases are visited, the bitmasks at
-# the end should be:
+# for second (bit 0) and other (bit 1), the bitmasks at the
+# end should be:
 #
-#      master: 1       (maximal, selected)
+#      second: 1       (maximal, selected)
 #       other: 01      (maximal, selected)
-# octo-master: 1
-#  octo-other: 01
-# merge-right: 111     (maximal)
-#        (l1): 111
-#        (r1): 111
-#  merge-left: 1101    (maximal)
-#        (l2): 11111   (maximal)
-#        (r2): 111101  (maximal)
-#      (base): 1111111 (maximal)
+#      (base): 11 (maximal)
+#
+# This complicated history was important for a previous
+# version of the walk that guarantees never walking a
+# commit multiple times. That goal might be important
+# again, so preserve this complicated case. For now, this
+# test will guarantee that the bitmaps are computed
+# correctly, even with the repeat calculations.
 
 test_expect_success 'setup repo with moderate-sized history' '
 	test_commit_bulk --id=file 10 &&
@@ -114,7 +115,7 @@ test_expect_success 'full repack creates bitmaps' '
 	ls .git/objects/pack/ | grep bitmap >output &&
 	test_line_count = 1 output &&
 	grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
-	grep "\"key\":\"num_maximal_commits\",\"value\":\"111\"" trace
+	grep "\"key\":\"num_maximal_commits\",\"value\":\"107\"" trace
 '
 
 test_expect_success 'rev-list --test-bitmap verifies bitmaps' '
