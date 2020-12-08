@@ -950,7 +950,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	init_grep_defaults(the_repository);
 	git_config(grep_cmd_config, NULL);
 	grep_init(&opt, the_repository, prefix);
 
