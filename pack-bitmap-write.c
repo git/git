@@ -30,7 +30,6 @@ struct bitmap_writer {
 	struct ewah_bitmap *tags;
 
 	kh_oid_map_t *bitmaps;
-	kh_oid_map_t *reused;
 	struct packing_data *to_pack;
 
 	struct bitmapped_commit *selected;
@@ -112,7 +111,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
  * Compute the actual bitmaps
  */
 
-static inline void push_bitmapped_commit(struct commit *commit, struct ewah_bitmap *reused)
+static inline void push_bitmapped_commit(struct commit *commit)
 {
 	if (writer.selected_nr >= writer.selected_alloc) {
 		writer.selected_alloc = (writer.selected_alloc + 32) * 2;
@@ -120,7 +119,7 @@ static inline void push_bitmapped_commit(struct commit *commit, struct ewah_bitm
 	}
 
 	writer.selected[writer.selected_nr].commit = commit;
-	writer.selected[writer.selected_nr].bitmap = reused;
+	writer.selected[writer.selected_nr].bitmap = NULL;
 	writer.selected[writer.selected_nr].flags = 0;
 
 	writer.selected_nr++;
@@ -372,13 +371,6 @@ static void store_selected(struct bb_commit *ent, struct commit *commit)
 	khiter_t hash_pos;
 	int hash_ret;
 
-	/*
-	 * the "reuse bitmaps" phase may have stored something here, but
-	 * our new algorithm doesn't use it. Drop it.
-	 */
-	if (stored->bitmap)
-		ewah_free(stored->bitmap);
-
 	stored->bitmap = bitmap_to_ewah(ent->bitmap);
 
 	hash_pos = kh_put_oid_map(writer.bitmaps, commit->object.oid, &hash_ret);
@@ -480,35 +472,6 @@ static int date_compare(const void *_a, const void *_b)
 	return (long)b->date - (long)a->date;
 }
 
-void bitmap_writer_reuse_bitmaps(struct packing_data *to_pack)
-{
-	struct bitmap_index *bitmap_git;
-	if (!(bitmap_git = prepare_bitmap_git(to_pack->repo)))
-		return;
-
-	writer.reused = kh_init_oid_map();
-	rebuild_existing_bitmaps(bitmap_git, to_pack, writer.reused,
-				 writer.show_progress);
-	/*
-	 * NEEDSWORK: rebuild_existing_bitmaps() makes writer.reused reference
-	 * some bitmaps in bitmap_git, so we can't free the latter.
-	 */
-}
-
-static struct ewah_bitmap *find_reused_bitmap(const struct object_id *oid)
-{
-	khiter_t hash_pos;
-
-	if (!writer.reused)
-		return NULL;
-
-	hash_pos = kh_get_oid_map(writer.reused, *oid);
-	if (hash_pos >= kh_end(writer.reused))
-		return NULL;
-
-	return kh_value(writer.reused, hash_pos);
-}
-
 void bitmap_writer_select_commits(struct commit **indexed_commits,
 				  unsigned int indexed_commits_nr,
 				  int max_bitmaps)
@@ -522,12 +485,11 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 
 	if (indexed_commits_nr < 100) {
 		for (i = 0; i < indexed_commits_nr; ++i)
-			push_bitmapped_commit(indexed_commits[i], NULL);
+			push_bitmapped_commit(indexed_commits[i]);
 		return;
 	}
 
 	for (;;) {
-		struct ewah_bitmap *reused_bitmap = NULL;
 		struct commit *chosen = NULL;
 
 		next = next_commit_index(i);
@@ -542,15 +504,13 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 
 		if (next == 0) {
 			chosen = indexed_commits[i];
-			reused_bitmap = find_reused_bitmap(&chosen->object.oid);
 		} else {
 			chosen = indexed_commits[i + next];
 
 			for (j = 0; j <= next; ++j) {
 				struct commit *cm = indexed_commits[i + j];
 
-				reused_bitmap = find_reused_bitmap(&cm->object.oid);
-				if (reused_bitmap || (cm->object.flags & NEEDS_BITMAP) != 0) {
+				if ((cm->object.flags & NEEDS_BITMAP) != 0) {
 					chosen = cm;
 					break;
 				}
@@ -560,7 +520,7 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 			}
 		}
 
-		push_bitmapped_commit(chosen, reused_bitmap);
+		push_bitmapped_commit(chosen);
 
 		i += next + 1;
 		display_progress(writer.progress, i);

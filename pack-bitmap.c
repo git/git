@@ -1338,9 +1338,9 @@ void test_bitmap_walk(struct rev_info *revs)
 	free_bitmap_index(bitmap_git);
 }
 
-static int rebuild_bitmap(uint32_t *reposition,
-			  struct ewah_bitmap *source,
-			  struct bitmap *dest)
+int rebuild_bitmap(const uint32_t *reposition,
+		   struct ewah_bitmap *source,
+		   struct bitmap *dest)
 {
 	uint32_t pos = 0;
 	struct ewah_iterator it;
@@ -1369,19 +1369,11 @@ static int rebuild_bitmap(uint32_t *reposition,
 	return 0;
 }
 
-int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
-			     struct packing_data *mapping,
-			     kh_oid_map_t *reused_bitmaps,
-			     int show_progress)
+uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
+				struct packing_data *mapping)
 {
 	uint32_t i, num_objects;
 	uint32_t *reposition;
-	struct bitmap *rebuild;
-	struct stored_bitmap *stored;
-	struct progress *progress = NULL;
-
-	khiter_t hash_pos;
-	int hash_ret;
 
 	num_objects = bitmap_git->pack->num_objects;
 	reposition = xcalloc(num_objects, sizeof(uint32_t));
@@ -1399,33 +1391,7 @@ int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 			reposition[i] = oe_in_pack_pos(mapping, oe) + 1;
 	}
 
-	rebuild = bitmap_new();
-	i = 0;
-
-	if (show_progress)
-		progress = start_progress("Reusing bitmaps", 0);
-
-	kh_foreach_value(bitmap_git->bitmaps, stored, {
-		if (stored->flags & BITMAP_FLAG_REUSE) {
-			if (!rebuild_bitmap(reposition,
-					    lookup_stored_bitmap(stored),
-					    rebuild)) {
-				hash_pos = kh_put_oid_map(reused_bitmaps,
-							  stored->oid,
-							  &hash_ret);
-				kh_value(reused_bitmaps, hash_pos) =
-					bitmap_to_ewah(rebuild);
-			}
-			bitmap_reset(rebuild);
-			display_progress(progress, ++i);
-		}
-	});
-
-	stop_progress(&progress);
-
-	free(reposition);
-	bitmap_free(rebuild);
-	return 0;
+	return reposition;
 }
 
 void free_bitmap_index(struct bitmap_index *b)
