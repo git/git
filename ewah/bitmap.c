@@ -122,6 +122,15 @@ void bitmap_and_not(struct bitmap *self, struct bitmap *other)
 		self->words[i] &= ~other->words[i];
 }
 
+void bitmap_or(struct bitmap *self, const struct bitmap *other)
+{
+	size_t i;
+
+	bitmap_grow(self, other->word_alloc);
+	for (i = 0; i < other->word_alloc; i++)
+		self->words[i] |= other->words[i];
+}
+
 void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 {
 	size_t original_size = self->word_alloc;
