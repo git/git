@@ -12,6 +12,7 @@
 #include "sha1-lookup.h"
 #include "pack-objects.h"
 #include "commit-reach.h"
+#include "prio-queue.h"
 
 struct bitmapped_commit {
 	struct commit *commit;
@@ -279,17 +280,30 @@ static void fill_bitmap_tree(struct bitmap *bitmap,
 }
 
 static void fill_bitmap_commit(struct bb_commit *ent,
-			       struct commit *commit)
+			       struct commit *commit,
+			       struct prio_queue *queue)
 {
 	if (!ent->bitmap)
 		ent->bitmap = bitmap_new();
 
-	/*
-	 * mark ourselves, but do not bother with parents; their values
-	 * will already have been propagated to us
-	 */
 	bitmap_set(ent->bitmap, find_object_pos(&commit->object.oid));
-	fill_bitmap_tree(ent->bitmap, get_commit_tree(commit));
+	prio_queue_put(queue, commit);
+
+	while (queue->nr) {
+		struct commit_list *p;
+		struct commit *c = prio_queue_get(queue);
+
+		bitmap_set(ent->bitmap, find_object_pos(&c->object.oid));
+		fill_bitmap_tree(ent->bitmap, get_commit_tree(c));
+
+		for (p = c->parents; p; p = p->next) {
+			int pos = find_object_pos(&p->item->object.oid);
+			if (!bitmap_get(ent->bitmap, pos)) {
+				bitmap_set(ent->bitmap, pos);
+				prio_queue_put(queue, p->item);
+			}
+		}
+	}
 }
 
 static void store_selected(struct bb_commit *ent, struct commit *commit)
@@ -319,6 +333,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	struct bitmap_builder bb;
 	size_t i;
 	int nr_stored = 0; /* for progress */
+	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
 
 	writer.bitmaps = kh_init_oid_map();
 	writer.to_pack = to_pack;
@@ -335,7 +350,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 		struct commit *child;
 		int reused = 0;
 
-		fill_bitmap_commit(ent, commit);
+		fill_bitmap_commit(ent, commit, &queue);
 
 		if (ent->selected) {
 			store_selected(ent, commit);
@@ -360,6 +375,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 			bitmap_free(ent->bitmap);
 		ent->bitmap = NULL;
 	}
+	clear_prio_queue(&queue);
 	bitmap_builder_clear(&bb);
 
 	trace2_region_leave("pack-bitmap-write", "building_bitmaps_total",
