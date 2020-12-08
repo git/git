@@ -197,6 +197,7 @@ codes can be interpreted as follows:
 * 'R' = renamed
 * 'C' = copied
 * 'U' = updated but unmerged
+* 'T' = type changed (e.g. a symbolic link becoming a file)
 
 Ignored files are not listed, unless `--ignored` option is in effect,
 in which case `XY` are `!!`.
