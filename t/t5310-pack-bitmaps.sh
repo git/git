@@ -20,12 +20,88 @@ has_any () {
 	grep -Ff "$1" "$2"
 }
 
+# To ensure the logic for "maximal commits" is exercised, make
+# the repository a bit more complicated.
+#
+#    other                         master
+#      *                             *
+# (99 commits)                  (99 commits)
+#      *                             *
+#      |\                           /|
+#      | * octo-other  octo-master * |
+#      |/|\_________  ____________/|\|
+#      | \          \/  __________/  |
+#      |  | ________/\ /             |
+#      *  |/          * merge-right  *
+#      | _|__________/ \____________ |
+#      |/ |                         \|
+# (l1) *  * merge-left               * (r1)
+#      | / \________________________ |
+#      |/                           \|
+# (l2) *                             * (r2)
+#       \___________________________ |
+#                                   \|
+#                                    * (base)
+#
+# The important part for the maximal commit algorithm is how
+# the bitmasks are extended. Assuming starting bit positions
+# for master (bit 0) and other (bit 1), and some flexibility
+# in the order that merge bases are visited, the bitmasks at
+# the end should be:
+#
+#      master: 1       (maximal, selected)
+#       other: 01      (maximal, selected)
+# octo-master: 1
+#  octo-other: 01
+# merge-right: 111     (maximal)
+#        (l1): 111
+#        (r1): 111
+#  merge-left: 1101    (maximal)
+#        (l2): 11111   (maximal)
+#        (r2): 111101  (maximal)
+#      (base): 1111111 (maximal)
+
 test_expect_success 'setup repo with moderate-sized history' '
-	test_commit_bulk --id=file 100 &&
+	test_commit_bulk --id=file 10 &&
 	git branch -M second &&
 	git checkout -b other HEAD~5 &&
 	test_commit_bulk --id=side 10 &&
+
+	# add complicated history setup, including merges and
+	# ambiguous merge-bases
+
+	git checkout -b merge-left other~2 &&
+	git merge second~2 -m "merge-left" &&
+
+	git checkout -b merge-right second~1 &&
+	git merge other~1 -m "merge-right" &&
+
+	git checkout -b octo-second second &&
+	git merge merge-left merge-right -m "octopus-second" &&
+
+	git checkout -b octo-other other &&
+	git merge merge-left merge-right -m "octopus-other" &&
+
+	git checkout other &&
+	git merge octo-other -m "pull octopus" &&
+
 	git checkout second &&
+	git merge octo-second -m "pull octopus" &&
+
+	# Remove these branches so they are not selected
+	# as bitmap tips
+	git branch -D merge-left &&
+	git branch -D merge-right &&
+	git branch -D octo-other &&
+	git branch -D octo-second &&
+
+	# add padding to make these merges less interesting
+	# and avoid having them selected for bitmaps
+	test_commit_bulk --id=file 100 &&
+	git checkout other &&
+	test_commit_bulk --id=side 100 &&
+	git checkout second &&
+
 	bitmaptip=$(git rev-parse second) &&
 	blob=$(echo tagged-blob | git hash-object -w --stdin) &&
 	git tag tagged-blob $blob &&
@@ -33,9 +109,12 @@ test_expect_success 'setup repo with moderate-sized history' '
 '
 
 test_expect_success 'full repack creates bitmaps' '
-	git repack -ad &&
+	GIT_TRACE2_EVENT_NESTING=4 GIT_TRACE2_EVENT="$(pwd)/trace" \
+		git repack -ad &&
 	ls .git/objects/pack/ | grep bitmap >output &&
-	test_line_count = 1 output
+	test_line_count = 1 output &&
+	grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
+	grep "\"key\":\"num_maximal_commits\",\"value\":\"111\"" trace
 '
 
 test_expect_success 'rev-list --test-bitmap verifies bitmaps' '

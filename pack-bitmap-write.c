@@ -180,8 +180,10 @@ static void compute_xor_offsets(void)
 
 struct bb_commit {
 	struct commit_list *reverse_edges;
+	struct bitmap *commit_mask;
 	struct bitmap *bitmap;
-	unsigned selected:1;
+	unsigned selected:1,
+		 maximal:1;
 	unsigned idx; /* within selected array */
 };
 
@@ -198,7 +200,7 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 {
 	struct rev_info revs;
 	struct commit *commit;
-	unsigned int i;
+	unsigned int i, num_maximal;
 
 	memset(bb, 0, sizeof(*bb));
 	init_bb_data(&bb->data);
@@ -210,27 +212,85 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 	for (i = 0; i < writer->selected_nr; i++) {
 		struct commit *c = writer->selected[i].commit;
 		struct bb_commit *ent = bb_data_at(&bb->data, c);
+
 		ent->selected = 1;
+		ent->maximal = 1;
 		ent->idx = i;
+
+		ent->commit_mask = bitmap_new();
+		bitmap_set(ent->commit_mask, i);
+
 		add_pending_object(&revs, &c->object, "");
 	}
+	num_maximal = writer->selected_nr;
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 
 	while ((commit = get_revision(&revs))) {
 		struct commit_list *p;
+		struct bb_commit *c_ent;
 
 		parse_commit_or_die(commit);
 
-		ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
-		bb->commits[bb->commits_nr++] = commit;
+		c_ent = bb_data_at(&bb->data, commit);
+
+		if (c_ent->maximal) {
+			if (!c_ent->selected) {
+				bitmap_set(c_ent->commit_mask, num_maximal);
+				num_maximal++;
+			}
+
+			ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
+			bb->commits[bb->commits_nr++] = commit;
+		}
 
 		for (p = commit->parents; p; p = p->next) {
-			struct bb_commit *ent = bb_data_at(&bb->data, p->item);
-			commit_list_insert(commit, &ent->reverse_edges);
+			struct bb_commit *p_ent = bb_data_at(&bb->data, p->item);
+			int c_not_p, p_not_c;
+
+			if (!p_ent->commit_mask) {
+				p_ent->commit_mask = bitmap_new();
+				c_not_p = 1;
+				p_not_c = 0;
+			} else {
+				c_not_p = bitmap_is_subset(c_ent->commit_mask, p_ent->commit_mask);
+				p_not_c = bitmap_is_subset(p_ent->commit_mask, c_ent->commit_mask);
+			}
+
+			if (!c_not_p)
+				continue;
+
+			bitmap_or(p_ent->commit_mask, c_ent->commit_mask);
+
+			if (p_not_c)
+				p_ent->maximal = 1;
+			else {
+				p_ent->maximal = 0;
+				free_commit_list(p_ent->reverse_edges);
+				p_ent->reverse_edges = NULL;
+			}
+
+			if (c_ent->maximal) {
+				commit_list_insert(commit, &p_ent->reverse_edges);
+			} else {
+				struct commit_list *cc = c_ent->reverse_edges;
+
+				for (; cc; cc = cc->next) {
+					if (!commit_list_contains(cc->item, p_ent->reverse_edges))
+						commit_list_insert(cc->item, &p_ent->reverse_edges);
+				}
+			}
 		}
+
+		bitmap_free(c_ent->commit_mask);
+		c_ent->commit_mask = NULL;
 	}
+
+	trace2_data_intmax("pack-bitmap-write", the_repository,
+			   "num_selected_commits", writer->selected_nr);
+	trace2_data_intmax("pack-bitmap-write", the_repository,
+			   "num_maximal_commits", num_maximal);
 }
 
 static void bitmap_builder_clear(struct bitmap_builder *bb)
