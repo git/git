@@ -589,6 +589,90 @@ test_expect_success 'diffs can be colorized' '
 	grep "$(printf "\\033")" output
 '
 
+test_expect_success 'colors can be overridden' '
+	git reset --hard &&
+	test_when_finished "git rm -f color-test" &&
+	test_write_lines context old more-context >color-test &&
+	git add color-test &&
+	test_write_lines context new more-context another-one >color-test &&
+
+	echo trigger an error message >input &&
+	force_color git \
+		-c color.interactive.error=blue \
+		add -i 2>err.raw <input &&
+	test_decode_color <err.raw >err &&
+	grep "<BLUE>Huh (trigger)?<RESET>" err &&
+
+	test_write_lines help quit >input &&
+	force_color git \
+		-c color.interactive.header=red \
+		-c color.interactive.help=green \
+		-c color.interactive.prompt=yellow \
+		add -i >actual.raw <input &&
+	test_decode_color <actual.raw >actual &&
+	cat >expect <<-\EOF &&
+	<RED>           staged     unstaged path<RESET>
+	  1:        +3/-0        +2/-1 color-test
+
+	<RED>*** Commands ***<RESET>
+	  1: <YELLOW>s<RESET>tatus	  2: <YELLOW>u<RESET>pdate	  3: <YELLOW>r<RESET>evert	  4: <YELLOW>a<RESET>dd untracked
+	  5: <YELLOW>p<RESET>atch	  6: <YELLOW>d<RESET>iff	  7: <YELLOW>q<RESET>uit	  8: <YELLOW>h<RESET>elp
+	<YELLOW>What now<RESET>> <GREEN>status        - show paths with changes<RESET>
+	<GREEN>update        - add working tree state to the staged set of changes<RESET>
+	<GREEN>revert        - revert staged set of changes back to the HEAD version<RESET>
+	<GREEN>patch         - pick hunks and update selectively<RESET>
+	<GREEN>diff          - view diff between HEAD and index<RESET>
+	<GREEN>add untracked - add contents of untracked files to the staged set of changes<RESET>
+	<RED>*** Commands ***<RESET>
+	  1: <YELLOW>s<RESET>tatus	  2: <YELLOW>u<RESET>pdate	  3: <YELLOW>r<RESET>evert	  4: <YELLOW>a<RESET>dd untracked
+	  5: <YELLOW>p<RESET>atch	  6: <YELLOW>d<RESET>iff	  7: <YELLOW>q<RESET>uit	  8: <YELLOW>h<RESET>elp
+	<YELLOW>What now<RESET>> Bye.
+	EOF
+	test_cmp expect actual &&
+
+	: exercise recolor_hunk by editing and then look at the hunk again &&
+	test_write_lines s e K q >input &&
+	force_color git \
+		-c color.interactive.prompt=yellow \
+		-c color.diff.meta=italic \
+		-c color.diff.frag=magenta \
+		-c color.diff.context=cyan \
+		-c color.diff.old=bold \
+		-c color.diff.new=blue \
+		-c core.editor=touch \
+		add -p >actual.raw <input &&
+	test_decode_color <actual.raw >actual.decoded &&
+	sed "s/index [0-9a-f]*\\.\\.[0-9a-f]* 100644/<INDEX-LINE>/" <actual.decoded >actual &&
+	cat >expect <<-\EOF &&
+	<ITALIC>diff --git a/color-test b/color-test<RESET>
+	<ITALIC><INDEX-LINE><RESET>
+	<ITALIC>--- a/color-test<RESET>
+	<ITALIC>+++ b/color-test<RESET>
+	<MAGENTA>@@ -1,3 +1,4 @@<RESET>
+	<CYAN> context<RESET>
+	<BOLD>-old<RESET>
+	<BLUE>+<RESET><BLUE>new<RESET>
+	<CYAN> more-context<RESET>
+	<BLUE>+<RESET><BLUE>another-one<RESET>
+	<YELLOW>(1/1) Stage this hunk [y,n,q,a,d,s,e,?]? <RESET><BOLD>Split into 2 hunks.<RESET>
+	<MAGENTA>@@ -1,3 +1,3 @@<RESET>
+	<CYAN> context<RESET>
+	<BOLD>-old<RESET>
+	<BLUE>+<RESET><BLUE>new<RESET>
+	<CYAN> more-context<RESET>
+	<YELLOW>(1/2) Stage this hunk [y,n,q,a,d,j,J,g,/,e,?]? <RESET><MAGENTA>@@ -3 +3,2 @@<RESET>
+	<CYAN> more-context<RESET>
+	<BLUE>+<RESET><BLUE>another-one<RESET>
+	<YELLOW>(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,?]? <RESET><MAGENTA>@@ -1,3 +1,3 @@<RESET>
+	<CYAN> context<RESET>
+	<BOLD>-old<RESET>
+	<BLUE>+new<RESET>
+	<CYAN> more-context<RESET>
+	<YELLOW>(1/2) Stage this hunk [y,n,q,a,d,j,J,g,/,e,?]? <RESET>
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'colorized diffs respect diff.wsErrorHighlight' '
 	git reset --hard &&
 

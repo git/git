@@ -30,9 +30,9 @@ my ($fraginfo_color) =
 	$diff_use_color ? (
 		$repo->get_color('color.diff.frag', 'cyan'),
 	) : ();
-my ($diff_plain_color) =
+my ($diff_context_color) =
 	$diff_use_color ? (
-		$repo->get_color('color.diff.plain', ''),
+		$repo->get_color($repo->config('color.diff.context') ? 'color.diff.context' : 'color.diff.plain', ''),
 	) : ();
 my ($diff_old_color) =
 	$diff_use_color ? (
@@ -483,10 +483,8 @@ sub list_and_choose {
 		my $last_lf = 0;
 
 		if ($opts->{HEADER}) {
-			if (!$opts->{LIST_FLAT}) {
-				print "     ";
-			}
-			print colored $header_color, "$opts->{HEADER}\n";
+			my $indent = $opts->{LIST_FLAT} ? "" : "     ";
+			print colored $header_color, "$indent$opts->{HEADER}\n";
 		}
 		for ($i = 0; $i < @stuff; $i++) {
 			my $chosen = $chosen[$i] ? '*' : ' ';
@@ -1048,7 +1046,7 @@ sub color_diff {
 		colored((/^@/  ? $fraginfo_color :
 			 /^\+/ ? $diff_new_color :
 			 /^-/  ? $diff_old_color :
-			 $diff_plain_color),
+			 $diff_context_color),
 			$_);
 	} @_;
 }
