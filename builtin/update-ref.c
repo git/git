@@ -436,6 +436,8 @@ static void update_refs_stdin(void)
 		switch (state) {
 		case UPDATE_REFS_OPEN:
 		case UPDATE_REFS_STARTED:
+			if (state == UPDATE_REFS_STARTED && cmd->state == UPDATE_REFS_STARTED)
+				die("cannot restart ongoing transaction");
 			/* Do not downgrade a transaction to a non-transaction. */
 			if (cmd->state >= state)
 				state = cmd->state;
@@ -446,7 +448,18 @@ static void update_refs_stdin(void)
 			state = cmd->state;
 			break;
 		case UPDATE_REFS_CLOSED:
-			die("transaction is closed");
+			if (cmd->state != UPDATE_REFS_STARTED)
+				die("transaction is closed");
+
+			/*
+			 * Open a new transaction if we're currently closed and
+			 * get a "start".
+			 */
+			state = cmd->state;
+			transaction = ref_transaction_begin(&err);
+			if (!transaction)
+				die("%s", err.buf);
+
 			break;
 		}
 
