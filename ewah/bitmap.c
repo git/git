@@ -35,6 +35,13 @@ struct bitmap *bitmap_new(void)
 	return bitmap_word_alloc(32);
 }
 
+struct bitmap *bitmap_dup(const struct bitmap *src)
+{
+	struct bitmap *dst = bitmap_word_alloc(src->word_alloc);
+	COPY_ARRAY(dst->words, src->words, src->word_alloc);
+	return dst;
+}
+
 static void bitmap_grow(struct bitmap *self, size_t word_alloc)
 {
 	size_t old_size = self->word_alloc;
