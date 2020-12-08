@@ -195,6 +195,27 @@ int bitmap_equals(struct bitmap *self, struct bitmap *other)
 	return 1;
 }
 
+int bitmap_is_subset(struct bitmap *self, struct bitmap *other)
+{
+	size_t common_size, i;
+
+	if (self->word_alloc < other->word_alloc)
+		common_size = self->word_alloc;
+	else {
+		common_size = other->word_alloc;
+		for (i = common_size; i < self->word_alloc; i++) {
+			if (self->words[i])
+				return 1;
+		}
+	}
+
+	for (i = 0; i < common_size; i++) {
+		if (self->words[i] & ~other->words[i])
+			return 1;
+	}
+	return 0;
+}
+
 void bitmap_reset(struct bitmap *bitmap)
 {
 	memset(bitmap->words, 0x0, bitmap->word_alloc * sizeof(eword_t));
