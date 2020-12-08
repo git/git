@@ -298,7 +298,7 @@ static int nth_midxed_pack_entry(struct repository *r,
 	pack_int_id = nth_midxed_pack_int_id(m, pos);
 
 	if (prepare_midx_pack(r, m, pack_int_id))
-		die(_("error preparing packfile from multi-pack-index"));
+		return 0;
 	p = m->packs[pack_int_id];
 
 	/*

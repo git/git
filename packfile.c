@@ -514,19 +514,8 @@ static int open_packed_git_1(struct packed_git *p)
 	ssize_t read_result;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
-	if (!p->index_data) {
-		struct multi_pack_index *m;
-		const char *pack_name = pack_basename(p);
-
-		for (m = the_repository->objects->multi_pack_index;
-		     m; m = m->next) {
-			if (midx_contains_pack(m, pack_name))
-				break;
-		}
-
-		if (!m && open_pack_index(p))
-			return error("packfile %s index unavailable", p->pack_name);
-	}
+	if (open_pack_index(p))
+		return error("packfile %s index unavailable", p->pack_name);
 
 	if (!pack_max_fds) {
 		unsigned int max_fds = get_max_fd_limit();
@@ -566,10 +555,6 @@ static int open_packed_git_1(struct packed_git *p)
 		return error("packfile %s is version %"PRIu32" and not"
 			" supported (try upgrading GIT to a newer version)",
 			p->pack_name, ntohl(hdr.hdr_version));
-
-	/* Skip index checking if in multi-pack-index */
-	if (!p->index_data)
-		return 0;
 
 	/* Verify the pack matches its index. */
 	if (p->num_objects != ntohl(hdr.hdr_entries))
