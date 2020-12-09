@@ -6,7 +6,11 @@ The Steps to Build Git with VS2015 or VS2017 from the command line.
    Prompt or from an SDK bash window:
 
    $ cd <repo_root>
-   $ ./compat/vcbuild/vcpkg_install.bat
+   $ ./compat/vcbuild/vcpkg_install.bat x64-windows
+
+   or
+
+   $ ./compat/vcbuild/vcpkg_install.bat arm64-windows
 
    The vcpkg tools and all of the third-party sources will be installed
    in this folder:
