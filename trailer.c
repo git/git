@@ -1132,7 +1132,8 @@ static void format_trailer_info(struct strbuf *out,
 
 	/* If we want the whole block untouched, we can take the fast path. */
 	if (!opts->only_trailers && !opts->unfold && !opts->filter &&
-	    !opts->separator && !opts->key_only && !opts->value_only) {
+	    !opts->separator && !opts->key_only && !opts->value_only &&
+	    !opts->key_value_separator) {
 		strbuf_add(out, info->trailer_start,
 			   info->trailer_end - info->trailer_start);
 		return;
@@ -1155,8 +1156,12 @@ static void format_trailer_info(struct strbuf *out,
 					strbuf_addbuf(out, opts->separator);
 				if (!opts->value_only)
 					strbuf_addbuf(out, &tok);
-				if (!opts->key_only && !opts->value_only)
-					strbuf_addstr(out, ": ");
+				if (!opts->key_only && !opts->value_only) {
+					if (opts->key_value_separator)
+						strbuf_addbuf(out, opts->key_value_separator);
+					else
+						strbuf_addstr(out, ": ");
+				}
 				if (!opts->key_only)
 					strbuf_addbuf(out, &val);
 				if (!opts->separator)

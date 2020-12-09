@@ -74,6 +74,7 @@ struct process_trailer_options {
 	int key_only;
 	int value_only;
 	const struct strbuf *separator;
+	const struct strbuf *key_value_separator;
 	int (*filter)(const struct strbuf *, void *);
 	void *filter_data;
 };
