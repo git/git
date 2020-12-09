@@ -18,7 +18,7 @@ add_upstream_commit() {
 		head2=$(git rev-parse --short HEAD) &&
 		echo "Fetching submodule submodule" > ../expect.err &&
 		echo "From $pwd/submodule" >> ../expect.err &&
-		echo "   $head1..$head2  main       -> origin/main" >> ../expect.err
+		echo "   $head1..$head2  sub        -> origin/sub" >> ../expect.err
 	) &&
 	(
 		cd deepsubmodule &&
@@ -30,7 +30,7 @@ add_upstream_commit() {
 		head2=$(git rev-parse --short HEAD) &&
 		echo "Fetching submodule submodule/subdir/deepsubmodule" >> ../expect.err
 		echo "From $pwd/deepsubmodule" >> ../expect.err &&
-		echo "   $head1..$head2  main       -> origin/main" >> ../expect.err
+		echo "   $head1..$head2  deep       -> origin/deep" >> ../expect.err
 	)
 }
 
@@ -41,7 +41,8 @@ test_expect_success setup '
 		git init &&
 		echo deepsubcontent > deepsubfile &&
 		git add deepsubfile &&
-		git commit -m new deepsubfile
+		git commit -m new deepsubfile &&
+		git branch -M deep
 	) &&
 	mkdir submodule &&
 	(
@@ -50,10 +51,12 @@ test_expect_success setup '
 		echo subcontent > subfile &&
 		git add subfile &&
 		git submodule add "$pwd/deepsubmodule" subdir/deepsubmodule &&
-		git commit -a -m new
+		git commit -a -m new &&
+		git branch -M sub
 	) &&
 	git submodule add "$pwd/submodule" submodule &&
 	git commit -am initial &&
+	git branch -M super &&
 	git clone . downstream &&
 	(
 		cd downstream &&
@@ -61,7 +64,7 @@ test_expect_success setup '
 	)
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "fetch --recurse-submodules recurses into submodules" '
+test_expect_success "fetch --recurse-submodules recurses into submodules" '
 	add_upstream_commit &&
 	(
 		cd downstream &&
@@ -71,7 +74,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "fetch --recurse-submodules recurses
 	test_i18ncmp expect.err actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "submodule.recurse option triggers recursive fetch" '
+test_expect_success "submodule.recurse option triggers recursive fetch" '
 	add_upstream_commit &&
 	(
 		cd downstream &&
@@ -81,7 +84,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "submodule.recurse option triggers r
 	test_i18ncmp expect.err actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "fetch --recurse-submodules -j2 has the same output behaviour" '
+test_expect_success "fetch --recurse-submodules -j2 has the same output behaviour" '
 	add_upstream_commit &&
 	(
 		cd downstream &&
@@ -111,7 +114,7 @@ test_expect_success "fetch --no-recurse-submodules only fetches superproject" '
 	test_must_be_empty actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "using fetchRecurseSubmodules=true in .gitmodules recurses into submodules" '
+test_expect_success "using fetchRecurseSubmodules=true in .gitmodules recurses into submodules" '
 	(
 		cd downstream &&
 		git config -f .gitmodules submodule.submodule.fetchRecurseSubmodules true &&
@@ -141,7 +144,7 @@ test_expect_success "using fetchRecurseSubmodules=false in .git/config overrides
 	test_must_be_empty actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "--recurse-submodules overrides fetchRecurseSubmodules setting from .git/config" '
+test_expect_success "--recurse-submodules overrides fetchRecurseSubmodules setting from .git/config" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules >../actual.out 2>../actual.err &&
@@ -170,7 +173,7 @@ test_expect_success "--quiet propagates to parallel submodules" '
 	test_must_be_empty actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "--dry-run propagates to submodules" '
+test_expect_success "--dry-run propagates to submodules" '
 	add_upstream_commit &&
 	(
 		cd downstream &&
@@ -180,7 +183,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "--dry-run propagates to submodules"
 	test_i18ncmp expect.err actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "Without --dry-run propagates to submodules" '
+test_expect_success "Without --dry-run propagates to submodules" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules >../actual.out 2>../actual.err
@@ -189,7 +192,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Without --dry-run propagates to sub
 	test_i18ncmp expect.err actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "recurseSubmodules=true propagates into submodules" '
+test_expect_success "recurseSubmodules=true propagates into submodules" '
 	add_upstream_commit &&
 	(
 		cd downstream &&
@@ -200,7 +203,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "recurseSubmodules=true propagates i
 	test_i18ncmp expect.err actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "--recurse-submodules overrides config in submodule" '
+test_expect_success "--recurse-submodules overrides config in submodule" '
 	add_upstream_commit &&
 	(
 		cd downstream &&
@@ -225,7 +228,7 @@ test_expect_success "--no-recurse-submodules overrides config setting" '
 	test_must_be_empty actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion doesn't happen when no new commits are fetched in the superproject" '
+test_expect_success "Recursion doesn't happen when no new commits are fetched in the superproject" '
 	(
 		cd downstream &&
 		(
@@ -239,13 +242,13 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion doesn't happen when no ne
 	test_must_be_empty actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion stops when no new submodule commits are fetched" '
+test_expect_success "Recursion stops when no new submodule commits are fetched" '
 	head1=$(git rev-parse --short HEAD) &&
 	git add submodule &&
 	git commit -m "new submodule" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.sub &&
-	echo "   $head1..$head2  main       -> origin/main" >>expect.err.sub &&
+	echo "   $head1..$head2  super      -> origin/super" >>expect.err.sub &&
 	head -3 expect.err >> expect.err.sub &&
 	(
 		cd downstream &&
@@ -255,7 +258,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion stops when no new submodu
 	test_must_be_empty actual.out
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion doesn't happen when new superproject commits don't change any submodules" '
+test_expect_success "Recursion doesn't happen when new superproject commits don't change any submodules" '
 	add_upstream_commit &&
 	head1=$(git rev-parse --short HEAD) &&
 	echo a > file &&
@@ -263,7 +266,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion doesn't happen when new s
 	git commit -m "new file" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.file &&
-	echo "   $head1..$head2  main       -> origin/main" >> expect.err.file &&
+	echo "   $head1..$head2  super      -> origin/super" >> expect.err.file &&
 	(
 		cd downstream &&
 		git fetch >../actual.out 2>../actual.err
@@ -272,7 +275,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion doesn't happen when new s
 	test_i18ncmp expect.err.file actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion picks up config in submodule" '
+test_expect_success "Recursion picks up config in submodule" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules &&
@@ -287,7 +290,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion picks up config in submod
 	git commit -m "new submodule" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.sub &&
-	echo "   $head1..$head2  main       -> origin/main" >> expect.err.sub &&
+	echo "   $head1..$head2  super      -> origin/super" >> expect.err.sub &&
 	cat expect.err >> expect.err.sub &&
 	(
 		cd downstream &&
@@ -301,7 +304,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion picks up config in submod
 	test_must_be_empty actual.out
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion picks up all submodules when necessary" '
+test_expect_success "Recursion picks up all submodules when necessary" '
 	add_upstream_commit &&
 	(
 		cd submodule &&
@@ -316,14 +319,14 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion picks up all submodules w
 		head2=$(git rev-parse --short HEAD) &&
 		echo "Fetching submodule submodule" > ../expect.err.sub &&
 		echo "From $pwd/submodule" >> ../expect.err.sub &&
-		echo "   $head1..$head2  main       -> origin/main" >> ../expect.err.sub
+		echo "   $head1..$head2  sub        -> origin/sub" >> ../expect.err.sub
 	) &&
 	head1=$(git rev-parse --short HEAD) &&
 	git add submodule &&
 	git commit -m "new submodule" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.2 &&
-	echo "   $head1..$head2  main       -> origin/main" >> expect.err.2 &&
+	echo "   $head1..$head2  super      -> origin/super" >> expect.err.2 &&
 	cat expect.err.sub >> expect.err.2 &&
 	tail -3 expect.err >> expect.err.2 &&
 	(
@@ -334,7 +337,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "Recursion picks up all submodules w
 	test_must_be_empty actual.out
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "'--recurse-submodules=on-demand' doesn't recurse when no new commits are fetched in the superproject (and ignores config)" '
+test_expect_success "'--recurse-submodules=on-demand' doesn't recurse when no new commits are fetched in the superproject (and ignores config)" '
 	add_upstream_commit &&
 	(
 		cd submodule &&
@@ -349,7 +352,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'--recurse-submodules=on-demand' do
 		head2=$(git rev-parse --short HEAD) &&
 		echo Fetching submodule submodule > ../expect.err.sub &&
 		echo "From $pwd/submodule" >> ../expect.err.sub &&
-		echo "   $head1..$head2  main       -> origin/main" >> ../expect.err.sub
+		echo "   $head1..$head2  sub        -> origin/sub" >> ../expect.err.sub
 	) &&
 	(
 		cd downstream &&
@@ -361,14 +364,14 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'--recurse-submodules=on-demand' do
 	test_must_be_empty actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "'--recurse-submodules=on-demand' recurses as deep as necessary (and ignores config)" '
+test_expect_success "'--recurse-submodules=on-demand' recurses as deep as necessary (and ignores config)" '
 	head1=$(git rev-parse --short HEAD) &&
 	git add submodule &&
 	git commit -m "new submodule" &&
 	head2=$(git rev-parse --short HEAD) &&
 	tail -3 expect.err > expect.err.deepsub &&
 	echo "From $pwd/." > expect.err &&
-	echo "   $head1..$head2  main       -> origin/main" >>expect.err &&
+	echo "   $head1..$head2  super      -> origin/super" >>expect.err &&
 	cat expect.err.sub >> expect.err &&
 	cat expect.err.deepsub >> expect.err &&
 	(
@@ -389,7 +392,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'--recurse-submodules=on-demand' re
 	test_i18ncmp expect.err actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "'--recurse-submodules=on-demand' stops when no new submodule commits are found in the superproject (and ignores config)" '
+test_expect_success "'--recurse-submodules=on-demand' stops when no new submodule commits are found in the superproject (and ignores config)" '
 	add_upstream_commit &&
 	head1=$(git rev-parse --short HEAD) &&
 	echo a >> file &&
@@ -397,7 +400,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'--recurse-submodules=on-demand' st
 	git commit -m "new file" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.file &&
-	echo "   $head1..$head2  main       -> origin/main" >> expect.err.file &&
+	echo "   $head1..$head2  super      -> origin/super" >> expect.err.file &&
 	(
 		cd downstream &&
 		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err
@@ -406,7 +409,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'--recurse-submodules=on-demand' st
 	test_i18ncmp expect.err.file actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "'fetch.recurseSubmodules=on-demand' overrides global config" '
+test_expect_success "'fetch.recurseSubmodules=on-demand' overrides global config" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules
@@ -418,7 +421,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'fetch.recurseSubmodules=on-demand'
 	git commit -m "new submodule" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.2 &&
-	echo "   $head1..$head2  main       -> origin/main" >>expect.err.2 &&
+	echo "   $head1..$head2  super      -> origin/super" >>expect.err.2 &&
 	head -3 expect.err >> expect.err.2 &&
 	(
 		cd downstream &&
@@ -434,7 +437,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'fetch.recurseSubmodules=on-demand'
 	test_i18ncmp expect.err.2 actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "'submodule.<sub>.fetchRecurseSubmodules=on-demand' overrides fetch.recurseSubmodules" '
+test_expect_success "'submodule.<sub>.fetchRecurseSubmodules=on-demand' overrides fetch.recurseSubmodules" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules
@@ -446,7 +449,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'submodule.<sub>.fetchRecurseSubmod
 	git commit -m "new submodule" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.2 &&
-	echo "   $head1..$head2  main       -> origin/main" >>expect.err.2 &&
+	echo "   $head1..$head2  super      -> origin/super" >>expect.err.2 &&
 	head -3 expect.err >> expect.err.2 &&
 	(
 		cd downstream &&
@@ -462,7 +465,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'submodule.<sub>.fetchRecurseSubmod
 	test_i18ncmp expect.err.2 actual.err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "don't fetch submodule when newly recorded commits are already present" '
+test_expect_success "don't fetch submodule when newly recorded commits are already present" '
 	(
 		cd submodule &&
 		git checkout -q HEAD^^
@@ -472,7 +475,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "don't fetch submodule when newly re
 	git commit -m "submodule rewound" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err &&
-	echo "   $head1..$head2  main       -> origin/main" >> expect.err &&
+	echo "   $head1..$head2  super      -> origin/super" >> expect.err &&
 	(
 		cd downstream &&
 		git fetch >../actual.out 2>../actual.err
@@ -481,11 +484,11 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "don't fetch submodule when newly re
 	test_i18ncmp expect.err actual.err &&
 	(
 		cd submodule &&
-		git checkout -q master
+		git checkout -q sub
 	)
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH "'fetch.recurseSubmodules=on-demand' works also without .gitmodules entry" '
+test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .gitmodules entry" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules
@@ -497,7 +500,7 @@ test_expect_success PREPARE_FOR_MAIN_BRANCH "'fetch.recurseSubmodules=on-demand'
 	git commit -m "new submodule without .gitmodules" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." >expect.err.2 &&
-	echo "   $head1..$head2  main       -> origin/main" >>expect.err.2 &&
+	echo "   $head1..$head2  super      -> origin/super" >>expect.err.2 &&
 	head -3 expect.err >>expect.err.2 &&
 	(
 		cd downstream &&
@@ -663,9 +666,9 @@ test_expect_success 'fetch new submodule commits on-demand without .gitmodules e
 	git config -f .gitmodules --remove-section submodule.sub1 &&
 	git add .gitmodules &&
 	git commit -m "delete gitmodules file" &&
-	git checkout -B master &&
+	git checkout -B super &&
 	git -C downstream fetch &&
-	git -C downstream checkout origin/master &&
+	git -C downstream checkout origin/super &&
 
 	C=$(git -C submodule commit-tree -m "yet another change outside refs/heads" HEAD^{tree}) &&
 	git -C submodule update-ref refs/changes/7 $C &&
