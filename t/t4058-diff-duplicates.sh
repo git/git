@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# NOTICE:
+#   This testsuite does a number of diffs and checks that the output match.
+#   However, it is a "garbage in, garbage out" situation; the trees have
+#   duplicate entries for individual paths, and it results in diffs that do
+#   not make much sense.  As such, it is not clear that the diffs are
+#   "correct".  The primary purpose of these tests was to verify that
+#   diff-tree does not segfault, but there is perhaps some value in ensuring
+#   that the diff output isn't wildly unreasonable.
+
 test_description='test tree diff when trees have duplicate entries'
 . ./test-lib.sh
 
@@ -57,7 +66,16 @@ test_expect_success 'create trees with duplicate entries' '
 	git tag two $outer_two
 '
 
-test_expect_success 'diff-tree between trees' '
+test_expect_success 'create tree without duplicate entries' '
+	blob_one=$(echo one | git hash-object -w --stdin) &&
+	outer_three=$(make_tree \
+		100644 renamed $blob_one
+	) &&
+	git tag three $outer_three
+'
+
+test_expect_success 'diff-tree between duplicate trees' '
+	# See NOTICE at top of file
 	{
 		printf ":000000 100644 $ZERO_OID $blob_two A\touter/inner\n" &&
 		printf ":000000 100644 $ZERO_OID $blob_two A\touter/inner\n" &&
@@ -71,8 +89,33 @@ test_expect_success 'diff-tree between trees' '
 '
 
 test_expect_success 'diff-tree with renames' '
-	# same expectation as above, since we disable rename detection
+	# See NOTICE at top of file.
 	git diff-tree -M -r --no-abbrev one two >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'diff-tree FROM duplicate tree' '
+	# See NOTICE at top of file.
+	{
+		printf ":100644 000000 $blob_one $ZERO_OID D\touter/inner\n" &&
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n" &&
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n" &&
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n" &&
+		printf ":000000 100644 $ZERO_OID $blob_one A\trenamed\n"
+	} >expect &&
+	git diff-tree -r --no-abbrev one three >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'diff-tree FROM duplicate tree, with renames' '
+	# See NOTICE at top of file.
+	{
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n" &&
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n" &&
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n" &&
+		printf ":100644 100644 $blob_one $blob_one R100\touter/inner\trenamed\n"
+	} >expect &&
+	git diff-tree -M -r --no-abbrev one three >actual &&
 	test_cmp expect actual
 '
 
