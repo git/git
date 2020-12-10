@@ -817,4 +817,49 @@ test_expect_success PERL 'invalid file in delayed checkout' '
 	grep "error: external filter .* signaled that .unfiltered. is now available although it has not been delayed earlier" git-stderr.log
 '
 
+for mode in 'case' 'utf-8'
+do
+	case "$mode" in
+	case)	dir='A' symlink='a' mode_prereq='CASE_INSENSITIVE_FS' ;;
+	utf-8)
+		dir=$(printf "\141\314\210") symlink=$(printf "\303\244")
+		mode_prereq='UTF8_NFD_TO_NFC' ;;
+	esac
+
+	test_expect_success PERL,SYMLINKS,$mode_prereq \
+	"delayed checkout with $mode-collision don't write to the wrong place" '
+		test_config_global filter.delay.process \
+			"\"$TEST_ROOT/rot13-filter.pl\" --always-delay delayed.log clean smudge delay" &&
+		test_config_global filter.delay.required true &&
+
+		git init $mode-collision &&
+		(
+			cd $mode-collision &&
+			mkdir target-dir &&
+
+			empty_oid=$(printf "" | git hash-object -w --stdin) &&
+			symlink_oid=$(printf "%s" "$PWD/target-dir" | git hash-object -w --stdin) &&
+			attr_oid=$(echo "$dir/z filter=delay" | git hash-object -w --stdin) &&
+
+			cat >objs <<-EOF &&
+			100644 blob $empty_oid	$dir/x
+			100644 blob $empty_oid	$dir/y
+			100644 blob $empty_oid	$dir/z
+			120000 blob $symlink_oid	$symlink
+			100644 blob $attr_oid	.gitattributes
+			EOF
+
+			git update-index --index-info <objs &&
+			git commit -m "test commit"
+		) &&
+
+		git clone $mode-collision $mode-collision-cloned &&
+		# Make sure z was really delayed
+		grep "IN: smudge $dir/z .* \\[DELAYED\\]" $mode-collision-cloned/delayed.log &&
+
+		# Should not create $dir/z at $symlink/z
+		test_path_is_missing $mode-collision/target-dir/z
+	'
+done
+
 test_done
