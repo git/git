@@ -447,12 +447,16 @@ static int too_many_rename_candidates(int num_destinations, int num_sources,
 	 * growing larger than a "rename_limit" square matrix, ie:
 	 *
 	 *    num_destinations * num_sources > rename_limit * rename_limit
+	 *
+	 * We use st_mult() to check overflow conditions; in the
+	 * exceptional circumstance that size_t isn't large enough to hold
+	 * the multiplication, the system won't be able to allocate enough
+	 * memory for the matrix anyway.
 	 */
 	if (rename_limit <= 0)
 		rename_limit = 32767;
-	if ((num_destinations <= rename_limit || num_sources <= rename_limit) &&
-	    ((uint64_t)num_destinations * (uint64_t)num_sources
-	     <= (uint64_t)rename_limit * (uint64_t)rename_limit))
+	if (st_mult(num_destinations, num_sources)
+	    <= st_mult(rename_limit, rename_limit))
 		return 0;
 
 	options->needed_rename_limit =
@@ -468,9 +472,8 @@ static int too_many_rename_candidates(int num_destinations, int num_sources,
 			continue;
 		limited_sources++;
 	}
-	if ((num_destinations <= rename_limit || limited_sources <= rename_limit) &&
-	    ((uint64_t)num_destinations * (uint64_t)limited_sources
-	     <= (uint64_t)rename_limit * (uint64_t)rename_limit))
+	if (st_mult(num_destinations, limited_sources)
+	    <= st_mult(rename_limit, rename_limit))
 		return 2;
 	return 1;
 }
