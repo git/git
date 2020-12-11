@@ -34,18 +34,6 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filepair *p)
  */
 static int add_rename_dst(struct diff_filepair *p)
 {
-	/*
-	 * If we have multiple entries at the same path in the destination
-	 * tree (an invalid tree, to be sure), turn off rename detection
-	 * entirely.  Once upon a time, diffcore-rename had double free()
-	 * issues due to such duplicate paths, resulting in segfaults.  See
-	 * commit 4d6be03b95 ("diffcore-rename: avoid processing duplicate
-	 * destinations", 2015-02-26).
-	 */
-	if (rename_dst_nr > 0 &&
-	    !strcmp(rename_dst[rename_dst_nr-1].p->two->path, p->two->path))
-		return -1;
-
 	ALLOC_GROW(rename_dst, rename_dst_nr + 1, rename_dst_alloc);
 	rename_dst[rename_dst_nr].p = p;
 	rename_dst[rename_dst_nr].filespec_to_free = NULL;
@@ -63,17 +51,6 @@ static int rename_src_nr, rename_src_alloc;
 
 static void register_rename_src(struct diff_filepair *p)
 {
-	/*
-	 * If we have multiple entries at the same path in the source tree
-	 * (an invalid tree, to be sure), avoid using more more than one
-	 * such entry in rename detection.  Once upon a time, doing so
-	 * caused segfaults; see commit 25d5ea410f ("[PATCH] Redo
-	 * rename/copy detection logic.", 2005-05-24).
-	 */
-	if (rename_src_nr > 0 &&
-	    !strcmp(rename_src[rename_src_nr-1].p->one->path, p->one->path))
-		return;
-
 	if (p->broken_pair) {
 		if (!break_idx) {
 			break_idx = xmalloc(sizeof(*break_idx));

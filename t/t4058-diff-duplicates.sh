@@ -91,7 +91,7 @@ test_expect_success 'diff-tree between duplicate trees' '
 test_expect_success 'diff-tree with renames' '
 	# See NOTICE at top of file.
 	git diff-tree -M -r --no-abbrev one two >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'diff-tree FROM duplicate tree' '
