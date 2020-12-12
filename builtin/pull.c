@@ -949,6 +949,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct object_id rebase_fork_point;
 	int autostash;
 	int rebase_unspecified = 0;
+	int can_ff;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -1044,7 +1045,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_rebase && merge_heads.nr > 1)
 		die(_("Cannot rebase onto multiple branches."));
 
-	if (rebase_unspecified && !opt_ff) {
+	can_ff = get_can_ff(&orig_head, &merge_heads.oid[0]);
+
+	if (rebase_unspecified && !opt_ff && !can_ff) {
 		if (opt_verbosity >= 0)
 			show_advice_pull_non_ff();
 	}
@@ -1063,7 +1066,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		    submodule_touches_in_range(the_repository, &upstream, &curr_head))
 			die(_("cannot rebase with locally recorded submodule modifications"));
 		if (!autostash) {
-			if (get_can_ff(&orig_head, &merge_heads.oid[0])) {
+			if (can_ff) {
 				/* we can fast-forward this without invoking rebase */
 				opt_ff = "--ff-only";
 				ran_ff = 1;
