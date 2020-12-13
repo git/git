@@ -60,10 +60,6 @@ Design Details
 Future Work
 -----------
 
-- Add a 'verify' subcommand to the 'git midx' builtin to verify the
-  contents of the multi-pack-index file match the offsets listed in
-  the corresponding pack-indexes.
-
 - The multi-pack-index allows many packfiles, especially in a context
   where repacking is expensive (such as a very large repo), or
   unexpected maintenance time is unacceptable (such as a high-demand
