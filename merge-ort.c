@@ -368,6 +368,19 @@ static int collect_merge_info_callback(int n,
 	make_traverse_path(fullpath, len + 1, info, p->path, p->pathlen);
 
 	/*
+	 * If mbase, side1, and side2 all match, we can resolve early.  Even
+	 * if these are trees, there will be no renames or anything
+	 * underneath.
+	 */
+	if (side1_matches_mbase && side2_matches_mbase) {
+		/* mbase, side1, & side2 all match; use mbase as resolution */
+		setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
+				names, names+0, mbase_null, 0,
+				filemask, dirmask, 1);
+		return mask;
+	}
+
+	/*
 	 * Record information about the path so we can resolve later in
 	 * process_entries.
 	 */
