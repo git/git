@@ -7,7 +7,14 @@ struct commit;
 struct tree;
 
 struct merge_result {
-	/* Whether the merge is clean */
+	/*
+	 * Whether the merge is clean; possible values:
+	 *    1: clean
+	 *    0: not clean (merge conflicts)
+	 *   <0: operation aborted prematurely.  (object database
+	 *       unreadable, disk full, etc.)  Worktree may be left in an
+	 *       inconsistent state if operation failed near the end.
+	 */
 	int clean;
 
 	/*
