@@ -220,6 +220,7 @@ static int collect_merge_info_callback(int n,
 	size_t len;
 	char *fullpath;
 	unsigned filemask = mask & ~dirmask;
+	unsigned match_mask = 0; /* will be updated below */
 	unsigned mbase_null = !(mask & 1);
 	unsigned side1_null = !(mask & 2);
 	unsigned side2_null = !(mask & 4);
@@ -232,6 +233,22 @@ static int collect_merge_info_callback(int n,
 	unsigned sides_match = (!side1_null && !side2_null &&
 				names[1].mode == names[2].mode &&
 				oideq(&names[1].oid, &names[2].oid));
+
+	/*
+	 * Note: When a path is a file on one side of history and a directory
+	 * in another, we have a directory/file conflict.  In such cases, if
+	 * the conflict doesn't resolve from renames and deletions, then we
+	 * always leave directories where they are and move files out of the
+	 * way.  Thus, while struct conflict_info has a df_conflict field to
+	 * track such conflicts, we ignore that field for any directories at
+	 * a path and only pay attention to it for files at the given path.
+	 * The fact that we leave directories were they are also means that
+	 * we do not need to worry about getting additional df_conflict
+	 * information propagated from parent directories down to children
+	 * (unlike, say traverse_trees_recursive() in unpack-trees.c, which
+	 * sets a newinfo.df_conflicts field specifically to propagate it).
+	 */
+	unsigned df_conflict = (filemask != 0) && (dirmask != 0);
 
 	/* n = 3 is a fundamental assumption. */
 	if (n != 3)
@@ -247,6 +264,14 @@ static int collect_merge_info_callback(int n,
 	assert(side2_null == is_null_oid(&names[2].oid));
 	assert(!mbase_null || !side1_null || !side2_null);
 	assert(mask > 0 && mask < 8);
+
+	/* Determine match_mask */
+	if (side1_matches_mbase)
+		match_mask = (side2_matches_mbase ? 7 : 3);
+	else if (side2_matches_mbase)
+		match_mask = 5;
+	else if (sides_match)
+		match_mask = 6;
 
 	/*
 	 * Get the name of the relevant filepath, which we'll pass to
@@ -266,6 +291,8 @@ static int collect_merge_info_callback(int n,
 	 * so we can resolve later in process_entries.
 	 */
 	ci = xcalloc(1, sizeof(struct conflict_info));
+	ci->df_conflict = df_conflict;
+	ci->match_mask = match_mask;
 	strmap_put(&opti->paths, fullpath, ci);
 
 	/* If dirmask, recurse into subdirectories */
@@ -282,6 +309,15 @@ static int collect_merge_info_callback(int n,
 		newinfo.name = p->path;
 		newinfo.namelen = p->pathlen;
 		newinfo.pathlen = st_add3(newinfo.pathlen, p->pathlen, 1);
+		/*
+		 * If this directory we are about to recurse into cared about
+		 * its parent directory (the current directory) having a D/F
+		 * conflict, then we'd propagate the masks in this way:
+		 *    newinfo.df_conflicts |= (mask & ~dirmask);
+		 * But we don't worry about propagating D/F conflicts.  (See
+		 * comment near setting of local df_conflict variable near
+		 * the beginning of this function).
+		 */
 
 		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++) {
 			if (i == 1 && side1_matches_mbase)
