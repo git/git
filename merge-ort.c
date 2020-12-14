@@ -652,7 +652,10 @@ static int process_renames(struct merge_options *opt,
 
 static int compare_pairs(const void *a_, const void *b_)
 {
-	die("Not yet implemented.");
+	const struct diff_filepair *a = *((const struct diff_filepair **)a_);
+	const struct diff_filepair *b = *((const struct diff_filepair **)b_);
+
+	return strcmp(a->one->path, b->one->path);
 }
 
 /* Call diffcore_rename() to compute which files have changed on given side */
@@ -698,7 +701,35 @@ static int collect_renames(struct merge_options *opt,
 			   struct diff_queue_struct *result,
 			   unsigned side_index)
 {
-	die("Not yet implemented.");
+	int i, clean = 1;
+	struct diff_queue_struct *side_pairs;
+	struct rename_info *renames = &opt->priv->renames;
+
+	side_pairs = &renames->pairs[side_index];
+
+	for (i = 0; i < side_pairs->nr; ++i) {
+		struct diff_filepair *p = side_pairs->queue[i];
+
+		if (p->status != 'R') {
+			diff_free_filepair(p);
+			continue;
+		}
+
+		/*
+		 * p->score comes back from diffcore_rename_extended() with
+		 * the similarity of the renamed file.  The similarity is
+		 * was used to determine that the two files were related
+		 * and are a rename, which we have already used, but beyond
+		 * that we have no use for the similarity.  So p->score is
+		 * now irrelevant.  However, process_renames() will need to
+		 * know which side of the merge this rename was associated
+		 * with, so overwrite p->score with that value.
+		 */
+		p->score = side_index;
+		result->queue[result->nr++] = p;
+	}
+
+	return clean;
 }
 
 static int detect_and_process_renames(struct merge_options *opt,
