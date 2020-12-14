@@ -304,11 +304,17 @@ The remaining data of each directory block is grouped by type:
 
   The extension starts with
 
-  - 32-bit version number: the current supported version is 1.
+  - 32-bit version number: the current supported versions are 1 and 2.
 
-  - 64-bit time: the extension data reflects all changes through the given
+  - (Version 1)
+    64-bit time: the extension data reflects all changes through the given
 	time which is stored as the nanoseconds elapsed since midnight,
 	January 1, 1970.
+
+  - (Version 2)
+    A null terminated string: an opaque token defined by the file system
+    monitor application.  The extension data reflects all changes relative
+    to that token.
 
   - 32-bit bitmap size: the size of the CE_FSMONITOR_VALID bitmap.
 
