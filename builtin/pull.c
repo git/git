@@ -925,6 +925,22 @@ static int get_can_ff(struct object_id *orig_head, struct object_id *orig_merge_
 	return ret;
 }
 
+static void show_advice_pull_non_ff(void)
+{
+	advise(_("Pulling without specifying how to reconcile divergent branches is\n"
+		 "discouraged. You can squelch this message by running one of the following\n"
+		 "commands sometime before your next pull:\n"
+		 "\n"
+		 "  git config pull.rebase false  # merge (the default strategy)\n"
+		 "  git config pull.rebase true   # rebase\n"
+		 "  git config pull.ff only       # fast-forward only\n"
+		 "\n"
+		 "You can replace \"git config\" with \"git config --global\" to set a default\n"
+		 "preference for all repositories. You can also pass --rebase, --no-rebase,\n"
+		 "or --ff-only on the command line to override the configured default per\n"
+		 "invocation.\n"));
+}
+
 int cmd_pull(int argc, const char **argv, const char *prefix)
 {
 	const char *repo, **refspecs;
@@ -1028,19 +1044,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_rebase && merge_heads.nr > 1)
 		die(_("Cannot rebase onto multiple branches."));
 
-	if (rebase_unspecified && opt_verbosity >= 0 && !opt_ff) {
-		advise(_("Pulling without specifying how to reconcile divergent branches is\n"
-			 "discouraged. You can squelch this message by running one of the following\n"
-			 "commands sometime before your next pull:\n"
-			 "\n"
-			 "  git config pull.rebase false  # merge (the default strategy)\n"
-			 "  git config pull.rebase true   # rebase\n"
-			 "  git config pull.ff only       # fast-forward only\n"
-			 "\n"
-			 "You can replace \"git config\" with \"git config --global\" to set a default\n"
-			 "preference for all repositories. You can also pass --rebase, --no-rebase,\n"
-			 "or --ff-only on the command line to override the configured default per\n"
-			 "invocation.\n"));
+	if (rebase_unspecified && !opt_ff) {
+		if (opt_verbosity >= 0)
+			show_advice_pull_non_ff();
 	}
 
 	if (opt_rebase) {
