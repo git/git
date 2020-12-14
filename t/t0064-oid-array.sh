@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='basic tests for the SHA1 array implementation'
+test_description='basic tests for the oid array implementation'
 . ./test-lib.sh
 
 echoid () {
@@ -25,6 +25,7 @@ test_expect_success 'ordered enumeration' '
 test_expect_success 'ordered enumeration with duplicate suppression' '
 	echoid "" 44 55 88 aa >expect &&
 	{
+		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echo for_each_unique
@@ -54,15 +55,17 @@ test_expect_success 'lookup with duplicates' '
 	{
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
+		echoid append 88 44 aa 55 &&
 		echoid lookup 55
 	} | test-tool oid-array >actual &&
 	n=$(cat actual) &&
-	test "$n" -ge 2 &&
-	test "$n" -le 3
+	test "$n" -ge 3 &&
+	test "$n" -le 5
 '
 
 test_expect_success 'lookup non-existing entry with duplicates' '
 	{
+		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echoid append 88 44 aa 55 &&
 		echoid lookup 66
