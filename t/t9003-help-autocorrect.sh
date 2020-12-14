@@ -37,16 +37,30 @@ test_expect_success 'autocorrect showing candidates' '
 	grep "^	distimdistim" actual
 '
 
-test_expect_success 'autocorrect running commands' '
-	git config help.autocorrect -1 &&
+for immediate in -1 immediate
+do
+	test_expect_success 'autocorrect running commands' '
+		git config help.autocorrect $immediate &&
 
-	git lfg >actual &&
-	echo "a single log entry" >expect &&
-	test_cmp expect actual &&
+		git lfg >actual &&
+		echo "a single log entry" >expect &&
+		test_cmp expect actual &&
 
-	git distimdist >actual &&
-	echo "distimdistim was called" >expect &&
-	test_cmp expect actual
+		git distimdist >actual &&
+		echo "distimdistim was called" >expect &&
+		test_cmp expect actual
+	'
+done
+
+test_expect_success 'autocorrect can be declined altogether' '
+	git config help.autocorrect never &&
+
+	test_must_fail git lfg 2>actual &&
+	if test_have_prereq C_LOCALE_OUTPUT
+	then
+		grep "is not a git command" actual &&
+		test_line_count = 1 actual
+	fi
 '
 
 test_done
