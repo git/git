@@ -71,7 +71,10 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 	}
 
 	item->pattern = is_glob;
-	item->src = xstrndup(lhs, llen);
+	if (llen == 1 && *lhs == '@')
+		item->src = xstrdup("HEAD");
+	else
+		item->src = xstrndup(lhs, llen);
 	flags = REFNAME_ALLOW_ONELEVEL | (is_glob ? REFNAME_REFSPEC_PATTERN : 0);
 
 	if (item->negative) {
