@@ -647,7 +647,103 @@ static int handle_content_merge(struct merge_options *opt,
 static int process_renames(struct merge_options *opt,
 			   struct diff_queue_struct *renames)
 {
-	die("Not yet implemented.");
+	int clean_merge = 1, i;
+
+	for (i = 0; i < renames->nr; ++i) {
+		const char *oldpath = NULL, *newpath;
+		struct diff_filepair *pair = renames->queue[i];
+		struct conflict_info *oldinfo = NULL, *newinfo = NULL;
+		struct strmap_entry *old_ent, *new_ent;
+		unsigned int old_sidemask;
+		int target_index, other_source_index;
+		int source_deleted, collision, type_changed;
+
+		old_ent = strmap_get_entry(&opt->priv->paths, pair->one->path);
+		oldpath = old_ent->key;
+		oldinfo = old_ent->value;
+
+		new_ent = strmap_get_entry(&opt->priv->paths, pair->two->path);
+		newpath = new_ent->key;
+		newinfo = new_ent->value;
+
+		/*
+		 * diff_filepairs have copies of pathnames, thus we have to
+		 * use standard 'strcmp()' (negated) instead of '=='.
+		 */
+		if (i + 1 < renames->nr &&
+		    !strcmp(oldpath, renames->queue[i+1]->one->path)) {
+			/* Handle rename/rename(1to2) or rename/rename(1to1) */
+			const char *pathnames[3];
+
+			pathnames[0] = oldpath;
+			pathnames[1] = newpath;
+			pathnames[2] = renames->queue[i+1]->two->path;
+
+			if (!strcmp(pathnames[1], pathnames[2])) {
+				/* Both sides renamed the same way. */
+				die("Not yet implemented");
+
+				/* We handled both renames, i.e. i+1 handled */
+				i++;
+				/* Move to next rename */
+				continue;
+			}
+
+			/* This is a rename/rename(1to2) */
+			die("Not yet implemented");
+
+			i++; /* We handled both renames, i.e. i+1 handled */
+			continue;
+		}
+
+		VERIFY_CI(oldinfo);
+		VERIFY_CI(newinfo);
+		target_index = pair->score; /* from collect_renames() */
+		assert(target_index == 1 || target_index == 2);
+		other_source_index = 3 - target_index;
+		old_sidemask = (1 << other_source_index); /* 2 or 4 */
+		source_deleted = (oldinfo->filemask == 1);
+		collision = ((newinfo->filemask & old_sidemask) != 0);
+		type_changed = !source_deleted &&
+			(S_ISREG(oldinfo->stages[other_source_index].mode) !=
+			 S_ISREG(newinfo->stages[target_index].mode));
+		if (type_changed && collision) {
+			/* special handling so later blocks can handle this */
+			die("Not yet implemented");
+		}
+
+		assert(source_deleted || oldinfo->filemask & old_sidemask);
+
+		/* Need to check for special types of rename conflicts... */
+		if (collision && !source_deleted) {
+			/* collision: rename/add or rename/rename(2to1) */
+			die("Not yet implemented");
+		} else if (collision && source_deleted) {
+			/* rename/add/delete or rename/rename(2to1)/delete */
+			die("Not yet implemented");
+		} else {
+			/* a few different cases... */
+			if (type_changed) {
+				/* rename vs. typechange */
+				die("Not yet implemented");
+			} else if (source_deleted) {
+				/* rename/delete */
+				die("Not yet implemented");
+			} else {
+				/* normal rename */
+				die("Not yet implemented");
+			}
+		}
+
+		if (!type_changed) {
+			/* Mark the original as resolved by removal */
+			oldinfo->merged.is_null = 1;
+			oldinfo->merged.clean = 1;
+		}
+
+	}
+
+	return clean_merge;
 }
 
 static int compare_pairs(const void *a_, const void *b_)
