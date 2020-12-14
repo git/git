@@ -91,6 +91,18 @@ UI, Workflows & Features
  * "git imap-send" used to ignore configuration variables like
    core.askpass; this has been corrected.
 
+ * "git $cmd $args", when $cmd is not a recognised subcommand, by
+   default tries to see if $cmd is a typo of an existing subcommand
+   and optionally executes the corrected command if there is only one
+   possibility, depending on the setting of help.autocorrect; the
+   users can now disable the whole thing, including the cycles spent
+   to find a likely typo, by setting the configuration variable to
+   'never'.
+
+ * "@" sometimes worked (e.g. "git push origin @:there") as a part of
+   a refspec element, but "git push origin @" did not work, which has
+   been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -338,6 +350,19 @@ Fixes since v2.29
    to hold the lockfile they use, but didn't make sure they are
    actually in a repository, which has been corrected.
 
+ * The glossary described a branch as an "active" line of development,
+   which is misleading---a stale and non-moving branch is still a
+   branch.
+   (merge eef1ceabd8 so/glossary-branch-is-not-necessarily-active later to maint).
+
+ * Newer versions of xsltproc can assign IDs in HTML documents it
+   generates in a consistent manner.  Use the feature to help format
+   HTML version of the user manual reproducibly.
+   (merge 3569e11d69 ae/doc-reproducible-html later to maint).
+
+ * Tighten error checking in the codepath that responds to "git fetch".
+   (merge d43a21bdbb jk/check-config-parsing-error-in-upload-pack later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
    (merge 32c83afc2c cw/ci-ghwf-check-ws-errors later to maint).
@@ -363,3 +388,6 @@ Fixes since v2.29
    (merge b86339b12b mt/worktree-error-message-fix later to maint).
    (merge e01ae2a4a7 js/pull-rebase-use-advise later to maint).
    (merge e63d774242 sn/config-doc-typofix later to maint).
+   (merge 08e9df2395 jk/multi-line-indent-style-fix later to maint).
+   (merge e66590348a da/vs-build-iconv-fix later to maint).
+   (merge 7fe07275be js/cmake-extra-built-ins-fix later to maint).
