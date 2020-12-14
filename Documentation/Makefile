@@ -380,7 +380,10 @@ SubmittingPatches.txt: SubmittingPatches
 	$(QUIET_GEN) cp $< $@
 
 XSLT = docbook.xsl
-XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
+XSLTOPTS =
+XSLTOPTS += --xinclude
+XSLTOPTS += --stringparam html.stylesheet docbook-xsl.css
+XSLTOPTS += --param generate.consistent.ids 1
 
 user-manual.html: user-manual.xml $(XSLT)
 	$(QUIET_XSLTPROC)$(RM) $@+ $@ && \
