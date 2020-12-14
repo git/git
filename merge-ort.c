@@ -661,7 +661,33 @@ static void detect_regular_renames(struct merge_options *opt,
 				   struct tree *side,
 				   unsigned side_index)
 {
-	die("Not yet implemented.");
+	struct diff_options diff_opts;
+	struct rename_info *renames = &opt->priv->renames;
+
+	repo_diff_setup(opt->repo, &diff_opts);
+	diff_opts.flags.recursive = 1;
+	diff_opts.flags.rename_empty = 0;
+	diff_opts.detect_rename = DIFF_DETECT_RENAME;
+	diff_opts.rename_limit = opt->rename_limit;
+	if (opt->rename_limit <= 0)
+		diff_opts.rename_limit = 1000;
+	diff_opts.rename_score = opt->rename_score;
+	diff_opts.show_rename_progress = opt->show_rename_progress;
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	diff_setup_done(&diff_opts);
+	diff_tree_oid(&merge_base->object.oid, &side->object.oid, "",
+		      &diff_opts);
+	diffcore_std(&diff_opts);
+
+	if (diff_opts.needed_rename_limit > renames->needed_limit)
+		renames->needed_limit = diff_opts.needed_rename_limit;
+
+	renames->pairs[side_index] = diff_queued_diff;
+
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	diff_queued_diff.nr = 0;
+	diff_queued_diff.queue = NULL;
+	diff_flush(&diff_opts);
 }
 
 /*
@@ -1406,6 +1432,10 @@ void merge_switch_to_result(struct merge_options *opt,
 			printf("%s", sb->buf);
 		}
 		string_list_clear(&olist, 0);
+
+		/* Also include needed rename limit adjustment now */
+		diff_warn_rename_limit("merge.renamelimit",
+				       opti->renames.needed_limit, 0);
 	}
 
 	merge_finalize(opt, result);
