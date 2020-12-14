@@ -27,8 +27,6 @@
 #include "commit-reach.h"
 #include "sequencer.h"
 
-static int default_mode;
-
 /**
  * Parses the value of --rebase. If value is a false value, returns
  * REBASE_FALSE. If value is a true value, returns REBASE_TRUE. If value is
@@ -326,7 +324,7 @@ static const char *config_get_ff(void)
  * looks for the value of "pull.rebase". If both configuration keys do not
  * exist, returns REBASE_FALSE.
  */
-static enum rebase_type config_get_rebase(void)
+static enum rebase_type config_get_rebase(int *rebase_unspecified)
 {
 	struct branch *curr_branch = branch_get("HEAD");
 	const char *value;
@@ -346,7 +344,7 @@ static enum rebase_type config_get_rebase(void)
 	if (!git_config_get_value("pull.rebase", &value))
 		return parse_config_rebase("pull.rebase", value, 1);
 
-	default_mode = 1;
+	*rebase_unspecified = 1;
 
 	return REBASE_FALSE;
 }
@@ -934,6 +932,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct object_id orig_head, curr_head;
 	struct object_id rebase_fork_point;
 	int autostash;
+	int rebase_unspecified = 0;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -955,7 +954,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		opt_ff = xstrdup_or_null(config_get_ff());
 
 	if (opt_rebase < 0)
-		opt_rebase = config_get_rebase();
+		opt_rebase = config_get_rebase(&rebase_unspecified);
 
 	if (read_cache_unmerged())
 		die_resolve_conflict("pull");
@@ -1029,7 +1028,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_rebase && merge_heads.nr > 1)
 		die(_("Cannot rebase onto multiple branches."));
 
-	if (default_mode && opt_verbosity >= 0 && !opt_ff) {
+	if (rebase_unspecified && opt_verbosity >= 0 && !opt_ff) {
 		advise(_("Pulling without specifying how to reconcile divergent branches is\n"
 			 "discouraged. You can squelch this message by running one of the following\n"
 			 "commands sometime before your next pull:\n"
