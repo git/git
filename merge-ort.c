@@ -657,6 +657,7 @@ static int process_renames(struct merge_options *opt,
 		unsigned int old_sidemask;
 		int target_index, other_source_index;
 		int source_deleted, collision, type_changed;
+		const char *rename_branch = NULL, *delete_branch = NULL;
 
 		old_ent = strmap_get_entry(&opt->priv->paths, pair->one->path);
 		oldpath = old_ent->key;
@@ -779,6 +780,15 @@ static int process_renames(struct merge_options *opt,
 			/* special handling so later blocks can handle this */
 			die("Not yet implemented");
 		}
+		if (source_deleted) {
+			if (target_index == 1) {
+				rename_branch = opt->branch1;
+				delete_branch = opt->branch2;
+			} else {
+				rename_branch = opt->branch2;
+				delete_branch = opt->branch1;
+			}
+		}
 
 		assert(source_deleted || oldinfo->filemask & old_sidemask);
 
@@ -790,13 +800,26 @@ static int process_renames(struct merge_options *opt,
 			/* rename/add/delete or rename/rename(2to1)/delete */
 			die("Not yet implemented");
 		} else {
-			/* a few different cases... */
+			/*
+			 * a few different cases...start by copying the
+			 * existing stage(s) from oldinfo over the newinfo
+			 * and update the pathname(s).
+			 */
+			memcpy(&newinfo->stages[0], &oldinfo->stages[0],
+			       sizeof(newinfo->stages[0]));
+			newinfo->filemask |= (1 << MERGE_BASE);
+			newinfo->pathnames[0] = oldpath;
 			if (type_changed) {
 				/* rename vs. typechange */
 				die("Not yet implemented");
 			} else if (source_deleted) {
 				/* rename/delete */
-				die("Not yet implemented");
+				newinfo->path_conflict = 1;
+				path_msg(opt, newpath, 0,
+					 _("CONFLICT (rename/delete): %s renamed"
+					   " to %s in %s, but deleted in %s."),
+					 oldpath, newpath,
+					 rename_branch, delete_branch);
 			} else {
 				/* normal rename */
 				die("Not yet implemented");
@@ -1332,12 +1355,21 @@ static void process_entry(struct merge_options *opt,
 		modify_branch = (side == 1) ? opt->branch1 : opt->branch2;
 		delete_branch = (side == 1) ? opt->branch2 : opt->branch1;
 
-		path_msg(opt, path, 0,
-			 _("CONFLICT (modify/delete): %s deleted in %s "
-			   "and modified in %s.  Version %s of %s left "
-			   "in tree."),
-			 path, delete_branch, modify_branch,
-			 modify_branch, path);
+		if (ci->path_conflict &&
+		    oideq(&ci->stages[0].oid, &ci->stages[side].oid)) {
+			/*
+			 * This came from a rename/delete; no action to take,
+			 * but avoid printing "modify/delete" conflict notice
+			 * since the contents were not modified.
+			 */
+		} else {
+			path_msg(opt, path, 0,
+				 _("CONFLICT (modify/delete): %s deleted in %s "
+				   "and modified in %s.  Version %s of %s left "
+				   "in tree."),
+				 path, delete_branch, modify_branch,
+				 modify_branch, path);
+		}
 	} else if (ci->filemask == 2 || ci->filemask == 4) {
 		/* Added on one side */
 		int side = (ci->filemask == 4) ? 2 : 1;
