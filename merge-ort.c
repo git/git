@@ -674,14 +674,30 @@ static int process_renames(struct merge_options *opt,
 		    !strcmp(oldpath, renames->queue[i+1]->one->path)) {
 			/* Handle rename/rename(1to2) or rename/rename(1to1) */
 			const char *pathnames[3];
+			struct version_info merged;
+			struct conflict_info *base, *side1, *side2;
 
 			pathnames[0] = oldpath;
 			pathnames[1] = newpath;
 			pathnames[2] = renames->queue[i+1]->two->path;
 
+			base = strmap_get(&opt->priv->paths, pathnames[0]);
+			side1 = strmap_get(&opt->priv->paths, pathnames[1]);
+			side2 = strmap_get(&opt->priv->paths, pathnames[2]);
+
+			VERIFY_CI(base);
+			VERIFY_CI(side1);
+			VERIFY_CI(side2);
+
 			if (!strcmp(pathnames[1], pathnames[2])) {
-				/* Both sides renamed the same way. */
-				die("Not yet implemented");
+				/* Both sides renamed the same way */
+				assert(side1 == side2);
+				memcpy(&side1->stages[0], &base->stages[0],
+				       sizeof(merged));
+				side1->filemask |= (1 << MERGE_BASE);
+				/* Mark base as resolved by removal */
+				base->merged.is_null = 1;
+				base->merged.clean = 1;
 
 				/* We handled both renames, i.e. i+1 handled */
 				i++;
