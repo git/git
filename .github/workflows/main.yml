@@ -189,7 +189,6 @@ jobs:
         unzip artifacts.zip
         rm artifacts.zip
     - name: download vcpkg artifacts
-      if: matrix.arch == 'x64'
       shell: powershell
       run: |
         $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
@@ -198,9 +197,6 @@ jobs:
         (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
         Expand-Archive compat.zip -DestinationPath . -Force
         Remove-Item compat.zip
-    - name: install vcpkg deps for arm64
-      if: matrix.arch == 'arm64'
-      run: .\compat\vcbuild\vcpkg_install.bat arm64-windows
     - name: add msbuild to PATH
       uses: microsoft/setup-msbuild@v1
     - name: copy dlls to root
