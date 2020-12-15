@@ -870,7 +870,11 @@ static int process_renames(struct merge_options *opt,
 					 rename_branch, delete_branch);
 			} else {
 				/* normal rename */
-				die("Not yet implemented");
+				memcpy(&newinfo->stages[other_source_index],
+				       &oldinfo->stages[other_source_index],
+				       sizeof(newinfo->stages[0]));
+				newinfo->filemask |= (1 << other_source_index);
+				newinfo->pathnames[other_source_index] = oldpath;
 			}
 		}
 
