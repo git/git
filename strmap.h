@@ -165,7 +165,7 @@ static inline int strintmap_contains(struct strintmap *map, const char *str)
 
 static inline void strintmap_remove(struct strintmap *map, const char *str)
 {
-	return strmap_remove(&map->map, str, 0);
+	strmap_remove(&map->map, str, 0);
 }
 
 static inline int strintmap_empty(struct strintmap *map)
@@ -249,7 +249,7 @@ static inline int strset_contains(struct strset *set, const char *str)
 
 static inline void strset_remove(struct strset *set, const char *str)
 {
-	return strmap_remove(&set->map, str, 0);
+	strmap_remove(&set->map, str, 0);
 }
 
 static inline int strset_empty(struct strset *set)
