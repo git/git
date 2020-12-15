@@ -795,10 +795,58 @@ static int process_renames(struct merge_options *opt,
 		/* Need to check for special types of rename conflicts... */
 		if (collision && !source_deleted) {
 			/* collision: rename/add or rename/rename(2to1) */
-			die("Not yet implemented");
+			const char *pathnames[3];
+			struct version_info merged;
+
+			struct conflict_info *base, *side1, *side2;
+			unsigned clean;
+
+			pathnames[0] = oldpath;
+			pathnames[other_source_index] = oldpath;
+			pathnames[target_index] = newpath;
+
+			base = strmap_get(&opt->priv->paths, pathnames[0]);
+			side1 = strmap_get(&opt->priv->paths, pathnames[1]);
+			side2 = strmap_get(&opt->priv->paths, pathnames[2]);
+
+			VERIFY_CI(base);
+			VERIFY_CI(side1);
+			VERIFY_CI(side2);
+
+			clean = handle_content_merge(opt, pair->one->path,
+						     &base->stages[0],
+						     &side1->stages[1],
+						     &side2->stages[2],
+						     pathnames,
+						     1 + 2 * opt->priv->call_depth,
+						     &merged);
+
+			memcpy(&newinfo->stages[target_index], &merged,
+			       sizeof(merged));
+			if (!clean) {
+				path_msg(opt, newpath, 0,
+					 _("CONFLICT (rename involved in "
+					   "collision): rename of %s -> %s has "
+					   "content conflicts AND collides "
+					   "with another path; this may result "
+					   "in nested conflict markers."),
+					 oldpath, newpath);
+			}
 		} else if (collision && source_deleted) {
-			/* rename/add/delete or rename/rename(2to1)/delete */
-			die("Not yet implemented");
+			/*
+			 * rename/add/delete or rename/rename(2to1)/delete:
+			 * since oldpath was deleted on the side that didn't
+			 * do the rename, there's not much of a content merge
+			 * we can do for the rename.  oldinfo->merged.is_null
+			 * was already set, so we just leave things as-is so
+			 * they look like an add/add conflict.
+			 */
+
+			newinfo->path_conflict = 1;
+			path_msg(opt, newpath, 0,
+				 _("CONFLICT (rename/delete): %s renamed "
+				   "to %s in %s, but deleted in %s."),
+				 oldpath, newpath, rename_branch, delete_branch);
 		} else {
 			/*
 			 * a few different cases...start by copying the
