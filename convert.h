@@ -99,15 +99,34 @@ const char *get_convert_attr_ascii(const struct index_state *istate,
 int convert_to_git(const struct index_state *istate,
 		   const char *path, const char *src, size_t len,
 		   struct strbuf *dst, int conv_flags);
-int convert_to_working_tree(const struct index_state *istate,
-			    const char *path, const char *src,
-			    size_t len, struct strbuf *dst,
-			    const struct checkout_metadata *meta);
-int async_convert_to_working_tree(const struct index_state *istate,
-				  const char *path, const char *src,
-				  size_t len, struct strbuf *dst,
-				  const struct checkout_metadata *meta,
-				  void *dco);
+int convert_to_working_tree_ca(const struct conv_attrs *ca,
+			       const char *path, const char *src,
+			       size_t len, struct strbuf *dst,
+			       const struct checkout_metadata *meta);
+int async_convert_to_working_tree_ca(const struct conv_attrs *ca,
+				     const char *path, const char *src,
+				     size_t len, struct strbuf *dst,
+				     const struct checkout_metadata *meta,
+				     void *dco);
+static inline int convert_to_working_tree(const struct index_state *istate,
+					  const char *path, const char *src,
+					  size_t len, struct strbuf *dst,
+					  const struct checkout_metadata *meta)
+{
+	struct conv_attrs ca;
+	convert_attrs(istate, &ca, path);
+	return convert_to_working_tree_ca(&ca, path, src, len, dst, meta);
+}
+static inline int async_convert_to_working_tree(const struct index_state *istate,
+						const char *path, const char *src,
+						size_t len, struct strbuf *dst,
+						const struct checkout_metadata *meta,
+						void *dco)
+{
+	struct conv_attrs ca;
+	convert_attrs(istate, &ca, path);
+	return async_convert_to_working_tree_ca(&ca, path, src, len, dst, meta, dco);
+}
 int async_query_available_blobs(const char *cmd,
 				struct string_list *available_paths);
 int renormalize_buffer(const struct index_state *istate,
