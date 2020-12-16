@@ -148,4 +148,3 @@ test_expect_success 'Verify status on folder with tracked & ignored files' '
 '
 
 test_done
-
