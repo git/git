@@ -5,7 +5,8 @@ test_description='basic branch output coloring'
 
 test_expect_success 'set up some sample branches' '
 	test_commit foo &&
-	git update-ref refs/remotes/origin/master HEAD &&
+	git branch -M main &&
+	git update-ref refs/remotes/origin/main HEAD &&
 	git update-ref refs/heads/other HEAD
 '
 
@@ -19,16 +20,16 @@ test_expect_success 'set up some color config' '
 
 test_expect_success 'regular output shows colors' '
 	cat >expect <<-\EOF &&
-	* <CYAN>master<RESET>
+	* <CYAN>main<RESET>
 	  <BLUE>other<RESET>
-	  <YELLOW>remotes/origin/master<RESET>
+	  <YELLOW>remotes/origin/main<RESET>
 	EOF
 	git branch --color -a >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH 'verbose output shows colors' '
+test_expect_success 'verbose output shows colors' '
 	oid=$(git rev-parse --short HEAD) &&
 	cat >expect <<-EOF &&
 	* <CYAN>main               <RESET> $oid foo
