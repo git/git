@@ -34,8 +34,10 @@ namespace eval color {
 		}
 		add_option *Text.Background $text_bg
 		add_option *Text.Foreground $text_fg
-		add_option *Text.HighlightBackground $base_bg
-		add_option *Text.HighlightColor $select_bg
+		add_option *Text.selectBackground $select_bg
+		add_option *Text.selectForeground $select_fg
+		add_option *Text.inactiveSelectBackground $select_bg
+		add_option *Text.inactiveSelectForeground $select_fg
 	}
 }
 
