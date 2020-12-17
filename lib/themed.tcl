@@ -174,7 +174,7 @@ proc InitEntryFrame {} {
 
 proc gold_frame {w args} {
 	global use_ttk
-	if {$use_ttk} {
+	if {$use_ttk && ![is_MacOSX]} {
 		eval [linsert $args 0 ttk::frame $w -style Gold.TFrame]
 	} else {
 		eval [linsert $args 0 frame $w -background gold]
@@ -183,7 +183,7 @@ proc gold_frame {w args} {
 
 proc tlabel {w args} {
 	global use_ttk
-	if {$use_ttk} {
+	if {$use_ttk && ![is_MacOSX]} {
 		set cmd [list ttk::label $w -style Color.TLabel]
 		foreach {k v} $args {
 			switch -glob -- $k {
