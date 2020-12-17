@@ -391,3 +391,5 @@ Fixes since v2.29
    (merge 08e9df2395 jk/multi-line-indent-style-fix later to maint).
    (merge e66590348a da/vs-build-iconv-fix later to maint).
    (merge 7fe07275be js/cmake-extra-built-ins-fix later to maint).
+   (merge 633eebe142 jb/midx-doc-update later to maint).
+   (merge 5885367e8f jh/index-v2-doc-on-fsmn later to maint).
