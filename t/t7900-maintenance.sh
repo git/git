@@ -422,7 +422,7 @@ test_expect_success 'start from empty cron table' '
 	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance start &&
 
 	# start registers the repo
-	git config --get --global maintenance.repo "$(pwd)" &&
+	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
 
 	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=daily" cron.txt &&
 	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=hourly" cron.txt &&
@@ -433,7 +433,7 @@ test_expect_success 'stop from existing schedule' '
 	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance stop &&
 
 	# stop does not unregister the repo
-	git config --get --global maintenance.repo "$(pwd)" &&
+	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
 
 	# Operation is idempotent
 	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance stop &&
