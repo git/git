@@ -720,9 +720,6 @@ proc rmsel_tag {text} {
 		-background [$text cget -background] \
 		-foreground [$text cget -foreground] \
 		-borderwidth 0
-	$text tag conf in_sel\
-		-background $color::select_bg \
-		-foreground $color::select_fg
 	bind $text <Motion> break
 	return $text
 }
@@ -3328,11 +3325,20 @@ if {!$use_ttk} {
 	.vpane.files paneconfigure .vpane.files.index -sticky news
 }
 
+proc set_selection_colors {w has_focus} {
+	foreach tag [list in_diff in_sel] {
+		$w tag conf $tag \
+			-background [expr {$has_focus ? $color::select_bg : $color::inactive_select_bg}] \
+			-foreground [expr {$has_focus ? $color::select_fg : $color::inactive_select_fg}]
+	}
+}
+
 foreach i [list $ui_index $ui_workdir] {
 	rmsel_tag $i
-	$i tag conf in_diff \
-		-background $color::select_bg \
-		-foreground $color::select_fg
+
+	set_selection_colors $i 0
+	bind $i <FocusIn>	{ set_selection_colors %W 1 }
+	bind $i <FocusOut>	{ set_selection_colors %W 0 }
 }
 unset i
 
