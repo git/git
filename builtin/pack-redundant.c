@@ -473,6 +473,12 @@ static void cmp_local_packs(void)
 {
 	struct pack_list *subset, *pl = local_packs;
 
+	/* only one packfile */
+	if (!pl->next) {
+		llist_init(&pl->unique_objects);
+		return;
+	}
+
 	while ((subset = pl)) {
 		while ((subset = subset->next))
 			cmp_two_packs(pl, subset);
