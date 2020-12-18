@@ -150,6 +150,149 @@ static int do_as_client__send_flush(void)
 	return 0;
 }
 
+enum fsmonitor_cookie_item_result {
+	FCIR_ERROR = -1, /* could not create cookie file ? */
+	FCIR_INIT = 0,
+	FCIR_SEEN,
+	FCIR_ABORT,
+};
+
+struct fsmonitor_cookie_item {
+	struct hashmap_entry entry;
+	const char *name;
+	enum fsmonitor_cookie_item_result result;
+};
+
+static int cookies_cmp(const void *data, const struct hashmap_entry *he1,
+		     const struct hashmap_entry *he2, const void *keydata)
+{
+	const struct fsmonitor_cookie_item *a =
+		container_of(he1, const struct fsmonitor_cookie_item, entry);
+	const struct fsmonitor_cookie_item *b =
+		container_of(he2, const struct fsmonitor_cookie_item, entry);
+
+	return strcmp(a->name, keydata ? keydata : b->name);
+}
+
+static enum fsmonitor_cookie_item_result fsmonitor_wait_for_cookie(
+	struct fsmonitor_daemon_state *state)
+{
+	int fd;
+	struct fsmonitor_cookie_item cookie;
+	struct strbuf cookie_pathname = STRBUF_INIT;
+	struct strbuf cookie_filename = STRBUF_INIT;
+	const char *slash;
+	int my_cookie_seq;
+
+	pthread_mutex_lock(&state->main_lock);
+
+	my_cookie_seq = state->cookie_seq++;
+
+	strbuf_addbuf(&cookie_pathname, &state->path_cookie_prefix);
+	strbuf_addf(&cookie_pathname, "%i-%i", getpid(), my_cookie_seq);
+
+	slash = find_last_dir_sep(cookie_pathname.buf);
+	if (slash)
+		strbuf_addstr(&cookie_filename, slash + 1);
+	else
+		strbuf_addbuf(&cookie_filename, &cookie_pathname);
+	cookie.name = strbuf_detach(&cookie_filename, NULL);
+	cookie.result = FCIR_INIT;
+	// TODO should we have case-insenstive hash (and in cookie_cmp()) ??
+	hashmap_entry_init(&cookie.entry, strhash(cookie.name));
+
+	/*
+	 * Warning: we are putting the address of a stack variable into a
+	 * global hashmap.  This feels dodgy.  We must ensure that we remove
+	 * it before this thread and stack frame returns.
+	 */
+	hashmap_add(&state->cookies, &cookie.entry);
+
+	trace_printf_key(&trace_fsmonitor, "cookie-wait: '%s' '%s'",
+			 cookie.name, cookie_pathname.buf);
+
+	/*
+	 * Create the cookie file on disk and then wait for a notification
+	 * that the listener thread has seen it.
+	 */
+	fd = open(cookie_pathname.buf, O_WRONLY | O_CREAT | O_EXCL, 0600);
+	if (fd >= 0) {
+		close(fd);
+		unlink_or_warn(cookie_pathname.buf);
+
+		while (cookie.result == FCIR_INIT)
+			pthread_cond_wait(&state->cookies_cond,
+					  &state->main_lock);
+
+		hashmap_remove(&state->cookies, &cookie.entry, NULL);
+	} else {
+		error_errno(_("could not create fsmonitor cookie '%s'"),
+			    cookie.name);
+
+		cookie.result = FCIR_ERROR;
+		hashmap_remove(&state->cookies, &cookie.entry, NULL);
+	}
+
+	pthread_mutex_unlock(&state->main_lock);
+
+	free((char*)cookie.name);
+	strbuf_release(&cookie_pathname);
+	return cookie.result;
+}
+
+/*
+ * Mark these cookies as _SEEN and wake up the corresponding client threads.
+ */
+static void fsmonitor_cookie_mark_seen(struct fsmonitor_daemon_state *state,
+				       const struct string_list *cookie_names)
+{
+	/* assert state->main_lock */
+
+	int k;
+	int nr_seen = 0;
+
+	for (k = 0; k < cookie_names->nr; k++) {
+		struct fsmonitor_cookie_item key;
+		struct fsmonitor_cookie_item *cookie;
+
+		key.name = cookie_names->items[k].string;
+		hashmap_entry_init(&key.entry, strhash(key.name));
+
+		cookie = hashmap_get_entry(&state->cookies, &key, entry, NULL);
+		if (cookie) {
+			trace_printf_key(&trace_fsmonitor, "cookie-seen: '%s'",
+					 cookie->name);
+			cookie->result = FCIR_SEEN;
+			nr_seen++;
+		}
+	}
+
+	if (nr_seen)
+		pthread_cond_broadcast(&state->cookies_cond);
+}
+
+/*
+ * Set _ABORT on all pending cookies and wake up all client threads.
+ */
+static void fsmonitor_cookie_abort_all(struct fsmonitor_daemon_state *state)
+{
+	/* assert state->main_lock */
+
+	struct hashmap_iter iter;
+	struct fsmonitor_cookie_item *cookie;
+	int nr_aborted = 0;
+
+	hashmap_for_each_entry(&state->cookies, &iter, cookie, entry) {
+		trace_printf_key(&trace_fsmonitor, "cookie-abort: '%s'",
+				 cookie->name);
+		cookie->result = FCIR_ABORT;
+		nr_aborted++;
+	}
+
+	if (nr_aborted)
+		pthread_cond_broadcast(&state->cookies_cond);
+}
+
 static int lookup_client_test_delay(void)
 {
 	static int delay_ms = -1;
@@ -435,6 +578,9 @@ static void fsmonitor_free_token_data(struct fsmonitor_token_data *token)
  *     We should create a new token and start fresh (as if we just
  *     booted up).
  *
+ * [2] Some of those lost events may have been for cookie files.  We
+ *     should assume the worst and abort them rather letting them starve.
+ *
  * If there are no readers of the the current token data series, we
  * can free it now.  Otherwise, let the last reader free it.  Either
  * way, the old token data series is no longer associated with our
@@ -453,6 +599,8 @@ void fsmonitor_force_resync(struct fsmonitor_daemon_state *state)
 			 "force resync [old '%s'][new '%s']",
 			 state->current_token_data->token_id.buf,
 			 new_one->token_id.buf);
+
+	fsmonitor_cookie_abort_all(state);
 
 	if (state->current_token_data->client_ref_count == 0)
 		free_me = state->current_token_data;
@@ -526,6 +674,7 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 	kh_str_t *shown;
 	int hash_ret;
 	int result;
+	enum fsmonitor_cookie_item_result cookie_result;
 
 	/*
 	 * We expect `command` to be of the form:
@@ -650,6 +799,39 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 
 		trace_printf_key(&trace_fsmonitor,
 				 "client requested truncated data");
+		result = 0;
+		goto send_trivial_response;
+	}
+
+	pthread_mutex_unlock(&state->main_lock);
+
+	/*
+	 * Write a cookie file inside the directory being watched in an
+	 * effort to flush out existing filesystem events that we actually
+	 * care about.  Suspend this client thread until we see the filesystem
+	 * events for this cookie file.
+	 */
+	cookie_result = fsmonitor_wait_for_cookie(state);
+	if (cookie_result != FCIR_SEEN) {
+		error(_("fsmonitor: cookie_result '%d' != SEEN"),
+		      cookie_result);
+		result = 0;
+		goto send_trivial_response;
+	}
+
+	pthread_mutex_lock(&state->main_lock);
+
+	if (strcmp(requested_token_id.buf,
+		   state->current_token_data->token_id.buf)) {
+		/*
+		 * Ack! The listener thread lost sync with the filesystem
+		 * and created a new token while we were waiting for the
+		 * cookie file to be created!  Just give up.
+		 */
+		pthread_mutex_unlock(&state->main_lock);
+
+		trace_printf_key(&trace_fsmonitor,
+				 "lost filesystem sync");
 		result = 0;
 		goto send_trivial_response;
 	}
@@ -982,6 +1164,9 @@ void fsmonitor_publish(struct fsmonitor_daemon_state *state,
 		}
 	}
 
+	if (cookie_names->nr)
+		fsmonitor_cookie_mark_seen(state, cookie_names);
+
 	pthread_mutex_unlock(&state->main_lock);
 }
 
@@ -1071,7 +1256,9 @@ static int fsmonitor_run_daemon(void)
 
 	memset(&state, 0, sizeof(state));
 
+	hashmap_init(&state.cookies, cookies_cmp, NULL, 0);
 	pthread_mutex_init(&state.main_lock, NULL);
+	pthread_cond_init(&state.cookies_cond, NULL);
 	state.error_code = 0;
 	state.current_token_data = fsmonitor_new_token_data();
 	state.test_client_delay_ms = lookup_client_test_delay();
@@ -1095,6 +1282,15 @@ static int fsmonitor_run_daemon(void)
 	}
 
 	/*
+	 * We will write filesystem syncing cookie files into
+	 * <gitdir>/<cookie-prefix><pid>-<seq>.
+	 */
+	strbuf_init(&state.path_cookie_prefix, 0);
+	strbuf_addbuf(&state.path_cookie_prefix, &state.path_gitdir_watch);
+	strbuf_addch(&state.path_cookie_prefix, '/');
+	strbuf_addstr(&state.path_cookie_prefix, FSMONITOR_COOKIE_PREFIX);
+
+	/*
 	 * Confirm that we can create platform-specific resources for the
 	 * filesystem listener before we bother starting all the threads.
 	 */
@@ -1106,6 +1302,7 @@ static int fsmonitor_run_daemon(void)
 	err = fsmonitor_run_daemon_1(&state);
 
 done:
+	pthread_cond_destroy(&state.cookies_cond);
 	pthread_mutex_destroy(&state.main_lock);
 	fsmonitor_fs_listen__dtor(&state);
 
@@ -1113,6 +1310,7 @@ done:
 
 	strbuf_release(&state.path_worktree_watch);
 	strbuf_release(&state.path_gitdir_watch);
+	strbuf_release(&state.path_cookie_prefix);
 
 	return err;
 }
