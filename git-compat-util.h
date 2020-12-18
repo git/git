@@ -273,7 +273,7 @@ struct itimerval {
 
 #ifdef NO_SETITIMER
 static inline int setitimer(int which, const struct itimerval *value, struct itimerval *newvalue) {
-	; /* nothing */
+	return 0; /* pretend success */
 }
 #endif
 
