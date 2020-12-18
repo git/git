@@ -316,6 +316,75 @@ static void fsmonitor_batch__combine(struct fsmonitor_batch *batch_dest,
 			batch_src->interned_paths[k];
 }
 
+/*
+ * To keep the batch list from growing unbounded in response to filesystem
+ * activity, we try to truncate old batches from the end of the list as
+ * they become irrelevant.
+ *
+ * We assume that the .git/index will be updated with the most recent token
+ * any time the index is updated.  And future commands will only ask for
+ * recent changes *since* that new token.  So as tokens advance into the
+ * future, older batch items will never be requested/needed.  So we can
+ * truncate them without loss of functionality.
+ *
+ * However, multiple commands may be talking to the daemon concurrently
+ * or perform a slow command, so a little "token skew" is possible.
+ * Therefore, we want this to be a little bit lazy and have a generous
+ * delay.
+ *
+ * The current reader thread walked backwards in time from `token->batch_head`
+ * back to `batch_marker` somewhere in the middle of the batch list.
+ *
+ * Let's walk backwards in time from that marker an arbitrary delay
+ * and truncate the list there.  Note that these timestamps are completely
+ * artificial (based on when we pinned the batch item) and not on any
+ * filesystem activity.
+ */
+#define MY_TIME_DELAY (5 * 60) /* seconds */
+
+static void fsmonitor_batch__truncate(struct fsmonitor_daemon_state *state,
+				      const struct fsmonitor_batch *batch_marker)
+{
+	/* assert state->main_lock */
+
+	const struct fsmonitor_batch *batch;
+	struct fsmonitor_batch *rest;
+	struct fsmonitor_batch *p;
+	time_t t;
+
+	if (!batch_marker)
+		return;
+
+	trace_printf_key(&trace_fsmonitor, "TRNC mark (%"PRIu64",%"PRIu64")",
+			 batch_marker->batch_seq_nr,
+			 (uint64_t)batch_marker->pinned_time);
+
+	for (batch = batch_marker; batch; batch = batch->next) {
+		if (!batch->pinned_time) /* an overflow batch */
+			continue;
+
+		t = batch->pinned_time + MY_TIME_DELAY;
+		if (t > batch_marker->pinned_time) /* too close to marker */
+			continue;
+
+		goto truncate_past_here;
+	}
+
+	return;
+
+truncate_past_here:
+	state->current_token_data->batch_tail = (struct fsmonitor_batch *)batch;
+
+	rest = ((struct fsmonitor_batch *)batch)->next;
+	((struct fsmonitor_batch *)batch)->next = NULL;
+
+	for (p = rest; p; p = fsmonitor_batch__free(p)) {
+		trace_printf_key(&trace_fsmonitor,
+				 "TRNC kill (%"PRIu64",%"PRIu64")",
+				 p->batch_seq_nr, (uint64_t)p->pinned_time);
+	}
+}
+
 static void fsmonitor_free_token_data(struct fsmonitor_token_data *token)
 {
 	struct fsmonitor_batch *p;
@@ -647,6 +716,15 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 			 * that work.
 			 */
 			fsmonitor_free_token_data(token_data);
+		} else if (batch) {
+			/*
+			 * This batch is the first item in the list
+			 * that is older than the requested sequence
+			 * number and might be considered to be
+			 * obsolete.  See if we can truncate the list
+			 * and save some memory.
+			 */
+			fsmonitor_batch__truncate(state, batch);
 		}
 	}
 
