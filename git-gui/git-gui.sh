@@ -720,9 +720,6 @@ proc rmsel_tag {text} {
 		-background [$text cget -background] \
 		-foreground [$text cget -foreground] \
 		-borderwidth 0
-	$text tag conf in_sel\
-		-background $color::select_bg \
-		-foreground $color::select_fg
 	bind $text <Motion> break
 	return $text
 }
@@ -1482,6 +1479,7 @@ proc rescan {after {honor_trustmtime 1}} {
 		} elseif {[run_prepare_commit_msg_hook]} {
 		} elseif {[load_message MERGE_MSG]} {
 		} elseif {[load_message SQUASH_MSG]} {
+		} elseif {[load_message [get_config commit.template]]} {
 		}
 		$ui_comm edit reset
 		$ui_comm edit modified false
@@ -1613,6 +1611,12 @@ proc run_prepare_commit_msg_hook {} {
 	} elseif {[file isfile [gitdir SQUASH_MSG]]} {
 		set pcm_source "squash"
 		set fd_sm [open [gitdir SQUASH_MSG] r]
+		fconfigure $fd_sm -encoding utf-8
+		puts -nonewline $fd_pcm [read $fd_sm]
+		close $fd_sm
+	} elseif {[file isfile [get_config commit.template]]} {
+		set pcm_source "template"
+		set fd_sm [open [get_config commit.template] r]
 		fconfigure $fd_sm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_sm]
 		close $fd_sm
@@ -2305,11 +2309,10 @@ proc do_quit {{rc {1}}} {
 		if {$GITGUI_BCK_exists && ![$ui_comm edit modified]} {
 			file rename -force [gitdir GITGUI_BCK] $save
 			set GITGUI_BCK_exists 0
-		} else {
+		} elseif {[$ui_comm edit modified]} {
 			set msg [string trim [$ui_comm get 0.0 end]]
 			regsub -all -line {[ \r\t]+$} $msg {} msg
-			if {(![string match amend* $commit_type]
-				|| [$ui_comm edit modified])
+			if {![string match amend* $commit_type]
 				&& $msg ne {}} {
 				catch {
 					set fd [open $save w]
@@ -3322,11 +3325,20 @@ if {!$use_ttk} {
 	.vpane.files paneconfigure .vpane.files.index -sticky news
 }
 
+proc set_selection_colors {w has_focus} {
+	foreach tag [list in_diff in_sel] {
+		$w tag conf $tag \
+			-background [expr {$has_focus ? $color::select_bg : $color::inactive_select_bg}] \
+			-foreground [expr {$has_focus ? $color::select_fg : $color::inactive_select_fg}]
+	}
+}
+
 foreach i [list $ui_index $ui_workdir] {
 	rmsel_tag $i
-	$i tag conf in_diff \
-		-background $color::select_bg \
-		-foreground $color::select_fg
+
+	set_selection_colors $i 0
+	bind $i <FocusIn>	{ set_selection_colors %W 1 }
+	bind $i <FocusOut>	{ set_selection_colors %W 0 }
 }
 unset i
 
