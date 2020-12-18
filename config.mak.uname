@@ -574,10 +574,6 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	NO_MMAP = YesPlease
 	NO_POLL = YesPlease
 	NO_INTPTR_T = UnfortunatelyYes
-	# Bug report 10-120822-4477 submitted to HP NonStop development.
-	MKDIR_WO_TRAILING_SLASH = YesPlease
-	# RFE 10-120912-4693 submitted to HP NonStop development.
-	NO_SETITIMER = UnfortunatelyYes
 	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
 	SHELL_PATH = /usr/coreutils/bin/bash
 endif
