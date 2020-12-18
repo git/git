@@ -6,19 +6,25 @@ namespace eval color {
 	# Variable colors
 	# Preffered way to set widget colors is using add_option.
 	# In some cases, like with tags in_diff/in_sel, we use these colors.
-	variable select_bg		lightgray
-	variable select_fg		black
+	variable select_bg				lightgray
+	variable select_fg				black
+	variable inactive_select_bg		lightgray
+	variable inactive_select_fg		black
 
 	proc sync_with_theme {} {
-		set base_bg		[ttk::style lookup . -background]
-		set base_fg		[ttk::style lookup . -foreground]
-		set text_bg		[ttk::style lookup Treeview -background]
-		set text_fg		[ttk::style lookup Treeview -foreground]
-		set select_bg	[ttk::style lookup Default -selectbackground]
-		set select_fg	[ttk::style lookup Default -selectforeground]
+		set base_bg				[ttk::style lookup . -background]
+		set base_fg				[ttk::style lookup . -foreground]
+		set text_bg				[ttk::style lookup Treeview -background]
+		set text_fg				[ttk::style lookup Treeview -foreground]
+		set select_bg			[ttk::style lookup Default -selectbackground]
+		set select_fg			[ttk::style lookup Default -selectforeground]
+		set inactive_select_bg	[convert_rgb_to_gray $select_bg]
+		set inactive_select_fg	$select_fg
 
 		set color::select_bg $select_bg
 		set color::select_fg $select_fg
+		set color::inactive_select_bg $inactive_select_bg
+		set color::inactive_select_fg $inactive_select_fg
 
 		proc add_option {key val} {
 			option add $key $val widgetDefault
@@ -36,9 +42,18 @@ namespace eval color {
 		add_option *Text.Foreground $text_fg
 		add_option *Text.selectBackground $select_bg
 		add_option *Text.selectForeground $select_fg
-		add_option *Text.inactiveSelectBackground $select_bg
-		add_option *Text.inactiveSelectForeground $select_fg
+		add_option *Text.inactiveSelectBackground $inactive_select_bg
+		add_option *Text.inactiveSelectForeground $inactive_select_fg
 	}
+}
+
+proc convert_rgb_to_gray {rgb} {
+	# Simply take the average of red, green and blue. This wouldn't be good
+	# enough for, say, converting a photo to grayscale, but for this simple
+	# purpose of approximating the brightness of a color it's good enough.
+	lassign [winfo rgb . $rgb] r g b
+	set gray [expr {($r / 256 + $g / 256 + $b / 256) / 3}]
+	return [format "#%2.2X%2.2X%2.2X" $gray $gray $gray]
 }
 
 proc ttk_get_current_theme {} {
