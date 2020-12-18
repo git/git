@@ -923,7 +923,6 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 		if (!tag)
 			die("Tag %s points nowhere?", e->name);
 		return (struct commit *)tag;
-		break;
 	}
 	default:
 		return NULL;
