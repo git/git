@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2020, #02; Mon, 14)
-X-master-at: 1c52ecf4ba0f4f7af72775695fee653f50737c71
-X-next-at: 06539567b223ae3441fad75ce47b72db03708628
+Subject: What's cooking in git.git (Dec 2020, #03; Fri, 18)
+X-master-at: 6d3ef5b467eccd2769f1aa1c555d317d3c8dc707
+X-next-at: 5298b911bdfa173511fab94a90a4302a2f1965b3
 
-What's cooking in git.git (Dec 2020, #02; Mon, 14)
+What's cooking in git.git (Dec 2020, #03; Fri, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,10 +12,12 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-A preview release 2.30-rc0 has been tagged; there are too many
+A release candidate 2.30-rc1 has been tagged; there are too many
 topics in flight, sadly many of which haven't been adequately
-reviewed.  I wish we had half the number of topics that had been
-reviewed twice as better, but such is life.
+reviewed.  I think there are a couple of topics left in 'next' that
+are obvious candidates for the final, but it would be lovely if we
+can figure out how to get topics in 'seen' that haven't got enough
+love unstuck.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,134 +50,25 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ae/doc-reproducible-html (2020-12-02) 1 commit
-  (merged to 'next' on 2020-12-08 at 263232f371)
- + doc: make HTML manual reproducible
+* ab/unreachable-break (2020-12-15) 1 commit
+  (merged to 'next' on 2020-12-17 at 3eab6be401)
+ + style: do not "break" in switch() after "return"
 
- Newer versions of xsltproc can assign IDs in HTML documents it
- generates in a consistent manner.  Use the feature to help format
- HTML version of the user manual reproducibly.
+ Code clean-up.
 
 
-* da/vs-build-iconv-fix (2020-12-04) 1 commit
-  (merged to 'next' on 2020-12-08 at 4c6c5054a3)
- + ci(vs-build): stop passing the iconv library location explicitly
+* dd/doc-p4-requirements-update (2020-12-14) 1 commit
+  (merged to 'next' on 2020-12-17 at 59649dd9a8)
+ + doc: mention Python 3.x supports
 
- Build update.
-
-
-* dd/help-autocorrect-never (2020-11-25) 1 commit
-  (merged to 'next' on 2020-12-08 at f1531ab641)
- + help.c: help.autocorrect=never means "do not compute suggestions"
-
- "git $cmd $args", when $cmd is not a recognised subcommand, by
- default tries to see if $cmd is a typo of an existing subcommand
- and optionally executes the corrected command if there is only one
- possibility, depending on the setting of help.autocorrect; the
- users can now disable the whole thing, including the cycles spent
- to find a likely typo, by setting the configuration variable to
- 'never'.
+ Doc update.
 
 
-* fc/atmark-in-refspec (2020-11-30) 3 commits
-  (merged to 'next' on 2020-12-08 at bfded23c1c)
- + refspec: make @ a synonym of HEAD
- + tests: push: trivial cleanup
- + tests: push: improve cleanup of HEAD tests
+* es/perf-export-fix (2020-12-16) 1 commit
+  (merged to 'next' on 2020-12-17 at 57489420ed)
+ + t/perf: fix test_export() failure with BSD `sed`
 
- "@" sometimes worked (e.g. "git push origin @:there") as a part of
- a refspec element, but "git push origin @" did not work, which has
- been corrected.
-
-
-* jk/check-config-parsing-error-in-upload-pack (2020-12-03) 1 commit
-  (merged to 'next' on 2020-12-08 at b618c7d956)
- + upload-pack: propagate return value from object filter config callback
-
- Tighten error checking in the codepath that responds to "git fetch".
-
-
-* jk/multi-line-indent-style-fix (2020-12-03) 1 commit
-  (merged to 'next' on 2020-12-08 at e6d1026437)
- + style: indent multiline "if" conditions to align
-
- Style fix.
-
-
-* js/cmake-extra-built-ins-fix (2020-12-04) 1 commit
-  (merged to 'next' on 2020-12-08 at f29945cb35)
- + cmake: determine list of extra built-ins dynamically
-
- VSbuild fix.
-
-
-* js/t5526-with-no-particular-primary-branch-name (2020-12-04) 2 commits
-  (merged to 'next' on 2020-12-08 at b16af9417c)
- + t5526: drop the prereq expecting the default branch name `main`
- + t5526: avoid depending on a specific default branch name
-
- Test update.
-
-
-* so/glossary-branch-is-not-necessarily-active (2020-12-02) 1 commit
-  (merged to 'next' on 2020-12-08 at 01805f8ab6)
- + glossary: improve "branch" definition
-
- The glossary described a branch as an "active" line of development,
- which is misleading---a stale and non-moving branch is still a
- branch.
-
---------------------------------------------------
-[New Topics]
-
-* en/merge-ort-3 (2020-12-14) 11 commits
- - merge-ort: add implementation of type-changed rename handling
- - merge-ort: add implementation of normal rename handling
- - merge-ort: add implementation of rename/delete conflicts
- - merge-ort: add implementation of rename collisions
- - merge-ort: add implementation of both sides renaming differently
- - merge-ort: add implementation of both sides renaming identically
- - merge-ort: add basic outline for process_renames()
- - merge-ort: implement compare_pairs() and collect_renames()
- - merge-ort: implement detect_regular_renames()
- - merge-ort: add initial outline for basic rename detection
- - merge-ort: add basic data structures for handling renames
- (this branch uses en/merge-ort-2 and en/merge-ort-impl.)
-
- Rename detection is added to the "ORT" merge strategy.
-
-
-* jk/disambiguate-equal-in-config-param (2020-12-09) 3 commits
- - config: store "git -c" variables using more robust format
- - config: parse more robust format in GIT_CONFIG_PARAMETERS
- - quote: make sq_dequote_step() a public function
- (this branch uses ps/config-env-pairs.)
-
- The quoting rules used to pass "git -c var=val" configuration
- across processes have been updated in a backward compatible way, so
- that the value read from an environment variable can contain an
- equal sign when using the "git --config-env var=env" feature.
-
- We may want to make this just a part of the ps/config-env-pairs
- topic with a bit of patch shuffling.
-
-
-* js/t7900-protect-pwd-in-config-get (2020-12-09) 1 commit
-  (merged to 'next' on 2020-12-14 at 61ff5e9b5b)
- + t7900: use --fixed-value in git-maintenance tests
-
- Hotfix for test breakage.
-
- Will merge to 'master'.
-
-
-* bc/hashed-mailmap (2020-12-12) 1 commit
- - mailmap: support hashed entries in mailmaps
-
- The mailmap database learned to take hashed value as the original
- side of mapping.
-
- Expecting a reroll.
+ Dev-support fix for BSD.
 
 
 * jb/midx-doc-update (2020-12-14) 1 commit
@@ -184,7 +77,27 @@ Release tarballs are available at:
 
  Doc update.
 
- Will merge to 'next' and to 'master'.
+
+* jc/compat-util-setitimer-fix (2020-12-15) 1 commit
+  (merged to 'next' on 2020-12-17 at 99a9af5066)
+ + compat-util: pretend that stub setitimer() always succeeds
+
+ Fix a recent bug in a rarely used replacement code.
+
+
+* jc/diff-I-status-fix (2020-12-16) 1 commit
+  (merged to 'next' on 2020-12-17 at d7cd43984a)
+ + diff: correct interaction between --exit-code and -I<pattern>
+
+ "git diff -I<pattern> -exit-code" should exit with 0 status when
+ all the changes match the ignored pattern, but it didn't.
+
+
+* jc/strmap-remove-typefix (2020-12-15) 1 commit
+  (merged to 'next' on 2020-12-17 at e94fef7216)
+ + strmap: make callers of strmap_remove() to call it in void context
+
+ C-std compliance fix.
 
 
 * jh/index-v2-doc-on-fsmn (2020-12-14) 1 commit
@@ -193,7 +106,138 @@ Release tarballs are available at:
 
  Doc update.
 
- Will merge to 'next' and to 'master'.
+
+* jk/oid-array-cleanup (2020-12-07) 9 commits
+  (merged to 'next' on 2020-12-14 at 362f6f2618)
+ + commit-graph: use size_t for array allocation and indexing
+ + commit-graph: replace packed_oid_list with oid_array
+ + commit-graph: drop count_distinct_commits() function
+ + oid-array: provide a for-loop iterator
+ + oid-array: make sort function public
+ + cache.h: move hash/oid functions to hash.h
+ + t0064: make duplicate tests more robust
+ + t0064: drop sha1 mention from filename
+ + oid-array.h: drop sha1 mention from header guard
+
+ Code clean-up.
+
+
+* js/init-defaultbranch-advice (2020-12-13) 4 commits
+  (merged to 'next' on 2020-12-15 at bcca948854)
+ + init: provide useful advice about init.defaultBranch
+ + get_default_branch_name(): prepare for showing some advice
+ + branch -m: allow renaming a yet-unborn branch
+ + init: document `init.defaultBranch` better
+
+ Our users are going to be trained to prepare for future change of
+ init.defaultBranch configuration variable.
+
+
+* js/t6300-hardcode-main (2020-12-07) 1 commit
+  (merged to 'next' on 2020-12-14 at 4eed7c6a8b)
+ + t6300: avoid using the default name of the initial branch
+
+ Test update.
+
+
+* js/t7064-master-to-initial (2020-12-08) 1 commit
+  (merged to 'next' on 2020-12-14 at b75529f792)
+ + t7064: avoid relying on a specific default branch name
+
+ Test update.
+
+
+* js/t7900-protect-pwd-in-config-get (2020-12-09) 1 commit
+  (merged to 'next' on 2020-12-14 at 61ff5e9b5b)
+ + t7900: use --fixed-value in git-maintenance tests
+
+ Hotfix for test breakage.
+
+
+* rb/nonstop-config-mak-uname-update (2020-12-16) 1 commit
+  (merged to 'next' on 2020-12-17 at 456a1bc21e)
+ + config.mak.uname: remove old NonStop compatibility settings
+
+ Build update.
+
+
+* rj/make-clean (2020-12-08) 5 commits
+  (merged to 'next' on 2020-12-14 at 767b1398d7)
+ + Makefile: don't use a versioned temp distribution directory
+ + Makefile: don't try to clean old debian build product
+ + gitweb/Makefile: conditionally include ../GIT-VERSION-FILE
+ + Documentation/Makefile: conditionally include ../GIT-VERSION-FILE
+ + Documentation/Makefile: conditionally include doc.dep
+
+ Build optimization.
+
+
+* tb/partial-clone-filters-fix (2020-12-03) 2 commits
+  (merged to 'next' on 2020-12-14 at d44e5942da)
+ + upload-pack.c: don't free allowed_filters util pointers
+ + builtin/clone.c: don't ignore transport_fetch_refs() errors
+
+ Fix potential server side resource deallocation issues when
+ responding to a partial clone request.
+
+--------------------------------------------------
+[New Topics]
+
+* jc/config-pretend-gitdir (2020-12-15) 1 commit
+ - config: --pretend-git-dir for includeIf:gitdir
+
+ WIP
+
+
+* jc/deprecate-pack-redundant (2020-12-15) 1 commit
+ - pack-redundant: gauge the usage before proposing its removal
+
+ Warn loudly when the "pack-redundant" command, which has been left
+ stale with almost unusable performance issues, gets used, as we no
+ longer want to recommend its use (instead just "repack -d" instead).
+
+
+* en/merge-ort-recursive (2020-12-16) 4 commits
+ - merge-ort: implement merge_incore_recursive()
+ - merge-ort: make clear_internal_opts() aware of partial clearing
+ - merge-ort: copy a few small helper functions from merge-recursive.c
+ - commit: move reverse_commit_list() from merge-recursive
+ (this branch uses en/merge-ort-2 and en/merge-ort-impl; is tangled with en/merge-ort-3.)
+
+ The ORT merge strategy learned to synthesize virtual ancestor tree
+ by recursively merging multiple merge bases together, just like the
+ recursive backend has done for years.
+
+ Will merge to 'next'.
+
+
+* js/no-more-prepare-for-main-in-test (2020-12-16) 11 commits
+  (merged to 'next' on 2020-12-18 at d15a382d4d)
+ + tests: drop the `PREPARE_FOR_MAIN_BRANCH` prereq
+ + t9902: use `main` as initial branch name
+ + t6302: use `main` as initial branch name
+ + t5703: use `main` as initial branch name
+ + t5510: use `main` as initial branch name
+ + t5505: finalize transitioning to using the branch name `main`
+ + t3205: finalize transitioning to using the branch name `main`
+ + t3203: complete the transition to using the branch name `main`
+ + t3201: finalize transitioning to using the branch name `main`
+ + t3200: finish transitioning to the initial branch name `main`
+ + t1400: use `main` as initial branch name
+
+ Test coverage fix.
+
+ Will merge to 'master'.
+
+
+* jx/pack-redundant-on-single-pack (2020-12-16) 1 commit
+  (merged to 'next' on 2020-12-18 at b819311529)
+ + pack-redundant: fix crash when one packfile in repo
+
+ "git pack-redandant" when there is only one packfile used to crash,
+ which has been corrected.
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -363,38 +407,12 @@ Release tarballs are available at:
 --------------------------------------------------
 [Needs Review]
 
-* ss/submodule-add-in-c (2020-10-07) 3 commits
- . t7400: add test to check 'submodule add' for tracked paths
- . submodule: port submodule subcommand 'add' from shell to C
- . dir: change the scope of function 'directory_exists_in_index()'
+* ss/submodule-add-in-c (2020-12-15) 3 commits
+ - t7400: add test to check 'submodule add' for tracked paths
+ - submodule: port submodule subcommand 'add' from shell to C
+ - dir: change the scope of function 'directory_exists_in_index()'
 
  "git submodule add" being rewritten in C.
-
- Needs review.
-
-
-* mt/parallel-checkout-part-1 (2020-11-04) 19 commits
- - ci: run test round with parallel-checkout enabled
- - parallel-checkout: add tests related to .gitattributes
- - parallel-checkout: add tests related to clone collisions
- - parallel-checkout: add tests for basic operations
- - checkout-index: add parallel checkout support
- - builtin/checkout.c: complete parallel checkout support
- - make_transient_cache_entry(): optionally alloc from mem_pool
- - parallel-checkout: support progress displaying
- - parallel-checkout: make it truly parallel
- - unpack-trees: add basic support for parallel checkout
- - entry: add checkout_entry_ca() which takes preloaded conv_attrs
- - entry: move conv_attrs lookup up to checkout_entry()
- - entry: extract cache_entry update from write_entry()
- - entry: make fstat_output() and read_blob_entry() public
- - entry: extract a header file for entry.c functions
- - convert: add conv_attrs classification
- - convert: add get_stream_filter_ca() variant
- - convert: add [async_]convert_to_working_tree_ca() variants
- - convert: make convert_attrs() and convert structs public
-
- Parallel checkout.
 
  Needs review.
 
@@ -453,12 +471,88 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* so/log-diff-merge (2020-11-09) 27 commits
+* mt/parallel-checkout-part-1 (2020-12-16) 9 commits
+ - entry: add checkout_entry_ca() taking preloaded conv_attrs
+ - entry: move conv_attrs lookup up to checkout_entry()
+ - entry: extract update_ce_after_write() from write_entry()
+ - entry: make fstat_output() and read_blob_entry() public
+ - entry: extract a header file for entry.c functions
+ - convert: add classification for conv_attrs struct
+ - convert: add get_stream_filter_ca() variant
+ - convert: add [async_]convert_to_working_tree_ca() variants
+ - convert: make convert_attrs() and convert structs public
+
+ Parallel checkout.
+
+ Looking good.
+
+
+* en/merge-ort-3 (2020-12-15) 11 commits
+ - merge-ort: add implementation of type-changed rename handling
+ - merge-ort: add implementation of normal rename handling
+ - merge-ort: add implementation of rename collisions
+ - merge-ort: add implementation of rename/delete conflicts
+ - merge-ort: add implementation of both sides renaming differently
+ - merge-ort: add implementation of both sides renaming identically
+ - merge-ort: add basic outline for process_renames()
+ - merge-ort: implement compare_pairs() and collect_renames()
+ - merge-ort: implement detect_regular_renames()
+ - merge-ort: add initial outline for basic rename detection
+ - merge-ort: add basic data structures for handling renames
+ (this branch uses en/merge-ort-2 and en/merge-ort-impl; is tangled with en/merge-ort-recursive.)
+
+ Rename detection is added to the "ORT" merge strategy.
+
+
+* jk/disambiguate-equal-in-config-param (2020-12-09) 3 commits
+ - config: store "git -c" variables using more robust format
+ - config: parse more robust format in GIT_CONFIG_PARAMETERS
+ - quote: make sq_dequote_step() a public function
+ (this branch uses ps/config-env-pairs.)
+
+ The quoting rules used to pass "git -c var=val" configuration
+ across processes have been updated in a backward compatible way, so
+ that the value read from an environment variable can contain an
+ equal sign when using the "git --config-env var=env" feature.
+
+ We may want to make this just a middle part of the
+ ps/config-env-pairs topic with a bit of patch shuffling.
+
+
+* ps/config-env-pairs (2020-12-09) 6 commits
+ - config: allow specifying config entries via envvar pairs
+ - config: refactor parsing of GIT_CONFIG_PARAMETERS
+ - config: extract function to parse config pairs
+ - environment: make `getenv_safe()` non-static
+ - config: add new way to pass config via `--config-env`
+ - git: add `--super-prefix` to usage string
+ (this branch is used by jk/disambiguate-equal-in-config-param.)
+
+ Introduce two new ways to feed configuration variable-value pairs
+ via environment variables.
+
+
+* bc/hashed-mailmap (2020-12-12) 1 commit
+ - mailmap: support hashed entries in mailmaps
+
+ The mailmap database learned to take hashed value as the original
+ side of mapping.
+
+ Expecting a reroll.
+
+
+* so/log-diff-merge (2020-12-16) 33 commits
+ - t4013: add tests for --diff-merges=first-parent
  - doc/git-show: include --diff-merges description
- - doc/rev-list-options: document --first-parent implies --diff-merges=first-parent
+ - doc/rev-list-options: document --first-parent changes merges format
  - doc/diff-generate-patch: mention new --diff-merges option
  - doc/git-log: describe new --diff-merges options
- - t4013: add test for --diff-merges=first-parent
+ - diff-merges: add '--diff-merges=1' as synonym for 'first-parent'
+ - diff-merges: add old mnemonic counterparts to --diff-merges
+ - diff-merges: let new options enable diff without -p
+ - diff-merges: do not imply -p for new options
+ - diff-merges: handle imply -p on -c/--cc logic for log.c
+ - diff-merges: fix style of functions definitions
  - diff-merges: implement new values for --diff-merges
  - diff-merges: make -m/-c/--cc explicitly mutually exclusive
  - diff-merges: refactor opt settings into separate functions
@@ -484,7 +578,7 @@ Release tarballs are available at:
 
  "git log" learned a new "--diff-merges=<how>" option.
 
- Expecting a reroll.
+ Rerolled.
 
 
 * bc/rev-parse-path-format (2020-12-12) 2 commits
@@ -517,9 +611,11 @@ Release tarballs are available at:
  - merge-ort: add some high-level algorithm structure
  - merge-ort: setup basic internal data structures
  - Merge branch 'en/strmap' into en/merge-ort-impl
- (this branch is used by en/merge-ort-2 and en/merge-ort-3.)
+ (this branch is used by en/merge-ort-2, en/merge-ort-3 and en/merge-ort-recursive.)
 
  The merge backend "done right" starts to emerge.
+
+ Will merge to 'next'.
 
 
 * es/config-hooks (2020-12-07) 34 commits
@@ -583,6 +679,9 @@ Release tarballs are available at:
 
  The "reftable" backend for the refs API.
 
+ Ejected for now, as it has been breaking the tip of 'seen' for too
+ long.
+
 
 * ab/mktag (2020-12-09) 11 commits
  - SQUASH???
@@ -640,15 +739,14 @@ Release tarballs are available at:
  - merge-ort: add a path_conflict field to merge_options_internal
  - merge-ort: add a clear_internal_opts helper
  - merge-ort: add a few includes
- (this branch is used by en/merge-ort-3; uses en/merge-ort-impl.)
+ (this branch is used by en/merge-ort-3 and en/merge-ort-recursive; uses en/merge-ort-impl.)
 
  More "ORT" merge strategy.
 
- Looking good.
- cf. <2ea0aab8-934f-3eaa-e3d0-9ae35a278748@gmail.com>
+ Will merge to 'next'.
 
 
-* fc/pull-merge-rebase (2020-12-14) 5 commits
+* fc/pull-merge-rebase (2020-12-15) 5 commits
  - pull: display default warning only when non-ff
  - pull: correct condition to trigger non-ff advice
  - pull: get rid of unnecessary global variable
@@ -664,41 +762,6 @@ Release tarballs are available at:
  merge if the history fast-forwards.
 
 
-* jk/oid-array-cleanup (2020-12-07) 9 commits
-  (merged to 'next' on 2020-12-14 at 362f6f2618)
- + commit-graph: use size_t for array allocation and indexing
- + commit-graph: replace packed_oid_list with oid_array
- + commit-graph: drop count_distinct_commits() function
- + oid-array: provide a for-loop iterator
- + oid-array: make sort function public
- + cache.h: move hash/oid functions to hash.h
- + t0064: make duplicate tests more robust
- + t0064: drop sha1 mention from filename
- + oid-array.h: drop sha1 mention from header guard
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* js/t6300-hardcode-main (2020-12-07) 1 commit
-  (merged to 'next' on 2020-12-14 at 4eed7c6a8b)
- + t6300: avoid using the default name of the initial branch
-
- Test update.
-
- Will merge to 'master'.
-
-
-* js/t7064-master-to-initial (2020-12-08) 1 commit
-  (merged to 'next' on 2020-12-14 at b75529f792)
- + t7064: avoid relying on a specific default branch name
-
- Test update.
-
- Will merge to 'master'.
-
-
 * pk/subsub-fetch-fix-take-2 (2020-12-09) 1 commit
   (merged to 'next' on 2020-12-14 at ccc01a5f66)
  + submodules: fix of regression on fetching of non-init subsub-repo
@@ -706,30 +769,6 @@ Release tarballs are available at:
  "git fetch --recurse-submodules" fix (second attempt).
 
  Will cook in 'next'.
-
-
-* rj/make-clean (2020-12-08) 5 commits
-  (merged to 'next' on 2020-12-14 at 767b1398d7)
- + Makefile: don't use a versioned temp distribution directory
- + Makefile: don't try to clean old debian build product
- + gitweb/Makefile: conditionally include ../GIT-VERSION-FILE
- + Documentation/Makefile: conditionally include ../GIT-VERSION-FILE
- + Documentation/Makefile: conditionally include doc.dep
-
- Build optimization.
-
- Will merge to 'master'.
-
-
-* tb/partial-clone-filters-fix (2020-12-03) 2 commits
-  (merged to 'next' on 2020-12-14 at d44e5942da)
- + upload-pack.c: don't free allowed_filters util pointers
- + builtin/clone.c: don't ignore transport_fetch_refs() errors
-
- Fix potential server side resource deallocation issues when
- responding to a partial clone request.
-
- Will merge to 'master'.
 
 
 * en/stash-apply-sparse-checkout (2020-12-01) 3 commits
@@ -741,58 +780,36 @@ Release tarballs are available at:
  tree.
 
 
-* js/init-defaultbranch-advice (2020-12-13) 4 commits
- - init: provide useful advice about init.defaultBranch
- - get_default_branch_name(): prepare for showing some advice
- - branch -m: allow renaming a yet-unborn branch
- - init: document `init.defaultBranch` better
-
- Our users are going to be trained to prepare for future change of
- init.defaultBranch configuration variable.
-
-
-* ps/config-env-pairs (2020-12-09) 6 commits
- - config: allow specifying config entries via envvar pairs
- - config: refactor parsing of GIT_CONFIG_PARAMETERS
- - config: extract function to parse config pairs
- - environment: make `getenv_safe()` non-static
- - config: add new way to pass config via `--config-env`
- - git: add `--super-prefix` to usage string
- (this branch is used by jk/disambiguate-equal-in-config-param.)
-
- Introduce two new ways to feed configuration variable-value pairs
- via environment variables.
-
-
 * tb/pack-bitmap (2020-12-08) 24 commits
- - pack-bitmap-write: better reuse bitmaps
- - pack-bitmap-write: relax unique revwalk condition
- - pack-bitmap-write: use existing bitmaps
- - pack-bitmap: factor out 'add_commit_to_bitmap()'
- - pack-bitmap: factor out 'bitmap_for_commit()'
- - pack-bitmap-write: ignore BITMAP_FLAG_REUSE
- - pack-bitmap-write: build fewer intermediate bitmaps
- - pack-bitmap.c: check reads more aggressively when loading
- - pack-bitmap-write: rename children to reverse_edges
- - t5310: add branch-based checks
- - commit: implement commit_list_contains()
- - bitmap: implement bitmap_is_subset()
- - pack-bitmap-write: fill bitmap with commit history
- - pack-bitmap-write: pass ownership of intermediate bitmaps
- - pack-bitmap-write: reimplement bitmap writing
- - ewah: add bitmap_dup() function
- - ewah: implement bitmap_or()
- - ewah: make bitmap growth less aggressive
- - ewah: factor out bitmap growth
- - rev-list: die when --test-bitmap detects a mismatch
- - t5310: drop size of truncated ewah bitmap
- - pack-bitmap: bounds-check size of cache extension
- - pack-bitmap: fix header size check
- - ewah/ewah_bitmap.c: avoid open-coding ALLOC_GROW()
+  (merged to 'next' on 2020-12-15 at 773268c2fb)
+ + pack-bitmap-write: better reuse bitmaps
+ + pack-bitmap-write: relax unique revwalk condition
+ + pack-bitmap-write: use existing bitmaps
+ + pack-bitmap: factor out 'add_commit_to_bitmap()'
+ + pack-bitmap: factor out 'bitmap_for_commit()'
+ + pack-bitmap-write: ignore BITMAP_FLAG_REUSE
+ + pack-bitmap-write: build fewer intermediate bitmaps
+ + pack-bitmap.c: check reads more aggressively when loading
+ + pack-bitmap-write: rename children to reverse_edges
+ + t5310: add branch-based checks
+ + commit: implement commit_list_contains()
+ + bitmap: implement bitmap_is_subset()
+ + pack-bitmap-write: fill bitmap with commit history
+ + pack-bitmap-write: pass ownership of intermediate bitmaps
+ + pack-bitmap-write: reimplement bitmap writing
+ + ewah: add bitmap_dup() function
+ + ewah: implement bitmap_or()
+ + ewah: make bitmap growth less aggressive
+ + ewah: factor out bitmap growth
+ + rev-list: die when --test-bitmap detects a mismatch
+ + t5310: drop size of truncated ewah bitmap
+ + pack-bitmap: bounds-check size of cache extension
+ + pack-bitmap: fix header size check
+ + ewah/ewah_bitmap.c: avoid open-coding ALLOC_GROW()
 
- Various improvement to the codepath that writes out pack bitmaps.
+ Various improvements to the codepath that writes out pack bitmaps.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * js/default-branch-name-tests-final-stretch (2020-11-19) 29 commits
