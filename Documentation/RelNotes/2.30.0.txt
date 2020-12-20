@@ -391,3 +391,9 @@ Fixes since v2.29
    (merge 08e9df2395 jk/multi-line-indent-style-fix later to maint).
    (merge e66590348a da/vs-build-iconv-fix later to maint).
    (merge 7fe07275be js/cmake-extra-built-ins-fix later to maint).
+   (merge 633eebe142 jb/midx-doc-update later to maint).
+   (merge 5885367e8f jh/index-v2-doc-on-fsmn later to maint).
+   (merge 14639a4779 jc/compat-util-setitimer-fix later to maint).
+   (merge 56f56ac50b ab/unreachable-break later to maint).
+   (merge 731d578b4f rb/nonstop-config-mak-uname-update later to maint).
+   (merge f4698738f9 es/perf-export-fix later to maint).

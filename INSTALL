@@ -165,8 +165,7 @@ Issues of note:
 	  use English. Under autoconf the configure script will do this
 	  automatically if it can't find libintl on the system.
 
-	- Python version 2.4 or later (but not 3.x, which is not
-	  supported by Perforce) is needed to use the git-p4 interface
+	- Python version 2.7 or later is needed to use the git-p4 interface
 	  to Perforce.
 
  - Some platform specific issues are dealt with Makefile rules,
