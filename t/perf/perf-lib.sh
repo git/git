@@ -147,10 +147,7 @@ test_run_perf_ () {
 	"$GTIME" -f "%E %U %S" -o test_time.$i "$SHELL" -c '
 . '"$TEST_DIRECTORY"/test-lib-functions.sh'
 test_export () {
-	[ $# != 0 ] || return 0
-	test_export_="$test_export_ $1"
-	shift
-	test_export "$@"
+	test_export_="$test_export_ $*"
 }
 '"$1"'
 ret=$?
