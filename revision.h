@@ -194,6 +194,7 @@ struct rev_info {
 			combine_merges:1,
 			combined_all_paths:1,
 			dense_combined_merges:1,
+			first_parent_merges:1,
 			always_show_header:1;
 	int             ignore_merges:2;
 
