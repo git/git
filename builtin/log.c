@@ -723,10 +723,6 @@ static void log_setup_revisions_tweak(struct rev_info *rev,
 	    rev->prune_data.nr == 1)
 		rev->diffopt.flags.follow_renames = 1;
 
-	/* Turn --cc/-c into -p --cc/-c when -p was not given */
-	if (!rev->diffopt.output_format && rev->combine_merges)
-		rev->diffopt.output_format = DIFF_FORMAT_PATCH;
-
 	if (rev->first_parent_only)
 		diff_merges_default_to_first_parent(rev);
 }

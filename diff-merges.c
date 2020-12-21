@@ -102,4 +102,9 @@ void diff_merges_setup_revs(struct rev_info *revs)
 		revs->ignore_merges = 1;
 	if (revs->combined_all_paths && !revs->combine_merges)
 		die("--combined-all-paths makes no sense without -c or --cc");
+	if (revs->combine_merges) {
+		/* Turn --cc/-c into -p --cc/-c when -p was not given */
+		if (!revs->diffopt.output_format)
+			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
+	}
 }
