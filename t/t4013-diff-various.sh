@@ -329,6 +329,8 @@ log --first-parent --diff-merges=off -p master
 log -p --first-parent master
 log -m -p --first-parent master
 log -m -p master
+:failure log --cc -m -p master
+:failure log -c -m -p master
 log -SF master
 log -S F master
 log -SF -p master
