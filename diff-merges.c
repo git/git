@@ -33,6 +33,7 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 	const char *arg = argv[0];
 
 	if (!strcmp(arg, "-m")) {
+		suppress(revs);
 		/*
 		 * To "diff-index", "-m" means "match missing", and to the "log"
 		 * family of commands, it means "show full diff for merges". Set
