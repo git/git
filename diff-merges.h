@@ -19,6 +19,8 @@ void diff_merges_default_to_first_parent(struct rev_info *revs);
 
 void diff_merges_default_to_dense_combined(struct rev_info *revs);
 
+void diff_merges_set_dense_combined_if_unset(struct rev_info *revs);
+
 void diff_merges_setup_revs(struct rev_info *revs);
 
 #endif
