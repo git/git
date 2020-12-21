@@ -599,7 +599,10 @@ static int show_tree_object(const struct object_id *oid,
 static void show_setup_revisions_tweak(struct rev_info *rev,
 				       struct setup_revision_opt *opt)
 {
-	diff_merges_default_to_dense_combined(rev);
+	if (rev->first_parent_only)
+		diff_merges_default_to_enable(rev);
+	else
+		diff_merges_default_to_dense_combined(rev);
 	if (!rev->diffopt.output_format)
 		rev->diffopt.output_format = DIFF_FORMAT_PATCH;
 }
@@ -724,7 +727,8 @@ static void log_setup_revisions_tweak(struct rev_info *rev,
 	if (!rev->diffopt.output_format && rev->combine_merges)
 		rev->diffopt.output_format = DIFF_FORMAT_PATCH;
 
-	diff_merges_first_parent_defaults_to_enable(rev);
+	if (rev->first_parent_only)
+		diff_merges_default_to_enable(rev);
 }
 
 int cmd_log(int argc, const char **argv, const char *prefix)

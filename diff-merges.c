@@ -56,19 +56,17 @@ void diff_merges_setup_revs(struct rev_info *revs)
 		die("--combined-all-paths makes no sense without -c or --cc");
 }
 
-void diff_merges_first_parent_defaults_to_enable(struct rev_info *revs)
+void diff_merges_default_to_enable(struct rev_info *revs)
 {
-	if (revs->first_parent_only && revs->ignore_merges < 0)
+	if (revs->ignore_merges < 0)		/* No -m */
 		revs->ignore_merges = 0;
 }
 
 void diff_merges_default_to_dense_combined(struct rev_info *revs)
 {
-	if (revs->ignore_merges < 0) {
-		/* There was no "-m" variant on the command line */
+	if (revs->ignore_merges < 0) {		/* No -m */
 		revs->ignore_merges = 0;
-		if (!revs->first_parent_only && !revs->combine_merges) {
-			/* No "--first-parent", "-c", or "--cc" */
+		if (!revs->combine_merges) {	/* No -c/--cc" */
 			revs->combine_merges = 1;
 			revs->dense_combined_merges = 1;
 		}
