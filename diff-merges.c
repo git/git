@@ -2,6 +2,14 @@
 
 #include "revision.h"
 
+static void suppress(struct rev_info *revs)
+{
+	revs->ignore_merges = 1;
+	revs->first_parent_merges = 0;
+	revs->combine_merges = 0;
+	revs->dense_combined_merges = 0;
+}
+
 /*
  * Public functions. They are in the order they are called.
  */
@@ -34,13 +42,13 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 		revs->dense_combined_merges = 1;
 		revs->combine_merges = 1;
 	} else if (!strcmp(arg, "--no-diff-merges")) {
-		revs->ignore_merges = 1;
+		suppress(revs);
 	} else if (!strcmp(arg, "--combined-all-paths")) {
 		revs->diff = 1;
 		revs->combined_all_paths = 1;
 	} else if ((argcount = parse_long_opt("diff-merges", argv, &optarg))) {
 		if (!strcmp(optarg, "off")) {
-			revs->ignore_merges = 1;
+			suppress(revs);
 		} else {
 			die(_("unknown value for --diff-merges: %s"), optarg);
 		}
@@ -48,6 +56,11 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 		argcount = 0;
 
 	return argcount;
+}
+
+void diff_merges_suppress(struct rev_info *revs)
+{
+	suppress(revs);
 }
 
 void diff_merges_default_to_first_parent(struct rev_info *revs)
