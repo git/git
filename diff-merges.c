@@ -4,7 +4,7 @@
 
 static void suppress(struct rev_info *revs)
 {
-	revs->ignore_merges = 1;
+	revs->separate_merges = 0;
 	revs->first_parent_merges = 0;
 	revs->combine_merges = 0;
 	revs->dense_combined_merges = 0;
@@ -23,7 +23,6 @@ static void set_dense_combined(struct rev_info *revs)
 
 void diff_merges_init_revs(struct rev_info *revs)
 {
-	revs->ignore_merges = -1;
 }
 
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
@@ -39,7 +38,7 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 		 * family of commands, it means "show full diff for merges". Set
 		 * both fields appropriately.
 		 */
-		revs->ignore_merges = 0;
+		revs->separate_merges = 1;
 		revs->match_missing = 1;
 	} else if (!strcmp(arg, "-c")) {
 		revs->dense_combined_merges = 0;
@@ -57,8 +56,9 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 			die(_("unknown value for --diff-merges: %s"), optarg);
 		}
 	} else
-		argcount = 0;
+		return 0;
 
+	revs->explicit_diff_merges = 1;
 	return argcount;
 }
 
@@ -69,21 +69,16 @@ void diff_merges_suppress(struct rev_info *revs)
 
 void diff_merges_default_to_first_parent(struct rev_info *revs)
 {
-	if (revs->ignore_merges < 0)		/* No -m */
-		revs->ignore_merges = 0;
-	if (!revs->combine_merges)		/* No -c/--cc" */
+	if (!revs->explicit_diff_merges)
+		revs->separate_merges = 1;
+	if (revs->separate_merges)
 		revs->first_parent_merges = 1;
 }
 
 void diff_merges_default_to_dense_combined(struct rev_info *revs)
 {
-	if (revs->ignore_merges < 0) {		/* No -m */
-		revs->ignore_merges = 0;
-		if (!revs->combine_merges) {	/* No -c/--cc" */
-			revs->combine_merges = 1;
-			revs->dense_combined_merges = 1;
-		}
-	}
+	if (!revs->explicit_diff_merges)
+		set_dense_combined(revs);
 }
 
 void diff_merges_set_dense_combined_if_unset(struct rev_info *revs)
@@ -94,10 +89,10 @@ void diff_merges_set_dense_combined_if_unset(struct rev_info *revs)
 
 void diff_merges_setup_revs(struct rev_info *revs)
 {
-	if (revs->combine_merges && revs->ignore_merges < 0)
-		revs->ignore_merges = 0;
-	if (revs->ignore_merges < 0)
-		revs->ignore_merges = 1;
+	if (revs->combine_merges == 0)
+		revs->dense_combined_merges = 0;
+	if (revs->separate_merges == 0)
+		revs->first_parent_merges = 0;
 	if (revs->combined_all_paths && !revs->combine_merges)
 		die("--combined-all-paths makes no sense without -c or --cc");
 	if (revs->combine_merges) {
