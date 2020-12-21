@@ -10,6 +10,7 @@ static void suppress(struct rev_info *revs)
 	revs->dense_combined_merges = 0;
 	revs->combined_all_paths = 0;
 	revs->combined_imply_patch = 0;
+	revs->merges_need_diff = 0;
 }
 
 static void set_separate(struct rev_info *revs)
@@ -51,9 +52,13 @@ static void set_dense_combined(struct rev_info *revs)
 
 static void set_diff_merges(struct rev_info *revs, const char *optarg)
 {
-	if (!strcmp(optarg, "off") || !strcmp(optarg, "none"))
+	if (!strcmp(optarg, "off") || !strcmp(optarg, "none")) {
 		suppress(revs);
-	else if (!strcmp(optarg, "first-parent"))
+		/* Return early to leave revs->merges_need_diff unset */
+		return;
+	}
+
+	if (!strcmp(optarg, "first-parent"))
 		set_first_parent(revs);
 	else if (!strcmp(optarg, "separate"))
 		set_separate(revs);
@@ -63,6 +68,9 @@ static void set_diff_merges(struct rev_info *revs, const char *optarg)
 		set_dense_combined(revs);
 	else
 		die(_("unknown value for --diff-merges: %s"), optarg);
+
+	/* The flag is cleared by set_xxx() functions, so don't move this up */
+	revs->merges_need_diff = 1;
 }
 
 /*
@@ -129,10 +137,9 @@ void diff_merges_setup_revs(struct rev_info *revs)
 		revs->first_parent_merges = 0;
 	if (revs->combined_all_paths && !revs->combine_merges)
 		die("--combined-all-paths makes no sense without -c or --cc");
-	if (revs->combine_merges)
+	if (revs->combined_imply_patch)
 		revs->diff = 1;
-	if (revs->combined_imply_patch) {
-		/* Turn --cc/-c into -p --cc/-c when -p was not given */
+	if (revs->combined_imply_patch || revs->merges_need_diff) {
 		if (!revs->diffopt.output_format)
 			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 	}

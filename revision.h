@@ -194,6 +194,7 @@ struct rev_info {
 			always_show_header:1,
 			/* Diff-merge flags */
 			explicit_diff_merges: 1,
+			merges_need_diff: 1,
 			separate_merges: 1,
 			combine_merges:1,
 			combined_all_paths:1,
