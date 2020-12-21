@@ -58,7 +58,7 @@ static void set_diff_merges(struct rev_info *revs, const char *optarg)
 		return;
 	}
 
-	if (!strcmp(optarg, "first-parent"))
+	if (!strcmp(optarg, "1") || !strcmp(optarg, "first-parent"))
 		set_first_parent(revs);
 	else if (!strcmp(optarg, "m") || !strcmp(optarg, "separate"))
 		set_separate(revs);
