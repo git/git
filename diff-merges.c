@@ -10,12 +10,43 @@ static void suppress(struct rev_info *revs)
 	revs->dense_combined_merges = 0;
 }
 
+static void set_separate(struct rev_info *revs)
+{
+	suppress(revs);
+	revs->separate_merges = 1;
+}
+
+static void set_m(struct rev_info *revs)
+{
+	/*
+	 * To "diff-index", "-m" means "match missing", and to the "log"
+	 * family of commands, it means "show full diff for merges". Set
+	 * both fields appropriately.
+	 */
+	set_separate(revs);
+	revs->match_missing = 1;
+}
+
+static void set_combined(struct rev_info *revs)
+{
+	revs->combine_merges = 1;
+	revs->dense_combined_merges = 0;
+}
+
 static void set_dense_combined(struct rev_info *revs)
 {
 	revs->combine_merges = 1;
 	revs->dense_combined_merges = 1;
 }
 
+static void set_diff_merges(struct rev_info *revs, const char *optarg)
+{
+	if (!strcmp(optarg, "off")) {
+		suppress(revs);
+	} else {
+		die(_("unknown value for --diff-merges: %s"), optarg);
+	}
+}
 
 /*
  * Public functions. They are in the order they are called.
@@ -27,31 +58,19 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 	const char *optarg;
 	const char *arg = argv[0];
 
-	if (!strcmp(arg, "-m")) {
-		suppress(revs);
-		/*
-		 * To "diff-index", "-m" means "match missing", and to the "log"
-		 * family of commands, it means "show full diff for merges". Set
-		 * both fields appropriately.
-		 */
-		revs->separate_merges = 1;
-		revs->match_missing = 1;
-	} else if (!strcmp(arg, "-c")) {
-		revs->dense_combined_merges = 0;
-		revs->combine_merges = 1;
-	} else if (!strcmp(arg, "--cc")) {
+	if (!strcmp(arg, "-m"))
+		set_m(revs);
+	else if (!strcmp(arg, "-c"))
+		set_combined(revs);
+	else if (!strcmp(arg, "--cc"))
 		set_dense_combined(revs);
-	} else if (!strcmp(arg, "--no-diff-merges")) {
+	else if (!strcmp(arg, "--no-diff-merges"))
 		suppress(revs);
-	} else if (!strcmp(arg, "--combined-all-paths")) {
+	else if (!strcmp(arg, "--combined-all-paths"))
 		revs->combined_all_paths = 1;
-	} else if ((argcount = parse_long_opt("diff-merges", argv, &optarg))) {
-		if (!strcmp(optarg, "off")) {
-			suppress(revs);
-		} else {
-			die(_("unknown value for --diff-merges: %s"), optarg);
-		}
-	} else
+	else if ((argcount = parse_long_opt("diff-merges", argv, &optarg)))
+		set_diff_merges(revs, optarg);
+	else
 		return 0;
 
 	revs->explicit_diff_merges = 1;
