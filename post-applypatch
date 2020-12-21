@@ -49,7 +49,5 @@ then
 		GIT_NOTES_REF=refs/notes/amlog
 		export GIT_NOTES_REF
 		git notes add -f -m "Message-Id: $message_id" "$head"
-		blob=$(git notes list "$head") &&
-		git notes append -m "$head" $blob
 	)
 fi
