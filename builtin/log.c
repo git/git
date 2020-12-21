@@ -600,7 +600,7 @@ static void show_setup_revisions_tweak(struct rev_info *rev,
 				       struct setup_revision_opt *opt)
 {
 	if (rev->first_parent_only)
-		diff_merges_default_to_enable(rev);
+		diff_merges_default_to_first_parent(rev);
 	else
 		diff_merges_default_to_dense_combined(rev);
 	if (!rev->diffopt.output_format)
@@ -728,7 +728,7 @@ static void log_setup_revisions_tweak(struct rev_info *rev,
 		rev->diffopt.output_format = DIFF_FORMAT_PATCH;
 
 	if (rev->first_parent_only)
-		diff_merges_default_to_enable(rev);
+		diff_merges_default_to_first_parent(rev);
 }
 
 int cmd_log(int argc, const char **argv, const char *prefix)

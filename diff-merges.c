@@ -56,7 +56,7 @@ void diff_merges_setup_revs(struct rev_info *revs)
 		die("--combined-all-paths makes no sense without -c or --cc");
 }
 
-void diff_merges_default_to_enable(struct rev_info *revs)
+void diff_merges_default_to_first_parent(struct rev_info *revs)
 {
 	if (revs->ignore_merges < 0)		/* No -m */
 		revs->ignore_merges = 0;
