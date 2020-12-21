@@ -2,12 +2,12 @@
 
 #include "revision.h"
 
-void init_diff_merge_revs(struct rev_info *revs)
+void diff_merges_init_revs(struct rev_info *revs)
 {
 	revs->ignore_merges = -1;
 }
 
-int parse_diff_merge_opts(struct rev_info *revs, const char **argv)
+int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 {
 	int argcount = 1;
 	const char *optarg;
@@ -46,7 +46,7 @@ int parse_diff_merge_opts(struct rev_info *revs, const char **argv)
 	return argcount;
 }
 
-void setup_diff_merges_revs(struct rev_info *revs)
+void diff_merges_setup_revs(struct rev_info *revs)
 {
 	if (revs->combine_merges && revs->ignore_merges < 0)
 		revs->ignore_merges = 0;
@@ -56,13 +56,13 @@ void setup_diff_merges_revs(struct rev_info *revs)
 		die("--combined-all-paths makes no sense without -c or --cc");
 }
 
-void rev_diff_merges_first_parent_defaults_to_enable(struct rev_info *revs)
+void diff_merges_first_parent_defaults_to_enable(struct rev_info *revs)
 {
 	if (revs->first_parent_only && revs->ignore_merges < 0)
 		revs->ignore_merges = 0;
 }
 
-void rev_diff_merges_default_to_dense_combined(struct rev_info *revs)
+void diff_merges_default_to_dense_combined(struct rev_info *revs)
 {
 	if (revs->ignore_merges < 0) {
 		/* There was no "-m" variant on the command line */

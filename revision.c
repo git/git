@@ -1814,7 +1814,7 @@ void repo_init_revisions(struct repository *r,
 
 	revs->repo = r;
 	revs->abbrev = DEFAULT_ABBREV;
-	init_diff_merge_revs(revs);
+	diff_merges_init_revs(revs);
 	revs->simplify_history = 1;
 	revs->pruning.repo = r;
 	revs->pruning.flags.recursive = 1;
@@ -2350,7 +2350,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->diff = 1;
 		revs->diffopt.flags.recursive = 1;
 		revs->diffopt.flags.tree_in_recursive = 1;
-	} else if ((argcount = parse_diff_merge_opts(revs, argv))) {
+	} else if ((argcount = diff_merges_parse_opts(revs, argv))) {
 		return argcount;
 	} else if (!strcmp(arg, "-v")) {
 		revs->verbose_header = 1;
@@ -2849,7 +2849,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 				      &revs->prune_data);
 	}
 
-	setup_diff_merges_revs(revs);
+	diff_merges_setup_revs(revs);
 
 	revs->diffopt.abbrev = revs->abbrev;
 
