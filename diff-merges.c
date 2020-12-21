@@ -8,6 +8,7 @@ static void suppress(struct rev_info *revs)
 	revs->first_parent_merges = 0;
 	revs->combine_merges = 0;
 	revs->dense_combined_merges = 0;
+	revs->combined_all_paths = 0;
 }
 
 static void set_separate(struct rev_info *revs)
@@ -29,12 +30,14 @@ static void set_m(struct rev_info *revs)
 
 static void set_combined(struct rev_info *revs)
 {
+	suppress(revs);
 	revs->combine_merges = 1;
 	revs->dense_combined_merges = 0;
 }
 
 static void set_dense_combined(struct rev_info *revs)
 {
+	suppress(revs);
 	revs->combine_merges = 1;
 	revs->dense_combined_merges = 1;
 }
