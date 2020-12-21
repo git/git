@@ -120,45 +120,62 @@ DIFF FORMATTING
 By default, `git log` does not generate any diff output. The options
 below can be used to show the changes made by each commit.
 
-Note that unless one of `-c`, `--cc`, or `-m` is given, merge commits
-will never show a diff, even if a diff format like `--patch` is
-selected, nor will they match search options like `-S`. The exception is
-when `--first-parent` is in use, in which merges are treated like normal
-single-parent commits (this can be overridden by providing a
-combined-diff option or with `--no-diff-merges`).
+Note that unless one of `--diff-merges` variants (including short
+`-m`, `-c`, and `--cc` options) is explicitly given, merge commits
+will not show a diff, even if a diff format like `--patch` is
+selected, nor will they match search options like `-S`. The exception
+is when `--first-parent` is in use, in which case `first-parent` is
+the default format.
 
--c::
-	With this option, diff output for a merge commit
-	shows the differences from each of the parents to the merge result
-	simultaneously instead of showing pairwise diff between a parent
-	and the result one at a time. Furthermore, it lists only files
-	which were modified from all parents.
-
---cc::
-	This flag implies the `-c` option and further compresses the
-	patch output by omitting uninteresting hunks whose contents in
-	the parents have only two variants and the merge result picks
-	one of them without modification.
+--diff-merges=(off|none|first-parent|1|separate|m|combined|c|dense-combined|cc)::
+--no-diff-merges::
+	Specify diff format to be used for merge commits. Default is
+	`off` unless `--first-parent` is in use, in which case
+	`first-parent` is the default.
++
+--diff-merges=(off|none):::
+--no-diff-merges:::
+	Disable output of diffs for merge commits. Useful to override
+	implied value.
++
+--diff-merges=first-parent:::
+--diff-merges=1:::
+	This option makes merge commits show the full diff with
+	respect to the first parent only.
++
+--diff-merges=separate:::
+--diff-merges=m:::
+-m:::
+	This makes merge commits show the full diff with respect to
+	each of the parents. Separate log entry and diff is generated
+	for each parent. `-m` doesn't produce any output without `-p`.
++
+--diff-merges=combined:::
+--diff-merges=c:::
+-c:::
+	With this option, diff output for a merge commit shows the
+	differences from each of the parents to the merge result
+	simultaneously instead of showing pairwise diff between a
+	parent and the result one at a time. Furthermore, it lists
+	only files which were modified from all parents. `-c` implies
+	`-p`.
++
+--diff-merges=dense-combined:::
+--diff-merges=cc:::
+--cc:::
+	With this option the output produced by
+	`--diff-merges=combined` is further compressed by omitting
+	uninteresting hunks whose contents in the parents have only
+	two variants and the merge result picks one of them without
+	modification.  `--cc` implies `-p`.
 
 --combined-all-paths::
 	This flag causes combined diffs (used for merge commits) to
 	list the name of the file from all parents.  It thus only has
-	effect when -c or --cc are specified, and is likely only
-	useful if filename changes are detected (i.e. when either
-	rename or copy detection have been requested).
+	effect when `--diff-merges=[dense-]combined` is in use, and
+	is likely only useful if filename changes are detected (i.e.
+	when either rename or copy detection have been requested).
 
--m::
-	This flag makes the merge commits show the full diff like
-	regular commits; for each merge parent, a separate log entry
-	and diff is generated. An exception is that only diff against
-	the first parent is shown when `--first-parent` option is given;
-	in that case, the output represents the changes the merge
-	brought _into_ the then-current branch.
-
---diff-merges=off::
---no-diff-merges::
-	Disable output of diffs for merge commits (default). Useful to
-	override `-m`, `-c`, or `--cc`.
 
 :git-log: 1
 include::diff-options.txt[]
