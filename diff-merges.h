@@ -9,8 +9,6 @@
 
 struct rev_info;
 
-void diff_merges_init_revs(struct rev_info *revs);
-
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv);
 
 void diff_merges_suppress(struct rev_info *revs);
