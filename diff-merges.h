@@ -13,11 +13,10 @@ void diff_merges_init_revs(struct rev_info *revs);
 
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv);
 
-void diff_merges_setup_revs(struct rev_info *revs);
+void diff_merges_default_to_first_parent(struct rev_info *revs);
 
 void diff_merges_default_to_dense_combined(struct rev_info *revs);
 
-void diff_merges_default_to_first_parent(struct rev_info *revs);
-
+void diff_merges_setup_revs(struct rev_info *revs);
 
 #endif
