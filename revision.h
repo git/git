@@ -197,6 +197,7 @@ struct rev_info {
 			separate_merges: 1,
 			combine_merges:1,
 			combined_all_paths:1,
+			combined_imply_patch:1,
 			dense_combined_merges:1,
 			first_parent_merges:1;
 
