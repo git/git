@@ -327,6 +327,8 @@ log --no-diff-merges -p --first-parent master
 log --diff-merges=off -p --first-parent master
 log --first-parent --diff-merges=off -p master
 log -p --first-parent master
+log -p --diff-merges=first-parent master
+log --diff-merges=first-parent master
 log -m -p --first-parent master
 log -m -p master
 log --cc -m -p master
