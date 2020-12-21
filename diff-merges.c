@@ -17,6 +17,12 @@ static void set_separate(struct rev_info *revs)
 	revs->separate_merges = 1;
 }
 
+static void set_first_parent(struct rev_info *revs)
+{
+	set_separate(revs);
+	revs->first_parent_merges = 1;
+}
+
 static void set_m(struct rev_info *revs)
 {
 	/*
@@ -44,11 +50,18 @@ static void set_dense_combined(struct rev_info *revs)
 
 static void set_diff_merges(struct rev_info *revs, const char *optarg)
 {
-	if (!strcmp(optarg, "off")) {
+	if (!strcmp(optarg, "off") || !strcmp(optarg, "none"))
 		suppress(revs);
-	} else {
+	else if (!strcmp(optarg, "first-parent"))
+		set_first_parent(revs);
+	else if (!strcmp(optarg, "separate"))
+		set_separate(revs);
+	else if (!strcmp(optarg, "combined"))
+		set_combined(revs);
+	else if (!strcmp(optarg, "dense-combined"))
+		set_dense_combined(revs);
+	else
 		die(_("unknown value for --diff-merges: %s"), optarg);
-	}
 }
 
 /*
