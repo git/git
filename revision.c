@@ -1805,6 +1805,8 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 	return 1;
 }
 
+static void init_diff_merge_revs(struct rev_info *revs);
+
 void repo_init_revisions(struct repository *r,
 			 struct rev_info *revs,
 			 const char *prefix)
@@ -1813,7 +1815,7 @@ void repo_init_revisions(struct repository *r,
 
 	revs->repo = r;
 	revs->abbrev = DEFAULT_ABBREV;
-	revs->ignore_merges = -1;
+	init_diff_merge_revs(revs);
 	revs->simplify_history = 1;
 	revs->pruning.repo = r;
 	revs->pruning.flags.recursive = 1;
@@ -2151,6 +2153,11 @@ static void add_header_grep(struct rev_info *revs, enum grep_header_field field,
 static void add_message_grep(struct rev_info *revs, const char *pattern)
 {
 	add_grep(revs, pattern, GREP_PATTERN_BODY);
+}
+
+static void init_diff_merge_revs(struct rev_info *revs)
+{
+	revs->ignore_merges = -1;
 }
 
 static int parse_diff_merge_opts(struct rev_info *revs, const char **argv)
