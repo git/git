@@ -446,6 +446,22 @@ test_expect_success 'start preserves existing schedule' '
 	grep "Important information!" cron.txt
 '
 
+test_expect_success 'magic markers are correct' '
+	grep "GIT MAINTENANCE SCHEDULE" cron.txt >actual &&
+	cat >expect <<-\EOF &&
+	# BEGIN GIT MAINTENANCE SCHEDULE
+	# END GIT MAINTENANCE SCHEDULE
+	EOF
+	test_cmp actual expect
+'
+
+test_expect_success 'stop preserves surrounding schedule' '
+	echo "Crucial information!" >>cron.txt &&
+	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance stop &&
+	grep "Important information!" cron.txt &&
+	grep "Crucial information!" cron.txt
+'
+
 test_expect_success 'register preserves existing strategy' '
 	git config maintenance.strategy none &&
 	git maintenance register &&
