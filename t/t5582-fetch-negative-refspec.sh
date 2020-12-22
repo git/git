@@ -186,4 +186,55 @@ test_expect_success "fetch --prune with negative refspec" '
 	)
 '
 
+test_expect_success "push with matching : and negative refspec" '
+	# Manually handle cleanup, since test_config is not
+	# prepared to take arbitrary options like --add
+	test_when_finished "test_unconfig -C two remote.one.push" &&
+
+	# For convenience, we use "master" to refer to the name of
+	# the branch created by default in the following.
+	#
+	# Repositories two and one have branches other than "master"
+	# but they have no overlap---"master" is the only one that
+	# is shared between them.  And the master branch at two is
+	# behind the master branch at one by one commit.
+	git -C two config --add remote.one.push : &&
+
+	# A matching push tries to update master, fails due to non-ff
+	test_must_fail git -C two push one &&
+
+	# "master" may actually not be "master"---find it out.
+	current=$(git symbolic-ref HEAD) &&
+
+	# If master is in negative refspec, then the command will not attempt
+	# to push and succeed.
+	git -C two config --add remote.one.push "^$current" &&
+
+	# With "master" excluded, this push is a no-op.  Nothing gets
+	# pushed and it succeeds.
+	git -C two push -v one
+'
+
+test_expect_success "push with matching +: and negative refspec" '
+	test_when_finished "test_unconfig -C two remote.one.push" &&
+
+	# The same set-up as above, whose side-effect was a no-op.
+	git -C two config --add remote.one.push +: &&
+
+	# The push refuses to update the "master" branch that is checked
+	# out in the "one" repository, even when it is forced with +:
+	test_must_fail git -C two push one &&
+
+	# "master" may actually not be "master"---find it out.
+	current=$(git symbolic-ref HEAD) &&
+
+	# If master is in negative refspec, then the command will not attempt
+	# to push and succeed
+	git -C two config --add remote.one.push "^$current" &&
+
+	# With "master" excluded, this push is a no-op.  Nothing gets
+	# pushed and it succeeds.
+	git -C two push -v one
+'
+
 test_done
