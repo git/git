@@ -123,4 +123,9 @@ test_expect_success PERL 'none of this moved HEAD' '
 	verify_saved_head
 '
 
+test_expect_success PERL 'empty tree can be handled' '
+	test_when_finished "git reset --hard" &&
+	git checkout -p $(test_oid empty_tree) --
+'
+
 test_done
