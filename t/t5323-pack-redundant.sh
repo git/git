@@ -112,6 +112,45 @@ test_expect_success 'setup master repo' '
 	create_commits_in "$master_repo" A B C D E F G H I J K L M N O P Q R
 '
 
+test_expect_success 'master: pack-redundant works with no packfile' '
+	(
+		cd "$master_repo" &&
+		cat >expect <<-EOF &&
+			fatal: Zero packs found!
+			EOF
+		test_must_fail git pack-redundant --all >actual 2>&1 &&
+		test_cmp expect actual
+	)
+'
+
+#############################################################################
+# Chart of packs and objects for this test case
+#
+#         | T A B C D E F G H I J K L M N O P Q R
+#     ----+--------------------------------------
+#     P1  | x x x x x x x                       x
+#     ----+--------------------------------------
+#     ALL | x x x x x x x                       x
+#
+#############################################################################
+test_expect_success 'master: pack-redundant works with one packfile' '
+	create_pack_in "$master_repo" P1 <<-EOF &&
+		$T
+		$A
+		$B
+		$C
+		$D
+		$E
+		$F
+		$R
+		EOF
+	(
+		cd "$master_repo" &&
+		git pack-redundant --all >out &&
+		test_must_be_empty out
+	)
+'
+
 #############################################################################
 # Chart of packs and objects for this test case
 #
@@ -125,16 +164,6 @@ test_expect_success 'setup master repo' '
 #
 #############################################################################
 test_expect_success 'master: no redundant for pack 1, 2, 3' '
-	create_pack_in "$master_repo" P1 <<-EOF &&
-		$T
-		$A
-		$B
-		$C
-		$D
-		$E
-		$F
-		$R
-		EOF
 	create_pack_in "$master_repo" P2 <<-EOF &&
 		$B
 		$C
