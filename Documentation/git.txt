@@ -609,8 +609,8 @@ other
 `GIT_SEQUENCE_EDITOR`::
 	This environment variable overrides the configured Git editor
 	when editing the todo list of an interactive rebase. See also
-	linkit::git-rebase[1] and the `sequence.editor` option in
-	linkit::git-config[1].
+	linkgit:git-rebase[1] and the `sequence.editor` option in
+	linkgit:git-config[1].
 
 `GIT_SSH`::
 `GIT_SSH_COMMAND`::
