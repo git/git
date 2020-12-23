@@ -1712,14 +1712,6 @@ test_lazy_prereq REBASE_P '
 	test -z "$GIT_TEST_SKIP_REBASE_P"
 '
 
-# Special-purpose prereq for transitioning to a new default branch name:
-# Some tests need more than just a mindless (case-preserving) s/master/main/g
-# replacement. The non-trivial adjustments are guarded behind this
-# prerequisite, acting kind of as a feature flag
-test_lazy_prereq PREPARE_FOR_MAIN_BRANCH '
-	test "$GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME" = main
-'
-
 # Ensure that no test accidentally triggers a Git command
 # that runs 'crontab', affecting a user's cron schedule.
 # Tests that verify the cron integration must set this locally

@@ -8,7 +8,7 @@ test_description='Test git update-ref and basic ref logging'
 
 Z=$ZERO_OID
 
-m=refs/heads/master
+m=refs/heads/main
 n_dir=refs/heads/gu
 n=$n_dir/fixes
 outside=refs/foo
@@ -27,10 +27,11 @@ create_test_commits ()
 }
 
 test_expect_success setup '
+	git checkout --orphan main &&
 	create_test_commits "" &&
 	mkdir $bare &&
 	cd $bare &&
-	git init --bare &&
+	git init --bare -b main &&
 	create_test_commits "bare" &&
 	cd -
 '
@@ -264,7 +265,7 @@ test_expect_success "(not) changed .git/$m" '
 	! test $B = $(git show-ref -s --verify $m)
 '
 
-rm -f .git/logs/refs/heads/master
+rm -f .git/logs/refs/heads/main
 test_expect_success "create $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
@@ -300,7 +301,7 @@ test_expect_success 'symref empty directory removal' '
 	git branch e1/e2/r1 HEAD &&
 	git branch e1/r2 HEAD &&
 	git checkout e1/e2/r1 &&
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout main" &&
 	test_path_is_file .git/refs/heads/e1/e2/r1 &&
 	test_path_is_file .git/logs/refs/heads/e1/e2/r1 &&
 	git update-ref -d HEAD &&
@@ -364,68 +365,68 @@ test_expect_success 'set up for querying the reflog' '
 ed="Thu, 26 May 2005 18:32:00 -0500"
 gd="Thu, 26 May 2005 18:33:00 -0500"
 ld="Thu, 26 May 2005 18:43:00 -0500"
-test_expect_success 'Query "master@{May 25 2005}" (before history)' '
+test_expect_success 'Query "main@{May 25 2005}" (before history)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify "master@{May 25 2005}" >o 2>e &&
+	git rev-parse --verify "main@{May 25 2005}" >o 2>e &&
 	echo "$C" >expect &&
 	test_cmp expect o &&
-	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
 	test_i18ncmp expect e
 '
-test_expect_success 'Query master@{2005-05-25} (before history)' '
+test_expect_success 'Query main@{2005-05-25} (before history)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify master@{2005-05-25} >o 2>e &&
+	git rev-parse --verify main@{2005-05-25} >o 2>e &&
 	echo "$C" >expect &&
 	test_cmp expect o &&
-	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
 	test_i18ncmp expect e
 '
-test_expect_success 'Query "master@{May 26 2005 23:31:59}" (1 second before history)' '
+test_expect_success 'Query "main@{May 26 2005 23:31:59}" (1 second before history)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
+	git rev-parse --verify "main@{May 26 2005 23:31:59}" >o 2>e &&
 	echo "$C" >expect &&
 	test_cmp expect o &&
-	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
 	test_i18ncmp expect e
 '
-test_expect_success 'Query "master@{May 26 2005 23:32:00}" (exactly history start)' '
+test_expect_success 'Query "main@{May 26 2005 23:32:00}" (exactly history start)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
+	git rev-parse --verify "main@{May 26 2005 23:32:00}" >o 2>e &&
 	echo "$C" >expect &&
 	test_cmp expect o &&
 	test_must_be_empty e
 '
-test_expect_success 'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' '
+test_expect_success 'Query "main@{May 26 2005 23:32:30}" (first non-creation change)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
+	git rev-parse --verify "main@{May 26 2005 23:32:30}" >o 2>e &&
 	echo "$A" >expect &&
 	test_cmp expect o &&
 	test_must_be_empty e
 '
-test_expect_success 'Query "master@{2005-05-26 23:33:01}" (middle of history with gap)' '
+test_expect_success 'Query "main@{2005-05-26 23:33:01}" (middle of history with gap)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify "master@{2005-05-26 23:33:01}" >o 2>e &&
+	git rev-parse --verify "main@{2005-05-26 23:33:01}" >o 2>e &&
 	echo "$B" >expect &&
 	test_cmp expect o &&
 	test_i18ngrep -F "warning: log for ref $m has gap after $gd" e
 '
-test_expect_success 'Query "master@{2005-05-26 23:38:00}" (middle of history)' '
+test_expect_success 'Query "main@{2005-05-26 23:38:00}" (middle of history)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify "master@{2005-05-26 23:38:00}" >o 2>e &&
+	git rev-parse --verify "main@{2005-05-26 23:38:00}" >o 2>e &&
 	echo "$Z" >expect &&
 	test_cmp expect o &&
 	test_must_be_empty e
 '
-test_expect_success 'Query "master@{2005-05-26 23:43:00}" (exact end of history)' '
+test_expect_success 'Query "main@{2005-05-26 23:43:00}" (exact end of history)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify "master@{2005-05-26 23:43:00}" >o 2>e &&
+	git rev-parse --verify "main@{2005-05-26 23:43:00}" >o 2>e &&
 	echo "$E" >expect &&
 	test_cmp expect o &&
 	test_must_be_empty e
 '
-test_expect_success 'Query "master@{2005-05-28}" (past end of history)' '
+test_expect_success 'Query "main@{2005-05-28}" (past end of history)' '
 	test_when_finished "rm -f o e" &&
-	git rev-parse --verify "master@{2005-05-28}" >o 2>e &&
+	git rev-parse --verify "main@{2005-05-28}" >o 2>e &&
 	echo "$D" >expect &&
 	test_cmp expect o &&
 	test_i18ngrep -F "warning: log for ref $m unexpectedly ended on $ld" e
@@ -467,14 +468,14 @@ test_expect_success 'git commit logged updates' '
 '
 unset h_TEST h_OTHER h_FIXED h_MERGED
 
-test_expect_success 'git cat-file blob master:F (expect OTHER)' '
-	test OTHER = $(git cat-file blob master:F)
+test_expect_success 'git cat-file blob main:F (expect OTHER)' '
+	test OTHER = $(git cat-file blob main:F)
 '
-test_expect_success 'git cat-file blob master@{2005-05-26 23:30}:F (expect TEST)' '
-	test TEST = $(git cat-file blob "master@{2005-05-26 23:30}:F")
+test_expect_success 'git cat-file blob main@{2005-05-26 23:30}:F (expect TEST)' '
+	test TEST = $(git cat-file blob "main@{2005-05-26 23:30}:F")
 '
-test_expect_success 'git cat-file blob master@{2005-05-26 23:42}:F (expect OTHER)' '
-	test OTHER = $(git cat-file blob "master@{2005-05-26 23:42}:F")
+test_expect_success 'git cat-file blob main@{2005-05-26 23:42}:F (expect OTHER)' '
+	test OTHER = $(git cat-file blob "main@{2005-05-26 23:42}:F")
 '
 
 # Test adding and deleting pseudorefs
@@ -586,21 +587,21 @@ test_expect_success 'stdin fails on unknown command' '
 '
 
 test_expect_success 'stdin fails on unbalanced quotes' '
-	echo "create $a \"master" >stdin &&
+	echo "create $a \"main" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: badly quoted argument: \\\"master" err
+	grep "fatal: badly quoted argument: \\\"main" err
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH 'stdin fails on invalid escape' '
+test_expect_success 'stdin fails on invalid escape' '
 	echo "create $a \"ma\zn\"" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
 	grep "fatal: badly quoted argument: \\\"ma\\\\zn\\\"" err
 '
 
 test_expect_success 'stdin fails on junk after quoted argument' '
-	echo "create \"$a\"master" >stdin &&
+	echo "create \"$a\"main" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: unexpected character after quoted argument: \\\"$a\\\"master" err
+	grep "fatal: unexpected character after quoted argument: \\\"$a\\\"main" err
 '
 
 test_expect_success 'stdin fails create with no ref' '
@@ -710,7 +711,7 @@ test_expect_success 'stdin succeeds with quoted argument' '
 	test_cmp expect actual
 '
 
-test_expect_success PREPARE_FOR_MAIN_BRANCH 'stdin succeeds with escaped character' '
+test_expect_success 'stdin succeeds with escaped character' '
 	git update-ref -d $a &&
 	echo "create $a \"ma\\151n\"" >stdin &&
 	git update-ref --stdin <stdin &&
