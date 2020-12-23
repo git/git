@@ -3517,17 +3517,6 @@ static int merge_trees_internal(struct merge_options *opt,
 	return clean;
 }
 
-static struct commit_list *reverse_commit_list(struct commit_list *list)
-{
-	struct commit_list *next = NULL, *current, *backup;
-	for (current = list; current; current = backup) {
-		backup = current->next;
-		current->next = next;
-		next = current;
-	}
-	return next;
-}
-
 /*
  * Merge the commits h1 and h2, returning a flag (int) indicating the
  * cleanness of the merge.  Also, if opt->priv->call_depth, create a

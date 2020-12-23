@@ -179,6 +179,9 @@ void commit_list_sort_by_date(struct commit_list **list);
 /* Shallow copy of the input list */
 struct commit_list *copy_commit_list(struct commit_list *list);
 
+/* Modify list in-place to reverse it, returning new head; list will be tail */
+struct commit_list *reverse_commit_list(struct commit_list *list);
+
 void free_commit_list(struct commit_list *list);
 
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
