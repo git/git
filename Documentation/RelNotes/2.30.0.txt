@@ -363,6 +363,10 @@ Fixes since v2.29
  * Tighten error checking in the codepath that responds to "git fetch".
    (merge d43a21bdbb jk/check-config-parsing-error-in-upload-pack later to maint).
 
+ * "git pack-redandant" when there is only one packfile used to crash,
+   which has been corrected.
+   (merge 0696232390 jx/pack-redundant-on-single-pack later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 3e0a5dc9af cc/doc-filter-branch-typofix later to maint).
    (merge 32c83afc2c cw/ci-ghwf-check-ws-errors later to maint).
@@ -397,3 +401,4 @@ Fixes since v2.29
    (merge 56f56ac50b ab/unreachable-break later to maint).
    (merge 731d578b4f rb/nonstop-config-mak-uname-update later to maint).
    (merge f4698738f9 es/perf-export-fix later to maint).
+   (merge 773c694142 nk/refspecs-negative-fix later to maint).
