@@ -645,6 +645,42 @@ static int is_main_worktree_path(const char *path)
 }
 
 /*
+ * If both the main worktree and linked worktree have been moved, then the
+ * gitfile /path/to/worktree/.git won't point into the repository, thus we
+ * won't know which <repo>/worktrees/<id>/gitdir to repair. However, we may
+ * be able to infer the gitdir by manually reading /path/to/worktree/.git,
+ * extracting the <id>, and checking if <repo>/worktrees/<id> exists.
+ */
+static char *infer_backlink(const char *gitfile)
+{
+	struct strbuf actual = STRBUF_INIT;
+	struct strbuf inferred = STRBUF_INIT;
+	const char *id;
+
+	if (strbuf_read_file(&actual, gitfile, 0) < 0)
+		goto error;
+	if (!starts_with(actual.buf, "gitdir:"))
+		goto error;
+	if (!(id = find_last_dir_sep(actual.buf)))
+		goto error;
+	strbuf_trim(&actual);
+	id++; /* advance past '/' to point at <id> */
+	if (!*id)
+		goto error;
+	strbuf_git_common_path(&inferred, the_repository, "worktrees/%s", id);
+	if (!is_directory(inferred.buf))
+		goto error;
+
+	strbuf_release(&actual);
+	return strbuf_detach(&inferred, NULL);
+
+error:
+	strbuf_release(&actual);
+	strbuf_release(&inferred);
+	return NULL;
+}
+
+/*
  * Repair <repo>/worktrees/<id>/gitdir if missing, corrupt, or not pointing at
  * the worktree's path.
  */
@@ -675,6 +711,11 @@ void repair_worktree_at_path(const char *path,
 	if (err == READ_GITFILE_ERR_NOT_A_FILE) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
 		goto done;
+	} else if (err == READ_GITFILE_ERR_NOT_A_REPO) {
+		if (!(backlink = infer_backlink(realdotgit.buf))) {
+			fn(1, realdotgit.buf, _("unable to locate repository; .git file does not reference a repository"), cb_data);
+			goto done;
+		}
 	} else if (err) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git file broken"), cb_data);
 		goto done;
