@@ -1554,11 +1554,10 @@ static int update_background_schedule(int run_maintenance)
 	while (!strbuf_getline_lf(&line, cron_list)) {
 		if (!in_old_region && !strcmp(line.buf, BEGIN_LINE))
 			in_old_region = 1;
-		if (in_old_region)
-			continue;
-		fprintf(cron_in, "%s\n", line.buf);
-		if (in_old_region && !strcmp(line.buf, END_LINE))
+		else if (in_old_region && !strcmp(line.buf, END_LINE))
 			in_old_region = 0;
+		else if (!in_old_region)
+			fprintf(cron_in, "%s\n", line.buf);
 	}
 
 	if (run_maintenance) {
