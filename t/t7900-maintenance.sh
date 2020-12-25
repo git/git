@@ -470,7 +470,7 @@ test_expect_success 'magic markers are correct' '
 
 test_expect_success 'stop preserves surrounding schedule' '
 	echo "Crucial information!" >>cron.txt &&
-	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance stop &&
+	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance stop &&
 	grep "Important information!" cron.txt &&
 	grep "Crucial information!" cron.txt
 '
