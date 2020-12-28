@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2020, #04; Tue, 22)
-X-master-at: 6d3ef5b467eccd2769f1aa1c555d317d3c8dc707
-X-next-at: acce13e5c41814e6303336cb470967b5b6cc9211
+Subject: What's cooking in git.git (Dec 2020, #05; Mon, 28)
+X-master-at: 71ca53e8125e36efbda17293c50027d31681a41f
+X-next-at: d98b1dd5eaa7327399716162c746c9bd3cac3866
 
-What's cooking in git.git (Dec 2020, #04; Tue, 22)
+What's cooking in git.git (Dec 2020, #05; Mon, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,7 +12,9 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Hopefully, the second release candidate -rc2 can be tagged tomorrow.
+Git 2.30 final is out.  I expect things will quiet down while people
+celebrate year-end and new year, unless a bad regression is found
+post release.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -43,7 +45,7 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
 
 * dl/checkout-p-merge-base (2020-12-21) 1 commit
   (merged to 'next' on 2020-12-21 at 595dd32b56)
@@ -51,27 +53,30 @@ Release tarballs are available at:
 
  Fix to a regression introduced during this cycle.
 
- Will merge to 'master'.
+
+* js/no-more-prepare-for-main-in-test (2020-12-16) 11 commits
+  (merged to 'next' on 2020-12-18 at d15a382d4d)
+ + tests: drop the `PREPARE_FOR_MAIN_BRANCH` prereq
+ + t9902: use `main` as initial branch name
+ + t6302: use `main` as initial branch name
+ + t5703: use `main` as initial branch name
+ + t5510: use `main` as initial branch name
+ + t5505: finalize transitioning to using the branch name `main`
+ + t3205: finalize transitioning to using the branch name `main`
+ + t3203: complete the transition to using the branch name `main`
+ + t3201: finalize transitioning to using the branch name `main`
+ + t3200: finish transitioning to the initial branch name `main`
+ + t1400: use `main` as initial branch name
+
+ Test coverage fix.
 
 
-* es/worktree-repair-both-moved (2020-12-21) 1 commit
- - worktree: teach `repair` to fix multi-directional breakage
+* jx/pack-redundant-on-single-pack (2020-12-16) 1 commit
+  (merged to 'next' on 2020-12-18 at b819311529)
+ + pack-redundant: fix crash when one packfile in repo
 
- "git worktree repair" learned to take advantage of the fact that it
- knows both ends (i.e. the main repository is found in the location
- the command runs, the worktrees are given as arguments) to deal
- with the case where both the repository and the worktree moved.
-
- Will merge to 'next'.
-
-
-* fc/t6030-bisect-reset-removes-auxiliary-files (2020-12-21) 1 commit
- - test: bisect-porcelain: fix location of files
-
- A 3-year old test that was not testing anything useful has been
- corrected.
-
- Will merge to 'next'.
+ "git pack-redandant" when there is only one packfile used to crash,
+ which has been corrected.
 
 
 * ma/maintenance-crontab-fix (2020-12-21) 3 commits
@@ -82,33 +87,6 @@ Release tarballs are available at:
 
  Hotfix for a topic of this cycle.
 
- Will merge to 'master'.
-
-
-* mr/bisect-in-c-4 (2020-12-21) 7 commits
- - bisect--helper: retire `--check-and-set-terms` subcommand
- - bisect--helper: reimplement `bisect_skip` shell function in C
- - bisect--helper: retire `--bisect-auto-next` subcommand
- - bisect--helper: use `res` instead of return in BISECT_RESET case option
- - bisect--helper: retire `--bisect-write` subcommand
- - bisect--helper: reimplement `bisect_replay` shell function in C
- - bisect--helper: reimplement `bisect_log` shell function in C
-
- Piecemeal of rewrite of "git bisect" in C continues.
-
-
-* jt/clone-unborn-head (2020-12-21) 3 commits
- . clone: respect remote unborn HEAD
- . connect, transport: add no-op arg for future patch
- . ls-refs: report unborn targets of symrefs
-
- "git clone" tries to locally check out the branch pointed at by
- HEAD of the remote repository after it is done, but the protocol
- did not convey the information necessary to do so when copying an
- empty repository.  The protocol v2 learned how to do so.
-
- Seems to break tests when merged to 'seen'.
-
 
 * nk/refspecs-negative-fix (2020-12-21) 2 commits
   (merged to 'next' on 2020-12-21 at 7d88169236)
@@ -117,10 +95,54 @@ Release tarballs are available at:
 
  Hotfix for recent regression.
 
- Will merge to 'master'.
+
+* pb/doc-git-linkit-fix (2020-12-22) 1 commit
+  (merged to 'next' on 2020-12-22 at 240a7a227c)
+ + git.txt: fix typos in 'linkgit' macro invocation
+
+ Docfix.
+
+--------------------------------------------------
+[New Topics]
+
+* es/perf-export-fix (2020-12-22) 1 commit
+  (merged to 'next' on 2020-12-22 at d06b0379d9)
+ + t/perf: avoid unnecessary test_export() recursion
+
+ Tweak unneeded recursion from a test framework helper function.
+
+ Will cook in 'next'.
+
+
+* dl/p4-encode-after-kw-expansion (2020-12-23) 1 commit
+ - git-p4: fix syncing file types with pattern
+
+ Text encoding fix for "git p4".
+
+
+* fc/mergetool-automerge (2020-12-22) 1 commit
+ - mergetool: add automerge configuration
+
+ "git mergetool" feeds three versions (base, local and remote) of
+ a conflicted path unmodified.  The command learned to optionally
+ prepare these files with unconflicted parts already resolved.
 
 --------------------------------------------------
 [Stalled]
+
+* ss/submodule-add-in-c (2020-12-15) 3 commits
+ . t7400: add test to check 'submodule add' for tracked paths
+ . submodule: port submodule subcommand 'add' from shell to C
+ . dir: change the scope of function 'directory_exists_in_index()'
+
+ "git submodule add" being rewritten in C.
+
+ Expecting a reroll.
+ The patches are split incorrectly; part of 1/3 belongs to 2/3
+ cf. <nycvar.QRO.7.76.6.2012190104140.56@tvgsbejvaqbjf.bet>
+ It seems to introduce a segfault on 'seen'.
+ cf. <xmqqft3xflw7.fsf@gitster.c.googlers.com>
+
 
 * ak/corrected-commit-date (2020-10-08) 10 commits
  - doc: add corrected commit date info
@@ -227,16 +249,6 @@ Release tarballs are available at:
  cf. <20200925170256.11490-1-shubhunic@gmail.com>
 
 
-* ew/decline-core-abbrev (2020-09-01) 1 commit
- - core.abbrev <off|false|no> disables abbreviations
-
- Allow the configuration to specify no abbreviation regardless of
- the hash algorithm.
-
- Expecting a reroll.  The intent is very good.
- cf. <20200901144323.GA14554@dcvr>
-
-
 * ar/fetch-transfer-ipversion (2020-09-16) 1 commit
  - config: option transfer.ipversion to set transport protocol version for network fetches
 
@@ -275,16 +287,6 @@ Release tarballs are available at:
 --------------------------------------------------
 [Needs Review]
 
-* ss/submodule-add-in-c (2020-12-15) 3 commits
- - t7400: add test to check 'submodule add' for tracked paths
- - submodule: port submodule subcommand 'add' from shell to C
- - dir: change the scope of function 'directory_exists_in_index()'
-
- "git submodule add" being rewritten in C.
-
- Needs review.
-
-
 * ag/merge-strategies-in-c (2020-11-24) 13 commits
  - sequencer: use the "octopus" merge strategy without forking
  - sequencer: use the "resolve" strategy without forking
@@ -308,13 +310,66 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* fc/bash-completion-post-2.29 (2020-12-19) 4 commits
- - completion: bash: fix for multiple dash commands
- - completion: bash: fix for suboptions with value
- - completion: bash: add correct suffix in variables
- - completion: bash: fix prefix detection in branch.*
+* ew/decline-core-abbrev (2020-12-23) 1 commit
+ - core.abbrev=no disables abbreviations
 
- Needs review.
+ Allow the configuration to specify no abbreviation regardless of
+ the hash algorithm.
+
+ Will merge to 'next'.
+
+
+* es/worktree-repair-both-moved (2020-12-21) 1 commit
+  (merged to 'next' on 2020-12-22 at 9eaae4f5c0)
+ + worktree: teach `repair` to fix multi-directional breakage
+
+ "git worktree repair" learned to deal with the case where both the
+ repository and the worktree moved.
+
+ Will cook in 'next'.
+
+
+* fc/t6030-bisect-reset-removes-auxiliary-files (2020-12-21) 1 commit
+  (merged to 'next' on 2020-12-22 at 2ab78ef1e1)
+ + test: bisect-porcelain: fix location of files
+
+ A 3-year old test that was not testing anything useful has been
+ corrected.
+
+ Will cook in 'next'.
+
+
+* mr/bisect-in-c-4 (2020-12-21) 7 commits
+ - bisect--helper: retire `--check-and-set-terms` subcommand
+ - bisect--helper: reimplement `bisect_skip` shell function in C
+ - bisect--helper: retire `--bisect-auto-next` subcommand
+ - bisect--helper: use `res` instead of return in BISECT_RESET case option
+ - bisect--helper: retire `--bisect-write` subcommand
+ - bisect--helper: reimplement `bisect_replay` shell function in C
+ - bisect--helper: reimplement `bisect_log` shell function in C
+
+ Piecemeal of rewrite of "git bisect" in C continues.
+
+
+* jt/clone-unborn-head (2020-12-22) 3 commits
+ - clone: respect remote unborn HEAD
+ - connect, transport: add no-op arg for future patch
+ - ls-refs: report unborn targets of symrefs
+
+ "git clone" tries to locally check out the branch pointed at by
+ HEAD of the remote repository after it is done, but the protocol
+ did not convey the information necessary to do so when copying an
+ empty repository.  The protocol v2 learned how to do so.
+
+
+* fc/bash-completion-post-2.29 (2020-12-23) 4 commits
+ . completion: bash: add correct suffix in variables
+ . completion: bash: fix for multiple dash commands
+ . completion: bash: fix for suboptions with value
+ . completion: bash: fix prefix detection in branch.*
+
+ Seems to break tests on Windows
+ cf. https://github.com/git/git/runs/1597682180#step:5:35614
 
 
 * jc/config-pretend-gitdir (2020-12-15) 1 commit
@@ -332,46 +387,18 @@ Release tarballs are available at:
 
 
 * en/merge-ort-recursive (2020-12-16) 4 commits
- - merge-ort: implement merge_incore_recursive()
- - merge-ort: make clear_internal_opts() aware of partial clearing
- - merge-ort: copy a few small helper functions from merge-recursive.c
- - commit: move reverse_commit_list() from merge-recursive
+  (merged to 'next' on 2020-12-22 at 0dbf60011f)
+ + merge-ort: implement merge_incore_recursive()
+ + merge-ort: make clear_internal_opts() aware of partial clearing
+ + merge-ort: copy a few small helper functions from merge-recursive.c
+ + commit: move reverse_commit_list() from merge-recursive
  (this branch uses en/merge-ort-2 and en/merge-ort-impl; is tangled with en/merge-ort-3.)
 
  The ORT merge strategy learned to synthesize virtual ancestor tree
  by recursively merging multiple merge bases together, just like the
  recursive backend has done for years.
 
- Will merge to 'next'.
-
-
-* js/no-more-prepare-for-main-in-test (2020-12-16) 11 commits
-  (merged to 'next' on 2020-12-18 at d15a382d4d)
- + tests: drop the `PREPARE_FOR_MAIN_BRANCH` prereq
- + t9902: use `main` as initial branch name
- + t6302: use `main` as initial branch name
- + t5703: use `main` as initial branch name
- + t5510: use `main` as initial branch name
- + t5505: finalize transitioning to using the branch name `main`
- + t3205: finalize transitioning to using the branch name `main`
- + t3203: complete the transition to using the branch name `main`
- + t3201: finalize transitioning to using the branch name `main`
- + t3200: finish transitioning to the initial branch name `main`
- + t1400: use `main` as initial branch name
-
- Test coverage fix.
-
- Will merge to 'master'.
-
-
-* jx/pack-redundant-on-single-pack (2020-12-16) 1 commit
-  (merged to 'next' on 2020-12-18 at b819311529)
- + pack-redundant: fix crash when one packfile in repo
-
- "git pack-redandant" when there is only one packfile used to crash,
- which has been corrected.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * mt/parallel-checkout-part-1 (2020-12-16) 9 commits
@@ -407,32 +434,20 @@ Release tarballs are available at:
  Rename detection is added to the "ORT" merge strategy.
 
 
-* jk/disambiguate-equal-in-config-param (2020-12-09) 3 commits
- - config: store "git -c" variables using more robust format
- - config: parse more robust format in GIT_CONFIG_PARAMETERS
- - quote: make sq_dequote_step() a public function
- (this branch uses ps/config-env-pairs.)
-
- The quoting rules used to pass "git -c var=val" configuration
- across processes have been updated in a backward compatible way, so
- that the value read from an environment variable can contain an
- equal sign when using the "git --config-env var=env" feature.
-
- We may want to make this just a middle part of the
- ps/config-env-pairs topic with a bit of patch shuffling.
-
-
-* ps/config-env-pairs (2020-12-09) 6 commits
+* ps/config-env-pairs (2020-12-23) 9 commits
+ - SQUASH???
  - config: allow specifying config entries via envvar pairs
- - config: refactor parsing of GIT_CONFIG_PARAMETERS
+ - environment: make `getenv_safe()` a public function
+ - config: parse more robust format in GIT_CONFIG_PARAMETERS
+ - config: store "git -c" variables using more robust format
  - config: extract function to parse config pairs
- - environment: make `getenv_safe()` non-static
+ - quote: make sq_dequote_step() a public function
  - config: add new way to pass config via `--config-env`
  - git: add `--super-prefix` to usage string
- (this branch is used by jk/disambiguate-equal-in-config-param.)
 
  Introduce two new ways to feed configuration variable-value pairs
- via environment variables.
+ via environment variables, and tweak the way GIT_CONFIG_PARAMETERS
+ encodes variable/value pairs to make it more robust.
 
 
 * bc/hashed-mailmap (2020-12-12) 1 commit
@@ -489,6 +504,8 @@ Release tarballs are available at:
 
  "git rev-parse" can be explicitly told to give output as absolute
  or relative path.
+
+ Will merge to 'next'.
 
 
 * en/merge-ort-impl (2020-12-13) 21 commits
@@ -583,24 +600,33 @@ Release tarballs are available at:
  The "reftable" backend for the refs API.
 
 
-* ab/mktag (2020-12-09) 11 commits
- - SQUASH???
+* ab/mktag (2020-12-22) 20 commits
+ - mktag: add a --no-strict option
+ - mktag: mark strings for translation
+ - mktag: convert to parse-options
+ - mktag: allow omitting the header/body \n separator
  - mktag: allow turning off fsck.extraHeaderEntry
  - fsck: make fsck_config() re-usable
- - mktag doc: update to explain why to use this
  - mktag: use fsck instead of custom verify_tag()
+ - mktag: use puts(str) instead of printf("%s\n", str)
+ - mktag: remove redundant braces in one-line body "if"
+ - mktag: use default strbuf_read() hint
+ - mktag tests: test "hash-object" compatibility
+ - mktag tests: stress test whitespace handling
+ - mktag tests: don't create "mytag" twice
+ - mktag tests: don't pipe to stderr needlessly
  - mktag tests: improve verify_object() test coverage
  - mktag tests: remove needless SHA-1 hardcoding
  - mktag tests: don't needlessly use a subshell
- - mktag: remove redundant braces in one-line body "if"
- - mktag: use default strbuf_read() hint
+ - mktag doc: update to explain why to use this
+ - mktag doc: grammar fix, when exists -> when it exists
  - mktag doc: say <hash> not <sha1>
 
  "git mktag" validates its input using its own rules before writing
  a tag object---it has been updated to share the logic with "git
  fsck".
 
- Expecting a reroll, but it seems getting closer.
+ cf. <20201223013606.7972-1-avarab@gmail.com>
 
 
 * ab/trailers-extra-format (2020-12-09) 5 commits
@@ -682,6 +708,8 @@ Release tarballs are available at:
 
  "git stash" did not work well in a sparsely checked out working
  tree.
+
+ Will merge to 'next'.
 
 
 * tb/pack-bitmap (2020-12-08) 24 commits
@@ -773,12 +801,11 @@ Release tarballs are available at:
  which does not consider having untracked files in the working tree
  as source of dirtiness.  The inconsistency has been fixed.
 
-
 --------------------------------------------------
 [Discarded]
 
 * dr/push-remoteref-fix (2020-04-23) 1 commit
- - remote.c: fix handling of %(push:remoteref)
+ . remote.c: fix handling of %(push:remoteref)
 
  The "%(push:remoteref)" placeholder in the "--format=" argument of
  "git format-patch" (and friends) only showed what got explicitly
@@ -790,3 +817,10 @@ Release tarballs are available at:
  cf. <xmqqv9gu7c61.fsf@gitster.c.googlers.com>
  cf. <20200911214358.acl3hy2e763begoo@feanor>
 
+
+* jk/disambiguate-equal-in-config-param (2020-12-09) 3 commits
+ . config: store "git -c" variables using more robust format
+ . config: parse more robust format in GIT_CONFIG_PARAMETERS
+ . quote: make sq_dequote_step() a public function
+
+ Absorbed by the ps/config-env-pairs topic.
