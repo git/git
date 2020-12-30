@@ -2382,10 +2382,22 @@ test_expect_success 'sourcing the completion script clears cached --options' '
 
 test_expect_success '__git_complete' '
 	unset -f __git_wrap__git_main &&
+
 	__git_complete foo __git_main &&
 	__git_have_func __git_wrap__git_main &&
+	unset -f __git_wrap__git_main &&
+
 	__git_complete gf _git_fetch &&
-	__git_have_func __git_wrap_git_fetch
+	__git_have_func __git_wrap_git_fetch &&
+
+	__git_complete foo git &&
+	__git_have_func __git_wrap__git_main &&
+	unset -f __git_wrap__git_main &&
+
+	__git_complete gd git_diff &&
+	__git_have_func __git_wrap_git_diff &&
+
+	test_must_fail __git_complete ga missing
 '
 
 test_done
