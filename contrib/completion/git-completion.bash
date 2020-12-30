@@ -3359,7 +3359,7 @@ __git_support_parseopt_helper () {
 }
 
 __git_have_func () {
-	declare -f $1 >/dev/null 2>/dev/null
+	declare -f -- "$1" >/dev/null 2>&1
 }
 
 __git_complete_command () {
