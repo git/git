@@ -2380,4 +2380,12 @@ test_expect_success 'sourcing the completion script clears cached --options' '
 	verbose test -z "$__gitcomp_builtin_notes_edit"
 '
 
+test_expect_success '__git_complete' '
+	unset -f __git_wrap__git_main &&
+	__git_complete foo __git_main &&
+	__git_have_func __git_wrap__git_main &&
+	__git_complete gf _git_fetch &&
+	__git_have_func __git_wrap_git_fetch
+'
+
 test_done
