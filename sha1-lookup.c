@@ -47,11 +47,11 @@ static uint32_t take2(const unsigned char *sha1)
  */
 /*
  * The table should contain "nr" elements.
- * The sha1 of element i (between 0 and nr - 1) should be returned
+ * The hash of element i (between 0 and nr - 1) should be returned
  * by "fn(i, table)".
  */
-int sha1_pos(const unsigned char *hash, void *table, size_t nr,
-	     sha1_access_fn fn)
+int hash_pos(const unsigned char *hash, void *table, size_t nr,
+	     hash_access_fn fn)
 {
 	size_t hi = nr;
 	size_t lo = 0;
@@ -74,7 +74,7 @@ int sha1_pos(const unsigned char *hash, void *table, size_t nr,
 			if (lov != hiv) {
 				/*
 				 * At this point miv could be equal
-				 * to hiv (but sha1 could still be higher);
+				 * to hiv (but hash could still be higher);
 				 * the invariant of (mi < hi) should be
 				 * kept.
 				 */

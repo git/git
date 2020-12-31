@@ -31,7 +31,7 @@ static const unsigned char *sha1_access(size_t index, void *table)
 int oid_array_lookup(struct oid_array *array, const struct object_id *oid)
 {
 	oid_array_sort(array);
-	return sha1_pos(oid->hash, array->oid, array->nr, sha1_access);
+	return hash_pos(oid->hash, array->oid, array->nr, sha1_access);
 }
 
 void oid_array_clear(struct oid_array *array)
