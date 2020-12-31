@@ -1,9 +1,9 @@
 #include "cache.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 
-static uint32_t take2(const unsigned char *sha1)
+static uint32_t take2(const unsigned char *hash)
 {
-	return ((sha1[0] << 8) | sha1[1]);
+	return ((hash[0] << 8) | hash[1]);
 }
 
 /*
@@ -100,17 +100,17 @@ int hash_pos(const unsigned char *hash, void *table, size_t nr,
 	return index_pos_to_insert_pos(lo);
 }
 
-int bsearch_hash(const unsigned char *sha1, const uint32_t *fanout_nbo,
+int bsearch_hash(const unsigned char *hash, const uint32_t *fanout_nbo,
 		 const unsigned char *table, size_t stride, uint32_t *result)
 {
 	uint32_t hi, lo;
 
-	hi = ntohl(fanout_nbo[*sha1]);
-	lo = ((*sha1 == 0x0) ? 0 : ntohl(fanout_nbo[*sha1 - 1]));
+	hi = ntohl(fanout_nbo[*hash]);
+	lo = ((*hash == 0x0) ? 0 : ntohl(fanout_nbo[*hash - 1]));
 
 	while (lo < hi) {
 		unsigned mi = lo + (hi - lo) / 2;
-		int cmp = hashcmp(table + mi * stride, sha1);
+		int cmp = hashcmp(table + mi * stride, hash);
 
 		if (!cmp) {
 			if (result)

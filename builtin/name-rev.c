@@ -7,7 +7,7 @@
 #include "refs.h"
 #include "parse-options.h"
 #include "prio-queue.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "commit-slab.h"
 
 /*

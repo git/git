@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "oid-array.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 
 void oid_array_append(struct oid_array *array, const struct object_id *oid)
 {

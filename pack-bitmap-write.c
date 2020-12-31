@@ -9,7 +9,7 @@
 #include "pack-revindex.h"
 #include "pack.h"
 #include "pack-bitmap.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "pack-objects.h"
 #include "commit-reach.h"
 

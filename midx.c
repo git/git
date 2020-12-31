@@ -5,7 +5,7 @@
 #include "lockfile.h"
 #include "packfile.h"
 #include "object-store.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "midx.h"
 #include "progress.h"
 #include "trace2.h"

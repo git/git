@@ -7,7 +7,7 @@
 #include "packfile.h"
 #include "delta.h"
 #include "streaming.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"

@@ -10,7 +10,7 @@
 #include "attr.h"
 #include "pathspec.h"
 #include "object-store.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 
 #define RESOLVED 0
 #define PUNTED 1

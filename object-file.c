@@ -20,7 +20,7 @@
 #include "tree-walk.h"
 #include "refs.h"
 #include "pack-revindex.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "bulk-checkin.h"
 #include "repository.h"
 #include "replace-object.h"
