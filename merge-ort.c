@@ -640,7 +640,15 @@ static int handle_content_merge(struct merge_options *opt,
 				const int extra_marker_size,
 				struct version_info *result)
 {
-	die("Not yet implemented");
+	int clean = 0;
+	/*
+	 * TODO: Needs a two-way or three-way content merge, but we're
+	 * just being lazy and copying the version from HEAD and
+	 * leaving it as conflicted.
+	 */
+	result->mode = a->mode;
+	oidcpy(&result->oid, &a->oid);
+	return clean;
 }
 
 /*** Function Grouping: functions related to detect_and_process_renames(), ***
@@ -1138,16 +1146,38 @@ static void process_entry(struct merge_options *opt,
 		 */
 		die("Not yet implemented.");
 	} else if (ci->filemask >= 6) {
-		/*
-		 * TODO: Needs a two-way or three-way content merge, but we're
-		 * just being lazy and copying the version from HEAD and
-		 * leaving it as conflicted.
-		 */
-		ci->merged.clean = 0;
-		ci->merged.result.mode = ci->stages[1].mode;
-		oidcpy(&ci->merged.result.oid, &ci->stages[1].oid);
-		/* When we fix above, we'll call handle_content_merge() */
-		(void)handle_content_merge;
+		/* Need a two-way or three-way content merge */
+		struct version_info merged_file;
+		unsigned clean_merge;
+		struct version_info *o = &ci->stages[0];
+		struct version_info *a = &ci->stages[1];
+		struct version_info *b = &ci->stages[2];
+
+		clean_merge = handle_content_merge(opt, path, o, a, b,
+						   ci->pathnames,
+						   opt->priv->call_depth * 2,
+						   &merged_file);
+		ci->merged.clean = clean_merge &&
+				   !ci->df_conflict && !ci->path_conflict;
+		ci->merged.result.mode = merged_file.mode;
+		ci->merged.is_null = (merged_file.mode == 0);
+		oidcpy(&ci->merged.result.oid, &merged_file.oid);
+		if (clean_merge && ci->df_conflict) {
+			assert(df_file_index == 1 || df_file_index == 2);
+			ci->filemask = 1 << df_file_index;
+			ci->stages[df_file_index].mode = merged_file.mode;
+			oidcpy(&ci->stages[df_file_index].oid, &merged_file.oid);
+		}
+		if (!clean_merge) {
+			const char *reason = _("content");
+			if (ci->filemask == 6)
+				reason = _("add/add");
+			if (S_ISGITLINK(merged_file.mode))
+				reason = _("submodule");
+			path_msg(opt, path, 0,
+				 _("CONFLICT (%s): Merge conflict in %s"),
+				 reason, path);
+		}
 	} else if (ci->filemask == 3 || ci->filemask == 5) {
 		/* Modify/delete */
 		const char *modify_branch, *delete_branch;
