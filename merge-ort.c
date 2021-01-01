@@ -343,11 +343,34 @@ static void path_msg(struct merge_options *opt,
 	strbuf_addch(sb, '\n');
 }
 
+/* add a string to a strbuf, but converting "/" to "_" */
+static void add_flattened_path(struct strbuf *out, const char *s)
+{
+	size_t i = out->len;
+	strbuf_addstr(out, s);
+	for (; i < out->len; i++)
+		if (out->buf[i] == '/')
+			out->buf[i] = '_';
+}
+
 static char *unique_path(struct strmap *existing_paths,
 			 const char *path,
 			 const char *branch)
 {
-	die("Not yet implemented.");
+	struct strbuf newpath = STRBUF_INIT;
+	int suffix = 0;
+	size_t base_len;
+
+	strbuf_addf(&newpath, "%s~", path);
+	add_flattened_path(&newpath, branch);
+
+	base_len = newpath.len;
+	while (strmap_contains(existing_paths, newpath.buf)) {
+		strbuf_setlen(&newpath, base_len);
+		strbuf_addf(&newpath, "_%d", suffix++);
+	}
+
+	return strbuf_detach(&newpath, NULL);
 }
 
 /*** Function Grouping: functions related to collect_merge_info() ***/
