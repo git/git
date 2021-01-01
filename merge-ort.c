@@ -976,7 +976,28 @@ static void process_entry(struct merge_options *opt,
 		assert(ci->df_conflict);
 	}
 
-	if (ci->df_conflict) {
+	if (ci->df_conflict && ci->merged.result.mode == 0) {
+		int i;
+
+		/*
+		 * directory no longer in the way, but we do have a file we
+		 * need to place here so we need to clean away the "directory
+		 * merges to nothing" result.
+		 */
+		ci->df_conflict = 0;
+		assert(ci->filemask != 0);
+		ci->merged.clean = 0;
+		ci->merged.is_null = 0;
+		/* and we want to zero out any directory-related entries */
+		ci->match_mask = (ci->match_mask & ~ci->dirmask);
+		ci->dirmask = 0;
+		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++) {
+			if (ci->filemask & (1 << i))
+				continue;
+			ci->stages[i].mode = 0;
+			oidcpy(&ci->stages[i].oid, &null_oid);
+		}
+	} else if (ci->df_conflict && ci->merged.result.mode != 0) {
 		die("Not yet implemented.");
 	}
 
