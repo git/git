@@ -1521,10 +1521,109 @@ static void process_entry(struct merge_options *opt,
 	} else if (ci->filemask >= 6 &&
 		   (S_IFMT & ci->stages[1].mode) !=
 		   (S_IFMT & ci->stages[2].mode)) {
-		/*
-		 * Two different items from (file/submodule/symlink)
-		 */
-		die("Not yet implemented.");
+		/* Two different items from (file/submodule/symlink) */
+		if (opt->priv->call_depth) {
+			/* Just use the version from the merge base */
+			ci->merged.clean = 0;
+			oidcpy(&ci->merged.result.oid, &ci->stages[0].oid);
+			ci->merged.result.mode = ci->stages[0].mode;
+			ci->merged.is_null = (ci->merged.result.mode == 0);
+		} else {
+			/* Handle by renaming one or both to separate paths. */
+			unsigned o_mode = ci->stages[0].mode;
+			unsigned a_mode = ci->stages[1].mode;
+			unsigned b_mode = ci->stages[2].mode;
+			struct conflict_info *new_ci;
+			const char *a_path = NULL, *b_path = NULL;
+			int rename_a = 0, rename_b = 0;
+
+			new_ci = xmalloc(sizeof(*new_ci));
+
+			if (S_ISREG(a_mode))
+				rename_a = 1;
+			else if (S_ISREG(b_mode))
+				rename_b = 1;
+			else {
+				rename_a = 1;
+				rename_b = 1;
+			}
+
+			path_msg(opt, path, 0,
+				 _("CONFLICT (distinct types): %s had different "
+				   "types on each side; renamed %s of them so "
+				   "each can be recorded somewhere."),
+				 path,
+				 (rename_a && rename_b) ? _("both") : _("one"));
+
+			ci->merged.clean = 0;
+			memcpy(new_ci, ci, sizeof(*new_ci));
+
+			/* Put b into new_ci, removing a from stages */
+			new_ci->merged.result.mode = ci->stages[2].mode;
+			oidcpy(&new_ci->merged.result.oid, &ci->stages[2].oid);
+			new_ci->stages[1].mode = 0;
+			oidcpy(&new_ci->stages[1].oid, &null_oid);
+			new_ci->filemask = 5;
+			if ((S_IFMT & b_mode) != (S_IFMT & o_mode)) {
+				new_ci->stages[0].mode = 0;
+				oidcpy(&new_ci->stages[0].oid, &null_oid);
+				new_ci->filemask = 4;
+			}
+
+			/* Leave only a in ci, fixing stages. */
+			ci->merged.result.mode = ci->stages[1].mode;
+			oidcpy(&ci->merged.result.oid, &ci->stages[1].oid);
+			ci->stages[2].mode = 0;
+			oidcpy(&ci->stages[2].oid, &null_oid);
+			ci->filemask = 3;
+			if ((S_IFMT & a_mode) != (S_IFMT & o_mode)) {
+				ci->stages[0].mode = 0;
+				oidcpy(&ci->stages[0].oid, &null_oid);
+				ci->filemask = 2;
+			}
+
+			/* Insert entries into opt->priv_paths */
+			assert(rename_a || rename_b);
+			if (rename_a) {
+				a_path = unique_path(&opt->priv->paths,
+						     path, opt->branch1);
+				strmap_put(&opt->priv->paths, a_path, ci);
+			}
+
+			if (rename_b)
+				b_path = unique_path(&opt->priv->paths,
+						     path, opt->branch2);
+			else
+				b_path = path;
+			strmap_put(&opt->priv->paths, b_path, new_ci);
+
+			if (rename_a && rename_b) {
+				strmap_remove(&opt->priv->paths, path, 0);
+				/*
+				 * We removed path from opt->priv->paths.  path
+				 * will also eventually need to be freed, but
+				 * it may still be used by e.g.  ci->pathnames.
+				 * So, store it in another string-list for now.
+				 */
+				string_list_append(&opt->priv->paths_to_free,
+						   path);
+			}
+
+			/*
+			 * Do special handling for b_path since process_entry()
+			 * won't be called on it specially.
+			 */
+			strmap_put(&opt->priv->conflicted, b_path, new_ci);
+			record_entry_for_tree(dir_metadata, b_path,
+					      &new_ci->merged);
+
+			/*
+			 * Remaining code for processing this entry should
+			 * think in terms of processing a_path.
+			 */
+			if (a_path)
+				path = a_path;
+		}
 	} else if (ci->filemask >= 6) {
 		/* Need a two-way or three-way content merge */
 		struct version_info merged_file;
