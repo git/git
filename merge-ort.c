@@ -631,6 +631,28 @@ static int collect_merge_info(struct merge_options *opt,
 
 /*** Function Grouping: functions related to threeway content merges ***/
 
+static int merge_submodule(struct merge_options *opt,
+			   const char *path,
+			   const struct object_id *o,
+			   const struct object_id *a,
+			   const struct object_id *b,
+			   struct object_id *result)
+{
+	die("Not yet implemented.");
+}
+
+static int merge_3way(struct merge_options *opt,
+		      const char *path,
+		      const struct object_id *o,
+		      const struct object_id *a,
+		      const struct object_id *b,
+		      const char *pathnames[3],
+		      const int extra_marker_size,
+		      mmbuffer_t *result_buf)
+{
+	die("Not yet implemented.");
+}
+
 static int handle_content_merge(struct merge_options *opt,
 				const char *path,
 				const struct version_info *o,
@@ -640,14 +662,129 @@ static int handle_content_merge(struct merge_options *opt,
 				const int extra_marker_size,
 				struct version_info *result)
 {
-	int clean = 0;
 	/*
-	 * TODO: Needs a two-way or three-way content merge, but we're
-	 * just being lazy and copying the version from HEAD and
-	 * leaving it as conflicted.
+	 * path is the target location where we want to put the file, and
+	 * is used to determine any normalization rules in ll_merge.
+	 *
+	 * The normal case is that path and all entries in pathnames are
+	 * identical, though renames can affect which path we got one of
+	 * the three blobs to merge on various sides of history.
+	 *
+	 * extra_marker_size is the amount to extend conflict markers in
+	 * ll_merge; this is neeed if we have content merges of content
+	 * merges, which happens for example with rename/rename(2to1) and
+	 * rename/add conflicts.
 	 */
-	result->mode = a->mode;
-	oidcpy(&result->oid, &a->oid);
+	unsigned clean = 1;
+
+	/*
+	 * handle_content_merge() needs both files to be of the same type, i.e.
+	 * both files OR both submodules OR both symlinks.  Conflicting types
+	 * needs to be handled elsewhere.
+	 */
+	assert((S_IFMT & a->mode) == (S_IFMT & b->mode));
+
+	/* Merge modes */
+	if (a->mode == b->mode || a->mode == o->mode)
+		result->mode = b->mode;
+	else {
+		/* must be the 100644/100755 case */
+		assert(S_ISREG(a->mode));
+		result->mode = a->mode;
+		clean = (b->mode == o->mode);
+		/*
+		 * FIXME: If opt->priv->call_depth && !clean, then we really
+		 * should not make result->mode match either a->mode or
+		 * b->mode; that causes t6036 "check conflicting mode for
+		 * regular file" to fail.  It would be best to use some other
+		 * mode, but we'll confuse all kinds of stuff if we use one
+		 * where S_ISREG(result->mode) isn't true, and if we use
+		 * something like 0100666, then tree-walk.c's calls to
+		 * canon_mode() will just normalize that to 100644 for us and
+		 * thus not solve anything.
+		 *
+		 * Figure out if there's some kind of way we can work around
+		 * this...
+		 */
+	}
+
+	/*
+	 * Trivial oid merge.
+	 *
+	 * Note: While one might assume that the next four lines would
+	 * be unnecessary due to the fact that match_mask is often
+	 * setup and already handled, renames don't always take care
+	 * of that.
+	 */
+	if (oideq(&a->oid, &b->oid) || oideq(&a->oid, &o->oid))
+		oidcpy(&result->oid, &b->oid);
+	else if (oideq(&b->oid, &o->oid))
+		oidcpy(&result->oid, &a->oid);
+
+	/* Remaining rules depend on file vs. submodule vs. symlink. */
+	else if (S_ISREG(a->mode)) {
+		mmbuffer_t result_buf;
+		int ret = 0, merge_status;
+		int two_way;
+
+		/*
+		 * If 'o' is different type, treat it as null so we do a
+		 * two-way merge.
+		 */
+		two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
+
+		merge_status = merge_3way(opt, path,
+					  two_way ? &null_oid : &o->oid,
+					  &a->oid, &b->oid,
+					  pathnames, extra_marker_size,
+					  &result_buf);
+
+		if ((merge_status < 0) || !result_buf.ptr)
+			ret = err(opt, _("Failed to execute internal merge"));
+
+		if (!ret &&
+		    write_object_file(result_buf.ptr, result_buf.size,
+				      blob_type, &result->oid))
+			ret = err(opt, _("Unable to add %s to database"),
+				  path);
+
+		free(result_buf.ptr);
+		if (ret)
+			return -1;
+		clean &= (merge_status == 0);
+		path_msg(opt, path, 1, _("Auto-merging %s"), path);
+	} else if (S_ISGITLINK(a->mode)) {
+		int two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
+		clean = merge_submodule(opt, pathnames[0],
+					two_way ? &null_oid : &o->oid,
+					&a->oid, &b->oid, &result->oid);
+		if (opt->priv->call_depth && two_way && !clean) {
+			result->mode = o->mode;
+			oidcpy(&result->oid, &o->oid);
+		}
+	} else if (S_ISLNK(a->mode)) {
+		if (opt->priv->call_depth) {
+			clean = 0;
+			result->mode = o->mode;
+			oidcpy(&result->oid, &o->oid);
+		} else {
+			switch (opt->recursive_variant) {
+			case MERGE_VARIANT_NORMAL:
+				clean = 0;
+				oidcpy(&result->oid, &a->oid);
+				break;
+			case MERGE_VARIANT_OURS:
+				oidcpy(&result->oid, &a->oid);
+				break;
+			case MERGE_VARIANT_THEIRS:
+				oidcpy(&result->oid, &b->oid);
+				break;
+			}
+		}
+	} else
+		BUG("unsupported object type in the tree: %06o for %s",
+		    a->mode, path);
+
 	return clean;
 }
 
