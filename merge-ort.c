@@ -23,6 +23,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
+#include "ll-merge.h"
 #include "object-store.h"
 #include "strmap.h"
 #include "tree.h"
@@ -650,7 +651,58 @@ static int merge_3way(struct merge_options *opt,
 		      const int extra_marker_size,
 		      mmbuffer_t *result_buf)
 {
-	die("Not yet implemented.");
+	mmfile_t orig, src1, src2;
+	struct ll_merge_options ll_opts = {0};
+	char *base, *name1, *name2;
+	int merge_status;
+
+	ll_opts.renormalize = opt->renormalize;
+	ll_opts.extra_marker_size = extra_marker_size;
+	ll_opts.xdl_opts = opt->xdl_opts;
+
+	if (opt->priv->call_depth) {
+		ll_opts.virtual_ancestor = 1;
+		ll_opts.variant = 0;
+	} else {
+		switch (opt->recursive_variant) {
+		case MERGE_VARIANT_OURS:
+			ll_opts.variant = XDL_MERGE_FAVOR_OURS;
+			break;
+		case MERGE_VARIANT_THEIRS:
+			ll_opts.variant = XDL_MERGE_FAVOR_THEIRS;
+			break;
+		default:
+			ll_opts.variant = 0;
+			break;
+		}
+	}
+
+	assert(pathnames[0] && pathnames[1] && pathnames[2] && opt->ancestor);
+	if (pathnames[0] == pathnames[1] && pathnames[1] == pathnames[2]) {
+		base  = mkpathdup("%s", opt->ancestor);
+		name1 = mkpathdup("%s", opt->branch1);
+		name2 = mkpathdup("%s", opt->branch2);
+	} else {
+		base  = mkpathdup("%s:%s", opt->ancestor, pathnames[0]);
+		name1 = mkpathdup("%s:%s", opt->branch1,  pathnames[1]);
+		name2 = mkpathdup("%s:%s", opt->branch2,  pathnames[2]);
+	}
+
+	read_mmblob(&orig, o);
+	read_mmblob(&src1, a);
+	read_mmblob(&src2, b);
+
+	merge_status = ll_merge(result_buf, path, &orig, base,
+				&src1, name1, &src2, name2,
+				opt->repo->index, &ll_opts);
+
+	free(base);
+	free(name1);
+	free(name2);
+	free(orig.ptr);
+	free(src1.ptr);
+	free(src2.ptr);
+	return merge_status;
 }
 
 static int handle_content_merge(struct merge_options *opt,
