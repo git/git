@@ -469,7 +469,8 @@ test_expect_success 'new variable inserts into proper section' '
 '
 
 test_expect_success 'alternative --file (non-existing file should fail)' '
-	test_must_fail git config --file non-existing-config -l
+	test_must_fail git config --file non-existing-config -l &&
+	test_must_fail git config --file non-existing-config test.xyzzy
 '
 
 cat > other-config << EOF
@@ -1030,11 +1031,6 @@ test_expect_success SYMLINKS 'symlinked configuration' '
 		git config --file=notyet test.xyzzy
 	} >actual &&
 	test_cmp expect actual
-'
-
-test_expect_success 'nonexistent configuration' '
-	test_must_fail git config --file=doesnotexist --list &&
-	test_must_fail git config --file=doesnotexist test.xyzzy
 '
 
 test_expect_success SYMLINKS 'symlink to nonexistent configuration' '
