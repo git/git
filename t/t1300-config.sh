@@ -506,10 +506,6 @@ test_expect_success 'editing stdin is an error' '
 
 test_expect_success 'refer config from subdirectory' '
 	mkdir x &&
-	test_cmp_config -C x strasse --get --file ../other-config ein.bahn
-'
-
-test_expect_success 'refer config from subdirectory via --file' '
 	test_cmp_config -C x strasse --file=../other-config --get ein.bahn
 '
 
