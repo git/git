@@ -1580,6 +1580,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
 
 	trace_performance_enter();
+	trace2_region_enter("unpack_trees", "unpack_trees", the_repository);
+
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
 	if (!o->skip_sparse_checkout && !o->pl) {
@@ -1653,7 +1655,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		}
 
 		trace_performance_enter();
+		trace2_region_enter("unpack_trees", "traverse_trees", the_repository);
 		ret = traverse_trees(o->src_index, len, t, &info);
+		trace2_region_leave("unpack_trees", "traverse_trees", the_repository);
 		trace_performance_leave("traverse_trees");
 		if (ret < 0)
 			goto return_failed;
@@ -1741,6 +1745,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 done:
 	if (free_pattern_list)
 		clear_pattern_list(&pl);
+	trace2_region_leave("unpack_trees", "unpack_trees", the_repository);
 	trace_performance_leave("unpack_trees");
 	return ret;
 
