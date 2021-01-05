@@ -19,6 +19,19 @@ check_verify_failure () {
 	'
 }
 
+test_expect_mktag_success() {
+	test_expect_success "$1" '
+		git hash-object -t tag -w --stdin <tag.sig >expected &&
+		git fsck --strict &&
+
+		git mktag <tag.sig >hash &&
+		test_cmp expected hash &&
+		test_when_finished "git update-ref -d refs/tags/mytag $(cat hash)" &&
+		git update-ref refs/tags/mytag $(cat hash) $(test_oid zero) &&
+		git fsck --strict
+	'
+}
+
 ###########################################################
 # first create a commit, so we have a valid object/type
 # for the tag.
@@ -220,9 +233,7 @@ tagger T A Gger <> 0 +0000
 
 EOF
 
-test_expect_success \
-    'allow empty tag email' \
-    'git mktag <tag.sig'
+test_expect_mktag_success 'allow empty tag email'
 
 ############################################################
 # 16. disallow spaces in tag email
@@ -347,9 +358,7 @@ tagger T A Gger <tagger@example.com> 1206478233 -0500
 this line comes after an extra newline
 EOF
 
-test_expect_success 'allow extra newlines at start of body' '
-	git mktag <tag.sig
-'
+test_expect_mktag_success 'allow extra newlines at start of body'
 
 cat >tag.sig <<EOF
 object $head
@@ -359,9 +368,7 @@ tagger T A Gger <tagger@example.com> 1206478233 -0500
 
 EOF
 
-test_expect_success 'require a blank line before an empty body (1)' '
-	git mktag <tag.sig
-'
+test_expect_mktag_success 'require a blank line before an empty body (1)'
 
 cat >tag.sig <<EOF
 object $head
@@ -384,10 +391,6 @@ tagger T A Gger <tagger@example.com> 1206478233 -0500
 
 EOF
 
-test_expect_success 'create valid tag' '
-	git mktag <tag.sig >hash &&
-	git update-ref refs/tags/mytag $(cat hash) $(test_oid zero) &&
-	git fsck --strict
-'
+test_expect_mktag_success 'create valid tag object'
 
 test_done
