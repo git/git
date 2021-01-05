@@ -1,9 +1,15 @@
 #include "builtin.h"
+#include "parse-options.h"
 #include "tag.h"
 #include "replace-object.h"
 #include "object-store.h"
 #include "fsck.h"
 #include "config.h"
+
+static char const * const builtin_mktag_usage[] = {
+	N_("git mktag"),
+	NULL
+};
 
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 
@@ -60,13 +66,17 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 
 int cmd_mktag(int argc, const char **argv, const char *prefix)
 {
+	static struct option builtin_mktag_options[] = {
+		OPT_END(),
+	};
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id tagged_oid;
 	int tagged_type;
 	struct object_id result;
 
-	if (argc != 1)
-		usage("git mktag");
+	argc = parse_options(argc, argv, NULL,
+			     builtin_mktag_options,
+			     builtin_mktag_usage, 0);
 
 	if (strbuf_read(&buf, 0, 0) < 0)
 		die_errno("could not read from stdin");

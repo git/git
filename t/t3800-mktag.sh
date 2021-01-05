@@ -45,6 +45,18 @@ test_expect_success 'setup' '
 	blob=$(git rev-parse --verify HEAD:B.t)
 '
 
+test_expect_success 'basic usage' '
+	cat >tag.sig <<-EOF &&
+	object $head
+	type commit
+	tag mytag
+	tagger T A Gger <tagger@example.com> 1206478233 -0500
+	EOF
+	git mktag <tag.sig &&
+	git mktag --end-of-options <tag.sig &&
+	test_expect_code 129 git mktag --unknown-option
+'
+
 ############################################################
 #  1. length check
 
