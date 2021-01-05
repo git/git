@@ -3,7 +3,7 @@ git-mktag(1)
 
 NAME
 ----
-git-mktag - Creates a tag object
+git-mktag - Creates a tag object with extra validation
 
 
 SYNOPSIS
@@ -13,10 +13,19 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Reads a tag contents on standard input and creates a tag object
-that can also be used to sign other objects.
 
-The output is the new tag's <object> identifier.
+Reads a tag contents on standard input and creates a tag object. The
+output is the new tag's <object> identifier.
+
+This command is mostly equivalent to linkgit:git-hash-object[1]
+invoked with `-t tag -w --stdin`. I.e. both of these will create and
+write a tag found in `my-tag`:
+
+    git mktag <my-tag
+    git hash-object -t tag -w --stdin <my-tag
+
+The difference is that mktag will die before writing the tag if the
+tag doesn't pass a sanity check.
 
 Tag Format
 ----------
