@@ -38,7 +38,11 @@ test_expect_mktag_success() {
 # for the tag.
 test_expect_success 'setup' '
 	test_commit A &&
-	head=$(git rev-parse --verify HEAD)
+	test_commit B &&
+	head=$(git rev-parse --verify HEAD) &&
+	head_parent=$(git rev-parse --verify HEAD~) &&
+	tree=$(git rev-parse HEAD^{tree}) &&
+	blob=$(git rev-parse --verify HEAD:B.t)
 '
 
 ############################################################
@@ -174,6 +178,35 @@ check_verify_failure 'verify object (hash/type) check -- made-up type, nonexisti
 
 cat >tag.sig <<EOF
 object $head
+type tree
+tag mytag
+tagger . <> 0 +0000
+
+EOF
+
+check_verify_failure 'verify object (hash/type) check -- mismatched type, valid object' \
+	'^error: char7: could not verify object'
+
+############################################################
+#  9.5. verify object (hash/type) check -- replacement
+
+test_expect_success 'setup replacement of commit -> commit and tree -> blob' '
+	git replace $head_parent $head &&
+	git replace -f $tree $blob
+'
+
+cat >tag.sig <<EOF
+object $head_parent
+type commit
+tag mytag
+tagger . <> 0 +0000
+
+EOF
+
+test_expect_mktag_success 'tag to a commit replaced by another commit'
+
+cat >tag.sig <<EOF
+object $tree
 type tree
 tag mytag
 tagger . <> 0 +0000
