@@ -313,6 +313,28 @@ To create more advanced customizations to your background tasks, see
 launchctl.plist(5) for more information.
 
 
+BACKGROUND MAINTENANCE ON WINDOWS SYSTEMS
+-----------------------------------------
+
+Windows does not support `cron` and instead has its own system for
+scheduling background tasks. The `git maintenance start` command uses
+the `schtasks` command to submit tasks to this system. You can inspect
+all background tasks using the Task Scheduler application. The tasks
+added by Git have names of the form `Git Maintenance (<frequency>)`.
+The Task Scheduler GUI has ways to inspect these tasks, but you can also
+export the tasks to XML files and view the details there.
+
+Note that since Git is a console application, these background tasks
+create a console window visible to the current user. This can be changed
+manually by selecting the "Run whether user is logged in or not" option
+in Task Scheduler. This change requires a password input, which is why
+`git maintenance start` does not select it by default.
+
+If you want to customize the background tasks, please rename the tasks
+so future calls to `git maintenance (start|stop)` do not overwrite your
+custom tasks.
+
+
 GIT
 ---
 Part of the linkgit:git[1] suite
