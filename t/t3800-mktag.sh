@@ -412,6 +412,20 @@ EOF
 check_verify_failure 'detect invalid header entry' \
 	'^error:.* extraHeaderEntry:'
 
+test_expect_success 'invalid header entry config & fsck' '
+	test_must_fail git mktag <tag.sig &&
+	test_must_fail git -c fsck.extraHeaderEntry=error mktag <tag.sig &&
+	test_must_fail git -c fsck.extraHeaderEntry=warn mktag <tag.sig &&
+	git -c fsck.extraHeaderEntry=ignore mktag <tag.sig &&
+	git fsck &&
+	env GIT_TEST_GETTEXT_POISON=false \
+		git -c fsck.extraHeaderEntry=warn fsck 2>err &&
+	grep "warning .*extraHeaderEntry:" err &&
+	test_must_fail env GIT_TEST_GETTEXT_POISON=false \
+		git -c fsck.extraHeaderEntry=error 2>err fsck &&
+	grep "error .* extraHeaderEntry:" err
+'
+
 cat >tag.sig <<EOF
 object $head
 type commit

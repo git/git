@@ -32,7 +32,10 @@ would run by default in that all `fsck.<msg-id>` messages are promoted
 from warnings to errors (so e.g. a missing "tagger" line is an error).
 
 Extra headers in the object are also an error under mktag, but ignored
-by linkgit:git-fsck[1]
+by linkgit:git-fsck[1]. This extra check can be turned off by setting
+the appropriate `fsck.<msg-id>` varible:
+
+    git -c fsck.extraHeaderEntry=ignore mktag <my-tag-with-headers
 
 Tag Format
 ----------
