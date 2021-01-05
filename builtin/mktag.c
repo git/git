@@ -173,6 +173,6 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 		die("unable to write tag file");
 
 	strbuf_release(&buf);
-	printf("%s\n", oid_to_hex(&result));
+	puts(oid_to_hex(&result));
 	return 0;
 }
