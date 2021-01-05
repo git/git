@@ -337,6 +337,42 @@ EOF
 check_verify_failure 'detect invalid header entry' \
 	'^error: char.*: trailing garbage in tag header$'
 
+cat >tag.sig <<EOF
+object $head
+type commit
+tag mytag
+tagger T A Gger <tagger@example.com> 1206478233 -0500
+
+
+this line comes after an extra newline
+EOF
+
+test_expect_success 'allow extra newlines at start of body' '
+	git mktag <tag.sig
+'
+
+cat >tag.sig <<EOF
+object $head
+type commit
+tag mytag
+tagger T A Gger <tagger@example.com> 1206478233 -0500
+
+EOF
+
+test_expect_success 'require a blank line before an empty body (1)' '
+	git mktag <tag.sig
+'
+
+cat >tag.sig <<EOF
+object $head
+type commit
+tag mytag
+tagger T A Gger <tagger@example.com> 1206478233 -0500
+EOF
+
+check_verify_failure 'require a blank line before an empty body (2)' \
+	'^error: char.*: trailing garbage in tag header$'
+
 ############################################################
 # 24. create valid tag
 
