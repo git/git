@@ -63,6 +63,15 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options);
 
 /*
+ * fsck a tag, and pass info about it back to the caller. This is
+ * exposed fsck_object() internals for git-mktag(1).
+ */
+int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
+			unsigned long size, struct fsck_options *options,
+			struct object_id *tagged_oid,
+			int *tag_type);
+
+/*
  * Some fsck checks are context-dependent, and may end up queued; run this
  * after completing all fsck_object() calls in order to resolve any remaining
  * checks.

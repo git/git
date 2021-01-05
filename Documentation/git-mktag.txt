@@ -25,7 +25,14 @@ write a tag found in `my-tag`:
     git hash-object -t tag -w --stdin <my-tag
 
 The difference is that mktag will die before writing the tag if the
-tag doesn't pass a sanity check.
+tag doesn't pass a linkgit:git-fsck[1] check.
+
+The "fsck" check done mktag is stricter than what linkgit:git-fsck[1]
+would run by default in that all `fsck.<msg-id>` messages are promoted
+from warnings to errors (so e.g. a missing "tagger" line is an error).
+
+Extra headers in the object are also an error under mktag, but ignored
+by linkgit:git-fsck[1]
 
 Tag Format
 ----------
