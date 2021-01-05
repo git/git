@@ -103,4 +103,11 @@ void fsck_put_object_name(struct fsck_options *options,
 const char *fsck_describe_object(struct fsck_options *options,
 				 const struct object_id *oid);
 
+/*
+ * git_config() callback for use by fsck-y tools that want to support
+ * fsck.<msg> fsck.skipList etc.
+ */
+int fsck_config_internal(const char *var, const char *value, void *cb,
+			 struct fsck_options *options);
+
 #endif
