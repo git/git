@@ -222,7 +222,7 @@ EOF
 
 test_expect_success \
     'allow empty tag email' \
-    'git mktag <tag.sig >.git/refs/tags/mytag'
+    'git mktag <tag.sig'
 
 ############################################################
 # 16. disallow spaces in tag email
@@ -348,16 +348,9 @@ tagger T A Gger <tagger@example.com> 1206478233 -0500
 
 EOF
 
-test_expect_success \
-    'create valid tag' \
-    'git mktag <tag.sig >.git/refs/tags/mytag'
-
-############################################################
-# 25. check mytag
-
-test_expect_success \
-    'check mytag' \
-    'git tag -l | grep mytag'
-
+test_expect_success 'create valid tag' '
+	git mktag <tag.sig >hash &&
+	git update-ref refs/tags/mytag $(cat hash) $(test_oid zero)
+'
 
 test_done
