@@ -23,9 +23,7 @@ check_verify_failure () {
 # first create a commit, so we have a valid object/type
 # for the tag.
 test_expect_success 'setup' '
-	echo Hello >A &&
-	git update-index --add A &&
-	git commit -m "Initial commit" &&
+	test_commit A &&
 	head=$(git rev-parse --verify HEAD)
 '
 
