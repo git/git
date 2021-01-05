@@ -350,7 +350,8 @@ EOF
 
 test_expect_success 'create valid tag' '
 	git mktag <tag.sig >hash &&
-	git update-ref refs/tags/mytag $(cat hash) $(test_oid zero)
+	git update-ref refs/tags/mytag $(cat hash) $(test_oid zero) &&
+	git fsck --strict
 '
 
 test_done
