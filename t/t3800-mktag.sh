@@ -446,7 +446,7 @@ tagger T A Gger <tagger@example.com> 1206478233 -0500
 
 EOF
 
-test_expect_mktag_success 'require a blank line before an empty body (1)'
+test_expect_mktag_success 'allow a blank line before an empty body (1)'
 
 cat >tag.sig <<EOF
 object $head
@@ -455,8 +455,7 @@ tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 -0500
 EOF
 
-check_verify_failure 'require a blank line before an empty body (2)' \
-	'^error:.* extraHeaderEntry:'
+test_expect_mktag_success 'allow no blank line before an empty body (2)'
 
 ############################################################
 # 24. create valid tag
@@ -466,7 +465,6 @@ object $head
 type commit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 -0500
-
 EOF
 
 test_expect_mktag_success 'create valid tag object'

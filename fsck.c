@@ -987,6 +987,8 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 	}
 	else
 		ret = fsck_ident(&buffer, oid, OBJ_TAG, options);
+	if (!*buffer)
+		goto done;
 
 	if (!starts_with(buffer, "\n")) {
 		/*
