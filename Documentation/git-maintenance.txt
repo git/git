@@ -273,6 +273,46 @@ schedule to ensure you are executing the correct binaries in your
 schedule.
 
 
+BACKGROUND MAINTENANCE ON MACOS SYSTEMS
+---------------------------------------
+
+While macOS technically supports `cron`, using `crontab -e` requires
+elevated privileges and the executed process does not have a full user
+context. Without a full user context, Git and its credential helpers
+cannot access stored credentials, so some maintenance tasks are not
+functional.
+
+Instead, `git maintenance start` interacts with the `launchctl` tool,
+which is the recommended way to schedule timed jobs in macOS. Scheduling
+maintenance through `git maintenance (start|stop)` requires some
+`launchctl` features available only in macOS 10.11 or later.
+
+Your user-specific scheduled tasks are stored as XML-formatted `.plist`
+files in `~/Library/LaunchAgents/`. You can see the currently-registered
+tasks using the following command:
+
+-----------------------------------------------------------------------
+$ ls ~/Library/LaunchAgents/org.git-scm.git*
+org.git-scm.git.daily.plist
+org.git-scm.git.hourly.plist
+org.git-scm.git.weekly.plist
+-----------------------------------------------------------------------
+
+One task is registered for each `--schedule=<frequency>` option. To
+inspect how the XML format describes each schedule, open one of these
+`.plist` files in an editor and inspect the `<array>` element following
+the `<key>StartCalendarInterval</key>` element.
+
+`git maintenance start` will overwrite these files and register the
+tasks again with `launchctl`, so any customizations should be done by
+creating your own `.plist` files with distinct names. Similarly, the
+`git maintenance stop` command will unregister the tasks with `launchctl`
+and delete the `.plist` files.
+
+To create more advanced customizations to your background tasks, see
+launchctl.plist(5) for more information.
+
+
 GIT
 ---
 Part of the linkgit:git[1] suite
