@@ -161,9 +161,8 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 	if (argc != 1)
 		usage("git mktag");
 
-	if (strbuf_read(&buf, 0, 0) < 0) {
+	if (strbuf_read(&buf, 0, 0) < 0)
 		die_errno("could not read from stdin");
-	}
 
 	/* Verify it for some basic sanity: it needs to start with
 	   "object <sha1>\ntype\ntagger " */
