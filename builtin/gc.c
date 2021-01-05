@@ -1589,7 +1589,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 		die(_("failed to create directories for '%s'"), filename);
 	plist = xfopen(filename, "w");
 
-	preamble = "<?xml version=\"1.0\" encoding=\"US-ASCII\"?>\n"
+	preamble = "<?xml version=\"1.0\"?>\n"
 		   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
 		   "<plist version=\"1.0\">"
 		   "<dict>\n"
@@ -1669,6 +1669,168 @@ static int launchctl_update_schedule(int run_maintenance, int fd, const char *cm
 		return launchctl_add_plists(cmd);
 	else
 		return launchctl_remove_plists(cmd);
+}
+
+static char *schtasks_task_name(const char *frequency)
+{
+	struct strbuf label = STRBUF_INIT;
+	strbuf_addf(&label, "Git Maintenance (%s)", frequency);
+	return strbuf_detach(&label, NULL);
+}
+
+static int schtasks_remove_task(enum schedule_priority schedule, const char *cmd)
+{
+	int result;
+	struct strvec args = STRVEC_INIT;
+	const char *frequency = get_frequency(schedule);
+	char *name = schtasks_task_name(frequency);
+
+	strvec_split(&args, cmd);
+	strvec_pushl(&args, "/delete", "/tn", name, "/f", NULL);
+
+	result = run_command_v_opt(args.v, 0);
+
+	strvec_clear(&args);
+	free(name);
+	return result;
+}
+
+static int schtasks_remove_tasks(const char *cmd)
+{
+	return schtasks_remove_task(SCHEDULE_HOURLY, cmd) ||
+		schtasks_remove_task(SCHEDULE_DAILY, cmd) ||
+		schtasks_remove_task(SCHEDULE_WEEKLY, cmd);
+}
+
+static int schtasks_schedule_task(const char *exec_path, enum schedule_priority schedule, const char *cmd)
+{
+	int result;
+	struct child_process child = CHILD_PROCESS_INIT;
+	const char *xml;
+	struct tempfile *tfile;
+	const char *frequency = get_frequency(schedule);
+	char *name = schtasks_task_name(frequency);
+	struct strbuf tfilename = STRBUF_INIT;
+
+	strbuf_addf(&tfilename, "%s/schedule_%s_XXXXXX",
+		    get_git_common_dir(), frequency);
+	tfile = xmks_tempfile(tfilename.buf);
+	strbuf_release(&tfilename);
+
+	if (!fdopen_tempfile(tfile, "w"))
+		die(_("failed to create temp xml file"));
+
+	xml = "<?xml version=\"1.0\" ?>\n"
+	      "<Task version=\"1.4\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+	      "<Triggers>\n"
+	      "<CalendarTrigger>\n";
+	fputs(xml, tfile->fp);
+
+	switch (schedule) {
+	case SCHEDULE_HOURLY:
+		fprintf(tfile->fp,
+			"<StartBoundary>2020-01-01T01:00:00</StartBoundary>\n"
+			"<Enabled>true</Enabled>\n"
+			"<ScheduleByDay>\n"
+			"<DaysInterval>1</DaysInterval>\n"
+			"</ScheduleByDay>\n"
+			"<Repetition>\n"
+			"<Interval>PT1H</Interval>\n"
+			"<Duration>PT23H</Duration>\n"
+			"<StopAtDurationEnd>false</StopAtDurationEnd>\n"
+			"</Repetition>\n");
+		break;
+
+	case SCHEDULE_DAILY:
+		fprintf(tfile->fp,
+			"<StartBoundary>2020-01-01T00:00:00</StartBoundary>\n"
+			"<Enabled>true</Enabled>\n"
+			"<ScheduleByWeek>\n"
+			"<DaysOfWeek>\n"
+			"<Monday />\n"
+			"<Tuesday />\n"
+			"<Wednesday />\n"
+			"<Thursday />\n"
+			"<Friday />\n"
+			"<Saturday />\n"
+			"</DaysOfWeek>\n"
+			"<WeeksInterval>1</WeeksInterval>\n"
+			"</ScheduleByWeek>\n");
+		break;
+
+	case SCHEDULE_WEEKLY:
+		fprintf(tfile->fp,
+			"<StartBoundary>2020-01-01T00:00:00</StartBoundary>\n"
+			"<Enabled>true</Enabled>\n"
+			"<ScheduleByWeek>\n"
+			"<DaysOfWeek>\n"
+			"<Sunday />\n"
+			"</DaysOfWeek>\n"
+			"<WeeksInterval>1</WeeksInterval>\n"
+			"</ScheduleByWeek>\n");
+		break;
+
+	default:
+		break;
+	}
+
+	xml = "</CalendarTrigger>\n"
+	      "</Triggers>\n"
+	      "<Principals>\n"
+	      "<Principal id=\"Author\">\n"
+	      "<LogonType>InteractiveToken</LogonType>\n"
+	      "<RunLevel>LeastPrivilege</RunLevel>\n"
+	      "</Principal>\n"
+	      "</Principals>\n"
+	      "<Settings>\n"
+	      "<MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>\n"
+	      "<Enabled>true</Enabled>\n"
+	      "<Hidden>true</Hidden>\n"
+	      "<UseUnifiedSchedulingEngine>true</UseUnifiedSchedulingEngine>\n"
+	      "<WakeToRun>false</WakeToRun>\n"
+	      "<ExecutionTimeLimit>PT72H</ExecutionTimeLimit>\n"
+	      "<Priority>7</Priority>\n"
+	      "</Settings>\n"
+	      "<Actions Context=\"Author\">\n"
+	      "<Exec>\n"
+	      "<Command>\"%s\\git.exe\"</Command>\n"
+	      "<Arguments>--exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%s</Arguments>\n"
+	      "</Exec>\n"
+	      "</Actions>\n"
+	      "</Task>\n";
+	fprintf(tfile->fp, xml, exec_path, exec_path, frequency);
+	strvec_split(&child.args, cmd);
+	strvec_pushl(&child.args, "/create", "/tn", name, "/f", "/xml",
+				  get_tempfile_path(tfile), NULL);
+	close_tempfile_gently(tfile);
+
+	child.no_stdout = 1;
+	child.no_stderr = 1;
+
+	if (start_command(&child))
+		die(_("failed to start schtasks"));
+	result = finish_command(&child);
+
+	delete_tempfile(&tfile);
+	free(name);
+	return result;
+}
+
+static int schtasks_schedule_tasks(const char *cmd)
+{
+	const char *exec_path = git_exec_path();
+
+	return schtasks_schedule_task(exec_path, SCHEDULE_HOURLY, cmd) ||
+		schtasks_schedule_task(exec_path, SCHEDULE_DAILY, cmd) ||
+		schtasks_schedule_task(exec_path, SCHEDULE_WEEKLY, cmd);
+}
+
+static int schtasks_update_schedule(int run_maintenance, int fd, const char *cmd)
+{
+	if (run_maintenance)
+		return schtasks_schedule_tasks(cmd);
+	else
+		return schtasks_remove_tasks(cmd);
 }
 
 #define BEGIN_LINE "# BEGIN GIT MAINTENANCE SCHEDULE"
@@ -1761,6 +1923,8 @@ done_editing:
 
 #if defined(__APPLE__)
 static const char platform_scheduler[] = "launchctl";
+#elif defined(GIT_WINDOWS_NATIVE)
+static const char platform_scheduler[] = "schtasks";
 #else
 static const char platform_scheduler[] = "crontab";
 #endif
@@ -1789,6 +1953,8 @@ static int update_background_schedule(int enable)
 
 	if (!strcmp(scheduler, "launchctl"))
 		result = launchctl_update_schedule(enable, lk.tempfile->fd, cmd);
+	else if (!strcmp(scheduler, "schtasks"))
+		result = schtasks_update_schedule(enable, lk.tempfile->fd, cmd);
 	else if (!strcmp(scheduler, "crontab"))
 		result = crontab_update_schedule(enable, lk.tempfile->fd, cmd);
 	else
