@@ -11,6 +11,14 @@ SYNOPSIS
 [verse]
 'git mktag'
 
+OPTIONS
+-------
+
+--strict::
+	By default mktag turns on the equivalent of
+	linkgit:git-fsck[1] `--strict` mode. Use `--no-strict` to
+	disable it.
+
 DESCRIPTION
 -----------
 

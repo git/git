@@ -10,6 +10,7 @@ static char const * const builtin_mktag_usage[] = {
 	N_("git mktag"),
 	NULL
 };
+static int option_strict = 1;
 
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 
@@ -25,6 +26,12 @@ static int mktag_fsck_error_func(struct fsck_options *o,
 {
 	switch (msg_type) {
 	case FSCK_WARN:
+		if (!option_strict) {
+			fprintf_ln(stderr, _("warning: tag input does not pass fsck: %s"), message);
+			return 0;
+
+		}
+		/* fallthrough */
 	case FSCK_ERROR:
 		/*
 		 * We treat both warnings and errors as errors, things
@@ -67,6 +74,8 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 int cmd_mktag(int argc, const char **argv, const char *prefix)
 {
 	static struct option builtin_mktag_options[] = {
+		OPT_BOOL(0, "strict", &option_strict,
+			 N_("enable more strict checking")),
 		OPT_END(),
 	};
 	struct strbuf buf = STRBUF_INIT;
