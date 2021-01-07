@@ -926,14 +926,14 @@ test_expect_success 'git bisect reset cleans bisection state properly' '
 	git bisect bad $HASH4 &&
 	git bisect reset &&
 	test -z "$(git for-each-ref "refs/bisect/*")" &&
-	test_path_is_missing "$GIT_DIR/BISECT_EXPECTED_REV" &&
-	test_path_is_missing "$GIT_DIR/BISECT_ANCESTORS_OK" &&
-	test_path_is_missing "$GIT_DIR/BISECT_LOG" &&
-	test_path_is_missing "$GIT_DIR/BISECT_RUN" &&
-	test_path_is_missing "$GIT_DIR/BISECT_TERMS" &&
-	test_path_is_missing "$GIT_DIR/head-name" &&
-	test_path_is_missing "$GIT_DIR/BISECT_HEAD" &&
-	test_path_is_missing "$GIT_DIR/BISECT_START"
+	test_path_is_missing ".git/BISECT_EXPECTED_REV" &&
+	test_path_is_missing ".git/BISECT_ANCESTORS_OK" &&
+	test_path_is_missing ".git/BISECT_LOG" &&
+	test_path_is_missing ".git/BISECT_RUN" &&
+	test_path_is_missing ".git/BISECT_TERMS" &&
+	test_path_is_missing ".git/head-name" &&
+	test_path_is_missing ".git/BISECT_HEAD" &&
+	test_path_is_missing ".git/BISECT_START"
 '
 
 test_done
