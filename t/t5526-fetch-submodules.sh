@@ -722,4 +722,121 @@ test_expect_success 'fetch new submodule commit intermittently referenced by sup
 	)
 '
 
+add_commit_push () {
+	dir="$1" &&
+	msg="$2" &&
+	shift 2 &&
+	git -C "$dir" add "$@" &&
+	git -C "$dir" commit -a -m "$msg" &&
+	git -C "$dir" push
+}
+
+compare_refs_in_dir () {
+	fail= &&
+	if test "x$1" = 'x!'
+	then
+		fail='!' &&
+		shift
+	fi &&
+	git -C "$1" rev-parse --verify "$2" >expect &&
+	git -C "$3" rev-parse --verify "$4" >actual &&
+	eval $fail test_cmp expect actual
+}
+
+
+test_expect_success 'setup nested submodule fetch test' '
+	# does not depend on any previous test setups
+
+	for repo in outer middle inner
+	do
+		git init --bare $repo &&
+		git clone $repo ${repo}_content &&
+		echo "$repo" >"${repo}_content/file" &&
+		add_commit_push ${repo}_content "initial" file ||
+		return 1
+	done &&
+
+	git clone outer A &&
+	git -C A submodule add "$pwd/middle" &&
+	git -C A/middle/ submodule add "$pwd/inner" &&
+	add_commit_push A/middle/ "adding inner sub" .gitmodules inner &&
+	add_commit_push A/ "adding middle sub" .gitmodules middle &&
+
+	git clone outer B &&
+	git -C B/ submodule update --init middle &&
+
+	compare_refs_in_dir A HEAD B HEAD &&
+	compare_refs_in_dir A/middle HEAD B/middle HEAD &&
+	test_path_is_file B/file &&
+	test_path_is_file B/middle/file &&
+	test_path_is_missing B/middle/inner/file &&
+
+	echo "change on inner repo of A" >"A/middle/inner/file" &&
+	add_commit_push A/middle/inner "change on inner" file &&
+	add_commit_push A/middle "change on inner" inner &&
+	add_commit_push A "change on inner" middle
+'
+
+test_expect_success 'fetching a superproject containing an uninitialized sub/sub project' '
+	# depends on previous test for setup
+
+	git -C B/ fetch &&
+	compare_refs_in_dir A origin/HEAD B origin/HEAD
+'
+
+fetch_with_recursion_abort () {
+	# In a regression the following git call will run into infinite recursion.
+	# To handle that, we connect the sed command to the git call by a pipe
+	# so that sed can kill the infinite recursion when detected.
+	# The recursion creates git output like:
+	# Fetching submodule sub
+	# Fetching submodule sub/sub              <-- [1]
+	# Fetching submodule sub/sub/sub
+	# ...
+	# [1] sed will stop reading and cause git to eventually stop and die
+
+	git -C "$1" fetch --recurse-submodules 2>&1 |
+		sed "/Fetching submodule $2[^$]/q" >out &&
+	! grep "Fetching submodule $2[^$]" out
+}
+
+test_expect_success 'setup recursive fetch with uninit submodule' '
+	# does not depend on any previous test setups
+
+	test_create_repo super &&
+	test_commit -C super initial &&
+	test_create_repo sub &&
+	test_commit -C sub initial &&
+	git -C sub rev-parse HEAD >expect &&
+
+	git -C super submodule add ../sub &&
+	git -C super commit -m "add sub" &&
+
+	git clone super superclone &&
+	git -C superclone submodule status >out &&
+	sed -e "s/^-//" -e "s/ sub.*$//" out >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'recursive fetch with uninit submodule' '
+	# depends on previous test for setup
+
+	fetch_with_recursion_abort superclone sub &&
+	git -C superclone submodule status >out &&
+	sed -e "s/^-//" -e "s/ sub$//" out >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'recursive fetch after deinit a submodule' '
+	# depends on previous test for setup
+
+	git -C superclone submodule update --init sub &&
+	git -C superclone submodule deinit -f sub &&
+
+	fetch_with_recursion_abort superclone sub &&
+	git -C superclone submodule status >out &&
+	sed -e "s/^-//" -e "s/ sub$//" out >actual &&
+	test_cmp expect actual
+'
+
 test_done
