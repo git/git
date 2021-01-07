@@ -308,8 +308,12 @@ static void free_strmap_strings(struct strmap *map)
 static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 					  int reinitialize)
 {
+	struct rename_info *renames = &opti->renames;
+	int i;
 	void (*strmap_func)(struct strmap *, int) =
 		reinitialize ? strmap_partial_clear : strmap_clear;
+	void (*strset_func)(struct strset *) =
+		reinitialize ? strset_partial_clear : strset_clear;
 
 	/*
 	 * We marked opti->paths with strdup_strings = 0, so that we
@@ -338,6 +342,23 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 	opti->paths_to_free.strdup_strings = 1;
 	string_list_clear(&opti->paths_to_free, 0);
 	opti->paths_to_free.strdup_strings = 0;
+
+	/* Free memory used by various renames maps */
+	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; ++i) {
+		struct hashmap_iter iter;
+		struct strmap_entry *entry;
+
+		strset_func(&renames->dirs_removed[i]);
+
+		strmap_for_each_entry(&renames->dir_rename_count[i],
+				      &iter, entry) {
+			struct strintmap *counts = entry->value;
+			strintmap_clear(counts);
+		}
+		strmap_func(&renames->dir_rename_count[i], 1);
+
+		strmap_func(&renames->dir_renames[i], 0);
+	}
 
 	if (!reinitialize) {
 		struct hashmap_iter iter;
@@ -1812,6 +1833,9 @@ static struct commit *make_virtual_commit(struct repository *repo,
 
 static void merge_start(struct merge_options *opt, struct merge_result *result)
 {
+	struct rename_info *renames;
+	int i;
+
 	/* Sanity checks on opt */
 	assert(opt->repo);
 
@@ -1845,6 +1869,17 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 
 	/* Initialization of opt->priv, our internal merge data */
 	opt->priv = xcalloc(1, sizeof(*opt->priv));
+
+	/* Initialization of various renames fields */
+	renames = &opt->priv->renames;
+	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; i++) {
+		strset_init_with_options(&renames->dirs_removed[i],
+					 NULL, 0);
+		strmap_init_with_options(&renames->dir_rename_count[i],
+					 NULL, 1);
+		strmap_init_with_options(&renames->dir_renames[i],
+					 NULL, 0);
+	}
 
 	/*
 	 * Although we initialize opt->priv->paths with strdup_strings=0,
