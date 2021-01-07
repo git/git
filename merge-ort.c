@@ -50,12 +50,40 @@ enum merge_side {
 
 struct rename_info {
 	/*
+	 * All variables that are arrays of size 3 correspond to data tracked
+	 * for the sides in enum merge_side.  Index 0 is almost always unused
+	 * because we often only need to track information for MERGE_SIDE1 and
+	 * MERGE_SIDE2 (MERGE_BASE can't have rename information since renames
+	 * are determined relative to what changed since the MERGE_BASE).
+	 */
+
+	/*
 	 * pairs: pairing of filenames from diffcore_rename()
-	 *
-	 * Index 1 and 2 correspond to sides 1 & 2 as used in
-	 * conflict_info.stages.  Index 0 unused.
 	 */
 	struct diff_queue_struct pairs[3];
+
+	/*
+	 * dirs_removed: directories removed on a given side of history.
+	 */
+	struct strset dirs_removed[3];
+
+	/*
+	 * dir_rename_count: tracking where parts of a directory were renamed to
+	 *
+	 * When files in a directory are renamed, they may not all go to the
+	 * same location.  Each strmap here tracks:
+	 *      old_dir => {new_dir => int}
+	 * That is, dir_rename_count[side] is a strmap to a strintmap.
+	 */
+	struct strmap dir_rename_count[3];
+
+	/*
+	 * dir_renames: computed directory renames
+	 *
+	 * This is a map of old_dir => new_dir and is derived in part from
+	 * dir_rename_count.
+	 */
+	struct strmap dir_renames[3];
 
 	/*
 	 * needed_limit: value needed for inexact rename detection to run
