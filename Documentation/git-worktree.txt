@@ -143,6 +143,11 @@ locate it. Running `repair` within the recently-moved working tree will
 reestablish the connection. If multiple linked working trees are moved,
 running `repair` from any working tree with each tree's new `<path>` as
 an argument, will reestablish the connection to all the specified paths.
++
+If both the main working tree and linked working trees have been moved
+manually, then running `repair` in the main working tree and specifying the
+new `<path>` of each linked working tree will reestablish all connections
+in both directions.
 
 unlock::
 
