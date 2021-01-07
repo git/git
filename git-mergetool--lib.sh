@@ -46,9 +46,11 @@ show_tool_names () {
 		while read scriptname
 		do
 			setup_tool "$scriptname" 2>/dev/null
-			variants="$variants$(list_tool_variants)\n"
+			# We need an actual line feed here
+			variants="$variants
+$(list_tool_variants)"
 		done
-		variants="$(echo "$variants" | sort | uniq)"
+		variants="$(echo "$variants" | sort -u)"
 
 		for toolname in $variants
 		do
