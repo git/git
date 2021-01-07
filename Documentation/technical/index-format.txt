@@ -26,7 +26,7 @@ Git index format
      Extensions are identified by signature. Optional extensions can
      be ignored if Git does not understand them.
 
-     Git currently supports cached tree and resolve undo extensions.
+     Git currently supports cache tree and resolve undo extensions.
 
      4-byte extension signature. If the first byte is 'A'..'Z' the
      extension is optional and can be ignored.
@@ -136,9 +136,9 @@ Git index format
 
 == Extensions
 
-=== Cached tree
+=== Cache tree
 
-  Cached tree extension contains pre-computed hashes for trees that can
+  Cache tree extension contains pre-computed hashes for trees that can
   be derived from the index. It helps speed up tree object generation
   from index for a new commit.
 
