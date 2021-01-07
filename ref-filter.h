@@ -32,6 +32,7 @@ struct ref_sorting {
 		REF_SORTING_REVERSE = 1<<0,
 		REF_SORTING_ICASE = 1<<1,
 		REF_SORTING_VERSION = 1<<2,
+		REF_SORTING_DETACHED_HEAD_FIRST = 1<<3,
 	} sort_flags;
 };
 
