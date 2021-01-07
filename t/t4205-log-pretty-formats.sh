@@ -605,6 +605,12 @@ test_expect_success 'pretty format %(trailers) shows trailers' '
 	test_cmp expect actual
 '
 
+test_expect_success 'pretty format %(trailers:) enables no options' '
+	git log --no-walk --pretty="%(trailers:)" >actual &&
+	# "expect" the same as the test above
+	test_cmp expect actual
+'
+
 test_expect_success '%(trailers:only) shows only "key: value" trailers' '
 	git log --no-walk --pretty="%(trailers:only)" >actual &&
 	{
@@ -709,19 +715,101 @@ test_expect_success '%(trailers:key) without value is error' '
 	test_cmp expect actual
 '
 
+test_expect_success '%(trailers:keyonly) shows only keys' '
+	git log --no-walk --pretty="format:%(trailers:keyonly)" >actual &&
+	test_write_lines \
+		"Signed-off-by" \
+		"Acked-by" \
+		"[ v2 updated patch description ]" \
+		"Signed-off-by" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:key=foo,keyonly) shows only key' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by,keyonly)" >actual &&
+	echo "Acked-by" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success '%(trailers:key=foo,valueonly) shows only value' '
 	git log --no-walk --pretty="format:%(trailers:key=Acked-by,valueonly)" >actual &&
 	echo "A U Thor <author@example.com>" >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'pretty format %(trailers:separator) changes separator' '
-	git log --no-walk --pretty=format:"X%(trailers:separator=%x00,unfold)X" >actual &&
-	printf "XSigned-off-by: A U Thor <author@example.com>\0Acked-by: A U Thor <author@example.com>\0[ v2 updated patch description ]\0Signed-off-by: A U Thor <author@example.com>X" >expect &&
+test_expect_success '%(trailers:valueonly) shows only values' '
+	git log --no-walk --pretty="format:%(trailers:valueonly)" >actual &&
+	test_write_lines \
+		"A U Thor <author@example.com>" \
+		"A U Thor <author@example.com>" \
+		"[ v2 updated patch description ]" \
+		"A U Thor" \
+		"  <author@example.com>" >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'pretty format %(trailers) combining separator/key/valueonly' '
+test_expect_success '%(trailers:key=foo,keyonly,valueonly) shows nothing' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by,keyonly,valueonly)" >actual &&
+	echo >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator) changes separator' '
+	git log --no-walk --pretty=format:"X%(trailers:separator=%x00)X" >actual &&
+	(
+		printf "XSigned-off-by: A U Thor <author@example.com>\0" &&
+		printf "Acked-by: A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by: A U Thor\n  <author@example.com>X"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator=X,unfold) changes separator' '
+	git log --no-walk --pretty=format:"X%(trailers:separator=%x00,unfold)X" >actual &&
+	(
+		printf "XSigned-off-by: A U Thor <author@example.com>\0" &&
+		printf "Acked-by: A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by: A U Thor <author@example.com>X"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key_value_separator) changes key-value separator' '
+	git log --no-walk --pretty=format:"X%(trailers:key_value_separator=%x00)X" >actual &&
+	(
+		printf "XSigned-off-by\0A U Thor <author@example.com>\n" &&
+		printf "Acked-by\0A U Thor <author@example.com>\n" &&
+		printf "[ v2 updated patch description ]\n" &&
+		printf "Signed-off-by\0A U Thor\n  <author@example.com>\nX"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key_value_separator,unfold) changes key-value separator' '
+	git log --no-walk --pretty=format:"X%(trailers:key_value_separator=%x00,unfold)X" >actual &&
+	(
+		printf "XSigned-off-by\0A U Thor <author@example.com>\n" &&
+		printf "Acked-by\0A U Thor <author@example.com>\n" &&
+		printf "[ v2 updated patch description ]\n" &&
+		printf "Signed-off-by\0A U Thor <author@example.com>\nX"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator,key_value_separator) changes both separators' '
+	git log --no-walk --pretty=format:"%(trailers:separator=%x00,key_value_separator=%x00%x00,unfold)" >actual &&
+	(
+		printf "Signed-off-by\0\0A U Thor <author@example.com>\0" &&
+		printf "Acked-by\0\0A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by\0\0A U Thor <author@example.com>"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers) combining separator/key/keyonly/valueonly' '
 	git commit --allow-empty -F - <<-\EOF &&
 	Important fix
 
@@ -748,6 +836,13 @@ test_expect_success 'pretty format %(trailers) combining separator/key/valueonly
 		"Does not close any tickets" \
 		"Another fix #567, #890" \
 		"Important fix #1234" >expect &&
+	test_cmp expect actual &&
+
+	git log --pretty="%s% (trailers:separator=%x2c%x20,key=Closes,keyonly)" HEAD~3.. >actual &&
+	test_write_lines \
+		"Does not close any tickets" \
+		"Another fix Closes, Closes" \
+		"Important fix Closes" >expect &&
 	test_cmp expect actual
 '
 

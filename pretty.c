@@ -1418,6 +1418,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
 		struct string_list filter_list = STRING_LIST_INIT_NODUP;
 		struct strbuf sepbuf = STRBUF_INIT;
+		struct strbuf kvsepbuf = STRBUF_INIT;
 		size_t ret = 0;
 
 		opts.no_divider = 1;
@@ -1449,8 +1450,17 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 					strbuf_expand(&sepbuf, fmt, strbuf_expand_literal_cb, NULL);
 					free(fmt);
 					opts.separator = &sepbuf;
+				} else if (match_placeholder_arg_value(arg, "key_value_separator", &arg, &argval, &arglen)) {
+					char *fmt;
+
+					strbuf_reset(&kvsepbuf);
+					fmt = xstrndup(argval, arglen);
+					strbuf_expand(&kvsepbuf, fmt, strbuf_expand_literal_cb, NULL);
+					free(fmt);
+					opts.key_value_separator = &kvsepbuf;
 				} else if (!match_placeholder_bool_arg(arg, "only", &arg, &opts.only_trailers) &&
 					   !match_placeholder_bool_arg(arg, "unfold", &arg, &opts.unfold) &&
+					   !match_placeholder_bool_arg(arg, "keyonly", &arg, &opts.key_only) &&
 					   !match_placeholder_bool_arg(arg, "valueonly", &arg, &opts.value_only))
 					break;
 			}
