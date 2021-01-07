@@ -102,6 +102,11 @@ test_expect_success 'fetch notices corrupt idx' '
 	)
 '
 
+test_expect_success 'client refuses to ask for repo with newline' '
+	test_must_fail git clone "$GIT_DAEMON_URL/repo$LF.git" dst 2>stderr &&
+	test_i18ngrep newline.is.forbidden stderr
+'
+
 test_remote_error()
 {
 	do_export=YesPlease

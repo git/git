@@ -1063,6 +1063,8 @@ static struct child_process *git_connect_git(int fd[2], char *hostandport,
 		target_host = xstrdup(hostandport);
 
 	transport_check_allowed("git");
+	if (strchr(target_host, '\n') || strchr(path, '\n'))
+		die(_("newline is forbidden in git:// hosts and repo paths"));
 
 	/*
 	 * These underlying connection commands die() if they
