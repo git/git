@@ -353,6 +353,16 @@ void refresh_fsmonitor(struct index_state *istate)
 	}
 	strbuf_release(&query_result);
 
+	/*
+	 * If the fsmonitor response and the subsequent scan of the disk
+	 * did not cause the in-memory index to be marked dirty, then force
+	 * it so that we advance the fsmonitor token in our extension, so
+	 * that future requests don't keep re-requesting the same range.
+	 */
+	if (istate->fsmonitor_last_update &&
+	    strcmp(istate->fsmonitor_last_update, last_update_token.buf))
+		istate->cache_changed |= FSMONITOR_CHANGED;
+
 	/* Now that we've updated istate, save the last_update_token */
 	FREE_AND_NULL(istate->fsmonitor_last_update);
 	istate->fsmonitor_last_update = strbuf_detach(&last_update_token, NULL);
