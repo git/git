@@ -1,0 +1,32 @@
+Git 2.31 Release Notes
+======================
+
+Updates since v2.30
+-------------------
+
+UI, Workflows & Features
+
+ * The "--format=%(trailers)" mechanism gets enhanced to make it
+   easier to design output for machine consumption.
+
+ * When a user does not tell "git pull" to use rebase or merge, the
+   command gives a loud message telling a user to choose between
+   rebase or merge but creates a merge anyway, forcing users who would
+   want to rebase to redo the operation.  Fix an early part of this
+   problem by tightening the condition to give the message---there is
+   no reason to stop or force the user to choose between rebase or
+   merge if the history fast-forwards.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * A 3-year old test that was not testing anything useful has been
+   corrected.
+
+
+Fixes since v2.30
+-----------------
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 505a276596 pk/subsub-fetch-fix-take-2 later to maint).
+   (merge 33fc56253b fc/t6030-bisect-reset-removes-auxiliary-files later to maint).
