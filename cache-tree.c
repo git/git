@@ -191,8 +191,8 @@ static int verify_cache(struct cache_entry **cache,
 		const char *next_name = next_ce->name;
 		int this_len = ce_namelen(this_ce);
 		if (this_len < ce_namelen(next_ce) &&
-		    strncmp(this_name, next_name, this_len) == 0 &&
-		    next_name[this_len] == '/') {
+		    next_name[this_len] == '/' &&
+		    strncmp(this_name, next_name, this_len) == 0) {
 			if (10 < ++funny) {
 				fprintf(stderr, "...\n");
 				break;
