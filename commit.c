@@ -574,6 +574,17 @@ struct commit_list *copy_commit_list(struct commit_list *list)
 	return head;
 }
 
+struct commit_list *reverse_commit_list(struct commit_list *list)
+{
+	struct commit_list *next = NULL, *current, *backup;
+	for (current = list; current; current = backup) {
+		backup = current->next;
+		current->next = next;
+		next = current;
+	}
+	return next;
+}
+
 void free_commit_list(struct commit_list *list)
 {
 	while (list)

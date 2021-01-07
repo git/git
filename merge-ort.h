@@ -34,6 +34,16 @@ struct merge_result {
 /*
  * rename-detecting three-way merge with recursive ancestor consolidation.
  * working tree and index are untouched.
+ *
+ * merge_bases will be consumed (emptied) so make a copy if you need it.
+ *
+ * NOTE: empirically, the recursive algorithm will perform better if you
+ *       pass the merge_bases in the order of oldest commit to the
+ *       newest[1][2].
+ *
+ *       [1] https://lore.kernel.org/git/nycvar.QRO.7.76.6.1907252055500.21907@tvgsbejvaqbjf.bet/
+ *       [2] commit 8918b0c9c2 ("merge-recur: try to merge older merge bases
+ *           first", 2006-08-09)
  */
 void merge_incore_recursive(struct merge_options *opt,
 			    struct commit_list *merge_bases,
