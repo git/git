@@ -185,10 +185,12 @@ static int verify_cache(struct cache_entry **cache,
 		 * the cache is sorted.  Also path can appear only once,
 		 * which means conflicting one would immediately follow.
 		 */
-		const char *this_name = cache[i]->name;
-		const char *next_name = cache[i+1]->name;
-		int this_len = strlen(this_name);
-		if (this_len < strlen(next_name) &&
+		const struct cache_entry *this_ce = cache[i];
+		const struct cache_entry *next_ce = cache[i + 1];
+		const char *this_name = this_ce->name;
+		const char *next_name = next_ce->name;
+		int this_len = ce_namelen(this_ce);
+		if (this_len < ce_namelen(next_ce) &&
 		    strncmp(this_name, next_name, this_len) == 0 &&
 		    next_name[this_len] == '/') {
 			if (10 < ++funny) {
