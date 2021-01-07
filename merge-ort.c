@@ -17,7 +17,9 @@
 #include "cache.h"
 #include "merge-ort.h"
 
+#include "blob.h"
 #include "cache-tree.h"
+#include "commit-reach.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
@@ -56,6 +58,8 @@ struct merge_options_internal {
 	 *   * these keys serve to intern all the path strings, which allows
 	 *     us to do pointer comparison on directory names instead of
 	 *     strcmp; we just have to be careful to use the interned strings.
+	 *     (Technically paths_to_free may track some strings that were
+	 *      removed from froms paths.)
 	 *
 	 * The values of paths:
 	 *   * either a pointer to a merged_info, or a conflict_info struct
@@ -89,6 +93,25 @@ struct merge_options_internal {
 	 * relevant entries.
 	 */
 	struct strmap conflicted;
+
+	/*
+	 * paths_to_free: additional list of strings to free
+	 *
+	 * If keys are removed from "paths", they are added to paths_to_free
+	 * to ensure they are later freed.  We avoid free'ing immediately since
+	 * other places (e.g. conflict_info.pathnames[]) may still be
+	 * referencing these paths.
+	 */
+	struct string_list paths_to_free;
+
+	/*
+	 * output: special messages and conflict notices for various paths
+	 *
+	 * This is a map of pathnames (a subset of the keys in "paths" above)
+	 * to strbufs.  It gathers various warning/conflict/notice messages
+	 * for later processing.
+	 */
+	struct strmap output;
 
 	/*
 	 * current_dir_name: temporary var used in collect_merge_info_callback()
@@ -164,6 +187,13 @@ struct conflict_info {
 	unsigned df_conflict:1;
 
 	/*
+	 * Whether this path is/was involved in a non-content conflict other
+	 * than a directory/file conflict (e.g. rename/rename, rename/delete,
+	 * file location based on possible directory rename).
+	 */
+	unsigned path_conflict:1;
+
+	/*
 	 * For filemask and dirmask, the ith bit corresponds to whether the
 	 * ith entry is a file (filemask) or a directory (dirmask).  Thus,
 	 * filemask & dirmask is always zero, and filemask | dirmask is at
@@ -188,6 +218,8 @@ struct conflict_info {
 	 */
 	unsigned match_mask:3;
 };
+
+/*** Function Grouping: various utility functions ***/
 
 /*
  * For the next three macros, see warning for conflict_info.merged.
@@ -219,6 +251,61 @@ static void free_strmap_strings(struct strmap *map)
 	}
 }
 
+static void clear_internal_opts(struct merge_options_internal *opti,
+				int reinitialize)
+{
+	assert(!reinitialize);
+
+	/*
+	 * We marked opti->paths with strdup_strings = 0, so that we
+	 * wouldn't have to make another copy of the fullpath created by
+	 * make_traverse_path from setup_path_info().  But, now that we've
+	 * used it and have no other references to these strings, it is time
+	 * to deallocate them.
+	 */
+	free_strmap_strings(&opti->paths);
+	strmap_clear(&opti->paths, 1);
+
+	/*
+	 * All keys and values in opti->conflicted are a subset of those in
+	 * opti->paths.  We don't want to deallocate anything twice, so we
+	 * don't free the keys and we pass 0 for free_values.
+	 */
+	strmap_clear(&opti->conflicted, 0);
+
+	/*
+	 * opti->paths_to_free is similar to opti->paths; we created it with
+	 * strdup_strings = 0 to avoid making _another_ copy of the fullpath
+	 * but now that we've used it and have no other references to these
+	 * strings, it is time to deallocate them.  We do so by temporarily
+	 * setting strdup_strings to 1.
+	 */
+	opti->paths_to_free.strdup_strings = 1;
+	string_list_clear(&opti->paths_to_free, 0);
+	opti->paths_to_free.strdup_strings = 0;
+
+	if (!reinitialize) {
+		struct hashmap_iter iter;
+		struct strmap_entry *e;
+
+		/* Release and free each strbuf found in output */
+		strmap_for_each_entry(&opti->output, &iter, e) {
+			struct strbuf *sb = e->value;
+			strbuf_release(sb);
+			/*
+			 * While strictly speaking we don't need to free(sb)
+			 * here because we could pass free_values=1 when
+			 * calling strmap_clear() on opti->output, that would
+			 * require strmap_clear to do another
+			 * strmap_for_each_entry() loop, so we just free it
+			 * while we're iterating anyway.
+			 */
+			free(sb);
+		}
+		strmap_clear(&opti->output, 0);
+	}
+}
+
 static int err(struct merge_options *opt, const char *err, ...)
 {
 	va_list params;
@@ -234,6 +321,29 @@ static int err(struct merge_options *opt, const char *err, ...)
 
 	return -1;
 }
+
+__attribute__((format (printf, 4, 5)))
+static void path_msg(struct merge_options *opt,
+		     const char *path,
+		     int omittable_hint, /* skippable under --remerge-diff */
+		     const char *fmt, ...)
+{
+	va_list ap;
+	struct strbuf *sb = strmap_get(&opt->priv->output, path);
+	if (!sb) {
+		sb = xmalloc(sizeof(*sb));
+		strbuf_init(sb, 0);
+		strmap_put(&opt->priv->output, path, sb);
+	}
+
+	va_start(ap, fmt);
+	strbuf_vaddf(sb, fmt, ap);
+	va_end(ap);
+
+	strbuf_addch(sb, '\n');
+}
+
+/*** Function Grouping: functions related to collect_merge_info() ***/
 
 static void setup_path_info(struct merge_options *opt,
 			    struct string_list_item *result,
@@ -489,6 +599,27 @@ static int collect_merge_info(struct merge_options *opt,
 	return ret;
 }
 
+/*** Function Grouping: functions related to threeway content merges ***/
+
+static int handle_content_merge(struct merge_options *opt,
+				const char *path,
+				const struct version_info *o,
+				const struct version_info *a,
+				const struct version_info *b,
+				const char *pathnames[3],
+				const int extra_marker_size,
+				struct version_info *result)
+{
+	die("Not yet implemented");
+}
+
+/*** Function Grouping: functions related to detect_and_process_renames(), ***
+ *** which are split into directory and regular rename detection sections. ***/
+
+/*** Function Grouping: functions related to directory rename detection ***/
+
+/*** Function Grouping: functions related to regular rename detection ***/
+
 static int detect_and_process_renames(struct merge_options *opt,
 				      struct tree *merge_base,
 				      struct tree *side1,
@@ -505,6 +636,8 @@ static int detect_and_process_renames(struct merge_options *opt,
 	 */
 	return clean;
 }
+
+/*** Function Grouping: functions related to process_entries() ***/
 
 static int string_list_df_name_compare(const char *one, const char *two)
 {
@@ -887,9 +1020,27 @@ static void process_entry(struct merge_options *opt,
 		ci->merged.clean = 0;
 		ci->merged.result.mode = ci->stages[1].mode;
 		oidcpy(&ci->merged.result.oid, &ci->stages[1].oid);
+		/* When we fix above, we'll call handle_content_merge() */
+		(void)handle_content_merge;
 	} else if (ci->filemask == 3 || ci->filemask == 5) {
 		/* Modify/delete */
-		die("Not yet implemented.");
+		const char *modify_branch, *delete_branch;
+		int side = (ci->filemask == 5) ? 2 : 1;
+		int index = opt->priv->call_depth ? 0 : side;
+
+		ci->merged.result.mode = ci->stages[index].mode;
+		oidcpy(&ci->merged.result.oid, &ci->stages[index].oid);
+		ci->merged.clean = 0;
+
+		modify_branch = (side == 1) ? opt->branch1 : opt->branch2;
+		delete_branch = (side == 1) ? opt->branch2 : opt->branch1;
+
+		path_msg(opt, path, 0,
+			 _("CONFLICT (modify/delete): %s deleted in %s "
+			   "and modified in %s.  Version %s of %s left "
+			   "in tree."),
+			 path, delete_branch, modify_branch,
+			 modify_branch, path);
 	} else if (ci->filemask == 2 || ci->filemask == 4) {
 		/* Added on one side */
 		int side = (ci->filemask == 4) ? 2 : 1;
@@ -983,6 +1134,8 @@ static void process_entries(struct merge_options *opt,
 	string_list_clear(&dir_metadata.versions, 0);
 	string_list_clear(&dir_metadata.offsets, 0);
 }
+
+/*** Function Grouping: functions related to merge_switch_to_result() ***/
 
 static int checkout(struct merge_options *opt,
 		    struct tree *prev,
@@ -1154,7 +1307,29 @@ void merge_switch_to_result(struct merge_options *opt,
 	}
 
 	if (display_update_msgs) {
-		/* TODO: print out CONFLICT and other informational messages. */
+		struct merge_options_internal *opti = result->priv;
+		struct hashmap_iter iter;
+		struct strmap_entry *e;
+		struct string_list olist = STRING_LIST_INIT_NODUP;
+		int i;
+
+		/* Hack to pre-allocate olist to the desired size */
+		ALLOC_GROW(olist.items, strmap_get_size(&opti->output),
+			   olist.alloc);
+
+		/* Put every entry from output into olist, then sort */
+		strmap_for_each_entry(&opti->output, &iter, e) {
+			string_list_append(&olist, e->key)->util = e->value;
+		}
+		string_list_sort(&olist);
+
+		/* Iterate over the items, printing them */
+		for (i = 0; i < olist.nr; ++i) {
+			struct strbuf *sb = olist.items[i].util;
+
+			printf("%s", sb->buf);
+		}
+		string_list_clear(&olist, 0);
 	}
 
 	merge_finalize(opt, result);
@@ -1167,24 +1342,11 @@ void merge_finalize(struct merge_options *opt,
 
 	assert(opt->priv == NULL);
 
-	/*
-	 * We marked opti->paths with strdup_strings = 0, so that we
-	 * wouldn't have to make another copy of the fullpath created by
-	 * make_traverse_path from setup_path_info().  But, now that we've
-	 * used it and have no other references to these strings, it is time
-	 * to deallocate them.
-	 */
-	free_strmap_strings(&opti->paths);
-	strmap_clear(&opti->paths, 1);
-
-	/*
-	 * All keys and values in opti->conflicted are a subset of those in
-	 * opti->paths.  We don't want to deallocate anything twice, so we
-	 * don't free the keys and we pass 0 for free_values.
-	 */
-	strmap_clear(&opti->conflicted, 0);
+	clear_internal_opts(opti, 0);
 	FREE_AND_NULL(opti);
 }
+
+/*** Function Grouping: helper functions for merge_incore_*() ***/
 
 static void merge_start(struct merge_options *opt, struct merge_result *result)
 {
@@ -1226,14 +1388,24 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	 * Although we initialize opt->priv->paths with strdup_strings=0,
 	 * that's just to avoid making yet another copy of an allocated
 	 * string.  Putting the entry into paths means we are taking
-	 * ownership, so we will later free it.
+	 * ownership, so we will later free it.  paths_to_free is similar.
 	 *
 	 * In contrast, conflicted just has a subset of keys from paths, so
 	 * we don't want to free those (it'd be a duplicate free).
 	 */
 	strmap_init_with_options(&opt->priv->paths, NULL, 0);
 	strmap_init_with_options(&opt->priv->conflicted, NULL, 0);
+	string_list_init(&opt->priv->paths_to_free, 0);
+
+	/*
+	 * keys & strbufs in output will sometimes need to outlive "paths",
+	 * so it will have a copy of relevant keys.  It's probably a small
+	 * subset of the overall paths that have special output.
+	 */
+	strmap_init(&opt->priv->output);
 }
+
+/*** Function Grouping: merge_incore_*() and their internal variants ***/
 
 /*
  * Originally from merge_trees_internal(); heavily adapted, though.
