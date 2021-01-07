@@ -2362,11 +2362,12 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 	if (get_ref_atom_value(b, s->atom, &vb, &err))
 		die("%s", err.buf);
 	strbuf_release(&err);
-	if (s->version) {
+	if (s->sort_flags & REF_SORTING_VERSION) {
 		cmp = versioncmp(va->s, vb->s);
 	} else if (cmp_type == FIELD_STR) {
 		int (*cmp_fn)(const char *, const char *);
-		cmp_fn = s->ignore_case ? strcasecmp : strcmp;
+		cmp_fn = s->sort_flags & REF_SORTING_ICASE
+			? strcasecmp : strcmp;
 		cmp = cmp_fn(va->s, vb->s);
 	} else {
 		if (va->value < vb->value)
@@ -2377,7 +2378,7 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 			cmp = 1;
 	}
 
-	return (s->reverse) ? -cmp : cmp;
+	return (s->sort_flags & REF_SORTING_REVERSE) ? -cmp : cmp;
 }
 
 static int compare_refs(const void *a_, const void *b_, void *ref_sorting)
@@ -2392,15 +2393,20 @@ static int compare_refs(const void *a_, const void *b_, void *ref_sorting)
 			return cmp;
 	}
 	s = ref_sorting;
-	return s && s->ignore_case ?
+	return s && s->sort_flags & REF_SORTING_ICASE ?
 		strcasecmp(a->refname, b->refname) :
 		strcmp(a->refname, b->refname);
 }
 
-void ref_sorting_icase_all(struct ref_sorting *sorting, int flag)
+void ref_sorting_set_sort_flags_all(struct ref_sorting *sorting,
+				    unsigned int mask, int on)
 {
-	for (; sorting; sorting = sorting->next)
-		sorting->ignore_case = !!flag;
+	for (; sorting; sorting = sorting->next) {
+		if (on)
+			sorting->sort_flags |= mask;
+		else
+			sorting->sort_flags &= ~mask;
+	}
 }
 
 void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
@@ -2537,12 +2543,12 @@ void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *arg)
 	*sorting_tail = s;
 
 	if (*arg == '-') {
-		s->reverse = 1;
+		s->sort_flags |= REF_SORTING_REVERSE;
 		arg++;
 	}
 	if (skip_prefix(arg, "version:", &arg) ||
 	    skip_prefix(arg, "v:", &arg))
-		s->version = 1;
+		s->sort_flags |= REF_SORTING_VERSION;
 	s->atom = parse_sorting_atom(arg);
 }
 

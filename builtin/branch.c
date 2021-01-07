@@ -739,7 +739,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		 */
 		if (!sorting)
 			sorting = ref_default_sorting();
-		ref_sorting_icase_all(sorting, icase);
+		ref_sorting_set_sort_flags_all(sorting, REF_SORTING_ICASE, icase);
 		print_ref_list(&filter, sorting, &format);
 		print_columns(&output, colopts, NULL);
 		string_list_clear(&output, 0);
