@@ -12,75 +12,75 @@ test_expect_success 'clear default config' '
 '
 
 cat > expect << EOF
-[core]
+[section]
 	penguin = little blue
 EOF
 test_expect_success 'initial' '
-	git config core.penguin "little blue" &&
+	git config section.penguin "little blue" &&
 	test_cmp expect .git/config
 '
 
 cat > expect << EOF
-[core]
+[section]
 	penguin = little blue
 	Movie = BadPhysics
 EOF
 test_expect_success 'mixed case' '
-	git config Core.Movie BadPhysics &&
+	git config Section.Movie BadPhysics &&
 	test_cmp expect .git/config
 '
 
 cat > expect << EOF
-[core]
+[section]
 	penguin = little blue
 	Movie = BadPhysics
-[Cores]
+[Sections]
 	WhatEver = Second
 EOF
 test_expect_success 'similar section' '
-	git config Cores.WhatEver Second &&
+	git config Sections.WhatEver Second &&
 	test_cmp expect .git/config
 '
 
 cat > expect << EOF
-[core]
+[section]
 	penguin = little blue
 	Movie = BadPhysics
 	UPPERCASE = true
-[Cores]
+[Sections]
 	WhatEver = Second
 EOF
 test_expect_success 'uppercase section' '
-	git config CORE.UPPERCASE true &&
+	git config SECTION.UPPERCASE true &&
 	test_cmp expect .git/config
 '
 
 test_expect_success 'replace with non-match' '
-	git config core.penguin kingpin !blue
+	git config section.penguin kingpin !blue
 '
 
 test_expect_success 'replace with non-match (actually matching)' '
-	git config core.penguin "very blue" !kingpin
+	git config section.penguin "very blue" !kingpin
 '
 
 cat > expect << EOF
-[core]
+[section]
 	penguin = very blue
 	Movie = BadPhysics
 	UPPERCASE = true
 	penguin = kingpin
-[Cores]
+[Sections]
 	WhatEver = Second
 EOF
 
 test_expect_success 'non-match result' 'test_cmp expect .git/config'
 
 test_expect_success 'find mixed-case key by canonical name' '
-	test_cmp_config Second cores.whatever
+	test_cmp_config Second sections.whatever
 '
 
 test_expect_success 'find mixed-case key by non-canonical name' '
-	test_cmp_config Second CoReS.WhAtEvEr
+	test_cmp_config Second SeCtIoNs.WhAtEvEr
 '
 
 test_expect_success 'subsections are not canonicalized by git-config' '
@@ -469,7 +469,8 @@ test_expect_success 'new variable inserts into proper section' '
 '
 
 test_expect_success 'alternative --file (non-existing file should fail)' '
-	test_must_fail git config --file non-existing-config -l
+	test_must_fail git config --file non-existing-config -l &&
+	test_must_fail git config --file non-existing-config test.xyzzy
 '
 
 cat > other-config << EOF
@@ -506,10 +507,6 @@ test_expect_success 'editing stdin is an error' '
 
 test_expect_success 'refer config from subdirectory' '
 	mkdir x &&
-	test_cmp_config -C x strasse --get --file ../other-config ein.bahn
-'
-
-test_expect_success 'refer config from subdirectory via --file' '
 	test_cmp_config -C x strasse --file=../other-config --get ein.bahn
 '
 
@@ -1036,11 +1033,6 @@ test_expect_success SYMLINKS 'symlinked configuration' '
 	test_cmp expect actual
 '
 
-test_expect_success 'nonexistent configuration' '
-	test_must_fail git config --file=doesnotexist --list &&
-	test_must_fail git config --file=doesnotexist test.xyzzy
-'
-
 test_expect_success SYMLINKS 'symlink to nonexistent configuration' '
 	ln -s doesnotexist linktonada &&
 	ln -s linktonada linktolinktonada &&
@@ -1065,12 +1057,12 @@ test_expect_success 'git -c "key=value" support' '
 	true
 	EOF
 	{
-		git -c core.name=value config core.name &&
+		git -c section.name=value config section.name &&
 		git -c foo.CamelCase=value config foo.camelcase &&
 		git -c foo.flag config --bool foo.flag
 	} >actual &&
 	test_cmp expect actual &&
-	test_must_fail git -c name=value config core.name
+	test_must_fail git -c name=value config section.name
 '
 
 # We just need a type-specifier here that cares about the
@@ -1115,7 +1107,7 @@ test_expect_success 'aliases can be CamelCased' '
 
 test_expect_success 'git -c does not split values on equals' '
 	echo "value with = in it" >expect &&
-	git -c core.foo="value with = in it" config core.foo >actual &&
+	git -c section.foo="value with = in it" config section.foo >actual &&
 	test_cmp expect actual
 '
 
@@ -1846,53 +1838,53 @@ do
 done
 
 cat >.git/config <<-\EOF &&
-[core]
+[section]
 foo = true
 number = 10
 big = 1M
 EOF
 
 test_expect_success 'identical modern --type specifiers are allowed' '
-	test_cmp_config 1048576 --type=int --type=int core.big
+	test_cmp_config 1048576 --type=int --type=int section.big
 '
 
 test_expect_success 'identical legacy --type specifiers are allowed' '
-	test_cmp_config 1048576 --int --int core.big
+	test_cmp_config 1048576 --int --int section.big
 '
 
 test_expect_success 'identical mixed --type specifiers are allowed' '
-	test_cmp_config 1048576 --int --type=int core.big
+	test_cmp_config 1048576 --int --type=int section.big
 '
 
 test_expect_success 'non-identical modern --type specifiers are not allowed' '
-	test_must_fail git config --type=int --type=bool core.big 2>error &&
+	test_must_fail git config --type=int --type=bool section.big 2>error &&
 	test_i18ngrep "only one type at a time" error
 '
 
 test_expect_success 'non-identical legacy --type specifiers are not allowed' '
-	test_must_fail git config --int --bool core.big 2>error &&
+	test_must_fail git config --int --bool section.big 2>error &&
 	test_i18ngrep "only one type at a time" error
 '
 
 test_expect_success 'non-identical mixed --type specifiers are not allowed' '
-	test_must_fail git config --type=int --bool core.big 2>error &&
+	test_must_fail git config --type=int --bool section.big 2>error &&
 	test_i18ngrep "only one type at a time" error
 '
 
 test_expect_success '--type allows valid type specifiers' '
-	test_cmp_config true  --type=bool core.foo
+	test_cmp_config true  --type=bool section.foo
 '
 
 test_expect_success '--no-type unsets type specifiers' '
-	test_cmp_config 10 --type=bool --no-type core.number
+	test_cmp_config 10 --type=bool --no-type section.number
 '
 
 test_expect_success 'unset type specifiers may be reset to conflicting ones' '
-	test_cmp_config 1048576 --type=bool --no-type --type=int core.big
+	test_cmp_config 1048576 --type=bool --no-type --type=int section.big
 '
 
 test_expect_success '--type rejects unknown specifiers' '
-	test_must_fail git config --type=nonsense core.foo 2>error &&
+	test_must_fail git config --type=nonsense section.foo 2>error &&
 	test_i18ngrep "unrecognized --type argument" error
 '
 
