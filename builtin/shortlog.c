@@ -360,19 +360,19 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 
 	const struct option options[] = {
 		OPT_BIT('c', "committer", &log.groups,
-			N_("Group by committer rather than author"),
+			N_("group by committer rather than author"),
 			SHORTLOG_GROUP_COMMITTER),
 		OPT_BOOL('n', "numbered", &log.sort_by_number,
 			 N_("sort output according to the number of commits per author")),
 		OPT_BOOL('s', "summary", &log.summary,
-			 N_("Suppress commit descriptions, only provides commit count")),
+			 N_("suppress commit descriptions, only provides commit count")),
 		OPT_BOOL('e', "email", &log.email,
-			 N_("Show the email address of each author")),
+			 N_("show the email address of each author")),
 		OPT_CALLBACK_F('w', NULL, &log, N_("<w>[,<i1>[,<i2>]]"),
-			N_("Linewrap output"), PARSE_OPT_OPTARG,
+			N_("linewrap output"), PARSE_OPT_OPTARG,
 			&parse_wrap_args),
 		OPT_CALLBACK(0, "group", &log, N_("field"),
-			N_("Group by field"), parse_group_option),
+			N_("group by field"), parse_group_option),
 		OPT_END(),
 	};
 
