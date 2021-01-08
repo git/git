@@ -7,7 +7,7 @@
 #include "object.h"
 #include "refs.h"
 #include "revision.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "commit-graph.h"
 #include "object-store.h"
 #include "alloc.h"
@@ -1043,7 +1043,7 @@ static int write_graph_chunk_data(struct hashfile *f,
 		if (!parent)
 			edge_value = GRAPH_PARENT_NONE;
 		else {
-			edge_value = sha1_pos(parent->item->object.oid.hash,
+			edge_value = hash_pos(parent->item->object.oid.hash,
 					      ctx->commits.list,
 					      ctx->commits.nr,
 					      commit_to_sha1);
@@ -1074,7 +1074,7 @@ static int write_graph_chunk_data(struct hashfile *f,
 		else if (parent->next)
 			edge_value = GRAPH_EXTRA_EDGES_NEEDED | num_extra_edges;
 		else {
-			edge_value = sha1_pos(parent->item->object.oid.hash,
+			edge_value = hash_pos(parent->item->object.oid.hash,
 					      ctx->commits.list,
 					      ctx->commits.nr,
 					      commit_to_sha1);
@@ -1143,7 +1143,7 @@ static int write_graph_chunk_extra_edges(struct hashfile *f,
 
 		/* Since num_parents > 2, this initializer is safe. */
 		for (parent = (*list)->parents->next; parent; parent = parent->next) {
-			int edge_value = sha1_pos(parent->item->object.oid.hash,
+			int edge_value = hash_pos(parent->item->object.oid.hash,
 						  ctx->commits.list,
 						  ctx->commits.nr,
 						  commit_to_sha1);

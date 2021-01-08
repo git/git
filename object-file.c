@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  *
- * This handles basic git sha1 object files - packing, unpacking,
+ * This handles basic git object files - packing, unpacking,
  * creation etc.
  */
 #include "cache.h"
@@ -20,7 +20,7 @@
 #include "tree-walk.h"
 #include "refs.h"
 #include "pack-revindex.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "bulk-checkin.h"
 #include "repository.h"
 #include "replace-object.h"
@@ -508,9 +508,9 @@ static int alt_odb_usable(struct raw_object_store *o,
  * LF separated.  Its base points at a statically allocated buffer that
  * contains "/the/directory/corresponding/to/.git/objects/...", while
  * its name points just after the slash at the end of ".git/objects/"
- * in the example above, and has enough space to hold 40-byte hex
- * SHA1, an extra slash for the first level indirection, and the
- * terminating NUL.
+ * in the example above, and has enough space to hold all hex characters
+ * of the object ID, an extra slash for the first level indirection, and
+ * the terminating NUL.
  */
 static void read_info_alternates(struct repository *r,
 				 const char *relative_base,
