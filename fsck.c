@@ -80,7 +80,9 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	/* infos (reported as warnings, but ignored by default) */ \
 	FUNC(GITMODULES_PARSE, INFO) \
 	FUNC(BAD_TAG_NAME, INFO) \
-	FUNC(MISSING_TAGGER_ENTRY, INFO)
+	FUNC(MISSING_TAGGER_ENTRY, INFO) \
+	/* ignored (elevated when requested) */ \
+	FUNC(EXTRA_HEADER_ENTRY, IGNORE)
 
 #define MSG_ID(id, msg_type) FSCK_MSG_##id,
 enum fsck_msg_id {
@@ -911,6 +913,16 @@ static int fsck_tag(const struct object_id *oid, const char *buffer,
 		    unsigned long size, struct fsck_options *options)
 {
 	struct object_id tagged_oid;
+	int tagged_type;
+	return fsck_tag_standalone(oid, buffer, size, options, &tagged_oid,
+				   &tagged_type);
+}
+
+int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
+			unsigned long size, struct fsck_options *options,
+			struct object_id *tagged_oid,
+			int *tagged_type)
+{
 	int ret = 0;
 	char *eol;
 	struct strbuf sb = STRBUF_INIT;
@@ -924,7 +936,7 @@ static int fsck_tag(const struct object_id *oid, const char *buffer,
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_MISSING_OBJECT, "invalid format - expected 'object' line");
 		goto done;
 	}
-	if (parse_oid_hex(buffer, &tagged_oid, &p) || *p != '\n') {
+	if (parse_oid_hex(buffer, tagged_oid, &p) || *p != '\n') {
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_BAD_OBJECT_SHA1, "invalid 'object' line format - bad sha1");
 		if (ret)
 			goto done;
@@ -940,7 +952,8 @@ static int fsck_tag(const struct object_id *oid, const char *buffer,
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_MISSING_TYPE, "invalid format - unexpected end after 'type' line");
 		goto done;
 	}
-	if (type_from_string_gently(buffer, eol - buffer, 1) < 0)
+	*tagged_type = type_from_string_gently(buffer, eol - buffer, 1);
+	if (*tagged_type < 0)
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_BAD_TYPE, "invalid 'type' value");
 	if (ret)
 		goto done;
@@ -974,6 +987,21 @@ static int fsck_tag(const struct object_id *oid, const char *buffer,
 	}
 	else
 		ret = fsck_ident(&buffer, oid, OBJ_TAG, options);
+	if (!*buffer)
+		goto done;
+
+	if (!starts_with(buffer, "\n")) {
+		/*
+		 * The verify_headers() check will allow
+		 * e.g. "[...]tagger <tagger>\nsome
+		 * garbage\n\nmessage" to pass, thinking "some
+		 * garbage" could be a custom header. E.g. "mktag"
+		 * doesn't want any unknown headers.
+		 */
+		ret = report(options, oid, OBJ_TAG, FSCK_MSG_EXTRA_HEADER_ENTRY, "invalid format - extra header(s) after 'tagger'");
+		if (ret)
+			goto done;
+	}
 
 done:
 	strbuf_release(&sb);
@@ -1283,4 +1311,28 @@ int fsck_finish(struct fsck_options *options)
 	oidset_clear(&gitmodules_found);
 	oidset_clear(&gitmodules_done);
 	return ret;
+}
+
+int fsck_config_internal(const char *var, const char *value, void *cb,
+			 struct fsck_options *options)
+{
+	if (strcmp(var, "fsck.skiplist") == 0) {
+		const char *path;
+		struct strbuf sb = STRBUF_INIT;
+
+		if (git_config_pathname(&path, var, value))
+			return 1;
+		strbuf_addf(&sb, "skiplist=%s", path);
+		free((char *)path);
+		fsck_set_msg_types(options, sb.buf);
+		strbuf_release(&sb);
+		return 0;
+	}
+
+	if (skip_prefix(var, "fsck.", &var)) {
+		fsck_set_msg_type(options, var, value);
+		return 0;
+	}
+
+	return git_default_config(var, value, cb);
 }
