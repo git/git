@@ -306,7 +306,9 @@ test_expect_success 'git branch --list -v with --abbrev' '
 
 	git branch -v --list --no-abbrev t >actual.noabbrev &&
 	git branch -v --list --abbrev=0 t >actual.0abbrev &&
+	git -c core.abbrev=no branch -v --list t >actual.noabbrev-conf &&
 	test_cmp actual.noabbrev actual.0abbrev &&
+	test_cmp actual.noabbrev actual.noabbrev-conf &&
 
 	git branch -v --list --abbrev=36 t >actual.36abbrev &&
 	# how many hexdigits are used?
