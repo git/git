@@ -202,7 +202,7 @@ int credential_read(struct credential *c, FILE *fp)
 {
 	struct strbuf line = STRBUF_INIT;
 
-	while (strbuf_getline_lf(&line, fp) != EOF) {
+	while (strbuf_getline(&line, fp) != EOF) {
 		char *key = line.buf;
 		char *value = strchr(key, '=');
 
@@ -274,11 +274,9 @@ static int run_credential_helper(struct credential *c,
 				 int want_output)
 {
 	struct child_process helper = CHILD_PROCESS_INIT;
-	const char *argv[] = { NULL, NULL };
 	FILE *fp;
 
-	argv[0] = cmd;
-	helper.argv = argv;
+	strvec_push(&helper.args, cmd);
 	helper.use_shell = 1;
 	helper.in = -1;
 	if (want_output)

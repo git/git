@@ -7,6 +7,7 @@ test_description='test for-each-refs usage of ref-filter APIs'
 
 test_expect_success 'setup some history and refs' '
 	test_commit one &&
+	git branch -M main &&
 	test_commit two &&
 	test_commit three &&
 	git checkout -b side &&
@@ -26,17 +27,17 @@ test_expect_success 'setup some history and refs' '
 	git tag $sign -m "A signed tag" signed-tag &&
 	git tag $sign -m "Signed doubly" doubly-signed-tag signed-tag &&
 
-	git checkout master &&
-	git update-ref refs/odd/spot master
+	git checkout main &&
+	git update-ref refs/odd/spot main
 '
 
 test_expect_success 'filtering with --points-at' '
 	cat >expect <<-\EOF &&
-	refs/heads/master
+	refs/heads/main
 	refs/odd/spot
 	refs/tags/three
 	EOF
-	git for-each-ref --format="%(refname)" --points-at=master >actual &&
+	git for-each-ref --format="%(refname)" --points-at=main >actual &&
 	test_cmp expect actual
 '
 
@@ -53,13 +54,13 @@ test_expect_success 'check signed tags with --points-at' '
 
 test_expect_success 'filtering with --merged' '
 	cat >expect <<-\EOF &&
-	refs/heads/master
+	refs/heads/main
 	refs/odd/spot
 	refs/tags/one
 	refs/tags/three
 	refs/tags/two
 	EOF
-	git for-each-ref --format="%(refname)" --merged=master >actual &&
+	git for-each-ref --format="%(refname)" --merged=main >actual &&
 	test_cmp expect actual
 '
 
@@ -72,13 +73,13 @@ test_expect_success 'filtering with --no-merged' '
 	refs/tags/four
 	refs/tags/signed-tag
 	EOF
-	git for-each-ref --format="%(refname)" --no-merged=master >actual &&
+	git for-each-ref --format="%(refname)" --no-merged=main >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'filtering with --contains' '
 	cat >expect <<-\EOF &&
-	refs/heads/master
+	refs/heads/main
 	refs/heads/side
 	refs/odd/spot
 	refs/tags/annotated-tag
@@ -115,7 +116,7 @@ test_expect_success '%(color) must fail' '
 
 test_expect_success 'left alignment is default' '
 	cat >expect <<-\EOF &&
-	refname is refs/heads/master  |refs/heads/master
+	refname is refs/heads/main    |refs/heads/main
 	refname is refs/heads/side    |refs/heads/side
 	refname is refs/odd/spot      |refs/odd/spot
 	refname is refs/tags/annotated-tag|refs/tags/annotated-tag
@@ -133,7 +134,7 @@ test_expect_success 'left alignment is default' '
 
 test_expect_success 'middle alignment' '
 	cat >expect <<-\EOF &&
-	| refname is refs/heads/master |refs/heads/master
+	|  refname is refs/heads/main  |refs/heads/main
 	|  refname is refs/heads/side  |refs/heads/side
 	|   refname is refs/odd/spot   |refs/odd/spot
 	|refname is refs/tags/annotated-tag|refs/tags/annotated-tag
@@ -151,7 +152,7 @@ test_expect_success 'middle alignment' '
 
 test_expect_success 'right alignment' '
 	cat >expect <<-\EOF &&
-	|  refname is refs/heads/master|refs/heads/master
+	|    refname is refs/heads/main|refs/heads/main
 	|    refname is refs/heads/side|refs/heads/side
 	|      refname is refs/odd/spot|refs/odd/spot
 	|refname is refs/tags/annotated-tag|refs/tags/annotated-tag
@@ -168,7 +169,7 @@ test_expect_success 'right alignment' '
 '
 
 cat >expect <<-\EOF
-|       refname is refs/heads/master       |refs/heads/master
+|        refname is refs/heads/main        |refs/heads/main
 |        refname is refs/heads/side        |refs/heads/side
 |         refname is refs/odd/spot         |refs/odd/spot
 |    refname is refs/tags/annotated-tag    |refs/tags/annotated-tag
@@ -215,7 +216,7 @@ EOF
 
 test_expect_success 'alignment with format quote' "
 	cat >expect <<-\EOF &&
-	|'      '\''master| A U Thor'\''      '|
+	|'       '\''main| A U Thor'\''       '|
 	|'       '\''side| A U Thor'\''       '|
 	|'     '\''odd/spot| A U Thor'\''     '|
 	|'      '\''annotated-tag| '\''       '|
@@ -233,7 +234,7 @@ test_expect_success 'alignment with format quote' "
 
 test_expect_success 'nested alignment with quote formatting' "
 	cat >expect <<-\EOF &&
-	|'         master               '|
+	|'           main               '|
 	|'           side               '|
 	|'       odd/spot               '|
 	|'  annotated-tag               '|
@@ -251,7 +252,7 @@ test_expect_success 'nested alignment with quote formatting' "
 
 test_expect_success 'check `%(contents:lines=1)`' '
 	cat >expect <<-\EOF &&
-	master |three
+	main |three
 	side |four
 	odd/spot |three
 	annotated-tag |An annotated tag
@@ -269,7 +270,7 @@ test_expect_success 'check `%(contents:lines=1)`' '
 
 test_expect_success 'check `%(contents:lines=0)`' '
 	cat >expect <<-\EOF &&
-	master |
+	main |
 	side |
 	odd/spot |
 	annotated-tag |
@@ -287,7 +288,7 @@ test_expect_success 'check `%(contents:lines=0)`' '
 
 test_expect_success 'check `%(contents:lines=99999)`' '
 	cat >expect <<-\EOF &&
-	master |three
+	main |three
 	side |four
 	odd/spot |three
 	annotated-tag |An annotated tag
@@ -360,7 +361,7 @@ test_expect_success 'improper usage of %(if), %(then), %(else) and %(end) atoms'
 test_expect_success 'check %(if)...%(then)...%(end) atoms' '
 	git for-each-ref --format="%(refname)%(if)%(authorname)%(then) Author: %(authorname)%(end)" >actual &&
 	cat >expect <<-\EOF &&
-	refs/heads/master Author: A U Thor
+	refs/heads/main Author: A U Thor
 	refs/heads/side Author: A U Thor
 	refs/odd/spot Author: A U Thor
 	refs/tags/annotated-tag
@@ -381,7 +382,7 @@ test_expect_success 'check %(if)...%(then)...%(end) atoms' '
 test_expect_success 'check %(if)...%(then)...%(else)...%(end) atoms' '
 	git for-each-ref --format="%(if)%(authorname)%(then)%(authorname)%(else)No author%(end): %(refname)" >actual &&
 	cat >expect <<-\EOF &&
-	A U Thor: refs/heads/master
+	A U Thor: refs/heads/main
 	A U Thor: refs/heads/side
 	A U Thor: refs/odd/spot
 	No author: refs/tags/annotated-tag
@@ -401,7 +402,7 @@ test_expect_success 'check %(if)...%(then)...%(else)...%(end) atoms' '
 test_expect_success 'ignore spaces in %(if) atom usage' '
 	git for-each-ref --format="%(refname:short): %(if)%(HEAD)%(then)Head ref%(else)Not Head ref%(end)" >actual &&
 	cat >expect <<-\EOF &&
-	master: Head ref
+	main: Head ref
 	side: Not Head ref
 	odd/spot: Not Head ref
 	annotated-tag: Not Head ref
@@ -420,34 +421,34 @@ test_expect_success 'ignore spaces in %(if) atom usage' '
 '
 
 test_expect_success 'check %(if:equals=<string>)' '
-	git for-each-ref --format="%(if:equals=master)%(refname:short)%(then)Found master%(else)Not master%(end)" refs/heads/ >actual &&
+	git for-each-ref --format="%(if:equals=main)%(refname:short)%(then)Found main%(else)Not main%(end)" refs/heads/ >actual &&
 	cat >expect <<-\EOF &&
-	Found master
-	Not master
+	Found main
+	Not main
 	EOF
 	test_cmp expect actual
 '
 
 test_expect_success 'check %(if:notequals=<string>)' '
-	git for-each-ref --format="%(if:notequals=master)%(refname:short)%(then)Not master%(else)Found master%(end)" refs/heads/ >actual &&
+	git for-each-ref --format="%(if:notequals=main)%(refname:short)%(then)Not main%(else)Found main%(end)" refs/heads/ >actual &&
 	cat >expect <<-\EOF &&
-	Found master
-	Not master
+	Found main
+	Not main
 	EOF
 	test_cmp expect actual
 '
 
-test_expect_success '--merged is incompatible with --no-merged' '
-	test_must_fail git for-each-ref --merged HEAD --no-merged HEAD
+test_expect_success '--merged is compatible with --no-merged' '
+	git for-each-ref --merged HEAD --no-merged HEAD
 '
 
 test_expect_success 'validate worktree atom' '
 	cat >expect <<-EOF &&
-	master: $(pwd)
-	master_worktree: $(pwd)/worktree_dir
+	main: $(pwd)
+	main_worktree: $(pwd)/worktree_dir
 	side: not checked out
 	EOF
-	git worktree add -b master_worktree worktree_dir master &&
+	git worktree add -b main_worktree worktree_dir main &&
 	git for-each-ref --format="%(refname:short): %(if)%(worktreepath)%(then)%(worktreepath)%(else)not checked out%(end)" refs/heads/ >actual &&
 	rm -r worktree_dir &&
 	git worktree prune &&

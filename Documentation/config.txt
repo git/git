@@ -64,7 +64,7 @@ The variable names are case-insensitive, allow only alphanumeric characters
 and `-`, and must start with an alphabetic character.
 
 A line that defines a value can be continued to the next line by
-ending it with a `\`; the backquote and the end-of-line are
+ending it with a `\`; the backslash and the end-of-line are
 stripped.  Leading whitespaces after 'name =', the remainder of the
 line after the first comment character '#' or ';', and trailing
 whitespaces of the line are discarded unless they are enclosed in
@@ -265,7 +265,7 @@ color::
 The basic colors accepted are `normal`, `black`, `red`, `green`, `yellow`,
 `blue`, `magenta`, `cyan` and `white`.  The first color given is the
 foreground; the second is the background.  All the basic colors except
-`normal` have a bright variant that can be speficied by prefixing the
+`normal` have a bright variant that can be specified by prefixing the
 color with `bright`, like `brightred`.
 +
 Colors may also be given as numbers between 0 and 255; these use ANSI
@@ -334,11 +334,15 @@ include::config/checkout.txt[]
 
 include::config/clean.txt[]
 
+include::config/clone.txt[]
+
 include::config/color.txt[]
 
 include::config/column.txt[]
 
 include::config/commit.txt[]
+
+include::config/commitgraph.txt[]
 
 include::config/credential.txt[]
 
@@ -435,6 +439,8 @@ include::config/rerere.txt[]
 include::config/reset.txt[]
 
 include::config/sendemail.txt[]
+
+include::config/sendpack.txt[]
 
 include::config/sequencer.txt[]
 

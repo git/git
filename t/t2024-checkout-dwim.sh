@@ -166,6 +166,17 @@ test_expect_success '--no-guess suppresses branch auto-vivification' '
 	test_branch master
 '
 
+test_expect_success 'checkout.guess = false suppresses branch auto-vivification' '
+	git checkout -B master &&
+	status_uno_is_clean &&
+	test_might_fail git branch -D bar &&
+
+	test_config checkout.guess false &&
+	test_must_fail git checkout bar &&
+	test_must_fail git rev-parse --verify refs/heads/bar &&
+	test_branch master
+'
+
 test_expect_success 'setup more remotes with unconventional refspecs' '
 	git checkout -B master &&
 	status_uno_is_clean &&

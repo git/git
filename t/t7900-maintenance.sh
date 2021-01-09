@@ -79,6 +79,43 @@ test_expect_success 'run --task=<task>' '
 	test_subcommand git commit-graph write --split --reachable --no-progress <run-both.txt
 '
 
+test_expect_success 'core.commitGraph=false prevents write process' '
+	GIT_TRACE2_EVENT="$(pwd)/no-commit-graph.txt" \
+		git -c core.commitGraph=false maintenance run \
+		--task=commit-graph 2>/dev/null &&
+	test_subcommand ! git commit-graph write --split --reachable --no-progress \
+		<no-commit-graph.txt
+'
+
+test_expect_success 'commit-graph auto condition' '
+	COMMAND="maintenance run --task=commit-graph --auto --quiet" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/cg-no.txt" \
+		git -c maintenance.commit-graph.auto=1 $COMMAND &&
+	GIT_TRACE2_EVENT="$(pwd)/cg-negative-means-yes.txt" \
+		git -c maintenance.commit-graph.auto="-1" $COMMAND &&
+
+	test_commit first &&
+
+	GIT_TRACE2_EVENT="$(pwd)/cg-zero-means-no.txt" \
+		git -c maintenance.commit-graph.auto=0 $COMMAND &&
+	GIT_TRACE2_EVENT="$(pwd)/cg-one-satisfied.txt" \
+		git -c maintenance.commit-graph.auto=1 $COMMAND &&
+
+	git commit --allow-empty -m "second" &&
+	git commit --allow-empty -m "third" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/cg-two-satisfied.txt" \
+		git -c maintenance.commit-graph.auto=2 $COMMAND &&
+
+	COMMIT_GRAPH_WRITE="git commit-graph write --split --reachable --no-progress" &&
+	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-no.txt &&
+	test_subcommand $COMMIT_GRAPH_WRITE <cg-negative-means-yes.txt &&
+	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-zero-means-no.txt &&
+	test_subcommand $COMMIT_GRAPH_WRITE <cg-one-satisfied.txt &&
+	test_subcommand $COMMIT_GRAPH_WRITE <cg-two-satisfied.txt
+'
+
 test_expect_success 'run --task=bogus' '
 	test_must_fail git maintenance run --task=bogus 2>err &&
 	test_i18ngrep "is not a valid task" err
@@ -215,13 +252,15 @@ test_expect_success 'incremental-repack task' '
 '
 
 test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
+	test_config core.compression 0 &&
+
 	for i in $(test_seq 1 5)
 	do
 		test-tool genrandom foo$i $((512 * 1024 * 1024 + 1)) >>big ||
 		return 1
 	done &&
 	git add big &&
-	git commit -m "Add big file (1)" &&
+	git commit -qm "Add big file (1)" &&
 
 	# ensure any possible loose objects are in a pack-file
 	git maintenance run --task=loose-objects &&
@@ -233,7 +272,7 @@ test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
 		return 1
 	done &&
 	git add big &&
-	git commit -m "Add big file (2)" &&
+	git commit -qm "Add big file (2)" &&
 
 	# ensure any possible loose objects are in a pack-file
 	git maintenance run --task=loose-objects &&
@@ -380,11 +419,23 @@ test_expect_success 'register and unregister' '
 	test_cmp before actual
 '
 
+test_expect_success !MINGW 'register and unregister with regex metacharacters' '
+	META="a+b*c" &&
+	git init "$META" &&
+	git -C "$META" maintenance register &&
+	git config --get-all --show-origin maintenance.repo &&
+	git config --get-all --global --fixed-value \
+		maintenance.repo "$(pwd)/$META" &&
+	git -C "$META" maintenance unregister &&
+	test_must_fail git config --get-all --global --fixed-value \
+		maintenance.repo "$(pwd)/$META"
+'
+
 test_expect_success 'start from empty cron table' '
 	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance start &&
 
 	# start registers the repo
-	git config --get --global maintenance.repo "$(pwd)" &&
+	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
 
 	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=daily" cron.txt &&
 	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=hourly" cron.txt &&
@@ -395,7 +446,7 @@ test_expect_success 'stop from existing schedule' '
 	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance stop &&
 
 	# stop does not unregister the repo
-	git config --get --global maintenance.repo "$(pwd)" &&
+	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
 
 	# Operation is idempotent
 	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance stop &&
@@ -406,6 +457,22 @@ test_expect_success 'start preserves existing schedule' '
 	echo "Important information!" >cron.txt &&
 	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance start &&
 	grep "Important information!" cron.txt
+'
+
+test_expect_success 'magic markers are correct' '
+	grep "GIT MAINTENANCE SCHEDULE" cron.txt >actual &&
+	cat >expect <<-\EOF &&
+	# BEGIN GIT MAINTENANCE SCHEDULE
+	# END GIT MAINTENANCE SCHEDULE
+	EOF
+	test_cmp actual expect
+'
+
+test_expect_success 'stop preserves surrounding schedule' '
+	echo "Crucial information!" >>cron.txt &&
+	GIT_TEST_CRONTAB="test-tool crontab cron.txt" git maintenance stop &&
+	grep "Important information!" cron.txt &&
+	grep "Crucial information!" cron.txt
 '
 
 test_expect_success 'start and stop macOS maintenance' '
@@ -498,6 +565,14 @@ test_expect_success 'register preserves existing strategy' '
 	git config --unset maintenance.strategy &&
 	git maintenance register &&
 	test_config maintenance.strategy incremental
+'
+
+test_expect_success 'fails when running outside of a repository' '
+	nongit test_must_fail git maintenance run &&
+	nongit test_must_fail git maintenance stop &&
+	nongit test_must_fail git maintenance start &&
+	nongit test_must_fail git maintenance register &&
+	nongit test_must_fail git maintenance unregister
 '
 
 test_done

@@ -72,12 +72,22 @@ check_zip() {
 	"
 }
 
+check_added() {
+	dir=$1
+	path_in_fs=$2
+	path_in_archive=$3
+
+	test_expect_success UNZIP " validate extra file $path_in_archive" '
+		diff -r $path_in_fs $dir/$path_in_archive
+	'
+}
+
 test_expect_success \
     'populate workdir' \
     'mkdir a &&
      echo simple textfile >a/a &&
      mkdir a/bin &&
-     cp /bin/sh a/bin &&
+     cp "$TEST_DIRECTORY/diff-lib/test-binary-1.png" a/bin &&
      printf "text\r"	>a/text.cr &&
      printf "text\r\n"	>a/text.crlf &&
      printf "text\n"	>a/text.lf &&
@@ -187,5 +197,23 @@ test_expect_success 'git archive --format=zip on large files' '
 '
 
 check_zip large-compressed
+
+test_expect_success 'git archive --format=zip --add-file' '
+	echo untracked >untracked &&
+	git archive --format=zip --add-file=untracked HEAD >with_untracked.zip
+'
+
+check_zip with_untracked
+check_added with_untracked untracked untracked
+
+test_expect_success 'git archive --format=zip --add-file twice' '
+	echo untracked >untracked &&
+	git archive --format=zip --prefix=one/ --add-file=untracked \
+		--prefix=two/ --add-file=untracked \
+		--prefix= HEAD >with_untracked2.zip
+'
+check_zip with_untracked2
+check_added with_untracked2 untracked one/untracked
+check_added with_untracked2 untracked two/untracked
 
 test_done

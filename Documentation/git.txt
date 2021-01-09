@@ -415,6 +415,14 @@ Environment Variables
 ---------------------
 Various Git commands use the following environment variables:
 
+System
+~~~~~~
+`HOME`::
+	Specifies the path to the user's home directory. On Windows, if
+	unset, Git will set a process environment variable equal to:
+	`$HOMEDRIVE$HOMEPATH` if both `$HOMEDRIVE` and `$HOMEPATH` exist;
+	otherwise `$USERPROFILE` if `$USERPROFILE` exists.
+
 The Git Repository
 ~~~~~~~~~~~~~~~~~~
 These environment variables apply to 'all' core Git commands. Nb: it
@@ -504,7 +512,8 @@ double-quotes and respecting backslash escapes. E.g., the value
 	If this variable is set, the default hash algorithm for new
 	repositories will be set to this value. This value is currently
 	ignored when cloning; the setting of the remote repository
-	is used instead. The default is "sha1".
+	is used instead. The default is "sha1". THIS VARIABLE IS
+	EXPERIMENTAL! See `--object-format` in linkgit:git-init[1].
 
 Git Commits
 ~~~~~~~~~~~
@@ -550,8 +559,9 @@ Git Diffs
 
 `GIT_EXTERNAL_DIFF`::
 	When the environment variable `GIT_EXTERNAL_DIFF` is set, the
-	program named by it is called, instead of the diff invocation
-	described above.  For a path that is added, removed, or modified,
+	program named by it is called to generate diffs, and Git
+	does not use its builtin diff machinery.
+	For a path that is added, removed, or modified,
 	`GIT_EXTERNAL_DIFF` is called with 7 parameters:
 
 	path old-file old-hex old-mode new-file new-hex new-mode
@@ -603,6 +613,12 @@ other
 	It is used by several Git commands when, on interactive mode,
 	an editor is to be launched. See also linkgit:git-var[1]
 	and the `core.editor` option in linkgit:git-config[1].
+
+`GIT_SEQUENCE_EDITOR`::
+	This environment variable overrides the configured Git editor
+	when editing the todo list of an interactive rebase. See also
+	linkgit:git-rebase[1] and the `sequence.editor` option in
+	linkgit:git-config[1].
 
 `GIT_SSH`::
 `GIT_SSH_COMMAND`::
@@ -712,6 +728,10 @@ of clones and fetches.
 `GIT_TRACE_PERFORMANCE`::
 	Enables performance related trace messages, e.g. total execution
 	time of each Git command.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_REFS`::
+	Enables trace messages for operations on the ref database.
 	See `GIT_TRACE` for available trace output options.
 
 `GIT_TRACE_SETUP`::

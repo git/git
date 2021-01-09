@@ -236,7 +236,7 @@ static struct pack_list * pack_list_difference(const struct pack_list *A,
 
 static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 {
-	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
+	size_t p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
 	const unsigned int hashsz = the_hash_algo->rawsz;
@@ -280,7 +280,7 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 {
 	size_t ret = 0;
-	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
+	size_t p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 	const unsigned int hashsz = the_hash_algo->rawsz;
 
@@ -473,6 +473,12 @@ static void cmp_local_packs(void)
 {
 	struct pack_list *subset, *pl = local_packs;
 
+	/* only one packfile */
+	if (!pl->next) {
+		llist_init(&pl->unique_objects);
+		return;
+	}
+
 	while ((subset = pl)) {
 		while ((subset = subset->next))
 			cmp_two_packs(pl, subset);
@@ -499,7 +505,7 @@ static void scan_alt_odb_packs(void)
 static struct pack_list * add_pack(struct packed_git *p)
 {
 	struct pack_list l;
-	unsigned long off = 0, step;
+	size_t off = 0, step;
 	const unsigned char *base;
 
 	if (!p->pack_local && !(alt_odb || verbose))

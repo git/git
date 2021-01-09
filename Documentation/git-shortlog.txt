@@ -47,9 +47,38 @@ OPTIONS
 
 	Each pretty-printed commit will be rewrapped before it is shown.
 
+--group=<type>::
+	Group commits based on `<type>`. If no `--group` option is
+	specified, the default is `author`. `<type>` is one of:
++
+--
+ - `author`, commits are grouped by author
+ - `committer`, commits are grouped by committer (the same as `-c`)
+ - `trailer:<field>`, the `<field>` is interpreted as a case-insensitive
+   commit message trailer (see linkgit:git-interpret-trailers[1]). For
+   example, if your project uses `Reviewed-by` trailers, you might want
+   to see who has been reviewing with
+   `git shortlog -ns --group=trailer:reviewed-by`.
++
+Note that commits that do not include the trailer will not be counted.
+Likewise, commits with multiple trailers (e.g., multiple signoffs) may
+be counted more than once (but only once per unique trailer value in
+that commit).
++
+Shortlog will attempt to parse each trailer value as a `name <email>`
+identity. If successful, the mailmap is applied and the email is omitted
+unless the `--email` option is specified. If the value cannot be parsed
+as an identity, it will be taken literally and completely.
+--
++
+If `--group` is specified multiple times, commits are counted under each
+value (but again, only once per unique value in that commit). For
+example, `git shortlog --group=author --group=trailer:co-authored-by`
+counts both authors and co-authors.
+
 -c::
 --committer::
-	Collect and show committer identities instead of authors.
+	This is an alias for `--group=committer`.
 
 -w[<width>[,<indent1>[,<indent2>]]]::
 	Linewrap the output by wrapping each line at `width`.  The first

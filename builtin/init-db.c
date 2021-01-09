@@ -9,6 +9,7 @@
 #include "builtin.h"
 #include "exec-cmd.h"
 #include "parse-options.h"
+#include "worktree.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
@@ -78,7 +79,7 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 			if (strbuf_readlink(&lnk, template_path->buf,
 					    st_template.st_size) < 0)
 				die_errno(_("cannot readlink '%s'"), template_path->buf);
-			if (symlink(lnk.buf, path->buf))
+			if (create_symlink(NULL, lnk.buf, path->buf))
 				die_errno(_("cannot symlink '%s' '%s'"),
 					  lnk.buf, path->buf);
 			strbuf_release(&lnk);
@@ -178,7 +179,7 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 	return 1;
 }
 
-void initialize_repository_version(int hash_algo)
+void initialize_repository_version(int hash_algo, int reinit)
 {
 	char repo_version_string[10];
 	int repo_version = GIT_REPO_VERSION;
@@ -194,12 +195,15 @@ void initialize_repository_version(int hash_algo)
 	if (hash_algo != GIT_HASH_SHA1)
 		git_config_set("extensions.objectformat",
 			       hash_algos[hash_algo].name);
+	else if (reinit)
+		git_config_set_gently("extensions.objectformat", NULL);
 }
 
 static int create_default_files(const char *template_path,
 				const char *original_git_dir,
 				const char *initial_branch,
-				const struct repository_format *fmt)
+				const struct repository_format *fmt,
+				int quiet)
 {
 	struct stat st1;
 	struct strbuf buf = STRBUF_INIT;
@@ -264,7 +268,7 @@ static int create_default_files(const char *template_path,
 		char *ref;
 
 		if (!initial_branch)
-			initial_branch = git_default_branch_name();
+			initial_branch = git_default_branch_name(quiet);
 
 		ref = xstrfmt("refs/heads/%s", initial_branch);
 		if (check_refname_format(ref, 0) < 0)
@@ -276,7 +280,7 @@ static int create_default_files(const char *template_path,
 		free(ref);
 	}
 
-	initialize_repository_version(fmt->hash_algo);
+	initialize_repository_version(fmt->hash_algo, 0);
 
 	/* Check filemode trustability */
 	path = git_path_buf(&buf, "config");
@@ -309,7 +313,7 @@ static int create_default_files(const char *template_path,
 		path = git_path_buf(&buf, "tXXXXXX");
 		if (!close(xmkstemp(path)) &&
 		    !unlink(path) &&
-		    !symlink("testing", path) &&
+		    !create_symlink(NULL, "testing", path) &&
 		    !lstat(path, &st1) &&
 		    S_ISLNK(st1.st_mode))
 			unlink(path); /* good */
@@ -364,6 +368,7 @@ static void separate_git_dir(const char *git_dir, const char *git_link)
 
 		if (rename(src, git_dir))
 			die_errno(_("unable to move %s to %s"), src, git_dir);
+		repair_worktrees(NULL, NULL);
 	}
 
 	write_file(git_link, "gitdir: %s", git_dir);
@@ -434,7 +439,8 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	validate_hash_algorithm(&repo_fmt, hash);
 
 	reinit = create_default_files(template_dir, original_git_dir,
-				      initial_branch, &repo_fmt);
+				      initial_branch, &repo_fmt,
+				      flags & INIT_DB_QUIET);
 	if (reinit && initial_branch)
 		warning(_("re-init: ignored --initial-branch=%s"),
 			initial_branch);
@@ -563,6 +569,9 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
+	if (real_git_dir && is_bare_repository_cfg == 1)
+		die(_("--separate-git-dir and --bare are mutually exclusive"));
+
 	if (real_git_dir && !is_absolute_path(real_git_dir))
 		real_git_dir = real_pathdup(real_git_dir, 1);
 
@@ -637,6 +646,30 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	if (!git_dir)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 
+	/*
+	 * When --separate-git-dir is used inside a linked worktree, take
+	 * care to ensure that the common .git/ directory is relocated, not
+	 * the worktree-specific .git/worktrees/<id>/ directory.
+	 */
+	if (real_git_dir) {
+		int err;
+		const char *p;
+		struct strbuf sb = STRBUF_INIT;
+
+		p = read_gitfile_gently(git_dir, &err);
+		if (p && get_common_dir(&sb, p)) {
+			struct strbuf mainwt = STRBUF_INIT;
+
+			strbuf_addbuf(&mainwt, &sb);
+			strbuf_strip_suffix(&mainwt, "/.git");
+			if (chdir(mainwt.buf) < 0)
+				die_errno(_("cannot chdir to %s"), mainwt.buf);
+			strbuf_release(&mainwt);
+			git_dir = strbuf_detach(&sb, NULL);
+		}
+		strbuf_release(&sb);
+	}
+
 	if (is_bare_repository_cfg < 0)
 		is_bare_repository_cfg = guess_repository_type(git_dir);
 
@@ -658,6 +691,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 				   get_git_work_tree());
 	}
 	else {
+		if (real_git_dir)
+			die(_("--separate-git-dir incompatible with bare repository"));
 		if (work_tree)
 			set_git_work_tree(work_tree);
 	}

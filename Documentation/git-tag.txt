@@ -15,7 +15,7 @@ SYNOPSIS
 'git tag' [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]
 	[--points-at <object>] [--column[=<options>] | --no-column]
 	[--create-reflog] [--sort=<key>] [--format=<format>]
-	[--[no-]merged [<commit>]] [<pattern>...]
+	[--merged <commit>] [--no-merged <commit>] [<pattern>...]
 'git tag' -v [--format=<format>] <tagname>...
 
 DESCRIPTION
@@ -149,11 +149,11 @@ This option is only applicable when listing tags without annotation lines.
 
 --merged [<commit>]::
 	Only list tags whose commits are reachable from the specified
-	commit (`HEAD` if not specified), incompatible with `--no-merged`.
+	commit (`HEAD` if not specified).
 
 --no-merged [<commit>]::
 	Only list tags whose commits are not reachable from the specified
-	commit (`HEAD` if not specified), incompatible with `--merged`.
+	commit (`HEAD` if not specified).
 
 --points-at <object>::
 	Only list tags of the given object (HEAD if not
@@ -376,6 +376,11 @@ $ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 ------------
 
 include::date-formats.txt[]
+
+NOTES
+-----
+
+include::ref-reachability-filters.txt[]
 
 SEE ALSO
 --------

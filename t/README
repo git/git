@@ -258,25 +258,27 @@ For an individual test suite --run could be used to specify that
 only some tests should be run or that some tests should be
 excluded from a run.
 
-The argument for --run is a list of individual test numbers or
-ranges with an optional negation prefix that define what tests in
-a test suite to include in the run.  A range is two numbers
-separated with a dash and matches a range of tests with both ends
-been included.  You may omit the first or the second number to
-mean "from the first test" or "up to the very last test"
-respectively.
+The argument for --run, <test-selector>, is a list of description
+substrings or globs or individual test numbers or ranges with an
+optional negation prefix (of '!') that define what tests in a test
+suite to include (or exclude, if negated) in the run.  A range is two
+numbers separated with a dash and matches a range of tests with both
+ends been included.  You may omit the first or the second number to
+mean "from the first test" or "up to the very last test" respectively.
 
-Optional prefix of '!' means that the test or a range of tests
-should be excluded from the run.
+The argument to --run is split on commas into separate strings,
+numbers, and ranges, and picks all tests that match any of the
+individual selection criteria.  If the substring of the description
+text that you want to match includes a comma, use the glob character
+'?' instead.  For example --run='rebase,merge?cherry-pick' would match
+on all tests that match either the glob *rebase* or the glob
+*merge?cherry-pick*.
 
 If --run starts with an unprefixed number or range the initial
 set of tests to run is empty. If the first item starts with '!'
 all the tests are added to the initial set.  After initial set is
 determined every test number or range is added or excluded from
 the set one by one, from left to right.
-
-Individual numbers or ranges could be separated either by a space
-or a comma.
 
 For example, to run only tests up to a specific test (21), one
 could do this:
@@ -290,7 +292,7 @@ or this:
 Common case is to run several setup tests (1, 2, 3) and then a
 specific test (21) that relies on that setup:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='1 2 3 21'
+    $ sh ./t9200-git-cvsexport-commit.sh --run='1,2,3,21'
 
 or:
 
@@ -298,17 +300,17 @@ or:
 
 or:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='-3 21'
+    $ sh ./t9200-git-cvsexport-commit.sh --run='-3,21'
 
 As noted above, the test set is built by going through the items
 from left to right, so this:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='1-4 !3'
+    $ sh ./t9200-git-cvsexport-commit.sh --run='1-4,!3'
 
 will run tests 1, 2, and 4.  Items that come later have higher
 precedence.  It means that this:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='!3 1-4'
+    $ sh ./t9200-git-cvsexport-commit.sh --run='!3,1-4'
 
 would just run tests from 1 to 4, including 3.
 
@@ -316,6 +318,18 @@ You may use negation with ranges.  The following will run all
 test in the test suite except from 7 up to 11:
 
     $ sh ./t9200-git-cvsexport-commit.sh --run='!7-11'
+
+Sometimes there may be multiple tests with e.g. "setup" in their name
+that are needed and rather than figuring out the number for all of them
+we can just use "setup" as a substring/glob to match against the test
+description:
+
+    $ sh ./t0050-filesystem.sh --run=setup,9-11
+
+or one could select both the setup tests and the rename ones (assuming all
+relevant tests had those words in their descriptions):
+
+    $ sh ./t0050-filesystem.sh --run=setup,rename
 
 Some tests in a test suite rely on the previous tests performing
 certain actions, specifically some tests are designated as
@@ -420,6 +434,13 @@ sideband-all).
 GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=<boolean>, when true (which is
 the default when running tests), errors out when an abbreviated option
 is used.
+
+GIT_TEST_DEFAULT_HASH=<hash-algo> specifies which hash algorithm to
+use in the test scripts. Recognized values for <hash-algo> are "sha1"
+and "sha256".
+
+GIT_TEST_FSCACHE=<boolean> exercises the uncommon fscache code path
+which adds a cache below mingw's lstat and dirent implementations.
 
 Naming Tests
 ------------

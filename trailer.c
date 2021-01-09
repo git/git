@@ -221,15 +221,13 @@ static char *apply_command(const char *command, const char *arg)
 	struct strbuf cmd = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process cp = CHILD_PROCESS_INIT;
-	const char *argv[] = {NULL, NULL};
 	char *result;
 
 	strbuf_addstr(&cmd, command);
 	if (arg)
 		strbuf_replace(&cmd, TRAILER_ARG_STRING, arg);
 
-	argv[0] = cmd.buf;
-	cp.argv = argv;
+	strvec_push(&cp.args, cmd.buf);
 	cp.env = local_repo_env;
 	cp.no_stdin = 1;
 	cp.use_shell = 1;
@@ -1184,4 +1182,40 @@ void format_trailers_from_commit(struct strbuf *out, const char *msg,
 	trailer_info_get(&info, msg, opts);
 	format_trailer_info(out, &info, opts);
 	trailer_info_release(&info);
+}
+
+void trailer_iterator_init(struct trailer_iterator *iter, const char *msg)
+{
+	struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+	strbuf_init(&iter->key, 0);
+	strbuf_init(&iter->val, 0);
+	opts.no_divider = 1;
+	trailer_info_get(&iter->info, msg, &opts);
+	iter->cur = 0;
+}
+
+int trailer_iterator_advance(struct trailer_iterator *iter)
+{
+	while (iter->cur < iter->info.trailer_nr) {
+		char *trailer = iter->info.trailers[iter->cur++];
+		int separator_pos = find_separator(trailer, separators);
+
+		if (separator_pos < 1)
+			continue; /* not a real trailer */
+
+		strbuf_reset(&iter->key);
+		strbuf_reset(&iter->val);
+		parse_trailer(&iter->key, &iter->val, NULL,
+			      trailer, separator_pos);
+		unfold_value(&iter->val);
+		return 1;
+	}
+	return 0;
+}
+
+void trailer_iterator_release(struct trailer_iterator *iter)
+{
+	trailer_info_release(&iter->info);
+	strbuf_release(&iter->val);
+	strbuf_release(&iter->key);
 }

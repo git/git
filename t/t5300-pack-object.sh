@@ -528,7 +528,7 @@ test_expect_success 'prefetch objects' '
 	TWO=$(git -C server rev-parse three_branch^) &&
 	git -C client fetch --filter=blob:none origin "$TWO" &&
 	GIT_TRACE_PACKET=$(pwd)/trace git -C client push origin "$TWO":refs/heads/two_branch &&
-	grep "git> done" trace >donelines &&
+	grep "fetch> done" trace >donelines &&
 	test_line_count = 1 donelines
 '
 

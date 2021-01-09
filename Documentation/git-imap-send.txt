@@ -51,17 +51,13 @@ OPTIONS
 CONFIGURATION
 -------------
 
-To use the tool, imap.folder and either imap.tunnel or imap.host must be set
+To use the tool, `imap.folder` and either `imap.tunnel` or `imap.host` must be set
 to appropriate values.
-
-Variables
-~~~~~~~~~
 
 include::config/imap.txt[]
 
-Examples
-~~~~~~~~
-
+EXAMPLES
+--------
 Using tunnel mode:
 
 ..........................
@@ -89,14 +85,18 @@ Using direct mode with SSL:
     user = bob
     pass = p4ssw0rd
     port = 123
-    sslverify = false
+    ; sslVerify = false
 .........................
 
 
-EXAMPLES
---------
-To submit patches using GMail's IMAP interface, first, edit your ~/.gitconfig
-to specify your account settings:
+[NOTE]
+You may want to use `sslVerify=false`
+while troubleshooting, if you suspect that the reason you are
+having trouble connecting is because the certificate you use at
+the private server `example.com` you are trying to set up (or
+have set up) may not be verified correctly.
+
+Using Gmail's IMAP interface:
 
 ---------
 [imap]
@@ -104,17 +104,21 @@ to specify your account settings:
 	host = imaps://imap.gmail.com
 	user = user@gmail.com
 	port = 993
-	sslverify = false
 ---------
 
-You might need to instead use: folder = "[Google Mail]/Drafts" if you get an error
+[NOTE]
+You might need to instead use: `folder = "[Google Mail]/Drafts"` if you get an error
 that the "Folder doesn't exist".
+
+[NOTE]
+If your Gmail account is set to another language than English, the name of the "Drafts"
+folder will be localized.
 
 Once the commits are ready to be sent, run the following command:
 
   $ git format-patch --cover-letter -M --stdout origin/master | git imap-send
 
-Just make sure to disable line wrapping in the email client (GMail's web
+Just make sure to disable line wrapping in the email client (Gmail's web
 interface will wrap lines no matter what, so you need to use a real
 IMAP client).
 

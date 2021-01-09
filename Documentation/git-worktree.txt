@@ -15,6 +15,7 @@ SYNOPSIS
 'git worktree move' <worktree> <new-path>
 'git worktree prune' [-n] [-v] [--expire <expire>]
 'git worktree remove' [-f] <worktree>
+'git worktree repair' [<path>...]
 'git worktree unlock' <worktree>
 
 DESCRIPTION
@@ -30,6 +31,18 @@ linkgit:git-init[1] or linkgit:git-clone[1].
 A repository has one main working tree (if it's not a
 bare repository) and zero or more linked working trees. When you are done
 with a linked working tree, remove it with `git worktree remove`.
+
+In its simplest form, `git worktree add <path>` automatically creates a
+new branch whose name is the final component of `<path>`, which is
+convenient if you plan to work on a new topic. For instance, `git
+worktree add ../hotfix` creates new branch `hotfix` and checks it out at
+path `../hotfix`. To instead work on an existing branch in a new working
+tree, use `git worktree add <path> <branch>`. On the other hand, if you
+just plan to make some experimental changes or do testing without
+disturbing existing development, it is often convenient to create a
+'throwaway' working tree not associated with any branch. For instance,
+`git worktree add -d <path>` creates a new working tree with a detached
+`HEAD` at the same commit as the current branch.
 
 If a working tree is deleted without using `git worktree remove`, then
 its associated administrative files, which reside in the repository
@@ -83,8 +96,9 @@ list::
 
 List details of each working tree.  The main working tree is listed first,
 followed by each of the linked working trees.  The output details include
-whether the working tree is bare, the revision currently checked out, and the
-branch currently checked out (or "detached HEAD" if none).
+whether the working tree is bare, the revision currently checked out, the
+branch currently checked out (or "detached HEAD" if none), and "locked" if
+the worktree is locked.
 
 lock::
 
@@ -97,7 +111,10 @@ with `--reason`.
 move::
 
 Move a working tree to a new location. Note that the main working tree
-or linked working trees containing submodules cannot be moved.
+or linked working trees containing submodules cannot be moved with this
+command. (The `git worktree repair` command, however, can reestablish
+the connection with linked working trees if you move the main working
+tree manually.)
 
 prune::
 
@@ -109,6 +126,23 @@ Remove a working tree. Only clean working trees (no untracked files
 and no modification in tracked files) can be removed. Unclean working
 trees or ones with submodules can be removed with `--force`. The main
 working tree cannot be removed.
+
+repair [<path>...]::
+
+Repair working tree administrative files, if possible, if they have
+become corrupted or outdated due to external factors.
++
+For instance, if the main working tree (or bare repository) is moved,
+linked working trees will be unable to locate it. Running `repair` in
+the main working tree will reestablish the connection from linked
+working trees back to the main working tree.
++
+Similarly, if a linked working tree is moved without using `git worktree
+move`, the main working tree (or bare repository) will be unable to
+locate it. Running `repair` within the recently-moved working tree will
+reestablish the connection. If multiple linked working trees are moved,
+running `repair` from any working tree with each tree's new `<path>` as
+an argument, will reestablish the connection to all the specified paths.
 
 unlock::
 
@@ -143,6 +177,7 @@ To remove a locked working tree, specify `--force` twice.
 	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
 	`<commit-ish>`.
 
+-d::
 --detach::
 	With `add`, detach `HEAD` in the new working tree. See "DETACHED HEAD"
 	in linkgit:git-checkout[1].
@@ -303,7 +338,8 @@ in the entry's directory. For example, if a linked working tree is moved
 to `/newpath/test-next` and its `.git` file points to
 `/path/main/.git/worktrees/test-next`, then update
 `/path/main/.git/worktrees/test-next/gitdir` to reference `/newpath/test-next`
-instead.
+instead. Better yet, run `git worktree repair` to reestablish the connection
+automatically.
 
 To prevent a `$GIT_DIR/worktrees` entry from being pruned (which
 can be useful in some situations, such as when the

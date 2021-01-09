@@ -45,7 +45,7 @@ while (@ARGV) {
 		push(@args, "zlib.lib");
 	    }
 	} elsif ("$arg" eq "-liconv") {
-		push(@args, "libiconv.lib");
+		push(@args, "iconv.lib");
 	} elsif ("$arg" eq "-lcrypto") {
 		push(@args, "libcrypto.lib");
 	} elsif ("$arg" eq "-lssl") {
@@ -56,7 +56,8 @@ while (@ARGV) {
 		# need to use that instead?
 		foreach my $flag (@lflags) {
 			if ($flag =~ /^-LIBPATH:(.*)/) {
-				foreach my $l ("libcurl_imp.lib", "libcurl.lib") {
+				my $libcurl = $is_debug ? "libcurl-d.lib" : "libcurl.lib";
+				foreach my $l ("libcurl_imp.lib", $libcurl) {
 					if (-f "$1/$l") {
 						$lib = $l;
 						last;
@@ -66,7 +67,7 @@ while (@ARGV) {
 		}
 		push(@args, $lib);
 	} elsif ("$arg" eq "-lexpat") {
-		push(@args, "expat.lib");
+		push(@args, "libexpat.lib");
 	} elsif ("$arg" =~ /^-L/ && "$arg" ne "-LTCG") {
 		$arg =~ s/^-L/-LIBPATH:/;
 		push(@lflags, $arg);

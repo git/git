@@ -148,13 +148,18 @@ test_run_perf_ () {
 . '"$TEST_DIRECTORY"/test-lib-functions.sh'
 test_export () {
 	[ $# != 0 ] || return 0
-	test_export_="$test_export_\\|$1"
+	test_export_="$test_export_ $1"
 	shift
 	test_export "$@"
 }
 '"$1"'
 ret=$?
-set | sed -n "s'"/'/'\\\\''/g"';s/^\\($test_export_\\)/export '"'&'"'/p" >test_vars
+needles=
+for v in $test_export_
+do
+	needles="$needles;s/^$v=/export $v=/p"
+done
+set | sed -n "s'"/'/'\\\\''/g"'$needles" >test_vars
 exit $ret' >&3 2>&4
 	eval_ret=$?
 
@@ -245,3 +250,5 @@ test_at_end_hook_ () {
 test_export () {
 	export "$@"
 }
+
+test_lazy_prereq PERF_EXTRA 'test_bool_env GIT_PERF_EXTRA false'

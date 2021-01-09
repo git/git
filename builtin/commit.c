@@ -326,7 +326,7 @@ static void refresh_cache_or_die(int refresh_flags)
 		die_resolve_conflict("commit");
 }
 
-static const char *prepare_index(int argc, const char **argv, const char *prefix,
+static const char *prepare_index(const char **argv, const char *prefix,
 				 const struct commit *current_head, int is_status)
 {
 	struct string_list partial = STRING_LIST_INIT_DUP;
@@ -378,7 +378,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		old_index_env = xstrdup_or_null(getenv(INDEX_ENVIRONMENT));
 		setenv(INDEX_ENVIRONMENT, the_repository->index_file, 1);
 
-		if (interactive_add(argc, argv, prefix, patch_interactive) != 0)
+		if (interactive_add(argv, prefix, patch_interactive) != 0)
 			die(_("interactive add failed"));
 
 		the_repository->index_file = old_repo_index_file;
@@ -847,21 +847,19 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS &&
 				!merge_contains_scissors)
 				wt_status_add_cut_line(s->fp);
-			status_printf_ln(s, GIT_COLOR_NORMAL,
-			    whence == FROM_MERGE
-				? _("\n"
-					"It looks like you may be committing a merge.\n"
-					"If this is not correct, please remove the file\n"
-					"	%s\n"
-					"and try again.\n")
-				: _("\n"
-					"It looks like you may be committing a cherry-pick.\n"
-					"If this is not correct, please remove the file\n"
-					"	%s\n"
-					"and try again.\n"),
+			status_printf_ln(
+				s, GIT_COLOR_NORMAL,
 				whence == FROM_MERGE ?
-					git_path_merge_head(the_repository) :
-					git_path_cherry_pick_head(the_repository));
+					      _("\n"
+					  "It looks like you may be committing a merge.\n"
+					  "If this is not correct, please run\n"
+					  "	git update-ref -d MERGE_HEAD\n"
+					  "and try again.\n") :
+					      _("\n"
+					  "It looks like you may be committing a cherry-pick.\n"
+					  "If this is not correct, please run\n"
+					  "	git update-ref -d CHERRY_PICK_HEAD\n"
+					  "and try again.\n"));
 		}
 
 		fprintf(s->fp, "\n");
@@ -1243,13 +1241,13 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	return argc;
 }
 
-static int dry_run_commit(int argc, const char **argv, const char *prefix,
+static int dry_run_commit(const char **argv, const char *prefix,
 			  const struct commit *current_head, struct wt_status *s)
 {
 	int committable;
 	const char *index_file;
 
-	index_file = prepare_index(argc, argv, prefix, current_head, 1);
+	index_file = prepare_index(argv, prefix, current_head, 1);
 	committable = run_status(stdout, index_file, prefix, 0, s);
 	rollback_index_files();
 
@@ -1358,6 +1356,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	static int no_renames = -1;
 	static const char *rename_score_arg = (const char *)-1;
+	static int no_lock_index = 0;
+	static int show_ignored_directory = 0;
 	static struct wt_status s;
 	unsigned int progress_flag = 0;
 	int fd;
@@ -1396,6 +1396,13 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK_F('M', "find-renames", &rename_score_arg,
 		  N_("n"), N_("detect renames, optionally set similarity index"),
 		  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, opt_parse_rename_score),
+		OPT_BOOL(0, "show-ignored-directory", &show_ignored_directory,
+			N_("(DEPRECATED: use --ignore=matching instead) Only "
+			   "show directories that match an ignore pattern "
+			   "name.")),
+		OPT_BOOL(0, "no-lock-index", &no_lock_index,
+			 N_("(DEPRECATED: use `git --no-optional-locks status` "
+			    "instead) Do not lock the index")),
 		OPT_END(),
 	};
 
@@ -1409,6 +1416,18 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	finalize_colopts(&s.colopts, -1);
 	finalize_deferred_config(&s);
 
+	if (no_lock_index) {
+		warning("--no-lock-index is deprecated, use --no-optional-locks"
+			" instead");
+		setenv(GIT_OPTIONAL_LOCKS_ENVIRONMENT, "false", 1);
+	}
+
+	if (show_ignored_directory) {
+		warning("--show-ignored-directory was deprecated, use "
+			"--ignored=matching instead");
+		ignored_arg = "matching";
+	}
+
 	handle_untracked_files_arg(&s);
 	handle_ignored_arg(&s);
 
@@ -1420,6 +1439,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_PREFER_FULL,
 		       prefix, argv);
 
+	enable_fscache(0);
 	if (status_format != STATUS_FORMAT_PORCELAIN &&
 	    status_format != STATUS_FORMAT_PORCELAIN_V2)
 		progress_flag = REFRESH_PROGRESS;
@@ -1460,6 +1480,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	wt_status_print(&s);
 	wt_status_collect_free_buffers(&s);
 
+	disable_fscache();
 	return 0;
 }
 
@@ -1509,7 +1530,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "fixup", &fixup_message, N_("commit"), N_("use autosquash formatted message to fixup specified commit")),
 		OPT_STRING(0, "squash", &squash_message, N_("commit"), N_("use autosquash formatted message to squash specified commit")),
 		OPT_BOOL(0, "reset-author", &renew_authorship, N_("the commit is authored by me now (used with -C/-c/--amend)")),
-		OPT_BOOL('s', "signoff", &signoff, N_("add Signed-off-by:")),
+		OPT_BOOL('s', "signoff", &signoff, N_("add a Signed-off-by trailer")),
 		OPT_FILENAME('t', "template", &template_file, N_("use specified template file")),
 		OPT_BOOL('e', "edit", &edit_flag, N_("force edit of commit")),
 		OPT_CLEANUP(&cleanup_arg),
@@ -1586,8 +1607,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		verbose = (config_commit_verbose < 0) ? 0 : config_commit_verbose;
 
 	if (dry_run)
-		return dry_run_commit(argc, argv, prefix, current_head, &s);
-	index_file = prepare_index(argc, argv, prefix, current_head, 0);
+		return dry_run_commit(argv, prefix, current_head, &s);
+	index_file = prepare_index(argv, prefix, current_head, 0);
 
 	/* Set up everything for writing the commit object.  This includes
 	   running hooks, writing the trees, and interacting with the user.  */
@@ -1674,8 +1695,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	if (commit_tree_extended(sb.buf, sb.len, &active_cache_tree->oid,
-				 parents, &oid, author_ident.buf, sign_commit,
-				 extra)) {
+				 parents, &oid, author_ident.buf, NULL,
+				 sign_commit, extra)) {
 		rollback_index_files();
 		die(_("failed to write commit object"));
 	}

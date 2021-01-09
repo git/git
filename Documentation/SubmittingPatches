@@ -209,7 +209,7 @@ send them as replies to either an additional "cover letter" message
 (see below), the first patch, or the respective preceding patch.
 
 If your log message (including your name on the
-Signed-off-by line) is not writable in ASCII, make sure that
+`Signed-off-by` trailer) is not writable in ASCII, make sure that
 you send off a message in the correct encoding.
 
 WARNING: Be wary of your MUAs word-wrap
@@ -229,7 +229,7 @@ previously sent.
 The `git format-patch` command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
 patch should come your commit message, ending with the
-Signed-off-by: lines, and a line that consists of three dashes,
+`Signed-off-by` trailers, and a line that consists of three dashes,
 followed by the diffstat information and the patch itself.  If
 you are forwarding a patch from somebody else, optionally, at
 the beginning of the e-mail message just before the commit
@@ -290,25 +290,24 @@ identify them), to solicit comments and reviews.
 :git-ml: footnote:[The mailing list: git@vger.kernel.org]
 
 After the list reached a consensus that it is a good idea to apply the
-patch, re-send it with "To:" set to the maintainer{current-maintainer} and "cc:" the
-list{git-ml} for inclusion.
+patch, re-send it with "To:" set to the maintainer{current-maintainer}
+and "cc:" the list{git-ml} for inclusion.  This is especially relevant
+when the maintainer did not heavily participate in the discussion and
+instead left the review to trusted others.
 
 Do not forget to add trailers such as `Acked-by:`, `Reviewed-by:` and
 `Tested-by:` lines as necessary to credit people who helped your
-patch.
+patch, and "cc:" them when sending such a final version for inclusion.
 
 [[sign-off]]
-=== Certify your work by adding your "Signed-off-by: " line
+=== Certify your work by adding your `Signed-off-by` trailer
 
-To improve tracking of who did what, we've borrowed the
-"sign-off" procedure from the Linux kernel project on patches
-that are being emailed around.  Although core Git is a lot
-smaller project it is a good discipline to follow it.
+To improve tracking of who did what, we ask you to certify that you
+wrote the patch or have the right to pass it on under the same license
+as ours, by "signing off" your patch.  Without sign-off, we cannot
+accept your patches.
 
-The sign-off is a simple line at the end of the explanation for
-the patch, which certifies that you wrote it or otherwise have
-the right to pass it on as an open-source patch.  The rules are
-pretty simple: if you can certify the below D-C-O:
+If you can certify the below D-C-O:
 
 [[dco]]
 .Developer's Certificate of Origin 1.1
@@ -338,23 +337,29 @@ d. I understand and agree that this project and the contribution
    this project or the open source license(s) involved.
 ____
 
-then you just add a line saying
+you add a "Signed-off-by" trailer to your commit, that looks like
+this:
 
 ....
 	Signed-off-by: Random J Developer <random@developer.example.org>
 ....
 
-This line can be automatically added by Git if you run the git-commit
-command with the -s option.
+This line can be added by Git if you run the git-commit command with
+the -s option.
 
-Notice that you can place your own Signed-off-by: line when
+Notice that you can place your own `Signed-off-by` trailer when
 forwarding somebody else's patch with the above rules for
 D-C-O.  Indeed you are encouraged to do so.  Do not forget to
 place an in-body "From: " line at the beginning to properly attribute
 the change to its true author (see (2) above).
 
+This procedure originally came from the Linux kernel project, so our
+rule is quite similar to theirs, but what exactly it means to sign-off
+your patch differs from project to project, so it may be different
+from that of the project you are accustomed to.
+
 [[real-name]]
-Also notice that a real name is used in the Signed-off-by: line. Please
+Also notice that a real name is used in the `Signed-off-by` trailer. Please
 don't hide your real name.
 
 [[commit-trailers]]

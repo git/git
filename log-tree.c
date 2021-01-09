@@ -15,7 +15,6 @@
 #include "sequencer.h"
 #include "line-log.h"
 #include "help.h"
-#include "interdiff.h"
 #include "range-diff.h"
 
 static struct decoration name_decoration = { "object names" };
@@ -368,7 +367,7 @@ void fmt_output_subject(struct strbuf *filename,
 	const char *suffix = info->patch_suffix;
 	int nr = info->nr;
 	int start_len = filename->len;
-	int max_len = start_len + FORMAT_PATCH_NAME_MAX - (strlen(suffix) + 1);
+	int max_len = start_len + info->patch_name_max - (strlen(suffix) + 1);
 
 	if (0 < info->reroll_count)
 		strbuf_addf(filename, "v%d-", info->reroll_count);
@@ -800,7 +799,8 @@ void show_log(struct rev_info *opt)
 
 		next_commentary_block(opt, NULL);
 		fprintf_ln(opt->diffopt.file, "%s", opt->idiff_title);
-		show_interdiff(opt, 2);
+		show_interdiff(opt->idiff_oid1, opt->idiff_oid2, 2,
+			       &opt->diffopt);
 
 		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
 	}
@@ -885,7 +885,7 @@ int log_tree_diff_flush(struct rev_info *opt)
 
 static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 {
-	diff_tree_combined_merge(commit, opt->dense_combined_merges, opt);
+	diff_tree_combined_merge(commit, opt);
 	return !opt->loginfo;
 }
 
@@ -917,26 +917,15 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	}
 
 	/* More than one parent? */
-	if (parents && parents->next) {
+	if (parents->next) {
 		if (opt->ignore_merges)
 			return 0;
 		else if (opt->combine_merges)
 			return do_diff_combined(opt, commit);
-		else if (opt->first_parent_only) {
-			/*
-			 * Generate merge log entry only for the first
-			 * parent, showing summary diff of the others
-			 * we merged _in_.
-			 */
-			parse_commit_or_die(parents->item);
-			diff_tree_oid(get_commit_tree_oid(parents->item),
-				      oid, "", &opt->diffopt);
-			log_tree_diff_flush(opt);
-			return !opt->loginfo;
+		else if (!opt->first_parent_only) {
+			/* If we show multiple diffs, show the parent info */
+			log->parent = parents->item;
 		}
-
-		/* If we show individual diffs, show the parent info */
-		log->parent = parents->item;
 	}
 
 	showed_log = 0;
@@ -952,7 +941,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 
 		/* Set up the log info for the next parent, if any.. */
 		parents = parents->next;
-		if (!parents)
+		if (!parents || opt->first_parent_only)
 			break;
 		log->parent = parents->item;
 		opt->loginfo = log;

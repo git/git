@@ -6,6 +6,8 @@ test_description='multi-pack-indexes'
 GIT_TEST_MULTI_PACK_INDEX=0
 objdir=.git/objects
 
+HASH_LEN=$(test_oid rawsz)
+
 midx_read_expect () {
 	NUM_PACKS=$1
 	NUM_OBJECTS=$2
@@ -14,7 +16,7 @@ midx_read_expect () {
 	EXTRA_CHUNKS="$5"
 	{
 		cat <<-EOF &&
-		header: 4d494458 1 $NUM_CHUNKS $NUM_PACKS
+		header: 4d494458 1 $HASH_LEN $NUM_CHUNKS $NUM_PACKS
 		chunks: pack-names oid-fanout oid-lookup object-offsets$EXTRA_CHUNKS
 		num_objects: $NUM_OBJECTS
 		packs:
@@ -47,7 +49,7 @@ test_expect_success "don't write midx with no packs" '
 	test_path_is_missing pack/multi-pack-index
 '
 
-test_expect_success "Warn if a midx contains no oid" '
+test_expect_success SHA1 'warn if a midx contains no oid' '
 	cp "$TEST_DIRECTORY"/t5319/no-objects.midx $objdir/pack/multi-pack-index &&
 	test_must_fail git multi-pack-index verify &&
 	rm $objdir/pack/multi-pack-index
@@ -136,7 +138,7 @@ test_expect_success 'write midx with one v2 pack' '
 
 compare_results_with_midx "one v2 pack"
 
-test_expect_success 'corrupt idx not opened' '
+test_expect_success 'corrupt idx reports errors' '
 	idx=$(test-tool read-midx $objdir | grep "\.idx\$") &&
 	mv $objdir/pack/$idx backup-$idx &&
 	test_when_finished "mv backup-\$idx \$objdir/pack/\$idx" &&
@@ -147,7 +149,7 @@ test_expect_success 'corrupt idx not opened' '
 	test_copy_bytes 1064 <backup-$idx >$objdir/pack/$idx &&
 
 	git -c core.multiPackIndex=true rev-list --objects --all 2>err &&
-	test_must_be_empty err
+	grep "index unavailable" err
 '
 
 test_expect_success 'add more objects' '
@@ -199,6 +201,40 @@ test_expect_success 'write midx with twelve packs' '
 
 compare_results_with_midx "twelve packs"
 
+test_expect_success 'warn on improper hash version' '
+	git init --object-format=sha1 sha1 &&
+	(
+		cd sha1 &&
+		git config core.multiPackIndex true &&
+		test_commit 1 &&
+		git repack -a &&
+		git multi-pack-index write &&
+		mv .git/objects/pack/multi-pack-index ../mpi-sha1
+	) &&
+	git init --object-format=sha256 sha256 &&
+	(
+		cd sha256 &&
+		git config core.multiPackIndex true &&
+		test_commit 1 &&
+		git repack -a &&
+		git multi-pack-index write &&
+		mv .git/objects/pack/multi-pack-index ../mpi-sha256
+	) &&
+	(
+		cd sha1 &&
+		mv ../mpi-sha256 .git/objects/pack/multi-pack-index &&
+		git log -1 2>err &&
+		test_i18ngrep "multi-pack-index hash version 2 does not match version 1" err
+	) &&
+	(
+		cd sha256 &&
+		mv ../mpi-sha1 .git/objects/pack/multi-pack-index &&
+		git log -1 2>err &&
+		test_i18ngrep "multi-pack-index hash version 1 does not match version 2" err
+	)
+'
+
+
 test_expect_success 'verify multi-pack-index success' '
 	git multi-pack-index verify --object-dir=$objdir
 '
@@ -244,7 +280,6 @@ test_expect_success 'verify bad signature' '
 		"multi-pack-index signature"
 '
 
-HASH_LEN=$(test_oid rawsz)
 NUM_OBJECTS=74
 MIDX_BYTE_VERSION=4
 MIDX_BYTE_OID_VERSION=5
@@ -273,7 +308,7 @@ test_expect_success 'verify bad version' '
 '
 
 test_expect_success 'verify bad OID version' '
-	corrupt_midx_and_verify $MIDX_BYTE_OID_VERSION "\02" $objdir \
+	corrupt_midx_and_verify $MIDX_BYTE_OID_VERSION "\03" $objdir \
 		"hash version"
 '
 
@@ -348,10 +383,50 @@ test_expect_success 'repack with the --no-progress option' '
 	test_line_count = 0 err
 '
 
-test_expect_success 'repack removes multi-pack-index' '
+test_expect_success 'repack removes multi-pack-index when deleting packs' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
-	GIT_TEST_MULTI_PACK_INDEX=0 git repack -adf &&
+	# Set GIT_TEST_MULTI_PACK_INDEX to 0 to avoid writing a new
+	# multi-pack-index after repacking, but set "core.multiPackIndex" to
+	# true so that "git repack" can read the existing MIDX.
+	GIT_TEST_MULTI_PACK_INDEX=0 git -c core.multiPackIndex repack -adf &&
 	test_path_is_missing $objdir/pack/multi-pack-index
+'
+
+test_expect_success 'repack preserves multi-pack-index when creating packs' '
+	git init preserve &&
+	test_when_finished "rm -fr preserve" &&
+	(
+		cd preserve &&
+		packdir=.git/objects/pack &&
+		midx=$packdir/multi-pack-index &&
+
+		test_commit 1 &&
+		pack1=$(git pack-objects --all $packdir/pack) &&
+		touch $packdir/pack-$pack1.keep &&
+		test_commit 2 &&
+		pack2=$(git pack-objects --revs $packdir/pack) &&
+		touch $packdir/pack-$pack2.keep &&
+
+		git multi-pack-index write &&
+		cp $midx $midx.bak &&
+
+		cat >pack-input <<-EOF &&
+		HEAD
+		^HEAD~1
+		EOF
+		test_commit 3 &&
+		pack3=$(git pack-objects --revs $packdir/pack <pack-input) &&
+		test_commit 4 &&
+		pack4=$(git pack-objects --revs $packdir/pack <pack-input) &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 git -c core.multiPackIndex repack -ad &&
+		ls -la $packdir &&
+		test_path_is_file $packdir/pack-$pack1.pack &&
+		test_path_is_file $packdir/pack-$pack2.pack &&
+		test_path_is_missing $packdir/pack-$pack3.pack &&
+		test_path_is_missing $packdir/pack-$pack4.pack &&
+		test_cmp_bin $midx.bak $midx
+	)
 '
 
 compare_results_with_midx "after repack"
@@ -643,6 +718,7 @@ test_expect_success 'expire respects .keep files' '
 '
 
 test_expect_success 'repack --batch-size=0 repacks everything' '
+	cp -r dup dup2 &&
 	(
 		cd dup &&
 		rm .git/objects/pack/*.keep &&
@@ -659,6 +735,49 @@ test_expect_success 'repack --batch-size=0 repacks everything' '
 		git multi-pack-index repack --batch-size=0 &&
 		ls -al .git/objects/pack/*idx >new-idx-list &&
 		test_cmp idx-list new-idx-list
+	)
+'
+
+test_expect_success 'repack --batch-size=<large> repacks everything' '
+	(
+		cd dup2 &&
+		rm .git/objects/pack/*.keep &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 2 idx-list &&
+		git multi-pack-index repack --batch-size=2000000 &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 3 idx-list &&
+		test-tool read-midx .git/objects | grep idx >midx-list &&
+		test_line_count = 3 midx-list &&
+		git multi-pack-index expire &&
+		ls -al .git/objects/pack/*idx >idx-list &&
+		test_line_count = 1 idx-list
+	)
+'
+
+test_expect_success 'load reverse index when missing .idx, .pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		git config core.multiPackIndex true &&
+
+		test_commit base &&
+		git repack -ad &&
+		git multi-pack-index write &&
+
+		git rev-parse HEAD >tip &&
+		pack=$(ls .git/objects/pack/pack-*.pack) &&
+		idx=$(ls .git/objects/pack/pack-*.idx) &&
+
+		mv $idx $idx.bak &&
+		git cat-file --batch-check="%(objectsize:disk)" <tip &&
+
+		mv $idx.bak $idx &&
+
+		mv $pack $pack.bak &&
+		git cat-file --batch-check="%(objectsize:disk)" <tip
 	)
 '
 

@@ -453,12 +453,12 @@ void clear_object_flags(unsigned flags)
 	}
 }
 
-void clear_commit_marks_all(unsigned int flags)
+void repo_clear_commit_marks(struct repository *r, unsigned int flags)
 {
 	int i;
 
-	for (i = 0; i < the_repository->parsed_objects->obj_hash_size; i++) {
-		struct object *obj = the_repository->parsed_objects->obj_hash[i];
+	for (i = 0; i < r->parsed_objects->obj_hash_size; i++) {
+		struct object *obj = r->parsed_objects->obj_hash[i];
 		if (obj && obj->type == OBJ_COMMIT)
 			obj->flags &= ~flags;
 	}
@@ -532,7 +532,7 @@ void raw_object_store_clear(struct raw_object_store *o)
 	close_object_store(o);
 	o->packed_git = NULL;
 
-	hashmap_free(&o->pack_map);
+	hashmap_clear(&o->pack_map);
 }
 
 void parsed_object_pool_clear(struct parsed_object_pool *o)

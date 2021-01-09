@@ -185,7 +185,7 @@ static int get_stash_info(struct stash_info *info, int argc, const char **argv)
 	end_of_rev = strchrnul(revision, '@');
 	strbuf_add(&symbolic, revision, end_of_rev - revision);
 
-	ret = dwim_ref(symbolic.buf, symbolic.len, &dummy, &expanded_ref);
+	ret = dwim_ref(symbolic.buf, symbolic.len, &dummy, &expanded_ref, 0);
 	strbuf_release(&symbolic);
 	switch (ret) {
 	case 0: /* Not found, but valid ref */
@@ -419,7 +419,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 			ret = apply_cached(&out);
 			strbuf_release(&out);
 			if (ret)
-				return error(_("conflicts in index."
+				return error(_("conflicts in index. "
 					       "Try without --index."));
 
 			discard_cache();
@@ -534,11 +534,22 @@ static int apply_stash(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
+static int reject_reflog_ent(struct object_id *ooid, struct object_id *noid,
+			     const char *email, timestamp_t timestamp, int tz,
+			     const char *message, void *cb_data)
+{
+	return 1;
+}
+
+static int reflog_is_empty(const char *refname)
+{
+	return !for_each_reflog_ent(refname, reject_reflog_ent, NULL);
+}
+
 static int do_drop_stash(struct stash_info *info, int quiet)
 {
 	int ret;
 	struct child_process cp_reflog = CHILD_PROCESS_INIT;
-	struct child_process cp = CHILD_PROCESS_INIT;
 
 	/*
 	 * reflog does not provide a simple function for deleting refs. One will
@@ -559,19 +570,7 @@ static int do_drop_stash(struct stash_info *info, int quiet)
 			     info->revision.buf);
 	}
 
-	/*
-	 * This could easily be replaced by get_oid, but currently it will throw
-	 * a fatal error when a reflog is empty, which we can not recover from.
-	 */
-	cp.git_cmd = 1;
-	/* Even though --quiet is specified, rev-parse still outputs the hash */
-	cp.no_stdout = 1;
-	strvec_pushl(&cp.args, "rev-parse", "--verify", "--quiet", NULL);
-	strvec_pushf(&cp.args, "%s@{0}", ref_stash);
-	ret = run_command(&cp);
-
-	/* do_clear_stash if we just dropped the last stash entry */
-	if (ret)
+	if (reflog_is_empty(ref_stash))
 		do_clear_stash();
 
 	return 0;
@@ -864,7 +863,7 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 	int found = 0;
 	struct dir_struct dir;
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	if (include_untracked != INCLUDE_ALL_FILES)
 		setup_standard_excludes(&dir);
 
@@ -875,12 +874,9 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 		strbuf_addstr(untracked_files, ent->name);
 		/* NUL-terminate: will be fed to update-index -z */
 		strbuf_addch(untracked_files, '\0');
-		free(ent);
 	}
 
-	free(dir.entries);
-	free(dir.ignored);
-	clear_directory(&dir);
+	dir_clear(&dir);
 	return found;
 }
 

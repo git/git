@@ -814,6 +814,33 @@ test_expect_success 'status -s without relative paths' '
 
 '
 
+cat >expect <<\EOF
+ M dir1/modified
+A  dir2/added
+A  "file with spaces"
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? "file with spaces 2"
+?? untracked
+EOF
+
+test_expect_success 'status -s without relative paths' '
+	test_when_finished "git rm --cached \"file with spaces\"; rm -f file*" &&
+	>"file with spaces" &&
+	>"file with spaces 2" &&
+	>"expect with spaces" &&
+	git add "file with spaces" &&
+
+	git status -s >output &&
+	test_cmp expect output &&
+
+	git status -s --ignored >output &&
+	grep "^!! \"expect with spaces\"$" output &&
+	grep -v "^!! " output >output-wo-ignored &&
+	test_cmp expect output-wo-ignored
+'
+
 test_expect_success 'dry-run of partial commit excluding new file in index' '
 	cat >expect <<EOF &&
 On branch master
@@ -844,6 +871,18 @@ test_expect_success 'status refreshes the index' '
 	git status &&
 	git diff-files >output &&
 	test_cmp expect output
+'
+
+test_expect_success 'status shows detached HEAD properly after checking out non-local upstream branch' '
+	test_when_finished rm -rf upstream downstream actual &&
+
+	test_create_repo upstream &&
+	test_commit -C upstream foo &&
+
+	git clone upstream downstream &&
+	git -C downstream checkout @{u} &&
+	git -C downstream status >actual &&
+	test_i18ngrep "HEAD detached at [0-9a-f]\\+" actual
 '
 
 test_expect_success 'setup status submodule summary' '
@@ -1605,6 +1644,17 @@ test_expect_success '"Initial commit" should not be noted in commit template' '
 	git add to_be_committed_2 &&
 	git commit --dry-run >output &&
 	test_i18ngrep ! "Initial commit" output
+'
+
+test_expect_success '--no-lock-index prevents index update and is deprecated' '
+	test-tool chmtime =1234567890 .git/index &&
+	git status --no-lock-index 2>err &&
+	grep "no-lock-index is deprecated" err &&
+	test-tool chmtime -v +0 .git/index >out &&
+	grep ^1234567890 out &&
+	git status &&
+	test-tool chmtime -v +0 .git/index >out &&
+	! grep ^1234567890 out
 '
 
 test_expect_success '--no-optional-locks prevents index update' '

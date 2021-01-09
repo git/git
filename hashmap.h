@@ -96,7 +96,7 @@
  *         }
  *
  *         if (!strcmp("end", action)) {
- *             hashmap_free_entries(&map, struct long2string, ent);
+ *             hashmap_clear_and_free(&map, struct long2string, ent);
  *             break;
  *         }
  *     }
@@ -210,6 +210,9 @@ struct hashmap {
 
 /* hashmap functions */
 
+#define HASHMAP_INIT(fn, data) { .cmpfn = fn, .cmpfn_data = data, \
+				 .do_count_items = 1 }
+
 /*
  * Initializes a hashmap structure.
  *
@@ -228,24 +231,72 @@ struct hashmap {
  * prevent expensive resizing. If 0, the table is dynamically resized.
  */
 void hashmap_init(struct hashmap *map,
-			 hashmap_cmp_fn equals_function,
-			 const void *equals_function_data,
-			 size_t initial_size);
+		  hashmap_cmp_fn equals_function,
+		  const void *equals_function_data,
+		  size_t initial_size);
 
-/* internal function for freeing hashmap */
-void hashmap_free_(struct hashmap *map, ssize_t offset);
-
-/*
- * Frees a hashmap structure and allocated memory, leaves entries undisturbed
- */
-#define hashmap_free(map) hashmap_free_(map, -1)
+/* internal functions for clearing or freeing hashmap */
+void hashmap_partial_clear_(struct hashmap *map, ssize_t offset);
+void hashmap_clear_(struct hashmap *map, ssize_t offset);
 
 /*
- * Frees @map and all entries.  @type is the struct type of the entry
- * where @member is the hashmap_entry struct used to associate with @map
+ * Frees a hashmap structure and allocated memory for the table, but does not
+ * free the entries nor anything they point to.
+ *
+ * Usage note:
+ *
+ * Many callers will need to iterate over all entries and free the data each
+ * entry points to; in such a case, they can free the entry itself while at it.
+ * Thus, you might see:
+ *
+ *    hashmap_for_each_entry(map, hashmap_iter, e, hashmap_entry_name) {
+ *      free(e->somefield);
+ *      free(e);
+ *    }
+ *    hashmap_clear(map);
+ *
+ * instead of
+ *
+ *    hashmap_for_each_entry(map, hashmap_iter, e, hashmap_entry_name) {
+ *      free(e->somefield);
+ *    }
+ *    hashmap_clear_and_free(map, struct my_entry_struct, hashmap_entry_name);
+ *
+ * to avoid the implicit extra loop over the entries.  However, if there are
+ * no special fields in your entry that need to be freed beyond the entry
+ * itself, it is probably simpler to avoid the explicit loop and just call
+ * hashmap_clear_and_free().
  */
-#define hashmap_free_entries(map, type, member) \
-	hashmap_free_(map, offsetof(type, member));
+#define hashmap_clear(map) hashmap_clear_(map, -1)
+
+/*
+ * Similar to hashmap_clear(), except that the table is no deallocated; it
+ * is merely zeroed out but left the same size as before.  If the hashmap
+ * will be reused, this avoids the overhead of deallocating and
+ * reallocating map->table.  As with hashmap_clear(), you may need to free
+ * the entries yourself before calling this function.
+ */
+#define hashmap_partial_clear(map) hashmap_partial_clear_(map, -1)
+
+/*
+ * Similar to hashmap_clear() but also frees all entries.  @type is the
+ * struct type of the entry where @member is the hashmap_entry struct used
+ * to associate with @map.
+ *
+ * See usage note above hashmap_clear().
+ */
+#define hashmap_clear_and_free(map, type, member) \
+	hashmap_clear_(map, offsetof(type, member))
+
+/*
+ * Similar to hashmap_partial_clear() but also frees all entries.  @type is
+ * the struct type of the entry where @member is the hashmap_entry struct
+ * used to associate with @map.
+ *
+ * See usage note above hashmap_clear().
+ */
+#define hashmap_partial_clear_and_free(map, type, member) \
+	hashmap_partial_clear_(map, offsetof(type, member))
 
 /* hashmap_entry functions */
 
@@ -261,7 +312,7 @@ void hashmap_free_(struct hashmap *map, ssize_t offset);
  * and if it is on stack, you can just let it go out of scope).
  */
 static inline void hashmap_entry_init(struct hashmap_entry *e,
-					unsigned int hash)
+				      unsigned int hash)
 {
 	e->hash = hash;
 	e->next = NULL;
@@ -303,8 +354,8 @@ static inline unsigned int hashmap_get_size(struct hashmap *map)
  * to `hashmap_cmp_fn` to decide whether the entry matches the key.
  */
 struct hashmap_entry *hashmap_get(const struct hashmap *map,
-				const struct hashmap_entry *key,
-				const void *keydata);
+				  const struct hashmap_entry *key,
+				  const void *keydata);
 
 /*
  * Returns the hashmap entry for the specified hash code and key data,
@@ -337,7 +388,7 @@ static inline struct hashmap_entry *hashmap_get_from_hash(
  * call to `hashmap_get` or `hashmap_get_next`.
  */
 struct hashmap_entry *hashmap_get_next(const struct hashmap *map,
-			const struct hashmap_entry *entry);
+				       const struct hashmap_entry *entry);
 
 /*
  * Adds a hashmap entry. This allows to add duplicate entries (i.e.
@@ -357,7 +408,7 @@ void hashmap_add(struct hashmap *map, struct hashmap_entry *entry);
  * Returns the replaced entry, or NULL if not found (i.e. the entry was added).
  */
 struct hashmap_entry *hashmap_put(struct hashmap *map,
-				struct hashmap_entry *entry);
+				  struct hashmap_entry *entry);
 
 /*
  * Adds or replaces a hashmap entry contained within @keyvar,
@@ -379,8 +430,8 @@ struct hashmap_entry *hashmap_put(struct hashmap *map,
  * Argument explanation is the same as in `hashmap_get`.
  */
 struct hashmap_entry *hashmap_remove(struct hashmap *map,
-					const struct hashmap_entry *key,
-					const void *keydata);
+				     const struct hashmap_entry *key,
+				     const void *keydata);
 
 /*
  * Removes a hashmap entry contained within @keyvar,
@@ -422,7 +473,7 @@ struct hashmap_entry *hashmap_iter_next(struct hashmap_iter *iter);
 
 /* Initializes the iterator and returns the first entry, if any. */
 static inline struct hashmap_entry *hashmap_iter_first(struct hashmap *map,
-		struct hashmap_iter *iter)
+						       struct hashmap_iter *iter)
 {
 	hashmap_iter_init(map, iter);
 	return hashmap_iter_next(iter);
@@ -449,7 +500,8 @@ static inline struct hashmap_entry *hashmap_iter_first(struct hashmap *map,
  * containing a @member which is a "struct hashmap_entry"
  */
 #define hashmap_for_each_entry(map, iter, var, member) \
-	for (var = hashmap_iter_first_entry_offset(map, iter, \
+	for (var = NULL, /* for systems without typeof */ \
+	     var = hashmap_iter_first_entry_offset(map, iter, \
 						OFFSETOF_VAR(var, member)); \
 		var; \
 		var = hashmap_iter_next_entry_offset(iter, \

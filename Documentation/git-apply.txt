@@ -61,18 +61,18 @@ OPTIONS
 	file and detects errors.  Turns off "apply".
 
 --index::
-	When `--check` is in effect, or when applying the patch
-	(which is the default when none of the options that
-	disables it is in effect), make sure the patch is
-	applicable to what the current index file records.  If
-	the file to be patched in the working tree is not
-	up to date, it is flagged as an error.  This flag also
-	causes the index file to be updated.
+	Apply the patch to both the index and the working tree (or
+	merely check that it would apply cleanly to both if `--check` is
+	in effect). Note that `--index` expects index entries and
+	working tree copies for relevant paths to be identical (their
+	contents and metadata such as file mode must match), and will
+	raise an error if they are not, even if the patch would apply
+	cleanly to both the index and the working tree in isolation.
 
 --cached::
-	Apply a patch without touching the working tree. Instead take the
-	cached data, apply the patch, and store the result in the index
-	without using the working tree. This implies `--index`.
+	Apply the patch to just the index, without touching the working
+	tree. If `--check` is in effect, merely check that it would
+	apply cleanly to the index entry.
 
 --intent-to-add::
 	When applying the patch only to the working tree, mark new

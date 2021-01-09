@@ -100,6 +100,8 @@ OPTIONS
 	value is set or outside a repository.
 +
 This option cannot be used with --stdin.
++
+include::object-format-disclaimer.txt[]
 
 NOTES
 -----

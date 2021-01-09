@@ -190,6 +190,24 @@ test_expect_success 'dotdot is not an empty set' '
 	test_cmp expect actual
 '
 
+test_expect_success 'dotdot does not peel endpoints' '
+	git tag -a -m "annote" annotated HEAD &&
+	A=$(git rev-parse annotated) &&
+	H=$(git rev-parse annotated^0) &&
+	{
+		echo $A && echo ^$A
+	} >expect-with-two-dots &&
+	{
+		echo $A && echo $A && echo ^$H
+	} >expect-with-merge-base &&
+
+	git rev-parse annotated..annotated >actual-with-two-dots &&
+	test_cmp expect-with-two-dots actual-with-two-dots &&
+
+	git rev-parse annotated...annotated >actual-with-merge-base &&
+	test_cmp expect-with-merge-base actual-with-merge-base
+'
+
 test_expect_success 'arg before dashdash must be a revision (missing)' '
 	test_must_fail git rev-parse foobar -- 2>stderr &&
 	test_i18ngrep "bad revision" stderr
@@ -234,6 +252,31 @@ test_expect_success 'backslash does not trigger wildcard rule' '
 
 test_expect_success 'escaped char does not trigger wildcard rule' '
 	test_must_fail git rev-parse "foo\\*bar"
+'
+
+test_expect_success 'arg after dashdash not interpreted as option' '
+	cat >expect <<-\EOF &&
+	--
+	--local-env-vars
+	EOF
+	git rev-parse -- --local-env-vars >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'arg after end-of-options not interpreted as option' '
+	test_must_fail git rev-parse --end-of-options --not-real -- 2>err &&
+	test_i18ngrep bad.revision.*--not-real err
+'
+
+test_expect_success 'end-of-options still allows --' '
+	cat >expect <<-EOF &&
+	--end-of-options
+	$(git rev-parse --verify HEAD)
+	--
+	path
+	EOF
+	git rev-parse --end-of-options HEAD -- path >actual &&
+	test_cmp expect actual
 '
 
 test_done

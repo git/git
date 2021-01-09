@@ -57,6 +57,7 @@ void install_packed_git(struct repository *r, struct packed_git *pack);
 struct packed_git *get_packed_git(struct repository *r);
 struct list_head *get_packed_git_mru(struct repository *r);
 struct multi_pack_index *get_multi_pack_index(struct repository *r);
+struct multi_pack_index *get_local_multi_pack_index(struct repository *r);
 struct packed_git *get_all_packs(struct repository *r);
 
 /*

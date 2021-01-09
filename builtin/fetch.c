@@ -80,6 +80,7 @@ static struct list_objects_filter_options filter_options;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
 static int fetch_write_commit_graph = -1;
+static int stdin_refspecs = 0;
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
 {
@@ -207,6 +208,8 @@ static struct option builtin_fetch_options[] = {
 		 N_("check for forced-updates on all updated branches")),
 	OPT_BOOL(0, "write-commit-graph", &fetch_write_commit_graph,
 		 N_("write the commit-graph after fetching")),
+	OPT_BOOL(0, "stdin", &stdin_refspecs,
+		 N_("accept refspecs from stdin")),
 	OPT_END()
 };
 
@@ -390,7 +393,7 @@ static void find_non_local_tags(const struct ref *refs,
 		item = refname_hash_add(&remote_refs, ref->name, &ref->old_oid);
 		string_list_insert(&remote_refs_list, ref->name);
 	}
-	hashmap_free_entries(&existing_refs, struct refname_hash_entry, ent);
+	hashmap_clear_and_free(&existing_refs, struct refname_hash_entry, ent);
 
 	/*
 	 * We may have a final lightweight tag that needs to be
@@ -425,7 +428,7 @@ static void find_non_local_tags(const struct ref *refs,
 		**tail = rm;
 		*tail = &rm->next;
 	}
-	hashmap_free_entries(&remote_refs, struct refname_hash_entry, ent);
+	hashmap_clear_and_free(&remote_refs, struct refname_hash_entry, ent);
 	string_list_clear(&remote_refs_list, 0);
 	oidset_clear(&fetch_oids);
 }
@@ -444,6 +447,7 @@ static struct ref *get_ref_map(struct remote *remote,
 	struct ref *orefs = NULL, **oref_tail = &orefs;
 
 	struct hashmap existing_refs;
+	int existing_refs_populated = 0;
 
 	if (rs->nr) {
 		struct refspec *fetch_refspec;
@@ -535,16 +539,29 @@ static struct ref *get_ref_map(struct remote *remote,
 		tail = &rm->next;
 	}
 
-	ref_map = ref_remove_duplicates(ref_map);
+	/*
+	 * apply negative refspecs first, before we remove duplicates. This is
+	 * necessary as negative refspecs might remove an otherwise conflicting
+	 * duplicate.
+	 */
+	if (rs->nr)
+		ref_map = apply_negative_refspecs(ref_map, rs);
+	else
+		ref_map = apply_negative_refspecs(ref_map, &remote->fetch);
 
-	refname_hash_init(&existing_refs);
-	for_each_ref(add_one_refname, &existing_refs);
+	ref_map = ref_remove_duplicates(ref_map);
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		if (rm->peer_ref) {
 			const char *refname = rm->peer_ref->name;
 			struct refname_hash_entry *peer_item;
 			unsigned int hash = strhash(refname);
+
+			if (!existing_refs_populated) {
+				refname_hash_init(&existing_refs);
+				for_each_ref(add_one_refname, &existing_refs);
+				existing_refs_populated = 1;
+			}
 
 			peer_item = hashmap_get_entry_from_hash(&existing_refs,
 						hash, refname,
@@ -555,7 +572,8 @@ static struct ref *get_ref_map(struct remote *remote,
 			}
 		}
 	}
-	hashmap_free_entries(&existing_refs, struct refname_hash_entry, ent);
+	if (existing_refs_populated)
+		hashmap_clear_and_free(&existing_refs, struct refname_hash_entry, ent);
 
 	return ref_map;
 }
@@ -650,7 +668,7 @@ static void prepare_format_display(struct ref *ref_map)
 	struct ref *rm;
 	const char *format = "full";
 
-	git_config_get_string_const("fetch.output", &format);
+	git_config_get_string_tmp("fetch.output", &format);
 	if (!strcasecmp(format, "full"))
 		compact_format = 0;
 	else if (!strcasecmp(format, "compact"))
@@ -960,8 +978,10 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				ref->force = rm->peer_ref->force;
 			}
 
-			if (recurse_submodules != RECURSE_SUBMODULES_OFF)
+			if (recurse_submodules != RECURSE_SUBMODULES_OFF &&
+			    (!rm->peer_ref || !oideq(&ref->old_oid, &ref->new_oid))) {
 				check_for_new_submodule_commits(&rm->old_oid);
+			}
 
 			if (!strcmp(rm->name, "HEAD")) {
 				kind = "";
@@ -1017,11 +1037,17 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				rc |= update_local_ref(ref, what, rm, &note,
 						       summary_width);
 				free(ref);
-			} else
+			} else if (write_fetch_head || dry_run) {
+				/*
+				 * Display fetches written to FETCH_HEAD (or
+				 * would be written to FETCH_HEAD, if --dry-run
+				 * is set).
+				 */
 				format_display(&note, '*',
 					       *kind ? kind : "branch", NULL,
 					       *what ? what : "HEAD",
 					       "FETCH_HEAD", summary_width);
+			}
 			if (note.len) {
 				if (verbosity >= 0 && !shown_url) {
 					fprintf(stderr, _("From %.*s\n"),
@@ -1538,7 +1564,10 @@ static void add_options_to_argv(struct strvec *argv)
 		strvec_push(argv, "-v");
 	else if (verbosity < 0)
 		strvec_push(argv, "-q");
-
+	if (family == TRANSPORT_FAMILY_IPV4)
+		strvec_push(argv, "--ipv4");
+	else if (family == TRANSPORT_FAMILY_IPV6)
+		strvec_push(argv, "--ipv6");
 }
 
 /* Fetch multiple remotes in parallel */
@@ -1665,7 +1694,7 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	 * If this is a partial-fetch request, we enable partial on
 	 * this repo if not already enabled and remember the given
 	 * filter-spec as the default for subsequent fetches to this
-	 * remote.
+	 * remote if there is currently no default filter-spec.
 	 */
 	if (filter_options.choice) {
 		partial_clone_register(remote->name, &filter_options);
@@ -1682,7 +1711,8 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	return;
 }
 
-static int fetch_one(struct remote *remote, int argc, const char **argv, int prune_tags_ok)
+static int fetch_one(struct remote *remote, int argc, const char **argv,
+		     int prune_tags_ok, int use_stdin_refspecs)
 {
 	struct refspec rs = REFSPEC_INIT_FETCH;
 	int i;
@@ -1725,18 +1755,22 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 
 	for (i = 0; i < argc; i++) {
 		if (!strcmp(argv[i], "tag")) {
-			char *tag;
 			i++;
 			if (i >= argc)
 				die(_("You need to specify a tag name."));
 
-			tag = xstrfmt("refs/tags/%s:refs/tags/%s",
-				      argv[i], argv[i]);
-			refspec_append(&rs, tag);
-			free(tag);
+			refspec_appendf(&rs, "refs/tags/%s:refs/tags/%s",
+					argv[i], argv[i]);
 		} else {
 			refspec_append(&rs, argv[i]);
 		}
+	}
+
+	if (use_stdin_refspecs) {
+		struct strbuf line = STRBUF_INIT;
+		while (strbuf_getline_lf(&line, stdin) != EOF)
+			refspec_append(&rs, line.buf);
+		strbuf_release(&line);
 	}
 
 	if (server_options.nr)
@@ -1773,12 +1807,18 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		free(anon);
 	}
 
-	fetch_config_from_gitmodules(&submodule_fetch_jobs_config,
-				     &recurse_submodules);
 	git_config(git_fetch_config, NULL);
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_fetch_options, builtin_fetch_usage, 0);
+	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {
+		int *sfjc = submodule_fetch_jobs_config == -1
+			    ? &submodule_fetch_jobs_config : NULL;
+		int *rs = recurse_submodules == RECURSE_SUBMODULES_DEFAULT
+			  ? &recurse_submodules : NULL;
+
+		fetch_config_from_gitmodules(sfjc, rs);
+	}
 
 	if (deepen_relative) {
 		if (deepen_relative < 0)
@@ -1839,13 +1879,17 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (remote) {
 		if (filter_options.choice || has_promisor_remote())
 			fetch_one_setup_partial(remote);
-		result = fetch_one(remote, argc, argv, prune_tags_ok);
+		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs);
 	} else {
 		int max_children = max_jobs;
 
 		if (filter_options.choice)
 			die(_("--filter can only be used with the remote "
 			      "configured in extensions.partialclone"));
+
+		if (stdin_refspecs)
+			die(_("--stdin can only be used when fetching "
+			      "from one remote"));
 
 		if (max_children < 0)
 			max_children = fetch_parallel_config;

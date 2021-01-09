@@ -273,4 +273,26 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 	test_cmp expect dst/push-cert-status
 '
 
+test_expect_success GPG 'failed atomic push does not execute GPG' '
+	prepare_dst &&
+	git -C dst config receive.certnonceseed sekrit &&
+	write_script gpg <<-EOF &&
+	# should check atomic push locally before running GPG.
+	exit 1
+	EOF
+	test_must_fail env PATH="$TRASH_DIRECTORY:$PATH" git push \
+			--signed --atomic --porcelain \
+			dst noop ff noff >out 2>err &&
+
+	test_i18ngrep ! "gpg failed to sign" err &&
+	cat >expect <<-EOF &&
+	To dst
+	=	refs/heads/noop:refs/heads/noop	[up to date]
+	!	refs/heads/ff:refs/heads/ff	[rejected] (atomic push failed)
+	!	refs/heads/noff:refs/heads/noff	[rejected] (non-fast-forward)
+	Done
+	EOF
+	test_cmp expect out
+'
+
 test_done

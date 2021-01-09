@@ -70,7 +70,7 @@ uploadpackfilter.<filter>.allow::
 	kinds must be allowed. Defaults to `uploadpackfilter.allow`.
 
 uploadpackfilter.tree.maxDepth::
-	Only allow `--filter=tree=<n>` when `n` is no more than the value of
+	Only allow `--filter=tree:<n>` when `<n>` is no more than the value of
 	`uploadpackfilter.tree.maxDepth`. If set, this also implies
 	`uploadpackfilter.tree.allow=true`, unless this configuration
 	variable had already been set. Has no effect if unset.

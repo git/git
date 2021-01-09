@@ -8,6 +8,8 @@
 #include "serve.h"
 #include "upload-pack.h"
 
+static int advertise_sid;
+
 static int always_advertise(struct repository *r,
 			    struct strbuf *value)
 {
@@ -27,6 +29,15 @@ static int object_format_advertise(struct repository *r,
 {
 	if (value)
 		strbuf_addstr(value, r->hash_algo->name);
+	return 1;
+}
+
+static int session_id_advertise(struct repository *r, struct strbuf *value)
+{
+	if (!advertise_sid)
+		return 0;
+	if (value)
+		strbuf_addstr(value, trace2_session_id());
 	return 1;
 }
 
@@ -66,6 +77,7 @@ static struct protocol_capability capabilities[] = {
 	{ "fetch", upload_pack_advertise, upload_pack_v2 },
 	{ "server-option", always_advertise, NULL },
 	{ "object-format", object_format_advertise, NULL },
+	{ "session-id", session_id_advertise, NULL },
 };
 
 static void advertise_capabilities(void)
@@ -189,6 +201,7 @@ static int process_request(void)
 	struct packet_reader reader;
 	struct strvec keys = STRVEC_INIT;
 	struct protocol_capability *command = NULL;
+	const char *client_sid;
 
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
@@ -252,6 +265,9 @@ static int process_request(void)
 
 	check_algorithm(the_repository, &keys);
 
+	if (has_capability(&keys, "session-id", &client_sid))
+		trace2_data_string("transfer", NULL, "client-sid", client_sid);
+
 	command->command(the_repository, &keys, &reader);
 
 	strvec_clear(&keys);
@@ -261,6 +277,8 @@ static int process_request(void)
 /* Main serve loop for protocol version 2 */
 void serve(struct serve_options *options)
 {
+	git_config_get_bool("transfer.advertisesid", &advertise_sid);
+
 	if (options->advertise_capabilities || !options->stateless_rpc) {
 		/* serve by default supports v2 */
 		packet_write_fmt(1, "version 2\n");

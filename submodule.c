@@ -194,7 +194,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 		char *key;
 
 		key = xstrfmt("submodule.%s.ignore", submodule->name);
-		if (repo_config_get_string_const(the_repository, key, &ignore))
+		if (repo_config_get_string_tmp(the_repository, key, &ignore))
 			ignore = submodule->ignore;
 		free(key);
 
@@ -438,13 +438,14 @@ void handle_ignore_submodules_arg(struct diff_options *diffopt,
 	 */
 }
 
-static int prepare_submodule_summary(struct rev_info *rev, const char *path,
-		struct commit *left, struct commit *right,
-		struct commit_list *merge_bases)
+static int prepare_submodule_diff_summary(struct repository *r, struct rev_info *rev,
+					  const char *path,
+					  struct commit *left, struct commit *right,
+					  struct commit_list *merge_bases)
 {
 	struct commit_list *list;
 
-	repo_init_revisions(the_repository, rev, NULL);
+	repo_init_revisions(r, rev, NULL);
 	setup_revisions(0, NULL, rev, NULL);
 	rev->left_right = 1;
 	rev->first_parent_only = 1;
@@ -459,7 +460,7 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 	return prepare_revision_walk(rev);
 }
 
-static void print_submodule_summary(struct repository *r, struct rev_info *rev, struct diff_options *o)
+static void print_submodule_diff_summary(struct repository *r, struct rev_info *rev, struct diff_options *o)
 {
 	static const char format[] = "  %m %s";
 	struct strbuf sb = STRBUF_INIT;
@@ -610,7 +611,7 @@ output_header:
 	strbuf_release(&sb);
 }
 
-void show_submodule_summary(struct diff_options *o, const char *path,
+void show_submodule_diff_summary(struct diff_options *o, const char *path,
 		struct object_id *one, struct object_id *two,
 		unsigned dirty_submodule)
 {
@@ -632,12 +633,12 @@ void show_submodule_summary(struct diff_options *o, const char *path,
 		goto out;
 
 	/* Treat revision walker failure the same as missing commits */
-	if (prepare_submodule_summary(&rev, path, left, right, merge_bases)) {
+	if (prepare_submodule_diff_summary(sub, &rev, path, left, right, merge_bases)) {
 		diff_emit_submodule_error(o, "(revision walker failed)\n");
 		goto out;
 	}
 
-	print_submodule_summary(sub, &rev, o);
+	print_submodule_diff_summary(sub, &rev, o);
 
 out:
 	if (merge_bases)
@@ -840,9 +841,16 @@ static void collect_changed_submodules(struct repository *r,
 {
 	struct rev_info rev;
 	const struct commit *commit;
+	int save_warning;
+	struct setup_revision_opt s_r_opt = {
+		.assume_dashdash = 1,
+	};
 
+	save_warning = warn_on_object_refname_ambiguity;
+	warn_on_object_refname_ambiguity = 0;
 	repo_init_revisions(r, &rev, NULL);
-	setup_revisions(argv->nr, argv->v, &rev, NULL);
+	setup_revisions(argv->nr, argv->v, &rev, &s_r_opt);
+	warn_on_object_refname_ambiguity = save_warning;
 	if (prepare_revision_walk(&rev))
 		die(_("revision walk setup failed"));
 
@@ -857,7 +865,8 @@ static void collect_changed_submodules(struct repository *r,
 		diff_rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 		diff_rev.diffopt.format_callback = collect_changed_submodules_cb;
 		diff_rev.diffopt.format_callback_data = &data;
-		diff_tree_combined_merge(commit, 1, &diff_rev);
+		diff_rev.dense_combined_merges = 1;
+		diff_tree_combined_merge(commit, &diff_rev);
 	}
 
 	reset_revision_walk();
@@ -1299,7 +1308,7 @@ static int get_fetch_recurse_config(const struct submodule *submodule,
 
 		int fetch_recurse = submodule->fetch_recurse;
 		key = xstrfmt("submodule.%s.fetchRecurseSubmodules", submodule->name);
-		if (!repo_config_get_string_const(spf->r, key, &value)) {
+		if (!repo_config_get_string_tmp(spf->r, key, &value)) {
 			fetch_recurse = parse_fetch_recurse_submodules_arg(key, value);
 		}
 		free(key);
@@ -1726,14 +1735,6 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 int submodule_uses_gitfile(const char *path)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	const char *argv[] = {
-		"submodule",
-		"foreach",
-		"--quiet",
-		"--recursive",
-		"test -f .git",
-		NULL,
-	};
 	struct strbuf buf = STRBUF_INIT;
 	const char *git_dir;
 
@@ -1746,7 +1747,10 @@ int submodule_uses_gitfile(const char *path)
 	strbuf_release(&buf);
 
 	/* Now test that all nested submodules use a gitfile too */
-	cp.argv = argv;
+	strvec_pushl(&cp.args,
+		     "submodule", "foreach", "--quiet",	"--recursive",
+		     "test -f .git", NULL);
+
 	prepare_submodule_repo_env(&cp.env_array);
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;

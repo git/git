@@ -342,7 +342,10 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	const char *workdir, *tmp;
 	int ret = 0, i;
 	FILE *fp;
-	struct hashmap working_tree_dups, submodules, symlinks2;
+	struct hashmap working_tree_dups = HASHMAP_INIT(working_tree_entry_cmp,
+							NULL);
+	struct hashmap submodules = HASHMAP_INIT(pair_cmp, NULL);
+	struct hashmap symlinks2 = HASHMAP_INIT(pair_cmp, NULL);
 	struct hashmap_iter iter;
 	struct pair_entry *entry;
 	struct index_state wtindex;
@@ -382,10 +385,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	ldir_len = ldir.len;
 	rdir_len = rdir.len;
 	wtdir_len = wtdir.len;
-
-	hashmap_init(&working_tree_dups, working_tree_entry_cmp, NULL, 0);
-	hashmap_init(&submodules, pair_cmp, NULL, 0);
-	hashmap_init(&symlinks2, pair_cmp, NULL, 0);
 
 	child.no_stdin = 1;
 	child.git_cmd = 1;
@@ -505,7 +504,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 				}
 				add_path(&wtdir, wtdir_len, dst_path);
 				if (symlinks) {
-					if (symlink(wtdir.buf, rdir.buf)) {
+					if (create_symlink(lstate.istate, wtdir.buf, rdir.buf)) {
 						ret = error_errno("could not symlink '%s' to '%s'", wtdir.buf, rdir.buf);
 						goto finish;
 					}

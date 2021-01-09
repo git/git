@@ -19,7 +19,7 @@ test_expect_success 'setup' '
 test_expect_success TTY 'some commands use a pager' '
 	rm -f paginated.out &&
 	test_terminal git log &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 test_expect_failure TTY 'pager runs from subdir' '
@@ -54,7 +54,7 @@ test_expect_success !MINGW,TTY 'LESS and LV envvars set by git-sh-setup' '
 		sane_unset LESS LV &&
 		PAGER="env >pager-env.out; wc" &&
 		export PAGER &&
-		PATH="$(git --exec-path):$PATH" &&
+		PATH="$(git --exec-path)$PATH_SEP$PATH" &&
 		export PATH &&
 		test_terminal sh -c ". git-sh-setup && git_pager"
 	) &&
@@ -65,49 +65,49 @@ test_expect_success !MINGW,TTY 'LESS and LV envvars set by git-sh-setup' '
 test_expect_success TTY 'some commands do not use a pager' '
 	rm -f paginated.out &&
 	test_terminal git rev-list HEAD &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success 'no pager when stdout is a pipe' '
 	rm -f paginated.out &&
 	git log | cat &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success 'no pager when stdout is a regular file' '
 	rm -f paginated.out &&
 	git log >file &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git --paginate rev-list uses a pager' '
 	rm -f paginated.out &&
 	test_terminal git --paginate rev-list HEAD &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 test_expect_success 'no pager even with --paginate when stdout is a pipe' '
 	rm -f file paginated.out &&
 	git --paginate log | cat &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'no pager with --no-pager' '
 	rm -f paginated.out &&
 	test_terminal git --no-pager log &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'configuration can disable pager' '
 	rm -f paginated.out &&
 	test_unconfig pager.grep &&
 	test_terminal git grep initial &&
-	test -e paginated.out &&
+	test_path_is_file paginated.out &&
 
 	rm -f paginated.out &&
 	test_config pager.grep false &&
 	test_terminal git grep initial &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'configuration can enable pager (from subdir)' '
@@ -122,107 +122,107 @@ test_expect_success TTY 'configuration can enable pager (from subdir)' '
 		test_terminal git bundle unbundle ../test.bundle
 	) &&
 	{
-		test -e paginated.out ||
-		test -e subdir/paginated.out
+		test_path_is_file paginated.out ||
+		test_path_is_file subdir/paginated.out
 	}
 '
 
 test_expect_success TTY 'git tag -l defaults to paging' '
 	rm -f paginated.out &&
 	test_terminal git tag -l &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 test_expect_success TTY 'git tag -l respects pager.tag' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag=false tag -l &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git tag -l respects --no-pager' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag --no-pager tag -l &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git tag with no args defaults to paging' '
 	# no args implies -l so this should page like -l
 	rm -f paginated.out &&
 	test_terminal git tag &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 test_expect_success TTY 'git tag with no args respects pager.tag' '
 	# no args implies -l so this should page like -l
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag=false tag &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git tag --contains defaults to paging' '
 	# --contains implies -l so this should page like -l
 	rm -f paginated.out &&
 	test_terminal git tag --contains &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 test_expect_success TTY 'git tag --contains respects pager.tag' '
 	# --contains implies -l so this should page like -l
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag=false tag --contains &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git tag -a defaults to not paging' '
 	test_when_finished "git tag -d newtag" &&
 	rm -f paginated.out &&
 	test_terminal git tag -am message newtag &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git tag -a ignores pager.tag' '
 	test_when_finished "git tag -d newtag" &&
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag tag -am message newtag &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git tag -a respects --paginate' '
 	test_when_finished "git tag -d newtag" &&
 	rm -f paginated.out &&
 	test_terminal git --paginate tag -am message newtag &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 test_expect_success TTY 'git tag as alias ignores pager.tag with -a' '
 	test_when_finished "git tag -d newtag" &&
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag -c alias.t=tag t -am message newtag &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git tag as alias respects pager.tag with -l' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag=false -c alias.t=tag t -l &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git branch defaults to paging' '
 	rm -f paginated.out &&
 	test_terminal git branch &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 test_expect_success TTY 'git branch respects pager.branch' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.branch=false branch &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git branch respects --no-pager' '
 	rm -f paginated.out &&
 	test_terminal git --no-pager branch &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git branch --edit-description ignores pager.branch' '
@@ -232,8 +232,8 @@ test_expect_success TTY 'git branch --edit-description ignores pager.branch' '
 		touch editor.used
 	EOF
 	EDITOR=./editor test_terminal git -c pager.branch branch --edit-description &&
-	! test -e paginated.out &&
-	test -e editor.used
+	test_path_is_missing paginated.out &&
+	test_path_is_file editor.used
 '
 
 test_expect_success TTY 'git branch --set-upstream-to ignores pager.branch' '
@@ -242,13 +242,13 @@ test_expect_success TTY 'git branch --set-upstream-to ignores pager.branch' '
 	test_when_finished "git branch -D other" &&
 	test_terminal git -c pager.branch branch --set-upstream-to=other &&
 	test_when_finished "git branch --unset-upstream" &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git config ignores pager.config when setting' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.config config foo.bar bar &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git config --edit ignores pager.config' '
@@ -257,33 +257,33 @@ test_expect_success TTY 'git config --edit ignores pager.config' '
 		touch editor.used
 	EOF
 	EDITOR=./editor test_terminal git -c pager.config config --edit &&
-	! test -e paginated.out &&
-	test -e editor.used
+	test_path_is_missing paginated.out &&
+	test_path_is_file editor.used
 '
 
 test_expect_success TTY 'git config --get ignores pager.config' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.config config --get foo.bar &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git config --get-urlmatch defaults to paging' '
 	rm -f paginated.out &&
 	test_terminal git -c http."https://foo.com/".bar=foo \
 			  config --get-urlmatch http https://foo.com &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 test_expect_success TTY 'git config --get-all respects pager.config' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.config=false config --get-all foo.bar &&
-	! test -e paginated.out
+	test_path_is_missing paginated.out
 '
 
 test_expect_success TTY 'git config --list defaults to paging' '
 	rm -f paginated.out &&
 	test_terminal git config --list &&
-	test -e paginated.out
+	test_path_is_file paginated.out
 '
 
 
@@ -388,11 +388,11 @@ test_default_pager() {
 		EOF
 		chmod +x \$less &&
 		(
-			PATH=.:\$PATH &&
+			PATH=.$PATH_SEP\$PATH &&
 			export PATH &&
 			$full_command
 		) &&
-		test -e default_pager_used
+		test_path_is_file default_pager_used
 	"
 }
 
@@ -406,7 +406,7 @@ test_PAGER_overrides() {
 		PAGER='wc >PAGER_used' &&
 		export PAGER &&
 		$full_command &&
-		test -e PAGER_used
+		test_path_is_file PAGER_used
 	"
 }
 
@@ -432,7 +432,7 @@ test_core_pager() {
 		export PAGER &&
 		test_config core.pager 'wc >core.pager_used' &&
 		$full_command &&
-		${if_local_config}test -e core.pager_used
+		${if_local_config}test_path_is_file core.pager_used
 	"
 }
 
@@ -464,7 +464,7 @@ test_pager_subdir_helper() {
 			cd sub &&
 			$full_command
 		) &&
-		${if_local_config}test -e core.pager_used
+		${if_local_config}test_path_is_file core.pager_used
 	"
 }
 
@@ -477,7 +477,7 @@ test_GIT_PAGER_overrides() {
 		GIT_PAGER='wc >GIT_PAGER_used' &&
 		export GIT_PAGER &&
 		$full_command &&
-		test -e GIT_PAGER_used
+		test_path_is_file GIT_PAGER_used
 	"
 }
 
@@ -489,7 +489,7 @@ test_doesnt_paginate() {
 		GIT_PAGER='wc >GIT_PAGER_used' &&
 		export GIT_PAGER &&
 		$full_command &&
-		! test -e GIT_PAGER_used
+		test_path_is_missing GIT_PAGER_used
 	"
 }
 

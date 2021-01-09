@@ -188,6 +188,7 @@ struct rev_info {
 	unsigned int	diff:1,
 			full_diff:1,
 			show_root_diff:1,
+			match_missing:1,
 			no_commit_id:1,
 			verbose_header:1,
 			combine_merges:1,
@@ -237,6 +238,7 @@ struct rev_info {
 	const char	*extra_headers;
 	const char	*log_reencode;
 	const char	*subject_prefix;
+	int		patch_name_max;
 	int		no_inline;
 	int		show_log_size;
 	struct string_list *mailmap;

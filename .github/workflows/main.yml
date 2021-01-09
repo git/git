@@ -7,34 +7,74 @@ env:
 
 jobs:
   ci-config:
-      runs-on: ubuntu-latest
-      outputs:
-        enabled: ${{ steps.check-ref.outputs.enabled }}
-      steps:
-        - name: try to clone ci-config branch
-          continue-on-error: true
-          run: |
-            git -c protocol.version=2 clone \
-              --no-tags \
-              --single-branch \
-              -b ci-config \
-              --depth 1 \
-              --no-checkout \
-              --filter=blob:none \
-              https://github.com/${{ github.repository }} \
-              config-repo &&
-              cd config-repo &&
-              git checkout HEAD -- ci/config
-        - id: check-ref
-          name: check whether CI is enabled for ref
-          run: |
-            enabled=yes
-            if test -x config-repo/ci/config/allow-ref &&
-               ! config-repo/ci/config/allow-ref '${{ github.ref }}'
-            then
-              enabled=no
-            fi
-            echo "::set-output name=enabled::$enabled"
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check-ref.outputs.enabled }}${{ steps.skip-if-redundant.outputs.enabled }}
+    steps:
+      - name: try to clone ci-config branch
+        run: |
+          git -c protocol.version=2 clone \
+            --no-tags \
+            --single-branch \
+            -b ci-config \
+            --depth 1 \
+            --no-checkout \
+            --filter=blob:none \
+            https://github.com/${{ github.repository }} \
+            config-repo &&
+          cd config-repo &&
+          git checkout HEAD -- ci/config || : ignore
+      - id: check-ref
+        name: check whether CI is enabled for ref
+        run: |
+          enabled=yes
+          if test -x config-repo/ci/config/allow-ref &&
+             ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+          then
+            enabled=no
+          fi
+          echo "::set-output name=enabled::$enabled"
+      - name: skip if the commit or tree was already tested
+        id: skip-if-redundant
+        uses: actions/github-script@v3
+        if: steps.check-ref.outputs.enabled == 'yes'
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            try {
+              // Figure out workflow ID, commit and tree
+              const { data: run } = await github.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+              });
+              const workflow_id = run.workflow_id;
+              const head_sha = run.head_sha;
+              const tree_id = run.head_commit.tree_id;
+
+              // See whether there is a successful run for that commit or tree
+              const { data: runs } = await github.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 500,
+                status: 'success',
+                workflow_id,
+              });
+              for (const run of runs.workflow_runs) {
+                if (head_sha === run.head_sha) {
+                  core.warning(`Successful run for the commit ${head_sha}: ${run.html_url}`);
+                  core.setOutput('enabled', ' but skip');
+                  break;
+                }
+                if (run.head_commit && tree_id === run.head_commit.tree_id) {
+                  core.warning(`Successful run for the tree ${tree_id}: ${run.html_url}`);
+                  core.setOutput('enabled', ' but skip');
+                  break;
+                }
+              }
+            } catch (e) {
+              core.warning(e);
+            }
 
   windows-build:
     needs: ci-config
@@ -128,6 +168,9 @@ jobs:
       NO_PERL: 1
       GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
     steps:
     - uses: actions/checkout@v1
     - name: download git-sdk-64-minimal
@@ -155,20 +198,19 @@ jobs:
         Expand-Archive compat.zip -DestinationPath . -Force
         Remove-Item compat.zip
     - name: add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.0
+      uses: microsoft/setup-msbuild@v1
     - name: copy dlls to root
       shell: powershell
       run: |
-        & compat\vcbuild\vcpkg_copy_dlls.bat release
+        & compat\vcbuild\vcpkg_copy_dlls.bat release ${{ matrix.arch }}-windows
         if (!$?) { exit(1) }
     - name: generate Visual Studio solution
       shell: bash
       run: |
-        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows \
-        -DIconv_LIBRARY=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows/lib/libiconv.lib -DIconv_INCLUDE_DIR=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows/include \
-        -DMSGFMT_EXE=`pwd`/git-sdk-64-minimal/mingw64/bin/msgfmt.exe -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON
+        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/${{ matrix.arch }}-windows \
+        -DMSGFMT_EXE=`pwd`/git-sdk-64-minimal/mingw64/bin/msgfmt.exe -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=${{ matrix.arch }} -DVCPKG_ARCH=${{ matrix.arch }}-windows
     - name: MSBuild
-      run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
+      run: msbuild git.sln -property:Configuration=Release -property:Platform=${{ matrix.arch }} -maxCpuCount:4 -property:PlatformToolset=v142
     - name: bundle artifact tar
       shell: powershell
       env:
@@ -182,7 +224,7 @@ jobs:
     - name: upload build artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: vs-artifacts
+        name: vs-artifacts-${{ matrix.arch }}
         path: artifacts
   vs-test:
     runs-on: windows-latest
@@ -200,7 +242,7 @@ jobs:
     - name: download build artifacts
       uses: actions/download-artifact@v1
       with:
-        name: vs-artifacts
+        name: vs-artifacts-x64
         path: ${{github.workspace}}
     - name: extract build artifacts
       shell: bash

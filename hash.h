@@ -2,6 +2,7 @@
 #define HASH_H
 
 #include "git-compat-util.h"
+#include "repository.h"
 
 #if defined(SHA1_PPC)
 #include "ppc/sha1.h"
@@ -183,5 +184,99 @@ struct object_id {
 };
 
 #define the_hash_algo the_repository->hash_algo
+
+extern const struct object_id null_oid;
+
+static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
+{
+	/*
+	 * Teach the compiler that there are only two possibilities of hash size
+	 * here, so that it can optimize for this case as much as possible.
+	 */
+	if (the_hash_algo->rawsz == GIT_MAX_RAWSZ)
+		return memcmp(sha1, sha2, GIT_MAX_RAWSZ);
+	return memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
+}
+
+static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
+{
+	return hashcmp(oid1->hash, oid2->hash);
+}
+
+static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2)
+{
+	/*
+	 * We write this here instead of deferring to hashcmp so that the
+	 * compiler can properly inline it and avoid calling memcmp.
+	 */
+	if (the_hash_algo->rawsz == GIT_MAX_RAWSZ)
+		return !memcmp(sha1, sha2, GIT_MAX_RAWSZ);
+	return !memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
+}
+
+static inline int oideq(const struct object_id *oid1, const struct object_id *oid2)
+{
+	return hasheq(oid1->hash, oid2->hash);
+}
+
+static inline int is_null_oid(const struct object_id *oid)
+{
+	return oideq(oid, &null_oid);
+}
+
+static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
+{
+	memcpy(sha_dst, sha_src, the_hash_algo->rawsz);
+}
+
+static inline void oidcpy(struct object_id *dst, const struct object_id *src)
+{
+	memcpy(dst->hash, src->hash, GIT_MAX_RAWSZ);
+}
+
+static inline struct object_id *oiddup(const struct object_id *src)
+{
+	struct object_id *dst = xmalloc(sizeof(struct object_id));
+	oidcpy(dst, src);
+	return dst;
+}
+
+static inline void hashclr(unsigned char *hash)
+{
+	memset(hash, 0, the_hash_algo->rawsz);
+}
+
+static inline void oidclr(struct object_id *oid)
+{
+	memset(oid->hash, 0, GIT_MAX_RAWSZ);
+}
+
+static inline void oidread(struct object_id *oid, const unsigned char *hash)
+{
+	memcpy(oid->hash, hash, the_hash_algo->rawsz);
+}
+
+static inline int is_empty_blob_sha1(const unsigned char *sha1)
+{
+	return hasheq(sha1, the_hash_algo->empty_blob->hash);
+}
+
+static inline int is_empty_blob_oid(const struct object_id *oid)
+{
+	return oideq(oid, the_hash_algo->empty_blob);
+}
+
+static inline int is_empty_tree_sha1(const unsigned char *sha1)
+{
+	return hasheq(sha1, the_hash_algo->empty_tree->hash);
+}
+
+static inline int is_empty_tree_oid(const struct object_id *oid)
+{
+	return oideq(oid, the_hash_algo->empty_tree);
+}
+
+const char *empty_tree_oid_hex(void);
+const char *empty_blob_oid_hex(void);
 
 #endif

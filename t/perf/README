@@ -28,6 +28,8 @@ the tests on the current git repository.
     7810.3: grep --cached, cheap regex       3.07(3.02+0.25)
     7810.4: grep --cached, expensive regex   9.39(30.57+0.24)
 
+Output format is in seconds "Elapsed(User + System)"
+
 You can compare multiple repositories and even git revisions with the
 'run' script:
 
@@ -83,6 +85,15 @@ You can set the following variables (also in your config.mak):
 	repo should be at least git.git size.  The large repo should
 	probably be about linux.git size for optimal results.
 	Both default to the git.git you are running from.
+
+    GIT_PERF_EXTRA
+	Boolean to enable additional tests. Most test scripts are
+	written to detect regressions between two versions of Git, and
+	the output will compare timings for individual tests between
+	those versions. Some scripts have additional tests which are not
+	run by default, that show patterns within a single version of
+	Git (e.g., performance of index-pack as the number of threads
+	changes). These can be enabled with GIT_PERF_EXTRA.
 
 You can also pass the options taken by ordinary git tests; the most
 useful one is:

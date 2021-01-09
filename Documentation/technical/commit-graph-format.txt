@@ -42,8 +42,13 @@ HEADER:
   1-byte version number:
       Currently, the only valid version is 1.
 
-  1-byte Hash Version (1 = SHA-1)
-      We infer the hash length (H) from this value.
+  1-byte Hash Version
+      We infer the hash length (H) from this value:
+	1 => SHA-1
+	2 => SHA-256
+      If the hash type does not match the repository's hash algorithm, the
+      commit-graph file should be ignored with a warning presented to the
+      user.
 
   1-byte number (C) of "chunks"
 
@@ -77,7 +82,7 @@ CHUNK DATA:
   Commit Data (ID: {'C', 'D', 'A', 'T' }) (N * (H + 16) bytes)
     * The first H bytes are for the OID of the root tree.
     * The next 8 bytes are for the positions of the first two parents
-      of the ith commit. Stores value 0x7000000 if no parent in that
+      of the ith commit. Stores value 0x70000000 if no parent in that
       position. If there are more than two parents, the second value
       has its most-significant bit on and the other bits store an array
       position into the Extra Edge List chunk.
@@ -120,7 +125,7 @@ CHUNK DATA:
     * The rest of the chunk is the concatenation of all the computed Bloom
       filters for the commits in lexicographic order.
     * Note: Commits with no changes or more than 512 changes have Bloom filters
-      of length zero.
+      of length one, with either all bits set to zero or one respectively.
     * The BDAT chunk is present if and only if BIDX is present.
 
   Base Graphs List (ID: {'B', 'A', 'S', 'E'}) [Optional]

@@ -567,6 +567,30 @@ test_expect_success '--check and --quiet are not exclusive' '
 	git diff --check --quiet
 '
 
+test_expect_success '-w and --exit-code interact sensibly' '
+	test_when_finished "git checkout x" &&
+	{
+		test_seq 15 &&
+		echo " 16"
+	} >x &&
+	test_must_fail git diff --exit-code &&
+	git diff -w >actual &&
+	test_must_be_empty actual &&
+	git diff -w --exit-code
+'
+
+test_expect_success '-I and --exit-code interact sensibly' '
+	test_when_finished "git checkout x" &&
+	{
+		test_seq 15 &&
+		echo " 16"
+	} >x &&
+	test_must_fail git diff --exit-code &&
+	git diff -I. >actual &&
+	test_must_be_empty actual &&
+	git diff -I. --exit-code
+'
+
 test_expect_success 'check staged with no whitespace errors' '
 	echo "foo();" >x &&
 	git add x &&
@@ -789,7 +813,7 @@ test_expect_success 'checkdiff allows new blank lines' '
 	git diff --check
 '
 
-test_expect_success 'whitespace-only changes not reported' '
+test_expect_success 'whitespace-only changes not reported (diff)' '
 	git reset --hard &&
 	echo >x "hello world" &&
 	git add x &&
@@ -799,8 +823,42 @@ test_expect_success 'whitespace-only changes not reported' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'whitespace-only changes reported across renames' '
+test_expect_success 'whitespace-only changes not reported (diffstat)' '
+	# reuse state from previous test
+	git diff --stat -b >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'whitespace changes with modification reported (diffstat)' '
 	git reset --hard &&
+	echo >x "hello  world" &&
+	git update-index --chmod=+x x &&
+	git diff --stat --cached -b >actual &&
+	cat <<-EOF >expect &&
+	 x | 0
+	 1 file changed, 0 insertions(+), 0 deletions(-)
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'whitespace-only changes reported across renames (diffstat)' '
+	git reset --hard &&
+	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i"; done >x &&
+	git add x &&
+	git commit -m "base" &&
+	sed -e "5s/^/ /" x >z &&
+	git rm x &&
+	git add z &&
+	git diff -w -M --cached --stat >actual &&
+	cat <<-EOF >expect &&
+	 x => z | 0
+	 1 file changed, 0 insertions(+), 0 deletions(-)
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'whitespace-only changes reported across renames' '
+	git reset --hard HEAD~1 &&
 	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i"; done >x &&
 	git add x &&
 	hash_x=$(git hash-object x) &&
@@ -843,13 +901,13 @@ test_expect_success 'rename empty' '
 test_expect_success 'combined diff with autocrlf conversion' '
 
 	git reset --hard &&
-	echo >x hello &&
-	git commit -m "one side" x &&
+	test_commit "one side" x hello one-side &&
 	git checkout HEAD^ &&
 	echo >x goodbye &&
 	git commit -m "the other side" x &&
 	git config core.autocrlf true &&
-	test_must_fail git merge master &&
+	test_must_fail git merge one-side >actual &&
+	test_i18ngrep "Automatic merge failed" actual &&
 
 	git diff >actual.raw &&
 	sed -e "1,/^@@@/d" actual.raw >actual &&

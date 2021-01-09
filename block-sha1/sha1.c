@@ -203,7 +203,7 @@ void blk_SHA1_Init(blk_SHA_CTX *ctx)
 	ctx->H[4] = 0xc3d2e1f0;
 }
 
-void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *data, unsigned long len)
+void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *data, size_t len)
 {
 	unsigned int lenW = ctx->size & 63;
 

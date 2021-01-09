@@ -210,7 +210,7 @@ int sq_dequote_to_strvec(char *arg, struct strvec *array)
  */
 #define X8(x)   x, x, x, x, x, x, x, x
 #define X16(x)  X8(x), X8(x)
-static signed char const sq_lookup[256] = {
+static signed char const cq_lookup[256] = {
 	/*           0    1    2    3    4    5    6    7 */
 	/* 0x00 */   1,   1,   1,   1,   1,   1,   1, 'a',
 	/* 0x08 */ 'b', 't', 'n', 'v', 'f', 'r',   1,   1,
@@ -223,9 +223,9 @@ static signed char const sq_lookup[256] = {
 	/* 0x80 */ /* set to 0 */
 };
 
-static inline int sq_must_quote(char c)
+static inline int cq_must_quote(char c)
 {
-	return sq_lookup[(unsigned char)c] + quote_path_fully > 0;
+	return cq_lookup[(unsigned char)c] + quote_path_fully > 0;
 }
 
 /* returns the longest prefix not needing a quote up to maxlen if positive.
@@ -235,9 +235,9 @@ static size_t next_quote_pos(const char *s, ssize_t maxlen)
 {
 	size_t len;
 	if (maxlen < 0) {
-		for (len = 0; !sq_must_quote(s[len]); len++);
+		for (len = 0; !cq_must_quote(s[len]); len++);
 	} else {
-		for (len = 0; len < maxlen && !sq_must_quote(s[len]); len++);
+		for (len = 0; len < maxlen && !cq_must_quote(s[len]); len++);
 	}
 	return len;
 }
@@ -256,7 +256,7 @@ static size_t next_quote_pos(const char *s, ssize_t maxlen)
  *     Return value is the same as in (1).
  */
 static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
-				    struct strbuf *sb, FILE *fp, int no_dq)
+				    struct strbuf *sb, FILE *fp, unsigned flags)
 {
 #undef EMIT
 #define EMIT(c)                                 \
@@ -272,6 +272,7 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		count += (l);                           \
 	} while (0)
 
+	int no_dq = !!(flags & CQUOTE_NODQ);
 	size_t len, count = 0;
 	const char *p = name;
 
@@ -291,8 +292,8 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		ch = (unsigned char)*p++;
 		if (maxlen >= 0)
 			maxlen -= len + 1;
-		if (sq_lookup[ch] >= ' ') {
-			EMIT(sq_lookup[ch]);
+		if (cq_lookup[ch] >= ' ') {
+			EMIT(cq_lookup[ch]);
 		} else {
 			EMIT(((ch >> 6) & 03) + '0');
 			EMIT(((ch >> 3) & 07) + '0');
@@ -309,19 +310,21 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 	return count;
 }
 
-size_t quote_c_style(const char *name, struct strbuf *sb, FILE *fp, int nodq)
+size_t quote_c_style(const char *name, struct strbuf *sb, FILE *fp, unsigned flags)
 {
-	return quote_c_style_counted(name, -1, sb, fp, nodq);
+	return quote_c_style_counted(name, -1, sb, fp, flags);
 }
 
-void quote_two_c_style(struct strbuf *sb, const char *prefix, const char *path, int nodq)
+void quote_two_c_style(struct strbuf *sb, const char *prefix, const char *path,
+		       unsigned flags)
 {
+	int nodq = !!(flags & CQUOTE_NODQ);
 	if (quote_c_style(prefix, NULL, NULL, 0) ||
 	    quote_c_style(path, NULL, NULL, 0)) {
 		if (!nodq)
 			strbuf_addch(sb, '"');
-		quote_c_style(prefix, sb, NULL, 1);
-		quote_c_style(path, sb, NULL, 1);
+		quote_c_style(prefix, sb, NULL, CQUOTE_NODQ);
+		quote_c_style(path, sb, NULL, CQUOTE_NODQ);
 		if (!nodq)
 			strbuf_addch(sb, '"');
 	} else {
@@ -352,13 +355,25 @@ void write_name_quoted_relative(const char *name, const char *prefix,
 }
 
 /* quote path as relative to the given prefix */
-char *quote_path_relative(const char *in, const char *prefix,
-			  struct strbuf *out)
+char *quote_path(const char *in, const char *prefix, struct strbuf *out, unsigned flags)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *rel = relative_path(in, prefix, &sb);
+	int force_dq = ((flags & QUOTE_PATH_QUOTE_SP) && strchr(rel, ' '));
+
 	strbuf_reset(out);
-	quote_c_style_counted(rel, strlen(rel), out, NULL, 0);
+
+	/*
+	 * If the caller wants us to enclose the output in a dq-pair
+	 * whether quote_c_style_counted() needs to, we do it ourselves
+	 * and tell quote_c_style_counted() not to.
+	 */
+	if (force_dq)
+		strbuf_addch(out, '"');
+	quote_c_style_counted(rel, strlen(rel), out, NULL,
+			      force_dq ? CQUOTE_NODQ : 0);
+	if (force_dq)
+		strbuf_addch(out, '"');
 	strbuf_release(&sb);
 
 	return out->buf;

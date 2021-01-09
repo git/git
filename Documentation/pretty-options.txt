@@ -16,17 +16,17 @@ configuration (see linkgit:git-config[1]).
 
 --abbrev-commit::
 	Instead of showing the full 40-byte hexadecimal commit object
-	name, show only a partial prefix.  Non default number of
-	digits can be specified with "--abbrev=<n>" (which also modifies
-	diff output, if it is displayed).
+	name, show a prefix that names the object uniquely.
+	"--abbrev=<n>" (which also modifies diff output, if it is displayed)
+	option can be used to specify the minimum length of the prefix.
 +
 This should make "--pretty=oneline" a whole lot more readable for
 people using 80-column terminals.
 
 --no-abbrev-commit::
 	Show the full 40-byte hexadecimal commit object name. This negates
-	`--abbrev-commit` and those options which imply it such as
-	"--oneline". It also overrides the `log.abbrevCommit` variable.
+	`--abbrev-commit`, either explicit or implied by other options such
+	as "--oneline". It also overrides the `log.abbrevCommit` variable.
 
 --oneline::
 	This is a shorthand for "--pretty=oneline --abbrev-commit"

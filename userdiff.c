@@ -23,6 +23,27 @@ IPATTERN("ada",
 	 "[a-zA-Z][a-zA-Z0-9_]*"
 	 "|[-+]?[0-9][0-9#_.aAbBcCdDeEfF]*([eE][+-]?[0-9_]+)?"
 	 "|=>|\\.\\.|\\*\\*|:=|/=|>=|<=|<<|>>|<>"),
+PATTERNS("bash",
+	 /* Optional leading indentation */
+	 "^[ \t]*"
+	 /* Start of captured text */
+	 "("
+	 "("
+	     /* POSIX identifier with mandatory parentheses */
+	     "[a-zA-Z_][a-zA-Z0-9_]*[ \t]*\\([ \t]*\\))"
+	 "|"
+	     /* Bashism identifier with optional parentheses */
+	     "(function[ \t]+[a-zA-Z_][a-zA-Z0-9_]*(([ \t]*\\([ \t]*\\))|([ \t]+))"
+	 ")"
+	 /* Optional whitespace */
+	 "[ \t]*"
+	 /* Compound command starting with `{`, `(`, `((` or `[[` */
+	 "(\\{|\\(\\(?|\\[\\[)"
+	 /* End of captured text */
+	 ")",
+	 /* -- */
+	 /* Characters not in the default $IFS value */
+	 "[^ \t]+"),
 PATTERNS("dts",
 	 "!;\n"
 	 "!=\n"
@@ -46,10 +67,14 @@ PATTERNS("elixir",
 	 /* Not real operators, but should be grouped */
 	 "|:?%[A-Za-z0-9_.]\\{\\}?"),
 IPATTERN("fortran",
+	 /* Don't match comment lines */
 	 "!^([C*]|[ \t]*!)\n"
+	 /* Don't match 'module procedure' lines */
 	 "!^[ \t]*MODULE[ \t]+PROCEDURE[ \t]\n"
+	 /* Program, module, block data */
 	 "^[ \t]*((END[ \t]+)?(PROGRAM|MODULE|BLOCK[ \t]+DATA"
-		"|([^'\" \t]+[ \t]+)*(SUBROUTINE|FUNCTION))[ \t]+[A-Z].*)$",
+		/* Subroutines and functions */
+		"|([^!'\" \t]+[ \t]+)*(SUBROUTINE|FUNCTION))[ \t]+[A-Z].*)$",
 	 /* -- */
 	 "[a-zA-Z][a-zA-Z0-9_]*"
 	 "|\\.([Ee][Qq]|[Nn][Ee]|[Gg][TtEe]|[Ll][TtEe]|[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|[Aa][Nn][Dd]|[Oo][Rr]|[Nn]?[Ee][Qq][Vv]|[Nn][Oo][Tt])\\."
@@ -143,7 +168,7 @@ PATTERNS("perl",
 	 "|=~|!~"
 	 "|<<|<>|<=>|>>"),
 PATTERNS("php",
-	 "^[\t ]*(((public|protected|private|static)[\t ]+)*function.*)$\n"
+	 "^[\t ]*(((public|protected|private|static|abstract|final)[\t ]+)*function.*)$\n"
 	 "^[\t ]*((((final|abstract)[\t ]+)?class|interface|trait).*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
@@ -161,7 +186,7 @@ PATTERNS("ruby", "^[ \t]*((class|module|def)[ \t].*)$",
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+|\\?(\\\\C-)?(\\\\M-)?."
 	 "|//=?|[-+*/<>%&^|=!]=|<<=?|>>=?|===|\\.{1,3}|::|[!=]~"),
 PATTERNS("rust",
-	 "^[\t ]*((pub(\\([^\\)]+\\))?[\t ]+)?((async|const|unsafe|extern([\t ]+\"[^\"]+\"))[\t ]+)?(struct|enum|union|mod|trait|fn|impl)[< \t]+[^;]*)$",
+	 "^[\t ]*((pub(\\([^\\)]+\\))?[\t ]+)?((async|const|unsafe|extern([\t ]+\"[^\"]+\"))[\t ]+)?(struct|enum|union|mod|trait|fn|impl|macro_rules!)[< \t]+[^;]*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[0-9][0-9_a-fA-Fiosuxz]*(\\.([0-9]*[eE][+-]?)?[0-9_fF]*)?"
@@ -196,7 +221,7 @@ PATTERNS("csharp",
 	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
 IPATTERN("css",
 	 "![:;][[:space:]]*$\n"
-	 "^[_a-z0-9].*$",
+	 "^[:[@.#]?[_a-z0-9].*$",
 	 /* -- */
 	 /*
 	  * This regex comes from W3C CSS specs. Should theoretically also

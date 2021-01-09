@@ -18,6 +18,9 @@ test_expect_success 'setup repo' '
 
 	base sha1:1376
 	base sha256:1496
+
+	oid_version sha1:1
+	oid_version sha256:2
 	EOM
 '
 
@@ -28,7 +31,7 @@ graph_read_expect() {
 		NUM_BASE=$2
 	fi
 	cat >expect <<- EOF
-	header: 43475048 1 1 3 $NUM_BASE
+	header: 43475048 1 $(test_oid oid_version) 3 $NUM_BASE
 	num_commits: $1
 	chunks: oid_fanout oid_lookup commit_metadata
 	EOF
@@ -423,5 +426,31 @@ done <<\EOF
 0666 -r--r--r--
 0600 -r--------
 EOF
+
+test_expect_success '--split=replace with partial Bloom data' '
+	rm -rf $graphdir $infodir/commit-graph &&
+	git reset --hard commits/3 &&
+	git rev-list -1 HEAD~2 >a &&
+	git rev-list -1 HEAD~1 >b &&
+	git commit-graph write --split=no-merge --stdin-commits --changed-paths <a &&
+	git commit-graph write --split=no-merge --stdin-commits <b &&
+	git commit-graph write --split=replace --stdin-commits --changed-paths <c &&
+	ls $graphdir/graph-*.graph >graph-files &&
+	test_line_count = 1 graph-files &&
+	verify_chain_files_exist $graphdir
+'
+
+test_expect_success 'prevent regression for duplicate commits across layers' '
+	git init dup &&
+	git -C dup commit --allow-empty -m one &&
+	git -C dup -c core.commitGraph=false commit-graph write --split=no-merge --reachable 2>err &&
+	test_i18ngrep "attempting to write a commit-graph" err &&
+	git -C dup commit-graph write --split=no-merge --reachable &&
+	git -C dup commit --allow-empty -m two &&
+	git -C dup commit-graph write --split=no-merge --reachable &&
+	git -C dup commit --allow-empty -m three &&
+	git -C dup commit-graph write --split --reachable &&
+	git -C dup commit-graph verify
+'
 
 test_done

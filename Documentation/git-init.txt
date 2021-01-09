@@ -20,8 +20,9 @@ DESCRIPTION
 
 This command creates an empty Git repository - basically a `.git`
 directory with subdirectories for `objects`, `refs/heads`,
-`refs/tags`, and template files.  An initial `HEAD` file that
-references the HEAD of the master branch is also created.
+`refs/tags`, and template files.  An initial branch without any
+commits will be created (see the `--initial-branch` option below
+for its name).
 
 If the `$GIT_DIR` environment variable is set then it specifies a path
 to use instead of `./.git` for the base of the repository.
@@ -53,6 +54,8 @@ current working directory.
 
 Specify the given object format (hash algorithm) for the repository.  The valid
 values are 'sha1' and (if enabled) 'sha256'.  'sha1' is the default.
++
+include::object-format-disclaimer.txt[]
 
 --template=<template_directory>::
 
@@ -68,11 +71,13 @@ repository.
 +
 If this is reinitialization, the repository will be moved to the specified path.
 
--b <branch-name::
+-b <branch-name>::
 --initial-branch=<branch-name>::
 
-Use the specified name for the initial branch in the newly created repository.
-If not specified, fall back to the default name: `master`.
+Use the specified name for the initial branch in the newly created
+repository.  If not specified, fall back to the default name (currently
+`master`, but this is subject to change in the future; the name can be
+customized via the `init.defaultBranch` configuration variable).
 
 --shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
 

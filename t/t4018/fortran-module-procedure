@@ -1,0 +1,13 @@
+ module RIGHT
+
+   implicit none
+   private
+
+   interface letters  ! generic interface
+      module procedure aaaa, &
+                       bbbb, &
+                       ChangeMe, &
+                       dddd
+   end interface
+   
+end module RIGHT

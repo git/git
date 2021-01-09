@@ -1,6 +1,8 @@
 #ifndef REFS_H
 #define REFS_H
 
+#include "cache.h"
+
 struct object_id;
 struct ref_store;
 struct repository;
@@ -105,6 +107,8 @@ int refs_verify_refname_available(struct ref_store *refs,
 				  const struct string_list *skip,
 				  struct strbuf *err);
 
+int refs_ref_exists(struct ref_store *refs, const char *refname);
+
 int ref_exists(const char *refname);
 
 int should_autocreate_reflog(const char *refname);
@@ -149,9 +153,15 @@ struct strvec;
 void expand_ref_prefix(struct strvec *prefixes, const char *prefix);
 
 int expand_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-int repo_dwim_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
+int repo_dwim_ref(struct repository *r, const char *str, int len,
+		  struct object_id *oid, char **ref, int nonfatal_dangling_mark);
 int repo_dwim_log(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-int dwim_ref(const char *str, int len, struct object_id *oid, char **ref);
+static inline int dwim_ref(const char *str, int len, struct object_id *oid,
+			   char **ref, int nonfatal_dangling_mark)
+{
+	return repo_dwim_ref(the_repository, str, len, oid, ref,
+			     nonfatal_dangling_mark);
+}
 int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 
 /*
@@ -160,8 +170,8 @@ int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
  * The return value of `repo_default_branch_name()` is an allocated string. The
  * return value of `git_default_branch_name()` is a singleton.
  */
-const char *git_default_branch_name(void);
-char *repo_default_branch_name(struct repository *r);
+const char *git_default_branch_name(int quiet);
+char *repo_default_branch_name(struct repository *r, int quiet);
 
 /*
  * A ref_transaction represents a collection of reference updates that

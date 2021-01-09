@@ -22,13 +22,13 @@ was sent.  Server MUST NOT ignore capabilities that client requested
 and server advertised.  As a consequence of these rules, server MUST
 NOT advertise capabilities it does not understand.
 
-The 'atomic', 'report-status', 'delete-refs', 'quiet', and 'push-cert'
-capabilities are sent and recognized by the receive-pack (push to server)
-process.
+The 'atomic', 'report-status', 'report-status-v2', 'delete-refs', 'quiet',
+and 'push-cert' capabilities are sent and recognized by the receive-pack
+(push to server) process.
 
 The 'ofs-delta' and 'side-band-64k' capabilities are sent and recognized
-by both upload-pack and receive-pack protocols.  The 'agent' capability
-may optionally be sent in both protocols.
+by both upload-pack and receive-pack protocols.  The 'agent' and 'session-id'
+capabilities may optionally be sent in both protocols.
 
 All other capabilities are only recognized by the upload-pack (fetch
 from server) process.
@@ -284,6 +284,17 @@ each reference was updated successfully.  If any of those were not
 successful, it will send back an error message.  See pack-protocol.txt
 for example messages.
 
+report-status-v2
+----------------
+
+Capability 'report-status-v2' extends capability 'report-status' by
+adding new "option" directives in order to support reference rewritten by
+the "proc-receive" hook.  The "proc-receive" hook may handle a command
+for a pseudo-reference which may create or update a reference with
+different name, new-oid, and old-oid.  While the capability
+'report-status' cannot report for such case.  See pack-protocol.txt
+for details.
+
 delete-refs
 -----------
 
@@ -324,15 +335,19 @@ allow-tip-sha1-in-want
 ----------------------
 
 If the upload-pack server advertises this capability, fetch-pack may
-send "want" lines with SHA-1s that exist at the server but are not
-advertised by upload-pack.
+send "want" lines with object names that exist at the server but are not
+advertised by upload-pack. For historical reasons, the name of this
+capability contains "sha1". Object names are always given using the
+object format negotiated through the 'object-format' capability.
 
 allow-reachable-sha1-in-want
 ----------------------------
 
 If the upload-pack server advertises this capability, fetch-pack may
-send "want" lines with SHA-1s that exist at the server but are not
-advertised by upload-pack.
+send "want" lines with object names that exist at the server but are not
+advertised by upload-pack. For historical reasons, the name of this
+capability contains "sha1". Object names are always given using the
+object format negotiated through the 'object-format' capability.
 
 push-cert=<nonce>
 -----------------
@@ -350,3 +365,16 @@ If the upload-pack server advertises the 'filter' capability,
 fetch-pack may send "filter" commands to request a partial clone
 or partial fetch and request that the server omit various objects
 from the packfile.
+
+session-id=<session id>
+-----------------------
+
+The server may advertise a session ID that can be used to identify this process
+across multiple requests. The client may advertise its own session ID back to
+the server as well.
+
+Session IDs should be unique to a given process. They must fit within a
+packet-line, and must not contain non-printable or whitespace characters. The
+current implementation uses trace2 session IDs (see
+link:api-trace2.html[api-trace2] for details), but this may change and users of
+the session ID should not rely on this fact.

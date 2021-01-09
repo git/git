@@ -208,9 +208,11 @@
 /* pull in Windows compatibility stuff */
 #include "compat/win32/path-utils.h"
 #include "compat/mingw.h"
+#include "compat/win32/fscache.h"
 #elif defined(_MSC_VER)
 #include "compat/win32/path-utils.h"
 #include "compat/msvc.h"
+#include "compat/win32/fscache.h"
 #else
 #include <sys/utsname.h>
 #include <sys/wait.h>
@@ -273,7 +275,7 @@ struct itimerval {
 
 #ifdef NO_SETITIMER
 static inline int setitimer(int which, const struct itimerval *value, struct itimerval *newvalue) {
-	; /* nothing */
+	return 0; /* pretend success */
 }
 #endif
 
@@ -401,8 +403,25 @@ static inline int git_has_dir_sep(const char *path)
 #define has_dir_sep(path) git_has_dir_sep(path)
 #endif
 
+#ifndef is_mount_point
+#define is_mount_point is_mount_point_via_stat
+#endif
+
+#ifndef create_symlink
+struct index_state;
+static inline int git_create_symlink(struct index_state *index, const char *target, const char *link)
+{
+	return symlink(target, link);
+}
+#define create_symlink git_create_symlink
+#endif
+
 #ifndef query_user_email
 #define query_user_email() NULL
+#endif
+
+#ifndef platform_strbuf_realpath
+#define platform_strbuf_realpath(resolved, path) NULL
 #endif
 
 #ifdef __TANDEM
@@ -489,11 +508,13 @@ static inline int const_error(void)
 #define error_errno(...) (error_errno(__VA_ARGS__), const_error())
 #endif
 
-void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params));
-void set_error_routine(void (*routine)(const char *err, va_list params));
-extern void (*get_error_routine(void))(const char *err, va_list params);
-void set_warn_routine(void (*routine)(const char *warn, va_list params));
-extern void (*get_warn_routine(void))(const char *warn, va_list params);
+typedef void (*report_fn)(const char *, va_list params);
+
+void set_die_routine(NORETURN_PTR report_fn routine);
+void set_error_routine(report_fn routine);
+report_fn get_error_routine(void);
+void set_warn_routine(report_fn routine);
+report_fn get_warn_routine(void);
 void set_die_is_recursing_routine(int (*routine)(void));
 
 int starts_with(const char *str, const char *prefix);
@@ -1279,6 +1300,45 @@ static inline int is_missing_file_error(int errno_)
 	return (errno_ == ENOENT || errno_ == ENOTDIR);
 }
 
+/*
+ * Enable/disable a read-only cache for file system data on platforms that
+ * support it.
+ *
+ * Implementing a live-cache is complicated and requires special platform
+ * support (inotify, ReadDirectoryChangesW...). enable_fscache shall be used
+ * to mark sections of git code that extensively read from the file system
+ * without modifying anything. Implementations can use this to cache e.g. stat
+ * data or even file content without the need to synchronize with the file
+ * system.
+ */
+
+ /* opaque fscache structure */
+struct fscache;
+
+#ifndef enable_fscache
+#define enable_fscache(x) /* noop */
+#endif
+
+#ifndef disable_fscache
+#define disable_fscache() /* noop */
+#endif
+
+#ifndef is_fscache_enabled
+#define is_fscache_enabled(path) (0)
+#endif
+
+#ifndef flush_fscache
+#define flush_fscache() /* noop */
+#endif
+
+#ifndef getcache_fscache
+#define getcache_fscache() (NULL) /* noop */
+#endif
+
+#ifndef merge_fscache
+#define merge_fscache(dest) /* noop */
+#endif
+
 int cmd_main(int, const char **);
 
 /*
@@ -1351,5 +1411,7 @@ static inline void *container_of_or_null_offset(void *ptr, size_t offset)
 #define OFFSETOF_VAR(ptr, member) \
 	((uintptr_t)&(ptr)->member - (uintptr_t)(ptr))
 #endif /* !__GNUC__ */
+
+void sleep_millisec(int millisec);
 
 #endif

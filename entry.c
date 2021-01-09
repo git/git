@@ -291,7 +291,7 @@ static int write_entry(struct cache_entry *ce,
 		if (!has_symlinks || to_tempfile)
 			goto write_file_entry;
 
-		ret = symlink(new_blob, path);
+		ret = create_symlink(state->istate, new_blob, path);
 		free(new_blob);
 		if (ret)
 			return error_errno("unable to create symlink %s", path);
@@ -369,6 +369,9 @@ static int write_entry(struct cache_entry *ce,
 	}
 
 finish:
+	/* Flush cached lstat in fscache after writing to disk. */
+	flush_fscache();
+
 	if (state->refresh_cache) {
 		assert(state->istate);
 		if (!fstat_done)
@@ -510,8 +513,6 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state,
 			/* If it is a gitlink, leave it alone! */
 			if (S_ISGITLINK(ce->ce_mode))
 				return 0;
-			if (!state->force)
-				return error("%s is a directory", path.buf);
 			remove_subtree(&path);
 		} else if (unlink(path.buf))
 			return error_errno("unable to unlink old '%s'", path.buf);

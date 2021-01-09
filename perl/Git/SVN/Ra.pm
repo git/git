@@ -1,7 +1,7 @@
 package Git::SVN::Ra;
 use vars qw/@ISA $config_dir $_ignore_refs_regex $_log_window_size/;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Memoize;
 use Git::SVN::Utils qw(
 	canonicalize_url

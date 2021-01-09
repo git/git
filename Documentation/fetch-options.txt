@@ -197,7 +197,7 @@ ifndef::git-pull[]
 endif::git-pull[]
 
 --set-upstream::
-	If the remote is fetched successfully, pull and add upstream
+	If the remote is fetched successfully, add upstream
 	(tracking) reference, used by argument-less
 	linkgit:git-pull[1] and other commands. For more information,
 	see `branch.<name>.merge` and `branch.<name>.remote` in

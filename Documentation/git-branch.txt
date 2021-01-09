@@ -9,9 +9,9 @@ SYNOPSIS
 --------
 [verse]
 'git branch' [--color[=<when>] | --no-color] [--show-current]
-	[-v [--abbrev=<length> | --no-abbrev]]
+	[-v [--abbrev=<n> | --no-abbrev]]
 	[--column[=<options>] | --no-column] [--sort=<key>]
-	[(--merged | --no-merged) [<commit>]]
+	[--merged [<commit>]] [--no-merged [<commit>]]
 	[--contains [<commit>]] [--no-contains [<commit>]]
 	[--points-at <object>] [--format=<format>]
 	[(-r | --remotes) | (-a | --all)]
@@ -194,8 +194,10 @@ This option is only applicable in non-verbose mode.
 	Be more quiet when creating or deleting a branch, suppressing
 	non-error messages.
 
---abbrev=<length>::
-	Alter the sha1's minimum display length in the output listing.
+--abbrev=<n>::
+	In the verbose listing that show the commit object name,
+	show the shortest prefix that is at least '<n>' hexdigits
+	long that uniquely refers the object.
 	The default value is 7 and can be overridden by the `core.abbrev`
 	config option.
 
@@ -252,13 +254,11 @@ start-point is either a local or remote-tracking branch.
 
 --merged [<commit>]::
 	Only list branches whose tips are reachable from the
-	specified commit (HEAD if not specified). Implies `--list`,
-	incompatible with `--no-merged`.
+	specified commit (HEAD if not specified). Implies `--list`.
 
 --no-merged [<commit>]::
 	Only list branches whose tips are not reachable from the
-	specified commit (HEAD if not specified). Implies `--list`,
-	incompatible with `--merged`.
+	specified commit (HEAD if not specified). Implies `--list`.
 
 <branchname>::
 	The name of the branch to create or delete.
@@ -369,6 +369,8 @@ serve four related but different purposes:
 
 - `--no-merged` is used to find branches which are candidates for merging
   into HEAD, since those branches are not fully contained by HEAD.
+
+include::ref-reachability-filters.txt[]
 
 SEE ALSO
 --------

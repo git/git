@@ -313,6 +313,60 @@ test_expect_success 'multiple files' '
 	ls patches/0001-Side-changes-1.patch patches/0002-Side-changes-2.patch patches/0003-Side-changes-3-with-n-backslash-n-in-it.patch
 '
 
+test_expect_success 'filename length limit' '
+	test_when_finished "rm -f 000*" &&
+	rm -rf 000[1-9]-*.patch &&
+	for len in 15 25 35
+	do
+		git format-patch --filename-max-length=$len -3 side &&
+		max=$(
+			for patch in 000[1-9]-*.patch
+			do
+				echo "$patch" | wc -c
+			done |
+			sort -nr |
+			head -n 1
+		) &&
+		test $max -le $len || return 1
+	done
+'
+
+test_expect_success 'filename length limit from config' '
+	test_when_finished "rm -f 000*" &&
+	rm -rf 000[1-9]-*.patch &&
+	for len in 15 25 35
+	do
+		git -c format.filenameMaxLength=$len format-patch -3 side &&
+		max=$(
+			for patch in 000[1-9]-*.patch
+			do
+				echo "$patch" | wc -c
+			done |
+			sort -nr |
+			head -n 1
+		) &&
+		test $max -le $len || return 1
+	done
+'
+
+test_expect_success 'filename limit applies only to basename' '
+	test_when_finished "rm -rf patches/" &&
+	rm -rf patches/ &&
+	for len in 15 25 35
+	do
+		git format-patch -o patches --filename-max-length=$len -3 side &&
+		max=$(
+			for patch in patches/000[1-9]-*.patch
+			do
+				echo "${patch#patches/}" | wc -c
+			done |
+			sort -nr |
+			head -n 1
+		) &&
+		test $max -le $len || return 1
+	done
+'
+
 test_expect_success 'reroll count' '
 	rm -fr patches &&
 	git format-patch -o patches --cover-letter --reroll-count 4 master..side >list &&
@@ -1919,6 +1973,39 @@ test_expect_success 'format-patch -o overrides format.outputDirectory' '
 	test_path_is_dir patchset
 '
 
+test_expect_success 'format-patch forbids multiple outputs' '
+	rm -fr outfile outdir &&
+	test_must_fail \
+		git format-patch --stdout --output-directory=outdir &&
+	test_must_fail \
+		git format-patch --stdout --output=outfile &&
+	test_must_fail \
+		git format-patch --output=outfile --output-directory=outdir
+'
+
+test_expect_success 'configured outdir does not conflict with output options' '
+	rm -fr outfile outdir &&
+	test_config format.outputDirectory outdir &&
+	git format-patch --stdout &&
+	test_path_is_missing outdir &&
+	git format-patch --output=outfile &&
+	test_path_is_missing outdir
+'
+
+test_expect_success 'format-patch --output' '
+	rm -fr outfile &&
+	git format-patch -3 --stdout HEAD >expect &&
+	git format-patch -3 --output=outfile HEAD &&
+	test_cmp expect outfile
+'
+
+test_expect_success 'format-patch --cover-letter --output' '
+	rm -fr outfile &&
+	git format-patch --cover-letter -3 --stdout HEAD >expect &&
+	git format-patch --cover-letter -3 --output=outfile HEAD &&
+	test_cmp expect outfile
+'
+
 test_expect_success 'format-patch --base' '
 	git checkout patchid &&
 
@@ -2037,9 +2124,25 @@ test_expect_success 'format-patch errors out when history involves criss-cross' 
 	test_must_fail 	git format-patch --base=auto -1
 '
 
+test_expect_success 'format-patch format.useAutoBase whenAble history involves criss-cross' '
+	test_config format.useAutoBase whenAble &&
+	git format-patch -1 >patch &&
+	! grep "^base-commit:" patch
+'
+
 test_expect_success 'format-patch format.useAutoBase option' '
 	git checkout local &&
 	test_config format.useAutoBase true &&
+	git format-patch --stdout -1 >patch &&
+	grep "^base-commit:" patch >actual &&
+	git rev-parse upstream >commit-id-base &&
+	echo "base-commit: $(cat commit-id-base)" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format-patch format.useAutoBase option with whenAble' '
+	git checkout local &&
+	test_config format.useAutoBase whenAble &&
 	git format-patch --stdout -1 >patch &&
 	grep "^base-commit:" patch >actual &&
 	git rev-parse upstream >commit-id-base &&
@@ -2058,6 +2161,12 @@ test_expect_success 'format-patch --base overrides format.useAutoBase' '
 
 test_expect_success 'format-patch --no-base overrides format.useAutoBase' '
 	test_config format.useAutoBase true &&
+	git format-patch --stdout --no-base -1 >patch &&
+	! grep "^base-commit:" patch
+'
+
+test_expect_success 'format-patch --no-base overrides format.useAutoBase whenAble' '
+	test_config format.useAutoBase whenAble &&
 	git format-patch --stdout --no-base -1 >patch &&
 	! grep "^base-commit:" patch
 '

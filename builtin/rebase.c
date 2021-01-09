@@ -92,6 +92,8 @@ struct rebase_options {
 	int autosquash;
 	char *gpg_sign_opt;
 	int autostash;
+	int committer_date_is_author_date;
+	int ignore_date;
 	char *cmd;
 	int allow_empty_message;
 	int rebase_merges, rebase_cousins;
@@ -117,6 +119,7 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 	struct replay_opts replay = REPLAY_OPTS_INIT;
 
 	replay.action = REPLAY_INTERACTIVE_REBASE;
+	replay.strategy = NULL;
 	sequencer_init_config(&replay);
 
 	replay.signoff = opts->signoff;
@@ -130,8 +133,17 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 	replay.quiet = !(opts->flags & REBASE_NO_QUIET);
 	replay.verbose = opts->flags & REBASE_VERBOSE;
 	replay.reschedule_failed_exec = opts->reschedule_failed_exec;
+	replay.committer_date_is_author_date =
+					opts->committer_date_is_author_date;
+	replay.ignore_date = opts->ignore_date;
 	replay.gpg_sign = xstrdup_or_null(opts->gpg_sign_opt);
-	replay.strategy = opts->strategy;
+	if (opts->strategy)
+		replay.strategy = opts->strategy;
+	else if (!replay.strategy && replay.default_strategy) {
+		replay.strategy = replay.default_strategy;
+		replay.default_strategy = NULL;
+	}
+
 	if (opts->strategy_opts)
 		parse_strategy_opts(&replay, opts->strategy_opts);
 
@@ -264,15 +276,14 @@ static int edit_todo_file(unsigned flags)
 }
 
 static int get_revision_ranges(struct commit *upstream, struct commit *onto,
-			       struct object_id *orig_head, const char **head_hash,
-			       char **revisions, char **shortrevisions)
+			       struct object_id *orig_head, char **revisions,
+			       char **shortrevisions)
 {
 	struct commit *base_rev = upstream ? upstream : onto;
 	const char *shorthead;
 
-	*head_hash = find_unique_abbrev(orig_head, GIT_MAX_HEXSZ);
 	*revisions = xstrfmt("%s...%s", oid_to_hex(&base_rev->object.oid),
-						   *head_hash);
+			     oid_to_hex(orig_head));
 
 	shorthead = find_unique_abbrev(orig_head, DEFAULT_ABBREV);
 
@@ -290,7 +301,8 @@ static int get_revision_ranges(struct commit *upstream, struct commit *onto,
 }
 
 static int init_basic_state(struct replay_opts *opts, const char *head_name,
-			    struct commit *onto, const char *orig_head)
+			    struct commit *onto,
+			    const struct object_id *orig_head)
 {
 	FILE *interactive;
 
@@ -321,7 +333,6 @@ static void split_exec_commands(const char *cmd, struct string_list *commands)
 static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 {
 	int ret;
-	const char *head_hash = NULL;
 	char *revisions = NULL, *shortrevisions = NULL;
 	struct strvec make_script_args = STRVEC_INIT;
 	struct todo_list todo_list = TODO_LIST_INIT;
@@ -329,12 +340,12 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 	struct string_list commands = STRING_LIST_INIT_DUP;
 
 	if (get_revision_ranges(opts->upstream, opts->onto, &opts->orig_head,
-				&head_hash, &revisions, &shortrevisions))
+				&revisions, &shortrevisions))
 		return -1;
 
 	if (init_basic_state(&replay,
 			     opts->head_name ? opts->head_name : "detached HEAD",
-			     opts->onto, head_hash)) {
+			     opts->onto, &opts->orig_head)) {
 		free(revisions);
 		free(shortrevisions);
 
@@ -364,8 +375,9 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 
 		split_exec_commands(opts->cmd, &commands);
 		ret = complete_action(the_repository, &replay, flags,
-			shortrevisions, opts->onto_name, opts->onto, head_hash,
-			&commands, opts->autosquash, &todo_list);
+			shortrevisions, opts->onto_name, opts->onto,
+			&opts->orig_head, &commands, opts->autosquash,
+			&todo_list);
 	}
 
 	string_list_clear(&commands, 0);
@@ -1289,6 +1301,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct strbuf revisions = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id merge_base;
+	int ignore_whitespace = 0;
 	enum action action = ACTION_NONE;
 	const char *gpg_sign = NULL;
 	struct string_list exec = STRING_LIST_INIT_NODUP;
@@ -1317,17 +1330,18 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			N_("do not show diffstat of what changed upstream"),
 			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
 		OPT_BOOL(0, "signoff", &options.signoff,
-			 N_("add a Signed-off-by: line to each commit")),
-		OPT_PASSTHRU_ARGV(0, "ignore-whitespace", &options.git_am_opts,
-				  NULL, N_("passed to 'git am'"),
-				  PARSE_OPT_NOARG),
-		OPT_PASSTHRU_ARGV(0, "committer-date-is-author-date",
-				  &options.git_am_opts, NULL,
-				  N_("passed to 'git am'"), PARSE_OPT_NOARG),
-		OPT_PASSTHRU_ARGV(0, "ignore-date", &options.git_am_opts, NULL,
-				  N_("passed to 'git am'"), PARSE_OPT_NOARG),
+			 N_("add a Signed-off-by trailer to each commit")),
+		OPT_BOOL(0, "committer-date-is-author-date",
+			 &options.committer_date_is_author_date,
+			 N_("make committer date match author date")),
+		OPT_BOOL(0, "reset-author-date", &options.ignore_date,
+			 N_("ignore author date and use current date")),
+		OPT_HIDDEN_BOOL(0, "ignore-date", &options.ignore_date,
+				N_("synonym of --reset-author-date")),
 		OPT_PASSTHRU_ARGV('C', NULL, &options.git_am_opts, N_("n"),
 				  N_("passed to 'git apply'"), 0),
+		OPT_BOOL(0, "ignore-whitespace", &ignore_whitespace,
+			 N_("ignore changes in whitespace")),
 		OPT_PASSTHRU_ARGV(0, "whitespace", &options.git_am_opts,
 				  N_("action"), N_("passed to 'git apply'"), 0),
 		OPT_BIT('f', "force-rebase", &options.flags,
@@ -1624,12 +1638,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	    options.autosquash) {
 		allow_preemptive_ff = 0;
 	}
+	if (options.committer_date_is_author_date || options.ignore_date)
+		options.flags |= REBASE_FORCE;
 
 	for (i = 0; i < options.git_am_opts.nr; i++) {
 		const char *option = options.git_am_opts.v[i], *p;
-		if (!strcmp(option, "--committer-date-is-author-date") ||
-		    !strcmp(option, "--ignore-date") ||
-		    !strcmp(option, "--whitespace=fix") ||
+		if (!strcmp(option, "--whitespace=fix") ||
 		    !strcmp(option, "--whitespace=strip"))
 			allow_preemptive_ff = 0;
 		else if (skip_prefix(option, "-C", &p)) {
@@ -1680,6 +1694,23 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("Unknown mode: %s"), rebase_merges);
 		options.rebase_merges = 1;
 		imply_merge(&options, "--rebase-merges");
+	}
+
+	if (options.type == REBASE_APPLY) {
+		if (ignore_whitespace)
+			strvec_push(&options.git_am_opts,
+				    "--ignore-whitespace");
+		if (options.committer_date_is_author_date)
+			strvec_push(&options.git_am_opts,
+				    "--committer-date-is-author-date");
+		if (options.ignore_date)
+			strvec_push(&options.git_am_opts, "--ignore-date");
+	} else {
+		/* REBASE_MERGE and PRESERVE_MERGES */
+		if (ignore_whitespace) {
+			string_list_append(&strategy_options,
+					   "ignore-space-change");
+		}
 	}
 
 	if (strategy_options.nr) {
@@ -1745,6 +1776,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("Unknown rebase backend: %s"),
 			    options.default_backend);
 	}
+
+	if (options.type == REBASE_MERGE &&
+	    !options.strategy &&
+	    getenv("GIT_TEST_MERGE_ALGORITHM"))
+		options.strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
 
 	switch (options.type) {
 	case REBASE_MERGE:

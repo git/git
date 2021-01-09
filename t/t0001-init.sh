@@ -163,7 +163,7 @@ test_expect_success 'reinit' '
 	(
 		mkdir again &&
 		cd again &&
-		git init >out1 2>err1 &&
+		git -c init.defaultBranch=initial init >out1 2>err1 &&
 		git init >out2 2>err2
 	) &&
 	test_i18ngrep "Initialized empty" again/out1 &&
@@ -316,6 +316,28 @@ test_expect_success 'init with separate gitdir' '
 	test_path_is_dir realgitdir/refs
 '
 
+test_expect_success 'explicit bare & --separate-git-dir incompatible' '
+	test_must_fail git init --bare --separate-git-dir goop.git bare.git 2>err &&
+	test_i18ngrep "mutually exclusive" err
+'
+
+test_expect_success 'implicit bare & --separate-git-dir incompatible' '
+	test_when_finished "rm -rf bare.git" &&
+	mkdir -p bare.git &&
+	test_must_fail env GIT_DIR=. \
+		git -C bare.git init --separate-git-dir goop.git 2>err &&
+	test_i18ngrep "incompatible" err
+'
+
+test_expect_success 'bare & --separate-git-dir incompatible within worktree' '
+	test_when_finished "rm -rf bare.git linkwt seprepo" &&
+	test_commit gumby &&
+	git clone --bare . bare.git &&
+	git -C bare.git worktree add --detach ../linkwt &&
+	test_must_fail git -C linkwt init --separate-git-dir seprepo 2>err &&
+	test_i18ngrep "incompatible" err
+'
+
 test_lazy_prereq GETCWD_IGNORES_PERMS '
 	base=GETCWD_TEST_BASE_DIR &&
 	mkdir -p $base/dir &&
@@ -390,6 +412,25 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	test_cmp expected newdir/.git &&
 	test_cmp expected newdir/here &&
 	test_path_is_dir realgitdir/refs
+'
+
+sep_git_dir_worktree ()  {
+	test_when_finished "rm -rf mainwt linkwt seprepo" &&
+	git init mainwt &&
+	test_commit -C mainwt gumby &&
+	git -C mainwt worktree add --detach ../linkwt &&
+	git -C "$1" init --separate-git-dir ../seprepo &&
+	git -C mainwt rev-parse --git-common-dir >expect &&
+	git -C linkwt rev-parse --git-common-dir >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 're-init to move gitdir with linked worktrees' '
+	sep_git_dir_worktree mainwt
+'
+
+test_expect_success 're-init to move gitdir within linked worktree' '
+	sep_git_dir_worktree linkwt
 '
 
 test_expect_success MINGW '.git hidden' '
@@ -512,15 +553,37 @@ test_expect_success '--initial-branch' '
 
 test_expect_success 'overridden default initial branch name (config)' '
 	test_config_global init.defaultBranch nmb &&
-	git init initial-branch-config &&
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= git init initial-branch-config &&
 	git -C initial-branch-config symbolic-ref HEAD >actual &&
 	grep nmb actual
 '
 
+test_expect_success 'advice on unconfigured init.defaultBranch' '
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= git -c color.advice=always \
+		init unconfigured-default-branch-name 2>err &&
+	test_decode_color <err >decoded &&
+	test_i18ngrep "<YELLOW>hint: " decoded
+'
+
+test_expect_success 'overridden default main branch name (env)' '
+	test_config_global init.defaultBranch nmb &&
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=env git init main-branch-env &&
+	git -C main-branch-env symbolic-ref HEAD >actual &&
+	grep env actual
+'
+
 test_expect_success 'invalid default branch name' '
-	test_config_global init.defaultBranch "with space" &&
-	test_must_fail git init initial-branch-invalid 2>err &&
+	test_must_fail env GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME="with space" \
+		git init initial-branch-invalid 2>err &&
 	test_i18ngrep "invalid branch name" err
+'
+
+test_expect_success 'branch -m with the initial branch' '
+	git init rename-initial &&
+	git -C rename-initial branch -m renamed &&
+	test renamed = $(git -C rename-initial symbolic-ref --short HEAD) &&
+	git -C rename-initial branch -m renamed again &&
+	test again = $(git -C rename-initial symbolic-ref --short HEAD)
 '
 
 test_done

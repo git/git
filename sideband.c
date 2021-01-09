@@ -3,6 +3,7 @@
 #include "config.h"
 #include "sideband.h"
 #include "help.h"
+#include "pkt-line.h"
 
 struct keyword_entry {
 	/*
@@ -114,7 +115,8 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 #define ANSI_SUFFIX "\033[K"
 #define DUMB_SUFFIX "        "
 
-int demultiplex_sideband(const char *me, char *buf, int len,
+int demultiplex_sideband(const char *me, int status,
+			 char *buf, int len,
 			 int die_on_error,
 			 struct strbuf *scratch,
 			 enum sideband_type *sideband_type)
@@ -130,17 +132,30 @@ int demultiplex_sideband(const char *me, char *buf, int len,
 			suffix = DUMB_SUFFIX;
 	}
 
-	if (len == 0) {
-		*sideband_type = SIDEBAND_FLUSH;
-		goto cleanup;
-	}
-	if (len < 1) {
+	if (status == PACKET_READ_EOF) {
 		strbuf_addf(scratch,
-			    "%s%s: protocol error: no band designator",
+			    "%s%s: unexpected disconnect while reading sideband packet",
 			    scratch->len ? "\n" : "", me);
 		*sideband_type = SIDEBAND_PROTOCOL_ERROR;
 		goto cleanup;
 	}
+
+	if (len < 0)
+		BUG("negative length on non-eof packet read");
+
+	if (len == 0) {
+		if (status == PACKET_READ_NORMAL) {
+			strbuf_addf(scratch,
+				    "%s%s: protocol error: missing sideband designator",
+				    scratch->len ? "\n" : "", me);
+			*sideband_type = SIDEBAND_PROTOCOL_ERROR;
+		} else {
+			/* covers flush, delim, etc */
+			*sideband_type = SIDEBAND_FLUSH;
+		}
+		goto cleanup;
+	}
+
 	band = buf[0] & 0xff;
 	buf[len] = '\0';
 	len--;
@@ -190,7 +205,7 @@ int demultiplex_sideband(const char *me, char *buf, int len,
 		return 0;
 	case 1:
 		*sideband_type = SIDEBAND_PRIMARY;
-		break;
+		return 1;
 	default:
 		strbuf_addf(scratch, "%s%s: protocol error: bad band #%d",
 			    scratch->len ? "\n" : "", me, band);

@@ -40,7 +40,7 @@ const char *git_sequence_editor(void)
 	const char *editor = getenv("GIT_SEQUENCE_EDITOR");
 
 	if (!editor)
-		git_config_get_string_const("sequence.editor", &editor);
+		git_config_get_string_tmp("sequence.editor", &editor);
 	if (!editor)
 		editor = git_editor();
 

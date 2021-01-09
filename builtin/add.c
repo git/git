@@ -192,9 +192,15 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	int use_builtin_add_i =
 		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
 
-	if (use_builtin_add_i < 0)
-		git_config_get_bool("add.interactive.usebuiltin",
-				    &use_builtin_add_i);
+	if (use_builtin_add_i < 0) {
+		int experimental;
+		if (!git_config_get_bool("add.interactive.usebuiltin",
+					 &use_builtin_add_i))
+			; /* ok */
+		else if (!git_config_get_bool("feature.experimental", &experimental) &&
+			 experimental)
+			use_builtin_add_i = 1;
+	}
 
 	if (use_builtin_add_i == 1) {
 		enum add_p_mode mode;
@@ -233,7 +239,7 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	return status;
 }
 
-int interactive_add(int argc, const char **argv, const char *prefix, int patch)
+int interactive_add(const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
 
@@ -445,7 +451,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (add_interactive) {
 		if (pathspec_from_file)
 			die(_("--pathspec-from-file is incompatible with --interactive/--patch"));
-		exit(interactive_add(argc - 1, argv + 1, prefix, patch_interactive));
+		exit(interactive_add(argv + 1, prefix, patch_interactive));
 	}
 	if (legacy_stash_p) {
 		struct pathspec pathspec;
@@ -534,11 +540,15 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	die_in_unpopulated_submodule(&the_index, prefix);
 	die_path_inside_submodule(&the_index, &pathspec);
 
+	enable_fscache(0);
+	/* We do not really re-read the index but update the up-to-date flags */
+	preload_index(&the_index, &pathspec, 0);
+
+	dir_init(&dir);
 	if (add_new_files) {
 		int baselen;
 
 		/* Set up the default git porcelain excludes */
-		memset(&dir, 0, sizeof(dir));
 		if (!ignored_too) {
 			dir.flags |= DIR_COLLECT_IGNORED;
 			setup_standard_excludes(&dir);
@@ -611,7 +621,8 @@ finish:
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
+	dir_clear(&dir);
+	enable_fscache(0);
 	UNLEAK(pathspec);
-	UNLEAK(dir);
 	return exit_status;
 }

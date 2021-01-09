@@ -38,7 +38,7 @@ static int load_bloom_filter_from_graph(struct commit_graph *g,
 	while (graph_pos < g->num_commits_in_base)
 		g = g->base_graph;
 
-	/* The commit graph commit 'c' lives in doesn't carry bloom filters. */
+	/* The commit graph commit 'c' lives in doesn't carry Bloom filters. */
 	if (!g->chunk_bloom_indexes)
 		return 0;
 
@@ -177,15 +177,25 @@ static int pathmap_cmp(const void *hashmap_cmp_fn_data,
 	return strcmp(e1->path, e2->path);
 }
 
-struct bloom_filter *get_bloom_filter(struct repository *r,
-				      struct commit *c,
-				      int compute_if_not_present)
+static void init_truncated_large_filter(struct bloom_filter *filter)
+{
+	filter->data = xmalloc(1);
+	filter->data[0] = 0xFF;
+	filter->len = 1;
+}
+
+struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
+						 struct commit *c,
+						 int compute_if_not_present,
+						 const struct bloom_filter_settings *settings,
+						 enum bloom_filter_computed *computed)
 {
 	struct bloom_filter *filter;
-	struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 	int i;
 	struct diff_options diffopt;
-	int max_changes = 512;
+
+	if (computed)
+		*computed = BLOOM_NOT_COMPUTED;
 
 	if (!bloom_filters.slab_size)
 		return NULL;
@@ -194,12 +204,11 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 
 	if (!filter->data) {
 		load_commit_graph_info(r, c);
-		if (commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH &&
-			r->objects->commit_graph->chunk_bloom_indexes)
+		if (commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH)
 			load_bloom_filter_from_graph(r->objects->commit_graph, filter, c);
 	}
 
-	if (filter->data)
+	if (filter->data && filter->len)
 		return filter;
 	if (!compute_if_not_present)
 		return NULL;
@@ -207,7 +216,7 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 	repo_diff_setup(r, &diffopt);
 	diffopt.flags.recursive = 1;
 	diffopt.detect_rename = 0;
-	diffopt.max_changes = max_changes;
+	diffopt.max_changes = settings->max_changed_paths;
 	diff_setup_done(&diffopt);
 
 	/* ensure commit is parsed so we have parent information */
@@ -219,11 +228,10 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 		diff_tree_oid(NULL, &c->object.oid, "", &diffopt);
 	diffcore_std(&diffopt);
 
-	if (diffopt.num_changes <= max_changes) {
-		struct hashmap pathmap;
+	if (diff_queued_diff.nr <= settings->max_changed_paths) {
+		struct hashmap pathmap = HASHMAP_INIT(pathmap_cmp, NULL);
 		struct pathmap_hash_entry *e;
 		struct hashmap_iter iter;
-		hashmap_init(&pathmap, pathmap_cmp, NULL, 0);
 
 		for (i = 0; i < diff_queued_diff.nr; i++) {
 			const char *path = diff_queued_diff.queue[i]->two->path;
@@ -256,22 +264,40 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 			diff_free_filepair(diff_queued_diff.queue[i]);
 		}
 
-		filter->len = (hashmap_get_size(&pathmap) * settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
+		if (hashmap_get_size(&pathmap) > settings->max_changed_paths) {
+			init_truncated_large_filter(filter);
+			if (computed)
+				*computed |= BLOOM_TRUNC_LARGE;
+			goto cleanup;
+		}
+
+		filter->len = (hashmap_get_size(&pathmap) * settings->bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
+		if (!filter->len) {
+			if (computed)
+				*computed |= BLOOM_TRUNC_EMPTY;
+			filter->len = 1;
+		}
 		filter->data = xcalloc(filter->len, sizeof(unsigned char));
 
 		hashmap_for_each_entry(&pathmap, &iter, e, entry) {
 			struct bloom_key key;
-			fill_bloom_key(e->path, strlen(e->path), &key, &settings);
-			add_key_to_filter(&key, filter, &settings);
+			fill_bloom_key(e->path, strlen(e->path), &key, settings);
+			add_key_to_filter(&key, filter, settings);
 		}
 
-		hashmap_free_entries(&pathmap, struct pathmap_hash_entry, entry);
+	cleanup:
+		hashmap_clear_and_free(&pathmap, struct pathmap_hash_entry, entry);
 	} else {
 		for (i = 0; i < diff_queued_diff.nr; i++)
 			diff_free_filepair(diff_queued_diff.queue[i]);
-		filter->data = NULL;
-		filter->len = 0;
+		init_truncated_large_filter(filter);
+
+		if (computed)
+			*computed |= BLOOM_TRUNC_LARGE;
 	}
+
+	if (computed)
+		*computed |= BLOOM_COMPUTED;
 
 	free(diff_queued_diff.queue);
 	DIFF_QUEUE_CLEAR(&diff_queued_diff);

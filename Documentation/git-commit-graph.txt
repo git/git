@@ -39,7 +39,9 @@ COMMANDS
 --------
 'write'::
 
-Write a commit-graph file based on the commits found in packfiles.
+Write a commit-graph file based on the commits found in packfiles. If
+the config option `core.commitGraph` is disabled, then this command will
+output a warning, then return success without writing a commit-graph file.
 +
 With the `--stdin-packs` option, generate the new commit graph by
 walking objects only in the specified pack-indexes. (Cannot be combined
@@ -66,6 +68,13 @@ for getting history of a directory or a file with `git log -- <path>`. If
 this option is given, future commit-graph writes will automatically assume
 that this option was intended. Use `--no-changed-paths` to stop storing this
 data.
++
+With the `--max-new-filters=<n>` option, generate at most `n` new Bloom
+filters (if `--changed-paths` is specified). If `n` is `-1`, no limit is
+enforced. Only commits present in the new layer count against this
+limit. To retroactively compute Bloom filters over earlier layers, it is
+advised to use `--split=replace`.  Overrides the `commitGraph.maxNewFilters`
+configuration.
 +
 With the `--split[=<strategy>]` option, write the commit-graph as a
 chain of multiple commit-graph files stored in

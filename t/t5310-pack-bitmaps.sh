@@ -277,7 +277,7 @@ test_expect_success 'pack with missing parent' '
 	git pack-objects --stdout --revs <revs >/dev/null
 '
 
-test_expect_success JGIT 'we can read jgit bitmaps' '
+test_expect_success JGIT,SHA1 'we can read jgit bitmaps' '
 	git clone --bare . compat-jgit.git &&
 	(
 		cd compat-jgit.git &&
@@ -287,7 +287,7 @@ test_expect_success JGIT 'we can read jgit bitmaps' '
 	)
 '
 
-test_expect_success JGIT 'jgit can read our bitmaps' '
+test_expect_success JGIT,SHA1 'jgit can read our bitmaps' '
 	git clone --bare . compat-us.git &&
 	(
 		cd compat-us.git &&

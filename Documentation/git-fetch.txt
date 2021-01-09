@@ -48,6 +48,10 @@ include::fetch-options.txt[]
 
 include::pull-fetch-param.txt[]
 
+--stdin::
+	Read refspecs, one per line, from stdin in addition to those provided
+	as arguments. The "tag <name>" format is not supported.
+
 include::urls-remotes.txt[]
 
 

@@ -11,7 +11,7 @@ SYNOPSIS
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>] [<pattern>...]
 		   [--points-at=<object>]
-		   (--merged[=<object>] | --no-merged[=<object>])
+		   [--merged[=<object>]] [--no-merged[=<object>]]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
 
 DESCRIPTION
@@ -76,13 +76,11 @@ OPTIONS
 
 --merged[=<object>]::
 	Only list refs whose tips are reachable from the
-	specified commit (HEAD if not specified),
-	incompatible with `--no-merged`.
+	specified commit (HEAD if not specified).
 
 --no-merged[=<object>]::
 	Only list refs whose tips are not reachable from the
-	specified commit (HEAD if not specified),
-	incompatible with `--merged`.
+	specified commit (HEAD if not specified).
 
 --contains[=<object>]::
 	Only list refs which contain the specified commit (HEAD if not
@@ -222,6 +220,8 @@ worktreepath::
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.
+Fields `tree` and `parent` can also be used with modifier `:short` and
+`:short=<length>` just like `objectname`.
 
 For commit and tag objects, the special `creatordate` and `creator`
 fields will correspond to the appropriate date or name-email-date tuple
@@ -230,7 +230,10 @@ These are intended for working on a mix of annotated and lightweight tags.
 
 Fields that have name-email-date tuple as its value (`author`,
 `committer`, and `tagger`) can be suffixed with `name`, `email`,
-and `date` to extract the named component.
+and `date` to extract the named component.  For email fields (`authoremail`,
+`committeremail` and `taggeremail`), `:trim` can be appended to get the email
+without angle brackets, and `:localpart` to get the part before the `@` symbol
+out of the trimmed email.
 
 The message in a commit or a tag object is `contents`, from which
 `contents:<part>` can be used to extract various parts out of:
@@ -242,6 +245,9 @@ contents:subject::
 	The first paragraph of the message, which typically is a
 	single line, is taken as the "subject" of the commit or the
 	tag message.
+	Instead of `contents:subject`, field `subject` can also be used to
+	obtain same results. `:sanitize` can be appended to `subject` for
+	subject line suitable for filename.
 
 contents:body::
 	The remainder of the commit or the tag message that follows
@@ -399,6 +405,11 @@ and is subject to change during a repack.
 Note also that multiple copies of an object may be present in the object
 database; in this case, it is undefined which copy's size or delta base
 will be reported.
+
+NOTES
+-----
+
+include::ref-reachability-filters.txt[]
 
 SEE ALSO
 --------

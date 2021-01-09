@@ -401,8 +401,9 @@ at all in the request stream:
 The stream is terminated by a pkt-line flush (`0000`).
 
 A single "want" or "have" command MUST have one hex formatted
-SHA-1 as its value.  Multiple SHA-1s MUST be sent by sending
-multiple commands.
+object name as its value.  Multiple object names MUST be sent by sending
+multiple commands. Object names MUST be given using the object format
+negotiated through the `object-format` capability (default SHA-1).
 
 The `have` list is created by popping the first 32 commits
 from `c_pending`.  Less can be supplied if `c_pending` empties.

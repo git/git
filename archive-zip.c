@@ -285,7 +285,8 @@ static int entry_is_binary(struct index_state *istate, const char *path,
 static int write_zip_entry(struct archiver_args *args,
 			   const struct object_id *oid,
 			   const char *path, size_t pathlen,
-			   unsigned int mode)
+			   unsigned int mode,
+			   void *buffer, unsigned long size)
 {
 	struct zip_local_header header;
 	uintmax_t offset = zip_offset;
@@ -299,10 +300,8 @@ static int write_zip_entry(struct archiver_args *args,
 	enum zip_method method;
 	unsigned char *out;
 	void *deflated = NULL;
-	void *buffer;
 	struct git_istream *stream = NULL;
 	unsigned long flags = 0;
-	unsigned long size;
 	int is_binary = -1;
 	const char *path_without_prefix = path + args->baselen;
 	unsigned int creator_version = 0;
@@ -328,13 +327,8 @@ static int write_zip_entry(struct archiver_args *args,
 		method = ZIP_METHOD_STORE;
 		attr2 = 16;
 		out = NULL;
-		size = 0;
 		compressed_size = 0;
-		buffer = NULL;
 	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
-		enum object_type type = oid_object_info(args->repo, oid,
-							&size);
-
 		method = ZIP_METHOD_STORE;
 		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
 			(mode & 0111) ? ((mode) << 16) : 0;
@@ -343,21 +337,16 @@ static int write_zip_entry(struct archiver_args *args,
 		if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
 			method = ZIP_METHOD_DEFLATE;
 
-		if (S_ISREG(mode) && type == OBJ_BLOB && !args->convert &&
-		    size > big_file_threshold) {
+		if (!buffer) {
+			enum object_type type;
 			stream = open_istream(args->repo, oid, &type, &size,
 					      NULL);
 			if (!stream)
 				return error(_("cannot stream blob %s"),
 					     oid_to_hex(oid));
 			flags |= ZIP_STREAM;
-			out = buffer = NULL;
+			out = NULL;
 		} else {
-			buffer = object_file_to_archive(args, path, oid, mode,
-							&type, &size);
-			if (!buffer)
-				return error(_("cannot read %s"),
-					     oid_to_hex(oid));
 			crc = crc32(crc, buffer, size);
 			is_binary = entry_is_binary(args->repo->index,
 						    path_without_prefix,
@@ -511,7 +500,6 @@ static int write_zip_entry(struct archiver_args *args,
 	}
 
 	free(deflated);
-	free(buffer);
 
 	if (compressed_size > 0xffffffff || size > 0xffffffff ||
 	    offset > 0xffffffff) {

@@ -249,7 +249,7 @@ component you're working on, followed by a blank line (always required) and then
 the body of your commit message, which should provide the bulk of the context.
 Remember to be explicit and provide the "Why" of your change, especially if it
 couldn't easily be understood from your diff. When editing your commit message,
-don't remove the Signed-off-by line which was added by `-s` above.
+don't remove the `Signed-off-by` trailer which was added by `-s` above.
 
 ----
 psuh: add a built-in by popular demand
@@ -319,14 +319,14 @@ function body:
 ...
 
 	git_config(git_default_config, NULL);
-	if (git_config_get_string_const("user.name", &cfg_name) > 0)
+	if (git_config_get_string_tmp("user.name", &cfg_name) > 0)
 		printf(_("No name is found in config\n"));
 	else
 		printf(_("Your name: %s\n"), cfg_name);
 ----
 
 `git_config()` will grab the configuration from config files known to Git and
-apply standard precedence rules. `git_config_get_string_const()` will look up
+apply standard precedence rules. `git_config_get_string_tmp()` will look up
 a specific key ("user.name") and give you the value. There are a number of
 single-key lookup functions like this one; you can see them all (and more info
 about how to use `git_config()`) in `Documentation/technical/api-config.txt`.
@@ -507,6 +507,9 @@ documentation is consistent with other Git and UNIX manpages; this makes life
 easier for your user, who can skip to the section they know contains the
 information they need.
 
+NOTE: Before trying to build the docs, make sure you have the package `asciidoc`
+installed.
+
 Now that you've written your manpage, you'll need to build it explicitly. We
 convert your AsciiDoc to troff which is man-readable like so:
 
@@ -521,8 +524,6 @@ or
 $ make -C Documentation/ git-psuh.1
 $ man Documentation/git-psuh.1
 ----
-
-NOTE: You may need to install the package `asciidoc` to get this to work.
 
 While this isn't as satisfying as running through `git help`, you can at least
 check that your help page looks right.
@@ -1142,10 +1143,24 @@ After a few days, you will hopefully receive a reply to your patchset with some
 comments. Woohoo! Now you can get back to work.
 
 It's good manners to reply to each comment, notifying the reviewer that you have
-made the change requested, feel the original is better, or that the comment
+made the change suggested, feel the original is better, or that the comment
 inspired you to do something a new way which is superior to both the original
 and the suggested change. This way reviewers don't need to inspect your v2 to
 figure out whether you implemented their comment or not.
+
+Reviewers may ask you about what you wrote in the patchset, either in
+the proposed commit log message or in the changes themselves.  You
+should answer these questions in your response messages, but often the
+reason why reviewers asked these questions to understand what you meant
+to write is because your patchset needed clarification to be understood.
+
+Do not be satisfied by just answering their questions in your response
+and hear them say that they now understand what you wanted to say.
+Update your patches to clarify the points reviewers had trouble with,
+and prepare your v2; the words you used to explain your v1 to answer
+reviewers' questions may be useful thing to use.  Your goal is to make
+your v2 clear enough so that it becomes unnecessary for you to give the
+same explanation to the next person who reads it.
 
 If you are going to push back on a comment, be polite and explain why you feel
 your original is better; be prepared that the reviewer may still disagree with

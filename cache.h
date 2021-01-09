@@ -629,7 +629,7 @@ int path_inside_repo(const char *prefix, const char *path);
 int init_db(const char *git_dir, const char *real_git_dir,
 	    const char *template_dir, int hash_algo,
 	    const char *initial_branch, unsigned int flags);
-void initialize_repository_version(int hash_algo);
+void initialize_repository_version(int hash_algo, int reinit);
 
 void sanitize_stdfds(void);
 int daemonize(void);
@@ -921,8 +921,8 @@ extern int assume_unchanged;
 extern int prefer_symlink_refs;
 extern int warn_ambiguous_refs;
 extern int warn_on_object_refname_ambiguity;
-extern const char *apply_default_whitespace;
-extern const char *apply_default_ignorewhitespace;
+extern char *apply_default_whitespace;
+extern char *apply_default_ignorewhitespace;
 extern const char *git_attributes_file;
 extern const char *git_hooks_path;
 extern int zlib_compression_level;
@@ -1123,100 +1123,6 @@ const char *repo_find_unique_abbrev(struct repository *r, const struct object_id
 int repo_find_unique_abbrev_r(struct repository *r, char *hex, const struct object_id *oid, int len);
 #define find_unique_abbrev_r(hex, oid, len) repo_find_unique_abbrev_r(the_repository, hex, oid, len)
 
-extern const struct object_id null_oid;
-
-static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
-{
-	/*
-	 * Teach the compiler that there are only two possibilities of hash size
-	 * here, so that it can optimize for this case as much as possible.
-	 */
-	if (the_hash_algo->rawsz == GIT_MAX_RAWSZ)
-		return memcmp(sha1, sha2, GIT_MAX_RAWSZ);
-	return memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
-}
-
-static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
-{
-	return hashcmp(oid1->hash, oid2->hash);
-}
-
-static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2)
-{
-	/*
-	 * We write this here instead of deferring to hashcmp so that the
-	 * compiler can properly inline it and avoid calling memcmp.
-	 */
-	if (the_hash_algo->rawsz == GIT_MAX_RAWSZ)
-		return !memcmp(sha1, sha2, GIT_MAX_RAWSZ);
-	return !memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
-}
-
-static inline int oideq(const struct object_id *oid1, const struct object_id *oid2)
-{
-	return hasheq(oid1->hash, oid2->hash);
-}
-
-static inline int is_null_oid(const struct object_id *oid)
-{
-	return oideq(oid, &null_oid);
-}
-
-static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
-{
-	memcpy(sha_dst, sha_src, the_hash_algo->rawsz);
-}
-
-static inline void oidcpy(struct object_id *dst, const struct object_id *src)
-{
-	memcpy(dst->hash, src->hash, GIT_MAX_RAWSZ);
-}
-
-static inline struct object_id *oiddup(const struct object_id *src)
-{
-	struct object_id *dst = xmalloc(sizeof(struct object_id));
-	oidcpy(dst, src);
-	return dst;
-}
-
-static inline void hashclr(unsigned char *hash)
-{
-	memset(hash, 0, the_hash_algo->rawsz);
-}
-
-static inline void oidclr(struct object_id *oid)
-{
-	memset(oid->hash, 0, GIT_MAX_RAWSZ);
-}
-
-static inline void oidread(struct object_id *oid, const unsigned char *hash)
-{
-	memcpy(oid->hash, hash, the_hash_algo->rawsz);
-}
-
-static inline int is_empty_blob_sha1(const unsigned char *sha1)
-{
-	return hasheq(sha1, the_hash_algo->empty_blob->hash);
-}
-
-static inline int is_empty_blob_oid(const struct object_id *oid)
-{
-	return oideq(oid, the_hash_algo->empty_blob);
-}
-
-static inline int is_empty_tree_sha1(const unsigned char *sha1)
-{
-	return hasheq(sha1, the_hash_algo->empty_tree->hash);
-}
-
-static inline int is_empty_tree_oid(const struct object_id *oid)
-{
-	return oideq(oid, the_hash_algo->empty_tree);
-}
-
-const char *empty_tree_oid_hex(void);
-const char *empty_blob_oid_hex(void);
-
 /* set default permissions by passing mode arguments to open(2) */
 int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
 int git_mkstemp_mode(char *pattern, int mode);
@@ -1255,7 +1161,11 @@ int adjust_shared_perm(const char *path);
  * safe_create_leading_directories() temporarily changes path while it
  * is working but restores it before returning.
  * safe_create_leading_directories_const() doesn't modify path, even
- * temporarily.
+ * temporarily. Both these variants adjust the permissions of the
+ * created directories to honor core.sharedRepository, so they are best
+ * suited for files inside the git dir. For working tree files, use
+ * safe_create_leading_directories_no_share() instead, as it ignores
+ * the core.sharedRepository setting.
  */
 enum scld_error {
 	SCLD_OK = 0,
@@ -1266,6 +1176,7 @@ enum scld_error {
 };
 enum scld_error safe_create_leading_directories(char *path);
 enum scld_error safe_create_leading_directories_const(const char *path);
+enum scld_error safe_create_leading_directories_no_share(char *path);
 
 /*
  * Callback function for raceproof_create_file(). This function is
@@ -1329,6 +1240,7 @@ int normalize_path_copy_len(char *dst, const char *src, int *prefix_len);
 int normalize_path_copy(char *dst, const char *src);
 int longest_ancestor_length(const char *path, struct string_list *prefixes);
 char *strip_path_suffix(const char *path, const char *suffix);
+int is_mount_point_via_stat(struct strbuf *path);
 int daemon_avoid_alias(const char *path);
 
 /*
@@ -1557,21 +1469,32 @@ int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
  *
  * If the input was ok but there are not N branch switches in the
  * reflog, it returns 0.
- *
- * If "allowed" is non-zero, it is a treated as a bitfield of allowable
- * expansions: local branches ("refs/heads/"), remote branches
- * ("refs/remotes/"), or "HEAD". If no "allowed" bits are set, any expansion is
- * allowed, even ones to refs outside of those namespaces.
  */
 #define INTERPRET_BRANCH_LOCAL (1<<0)
 #define INTERPRET_BRANCH_REMOTE (1<<1)
 #define INTERPRET_BRANCH_HEAD (1<<2)
+struct interpret_branch_name_options {
+	/*
+	 * If "allowed" is non-zero, it is a treated as a bitfield of allowable
+	 * expansions: local branches ("refs/heads/"), remote branches
+	 * ("refs/remotes/"), or "HEAD". If no "allowed" bits are set, any expansion is
+	 * allowed, even ones to refs outside of those namespaces.
+	 */
+	unsigned allowed;
+
+	/*
+	 * If ^{upstream} or ^{push} (or equivalent) is requested, and the
+	 * branch in question does not have such a reference, return -1 instead
+	 * of die()-ing.
+	 */
+	unsigned nonfatal_dangling_mark : 1;
+};
 int repo_interpret_branch_name(struct repository *r,
 			       const char *str, int len,
 			       struct strbuf *buf,
-			       unsigned allowed);
-#define interpret_branch_name(str, len, buf, allowed) \
-	repo_interpret_branch_name(the_repository, str, len, buf, allowed)
+			       const struct interpret_branch_name_options *options);
+#define interpret_branch_name(str, len, buf, options) \
+	repo_interpret_branch_name(the_repository, str, len, buf, options)
 
 int validate_headref(const char *ref);
 
@@ -1949,7 +1872,6 @@ int stat_validity_check(struct stat_validity *sv, const char *path);
 void stat_validity_update(struct stat_validity *sv, int fd);
 
 int versioncmp(const char *s1, const char *s2);
-void sleep_millisec(int millisec);
 
 /*
  * Create a directory and (if share is nonzero) adjust its permissions

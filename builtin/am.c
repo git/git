@@ -1556,7 +1556,7 @@ static void do_commit(const struct am_state *state)
 	struct object_id tree, parent, commit;
 	const struct object_id *old_oid;
 	struct commit_list *parents = NULL;
-	const char *reflog_msg, *author;
+	const char *reflog_msg, *author, *committer = NULL;
 	struct strbuf sb = STRBUF_INIT;
 
 	if (run_hook_le(NULL, "pre-applypatch", NULL))
@@ -1580,11 +1580,16 @@ static void do_commit(const struct am_state *state)
 			IDENT_STRICT);
 
 	if (state->committer_date_is_author_date)
-		setenv("GIT_COMMITTER_DATE",
-			state->ignore_date ? "" : state->author_date, 1);
+		committer = fmt_ident(getenv("GIT_COMMITTER_NAME"),
+				      getenv("GIT_COMMITTER_EMAIL"),
+				      WANT_COMMITTER_IDENT,
+				      state->ignore_date ? NULL
+							 : state->author_date,
+				      IDENT_STRICT);
 
-	if (commit_tree(state->msg, state->msg_len, &tree, parents, &commit,
-			author, state->sign_commit))
+	if (commit_tree_extended(state->msg, state->msg_len, &tree, parents,
+				 &commit, author, committer, state->sign_commit,
+				 NULL))
 		die(_("failed to write commit object"));
 
 	reflog_msg = getenv("GIT_REFLOG_ACTION");
@@ -2162,6 +2167,8 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	};
 	int new_value = SHOW_PATCH_RAW;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (arg) {
 		for (new_value = 0; new_value < ARRAY_SIZE(valid_modes); new_value++) {
 			if (!strcmp(arg, valid_modes[new_value]))
@@ -2217,7 +2224,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			N_("allow fall back on 3way merging if needed")),
 		OPT__QUIET(&state.quiet, N_("be quiet")),
 		OPT_SET_INT('s', "signoff", &state.signoff,
-			N_("add a Signed-off-by line to the commit message"),
+			N_("add a Signed-off-by trailer to the commit message"),
 			SIGNOFF_EXPLICIT),
 		OPT_BOOL('u', "utf8", &state.utf8,
 			N_("recode into utf8 (default)")),

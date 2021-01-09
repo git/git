@@ -79,6 +79,14 @@ static int checkout_file(const char *name, const char *prefix)
 		return errs > 0 ? -1 : 0;
 	}
 
+	/*
+	 * At this point we know we didn't try to check anything out. If it was
+	 * because we did find an entry but it was stage 0, that's not an
+	 * error.
+	 */
+	if (has_same_name && checkout_stage == CHECKOUT_ALL)
+		return 0;
+
 	if (!state.quiet) {
 		fprintf(stderr, "git checkout-index: %s ", name);
 		if (!has_same_name)
@@ -159,6 +167,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	int prefix_length;
 	int force = 0, quiet = 0, not_new = 0;
 	int index_opt = 0;
+	int err = 0;
 	struct option builtin_checkout_index_options[] = {
 		OPT_BOOL('a', "all", &all,
 			N_("check out all files in the index")),
@@ -223,7 +232,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		if (read_from_stdin)
 			die("git checkout-index: don't mix '--stdin' and explicit filenames");
 		p = prefix_path(prefix, prefix_length, arg);
-		checkout_file(p, prefix);
+		err |= checkout_file(p, prefix);
 		free(p);
 	}
 
@@ -245,12 +254,15 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 				strbuf_swap(&buf, &unquoted);
 			}
 			p = prefix_path(prefix, prefix_length, buf.buf);
-			checkout_file(p, prefix);
+			err |= checkout_file(p, prefix);
 			free(p);
 		}
 		strbuf_release(&unquoted);
 		strbuf_release(&buf);
 	}
+
+	if (err)
+		return 1;
 
 	if (all)
 		checkout_all(prefix, prefix_length);

@@ -7,7 +7,7 @@ test_description='git remote porcelain-ish'
 setup_repository () {
 	mkdir "$1" && (
 	cd "$1" &&
-	git init &&
+	git init -b main &&
 	>file &&
 	git add file &&
 	test_tick &&
@@ -17,7 +17,7 @@ setup_repository () {
 	git add elif &&
 	test_tick &&
 	git commit -m "Second" &&
-	git checkout master
+	git checkout main
 	)
 }
 
@@ -60,8 +60,8 @@ test_expect_success C_LOCALE_OUTPUT 'remote information for the origin' '
 	(
 		cd test &&
 		tokens_match origin "$(git remote)" &&
-		check_remote_track origin master side &&
-		check_tracking_branch origin HEAD master side
+		check_remote_track origin main side &&
+		check_tracking_branch origin HEAD main side
 	)
 '
 
@@ -70,7 +70,7 @@ test_expect_success 'add another remote' '
 		cd test &&
 		git remote add -f second ../two &&
 		tokens_match "origin second" "$(git remote)" &&
-		check_tracking_branch second master side another &&
+		check_tracking_branch second main side another &&
 		git for-each-ref "--format=%(refname)" refs/remotes |
 		sed -e "/^refs\/remotes\/origin\//d" \
 		    -e "/^refs\/remotes\/second\//d" >actual &&
@@ -81,8 +81,8 @@ test_expect_success 'add another remote' '
 test_expect_success C_LOCALE_OUTPUT 'check remote-tracking' '
 	(
 		cd test &&
-		check_remote_track origin master side &&
-		check_remote_track second master side another
+		check_remote_track origin main side &&
+		check_remote_track second main side another
 	)
 '
 
@@ -99,7 +99,7 @@ test_expect_success 'remote forces tracking branches' '
 test_expect_success 'remove remote' '
 	(
 		cd test &&
-		git symbolic-ref refs/remotes/second/HEAD refs/remotes/second/master &&
+		git symbolic-ref refs/remotes/second/HEAD refs/remotes/second/main &&
 		git remote rm second
 	)
 '
@@ -108,7 +108,7 @@ test_expect_success C_LOCALE_OUTPUT 'remove remote' '
 	(
 		cd test &&
 		tokens_match origin "$(git remote)" &&
-		check_remote_track origin master side &&
+		check_remote_track origin main side &&
 		git for-each-ref "--format=%(refname)" refs/remotes |
 		sed -e "/^refs\/remotes\/origin\//d" >actual &&
 		test_must_be_empty actual
@@ -121,13 +121,13 @@ test_expect_success 'remove remote protects local branches' '
 		cat >expect1 <<-\EOF &&
 		Note: A branch outside the refs/remotes/ hierarchy was not removed;
 		to delete it, use:
-		  git branch -d master
+		  git branch -d main
 		EOF
 		cat >expect2 <<-\EOF &&
 		Note: Some branches outside the refs/remotes/ hierarchy were not removed;
 		to delete them, use:
 		  git branch -d foobranch
-		  git branch -d master
+		  git branch -d main
 		EOF
 		git tag footag &&
 		git config --add remote.oops.fetch "+refs/*:refs/*" &&
@@ -145,15 +145,15 @@ test_expect_success 'remove remote protects local branches' '
 test_expect_success 'remove errors out early when deleting non-existent branch' '
 	(
 		cd test &&
-		echo "fatal: No such remote: '\''foo'\''" >expect &&
-		test_must_fail git remote rm foo 2>actual &&
+		echo "error: No such remote: '\''foo'\''" >expect &&
+		test_expect_code 2 git remote rm foo 2>actual &&
 		test_i18ncmp expect actual
 	)
 '
 
 test_expect_success 'remove remote with a branch without configured merge' '
 	test_when_finished "(
-		git -C test checkout master;
+		git -C test checkout main;
 		git -C test branch -D two;
 		git -C test config --remove-section remote.two;
 		git -C test config --remove-section branch.second;
@@ -163,9 +163,9 @@ test_expect_success 'remove remote with a branch without configured merge' '
 		cd test &&
 		git remote add two ../two &&
 		git fetch two &&
-		git checkout -b second two/master^0 &&
+		git checkout -b second two/main^0 &&
 		git config branch.second.remote two &&
-		git checkout master &&
+		git checkout main &&
 		git remote rm two
 	)
 '
@@ -173,24 +173,37 @@ test_expect_success 'remove remote with a branch without configured merge' '
 test_expect_success 'rename errors out early when deleting non-existent branch' '
 	(
 		cd test &&
-		echo "fatal: No such remote: '\''foo'\''" >expect &&
-		test_must_fail git remote rename foo bar 2>actual &&
+		echo "error: No such remote: '\''foo'\''" >expect &&
+		test_expect_code 2 git remote rename foo bar 2>actual &&
 		test_i18ncmp expect actual
 	)
 '
 
+test_expect_success 'rename errors out early when when new name is invalid' '
+	test_config remote.foo.vcs bar &&
+	echo "fatal: '\''invalid...name'\'' is not a valid remote name" >expect &&
+	test_must_fail git remote rename foo invalid...name 2>actual &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'add existing foreign_vcs remote' '
 	test_config remote.foo.vcs bar &&
-	echo "fatal: remote foo already exists." >expect &&
-	test_must_fail git remote add foo bar 2>actual &&
+	echo "error: remote foo already exists." >expect &&
+	test_expect_code 3 git remote add foo bar 2>actual &&
 	test_i18ncmp expect actual
 '
 
 test_expect_success 'add existing foreign_vcs remote' '
 	test_config remote.foo.vcs bar &&
 	test_config remote.bar.vcs bar &&
-	echo "fatal: remote bar already exists." >expect &&
-	test_must_fail git remote rename foo bar 2>actual &&
+	echo "error: remote bar already exists." >expect &&
+	test_expect_code 3 git remote rename foo bar 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'add invalid foreign_vcs remote' '
+	echo "fatal: '\''invalid...name'\'' is not a valid remote name" >expect &&
+	test_must_fail git remote add invalid...name bar 2>actual &&
 	test_i18ncmp expect actual
 '
 
@@ -198,42 +211,42 @@ cat >test/expect <<EOF
 * remote origin
   Fetch URL: $(pwd)/one
   Push  URL: $(pwd)/one
-  HEAD branch: master
+  HEAD branch: main
   Remote branches:
-    master new (next fetch will store in remotes/origin)
-    side   tracked
+    main new (next fetch will store in remotes/origin)
+    side tracked
   Local branches configured for 'git pull':
-    ahead    merges with remote master
-    master   merges with remote master
+    ahead    merges with remote main
+    main     merges with remote main
     octopus  merges with remote topic-a
                 and with remote topic-b
                 and with remote topic-c
-    rebase  rebases onto remote master
+    rebase  rebases onto remote main
   Local refs configured for 'git push':
-    master pushes to master   (local out of date)
-    master pushes to upstream (create)
+    main pushes to main     (local out of date)
+    main pushes to upstream (create)
 * remote two
   Fetch URL: ../two
   Push  URL: ../three
-  HEAD branch: master
+  HEAD branch: main
   Local refs configured for 'git push':
-    ahead  forces to master  (fast-forwardable)
-    master pushes to another (up to date)
+    ahead forces to main    (fast-forwardable)
+    main  pushes to another (up to date)
 EOF
 
 test_expect_success 'show' '
 	(
 		cd test &&
-		git config --add remote.origin.fetch refs/heads/master:refs/heads/upstream &&
+		git config --add remote.origin.fetch refs/heads/main:refs/heads/upstream &&
 		git fetch &&
-		git checkout -b ahead origin/master &&
+		git checkout -b ahead origin/main &&
 		echo 1 >>file &&
 		test_tick &&
 		git commit -m update file &&
-		git checkout master &&
-		git branch --track octopus origin/master &&
-		git branch --track rebase origin/master &&
-		git branch -d -r origin/master &&
+		git checkout main &&
+		git branch --track octopus origin/main &&
+		git branch --track rebase origin/main &&
+		git branch -d -r origin/main &&
 		git config --add remote.two.url ../two &&
 		git config --add remote.two.pushurl ../three &&
 		git config branch.rebase.rebase true &&
@@ -245,10 +258,10 @@ test_expect_success 'show' '
 			git commit -m update file
 		) &&
 		git config --add remote.origin.push : &&
-		git config --add remote.origin.push refs/heads/master:refs/heads/upstream &&
+		git config --add remote.origin.push refs/heads/main:refs/heads/upstream &&
 		git config --add remote.origin.push +refs/tags/lastbackup &&
-		git config --add remote.two.push +refs/heads/ahead:refs/heads/master &&
-		git config --add remote.two.push refs/heads/master:refs/heads/another &&
+		git config --add remote.two.push +refs/heads/ahead:refs/heads/main &&
+		git config --add remote.two.push refs/heads/main:refs/heads/another &&
 		git remote show origin two >output &&
 		git branch -d rebase octopus &&
 		test_i18ncmp expect output
@@ -261,14 +274,14 @@ cat >test/expect <<EOF
   Push  URL: $(pwd)/one
   HEAD branch: (not queried)
   Remote branches: (status not queried)
-    master
+    main
     side
   Local branches configured for 'git pull':
-    ahead  merges with remote master
-    master merges with remote master
+    ahead merges with remote main
+    main  merges with remote main
   Local refs configured for 'git push' (status not queried):
     (matching)           pushes to (matching)
-    refs/heads/master    pushes to refs/heads/upstream
+    refs/heads/main      pushes to refs/heads/upstream
     refs/tags/lastbackup forces to refs/tags/lastbackup
 EOF
 
@@ -309,7 +322,7 @@ test_expect_success 'set-head --auto' '
 	(
 		cd test &&
 		git remote set-head --auto origin &&
-		echo refs/remotes/origin/master >expect &&
+		echo refs/remotes/origin/main >expect &&
 		git symbolic-ref refs/remotes/origin/HEAD >output &&
 		test_cmp expect output
 	)
@@ -320,7 +333,7 @@ test_expect_success 'set-head --auto has no problem w/multiple HEADs' '
 		cd test &&
 		git fetch two "refs/heads/*:refs/remotes/two/*" &&
 		git remote set-head --auto two >output 2>&1 &&
-		echo "two/HEAD set to master" >expect &&
+		echo "two/HEAD set to main" >expect &&
 		test_i18ncmp expect output
 	)
 '
@@ -334,7 +347,7 @@ test_expect_success 'set-head explicit' '
 		cd test &&
 		git remote set-head origin side2 &&
 		git symbolic-ref refs/remotes/origin/HEAD >output &&
-		git remote set-head origin master &&
+		git remote set-head origin main &&
 		test_cmp expect output
 	)
 '
@@ -381,7 +394,7 @@ test_expect_success 'add --mirror && prune' '
 
 test_expect_success 'add --mirror=fetch' '
 	mkdir mirror-fetch &&
-	git init mirror-fetch/parent &&
+	git init -b main mirror-fetch/parent &&
 	(
 		cd mirror-fetch/parent &&
 		test_commit one
@@ -397,7 +410,7 @@ test_expect_success 'fetch mirrors act as mirrors during fetch' '
 	(
 		cd mirror-fetch/parent &&
 		git branch new &&
-		git branch -m master renamed
+		git branch -m main renamed
 	) &&
 	(
 		cd mirror-fetch/child &&
@@ -411,7 +424,7 @@ test_expect_success 'fetch mirrors can prune' '
 	(
 		cd mirror-fetch/child &&
 		git remote prune parent &&
-		test_must_fail git rev-parse --verify refs/heads/master
+		test_must_fail git rev-parse --verify refs/heads/main
 	)
 '
 
@@ -452,7 +465,7 @@ test_expect_success 'fetch mirror respects specific branches' '
 test_expect_success 'add --mirror=push' '
 	mkdir mirror-push &&
 	git init --bare mirror-push/public &&
-	git init mirror-push/private &&
+	git init -b main mirror-push/private &&
 	(
 		cd mirror-push/private &&
 		test_commit one &&
@@ -464,14 +477,14 @@ test_expect_success 'push mirrors act as mirrors during push' '
 	(
 		cd mirror-push/private &&
 		git branch new &&
-		git branch -m master renamed &&
+		git branch -m main renamed &&
 		git push public
 	) &&
 	(
 		cd mirror-push/private &&
 		git rev-parse --verify refs/heads/new &&
 		git rev-parse --verify refs/heads/renamed &&
-		test_must_fail git rev-parse --verify refs/heads/master
+		test_must_fail git rev-parse --verify refs/heads/main
 	)
 '
 
@@ -597,10 +610,10 @@ test_expect_success 'reject --no-no-tags' '
 '
 
 cat >one/expect <<\EOF
-  apis/master
+  apis/main
   apis/side
   drosophila/another
-  drosophila/master
+  drosophila/main
   drosophila/side
 EOF
 
@@ -617,11 +630,11 @@ test_expect_success 'update' '
 
 cat >one/expect <<\EOF
   drosophila/another
-  drosophila/master
+  drosophila/main
   drosophila/side
-  manduca/master
+  manduca/main
   manduca/side
-  megaloprepus/master
+  megaloprepus/main
   megaloprepus/side
 EOF
 
@@ -660,11 +673,11 @@ test_expect_success 'update --prune' '
 '
 
 cat >one/expect <<-\EOF
-  apis/master
+  apis/main
   apis/side
-  manduca/master
+  manduca/main
   manduca/side
-  megaloprepus/master
+  megaloprepus/main
   megaloprepus/side
 EOF
 
@@ -684,7 +697,7 @@ test_expect_success 'update default' '
 
 cat >one/expect <<\EOF
   drosophila/another
-  drosophila/master
+  drosophila/main
   drosophila/side
 EOF
 
@@ -721,8 +734,8 @@ test_expect_success '"remote show" does not show symbolic refs' '
 	(
 		cd three &&
 		git remote show origin >output &&
-		! grep "^ *HEAD$" < output &&
-		! grep -i stale < output
+		! grep "^ *HEAD$" <output &&
+		! grep -i stale <output
 	)
 '
 
@@ -738,14 +751,14 @@ test_expect_success 'rename a remote' '
 	git clone one four &&
 	(
 		cd four &&
-		git config branch.master.pushRemote origin &&
+		git config branch.main.pushRemote origin &&
 		git remote rename origin upstream &&
 		test -z "$(git for-each-ref refs/remotes/origin)" &&
-		test "$(git symbolic-ref refs/remotes/upstream/HEAD)" = "refs/remotes/upstream/master" &&
-		test "$(git rev-parse upstream/master)" = "$(git rev-parse master)" &&
+		test "$(git symbolic-ref refs/remotes/upstream/HEAD)" = "refs/remotes/upstream/main" &&
+		test "$(git rev-parse upstream/main)" = "$(git rev-parse main)" &&
 		test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/remotes/upstream/*" &&
-		test "$(git config branch.master.remote)" = "upstream" &&
-		test "$(git config branch.master.pushRemote)" = "upstream" &&
+		test "$(git config branch.main.remote)" = "upstream" &&
+		test "$(git config branch.main.pushRemote)" = "upstream" &&
 		test "$(git config --global remote.pushDefault)" = "origin"
 	)
 '
@@ -791,7 +804,7 @@ test_expect_success 'rename does not update a non-default fetch refspec' '
 		git config remote.origin.fetch +refs/heads/*:refs/heads/origin/* &&
 		git remote rename origin upstream &&
 		test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/heads/origin/*" &&
-		git rev-parse -q origin/master
+		git rev-parse -q origin/main
 	)
 '
 
@@ -811,7 +824,7 @@ test_expect_success 'rename a remote with name prefix of other remote' '
 		cd four.three &&
 		git remote add o git://example.com/repo.git &&
 		git remote rename o upstream &&
-		test "$(git rev-parse origin/master)" = "$(git rev-parse master)"
+		test "$(git rev-parse origin/main)" = "$(git rev-parse main)"
 	)
 '
 
@@ -827,11 +840,11 @@ test_expect_success 'remove a remote' '
 	git clone one four.five &&
 	(
 		cd four.five &&
-		git config branch.master.pushRemote origin &&
+		git config branch.main.pushRemote origin &&
 		git remote remove origin &&
 		test -z "$(git for-each-ref refs/remotes/origin)" &&
-		test_must_fail git config branch.master.remote &&
-		test_must_fail git config branch.master.pushRemote &&
+		test_must_fail git config branch.main.remote &&
+		test_must_fail git config branch.main.pushRemote &&
 		test "$(git config --global remote.pushDefault)" = "origin"
 	)
 '
@@ -872,9 +885,9 @@ test_expect_success 'remove a remote removes repo remote.pushDefault but keeps g
 
 cat >remotes_origin <<EOF
 URL: $(pwd)/one
-Push: refs/heads/master:refs/heads/upstream
+Push: refs/heads/main:refs/heads/upstream
 Push: refs/heads/next:refs/heads/upstream2
-Pull: refs/heads/master:refs/heads/origin
+Pull: refs/heads/main:refs/heads/origin
 Pull: refs/heads/next:refs/heads/origin2
 EOF
 
@@ -890,11 +903,11 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
 		test_path_is_missing .git/remotes/origin &&
 		test "$(git config remote.origin.url)" = "$origin_url" &&
 		cat >push_expected <<-\EOF &&
-		refs/heads/master:refs/heads/upstream
+		refs/heads/main:refs/heads/upstream
 		refs/heads/next:refs/heads/upstream2
 		EOF
 		cat >fetch_expected <<-\EOF &&
-		refs/heads/master:refs/heads/origin
+		refs/heads/main:refs/heads/origin
 		refs/heads/next:refs/heads/origin2
 		EOF
 		git config --get-all remote.origin.push >push_actual &&
@@ -910,12 +923,13 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
 	(
 		cd six &&
 		git remote rm origin &&
-		echo "$origin_url" >.git/branches/origin &&
+		mkdir -p .git/branches &&
+		echo "$origin_url#main" >.git/branches/origin &&
 		git remote rename origin origin &&
 		test_path_is_missing .git/branches/origin &&
 		test "$(git config remote.origin.url)" = "$origin_url" &&
-		test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin" &&
-		test "$(git config remote.origin.push)" = "HEAD:refs/heads/master"
+		test "$(git config remote.origin.fetch)" = "refs/heads/main:refs/heads/origin" &&
+		test "$(git config remote.origin.push)" = "HEAD:refs/heads/main"
 	)
 '
 
@@ -924,7 +938,8 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches (2)' 
 	(
 		cd seven &&
 		git remote rm origin &&
-		echo "quux#foom" > .git/branches/origin &&
+		mkdir -p .git/branches &&
+		echo "quux#foom" >.git/branches/origin &&
 		git remote rename origin origin &&
 		test_path_is_missing .git/branches/origin &&
 		test "$(git config remote.origin.url)" = "quux" &&
@@ -938,7 +953,7 @@ test_expect_success 'remote prune to cause a dangling symref' '
 	(
 		cd one &&
 		git checkout side2 &&
-		git branch -D master
+		git branch -D main
 	) &&
 	(
 		cd eight &&
@@ -981,22 +996,22 @@ test_expect_success 'remote set-branches' '
 	EOF
 	sort <<-\EOF >expect.replace &&
 	+refs/heads/maint:refs/remotes/scratch/maint
-	+refs/heads/master:refs/remotes/scratch/master
+	+refs/heads/main:refs/remotes/scratch/main
 	+refs/heads/next:refs/remotes/scratch/next
 	EOF
 	sort <<-\EOF >expect.add-two &&
 	+refs/heads/maint:refs/remotes/scratch/maint
-	+refs/heads/master:refs/remotes/scratch/master
+	+refs/heads/main:refs/remotes/scratch/main
 	+refs/heads/next:refs/remotes/scratch/next
 	+refs/heads/seen:refs/remotes/scratch/seen
 	+refs/heads/t/topic:refs/remotes/scratch/t/topic
 	EOF
 	sort <<-\EOF >expect.setup-ffonly &&
-	refs/heads/master:refs/remotes/scratch/master
+	refs/heads/main:refs/remotes/scratch/main
 	+refs/heads/next:refs/remotes/scratch/next
 	EOF
 	sort <<-\EOF >expect.respect-ffonly &&
-	refs/heads/master:refs/remotes/scratch/master
+	refs/heads/main:refs/remotes/scratch/main
 	+refs/heads/next:refs/remotes/scratch/next
 	+refs/heads/seen:refs/remotes/scratch/seen
 	EOF
@@ -1012,7 +1027,7 @@ test_expect_success 'remote set-branches' '
 		git config --get-all remote.scratch.fetch >config-result &&
 		sort <config-result >../actual.add &&
 
-		git remote set-branches scratch maint master next &&
+		git remote set-branches scratch maint main next &&
 		git config --get-all remote.scratch.fetch >config-result &&
 		sort <config-result >../actual.replace &&
 
@@ -1022,7 +1037,7 @@ test_expect_success 'remote set-branches' '
 
 		git config --unset-all remote.scratch.fetch &&
 		git config remote.scratch.fetch \
-			refs/heads/master:refs/remotes/scratch/master &&
+			refs/heads/main:refs/remotes/scratch/main &&
 		git config --add remote.scratch.fetch \
 			+refs/heads/next:refs/remotes/scratch/next &&
 		git config --get-all remote.scratch.fetch >config-result &&
@@ -1042,14 +1057,14 @@ test_expect_success 'remote set-branches' '
 
 test_expect_success 'remote set-branches with --mirror' '
 	echo "+refs/*:refs/*" >expect.initial &&
-	echo "+refs/heads/master:refs/heads/master" >expect.replace &&
+	echo "+refs/heads/main:refs/heads/main" >expect.replace &&
 	git clone --mirror .git/ setbranches-mirror &&
 	(
 		cd setbranches-mirror &&
 		git remote rename origin scratch &&
 		git config --get-all remote.scratch.fetch >../actual.initial &&
 
-		git remote set-branches scratch heads/master &&
+		git remote set-branches scratch heads/main &&
 		git config --get-all remote.scratch.fetch >../actual.replace
 	) &&
 	test_cmp expect.initial actual.initial &&
@@ -1295,7 +1310,7 @@ test_extra_arg () {
 test_extra_arg add nick url
 test_extra_arg rename origin newname
 test_extra_arg remove origin
-test_extra_arg set-head origin master
+test_extra_arg set-head origin main
 # set-branches takes any number of args
 test_extra_arg get-url origin newurl
 test_extra_arg set-url origin newurl oldurl
@@ -1312,7 +1327,7 @@ test_expect_success 'unqualified <dst> refspec DWIM and advice' '
 	test_when_finished "(cd test && git tag -d some-tag)" &&
 	(
 		cd test &&
-		git tag -a -m "Some tag" some-tag master &&
+		git tag -a -m "Some tag" some-tag main &&
 		exit_with=true &&
 		for type in commit tag tree blob
 		do
@@ -1338,7 +1353,7 @@ test_expect_success 'unqualified <dst> refspec DWIM and advice' '
 test_expect_success 'refs/remotes/* <src> refspec and unqualified <dst> DWIM and advice' '
 	(
 		cd two &&
-		git tag -a -m "Some tag" my-tag master &&
+		git tag -a -m "Some tag" my-tag main &&
 		git update-ref refs/trees/my-head-tree HEAD^{tree} &&
 		git update-ref refs/blobs/my-file-blob HEAD:file
 	) &&

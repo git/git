@@ -319,7 +319,7 @@ static void grep_source_name(struct grep_opt *opt, const char *filename,
 	}
 
 	if (opt->relative && opt->prefix_length)
-		quote_path_relative(filename + tree_name_len, opt->prefix, out);
+		quote_path(filename + tree_name_len, opt->prefix, out, 0);
 	else
 		quote_c_style(filename + tree_name_len, out, NULL, 0);
 
@@ -670,6 +670,17 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 				     NULL, 0);
 		obj_read_unlock();
 
+		if (!real_obj) {
+			char hex[GIT_MAX_HEXSZ + 1];
+			const char *name = list->objects[i].name;
+
+			if (!name) {
+				oid_to_hex_r(hex, &list->objects[i].item->oid);
+				name = hex;
+			}
+			die(_("invalid object '%s' given."), name);
+		}
+
 		/* load the gitmodules file for this rev */
 		if (recurse_submodules) {
 			submodule_free(opt->repo);
@@ -693,7 +704,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 	struct dir_struct dir;
 	int i, hit = 0;
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	if (!use_index)
 		dir.flags |= DIR_NO_GITLINKS;
 	if (exc_std)
@@ -705,6 +716,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 		if (hit && opt->status_only)
 			break;
 	}
+	dir_clear(&dir);
 	return hit;
 }
 
@@ -938,7 +950,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	init_grep_defaults(the_repository);
 	git_config(grep_cmd_config, NULL);
 	grep_init(&opt, the_repository, prefix);
 

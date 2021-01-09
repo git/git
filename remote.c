@@ -284,22 +284,18 @@ static void read_branches_file(struct remote *remote)
 	if (frag)
 		*(frag++) = '\0';
 	else
-		frag = (char *)git_default_branch_name();
+		frag = (char *)git_default_branch_name(0);
 
 	add_url_alias(remote, strbuf_detach(&buf, NULL));
-	strbuf_addf(&buf, "refs/heads/%s:refs/heads/%s",
-		    frag, remote->name);
-	refspec_append(&remote->fetch, buf.buf);
+	refspec_appendf(&remote->fetch, "refs/heads/%s:refs/heads/%s",
+			frag, remote->name);
 
 	/*
 	 * Cogito compatible push: push current HEAD to remote #branch
 	 * (master if missing)
 	 */
-	strbuf_reset(&buf);
-	strbuf_addf(&buf, "HEAD:refs/heads/%s", frag);
-	refspec_append(&remote->push, buf.buf);
+	refspec_appendf(&remote->push, "HEAD:refs/heads/%s", frag);
 	remote->fetch_tags = 1; /* always auto-follow */
-	strbuf_release(&buf);
 }
 
 static int handle_config(const char *key, const char *value, void *cb)
@@ -359,7 +355,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 	remote = make_remote(name, namelen);
 	remote->origin = REMOTE_CONFIG;
 	if (current_config_scope() == CONFIG_SCOPE_LOCAL ||
-	current_config_scope() == CONFIG_SCOPE_WORKTREE)
+	    current_config_scope() == CONFIG_SCOPE_WORKTREE)
 		remote->configured_in_repo = 1;
 	if (!strcmp(subkey, "mirror"))
 		remote->mirror = git_config_bool(key, value);
@@ -686,6 +682,101 @@ static int match_name_with_pattern(const char *key, const char *name,
 	return ret;
 }
 
+static int refspec_match(const struct refspec_item *refspec,
+			 const char *name)
+{
+	if (refspec->pattern)
+		return match_name_with_pattern(refspec->src, name, NULL, NULL);
+
+	return !strcmp(refspec->src, name);
+}
+
+static int omit_name_by_refspec(const char *name, struct refspec *rs)
+{
+	int i;
+
+	for (i = 0; i < rs->nr; i++) {
+		if (rs->items[i].negative && refspec_match(&rs->items[i], name))
+			return 1;
+	}
+	return 0;
+}
+
+struct ref *apply_negative_refspecs(struct ref *ref_map, struct refspec *rs)
+{
+	struct ref **tail;
+
+	for (tail = &ref_map; *tail; ) {
+		struct ref *ref = *tail;
+
+		if (omit_name_by_refspec(ref->name, rs)) {
+			*tail = ref->next;
+			free(ref->peer_ref);
+			free(ref);
+		} else
+			tail = &ref->next;
+	}
+
+	return ref_map;
+}
+
+static int query_matches_negative_refspec(struct refspec *rs, struct refspec_item *query)
+{
+	int i, matched_negative = 0;
+	int find_src = !query->src;
+	struct string_list reversed = STRING_LIST_INIT_NODUP;
+	const char *needle = find_src ? query->dst : query->src;
+
+	/*
+	 * Check whether the queried ref matches any negative refpsec. If so,
+	 * then we should ultimately treat this as not matching the query at
+	 * all.
+	 *
+	 * Note that negative refspecs always match the source, but the query
+	 * item uses the destination. To handle this, we apply pattern
+	 * refspecs in reverse to figure out if the query source matches any
+	 * of the negative refspecs.
+	 *
+	 * The first loop finds and expands all positive refspecs
+	 * matched by the queried ref.
+	 *
+	 * The second loop checks if any of the results of the first loop
+	 * match any negative refspec.
+	 */
+	for (i = 0; i < rs->nr; i++) {
+		struct refspec_item *refspec = &rs->items[i];
+		char *expn_name;
+
+		if (refspec->negative)
+			continue;
+
+		/* Note the reversal of src and dst */
+		if (refspec->pattern) {
+			const char *key = refspec->dst ? refspec->dst : refspec->src;
+			const char *value = refspec->src;
+
+			if (match_name_with_pattern(key, needle, value, &expn_name))
+				string_list_append_nodup(&reversed, expn_name);
+		} else if (refspec->matching) {
+			/* For the special matching refspec, any query should match */
+			string_list_append(&reversed, needle);
+		} else if (!refspec->src) {
+			BUG("refspec->src should not be null here");
+		} else if (!strcmp(needle, refspec->src)) {
+			string_list_append(&reversed, refspec->src);
+		}
+	}
+
+	for (i = 0; !matched_negative && i < reversed.nr; i++) {
+		if (omit_name_by_refspec(reversed.items[i].string, rs))
+			matched_negative = 1;
+	}
+
+	string_list_clear(&reversed, 0);
+
+	return matched_negative;
+}
+
 static void query_refspecs_multiple(struct refspec *rs,
 				    struct refspec_item *query,
 				    struct string_list *results)
@@ -696,6 +787,9 @@ static void query_refspecs_multiple(struct refspec *rs,
 	if (find_src && !query->dst)
 		BUG("query_refspecs_multiple: need either src or dst");
 
+	if (query_matches_negative_refspec(rs, query))
+		return;
+
 	for (i = 0; i < rs->nr; i++) {
 		struct refspec_item *refspec = &rs->items[i];
 		const char *key = find_src ? refspec->dst : refspec->src;
@@ -703,7 +797,7 @@ static void query_refspecs_multiple(struct refspec *rs,
 		const char *needle = find_src ? query->dst : query->src;
 		char **result = find_src ? &query->src : &query->dst;
 
-		if (!refspec->dst)
+		if (!refspec->dst || refspec->negative)
 			continue;
 		if (refspec->pattern) {
 			if (match_name_with_pattern(key, needle, value, result))
@@ -724,12 +818,15 @@ int query_refspecs(struct refspec *rs, struct refspec_item *query)
 	if (find_src && !query->dst)
 		BUG("query_refspecs: need either src or dst");
 
+	if (query_matches_negative_refspec(rs, query))
+		return -1;
+
 	for (i = 0; i < rs->nr; i++) {
 		struct refspec_item *refspec = &rs->items[i];
 		const char *key = find_src ? refspec->dst : refspec->src;
 		const char *value = find_src ? refspec->src : refspec->dst;
 
-		if (!refspec->dst)
+		if (!refspec->dst || refspec->negative)
 			continue;
 		if (refspec->pattern) {
 			if (match_name_with_pattern(key, needle, value, result)) {
@@ -1058,7 +1155,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	const char *dst_value = rs->dst;
 	char *dst_guess;
 
-	if (rs->pattern || rs->matching)
+	if (rs->pattern || rs->matching || rs->negative)
 		return 0;
 
 	matched_src = matched_dst = NULL;
@@ -1134,6 +1231,10 @@ static char *get_ref_match(const struct refspec *rs, const struct ref *ref,
 	int matching_refs = -1;
 	for (i = 0; i < rs->nr; i++) {
 		const struct refspec_item *item = &rs->items[i];
+
+		if (item->negative)
+			continue;
+
 		if (item->matching &&
 		    (matching_refs == -1 || item->force)) {
 			matching_refs = i;
@@ -1339,7 +1440,7 @@ int check_push_refs(struct ref *src, struct refspec *rs)
 	for (i = 0; i < rs->nr; i++) {
 		struct refspec_item *item = &rs->items[i];
 
-		if (item->pattern || item->matching)
+		if (item->pattern || item->matching || item->negative)
 			continue;
 
 		ret |= match_explicit_lhs(src, item, NULL, NULL);
@@ -1441,6 +1542,8 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		string_list_clear(&src_ref_index, 0);
 	}
 
+	*dst = apply_negative_refspecs(*dst, rs);
+
 	if (errs)
 		return -1;
 	return 0;
@@ -1475,12 +1578,23 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 * with the remote-tracking branch to find the value
 		 * to expect, but we did not have such a tracking
 		 * branch.
+		 *
+		 * If the tip of the remote-tracking ref is unreachable
+		 * from any reflog entry of its local ref indicating a
+		 * possible update since checkout; reject the push.
 		 */
 		if (ref->expect_old_sha1) {
 			if (!oideq(&ref->old_oid, &ref->old_oid_expect))
 				reject_reason = REF_STATUS_REJECT_STALE;
+			else if (ref->check_reachable && ref->unreachable)
+				reject_reason =
+					REF_STATUS_REJECT_REMOTE_UPDATED;
 			else
-				/* If the ref isn't stale then force the update. */
+				/*
+				 * If the ref isn't stale, and is reachable
+				 * from from one of the reflog entries of
+				 * the local branch, force the update.
+				 */
 				force_ref_update = 1;
 		}
 
@@ -1558,7 +1672,7 @@ static void set_merge(struct branch *ret)
 		    strcmp(ret->remote_name, "."))
 			continue;
 		if (dwim_ref(ret->merge_name[i], strlen(ret->merge_name[i]),
-			     &oid, &ref) == 1)
+			     &oid, &ref, 0) == 1)
 			ret->merge[i]->dst = ref;
 		else
 			ret->merge[i]->dst = xstrdup(ret->merge_name[i]);
@@ -1809,6 +1923,9 @@ int get_fetch_map(const struct ref *remote_refs,
 		  int missing_ok)
 {
 	struct ref *ref_map, **rmp;
+
+	if (refspec->negative)
+		return 0;
 
 	if (refspec->pattern) {
 		ref_map = get_expanded_map(remote_refs, refspec);
@@ -2099,7 +2216,8 @@ struct ref *guess_remote_head(const struct ref *head,
 
 	/* If a remote branch exists with the default branch name, let's use it. */
 	if (!all) {
-		char *ref = xstrfmt("refs/heads/%s", git_default_branch_name());
+		char *ref = xstrfmt("refs/heads/%s",
+				    git_default_branch_name(0));
 
 		r = find_ref_by_name(refs, ref);
 		free(ref);
@@ -2255,12 +2373,13 @@ int is_empty_cas(const struct push_cas_option *cas)
 
 /*
  * Look at remote.fetch refspec and see if we have a remote
- * tracking branch for the refname there.  Fill its current
- * value in sha1[].
+ * tracking branch for the refname there. Fill the name of
+ * the remote-tracking branch in *dst_refname, and the name
+ * of the commit object at its tip in oid[].
  * If we cannot do so, return negative to signal an error.
  */
 static int remote_tracking(struct remote *remote, const char *refname,
-			   struct object_id *oid)
+			   struct object_id *oid, char **dst_refname)
 {
 	char *dst;
 
@@ -2269,7 +2388,148 @@ static int remote_tracking(struct remote *remote, const char *refname,
 		return -1; /* no tracking ref for refname at remote */
 	if (read_ref(dst, oid))
 		return -1; /* we know what the tracking ref is but we cannot read it */
+
+	*dst_refname = dst;
 	return 0;
+}
+
+/*
+ * The struct "reflog_commit_array" and related helper functions
+ * are used for collecting commits into an array during reflog
+ * traversals in "check_and_collect_until()".
+ */
+struct reflog_commit_array {
+	struct commit **item;
+	size_t nr, alloc;
+};
+
+#define REFLOG_COMMIT_ARRAY_INIT { NULL, 0, 0 }
+
+/* Append a commit to the array. */
+static void append_commit(struct reflog_commit_array *arr,
+			  struct commit *commit)
+{
+	ALLOC_GROW(arr->item, arr->nr + 1, arr->alloc);
+	arr->item[arr->nr++] = commit;
+}
+
+/* Free and reset the array. */
+static void free_commit_array(struct reflog_commit_array *arr)
+{
+	FREE_AND_NULL(arr->item);
+	arr->nr = arr->alloc = 0;
+}
+
+struct check_and_collect_until_cb_data {
+	struct commit *remote_commit;
+	struct reflog_commit_array *local_commits;
+	timestamp_t remote_reflog_timestamp;
+};
+
+/* Get the timestamp of the latest entry. */
+static int peek_reflog(struct object_id *o_oid, struct object_id *n_oid,
+		       const char *ident, timestamp_t timestamp,
+		       int tz, const char *message, void *cb_data)
+{
+	timestamp_t *ts = cb_data;
+	*ts = timestamp;
+	return 1;
+}
+
+static int check_and_collect_until(struct object_id *o_oid,
+				   struct object_id *n_oid,
+				   const char *ident, timestamp_t timestamp,
+				   int tz, const char *message, void *cb_data)
+{
+	struct commit *commit;
+	struct check_and_collect_until_cb_data *cb = cb_data;
+
+	/* An entry was found. */
+	if (oideq(n_oid, &cb->remote_commit->object.oid))
+		return 1;
+
+	if ((commit = lookup_commit_reference(the_repository, n_oid)))
+		append_commit(cb->local_commits, commit);
+
+	/*
+	 * If the reflog entry timestamp is older than the remote ref's
+	 * latest reflog entry, there is no need to check or collect
+	 * entries older than this one.
+	 */
+	if (timestamp < cb->remote_reflog_timestamp)
+		return -1;
+
+	return 0;
+}
+
+#define MERGE_BASES_BATCH_SIZE 8
+
+/*
+ * Iterate through the reflog of the local ref to check if there is an entry
+ * for the given remote-tracking ref; runs until the timestamp of an entry is
+ * older than latest timestamp of remote-tracking ref's reflog. Any commits
+ * are that seen along the way are collected into an array to check if the
+ * remote-tracking ref is reachable from any of them.
+ */
+static int is_reachable_in_reflog(const char *local, const struct ref *remote)
+{
+	timestamp_t date;
+	struct commit *commit;
+	struct commit **chunk;
+	struct check_and_collect_until_cb_data cb;
+	struct reflog_commit_array arr = REFLOG_COMMIT_ARRAY_INIT;
+	size_t size = 0;
+	int ret = 0;
+
+	commit = lookup_commit_reference(the_repository, &remote->old_oid);
+	if (!commit)
+		goto cleanup_return;
+
+	/*
+	 * Get the timestamp from the latest entry
+	 * of the remote-tracking ref's reflog.
+	 */
+	for_each_reflog_ent_reverse(remote->tracking_ref, peek_reflog, &date);
+
+	cb.remote_commit = commit;
+	cb.local_commits = &arr;
+	cb.remote_reflog_timestamp = date;
+	ret = for_each_reflog_ent_reverse(local, check_and_collect_until, &cb);
+
+	/* We found an entry in the reflog. */
+	if (ret > 0)
+		goto cleanup_return;
+
+	/*
+	 * Check if the remote commit is reachable from any
+	 * of the commits in the collected array, in batches.
+	 */
+	for (chunk = arr.item; chunk < arr.item + arr.nr; chunk += size) {
+		size = arr.item + arr.nr - chunk;
+		if (MERGE_BASES_BATCH_SIZE < size)
+			size = MERGE_BASES_BATCH_SIZE;
+
+		if ((ret = in_merge_bases_many(commit, size, chunk)))
+			break;
+	}
+
+cleanup_return:
+	free_commit_array(&arr);
+	return ret;
+}
+
+/*
+ * Check for reachability of a remote-tracking
+ * ref in the reflog entries of its local ref.
+ */
+static void check_if_includes_upstream(struct ref *remote)
+{
+	struct ref *local = get_local_ref(remote->name);
+	if (!local)
+		return;
+
+	if (is_reachable_in_reflog(local->name, remote) <= 0)
+		remote->unreachable = 1;
 }
 
 static void apply_cas(struct push_cas_option *cas,
@@ -2286,8 +2546,12 @@ static void apply_cas(struct push_cas_option *cas,
 		ref->expect_old_sha1 = 1;
 		if (!entry->use_tracking)
 			oidcpy(&ref->old_oid_expect, &entry->expect);
-		else if (remote_tracking(remote, ref->name, &ref->old_oid_expect))
+		else if (remote_tracking(remote, ref->name,
+					 &ref->old_oid_expect,
+					 &ref->tracking_ref))
 			oidclr(&ref->old_oid_expect);
+		else
+			ref->check_reachable = cas->use_force_if_includes;
 		return;
 	}
 
@@ -2296,8 +2560,12 @@ static void apply_cas(struct push_cas_option *cas,
 		return;
 
 	ref->expect_old_sha1 = 1;
-	if (remote_tracking(remote, ref->name, &ref->old_oid_expect))
+	if (remote_tracking(remote, ref->name,
+			    &ref->old_oid_expect,
+			    &ref->tracking_ref))
 		oidclr(&ref->old_oid_expect);
+	else
+		ref->check_reachable = cas->use_force_if_includes;
 }
 
 void apply_push_cas(struct push_cas_option *cas,
@@ -2305,6 +2573,15 @@ void apply_push_cas(struct push_cas_option *cas,
 		    struct ref *remote_refs)
 {
 	struct ref *ref;
-	for (ref = remote_refs; ref; ref = ref->next)
+	for (ref = remote_refs; ref; ref = ref->next) {
 		apply_cas(cas, remote, ref);
+
+		/*
+		 * If "compare-and-swap" is in "use_tracking[_for_rest]"
+		 * mode, and if "--force-if-includes" was specified, run
+		 * the check.
+		 */
+		if (ref->check_reachable)
+			check_if_includes_upstream(ref);
+	}
 }

@@ -138,6 +138,10 @@ setup_user_tool () {
 	merge_cmd () {
 		( eval $merge_tool_cmd )
 	}
+
+	list_tool_variants () {
+		echo "$tool"
+	}
 }
 
 setup_tool () {

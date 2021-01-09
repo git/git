@@ -84,6 +84,25 @@ static void unpack_sideband(void)
 	}
 }
 
+static int send_split_sideband(void)
+{
+	const char *part1 = "Hello,";
+	const char *primary = "\001primary: regular output\n";
+	const char *part2 = " world!\n";
+
+	send_sideband(1, 2, part1, strlen(part1), LARGE_PACKET_MAX);
+	packet_write(1, primary, strlen(primary));
+	send_sideband(1, 2, part2, strlen(part2), LARGE_PACKET_MAX);
+	packet_response_end(1);
+
+	return 0;
+}
+
+static int receive_sideband(void)
+{
+	return recv_sideband("sideband", 0, 1);
+}
+
 int cmd__pkt_line(int argc, const char **argv)
 {
 	if (argc < 2)
@@ -95,6 +114,10 @@ int cmd__pkt_line(int argc, const char **argv)
 		unpack();
 	else if (!strcmp(argv[1], "unpack-sideband"))
 		unpack_sideband();
+	else if (!strcmp(argv[1], "send-split-sideband"))
+		send_split_sideband();
+	else if (!strcmp(argv[1], "receive-sideband"))
+		receive_sideband();
 	else
 		die("invalid argument '%s'", argv[1]);
 

@@ -36,9 +36,9 @@ endif::git-format-patch[]
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
-	the usual three. Implies `--patch`.
+	the usual three.
 ifndef::git-format-patch[]
-	Implies `-p`.
+	Implies `--patch`.
 endif::git-format-patch[]
 
 --output=<file>::
@@ -441,15 +441,20 @@ endif::git-format-patch[]
 
 --binary::
 	In addition to `--full-index`, output a binary diff that
-	can be applied with `git-apply`. Implies `--patch`.
+	can be applied with `git-apply`.
+ifndef::git-format-patch[]
+	Implies `--patch`.
+endif::git-format-patch[]
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
-	lines, show only a partial prefix.  This is
-	independent of the `--full-index` option above, which controls
-	the diff-patch output format.  Non default number of
-	digits can be specified with `--abbrev=<n>`.
+	lines, show the shortest prefix that is at least '<n>'
+	hexdigits long that uniquely refers the object.
+	In diff-patch output format, `--full-index` takes higher
+	precedence, i.e. if `--full-index` is specified, full blob
+	names will be shown regardless of `--abbrev`.
+	Non default number of digits can be specified with `--abbrev=<n>`.
 
 -B[<n>][/<m>]::
 --break-rewrites[=[<n>][/<m>]]::
@@ -686,6 +691,11 @@ endif::git-format-patch[]
 --ignore-blank-lines::
 	Ignore changes whose lines are all blank.
 
+-I<regex>::
+--ignore-matching-lines=<regex>::
+	Ignore changes whose all lines match <regex>.  This option may
+	be specified more than once.
+
 --inter-hunk-context=<lines>::
 	Show the context between diff hunks, up to the specified number
 	of lines, thereby fusing hunks that are close to each other.
@@ -694,7 +704,10 @@ endif::git-format-patch[]
 
 -W::
 --function-context::
-	Show whole surrounding functions of changes.
+	Show whole function as context lines for each change.
+	The function names are determined in the same way as
+	`git diff` works out patch hunk headers (see 'Defining a
+	custom hunk-header' in linkgit:gitattributes[5]).
 
 ifndef::git-format-patch[]
 ifndef::git-log[]

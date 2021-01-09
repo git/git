@@ -525,7 +525,8 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	parse_options_start_1(ctx, argc, argv, prefix, options, flags);
 }
 
-static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
+static void show_negated_gitcomp(const struct option *opts, int show_all,
+				 int nr_noopts)
 {
 	int printed_dashdash = 0;
 
@@ -535,7 +536,8 @@ static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
 
 		if (!opts->long_name)
 			continue;
-		if (opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE))
+		if (!show_all &&
+			(opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE)))
 			continue;
 		if (opts->flags & PARSE_OPT_NONEG)
 			continue;
@@ -572,7 +574,7 @@ static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
 	}
 }
 
-static int show_gitcomp(const struct option *opts)
+static int show_gitcomp(const struct option *opts, int show_all)
 {
 	const struct option *original_opts = opts;
 	int nr_noopts = 0;
@@ -582,7 +584,8 @@ static int show_gitcomp(const struct option *opts)
 
 		if (!opts->long_name)
 			continue;
-		if (opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE))
+		if (!show_all &&
+			(opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE)))
 			continue;
 
 		switch (opts->type) {
@@ -610,8 +613,8 @@ static int show_gitcomp(const struct option *opts)
 			nr_noopts++;
 		printf(" --%s%s", opts->long_name, suffix);
 	}
-	show_negated_gitcomp(original_opts, -1);
-	show_negated_gitcomp(original_opts, nr_noopts);
+	show_negated_gitcomp(original_opts, show_all, -1);
+	show_negated_gitcomp(original_opts, show_all, nr_noopts);
 	fputc('\n', stdout);
 	return PARSE_OPT_COMPLETE;
 }
@@ -723,9 +726,14 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		if (internal_help && ctx->total == 1 && !strcmp(arg + 1, "h"))
 			goto show_usage;
 
-		/* lone --git-completion-helper is asked by git-completion.bash */
-		if (ctx->total == 1 && !strcmp(arg + 1, "-git-completion-helper"))
-			return show_gitcomp(options);
+		/*
+		 * lone --git-completion-helper and --git-completion-helper-all
+		 * are asked by git-completion.bash
+		 */
+		if (ctx->total == 1 && !strcmp(arg, "--git-completion-helper"))
+			return show_gitcomp(options, 0);
+		if (ctx->total == 1 && !strcmp(arg, "--git-completion-helper-all"))
+			return show_gitcomp(options, 1);
 
 		if (arg[1] != '-') {
 			ctx->opt = arg + 1;

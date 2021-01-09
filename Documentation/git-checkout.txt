@@ -192,12 +192,16 @@ branches from there if `<branch>` is ambiguous but exists on the
 'origin' remote. See also `checkout.defaultRemote` in
 linkgit:git-config[1].
 +
-Use `--no-guess` to disable this.
+`--guess` is the default behavior. Use `--no-guess` to disable it.
++
+The default behavior can be set via the `checkout.guess` configuration
+variable.
 
 -l::
 	Create the new branch's reflog; see linkgit:git-branch[1] for
 	details.
 
+-d::
 --detach::
 	Rather than checking out a branch to work on it, check out a
 	commit for inspection and discardable experiments.
@@ -350,6 +354,10 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 <tree-ish>::
 	Tree to checkout from (when paths are given). If not specified,
 	the index will be used.
++
+As a special case, you may use `"A...B"` as a shortcut for the
+merge base of `A` and `B` if there is exactly one merge base. You can
+leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 \--::
 	Do not interpret any more arguments as options.

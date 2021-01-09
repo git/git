@@ -30,9 +30,9 @@ my ($fraginfo_color) =
 	$diff_use_color ? (
 		$repo->get_color('color.diff.frag', 'cyan'),
 	) : ();
-my ($diff_plain_color) =
+my ($diff_context_color) =
 	$diff_use_color ? (
-		$repo->get_color('color.diff.plain', ''),
+		$repo->get_color($repo->config('color.diff.context') ? 'color.diff.context' : 'color.diff.plain', ''),
 	) : ();
 my ($diff_old_color) =
 	$diff_use_color ? (
@@ -174,6 +174,24 @@ sub run_cmd_pipe {
 		die "$^O does not support: @invalid\n" if @invalid;
 		my @args = map { m/ /o ? "\"$_\"": $_ } @_;
 		return qx{@args};
+	} elsif (($^O eq 'MSWin32' || $^O eq 'msys') && (scalar @_ > 200) &&
+			grep $_ eq '--', @_) {
+		use File::Temp qw(tempfile);
+		my ($fhargs, $filename) =
+			tempfile('git-args-XXXXXX', UNLINK => 1);
+
+		my $cmd = 'cat '.$filename.' | xargs -0 -s 20000 ';
+		while ($_[0] ne '--') {
+			$cmd = $cmd . shift(@_) . ' ';
+		}
+
+		shift(@_);
+		print $fhargs join("\0", @_);
+		close($fhargs);
+
+		my $fh = undef;
+		open($fh, '-|', $cmd) or die;
+		return <$fh>;
 	} else {
 		my $fh = undef;
 		open($fh, '-|', @_) or die;
@@ -483,10 +501,8 @@ sub list_and_choose {
 		my $last_lf = 0;
 
 		if ($opts->{HEADER}) {
-			if (!$opts->{LIST_FLAT}) {
-				print "     ";
-			}
-			print colored $header_color, "$opts->{HEADER}\n";
+			my $indent = $opts->{LIST_FLAT} ? "" : "     ";
+			print colored $header_color, "$indent$opts->{HEADER}\n";
 		}
 		for ($i = 0; $i < @stuff; $i++) {
 			my $chosen = $chosen[$i] ? '*' : ' ';
@@ -714,7 +730,7 @@ sub parse_diff {
 	if (defined $patch_mode_revision) {
 		push @diff_cmd, get_diff_reference($patch_mode_revision);
 	}
-	my @diff = run_cmd_pipe("git", @diff_cmd, "--", $path);
+	my @diff = run_cmd_pipe("git", @diff_cmd, qw(--no-color --), $path);
 	my @colored = ();
 	if ($diff_use_color) {
 		my @display_cmd = ("git", @diff_cmd, qw(--color --), $path);
@@ -754,13 +770,16 @@ sub parse_diff_header {
 	my $head = { TEXT => [], DISPLAY => [], TYPE => 'header' };
 	my $mode = { TEXT => [], DISPLAY => [], TYPE => 'mode' };
 	my $deletion = { TEXT => [], DISPLAY => [], TYPE => 'deletion' };
-	my $addition = { TEXT => [], DISPLAY => [], TYPE => 'addition' };
+	my $addition;
 
 	for (my $i = 0; $i < @{$src->{TEXT}}; $i++) {
+		if ($src->{TEXT}->[$i] =~ /^new file/) {
+			$addition = 1;
+			$head->{TYPE} = 'addition';
+		}
 		my $dest =
 		   $src->{TEXT}->[$i] =~ /^(old|new) mode (\d+)$/ ? $mode :
 		   $src->{TEXT}->[$i] =~ /^deleted file/ ? $deletion :
-		   $src->{TEXT}->[$i] =~ /^new file/ ? $addition :
 		   $head;
 		push @{$dest->{TEXT}}, $src->{TEXT}->[$i];
 		push @{$dest->{DISPLAY}}, $src->{DISPLAY}->[$i];
@@ -1045,7 +1064,7 @@ sub color_diff {
 		colored((/^@/  ? $fraginfo_color :
 			 /^\+/ ? $diff_new_color :
 			 /^-/  ? $diff_old_color :
-			 $diff_plain_color),
+			 $diff_context_color),
 			$_);
 	} @_;
 }
@@ -1501,12 +1520,6 @@ sub patch_update_file {
 			push @{$deletion->{DISPLAY}}, @{$hunk->{DISPLAY}};
 		}
 		@hunk = ($deletion);
-	} elsif (@{$addition->{TEXT}}) {
-		foreach my $hunk (@hunk) {
-			push @{$addition->{TEXT}}, @{$hunk->{TEXT}};
-			push @{$addition->{DISPLAY}}, @{$hunk->{DISPLAY}};
-		}
-		@hunk = ($addition);
 	}
 
 	$num = scalar @hunk;
@@ -1516,6 +1529,7 @@ sub patch_update_file {
 		my ($prev, $next, $other, $undecided, $i);
 		$other = '';
 
+		last if ($ix and !$num);
 		if ($num <= $ix) {
 			$ix = 0;
 		}
@@ -1548,35 +1562,51 @@ sub patch_update_file {
 				last;
 			}
 		}
-		last if (!$undecided);
+		last if (!$undecided && ($num || !$addition));
 
-		if ($hunk[$ix]{TYPE} eq 'hunk' &&
-		    hunk_splittable($hunk[$ix]{TEXT})) {
-			$other .= ',s';
+		if ($num) {
+			if ($hunk[$ix]{TYPE} eq 'hunk' &&
+			    hunk_splittable($hunk[$ix]{TEXT})) {
+				$other .= ',s';
+			}
+			if ($hunk[$ix]{TYPE} eq 'hunk') {
+				$other .= ',e';
+			}
+			for (@{$hunk[$ix]{DISPLAY}}) {
+				print;
+			}
 		}
-		if ($hunk[$ix]{TYPE} eq 'hunk') {
-			$other .= ',e';
-		}
-		for (@{$hunk[$ix]{DISPLAY}}) {
-			print;
-		}
-		print colored $prompt_color, "(", ($ix+1), "/$num) ",
-			sprintf(__($patch_update_prompt_modes{$patch_mode}{$hunk[$ix]{TYPE}}), $other);
+		my $type = $num ? $hunk[$ix]{TYPE} : $head->{TYPE};
+		print colored $prompt_color, "(", ($ix+1), "/", ($num ? $num : 1), ") ",
+			sprintf(__($patch_update_prompt_modes{$patch_mode}{$type}), $other);
 
 		my $line = prompt_single_character;
 		last unless defined $line;
 		if ($line) {
 			if ($line =~ /^y/i) {
-				$hunk[$ix]{USE} = 1;
+				if ($num) {
+					$hunk[$ix]{USE} = 1;
+				} else {
+					$head->{USE} = 1;
+				}
 			}
 			elsif ($line =~ /^n/i) {
-				$hunk[$ix]{USE} = 0;
+				if ($num) {
+					$hunk[$ix]{USE} = 0;
+				} else {
+					$head->{USE} = 0;
+				}
 			}
 			elsif ($line =~ /^a/i) {
-				while ($ix < $num) {
-					if (!defined $hunk[$ix]{USE}) {
-						$hunk[$ix]{USE} = 1;
+				if ($num) {
+					while ($ix < $num) {
+						if (!defined $hunk[$ix]{USE}) {
+							$hunk[$ix]{USE} = 1;
+						}
+						$ix++;
 					}
+				} else {
+					$head->{USE} = 1;
 					$ix++;
 				}
 				next;
@@ -1613,19 +1643,28 @@ sub patch_update_file {
 				next;
 			}
 			elsif ($line =~ /^d/i) {
-				while ($ix < $num) {
-					if (!defined $hunk[$ix]{USE}) {
-						$hunk[$ix]{USE} = 0;
+				if ($num) {
+					while ($ix < $num) {
+						if (!defined $hunk[$ix]{USE}) {
+							$hunk[$ix]{USE} = 0;
+						}
+						$ix++;
 					}
+				} else {
+					$head->{USE} = 0;
 					$ix++;
 				}
 				next;
 			}
 			elsif ($line =~ /^q/i) {
-				for ($i = 0; $i < $num; $i++) {
-					if (!defined $hunk[$i]{USE}) {
-						$hunk[$i]{USE} = 0;
+				if ($num) {
+					for ($i = 0; $i < $num; $i++) {
+						if (!defined $hunk[$i]{USE}) {
+							$hunk[$i]{USE} = 0;
+						}
 					}
+				} elsif (!defined $head->{USE}) {
+					$head->{USE} = 0;
 				}
 				$quit = 1;
 				last;
@@ -1743,7 +1782,7 @@ sub patch_update_file {
 		}
 	}
 
-	@hunk = coalesce_overlapping_hunks(@hunk);
+	@hunk = coalesce_overlapping_hunks(@hunk) if ($num);
 
 	my $n_lofs = 0;
 	my @result = ();
@@ -1753,7 +1792,7 @@ sub patch_update_file {
 		}
 	}
 
-	if (@result) {
+	if (@result or $head->{USE}) {
 		my @patch = reassemble_patch($head->{TEXT}, @result);
 		my $apply_routine = $patch_mode_flavour{APPLY};
 		&$apply_routine(@patch);
@@ -1807,6 +1846,13 @@ sub process_args {
 				$arg = shift @ARGV or die __("missing --");
 				if ($arg ne '--') {
 					$patch_mode_revision = $arg;
+
+					# NEEDSWORK: Instead of comparing to the literal "HEAD",
+					# compare the commit objects instead so that other ways of
+					# saying the same thing (such as "@") are also handled
+					# appropriately.
+					#
+					# This applies to the cases below too.
 					$patch_mode = ($arg eq 'HEAD' ?
 						       'reset_head' : 'reset_nothead');
 					$arg = shift @ARGV or die __("missing --");

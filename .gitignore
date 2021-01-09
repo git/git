@@ -115,7 +115,6 @@
 /git-pack-redundant
 /git-pack-objects
 /git-pack-refs
-/git-parse-remote
 /git-patch-id
 /git-prune
 /git-prune-packed
@@ -135,8 +134,6 @@
 /git-remote-ftps
 /git-remote-fd
 /git-remote-ext
-/git-remote-testpy
-/git-remote-testsvn
 /git-repack
 /git-replace
 /git-request-pull
@@ -149,11 +146,9 @@
 /git-rm
 /git-send-email
 /git-send-pack
-/git-serve
 /git-sh-i18n
 /git-sh-i18n--envsubst
 /git-sh-setup
-/git-sh-i18n
 /git-shell
 /git-shortlog
 /git-show
@@ -199,6 +194,7 @@
 /git.spec
 *.exe
 *.[aos]
+*.o.json
 *.py[co]
 .depend/
 *.gcda
@@ -220,6 +216,7 @@
 /tags
 /TAGS
 /cscope*
+/compile_commands.json
 *.hcc
 *.obj
 *.lib
@@ -242,3 +239,4 @@ Release/
 /git.VC.VC.opendb
 /git.VC.db
 *.dSYM
+/contrib/buildsystems/out

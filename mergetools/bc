@@ -25,4 +25,5 @@ translate_merge_tool_path() {
 list_tool_variants () {
 	echo bc
 	echo bc3
+	echo bc4
 }

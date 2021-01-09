@@ -17,6 +17,8 @@ static unsigned long offset;
 
 static int tar_umask = 002;
 
+static gzFile gzip;
+
 static int write_tar_filter_archive(const struct archiver *ar,
 				    struct archiver_args *args);
 
@@ -38,11 +40,21 @@ static int write_tar_filter_archive(const struct archiver *ar,
 #define USTAR_MAX_MTIME 077777777777ULL
 #endif
 
+/* writes out the whole block, or dies if fails */
+static void write_block_or_die(const char *block) {
+	if (gzip) {
+		if (gzwrite(gzip, block, (unsigned) BLOCKSIZE) != BLOCKSIZE)
+			die(_("gzwrite failed"));
+	} else {
+		write_or_die(1, block, BLOCKSIZE);
+	}
+}
+
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
 {
 	if (offset == BLOCKSIZE) {
-		write_or_die(1, block, BLOCKSIZE);
+		write_block_or_die(block);
 		offset = 0;
 	}
 }
@@ -66,7 +78,7 @@ static void do_write_blocked(const void *data, unsigned long size)
 		write_if_needed();
 	}
 	while (size >= BLOCKSIZE) {
-		write_or_die(1, buf, BLOCKSIZE);
+		write_block_or_die(buf);
 		size -= BLOCKSIZE;
 		buf += BLOCKSIZE;
 	}
@@ -101,10 +113,10 @@ static void write_trailer(void)
 {
 	int tail = BLOCKSIZE - offset;
 	memset(block + offset, 0, tail);
-	write_or_die(1, block, BLOCKSIZE);
+	write_block_or_die(block);
 	if (tail < 2 * RECORDSIZE) {
 		memset(block, 0, offset);
-		write_or_die(1, block, BLOCKSIZE);
+		write_block_or_die(block);
 	}
 }
 
@@ -242,13 +254,12 @@ static void write_extended_header(struct archiver_args *args,
 static int write_tar_entry(struct archiver_args *args,
 			   const struct object_id *oid,
 			   const char *path, size_t pathlen,
-			   unsigned int mode)
+			   unsigned int mode,
+			   void *buffer, unsigned long size)
 {
 	struct ustar_header header;
 	struct strbuf ext_header = STRBUF_INIT;
-	unsigned int old_mode = mode;
-	unsigned long size, size_in_header;
-	void *buffer;
+	unsigned long size_in_header;
 	int err = 0;
 
 	memset(&header, 0, sizeof(header));
@@ -282,20 +293,6 @@ static int write_tar_entry(struct archiver_args *args,
 	} else
 		memcpy(header.name, path, pathlen);
 
-	if (S_ISREG(mode) && !args->convert &&
-	    oid_object_info(args->repo, oid, &size) == OBJ_BLOB &&
-	    size > big_file_threshold)
-		buffer = NULL;
-	else if (S_ISLNK(mode) || S_ISREG(mode)) {
-		enum object_type type;
-		buffer = object_file_to_archive(args, path, oid, old_mode, &type, &size);
-		if (!buffer)
-			return error(_("cannot read %s"), oid_to_hex(oid));
-	} else {
-		buffer = NULL;
-		size = 0;
-	}
-
 	if (S_ISLNK(mode)) {
 		if (size > sizeof(header.linkname)) {
 			xsnprintf(header.linkname, sizeof(header.linkname),
@@ -326,7 +323,6 @@ static int write_tar_entry(struct archiver_args *args,
 		else
 			err = stream_blocked(args->repo, oid);
 	}
-	free(buffer);
 	return err;
 }
 
@@ -390,7 +386,8 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 		ar = xcalloc(1, sizeof(*ar));
 		ar->name = xmemdupz(name, namelen);
 		ar->write_archive = write_tar_filter_archive;
-		ar->flags = ARCHIVER_WANT_COMPRESSION_LEVELS;
+		ar->flags = ARCHIVER_WANT_COMPRESSION_LEVELS |
+			    ARCHIVER_HIGH_COMPRESSION_LEVELS;
 		ALLOC_GROW(tar_filters, nr_tar_filters + 1, alloc_tar_filters);
 		tar_filters[nr_tar_filters++] = ar;
 	}
@@ -461,18 +458,34 @@ static int write_tar_filter_archive(const struct archiver *ar,
 	filter.use_shell = 1;
 	filter.in = -1;
 
-	if (start_command(&filter) < 0)
-		die_errno(_("unable to start '%s' filter"), argv[0]);
-	close(1);
-	if (dup2(filter.in, 1) < 0)
-		die_errno(_("unable to redirect descriptor"));
-	close(filter.in);
+	if (!strcmp("gzip -cn", ar->data)) {
+		char outmode[4] = "wb\0";
+
+		if (args->compression_level >= 0 && args->compression_level <= 9)
+			outmode[2] = '0' + args->compression_level;
+
+		gzip = gzdopen(fileno(stdout), outmode);
+		if (!gzip)
+			die(_("Could not gzdopen stdout"));
+	} else {
+		if (start_command(&filter) < 0)
+			die_errno(_("unable to start '%s' filter"), argv[0]);
+		close(1);
+		if (dup2(filter.in, 1) < 0)
+			die_errno(_("unable to redirect descriptor"));
+		close(filter.in);
+	}
 
 	r = write_tar_archive(ar, args);
 
-	close(1);
-	if (finish_command(&filter) != 0)
-		die(_("'%s' filter reported error"), argv[0]);
+	if (gzip) {
+		if (gzclose(gzip) != Z_OK)
+			die(_("gzclose failed"));
+	} else {
+		close(1);
+		if (finish_command(&filter) != 0)
+			die(_("'%s' filter reported error"), argv[0]);
+	}
 
 	strbuf_release(&cmd);
 	return r;

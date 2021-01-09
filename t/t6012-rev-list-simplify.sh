@@ -168,10 +168,10 @@ test_expect_success '--full-diff is not affected by --parents' '
 #
 # This example is explained in Documentation/rev-list-options.txt
 
-test_expect_success 'rebuild repo' '
+test_expect_success 'setup rebuild repo' '
 	rm -rf .git * &&
 	git init &&
-	git switch -c main &&
+	git switch -c topic &&
 
 	echo base >file &&
 	git add file &&
@@ -186,7 +186,7 @@ test_expect_success 'rebuild repo' '
 	git add file &&
 	test_commit B &&
 
-	git switch main &&
+	git switch topic &&
 	test_must_fail git merge -m "M" B &&
 	echo A >file &&
 	echo B >>file &&
@@ -207,7 +207,7 @@ test_expect_success 'rebuild repo' '
 	git merge -m R -Xtheirs X &&
 	note R &&
 
-	git switch main &&
+	git switch topic &&
 	git merge -m N R &&
 	note N &&
 
@@ -221,7 +221,7 @@ test_expect_success 'rebuild repo' '
 	git add z &&
 	test_commit Z &&
 
-	git switch main &&
+	git switch topic &&
 	git merge -m O Z &&
 	note O &&
 

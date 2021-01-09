@@ -136,7 +136,7 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 			struct object_id discard;
 			char *full;
 
-			switch (dwim_ref(name, strlen(name), &discard, &full)) {
+			switch (dwim_ref(name, strlen(name), &discard, &full, 0)) {
 			case 0:
 				/*
 				 * Not found -- not a ref.  We could
@@ -426,6 +426,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	struct option *opts = NULL;
 	int onb = 0, osz = 0, unb = 0, usz = 0;
 
+	git_config(git_default_config, NULL);
 	strbuf_addstr(&parsed, "set --");
 	argc = parse_options(argc, argv, prefix, parseopt_opts, parseopt_usage,
 	                     PARSE_OPT_KEEP_DASHDASH);
@@ -595,6 +596,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	struct object_context unused;
 	struct strbuf buf = STRBUF_INIT;
 	const int hexsz = the_hash_algo->hexsz;
+	int seen_end_of_options = 0;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -622,21 +624,29 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
-		if (!strcmp(arg, "--local-env-vars")) {
-			int i;
-			for (i = 0; local_repo_env[i]; i++)
-				printf("%s\n", local_repo_env[i]);
+		if (as_is) {
+			if (show_file(arg, output_prefix) && as_is < 2)
+				verify_filename(prefix, arg, 0);
 			continue;
 		}
-		if (!strcmp(arg, "--resolve-git-dir")) {
-			const char *gitdir = argv[++i];
-			if (!gitdir)
-				die("--resolve-git-dir requires an argument");
-			gitdir = resolve_gitdir(gitdir);
-			if (!gitdir)
-				die("not a gitdir '%s'", argv[i]);
-			puts(gitdir);
-			continue;
+
+		if (!seen_end_of_options) {
+			if (!strcmp(arg, "--local-env-vars")) {
+				int i;
+				for (i = 0; local_repo_env[i]; i++)
+					printf("%s\n", local_repo_env[i]);
+				continue;
+			}
+			if (!strcmp(arg, "--resolve-git-dir")) {
+				const char *gitdir = argv[++i];
+				if (!gitdir)
+					die("--resolve-git-dir requires an argument");
+				gitdir = resolve_gitdir(gitdir);
+				if (!gitdir)
+					die("not a gitdir '%s'", argv[i]);
+				puts(gitdir);
+				continue;
+			}
 		}
 
 		/* The rest of the options require a git repository. */
@@ -646,41 +656,36 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			did_repo_setup = 1;
 		}
 
-		if (!strcmp(arg, "--git-path")) {
-			if (!argv[i + 1])
-				die("--git-path requires an argument");
-			strbuf_reset(&buf);
-			puts(relative_path(git_path("%s", argv[i + 1]),
-					   prefix, &buf));
-			i++;
-			continue;
-		}
-		if (as_is) {
-			if (show_file(arg, output_prefix) && as_is < 2)
-				verify_filename(prefix, arg, 0);
-			continue;
-		}
-		if (!strcmp(arg,"-n")) {
-			if (++i >= argc)
-				die("-n requires an argument");
-			if ((filter & DO_FLAGS) && (filter & DO_REVS)) {
-				show(arg);
-				show(argv[i]);
-			}
-			continue;
-		}
-		if (starts_with(arg, "-n")) {
-			if ((filter & DO_FLAGS) && (filter & DO_REVS))
-				show(arg);
+		if (!strcmp(arg, "--")) {
+			as_is = 2;
+			/* Pass on the "--" if we show anything but files.. */
+			if (filter & (DO_FLAGS | DO_REVS))
+				show_file(arg, 0);
 			continue;
 		}
 
-		if (*arg == '-') {
-			if (!strcmp(arg, "--")) {
-				as_is = 2;
-				/* Pass on the "--" if we show anything but files.. */
-				if (filter & (DO_FLAGS | DO_REVS))
-					show_file(arg, 0);
+		if (!seen_end_of_options && *arg == '-') {
+			if (!strcmp(arg, "--git-path")) {
+				if (!argv[i + 1])
+					die("--git-path requires an argument");
+				strbuf_reset(&buf);
+				puts(relative_path(git_path("%s", argv[i + 1]),
+						   prefix, &buf));
+				i++;
+				continue;
+			}
+			if (!strcmp(arg,"-n")) {
+				if (++i >= argc)
+					die("-n requires an argument");
+				if ((filter & DO_FLAGS) && (filter & DO_REVS)) {
+					show(arg);
+					show(argv[i]);
+				}
+				continue;
+			}
+			if (starts_with(arg, "-n")) {
+				if ((filter & DO_FLAGS) && (filter & DO_REVS))
+					show(arg);
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
@@ -935,6 +940,12 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 					die("unknown mode for --show-object-format: %s",
 					    arg);
 				puts(the_hash_algo->name);
+				continue;
+			}
+			if (!strcmp(arg, "--end-of-options")) {
+				seen_end_of_options = 1;
+				if (filter & (DO_FLAGS | DO_REVS))
+					show_file(arg, 0);
 				continue;
 			}
 			if (show_flag(arg) && verify)

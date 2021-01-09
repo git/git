@@ -46,22 +46,22 @@ test_expect_success 'rebase fast-forward to master' '
 
 test_expect_success 'rebase --stat' '
 	git reset --hard start &&
-        git rebase --stat master >diffstat.txt &&
-        grep "^ fileX |  *1 +$" diffstat.txt
+	git rebase --stat master >diffstat.txt &&
+	grep "^ fileX |  *1 +$" diffstat.txt
 '
 
 test_expect_success 'rebase w/config rebase.stat' '
 	git reset --hard start &&
-        git config rebase.stat true &&
-        git rebase master >diffstat.txt &&
-        grep "^ fileX |  *1 +$" diffstat.txt
+	git config rebase.stat true &&
+	git rebase master >diffstat.txt &&
+	grep "^ fileX |  *1 +$" diffstat.txt
 '
 
 test_expect_success 'rebase -n overrides config rebase.stat config' '
 	git reset --hard start &&
-        git config rebase.stat true &&
-        git rebase -n master >diffstat.txt &&
-        ! grep "^ fileX |  *1 +$" diffstat.txt
+	git config rebase.stat true &&
+	git rebase -n master >diffstat.txt &&
+	! grep "^ fileX |  *1 +$" diffstat.txt
 '
 
 # Output to stderr:

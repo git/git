@@ -883,6 +883,59 @@ test_expect_success 'fetching with valid packfile URI but invalid hash fails' '
 	test_i18ngrep "pack downloaded from.*does not match expected hash" err
 '
 
+test_expect_success 'packfile-uri with transfer.fsckobjects' '
+	P="$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+	rm -rf "$P" http_child log &&
+
+	git init "$P" &&
+	git -C "$P" config "uploadpack.allowsidebandall" "true" &&
+
+	echo my-blob >"$P/my-blob" &&
+	git -C "$P" add my-blob &&
+	git -C "$P" commit -m x &&
+
+	configure_exclusion "$P" my-blob >h &&
+
+	sane_unset GIT_TEST_SIDEBAND_ALL &&
+	git -c protocol.version=2 -c transfer.fsckobjects=1 \
+		-c fetch.uriprotocols=http,https \
+		clone "$HTTPD_URL/smart/http_parent" http_child &&
+
+	# Ensure that there are exactly 4 files (2 .pack and 2 .idx).
+	ls http_child/.git/objects/pack/* >filelist &&
+	test_line_count = 4 filelist
+'
+
+test_expect_success 'packfile-uri with transfer.fsckobjects fails on bad object' '
+	P="$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+	rm -rf "$P" http_child log &&
+
+	git init "$P" &&
+	git -C "$P" config "uploadpack.allowsidebandall" "true" &&
+
+	cat >bogus-commit <<-EOF &&
+	tree $EMPTY_TREE
+	author Bugs Bunny 1234567890 +0000
+	committer Bugs Bunny <bugs@bun.ni> 1234567890 +0000
+
+	This commit object intentionally broken
+	EOF
+	BOGUS=$(git -C "$P" hash-object -t commit -w --stdin <bogus-commit) &&
+	git -C "$P" branch bogus-branch "$BOGUS" &&
+
+	echo my-blob >"$P/my-blob" &&
+	git -C "$P" add my-blob &&
+	git -C "$P" commit -m x &&
+
+	configure_exclusion "$P" my-blob >h &&
+
+	sane_unset GIT_TEST_SIDEBAND_ALL &&
+	test_must_fail git -c protocol.version=2 -c transfer.fsckobjects=1 \
+		-c fetch.uriprotocols=http,https \
+		clone "$HTTPD_URL/smart/http_parent" http_child 2>error &&
+	test_i18ngrep "invalid author/committer line - missing email" error
+'
+
 # DO NOT add non-httpd-specific tests here, because the last part of this
 # test script is only executed when httpd is available and enabled.
 

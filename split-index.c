@@ -79,8 +79,10 @@ void move_cache_to_base_index(struct index_state *istate)
 	if (si->base &&
 		si->base->ce_mem_pool) {
 
-		if (!istate->ce_mem_pool)
-			mem_pool_init(&istate->ce_mem_pool, 0);
+		if (!istate->ce_mem_pool) {
+			istate->ce_mem_pool = xmalloc(sizeof(struct mem_pool));
+			mem_pool_init(istate->ce_mem_pool, 0);
+		}
 
 		mem_pool_combine(istate->ce_mem_pool, istate->split_index->base->ce_mem_pool);
 	}

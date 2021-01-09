@@ -4,8 +4,8 @@ test_description='blob conversion via gitattributes'
 
 . ./test-lib.sh
 
-TEST_ROOT="$PWD"
-PATH=$TEST_ROOT:$PATH
+TEST_ROOT="$(pwd)"
+PATH=$PWD$PATH_SEP$PATH
 
 write_script <<\EOF "$TEST_ROOT/rot13.sh"
 tr \
@@ -21,10 +21,6 @@ generate_random_characters () {
 	NAME=$2
 	test-tool genrandom some-seed $LEN |
 		perl -pe "s/./chr((ord($&) % 26) + ord('a'))/sge" >"$TEST_ROOT/$NAME"
-}
-
-file_size () {
-	test-tool path-utils file-size "$1"
 }
 
 filter_git () {
@@ -361,9 +357,9 @@ test_expect_success PERL 'required process filter should filter data' '
 		cp "$TEST_ROOT/test3 '\''sq'\'',\$x=.o" "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 		>test4-empty.r &&
 
-		S=$(file_size test.r) &&
-		S2=$(file_size test2.r) &&
-		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		S=$(test_file_size test.r) &&
+		S2=$(test_file_size test2.r) &&
+		S3=$(test_file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
 		M=$(git hash-object test.r) &&
 		M2=$(git hash-object test2.r) &&
 		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
@@ -432,9 +428,9 @@ test_expect_success PERL 'required process filter should filter data for various
 	(
 		cd repo &&
 
-		S=$(file_size test.r) &&
-		S2=$(file_size test2.r) &&
-		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		S=$(test_file_size test.r) &&
+		S2=$(test_file_size test2.r) &&
+		S3=$(test_file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
 		M=$(git hash-object test.r) &&
 		M2=$(git hash-object test2.r) &&
 		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
@@ -549,7 +545,7 @@ test_expect_success PERL 'required process filter takes precedence' '
 
 		echo "*.r filter=protocol" >.gitattributes &&
 		cp "$TEST_ROOT/test.o" test.r &&
-		S=$(file_size test.r) &&
+		S=$(test_file_size test.r) &&
 
 		# Check that the process filter is invoked here
 		filter_git add . &&
@@ -573,7 +569,7 @@ test_expect_success PERL 'required process filter should be used only for "clean
 
 		echo "*.r filter=protocol" >.gitattributes &&
 		cp "$TEST_ROOT/test.o" test.r &&
-		S=$(file_size test.r) &&
+		S=$(test_file_size test.r) &&
 
 		filter_git add . &&
 		cat >expected.log <<-EOF &&
@@ -697,9 +693,9 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 		echo "this is going to fail" >smudge-write-fail.o &&
 		cp smudge-write-fail.o smudge-write-fail.r &&
 
-		S=$(file_size test.r) &&
-		S2=$(file_size test2.r) &&
-		SF=$(file_size smudge-write-fail.r) &&
+		S=$(test_file_size test.r) &&
+		S2=$(test_file_size test2.r) &&
+		SF=$(test_file_size smudge-write-fail.r) &&
 		M=$(git hash-object test.r) &&
 		M2=$(git hash-object test2.r) &&
 		MF=$(git hash-object smudge-write-fail.r) &&
@@ -752,9 +748,9 @@ test_expect_success PERL 'process filter should not be restarted if it signals a
 		echo "this will cause an error" >error.o &&
 		cp error.o error.r &&
 
-		S=$(file_size test.r) &&
-		S2=$(file_size test2.r) &&
-		SE=$(file_size error.r) &&
+		S=$(test_file_size test.r) &&
+		S2=$(test_file_size test2.r) &&
+		SE=$(test_file_size error.r) &&
 		M=$(git hash-object test.r) &&
 		M2=$(git hash-object test2.r) &&
 		ME=$(git hash-object error.r) &&
@@ -797,7 +793,7 @@ test_expect_success PERL 'process filter abort stops processing of all further f
 
 		M="blob=$(git hash-object abort.r)" &&
 		rm -f debug.log &&
-		SA=$(file_size abort.r) &&
+		SA=$(test_file_size abort.r) &&
 
 		git add . &&
 		rm -f *.r &&
@@ -859,7 +855,7 @@ test_expect_success PERL 'delayed checkout in process filter' '
 		git commit -m "test commit"
 	) &&
 
-	S=$(file_size "$TEST_ROOT/test.o") &&
+	S=$(test_file_size "$TEST_ROOT/test.o") &&
 	PM="ref=refs/heads/master treeish=$(git -C repo rev-parse --verify master) " &&
 	M="${PM}blob=$(git -C repo rev-parse --verify master:test.a)" &&
 	cat >a.exp <<-EOF &&

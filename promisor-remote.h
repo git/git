@@ -9,7 +9,7 @@ struct object_id;
  * Promisor remote linked list
  *
  * Information in its fields come from remote.XXX config entries or
- * from extensions.partialclone or core.partialclonefilter.
+ * from extensions.partialclone.
  */
 struct promisor_remote {
 	struct promisor_remote *next;

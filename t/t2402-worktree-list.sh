@@ -61,6 +61,16 @@ test_expect_success '"list" all worktrees --porcelain' '
 	test_cmp expect actual
 '
 
+test_expect_success '"list" all worktrees with locked annotation' '
+	test_when_finished "rm -rf locked unlocked out && git worktree prune" &&
+	git worktree add --detach locked master &&
+	git worktree add --detach unlocked master &&
+	git worktree lock locked &&
+	git worktree list >out &&
+	grep "/locked  *[0-9a-f].* locked$" out &&
+	! grep "/unlocked  *[0-9a-f].* locked$" out
+'
+
 test_expect_success 'bare repo setup' '
 	git init --bare bare1 &&
 	echo "data" >file1 &&

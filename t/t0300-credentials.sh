@@ -35,7 +35,7 @@ test_expect_success 'setup helper scripts' '
 	test -z "$pass" || echo password=$pass
 	EOF
 
-	PATH="$PWD:$PATH"
+	PATH="$PWD$PATH_SEP$PATH"
 '
 
 test_expect_success 'credential_fill invokes helper' '
@@ -263,6 +263,32 @@ test_expect_success 'internal getpass does not ask for known username' '
 	--
 	askpass: Password for '\''http://foo@example.com'\'':
 	EOF
+'
+
+test_expect_success 'git-credential respects core.askPass' '
+	write_script alternate-askpass <<-\EOF &&
+	echo >&2 "alternate askpass invoked"
+	echo alternate-value
+	EOF
+	test_config core.askpass "$PWD/alternate-askpass" &&
+	(
+		# unset GIT_ASKPASS set by lib-credential.sh which would
+		# override our config, but do so in a subshell so that we do
+		# not interfere with other tests
+		sane_unset GIT_ASKPASS &&
+		check fill <<-\EOF
+		protocol=http
+		host=example.com
+		--
+		protocol=http
+		host=example.com
+		username=alternate-value
+		password=alternate-value
+		--
+		alternate askpass invoked
+		alternate askpass invoked
+		EOF
+	)
 '
 
 HELPER="!f() {

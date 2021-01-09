@@ -209,7 +209,7 @@ providing this option will cause it to die.
 	Use \0 as the delimiter for pathnames in the output, and print
 	them verbatim. Without this option, pathnames with "unusual"
 	characters are quoted as explained for the configuration
-	variable core.quotePath (see git-config(1)).
+	variable core.quotePath (see linkgit:git-config[1]).
 
 -o::
 --only-matching::
@@ -241,7 +241,7 @@ providing this option will cause it to die.
 --show-function::
 	Show the preceding line that contains the function name of
 	the match, unless the matching line is a function name itself.
-	The name is determined in the same way as 'git diff' works out
+	The name is determined in the same way as `git diff` works out
 	patch hunk headers (see 'Defining a custom hunk-header' in
 	linkgit:gitattributes[5]).
 
@@ -266,7 +266,9 @@ providing this option will cause it to die.
 	Show the surrounding text from the previous line containing a
 	function name up to the one before the next function name,
 	effectively showing the whole function in which the match was
-	found.
+	found. The function names are determined in the same way as
+	`git diff` works out patch hunk headers (see 'Defining a
+	custom hunk-header' in linkgit:gitattributes[5]).
 
 --threads <num>::
 	Number of grep worker threads to use.

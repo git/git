@@ -84,17 +84,17 @@ static int nfvasprintf(char **strp, const char *fmt, va_list ap)
 }
 
 struct imap_server_conf {
-	char *name;
-	char *tunnel;
-	char *host;
+	const char *name;
+	const char *tunnel;
+	const char *host;
 	int port;
-	char *folder;
-	char *user;
-	char *pass;
+	const char *folder;
+	const char *user;
+	const char *pass;
 	int use_ssl;
 	int ssl_verify;
 	int use_html;
-	char *auth_method;
+	const char *auth_method;
 };
 
 static struct imap_server_conf server = {
@@ -955,7 +955,7 @@ static void server_fill_credential(struct imap_server_conf *srvc, struct credent
 		srvc->pass = xstrdup(cred->password);
 }
 
-static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *folder)
+static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const char *folder)
 {
 	struct credential cred = CREDENTIAL_INIT;
 	struct imap_store *ctx;
@@ -1338,15 +1338,26 @@ static int split_msg(struct strbuf *all_msgs, struct strbuf *msg, int *ofs)
 	return 1;
 }
 
-static void git_imap_config(void)
+static int git_imap_config(const char *var, const char *val, void *cb)
 {
-	const char *val = NULL;
 
-	git_config_get_bool("imap.sslverify", &server.ssl_verify);
-	git_config_get_bool("imap.preformattedhtml", &server.use_html);
-	git_config_get_string("imap.folder", &server.folder);
-
-	if (!git_config_get_value("imap.host", &val)) {
+	if (!strcmp("imap.sslverify", var))
+		server.ssl_verify = git_config_bool(var, val);
+	else if (!strcmp("imap.preformattedhtml", var))
+		server.use_html = git_config_bool(var, val);
+	else if (!strcmp("imap.folder", var))
+		return git_config_string(&server.folder, var, val);
+	else if (!strcmp("imap.user", var))
+		return git_config_string(&server.user, var, val);
+	else if (!strcmp("imap.pass", var))
+		return git_config_string(&server.pass, var, val);
+	else if (!strcmp("imap.tunnel", var))
+		return git_config_string(&server.tunnel, var, val);
+	else if (!strcmp("imap.authmethod", var))
+		return git_config_string(&server.auth_method, var, val);
+	else if (!strcmp("imap.port", var))
+		server.port = git_config_int(var, val);
+	else if (!strcmp("imap.host", var)) {
 		if (!val) {
 			git_die_config("imap.host", "Missing value for 'imap.host'");
 		} else {
@@ -1360,13 +1371,10 @@ static void git_imap_config(void)
 				val += 2;
 			server.host = xstrdup(val);
 		}
-	}
+	} else
+		return git_default_config(var, val, cb);
 
-	git_config_get_string("imap.user", &server.user);
-	git_config_get_string("imap.pass", &server.pass);
-	git_config_get_int("imap.port", &server.port);
-	git_config_get_string("imap.tunnel", &server.tunnel);
-	git_config_get_string("imap.authmethod", &server.auth_method);
+	return 0;
 }
 
 static int append_msgs_to_imap(struct imap_server_conf *server,
@@ -1539,7 +1547,7 @@ int cmd_main(int argc, const char **argv)
 	int nongit_ok;
 
 	setup_git_directory_gently(&nongit_ok);
-	git_imap_config();
+	git_config(git_imap_config, NULL);
 
 	argc = parse_options(argc, (const char **)argv, "", imap_send_options, imap_send_usage, 0);
 

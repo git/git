@@ -234,6 +234,10 @@ struct diff_options {
 	 */
 	const char *pickaxe;
 
+	/* -I<regex> */
+	regex_t **ignore_regex;
+	size_t ignore_regex_nr, ignore_regex_alloc;
+
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	const char *line_prefix;
@@ -287,8 +291,6 @@ struct diff_options {
 
 	/* If non-zero, then stop computing after this many changes. */
 	int max_changes;
-	/* For internal use only. */
-	int num_changes;
 
 	int ita_invisible_in_index;
 /* white-space error highlighting */
@@ -454,11 +456,11 @@ struct combine_diff_path {
 		st_mult(sizeof(struct combine_diff_parent), (n)))
 
 void show_combined_diff(struct combine_diff_path *elem, int num_parent,
-			int dense, struct rev_info *);
+			struct rev_info *);
 
-void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, int dense, struct rev_info *rev);
+void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, struct rev_info *rev);
 
-void diff_tree_combined_merge(const struct commit *commit, int dense, struct rev_info *rev);
+void diff_tree_combined_merge(const struct commit *commit, struct rev_info *rev);
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
 
@@ -580,12 +582,17 @@ void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
  */
 const char *diff_aligned_abbrev(const struct object_id *sha1, int);
 
+void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb);
+
 /* do not report anything on removed paths */
 #define DIFF_SILENT_ON_REMOVED 01
 /* report racily-clean paths as modified */
 #define DIFF_RACY_IS_MODIFIED 02
 int run_diff_files(struct rev_info *revs, unsigned int option);
-int run_diff_index(struct rev_info *revs, int cached);
+
+#define DIFF_INDEX_CACHED 01
+#define DIFF_INDEX_MERGE_BASE 02
+int run_diff_index(struct rev_info *revs, unsigned int option);
 
 int do_diff_cache(const struct object_id *, struct diff_options *);
 int diff_flush_patch_id(struct diff_options *, struct object_id *, int, int);
@@ -599,6 +606,13 @@ int diff_no_index(struct rev_info *,
 int index_differs_from(struct repository *r, const char *def,
 		       const struct diff_flags *flags,
 		       int ita_invisible_in_index);
+
+/*
+ * Emit an interdiff of two object ID's to 'diff_options.file' optionally
+ * indented by 'indent' spaces.
+ */
+void show_interdiff(const struct object_id *, const struct object_id *,
+		    int indent, struct diff_options *);
 
 /*
  * Fill the contents of the filespec "df", respecting any textconv defined by

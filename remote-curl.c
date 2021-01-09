@@ -39,10 +39,13 @@ struct options {
 		/* One of the SEND_PACK_PUSH_CERT_* constants. */
 		push_cert : 2,
 		deepen_relative : 1,
+
+		/* see documentation of corresponding flag in fetch-pack.h */
 		from_promisor : 1,
-		no_dependents : 1,
+
 		atomic : 1,
-		object_format : 1;
+		object_format : 1,
+		force_if_includes : 1;
 	const struct git_hash_algo *hash_algo;
 };
 static struct options options;
@@ -129,6 +132,14 @@ static int set_option(const char *name, const char *value)
 		string_list_append(&cas_options, val.buf);
 		strbuf_release(&val);
 		return 0;
+	} else if (!strcmp(name, TRANS_OPT_FORCE_IF_INCLUDES)) {
+		if (!strcmp(value, "true"))
+			options.force_if_includes = 1;
+		else if (!strcmp(value, "false"))
+			options.force_if_includes = 0;
+		else
+			return -1;
+		return 0;
 	} else if (!strcmp(name, "cloning")) {
 		if (!strcmp(value, "true"))
 			options.cloning = 1;
@@ -189,9 +200,6 @@ static int set_option(const char *name, const char *value)
 #endif /* LIBCURL_VERSION_NUM >= 0x070a08 */
 	} else if (!strcmp(name, "from-promisor")) {
 		options.from_promisor = 1;
-		return 0;
-	} else if (!strcmp(name, "no-dependents")) {
-		options.no_dependents = 1;
 		return 0;
 	} else if (!strcmp(name, "filter")) {
 		options.filter = xstrdup(value);
@@ -1175,8 +1183,6 @@ static int fetch_git(struct discovery *heads,
 		strvec_push(&args, "--deepen-relative");
 	if (options.from_promisor)
 		strvec_push(&args, "--from-promisor");
-	if (options.no_dependents)
-		strvec_push(&args, "--no-dependents");
 	if (options.filter)
 		strvec_pushf(&args, "--filter=%s", options.filter);
 	strvec_push(&args, url.buf);
@@ -1320,6 +1326,9 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 	for_each_string_list_item(cas_option, &cas_options)
 		strvec_push(&args, cas_option->string);
 	strvec_push(&args, url.buf);
+
+	if (options.force_if_includes)
+		strvec_push(&args, "--force-if-includes");
 
 	strvec_push(&args, "--stdin");
 	for (i = 0; i < nr_spec; i++)

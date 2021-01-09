@@ -986,7 +986,7 @@ static int update_file_flags(struct merge_options *opt,
 			char *lnk = xmemdupz(buf, size);
 			safe_create_leading_directories_const(path);
 			unlink(path);
-			if (symlink(lnk, path))
+			if (create_symlink(&opt->priv->orig_index, lnk, path))
 				ret = err(opt, _("failed to symlink '%s': %s"),
 					  path, strerror(errno));
 			free(lnk);
@@ -2651,7 +2651,7 @@ static struct string_list *get_renames(struct merge_options *opt,
 		free(e->target_file);
 		string_list_clear(&e->source_files, 0);
 	}
-	hashmap_free_entries(&collisions, struct collision_entry, ent);
+	hashmap_clear_and_free(&collisions, struct collision_entry, ent);
 	return renames;
 }
 
@@ -2870,7 +2870,7 @@ static void initial_cleanup_rename(struct diff_queue_struct *pairs,
 		strbuf_release(&e->new_dir);
 		/* possible_new_dirs already cleared in get_directory_renames */
 	}
-	hashmap_free_entries(dir_renames, struct dir_rename_entry, ent);
+	hashmap_clear_and_free(dir_renames, struct dir_rename_entry, ent);
 	free(dir_renames);
 
 	free(pairs->queue);
@@ -3497,7 +3497,7 @@ static int merge_trees_internal(struct merge_options *opt,
 		string_list_clear(entries, 1);
 		free(entries);
 
-		hashmap_free_entries(&opt->priv->current_file_dir_set,
+		hashmap_clear_and_free(&opt->priv->current_file_dir_set,
 					struct path_hashmap_entry, e);
 
 		if (clean < 0) {

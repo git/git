@@ -481,7 +481,7 @@ static struct commit *check_single_commit(struct rev_info *revs)
 		if (obj->flags & UNINTERESTING)
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (obj->type != OBJ_COMMIT)
+		if (!obj || obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (commit)
 			die("More than one commit to dig from: %s and %s?",
@@ -1159,7 +1159,7 @@ static int bloom_filter_check(struct rev_info *rev,
 		return 1;
 
 	if (!rev->bloom_filter_settings ||
-	    !(filter = get_bloom_filter(rev->repo, commit, 0)))
+	    !(filter = get_bloom_filter(rev->repo, commit)))
 		return 1;
 
 	if (!range)
