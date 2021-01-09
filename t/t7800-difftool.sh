@@ -440,20 +440,20 @@ run_dir_diff_test () {
 
 run_dir_diff_test 'difftool -d' '
 	git difftool -d $symlinks --extcmd ls branch >output &&
-	grep sub output &&
-	grep file output
+	grep "^sub$" output &&
+	grep "^file$" output
 '
 
 run_dir_diff_test 'difftool --dir-diff' '
 	git difftool --dir-diff $symlinks --extcmd ls branch >output &&
-	grep sub output &&
-	grep file output
+	grep "^sub$" output &&
+	grep "^file$" output
 '
 
 run_dir_diff_test 'difftool --dir-diff ignores --prompt' '
 	git difftool --dir-diff $symlinks --prompt --extcmd ls branch >output &&
-	grep sub output &&
-	grep file output
+	grep "^sub$" output &&
+	grep "^file$" output
 '
 
 run_dir_diff_test 'difftool --dir-diff branch from subdirectory' '
@@ -462,11 +462,11 @@ run_dir_diff_test 'difftool --dir-diff branch from subdirectory' '
 		git difftool --dir-diff $symlinks --extcmd ls branch >output &&
 		# "sub" must only exist in "right"
 		# "file" and "file2" must be listed in both "left" and "right"
-		grep sub output >sub-output &&
+		grep "^sub$" output >sub-output &&
 		test_line_count = 1 sub-output &&
-		grep file"$" output >file-output &&
+		grep "^file$" output >file-output &&
 		test_line_count = 2 file-output &&
-		grep file2 output >file2-output &&
+		grep "^file2$" output >file2-output &&
 		test_line_count = 2 file2-output
 	)
 '
@@ -477,11 +477,11 @@ run_dir_diff_test 'difftool --dir-diff v1 from subdirectory' '
 		git difftool --dir-diff $symlinks --extcmd ls v1 >output &&
 		# "sub" and "file" exist in both v1 and HEAD.
 		# "file2" is unchanged.
-		grep sub output >sub-output &&
+		grep "^sub$" output >sub-output &&
 		test_line_count = 2 sub-output &&
-		grep file output >file-output &&
+		grep "^file$" output >file-output &&
 		test_line_count = 2 file-output &&
-		! grep file2 output
+		! grep "^file2$" output
 	)
 '
 
@@ -491,9 +491,9 @@ run_dir_diff_test 'difftool --dir-diff branch from subdirectory w/ pathspec' '
 		git difftool --dir-diff $symlinks --extcmd ls branch -- .>output &&
 		# "sub" only exists in "right"
 		# "file" and "file2" must not be listed
-		grep sub output >sub-output &&
+		grep "^sub$" output >sub-output &&
 		test_line_count = 1 sub-output &&
-		! grep file output
+		! grep "^file$" output
 	)
 '
 
@@ -503,9 +503,9 @@ run_dir_diff_test 'difftool --dir-diff v1 from subdirectory w/ pathspec' '
 		git difftool --dir-diff $symlinks --extcmd ls v1 -- .>output &&
 		# "sub" exists in v1 and HEAD
 		# "file" is filtered out by the pathspec
-		grep sub output >sub-output &&
+		grep "^sub$" output >sub-output &&
 		test_line_count = 2 sub-output &&
-		! grep file output
+		! grep "^file$" output
 	)
 '
 
@@ -518,8 +518,8 @@ run_dir_diff_test 'difftool --dir-diff from subdirectory with GIT_DIR set' '
 		cd sub &&
 		git difftool --dir-diff $symlinks --extcmd ls \
 			branch -- sub >output &&
-		grep sub output &&
-		! grep file output
+		grep "^sub$" output &&
+		! grep "^file$" output
 	)
 '
 
@@ -527,7 +527,7 @@ run_dir_diff_test 'difftool --dir-diff when worktree file is missing' '
 	test_when_finished git reset --hard &&
 	rm file2 &&
 	git difftool --dir-diff $symlinks --extcmd ls branch master >output &&
-	grep file2 output
+	grep "^file2$" output
 '
 
 run_dir_diff_test 'difftool --dir-diff with unmerged files' '
