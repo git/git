@@ -184,11 +184,26 @@ characters, that field will be quoted in the manner of a C string
 literal: surrounded by ASCII double quote (34) characters, and with
 interior special characters backslash-escaped.
 
-For paths with merge conflicts, `X` and `Y` show the modification
-states of each side of the merge. For paths that do not have merge
-conflicts, `X` shows the status of the index, and `Y` shows the status
-of the work tree.  For untracked paths, `XY` are `??`.  Other status
-codes can be interpreted as follows:
+There are three different types of states that are shown using this format, and
+each one uses the `XY` syntax differently:
+
+* When a merge is occurring and the merge was successful, or outside of a merge
+	situation, `X` shows the status of the index and `Y` shows the status of the
+	working tree.
+* When a merge conflict has occurred and has not yet been resolved, `X` and `Y`
+	show the state introduced by each head of the merge, relative to the common
+	ancestor. These paths are said to be _unmerged_.
+* When a path is untracked, `X` and `Y` are always the same, since they are
+	unknown to the index. `??` is used for untracked paths. Ignored files are
+	not listed unless `--ignored` is used; if it is, ignored files are indicated
+	by `!!`.
+
+Note that the term _merge_ here also includes rebases using the default
+`--merge` strategy, cherry-picks, and anything else using the merge machinery.
+
+In the following table, these three classes are shown in separate sections, and
+these characters are used for `X` and `Y` fields for the first two sections that
+show tracked paths:
 
 * ' ' = unmodified
 * 'M' = modified
@@ -197,9 +212,6 @@ codes can be interpreted as follows:
 * 'R' = renamed
 * 'C' = copied
 * 'U' = updated but unmerged
-
-Ignored files are not listed, unless `--ignored` option is in effect,
-in which case `XY` are `!!`.
 
 ....
 X          Y     Meaning
