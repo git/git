@@ -1493,38 +1493,368 @@ static int maintenance_unregister(void)
 	return run_command(&config_unset);
 }
 
+static const char *get_frequency(enum schedule_priority schedule)
+{
+	switch (schedule) {
+	case SCHEDULE_HOURLY:
+		return "hourly";
+	case SCHEDULE_DAILY:
+		return "daily";
+	case SCHEDULE_WEEKLY:
+		return "weekly";
+	default:
+		BUG("invalid schedule %d", schedule);
+	}
+}
+
+static char *launchctl_service_name(const char *frequency)
+{
+	struct strbuf label = STRBUF_INIT;
+	strbuf_addf(&label, "org.git-scm.git.%s", frequency);
+	return strbuf_detach(&label, NULL);
+}
+
+static char *launchctl_service_filename(const char *name)
+{
+	char *expanded;
+	struct strbuf filename = STRBUF_INIT;
+	strbuf_addf(&filename, "~/Library/LaunchAgents/%s.plist", name);
+
+	expanded = expand_user_path(filename.buf, 1);
+	if (!expanded)
+		die(_("failed to expand path '%s'"), filename.buf);
+
+	strbuf_release(&filename);
+	return expanded;
+}
+
+static char *launchctl_get_uid(void)
+{
+	return xstrfmt("gui/%d", getuid());
+}
+
+static int launchctl_boot_plist(int enable, const char *filename, const char *cmd)
+{
+	int result;
+	struct child_process child = CHILD_PROCESS_INIT;
+	char *uid = launchctl_get_uid();
+
+	strvec_split(&child.args, cmd);
+	if (enable)
+		strvec_push(&child.args, "bootstrap");
+	else
+		strvec_push(&child.args, "bootout");
+	strvec_push(&child.args, uid);
+	strvec_push(&child.args, filename);
+
+	child.no_stderr = 1;
+	child.no_stdout = 1;
+
+	if (start_command(&child))
+		die(_("failed to start launchctl"));
+
+	result = finish_command(&child);
+
+	free(uid);
+	return result;
+}
+
+static int launchctl_remove_plist(enum schedule_priority schedule, const char *cmd)
+{
+	const char *frequency = get_frequency(schedule);
+	char *name = launchctl_service_name(frequency);
+	char *filename = launchctl_service_filename(name);
+	int result = launchctl_boot_plist(0, filename, cmd);
+	unlink(filename);
+	free(filename);
+	free(name);
+	return result;
+}
+
+static int launchctl_remove_plists(const char *cmd)
+{
+	return launchctl_remove_plist(SCHEDULE_HOURLY, cmd) ||
+		launchctl_remove_plist(SCHEDULE_DAILY, cmd) ||
+		launchctl_remove_plist(SCHEDULE_WEEKLY, cmd);
+}
+
+static int launchctl_schedule_plist(const char *exec_path, enum schedule_priority schedule, const char *cmd)
+{
+	FILE *plist;
+	int i;
+	const char *preamble, *repeat;
+	const char *frequency = get_frequency(schedule);
+	char *name = launchctl_service_name(frequency);
+	char *filename = launchctl_service_filename(name);
+
+	if (safe_create_leading_directories(filename))
+		die(_("failed to create directories for '%s'"), filename);
+	plist = xfopen(filename, "w");
+
+	preamble = "<?xml version=\"1.0\"?>\n"
+		   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+		   "<plist version=\"1.0\">"
+		   "<dict>\n"
+		   "<key>Label</key><string>%s</string>\n"
+		   "<key>ProgramArguments</key>\n"
+		   "<array>\n"
+		   "<string>%s/git</string>\n"
+		   "<string>--exec-path=%s</string>\n"
+		   "<string>for-each-repo</string>\n"
+		   "<string>--config=maintenance.repo</string>\n"
+		   "<string>maintenance</string>\n"
+		   "<string>run</string>\n"
+		   "<string>--schedule=%s</string>\n"
+		   "</array>\n"
+		   "<key>StartCalendarInterval</key>\n"
+		   "<array>\n";
+	fprintf(plist, preamble, name, exec_path, exec_path, frequency);
+
+	switch (schedule) {
+	case SCHEDULE_HOURLY:
+		repeat = "<dict>\n"
+			 "<key>Hour</key><integer>%d</integer>\n"
+			 "<key>Minute</key><integer>0</integer>\n"
+			 "</dict>\n";
+		for (i = 1; i <= 23; i++)
+			fprintf(plist, repeat, i);
+		break;
+
+	case SCHEDULE_DAILY:
+		repeat = "<dict>\n"
+			 "<key>Day</key><integer>%d</integer>\n"
+			 "<key>Hour</key><integer>0</integer>\n"
+			 "<key>Minute</key><integer>0</integer>\n"
+			 "</dict>\n";
+		for (i = 1; i <= 6; i++)
+			fprintf(plist, repeat, i);
+		break;
+
+	case SCHEDULE_WEEKLY:
+		fprintf(plist,
+			"<dict>\n"
+			"<key>Day</key><integer>0</integer>\n"
+			"<key>Hour</key><integer>0</integer>\n"
+			"<key>Minute</key><integer>0</integer>\n"
+			"</dict>\n");
+		break;
+
+	default:
+		/* unreachable */
+		break;
+	}
+	fprintf(plist, "</array>\n</dict>\n</plist>\n");
+	fclose(plist);
+
+	/* bootout might fail if not already running, so ignore */
+	launchctl_boot_plist(0, filename, cmd);
+	if (launchctl_boot_plist(1, filename, cmd))
+		die(_("failed to bootstrap service %s"), filename);
+
+	free(filename);
+	free(name);
+	return 0;
+}
+
+static int launchctl_add_plists(const char *cmd)
+{
+	const char *exec_path = git_exec_path();
+
+	return launchctl_schedule_plist(exec_path, SCHEDULE_HOURLY, cmd) ||
+		launchctl_schedule_plist(exec_path, SCHEDULE_DAILY, cmd) ||
+		launchctl_schedule_plist(exec_path, SCHEDULE_WEEKLY, cmd);
+}
+
+static int launchctl_update_schedule(int run_maintenance, int fd, const char *cmd)
+{
+	if (run_maintenance)
+		return launchctl_add_plists(cmd);
+	else
+		return launchctl_remove_plists(cmd);
+}
+
+static char *schtasks_task_name(const char *frequency)
+{
+	struct strbuf label = STRBUF_INIT;
+	strbuf_addf(&label, "Git Maintenance (%s)", frequency);
+	return strbuf_detach(&label, NULL);
+}
+
+static int schtasks_remove_task(enum schedule_priority schedule, const char *cmd)
+{
+	int result;
+	struct strvec args = STRVEC_INIT;
+	const char *frequency = get_frequency(schedule);
+	char *name = schtasks_task_name(frequency);
+
+	strvec_split(&args, cmd);
+	strvec_pushl(&args, "/delete", "/tn", name, "/f", NULL);
+
+	result = run_command_v_opt(args.v, 0);
+
+	strvec_clear(&args);
+	free(name);
+	return result;
+}
+
+static int schtasks_remove_tasks(const char *cmd)
+{
+	return schtasks_remove_task(SCHEDULE_HOURLY, cmd) ||
+		schtasks_remove_task(SCHEDULE_DAILY, cmd) ||
+		schtasks_remove_task(SCHEDULE_WEEKLY, cmd);
+}
+
+static int schtasks_schedule_task(const char *exec_path, enum schedule_priority schedule, const char *cmd)
+{
+	int result;
+	struct child_process child = CHILD_PROCESS_INIT;
+	const char *xml;
+	struct tempfile *tfile;
+	const char *frequency = get_frequency(schedule);
+	char *name = schtasks_task_name(frequency);
+	struct strbuf tfilename = STRBUF_INIT;
+
+	strbuf_addf(&tfilename, "%s/schedule_%s_XXXXXX",
+		    get_git_common_dir(), frequency);
+	tfile = xmks_tempfile(tfilename.buf);
+	strbuf_release(&tfilename);
+
+	if (!fdopen_tempfile(tfile, "w"))
+		die(_("failed to create temp xml file"));
+
+	xml = "<?xml version=\"1.0\" ?>\n"
+	      "<Task version=\"1.4\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+	      "<Triggers>\n"
+	      "<CalendarTrigger>\n";
+	fputs(xml, tfile->fp);
+
+	switch (schedule) {
+	case SCHEDULE_HOURLY:
+		fprintf(tfile->fp,
+			"<StartBoundary>2020-01-01T01:00:00</StartBoundary>\n"
+			"<Enabled>true</Enabled>\n"
+			"<ScheduleByDay>\n"
+			"<DaysInterval>1</DaysInterval>\n"
+			"</ScheduleByDay>\n"
+			"<Repetition>\n"
+			"<Interval>PT1H</Interval>\n"
+			"<Duration>PT23H</Duration>\n"
+			"<StopAtDurationEnd>false</StopAtDurationEnd>\n"
+			"</Repetition>\n");
+		break;
+
+	case SCHEDULE_DAILY:
+		fprintf(tfile->fp,
+			"<StartBoundary>2020-01-01T00:00:00</StartBoundary>\n"
+			"<Enabled>true</Enabled>\n"
+			"<ScheduleByWeek>\n"
+			"<DaysOfWeek>\n"
+			"<Monday />\n"
+			"<Tuesday />\n"
+			"<Wednesday />\n"
+			"<Thursday />\n"
+			"<Friday />\n"
+			"<Saturday />\n"
+			"</DaysOfWeek>\n"
+			"<WeeksInterval>1</WeeksInterval>\n"
+			"</ScheduleByWeek>\n");
+		break;
+
+	case SCHEDULE_WEEKLY:
+		fprintf(tfile->fp,
+			"<StartBoundary>2020-01-01T00:00:00</StartBoundary>\n"
+			"<Enabled>true</Enabled>\n"
+			"<ScheduleByWeek>\n"
+			"<DaysOfWeek>\n"
+			"<Sunday />\n"
+			"</DaysOfWeek>\n"
+			"<WeeksInterval>1</WeeksInterval>\n"
+			"</ScheduleByWeek>\n");
+		break;
+
+	default:
+		break;
+	}
+
+	xml = "</CalendarTrigger>\n"
+	      "</Triggers>\n"
+	      "<Principals>\n"
+	      "<Principal id=\"Author\">\n"
+	      "<LogonType>InteractiveToken</LogonType>\n"
+	      "<RunLevel>LeastPrivilege</RunLevel>\n"
+	      "</Principal>\n"
+	      "</Principals>\n"
+	      "<Settings>\n"
+	      "<MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>\n"
+	      "<Enabled>true</Enabled>\n"
+	      "<Hidden>true</Hidden>\n"
+	      "<UseUnifiedSchedulingEngine>true</UseUnifiedSchedulingEngine>\n"
+	      "<WakeToRun>false</WakeToRun>\n"
+	      "<ExecutionTimeLimit>PT72H</ExecutionTimeLimit>\n"
+	      "<Priority>7</Priority>\n"
+	      "</Settings>\n"
+	      "<Actions Context=\"Author\">\n"
+	      "<Exec>\n"
+	      "<Command>\"%s\\headless-git.exe\"</Command>\n"
+	      "<Arguments>--exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%s</Arguments>\n"
+	      "</Exec>\n"
+	      "</Actions>\n"
+	      "</Task>\n";
+	fprintf(tfile->fp, xml, exec_path, exec_path, frequency);
+	strvec_split(&child.args, cmd);
+	strvec_pushl(&child.args, "/create", "/tn", name, "/f", "/xml",
+				  get_tempfile_path(tfile), NULL);
+	close_tempfile_gently(tfile);
+
+	child.no_stdout = 1;
+	child.no_stderr = 1;
+
+	if (start_command(&child))
+		die(_("failed to start schtasks"));
+	result = finish_command(&child);
+
+	delete_tempfile(&tfile);
+	free(name);
+	return result;
+}
+
+static int schtasks_schedule_tasks(const char *cmd)
+{
+	const char *exec_path = git_exec_path();
+
+	return schtasks_schedule_task(exec_path, SCHEDULE_HOURLY, cmd) ||
+		schtasks_schedule_task(exec_path, SCHEDULE_DAILY, cmd) ||
+		schtasks_schedule_task(exec_path, SCHEDULE_WEEKLY, cmd);
+}
+
+static int schtasks_update_schedule(int run_maintenance, int fd, const char *cmd)
+{
+	if (run_maintenance)
+		return schtasks_schedule_tasks(cmd);
+	else
+		return schtasks_remove_tasks(cmd);
+}
+
 #define BEGIN_LINE "# BEGIN GIT MAINTENANCE SCHEDULE"
 #define END_LINE "# END GIT MAINTENANCE SCHEDULE"
 
-static int update_background_schedule(int run_maintenance)
+static int crontab_update_schedule(int run_maintenance, int fd, const char *cmd)
 {
 	int result = 0;
 	int in_old_region = 0;
 	struct child_process crontab_list = CHILD_PROCESS_INIT;
 	struct child_process crontab_edit = CHILD_PROCESS_INIT;
 	FILE *cron_list, *cron_in;
-	const char *crontab_name;
 	struct strbuf line = STRBUF_INIT;
-	struct lock_file lk;
-	char *lock_path = xstrfmt("%s/schedule", the_repository->objects->odb->path);
 
-	if (hold_lock_file_for_update(&lk, lock_path, LOCK_NO_DEREF) < 0)
-		return error(_("another process is scheduling background maintenance"));
-
-	crontab_name = getenv("GIT_TEST_CRONTAB");
-	if (!crontab_name)
-		crontab_name = "crontab";
-
-	strvec_split(&crontab_list.args, crontab_name);
+	strvec_split(&crontab_list.args, cmd);
 	strvec_push(&crontab_list.args, "-l");
 	crontab_list.in = -1;
-	crontab_list.out = dup(lk.tempfile->fd);
+	crontab_list.out = dup(fd);
 	crontab_list.git_cmd = 0;
 
-	if (start_command(&crontab_list)) {
-		result = error(_("failed to run 'crontab -l'; your system might not support 'cron'"));
-		goto cleanup;
-	}
+	if (start_command(&crontab_list))
+		return error(_("failed to run 'crontab -l'; your system might not support 'cron'"));
 
 	/* Ignore exit code, as an empty crontab will return error. */
 	finish_command(&crontab_list);
@@ -1533,17 +1863,15 @@ static int update_background_schedule(int run_maintenance)
 	 * Read from the .lock file, filtering out the old
 	 * schedule while appending the new schedule.
 	 */
-	cron_list = fdopen(lk.tempfile->fd, "r");
+	cron_list = fdopen(fd, "r");
 	rewind(cron_list);
 
-	strvec_split(&crontab_edit.args, crontab_name);
+	strvec_split(&crontab_edit.args, cmd);
 	crontab_edit.in = -1;
 	crontab_edit.git_cmd = 0;
 
-	if (start_command(&crontab_edit)) {
-		result = error(_("failed to run 'crontab'; your system might not support 'cron'"));
-		goto cleanup;
-	}
+	if (start_command(&crontab_edit))
+		return error(_("failed to run 'crontab'; your system might not support 'cron'"));
 
 	cron_in = fdopen(crontab_edit.in, "w");
 	if (!cron_in) {
@@ -1587,14 +1915,54 @@ static int update_background_schedule(int run_maintenance)
 	close(crontab_edit.in);
 
 done_editing:
-	if (finish_command(&crontab_edit)) {
+	if (finish_command(&crontab_edit))
 		result = error(_("'crontab' died"));
-		goto cleanup;
-	}
-	fclose(cron_list);
+	else
+		fclose(cron_list);
+	return result;
+}
 
-cleanup:
+#if defined(__APPLE__)
+static const char platform_scheduler[] = "launchctl";
+#elif defined(GIT_WINDOWS_NATIVE)
+static const char platform_scheduler[] = "schtasks";
+#else
+static const char platform_scheduler[] = "crontab";
+#endif
+
+static int update_background_schedule(int enable)
+{
+	int result;
+	const char *scheduler = platform_scheduler;
+	const char *cmd = scheduler;
+	char *testing;
+	struct lock_file lk;
+	char *lock_path = xstrfmt("%s/schedule", the_repository->objects->odb->path);
+
+	testing = xstrdup_or_null(getenv("GIT_TEST_MAINT_SCHEDULER"));
+	if (testing) {
+		char *sep = strchr(testing, ':');
+		if (!sep)
+			die("GIT_TEST_MAINT_SCHEDULER unparseable: %s", testing);
+		*sep = '\0';
+		scheduler = testing;
+		cmd = sep + 1;
+	}
+
+	if (hold_lock_file_for_update(&lk, lock_path, LOCK_NO_DEREF) < 0)
+		return error(_("another process is scheduling background maintenance"));
+
+	if (!strcmp(scheduler, "launchctl"))
+		result = launchctl_update_schedule(enable, lk.tempfile->fd, cmd);
+	else if (!strcmp(scheduler, "schtasks"))
+		result = schtasks_update_schedule(enable, lk.tempfile->fd, cmd);
+	else if (!strcmp(scheduler, "crontab"))
+		result = crontab_update_schedule(enable, lk.tempfile->fd, cmd);
+	else
+		die("unknown background scheduler: %s", scheduler);
+
 	rollback_lock_file(&lk);
+	free(testing);
 	return result;
 }
 
