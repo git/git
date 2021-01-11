@@ -76,7 +76,7 @@ sub createProject {
 
     my $libs_release = "\n    ";
     my $libs_debug = "\n    ";
-    if (!$static_library) {
+    if (!$static_library && $name ne 'headless-git') {
       $libs_release = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib|vcs-svn\/lib\.lib|reftable\/libreftable\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
       $libs_debug = $libs_release;
       $libs_debug =~ s/zlib\.lib/zlibd\.lib/g;
@@ -88,6 +88,16 @@ sub createProject {
     $defines =~ s/</&lt;/g;
     $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
+
+    my $rcdefines = $defines;
+    $rcdefines =~ s/(?<!\\)"/\\$&/g;
+
+    my $entrypoint = 'wmainCRTStartup';
+    my $subsystem = 'Console';
+    if (grep /^-mwindows$/, @{$$build_structure{"$prefix${name}_LFLAGS"}}) {
+        $entrypoint = 'wWinMainCRTStartup';
+        $subsystem = 'Windows';
+    }
 
     my $dir = $vcxproj;
     $dir =~ s/\/[^\/]*$//;
@@ -176,9 +186,9 @@ sub createProject {
       <AdditionalLibraryDirectories>\$(VCPKGLibDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>\$(VCPKGLibs);\$(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>invalidcontinue.obj %(AdditionalOptions)</AdditionalOptions>
-      <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
+      <EntryPointSymbol>$entrypoint</EntryPointSymbol>
       <ManifestFile>$cdup\\compat\\win32\\git.manifest</ManifestFile>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>$subsystem</SubSystem>
     </Link>
 EOM
     if ($target eq 'libgit') {
@@ -203,6 +213,9 @@ EOM
       <PreprocessorDefinitions>WIN32;_DEBUG;$defines;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;$rcdefines;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
@@ -216,6 +229,9 @@ EOM
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;$rcdefines;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -225,14 +241,20 @@ EOM
   <ItemGroup>
 EOM
     foreach(@sources) {
-        print F << "EOM";
+        if (/\.rc$/) {
+            print F << "EOM";
+    <ResourceCompile Include="$_" />
+EOM
+        } else {
+            print F << "EOM";
     <ClCompile Include="$_" />
 EOM
+        }
     }
     print F << "EOM";
   </ItemGroup>
 EOM
-    if (!$static_library || $target =~ 'vcs-svn' || $target =~ 'xdiff') {
+    if ((!$static_library || $target =~ 'vcs-svn' || $target =~ 'xdiff') && !($name =~ /headless-git/)) {
       my $uuid_libgit = $$build_structure{"LIBS_libgit_GUID"};
       my $uuid_libreftable = $$build_structure{"LIBS_reftable/libreftable_GUID"};
       my $uuid_xdiff_lib = $$build_structure{"LIBS_xdiff/lib_GUID"};
