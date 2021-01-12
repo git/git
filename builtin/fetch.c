@@ -899,6 +899,7 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 
 struct fetch_head {
 	FILE *fp;
+	struct strbuf buf;
 };
 
 static int open_fetch_head(struct fetch_head *fetch_head)
@@ -909,6 +910,7 @@ static int open_fetch_head(struct fetch_head *fetch_head)
 		fetch_head->fp = fopen(filename, "a");
 		if (!fetch_head->fp)
 			return error_errno(_("cannot open %s"), filename);
+		strbuf_init(&fetch_head->buf, 0);
 	} else {
 		fetch_head->fp = NULL;
 	}
@@ -941,14 +943,17 @@ static void append_fetch_head(struct fetch_head *fetch_head,
 		return;
 	}
 
-	fprintf(fetch_head->fp, "%s\t%s\t%s",
-		oid_to_hex_r(old_oid_hex, old_oid), merge_status_marker, note);
+	strbuf_addf(&fetch_head->buf, "%s\t%s\t%s",
+		    oid_to_hex_r(old_oid_hex, old_oid), merge_status_marker, note);
 	for (i = 0; i < url_len; ++i)
 		if ('\n' == url[i])
-			fputs("\\n", fetch_head->fp);
+			strbuf_addstr(&fetch_head->buf, "\\n");
 		else
-			fputc(url[i], fetch_head->fp);
-	fputc('\n', fetch_head->fp);
+			strbuf_addch(&fetch_head->buf, url[i]);
+	strbuf_addch(&fetch_head->buf, '\n');
+
+	strbuf_write(&fetch_head->buf, fetch_head->fp);
+	strbuf_reset(&fetch_head->buf);
 }
 
 static void commit_fetch_head(struct fetch_head *fetch_head)
@@ -962,6 +967,7 @@ static void close_fetch_head(struct fetch_head *fetch_head)
 		return;
 
 	fclose(fetch_head->fp);
+	strbuf_release(&fetch_head->buf);
 }
 
 static const char warn_show_forced_updates[] =
