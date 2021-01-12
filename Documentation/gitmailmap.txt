@@ -14,8 +14,8 @@ DESCRIPTION
 -----------
 
 If the file `.mailmap` exists at the toplevel of the repository, or at
-the location pointed to by the mailmap.file or mailmap.blob
-configuration options, it
+the location pointed to by the `mailmap.file` or `mailmap.blob`
+configuration options (see linkgit:git-config[1]), it
 is used to map author and committer names and email addresses to
 canonical real names and email addresses.
 
