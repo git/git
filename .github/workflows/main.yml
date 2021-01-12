@@ -129,6 +129,7 @@ jobs:
   vs-build:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
+    timeout-minutes: 15
     env:
       NO_PERL: 1
       GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
@@ -136,6 +137,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: git-for-windows/setup-git-for-windows-sdk@v0
+    - name: initialize vcpkg
+      uses: actions/checkout@v2
+      with:
+        repository: 'microsoft/vcpkg'
+        path: 'compat/vcbuild/vcpkg'
     - name: download vcpkg artifacts
       shell: powershell
       run: |
