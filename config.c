@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "branch.h"
 #include "config.h"
+#include "environment.h"
 #include "repository.h"
 #include "lockfile.h"
 #include "exec-cmd.h"
@@ -598,23 +599,73 @@ static int parse_config_env_list(char *env, config_fn_t fn, void *data)
 
 int git_config_from_parameters(config_fn_t fn, void *data)
 {
-	const char *env = getenv(CONFIG_DATA_ENVIRONMENT);
+	const char *env;
+	struct strbuf envvar = STRBUF_INIT;
+	struct strvec to_free = STRVEC_INIT;
 	int ret = 0;
-	char *envw;
+	char *envw = NULL;
 	struct config_source source;
-
-	if (!env)
-		return 0;
 
 	memset(&source, 0, sizeof(source));
 	source.prev = cf;
 	source.origin_type = CONFIG_ORIGIN_CMDLINE;
 	cf = &source;
 
-	/* sq_dequote will write over it */
-	envw = xstrdup(env);
-	ret = parse_config_env_list(envw, fn, data);
+	env = getenv(CONFIG_COUNT_ENVIRONMENT);
+	if (env) {
+		unsigned long count;
+		char *endp;
+		int i;
 
+		count = strtoul(env, &endp, 10);
+		if (*endp) {
+			ret = error(_("bogus count in %s"), CONFIG_COUNT_ENVIRONMENT);
+			goto out;
+		}
+		if (count > INT_MAX) {
+			ret = error(_("too many entries in %s"), CONFIG_COUNT_ENVIRONMENT);
+			goto out;
+		}
+
+		for (i = 0; i < count; i++) {
+			const char *key, *value;
+
+			strbuf_addf(&envvar, "GIT_CONFIG_KEY_%d", i);
+			key = getenv_safe(&to_free, envvar.buf);
+			if (!key) {
+				ret = error(_("missing config key %s"), envvar.buf);
+				goto out;
+			}
+			strbuf_reset(&envvar);
+
+			strbuf_addf(&envvar, "GIT_CONFIG_VALUE_%d", i);
+			value = getenv_safe(&to_free, envvar.buf);
+			if (!value) {
+				ret = error(_("missing config value %s"), envvar.buf);
+				goto out;
+			}
+			strbuf_reset(&envvar);
+
+			if (config_parse_pair(key, value, fn, data) < 0) {
+				ret = -1;
+				goto out;
+			}
+		}
+	}
+
+	env = getenv(CONFIG_DATA_ENVIRONMENT);
+	if (env) {
+		/* sq_dequote will write over it */
+		envw = xstrdup(env);
+		if (parse_config_env_list(envw, fn, data) < 0) {
+			ret = -1;
+			goto out;
+		}
+	}
+
+out:
+	strbuf_release(&envvar);
+	strvec_clear(&to_free);
 	free(envw);
 	cf = source.prev;
 	return ret;

@@ -1424,6 +1424,117 @@ test_expect_success '--config-env handles keys with equals' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git config handles environment config pairs' '
+	GIT_CONFIG_COUNT=2 \
+		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="foo" \
+		GIT_CONFIG_KEY_1="pair.two" GIT_CONFIG_VALUE_1="bar" \
+		git config --get-regexp "pair.*" >actual &&
+	cat >expect <<-EOF &&
+	pair.one foo
+	pair.two bar
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'git config ignores pairs without count' '
+	test_must_fail env GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+		git config pair.one 2>error &&
+	test_must_be_empty error
+'
+
+test_expect_success 'git config ignores pairs with zero count' '
+	test_must_fail env \
+		GIT_CONFIG_COUNT=0 \
+		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+		git config pair.one
+'
+
+test_expect_success 'git config ignores pairs exceeding count' '
+	GIT_CONFIG_COUNT=1 \
+		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+		GIT_CONFIG_KEY_1="pair.two" GIT_CONFIG_VALUE_1="value" \
+		git config --get-regexp "pair.*" >actual &&
+	cat >expect <<-EOF &&
+	pair.one value
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'git config ignores pairs with zero count' '
+	test_must_fail env \
+		GIT_CONFIG_COUNT=0 GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+		git config pair.one >error &&
+	test_must_be_empty error
+'
+
+test_expect_success 'git config ignores pairs with empty count' '
+	test_must_fail env \
+		GIT_CONFIG_COUNT= GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+		git config pair.one >error &&
+	test_must_be_empty error
+'
+
+test_expect_success 'git config fails with invalid count' '
+	test_must_fail env GIT_CONFIG_COUNT=10a git config --list 2>error &&
+	test_i18ngrep "bogus count" error &&
+	test_must_fail env GIT_CONFIG_COUNT=9999999999999999 git config --list 2>error &&
+	test_i18ngrep "too many entries" error
+'
+
+test_expect_success 'git config fails with missing config key' '
+	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_VALUE_0="value" \
+		git config --list 2>error &&
+	test_i18ngrep "missing config key" error
+'
+
+test_expect_success 'git config fails with missing config value' '
+	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="pair.one" \
+		git config --list 2>error &&
+	test_i18ngrep "missing config value" error
+'
+
+test_expect_success 'git config fails with invalid config pair key' '
+	test_must_fail env GIT_CONFIG_COUNT=1 \
+		GIT_CONFIG_KEY_0= GIT_CONFIG_VALUE_0=value \
+		git config --list &&
+	test_must_fail env GIT_CONFIG_COUNT=1 \
+		GIT_CONFIG_KEY_0=missing-section GIT_CONFIG_VALUE_0=value \
+		git config --list
+'
+
+test_expect_success 'environment overrides config file' '
+	test_when_finished "rm -f .git/config" &&
+	cat >.git/config <<-EOF &&
+	[pair]
+	one = value
+	EOF
+	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=pair.one GIT_CONFIG_VALUE_0=override \
+		git config pair.one >actual &&
+	cat >expect <<-EOF &&
+	override
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'GIT_CONFIG_PARAMETERS overrides environment config' '
+	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=pair.one GIT_CONFIG_VALUE_0=value \
+		GIT_CONFIG_PARAMETERS="${SQ}pair.one=override${SQ}" \
+		git config pair.one >actual &&
+	cat >expect <<-EOF &&
+	override
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'command line overrides environment config' '
+	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=pair.one GIT_CONFIG_VALUE_0=value \
+		git -c pair.one=override config pair.one >actual &&
+	cat >expect <<-EOF &&
+	override
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'git config --edit works' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&
@@ -1769,9 +1880,11 @@ test_expect_success '--show-origin with --list' '
 	file:.git/config	user.override=local
 	file:.git/config	include.path=../include/relative.include
 	file:.git/../include/relative.include	user.relative=include
+	command line:	user.environ=true
 	command line:	user.cmdline=true
 	EOF
-	git -c user.cmdline=true config --list --show-origin >output &&
+	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=user.environ GIT_CONFIG_VALUE_0=true\
+		git -c user.cmdline=true config --list --show-origin >output &&
 	test_cmp expect output
 '
 
