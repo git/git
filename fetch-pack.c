@@ -772,8 +772,8 @@ static int sideband_demux(int in, int out, void *data)
 	return ret;
 }
 
-static void write_promisor_file(const char *keep_name,
-				struct ref **sought, int nr_sought)
+static void create_promisor_file(const char *keep_name,
+				 struct ref **sought, int nr_sought)
 {
 	struct strbuf promisor_name = STRBUF_INIT;
 	int suffix_stripped;
@@ -875,7 +875,7 @@ static int get_pack(struct fetch_pack_args *args,
 
 		if (args->from_promisor)
 			/*
-			 * write_promisor_file() may be called afterwards but
+			 * create_promisor_file() may be called afterwards but
 			 * we still need index-pack to know that this is a
 			 * promisor pack. For example, if transfer.fsckobjects
 			 * is true, index-pack needs to know that .gitmodules
@@ -943,7 +943,7 @@ static int get_pack(struct fetch_pack_args *args,
 	 * obtained .keep filename if necessary
 	 */
 	if (do_keep && pack_lockfiles && pack_lockfiles->nr && args->from_promisor)
-		write_promisor_file(pack_lockfiles->items[0].string, sought, nr_sought);
+		create_promisor_file(pack_lockfiles->items[0].string, sought, nr_sought);
 
 	return 0;
 }
