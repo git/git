@@ -4,14 +4,6 @@ test_description='.mailmap configurations'
 
 . ./test-lib.sh
 
-fuzz_blame () {
-	sed "
-		s/$_x05[0-9a-f][0-9a-f][0-9a-f]/OBJID/g
-		s/$_x05[0-9a-f][0-9a-f]/OBJI/g
-		s/[-0-9]\{10\} [:0-9]\{8\} [-+][0-9]\{4\}/DATE/g
-	" "$@"
-}
-
 test_expect_success 'setup commits and contacts file' '
 	echo one >one &&
 	git add one &&
@@ -630,22 +622,40 @@ test_expect_success 'Only grep replaced author with --use-mailmap' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'Blame output (complex mapping)' '
+test_expect_success 'Blame --porcelain output (complex mapping)' '
 	test_config mailmap.file complex.map &&
 
 	cat >expect <<-EOF &&
-	^OBJI ($GIT_AUTHOR_NAME     DATE 1) one
-	OBJID (Some Dude    DATE 2) two
-	OBJID (Other Author DATE 3) three
-	OBJID (Other Author DATE 4) four
-	OBJID (Santa Claus  DATE 5) five
-	OBJID (Santa Claus  DATE 6) six
-	OBJID (CTO          DATE 7) seven
+	1 1 1
+	A U Thor
+	2 2 1
+	Some Dude
+	3 3 1
+	Other Author
+	4 4 1
+	Other Author
+	5 5 1
+	Santa Claus
+	6 6 1
+	Santa Claus
+	7 7 1
+	CTO
 	EOF
 
-	git blame one >actual &&
-	fuzz_blame actual >actual.fuzz &&
+	git blame --porcelain one >actual.blame &&
+	grep -E \
+		-e "[0-9]+ [0-9]+ [0-9]+$" \
+		-e "^author .*$" \
+		actual.blame >actual.grep &&
+	cut -d " " -f2-4 <actual.grep >actual.fuzz &&
 	test_cmp expect actual.fuzz
+'
+
+test_expect_success 'Blame output (complex mapping)' '
+	git -c mailmap.file=complex.map blame one >a &&
+	git blame one >b &&
+	test_file_not_empty a &&
+	! cmp a b
 '
 
 test_expect_success 'commit --author honors mailmap' '
