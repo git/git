@@ -777,8 +777,6 @@ static void create_promisor_file(const char *keep_name,
 {
 	struct strbuf promisor_name = STRBUF_INIT;
 	int suffix_stripped;
-	FILE *output;
-	int i;
 
 	strbuf_addstr(&promisor_name, keep_name);
 	suffix_stripped = strbuf_strip_suffix(&promisor_name, ".keep");
@@ -787,11 +785,7 @@ static void create_promisor_file(const char *keep_name,
 		    keep_name);
 	strbuf_addstr(&promisor_name, ".promisor");
 
-	output = xfopen(promisor_name.buf, "w");
-	for (i = 0; i < nr_sought; i++)
-		fprintf(output, "%s %s\n", oid_to_hex(&sought[i]->old_oid),
-			sought[i]->name);
-	fclose(output);
+	write_promisor_file(promisor_name.buf, sought, nr_sought);
 
 	strbuf_release(&promisor_name);
 }

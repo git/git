@@ -14,6 +14,7 @@
 #include "object-store.h"
 #include "promisor-remote.h"
 #include "shallow.h"
+#include "pack.h"
 
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
@@ -263,7 +264,7 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 	while (strbuf_getline_lf(&line, out) != EOF) {
 		struct string_list_item *item;
 		char *promisor_name;
-		int fd;
+
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
 		item = string_list_append(names, line.buf);
@@ -281,10 +282,7 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 		 */
 		promisor_name = mkpathdup("%s-%s.promisor", packtmp,
 					  line.buf);
-		fd = open(promisor_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
-		if (fd < 0)
-			die_errno(_("unable to create '%s'"), promisor_name);
-		close(fd);
+		write_promisor_file(promisor_name, NULL, 0);
 
 		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
 
