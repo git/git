@@ -838,4 +838,31 @@ test_expect_success 'whitespace syntax: setup' '
 	test_cmp expect actual
 '
 
+test_expect_success 'empty syntax: setup' '
+	test_create_repo empty &&
+	test_commit -C empty --author "A <>" A &&
+	test_commit -C empty --author "B <b@example.com>" B &&
+	test_commit -C empty --author "C <c@example.com>" C &&
+
+	test_config -C empty mailmap.file ../empty.map &&
+	cat >>empty.map <<-\EOF &&
+	Ah <ah@example.com> <>
+	Bee <bee@example.com> <>
+	Cee <> <c@example.com>
+	EOF
+
+	cat >expect <<-\EOF &&
+	Author A <> maps to Bee <bee@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author B <b@example.com> maps to B <b@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author C <c@example.com> maps to C <c@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	EOF
+	git -C empty log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	test_cmp expect actual
+'
+
 test_done
