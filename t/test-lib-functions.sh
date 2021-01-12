@@ -185,6 +185,8 @@ debug () {
 #	Do not call test_tick before making a commit
 #   --signoff
 #	Invoke "git commit" with --signoff
+#   --author=<author>
+#	Invoke "git commit" with --author=<author>
 #
 # This will commit a file with the given contents and the given commit
 # message, and tag the resulting commit with the given tag name.
@@ -193,6 +195,7 @@ debug () {
 
 test_commit () {
 	notick= &&
+	author= &&
 	signoff= &&
 	indir= &&
 	while test $# != 0
@@ -200,6 +203,10 @@ test_commit () {
 		case "$1" in
 		--notick)
 			notick=yes
+			;;
+		--author)
+			author="$2"
+			shift
 			;;
 		--signoff)
 			signoff="$1"
@@ -222,7 +229,9 @@ test_commit () {
 	then
 		test_tick
 	fi &&
-	git ${indir:+ -C "$indir"} commit $signoff -m "$1" &&
+	git ${indir:+ -C "$indir"} commit \
+	    ${author:+ --author "$author"} \
+	    $signoff -m "$1" &&
 	git ${indir:+ -C "$indir"} tag "${4:-$1}"
 }
 
