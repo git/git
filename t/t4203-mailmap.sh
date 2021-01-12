@@ -309,6 +309,24 @@ test_expect_success 'mailmap.file overrides mailmap.blob' '
 	test_cmp expect actual
 '
 
+test_expect_success 'mailmap.file can be missing' '
+	test_when_finished "rm .mailmap" &&
+	cp default.map .mailmap &&
+
+	test_config mailmap.file nonexistent &&
+	cat >expect <<-\EOF &&
+	Repo Guy (1):
+	      initial
+
+	nick1 (1):
+	      second
+
+	EOF
+	git shortlog HEAD >actual 2>err &&
+	test_must_be_empty err &&
+	test_cmp expect actual
+'
+
 test_expect_success 'mailmap.blob can be missing' '
 	test_when_finished "rm .mailmap" &&
 	cp default.map .mailmap &&
@@ -321,7 +339,8 @@ test_expect_success 'mailmap.blob can be missing' '
 	      second
 
 	EOF
-	git -c mailmap.blob=map:nonexistent shortlog HEAD >actual &&
+	git -c mailmap.blob=map:nonexistent shortlog HEAD >actual 2>err &&
+	test_must_be_empty err &&
 	test_cmp expect actual
 '
 
