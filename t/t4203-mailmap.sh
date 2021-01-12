@@ -786,4 +786,56 @@ test_expect_success 'comment syntax: setup' '
 	test_cmp expect actual
 '
 
+test_expect_success 'whitespace syntax: setup' '
+	test_create_repo space &&
+	test_commit -C space --author "A <a@example.com>" A &&
+	test_commit -C space --author "B <b@example.com>" B &&
+	test_commit -C space --author " C <c@example.com>" C &&
+	test_commit -C space --author " D  <d@example.com>" D &&
+	test_commit -C space --author "E E <e@example.com>" E &&
+	test_commit -C space --author "F  F <f@example.com>" F &&
+	test_commit -C space --author "G   G <g@example.com>" G &&
+	test_commit -C space --author "H   H <h@example.com>" H &&
+
+	test_config -C space mailmap.file ../space.map &&
+	cat >>space.map <<-\EOF &&
+	Ah <ah@example.com> < a@example.com >
+	Bee <bee@example.com  > <  b@example.com  >
+	Cee <cee@example.com> C <c@example.com>
+	dee <dee@example.com>  D  <d@example.com>
+	eee <eee@example.com> E E <e@example.com>
+	eff <eff@example.com> F  F <f@example.com>
+	gee <gee@example.com> G   G <g@example.com>
+	aitch <aitch@example.com> H  H <h@example.com>
+	EOF
+
+	cat >expect <<-\EOF &&
+	Author A <a@example.com> maps to A <a@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author B <b@example.com> maps to B <b@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author C <c@example.com> maps to Cee <cee@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author D <d@example.com> maps to dee <dee@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author E E <e@example.com> maps to eee <eee@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author F  F <f@example.com> maps to eff <eff@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author G   G <g@example.com> maps to gee <gee@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author H   H <h@example.com> maps to H   H <h@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	EOF
+	git -C space log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	test_cmp expect actual
+'
+
 test_done
