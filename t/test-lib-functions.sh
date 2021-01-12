@@ -181,6 +181,10 @@ debug () {
 # Usage: test_commit [options] <message> [<file> [<contents> [<tag>]]]
 #   -C <dir>:
 #	Run all git commands in directory <dir>
+#   --notick
+#	Do not call test_tick before making a commit
+#   --signoff
+#	Invoke "git commit" with --signoff
 #
 # This will commit a file with the given contents and the given commit
 # message, and tag the resulting commit with the given tag name.
