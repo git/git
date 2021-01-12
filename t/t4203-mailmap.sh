@@ -13,7 +13,7 @@ fuzz_blame () {
 }
 
 test_expect_success setup '
-	cat >contacts <<- EOF &&
+	cat >contacts <<-EOF &&
 	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
@@ -33,7 +33,7 @@ test_expect_success 'check-mailmap no arguments' '
 '
 
 test_expect_success 'check-mailmap arguments' '
-	cat >expect <<- EOF &&
+	cat >expect <<-EOF &&
 	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
@@ -44,7 +44,7 @@ test_expect_success 'check-mailmap arguments' '
 '
 
 test_expect_success 'check-mailmap --stdin' '
-	cat >expect <<- EOF &&
+	cat >expect <<-EOF &&
 	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
@@ -195,10 +195,10 @@ test_expect_success 'No mailmap files, but configured' '
 test_expect_success 'setup mailmap blob tests' '
 	git checkout -b map &&
 	test_when_finished "git checkout master" &&
-	cat >just-bugs <<- EOF &&
+	cat >just-bugs <<-\EOF &&
 	Blob Guy <bugs@company.xx>
 	EOF
-	cat >both <<- EOF &&
+	cat >both <<-EOF &&
 	Blob Guy <$GIT_AUTHOR_EMAIL>
 	Blob Guy <bugs@company.xx>
 	EOF
@@ -471,7 +471,7 @@ test_expect_success 'Log output with log.mailmap' '
 '
 
 test_expect_success 'log.mailmap=false disables mailmap' '
-	cat >expect <<- EOF &&
+	cat >expect <<-EOF &&
 	Author: CTO <cto@coompany.xx>
 	Author: claus <me@company.xx>
 	Author: santa <me@company.xx>
@@ -480,12 +480,12 @@ test_expect_success 'log.mailmap=false disables mailmap' '
 	Author: nick1 <bugs@company.xx>
 	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	EOF
-	git -c log.mailmap=False log | grep Author > actual &&
+	git -c log.mailmap=False log | grep Author >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--no-use-mailmap disables mailmap' '
-	cat >expect <<- EOF &&
+	cat >expect <<-EOF &&
 	Author: CTO <cto@coompany.xx>
 	Author: claus <me@company.xx>
 	Author: santa <me@company.xx>
