@@ -1316,6 +1316,54 @@ test_expect_success 'detect bogus GIT_CONFIG_PARAMETERS' '
 		git config --get-regexp "env.*"
 '
 
+test_expect_success 'git --config-env=key=envvar support' '
+	cat >expect <<-\EOF &&
+	value
+	value
+	false
+	EOF
+	{
+		ENVVAR=value git --config-env=core.name=ENVVAR config core.name &&
+		ENVVAR=value git --config-env=foo.CamelCase=ENVVAR config foo.camelcase &&
+		ENVVAR= git --config-env=foo.flag=ENVVAR config --bool foo.flag
+	} >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git --config-env fails with invalid parameters' '
+	test_must_fail git --config-env=foo.flag config --bool foo.flag 2>error &&
+	test_i18ngrep "invalid config format: foo.flag" error &&
+	test_must_fail git --config-env=foo.flag= config --bool foo.flag 2>error &&
+	test_i18ngrep "missing environment variable name for configuration ${SQ}foo.flag${SQ}" error &&
+	sane_unset NONEXISTENT &&
+	test_must_fail git --config-env=foo.flag=NONEXISTENT config --bool foo.flag 2>error &&
+	test_i18ngrep "missing environment variable ${SQ}NONEXISTENT${SQ} for configuration ${SQ}foo.flag${SQ}" error
+'
+
+test_expect_success 'git -c and --config-env work together' '
+	cat >expect <<-\EOF &&
+	bar.cmd cmd-value
+	bar.env env-value
+	EOF
+	ENVVAR=env-value git \
+		-c bar.cmd=cmd-value \
+		--config-env=bar.env=ENVVAR \
+		config --get-regexp "^bar.*" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git -c and --config-env override each other' '
+	cat >expect <<-\EOF &&
+	env
+	cmd
+	EOF
+	{
+		ENVVAR=env git -c bar.bar=cmd --config-env=bar.bar=ENVVAR config bar.bar &&
+		ENVVAR=env git --config-env=bar.bar=ENVVAR -c bar.bar=cmd config bar.bar
+	} >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git config --edit works' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&
