@@ -61,8 +61,7 @@ static void insert_one_record(struct shortlog *log,
 	if (log->summary)
 		item->util = (void *)(UTIL_TO_INT(item) + 1);
 	else {
-		const char *dot3 = log->common_repo_prefix;
-		char *buffer, *p;
+		char *buffer;
 		struct strbuf subject = STRBUF_INIT;
 		const char *eol;
 
@@ -81,17 +80,6 @@ static void insert_one_record(struct shortlog *log,
 			oneline++;
 		format_subject(&subject, oneline, " ");
 		buffer = strbuf_detach(&subject, NULL);
-
-		if (dot3) {
-			int dot3len = strlen(dot3);
-			if (dot3len > 5) {
-				while ((p = strstr(buffer, dot3)) != NULL) {
-					int taillen = strlen(p) - dot3len;
-					memcpy(p, "/.../", 5);
-					memmove(p + 5, p + dot3len, taillen + 1);
-				}
-			}
-		}
 
 		if (item->util == NULL)
 			item->util = xcalloc(1, sizeof(struct string_list));
@@ -342,7 +330,7 @@ void shortlog_init(struct shortlog *log)
 {
 	memset(log, 0, sizeof(*log));
 
-	read_mailmap(&log->mailmap, &log->common_repo_prefix);
+	read_mailmap(&log->mailmap);
 
 	log->list.strdup_strings = 1;
 	log->wrap = DEFAULT_WRAPLEN;

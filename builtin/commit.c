@@ -1039,7 +1039,7 @@ static const char *find_author_by_nickname(const char *name)
 	av[++ac] = NULL;
 	setup_revisions(ac, av, &revs, NULL);
 	revs.mailmap = &mailmap;
-	read_mailmap(revs.mailmap, NULL);
+	read_mailmap(revs.mailmap);
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));

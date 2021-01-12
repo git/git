@@ -23,7 +23,6 @@ struct shortlog {
 	} groups;
 	struct string_list trailers;
 
-	char *common_repo_prefix;
 	int email;
 	struct string_list mailmap;
 	FILE *file;
