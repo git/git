@@ -23,6 +23,9 @@ canonical real names and email addresses.
 SYNTAX
 ------
 
+The '#' character begins a comment to the end of line, blank lines
+are ignored.
+
 In the simple form, each line in the file consists of the canonical
 real name of an author, whitespace, and an email address used in the
 commit (enclosed by '<' and '>') to map to the name. For example:
@@ -94,8 +97,6 @@ Other Author <other@author.xx>         <nick2@company.xx>
 Santa Claus <santa.claus@northpole.xx> <me@company.xx>
 ------------
 
-Use hash '#' for comments that are either on their own line, or after
-the email address.
 
 
 SEE ALSO
