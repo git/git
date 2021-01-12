@@ -897,6 +897,73 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 	return 0;
 }
 
+struct fetch_head {
+	FILE *fp;
+};
+
+static int open_fetch_head(struct fetch_head *fetch_head)
+{
+	const char *filename = git_path_fetch_head(the_repository);
+
+	if (write_fetch_head) {
+		fetch_head->fp = fopen(filename, "a");
+		if (!fetch_head->fp)
+			return error_errno(_("cannot open %s"), filename);
+	} else {
+		fetch_head->fp = NULL;
+	}
+
+	return 0;
+}
+
+static void append_fetch_head(struct fetch_head *fetch_head,
+			      const struct object_id *old_oid,
+			      enum fetch_head_status fetch_head_status,
+			      const char *note,
+			      const char *url, size_t url_len)
+{
+	char old_oid_hex[GIT_MAX_HEXSZ + 1];
+	const char *merge_status_marker;
+	size_t i;
+
+	if (!fetch_head->fp)
+		return;
+
+	switch (fetch_head_status) {
+	case FETCH_HEAD_NOT_FOR_MERGE:
+		merge_status_marker = "not-for-merge";
+		break;
+	case FETCH_HEAD_MERGE:
+		merge_status_marker = "";
+		break;
+	default:
+		/* do not write anything to FETCH_HEAD */
+		return;
+	}
+
+	fprintf(fetch_head->fp, "%s\t%s\t%s",
+		oid_to_hex_r(old_oid_hex, old_oid), merge_status_marker, note);
+	for (i = 0; i < url_len; ++i)
+		if ('\n' == url[i])
+			fputs("\\n", fetch_head->fp);
+		else
+			fputc(url[i], fetch_head->fp);
+	fputc('\n', fetch_head->fp);
+}
+
+static void commit_fetch_head(struct fetch_head *fetch_head)
+{
+	/* Nothing to commit yet. */
+}
+
+static void close_fetch_head(struct fetch_head *fetch_head)
+{
+	if (!fetch_head->fp)
+		return;
+
+	fclose(fetch_head->fp);
+}
+
 static const char warn_show_forced_updates[] =
 N_("Fetch normally indicates which branches had a forced update,\n"
    "but that check has been disabled. To re-enable, use '--show-forced-updates'\n"
@@ -909,22 +976,19 @@ N_("It took %.2f seconds to check forced updates. You can use\n"
 static int store_updated_refs(const char *raw_url, const char *remote_name,
 			      int connectivity_checked, struct ref *ref_map)
 {
-	FILE *fp;
+	struct fetch_head fetch_head;
 	struct commit *commit;
 	int url_len, i, rc = 0;
 	struct strbuf note = STRBUF_INIT;
 	const char *what, *kind;
 	struct ref *rm;
 	char *url;
-	const char *filename = (!write_fetch_head
-				? "/dev/null"
-				: git_path_fetch_head(the_repository));
 	int want_status;
 	int summary_width = transport_summary_width(ref_map);
 
-	fp = fopen(filename, "a");
-	if (!fp)
-		return error_errno(_("cannot open %s"), filename);
+	rc = open_fetch_head(&fetch_head);
+	if (rc)
+		return -1;
 
 	if (raw_url)
 		url = transport_anonymize_url(raw_url);
@@ -953,7 +1017,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	     want_status++) {
 		for (rm = ref_map; rm; rm = rm->next) {
 			struct ref *ref = NULL;
-			const char *merge_status_marker = "";
 
 			if (rm->status == REF_STATUS_REJECT_SHALLOW) {
 				if (want_status == FETCH_HEAD_MERGE)
@@ -1011,26 +1074,10 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 					strbuf_addf(&note, "%s ", kind);
 				strbuf_addf(&note, "'%s' of ", what);
 			}
-			switch (rm->fetch_head_status) {
-			case FETCH_HEAD_NOT_FOR_MERGE:
-				merge_status_marker = "not-for-merge";
-				/* fall-through */
-			case FETCH_HEAD_MERGE:
-				fprintf(fp, "%s\t%s\t%s",
-					oid_to_hex(&rm->old_oid),
-					merge_status_marker,
-					note.buf);
-				for (i = 0; i < url_len; ++i)
-					if ('\n' == url[i])
-						fputs("\\n", fp);
-					else
-						fputc(url[i], fp);
-				fputc('\n', fp);
-				break;
-			default:
-				/* do not write anything to FETCH_HEAD */
-				break;
-			}
+
+			append_fetch_head(&fetch_head, &rm->old_oid,
+					  rm->fetch_head_status,
+					  note.buf, url, url_len);
 
 			strbuf_reset(&note);
 			if (ref) {
@@ -1060,6 +1107,9 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		}
 	}
 
+	if (!rc)
+		commit_fetch_head(&fetch_head);
+
 	if (rc & STORE_REF_ERROR_DF_CONFLICT)
 		error(_("some local refs could not be updated; try running\n"
 		      " 'git remote prune %s' to remove any old, conflicting "
@@ -1077,7 +1127,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
  abort:
 	strbuf_release(&note);
 	free(url);
-	fclose(fp);
+	close_fetch_head(&fetch_head);
 	return rc;
 }
 
