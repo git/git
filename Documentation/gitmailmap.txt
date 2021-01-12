@@ -1,8 +1,27 @@
+gitmailmap(5)
+=============
+
+NAME
+----
+gitmailmap - Map author/committer names and/or E-Mail addresses
+
+SYNOPSIS
+--------
+$GIT_WORK_DIR/.mailmap
+
+
+DESCRIPTION
+-----------
+
 If the file `.mailmap` exists at the toplevel of the repository, or at
 the location pointed to by the mailmap.file or mailmap.blob
 configuration options, it
 is used to map author and committer names and email addresses to
 canonical real names and email addresses.
+
+
+SYNTAX
+------
 
 In the simple form, each line in the file consists of the canonical
 real name of an author, whitespace, and an email address used in the
@@ -26,6 +45,10 @@ commit matching the specified commit email address, and:
 --
 which allows mailmap to replace both the name and the email of a
 commit matching both the specified commit name and email address.
+
+
+EXAMPLES
+--------
 
 Example 1: Your history contains commits by two authors, Jane
 and Joe, whose names appear in the repository under several forms:
@@ -73,3 +96,13 @@ Santa Claus <santa.claus@northpole.xx> <me@company.xx>
 
 Use hash '#' for comments that are either on their own line, or after
 the email address.
+
+
+SEE ALSO
+--------
+linkgit:git-check-mailmap[1]
+
+
+GIT
+---
+Part of the linkgit:git[1] suite

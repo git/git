@@ -39,7 +39,7 @@ printed; otherwise only ``$$<user@host>$$'' is printed.
 MAPPING AUTHORS
 ---------------
 
-include::mailmap.txt[]
+See linkgit:gitmailmap[5].
 
 
 GIT

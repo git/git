@@ -204,6 +204,7 @@ gitfaq                                  guide
 gitglossary                             guide
 githooks                                guide
 gitignore                               guide
+gitmailmap                              guide
 gitmodules                              guide
 gitnamespaces                           guide
 gitremote-helpers                       guide
