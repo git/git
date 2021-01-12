@@ -1294,6 +1294,58 @@ test_expect_success 'git -c is not confused by empty environment' '
 	GIT_CONFIG_PARAMETERS="" git -c x.one=1 config --list
 '
 
+test_expect_success 'GIT_CONFIG_PARAMETERS handles old-style entries' '
+	v="${SQ}key.one=foo${SQ}" &&
+	v="$v  ${SQ}key.two=bar${SQ}" &&
+	v="$v ${SQ}key.ambiguous=section.whatever=value${SQ}" &&
+	GIT_CONFIG_PARAMETERS=$v git config --get-regexp "key.*" >actual &&
+	cat >expect <<-EOF &&
+	key.one foo
+	key.two bar
+	key.ambiguous section.whatever=value
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'GIT_CONFIG_PARAMETERS handles new-style entries' '
+	v="${SQ}key.one${SQ}=${SQ}foo${SQ}" &&
+	v="$v  ${SQ}key.two${SQ}=${SQ}bar${SQ}" &&
+	v="$v ${SQ}key.ambiguous=section.whatever${SQ}=${SQ}value${SQ}" &&
+	GIT_CONFIG_PARAMETERS=$v git config --get-regexp "key.*" >actual &&
+	cat >expect <<-EOF &&
+	key.one foo
+	key.two bar
+	key.ambiguous=section.whatever value
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'old and new-style entries can mix' '
+	v="${SQ}key.oldone=oldfoo${SQ}" &&
+	v="$v ${SQ}key.newone${SQ}=${SQ}newfoo${SQ}" &&
+	v="$v ${SQ}key.oldtwo=oldbar${SQ}" &&
+	v="$v ${SQ}key.newtwo${SQ}=${SQ}newbar${SQ}" &&
+	GIT_CONFIG_PARAMETERS=$v git config --get-regexp "key.*" >actual &&
+	cat >expect <<-EOF &&
+	key.oldone oldfoo
+	key.newone newfoo
+	key.oldtwo oldbar
+	key.newtwo newbar
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'old and new bools with ambiguous subsection' '
+	v="${SQ}key.with=equals.oldbool${SQ}" &&
+	v="$v ${SQ}key.with=equals.newbool${SQ}=" &&
+	GIT_CONFIG_PARAMETERS=$v git config --get-regexp "key.*" >actual &&
+	cat >expect <<-EOF &&
+	key.with equals.oldbool
+	key.with=equals.newbool
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'detect bogus GIT_CONFIG_PARAMETERS' '
 	cat >expect <<-\EOF &&
 	env.one one

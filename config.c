@@ -507,14 +507,62 @@ int git_config_parse_parameter(const char *text,
 	return ret;
 }
 
+static int parse_config_env_list(char *env, config_fn_t fn, void *data)
+{
+	char *cur = env;
+	while (cur && *cur) {
+		const char *key = sq_dequote_step(cur, &cur);
+		if (!key)
+			return error(_("bogus format in %s"),
+				     CONFIG_DATA_ENVIRONMENT);
+
+		if (!cur || isspace(*cur)) {
+			/* old-style 'key=value' */
+			if (git_config_parse_parameter(key, fn, data) < 0)
+				return -1;
+		}
+		else if (*cur == '=') {
+			/* new-style 'key'='value' */
+			const char *value;
+
+			cur++;
+			if (*cur == '\'') {
+				/* quoted value */
+				value = sq_dequote_step(cur, &cur);
+				if (!value || (cur && !isspace(*cur))) {
+					return error(_("bogus format in %s"),
+						     CONFIG_DATA_ENVIRONMENT);
+				}
+			} else if (!*cur || isspace(*cur)) {
+				/* implicit bool: 'key'= */
+				value = NULL;
+			} else {
+				return error(_("bogus format in %s"),
+					     CONFIG_DATA_ENVIRONMENT);
+			}
+
+			if (config_parse_pair(key, value, fn, data) < 0)
+				return -1;
+		}
+		else {
+			/* unknown format */
+			return error(_("bogus format in %s"),
+				     CONFIG_DATA_ENVIRONMENT);
+		}
+
+		if (cur) {
+			while (isspace(*cur))
+				cur++;
+		}
+	}
+	return 0;
+}
+
 int git_config_from_parameters(config_fn_t fn, void *data)
 {
 	const char *env = getenv(CONFIG_DATA_ENVIRONMENT);
 	int ret = 0;
 	char *envw;
-	const char **argv = NULL;
-	int nr = 0, alloc = 0;
-	int i;
 	struct config_source source;
 
 	if (!env)
@@ -527,21 +575,8 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 
 	/* sq_dequote will write over it */
 	envw = xstrdup(env);
+	ret = parse_config_env_list(envw, fn, data);
 
-	if (sq_dequote_to_argv(envw, &argv, &nr, &alloc) < 0) {
-		ret = error(_("bogus format in %s"), CONFIG_DATA_ENVIRONMENT);
-		goto out;
-	}
-
-	for (i = 0; i < nr; i++) {
-		if (git_config_parse_parameter(argv[i], fn, data) < 0) {
-			ret = -1;
-			goto out;
-		}
-	}
-
-out:
-	free(argv);
 	free(envw);
 	cf = source.prev;
 	return ret;
