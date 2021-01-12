@@ -13,11 +13,6 @@ fuzz_blame () {
 }
 
 test_expect_success 'setup commits and contacts file' '
-	cat >contacts <<-EOF &&
-	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
-	nick1 <bugs@company.xx>
-	EOF
-
 	echo one >one &&
 	git add one &&
 	test_tick &&
@@ -48,22 +43,51 @@ test_expect_success 'check-mailmap --stdin' '
 	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
-	git check-mailmap --stdin <contacts >actual &&
+	git check-mailmap --stdin <expect >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'check-mailmap --stdin arguments' '
+test_expect_success 'check-mailmap --stdin arguments: no mapping' '
+	test_when_finished "rm contacts" &&
+	cat >contacts <<-EOF &&
+	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+	nick1 <bugs@company.xx>
+	EOF
 	cat >expect <<-\EOF &&
 	Internal Guy <bugs@company.xy>
 	EOF
-	cat <contacts >>expect &&
+	cat contacts >>expect &&
+
 	git check-mailmap --stdin "Internal Guy <bugs@company.xy>" \
 		<contacts >actual &&
 	test_cmp expect actual
 '
 
+test_expect_success 'check-mailmap --stdin arguments: mapping' '
+	test_when_finished "rm .mailmap" &&
+	cat >.mailmap <<-EOF &&
+	New Name <$GIT_AUTHOR_EMAIL>
+	EOF
+	cat >stdin <<-EOF &&
+	Old Name <$GIT_AUTHOR_EMAIL>
+	EOF
+
+	cp .mailmap expect &&
+	git check-mailmap --stdin <stdin >actual &&
+	test_cmp expect actual &&
+
+	cat .mailmap >>expect &&
+	git check-mailmap --stdin "Another Old Name <$GIT_AUTHOR_EMAIL>" \
+		<stdin >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'check-mailmap bogus contact' '
 	test_must_fail git check-mailmap bogus
+'
+
+test_expect_success 'check-mailmap bogus contact --stdin' '
+	test_must_fail git check-mailmap --stdin bogus </dev/null
 '
 
 test_expect_success 'No mailmap' '
