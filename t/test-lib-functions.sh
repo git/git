@@ -183,6 +183,9 @@ debug () {
 #	Run all git commands in directory <dir>
 #   --notick
 #	Do not call test_tick before making a commit
+#   --append
+#	Use "echo >>" instead of "echo >" when writing "<contents>" to
+#	"<file>"
 #   --signoff
 #	Invoke "git commit" with --signoff
 #   --author=<author>
@@ -195,6 +198,7 @@ debug () {
 
 test_commit () {
 	notick= &&
+	append= &&
 	author= &&
 	signoff= &&
 	indir= &&
@@ -203,6 +207,9 @@ test_commit () {
 		case "$1" in
 		--notick)
 			notick=yes
+			;;
+		--append)
+			append=yes
 			;;
 		--author)
 			author="$2"
@@ -223,7 +230,12 @@ test_commit () {
 	done &&
 	indir=${indir:+"$indir"/} &&
 	file=${2:-"$1.t"} &&
-	echo "${3-$1}" > "$indir$file" &&
+	if test -n "$append"
+	then
+		echo "${3-$1}" >>"$indir$file"
+	else
+		echo "${3-$1}" >"$indir$file"
+	fi &&
 	git ${indir:+ -C "$indir"} add "$file" &&
 	if test -z "$notick"
 	then

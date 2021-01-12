@@ -5,14 +5,8 @@ test_description='.mailmap configurations'
 . ./test-lib.sh
 
 test_expect_success 'setup commits and contacts file' '
-	echo one >one &&
-	git add one &&
-	test_tick &&
-	git commit -m initial &&
-	echo two >>one &&
-	git add one &&
-	test_tick &&
-	git commit --author "nick1 <bugs@company.xx>" -m second
+	test_commit initial one one &&
+	test_commit --author "nick1 <bugs@company.xx>" --append second one two
 '
 
 test_expect_success 'check-mailmap no arguments' '
@@ -436,30 +430,11 @@ test_expect_success 'Shortlog output (complex mapping)' '
 	Santa Claus <santa.claus@northpole.xx> <me@company.xx>
 	EOF
 
-	echo three >>one &&
-	git add one &&
-	test_tick &&
-	git commit --author "nick2 <bugs@company.xx>" -m third &&
-
-	echo four >>one &&
-	git add one &&
-	test_tick &&
-	git commit --author "nick2 <nick2@company.xx>" -m fourth &&
-
-	echo five >>one &&
-	git add one &&
-	test_tick &&
-	git commit --author "santa <me@company.xx>" -m fifth &&
-
-	echo six >>one &&
-	git add one &&
-	test_tick &&
-	git commit --author "claus <me@company.xx>" -m sixth &&
-
-	echo seven >>one &&
-	git add one &&
-	test_tick &&
-	git commit --author "CTO <cto@coompany.xx>" -m seventh &&
+	test_commit --author "nick2 <bugs@company.xx>" --append third one three &&
+	test_commit --author "nick2 <nick2@company.xx>" --append fourth one four &&
+	test_commit --author "santa <me@company.xx>" --append fifth one five &&
+	test_commit --author "claus <me@company.xx>" --append sixth one six &&
+	test_commit --author "CTO <cto@coompany.xx>" --append seventh one seven &&
 
 	cat >expect <<-EOF &&
 	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> (1):
