@@ -167,7 +167,7 @@ test_expect_success 'setup' '
 	test_commit_setvar P "Commit P" main.txt
 '
 
-test_expect_failure 'create bundle from special rev: main^!' '
+test_expect_success 'create bundle from special rev: main^!' '
 	git bundle create special-rev.bdl "main^!" &&
 
 	git bundle list-heads special-rev.bdl |
