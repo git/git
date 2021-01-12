@@ -333,6 +333,15 @@ test_expect_success 'mailmap.blob can be missing' '
 	test_cmp expect actual
 '
 
+test_expect_success 'mailmap.blob might be the wrong type' '
+	test_when_finished "rm .mailmap" &&
+	cp default.map .mailmap &&
+
+	git -c mailmap.blob=HEAD: shortlog HEAD >actual 2>err &&
+	test_i18ngrep "mailmap is not a blob" err &&
+	test_cmp expect actual
+'
+
 test_expect_success 'mailmap.blob defaults to off in non-bare repo' '
 	git init non-bare &&
 	(
