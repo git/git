@@ -49,6 +49,11 @@ commit matching the specified commit email address, and:
 which allows mailmap to replace both the name and the email of a
 commit matching both the specified commit name and email address.
 
+Both E-Mails and names are matched case-insensitively. For example
+this would also match the 'Commit Name <commit@email.xx>' above:
+--
+Proper Name <proper@email.xx> CoMmIt NaMe <CoMmIt@EmAiL.xX>
+--
 
 EXAMPLES
 --------

@@ -220,7 +220,21 @@ test_expect_success 'name entry after email entry, case-insensitive' '
 	      initial
 
 	EOF
+	git shortlog HEAD >actual &&
+	test_cmp expect actual &&
 
+	cat >internal.map <<-\EOF &&
+	NiCk <BuGs@CoMpAnY.Xy> NICK1 <BUGS@COMPANY.XX>
+	EOF
+
+	cat >expect <<-\EOF &&
+	NiCk (1):
+	      second
+
+	Repo Guy (1):
+	      initial
+
+	EOF
 	git shortlog HEAD >actual &&
 	test_cmp expect actual
 '
