@@ -419,6 +419,94 @@ test_expect_success 'preserve canonical email case' '
 	test_cmp expect actual
 '
 
+test_expect_success 'gitmailmap(5) example output: setup' '
+	test_create_repo doc &&
+	test_commit -C doc --author "Joe Developer <joe@example.com>" A &&
+	test_commit -C doc --author "Joe R. Developer <joe@example.com>" B &&
+	test_commit -C doc --author "Jane Doe <jane@example.com>" C &&
+	test_commit -C doc --author "Jane Doe <jane@laptop.(none)>" D &&
+	test_commit -C doc --author "Jane D. <jane@desktop.(none)>" E
+'
+
+test_expect_success 'gitmailmap(5) example output: example #1' '
+	test_config -C doc mailmap.file ../doc.map &&
+	cat >doc.map <<-\EOF &&
+	Joe R. Developer <joe@example.com>
+	Jane Doe <jane@example.com>
+	Jane Doe <jane@desktop.(none)>
+	EOF
+
+	cat >expect <<-\EOF &&
+	Author Joe Developer <joe@example.com> maps to Joe R. Developer <joe@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Joe R. Developer <joe@example.com> maps to Joe R. Developer <joe@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Jane Doe <jane@example.com> maps to Jane Doe <jane@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Jane Doe <jane@laptop.(none)> maps to Jane Doe <jane@laptop.(none)>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Jane D <jane@desktop.(none)> maps to Jane Doe <jane@desktop.(none)>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	EOF
+	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'gitmailmap(5) example output: example #2' '
+	test_config -C doc mailmap.file ../doc.map &&
+	cat >doc.map <<-\EOF &&
+	Joe R. Developer <joe@example.com>
+	Jane Doe <jane@example.com> <jane@laptop.(none)>
+	Jane Doe <jane@example.com> <jane@desktop.(none)>
+	EOF
+
+	cat >expect <<-\EOF &&
+	Author Joe Developer <joe@example.com> maps to Joe R. Developer <joe@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Joe R. Developer <joe@example.com> maps to Joe R. Developer <joe@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Jane Doe <jane@example.com> maps to Jane Doe <jane@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Jane Doe <jane@laptop.(none)> maps to Jane Doe <jane@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Jane D <jane@desktop.(none)> maps to Jane Doe <jane@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	EOF
+	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'gitmailmap(5) example output: example #3' '
+	test_config -C doc mailmap.file ../doc.map &&
+	cat >>doc.map <<-\EOF &&
+	Joe R. Developer <joe@example.com> Joe <bugs@example.com>
+	Jane Doe <jane@example.com> Jane <bugs@example.com>
+	EOF
+
+	test_commit -C doc --author "Joe <bugs@example.com>" F &&
+	test_commit -C doc --author "Jane <bugs@example.com>" G &&
+
+	cat >>expect <<-\EOF &&
+
+	Author Joe <bugs@example.com> maps to Joe R. Developer <joe@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author Jane <bugs@example.com> maps to Jane Doe <jane@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	EOF
+	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	test_cmp expect actual
+'
+
+
 test_expect_success 'Shortlog output (complex mapping)' '
 	test_config mailmap.file complex.map &&
 	cat >complex.map <<-EOF &&
