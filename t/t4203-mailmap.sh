@@ -753,4 +753,37 @@ test_expect_success 'commit --author honors mailmap' '
 	test_cmp expect actual
 '
 
+test_expect_success 'comment syntax: setup' '
+	test_create_repo comm &&
+	test_commit -C comm --author "A <a@example.com>" A &&
+	test_commit -C comm --author "B <b@example.com>" B &&
+	test_commit -C comm --author "C <#@example.com>" C &&
+	test_commit -C comm --author "D <d@e#ample.com>" D &&
+
+	test_config -C comm mailmap.file ../doc.map &&
+	cat >>doc.map <<-\EOF &&
+	# Ah <a@example.com>
+
+	; Bee <b@example.com>
+	Cee <cee@example.com> <#@example.com>
+	Dee <dee@example.com> <d@e#ample.com>
+	EOF
+
+	cat >expect <<-\EOF &&
+	Author A <a@example.com> maps to A <a@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author B <b@example.com> maps to ; Bee <b@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author C <#@example.com> maps to Cee <cee@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+
+	Author D <d@e#ample.com> maps to Dee <dee@example.com>
+	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	EOF
+	git -C comm log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	test_cmp expect actual
+'
+
 test_done
