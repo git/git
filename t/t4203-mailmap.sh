@@ -414,7 +414,6 @@ test_expect_success 'Shortlog output (complex mapping)' '
 	Other Author <other@author.xx>   nick2 <bugs@company.xx>
 	Other Author <other@author.xx>         <nick2@company.xx>
 	Santa Claus <santa.claus@northpole.xx> <me@company.xx>
-	Santa Claus <santa.claus@northpole.xx> <me@company.xx>
 	EOF
 
 	echo three >>one &&
