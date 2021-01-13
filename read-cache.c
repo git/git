@@ -3014,10 +3014,10 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	if (ce_flush(&c, newfd, istate->oid.hash))
 		return -1;
 	if (close_tempfile_gently(tempfile)) {
-		error(_("could not close '%s'"), tempfile->filename.buf);
+		error(_("could not close '%s'"), get_tempfile_path(tempfile));
 		return -1;
 	}
-	if (stat(tempfile->filename.buf, &st))
+	if (stat(get_tempfile_path(tempfile), &st))
 		return -1;
 	istate->timestamp.sec = (unsigned int)st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
@@ -3058,10 +3058,10 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 	 * that is associated with the given "istate".
 	 */
 	trace2_region_enter_printf("index", "do_write_index", the_repository,
-				   "%s", lock->tempfile->filename.buf);
+				   "%s", get_lock_file_path(lock));
 	ret = do_write_index(istate, lock->tempfile, 0);
 	trace2_region_leave_printf("index", "do_write_index", the_repository,
-				   "%s", lock->tempfile->filename.buf);
+				   "%s", get_lock_file_path(lock));
 
 	if (ret)
 		return ret;
@@ -3158,10 +3158,10 @@ static int write_shared_index(struct index_state *istate,
 	move_cache_to_base_index(istate);
 
 	trace2_region_enter_printf("index", "shared/do_write_index",
-				   the_repository, "%s", (*temp)->filename.buf);
+				   the_repository, "%s", get_tempfile_path(*temp));
 	ret = do_write_index(si->base, *temp, 1);
 	trace2_region_leave_printf("index", "shared/do_write_index",
-				   the_repository, "%s", (*temp)->filename.buf);
+				   the_repository, "%s", get_tempfile_path(*temp));
 
 	if (ret)
 		return ret;
