@@ -2086,7 +2086,7 @@ int for_each_object_in_pack(struct packed_git *p,
 		struct object_id oid;
 
 		if (flags & FOR_EACH_OBJECT_PACK_ORDER)
-			pos = p->revindex[i].nr;
+			pos = pack_pos_to_index(p, i);
 		else
 			pos = i;
 
