@@ -203,3 +203,35 @@ struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
 
 	return p->revindex + pos;
 }
+
+int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
+{
+	int ret;
+
+	if (load_pack_revindex(p) < 0)
+		return -1;
+
+	ret = find_revindex_position(p, ofs);
+	if (ret < 0)
+		return ret;
+	*pos = ret;
+	return 0;
+}
+
+uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos)
+{
+	if (!p->revindex)
+		BUG("pack_pos_to_index: reverse index not yet loaded");
+	if (p->num_objects <= pos)
+		BUG("pack_pos_to_index: out-of-bounds object at %"PRIu32, pos);
+	return p->revindex[pos].nr;
+}
+
+off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos)
+{
+	if (!p->revindex)
+		BUG("pack_pos_to_index: reverse index not yet loaded");
+	if (p->num_objects < pos)
+		BUG("pack_pos_to_offset: out-of-bounds object at %"PRIu32, pos);
+	return p->revindex[pos].offset;
+}
