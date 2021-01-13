@@ -177,21 +177,21 @@ int load_pack_revindex(struct packed_git *p)
 int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
 	unsigned lo, hi;
-	const struct revindex_entry *revindex;
 
 	if (load_pack_revindex(p) < 0)
 		return -1;
 
 	lo = 0;
 	hi = p->num_objects + 1;
-	revindex = p->revindex;
 
 	do {
 		const unsigned mi = lo + (hi - lo) / 2;
-		if (revindex[mi].offset == ofs) {
+		off_t got = pack_pos_to_offset(p, mi);
+
+		if (got == ofs) {
 			*pos = mi;
 			return 0;
-		} else if (ofs < revindex[mi].offset)
+		} else if (ofs < got)
 			hi = mi;
 		else
 			lo = mi + 1;
