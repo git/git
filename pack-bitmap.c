@@ -711,21 +711,22 @@ static void show_objects_for_type(
 
 		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
 			struct object_id oid;
-			struct revindex_entry *entry;
-			uint32_t hash = 0;
+			uint32_t hash = 0, index_pos;
+			off_t ofs;
 
 			if ((word >> offset) == 0)
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
 
-			entry = &bitmap_git->pack->revindex[pos + offset];
-			nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
+			index_pos = pack_pos_to_index(bitmap_git->pack, pos + offset);
+			ofs = pack_pos_to_offset(bitmap_git->pack, pos + offset);
+			nth_packed_object_id(&oid, bitmap_git->pack, index_pos);
 
 			if (bitmap_git->hashes)
-				hash = get_be32(bitmap_git->hashes + entry->nr);
+				hash = get_be32(bitmap_git->hashes + index_pos);
 
-			show_reach(&oid, object_type, 0, hash, bitmap_git->pack, entry->offset);
+			show_reach(&oid, object_type, 0, hash, bitmap_git->pack, ofs);
 		}
 	}
 }
