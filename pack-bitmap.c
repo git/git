@@ -1392,11 +1392,10 @@ uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 
 	for (i = 0; i < num_objects; ++i) {
 		struct object_id oid;
-		struct revindex_entry *entry;
 		struct object_entry *oe;
 
-		entry = &bitmap_git->pack->revindex[i];
-		nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
+		nth_packed_object_id(&oid, bitmap_git->pack,
+				     pack_pos_to_index(bitmap_git->pack, i));
 		oe = packlist_find(mapping, &oid);
 
 		if (oe)
