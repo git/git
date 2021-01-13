@@ -835,11 +835,11 @@ static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
 	oi.sizep = &size;
 
 	if (pos < pack->num_objects) {
-		struct revindex_entry *entry = &pack->revindex[pos];
-		if (packed_object_info(the_repository, pack,
-				       entry->offset, &oi) < 0) {
+		off_t ofs = pack_pos_to_offset(pack, pos);
+		if (packed_object_info(the_repository, pack, ofs, &oi) < 0) {
 			struct object_id oid;
-			nth_packed_object_id(&oid, pack, entry->nr);
+			nth_packed_object_id(&oid, pack,
+					     pack_pos_to_index(pack, pos));
 			die(_("unable to get size of %s"), oid_to_hex(&oid));
 		}
 	} else {
