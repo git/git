@@ -1260,7 +1260,9 @@ do
 			git cat-file commit $SHA1_2 &&
 			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 				git fetch ../testrepo/.git $SHA1_3 2>err &&
-			test_i18ngrep "remote error:.*not our ref.*$SHA1_3\$" err
+			# ideally we would insist this be on a "remote error:"
+			# line, but it is racy; see the commit message
+			test_i18ngrep "not our ref.*$SHA1_3\$" err
 		)
 	'
 done
