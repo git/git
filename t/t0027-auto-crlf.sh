@@ -368,9 +368,9 @@ test_expect_success 'ls-files --eol -o Text/Binary' '
 	test_cmp expect actual
 '
 
-test_expect_success 'setup master' '
+test_expect_success 'setup main' '
 	echo >.gitattributes &&
-	git checkout -b master &&
+	git checkout -b main &&
 	git add .gitattributes &&
 	git commit -m "add .gitattributes" . &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\nLINETWO\nLINETHREE"     >LF &&

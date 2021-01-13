@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='some bundle related tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -19,7 +22,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success '"verify" needs a worktree' '
-	git bundle create tip.bundle -1 master &&
+	git bundle create tip.bundle -1 main &&
 	nongit test_must_fail git bundle verify ../tip.bundle 2>err &&
 	test_i18ngrep "need a repository" err
 '
@@ -39,15 +42,15 @@ test_expect_success 'die if bundle file cannot be created' '
 '
 
 test_expect_failure 'bundle --stdin' '
-	echo master | git bundle create stdin-bundle.bdl --stdin &&
+	echo main | git bundle create stdin-bundle.bdl --stdin &&
 	git ls-remote stdin-bundle.bdl >output &&
-	grep master output
+	grep main output
 '
 
 test_expect_failure 'bundle --stdin <rev-list options>' '
-	echo master | git bundle create hybrid-bundle.bdl --stdin tag &&
+	echo main | git bundle create hybrid-bundle.bdl --stdin tag &&
 	git ls-remote hybrid-bundle.bdl >output &&
-	grep master output
+	grep main output
 '
 
 test_expect_success 'empty bundle file is rejected' '
@@ -83,14 +86,14 @@ test_expect_success 'prerequisites with an empty commit message' '
 
 test_expect_success 'failed bundle creation does not leave cruft' '
 	# This fails because the bundle would be empty.
-	test_must_fail git bundle create fail.bundle master..master &&
+	test_must_fail git bundle create fail.bundle main..main &&
 	test_path_is_missing fail.bundle.lock
 '
 
 test_expect_success 'fetch SHA-1 from bundle' '
 	test_create_repo foo &&
 	test_commit -C foo x &&
-	git -C foo bundle create tip.bundle -1 master &&
+	git -C foo bundle create tip.bundle -1 main &&
 	git -C foo rev-parse HEAD >hash &&
 
 	# Exercise to ensure that fetching a SHA-1 from a bundle works with no

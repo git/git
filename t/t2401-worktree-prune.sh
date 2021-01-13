@@ -2,6 +2,9 @@
 
 test_description='prune $GIT_DIR/worktrees'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success initialize '
@@ -87,7 +90,7 @@ test_expect_success 'not prune recent checkouts' '
 
 test_expect_success 'not prune proper checkouts' '
 	test_when_finished rm -r .git/worktrees &&
-	git worktree add --detach "$PWD/nop" master &&
+	git worktree add --detach "$PWD/nop" main &&
 	git worktree prune &&
 	test -d .git/worktrees/nop
 '

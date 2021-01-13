@@ -2,6 +2,9 @@
 
 test_description='subtree merge strategy'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -14,10 +17,10 @@ test_expect_success setup '
 	echo >>hello world &&
 	git add hello &&
 	git commit -m second &&
-	git checkout master &&
+	git checkout main &&
 	for i in mundo $s; do echo $i; done >hello &&
 	git add hello &&
-	git commit -m master
+	git commit -m main
 
 '
 
@@ -36,7 +39,7 @@ test_expect_success 'setup branch sub' '
 '
 
 test_expect_success 'setup topic branch' '
-	git checkout -b topic master &&
+	git checkout -b topic main &&
 	git merge -s ours --no-commit --allow-unrelated-histories sub &&
 	git read-tree --prefix=dir/ -u sub &&
 	git commit -m "initial merge of sub into topic" &&
@@ -77,8 +80,8 @@ test_expect_success 'setup' '
 
 test_expect_success 'initial merge' '
 	git remote add -f gui ../git-gui &&
-	git merge -s ours --no-commit --allow-unrelated-histories gui/master &&
-	git read-tree --prefix=git-gui/ -u gui/master &&
+	git merge -s ours --no-commit --allow-unrelated-histories gui/main &&
+	git read-tree --prefix=git-gui/ -u gui/main &&
 	git commit -m "Merge git-gui as our subdirectory" &&
 	git checkout -b work &&
 	git ls-files -s >actual &&
@@ -108,10 +111,10 @@ test_expect_success 'merge update' '
 
 test_expect_success 'initial ambiguous subtree' '
 	cd ../git &&
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b topic_2 &&
-	git merge -s ours --no-commit gui/master &&
-	git read-tree --prefix=git-gui2/ -u gui/master &&
+	git merge -s ours --no-commit gui/main &&
+	git read-tree --prefix=git-gui2/ -u gui/main &&
 	git commit -m "Merge git-gui2 as our subdirectory" &&
 	git checkout -b work2 &&
 	git ls-files -s >actual &&

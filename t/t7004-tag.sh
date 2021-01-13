@@ -7,6 +7,9 @@ test_description='git tag
 
 Tests for operations with tags.'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
@@ -1583,7 +1586,7 @@ test_expect_success 'checking that branch head with --no-contains lists all but 
 "
 
 test_expect_success 'merging original branch into this branch' '
-	git merge --strategy=ours master &&
+	git merge --strategy=ours main &&
         git tag v4.0
 '
 
@@ -1944,15 +1947,15 @@ test_expect_success ULIMIT_STACK_SIZE '--contains and --no-contains work in a de
 	i=1 &&
 	while test $i -lt 8000
 	do
-		echo "commit refs/heads/master
+		echo "commit refs/heads/main
 committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
 data <<EOF
 commit #$i
 EOF"
-		test $i = 1 && echo "from refs/heads/master^0"
+		test $i = 1 && echo "from refs/heads/main^0"
 		i=$(($i + 1))
 	done | git fast-import &&
-	git checkout master &&
+	git checkout main &&
 	git tag far-far-away HEAD^ &&
 	run_with_limited_stack git tag --contains HEAD >actual &&
 	test_must_be_empty actual &&

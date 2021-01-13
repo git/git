@@ -10,6 +10,9 @@ commandline, and checks that it would not write any errors
 or warnings to log.'
 
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./gitweb-lib.sh
 
 # ----------------------------------------------------------------------
@@ -327,7 +330,7 @@ test_expect_success \
 	 echo "Branch" >>b &&
 	 git add b &&
 	 git commit -a -m "On branch" &&
-	 git checkout master &&
+	 git checkout main &&
 	 git merge b &&
 	 git tag merge_commit'
 
@@ -364,7 +367,7 @@ test_expect_success \
 	 echo "Changed and have mode changed" >07-change-mode-change &&
 	 test_chmod +x 07-change-mode-change &&
 	 git commit -a -m "Large commit" &&
-	 git checkout master'
+	 git checkout main'
 
 test_expect_success \
 	'commit(1): large commit' \
@@ -402,7 +405,7 @@ test_expect_success 'side-by-side: merge commit' '
 
 test_expect_success \
 	'tags: list of different types of tags' \
-	'git checkout master &&
+	'git checkout main &&
 	 git tag -a -m "Tag commit object" tag-commit HEAD &&
 	 git tag -a -m "" tag-commit-nomessage HEAD &&
 	 git tag -a -m "Tag tag object" tag-tag tag-commit &&
@@ -443,7 +446,7 @@ test_expect_success \
 
 test_expect_success \
 	'logs: history (implicit HEAD, deleted file)' \
-	'git checkout master &&
+	'git checkout main &&
 	 echo "to be deleted" >deleted_file &&
 	 git add deleted_file &&
 	 git commit -m "Add file to be deleted" &&
@@ -463,11 +466,11 @@ test_expect_success \
 
 test_expect_success \
 	'path_info: project/branch:file' \
-	'gitweb_run "" "/.git/master:file"'
+	'gitweb_run "" "/.git/main:file"'
 
 test_expect_success \
 	'path_info: project/branch:dir/' \
-	'gitweb_run "" "/.git/master:foo/"'
+	'gitweb_run "" "/.git/main:foo/"'
 
 test_expect_success \
 	'path_info: project/branch (non-existent)' \
@@ -479,16 +482,16 @@ test_expect_success \
 
 test_expect_success \
 	'path_info: project/branch:file (non-existent)' \
-	'gitweb_run "" "/.git/master:non-existent"'
+	'gitweb_run "" "/.git/main:non-existent"'
 
 test_expect_success \
 	'path_info: project/branch:dir/ (non-existent)' \
-	'gitweb_run "" "/.git/master:non-existent/"'
+	'gitweb_run "" "/.git/main:non-existent/"'
 
 
 test_expect_success \
 	'path_info: project/branch:/file' \
-	'gitweb_run "" "/.git/master:/file"'
+	'gitweb_run "" "/.git/main:/file"'
 
 test_expect_success \
 	'path_info: project/:/file (implicit HEAD)' \
@@ -801,7 +804,7 @@ test_expect_success \
 		git checkout orphan_branch ||
 		git checkout --orphan orphan_branch
 	 } &&
-	 test_when_finished "git checkout master" &&
+	 test_when_finished "git checkout main" &&
 	 gitweb_run "p=.git;a=summary"'
 
 test_done

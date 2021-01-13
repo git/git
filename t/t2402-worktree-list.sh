@@ -2,6 +2,9 @@
 
 test_description='test git worktree list'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -21,7 +24,7 @@ test_expect_success 'rev-parse --git-common-dir on main worktree' '
 test_expect_success 'rev-parse --git-path objects linked worktree' '
 	echo "$(git rev-parse --show-toplevel)/.git/objects" >expect &&
 	test_when_finished "rm -rf linked-tree actual expect && git worktree prune" &&
-	git worktree add --detach linked-tree master &&
+	git worktree add --detach linked-tree main &&
 	git -C linked-tree rev-parse --git-path objects >actual &&
 	test_cmp expect actual
 '
@@ -29,7 +32,7 @@ test_expect_success 'rev-parse --git-path objects linked worktree' '
 test_expect_success '"list" all worktrees from main' '
 	echo "$(git rev-parse --show-toplevel) $(git rev-parse --short HEAD) [$(git symbolic-ref --short HEAD)]" >expect &&
 	test_when_finished "rm -rf here out actual expect && git worktree prune" &&
-	git worktree add --detach here master &&
+	git worktree add --detach here main &&
 	echo "$(git -C here rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >>expect &&
 	git worktree list >out &&
 	sed "s/  */ /g" <out >actual &&
@@ -39,7 +42,7 @@ test_expect_success '"list" all worktrees from main' '
 test_expect_success '"list" all worktrees from linked' '
 	echo "$(git rev-parse --show-toplevel) $(git rev-parse --short HEAD) [$(git symbolic-ref --short HEAD)]" >expect &&
 	test_when_finished "rm -rf here out actual expect && git worktree prune" &&
-	git worktree add --detach here master &&
+	git worktree add --detach here main &&
 	echo "$(git -C here rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >>expect &&
 	git -C here worktree list >out &&
 	sed "s/  */ /g" <out >actual &&
@@ -52,7 +55,7 @@ test_expect_success '"list" all worktrees --porcelain' '
 	echo "branch $(git symbolic-ref HEAD)" >>expect &&
 	echo >>expect &&
 	test_when_finished "rm -rf here actual expect && git worktree prune" &&
-	git worktree add --detach here master &&
+	git worktree add --detach here main &&
 	echo "worktree $(git -C here rev-parse --show-toplevel)" >>expect &&
 	echo "HEAD $(git rev-parse HEAD)" >>expect &&
 	echo "detached" >>expect &&
@@ -63,8 +66,8 @@ test_expect_success '"list" all worktrees --porcelain' '
 
 test_expect_success '"list" all worktrees with locked annotation' '
 	test_when_finished "rm -rf locked unlocked out && git worktree prune" &&
-	git worktree add --detach locked master &&
-	git worktree add --detach unlocked master &&
+	git worktree add --detach locked main &&
+	git worktree add --detach unlocked main &&
 	git worktree lock locked &&
 	git worktree list >out &&
 	grep "/locked  *[0-9a-f].* locked$" out &&
@@ -76,13 +79,13 @@ test_expect_success 'bare repo setup' '
 	echo "data" >file1 &&
 	git add file1 &&
 	git commit -m"File1: add data" &&
-	git push bare1 master &&
+	git push bare1 main &&
 	git reset --hard HEAD^
 '
 
 test_expect_success '"list" all worktrees from bare main' '
 	test_when_finished "rm -rf there out actual expect && git -C bare1 worktree prune" &&
-	git -C bare1 worktree add --detach ../there master &&
+	git -C bare1 worktree add --detach ../there main &&
 	echo "$(pwd)/bare1 (bare)" >expect &&
 	echo "$(git -C there rev-parse --show-toplevel) $(git -C there rev-parse --short HEAD) (detached HEAD)" >>expect &&
 	git -C bare1 worktree list >out &&
@@ -92,7 +95,7 @@ test_expect_success '"list" all worktrees from bare main' '
 
 test_expect_success '"list" all worktrees --porcelain from bare main' '
 	test_when_finished "rm -rf there actual expect && git -C bare1 worktree prune" &&
-	git -C bare1 worktree add --detach ../there master &&
+	git -C bare1 worktree add --detach ../there main &&
 	echo "worktree $(pwd)/bare1" >expect &&
 	echo "bare" >>expect &&
 	echo >>expect &&
@@ -106,7 +109,7 @@ test_expect_success '"list" all worktrees --porcelain from bare main' '
 
 test_expect_success '"list" all worktrees from linked with a bare main' '
 	test_when_finished "rm -rf there out actual expect && git -C bare1 worktree prune" &&
-	git -C bare1 worktree add --detach ../there master &&
+	git -C bare1 worktree add --detach ../there main &&
 	echo "$(pwd)/bare1 (bare)" >expect &&
 	echo "$(git -C there rev-parse --show-toplevel) $(git -C there rev-parse --short HEAD) (detached HEAD)" >>expect &&
 	git -C there worktree list >out &&

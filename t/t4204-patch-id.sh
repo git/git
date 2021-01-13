@@ -2,6 +2,9 @@
 
 test_description='git patch-id'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -13,9 +16,9 @@ test_expect_success 'setup' '
 	test_write_lines $as b >foo &&
 	test_write_lines $as b >bar &&
 	git commit -a -m first &&
-	git checkout -b same master &&
+	git checkout -b same main &&
 	git commit --amend -m same-msg &&
-	git checkout -b notsame master &&
+	git checkout -b notsame main &&
 	echo c >foo &&
 	echo c >bar &&
 	git commit --amend -a -m notsame-msg &&
@@ -46,31 +49,31 @@ get_patch_id () {
 }
 
 test_expect_success 'patch-id detects equality' '
-	get_patch_id master &&
+	get_patch_id main &&
 	get_patch_id same &&
-	test_cmp patch-id_master patch-id_same
+	test_cmp patch-id_main patch-id_same
 '
 
 test_expect_success 'patch-id detects inequality' '
-	get_patch_id master &&
+	get_patch_id main &&
 	get_patch_id notsame &&
-	! test_cmp patch-id_master patch-id_notsame
+	! test_cmp patch-id_main patch-id_notsame
 '
 
 test_expect_success 'patch-id supports git-format-patch output' '
-	get_patch_id master &&
+	get_patch_id main &&
 	git checkout same &&
 	git format-patch -1 --stdout | calc_patch_id same &&
-	test_cmp patch-id_master patch-id_same &&
+	test_cmp patch-id_main patch-id_same &&
 	set $(git format-patch -1 --stdout | git patch-id) &&
 	test "$2" = $(git rev-parse HEAD)
 '
 
 test_expect_success 'whitespace is irrelevant in footer' '
-	get_patch_id master &&
+	get_patch_id main &&
 	git checkout same &&
 	git format-patch -1 --stdout | sed "s/ \$//" | calc_patch_id same &&
-	test_cmp patch-id_master patch-id_same
+	test_cmp patch-id_main patch-id_same
 '
 
 cmp_patch_id () {
@@ -88,7 +91,7 @@ test_patch_id_file_order () {
 	shift
 	name="order-${1}-$relevant"
 	shift
-	get_top_diff "master" | calc_patch_id "$name" "$@" &&
+	get_top_diff "main" | calc_patch_id "$name" "$@" &&
 	git checkout same &&
 	git format-patch -1 --stdout -O foo-then-bar |
 		calc_patch_id "ordered-$name" "$@" &&
@@ -137,10 +140,10 @@ test_expect_success '--stable overrides patchid.stable = false' '
 '
 
 test_expect_success 'patch-id supports git-format-patch MIME output' '
-	get_patch_id master &&
+	get_patch_id main &&
 	git checkout same &&
 	git format-patch -1 --attach --stdout | calc_patch_id same &&
-	test_cmp patch-id_master patch-id_same
+	test_cmp patch-id_main patch-id_same
 '
 
 test_expect_success 'patch-id respects config from subdir' '

@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='git svn dcommit CRLF'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-svn.sh
 
 test_expect_success 'setup commit repository' '
@@ -14,7 +17,7 @@ test_expect_success 'setup commit repository' '
 		p=$(git rev-parse HEAD) &&
 		t=$(git write-tree) &&
 		cmt=$(git commit-tree -p $p $t <cmt) &&
-		git update-ref refs/heads/master $cmt &&
+		git update-ref refs/heads/main $cmt &&
 		git cat-file commit HEAD | tail -n4 >out &&
 		test_cmp cmt out &&
 		git svn dcommit &&

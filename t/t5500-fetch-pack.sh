@@ -5,6 +5,9 @@
 
 test_description='Testing multi_ack pack fetching'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test fetch-pack/upload-pack pair.
@@ -407,14 +410,14 @@ test_expect_success 'in_vain resetted upon ACK' '
 	rm -rf myserver myclient &&
 	git init myserver &&
 
-	# Linked list of commits on master. The first is common; the rest are
+	# Linked list of commits on main. The first is common; the rest are
 	# not.
-	test_commit -C myserver first_master_commit &&
+	test_commit -C myserver first_main_commit &&
 	git clone "file://$(pwd)/myserver" myclient &&
 	test_commit_bulk -C myclient 255 &&
 
 	# Another linked list of commits on anotherbranch with no connection to
-	# master. The first is common; the rest are not.
+	# main. The first is common; the rest are not.
 	git -C myserver checkout --orphan anotherbranch &&
 	test_commit -C myserver first_anotherbranch_commit &&
 	git -C myclient fetch origin anotherbranch:refs/heads/anotherbranch &&
@@ -422,14 +425,14 @@ test_expect_success 'in_vain resetted upon ACK' '
 	test_commit_bulk -C myclient 255 &&
 
 	# The new commit that the client wants to fetch.
-	git -C myserver checkout master &&
+	git -C myserver checkout main &&
 	test_commit -C myserver to_fetch &&
 
 	# The client will send (as "have"s) all 256 commits in anotherbranch
 	# first. The 256th commit is common between the client and the server,
 	# and should reset in_vain. This allows negotiation to continue until
 	# the client reports that first_anotherbranch_commit is common.
-	git -C myclient fetch --progress origin master 2>log &&
+	git -C myclient fetch --progress origin main 2>log &&
 	test_i18ngrep "Total 3 " log
 '
 
@@ -637,7 +640,7 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 		mkdir repo2 &&
 		cd repo2 &&
 		git init &&
-		git fetch --depth=2 ../.git master:branch &&
+		git fetch --depth=2 ../.git main:branch &&
 		git fsck
 	)
 '
@@ -662,7 +665,7 @@ test_expect_success 'fetch-pack can fetch a raw sha1 that is advertised as a ref
 
 	git init client &&
 	git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/heads/master)
+		$(git -C server rev-parse refs/heads/main)
 '
 
 test_expect_success 'fetch-pack can fetch a raw sha1 overlapping a named ref' '
@@ -688,7 +691,7 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
 	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/heads/master^) 2>err &&
+		$(git -C server rev-parse refs/heads/main^) 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
 
@@ -822,7 +825,7 @@ test_expect_success 'clone shallow since ...' '
 
 test_expect_success 'fetch shallow since ...' '
 	git -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
-	git -C shallow11 log --pretty=tformat:%s origin/master >actual &&
+	git -C shallow11 log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	three
 	two
@@ -863,7 +866,7 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 	(
 	cd shallow-since-graph &&
 	test_commit base &&
-	test_commit master &&
+	test_commit main &&
 	git checkout -b other HEAD^ &&
 	test_commit other &&
 	git commit-graph write --reachable &&
@@ -874,7 +877,7 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 	$(echo "object-format=$(test_oid algo)" | packetize)
 	00010013deepen-since 1
 	$(echo "want $(git rev-parse other)" | packetize)
-	$(echo "have $(git rev-parse master)" | packetize)
+	$(echo "have $(git rev-parse main)" | packetize)
 	0000
 	EOF
 	)
@@ -896,7 +899,7 @@ test_expect_success 'shallow clone exclude tag two' '
 
 test_expect_success 'fetch exclude tag one' '
 	git -C shallow12 fetch --shallow-exclude one origin &&
-	git -C shallow12 log --pretty=tformat:%s origin/master >actual &&
+	git -C shallow12 log --pretty=tformat:%s origin/main >actual &&
 	test_write_lines three two >expected &&
 	test_cmp expected actual
 '
@@ -910,11 +913,11 @@ test_expect_success 'fetching deepen' '
 	test_commit three &&
 	git clone --depth 1 "file://$(pwd)/." deepen &&
 	test_commit four &&
-	git -C deepen log --pretty=tformat:%s master >actual &&
+	git -C deepen log --pretty=tformat:%s main >actual &&
 	echo three >expected &&
 	test_cmp expected actual &&
 	git -C deepen fetch --deepen=1 &&
-	git -C deepen log --pretty=tformat:%s origin/master >actual &&
+	git -C deepen log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	four
 	three

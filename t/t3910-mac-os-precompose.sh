@@ -5,6 +5,9 @@
 
 test_description='utf-8 decomposed (nfd) converted to precomposed (nfc)'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if ! test_have_prereq UTF8_NFD_TO_NFC
@@ -151,7 +154,7 @@ test_expect_success "git checkout link nfd" '
 	git checkout l.$Odiarnfd
 '
 test_expect_success "setup case mac2" '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard &&
 	git checkout -b mac_os_2
 '
@@ -163,7 +166,7 @@ test_expect_success "commit file d2.Adiarnfd/f.Adiarnfd" '
 	git commit -m "add d2.$Adiarnfd/f.$Adiarnfd" -- d2.$Adiarnfd/f.$Adiarnfd
 '
 test_expect_success "setup for long decomposed filename" '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard &&
 	git checkout -b mac_os_long_nfd_fn
 '
@@ -173,7 +176,7 @@ test_expect_success "Add long decomposed filename" '
 	git commit -m "Long filename"
 '
 test_expect_success "setup for long precomposed filename" '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard &&
 	git checkout -b mac_os_long_nfc_fn
 '

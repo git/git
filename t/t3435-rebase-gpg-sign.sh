@@ -5,6 +5,9 @@
 
 test_description='test rebase --[no-]gpg-sign'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-rebase.sh"
 . "$TEST_DIRECTORY/lib-gpg.sh"
@@ -46,7 +49,7 @@ test_expect_success 'setup: merge commit' '
 	test_commit fork-point &&
 	git switch -c side &&
 	test_commit three &&
-	git switch master &&
+	git switch main &&
 	git merge --no-ff side &&
 	git tag merged
 '
@@ -64,7 +67,7 @@ test_rebase_gpg_sign   false -i --no-gpg-sign --gpg-sign
 test_expect_failure 'rebase -p --no-gpg-sign override commit.gpgsign' '
 	git reset --hard merged &&
 	git config commit.gpgsign true &&
-	git rebase -p --no-gpg-sign --onto=one fork-point master &&
+	git rebase -p --no-gpg-sign --onto=one fork-point main &&
 	test_must_fail git verify-commit HEAD
 '
 

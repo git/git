@@ -25,6 +25,9 @@ Initial setup:
  where A, B, D and G all touch file1, and one, two, three, four all
  touch file "conflict".
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh

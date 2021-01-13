@@ -2,6 +2,9 @@
 
 test_description='git ls-remote'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 generate_references () {
@@ -118,7 +121,7 @@ test_expect_success 'use branch.<name>.remote if possible' '
 	echo "From $URL" >exp_err &&
 
 	git remote add other $URL &&
-	git config branch.master.remote other &&
+	git config branch.main.remote other &&
 
 	git ls-remote 2>actual_err >actual &&
 	test_cmp exp_err actual_err &&
@@ -129,9 +132,9 @@ test_expect_success 'confuses pattern as remote when no remote specified' '
 	if test_have_prereq MINGW
 	then
 		# Windows does not like asterisks in pathname
-		does_not_exist=master
+		does_not_exist=main
 	else
-		does_not_exist="refs*master"
+		does_not_exist="refs*main"
 	fi &&
 	cat >exp <<-EOF &&
 	fatal: '\''$does_not_exist'\'' does not appear to be a git repository
@@ -144,7 +147,7 @@ test_expect_success 'confuses pattern as remote when no remote specified' '
 	# Do not expect "git ls-remote <pattern>" to work; ls-remote needs
 	# <remote> if you want to feed <pattern>, just like you cannot say
 	# fetch <branch>.
-	# We could just as easily have used "master"; the "*" emphasizes its
+	# We could just as easily have used "main"; the "*" emphasizes its
 	# role as a pattern.
 	test_must_fail git ls-remote "$does_not_exist" >actual 2>&1 &&
 	test_i18ncmp exp actual
@@ -217,14 +220,14 @@ test_expect_success 'protocol v2 supports hiderefs' '
 
 test_expect_success 'ls-remote --symref' '
 	git fetch origin &&
-	echo "ref: refs/heads/master	HEAD" >expect &&
+	echo "ref: refs/heads/main	HEAD" >expect &&
 	generate_references \
 		HEAD \
-		refs/heads/master >>expect &&
+		refs/heads/main >>expect &&
 	oid=$(git rev-parse HEAD) &&
 	echo "$oid	refs/remotes/origin/HEAD" >>expect &&
 	generate_references \
-		refs/remotes/origin/master \
+		refs/remotes/origin/main \
 		refs/tags/mark \
 		refs/tags/mark1.1 \
 		refs/tags/mark1.10 \
@@ -238,7 +241,7 @@ test_expect_success 'ls-remote --symref' '
 test_expect_success 'ls-remote with filtered symref (refname)' '
 	rev=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
-	ref: refs/heads/master	HEAD
+	ref: refs/heads/main	HEAD
 	$rev	HEAD
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
@@ -252,7 +255,7 @@ test_expect_failure 'ls-remote with filtered symref (--heads)' '
 	cat >expect <<-EOF &&
 	ref: refs/tags/mark	refs/heads/foo
 	$rev	refs/heads/foo
-	$rev	refs/heads/master
+	$rev	refs/heads/main
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
@@ -263,7 +266,7 @@ test_expect_failure 'ls-remote with filtered symref (--heads)' '
 test_expect_success 'ls-remote --symref omits filtered-out matches' '
 	cat >expect <<-EOF &&
 	$rev	refs/heads/foo
-	$rev	refs/heads/master
+	$rev	refs/heads/main
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
@@ -330,10 +333,10 @@ test_expect_success 'ls-remote --sort fails gracefully outside repository' '
 
 test_expect_success 'ls-remote patterns work with all protocol versions' '
 	git for-each-ref --format="%(objectname)	%(refname)" \
-		refs/heads/master refs/remotes/origin/master >expect &&
-	git -c protocol.version=1 ls-remote . master >actual.v1 &&
+		refs/heads/main refs/remotes/origin/main >expect &&
+	git -c protocol.version=1 ls-remote . main >actual.v1 &&
 	test_cmp expect actual.v1 &&
-	git -c protocol.version=2 ls-remote . master >actual.v2 &&
+	git -c protocol.version=2 ls-remote . main >actual.v2 &&
 	test_cmp expect actual.v2
 '
 

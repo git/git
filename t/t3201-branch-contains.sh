@@ -2,6 +2,9 @@
 
 test_description='branch --contains <commit>, --no-contains <commit> --merged, and --no-merged'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '

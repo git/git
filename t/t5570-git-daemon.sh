@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test fetching over git protocol'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-git-daemon.sh
@@ -26,7 +29,7 @@ test_expect_success 'create git-accessible bare repository' '
 	 : >git-daemon-export-ok
 	) &&
 	git remote add public "$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo.git" &&
-	git push public master:master
+	git push public main:main
 '
 
 test_expect_success 'clone git repository' '
@@ -55,12 +58,12 @@ test_expect_success 'no-op fetch without "-v" is quiet' '
 '
 
 test_expect_success 'remote detects correct HEAD' '
-	git push public master:other &&
+	git push public main:other &&
 	(cd clone &&
 	 git remote set-head -d origin &&
 	 git remote set-head -a origin &&
 	 git symbolic-ref refs/remotes/origin/HEAD > output &&
-	 echo refs/remotes/origin/master > expect &&
+	 echo refs/remotes/origin/main > expect &&
 	 test_cmp expect output
 	)
 '
@@ -153,7 +156,7 @@ test_remote_error()
 
 msg="access denied or repository not exported"
 test_expect_success 'clone non-existent' "test_remote_error    '$msg' clone nowhere.git"
-test_expect_success 'push disabled'      "test_remote_error    '$msg' push  repo.git master"
+test_expect_success 'push disabled'      "test_remote_error    '$msg' push  repo.git main"
 test_expect_success 'read access denied' "test_remote_error -x '$msg' fetch repo.git"
 test_expect_success 'not exported'       "test_remote_error -n '$msg' fetch repo.git"
 
@@ -161,7 +164,7 @@ stop_git_daemon
 start_git_daemon --informative-errors
 
 test_expect_success 'clone non-existent' "test_remote_error    'no such repository'      clone nowhere.git"
-test_expect_success 'push disabled'      "test_remote_error    'service not enabled'     push  repo.git master"
+test_expect_success 'push disabled'      "test_remote_error    'service not enabled'     push  repo.git main"
 test_expect_success 'read access denied' "test_remote_error -x 'no such repository'      fetch repo.git"
 test_expect_success 'not exported'       "test_remote_error -n 'repository not exported' fetch repo.git"
 
@@ -197,10 +200,10 @@ test_expect_success FAKENC 'hostname interpolation works after LF-stripping' '
 	fake_nc "$GIT_DAEMON_HOST_PORT" <input >output &&
 	depacketize <output >output.raw &&
 
-	# just pick out the value of master, which avoids any protocol
+	# just pick out the value of main, which avoids any protocol
 	# particulars
-	perl -lne "print \$1 if m{^(\\S+) refs/heads/master}" <output.raw >actual &&
-	git -C "$repo" rev-parse master >expect &&
+	perl -lne "print \$1 if m{^(\\S+) refs/heads/main}" <output.raw >actual &&
+	git -C "$repo" rev-parse main >expect &&
 	test_cmp expect actual
 '
 

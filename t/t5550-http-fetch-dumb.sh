@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test dumb fetching over http via static file'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
@@ -26,7 +29,7 @@ test_expect_success 'create http-accessible bare repository with loose objects' 
 	 hooks/post-update
 	) &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git push public master:master
+	git push public main:main
 '
 
 test_expect_success 'clone http repository' '
@@ -37,8 +40,8 @@ test_expect_success 'clone http repository' '
 
 test_expect_success 'list refs from outside any repository' '
 	cat >expect <<-EOF &&
-	$(git rev-parse master)	HEAD
-	$(git rev-parse master)	refs/heads/master
+	$(git rev-parse main)	HEAD
+	$(git rev-parse main)	refs/heads/main
 	EOF
 	nongit git ls-remote "$HTTPD_URL/dumb/repo.git" >actual &&
 	test_cmp expect actual
@@ -181,8 +184,8 @@ test_expect_success 'fetch changes via manual http-fetch' '
 
 	HEAD=$(git rev-parse --verify HEAD) &&
 	(cd clone2 &&
-	 git http-fetch -a -w heads/master-new $HEAD $(git config remote.origin.url) &&
-	 git checkout master-new &&
+	 git http-fetch -a -w heads/main-new $HEAD $(git config remote.origin.url) &&
+	 git checkout main-new &&
 	 test $HEAD = $(git rev-parse --verify HEAD)) &&
 	test_cmp file clone2/file
 '
@@ -192,19 +195,19 @@ test_expect_success 'manual http-fetch without -a works just as well' '
 
 	HEAD=$(git rev-parse --verify HEAD) &&
 	(cd clone3 &&
-	 git http-fetch -w heads/master-new $HEAD $(git config remote.origin.url) &&
-	 git checkout master-new &&
+	 git http-fetch -w heads/main-new $HEAD $(git config remote.origin.url) &&
+	 git checkout main-new &&
 	 test $HEAD = $(git rev-parse --verify HEAD)) &&
 	test_cmp file clone3/file
 '
 
 test_expect_success 'http remote detects correct HEAD' '
-	git push public master:other &&
+	git push public main:other &&
 	(cd clone &&
 	 git remote set-head origin -d &&
 	 git remote set-head origin -a &&
 	 git symbolic-ref refs/remotes/origin/HEAD > output &&
-	 echo refs/remotes/origin/master > expect &&
+	 echo refs/remotes/origin/main > expect &&
 	 test_cmp expect output
 	)
 '
@@ -416,7 +419,7 @@ test_expect_success 'set up evil alternates scheme' '
 	evil=$HTTPD_DOCUMENT_ROOT_PATH/evil.git &&
 	git init --bare "$evil" &&
 	# do this by hand to avoid object existence check
-	printf "%s\\t%s\\n" $sha1 refs/heads/master >"$evil/info/refs"
+	printf "%s\\t%s\\n" $sha1 refs/heads/main >"$evil/info/refs"
 '
 
 # Here we'll just redirect via HTTP. In a real-world attack these would be on

@@ -4,6 +4,9 @@
 #
 test_description='Tests replace refs functionality'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
@@ -133,9 +136,9 @@ test_expect_success 'tag replaced commit' '
 '
 
 test_expect_success '"git fsck" works' '
-     git fsck master >fsck_master.out &&
-     test_i18ngrep "dangling commit $R" fsck_master.out &&
-     test_i18ngrep "dangling tag $(git show-ref -s refs/tags/mytag)" fsck_master.out &&
+     git fsck main >fsck_main.out &&
+     test_i18ngrep "dangling commit $R" fsck_main.out &&
+     test_i18ngrep "dangling tag $(git show-ref -s refs/tags/mytag)" fsck_main.out &&
      test -z "$(git fsck)"
 '
 
@@ -218,7 +221,7 @@ test_expect_success 'create parallel branch without the bug' '
      git cherry-pick $HASH6 &&
      PARA6=$(git rev-parse --verify HEAD) &&
      git replace $HASH6 $PARA6 &&
-     git checkout master &&
+     git checkout main &&
      cur=$(git rev-parse --verify HEAD) &&
      test "$cur" = "$HASH7" &&
      git log --pretty=oneline | grep $PARA2 &&
@@ -461,7 +464,7 @@ test_expect_success GPG 'set up a merge commit with a mergetag' '
 	git commit -m "hello: 2 more lines from a test branch" &&
 	HASH9=$(git rev-parse --verify HEAD) &&
 	git tag -s -m "tag for testing with a mergetag" test_tag HEAD &&
-	git checkout master &&
+	git checkout main &&
 	git merge -s ours test_tag &&
 	HASH10=$(git rev-parse --verify HEAD) &&
 	git cat-file commit $HASH10 | grep "^mergetag object"

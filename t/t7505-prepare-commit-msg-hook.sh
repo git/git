@@ -2,6 +2,9 @@
 
 test_description='prepare-commit-msg hook'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'set up commits for rebasing' '
@@ -15,7 +18,7 @@ test_expect_success 'set up commits for rebasing' '
 	do
 		test_commit rebase-$i c $i
 	done &&
-	git checkout master &&
+	git checkout main &&
 
 	cat >rebase-todo <<-EOF
 	pick $(git rev-parse rebase-a)
@@ -190,7 +193,7 @@ test_expect_success 'with hook (-c)' '
 
 test_expect_success 'with hook (merge)' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other HEAD@{1} &&
 	echo "more" >>file &&
 	git add file &&
@@ -202,7 +205,7 @@ test_expect_success 'with hook (merge)' '
 
 test_expect_success 'with hook and editor (merge)' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other HEAD@{1} &&
 	echo "more" >>file &&
 	git add file &&
@@ -218,7 +221,7 @@ test_rebase () {
 	test_expect_$expect C_LOCALE_OUTPUT "with hook (rebase ${mode:--i})" '
 		test_when_finished "\
 			git rebase --abort
-			git checkout -f master
+			git checkout -f main
 			git branch -D tmp" &&
 		git checkout -b tmp rebase-me &&
 		GIT_SEQUENCE_EDITOR="cp rebase-todo" &&
@@ -250,14 +253,14 @@ test_rebase success
 test_have_prereq !REBASE_P || test_rebase success -p
 
 test_expect_success 'with hook (cherry-pick)' '
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other b &&
 	git cherry-pick rebase-1 &&
 	test "$(git log -1 --pretty=format:%s)" = "message (no editor)"
 '
 
 test_expect_success 'with hook and editor (cherry-pick)' '
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other b &&
 	git cherry-pick -e rebase-1 &&
 	test "$(git log -1 --pretty=format:%s)" = merge
@@ -270,7 +273,7 @@ EOF
 
 test_expect_success 'with failing hook' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	head=$(git rev-parse HEAD) &&
 	echo "more" >> file &&
 	git add file &&
@@ -280,7 +283,7 @@ test_expect_success 'with failing hook' '
 
 test_expect_success 'with failing hook (--no-verify)' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	head=$(git rev-parse HEAD) &&
 	echo "more" >> file &&
 	git add file &&
@@ -290,7 +293,7 @@ test_expect_success 'with failing hook (--no-verify)' '
 
 test_expect_success 'with failing hook (merge)' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other HEAD@{1} &&
 	echo "more" >> file &&
 	git add file &&
@@ -305,7 +308,7 @@ test_expect_success 'with failing hook (merge)' '
 '
 
 test_expect_success C_LOCALE_OUTPUT 'with failing hook (cherry-pick)' '
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other b &&
 	test_must_fail git cherry-pick rebase-1 2>actual &&
 	test $(grep -c prepare-commit-msg actual) = 1

@@ -4,6 +4,9 @@
 #
 
 test_description='test git fast-import utility'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
@@ -62,7 +65,7 @@ test_expect_success 'A: create pack from stdin' '
 	mark :4
 	data $file4_len
 	$file4_data
-	commit refs/heads/master
+	commit refs/heads/main
 	mark :5
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data <<COMMIT
@@ -117,7 +120,7 @@ test_expect_success 'A: create pack from stdin' '
 
 	INPUT_END
 	git fast-import --export-marks=marks.out <input &&
-	git whatchanged master
+	git whatchanged main
 '
 
 test_expect_success 'A: verify pack' '
@@ -131,7 +134,7 @@ test_expect_success 'A: verify commit' '
 
 	initial
 	EOF
-	git cat-file commit master | sed 1d >actual &&
+	git cat-file commit main | sed 1d >actual &&
 	test_cmp expect actual
 '
 
@@ -141,31 +144,31 @@ test_expect_success 'A: verify tree' '
 	100644 blob file3
 	100755 blob file4
 	EOF
-	git cat-file -p master^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	git cat-file -p main^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'A: verify file2' '
 	echo "$file2_data" >expect &&
-	git cat-file blob master:file2 >actual &&
+	git cat-file blob main:file2 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'A: verify file3' '
 	echo "$file3_data" >expect &&
-	git cat-file blob master:file3 >actual &&
+	git cat-file blob main:file3 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'A: verify file4' '
 	printf "$file4_data" >expect &&
-	git cat-file blob master:file4 >actual &&
+	git cat-file blob main:file4 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'A: verify tag/series-A' '
 	cat >expect <<-EOF &&
-	object $(git rev-parse refs/heads/master)
+	object $(git rev-parse refs/heads/main)
 	type commit
 	tag series-A
 
@@ -177,7 +180,7 @@ test_expect_success 'A: verify tag/series-A' '
 
 test_expect_success 'A: verify tag/series-A-blob' '
 	cat >expect <<-EOF &&
-	object $(git rev-parse refs/heads/master:file3)
+	object $(git rev-parse refs/heads/main:file3)
 	type blob
 	tag series-A-blob
 
@@ -193,13 +196,13 @@ test_expect_success 'A: verify tag deletion is successful' '
 
 test_expect_success 'A: verify marks output' '
 	cat >expect <<-EOF &&
-	:2 $(git rev-parse --verify master:file2)
-	:3 $(git rev-parse --verify master:file3)
-	:4 $(git rev-parse --verify master:file4)
-	:5 $(git rev-parse --verify master^0)
+	:2 $(git rev-parse --verify main:file2)
+	:3 $(git rev-parse --verify main:file3)
+	:4 $(git rev-parse --verify main:file4)
+	:5 $(git rev-parse --verify main^0)
 	:6 $(git cat-file tag nested | grep object | cut -d" " -f 2)
 	:7 $(git rev-parse --verify nested)
-	:8 $(git rev-parse --verify master^0)
+	:8 $(git rev-parse --verify main^0)
 	EOF
 	test_cmp expect marks.out
 '
@@ -217,7 +220,7 @@ test_expect_success 'A: tag blob by sha1' '
 	new_blob=$(echo testing | git hash-object --stdin) &&
 	cat >input <<-INPUT_END &&
 	tag series-A-blob-2
-	from $(git rev-parse refs/heads/master:file3)
+	from $(git rev-parse refs/heads/main:file3)
 	data <<EOF
 	Tag blob by sha1.
 	EOF
@@ -243,7 +246,7 @@ test_expect_success 'A: tag blob by sha1' '
 	INPUT_END
 
 	cat >expect <<-EOF &&
-	object $(git rev-parse refs/heads/master:file3)
+	object $(git rev-parse refs/heads/main:file3)
 	type blob
 	tag series-A-blob-2
 
@@ -284,13 +287,13 @@ test_expect_success 'A: verify pack' '
 '
 
 test_expect_success 'A: verify diff' '
-	copy=$(git rev-parse --verify master:file2) &&
+	copy=$(git rev-parse --verify main:file2) &&
 	cat >expect <<-EOF &&
 	:000000 100755 $ZERO_OID $copy A	copy-of-file2
 	EOF
-	git diff-tree -M -r master verify--import-marks >actual &&
+	git diff-tree -M -r main verify--import-marks >actual &&
 	compare_diff_raw expect actual &&
-	test $(git rev-parse --verify master:file2) \
+	test $(git rev-parse --verify main:file2) \
 	    = $(git rev-parse --verify verify--import-marks:copy-of-file2)
 '
 
@@ -364,7 +367,7 @@ test_expect_success 'B: fail on invalid blob sha1' '
 	corrupt
 	COMMIT
 
-	from refs/heads/master
+	from refs/heads/main
 	M 755 $(echo $ZERO_OID | sed -e "s/0$/1/") zero1
 
 	INPUT_END
@@ -381,7 +384,7 @@ test_expect_success 'B: accept branch name "TEMP_TAG"' '
 	tag base
 	COMMIT
 
-	from refs/heads/master
+	from refs/heads/main
 
 	INPUT_END
 
@@ -390,7 +393,7 @@ test_expect_success 'B: accept branch name "TEMP_TAG"' '
 		git prune" &&
 	git fast-import <input &&
 	test -f .git/TEMP_TAG &&
-	test $(git rev-parse master) = $(git rev-parse TEMP_TAG^)
+	test $(git rev-parse main) = $(git rev-parse TEMP_TAG^)
 '
 
 test_expect_success 'B: accept empty committer' '
@@ -528,8 +531,8 @@ test_expect_success 'B: fail on invalid committer (5)' '
 
 test_expect_success 'C: incremental import create pack from stdin' '
 	newf=$(echo hi newf | git hash-object -w --stdin) &&
-	oldf=$(git rev-parse --verify master:file2) &&
-	thrf=$(git rev-parse --verify master:file3) &&
+	oldf=$(git rev-parse --verify main:file2) &&
+	thrf=$(git rev-parse --verify main:file3) &&
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	commit refs/heads/branch
@@ -538,7 +541,7 @@ test_expect_success 'C: incremental import create pack from stdin' '
 	second
 	COMMIT
 
-	from refs/heads/master
+	from refs/heads/main
 	M 644 $oldf file2/oldf
 	M 755 $newf file2/newf
 	D file3
@@ -560,7 +563,7 @@ test_expect_success 'C: validate reuse existing blob' '
 
 test_expect_success 'C: verify commit' '
 	cat >expect <<-EOF &&
-	parent $(git rev-parse --verify master^0)
+	parent $(git rev-parse --verify main^0)
 	author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
@@ -578,7 +581,7 @@ test_expect_success 'C: validate rename result' '
 	:100644 100644 $oldf $oldf R100	file2	file2/oldf
 	:100644 000000 $thrf $zero D	file3
 	EOF
-	git diff-tree -M -r master branch >actual &&
+	git diff-tree -M -r main branch >actual &&
 	compare_diff_raw expect actual
 '
 
@@ -1698,7 +1701,7 @@ test_expect_success 'P: superproject & submodule mix' '
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data 8
 	initial
-	from refs/heads/master
+	from refs/heads/main
 	M 100644 :3 .gitmodules
 	M 160000 :2 sub
 
@@ -1733,8 +1736,8 @@ test_expect_success 'P: superproject & submodule mix' '
 	(
 		cd sub &&
 		git init &&
-		git fetch --update-head-ok .. refs/heads/sub:refs/heads/master &&
-		git checkout master
+		git fetch --update-head-ok .. refs/heads/sub:refs/heads/main &&
+		git checkout main
 	) &&
 	git submodule init &&
 	git submodule update
@@ -1758,7 +1761,7 @@ test_expect_success 'P: verbatim SHA gitlinks' '
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data 8
 	initial
-	from refs/heads/master
+	from refs/heads/main
 	M 100644 :1 .gitmodules
 	M 160000 $SUBPREV sub
 
@@ -3429,8 +3432,8 @@ mark :1
 data 4
 foo
 
-reset refs/heads/master
-commit refs/heads/master
+reset refs/heads/main
+commit refs/heads/main
 mark :2
 author Full Name <user@company.tld> 1000000000 +0100
 committer Full Name <user@company.tld> 1000000000 +0100
@@ -3444,7 +3447,7 @@ data 8
 foo
 bar
 
-commit refs/heads/master
+commit refs/heads/main
 mark :4
 author Full Name <user@company.tld> 1000000001 +0100
 committer Full Name <user@company.tld> 1000000001 +0100
@@ -3461,8 +3464,8 @@ mark :1
 data 4
 foo
 
-reset refs/heads/master
-commit refs/heads/master
+reset refs/heads/main
+commit refs/heads/main
 mark :2
 author Full Name <user@company.tld> 2000000000 +0100
 committer Full Name <user@company.tld> 2000000000 +0100
@@ -3477,7 +3480,7 @@ data 73
 	path = sub1
 	url = https://void.example.com/main.git
 
-commit refs/heads/master
+commit refs/heads/main
 mark :4
 author Full Name <user@company.tld> 2000000001 +0100
 committer Full Name <user@company.tld> 2000000001 +0100
@@ -3493,7 +3496,7 @@ data 8
 foo
 bar
 
-commit refs/heads/master
+commit refs/heads/main
 mark :6
 author Full Name <user@company.tld> 2000000002 +0100
 committer Full Name <user@company.tld> 2000000002 +0100
@@ -3511,8 +3514,8 @@ Y_INPUT_END
 
 test_expect_success 'Y: setup' '
 	test_oid_cache <<-EOF
-	Ymaster sha1:9afed2f9161ddf416c0a1863b8b0725b00070504
-	Ymaster sha256:c0a1010da1df187b2e287654793df01b464bd6f8e3f17fc1481a7dadf84caee3
+	Ymain sha1:9afed2f9161ddf416c0a1863b8b0725b00070504
+	Ymain sha256:c0a1010da1df187b2e287654793df01b464bd6f8e3f17fc1481a7dadf84caee3
 	EOF
 '
 
@@ -3524,7 +3527,7 @@ test_expect_success 'Y: rewrite submodules' '
 		git -C sub2 fast-import --export-marks=../sub2-marks <../Y-sub-input &&
 		git fast-import --rewrite-submodules-from=sub:../Y-marks \
 			--rewrite-submodules-to=sub:sub2-marks <../Y-main-input &&
-		test "$(git rev-parse master)" = "$(test_oid Ymaster)"
+		test "$(git rev-parse main)" = "$(test_oid Ymain)"
 	)
 '
 

@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test cloning a repository with detached HEAD'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 head_is_detached() {
@@ -20,7 +23,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'clone repo (detached HEAD points to branch)' '
-	git checkout master^0 &&
+	git checkout main^0 &&
 	git clone "file://$PWD" detached-branch
 '
 test_expect_success 'cloned HEAD matches' '
@@ -59,7 +62,7 @@ test_expect_success 'cloned HEAD is detached' '
 '
 
 test_expect_success 'clone repo (orphan detached HEAD)' '
-	git checkout master^0 &&
+	git checkout main^0 &&
 	echo four >file &&
 	git commit -a -m four &&
 	git clone "file://$PWD" detached-orphan

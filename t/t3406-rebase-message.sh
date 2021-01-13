@@ -2,6 +2,9 @@
 
 test_description='messages from rebase operation'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -18,27 +21,27 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'rebase -m' '
-	git rebase -m master >actual &&
+	git rebase -m main >actual &&
 	test_must_be_empty actual
 '
 
-test_expect_success 'rebase against master twice' '
-	git rebase --apply master >out &&
+test_expect_success 'rebase against main twice' '
+	git rebase --apply main >out &&
 	test_i18ngrep "Current branch topic is up to date" out
 '
 
-test_expect_success 'rebase against master twice with --force' '
-	git rebase --force-rebase --apply master >out &&
+test_expect_success 'rebase against main twice with --force' '
+	git rebase --force-rebase --apply main >out &&
 	test_i18ngrep "Current branch topic is up to date, rebase forced" out
 '
 
-test_expect_success 'rebase against master twice from another branch' '
+test_expect_success 'rebase against main twice from another branch' '
 	git checkout topic^ &&
-	git rebase --apply master topic >out &&
+	git rebase --apply main topic >out &&
 	test_i18ngrep "Current branch topic is up to date" out
 '
 
-test_expect_success 'rebase fast-forward to master' '
+test_expect_success 'rebase fast-forward to main' '
 	git checkout topic^ &&
 	git rebase --apply topic >out &&
 	test_i18ngrep "Fast-forwarded HEAD to topic" out
@@ -46,21 +49,21 @@ test_expect_success 'rebase fast-forward to master' '
 
 test_expect_success 'rebase --stat' '
 	git reset --hard start &&
-	git rebase --stat master >diffstat.txt &&
+	git rebase --stat main >diffstat.txt &&
 	grep "^ fileX |  *1 +$" diffstat.txt
 '
 
 test_expect_success 'rebase w/config rebase.stat' '
 	git reset --hard start &&
 	git config rebase.stat true &&
-	git rebase master >diffstat.txt &&
+	git rebase main >diffstat.txt &&
 	grep "^ fileX |  *1 +$" diffstat.txt
 '
 
 test_expect_success 'rebase -n overrides config rebase.stat config' '
 	git reset --hard start &&
 	git config rebase.stat true &&
-	git rebase -n master >diffstat.txt &&
+	git rebase -n main >diffstat.txt &&
 	! grep "^ fileX |  *1 +$" diffstat.txt
 '
 
@@ -113,7 +116,7 @@ test_expect_success 'rebase -i onto unrelated history' '
 	git init unrelated &&
 	test_commit -C unrelated 1 &&
 	git -C unrelated remote add -f origin "$PWD" &&
-	git -C unrelated branch --set-upstream-to=origin/master &&
+	git -C unrelated branch --set-upstream-to=origin/main &&
 	git -C unrelated -c core.editor=true rebase -i -v --stat >actual &&
 	test_i18ngrep "Changes to " actual &&
 	test_i18ngrep "5 files changed" actual

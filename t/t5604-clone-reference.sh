@@ -4,6 +4,9 @@
 #
 
 test_description='test clone --reference'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 base_dir=$(pwd)
@@ -49,7 +52,7 @@ test_expect_success 'existence of info/alternates' '
 '
 
 test_expect_success 'pulling from reference' '
-	git -C C pull ../B master
+	git -C C pull ../B main
 '
 
 test_expect_success 'that reference gets used' '
@@ -70,7 +73,7 @@ test_expect_success 'existence of info/alternates' '
 '
 
 test_expect_success 'pulling from reference' '
-	git -C D pull ../B master
+	git -C D pull ../B main
 '
 
 test_expect_success 'that reference gets used' '
@@ -136,11 +139,11 @@ test_expect_success 'prepare branched repository' '
 	git clone A J &&
 	(
 		cd J &&
-		git checkout -b other master^ &&
+		git checkout -b other main^ &&
 		echo other >otherfile &&
 		git add otherfile &&
 		git commit -m other &&
-		git checkout master
+		git checkout main
 	)
 '
 
@@ -152,9 +155,9 @@ test_expect_success 'fetch with incomplete alternates' '
 		git remote add J "file://$base_dir/J" &&
 		GIT_TRACE_PACKET=$U.K git fetch J
 	) &&
-	master_object=$(cd A && git for-each-ref --format="%(objectname)" refs/heads/master) &&
+	main_object=$(cd A && git for-each-ref --format="%(objectname)" refs/heads/main) &&
 	test -s "$U.K" &&
-	! grep " want $master_object" "$U.K" &&
+	! grep " want $main_object" "$U.K" &&
 	tag_object=$(cd A && git for-each-ref --format="%(objectname)" refs/tags/HEAD) &&
 	! grep " want $tag_object" "$U.K"
 '

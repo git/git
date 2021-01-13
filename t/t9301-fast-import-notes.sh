@@ -4,12 +4,15 @@
 #
 
 test_description='test git fast-import of notes objects'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 
 test_tick
 cat >input <<INPUT_END
-commit refs/heads/master
+commit refs/heads/main
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 data <<COMMIT
 first commit
@@ -30,7 +33,7 @@ data <<EOF
 file baz/xyzzy in first commit
 EOF
 
-commit refs/heads/master
+commit refs/heads/main
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 data <<COMMIT
 second commit
@@ -46,7 +49,7 @@ data <<EOF
 file baz/xyzzy in second commit
 EOF
 
-commit refs/heads/master
+commit refs/heads/main
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 data <<COMMIT
 third commit
@@ -57,7 +60,7 @@ data <<EOF
 file foo in third commit
 EOF
 
-commit refs/heads/master
+commit refs/heads/main
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 data <<COMMIT
 fourth commit
@@ -70,13 +73,13 @@ EOF
 
 INPUT_END
 
-test_expect_success 'set up master branch' '
+test_expect_success 'set up main branch' '
 
 	git fast-import <input &&
-	git whatchanged master
+	git whatchanged main
 '
 
-commit4=$(git rev-parse refs/heads/master)
+commit4=$(git rev-parse refs/heads/main)
 commit3=$(git rev-parse "$commit4^")
 commit2=$(git rev-parse "$commit4~2")
 commit1=$(git rev-parse "$commit4~3")

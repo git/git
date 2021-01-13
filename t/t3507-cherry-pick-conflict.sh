@@ -9,6 +9,9 @@ test_description='test cherry-pick and revert with conflicts
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 pristine_detach () {
@@ -29,7 +32,7 @@ test_expect_success setup '
 	test_commit redundant-pick foo c redundant &&
 	git commit --allow-empty --allow-empty-message &&
 	git tag empty &&
-	git checkout master &&
+	git checkout main &&
 	git config advice.detachedhead false
 
 '

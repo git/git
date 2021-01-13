@@ -5,6 +5,9 @@ test_description='git status --porcelain=v2
 This test exercises porcelain V2 output for git status.'
 
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 

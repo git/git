@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='pack-objects object selection using sparse algorithm'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup repo' '
@@ -18,7 +21,7 @@ test_expect_success 'setup repo' '
 	git commit -m "Initialized trees" &&
 	for i in $(test_seq 1 3)
 	do
-		git checkout -b topic$i master &&
+		git checkout -b topic$i main &&
 		echo change-$i >f$i/f$i/data.txt &&
 		git commit -a -m "Changed f$i/f$i/data.txt"
 	done &&

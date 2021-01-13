@@ -2,6 +2,9 @@
 
 test_description='upload-pack ref-in-want'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 get_actual_refs () {

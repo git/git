@@ -6,6 +6,9 @@
 test_description='See why rewinding head breaks send-pack
 
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 cnt=64
@@ -66,20 +69,20 @@ test_expect_success 'pack the destination repository' '
 '
 
 test_expect_success 'refuse pushing rewound head without --force' '
-	pushed_head=$(git rev-parse --verify master) &&
-	victim_orig=$(cd victim && git rev-parse --verify master) &&
-	test_must_fail git send-pack ./victim master &&
-	victim_head=$(cd victim && git rev-parse --verify master) &&
+	pushed_head=$(git rev-parse --verify main) &&
+	victim_orig=$(cd victim && git rev-parse --verify main) &&
+	test_must_fail git send-pack ./victim main &&
+	victim_head=$(cd victim && git rev-parse --verify main) &&
 	test "$victim_head" = "$victim_orig" &&
 	# this should update
-	git send-pack --force ./victim master &&
-	victim_head=$(cd victim && git rev-parse --verify master) &&
+	git send-pack --force ./victim main &&
+	victim_head=$(cd victim && git rev-parse --verify main) &&
 	test "$victim_head" = "$pushed_head"
 '
 
 test_expect_success 'push can be used to delete a ref' '
-	( cd victim && git branch extra master ) &&
-	git send-pack ./victim :extra master &&
+	( cd victim && git branch extra main ) &&
+	git send-pack ./victim :extra main &&
 	( cd victim &&
 	  test_must_fail git rev-parse --verify extra )
 '
@@ -89,9 +92,9 @@ test_expect_success 'refuse deleting push with denyDeletes' '
 		cd victim &&
 		test_might_fail git branch -D extra &&
 		git config receive.denyDeletes true &&
-		git branch extra master
+		git branch extra main
 	) &&
-	test_must_fail git send-pack ./victim :extra master
+	test_must_fail git send-pack ./victim :extra main
 '
 
 test_expect_success 'cannot override denyDeletes with git -c send-pack' '
@@ -99,10 +102,10 @@ test_expect_success 'cannot override denyDeletes with git -c send-pack' '
 		cd victim &&
 		test_might_fail git branch -D extra &&
 		git config receive.denyDeletes true &&
-		git branch extra master
+		git branch extra main
 	) &&
 	test_must_fail git -c receive.denyDeletes=false \
-					send-pack ./victim :extra master
+					send-pack ./victim :extra main
 '
 
 test_expect_success 'override denyDeletes with git -c receive-pack' '
@@ -110,11 +113,11 @@ test_expect_success 'override denyDeletes with git -c receive-pack' '
 		cd victim &&
 		test_might_fail git branch -D extra &&
 		git config receive.denyDeletes true &&
-		git branch extra master
+		git branch extra main
 	) &&
 	git send-pack \
 		--receive-pack="git -c receive.denyDeletes=false receive-pack" \
-		./victim :extra master
+		./victim :extra main
 '
 
 test_expect_success 'denyNonFastforwards trumps --force' '
@@ -123,9 +126,9 @@ test_expect_success 'denyNonFastforwards trumps --force' '
 		test_might_fail git branch -D extra &&
 		git config receive.denyNonFastforwards true
 	) &&
-	victim_orig=$(cd victim && git rev-parse --verify master) &&
-	test_must_fail git send-pack --force ./victim master^:master &&
-	victim_head=$(cd victim && git rev-parse --verify master) &&
+	victim_orig=$(cd victim && git rev-parse --verify main) &&
+	test_must_fail git send-pack --force ./victim main^:main &&
+	victim_head=$(cd victim && git rev-parse --verify main) &&
 	test "$victim_orig" = "$victim_head"
 '
 
@@ -210,41 +213,41 @@ rewound_push_setup() {
 
 test_expect_success 'pushing explicit refspecs respects forcing' '
 	rewound_push_setup &&
-	parent_orig=$(cd parent && git rev-parse --verify master) &&
+	parent_orig=$(cd parent && git rev-parse --verify main) &&
 	(
 		cd child &&
 		test_must_fail git send-pack ../parent \
-			refs/heads/master:refs/heads/master
+			refs/heads/main:refs/heads/main
 	) &&
-	parent_head=$(cd parent && git rev-parse --verify master) &&
+	parent_head=$(cd parent && git rev-parse --verify main) &&
 	test "$parent_orig" = "$parent_head" &&
 	(
 		cd child &&
 		git send-pack ../parent \
-			+refs/heads/master:refs/heads/master
+			+refs/heads/main:refs/heads/main
 	) &&
-	parent_head=$(cd parent && git rev-parse --verify master) &&
-	child_head=$(cd child && git rev-parse --verify master) &&
+	parent_head=$(cd parent && git rev-parse --verify main) &&
+	child_head=$(cd child && git rev-parse --verify main) &&
 	test "$parent_head" = "$child_head"
 '
 
 test_expect_success 'pushing wildcard refspecs respects forcing' '
 	rewound_push_setup &&
-	parent_orig=$(cd parent && git rev-parse --verify master) &&
+	parent_orig=$(cd parent && git rev-parse --verify main) &&
 	(
 		cd child &&
 		test_must_fail git send-pack ../parent \
 			"refs/heads/*:refs/heads/*"
 	) &&
-	parent_head=$(cd parent && git rev-parse --verify master) &&
+	parent_head=$(cd parent && git rev-parse --verify main) &&
 	test "$parent_orig" = "$parent_head" &&
 	(
 		cd child &&
 		git send-pack ../parent \
 			"+refs/heads/*:refs/heads/*"
 	) &&
-	parent_head=$(cd parent && git rev-parse --verify master) &&
-	child_head=$(cd child && git rev-parse --verify master) &&
+	parent_head=$(cd parent && git rev-parse --verify main) &&
+	child_head=$(cd child && git rev-parse --verify main) &&
 	test "$parent_head" = "$child_head"
 '
 
@@ -252,7 +255,7 @@ test_expect_success 'deny pushing to delete current branch' '
 	rewound_push_setup &&
 	(
 		cd child &&
-		test_must_fail git send-pack ../parent :refs/heads/master 2>errs
+		test_must_fail git send-pack ../parent :refs/heads/main 2>errs
 	)
 '
 
@@ -283,9 +286,9 @@ test_expect_success 'receive-pack de-dupes .have lines' '
 	local=$(git -C fork rev-parse HEAD) &&
 	shared=$(git -C shared rev-parse only-shared) &&
 	cat >expect <<-EOF &&
-	$local refs/heads/master
+	$local refs/heads/main
 	$local refs/remotes/origin/HEAD
-	$local refs/remotes/origin/master
+	$local refs/remotes/origin/main
 	$shared .have
 	EOF
 

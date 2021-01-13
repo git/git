@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='tests for git clone -c key=value'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'clone -c sets config in cloned repo' '
@@ -47,16 +50,16 @@ test_expect_success 'clone -c config is available during clone' '
 
 test_expect_success 'clone -c remote.origin.fetch=<refspec> works' '
 	rm -rf child &&
-	git update-ref refs/grab/it refs/heads/master &&
-	git update-ref refs/leave/out refs/heads/master &&
+	git update-ref refs/grab/it refs/heads/main &&
+	git update-ref refs/leave/out refs/heads/main &&
 	git clone -c "remote.origin.fetch=+refs/grab/*:refs/grab/*" . child &&
 	git -C child for-each-ref --format="%(refname)" >actual &&
 
 	cat >expect <<-\EOF &&
 	refs/grab/it
-	refs/heads/master
+	refs/heads/main
 	refs/remotes/origin/HEAD
-	refs/remotes/origin/master
+	refs/remotes/origin/main
 	EOF
 	test_cmp expect actual
 '
@@ -68,9 +71,9 @@ test_expect_success 'git -c remote.origin.fetch=<refspec> clone works' '
 
 	cat >expect <<-\EOF &&
 	refs/grab/it
-	refs/heads/master
+	refs/heads/main
 	refs/remotes/origin/HEAD
-	refs/remotes/origin/master
+	refs/remotes/origin/main
 	EOF
 	test_cmp expect actual
 '
@@ -85,9 +88,9 @@ test_expect_success 'clone -c remote.<remote>.fetch=<refspec> --origin=<name>' '
 
 	cat >expect <<-\EOF &&
 	refs/grab/it
-	refs/heads/master
+	refs/heads/main
 	refs/remotes/upstream/HEAD
-	refs/remotes/upstream/master
+	refs/remotes/upstream/main
 	EOF
 	test_cmp expect actual
 '

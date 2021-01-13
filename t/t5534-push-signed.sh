@@ -2,6 +2,9 @@
 
 test_description='signed push'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
@@ -9,11 +12,11 @@ prepare_dst () {
 	rm -fr dst &&
 	test_create_repo dst &&
 
-	git push dst master:noop master:ff master:noff
+	git push dst main:noop main:ff main:noff
 }
 
 test_expect_success setup '
-	# master, ff and noff branches pointing at the same commit
+	# main, ff and noff branches pointing at the same commit
 	test_tick &&
 	git commit --allow-empty -m initial &&
 

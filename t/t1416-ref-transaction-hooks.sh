@@ -2,6 +2,9 @@
 
 test_description='reference transaction hooks'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -53,11 +56,11 @@ test_expect_success 'hook gets all queued updates in prepared state' '
 	EOF
 	cat >expect <<-EOF &&
 		$ZERO_OID $POST_OID HEAD
-		$ZERO_OID $POST_OID refs/heads/master
+		$ZERO_OID $POST_OID refs/heads/main
 	EOF
 	git update-ref HEAD POST <<-EOF &&
 		update HEAD $ZERO_OID $POST_OID
-		update refs/heads/master $ZERO_OID $POST_OID
+		update refs/heads/main $ZERO_OID $POST_OID
 	EOF
 	test_cmp expect actual
 '
@@ -76,7 +79,7 @@ test_expect_success 'hook gets all queued updates in committed state' '
 	EOF
 	cat >expect <<-EOF &&
 		$ZERO_OID $POST_OID HEAD
-		$ZERO_OID $POST_OID refs/heads/master
+		$ZERO_OID $POST_OID refs/heads/main
 	EOF
 	git update-ref HEAD POST &&
 	test_cmp expect actual
@@ -96,12 +99,12 @@ test_expect_success 'hook gets all queued updates in aborted state' '
 	EOF
 	cat >expect <<-EOF &&
 		$ZERO_OID $POST_OID HEAD
-		$ZERO_OID $POST_OID refs/heads/master
+		$ZERO_OID $POST_OID refs/heads/main
 	EOF
 	git update-ref --stdin <<-EOF &&
 		start
 		update HEAD POST $ZERO_OID
-		update refs/heads/master POST $ZERO_OID
+		update refs/heads/main POST $ZERO_OID
 		abort
 	EOF
 	test_cmp expect actual

@@ -312,7 +312,7 @@ test_expect_success SYMLINKS 'conditional include, gitdir matching symlink, icas
 test_expect_success 'conditional include, onbranch' '
 	echo "[includeIf \"onbranch:foo-branch\"]path=bar9" >>.git/config &&
 	echo "[test]nine=9" >.git/bar9 &&
-	git checkout -b master &&
+	git checkout -b main &&
 	test_must_fail git config test.nine &&
 	git checkout -b foo-branch &&
 	echo 9 >expect &&

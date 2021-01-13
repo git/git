@@ -2,6 +2,9 @@
 
 test_description='CRLF conversion'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 has_cr() {
@@ -318,8 +321,8 @@ test_expect_success 'checkout with existing .gitattributes' '
 	git add .gitattributes .file &&
 	git commit -m second &&
 
-	git checkout master~1 &&
-	git checkout master &&
+	git checkout main~1 &&
+	git checkout main &&
 	test "$(git diff-files --raw)" = ""
 
 '
@@ -331,8 +334,8 @@ test_expect_success 'checkout when deleting .gitattributes' '
 	git add .file2 &&
 	git commit -m third &&
 
-	git checkout master~1 &&
-	git checkout master &&
+	git checkout main~1 &&
+	git checkout main &&
 	has_cr .file2
 
 '
