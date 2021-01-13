@@ -134,7 +134,7 @@ struct ref {
 	 * should be 0, so that xcalloc'd structures get it
 	 * by default.
 	 */
-	enum {
+	enum fetch_head_status {
 		FETCH_HEAD_MERGE = -1,
 		FETCH_HEAD_NOT_FOR_MERGE = 0,
 		FETCH_HEAD_IGNORE = 1

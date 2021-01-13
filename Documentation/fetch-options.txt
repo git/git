@@ -7,6 +7,10 @@
 	existing contents of `.git/FETCH_HEAD`.  Without this
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
+--atomic::
+	Use an atomic transaction to update local refs. Either all refs are
+	updated, or on error, no refs are updated.
+
 --depth=<depth>::
 	Limit fetching to the specified number of commits from the tip of
 	each remote branch history. If fetching to a 'shallow' repository

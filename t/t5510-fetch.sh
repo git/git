@@ -179,6 +179,174 @@ test_expect_success 'fetch --prune --tags with refspec prunes based on refspec' 
 	git rev-parse sometag
 '
 
+test_expect_success 'fetch --atomic works with a single branch' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git clone . atomic &&
+	git branch atomic-branch &&
+	oid=$(git rev-parse atomic-branch) &&
+	echo "$oid" >expected &&
+
+	git -C atomic fetch --atomic origin &&
+	git -C atomic rev-parse origin/atomic-branch >actual &&
+	test_cmp expected actual &&
+	test $oid = "$(git -C atomic rev-parse --verify FETCH_HEAD)"
+'
+
+test_expect_success 'fetch --atomic works with multiple branches' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git clone . atomic &&
+	git branch atomic-branch-1 &&
+	git branch atomic-branch-2 &&
+	git branch atomic-branch-3 &&
+	git rev-parse refs/heads/atomic-branch-1 refs/heads/atomic-branch-2 refs/heads/atomic-branch-3 >actual &&
+
+	git -C atomic fetch --atomic origin &&
+	git -C atomic rev-parse refs/remotes/origin/atomic-branch-1 refs/remotes/origin/atomic-branch-2 refs/remotes/origin/atomic-branch-3 >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'fetch --atomic works with mixed branches and tags' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git clone . atomic &&
+	git branch atomic-mixed-branch &&
+	git tag atomic-mixed-tag &&
+	git rev-parse refs/heads/atomic-mixed-branch refs/tags/atomic-mixed-tag >actual &&
+
+	git -C atomic fetch --tags --atomic origin &&
+	git -C atomic rev-parse refs/remotes/origin/atomic-mixed-branch refs/tags/atomic-mixed-tag >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'fetch --atomic prunes references' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git branch atomic-prune-delete &&
+	git clone . atomic &&
+	git branch --delete atomic-prune-delete &&
+	git branch atomic-prune-create &&
+	git rev-parse refs/heads/atomic-prune-create >actual &&
+
+	git -C atomic fetch --prune --atomic origin &&
+	test_must_fail git -C atomic rev-parse refs/remotes/origin/atomic-prune-delete &&
+	git -C atomic rev-parse refs/remotes/origin/atomic-prune-create >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'fetch --atomic aborts with non-fast-forward update' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git branch atomic-non-ff &&
+	git clone . atomic &&
+	git rev-parse HEAD >actual &&
+
+	git branch atomic-new-branch &&
+	parent_commit=$(git rev-parse atomic-non-ff~) &&
+	git update-ref refs/heads/atomic-non-ff $parent_commit &&
+
+	test_must_fail git -C atomic fetch --atomic origin refs/heads/*:refs/remotes/origin/* &&
+	test_must_fail git -C atomic rev-parse refs/remotes/origin/atomic-new-branch &&
+	git -C atomic rev-parse refs/remotes/origin/atomic-non-ff >expected &&
+	test_cmp expected actual &&
+	test_must_be_empty atomic/.git/FETCH_HEAD
+'
+
+test_expect_success 'fetch --atomic executes a single reference transaction only' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git clone . atomic &&
+	git branch atomic-hooks-1 &&
+	git branch atomic-hooks-2 &&
+	head_oid=$(git rev-parse HEAD) &&
+
+	cat >expected <<-EOF &&
+		prepared
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-1
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-2
+		committed
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-1
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-2
+	EOF
+
+	rm -f atomic/actual &&
+	write_script atomic/.git/hooks/reference-transaction <<-\EOF &&
+		( echo "$*" && cat ) >>actual
+	EOF
+
+	git -C atomic fetch --atomic origin &&
+	test_cmp expected atomic/actual
+'
+
+test_expect_success 'fetch --atomic aborts all reference updates if hook aborts' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git clone . atomic &&
+	git branch atomic-hooks-abort-1 &&
+	git branch atomic-hooks-abort-2 &&
+	git branch atomic-hooks-abort-3 &&
+	git tag atomic-hooks-abort &&
+	head_oid=$(git rev-parse HEAD) &&
+
+	cat >expected <<-EOF &&
+		prepared
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-abort-1
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-abort-2
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-abort-3
+		$ZERO_OID $head_oid refs/tags/atomic-hooks-abort
+		aborted
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-abort-1
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-abort-2
+		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-abort-3
+		$ZERO_OID $head_oid refs/tags/atomic-hooks-abort
+	EOF
+
+	rm -f atomic/actual &&
+	write_script atomic/.git/hooks/reference-transaction <<-\EOF &&
+		( echo "$*" && cat ) >>actual
+		exit 1
+	EOF
+
+	git -C atomic for-each-ref >expected-refs &&
+	test_must_fail git -C atomic fetch --tags --atomic origin &&
+	git -C atomic for-each-ref >actual-refs &&
+	test_cmp expected-refs actual-refs &&
+	test_must_be_empty atomic/.git/FETCH_HEAD
+'
+
+test_expect_success 'fetch --atomic --append appends to FETCH_HEAD' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git clone . atomic &&
+	oid=$(git rev-parse HEAD) &&
+
+	git branch atomic-fetch-head-1 &&
+	git -C atomic fetch --atomic origin atomic-fetch-head-1 &&
+	test_line_count = 1 atomic/.git/FETCH_HEAD &&
+
+	git branch atomic-fetch-head-2 &&
+	git -C atomic fetch --atomic --append origin atomic-fetch-head-2 &&
+	test_line_count = 2 atomic/.git/FETCH_HEAD &&
+	cp atomic/.git/FETCH_HEAD expected &&
+
+	write_script atomic/.git/hooks/reference-transaction <<-\EOF &&
+		exit 1
+	EOF
+
+	git branch atomic-fetch-head-3 &&
+	test_must_fail git -C atomic fetch --atomic --append origin atomic-fetch-head-3 &&
+	test_cmp expected atomic/.git/FETCH_HEAD
+'
+
 test_expect_success '--refmap="" ignores configured refspec' '
 	cd "$TRASH_DIRECTORY" &&
 	git clone "$D" remote-refs &&
