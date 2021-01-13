@@ -307,7 +307,7 @@ wrote the patch or have the right to pass it on under the same license
 as ours, by "signing off" your patch.  Without sign-off, we cannot
 accept your patches.
 
-If you can certify the below D-C-O:
+If (and only if) you certify the below D-C-O:
 
 [[dco]]
 .Developer's Certificate of Origin 1.1
