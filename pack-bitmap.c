@@ -407,11 +407,14 @@ static inline int bitmap_position_extended(struct bitmap_index *bitmap_git,
 static inline int bitmap_position_packfile(struct bitmap_index *bitmap_git,
 					   const struct object_id *oid)
 {
+	uint32_t pos;
 	off_t offset = find_pack_entry_one(oid->hash, bitmap_git->pack);
 	if (!offset)
 		return -1;
 
-	return find_revindex_position(bitmap_git->pack, offset);
+	if (offset_to_pack_pos(bitmap_git->pack, offset, &pos) < 0)
+		return -1;
+	return pos;
 }
 
 static int bitmap_position(struct bitmap_index *bitmap_git,
