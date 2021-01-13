@@ -28,7 +28,6 @@ struct revindex_entry {
  * given pack, returning zero on success and a negative value otherwise.
  */
 int load_pack_revindex(struct packed_git *p);
-int find_revindex_position(struct packed_git *p, off_t ofs);
 
 /*
  * offset_to_pack_pos converts an object offset to a pack position. This

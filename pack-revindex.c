@@ -169,16 +169,23 @@ int load_pack_revindex(struct packed_git *p)
 	return 0;
 }
 
-int find_revindex_position(struct packed_git *p, off_t ofs)
+int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
-	int lo = 0;
-	int hi = p->num_objects + 1;
-	const struct revindex_entry *revindex = p->revindex;
+	unsigned lo, hi;
+	const struct revindex_entry *revindex;
+
+	if (load_pack_revindex(p) < 0)
+		return -1;
+
+	lo = 0;
+	hi = p->num_objects + 1;
+	revindex = p->revindex;
 
 	do {
 		const unsigned mi = lo + (hi - lo) / 2;
 		if (revindex[mi].offset == ofs) {
-			return mi;
+			*pos = mi;
+			return 0;
 		} else if (ofs < revindex[mi].offset)
 			hi = mi;
 		else
@@ -187,20 +194,6 @@ int find_revindex_position(struct packed_git *p, off_t ofs)
 
 	error("bad offset for revindex");
 	return -1;
-}
-
-int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
-{
-	int ret;
-
-	if (load_pack_revindex(p) < 0)
-		return -1;
-
-	ret = find_revindex_position(p, ofs);
-	if (ret < 0)
-		return ret;
-	*pos = ret;
-	return 0;
 }
 
 uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos)
