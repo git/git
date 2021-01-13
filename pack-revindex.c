@@ -189,21 +189,6 @@ int find_revindex_position(struct packed_git *p, off_t ofs)
 	return -1;
 }
 
-struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
-{
-	int pos;
-
-	if (load_pack_revindex(p))
-		return NULL;
-
-	pos = find_revindex_position(p, ofs);
-
-	if (pos < 0)
-		return NULL;
-
-	return p->revindex + pos;
-}
-
 int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
 	int ret;
