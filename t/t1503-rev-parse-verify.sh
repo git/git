@@ -86,8 +86,8 @@ test_expect_success 'fails silently when using -q' '
 test_expect_success 'fails silently when using -q with deleted reflogs' '
 	ref=$(git rev-parse HEAD) &&
 	git update-ref --create-reflog -m "message for refs/test" refs/test "$ref" &&
-	git reflog delete --updateref --rewrite refs/test@{0} &&
-	test_must_fail git rev-parse -q --verify refs/test@{0} >error 2>&1 &&
+	git reflog delete --updateref --rewrite refs/test@{1} &&
+	test_must_fail git rev-parse -q --verify refs/test@{1} >error 2>&1 &&
 	test_must_be_empty error
 '
 
