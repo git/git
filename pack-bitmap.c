@@ -1069,23 +1069,21 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 			      struct bitmap *reuse,
 			      struct pack_window **w_curs)
 {
-	struct revindex_entry *revidx;
-	off_t offset;
+	off_t offset, header;
 	enum object_type type;
 	unsigned long size;
 
 	if (pos >= bitmap_git->pack->num_objects)
 		return; /* not actually in the pack */
 
-	revidx = &bitmap_git->pack->revindex[pos];
-	offset = revidx->offset;
+	offset = header = pack_pos_to_offset(bitmap_git->pack, pos);
 	type = unpack_object_header(bitmap_git->pack, w_curs, &offset, &size);
 	if (type < 0)
 		return; /* broken packfile, punt */
 
 	if (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA) {
 		off_t base_offset;
-		int base_pos;
+		uint32_t base_pos;
 
 		/*
 		 * Find the position of the base object so we can look it up
@@ -1096,11 +1094,10 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 		 * more detail.
 		 */
 		base_offset = get_delta_base(bitmap_git->pack, w_curs,
-					     &offset, type, revidx->offset);
+					     &offset, type, header);
 		if (!base_offset)
 			return;
-		base_pos = find_revindex_position(bitmap_git->pack, base_offset);
-		if (base_pos < 0)
+		if (offset_to_pack_pos(bitmap_git->pack, base_offset, &base_pos) < 0)
 			return;
 
 		/*
