@@ -726,7 +726,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		print_current_branch_name();
 		return 0;
 	} else if (list) {
-		/*  git branch --local also shows HEAD when it is detached */
+		/*  git branch --list also shows HEAD when it is detached */
 		if ((filter.kind & FILTER_REFS_BRANCHES) && filter.detached)
 			filter.kind |= FILTER_REFS_DETACHED_HEAD;
 		filter.name_patterns = argv;
@@ -739,7 +739,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		 */
 		if (!sorting)
 			sorting = ref_default_sorting();
-		ref_sorting_icase_all(sorting, icase);
+		ref_sorting_set_sort_flags_all(sorting, REF_SORTING_ICASE, icase);
+		ref_sorting_set_sort_flags_all(
+			sorting, REF_SORTING_DETACHED_HEAD_FIRST, 1);
 		print_ref_list(&filter, sorting, &format);
 		print_columns(&output, colopts, NULL);
 		string_list_clear(&output, 0);

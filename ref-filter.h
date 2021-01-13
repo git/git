@@ -28,9 +28,12 @@ struct atom_value;
 struct ref_sorting {
 	struct ref_sorting *next;
 	int atom; /* index into used_atom array (internal) */
-	unsigned reverse : 1,
-		ignore_case : 1,
-		version : 1;
+	enum {
+		REF_SORTING_REVERSE = 1<<0,
+		REF_SORTING_ICASE = 1<<1,
+		REF_SORTING_VERSION = 1<<2,
+		REF_SORTING_DETACHED_HEAD_FIRST = 1<<3,
+	} sort_flags;
 };
 
 struct ref_array_item {
@@ -109,8 +112,8 @@ void ref_array_clear(struct ref_array *array);
 int verify_ref_format(struct ref_format *format);
 /*  Sort the given ref_array as per the ref_sorting provided */
 void ref_array_sort(struct ref_sorting *sort, struct ref_array *array);
-/*  Set the ignore_case flag for all elements of a sorting list */
-void ref_sorting_icase_all(struct ref_sorting *sorting, int flag);
+/*  Set REF_SORTING_* sort_flags for all elements of a sorting list */
+void ref_sorting_set_sort_flags_all(struct ref_sorting *sorting, unsigned int mask, int on);
 /*  Based on the given format and quote_style, fill the strbuf */
 int format_ref_array_item(struct ref_array_item *info,
 			  const struct ref_format *format,

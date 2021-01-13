@@ -210,7 +210,7 @@ EOF
 	test_i18ncmp expect actual
 '
 
-test_expect_success 'git branch `--sort` option' '
+test_expect_success 'git branch `--sort=[-]objectsize` option' '
 	cat >expect <<-\EOF &&
 	* (HEAD detached from fromtag)
 	  branch-two
@@ -218,6 +218,55 @@ test_expect_success 'git branch `--sort` option' '
 	  main
 	EOF
 	git branch --sort=objectsize >actual &&
+	test_i18ncmp expect actual &&
+
+	cat >expect <<-\EOF &&
+	* (HEAD detached from fromtag)
+	  branch-one
+	  main
+	  branch-two
+	EOF
+	git branch --sort=-objectsize >actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'git branch `--sort=[-]type` option' '
+	cat >expect <<-\EOF &&
+	* (HEAD detached from fromtag)
+	  branch-one
+	  branch-two
+	  main
+	EOF
+	git branch --sort=type >actual &&
+	test_i18ncmp expect actual &&
+
+	cat >expect <<-\EOF &&
+	* (HEAD detached from fromtag)
+	  branch-one
+	  branch-two
+	  main
+	EOF
+	git branch --sort=-type >actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'git branch `--sort=[-]version:refname` option' '
+	cat >expect <<-\EOF &&
+	* (HEAD detached from fromtag)
+	  branch-one
+	  branch-two
+	  main
+	EOF
+	git branch --sort=version:refname >actual &&
+	test_i18ncmp expect actual &&
+
+	cat >expect <<-\EOF &&
+	* (HEAD detached from fromtag)
+	  main
+	  branch-two
+	  branch-one
+	EOF
+	git branch --sort=-version:refname >actual &&
 	test_i18ncmp expect actual
 '
 
