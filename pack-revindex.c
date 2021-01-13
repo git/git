@@ -3,6 +3,11 @@
 #include "object-store.h"
 #include "packfile.h"
 
+struct revindex_entry {
+	off_t offset;
+	unsigned int nr;
+};
+
 /*
  * Pack index for existing packs give us easy access to the offsets into
  * corresponding pack file where each object's data starts, but the entries

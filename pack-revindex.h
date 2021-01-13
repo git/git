@@ -18,11 +18,6 @@
 
 struct packed_git;
 
-struct revindex_entry {
-	off_t offset;
-	unsigned int nr;
-};
-
 /*
  * load_pack_revindex populates the revindex's internal data-structures for the
  * given pack, returning zero on success and a negative value otherwise.
