@@ -952,7 +952,7 @@ static size_t write_reused_pack_verbatim(struct hashfile *out,
 		off_t to_write;
 
 		written = (pos * BITS_IN_EWORD);
-		to_write = reuse_packfile->revindex[written].offset
+		to_write = pack_pos_to_offset(reuse_packfile, written)
 			- sizeof(struct pack_header);
 
 		/* We're recording one chunk, not one object. */
