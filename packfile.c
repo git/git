@@ -2082,19 +2082,31 @@ int for_each_object_in_pack(struct packed_git *p,
 	}
 
 	for (i = 0; i < p->num_objects; i++) {
-		uint32_t pos;
+		uint32_t index_pos;
 		struct object_id oid;
 
+		/*
+		 * We are iterating "i" from 0 up to num_objects, but its
+		 * meaning may be different, depending on the requested output
+		 * order:
+		 *
+		 *   - in object-name order, it is the same as the index order
+		 *     used by nth_packed_object_id(), so we can pass it
+		 *     directly
+		 *
+		 *   - in pack-order, it is pack position, which we must
+		 *     convert to an index position in order to get the oid.
+		 */
 		if (flags & FOR_EACH_OBJECT_PACK_ORDER)
-			pos = pack_pos_to_index(p, i);
+			index_pos = pack_pos_to_index(p, i);
 		else
-			pos = i;
+			index_pos = i;
 
-		if (nth_packed_object_id(&oid, p, pos) < 0)
+		if (nth_packed_object_id(&oid, p, index_pos) < 0)
 			return error("unable to get sha1 of object %u in %s",
-				     pos, p->pack_name);
+				     index_pos, p->pack_name);
 
-		r = cb(&oid, p, pos, data);
+		r = cb(&oid, p, index_pos, data);
 		if (r)
 			break;
 	}
