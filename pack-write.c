@@ -371,11 +371,15 @@ void finish_tmp_packfile(struct strbuf *name_buffer,
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought)
 {
-	int i;
+	int i, err;
 	FILE *output = xfopen(promisor_name, "w");
 
 	for (i = 0; i < nr_sought; i++)
 		fprintf(output, "%s %s\n", oid_to_hex(&sought[i]->old_oid),
 			sought[i]->name);
-	fclose(output);
+
+	err = ferror(output);
+	err |= fclose(output);
+	if (err)
+		die(_("could not write '%s' promisor file"), promisor_name);
 }
