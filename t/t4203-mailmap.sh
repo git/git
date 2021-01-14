@@ -746,11 +746,11 @@ test_expect_success 'Blame --porcelain output (complex mapping)' '
 	EOF
 
 	git blame --porcelain one >actual.blame &&
-	grep -E \
-		-e "[0-9]+ [0-9]+ [0-9]+$" \
-		-e "^author .*$" \
-		actual.blame >actual.grep &&
-	cut -d " " -f2-4 <actual.grep >actual.fuzz &&
+
+	NUM="[0-9][0-9]*" &&
+	sed -n <actual.blame >actual.fuzz \
+		-e "s/^author //p" \
+		-e "s/^$OID_REGEX \\($NUM $NUM $NUM\\)$/\\1/p"  &&
 	test_cmp expect actual.fuzz
 '
 
