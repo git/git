@@ -10,7 +10,7 @@
 #include "attr.h"
 #include "pathspec.h"
 #include "object-store.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 
 #define RESOLVED 0
 #define PUNTED 1
@@ -147,7 +147,7 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 
 	if (get_sha1_hex(hex, hash))
 		return NULL; /* BUG */
-	pos = sha1_pos(hash, rerere_dir, rerere_dir_nr, rerere_dir_hash);
+	pos = hash_pos(hash, rerere_dir, rerere_dir_nr, rerere_dir_hash);
 	if (pos < 0) {
 		rr_dir = xmalloc(sizeof(*rr_dir));
 		hashcpy(rr_dir->hash, hash);

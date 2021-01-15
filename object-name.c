@@ -85,7 +85,7 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 	/* otherwise, current can be discarded and candidate is still good */
 }
 
-static int match_sha(unsigned, const unsigned char *, const unsigned char *);
+static int match_hash(unsigned, const unsigned char *, const unsigned char *);
 
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
@@ -102,7 +102,7 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 		while (!ds->ambiguous && pos < loose_objects->nr) {
 			const struct object_id *oid;
 			oid = loose_objects->oid + pos;
-			if (!match_sha(ds->len, ds->bin_pfx.hash, oid->hash))
+			if (!match_hash(ds->len, ds->bin_pfx.hash, oid->hash))
 				break;
 			update_candidates(ds, oid);
 			pos++;
@@ -110,7 +110,7 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 	}
 }
 
-static int match_sha(unsigned len, const unsigned char *a, const unsigned char *b)
+static int match_hash(unsigned len, const unsigned char *a, const unsigned char *b)
 {
 	do {
 		if (*a != *b)
@@ -145,7 +145,7 @@ static void unique_in_midx(struct multi_pack_index *m,
 	for (i = first; i < num && !ds->ambiguous; i++) {
 		struct object_id oid;
 		current = nth_midxed_object_oid(&oid, m, i);
-		if (!match_sha(ds->len, ds->bin_pfx.hash, current->hash))
+		if (!match_hash(ds->len, ds->bin_pfx.hash, current->hash))
 			break;
 		update_candidates(ds, current);
 	}
@@ -173,7 +173,7 @@ static void unique_in_pack(struct packed_git *p,
 	for (i = first; i < num && !ds->ambiguous; i++) {
 		struct object_id oid;
 		nth_packed_object_id(&oid, p, i);
-		if (!match_sha(ds->len, ds->bin_pfx.hash, oid.hash))
+		if (!match_hash(ds->len, ds->bin_pfx.hash, oid.hash))
 			break;
 		update_candidates(ds, &oid);
 	}
@@ -483,7 +483,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	if (!quietly && (status == SHORT_NAME_AMBIGUOUS)) {
 		struct oid_array collect = OID_ARRAY_INIT;
 
-		error(_("short SHA1 %s is ambiguous"), ds.hex_pfx);
+		error(_("short object ID %s is ambiguous"), ds.hex_pfx);
 
 		/*
 		 * We may still have ambiguity if we simply saw a series of
@@ -1811,7 +1811,7 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 	if (!ret)
 		return ret;
 	/*
-	 * sha1:path --> object name of path in ent sha1
+	 * tree:path --> object name of path in tree
 	 * :path -> object name of absolute path in index
 	 * :./path -> object name of path relative to cwd in index
 	 * :[0-3]:path -> object name of path in index at stage
@@ -1949,6 +1949,6 @@ enum get_oid_result get_oid_with_context(struct repository *repo,
 					 struct object_context *oc)
 {
 	if (flags & GET_OID_FOLLOW_SYMLINKS && flags & GET_OID_ONLY_TO_DIE)
-		BUG("incompatible flags for get_sha1_with_context");
+		BUG("incompatible flags for get_oid_with_context");
 	return get_oid_with_context_1(repo, str, flags, NULL, oid, oc);
 }

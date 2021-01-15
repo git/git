@@ -14,7 +14,7 @@
 #include "mergesort.h"
 #include "commit-slab.h"
 #include "prio-queue.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "wt-status.h"
 #include "advice.h"
 #include "refs.h"
@@ -113,7 +113,7 @@ static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
 
 int commit_graft_pos(struct repository *r, const unsigned char *sha1)
 {
-	return sha1_pos(sha1, r->parsed_objects->grafts,
+	return hash_pos(sha1, r->parsed_objects->grafts,
 			r->parsed_objects->grafts_nr,
 			commit_graft_sha1_access);
 }
