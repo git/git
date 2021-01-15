@@ -17,16 +17,45 @@ UI, Workflows & Features
    no reason to stop or force the user to choose between rebase or
    merge if the history fast-forwards.
 
+ * The configuration variable 'core.abbrev' can be set to 'no' to
+   force no abbreviation regardless of the hash algorithm.
+
+ * "git rev-parse" can be explicitly told to give output as absolute
+   or relative path with the `--path-format=(absolute|relative)` option.
+
+ * Bash completion (in contrib/) update to make it easier for
+   end-users to add completion for their custom "git" subcommands.
+
 
 Performance, Internal Implementation, Development Support etc.
 
  * A 3-year old test that was not testing anything useful has been
    corrected.
 
+ * Retire more names with "sha1" in it.
+
+ * The topological walk codepath is covered by new trace2 stats.
+
 
 Fixes since v2.30
 -----------------
 
+ * Diagnose command line error of "git rebase" early.
+   (merge ca5120c339 rs/rebase-commit-validation later to maint).
+
+ * Clean up option descriptions in "git cmd --help".
+   (merge e73fe3dd02 zh/arg-help-format later to maint).
+
+ * "git stash" did not work well in a sparsely checked out working
+   tree.
+   (merge ba359fd507 en/stash-apply-sparse-checkout later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 505a276596 pk/subsub-fetch-fix-take-2 later to maint).
    (merge 33fc56253b fc/t6030-bisect-reset-removes-auxiliary-files later to maint).
+   (merge 7efc378205 ta/doc-typofix later to maint).
+   (merge 1f4e9319c7 pb/doc-modules-git-work-tree-typofix later to maint).
+   (merge 04f6b0a192 ma/t1300-cleanup later to maint).
+   (merge 7b77f5a13e ma/doc-pack-format-varint-for-sizes later to maint).
+   (merge cc2d43be2b nk/perf-fsmonitor-cleanup later to maint).
+   (merge c8302c6c00 ar/t6016-modernise later to maint).
