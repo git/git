@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "pack.h"
 #include "csum-file.h"
+#include "remote.h"
 
 void reset_pack_idx_option(struct pack_idx_option *opts)
 {
@@ -366,4 +367,19 @@ void finish_tmp_packfile(struct strbuf *name_buffer,
 	strbuf_setlen(name_buffer, basename_len);
 
 	free((void *)idx_tmp_name);
+}
+
+void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought)
+{
+	int i, err;
+	FILE *output = xfopen(promisor_name, "w");
+
+	for (i = 0; i < nr_sought; i++)
+		fprintf(output, "%s %s\n", oid_to_hex(&sought[i]->old_oid),
+			sought[i]->name);
+
+	err = ferror(output);
+	err |= fclose(output);
+	if (err)
+		die(_("could not write '%s' promisor file"), promisor_name);
 }
