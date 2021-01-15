@@ -325,35 +325,6 @@ static void add_diff_to_buf(struct diff_queue_struct *q,
 	}
 }
 
-static int get_newly_staged(struct strbuf *out, struct object_id *c_tree)
-{
-	struct child_process cp = CHILD_PROCESS_INIT;
-	const char *c_tree_hex = oid_to_hex(c_tree);
-
-	/*
-	 * diff-index is very similar to diff-tree above, and should be
-	 * converted together with update_index.
-	 */
-	cp.git_cmd = 1;
-	strvec_pushl(&cp.args, "diff-index", "--cached", "--name-only",
-		     "--diff-filter=A", NULL);
-	strvec_push(&cp.args, c_tree_hex);
-	return pipe_command(&cp, NULL, 0, out, 0, NULL, 0);
-}
-
-static int update_index(struct strbuf *out)
-{
-	struct child_process cp = CHILD_PROCESS_INIT;
-
-	/*
-	 * Update-index is very complicated and may need to have a public
-	 * function exposed in order to remove this forking.
-	 */
-	cp.git_cmd = 1;
-	strvec_pushl(&cp.args, "update-index", "--add", "--stdin", NULL);
-	return pipe_command(&cp, out->buf, out->len, NULL, 0, NULL, 0);
-}
-
 static int restore_untracked(struct object_id *u_tree)
 {
 	int res;
@@ -383,6 +354,121 @@ static int restore_untracked(struct object_id *u_tree)
 	res = run_command(&cp);
 	remove_path(stash_index_path.buf);
 	return res;
+}
+
+static void unstage_changes_unless_new(struct object_id *orig_tree)
+{
+	/*
+	 * When we enter this function, there has been a clean merge of
+	 * relevant trees, and the merge logic always stages whatever merges
+	 * cleanly.  We want to unstage those changes, unless it corresponds
+	 * to a file that didn't exist as of orig_tree.
+	 *
+	 * However, if any SKIP_WORKTREE path is modified relative to
+	 * orig_tree, then we want to clear the SKIP_WORKTREE bit and write
+	 * it to the worktree before unstaging.
+	 */
+
+	struct checkout state = CHECKOUT_INIT;
+	struct diff_options diff_opts;
+	struct lock_file lock = LOCK_INIT;
+	int i;
+
+	/* If any entries have skip_worktree set, we'll have to check 'em out */
+	state.force = 1;
+	state.quiet = 1;
+	state.refresh_cache = 1;
+	state.istate = &the_index;
+
+	/*
+	 * Step 1: get a difference between orig_tree (which corresponding
+	 * to the index before a merge was run) and the current index
+	 * (reflecting the changes brought in by the merge).
+	 */
+	diff_setup(&diff_opts);
+	diff_opts.flags.recursive = 1;
+	diff_opts.detect_rename = 0;
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	diff_setup_done(&diff_opts);
+
+	do_diff_cache(orig_tree, &diff_opts);
+	diffcore_std(&diff_opts);
+
+	/* Iterate over the paths that changed due to the merge... */
+	for (i = 0; i < diff_queued_diff.nr; i++) {
+		struct diff_filepair *p;
+		struct cache_entry *ce;
+		int pos;
+
+		/* Look up the path's position in the current index. */
+		p = diff_queued_diff.queue[i];
+		pos = index_name_pos(&the_index, p->two->path,
+				     strlen(p->two->path));
+
+		/*
+		 * Step 2: Place changes in the working tree
+		 *
+		 * Stash is about restoring changes *to the working tree*.
+		 * So if the merge successfully got a new version of some
+		 * path, but left it out of the working tree, then clear the
+		 * SKIP_WORKTREE bit and write it to the working tree.
+		 */
+		if (pos >= 0 && ce_skip_worktree(active_cache[pos])) {
+			struct stat st;
+
+			ce = active_cache[pos];
+			if (!lstat(ce->name, &st)) {
+				/* Conflicting path present; relocate it */
+				struct strbuf new_path = STRBUF_INIT;
+				int fd;
+
+				strbuf_addf(&new_path,
+					    "%s.stash.XXXXXX", ce->name);
+				fd = xmkstemp(new_path.buf);
+				close(fd);
+				printf(_("WARNING: Untracked file in way of "
+					 "tracked file!  Renaming\n "
+					 "           %s -> %s\n"
+					 "         to make room.\n"),
+				       ce->name, new_path.buf);
+				if (rename(ce->name, new_path.buf))
+					die("Failed to move %s to %s\n",
+					    ce->name, new_path.buf);
+				strbuf_release(&new_path);
+			}
+			checkout_entry(ce, &state, NULL, NULL);
+			ce->ce_flags &= ~CE_SKIP_WORKTREE;
+		}
+
+		/*
+		 * Step 3: "unstage" changes, as long as they are still tracked
+		 */
+		if (p->one->oid_valid) {
+			/*
+			 * Path existed in orig_tree; restore index entry
+			 * from that tree in order to "unstage" the changes.
+			 */
+			int option = ADD_CACHE_OK_TO_REPLACE;
+			if (pos < 0)
+				option = ADD_CACHE_OK_TO_ADD;
+
+			ce = make_cache_entry(&the_index,
+					      p->one->mode,
+					      &p->one->oid,
+					      p->one->path,
+					      0, 0);
+			add_index_entry(&the_index, ce, option);
+		}
+	}
+	diff_flush(&diff_opts);
+
+	/*
+	 * Step 4: write the new index to disk
+	 */
+	repo_hold_locked_index(the_repository, &lock, LOCK_DIE_ON_ERROR);
+	if (write_locked_index(&the_index, &lock,
+			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+		die(_("Unable to write index."));
 }
 
 static int do_apply_stash(const char *prefix, struct stash_info *info,
@@ -467,26 +553,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		if (reset_tree(&index_tree, 0, 0))
 			return -1;
 	} else {
-		struct strbuf out = STRBUF_INIT;
-
-		if (get_newly_staged(&out, &c_tree)) {
-			strbuf_release(&out);
-			return -1;
-		}
-
-		if (reset_tree(&c_tree, 0, 1)) {
-			strbuf_release(&out);
-			return -1;
-		}
-
-		ret = update_index(&out);
-		strbuf_release(&out);
-		if (ret)
-			return -1;
-
-		/* read back the result of update_index() back from the disk */
-		discard_cache();
-		read_cache();
+		unstage_changes_unless_new(&c_tree);
 	}
 
 	if (!quiet) {
