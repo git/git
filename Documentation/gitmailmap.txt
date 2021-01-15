@@ -7,7 +7,7 @@ gitmailmap - Map author/committer names and/or E-Mail addresses
 
 SYNOPSIS
 --------
-$GIT_WORK_DIR/.mailmap
+$GIT_WORK_TREE/.mailmap
 
 
 DESCRIPTION
