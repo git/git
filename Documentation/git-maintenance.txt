@@ -38,7 +38,7 @@ register::
 	for running in the background without disrupting foreground
 	processes.
 +
-The `register` subcomand will also set the `maintenance.strategy` config
+The `register` subcommand will also set the `maintenance.strategy` config
 value to `incremental`, if this value is not previously set. The
 `incremental` strategy uses the following schedule for each maintenance
 task:

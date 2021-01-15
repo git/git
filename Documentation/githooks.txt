@@ -644,7 +644,7 @@ changelist text. Exiting with a non-zero status from the script
 will abort the process.
 
 The purpose of the hook is to edit the message file in place,
-and it is not supressed by the `--no-verify` option. This hook
+and it is not suppressed by the `--no-verify` option. This hook
 is called even if `--prepare-p4-only` is set.
 
 Run `git-p4 submit --help` for details.
