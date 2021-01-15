@@ -9,21 +9,9 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/test-bundle-functions.sh
 
 D=$(pwd)
-
-test_bundle_object_count () {
-	git verify-pack -v "$1" >verify.out &&
-	test "$2" = $(grep "^$OID_REGEX " verify.out | wc -l)
-}
-
-convert_bundle_to_pack () {
-	while read x && test -n "$x"
-	do
-		:;
-	done
-	cat
-}
 
 test_expect_success setup '
 	echo >file original &&
@@ -483,9 +471,7 @@ test_expect_success 'unbundle 1' '
 
 test_expect_success 'bundle 1 has only 3 files ' '
 	cd "$D" &&
-	convert_bundle_to_pack <bundle1 >bundle.pack &&
-	git index-pack bundle.pack &&
-	test_bundle_object_count bundle.pack 3
+	test_bundle_object_count bundle1 3
 '
 
 test_expect_success 'unbundle 2' '
@@ -500,9 +486,7 @@ test_expect_success 'bundle does not prerequisite objects' '
 	git add file2 &&
 	git commit -m add.file2 file2 &&
 	git bundle create bundle3 -1 HEAD &&
-	convert_bundle_to_pack <bundle3 >bundle.pack &&
-	git index-pack bundle.pack &&
-	test_bundle_object_count bundle.pack 3
+	test_bundle_object_count bundle3 3
 '
 
 test_expect_success 'bundle should be able to create a full history' '
@@ -1055,9 +1039,7 @@ test_expect_success 'all boundary commits are excluded' '
 	git merge otherside &&
 	ad=$(git log --no-walk --format=%ad HEAD) &&
 	git bundle create twoside-boundary.bdl main --since="$ad" &&
-	convert_bundle_to_pack <twoside-boundary.bdl >twoside-boundary.pack &&
-	pack=$(git index-pack --fix-thin --stdin <twoside-boundary.pack) &&
-	test_bundle_object_count .git/objects/pack/pack-${pack##pack	}.pack 3
+	test_bundle_object_count --thin twoside-boundary.bdl 3
 '
 
 test_expect_success 'fetch --prune prints the remotes url' '
