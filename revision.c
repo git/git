@@ -3308,6 +3308,26 @@ struct topo_walk_info {
 	struct author_date_slab author_date;
 };
 
+static int topo_walk_atexit_registered;
+static unsigned int count_explore_walked;
+static unsigned int count_indegree_walked;
+static unsigned int count_topo_walked;
+
+static void trace2_topo_walk_statistics_atexit(void)
+{
+	struct json_writer jw = JSON_WRITER_INIT;
+
+	jw_object_begin(&jw, 0);
+	jw_object_intmax(&jw, "count_explore_walked", count_explore_walked);
+	jw_object_intmax(&jw, "count_indegree_walked", count_indegree_walked);
+	jw_object_intmax(&jw, "count_topo_walked", count_topo_walked);
+	jw_end(&jw);
+
+	trace2_data_json("topo_walk", the_repository, "statistics", &jw);
+
+	jw_release(&jw);
+}
+
 static inline void test_flag_and_insert(struct prio_queue *q, struct commit *c, int flag)
 {
 	if (c->object.flags & flag)
@@ -3328,6 +3348,8 @@ static void explore_walk_step(struct rev_info *revs)
 
 	if (repo_parse_commit_gently(revs->repo, c, 1) < 0)
 		return;
+
+	count_explore_walked++;
 
 	if (revs->sort_order == REV_SORT_BY_AUTHOR_DATE)
 		record_author_date(&info->author_date, c);
@@ -3366,6 +3388,8 @@ static void indegree_walk_step(struct rev_info *revs)
 
 	if (repo_parse_commit_gently(revs->repo, c, 1) < 0)
 		return;
+
+	count_indegree_walked++;
 
 	explore_to_depth(revs, commit_graph_generation(c));
 
@@ -3476,6 +3500,11 @@ static void init_topo_walk(struct rev_info *revs)
 	 */
 	if (revs->sort_order == REV_SORT_IN_GRAPH_ORDER)
 		prio_queue_reverse(&info->topo_queue);
+
+	if (trace2_is_enabled() && !topo_walk_atexit_registered) {
+		atexit(trace2_topo_walk_statistics_atexit);
+		topo_walk_atexit_registered = 1;
+	}
 }
 
 static struct commit *next_topo_commit(struct rev_info *revs)
@@ -3501,6 +3530,8 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 			die("Failed to traverse parents of commit %s",
 			    oid_to_hex(&commit->object.oid));
 	}
+
+	count_topo_walked++;
 
 	for (p = commit->parents; p; p = p->next) {
 		struct commit *parent = p->item;
