@@ -20,6 +20,9 @@ test_expect_success 'setup' '
 	 echo one >file && git add file && git commit -m one &&
 	 git checkout -b two &&
 	 echo two >file && git add file && git commit -m two &&
+	 blob=$(git rev-parse HEAD:file) &&
+	 echo $blob > .git/refs/heads/broken-tag &&
+	 echo $blob > .git/refs/heads/broken-head &&
 	 git checkout master) &&
 	mkdir empty &&
 	(cd empty && git init)
@@ -65,6 +68,18 @@ test_expect_success 'clone -b with bogus branch' '
 
 test_expect_success 'clone -b not allowed with empty repos' '
 	test_must_fail git clone -b branch empty clone-branch-empty
+'
+
+test_expect_success 'cloning -b for invalid tag must fail and fallback on remote head' '
+	test_must_fail git clone -b broken-tag parent broken-tag 2>error &&
+	test_i18ngrep "non-commit branch cannot be checked out." error &&
+	(cd broken-tag && check_HEAD master)
+'
+
+test_expect_success 'cloning -b for broken head must fail and fallback on remote head' '
+	test_must_fail git clone -b broken-head parent broken-head &&
+	test_i18ngrep "non-commit branch cannot be checked out." error &&
+	(cd broken-head && check_HEAD master)
 '
 
 test_done

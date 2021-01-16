@@ -711,10 +711,63 @@ static void update_remote_refs(const struct ref *refs,
 	}
 }
 
-static void update_head(const struct ref *our, const struct ref *remote,
+static struct commit * commit_lookup_helper (const struct ref *our,
+					      const struct ref *remote,
+					      const char *msg,
+					      int *err)
+{
+	const struct object_id *tip = NULL;
+	struct commit *tip_commit =  NULL;
+
+	if (our)
+		tip = &our->old_oid;
+	else if (remote)
+		tip = &remote->old_oid;
+	else {
+		/*
+		 * We have no local branch requested with "-b", and the
+		 * remote HEAD is unborn. There's nothing to update HEAD
+		 * to, but this state is not an error.
+		 */
+		return NULL;
+	}
+
+	if ( !lookup_object(the_repository, tip)) {
+		/**
+		 * We have a object id associated with the tip of the branch
+		 * but the object id doesn't resolve to a object. This will be
+		 * handled downstream in update_ref().
+		 */
+		return NULL;
+	}
+
+	tip_commit = lookup_commit_reference_gently(the_repository, tip, 1);
+	if (!tip_commit) {
+		/*
+		 * The given non-commit cannot be checked out,
+		 * so have a 'master' branch and leave it unborn.
+		 */
+		error(_("non-commit branch cannot be checked out."));
+		create_symref("HEAD", "refs/heads/master" ,msg);
+		*err = -1;
+		return NULL;
+	}
+
+	return tip_commit;
+}
+
+static int update_head(const struct ref *our,
+			const struct ref *remote,
 			const char *msg)
 {
 	const char *head;
+	int err = 0;
+	const struct commit * c;
+	c = commit_lookup_helper(our, remote, msg, &err);
+	if (err < 0) {
+		return -1;
+	}
+
 	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
 		/* Local default branch link */
 		if (create_symref("HEAD", our->name, NULL) < 0)
@@ -725,8 +778,6 @@ static void update_head(const struct ref *our, const struct ref *remote,
 			install_branch_config(0, head, remote_name, our->name);
 		}
 	} else if (our) {
-		struct commit *c = lookup_commit_reference(the_repository,
-							   &our->old_oid);
 		/* --branch specifies a non-branch (i.e. tags), detach HEAD */
 		update_ref(msg, "HEAD", &c->object.oid, NULL, REF_NO_DEREF,
 			   UPDATE_REFS_DIE_ON_ERR);
@@ -739,6 +790,8 @@ static void update_head(const struct ref *our, const struct ref *remote,
 		update_ref(msg, "HEAD", &remote->old_oid, NULL, REF_NO_DEREF,
 			   UPDATE_REFS_DIE_ON_ERR);
 	}
+
+	return 0;
 }
 
 static int git_sparse_checkout_init(const char *repo)
@@ -1352,7 +1405,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			   branch_top.buf, reflog_msg.buf, transport,
 			   !is_local);
 
-	update_head(our_head_points_at, remote_head, reflog_msg.buf);
+	err = update_head(our_head_points_at, remote_head, reflog_msg.buf);
 
 	/*
 	 * We want to show progress for recursive submodule clones iff
@@ -1371,7 +1424,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	junk_mode = JUNK_LEAVE_REPO;
-	err = checkout(submodule_progress);
+	if ( err == 0 ) {
+		/*
+		 * Only try to checkout if we successfully updated HEAD; otherwise
+		 * HEAD isn't pointing to the thing the user wanted.
+		 */
+		err = checkout(submodule_progress);
+	}
 
 cleanup:
 	free(remote_name);
