@@ -731,8 +731,8 @@ int compare_commits_by_author_date(const void *a_, const void *b_,
 int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void *unused)
 {
 	const struct commit *a = a_, *b = b_;
-	const uint32_t generation_a = commit_graph_generation(a),
-		       generation_b = commit_graph_generation(b);
+	const timestamp_t generation_a = commit_graph_generation(a),
+			  generation_b = commit_graph_generation(b);
 
 	/* newer commits first */
 	if (generation_a < generation_b)
