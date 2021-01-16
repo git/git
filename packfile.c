@@ -1235,18 +1235,18 @@ static int get_delta_base_oid(struct packed_git *p,
 		oidread(oid, base);
 		return 0;
 	} else if (type == OBJ_OFS_DELTA) {
-		struct revindex_entry *revidx;
+		uint32_t base_pos;
 		off_t base_offset = get_delta_base(p, w_curs, &curpos,
 						   type, delta_obj_offset);
 
 		if (!base_offset)
 			return -1;
 
-		revidx = find_pack_revindex(p, base_offset);
-		if (!revidx)
+		if (offset_to_pack_pos(p, base_offset, &base_pos) < 0)
 			return -1;
 
-		return nth_packed_object_id(oid, p, revidx->nr);
+		return nth_packed_object_id(oid, p,
+					    pack_pos_to_index(p, base_pos));
 	} else
 		return -1;
 }
@@ -1256,12 +1256,11 @@ static int retry_bad_packed_offset(struct repository *r,
 				   off_t obj_offset)
 {
 	int type;
-	struct revindex_entry *revidx;
+	uint32_t pos;
 	struct object_id oid;
-	revidx = find_pack_revindex(p, obj_offset);
-	if (!revidx)
+	if (offset_to_pack_pos(p, obj_offset, &pos) < 0)
 		return OBJ_BAD;
-	nth_packed_object_id(&oid, p, revidx->nr);
+	nth_packed_object_id(&oid, p, pack_pos_to_index(p, pos));
 	mark_bad_packed_object(p, oid.hash);
 	type = oid_object_info(r, &oid, NULL);
 	if (type <= OBJ_NONE)
@@ -1538,8 +1537,15 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 	}
 
 	if (oi->disk_sizep) {
-		struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
-		*oi->disk_sizep = revidx[1].offset - obj_offset;
+		uint32_t pos;
+		if (offset_to_pack_pos(p, obj_offset, &pos) < 0) {
+			error("could not find object at offset %"PRIuMAX" "
+			      "in pack %s", (uintmax_t)obj_offset, p->pack_name);
+			type = OBJ_BAD;
+			goto out;
+		}
+
+		*oi->disk_sizep = pack_pos_to_offset(p, pos + 1) - obj_offset;
 	}
 
 	if (oi->typep || oi->type_name) {
@@ -1688,11 +1694,21 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		}
 
 		if (do_check_packed_object_crc && p->index_version > 1) {
-			struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
-			off_t len = revidx[1].offset - obj_offset;
-			if (check_pack_crc(p, &w_curs, obj_offset, len, revidx->nr)) {
+			uint32_t pack_pos, index_pos;
+			off_t len;
+
+			if (offset_to_pack_pos(p, obj_offset, &pack_pos) < 0) {
+				error("could not find object at offset %"PRIuMAX" in pack %s",
+				      (uintmax_t)obj_offset, p->pack_name);
+				data = NULL;
+				goto out;
+			}
+
+			len = pack_pos_to_offset(p, pack_pos + 1) - obj_offset;
+			index_pos = pack_pos_to_index(p, pack_pos);
+			if (check_pack_crc(p, &w_curs, obj_offset, len, index_pos)) {
 				struct object_id oid;
-				nth_packed_object_id(&oid, p, revidx->nr);
+				nth_packed_object_id(&oid, p, index_pos);
 				error("bad packed object CRC for %s",
 				      oid_to_hex(&oid));
 				mark_bad_packed_object(p, oid.hash);
@@ -1775,11 +1791,11 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			 * This is costly but should happen only in the presence
 			 * of a corrupted pack, and is better than failing outright.
 			 */
-			struct revindex_entry *revidx;
+			uint32_t pos;
 			struct object_id base_oid;
-			revidx = find_pack_revindex(p, obj_offset);
-			if (revidx) {
-				nth_packed_object_id(&base_oid, p, revidx->nr);
+			if (!(offset_to_pack_pos(p, obj_offset, &pos))) {
+				nth_packed_object_id(&base_oid, p,
+						     pack_pos_to_index(p, pos));
 				error("failed to read delta base object %s"
 				      " at offset %"PRIuMAX" from %s",
 				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
@@ -2066,19 +2082,31 @@ int for_each_object_in_pack(struct packed_git *p,
 	}
 
 	for (i = 0; i < p->num_objects; i++) {
-		uint32_t pos;
+		uint32_t index_pos;
 		struct object_id oid;
 
+		/*
+		 * We are iterating "i" from 0 up to num_objects, but its
+		 * meaning may be different, depending on the requested output
+		 * order:
+		 *
+		 *   - in object-name order, it is the same as the index order
+		 *     used by nth_packed_object_id(), so we can pass it
+		 *     directly
+		 *
+		 *   - in pack-order, it is pack position, which we must
+		 *     convert to an index position in order to get the oid.
+		 */
 		if (flags & FOR_EACH_OBJECT_PACK_ORDER)
-			pos = p->revindex[i].nr;
+			index_pos = pack_pos_to_index(p, i);
 		else
-			pos = i;
+			index_pos = i;
 
-		if (nth_packed_object_id(&oid, p, pos) < 0)
+		if (nth_packed_object_id(&oid, p, index_pos) < 0)
 			return error("unable to get sha1 of object %u in %s",
-				     pos, p->pack_name);
+				     index_pos, p->pack_name);
 
-		r = cb(&oid, p, pos, data);
+		r = cb(&oid, p, index_pos, data);
 		if (r)
 			break;
 	}

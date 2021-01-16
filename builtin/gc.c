@@ -301,7 +301,7 @@ static uint64_t estimate_repack_memory(struct packed_git *pack)
 	/* and then obj_hash[], underestimated in fact */
 	heap += sizeof(struct object *) * nr_objects;
 	/* revindex is used also */
-	heap += sizeof(struct revindex_entry) * nr_objects;
+	heap += (sizeof(off_t) + sizeof(uint32_t)) * nr_objects;
 	/*
 	 * read_sha1_file() (either at delta calculation phase, or
 	 * writing phase) also fills up the delta base cache

@@ -407,11 +407,14 @@ static inline int bitmap_position_extended(struct bitmap_index *bitmap_git,
 static inline int bitmap_position_packfile(struct bitmap_index *bitmap_git,
 					   const struct object_id *oid)
 {
+	uint32_t pos;
 	off_t offset = find_pack_entry_one(oid->hash, bitmap_git->pack);
 	if (!offset)
 		return -1;
 
-	return find_revindex_position(bitmap_git->pack, offset);
+	if (offset_to_pack_pos(bitmap_git->pack, offset, &pos) < 0)
+		return -1;
+	return pos;
 }
 
 static int bitmap_position(struct bitmap_index *bitmap_git,
@@ -708,21 +711,22 @@ static void show_objects_for_type(
 
 		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
 			struct object_id oid;
-			struct revindex_entry *entry;
-			uint32_t hash = 0;
+			uint32_t hash = 0, index_pos;
+			off_t ofs;
 
 			if ((word >> offset) == 0)
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
 
-			entry = &bitmap_git->pack->revindex[pos + offset];
-			nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
+			index_pos = pack_pos_to_index(bitmap_git->pack, pos + offset);
+			ofs = pack_pos_to_offset(bitmap_git->pack, pos + offset);
+			nth_packed_object_id(&oid, bitmap_git->pack, index_pos);
 
 			if (bitmap_git->hashes)
-				hash = get_be32(bitmap_git->hashes + entry->nr);
+				hash = get_be32(bitmap_git->hashes + index_pos);
 
-			show_reach(&oid, object_type, 0, hash, bitmap_git->pack, entry->offset);
+			show_reach(&oid, object_type, 0, hash, bitmap_git->pack, ofs);
 		}
 	}
 }
@@ -831,11 +835,11 @@ static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
 	oi.sizep = &size;
 
 	if (pos < pack->num_objects) {
-		struct revindex_entry *entry = &pack->revindex[pos];
-		if (packed_object_info(the_repository, pack,
-				       entry->offset, &oi) < 0) {
+		off_t ofs = pack_pos_to_offset(pack, pos);
+		if (packed_object_info(the_repository, pack, ofs, &oi) < 0) {
 			struct object_id oid;
-			nth_packed_object_id(&oid, pack, entry->nr);
+			nth_packed_object_id(&oid, pack,
+					     pack_pos_to_index(pack, pos));
 			die(_("unable to get size of %s"), oid_to_hex(&oid));
 		}
 	} else {
@@ -1065,23 +1069,21 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 			      struct bitmap *reuse,
 			      struct pack_window **w_curs)
 {
-	struct revindex_entry *revidx;
-	off_t offset;
+	off_t offset, header;
 	enum object_type type;
 	unsigned long size;
 
 	if (pos >= bitmap_git->pack->num_objects)
 		return; /* not actually in the pack */
 
-	revidx = &bitmap_git->pack->revindex[pos];
-	offset = revidx->offset;
+	offset = header = pack_pos_to_offset(bitmap_git->pack, pos);
 	type = unpack_object_header(bitmap_git->pack, w_curs, &offset, &size);
 	if (type < 0)
 		return; /* broken packfile, punt */
 
 	if (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA) {
 		off_t base_offset;
-		int base_pos;
+		uint32_t base_pos;
 
 		/*
 		 * Find the position of the base object so we can look it up
@@ -1092,11 +1094,10 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 		 * more detail.
 		 */
 		base_offset = get_delta_base(bitmap_git->pack, w_curs,
-					     &offset, type, revidx->offset);
+					     &offset, type, header);
 		if (!base_offset)
 			return;
-		base_pos = find_revindex_position(bitmap_git->pack, base_offset);
-		if (base_pos < 0)
+		if (offset_to_pack_pos(bitmap_git->pack, base_offset, &base_pos) < 0)
 			return;
 
 		/*
@@ -1391,11 +1392,10 @@ uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 
 	for (i = 0; i < num_objects; ++i) {
 		struct object_id oid;
-		struct revindex_entry *entry;
 		struct object_entry *oe;
 
-		entry = &bitmap_git->pack->revindex[i];
-		nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
+		nth_packed_object_id(&oid, bitmap_git->pack,
+				     pack_pos_to_index(bitmap_git->pack, i));
 		oe = packlist_find(mapping, &oid);
 
 		if (oe)
