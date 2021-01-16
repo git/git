@@ -55,6 +55,9 @@ test_expect_success 'setup' '
 	git show-ref -s commit-5-5 | git commit-graph write --stdin-commits &&
 	mv .git/objects/info/commit-graph commit-graph-half &&
 	chmod u+w commit-graph-half &&
+	GIT_TEST_COMMIT_GRAPH_NO_GDAT=1 git commit-graph write --reachable &&
+	mv .git/objects/info/commit-graph commit-graph-no-gdat &&
+	chmod u+w commit-graph-no-gdat &&
 	git config core.commitGraph true
 '
 
@@ -66,6 +69,9 @@ run_all_modes () {
 	"$@" <input >actual &&
 	test_cmp expect actual &&
 	cp commit-graph-half .git/objects/info/commit-graph &&
+	"$@" <input >actual &&
+	test_cmp expect actual &&
+	cp commit-graph-no-gdat .git/objects/info/commit-graph &&
 	"$@" <input >actual &&
 	test_cmp expect actual
 }
