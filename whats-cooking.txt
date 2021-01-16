@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2021, #03; Fri, 15)
-X-master-at: 4151fdb1c76c1a190ac9241b67223efd19f3e478
-X-next-at: 6a967380364a91b4c913c719b6c1f3962b1af2d8
+Subject: What's cooking in git.git (Jan 2021, #04; Sat, 16)
+X-master-at: 66e871b6647ffea61a77a0f82c7ef3415f1ee79c
+X-next-at: 02bc693789bd06eae399a1ec06d0ca2f72f49ff3
 
-What's cooking in git.git (Jan 2021, #03; Fri, 15)
+What's cooking in git.git (Jan 2021, #04; Sat, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,7 +12,10 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The second batch of topics are now in 'master'.
+The third batch of topics are now in 'master'.  Most of these cooked
+for shorter than usual in 'next' (I usually try to keep any topic in
+'next' for at least a week), but many of them are mostly benign doc
+and test fixes.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -45,76 +48,34 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* en/ort-directory-rename (2021-01-07) 18 commits
- - merge-ort: fix a directory rename detection bug
- - merge-ort: process_renames() now needs more defensiveness
- - merge-ort: implement apply_directory_rename_modifications()
- - merge-ort: add a new toplevel_dir field
- - merge-ort: implement handle_path_level_conflicts()
- - merge-ort: implement check_for_directory_rename()
- - merge-ort: implement apply_dir_rename() and check_dir_renamed()
- - merge-ort: implement compute_collisions()
- - merge-ort: modify collect_renames() for directory rename handling
- - merge-ort: implement handle_directory_level_conflicts()
- - merge-ort: implement compute_rename_counts()
- - merge-ort: copy get_renamed_dir_portion() from merge-recursive.c
- - merge-ort: add outline of get_provisional_directory_renames()
- - merge-ort: add outline for computing directory renames
- - merge-ort: collect which directories are removed in dirs_removed
- - merge-ort: initialize and free new directory rename data structures
- - merge-ort: add new data structures for directory rename detection
- - Merge branch 'en/merge-ort-3' into en/ort-directory-rename
- (this branch is used by en/merge-ort-perf; uses en/merge-ort-3.)
+* ab/fsck-doc-fix (2021-01-16) 1 commit
+ - fsck doc: remove ancient out-of-date diagnostics
 
- ORT merge strategy learns to infer "renamed directory" while
- merging.
+ Documentation for "git fsck" lost stale bits that has become
+ incorrect.
+
+ Will merge to 'next'.
 
 
-* jk/forbid-lf-in-git-url (2021-01-07) 2 commits
-  (merged to 'next' on 2021-01-12 at 88a1d937ae)
- + fsck: reject .gitmodules git:// urls with newlines
- + git_connect_git(): forbid newlines in host and path
+* ab/tests-various-fixup (2021-01-16) 11 commits
+ - tests: add a "set -o pipefail" for a patched bash
+ - tests: split up bash detection library
+ - archive tests: use a cheaper "zipinfo -h" invocation to get header
+ - upload-pack tests: avoid a non-zero "grep" exit status
+ - rm tests: actually test for SIGPIPE in SIGPIPE test
+ - git-svn tests: rewrite brittle tests to use "--[no-]merges".
+ - git svn mergeinfo tests: refactor "test -z" to use test_must_be_empty
+ - git svn mergeinfo tests: modernize redirection & quoting style
+ - cache-tree tests: refactor overly complex function
+ - cache-tree tests: use a sub-shell with less indirection
+ - cache-tree tests: remove unused $2 parameter
 
- Newline characters in the host and path part of git:// URL are
- now forbidden.
+ Various test updates.
 
- Will merge to 'master'.
+ Looking good.
 
-
-* ps/fetch-atomic (2021-01-12) 5 commits
-  (merged to 'next' on 2021-01-13 at a8896d0873)
- + fetch: implement support for atomic reference updates
- + fetch: allow passing a transaction to `s_update_ref()`
- + fetch: refactor `s_update_ref` to use common exit path
- + fetch: use strbuf to format FETCH_HEAD updates
- + fetch: extract writing to FETCH_HEAD
-
- "git fetch" learns to treat ref updates atomically in all-or-none
- fashion, just like "git push" does, with the new "--atomic" option.
-
- Will merge to 'master'.
-
-
-* jc/sign-off (2021-01-07) 1 commit
-  (merged to 'next' on 2021-01-12 at 0d9a2a9a41)
- + SubmittingPatches: tighten wording on "sign-off" procedure
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* ab/detox-gettext-tests (2021-01-11) 6 commits
- - tests: remove uses of GIT_TEST_GETTEXT_POISON=false
- - tests: (almost) remove C_LOCALE_OUTPUT prerequisites
- - tests: (almost) remove use of "test_i18ngrep !"
- - tests: remove misc use of test_i18n{cmp,grep}
- - tests: remove support for GIT_TEST_GETTEXT_POISON
- - ci: remove GETTEXT_POISON jobs
-
- Get rid of "GETTEXT_POISON" support altogether, which may or may
- not be controversial.
-
+--------------------------------------------------
+[Graduated to 'master']
 
 * ab/gettext-charset-comment-fix (2021-01-11) 2 commits
   (merged to 'next' on 2021-01-12 at bc7f60e246)
@@ -123,16 +84,12 @@ Release tarballs are available at:
 
  Comments update.
 
- Will merge to 'master'.
-
 
 * ad/t4129-setfacl-target-fix (2021-01-09) 1 commit
   (merged to 'next' on 2021-01-12 at e09694772a)
  + t4129: fix setfacl-related permissions failure
 
  Test fix.
-
- Will merge to 'master'.
 
 
 * bc/doc-status-short (2021-01-11) 1 commit
@@ -141,190 +98,33 @@ Release tarballs are available at:
 
  Doc update.
 
- Will merge to 'master'.
+
+* dl/p4-encode-after-kw-expansion (2020-12-23) 1 commit
+  (merged to 'next' on 2021-01-13 at 8fce17d998)
+ + git-p4: fix syncing file types with pattern
+
+ Text encoding fix for "git p4".
 
 
-* bc/signed-objects-with-both-hashes (2021-01-11) 6 commits
- - SQUASH??? ulong vs size_t
- - gpg-interface: remove other signature headers before verifying
- - ref-filter: hoist signature parsing
- - commit: allow parsing arbitrary buffers with headers
- - gpg-interface: improve interface for parsing tags
- - commit: ignore additional signatures when parsing signed commits
+* ds/for-each-repo-noopfix (2021-01-07) 1 commit
+  (merged to 'next' on 2021-01-12 at 92f83b5db1)
+ + for-each-repo: do nothing on empty config
 
- Signed commits and tags now allow verification of objects, whose
- two object names (one in SHA-1, the other in SHA-256) are both
- signed.
+ "git for-each-repo --config=<var> <cmd>" should not run <cmd> for
+ any repository when the configuration variable <var> is not defined
+ even once.
 
 
-* ds/update-index (2021-01-09) 14 commits
- - update-index: remove static globals from callbacks
- - update-index: reduce static globals, part 2
- - update-index: reduce static globals, part 1
- - update-index: remove ce_match_stat(), all macros
- - update-index: replace several compatibility macros
- - update-index: use add_index_entry()
- - update-index: use remove_file_from_index()
- - update-index: use index_name_pos() over cache_name_pos()
- - update-index: use istate->cache_changed
- - update-index: use istate->cache_nr over active_nr
- - update-index: use istate->cache over active_cache
- - update-index: drop the_index, the_repository
- - rm: remove compatilibity macros
- - mv: remove index compatibility macros
- (this branch uses ag/merge-strategies-in-c.)
+* ds/maintenance-part-4 (2021-01-05) 4 commits
+  (merged to 'next' on 2021-01-08 at 1f98c859ea)
+ + maintenance: use Windows scheduled tasks
+ + maintenance: use launchctl on macOS
+ + maintenance: include 'cron' details in docs
+ + maintenance: extract platform-specific scheduling
 
- The implementation of a few commands lost reliance of "the_index"
- compatibility macros by explicitly passing the index_state through
- the callchain.
-
- Unfortunately the base topic still needs to solidify.
-
-
-* jk/t5516-deflake (2021-01-09) 1 commit
-  (merged to 'next' on 2021-01-12 at ed5317a798)
- + t5516: loosen "not our ref" error check
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* jx/bundle (2021-01-11) 3 commits
-  (merged to 'next' on 2021-01-14 at 749a907dd2)
- + bundle: arguments can be read from stdin
- + bundle: lost objects when removing duplicate pendings
- + test: add helper functions for git-bundle
-
- "git bundle" learns "--stdin" option to read its refs from the
- standard input.  Also, it now does not lose refs whey thy point at
- the same object.
-
- Will merge to 'master'.
-
-
-* ug/doc-lose-dircache (2021-01-09) 1 commit
-  (merged to 'next' on 2021-01-12 at 28310380a5)
- + doc: remove "directory cache" from man pages
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* ab/mailmap (2021-01-12) 22 commits
-  (merged to 'next' on 2021-01-13 at a3ce27912f)
- + shortlog: remove unused(?) "repo-abbrev" feature
- + mailmap doc + tests: document and test for case-insensitivity
- + mailmap tests: add tests for empty "<>" syntax
- + mailmap tests: add tests for whitespace syntax
- + mailmap tests: add a test for comment syntax
- + mailmap doc + tests: add better examples & test them
- + tests: refactor a few tests to use "test_commit --append"
- + test-lib functions: add an --append option to test_commit
- + test-lib functions: add --author support to test_commit
- + test-lib functions: document arguments to test_commit
- + test-lib functions: expand "test_commit" comment template
- + mailmap: test for silent exiting on missing file/blob
- + mailmap tests: get rid of overly complex blame fuzzing
- + mailmap tests: add a test for "not a blob" error
- + mailmap tests: remove redundant entry in test
- + mailmap tests: improve --stdin tests
- + mailmap tests: modernize syntax & test idioms
- + mailmap tests: use our preferred whitespace syntax
- + mailmap doc: start by mentioning the comment syntax
- + check-mailmap doc: note config options
- + mailmap doc: quote config variables `like.this`
- + mailmap doc: create a new "gitmailmap(5)" man page
- (this branch is used by ab/mailmap-fixup.)
-
- Clean-up docs, codepaths and tests around mailmap.
-
- Will merge to 'master'.
-
-
-* jk/log-cherry-pick-duplicate-patches (2021-01-12) 1 commit
-  (merged to 'next' on 2021-01-13 at abcfbf8603)
- + patch-ids: handle duplicate hashmap entries
-
- When more than one commit with the same patch ID appears on one
- side, "git log --cherry-pick A...B" did not exclude them all when a
- commit with the same patch ID appears on the other side.  Now it
- does.
-
-
-* tb/local-clone-race-doc (2021-01-11) 1 commit
-  (merged to 'next' on 2021-01-14 at b86c0426de)
- + Documentation/git-clone.txt: document race with --local
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* tb/pack-revindex-api (2021-01-14) 21 commits
- - for_each_object_in_pack(): clarify pack vs index ordering
- - pack-revindex.c: avoid direct revindex access in 'offset_to_pack_pos()'
- - pack-revindex: hide the definition of 'revindex_entry'
- - pack-revindex: remove unused 'find_revindex_position()'
- - pack-revindex: remove unused 'find_pack_revindex()'
- - builtin/gc.c: guess the size of the revindex
- - for_each_object_in_pack(): convert to new revindex API
- - unpack_entry(): convert to new revindex API
- - packed_object_info(): convert to new revindex API
- - retry_bad_packed_offset(): convert to new revindex API
- - get_delta_base_oid(): convert to new revindex API
- - rebuild_existing_bitmaps(): convert to new revindex API
- - try_partial_reuse(): convert to new revindex API
- - get_size_by_pos(): convert to new revindex API
- - show_objects_for_type(): convert to new revindex API
- - bitmap_position_packfile(): convert to new revindex API
- - check_object(): convert to new revindex API
- - write_reused_pack_verbatim(): convert to new revindex API
- - write_reused_pack_one(): convert to new revindex API
- - write_reuse_object(): convert to new revindex API
- - pack-revindex: introduce a new API
- (this branch is used by tb/pack-revindex-on-disk.)
-
- Abstract accesses to in-core revindex that allows enumerating
- objects stored in a packfile in the order they appear in the pack,
- in preparation for introducing an on-disk precomputed revindex.
-
- Will merge to 'next'.
-
-
-* cc/write-promisor-file (2021-01-14) 3 commits
-  (merged to 'next' on 2021-01-14 at 9d773d4734)
- + pack-write: die on error in write_promisor_file()
- + fetch-pack: refactor writing promisor file
- + fetch-pack: rename helper to create_promisor_file()
-
- A bit of code refactoring.
-
- Will merge to 'master'.
-
-
-* js/rebase-i-commit-cleanup-fix (2021-01-12) 1 commit
- - rebase -i: do leave commit message intact in fixup! chains
-
- When "git rebase -i" processes "fixup" insn, there is no reason to
- clean up the commit log message, but we did the usual stripspace
- processing.  This has been corrected.
-
- A bit more tests to document what is still broken have been offered.
- cf. <20210112204939.1095-1-martin.agren@gmail.com>
-
-
-* ab/mailmap-fixup (2021-01-14) 4 commits
- - t4203: make blame output massaging more robust
- - mailmap doc: use correct environment variable 'GIT_WORK_TREE'
- - t4203: stop losing return codes of git commands
- - test-lib-functions.sh: fix usage for test_commit()
- (this branch uses ab/mailmap.)
-
- Follow-up fixes and improvements to ab/mailmap topic.
-
- Will merge to 'next'.
+ Follow-up on the "maintenance part-3" which introduced scheduled
+ maintenance tasks to support platforms whose native scheduling
+ methods are not 'cron'.
 
 
 * jc/macos-install-dependencies-fix (2021-01-14) 1 commit
@@ -333,290 +133,58 @@ Release tarballs are available at:
 
  Fix for procedure to building CI test environment for mac.
 
- Will merge to 'master'.
 
-
-* tb/pack-revindex-on-disk (2021-01-14) 8 commits
- - pack-revindex: ensure that on-disk reverse indexes are given precedence
- - t: support GIT_TEST_WRITE_REV_INDEX
- - t: prepare for GIT_TEST_WRITE_REV_INDEX
- - Documentation/config/pack.txt: advertise 'pack.writeReverseIndex'
- - builtin/pack-objects.c: respect 'pack.writeReverseIndex'
- - builtin/index-pack.c: write reverse indexes
- - pack-write.c: prepare to write 'pack-*.rev' files
- - packfile: prepare for the existence of '*.rev' files
- (this branch uses tb/pack-revindex-api.)
-
- Introduce an on-disk file to record revindex for packdata, which
- traditionally was always created on the fly and only in-core.
-
-
-* en/merge-ort-perf (2021-01-15) 4 commits
- - merge-ort: begin performance work; instrument with trace2_region_* calls
- - Merge branch 'en/ort-directory-rename' into en/merge-ort-perf
- - Merge branch 'en/ort-conflict-handling' into en/merge-ort-perf
- - Merge branch 'en/diffcore-rename' into en/merge-ort-perf
- (this branch uses en/diffcore-rename, en/merge-ort-3, en/ort-conflict-handling and en/ort-directory-rename.)
-
---------------------------------------------------
-[Graduated to 'master']
-
-* ab/trailers-extra-format (2020-12-09) 5 commits
-  (merged to 'next' on 2020-12-14 at 9fc731944e)
- + pretty format %(trailers): add a "key_value_separator"
- + pretty format %(trailers): add a "keyonly"
- + pretty-format %(trailers): fix broken standalone "valueonly"
- + pretty format %(trailers) doc: avoid repetition
- + pretty format %(trailers) test: split a long line
-
- The "--format=%(trailers)" mechanism gets enhanced to make it
- easier to design output for machine consumption.
-
-
-* ar/t6016-modernise (2021-01-04) 1 commit
-  (merged to 'next' on 2021-01-08 at 45f1b43e88)
- + t6016: move to lib-log-graph.sh framework
-
- Test update.
-
-
-* bc/rev-parse-path-format (2020-12-12) 2 commits
-  (merged to 'next' on 2021-01-08 at 7d51587b7f)
- + rev-parse: add option for absolute or relative path formatting
- + abspath: add a function to resolve paths with missing components
-
- "git rev-parse" can be explicitly told to give output as absolute
- or relative path with the `--path-format=(absolute|relative)` option.
-
-
-* ds/trace2-topo-walk (2021-01-04) 1 commit
-  (merged to 'next' on 2021-01-08 at 794c8f37ee)
- + revision: trace topo-walk statistics
-
- The topological walk codepath is covered by new trace2 stats.
-
-
-* en/merge-ort-2 (2020-12-13) 7 commits
-  (merged to 'next' on 2020-12-21 at ef5b184349)
- + merge-ort: add modify/delete handling and delayed output processing
- + merge-ort: add die-not-implemented stub handle_content_merge() function
- + merge-ort: add function grouping comments
- + merge-ort: add a paths_to_free field to merge_options_internal
- + merge-ort: add a path_conflict field to merge_options_internal
- + merge-ort: add a clear_internal_opts helper
- + merge-ort: add a few includes
- (this branch is used by en/merge-ort-3, en/merge-ort-recursive and en/ort-conflict-handling; uses en/merge-ort-impl.)
-
- More "ORT" merge strategy.
-
-
-* en/merge-ort-impl (2020-12-13) 21 commits
-  (merged to 'next' on 2020-12-21 at c551d7bda9)
- + merge-ort: free data structures in merge_finalize()
- + merge-ort: add implementation of record_conflicted_index_entries()
- + tree: enable cmp_cache_name_compare() to be used elsewhere
- + merge-ort: add implementation of checkout()
- + merge-ort: basic outline for merge_switch_to_result()
- + merge-ort: step 3 of tree writing -- handling subdirectories as we go
- + merge-ort: step 2 of tree writing -- function to create tree object
- + merge-ort: step 1 of tree writing -- record basenames, modes, and oids
- + merge-ort: have process_entries operate in a defined order
- + merge-ort: add a preliminary simple process_entries() implementation
- + merge-ort: avoid recursing into identical trees
- + merge-ort: record stage and auxiliary info for every path
- + merge-ort: compute a few more useful fields for collect_merge_info
- + merge-ort: avoid repeating fill_tree_descriptor() on the same tree
- + merge-ort: implement a very basic collect_merge_info()
- + merge-ort: add an err() function similar to one from merge-recursive
- + merge-ort: use histogram diff
- + merge-ort: port merge_start() from merge-recursive
- + merge-ort: add some high-level algorithm structure
- + merge-ort: setup basic internal data structures
- + Merge branch 'en/strmap' into en/merge-ort-impl
- (this branch is used by en/merge-ort-2, en/merge-ort-3, en/merge-ort-recursive and en/ort-conflict-handling.)
-
- The merge backend "done right" starts to emerge.
-
-
-* en/merge-ort-recursive (2020-12-16) 4 commits
-  (merged to 'next' on 2020-12-22 at 0dbf60011f)
- + merge-ort: implement merge_incore_recursive()
- + merge-ort: make clear_internal_opts() aware of partial clearing
- + merge-ort: copy a few small helper functions from merge-recursive.c
- + commit: move reverse_commit_list() from merge-recursive
- (this branch uses en/merge-ort-2 and en/merge-ort-impl; is tangled with en/merge-ort-3 and en/ort-conflict-handling.)
-
- The ORT merge strategy learned to synthesize virtual ancestor tree
- by recursively merging multiple merge bases together, just like the
- recursive backend has done for years.
-
-
-* en/stash-apply-sparse-checkout (2020-12-01) 3 commits
-  (merged to 'next' on 2021-01-08 at cae5b73d99)
- + stash: fix stash application in sparse-checkouts
- + stash: remove unnecessary process forking
- + t7012: add a testcase demonstrating stash apply bugs in sparse checkouts
-
- "git stash" did not work well in a sparsely checked out working
- tree.
-
-
-* es/perf-export-fix (2020-12-22) 1 commit
-  (merged to 'next' on 2020-12-22 at d06b0379d9)
- + t/perf: avoid unnecessary test_export() recursion
-
- Tweak unneeded recursion from a test framework helper function.
-
-
-* es/worktree-repair-both-moved (2020-12-21) 1 commit
-  (merged to 'next' on 2020-12-22 at 9eaae4f5c0)
- + worktree: teach `repair` to fix multi-directional breakage
-
- "git worktree repair" learned to deal with the case where both the
- repository and the worktree moved.
-
-
-* ew/decline-core-abbrev (2020-12-23) 1 commit
-  (merged to 'next' on 2021-01-08 at 630dd186a4)
- + core.abbrev=no disables abbreviations
-
- The configuration variable 'core.abbrev' can be set to 'no' to
- force no abbreviation regardless of the hash algorithm.
-
-
-* fc/completion-aliases-support (2021-01-04) 4 commits
-  (merged to 'next' on 2021-01-08 at b2714ff1a4)
- + completion: add proper public __git_complete
- + test: completion: add tests for __git_complete
- + completion: bash: improve function detection
- + completion: bash: add __git_have_func helper
-
- Bash completion (in contrib/) update to make it easier for
- end-users to add completion for their custom "git" subcommands.
-
-
-* fc/pull-merge-rebase (2020-12-15) 5 commits
-  (merged to 'next' on 2020-12-21 at acce13e5c4)
- + pull: display default warning only when non-ff
- + pull: correct condition to trigger non-ff advice
- + pull: get rid of unnecessary global variable
- + pull: give the advice for choosing rebase/merge much later
- + pull: refactor fast-forward check
-
- When a user does not tell "git pull" to use rebase or merge, the
- command gives a loud message telling a user to choose between
- rebase or merge but creates a merge anyway, forcing users who would
- want to rebase to redo the operation.  Fix an early part of this
- problem by tightening the condition to give the message---there is
- no reason to stop or force the user to choose between rebase or
- merge if the history fast-forwards.
-
-
-* fc/t6030-bisect-reset-removes-auxiliary-files (2020-12-21) 1 commit
-  (merged to 'next' on 2020-12-22 at 2ab78ef1e1)
- + test: bisect-porcelain: fix location of files
-
- A 3-year old test that was not testing anything useful has been
- corrected.
-
-
-* ma/doc-pack-format-varint-for-sizes (2021-01-04) 1 commit
-  (merged to 'next' on 2021-01-08 at 8a448c50dd)
- + pack-format.txt: document sizes at start of delta data
+* jc/sign-off (2021-01-07) 1 commit
+  (merged to 'next' on 2021-01-12 at 0d9a2a9a41)
+ + SubmittingPatches: tighten wording on "sign-off" procedure
 
  Doc update.
 
 
-* ma/sha1-is-a-hash (2021-01-04) 4 commits
-  (merged to 'next' on 2021-01-08 at a25537f7c3)
- + hash-lookup: rename from sha1-lookup
- + sha1-lookup: rename `sha1_pos()` as `hash_pos()`
- + object-file.c: rename from sha1-file.c
- + object-name.c: rename from sha1-name.c
-
- Retire more names with "sha1" in it.
-
-
-* ma/t1300-cleanup (2021-01-04) 3 commits
-  (merged to 'next' on 2021-01-08 at 51aaae39a1)
- + t1300: don't needlessly work with `core.foo` configs
- + t1300: remove duplicate test for `--file no-such-file`
- + t1300: remove duplicate test for `--file ../foo`
-
- Code clean-up.
-
-
-* nk/perf-fsmonitor-cleanup (2021-01-06) 1 commit
-  (merged to 'next' on 2021-01-08 at 1837d6c30b)
- + p7519: allow running without watchman prereq
+* jk/t5516-deflake (2021-01-09) 1 commit
+  (merged to 'next' on 2021-01-12 at ed5317a798)
+ + t5516: loosen "not our ref" error check
 
  Test fix.
 
 
-* pb/doc-modules-git-work-tree-typofix (2021-01-04) 1 commit
-  (merged to 'next' on 2021-01-08 at a67ab3e96a)
- + gitmodules.txt: fix 'GIT_WORK_TREE' variable name
+* mt/t4129-with-setgid-dir (2021-01-06) 1 commit
+  (merged to 'next' on 2021-01-12 at 7a54dd92d8)
+ + t4129: don't fail if setgid is set in the test directory
 
- Doc fix.
-
-
-* pk/subsub-fetch-fix-take-2 (2020-12-09) 1 commit
-  (merged to 'next' on 2020-12-14 at ccc01a5f66)
- + submodules: fix of regression on fetching of non-init subsub-repo
-
- "git fetch --recurse-submodules" fix (second attempt).
+ Some tests expect that "ls -l" output has either '-' or 'x' for
+ group executable bit, but setgid bit can be inherited from parent
+ directory and make these fields 'S' or 's' instead, causing test
+ failures.
 
 
-* rs/rebase-commit-validation (2021-01-04) 1 commit
-  (merged to 'next' on 2021-01-08 at 2c63eb1cc8)
- + rebase: verify commit parameter
+* pb/mergetool-tool-help-fix (2021-01-06) 1 commit
+  (merged to 'next' on 2021-01-12 at ba0f76b413)
+ + mergetool--lib: fix '--tool-help' to correctly show available tools
 
- Diagnose command line error of "git rebase" early.
-
-
-* ta/doc-typofix (2021-01-04) 1 commit
-  (merged to 'next' on 2021-01-08 at 1e579ef94f)
- + doc: fix some typos
-
- Doc fix.
+ Fix 2.29 regression where "git mergetool --tool-help" fails to list
+ all the available tools.
 
 
-* tb/pack-bitmap (2020-12-08) 24 commits
-  (merged to 'next' on 2020-12-15 at 773268c2fb)
- + pack-bitmap-write: better reuse bitmaps
- + pack-bitmap-write: relax unique revwalk condition
- + pack-bitmap-write: use existing bitmaps
- + pack-bitmap: factor out 'add_commit_to_bitmap()'
- + pack-bitmap: factor out 'bitmap_for_commit()'
- + pack-bitmap-write: ignore BITMAP_FLAG_REUSE
- + pack-bitmap-write: build fewer intermediate bitmaps
- + pack-bitmap.c: check reads more aggressively when loading
- + pack-bitmap-write: rename children to reverse_edges
- + t5310: add branch-based checks
- + commit: implement commit_list_contains()
- + bitmap: implement bitmap_is_subset()
- + pack-bitmap-write: fill bitmap with commit history
- + pack-bitmap-write: pass ownership of intermediate bitmaps
- + pack-bitmap-write: reimplement bitmap writing
- + ewah: add bitmap_dup() function
- + ewah: implement bitmap_or()
- + ewah: make bitmap growth less aggressive
- + ewah: factor out bitmap growth
- + rev-list: die when --test-bitmap detects a mismatch
- + t5310: drop size of truncated ewah bitmap
- + pack-bitmap: bounds-check size of cache extension
- + pack-bitmap: fix header size check
- + ewah/ewah_bitmap.c: avoid open-coding ALLOC_GROW()
+* tb/local-clone-race-doc (2021-01-11) 1 commit
+  (merged to 'next' on 2021-01-14 at b86c0426de)
+ + Documentation/git-clone.txt: document race with --local
 
- Various improvements to the codepath that writes out pack bitmaps.
+ Doc update.
 
 
-* zh/arg-help-format (2021-01-06) 2 commits
-  (merged to 'next' on 2021-01-08 at 208c98620c)
- + builtin/*: update usage format
- + parse-options: format argh like error messages
+* ug/doc-lose-dircache (2021-01-09) 1 commit
+  (merged to 'next' on 2021-01-12 at 28310380a5)
+ + doc: remove "directory cache" from man pages
 
- Clean up option descriptions in "git cmd --help".
+ Doc update.
+
+
+* vv/send-email-with-less-secure-apps-access (2021-01-07) 1 commit
+  (merged to 'next' on 2021-01-12 at 53243ca7e7)
+ + git-send-email.txt: mention less secure app access with Gmail
+
+ Doc update.
 
 --------------------------------------------------
 [Stalled]
@@ -771,13 +339,249 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* vv/send-email-with-less-secure-apps-access (2021-01-07) 1 commit
-  (merged to 'next' on 2021-01-12 at 53243ca7e7)
- + git-send-email.txt: mention less secure app access with Gmail
+* en/ort-directory-rename (2021-01-07) 18 commits
+ - merge-ort: fix a directory rename detection bug
+ - merge-ort: process_renames() now needs more defensiveness
+ - merge-ort: implement apply_directory_rename_modifications()
+ - merge-ort: add a new toplevel_dir field
+ - merge-ort: implement handle_path_level_conflicts()
+ - merge-ort: implement check_for_directory_rename()
+ - merge-ort: implement apply_dir_rename() and check_dir_renamed()
+ - merge-ort: implement compute_collisions()
+ - merge-ort: modify collect_renames() for directory rename handling
+ - merge-ort: implement handle_directory_level_conflicts()
+ - merge-ort: implement compute_rename_counts()
+ - merge-ort: copy get_renamed_dir_portion() from merge-recursive.c
+ - merge-ort: add outline of get_provisional_directory_renames()
+ - merge-ort: add outline for computing directory renames
+ - merge-ort: collect which directories are removed in dirs_removed
+ - merge-ort: initialize and free new directory rename data structures
+ - merge-ort: add new data structures for directory rename detection
+ - Merge branch 'en/merge-ort-3' into en/ort-directory-rename
+ (this branch is used by en/merge-ort-perf; uses en/merge-ort-3.)
 
- Doc update.
+ ORT merge strategy learns to infer "renamed directory" while
+ merging.
+
+
+* jk/forbid-lf-in-git-url (2021-01-07) 2 commits
+  (merged to 'next' on 2021-01-12 at 88a1d937ae)
+ + fsck: reject .gitmodules git:// urls with newlines
+ + git_connect_git(): forbid newlines in host and path
+
+ Newline characters in the host and path part of git:// URL are
+ now forbidden.
 
  Will merge to 'master'.
+
+
+* ps/fetch-atomic (2021-01-12) 5 commits
+  (merged to 'next' on 2021-01-13 at a8896d0873)
+ + fetch: implement support for atomic reference updates
+ + fetch: allow passing a transaction to `s_update_ref()`
+ + fetch: refactor `s_update_ref` to use common exit path
+ + fetch: use strbuf to format FETCH_HEAD updates
+ + fetch: extract writing to FETCH_HEAD
+
+ "git fetch" learns to treat ref updates atomically in all-or-none
+ fashion, just like "git push" does, with the new "--atomic" option.
+
+ Will merge to 'master'.
+
+
+* ab/detox-gettext-tests (2021-01-11) 6 commits
+ - tests: remove uses of GIT_TEST_GETTEXT_POISON=false
+ - tests: (almost) remove C_LOCALE_OUTPUT prerequisites
+ - tests: (almost) remove use of "test_i18ngrep !"
+ - tests: remove misc use of test_i18n{cmp,grep}
+ - tests: remove support for GIT_TEST_GETTEXT_POISON
+ - ci: remove GETTEXT_POISON jobs
+
+ Get rid of "GETTEXT_POISON" support altogether, which may or may
+ not be controversial.
+
+
+* bc/signed-objects-with-both-hashes (2021-01-11) 6 commits
+ - SQUASH??? ulong vs size_t
+ - gpg-interface: remove other signature headers before verifying
+ - ref-filter: hoist signature parsing
+ - commit: allow parsing arbitrary buffers with headers
+ - gpg-interface: improve interface for parsing tags
+ - commit: ignore additional signatures when parsing signed commits
+
+ Signed commits and tags now allow verification of objects, whose
+ two object names (one in SHA-1, the other in SHA-256) are both
+ signed.
+
+
+* ds/update-index (2021-01-09) 14 commits
+ - update-index: remove static globals from callbacks
+ - update-index: reduce static globals, part 2
+ - update-index: reduce static globals, part 1
+ - update-index: remove ce_match_stat(), all macros
+ - update-index: replace several compatibility macros
+ - update-index: use add_index_entry()
+ - update-index: use remove_file_from_index()
+ - update-index: use index_name_pos() over cache_name_pos()
+ - update-index: use istate->cache_changed
+ - update-index: use istate->cache_nr over active_nr
+ - update-index: use istate->cache over active_cache
+ - update-index: drop the_index, the_repository
+ - rm: remove compatilibity macros
+ - mv: remove index compatibility macros
+ (this branch uses ag/merge-strategies-in-c.)
+
+ The implementation of a few commands lost reliance of "the_index"
+ compatibility macros by explicitly passing the index_state through
+ the callchain.
+
+ Unfortunately the base topic still needs to solidify.
+
+
+* jx/bundle (2021-01-11) 3 commits
+  (merged to 'next' on 2021-01-14 at 749a907dd2)
+ + bundle: arguments can be read from stdin
+ + bundle: lost objects when removing duplicate pendings
+ + test: add helper functions for git-bundle
+
+ "git bundle" learns "--stdin" option to read its refs from the
+ standard input.  Also, it now does not lose refs whey they point
+ at the same object.
+
+ Will merge to 'master'.
+
+
+* ab/mailmap (2021-01-12) 22 commits
+  (merged to 'next' on 2021-01-13 at a3ce27912f)
+ + shortlog: remove unused(?) "repo-abbrev" feature
+ + mailmap doc + tests: document and test for case-insensitivity
+ + mailmap tests: add tests for empty "<>" syntax
+ + mailmap tests: add tests for whitespace syntax
+ + mailmap tests: add a test for comment syntax
+ + mailmap doc + tests: add better examples & test them
+ + tests: refactor a few tests to use "test_commit --append"
+ + test-lib functions: add an --append option to test_commit
+ + test-lib functions: add --author support to test_commit
+ + test-lib functions: document arguments to test_commit
+ + test-lib functions: expand "test_commit" comment template
+ + mailmap: test for silent exiting on missing file/blob
+ + mailmap tests: get rid of overly complex blame fuzzing
+ + mailmap tests: add a test for "not a blob" error
+ + mailmap tests: remove redundant entry in test
+ + mailmap tests: improve --stdin tests
+ + mailmap tests: modernize syntax & test idioms
+ + mailmap tests: use our preferred whitespace syntax
+ + mailmap doc: start by mentioning the comment syntax
+ + check-mailmap doc: note config options
+ + mailmap doc: quote config variables `like.this`
+ + mailmap doc: create a new "gitmailmap(5)" man page
+ (this branch is used by ab/mailmap-fixup.)
+
+ Clean-up docs, codepaths and tests around mailmap.
+
+ Will merge to 'master'.
+
+
+* jk/log-cherry-pick-duplicate-patches (2021-01-12) 1 commit
+  (merged to 'next' on 2021-01-13 at abcfbf8603)
+ + patch-ids: handle duplicate hashmap entries
+
+ When more than one commit with the same patch ID appears on one
+ side, "git log --cherry-pick A...B" did not exclude them all when a
+ commit with the same patch ID appears on the other side.  Now it
+ does.
+
+ Will merge to 'master'.
+
+
+* tb/pack-revindex-api (2021-01-14) 21 commits
+  (merged to 'next' on 2021-01-15 at 1f2997979c)
+ + for_each_object_in_pack(): clarify pack vs index ordering
+ + pack-revindex.c: avoid direct revindex access in 'offset_to_pack_pos()'
+ + pack-revindex: hide the definition of 'revindex_entry'
+ + pack-revindex: remove unused 'find_revindex_position()'
+ + pack-revindex: remove unused 'find_pack_revindex()'
+ + builtin/gc.c: guess the size of the revindex
+ + for_each_object_in_pack(): convert to new revindex API
+ + unpack_entry(): convert to new revindex API
+ + packed_object_info(): convert to new revindex API
+ + retry_bad_packed_offset(): convert to new revindex API
+ + get_delta_base_oid(): convert to new revindex API
+ + rebuild_existing_bitmaps(): convert to new revindex API
+ + try_partial_reuse(): convert to new revindex API
+ + get_size_by_pos(): convert to new revindex API
+ + show_objects_for_type(): convert to new revindex API
+ + bitmap_position_packfile(): convert to new revindex API
+ + check_object(): convert to new revindex API
+ + write_reused_pack_verbatim(): convert to new revindex API
+ + write_reused_pack_one(): convert to new revindex API
+ + write_reuse_object(): convert to new revindex API
+ + pack-revindex: introduce a new API
+ (this branch is used by tb/pack-revindex-on-disk.)
+
+ Abstract accesses to in-core revindex that allows enumerating
+ objects stored in a packfile in the order they appear in the pack,
+ in preparation for introducing an on-disk precomputed revindex.
+
+ Will merge to 'master'.
+
+
+* cc/write-promisor-file (2021-01-14) 3 commits
+  (merged to 'next' on 2021-01-14 at 9d773d4734)
+ + pack-write: die on error in write_promisor_file()
+ + fetch-pack: refactor writing promisor file
+ + fetch-pack: rename helper to create_promisor_file()
+
+ A bit of code refactoring.
+
+ Will merge to 'master'.
+
+
+* js/rebase-i-commit-cleanup-fix (2021-01-12) 1 commit
+ - rebase -i: do leave commit message intact in fixup! chains
+
+ When "git rebase -i" processes "fixup" insn, there is no reason to
+ clean up the commit log message, but we did the usual stripspace
+ processing.  This has been corrected.
+
+ A bit more tests to document what is still broken have been offered.
+ cf. <20210112204939.1095-1-martin.agren@gmail.com>
+
+
+* ab/mailmap-fixup (2021-01-14) 4 commits
+  (merged to 'next' on 2021-01-15 at ef14e2263d)
+ + t4203: make blame output massaging more robust
+ + mailmap doc: use correct environment variable 'GIT_WORK_TREE'
+ + t4203: stop losing return codes of git commands
+ + test-lib-functions.sh: fix usage for test_commit()
+ (this branch uses ab/mailmap.)
+
+ Follow-up fixes and improvements to ab/mailmap topic.
+
+ Will merge to 'master'.
+
+
+* tb/pack-revindex-on-disk (2021-01-14) 8 commits
+ - pack-revindex: ensure that on-disk reverse indexes are given precedence
+ - t: support GIT_TEST_WRITE_REV_INDEX
+ - t: prepare for GIT_TEST_WRITE_REV_INDEX
+ - Documentation/config/pack.txt: advertise 'pack.writeReverseIndex'
+ - builtin/pack-objects.c: respect 'pack.writeReverseIndex'
+ - builtin/index-pack.c: write reverse indexes
+ - pack-write.c: prepare to write 'pack-*.rev' files
+ - packfile: prepare for the existence of '*.rev' files
+ (this branch uses tb/pack-revindex-api.)
+
+ Introduce an on-disk file to record revindex for packdata, which
+ traditionally was always created on the fly and only in-core.
+
+
+* en/merge-ort-perf (2021-01-15) 4 commits
+ - merge-ort: begin performance work; instrument with trace2_region_* calls
+ - Merge branch 'en/ort-directory-rename' into en/merge-ort-perf
+ - Merge branch 'en/ort-conflict-handling' into en/merge-ort-perf
+ - Merge branch 'en/diffcore-rename' into en/merge-ort-perf
+ (this branch uses en/diffcore-rename, en/merge-ort-3, en/ort-conflict-handling and en/ort-directory-rename.)
 
 
 * ab/branch-sort (2021-01-07) 7 commits
@@ -797,14 +601,15 @@ Release tarballs are available at:
 
 
 * ab/coc-update-to-2.0 (2021-01-13) 3 commits
- - CoC: update to version 2.0 + local changes
- - CoC: explicitly take any whitespace breakage
- - CoC: Update word-wrapping to match upstream
+  (merged to 'next' on 2021-01-15 at 4859c12625)
+ + CoC: update to version 2.0 + local changes
+ + CoC: explicitly take any whitespace breakage
+ + CoC: Update word-wrapping to match upstream
 
  Update the Code-of-conduct to version 2.0 from the upstream (we've
  been using version 1.4).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dl/reflog-with-single-entry (2021-01-11) 2 commits
@@ -819,10 +624,10 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* ds/cache-tree-basics (2021-01-07) 10 commits
+* ds/cache-tree-basics (2021-01-15) 10 commits
  - cache-tree: speed up consecutive path comparisons
  - cache-tree: use ce_namelen() instead of strlen()
- - index-format: discuss recursion of cached-tree better
+ - index-format: discuss recursion of cache-tree better
  - index-format: update preamble to cache tree extension
  - index-format: use 'cache tree' over 'cached tree'
  - cache-tree: trace regions for prime_cache_tree
@@ -834,16 +639,7 @@ Release tarballs are available at:
  Document, clean-up and optimize the code around the cache-tree
  extension in the index.
 
-
-* ds/for-each-repo-noopfix (2021-01-07) 1 commit
-  (merged to 'next' on 2021-01-12 at 92f83b5db1)
- + for-each-repo: do nothing on empty config
-
- "git for-each-repo --config=<var> <cmd>" should not run <cmd> for
- any repository when the configuration variable <var> is not defined
- even once.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * en/ort-conflict-handling (2021-01-04) 10 commits
@@ -861,6 +657,8 @@ Release tarballs are available at:
 
  ORT merge strategy learns more support for merge conflicts.
 
+ Will merge to 'next'.
+
 
 * ma/more-opaque-lock-file (2021-01-06) 5 commits
   (merged to 'next' on 2021-01-12 at f246e38b50)
@@ -875,28 +673,6 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* mt/t4129-with-setgid-dir (2021-01-06) 1 commit
-  (merged to 'next' on 2021-01-12 at 7a54dd92d8)
- + t4129: don't fail if setgid is set in the test directory
-
- Some tests expect that "ls -l" output has either '-' or 'x' for
- group executable bit, but setgid bit can be inherited from parent
- directory and make these fields 'S' or 's' instead, causing test
- failures.
-
- Will merge to 'master'.
-
-
-* pb/mergetool-tool-help-fix (2021-01-06) 1 commit
-  (merged to 'next' on 2021-01-12 at ba0f76b413)
- + mergetool--lib: fix '--tool-help' to correctly show available tools
-
- Fix 2.29 regression where "git mergetool --tool-help" fails to list
- all the available tools.
-
- Will merge to 'master'.
-
-
 * sg/t7800-difftool-robustify (2021-01-09) 1 commit
  - t7800-difftool: don't accidentally match tmp dirs
 
@@ -906,7 +682,7 @@ Release tarballs are available at:
  cf. https://github.com/git/git/runs/1660588243?check_suite_focus=true#step:7:4186
 
 
-* ak/corrected-commit-date (2021-01-04) 11 commits
+* ak/corrected-commit-date (2021-01-16) 11 commits
  - doc: add corrected commit date info
  - commit-reach: use corrected commit dates in paint_down_to_common()
  - commit-graph: use generation v2 only if entire chain does
@@ -921,18 +697,6 @@ Release tarballs are available at:
 
  The commit-graph learned to use corrected commit dates instead of
  the generation number to help topological revision traversal.
-
- Getting there, but not needs more help to find and resolve segv.
- cf. <1adabda6-b80b-d543-f6c0-570dadbe589b@gmail.com>
-
-
-* dl/p4-encode-after-kw-expansion (2020-12-23) 1 commit
-  (merged to 'next' on 2021-01-13 at 8fce17d998)
- + git-p4: fix syncing file types with pattern
-
- Text encoding fix for "git p4".
-
- Will merge to 'master'.
 
 
 * fc/mergetool-automerge (2021-01-09) 8 commits
@@ -1090,7 +854,7 @@ Release tarballs are available at:
 
  "git log" learned a new "--diff-merges=<how>" option.
 
- Ready for 'next'?
+ Will merge to 'next'.
 
 
 * es/config-hooks (2020-12-21) 34 commits
@@ -1240,20 +1004,6 @@ Release tarballs are available at:
 
  Prepare tests not to be affected by the name of the default branch
  "git init" creates.
-
- Will merge to 'master'.
-
-
-* ds/maintenance-part-4 (2021-01-05) 4 commits
-  (merged to 'next' on 2021-01-08 at 1f98c859ea)
- + maintenance: use Windows scheduled tasks
- + maintenance: use launchctl on macOS
- + maintenance: include 'cron' details in docs
- + maintenance: extract platform-specific scheduling
-
- Follow-up on the "maintenance part-3" which introduced scheduled
- maintenance tasks to support platforms whose native scheduling
- methods are not 'cron'.
 
  Will merge to 'master'.
 
