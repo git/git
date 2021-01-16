@@ -26,6 +26,9 @@ UI, Workflows & Features
  * Bash completion (in contrib/) update to make it easier for
    end-users to add completion for their custom "git" subcommands.
 
+ * "git maintenance" learned to drive scheduled maintenance on
+   platforms whose native scheduling methods are not 'cron'.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -50,6 +53,24 @@ Fixes since v2.30
    tree.
    (merge ba359fd507 en/stash-apply-sparse-checkout later to maint).
 
+ * Some tests expect that "ls -l" output has either '-' or 'x' for
+   group executable bit, but setgid bit can be inherited from parent
+   directory and make these fields 'S' or 's' instead, causing test
+   failures.
+   (merge ea8bbf2a4e mt/t4129-with-setgid-dir later to maint).
+
+ * "git for-each-repo --config=<var> <cmd>" should not run <cmd> for
+   any repository when the configuration variable <var> is not defined
+   even once.
+   (merge 6c62f01552 ds/for-each-repo-noopfix later to maint).
+
+ * Fix 2.29 regression where "git mergetool --tool-help" fails to list
+   all the available tools.
+   (merge 80f5a16798 pb/mergetool-tool-help-fix later to maint).
+
+ * Fix for procedure to building CI test environment for mac.
+   (merge 3831132ace jc/macos-install-dependencies-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 505a276596 pk/subsub-fetch-fix-take-2 later to maint).
    (merge 33fc56253b fc/t6030-bisect-reset-removes-auxiliary-files later to maint).
@@ -59,3 +80,12 @@ Fixes since v2.30
    (merge 7b77f5a13e ma/doc-pack-format-varint-for-sizes later to maint).
    (merge cc2d43be2b nk/perf-fsmonitor-cleanup later to maint).
    (merge c8302c6c00 ar/t6016-modernise later to maint).
+   (merge 0454986e78 jc/sign-off later to maint).
+   (merge 155067ab4f vv/send-email-with-less-secure-apps-access later to maint).
+   (merge acaabcf391 jk/t5516-deflake later to maint).
+   (merge a1e03535db ad/t4129-setfacl-target-fix later to maint).
+   (merge b356d23638 ug/doc-lose-dircache later to maint).
+   (merge 9371c0e9dd ab/gettext-charset-comment-fix later to maint).
+   (merge 52fc4f195c dl/p4-encode-after-kw-expansion later to maint).
+   (merge 4eb56b56e7 bc/doc-status-short later to maint).
+   (merge a4a1ca22ef tb/local-clone-race-doc later to maint).
