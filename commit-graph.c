@@ -614,6 +614,21 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r,
 	return graph_chain;
 }
 
+static void validate_mixed_generation_chain(struct commit_graph *g)
+{
+	int read_generation_data;
+
+	if (!g)
+		return;
+
+	read_generation_data = !!g->chunk_generation_data;
+
+	while (g) {
+		g->read_generation_data = read_generation_data;
+		g = g->base_graph;
+	}
+}
+
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb)
 {
@@ -621,6 +636,8 @@ struct commit_graph *read_commit_graph_one(struct repository *r,
 
 	if (!g)
 		g = load_commit_graph_chain(r, odb);
+
+	validate_mixed_generation_chain(g);
 
 	return g;
 }
@@ -791,7 +808,7 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 	date_low = get_be32(commit_data + g->hash_len + 12);
 	item->date = (timestamp_t)((date_high << 32) | date_low);
 
-	if (g->chunk_generation_data) {
+	if (g->read_generation_data) {
 		offset = (timestamp_t)get_be32(g->chunk_generation_data + sizeof(uint32_t) * lex_index);
 
 		if (offset & CORRECTED_COMMIT_DATE_OFFSET_OVERFLOW) {
@@ -2019,6 +2036,13 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 		if (i < ctx->num_commit_graphs_after)
 			ctx->commit_graph_hash_after[i] = xstrdup(oid_to_hex(&g->oid));
 
+		/*
+		 * If the topmost remaining layer has generation data chunk, the
+		 * resultant layer also has generation data chunk.
+		 */
+		if (i == ctx->num_commit_graphs_after - 2)
+			ctx->write_generation_data = !!g->chunk_generation_data;
+
 		i--;
 		g = g->base_graph;
 	}
@@ -2343,6 +2367,8 @@ int write_commit_graph(struct object_directory *odb,
 	} else
 		ctx->num_commit_graphs_after = 1;
 
+	validate_mixed_generation_chain(ctx->r->objects->commit_graph);
+
 	compute_generation_numbers(ctx);
 
 	if (ctx->changed_paths)
@@ -2541,7 +2567,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 		 * also GENERATION_NUMBER_V1_MAX. Decrement to avoid extra logic
 		 * in the following condition.
 		 */
-		if (!g->chunk_generation_data && max_generation == GENERATION_NUMBER_V1_MAX)
+		if (!g->read_generation_data && max_generation == GENERATION_NUMBER_V1_MAX)
 			max_generation--;
 
 		generation = commit_graph_generation(graph_commit);
