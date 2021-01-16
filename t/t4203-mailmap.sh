@@ -637,7 +637,8 @@ test_expect_success 'Log output with --use-mailmap' '
 	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	EOF
 
-	git log --use-mailmap | grep Author >actual &&
+	git log --use-mailmap >log &&
+	grep Author log >actual &&
 	test_cmp expect actual
 '
 
@@ -654,7 +655,8 @@ test_expect_success 'Log output with log.mailmap' '
 	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	EOF
 
-	git -c log.mailmap=True log | grep Author >actual &&
+	git -c log.mailmap=True log >log &&
+	grep Author log >actual &&
 	test_cmp expect actual
 '
 
@@ -668,7 +670,8 @@ test_expect_success 'log.mailmap=false disables mailmap' '
 	Author: nick1 <bugs@company.xx>
 	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	EOF
-	git -c log.mailmap=false log | grep Author >actual &&
+	git -c log.mailmap=false log >log &&
+	grep Author log >actual &&
 	test_cmp expect actual
 '
 
@@ -682,7 +685,8 @@ test_expect_success '--no-use-mailmap disables mailmap' '
 	Author: nick1 <bugs@company.xx>
 	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	EOF
-	git log --no-use-mailmap | grep Author > actual &&
+	git log --no-use-mailmap >log &&
+	grep Author log >actual &&
 	test_cmp expect actual
 '
 
@@ -693,7 +697,8 @@ test_expect_success 'Grep author with --use-mailmap' '
 	Author: Santa Claus <santa.claus@northpole.xx>
 	Author: Santa Claus <santa.claus@northpole.xx>
 	EOF
-	git log --use-mailmap --author Santa | grep Author >actual &&
+	git log --use-mailmap --author Santa >log &&
+	grep Author log >actual &&
 	test_cmp expect actual
 '
 
@@ -705,13 +710,15 @@ test_expect_success 'Grep author with log.mailmap' '
 	Author: Santa Claus <santa.claus@northpole.xx>
 	EOF
 
-	git -c log.mailmap=True log --author Santa | grep Author >actual &&
+	git -c log.mailmap=True log --author Santa >log &&
+	grep Author log >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'log.mailmap is true by default these days' '
 	test_config mailmap.file complex.map &&
-	git log --author Santa | grep Author >actual &&
+	git log --author Santa >log &&
+	grep Author log >actual &&
 	test_cmp expect actual
 '
 
@@ -742,11 +749,11 @@ test_expect_success 'Blame --porcelain output (complex mapping)' '
 	EOF
 
 	git blame --porcelain one >actual.blame &&
-	grep -E \
-		-e "[0-9]+ [0-9]+ [0-9]+$" \
-		-e "^author .*$" \
-		actual.blame >actual.grep &&
-	cut -d " " -f2-4 <actual.grep >actual.fuzz &&
+
+	NUM="[0-9][0-9]*" &&
+	sed -n <actual.blame >actual.fuzz \
+		-e "s/^author //p" \
+		-e "s/^$OID_REGEX \\($NUM $NUM $NUM\\)$/\\1/p"  &&
 	test_cmp expect actual.fuzz
 '
 
