@@ -317,7 +317,8 @@ void set_merge_remote_desc(struct commit *commit,
 struct commit *get_merge_parent(const char *name);
 
 int parse_signed_commit(const struct commit *commit,
-			struct strbuf *message, struct strbuf *signature);
+			struct strbuf *message, struct strbuf *signature,
+			const struct git_hash_algo *algop);
 int remove_signature(struct strbuf *buf);
 
 /*
