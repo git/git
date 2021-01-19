@@ -864,6 +864,16 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 	*new_dir = xstrndup(new_path, end_of_new - new_path);
 }
 
+static int path_in_way(struct strmap *paths, const char *path, unsigned side_mask)
+{
+	struct merged_info *mi = strmap_get(paths, path);
+	struct conflict_info *ci;
+	if (!mi)
+		return 0;
+	INITIALIZE_CI(ci, mi);
+	return mi->clean || (side_mask & (ci->filemask | ci->dirmask));
+}
+
 /*
  * See if there is a directory rename for path, and if there are any file
  * level conflicts on the given side for the renamed location.  If there is
@@ -876,7 +886,67 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 					 struct strmap_entry *rename_info,
 					 struct strmap *collisions)
 {
-	die("Not yet implemented");
+	char *new_path = NULL;
+	struct collision_info *c_info;
+	int clean = 1;
+	struct strbuf collision_paths = STRBUF_INIT;
+
+	/*
+	 * entry has the mapping of old directory name to new directory name
+	 * that we want to apply to path.
+	 */
+	new_path = apply_dir_rename(rename_info, path);
+	if (!new_path)
+		BUG("Failed to apply directory rename!");
+
+	/*
+	 * The caller needs to have ensured that it has pre-populated
+	 * collisions with all paths that map to new_path.  Do a quick check
+	 * to ensure that's the case.
+	 */
+	c_info = strmap_get(collisions, new_path);
+	if (c_info == NULL)
+		BUG("c_info is NULL");
+
+	/*
+	 * Check for one-sided add/add/.../add conflicts, i.e.
+	 * where implicit renames from the other side doing
+	 * directory rename(s) can affect this side of history
+	 * to put multiple paths into the same location.  Warn
+	 * and bail on directory renames for such paths.
+	 */
+	if (c_info->reported_already) {
+		clean = 0;
+	} else if (path_in_way(&opt->priv->paths, new_path, 1 << side_index)) {
+		c_info->reported_already = 1;
+		strbuf_add_separated_string_list(&collision_paths, ", ",
+						 &c_info->source_files);
+		path_msg(opt, new_path, 0,
+			 _("CONFLICT (implicit dir rename): Existing file/dir "
+			   "at %s in the way of implicit directory rename(s) "
+			   "putting the following path(s) there: %s."),
+		       new_path, collision_paths.buf);
+		clean = 0;
+	} else if (c_info->source_files.nr > 1) {
+		c_info->reported_already = 1;
+		strbuf_add_separated_string_list(&collision_paths, ", ",
+						 &c_info->source_files);
+		path_msg(opt, new_path, 0,
+			 _("CONFLICT (implicit dir rename): Cannot map more "
+			   "than one path to %s; implicit directory renames "
+			   "tried to put these paths there: %s"),
+		       new_path, collision_paths.buf);
+		clean = 0;
+	}
+
+	/* Free memory we no longer need */
+	strbuf_release(&collision_paths);
+	if (!clean && new_path) {
+		free(new_path);
+		return NULL;
+	}
+
+	return new_path;
 }
 
 static void increment_count(struct strmap *dir_rename_count,
