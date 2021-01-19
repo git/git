@@ -256,6 +256,13 @@ test_expect_success 'incremental-repack task' '
 	HEAD
 	^HEAD~1
 	EOF
+
+	# Delete refs that have not been repacked in these packs.
+	git for-each-ref --format="delete %(refname)" \
+		refs/prefetch refs/tags >refs &&
+	git update-ref --stdin <refs &&
+
+	# Replace the object directory with this pack layout.
 	rm -f $packDir/pack-* &&
 	rm -f $packDir/loose-* &&
 	ls $packDir/*.pack >packs-before &&
