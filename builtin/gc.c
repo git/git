@@ -897,6 +897,12 @@ static int maintenance_task_prefetch(struct maintenance_run_opts *opts)
 	struct string_list_item *item;
 	struct string_list remotes = STRING_LIST_INIT_DUP;
 
+	git_config_set_multivar_gently("log.excludedecoration",
+					"refs/prefetch/",
+					"refs/prefetch/",
+					CONFIG_FLAGS_FIXED_VALUE |
+					CONFIG_FLAGS_MULTI_REPLACE);
+
 	if (for_each_remote(append_remote, &remotes)) {
 		error(_("failed to fill remotes"));
 		result = 1;
