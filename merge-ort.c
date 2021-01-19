@@ -1410,12 +1410,28 @@ static int process_renames(struct merge_options *opt,
 		const char *rename_branch = NULL, *delete_branch = NULL;
 
 		old_ent = strmap_get_entry(&opt->priv->paths, pair->one->path);
-		oldpath = old_ent->key;
-		oldinfo = old_ent->value;
-
 		new_ent = strmap_get_entry(&opt->priv->paths, pair->two->path);
-		newpath = new_ent->key;
-		newinfo = new_ent->value;
+		if (old_ent) {
+			oldpath = old_ent->key;
+			oldinfo = old_ent->value;
+		}
+		newpath = pair->two->path;
+		if (new_ent) {
+			newpath = new_ent->key;
+			newinfo = new_ent->value;
+		}
+
+		/*
+		 * If pair->one->path isn't in opt->priv->paths, that means
+		 * that either directory rename detection removed that
+		 * path, or a parent directory of oldpath was resolved and
+		 * we don't even need the rename; in either case, we can
+		 * skip it.  If oldinfo->merged.clean, then the other side
+		 * of history had no changes to oldpath and we don't need
+		 * the rename and can skip it.
+		 */
+		if (!oldinfo || oldinfo->merged.clean)
+			continue;
 
 		/*
 		 * diff_filepairs have copies of pathnames, thus we have to
