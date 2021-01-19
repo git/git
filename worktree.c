@@ -15,6 +15,7 @@ void free_worktrees(struct worktree **worktrees)
 		free(worktrees[i]->id);
 		free(worktrees[i]->head_ref);
 		free(worktrees[i]->lock_reason);
+		free(worktrees[i]->prune_reason);
 		free(worktrees[i]);
 	}
 	free (worktrees);
@@ -243,6 +244,25 @@ const char *worktree_lock_reason(struct worktree *wt)
 	}
 
 	return wt->lock_reason;
+}
+
+const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire)
+{
+	struct strbuf reason = STRBUF_INIT;
+	char *path = NULL;
+
+	if (is_main_worktree(wt))
+		return NULL;
+	if (wt->prune_reason_valid)
+		return wt->prune_reason;
+
+	if (should_prune_worktree(wt->id, &reason, &path, expire))
+		wt->prune_reason = strbuf_detach(&reason, NULL);
+	wt->prune_reason_valid = 1;
+
+	strbuf_release(&reason);
+	free(path);
+	return wt->prune_reason;
 }
 
 /* convenient wrapper to deal with NULL strbuf */
