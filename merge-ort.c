@@ -726,6 +726,19 @@ struct collision_info {
 	unsigned reported_already:1;
 };
 
+/*
+ * Return a new string that replaces the beginning portion (which matches
+ * rename_info->key), with rename_info->util.new_dir.  In perl-speak:
+ *   new_path_name = (old_path =~ s/rename_info->key/rename_info->value/);
+ * NOTE:
+ *   Caller must ensure that old_path starts with rename_info->key + '/'.
+ */
+static char *apply_dir_rename(struct strmap_entry *rename_info,
+			      const char *old_path)
+{
+	die("Not yet implemented!");
+}
+
 static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 				    char **old_dir, char **new_dir)
 {
@@ -964,11 +977,64 @@ static void handle_directory_level_conflicts(struct merge_options *opt)
 	string_list_clear(&duplicated, 0);
 }
 
+static struct strmap_entry *check_dir_renamed(const char *path,
+					      struct strmap *dir_renames)
+{
+	die("Not yet implemented!");
+}
+
 static void compute_collisions(struct strmap *collisions,
 			       struct strmap *dir_renames,
 			       struct diff_queue_struct *pairs)
 {
-	die("Not yet implemented.");
+	int i;
+
+	strmap_init_with_options(collisions, NULL, 0);
+	if (strmap_empty(dir_renames))
+		return;
+
+	/*
+	 * Multiple files can be mapped to the same path due to directory
+	 * renames done by the other side of history.  Since that other
+	 * side of history could have merged multiple directories into one,
+	 * if our side of history added the same file basename to each of
+	 * those directories, then all N of them would get implicitly
+	 * renamed by the directory rename detection into the same path,
+	 * and we'd get an add/add/.../add conflict, and all those adds
+	 * from *this* side of history.  This is not representable in the
+	 * index, and users aren't going to easily be able to make sense of
+	 * it.  So we need to provide a good warning about what's
+	 * happening, and fall back to no-directory-rename detection
+	 * behavior for those paths.
+	 *
+	 * See testcases 9e and all of section 5 from t6043 for examples.
+	 */
+	for (i = 0; i < pairs->nr; ++i) {
+		struct strmap_entry *rename_info;
+		struct collision_info *collision_info;
+		char *new_path;
+		struct diff_filepair *pair = pairs->queue[i];
+
+		if (pair->status != 'A' && pair->status != 'R')
+			continue;
+		rename_info = check_dir_renamed(pair->two->path, dir_renames);
+		if (!rename_info)
+			continue;
+
+		new_path = apply_dir_rename(rename_info, pair->two->path);
+		assert(new_path);
+		collision_info = strmap_get(collisions, new_path);
+		if (collision_info) {
+			free(new_path);
+		} else {
+			collision_info = xcalloc(1,
+						 sizeof(struct collision_info));
+			string_list_init(&collision_info->source_files, 0);
+			strmap_put(collisions, new_path, collision_info);
+		}
+		string_list_insert(&collision_info->source_files,
+				   pair->two->path);
+	}
 }
 
 static char *check_for_directory_rename(struct merge_options *opt,
