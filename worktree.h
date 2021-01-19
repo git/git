@@ -73,6 +73,20 @@ int is_main_worktree(const struct worktree *wt);
  */
 const char *worktree_lock_reason(struct worktree *wt);
 
+/*
+ * Return true if worktree entry should be pruned, along with the reason for
+ * pruning. Otherwise, return false and the worktree's path in `wtpath`, or
+ * NULL if it cannot be determined. Caller is responsible for freeing
+ * returned path.
+ *
+ * `expire` defines a grace period to prune the worktree when its path
+ * does not exist.
+ */
+int should_prune_worktree(const char *id,
+			  struct strbuf *reason,
+			  char **wtpath,
+			  timestamp_t expire);
+
 #define WT_VALIDATE_WORKTREE_MISSING_OK (1 << 0)
 
 /*
