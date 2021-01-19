@@ -736,7 +736,29 @@ struct collision_info {
 static char *apply_dir_rename(struct strmap_entry *rename_info,
 			      const char *old_path)
 {
-	die("Not yet implemented!");
+	struct strbuf new_path = STRBUF_INIT;
+	const char *old_dir = rename_info->key;
+	const char *new_dir = rename_info->value;
+	int oldlen, newlen, new_dir_len;
+
+	oldlen = strlen(old_dir);
+	if (*new_dir == '\0')
+		/*
+		 * If someone renamed/merged a subdirectory into the root
+		 * directory (e.g. 'some/subdir' -> ''), then we want to
+		 * avoid returning
+		 *     '' + '/filename'
+		 * as the rename; we need to make old_path + oldlen advance
+		 * past the '/' character.
+		 */
+		oldlen++;
+	new_dir_len = strlen(new_dir);
+	newlen = new_dir_len + (strlen(old_path) - oldlen) + 1;
+	strbuf_grow(&new_path, newlen);
+	strbuf_add(&new_path, new_dir, new_dir_len);
+	strbuf_addstr(&new_path, &old_path[oldlen]);
+
+	return strbuf_detach(&new_path, NULL);
 }
 
 static void get_renamed_dir_portion(const char *old_path, const char *new_path,
@@ -980,7 +1002,18 @@ static void handle_directory_level_conflicts(struct merge_options *opt)
 static struct strmap_entry *check_dir_renamed(const char *path,
 					      struct strmap *dir_renames)
 {
-	die("Not yet implemented!");
+	char *temp = xstrdup(path);
+	char *end;
+	struct strmap_entry *e = NULL;
+
+	while ((end = strrchr(temp, '/'))) {
+		*end = '\0';
+		e = strmap_get_entry(dir_renames, temp);
+		if (e)
+			break;
+	}
+	free(temp);
+	return e;
 }
 
 static void compute_collisions(struct strmap *collisions,
