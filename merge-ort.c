@@ -721,11 +721,66 @@ static int handle_content_merge(struct merge_options *opt,
 
 /*** Function Grouping: functions related to directory rename detection ***/
 
+static void compute_rename_counts(struct diff_queue_struct *pairs,
+				  struct strmap *dir_rename_count,
+				  struct strset *dirs_removed)
+{
+	die("Not yet implemented!");
+}
+
 static void get_provisional_directory_renames(struct merge_options *opt,
 					      unsigned side,
 					      int *clean)
 {
-	die("Not yet implemented!");
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+	struct rename_info *renames = &opt->priv->renames;
+
+	compute_rename_counts(&renames->pairs[side],
+			      &renames->dir_rename_count[side],
+			      &renames->dirs_removed[side]);
+	/*
+	 * Collapse
+	 *    dir_rename_count: old_directory -> {new_directory -> count}
+	 * down to
+	 *    dir_renames: old_directory -> best_new_directory
+	 * where best_new_directory is the one with the unique highest count.
+	 */
+	strmap_for_each_entry(&renames->dir_rename_count[side], &iter, entry) {
+		const char *source_dir = entry->key;
+		struct strintmap *counts = entry->value;
+		struct hashmap_iter count_iter;
+		struct strmap_entry *count_entry;
+		int max = 0;
+		int bad_max = 0;
+		const char *best = NULL;
+
+		strintmap_for_each_entry(counts, &count_iter, count_entry) {
+			const char *target_dir = count_entry->key;
+			intptr_t count = (intptr_t)count_entry->value;
+
+			if (count == max)
+				bad_max = max;
+			else if (count > max) {
+				max = count;
+				best = target_dir;
+			}
+		}
+
+		if (bad_max == max) {
+			path_msg(opt, source_dir, 0,
+			       _("CONFLICT (directory rename split): "
+				 "Unclear where to rename %s to; it was "
+				 "renamed to multiple other directories, with "
+				 "no destination getting a majority of the "
+				 "files."),
+			       source_dir);
+			*clean = 0;
+		} else {
+			strmap_put(&renames->dir_renames[side],
+				   source_dir, (void*)best);
+		}
+	}
 }
 
 static void handle_directory_level_conflicts(struct merge_options *opt)
