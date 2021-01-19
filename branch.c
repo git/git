@@ -34,17 +34,25 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 	return 0;
 }
 
-static int should_setup_rebase(const char *origin)
+typedef enum {
+	REBASE_FALSE,
+	REBASE_TRUE,
+	REBASE_MERGES
+} rebase_type;
+
+static rebase_type should_setup_rebase(const char *origin)
 {
 	switch (autorebase) {
 	case AUTOREBASE_NEVER:
-		return 0;
+		return REBASE_FALSE;
 	case AUTOREBASE_LOCAL:
-		return origin == NULL;
+		return origin == NULL ? REBASE_TRUE : REBASE_FALSE;
 	case AUTOREBASE_REMOTE:
-		return origin != NULL;
+		return origin != NULL ? REBASE_TRUE : REBASE_FALSE;
 	case AUTOREBASE_ALWAYS:
-		return 1;
+		return REBASE_TRUE;
+	case AUTOREBASE_MERGES:
+		return REBASE_MERGES;
 	}
 	return 0;
 }
@@ -59,7 +67,8 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 {
 	const char *shortname = NULL;
 	struct strbuf key = STRBUF_INIT;
-	int rebasing = should_setup_rebase(origin);
+	rebase_type rebasing = should_setup_rebase(origin);
+	struct strbuf method = STRBUF_INIT;
 
 	if (skip_prefix(remote, "refs/heads/", &shortname)
 	    && !strcmp(local, shortname)
@@ -78,44 +87,51 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 	if (git_config_set_gently(key.buf, remote) < 0)
 		goto out_err;
 
-	if (rebasing) {
-		strbuf_reset(&key);
-		strbuf_addf(&key, "branch.%s.rebase", local);
-		if (git_config_set_gently(key.buf, "true") < 0)
-			goto out_err;
+	strbuf_reset(&key);
+	strbuf_addf(&key, "branch.%s.rebase", local);
+	switch(rebasing) {
+		case REBASE_TRUE:
+			strbuf_addstr(&method, " by rebasing");
+			if(git_config_set_gently(key.buf, "true") < 0)
+				goto out_err;
+			break;
+		case REBASE_MERGES:
+			strbuf_addstr(&method, " by rebasing while preserving merges");
+			if (git_config_set_gently(key.buf, "merges") < 0)
+				goto out_err;
+			break;
+    default:;
 	}
 	strbuf_release(&key);
 
 	if (flag & BRANCH_CONFIG_VERBOSE) {
 		if (shortname) {
 			if (origin)
-				printf_ln(rebasing ?
-					  _("Branch '%s' set up to track remote branch '%s' from '%s' by rebasing.") :
-					  _("Branch '%s' set up to track remote branch '%s' from '%s'."),
-					  local, shortname, origin);
+				printf_ln(
+					_("Branch '%s' set up to track remote branch '%s' from '%s'%s."),
+					local, shortname, origin, method.buf);
 			else
-				printf_ln(rebasing ?
-					  _("Branch '%s' set up to track local branch '%s' by rebasing.") :
-					  _("Branch '%s' set up to track local branch '%s'."),
-					  local, shortname);
+				printf_ln(
+					_("Branch '%s' set up to track local branch '%s'%s."),
+					local, shortname, method.buf);
 		} else {
 			if (origin)
-				printf_ln(rebasing ?
-					  _("Branch '%s' set up to track remote ref '%s' by rebasing.") :
-					  _("Branch '%s' set up to track remote ref '%s'."),
-					  local, remote);
+				printf_ln(
+					_("Branch '%s' set up to track remote ref '%s'%s."),
+					local, remote, method.buf);
 			else
-				printf_ln(rebasing ?
-					  _("Branch '%s' set up to track local ref '%s' by rebasing.") :
-					  _("Branch '%s' set up to track local ref '%s'."),
-					  local, remote);
+				printf_ln(
+					_("Branch '%s' set up to track local ref '%s'%s."),
+					local, remote, method.buf);
 		}
 	}
 
+	strbuf_release(&method);
 	return 0;
 
 out_err:
 	strbuf_release(&key);
+	strbuf_release(&method);
 	error(_("Unable to write upstream branch configuration"));
 
 	advise(_(tracking_advice),

@@ -1222,6 +1222,51 @@ test_expect_success 'autosetuprebase always on an untracked remote branch' '
 	test "z$(git config branch.myr20.rebase)" = z
 '
 
+test_expect_success 'autosetuprebase merges on a tracked local branch' '
+	git config branch.autosetuprebase merges &&
+	git config remote.local.url . &&
+	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+	(git show-ref -q refs/remotes/local/o || git fetch local) &&
+	git branch mybase21 &&
+	git branch --track myr21 mybase3 &&
+	test "$(git config branch.myr21.remote)" = . &&
+	test "$(git config branch.myr21.merge)" = refs/heads/mybase3 &&
+	test "$(git config branch.myr21.rebase)" = merges
+'
+
+test_expect_success 'autosetuprebase merges on a tracked remote branch' '
+	git config branch.autosetuprebase merges &&
+	git config remote.local.url . &&
+	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --track myr22 local/main &&
+	test "$(git config branch.myr22.remote)" = local &&
+	test "$(git config branch.myr22.merge)" = refs/heads/main &&
+	test "$(git config branch.myr22.rebase)" = merges
+'
+
+test_expect_success 'autosetuprebase merges on an untracked local branch' '
+	git config branch.autosetuprebase merges &&
+	git config remote.local.url . &&
+	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --no-track myr23 mybase2 &&
+	test "z$(git config branch.myr23.remote)" = z &&
+	test "z$(git config branch.myr23.merge)" = z &&
+	test "z$(git config branch.myr23.rebase)" = z
+'
+
+test_expect_success 'autosetuprebase merges on an untracked remote branch' '
+	git config branch.autosetuprebase merges &&
+	git config remote.local.url . &&
+	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --no-track myr24 local/main &&
+	test "z$(git config branch.myr24.remote)" = z &&
+	test "z$(git config branch.myr24.merge)" = z &&
+	test "z$(git config branch.myr24.rebase)" = z
+'
+
 test_expect_success 'autosetuprebase always on detached HEAD' '
 	git config branch.autosetupmerge always &&
 	test_when_finished git checkout main &&

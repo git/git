@@ -21,6 +21,8 @@ branch.autoSetupRebase::
 	remote-tracking branches.
 	When `always`, rebase will be set to true for all tracking
 	branches.
+	When `merges`, rebase will be set to `merges` for all tracking
+	branches.
 	See "branch.autoSetupMerge" for details on how to set up a
 	branch to track another branch.
 	This option defaults to never.

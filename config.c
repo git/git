@@ -1443,6 +1443,8 @@ static int git_default_branch_config(const char *var, const char *value)
 			autorebase = AUTOREBASE_REMOTE;
 		else if (!strcmp(value, "always"))
 			autorebase = AUTOREBASE_ALWAYS;
+		else if (!strcmp(value, "merges"))
+			autorebase = AUTOREBASE_MERGES;
 		else
 			return error(_("malformed value for %s"), var);
 		return 0;
