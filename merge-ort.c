@@ -721,6 +721,11 @@ static int handle_content_merge(struct merge_options *opt,
 
 /*** Function Grouping: functions related to directory rename detection ***/
 
+struct collision_info {
+	struct string_list source_files;
+	unsigned reported_already:1;
+};
+
 static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 				    char **old_dir, char **new_dir)
 {
@@ -957,6 +962,31 @@ static void handle_directory_level_conflicts(struct merge_options *opt)
 		strmap_remove(side2_dir_renames, duplicated.items[i].string, 0);
 	}
 	string_list_clear(&duplicated, 0);
+}
+
+static void compute_collisions(struct strmap *collisions,
+			       struct strmap *dir_renames,
+			       struct diff_queue_struct *pairs)
+{
+	die("Not yet implemented.");
+}
+
+static char *check_for_directory_rename(struct merge_options *opt,
+					const char *path,
+					unsigned side_index,
+					struct strmap *dir_renames,
+					struct strmap *dir_rename_exclusions,
+					struct strmap *collisions,
+					int *clean_merge)
+{
+	die("Not yet implemented.");
+}
+
+static void apply_directory_rename_modifications(struct merge_options *opt,
+						 struct diff_filepair *pair,
+						 char *new_path)
+{
+	die("Not yet implemented.");
 }
 
 /*** Function Grouping: functions related to regular rename detection ***/
@@ -1284,21 +1314,43 @@ static void detect_regular_renames(struct merge_options *opt,
  */
 static int collect_renames(struct merge_options *opt,
 			   struct diff_queue_struct *result,
-			   unsigned side_index)
+			   unsigned side_index,
+			   struct strmap *dir_renames_for_side,
+			   struct strmap *rename_exclusions)
 {
 	int i, clean = 1;
+	struct strmap collisions;
 	struct diff_queue_struct *side_pairs;
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
 	struct rename_info *renames = &opt->priv->renames;
 
 	side_pairs = &renames->pairs[side_index];
+	compute_collisions(&collisions, dir_renames_for_side, side_pairs);
 
 	for (i = 0; i < side_pairs->nr; ++i) {
 		struct diff_filepair *p = side_pairs->queue[i];
+		char *new_path; /* non-NULL only with directory renames */
 
-		if (p->status != 'R') {
+		if (p->status != 'A' && p->status != 'R') {
 			diff_free_filepair(p);
 			continue;
 		}
+
+		new_path = check_for_directory_rename(opt, p->two->path,
+						      side_index,
+						      dir_renames_for_side,
+						      rename_exclusions,
+						      &collisions,
+						      &clean);
+
+		if (p->status != 'R' && !new_path) {
+			diff_free_filepair(p);
+			continue;
+		}
+
+		if (new_path)
+			apply_directory_rename_modifications(opt, p, new_path);
 
 		/*
 		 * p->score comes back from diffcore_rename_extended() with
@@ -1314,6 +1366,20 @@ static int collect_renames(struct merge_options *opt,
 		result->queue[result->nr++] = p;
 	}
 
+	/* Free each value in the collisions map */
+	strmap_for_each_entry(&collisions, &iter, entry) {
+		struct collision_info *info = entry->value;
+		string_list_clear(&info->source_files, 0);
+	}
+	/*
+	 * In compute_collisions(), we set collisions.strdup_strings to 0
+	 * so that we wouldn't have to make another copy of the new_path
+	 * allocated by apply_dir_rename().  But now that we've used them
+	 * and have no other references to these strings, it is time to
+	 * deallocate them.
+	 */
+	free_strmap_strings(&collisions);
+	strmap_clear(&collisions, 1);
 	return clean;
 }
 
@@ -1345,8 +1411,12 @@ static int detect_and_process_renames(struct merge_options *opt,
 	ALLOC_GROW(combined.queue,
 		   renames->pairs[1].nr + renames->pairs[2].nr,
 		   combined.alloc);
-	clean &= collect_renames(opt, &combined, MERGE_SIDE1);
-	clean &= collect_renames(opt, &combined, MERGE_SIDE2);
+	clean &= collect_renames(opt, &combined, MERGE_SIDE1,
+				 &renames->dir_renames[2],
+				 &renames->dir_renames[1]);
+	clean &= collect_renames(opt, &combined, MERGE_SIDE2,
+				 &renames->dir_renames[1],
+				 &renames->dir_renames[2]);
 	QSORT(combined.queue, combined.nr, compare_pairs);
 
 	clean &= process_renames(opt, &combined);
