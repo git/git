@@ -721,6 +721,18 @@ static int handle_content_merge(struct merge_options *opt,
 
 /*** Function Grouping: functions related to directory rename detection ***/
 
+static void get_provisional_directory_renames(struct merge_options *opt,
+					      unsigned side,
+					      int *clean)
+{
+	die("Not yet implemented!");
+}
+
+static void handle_directory_level_conflicts(struct merge_options *opt)
+{
+	die("Not yet implemented!");
+}
+
 /*** Function Grouping: functions related to regular rename detection ***/
 
 static int process_renames(struct merge_options *opt,
@@ -1086,12 +1098,23 @@ static int detect_and_process_renames(struct merge_options *opt,
 {
 	struct diff_queue_struct combined;
 	struct rename_info *renames = &opt->priv->renames;
-	int s, clean = 1;
+	int need_dir_renames, s, clean = 1;
 
 	memset(&combined, 0, sizeof(combined));
 
 	detect_regular_renames(opt, merge_base, side1, MERGE_SIDE1);
 	detect_regular_renames(opt, merge_base, side2, MERGE_SIDE2);
+
+	need_dir_renames =
+	  !opt->priv->call_depth &&
+	  (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_TRUE ||
+	   opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_CONFLICT);
+
+	if (need_dir_renames) {
+		get_provisional_directory_renames(opt, MERGE_SIDE1, &clean);
+		get_provisional_directory_renames(opt, MERGE_SIDE2, &clean);
+		handle_directory_level_conflicts(opt);
+	}
 
 	ALLOC_GROW(combined.queue,
 		   renames->pairs[1].nr + renames->pairs[2].nr,
