@@ -225,7 +225,8 @@ int is_main_worktree(const struct worktree *wt)
 
 const char *worktree_lock_reason(struct worktree *wt)
 {
-	assert(!is_main_worktree(wt));
+	if (is_main_worktree(wt))
+		return NULL;
 
 	if (!wt->lock_reason_valid) {
 		struct strbuf path = STRBUF_INIT;
