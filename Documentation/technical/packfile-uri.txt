@@ -37,8 +37,11 @@ at least so that we can test the client.
 This is the implementation: a feature, marked experimental, that allows the
 server to be configured by one or more `uploadpack.blobPackfileUri=<sha1>
 <uri>` entries. Whenever the list of objects to be sent is assembled, all such
-blobs are excluded, replaced with URIs. The client will download those URIs,
-expecting them to each point to packfiles containing single blobs.
+blobs are excluded, replaced with URIs. As noted in "Future work" below, the
+server can evolve in the future to support excluding other objects (or other
+implementations of servers could be made that support excluding other objects)
+without needing a protocol change, so clients should not expect that packfiles
+downloaded in this way only contain single blobs.
 
 Client design
 -------------
