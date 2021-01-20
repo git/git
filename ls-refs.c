@@ -90,6 +90,7 @@ int ls_refs(struct repository *r, struct strvec *keys,
 	struct ls_refs_data data;
 
 	memset(&data, 0, sizeof(data));
+	strvec_init(&data.prefixes);
 
 	git_config(ls_refs_config, NULL);
 
