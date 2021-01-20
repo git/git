@@ -404,15 +404,6 @@ TZ=UTC
 export LANG LC_ALL PAGER TZ
 EDITOR=:
 
-# GIT_TEST_GETTEXT_POISON should not influence git commands executed
-# during initialization of test-lib and the test repo. Back it up,
-# unset and then restore after initialization is finished.
-if test -n "$GIT_TEST_GETTEXT_POISON"
-then
-	GIT_TEST_GETTEXT_POISON_ORIG=$GIT_TEST_GETTEXT_POISON
-	unset GIT_TEST_GETTEXT_POISON
-fi
-
 # A call to "unset" with no arguments causes at least Solaris 10
 # /usr/xpg4/bin/sh and /bin/ksh to bail out.  So keep the unsets
 # deriving from the command substitution clustered with the other
@@ -1529,16 +1520,10 @@ test -n "$USE_LIBPCRE1" && test_set_prereq LIBPCRE1
 test -n "$USE_LIBPCRE2" && test_set_prereq LIBPCRE2
 test -z "$NO_GETTEXT" && test_set_prereq GETTEXT
 
-if test -n "$GIT_TEST_GETTEXT_POISON_ORIG"
-then
-	GIT_TEST_GETTEXT_POISON=$GIT_TEST_GETTEXT_POISON_ORIG
-	export GIT_TEST_GETTEXT_POISON
-	unset GIT_TEST_GETTEXT_POISON_ORIG
-fi
-
-test_lazy_prereq C_LOCALE_OUTPUT '
-	! test_bool_env GIT_TEST_GETTEXT_POISON false
-'
+# Used to be used for GIT_TEST_GETTEXT_POISON=false. Only here as a
+# shim for other in-flight changes. Should not be used and will be
+# removed soon.
+test_set_prereq C_LOCALE_OUTPUT
 
 if test -z "$GIT_TEST_CHECK_CACHE_TREE"
 then

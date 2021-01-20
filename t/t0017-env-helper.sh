@@ -86,14 +86,14 @@ test_expect_success 'env--helper reads config thanks to trace2' '
 	git config -f home/cycle include.path .gitconfig &&
 
 	test_must_fail \
-		env HOME="$(pwd)/home" GIT_TEST_GETTEXT_POISON=false \
+		env HOME="$(pwd)/home" \
 		git config -l 2>err &&
 	grep "exceeded maximum include depth" err &&
 
 	test_must_fail \
-		env HOME="$(pwd)/home" GIT_TEST_GETTEXT_POISON=true \
-		git -C cycle env--helper --type=bool --default=0 --exit-code GIT_TEST_GETTEXT_POISON 2>err &&
-	grep "# GETTEXT POISON #" err
+		env HOME="$(pwd)/home" GIT_TEST_ENV_HELPER=true \
+		git -C cycle env--helper --type=bool --default=0 --exit-code GIT_TEST_ENV_HELPER 2>err &&
+	grep "exceeded maximum include depth" err
 '
 
 test_done

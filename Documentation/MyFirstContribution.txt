@@ -664,7 +664,7 @@ mention the right animal somewhere:
 ----
 test_expect_success 'runs correctly with no args and good output' '
 	git psuh >actual &&
-	test_i18ngrep Pony actual
+	grep Pony actual
 '
 ----
 

@@ -17,7 +17,7 @@ else
 	. "$GIT_BUILD_DIR"/git-sh-i18n
 fi
 
-if test_have_prereq GETTEXT && test_have_prereq C_LOCALE_OUTPUT
+if test_have_prereq GETTEXT
 then
 	# is_IS.UTF-8 on Solaris and FreeBSD, is_IS.utf8 on Debian
 	is_IS_locale=$(locale -a 2>/dev/null |
