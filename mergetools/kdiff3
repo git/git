@@ -27,5 +27,5 @@ exit_code_trustable () {
 }
 
 translate_merge_tool_path() {
-                mergetool_find_win32_cmd "kdiff3.exe" "kdiff3"
+    which kdiff3 || mergetool_find_win32_cmd "kdiff3.exe" "Kdiff3"
 }
