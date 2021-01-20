@@ -2803,13 +2803,11 @@ static void add_tag_chain(const struct object_id *oid)
 	}
 }
 
-static int add_ref_tag(const char *path, const struct object_id *oid, int flag, void *cb_data)
+static int add_ref_tag(const char *tag, const struct object_id *oid, int flag, void *cb_data)
 {
 	struct object_id peeled;
 
-	if (starts_with(path, "refs/tags/") && /* is a tag? */
-	    !peel_ref(path, &peeled)    && /* peelable? */
-	    obj_is_packed(&peeled)) /* object packed? */
+	if (!peel_ref(tag, &peeled) && obj_is_packed(&peeled))
 		add_tag_chain(oid);
 	return 0;
 }
@@ -3740,7 +3738,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)
-		for_each_ref(add_ref_tag, NULL);
+		for_each_tag_ref(add_ref_tag, NULL);
 	stop_progress(&progress_state);
 	trace2_region_leave("pack-objects", "enumerate-objects",
 			    the_repository);
