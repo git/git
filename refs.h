@@ -118,16 +118,16 @@ int is_branch(const char *refname);
 int refs_init_db(struct strbuf *err);
 
 /*
- * If refname is a non-symbolic reference that refers to a tag object,
- * and the tag can be (recursively) dereferenced to a non-tag object,
- * store the object ID of the referred-to object to oid and return 0.
- * If any of these conditions are not met, return a non-zero value.
- * Symbolic references are considered unpeelable, even if they
- * ultimately resolve to a peelable tag.
+ * Return the peeled value of the oid currently being iterated via
+ * for_each_ref(), etc. This is equivalent to calling:
+ *
+ *   peel_object(oid, &peeled);
+ *
+ * with the "oid" value given to the each_ref_fn callback, except
+ * that some ref storage may be able to answer the query without
+ * actually loading the object in memory.
  */
-int refs_peel_ref(struct ref_store *refs, const char *refname,
-		  struct object_id *oid);
-int peel_ref(const char *refname, struct object_id *oid);
+int peel_iterated_oid(const struct object_id *base, struct object_id *peeled);
 
 /**
  * Resolve refname in the nested "gitlink" repository in the specified
