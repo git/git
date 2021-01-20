@@ -286,7 +286,7 @@ jobs:
           - jobname: osx-gcc
             cc: gcc
             pool: macos-latest
-          - jobname: GETTEXT_POISON
+          - jobname: linux-gcc-default
             cc: gcc
             pool: ubuntu-latest
     env:
