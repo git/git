@@ -164,6 +164,7 @@ jobs:
   vs-build:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
+    timeout-minutes: 15
     env:
       MSYSTEM: MINGW64
       NO_PERL: 1
@@ -189,6 +190,11 @@ jobs:
         ## Unzip and remove the artifact
         unzip artifacts.zip
         rm artifacts.zip
+    - name: initialize vcpkg
+      uses: actions/checkout@v2
+      with:
+        repository: 'microsoft/vcpkg'
+        path: 'compat/vcbuild/vcpkg'
     - name: download vcpkg artifacts
       shell: powershell
       run: |
