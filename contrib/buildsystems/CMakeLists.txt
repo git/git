@@ -58,6 +58,10 @@ if(WIN32)
 
 	# In the vcpkg edition, we need this to be able to link to libcurl
 	set(CURL_NO_CURL_CMAKE ON)
+
+	# Copy the necessary vcpkg DLLs (like iconv) to the install dir
+	set(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)
+	set(CMAKE_TOOLCHAIN_FILE ${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 endif()
 
 find_program(SH_EXE sh PATHS "C:/Program Files/Git/bin")
