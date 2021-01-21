@@ -34,12 +34,9 @@ test_expect_success "proc-receive: bad protocol (unknown version, $PROTOCOL)" '
 	EOF
 	test_cmp expect actual-error &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "setup proc-receive hook (hook --die-read-version, $PROTOCOL)" '
@@ -68,12 +65,9 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-version, $PROTO
 	grep "remote: fatal: die with the --die-read-version option" out-$test_count &&
 	grep "remote: error: fail to negotiate version with proc-receive hook" out-$test_count &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "setup proc-receive hook (hook --die-write-version, $PROTOCOL)" '
@@ -102,12 +96,9 @@ test_expect_success "proc-receive: bad protocol (hook --die-write-version, $PROT
 	grep "remote: fatal: die with the --die-write-version option" out-$test_count &&
 	grep "remote: error: fail to negotiate version with proc-receive hook" out-$test_count &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "setup proc-receive hook (hook --die-read-commands, $PROTOCOL)" '
@@ -135,12 +126,9 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-commands, $PROT
 	test_cmp expect actual &&
 	grep "remote: fatal: die with the --die-read-commands option" out-$test_count &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "setup proc-receive hook (hook --die-read-push-options, $PROTOCOL)" '
@@ -170,12 +158,9 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-push-options, $
 	test_cmp expect actual &&
 	grep "remote: fatal: die with the --die-read-push-options option" out-$test_count &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "setup proc-receive hook (hook --die-write-report, $PROTOCOL)" '
@@ -203,12 +188,9 @@ test_expect_success "proc-receive: bad protocol (hook --die-write-report, $PROTO
 	test_cmp expect actual &&
 	grep "remote: fatal: die with the --die-write-report option" out-$test_count &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "setup proc-receive hook (no report, $PROTOCOL)" '
@@ -240,13 +222,10 @@ test_expect_success "proc-receive: bad protocol (no report, $PROTOCOL)" '
 	EOF
 	test_cmp expect actual &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	<COMMIT-A> refs/heads/next
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(A)             next(A)
@@ -284,12 +263,9 @@ test_expect_success "proc-receive: bad protocol (no ref, $PROTOCOL)" '
 	EOF
 	test_cmp expect actual &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "setup proc-receive hook (unknown status, $PROTOCOL)" '
@@ -320,10 +296,7 @@ test_expect_success "proc-receive: bad protocol (unknown status, $PROTOCOL)" '
 	EOF
 	test_cmp expect actual &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '

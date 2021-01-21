@@ -20,13 +20,11 @@ test_expect_success "proc-receive: no hook, fail to push special ref ($PROTOCOL/
 	Done
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	<COMMIT-A> refs/heads/next
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(A)             next(A)
@@ -57,10 +55,8 @@ test_expect_success "proc-receive: no hook, all failed for atomic push ($PROTOCO
 	Done
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '

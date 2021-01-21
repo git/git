@@ -31,12 +31,10 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL/porcelain)" 
 	Done
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-B> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(B)

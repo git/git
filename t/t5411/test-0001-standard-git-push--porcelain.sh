@@ -20,13 +20,11 @@ test_expect_success "git-push ($PROTOCOL/porcelain)" '
 	Done
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-B> refs/heads/main
 	<COMMIT-A> refs/heads/next
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(B)  next(A)
@@ -48,13 +46,11 @@ test_expect_success "git-push --atomic ($PROTOCOL/porcelain)" '
 	!    <COMMIT-B>:refs/heads/next    [rejected] (atomic push failed)
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-B> refs/heads/main
 	<COMMIT-A> refs/heads/next
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(B)  next(A)
@@ -80,13 +76,11 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL/porcelain)" '
 	Done
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-B> refs/heads/main
 	<COMMIT-B> refs/heads/next
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(B)  next(B)
@@ -123,15 +117,13 @@ test_expect_success "git-push -f ($PROTOCOL/porcelain)" '
 	Done
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/a/b/c
 	<COMMIT-A> refs/heads/main
 	<COMMIT-A> refs/review/main/topic
 	<TAG-v123> refs/tags/v123
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(A)  tags/v123  refs/review/main/topic(A)  a/b/c(A)
