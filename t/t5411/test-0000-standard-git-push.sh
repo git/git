@@ -35,11 +35,11 @@ test_expect_success "git-push --atomic ($PROTOCOL)" '
 	test_must_fail git -C workbench push --atomic origin \
 		main \
 		$B:refs/heads/next \
-		>out 2>&1 &&
+		>out-$test_count 2>&1 &&
 	filter_out_user_friendly_and_stable_output \
 		-e "/^To / { p; }" \
 		-e "/^ ! / { p; }" \
-		<out >actual &&
+		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
 	 ! [rejected] main -> main (non-fast-forward)
@@ -65,8 +65,8 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL)" '
 		push origin \
 		main \
 		$B:refs/heads/next \
-		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		>out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	remote: # pre-receive hook
 	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/next

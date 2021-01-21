@@ -12,8 +12,8 @@ test_expect_success "setup proc-receive hook (unexpected ref, $PROTOCOL)" '
 test_expect_success "proc-receive: report unknown reference ($PROTOCOL)" '
 	test_must_fail git -C workbench push origin \
 		HEAD:refs/for/a/b/c/my/topic \
-		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		>out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	remote: # pre-receive hook
 	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/my/topic
