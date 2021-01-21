@@ -72,10 +72,10 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 }
 
 typedef int (*each_tag_name_fn)(const char *name, const char *ref,
-				const struct object_id *oid, const void *cb_data);
+				const struct object_id *oid, void *cb_data);
 
 static int for_each_tag_name(const char **argv, each_tag_name_fn fn,
-			     const void *cb_data)
+			     void *cb_data)
 {
 	const char **p;
 	struct strbuf ref = STRBUF_INIT;
@@ -97,18 +97,42 @@ static int for_each_tag_name(const char **argv, each_tag_name_fn fn,
 	return had_error;
 }
 
-static int delete_tag(const char *name, const char *ref,
-		      const struct object_id *oid, const void *cb_data)
+static int collect_tags(const char *name, const char *ref,
+			const struct object_id *oid, void *cb_data)
 {
-	if (delete_ref(NULL, ref, oid, 0))
-		return 1;
-	printf(_("Deleted tag '%s' (was %s)\n"), name,
-	       find_unique_abbrev(oid, DEFAULT_ABBREV));
+	struct string_list *ref_list = cb_data;
+
+	string_list_append(ref_list, ref);
+	ref_list->items[ref_list->nr - 1].util = oiddup(oid);
 	return 0;
 }
 
+static int delete_tags(const char **argv)
+{
+	int result;
+	struct string_list refs_to_delete = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
+
+	result = for_each_tag_name(argv, collect_tags, (void *)&refs_to_delete);
+	if (delete_refs(NULL, &refs_to_delete, REF_NO_DEREF))
+		result = 1;
+
+	for_each_string_list_item(item, &refs_to_delete) {
+		const char *name = item->string;
+		struct object_id *oid = item->util;
+		if (!ref_exists(name))
+			printf(_("Deleted tag '%s' (was %s)\n"),
+				item->string + 10,
+				find_unique_abbrev(oid, DEFAULT_ABBREV));
+
+		free(oid);
+	}
+	string_list_clear(&refs_to_delete, 0);
+	return result;
+}
+
 static int verify_tag(const char *name, const char *ref,
-		      const struct object_id *oid, const void *cb_data)
+		      const struct object_id *oid, void *cb_data)
 {
 	int flags;
 	const struct ref_format *format = cb_data;
@@ -512,7 +536,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (filter.reachable_from || filter.unreachable_from)
 		die(_("--merged and --no-merged options are only allowed in list mode"));
 	if (cmdmode == 'd')
-		return for_each_tag_name(argv, delete_tag, NULL);
+		return delete_tags(argv);
 	if (cmdmode == 'v') {
 		if (format.format && verify_ref_format(&format))
 			usage_with_options(git_tag_usage, options);
