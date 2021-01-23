@@ -312,49 +312,40 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 		if (show_killed)
 			show_killed_files(repo->index, dir);
 	}
-	if (show_cached || show_stage) {
-		for (i = 0; i < repo->index->cache_nr; i++) {
-			const struct cache_entry *ce = repo->index->cache[i];
 
-			construct_fullname(&fullname, repo, ce);
+	if (!(show_cached || show_stage || show_deleted || show_modified))
+		return;
+	for (i = 0; i < repo->index->cache_nr; i++) {
+		const struct cache_entry *ce = repo->index->cache[i];
+		struct stat st;
+		int stat_err;
 
-			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !ce_excluded(dir, repo->index, fullname.buf, ce))
-				continue;
-			if (show_unmerged && !ce_stage(ce))
-				continue;
-			if (ce->ce_flags & CE_UPDATE)
-				continue;
+		construct_fullname(&fullname, repo, ce);
+
+		if ((dir->flags & DIR_SHOW_IGNORED) &&
+			!ce_excluded(dir, repo->index, fullname.buf, ce))
+			continue;
+		if (ce->ce_flags & CE_UPDATE)
+			continue;
+		if ((show_cached || show_stage) &&
+		    (!show_unmerged || ce_stage(ce)))
 			show_ce(repo, dir, ce, fullname.buf,
 				ce_stage(ce) ? tag_unmerged :
 				(ce_skip_worktree(ce) ? tag_skip_worktree :
 				 tag_cached));
-		}
-	}
-	if (show_deleted || show_modified) {
-		for (i = 0; i < repo->index->cache_nr; i++) {
-			const struct cache_entry *ce = repo->index->cache[i];
-			struct stat st;
-			int stat_err;
 
-			construct_fullname(&fullname, repo, ce);
-
-			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !ce_excluded(dir, repo->index, fullname.buf, ce))
-				continue;
-			if (ce->ce_flags & CE_UPDATE)
-				continue;
-			if (ce_skip_worktree(ce))
-				continue;
-			stat_err = lstat(fullname.buf, &st);
-			if (stat_err && (errno != ENOENT && errno != ENOTDIR))
-				error_errno("cannot lstat '%s'", fullname.buf);
-			if (stat_err && show_deleted)
-				show_ce(repo, dir, ce, fullname.buf, tag_removed);
-			if (show_modified &&
-			    (stat_err || ie_modified(repo->index, ce, &st, 0)))
-				show_ce(repo, dir, ce, fullname.buf, tag_modified);
-		}
+		if (!(show_deleted || show_modified))
+			continue;
+		if (ce_skip_worktree(ce))
+			continue;
+		stat_err = lstat(fullname.buf, &st);
+		if (stat_err && (errno != ENOENT && errno != ENOTDIR))
+			error_errno("cannot lstat '%s'", fullname.buf);
+		if (stat_err && show_deleted)
+			show_ce(repo, dir, ce, fullname.buf, tag_removed);
+		if (show_modified &&
+		    (stat_err || ie_modified(repo->index, ce, &st, 0)))
+			show_ce(repo, dir, ce, fullname.buf, tag_modified);
 	}
 
 	strbuf_release(&fullname);
