@@ -328,6 +328,7 @@ struct index_state {
 	struct ewah_bitmap *fsmonitor_dirty;
 	struct mem_pool *ce_mem_pool;
 	struct progress *progress;
+	struct repository *repo;
 };
 
 /* Name hashing */
