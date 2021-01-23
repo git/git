@@ -10,7 +10,8 @@ cache-tree extension.
 cmp_cache_tree () {
 	test-tool dump-cache-tree | sed -e '/#(ref)/d' >actual &&
 	sed "s/$OID_REGEX/SHA/" <actual >filtered &&
-	test_cmp "$1" filtered
+	test_cmp "$1" filtered &&
+	rm filtered
 }
 
 # We don't bother with actually checking the SHA1:
@@ -54,7 +55,7 @@ test_invalid_cache_tree () {
 }
 
 test_no_cache_tree () {
-	: >expect &&
+	>expect &&
 	cmp_cache_tree expect
 }
 
@@ -83,18 +84,6 @@ test_expect_success 'git-add in subdir invalidates cache-tree' '
 	test_invalid_cache_tree
 '
 
-cat >before <<\EOF
-SHA  (3 entries, 2 subtrees)
-SHA dir1/ (1 entries, 0 subtrees)
-SHA dir2/ (1 entries, 0 subtrees)
-EOF
-
-cat >expect <<\EOF
-invalid                                   (2 subtrees)
-invalid                                  dir1/ (0 subtrees)
-SHA dir2/ (1 entries, 0 subtrees)
-EOF
-
 test_expect_success 'git-add in subdir does not invalidate sibling cache-tree' '
 	git tag no-children &&
 	test_when_finished "git reset --hard no-children; git read-tree HEAD" &&
@@ -102,9 +91,20 @@ test_expect_success 'git-add in subdir does not invalidate sibling cache-tree' '
 	test_commit dir1/a &&
 	test_commit dir2/b &&
 	echo "I changed this file" >dir1/a &&
+	test_when_finished "rm before" &&
+	cat >before <<-\EOF &&
+	SHA  (3 entries, 2 subtrees)
+	SHA dir1/ (1 entries, 0 subtrees)
+	SHA dir2/ (1 entries, 0 subtrees)
+	EOF
 	cmp_cache_tree before &&
 	echo "I changed this file" >dir1/a &&
 	git add dir1/a &&
+	cat >expect <<-\EOF &&
+	invalid                                   (2 subtrees)
+	invalid                                  dir1/ (0 subtrees)
+	SHA dir2/ (1 entries, 0 subtrees)
+	EOF
 	cmp_cache_tree expect
 '
 
