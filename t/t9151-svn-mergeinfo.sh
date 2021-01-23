@@ -17,21 +17,17 @@ test_expect_success 'load svn dump' "
 "
 
 test_expect_success 'all svn merges became git merge commits' '
-	git rev-list --parents --all --grep=Merge |
-		grep -v " .* " | cut -f1 -d" " >unmarked &&
+	git rev-list --all --no-merges --grep=Merge >unmarked &&
 	test_must_be_empty unmarked
 '
 
-
 test_expect_success 'cherry picks did not become git merge commits' '
-	git rev-list --parents --all --grep=Cherry |
-		grep " .* " | cut -f1 -d" " >bad-cherries &&
+	git rev-list --all --merges --grep=Cherry >bad-cherries &&
 	test_must_be_empty bad-cherries
 '
 
 test_expect_success 'svn non-merge merge commits did not become git merge commits' '
-	git rev-list --parents --all --grep=non-merge |
-		grep " .* " | cut -f1 -d" " >bad-non-merges &&
+	git rev-list --all --merges --grep=non-merge >bad-non-merges &&
 	test_must_be_empty bad-non-merges
 '
 
