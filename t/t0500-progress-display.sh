@@ -303,8 +303,7 @@ test_expect_success 'progress generates traces' '
 		"Working hard" <in 2>stderr &&
 
 	# t0212/parse_events.perl intentionally omits regions and data.
-	grep -e "region_enter" -e "\"category\":\"progress\"" trace.event &&
-	grep -e "region_leave" -e "\"category\":\"progress\"" trace.event &&
+	test_region progress "Working hard" trace.event &&
 	grep "\"key\":\"total_objects\",\"value\":\"40\"" trace.event &&
 	grep "\"key\":\"total_bytes\",\"value\":\"409600\"" trace.event
 '
