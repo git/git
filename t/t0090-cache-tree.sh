@@ -17,7 +17,7 @@ cmp_cache_tree () {
 # We don't bother with actually checking the SHA1:
 # test-tool dump-cache-tree already verifies that all existing data is
 # correct.
-generate_expected_cache_tree_rec () {
+generate_expected_cache_tree () {
 	dir="$1${1:+/}" &&
 	# ls-files might have foo/bar, foo/bar/baz, and foo/bar/quux
 	# We want to count only foo because it's the only direct child
@@ -28,16 +28,11 @@ generate_expected_cache_tree_rec () {
 	printf "SHA $dir (%d entries, %d subtrees)\n" "$entries" "$subtree_count" &&
 	for subtree in $subtrees
 	do
-		cd "$subtree"
-		generate_expected_cache_tree_rec "$dir$subtree" || return 1
-		cd ..
+		(
+			cd "$subtree" &&
+			generate_expected_cache_tree "$dir$subtree"
+		) || return 1
 	done
-}
-
-generate_expected_cache_tree () {
-	(
-		generate_expected_cache_tree_rec
-	)
 }
 
 test_cache_tree () {
