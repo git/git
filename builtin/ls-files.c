@@ -335,7 +335,7 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 		for (i = 0; i < repo->index->cache_nr; i++) {
 			const struct cache_entry *ce = repo->index->cache[i];
 			struct stat st;
-			int err;
+			int stat_err;
 
 			construct_fullname(&fullname, repo, ce);
 
@@ -346,10 +346,13 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 				continue;
 			if (ce_skip_worktree(ce))
 				continue;
-			err = lstat(fullname.buf, &st);
-			if (show_deleted && err)
+			stat_err = lstat(fullname.buf, &st);
+			if (stat_err && (errno != ENOENT && errno != ENOTDIR))
+				error_errno("cannot lstat '%s'", fullname.buf);
+			if (stat_err && show_deleted)
 				show_ce(repo, dir, ce, fullname.buf, tag_removed);
-			if (show_modified && ie_modified(repo->index, ce, &st, 0))
+			if (show_modified &&
+			    (stat_err || ie_modified(repo->index, ce, &st, 0)))
 				show_ce(repo, dir, ce, fullname.buf, tag_modified);
 		}
 	}
