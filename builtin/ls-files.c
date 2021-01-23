@@ -35,6 +35,7 @@ static int line_terminator = '\n';
 static int debug_mode;
 static int show_eol;
 static int recurse_submodules;
+static int skipping_duplicates;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -328,11 +329,14 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 		if (ce->ce_flags & CE_UPDATE)
 			continue;
 		if ((show_cached || show_stage) &&
-		    (!show_unmerged || ce_stage(ce)))
+		    (!show_unmerged || ce_stage(ce))) {
 			show_ce(repo, dir, ce, fullname.buf,
 				ce_stage(ce) ? tag_unmerged :
 				(ce_skip_worktree(ce) ? tag_skip_worktree :
 				 tag_cached));
+			if (skipping_duplicates)
+				goto skip_to_next_name;
+		}
 
 		if (!(show_deleted || show_modified))
 			continue;
@@ -341,11 +345,28 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 		stat_err = lstat(fullname.buf, &st);
 		if (stat_err && (errno != ENOENT && errno != ENOTDIR))
 			error_errno("cannot lstat '%s'", fullname.buf);
-		if (stat_err && show_deleted)
+		if (stat_err && show_deleted) {
 			show_ce(repo, dir, ce, fullname.buf, tag_removed);
+			if (skipping_duplicates)
+				goto skip_to_next_name;
+		}
 		if (show_modified &&
-		    (stat_err || ie_modified(repo->index, ce, &st, 0)))
+		    (stat_err || ie_modified(repo->index, ce, &st, 0))) {
 			show_ce(repo, dir, ce, fullname.buf, tag_modified);
+			if (skipping_duplicates)
+				goto skip_to_next_name;
+		}
+		continue;
+
+skip_to_next_name:
+		{
+			int j;
+			struct cache_entry **cache = repo->index->cache;
+			for (j = i + 1; j < repo->index->cache_nr; j++)
+				if (strcmp(ce->name, cache[j]->name))
+					break;
+			i = j - 1; /* compensate for the for loop */
+		}
 	}
 
 	strbuf_release(&fullname);
@@ -572,6 +593,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("pretend that paths removed since <tree-ish> are still present")),
 		OPT__ABBREV(&abbrev),
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
+		OPT_BOOL(0, "deduplicate", &skipping_duplicates,
+			 N_("suppress duplicate entries")),
 		OPT_END()
 	};
 
@@ -611,6 +634,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		 * you also show the stage information.
 		 */
 		show_stage = 1;
+	if (show_tag || show_stage)
+		skipping_duplicates = 0;
 	if (dir.exclude_per_dir)
 		exc_given = 1;
 
