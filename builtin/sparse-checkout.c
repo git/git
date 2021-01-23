@@ -22,11 +22,6 @@ static char const * const builtin_sparse_checkout_usage[] = {
 	NULL
 };
 
-static char *get_sparse_checkout_filename(void)
-{
-	return git_pathdup("info/sparse-checkout");
-}
-
 static void write_patterns_to_file(FILE *fp, struct pattern_list *pl)
 {
 	int i;
