@@ -19,7 +19,6 @@ cmp_cache_tree () {
 # correct.
 generate_expected_cache_tree_rec () {
 	dir="$1${1:+/}" &&
-	parent="$2" &&
 	# ls-files might have foo/bar, foo/bar/baz, and foo/bar/quux
 	# We want to count only foo because it's the only direct child
 	git ls-files >files &&
@@ -30,10 +29,9 @@ generate_expected_cache_tree_rec () {
 	for subtree in $subtrees
 	do
 		cd "$subtree"
-		generate_expected_cache_tree_rec "$dir$subtree" "$dir" || return 1
+		generate_expected_cache_tree_rec "$dir$subtree" || return 1
 		cd ..
-	done &&
-	dir=$parent
+	done
 }
 
 generate_expected_cache_tree () {
