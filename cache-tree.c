@@ -151,16 +151,15 @@ void cache_tree_invalidate_path(struct index_state *istate, const char *path)
 		istate->cache_changed |= CACHE_TREE_CHANGED;
 }
 
-static int verify_cache(struct cache_entry **cache,
-			int entries, int flags)
+static int verify_cache(struct index_state *istate, int flags)
 {
-	int i, funny;
+	unsigned i, funny;
 	int silent = flags & WRITE_TREE_SILENT;
 
 	/* Verify that the tree is merged */
 	funny = 0;
-	for (i = 0; i < entries; i++) {
-		const struct cache_entry *ce = cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
 		if (ce_stage(ce)) {
 			if (silent)
 				return -1;
@@ -180,13 +179,13 @@ static int verify_cache(struct cache_entry **cache,
 	 * stage 0 entries.
 	 */
 	funny = 0;
-	for (i = 0; i < entries - 1; i++) {
+	for (i = 0; i + 1 < istate->cache_nr; i++) {
 		/* path/file always comes after path because of the way
 		 * the cache is sorted.  Also path can appear only once,
 		 * which means conflicting one would immediately follow.
 		 */
-		const struct cache_entry *this_ce = cache[i];
-		const struct cache_entry *next_ce = cache[i + 1];
+		const struct cache_entry *this_ce = istate->cache[i];
+		const struct cache_entry *next_ce = istate->cache[i + 1];
 		const char *this_name = this_ce->name;
 		const char *next_name = next_ce->name;
 		int this_len = ce_namelen(this_ce);
@@ -438,7 +437,7 @@ int cache_tree_update(struct index_state *istate, int flags)
 {
 	int skip, i;
 
-	i = verify_cache(istate->cache, istate->cache_nr, flags);
+	i = verify_cache(istate, flags);
 
 	if (i)
 		return i;
