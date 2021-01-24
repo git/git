@@ -1439,7 +1439,18 @@ static void get_provisional_directory_renames(struct merge_options *opt,
 				 "no destination getting a majority of the "
 				 "files."),
 			       source_dir);
-			*clean = 0;
+			/*
+			 * We should mark this as unclean IF something attempts
+			 * to use this rename.  We do not yet have the logic
+			 * in place to detect if this directory rename is being
+			 * used, and optimizations that reduce the number of
+			 * renames cause this to falsely trigger.  For now,
+			 * just disable it, causing t6423 testcase 2a to break.
+			 * We'll later fix the detection, and when we do we
+			 * will re-enable setting *clean to 0 (and thereby fix
+			 * t6423 testcase 2a).
+			 */
+			/*   *clean = 0;   */
 		} else {
 			strmap_put(&renames->dir_renames[side],
 				   source_dir, (void*)best);
