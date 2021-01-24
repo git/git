@@ -3227,11 +3227,28 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	assert(opt->obuf.len == 0);
 
 	assert(opt->priv == NULL);
+	if (result->priv) {
+		opt->priv = result->priv;
+		result->priv = NULL;
+		/*
+		 * opt->priv non-NULL means we had results from a previous
+		 * run; do a few sanity checks that user didn't mess with
+		 * it in an obvious fashion.
+		 */
+		assert(opt->priv->call_depth == 0);
+		assert(!opt->priv->toplevel_dir ||
+		       0 == strlen(opt->priv->toplevel_dir));
+	}
 
 	/* Default to histogram diff.  Actually, just hardcode it...for now. */
 	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
 
 	/* Initialization of opt->priv, our internal merge data */
+	if (opt->priv) {
+		clear_or_reinit_internal_opts(opt->priv, 1);
+		trace2_region_leave("merge", "allocate/init", opt->repo);
+		return;
+	}
 	opt->priv = xcalloc(1, sizeof(*opt->priv));
 
 	/* Initialization of various renames fields */
