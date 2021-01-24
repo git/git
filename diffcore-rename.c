@@ -465,6 +465,7 @@ void diffcore_rename(struct diff_options *options)
 	int num_destinations, dst_cnt;
 	struct progress *progress = NULL;
 
+	trace2_region_enter("diff", "setup", options->repo);
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
 
@@ -510,14 +511,17 @@ void diffcore_rename(struct diff_options *options)
 			register_rename_src(p);
 		}
 	}
+	trace2_region_leave("diff", "setup", options->repo);
 	if (rename_dst_nr == 0 || rename_src_nr == 0)
 		goto cleanup; /* nothing to do */
 
+	trace2_region_enter("diff", "exact renames", options->repo);
 	/*
 	 * We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
 	 */
 	rename_count = find_exact_renames(options);
+	trace2_region_leave("diff", "exact renames", options->repo);
 
 	/* Did we only want exact renames? */
 	if (minimum_score == MAX_SCORE)
@@ -545,6 +549,7 @@ void diffcore_rename(struct diff_options *options)
 		break;
 	}
 
+	trace2_region_enter("diff", "inexact renames", options->repo);
 	if (options->show_rename_progress) {
 		progress = start_delayed_progress(
 				_("Performing inexact rename detection"),
@@ -600,11 +605,13 @@ void diffcore_rename(struct diff_options *options)
 	if (detect_rename == DIFF_DETECT_COPY)
 		rename_count += find_renames(mx, dst_cnt, minimum_score, 1);
 	free(mx);
+	trace2_region_leave("diff", "inexact renames", options->repo);
 
  cleanup:
 	/* At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
+	trace2_region_enter("diff", "write back to queue", options->repo);
 	DIFF_QUEUE_CLEAR(&outq);
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -680,5 +687,6 @@ void diffcore_rename(struct diff_options *options)
 		strintmap_clear(break_idx);
 		FREE_AND_NULL(break_idx);
 	}
+	trace2_region_leave("diff", "write back to queue", options->repo);
 	return;
 }
