@@ -166,11 +166,6 @@ void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix
 					pcre2_malloc, pcre2_free, NULL);
 #endif
 
-#ifdef USE_LIBPCRE1
-	pcre_malloc = malloc;
-	pcre_free = free;
-#endif
-
 	*opt = grep_defaults;
 
 	opt->repo = repo;
@@ -223,17 +218,7 @@ static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, st
 		break;
 
 	case GREP_PATTERN_TYPE_PCRE:
-#ifdef USE_LIBPCRE2
 		opt->pcre2 = 1;
-#else
-		/*
-		 * It's important that pcre1 always be assigned to
-		 * even when there's no USE_LIBPCRE* defined. We still
-		 * call the PCRE stub function, it just dies with
-		 * "cannot use Perl-compatible regexes[...]".
-		 */
-		opt->pcre1 = 1;
-#endif
 		break;
 	}
 }
@@ -377,92 +362,6 @@ static int is_fixed(const char *s, size_t len)
 	return 1;
 }
 
-#ifdef USE_LIBPCRE1
-static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
-{
-	const char *error;
-	int erroffset;
-	int options = PCRE_MULTILINE;
-	int study_options = 0;
-
-	if (opt->ignore_case) {
-		if (!opt->ignore_locale && has_non_ascii(p->pattern))
-			p->pcre1_tables = pcre_maketables();
-		options |= PCRE_CASELESS;
-	}
-	if (!opt->ignore_locale && is_utf8_locale() && has_non_ascii(p->pattern))
-		options |= PCRE_UTF8;
-
-	p->pcre1_regexp = pcre_compile(p->pattern, options, &error, &erroffset,
-				      p->pcre1_tables);
-	if (!p->pcre1_regexp)
-		compile_regexp_failed(p, error);
-
-#if defined(PCRE_CONFIG_JIT) && !defined(NO_LIBPCRE1_JIT)
-	pcre_config(PCRE_CONFIG_JIT, &p->pcre1_jit_on);
-	if (opt->debug)
-		fprintf(stderr, "pcre1_jit_on=%d\n", p->pcre1_jit_on);
-
-	if (p->pcre1_jit_on)
-		study_options = PCRE_STUDY_JIT_COMPILE;
-#endif
-
-	p->pcre1_extra_info = pcre_study(p->pcre1_regexp, study_options, &error);
-	if (!p->pcre1_extra_info && error)
-		die("%s", error);
-}
-
-static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
-		regmatch_t *match, int eflags)
-{
-	int ovector[30], ret, flags = PCRE_NO_UTF8_CHECK;
-
-	if (eflags & REG_NOTBOL)
-		flags |= PCRE_NOTBOL;
-
-	ret = pcre_exec(p->pcre1_regexp, p->pcre1_extra_info, line,
-			eol - line, 0, flags, ovector,
-			ARRAY_SIZE(ovector));
-
-	if (ret < 0 && ret != PCRE_ERROR_NOMATCH)
-		die("pcre_exec failed with error code %d", ret);
-	if (ret > 0) {
-		ret = 0;
-		match->rm_so = ovector[0];
-		match->rm_eo = ovector[1];
-	}
-
-	return ret;
-}
-
-static void free_pcre1_regexp(struct grep_pat *p)
-{
-	pcre_free(p->pcre1_regexp);
-#ifdef PCRE_CONFIG_JIT
-	if (p->pcre1_jit_on)
-		pcre_free_study(p->pcre1_extra_info);
-	else
-#endif
-		pcre_free(p->pcre1_extra_info);
-	pcre_free((void *)p->pcre1_tables);
-}
-#else /* !USE_LIBPCRE1 */
-static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
-{
-	die("cannot use Perl-compatible regexes when not compiled with USE_LIBPCRE");
-}
-
-static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
-		regmatch_t *match, int eflags)
-{
-	return 1;
-}
-
-static void free_pcre1_regexp(struct grep_pat *p)
-{
-}
-#endif /* !USE_LIBPCRE1 */
-
 #ifdef USE_LIBPCRE2
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
 {
@@ -588,11 +487,6 @@ static void free_pcre2_pattern(struct grep_pat *p)
 #else /* !USE_LIBPCRE2 */
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
 {
-	/*
-	 * Unreachable until USE_LIBPCRE2 becomes synonymous with
-	 * USE_LIBPCRE. See the sibling comment in
-	 * grep_set_pattern_type_option().
-	 */
 	die("cannot use Perl-compatible regexes when not compiled with USE_LIBPCRE");
 }
 
@@ -690,11 +584,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 
 	if (opt->pcre2) {
 		compile_pcre2_pattern(p, opt);
-		return;
-	}
-
-	if (opt->pcre1) {
-		compile_pcre1_regexp(p, opt);
 		return;
 	}
 
@@ -1051,9 +940,7 @@ void free_grep_patterns(struct grep_opt *opt)
 		case GREP_PATTERN: /* atom */
 		case GREP_PATTERN_HEAD:
 		case GREP_PATTERN_BODY:
-			if (p->pcre1_regexp)
-				free_pcre1_regexp(p);
-			else if (p->pcre2_pattern)
+			if (p->pcre2_pattern)
 				free_pcre2_pattern(p);
 			else
 				regfree(&p->regexp);
@@ -1116,9 +1003,7 @@ static int patmatch(struct grep_pat *p, char *line, char *eol,
 {
 	int hit;
 
-	if (p->pcre1_regexp)
-		hit = !pcre1match(p, line, eol, match, eflags);
-	else if (p->pcre2_pattern)
+	if (p->pcre2_pattern)
 		hit = !pcre2match(p, line, eol, match, eflags);
 	else
 		hit = !regexec_buf(&p->regexp, line, eol - line, 1, match,
