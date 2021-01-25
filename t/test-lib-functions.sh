@@ -188,8 +188,8 @@ debug () {
 #	"<file>"
 #   --signoff
 #	Invoke "git commit" with --signoff
-#   --author=<author>
-#	Invoke "git commit" with --author=<author>
+#   --author <author>
+#	Invoke "git commit" with --author <author>
 #
 # This will commit a file with the given contents and the given commit
 # message, and tag the resulting commit with the given tag name.
