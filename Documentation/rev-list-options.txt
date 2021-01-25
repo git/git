@@ -130,6 +130,11 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	this option allows you to ignore the individual commits
 	brought in to your history by such a merge.
 
+ifdef::git-log[]
+	This option also changes default diff format for merge commits
+	to `first-parent`, see `--diff-merges=first-parent` for details.
+endif::git-log[]
+
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
 	for all following revision specifiers, up to the next `--not`.
