@@ -87,6 +87,10 @@ off_t write_pack_header(struct hashfile *f, uint32_t);
 void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
 char *index_pack_lockfile(int fd);
 
+struct ref;
+
+void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought);
+
 /*
  * The "hdr" output buffer should be at least this big, which will handle sizes
  * up to 2^67.
