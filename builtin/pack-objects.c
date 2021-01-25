@@ -2955,6 +2955,13 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 			    pack_idx_opts.version);
 		return 0;
 	}
+	if (!strcmp(k, "pack.writereverseindex")) {
+		if (git_config_bool(k, v))
+			pack_idx_opts.flags |= WRITE_REV;
+		else
+			pack_idx_opts.flags &= ~WRITE_REV;
+		return 0;
+	}
 	if (!strcmp(k, "uploadpack.blobpackfileuri")) {
 		struct configured_exclusion *ex = xmalloc(sizeof(*ex));
 		const char *oid_end, *pack_end;

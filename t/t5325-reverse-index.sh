@@ -68,4 +68,17 @@ test_expect_success 'index-pack infers reverse index name with -o' '
 	test_path_is_file other.rev
 '
 
+test_expect_success 'pack-objects respects pack.writeReverseIndex' '
+	test_when_finished "rm -fr pack-1-*" &&
+
+	git -c pack.writeReverseIndex= pack-objects --all pack-1 &&
+	test_path_is_missing pack-1-*.rev &&
+
+	git -c pack.writeReverseIndex=false pack-objects --all pack-1 &&
+	test_path_is_missing pack-1-*.rev &&
+
+	git -c pack.writeReverseIndex=true pack-objects --all pack-1 &&
+	test_path_is_file pack-1-*.rev
+'
+
 test_done
