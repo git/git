@@ -2,6 +2,7 @@
 #include "pack-revindex.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "config.h"
 
 struct revindex_entry {
 	off_t offset;
@@ -166,6 +167,9 @@ static void create_pack_revindex(struct packed_git *p)
 
 static int create_pack_revindex_in_memory(struct packed_git *p)
 {
+	if (git_env_bool(GIT_TEST_REV_INDEX_DIE_IN_MEMORY, 0))
+		die("dying as requested by '%s'",
+		    GIT_TEST_REV_INDEX_DIE_IN_MEMORY);
 	if (open_pack_index(p))
 		return -1;
 	create_pack_revindex(p);

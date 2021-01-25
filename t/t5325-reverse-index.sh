@@ -85,4 +85,13 @@ test_expect_success 'pack-objects respects pack.writeReverseIndex' '
 	test_path_is_file pack-1-*.rev
 '
 
+test_expect_success 'reverse index is not generated when available on disk' '
+	test_index_pack true &&
+	test_path_is_file $rev &&
+
+	git rev-parse HEAD >tip &&
+	GIT_TEST_REV_INDEX_DIE_IN_MEMORY=1 git cat-file \
+		--batch-check="%(objectsize:disk)" <tip
+'
+
 test_done
