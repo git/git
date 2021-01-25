@@ -4,6 +4,17 @@ Git 2.31 Release Notes
 Updates since v2.30
 -------------------
 
+Backward incompatible and other important changes
+
+ * The "pack-redundant" command, which has been left stale with almost
+   unusable performance issues, now warns loudly when it gets used, as
+   we no longer want to recommend its use (instead just "repack -d"
+   instead).
+
+ * The development community has adopted Contributor Covenant v2.0 to
+   update from v1.4 that we have been using.
+
+
 UI, Workflows & Features
 
  * The "--format=%(trailers)" mechanism gets enhanced to make it
@@ -29,6 +40,13 @@ UI, Workflows & Features
  * "git maintenance" learned to drive scheduled maintenance on
    platforms whose native scheduling methods are not 'cron'.
 
+ * After expiring a reflog and making a single commit, the reflog for
+   the branch would record a single entry that knows both @{0} and
+   @{1}, but we failed to answer "what commit were we on?", i.e. @{1}
+
+ * "git bundle" learns "--stdin" option to read its refs from the
+   standard input.  Also, it now does not lose refs whey they point
+   at the same object.
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -38,6 +56,24 @@ Performance, Internal Implementation, Development Support etc.
  * Retire more names with "sha1" in it.
 
  * The topological walk codepath is covered by new trace2 stats.
+
+ * Update the Code-of-conduct to version 2.0 from the upstream (we've
+   been using version 1.4).
+
+ * "git mktag" validates its input using its own rules before writing
+   a tag object---it has been updated to share the logic with "git
+   fsck".
+
+ * Two new ways to feed configuration variable-value pairs via
+   environment variables have been introduced, and the way
+   GIT_CONFIG_PARAMETERS encodes variable/value pairs has been tweaked
+   to make it more robust.
+
+ * Tests have been updated so that they do not to get affected by the
+   name of the default branch "git init" creates.
+
+ * "git fetch" learns to treat ref updates atomically in all-or-none
+   fashion, just like "git push" does, with the new "--atomic" option.
 
 
 Fixes since v2.30
@@ -71,6 +107,26 @@ Fixes since v2.30
  * Fix for procedure to building CI test environment for mac.
    (merge 3831132ace jc/macos-install-dependencies-fix later to maint).
 
+ * The implementation of "git branch --sort" wrt the detached HEAD
+   display has always been hacky, which has been cleaned up.
+   (merge 4045f659bd ab/branch-sort later to maint).
+
+ * Newline characters in the host and path part of git:// URL are
+   now forbidden.
+   (merge 6aed56736b jk/forbid-lf-in-git-url later to maint).
+
+ * "git diff" showed a submodule working tree with untracked cruft as
+   "Submodule commit <objectname>-dirty", but a natural expectation is
+   that the "-dirty" indicator would align with "git describe --dirty",
+   which does not consider having untracked files in the working tree
+   as source of dirtiness.  The inconsistency has been fixed.
+
+ * When more than one commit with the same patch ID appears on one
+   side, "git log --cherry-pick A...B" did not exclude them all when a
+   commit with the same patch ID appears on the other side.  Now it
+   does.
+   (merge c9e3a4e76d jk/log-cherry-pick-duplicate-patches later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 505a276596 pk/subsub-fetch-fix-take-2 later to maint).
    (merge 33fc56253b fc/t6030-bisect-reset-removes-auxiliary-files later to maint).
@@ -89,3 +145,4 @@ Fixes since v2.30
    (merge 52fc4f195c dl/p4-encode-after-kw-expansion later to maint).
    (merge 4eb56b56e7 bc/doc-status-short later to maint).
    (merge a4a1ca22ef tb/local-clone-race-doc later to maint).
+   (merge 6a8c89d053 ma/more-opaque-lock-file later to maint).
