@@ -419,7 +419,7 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 {
 	struct packed_git *p = IN_PACK(entry);
 	struct pack_window *w_curs = NULL;
-	struct revindex_entry *revidx;
+	uint32_t pos;
 	off_t offset;
 	enum object_type type = oe_type(entry);
 	off_t datalen;
@@ -436,10 +436,15 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 					      type, entry_size);
 
 	offset = entry->in_pack_offset;
-	revidx = find_pack_revindex(p, offset);
-	datalen = revidx[1].offset - offset;
+	if (offset_to_pack_pos(p, offset, &pos) < 0)
+		die(_("write_reuse_object: could not locate %s, expected at "
+		      "offset %"PRIuMAX" in pack %s"),
+		    oid_to_hex(&entry->idx.oid), (uintmax_t)offset,
+		    p->pack_name);
+	datalen = pack_pos_to_offset(p, pos + 1) - offset;
 	if (!pack_to_stdout && p->index_version > 1 &&
-	    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr)) {
+	    check_pack_crc(p, &w_curs, offset, datalen,
+			   pack_pos_to_index(p, pos))) {
 		error(_("bad packed object CRC for %s"),
 		      oid_to_hex(&entry->idx.oid));
 		unuse_pack(&w_curs);
@@ -863,8 +868,8 @@ static void write_reused_pack_one(size_t pos, struct hashfile *out,
 	enum object_type type;
 	unsigned long size;
 
-	offset = reuse_packfile->revindex[pos].offset;
-	next = reuse_packfile->revindex[pos + 1].offset;
+	offset = pack_pos_to_offset(reuse_packfile, pos);
+	next = pack_pos_to_offset(reuse_packfile, pos + 1);
 
 	record_reused_object(offset, offset - hashfile_total(out));
 
@@ -884,11 +889,17 @@ static void write_reused_pack_one(size_t pos, struct hashfile *out,
 
 		/* Convert to REF_DELTA if we must... */
 		if (!allow_ofs_delta) {
-			int base_pos = find_revindex_position(reuse_packfile, base_offset);
+			uint32_t base_pos;
 			struct object_id base_oid;
 
+			if (offset_to_pack_pos(reuse_packfile, base_offset, &base_pos) < 0)
+				die(_("expected object at offset %"PRIuMAX" "
+				      "in pack %s"),
+				    (uintmax_t)base_offset,
+				    reuse_packfile->pack_name);
+
 			nth_packed_object_id(&base_oid, reuse_packfile,
-					     reuse_packfile->revindex[base_pos].nr);
+					     pack_pos_to_index(reuse_packfile, base_pos));
 
 			len = encode_in_pack_object_header(header, sizeof(header),
 							   OBJ_REF_DELTA, size);
@@ -941,7 +952,7 @@ static size_t write_reused_pack_verbatim(struct hashfile *out,
 		off_t to_write;
 
 		written = (pos * BITS_IN_EWORD);
-		to_write = reuse_packfile->revindex[written].offset
+		to_write = pack_pos_to_offset(reuse_packfile, written)
 			- sizeof(struct pack_header);
 
 		/* We're recording one chunk, not one object. */
@@ -1806,11 +1817,11 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 				goto give_up;
 			}
 			if (reuse_delta && !entry->preferred_base) {
-				struct revindex_entry *revidx;
-				revidx = find_pack_revindex(p, ofs);
-				if (!revidx)
+				uint32_t pos;
+				if (offset_to_pack_pos(p, ofs, &pos) < 0)
 					goto give_up;
-				if (!nth_packed_object_id(&base_ref, p, revidx->nr))
+				if (!nth_packed_object_id(&base_ref, p,
+							  pack_pos_to_index(p, pos)))
 					have_base = 1;
 			}
 			entry->in_pack_header_size = used + used_0;
