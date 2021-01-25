@@ -226,7 +226,7 @@ commit commentary), a blame viewer will not care.
 MAPPING AUTHORS
 ---------------
 
-include::mailmap.txt[]
+See linkgit:gitmailmap[5].
 
 
 SEE ALSO

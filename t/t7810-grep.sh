@@ -690,21 +690,9 @@ test_expect_success 'grep -C1 hunk mark between files' '
 '
 
 test_expect_success 'log grep setup' '
-	echo a >>file &&
-	test_tick &&
-	GIT_AUTHOR_NAME="With * Asterisk" \
-	GIT_AUTHOR_EMAIL="xyzzy@frotz.com" \
-	git commit -a -m "second" &&
-
-	echo a >>file &&
-	test_tick &&
-	git commit -a -m "third" &&
-
-	echo a >>file &&
-	test_tick &&
-	GIT_AUTHOR_NAME="Night Fall" \
-	GIT_AUTHOR_EMAIL="nitfol@frobozz.com" \
-	git commit -a -m "fourth"
+	test_commit --append --author "With * Asterisk <xyzzy@frotz.com>" second file a &&
+	test_commit --append third file a &&
+	test_commit --append --author "Night Fall <nitfol@frobozz.com>" fourth file a
 '
 
 test_expect_success 'log grep (1)' '

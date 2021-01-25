@@ -178,19 +178,28 @@ debug () {
 	GIT_DEBUGGER="${GIT_DEBUGGER}" "$@" <&6 >&5 2>&7
 }
 
-# Call test_commit with the arguments
-# [-C <directory>] <message> [<file> [<contents> [<tag>]]]"
+# Usage: test_commit [options] <message> [<file> [<contents> [<tag>]]]
+#   -C <dir>:
+#	Run all git commands in directory <dir>
+#   --notick
+#	Do not call test_tick before making a commit
+#   --append
+#	Use "echo >>" instead of "echo >" when writing "<contents>" to
+#	"<file>"
+#   --signoff
+#	Invoke "git commit" with --signoff
+#   --author=<author>
+#	Invoke "git commit" with --author=<author>
 #
 # This will commit a file with the given contents and the given commit
 # message, and tag the resulting commit with the given tag name.
 #
 # <file>, <contents>, and <tag> all default to <message>.
-#
-# If the first argument is "-C", the second argument is used as a path for
-# the git invocations.
 
 test_commit () {
 	notick= &&
+	append= &&
+	author= &&
 	signoff= &&
 	indir= &&
 	while test $# != 0
@@ -198,6 +207,13 @@ test_commit () {
 		case "$1" in
 		--notick)
 			notick=yes
+			;;
+		--append)
+			append=yes
+			;;
+		--author)
+			author="$2"
+			shift
 			;;
 		--signoff)
 			signoff="$1"
@@ -214,13 +230,20 @@ test_commit () {
 	done &&
 	indir=${indir:+"$indir"/} &&
 	file=${2:-"$1.t"} &&
-	echo "${3-$1}" > "$indir$file" &&
+	if test -n "$append"
+	then
+		echo "${3-$1}" >>"$indir$file"
+	else
+		echo "${3-$1}" >"$indir$file"
+	fi &&
 	git ${indir:+ -C "$indir"} add "$file" &&
 	if test -z "$notick"
 	then
 		test_tick
 	fi &&
-	git ${indir:+ -C "$indir"} commit $signoff -m "$1" &&
+	git ${indir:+ -C "$indir"} commit \
+	    ${author:+ --author "$author"} \
+	    $signoff -m "$1" &&
 	git ${indir:+ -C "$indir"} tag "${4:-$1}"
 }
 
