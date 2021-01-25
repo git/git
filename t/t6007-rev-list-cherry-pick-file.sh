@@ -248,6 +248,18 @@ test_expect_success '--count --left-right' '
 	test_cmp expect actual
 '
 
+test_expect_success '--cherry-pick with duplicates on each side' '
+	git checkout -b dup-orig &&
+	test_commit dup-base &&
+	git revert dup-base &&
+	git cherry-pick dup-base &&
+	git checkout -b dup-side HEAD~3 &&
+	test_tick &&
+	git cherry-pick -3 dup-orig &&
+	git rev-list --cherry-pick dup-orig...dup-side >actual &&
+	test_must_be_empty actual
+'
+
 # Corrupt the object store deliberately to make sure
 # the object is not even checked for its existence.
 remove_loose_object () {
