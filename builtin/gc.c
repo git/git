@@ -92,7 +92,7 @@ static void process_log_file(void)
 		 */
 		int saved_errno = errno;
 		fprintf(stderr, _("Failed to fstat %s: %s"),
-			get_tempfile_path(log_lock.tempfile),
+			get_lock_file_path(&log_lock),
 			strerror(saved_errno));
 		fflush(stderr);
 		commit_lock_file(&log_lock);
@@ -1953,11 +1953,11 @@ static int update_background_schedule(int enable)
 		return error(_("another process is scheduling background maintenance"));
 
 	if (!strcmp(scheduler, "launchctl"))
-		result = launchctl_update_schedule(enable, lk.tempfile->fd, cmd);
+		result = launchctl_update_schedule(enable, get_lock_file_fd(&lk), cmd);
 	else if (!strcmp(scheduler, "schtasks"))
-		result = schtasks_update_schedule(enable, lk.tempfile->fd, cmd);
+		result = schtasks_update_schedule(enable, get_lock_file_fd(&lk), cmd);
 	else if (!strcmp(scheduler, "crontab"))
-		result = crontab_update_schedule(enable, lk.tempfile->fd, cmd);
+		result = crontab_update_schedule(enable, get_lock_file_fd(&lk), cmd);
 	else
 		die("unknown background scheduler: %s", scheduler);
 

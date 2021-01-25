@@ -1824,12 +1824,12 @@ static int create_symref_locked(struct files_ref_store *refs,
 
 	if (!fdopen_lock_file(&lock->lk, "w"))
 		return error("unable to fdopen %s: %s",
-			     lock->lk.tempfile->filename.buf, strerror(errno));
+			     get_lock_file_path(&lock->lk), strerror(errno));
 
 	update_symref_reflog(refs, lock, refname, target, logmsg);
 
 	/* no error check; commit_ref will check ferror */
-	fprintf(lock->lk.tempfile->fp, "ref: %s\n", target);
+	fprintf(get_lock_file_fp(&lock->lk), "ref: %s\n", target);
 	if (commit_ref(lock) < 0)
 		return error("unable to write symref for %s: %s", refname,
 			     strerror(errno));
