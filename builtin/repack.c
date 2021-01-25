@@ -209,6 +209,7 @@ static struct {
 } exts[] = {
 	{".pack"},
 	{".idx"},
+	{".rev", 1},
 	{".bitmap", 1},
 	{".promisor", 1},
 };
