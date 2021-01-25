@@ -39,6 +39,8 @@ relationship between packs and objects is as follows:
 master_repo=master.git
 shared_repo=shared.git
 
+git_pack_redundant='git pack-redundant --i-still-use-this'
+
 # Create commits in <repo> and assign each commit's oid to shell variables
 # given in the arguments (A, B, and C). E.g.:
 #
@@ -118,7 +120,7 @@ test_expect_success 'master: pack-redundant works with no packfile' '
 		cat >expect <<-EOF &&
 			fatal: Zero packs found!
 			EOF
-		test_must_fail git pack-redundant --all >actual 2>&1 &&
+		test_must_fail $git_pack_redundant --all >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -146,7 +148,7 @@ test_expect_success 'master: pack-redundant works with one packfile' '
 		EOF
 	(
 		cd "$master_repo" &&
-		git pack-redundant --all >out &&
+		$git_pack_redundant --all >out &&
 		test_must_be_empty out
 	)
 '
@@ -183,7 +185,7 @@ test_expect_success 'master: no redundant for pack 1, 2, 3' '
 		EOF
 	(
 		cd "$master_repo" &&
-		git pack-redundant --all >out &&
+		$git_pack_redundant --all >out &&
 		test_must_be_empty out
 	)
 '
@@ -221,7 +223,7 @@ test_expect_success 'master: one of pack-2/pack-3 is redundant' '
 		cat >expect <<-EOF &&
 			P3:$P3
 			EOF
-		git pack-redundant --all >out &&
+		$git_pack_redundant --all >out &&
 		format_packfiles <out >actual &&
 		test_cmp expect actual
 	)
@@ -260,7 +262,7 @@ test_expect_success 'master: pack 2, 4, and 6 are redundant' '
 			P4:$P4
 			P6:$P6
 			EOF
-		git pack-redundant --all >out &&
+		$git_pack_redundant --all >out &&
 		format_packfiles <out >actual &&
 		test_cmp expect actual
 	)
@@ -295,7 +297,7 @@ test_expect_success 'master: pack-8 (subset of pack-1) is also redundant' '
 			P6:$P6
 			P8:$P8
 			EOF
-		git pack-redundant --all >out &&
+		$git_pack_redundant --all >out &&
 		format_packfiles <out >actual &&
 		test_cmp expect actual
 	)
@@ -313,9 +315,9 @@ test_expect_success 'master: clean loose objects' '
 test_expect_success 'master: remove redundant packs and pass fsck' '
 	(
 		cd "$master_repo" &&
-		git pack-redundant --all | xargs rm &&
+		$git_pack_redundant --all | xargs rm &&
 		git fsck &&
-		git pack-redundant --all >out &&
+		$git_pack_redundant --all >out &&
 		test_must_be_empty out
 	)
 '
@@ -333,7 +335,7 @@ test_expect_success 'setup shared.git' '
 test_expect_success 'shared: all packs are redundant, but no output without --alt-odb' '
 	(
 		cd "$shared_repo" &&
-		git pack-redundant --all >out &&
+		$git_pack_redundant --all >out &&
 		test_must_be_empty out
 	)
 '
@@ -372,7 +374,7 @@ test_expect_success 'shared: show redundant packs in stderr for verbose mode' '
 			P5:$P5
 			P7:$P7
 			EOF
-		git pack-redundant --all --verbose >out 2>out.err &&
+		$git_pack_redundant --all --verbose >out 2>out.err &&
 		test_must_be_empty out &&
 		grep "pack$" out.err | format_packfiles >actual &&
 		test_cmp expect actual
@@ -385,9 +387,9 @@ test_expect_success 'shared: remove redundant packs, no packs left' '
 		cat >expect <<-EOF &&
 			fatal: Zero packs found!
 			EOF
-		git pack-redundant --all --alt-odb | xargs rm &&
+		$git_pack_redundant --all --alt-odb | xargs rm &&
 		git fsck &&
-		test_must_fail git pack-redundant --all --alt-odb >actual 2>&1 &&
+		test_must_fail $git_pack_redundant --all --alt-odb >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -415,7 +417,7 @@ test_expect_success 'shared: create new objects and packs' '
 test_expect_success 'shared: no redundant without --alt-odb' '
 	(
 		cd "$shared_repo" &&
-		git pack-redundant --all >out &&
+		$git_pack_redundant --all >out &&
 		test_must_be_empty out
 	)
 '
@@ -446,7 +448,7 @@ test_expect_success 'shared: no redundant without --alt-odb' '
 test_expect_success 'shared: one pack is redundant with --alt-odb' '
 	(
 		cd "$shared_repo" &&
-		git pack-redundant --all --alt-odb >out &&
+		$git_pack_redundant --all --alt-odb >out &&
 		format_packfiles <out >actual &&
 		test_line_count = 1 actual
 	)
@@ -483,7 +485,7 @@ test_expect_success 'shared: ignore unique objects and all two packs are redunda
 			Px1:$Px1
 			Px2:$Px2
 			EOF
-		git pack-redundant --all --alt-odb >out <<-EOF &&
+		$git_pack_redundant --all --alt-odb >out <<-EOF &&
 			$X
 			$Y
 			$Z
