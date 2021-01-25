@@ -1110,7 +1110,7 @@ static int check_submodule_url(const char *url)
 	if (looks_like_command_line_option(url))
 		return -1;
 
-	if (submodule_url_is_relative(url)) {
+	if (submodule_url_is_relative(url) || starts_with(url, "git://")) {
 		char *decoded;
 		const char *next;
 		int has_nl;
