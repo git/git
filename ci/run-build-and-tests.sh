@@ -24,6 +24,7 @@ linux-gcc)
 	export GIT_TEST_MULTI_PACK_INDEX=1
 	export GIT_TEST_ADD_I_USE_BUILTIN=1
 	export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+	export GIT_TEST_WRITE_REV_INDEX=1
 	make test
 	;;
 linux-clang)

@@ -16,8 +16,11 @@
  *   can be found
  */
 
+
 #define RIDX_SIGNATURE 0x52494458 /* "RIDX" */
 #define RIDX_VERSION 1
+
+#define GIT_TEST_WRITE_REV_INDEX "GIT_TEST_WRITE_REV_INDEX"
 
 struct packed_git;
 
