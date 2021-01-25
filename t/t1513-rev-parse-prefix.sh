@@ -2,6 +2,9 @@
 
 test_description='Tests for rev-parse --prefix'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -76,9 +79,9 @@ test_expect_success 'disambiguate path with valid prefix' '
 '
 
 test_expect_success 'file and refs with prefix' '
-	git rev-parse --prefix sub1/ master file1 >actual &&
+	git rev-parse --prefix sub1/ main file1 >actual &&
 	cat <<-EOF >expected &&
-	$(git rev-parse master)
+	$(git rev-parse main)
 	sub1/file1
 	EOF
 	test_cmp expected actual

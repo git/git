@@ -2,6 +2,9 @@
 
 test_description='remote tracking stats'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 advance () {
@@ -34,7 +37,7 @@ test_expect_success setup '
 		git branch -d brokenbase &&
 		git checkout -b b6 origin
 	) &&
-	git checkout -b follower --track master &&
+	git checkout -b follower --track main &&
 	advance h
 '
 
@@ -58,12 +61,12 @@ test_expect_success 'branch -v' '
 '
 
 cat >expect <<\EOF
-b1 [origin/master: ahead 1, behind 1] d
-b2 [origin/master: ahead 1, behind 1] d
-b3 [origin/master: behind 1] b
-b4 [origin/master: ahead 2] f
+b1 [origin/main: ahead 1, behind 1] d
+b2 [origin/main: ahead 1, behind 1] d
+b3 [origin/main: behind 1] b
+b4 [origin/main: ahead 2] f
 b5 [brokenbase: gone] g
-b6 [origin/master] c
+b6 [origin/main] c
 EOF
 
 test_expect_success 'branch -vv' '
@@ -83,7 +86,7 @@ test_expect_success 'checkout (diverged from upstream)' '
 '
 
 test_expect_success 'checkout with local tracked branch' '
-	git checkout master &&
+	git checkout main &&
 	git checkout follower >actual &&
 	test_i18ngrep "is ahead of" actual
 '
@@ -100,7 +103,7 @@ test_expect_success 'checkout (up-to-date with upstream)' '
 	(
 		cd test && git checkout b6
 	) >actual &&
-	test_i18ngrep "Your branch is up to date with .origin/master" actual
+	test_i18ngrep "Your branch is up to date with .origin/main" actual
 '
 
 test_expect_success 'status (diverged from upstream)' '
@@ -130,11 +133,11 @@ test_expect_success 'status (up-to-date with upstream)' '
 		# reports nothing to commit
 		test_must_fail git commit --dry-run
 	) >actual &&
-	test_i18ngrep "Your branch is up to date with .origin/master" actual
+	test_i18ngrep "Your branch is up to date with .origin/main" actual
 '
 
 cat >expect <<\EOF
-## b1...origin/master [ahead 1, behind 1]
+## b1...origin/main [ahead 1, behind 1]
 EOF
 
 test_expect_success 'status -s -b (diverged from upstream)' '
@@ -147,7 +150,7 @@ test_expect_success 'status -s -b (diverged from upstream)' '
 '
 
 cat >expect <<\EOF
-## b1...origin/master [different]
+## b1...origin/main [different]
 EOF
 
 test_expect_success 'status -s -b --no-ahead-behind (diverged from upstream)' '
@@ -160,7 +163,7 @@ test_expect_success 'status -s -b --no-ahead-behind (diverged from upstream)' '
 '
 
 cat >expect <<\EOF
-## b1...origin/master [different]
+## b1...origin/main [different]
 EOF
 
 test_expect_success 'status.aheadbehind=false status -s -b (diverged from upstream)' '
@@ -174,7 +177,7 @@ test_expect_success 'status.aheadbehind=false status -s -b (diverged from upstre
 
 cat >expect <<\EOF
 On branch b1
-Your branch and 'origin/master' have diverged,
+Your branch and 'origin/main' have diverged,
 and have 1 and 1 different commits each, respectively.
 EOF
 
@@ -198,7 +201,7 @@ test_expect_success 'status --long --branch' '
 
 cat >expect <<\EOF
 On branch b1
-Your branch and 'origin/master' refer to different commits.
+Your branch and 'origin/main' refer to different commits.
 EOF
 
 test_expect_success 'status --long --branch --no-ahead-behind' '
@@ -233,7 +236,7 @@ test_expect_success 'status -s -b (upstream is gone)' '
 '
 
 cat >expect <<\EOF
-## b6...origin/master
+## b6...origin/main
 EOF
 
 test_expect_success 'status -s -b (up-to-date with upstream)' '
@@ -246,7 +249,7 @@ test_expect_success 'status -s -b (up-to-date with upstream)' '
 '
 
 test_expect_success 'fail to track lightweight tags' '
-	git checkout master &&
+	git checkout main &&
 	git tag light &&
 	test_must_fail git branch --track lighttrack light >actual &&
 	test_i18ngrep ! "set up to track" actual &&
@@ -254,7 +257,7 @@ test_expect_success 'fail to track lightweight tags' '
 '
 
 test_expect_success 'fail to track annotated tags' '
-	git checkout master &&
+	git checkout main &&
 	git tag -m heavy heavy &&
 	test_must_fail git branch --track heavytrack heavy >actual &&
 	test_i18ngrep ! "set up to track" actual &&
@@ -262,17 +265,17 @@ test_expect_success 'fail to track annotated tags' '
 '
 
 test_expect_success '--set-upstream-to does not change branch' '
-	git branch from-master master &&
-	git branch --set-upstream-to master from-master &&
-	git branch from-topic_2 master &&
+	git branch from-main main &&
+	git branch --set-upstream-to main from-main &&
+	git branch from-topic_2 main &&
 	test_must_fail git config branch.from-topic_2.merge > actual &&
 	git rev-list from-topic_2 &&
 	git update-ref refs/heads/from-topic_2 from-topic_2^ &&
 	git rev-parse from-topic_2 >expect2 &&
-	git branch --set-upstream-to master from-topic_2 &&
-	git config branch.from-master.merge > actual &&
+	git branch --set-upstream-to main from-topic_2 &&
+	git config branch.from-main.merge > actual &&
 	git rev-parse from-topic_2 >actual2 &&
-	grep -q "^refs/heads/master$" actual &&
+	grep -q "^refs/heads/main$" actual &&
 	cmp expect2 actual2
 '
 
@@ -280,11 +283,11 @@ test_expect_success '--set-upstream-to @{-1}' '
 	git checkout follower &&
 	git checkout from-topic_2 &&
 	git config branch.from-topic_2.merge > expect2 &&
-	git branch --set-upstream-to @{-1} from-master &&
-	git config branch.from-master.merge > actual &&
+	git branch --set-upstream-to @{-1} from-main &&
+	git config branch.from-main.merge > actual &&
 	git config branch.from-topic_2.merge > actual2 &&
-	git branch --set-upstream-to follower from-master &&
-	git config branch.from-master.merge > expect &&
+	git branch --set-upstream-to follower from-main &&
+	git config branch.from-main.merge > expect &&
 	test_cmp expect2 actual2 &&
 	test_cmp expect actual
 '

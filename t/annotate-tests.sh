@@ -95,7 +95,7 @@ test_expect_success 'blame 2 authors' '
 '
 
 test_expect_success 'setup B1 lines (branch1)' '
-	git checkout -b branch1 master &&
+	git checkout -b branch1 main &&
 	echo "3A slow green fox jumps into the" >>file &&
 	echo "well." >>file &&
 	GIT_AUTHOR_NAME="B1" GIT_AUTHOR_EMAIL="B1@test.git" \
@@ -107,7 +107,7 @@ test_expect_success 'blame 2 authors + 1 branch1 author' '
 '
 
 test_expect_success 'setup B2 lines (branch2)' '
-	git checkout -b branch2 master &&
+	git checkout -b branch2 main &&
 	sed -e "s/2A quick brown/4A quick brown lazy dog/" <file >file.new &&
 	mv file.new file &&
 	GIT_AUTHOR_NAME="B2" GIT_AUTHOR_EMAIL="B2@test.git" \
@@ -131,11 +131,11 @@ test_expect_success 'blame --first-parent blames merge for branch1' '
 '
 
 test_expect_success 'blame ancestor' '
-	check_count -h master A 2 B 2
+	check_count -h main A 2 B 2
 '
 
 test_expect_success 'blame great-ancestor' '
-	check_count -h master^ A 2
+	check_count -h main^ A 2
 '
 
 test_expect_success 'setup evil merge' '

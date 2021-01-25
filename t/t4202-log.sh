@@ -2,6 +2,9 @@
 
 test_description='git log'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 . "$TEST_DIRECTORY/lib-terminal.sh"
@@ -478,7 +481,7 @@ test_expect_success 'set up merge history' '
 	git checkout -b side HEAD~4 &&
 	test_commit side-1 1 1 &&
 	test_commit side-2 2 2 &&
-	git checkout master &&
+	git checkout main &&
 	git merge side
 '
 
@@ -541,17 +544,17 @@ test_expect_success 'log --graph with merge with log.graphColors' '
 '
 
 test_expect_success 'log --raw --graph -m with merge' '
-	git log --raw --graph --oneline -m master | head -n 500 >actual &&
+	git log --raw --graph --oneline -m main | head -n 500 >actual &&
 	grep "initial" actual
 '
 
 test_expect_success 'diff-tree --graph' '
-	git diff-tree --graph master^ | head -n 500 >actual &&
+	git diff-tree --graph main^ | head -n 500 >actual &&
 	grep "one" actual
 '
 
 cat > expect <<\EOF
-*   commit master
+*   commit main
 |\  Merge: A B
 | | Author: A U Thor <author@example.com>
 | |
@@ -567,22 +570,22 @@ cat > expect <<\EOF
 | |
 | |     side-1
 | |
-* | commit master~1
+* | commit main~1
 | | Author: A U Thor <author@example.com>
 | |
 | |     Second
 | |
-* | commit master~2
+* | commit main~2
 | | Author: A U Thor <author@example.com>
 | |
 | |     sixth
 | |
-* | commit master~3
+* | commit main~3
 | | Author: A U Thor <author@example.com>
 | |
 | |     fifth
 | |
-* | commit master~4
+* | commit main~4
 |/  Author: A U Thor <author@example.com>
 |
 |       fourth
@@ -613,19 +616,19 @@ test_expect_success 'log --graph with full output' '
 test_expect_success 'set up more tangled history' '
 	git checkout -b tangle HEAD~6 &&
 	test_commit tangle-a tangle-a a &&
-	git merge master~3 &&
+	git merge main~3 &&
 	git merge side~1 &&
-	git checkout master &&
+	git checkout main &&
 	git merge tangle &&
 	git checkout -b reach &&
 	test_commit reach &&
-	git checkout master &&
+	git checkout main &&
 	git checkout -b octopus-a &&
 	test_commit octopus-a &&
-	git checkout master &&
+	git checkout main &&
 	git checkout -b octopus-b &&
 	test_commit octopus-b &&
-	git checkout master &&
+	git checkout main &&
 	test_commit seventh &&
 	git merge octopus-a octopus-b &&
 	git merge reach
@@ -650,7 +653,7 @@ cat > expect <<\EOF
 |\
 | *   Merge branch 'side' (early part) into tangle
 | |\
-| * \   Merge branch 'master' (early part) into tangle
+| * \   Merge branch 'main' (early part) into tangle
 | |\ \
 | * | | tangle-a
 * | | |   Merge branch 'side'
@@ -794,7 +797,7 @@ test_expect_success 'multiple decorate-refs' '
 
 test_expect_success 'decorate-refs-exclude with glob' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach (HEAD -> master)
+	Merge-tag-reach (HEAD -> main)
 	Merge-tags-octopus-a-and-octopus-b
 	seventh (tag: seventh)
 	octopus-b (tag: octopus-b)
@@ -811,7 +814,7 @@ test_expect_success 'decorate-refs-exclude with glob' '
 
 test_expect_success 'decorate-refs-exclude without globs' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach (HEAD -> master)
+	Merge-tag-reach (HEAD -> main)
 	Merge-tags-octopus-a-and-octopus-b
 	seventh (tag: seventh)
 	octopus-b (tag: octopus-b, octopus-b)
@@ -828,7 +831,7 @@ test_expect_success 'decorate-refs-exclude without globs' '
 
 test_expect_success 'multiple decorate-refs-exclude' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach (HEAD -> master)
+	Merge-tag-reach (HEAD -> main)
 	Merge-tags-octopus-a-and-octopus-b
 	seventh (tag: seventh)
 	octopus-b (tag: octopus-b)
@@ -851,7 +854,7 @@ test_expect_success 'multiple decorate-refs-exclude' '
 
 test_expect_success 'decorate-refs and decorate-refs-exclude' '
 	cat >expect.no-decorate <<-\EOF &&
-	Merge-tag-reach (master)
+	Merge-tag-reach (main)
 	Merge-tags-octopus-a-and-octopus-b
 	seventh
 	octopus-b
@@ -866,7 +869,7 @@ test_expect_success 'decorate-refs and decorate-refs-exclude' '
 
 test_expect_success 'deocrate-refs and log.excludeDecoration' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach (master)
+	Merge-tag-reach (main)
 	Merge-tags-octopus-a-and-octopus-b
 	seventh
 	octopus-b (octopus-b)
@@ -881,7 +884,7 @@ test_expect_success 'deocrate-refs and log.excludeDecoration' '
 
 test_expect_success 'decorate-refs-exclude and simplify-by-decoration' '
 	cat >expect.decorate <<-\EOF &&
-	Merge-tag-reach (HEAD -> master)
+	Merge-tag-reach (HEAD -> main)
 	reach (tag: reach, reach)
 	seventh (tag: seventh)
 	Merge-branch-tangle
@@ -1080,7 +1083,7 @@ cat >expect <<\EOF
 | |\ \  Merge: MERGE_PARENTS
 | | | | Author: A U Thor <author@example.com>
 | | | |
-| | | |     Merge branch 'master' (early part) into tangle
+| | | |     Merge branch 'main' (early part) into tangle
 | | | |
 | * | | commit COMMIT_OBJECT_NAME
 | | | | Author: A U Thor <author@example.com>
@@ -1355,7 +1358,7 @@ cat >expect <<\EOF
 *** | |\ \  Merge: MERGE_PARENTS
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
-*** | | | |     Merge branch 'master' (early part) into tangle
+*** | | | |     Merge branch 'main' (early part) into tangle
 *** | | | |
 *** | * | | commit COMMIT_OBJECT_NAME
 *** | | | | Author: A U Thor <author@example.com>
@@ -1588,24 +1591,24 @@ test_expect_success 'dotdot is a parent directory' '
 '
 
 test_expect_success GPG 'setup signed branch' '
-	test_when_finished "git reset --hard && git checkout master" &&
-	git checkout -b signed master &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b signed main &&
 	echo foo >foo &&
 	git add foo &&
 	git commit -S -m signed_commit
 '
 
 test_expect_success GPG 'setup signed branch with subkey' '
-	test_when_finished "git reset --hard && git checkout master" &&
-	git checkout -b signed-subkey master &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b signed-subkey main &&
 	echo foo >foo &&
 	git add foo &&
 	git commit -SB7227189 -m signed_commit
 '
 
 test_expect_success GPGSM 'setup signed branch x509' '
-	test_when_finished "git reset --hard && git checkout master" &&
-	git checkout -b signed-x509 master &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b signed-x509 main &&
 	echo foo >foo &&
 	git add foo &&
 	test_config gpg.format x509 &&
@@ -1638,12 +1641,12 @@ test_expect_success GPGSM 'log --graph --show-signature x509' '
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag' '
-	test_when_finished "git reset --hard && git checkout master" &&
-	git checkout -b plain master &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b plain main &&
 	echo aaa >bar &&
 	git add bar &&
 	git commit -m bar_commit &&
-	git checkout -b tagged master &&
+	git checkout -b tagged main &&
 	echo bbb >baz &&
 	git add baz &&
 	git commit -m baz_commit &&
@@ -1657,12 +1660,12 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag in shallow clone' '
-	test_when_finished "git reset --hard && git checkout master" &&
-	git checkout -b plain-shallow master &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b plain-shallow main &&
 	echo aaa >bar &&
 	git add bar &&
 	git commit -m bar_commit &&
-	git checkout --detach master &&
+	git checkout --detach main &&
 	echo bbb >baz &&
 	git add baz &&
 	git commit -m baz_commit &&
@@ -1677,12 +1680,12 @@ test_expect_success GPG 'log --graph --show-signature for merged tag in shallow 
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag with missing key' '
-	test_when_finished "git reset --hard && git checkout master" &&
-	git checkout -b plain-nokey master &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b plain-nokey main &&
 	echo aaa >bar &&
 	git add bar &&
 	git commit -m bar_commit &&
-	git checkout -b tagged-nokey master &&
+	git checkout -b tagged-nokey main &&
 	echo bbb >baz &&
 	git add baz &&
 	git commit -m baz_commit &&
@@ -1696,12 +1699,12 @@ test_expect_success GPG 'log --graph --show-signature for merged tag with missin
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag with bad signature' '
-	test_when_finished "git reset --hard && git checkout master" &&
-	git checkout -b plain-bad master &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b plain-bad main &&
 	echo aaa >bar &&
 	git add bar &&
 	git commit -m bar_commit &&
-	git checkout -b tagged-bad master &&
+	git checkout -b tagged-bad main &&
 	echo bbb >baz &&
 	git add baz &&
 	git commit -m baz_commit &&
@@ -1718,12 +1721,12 @@ test_expect_success GPG 'log --graph --show-signature for merged tag with bad si
 '
 
 test_expect_success GPG 'log --show-signature for merged tag with GPG failure' '
-	test_when_finished "git reset --hard && git checkout master" &&
-	git checkout -b plain-fail master &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b plain-fail main &&
 	echo aaa >bar &&
 	git add bar &&
 	git commit -m bar_commit &&
-	git checkout -b tagged-fail master &&
+	git checkout -b tagged-fail main &&
 	echo bbb >baz &&
 	git add baz &&
 	git commit -m baz_commit &&
@@ -1737,14 +1740,14 @@ test_expect_success GPG 'log --show-signature for merged tag with GPG failure' '
 '
 
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
-	test_when_finished "git reset --hard && git checkout master" &&
+	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
 	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
-	git checkout -b plain-x509 master &&
+	git checkout -b plain-x509 main &&
 	echo aaa >bar &&
 	git add bar &&
 	git commit -m bar_commit &&
-	git checkout -b tagged-x509 master &&
+	git checkout -b tagged-x509 main &&
 	echo bbb >baz &&
 	git add baz &&
 	git commit -m baz_commit &&
@@ -1758,14 +1761,14 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 '
 
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 missing key' '
-	test_when_finished "git reset --hard && git checkout master" &&
+	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
 	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
-	git checkout -b plain-x509-nokey master &&
+	git checkout -b plain-x509-nokey main &&
 	echo aaa >bar &&
 	git add bar &&
 	git commit -m bar_commit &&
-	git checkout -b tagged-x509-nokey master &&
+	git checkout -b tagged-x509-nokey main &&
 	echo bbb >baz &&
 	git add baz &&
 	git commit -m baz_commit &&
@@ -1778,14 +1781,14 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 miss
 '
 
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 bad signature' '
-	test_when_finished "git reset --hard && git checkout master" &&
+	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
 	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
-	git checkout -b plain-x509-bad master &&
+	git checkout -b plain-x509-bad main &&
 	echo aaa >bar &&
 	git add bar &&
 	git commit -m bar_commit &&
-	git checkout -b tagged-x509-bad master &&
+	git checkout -b tagged-x509-bad main &&
 	echo bbb >baz &&
 	git add baz &&
 	git commit -m baz_commit &&
@@ -1835,7 +1838,7 @@ test_expect_success 'log diagnoses bogus HEAD' '
 	git init empty &&
 	test_must_fail git -C empty log 2>stderr &&
 	test_i18ngrep does.not.have.any.commits stderr &&
-	echo 1234abcd >empty/.git/refs/heads/master &&
+	echo 1234abcd >empty/.git/refs/heads/main &&
 	test_must_fail git -C empty log 2>stderr &&
 	test_i18ngrep broken stderr &&
 	echo "ref: refs/heads/invalid.lock" >empty/.git/HEAD &&

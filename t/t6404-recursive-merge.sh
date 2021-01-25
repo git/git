@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='Test merge without common ancestors'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # This scenario is based on a real-world repository of Shawn Pearce.
@@ -19,11 +22,11 @@ test_expect_success 'setup tests' '
 	git add a1 &&
 	GIT_AUTHOR_DATE="2006-12-12 23:00:00" git commit -m 1 a1 &&
 
-	git checkout -b A master &&
+	git checkout -b A main &&
 	echo A >a1 &&
 	GIT_AUTHOR_DATE="2006-12-12 23:00:01" git commit -m A a1 &&
 
-	git checkout -b B master &&
+	git checkout -b B main &&
 	echo B >a1 &&
 	GIT_AUTHOR_DATE="2006-12-12 23:00:02" git commit -m B a1 &&
 

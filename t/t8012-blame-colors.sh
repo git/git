@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='colored git blame'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 PROG='git blame -c'

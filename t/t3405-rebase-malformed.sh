@@ -2,6 +2,9 @@
 
 test_description='rebase should handle arbitrary git message'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
@@ -52,7 +55,7 @@ test_expect_success setup '
 	git add file3 &&
 	git commit --allow-empty-message -m "" &&
 
-	git checkout master &&
+	git checkout main &&
 
 	echo One >file1 &&
 	test_tick &&
@@ -62,7 +65,7 @@ test_expect_success setup '
 
 test_expect_success 'rebase commit with multi-line subject' '
 
-	git rebase master multi-line-subject &&
+	git rebase main multi-line-subject &&
 	git cat-file commit HEAD | sed -e "1,/^\$/d" >F1 &&
 
 	test_cmp F0 F1 &&
@@ -70,14 +73,14 @@ test_expect_success 'rebase commit with multi-line subject' '
 '
 
 test_expect_success 'rebase commit with diff in message' '
-	git rebase master diff-in-message &&
+	git rebase main diff-in-message &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >G1 &&
 	test_cmp G0 G1 &&
 	test_cmp G G0
 '
 
 test_expect_success 'rebase -m commit with empty message' '
-	git rebase -m master empty-message-merge
+	git rebase -m main empty-message-merge
 '
 
 test_expect_success 'rebase -i commit with empty message' '

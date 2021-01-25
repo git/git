@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='various tests of reflog walk (log -g) behavior'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'set up some reflog entries' '
@@ -8,7 +11,7 @@ test_expect_success 'set up some reflog entries' '
 	test_commit two &&
 	git checkout -b side HEAD^ &&
 	test_commit three &&
-	git merge --no-commit master &&
+	git merge --no-commit main &&
 	echo evil-merge-content >>one.t &&
 	test_tick &&
 	git commit --no-edit -a
@@ -20,9 +23,9 @@ do_walk () {
 
 test_expect_success 'set up expected reflog' '
 	cat >expect.all <<-EOF
-	HEAD@{0} commit (merge): Merge branch ${SQ}master${SQ} into side
+	HEAD@{0} commit (merge): Merge branch ${SQ}main${SQ} into side
 	HEAD@{1} commit: three
-	HEAD@{2} checkout: moving from master to side
+	HEAD@{2} checkout: moving from main to side
 	HEAD@{3} commit: two
 	HEAD@{4} commit (initial): one
 	EOF
@@ -73,15 +76,15 @@ test_expect_success 'walking multiple reflogs shows all' '
 	#      sort ignores the bits after the timestamp.
 	#
 	#   2. POSIX leaves undefined whether this is a stable sort or not. So
-	#      we use "-k 1" to ensure that we see HEAD before master before
+	#      we use "-k 1" to ensure that we see HEAD before main before
 	#      side when breaking ties.
 	{
 		do_walk --date=unix HEAD &&
 		do_walk --date=unix side &&
-		do_walk --date=unix master
+		do_walk --date=unix main
 	} >expect.raw &&
 	sort -t "{" -k 2nr -k 1 <expect.raw >expect &&
-	do_walk --date=unix HEAD master side >actual &&
+	do_walk --date=unix HEAD main side >actual &&
 	test_cmp expect actual
 '
 

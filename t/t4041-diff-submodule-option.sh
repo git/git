@@ -9,6 +9,9 @@ test_description='Support for verbose submodule differences in git diff
 This test tries to verify the sanity of the --submodule option of git diff.
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Tested non-UTF-8 encoding
@@ -538,7 +541,7 @@ test_expect_success 'diff --submodule with objects referenced by alternates' '
 	(cd super &&
 		(cd sub &&
 			git fetch &&
-			git checkout origin/master
+			git checkout origin/main
 		) &&
 		git diff --submodule > ../actual
 	) &&

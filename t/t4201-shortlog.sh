@@ -6,6 +6,9 @@
 test_description='git shortlog
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -191,7 +194,7 @@ test_expect_success 'shortlog with revision pseudo options' '
 '
 
 test_expect_success 'shortlog with --output=<file>' '
-	git shortlog --output=shortlog -1 master >output &&
+	git shortlog --output=shortlog -1 main >output &&
 	test_must_be_empty output &&
 	test_line_count = 3 shortlog
 '

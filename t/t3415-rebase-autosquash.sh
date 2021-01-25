@@ -2,6 +2,9 @@
 
 test_description='auto squash'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -407,7 +410,7 @@ test_expect_success 'wrapped original subject' '
 
 test_expect_success 'abort last squash' '
 	test_when_finished "test_might_fail git rebase --abort" &&
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout main" &&
 
 	git checkout -b some-squashes &&
 	git commit --allow-empty -m first &&

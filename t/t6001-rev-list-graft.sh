@@ -2,6 +2,9 @@
 
 test_description='Revision traversal vs grafts and path limiter'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -20,7 +23,7 @@ test_expect_success setup '
 	git commit -a -m "Third in one history." &&
 	A2=$(git rev-parse --verify HEAD) &&
 
-	rm -f .git/refs/heads/master .git/index &&
+	rm -f .git/refs/heads/main .git/index &&
 
 	echo >fileA fileA again &&
 	echo >subdir/fileB fileB again &&

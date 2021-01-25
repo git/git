@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='add -i basic tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -549,8 +552,8 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	test_commit non-conflict &&
 	git checkout -b side &&
 	test_commit side conflict.t &&
-	git checkout master &&
-	test_commit master conflict.t &&
+	git checkout main &&
+	test_commit main conflict.t &&
 	test_must_fail git merge side &&
 	echo changed >non-conflict.t &&
 	echo y | git add -p >output &&

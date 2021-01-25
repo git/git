@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='git log for a path with Bloom filters'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 GIT_TEST_COMMIT_GRAPH=0
@@ -21,7 +24,7 @@ test_expect_success 'setup test - repo, commits, commit graph, log outputs' '
 	test_commit c10 file_to_be_deleted &&
 	git checkout -b side HEAD~4 &&
 	test_commit side-1 file4 &&
-	git checkout master &&
+	git checkout main &&
 	git merge side &&
 	test_commit c11 file5 &&
 	mv file5 file5_renamed &&
@@ -94,7 +97,7 @@ do
 		      "--topo-order" \
 		      "--date-order" \
 		      "--author-date-order" \
-		      "--ancestry-path side..master"
+		      "--ancestry-path side..main"
 	do
 		test_expect_success "git log option: $option for path: $path" '
 			test_bloom_filters_used "$option -- $path" &&

@@ -29,11 +29,11 @@ status_uno_is_clean () {
 }
 
 test_expect_success 'setup' '
-	test_commit my_master &&
+	test_commit my_main &&
 	git init repo_a &&
 	(
 		cd repo_a &&
-		test_commit a_master &&
+		test_commit a_main &&
 		git checkout -b foo &&
 		test_commit a_foo &&
 		git checkout -b bar &&
@@ -44,7 +44,7 @@ test_expect_success 'setup' '
 	git init repo_b &&
 	(
 		cd repo_b &&
-		test_commit b_master &&
+		test_commit b_main &&
 		git checkout -b foo &&
 		test_commit b_foo &&
 		git checkout -b baz &&
@@ -60,23 +60,23 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'checkout of non-existing branch fails' '
-	git checkout -B master &&
+	git checkout -B main &&
 	test_might_fail git branch -D xyzzy &&
 
 	test_must_fail git checkout xyzzy &&
 	status_uno_is_clean &&
 	test_must_fail git rev-parse --verify refs/heads/xyzzy &&
-	test_branch master
+	test_branch main
 '
 
 test_expect_success 'checkout of branch from multiple remotes fails #1' '
-	git checkout -B master &&
+	git checkout -B main &&
 	test_might_fail git branch -D foo &&
 
 	test_must_fail git checkout foo &&
 	status_uno_is_clean &&
 	test_must_fail git rev-parse --verify refs/heads/foo &&
-	test_branch master
+	test_branch main
 '
 
 test_expect_success 'when arg matches multiple remotes, do not fallback to interpreting as pathspec' '
@@ -100,21 +100,21 @@ test_expect_success 'when arg matches multiple remotes, do not fallback to inter
 '
 
 test_expect_success 'checkout of branch from multiple remotes fails with advice' '
-	git checkout -B master &&
+	git checkout -B main &&
 	test_might_fail git branch -D foo &&
 	test_must_fail git checkout foo 2>stderr &&
-	test_branch master &&
+	test_branch main &&
 	status_uno_is_clean &&
 	test_i18ngrep "^hint: " stderr &&
 	test_must_fail git -c advice.checkoutAmbiguousRemoteBranchName=false \
 		checkout foo 2>stderr &&
-	test_branch master &&
+	test_branch main &&
 	status_uno_is_clean &&
 	test_i18ngrep ! "^hint: " stderr
 '
 
 test_expect_success PERL 'checkout -p with multiple remotes does not print advice' '
-	git checkout -B master &&
+	git checkout -B main &&
 	test_might_fail git branch -D foo &&
 
 	git checkout -p foo 2>stderr &&
@@ -123,7 +123,7 @@ test_expect_success PERL 'checkout -p with multiple remotes does not print advic
 '
 
 test_expect_success 'checkout of branch from multiple remotes succeeds with checkout.defaultRemote #1' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D foo &&
 
@@ -135,7 +135,7 @@ test_expect_success 'checkout of branch from multiple remotes succeeds with chec
 '
 
 test_expect_success 'checkout of branch from a single remote succeeds #1' '
-	git checkout -B master &&
+	git checkout -B main &&
 	test_might_fail git branch -D bar &&
 
 	git checkout bar &&
@@ -146,7 +146,7 @@ test_expect_success 'checkout of branch from a single remote succeeds #1' '
 '
 
 test_expect_success 'checkout of branch from a single remote succeeds #2' '
-	git checkout -B master &&
+	git checkout -B main &&
 	test_might_fail git branch -D baz &&
 
 	git checkout baz &&
@@ -157,33 +157,33 @@ test_expect_success 'checkout of branch from a single remote succeeds #2' '
 '
 
 test_expect_success '--no-guess suppresses branch auto-vivification' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D bar &&
 
 	test_must_fail git checkout --no-guess bar &&
 	test_must_fail git rev-parse --verify refs/heads/bar &&
-	test_branch master
+	test_branch main
 '
 
 test_expect_success 'checkout.guess = false suppresses branch auto-vivification' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D bar &&
 
 	test_config checkout.guess false &&
 	test_must_fail git checkout bar &&
 	test_must_fail git rev-parse --verify refs/heads/bar &&
-	test_branch master
+	test_branch main
 '
 
 test_expect_success 'setup more remotes with unconventional refspecs' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	git init repo_c &&
 	(
 		cd repo_c &&
-		test_commit c_master &&
+		test_commit c_main &&
 		git checkout -b bar &&
 		test_commit c_bar &&
 		git checkout -b spam &&
@@ -192,7 +192,7 @@ test_expect_success 'setup more remotes with unconventional refspecs' '
 	git init repo_d &&
 	(
 		cd repo_d &&
-		test_commit d_master &&
+		test_commit d_main &&
 		git checkout -b baz &&
 		test_commit d_baz &&
 		git checkout -b eggs &&
@@ -208,29 +208,29 @@ test_expect_success 'setup more remotes with unconventional refspecs' '
 '
 
 test_expect_success 'checkout of branch from multiple remotes fails #2' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D bar &&
 
 	test_must_fail git checkout bar &&
 	status_uno_is_clean &&
 	test_must_fail git rev-parse --verify refs/heads/bar &&
-	test_branch master
+	test_branch main
 '
 
 test_expect_success 'checkout of branch from multiple remotes fails #3' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D baz &&
 
 	test_must_fail git checkout baz &&
 	status_uno_is_clean &&
 	test_must_fail git rev-parse --verify refs/heads/baz &&
-	test_branch master
+	test_branch main
 '
 
 test_expect_success 'checkout of branch from a single remote succeeds #3' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D spam &&
 
@@ -242,7 +242,7 @@ test_expect_success 'checkout of branch from a single remote succeeds #3' '
 '
 
 test_expect_success 'checkout of branch from a single remote succeeds #4' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D eggs &&
 
@@ -254,7 +254,7 @@ test_expect_success 'checkout of branch from a single remote succeeds #4' '
 '
 
 test_expect_success 'checkout of branch with a file having the same name fails' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D spam &&
 
@@ -262,11 +262,11 @@ test_expect_success 'checkout of branch with a file having the same name fails' 
 	test_must_fail git checkout spam &&
 	status_uno_is_clean &&
 	test_must_fail git rev-parse --verify refs/heads/spam &&
-	test_branch master
+	test_branch main
 '
 
 test_expect_success 'checkout of branch with a file in subdir having the same name fails' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D spam &&
 
@@ -276,11 +276,11 @@ test_expect_success 'checkout of branch with a file in subdir having the same na
 	test_must_fail git -C sub checkout spam &&
 	status_uno_is_clean &&
 	test_must_fail git rev-parse --verify refs/heads/spam &&
-	test_branch master
+	test_branch main
 '
 
 test_expect_success 'checkout <branch> -- succeeds, even if a file with the same name exists' '
-	git checkout -B master &&
+	git checkout -B main &&
 	status_uno_is_clean &&
 	test_might_fail git branch -D spam &&
 
@@ -294,7 +294,7 @@ test_expect_success 'checkout <branch> -- succeeds, even if a file with the same
 
 test_expect_success 'loosely defined local base branch is reported correctly' '
 
-	git checkout master &&
+	git checkout main &&
 	status_uno_is_clean &&
 	git branch strict &&
 	git branch loose &&
@@ -302,8 +302,8 @@ test_expect_success 'loosely defined local base branch is reported correctly' '
 
 	test_config branch.strict.remote . &&
 	test_config branch.loose.remote . &&
-	test_config branch.strict.merge refs/heads/master &&
-	test_config branch.loose.merge master &&
+	test_config branch.strict.merge refs/heads/main &&
+	test_config branch.loose.merge main &&
 
 	git checkout strict | sed -e "s/strict/BRANCHNAME/g" >expect &&
 	status_uno_is_clean &&

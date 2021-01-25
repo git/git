@@ -5,6 +5,9 @@ test_description='git-cvsserver and git refspecs
 tests ability for git-cvsserver to switch between and compare
 tags, branches and other git refspecs'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 #########
@@ -115,7 +118,7 @@ test_expect_success 'setup v1, b1' '
 
 rm -rf cvswork
 test_expect_success 'cvs co v1' '
-	cvs -f -Q co -r v1 -d cvswork master >cvs.log 2>&1 &&
+	cvs -f -Q co -r v1 -d cvswork main >cvs.log 2>&1 &&
 	check_start_tree cvswork &&
 	check_file cvswork textfile.c v1 &&
 	check_file cvswork t2 v1 &&
@@ -128,7 +131,7 @@ test_expect_success 'cvs co v1' '
 
 rm -rf cvswork
 test_expect_success 'cvs co b1' '
-	cvs -f co -r b1 -d cvswork master >cvs.log 2>&1 &&
+	cvs -f co -r b1 -d cvswork main >cvs.log 2>&1 &&
 	check_start_tree cvswork &&
 	check_file cvswork textfile.c v1 &&
 	check_file cvswork t2 v1 &&
@@ -140,7 +143,7 @@ test_expect_success 'cvs co b1' '
 '
 
 test_expect_success 'cvs co b1 [cvswork3]' '
-	cvs -f co -r b1 -d cvswork3 master >cvs.log 2>&1 &&
+	cvs -f co -r b1 -d cvswork3 main >cvs.log 2>&1 &&
 	check_start_tree cvswork3 &&
 	check_file cvswork3 textfile.c v1 &&
 	check_file cvswork3 t2 v1 &&
@@ -265,7 +268,7 @@ test_expect_success 'setup simple b2' '
 '
 
 test_expect_success 'cvs co b2 [into cvswork2]' '
-	cvs -f co -r b2 -d cvswork2 master >cvs.log 2>&1 &&
+	cvs -f co -r b2 -d cvswork2 main >cvs.log 2>&1 &&
 	check_start_tree cvswork &&
 	check_file cvswork textfile.c v1 &&
 	check_file cvswork t2 v1 &&

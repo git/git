@@ -2,6 +2,9 @@
 
 test_description='test submodule ref store api'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 RUN="test-tool ref-store submodule:sub"
@@ -11,7 +14,7 @@ test_expect_success 'setup' '
 	(
 		cd sub &&
 		test_commit first &&
-		git checkout -b new-master
+		git checkout -b new-main
 	)
 '
 
@@ -27,7 +30,7 @@ test_expect_success 'peel_ref(new-tag)' '
 '
 
 test_expect_success 'create_symref() not allowed' '
-	test_must_fail $RUN create-symref FOO refs/heads/master nothing
+	test_must_fail $RUN create-symref FOO refs/heads/main nothing
 '
 
 test_expect_success 'delete_refs() not allowed' '
@@ -35,14 +38,14 @@ test_expect_success 'delete_refs() not allowed' '
 '
 
 test_expect_success 'rename_refs() not allowed' '
-	test_must_fail $RUN rename-ref refs/heads/master refs/heads/new-master
+	test_must_fail $RUN rename-ref refs/heads/main refs/heads/new-main
 '
 
 test_expect_success 'for_each_ref(refs/heads/)' '
 	$RUN for-each-ref refs/heads/ | cut -d" " -f 2- >actual &&
 	cat >expected <<-\EOF &&
-	master 0x0
-	new-master 0x0
+	main 0x0
+	new-main 0x0
 	EOF
 	test_cmp expected actual
 '
@@ -53,23 +56,23 @@ test_expect_success 'for_each_ref() is sorted' '
 	test_cmp expected actual
 '
 
-test_expect_success 'resolve_ref(master)' '
-	SHA1=`git -C sub rev-parse master` &&
-	echo "$SHA1 refs/heads/master 0x0" >expected &&
-	$RUN resolve-ref refs/heads/master 0 >actual &&
+test_expect_success 'resolve_ref(main)' '
+	SHA1=`git -C sub rev-parse main` &&
+	echo "$SHA1 refs/heads/main 0x0" >expected &&
+	$RUN resolve-ref refs/heads/main 0 >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'verify_ref(new-master)' '
-	$RUN verify-ref refs/heads/new-master
+test_expect_success 'verify_ref(new-main)' '
+	$RUN verify-ref refs/heads/new-main
 '
 
 test_expect_success 'for_each_reflog()' '
 	$RUN for-each-reflog | sort | cut -d" " -f 2- >actual &&
 	cat >expected <<-\EOF &&
 	HEAD 0x1
-	refs/heads/master 0x0
-	refs/heads/new-master 0x0
+	refs/heads/main 0x0
+	refs/heads/new-main 0x0
 	EOF
 	test_cmp expected actual
 '
@@ -77,12 +80,12 @@ test_expect_success 'for_each_reflog()' '
 test_expect_success 'for_each_reflog_ent()' '
 	$RUN for-each-reflog-ent HEAD >actual &&
 	head -n1 actual | grep first &&
-	tail -n2 actual | head -n1 | grep master.to.new
+	tail -n2 actual | head -n1 | grep main.to.new
 '
 
 test_expect_success 'for_each_reflog_ent_reverse()' '
 	$RUN for-each-reflog-ent-reverse HEAD >actual &&
-	head -n1 actual | grep master.to.new &&
+	head -n1 actual | grep main.to.new &&
 	tail -n2 actual | head -n1 | grep first
 '
 

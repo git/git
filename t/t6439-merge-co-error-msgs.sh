@@ -2,6 +2,9 @@
 
 test_description='unpack-trees error messages'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 
@@ -18,7 +21,7 @@ test_expect_success 'setup' '
 	git add two three four five &&
 	git commit -m Second &&
 
-	git checkout master &&
+	git checkout main &&
 	echo other >two &&
 	echo other >three &&
 	echo other >four &&
@@ -83,7 +86,7 @@ test_expect_success 'cannot switch branches because of local changes' '
 	echo two >rep/two &&
 	git add rep/one rep/two &&
 	git commit -m Fourth &&
-	git checkout master &&
+	git checkout main &&
 	echo uno >rep/one &&
 	echo dos >rep/two &&
 	test_must_fail git checkout branch 2>out &&
@@ -128,7 +131,7 @@ test_expect_success 'not_uptodate_dir porcelain checkout error' '
 	>rep2 &&
 	git add rep rep2 &&
 	git commit -m "added test as a file" &&
-	git checkout master &&
+	git checkout main &&
 	>rep/untracked-file &&
 	>rep2/untracked-file &&
 	test_must_fail git checkout branch 2>out &&

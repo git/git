@@ -25,6 +25,9 @@
 #      to refer to an existing tree).
 
 test_description='check pruning of dependent objects'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # We care about reachability, so we do not want to use
@@ -67,7 +70,7 @@ for repack in '' true; do
 		git checkout -b experiment &&
 		commit abandon &&
 		maybe_repack &&
-		git checkout master &&
+		git checkout main &&
 		git branch -D experiment
 	'
 

@@ -2,6 +2,9 @@
 
 test_description='git partial clone'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # create a normal "src" repo where we can later create new commits.
@@ -51,14 +54,14 @@ test_expect_success 'verify that .promisor file contains refs fetched' '
 	test_line_count = 1 promisorlist &&
 	git -C srv.bare rev-parse --verify HEAD >headhash &&
 	grep "$(cat headhash) HEAD" $(cat promisorlist) &&
-	grep "$(cat headhash) refs/heads/master" $(cat promisorlist)
+	grep "$(cat headhash) refs/heads/main" $(cat promisorlist)
 '
 
-# checkout master to force dynamic object fetch of blobs at HEAD.
+# checkout main to force dynamic object fetch of blobs at HEAD.
 test_expect_success 'verify checkout with dynamic object fetch' '
 	git -C pc1 rev-list --quiet --objects --missing=print HEAD >observed &&
 	test_line_count = 4 observed &&
-	git -C pc1 checkout master &&
+	git -C pc1 checkout main &&
 	git -C pc1 rev-list --quiet --objects --missing=print HEAD >observed &&
 	test_line_count = 0 observed
 '
@@ -73,8 +76,8 @@ test_expect_success 'push new commits to server' '
 		git -C src add file.1.txt
 		git -C src commit -m "mod $x"
 	done &&
-	git -C src blame master -- file.1.txt >expect.blame &&
-	git -C src push -u srv master
+	git -C src blame main -- file.1.txt >expect.blame &&
+	git -C src push -u srv main
 '
 
 # (partial) fetch in the partial clone repo from the promisor remote.
@@ -83,26 +86,26 @@ test_expect_success 'push new commits to server' '
 test_expect_success 'partial fetch inherits filter settings' '
 	git -C pc1 fetch origin &&
 	git -C pc1 rev-list --quiet --objects --missing=print \
-		master..origin/master >observed &&
+		main..origin/main >observed &&
 	test_line_count = 5 observed
 '
 
 # force dynamic object fetch using diff.
-# we should only get 1 new blob (for the file in origin/master).
+# we should only get 1 new blob (for the file in origin/main).
 test_expect_success 'verify diff causes dynamic object fetch' '
-	git -C pc1 diff master..origin/master -- file.1.txt &&
+	git -C pc1 diff main..origin/main -- file.1.txt &&
 	git -C pc1 rev-list --quiet --objects --missing=print \
-		 master..origin/master >observed &&
+		 main..origin/main >observed &&
 	test_line_count = 4 observed
 '
 
 # force full dynamic object fetch of the file's history using blame.
 # we should get the intermediate blobs for the file.
 test_expect_success 'verify blame causes dynamic object fetch' '
-	git -C pc1 blame origin/master -- file.1.txt >observed.blame &&
+	git -C pc1 blame origin/main -- file.1.txt >observed.blame &&
 	test_cmp expect.blame observed.blame &&
 	git -C pc1 rev-list --quiet --objects --missing=print \
-		master..origin/master >observed &&
+		main..origin/main >observed &&
 	test_line_count = 0 observed
 '
 
@@ -115,7 +118,7 @@ test_expect_success 'push new commits to server for file.2.txt' '
 		git -C src add file.2.txt
 		git -C src commit -m "mod $x"
 	done &&
-	git -C src push -u srv master
+	git -C src push -u srv main
 '
 
 # Do FULL fetch by disabling inherited filter-spec using --no-filter.
@@ -123,7 +126,7 @@ test_expect_success 'push new commits to server for file.2.txt' '
 test_expect_success 'override inherited filter-spec using --no-filter' '
 	git -C pc1 fetch --no-filter origin &&
 	git -C pc1 rev-list --quiet --objects --missing=print \
-		master..origin/master >observed &&
+		main..origin/main >observed &&
 	test_line_count = 0 observed
 '
 
@@ -136,7 +139,7 @@ test_expect_success 'push new commits to server for file.3.txt' '
 		git -C src add file.3.txt
 		git -C src commit -m "mod $x"
 	done &&
-	git -C src push -u srv master
+	git -C src push -u srv main
 '
 
 # Do a partial fetch and then try to manually fetch the missing objects.
@@ -146,7 +149,7 @@ test_expect_success 'manual prefetch of missing objects' '
 	git -C pc1 fetch --filter=blob:none origin &&
 
 	git -C pc1 rev-list --quiet --objects --missing=print \
-		 master..origin/master >revs &&
+		 main..origin/main >revs &&
 	awk -f print_1.awk revs |
 	sed "s/?//" |
 	sort >observed.oids &&
@@ -155,7 +158,7 @@ test_expect_success 'manual prefetch of missing objects' '
 	git -C pc1 fetch-pack --stdin "file://$(pwd)/srv.bare" <observed.oids &&
 
 	git -C pc1 rev-list --quiet --objects --missing=print \
-		master..origin/master >revs &&
+		main..origin/main >revs &&
 	awk -f print_1.awk revs |
 	sed "s/?//" |
 	sort >observed.oids &&
@@ -196,7 +199,7 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 	echo "in dir" >src/dir/file.txt &&
 	git -C src add dir/file.txt &&
 	git -C src commit -m "file in dir" &&
-	git -C src push -u srv master &&
+	git -C src push -u srv main &&
 	SUBTREE=$(git -C src rev-parse HEAD:dir) &&
 
 	rm -rf dst &&
@@ -204,7 +207,7 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 	git -C dst fsck &&
 
 	# Make sure we only have commits, and all trees and blobs are missing.
-	git -C dst rev-list --missing=allow-any --objects master \
+	git -C dst rev-list --missing=allow-any --objects main \
 		>fetched_objects &&
 	awk -f print_1.awk fetched_objects |
 	xargs -n1 git -C dst cat-file -t >fetched_types &&
@@ -221,7 +224,7 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 	git -C dst fsck &&
 
 	# Auto-fetch all remaining trees and blobs with --missing=error
-	git -C dst rev-list --missing=error --objects master >fetched_objects &&
+	git -C dst rev-list --missing=error --objects main >fetched_objects &&
 	test_line_count = 70 fetched_objects &&
 
 	awk -f print_1.awk fetched_objects |
@@ -347,7 +350,7 @@ test_expect_success 'setup src repo for sparse filter' '
 test_expect_success 'partial clone with sparse filter succeeds' '
 	rm -rf dst.git &&
 	git clone --no-local --bare \
-		  --filter=sparse:oid=master:only-one \
+		  --filter=sparse:oid=main:only-one \
 		  sparse-src dst.git &&
 	(
 		cd dst.git &&
@@ -360,11 +363,11 @@ test_expect_success 'partial clone with sparse filter succeeds' '
 test_expect_success 'partial clone with unresolvable sparse filter fails cleanly' '
 	rm -rf dst.git &&
 	test_must_fail git clone --no-local --bare \
-				 --filter=sparse:oid=master:no-such-name \
+				 --filter=sparse:oid=main:no-such-name \
 				 sparse-src dst.git 2>err &&
-	test_i18ngrep "unable to access sparse blob in .master:no-such-name" err &&
+	test_i18ngrep "unable to access sparse blob in .main:no-such-name" err &&
 	test_must_fail git clone --no-local --bare \
-				 --filter=sparse:oid=master \
+				 --filter=sparse:oid=main \
 				 sparse-src dst.git 2>err &&
 	test_i18ngrep "unable to parse sparse filter data in" err
 '
@@ -419,7 +422,7 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas' '
 	# promisor remote other than for the big tree (because it needs to
 	# resolve the delta).
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client \
-		fetch "file://$(pwd)/server" master &&
+		fetch "file://$(pwd)/server" main &&
 
 	# Verify the assumption that the client needed to fetch the delta base
 	# to resolve the delta.
@@ -438,7 +441,7 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 	# promisor remote other than for the big blob (because it needs to
 	# resolve the delta).
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client \
-		fetch "file://$(pwd)/server" master &&
+		fetch "file://$(pwd)/server" main &&
 
 	# Verify that protocol version 2 was used.
 	grep "fetch< version 2" trace &&

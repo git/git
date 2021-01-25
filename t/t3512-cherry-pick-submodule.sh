@@ -2,6 +2,9 @@
 
 test_description='cherry-pick can handle submodules'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-submodule-update.sh
 
@@ -35,7 +38,7 @@ test_expect_success 'unrelated submodule/file conflict is ignored' '
 		git add a_file &&
 		git commit -m "modify a file" &&
 
-		git checkout master &&
+		git checkout main &&
 
 		git submodule add ../sub sub &&
 		git submodule update sub &&

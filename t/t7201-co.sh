@@ -5,10 +5,10 @@
 
 test_description='git checkout tests.
 
-Creates master, forks renamer and side branches from it.
+Creates main, forks renamer and side branches from it.
 Test switching across them.
 
-  ! [master] Initial A one, A two
+  ! [main] Initial A one, A two
    * [renamer] Renamer R one->uno, M two
     ! [side] Side M one, D two, A three
      ! [simple] Simple D one, M two
@@ -16,9 +16,12 @@ Test switching across them.
      + [simple] Simple D one, M two
     +  [side] Side M one, D two, A three
    *   [renamer] Renamer R one->uno, M two
-  +*++ [master] Initial A one, A two
+  +*++ [main] Initial A one, A two
 
 '
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -46,27 +49,27 @@ test_expect_success setup '
 	fill a b c d e f >two &&
 	git commit -a -m "Renamer R one->uno, M two" &&
 
-	git checkout -b side master &&
+	git checkout -b side main &&
 	fill 1 2 3 4 5 6 7 >one &&
 	fill A B C D E >three &&
 	rm -f two &&
 	git update-index --add --remove one two three &&
 	git commit -m "Side M one, D two, A three" &&
 
-	git checkout -b simple master &&
+	git checkout -b simple main &&
 	rm -f one &&
 	fill a c e >two &&
 	git commit -a -m "Simple D one, M two" &&
 
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'checkout from non-existing branch' '
-	git checkout -b delete-me master &&
+	git checkout -b delete-me main &&
 	git update-ref -d --no-deref refs/heads/delete-me &&
 	test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
-	git checkout master &&
-	test refs/heads/master = "$(git symbolic-ref HEAD)"
+	git checkout main &&
+	test refs/heads/main = "$(git symbolic-ref HEAD)"
 '
 
 test_expect_success 'checkout with dirty tree without -m' '
@@ -81,7 +84,7 @@ test_expect_success 'checkout with dirty tree without -m' '
 '
 
 test_expect_success 'checkout with unrelated dirty tree without -m' '
-	git checkout -f master &&
+	git checkout -f main &&
 	fill 0 1 2 3 4 5 6 7 8 >same &&
 	cp same kept &&
 	git checkout side >messages &&
@@ -91,7 +94,7 @@ test_expect_success 'checkout with unrelated dirty tree without -m' '
 '
 
 test_expect_success 'checkout -m with dirty tree' '
-	git checkout -f master &&
+	git checkout -f main &&
 	git clean -f &&
 
 	fill 0 1 2 3 4 5 6 7 8 >one &&
@@ -102,9 +105,9 @@ test_expect_success 'checkout -m with dirty tree' '
 	printf "M\t%s\n" one >expect.messages &&
 	test_cmp expect.messages messages &&
 
-	fill "M	one" "A	three" "D	two" >expect.master &&
-	git diff --name-status master >current.master &&
-	test_cmp expect.master current.master &&
+	fill "M	one" "A	three" "D	two" >expect.main &&
+	git diff --name-status main >current.main &&
+	test_cmp expect.main current.main &&
 
 	fill "M	one" >expect.side &&
 	git diff --name-status side >current.side &&
@@ -115,7 +118,7 @@ test_expect_success 'checkout -m with dirty tree' '
 '
 
 test_expect_success 'checkout -m with dirty tree, renamed' '
-	git checkout -f master && git clean -f &&
+	git checkout -f main && git clean -f &&
 
 	fill 1 2 3 4 5 7 8 >one &&
 	if git checkout renamer
@@ -135,7 +138,7 @@ test_expect_success 'checkout -m with dirty tree, renamed' '
 '
 
 test_expect_success 'checkout -m with merge conflict' '
-	git checkout -f master && git clean -f &&
+	git checkout -f main && git clean -f &&
 
 	fill 1 T 3 4 5 6 S 8 >one &&
 	if git checkout renamer
@@ -148,7 +151,7 @@ test_expect_success 'checkout -m with merge conflict' '
 
 	git checkout -m renamer &&
 
-	git diff master:one :3:uno |
+	git diff main:one :3:uno |
 	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" >current &&
 	fill d2 aT d7 aS >expect &&
 	test_cmp expect current &&
@@ -157,7 +160,7 @@ test_expect_success 'checkout -m with merge conflict' '
 '
 
 test_expect_success 'format of merge conflict from checkout -m' '
-	git checkout -f master &&
+	git checkout -f main &&
 	git clean -f &&
 
 	fill b d >two &&
@@ -181,7 +184,7 @@ test_expect_success 'format of merge conflict from checkout -m' '
 '
 
 test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
-	git checkout -f master &&
+	git checkout -f main &&
 	git reset --hard &&
 	git clean -f &&
 
@@ -193,7 +196,7 @@ test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
 	a
 	c
 	e
-	||||||| master
+	||||||| main
 	a
 	b
 	c
@@ -208,7 +211,7 @@ test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
 '
 
 test_expect_success 'switch to another branch while carrying a deletion' '
-	git checkout -f master &&
+	git checkout -f main &&
 	git reset --hard &&
 	git clean -f &&
 	git rm two &&
@@ -229,7 +232,7 @@ test_expect_success 'checkout to detach HEAD (with advice declined)' '
 	test_i18ngrep "HEAD is now at $rev" messages &&
 	test_line_count = 1 messages &&
 	H=$(git rev-parse --verify HEAD) &&
-	M=$(git show-ref -s --verify refs/heads/master) &&
+	M=$(git show-ref -s --verify refs/heads/main) &&
 	test "z$H" = "z$M" &&
 	if git symbolic-ref HEAD >/dev/null 2>&1
 	then
@@ -249,7 +252,7 @@ test_expect_success 'checkout to detach HEAD' '
 	grep "HEAD is now at $rev" messages &&
 	test_line_count -gt 1 messages &&
 	H=$(git rev-parse --verify HEAD) &&
-	M=$(git show-ref -s --verify refs/heads/master) &&
+	M=$(git show-ref -s --verify refs/heads/main) &&
 	test "z$H" = "z$M" &&
 	if git symbolic-ref HEAD >/dev/null 2>&1
 	then
@@ -261,11 +264,11 @@ test_expect_success 'checkout to detach HEAD' '
 '
 
 test_expect_success 'checkout to detach HEAD with branchname^' '
-	git checkout -f master &&
+	git checkout -f main &&
 	git clean -f &&
 	git checkout renamer^ &&
 	H=$(git rev-parse --verify HEAD) &&
-	M=$(git show-ref -s --verify refs/heads/master) &&
+	M=$(git show-ref -s --verify refs/heads/main) &&
 	test "z$H" = "z$M" &&
 	if git symbolic-ref HEAD >/dev/null 2>&1
 	then
@@ -277,11 +280,11 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 '
 
 test_expect_success 'checkout to detach HEAD with :/message' '
-	git checkout -f master &&
+	git checkout -f main &&
 	git clean -f &&
 	git checkout ":/Initial" &&
 	H=$(git rev-parse --verify HEAD) &&
-	M=$(git show-ref -s --verify refs/heads/master) &&
+	M=$(git show-ref -s --verify refs/heads/main) &&
 	test "z$H" = "z$M" &&
 	if git symbolic-ref HEAD >/dev/null 2>&1
 	then
@@ -293,11 +296,11 @@ test_expect_success 'checkout to detach HEAD with :/message' '
 '
 
 test_expect_success 'checkout to detach HEAD with HEAD^0' '
-	git checkout -f master &&
+	git checkout -f main &&
 	git clean -f &&
 	git checkout HEAD^0 &&
 	H=$(git rev-parse --verify HEAD) &&
-	M=$(git show-ref -s --verify refs/heads/master) &&
+	M=$(git show-ref -s --verify refs/heads/main) &&
 	test "z$H" = "z$M" &&
 	if git symbolic-ref HEAD >/dev/null 2>&1
 	then
@@ -310,13 +313,13 @@ test_expect_success 'checkout to detach HEAD with HEAD^0' '
 
 test_expect_success 'checkout with ambiguous tag/branch names' '
 	git tag both side &&
-	git branch both master &&
+	git branch both main &&
 	git reset --hard &&
-	git checkout master &&
+	git checkout main &&
 
 	git checkout both &&
 	H=$(git rev-parse --verify HEAD) &&
-	M=$(git show-ref -s --verify refs/heads/master) &&
+	M=$(git show-ref -s --verify refs/heads/main) &&
 	test "z$H" = "z$M" &&
 	name=$(git symbolic-ref HEAD 2>/dev/null) &&
 	test "z$name" = zrefs/heads/both
@@ -324,12 +327,12 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 
 test_expect_success 'checkout with ambiguous tag/branch names' '
 	git reset --hard &&
-	git checkout master &&
+	git checkout main &&
 
 	git tag frotz side &&
-	git branch frotz master &&
+	git branch frotz main &&
 	git reset --hard &&
-	git checkout master &&
+	git checkout main &&
 
 	git checkout tags/frotz &&
 	H=$(git rev-parse --verify HEAD) &&
@@ -346,7 +349,7 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 
 test_expect_success 'switch branches while in subdirectory' '
 	git reset --hard &&
-	git checkout master &&
+	git checkout main &&
 
 	mkdir subs &&
 	git -C subs checkout side &&
@@ -362,7 +365,7 @@ test_expect_success 'checkout specific path while in subdirectory' '
 	git add subs/bero &&
 	git commit -m "add subs/bero" &&
 
-	git checkout master &&
+	git checkout main &&
 	mkdir -p subs &&
 	git -C subs checkout side -- bero &&
 	test -f subs/bero
@@ -370,7 +373,7 @@ test_expect_success 'checkout specific path while in subdirectory' '
 
 test_expect_success 'checkout w/--track sets up tracking' '
     git config branch.autosetupmerge false &&
-    git checkout master &&
+    git checkout main &&
     git checkout --track -b track1 &&
     test "$(git config branch.track1.remote)" &&
     test "$(git config branch.track1.merge)"
@@ -379,40 +382,40 @@ test_expect_success 'checkout w/--track sets up tracking' '
 test_expect_success 'checkout w/autosetupmerge=always sets up tracking' '
     test_when_finished git config branch.autosetupmerge false &&
     git config branch.autosetupmerge always &&
-    git checkout master &&
+    git checkout main &&
     git checkout -b track2 &&
     test "$(git config branch.track2.remote)" &&
     test "$(git config branch.track2.merge)"
 '
 
 test_expect_success 'checkout w/--track from non-branch HEAD fails' '
-    git checkout master^0 &&
+    git checkout main^0 &&
     test_must_fail git symbolic-ref HEAD &&
     test_must_fail git checkout --track -b track &&
     test_must_fail git rev-parse --verify track &&
     test_must_fail git symbolic-ref HEAD &&
-    test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
+    test "z$(git rev-parse main^0)" = "z$(git rev-parse HEAD)"
 '
 
 test_expect_success 'checkout w/--track from tag fails' '
-    git checkout master^0 &&
+    git checkout main^0 &&
     test_must_fail git symbolic-ref HEAD &&
     test_must_fail git checkout --track -b track frotz &&
     test_must_fail git rev-parse --verify track &&
     test_must_fail git symbolic-ref HEAD &&
-    test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
+    test "z$(git rev-parse main^0)" = "z$(git rev-parse HEAD)"
 '
 
 test_expect_success 'detach a symbolic link HEAD' '
-    git checkout master &&
+    git checkout main &&
     git config --bool core.prefersymlinkrefs yes &&
     git checkout side &&
-    git checkout master &&
+    git checkout main &&
     it=$(git symbolic-ref HEAD) &&
-    test "z$it" = zrefs/heads/master &&
-    here=$(git rev-parse --verify refs/heads/master) &&
+    test "z$it" = zrefs/heads/main &&
+    here=$(git rev-parse --verify refs/heads/main) &&
     git checkout side^ &&
-    test "z$(git rev-parse --verify refs/heads/master)" = "z$here"
+    test "z$(git rev-parse --verify refs/heads/main)" = "z$here"
 '
 
 test_expect_success 'checkout with --track fakes a sensible -b <name>' '
@@ -423,13 +426,13 @@ test_expect_success 'checkout with --track fakes a sensible -b <name>' '
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
     test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
 
-    git checkout master && git branch -D koala/bear &&
+    git checkout main && git branch -D koala/bear &&
 
     git checkout --track refs/remotes/origin/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
     test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
 
-    git checkout master && git branch -D koala/bear &&
+    git checkout main && git branch -D koala/bear &&
 
     git checkout --track remotes/origin/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
@@ -582,17 +585,17 @@ test_expect_success 'checkout --conflict=diff3' '
 '
 
 test_expect_success 'failing checkout -b should not break working tree' '
-	git reset --hard master &&
-	git symbolic-ref HEAD refs/heads/master &&
+	git reset --hard main &&
+	git symbolic-ref HEAD refs/heads/main &&
 	test_must_fail git checkout -b renamer side^ &&
-	test $(git symbolic-ref HEAD) = refs/heads/master &&
+	test $(git symbolic-ref HEAD) = refs/heads/main &&
 	git diff --exit-code &&
 	git diff --cached --exit-code
 '
 
 test_expect_success 'switch out of non-branch' '
-	git reset --hard master &&
-	git checkout master^0 &&
+	git reset --hard main &&
+	git checkout main^0 &&
 	echo modified >one &&
 	test_must_fail git checkout renamer 2>error.log &&
 	! grep "^Previous HEAD" error.log
