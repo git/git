@@ -63,6 +63,7 @@ static int enable_auto_gc = 1;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
 static int max_jobs = -1, submodule_fetch_jobs_config = -1;
 static int fetch_parallel_config = 1;
+static int atomic_fetch;
 static enum transport_family family;
 static const char *depth;
 static const char *deepen_since;
@@ -144,6 +145,8 @@ static struct option builtin_fetch_options[] = {
 		 N_("set upstream for git pull/fetch")),
 	OPT_BOOL('a', "append", &append,
 		 N_("append to .git/FETCH_HEAD instead of overwriting")),
+	OPT_BOOL(0, "atomic", &atomic_fetch,
+		 N_("use atomic transaction to update references")),
 	OPT_STRING(0, "upload-pack", &upload_pack, N_("path"),
 		   N_("path to upload pack on remote end")),
 	OPT__FORCE(&force, N_("force overwrite of local reference"), 0),
@@ -583,13 +586,14 @@ static struct ref *get_ref_map(struct remote *remote,
 
 static int s_update_ref(const char *action,
 			struct ref *ref,
+			struct ref_transaction *transaction,
 			int check_old)
 {
 	char *msg;
 	char *rla = getenv("GIT_REFLOG_ACTION");
-	struct ref_transaction *transaction;
+	struct ref_transaction *our_transaction = NULL;
 	struct strbuf err = STRBUF_INIT;
-	int ret, df_conflict = 0;
+	int ret;
 
 	if (dry_run)
 		return 0;
@@ -597,31 +601,47 @@ static int s_update_ref(const char *action,
 		rla = default_rla.buf;
 	msg = xstrfmt("%s: %s", rla, action);
 
-	transaction = ref_transaction_begin(&err);
-	if (!transaction ||
-	    ref_transaction_update(transaction, ref->name,
-				   &ref->new_oid,
-				   check_old ? &ref->old_oid : NULL,
-				   0, msg, &err))
-		goto fail;
-
-	ret = ref_transaction_commit(transaction, &err);
-	if (ret) {
-		df_conflict = (ret == TRANSACTION_NAME_CONFLICT);
-		goto fail;
+	/*
+	 * If no transaction was passed to us, we manage the transaction
+	 * ourselves. Otherwise, we trust the caller to handle the transaction
+	 * lifecycle.
+	 */
+	if (!transaction) {
+		transaction = our_transaction = ref_transaction_begin(&err);
+		if (!transaction) {
+			ret = STORE_REF_ERROR_OTHER;
+			goto out;
+		}
 	}
 
-	ref_transaction_free(transaction);
+	ret = ref_transaction_update(transaction, ref->name, &ref->new_oid,
+				     check_old ? &ref->old_oid : NULL,
+				     0, msg, &err);
+	if (ret) {
+		ret = STORE_REF_ERROR_OTHER;
+		goto out;
+	}
+
+	if (our_transaction) {
+		switch (ref_transaction_commit(our_transaction, &err)) {
+		case 0:
+			break;
+		case TRANSACTION_NAME_CONFLICT:
+			ret = STORE_REF_ERROR_DF_CONFLICT;
+			goto out;
+		default:
+			ret = STORE_REF_ERROR_OTHER;
+			goto out;
+		}
+	}
+
+out:
+	ref_transaction_free(our_transaction);
+	if (ret)
+		error("%s", err.buf);
 	strbuf_release(&err);
 	free(msg);
-	return 0;
-fail:
-	ref_transaction_free(transaction);
-	error("%s", err.buf);
-	strbuf_release(&err);
-	free(msg);
-	return df_conflict ? STORE_REF_ERROR_DF_CONFLICT
-			   : STORE_REF_ERROR_OTHER;
+	return ret;
 }
 
 static int refcol_width = 10;
@@ -759,6 +779,7 @@ static void format_display(struct strbuf *display, char code,
 }
 
 static int update_local_ref(struct ref *ref,
+			    struct ref_transaction *transaction,
 			    const char *remote,
 			    const struct ref *remote_ref,
 			    struct strbuf *display,
@@ -799,7 +820,7 @@ static int update_local_ref(struct ref *ref,
 	    starts_with(ref->name, "refs/tags/")) {
 		if (force || ref->force) {
 			int r;
-			r = s_update_ref("updating tag", ref, 0);
+			r = s_update_ref("updating tag", ref, transaction, 0);
 			format_display(display, r ? '!' : 't', _("[tag update]"),
 				       r ? _("unable to update local ref") : NULL,
 				       remote, pretty_ref, summary_width);
@@ -836,7 +857,7 @@ static int update_local_ref(struct ref *ref,
 			what = _("[new ref]");
 		}
 
-		r = s_update_ref(msg, ref, 0);
+		r = s_update_ref(msg, ref, transaction, 0);
 		format_display(display, r ? '!' : '*', what,
 			       r ? _("unable to update local ref") : NULL,
 			       remote, pretty_ref, summary_width);
@@ -858,7 +879,7 @@ static int update_local_ref(struct ref *ref,
 		strbuf_add_unique_abbrev(&quickref, &current->object.oid, DEFAULT_ABBREV);
 		strbuf_addstr(&quickref, "..");
 		strbuf_add_unique_abbrev(&quickref, &ref->new_oid, DEFAULT_ABBREV);
-		r = s_update_ref("fast-forward", ref, 1);
+		r = s_update_ref("fast-forward", ref, transaction, 1);
 		format_display(display, r ? '!' : ' ', quickref.buf,
 			       r ? _("unable to update local ref") : NULL,
 			       remote, pretty_ref, summary_width);
@@ -870,7 +891,7 @@ static int update_local_ref(struct ref *ref,
 		strbuf_add_unique_abbrev(&quickref, &current->object.oid, DEFAULT_ABBREV);
 		strbuf_addstr(&quickref, "...");
 		strbuf_add_unique_abbrev(&quickref, &ref->new_oid, DEFAULT_ABBREV);
-		r = s_update_ref("forced-update", ref, 1);
+		r = s_update_ref("forced-update", ref, transaction, 1);
 		format_display(display, r ? '!' : '+', quickref.buf,
 			       r ? _("unable to update local ref") : _("forced update"),
 			       remote, pretty_ref, summary_width);
@@ -897,6 +918,89 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 	return 0;
 }
 
+struct fetch_head {
+	FILE *fp;
+	struct strbuf buf;
+};
+
+static int open_fetch_head(struct fetch_head *fetch_head)
+{
+	const char *filename = git_path_fetch_head(the_repository);
+
+	if (write_fetch_head) {
+		fetch_head->fp = fopen(filename, "a");
+		if (!fetch_head->fp)
+			return error_errno(_("cannot open %s"), filename);
+		strbuf_init(&fetch_head->buf, 0);
+	} else {
+		fetch_head->fp = NULL;
+	}
+
+	return 0;
+}
+
+static void append_fetch_head(struct fetch_head *fetch_head,
+			      const struct object_id *old_oid,
+			      enum fetch_head_status fetch_head_status,
+			      const char *note,
+			      const char *url, size_t url_len)
+{
+	char old_oid_hex[GIT_MAX_HEXSZ + 1];
+	const char *merge_status_marker;
+	size_t i;
+
+	if (!fetch_head->fp)
+		return;
+
+	switch (fetch_head_status) {
+	case FETCH_HEAD_NOT_FOR_MERGE:
+		merge_status_marker = "not-for-merge";
+		break;
+	case FETCH_HEAD_MERGE:
+		merge_status_marker = "";
+		break;
+	default:
+		/* do not write anything to FETCH_HEAD */
+		return;
+	}
+
+	strbuf_addf(&fetch_head->buf, "%s\t%s\t%s",
+		    oid_to_hex_r(old_oid_hex, old_oid), merge_status_marker, note);
+	for (i = 0; i < url_len; ++i)
+		if ('\n' == url[i])
+			strbuf_addstr(&fetch_head->buf, "\\n");
+		else
+			strbuf_addch(&fetch_head->buf, url[i]);
+	strbuf_addch(&fetch_head->buf, '\n');
+
+	/*
+	 * When using an atomic fetch, we do not want to update FETCH_HEAD if
+	 * any of the reference updates fails. We thus have to write all
+	 * updates to a buffer first and only commit it as soon as all
+	 * references have been successfully updated.
+	 */
+	if (!atomic_fetch) {
+		strbuf_write(&fetch_head->buf, fetch_head->fp);
+		strbuf_reset(&fetch_head->buf);
+	}
+}
+
+static void commit_fetch_head(struct fetch_head *fetch_head)
+{
+	if (!fetch_head->fp || !atomic_fetch)
+		return;
+	strbuf_write(&fetch_head->buf, fetch_head->fp);
+}
+
+static void close_fetch_head(struct fetch_head *fetch_head)
+{
+	if (!fetch_head->fp)
+		return;
+
+	fclose(fetch_head->fp);
+	strbuf_release(&fetch_head->buf);
+}
+
 static const char warn_show_forced_updates[] =
 N_("Fetch normally indicates which branches had a forced update,\n"
    "but that check has been disabled. To re-enable, use '--show-forced-updates'\n"
@@ -909,22 +1013,20 @@ N_("It took %.2f seconds to check forced updates. You can use\n"
 static int store_updated_refs(const char *raw_url, const char *remote_name,
 			      int connectivity_checked, struct ref *ref_map)
 {
-	FILE *fp;
+	struct fetch_head fetch_head;
 	struct commit *commit;
 	int url_len, i, rc = 0;
-	struct strbuf note = STRBUF_INIT;
+	struct strbuf note = STRBUF_INIT, err = STRBUF_INIT;
+	struct ref_transaction *transaction = NULL;
 	const char *what, *kind;
 	struct ref *rm;
 	char *url;
-	const char *filename = (!write_fetch_head
-				? "/dev/null"
-				: git_path_fetch_head(the_repository));
 	int want_status;
 	int summary_width = transport_summary_width(ref_map);
 
-	fp = fopen(filename, "a");
-	if (!fp)
-		return error_errno(_("cannot open %s"), filename);
+	rc = open_fetch_head(&fetch_head);
+	if (rc)
+		return -1;
 
 	if (raw_url)
 		url = transport_anonymize_url(raw_url);
@@ -941,6 +1043,14 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		}
 	}
 
+	if (atomic_fetch) {
+		transaction = ref_transaction_begin(&err);
+		if (!transaction) {
+			error("%s", err.buf);
+			goto abort;
+		}
+	}
+
 	prepare_format_display(ref_map);
 
 	/*
@@ -953,7 +1063,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	     want_status++) {
 		for (rm = ref_map; rm; rm = rm->next) {
 			struct ref *ref = NULL;
-			const char *merge_status_marker = "";
 
 			if (rm->status == REF_STATUS_REJECT_SHALLOW) {
 				if (want_status == FETCH_HEAD_MERGE)
@@ -1011,31 +1120,15 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 					strbuf_addf(&note, "%s ", kind);
 				strbuf_addf(&note, "'%s' of ", what);
 			}
-			switch (rm->fetch_head_status) {
-			case FETCH_HEAD_NOT_FOR_MERGE:
-				merge_status_marker = "not-for-merge";
-				/* fall-through */
-			case FETCH_HEAD_MERGE:
-				fprintf(fp, "%s\t%s\t%s",
-					oid_to_hex(&rm->old_oid),
-					merge_status_marker,
-					note.buf);
-				for (i = 0; i < url_len; ++i)
-					if ('\n' == url[i])
-						fputs("\\n", fp);
-					else
-						fputc(url[i], fp);
-				fputc('\n', fp);
-				break;
-			default:
-				/* do not write anything to FETCH_HEAD */
-				break;
-			}
+
+			append_fetch_head(&fetch_head, &rm->old_oid,
+					  rm->fetch_head_status,
+					  note.buf, url, url_len);
 
 			strbuf_reset(&note);
 			if (ref) {
-				rc |= update_local_ref(ref, what, rm, &note,
-						       summary_width);
+				rc |= update_local_ref(ref, transaction, what,
+						       rm, &note, summary_width);
 				free(ref);
 			} else if (write_fetch_head || dry_run) {
 				/*
@@ -1060,6 +1153,17 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		}
 	}
 
+	if (!rc && transaction) {
+		rc = ref_transaction_commit(transaction, &err);
+		if (rc) {
+			error("%s", err.buf);
+			goto abort;
+		}
+	}
+
+	if (!rc)
+		commit_fetch_head(&fetch_head);
+
 	if (rc & STORE_REF_ERROR_DF_CONFLICT)
 		error(_("some local refs could not be updated; try running\n"
 		      " 'git remote prune %s' to remove any old, conflicting "
@@ -1076,8 +1180,10 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
  abort:
 	strbuf_release(&note);
+	strbuf_release(&err);
+	ref_transaction_free(transaction);
 	free(url);
-	fclose(fp);
+	close_fetch_head(&fetch_head);
 	return rc;
 }
 
@@ -1886,6 +1992,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (filter_options.choice)
 			die(_("--filter can only be used with the remote "
 			      "configured in extensions.partialclone"));
+
+		if (atomic_fetch)
+			die(_("--atomic can only be used when fetching "
+			      "from one remote"));
 
 		if (stdin_refspecs)
 			die(_("--stdin can only be used when fetching "
