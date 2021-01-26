@@ -76,7 +76,7 @@ graph_git_behavior 'no graph' full commits/3 commits/1
 graph_read_expect() {
 	OPTIONAL=""
 	NUM_CHUNKS=3
-	if test ! -z $2
+	if test ! -z "$2"
 	then
 		OPTIONAL=" $2"
 		NUM_CHUNKS=$((3 + $(echo "$2" | wc -w)))
@@ -103,14 +103,14 @@ test_expect_success 'exit with correct error on bad input to --stdin-commits' '
 	# valid commit and tree OID
 	git rev-parse HEAD HEAD^{tree} >in &&
 	git commit-graph write --stdin-commits <in &&
-	graph_read_expect 3
+	graph_read_expect 3 generation_data
 '
 
 test_expect_success 'write graph' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "3"
+	graph_read_expect "3" generation_data
 '
 
 test_expect_success POSIXPERM 'write graph has correct permissions' '
@@ -219,7 +219,7 @@ test_expect_success 'write graph with merges' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "10" "extra_edges"
+	graph_read_expect "10" "generation_data extra_edges"
 '
 
 graph_git_behavior 'merge 1 vs 2' full merge/1 merge/2
@@ -254,7 +254,7 @@ test_expect_success 'write graph with new commit' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "extra_edges"
+	graph_read_expect "11" "generation_data extra_edges"
 '
 
 graph_git_behavior 'full graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -264,7 +264,7 @@ test_expect_success 'write graph with nothing new' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "extra_edges"
+	graph_read_expect "11" "generation_data extra_edges"
 '
 
 graph_git_behavior 'cleared graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -274,7 +274,7 @@ test_expect_success 'build graph from latest pack with closure' '
 	cd "$TRASH_DIRECTORY/full" &&
 	cat new-idx | git commit-graph write --stdin-packs &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "9" "extra_edges"
+	graph_read_expect "9" "generation_data extra_edges"
 '
 
 graph_git_behavior 'graph from pack, commit 8 vs merge 1' full commits/8 merge/1
@@ -287,7 +287,7 @@ test_expect_success 'build graph from commits with closure' '
 	git rev-parse merge/1 >>commits-in &&
 	cat commits-in | git commit-graph write --stdin-commits &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "6"
+	graph_read_expect "6" "generation_data"
 '
 
 graph_git_behavior 'graph from commits, commit 8 vs merge 1' full commits/8 merge/1
@@ -297,7 +297,7 @@ test_expect_success 'build graph from commits with append' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git rev-parse merge/3 | git commit-graph write --stdin-commits --append &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "10" "extra_edges"
+	graph_read_expect "10" "generation_data extra_edges"
 '
 
 graph_git_behavior 'append graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -307,7 +307,7 @@ test_expect_success 'build graph using --reachable' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write --reachable &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "extra_edges"
+	graph_read_expect "11" "generation_data extra_edges"
 '
 
 graph_git_behavior 'append graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -328,7 +328,7 @@ test_expect_success 'write graph in bare repo' '
 	cd "$TRASH_DIRECTORY/bare" &&
 	git commit-graph write &&
 	test_path_is_file $baredir/info/commit-graph &&
-	graph_read_expect "11" "extra_edges"
+	graph_read_expect "11" "generation_data extra_edges"
 '
 
 graph_git_behavior 'bare repo with graph, commit 8 vs merge 1' bare commits/8 merge/1
@@ -454,8 +454,9 @@ test_expect_success 'warn on improper hash version' '
 
 test_expect_success 'git commit-graph verify' '
 	cd "$TRASH_DIRECTORY/full" &&
-	git rev-parse commits/8 | git commit-graph write --stdin-commits &&
-	git commit-graph verify >output
+	git rev-parse commits/8 | GIT_TEST_COMMIT_GRAPH_NO_GDAT=1 git commit-graph write --stdin-commits &&
+	git commit-graph verify >output &&
+	graph_read_expect 9 extra_edges
 '
 
 NUM_COMMITS=9
@@ -740,5 +741,57 @@ test_expect_success 'corrupt commit-graph write (missing tree)' '
 		test_i18ngrep "unable to parse commit" test_err
 	)
 '
+
+# We test the overflow-related code with the following repo history:
+#
+#               4:F - 5:N - 6:U
+#              /                \
+# 1:U - 2:N - 3:U                M:N
+#              \                /
+#               7:N - 8:F - 9:N
+#
+# Here the commits denoted by U have committer date of zero seconds
+# since Unix epoch, the commits denoted by N have committer date
+# starting from 1112354055 seconds since Unix epoch (default committer
+# date for the test suite), and the commits denoted by F have committer
+# date of (2 ^ 31 - 2) seconds since Unix epoch.
+#
+# The largest offset observed is 2 ^ 31, just large enough to overflow.
+#
+
+test_expect_success 'set up and verify repo with generation data overflow chunk' '
+	objdir=".git/objects" &&
+	UNIX_EPOCH_ZERO="@0 +0000" &&
+	FUTURE_DATE="@2147483646 +0000" &&
+	test_oid_cache <<-EOF &&
+	oid_version sha1:1
+	oid_version sha256:2
+	EOF
+	cd "$TRASH_DIRECTORY" &&
+	mkdir repo &&
+	cd repo &&
+	git init &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 1 &&
+	test_commit 2 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 3 &&
+	git commit-graph write --reachable &&
+	graph_read_expect 3 generation_data &&
+	test_commit --date "$FUTURE_DATE" 4 &&
+	test_commit 5 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 6 &&
+	git branch left &&
+	git reset --hard 3 &&
+	test_commit 7 &&
+	test_commit --date "$FUTURE_DATE" 8 &&
+	test_commit 9 &&
+	git branch right &&
+	git reset --hard 3 &&
+	test_merge M left right &&
+	git commit-graph write --reachable &&
+	graph_read_expect 10 "generation_data generation_data_overflow" &&
+	git commit-graph verify
+'
+
+graph_git_behavior 'generation data overflow chunk repo' repo left right
 
 test_done
