@@ -1564,6 +1564,93 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 	return refs_for_each_rawref(get_main_ref_store(the_repository), fn, cb_data);
 }
 
+static int qsort_strcmp(const void *va, const void *vb)
+{
+	const char *a = *(const char **)va;
+	const char *b = *(const char **)vb;
+
+	return strcmp(a, b);
+}
+
+static void find_longest_prefixes_1(struct string_list *out,
+				  struct strbuf *prefix,
+				  const char **patterns, size_t nr)
+{
+	size_t i;
+
+	for (i = 0; i < nr; i++) {
+		char c = patterns[i][prefix->len];
+		if (!c || is_glob_special(c)) {
+			string_list_append(out, prefix->buf);
+			return;
+		}
+	}
+
+	i = 0;
+	while (i < nr) {
+		size_t end;
+
+		/*
+		* Set "end" to the index of the element _after_ the last one
+		* in our group.
+		*/
+		for (end = i + 1; end < nr; end++) {
+			if (patterns[i][prefix->len] != patterns[end][prefix->len])
+				break;
+		}
+
+		strbuf_addch(prefix, patterns[i][prefix->len]);
+		find_longest_prefixes_1(out, prefix, patterns + i, end - i);
+		strbuf_setlen(prefix, prefix->len - 1);
+
+		i = end;
+	}
+}
+
+static void find_longest_prefixes(struct string_list *out,
+				  const char **patterns)
+{
+	struct strvec sorted = STRVEC_INIT;
+	struct strbuf prefix = STRBUF_INIT;
+
+	strvec_pushv(&sorted, patterns);
+	QSORT(sorted.v, sorted.nr, qsort_strcmp);
+
+	find_longest_prefixes_1(out, &prefix, sorted.v, sorted.nr);
+
+	strvec_clear(&sorted);
+	strbuf_release(&prefix);
+}
+
+int for_each_fullref_in_prefixes(const char *namespace,
+				 const char **patterns,
+				 each_ref_fn fn, void *cb_data,
+				 unsigned int broken)
+{
+	struct string_list prefixes = STRING_LIST_INIT_DUP;
+	struct string_list_item *prefix;
+	struct strbuf buf = STRBUF_INIT;
+	int ret = 0, namespace_len;
+
+	find_longest_prefixes(&prefixes, patterns);
+
+	if (namespace)
+		strbuf_addstr(&buf, namespace);
+	namespace_len = buf.len;
+
+	for_each_string_list_item(prefix, &prefixes) {
+		strbuf_addstr(&buf, prefix->string);
+		ret = for_each_fullref_in(buf.buf, fn, cb_data, broken);
+		if (ret)
+			break;
+		strbuf_setlen(&buf, namespace_len);
+	}
+
+	string_list_clear(&prefixes, 0);
+	strbuf_release(&buf);
+	return ret;
+}
+
 static int refs_read_special_head(struct ref_store *ref_store,
 				  const char *refname, struct object_id *oid,
 				  struct strbuf *referent, unsigned int *type)
