@@ -163,8 +163,8 @@ parse_option () {
 		;;
 	--stress-jobs=*)
 		stress=t;
-		stress=${opt#--*=}
-		case "$stress" in
+		stress_jobs=${opt#--*=}
+		case "$stress_jobs" in
 		*[!0-9]*|0*|"")
 			echo "error: --stress-jobs=<N> requires the number of jobs to run" >&2
 			exit 1
@@ -262,9 +262,9 @@ then
 	: # Don't stress test again.
 elif test -n "$stress"
 then
-	if test "$stress" != t
+	if test -n "$stress_jobs"
 	then
-		job_count=$stress
+		job_count=$stress_jobs
 	elif test -n "$GIT_TEST_STRESS_LOAD"
 	then
 		job_count="$GIT_TEST_STRESS_LOAD"
