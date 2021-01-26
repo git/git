@@ -63,7 +63,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 
 	if (data->peel) {
 		struct object_id peeled;
-		if (!peel_ref(refname, &peeled))
+		if (!peel_iterated_oid(oid, &peeled))
 			strbuf_addf(&refline, " peeled:%s", oid_to_hex(&peeled));
 	}
 

@@ -194,7 +194,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 	}
 
 	/* Is it annotated? */
-	if (!peel_ref(path, &peeled)) {
+	if (!peel_iterated_oid(oid, &peeled)) {
 		is_annotated = !oideq(oid, &peeled);
 	} else {
 		oidcpy(&peeled, oid);

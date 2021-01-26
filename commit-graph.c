@@ -1575,7 +1575,7 @@ static int add_ref_to_set(const char *refname,
 	struct object_id peeled;
 	struct refs_cb_data *data = (struct refs_cb_data *)cb_data;
 
-	if (!peel_ref(refname, &peeled))
+	if (!peel_iterated_oid(oid, &peeled))
 		oid = &peeled;
 	if (oid_object_info(the_repository, oid, NULL) == OBJ_COMMIT)
 		oidset_insert(data->commits, oid);
