@@ -66,6 +66,7 @@ test_expect_success '"list" all worktrees with locked annotation' '
 	git worktree add --detach locked master &&
 	git worktree add --detach unlocked master &&
 	git worktree lock locked &&
+	test_when_finished "git worktree unlock locked" &&
 	git worktree list >out &&
 	grep "/locked  *[0-9a-f].* locked$" out &&
 	! grep "/unlocked  *[0-9a-f].* locked$" out
