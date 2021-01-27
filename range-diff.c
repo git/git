@@ -564,3 +564,8 @@ int show_range_diff(const char *range1, const char *range2,
 
 	return res;
 }
+
+int is_range_diff_range(const char *arg)
+{
+	return !!strstr(arg, "..");
+}
