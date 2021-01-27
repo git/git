@@ -104,6 +104,38 @@ test_expect_success '"list" all worktrees --porcelain with locked reason newline
 	test_cmp expect actual
 '
 
+test_expect_success '"list" all worktrees with prunable annotation' '
+	test_when_finished "rm -rf prunable unprunable out && git worktree prune" &&
+	git worktree add --detach prunable &&
+	git worktree add --detach unprunable &&
+	rm -rf prunable &&
+	git worktree list >out &&
+	grep "/prunable  *[0-9a-f].* prunable$" out &&
+	! grep "/unprunable  *[0-9a-f].* prunable$"
+'
+
+test_expect_success '"list" all worktrees --porcelain with prunable' '
+	test_when_finished "rm -rf prunable out && git worktree prune" &&
+	git worktree add --detach prunable &&
+	rm -rf prunable &&
+	git worktree list --porcelain >out &&
+	sed -n "/^worktree .*\/prunable$/,/^$/p" <out >only_prunable &&
+	test_i18ngrep "^prunable gitdir file points to non-existent location$" only_prunable
+'
+
+test_expect_success '"list" all worktrees with prunable consistent with "prune"' '
+	test_when_finished "rm -rf prunable unprunable out && git worktree prune" &&
+	git worktree add --detach prunable &&
+	git worktree add --detach unprunable &&
+	rm -rf prunable &&
+	git worktree list >out &&
+	grep "/prunable  *[0-9a-f].* prunable$" out &&
+	! grep "/unprunable  *[0-9a-f].* unprunable$" out &&
+	git worktree prune --verbose >out &&
+	test_i18ngrep "^Removing worktrees/prunable" out &&
+	test_i18ngrep ! "^Removing worktrees/unprunable" out
+'
+
 test_expect_success 'bare repo setup' '
 	git init --bare bare1 &&
 	echo "data" >file1 &&

@@ -592,6 +592,10 @@ static void show_worktree_porcelain(struct worktree *wt)
 	} else if (reason)
 		printf("locked\n");
 
+	reason = worktree_prune_reason(wt, expire);
+	if (reason)
+		printf("prunable %s\n", reason);
+
 	printf("\n");
 }
 
@@ -619,6 +623,9 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 
 	if (worktree_lock_reason(wt))
 		strbuf_addstr(&sb, " locked");
+
+	if (worktree_prune_reason(wt, expire))
+		strbuf_addstr(&sb, " prunable");
 
 	printf("%s\n", sb.buf);
 	strbuf_release(&sb);
@@ -663,9 +670,12 @@ static int list(int ac, const char **av, const char *prefix)
 
 	struct option options[] = {
 		OPT_BOOL(0, "porcelain", &porcelain, N_("machine-readable output")),
+		OPT_EXPIRY_DATE(0, "expire", &expire,
+				N_("add 'prunable' annotation to worktrees older than <time>")),
 		OPT_END()
 	};
 
+	expire = TIME_MAX;
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
 	if (ac)
 		usage_with_options(worktree_usage, options);
