@@ -232,6 +232,8 @@ This can also be set up as the default behaviour by using the
 -v::
 --verbose::
 	With `prune`, report all removals.
++
+With `list`, output additional information about worktrees (see below).
 
 --expire <time>::
 	With `prune`, only expire unused working trees older than `<time>`.
@@ -388,6 +390,24 @@ $ git worktree list
 /path/to/locked-worktreee   acbd5678 (brancha) locked
 /path/to/prunable-worktree  5678abc  (detached HEAD) prunable
 ------------
+
+For these annotations, a reason might also be available and this can be
+seen using the verbose mode. The annotation is then moved to the next line
+indented followed by the additional information.
+
+------------
+$ git worktree list --verbose
+/path/to/linked-worktree              abcd1234 [master]
+/path/to/locked-worktree-no-reason    abcd5678 (detached HEAD) locked
+/path/to/locked-worktree-with-reason  1234abcd (brancha)
+	locked: working tree path is mounted on a portable device
+/path/to/prunable-worktree            5678abc1 (detached HEAD)
+	prunable: gitdir file points to non-existent location
+------------
+
+Note that the annotation is moved to the next line if the additional
+information is available, otherwise it stays on the same line as the
+working tree itself.
 
 Porcelain Format
 ~~~~~~~~~~~~~~~~

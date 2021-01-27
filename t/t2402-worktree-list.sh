@@ -136,6 +136,37 @@ test_expect_success '"list" all worktrees with prunable consistent with "prune"'
 	test_i18ngrep ! "^Removing worktrees/unprunable" out
 '
 
+test_expect_success '"list" --verbose and --porcelain mutually exclusive' '
+	test_must_fail git worktree list --verbose --porcelain
+'
+
+test_expect_success '"list" all worktrees --verbose with locked' '
+	test_when_finished "rm -rf locked1 locked2 out actual expect && git worktree prune" &&
+	git worktree add locked1 --detach &&
+	git worktree add locked2 --detach &&
+	git worktree lock locked1 &&
+	test_when_finished "git worktree unlock locked1" &&
+	git worktree lock locked2 --reason "with reason" &&
+	test_when_finished "git worktree unlock locked2" &&
+	echo "$(git -C locked2 rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >expect &&
+	printf "\tlocked: with reason\n" >>expect &&
+	git worktree list --verbose >out &&
+	grep "/locked1  *[0-9a-f].* locked$" out &&
+	sed -n "s/  */ /g;/\/locked2  *[0-9a-f].*$/,/locked: .*$/p" <out >actual &&
+	test_cmp actual expect
+'
+
+test_expect_success '"list" all worktrees --verbose with prunable' '
+	test_when_finished "rm -rf prunable out actual expect && git worktree prune" &&
+	git worktree add prunable --detach &&
+	echo "$(git -C prunable rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >expect &&
+	printf "\tprunable: gitdir file points to non-existent location\n" >>expect &&
+	rm -rf prunable &&
+	git worktree list --verbose >out &&
+	sed -n "s/  */ /g;/\/prunable  *[0-9a-f].*$/,/prunable: .*$/p" <out >actual &&
+	test_i18ncmp actual expect
+'
+
 test_expect_success 'bare repo setup' '
 	git init --bare bare1 &&
 	echo "data" >file1 &&

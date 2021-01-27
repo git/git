@@ -604,6 +604,7 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 	struct strbuf sb = STRBUF_INIT;
 	int cur_path_len = strlen(wt->path);
 	int path_adj = cur_path_len - utf8_strwidth(wt->path);
+	const char *reason;
 
 	strbuf_addf(&sb, "%-*s ", 1 + path_maxlen + path_adj, wt->path);
 	if (wt->is_bare)
@@ -621,10 +622,16 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 			strbuf_addstr(&sb, "(error)");
 	}
 
-	if (worktree_lock_reason(wt))
+	reason = worktree_lock_reason(wt);
+	if (verbose && reason && *reason)
+		strbuf_addf(&sb, "\n\tlocked: %s", reason);
+	else if (reason)
 		strbuf_addstr(&sb, " locked");
 
-	if (worktree_prune_reason(wt, expire))
+	reason = worktree_prune_reason(wt, expire);
+	if (verbose && reason)
+		strbuf_addf(&sb, "\n\tprunable: %s", reason);
+	else if (reason)
 		strbuf_addstr(&sb, " prunable");
 
 	printf("%s\n", sb.buf);
@@ -670,6 +677,7 @@ static int list(int ac, const char **av, const char *prefix)
 
 	struct option options[] = {
 		OPT_BOOL(0, "porcelain", &porcelain, N_("machine-readable output")),
+		OPT__VERBOSE(&verbose, N_("show extended annotations and reasons, if available")),
 		OPT_EXPIRY_DATE(0, "expire", &expire,
 				N_("add 'prunable' annotation to worktrees older than <time>")),
 		OPT_END()
@@ -679,6 +687,8 @@ static int list(int ac, const char **av, const char *prefix)
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
 	if (ac)
 		usage_with_options(worktree_usage, options);
+	else if (verbose && porcelain)
+		die(_("--verbose and --porcelain are mutually exclusive"));
 	else {
 		struct worktree **worktrees = get_worktrees();
 		int path_maxlen = 0, abbrev = DEFAULT_ABBREV, i;
