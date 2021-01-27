@@ -377,8 +377,10 @@ Porcelain Format
 The porcelain format has a line per attribute.  Attributes are listed with a
 label and value separated by a single space.  Boolean attributes (like `bare`
 and `detached`) are listed as a label only, and are present only
-if the value is true.  The first attribute of a working tree is always
-`worktree`, an empty line indicates the end of the record.  For example:
+if the value is true.  Some attributes (like `locked`) can be listed as a label
+only or with a value depending upon whether a reason is available.  The first
+attribute of a working tree is always `worktree`, an empty line indicates the
+end of the record.  For example:
 
 ------------
 $ git worktree list --porcelain
@@ -393,6 +395,28 @@ worktree /path/to/other-linked-worktree
 HEAD 1234abc1234abc1234abc1234abc1234abc1234a
 detached
 
+worktree /path/to/linked-worktree-locked-no-reason
+HEAD 5678abc5678abc5678abc5678abc5678abc5678c
+branch refs/heads/locked-no-reason
+locked
+
+worktree /path/to/linked-worktree-locked-with-reason
+HEAD 3456def3456def3456def3456def3456def3456b
+branch refs/heads/locked-with-reason
+locked reason why is locked
+
+------------
+
+If the lock reason contains "unusual" characters such as newline, they
+are escaped and the entire reason is quoted as explained for the
+configuration variable `core.quotePath` (see linkgit:git-config[1]).
+For Example:
+
+------------
+$ git worktree list --porcelain
+...
+locked "reason\nwhy is locked"
+...
 ------------
 
 EXAMPLES

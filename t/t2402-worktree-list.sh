@@ -72,6 +72,38 @@ test_expect_success '"list" all worktrees with locked annotation' '
 	! grep "/unlocked  *[0-9a-f].* locked$" out
 '
 
+test_expect_success '"list" all worktrees --porcelain with locked' '
+	test_when_finished "rm -rf locked1 locked2 unlocked out actual expect && git worktree prune" &&
+	echo "locked" >expect &&
+	echo "locked with reason" >>expect &&
+	git worktree add --detach locked1 &&
+	git worktree add --detach locked2 &&
+	# unlocked worktree should not be annotated with "locked"
+	git worktree add --detach unlocked &&
+	git worktree lock locked1 &&
+	test_when_finished "git worktree unlock locked1" &&
+	git worktree lock locked2 --reason "with reason" &&
+	test_when_finished "git worktree unlock locked2" &&
+	git worktree list --porcelain >out &&
+	grep "^locked" out >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '"list" all worktrees --porcelain with locked reason newline escaped' '
+	test_when_finished "rm -rf locked_lf locked_crlf out actual expect && git worktree prune" &&
+	printf "locked \"locked\\\\r\\\\nreason\"\n" >expect &&
+	printf "locked \"locked\\\\nreason\"\n" >>expect &&
+	git worktree add --detach locked_lf &&
+	git worktree add --detach locked_crlf &&
+	git worktree lock locked_lf --reason "$(printf "locked\nreason")" &&
+	test_when_finished "git worktree unlock locked_lf" &&
+	git worktree lock locked_crlf --reason "$(printf "locked\r\nreason")" &&
+	test_when_finished "git worktree unlock locked_crlf" &&
+	git worktree list --porcelain >out &&
+	grep "^locked" out >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'bare repo setup' '
 	git init --bare bare1 &&
 	echo "data" >file1 &&
