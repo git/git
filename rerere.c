@@ -146,7 +146,7 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 	int pos;
 
 	if (get_sha1_hex(hex, hash))
-		return NULL; /* BUG */
+		BUG("cannot parse rerere dir hex?");
 	pos = hash_pos(hash, rerere_dir, rerere_dir_nr, rerere_dir_hash);
 	if (pos < 0) {
 		rr_dir = xmalloc(sizeof(*rr_dir));
@@ -1178,6 +1178,13 @@ static void prune_one(struct rerere_id *id,
 		unlink_rr_item(id);
 }
 
+/* Does the basename in "path" look plausibly like an rr-cache entry? */
+static int is_rr_cache_dirname(const char *path)
+{
+	unsigned char hash[GIT_MAX_RAWSZ];
+	return !get_sha1_hex(path, hash);
+}
+
 void rerere_gc(struct repository *r, struct string_list *rr)
 {
 	struct string_list to_remove = STRING_LIST_INIT_DUP;
@@ -1205,9 +1212,10 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 
 		if (is_dot_or_dotdot(e->d_name))
 			continue;
-		rr_dir = find_rerere_dir(e->d_name);
-		if (!rr_dir)
+		if (!is_rr_cache_dirname(e->d_name))
 			continue; /* or should we remove e->d_name? */
+
+		rr_dir = find_rerere_dir(e->d_name);
 
 		now_empty = 1;
 		for (id.variant = 0, id.collection = rr_dir;
