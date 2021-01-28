@@ -1012,9 +1012,9 @@ static int write_graph_chunk_oids(struct hashfile *f,
 	return 0;
 }
 
-static const struct object_id *commit_to_oid(size_t index, void *table)
+static const struct object_id *commit_to_oid(size_t index, const void *table)
 {
-	struct commit **commits = table;
+	const struct commit * const *commits = table;
 	return &commits[index]->object.oid;
 }
 

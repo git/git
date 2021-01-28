@@ -390,9 +390,9 @@ static void name_tips(void)
 	}
 }
 
-static const struct object_id *nth_tip_table_ent(size_t ix, void *table_)
+static const struct object_id *nth_tip_table_ent(size_t ix, const void *table_)
 {
-	struct tip_table_entry *table = table_;
+	const struct tip_table_entry *table = table_;
 	return &table[ix].oid;
 }
 

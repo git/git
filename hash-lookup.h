@@ -1,10 +1,10 @@
 #ifndef HASH_LOOKUP_H
 #define HASH_LOOKUP_H
 
-typedef const struct object_id *oid_access_fn(size_t index, void *table);
+typedef const struct object_id *oid_access_fn(size_t index, const void *table);
 
 int oid_pos(const struct object_id *oid,
-	    void *table,
+	    const void *table,
 	    size_t nr,
 	    oid_access_fn fn);
 

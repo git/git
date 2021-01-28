@@ -610,9 +610,9 @@ static inline void dump_bitmap(struct hashfile *f, struct ewah_bitmap *bitmap)
 		die("Failed to write bitmap index");
 }
 
-static const struct object_id *oid_access(size_t pos, void *table)
+static const struct object_id *oid_access(size_t pos, const void *table)
 {
-	struct pack_idx_entry **index = table;
+	const struct pack_idx_entry * const *index = table;
 	return &index[pos]->oid;
 }
 

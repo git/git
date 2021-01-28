@@ -105,9 +105,9 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
-static const struct object_id *commit_graft_oid_access(size_t index, void *table)
+static const struct object_id *commit_graft_oid_access(size_t index, const void *table)
 {
-	struct commit_graft **commit_graft_table = table;
+	const struct commit_graft * const *commit_graft_table = table;
 	return &commit_graft_table[index]->oid;
 }
 

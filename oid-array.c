@@ -22,9 +22,9 @@ void oid_array_sort(struct oid_array *array)
 	array->sorted = 1;
 }
 
-static const struct object_id *oid_access(size_t index, void *table)
+static const struct object_id *oid_access(size_t index, const void *table)
 {
-	struct object_id *array = table;
+	const struct object_id *array = table;
 	return &array[index];
 }
 

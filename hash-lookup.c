@@ -50,7 +50,7 @@ static uint32_t take2(const struct object_id *oid, size_t ofs)
  * The oid of element i (between 0 and nr - 1) should be returned
  * by "fn(i, table)".
  */
-int oid_pos(const struct object_id *oid, void *table, size_t nr,
+int oid_pos(const struct object_id *oid, const void *table, size_t nr,
 	    oid_access_fn fn)
 {
 	size_t hi = nr;
