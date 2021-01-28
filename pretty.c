@@ -783,6 +783,7 @@ enum trunc_type {
 };
 
 struct format_commit_context {
+	struct repository *repository;
 	const struct commit *commit;
 	const struct pretty_print_context *pretty_ctx;
 	unsigned commit_header_parsed:1;
@@ -1373,10 +1374,13 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		return 2;
 	}
 
-
 	/* For the rest we have to parse the commit header. */
-	if (!c->commit_header_parsed)
+	if (!c->commit_header_parsed) {
+		msg = c->message =
+			repo_logmsg_reencode(c->repository, commit,
+					     &c->commit_encoding, "UTF-8");
 		parse_commit_header(c);
+	}
 
 	switch (placeholder[0]) {
 	case 'a':	/* author ... */
@@ -1667,6 +1671,7 @@ void repo_format_commit_message(struct repository *r,
 				const struct pretty_print_context *pretty_ctx)
 {
 	struct format_commit_context context = {
+		.repository = r,
 		.commit = commit,
 		.pretty_ctx = pretty_ctx,
 		.wrap_start = sb->len
@@ -1674,18 +1679,14 @@ void repo_format_commit_message(struct repository *r,
 	const char *output_enc = pretty_ctx->output_encoding;
 	const char *utf8 = "UTF-8";
 
-	/*
-	 * convert a commit message to UTF-8 first
-	 * as far as 'format_commit_item' assumes it in UTF-8
-	 */
-	context.message = repo_logmsg_reencode(r, commit,
-					       &context.commit_encoding,
-					       utf8);
-
 	strbuf_expand(sb, format, format_commit_item, &context);
 	rewrap_message_tail(sb, &context, 0, 0, 0);
 
-	/* then convert a commit message to an actual output encoding */
+	/*
+	 * Convert output to an actual output encoding; note that
+	 * format_commit_item() will always use UTF-8, so we don't
+	 * have to bother if that's what the output wants.
+	 */
 	if (output_enc) {
 		if (same_encoding(utf8, output_enc))
 			output_enc = NULL;
