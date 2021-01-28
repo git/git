@@ -1181,8 +1181,9 @@ static void prune_one(struct rerere_id *id,
 /* Does the basename in "path" look plausibly like an rr-cache entry? */
 static int is_rr_cache_dirname(const char *path)
 {
-	unsigned char hash[GIT_MAX_RAWSZ];
-	return !get_sha1_hex(path, hash);
+	struct object_id oid;
+	const char *end;
+	return !parse_oid_hex(path, &oid, &end) && !*end;
 }
 
 void rerere_gc(struct repository *r, struct string_list *rr)
