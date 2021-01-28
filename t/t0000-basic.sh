@@ -759,96 +759,85 @@ test_expect_success '--run invalid range end' "
 	EOF_ERR
 "
 
+test_expect_success 'tests respect prerequisites' '
+	run_sub_test_lib_test prereqs "tests respect prereqs" <<-\EOF &&
 
-test_set_prereq HAVEIT
-haveit=no
-test_expect_success HAVEIT 'test runs if prerequisite is satisfied' '
-	test_have_prereq HAVEIT &&
-	haveit=yes
-'
-donthaveit=yes
-test_expect_success DONTHAVEIT 'unmet prerequisite causes test to be skipped' '
-	donthaveit=no
-'
-if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" -a $haveit$donthaveit != yesyes
-then
-	say "bug in test framework: prerequisite tags do not work reliably"
-	exit 1
-fi
+	test_set_prereq HAVEIT
+	test_expect_success HAVEIT "prereq is satisfied" "true"
+	test_expect_success "have_prereq works" "
+		test_have_prereq HAVEIT
+	"
+	test_expect_success DONTHAVEIT "prereq not satisfied" "false"
 
-test_set_prereq HAVETHIS
-haveit=no
-test_expect_success HAVETHIS,HAVEIT 'test runs if prerequisites are satisfied' '
-	test_have_prereq HAVEIT &&
-	test_have_prereq HAVETHIS &&
-	haveit=yes
-'
-donthaveit=yes
-test_expect_success HAVEIT,DONTHAVEIT 'unmet prerequisites causes test to be skipped' '
-	donthaveit=no
-'
-donthaveiteither=yes
-test_expect_success DONTHAVEIT,HAVEIT 'unmet prerequisites causes test to be skipped' '
-	donthaveiteither=no
-'
-if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" -a $haveit$donthaveit$donthaveiteither != yesyesyes
-then
-	say "bug in test framework: multiple prerequisite tags do not work reliably"
-	exit 1
-fi
+	test_set_prereq HAVETHIS
+	test_expect_success HAVETHIS,HAVEIT "multiple prereqs" "true"
+	test_expect_success HAVEIT,DONTHAVEIT "mixed prereqs (yes,no)" "false"
+	test_expect_success DONTHAVEIT,HAVEIT "mixed prereqs (no,yes)" "false"
 
-test_lazy_prereq LAZY_TRUE true
-havetrue=no
-test_expect_success LAZY_TRUE 'test runs if lazy prereq is satisfied' '
-	havetrue=yes
-'
-donthavetrue=yes
-test_expect_success !LAZY_TRUE 'missing lazy prereqs skip tests' '
-	donthavetrue=no
+	test_done
+	EOF
+
+	check_sub_test_lib_test prereqs <<-\EOF
+	ok 1 - prereq is satisfied
+	ok 2 - have_prereq works
+	ok 3 # skip prereq not satisfied (missing DONTHAVEIT)
+	ok 4 - multiple prereqs
+	ok 5 # skip mixed prereqs (yes,no) (missing DONTHAVEIT of HAVEIT,DONTHAVEIT)
+	ok 6 # skip mixed prereqs (no,yes) (missing DONTHAVEIT of DONTHAVEIT,HAVEIT)
+	# passed all 6 test(s)
+	1..6
+	EOF
 '
 
-if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" -a "$havetrue$donthavetrue" != yesyes
-then
-	say 'bug in test framework: lazy prerequisites do not work'
-	exit 1
-fi
+test_expect_success 'tests respect lazy prerequisites' '
+	run_sub_test_lib_test lazy-prereqs "respect lazy prereqs" <<-\EOF &&
 
-test_lazy_prereq LAZY_FALSE false
-nothavefalse=no
-test_expect_success !LAZY_FALSE 'negative lazy prereqs checked' '
-	nothavefalse=yes
-'
-havefalse=yes
-test_expect_success LAZY_FALSE 'missing negative lazy prereqs will skip' '
-	havefalse=no
-'
+	test_lazy_prereq LAZY_TRUE true
+	test_expect_success LAZY_TRUE "lazy prereq is satisifed" "true"
+	test_expect_success !LAZY_TRUE "negative lazy prereq" "false"
 
-if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" -a "$nothavefalse$havefalse" != yesyes
-then
-	say 'bug in test framework: negative lazy prerequisites do not work'
-	exit 1
-fi
+	test_lazy_prereq LAZY_FALSE false
+	test_expect_success LAZY_FALSE "lazy prereq not satisfied" "false"
+	test_expect_success !LAZY_FALSE "negative false prereq" "true"
 
-test_lazy_prereq NESTED_INNER '
-	>inner &&
-	rm -f outer
-'
-test_lazy_prereq NESTED_PREREQ '
-	>outer &&
-	test_have_prereq NESTED_INNER &&
-	echo "can create new file in cwd" >file &&
-	test -f outer &&
-	test ! -f inner
-'
-test_expect_success NESTED_PREREQ 'evaluating nested lazy prereqs dont interfere with each other' '
-	nestedworks=yes
+	test_done
+	EOF
+
+	check_sub_test_lib_test lazy-prereqs <<-\EOF
+	ok 1 - lazy prereq is satisifed
+	ok 2 # skip negative lazy prereq (missing !LAZY_TRUE)
+	ok 3 # skip lazy prereq not satisfied (missing LAZY_FALSE)
+	ok 4 - negative false prereq
+	# passed all 4 test(s)
+	1..4
+	EOF
 '
 
-if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" && test "$nestedworks" != yes
-then
-	say 'bug in test framework: nested lazy prerequisites do not work'
-	exit 1
-fi
+test_expect_success 'nested lazy prerequisites' '
+	run_sub_test_lib_test nested-lazy "nested lazy prereqs" <<-\EOF &&
+
+	test_lazy_prereq NESTED_INNER "
+		>inner &&
+		rm -f outer
+	"
+	test_lazy_prereq NESTED_PREREQ "
+		>outer &&
+		test_have_prereq NESTED_INNER &&
+		echo can create new file in cwd >file &&
+		test_path_is_file outer &&
+		test_path_is_missing inner
+	"
+	test_expect_success NESTED_PREREQ "evaluate nested prereq" "true"
+
+	test_done
+	EOF
+
+	check_sub_test_lib_test nested-lazy <<-\EOF
+	ok 1 - evaluate nested prereq
+	# passed all 1 test(s)
+	1..1
+	EOF
+'
 
 test_expect_success 'lazy prereqs do not turn off tracing' "
 	run_sub_test_lib_test lazy-prereq-and-tracing \
