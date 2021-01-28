@@ -829,17 +829,6 @@ then
 	exit 1
 fi
 
-clean=no
-test_expect_success 'tests clean up after themselves' '
-	test_when_finished clean=yes
-'
-
-if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" -a $clean != yes
-then
-	say "bug in test framework: basic cleanup command does not work reliably"
-	exit 1
-fi
-
 test_lazy_prereq NESTED_INNER '
 	>inner &&
 	rm -f outer
@@ -873,6 +862,17 @@ test_expect_success 'lazy prereqs do not turn off tracing' "
 
 	grep 'echo trace' lazy-prereq-and-tracing/err
 "
+
+clean=no
+test_expect_success 'tests clean up after themselves' '
+	test_when_finished clean=yes
+'
+
+if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" -a $clean != yes
+then
+	say "bug in test framework: basic cleanup command does not work reliably"
+	exit 1
+fi
 
 test_expect_success 'tests clean up even on failures' "
 	run_sub_test_lib_test_err \
