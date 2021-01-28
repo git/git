@@ -852,16 +852,25 @@ test_expect_success 'lazy prereqs do not turn off tracing' "
 	grep 'echo trace' lazy-prereq-and-tracing/err
 "
 
-clean=no
 test_expect_success 'tests clean up after themselves' '
-	test_when_finished clean=yes
-'
+	run_sub_test_lib_test cleanup "test with cleanup" <<-\EOF &&
+	clean=no
+	test_expect_success "do cleanup" "
+		test_when_finished clean=yes
+	"
+	test_expect_success "cleanup happened" "
+		test $clean = yes
+	"
+	test_done
+	EOF
 
-if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" -a $clean != yes
-then
-	say "bug in test framework: basic cleanup command does not work reliably"
-	exit 1
-fi
+	check_sub_test_lib_test cleanup <<-\EOF
+	ok 1 - do cleanup
+	ok 2 - cleanup happened
+	# passed all 2 test(s)
+	1..2
+	EOF
+'
 
 test_expect_success 'tests clean up even on failures' "
 	run_sub_test_lib_test_err \
