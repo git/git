@@ -11,6 +11,7 @@
 #include "pathspec.h"
 #include "object-store.h"
 #include "hash-lookup.h"
+#include "strmap.h"
 
 #define RESOLVED 0
 #define PUNTED 1
@@ -23,26 +24,27 @@ static int rerere_enabled = -1;
 /* automatically update cleanly resolved paths to the index */
 static int rerere_autoupdate;
 
-static int rerere_dir_nr;
-static int rerere_dir_alloc;
-
 #define RR_HAS_POSTIMAGE 1
 #define RR_HAS_PREIMAGE 2
-static struct rerere_dir {
-	unsigned char hash[GIT_MAX_HEXSZ];
+struct rerere_dir {
 	int status_alloc, status_nr;
 	unsigned char *status;
-} **rerere_dir;
+	char name[FLEX_ARRAY];
+};
+
+static struct strmap rerere_dirs = STRMAP_INIT;
 
 static void free_rerere_dirs(void)
 {
-	int i;
-	for (i = 0; i < rerere_dir_nr; i++) {
-		free(rerere_dir[i]->status);
-		free(rerere_dir[i]);
+	struct hashmap_iter iter;
+	struct strmap_entry *ent;
+
+	strmap_for_each_entry(&rerere_dirs, &iter, ent) {
+		struct rerere_dir *rr_dir = ent->value;
+		free(rr_dir->status);
+		free(rr_dir);
 	}
-	FREE_AND_NULL(rerere_dir);
-	rerere_dir_nr = rerere_dir_alloc = 0;
+	strmap_clear(&rerere_dirs, 0);
 }
 
 static void free_rerere_id(struct string_list_item *item)
@@ -52,7 +54,7 @@ static void free_rerere_id(struct string_list_item *item)
 
 static const char *rerere_id_hex(const struct rerere_id *id)
 {
-	return hash_to_hex(id->collection->hash);
+	return id->collection->name;
 }
 
 static void fit_variant(struct rerere_dir *rr_dir, int variant)
@@ -115,7 +117,7 @@ static int is_rr_file(const char *name, const char *filename, int *variant)
 static void scan_rerere_dir(struct rerere_dir *rr_dir)
 {
 	struct dirent *de;
-	DIR *dir = opendir(git_path("rr-cache/%s", hash_to_hex(rr_dir->hash)));
+	DIR *dir = opendir(git_path("rr-cache/%s", rr_dir->name));
 
 	if (!dir)
 		return;
@@ -133,39 +135,21 @@ static void scan_rerere_dir(struct rerere_dir *rr_dir)
 	closedir(dir);
 }
 
-static const unsigned char *rerere_dir_hash(size_t i, void *table)
-{
-	struct rerere_dir **rr_dir = table;
-	return rr_dir[i]->hash;
-}
-
 static struct rerere_dir *find_rerere_dir(const char *hex)
 {
-	unsigned char hash[GIT_MAX_RAWSZ];
 	struct rerere_dir *rr_dir;
-	int pos;
 
-	if (get_sha1_hex(hex, hash))
-		BUG("cannot parse rerere dir hex?");
-	pos = hash_pos(hash, rerere_dir, rerere_dir_nr, rerere_dir_hash);
-	if (pos < 0) {
-		rr_dir = xmalloc(sizeof(*rr_dir));
-		hashcpy(rr_dir->hash, hash);
+	rr_dir = strmap_get(&rerere_dirs, hex);
+	if (!rr_dir) {
+		FLEX_ALLOC_STR(rr_dir, name, hex);
 		rr_dir->status = NULL;
 		rr_dir->status_nr = 0;
 		rr_dir->status_alloc = 0;
-		pos = -1 - pos;
+		strmap_put(&rerere_dirs, hex, rr_dir);
 
-		/* Make sure the array is big enough ... */
-		ALLOC_GROW(rerere_dir, rerere_dir_nr + 1, rerere_dir_alloc);
-		/* ... and add it in. */
-		rerere_dir_nr++;
-		MOVE_ARRAY(rerere_dir + pos + 1, rerere_dir + pos,
-			   rerere_dir_nr - pos - 1);
-		rerere_dir[pos] = rr_dir;
 		scan_rerere_dir(rr_dir);
 	}
-	return rerere_dir[pos];
+	return rr_dir;
 }
 
 static int has_rerere_resolution(const struct rerere_id *id)
