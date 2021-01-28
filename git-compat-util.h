@@ -1176,9 +1176,12 @@ static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
 #endif
 #endif
 
-#if defined(__GNUC__) || (_MSC_VER >= 1400) || defined(__C99_MACRO_WITH_VA_ARGS)
+/*
+ * This is always defined as a first step towards making the use of variadic
+ * macros unconditional. If it causes compilation problems on your platform,
+ * please report it to the Git mailing list at git@vger.kernel.org.
+ */
 #define HAVE_VARIADIC_MACROS 1
-#endif
 
 /* usage.c: only to be used for testing BUG() implementation (see test-tool) */
 extern int BUG_exit_code;
