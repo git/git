@@ -59,4 +59,13 @@ test_expect_success 'hook does not run from repo config' '
 	test_path_is_missing .git/hook.stdout
 '
 
+test_expect_success 'hook works with partial clone' '
+	clear_hook_results &&
+	test_config_global uploadpack.packObjectsHook ./hook &&
+	test_config_global uploadpack.allowFilter true &&
+	git clone --bare --no-local --filter=blob:none . dst.git &&
+	git -C dst.git rev-list --objects --missing=print HEAD >objects &&
+	grep "^?" objects
+'
+
 test_done
