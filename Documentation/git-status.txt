@@ -32,6 +32,15 @@ OPTIONS
 --branch::
 	Show the branch and tracking info even in short-format.
 
+--color[=<when>]::
+	Color status output, overriding configuration file setting.
+	The value must be always (the default), never, or auto.
+
+--no-color::
+	Turn off color ouput, even when the configuration file gives
+	the default to color output.
+	Same as `--color=never`.
+
 --show-stash::
 	Show the number of entries currently stashed away.
 

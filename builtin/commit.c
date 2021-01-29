@@ -1355,6 +1355,7 @@ static int git_status_config(const char *k, const char *v, void *cb)
 int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	static int no_renames = -1;
+	static int use_color = GIT_COLOR_AUTO;
 	static const char *rename_score_arg = (const char *)-1;
 	static struct wt_status s;
 	unsigned int progress_flag = 0;
@@ -1378,6 +1379,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 			    STATUS_FORMAT_LONG),
 		OPT_BOOL('z', "null", &s.null_termination,
 			 N_("terminate entries with NUL")),
+		OPT__COLOR(&use_color, N_("use colored output")),
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
 		  N_("mode"),
 		  N_("show untracked files, optional modes: all, normal, no. (Default: all)"),
@@ -1409,6 +1411,10 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	handle_untracked_files_arg(&s);
 	handle_ignored_arg(&s);
+
+	if (use_color != GIT_COLOR_AUTO) {
+		s.use_color=use_color;
+	}
 
 	if (s.show_ignored_mode == SHOW_MATCHING_IGNORED &&
 	    s.show_untracked_files == SHOW_NO_UNTRACKED_FILES)
