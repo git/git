@@ -1064,6 +1064,8 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 	if (s->fp != stdout) {
 		rev.diffopt.use_color = 0;
 		wt_status_add_cut_line(s->fp);
+	} else {
+		rev.diffopt.use_color = s->use_color;
 	}
 	if (s->verbose > 1 && s->committable) {
 		/* print_updated() printed a header, so do we */
