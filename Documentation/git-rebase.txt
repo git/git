@@ -887,9 +887,17 @@ If you want to fold two or more commits into one, replace the command
 "pick" for the second and subsequent commits with "squash" or "fixup".
 If the commits had different authors, the folded commit will be
 attributed to the author of the first commit.  The suggested commit
-message for the folded commit is the concatenation of the commit
-messages of the first commit and of those with the "squash" command,
-but omits the commit messages of commits with the "fixup" command.
+message for the folded commit is the concatenation of the first
+commit's message with those identified by "squash" commands, omitting the
+messages of commits identified by "fixup" commands, unless "fixup -c"
+is used.  In that case the suggested commit message is only the message
+of the "fixup -c" commit, and an editor is opened allowing you to edit
+the message.  The contents (patch) of the "fixup -c" commit are still
+incorporated into the folded commit. If there is more than one "fixup -c"
+commit, the message from the last last one is used.  You can also use
+"fixup -C" to get the same behavior as "fixup -c" except without opening
+an editor.
+
 
 'git rebase' will stop when "pick" has been replaced with "edit" or
 when a command fails due to merge errors. When you are done editing
