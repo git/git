@@ -94,4 +94,27 @@ test_expect_success 'reverse index is not generated when available on disk' '
 		--batch-check="%(objectsize:disk)" <tip
 '
 
+test_expect_success 'revindex in-memory vs on-disk' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit commit &&
+
+		git rev-list --objects --no-object-names --all >objects &&
+
+		git -c pack.writeReverseIndex=false repack -ad &&
+		test_path_is_missing $packdir/pack-*.rev &&
+		git cat-file --batch-check="%(objectsize:disk) %(objectname)" \
+			<objects >in-core &&
+
+		git -c pack.writeReverseIndex=true repack -ad &&
+		test_path_is_file $packdir/pack-*.rev &&
+		git cat-file --batch-check="%(objectsize:disk) %(objectname)" \
+			<objects >on-disk &&
+
+		test_cmp on-disk in-core
+	)
+'
 test_done
