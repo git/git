@@ -210,4 +210,16 @@ test_expect_success 'sequence squash, fixup & fixup -c gives combined message' '
 	test_cmp_rev HEAD^ A
 '
 
+test_expect_success 'fixup -C works upon --autosquash with amend!' '
+	git checkout --detach branch &&
+	FAKE_COMMIT_AMEND=squashed \
+		FAKE_MESSAGE_COPY=actual-squash-message \
+		git -c commit.status=false rebase -ik --autosquash \
+						--signoff A &&
+	git diff-tree --exit-code --patch HEAD branch -- &&
+	test_cmp_rev HEAD^ A &&
+	test_i18ncmp "$TEST_DIRECTORY/t3437/expected-squash-message" \
+		actual-squash-message
+'
+
 test_done
