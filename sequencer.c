@@ -1718,15 +1718,34 @@ static int is_pick_or_similar(enum todo_command command)
 	}
 }
 
+static size_t subject_length(const char *body)
+{
+	const char *p = body;
+	while (*p) {
+		const char *next = skip_blank_lines(p);
+		if (next != p)
+			break;
+		p = strchrnul(p, '\n');
+		if (*p)
+			p++;
+	}
+	return p - body;
+}
+
 static void append_squash_message(struct strbuf *buf, const char *body,
 				  struct replay_opts *opts)
 {
+	size_t commented_len = 0;
+
 	unlink(rebase_path_fixup_msg());
+	if (starts_with(body, "squash!") || starts_with(body, "fixup!"))
+		commented_len = subject_length(body);
 	strbuf_addf(buf, "\n%c ", comment_line_char);
 	strbuf_addf(buf, _("This is the commit message #%d:"),
 		    ++opts->current_fixup_count + 1);
 	strbuf_addstr(buf, "\n\n");
-	strbuf_addstr(buf, body);
+	strbuf_add_commented_lines(buf, body, commented_len);
+	strbuf_addstr(buf, body + commented_len);
 }
 
 static int update_squash_messages(struct repository *r,
