@@ -400,8 +400,6 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 
 #if defined(PCRE_CONFIG_JIT) && !defined(NO_LIBPCRE1_JIT)
 	pcre_config(PCRE_CONFIG_JIT, &p->pcre1_jit_on);
-	if (opt->debug)
-		fprintf(stderr, "pcre1_jit_on=%d\n", p->pcre1_jit_on);
 
 	if (p->pcre1_jit_on)
 		study_options = PCRE_STUDY_JIT_COMPILE;
@@ -508,8 +506,6 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	}
 
 	pcre2_config(PCRE2_CONFIG_JIT, &p->pcre2_jit_on);
-	if (opt->debug)
-		fprintf(stderr, "pcre2_jit_on=%d\n", p->pcre2_jit_on);
 	if (p->pcre2_jit_on) {
 		jitret = pcre2_jit_compile(p->pcre2_pattern, PCRE2_JIT_COMPLETE);
 		if (jitret)
@@ -535,9 +531,6 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 			BUG("pcre2_pattern_info() failed: %d", patinforet);
 		if (jitsizearg == 0) {
 			p->pcre2_jit_on = 0;
-			if (opt->debug)
-				fprintf(stderr, "pcre2_jit_on=%d: (*NO_JIT) in regex\n",
-					p->pcre2_jit_on);
 			return;
 		}
 	}
@@ -616,8 +609,6 @@ static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
 	if (opt->ignore_case)
 		regflags |= REG_ICASE;
 	err = regcomp(&p->regexp, sb.buf, regflags);
-	if (opt->debug)
-		fprintf(stderr, "fixed %s\n", sb.buf);
 	strbuf_release(&sb);
 	if (err) {
 		char errbuf[1024];
@@ -812,87 +803,6 @@ static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
 	return compile_pattern_or(list);
 }
 
-static void indent(int in)
-{
-	while (in-- > 0)
-		fputc(' ', stderr);
-}
-
-static void dump_grep_pat(struct grep_pat *p)
-{
-	switch (p->token) {
-	case GREP_AND: fprintf(stderr, "*and*"); break;
-	case GREP_OPEN_PAREN: fprintf(stderr, "*(*"); break;
-	case GREP_CLOSE_PAREN: fprintf(stderr, "*)*"); break;
-	case GREP_NOT: fprintf(stderr, "*not*"); break;
-	case GREP_OR: fprintf(stderr, "*or*"); break;
-
-	case GREP_PATTERN: fprintf(stderr, "pattern"); break;
-	case GREP_PATTERN_HEAD: fprintf(stderr, "pattern_head"); break;
-	case GREP_PATTERN_BODY: fprintf(stderr, "pattern_body"); break;
-	}
-
-	switch (p->token) {
-	default: break;
-	case GREP_PATTERN_HEAD:
-		fprintf(stderr, "<head %d>", p->field); break;
-	case GREP_PATTERN_BODY:
-		fprintf(stderr, "<body>"); break;
-	}
-	switch (p->token) {
-	default: break;
-	case GREP_PATTERN_HEAD:
-	case GREP_PATTERN_BODY:
-	case GREP_PATTERN:
-		fprintf(stderr, "%.*s", (int)p->patternlen, p->pattern);
-		break;
-	}
-	fputc('\n', stderr);
-}
-
-static void dump_grep_expression_1(struct grep_expr *x, int in)
-{
-	indent(in);
-	switch (x->node) {
-	case GREP_NODE_TRUE:
-		fprintf(stderr, "true\n");
-		break;
-	case GREP_NODE_ATOM:
-		dump_grep_pat(x->u.atom);
-		break;
-	case GREP_NODE_NOT:
-		fprintf(stderr, "(not\n");
-		dump_grep_expression_1(x->u.unary, in+1);
-		indent(in);
-		fprintf(stderr, ")\n");
-		break;
-	case GREP_NODE_AND:
-		fprintf(stderr, "(and\n");
-		dump_grep_expression_1(x->u.binary.left, in+1);
-		dump_grep_expression_1(x->u.binary.right, in+1);
-		indent(in);
-		fprintf(stderr, ")\n");
-		break;
-	case GREP_NODE_OR:
-		fprintf(stderr, "(or\n");
-		dump_grep_expression_1(x->u.binary.left, in+1);
-		dump_grep_expression_1(x->u.binary.right, in+1);
-		indent(in);
-		fprintf(stderr, ")\n");
-		break;
-	}
-}
-
-static void dump_grep_expression(struct grep_opt *opt)
-{
-	struct grep_expr *x = opt->pattern_expression;
-
-	if (opt->all_match)
-		fprintf(stderr, "[all-match]\n");
-	dump_grep_expression_1(x, 0);
-	fflush(NULL);
-}
-
 static struct grep_expr *grep_true_expr(void)
 {
 	struct grep_expr *z = xcalloc(1, sizeof(*z));
@@ -973,7 +883,7 @@ static struct grep_expr *grep_splice_or(struct grep_expr *x, struct grep_expr *y
 	return z;
 }
 
-static void compile_grep_patterns_real(struct grep_opt *opt)
+void compile_grep_patterns(struct grep_opt *opt)
 {
 	struct grep_pat *p;
 	struct grep_expr *header_expr = prep_header_patterns(opt);
@@ -993,7 +903,7 @@ static void compile_grep_patterns_real(struct grep_opt *opt)
 
 	if (opt->all_match || header_expr)
 		opt->extended = 1;
-	else if (!opt->extended && !opt->debug)
+	else if (!opt->extended)
 		return;
 
 	p = opt->pattern_list;
@@ -1014,13 +924,6 @@ static void compile_grep_patterns_real(struct grep_opt *opt)
 		opt->pattern_expression = grep_or_expr(opt->pattern_expression,
 						       header_expr);
 	opt->all_match = 1;
-}
-
-void compile_grep_patterns(struct grep_opt *opt)
-{
-	compile_grep_patterns_real(opt);
-	if (opt->debug)
-		dump_grep_expression(opt);
 }
 
 static void free_pattern_expr(struct grep_expr *x)
