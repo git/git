@@ -443,4 +443,12 @@ test_expect_success 'fixup a fixup' '
 	test XZWY = $(git show | tr -cd W-Z)
 '
 
+test_expect_success 'fixup does not clean up commit message' '
+	oneline="#818" &&
+	git commit --allow-empty -m "$oneline" &&
+	git commit --fixup HEAD --allow-empty &&
+	git -c commit.cleanup=strip rebase -ki --autosquash HEAD~2 &&
+	test "$oneline" = "$(git show -s --format=%s)"
+'
+
 test_done
