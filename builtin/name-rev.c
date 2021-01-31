@@ -390,10 +390,10 @@ static void name_tips(void)
 	}
 }
 
-static const unsigned char *nth_tip_table_ent(size_t ix, void *table_)
+static const struct object_id *nth_tip_table_ent(size_t ix, const void *table_)
 {
-	struct tip_table_entry *table = table_;
-	return table[ix].oid.hash;
+	const struct tip_table_entry *table = table_;
+	return &table[ix].oid;
 }
 
 static const char *get_exact_ref_match(const struct object *o)
@@ -408,8 +408,8 @@ static const char *get_exact_ref_match(const struct object *o)
 		tip_table.sorted = 1;
 	}
 
-	found = hash_pos(o->oid.hash, tip_table.table, tip_table.nr,
-			 nth_tip_table_ent);
+	found = oid_pos(&o->oid, tip_table.table, tip_table.nr,
+			nth_tip_table_ent);
 	if (0 <= found)
 		return tip_table.table[found].refname;
 	return NULL;

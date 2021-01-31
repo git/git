@@ -41,7 +41,7 @@ int register_shallow(struct repository *r, const struct object_id *oid)
 
 int unregister_shallow(const struct object_id *oid)
 {
-	int pos = commit_graft_pos(the_repository, oid->hash);
+	int pos = commit_graft_pos(the_repository, oid);
 	if (pos < 0)
 		return -1;
 	if (pos + 1 < the_repository->parsed_objects->grafts_nr)

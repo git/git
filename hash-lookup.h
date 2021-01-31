@@ -1,12 +1,12 @@
 #ifndef HASH_LOOKUP_H
 #define HASH_LOOKUP_H
 
-typedef const unsigned char *hash_access_fn(size_t index, void *table);
+typedef const struct object_id *oid_access_fn(size_t index, const void *table);
 
-int hash_pos(const unsigned char *hash,
-	     void *table,
-	     size_t nr,
-	     hash_access_fn fn);
+int oid_pos(const struct object_id *oid,
+	    const void *table,
+	    size_t nr,
+	    oid_access_fn fn);
 
 /*
  * Searches for hash in table, using the given fanout table to determine the
