@@ -34,6 +34,7 @@ jobs:
             feed: https://github.com/msys2/MSYS2-packages/commits/master/msys2-runtime.atom
           - label: msys2-runtime
             feed: https://github.com/msys2/msys2-runtime/commits/HEAD.atom
+            aggregate: true
           - label: openssh
             feed: https://github.com/openssh/openssh-portable/tags.atom
           - label: openssl
@@ -56,6 +57,7 @@ jobs:
             feed: https://sourceforge.net/projects/p7zip/rss?path=/p7zip
           - label: bash
             feed: https://git.savannah.gnu.org/cgit/bash.git/atom/?h=master
+            aggregate: true
           - label: perl
             feed: https://github.com/Perl/perl5/tags.atom
       fail-fast: false
@@ -68,3 +70,4 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           characterLimit: ${{ env.CHARACTER_LIMIT }}
           lastTime: ${{ env.LAST_TIME }}
+          aggregate: ${{matrix.component.aggregate}}
