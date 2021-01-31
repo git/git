@@ -30,6 +30,7 @@ jobs:
             feed: https://github.com/jonas/tig/tags.atom
           - label: cygwin
             feed: https://github.com/cygwin/cygwin/releases.atom
+            titleFilter: newlib
           - label: msys2-runtime-package
             feed: https://github.com/msys2/MSYS2-packages/commits/master/msys2-runtime.atom
           - label: msys2-runtime
@@ -39,6 +40,7 @@ jobs:
             feed: https://github.com/openssh/openssh-portable/tags.atom
           - label: openssl
             feed: https://github.com/openssl/openssl/tags.atom
+            titleFilter: alpha
           - label: gnutls
             feed: https://gnutls.org/news.atom
           - label: heimdal
@@ -60,6 +62,7 @@ jobs:
             aggregate: true
           - label: perl
             feed: https://github.com/Perl/perl5/tags.atom
+            titleFilter: (5\.[0-9]+[13579])|(RC)
       fail-fast: false
     steps:
       - uses: guilhem/rss-issues-action@cadba1e05ad93613180979261b7e05cee1a9b282
@@ -71,3 +74,4 @@ jobs:
           characterLimit: ${{ env.CHARACTER_LIMIT }}
           lastTime: ${{ env.LAST_TIME }}
           aggregate: ${{matrix.component.aggregate}}
+          titleFilter: ${{matrix.component.titleFilter}}
