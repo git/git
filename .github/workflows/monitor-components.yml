@@ -60,7 +60,7 @@ jobs:
             feed: https://github.com/Perl/perl5/tags.atom
       fail-fast: false
     steps:
-      - uses: guilhem/rss-issues-action@e910ad1171d9b3ca3e55c3c08862aae06ce35697
+      - uses: guilhem/rss-issues-action@cadba1e05ad93613180979261b7e05cee1a9b282
         with:
           feed: ${{matrix.component.feed}}
           prefix: "[New ${{matrix.component.label}} version]"
