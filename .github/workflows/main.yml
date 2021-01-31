@@ -123,6 +123,7 @@ jobs:
     runs-on: windows-latest
     needs: [windows-build]
     strategy:
+      fail-fast: false
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
@@ -227,6 +228,7 @@ jobs:
     runs-on: windows-latest
     needs: [vs-build, windows-build]
     strategy:
+      fail-fast: false
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
@@ -272,6 +274,7 @@ jobs:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     strategy:
+      fail-fast: false
       matrix:
         vector:
           - jobname: linux-clang
@@ -309,6 +312,7 @@ jobs:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     strategy:
+      fail-fast: false
       matrix:
         vector:
         - jobname: linux-musl
