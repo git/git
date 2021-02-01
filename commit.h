@@ -89,9 +89,10 @@ static inline int repo_parse_commit(struct repository *r, struct commit *item)
 	return repo_parse_commit_gently(r, item, 0);
 }
 
-static inline int parse_commit_no_graph(struct commit *commit)
+static inline int repo_parse_commit_no_graph(struct repository *r,
+					     struct commit *commit)
 {
-	return repo_parse_commit_internal(the_repository, commit, 0, 0);
+	return repo_parse_commit_internal(r, commit, 0, 0);
 }
 
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS

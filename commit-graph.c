@@ -1098,7 +1098,7 @@ static int write_graph_chunk_data(struct hashfile *f,
 		uint32_t packedDate[2];
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
-		if (parse_commit_no_graph(*list))
+		if (repo_parse_commit_no_graph(ctx->r, *list))
 			die(_("unable to parse commit %s"),
 				oid_to_hex(&(*list)->object.oid));
 		tree = get_commit_tree_oid(*list);
@@ -1411,11 +1411,11 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 		if (!commit)
 			continue;
 		if (ctx->split) {
-			if ((!parse_commit(commit) &&
+			if ((!repo_parse_commit(ctx->r, commit) &&
 			     commit_graph_position(commit) == COMMIT_NOT_FROM_GRAPH) ||
 			    flags == COMMIT_GRAPH_SPLIT_REPLACE)
 				add_missing_parents(ctx, commit);
-		} else if (!parse_commit_no_graph(commit))
+		} else if (!repo_parse_commit_no_graph(ctx->r, commit))
 			add_missing_parents(ctx, commit);
 	}
 	stop_progress(&ctx->progress);
@@ -1710,9 +1710,9 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 			continue;
 
 		if (ctx->split && flags == COMMIT_GRAPH_SPLIT_REPLACE)
-			parse_commit(ctx->commits.list[ctx->commits.nr]);
+			repo_parse_commit(ctx->r, ctx->commits.list[ctx->commits.nr]);
 		else
-			parse_commit_no_graph(ctx->commits.list[ctx->commits.nr]);
+			repo_parse_commit_no_graph(ctx->r, ctx->commits.list[ctx->commits.nr]);
 
 		num_parents = commit_list_count(ctx->commits.list[ctx->commits.nr]->parents);
 		if (num_parents > 2)
