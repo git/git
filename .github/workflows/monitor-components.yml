@@ -30,14 +30,17 @@ jobs:
             feed: https://github.com/jonas/tig/tags.atom
           - label: cygwin
             feed: https://github.com/cygwin/cygwin/releases.atom
+            titleFilter: newlib
           - label: msys2-runtime-package
             feed: https://github.com/msys2/MSYS2-packages/commits/master/msys2-runtime.atom
           - label: msys2-runtime
             feed: https://github.com/msys2/msys2-runtime/commits/HEAD.atom
+            aggregate: true
           - label: openssh
             feed: https://github.com/openssh/openssh-portable/tags.atom
           - label: openssl
             feed: https://github.com/openssl/openssl/tags.atom
+            titleFilter: alpha
           - label: gnutls
             feed: https://gnutls.org/news.atom
           - label: heimdal
@@ -56,11 +59,13 @@ jobs:
             feed: https://sourceforge.net/projects/p7zip/rss?path=/p7zip
           - label: bash
             feed: https://git.savannah.gnu.org/cgit/bash.git/atom/?h=master
+            aggregate: true
           - label: perl
             feed: https://github.com/Perl/perl5/tags.atom
+            titleFilter: (5\.[0-9]+[13579])|(RC)
       fail-fast: false
     steps:
-      - uses: guilhem/rss-issues-action@e910ad1171d9b3ca3e55c3c08862aae06ce35697
+      - uses: guilhem/rss-issues-action@cadba1e05ad93613180979261b7e05cee1a9b282
         with:
           feed: ${{matrix.component.feed}}
           prefix: "[New ${{matrix.component.label}} version]"
@@ -68,3 +73,5 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           characterLimit: ${{ env.CHARACTER_LIMIT }}
           lastTime: ${{ env.LAST_TIME }}
+          aggregate: ${{matrix.component.aggregate}}
+          titleFilter: ${{matrix.component.titleFilter}}
