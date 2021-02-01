@@ -160,9 +160,10 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 {
 	/*
 	 * Some commit in the array may be an ancestor of
-	 * another commit.  Move such commit to the end of
-	 * the array, and return the number of commits that
-	 * are independent from each other.
+	 * another commit.  Move the independent commits to the
+	 * beginning of 'array' and return their number. Callers
+	 * should not rely upon the contents of 'array' after
+	 * that number.
 	 */
 	struct commit **work;
 	unsigned char *redundant;
@@ -209,9 +210,6 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 	for (i = filled = 0; i < cnt; i++)
 		if (!redundant[i])
 			array[filled++] = work[i];
-	for (j = filled, i = 0; i < cnt; i++)
-		if (redundant[i])
-			array[j++] = work[i];
 	free(work);
 	free(redundant);
 	free(filled_index);
