@@ -1193,7 +1193,9 @@ static int write_graph_chunk_generation_data(struct hashfile *f,
 
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = ctx->commits.list[i];
-		timestamp_t offset = commit_graph_data_at(c)->generation - c->date;
+		timestamp_t offset;
+		repo_parse_commit(ctx->r, c);
+		offset = commit_graph_data_at(c)->generation - c->date;
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
 		if (offset > GENERATION_NUMBER_V2_OFFSET_MAX) {
@@ -1444,15 +1446,20 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 					_("Computing commit graph generation numbers"),
 					ctx->commits.nr);
 	for (i = 0; i < ctx->commits.nr; i++) {
-		uint32_t level = *topo_level_slab_at(ctx->topo_levels, ctx->commits.list[i]);
-		timestamp_t corrected_commit_date = commit_graph_data_at(ctx->commits.list[i])->generation;
+		struct commit *c = ctx->commits.list[i];
+		uint32_t level;
+		timestamp_t corrected_commit_date;
+
+		repo_parse_commit(ctx->r, c);
+		level = *topo_level_slab_at(ctx->topo_levels, c);
+		corrected_commit_date = commit_graph_data_at(c)->generation;
 
 		display_progress(ctx->progress, i + 1);
 		if (level != GENERATION_NUMBER_ZERO &&
 		    corrected_commit_date != GENERATION_NUMBER_ZERO)
 			continue;
 
-		commit_list_insert(ctx->commits.list[i], &list);
+		commit_list_insert(c, &list);
 		while (list) {
 			struct commit *current = list->item;
 			struct commit_list *parent;
@@ -1461,6 +1468,7 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 			timestamp_t max_corrected_commit_date = 0;
 
 			for (parent = current->parents; parent; parent = parent->next) {
+				repo_parse_commit(ctx->r, parent->item);
 				level = *topo_level_slab_at(ctx->topo_levels, parent->item);
 				corrected_commit_date = commit_graph_data_at(parent->item)->generation;
 
