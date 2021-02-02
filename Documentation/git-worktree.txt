@@ -97,8 +97,9 @@ list::
 List details of each working tree.  The main working tree is listed first,
 followed by each of the linked working trees.  The output details include
 whether the working tree is bare, the revision currently checked out, the
-branch currently checked out (or "detached HEAD" if none), and "locked" if
-the worktree is locked.
+branch currently checked out (or "detached HEAD" if none), "locked" if
+the worktree is locked, "prunable" if the worktree can be pruned by `prune`
+command.
 
 lock::
 
@@ -231,9 +232,14 @@ This can also be set up as the default behaviour by using the
 -v::
 --verbose::
 	With `prune`, report all removals.
++
+With `list`, output additional information about worktrees (see below).
 
 --expire <time>::
 	With `prune`, only expire unused working trees older than `<time>`.
++
+With `list`, annotate missing working trees as prunable if they are
+older than `<time>`.
 
 --reason <string>::
 	With `lock`, an explanation why the working tree is locked.
@@ -372,13 +378,46 @@ $ git worktree list
 /path/to/other-linked-worktree  1234abc  (detached HEAD)
 ------------
 
+The command also shows annotations for each working tree, according to its state.
+These annotations are:
+
+ * `locked`, if the working tree is locked.
+ * `prunable`, if the working tree can be pruned via `git worktree prune`.
+
+------------
+$ git worktree list
+/path/to/linked-worktree    abcd1234 [master]
+/path/to/locked-worktreee   acbd5678 (brancha) locked
+/path/to/prunable-worktree  5678abc  (detached HEAD) prunable
+------------
+
+For these annotations, a reason might also be available and this can be
+seen using the verbose mode. The annotation is then moved to the next line
+indented followed by the additional information.
+
+------------
+$ git worktree list --verbose
+/path/to/linked-worktree              abcd1234 [master]
+/path/to/locked-worktree-no-reason    abcd5678 (detached HEAD) locked
+/path/to/locked-worktree-with-reason  1234abcd (brancha)
+	locked: working tree path is mounted on a portable device
+/path/to/prunable-worktree            5678abc1 (detached HEAD)
+	prunable: gitdir file points to non-existent location
+------------
+
+Note that the annotation is moved to the next line if the additional
+information is available, otherwise it stays on the same line as the
+working tree itself.
+
 Porcelain Format
 ~~~~~~~~~~~~~~~~
 The porcelain format has a line per attribute.  Attributes are listed with a
 label and value separated by a single space.  Boolean attributes (like `bare`
 and `detached`) are listed as a label only, and are present only
-if the value is true.  The first attribute of a working tree is always
-`worktree`, an empty line indicates the end of the record.  For example:
+if the value is true.  Some attributes (like `locked`) can be listed as a label
+only or with a value depending upon whether a reason is available.  The first
+attribute of a working tree is always `worktree`, an empty line indicates the
+end of the record.  For example:
 
 ------------
 $ git worktree list --porcelain
@@ -393,6 +432,33 @@ worktree /path/to/other-linked-worktree
 HEAD 1234abc1234abc1234abc1234abc1234abc1234a
 detached
 
+worktree /path/to/linked-worktree-locked-no-reason
+HEAD 5678abc5678abc5678abc5678abc5678abc5678c
+branch refs/heads/locked-no-reason
+locked
+
+worktree /path/to/linked-worktree-locked-with-reason
+HEAD 3456def3456def3456def3456def3456def3456b
+branch refs/heads/locked-with-reason
+locked reason why is locked
+
+worktree /path/to/linked-worktree-prunable
+HEAD 1233def1234def1234def1234def1234def1234b
+detached
+prunable gitdir file points to non-existent location
+
+------------
+
+If the lock reason contains "unusual" characters such as newline, they
+are escaped and the entire reason is quoted as explained for the
+configuration variable `core.quotePath` (see linkgit:git-config[1]).
+For Example:
+
+------------
+$ git worktree list --porcelain
+...
+locked "reason\nwhy is locked"
+...
 ------------
 
 EXAMPLES
