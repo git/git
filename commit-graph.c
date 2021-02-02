@@ -1036,7 +1036,8 @@ struct write_commit_graph_context {
 		 split:1,
 		 changed_paths:1,
 		 order_by_pack:1,
-		 write_generation_data:1;
+		 write_generation_data:1,
+		 trust_generation_numbers:1;
 
 	struct topo_level_slab *topo_levels;
 	const struct commit_graph_opts *opts;
@@ -1508,6 +1509,15 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 		ctx->progress = start_delayed_progress(
 					_("Computing commit graph generation numbers"),
 					ctx->commits.nr);
+
+	if (!ctx->trust_generation_numbers) {
+		for (i = 0; i < ctx->commits.nr; i++) {
+			struct commit *c = ctx->commits.list[i];
+			repo_parse_commit(ctx->r, c);
+			commit_graph_data_at(c)->generation = GENERATION_NUMBER_ZERO;
+		}
+	}
+
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = ctx->commits.list[i];
 		timestamp_t corrected_commit_date;
@@ -2439,7 +2449,7 @@ int write_commit_graph(struct object_directory *odb,
 	} else
 		ctx->num_commit_graphs_after = 1;
 
-	validate_mixed_generation_chain(ctx->r->objects->commit_graph);
+	ctx->trust_generation_numbers = validate_mixed_generation_chain(ctx->r->objects->commit_graph);
 
 	compute_topological_levels(ctx);
 	if (ctx->write_generation_data)
