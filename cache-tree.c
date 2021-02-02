@@ -45,7 +45,7 @@ static int subtree_name_cmp(const char *one, int onelen,
 	return memcmp(one, two, onelen);
 }
 
-static int subtree_pos(struct cache_tree *it, const char *path, int pathlen)
+int cache_tree_subtree_pos(struct cache_tree *it, const char *path, int pathlen)
 {
 	struct cache_tree_sub **down = it->down;
 	int lo, hi;
@@ -72,7 +72,7 @@ static struct cache_tree_sub *find_subtree(struct cache_tree *it,
 					   int create)
 {
 	struct cache_tree_sub *down;
-	int pos = subtree_pos(it, path, pathlen);
+	int pos = cache_tree_subtree_pos(it, path, pathlen);
 	if (0 <= pos)
 		return it->down[pos];
 	if (!create)
@@ -123,7 +123,7 @@ static int do_invalidate_path(struct cache_tree *it, const char *path)
 	it->entry_count = -1;
 	if (!*slash) {
 		int pos;
-		pos = subtree_pos(it, path, namelen);
+		pos = cache_tree_subtree_pos(it, path, namelen);
 		if (0 <= pos) {
 			cache_tree_free(&it->down[pos]->cache_tree);
 			free(it->down[pos]);
@@ -151,16 +151,15 @@ void cache_tree_invalidate_path(struct index_state *istate, const char *path)
 		istate->cache_changed |= CACHE_TREE_CHANGED;
 }
 
-static int verify_cache(struct cache_entry **cache,
-			int entries, int flags)
+static int verify_cache(struct index_state *istate, int flags)
 {
-	int i, funny;
+	unsigned i, funny;
 	int silent = flags & WRITE_TREE_SILENT;
 
 	/* Verify that the tree is merged */
 	funny = 0;
-	for (i = 0; i < entries; i++) {
-		const struct cache_entry *ce = cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
 		if (ce_stage(ce)) {
 			if (silent)
 				return -1;
@@ -180,13 +179,13 @@ static int verify_cache(struct cache_entry **cache,
 	 * stage 0 entries.
 	 */
 	funny = 0;
-	for (i = 0; i < entries - 1; i++) {
+	for (i = 0; i + 1 < istate->cache_nr; i++) {
 		/* path/file always comes after path because of the way
 		 * the cache is sorted.  Also path can appear only once,
 		 * which means conflicting one would immediately follow.
 		 */
-		const struct cache_entry *this_ce = cache[i];
-		const struct cache_entry *next_ce = cache[i + 1];
+		const struct cache_entry *this_ce = istate->cache[i];
+		const struct cache_entry *next_ce = istate->cache[i + 1];
 		const char *this_name = this_ce->name;
 		const char *next_name = next_ce->name;
 		int this_len = ce_namelen(this_ce);
@@ -436,16 +435,20 @@ static int update_one(struct cache_tree *it,
 
 int cache_tree_update(struct index_state *istate, int flags)
 {
-	struct cache_tree *it = istate->cache_tree;
-	struct cache_entry **cache = istate->cache;
-	int entries = istate->cache_nr;
-	int skip, i = verify_cache(cache, entries, flags);
+	int skip, i;
+
+	i = verify_cache(istate, flags);
 
 	if (i)
 		return i;
+
+	if (!istate->cache_tree)
+		istate->cache_tree = cache_tree();
+
 	trace_performance_enter();
 	trace2_region_enter("cache_tree", "update", the_repository);
-	i = update_one(it, cache, entries, "", 0, &skip, flags);
+	i = update_one(istate->cache_tree, istate->cache, istate->cache_nr,
+		       "", 0, &skip, flags);
 	trace2_region_leave("cache_tree", "update", the_repository);
 	trace_performance_leave("cache_tree_update");
 	if (i < 0)
@@ -634,9 +637,6 @@ static int write_index_as_tree_internal(struct object_id *oid,
 		cache_tree_free(&index_state->cache_tree);
 		cache_tree_valid = 0;
 	}
-
-	if (!index_state->cache_tree)
-		index_state->cache_tree = cache_tree();
 
 	if (!cache_tree_valid && cache_tree_update(index_state, flags) < 0)
 		return WRITE_TREE_UNMERGED_INDEX;
