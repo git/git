@@ -42,6 +42,8 @@ struct pack_idx_option {
 	/* flag bits */
 #define WRITE_IDX_VERIFY 01 /* verify only, do not write the idx file */
 #define WRITE_IDX_STRICT 02
+#define WRITE_REV 04
+#define WRITE_REV_VERIFY 010
 
 	uint32_t version;
 	uint32_t off32_limit;
@@ -90,6 +92,8 @@ char *index_pack_lockfile(int fd);
 struct ref;
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought);
+
+const char *write_rev_file(const char *rev_name, struct pack_idx_entry **objects, uint32_t nr_objects, const unsigned char *hash, unsigned flags);
 
 /*
  * The "hdr" output buffer should be at least this big, which will handle sizes
