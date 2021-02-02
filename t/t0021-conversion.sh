@@ -862,4 +862,40 @@ do
 	'
 done
 
+test_expect_success PERL,SYMLINKS,CASE_INSENSITIVE_FS \
+"delayed checkout with submodule collision don't write to the wrong place" '
+	git init collision-with-submodule &&
+	(
+		cd collision-with-submodule &&
+		git config filter.delay.process "\"$TEST_ROOT/rot13-filter.pl\" --always-delay delayed.log clean smudge delay" &&
+		git config filter.delay.required true &&
+
+		# We need Git to treat the submodule "a" and the
+		# leading dir "A" as different paths in the index.
+		git config --local core.ignoreCase false &&
+
+		empty_oid=$(printf "" | git hash-object -w --stdin) &&
+		attr_oid=$(echo "A/B/y filter=delay" | git hash-object -w --stdin) &&
+		cat >objs <<-EOF &&
+		100644 blob $empty_oid	A/B/x
+		100644 blob $empty_oid	A/B/y
+		100644 blob $attr_oid	.gitattributes
+		EOF
+		git update-index --index-info <objs &&
+
+		git init a &&
+		mkdir target-dir &&
+		symlink_oid=$(printf "%s" "$PWD/target-dir" | git -C a hash-object -w --stdin) &&
+		echo "120000 blob $symlink_oid	b" >objs &&
+		git -C a update-index --index-info <objs &&
+		git -C a commit -m sub &&
+		git submodule add ./a &&
+		git commit -m super &&
+
+		git checkout --recurse-submodules . &&
+		grep "IN: smudge A/B/y .* \\[DELAYED\\]" delayed.log &&
+		test_path_is_missing target-dir/y
+	)
+'
+
 test_done
