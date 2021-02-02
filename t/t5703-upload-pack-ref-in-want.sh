@@ -19,7 +19,8 @@ get_actual_commits () {
 	test-tool pkt-line unpack-sideband <out >o.pack &&
 	git index-pack o.pack &&
 	git verify-pack -v o.idx >objs &&
-	grep commit objs | cut -d" " -f1 | sort >actual_commits
+	sed -n -e 's/\([0-9a-f][0-9a-f]*\) commit .*/\1/p' objs >objs.sed &&
+	sort >actual_commits <objs.sed
 }
 
 check_output () {

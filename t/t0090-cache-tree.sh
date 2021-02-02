@@ -10,40 +10,36 @@ cache-tree extension.
 cmp_cache_tree () {
 	test-tool dump-cache-tree | sed -e '/#(ref)/d' >actual &&
 	sed "s/$OID_REGEX/SHA/" <actual >filtered &&
-	test_cmp "$1" filtered
+	test_cmp "$1" filtered &&
+	rm filtered
 }
 
 # We don't bother with actually checking the SHA1:
 # test-tool dump-cache-tree already verifies that all existing data is
 # correct.
-generate_expected_cache_tree_rec () {
-	dir="$1${1:+/}" &&
-	parent="$2" &&
-	# ls-files might have foo/bar, foo/bar/baz, and foo/bar/quux
-	# We want to count only foo because it's the only direct child
-	git ls-files >files &&
-	subtrees=$(grep / files|cut -d / -f 1|uniq) &&
-	subtree_count=$(echo "$subtrees"|awk -v c=0 '$1 != "" {++c} END {print c}') &&
-	entries=$(wc -l <files) &&
-	printf "SHA $dir (%d entries, %d subtrees)\n" "$entries" "$subtree_count" &&
-	for subtree in $subtrees
-	do
-		cd "$subtree"
-		generate_expected_cache_tree_rec "$dir$subtree" "$dir" || return 1
-		cd ..
-	done &&
-	dir=$parent
-}
-
 generate_expected_cache_tree () {
-	(
-		generate_expected_cache_tree_rec
-	)
+	pathspec="$1" &&
+	dir="$2${2:+/}" &&
+	git ls-tree --name-only HEAD -- "$pathspec" >files &&
+	git ls-tree --name-only -d HEAD -- "$pathspec" >subtrees &&
+	printf "SHA %s (%d entries, %d subtrees)\n" "$dir" $(wc -l <files) $(wc -l <subtrees) &&
+	while read subtree
+	do
+		generate_expected_cache_tree "$pathspec/$subtree/" "$subtree" || return 1
+	done <subtrees
 }
 
 test_cache_tree () {
-	generate_expected_cache_tree >expect &&
-	cmp_cache_tree expect
+	generate_expected_cache_tree "." >expect &&
+	cmp_cache_tree expect &&
+	rm expect actual files subtrees &&
+	git status --porcelain -- ':!status' ':!expected.status' >status &&
+	if test -n "$1"
+	then
+		test_cmp "$1" status
+	else
+		test_must_be_empty status
+	fi
 }
 
 test_invalid_cache_tree () {
@@ -54,7 +50,7 @@ test_invalid_cache_tree () {
 }
 
 test_no_cache_tree () {
-	: >expect &&
+	>expect &&
 	cmp_cache_tree expect
 }
 
@@ -83,18 +79,6 @@ test_expect_success 'git-add in subdir invalidates cache-tree' '
 	test_invalid_cache_tree
 '
 
-cat >before <<\EOF
-SHA  (3 entries, 2 subtrees)
-SHA dir1/ (1 entries, 0 subtrees)
-SHA dir2/ (1 entries, 0 subtrees)
-EOF
-
-cat >expect <<\EOF
-invalid                                   (2 subtrees)
-invalid                                  dir1/ (0 subtrees)
-SHA dir2/ (1 entries, 0 subtrees)
-EOF
-
 test_expect_success 'git-add in subdir does not invalidate sibling cache-tree' '
 	git tag no-children &&
 	test_when_finished "git reset --hard no-children; git read-tree HEAD" &&
@@ -102,9 +86,20 @@ test_expect_success 'git-add in subdir does not invalidate sibling cache-tree' '
 	test_commit dir1/a &&
 	test_commit dir2/b &&
 	echo "I changed this file" >dir1/a &&
+	test_when_finished "rm before" &&
+	cat >before <<-\EOF &&
+	SHA  (3 entries, 2 subtrees)
+	SHA dir1/ (1 entries, 0 subtrees)
+	SHA dir2/ (1 entries, 0 subtrees)
+	EOF
 	cmp_cache_tree before &&
 	echo "I changed this file" >dir1/a &&
 	git add dir1/a &&
+	cat >expect <<-\EOF &&
+	invalid                                   (2 subtrees)
+	invalid                                  dir1/ (0 subtrees)
+	SHA dir2/ (1 entries, 0 subtrees)
+	EOF
 	cmp_cache_tree expect
 '
 
@@ -133,6 +128,7 @@ test_expect_success 'second commit has cache-tree' '
 '
 
 test_expect_success PERL 'commit --interactive gives cache-tree on partial commit' '
+	test_when_finished "git reset --hard" &&
 	cat <<-\EOT >foo.c &&
 	int foo()
 	{
@@ -159,7 +155,10 @@ test_expect_success PERL 'commit --interactive gives cache-tree on partial commi
 	EOT
 	test_write_lines p 1 "" s n y q |
 	git commit --interactive -m foo &&
-	test_cache_tree
+	cat <<-\EOF >expected.status &&
+	 M foo.c
+	EOF
+	test_cache_tree expected.status
 '
 
 test_expect_success PERL 'commit -p with shrinking cache-tree' '
@@ -250,7 +249,10 @@ test_expect_success 'partial commit gives cache-tree' '
 	git add one.t &&
 	echo "some other change" >two.t &&
 	git commit two.t -m partial &&
-	test_cache_tree
+	cat <<-\EOF >expected.status &&
+	M  one.t
+	EOF
+	test_cache_tree expected.status
 '
 
 test_expect_success 'no phantom error when switching trees' '
