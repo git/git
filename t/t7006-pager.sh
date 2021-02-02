@@ -656,4 +656,86 @@ test_expect_success TTY 'git tag with auto-columns ' '
 	test_cmp expect actual
 '
 
+test_expect_success TTY 'git returns SIGPIPE on early pager exit' '
+	test_when_finished "rm pager-used" &&
+	test_config core.pager ">pager-used; head -n 1; exit 0" &&
+
+	if test_have_prereq !MINGW
+	then
+		OUT=$( ((test_terminal git log; echo $? 1>&3) | :) 3>&1 ) &&
+		test_match_signal 13 "$OUT"
+	else
+		test_terminal git log
+	fi &&
+	test_path_is_file pager-used
+'
+
+test_expect_success TTY 'git returns SIGPIPE on early pager non-zero exit' '
+	test_when_finished "rm pager-used" &&
+	test_config core.pager ">pager-used; head -n 1; exit 1" &&
+
+	if test_have_prereq !MINGW
+	then
+		OUT=$( ((test_terminal git log; echo $? 1>&3) | :) 3>&1 ) &&
+		test_match_signal 13 "$OUT"
+	else
+		test_terminal git log
+	fi &&
+	test_path_is_file pager-used
+'
+
+test_expect_success TTY 'git discards pager non-zero exit without SIGPIPE' '
+	test_when_finished "rm pager-used" &&
+	test_config core.pager "wc >pager-used; exit 1" &&
+
+	if test_have_prereq !MINGW
+	then
+		OUT=$( ((test_terminal git log; echo $? 1>&3) | :) 3>&1 ) &&
+		test "$OUT" -eq 0
+	else
+		test_terminal git log
+	fi &&
+	test_path_is_file pager-used
+'
+
+test_expect_success TTY 'git discards nonexisting pager without SIGPIPE' '
+	test_when_finished "rm pager-used" &&
+	test_config core.pager "wc >pager-used; does-not-exist" &&
+
+	if test_have_prereq !MINGW
+	then
+		OUT=$( ((test_terminal git log; echo $? 1>&3) | :) 3>&1 ) &&
+		test "$OUT" -eq 0
+	else
+		test_terminal git log
+	fi &&
+	test_path_is_file pager-used
+'
+
+test_expect_success TTY 'git attempts to page to nonexisting pager command, gets SIGPIPE' '
+	test_config core.pager "does-not-exist" &&
+
+	if test_have_prereq !MINGW
+	then
+		OUT=$( ((test_terminal git log; echo $? 1>&3) | :) 3>&1 ) &&
+		test_match_signal 13 "$OUT"
+	else
+		test_terminal git log
+	fi
+'
+
+test_expect_success TTY 'git returns SIGPIPE on propagated signals from pager' '
+	test_when_finished "rm pager-used" &&
+	test_config core.pager ">pager-used; test-tool sigchain" &&
+
+	if test_have_prereq !MINGW
+	then
+		OUT=$( ((test_terminal git log; echo $? 1>&3) | :) 3>&1 ) &&
+		test_match_signal 13 "$OUT"
+	else
+		test_terminal git log
+	fi &&
+	test_path_is_file pager-used
+'
+
 test_done
