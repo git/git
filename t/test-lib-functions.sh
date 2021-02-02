@@ -1022,19 +1022,16 @@ test_cmp_bin () {
 	cmp "$@"
 }
 
-# Use this instead of test_cmp to compare files that contain expected and
-# actual output from git commands that can be translated.  When running
-# under GIT_TEST_GETTEXT_POISON this pretends that the command produced expected
-# results.
+# Wrapper for test_cmp which used to be used for
+# GIT_TEST_GETTEXT_POISON=false. Only here as a shim for other
+# in-flight changes. Should not be used and will be removed soon.
 test_i18ncmp () {
-	! test_have_prereq C_LOCALE_OUTPUT || test_cmp "$@"
+	test_cmp "$@"
 }
 
-# Use this instead of "grep expected-string actual" to see if the
-# output from a git command that can be translated either contains an
-# expected string, or does not contain an unwanted one.  When running
-# under GIT_TEST_GETTEXT_POISON this pretends that the command produced expected
-# results.
+# Wrapper for grep which used to be used for
+# GIT_TEST_GETTEXT_POISON=false. Only here as a shim for other
+# in-flight changes. Should not be used and will be removed soon.
 test_i18ngrep () {
 	eval "last_arg=\${$#}"
 
@@ -1045,12 +1042,6 @@ test_i18ngrep () {
 	   { test "x!" = "x$1" && test $# -lt 3 ; }
 	then
 		BUG "too few parameters to test_i18ngrep"
-	fi
-
-	if test_have_prereq !C_LOCALE_OUTPUT
-	then
-		# pretend success
-		return 0
 	fi
 
 	if test "x!" = "x$1"
