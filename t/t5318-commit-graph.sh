@@ -446,7 +446,7 @@ test_expect_success 'warn on improper hash version' '
 	)
 '
 
-test_expect_failure 'lower layers have overflow chunk' '
+test_expect_success 'lower layers have overflow chunk' '
 	cd "$TRASH_DIRECTORY/full" &&
 	UNIX_EPOCH_ZERO="@0 +0000" &&
 	FUTURE_DATE="@2147483646 +0000" &&
