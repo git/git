@@ -31,6 +31,7 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-auto-next"),
 	N_("git bisect--helper --bisect-state (bad|new) [<rev>]"),
 	N_("git bisect--helper --bisect-state (good|old) [<rev>...]"),
+	N_("git bisect--helper --bisect-replay <filename>"),
 	NULL
 };
 
@@ -921,6 +922,78 @@ static enum bisect_error bisect_log(void)
 	return status ? BISECT_FAILED : BISECT_OK;
 }
 
+static int process_replay_line(struct bisect_terms *terms, struct strbuf *line)
+{
+	const char *p = line->buf + strspn(line->buf, " \t");
+	char *word_end, *rev;
+
+	if ((!skip_prefix(p, "git bisect", &p) &&
+	!skip_prefix(p, "git-bisect", &p)) || !isspace(*p))
+		return 0;
+	p += strspn(p, " \t");
+
+	word_end = (char *)p + strcspn(p, " \t");
+	rev = word_end + strspn(word_end, " \t");
+	*word_end = '\0'; /* NUL-terminate the word */
+
+	get_terms(terms);
+	if (check_and_set_terms(terms, p))
+		return -1;
+
+	if (!strcmp(p, "start")) {
+		struct strvec argv = STRVEC_INIT;
+		int res;
+		sq_dequote_to_strvec(rev, &argv);
+		res = bisect_start(terms, argv.v, argv.nr);
+		strvec_clear(&argv);
+		return res;
+	}
+
+	if (one_of(p, terms->term_good,
+	   terms->term_bad, "skip", NULL))
+		return bisect_write(p, rev, terms, 0);
+
+	if (!strcmp(p, "terms")) {
+		struct strvec argv = STRVEC_INIT;
+		int res;
+		sq_dequote_to_strvec(rev, &argv);
+		res = bisect_terms(terms, argv.nr == 1 ? argv.v[0] : NULL);
+		strvec_clear(&argv);
+		return res;
+	}
+	error(_("'%s'?? what are you talking about?"), p);
+
+	return -1;
+}
+
+static enum bisect_error bisect_replay(struct bisect_terms *terms, const char *filename)
+{
+	FILE *fp = NULL;
+	enum bisect_error res = BISECT_OK;
+	struct strbuf line = STRBUF_INIT;
+
+	if (is_empty_or_missing_file(filename))
+		return error(_("cannot read file '%s' for replaying"), filename);
+
+	if (bisect_reset(NULL))
+		return BISECT_FAILED;
+
+	fp = fopen(filename, "r");
+	if (!fp)
+		return BISECT_FAILED;
+
+	while ((strbuf_getline(&line, fp) != EOF) && !res)
+		res = process_replay_line(terms, &line);
+
+	strbuf_release(&line);
+	fclose(fp);
+
+	if (res)
+		return BISECT_FAILED;
+
+	return bisect_auto_next(terms, NULL);
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -934,7 +1007,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_NEXT,
 		BISECT_AUTO_NEXT,
 		BISECT_STATE,
-		BISECT_LOG
+		BISECT_LOG,
+		BISECT_REPLAY
 	} cmdmode = 0;
 	int res = 0, nolog = 0;
 	struct option options[] = {
@@ -958,6 +1032,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("mark the state of ref (or refs)"), BISECT_STATE),
 		OPT_CMDMODE(0, "bisect-log", &cmdmode,
 			 N_("list the bisection steps so far"), BISECT_LOG),
+		OPT_CMDMODE(0, "bisect-replay", &cmdmode,
+			 N_("replay the bisection process from the given file"), BISECT_REPLAY),
 		OPT_BOOL(0, "no-log", &nolog,
 			 N_("no log for BISECT_WRITE")),
 		OPT_END()
@@ -1024,6 +1100,12 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		if (argc)
 			return error(_("--bisect-log requires 0 arguments"));
 		res = bisect_log();
+		break;
+	case BISECT_REPLAY:
+		if (argc != 1)
+			return error(_("no logfile given"));
+		set_terms(&terms, "bad", "good");
+		res = bisect_replay(&terms, argv[0]);
 		break;
 	default:
 		BUG("unknown subcommand %d", cmdmode);
