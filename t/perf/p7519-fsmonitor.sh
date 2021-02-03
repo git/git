@@ -101,7 +101,7 @@ test_expect_success "one time repo setup" '
 	# If Watchman exists, watch the work tree and attempt a query.
 	if test_have_prereq WATCHMAN; then
 		watchman watch "$GIT_WORK_TREE" &&
-		watchman watch-list | grep -q -F "$GIT_WORK_TREE"
+		watchman watch-list | grep -q -F "p7519-fsmonitor"
 	fi
 '
 
