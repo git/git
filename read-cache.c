@@ -1365,7 +1365,8 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 					     struct cache_entry *ce,
 					     unsigned int options, int *err,
 					     int *changed_ret,
-					     int *t2_did_lstat)
+					     int *t2_did_lstat,
+					     int *t2_did_scan)
 {
 	struct stat st;
 	struct cache_entry *updated;
@@ -1445,6 +1446,8 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 		}
 	}
 
+	if (t2_did_scan)
+		*t2_did_scan = 1;
 	if (ie_modified(istate, ce, &st, options)) {
 		if (err)
 			*err = EINVAL;
@@ -1523,6 +1526,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	const char *unmerged_fmt;
 	struct progress *progress = NULL;
 	int t2_sum_lstat = 0;
+	int t2_sum_scan = 0;
 
 	if (flags & REFRESH_PROGRESS && isatty(2))
 		progress = start_delayed_progress(_("Refresh index"),
@@ -1547,6 +1551,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		int changed = 0;
 		int filtered = 0;
 		int t2_did_lstat = 0;
+		int t2_did_scan = 0;
 
 		ce = istate->cache[i];
 		if (ignore_submodules && S_ISGITLINK(ce->ce_mode))
@@ -1574,8 +1579,9 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 
 		new_entry = refresh_cache_ent(istate, ce, options,
 					      &cache_errno, &changed,
-					      &t2_did_lstat);
+					      &t2_did_lstat, &t2_did_scan);
 		t2_sum_lstat += t2_did_lstat;
+		t2_sum_scan += t2_did_scan;
 		if (new_entry == ce)
 			continue;
 		if (progress)
@@ -1612,6 +1618,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		replace_index_entry(istate, i, new_entry);
 	}
 	trace2_data_intmax("index", NULL, "refresh/sum_lstat", t2_sum_lstat);
+	trace2_data_intmax("index", NULL, "refresh/sum_scan", t2_sum_scan);
 	trace2_region_leave("index", "refresh", NULL);
 	if (progress) {
 		display_progress(progress, istate->cache_nr);
@@ -1625,7 +1632,7 @@ struct cache_entry *refresh_cache_entry(struct index_state *istate,
 					struct cache_entry *ce,
 					unsigned int options)
 {
-	return refresh_cache_ent(istate, ce, options, NULL, NULL, NULL);
+	return refresh_cache_ent(istate, ce, options, NULL, NULL, NULL, NULL);
 }
 
 
