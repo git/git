@@ -64,8 +64,9 @@ test_expect_success 'hook works with partial clone' '
 	test_config_global uploadpack.packObjectsHook ./hook &&
 	test_config_global uploadpack.allowFilter true &&
 	git clone --bare --no-local --filter=blob:none . dst.git &&
-	git -C dst.git rev-list --objects --missing=print HEAD >objects &&
-	grep "^?" objects
+	git -C dst.git rev-list --objects --missing=allow-any --no-object-names --all >objects &&
+	git -C dst.git cat-file --batch-check="%(objecttype)" <objects >types &&
+	! grep blob types
 '
 
 test_done
