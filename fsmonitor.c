@@ -87,7 +87,11 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
 		    (uintmax_t)istate->fsmonitor_dirty->bit_size, istate->cache_nr);
 
-	trace_printf_key(&trace_fsmonitor, "read fsmonitor extension successful");
+	trace2_data_string("index", NULL, "extension/fsmn/read/token",
+			   istate->fsmonitor_last_update);
+	trace_printf_key(&trace_fsmonitor,
+			 "read fsmonitor extension successful '%s'",
+			 istate->fsmonitor_last_update);
 	return 0;
 }
 
@@ -133,7 +137,11 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 	put_be32(&ewah_size, sb->len - ewah_start);
 	memcpy(sb->buf + fixup, &ewah_size, sizeof(uint32_t));
 
-	trace_printf_key(&trace_fsmonitor, "write fsmonitor extension successful");
+	trace2_data_string("index", NULL, "extension/fsmn/write/token",
+			   istate->fsmonitor_last_update);
+	trace_printf_key(&trace_fsmonitor,
+			 "write fsmonitor extension successful '%s'",
+			 istate->fsmonitor_last_update);
 }
 
 /*
