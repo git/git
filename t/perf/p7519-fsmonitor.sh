@@ -164,8 +164,18 @@ test_fsmonitor_suite() {
 		git status -uall
 	'
 
+	# Update the mtimes on upto 100k files to make status think
+	# that they are dirty.  For simplicity, omit any files with
+	# LFs (i.e. anything that ls-files thinks it needs to dquote).
+	# Then fully backslash-quote the paths to capture any
+	# whitespace so that they pass thru xargs properly.
+	#
 	test_perf_w_drop_caches "status (dirty) ($DESC)" '
-		git ls-files | head -100000 | xargs -d "\n" touch -h &&
+		git ls-files | \
+			head -100000 | \
+			grep -v \" | \
+			sed '\''s/\(.\)/\\\1/g'\'' | \
+			xargs test-tool chmtime -300 &&
 		git status
 	'
 
