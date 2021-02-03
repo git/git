@@ -149,7 +149,31 @@ test_expect_success 'prefetch multiple remotes' '
 	git log prefetch/remote2/two &&
 	git fetch --all &&
 	test_cmp_rev refs/remotes/remote1/one refs/prefetch/remote1/one &&
-	test_cmp_rev refs/remotes/remote2/two refs/prefetch/remote2/two
+	test_cmp_rev refs/remotes/remote2/two refs/prefetch/remote2/two &&
+
+	test_cmp_config refs/prefetch/ log.excludedecoration &&
+	git log --oneline --decorate --all >log &&
+	! grep "prefetch" log
+'
+
+test_expect_success 'prefetch and existing log.excludeDecoration values' '
+	git config --unset-all log.excludeDecoration &&
+	git config log.excludeDecoration refs/remotes/remote1/ &&
+	git maintenance run --task=prefetch &&
+
+	git config --get-all log.excludeDecoration >out &&
+	grep refs/remotes/remote1/ out &&
+	grep refs/prefetch/ out &&
+
+	git log --oneline --decorate --all >log &&
+	! grep "prefetch" log &&
+	! grep "remote1" log &&
+	grep "remote2" log &&
+
+	# a second run does not change the config
+	git maintenance run --task=prefetch &&
+	git log --oneline --decorate --all >log2 &&
+	test_cmp log log2
 '
 
 test_expect_success 'loose-objects task' '
@@ -232,6 +256,13 @@ test_expect_success 'incremental-repack task' '
 	HEAD
 	^HEAD~1
 	EOF
+
+	# Delete refs that have not been repacked in these packs.
+	git for-each-ref --format="delete %(refname)" \
+		refs/prefetch refs/tags >refs &&
+	git update-ref --stdin <refs &&
+
+	# Replace the object directory with this pack layout.
 	rm -f $packDir/pack-* &&
 	rm -f $packDir/loose-* &&
 	ls $packDir/*.pack >packs-before &&
