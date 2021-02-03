@@ -129,14 +129,6 @@ using 'git commit-graph verify'. See linkgit:git-commit-graph[1].
 Extracted Diagnostics
 ---------------------
 
-expect dangling commits - potential heads - due to lack of head information::
-	You haven't specified any nodes as heads so it won't be
-	possible to differentiate between un-parented commits and
-	root nodes.
-
-missing sha1 directory '<dir>'::
-	The directory holding the sha1 objects is missing.
-
 unreachable <type> <object>::
 	The <type> object <object>, isn't actually referred to directly
 	or indirectly in any of the trees or commits seen. This can
