@@ -1047,7 +1047,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 	case BISECT_RESET:
 		if (argc > 1)
 			return error(_("--bisect-reset requires either no argument or a commit"));
-		return !!bisect_reset(argc ? argv[0] : NULL);
+		res = bisect_reset(argc ? argv[0] : NULL);
+		break;
 	case CHECK_AND_SET_TERMS:
 		if (argc != 3)
 			return error(_("--check-and-set-terms requires 3 arguments"));
