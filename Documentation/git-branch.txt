@@ -78,8 +78,8 @@ renaming. If <newbranch> exists, -M must be used to force the rename
 to happen.
 
 The `-c` and `-C` options have the exact same semantics as `-m` and
-`-M`, except instead of the branch being renamed it along with its
-config and reflog will be copied to a new name.
+`-M`, except instead of the branch being renamed, it will be copied to a
+new name, along with its config and reflog.
 
 With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
 specify more than one branch for deletion.  If the branch currently
