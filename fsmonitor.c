@@ -343,16 +343,45 @@ void refresh_fsmonitor(struct index_state *istate)
 	istate->fsmonitor_last_update = strbuf_detach(&last_update_token, NULL);
 }
 
+/*
+ * The caller wants to turn on FSMonitor.  And when the caller writes
+ * the index to disk, a FSMonitor extension should be included.  This
+ * requires that `istate->fsmonitor_last_update` not be NULL.  But we
+ * have not actually talked to a FSMonitor process yet, so we don't
+ * have an initial value for this field.
+ *
+ * For a protocol V1 FSMonitor process, this field is a formatted
+ * "nanoseconds since epoch" field.  However, for a protocol V2
+ * FSMonitor process, this field is an opaque token.
+ *
+ * Historically, `add_fsmonitor()` has initialized this field to the
+ * current time for protocol V1 processes.  There are lots of race
+ * conditions here, but that code has shipped...
+ *
+ * The only true solution is to use a V2 FSMonitor and get a current
+ * or default token value (that it understands), but we cannot do that
+ * until we have actually talked to an instance of the FSMonitor process
+ * (but the protocol requires that we send a token first...).
+ *
+ * For simplicity, just initialize like we have a V1 process and require
+ * that V2 processes adapt.
+ */
+static void initialize_fsmonitor_last_update(struct index_state *istate)
+{
+	struct strbuf last_update = STRBUF_INIT;
+
+	strbuf_addf(&last_update, "%"PRIu64"", getnanotime());
+	istate->fsmonitor_last_update = strbuf_detach(&last_update, NULL);
+}
+
 void add_fsmonitor(struct index_state *istate)
 {
 	unsigned int i;
-	struct strbuf last_update = STRBUF_INIT;
 
 	if (!istate->fsmonitor_last_update) {
 		trace_printf_key(&trace_fsmonitor, "add fsmonitor");
 		istate->cache_changed |= FSMONITOR_CHANGED;
-		strbuf_addf(&last_update, "%"PRIu64"", getnanotime());
-		istate->fsmonitor_last_update = strbuf_detach(&last_update, NULL);
+		initialize_fsmonitor_last_update(istate);
 
 		/* reset the fsmonitor state */
 		for (i = 0; i < istate->cache_nr; i++)
