@@ -75,6 +75,11 @@ Performance, Internal Implementation, Development Support etc.
  * "git fetch" learns to treat ref updates atomically in all-or-none
    fashion, just like "git push" does, with the new "--atomic" option.
 
+ * The peel_ref() API has been replaced with peel_iterated_oid().
+
+ * The .use_shell flag in struct child_process that is passed to
+   run_command() API has been clarified with a bit more documentation.
+
 
 Fixes since v2.30
 -----------------
@@ -127,6 +132,13 @@ Fixes since v2.30
    does.
    (merge c9e3a4e76d jk/log-cherry-pick-duplicate-patches later to maint).
 
+ * Documentation for "git fsck" lost stale bits that has become
+   incorrect.
+   (merge 28cc00a13d ab/fsck-doc-fix later to maint).
+
+ * Doc fix for packfile URI feature.
+   (merge bfc2a36ff2 jt/packfile-as-uri-doc later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 505a276596 pk/subsub-fetch-fix-take-2 later to maint).
    (merge 33fc56253b fc/t6030-bisect-reset-removes-auxiliary-files later to maint).
@@ -146,3 +158,4 @@ Fixes since v2.30
    (merge 4eb56b56e7 bc/doc-status-short later to maint).
    (merge a4a1ca22ef tb/local-clone-race-doc later to maint).
    (merge 6a8c89d053 ma/more-opaque-lock-file later to maint).
+   (merge 4a5ec7d166 js/skip-dashed-built-ins-from-config-mak later to maint).
