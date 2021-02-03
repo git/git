@@ -614,19 +614,29 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r,
 	return graph_chain;
 }
 
-static void validate_mixed_generation_chain(struct commit_graph *g)
+/*
+ * returns 1 if and only if all graphs in the chain have
+ * corrected commit dates stored in the generation_data chunk.
+ */
+static int validate_mixed_generation_chain(struct commit_graph *g)
 {
-	int read_generation_data;
+	int read_generation_data = 1;
+	struct commit_graph *p = g;
 
-	if (!g)
-		return;
+	while (read_generation_data && p) {
+		read_generation_data = p->read_generation_data;
+		p = p->base_graph;
+	}
 
-	read_generation_data = !!g->chunk_generation_data;
+	if (read_generation_data)
+		return 1;
 
 	while (g) {
-		g->read_generation_data = read_generation_data;
+		g->read_generation_data = 0;
 		g = g->base_graph;
 	}
+
+	return 0;
 }
 
 struct commit_graph *read_commit_graph_one(struct repository *r,
@@ -1026,7 +1036,8 @@ struct write_commit_graph_context {
 		 split:1,
 		 changed_paths:1,
 		 order_by_pack:1,
-		 write_generation_data:1;
+		 write_generation_data:1,
+		 trust_generation_numbers:1;
 
 	struct topo_level_slab *topo_levels;
 	const struct commit_graph_opts *opts;
@@ -1098,7 +1109,7 @@ static int write_graph_chunk_data(struct hashfile *f,
 		uint32_t packedDate[2];
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
-		if (parse_commit_no_graph(*list))
+		if (repo_parse_commit_no_graph(ctx->r, *list))
 			die(_("unable to parse commit %s"),
 				oid_to_hex(&(*list)->object.oid));
 		tree = get_commit_tree_oid(*list);
@@ -1193,7 +1204,9 @@ static int write_graph_chunk_generation_data(struct hashfile *f,
 
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = ctx->commits.list[i];
-		timestamp_t offset = commit_graph_data_at(c)->generation - c->date;
+		timestamp_t offset;
+		repo_parse_commit(ctx->r, c);
+		offset = commit_graph_data_at(c)->generation - c->date;
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
 		if (offset > GENERATION_NUMBER_V2_OFFSET_MAX) {
@@ -1411,11 +1424,11 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 		if (!commit)
 			continue;
 		if (ctx->split) {
-			if ((!parse_commit(commit) &&
+			if ((!repo_parse_commit(ctx->r, commit) &&
 			     commit_graph_position(commit) == COMMIT_NOT_FROM_GRAPH) ||
 			    flags == COMMIT_GRAPH_SPLIT_REPLACE)
 				add_missing_parents(ctx, commit);
-		} else if (!parse_commit_no_graph(commit))
+		} else if (!repo_parse_commit_no_graph(ctx->r, commit))
 			add_missing_parents(ctx, commit);
 	}
 	stop_progress(&ctx->progress);
@@ -1434,6 +1447,59 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 }
 
+static void compute_topological_levels(struct write_commit_graph_context *ctx)
+{
+	int i;
+	struct commit_list *list = NULL;
+
+	if (ctx->report_progress)
+		ctx->progress = start_delayed_progress(
+					_("Computing commit graph topological levels"),
+					ctx->commits.nr);
+	for (i = 0; i < ctx->commits.nr; i++) {
+		struct commit *c = ctx->commits.list[i];
+		uint32_t level;
+
+		repo_parse_commit(ctx->r, c);
+		level = *topo_level_slab_at(ctx->topo_levels, c);
+
+		display_progress(ctx->progress, i + 1);
+		if (level != GENERATION_NUMBER_ZERO)
+			continue;
+
+		commit_list_insert(c, &list);
+		while (list) {
+			struct commit *current = list->item;
+			struct commit_list *parent;
+			int all_parents_computed = 1;
+			uint32_t max_level = 0;
+
+			for (parent = current->parents; parent; parent = parent->next) {
+				repo_parse_commit(ctx->r, parent->item);
+				level = *topo_level_slab_at(ctx->topo_levels, parent->item);
+
+				if (level == GENERATION_NUMBER_ZERO) {
+					all_parents_computed = 0;
+					commit_list_insert(parent->item, &list);
+					break;
+				}
+
+				if (level > max_level)
+					max_level = level;
+			}
+
+			if (all_parents_computed) {
+				pop_commit(&list);
+
+				if (max_level > GENERATION_NUMBER_V1_MAX - 1)
+					max_level = GENERATION_NUMBER_V1_MAX - 1;
+				*topo_level_slab_at(ctx->topo_levels, current) = max_level + 1;
+			}
+		}
+	}
+	stop_progress(&ctx->progress);
+}
+
 static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 {
 	int i;
@@ -1443,36 +1509,42 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 		ctx->progress = start_delayed_progress(
 					_("Computing commit graph generation numbers"),
 					ctx->commits.nr);
+
+	if (!ctx->trust_generation_numbers) {
+		for (i = 0; i < ctx->commits.nr; i++) {
+			struct commit *c = ctx->commits.list[i];
+			repo_parse_commit(ctx->r, c);
+			commit_graph_data_at(c)->generation = GENERATION_NUMBER_ZERO;
+		}
+	}
+
 	for (i = 0; i < ctx->commits.nr; i++) {
-		uint32_t level = *topo_level_slab_at(ctx->topo_levels, ctx->commits.list[i]);
-		timestamp_t corrected_commit_date = commit_graph_data_at(ctx->commits.list[i])->generation;
+		struct commit *c = ctx->commits.list[i];
+		timestamp_t corrected_commit_date;
+
+		repo_parse_commit(ctx->r, c);
+		corrected_commit_date = commit_graph_data_at(c)->generation;
 
 		display_progress(ctx->progress, i + 1);
-		if (level != GENERATION_NUMBER_ZERO &&
-		    corrected_commit_date != GENERATION_NUMBER_ZERO)
+		if (corrected_commit_date != GENERATION_NUMBER_ZERO)
 			continue;
 
-		commit_list_insert(ctx->commits.list[i], &list);
+		commit_list_insert(c, &list);
 		while (list) {
 			struct commit *current = list->item;
 			struct commit_list *parent;
 			int all_parents_computed = 1;
-			uint32_t max_level = 0;
 			timestamp_t max_corrected_commit_date = 0;
 
 			for (parent = current->parents; parent; parent = parent->next) {
-				level = *topo_level_slab_at(ctx->topo_levels, parent->item);
+				repo_parse_commit(ctx->r, parent->item);
 				corrected_commit_date = commit_graph_data_at(parent->item)->generation;
 
-				if (level == GENERATION_NUMBER_ZERO ||
-				    corrected_commit_date == GENERATION_NUMBER_ZERO) {
+				if (corrected_commit_date == GENERATION_NUMBER_ZERO) {
 					all_parents_computed = 0;
 					commit_list_insert(parent->item, &list);
 					break;
 				}
-
-				if (level > max_level)
-					max_level = level;
 
 				if (corrected_commit_date > max_corrected_commit_date)
 					max_corrected_commit_date = corrected_commit_date;
@@ -1480,10 +1552,6 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 
 			if (all_parents_computed) {
 				pop_commit(&list);
-
-				if (max_level > GENERATION_NUMBER_V1_MAX - 1)
-					max_level = GENERATION_NUMBER_V1_MAX - 1;
-				*topo_level_slab_at(ctx->topo_levels, current) = max_level + 1;
 
 				if (current->date && current->date > max_corrected_commit_date)
 					max_corrected_commit_date = current->date - 1;
@@ -1710,9 +1778,9 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 			continue;
 
 		if (ctx->split && flags == COMMIT_GRAPH_SPLIT_REPLACE)
-			parse_commit(ctx->commits.list[ctx->commits.nr]);
+			repo_parse_commit(ctx->r, ctx->commits.list[ctx->commits.nr]);
 		else
-			parse_commit_no_graph(ctx->commits.list[ctx->commits.nr]);
+			repo_parse_commit_no_graph(ctx->r, ctx->commits.list[ctx->commits.nr]);
 
 		num_parents = commit_list_count(ctx->commits.list[ctx->commits.nr]->parents);
 		if (num_parents > 2)
@@ -2280,6 +2348,7 @@ int write_commit_graph(struct object_directory *odb,
 	init_topo_level_slab(&topo_levels);
 	ctx->topo_levels = &topo_levels;
 
+	prepare_commit_graph(ctx->r);
 	if (ctx->r->objects->commit_graph) {
 		struct commit_graph *g = ctx->r->objects->commit_graph;
 
@@ -2293,7 +2362,6 @@ int write_commit_graph(struct object_directory *odb,
 		ctx->changed_paths = 1;
 	if (!(flags & COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS)) {
 		struct commit_graph *g;
-		prepare_commit_graph_one(ctx->r, ctx->odb);
 
 		g = ctx->r->objects->commit_graph;
 
@@ -2305,10 +2373,7 @@ int write_commit_graph(struct object_directory *odb,
 	}
 
 	if (ctx->split) {
-		struct commit_graph *g;
-		prepare_commit_graph(ctx->r);
-
-		g = ctx->r->objects->commit_graph;
+		struct commit_graph *g = ctx->r->objects->commit_graph;
 
 		while (g) {
 			ctx->num_commit_graphs_before++;
@@ -2331,9 +2396,6 @@ int write_commit_graph(struct object_directory *odb,
 	}
 
 	ctx->approx_nr_objects = approximate_object_count();
-
-	if (ctx->append)
-		prepare_commit_graph_one(ctx->r, ctx->odb);
 
 	if (ctx->append && ctx->r->objects->commit_graph) {
 		struct commit_graph *g = ctx->r->objects->commit_graph;
@@ -2381,9 +2443,11 @@ int write_commit_graph(struct object_directory *odb,
 	} else
 		ctx->num_commit_graphs_after = 1;
 
-	validate_mixed_generation_chain(ctx->r->objects->commit_graph);
+	ctx->trust_generation_numbers = validate_mixed_generation_chain(ctx->r->objects->commit_graph);
 
-	compute_generation_numbers(ctx);
+	compute_topological_levels(ctx);
+	if (ctx->write_generation_data)
+		compute_generation_numbers(ctx);
 
 	if (ctx->changed_paths)
 		compute_bloom_filters(ctx);

@@ -446,6 +446,27 @@ test_expect_success 'warn on improper hash version' '
 	)
 '
 
+test_expect_success 'lower layers have overflow chunk' '
+	cd "$TRASH_DIRECTORY/full" &&
+	UNIX_EPOCH_ZERO="@0 +0000" &&
+	FUTURE_DATE="@2147483646 +0000" &&
+	rm -f .git/objects/info/commit-graph &&
+	test_commit --date "$FUTURE_DATE" future-1 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" old-1 &&
+	git commit-graph write --reachable &&
+	test_commit --date "$FUTURE_DATE" future-2 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" old-2 &&
+	git commit-graph write --reachable --split=no-merge &&
+	test_commit extra &&
+	git commit-graph write --reachable --split=no-merge &&
+	git commit-graph write --reachable &&
+	graph_read_expect 16 "generation_data generation_data_overflow extra_edges" &&
+	mv .git/objects/info/commit-graph commit-graph-upgraded &&
+	git commit-graph write --reachable &&
+	graph_read_expect 16 "generation_data generation_data_overflow extra_edges" &&
+	test_cmp .git/objects/info/commit-graph commit-graph-upgraded
+'
+
 # the verify tests below expect the commit-graph to contain
 # exactly the commits reachable from the commits/8 branch.
 # If the file changes the set of commits in the list, then the
