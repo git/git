@@ -142,6 +142,7 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 static int query_fsmonitor(int version, const char *last_update, struct strbuf *query_result)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
+	int result;
 
 	if (!core_fsmonitor)
 		return -1;
@@ -152,7 +153,33 @@ static int query_fsmonitor(int version, const char *last_update, struct strbuf *
 	cp.use_shell = 1;
 	cp.dir = get_git_work_tree();
 
-	return capture_command(&cp, query_result, 1024);
+	trace2_region_enter("fsm_hook", "query", NULL);
+
+	result = capture_command(&cp, query_result, 1024);
+
+	if (result)
+		trace2_data_intmax("fsm_hook", NULL, "query/failed", result);
+	else {
+		trace2_data_intmax("fsm_hook", NULL, "query/response-length",
+				   query_result->len);
+
+		if (fsmonitor_is_trivial_response(query_result))
+			trace2_data_intmax("fsm_hook", NULL,
+					   "query/trivial-response", 1);
+	}
+
+	trace2_region_leave("fsm_hook", "query", NULL);
+
+	return result;
+}
+
+int fsmonitor_is_trivial_response(const struct strbuf *query_result)
+{
+	static char trivial_response[3] = { '\0', '/', '\0' };
+	int is_trivial = !memcmp(trivial_response,
+				 &query_result->buf[query_result->len - 3], 3);
+
+	return is_trivial;
 }
 
 static void fsmonitor_refresh_callback(struct index_state *istate, const char *name)
