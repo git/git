@@ -208,6 +208,11 @@ test_fsmonitor_suite() {
 	'
 }
 
+#
+# Run a full set of perf tests using each Hook-based fsmonitor provider,
+# such as Watchman.
+#
+
 if test -n "$GIT_PERF_7519_FSMONITOR"; then
 	for INTEGRATION_PATH in $GIT_PERF_7519_FSMONITOR; do
 		test_expect_success "setup for fsmonitor $INTEGRATION_PATH" 'setup_for_fsmonitor'
@@ -218,14 +223,6 @@ else
 	test_fsmonitor_suite
 fi
 
-test_expect_success "setup without fsmonitor" '
-	unset INTEGRATION_SCRIPT &&
-	git config --unset core.fsmonitor &&
-	git update-index --no-fsmonitor
-'
-
-test_fsmonitor_suite
-
 if test_have_prereq WATCHMAN
 then
 	watchman watch-del "$GIT_WORK_TREE" >/dev/null 2>&1 &&
@@ -234,5 +231,17 @@ then
 	# preventing the removal of the trash directory
 	watchman shutdown-server >/dev/null 2>&1
 fi
+
+#
+# Run a full set of perf tests with the fsmonitor feature disabled.
+#
+
+test_expect_success "setup without fsmonitor" '
+	unset INTEGRATION_SCRIPT &&
+	git config --unset core.fsmonitor &&
+	git update-index --no-fsmonitor
+'
+
+test_fsmonitor_suite
 
 test_done
