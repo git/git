@@ -904,6 +904,23 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 	return bisect_auto_next(terms, NULL);
 }
 
+static enum bisect_error bisect_log(void)
+{
+	int fd, status;
+	const char* filename = git_path_bisect_log();
+
+	if (is_empty_or_missing_file(filename))
+		return error(_("We are not bisecting."));
+
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
+		return BISECT_FAILED;
+
+	status = copy_fd(fd, STDOUT_FILENO);
+	close(fd);
+	return status ? BISECT_FAILED : BISECT_OK;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -916,7 +933,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_AUTOSTART,
 		BISECT_NEXT,
 		BISECT_AUTO_NEXT,
-		BISECT_STATE
+		BISECT_STATE,
+		BISECT_LOG
 	} cmdmode = 0;
 	int res = 0, nolog = 0;
 	struct option options[] = {
@@ -938,6 +956,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("verify the next bisection state then checkout the next bisection commit"), BISECT_AUTO_NEXT),
 		OPT_CMDMODE(0, "bisect-state", &cmdmode,
 			 N_("mark the state of ref (or refs)"), BISECT_STATE),
+		OPT_CMDMODE(0, "bisect-log", &cmdmode,
+			 N_("list the bisection steps so far"), BISECT_LOG),
 		OPT_BOOL(0, "no-log", &nolog,
 			 N_("no log for BISECT_WRITE")),
 		OPT_END()
@@ -999,6 +1019,11 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		set_terms(&terms, "bad", "good");
 		get_terms(&terms);
 		res = bisect_state(&terms, argv, argc);
+		break;
+	case BISECT_LOG:
+		if (argc)
+			return error(_("--bisect-log requires 0 arguments"));
+		res = bisect_log();
 		break;
 	default:
 		BUG("unknown subcommand %d", cmdmode);
