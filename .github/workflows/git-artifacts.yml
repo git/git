@@ -149,16 +149,23 @@ jobs:
           git config --global user.name "$USER_NAME" &&
           git config --global user.email "$USER_EMAIL" &&
           echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
-      - name: Download git-sdk-64-makepkg-git
+      - name: Cache git-sdk-64-build-installers
+        id: cache-sdk-build-installers
+        uses: actions/cache@v2
+        with:
+          path: git-sdk-64-build-installers
+          key: build-installers-64-${{ needs.bundle-artifacts.outputs.latest-sdk64-extra-build-id }}
+      - name: Download git-sdk-64-build-installers
+        if: steps.cache-sdk-build-installers.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # Use Git Bash to download and unpack the artifact
 
           ## Get artifact
           urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-          id=${{ needs.bundle-artifacts.outputs.latest-sdk64-extra-build-id }}
-          download_url="$(curl "$urlbase/$id/artifacts" |
-            jq -r '.value[] | select(.name == "git-sdk-64-makepkg-git").resource.downloadUrl')"
+          id=${{ needs.pkg.outputs.latest-sdk64-extra-build-id }}
+          download_url=$(curl "$urlbase/$id/artifacts" |
+            jq -r '.value[] | select(.name == "git-sdk-64-build-installers").resource.downloadUrl')
 
           curl -o artifacts.zip "$download_url"
 
@@ -172,8 +179,14 @@ jobs:
       - name: Clone and update build-extra
         shell: bash
         run: |
-          d=git-sdk-64-makepkg-git/usr/src/build-extra &&
-          git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d &&
+          d=git-sdk-64-build-installers/usr/src/build-extra &&
+          if test ! -d $d/.git
+          then
+            git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
+          else
+            git -C $d fetch https://github.com/git-for-windows/build-extra main &&
+            git -C $d switch -C main FETCH_HEAD
+          fi &&
           git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
       - name: Check out git/git
         shell: bash
@@ -209,7 +222,7 @@ jobs:
           GPGKEY: "${{secrets.GPGKEY}}"
         shell: powershell
         run: |
-          & git-sdk-64-makepkg-git\usr\bin\sh.exe -lc @"
+          & git-sdk-64-build-installers\usr\bin\sh.exe -lc @"
             set -x
             # Let `cv2pdb` find the DLLs
             PATH=\"`$PATH:/c/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin${{matrix.arch.bin}}\"
