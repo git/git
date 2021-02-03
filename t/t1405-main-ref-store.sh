@@ -17,13 +17,6 @@ test_expect_success 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
 	N=`find .git/refs -type f | wc -l`
 '
 
-test_expect_success 'peel_ref(new-tag)' '
-	git rev-parse HEAD >expected &&
-	git tag -a -m new-tag new-tag HEAD &&
-	$RUN peel-ref refs/tags/new-tag >actual &&
-	test_cmp expected actual
-'
-
 test_expect_success 'create_symref(FOO, refs/heads/main)' '
 	$RUN create-symref FOO refs/heads/main nothing &&
 	echo refs/heads/main >expected &&
@@ -32,6 +25,7 @@ test_expect_success 'create_symref(FOO, refs/heads/main)' '
 '
 
 test_expect_success 'delete_refs(FOO, refs/tags/new-tag)' '
+	git tag -a -m new-tag new-tag HEAD &&
 	git rev-parse FOO -- &&
 	git rev-parse refs/tags/new-tag -- &&
 	m=$(git rev-parse main) &&

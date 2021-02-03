@@ -14,19 +14,13 @@ test_expect_success 'setup' '
 	(
 		cd sub &&
 		test_commit first &&
-		git checkout -b new-main
+		git checkout -b new-main &&
+		git tag -a -m new-tag new-tag HEAD
 	)
 '
 
 test_expect_success 'pack_refs() not allowed' '
 	test_must_fail $RUN pack-refs 3
-'
-
-test_expect_success 'peel_ref(new-tag)' '
-	git -C sub rev-parse HEAD >expected &&
-	git -C sub tag -a -m new-tag new-tag HEAD &&
-	$RUN peel-ref refs/tags/new-tag >actual &&
-	test_cmp expected actual
 '
 
 test_expect_success 'create_symref() not allowed' '

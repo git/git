@@ -1916,31 +1916,14 @@ int refs_pack_refs(struct ref_store *refs, unsigned int flags)
 	return refs->be->pack_refs(refs, flags);
 }
 
-int refs_peel_ref(struct ref_store *refs, const char *refname,
-		  struct object_id *oid)
+int peel_iterated_oid(const struct object_id *base, struct object_id *peeled)
 {
-	int flag;
-	struct object_id base;
+	if (current_ref_iter &&
+	    (current_ref_iter->oid == base ||
+	     oideq(current_ref_iter->oid, base)))
+		return ref_iterator_peel(current_ref_iter, peeled);
 
-	if (current_ref_iter && current_ref_iter->refname == refname) {
-		struct object_id peeled;
-
-		if (ref_iterator_peel(current_ref_iter, &peeled))
-			return -1;
-		oidcpy(oid, &peeled);
-		return 0;
-	}
-
-	if (refs_read_ref_full(refs, refname,
-			       RESOLVE_REF_READING, &base, &flag))
-		return -1;
-
-	return peel_object(&base, oid);
-}
-
-int peel_ref(const char *refname, struct object_id *oid)
-{
-	return refs_peel_ref(get_main_ref_store(the_repository), refname, oid);
+	return peel_object(base, peeled);
 }
 
 int refs_create_symref(struct ref_store *refs,
