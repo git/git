@@ -463,9 +463,11 @@ void diffcore_rename(struct diff_options *options)
 	struct diff_score *mx;
 	int i, j, rename_count, skip_unmodified = 0;
 	int num_destinations, dst_cnt;
+	int num_sources, want_copies;
 	struct progress *progress = NULL;
 
 	trace2_region_enter("diff", "setup", options->repo);
+	want_copies = (detect_rename == DIFF_DETECT_COPY);
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
 
@@ -502,7 +504,7 @@ void diffcore_rename(struct diff_options *options)
 				p->one->rename_used++;
 			register_rename_src(p);
 		}
-		else if (detect_rename == DIFF_DETECT_COPY) {
+		else if (want_copies) {
 			/*
 			 * Increment the "rename_used" score by
 			 * one, to indicate ourselves as a user.
@@ -532,12 +534,15 @@ void diffcore_rename(struct diff_options *options)
 	 * files still remain as options for rename/copies!)
 	 */
 	num_destinations = (rename_dst_nr - rename_count);
+	num_sources = rename_src_nr;
+	if (!want_copies)
+		num_sources -= rename_count;
 
 	/* All done? */
-	if (!num_destinations)
+	if (!num_destinations || !num_sources)
 		goto cleanup;
 
-	switch (too_many_rename_candidates(num_destinations, rename_src_nr,
+	switch (too_many_rename_candidates(num_destinations, num_sources,
 					   options)) {
 	case 1:
 		goto cleanup;
@@ -553,7 +558,7 @@ void diffcore_rename(struct diff_options *options)
 	if (options->show_rename_progress) {
 		progress = start_delayed_progress(
 				_("Performing inexact rename detection"),
-				(uint64_t)num_destinations * (uint64_t)rename_src_nr);
+				(uint64_t)num_destinations * (uint64_t)num_sources);
 	}
 
 	mx = xcalloc(st_mult(NUM_CANDIDATE_PER_DST, num_destinations),
@@ -572,6 +577,9 @@ void diffcore_rename(struct diff_options *options)
 		for (j = 0; j < rename_src_nr; j++) {
 			struct diff_filespec *one = rename_src[j].p->one;
 			struct diff_score this_src;
+
+			if (one->rename_used && !want_copies)
+				continue;
 
 			if (skip_unmodified &&
 			    diff_unmodified_pair(rename_src[j].p))
@@ -594,7 +602,7 @@ void diffcore_rename(struct diff_options *options)
 		}
 		dst_cnt++;
 		display_progress(progress,
-				 (uint64_t)dst_cnt * (uint64_t)rename_src_nr);
+				 (uint64_t)dst_cnt * (uint64_t)num_sources);
 	}
 	stop_progress(&progress);
 
@@ -602,7 +610,7 @@ void diffcore_rename(struct diff_options *options)
 	STABLE_QSORT(mx, dst_cnt * NUM_CANDIDATE_PER_DST, score_compare);
 
 	rename_count += find_renames(mx, dst_cnt, minimum_score, 0);
-	if (detect_rename == DIFF_DETECT_COPY)
+	if (want_copies)
 		rename_count += find_renames(mx, dst_cnt, minimum_score, 1);
 	free(mx);
 	trace2_region_leave("diff", "inexact renames", options->repo);
