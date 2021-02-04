@@ -253,9 +253,54 @@ jobs:
         with:
           name: pkg-${{matrix.arch.name}}
           path: artifacts
+  build-arm64:
+    needs: bundle-artifacts
+    runs-on: windows-latest
+    steps:
+      - name: Configure user
+        shell: bash
+        run:
+          USER_NAME="${{github.actor}}" &&
+          USER_EMAIL="${{github.actor}}@users.noreply.github.com" &&
+          mkdir -p "$HOME" &&
+          git config --global user.name "$USER_NAME" &&
+          git config --global user.email "$USER_EMAIL"
+      - uses: actions/checkout@v2
+      - name: initialize vcpkg
+        uses: actions/checkout@v2
+        with:
+          repository: 'microsoft/vcpkg'
+          path: 'compat/vcbuild/vcpkg'
+      - name: download vcpkg artifacts
+        uses: git-for-windows/get-azure-pipelines-artifact@v0
+        with:
+          repository: git/git
+          definitionId: 9
+      - name: add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1
+      - name: copy dlls to root
+        shell: powershell
+        run: |
+          & compat\vcbuild\vcpkg_copy_dlls.bat release arm64-windows
+          if (!$?) { exit(1) }
+      - name: generate Visual Studio solution
+        shell: bash
+        run: |
+          cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/arm64-windows \
+          -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=arm64 -DVCPKG_ARCH=arm64-windows \
+          -DCMAKE_INSTALL_PREFIX="`pwd`/git-arm64"
+      - name: MSBuild
+        run: msbuild git.sln -property:Configuration=Release
+      - name: Link the Git executables
+        run: msbuild INSTALL.vcxproj -property:Configuration=Release
+      - name: upload build artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: arm64-artifacts
+          path: ./git-arm64
   artifacts:
     runs-on: windows-latest
-    needs: pkg
+    needs: [pkg, build-arm64]
     strategy:
       matrix:
         artifact:
@@ -277,8 +322,13 @@ jobs:
         arch:
           - name: x86_64
             bitness: 64
+            arm64: false
           - name: i686
             bitness: 32
+            arm64: false
+          - name: i686
+            bitness: 32
+            arm64: true
       fail-fast: false
     env:
       MSYSTEM: MINGW${{matrix.arch.bitness}}
@@ -360,6 +410,12 @@ jobs:
 
           ## Unpack artifact
           unzip artifacts.zip
+      - name: Download arm64 artifact
+        if: env.SKIP != 'true' && matrix.arch.arm64 == true
+        uses: actions/download-artifact@v1
+        with:
+          name: arm64-artifacts
+          path: ${{github.workspace}}/arm64
       - name: Clone and update build-extra
         if: env.SKIP != 'true'
         shell: bash
@@ -390,7 +446,14 @@ jobs:
         run: |
           & .\git-sdk-${{matrix.arch.bitness}}-build-installers\usr\bin\bash.exe -lc @"
             set -x
-            /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=`$(cat pkg-${{matrix.arch.name}}/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-[0-9]*.tar.xz --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-doc-html-[0-9]*.tar.xz &&
+            if test "${{matrix.arch.arm64}}" = true
+            then
+              ARM64="--include-arm64-artifacts=\"$PWD/arm64\""
+            else
+              ARM64=
+            fi
+
+            eval /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git `$ARM64 --version=`$(cat pkg-${{matrix.arch.name}}/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-[0-9]*.tar.xz --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-doc-html-[0-9]*.tar.xz &&
             if test portable = '${{matrix.artifact.name}}' && test -n \"`$(git config alias.signtool)\"
             then
               git signtool artifacts/PortableGit-*.exe
@@ -416,10 +479,16 @@ jobs:
         shell: bash
         run: rm -rf home
       - name: Publish ${{matrix.artifact.name}}-${{matrix.arch.name}}
-        if: env.SKIP != 'true'
+        if: env.SKIP != 'true' && matrix.arch.arm64 != true
         uses: actions/upload-artifact@v1
         with:
           name: ${{matrix.artifact.name}}-${{matrix.arch.name}}
+          path: artifacts
+      - name: Publish ${{matrix.artifact.name}}-arm64
+        if: env.SKIP != 'true' && matrix.arch.arm64 == true
+        uses: actions/upload-artifact@v1
+        with:
+          name: ${{matrix.artifact.name}}-arm64
           path: artifacts
   nuget:
     runs-on: windows-latest
