@@ -80,6 +80,8 @@ static int read_patches(const char *range, struct string_list *list,
 		finish_command(&cp);
 		return -1;
 	}
+	if (finish_command(&cp))
+		return -1;
 
 	line = contents.buf;
 	size = contents.len;
@@ -101,7 +103,6 @@ static int read_patches(const char *range, struct string_list *list,
 				string_list_clear(list, 1);
 				strbuf_release(&buf);
 				strbuf_release(&contents);
-				finish_command(&cp);
 				return -1;
 			}
 			util->matching = -1;
@@ -117,7 +118,6 @@ static int read_patches(const char *range, struct string_list *list,
 			string_list_clear(list, 1);
 			strbuf_release(&buf);
 			strbuf_release(&contents);
-			finish_command(&cp);
 			return -1;
 		}
 
@@ -226,9 +226,6 @@ static int read_patches(const char *range, struct string_list *list,
 		string_list_append(list, buf.buf)->util = util;
 	strbuf_release(&buf);
 	free(current_filename);
-
-	if (finish_command(&cp))
-		return -1;
 
 	return 0;
 }
