@@ -97,6 +97,7 @@ static int read_patches(const char *range, struct string_list *list,
 			if (get_oid(p, &util->oid)) {
 				error(_("could not parse commit '%s'"), p);
 				free(util);
+				free(current_filename);
 				string_list_clear(list, 1);
 				strbuf_release(&buf);
 				strbuf_release(&contents);
@@ -112,6 +113,7 @@ static int read_patches(const char *range, struct string_list *list,
 			error(_("could not parse first line of `log` output: "
 				"did not start with 'commit ': '%s'"),
 			      line);
+			free(current_filename);
 			string_list_clear(list, 1);
 			strbuf_release(&buf);
 			strbuf_release(&contents);
