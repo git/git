@@ -18,9 +18,7 @@ int show_range_diff(const char *range1, const char *range2,
 
 /*
  * Determine whether the given argument is usable as a range argument of `git
- * range-diff`, e.g. A..B. Note that this only validates the format but does
- * _not_ parse it, i.e. it does _not_ look up the specified commits in the
- * local repository.
+ * range-diff`, e.g. A..B.
  */
 int is_range_diff_range(const char *arg);
 
