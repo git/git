@@ -513,7 +513,8 @@ static void output(struct string_list *a, struct string_list *b,
 
 		/* Show unmatched LHS commit whose predecessors were shown. */
 		if (i < a->nr && a_util->matching < 0) {
-			output_pair_header(&opts, patch_no_width,
+			if (!range_diff_opts->right_only)
+				output_pair_header(&opts, patch_no_width,
 					   &buf, &dashes, a_util, NULL);
 			i++;
 			continue;
@@ -521,7 +522,8 @@ static void output(struct string_list *a, struct string_list *b,
 
 		/* Show unmatched RHS commits. */
 		while (j < b->nr && b_util->matching < 0) {
-			output_pair_header(&opts, patch_no_width,
+			if (!range_diff_opts->left_only)
+				output_pair_header(&opts, patch_no_width,
 					   &buf, &dashes, NULL, b_util);
 			b_util = ++j < b->nr ? b->items[j].util : NULL;
 		}
@@ -551,7 +553,10 @@ int show_range_diff(const char *range1, const char *range2,
 	struct string_list branch1 = STRING_LIST_INIT_DUP;
 	struct string_list branch2 = STRING_LIST_INIT_DUP;
 
-	if (read_patches(range1, &branch1, range_diff_opts->other_arg))
+	if (range_diff_opts->left_only && range_diff_opts->right_only)
+		res = error(_("--left-only and --right-only are mutually exclusive"));
+
+	if (!res && read_patches(range1, &branch1, range_diff_opts->other_arg))
 		res = error(_("could not parse log for '%s'"), range1);
 	if (!res && read_patches(range2, &branch2, range_diff_opts->other_arg))
 		res = error(_("could not parse log for '%s'"), range2);
