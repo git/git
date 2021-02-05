@@ -315,7 +315,7 @@ for all objects in the object store.
 Reading an object's SHA-1 content
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The SHA-1 content of an object can be read by converting all SHA-256 names
-its SHA-256 content references to SHA-1 names using the translation table.
+of its SHA-256 content references to SHA-1 names using the translation table.
 
 Fetch
 ~~~~~
