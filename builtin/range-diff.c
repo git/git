@@ -13,12 +13,17 @@ NULL
 
 int cmd_range_diff(int argc, const char **argv, const char *prefix)
 {
-	int creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;
 	struct diff_options diffopt = { NULL };
 	struct strvec other_arg = STRVEC_INIT;
+	struct range_diff_options range_diff_opts = {
+		.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT,
+		.diffopt = &diffopt,
+		.other_arg = &other_arg
+	};
 	int simple_color = -1;
 	struct option range_diff_options[] = {
-		OPT_INTEGER(0, "creation-factor", &creation_factor,
+		OPT_INTEGER(0, "creation-factor",
+			    &range_diff_opts.creation_factor,
 			    N_("Percentage by which creation is weighted")),
 		OPT_BOOL(0, "no-dual-color", &simple_color,
 			    N_("use simple diff colors")),
@@ -81,8 +86,8 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	}
 	FREE_AND_NULL(options);
 
-	res = show_range_diff(range1.buf, range2.buf, creation_factor,
-			      simple_color < 1, &diffopt, &other_arg);
+	range_diff_opts.dual_color = simple_color < 1;
+	res = show_range_diff(range1.buf, range2.buf, &range_diff_opts);
 
 	strvec_clear(&other_arg);
 	strbuf_release(&range1);

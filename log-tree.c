@@ -808,6 +808,11 @@ void show_log(struct rev_info *opt)
 	if (cmit_fmt_is_mail(ctx.fmt) && opt->rdiff1) {
 		struct diff_queue_struct dq;
 		struct diff_options opts;
+		struct range_diff_options range_diff_opts = {
+			.creation_factor = opt->creation_factor,
+			.dual_color = 1,
+			.diffopt = &opts
+		};
 
 		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
 		DIFF_QUEUE_CLEAR(&diff_queued_diff);
@@ -822,8 +827,7 @@ void show_log(struct rev_info *opt)
 		opts.file = opt->diffopt.file;
 		opts.use_color = opt->diffopt.use_color;
 		diff_setup_done(&opts);
-		show_range_diff(opt->rdiff1, opt->rdiff2,
-				opt->creation_factor, 1, &opts, NULL);
+		show_range_diff(opt->rdiff1, opt->rdiff2, &range_diff_opts);
 
 		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
 	}

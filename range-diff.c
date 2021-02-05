@@ -525,33 +525,32 @@ static struct strbuf *output_prefix_cb(struct diff_options *opt, void *data)
 }
 
 int show_range_diff(const char *range1, const char *range2,
-		    int creation_factor, int dual_color,
-		    const struct diff_options *diffopt,
-		    const struct strvec *other_arg)
+		    struct range_diff_options *range_diff_opts)
 {
 	int res = 0;
 
 	struct string_list branch1 = STRING_LIST_INIT_DUP;
 	struct string_list branch2 = STRING_LIST_INIT_DUP;
 
-	if (read_patches(range1, &branch1, other_arg))
+	if (read_patches(range1, &branch1, range_diff_opts->other_arg))
 		res = error(_("could not parse log for '%s'"), range1);
-	if (!res && read_patches(range2, &branch2, other_arg))
+	if (!res && read_patches(range2, &branch2, range_diff_opts->other_arg))
 		res = error(_("could not parse log for '%s'"), range2);
 
 	if (!res) {
 		struct diff_options opts;
 		struct strbuf indent = STRBUF_INIT;
 
-		if (diffopt)
-			memcpy(&opts, diffopt, sizeof(opts));
+		if (range_diff_opts->diffopt)
+			memcpy(&opts, range_diff_opts->diffopt, sizeof(opts));
 		else
 			diff_setup(&opts);
 
 		if (!opts.output_format)
 			opts.output_format = DIFF_FORMAT_PATCH;
 		opts.flags.suppress_diff_headers = 1;
-		opts.flags.dual_color_diffed_diffs = dual_color;
+		opts.flags.dual_color_diffed_diffs =
+			range_diff_opts->dual_color;
 		opts.flags.suppress_hunk_header_line_count = 1;
 		opts.output_prefix = output_prefix_cb;
 		strbuf_addstr(&indent, "    ");
@@ -559,7 +558,8 @@ int show_range_diff(const char *range1, const char *range2,
 		diff_setup_done(&opts);
 
 		find_exact_matches(&branch1, &branch2);
-		get_correspondences(&branch1, &branch2, creation_factor);
+		get_correspondences(&branch1, &branch2,
+				    range_diff_opts->creation_factor);
 		output(&branch1, &branch2, &opts);
 
 		strbuf_release(&indent);
