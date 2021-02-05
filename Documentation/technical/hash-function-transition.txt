@@ -33,16 +33,9 @@ researchers. On 23 February 2017 the SHAttered attack
 
 Git v2.13.0 and later subsequently moved to a hardened SHA-1
 implementation by default, which isn't vulnerable to the SHAttered
-attack.
+attack, but SHA-1 is still weak.
 
-Thus Git has in effect already migrated to a new hash that isn't SHA-1
-and doesn't share its vulnerabilities, its new hash function just
-happens to produce exactly the same output for all known inputs,
-except two PDFs published by the SHAttered researchers, and the new
-implementation (written by those researchers) claims to detect future
-cryptanalytic collision attacks.
-
-Regardless, it's considered prudent to move past any variant of SHA-1
+Thus it's considered prudent to move past any variant of SHA-1
 to a new hash. There's no guarantee that future attacks on SHA-1 won't
 be published in the future, and those attacks may not have viable
 mitigations.
@@ -56,6 +49,38 @@ that the speaker intended.
 SHA-1 still possesses the other properties such as fast object lookup
 and safe error checking, but other hash functions are equally suitable
 that are believed to be cryptographically secure.
+
+Choice of Hash
+--------------
+The hash to replace the hardened SHA-1 should be stronger than SHA-1
+was: we would like it to be trustworthy and useful in practice for at
+least 10 years.
+
+Some other relevant properties:
+
+1. A 256-bit hash (long enough to match common security practice; not
+   excessively long to hurt performance and disk usage).
+
+2. High quality implementations should be widely available (e.g., in
+   OpenSSL and Apple CommonCrypto).
+
+3. The hash function's properties should match Git's needs (e.g. Git
+   requires collision and 2nd preimage resistance and does not require
+   length extension resistance).
+
+4. As a tiebreaker, the hash should be fast to compute (fortunately
+   many contenders are faster than SHA-1).
+
+There were several contenders for a successor hash to SHA-1, including
+SHA-256, SHA-512/256, SHA-256x16, K12, and BLAKE2bp-256.
+
+In late 2018 the project picked SHA-256 as its successor hash.
+
+See 0ed8d8da374 (doc hash-function-transition: pick SHA-256 as
+NewHash, 2018-08-04) and numerous mailing list threads at the time,
+particularly the one starting at
+https://lore.kernel.org/git/20180609224913.GC38834@genre.crustytoothpaste.net/
+for more information.
 
 Goals
 -----
@@ -600,39 +625,6 @@ particular revision specifier and for output, overriding the mode. For
 example:
 
     git --output-format=sha1 log abac87a^{sha1}..f787cac^{sha256}
-
-Choice of Hash
---------------
-In early 2005, around the time that Git was written, Xiaoyun Wang,
-Yiqun Lisa Yin, and Hongbo Yu announced an attack finding SHA-1
-collisions in 2^69 operations. In August they published details.
-Luckily, no practical demonstrations of a collision in full SHA-1 were
-published until 10 years later, in 2017.
-
-Git v2.13.0 and later subsequently moved to a hardened SHA-1
-implementation by default that mitigates the SHAttered attack, but
-SHA-1 is still believed to be weak.
-
-The hash to replace this hardened SHA-1 should be stronger than SHA-1
-was: we would like it to be trustworthy and useful in practice for at
-least 10 years.
-
-Some other relevant properties:
-
-1. A 256-bit hash (long enough to match common security practice; not
-   excessively long to hurt performance and disk usage).
-
-2. High quality implementations should be widely available (e.g., in
-   OpenSSL and Apple CommonCrypto).
-
-3. The hash function's properties should match Git's needs (e.g. Git
-   requires collision and 2nd preimage resistance and does not require
-   length extension resistance).
-
-4. As a tiebreaker, the hash should be fast to compute (fortunately
-   many contenders are faster than SHA-1).
-
-We choose SHA-256.
 
 Transition plan
 ---------------
