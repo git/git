@@ -1330,8 +1330,19 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		remote_head = NULL;
 		option_no_checkout = 1;
 		if (!option_bare) {
-			const char *branch = git_default_branch_name();
-			char *ref = xstrfmt("refs/heads/%s", branch);
+			const char *branch;
+			char *ref;
+
+			if (transport_ls_refs_options.unborn_head_target &&
+			    skip_prefix(transport_ls_refs_options.unborn_head_target,
+					"refs/heads/", &branch)) {
+				ref = transport_ls_refs_options.unborn_head_target;
+				transport_ls_refs_options.unborn_head_target = NULL;
+				create_symref("HEAD", ref, reflog_msg.buf);
+			} else {
+				branch = git_default_branch_name();
+				ref = xstrfmt("refs/heads/%s", branch);
+			}
 
 			install_branch_config(0, branch, remote_name, ref);
 			free(ref);
@@ -1385,5 +1396,6 @@ cleanup:
 	junk_mode = JUNK_LEAVE_ALL;
 
 	strvec_clear(&transport_ls_refs_options.ref_prefixes);
+	free(transport_ls_refs_options.unborn_head_target);
 	return err;
 }
