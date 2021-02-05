@@ -794,8 +794,8 @@ sbeller@google.com
 2017-03-03 jrnieder@gmail.com
 Incorporated suggestions from jonathantanmy and sbeller:
 
-* describe purpose of signed objects with each hash type
-* redefine signed object verification using object content under the
+* Describe purpose of signed objects with each hash type
+* Redefine signed object verification using object content under the
   first hash function
 
 2017-03-06 jrnieder@gmail.com
@@ -814,13 +814,13 @@ Incorporated suggestions from jonathantanmy and sbeller:
 
 2017-09-27 jrnieder@gmail.com, sbeller@google.com
 
-* use placeholder NewHash instead of SHA3-256
-* describe criteria for picking a hash function.
-* include a transition plan (thanks especially to Brandon Williams
+* Use placeholder NewHash instead of SHA3-256
+* Describe criteria for picking a hash function.
+* Include a transition plan (thanks especially to Brandon Williams
   for fleshing these ideas out)
-* define the translation table (thanks, Shawn Pearce[5], Jonathan
+* Define the translation table (thanks, Shawn Pearce[5], Jonathan
   Tan, and Masaya Suzuki)
-* avoid loose object overhead by packing more aggressively in
+* Avoid loose object overhead by packing more aggressively in
   "git gc --auto"
 
 Later history:
