@@ -934,7 +934,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			for (i = 0; i < active_nr; i++)
 				if (ce_intent_to_add(active_cache[i]))
 					ita_nr++;
-			committable = active_nr - ita_nr > 0;
+			committable = active_nr > ita_nr;
 		} else {
 			/*
 			 * Unless the user did explicitly request a submodule
