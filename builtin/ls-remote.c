@@ -45,7 +45,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	int show_symref_target = 0;
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
-	struct strvec ref_prefixes = STRVEC_INIT;
+	struct transport_ls_refs_options transport_options =
+		TRANSPORT_LS_REFS_OPTIONS_INIT;
 	int i;
 	struct string_list server_options = STRING_LIST_INIT_DUP;
 
@@ -94,9 +95,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	}
 
 	if (flags & REF_TAGS)
-		strvec_push(&ref_prefixes, "refs/tags/");
+		strvec_push(&transport_options.ref_prefixes, "refs/tags/");
 	if (flags & REF_HEADS)
-		strvec_push(&ref_prefixes, "refs/heads/");
+		strvec_push(&transport_options.ref_prefixes, "refs/heads/");
 
 	remote = remote_get(dest);
 	if (!remote) {
@@ -118,7 +119,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	if (server_options.nr)
 		transport->server_options = &server_options;
 
-	ref = transport_get_remote_refs(transport, &ref_prefixes);
+	ref = transport_get_remote_refs(transport, &transport_options);
 	if (ref) {
 		int hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
 		repo_set_hash_algo(the_repository, hash_algo);

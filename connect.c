@@ -453,12 +453,14 @@ void check_stateless_delimiter(int stateless_rpc,
 
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     struct ref **list, int for_push,
-			     const struct strvec *ref_prefixes,
+			     struct transport_ls_refs_options *transport_options,
 			     const struct string_list *server_options,
 			     int stateless_rpc)
 {
 	int i;
 	const char *hash_name;
+	struct strvec *ref_prefixes = transport_options ?
+		&transport_options->ref_prefixes : NULL;
 	*list = NULL;
 
 	if (server_supports_v2("ls-refs", 1))
