@@ -7,7 +7,7 @@ gitmodules - Defining submodule properties
 
 SYNOPSIS
 --------
-$GIT_WORK_DIR/.gitmodules
+$GIT_WORK_TREE/.gitmodules
 
 
 DESCRIPTION
@@ -27,19 +27,19 @@ submodule.<name>.path::
 	Defines the path, relative to the top-level directory of the Git
 	working tree, where the submodule is expected to be checked out.
 	The path name must not end with a `/`. All submodule paths must
-	be unique within the .gitmodules file.
+	be unique within the `.gitmodules` file.
 
 submodule.<name>.url::
 	Defines a URL from which the submodule repository can be cloned.
 	This may be either an absolute URL ready to be passed to
-	linkgit:git-clone[1] or (if it begins with ./ or ../) a location
+	linkgit:git-clone[1] or (if it begins with `./` or `../`) a location
 	relative to the superproject's origin repository.
 
 In addition, there are a number of optional keys:
 
 submodule.<name>.update::
 	Defines the default update procedure for the named submodule,
-	i.e. how the submodule is updated by "git submodule update"
+	i.e. how the submodule is updated by the `git submodule update`
 	command in the superproject. This is only used by `git
 	submodule init` to initialize the configuration variable of
 	the same name. Allowed values here are 'checkout', 'rebase',
@@ -49,7 +49,7 @@ submodule.<name>.update::
 
 submodule.<name>.branch::
 	A remote branch name for tracking updates in the upstream submodule.
-	If the option is not specified, it defaults to the remote 'HEAD'.
+	If the option is not specified, it defaults to the remote `HEAD`.
 	A special value of `.` is used to indicate that the name of the branch
 	in the submodule should be the same name as the current branch in the
 	current repository.  See the `--remote` documentation in
@@ -57,14 +57,14 @@ submodule.<name>.branch::
 
 submodule.<name>.fetchRecurseSubmodules::
 	This option can be used to control recursive fetching of this
-	submodule. If this option is also present in the submodules entry in
-	.git/config of the superproject, the setting there will override the
-	one found in .gitmodules.
+	submodule. If this option is also present in the submodule's entry in
+	`.git/config` of the superproject, the setting there will override the
+	one found in `.gitmodules`.
 	Both settings can be overridden on the command line by using the
-	"--[no-]recurse-submodules" option to "git fetch" and "git pull".
+	`--[no-]recurse-submodules` option to `git fetch` and `git pull`.
 
 submodule.<name>.ignore::
-	Defines under what circumstances "git status" and the diff family show
+	Defines under what circumstances `git status` and the diff family show
 	a submodule as modified. The following values are supported:
 +
 --
@@ -73,7 +73,7 @@ submodule.<name>.ignore::
 	    been staged).
 
 	dirty;; All changes to the submodule's work tree will be ignored, only
-	    committed differences between the HEAD of the submodule and its
+	    committed differences between the `HEAD` of the submodule and its
 	    recorded state in the superproject are taken into account.
 
 	untracked;; Only untracked files in submodules will be ignored.
@@ -84,12 +84,12 @@ submodule.<name>.ignore::
 	    differences, and modifications to tracked and untracked files are
 	    shown. This is the default option.
 
-If this option is also present in the submodules entry in .git/config
+If this option is also present in the submodule's entry in `.git/config`
 of the superproject, the setting there will override the one found in
-.gitmodules.
+`.gitmodules`.
 
 Both settings can be overridden on the command line by using the
-"--ignore-submodules" option. The 'git submodule' commands are not
+`--ignore-submodules` option. The `git submodule` commands are not
 affected by this setting.
 --
 
@@ -102,7 +102,7 @@ submodule.<name>.shallow::
 EXAMPLES
 --------
 
-Consider the following .gitmodules file:
+Consider the following `.gitmodules` file:
 
 ----
 [submodule "libfoo"]
