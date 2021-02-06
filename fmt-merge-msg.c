@@ -2,6 +2,7 @@
 #include "refs.h"
 #include "object-store.h"
 #include "diff.h"
+#include "diff-merges.h"
 #include "revision.h"
 #include "tag.h"
 #include "string-list.h"
@@ -670,7 +671,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		head = lookup_commit_or_die(&head_oid, "HEAD");
 		repo_init_revisions(the_repository, &rev, NULL);
 		rev.commit_format = CMIT_FMT_ONELINE;
-		rev.ignore_merges = 1;
+		diff_merges_suppress(&rev);
 		rev.limited = 1;
 
 		strbuf_complete_line(out);
