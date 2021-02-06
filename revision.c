@@ -1241,12 +1241,14 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 		/*
 		 * Have we seen the same patch id?
 		 */
-		id = has_commit_patch_id(commit, &ids);
+		id = patch_id_iter_first(commit, &ids);
 		if (!id)
 			continue;
 
 		commit->object.flags |= cherry_flag;
-		id->commit->object.flags |= cherry_flag;
+		do {
+			id->commit->object.flags |= cherry_flag;
+		} while ((id = patch_id_iter_next(id, &ids)));
 	}
 
 	free_patch_ids(&ids);
