@@ -23,9 +23,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This merges the file listing in the directory cache index with the
-actual working directory list, and shows different combinations of the
-two.
+This merges the file listing in the index with the actual working
+directory list, and shows different combinations of the two.
 
 One or more of the options below may be used to determine the files
 shown:
