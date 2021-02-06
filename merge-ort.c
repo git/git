@@ -25,8 +25,11 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
+#include "ll-merge.h"
 #include "object-store.h"
+#include "revision.h"
 #include "strmap.h"
+#include "submodule.h"
 #include "tree.h"
 #include "unpack-trees.h"
 #include "xdiff-interface.h"
@@ -349,6 +352,25 @@ static int err(struct merge_options *opt, const char *err, ...)
 	return -1;
 }
 
+static void format_commit(struct strbuf *sb,
+			  int indent,
+			  struct commit *commit)
+{
+	struct merge_remote_desc *desc;
+	struct pretty_print_context ctx = {0};
+	ctx.abbrev = DEFAULT_ABBREV;
+
+	strbuf_addchars(sb, ' ', indent);
+	desc = merge_remote_util(commit);
+	if (desc) {
+		strbuf_addf(sb, "virtual %s\n", desc->name);
+		return;
+	}
+
+	format_commit_message(commit, "%h %s", sb, &ctx);
+	strbuf_addch(sb, '\n');
+}
+
 __attribute__((format (printf, 4, 5)))
 static void path_msg(struct merge_options *opt,
 		     const char *path,
@@ -368,6 +390,36 @@ static void path_msg(struct merge_options *opt,
 	va_end(ap);
 
 	strbuf_addch(sb, '\n');
+}
+
+/* add a string to a strbuf, but converting "/" to "_" */
+static void add_flattened_path(struct strbuf *out, const char *s)
+{
+	size_t i = out->len;
+	strbuf_addstr(out, s);
+	for (; i < out->len; i++)
+		if (out->buf[i] == '/')
+			out->buf[i] = '_';
+}
+
+static char *unique_path(struct strmap *existing_paths,
+			 const char *path,
+			 const char *branch)
+{
+	struct strbuf newpath = STRBUF_INIT;
+	int suffix = 0;
+	size_t base_len;
+
+	strbuf_addf(&newpath, "%s~", path);
+	add_flattened_path(&newpath, branch);
+
+	base_len = newpath.len;
+	while (strmap_contains(existing_paths, newpath.buf)) {
+		strbuf_setlen(&newpath, base_len);
+		strbuf_addf(&newpath, "_%d", suffix++);
+	}
+
+	return strbuf_detach(&newpath, NULL);
 }
 
 /*** Function Grouping: functions related to collect_merge_info() ***/
@@ -628,6 +680,249 @@ static int collect_merge_info(struct merge_options *opt,
 
 /*** Function Grouping: functions related to threeway content merges ***/
 
+static int find_first_merges(struct repository *repo,
+			     const char *path,
+			     struct commit *a,
+			     struct commit *b,
+			     struct object_array *result)
+{
+	int i, j;
+	struct object_array merges = OBJECT_ARRAY_INIT;
+	struct commit *commit;
+	int contains_another;
+
+	char merged_revision[GIT_MAX_HEXSZ + 2];
+	const char *rev_args[] = { "rev-list", "--merges", "--ancestry-path",
+				   "--all", merged_revision, NULL };
+	struct rev_info revs;
+	struct setup_revision_opt rev_opts;
+
+	memset(result, 0, sizeof(struct object_array));
+	memset(&rev_opts, 0, sizeof(rev_opts));
+
+	/* get all revisions that merge commit a */
+	xsnprintf(merged_revision, sizeof(merged_revision), "^%s",
+		  oid_to_hex(&a->object.oid));
+	repo_init_revisions(repo, &revs, NULL);
+	rev_opts.submodule = path;
+	/* FIXME: can't handle linked worktrees in submodules yet */
+	revs.single_worktree = path != NULL;
+	setup_revisions(ARRAY_SIZE(rev_args)-1, rev_args, &revs, &rev_opts);
+
+	/* save all revisions from the above list that contain b */
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
+	while ((commit = get_revision(&revs)) != NULL) {
+		struct object *o = &(commit->object);
+		if (in_merge_bases(b, commit))
+			add_object_array(o, NULL, &merges);
+	}
+	reset_revision_walk();
+
+	/* Now we've got all merges that contain a and b. Prune all
+	 * merges that contain another found merge and save them in
+	 * result.
+	 */
+	for (i = 0; i < merges.nr; i++) {
+		struct commit *m1 = (struct commit *) merges.objects[i].item;
+
+		contains_another = 0;
+		for (j = 0; j < merges.nr; j++) {
+			struct commit *m2 = (struct commit *) merges.objects[j].item;
+			if (i != j && in_merge_bases(m2, m1)) {
+				contains_another = 1;
+				break;
+			}
+		}
+
+		if (!contains_another)
+			add_object_array(merges.objects[i].item, NULL, result);
+	}
+
+	object_array_clear(&merges);
+	return result->nr;
+}
+
+static int merge_submodule(struct merge_options *opt,
+			   const char *path,
+			   const struct object_id *o,
+			   const struct object_id *a,
+			   const struct object_id *b,
+			   struct object_id *result)
+{
+	struct commit *commit_o, *commit_a, *commit_b;
+	int parent_count;
+	struct object_array merges;
+	struct strbuf sb = STRBUF_INIT;
+
+	int i;
+	int search = !opt->priv->call_depth;
+
+	/* store fallback answer in result in case we fail */
+	oidcpy(result, opt->priv->call_depth ? o : a);
+
+	/* we can not handle deletion conflicts */
+	if (is_null_oid(o))
+		return 0;
+	if (is_null_oid(a))
+		return 0;
+	if (is_null_oid(b))
+		return 0;
+
+	if (add_submodule_odb(path)) {
+		path_msg(opt, path, 0,
+			 _("Failed to merge submodule %s (not checked out)"),
+			 path);
+		return 0;
+	}
+
+	if (!(commit_o = lookup_commit_reference(opt->repo, o)) ||
+	    !(commit_a = lookup_commit_reference(opt->repo, a)) ||
+	    !(commit_b = lookup_commit_reference(opt->repo, b))) {
+		path_msg(opt, path, 0,
+			 _("Failed to merge submodule %s (commits not present)"),
+			 path);
+		return 0;
+	}
+
+	/* check whether both changes are forward */
+	if (!in_merge_bases(commit_o, commit_a) ||
+	    !in_merge_bases(commit_o, commit_b)) {
+		path_msg(opt, path, 0,
+			 _("Failed to merge submodule %s "
+			   "(commits don't follow merge-base)"),
+			 path);
+		return 0;
+	}
+
+	/* Case #1: a is contained in b or vice versa */
+	if (in_merge_bases(commit_a, commit_b)) {
+		oidcpy(result, b);
+		path_msg(opt, path, 1,
+			 _("Note: Fast-forwarding submodule %s to %s"),
+			 path, oid_to_hex(b));
+		return 1;
+	}
+	if (in_merge_bases(commit_b, commit_a)) {
+		oidcpy(result, a);
+		path_msg(opt, path, 1,
+			 _("Note: Fast-forwarding submodule %s to %s"),
+			 path, oid_to_hex(a));
+		return 1;
+	}
+
+	/*
+	 * Case #2: There are one or more merges that contain a and b in
+	 * the submodule. If there is only one, then present it as a
+	 * suggestion to the user, but leave it marked unmerged so the
+	 * user needs to confirm the resolution.
+	 */
+
+	/* Skip the search if makes no sense to the calling context.  */
+	if (!search)
+		return 0;
+
+	/* find commit which merges them */
+	parent_count = find_first_merges(opt->repo, path, commit_a, commit_b,
+					 &merges);
+	switch (parent_count) {
+	case 0:
+		path_msg(opt, path, 0, _("Failed to merge submodule %s"), path);
+		break;
+
+	case 1:
+		format_commit(&sb, 4,
+			      (struct commit *)merges.objects[0].item);
+		path_msg(opt, path, 0,
+			 _("Failed to merge submodule %s, but a possible merge "
+			   "resolution exists:\n%s\n"),
+			 path, sb.buf);
+		path_msg(opt, path, 1,
+			 _("If this is correct simply add it to the index "
+			   "for example\n"
+			   "by using:\n\n"
+			   "  git update-index --cacheinfo 160000 %s \"%s\"\n\n"
+			   "which will accept this suggestion.\n"),
+			 oid_to_hex(&merges.objects[0].item->oid), path);
+		strbuf_release(&sb);
+		break;
+	default:
+		for (i = 0; i < merges.nr; i++)
+			format_commit(&sb, 4,
+				      (struct commit *)merges.objects[i].item);
+		path_msg(opt, path, 0,
+			 _("Failed to merge submodule %s, but multiple "
+			   "possible merges exist:\n%s"), path, sb.buf);
+		strbuf_release(&sb);
+	}
+
+	object_array_clear(&merges);
+	return 0;
+}
+
+static int merge_3way(struct merge_options *opt,
+		      const char *path,
+		      const struct object_id *o,
+		      const struct object_id *a,
+		      const struct object_id *b,
+		      const char *pathnames[3],
+		      const int extra_marker_size,
+		      mmbuffer_t *result_buf)
+{
+	mmfile_t orig, src1, src2;
+	struct ll_merge_options ll_opts = {0};
+	char *base, *name1, *name2;
+	int merge_status;
+
+	ll_opts.renormalize = opt->renormalize;
+	ll_opts.extra_marker_size = extra_marker_size;
+	ll_opts.xdl_opts = opt->xdl_opts;
+
+	if (opt->priv->call_depth) {
+		ll_opts.virtual_ancestor = 1;
+		ll_opts.variant = 0;
+	} else {
+		switch (opt->recursive_variant) {
+		case MERGE_VARIANT_OURS:
+			ll_opts.variant = XDL_MERGE_FAVOR_OURS;
+			break;
+		case MERGE_VARIANT_THEIRS:
+			ll_opts.variant = XDL_MERGE_FAVOR_THEIRS;
+			break;
+		default:
+			ll_opts.variant = 0;
+			break;
+		}
+	}
+
+	assert(pathnames[0] && pathnames[1] && pathnames[2] && opt->ancestor);
+	if (pathnames[0] == pathnames[1] && pathnames[1] == pathnames[2]) {
+		base  = mkpathdup("%s", opt->ancestor);
+		name1 = mkpathdup("%s", opt->branch1);
+		name2 = mkpathdup("%s", opt->branch2);
+	} else {
+		base  = mkpathdup("%s:%s", opt->ancestor, pathnames[0]);
+		name1 = mkpathdup("%s:%s", opt->branch1,  pathnames[1]);
+		name2 = mkpathdup("%s:%s", opt->branch2,  pathnames[2]);
+	}
+
+	read_mmblob(&orig, o);
+	read_mmblob(&src1, a);
+	read_mmblob(&src2, b);
+
+	merge_status = ll_merge(result_buf, path, &orig, base,
+				&src1, name1, &src2, name2,
+				opt->repo->index, &ll_opts);
+
+	free(base);
+	free(name1);
+	free(name2);
+	free(orig.ptr);
+	free(src1.ptr);
+	free(src2.ptr);
+	return merge_status;
+}
+
 static int handle_content_merge(struct merge_options *opt,
 				const char *path,
 				const struct version_info *o,
@@ -637,7 +932,130 @@ static int handle_content_merge(struct merge_options *opt,
 				const int extra_marker_size,
 				struct version_info *result)
 {
-	die("Not yet implemented");
+	/*
+	 * path is the target location where we want to put the file, and
+	 * is used to determine any normalization rules in ll_merge.
+	 *
+	 * The normal case is that path and all entries in pathnames are
+	 * identical, though renames can affect which path we got one of
+	 * the three blobs to merge on various sides of history.
+	 *
+	 * extra_marker_size is the amount to extend conflict markers in
+	 * ll_merge; this is neeed if we have content merges of content
+	 * merges, which happens for example with rename/rename(2to1) and
+	 * rename/add conflicts.
+	 */
+	unsigned clean = 1;
+
+	/*
+	 * handle_content_merge() needs both files to be of the same type, i.e.
+	 * both files OR both submodules OR both symlinks.  Conflicting types
+	 * needs to be handled elsewhere.
+	 */
+	assert((S_IFMT & a->mode) == (S_IFMT & b->mode));
+
+	/* Merge modes */
+	if (a->mode == b->mode || a->mode == o->mode)
+		result->mode = b->mode;
+	else {
+		/* must be the 100644/100755 case */
+		assert(S_ISREG(a->mode));
+		result->mode = a->mode;
+		clean = (b->mode == o->mode);
+		/*
+		 * FIXME: If opt->priv->call_depth && !clean, then we really
+		 * should not make result->mode match either a->mode or
+		 * b->mode; that causes t6036 "check conflicting mode for
+		 * regular file" to fail.  It would be best to use some other
+		 * mode, but we'll confuse all kinds of stuff if we use one
+		 * where S_ISREG(result->mode) isn't true, and if we use
+		 * something like 0100666, then tree-walk.c's calls to
+		 * canon_mode() will just normalize that to 100644 for us and
+		 * thus not solve anything.
+		 *
+		 * Figure out if there's some kind of way we can work around
+		 * this...
+		 */
+	}
+
+	/*
+	 * Trivial oid merge.
+	 *
+	 * Note: While one might assume that the next four lines would
+	 * be unnecessary due to the fact that match_mask is often
+	 * setup and already handled, renames don't always take care
+	 * of that.
+	 */
+	if (oideq(&a->oid, &b->oid) || oideq(&a->oid, &o->oid))
+		oidcpy(&result->oid, &b->oid);
+	else if (oideq(&b->oid, &o->oid))
+		oidcpy(&result->oid, &a->oid);
+
+	/* Remaining rules depend on file vs. submodule vs. symlink. */
+	else if (S_ISREG(a->mode)) {
+		mmbuffer_t result_buf;
+		int ret = 0, merge_status;
+		int two_way;
+
+		/*
+		 * If 'o' is different type, treat it as null so we do a
+		 * two-way merge.
+		 */
+		two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
+
+		merge_status = merge_3way(opt, path,
+					  two_way ? &null_oid : &o->oid,
+					  &a->oid, &b->oid,
+					  pathnames, extra_marker_size,
+					  &result_buf);
+
+		if ((merge_status < 0) || !result_buf.ptr)
+			ret = err(opt, _("Failed to execute internal merge"));
+
+		if (!ret &&
+		    write_object_file(result_buf.ptr, result_buf.size,
+				      blob_type, &result->oid))
+			ret = err(opt, _("Unable to add %s to database"),
+				  path);
+
+		free(result_buf.ptr);
+		if (ret)
+			return -1;
+		clean &= (merge_status == 0);
+		path_msg(opt, path, 1, _("Auto-merging %s"), path);
+	} else if (S_ISGITLINK(a->mode)) {
+		int two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
+		clean = merge_submodule(opt, pathnames[0],
+					two_way ? &null_oid : &o->oid,
+					&a->oid, &b->oid, &result->oid);
+		if (opt->priv->call_depth && two_way && !clean) {
+			result->mode = o->mode;
+			oidcpy(&result->oid, &o->oid);
+		}
+	} else if (S_ISLNK(a->mode)) {
+		if (opt->priv->call_depth) {
+			clean = 0;
+			result->mode = o->mode;
+			oidcpy(&result->oid, &o->oid);
+		} else {
+			switch (opt->recursive_variant) {
+			case MERGE_VARIANT_NORMAL:
+				clean = 0;
+				oidcpy(&result->oid, &a->oid);
+				break;
+			case MERGE_VARIANT_OURS:
+				oidcpy(&result->oid, &a->oid);
+				break;
+			case MERGE_VARIANT_THEIRS:
+				oidcpy(&result->oid, &b->oid);
+				break;
+			}
+		}
+	} else
+		BUG("unsupported object type in the tree: %06o for %s",
+		    a->mode, path);
+
+	return clean;
 }
 
 /*** Function Grouping: functions related to detect_and_process_renames(), ***
@@ -1366,6 +1784,8 @@ static void process_entry(struct merge_options *opt,
 			  struct conflict_info *ci,
 			  struct directory_versions *dir_metadata)
 {
+	int df_file_index = 0;
+
 	VERIFY_CI(ci);
 	assert(ci->filemask >= 0 && ci->filemask <= 7);
 	/* ci->match_mask == 7 was handled in collect_merge_info_callback() */
@@ -1380,14 +1800,108 @@ static void process_entry(struct merge_options *opt,
 		assert(ci->df_conflict);
 	}
 
-	if (ci->df_conflict) {
-		die("Not yet implemented.");
+	if (ci->df_conflict && ci->merged.result.mode == 0) {
+		int i;
+
+		/*
+		 * directory no longer in the way, but we do have a file we
+		 * need to place here so we need to clean away the "directory
+		 * merges to nothing" result.
+		 */
+		ci->df_conflict = 0;
+		assert(ci->filemask != 0);
+		ci->merged.clean = 0;
+		ci->merged.is_null = 0;
+		/* and we want to zero out any directory-related entries */
+		ci->match_mask = (ci->match_mask & ~ci->dirmask);
+		ci->dirmask = 0;
+		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++) {
+			if (ci->filemask & (1 << i))
+				continue;
+			ci->stages[i].mode = 0;
+			oidcpy(&ci->stages[i].oid, &null_oid);
+		}
+	} else if (ci->df_conflict && ci->merged.result.mode != 0) {
+		/*
+		 * This started out as a D/F conflict, and the entries in
+		 * the competing directory were not removed by the merge as
+		 * evidenced by write_completed_directory() writing a value
+		 * to ci->merged.result.mode.
+		 */
+		struct conflict_info *new_ci;
+		const char *branch;
+		const char *old_path = path;
+		int i;
+
+		assert(ci->merged.result.mode == S_IFDIR);
+
+		/*
+		 * If filemask is 1, we can just ignore the file as having
+		 * been deleted on both sides.  We do not want to overwrite
+		 * ci->merged.result, since it stores the tree for all the
+		 * files under it.
+		 */
+		if (ci->filemask == 1) {
+			ci->filemask = 0;
+			return;
+		}
+
+		/*
+		 * This file still exists on at least one side, and we want
+		 * the directory to remain here, so we need to move this
+		 * path to some new location.
+		 */
+		new_ci = xcalloc(1, sizeof(*new_ci));
+		/* We don't really want new_ci->merged.result copied, but it'll
+		 * be overwritten below so it doesn't matter.  We also don't
+		 * want any directory mode/oid values copied, but we'll zero
+		 * those out immediately.  We do want the rest of ci copied.
+		 */
+		memcpy(new_ci, ci, sizeof(*ci));
+		new_ci->match_mask = (new_ci->match_mask & ~new_ci->dirmask);
+		new_ci->dirmask = 0;
+		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++) {
+			if (new_ci->filemask & (1 << i))
+				continue;
+			/* zero out any entries related to directories */
+			new_ci->stages[i].mode = 0;
+			oidcpy(&new_ci->stages[i].oid, &null_oid);
+		}
+
+		/*
+		 * Find out which side this file came from; note that we
+		 * cannot just use ci->filemask, because renames could cause
+		 * the filemask to go back to 7.  So we use dirmask, then
+		 * pick the opposite side's index.
+		 */
+		df_file_index = (ci->dirmask & (1 << 1)) ? 2 : 1;
+		branch = (df_file_index == 1) ? opt->branch1 : opt->branch2;
+		path = unique_path(&opt->priv->paths, path, branch);
+		strmap_put(&opt->priv->paths, path, new_ci);
+
+		path_msg(opt, path, 0,
+			 _("CONFLICT (file/directory): directory in the way "
+			   "of %s from %s; moving it to %s instead."),
+			 old_path, branch, path);
+
+		/*
+		 * Zero out the filemask for the old ci.  At this point, ci
+		 * was just an entry for a directory, so we don't need to
+		 * do anything more with it.
+		 */
+		ci->filemask = 0;
+
+		/*
+		 * Now note that we're working on the new entry (path was
+		 * updated above.
+		 */
+		ci = new_ci;
 	}
 
 	/*
 	 * NOTE: Below there is a long switch-like if-elseif-elseif... block
 	 *       which the code goes through even for the df_conflict cases
-	 *       above.  Well, it will once we don't die-not-implemented above.
+	 *       above.
 	 */
 	if (ci->match_mask) {
 		ci->merged.clean = 1;
@@ -1411,21 +1925,142 @@ static void process_entry(struct merge_options *opt,
 	} else if (ci->filemask >= 6 &&
 		   (S_IFMT & ci->stages[1].mode) !=
 		   (S_IFMT & ci->stages[2].mode)) {
-		/*
-		 * Two different items from (file/submodule/symlink)
-		 */
-		die("Not yet implemented.");
+		/* Two different items from (file/submodule/symlink) */
+		if (opt->priv->call_depth) {
+			/* Just use the version from the merge base */
+			ci->merged.clean = 0;
+			oidcpy(&ci->merged.result.oid, &ci->stages[0].oid);
+			ci->merged.result.mode = ci->stages[0].mode;
+			ci->merged.is_null = (ci->merged.result.mode == 0);
+		} else {
+			/* Handle by renaming one or both to separate paths. */
+			unsigned o_mode = ci->stages[0].mode;
+			unsigned a_mode = ci->stages[1].mode;
+			unsigned b_mode = ci->stages[2].mode;
+			struct conflict_info *new_ci;
+			const char *a_path = NULL, *b_path = NULL;
+			int rename_a = 0, rename_b = 0;
+
+			new_ci = xmalloc(sizeof(*new_ci));
+
+			if (S_ISREG(a_mode))
+				rename_a = 1;
+			else if (S_ISREG(b_mode))
+				rename_b = 1;
+			else {
+				rename_a = 1;
+				rename_b = 1;
+			}
+
+			path_msg(opt, path, 0,
+				 _("CONFLICT (distinct types): %s had different "
+				   "types on each side; renamed %s of them so "
+				   "each can be recorded somewhere."),
+				 path,
+				 (rename_a && rename_b) ? _("both") : _("one"));
+
+			ci->merged.clean = 0;
+			memcpy(new_ci, ci, sizeof(*new_ci));
+
+			/* Put b into new_ci, removing a from stages */
+			new_ci->merged.result.mode = ci->stages[2].mode;
+			oidcpy(&new_ci->merged.result.oid, &ci->stages[2].oid);
+			new_ci->stages[1].mode = 0;
+			oidcpy(&new_ci->stages[1].oid, &null_oid);
+			new_ci->filemask = 5;
+			if ((S_IFMT & b_mode) != (S_IFMT & o_mode)) {
+				new_ci->stages[0].mode = 0;
+				oidcpy(&new_ci->stages[0].oid, &null_oid);
+				new_ci->filemask = 4;
+			}
+
+			/* Leave only a in ci, fixing stages. */
+			ci->merged.result.mode = ci->stages[1].mode;
+			oidcpy(&ci->merged.result.oid, &ci->stages[1].oid);
+			ci->stages[2].mode = 0;
+			oidcpy(&ci->stages[2].oid, &null_oid);
+			ci->filemask = 3;
+			if ((S_IFMT & a_mode) != (S_IFMT & o_mode)) {
+				ci->stages[0].mode = 0;
+				oidcpy(&ci->stages[0].oid, &null_oid);
+				ci->filemask = 2;
+			}
+
+			/* Insert entries into opt->priv_paths */
+			assert(rename_a || rename_b);
+			if (rename_a) {
+				a_path = unique_path(&opt->priv->paths,
+						     path, opt->branch1);
+				strmap_put(&opt->priv->paths, a_path, ci);
+			}
+
+			if (rename_b)
+				b_path = unique_path(&opt->priv->paths,
+						     path, opt->branch2);
+			else
+				b_path = path;
+			strmap_put(&opt->priv->paths, b_path, new_ci);
+
+			if (rename_a && rename_b) {
+				strmap_remove(&opt->priv->paths, path, 0);
+				/*
+				 * We removed path from opt->priv->paths.  path
+				 * will also eventually need to be freed, but
+				 * it may still be used by e.g.  ci->pathnames.
+				 * So, store it in another string-list for now.
+				 */
+				string_list_append(&opt->priv->paths_to_free,
+						   path);
+			}
+
+			/*
+			 * Do special handling for b_path since process_entry()
+			 * won't be called on it specially.
+			 */
+			strmap_put(&opt->priv->conflicted, b_path, new_ci);
+			record_entry_for_tree(dir_metadata, b_path,
+					      &new_ci->merged);
+
+			/*
+			 * Remaining code for processing this entry should
+			 * think in terms of processing a_path.
+			 */
+			if (a_path)
+				path = a_path;
+		}
 	} else if (ci->filemask >= 6) {
-		/*
-		 * TODO: Needs a two-way or three-way content merge, but we're
-		 * just being lazy and copying the version from HEAD and
-		 * leaving it as conflicted.
-		 */
-		ci->merged.clean = 0;
-		ci->merged.result.mode = ci->stages[1].mode;
-		oidcpy(&ci->merged.result.oid, &ci->stages[1].oid);
-		/* When we fix above, we'll call handle_content_merge() */
-		(void)handle_content_merge;
+		/* Need a two-way or three-way content merge */
+		struct version_info merged_file;
+		unsigned clean_merge;
+		struct version_info *o = &ci->stages[0];
+		struct version_info *a = &ci->stages[1];
+		struct version_info *b = &ci->stages[2];
+
+		clean_merge = handle_content_merge(opt, path, o, a, b,
+						   ci->pathnames,
+						   opt->priv->call_depth * 2,
+						   &merged_file);
+		ci->merged.clean = clean_merge &&
+				   !ci->df_conflict && !ci->path_conflict;
+		ci->merged.result.mode = merged_file.mode;
+		ci->merged.is_null = (merged_file.mode == 0);
+		oidcpy(&ci->merged.result.oid, &merged_file.oid);
+		if (clean_merge && ci->df_conflict) {
+			assert(df_file_index == 1 || df_file_index == 2);
+			ci->filemask = 1 << df_file_index;
+			ci->stages[df_file_index].mode = merged_file.mode;
+			oidcpy(&ci->stages[df_file_index].oid, &merged_file.oid);
+		}
+		if (!clean_merge) {
+			const char *reason = _("content");
+			if (ci->filemask == 6)
+				reason = _("add/add");
+			if (S_ISGITLINK(merged_file.mode))
+				reason = _("submodule");
+			path_msg(opt, path, 0,
+				 _("CONFLICT (%s): Merge conflict in %s"),
+				 reason, path);
+		}
 	} else if (ci->filemask == 3 || ci->filemask == 5) {
 		/* Modify/delete */
 		const char *modify_branch, *delete_branch;
