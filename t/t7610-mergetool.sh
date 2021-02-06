@@ -828,4 +828,15 @@ test_expect_success 'mergetool -Oorder-file is honored' '
 	test_cmp expect actual
 '
 
+test_expect_success 'mergetool --tool-help shows recognized tools' '
+	# Check a few known tools are correctly shown
+	git mergetool --tool-help >mergetools &&
+	grep vimdiff mergetools &&
+	grep vimdiff3 mergetools &&
+	grep gvimdiff2 mergetools &&
+	grep araxis mergetools &&
+	grep xxdiff mergetools &&
+	grep meld mergetools
+'
+
 test_done
