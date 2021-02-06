@@ -367,9 +367,14 @@ test_chmod () {
 	git update-index --add "--chmod=$@"
 }
 
-# Get the modebits from a file or directory.
+# Get the modebits from a file or directory, ignoring the setgid bit (g+s).
+# This bit is inherited by subdirectories at their creation. So we remove it
+# from the returning string to prevent callers from having to worry about the
+# state of the bit in the test directory.
+#
 test_modebits () {
-	ls -ld "$1" | sed -e 's|^\(..........\).*|\1|'
+	ls -ld "$1" | sed -e 's|^\(..........\).*|\1|' \
+			  -e 's|^\(......\)S|\1-|' -e 's|^\(......\)s|\1x|'
 }
 
 # Unset a configuration variable, but don't fail if it doesn't exist.
