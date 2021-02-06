@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test GIT_CURL_VERBOSE'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
@@ -13,7 +16,7 @@ test_expect_success 'setup repository' '
 	git add file &&
 	git commit -m one &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git push public master:master
+	git push public main:main
 '
 
 test_expect_success 'failure in git-upload-pack is shown' '

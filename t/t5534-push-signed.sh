@@ -2,6 +2,9 @@
 
 test_description='signed push'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
@@ -9,11 +12,11 @@ prepare_dst () {
 	rm -fr dst &&
 	test_create_repo dst &&
 
-	git push dst master:noop master:ff master:noff
+	git push dst main:noop main:ff main:noff
 }
 
 test_expect_success setup '
-	# master, ff and noff branches pointing at the same commit
+	# main, ff and noff branches pointing at the same commit
 	test_tick &&
 	git commit --allow-empty -m initial &&
 
@@ -271,6 +274,28 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 	grep "$noop $ff refs/heads/ff" dst/push-cert &&
 	grep "$noop $noff refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status
+'
+
+test_expect_success GPG 'failed atomic push does not execute GPG' '
+	prepare_dst &&
+	git -C dst config receive.certnonceseed sekrit &&
+	write_script gpg <<-EOF &&
+	# should check atomic push locally before running GPG.
+	exit 1
+	EOF
+	test_must_fail env PATH="$TRASH_DIRECTORY:$PATH" git push \
+			--signed --atomic --porcelain \
+			dst noop ff noff >out 2>err &&
+
+	test_i18ngrep ! "gpg failed to sign" err &&
+	cat >expect <<-EOF &&
+	To dst
+	=	refs/heads/noop:refs/heads/noop	[up to date]
+	!	refs/heads/ff:refs/heads/ff	[rejected] (atomic push failed)
+	!	refs/heads/noff:refs/heads/noff	[rejected] (non-fast-forward)
+	Done
+	EOF
+	test_cmp expect out
 '
 
 test_done

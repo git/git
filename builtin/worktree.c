@@ -304,9 +304,9 @@ static void check_candidate_path(const char *path,
 	}
 
 	if (locked)
-		die(_("'%s' is a missing but locked worktree;\nuse '%s -f -f' to override, or 'unlock' and 'prune' or 'remove' to clear"), cmd, path);
+		die(_("'%s' is a missing but locked worktree;\nuse '%s -f -f' to override, or 'unlock' and 'prune' or 'remove' to clear"), path, cmd);
 	else
-		die(_("'%s' is a missing but already registered worktree;\nuse '%s -f' to override, or 'prune' or 'remove' to clear"), cmd, path);
+		die(_("'%s' is a missing but already registered worktree;\nuse '%s -f' to override, or 'prune' or 'remove' to clear"), path, cmd);
 }
 
 static int add_worktree(const char *path, const char *refname,
@@ -676,8 +676,11 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 		} else
 			strbuf_addstr(&sb, "(error)");
 	}
-	printf("%s\n", sb.buf);
 
+	if (!is_main_worktree(wt) && worktree_lock_reason(wt))
+		strbuf_addstr(&sb, " locked");
+
+	printf("%s\n", sb.buf);
 	strbuf_release(&sb);
 }
 
@@ -1049,10 +1052,10 @@ static int repair(int ac, const char **av, const char *prefix)
 	int rc = 0;
 
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
-	repair_worktrees(report_repair, &rc);
 	p = ac > 0 ? av : self;
 	for (; *p; p++)
 		repair_worktree_at_path(*p, report_repair, &rc);
+	repair_worktrees(report_repair, &rc);
 	return rc;
 }
 

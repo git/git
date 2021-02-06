@@ -4,12 +4,6 @@ test_description='pack-object compression configuration'
 
 . ./test-lib.sh
 
-# This should be moved to test-lib.sh together with the
-# copy in t0021 after both topics have graduated to 'master'.
-file_size () {
-	test-tool path-utils file-size "$1"
-}
-
 test_expect_success setup '
 	printf "%2000000s" X |
 	git hash-object -w --stdin >object-name &&
@@ -24,7 +18,7 @@ do
 	test_expect_success "pack-objects with $config" '
 		test_when_finished "rm -f pack-*.*" &&
 		git $config pack-objects pack <object-name &&
-		sz=$(file_size pack-*.pack) &&
+		sz=$(test_file_size pack-*.pack) &&
 		case "$expect" in
 		small) test "$sz" -le 100000 ;;
 		large) test "$sz" -ge 100000 ;;

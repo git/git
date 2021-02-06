@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='checkout into detached HEAD state'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check_detached () {
@@ -22,7 +25,7 @@ check_no_orphan_warning() {
 }
 
 reset () {
-	git checkout master &&
+	git checkout main &&
 	check_not_detached
 }
 
@@ -85,7 +88,7 @@ test_expect_success 'checkout --detach errors out for non-commit' '
 
 test_expect_success 'checkout --detach errors out for extra argument' '
 	reset &&
-	git checkout master &&
+	git checkout main &&
 	test_must_fail git checkout --detach tag one.t &&
 	check_not_detached
 '
@@ -113,7 +116,7 @@ test_expect_success 'checkout warns on orphan commits' '
 	echo new content >orphan &&
 	git commit -a -m orphan2 &&
 	orphan2=$(git rev-parse HEAD) &&
-	git checkout master 2>stderr
+	git checkout main 2>stderr
 '
 
 test_expect_success 'checkout warns on orphan commits: output' '
@@ -132,7 +135,7 @@ test_expect_success 'checkout warns orphaning 1 of 2 commits: output' '
 test_expect_success 'checkout does not warn leaving ref tip' '
 	reset &&
 	git checkout --detach two &&
-	git checkout master 2>stderr
+	git checkout main 2>stderr
 '
 
 test_expect_success 'checkout does not warn leaving ref tip' '
@@ -142,7 +145,7 @@ test_expect_success 'checkout does not warn leaving ref tip' '
 test_expect_success 'checkout does not warn leaving reachable commit' '
 	reset &&
 	git checkout --detach HEAD^ &&
-	git checkout master 2>stderr
+	git checkout main 2>stderr
 '
 
 test_expect_success 'checkout does not warn leaving reachable commit' '
@@ -150,14 +153,14 @@ test_expect_success 'checkout does not warn leaving reachable commit' '
 '
 
 cat >expect <<'EOF'
-Your branch is behind 'master' by 1 commit, and can be fast-forwarded.
+Your branch is behind 'main' by 1 commit, and can be fast-forwarded.
   (use "git pull" to update your local branch)
 EOF
 test_expect_success 'tracking count is accurate after orphan check' '
 	reset &&
-	git branch child master^ &&
+	git branch child main^ &&
 	git config branch.child.remote . &&
-	git config branch.child.merge refs/heads/master &&
+	git config branch.child.merge refs/heads/main &&
 	git checkout child^ &&
 	git checkout child >stdout &&
 	test_i18ncmp expect stdout
@@ -189,9 +192,9 @@ test_expect_success 'no advice given for explicit detached head state' '
 # Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (new format)
 test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not asked to' "
 
-	commit=$(git rev-parse --short=12 master^) &&
-	commit2=$(git rev-parse --short=12 master~2) &&
-	commit3=$(git rev-parse --short=12 master~3) &&
+	commit=$(git rev-parse --short=12 main^) &&
+	commit2=$(git rev-parse --short=12 main~2) &&
+	commit3=$(git rev-parse --short=12 main~3) &&
 
 	# The first detach operation is more chatty than the following ones.
 	cat >1st_detach <<-EOF &&
@@ -271,9 +274,9 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 # Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (old format)
 test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked to' "
 
-	commit=$(git rev-parse --short=12 master^) &&
-	commit2=$(git rev-parse --short=12 master~2) &&
-	commit3=$(git rev-parse --short=12 master~3) &&
+	commit=$(git rev-parse --short=12 main^) &&
+	commit2=$(git rev-parse --short=12 main~2) &&
+	commit3=$(git rev-parse --short=12 main~3) &&
 
 	# The first detach operation is more chatty than the following ones.
 	cat >1st_detach <<-EOF &&

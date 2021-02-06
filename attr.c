@@ -52,13 +52,6 @@ static inline void hashmap_unlock(struct attr_hashmap *map)
 	pthread_mutex_unlock(&map->mutex);
 }
 
-/*
- * The global dictionary of all interned attributes.  This
- * is a singleton object which is shared between threads.
- * Access to this dictionary must be surrounded with a mutex.
- */
-static struct attr_hashmap g_attr_hashmap;
-
 /* The container for objects stored in "struct attr_hashmap" */
 struct attr_hash_entry {
 	struct hashmap_entry ent;
@@ -80,11 +73,14 @@ static int attr_hash_entry_cmp(const void *unused_cmp_data,
 	return (a->keylen != b->keylen) || strncmp(a->key, b->key, a->keylen);
 }
 
-/* Initialize an 'attr_hashmap' object */
-static void attr_hashmap_init(struct attr_hashmap *map)
-{
-	hashmap_init(&map->map, attr_hash_entry_cmp, NULL, 0);
-}
+/*
+ * The global dictionary of all interned attributes.  This
+ * is a singleton object which is shared between threads.
+ * Access to this dictionary must be surrounded with a mutex.
+ */
+static struct attr_hashmap g_attr_hashmap = {
+	HASHMAP_INIT(attr_hash_entry_cmp, NULL)
+};
 
 /*
  * Retrieve the 'value' stored in a hashmap given the provided 'key'.
@@ -95,9 +91,6 @@ static void *attr_hashmap_get(struct attr_hashmap *map,
 {
 	struct attr_hash_entry k;
 	struct attr_hash_entry *e;
-
-	if (!map->map.tablesize)
-		attr_hashmap_init(map);
 
 	hashmap_entry_init(&k.ent, memhash(key, keylen));
 	k.key = key;
@@ -113,9 +106,6 @@ static void attr_hashmap_add(struct attr_hashmap *map,
 			     void *value)
 {
 	struct attr_hash_entry *e;
-
-	if (!map->map.tablesize)
-		attr_hashmap_init(map);
 
 	e = xmalloc(sizeof(struct attr_hash_entry));
 	hashmap_entry_init(&e->ent, memhash(key, keylen));

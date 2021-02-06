@@ -21,7 +21,7 @@ void free_worktrees(struct worktree **worktrees)
 }
 
 /**
- * Update head_sha1, head_ref and is_detached of the given worktree
+ * Update head_oid, head_ref and is_detached of the given worktree
  */
 static void add_head_info(struct worktree *wt)
 {
@@ -352,13 +352,12 @@ int is_worktree_being_rebased(const struct worktree *wt,
 
 	memset(&state, 0, sizeof(state));
 	found_rebase = wt_status_check_rebase(wt, &state) &&
-		((state.rebase_in_progress ||
-		  state.rebase_interactive_in_progress) &&
-		 state.branch &&
-		 starts_with(target, "refs/heads/") &&
-		 !strcmp(state.branch, target + strlen("refs/heads/")));
-	free(state.branch);
-	free(state.onto);
+		       (state.rebase_in_progress ||
+			state.rebase_interactive_in_progress) &&
+		       state.branch &&
+		       skip_prefix(target, "refs/heads/", &target) &&
+		       !strcmp(state.branch, target);
+	wt_status_state_free_buffers(&state);
 	return found_rebase;
 }
 
@@ -366,15 +365,15 @@ int is_worktree_being_bisected(const struct worktree *wt,
 			       const char *target)
 {
 	struct wt_status_state state;
-	int found_rebase;
+	int found_bisect;
 
 	memset(&state, 0, sizeof(state));
-	found_rebase = wt_status_check_bisect(wt, &state) &&
-		state.branch &&
-		starts_with(target, "refs/heads/") &&
-		!strcmp(state.branch, target + strlen("refs/heads/"));
-	free(state.branch);
-	return found_rebase;
+	found_bisect = wt_status_check_bisect(wt, &state) &&
+		       state.branch &&
+		       skip_prefix(target, "refs/heads/", &target) &&
+		       !strcmp(state.branch, target);
+	wt_status_state_free_buffers(&state);
+	return found_bisect;
 }
 
 /*
@@ -537,18 +536,10 @@ void strbuf_worktree_ref(const struct worktree *wt,
 	strbuf_addstr(sb, refname);
 }
 
-const char *worktree_ref(const struct worktree *wt, const char *refname)
-{
-	static struct strbuf sb = STRBUF_INIT;
-
-	strbuf_reset(&sb);
-	strbuf_worktree_ref(wt, &sb, refname);
-	return sb.buf;
-}
-
 int other_head_refs(each_ref_fn fn, void *cb_data)
 {
 	struct worktree **worktrees, **p;
+	struct strbuf refname = STRBUF_INIT;
 	int ret = 0;
 
 	worktrees = get_worktrees();
@@ -560,15 +551,18 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 		if (wt->is_current)
 			continue;
 
+		strbuf_reset(&refname);
+		strbuf_worktree_ref(wt, &refname, "HEAD");
 		if (!refs_read_ref_full(get_main_ref_store(the_repository),
-					worktree_ref(wt, "HEAD"),
+					refname.buf,
 					RESOLVE_REF_READING,
 					&oid, &flag))
-			ret = fn(worktree_ref(wt, "HEAD"), &oid, flag, cb_data);
+			ret = fn(refname.buf, &oid, flag, cb_data);
 		if (ret)
 			break;
 	}
 	free_worktrees(worktrees);
+	strbuf_release(&refname);
 	return ret;
 }
 
@@ -651,6 +645,42 @@ static int is_main_worktree_path(const char *path)
 }
 
 /*
+ * If both the main worktree and linked worktree have been moved, then the
+ * gitfile /path/to/worktree/.git won't point into the repository, thus we
+ * won't know which <repo>/worktrees/<id>/gitdir to repair. However, we may
+ * be able to infer the gitdir by manually reading /path/to/worktree/.git,
+ * extracting the <id>, and checking if <repo>/worktrees/<id> exists.
+ */
+static char *infer_backlink(const char *gitfile)
+{
+	struct strbuf actual = STRBUF_INIT;
+	struct strbuf inferred = STRBUF_INIT;
+	const char *id;
+
+	if (strbuf_read_file(&actual, gitfile, 0) < 0)
+		goto error;
+	if (!starts_with(actual.buf, "gitdir:"))
+		goto error;
+	if (!(id = find_last_dir_sep(actual.buf)))
+		goto error;
+	strbuf_trim(&actual);
+	id++; /* advance past '/' to point at <id> */
+	if (!*id)
+		goto error;
+	strbuf_git_common_path(&inferred, the_repository, "worktrees/%s", id);
+	if (!is_directory(inferred.buf))
+		goto error;
+
+	strbuf_release(&actual);
+	return strbuf_detach(&inferred, NULL);
+
+error:
+	strbuf_release(&actual);
+	strbuf_release(&inferred);
+	return NULL;
+}
+
+/*
  * Repair <repo>/worktrees/<id>/gitdir if missing, corrupt, or not pointing at
  * the worktree's path.
  */
@@ -681,6 +711,11 @@ void repair_worktree_at_path(const char *path,
 	if (err == READ_GITFILE_ERR_NOT_A_FILE) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
 		goto done;
+	} else if (err == READ_GITFILE_ERR_NOT_A_REPO) {
+		if (!(backlink = infer_backlink(realdotgit.buf))) {
+			fn(1, realdotgit.buf, _("unable to locate repository; .git file does not reference a repository"), cb_data);
+			goto done;
+		}
 	} else if (err) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git file broken"), cb_data);
 		goto done;

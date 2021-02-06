@@ -28,7 +28,7 @@ test_expect_success 'setup' '
 	test_commit commit2 foo foo2 &&
 	test_commit commit3 foo foo3 &&
 
-	git checkout --orphan master &&
+	git checkout --orphan main &&
 	rm foo &&
 	test_write_lines "line 1" "        line 2" "line 3" >file &&
 	git commit -am "add file" &&
@@ -65,8 +65,8 @@ test_expect_success '--ignore-whitespace is remembered when continuing' '
 '
 
 test_ctime_is_atime () {
-	git log $1 --format=%ai >authortime &&
-	git log $1 --format=%ci >committertime &&
+	git log $1 --format="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> %ai" >authortime &&
+	git log $1 --format="%cn <%ce> %ci" >committertime &&
 	test_cmp authortime committertime
 }
 

@@ -3,6 +3,11 @@
 #include "object-store.h"
 #include "packfile.h"
 
+struct revindex_entry {
+	off_t offset;
+	unsigned int nr;
+};
+
 /*
  * Pack index for existing packs give us easy access to the offsets into
  * corresponding pack file where each object's data starts, but the entries
@@ -130,7 +135,7 @@ static void create_pack_revindex(struct packed_git *p)
 
 	if (p->index_version > 1) {
 		const uint32_t *off_32 =
-			(uint32_t *)(index + 8 + p->num_objects * (hashsz + 4));
+			(uint32_t *)(index + 8 + (size_t)p->num_objects * (hashsz + 4));
 		const uint32_t *off_64 = off_32 + p->num_objects;
 		for (i = 0; i < num_ent; i++) {
 			const uint32_t off = ntohl(*off_32++);
@@ -169,17 +174,24 @@ int load_pack_revindex(struct packed_git *p)
 	return 0;
 }
 
-int find_revindex_position(struct packed_git *p, off_t ofs)
+int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
-	int lo = 0;
-	int hi = p->num_objects + 1;
-	const struct revindex_entry *revindex = p->revindex;
+	unsigned lo, hi;
+
+	if (load_pack_revindex(p) < 0)
+		return -1;
+
+	lo = 0;
+	hi = p->num_objects + 1;
 
 	do {
 		const unsigned mi = lo + (hi - lo) / 2;
-		if (revindex[mi].offset == ofs) {
-			return mi;
-		} else if (ofs < revindex[mi].offset)
+		off_t got = pack_pos_to_offset(p, mi);
+
+		if (got == ofs) {
+			*pos = mi;
+			return 0;
+		} else if (ofs < got)
 			hi = mi;
 		else
 			lo = mi + 1;
@@ -189,17 +201,20 @@ int find_revindex_position(struct packed_git *p, off_t ofs)
 	return -1;
 }
 
-struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
+uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos)
 {
-	int pos;
+	if (!p->revindex)
+		BUG("pack_pos_to_index: reverse index not yet loaded");
+	if (p->num_objects <= pos)
+		BUG("pack_pos_to_index: out-of-bounds object at %"PRIu32, pos);
+	return p->revindex[pos].nr;
+}
 
-	if (load_pack_revindex(p))
-		return NULL;
-
-	pos = find_revindex_position(p, ofs);
-
-	if (pos < 0)
-		return NULL;
-
-	return p->revindex + pos;
+off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos)
+{
+	if (!p->revindex)
+		BUG("pack_pos_to_index: reverse index not yet loaded");
+	if (p->num_objects < pos)
+		BUG("pack_pos_to_offset: out-of-bounds object at %"PRIu32, pos);
+	return p->revindex[pos].offset;
 }

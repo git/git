@@ -14,7 +14,7 @@
 #include "mergesort.h"
 #include "commit-slab.h"
 #include "prio-queue.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "wt-status.h"
 #include "advice.h"
 #include "refs.h"
@@ -113,7 +113,7 @@ static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
 
 int commit_graft_pos(struct repository *r, const unsigned char *sha1)
 {
-	return sha1_pos(sha1, r->parsed_objects->grafts,
+	return hash_pos(sha1, r->parsed_objects->grafts,
 			r->parsed_objects->grafts_nr,
 			commit_graft_sha1_access);
 }
@@ -544,6 +544,17 @@ struct commit_list *commit_list_insert(struct commit *item, struct commit_list *
 	return new_list;
 }
 
+int commit_list_contains(struct commit *item, struct commit_list *list)
+{
+	while (list) {
+		if (list->item == item)
+			return 1;
+		list = list->next;
+	}
+
+	return 0;
+}
+
 unsigned commit_list_count(const struct commit_list *l)
 {
 	unsigned c = 0;
@@ -561,6 +572,17 @@ struct commit_list *copy_commit_list(struct commit_list *list)
 		list = list->next;
 	}
 	return head;
+}
+
+struct commit_list *reverse_commit_list(struct commit_list *list)
+{
+	struct commit_list *next = NULL, *current, *backup;
+	for (current = list; current; current = backup) {
+		backup = current->next;
+		current->next = next;
+		next = current;
+	}
+	return next;
 }
 
 void free_commit_list(struct commit_list *list)
@@ -1586,7 +1608,7 @@ const char *find_commit_header(const char *msg, const char *key, size_t *out_len
 
 /*
  * Inspect the given string and determine the true "end" of the log message, in
- * order to find where to put a new Signed-off-by: line.  Ignored are
+ * order to find where to put a new Signed-off-by trailer.  Ignored are
  * trailing comment lines and blank lines.  To support "git commit -s
  * --amend" on an existing commit, we also ignore "Conflicts:".  To
  * support "git commit -v", we truncate at cut lines.

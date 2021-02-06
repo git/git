@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git remote' [-v | --verbose]
-'git remote add' [-t <branch>] [-m <master>] [-f] [--[no-]tags] [--mirror=<fetch|push>] <name> <url>
+'git remote add' [-t <branch>] [-m <master>] [-f] [--[no-]tags] [--mirror=(fetch|push)] <name> <url>
 'git remote rename' <old> <new>
 'git remote remove' <name>
 'git remote set-head' <name> (-a | --auto | -d | --delete | <branch>)
@@ -35,7 +35,7 @@ OPTIONS
 -v::
 --verbose::
 	Be a little more verbose and show remote url after name.
-	NOTE: This must be placed between `remote` and `subcommand`.
+	NOTE: This must be placed between `remote` and subcommand.
 
 
 COMMANDS
@@ -46,7 +46,7 @@ subcommands are available to perform operations on the remotes.
 
 'add'::
 
-Adds a remote named <name> for the repository at
+Add a remote named <name> for the repository at
 <url>.  The command `git fetch <name>` can then be used to create and
 update remote-tracking branches <name>/<branch>.
 +
@@ -109,13 +109,13 @@ With `-d` or `--delete`, the symbolic ref `refs/remotes/<name>/HEAD` is deleted.
 +
 With `-a` or `--auto`, the remote is queried to determine its `HEAD`, then the
 symbolic-ref `refs/remotes/<name>/HEAD` is set to the same branch. e.g., if the remote
-`HEAD` is pointed at `next`, "`git remote set-head origin -a`" will set
+`HEAD` is pointed at `next`, `git remote set-head origin -a` will set
 the symbolic-ref `refs/remotes/origin/HEAD` to `refs/remotes/origin/next`. This will
 only work if `refs/remotes/origin/next` already exists; if not it must be
 fetched first.
 +
-Use `<branch>` to set the symbolic-ref `refs/remotes/<name>/HEAD` explicitly. e.g., "git
-remote set-head origin master" will set the symbolic-ref `refs/remotes/origin/HEAD` to
+Use `<branch>` to set the symbolic-ref `refs/remotes/<name>/HEAD` explicitly. e.g., `git
+remote set-head origin master` will set the symbolic-ref `refs/remotes/origin/HEAD` to
 `refs/remotes/origin/master`. This will only work if
 `refs/remotes/origin/master` already exists; if not it must be fetched first.
 +
@@ -127,7 +127,7 @@ This can be used to track a subset of the available remote branches
 after the initial setup for a remote.
 +
 The named branches will be interpreted as if specified with the
-`-t` option on the 'git remote add' command line.
+`-t` option on the `git remote add` command line.
 +
 With `--add`, instead of replacing the list of currently tracked
 branches, adds to that list.
@@ -181,16 +181,16 @@ fetch --prune <name>`, except that no new references will be fetched.
 See the PRUNING section of linkgit:git-fetch[1] for what it'll prune
 depending on various configuration.
 +
-With `--dry-run` option, report what branches will be pruned, but do not
+With `--dry-run` option, report what branches would be pruned, but do not
 actually prune them.
 
 'update'::
 
 Fetch updates for remotes or remote groups in the repository as defined by
-remotes.<group>.  If neither group nor remote is specified on the command line,
+`remotes.<group>`. If neither group nor remote is specified on the command line,
 the configuration parameter remotes.default will be used; if
 remotes.default is not defined, all remotes which do not have the
-configuration parameter remote.<name>.skipDefaultUpdate set to true will
+configuration parameter `remote.<name>.skipDefaultUpdate` set to true will
 be updated.  (See linkgit:git-config[1]).
 +
 With `--prune` option, run pruning against all the remotes that are updated.
@@ -202,6 +202,17 @@ DISCUSSION
 The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
 linkgit:git-config[1]).
+
+EXIT STATUS
+-----------
+
+On success, the exit status is `0`.
+
+When subcommands such as 'add', 'rename', and 'remove' can't find the
+remote in question, the exit status is `2`. When the remote already
+exists, the exit status is `3`.
+
+On any other error, the exit status may be any other non-zero value.
 
 EXAMPLES
 --------

@@ -2,6 +2,9 @@
 
 test_description='magic pathspec tests using git-log'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -26,7 +29,7 @@ test_expect_success '"git log :/a -- " should not be ambiguous' '
 '
 
 test_expect_success '"git log :/detached -- " should find a commit only in HEAD' '
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout main" &&
 	git checkout --detach &&
 	# Must manually call `test_tick` instead of using `test_commit`,
 	# because the latter additionally creates a tag, which would make
@@ -119,7 +122,7 @@ test_expect_success 'command line pathspec parsing for "git log"' '
 	git checkout HEAD^ &&
 	echo 2 >a &&
 	git commit -a -m "update a to 2" &&
-	test_must_fail git merge master &&
+	test_must_fail git merge main &&
 	git add a &&
 	git log --merge -- a
 '

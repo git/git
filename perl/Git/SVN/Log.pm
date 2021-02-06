@@ -1,6 +1,6 @@
 package Git::SVN::Log;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Git::SVN::Utils qw(fatal);
 use Git qw(command
            command_oneline
@@ -298,7 +298,7 @@ sub cmd_show_log {
 			get_author_info($c, $1, $2, $3);
 		} elsif (/^${esc_color}(?:tree|parent|committer) /o) {
 			# ignore
-		} elsif (/^${esc_color}:\d{6} \d{6} $::sha1_short/o) {
+		} elsif (/^${esc_color}:\d{6} \d{6} $::oid_short/o) {
 			push @{$c->{raw}}, $_;
 		} elsif (/^${esc_color}[ACRMDT]\t/) {
 			# we could add $SVN->{svn_path} here, but that requires

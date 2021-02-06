@@ -125,6 +125,7 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 	struct strbuf report_path = STRBUF_INIT;
 	int report = -1;
 	time_t now = time(NULL);
+	struct tm tm;
 	char *option_output = NULL;
 	char *option_suffix = "%Y-%m-%d-%H%M";
 	const char *user_relative_path = NULL;
@@ -147,7 +148,7 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 	strbuf_complete(&report_path, '/');
 
 	strbuf_addstr(&report_path, "git-bugreport-");
-	strbuf_addftime(&report_path, option_suffix, localtime(&now), 0, 0);
+	strbuf_addftime(&report_path, option_suffix, localtime_r(&now, &tm), 0, 0);
 	strbuf_addstr(&report_path, ".txt");
 
 	switch (safe_create_leading_directories(report_path.buf)) {

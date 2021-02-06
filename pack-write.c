@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "pack.h"
 #include "csum-file.h"
+#include "remote.h"
 
 void reset_pack_idx_option(struct pack_idx_option *opts)
 {
@@ -48,7 +49,6 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	struct hashfile *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
 	off_t last_obj_offset = 0;
-	uint32_t array[256];
 	int i, fd;
 	uint32_t index_version;
 
@@ -106,10 +106,9 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 				break;
 			next++;
 		}
-		array[i] = htonl(next - sorted_by_sha);
+		hashwrite_be32(f, next - sorted_by_sha);
 		list = next;
 	}
-	hashwrite(f, array, 256 * 4);
 
 	/*
 	 * Write the actual SHA1 entries..
@@ -117,10 +116,8 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	list = sorted_by_sha;
 	for (i = 0; i < nr_objects; i++) {
 		struct pack_idx_entry *obj = *list++;
-		if (index_version < 2) {
-			uint32_t offset = htonl(obj->offset);
-			hashwrite(f, &offset, 4);
-		}
+		if (index_version < 2)
+			hashwrite_be32(f, obj->offset);
 		hashwrite(f, obj->oid.hash, the_hash_algo->rawsz);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
 		    (i && oideq(&list[-2]->oid, &obj->oid)))
@@ -135,8 +132,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		list = sorted_by_sha;
 		for (i = 0; i < nr_objects; i++) {
 			struct pack_idx_entry *obj = *list++;
-			uint32_t crc32_val = htonl(obj->crc32);
-			hashwrite(f, &crc32_val, 4);
+			hashwrite_be32(f, obj->crc32);
 		}
 
 		/* write the 32-bit offset table */
@@ -148,8 +144,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			offset = (need_large_offset(obj->offset, opts)
 				  ? (0x80000000 | nr_large_offset++)
 				  : obj->offset);
-			offset = htonl(offset);
-			hashwrite(f, &offset, 4);
+			hashwrite_be32(f, offset);
 		}
 
 		/* write the large offset table */
@@ -157,13 +152,10 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		while (nr_large_offset) {
 			struct pack_idx_entry *obj = *list++;
 			uint64_t offset = obj->offset;
-			uint32_t split[2];
 
 			if (!need_large_offset(offset, opts))
 				continue;
-			split[0] = htonl(offset >> 32);
-			split[1] = htonl(offset & 0xffffffff);
-			hashwrite(f, split, 8);
+			hashwrite_be64(f, offset);
 			nr_large_offset--;
 		}
 	}
@@ -375,4 +367,19 @@ void finish_tmp_packfile(struct strbuf *name_buffer,
 	strbuf_setlen(name_buffer, basename_len);
 
 	free((void *)idx_tmp_name);
+}
+
+void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought)
+{
+	int i, err;
+	FILE *output = xfopen(promisor_name, "w");
+
+	for (i = 0; i < nr_sought; i++)
+		fprintf(output, "%s %s\n", oid_to_hex(&sought[i]->old_oid),
+			sought[i]->name);
+
+	err = ferror(output);
+	err |= fclose(output);
+	if (err)
+		die(_("could not write '%s' promisor file"), promisor_name);
 }

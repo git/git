@@ -20,6 +20,9 @@ one tagged as v1.0.0.  They all have one regular file each.
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if ! test_have_prereq SHA1
@@ -48,7 +51,7 @@ test_expect_success 'blob and tree' '
 
 test_expect_success 'warn ambiguity when no candidate matches type hint' '
 	test_must_fail git rev-parse --verify 000000000^{commit} 2>actual &&
-	test_i18ngrep "short SHA1 000000000 is ambiguous" actual
+	test_i18ngrep "short object ID 000000000 is ambiguous" actual
 '
 
 test_expect_success 'disambiguate tree-ish' '
@@ -212,7 +215,7 @@ test_expect_success 'more history' '
 	side=$(git rev-parse HEAD) &&
 
 	# commit 000000000066
-	git checkout master &&
+	git checkout main &&
 
 	# If you use recursive, merge will fail and you will need to
 	# clean up a0blgqsjc as well.  If you use resolve, merge will

@@ -63,7 +63,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 
 	if (data->peel) {
 		struct object_id peeled;
-		if (!peel_ref(refname, &peeled))
+		if (!peel_iterated_oid(oid, &peeled))
 			strbuf_addf(&refline, " peeled:%s", oid_to_hex(&peeled));
 	}
 
@@ -90,6 +90,7 @@ int ls_refs(struct repository *r, struct strvec *keys,
 	struct ls_refs_data data;
 
 	memset(&data, 0, sizeof(data));
+	strvec_init(&data.prefixes);
 
 	git_config(ls_refs_config, NULL);
 
@@ -109,7 +110,10 @@ int ls_refs(struct repository *r, struct strvec *keys,
 		die(_("expected flush after ls-refs arguments"));
 
 	head_ref_namespaced(send_ref, &data);
-	for_each_namespaced_ref(send_ref, &data);
+	if (!data.prefixes.nr)
+		strvec_push(&data.prefixes, "");
+	for_each_fullref_in_prefixes(get_git_namespace(), data.prefixes.v,
+				     send_ref, &data, 0);
 	packet_flush(1);
 	strvec_clear(&data.prefixes);
 	return 0;

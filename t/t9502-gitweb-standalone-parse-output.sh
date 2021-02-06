@@ -10,6 +10,9 @@ commandline, and checks that it produces the correct output, either
 in the HTTP header or the actual script output.'
 
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./gitweb-lib.sh
 
 # ----------------------------------------------------------------------
@@ -79,10 +82,10 @@ test_expect_success 'snapshot: HEAD' '
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
-test_expect_success 'snapshot: short branch name (master)' '
-	gitweb_run "p=.git;a=snapshot;h=master;sf=tar" &&
-	ID=$(git rev-parse --verify --short=7 master) &&
-	check_snapshot ".git-master-$ID"
+test_expect_success 'snapshot: short branch name (main)' '
+	gitweb_run "p=.git;a=snapshot;h=main;sf=tar" &&
+	ID=$(git rev-parse --verify --short=7 main) &&
+	check_snapshot ".git-main-$ID"
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
@@ -93,10 +96,10 @@ test_expect_success 'snapshot: short tag name (first)' '
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
-test_expect_success 'snapshot: full branch name (refs/heads/master)' '
-	gitweb_run "p=.git;a=snapshot;h=refs/heads/master;sf=tar" &&
-	ID=$(git rev-parse --verify --short=7 master) &&
-	check_snapshot ".git-master-$ID"
+test_expect_success 'snapshot: full branch name (refs/heads/main)' '
+	gitweb_run "p=.git;a=snapshot;h=refs/heads/main;sf=tar" &&
+	ID=$(git rev-parse --verify --short=7 main) &&
+	check_snapshot ".git-main-$ID"
 '
 test_debug 'cat gitweb.headers && cat file_list'
 

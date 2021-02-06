@@ -142,7 +142,7 @@ static struct option pull_options[] = {
 		N_("add (at most <n>) entries from shortlog to merge commit message"),
 		PARSE_OPT_OPTARG),
 	OPT_PASSTHRU(0, "signoff", &opt_signoff, NULL,
-		N_("add Signed-off-by:"),
+		N_("add a Signed-off-by trailer"),
 		PARSE_OPT_OPTARG),
 	OPT_PASSTHRU(0, "squash", &opt_squash, NULL,
 		N_("create a single commit instead of doing a merge"),
@@ -324,7 +324,7 @@ static const char *config_get_ff(void)
  * looks for the value of "pull.rebase". If both configuration keys do not
  * exist, returns REBASE_FALSE.
  */
-static enum rebase_type config_get_rebase(void)
+static enum rebase_type config_get_rebase(int *rebase_unspecified)
 {
 	struct branch *curr_branch = branch_get("HEAD");
 	const char *value;
@@ -344,21 +344,7 @@ static enum rebase_type config_get_rebase(void)
 	if (!git_config_get_value("pull.rebase", &value))
 		return parse_config_rebase("pull.rebase", value, 1);
 
-	if (opt_verbosity >= 0 &&
-	    (!opt_ff || strcmp(opt_ff, "--ff-only"))) {
-		warning(_("Pulling without specifying how to reconcile divergent branches is\n"
-			"discouraged. You can squelch this message by running one of the following\n"
-			"commands sometime before your next pull:\n"
-			"\n"
-			"  git config pull.rebase false  # merge (the default strategy)\n"
-			"  git config pull.rebase true   # rebase\n"
-			"  git config pull.ff only       # fast-forward only\n"
-			"\n"
-			"You can replace \"git config\" with \"git config --global\" to set a default\n"
-			"preference for all repositories. You can also pass --rebase, --no-rebase,\n"
-			"or --ff-only on the command line to override the configured default per\n"
-			"invocation.\n"));
-	}
+	*rebase_unspecified = 1;
 
 	return REBASE_FALSE;
 }
@@ -853,20 +839,41 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 
 /**
  * Given the current HEAD oid, the merge head returned from git-fetch and the
- * fork point calculated by get_rebase_fork_point(), runs git-rebase with the
- * appropriate arguments and returns its exit status.
+ * fork point calculated by get_rebase_fork_point(), compute the <newbase> and
+ * <upstream> arguments to use for the upcoming git-rebase invocation.
  */
-static int run_rebase(const struct object_id *curr_head,
+static int get_rebase_newbase_and_upstream(struct object_id *newbase,
+		struct object_id *upstream,
+		const struct object_id *curr_head,
 		const struct object_id *merge_head,
 		const struct object_id *fork_point)
 {
-	int ret;
 	struct object_id oct_merge_base;
-	struct strvec args = STRVEC_INIT;
 
 	if (!get_octopus_merge_base(&oct_merge_base, curr_head, merge_head, fork_point))
 		if (!is_null_oid(fork_point) && oideq(&oct_merge_base, fork_point))
 			fork_point = NULL;
+
+	if (fork_point && !is_null_oid(fork_point))
+		oidcpy(upstream, fork_point);
+	else
+		oidcpy(upstream, merge_head);
+
+	oidcpy(newbase, merge_head);
+
+	return 0;
+}
+
+/**
+ * Given the <newbase> and <upstream> calculated by
+ * get_rebase_newbase_and_upstream(), runs git-rebase with the
+ * appropriate arguments and returns its exit status.
+ */
+static int run_rebase(const struct object_id *newbase,
+		const struct object_id *upstream)
+{
+	int ret;
+	struct strvec args = STRVEC_INIT;
 
 	strvec_push(&args, "rebase");
 
@@ -895,16 +902,43 @@ static int run_rebase(const struct object_id *curr_head,
 		warning(_("ignoring --verify-signatures for rebase"));
 
 	strvec_push(&args, "--onto");
-	strvec_push(&args, oid_to_hex(merge_head));
+	strvec_push(&args, oid_to_hex(newbase));
 
-	if (fork_point && !is_null_oid(fork_point))
-		strvec_push(&args, oid_to_hex(fork_point));
-	else
-		strvec_push(&args, oid_to_hex(merge_head));
+	strvec_push(&args, oid_to_hex(upstream));
 
 	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
 	strvec_clear(&args);
 	return ret;
+}
+
+static int get_can_ff(struct object_id *orig_head, struct object_id *orig_merge_head)
+{
+	int ret;
+	struct commit_list *list = NULL;
+	struct commit *merge_head, *head;
+
+	head = lookup_commit_reference(the_repository, orig_head);
+	commit_list_insert(head, &list);
+	merge_head = lookup_commit_reference(the_repository, orig_merge_head);
+	ret = repo_is_descendant_of(the_repository, merge_head, list);
+	free_commit_list(list);
+	return ret;
+}
+
+static void show_advice_pull_non_ff(void)
+{
+	advise(_("Pulling without specifying how to reconcile divergent branches is\n"
+		 "discouraged. You can squelch this message by running one of the following\n"
+		 "commands sometime before your next pull:\n"
+		 "\n"
+		 "  git config pull.rebase false  # merge (the default strategy)\n"
+		 "  git config pull.rebase true   # rebase\n"
+		 "  git config pull.ff only       # fast-forward only\n"
+		 "\n"
+		 "You can replace \"git config\" with \"git config --global\" to set a default\n"
+		 "preference for all repositories. You can also pass --rebase, --no-rebase,\n"
+		 "or --ff-only on the command line to override the configured default per\n"
+		 "invocation.\n"));
 }
 
 int cmd_pull(int argc, const char **argv, const char *prefix)
@@ -914,6 +948,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct object_id orig_head, curr_head;
 	struct object_id rebase_fork_point;
 	int autostash;
+	int rebase_unspecified = 0;
+	int can_ff;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -935,7 +971,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		opt_ff = xstrdup_or_null(config_get_ff());
 
 	if (opt_rebase < 0)
-		opt_rebase = config_get_rebase();
+		opt_rebase = config_get_rebase(&rebase_unspecified);
 
 	if (read_cache_unmerged())
 		die_resolve_conflict("pull");
@@ -1009,33 +1045,36 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_rebase && merge_heads.nr > 1)
 		die(_("Cannot rebase onto multiple branches."));
 
+	can_ff = get_can_ff(&orig_head, &merge_heads.oid[0]);
+
+	if (rebase_unspecified && !opt_ff && !can_ff) {
+		if (opt_verbosity >= 0)
+			show_advice_pull_non_ff();
+	}
+
 	if (opt_rebase) {
 		int ret = 0;
 		int ran_ff = 0;
+
+		struct object_id newbase;
+		struct object_id upstream;
+		get_rebase_newbase_and_upstream(&newbase, &upstream, &curr_head,
+						merge_heads.oid, &rebase_fork_point);
+
 		if ((recurse_submodules == RECURSE_SUBMODULES_ON ||
 		     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND) &&
-		    submodule_touches_in_range(the_repository, &rebase_fork_point, &curr_head))
+		    submodule_touches_in_range(the_repository, &upstream, &curr_head))
 			die(_("cannot rebase with locally recorded submodule modifications"));
 		if (!autostash) {
-			struct commit_list *list = NULL;
-			struct commit *merge_head, *head;
-
-			head = lookup_commit_reference(the_repository,
-						       &orig_head);
-			commit_list_insert(head, &list);
-			merge_head = lookup_commit_reference(the_repository,
-							     &merge_heads.oid[0]);
-			if (repo_is_descendant_of(the_repository,
-						  merge_head, list)) {
+			if (can_ff) {
 				/* we can fast-forward this without invoking rebase */
 				opt_ff = "--ff-only";
 				ran_ff = 1;
 				ret = run_merge();
 			}
-			free_commit_list(list);
 		}
 		if (!ran_ff)
-			ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
+			ret = run_rebase(&newbase, &upstream);
 
 		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
 			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))

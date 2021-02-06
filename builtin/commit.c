@@ -326,7 +326,7 @@ static void refresh_cache_or_die(int refresh_flags)
 		die_resolve_conflict("commit");
 }
 
-static const char *prepare_index(int argc, const char **argv, const char *prefix,
+static const char *prepare_index(const char **argv, const char *prefix,
 				 const struct commit *current_head, int is_status)
 {
 	struct string_list partial = STRING_LIST_INIT_DUP;
@@ -378,7 +378,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		old_index_env = xstrdup_or_null(getenv(INDEX_ENVIRONMENT));
 		setenv(INDEX_ENVIRONMENT, the_repository->index_file, 1);
 
-		if (interactive_add(argc, argv, prefix, patch_interactive) != 0)
+		if (interactive_add(argv, prefix, patch_interactive) != 0)
 			die(_("interactive add failed"));
 
 		the_repository->index_file = old_repo_index_file;
@@ -1039,7 +1039,7 @@ static const char *find_author_by_nickname(const char *name)
 	av[++ac] = NULL;
 	setup_revisions(ac, av, &revs, NULL);
 	revs.mailmap = &mailmap;
-	read_mailmap(revs.mailmap, NULL);
+	read_mailmap(revs.mailmap);
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
@@ -1241,13 +1241,13 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	return argc;
 }
 
-static int dry_run_commit(int argc, const char **argv, const char *prefix,
+static int dry_run_commit(const char **argv, const char *prefix,
 			  const struct commit *current_head, struct wt_status *s)
 {
 	int committable;
 	const char *index_file;
 
-	index_file = prepare_index(argc, argv, prefix, current_head, 1);
+	index_file = prepare_index(argv, prefix, current_head, 1);
 	committable = run_status(stdout, index_file, prefix, 0, s);
 	rollback_index_files();
 
@@ -1507,7 +1507,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "fixup", &fixup_message, N_("commit"), N_("use autosquash formatted message to fixup specified commit")),
 		OPT_STRING(0, "squash", &squash_message, N_("commit"), N_("use autosquash formatted message to squash specified commit")),
 		OPT_BOOL(0, "reset-author", &renew_authorship, N_("the commit is authored by me now (used with -C/-c/--amend)")),
-		OPT_BOOL('s', "signoff", &signoff, N_("add Signed-off-by:")),
+		OPT_BOOL('s', "signoff", &signoff, N_("add a Signed-off-by trailer")),
 		OPT_FILENAME('t', "template", &template_file, N_("use specified template file")),
 		OPT_BOOL('e', "edit", &edit_flag, N_("force edit of commit")),
 		OPT_CLEANUP(&cleanup_arg),
@@ -1584,8 +1584,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		verbose = (config_commit_verbose < 0) ? 0 : config_commit_verbose;
 
 	if (dry_run)
-		return dry_run_commit(argc, argv, prefix, current_head, &s);
-	index_file = prepare_index(argc, argv, prefix, current_head, 0);
+		return dry_run_commit(argv, prefix, current_head, &s);
+	index_file = prepare_index(argv, prefix, current_head, 0);
 
 	/* Set up everything for writing the commit object.  This includes
 	   running hooks, writing the trees, and interacting with the user.  */
@@ -1700,7 +1700,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	git_test_write_commit_graph_or_die();
 
 	repo_rerere(the_repository, 0);
-	run_auto_gc(quiet);
+	run_auto_maintenance(quiet);
 	run_commit_hook(use_editor, get_index_file(), "post-commit", NULL);
 	if (amend && !no_post_rewrite) {
 		commit_post_rewrite(the_repository, current_head, &oid);

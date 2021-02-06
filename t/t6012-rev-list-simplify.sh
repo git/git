@@ -2,6 +2,9 @@
 
 test_description='merge simplification'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 note () {
@@ -43,7 +46,7 @@ test_expect_success setup '
 	git add side &&
 	test_tick && git commit -m "Side root" &&
 	note J &&
-	git checkout master &&
+	git checkout main &&
 
 	echo "Hello" >file &&
 	echo "second" >lost &&
@@ -65,7 +68,7 @@ test_expect_success setup '
 	note D &&
 
 	test_tick &&
-	test_must_fail git merge -m "merge" master &&
+	test_must_fail git merge -m "merge" main &&
 	>lost && git commit -a -m "merge" &&
 	note E &&
 
@@ -74,7 +77,7 @@ test_expect_success setup '
 	test_tick && git commit -m "Irrelevant change" &&
 	note F &&
 
-	git checkout master &&
+	git checkout main &&
 	echo "Yet another" >elif &&
 	git add elif &&
 	test_tick && git commit -m "Another irrelevant change" &&
@@ -87,7 +90,7 @@ test_expect_success setup '
 	test_tick && git commit -a -m "Final change" &&
 	note I &&
 
-	git checkout master &&
+	git checkout main &&
 	test_tick && git merge --allow-unrelated-histories -m "Coolest" unrelated &&
 	note K &&
 
@@ -168,10 +171,10 @@ test_expect_success '--full-diff is not affected by --parents' '
 #
 # This example is explained in Documentation/rev-list-options.txt
 
-test_expect_success 'rebuild repo' '
+test_expect_success 'setup rebuild repo' '
 	rm -rf .git * &&
 	git init &&
-	git switch -c main &&
+	git switch -c topic &&
 
 	echo base >file &&
 	git add file &&
@@ -186,7 +189,7 @@ test_expect_success 'rebuild repo' '
 	git add file &&
 	test_commit B &&
 
-	git switch main &&
+	git switch topic &&
 	test_must_fail git merge -m "M" B &&
 	echo A >file &&
 	echo B >>file &&
@@ -207,7 +210,7 @@ test_expect_success 'rebuild repo' '
 	git merge -m R -Xtheirs X &&
 	note R &&
 
-	git switch main &&
+	git switch topic &&
 	git merge -m N R &&
 	note N &&
 
@@ -221,7 +224,7 @@ test_expect_success 'rebuild repo' '
 	git add z &&
 	test_commit Z &&
 
-	git switch main &&
+	git switch topic &&
 	git merge -m O Z &&
 	note O &&
 

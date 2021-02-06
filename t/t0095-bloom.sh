@@ -71,8 +71,8 @@ test_expect_success 'get bloom filters for commit with no changes' '
 	git init &&
 	git commit --allow-empty -m "c0" &&
 	cat >expect <<-\EOF &&
-	Filter_Length:0
-	Filter_Data:
+	Filter_Length:1
+	Filter_Data:00|
 	EOF
 	test-tool bloom get_filter_for_commit "$(git rev-parse HEAD)" >actual &&
 	test_cmp expect actual
@@ -107,8 +107,8 @@ test_expect_success EXPENSIVE 'get bloom filter for commit with 513 changes' '
 	git add bigDir &&
 	git commit -m "commit with 513 changes" &&
 	cat >expect <<-\EOF &&
-	Filter_Length:0
-	Filter_Data:
+	Filter_Length:1
+	Filter_Data:ff|
 	EOF
 	test-tool bloom get_filter_for_commit "$(git rev-parse HEAD)" >actual &&
 	test_cmp expect actual

@@ -10,6 +10,9 @@ commandline, and checks that it returns the expected HTTP status
 code and message.'
 
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./gitweb-lib.sh
 
 #
@@ -85,7 +88,7 @@ test_debug 'cat gitweb.headers'
 # snapshot hash ids
 
 test_expect_success 'snapshots: good tree-ish id' '
-	gitweb_run "p=.git;a=snapshot;h=master;sf=tgz" &&
+	gitweb_run "p=.git;a=snapshot;h=main;sf=tgz" &&
 	grep "Status: 200 OK" gitweb.output
 '
 test_debug 'cat gitweb.headers'
@@ -123,7 +126,7 @@ test_debug 'cat gitweb.output'
 # modification times (Last-Modified and If-Modified-Since)
 
 test_expect_success DATE_PARSER 'modification: feed last-modified' '
-	gitweb_run "p=.git;a=atom;h=master" &&
+	gitweb_run "p=.git;a=atom;h=main" &&
 	grep "Status: 200 OK" gitweb.headers &&
 	grep "Last-modified: Thu, 7 Apr 2005 22:14:13 +0000" gitweb.headers
 '
@@ -133,7 +136,7 @@ test_expect_success DATE_PARSER 'modification: feed if-modified-since (modified)
 	HTTP_IF_MODIFIED_SINCE="Wed, 6 Apr 2005 22:14:13 +0000" &&
 	export HTTP_IF_MODIFIED_SINCE &&
 	test_when_finished "unset HTTP_IF_MODIFIED_SINCE" &&
-	gitweb_run "p=.git;a=atom;h=master" &&
+	gitweb_run "p=.git;a=atom;h=main" &&
 	grep "Status: 200 OK" gitweb.headers
 '
 test_debug 'cat gitweb.headers'
@@ -142,13 +145,13 @@ test_expect_success DATE_PARSER 'modification: feed if-modified-since (unmodifie
 	HTTP_IF_MODIFIED_SINCE="Thu, 7 Apr 2005 22:14:13 +0000" &&
 	export HTTP_IF_MODIFIED_SINCE &&
 	test_when_finished "unset HTTP_IF_MODIFIED_SINCE" &&
-	gitweb_run "p=.git;a=atom;h=master" &&
+	gitweb_run "p=.git;a=atom;h=main" &&
 	grep "Status: 304 Not Modified" gitweb.headers
 '
 test_debug 'cat gitweb.headers'
 
 test_expect_success DATE_PARSER 'modification: snapshot last-modified' '
-	gitweb_run "p=.git;a=snapshot;h=master;sf=tgz" &&
+	gitweb_run "p=.git;a=snapshot;h=main;sf=tgz" &&
 	grep "Status: 200 OK" gitweb.headers &&
 	grep "Last-modified: Thu, 7 Apr 2005 22:14:13 +0000" gitweb.headers
 '
@@ -158,7 +161,7 @@ test_expect_success DATE_PARSER 'modification: snapshot if-modified-since (modif
 	HTTP_IF_MODIFIED_SINCE="Wed, 6 Apr 2005 22:14:13 +0000" &&
 	export HTTP_IF_MODIFIED_SINCE &&
 	test_when_finished "unset HTTP_IF_MODIFIED_SINCE" &&
-	gitweb_run "p=.git;a=snapshot;h=master;sf=tgz" &&
+	gitweb_run "p=.git;a=snapshot;h=main;sf=tgz" &&
 	grep "Status: 200 OK" gitweb.headers
 '
 test_debug 'cat gitweb.headers'
@@ -167,7 +170,7 @@ test_expect_success DATE_PARSER 'modification: snapshot if-modified-since (unmod
 	HTTP_IF_MODIFIED_SINCE="Thu, 7 Apr 2005 22:14:13 +0000" &&
 	export HTTP_IF_MODIFIED_SINCE &&
 	test_when_finished "unset HTTP_IF_MODIFIED_SINCE" &&
-	gitweb_run "p=.git;a=snapshot;h=master;sf=tgz" &&
+	gitweb_run "p=.git;a=snapshot;h=main;sf=tgz" &&
 	grep "Status: 304 Not Modified" gitweb.headers
 '
 test_debug 'cat gitweb.headers'

@@ -29,6 +29,15 @@
 # tell the completion to use commit completion.  This also works with aliases
 # of form "!sh -c '...'".  For example, "!sh -c ': git commit ; ... '".
 #
+# If you have a command that is not part of git, but you would still
+# like completion, you can use __git_complete:
+#
+#   __git_complete gl git_log
+#
+# Or if it's a main command (i.e. git or gitk):
+#
+#   __git_complete gk gitk
+#
 # Compatible with bash 3.2.57.
 #
 # You can set the following environment variables to influence the behavior of
@@ -416,14 +425,13 @@ __gitcomp_builtin ()
 	local options
 	eval "options=\${$var-}"
 
-	local completion_helper
-	if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
-		completion_helper="--git-completion-helper-all"
-	else
-		completion_helper="--git-completion-helper"
-	fi
-
 	if [ -z "$options" ]; then
+		local completion_helper
+		if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
+			completion_helper="--git-completion-helper-all"
+		else
+			completion_helper="--git-completion-helper"
+		fi
 		# leading and trailing spaces are significant to make
 		# option removal work correctly.
 		options=" $incl $(__git ${cmd/_/ } $completion_helper) " || return
@@ -1121,26 +1129,44 @@ __git_pretty_aliases ()
 # __git_aliased_command requires 1 argument
 __git_aliased_command ()
 {
-	local word cmdline=$(__git config --get "alias.$1")
-	for word in $cmdline; do
-		case "$word" in
-		\!gitk|gitk)
-			echo "gitk"
+	local cur=$1 last list word cmdline
+
+	while [[ -n "$cur" ]]; do
+		if [[ "$list" == *" $cur "* ]]; then
+			# loop detected
 			return
-			;;
-		\!*)	: shell command alias ;;
-		-*)	: option ;;
-		*=*)	: setting env ;;
-		git)	: git itself ;;
-		\(\))   : skip parens of shell function definition ;;
-		{)	: skip start of shell helper function ;;
-		:)	: skip null command ;;
-		\'*)	: skip opening quote after sh -c ;;
-		*)
-			echo "$word"
-			return
-		esac
+		fi
+
+		cmdline=$(__git config --get "alias.$cur")
+		list=" $cur $list"
+		last=$cur
+		cur=
+
+		for word in $cmdline; do
+			case "$word" in
+			\!gitk|gitk)
+				cur="gitk"
+				break
+				;;
+			\!*)	: shell command alias ;;
+			-*)	: option ;;
+			*=*)	: setting env ;;
+			git)	: git itself ;;
+			\(\))   : skip parens of shell function definition ;;
+			{)	: skip start of shell helper function ;;
+			:)	: skip null command ;;
+			\'*)	: skip opening quote after sh -c ;;
+			*)
+				cur="$word"
+				break
+			esac
+		done
 	done
+
+	cur=$last
+	if [[ "$cur" != "$1" ]]; then
+		echo "$cur"
+	fi
 }
 
 # Check whether one of the given words is present on the command line,
@@ -1467,14 +1493,15 @@ _git_bundle ()
 # Helper function to decide whether or not we should enable DWIM logic for
 # git-switch and git-checkout.
 #
-# To decide between the following rules in priority order
-# 1) the last provided of "--guess" or "--no-guess" explicitly enable or
-#    disable completion of DWIM logic respectively.
-# 2) If the --no-track option is provided, take this as a hint to disable the
-#    DWIM completion logic
-# 3) If GIT_COMPLETION_CHECKOUT_NO_GUESS is set, disable the DWIM completion
-#    logic, as requested by the user.
-# 4) Enable DWIM logic otherwise.
+# To decide between the following rules in decreasing priority order:
+# - the last provided of "--guess" or "--no-guess" explicitly enable or
+#   disable completion of DWIM logic respectively.
+# - If checkout.guess is false, disable completion of DWIM logic.
+# - If the --no-track option is provided, take this as a hint to disable the
+#   DWIM completion logic
+# - If GIT_COMPLETION_CHECKOUT_NO_GUESS is set, disable the DWIM completion
+#   logic, as requested by the user.
+# - Enable DWIM logic otherwise.
 #
 __git_checkout_default_dwim_mode ()
 {
@@ -1485,8 +1512,14 @@ __git_checkout_default_dwim_mode ()
 	fi
 
 	# --no-track disables DWIM, but with lower priority than
-	# --guess/--no-guess
+	# --guess/--no-guess/checkout.guess
 	if [ -n "$(__git_find_on_cmdline "--no-track")" ]; then
+		dwim_opt=""
+	fi
+
+	# checkout.guess = false disables DWIM, but with lower priority than
+	# --guess/--no-guess
+	if [ "$(__git config --type=bool checkout.guess)" = "false" ]; then
 		dwim_opt=""
 	fi
 
@@ -1508,6 +1541,22 @@ _git_checkout ()
 {
 	__git_has_doubledash && return
 
+	local dwim_opt="$(__git_checkout_default_dwim_mode)"
+
+	case "$prev" in
+	-b|-B|--orphan)
+		# Complete local branches (and DWIM branch
+		# remote branch names) for an option argument
+		# specifying a new branch name. This is for
+		# convenience, assuming new branches are
+		# possibly based on pre-existing branch names.
+		__git_complete_refs $dwim_opt --mode="heads"
+		return
+		;;
+	*)
+		;;
+	esac
+
 	case "$cur" in
 	--conflict=*)
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
@@ -1516,23 +1565,6 @@ _git_checkout ()
 		__gitcomp_builtin checkout
 		;;
 	*)
-		local dwim_opt="$(__git_checkout_default_dwim_mode)"
-		local prevword prevword="${words[cword-1]}"
-
-		case "$prevword" in
-			-b|-B|--orphan)
-				# Complete local branches (and DWIM branch
-				# remote branch names) for an option argument
-				# specifying a new branch name. This is for
-				# convenience, assuming new branches are
-				# possibly based on pre-existing branch names.
-				__git_complete_refs $dwim_opt --mode="heads"
-				return
-				;;
-			*)
-				;;
-		esac
-
 		# At this point, we've already handled special completion for
 		# the arguments to -b/-B, and --orphan. There are 3 main
 		# things left we can possibly complete:
@@ -1689,7 +1721,12 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--submodule --submodule= --ignore-submodules
 			--indent-heuristic --no-indent-heuristic
 			--textconv --no-textconv
+			--patch --no-patch
 "
+
+__git_diff_difftool_options="--cached --staged --pickaxe-all --pickaxe-regex
+			--base --ours --theirs --no-index --relative --merge-base
+			$__git_diff_common_options"
 
 _git_diff ()
 {
@@ -1713,10 +1750,7 @@ _git_diff ()
 		return
 		;;
 	--*)
-		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
-			--base --ours --theirs --no-index
-			$__git_diff_common_options
-			"
+		__gitcomp "$__git_diff_difftool_options"
 		return
 		;;
 	esac
@@ -1738,11 +1772,7 @@ _git_difftool ()
 		return
 		;;
 	--*)
-		__gitcomp_builtin difftool "$__git_diff_common_options
-					--base --cached --ours --theirs
-					--pickaxe-all --pickaxe-regex
-					--relative --staged
-					"
+		__gitcomp_builtin difftool "$__git_diff_difftool_options"
 		return
 		;;
 	esac
@@ -1808,7 +1838,7 @@ _git_fsck ()
 
 _git_gitk ()
 {
-	_gitk
+	__gitk_main
 }
 
 # Lists matching symbol names from a tag (as in ctags) file.
@@ -2032,11 +2062,9 @@ _git_log ()
 			--no-walk --no-walk= --do-walk
 			--parents --children
 			--expand-tabs --expand-tabs= --no-expand-tabs
-			--patch
 			$merge
 			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
-			--patch --no-patch
 			"
 		return
 		;;
@@ -2392,6 +2420,22 @@ _git_status ()
 
 _git_switch ()
 {
+	local dwim_opt="$(__git_checkout_default_dwim_mode)"
+
+	case "$prev" in
+	-c|-C|--orphan)
+		# Complete local branches (and DWIM branch
+		# remote branch names) for an option argument
+		# specifying a new branch name. This is for
+		# convenience, assuming new branches are
+		# possibly based on pre-existing branch names.
+		__git_complete_refs $dwim_opt --mode="heads"
+		return
+		;;
+	*)
+		;;
+	esac
+
 	case "$cur" in
 	--conflict=*)
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
@@ -2400,23 +2444,6 @@ _git_switch ()
 		__gitcomp_builtin switch
 		;;
 	*)
-		local dwim_opt="$(__git_checkout_default_dwim_mode)"
-		local prevword prevword="${words[cword-1]}"
-
-		case "$prevword" in
-			-c|-C|--orphan)
-				# Complete local branches (and DWIM branch
-				# remote branch names) for an option argument
-				# specifying a new branch name. This is for
-				# convenience, assuming new branches are
-				# possibly based on pre-existing branch names.
-				__git_complete_refs $dwim_opt --mode="heads"
-				return
-				;;
-			*)
-				;;
-		esac
-
 		# Unlike in git checkout, git switch --orphan does not take
 		# a start point. Thus we really have nothing to complete after
 		# the branch name.
@@ -2843,6 +2870,13 @@ _git_reset ()
 
 _git_restore ()
 {
+	case "$prev" in
+	-s)
+		__git_complete_refs
+		return
+		;;
+	esac
+
 	case "$cur" in
 	--conflict=*)
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
@@ -2933,7 +2967,7 @@ _git_show ()
 		;;
 	--*)
 		__gitcomp "--pretty= --format= --abbrev-commit --no-abbrev-commit
-			--oneline --show-signature --patch
+			--oneline --show-signature
 			--expand-tabs --expand-tabs= --no-expand-tabs
 			$__git_diff_common_options
 			"
@@ -3016,7 +3050,10 @@ _git_stash ()
 		list,--*)
 			__gitcomp "--name-status --oneline --patch-with-stat"
 			;;
-		show,--*|branch,--*)
+		show,--*)
+			__gitcomp "$__git_diff_common_options"
+			;;
+		branch,--*)
 			;;
 		branch,*)
 			if [ $cword -eq 3 ]; then
@@ -3330,15 +3367,19 @@ __git_support_parseopt_helper () {
 	esac
 }
 
+__git_have_func () {
+	declare -f -- "$1" >/dev/null 2>&1
+}
+
 __git_complete_command () {
 	local command="$1"
 	local completion_func="_git_${command//-/_}"
-	if ! declare -f $completion_func >/dev/null 2>/dev/null &&
-		declare -f _completion_loader >/dev/null 2>/dev/null
+	if ! __git_have_func $completion_func &&
+		__git_have_func _completion_loader
 	then
 		_completion_loader "git-$command"
 	fi
-	if declare -f $completion_func >/dev/null 2>/dev/null
+	if __git_have_func $completion_func
 	then
 		$completion_func
 		return 0
@@ -3453,88 +3494,8 @@ __gitk_main ()
 	__git_complete_revlist
 }
 
-if [[ -n ${ZSH_VERSION-} ]] &&
-   # Don't define these functions when sourced from 'git-completion.zsh',
-   # it has its own implementations.
-   [[ -z ${GIT_SOURCING_ZSH_COMPLETION-} ]]; then
-	echo "WARNING: this script is deprecated, please see git-completion.zsh" 1>&2
-
-	autoload -U +X compinit && compinit
-
-	__gitcomp ()
-	{
-		emulate -L zsh
-
-		local cur_="${3-$cur}"
-
-		case "$cur_" in
-		--*=)
-			;;
-		*)
-			local c IFS=$' \t\n'
-			local -a array
-			for c in ${=1}; do
-				c="$c${4-}"
-				case $c in
-				--*=*|*.) ;;
-				*) c="$c " ;;
-				esac
-				array[${#array[@]}+1]="$c"
-			done
-			compset -P '*[=:]'
-			compadd -Q -S '' -p "${2-}" -a -- array && _ret=0
-			;;
-		esac
-	}
-
-	__gitcomp_direct ()
-	{
-		emulate -L zsh
-
-		local IFS=$'\n'
-		compset -P '*[=:]'
-		compadd -Q -- ${=1} && _ret=0
-	}
-
-	__gitcomp_nl ()
-	{
-		emulate -L zsh
-
-		local IFS=$'\n'
-		compset -P '*[=:]'
-		compadd -Q -S "${4- }" -p "${2-}" -- ${=1} && _ret=0
-	}
-
-	__gitcomp_file_direct ()
-	{
-		emulate -L zsh
-
-		local IFS=$'\n'
-		compset -P '*[=:]'
-		compadd -f -- ${=1} && _ret=0
-	}
-
-	__gitcomp_file ()
-	{
-		emulate -L zsh
-
-		local IFS=$'\n'
-		compset -P '*[=:]'
-		compadd -p "${2-}" -f -- ${=1} && _ret=0
-	}
-
-	_git ()
-	{
-		local _ret=1 cur cword prev
-		cur=${words[CURRENT]}
-		prev=${words[CURRENT-1]}
-		let cword=CURRENT-1
-		emulate ksh -c __${service}_main
-		let _ret && _default && _ret=0
-		return _ret
-	}
-
-	compdef _git git gitk
+if [[ -n ${ZSH_VERSION-} && -z ${GIT_SOURCING_ZSH_COMPLETION-} ]]; then
+	echo "ERROR: this script is obsolete, please see git-completion.zsh" 1>&2
 	return
 fi
 
@@ -3545,10 +3506,7 @@ __git_func_wrap ()
 	$1
 }
 
-# Setup completion for certain functions defined above by setting common
-# variables and workarounds.
-# This is NOT a public function; use at your own risk.
-__git_complete ()
+___git_complete ()
 {
 	local wrapper="__git_wrap${2}"
 	eval "$wrapper () { __git_func_wrap $2 ; }"
@@ -3556,25 +3514,33 @@ __git_complete ()
 		|| complete -o default -o nospace -F $wrapper $1
 }
 
-# wrapper for backwards compatibility
-_git ()
+# Setup the completion for git commands
+# 1: command or alias
+# 2: function to call (e.g. `git`, `gitk`, `git_fetch`)
+__git_complete ()
 {
-	__git_wrap__git_main
+	local func
+
+	if __git_have_func $2; then
+		func=$2
+	elif __git_have_func __$2_main; then
+		func=__$2_main
+	elif __git_have_func _$2; then
+		func=_$2
+	else
+		echo "ERROR: could not find function '$2'" 1>&2
+		return 1
+	fi
+	___git_complete $1 $func
 }
 
-# wrapper for backwards compatibility
-_gitk ()
-{
-	__git_wrap__gitk_main
-}
-
-__git_complete git __git_main
-__git_complete gitk __gitk_main
+___git_complete git __git_main
+___git_complete gitk __gitk_main
 
 # The following are necessary only for Cygwin, and only are needed
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 #
-if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
-__git_complete git.exe __git_main
+if [ "$OSTYPE" = cygwin ]; then
+	___git_complete git.exe __git_main
 fi

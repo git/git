@@ -3,6 +3,7 @@
 test_description='multi-pack-indexes'
 . ./test-lib.sh
 
+GIT_TEST_MULTI_PACK_INDEX=0
 objdir=.git/objects
 
 HASH_LEN=$(test_oid rawsz)
@@ -137,7 +138,7 @@ test_expect_success 'write midx with one v2 pack' '
 
 compare_results_with_midx "one v2 pack"
 
-test_expect_success 'corrupt idx not opened' '
+test_expect_success 'corrupt idx reports errors' '
 	idx=$(test-tool read-midx $objdir | grep "\.idx\$") &&
 	mv $objdir/pack/$idx backup-$idx &&
 	test_when_finished "mv backup-\$idx \$objdir/pack/\$idx" &&
@@ -148,7 +149,7 @@ test_expect_success 'corrupt idx not opened' '
 	test_copy_bytes 1064 <backup-$idx >$objdir/pack/$idx &&
 
 	git -c core.multiPackIndex=true rev-list --objects --all 2>err &&
-	test_must_be_empty err
+	grep "index unavailable" err
 '
 
 test_expect_success 'add more objects' '
@@ -173,12 +174,12 @@ test_expect_success 'write progress off for redirected stderr' '
 '
 
 test_expect_success 'write force progress on for stderr' '
-	git multi-pack-index --object-dir=$objdir --progress write 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir --progress write 2>err &&
 	test_file_not_empty err
 '
 
 test_expect_success 'write with the --no-progress option' '
-	git multi-pack-index --object-dir=$objdir --no-progress write 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir --no-progress write 2>err &&
 	test_line_count = 0 err
 '
 
@@ -368,17 +369,17 @@ test_expect_success 'git-fsck incorrect offset' '
 '
 
 test_expect_success 'repack progress off for redirected stderr' '
-	git multi-pack-index --object-dir=$objdir repack 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir repack 2>err &&
 	test_line_count = 0 err
 '
 
 test_expect_success 'repack force progress on for stderr' '
-	git multi-pack-index --object-dir=$objdir --progress repack 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir --progress repack 2>err &&
 	test_file_not_empty err
 '
 
 test_expect_success 'repack with the --no-progress option' '
-	git multi-pack-index --object-dir=$objdir --no-progress repack 2>err &&
+	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir --no-progress repack 2>err &&
 	test_line_count = 0 err
 '
 
@@ -562,7 +563,7 @@ test_expect_success 'expire progress off for redirected stderr' '
 test_expect_success 'expire force progress on for stderr' '
 	(
 		cd dup &&
-		git multi-pack-index --progress expire 2>err &&
+		GIT_PROGRESS_DELAY=0 git multi-pack-index --progress expire 2>err &&
 		test_file_not_empty err
 	)
 '
@@ -570,7 +571,7 @@ test_expect_success 'expire force progress on for stderr' '
 test_expect_success 'expire with the --no-progress option' '
 	(
 		cd dup &&
-		git multi-pack-index --no-progress expire 2>err &&
+		GIT_PROGRESS_DELAY=0 git multi-pack-index --no-progress expire 2>err &&
 		test_line_count = 0 err
 	)
 '
@@ -751,6 +752,32 @@ test_expect_success 'repack --batch-size=<large> repacks everything' '
 		git multi-pack-index expire &&
 		ls -al .git/objects/pack/*idx >idx-list &&
 		test_line_count = 1 idx-list
+	)
+'
+
+test_expect_success 'load reverse index when missing .idx, .pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		git config core.multiPackIndex true &&
+
+		test_commit base &&
+		git repack -ad &&
+		git multi-pack-index write &&
+
+		git rev-parse HEAD >tip &&
+		pack=$(ls .git/objects/pack/pack-*.pack) &&
+		idx=$(ls .git/objects/pack/pack-*.idx) &&
+
+		mv $idx $idx.bak &&
+		git cat-file --batch-check="%(objectsize:disk)" <tip &&
+
+		mv $idx.bak $idx &&
+
+		mv $pack $pack.bak &&
+		git cat-file --batch-check="%(objectsize:disk)" <tip
 	)
 '
 

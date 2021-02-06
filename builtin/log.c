@@ -12,6 +12,7 @@
 #include "color.h"
 #include "commit.h"
 #include "diff.h"
+#include "diff-merges.h"
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
@@ -37,6 +38,7 @@
 
 #define MAIL_DEFAULT_WRAP 72
 #define COVER_FROM_AUTO_MAX_SUBJECT_LEN 100
+#define FORMAT_PATCH_NAME_MAX_DEFAULT 64
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -50,6 +52,7 @@ static int decoration_style;
 static int decoration_given;
 static int use_mailmap_config = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
+static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
 static const char *fmt_pretty;
 
 static const char * const builtin_log_usage[] = {
@@ -131,7 +134,6 @@ static int log_line_range_callback(const struct option *option, const char *arg,
 
 static void init_log_defaults(void)
 {
-	init_grep_defaults(the_repository);
 	init_diff_ui_defaults();
 
 	decoration_style = auto_decoration_style();
@@ -150,6 +152,7 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 	rev->abbrev_commit = default_abbrev_commit;
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
+	rev->patch_name_max = fmt_patch_name_max;
 	rev->show_signature = default_show_signature;
 	rev->encode_email_headers = default_encode_email_headers;
 	rev->diffopt.flags.allow_textconv = 1;
@@ -175,7 +178,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	const struct option builtin_log_options[] = {
 		OPT__QUIET(&quiet, N_("suppress diff output")),
 		OPT_BOOL(0, "source", &source, N_("show source")),
-		OPT_BOOL(0, "use-mailmap", &mailmap, N_("Use mail map file")),
+		OPT_BOOL(0, "use-mailmap", &mailmap, N_("use mail map file")),
 		OPT_ALIAS(0, "mailmap", "use-mailmap"),
 		OPT_STRING_LIST(0, "decorate-refs", &decorate_refs_include,
 				N_("pattern"), N_("only decorate refs that match <pattern>")),
@@ -183,8 +186,8 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 				N_("pattern"), N_("do not decorate refs that match <pattern>")),
 		OPT_CALLBACK_F(0, "decorate", NULL, NULL, N_("decorate options"),
 			       PARSE_OPT_OPTARG, decorate_callback),
-		OPT_CALLBACK('L', NULL, &line_cb, "n,m:file",
-			     N_("Process line range n,m in file, counting from 1"),
+		OPT_CALLBACK('L', NULL, &line_cb, "range:file",
+			     N_("trace the evolution of line range <start>,<end> or function :<funcname> in <file>"),
 			     log_line_range_callback),
 		OPT_END()
 	};
@@ -206,6 +209,9 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	if (argc > 1)
 		die(_("unrecognized argument: %s"), argv[1]);
 
+	if (rev->line_level_traverse && rev->prune_data.nr)
+		die(_("-L<range>:<file> cannot be used with pathspec"));
+
 	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);
 
@@ -225,7 +231,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 
 	if (mailmap) {
 		rev->mailmap = xcalloc(1, sizeof(struct string_list));
-		read_mailmap(rev->mailmap, NULL);
+		read_mailmap(rev->mailmap);
 	}
 
 	if (rev->pretty_given && rev->commit_format == CMIT_FMT_RAW) {
@@ -454,6 +460,10 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return git_config_string(&fmt_pretty, var, value);
 	if (!strcmp(var, "format.subjectprefix"))
 		return git_config_string(&fmt_patch_subject_prefix, var, value);
+	if (!strcmp(var, "format.filenamemaxlength")) {
+		fmt_patch_name_max = git_config_int(var, value);
+		return 0;
+	}
 	if (!strcmp(var, "format.encodeemailheaders")) {
 		default_encode_email_headers = git_config_bool(var, value);
 		return 0;
@@ -598,15 +608,10 @@ static int show_tree_object(const struct object_id *oid,
 static void show_setup_revisions_tweak(struct rev_info *rev,
 				       struct setup_revision_opt *opt)
 {
-	if (rev->ignore_merges < 0) {
-		/* There was no "-m" variant on the command line */
-		rev->ignore_merges = 0;
-		if (!rev->first_parent_only && !rev->combine_merges) {
-			/* No "--first-parent", "-c", or "--cc" */
-			rev->combine_merges = 1;
-			rev->dense_combined_merges = 1;
-		}
-	}
+	if (rev->first_parent_only)
+		diff_merges_default_to_first_parent(rev);
+	else
+		diff_merges_default_to_dense_combined(rev);
 	if (!rev->diffopt.output_format)
 		rev->diffopt.output_format = DIFF_FORMAT_PATCH;
 }
@@ -727,12 +732,8 @@ static void log_setup_revisions_tweak(struct rev_info *rev,
 	    rev->prune_data.nr == 1)
 		rev->diffopt.flags.follow_renames = 1;
 
-	/* Turn --cc/-c into -p --cc/-c when -p was not given */
-	if (!rev->diffopt.output_format && rev->combine_merges)
-		rev->diffopt.output_format = DIFF_FORMAT_PATCH;
-
-	if (rev->first_parent_only && rev->ignore_merges < 0)
-		rev->ignore_merges = 0;
+	if (rev->first_parent_only)
+		diff_merges_default_to_first_parent(rev);
 }
 
 int cmd_log(int argc, const char **argv, const char *prefix)
@@ -805,9 +806,15 @@ enum cover_from_description {
 	COVER_FROM_AUTO
 };
 
+enum auto_base_setting {
+	AUTO_BASE_NEVER,
+	AUTO_BASE_ALWAYS,
+	AUTO_BASE_WHEN_ABLE
+};
+
 static enum thread_level thread;
 static int do_signoff;
-static int base_auto;
+static enum auto_base_setting auto_base;
 static char *from;
 static const char *signature = git_version_string;
 static const char *signature_file;
@@ -906,7 +913,11 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "format.outputdirectory"))
 		return git_config_string(&config_output_directory, var, value);
 	if (!strcmp(var, "format.useautobase")) {
-		base_auto = git_config_bool(var, value);
+		if (value && !strcasecmp(value, "whenAble")) {
+			auto_base = AUTO_BASE_WHEN_ABLE;
+			return 0;
+		}
+		auto_base = git_config_bool(var, value) ? AUTO_BASE_ALWAYS : AUTO_BASE_NEVER;
 		return 0;
 	}
 	if (!strcmp(var, "format.from")) {
@@ -945,15 +956,9 @@ static int open_next_file(struct commit *commit, const char *subject,
 			 struct rev_info *rev, int quiet)
 {
 	struct strbuf filename = STRBUF_INIT;
-	int suffix_len = strlen(rev->patch_suffix) + 1;
 
 	if (output_directory) {
 		strbuf_addstr(&filename, output_directory);
-		if (filename.len >=
-		    PATH_MAX - FORMAT_PATCH_NAME_MAX - suffix_len) {
-			strbuf_release(&filename);
-			return error(_("name of output directory is too long"));
-		}
 		strbuf_complete(&filename, '/');
 	}
 
@@ -1143,7 +1148,7 @@ static void get_notes_args(struct strvec *arg, struct rev_info *rev)
 	}
 }
 
-static void make_cover_letter(struct rev_info *rev, int use_stdout,
+static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			      struct commit *origin,
 			      int nr, struct commit **list,
 			      const char *branch_name,
@@ -1163,7 +1168,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	committer = git_committer_info(0);
 
-	if (!use_stdout &&
+	if (use_separate_file &&
 	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter", rev, quiet))
 		die(_("failed to create cover-letter file"));
 
@@ -1195,6 +1200,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	log.in1 = 2;
 	log.in2 = 4;
 	log.file = rev->diffopt.file;
+	log.groups = SHORTLOG_GROUP_AUTHOR;
 	for (i = 0; i < nr; i++)
 		shortlog_add_commit(&log, list[i]);
 
@@ -1424,6 +1430,23 @@ static int from_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int base_callback(const struct option *opt, const char *arg, int unset)
+{
+	const char **base_commit = opt->value;
+
+	if (unset) {
+		auto_base = AUTO_BASE_NEVER;
+		*base_commit = NULL;
+	} else if (!strcmp(arg, "auto")) {
+		auto_base = AUTO_BASE_ALWAYS;
+		*base_commit = NULL;
+	} else {
+		auto_base = AUTO_BASE_NEVER;
+		*base_commit = arg;
+	}
+	return 0;
+}
+
 struct base_tree_info {
 	struct object_id base_commit;
 	int nr_patch_id, alloc_patch_id;
@@ -1436,13 +1459,36 @@ static struct commit *get_base_commit(const char *base_commit,
 {
 	struct commit *base = NULL;
 	struct commit **rev;
-	int i = 0, rev_nr = 0;
+	int i = 0, rev_nr = 0, auto_select, die_on_failure;
 
-	if (base_commit && strcmp(base_commit, "auto")) {
+	switch (auto_base) {
+	case AUTO_BASE_NEVER:
+		if (base_commit) {
+			auto_select = 0;
+			die_on_failure = 1;
+		} else {
+			/* no base information is requested */
+			return NULL;
+		}
+		break;
+	case AUTO_BASE_ALWAYS:
+	case AUTO_BASE_WHEN_ABLE:
+		if (base_commit) {
+			BUG("requested automatic base selection but a commit was provided");
+		} else {
+			auto_select = 1;
+			die_on_failure = auto_base == AUTO_BASE_ALWAYS;
+		}
+		break;
+	default:
+		BUG("unexpected automatic base selection method");
+	}
+
+	if (!auto_select) {
 		base = lookup_commit_reference_by_name(base_commit);
 		if (!base)
 			die(_("unknown commit %s"), base_commit);
-	} else if ((base_commit && !strcmp(base_commit, "auto"))) {
+	} else {
 		struct branch *curr_branch = branch_get(NULL);
 		const char *upstream = branch_get_upstream(curr_branch, NULL);
 		if (upstream) {
@@ -1450,19 +1496,32 @@ static struct commit *get_base_commit(const char *base_commit,
 			struct commit *commit;
 			struct object_id oid;
 
-			if (get_oid(upstream, &oid))
-				die(_("failed to resolve '%s' as a valid ref"), upstream);
+			if (get_oid(upstream, &oid)) {
+				if (die_on_failure)
+					die(_("failed to resolve '%s' as a valid ref"), upstream);
+				else
+					return NULL;
+			}
 			commit = lookup_commit_or_die(&oid, "upstream base");
 			base_list = get_merge_bases_many(commit, total, list);
 			/* There should be one and only one merge base. */
-			if (!base_list || base_list->next)
-				die(_("could not find exact merge base"));
+			if (!base_list || base_list->next) {
+				if (die_on_failure) {
+					die(_("could not find exact merge base"));
+				} else {
+					free_commit_list(base_list);
+					return NULL;
+				}
+			}
 			base = base_list->item;
 			free_commit_list(base_list);
 		} else {
-			die(_("failed to get upstream, if you want to record base commit automatically,\n"
-			      "please use git branch --set-upstream-to to track a remote branch.\n"
-			      "Or you could specify base commit by --base=<base-commit-id> manually"));
+			if (die_on_failure)
+				die(_("failed to get upstream, if you want to record base commit automatically,\n"
+				      "please use git branch --set-upstream-to to track a remote branch.\n"
+				      "Or you could specify base commit by --base=<base-commit-id> manually"));
+			else
+				return NULL;
 		}
 	}
 
@@ -1479,8 +1538,14 @@ static struct commit *get_base_commit(const char *base_commit,
 		for (i = 0; i < rev_nr / 2; i++) {
 			struct commit_list *merge_base;
 			merge_base = get_merge_bases(rev[2 * i], rev[2 * i + 1]);
-			if (!merge_base || merge_base->next)
-				die(_("failed to find exact merge base"));
+			if (!merge_base || merge_base->next) {
+				if (die_on_failure) {
+					die(_("failed to find exact merge base"));
+				} else {
+					free(rev);
+					return NULL;
+				}
+			}
 
 			rev[i] = merge_base->item;
 		}
@@ -1490,12 +1555,24 @@ static struct commit *get_base_commit(const char *base_commit,
 		rev_nr = DIV_ROUND_UP(rev_nr, 2);
 	}
 
-	if (!in_merge_bases(base, rev[0]))
-		die(_("base commit should be the ancestor of revision list"));
+	if (!in_merge_bases(base, rev[0])) {
+		if (die_on_failure) {
+			die(_("base commit should be the ancestor of revision list"));
+		} else {
+			free(rev);
+			return NULL;
+		}
+	}
 
 	for (i = 0; i < total; i++) {
-		if (base == list[i])
-			die(_("base commit shouldn't be in revision list"));
+		if (base == list[i]) {
+			if (die_on_failure) {
+				die(_("base commit shouldn't be in revision list"));
+			} else {
+				free(rev);
+				return NULL;
+			}
+		}
 	}
 
 	free(rev);
@@ -1638,6 +1715,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *branch_name = NULL;
 	char *base_commit = NULL;
 	struct base_tree_info bases;
+	struct commit *base;
 	int show_progress = 0;
 	struct progress *progress = NULL;
 	struct oid_array idiff_prev = OID_ARRAY_INIT;
@@ -1655,7 +1733,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK_F('N', "no-numbered", &numbered, NULL,
 			    N_("use [PATCH] even with multiple patches"),
 			    PARSE_OPT_NOARG | PARSE_OPT_NONEG, no_numbered_callback),
-		OPT_BOOL('s', "signoff", &do_signoff, N_("add Signed-off-by:")),
+		OPT_BOOL('s', "signoff", &do_signoff, N_("add a Signed-off-by trailer")),
 		OPT_BOOL(0, "stdout", &use_stdout,
 			    N_("print patches to standard out")),
 		OPT_BOOL(0, "cover-letter", &cover_letter,
@@ -1668,14 +1746,16 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    N_("start numbering patches at <n> instead of 1")),
 		OPT_INTEGER('v', "reroll-count", &reroll_count,
 			    N_("mark the series as Nth re-roll")),
+		OPT_INTEGER(0, "filename-max-length", &fmt_patch_name_max,
+			    N_("max length of output filename")),
 		OPT_CALLBACK_F(0, "rfc", &rev, NULL,
-			    N_("Use [RFC PATCH] instead of [PATCH]"),
+			    N_("use [RFC PATCH] instead of [PATCH]"),
 			    PARSE_OPT_NOARG | PARSE_OPT_NONEG, rfc_callback),
 		OPT_STRING(0, "cover-from-description", &cover_from_description_arg,
 			    N_("cover-from-description-mode"),
 			    N_("generate parts of a cover letter based on a branch's description")),
 		OPT_CALLBACK_F(0, "subject-prefix", &rev, N_("prefix"),
-			    N_("Use [<prefix>] instead of [PATCH]"),
+			    N_("use [<prefix>] instead of [PATCH]"),
 			    PARSE_OPT_NONEG, subject_prefix_callback),
 		OPT_CALLBACK_F('o', "output-directory", &output_directory,
 			    N_("dir"), N_("store resulting files in <dir>"),
@@ -1714,8 +1794,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    PARSE_OPT_OPTARG, thread_callback),
 		OPT_STRING(0, "signature", &signature, N_("signature"),
 			    N_("add a signature")),
-		OPT_STRING(0, "base", &base_commit, N_("base-commit"),
-			   N_("add prerequisite tree info to the patch series")),
+		OPT_CALLBACK_F(0, "base", &base_commit, N_("base-commit"),
+			       N_("add prerequisite tree info to the patch series"),
+			       0, base_callback),
 		OPT_FILENAME(0, "signature-file", &signature_file,
 				N_("add a signature from a file")),
 		OPT__QUIET(&quiet, N_("don't print the patch filenames")),
@@ -1752,9 +1833,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	s_r_opt.def = "HEAD";
 	s_r_opt.revarg_opt = REVARG_COMMITTISH;
 
-	if (base_auto)
-		base_commit = "auto";
-
 	if (default_attach) {
 		rev.mime_boundary = default_attach;
 		rev.no_inline = 1;
@@ -1769,6 +1847,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			     builtin_format_patch_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	/* Make sure "0000-$sub.patch" gives non-negative length for $sub */
+	if (fmt_patch_name_max <= strlen("0000-") + strlen(fmt_patch_suffix))
+		fmt_patch_name_max = strlen("0000-") + strlen(fmt_patch_suffix);
 
 	if (cover_from_description_arg)
 		cover_from_description_mode = parse_cover_from_description(cover_from_description_arg);
@@ -1854,6 +1936,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 
 	rev.zero_commit = zero_commit;
+	rev.patch_name_max = fmt_patch_name_max;
 
 	if (!rev.diffopt.flags.text && !no_binary_diff)
 		rev.diffopt.flags.binary = 1;
@@ -1861,20 +1944,27 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (rev.show_notes)
 		load_display_notes(&rev.notes_opt);
 
-	if (!output_directory && !use_stdout)
-		output_directory = config_output_directory;
+	if (use_stdout + rev.diffopt.close_file + !!output_directory > 1)
+		die(_("--stdout, --output, and --output-directory are mutually exclusive"));
 
-	if (!use_stdout)
-		output_directory = set_outdir(prefix, output_directory);
-	else
+	if (use_stdout) {
 		setup_pager();
-
-	if (output_directory) {
+	} else if (rev.diffopt.close_file) {
+		/*
+		 * The diff code parsed --output; it has already opened the
+		 * file, but but we must instruct it not to close after each
+		 * diff.
+		 */
+		rev.diffopt.close_file = 0;
+	} else {
 		int saved;
+
+		if (!output_directory)
+			output_directory = config_output_directory;
+		output_directory = set_outdir(prefix, output_directory);
+
 		if (rev.diffopt.use_color != GIT_COLOR_ALWAYS)
 			rev.diffopt.use_color = GIT_COLOR_NEVER;
-		if (use_stdout)
-			die(_("standard output, or directory, which one?"));
 		/*
 		 * We consider <outdir> as 'outside of gitdir', therefore avoid
 		 * applying adjust_shared_perm in s-c-l-d.
@@ -2018,8 +2108,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	memset(&bases, 0, sizeof(bases));
-	if (base_commit) {
-		struct commit *base = get_base_commit(base_commit, list, nr);
+	base = get_base_commit(base_commit, list, nr);
+	if (base) {
 		reset_revision_walk();
 		clear_object_flags(UNINTERESTING);
 		prepare_bases(&bases, base, list, nr);
@@ -2036,7 +2126,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
-		make_cover_letter(&rev, use_stdout,
+		make_cover_letter(&rev, !!output_directory,
 				  origin, nr, list, branch_name, quiet);
 		print_bases(&bases, rev.diffopt.file);
 		print_signature(rev.diffopt.file);
@@ -2091,7 +2181,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			gen_message_id(&rev, oid_to_hex(&commit->object.oid));
 		}
 
-		if (!use_stdout &&
+		if (output_directory &&
 		    open_next_file(rev.numbered_files ? NULL : commit, NULL, &rev, quiet))
 			die(_("failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
@@ -2104,7 +2194,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		 * the log; when using one file per patch, we do
 		 * not want the extra blank line.
 		 */
-		if (!use_stdout)
+		if (output_directory)
 			rev.shown_one = 0;
 		if (shown) {
 			print_bases(&bases, rev.diffopt.file);
@@ -2115,7 +2205,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			else
 				print_signature(rev.diffopt.file);
 		}
-		if (!use_stdout)
+		if (output_directory)
 			fclose(rev.diffopt.file);
 	}
 	stop_progress(&progress);

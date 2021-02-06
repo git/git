@@ -420,6 +420,7 @@ const char *submodule_strategy_to_string(const struct submodule_update_strategy 
 void handle_ignore_submodules_arg(struct diff_options *diffopt,
 				  const char *arg)
 {
+	diffopt->flags.ignore_submodule_set = 1;
 	diffopt->flags.ignore_submodules = 0;
 	diffopt->flags.ignore_untracked_in_submodules = 0;
 	diffopt->flags.ignore_dirty_submodules = 0;
@@ -865,7 +866,8 @@ static void collect_changed_submodules(struct repository *r,
 		diff_rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 		diff_rev.diffopt.format_callback = collect_changed_submodules_cb;
 		diff_rev.diffopt.format_callback_data = &data;
-		diff_tree_combined_merge(commit, 1, &diff_rev);
+		diff_rev.dense_combined_merges = 1;
+		diff_tree_combined_merge(commit, &diff_rev);
 	}
 
 	reset_revision_walk();
@@ -1476,6 +1478,7 @@ static int get_next_submodule(struct child_process *cp,
 			strbuf_release(&submodule_prefix);
 			return 1;
 		} else {
+			struct strbuf empty_submodule_path = STRBUF_INIT;
 
 			fetch_task_release(task);
 			free(task);
@@ -1484,13 +1487,17 @@ static int get_next_submodule(struct child_process *cp,
 			 * An empty directory is normal,
 			 * the submodule is not initialized
 			 */
+			strbuf_addf(&empty_submodule_path, "%s/%s/",
+							spf->r->worktree,
+							ce->name);
 			if (S_ISGITLINK(ce->ce_mode) &&
-			    !is_empty_dir(ce->name)) {
+			    !is_empty_dir(empty_submodule_path.buf)) {
 				spf->result = 1;
 				strbuf_addf(err,
 					    _("Could not access submodule '%s'\n"),
 					    ce->name);
 			}
+			strbuf_release(&empty_submodule_path);
 		}
 	}
 

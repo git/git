@@ -405,12 +405,12 @@ static char *generate_fake_oid(void *data)
 {
 	static uint32_t counter = 1; /* avoid null oid */
 	const unsigned hashsz = the_hash_algo->rawsz;
-	unsigned char out[GIT_MAX_RAWSZ];
+	struct object_id oid;
 	char *hex = xmallocz(GIT_MAX_HEXSZ);
 
-	hashclr(out);
-	put_be32(out + hashsz - 4, counter++);
-	return hash_to_hex_algop_r(hex, out, the_hash_algo);
+	oidclr(&oid);
+	put_be32(oid.hash + hashsz - 4, counter++);
+	return oid_to_hex_r(hex, &oid);
 }
 
 static const char *anonymize_oid(const char *oid_hex)
@@ -923,7 +923,6 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 		if (!tag)
 			die("Tag %s points nowhere?", e->name);
 		return (struct commit *)tag;
-		break;
 	}
 	default:
 		return NULL;
@@ -1026,7 +1025,7 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				/*
 				 * Getting here means we have a commit which
 				 * was excluded by a negative refspec (e.g.
-				 * fast-export ^master master).  If we are
+				 * fast-export ^HEAD HEAD).  If we are
 				 * referencing excluded commits, set the ref
 				 * to the exact commit.  Otherwise, the user
 				 * wants the branch exported but every commit
@@ -1206,32 +1205,32 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			     N_("select handling of commit messages in an alternate encoding"),
 			     parse_opt_reencode_mode),
 		OPT_STRING(0, "export-marks", &export_filename, N_("file"),
-			     N_("Dump marks to this file")),
+			     N_("dump marks to this file")),
 		OPT_STRING(0, "import-marks", &import_filename, N_("file"),
-			     N_("Import marks from this file")),
+			     N_("import marks from this file")),
 		OPT_STRING(0, "import-marks-if-exists",
 			     &import_filename_if_exists,
 			     N_("file"),
-			     N_("Import marks from this file if it exists")),
+			     N_("import marks from this file if it exists")),
 		OPT_BOOL(0, "fake-missing-tagger", &fake_missing_tagger,
-			 N_("Fake a tagger when tags lack one")),
+			 N_("fake a tagger when tags lack one")),
 		OPT_BOOL(0, "full-tree", &full_tree,
-			 N_("Output full tree for each commit")),
+			 N_("output full tree for each commit")),
 		OPT_BOOL(0, "use-done-feature", &use_done_feature,
-			     N_("Use the done feature to terminate the stream")),
-		OPT_BOOL(0, "no-data", &no_data, N_("Skip output of blob data")),
+			     N_("use the done feature to terminate the stream")),
+		OPT_BOOL(0, "no-data", &no_data, N_("skip output of blob data")),
 		OPT_STRING_LIST(0, "refspec", &refspecs_list, N_("refspec"),
-			     N_("Apply refspec to exported refs")),
+			     N_("apply refspec to exported refs")),
 		OPT_BOOL(0, "anonymize", &anonymize, N_("anonymize output")),
 		OPT_CALLBACK_F(0, "anonymize-map", &anonymized_seeds, N_("from:to"),
 			       N_("convert <from> to <to> in anonymized output"),
 			       PARSE_OPT_NONEG, parse_opt_anonymize_map),
 		OPT_BOOL(0, "reference-excluded-parents",
-			 &reference_excluded_commits, N_("Reference parents which are not in fast-export stream by object id")),
+			 &reference_excluded_commits, N_("reference parents which are not in fast-export stream by object id")),
 		OPT_BOOL(0, "show-original-ids", &show_original_ids,
-			    N_("Show original object ids of blobs/commits")),
+			    N_("show original object ids of blobs/commits")),
 		OPT_BOOL(0, "mark-tags", &mark_tags,
-			    N_("Label tags with mark ids")),
+			    N_("label tags with mark ids")),
 
 		OPT_END()
 	};

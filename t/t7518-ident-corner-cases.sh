@@ -13,7 +13,7 @@ test_expect_success 'empty name and missing email' '
 		sane_unset GIT_AUTHOR_EMAIL &&
 		GIT_AUTHOR_NAME= &&
 		test_must_fail git commit --allow-empty -m foo 2>err &&
-		test_i18ngrep ! null err
+		test_i18ngrep ! "(null)" err
 	)
 '
 

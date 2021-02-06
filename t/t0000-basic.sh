@@ -430,7 +430,7 @@ test_expect_success 'GIT_SKIP_TESTS does not skip unmatched suite' "
 
 test_expect_success '--run basic' "
 	run_sub_test_lib_test run-basic \
-		'--run basic' --run='1 3 5' <<-\\EOF &&
+		'--run basic' --run='1,3,5' <<-\\EOF &&
 	for i in 1 2 3 4 5 6
 	do
 		test_expect_success \"passing test #\$i\" 'true'
@@ -472,7 +472,7 @@ test_expect_success '--run with a range' "
 
 test_expect_success '--run with two ranges' "
 	run_sub_test_lib_test run-two-ranges \
-		'--run with two ranges' --run='1-2 5-6' <<-\\EOF &&
+		'--run with two ranges' --run='1-2,5-6' <<-\\EOF &&
 	for i in 1 2 3 4 5 6
 	do
 		test_expect_success \"passing test #\$i\" 'true'
@@ -556,7 +556,7 @@ test_expect_success '--run with basic negation' "
 
 test_expect_success '--run with two negations' "
 	run_sub_test_lib_test run-two-neg \
-		'--run with two negations' --run='"'!3 !6'"' <<-\\EOF &&
+		'--run with two negations' --run='"'!3,!6'"' <<-\\EOF &&
 	for i in 1 2 3 4 5 6
 	do
 		test_expect_success \"passing test #\$i\" 'true'
@@ -577,7 +577,7 @@ test_expect_success '--run with two negations' "
 
 test_expect_success '--run a range and negation' "
 	run_sub_test_lib_test run-range-and-neg \
-		'--run a range and negation' --run='"'-4 !2'"' <<-\\EOF &&
+		'--run a range and negation' --run='"'-4,!2'"' <<-\\EOF &&
 	for i in 1 2 3 4 5 6
 	do
 		test_expect_success \"passing test #\$i\" 'true'
@@ -620,7 +620,7 @@ test_expect_success '--run range negation' "
 test_expect_success '--run include, exclude and include' "
 	run_sub_test_lib_test run-inc-neg-inc \
 		'--run include, exclude and include' \
-		--run='"'1-5 !1-3 2'"' <<-\\EOF &&
+		--run='"'1-5,!1-3,2'"' <<-\\EOF &&
 	for i in 1 2 3 4 5 6
 	do
 		test_expect_success \"passing test #\$i\" 'true'
@@ -664,7 +664,7 @@ test_expect_success '--run include, exclude and include, comma separated' "
 test_expect_success '--run exclude and include' "
 	run_sub_test_lib_test run-neg-inc \
 		'--run exclude and include' \
-		--run='"'!3- 5'"' <<-\\EOF &&
+		--run='"'!3-,5'"' <<-\\EOF &&
 	for i in 1 2 3 4 5 6
 	do
 		test_expect_success \"passing test #\$i\" 'true'
@@ -705,7 +705,31 @@ test_expect_success '--run empty selectors' "
 	EOF
 "
 
-test_expect_success '--run invalid range start' "
+test_expect_success '--run substring selector' "
+	run_sub_test_lib_test run-substring-selector \
+		'--run empty selectors' \
+		--run='relevant' <<-\\EOF &&
+	test_expect_success \"relevant test\" 'true'
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"other test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-substring-selector <<-\\EOF
+	> ok 1 - relevant test
+	> ok 2 # skip other test #1 (--run)
+	> ok 3 # skip other test #2 (--run)
+	> ok 4 # skip other test #3 (--run)
+	> ok 5 # skip other test #4 (--run)
+	> ok 6 # skip other test #5 (--run)
+	> ok 7 # skip other test #6 (--run)
+	> # passed all 7 test(s)
+	> 1..7
+	EOF
+"
+
+test_expect_success '--run keyword selection' "
 	run_sub_test_lib_test_err run-inv-range-start \
 		'--run invalid range start' \
 		--run='a-5' <<-\\EOF &&
@@ -732,21 +756,6 @@ test_expect_success '--run invalid range end' "
 	> FATAL: Unexpected exit with code 1
 	EOF_OUT
 	> error: --run: invalid non-numeric in range end: '1-z'
-	EOF_ERR
-"
-
-test_expect_success '--run invalid selector' "
-	run_sub_test_lib_test_err run-inv-selector \
-		'--run invalid selector' \
-		--run='1?' <<-\\EOF &&
-	test_expect_success \"passing test #1\" 'true'
-	test_done
-	EOF
-	check_sub_test_lib_test_err run-inv-selector \
-		<<-\\EOF_OUT 3<<-\\EOF_ERR
-	> FATAL: Unexpected exit with code 1
-	EOF_OUT
-	> error: --run: invalid non-numeric in test selector: '1?'
 	EOF_ERR
 "
 
@@ -828,6 +837,27 @@ test_expect_success 'tests clean up after themselves' '
 if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" -a $clean != yes
 then
 	say "bug in test framework: basic cleanup command does not work reliably"
+	exit 1
+fi
+
+test_lazy_prereq NESTED_INNER '
+	>inner &&
+	rm -f outer
+'
+test_lazy_prereq NESTED_PREREQ '
+	>outer &&
+	test_have_prereq NESTED_INNER &&
+	echo "can create new file in cwd" >file &&
+	test -f outer &&
+	test ! -f inner
+'
+test_expect_success NESTED_PREREQ 'evaluating nested lazy prereqs dont interfere with each other' '
+	nestedworks=yes
+'
+
+if test -z "$GIT_TEST_FAIL_PREREQS_INTERNAL" && test "$nestedworks" != yes
+then
+	say 'bug in test framework: nested lazy prerequisites do not work'
 	exit 1
 fi
 
@@ -1191,7 +1221,7 @@ test_expect_success 'writing this tree with --missing-ok' '
 test_expect_success 'git read-tree followed by write-tree should be idempotent' '
 	rm -f .git/index &&
 	git read-tree $tree &&
-	test -f .git/index &&
+	test_path_is_file .git/index &&
 	newtree=$(git write-tree) &&
 	test "$newtree" = "$tree"
 '

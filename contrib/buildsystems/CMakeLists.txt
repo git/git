@@ -4,17 +4,25 @@
 
 #[[
 
-Instructions to run CMake:
+Instructions how to use this in Visual Studio:
 
-cmake `relative-path-to-CMakeLists.txt` -DCMAKE_BUILD_TYPE=Release
-Eg.
-From the root of git source tree
-	`cmake contrib/buildsystems/ `
-This will build the git binaries at the root
+Open the worktree as a folder. Visual Studio 2019 and later will detect
+the CMake configuration automatically and set everything up for you,
+ready to build. You can then run the tests in `t/` via a regular Git Bash.
 
-For out of source builds, say build in 'git/git-build/'
-	`mkdir git-build;cd git-build; cmake ../contrib/buildsystems/`
-This will build the git binaries in git-build directory
+Note: Visual Studio also has the option of opening `CMakeLists.txt`
+directly; Using this option, Visual Studio will not find the source code,
+though, therefore the `File>Open>Folder...` option is preferred.
+
+Instructions to run CMake manually:
+
+    mkdir -p contrib/buildsystems/out
+    cd contrib/buildsystems/out
+    cmake ../ -DCMAKE_BUILD_TYPE=Release
+
+This will build the git binaries in contrib/buildsystems/out
+directory (our top-level .gitignore file knows to ignore contents of
+this directory).
 
 Possible build configurations(-DCMAKE_BUILD_TYPE) with corresponding
 compiler flags
@@ -40,8 +48,19 @@ cmake_minimum_required(VERSION 3.14)
 
 #set the source directory to root of git
 set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
+if(WIN32)
+	set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg")
+	if(MSVC AND NOT EXISTS ${VCPKG_DIR})
+		message("Initializing vcpkg and building the Git's dependencies (this will take a while...)")
+		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat)
+	endif()
+	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/x64-windows")
 
-find_program(SH_EXE sh)
+	# In the vcpkg edition, we need this to be able to link to libcurl
+	set(CURL_NO_CURL_CMAKE ON)
+endif()
+
+find_program(SH_EXE sh PATHS "C:/Program Files/Git/bin")
 if(NOT SH_EXE)
 	message(FATAL_ERROR "sh: shell interpreter was not found in your path, please install one."
 			"On Windows, you can get it as part of 'Git for Windows' install at https://gitforwindows.org/")
@@ -95,6 +114,16 @@ macro(parse_makefile_for_scripts list_var regex lang)
 	endif()
 endmacro()
 
+macro(parse_makefile_for_executables list_var regex)
+	file(STRINGS ${CMAKE_SOURCE_DIR}/Makefile ${list_var} REGEX "^${regex} \\+= git-(.*)")
+	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
+	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
+	string(REPLACE "git-" "" ${list_var} ${${list_var}}) #strip `git-` prefix
+	string(REPLACE "\$X" ";" ${list_var} ${${list_var}}) #strip $X, ; is for converting the string into a list
+	list(TRANSFORM ${list_var} STRIP) #remove trailing/leading whitespaces for each element in list
+	list(REMOVE_ITEM ${list_var} "") #remove empty list elements
+endmacro()
+
 include(CheckTypeSize)
 include(CheckCSourceRuns)
 include(CheckCSourceCompiles)
@@ -145,7 +174,11 @@ endif()
 
 find_program(MSGFMT_EXE msgfmt)
 if(NOT MSGFMT_EXE)
-	message(WARNING "Text Translations won't be build")
+	set(MSGFMT_EXE ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg/downloads/tools/msys2/msys64/usr/bin/msgfmt.exe)
+	if(NOT EXISTS ${MSGFMT_EXE})
+		message(WARNING "Text Translations won't be built")
+		unset(MSGFMT_EXE)
+	endif()
 endif()
 
 #Force all visual studio outputs to CMAKE_BINARY_DIR
@@ -606,6 +639,8 @@ if(WIN32)
 		target_link_options(common-main PUBLIC -municode -Wl,-nxcompat -Wl,-dynamicbase -Wl,-entry:wmainCRTStartup -Wl,invalidcontinue.obj)
 	elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 		target_link_options(common-main PUBLIC /IGNORE:4217 /IGNORE:4049 /NOLOGO /ENTRY:wmainCRTStartup /SUBSYSTEM:CONSOLE invalidcontinue.obj)
+	else()
+		message(FATAL_ERROR "Unhandled compiler: ${CMAKE_C_COMPILER_ID}")
 	endif()
 elseif(UNIX)
 	target_link_libraries(common-main pthread rt)
@@ -648,10 +683,7 @@ if(CURL_FOUND)
 	endif()
 endif()
 
-set(git_builtin_extra
-	cherry cherry-pick format-patch fsck-objects
-	init merge-subtree restore show
-	stage status switch whatchanged)
+parse_makefile_for_executables(git_builtin_extra "BUILT_INS")
 
 #Creating hardlinks
 foreach(s ${git_SOURCES} ${git_builtin_extra})
@@ -928,6 +960,9 @@ file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "X='${EXE_EXTENSION}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_GETTEXT='${NO_GETTEXT}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "RUNTIME_PREFIX='${RUNTIME_PREFIX}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_PYTHON='${NO_PYTHON}'\n")
+if(WIN32)
+	file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")
+endif()
 
 #Make the tests work when building out of the source tree
 get_filename_component(CACHE_PATH ${CMAKE_CURRENT_LIST_DIR}/../../CMakeCache.txt ABSOLUTE)
@@ -938,7 +973,7 @@ if(NOT ${CMAKE_BINARY_DIR}/CMakeCache.txt STREQUAL ${CACHE_PATH})
 	file(WRITE ${CMAKE_BINARY_DIR}/CTestCustom.cmake
 		"file(STRINGS ${CMAKE_SOURCE_DIR}/t/test-lib.sh GIT_BUILD_DIR_REPL REGEX \"GIT_BUILD_DIR=(.*)\")\n"
 		"file(STRINGS ${CMAKE_SOURCE_DIR}/t/test-lib.sh content NEWLINE_CONSUME)\n"
-		"string(REPLACE \"\${GIT_BUILD_DIR_REPL}\" \"GIT_BUILD_DIR=\\\"$TEST_DIRECTORY\\\"/../${BUILD_DIR_RELATIVE}\" content \"\${content}\")\n"
+		"string(REPLACE \"\${GIT_BUILD_DIR_REPL}\" \"GIT_BUILD_DIR=\\\"$TEST_DIRECTORY/../${BUILD_DIR_RELATIVE}\\\"\" content \"\${content}\")\n"
 		"file(WRITE ${CMAKE_SOURCE_DIR}/t/test-lib.sh \${content})")
 	#misc copies
 	file(COPY ${CMAKE_SOURCE_DIR}/t/chainlint.sed DESTINATION ${CMAKE_BINARY_DIR}/t/)

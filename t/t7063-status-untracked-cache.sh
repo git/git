@@ -2,6 +2,9 @@
 
 test_description='test untracked cache'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # On some filesystems (e.g. FreeBSD's ext2 and ufs) directory mtime
@@ -475,7 +478,7 @@ EOF
 test_expect_success 'set up sparse checkout' '
 	echo "done/[a-z]*" >.git/info/sparse-checkout &&
 	test_config core.sparsecheckout true &&
-	git checkout master &&
+	git checkout main &&
 	git update-index --force-untracked-cache &&
 	git status --porcelain >/dev/null && # prime the cache
 	test_path_is_missing done/.gitignore &&
@@ -734,13 +737,13 @@ test_expect_success 'test ident field is working' '
 test_expect_success 'untracked cache survives a checkout' '
 	git commit --allow-empty -m empty &&
 	test-tool dump-untracked-cache >../before &&
-	test_when_finished  "git checkout master" &&
+	test_when_finished  "git checkout main" &&
 	git checkout -b other_branch &&
 	test-tool dump-untracked-cache >../after &&
 	test_cmp ../before ../after &&
 	test_commit test &&
 	test-tool dump-untracked-cache >../before &&
-	git checkout master &&
+	git checkout main &&
 	test-tool dump-untracked-cache >../after &&
 	test_cmp ../before ../after
 '
@@ -775,7 +778,7 @@ test_expect_success SYMLINKS '"status" after symlink replacement should be clean
 	git checkout HEAD~ &&
 	status_is_clean &&
 	status_is_clean &&
-	git checkout master &&
+	git checkout main &&
 	avoid_racy &&
 	status_is_clean &&
 	status_is_clean
@@ -786,7 +789,7 @@ test_expect_success SYMLINKS '"status" after symlink replacement should be clean
 	git checkout HEAD~ &&
 	status_is_clean &&
 	status_is_clean &&
-	git checkout master &&
+	git checkout main &&
 	avoid_racy &&
 	status_is_clean &&
 	status_is_clean
@@ -810,7 +813,7 @@ test_expect_success '"status" after file replacement should be clean with UC=tru
 	git checkout HEAD~ &&
 	status_is_clean &&
 	status_is_clean &&
-	git checkout master &&
+	git checkout main &&
 	avoid_racy &&
 	status_is_clean &&
 	test-tool dump-untracked-cache >../actual &&
@@ -828,7 +831,7 @@ test_expect_success '"status" after file replacement should be clean with UC=fal
 	git checkout HEAD~ &&
 	status_is_clean &&
 	status_is_clean &&
-	git checkout master &&
+	git checkout main &&
 	avoid_racy &&
 	status_is_clean &&
 	status_is_clean

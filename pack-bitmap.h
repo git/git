@@ -73,7 +73,13 @@ void bitmap_writer_set_checksum(unsigned char *sha1);
 void bitmap_writer_build_type_index(struct packing_data *to_pack,
 				    struct pack_idx_entry **index,
 				    uint32_t index_nr);
-void bitmap_writer_reuse_bitmaps(struct packing_data *to_pack);
+uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
+				struct packing_data *mapping);
+int rebuild_bitmap(const uint32_t *reposition,
+		   struct ewah_bitmap *source,
+		   struct bitmap *dest);
+struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
+				      struct commit *commit);
 void bitmap_writer_select_commits(struct commit **indexed_commits,
 		unsigned int indexed_commits_nr, int max_bitmaps);
 void bitmap_writer_build(struct packing_data *to_pack);

@@ -159,11 +159,4 @@ void strbuf_worktree_ref(const struct worktree *wt,
 			 struct strbuf *sb,
 			 const char *refname);
 
-/*
- * Return a refname suitable for access from the current ref
- * store. The result will be destroyed at the next call.
- */
-const char *worktree_ref(const struct worktree *wt,
-			 const char *refname);
-
 #endif

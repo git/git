@@ -2,6 +2,9 @@
 
 test_description='combined diff'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh
 
@@ -115,7 +118,7 @@ test_expect_success 'check --cc --raw with forty trees' '
 '
 
 test_expect_success 'setup combined ignore spaces' '
-	git checkout master &&
+	git checkout main &&
 	>test &&
 	git add test &&
 	git commit -m initial &&
@@ -143,7 +146,7 @@ test_expect_success 'setup combined ignore spaces' '
 	EOF
 	git commit -m "test other space changes" -a &&
 
-	test_must_fail git merge master &&
+	test_must_fail git merge main &&
 	tr -d Q <<-\EOF >test &&
 	eol spaces Q
 	space  change
@@ -404,7 +407,7 @@ test_expect_success 'combine diff missing delete bug' '
 test_expect_success 'combine diff gets tree sorting right' '
 	# create a directory and a file that sort differently in trees
 	# versus byte-wise (implied "/" sorts after ".")
-	git checkout -f master &&
+	git checkout -f main &&
 	mkdir foo &&
 	echo base >foo/one &&
 	echo base >foo/two &&
@@ -414,9 +417,9 @@ test_expect_success 'combine diff gets tree sorting right' '
 
 	# one side modifies a file in the directory, along with the root
 	# file...
-	echo master >foo/one &&
-	echo master >foo.ext &&
-	git commit -a -m master &&
+	echo main >foo/one &&
+	echo main >foo.ext &&
+	git commit -a -m main &&
 
 	# the other side modifies the other file in the directory
 	git checkout -b other HEAD^ &&
@@ -426,7 +429,7 @@ test_expect_success 'combine diff gets tree sorting right' '
 	# And now we merge. The files in the subdirectory will resolve cleanly,
 	# meaning that a combined diff will not find them interesting. But it
 	# will find the tree itself interesting, because it had to be merged.
-	git checkout master &&
+	git checkout main &&
 	git merge other &&
 
 	printf "MM\tfoo\n" >expect &&

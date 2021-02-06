@@ -21,10 +21,14 @@ repack_into_n () {
 	mkdir staging &&
 
 	git rev-list --first-parent HEAD |
-	sed -n '1~5p' |
-	head -n "$1" |
-	perl -e 'print reverse <>' \
-	>pushes
+	perl -e '
+		my $n = shift;
+		while (<>) {
+			last unless @commits < $n;
+			push @commits, $_ if $. % 5 == 1;
+		}
+		print reverse @commits;
+	' "$1" >pushes
 
 	# create base packfile
 	head -n 1 pushes |

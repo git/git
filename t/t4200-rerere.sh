@@ -8,7 +8,7 @@ test_description='git rerere
 ! [fifth] version1
  ! [first] first
   ! [fourth] version1
-   ! [master] initial
+   ! [main] initial
     ! [second] prefer first over second
      ! [third] version2
 ------
@@ -19,8 +19,11 @@ test_description='git rerere
     -  [second] prefer first over second
  +  +  [first] first
     +  [second^] second
-++++++ [master] initial
+++++++ [main] initial
 '
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -57,7 +60,7 @@ test_expect_success 'setup' '
 	test_tick &&
 	git commit -q -a -m first &&
 
-	git checkout -b second master &&
+	git checkout -b second main &&
 	git show first:a1 |
 	sed -e "s/To die, t/To die! T/" -e "s/Some title/Some Title/" >a1 &&
 	echo "* END *" >>a1 &&
@@ -168,7 +171,7 @@ test_expect_success 'first postimage wins' '
 
 	oldmtimepost=$(test-tool chmtime --get -60 $rr/postimage) &&
 
-	git checkout -b third master &&
+	git checkout -b third main &&
 	git show second^:a1 | sed "s/To die: t/To die! T/" >a1 &&
 	git commit -q -a -m third &&
 
@@ -580,13 +583,13 @@ test_expect_success 'multiple identical conflicts' '
 test_expect_success 'rerere with unexpected conflict markers does not crash' '
 	git reset --hard &&
 
-	git checkout -b branch-1 master &&
+	git checkout -b branch-1 main &&
 	echo "bar" >test &&
 	git add test &&
 	git commit -q -m two &&
 
 	git reset --hard &&
-	git checkout -b branch-2 master &&
+	git checkout -b branch-2 main &&
 	echo "foo" >test &&
 	git add test &&
 	git commit -q -a -m one &&
@@ -601,7 +604,7 @@ test_expect_success 'rerere with unexpected conflict markers does not crash' '
 test_expect_success 'rerere with inner conflict markers' '
 	git reset --hard &&
 
-	git checkout -b A master &&
+	git checkout -b A main &&
 	echo "bar" >test &&
 	git add test &&
 	git commit -q -m two &&
@@ -610,7 +613,7 @@ test_expect_success 'rerere with inner conflict markers' '
 	git commit -q -m three &&
 
 	git reset --hard &&
-	git checkout -b B master &&
+	git checkout -b B main &&
 	echo "foo" >test &&
 	git add test &&
 	git commit -q -a -m one &&
@@ -651,11 +654,11 @@ test_expect_success 'setup simple stage 1 handling' '
 		git add original &&
 		git commit -m original &&
 
-		git checkout -b A master &&
+		git checkout -b A main &&
 		git mv original A &&
 		git commit -m "rename to A" &&
 
-		git checkout -b B master &&
+		git checkout -b B main &&
 		git mv original B &&
 		git commit -m "rename to B"
 	)

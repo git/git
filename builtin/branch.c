@@ -202,6 +202,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	int remote_branch = 0;
 	struct strbuf bname = STRBUF_INIT;
 	unsigned allowed_interpret;
+	struct string_list refs_to_delete = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
+	int branch_name_pos;
 
 	switch (kinds) {
 	case FILTER_REFS_REMOTES:
@@ -219,6 +222,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	default:
 		die(_("cannot use -a with -d"));
 	}
+	branch_name_pos = strcspn(fmt, "%");
 
 	if (!force) {
 		head_rev = lookup_commit_reference(the_repository, &head_oid);
@@ -265,29 +269,34 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			goto next;
 		}
 
-		if (delete_ref(NULL, name, is_null_oid(&oid) ? NULL : &oid,
-			       REF_NO_DEREF)) {
-			error(remote_branch
-			      ? _("Error deleting remote-tracking branch '%s'")
-			      : _("Error deleting branch '%s'"),
-			      bname.buf);
-			ret = 1;
-			goto next;
-		}
-		if (!quiet) {
-			printf(remote_branch
-			       ? _("Deleted remote-tracking branch %s (was %s).\n")
-			       : _("Deleted branch %s (was %s).\n"),
-			       bname.buf,
-			       (flags & REF_ISBROKEN) ? "broken"
-			       : (flags & REF_ISSYMREF) ? target
-			       : find_unique_abbrev(&oid, DEFAULT_ABBREV));
-		}
-		delete_branch_config(bname.buf);
+		item = string_list_append(&refs_to_delete, name);
+		item->util = xstrdup((flags & REF_ISBROKEN) ? "broken"
+				    : (flags & REF_ISSYMREF) ? target
+				    : find_unique_abbrev(&oid, DEFAULT_ABBREV));
 
 	next:
 		free(target);
 	}
+
+	if (delete_refs(NULL, &refs_to_delete, REF_NO_DEREF))
+		ret = 1;
+
+	for_each_string_list_item(item, &refs_to_delete) {
+		char *describe_ref = item->util;
+		char *name = item->string;
+		if (!ref_exists(name)) {
+			char *refname = name + branch_name_pos;
+			if (!quiet)
+				printf(remote_branch
+					? _("Deleted remote-tracking branch %s (was %s).\n")
+					: _("Deleted branch %s (was %s).\n"),
+					name + branch_name_pos, describe_ref);
+
+			delete_branch_config(refname);
+		}
+		free(describe_ref);
+	}
+	string_list_clear(&refs_to_delete, 0);
 
 	free(name);
 	strbuf_release(&bname);
@@ -538,7 +547,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 		strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 			    oldref.buf, newref.buf);
 
-	if (!copy && rename_ref(oldref.buf, newref.buf, logmsg.buf))
+	if (!copy &&
+	    (!head || strcmp(oldname, head) || !is_null_oid(&head_oid)) &&
+	    rename_ref(oldref.buf, newref.buf, logmsg.buf))
 		die(_("Branch rename failed"));
 	if (copy && copy_existing_ref(oldref.buf, newref.buf, logmsg.buf))
 		die(_("Branch copy failed"));
@@ -724,7 +735,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		print_current_branch_name();
 		return 0;
 	} else if (list) {
-		/*  git branch --local also shows HEAD when it is detached */
+		/*  git branch --list also shows HEAD when it is detached */
 		if ((filter.kind & FILTER_REFS_BRANCHES) && filter.detached)
 			filter.kind |= FILTER_REFS_DETACHED_HEAD;
 		filter.name_patterns = argv;
@@ -737,7 +748,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		 */
 		if (!sorting)
 			sorting = ref_default_sorting();
-		ref_sorting_icase_all(sorting, icase);
+		ref_sorting_set_sort_flags_all(sorting, REF_SORTING_ICASE, icase);
+		ref_sorting_set_sort_flags_all(
+			sorting, REF_SORTING_DETACHED_HEAD_FIRST, 1);
 		print_ref_list(&filter, sorting, &format);
 		print_columns(&output, colopts, NULL);
 		string_list_clear(&output, 0);
@@ -829,10 +842,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			die(_("Branch '%s' has no upstream information"), branch->name);
 
 		strbuf_addf(&buf, "branch.%s.remote", branch->name);
-		git_config_set_multivar(buf.buf, NULL, NULL, 1);
+		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "branch.%s.merge", branch->name);
-		git_config_set_multivar(buf.buf, NULL, NULL, 1);
+		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 		strbuf_release(&buf);
 	} else if (argc > 0 && argc <= 2) {
 		if (filter.kind != FILTER_REFS_BRANCHES)

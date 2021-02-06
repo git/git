@@ -5,7 +5,11 @@
 
 test_description='Various diff formatting options'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 test_expect_success setup '
 
@@ -174,6 +178,7 @@ process_diffs () {
 V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
 while read magic cmd
 do
+	status=success
 	case "$magic" in
 	'' | '#'*)
 		continue ;;
@@ -182,6 +187,10 @@ do
 		label="$magic-$cmd"
 		case "$magic" in
 		noellipses) ;;
+		failure)
+			status=failure
+			magic=
+			label="$cmd" ;;
 		*)
 			BUG "unknown magic $magic" ;;
 		esac ;;
@@ -194,7 +203,7 @@ do
 	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
-	test_expect_success "git $cmd # magic is ${magic:-(not used)}" '
+	test_expect_$status "git $cmd # magic is ${magic:-(not used)}" '
 		{
 			echo "$ git $cmd"
 			case "$magic" in
@@ -322,8 +331,12 @@ log --no-diff-merges -p --first-parent master
 log --diff-merges=off -p --first-parent master
 log --first-parent --diff-merges=off -p master
 log -p --first-parent master
+log -p --diff-merges=first-parent master
+log --diff-merges=first-parent master
 log -m -p --first-parent master
 log -m -p master
+log --cc -m -p master
+log -c -m -p master
 log -SF master
 log -S F master
 log -SF -p master
@@ -333,6 +346,7 @@ log -SF master --max-count=2
 log -GF master
 log -GF -p master
 log -GF -p --pickaxe-all master
+log -IA -IB -I1 -I2 -p master
 log --decorate --all
 log --decorate=full --all
 
@@ -471,6 +485,45 @@ test_expect_success 'diff-tree --stdin with log formatting' '
 	EOF
 	git rev-list master | git diff-tree --stdin --format=%s -s >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'diff -I<regex>: setup' '
+	git checkout master &&
+	test_seq 50 >file0 &&
+	git commit -m "Set up -I<regex> test file" file0 &&
+	test_seq 50 | sed -e "s/13/ten and three/" -e "/7\$/d" >file0 &&
+	echo >>file0
+'
+test_expect_success 'diff -I<regex>' '
+	git diff --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >actual &&
+	cat >expect <<-\EOF &&
+	diff --git a/file0 b/file0
+	--- a/file0
+	+++ b/file0
+	@@ -34,7 +31,6 @@
+	 34
+	 35
+	 36
+	-37
+	 38
+	 39
+	 40
+	EOF
+	compare_diff_patch expect actual
+'
+
+test_expect_success 'diff -I<regex> --stat' '
+	git diff --stat --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >actual &&
+	cat >expect <<-\EOF &&
+	 file0 | 1 -
+	 1 file changed, 1 deletion(-)
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'diff -I<regex>: detect malformed regex' '
+	test_expect_code 129 git diff --ignore-matching-lines="^[124-9" 2>error &&
+	test_i18ngrep "invalid regex given to -I: " error
 '
 
 test_done

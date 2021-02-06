@@ -55,6 +55,18 @@ Valid object types are:
 
 Type 5 is reserved for future expansion. Type 0 is invalid.
 
+=== Size encoding
+
+This document uses the following "size encoding" of non-negative
+integers: From each byte, the seven least significant bits are
+used to form the resulting integer. As long as the most significant
+bit is 1, this process continues; the byte with MSB 0 provides the
+last seven bits.  The seven-bit chunks are concatenated. Later
+values are more significant.
+
+This size encoding should not be confused with the "offset encoding",
+which is also used in this document.
+
 === Deltified representation
 
 Conceptually there are only four object types: commit, tree, tag and
@@ -73,7 +85,10 @@ Ref-delta can also refer to an object outside the pack (i.e. the
 so-called "thin pack"). When stored on disk however, the pack should
 be self contained to avoid cyclic dependency.
 
-The delta data is a sequence of instructions to reconstruct an object
+The delta data starts with the size of the base object and the
+size of the object to be reconstructed. These sizes are
+encoded using the size encoding from above.  The remainder of
+the delta data is a sequence of instructions to reconstruct the object
 from the base object. If the base object is deltified, it must be
 converted to canonical form first. Each instruction appends more and
 more data to the target object until it's complete. There are two

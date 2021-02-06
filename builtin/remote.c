@@ -191,11 +191,12 @@ static int add(int argc, const char **argv)
 	url = argv[1];
 
 	remote = remote_get(name);
-	if (remote_is_configured(remote, 1))
-		die(_("remote %s already exists."), name);
+	if (remote_is_configured(remote, 1)) {
+		error(_("remote %s already exists."), name);
+		exit(3);
+	}
 
-	strbuf_addf(&buf2, "refs/heads/test:refs/remotes/%s/test", name);
-	if (!valid_fetch_refspec(buf2.buf))
+	if (!valid_remote_name(name))
 		die(_("'%s' is not a valid remote name"), name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
@@ -686,21 +687,23 @@ static int mv(int argc, const char **argv)
 	rename.remote_branches = &remote_branches;
 
 	oldremote = remote_get(rename.old_name);
-	if (!remote_is_configured(oldremote, 1))
-		die(_("No such remote: '%s'"), rename.old_name);
+	if (!remote_is_configured(oldremote, 1)) {
+		error(_("No such remote: '%s'"), rename.old_name);
+		exit(2);
+	}
 
 	if (!strcmp(rename.old_name, rename.new_name) && oldremote->origin != REMOTE_CONFIG)
 		return migrate_file(oldremote);
 
 	newremote = remote_get(rename.new_name);
-	if (remote_is_configured(newremote, 1))
-		die(_("remote %s already exists."), rename.new_name);
+	if (remote_is_configured(newremote, 1)) {
+		error(_("remote %s already exists."), rename.new_name);
+		exit(3);
+	}
 
-	strbuf_addf(&buf, "refs/heads/test:refs/remotes/%s/test", rename.new_name);
-	if (!valid_fetch_refspec(buf.buf))
+	if (!valid_remote_name(rename.new_name))
 		die(_("'%s' is not a valid remote name"), rename.new_name);
 
-	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s", rename.old_name);
 	strbuf_addf(&buf2, "remote.%s", rename.new_name);
 	if (git_config_rename_section(buf.buf, buf2.buf) < 1)
@@ -709,7 +712,7 @@ static int mv(int argc, const char **argv)
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
-	git_config_set_multivar(buf.buf, NULL, NULL, 1);
+	git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
 	for (i = 0; i < oldremote->fetch.raw_nr; i++) {
 		char *ptr;
@@ -829,8 +832,10 @@ static int rm(int argc, const char **argv)
 		usage_with_options(builtin_remote_rm_usage, options);
 
 	remote = remote_get(argv[1]);
-	if (!remote_is_configured(remote, 1))
-		die(_("No such remote: '%s'"), argv[1]);
+	if (!remote_is_configured(remote, 1)) {
+		error(_("No such remote: '%s'"), argv[1]);
+		exit(2);
+	}
 
 	known_remotes.to_delete = remote;
 	for_each_remote(add_known_remote, &known_remotes);
@@ -1486,7 +1491,8 @@ static int update(int argc, const char **argv)
 
 static int remove_all_fetch_refspecs(const char *key)
 {
-	return git_config_set_multivar_gently(key, NULL, NULL, 1);
+	return git_config_set_multivar_gently(key, NULL, NULL,
+					      CONFIG_FLAGS_MULTI_REPLACE);
 }
 
 static void add_branches(struct remote *remote, const char **branches,
@@ -1511,8 +1517,10 @@ static int set_remote_branches(const char *remotename, const char **branches,
 	strbuf_addf(&key, "remote.%s.fetch", remotename);
 
 	remote = remote_get(remotename);
-	if (!remote_is_configured(remote, 1))
-		die(_("No such remote '%s'"), remotename);
+	if (!remote_is_configured(remote, 1)) {
+		error(_("No such remote '%s'"), remotename);
+		exit(2);
+	}
 
 	if (!add_mode && remove_all_fetch_refspecs(key.buf)) {
 		strbuf_release(&key);
@@ -1565,8 +1573,10 @@ static int get_url(int argc, const char **argv)
 	remotename = argv[0];
 
 	remote = remote_get(remotename);
-	if (!remote_is_configured(remote, 1))
-		die(_("No such remote '%s'"), remotename);
+	if (!remote_is_configured(remote, 1)) {
+		error(_("No such remote '%s'"), remotename);
+		exit(2);
+	}
 
 	url_nr = 0;
 	if (push_mode) {
@@ -1633,8 +1643,10 @@ static int set_url(int argc, const char **argv)
 		oldurl = newurl;
 
 	remote = remote_get(remotename);
-	if (!remote_is_configured(remote, 1))
-		die(_("No such remote '%s'"), remotename);
+	if (!remote_is_configured(remote, 1)) {
+		error(_("No such remote '%s'"), remotename);
+		exit(2);
+	}
 
 	if (push_mode) {
 		strbuf_addf(&name_buf, "remote.%s.pushurl", remotename);
@@ -1675,7 +1687,8 @@ static int set_url(int argc, const char **argv)
 	if (!delete_mode)
 		git_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
 	else
-		git_config_set_multivar(name_buf.buf, NULL, oldurl, 1);
+		git_config_set_multivar(name_buf.buf, NULL, oldurl,
+					CONFIG_FLAGS_MULTI_REPLACE);
 out:
 	strbuf_release(&name_buf);
 	return 0;

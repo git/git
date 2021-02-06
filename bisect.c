@@ -6,7 +6,7 @@
 #include "refs.h"
 #include "list-objects.h"
 #include "quote.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "run-command.h"
 #include "log-tree.h"
 #include "bisect.h"
@@ -103,8 +103,10 @@ static int count_interesting_parents(struct commit *commit, unsigned bisect_flag
 	return count;
 }
 
-static inline int halfway(struct commit_list *p, int nr)
+static inline int approx_halfway(struct commit_list *p, int nr)
 {
+	int diff;
+
 	/*
 	 * Don't short-cut something we are not going to return!
 	 */
@@ -113,13 +115,22 @@ static inline int halfway(struct commit_list *p, int nr)
 	if (DEBUG_BISECT)
 		return 0;
 	/*
-	 * 2 and 3 are halfway of 5.
+	 * For small number of commits 2 and 3 are halfway of 5, and
 	 * 3 is halfway of 6 but 2 and 4 are not.
 	 */
-	switch (2 * weight(p) - nr) {
+	diff = 2 * weight(p) - nr;
+	switch (diff) {
 	case -1: case 0: case 1:
 		return 1;
 	default:
+		/*
+		 * For large number of commits we are not so strict, it's
+		 * good enough if it's within ~0.1% of the halfway point,
+		 * e.g. 5000 is exactly halfway of 10000, but we consider
+		 * the values [4996, 5004] as halfway as well.
+		 */
+		if (abs(diff) < nr / 1024)
+			return 1;
 		return 0;
 	}
 }
@@ -321,8 +332,9 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		weight_set(p, count_distance(p));
 		clear_distance(list);
 
-		/* Does it happen to be at exactly half-way? */
-		if (!(bisect_flags & FIND_BISECTION_ALL) && halfway(p, nr))
+		/* Does it happen to be at half-way? */
+		if (!(bisect_flags & FIND_BISECTION_ALL) &&
+		      approx_halfway(p, nr))
 			return p;
 		counted++;
 	}
@@ -362,8 +374,9 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			else
 				weight_set(p, weight(q));
 
-			/* Does it happen to be at exactly half-way? */
-			if (!(bisect_flags & FIND_BISECTION_ALL) && halfway(p, nr))
+			/* Does it happen to be at half-way? */
+			if (!(bisect_flags & FIND_BISECTION_ALL) &&
+			      approx_halfway(p, nr))
 				return p;
 		}
 	}
@@ -988,8 +1001,11 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
  * the bisection process finished successfully.
  * In this case the calling function or command should not turn a
  * BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND return code into an error or a non zero exit code.
- * If no_checkout is non-zero, the bisection process does not
- * checkout the trial commit but instead simply updates BISECT_HEAD.
+ *
+ * Checking BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND
+ * in bisect_helper::bisect_next() and only transforming it to 0 at
+ * the end of bisect_helper::cmd_bisect__helper() helps bypassing
+ * all the code related to finding a commit to test.
  */
 enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 {
@@ -999,6 +1015,10 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 	enum bisect_error res = BISECT_OK;
 	struct object_id *bisect_rev;
 	char *steps_msg;
+	/*
+	 * If no_checkout is non-zero, the bisection process does not
+	 * checkout the trial commit but instead simply updates BISECT_HEAD.
+	 */
 	int no_checkout = ref_exists("BISECT_HEAD");
 	unsigned bisect_flags = 0;
 
@@ -1082,6 +1102,8 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 		  "Bisecting: %d revisions left to test after this %s\n",
 		  nr), nr, steps_msg);
 	free(steps_msg);
+	/* Clean up objects used, as they will be reused. */
+	repo_clear_commit_marks(r, ALL_REV_FLAGS);
 
 	return bisect_checkout(bisect_rev, no_checkout);
 }

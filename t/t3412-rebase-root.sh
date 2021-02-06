@@ -4,6 +4,9 @@ test_description='git rebase --root
 
 Tests if git rebase --root --onto <newparent> can rebase the root commit.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 log_with_names () {
@@ -24,7 +27,7 @@ test_expect_success 'prepare repository' '
 
 test_expect_success 'rebase --root fails with too many args' '
 	git checkout -B fail other &&
-	test_must_fail git rebase --onto master --root fail fail
+	test_must_fail git rebase --onto main --root fail fail
 '
 
 test_expect_success 'setup pre-rebase hook' '
@@ -44,7 +47,7 @@ EOF
 
 test_expect_success 'rebase --root --onto <newbase>' '
 	git checkout -b work other &&
-	git rebase --root --onto master &&
+	git rebase --root --onto main &&
 	git log --pretty=tformat:"%s" > rebased &&
 	test_cmp expect rebased
 '
@@ -55,7 +58,7 @@ test_expect_success 'pre-rebase got correct input (1)' '
 
 test_expect_success 'rebase --root --onto <newbase> <branch>' '
 	git branch work2 other &&
-	git rebase --root --onto master work2 &&
+	git rebase --root --onto main work2 &&
 	git log --pretty=tformat:"%s" > rebased2 &&
 	test_cmp expect rebased2
 '
@@ -66,7 +69,7 @@ test_expect_success 'pre-rebase got correct input (2)' '
 
 test_expect_success 'rebase -i --root --onto <newbase>' '
 	git checkout -b work3 other &&
-	git rebase -i --root --onto master &&
+	git rebase -i --root --onto main &&
 	git log --pretty=tformat:"%s" > rebased3 &&
 	test_cmp expect rebased3
 '
@@ -77,7 +80,7 @@ test_expect_success 'pre-rebase got correct input (3)' '
 
 test_expect_success 'rebase -i --root --onto <newbase> <branch>' '
 	git branch work4 other &&
-	git rebase -i --root --onto master work4 &&
+	git rebase -i --root --onto main work4 &&
 	git log --pretty=tformat:"%s" > rebased4 &&
 	test_cmp expect rebased4
 '
@@ -88,7 +91,7 @@ test_expect_success 'pre-rebase got correct input (4)' '
 
 test_expect_success REBASE_P 'rebase -i -p with linear history' '
 	git checkout -b work5 other &&
-	git rebase -i -p --root --onto master &&
+	git rebase -i -p --root --onto main &&
 	git log --pretty=tformat:"%s" > rebased5 &&
 	test_cmp expect rebased5
 '
@@ -122,7 +125,7 @@ EOF
 
 test_expect_success REBASE_P 'rebase -i -p with merge' '
 	git checkout -b work6 other &&
-	git rebase -i -p --root --onto master &&
+	git rebase -i -p --root --onto main &&
 	log_with_names work6 > rebased6 &&
 	test_cmp expect-side rebased6
 '
@@ -157,7 +160,7 @@ EOF
 
 test_expect_success REBASE_P 'rebase -i -p with two roots' '
 	git checkout -b work7 other &&
-	git rebase -i -p --root --onto master &&
+	git rebase -i -p --root --onto main &&
 	log_with_names work7 > rebased7 &&
 	test_cmp expect-third rebased7
 '
@@ -173,14 +176,14 @@ EOF
 
 test_expect_success 'pre-rebase hook stops rebase' '
 	git checkout -b stops1 other &&
-	test_must_fail git rebase --root --onto master &&
+	test_must_fail git rebase --root --onto main &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops1 &&
 	test 0 = $(git rev-list other...stops1 | wc -l)
 '
 
 test_expect_success 'pre-rebase hook stops rebase -i' '
 	git checkout -b stops2 other &&
-	test_must_fail git rebase --root --onto master &&
+	test_must_fail git rebase --root --onto main &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops2 &&
 	test 0 = $(git rev-list other...stops2 | wc -l)
 '
@@ -190,7 +193,7 @@ test_expect_success 'remove pre-rebase hook' '
 '
 
 test_expect_success 'set up a conflict' '
-	git checkout master &&
+	git checkout main &&
 	echo conflict > B &&
 	git add B &&
 	git commit -m conflict
@@ -198,7 +201,7 @@ test_expect_success 'set up a conflict' '
 
 test_expect_success 'rebase --root with conflict (first part)' '
 	git checkout -b conflict1 other &&
-	test_must_fail git rebase --root --onto master &&
+	test_must_fail git rebase --root --onto main &&
 	git ls-files -u | grep "B$"
 '
 
@@ -225,7 +228,7 @@ test_expect_success 'rebase --root with conflict (second part)' '
 
 test_expect_success 'rebase -i --root with conflict (first part)' '
 	git checkout -b conflict2 other &&
-	test_must_fail git rebase -i --root --onto master &&
+	test_must_fail git rebase -i --root --onto main &&
 	git ls-files -u | grep "B$"
 '
 
@@ -263,7 +266,7 @@ EOF
 
 test_expect_success REBASE_P 'rebase -i -p --root with conflict (first part)' '
 	git checkout -b conflict3 other &&
-	test_must_fail git rebase -i -p --root --onto master &&
+	test_must_fail git rebase -i -p --root --onto main &&
 	git ls-files -u | grep "B$"
 '
 

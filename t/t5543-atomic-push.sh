@@ -2,6 +2,9 @@
 
 test_description='pushing to a repository using the atomic push option'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 mk_repo_pair () {
@@ -40,9 +43,9 @@ test_expect_success 'atomic push works for a single branch' '
 		test_commit one &&
 		git push --mirror up &&
 		test_commit two &&
-		git push --atomic up master
+		git push --atomic up main
 	) &&
-	test_refs master master
+	test_refs main main
 '
 
 test_expect_success 'atomic push works for two branches' '
@@ -55,9 +58,9 @@ test_expect_success 'atomic push works for two branches' '
 		test_commit two &&
 		git checkout second &&
 		test_commit three &&
-		git push --atomic up master second
+		git push --atomic up main second
 	) &&
-	test_refs master master &&
+	test_refs main main &&
 	test_refs second second
 '
 
@@ -70,7 +73,7 @@ test_expect_success 'atomic push works in combination with --mirror' '
 		test_commit two &&
 		git push --atomic --mirror up
 	) &&
-	test_refs master master &&
+	test_refs main main &&
 	test_refs second second
 '
 
@@ -79,7 +82,7 @@ test_expect_success 'atomic push works in combination with --force' '
 	(
 		cd workbench &&
 		test_commit one &&
-		git branch second master &&
+		git branch second main &&
 		test_commit two_a &&
 		git checkout second &&
 		test_commit two_b &&
@@ -87,36 +90,36 @@ test_expect_success 'atomic push works in combination with --force' '
 		test_commit four &&
 		git push --mirror up &&
 		# The actual test is below
-		git checkout master &&
+		git checkout main &&
 		test_commit three_a &&
 		git checkout second &&
 		git reset --hard HEAD^ &&
-		git push --force --atomic up master second
+		git push --force --atomic up main second
 	) &&
-	test_refs master master &&
+	test_refs main main &&
 	test_refs second second
 '
 
-# set up two branches where master can be pushed but second can not
+# set up two branches where main can be pushed but second can not
 # (non-fast-forward). Since second can not be pushed the whole operation
-# will fail and leave master untouched.
+# will fail and leave main untouched.
 test_expect_success 'atomic push fails if one branch fails' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
 		test_commit one &&
-		git checkout -b second master &&
+		git checkout -b second main &&
 		test_commit two &&
 		test_commit three &&
 		test_commit four &&
 		git push --mirror up &&
 		git reset --hard HEAD~2 &&
 		test_commit five &&
-		git checkout master &&
+		git checkout main &&
 		test_commit six &&
 		test_must_fail git push --atomic --all up
 	) &&
-	test_refs master HEAD@{7} &&
+	test_refs main HEAD@{7} &&
 	test_refs second HEAD@{4}
 '
 
@@ -126,7 +129,7 @@ test_expect_success 'atomic push fails if one tag fails remotely' '
 	(
 		cd workbench &&
 		test_commit one &&
-		git checkout -b second master &&
+		git checkout -b second main &&
 		test_commit two &&
 		git push --mirror up
 	) &&
@@ -139,14 +142,14 @@ test_expect_success 'atomic push fails if one tag fails remotely' '
 	# see if we can now push both branches.
 	(
 		cd workbench &&
-		git checkout master &&
+		git checkout main &&
 		test_commit three &&
 		git checkout second &&
 		test_commit four &&
 		git tag test_tag &&
-		test_must_fail git push --tags --atomic up master second
+		test_must_fail git push --tags --atomic up main second
 	) &&
-	test_refs master HEAD@{3} &&
+	test_refs main HEAD@{3} &&
 	test_refs second HEAD@{1}
 '
 
@@ -155,7 +158,7 @@ test_expect_success 'atomic push obeys update hook preventing a branch to be pus
 	(
 		cd workbench &&
 		test_commit one &&
-		git checkout -b second master &&
+		git checkout -b second main &&
 		test_commit two &&
 		git push --mirror up
 	) &&
@@ -165,19 +168,19 @@ test_expect_success 'atomic push obeys update hook preventing a branch to be pus
 		HOOK="$HOOKDIR/update" &&
 		mkdir -p "$HOOKDIR" &&
 		write_script "$HOOK" <<-\EOF
-			# only allow update to master from now on
-			test "$1" = "refs/heads/master"
+			# only allow update to main from now on
+			test "$1" = "refs/heads/main"
 		EOF
 	) &&
 	(
 		cd workbench &&
-		git checkout master &&
+		git checkout main &&
 		test_commit three &&
 		git checkout second &&
 		test_commit four &&
-		test_must_fail git push --atomic up master second
+		test_must_fail git push --atomic up main second
 	) &&
-	test_refs master HEAD@{3} &&
+	test_refs main HEAD@{3} &&
 	test_refs second HEAD@{1}
 '
 
@@ -192,21 +195,21 @@ test_expect_success 'atomic push is not advertised if configured' '
 		test_commit one &&
 		git push --mirror up &&
 		test_commit two &&
-		test_must_fail git push --atomic up master
+		test_must_fail git push --atomic up main
 	) &&
-	test_refs master HEAD@{1}
+	test_refs main HEAD@{1}
 '
 
-# References in upstream : master(1) one(1) foo(1)
-# References in workbench: master(2)        foo(1) two(2) bar(2)
-# Atomic push            : master(2)               two(2) bar(2)
+# References in upstream : main(1) one(1) foo(1)
+# References in workbench: main(2)        foo(1) two(2) bar(2)
+# Atomic push            : main(2)               two(2) bar(2)
 test_expect_success 'atomic push reports (reject by update hook)' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
 		test_commit one &&
 		git branch foo &&
-		git push up master one foo &&
+		git push up main one foo &&
 		git tag -d one
 	) &&
 	(
@@ -228,19 +231,19 @@ test_expect_success 'atomic push reports (reject by update hook)' '
 		git branch bar
 	) &&
 	test_must_fail git -C workbench \
-		push --atomic up master two bar >out 2>&1 &&
+		push --atomic up main two bar >out 2>&1 &&
 	fmt_status_report <out >actual &&
 	cat >expect <<-EOF &&
 	To ../upstream
-	 ! [remote rejected] master -> master (atomic push failure)
+	 ! [remote rejected] main -> main (atomic push failure)
 	 ! [remote rejected] two -> two (atomic push failure)
 	 ! [remote rejected] bar -> bar (hook declined)
 	EOF
 	test_cmp expect actual
 '
 
-# References in upstream : master(1) one(1) foo(1)
-# References in workbench: master(2)        foo(1) two(2) bar(2)
+# References in upstream : main(1) one(1) foo(1)
+# References in workbench: main(2)        foo(1) two(2) bar(2)
 test_expect_success 'atomic push reports (mirror, but reject by update hook)' '
 	(
 		cd workbench &&
@@ -252,7 +255,7 @@ test_expect_success 'atomic push reports (mirror, but reject by update hook)' '
 	fmt_status_report <out >actual &&
 	cat >expect <<-EOF &&
 	To ../upstream
-	 ! [remote rejected] master -> master (atomic push failure)
+	 ! [remote rejected] main -> main (atomic push failure)
 	 ! [remote rejected] one (atomic push failure)
 	 ! [remote rejected] bar -> bar (hook declined)
 	 ! [remote rejected] two -> two (atomic push failure)
@@ -260,21 +263,21 @@ test_expect_success 'atomic push reports (mirror, but reject by update hook)' '
 	test_cmp expect actual
 '
 
-# References in upstream : master(2) one(1) foo(1)
-# References in workbench: master(1)        foo(1) two(2) bar(2)
+# References in upstream : main(2) one(1) foo(1)
+# References in workbench: main(1)        foo(1) two(2) bar(2)
 test_expect_success 'atomic push reports (reject by non-ff)' '
 	rm upstream/.git/hooks/update &&
 	(
 		cd workbench &&
-		git push up master &&
+		git push up main &&
 		git reset --hard HEAD^
 	) &&
 	test_must_fail git -C workbench \
-		push --atomic up master foo bar >out 2>&1 &&
+		push --atomic up main foo bar >out 2>&1 &&
 	fmt_status_report <out >actual &&
 	cat >expect <<-EOF &&
 	To ../upstream
-	 ! [rejected] master -> master (non-fast-forward)
+	 ! [rejected] main -> main (non-fast-forward)
 	 ! [rejected] bar -> bar (atomic push failed)
 	EOF
 	test_cmp expect actual

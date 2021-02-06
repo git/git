@@ -108,7 +108,7 @@ test_expect_success 'fail to merge into various non-notes refs' '
 	git update-ref refs/notes/dir/foo HEAD &&
 	test_must_fail git -c "core.notesRef=refs/notes/dir" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/dir/" notes merge x &&
-	test_must_fail git -c "core.notesRef=refs/heads/master" notes merge x &&
+	test_must_fail git -c "core.notesRef=refs/heads/main" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/y:" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/y:foo" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/foo^{bar" notes merge x

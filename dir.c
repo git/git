@@ -817,8 +817,8 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 
 clear_hashmaps:
 	warning(_("disabling cone pattern matching"));
-	hashmap_free_entries(&pl->parent_hashmap, struct pattern_entry, ent);
-	hashmap_free_entries(&pl->recursive_hashmap, struct pattern_entry, ent);
+	hashmap_clear_and_free(&pl->parent_hashmap, struct pattern_entry, ent);
+	hashmap_clear_and_free(&pl->recursive_hashmap, struct pattern_entry, ent);
 	pl->use_cone_patterns = 0;
 }
 
@@ -921,8 +921,8 @@ void clear_pattern_list(struct pattern_list *pl)
 		free(pl->patterns[i]);
 	free(pl->patterns);
 	free(pl->filebuf);
-	hashmap_free_entries(&pl->recursive_hashmap, struct pattern_entry, ent);
-	hashmap_free_entries(&pl->parent_hashmap, struct pattern_entry, ent);
+	hashmap_clear_and_free(&pl->recursive_hashmap, struct pattern_entry, ent);
+	hashmap_clear_and_free(&pl->parent_hashmap, struct pattern_entry, ent);
 
 	memset(pl, 0, sizeof(*pl));
 }
@@ -1040,9 +1040,9 @@ static int add_patterns_from_buffer(char *buf, size_t size,
  * an index if 'istate' is non-null), parse it and store the
  * exclude rules in "pl".
  *
- * If "ss" is not NULL, compute SHA-1 of the exclude file and fill
+ * If "oid_stat" is not NULL, compute oid of the exclude file and fill
  * stat data from disk (only valid if add_patterns returns zero). If
- * ss_valid is non-zero, "ss" must contain good value as input.
+ * oid_stat.valid is non-zero, "oid_stat" must contain good value as input.
  */
 static int add_patterns(const char *fname, const char *base, int baselen,
 			struct pattern_list *pl, struct index_state *istate,
@@ -1090,7 +1090,7 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 			int pos;
 			if (oid_stat->valid &&
 			    !match_stat_data_racy(istate, &oid_stat->stat, &st))
-				; /* no content change, ss->sha1 still good */
+				; /* no content change, oid_stat->oid still good */
 			else if (istate &&
 				 (pos = index_name_pos(istate, fname, strlen(fname))) >= 0 &&
 				 !ce_stage(istate->cache[pos]) &&
@@ -2105,7 +2105,6 @@ static int resolve_dtype(int dtype, struct index_state *istate,
 }
 
 static enum path_treatment treat_path_fast(struct dir_struct *dir,
-					   struct untracked_cache_dir *untracked,
 					   struct cached_dir *cdir,
 					   struct index_state *istate,
 					   struct strbuf *path,
@@ -2153,7 +2152,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 	int has_path_in_index, dtype, excluded;
 
 	if (!cdir->d_name)
-		return treat_path_fast(dir, untracked, cdir, istate, path,
+		return treat_path_fast(dir, cdir, istate, path,
 				       baselen, pathspec);
 	if (is_dot_or_dotdot(cdir->d_name) || !fspathcmp(cdir->d_name, ".git"))
 		return path_none;

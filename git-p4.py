@@ -1668,7 +1668,7 @@ class P4Submit(Command, P4UserMap):
     Submit after inspect the message file.
 
     The `p4-post-changelist` hook is invoked after the submit has successfully
-    occured in P4. It takes no parameters and is meant primarily for notification
+    occurred in P4. It takes no parameters and is meant primarily for notification
     and cannot affect the outcome of the git p4 submit action.
     """
 
@@ -3031,7 +3031,7 @@ class P4Sync(Command, P4UserMap):
             regexp = re.compile(pattern, re.VERBOSE)
             text = ''.join(decode_text_stream(c) for c in contents)
             text = regexp.sub(r'$\1$', text)
-            contents = [ text ]
+            contents = [ encode_text_stream(text) ]
 
         if self.largeFileSystem:
             (git_mode, contents) = self.largeFileSystem.processContent(git_mode, relPath, contents)
@@ -4186,7 +4186,7 @@ class P4Clone(P4Sync):
 
         # create a master branch and check out a work tree
         if gitBranchExists(self.branch):
-            system([ "git", "branch", "master", self.branch ])
+            system([ "git", "branch", currentGitBranch(), self.branch ])
             if not self.cloneBare:
                 system([ "git", "checkout", "-f" ])
         else:
@@ -4237,7 +4237,7 @@ class P4Unshelve(Command):
         """
 
         for parent in (range(65535)):
-            log = extractLogMessageFromGitCommit("{0}^{1}".format(starting_point, parent))
+            log = extractLogMessageFromGitCommit("{0}~{1}".format(starting_point, parent))
             settings = extractSettingsGitLog(log)
             if 'change' in settings:
                 return settings

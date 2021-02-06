@@ -567,6 +567,30 @@ test_expect_success '--check and --quiet are not exclusive' '
 	git diff --check --quiet
 '
 
+test_expect_success '-w and --exit-code interact sensibly' '
+	test_when_finished "git checkout x" &&
+	{
+		test_seq 15 &&
+		echo " 16"
+	} >x &&
+	test_must_fail git diff --exit-code &&
+	git diff -w >actual &&
+	test_must_be_empty actual &&
+	git diff -w --exit-code
+'
+
+test_expect_success '-I and --exit-code interact sensibly' '
+	test_when_finished "git checkout x" &&
+	{
+		test_seq 15 &&
+		echo " 16"
+	} >x &&
+	test_must_fail git diff --exit-code &&
+	git diff -I. >actual &&
+	test_must_be_empty actual &&
+	git diff -I. --exit-code
+'
+
 test_expect_success 'check staged with no whitespace errors' '
 	echo "foo();" >x &&
 	git add x &&
@@ -877,13 +901,13 @@ test_expect_success 'rename empty' '
 test_expect_success 'combined diff with autocrlf conversion' '
 
 	git reset --hard &&
-	echo >x hello &&
-	git commit -m "one side" x &&
+	test_commit "one side" x hello one-side &&
 	git checkout HEAD^ &&
 	echo >x goodbye &&
 	git commit -m "the other side" x &&
 	git config core.autocrlf true &&
-	test_must_fail git merge master &&
+	test_must_fail git merge one-side >actual &&
+	test_i18ngrep "Automatic merge failed" actual &&
 
 	git diff >actual.raw &&
 	sed -e "1,/^@@@/d" actual.raw >actual &&

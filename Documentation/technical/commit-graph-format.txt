@@ -125,7 +125,7 @@ CHUNK DATA:
     * The rest of the chunk is the concatenation of all the computed Bloom
       filters for the commits in lexicographic order.
     * Note: Commits with no changes or more than 512 changes have Bloom filters
-      of length zero.
+      of length one, with either all bits set to zero or one respectively.
     * The BDAT chunk is present if and only if BIDX is present.
 
   Base Graphs List (ID: {'B', 'A', 'S', 'E'}) [Optional]

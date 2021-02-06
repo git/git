@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "commit.h"
 #include "diff.h"
+#include "diff-merges.h"
 #include "refs.h"
 #include "revision.h"
 #include "repository.h"
@@ -124,11 +125,6 @@ static int path_and_oids_cmp(const void *hashmap_cmp_fn_data,
 	return strcmp(e1->path, e2->path);
 }
 
-static void paths_and_oids_init(struct hashmap *map)
-{
-	hashmap_init(map, path_and_oids_cmp, NULL, 0);
-}
-
 static void paths_and_oids_clear(struct hashmap *map)
 {
 	struct hashmap_iter iter;
@@ -139,7 +135,7 @@ static void paths_and_oids_clear(struct hashmap *map)
 		free(entry->path);
 	}
 
-	hashmap_free_entries(map, struct path_and_oids_entry, ent);
+	hashmap_clear_and_free(map, struct path_and_oids_entry, ent);
 }
 
 static void paths_and_oids_insert(struct hashmap *map,
@@ -213,7 +209,7 @@ void mark_trees_uninteresting_sparse(struct repository *r,
 				     struct oidset *trees)
 {
 	unsigned has_interesting = 0, has_uninteresting = 0;
-	struct hashmap map;
+	struct hashmap map = HASHMAP_INIT(path_and_oids_cmp, NULL);
 	struct hashmap_iter map_iter;
 	struct path_and_oids_entry *entry;
 	struct object_id *oid;
@@ -236,8 +232,6 @@ void mark_trees_uninteresting_sparse(struct repository *r,
 	/* Do not walk unless we have both types of trees. */
 	if (!has_uninteresting || !has_interesting)
 		return;
-
-	paths_and_oids_init(&map);
 
 	oidset_iter_init(trees, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
@@ -681,10 +675,7 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 
 	repo_parse_commit(revs->repo, revs->commits->item);
 
-	if (!revs->repo->objects->commit_graph)
-		return;
-
-	revs->bloom_filter_settings = revs->repo->objects->commit_graph->bloom_filter_settings;
+	revs->bloom_filter_settings = get_bloom_filter_settings(revs->repo);
 	if (!revs->bloom_filter_settings)
 		return;
 
@@ -755,7 +746,7 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 	if (commit_graph_generation(commit) == GENERATION_NUMBER_INFINITY)
 		return -1;
 
-	filter = get_bloom_filter(revs->repo, commit, 0);
+	filter = get_bloom_filter(revs->repo, commit);
 
 	if (!filter) {
 		count_bloom_filter_not_present++;
@@ -1251,12 +1242,14 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 		/*
 		 * Have we seen the same patch id?
 		 */
-		id = has_commit_patch_id(commit, &ids);
+		id = patch_id_iter_first(commit, &ids);
 		if (!id)
 			continue;
 
 		commit->object.flags |= cherry_flag;
-		id->commit->object.flags |= cherry_flag;
+		do {
+			id->commit->object.flags |= cherry_flag;
+		} while ((id = patch_id_iter_next(id, &ids)));
 	}
 
 	free_patch_ids(&ids);
@@ -1816,7 +1809,6 @@ void repo_init_revisions(struct repository *r,
 
 	revs->repo = r;
 	revs->abbrev = DEFAULT_ABBREV;
-	revs->ignore_merges = -1;
 	revs->simplify_history = 1;
 	revs->pruning.repo = r;
 	revs->pruning.flags.recursive = 1;
@@ -1837,7 +1829,6 @@ void repo_init_revisions(struct repository *r,
 	revs->commit_format = CMIT_FMT_DEFAULT;
 	revs->expand_tabs_in_log_default = 8;
 
-	init_grep_defaults(revs->repo);
 	grep_init(&revs->grep_filter, revs->repo, prefix);
 	revs->grep_filter.status_only = 1;
 
@@ -2352,34 +2343,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->diff = 1;
 		revs->diffopt.flags.recursive = 1;
 		revs->diffopt.flags.tree_in_recursive = 1;
-	} else if (!strcmp(arg, "-m")) {
-		/*
-		 * To "diff-index", "-m" means "match missing", and to the "log"
-		 * family of commands, it means "show full diff for merges". Set
-		 * both fields appropriately.
-		 */
-		revs->ignore_merges = 0;
-		revs->match_missing = 1;
-	} else if ((argcount = parse_long_opt("diff-merges", argv, &optarg))) {
-		if (!strcmp(optarg, "off")) {
-			revs->ignore_merges = 1;
-		} else {
-			die(_("unknown value for --diff-merges: %s"), optarg);
-		}
+	} else if ((argcount = diff_merges_parse_opts(revs, argv))) {
 		return argcount;
-	} else if (!strcmp(arg, "--no-diff-merges")) {
-		revs->ignore_merges = 1;
-	} else if (!strcmp(arg, "-c")) {
-		revs->diff = 1;
-		revs->dense_combined_merges = 0;
-		revs->combine_merges = 1;
-	} else if (!strcmp(arg, "--combined-all-paths")) {
-		revs->diff = 1;
-		revs->combined_all_paths = 1;
-	} else if (!strcmp(arg, "--cc")) {
-		revs->diff = 1;
-		revs->dense_combined_merges = 1;
-		revs->combine_merges = 1;
 	} else if (!strcmp(arg, "-v")) {
 		revs->verbose_header = 1;
 	} else if (!strcmp(arg, "--pretty")) {
@@ -2583,8 +2548,8 @@ static int for_each_good_bisect_ref(struct ref_store *refs, each_ref_fn fn, void
 }
 
 static int handle_revision_pseudo_opt(const char *submodule,
-				struct rev_info *revs,
-				int argc, const char **argv, int *flags)
+				      struct rev_info *revs,
+				      const char **argv, int *flags)
 {
 	const char *arg = argv[0];
 	const char *optarg;
@@ -2755,7 +2720,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			int opts;
 
 			opts = handle_revision_pseudo_opt(submodule,
-						revs, argc - i, argv + i,
+						revs, argv + i,
 						&flags);
 			if (opts > 0) {
 				i += opts - 1;
@@ -2876,12 +2841,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			copy_pathspec(&revs->diffopt.pathspec,
 				      &revs->prune_data);
 	}
-	if (revs->combine_merges && revs->ignore_merges < 0)
-		revs->ignore_merges = 0;
-	if (revs->ignore_merges < 0)
-		revs->ignore_merges = 1;
-	if (revs->combined_all_paths && !revs->combine_merges)
-		die("--combined-all-paths makes no sense without -c or --cc");
+
+	diff_merges_setup_revs(revs);
 
 	revs->diffopt.abbrev = revs->abbrev;
 
@@ -3319,6 +3280,26 @@ struct topo_walk_info {
 	struct author_date_slab author_date;
 };
 
+static int topo_walk_atexit_registered;
+static unsigned int count_explore_walked;
+static unsigned int count_indegree_walked;
+static unsigned int count_topo_walked;
+
+static void trace2_topo_walk_statistics_atexit(void)
+{
+	struct json_writer jw = JSON_WRITER_INIT;
+
+	jw_object_begin(&jw, 0);
+	jw_object_intmax(&jw, "count_explore_walked", count_explore_walked);
+	jw_object_intmax(&jw, "count_indegree_walked", count_indegree_walked);
+	jw_object_intmax(&jw, "count_topo_walked", count_topo_walked);
+	jw_end(&jw);
+
+	trace2_data_json("topo_walk", the_repository, "statistics", &jw);
+
+	jw_release(&jw);
+}
+
 static inline void test_flag_and_insert(struct prio_queue *q, struct commit *c, int flag)
 {
 	if (c->object.flags & flag)
@@ -3339,6 +3320,8 @@ static void explore_walk_step(struct rev_info *revs)
 
 	if (repo_parse_commit_gently(revs->repo, c, 1) < 0)
 		return;
+
+	count_explore_walked++;
 
 	if (revs->sort_order == REV_SORT_BY_AUTHOR_DATE)
 		record_author_date(&info->author_date, c);
@@ -3377,6 +3360,8 @@ static void indegree_walk_step(struct rev_info *revs)
 
 	if (repo_parse_commit_gently(revs->repo, c, 1) < 0)
 		return;
+
+	count_indegree_walked++;
 
 	explore_to_depth(revs, commit_graph_generation(c));
 
@@ -3487,6 +3472,11 @@ static void init_topo_walk(struct rev_info *revs)
 	 */
 	if (revs->sort_order == REV_SORT_IN_GRAPH_ORDER)
 		prio_queue_reverse(&info->topo_queue);
+
+	if (trace2_is_enabled() && !topo_walk_atexit_registered) {
+		atexit(trace2_topo_walk_statistics_atexit);
+		topo_walk_atexit_registered = 1;
+	}
 }
 
 static struct commit *next_topo_commit(struct rev_info *revs)
@@ -3512,6 +3502,8 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 			die("Failed to traverse parents of commit %s",
 			    oid_to_hex(&commit->object.oid));
 	}
+
+	count_topo_walked++;
 
 	for (p = commit->parents; p; p = p->next) {
 		struct commit *parent = p->item;

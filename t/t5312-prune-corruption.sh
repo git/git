@@ -8,6 +8,9 @@ bail out or to proceed using it as a reachable tip, but it is _not_
 OK to proceed as if it did not exist. Otherwise we might silently
 delete objects that cannot be recovered.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'disable reflogs' '
@@ -16,7 +19,7 @@ test_expect_success 'disable reflogs' '
 '
 
 test_expect_success 'create history reachable only from a bogus-named ref' '
-	test_tick && git commit --allow-empty -m master &&
+	test_tick && git commit --allow-empty -m main &&
 	base=$(git rev-parse HEAD) &&
 	test_tick && git commit --allow-empty -m bogus &&
 	bogus=$(git rev-parse HEAD) &&
@@ -51,7 +54,7 @@ test_expect_success 'clean up bogus ref' '
 '
 
 # We create two new objects here, "one" and "two". Our
-# master branch points to "two", which is deleted,
+# main branch points to "two", which is deleted,
 # corrupting the repository. But we'd like to make sure
 # that the otherwise unreachable "one" is not pruned
 # (since it is the user's best bet for recovering
@@ -81,7 +84,7 @@ test_expect_success 'pruning with a corrupted tip does not drop history' '
 test_expect_success 'pack-refs does not silently delete broken loose ref' '
 	git pack-refs --all --prune &&
 	echo $missing >expect &&
-	git rev-parse refs/heads/master >actual &&
+	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -89,25 +92,25 @@ test_expect_success 'pack-refs does not silently delete broken loose ref' '
 # actually pack it, as it is perfectly reasonable to
 # skip processing a broken ref
 test_expect_success 'create packed-refs file with broken ref' '
-	rm -f .git/refs/heads/master &&
+	rm -f .git/refs/heads/main &&
 	cat >.git/packed-refs <<-EOF &&
-	$missing refs/heads/master
+	$missing refs/heads/main
 	$recoverable refs/heads/other
 	EOF
 	echo $missing >expect &&
-	git rev-parse refs/heads/master >actual &&
+	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pack-refs does not silently delete broken packed ref' '
 	git pack-refs --all --prune &&
-	git rev-parse refs/heads/master >actual &&
+	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pack-refs does not drop broken refs during deletion' '
 	git update-ref -d refs/heads/other &&
-	git rev-parse refs/heads/master >actual &&
+	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
 

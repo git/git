@@ -2,6 +2,9 @@
 
 test_description='recursive merge diff3 style conflict markers'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Setup:
@@ -43,7 +46,7 @@ test_expect_success 'check no merge base' '
 # Setup:
 #          L1
 #         /  \
-#   master    ?
+#     main    ?
 #         \  /
 #          R1
 #
@@ -90,18 +93,18 @@ test_expect_success 'check unique merge base' '
 		cd unique_merge_base &&
 
 		git checkout L^0 &&
-		MASTER=$(git rev-parse --short master) &&
+		MAIN=$(git rev-parse --short main) &&
 
 		test_must_fail git -c merge.conflictstyle=diff3 merge -s recursive R^0 &&
 
-		grep "|||||| $MASTER:content" renamed
+		grep "|||||| $MAIN:content" renamed
 	)
 '
 
 # Setup:
 #          L1---L2--L3
 #         /  \ /      \
-#   master    X1       ?
+#     main    X1       ?
 #         \  / \      /
 #          R1---R2--R3
 #
@@ -191,10 +194,10 @@ test_expect_success 'rebase --merge describes parent of commit being picked' '
 	(
 		cd rebase &&
 		test_commit base file &&
-		test_commit master file &&
+		test_commit main file &&
 		git checkout -b side HEAD^ &&
 		test_commit side file &&
-		test_must_fail git -c merge.conflictstyle=diff3 rebase --merge master &&
+		test_must_fail git -c merge.conflictstyle=diff3 rebase --merge main &&
 		grep "||||||| parent of" file
 	)
 '
@@ -203,7 +206,7 @@ test_expect_success 'rebase --apply describes fake ancestor base' '
 	(
 		cd rebase &&
 		git rebase --abort &&
-		test_must_fail git -c merge.conflictstyle=diff3 rebase --apply master &&
+		test_must_fail git -c merge.conflictstyle=diff3 rebase --apply main &&
 		grep "||||||| constructed merge base" file
 	)
 '

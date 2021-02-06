@@ -109,6 +109,7 @@ static void show_diff(struct merge_list *entry)
 	xdemitconf_t xecfg;
 	xdemitcb_t ecb;
 
+	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;

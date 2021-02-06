@@ -22,7 +22,9 @@ test_description="Test core.fsmonitor"
 #
 # GIT_PERF_7519_UNTRACKED_CACHE: used to configure core.untrackedCache
 # GIT_PERF_7519_SPLIT_INDEX: used to configure core.splitIndex
-# GIT_PERF_7519_FSMONITOR: used to configure core.fsMonitor
+# GIT_PERF_7519_FSMONITOR: used to configure core.fsMonitor. May be an
+#   absolute path to an integration. May be a space delimited list of
+#   absolute paths to integrations.
 #
 # The big win for using fsmonitor is the elimination of the need to scan the
 # working directory looking for changed and untracked files. If the file
@@ -68,7 +70,7 @@ then
 	fi
 fi
 
-test_expect_success "setup for fsmonitor" '
+test_expect_success "one time repo setup" '
 	# set untrackedCache depending on the environment
 	if test -n "$GIT_PERF_7519_UNTRACKED_CACHE"
 	then
@@ -88,24 +90,36 @@ test_expect_success "setup for fsmonitor" '
 		git config core.splitIndex "$GIT_PERF_7519_SPLIT_INDEX"
 	fi &&
 
+	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
+	for i in $(test_seq 1 10); do touch 10_files/$i; done &&
+	for i in $(test_seq 1 100); do touch 100_files/$i; done &&
+	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
+	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
+	git add 1_file 10_files 100_files 1000_files 10000_files &&
+	git commit -qm "Add files" &&
+
+	# If Watchman exists, watch the work tree and attempt a query.
+	if test_have_prereq WATCHMAN; then
+		watchman watch "$GIT_WORK_TREE" &&
+		watchman watch-list | grep -q -F "$GIT_WORK_TREE"
+	fi
+'
+
+setup_for_fsmonitor() {
 	# set INTEGRATION_SCRIPT depending on the environment
-	if test -n "$GIT_PERF_7519_FSMONITOR"
+	if test -n "$INTEGRATION_PATH"
 	then
-		INTEGRATION_SCRIPT="$GIT_PERF_7519_FSMONITOR"
+		INTEGRATION_SCRIPT="$INTEGRATION_PATH"
 	else
 		#
 		# Choose integration script based on existence of Watchman.
-		# If Watchman exists, watch the work tree and attempt a query.
-		# If everything succeeds, use Watchman integration script,
-		# else fall back to an empty integration script.
+		# Fall back to an empty integration script.
 		#
 		mkdir .git/hooks &&
 		if test_have_prereq WATCHMAN
 		then
 			INTEGRATION_SCRIPT=".git/hooks/fsmonitor-watchman" &&
-			cp "$TEST_DIRECTORY/../templates/hooks--fsmonitor-watchman.sample" "$INTEGRATION_SCRIPT" &&
-			watchman watch "$GIT_WORK_TREE" &&
-			watchman watch-list | grep -q -F "$GIT_WORK_TREE"
+			cp "$TEST_DIRECTORY/../templates/hooks--fsmonitor-watchman.sample" "$INTEGRATION_SCRIPT"
 		else
 			INTEGRATION_SCRIPT=".git/hooks/fsmonitor-empty" &&
 			write_script "$INTEGRATION_SCRIPT"<<-\EOF
@@ -114,32 +128,90 @@ test_expect_success "setup for fsmonitor" '
 	fi &&
 
 	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
-	git update-index --fsmonitor
-'
+	git update-index --fsmonitor 2>error &&
+	if test_have_prereq WATCHMAN
+	then
+		test_must_be_empty error  # ensure no silent error
+	else
+		grep "Empty last update token" error
+	fi
+}
 
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
+test_perf_w_drop_caches () {
+	if test -n "$GIT_PERF_7519_DROP_CACHE"; then
+		test-tool drop-caches
+	fi
+
+	test_perf "$@"
+}
+
+test_fsmonitor_suite() {
+	if test -n "$INTEGRATION_SCRIPT"; then
+		DESC="fsmonitor=$(basename $INTEGRATION_SCRIPT)"
+	else
+		DESC="fsmonitor=disabled"
+	fi
+
+	test_expect_success "test_initialization" '
+		git reset --hard &&
+		git status  # Warm caches
+	'
+
+	test_perf_w_drop_caches "status ($DESC)" '
+		git status
+	'
+
+	test_perf_w_drop_caches "status -uno ($DESC)" '
+		git status -uno
+	'
+
+	test_perf_w_drop_caches "status -uall ($DESC)" '
+		git status -uall
+	'
+
+	test_perf_w_drop_caches "status (dirty) ($DESC)" '
+		git ls-files | head -100000 | xargs -d "\n" touch -h &&
+		git status
+	'
+
+	test_perf_w_drop_caches "diff ($DESC)" '
+		git diff
+	'
+
+	test_perf_w_drop_caches "diff -- 0_files ($DESC)" '
+		git diff -- 1_file
+	'
+
+	test_perf_w_drop_caches "diff -- 10_files ($DESC)" '
+		git diff -- 10_files
+	'
+
+	test_perf_w_drop_caches "diff -- 100_files ($DESC)" '
+		git diff -- 100_files
+	'
+
+	test_perf_w_drop_caches "diff -- 1000_files ($DESC)" '
+		git diff -- 1000_files
+	'
+
+	test_perf_w_drop_caches "diff -- 10000_files ($DESC)" '
+		git diff -- 10000_files
+	'
+
+	test_perf_w_drop_caches "add ($DESC)" '
+		git add  --all
+	'
+}
+
+if test -n "$GIT_PERF_7519_FSMONITOR"; then
+	for INTEGRATION_PATH in $GIT_PERF_7519_FSMONITOR; do
+		test_expect_success "setup for fsmonitor $INTEGRATION_PATH" 'setup_for_fsmonitor'
+		test_fsmonitor_suite
+	done
+else
+	test_expect_success "setup for fsmonitor" 'setup_for_fsmonitor'
+	test_fsmonitor_suite
 fi
-
-test_perf "status (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status
-'
-
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
-
-test_perf "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status -uno
-'
-
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
-
-test_perf "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status -uall
-'
 
 test_expect_success "setup without fsmonitor" '
 	unset INTEGRATION_SCRIPT &&
@@ -147,29 +219,7 @@ test_expect_success "setup without fsmonitor" '
 	git update-index --no-fsmonitor
 '
 
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
-
-test_perf "status (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status
-'
-
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
-
-test_perf "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status -uno
-'
-
-if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-tool drop-caches
-fi
-
-test_perf "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
-	git status -uall
-'
+test_fsmonitor_suite
 
 if test_have_prereq WATCHMAN
 then

@@ -6,6 +6,9 @@ test_description='Tests git bisect functionality'
 
 exec </dev/null
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 add_line_into_file()
@@ -82,9 +85,16 @@ test_expect_success 'bisect fails if given any junk instead of revs' '
 	git bisect bad $HASH4
 '
 
-test_expect_success 'bisect reset: back in the master branch' '
+test_expect_success 'bisect start without -- takes unknown arg as pathspec' '
 	git bisect reset &&
-	echo "* master" > branch.expect &&
+	git bisect start foo bar &&
+	grep foo ".git/BISECT_NAMES" &&
+	grep bar ".git/BISECT_NAMES"
+'
+
+test_expect_success 'bisect reset: back in the main branch' '
+	git bisect reset &&
+	echo "* main" > branch.expect &&
 	git branch > branch.output &&
 	cmp branch.expect branch.output
 '
@@ -95,7 +105,7 @@ test_expect_success 'bisect reset: back in another branch' '
 	git bisect good $HASH1 &&
 	git bisect bad $HASH3 &&
 	git bisect reset &&
-	echo "  master" > branch.expect &&
+	echo "  main" > branch.expect &&
 	echo "* other" >> branch.expect &&
 	git branch > branch.output &&
 	cmp branch.expect branch.output
@@ -341,7 +351,7 @@ test_expect_success 'bisect skip many ranges' '
 
 test_expect_success 'bisect starting with a detached HEAD' '
 	git bisect reset &&
-	git checkout master^ &&
+	git checkout main^ &&
 	HEAD=$(git rev-parse --verify HEAD) &&
 	git bisect start &&
 	test $HEAD = $(cat .git/BISECT_START) &&
@@ -709,7 +719,7 @@ test_expect_success 'bisect: --no-checkout - target after breakage' '
 test_expect_success 'bisect: demonstrate identification of damage boundary' "
 	git bisect reset &&
 	git checkout broken &&
-	git bisect start broken master --no-checkout &&
+	git bisect start broken main --no-checkout &&
 	test_must_fail git bisect run \"\$SHELL_PATH\" -c '
 		GOOD=\$(git for-each-ref \"--format=%(objectname)\" refs/bisect/good-*) &&
 		git rev-list --objects BISECT_HEAD --not \$GOOD >tmp.\$\$ &&
@@ -919,14 +929,14 @@ test_expect_success 'git bisect reset cleans bisection state properly' '
 	git bisect bad $HASH4 &&
 	git bisect reset &&
 	test -z "$(git for-each-ref "refs/bisect/*")" &&
-	test_path_is_missing "$GIT_DIR/BISECT_EXPECTED_REV" &&
-	test_path_is_missing "$GIT_DIR/BISECT_ANCESTORS_OK" &&
-	test_path_is_missing "$GIT_DIR/BISECT_LOG" &&
-	test_path_is_missing "$GIT_DIR/BISECT_RUN" &&
-	test_path_is_missing "$GIT_DIR/BISECT_TERMS" &&
-	test_path_is_missing "$GIT_DIR/head-name" &&
-	test_path_is_missing "$GIT_DIR/BISECT_HEAD" &&
-	test_path_is_missing "$GIT_DIR/BISECT_START"
+	test_path_is_missing ".git/BISECT_EXPECTED_REV" &&
+	test_path_is_missing ".git/BISECT_ANCESTORS_OK" &&
+	test_path_is_missing ".git/BISECT_LOG" &&
+	test_path_is_missing ".git/BISECT_RUN" &&
+	test_path_is_missing ".git/BISECT_TERMS" &&
+	test_path_is_missing ".git/head-name" &&
+	test_path_is_missing ".git/BISECT_HEAD" &&
+	test_path_is_missing ".git/BISECT_START"
 '
 
 test_done

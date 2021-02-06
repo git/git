@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='Test merge without common ancestors'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # This scenario is based on a real-world repository of Shawn Pearce.
@@ -19,11 +22,11 @@ test_expect_success 'setup tests' '
 	git add a1 &&
 	GIT_AUTHOR_DATE="2006-12-12 23:00:00" git commit -m 1 a1 &&
 
-	git checkout -b A master &&
+	git checkout -b A main &&
 	echo A >a1 &&
 	GIT_AUTHOR_DATE="2006-12-12 23:00:01" git commit -m A a1 &&
 
-	git checkout -b B master &&
+	git checkout -b B main &&
 	echo B >a1 &&
 	GIT_AUTHOR_DATE="2006-12-12 23:00:02" git commit -m B a1 &&
 
@@ -118,12 +121,22 @@ test_expect_success 'mark rename/delete as unmerged' '
 	test_tick &&
 	git commit -m rename &&
 	test_must_fail git merge delete &&
-	test 1 = $(git ls-files --unmerged | wc -l) &&
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		test 2 = $(git ls-files --unmerged | wc -l)
+	else
+		test 1 = $(git ls-files --unmerged | wc -l)
+	fi &&
 	git rev-parse --verify :2:a2 &&
 	test_must_fail git rev-parse --verify :3:a2 &&
 	git checkout -f delete &&
 	test_must_fail git merge rename &&
-	test 1 = $(git ls-files --unmerged | wc -l) &&
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		test 2 = $(git ls-files --unmerged | wc -l)
+	else
+		test 1 = $(git ls-files --unmerged | wc -l)
+	fi &&
 	test_must_fail git rev-parse --verify :2:a2 &&
 	git rev-parse --verify :3:a2
 '

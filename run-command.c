@@ -7,6 +7,7 @@
 #include "strbuf.h"
 #include "string-list.h"
 #include "quote.h"
+#include "config.h"
 
 void child_process_init(struct child_process *child)
 {
@@ -1866,15 +1867,18 @@ int run_processes_parallel_tr2(int n, get_next_task_fn get_next_task,
 	return result;
 }
 
-int run_auto_gc(int quiet)
+int run_auto_maintenance(int quiet)
 {
-	struct strvec argv_gc_auto = STRVEC_INIT;
-	int status;
+	int enabled;
+	struct child_process maint = CHILD_PROCESS_INIT;
 
-	strvec_pushl(&argv_gc_auto, "gc", "--auto", NULL);
-	if (quiet)
-		strvec_push(&argv_gc_auto, "--quiet");
-	status = run_command_v_opt(argv_gc_auto.v, RUN_GIT_CMD);
-	strvec_clear(&argv_gc_auto);
-	return status;
+	if (!git_config_get_bool("maintenance.auto", &enabled) &&
+	    !enabled)
+		return 0;
+
+	maint.git_cmd = 1;
+	strvec_pushl(&maint.args, "maintenance", "run", "--auto", NULL);
+	strvec_push(&maint.args, quiet ? "--quiet" : "--no-quiet");
+
+	return run_command(&maint);
 }

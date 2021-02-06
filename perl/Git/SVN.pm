@@ -1,6 +1,6 @@
 package Git::SVN;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Fcntl qw/:DEFAULT :seek/;
 use constant rev_map_fmt => 'NH*';
 use vars qw/$_no_metadata

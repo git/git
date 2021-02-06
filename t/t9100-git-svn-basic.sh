@@ -6,6 +6,9 @@
 test_description='git svn basic tests'
 GIT_SVN_LC_ALL=${LC_ALL:-$LANG}
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-svn.sh
 
 case "$GIT_SVN_LC_ALL" in
@@ -275,7 +278,7 @@ test_expect_success 'dcommit $rev does not clobber current branch' '
 	test refs/heads/my-bar = $(git symbolic-ref HEAD) &&
 	git log refs/remotes/bar | grep "change 1" &&
 	! git log refs/remotes/bar | grep "change 2" &&
-	git checkout master &&
+	git checkout main &&
 	git branch -D my-bar
 	'
 

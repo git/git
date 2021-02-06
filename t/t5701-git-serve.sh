@@ -2,6 +2,9 @@
 
 test_description='test protocol v2 server commands'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'test capability advertisement' '
@@ -83,9 +86,9 @@ test_expect_success 'wrong object-format' '
 #
 test_expect_success 'setup some refs and tags' '
 	test_commit one &&
-	git branch dev master &&
+	git branch dev main &&
 	test_commit two &&
-	git symbolic-ref refs/heads/release refs/heads/master &&
+	git symbolic-ref refs/heads/release refs/heads/main &&
 	git tag -a -m "annotated tag" annotated-tag
 '
 
@@ -99,7 +102,7 @@ test_expect_success 'basics of ls-refs' '
 	cat >expect <<-EOF &&
 	$(git rev-parse HEAD) HEAD
 	$(git rev-parse refs/heads/dev) refs/heads/dev
-	$(git rev-parse refs/heads/master) refs/heads/master
+	$(git rev-parse refs/heads/main) refs/heads/main
 	$(git rev-parse refs/heads/release) refs/heads/release
 	$(git rev-parse refs/tags/annotated-tag) refs/tags/annotated-tag
 	$(git rev-parse refs/tags/one) refs/tags/one
@@ -117,13 +120,13 @@ test_expect_success 'basic ref-prefixes' '
 	command=ls-refs
 	object-format=$(test_oid algo)
 	0001
-	ref-prefix refs/heads/master
+	ref-prefix refs/heads/main
 	ref-prefix refs/tags/one
 	0000
 	EOF
 
 	cat >expect <<-EOF &&
-	$(git rev-parse refs/heads/master) refs/heads/master
+	$(git rev-parse refs/heads/main) refs/heads/main
 	$(git rev-parse refs/tags/one) refs/tags/one
 	0000
 	EOF
@@ -144,7 +147,7 @@ test_expect_success 'refs/heads prefix' '
 
 	cat >expect <<-EOF &&
 	$(git rev-parse refs/heads/dev) refs/heads/dev
-	$(git rev-parse refs/heads/master) refs/heads/master
+	$(git rev-parse refs/heads/main) refs/heads/main
 	$(git rev-parse refs/heads/release) refs/heads/release
 	0000
 	EOF
@@ -188,8 +191,8 @@ test_expect_success 'symrefs parameter' '
 
 	cat >expect <<-EOF &&
 	$(git rev-parse refs/heads/dev) refs/heads/dev
-	$(git rev-parse refs/heads/master) refs/heads/master
-	$(git rev-parse refs/heads/release) refs/heads/release symref-target:refs/heads/master
+	$(git rev-parse refs/heads/main) refs/heads/main
+	$(git rev-parse refs/heads/release) refs/heads/release symref-target:refs/heads/main
 	0000
 	EOF
 

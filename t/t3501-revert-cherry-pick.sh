@@ -10,6 +10,9 @@ test_description='test cherry-pick and revert with renames
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -112,7 +115,7 @@ test_expect_success 'cherry-pick on unborn branch' '
 test_expect_success 'cherry-pick "-" to pick from previous branch' '
 	git checkout unborn &&
 	test_commit to-pick actual content &&
-	git checkout master &&
+	git checkout main &&
 	git cherry-pick - &&
 	echo content >expect &&
 	test_cmp expect actual
@@ -132,7 +135,7 @@ test_expect_success 'cherry-pick "-" is meaningless without checkout' '
 test_expect_success 'cherry-pick "-" works with arguments' '
 	git checkout -b side-branch &&
 	test_commit change actual change &&
-	git checkout master &&
+	git checkout main &&
 	git cherry-pick -s - &&
 	echo "Signed-off-by: C O Mitter <committer@example.com>" >expect &&
 	git cat-file commit HEAD | grep ^Signed-off-by: >signoff &&

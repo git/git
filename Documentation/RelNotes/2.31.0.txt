@@ -1,0 +1,201 @@
+Git 2.31 Release Notes
+======================
+
+Updates since v2.30
+-------------------
+
+Backward incompatible and other important changes
+
+ * The "pack-redundant" command, which has been left stale with almost
+   unusable performance issues, now warns loudly when it gets used, as
+   we no longer want to recommend its use (instead just "repack -d"
+   instead).
+
+ * The development community has adopted Contributor Covenant v2.0 to
+   update from v1.4 that we have been using.
+
+
+UI, Workflows & Features
+
+ * The "--format=%(trailers)" mechanism gets enhanced to make it
+   easier to design output for machine consumption.
+
+ * When a user does not tell "git pull" to use rebase or merge, the
+   command gives a loud message telling a user to choose between
+   rebase or merge but creates a merge anyway, forcing users who would
+   want to rebase to redo the operation.  Fix an early part of this
+   problem by tightening the condition to give the message---there is
+   no reason to stop or force the user to choose between rebase or
+   merge if the history fast-forwards.
+
+ * The configuration variable 'core.abbrev' can be set to 'no' to
+   force no abbreviation regardless of the hash algorithm.
+
+ * "git rev-parse" can be explicitly told to give output as absolute
+   or relative path with the `--path-format=(absolute|relative)` option.
+
+ * Bash completion (in contrib/) update to make it easier for
+   end-users to add completion for their custom "git" subcommands.
+
+ * "git maintenance" learned to drive scheduled maintenance on
+   platforms whose native scheduling methods are not 'cron'.
+
+ * After expiring a reflog and making a single commit, the reflog for
+   the branch would record a single entry that knows both @{0} and
+   @{1}, but we failed to answer "what commit were we on?", i.e. @{1}
+
+ * "git bundle" learns "--stdin" option to read its refs from the
+   standard input.  Also, it now does not lose refs whey they point
+   at the same object.
+
+ * "git log" learned a new "--diff-merges=<how>" option.
+
+ * "git ls-files" can and does show multiple entries when the index is
+   unmerged, which is a source for confusion unless -s/-u option is in
+   use.  A new option --deduplicate has been introduced.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * A 3-year old test that was not testing anything useful has been
+   corrected.
+
+ * Retire more names with "sha1" in it.
+
+ * The topological walk codepath is covered by new trace2 stats.
+
+ * Update the Code-of-conduct to version 2.0 from the upstream (we've
+   been using version 1.4).
+
+ * "git mktag" validates its input using its own rules before writing
+   a tag object---it has been updated to share the logic with "git
+   fsck".
+
+ * Two new ways to feed configuration variable-value pairs via
+   environment variables have been introduced, and the way
+   GIT_CONFIG_PARAMETERS encodes variable/value pairs has been tweaked
+   to make it more robust.
+
+ * Tests have been updated so that they do not to get affected by the
+   name of the default branch "git init" creates.
+
+ * "git fetch" learns to treat ref updates atomically in all-or-none
+   fashion, just like "git push" does, with the new "--atomic" option.
+
+ * The peel_ref() API has been replaced with peel_iterated_oid().
+
+ * The .use_shell flag in struct child_process that is passed to
+   run_command() API has been clarified with a bit more documentation.
+
+ * Document, clean-up and optimize the code around the cache-tree
+   extension in the index.
+
+ * The ls-refs protocol operation has been optimized to narrow the
+   sub-hierarchy of refs/ it walks to produce response.
+
+ * When removing many branches and tags, the code used to do so one
+   ref at a time.  There is another API it can use to delete multiple
+   refs, and it makes quite a lot of performance difference when the
+   refs are packed.
+
+ * The "pack-objects" command needs to iterate over all the tags when
+   automatic tag following is enabled, but it actually iterated over
+   all refs and then discarded everything outside "refs/tags/"
+   hierarchy, which was quite wasteful.
+
+ * A perf script was made more portable.
+   (merge f08b6c553d jk/p5303-sed-portability-fix later to maint).
+
+ * Our setting of GitHub CI test jobs were a bit too eager to give up
+   once there is even one failure found.  Tweak the knob to allow
+   other jobs keep running even when we see a failure, so that we can
+   find more failures in a single run.
+   (merge 2b0e14f640 pb/ci-matrix-wo-shortcut later to maint).
+
+ * We've carried compatibility codepaths for compilers without
+   variadic macros for quite some time, but the world may be ready for
+   them to be removed.  Force compilation failure on exotic platforms
+   where variadic macros are not available to find out who screams in
+   such a way that we can easily revert if it turns out that the world
+   is not yet ready.
+
+
+Fixes since v2.30
+-----------------
+
+ * Diagnose command line error of "git rebase" early.
+   (merge ca5120c339 rs/rebase-commit-validation later to maint).
+
+ * Clean up option descriptions in "git cmd --help".
+   (merge e73fe3dd02 zh/arg-help-format later to maint).
+
+ * "git stash" did not work well in a sparsely checked out working
+   tree.
+   (merge ba359fd507 en/stash-apply-sparse-checkout later to maint).
+
+ * Some tests expect that "ls -l" output has either '-' or 'x' for
+   group executable bit, but setgid bit can be inherited from parent
+   directory and make these fields 'S' or 's' instead, causing test
+   failures.
+   (merge ea8bbf2a4e mt/t4129-with-setgid-dir later to maint).
+
+ * "git for-each-repo --config=<var> <cmd>" should not run <cmd> for
+   any repository when the configuration variable <var> is not defined
+   even once.
+   (merge 6c62f01552 ds/for-each-repo-noopfix later to maint).
+
+ * Fix 2.29 regression where "git mergetool --tool-help" fails to list
+   all the available tools.
+   (merge 80f5a16798 pb/mergetool-tool-help-fix later to maint).
+
+ * Fix for procedure to building CI test environment for mac.
+   (merge 3831132ace jc/macos-install-dependencies-fix later to maint).
+
+ * The implementation of "git branch --sort" wrt the detached HEAD
+   display has always been hacky, which has been cleaned up.
+   (merge 4045f659bd ab/branch-sort later to maint).
+
+ * Newline characters in the host and path part of git:// URL are
+   now forbidden.
+   (merge 6aed56736b jk/forbid-lf-in-git-url later to maint).
+
+ * "git diff" showed a submodule working tree with untracked cruft as
+   "Submodule commit <objectname>-dirty", but a natural expectation is
+   that the "-dirty" indicator would align with "git describe --dirty",
+   which does not consider having untracked files in the working tree
+   as source of dirtiness.  The inconsistency has been fixed.
+
+ * When more than one commit with the same patch ID appears on one
+   side, "git log --cherry-pick A...B" did not exclude them all when a
+   commit with the same patch ID appears on the other side.  Now it
+   does.
+   (merge c9e3a4e76d jk/log-cherry-pick-duplicate-patches later to maint).
+
+ * Documentation for "git fsck" lost stale bits that has become
+   incorrect.
+   (merge 28cc00a13d ab/fsck-doc-fix later to maint).
+
+ * Doc fix for packfile URI feature.
+   (merge bfc2a36ff2 jt/packfile-as-uri-doc later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 505a276596 pk/subsub-fetch-fix-take-2 later to maint).
+   (merge 33fc56253b fc/t6030-bisect-reset-removes-auxiliary-files later to maint).
+   (merge 7efc378205 ta/doc-typofix later to maint).
+   (merge 1f4e9319c7 pb/doc-modules-git-work-tree-typofix later to maint).
+   (merge 04f6b0a192 ma/t1300-cleanup later to maint).
+   (merge 7b77f5a13e ma/doc-pack-format-varint-for-sizes later to maint).
+   (merge cc2d43be2b nk/perf-fsmonitor-cleanup later to maint).
+   (merge c8302c6c00 ar/t6016-modernise later to maint).
+   (merge 0454986e78 jc/sign-off later to maint).
+   (merge 155067ab4f vv/send-email-with-less-secure-apps-access later to maint).
+   (merge acaabcf391 jk/t5516-deflake later to maint).
+   (merge a1e03535db ad/t4129-setfacl-target-fix later to maint).
+   (merge b356d23638 ug/doc-lose-dircache later to maint).
+   (merge 9371c0e9dd ab/gettext-charset-comment-fix later to maint).
+   (merge 52fc4f195c dl/p4-encode-after-kw-expansion later to maint).
+   (merge 4eb56b56e7 bc/doc-status-short later to maint).
+   (merge a4a1ca22ef tb/local-clone-race-doc later to maint).
+   (merge 6a8c89d053 ma/more-opaque-lock-file later to maint).
+   (merge 4a5ec7d166 js/skip-dashed-built-ins-from-config-mak later to maint).
+   (merge 6eaf624dea pb/blame-funcname-range-userdiff later to maint).

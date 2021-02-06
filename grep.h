@@ -170,7 +170,6 @@ struct grep_opt {
 	void *output_priv;
 };
 
-void init_grep_defaults(struct repository *);
 int grep_config(const char *var, const char *value, void *);
 void grep_init(struct grep_opt *, struct repository *repo, const char *prefix);
 void grep_destroy(void);

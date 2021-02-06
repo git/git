@@ -73,4 +73,30 @@ test_expect_success FILEMODE 'bogus mode is rejected' '
 	test_i18ngrep "invalid mode" err
 '
 
+test_expect_success POSIXPERM 'do not use core.sharedRepository for working tree files' '
+	git reset --hard &&
+	test_config core.sharedRepository 0666 &&
+	(
+		# Remove a default ACL if possible.
+		(setfacl -k . 2>/dev/null || true) &&
+		umask 0077 &&
+
+		# Test both files (f1) and leading dirs (d)
+		mkdir d &&
+		touch f1 d/f2 &&
+		git add f1 d/f2 &&
+		git diff --staged >patch-f1-and-f2.txt &&
+
+		rm -rf d f1 &&
+		git apply patch-f1-and-f2.txt &&
+
+		echo "-rw-------" >f1_mode.expected &&
+		echo "drwx------" >d_mode.expected &&
+		test_modebits f1 >f1_mode.actual &&
+		test_modebits d >d_mode.actual &&
+		test_cmp f1_mode.expected f1_mode.actual &&
+		test_cmp d_mode.expected d_mode.actual
+	)
+'
+
 test_done

@@ -3,7 +3,7 @@
 test_description='git fsck random collection of tests
 
 * (HEAD) B
-* (master) A
+* (main) A
 '
 
 . ./test-lib.sh

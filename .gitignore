@@ -67,6 +67,7 @@
 /git-filter-branch
 /git-fmt-merge-msg
 /git-for-each-ref
+/git-for-each-repo
 /git-format-patch
 /git-fsck
 /git-fsck-objects
@@ -90,6 +91,7 @@
 /git-ls-tree
 /git-mailinfo
 /git-mailsplit
+/git-maintenance
 /git-merge
 /git-merge-base
 /git-merge-index
@@ -113,7 +115,6 @@
 /git-pack-redundant
 /git-pack-objects
 /git-pack-refs
-/git-parse-remote
 /git-patch-id
 /git-prune
 /git-prune-packed
@@ -133,7 +134,6 @@
 /git-remote-ftps
 /git-remote-fd
 /git-remote-ext
-/git-remote-testpy
 /git-repack
 /git-replace
 /git-request-pull
@@ -146,11 +146,9 @@
 /git-rm
 /git-send-email
 /git-send-pack
-/git-serve
 /git-sh-i18n
 /git-sh-i18n--envsubst
 /git-sh-setup
-/git-sh-i18n
 /git-shell
 /git-shortlog
 /git-show
@@ -241,3 +239,4 @@ Release/
 /git.VC.VC.opendb
 /git.VC.db
 *.dSYM
+/contrib/buildsystems/out

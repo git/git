@@ -20,7 +20,6 @@ USAGE="[--quiet] [--cached]
 OPTIONS_SPEC=
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
-. git-parse-remote
 require_work_tree
 wt_prefix=$(git rev-parse --show-prefix)
 cd_to_toplevel
@@ -413,16 +412,18 @@ is_tip_reachable () (
 	test -z "$rev"
 )
 
+# usage: fetch_in_submodule <module_path> [<depth>] [<sha1>]
+# Because arguments are positional, use an empty string to omit <depth>
+# but include <sha1>.
 fetch_in_submodule () (
 	sanitize_submodule_env &&
 	cd "$1" &&
-	case "$2" in
-	'')
-		git fetch ;;
-	*)
-		shift
-		git fetch $(get_default_remote) "$@" ;;
-	esac
+	if test $# -eq 3
+	then
+		echo "$3" | git fetch --stdin ${2:+"$2"}
+	else
+		git fetch ${2:+"$2"}
+	fi
 )
 
 #
@@ -440,7 +441,7 @@ cmd_update()
 			GIT_QUIET=1
 			;;
 		-v)
-			GIT_QUIET=0
+			unset GIT_QUIET
 			;;
 		--progress)
 			progress=1
@@ -576,7 +577,7 @@ cmd_update()
 				fetch_in_submodule "$sm_path" $depth ||
 				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
 			fi
-			remote_name=$(sanitize_submodule_env; cd "$sm_path" && get_default_remote)
+			remote_name=$(sanitize_submodule_env; cd "$sm_path" && git submodule--helper print-default-remote)
 			sha1=$(sanitize_submodule_env; cd "$sm_path" &&
 				git rev-parse --verify "${remote_name}/${branch}") ||
 			die "$(eval_gettext "Unable to find current \${remote_name}/\${branch} revision in submodule path '\$sm_path'")"
@@ -602,7 +603,7 @@ cmd_update()
 				# Now we tried the usual fetch, but $sha1 may
 				# not be reachable from any of the refs
 				is_tip_reachable "$sm_path" "$sha1" ||
-				fetch_in_submodule "$sm_path" $depth "$sha1" ||
+				fetch_in_submodule "$sm_path" "$depth" "$sha1" ||
 				die "$(eval_gettext "Fetched in submodule path '\$displaypath', but it did not contain \$sha1. Direct fetching of that commit failed.")"
 			fi
 
@@ -614,13 +615,13 @@ cmd_update()
 				say_msg="$(eval_gettext "Submodule path '\$displaypath': checked out '\$sha1'")"
 				;;
 			rebase)
-				command="git rebase"
+				command="git rebase ${GIT_QUIET:+--quiet}"
 				die_msg="$(eval_gettext "Unable to rebase '\$sha1' in submodule path '\$displaypath'")"
 				say_msg="$(eval_gettext "Submodule path '\$displaypath': rebased into '\$sha1'")"
 				must_die_on_failure=yes
 				;;
 			merge)
-				command="git merge"
+				command="git merge ${GIT_QUIET:+--quiet}"
 				die_msg="$(eval_gettext "Unable to merge '\$sha1' in submodule path '\$displaypath'")"
 				say_msg="$(eval_gettext "Submodule path '\$displaypath': merged in '\$sha1'")"
 				must_die_on_failure=yes

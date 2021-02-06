@@ -303,7 +303,7 @@ all::
 # modules, instead of the fallbacks shipped with Git.
 #
 # Define PYTHON_PATH to the path of your Python binary (often /usr/bin/python
-# but /usr/bin/python2.7 on some platforms).
+# but /usr/bin/python2.7 or /usr/bin/python3 on some platforms).
 #
 # Define NO_PYTHON if you do not want Python scripts or libraries at all.
 #
@@ -347,6 +347,9 @@ all::
 #
 # Define NO_INSTALL_HARDLINKS if you prefer to use either symbolic links or
 # copies to install built-in git commands e.g. git-cat-file.
+#
+# Define SKIP_DASHED_BUILT_INS if you do not need the dashed versions of the
+# built-ins to be linked/copied at all.
 #
 # Define USE_NED_ALLOCATOR if you want to replace the platforms default
 # memory allocators with the nedmalloc allocator written by Niall Douglas.
@@ -610,7 +613,6 @@ SCRIPT_SH += git-submodule.sh
 SCRIPT_SH += git-web--browse.sh
 
 SCRIPT_LIB += git-mergetool--lib
-SCRIPT_LIB += git-parse-remote
 SCRIPT_LIB += git-rebase--preserve-merges
 SCRIPT_LIB += git-sh-i18n
 SCRIPT_LIB += git-sh-setup
@@ -691,6 +693,7 @@ TEST_BUILTINS_OBJS += test-advise.o
 TEST_BUILTINS_OBJS += test-bloom.o
 TEST_BUILTINS_OBJS += test-chmtime.o
 TEST_BUILTINS_OBJS += test-config.o
+TEST_BUILTINS_OBJS += test-crontab.o
 TEST_BUILTINS_OBJS += test-ctype.o
 TEST_BUILTINS_OBJS += test-date.o
 TEST_BUILTINS_OBJS += test-delta.o
@@ -701,6 +704,7 @@ TEST_BUILTINS_OBJS += test-dump-fsmonitor.o
 TEST_BUILTINS_OBJS += test-dump-split-index.o
 TEST_BUILTINS_OBJS += test-dump-untracked-cache.o
 TEST_BUILTINS_OBJS += test-example-decorate.o
+TEST_BUILTINS_OBJS += test-fast-rebase.o
 TEST_BUILTINS_OBJS += test-genrandom.o
 TEST_BUILTINS_OBJS += test-genzeros.o
 TEST_BUILTINS_OBJS += test-hash-speed.o
@@ -720,6 +724,7 @@ TEST_BUILTINS_OBJS += test-parse-pathspec-file.o
 TEST_BUILTINS_OBJS += test-path-utils.o
 TEST_BUILTINS_OBJS += test-pkt-line.o
 TEST_BUILTINS_OBJS += test-prio-queue.o
+TEST_BUILTINS_OBJS += test-proc-receive.o
 TEST_BUILTINS_OBJS += test-progress.o
 TEST_BUILTINS_OBJS += test-reach.o
 TEST_BUILTINS_OBJS += test-read-cache.o
@@ -763,6 +768,7 @@ BUILT_INS += git-cherry-pick$X
 BUILT_INS += git-format-patch$X
 BUILT_INS += git-fsck-objects$X
 BUILT_INS += git-init$X
+BUILT_INS += git-maintenance$X
 BUILT_INS += git-merge-subtree$X
 BUILT_INS += git-restore$X
 BUILT_INS += git-show$X
@@ -770,10 +776,6 @@ BUILT_INS += git-stage$X
 BUILT_INS += git-status$X
 BUILT_INS += git-switch$X
 BUILT_INS += git-whatchanged$X
-
-# what 'all' will build and 'install' will install in gitexecdir,
-# excluding programs for built-in commands
-ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
 
 # what 'all' will build but not install in gitexecdir
 OTHER_PROGRAMS = git$X
@@ -806,8 +808,8 @@ TEST_SHELL_PATH = $(SHELL_PATH)
 LIB_FILE = libgit.a
 XDIFF_LIB = xdiff/lib.a
 
-GENERATED_H += config-list.h
 GENERATED_H += command-list.h
+GENERATED_H += config-list.h
 
 LIB_H := $(sort $(patsubst ./%,%,$(shell git ls-files '*.h' ':!t/' ':!Documentation/' 2>/dev/null || \
 	$(FIND) . \
@@ -858,6 +860,7 @@ LIB_OBJS += date.o
 LIB_OBJS += decorate.o
 LIB_OBJS += delta-islands.o
 LIB_OBJS += diff-delta.o
+LIB_OBJS += diff-merges.o
 LIB_OBJS += diff-lib.o
 LIB_OBJS += diff-no-index.o
 LIB_OBJS += diff.o
@@ -885,6 +888,7 @@ LIB_OBJS += gettext.o
 LIB_OBJS += gpg-interface.o
 LIB_OBJS += graph.o
 LIB_OBJS += grep.o
+LIB_OBJS += hash-lookup.o
 LIB_OBJS += hashmap.o
 LIB_OBJS += help.o
 LIB_OBJS += hex.o
@@ -907,6 +911,8 @@ LIB_OBJS += mailmap.o
 LIB_OBJS += match-trees.o
 LIB_OBJS += mem-pool.o
 LIB_OBJS += merge-blobs.o
+LIB_OBJS += merge-ort.o
+LIB_OBJS += merge-ort-wrappers.o
 LIB_OBJS += merge-recursive.o
 LIB_OBJS += merge.o
 LIB_OBJS += mergesort.o
@@ -919,6 +925,8 @@ LIB_OBJS += notes-cache.o
 LIB_OBJS += notes-merge.o
 LIB_OBJS += notes-utils.o
 LIB_OBJS += notes.o
+LIB_OBJS += object-file.o
+LIB_OBJS += object-name.o
 LIB_OBJS += object.o
 LIB_OBJS += oid-array.o
 LIB_OBJS += oidmap.o
@@ -975,18 +983,16 @@ LIB_OBJS += sequencer.o
 LIB_OBJS += serve.o
 LIB_OBJS += server-info.o
 LIB_OBJS += setup.o
-LIB_OBJS += sha1-file.o
-LIB_OBJS += sha1-lookup.o
-LIB_OBJS += sha1-name.o
 LIB_OBJS += shallow.o
 LIB_OBJS += sideband.o
 LIB_OBJS += sigchain.o
 LIB_OBJS += split-index.o
 LIB_OBJS += stable-qsort.o
 LIB_OBJS += strbuf.o
-LIB_OBJS += strvec.o
 LIB_OBJS += streaming.o
 LIB_OBJS += string-list.o
+LIB_OBJS += strmap.o
+LIB_OBJS += strvec.o
 LIB_OBJS += sub-process.o
 LIB_OBJS += submodule-config.o
 LIB_OBJS += submodule.o
@@ -1052,15 +1058,15 @@ BUILTIN_OBJS += builtin/checkout-index.o
 BUILTIN_OBJS += builtin/checkout.o
 BUILTIN_OBJS += builtin/clean.o
 BUILTIN_OBJS += builtin/clone.o
-BUILTIN_OBJS += builtin/credential-cache.o
-BUILTIN_OBJS += builtin/credential-cache--daemon.o
-BUILTIN_OBJS += builtin/credential-store.o
 BUILTIN_OBJS += builtin/column.o
 BUILTIN_OBJS += builtin/commit-graph.o
 BUILTIN_OBJS += builtin/commit-tree.o
 BUILTIN_OBJS += builtin/commit.o
 BUILTIN_OBJS += builtin/config.o
 BUILTIN_OBJS += builtin/count-objects.o
+BUILTIN_OBJS += builtin/credential-cache--daemon.o
+BUILTIN_OBJS += builtin/credential-cache.o
+BUILTIN_OBJS += builtin/credential-store.o
 BUILTIN_OBJS += builtin/credential.o
 BUILTIN_OBJS += builtin/describe.o
 BUILTIN_OBJS += builtin/diff-files.o
@@ -1075,6 +1081,7 @@ BUILTIN_OBJS += builtin/fetch-pack.o
 BUILTIN_OBJS += builtin/fetch.o
 BUILTIN_OBJS += builtin/fmt-merge-msg.o
 BUILTIN_OBJS += builtin/for-each-ref.o
+BUILTIN_OBJS += builtin/for-each-repo.o
 BUILTIN_OBJS += builtin/fsck.o
 BUILTIN_OBJS += builtin/gc.o
 BUILTIN_OBJS += builtin/get-tar-commit-id.o
@@ -1206,6 +1213,20 @@ ifdef DEVELOPER
 include config.mak.dev
 endif
 
+# what 'all' will build and 'install' will install in gitexecdir,
+# excluding programs for built-in commands
+ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
+ALL_COMMANDS_TO_INSTALL = $(ALL_PROGRAMS)
+ifeq (,$(SKIP_DASHED_BUILT_INS))
+ALL_COMMANDS_TO_INSTALL += $(BUILT_INS)
+else
+# git-upload-pack, git-receive-pack and git-upload-archive are special: they
+# are _expected_ to be present in the `bin/` directory in their dashed form.
+ALL_COMMANDS_TO_INSTALL += git-receive-pack$(X)
+ALL_COMMANDS_TO_INSTALL += git-upload-archive$(X)
+ALL_COMMANDS_TO_INSTALL += git-upload-pack$(X)
+endif
+
 ALL_CFLAGS = $(DEVELOPER_CFLAGS) $(CPPFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
 
@@ -1218,7 +1239,6 @@ SANITIZERS := $(foreach flag,$(subst $(comma),$(space),$(SANITIZE)),$(flag))
 BASIC_CFLAGS += -fsanitize=$(SANITIZE) -fno-sanitize-recover=$(SANITIZE)
 BASIC_CFLAGS += -fno-omit-frame-pointer
 ifneq ($(filter undefined,$(SANITIZERS)),)
-BASIC_CFLAGS += -DNO_UNALIGNED_LOADS
 BASIC_CFLAGS += -DSHA1DC_FORCE_ALIGNED_ACCESS
 endif
 ifneq ($(filter leak,$(SANITIZERS)),)
@@ -1534,9 +1554,6 @@ ifdef FREAD_READS_DIRECTORIES
 endif
 ifdef NO_SYMLINK_HEAD
 	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
-endif
-ifdef GETTEXT_POISON
-$(warning The GETTEXT_POISON option has been removed in favor of runtime GIT_TEST_GETTEXT_POISON. See t/README!)
 endif
 ifdef NO_GETTEXT
 	BASIC_CFLAGS += -DNO_GETTEXT
@@ -2088,9 +2105,9 @@ profile-fast: profile-clean
 	$(MAKE) PROFILE=USE all
 
 
-all:: $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS) GIT-BUILD-OPTIONS
+all:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) GIT-BUILD-OPTIONS
 ifneq (,$X)
-	$(QUIET_BUILT_IN)$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), test -d '$p' -o '$p' -ef '$p$X' || $(RM) '$p';)
+	$(QUIET_BUILT_IN)$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_COMMANDS_TO_INSTALL) git$X)), test -d '$p' -o '$p' -ef '$p$X' || $(RM) '$p';)
 endif
 
 all::
@@ -2564,7 +2581,6 @@ XGETTEXT_FLAGS_PERL = $(XGETTEXT_FLAGS) --language=Perl \
 	--keyword=__ --keyword=N__ --keyword="__n:1,2"
 LOCALIZED_C = $(C_OBJ:o=c) $(LIB_H) $(GENERATED_H)
 LOCALIZED_SH = $(SCRIPT_SH)
-LOCALIZED_SH += git-parse-remote.sh
 LOCALIZED_SH += git-rebase--preserve-merges.sh
 LOCALIZED_SH += git-sh-setup.sh
 LOCALIZED_PERL = $(SCRIPT_PERL)
@@ -2755,6 +2771,9 @@ endif
 ifdef GIT_TEST_INDEX_VERSION
 	@echo GIT_TEST_INDEX_VERSION=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_INDEX_VERSION)))'\' >>$@+
 endif
+ifdef GIT_TEST_PERL_FATAL_WARNINGS
+	@echo GIT_TEST_PERL_FATAL_WARNINGS=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_PERL_FATAL_WARNINGS)))'\' >>$@+
+endif
 	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
 
 ### Detect Python interpreter path changes
@@ -2921,15 +2940,8 @@ ifdef MSVC
 	# have already been rolled up into the exe's pdb file.
 	# We DO NOT have pdb files for the builtin commands (like git-status.exe)
 	# because it is just a copy/hardlink of git.exe, rather than a unique binary.
-	$(INSTALL) git.pdb '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) git-shell.pdb '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) git-daemon.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) git-http-backend.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) git-http-fetch.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) git-http-push.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) git-imap-send.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) git-remote-http.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) git-sh-i18n--envsubst.pdb '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) $(patsubst %.exe,%.pdb,$(filter-out $(BUILT_INS),$(patsubst %,%$X,$(BINDIR_PROGRAMS_NEED_X)))) '$(DESTDIR_SQ)$(bindir_SQ)'
+	$(INSTALL) $(patsubst %.exe,%.pdb,$(filter-out $(BUILT_INS) $(REMOTE_CURL_ALIASES),$(PROGRAMS))) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 ifndef DEBUG
 	$(INSTALL) $(vcpkg_rel_bin)/*.dll '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(INSTALL) $(vcpkg_rel_bin)/*.pdb '$(DESTDIR_SQ)$(bindir_SQ)'
@@ -2957,7 +2969,7 @@ ifndef NO_TCLTK
 	$(MAKE) -C git-gui gitexecdir='$(gitexec_instdir_SQ)' install
 endif
 ifneq (,$X)
-	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), test '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p' -ef '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p$X' || $(RM) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p';)
+	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_COMMANDS_TO_INSTALL) git$X)), test '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p' -ef '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p$X' || $(RM) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p';)
 endif
 
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
@@ -2980,16 +2992,19 @@ endif
 		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
 		  ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
 		  ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
-		  cp "$$bindir/git$X" "$$bindir/$$p" || exit; } \
+		  cp "$$bindir/git$X" "$$bindir/$$p" || exit; }; \
 	done && \
 	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
-		test -n "$(INSTALL_SYMLINKS)" && \
-		ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/git$X" "$$execdir/$$p" || \
-		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
-		  ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
-		  ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
-		  cp "$$execdir/git$X" "$$execdir/$$p" || exit; } \
+		if test -z "$(SKIP_DASHED_BUILT_INS)"; \
+		then \
+			test -n "$(INSTALL_SYMLINKS)" && \
+			ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/git$X" "$$execdir/$$p" || \
+			{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+			  ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
+			  ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
+			  cp "$$execdir/git$X" "$$execdir/$$p" || exit; }; \
+		fi \
 	done && \
 	remote_curl_aliases="$(REMOTE_CURL_ALIASES)" && \
 	for p in $$remote_curl_aliases; do \
@@ -3041,37 +3056,32 @@ quick-install-html:
 
 ### Maintainer's dist rules
 
-# Allow tweaking to hide local environment effects, like perm bits.
-# With GNU tar, "--mode=u+rwX,og+rX,og-w" would be a good idea, for example.
-TAR_DIST_EXTRA_OPTS =
 GIT_TARNAME = git-$(GIT_VERSION)
-dist: git-archive$(X) configure
-	./git-archive --format=tar \
-		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
-	@mkdir -p $(GIT_TARNAME)
-	@cp configure $(GIT_TARNAME)
-	@echo $(GIT_VERSION) > $(GIT_TARNAME)/version
-	@$(MAKE) -C git-gui TARDIR=../$(GIT_TARNAME)/git-gui dist-version
-	$(TAR) rf $(GIT_TARNAME).tar $(TAR_DIST_EXTRA_OPTS) \
-		$(GIT_TARNAME)/configure \
-		$(GIT_TARNAME)/version \
-		$(GIT_TARNAME)/git-gui/version
+GIT_ARCHIVE_EXTRA_FILES = \
+	--prefix=$(GIT_TARNAME)/ \
+	--add-file=configure \
+	--add-file=.dist-tmp-dir/version \
+	--prefix=$(GIT_TARNAME)/git-gui/ \
+	--add-file=.dist-tmp-dir/git-gui/version
 ifdef DC_SHA1_SUBMODULE
-	@mkdir -p $(GIT_TARNAME)/sha1collisiondetection/lib
-	@cp sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/
-	@cp sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/
-	@cp sha1collisiondetection/lib/sha1.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/
-	@cp sha1collisiondetection/lib/ubc_check.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/
-	$(TAR) rf $(GIT_TARNAME).tar $(TAR_DIST_EXTRA_OPTS) \
-		$(GIT_TARNAME)/sha1collisiondetection/LICENSE.txt \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/sha1.[ch] \
-		$(GIT_TARNAME)/sha1collisiondetection/lib/ubc_check.[ch]
+GIT_ARCHIVE_EXTRA_FILES += \
+	--prefix=$(GIT_TARNAME)/sha1collisiondetection/ \
+	--add-file=sha1collisiondetection/LICENSE.txt \
+	--prefix=$(GIT_TARNAME)/sha1collisiondetection/lib/ \
+	--add-file=sha1collisiondetection/lib/sha1.c \
+	--add-file=sha1collisiondetection/lib/sha1.h \
+	--add-file=sha1collisiondetection/lib/ubc_check.c \
+	--add-file=sha1collisiondetection/lib/ubc_check.h
 endif
-	@$(RM) -r $(GIT_TARNAME)
+dist: git-archive$(X) configure
+	@$(RM) -r .dist-tmp-dir
+	@mkdir .dist-tmp-dir
+	@echo $(GIT_VERSION) > .dist-tmp-dir/version
+	@$(MAKE) -C git-gui TARDIR=../.dist-tmp-dir/git-gui dist-version
+	./git-archive --format=tar \
+		$(GIT_ARCHIVE_EXTRA_FILES) \
+		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
+	@$(RM) -r .dist-tmp-dir
 	gzip -f -9 $(GIT_TARNAME).tar
 
 rpm::
@@ -3083,7 +3093,7 @@ ifneq ($(INCLUDE_DLLS_IN_ARTIFACTS),)
 OTHER_PROGRAMS += $(shell echo *.dll t/helper/*.dll)
 endif
 
-artifacts-tar:: $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS) \
+artifacts-tar:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) \
 		GIT-BUILD-OPTIONS $(TEST_PROGRAMS) $(test_bindir_programs) \
 		$(MOFILES)
 	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1) \
@@ -3096,11 +3106,15 @@ artifacts-tar:: $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS) \
 htmldocs = git-htmldocs-$(GIT_VERSION)
 manpages = git-manpages-$(GIT_VERSION)
 .PHONY: dist-doc distclean
-dist-doc:
+dist-doc: git$X
 	$(RM) -r .doc-tmp-dir
 	mkdir .doc-tmp-dir
 	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
-	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar $(TAR_DIST_EXTRA_OPTS) .
+	./git -C .doc-tmp-dir init
+	./git -C .doc-tmp-dir add .
+	./git -C .doc-tmp-dir commit -m htmldocs
+	./git -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
+		> $(htmldocs).tar
 	gzip -n -9 -f $(htmldocs).tar
 	:
 	$(RM) -r .doc-tmp-dir
@@ -3110,7 +3124,11 @@ dist-doc:
 		man5dir=../.doc-tmp-dir/man5 \
 		man7dir=../.doc-tmp-dir/man7 \
 		install
-	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar $(TAR_DIST_EXTRA_OPTS) .
+	./git -C .doc-tmp-dir init
+	./git -C .doc-tmp-dir add .
+	./git -C .doc-tmp-dir commit -m manpages
+	./git -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
+		> $(manpages).tar
 	gzip -n -9 -f $(manpages).tar
 	$(RM) -r .doc-tmp-dir
 
@@ -3140,8 +3158,8 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) -r bin-wrappers $(dep_dirs) $(compdb_dir) compile_commands.json
 	$(RM) -r po/build/
 	$(RM) *.pyc *.pyo */*.pyc */*.pyo $(GENERATED_H) $(ETAGS_TARGET) tags cscope*
-	$(RM) -r $(GIT_TARNAME) .doc-tmp-dir
-	$(RM) $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
+	$(RM) -r .dist-tmp-dir .doc-tmp-dir
+	$(RM) $(GIT_TARNAME).tar.gz
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
 	$(RM) Documentation/GIT-EXCLUDED-PROGRAMS
@@ -3178,7 +3196,7 @@ endif
 
 ### Check documentation
 #
-ALL_COMMANDS = $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS)
+ALL_COMMANDS = $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB)
 ALL_COMMANDS += git
 ALL_COMMANDS += git-citool
 ALL_COMMANDS += git-gui
@@ -3218,7 +3236,7 @@ check-docs::
 		    -e 's/\.txt//'; \
 	) | while read how cmd; \
 	do \
-		case " $(patsubst %$X,%,$(ALL_COMMANDS) $(EXCLUDED_PROGRAMS)) " in \
+		case " $(patsubst %$X,%,$(ALL_COMMANDS) $(BUILT_INS) $(EXCLUDED_PROGRAMS)) " in \
 		*" $$cmd "*)	;; \
 		*) echo "removed but $$how: $$cmd" ;; \
 		esac; \

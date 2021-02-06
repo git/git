@@ -88,6 +88,23 @@ test_expect_success 'upload-pack fails due to error in pack-objects enumeration'
 	grep "pack-objects died" output.err
 '
 
+test_expect_success 'upload-pack tolerates EOF just after stateless client wants' '
+	test_commit initial &&
+	head=$(git rev-parse HEAD) &&
+
+	{
+		packetize "want $head" &&
+		packetize "shallow $head" &&
+		packetize "deepen 1" &&
+		printf "0000"
+	} >request &&
+
+	printf "0000" >expect &&
+
+	git upload-pack --stateless-rpc . <request >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'create empty repository' '
 
 	mkdir foo &&
@@ -98,7 +115,7 @@ test_expect_success 'create empty repository' '
 
 test_expect_success 'fetch fails' '
 
-	test_must_fail git fetch .. master
+	test_must_fail git fetch .. main
 
 '
 

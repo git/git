@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='exercise basic bitmap functionality'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 objpath () {
@@ -20,82 +23,170 @@ has_any () {
 	grep -Ff "$1" "$2"
 }
 
+# To ensure the logic for "maximal commits" is exercised, make
+# the repository a bit more complicated.
+#
+#    other                         second
+#      *                             *
+# (99 commits)                  (99 commits)
+#      *                             *
+#      |\                           /|
+#      | * octo-other  octo-second * |
+#      |/|\_________  ____________/|\|
+#      | \          \/  __________/  |
+#      |  | ________/\ /             |
+#      *  |/          * merge-right  *
+#      | _|__________/ \____________ |
+#      |/ |                         \|
+# (l1) *  * merge-left               * (r1)
+#      | / \________________________ |
+#      |/                           \|
+# (l2) *                             * (r2)
+#       \___________________________ |
+#                                   \|
+#                                    * (base)
+#
+# We only push bits down the first-parent history, which
+# makes some of these commits unimportant!
+#
+# The important part for the maximal commit algorithm is how
+# the bitmasks are extended. Assuming starting bit positions
+# for second (bit 0) and other (bit 1), the bitmasks at the
+# end should be:
+#
+#      second: 1       (maximal, selected)
+#       other: 01      (maximal, selected)
+#      (base): 11 (maximal)
+#
+# This complicated history was important for a previous
+# version of the walk that guarantees never walking a
+# commit multiple times. That goal might be important
+# again, so preserve this complicated case. For now, this
+# test will guarantee that the bitmaps are computed
+# correctly, even with the repeat calculations.
+
 test_expect_success 'setup repo with moderate-sized history' '
-	test_commit_bulk --id=file 100 &&
+	test_commit_bulk --id=file 10 &&
+	git branch -M second &&
 	git checkout -b other HEAD~5 &&
 	test_commit_bulk --id=side 10 &&
-	git checkout master &&
-	bitmaptip=$(git rev-parse master) &&
+
+	# add complicated history setup, including merges and
+	# ambiguous merge-bases
+
+	git checkout -b merge-left other~2 &&
+	git merge second~2 -m "merge-left" &&
+
+	git checkout -b merge-right second~1 &&
+	git merge other~1 -m "merge-right" &&
+
+	git checkout -b octo-second second &&
+	git merge merge-left merge-right -m "octopus-second" &&
+
+	git checkout -b octo-other other &&
+	git merge merge-left merge-right -m "octopus-other" &&
+
+	git checkout other &&
+	git merge octo-other -m "pull octopus" &&
+
+	git checkout second &&
+	git merge octo-second -m "pull octopus" &&
+
+	# Remove these branches so they are not selected
+	# as bitmap tips
+	git branch -D merge-left &&
+	git branch -D merge-right &&
+	git branch -D octo-other &&
+	git branch -D octo-second &&
+
+	# add padding to make these merges less interesting
+	# and avoid having them selected for bitmaps
+	test_commit_bulk --id=file 100 &&
+	git checkout other &&
+	test_commit_bulk --id=side 100 &&
+	git checkout second &&
+
+	bitmaptip=$(git rev-parse second) &&
 	blob=$(echo tagged-blob | git hash-object -w --stdin) &&
 	git tag tagged-blob $blob &&
 	git config repack.writebitmaps true
 '
 
 test_expect_success 'full repack creates bitmaps' '
-	git repack -ad &&
+	GIT_TRACE2_EVENT_NESTING=4 GIT_TRACE2_EVENT="$(pwd)/trace" \
+		git repack -ad &&
 	ls .git/objects/pack/ | grep bitmap >output &&
-	test_line_count = 1 output
+	test_line_count = 1 output &&
+	grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
+	grep "\"key\":\"num_maximal_commits\",\"value\":\"107\"" trace
 '
 
 test_expect_success 'rev-list --test-bitmap verifies bitmaps' '
 	git rev-list --test-bitmap HEAD
 '
 
-rev_list_tests() {
-	state=$1
-
-	test_expect_success "counting commits via bitmap ($state)" '
-		git rev-list --count HEAD >expect &&
-		git rev-list --use-bitmap-index --count HEAD >actual &&
+rev_list_tests_head () {
+	test_expect_success "counting commits via bitmap ($state, $branch)" '
+		git rev-list --count $branch >expect &&
+		git rev-list --use-bitmap-index --count $branch >actual &&
 		test_cmp expect actual
 	'
 
-	test_expect_success "counting partial commits via bitmap ($state)" '
-		git rev-list --count HEAD~5..HEAD >expect &&
-		git rev-list --use-bitmap-index --count HEAD~5..HEAD >actual &&
+	test_expect_success "counting partial commits via bitmap ($state, $branch)" '
+		git rev-list --count $branch~5..$branch >expect &&
+		git rev-list --use-bitmap-index --count $branch~5..$branch >actual &&
 		test_cmp expect actual
 	'
 
-	test_expect_success "counting commits with limit ($state)" '
-		git rev-list --count -n 1 HEAD >expect &&
-		git rev-list --use-bitmap-index --count -n 1 HEAD >actual &&
+	test_expect_success "counting commits with limit ($state, $branch)" '
+		git rev-list --count -n 1 $branch >expect &&
+		git rev-list --use-bitmap-index --count -n 1 $branch >actual &&
 		test_cmp expect actual
 	'
 
-	test_expect_success "counting non-linear history ($state)" '
-		git rev-list --count other...master >expect &&
-		git rev-list --use-bitmap-index --count other...master >actual &&
+	test_expect_success "counting non-linear history ($state, $branch)" '
+		git rev-list --count other...second >expect &&
+		git rev-list --use-bitmap-index --count other...second >actual &&
 		test_cmp expect actual
 	'
 
-	test_expect_success "counting commits with limiting ($state)" '
-		git rev-list --count HEAD -- 1.t >expect &&
-		git rev-list --use-bitmap-index --count HEAD -- 1.t >actual &&
+	test_expect_success "counting commits with limiting ($state, $branch)" '
+		git rev-list --count $branch -- 1.t >expect &&
+		git rev-list --use-bitmap-index --count $branch -- 1.t >actual &&
 		test_cmp expect actual
 	'
 
-	test_expect_success "counting objects via bitmap ($state)" '
-		git rev-list --count --objects HEAD >expect &&
-		git rev-list --use-bitmap-index --count --objects HEAD >actual &&
+	test_expect_success "counting objects via bitmap ($state, $branch)" '
+		git rev-list --count --objects $branch >expect &&
+		git rev-list --use-bitmap-index --count --objects $branch >actual &&
 		test_cmp expect actual
 	'
 
-	test_expect_success "enumerate commits ($state)" '
-		git rev-list --use-bitmap-index HEAD >actual &&
-		git rev-list HEAD >expect &&
+	test_expect_success "enumerate commits ($state, $branch)" '
+		git rev-list --use-bitmap-index $branch >actual &&
+		git rev-list $branch >expect &&
 		test_bitmap_traversal --no-confirm-bitmaps expect actual
 	'
 
-	test_expect_success "enumerate --objects ($state)" '
-		git rev-list --objects --use-bitmap-index HEAD >actual &&
-		git rev-list --objects HEAD >expect &&
+	test_expect_success "enumerate --objects ($state, $branch)" '
+		git rev-list --objects --use-bitmap-index $branch >actual &&
+		git rev-list --objects $branch >expect &&
 		test_bitmap_traversal expect actual
 	'
 
-	test_expect_success "bitmap --objects handles non-commit objects ($state)" '
-		git rev-list --objects --use-bitmap-index HEAD tagged-blob >actual &&
+	test_expect_success "bitmap --objects handles non-commit objects ($state, $branch)" '
+		git rev-list --objects --use-bitmap-index $branch tagged-blob >actual &&
 		grep $blob actual
 	'
+}
+
+rev_list_tests () {
+	state=$1
+
+	for branch in "second" "other"
+	do
+		rev_list_tests_head
+	done
 }
 
 rev_list_tests 'full bitmap'
@@ -128,7 +219,7 @@ test_expect_success 'setup further non-bitmapped commits' '
 rev_list_tests 'partial bitmap'
 
 test_expect_success 'fetch (partial bitmap)' '
-	git --git-dir=clone.git fetch origin master:master &&
+	git --git-dir=clone.git fetch origin second:second &&
 	git rev-parse HEAD >expect &&
 	git --git-dir=clone.git rev-parse HEAD >actual &&
 	test_cmp expect actual
@@ -230,7 +321,7 @@ test_expect_success 'full repack, reusing previous bitmaps' '
 '
 
 test_expect_success 'fetch (full bitmap)' '
-	git --git-dir=clone.git fetch origin master:master &&
+	git --git-dir=clone.git fetch origin second:second &&
 	git rev-parse HEAD >expect &&
 	git --git-dir=clone.git rev-parse HEAD >actual &&
 	test_cmp expect actual
@@ -277,7 +368,7 @@ test_expect_success 'pack with missing parent' '
 	git pack-objects --stdout --revs <revs >/dev/null
 '
 
-test_expect_success JGIT 'we can read jgit bitmaps' '
+test_expect_success JGIT,SHA1 'we can read jgit bitmaps' '
 	git clone --bare . compat-jgit.git &&
 	(
 		cd compat-jgit.git &&
@@ -287,7 +378,7 @@ test_expect_success JGIT 'we can read jgit bitmaps' '
 	)
 '
 
-test_expect_success JGIT 'jgit can read our bitmaps' '
+test_expect_success JGIT,SHA1 'jgit can read our bitmaps' '
 	git clone --bare . compat-us.git &&
 	(
 		cd compat-us.git &&
@@ -343,7 +434,20 @@ test_expect_success 'pack reuse respects --incremental' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'truncated bitmap fails gracefully' '
+test_expect_success 'truncated bitmap fails gracefully (ewah)' '
+	test_config pack.writebitmaphashcache false &&
+	git repack -ad &&
+	git rev-list --use-bitmap-index --count --all >expect &&
+	bitmap=$(ls .git/objects/pack/*.bitmap) &&
+	test_when_finished "rm -f $bitmap" &&
+	test_copy_bytes 256 <$bitmap >$bitmap.tmp &&
+	mv -f $bitmap.tmp $bitmap &&
+	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
+	test_cmp expect actual &&
+	test_i18ngrep corrupt.ewah.bitmap stderr
+'
+
+test_expect_success 'truncated bitmap fails gracefully (cache)' '
 	git repack -ad &&
 	git rev-list --use-bitmap-index --count --all >expect &&
 	bitmap=$(ls .git/objects/pack/*.bitmap) &&
@@ -352,7 +456,7 @@ test_expect_success 'truncated bitmap fails gracefully' '
 	mv -f $bitmap.tmp $bitmap &&
 	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
 	test_cmp expect actual &&
-	test_i18ngrep corrupt stderr
+	test_i18ngrep corrupted.bitmap.index stderr
 '
 
 # have_delta <obj> <expected_base>

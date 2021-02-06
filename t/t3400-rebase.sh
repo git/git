@@ -8,6 +8,9 @@ test_description='git rebase assorted tests
 This test runs git rebase and checks that the author information is not lost
 among other things.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 GIT_AUTHOR_NAME=author@name
@@ -24,15 +27,15 @@ test_expect_success 'prepare repository with topic branches' '
 	git update-index --add Y &&
 	git commit -m "Add Y." &&
 	git checkout -b filemove &&
-	git reset --soft master &&
+	git reset --soft main &&
 	mkdir D &&
 	git mv A D/A &&
 	git commit -m "Move A." &&
-	git checkout -b my-topic-branch master &&
+	git checkout -b my-topic-branch main &&
 	echo Second >B &&
 	git update-index --add B &&
 	git commit -m "Add B." &&
-	git checkout -f master &&
+	git checkout -f main &&
 	echo Third >>A &&
 	git update-index A &&
 	git commit -m "Modify A." &&
@@ -46,23 +49,23 @@ test_expect_success 'prepare repository with topic branches' '
 
 test_expect_success 'rebase on dirty worktree' '
 	echo dirty >>A &&
-	test_must_fail git rebase master
+	test_must_fail git rebase main
 '
 
 test_expect_success 'rebase on dirty cache' '
 	git add A &&
-	test_must_fail git rebase master
+	test_must_fail git rebase main
 '
 
-test_expect_success 'rebase against master' '
+test_expect_success 'rebase against main' '
 	git reset --hard HEAD &&
-	git rebase master
+	git rebase main
 '
 
 test_expect_success 'rebase sets ORIG_HEAD to pre-rebase state' '
 	git checkout -b orig-head topic &&
 	pre="$(git rev-parse --verify HEAD)" &&
-	git rebase master &&
+	git rebase main &&
 	test_cmp_rev "$pre" ORIG_HEAD &&
 	test_cmp_rev ! "$pre" HEAD
 '
@@ -93,19 +96,19 @@ test_expect_success 'HEAD was detached during rebase' '
 
 test_expect_success 'rebase from ambiguous branch name' '
 	git checkout -b topic side &&
-	git rebase master
+	git rebase main
 '
 
 test_expect_success 'rebase off of the previous branch using "-"' '
-	git checkout master &&
+	git checkout main &&
 	git checkout HEAD^ &&
 	git rebase @{-1} >expect.messages &&
-	git merge-base master HEAD >expect.forkpoint &&
+	git merge-base main HEAD >expect.forkpoint &&
 
-	git checkout master &&
+	git checkout main &&
 	git checkout HEAD^ &&
 	git rebase - >actual.messages &&
-	git merge-base master HEAD >actual.forkpoint &&
+	git merge-base main HEAD >actual.forkpoint &&
 
 	test_cmp expect.forkpoint actual.forkpoint &&
 	# the next one is dubious---we may want to say "-",
@@ -114,7 +117,7 @@ test_expect_success 'rebase off of the previous branch using "-"' '
 '
 
 test_expect_success 'rebase a single mode change' '
-	git checkout master &&
+	git checkout main &&
 	git branch -D topic &&
 	echo 1 >X &&
 	git add X &&
@@ -126,7 +129,7 @@ test_expect_success 'rebase a single mode change' '
 	test_chmod +x A &&
 	test_tick &&
 	git commit -m modechange &&
-	GIT_TRACE=1 git rebase master
+	GIT_TRACE=1 git rebase main
 '
 
 test_expect_success 'rebase is not broken by diff.renames' '
@@ -162,11 +165,11 @@ test_expect_success 'fail when upstream arg is missing and not configured' '
 test_expect_success 'rebase works with format.useAutoBase' '
 	test_config format.useAutoBase true &&
 	git checkout topic &&
-	git rebase master
+	git rebase main
 '
 
 test_expect_success 'default to common base in @{upstream}s reflog if no upstream arg (--merge)' '
-	git checkout -b default-base master &&
+	git checkout -b default-base main &&
 	git checkout -b default topic &&
 	git config branch.default.remote . &&
 	git config branch.default.merge refs/heads/default-base &&
@@ -184,7 +187,7 @@ test_expect_success 'default to common base in @{upstream}s reflog if no upstrea
 '
 
 test_expect_success 'default to common base in @{upstream}s reflog if no upstream arg (--apply)' '
-	git checkout -B default-base master &&
+	git checkout -B default-base main &&
 	git checkout -B default topic &&
 	git config branch.default.remote . &&
 	git config branch.default.merge refs/heads/default-base &&
@@ -226,13 +229,13 @@ test_expect_success 'cherry-picked commits and fork-point work together' '
 
 test_expect_success 'rebase --apply -q is quiet' '
 	git checkout -b quiet topic &&
-	git rebase --apply -q master >output.out 2>&1 &&
+	git rebase --apply -q main >output.out 2>&1 &&
 	test_must_be_empty output.out
 '
 
 test_expect_success 'rebase --merge -q is quiet' '
 	git checkout -B quiet topic &&
-	git rebase --merge -q master >output.out 2>&1 &&
+	git rebase --merge -q main >output.out 2>&1 &&
 	test_must_be_empty output.out
 '
 
@@ -294,7 +297,7 @@ test_expect_success 'rebase commit with an ancient timestamp' '
 '
 
 test_expect_success 'rebase with "From " line in commit message' '
-	git checkout -b preserve-from master~1 &&
+	git checkout -b preserve-from main~1 &&
 	cat >From_.msg <<EOF &&
 Somebody embedded an mbox in a commit message
 
@@ -310,7 +313,7 @@ EOF
 	>From_ &&
 	git add From_ &&
 	git commit -F From_.msg &&
-	git rebase master &&
+	git rebase main &&
 	git log -1 --pretty=format:%B >out &&
 	test_cmp From_.msg out
 '
@@ -357,12 +360,12 @@ test_expect_success 'rebase --apply and .gitattributes' '
 		git cherry-pick test &&
 
 		git checkout test &&
-		git rebase master &&
+		git rebase main &&
 		grep "smudged" a.txt &&
 
 		git checkout removal &&
 		git reset --hard &&
-		git rebase master &&
+		git rebase main &&
 		grep "clean" a.txt
 	)
 '
@@ -402,20 +405,20 @@ test_expect_success 'rebase -c rebase.useBuiltin=false warning' '
 '
 
 test_expect_success 'switch to branch checked out here' '
-	git checkout master &&
-	git rebase master master
+	git checkout main &&
+	git rebase main main
 '
 
 test_expect_success 'switch to branch not checked out' '
-	git checkout master &&
+	git checkout main &&
 	git branch other &&
-	git rebase master other
+	git rebase main other
 '
 
 test_expect_success 'refuse to switch to branch checked out elsewhere' '
-	git checkout master &&
+	git checkout main &&
 	git worktree add wt &&
-	test_must_fail git -C wt rebase master master 2>err &&
+	test_must_fail git -C wt rebase main main 2>err &&
 	test_i18ngrep "already checked out" err
 '
 

@@ -397,7 +397,7 @@ changelist text. Exiting with a non-zero status from the script
 will abort the process.
 
 The purpose of the hook is to edit the message file in place,
-and it is not supressed by the `--no-verify` option. This hook
+and it is not suppressed by the `--no-verify` option. This hook
 is called even if `--prepare-p4-only` is set.
 
 p4-changelist
@@ -417,7 +417,7 @@ p4-post-changelist
 ~~~~~~~~~~~~~~~~~~
 
 The `p4-post-changelist` hook is invoked after the submit has
-successfully occured in P4. It takes no parameters and is meant
+successfully occurred in P4. It takes no parameters and is meant
 primarily for notification and cannot affect the outcome of the
 git p4 submit action.
 

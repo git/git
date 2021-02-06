@@ -1,0 +1,4 @@
+[class*="RIGHT"] {
+    background : #000;
+    border : 10px ChangeMe #C6C6C6;
+}

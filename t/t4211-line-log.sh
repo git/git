@@ -1,11 +1,36 @@
 #!/bin/sh
 
 test_description='test log -L'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup (import history)' '
 	git fast-import < "$TEST_DIRECTORY"/t4211/history.export &&
 	git reset --hard
+'
+
+test_expect_success 'basic command line parsing' '
+	# This may fail due to "no such path a.c in commit", or
+	# "-L is incompatible with pathspec", depending on the
+	# order the error is checked.  Either is acceptable.
+	test_must_fail git log -L1,1:a.c -- a.c &&
+
+	# -L requires there is no pathspec
+	test_must_fail git log -L1,1:b.c -- b.c 2>error &&
+	test_i18ngrep "cannot be used with pathspec" error &&
+
+	# This would fail because --follow wants a single path, but
+	# we may fail due to incompatibility between -L/--follow in
+	# the future.  Either is acceptable.
+	test_must_fail git log -L1,1:b.c --follow &&
+	test_must_fail git log --follow -L1,1:b.c &&
+
+	# This would fail because -L wants no pathspec, but
+	# we may fail due to incompatibility between -L/--follow in
+	# the future.  Either is acceptable.
+	test_must_fail git log --follow -L1,1:b.c -- b.c
 '
 
 canned_test_1 () {

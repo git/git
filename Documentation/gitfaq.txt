@@ -241,6 +241,59 @@ How do I know if I want to do a fetch or a pull?::
 	ignore the upstream changes.  A pull consists of a fetch followed
 	immediately by either a merge or rebase.  See linkgit:git-pull[1].
 
+Merging and Rebasing
+--------------------
+
+[[long-running-squash-merge]]
+What kinds of problems can occur when merging long-lived branches with squash merges?::
+	In general, there are a variety of problems that can occur when using squash
+	merges to merge two branches multiple times.  These can include seeing extra
+	commits in `git log` output, with a GUI, or when using the `...` notation to
+	express a range, as well as the possibility of needing to re-resolve conflicts
+	again and again.
++
+When Git does a normal merge between two branches, it considers exactly three
+points: the two branches and a third commit, called the _merge base_, which is
+usually the common ancestor of the commits.  The result of the merge is the sum
+of the changes between the merge base and each head.  When you merge two
+branches with a regular merge commit, this results in a new commit which will
+end up as a merge base when they're merged again, because there is now a new
+common ancestor.  Git doesn't have to consider changes that occurred before the
+merge base, so you don't have to re-resolve any conflicts you resolved before.
++
+When you perform a squash merge, a merge commit isn't created; instead, the
+changes from one side are applied as a regular commit to the other side.  This
+means that the merge base for these branches won't have changed, and so when Git
+goes to perform its next merge, it considers all of the changes that it
+considered the last time plus the new changes.  That means any conflicts may
+need to be re-resolved.  Similarly, anything using the `...` notation in `git
+diff`, `git log`, or a GUI will result in showing all of the changes since the
+original merge base.
++
+As a consequence, if you want to merge two long-lived branches repeatedly, it's
+best to always use a regular merge commit.
+
+[[merge-two-revert-one]]
+If I make a change on two branches but revert it on one, why does the merge of those branches include the change?::
+	By default, when Git does a merge, it uses a strategy called the recursive
+	strategy, which does a fancy three-way merge.  In such a case, when Git
+	performs the merge, it considers exactly three points: the two heads and a
+	third point, called the _merge base_, which is usually the common ancestor of
+	those commits.  Git does not consider the history or the individual commits
+	that have happened on those branches at all.
++
+As a result, if both sides have a change and one side has reverted that change,
+the result is to include the change.  This is because the code has changed on
+one side and there is no net change on the other, and in this scenario, Git
+adopts the change.
++
+If this is a problem for you, you can do a rebase instead, rebasing the branch
+with the revert onto the other branch.  A rebase in this scenario will revert
+the change, because a rebase applies each individual commit, including the
+revert.  Note that rebases rewrite history, so you should avoid rebasing
+published branches unless you're sure you're comfortable with that.  See the
+NOTES section in linkgit:git-rebase[1] for more details.
+
 Hooks
 -----
 
@@ -309,6 +362,39 @@ information about how to configure files as text or binary.
 +
 You can also control this behavior with the `core.whitespace` setting if you
 don't wish to remove the carriage returns from your line endings.
+
+[[always-modified-files-case]]
+Why do I have a file that's always modified?::
+	Internally, Git always stores file names as sequences of bytes and doesn't
+	perform any encoding or case folding.  However, Windows and macOS by default
+	both perform case folding on file names.  As a result, it's possible to end up
+	with multiple files or directories whose names differ only in case.  Git can
+	handle this just fine, but the file system can store only one of these files,
+	so when Git reads the other file to see its contents, it looks modified.
++
+It's best to remove one of the files such that you only have one file.  You can
+do this with commands like the following (assuming two files `AFile.txt` and
+`afile.txt`) on an otherwise clean working tree:
++
+----
+$ git rm --cached AFile.txt
+$ git commit -m 'Remove files conflicting in case'
+$ git checkout .
+----
++
+This avoids touching the disk, but removes the additional file.  Your project
+may prefer to adopt a naming convention, such as all-lowercase names, to avoid
+this problem from occurring again; such a convention can be checked using a
+`pre-receive` hook or as part of a continuous integration (CI) system.
++
+It is also possible for perpetually modified files to occur on any platform if a
+smudge or clean filter is in use on your system but a file was previously
+committed without running the smudge or clean filter.  To fix this, run the
+following on an otherwise clean working tree:
++
+----
+$ git add --renormalize .
+----
 
 [[recommended-storage-settings]]
 What's the recommended way to store files in Git?::

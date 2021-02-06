@@ -35,6 +35,7 @@ static int fetch_fsck_objects = -1;
 static int transfer_fsck_objects = -1;
 static int agent_supported;
 static int server_supports_filtering;
+static int advertise_sid;
 static struct shallow_lock shallow_lock;
 static const char *alternate_shallow_file;
 static struct strbuf fsck_msg_types = STRBUF_INIT;
@@ -326,6 +327,8 @@ static int find_common(struct fetch_negotiator *negotiator,
 			if (deepen_not_ok)      strbuf_addstr(&c, " deepen-not");
 			if (agent_supported)    strbuf_addf(&c, " agent=%s",
 							    git_user_agent_sanitized());
+			if (advertise_sid)
+				strbuf_addf(&c, " session-id=%s", trace2_session_id());
 			if (args->filter_options.choice)
 				strbuf_addstr(&c, " filter");
 			packet_buf_write(&req_buf, "want %s%s\n", remote_hex, c.buf);
@@ -769,13 +772,11 @@ static int sideband_demux(int in, int out, void *data)
 	return ret;
 }
 
-static void write_promisor_file(const char *keep_name,
-				struct ref **sought, int nr_sought)
+static void create_promisor_file(const char *keep_name,
+				 struct ref **sought, int nr_sought)
 {
 	struct strbuf promisor_name = STRBUF_INIT;
 	int suffix_stripped;
-	FILE *output;
-	int i;
 
 	strbuf_addstr(&promisor_name, keep_name);
 	suffix_stripped = strbuf_strip_suffix(&promisor_name, ".keep");
@@ -784,11 +785,7 @@ static void write_promisor_file(const char *keep_name,
 		    keep_name);
 	strbuf_addstr(&promisor_name, ".promisor");
 
-	output = xfopen(promisor_name.buf, "w");
-	for (i = 0; i < nr_sought; i++)
-		fprintf(output, "%s %s\n", oid_to_hex(&sought[i]->old_oid),
-			sought[i]->name);
-	fclose(output);
+	write_promisor_file(promisor_name.buf, sought, nr_sought);
 
 	strbuf_release(&promisor_name);
 }
@@ -872,7 +869,7 @@ static int get_pack(struct fetch_pack_args *args,
 
 		if (args->from_promisor)
 			/*
-			 * write_promisor_file() may be called afterwards but
+			 * create_promisor_file() may be called afterwards but
 			 * we still need index-pack to know that this is a
 			 * promisor pack. For example, if transfer.fsckobjects
 			 * is true, index-pack needs to know that .gitmodules
@@ -915,8 +912,9 @@ static int get_pack(struct fetch_pack_args *args,
 	if (start_command(&cmd))
 		die(_("fetch-pack: unable to fork off %s"), cmd_name);
 	if (do_keep && pack_lockfiles) {
-		string_list_append_nodup(pack_lockfiles,
-					 index_pack_lockfile(cmd.out));
+		char *pack_lockfile = index_pack_lockfile(cmd.out);
+		if (pack_lockfile)
+			string_list_append_nodup(pack_lockfiles, pack_lockfile);
 		close(cmd.out);
 	}
 
@@ -939,7 +937,7 @@ static int get_pack(struct fetch_pack_args *args,
 	 * obtained .keep filename if necessary
 	 */
 	if (do_keep && pack_lockfiles && pack_lockfiles->nr && args->from_promisor)
-		write_promisor_file(pack_lockfiles->items[0].string, sought, nr_sought);
+		create_promisor_file(pack_lockfiles->items[0].string, sought, nr_sought);
 
 	return 0;
 }
@@ -978,6 +976,9 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 			print_verbose(args, _("Server version is %.*s"),
 				      agent_len, agent_feature);
 	}
+
+	if (!server_supports("session-id"))
+		advertise_sid = 0;
 
 	if (server_supports("shallow"))
 		print_verbose(args, _("Server supports %s"), "shallow");
@@ -1191,6 +1192,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 		packet_buf_write(&req_buf, "command=fetch");
 	if (server_supports_v2("agent", 0))
 		packet_buf_write(&req_buf, "agent=%s", git_user_agent_sanitized());
+	if (advertise_sid && server_supports_v2("session-id", 0))
+		packet_buf_write(&req_buf, "session-id=%s", trace2_session_id());
 	if (args->server_options && args->server_options->nr &&
 	    server_supports_v2("server-option", 1)) {
 		int i;
@@ -1711,6 +1714,7 @@ static void fetch_pack_config(void)
 	git_config_get_bool("repack.usedeltabaseoffset", &prefer_ofs_delta);
 	git_config_get_bool("fetch.fsckobjects", &fetch_fsck_objects);
 	git_config_get_bool("transfer.fsckobjects", &transfer_fsck_objects);
+	git_config_get_bool("transfer.advertisesid", &advertise_sid);
 	if (!uri_protocols.nr) {
 		char *str;
 

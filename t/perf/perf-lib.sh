@@ -147,14 +147,16 @@ test_run_perf_ () {
 	"$GTIME" -f "%E %U %S" -o test_time.$i "$SHELL" -c '
 . '"$TEST_DIRECTORY"/test-lib-functions.sh'
 test_export () {
-	[ $# != 0 ] || return 0
-	test_export_="$test_export_\\|$1"
-	shift
-	test_export "$@"
+	test_export_="$test_export_ $*"
 }
 '"$1"'
 ret=$?
-set | sed -n "s'"/'/'\\\\''/g"';s/^\\($test_export_\\)/export '"'&'"'/p" >test_vars
+needles=
+for v in $test_export_
+do
+	needles="$needles;s/^$v=/export $v=/p"
+done
+set | sed -n "s'"/'/'\\\\''/g"'$needles" >test_vars
 exit $ret' >&3 2>&4
 	eval_ret=$?
 

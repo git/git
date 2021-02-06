@@ -3587,6 +3587,8 @@ static void builtin_diff(const char *name_a,
 		if (header.len && !o->flags.suppress_diff_headers)
 			ecbdata.header = &header;
 		xpp.flags = o->xdl_opts;
+		xpp.ignore_regex = o->ignore_regex;
+		xpp.ignore_regex_nr = o->ignore_regex_nr;
 		xpp.anchors = o->anchors;
 		xpp.anchors_nr = o->anchors_nr;
 		xecfg.ctxlen = o->context;
@@ -3663,7 +3665,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 {
 	mmfile_t mf1, mf2;
 	struct diffstat_file *data;
-	int same_contents;
+	int may_differ;
 	int complete_rewrite = 0;
 
 	if (!DIFF_PAIR_UNMERGED(p)) {
@@ -3681,12 +3683,14 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		return;
 	}
 
-	same_contents = oideq(&one->oid, &two->oid);
+	/* saves some reads if true, not a guarantee of diff outcome */
+	may_differ = !(one->oid_valid && two->oid_valid &&
+			oideq(&one->oid, &two->oid));
 
 	if (diff_filespec_is_binary(o->repo, one) ||
 	    diff_filespec_is_binary(o->repo, two)) {
 		data->is_binary = 1;
-		if (same_contents) {
+		if (!may_differ) {
 			data->added = 0;
 			data->deleted = 0;
 		} else {
@@ -3702,7 +3706,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		data->added = count_lines(two->data, two->size);
 	}
 
-	else if (!same_contents) {
+	else if (may_differ) {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
@@ -3714,6 +3718,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = o->xdl_opts;
+		xpp.ignore_regex = o->ignore_regex;
+		xpp.ignore_regex_nr = o->ignore_regex_nr;
 		xpp.anchors = o->anchors;
 		xpp.anchors_nr = o->anchors_nr;
 		xecfg.ctxlen = o->context;
@@ -3727,7 +3733,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 				diffstat->files[diffstat->nr - 1];
 			/*
 			 * Omit diffstats of modified files where nothing changed.
-			 * Even if !same_contents, this might be the case due to
+			 * Even if may_differ, this might be the case due to
 			 * ignoring whitespace changes, etc.
 			 *
 			 * But note that we special-case additions, deletions,
@@ -4109,6 +4115,9 @@ void diff_free_filespec_blob(struct diff_filespec *s)
 
 void diff_free_filespec_data(struct diff_filespec *s)
 {
+	if (!s)
+		return;
+
 	diff_free_filespec_blob(s);
 	FREE_AND_NULL(s->cnt_data);
 }
@@ -4584,6 +4593,9 @@ void repo_diff_setup(struct repository *r, struct diff_options *options)
 
 	options->orderfile = diff_order_file_cfg;
 
+	if (!options->flags.ignore_submodule_set)
+		options->flags.ignore_untracked_in_submodules = 1;
+
 	if (diff_no_prefix) {
 		options->a_prefix = options->b_prefix = "";
 	} else if (!diff_mnemonic_prefix) {
@@ -4625,7 +4637,8 @@ void diff_setup_done(struct diff_options *options)
 	 * inside contents.
 	 */
 
-	if ((options->xdl_opts & XDF_WHITESPACE_FLAGS))
+	if ((options->xdl_opts & XDF_WHITESPACE_FLAGS) ||
+	    options->ignore_regex_nr)
 		options->flags.diff_from_contents = 1;
 	else
 		options->flags.diff_from_contents = 0;
@@ -5201,6 +5214,22 @@ static int diff_opt_patience(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_ignore_regex(const struct option *opt,
+				 const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+	regex_t *regex;
+
+	BUG_ON_OPT_NEG(unset);
+	regex = xmalloc(sizeof(*regex));
+	if (regcomp(regex, arg, REG_EXTENDED | REG_NEWLINE))
+		return error(_("invalid regex given to -I: '%s'"), arg);
+	ALLOC_GROW(options->ignore_regex, options->ignore_regex_nr + 1,
+		   options->ignore_regex_alloc);
+	options->ignore_regex[options->ignore_regex_nr++] = regex;
+	return 0;
+}
+
 static int diff_opt_pickaxe_regex(const struct option *opt,
 				  const char *arg, int unset)
 {
@@ -5489,6 +5518,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_BIT_F(0, "ignore-blank-lines", &options->xdl_opts,
 			  N_("ignore changes whose lines are all blank"),
 			  XDF_IGNORE_BLANK_LINES, PARSE_OPT_NONEG),
+		OPT_CALLBACK_F('I', "ignore-matching-lines", options, N_("<regex>"),
+			       N_("ignore changes whose all lines match <regex>"),
+			       0, diff_opt_ignore_regex),
 		OPT_BIT(0, "indent-heuristic", &options->xdl_opts,
 			N_("heuristic to shift diff hunk boundaries for easy reading"),
 			XDF_INDENT_HEURISTIC),
@@ -6287,9 +6319,9 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 			if (o->color_moved == COLOR_MOVED_ZEBRA_DIM)
 				dim_moved_lines(o);
 
-			hashmap_free_entries(&add_lines, struct moved_entry,
+			hashmap_clear_and_free(&add_lines, struct moved_entry,
 						ent);
-			hashmap_free_entries(&del_lines, struct moved_entry,
+			hashmap_clear_and_free(&del_lines, struct moved_entry,
 						ent);
 		}
 

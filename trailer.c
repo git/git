@@ -1131,7 +1131,9 @@ static void format_trailer_info(struct strbuf *out,
 	size_t i;
 
 	/* If we want the whole block untouched, we can take the fast path. */
-	if (!opts->only_trailers && !opts->unfold && !opts->filter && !opts->separator) {
+	if (!opts->only_trailers && !opts->unfold && !opts->filter &&
+	    !opts->separator && !opts->key_only && !opts->value_only &&
+	    !opts->key_value_separator) {
 		strbuf_add(out, info->trailer_start,
 			   info->trailer_end - info->trailer_start);
 		return;
@@ -1153,8 +1155,15 @@ static void format_trailer_info(struct strbuf *out,
 				if (opts->separator && out->len != origlen)
 					strbuf_addbuf(out, opts->separator);
 				if (!opts->value_only)
-					strbuf_addf(out, "%s: ", tok.buf);
-				strbuf_addbuf(out, &val);
+					strbuf_addbuf(out, &tok);
+				if (!opts->key_only && !opts->value_only) {
+					if (opts->key_value_separator)
+						strbuf_addbuf(out, opts->key_value_separator);
+					else
+						strbuf_addstr(out, ": ");
+				}
+				if (!opts->key_only)
+					strbuf_addbuf(out, &val);
 				if (!opts->separator)
 					strbuf_addch(out, '\n');
 			}
@@ -1182,4 +1191,40 @@ void format_trailers_from_commit(struct strbuf *out, const char *msg,
 	trailer_info_get(&info, msg, opts);
 	format_trailer_info(out, &info, opts);
 	trailer_info_release(&info);
+}
+
+void trailer_iterator_init(struct trailer_iterator *iter, const char *msg)
+{
+	struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+	strbuf_init(&iter->key, 0);
+	strbuf_init(&iter->val, 0);
+	opts.no_divider = 1;
+	trailer_info_get(&iter->info, msg, &opts);
+	iter->cur = 0;
+}
+
+int trailer_iterator_advance(struct trailer_iterator *iter)
+{
+	while (iter->cur < iter->info.trailer_nr) {
+		char *trailer = iter->info.trailers[iter->cur++];
+		int separator_pos = find_separator(trailer, separators);
+
+		if (separator_pos < 1)
+			continue; /* not a real trailer */
+
+		strbuf_reset(&iter->key);
+		strbuf_reset(&iter->val);
+		parse_trailer(&iter->key, &iter->val, NULL,
+			      trailer, separator_pos);
+		unfold_value(&iter->val);
+		return 1;
+	}
+	return 0;
+}
+
+void trailer_iterator_release(struct trailer_iterator *iter)
+{
+	trailer_info_release(&iter->info);
+	strbuf_release(&iter->val);
+	strbuf_release(&iter->key);
 }
