@@ -446,7 +446,7 @@ especially if readers will not use the object name to ref mapping.
 Object blocks use unique, abbreviated 2-32 object name keys, mapping to
 ref blocks containing references pointing to that object directly, or as
 the peeled value of an annotated tag. Like ref blocks, object blocks use
-the file's standard block size. The abbrevation length is available in
+the file's standard block size. The abbreviation length is available in
 the footer as `obj_id_len`.
 
 To save space in small files, object blocks may be omitted if the ref
