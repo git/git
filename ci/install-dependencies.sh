@@ -44,13 +44,13 @@ osx-clang|osx-gcc)
 	test -z "$BREW_INSTALL_PACKAGES" ||
 	brew install $BREW_INSTALL_PACKAGES
 	brew link --force gettext
-	brew cask install --no-quarantine perforce || {
+	brew install --cask --no-quarantine perforce || {
 		# Update the definitions and try again
 		cask_repo="$(brew --repository)"/Library/Taps/homebrew/homebrew-cask &&
-		git -C "$cask_repo" pull --no-stat &&
-		brew cask install --no-quarantine perforce
+		git -C "$cask_repo" pull --no-stat --ff-only &&
+		brew install --cask --no-quarantine perforce
 	} ||
-	brew install caskroom/cask/perforce
+	brew install homebrew/cask/perforce
 	case "$jobname" in
 	osx-gcc)
 		brew install gcc@9
