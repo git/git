@@ -194,6 +194,22 @@ test_expect_failure 'handle existing decomposed filenames' '
 	test_must_be_empty untracked
 '
 
+test_expect_success "unicode decomposed: git restore -p . " '
+	DIRNAMEPWD=dir.Odiarnfc &&
+	DIRNAMEINREPO=dir.$Adiarnfc &&
+	export DIRNAMEPWD DIRNAMEINREPO &&
+	git init "$DIRNAMEPWD" &&
+	(
+		cd "$DIRNAMEPWD" &&
+		mkdir "$DIRNAMEINREPO" &&
+		cd "$DIRNAMEINREPO" &&
+		echo "Initial" >file &&
+		git add file &&
+		echo "More stuff" >>file &&
+		echo y | git restore -p .
+	)
+'
+
 # Test if the global core.precomposeunicode stops autosensing
 # Must be the last test case
 test_expect_success "respect git config --global core.precomposeunicode" '
