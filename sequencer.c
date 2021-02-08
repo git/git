@@ -1744,8 +1744,7 @@ static const char skip_first_commit_msg_str[] = N_("The 1st commit message will 
 static const char skip_nth_commit_msg_fmt[] = N_("The commit message #%d will be skipped:");
 static const char combined_commit_msg_fmt[] = N_("This is a combination of %d commits.");
 
-static int check_fixup_flag(enum todo_command command,
-			    enum todo_item_flags flag)
+static int check_fixup_flag(enum todo_command command, unsigned flag)
 {
 	return command == TODO_FIXUP && ((flag & TODO_REPLACE_FIXUP_MSG) ||
 					 (flag & TODO_EDIT_FIXUP_MSG));
@@ -1850,7 +1849,7 @@ static void update_squash_message_for_fixup(struct strbuf *msg)
 
 static int append_squash_message(struct strbuf *buf, const char *body,
 			 enum todo_command command, struct replay_opts *opts,
-			 enum todo_item_flags flag)
+			 unsigned flag)
 {
 	const char *fixup_msg;
 	size_t commented_len = 0, fixup_off;
@@ -1906,7 +1905,7 @@ static int update_squash_messages(struct repository *r,
 				  enum todo_command command,
 				  struct commit *commit,
 				  struct replay_opts *opts,
-				  enum todo_item_flags flag)
+				  unsigned flag)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int res = 0;
