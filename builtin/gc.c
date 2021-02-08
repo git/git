@@ -92,7 +92,7 @@ static void process_log_file(void)
 		 */
 		int saved_errno = errno;
 		fprintf(stderr, _("Failed to fstat %s: %s"),
-			get_tempfile_path(log_lock.tempfile),
+			get_lock_file_path(&log_lock),
 			strerror(saved_errno));
 		fflush(stderr);
 		commit_lock_file(&log_lock);
@@ -1518,7 +1518,7 @@ static int update_background_schedule(int run_maintenance)
 	strvec_split(&crontab_list.args, crontab_name);
 	strvec_push(&crontab_list.args, "-l");
 	crontab_list.in = -1;
-	crontab_list.out = dup(lk.tempfile->fd);
+	crontab_list.out = dup(get_lock_file_fd(&lk));
 	crontab_list.git_cmd = 0;
 
 	if (start_command(&crontab_list)) {
@@ -1533,7 +1533,7 @@ static int update_background_schedule(int run_maintenance)
 	 * Read from the .lock file, filtering out the old
 	 * schedule while appending the new schedule.
 	 */
-	cron_list = fdopen(lk.tempfile->fd, "r");
+	cron_list = fdopen(get_lock_file_fd(&lk), "r");
 	rewind(cron_list);
 
 	strvec_split(&crontab_edit.args, crontab_name);

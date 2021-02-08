@@ -918,7 +918,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 					(pack_name_concat_len % MIDX_CHUNK_ALIGNMENT);
 
 	hold_lock_file_for_update(&lk, midx_name, LOCK_DIE_ON_ERROR);
-	f = hashfd(lk.tempfile->fd, lk.tempfile->filename.buf);
+	f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
 	FREE_AND_NULL(midx_name);
 
 	if (packs.m)
