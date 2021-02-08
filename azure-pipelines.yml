@@ -365,7 +365,7 @@ jobs:
   displayName: StaticAnalysis
   condition: succeeded()
   pool:
-    vmImage: ubuntu-latest
+    vmImage: ubuntu-22.04
   steps:
   - bash: |
        sudo apt-get update &&
