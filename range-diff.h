@@ -16,4 +16,10 @@ int show_range_diff(const char *range1, const char *range2,
 		    const struct diff_options *diffopt,
 		    const struct strvec *other_arg);
 
+/*
+ * Determine whether the given argument is usable as a range argument of `git
+ * range-diff`, e.g. A..B.
+ */
+int is_range_diff_range(const char *arg);
+
 #endif
