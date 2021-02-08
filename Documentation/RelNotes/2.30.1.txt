@@ -44,4 +44,12 @@ Fixes since v2.30
 
  * Doc for packfile URI feature has been clarified.
 
+ * The implementation of "git branch --sort" wrt the detached HEAD
+   display has always been hacky, which has been cleaned up.
+
+ * Our setting of GitHub CI test jobs were a bit too eager to give up
+   once there is even one failure found.  Tweak the knob to allow
+   other jobs keep running even when we see a failure, so that we can
+   find more failures in a single run.
+
 Also contains minor documentation updates and code clean-ups.
