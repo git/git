@@ -7,6 +7,39 @@
 #include "pkt-line.h"
 #include "config.h"
 
+static int config_read;
+static int advertise_unborn;
+static int allow_unborn;
+
+static void ensure_config_read(void)
+{
+	const char *str = NULL;
+
+	if (config_read)
+		return;
+
+	if (repo_config_get_string_tmp(the_repository, "lsrefs.unborn", &str)) {
+		/*
+		 * If there is no such config, advertise and allow it by
+		 * default.
+		 */
+		advertise_unborn = 1;
+		allow_unborn = 1;
+	} else {
+		if (!strcmp(str, "advertise")) {
+			advertise_unborn = 1;
+			allow_unborn = 1;
+		} else if (!strcmp(str, "allow")) {
+			allow_unborn = 1;
+		} else if (!strcmp(str, "ignore")) {
+			/* do nothing */
+		} else {
+			die(_("invalid value '%s' for lsrefs.unborn"), str);
+		}
+	}
+	config_read = 1;
+}
+
 /*
  * Check if one of the prefixes is a prefix of the ref.
  * If no prefixes were provided, all refs match.
@@ -32,6 +65,7 @@ struct ls_refs_data {
 	unsigned peel;
 	unsigned symrefs;
 	struct strvec prefixes;
+	unsigned unborn : 1;
 };
 
 static int send_ref(const char *refname, const struct object_id *oid,
@@ -47,7 +81,10 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	if (!ref_match(&data->prefixes, refname_nons))
 		return 0;
 
-	strbuf_addf(&refline, "%s %s", oid_to_hex(oid), refname_nons);
+	if (oid)
+		strbuf_addf(&refline, "%s %s", oid_to_hex(oid), refname_nons);
+	else
+		strbuf_addf(&refline, "unborn %s", refname_nons);
 	if (data->symrefs && flag & REF_ISSYMREF) {
 		struct object_id unused;
 		const char *symref_target = resolve_ref_unsafe(refname, 0,
@@ -61,7 +98,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 			    strip_namespace(symref_target));
 	}
 
-	if (data->peel) {
+	if (data->peel && oid) {
 		struct object_id peeled;
 		if (!peel_iterated_oid(oid, &peeled))
 			strbuf_addf(&refline, " peeled:%s", oid_to_hex(&peeled));
@@ -72,6 +109,23 @@ static int send_ref(const char *refname, const struct object_id *oid,
 
 	strbuf_release(&refline);
 	return 0;
+}
+
+static void send_possibly_unborn_head(struct ls_refs_data *data)
+{
+	struct strbuf namespaced = STRBUF_INIT;
+	struct object_id oid;
+	int flag;
+	int oid_is_null;
+
+	strbuf_addf(&namespaced, "%sHEAD", get_git_namespace());
+	if (!resolve_ref_unsafe(namespaced.buf, 0, &oid, &flag))
+		return; /* bad ref */
+	oid_is_null = is_null_oid(&oid);
+	if (!oid_is_null ||
+	    (data->unborn && data->symrefs && (flag & REF_ISSYMREF)))
+		send_ref(namespaced.buf, oid_is_null ? NULL : &oid, flag, data);
+	strbuf_release(&namespaced);
 }
 
 static int ls_refs_config(const char *var, const char *value, void *data)
@@ -92,6 +146,7 @@ int ls_refs(struct repository *r, struct strvec *keys,
 	memset(&data, 0, sizeof(data));
 	strvec_init(&data.prefixes);
 
+	ensure_config_read();
 	git_config(ls_refs_config, NULL);
 
 	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
@@ -104,12 +159,14 @@ int ls_refs(struct repository *r, struct strvec *keys,
 			data.symrefs = 1;
 		else if (skip_prefix(arg, "ref-prefix ", &out))
 			strvec_push(&data.prefixes, out);
+		else if (!strcmp("unborn", arg))
+			data.unborn = allow_unborn;
 	}
 
 	if (request->status != PACKET_READ_FLUSH)
 		die(_("expected flush after ls-refs arguments"));
 
-	head_ref_namespaced(send_ref, &data);
+	send_possibly_unborn_head(&data);
 	if (!data.prefixes.nr)
 		strvec_push(&data.prefixes, "");
 	for_each_fullref_in_prefixes(get_git_namespace(), data.prefixes.v,
@@ -117,4 +174,15 @@ int ls_refs(struct repository *r, struct strvec *keys,
 	packet_flush(1);
 	strvec_clear(&data.prefixes);
 	return 0;
+}
+
+int ls_refs_advertise(struct repository *r, struct strbuf *value)
+{
+	if (value) {
+		ensure_config_read();
+		if (advertise_unborn)
+			strbuf_addstr(value, "unborn");
+	}
+
+	return 1;
 }
