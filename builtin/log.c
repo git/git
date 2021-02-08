@@ -1223,14 +1223,20 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 		 */
 		struct diff_options opts;
 		struct strvec other_arg = STRVEC_INIT;
+		struct range_diff_options range_diff_opts = {
+			.creation_factor = rev->creation_factor,
+			.dual_color = 1,
+			.diffopt = &opts,
+			.other_arg = &other_arg
+		};
+
 		diff_setup(&opts);
 		opts.file = rev->diffopt.file;
 		opts.use_color = rev->diffopt.use_color;
 		diff_setup_done(&opts);
 		fprintf_ln(rev->diffopt.file, "%s", rev->rdiff_title);
 		get_notes_args(&other_arg, rev);
-		show_range_diff(rev->rdiff1, rev->rdiff2,
-				rev->creation_factor, 1, &opts, &other_arg);
+		show_range_diff(rev->rdiff1, rev->rdiff2, &range_diff_opts);
 		strvec_clear(&other_arg);
 	}
 }

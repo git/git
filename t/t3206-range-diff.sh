@@ -733,4 +733,19 @@ test_expect_success 'format-patch --range-diff with multiple notes' '
 	test_cmp expect actual
 '
 
+test_expect_success '--left-only/--right-only' '
+	git switch --orphan left-right &&
+	test_commit first &&
+	test_commit unmatched &&
+	test_commit common &&
+	git switch -C left-right first &&
+	git cherry-pick common &&
+
+	git range-diff -s --left-only ...common >actual &&
+	head_oid=$(git rev-parse --short HEAD) &&
+	common_oid=$(git rev-parse --short common) &&
+	echo "1:  $head_oid = 2:  $common_oid common" >expect &&
+	test_cmp expect actual
+'
+
 test_done

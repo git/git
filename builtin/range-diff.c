@@ -14,18 +14,27 @@ NULL
 
 int cmd_range_diff(int argc, const char **argv, const char *prefix)
 {
-	int creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;
 	struct diff_options diffopt = { NULL };
 	struct strvec other_arg = STRVEC_INIT;
-	int simple_color = -1;
+	struct range_diff_options range_diff_opts = {
+		.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT,
+		.diffopt = &diffopt,
+		.other_arg = &other_arg
+	};
+	int simple_color = -1, left_only = 0, right_only = 0;
 	struct option range_diff_options[] = {
-		OPT_INTEGER(0, "creation-factor", &creation_factor,
+		OPT_INTEGER(0, "creation-factor",
+			    &range_diff_opts.creation_factor,
 			    N_("Percentage by which creation is weighted")),
 		OPT_BOOL(0, "no-dual-color", &simple_color,
 			    N_("use simple diff colors")),
 		OPT_PASSTHRU_ARGV(0, "notes", &other_arg,
 				  N_("notes"), N_("passed to 'git log'"),
 				  PARSE_OPT_OPTARG),
+		OPT_BOOL(0, "left-only", &left_only,
+			 N_("only emit output related to the first range")),
+		OPT_BOOL(0, "right-only", &right_only,
+			 N_("only emit output related to the second range")),
 		OPT_END()
 	};
 	struct option *options;
@@ -82,8 +91,10 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	}
 	FREE_AND_NULL(options);
 
-	res = show_range_diff(range1.buf, range2.buf, creation_factor,
-			      simple_color < 1, &diffopt, &other_arg);
+	range_diff_opts.dual_color = simple_color < 1;
+	range_diff_opts.left_only = left_only;
+	range_diff_opts.right_only = right_only;
+	res = show_range_diff(range1.buf, range2.buf, &range_diff_opts);
 
 	strvec_clear(&other_arg);
 	strbuf_release(&range1);
