@@ -103,8 +103,10 @@ test_expect_success 'stash pop after save --include-untracked leaves files untra
 	git stash pop &&
 	git status --porcelain >actual &&
 	test_cmp expect actual &&
-	test "1" = "$(cat file2)" &&
-	test untracked = "$(cat untracked/untracked)"
+	echo 1 >expect_file2 &&
+	test_cmp expect_file2 file2 &&
+	echo untracked >untracked_expect &&
+	test_cmp untracked_expect untracked/untracked
 '
 
 test_expect_success 'clean up untracked/ directory to prepare for next tests' '
