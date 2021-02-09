@@ -13,7 +13,7 @@ code and message.'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-. ./gitweb-lib.sh
+. ./lib-gitweb.sh
 
 #
 # Gitweb only provides the functionality tested by the 'modification times'
