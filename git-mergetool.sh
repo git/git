@@ -272,6 +272,8 @@ merge_file () {
 		ext=
 	esac
 
+	initialize_merge_tool "$merge_tool" || return
+
 	mergetool_tmpdir_init
 
 	if test "$MERGETOOL_TMPDIR" != "."
