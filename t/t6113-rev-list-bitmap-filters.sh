@@ -2,6 +2,7 @@
 
 test_description='rev-list combining bitmaps and filters'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-bitmap.sh
 
 test_expect_success 'set up bitmapped repo' '
 	# one commit will have bitmaps, the other will not
