@@ -239,6 +239,13 @@ checkout_staged_file () {
 	fi
 }
 
+hide_resolved () {
+	git merge-file --ours -q -p "$LOCAL" "$BASE" "$REMOTE" >"$LCONFL"
+	git merge-file --theirs -q -p "$LOCAL" "$BASE" "$REMOTE" >"$RCONFL"
+	mv -- "$LCONFL" "$LOCAL"
+	mv -- "$RCONFL" "$REMOTE"
+}
+
 merge_file () {
 	MERGED="$1"
 
@@ -276,7 +283,9 @@ merge_file () {
 
 	BACKUP="$MERGETOOL_TMPDIR/${BASE}_BACKUP_$$$ext"
 	LOCAL="$MERGETOOL_TMPDIR/${BASE}_LOCAL_$$$ext"
+	LCONFL="$MERGETOOL_TMPDIR/${BASE}_LOCAL_LCONFL_$$$ext"
 	REMOTE="$MERGETOOL_TMPDIR/${BASE}_REMOTE_$$$ext"
+	RCONFL="$MERGETOOL_TMPDIR/${BASE}_REMOTE_RCONFL_$$$ext"
 	BASE="$MERGETOOL_TMPDIR/${BASE}_BASE_$$$ext"
 
 	base_mode= local_mode= remote_mode=
@@ -321,6 +330,11 @@ merge_file () {
 	checkout_staged_file 1 "$MERGED" "$BASE"
 	checkout_staged_file 2 "$MERGED" "$LOCAL"
 	checkout_staged_file 3 "$MERGED" "$REMOTE"
+
+	if test "$(git config --type=bool mergetool.hideResolved)" != "false"
+	then
+		hide_resolved
+	fi
 
 	if test -z "$local_mode" || test -z "$remote_mode"
 	then

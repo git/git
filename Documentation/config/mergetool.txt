@@ -40,6 +40,16 @@ mergetool.meld.useAutoMerge::
 	value of `false` avoids using `--auto-merge` altogether, and is the
 	default value.
 
+mergetool.hideResolved::
+	During a merge Git will automatically resolve as many conflicts as
+	possible and write the 'MERGED' file containing conflict markers around
+	any conflicts that it cannot resolve; 'LOCAL' and 'REMOTE' normally
+	represent the versions of the file from before Git's conflict
+	resolution. This flag causes 'LOCAL' and 'REMOTE' to be overwriten so
+	that only the unresolved conflicts are presented to the merge tool. Can
+	be configured per-tool via the `mergetool.<tool>.hideResolved`
+	configuration variable. Defaults to `true`.
+
 mergetool.keepBackup::
 	After performing a merge, the original file with conflict markers
 	can be saved as a file with a `.orig` extension.  If this variable
