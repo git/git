@@ -169,9 +169,9 @@ test_expect_success 'stash save --include-untracked respects .gitignore' '
 	mkdir ignored.d &&
 	echo ignored >ignored.d/untracked &&
 	git stash -u &&
-	test -s ignored &&
-	test -s ignored.d/untracked &&
-	test -s .gitignore
+	test_file_not_empty ignored &&
+	test_file_not_empty ignored.d/untracked &&
+	test_file_not_empty .gitignore
 '
 
 test_expect_success 'stash save -u can stash with only untracked files different' '
@@ -189,9 +189,9 @@ test_expect_success 'stash save --all does not respect .gitignore' '
 
 test_expect_success 'stash save --all is stash poppable' '
 	git stash pop &&
-	test -s ignored &&
-	test -s ignored.d/untracked &&
-	test -s .gitignore
+	test_file_not_empty ignored &&
+	test_file_not_empty ignored.d/untracked &&
+	test_file_not_empty .gitignore
 '
 
 test_expect_success 'stash push --include-untracked with pathspec' '
