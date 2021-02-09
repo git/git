@@ -1105,7 +1105,7 @@ test_cmp_rev () {
 	fi
 	if test $# != 2
 	then
-		error "bug in the test script: test_cmp_rev requires two revisions, but got $#"
+		BUG "test_cmp_rev requires two revisions, but got $#"
 	else
 		local r1 r2
 		r1=$(git rev-parse --verify "$1") &&
@@ -1216,7 +1216,7 @@ test_atexit () {
 	# doing so on Bash is better than nothing (the test will
 	# silently pass on other shells).
 	test "${BASH_SUBSHELL-0}" = 0 ||
-	error "bug in test script: test_atexit does nothing in a subshell"
+	BUG "test_atexit does nothing in a subshell"
 	test_atexit_cleanup="{ $*
 		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_atexit_cleanup"
 }
