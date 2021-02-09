@@ -68,6 +68,8 @@ int bitmap_walk_contains(struct bitmap_index *,
  */
 int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_id *oid);
 
+off_t get_disk_usage_from_bitmap(struct bitmap_index *, struct rev_info *);
+
 void bitmap_writer_show_progress(int show);
 void bitmap_writer_set_checksum(unsigned char *sha1);
 void bitmap_writer_build_type_index(struct packing_data *to_pack,

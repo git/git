@@ -227,6 +227,15 @@ ifdef::git-rev-list[]
 	test the exit status to see if a range of objects is fully
 	connected (or not).  It is faster than redirecting stdout
 	to `/dev/null` as the output does not have to be formatted.
+
+--disk-usage::
+	Suppress normal output; instead, print the sum of the bytes used
+	for on-disk storage by the selected commits or objects. This is
+	equivalent to piping the output into `git cat-file
+	--batch-check='%(objectsize:disk)'`, except that it runs much
+	faster (especially with `--use-bitmap-index`). See the `CAVEATS`
+	section in linkgit:git-cat-file[1] for the limitations of what
+	"on-disk storage" means.
 endif::git-rev-list[]
 
 --cherry-mark::
