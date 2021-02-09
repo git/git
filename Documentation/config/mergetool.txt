@@ -13,6 +13,11 @@ mergetool.<tool>.cmd::
 	merged; 'MERGED' contains the name of the file to which the merge
 	tool should write the results of a successful merge.
 
+mergetool.<tool>.hideResolved::
+	Allows the user to override the global `mergetool.hideResolved` value
+	for a specific tool. See `mergetool.hideResolved` for the full
+	description.
+
 mergetool.<tool>.trustExitCode::
 	For a custom merge command, specify whether the exit code of
 	the merge command can be used to determine whether the merge was

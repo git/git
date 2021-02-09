@@ -333,7 +333,41 @@ merge_file () {
 	checkout_staged_file 2 "$MERGED" "$LOCAL"
 	checkout_staged_file 3 "$MERGED" "$REMOTE"
 
-	if test "$(git config --type=bool mergetool.hideResolved)" != "false"
+	# hideResolved preferences hierarchy.
+	global_config="mergetool.hideResolved"
+	tool_config="mergetool.${merge_tool}.hideResolved"
+
+	if enabled=$(git config --type=bool "$tool_config")
+	then
+		# The user has a specific preference for a specific tool and no
+		# other preferences should override that.
+		: ;
+	elif enabled=$(git config --type=bool "$global_config")
+	then
+		# The user has a general preference for all tools.
+		#
+		# 'true' means the user likes the feature so we should use it
+		# where possible but tool authors can still override.
+		#
+		# 'false' means the user doesn't like the feature so we should
+		# not use it anywhere.
+		if test "$enabled" = true && hide_resolved_enabled
+		then
+		    enabled=true
+		else
+		    enabled=false
+		fi
+	else
+		# The user does not have a preference. Ask the tool.
+		if hide_resolved_enabled
+		then
+		    enabled=true
+		else
+		    enabled=false
+		fi
+	fi
+
+	if test "$enabled" = true
 	then
 		hide_resolved
 	fi
