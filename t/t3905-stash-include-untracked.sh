@@ -36,8 +36,10 @@ test_expect_success 'stash save --include-untracked cleaned the untracked files'
 '
 
 test_expect_success 'stash save --include-untracked stashed the untracked files' '
-	tracked=$(git rev-parse --short $(echo 1 | git hash-object --stdin)) &&
-	untracked=$(git rev-parse --short $(echo untracked | git hash-object --stdin)) &&
+	one_blob=$(echo 1 | git hash-object --stdin) &&
+	tracked=$(git rev-parse --short "$one_blob") &&
+	untracked_blob=$(echo untracked | git hash-object --stdin) &&
+	untracked=$(git rev-parse --short "$untracked_blob") &&
 	cat >expect.diff <<-EOF &&
 	diff --git a/HEAD b/HEAD
 	new file mode 100644
@@ -117,7 +119,8 @@ test_expect_success 'stash save -u dirty index' '
 '
 
 test_expect_success 'stash save --include-untracked dirty index got stashed' '
-	blob=$(git rev-parse --short $(echo 4 | git hash-object --stdin)) &&
+	four_blob=$(echo 4 | git hash-object --stdin) &&
+	blob=$(git rev-parse --short "$four_blob") &&
 	cat >expect <<-EOF &&
 	diff --git a/file3 b/file3
 	new file mode 100644
