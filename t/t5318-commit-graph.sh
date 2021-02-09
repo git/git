@@ -529,7 +529,7 @@ corrupt_graph_and_verify() {
 	zero_pos=${4:-${orig_size}} &&
 	printf "$data" | dd of="$objdir/info/commit-graph" bs=1 seek="$pos" conv=notrunc &&
 	dd of="$objdir/info/commit-graph" bs=1 seek="$zero_pos" if=/dev/null &&
-	generate_zero_bytes $(($orig_size - $zero_pos)) >>"$objdir/info/commit-graph" &&
+	test-tool genzeros $(($orig_size - $zero_pos)) >>"$objdir/info/commit-graph" &&
 	corrupt_graph_verify "$grepstr"
 
 }
