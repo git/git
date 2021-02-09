@@ -408,11 +408,15 @@ test_expect_success 'maintenance.strategy inheritance' '
 		git maintenance run --schedule=hourly --quiet &&
 	GIT_TRACE2_EVENT="$(pwd)/incremental-daily.txt" \
 		git maintenance run --schedule=daily --quiet &&
+	GIT_TRACE2_EVENT="$(pwd)/incremental-weekly.txt" \
+		git maintenance run --schedule=weekly --quiet &&
 
 	test_subcommand git commit-graph write --split --reachable \
 		--no-progress <incremental-hourly.txt &&
 	test_subcommand ! git prune-packed --quiet <incremental-hourly.txt &&
 	test_subcommand ! git multi-pack-index write --no-progress \
+		<incremental-hourly.txt &&
+	test_subcommand ! git pack-refs --all --prune \
 		<incremental-hourly.txt &&
 
 	test_subcommand git commit-graph write --split --reachable \
@@ -420,6 +424,16 @@ test_expect_success 'maintenance.strategy inheritance' '
 	test_subcommand git prune-packed --quiet <incremental-daily.txt &&
 	test_subcommand git multi-pack-index write --no-progress \
 		<incremental-daily.txt &&
+	test_subcommand ! git pack-refs --all --prune \
+		<incremental-daily.txt &&
+
+	test_subcommand git commit-graph write --split --reachable \
+		--no-progress <incremental-weekly.txt &&
+	test_subcommand git prune-packed --quiet <incremental-weekly.txt &&
+	test_subcommand git multi-pack-index write --no-progress \
+		<incremental-weekly.txt &&
+	test_subcommand git pack-refs --all --prune \
+		<incremental-weekly.txt &&
 
 	# Modify defaults
 	git config maintenance.commit-graph.schedule daily &&

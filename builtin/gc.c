@@ -1352,6 +1352,8 @@ static void initialize_maintenance_strategy(void)
 		tasks[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY;
 		tasks[TASK_LOOSE_OBJECTS].enabled = 1;
 		tasks[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY;
+		tasks[TASK_PACK_REFS].enabled = 1;
+		tasks[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY;
 	}
 }
 
