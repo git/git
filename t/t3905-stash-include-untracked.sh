@@ -8,16 +8,16 @@ test_description='Test git stash --include-untracked'
 . ./test-lib.sh
 
 test_expect_success 'stash save --include-untracked some dirty working directory' '
-	echo 1 > file &&
+	echo 1 >file &&
 	git add file &&
 	test_tick &&
 	git commit -m initial &&
-	echo 2 > file &&
+	echo 2 >file &&
 	git add file &&
-	echo 3 > file &&
+	echo 3 >file &&
 	test_tick &&
-	echo 1 > file2 &&
-	echo 1 > HEAD &&
+	echo 1 >file2 &&
+	echo 1 >HEAD &&
 	mkdir untracked &&
 	echo untracked >untracked/untracked &&
 	git stash --include-untracked &&
@@ -25,7 +25,7 @@ test_expect_success 'stash save --include-untracked some dirty working directory
 	git diff-index --cached --quiet HEAD
 '
 
-cat > expect <<EOF
+cat >expect <<EOF
 ?? actual
 ?? expect
 EOF
@@ -37,7 +37,7 @@ test_expect_success 'stash save --include-untracked cleaned the untracked files'
 
 tracked=$(git rev-parse --short $(echo 1 | git hash-object --stdin))
 untracked=$(git rev-parse --short $(echo untracked | git hash-object --stdin))
-cat > expect.diff <<EOF
+cat >expect.diff <<EOF
 diff --git a/HEAD b/HEAD
 new file mode 100644
 index 0000000..$tracked
@@ -60,7 +60,7 @@ index 0000000..$untracked
 @@ -0,0 +1 @@
 +untracked
 EOF
-cat > expect.lstree <<EOF
+cat >expect.lstree <<EOF
 HEAD
 file2
 untracked
@@ -85,7 +85,7 @@ test_expect_success 'stash save --patch --all fails' '
 
 git clean --force --quiet
 
-cat > expect <<EOF
+cat >expect <<EOF
  M file
 ?? HEAD
 ?? actual
@@ -105,14 +105,14 @@ test_expect_success 'stash pop after save --include-untracked leaves files untra
 git clean --force --quiet -d
 
 test_expect_success 'stash save -u dirty index' '
-	echo 4 > file3 &&
+	echo 4 >file3 &&
 	git add file3 &&
 	test_tick &&
 	git stash -u
 '
 
 blob=$(git rev-parse --short $(echo 4 | git hash-object --stdin))
-cat > expect <<EOF
+cat >expect <<EOF
 diff --git a/file3 b/file3
 new file mode 100644
 index 0000000..$blob
@@ -128,12 +128,12 @@ test_expect_success 'stash save --include-untracked dirty index got stashed' '
 	test_cmp expect actual
 '
 
-git reset > /dev/null
+git reset >/dev/null
 
 # Must direct output somewhere where it won't be considered an untracked file
 test_expect_success 'stash save --include-untracked -q is quiet' '
-	echo 1 > file5 &&
-	git stash save --include-untracked --quiet > .git/stash-output.out 2>&1 &&
+	echo 1 >file5 &&
+	git stash save --include-untracked --quiet >.git/stash-output.out 2>&1 &&
 	test_line_count = 0 .git/stash-output.out &&
 	rm -f .git/stash-output.out
 '
@@ -141,7 +141,7 @@ test_expect_success 'stash save --include-untracked -q is quiet' '
 test_expect_success 'stash save --include-untracked removed files' '
 	rm -f file &&
 	git stash save --include-untracked &&
-	echo 1 > expect &&
+	echo 1 >expect &&
 	test_cmp expect file
 '
 
@@ -152,14 +152,14 @@ test_expect_success 'stash save --include-untracked removed files got stashed' '
 	test_path_is_missing file
 '
 
-cat > .gitignore <<EOF
+cat >.gitignore <<EOF
 .gitignore
 ignored
 ignored.d/
 EOF
 
 test_expect_success 'stash save --include-untracked respects .gitignore' '
-	echo ignored > ignored &&
+	echo ignored >ignored &&
 	mkdir ignored.d &&
 	echo ignored >ignored.d/untracked &&
 	git stash -u &&
@@ -169,7 +169,7 @@ test_expect_success 'stash save --include-untracked respects .gitignore' '
 '
 
 test_expect_success 'stash save -u can stash with only untracked files different' '
-	echo 4 > file4 &&
+	echo 4 >file4 &&
 	git stash -u &&
 	test_path_is_missing file4
 '
@@ -214,7 +214,7 @@ test_expect_success 'stash push with $IFS character' '
 	test_path_is_file bar
 '
 
-cat > .gitignore <<EOF
+cat >.gitignore <<EOF
 ignored
 ignored.d/*
 EOF
@@ -224,7 +224,7 @@ test_expect_success 'stash previously ignored file' '
 	git add .gitignore &&
 	git commit -m "Add .gitignore" &&
 	>ignored.d/foo &&
-	echo "!ignored.d/foo" >> .gitignore &&
+	echo "!ignored.d/foo" >>.gitignore &&
 	git stash save --include-untracked &&
 	test_path_is_missing ignored.d/foo &&
 	git stash pop &&
