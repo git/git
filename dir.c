@@ -2998,6 +2998,23 @@ void setup_standard_excludes(struct dir_struct *dir)
 	}
 }
 
+char *get_sparse_checkout_filename(void)
+{
+	return git_pathdup("info/sparse-checkout");
+}
+
+int get_sparse_checkout_patterns(struct pattern_list *pl)
+{
+	int res;
+	char *sparse_filename = get_sparse_checkout_filename();
+
+	pl->use_cone_patterns = core_sparse_checkout_cone;
+	res = add_patterns_from_file_to_list(sparse_filename, "", 0, pl, NULL);
+
+	free(sparse_filename);
+	return res;
+}
+
 int remove_path(const char *name)
 {
 	char *slash;
