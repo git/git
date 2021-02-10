@@ -9,7 +9,9 @@ This test checks the "fixup [-C|-c]" command of rebase interactive.
 In addition to amending the contents of the commit, "fixup -C"
 replaces the original commit message with the message of the fixup
 commit. "fixup -c" also replaces the original message, but opens the
-editor to allow the user to edit the message before committing.
+editor to allow the user to edit the message before committing. Similar
+to the "fixup" command that works with "fixup!", "fixup -C" works with
+"amend!" upon --autosquash.
 '
 
 . ./test-lib.sh
@@ -18,17 +20,19 @@ editor to allow the user to edit the message before committing.
 
 EMPTY=""
 
+# test_commit_message <rev> -m <msg>
+# test_commit_message <rev> <path>
+# Verify that the commit message of <rev> matches
+# <msg> or the content of <path>.
 test_commit_message () {
-	rev="$1" && # commit or tag we want to test
-	file="$2" && # test against the content of a file
-	git show --no-patch --pretty=format:%B "$rev" >actual-message &&
-	if test "$2" = -m
-	then
-		str="$3" && # test against a string
-		printf "%s\n" "$str" >tmp-expected-message &&
-		file="tmp-expected-message"
-	fi
-	test_cmp "$file" actual-message
+	git show --no-patch --pretty=format:%B "$1" >actual &&
+	case "$2" in
+	-m)
+		echo "$3" >expect &&
+		test_cmp expect actual ;;
+	*)
+		test_cmp "$2" actual ;;
+	esac
 }
 
 get_author () {
