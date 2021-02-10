@@ -105,23 +105,23 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
-static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
+static const struct object_id *commit_graft_oid_access(size_t index, const void *table)
 {
-	struct commit_graft **commit_graft_table = table;
-	return commit_graft_table[index]->oid.hash;
+	const struct commit_graft * const *commit_graft_table = table;
+	return &commit_graft_table[index]->oid;
 }
 
-int commit_graft_pos(struct repository *r, const unsigned char *sha1)
+int commit_graft_pos(struct repository *r, const struct object_id *oid)
 {
-	return hash_pos(sha1, r->parsed_objects->grafts,
-			r->parsed_objects->grafts_nr,
-			commit_graft_sha1_access);
+	return oid_pos(oid, r->parsed_objects->grafts,
+		       r->parsed_objects->grafts_nr,
+		       commit_graft_oid_access);
 }
 
 int register_commit_graft(struct repository *r, struct commit_graft *graft,
 			  int ignore_dups)
 {
-	int pos = commit_graft_pos(r, graft->oid.hash);
+	int pos = commit_graft_pos(r, &graft->oid);
 
 	if (0 <= pos) {
 		if (ignore_dups)
@@ -232,7 +232,7 @@ struct commit_graft *lookup_commit_graft(struct repository *r, const struct obje
 {
 	int pos;
 	prepare_commit_graft(r);
-	pos = commit_graft_pos(r, oid->hash);
+	pos = commit_graft_pos(r, oid);
 	if (pos < 0)
 		return NULL;
 	return r->parsed_objects->grafts[pos];

@@ -610,10 +610,10 @@ static inline void dump_bitmap(struct hashfile *f, struct ewah_bitmap *bitmap)
 		die("Failed to write bitmap index");
 }
 
-static const unsigned char *sha1_access(size_t pos, void *table)
+static const struct object_id *oid_access(size_t pos, const void *table)
 {
-	struct pack_idx_entry **index = table;
-	return index[pos]->oid.hash;
+	const struct pack_idx_entry * const *index = table;
+	return &index[pos]->oid;
 }
 
 static void write_selected_commits_v1(struct hashfile *f,
@@ -626,7 +626,7 @@ static void write_selected_commits_v1(struct hashfile *f,
 		struct bitmapped_commit *stored = &writer.selected[i];
 
 		int commit_pos =
-			hash_pos(stored->commit->object.oid.hash, index, index_nr, sha1_access);
+			oid_pos(&stored->commit->object.oid, index, index_nr, oid_access);
 
 		if (commit_pos < 0)
 			BUG("trying to write commit not in index");

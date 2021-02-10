@@ -1012,10 +1012,10 @@ static int write_graph_chunk_oids(struct hashfile *f,
 	return 0;
 }
 
-static const unsigned char *commit_to_sha1(size_t index, void *table)
+static const struct object_id *commit_to_oid(size_t index, const void *table)
 {
-	struct commit **commits = table;
-	return commits[index]->object.oid.hash;
+	const struct commit * const *commits = table;
+	return &commits[index]->object.oid;
 }
 
 static int write_graph_chunk_data(struct hashfile *f,
@@ -1043,10 +1043,10 @@ static int write_graph_chunk_data(struct hashfile *f,
 		if (!parent)
 			edge_value = GRAPH_PARENT_NONE;
 		else {
-			edge_value = hash_pos(parent->item->object.oid.hash,
-					      ctx->commits.list,
-					      ctx->commits.nr,
-					      commit_to_sha1);
+			edge_value = oid_pos(&parent->item->object.oid,
+					     ctx->commits.list,
+					     ctx->commits.nr,
+					     commit_to_oid);
 
 			if (edge_value >= 0)
 				edge_value += ctx->new_num_commits_in_base;
@@ -1074,10 +1074,10 @@ static int write_graph_chunk_data(struct hashfile *f,
 		else if (parent->next)
 			edge_value = GRAPH_EXTRA_EDGES_NEEDED | num_extra_edges;
 		else {
-			edge_value = hash_pos(parent->item->object.oid.hash,
-					      ctx->commits.list,
-					      ctx->commits.nr,
-					      commit_to_sha1);
+			edge_value = oid_pos(&parent->item->object.oid,
+					     ctx->commits.list,
+					     ctx->commits.nr,
+					     commit_to_oid);
 
 			if (edge_value >= 0)
 				edge_value += ctx->new_num_commits_in_base;
@@ -1143,10 +1143,10 @@ static int write_graph_chunk_extra_edges(struct hashfile *f,
 
 		/* Since num_parents > 2, this initializer is safe. */
 		for (parent = (*list)->parents->next; parent; parent = parent->next) {
-			int edge_value = hash_pos(parent->item->object.oid.hash,
-						  ctx->commits.list,
-						  ctx->commits.nr,
-						  commit_to_sha1);
+			int edge_value = oid_pos(&parent->item->object.oid,
+						 ctx->commits.list,
+						 ctx->commits.nr,
+						 commit_to_oid);
 
 			if (edge_value >= 0)
 				edge_value += ctx->new_num_commits_in_base;

@@ -1,9 +1,9 @@
 #include "cache.h"
 #include "hash-lookup.h"
 
-static uint32_t take2(const unsigned char *hash)
+static uint32_t take2(const struct object_id *oid, size_t ofs)
 {
-	return ((hash[0] << 8) | hash[1]);
+	return ((oid->hash[ofs] << 8) | oid->hash[ofs + 1]);
 }
 
 /*
@@ -47,11 +47,11 @@ static uint32_t take2(const unsigned char *hash)
  */
 /*
  * The table should contain "nr" elements.
- * The hash of element i (between 0 and nr - 1) should be returned
+ * The oid of element i (between 0 and nr - 1) should be returned
  * by "fn(i, table)".
  */
-int hash_pos(const unsigned char *hash, void *table, size_t nr,
-	     hash_access_fn fn)
+int oid_pos(const struct object_id *oid, const void *table, size_t nr,
+	    oid_access_fn fn)
 {
 	size_t hi = nr;
 	size_t lo = 0;
@@ -64,9 +64,9 @@ int hash_pos(const unsigned char *hash, void *table, size_t nr,
 		size_t lov, hiv, miv, ofs;
 
 		for (ofs = 0; ofs < the_hash_algo->rawsz - 2; ofs += 2) {
-			lov = take2(fn(0, table) + ofs);
-			hiv = take2(fn(nr - 1, table) + ofs);
-			miv = take2(hash + ofs);
+			lov = take2(fn(0, table), ofs);
+			hiv = take2(fn(nr - 1, table), ofs);
+			miv = take2(oid, ofs);
 			if (miv < lov)
 				return -1;
 			if (hiv < miv)
@@ -88,7 +88,7 @@ int hash_pos(const unsigned char *hash, void *table, size_t nr,
 
 	do {
 		int cmp;
-		cmp = hashcmp(fn(mi, table), hash);
+		cmp = oidcmp(fn(mi, table), oid);
 		if (!cmp)
 			return mi;
 		if (cmp > 0)
