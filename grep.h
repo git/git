@@ -9,6 +9,10 @@ typedef int pcre2_code;
 typedef int pcre2_match_data;
 typedef int pcre2_compile_context;
 #endif
+#ifndef PCRE2_MATCH_INVALID_UTF
+/* PCRE2_MATCH_* dummy also with !USE_LIBPCRE2, for test-pcre2-config.c */
+#define PCRE2_MATCH_INVALID_UTF 0
+#endif
 #include "thread-utils.h"
 #include "userdiff.h"
 

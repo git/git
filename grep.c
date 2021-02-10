@@ -391,7 +391,23 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	}
 	if (!opt->ignore_locale && is_utf8_locale() && has_non_ascii(p->pattern) &&
 	    !(!opt->ignore_case && (p->fixed || p->is_fixed)))
-		options |= PCRE2_UTF;
+		options |= (PCRE2_UTF | PCRE2_MATCH_INVALID_UTF);
+
+	/* Work around https://bugs.exim.org/show_bug.cgi?id=2642 fixed in 10.36 */
+	if (PCRE2_MATCH_INVALID_UTF && options & (PCRE2_UTF | PCRE2_CASELESS)) {
+		struct strbuf buf;
+		int len;
+		int err;
+
+		if ((len = pcre2_config(PCRE2_CONFIG_VERSION, NULL)) < 0)
+			BUG("pcre2_config(..., NULL) failed: %d", len);
+		strbuf_init(&buf, len + 1);
+		if ((err = pcre2_config(PCRE2_CONFIG_VERSION, buf.buf)) < 0)
+			BUG("pcre2_config(..., buf.buf) failed: %d", err);
+		if (versioncmp(buf.buf, "10.36") < 0)
+			options |= PCRE2_NO_START_OPTIMIZE;
+		strbuf_release(&buf);
+	}
 
 	p->pcre2_pattern = pcre2_compile((PCRE2_SPTR)p->pattern,
 					 p->patternlen, options, &error, &erroffset,
