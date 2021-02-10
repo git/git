@@ -38,13 +38,13 @@ get_author () {
 
 test_expect_success 'setup' '
 	cat >message <<-EOF &&
-		amend! B
-		${EMPTY}
-		new subject
-		${EMPTY}
-		new
-		body
-		EOF
+	amend! B
+	$EMPTY
+	new subject
+	$EMPTY
+	new
+	body
+	EOF
 
 	sed "1,2d" message >expected-message &&
 
@@ -70,38 +70,38 @@ test_expect_success 'setup' '
 	git commit --fixup=HEAD -a &&
 	test_tick &&
 	git commit --allow-empty -F - <<-EOF &&
-		amend! B
-		${EMPTY}
-		B
-		${EMPTY}
-		edited 1
-		EOF
+	amend! B
+	$EMPTY
+	B
+	$EMPTY
+	edited 1
+	EOF
 	test_tick &&
 	git commit --allow-empty -F - <<-EOF &&
-		amend! amend! B
-		${EMPTY}
-		B
-		${EMPTY}
-		edited 1
-		${EMPTY}
-		edited 2
-		EOF
+	amend! amend! B
+	$EMPTY
+	B
+	$EMPTY
+	edited 1
+	$EMPTY
+	edited 2
+	EOF
 	echo B2 >B &&
 	test_tick &&
 	FAKE_COMMIT_AMEND="edited squash" git commit --squash=HEAD -a &&
 	echo B3 >B &&
 	test_tick &&
 	git commit -a -F - <<-EOF &&
-		amend! amend! amend! B
-		${EMPTY}
-		B
-		${EMPTY}
-		edited 1
-		${EMPTY}
-		edited 2
-		${EMPTY}
-		edited 3
-		EOF
+	amend! amend! amend! B
+	$EMPTY
+	B
+	$EMPTY
+	edited 1
+	$EMPTY
+	edited 2
+	$EMPTY
+	edited 3
+	EOF
 
 	GIT_AUTHOR_NAME="Rebase Author" &&
 	GIT_AUTHOR_EMAIL="rebase.author@example.com" &&
