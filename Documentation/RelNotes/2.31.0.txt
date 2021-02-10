@@ -14,6 +14,8 @@ Backward incompatible and other important changes
  * The development community has adopted Contributor Covenant v2.0 to
    update from v1.4 that we have been using.
 
+ * The support for deprecated PCRE1 library has been dropped.
+
 
 UI, Workflows & Features
 
@@ -53,6 +55,10 @@ UI, Workflows & Features
  * "git ls-files" can and does show multiple entries when the index is
    unmerged, which is a source for confusion unless -s/-u option is in
    use.  A new option --deduplicate has been introduced.
+
+ * `git worktree list` now annotates worktrees as prunable, shows
+   locked and prunable attributes in --porcelain mode, and gained
+   a --verbose option.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -104,13 +110,11 @@ Performance, Internal Implementation, Development Support etc.
    hierarchy, which was quite wasteful.
 
  * A perf script was made more portable.
-   (merge f08b6c553d jk/p5303-sed-portability-fix later to maint).
 
  * Our setting of GitHub CI test jobs were a bit too eager to give up
    once there is even one failure found.  Tweak the knob to allow
    other jobs keep running even when we see a failure, so that we can
    find more failures in a single run.
-   (merge 2b0e14f640 pb/ci-matrix-wo-shortcut later to maint).
 
  * We've carried compatibility codepaths for compilers without
    variadic macros for quite some time, but the world may be ready for
@@ -119,45 +123,49 @@ Performance, Internal Implementation, Development Support etc.
    such a way that we can easily revert if it turns out that the world
    is not yet ready.
 
+ * Code clean-up to ensure our use of hashtables using object names as
+   keys use the "struct object_id" objects, not the raw hash values.
+
+ * Lose the debugging aid that may have been useful in the past, but
+   no longer is, in the "grep" codepaths.
+
+ * Some pretty-format specifiers do not need the data in commit object
+   (e.g. "%H"), but we were over-eager to load and parse it, which has
+   been made even lazier.
+
+ * Get rid of "GETTEXT_POISON" support altogether, which may or may
+   not be controversial.
+
 
 Fixes since v2.30
 -----------------
 
  * Diagnose command line error of "git rebase" early.
-   (merge ca5120c339 rs/rebase-commit-validation later to maint).
 
  * Clean up option descriptions in "git cmd --help".
-   (merge e73fe3dd02 zh/arg-help-format later to maint).
 
  * "git stash" did not work well in a sparsely checked out working
    tree.
-   (merge ba359fd507 en/stash-apply-sparse-checkout later to maint).
 
  * Some tests expect that "ls -l" output has either '-' or 'x' for
    group executable bit, but setgid bit can be inherited from parent
    directory and make these fields 'S' or 's' instead, causing test
    failures.
-   (merge ea8bbf2a4e mt/t4129-with-setgid-dir later to maint).
 
  * "git for-each-repo --config=<var> <cmd>" should not run <cmd> for
    any repository when the configuration variable <var> is not defined
    even once.
-   (merge 6c62f01552 ds/for-each-repo-noopfix later to maint).
 
  * Fix 2.29 regression where "git mergetool --tool-help" fails to list
    all the available tools.
-   (merge 80f5a16798 pb/mergetool-tool-help-fix later to maint).
 
  * Fix for procedure to building CI test environment for mac.
-   (merge 3831132ace jc/macos-install-dependencies-fix later to maint).
 
  * The implementation of "git branch --sort" wrt the detached HEAD
    display has always been hacky, which has been cleaned up.
-   (merge 4045f659bd ab/branch-sort later to maint).
 
  * Newline characters in the host and path part of git:// URL are
    now forbidden.
-   (merge 6aed56736b jk/forbid-lf-in-git-url later to maint).
 
  * "git diff" showed a submodule working tree with untracked cruft as
    "Submodule commit <objectname>-dirty", but a natural expectation is
@@ -169,33 +177,16 @@ Fixes since v2.30
    side, "git log --cherry-pick A...B" did not exclude them all when a
    commit with the same patch ID appears on the other side.  Now it
    does.
-   (merge c9e3a4e76d jk/log-cherry-pick-duplicate-patches later to maint).
 
  * Documentation for "git fsck" lost stale bits that has become
    incorrect.
-   (merge 28cc00a13d ab/fsck-doc-fix later to maint).
 
  * Doc fix for packfile URI feature.
-   (merge bfc2a36ff2 jt/packfile-as-uri-doc later to maint).
+
+ * When "git rebase -i" processes "fixup" insn, there is no reason to
+   clean up the commit log message, but we did the usual stripspace
+   processing.  This has been corrected.
+   (merge f7d42ceec5 js/rebase-i-commit-cleanup-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge 505a276596 pk/subsub-fetch-fix-take-2 later to maint).
-   (merge 33fc56253b fc/t6030-bisect-reset-removes-auxiliary-files later to maint).
-   (merge 7efc378205 ta/doc-typofix later to maint).
-   (merge 1f4e9319c7 pb/doc-modules-git-work-tree-typofix later to maint).
-   (merge 04f6b0a192 ma/t1300-cleanup later to maint).
-   (merge 7b77f5a13e ma/doc-pack-format-varint-for-sizes later to maint).
-   (merge cc2d43be2b nk/perf-fsmonitor-cleanup later to maint).
-   (merge c8302c6c00 ar/t6016-modernise later to maint).
-   (merge 0454986e78 jc/sign-off later to maint).
-   (merge 155067ab4f vv/send-email-with-less-secure-apps-access later to maint).
-   (merge acaabcf391 jk/t5516-deflake later to maint).
-   (merge a1e03535db ad/t4129-setfacl-target-fix later to maint).
-   (merge b356d23638 ug/doc-lose-dircache later to maint).
-   (merge 9371c0e9dd ab/gettext-charset-comment-fix later to maint).
-   (merge 52fc4f195c dl/p4-encode-after-kw-expansion later to maint).
-   (merge 4eb56b56e7 bc/doc-status-short later to maint).
-   (merge a4a1ca22ef tb/local-clone-race-doc later to maint).
-   (merge 6a8c89d053 ma/more-opaque-lock-file later to maint).
-   (merge 4a5ec7d166 js/skip-dashed-built-ins-from-config-mak later to maint).
-   (merge 6eaf624dea pb/blame-funcname-range-userdiff later to maint).
+   (merge e3f5da7e60 sg/t7800-difftool-robustify later to maint).
