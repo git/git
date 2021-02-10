@@ -461,6 +461,11 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 				generation += power * (name[--len] - '0');
 			if (power > 1 && len && name[len - 1] == '~')
 				name_prefix_len = len - 1;
+			else {
+				/* Maybe a non-first parent, e.g. HEAD^2 */
+				generation = 0;
+				name_prefix_len = len;
+			}
 		}
 	}
 
