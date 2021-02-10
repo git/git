@@ -266,6 +266,10 @@ int BUG_exit_code;
 static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
 {
 	char prefix[256];
+	va_list params_copy;
+	static int in_bug;
+
+	va_copy(params_copy, params);
 
 	/* truncation via snprintf is OK here */
 	if (file)
@@ -274,6 +278,13 @@ static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_lis
 		snprintf(prefix, sizeof(prefix), "BUG: ");
 
 	vreportf(prefix, fmt, params);
+
+	if (in_bug)
+		abort();
+	in_bug = 1;
+
+	trace2_cmd_error_va(fmt, params_copy);
+
 	if (BUG_exit_code)
 		exit(BUG_exit_code);
 	abort();
