@@ -38,6 +38,10 @@ get_merge_tool_cmd::
 get_merge_tool_path::
 	returns the custom path for a merge tool.
 
+initialize_merge_tool::
+	bring merge tool specific functions into scope so they can be used or
+	overridden.
+
 run_merge_tool::
 	launches a merge tool given the tool name and a true/false
 	flag to indicate whether a merge base is present.
