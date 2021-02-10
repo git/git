@@ -36,9 +36,8 @@ create_commits_in () {
 # without having to worry about future changes of the commit ID and spaces
 # of the output.  Single quotes are replaced with double quotes, because
 # it is boring to prepare unquoted single quotes in expect text.  We also
-# remove some locale error messages, which break test if we turn on
-# `GIT_TEST_GETTEXT_POISON=true` in order to test unintentional translations
-# on plumbing commands.
+# remove some locale error messages. The emitted human-readable errors are
+# redundant to the more machine-readable output the tests already assert.
 make_user_friendly_and_stable_output () {
 	sed \
 		-e "s/  *\$//" \

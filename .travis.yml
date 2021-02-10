@@ -16,7 +16,7 @@ compiler:
 
 matrix:
   include:
-    - env: jobname=GETTEXT_POISON
+    - env: jobname=linux-gcc-default
       os: linux
       compiler:
       addons:

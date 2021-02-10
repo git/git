@@ -1155,15 +1155,6 @@ static void die_bad_number(const char *name, const char *value)
 	if (!value)
 		value = "";
 
-	if (!strcmp(name, "GIT_TEST_GETTEXT_POISON"))
-		/*
-		 * We explicitly *don't* use _() here since it would
-		 * cause an infinite loop with _() needing to call
-		 * use_gettext_poison(). This is why marked up
-		 * translations with N_() above.
-		 */
-		die(bad_numeric, value, name, error_type);
-
 	if (!(cf && cf->name))
 		die(_(bad_numeric), value, name, _(error_type));
 
