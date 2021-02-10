@@ -70,6 +70,7 @@ test_expect_success 'setup' '
 	echo B1 >B &&
 	test_tick &&
 	git commit --fixup=HEAD -a &&
+	git tag B1 &&
 	test_tick &&
 	git commit --allow-empty -F - <<-EOF &&
 	amend! B
@@ -91,6 +92,7 @@ test_expect_success 'setup' '
 	echo B2 >B &&
 	test_tick &&
 	FAKE_COMMIT_AMEND="edited squash" git commit --squash=HEAD -a &&
+	git tag B2 &&
 	echo B3 >B &&
 	test_tick &&
 	git commit -a -F - <<-EOF &&
@@ -104,6 +106,7 @@ test_expect_success 'setup' '
 	$EMPTY
 	edited 3
 	EOF
+	git tag B3 &&
 
 	GIT_AUTHOR_NAME="Rebase Author" &&
 	GIT_AUTHOR_EMAIL="rebase.author@example.com" &&
@@ -171,12 +174,12 @@ test_expect_success 'skipping fixup -C after fixup gives correct message' '
 '
 
 test_expect_success 'sequence of fixup, fixup -C & squash --signoff works' '
-	git checkout --detach branch &&
+	git checkout --detach B3 &&
 	FAKE_LINES="1 fixup 2 fixup_-C 3 fixup_-C 4 squash 5 fixup_-C 6" \
 		FAKE_COMMIT_AMEND=squashed \
 		FAKE_MESSAGE_COPY=actual-squash-message \
 		git -c commit.status=false rebase -ik --signoff A &&
-	git diff-tree --exit-code --patch HEAD branch -- &&
+	git diff-tree --exit-code --patch HEAD B3 -- &&
 	test_cmp_rev HEAD^ A &&
 	test_i18ncmp "$TEST_DIRECTORY/t3437/expected-squash-message" \
 		actual-squash-message
@@ -184,7 +187,7 @@ test_expect_success 'sequence of fixup, fixup -C & squash --signoff works' '
 
 test_expect_success 'first fixup -C commented out in sequence fixup fixup -C fixup -C' '
 	test_when_finished "test_might_fail git rebase --abort" &&
-	git checkout branch && git checkout --detach branch~2 &&
+	git checkout --detach B2~ &&
 	git log -1 --pretty=format:%b >expected-message &&
 	FAKE_LINES="1 fixup 2 fixup_-C 3 fixup_-C 4" git rebase -i A &&
 	test_cmp_rev HEAD^ A &&
@@ -194,12 +197,11 @@ test_expect_success 'first fixup -C commented out in sequence fixup fixup -C fix
 test_expect_success 'multiple fixup -c opens editor once' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout --detach A3 &&
-	base=$(git rev-parse HEAD~4) &&
 	FAKE_COMMIT_MESSAGE="Modified-A3" \
 		FAKE_LINES="1 fixup_-C 2 fixup_-c 3 fixup_-c 4" \
 		EXPECT_HEADER_COUNT=4 \
-		git rebase -i $base &&
-	test_cmp_rev $base HEAD^ &&
+		git rebase -i A &&
+	test_cmp_rev HEAD^ A &&
 	get_author HEAD >actual-author &&
 	test_cmp expected-author actual-author &&
 	test 1 = $(git show | grep Modified-A3 | wc -l)
@@ -217,12 +219,12 @@ test_expect_success 'sequence squash, fixup & fixup -c gives combined message' '
 '
 
 test_expect_success 'fixup -C works upon --autosquash with amend!' '
-	git checkout --detach branch &&
+	git checkout --detach B3 &&
 	FAKE_COMMIT_AMEND=squashed \
 		FAKE_MESSAGE_COPY=actual-squash-message \
 		git -c commit.status=false rebase -ik --autosquash \
 						--signoff A &&
-	git diff-tree --exit-code --patch HEAD branch -- &&
+	git diff-tree --exit-code --patch HEAD B3 -- &&
 	test_cmp_rev HEAD^ A &&
 	test_i18ncmp "$TEST_DIRECTORY/t3437/expected-squash-message" \
 		actual-squash-message
