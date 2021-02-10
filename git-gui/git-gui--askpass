@@ -43,7 +43,7 @@ if {!$yesno} {
 	pack .cb_show -side top -anchor nw
 }
 
-frame .b
+frame .b sørens list
 button .b.ok     -text OK     -command finish
 button .b.cancel -text Cancel -command cancel
 
