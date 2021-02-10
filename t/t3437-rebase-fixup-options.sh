@@ -197,14 +197,16 @@ test_expect_success 'first fixup -C commented out in sequence fixup fixup -C fix
 test_expect_success 'multiple fixup -c opens editor once' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout --detach A3 &&
-	FAKE_COMMIT_MESSAGE="Modified-A3" \
+	git log -1 --pretty=format:%B >expected-message &&
+	test_write_lines "" "Modified-A3" >>expected-message &&
+	FAKE_COMMIT_AMEND="Modified-A3" \
 		FAKE_LINES="1 fixup_-C 2 fixup_-c 3 fixup_-c 4" \
 		EXPECT_HEADER_COUNT=4 \
 		git rebase -i A &&
 	test_cmp_rev HEAD^ A &&
 	get_author HEAD >actual-author &&
 	test_cmp expected-author actual-author &&
-	test 1 = $(git show | grep Modified-A3 | wc -l)
+	test_commit_message HEAD expected-message
 '
 
 test_expect_success 'sequence squash, fixup & fixup -c gives combined message' '
