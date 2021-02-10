@@ -46,8 +46,6 @@ test_expect_success 'setup' '
 	body
 	EOF
 
-	sed "1,2d" message >expected-message &&
-
 	test_commit A A &&
 	test_commit B B &&
 	get_author HEAD >expected-author &&
@@ -134,6 +132,7 @@ test_expect_success 'simple fixup -c works' '
 test_expect_success 'fixup -C removes amend! from message' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout --detach A1 &&
+	git log -1 --pretty=format:%b >expected-message &&
 	FAKE_LINES="1 fixup_-C 2" git rebase -i A &&
 	test_cmp_rev HEAD^ A &&
 	test_cmp_rev HEAD^{tree} A1^{tree} &&
@@ -145,13 +144,14 @@ test_expect_success 'fixup -C removes amend! from message' '
 test_expect_success 'fixup -C with conflicts gives correct message' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout --detach A1 &&
+	git log -1 --pretty=format:%b >expected-message &&
+	test_write_lines "" "edited" >>expected-message &&
 	test_must_fail env FAKE_LINES="1 fixup_-C 2" git rebase -i conflicts &&
 	git checkout --theirs -- A &&
 	git add A &&
 	FAKE_COMMIT_AMEND=edited git rebase --continue &&
 	test_cmp_rev HEAD^ conflicts &&
 	test_cmp_rev HEAD^{tree} A1^{tree} &&
-	test_write_lines "" edited >>expected-message &&
 	test_commit_message HEAD expected-message &&
 	get_author HEAD >actual-author &&
 	test_cmp expected-author actual-author
