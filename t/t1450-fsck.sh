@@ -40,17 +40,13 @@ test_expect_success 'HEAD is part of refs, valid objects appear valid' '
 # specific corruption you test afterwards, lest a later test trip over
 # it.
 
-test_expect_success 'setup: helpers for corruption tests' '
-	sha1_file() {
-		remainder=${1#??} &&
-		firsttwo=${1%$remainder} &&
-		echo ".git/objects/$firsttwo/$remainder"
-	} &&
+sha1_file () {
+	git rev-parse --git-path objects/$(test_oid_to_path "$1")
+}
 
-	remove_object() {
-		rm "$(sha1_file "$1")"
-	}
-'
+remove_object () {
+	rm "$(sha1_file "$1")"
+}
 
 test_expect_success 'object with bad sha1' '
 	sha=$(echo blob | git hash-object -w --stdin) &&
