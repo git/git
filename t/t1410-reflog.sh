@@ -158,6 +158,32 @@ test_expect_success 'reflog expire' '
 	check_fsck "dangling commit $K"
 '
 
+test_expect_success '--stale-fix handles missing objects generously' '
+	git -c core.logAllRefUpdates=false fast-import --date-format=now <<-EOS &&
+	commit refs/heads/stale-fix
+	mark :1
+	committer Author <a@uth.or> now
+	data <<EOF
+	start stale fix
+	EOF
+	M 100644 inline file
+	data <<EOF
+	contents
+	EOF
+	commit refs/heads/stale-fix
+	committer Author <a@uth.or> now
+	data <<EOF
+	stale fix branch tip
+	EOF
+	from :1
+	EOS
+
+	parent_oid=$(git rev-parse stale-fix^) &&
+	test_when_finished "recover $parent_oid" &&
+	corrupt $parent_oid &&
+	git reflog expire --stale-fix
+'
+
 test_expect_success 'prune and fsck' '
 
 	git prune &&
