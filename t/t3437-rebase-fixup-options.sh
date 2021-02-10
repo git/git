@@ -33,7 +33,7 @@ test_commit_message () {
 
 get_author () {
 	rev="$1" &&
-	git log -1 --pretty=format:"%an %ae" "$rev"
+	git log -1 --pretty=format:"%an %ae %at" "$rev"
 }
 
 test_expect_success 'setup' '
@@ -196,6 +196,8 @@ test_expect_success 'multiple fixup -c opens editor once' '
 		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
 	test_cmp_rev $base HEAD^ &&
+	get_author HEAD >actual-author &&
+	test_cmp expected-author actual-author &&
 	test 1 = $(git show | grep Modified-A3 | wc -l)
 '
 
