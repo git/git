@@ -182,7 +182,6 @@ test_expect_success "Sergey Vlasov's test case" '
 '
 
 test_expect_success 'absolute pathname' '(
-
 	rm -fr mine &&
 	mkdir mine &&
 	cd mine &&
@@ -196,12 +195,9 @@ test_expect_success 'absolute pathname' '(
 	! test -d sub &&
 	test -d in &&
 	git ls-files --error-unmatch in/file
-
-
 )'
 
 test_expect_success 'absolute pathname outside should fail' '(
-
 	rm -fr mine &&
 	mkdir mine &&
 	cd mine &&
@@ -216,7 +212,6 @@ test_expect_success 'absolute pathname outside should fail' '(
 	test -d sub &&
 	! test -d ../in &&
 	git ls-files --error-unmatch sub/file
-
 )'
 
 test_expect_success 'git mv to move multiple sources into a directory' '
@@ -232,7 +227,6 @@ test_expect_success 'git mv to move multiple sources into a directory' '
 '
 
 test_expect_success 'git mv should not change sha1 of moved cache entry' '
-
 	rm -fr .git &&
 	git init &&
 	echo 1 >dirty &&
@@ -243,7 +237,6 @@ test_expect_success 'git mv should not change sha1 of moved cache entry' '
 	echo 2 >dirty2 &&
 	git mv dirty2 dirty &&
 	[ "$entry" = "$(git ls-files --stage dirty | cut -f 1)" ]
-
 '
 
 rm -f dirty dirty2
@@ -266,7 +259,6 @@ test_expect_success 'git mv error on conflicted file' '
 '
 
 test_expect_success 'git mv should overwrite symlink to a file' '
-
 	rm -fr .git &&
 	git init &&
 	echo 1 >moved &&
@@ -279,13 +271,11 @@ test_expect_success 'git mv should overwrite symlink to a file' '
 	test "$(cat symlink)" = 1 &&
 	git update-index --refresh &&
 	git diff-files --quiet
-
 '
 
 rm -f moved symlink
 
 test_expect_success 'git mv should overwrite file with a symlink' '
-
 	rm -fr .git &&
 	git init &&
 	echo 1 >moved &&
@@ -296,11 +286,9 @@ test_expect_success 'git mv should overwrite file with a symlink' '
 	! test -e symlink &&
 	git update-index --refresh &&
 	git diff-files --quiet
-
 '
 
 test_expect_success SYMLINKS 'check moved symlink' '
-
 	test -h moved
 '
 
