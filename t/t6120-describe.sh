@@ -136,7 +136,7 @@ warning: tag 'Q' is externally known as 'A'
 EOF
 check_describe A-* HEAD
 test_expect_success 'warning was displayed for Q' '
-	test_i18ncmp err.expect err.actual
+	test_cmp err.expect err.actual
 '
 test_expect_success 'misnamed annotated tag forces long output' '
 	description=$(git describe --no-long Q^0) &&

@@ -974,7 +974,7 @@ test_expect_success 'show help from add--helper' '
 	EOF
 	test_write_lines h | force_color git add -i >actual.colored &&
 	test_decode_color <actual.colored >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_done

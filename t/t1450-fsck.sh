@@ -380,7 +380,7 @@ test_expect_success 'tag with incorrect tag name & missing tagger' '
 	warning in tag $tag: badTagName: invalid '\''tag'\'' name: wrong name format
 	warning in tag $tag: missingTaggerEntry: invalid format - expected '\''tagger'\'' line
 	EOF
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'tag with bad tagger' '
@@ -806,7 +806,7 @@ test_expect_success 'fsck notices dangling objects' '
 		git fsck >actual &&
 		# the output order is non-deterministic, as it comes from a hash
 		sort <actual >actual.sorted &&
-		test_i18ncmp expect actual.sorted
+		test_cmp expect actual.sorted
 	)
 '
 
@@ -816,7 +816,7 @@ test_expect_success 'fsck --connectivity-only notices dangling objects' '
 		git fsck --connectivity-only >actual &&
 		# the output order is non-deterministic, as it comes from a hash
 		sort <actual >actual.sorted &&
-		test_i18ncmp expect actual.sorted
+		test_cmp expect actual.sorted
 	)
 '
 

@@ -175,7 +175,7 @@ test_expect_success 'create bundle from special rev: main^!' '
 	cat >expect <<-\EOF &&
 	<COMMIT-P> refs/heads/main
 	EOF
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	git bundle verify special-rev.bdl |
 		make_user_friendly_and_stable_output >actual &&
@@ -185,7 +185,7 @@ test_expect_success 'create bundle from special rev: main^!' '
 	The bundle requires this ref:
 	<COMMIT-O>
 	EOF
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	test_bundle_object_count special-rev.bdl 3
 '
@@ -207,7 +207,7 @@ test_expect_success 'create bundle with --max-count option' '
 	The bundle requires this ref:
 	<COMMIT-O>
 	EOF
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	test_bundle_object_count max-count.bdl 4
 '
@@ -236,7 +236,7 @@ test_expect_success 'create bundle with --since option' '
 	<COMMIT-M>
 	<COMMIT-K>
 	EOF
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	test_bundle_object_count --thin since.bdl 13
 '
@@ -262,11 +262,11 @@ test_expect_success 'create bundle 1 - no prerequisites' '
 	# verify bundle, which has no prerequisites
 	git bundle verify 1.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	git bundle verify stdin-1.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	test_bundle_object_count       1.bdl 24 &&
 	test_bundle_object_count stdin-1.bdl 24
@@ -304,11 +304,11 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 
 	git bundle verify 2.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	git bundle verify stdin-2.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	test_bundle_object_count       2.bdl 16 &&
 	test_bundle_object_count stdin-2.bdl 16
@@ -326,11 +326,11 @@ test_expect_success 'fail to verify bundle without prerequisites' '
 
 	test_must_fail git -C test1.git bundle verify ../2.bdl 2>&1 |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	test_must_fail git -C test1.git bundle verify ../stdin-2.bdl 2>&1 |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'create bundle 3 - two refs, same object' '
@@ -363,11 +363,11 @@ test_expect_success 'create bundle 3 - two refs, same object' '
 
 	git bundle verify 3.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	git bundle verify stdin-3.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	test_bundle_object_count       3.bdl 4 &&
 	test_bundle_object_count stdin-3.bdl 4
@@ -404,11 +404,11 @@ test_expect_success 'create bundle 4 - with tags' '
 
 	git bundle verify 4.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	git bundle verify stdin-4.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 
 	test_bundle_object_count       4.bdl 3 &&
 	test_bundle_object_count stdin-4.bdl 3

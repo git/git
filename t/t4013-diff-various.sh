@@ -222,7 +222,7 @@ do
 			process_diffs "$expect" >expect &&
 			case $cmd in
 			*format-patch* | *-stat*)
-				test_i18ncmp expect actual;;
+				test_cmp expect actual;;
 			*)
 				test_cmp expect actual;;
 			esac &&

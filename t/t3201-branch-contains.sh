@@ -264,7 +264,7 @@ test_expect_success 'branch --merged with --verbose' '
 	* topic $(git rev-parse --short topic ) [ahead 1] foo
 	  zzz   $(git rev-parse --short zzz   ) second on main
 	EOF
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_done

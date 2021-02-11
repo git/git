@@ -57,7 +57,7 @@ test_expect_success 'branch -v' '
 		git branch -v
 	) |
 	sed -n -e "$t6040_script" >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<\EOF
@@ -75,7 +75,7 @@ test_expect_success 'branch -vv' '
 		git branch -vv
 	) |
 	sed -n -e "$t6040_script" >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'checkout (diverged from upstream)' '
@@ -146,7 +146,7 @@ test_expect_success 'status -s -b (diverged from upstream)' '
 		git checkout b1 >/dev/null &&
 		git status -s -b | head -1
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<\EOF
@@ -159,7 +159,7 @@ test_expect_success 'status -s -b --no-ahead-behind (diverged from upstream)' '
 		git checkout b1 >/dev/null &&
 		git status -s -b --no-ahead-behind | head -1
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<\EOF
@@ -172,7 +172,7 @@ test_expect_success 'status.aheadbehind=false status -s -b (diverged from upstre
 		git checkout b1 >/dev/null &&
 		git -c status.aheadbehind=false status -s -b | head -1
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<\EOF
@@ -187,7 +187,7 @@ test_expect_success 'status --long --branch' '
 		git checkout b1 >/dev/null &&
 		git status --long -b | head -3
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'status --long --branch' '
@@ -196,7 +196,7 @@ test_expect_success 'status --long --branch' '
 		git checkout b1 >/dev/null &&
 		git -c status.aheadbehind=true status --long -b | head -3
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<\EOF
@@ -210,7 +210,7 @@ test_expect_success 'status --long --branch --no-ahead-behind' '
 		git checkout b1 >/dev/null &&
 		git status --long -b --no-ahead-behind | head -2
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'status.aheadbehind=false status --long --branch' '
@@ -219,7 +219,7 @@ test_expect_success 'status.aheadbehind=false status --long --branch' '
 		git checkout b1 >/dev/null &&
 		git -c status.aheadbehind=false status --long -b | head -2
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<\EOF
@@ -232,7 +232,7 @@ test_expect_success 'status -s -b (upstream is gone)' '
 		git checkout b5 >/dev/null &&
 		git status -s -b | head -1
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<\EOF
@@ -245,7 +245,7 @@ test_expect_success 'status -s -b (up-to-date with upstream)' '
 		git checkout b6 >/dev/null &&
 		git status -s -b | head -1
 	) >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'fail to track lightweight tags' '

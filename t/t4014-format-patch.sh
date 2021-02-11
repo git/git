@@ -888,11 +888,11 @@ echo "fatal: --check does not make sense" >expect.check
 
 test_expect_success 'options no longer allowed for format-patch' '
 	test_must_fail git format-patch --name-only 2>output &&
-	test_i18ncmp expect.name-only output &&
+	test_cmp expect.name-only output &&
 	test_must_fail git format-patch --name-status 2>output &&
-	test_i18ncmp expect.name-status output &&
+	test_cmp expect.name-status output &&
 	test_must_fail git format-patch --check 2>output &&
-	test_i18ncmp expect.check output
+	test_cmp expect.check output
 '
 
 test_expect_success 'format-patch --numstat should produce a patch' '

@@ -150,7 +150,7 @@ test_expect_success 'confuses pattern as remote when no remote specified' '
 	# We could just as easily have used "main"; the "*" emphasizes its
 	# role as a pattern.
 	test_must_fail git ls-remote "$does_not_exist" >actual 2>&1 &&
-	test_i18ncmp exp actual
+	test_cmp exp actual
 '
 
 test_expect_success 'die with non-2 for wrong repository even with --exit-code' '

@@ -12,13 +12,13 @@ sanitize_log_output () {
 lib_test_cmp_graph () {
 	git log --graph "$@" >output &&
 	sed 's/ *$//' >output.sanitized <output &&
-	test_i18ncmp expect output.sanitized
+	test_cmp expect output.sanitized
 }
 
 lib_test_cmp_short_graph () {
 	git log --graph --pretty=short "$@" >output &&
 	sanitize_log_output >output.sanitized <output &&
-	test_i18ncmp expect output.sanitized
+	test_cmp expect output.sanitized
 }
 
 lib_test_cmp_colored_graph () {

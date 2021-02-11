@@ -74,10 +74,10 @@ test_expect_success 'cherry-pick --continue rejects --rerere-autoupdate' '
 	git diff-files --quiet &&
 	test_must_fail git cherry-pick --continue --rerere-autoupdate >actual 2>&1 &&
 	echo "fatal: cherry-pick: --rerere-autoupdate cannot be used with --continue" >expect &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	test_must_fail git cherry-pick --continue --no-rerere-autoupdate >actual 2>&1 &&
 	echo "fatal: cherry-pick: --no-rerere-autoupdate cannot be used with --continue" >expect &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	git cherry-pick --abort
 '
 

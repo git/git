@@ -10,7 +10,7 @@ test_expect_success 'advice should be printed when config variable is unset' '
 	hint: Disable this message with "git config advice.nestedTag false"
 	EOF
 	test-tool advise "This is a piece of advice" 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'advice should be printed when config variable is set to true' '
@@ -20,7 +20,7 @@ test_expect_success 'advice should be printed when config variable is set to tru
 	EOF
 	test_config advice.nestedTag true &&
 	test-tool advise "This is a piece of advice" 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'advice should not be printed when config variable is set to false' '

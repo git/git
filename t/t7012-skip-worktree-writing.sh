@@ -125,13 +125,13 @@ EOF
 test_expect_success 'git-clean, absent case' '
 	setup_absent &&
 	git clean -n > result &&
-	test_i18ncmp expected result
+	test_cmp expected result
 '
 
 test_expect_success 'git-clean, dirty case' '
 	setup_dirty &&
 	git clean -n > result &&
-	test_i18ncmp expected result
+	test_cmp expected result
 '
 
 test_expect_success '--ignore-skip-worktree-entries leaves worktree alone' '

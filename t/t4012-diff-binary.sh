@@ -34,19 +34,19 @@ EOF
 test_expect_success 'apply --stat output for binary file change' '
 	git diff >diff &&
 	git apply --stat --summary <diff >current &&
-	test_i18ncmp expected current
+	test_cmp expected current
 '
 
 test_expect_success 'diff --shortstat output for binary file change' '
 	tail -n 1 expected >expect &&
 	git diff --shortstat >current &&
-	test_i18ncmp expect current
+	test_cmp expect current
 '
 
 test_expect_success 'diff --shortstat output for binary file change only' '
 	echo " 1 file changed, 0 insertions(+), 0 deletions(-)" >expected &&
 	git diff --shortstat -- b >current &&
-	test_i18ncmp expected current
+	test_cmp expected current
 '
 
 test_expect_success 'apply --numstat notices binary file change' '
