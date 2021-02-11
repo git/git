@@ -227,6 +227,27 @@ enum diff_submodule_format {
 struct diff_options {
 	const char *orderfile;
 
+	/*
+	 * "--rotate-to=<file>" would start showing at <file> and when
+	 * the output reaches the end, wrap around by default.
+	 * Setting skip_instead_of_rotate to true stops the output at the
+	 * end, effectively discarding the earlier part of the output
+	 * before <file>'s diff (this is used to implement the
+	 * "--skip-to=<file>" option).
+	 *
+	 * When rotate_to_strict is set, it is an error if there is no
+	 * <file> in the diff.  Otherwise, the output starts at the
+	 * path that is the same as, or first path that sorts after,
+	 * <file>.  Because it is unreasonable to require the exact
+	 * match for "git log -p --rotate-to=<file>" (i.e. not all
+	 * commit would touch that single <file>), "git log" sets it
+	 * to false.  "git diff" sets it to true to detect an error
+	 * in the command line option.
+	 */
+	const char *rotate_to;
+	int skip_instead_of_rotate;
+	int rotate_to_strict;
+
 	/**
 	 * A constant string (can and typically does contain newlines to look for
 	 * a block of text, not just a single line) to filter out the filepairs

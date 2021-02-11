@@ -700,6 +700,14 @@ matches a pattern if removing any number of the final pathname
 components matches the pattern.  For example, the pattern "`foo*bar`"
 matches "`fooasdfbar`" and "`foo/bar/baz/asdf`" but not "`foobarx`".
 
+--skip-to=<file>::
+--rotate-to=<file>::
+	Discard the files before the named <file> from the output
+	(i.e. 'skip to'), or move them to the end of the output
+	(i.e. 'rotate to').  These were invented primarily for use
+	of the `git difftool` command, and may not be very useful
+	otherwise.
+
 ifndef::git-format-patch[]
 -R::
 	Swap two inputs; that is, show differences from index or

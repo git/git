@@ -156,6 +156,8 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	if (merge_base && opt->pending.nr != 2)
 		die(_("--merge-base only works with two commits"));
 
+	opt->diffopt.rotate_to_strict = 1;
+
 	/*
 	 * NOTE!  We expect "a..b" to expand to "^a b" but it is
 	 * perfectly valid for revision range parser to yield "b ^a",
@@ -192,6 +194,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		int saved_nrl = 0;
 		int saved_dcctc = 0;
 
+		opt->diffopt.rotate_to_strict = 0;
 		if (opt->diffopt.detect_rename) {
 			if (!the_index.cache)
 				repo_read_index(the_repository);
