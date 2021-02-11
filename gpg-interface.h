@@ -38,12 +38,19 @@ struct signature_check {
 void signature_check_clear(struct signature_check *sigc);
 
 /*
+ * Look at a GPG signed tag object.  If such a signature exists, store it in
+ * signature and the signed content in payload.  Return 1 if a signature was
+ * found, and 0 otherwise.
+ */
+int parse_signature(const char *buf, size_t size, struct strbuf *payload, struct strbuf *signature);
+
+/*
  * Look at GPG signed content (e.g. a signed tag object), whose
  * payload is followed by a detached signature on it.  Return the
  * offset where the embedded detached signature begins, or the end of
  * the data when there is no such signature.
  */
-size_t parse_signature(const char *buf, size_t size);
+size_t parse_signed_buffer(const char *buf, size_t size);
 
 /*
  * Create a detached signature for the contents of "buffer" and append
