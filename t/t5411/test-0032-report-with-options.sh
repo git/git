@@ -13,8 +13,8 @@ test_expect_success "setup proc-receive hook (option without matching ok, $PROTO
 test_expect_success "proc-receive: report option without matching ok ($PROTOCOL)" '
 	test_must_fail git -C workbench push origin \
 		HEAD:refs/for/main/topic \
-		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		>out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	remote: # pre-receive hook
 	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
@@ -247,10 +247,7 @@ test_expect_success "proc-receive: report with multiple rewrites ($PROTOCOL)" '
 	EOF
 	test_cmp expect actual &&
 
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '

@@ -12,8 +12,8 @@ test_expect_success "git-push is declined ($PROTOCOL/porcelain)" '
 	test_must_fail git -C workbench push --porcelain origin \
 		$B:refs/heads/main \
 		HEAD:refs/heads/next \
-		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		>out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
 	!    <COMMIT-B>:refs/heads/main    [remote rejected] (pre-receive hook declined)
@@ -21,12 +21,10 @@ test_expect_success "git-push is declined ($PROTOCOL/porcelain)" '
 	Done
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "cleanup ($PROTOCOL/porcelain)" '

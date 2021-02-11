@@ -24,8 +24,8 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL)" '
 		HEAD:refs/heads/foo \
 		HEAD:refs/for/main/topic \
 		HEAD:refs/for/next/topic3 \
-		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		>out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	remote: # pre-receive hook
 	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
@@ -65,15 +65,13 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL)" '
 	 ! [remote rejected] HEAD -> refs/for/next/topic3 (proc-receive failed to report status)
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/bar
 	<COMMIT-A> refs/heads/baz
 	<COMMIT-A> refs/heads/foo
 	<COMMIT-B> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(B)             foo(A)  bar(A))  baz(A)

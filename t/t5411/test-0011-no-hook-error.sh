@@ -5,8 +5,8 @@ test_expect_success "proc-receive: no hook, fail to push special ref ($PROTOCOL)
 	test_must_fail git -C workbench push origin \
 		HEAD:next \
 		HEAD:refs/for/main/topic \
-		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		>out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	remote: # pre-receive hook
 	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
@@ -19,13 +19,11 @@ test_expect_success "proc-receive: no hook, fail to push special ref ($PROTOCOL)
 	 ! [remote rejected] HEAD -> refs/for/main/topic (fail to run proc-receive hook)
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	<COMMIT-A> refs/heads/next
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(A)             next(A)
@@ -41,8 +39,8 @@ test_expect_success "proc-receive: no hook, all failed for atomic push ($PROTOCO
 	test_must_fail git -C workbench push --atomic origin \
 		$B:main \
 		HEAD:next \
-		HEAD:refs/for/main/topic >out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		HEAD:refs/for/main/topic >out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	remote: # pre-receive hook
 	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
@@ -55,10 +53,8 @@ test_expect_success "proc-receive: no hook, all failed for atomic push ($PROTOCO
 	 ! [remote rejected] HEAD -> refs/for/main/topic (fail to run proc-receive hook)
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '

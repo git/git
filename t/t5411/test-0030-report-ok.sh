@@ -26,10 +26,8 @@ test_expect_success "proc-receive: ok ($PROTOCOL)" '
 	 * [new reference] HEAD -> refs/for/main/topic
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
