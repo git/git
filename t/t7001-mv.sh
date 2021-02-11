@@ -49,14 +49,14 @@ test_expect_success 'checking -k on non-existing file' '
 '
 
 test_expect_success 'checking -k on untracked file' '
-	touch untracked1 &&
+	>untracked1 &&
 	git mv -k untracked1 path0 &&
 	test -f untracked1 &&
 	test ! -f path0/untracked1
 '
 
 test_expect_success 'checking -k on multiple untracked files' '
-	touch untracked2 &&
+	>untracked2 &&
 	git mv -k untracked1 untracked2 path0 &&
 	test -f untracked1 &&
 	test -f untracked2 &&
@@ -65,7 +65,7 @@ test_expect_success 'checking -k on multiple untracked files' '
 '
 
 test_expect_success 'checking -f on untracked file with existing target' '
-	touch path0/untracked1 &&
+	>path0/untracked1 &&
 	test_must_fail git mv -f untracked1 path0 &&
 	test ! -f .git/index.lock &&
 	test -f untracked1 &&
@@ -488,7 +488,7 @@ test_expect_success 'moving nested submodules' '
 	mkdir sub_nested_nested &&
 	(
 		cd sub_nested_nested &&
-		touch nested_level2 &&
+		>nested_level2 &&
 		git init &&
 		git add . &&
 		git commit -m "nested level 2"
@@ -496,7 +496,7 @@ test_expect_success 'moving nested submodules' '
 	mkdir sub_nested &&
 	(
 		cd sub_nested &&
-		touch nested_level1 &&
+		>nested_level1 &&
 		git init &&
 		git add . &&
 		git commit -m "nested level 1" &&
