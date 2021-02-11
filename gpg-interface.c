@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "commit.h"
 #include "config.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -366,6 +367,7 @@ int parse_signature(const char *buf, size_t size, struct strbuf *payload, struct
 	size_t match = parse_signed_buffer(buf, size);
 	if (match != size) {
 		strbuf_add(payload, buf, match);
+		remove_signature(payload);
 		strbuf_add(signature, buf + match, size - match);
 		return 1;
 	}
