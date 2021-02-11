@@ -13,13 +13,11 @@ test_description='git mktag: tag object verify test'
 
 check_verify_failure () {
 	test_expect_success "$1" "
-		test_must_fail env GIT_TEST_GETTEXT_POISON=false \
-			git mktag <tag.sig 2>message &&
+		test_must_fail git mktag <tag.sig 2>message &&
 		grep '$2' message &&
 		if test '$3' != '--no-strict'
 		then
-			test_must_fail env GIT_TEST_GETTEXT_POISON=false \
-				git mktag --no-strict <tag.sig 2>message.no-strict &&
+			test_must_fail git mktag --no-strict <tag.sig 2>message.no-strict &&xb
 			grep '$2' message.no-strict
 		fi
 	"
@@ -443,11 +441,9 @@ test_expect_success 'invalid header entry config & fsck' '
 	git -c fsck.extraHeaderEntry=ignore mktag --no-strict <tag.sig &&
 
 	git fsck &&
-	env GIT_TEST_GETTEXT_POISON=false \
-		git -c fsck.extraHeaderEntry=warn fsck 2>err &&
+	git -c fsck.extraHeaderEntry=warn fsck 2>err &&
 	grep "warning .*extraHeaderEntry:" err &&
-	test_must_fail env GIT_TEST_GETTEXT_POISON=false \
-		git -c fsck.extraHeaderEntry=error 2>err fsck &&
+	test_must_fail git -c fsck.extraHeaderEntry=error 2>err fsck &&
 	grep "error .* extraHeaderEntry:" err
 '
 
