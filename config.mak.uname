@@ -770,7 +770,7 @@ vcxproj:
 
 	# Make .vcxproj files and add them
 	perl contrib/buildsystems/generate -g Vcxproj
-	git add -f git.sln {*,*/lib.proj,t/helper/*}/*.vcxproj
+	git add -f git.sln {*,*/lib.proj,t/helper/*,reftable/libreftable{,_test}.proj}/*.vcxproj
 
 	# Generate the LinkOrCopyBuiltins.targets and LinkOrCopyRemoteHttp.targets file
 	(echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' && \
@@ -802,9 +802,11 @@ vcxproj:
 	sed -i '/^git_broken_path_fix ".*/d' git-sh-setup
 	git add -f $(SCRIPT_LIB) $(SCRIPTS)
 
+ifndef NO_PERL
 	# Add Perl module
 	$(MAKE) $(LIB_PERL_GEN)
 	git add -f perl/build
+endif
 
 	# Add bin-wrappers, for testing
 	rm -rf bin-wrappers/
