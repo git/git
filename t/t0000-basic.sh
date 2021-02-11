@@ -271,7 +271,7 @@ test_expect_success 'pretend we have a mix of all possible results' '
 	EOF
 '
 
-test_expect_success C_LOCALE_OUTPUT 'test --verbose' '
+test_expect_success 'test --verbose' '
 	run_sub_test_lib_test_err \
 		t1234-verbose "test verbose" --verbose <<-\EOF &&
 	test_expect_success "passing test" true

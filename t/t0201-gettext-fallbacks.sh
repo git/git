@@ -18,7 +18,7 @@ test_expect_success 'sanity: $GIT_INTERNAL_GETTEXT_TEST_FALLBACKS is set' '
     test -n "$GIT_INTERNAL_GETTEXT_TEST_FALLBACKS"
 '
 
-test_expect_success C_LOCALE_OUTPUT 'sanity: $GIT_INTERNAL_GETTEXT_SH_SCHEME" is fallthrough' '
+test_expect_success 'sanity: $GIT_INTERNAL_GETTEXT_SH_SCHEME" is fallthrough' '
     echo fallthrough >expect &&
     echo $GIT_INTERNAL_GETTEXT_SH_SCHEME >actual &&
     test_cmp expect actual

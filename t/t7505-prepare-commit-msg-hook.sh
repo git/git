@@ -218,7 +218,7 @@ test_expect_success 'with hook and editor (merge)' '
 test_rebase () {
 	expect=$1 &&
 	mode=$2 &&
-	test_expect_$expect C_LOCALE_OUTPUT "with hook (rebase ${mode:--i})" '
+	test_expect_$expect "with hook (rebase ${mode:--i})" '
 		test_when_finished "\
 			git rebase --abort
 			git checkout -f main
@@ -307,7 +307,7 @@ test_expect_success 'with failing hook (merge)' '
 
 '
 
-test_expect_success C_LOCALE_OUTPUT 'with failing hook (cherry-pick)' '
+test_expect_success 'with failing hook (cherry-pick)' '
 	test_when_finished "git checkout -f main" &&
 	git checkout -B other b &&
 	test_must_fail git cherry-pick rebase-1 2>actual &&

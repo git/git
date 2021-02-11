@@ -370,7 +370,7 @@ test_expect_success 'setup expected' '
 '
 
 # Test splitting the first patch, then adding both
-test_expect_success C_LOCALE_OUTPUT 'add first line works' '
+test_expect_success 'add first line works' '
 	git commit -am "clear local changes" &&
 	git apply patch &&
 	printf "%s\n" s y y | git add -p file 2>error |
