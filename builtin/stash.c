@@ -87,7 +87,7 @@ static const char * const git_stash_save_usage[] = {
 	NULL
 };
 
-static const char *ref_stash = "refs/stash";
+static const char ref_stash[] = "refs/stash";
 static struct strbuf stash_index_path = STRBUF_INIT;
 
 /*
