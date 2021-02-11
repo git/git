@@ -156,9 +156,9 @@ test_expect_success "Michael Cassar's test case" '
 	rm -fr .git papers partA &&
 	git init &&
 	mkdir -p papers/unsorted papers/all-papers partA &&
-	echo a > papers/unsorted/Thesis.pdf &&
-	echo b > partA/outline.txt &&
-	echo c > papers/unsorted/_another &&
+	echo a >papers/unsorted/Thesis.pdf &&
+	echo b >partA/outline.txt &&
+	echo c >papers/unsorted/_another &&
 	git add papers partA &&
 	T1=$(git write-tree) &&
 
