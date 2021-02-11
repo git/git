@@ -181,38 +181,42 @@ test_expect_success "Sergey Vlasov's test case" '
 	git mv ab a
 '
 
-test_expect_success 'absolute pathname' '(
-	rm -fr mine &&
-	mkdir mine &&
-	cd mine &&
-	test_create_repo one &&
-	cd one &&
-	mkdir sub &&
-	>sub/file &&
-	git add sub/file &&
+test_expect_success 'absolute pathname' '
+	(
+		rm -fr mine &&
+		mkdir mine &&
+		cd mine &&
+		test_create_repo one &&
+		cd one &&
+		mkdir sub &&
+		>sub/file &&
+		git add sub/file &&
 
-	git mv sub "$(pwd)/in" &&
-	! test -d sub &&
-	test -d in &&
-	git ls-files --error-unmatch in/file
-)'
+		git mv sub "$(pwd)/in" &&
+		! test -d sub &&
+		test -d in &&
+		git ls-files --error-unmatch in/file
+	)
+'
 
-test_expect_success 'absolute pathname outside should fail' '(
-	rm -fr mine &&
-	mkdir mine &&
-	cd mine &&
-	out=$(pwd) &&
-	test_create_repo one &&
-	cd one &&
-	mkdir sub &&
-	>sub/file &&
-	git add sub/file &&
+test_expect_success 'absolute pathname outside should fail' '
+	(
+		rm -fr mine &&
+		mkdir mine &&
+		cd mine &&
+		out=$(pwd) &&
+		test_create_repo one &&
+		cd one &&
+		mkdir sub &&
+		>sub/file &&
+		git add sub/file &&
 
-	test_must_fail git mv sub "$out/out" &&
-	test -d sub &&
-	! test -d ../in &&
-	git ls-files --error-unmatch sub/file
-)'
+		test_must_fail git mv sub "$out/out" &&
+		test -d sub &&
+		! test -d ../in &&
+		git ls-files --error-unmatch sub/file
+	)
+'
 
 test_expect_success 'git mv to move multiple sources into a directory' '
 	rm -fr .git && git init &&
@@ -503,14 +507,16 @@ test_expect_success 'moving a submodule in nested directories' '
 test_expect_success 'moving nested submodules' '
 	git commit -am "cleanup commit" &&
 	mkdir sub_nested_nested &&
-	(cd sub_nested_nested &&
+	(
+		cd sub_nested_nested &&
 		touch nested_level2 &&
 		git init &&
 		git add . &&
 		git commit -m "nested level 2"
 	) &&
 	mkdir sub_nested &&
-	(cd sub_nested &&
+	(
+		cd sub_nested &&
 		touch nested_level1 &&
 		git init &&
 		git add . &&
