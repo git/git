@@ -6342,12 +6342,24 @@ static void diff_free_file(struct diff_options *options)
 		fclose(options->file);
 }
 
+static void diff_free_ignore_regex(struct diff_options *options)
+{
+	int i;
+
+	for (i = 0; i < options->ignore_regex_nr; i++) {
+		regfree(options->ignore_regex[i]);
+		free(options->ignore_regex[i]);
+	}
+	free(options->ignore_regex);
+}
+
 void diff_free(struct diff_options *options)
 {
 	if (options->no_free)
 		return;
 
 	diff_free_file(options);
+	diff_free_ignore_regex(options);
 }
 
 void diff_flush(struct diff_options *options)
