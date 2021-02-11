@@ -4,72 +4,72 @@ test_description='git mv in subdirs'
 . ./test-lib.sh
 
 test_expect_success 'prepare reference tree' '
-     mkdir path0 path1 &&
-     cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
-     git add path0/COPYING &&
-     git commit -m add -a
+	mkdir path0 path1 &&
+	cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
+	git add path0/COPYING &&
+	git commit -m add -a
 '
 
 test_expect_success 'moving the file out of subdirectory' '
-     cd path0 && git mv COPYING ../path1/COPYING
+	cd path0 && git mv COPYING ../path1/COPYING
 '
 
 # in path0 currently
 test_expect_success 'commiting the change' '
-     cd .. && git commit -m move-out -a
+	cd .. && git commit -m move-out -a
 '
 
 test_expect_success 'checking the commit' '
-     git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-     grep "^R100..*path0/COPYING..*path1/COPYING" actual
+	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+	grep "^R100..*path0/COPYING..*path1/COPYING" actual
 '
 
 test_expect_success 'moving the file back into subdirectory' '
-     cd path0 && git mv ../path1/COPYING COPYING
+	cd path0 && git mv ../path1/COPYING COPYING
 '
 
 # in path0 currently
 test_expect_success 'commiting the change' '
-     cd .. && git commit -m move-in -a
+	cd .. && git commit -m move-in -a
 '
 
 test_expect_success 'checking the commit' '
-     git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-     grep "^R100..*path1/COPYING..*path0/COPYING" actual
+	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+	grep "^R100..*path1/COPYING..*path0/COPYING" actual
 '
 
 test_expect_success 'mv --dry-run does not move file' '
-     git mv -n path0/COPYING MOVED &&
-     test -f path0/COPYING &&
-     test ! -f MOVED
+	git mv -n path0/COPYING MOVED &&
+	test -f path0/COPYING &&
+	test ! -f MOVED
 '
 
 test_expect_success 'checking -k on non-existing file' '
-     git mv -k idontexist path0
+	git mv -k idontexist path0
 '
 
 test_expect_success 'checking -k on untracked file' '
-     touch untracked1 &&
-     git mv -k untracked1 path0 &&
-     test -f untracked1 &&
-     test ! -f path0/untracked1
+	touch untracked1 &&
+	git mv -k untracked1 path0 &&
+	test -f untracked1 &&
+	test ! -f path0/untracked1
 '
 
 test_expect_success 'checking -k on multiple untracked files' '
-     touch untracked2 &&
-     git mv -k untracked1 untracked2 path0 &&
-     test -f untracked1 &&
-     test -f untracked2 &&
-     test ! -f path0/untracked1 &&
-     test ! -f path0/untracked2
+	touch untracked2 &&
+	git mv -k untracked1 untracked2 path0 &&
+	test -f untracked1 &&
+	test -f untracked2 &&
+	test ! -f path0/untracked1 &&
+	test ! -f path0/untracked2
 '
 
 test_expect_success 'checking -f on untracked file with existing target' '
-     touch path0/untracked1 &&
-     test_must_fail git mv -f untracked1 path0 &&
-     test ! -f .git/index.lock &&
-     test -f untracked1 &&
-     test -f path0/untracked1
+	touch path0/untracked1 &&
+	test_must_fail git mv -f untracked1 path0 &&
+	test ! -f .git/index.lock &&
+	test -f untracked1 &&
+	test -f path0/untracked1
 '
 
 # clean up the mess in case bad things happen
@@ -79,77 +79,77 @@ rm -f idontexist untracked1 untracked2 \
 rmdir path1
 
 test_expect_success 'moving to absent target with trailing slash' '
-     test_must_fail git mv path0/COPYING no-such-dir/ &&
-     test_must_fail git mv path0/COPYING no-such-dir// &&
-     git mv path0/ no-such-dir/ &&
-     test_path_is_dir no-such-dir
+	test_must_fail git mv path0/COPYING no-such-dir/ &&
+	test_must_fail git mv path0/COPYING no-such-dir// &&
+	git mv path0/ no-such-dir/ &&
+	test_path_is_dir no-such-dir
 '
 
 test_expect_success 'clean up' '
-     git reset --hard
+	git reset --hard
 '
 
 test_expect_success 'moving to existing untracked target with trailing slash' '
-     mkdir path1 &&
-     git mv path0/ path1/ &&
-     test_path_is_dir path1/path0/
+	mkdir path1 &&
+	git mv path0/ path1/ &&
+	test_path_is_dir path1/path0/
 '
 
 test_expect_success 'moving to existing tracked target with trailing slash' '
-     mkdir path2 &&
-     >path2/file && git add path2/file &&
-     git mv path1/path0/ path2/ &&
-     test_path_is_dir path2/path0/
+	mkdir path2 &&
+	>path2/file && git add path2/file &&
+	git mv path1/path0/ path2/ &&
+	test_path_is_dir path2/path0/
 '
 
 test_expect_success 'clean up' '
-     git reset --hard
+	git reset --hard
 '
 
 test_expect_success 'adding another file' '
-     cp "$TEST_DIRECTORY"/../README.md path0/README &&
-     git add path0/README &&
-     git commit -m add2 -a
+	cp "$TEST_DIRECTORY"/../README.md path0/README &&
+	git add path0/README &&
+	git commit -m add2 -a
 '
 
 test_expect_success 'moving whole subdirectory' '
-     git mv path0 path2
+	git mv path0 path2
 '
 
 test_expect_success 'commiting the change' '
-     git commit -m dir-move -a
+	git commit -m dir-move -a
 '
 
 test_expect_success 'checking the commit' '
-     git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-     grep "^R100..*path0/COPYING..*path2/COPYING" actual &&
-     grep "^R100..*path0/README..*path2/README" actual
+	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+	grep "^R100..*path0/COPYING..*path2/COPYING" actual &&
+	grep "^R100..*path0/README..*path2/README" actual
 '
 
 test_expect_success 'succeed when source is a prefix of destination' '
-     git mv path2/COPYING path2/COPYING-renamed
+	git mv path2/COPYING path2/COPYING-renamed
 '
 
 test_expect_success 'moving whole subdirectory into subdirectory' '
-     git mv path2 path1
+	git mv path2 path1
 '
 
 test_expect_success 'commiting the change' '
-     git commit -m dir-move -a
+	git commit -m dir-move -a
 '
 
 test_expect_success 'checking the commit' '
-     git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-     grep "^R100..*path2/COPYING..*path1/path2/COPYING" actual &&
-     grep "^R100..*path2/README..*path1/path2/README" actual
+	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+	grep "^R100..*path2/COPYING..*path1/path2/COPYING" actual &&
+	grep "^R100..*path2/README..*path1/path2/README" actual
 '
 
 test_expect_success 'do not move directory over existing directory' '
-     mkdir path0 && mkdir path0/path2 && test_must_fail git mv path2 path0
+	mkdir path0 && mkdir path0/path2 && test_must_fail git mv path2 path0
 '
 
 test_expect_success 'move into "."' '
-     git mv path1/path2/ .
+	git mv path1/path2/ .
 '
 
 test_expect_success "Michael Cassar's test case" '
