@@ -228,7 +228,10 @@ test_expect_success 'git mv to move multiple sources into a directory' '
 	git add dir/?.txt &&
 	git mv dir/a.txt dir/b.txt other &&
 	git ls-files >actual &&
-	{ echo other/a.txt; echo other/b.txt; } >expect &&
+	cat >expect <<-\EOF &&
+	other/a.txt
+	other/b.txt
+	EOF
 	test_cmp expect actual
 '
 
