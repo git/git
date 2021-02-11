@@ -202,6 +202,7 @@ test_commit () {
 	author= &&
 	signoff= &&
 	indir= &&
+	no_tag= &&
 	while test $# != 0
 	do
 		case "$1" in
@@ -228,6 +229,9 @@ test_commit () {
 			indir="$2"
 			shift
 			;;
+		--no-tag)
+			no_tag=yes
+			;;
 		*)
 			break
 			;;
@@ -250,7 +254,10 @@ test_commit () {
 	git ${indir:+ -C "$indir"} commit \
 	    ${author:+ --author "$author"} \
 	    $signoff -m "$1" &&
-	git ${indir:+ -C "$indir"} tag "${4:-$1}"
+	if test -z "$no_tag"
+	then
+		git ${indir:+ -C "$indir"} tag "${4:-$1}"
+	fi
 }
 
 # Call test_merge with the arguments "<message> <commit>", where <commit>

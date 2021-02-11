@@ -31,13 +31,8 @@ test_expect_success '"git log :/a -- " should not be ambiguous' '
 test_expect_success '"git log :/detached -- " should find a commit only in HEAD' '
 	test_when_finished "git checkout main" &&
 	git checkout --detach &&
-	# Must manually call `test_tick` instead of using `test_commit`,
-	# because the latter additionally creates a tag, which would make
-	# the commit reachable not only via HEAD.
-	test_tick &&
-	git commit --allow-empty -m detached &&
-	test_tick &&
-	git commit --allow-empty -m something-else &&
+	test_commit --no-tag detached &&
+	test_commit --no-tag something-else &&
 	git log :/detached --
 '
 
