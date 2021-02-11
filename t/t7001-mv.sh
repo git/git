@@ -11,12 +11,12 @@ test_expect_success 'prepare reference tree' '
 '
 
 test_expect_success 'moving the file out of subdirectory' '
-	cd path0 && git mv COPYING ../path1/COPYING
+	git -C path0 mv COPYING ../path1/COPYING
 '
 
 # in path0 currently
 test_expect_success 'commiting the change' '
-	cd .. && git commit -m move-out -a
+	git commit -m move-out -a
 '
 
 test_expect_success 'checking the commit' '
@@ -25,12 +25,12 @@ test_expect_success 'checking the commit' '
 '
 
 test_expect_success 'moving the file back into subdirectory' '
-	cd path0 && git mv ../path1/COPYING COPYING
+	git -C path0 mv ../path1/COPYING COPYING
 '
 
 # in path0 currently
 test_expect_success 'commiting the change' '
-	cd .. && git commit -m move-in -a
+	git commit -m move-in -a
 '
 
 test_expect_success 'checking the commit' '
@@ -328,10 +328,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and no .gitm
 	git mv sub mod/sub &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
@@ -351,10 +348,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	git mv sub mod/sub &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	git -C mod/sub status &&
 	echo mod/sub >expected &&
 	git config -f .gitmodules submodule.sub.path >actual &&
 	test_cmp expected actual &&
@@ -368,16 +362,10 @@ test_expect_success 'git mv moves a submodule with gitfile' '
 	git submodule update &&
 	entry="$(git ls-files --stage sub | cut -f 1)" &&
 	mkdir mod &&
-	(
-		cd mod &&
-		git mv ../sub/ .
-	) &&
+	git -C mod mv ../sub/ . &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	git -C mod/sub status &&
 	echo mod/sub >expected &&
 	git config -f .gitmodules submodule.sub.path >actual &&
 	test_cmp expected actual &&
@@ -396,10 +384,7 @@ test_expect_success 'mv does not complain when no .gitmodules file is found' '
 	test_must_be_empty actual.err &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
@@ -420,10 +405,7 @@ test_expect_success 'mv will error out on a modified .gitmodules file unless sta
 	test_must_be_empty actual.err &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
@@ -441,10 +423,7 @@ test_expect_success 'mv issues a warning when section is not found in .gitmodule
 	test_i18ncmp expect.err actual.err &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
