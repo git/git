@@ -510,22 +510,28 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 	for (i = 0; i < origins.nr; i++) {
 		struct object_id *oid = origins.items[i].util;
 		enum object_type type;
-		unsigned long size, len;
+		unsigned long size;
 		char *buf = read_object_file(oid, &type, &size);
+		char *origbuf = buf;
+		unsigned long len = size;
 		struct signature_check sigc = { NULL };
-		struct strbuf sig = STRBUF_INIT;
+		struct strbuf payload = STRBUF_INIT, sig = STRBUF_INIT;
 
 		if (!buf || type != OBJ_TAG)
 			goto next;
-		len = parse_signature(buf, size);
 
-		if (size == len)
-			; /* merely annotated */
-		else if (check_signature(buf, len, buf + len, size - len, &sigc) &&
-			!sigc.gpg_output)
-			strbuf_addstr(&sig, "gpg verification failed.\n");
-		else
-			strbuf_addstr(&sig, sigc.gpg_output);
+		if (!parse_signature(buf, size, &payload, &sig))
+			;/* merely annotated */
+		else {
+			buf = payload.buf;
+			len = payload.len;
+			if (check_signature(payload.buf, payload.len, sig.buf,
+					 sig.len, &sigc) &&
+				!sigc.gpg_output)
+				strbuf_addstr(&sig, "gpg verification failed.\n");
+			else
+				strbuf_addstr(&sig, sigc.gpg_output);
+		}
 		signature_check_clear(&sigc);
 
 		if (!tag_number++) {
@@ -548,9 +554,10 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 					strlen(origins.items[i].string));
 			fmt_tag_signature(&tagbuf, &sig, buf, len);
 		}
+		strbuf_release(&payload);
 		strbuf_release(&sig);
 	next:
-		free(buf);
+		free(origbuf);
 	}
 	if (tagbuf.len) {
 		strbuf_addch(out, '\n');
