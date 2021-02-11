@@ -752,7 +752,9 @@ static int collect_merge_info(struct merge_options *opt,
 	init_tree_desc(t + 1, side1->buffer, side1->size);
 	init_tree_desc(t + 2, side2->buffer, side2->size);
 
+	trace2_region_enter("merge", "traverse_trees", opt->repo);
 	ret = traverse_trees(NULL, 3, t, &info);
+	trace2_region_leave("merge", "traverse_trees", opt->repo);
 
 	return ret;
 }
@@ -1439,7 +1441,18 @@ static void get_provisional_directory_renames(struct merge_options *opt,
 				 "no destination getting a majority of the "
 				 "files."),
 			       source_dir);
-			*clean = 0;
+			/*
+			 * We should mark this as unclean IF something attempts
+			 * to use this rename.  We do not yet have the logic
+			 * in place to detect if this directory rename is being
+			 * used, and optimizations that reduce the number of
+			 * renames cause this to falsely trigger.  For now,
+			 * just disable it, causing t6423 testcase 2a to break.
+			 * We'll later fix the detection, and when we do we
+			 * will re-enable setting *clean to 0 (and thereby fix
+			 * t6423 testcase 2a).
+			 */
+			/*   *clean = 0;   */
 		} else {
 			strmap_put(&renames->dir_renames[side],
 				   source_dir, (void*)best);
@@ -2094,9 +2107,12 @@ static void detect_regular_renames(struct merge_options *opt,
 	diff_opts.show_rename_progress = opt->show_rename_progress;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_setup_done(&diff_opts);
+
+	trace2_region_enter("diff", "diffcore_rename", opt->repo);
 	diff_tree_oid(&merge_base->object.oid, &side->object.oid, "",
 		      &diff_opts);
 	diffcore_std(&diff_opts);
+	trace2_region_leave("diff", "diffcore_rename", opt->repo);
 
 	if (diff_opts.needed_rename_limit > renames->needed_limit)
 		renames->needed_limit = diff_opts.needed_rename_limit;
@@ -2195,9 +2211,12 @@ static int detect_and_process_renames(struct merge_options *opt,
 
 	memset(&combined, 0, sizeof(combined));
 
+	trace2_region_enter("merge", "regular renames", opt->repo);
 	detect_regular_renames(opt, merge_base, side1, MERGE_SIDE1);
 	detect_regular_renames(opt, merge_base, side2, MERGE_SIDE2);
+	trace2_region_leave("merge", "regular renames", opt->repo);
 
+	trace2_region_enter("merge", "directory renames", opt->repo);
 	need_dir_renames =
 	  !opt->priv->call_depth &&
 	  (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_TRUE ||
@@ -2219,8 +2238,11 @@ static int detect_and_process_renames(struct merge_options *opt,
 				 &renames->dir_renames[1],
 				 &renames->dir_renames[2]);
 	QSORT(combined.queue, combined.nr, compare_pairs);
+	trace2_region_leave("merge", "directory renames", opt->repo);
 
+	trace2_region_enter("merge", "process renames", opt->repo);
 	clean &= process_renames(opt, &combined);
+	trace2_region_leave("merge", "process renames", opt->repo);
 
 	/* Free memory for renames->pairs[] and combined */
 	for (s = MERGE_SIDE1; s <= MERGE_SIDE2; s++) {
@@ -2902,20 +2924,30 @@ static void process_entries(struct merge_options *opt,
 						   STRING_LIST_INIT_NODUP,
 						   NULL, 0 };
 
+	trace2_region_enter("merge", "process_entries setup", opt->repo);
 	if (strmap_empty(&opt->priv->paths)) {
 		oidcpy(result_oid, opt->repo->hash_algo->empty_tree);
 		return;
 	}
 
 	/* Hack to pre-allocate plist to the desired size */
+	trace2_region_enter("merge", "plist grow", opt->repo);
 	ALLOC_GROW(plist.items, strmap_get_size(&opt->priv->paths), plist.alloc);
+	trace2_region_leave("merge", "plist grow", opt->repo);
 
 	/* Put every entry from paths into plist, then sort */
+	trace2_region_enter("merge", "plist copy", opt->repo);
 	strmap_for_each_entry(&opt->priv->paths, &iter, e) {
 		string_list_append(&plist, e->key)->util = e->value;
 	}
+	trace2_region_leave("merge", "plist copy", opt->repo);
+
+	trace2_region_enter("merge", "plist special sort", opt->repo);
 	plist.cmp = string_list_df_name_compare;
 	string_list_sort(&plist);
+	trace2_region_leave("merge", "plist special sort", opt->repo);
+
+	trace2_region_leave("merge", "process_entries setup", opt->repo);
 
 	/*
 	 * Iterate over the items in reverse order, so we can handle paths
@@ -2926,6 +2958,7 @@ static void process_entries(struct merge_options *opt,
 	 * (because it allows us to know whether the directory is still in
 	 * the way when it is time to process the file at the same path).
 	 */
+	trace2_region_enter("merge", "processing", opt->repo);
 	for (entry = &plist.items[plist.nr-1]; entry >= plist.items; --entry) {
 		char *path = entry->string;
 		/*
@@ -2944,7 +2977,9 @@ static void process_entries(struct merge_options *opt,
 			process_entry(opt, path, ci, &dir_metadata);
 		}
 	}
+	trace2_region_leave("merge", "processing", opt->repo);
 
+	trace2_region_enter("merge", "process_entries cleanup", opt->repo);
 	if (dir_metadata.offsets.nr != 1 ||
 	    (uintptr_t)dir_metadata.offsets.items[0].util != 0) {
 		printf("dir_metadata.offsets.nr = %d (should be 1)\n",
@@ -2959,6 +2994,7 @@ static void process_entries(struct merge_options *opt,
 	string_list_clear(&plist, 0);
 	string_list_clear(&dir_metadata.versions, 0);
 	string_list_clear(&dir_metadata.offsets, 0);
+	trace2_region_leave("merge", "process_entries cleanup", opt->repo);
 }
 
 /*** Function Grouping: functions related to merge_switch_to_result() ***/
@@ -3117,12 +3153,15 @@ void merge_switch_to_result(struct merge_options *opt,
 	if (result->clean >= 0 && update_worktree_and_index) {
 		struct merge_options_internal *opti = result->priv;
 
+		trace2_region_enter("merge", "checkout", opt->repo);
 		if (checkout(opt, head, result->tree)) {
 			/* failure to function */
 			result->clean = -1;
 			return;
 		}
+		trace2_region_leave("merge", "checkout", opt->repo);
 
+		trace2_region_enter("merge", "record_conflicted", opt->repo);
 		if (record_conflicted_index_entries(opt, opt->repo->index,
 						    &opti->paths,
 						    &opti->conflicted)) {
@@ -3130,6 +3169,7 @@ void merge_switch_to_result(struct merge_options *opt,
 			result->clean = -1;
 			return;
 		}
+		trace2_region_leave("merge", "record_conflicted", opt->repo);
 	}
 
 	if (display_update_msgs) {
@@ -3138,6 +3178,8 @@ void merge_switch_to_result(struct merge_options *opt,
 		struct strmap_entry *e;
 		struct string_list olist = STRING_LIST_INIT_NODUP;
 		int i;
+
+		trace2_region_enter("merge", "display messages", opt->repo);
 
 		/* Hack to pre-allocate olist to the desired size */
 		ALLOC_GROW(olist.items, strmap_get_size(&opti->output),
@@ -3160,6 +3202,8 @@ void merge_switch_to_result(struct merge_options *opt,
 		/* Also include needed rename limit adjustment now */
 		diff_warn_rename_limit("merge.renamelimit",
 				       opti->renames.needed_limit, 0);
+
+		trace2_region_leave("merge", "display messages", opt->repo);
 	}
 
 	merge_finalize(opt, result);
@@ -3201,6 +3245,7 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	int i;
 
 	/* Sanity checks on opt */
+	trace2_region_enter("merge", "sanity checks", opt->repo);
 	assert(opt->repo);
 
 	assert(opt->branch1 && opt->branch2);
@@ -3227,11 +3272,30 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	assert(opt->obuf.len == 0);
 
 	assert(opt->priv == NULL);
+	if (result->priv) {
+		opt->priv = result->priv;
+		result->priv = NULL;
+		/*
+		 * opt->priv non-NULL means we had results from a previous
+		 * run; do a few sanity checks that user didn't mess with
+		 * it in an obvious fashion.
+		 */
+		assert(opt->priv->call_depth == 0);
+		assert(!opt->priv->toplevel_dir ||
+		       0 == strlen(opt->priv->toplevel_dir));
+	}
+	trace2_region_leave("merge", "sanity checks", opt->repo);
 
 	/* Default to histogram diff.  Actually, just hardcode it...for now. */
 	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
 
 	/* Initialization of opt->priv, our internal merge data */
+	trace2_region_enter("merge", "allocate/init", opt->repo);
+	if (opt->priv) {
+		clear_or_reinit_internal_opts(opt->priv, 1);
+		trace2_region_leave("merge", "allocate/init", opt->repo);
+		return;
+	}
 	opt->priv = xcalloc(1, sizeof(*opt->priv));
 
 	/* Initialization of various renames fields */
@@ -3264,6 +3328,8 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	 * subset of the overall paths that have special output.
 	 */
 	strmap_init(&opt->priv->output);
+
+	trace2_region_leave("merge", "allocate/init", opt->repo);
 }
 
 /*** Function Grouping: merge_incore_*() and their internal variants ***/
@@ -3279,6 +3345,7 @@ static void merge_ort_nonrecursive_internal(struct merge_options *opt,
 {
 	struct object_id working_tree_oid;
 
+	trace2_region_enter("merge", "collect_merge_info", opt->repo);
 	if (collect_merge_info(opt, merge_base, side1, side2) != 0) {
 		/*
 		 * TRANSLATORS: The %s arguments are: 1) tree hash of a merge
@@ -3291,10 +3358,16 @@ static void merge_ort_nonrecursive_internal(struct merge_options *opt,
 		result->clean = -1;
 		return;
 	}
+	trace2_region_leave("merge", "collect_merge_info", opt->repo);
 
+	trace2_region_enter("merge", "renames", opt->repo);
 	result->clean = detect_and_process_renames(opt, merge_base,
 						   side1, side2);
+	trace2_region_leave("merge", "renames", opt->repo);
+
+	trace2_region_enter("merge", "process_entries", opt->repo);
 	process_entries(opt, &working_tree_oid);
+	trace2_region_leave("merge", "process_entries", opt->repo);
 
 	/* Set return values */
 	result->tree = parse_tree_indirect(&working_tree_oid);
@@ -3395,9 +3468,15 @@ void merge_incore_nonrecursive(struct merge_options *opt,
 			       struct tree *side2,
 			       struct merge_result *result)
 {
+	trace2_region_enter("merge", "incore_nonrecursive", opt->repo);
+
+	trace2_region_enter("merge", "merge_start", opt->repo);
 	assert(opt->ancestor != NULL);
 	merge_start(opt, result);
+	trace2_region_leave("merge", "merge_start", opt->repo);
+
 	merge_ort_nonrecursive_internal(opt, merge_base, side1, side2, result);
+	trace2_region_leave("merge", "incore_nonrecursive", opt->repo);
 }
 
 void merge_incore_recursive(struct merge_options *opt,
@@ -3406,9 +3485,15 @@ void merge_incore_recursive(struct merge_options *opt,
 			    struct commit *side2,
 			    struct merge_result *result)
 {
+	trace2_region_enter("merge", "incore_recursive", opt->repo);
+
 	/* We set the ancestor label based on the merge_bases */
 	assert(opt->ancestor == NULL);
 
+	trace2_region_enter("merge", "merge_start", opt->repo);
 	merge_start(opt, result);
+	trace2_region_leave("merge", "merge_start", opt->repo);
+
 	merge_ort_internal(opt, merge_bases, side1, side2, result);
+	trace2_region_leave("merge", "incore_recursive", opt->repo);
 }
