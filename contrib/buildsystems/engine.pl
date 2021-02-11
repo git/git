@@ -263,7 +263,7 @@ sub handleCompileLine
         if ("$part" eq "-o") {
             # ignore object file
             shift @parts;
-        } elsif ("$part" eq "-c" || "$part" eq "-i" || "$part" =~ /^-fno-/) {
+        } elsif ("$part" eq "-c" || "$part" eq "-i" || "$part" =~ /^-fno-/ || "$part" eq '-pedantic') {
             # ignore compile flag
         } elsif ($part =~ /^.?-I/) {
             push(@incpaths, $part);
