@@ -343,6 +343,18 @@ test_expect_success 'maintenance.incremental-repack.auto' '
 	test_subcommand git multi-pack-index write --no-progress <trace-B
 '
 
+test_expect_success 'pack-refs task' '
+	for n in $(test_seq 1 5)
+	do
+		git branch -f to-pack/$n HEAD || return 1
+	done &&
+	GIT_TRACE2_EVENT="$(pwd)/pack-refs.txt" \
+		git maintenance run --task=pack-refs &&
+	ls .git/refs/heads/ >after &&
+	test_must_be_empty after &&
+	test_subcommand git pack-refs --all --prune <pack-refs.txt
+'
+
 test_expect_success '--auto and --schedule incompatible' '
 	test_must_fail git maintenance run --auto --schedule=daily 2>err &&
 	test_i18ngrep "at most one" err
@@ -396,11 +408,15 @@ test_expect_success 'maintenance.strategy inheritance' '
 		git maintenance run --schedule=hourly --quiet &&
 	GIT_TRACE2_EVENT="$(pwd)/incremental-daily.txt" \
 		git maintenance run --schedule=daily --quiet &&
+	GIT_TRACE2_EVENT="$(pwd)/incremental-weekly.txt" \
+		git maintenance run --schedule=weekly --quiet &&
 
 	test_subcommand git commit-graph write --split --reachable \
 		--no-progress <incremental-hourly.txt &&
 	test_subcommand ! git prune-packed --quiet <incremental-hourly.txt &&
 	test_subcommand ! git multi-pack-index write --no-progress \
+		<incremental-hourly.txt &&
+	test_subcommand ! git pack-refs --all --prune \
 		<incremental-hourly.txt &&
 
 	test_subcommand git commit-graph write --split --reachable \
@@ -408,6 +424,16 @@ test_expect_success 'maintenance.strategy inheritance' '
 	test_subcommand git prune-packed --quiet <incremental-daily.txt &&
 	test_subcommand git multi-pack-index write --no-progress \
 		<incremental-daily.txt &&
+	test_subcommand ! git pack-refs --all --prune \
+		<incremental-daily.txt &&
+
+	test_subcommand git commit-graph write --split --reachable \
+		--no-progress <incremental-weekly.txt &&
+	test_subcommand git prune-packed --quiet <incremental-weekly.txt &&
+	test_subcommand git multi-pack-index write --no-progress \
+		<incremental-weekly.txt &&
+	test_subcommand git pack-refs --all --prune \
+		<incremental-weekly.txt &&
 
 	# Modify defaults
 	git config maintenance.commit-graph.schedule daily &&

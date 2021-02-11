@@ -145,6 +145,12 @@ incremental-repack::
 	which is a special case that attempts to repack all pack-files
 	into a single pack-file.
 
+pack-refs::
+	The `pack-refs` task collects the loose reference files and
+	collects them into a single file. This speeds up operations that
+	need to iterate across many references. See linkgit:git-pack-refs[1]
+	for more information.
+
 OPTIONS
 -------
 --auto::
