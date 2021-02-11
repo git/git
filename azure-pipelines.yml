@@ -1,0 +1,393 @@
+variables:
+  Agent.Source.Git.ShallowFetchDepth: 1
+  GIT_CONFIG_PARAMETERS: "'checkout.workers=56' 'user.name=CI' 'user.email=ci@git'"
+
+jobs:
+- job: windows_build
+  displayName: Windows Build
+  condition: succeeded()
+  pool:
+    vmImage: windows-latest
+  timeoutInMinutes: 240
+  steps:
+  - bash: git clone --bare --depth=1 --filter=blob:none --single-branch -b main https://github.com/git-for-windows/git-sdk-64
+    displayName: 'clone git-sdk-64'
+  - bash: git clone --depth=1 --single-branch -b main https://github.com/git-for-windows/build-extra
+    displayName: 'clone build-extra'
+  - bash: sh -x ./build-extra/please.sh create-sdk-artifact --sdk=git-sdk-64.git --out=git-sdk-64-minimal minimal-sdk
+    displayName: 'build git-sdk-64-minimal-sdk'
+  - bash: |
+      # Let Git ignore the SDK and the test-cache
+      printf "%s\n" /git-sdk-64.git/ /build-extra/ /git-sdk-64-minimal/ /test-cache/ >>'.git/info/exclude'
+    displayName: 'Ignore untracked directories'
+  - bash: ci/make-test-artifacts.sh artifacts
+    displayName: Build
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      DEVELOPER: 1
+      NO_PERL: 1
+      PATH: "$(Build.SourcesDirectory)\\git-sdk-64-minimal\\mingw64\\bin;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
+  - task: PublishPipelineArtifact@0
+    displayName: 'Publish Pipeline Artifact: test artifacts'
+    inputs:
+      artifactName: 'windows-artifacts'
+      targetPath: '$(Build.SourcesDirectory)\artifacts'
+  - task: PublishPipelineArtifact@0
+    displayName: 'Publish Pipeline Artifact: git-sdk-64-minimal'
+    inputs:
+      artifactName: 'git-sdk-64-minimal'
+      targetPath: '$(Build.SourcesDirectory)\git-sdk-64-minimal'
+
+- job: windows_test
+  displayName: Windows Test
+  dependsOn: windows_build
+  condition: succeeded()
+  pool:
+    vmImage: windows-latest
+  timeoutInMinutes: 240
+  strategy:
+    parallel: 10
+  steps:
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Pipeline Artifact: test artifacts'
+    inputs:
+      artifactName: 'windows-artifacts'
+      targetPath: '$(Build.SourcesDirectory)'
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Pipeline Artifact: git-sdk-64-minimal'
+    inputs:
+      artifactName: 'git-sdk-64-minimal'
+      targetPath: '$(Build.SourcesDirectory)\git-sdk-64-minimal'
+  - bash: |
+      test -f artifacts.tar.gz || {
+        echo No test artifacts found\; skipping >&2
+        exit 0
+      }
+      tar xf artifacts.tar.gz || exit 1
+
+      # Let Git ignore the SDK and the test-cache
+      printf '%s\n' /git-sdk-64.git/ /build-extra/ /git-sdk-64-minimal/ /test-cache/ >>.git/info/exclude
+
+      ci/run-test-slice.sh $SYSTEM_JOBPOSITIONINPHASE $SYSTEM_TOTALJOBSINPHASE || {
+        ci/print-test-failures.sh
+        exit 1
+      }
+    displayName: 'Test (parallel)'
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      NO_SVN_TESTS: 1
+      GIT_TEST_SKIP_REBASE_P: 1
+      PATH: "$(Build.SourcesDirectory)\\git-sdk-64-minimal\\mingw64\\bin;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin\\core_perl;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'windows'
+      platform: Windows
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish trash directories of failed tests'
+    condition: failed()
+    inputs:
+      PathtoPublish: t/failed-test-artifacts
+      ArtifactName: failed-test-artifacts
+
+- job: vs_build
+  displayName: Visual Studio Build
+  condition: succeeded()
+  pool:
+    vmImage: windows-latest
+  timeoutInMinutes: 240
+  steps:
+  - bash: git clone --bare --depth=1 --filter=blob:none --single-branch -b main https://github.com/git-for-windows/git-sdk-64
+    displayName: 'clone git-sdk-64'
+  - bash: git clone --depth=1 --single-branch -b main https://github.com/git-for-windows/build-extra
+    displayName: 'clone build-extra'
+  - bash: sh -x ./build-extra/please.sh create-sdk-artifact --sdk=git-sdk-64.git --out=git-sdk-64-minimal minimal-sdk
+    displayName: 'build git-sdk-64-minimal-sdk'
+  - bash: |
+      # Let Git ignore the SDK and the test-cache
+      printf "%s\n" /git-sdk-64-minimal/ /test-cache/ >>'.git/info/exclude'
+    displayName: 'Ignore untracked directories'
+  - bash: make NDEBUG=1 DEVELOPER=1 vcxproj
+    displayName: Generate Visual Studio Solution
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      DEVELOPER: 1
+      NO_PERL: 1
+      PATH: "$(Build.SourcesDirectory)\\git-sdk-64-minimal\\mingw64\\bin;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
+  - powershell: |
+      $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
+      $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
+      $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
+      (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
+      Expand-Archive compat.zip -DestinationPath . -Force
+      Remove-Item compat.zip
+    displayName: 'Download vcpkg artifacts'
+  - task: MSBuild@1
+    inputs:
+      solution: git.sln
+      platform: x64
+      configuration: Release
+      maximumCpuCount: 4
+      msbuildArguments: /p:PlatformToolset=v142
+  - bash: |
+      ./compat/vcbuild/vcpkg_copy_dlls.bat release &&
+      mkdir -p artifacts &&
+      eval "$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts | grep ^tar)"
+    displayName: Bundle artifact tar
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      DEVELOPER: 1
+      NO_PERL: 1
+      MSVC: 1
+      VCPKG_ROOT: $(Build.SourcesDirectory)\compat\vcbuild\vcpkg
+      PATH: "$(Build.SourcesDirectory)\\git-sdk-64-minimal\\mingw64\\bin;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
+  - powershell: |
+      $tag = (Invoke-WebRequest -UseBasicParsing "https://gitforwindows.org/latest-tag.txt").content
+      $version = (Invoke-WebRequest -UseBasicParsing "https://gitforwindows.org/latest-version.txt").content
+      $url = "https://github.com/git-for-windows/git/releases/download/${tag}/PortableGit-${version}-64-bit.7z.exe"
+      (New-Object Net.WebClient).DownloadFile($url,"PortableGit.exe")
+      & .\PortableGit.exe -y -oartifacts\PortableGit
+      # Wait until it is unpacked
+      while (-not @(Remove-Item -ErrorAction SilentlyContinue PortableGit.exe; $?)) { sleep 1 }
+    displayName: Download & extract portable Git
+  - task: PublishPipelineArtifact@0
+    displayName: 'Publish Pipeline Artifact: MSVC test artifacts'
+    inputs:
+      artifactName: 'vs-artifacts'
+      targetPath: '$(Build.SourcesDirectory)\artifacts'
+
+- job: vs_test
+  displayName: Visual Studio Test
+  dependsOn: vs_build
+  condition: succeeded()
+  pool:
+    vmImage: windows-latest
+  timeoutInMinutes: 240
+  strategy:
+    parallel: 10
+  steps:
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Pipeline Artifact: VS test artifacts'
+    inputs:
+      artifactName: 'vs-artifacts'
+      targetPath: '$(Build.SourcesDirectory)'
+  - bash: |
+      test -f artifacts.tar.gz || {
+        echo No test artifacts found\; skipping >&2
+        exit 0
+      }
+      tar xf artifacts.tar.gz || exit 1
+
+      # Let Git ignore the SDK and the test-cache
+      printf '%s\n' /PortableGit/ /test-cache/ >>.git/info/exclude
+
+      cd t &&
+      PATH="$PWD/helper:$PATH" &&
+      test-tool.exe run-command testsuite --jobs=10 -V -x --write-junit-xml \
+              $(test-tool.exe path-utils slice-tests \
+                      $SYSTEM_JOBPOSITIONINPHASE $SYSTEM_TOTALJOBSINPHASE t[0-9]*.sh)
+    displayName: 'Test (parallel)'
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      NO_SVN_TESTS: 1
+      GIT_TEST_SKIP_REBASE_P: 1
+      PATH: "$(Build.SourcesDirectory)\\PortableGit\\mingw64\\bin;$(Build.SourcesDirectory)\\PortableGit\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'vs'
+      platform: Windows
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish trash directories of failed tests'
+    condition: failed()
+    inputs:
+      PathtoPublish: t/failed-test-artifacts
+      ArtifactName: failed-vs-test-artifacts
+
+- job: linux_clang
+  displayName: linux-clang
+  condition: succeeded()
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - bash: |
+       export CC=clang || exit 1
+
+       ci/install-dependencies.sh || exit 1
+       ci/run-build-and-tests.sh || {
+           ci/print-test-failures.sh
+           exit 1
+       }
+    displayName: 'ci/run-build-and-tests.sh'
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'linux-clang'
+      platform: Linux
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish trash directories of failed tests'
+    condition: failed()
+    inputs:
+      PathtoPublish: t/failed-test-artifacts
+      ArtifactName: failed-test-artifacts
+
+- job: linux_gcc
+  displayName: linux-gcc
+  condition: succeeded()
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - bash: |
+       ci/install-dependencies.sh || exit 1
+       ci/run-build-and-tests.sh || {
+           ci/print-test-failures.sh
+           exit 1
+       }
+    displayName: 'ci/run-build-and-tests.sh'
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'linux-gcc'
+      platform: Linux
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish trash directories of failed tests'
+    condition: failed()
+    inputs:
+      PathtoPublish: t/failed-test-artifacts
+      ArtifactName: failed-test-artifacts
+
+- job: osx_clang
+  displayName: osx-clang
+  condition: succeeded()
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - bash: |
+       export CC=clang
+
+       ci/install-dependencies.sh || exit 1
+       ci/run-build-and-tests.sh || {
+           ci/print-test-failures.sh
+           exit 1
+       }
+    displayName: 'ci/run-build-and-tests.sh'
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'osx-clang'
+      platform: macOS
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish trash directories of failed tests'
+    condition: failed()
+    inputs:
+      PathtoPublish: t/failed-test-artifacts
+      ArtifactName: failed-test-artifacts
+
+- job: osx_gcc
+  displayName: osx-gcc
+  condition: succeeded()
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - bash: |
+       ci/install-dependencies.sh || exit 1
+       ci/run-build-and-tests.sh || {
+           ci/print-test-failures.sh
+           exit 1
+       }
+    displayName: 'ci/run-build-and-tests.sh'
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'osx-gcc'
+      platform: macOS
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish trash directories of failed tests'
+    condition: failed()
+    inputs:
+      PathtoPublish: t/failed-test-artifacts
+      ArtifactName: failed-test-artifacts
+
+- job: linux32
+  displayName: Linux32
+  condition: succeeded()
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - bash: |
+       res=0
+       sudo AGENT_OS="$AGENT_OS" BUILD_BUILDNUMBER="$BUILD_BUILDNUMBER" BUILD_REPOSITORY_URI="$BUILD_REPOSITORY_URI" BUILD_SOURCEBRANCH="$BUILD_SOURCEBRANCH" BUILD_SOURCEVERSION="$BUILD_SOURCEVERSION" SYSTEM_PHASENAME="$SYSTEM_PHASENAME" SYSTEM_TASKDEFINITIONSURI="$SYSTEM_TASKDEFINITIONSURI" SYSTEM_TEAMPROJECT="$SYSTEM_TEAMPROJECT" CC=$CC MAKEFLAGS="$MAKEFLAGS" jobname=linux32 bash -lxc ci/run-docker.sh || res=1
+
+       sudo chmod a+r t/out/TEST-*.xml
+       test ! -d t/failed-test-artifacts || sudo chmod a+r t/failed-test-artifacts
+
+       exit $res
+    displayName: 'jobname=linux32 ci/run-docker.sh'
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'linux32'
+      platform: Linux
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish trash directories of failed tests'
+    condition: failed()
+    inputs:
+      PathtoPublish: t/failed-test-artifacts
+      ArtifactName: failed-test-artifacts
+
+- job: static_analysis
+  displayName: StaticAnalysis
+  condition: succeeded()
+  pool:
+    vmImage: ubuntu-22.04
+  steps:
+  - bash: |
+       sudo apt-get update &&
+       sudo apt-get install -y coccinelle libcurl4-openssl-dev libssl-dev libexpat-dev gettext &&
+
+       export jobname=StaticAnalysis &&
+
+       ci/run-static-analysis.sh || exit 1
+    displayName: 'ci/run-static-analysis.sh'
+
+- job: documentation
+  displayName: Documentation
+  condition: succeeded()
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - bash: |
+       sudo apt-get update &&
+       sudo apt-get install -y asciidoc xmlto asciidoctor docbook-xsl-ns &&
+
+       export ALREADY_HAVE_ASCIIDOCTOR=yes. &&
+       export jobname=Documentation &&
+
+       ci/test-documentation.sh || exit 1
+    displayName: 'ci/test-documentation.sh'
