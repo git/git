@@ -205,16 +205,24 @@ static int commit_graph_compatible(struct repository *r)
 
 	if (read_replace_refs) {
 		prepare_replace_object(r);
-		if (hashmap_get_size(&r->objects->replace_map->map))
+		if (hashmap_get_size(&r->objects->replace_map->map)) {
+			warning(_("repository contains replace objects; "
+			       "skipping commit-graph"));
 			return 0;
+		}
 	}
 
 	prepare_commit_graft(r);
 	if (r->parsed_objects &&
-	    (r->parsed_objects->grafts_nr || r->parsed_objects->substituted_parent))
+	    (r->parsed_objects->grafts_nr || r->parsed_objects->substituted_parent)) {
+		warning(_("repository contains (deprecated) grafts; "
+		       "skipping commit-graph"));
 		return 0;
-	if (is_repository_shallow(r))
+	}
+	if (is_repository_shallow(r)) {
+		warning(_("repository is shallow; skipping commit-graph"));
 		return 0;
+	}
 
 	return 1;
 }
