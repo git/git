@@ -889,4 +889,47 @@ test_expect_success 'empty syntax: setup' '
 	test_cmp expect actual
 '
 
+test_expect_success 'set up mailmap location tests' '
+	git init --bare loc-bare &&
+	git --git-dir=loc-bare --work-tree=. commit \
+		--allow-empty -m foo --author="Orig <orig@example.com>" &&
+	echo "New <new@example.com> <orig@example.com>" >loc-bare/.mailmap
+'
+
+test_expect_success 'bare repo with --work-tree finds mailmap at top-level' '
+	git -C loc-bare --work-tree=. log -1 --format=%aE >actual &&
+	echo new@example.com >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'bare repo does not look in current directory' '
+	git -C loc-bare log -1 --format=%aE >actual &&
+	echo orig@example.com >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'non-git shortlog respects mailmap in current dir' '
+	git --git-dir=loc-bare log -1 >input &&
+	nongit cp "$TRASH_DIRECTORY/loc-bare/.mailmap" . &&
+	nongit git shortlog -s <input >actual &&
+	echo "     1	New" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'shortlog on stdin respects mailmap from repo' '
+	cp loc-bare/.mailmap . &&
+	git shortlog -s <input >actual &&
+	echo "     1	New" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'find top-level mailmap from subdir' '
+	git clone loc-bare loc-wt &&
+	cp loc-bare/.mailmap loc-wt &&
+	mkdir loc-wt/subdir &&
+	git -C loc-wt/subdir log -1 --format=%aE >actual &&
+	echo new@example.com >expect &&
+	test_cmp expect actual
+'
+
 test_done
