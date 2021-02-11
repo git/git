@@ -145,7 +145,9 @@ test_expect_success 'checking the commit' '
 '
 
 test_expect_success 'do not move directory over existing directory' '
-	mkdir path0 && mkdir path0/path2 && test_must_fail git mv path2 path0
+	mkdir path0 &&
+	mkdir path0/path2 &&
+	test_must_fail git mv path2 path0
 '
 
 test_expect_success 'move into "."' '
