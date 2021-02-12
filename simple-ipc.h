@@ -5,7 +5,7 @@
  * See Documentation/technical/api-simple-ipc.txt
  */
 
-#if defined(GIT_WINDOWS_NATIVE)
+#if defined(GIT_WINDOWS_NATIVE) || !defined(NO_UNIX_SOCKETS)
 #define SUPPORTS_SIMPLE_IPC
 #endif
 
@@ -62,11 +62,17 @@ struct ipc_client_connect_options {
 	 * the service and need to wait for it to become ready.
 	 */
 	unsigned int wait_if_not_found:1;
+
+	/*
+	 * Disallow chdir() when creating a Unix domain socket.
+	 */
+	unsigned int uds_disallow_chdir:1;
 };
 
 #define IPC_CLIENT_CONNECT_OPTIONS_INIT { \
 	.wait_if_busy = 0, \
 	.wait_if_not_found = 0, \
+	.uds_disallow_chdir = 0, \
 }
 
 /*
@@ -159,6 +165,11 @@ struct ipc_server_data;
 struct ipc_server_opts
 {
 	int nr_threads;
+
+	/*
+	 * Disallow chdir() when creating a Unix domain socket.
+	 */
+	unsigned int uds_disallow_chdir:1;
 };
 
 /*
