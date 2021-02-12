@@ -2,9 +2,15 @@
 # Example implementation for the Git filter protocol version 2
 # See Documentation/gitattributes.txt, section "Filter Protocol"
 #
-# The first argument defines a debug log file that the script write to.
-# All remaining arguments define a list of supported protocol
-# capabilities ("clean", "smudge", etc).
+# Usage: rot13-filter.pl [--always-delay] <log path> <capabilities>
+#
+# Log path defines a debug log file that the script writes to. The
+# subsequent arguments define a list of supported protocol capabilities
+# ("clean", "smudge", etc).
+#
+# When --always-delay is given all pathnames with the "can-delay" flag
+# that don't appear on the list bellow are delayed with a count of 1
+# (see more below).
 #
 # This implementation supports special test cases:
 # (1) If data with the pathname "clean-write-fail.r" is processed with
@@ -53,6 +59,13 @@ use IO::File;
 use Git::Packet;
 
 my $MAX_PACKET_CONTENT_SIZE = 65516;
+
+my $always_delay = 0;
+if ( $ARGV[0] eq '--always-delay' ) {
+	$always_delay = 1;
+	shift @ARGV;
+}
+
 my $log_file                = shift @ARGV;
 my @capabilities            = @ARGV;
 
@@ -134,6 +147,8 @@ while (1) {
 			if ( $buffer eq "can-delay=1" ) {
 				if ( exists $DELAY{$pathname} and $DELAY{$pathname}{"requested"} == 0 ) {
 					$DELAY{$pathname}{"requested"} = 1;
+				} elsif ( !exists $DELAY{$pathname} and $always_delay ) {
+					$DELAY{$pathname} = { "requested" => 1, "count" => 1 };
 				}
 			} elsif ($buffer =~ /^(ref|treeish|blob)=/) {
 				print $debug " $buffer";
