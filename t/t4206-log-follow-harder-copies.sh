@@ -7,7 +7,7 @@ test_description='Test --follow should always find copies hard in git log.
 
 '
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 echo >path0 'Line 1
 Line 2

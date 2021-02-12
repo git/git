@@ -3,7 +3,7 @@
 test_description='difference in submodules'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 test_expect_success setup '
 	test_tick &&

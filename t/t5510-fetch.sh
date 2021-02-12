@@ -9,7 +9,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/test-bundle-functions.sh
+. "$TEST_DIRECTORY"/lib-bundle.sh
 
 D=$(pwd)
 
