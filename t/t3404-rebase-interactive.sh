@@ -101,7 +101,8 @@ test_expect_success 'rebase -i with the exec command' '
 	) &&
 	test_path_is_file touch-one &&
 	test_path_is_file touch-two &&
-	test_path_is_missing touch-three " (should have stopped before)" &&
+	# Missing because we should have stopped by now.
+	test_path_is_missing touch-three &&
 	test_cmp_rev C HEAD &&
 	git rebase --continue &&
 	test_path_is_file touch-three &&

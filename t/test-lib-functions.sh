@@ -717,12 +717,12 @@ test_external_without_stderr () {
 }
 
 # debugging-friendly alternatives to "test [-f|-d|-e]"
-# The commands test the existence or non-existence of $1. $2 can be
-# given to provide a more precise diagnosis.
+# The commands test the existence or non-existence of $1
 test_path_is_file () {
+	test "$#" -ne 1 && BUG "1 param"
 	if ! test -f "$1"
 	then
-		echo "File $1 doesn't exist. $2"
+		echo "File $1 doesn't exist"
 		false
 	fi
 }
@@ -730,15 +730,16 @@ test_path_is_file () {
 test_path_is_dir () {
 	if ! test -d "$1"
 	then
-		echo "Directory $1 doesn't exist. $2"
+		echo "Directory $1 doesn't exist"
 		false
 	fi
 }
 
 test_path_exists () {
+	test "$#" -ne 1 && BUG "1 param"
 	if ! test -e "$1"
 	then
-		echo "Path $1 doesn't exist. $2"
+		echo "Path $1 doesn't exist"
 		false
 	fi
 }

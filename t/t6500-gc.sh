@@ -78,7 +78,7 @@ test_expect_success 'gc --keep-largest-pack' '
 		git gc &&
 		( cd .git/objects/pack && ls *.pack ) >pack-list &&
 		test_line_count = 1 pack-list &&
-		BASE_PACK=.git/objects/pack/pack-*.pack &&
+		cp pack-list base-pack-list &&
 		test_commit four &&
 		git repack -d &&
 		test_commit five &&
@@ -90,7 +90,7 @@ test_expect_success 'gc --keep-largest-pack' '
 		test_line_count = 2 pack-list &&
 		awk "/^P /{print \$2}" <.git/objects/info/packs >pack-info &&
 		test_line_count = 2 pack-info &&
-		test_path_is_file $BASE_PACK &&
+		test_path_is_file .git/objects/pack/$(cat base-pack-list) &&
 		git fsck
 	)
 '
