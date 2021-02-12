@@ -963,6 +963,7 @@ int finish_command(struct child_process *cmd)
 {
 	int ret = wait_or_whine(cmd->pid, cmd->argv[0], 0);
 	child_process_clear(cmd);
+	invalidate_lstat_cache();
 	return ret;
 }
 
@@ -1249,13 +1250,19 @@ error:
 int finish_async(struct async *async)
 {
 #ifdef NO_PTHREADS
-	return wait_or_whine(async->pid, "child process", 0);
+	int ret = wait_or_whine(async->pid, "child process", 0);
+
+	invalidate_lstat_cache();
+
+	return ret;
 #else
 	void *ret = (void *)(intptr_t)(-1);
 
 	if (pthread_join(async->tid, &ret))
 		error("pthread_join failed");
+	invalidate_lstat_cache();
 	return (int)(intptr_t)ret;
+
 #endif
 }
 
