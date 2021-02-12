@@ -136,6 +136,9 @@ Performance, Internal Implementation, Development Support etc.
  * Get rid of "GETTEXT_POISON" support altogether, which may or may
    not be controversial.
 
+ * Introduce an on-disk file to record revindex for packdata, which
+   traditionally was always created on the fly and only in-core.
+
 
 Fixes since v2.30
 -----------------
@@ -187,6 +190,24 @@ Fixes since v2.30
    clean up the commit log message, but we did the usual stripspace
    processing.  This has been corrected.
    (merge f7d42ceec5 js/rebase-i-commit-cleanup-fix later to maint).
+
+ * Fix in passing custom args from "git clone" to "upload-pack" on the
+   other side.
+   (merge ad6b5fefbd jv/upload-pack-filter-spec-quotefix later to maint).
+
+ * The command line completion (in contrib/) completed "git branch -d"
+   with branch names, but "git branch -D" offered tagnames in addition,
+   which has been corrected.  "git branch -M" had the same problem.
+   (merge 27dc071b9a jk/complete-branch-force-delete later to maint).
+
+ * When commands are started from a subdirectory, they may have to
+   compare the path to the subdirectory (called prefix and found out
+   from $(pwd)) with the tracked paths.  On macOS, $(pwd) and
+   readdir() yield decomposed path, while the tracked paths are
+   usually normalized to the precomposed form, causing mismatch.  This
+   has been fixed by taking the same approach used to normalize the
+   command line arguments.
+   (merge 5c327502db tb/precompose-prefix-too later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e3f5da7e60 sg/t7800-difftool-robustify later to maint).
