@@ -551,8 +551,11 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 
 	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
 		;	/* nothing */
-	if (in_signal)
-		return 0;
+	if (in_signal) {
+		if (WIFEXITED(status))
+			code = WEXITSTATUS(status);
+		return code;
+	}
 
 	if (waiting < 0) {
 		failed_errno = errno;
