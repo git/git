@@ -243,7 +243,7 @@ test_expect_success 'refresh index before checking if it is up-to-date' '
 	test_path_is_missing frotz/nitfol
 '
 
-test_expect_success 'choking "git rm" should not let it die with cruft' '
+choke_git_rm_setup() {
 	git reset -q --hard &&
 	test_when_finished "rm -f .git/index.lock && git reset -q --hard" &&
 	i=0 &&
@@ -252,9 +252,21 @@ test_expect_success 'choking "git rm" should not let it die with cruft' '
 	do
 		echo "100644 $hash 0	some-file-$i"
 		i=$(( $i + 1 ))
-	done | git update-index --index-info &&
+	done | git update-index --index-info
+}
+
+test_expect_success 'choking "git rm" should not let it die with cruft (induce SIGPIPE)' '
+	choke_git_rm_setup &&
 	# git command is intentionally placed upstream of pipe to induce SIGPIPE
 	git rm -n "some-file-*" | : &&
+	test_path_is_missing .git/index.lock
+'
+
+
+test_expect_success !MINGW 'choking "git rm" should not let it die with cruft (induce and check SIGPIPE)' '
+	choke_git_rm_setup &&
+	OUT=$( ((trap "" PIPE; git rm -n "some-file-*"; echo $? 1>&3) | :) 3>&1 ) &&
+	test_match_signal 13 "$OUT" &&
 	test_path_is_missing .git/index.lock
 '
 
