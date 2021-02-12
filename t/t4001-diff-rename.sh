@@ -7,7 +7,7 @@ test_description='Test rename detection in diff engine.
 
 '
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 test_expect_success 'setup' '
 	cat >path0 <<-\EOF &&
