@@ -367,6 +367,8 @@ int mingw_rmdir(const char *pathname)
 	       ask_yes_no_if_possible("Deletion of directory '%s' failed. "
 			"Should I try again?", pathname))
 	       ret = _wrmdir(wpathname);
+	if (!ret)
+		invalidate_lstat_cache();
 	return ret;
 }
 
