@@ -894,7 +894,7 @@ is used.  In that case the suggested commit message is only the message
 of the "fixup -c" commit, and an editor is opened allowing you to edit
 the message.  The contents (patch) of the "fixup -c" commit are still
 incorporated into the folded commit. If there is more than one "fixup -c"
-commit, the message from the last last one is used.  You can also use
+commit, the message from the final one is used.  You can also use
 "fixup -C" to get the same behavior as "fixup -c" except without opening
 an editor.
 
