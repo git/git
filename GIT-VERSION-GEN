@@ -1,7 +1,7 @@
 #!/bin/sh
 
 GVF=GIT-VERSION-FILE
-DEF_VER=v2.26.2
+DEF_VER=v2.26.3
 
 LF='
 '
