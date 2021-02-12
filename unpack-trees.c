@@ -360,6 +360,9 @@ static int check_updates(struct unpack_trees_options *o)
 
 	progress = get_progress(o);
 
+	/* Start with clean cache to avoid using any possibly outdated info. */
+	invalidate_lstat_cache();
+
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT, index);
 
