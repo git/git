@@ -36,7 +36,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	 */
 	rev.diffopt.ita_invisible_in_index = 1;
 
-	precompose_argv(argc, argv);
+	prefix = precompose_argv_prefix(argc, argv, prefix);
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	while (1 < argc && argv[1][0] == '-') {

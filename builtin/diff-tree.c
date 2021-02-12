@@ -126,7 +126,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.tweak = diff_tree_tweak_rev;
 
-	precompose_argv(argc, argv);
+	prefix = precompose_argv_prefix(argc, argv, prefix);
 	argc = setup_revisions(argc, argv, opt, &s_r_opt);
 
 	memset(&w, 0, sizeof(w));

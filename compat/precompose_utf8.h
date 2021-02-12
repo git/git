@@ -28,7 +28,7 @@ typedef struct {
 	struct dirent_prec_psx *dirent_nfc;
 } PREC_DIR;
 
-void precompose_argv(int argc, const char **argv);
+const char *precompose_argv_prefix(int argc, const char **argv, const char *prefix);
 void probe_utf8_pathname_composition(void);
 
 PREC_DIR *precompose_utf8_opendir(const char *dirname);

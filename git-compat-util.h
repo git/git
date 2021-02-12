@@ -252,9 +252,9 @@ typedef unsigned long uintptr_t;
 #ifdef PRECOMPOSE_UNICODE
 #include "compat/precompose_utf8.h"
 #else
-static inline void precompose_argv(int argc, const char **argv)
+static inline const char *precompose_argv_prefix(int argc, const char **argv, const char *prefix)
 {
-	; /* nothing */
+	return prefix;
 }
 #define probe_utf8_pathname_composition()
 #endif
