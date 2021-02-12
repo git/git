@@ -185,9 +185,11 @@ static int pack_copy_priority(const char *name)
 		return 1;
 	if (ends_with(name, ".pack"))
 		return 2;
-	if (ends_with(name, ".idx"))
+	if (ends_with(name, ".rev"))
 		return 3;
-	return 4;
+	if (ends_with(name, ".idx"))
+		return 4;
+	return 5;
 }
 
 static int pack_copy_cmp(const char *a, const char *b)

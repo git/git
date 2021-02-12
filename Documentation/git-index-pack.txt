@@ -9,17 +9,18 @@ git-index-pack - Build pack index file for an existing packed archive
 SYNOPSIS
 --------
 [verse]
-'git index-pack' [-v] [-o <index-file>] <pack-file>
+'git index-pack' [-v] [-o <index-file>] [--[no-]rev-index] <pack-file>
 'git index-pack' --stdin [--fix-thin] [--keep] [-v] [-o <index-file>]
-                 [<pack-file>]
+		  [--[no-]rev-index] [<pack-file>]
 
 
 DESCRIPTION
 -----------
 Reads a packed archive (.pack) from the specified file, and
-builds a pack index file (.idx) for it.  The packed archive
-together with the pack index can then be placed in the
-objects/pack/ directory of a Git repository.
+builds a pack index file (.idx) for it. Optionally writes a
+reverse-index (.rev) for the specified pack. The packed
+archive together with the pack index can then be placed in
+the objects/pack/ directory of a Git repository.
 
 
 OPTIONS
@@ -34,6 +35,13 @@ OPTIONS
 	file by replacing .pack with .idx (and the program
 	fails if the name of packed archive does not end
 	with .pack).
+
+--[no-]rev-index::
+	When this flag is provided, generate a reverse index
+	(a `.rev` file) corresponding to the given pack. If
+	`--verify` is given, ensure that the existing
+	reverse index is correct. Takes precedence over
+	`pack.writeReverseIndex`.
 
 --stdin::
 	When this flag is provided, the pack is read from stdin

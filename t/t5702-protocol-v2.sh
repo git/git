@@ -851,8 +851,10 @@ test_expect_success 'part of packfile response provided as URI' '
 	test -f h2found &&
 
 	# Ensure that there are exactly 6 files (3 .pack and 3 .idx).
-	ls http_child/.git/objects/pack/* >filelist &&
-	test_line_count = 6 filelist
+	ls http_child/.git/objects/pack/*.pack >packlist &&
+	ls http_child/.git/objects/pack/*.idx >idxlist &&
+	test_line_count = 3 idxlist &&
+	test_line_count = 3 packlist
 '
 
 test_expect_success 'fetching with valid packfile URI but invalid hash fails' '
@@ -905,8 +907,10 @@ test_expect_success 'packfile-uri with transfer.fsckobjects' '
 		clone "$HTTPD_URL/smart/http_parent" http_child &&
 
 	# Ensure that there are exactly 4 files (2 .pack and 2 .idx).
-	ls http_child/.git/objects/pack/* >filelist &&
-	test_line_count = 4 filelist
+	ls http_child/.git/objects/pack/*.pack >packlist &&
+	ls http_child/.git/objects/pack/*.idx >idxlist &&
+	test_line_count = 2 idxlist &&
+	test_line_count = 2 packlist
 '
 
 test_expect_success 'packfile-uri with transfer.fsckobjects fails on bad object' '
