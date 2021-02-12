@@ -1,0 +1,7 @@
+Git v2.22.5 Release Notes
+=========================
+
+This release merges up the fixes that appear in v2.17.6,
+v2.18.5, v2.19.6, v2.20.5 and v2.21.4 to address the security
+issue CVE-2021-21300; see the release notes for these versions
+for details.

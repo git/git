@@ -417,6 +417,9 @@ static int check_updates(struct unpack_trees_options *o,
 
 	progress = get_progress(o, index);
 
+	/* Start with clean cache to avoid using any possibly outdated info. */
+	invalidate_lstat_cache();
+
 	git_attr_set_direction(GIT_ATTR_CHECKOUT);
 
 	if (should_update_submodules())
