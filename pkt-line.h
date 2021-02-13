@@ -75,10 +75,14 @@ int write_packetized_from_buf_no_flush(const char *src_in, size_t len, int fd_ou
  *
  * If options contains PACKET_READ_DIE_ON_ERR_PACKET, it dies when it sees an
  * ERR packet.
+ *
+ * With `PACKET_READ_NEVER_DIE`, no errors are allowed to trigger die() (except
+ * an ERR packet, when `PACKET_READ_DIE_ON_ERR_PACKET` is in effect).
  */
 #define PACKET_READ_GENTLE_ON_EOF     (1u<<0)
 #define PACKET_READ_CHOMP_NEWLINE     (1u<<1)
 #define PACKET_READ_DIE_ON_ERR_PACKET (1u<<2)
+#define PACKET_READ_NEVER_DIE         (1u<<3)
 int packet_read(int fd, char **src_buffer, size_t *src_len, char
 		*buffer, unsigned size, int options);
 
