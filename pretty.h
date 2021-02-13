@@ -151,6 +151,7 @@ int format_set_trailers_options(struct process_trailer_options *opts,
 			struct string_list *filter_list,
 			struct strbuf *sepbuf,
 			struct strbuf *kvsepbuf,
-			const char **arg);
+			const char **arg,
+			char **invalid_arg);
 
 #endif /* PRETTY_H */

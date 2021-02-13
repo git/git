@@ -1152,11 +1152,15 @@ int format_set_trailers_options(struct process_trailer_options *opts,
 				struct string_list *filter_list,
 				struct strbuf *sepbuf,
 				struct strbuf *kvsepbuf,
-				const char **arg)
+				const char **arg,
+				char **invalid_arg)
 {
 	for (;;) {
 		const char *argval;
 		size_t arglen;
+
+		if (**arg == ')')
+			break;
 
 		if (match_placeholder_arg_value(*arg, "key", arg, &argval, &arglen)) {
 			uintptr_t len = arglen;
@@ -1190,8 +1194,13 @@ int format_set_trailers_options(struct process_trailer_options *opts,
 		} else if (!match_placeholder_bool_arg(*arg, "only", arg, &opts->only_trailers) &&
 			   !match_placeholder_bool_arg(*arg, "unfold", arg, &opts->unfold) &&
 			   !match_placeholder_bool_arg(*arg, "keyonly", arg, &opts->key_only) &&
-			   !match_placeholder_bool_arg(*arg, "valueonly", arg, &opts->value_only))
-			break;
+			   !match_placeholder_bool_arg(*arg, "valueonly", arg, &opts->value_only)) {
+			if (invalid_arg) {
+				size_t len = strcspn(*arg, ",)");
+				*invalid_arg = xstrndup(*arg, len);
+			}
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -1473,7 +1482,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 
 		if (*arg == ':') {
 			arg++;
-			if (format_set_trailers_options(&opts, &filter_list, &sepbuf, &kvsepbuf, &arg))
+			if (format_set_trailers_options(&opts, &filter_list, &sepbuf, &kvsepbuf, &arg, NULL))
 				goto trailer_out;
 		}
 		if (*arg == ')') {
