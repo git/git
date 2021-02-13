@@ -814,53 +814,57 @@ test_expect_success 'set up trailers for next test' '
 	EOF
 '
 
-test_expect_success '%(trailers:unfold) unfolds trailers' '
-	{
-		unfold <trailers
-		echo
-	} >expect &&
-	git for-each-ref --format="%(trailers:unfold)" refs/heads/main >actual &&
-	test_cmp expect actual &&
-	git for-each-ref --format="%(contents:trailers:unfold)" refs/heads/main >actual &&
-	test_cmp expect actual
-'
+test_trailer_option () {
+	title=$1 option=$2
+	cat >expect
+	test_expect_success "$title" '
+		git for-each-ref --format="%($option)" refs/heads/main >actual &&
+		test_cmp expect actual &&
+		git for-each-ref --format="%(contents:$option)" refs/heads/main >actual &&
+		test_cmp expect actual
+	'
+}
 
-test_expect_success '%(trailers:only) shows only "key: value" trailers' '
-	{
-		grep -v patch.description <trailers &&
-		echo
-	} >expect &&
-	git for-each-ref --format="%(trailers:only)" refs/heads/main >actual &&
-	test_cmp expect actual &&
-	git for-each-ref --format="%(contents:trailers:only)" refs/heads/main >actual &&
-	test_cmp expect actual
-'
+test_trailer_option '%(trailers:unfold) unfolds trailers' \
+	'trailers:unfold' <<-EOF
+	$(unfold <trailers)
 
-test_expect_success '%(trailers:only) and %(trailers:unfold) work together' '
-	{
-		grep -v patch.description <trailers | unfold &&
-		echo
-	} >expect &&
-	git for-each-ref --format="%(trailers:only,unfold)" refs/heads/main >actual &&
-	test_cmp expect actual &&
-	git for-each-ref --format="%(trailers:unfold,only)" refs/heads/main >actual &&
-	test_cmp actual actual &&
-	git for-each-ref --format="%(contents:trailers:only,unfold)" refs/heads/main >actual &&
-	test_cmp expect actual &&
-	git for-each-ref --format="%(contents:trailers:unfold,only)" refs/heads/main >actual &&
-	test_cmp actual actual
-'
+	EOF
 
-test_expect_success '%(trailers) rejects unknown trailers arguments' '
-	# error message cannot be checked under i18n
-	cat >expect <<-EOF &&
+test_trailer_option '%(trailers:only) shows only "key: value" trailers' \
+	'trailers:only' <<-EOF
+	$(grep -v patch.description <trailers)
+
+	EOF
+
+test_trailer_option '%(trailers:only) and %(trailers:unfold) work together' \
+	'trailers:only,unfold' <<-EOF
+	$(grep -v patch.description <trailers | unfold)
+
+	EOF
+
+test_trailer_option '%(trailers:unfold) and %(trailers:only) work together' \
+	'trailers:unfold,only' <<-EOF
+	$(grep -v patch.description <trailers | unfold)
+
+	EOF
+
+test_failing_trailer_option () {
+	title=$1 option=$2
+	cat >expect
+	test_expect_success "$title" '
+		# error message cannot be checked under i18n
+		test_must_fail git for-each-ref --format="%($option)" refs/heads/main 2>actual &&
+		test_i18ncmp expect actual &&
+		test_must_fail git for-each-ref --format="%(contents:$option)" refs/heads/main 2>actual &&
+		test_i18ncmp expect actual
+	'
+}
+
+test_failing_trailer_option '%(trailers) rejects unknown trailers arguments' \
+	'trailers:unsupported' <<-\EOF
 	fatal: unknown %(trailers) argument: unsupported
 	EOF
-	test_must_fail git for-each-ref --format="%(trailers:unsupported)" 2>actual &&
-	test_i18ncmp expect actual &&
-	test_must_fail git for-each-ref --format="%(contents:trailers:unsupported)" 2>actual &&
-	test_i18ncmp expect actual
-'
 
 test_expect_success 'if arguments, %(contents:trailers) shows error if colon is missing' '
 	cat >expect <<-EOF &&
