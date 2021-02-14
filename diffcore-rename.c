@@ -367,6 +367,69 @@ static int find_exact_renames(struct diff_options *options)
 	return renames;
 }
 
+static const char *get_basename(const char *filename)
+{
+	/*
+	 * gitbasename() has to worry about special drives, multiple
+	 * directory separator characters, trailing slashes, NULL or
+	 * empty strings, etc.  We only work on filenames as stored in
+	 * git, and thus get to ignore all those complications.
+	 */
+	const char *base = strrchr(filename, '/');
+	return base ? base + 1 : filename;
+}
+
+MAYBE_UNUSED
+static int find_basename_matches(struct diff_options *options,
+				 int minimum_score)
+{
+	int i;
+	struct strintmap sources;
+	struct strintmap dests;
+
+	/*
+	 * Create maps of basename -> fullname(s) for remaining sources and
+	 * dests.
+	 */
+	strintmap_init_with_options(&sources, -1, NULL, 0);
+	strintmap_init_with_options(&dests, -1, NULL, 0);
+	for (i = 0; i < rename_src_nr; ++i) {
+		char *filename = rename_src[i].p->one->path;
+		const char *base;
+
+		/* exact renames removed in remove_unneeded_paths_from_src() */
+		assert(!rename_src[i].p->one->rename_used);
+
+		/* Record index within rename_src (i) if basename is unique */
+		base = get_basename(filename);
+		if (strintmap_contains(&sources, base))
+			strintmap_set(&sources, base, -1);
+		else
+			strintmap_set(&sources, base, i);
+	}
+	for (i = 0; i < rename_dst_nr; ++i) {
+		char *filename = rename_dst[i].p->two->path;
+		const char *base;
+
+		if (rename_dst[i].is_rename)
+			continue; /* involved in exact match already. */
+
+		/* Record index within rename_dst (i) if basename is unique */
+		base = get_basename(filename);
+		if (strintmap_contains(&dests, base))
+			strintmap_set(&dests, base, -1);
+		else
+			strintmap_set(&dests, base, i);
+	}
+
+	/* TODO: Make use of basenames source and destination basenames */
+
+	strintmap_clear(&sources);
+	strintmap_clear(&dests);
+
+	return 0;
+}
+
 #define NUM_CANDIDATE_PER_DST 4
 static void record_if_better(struct diff_score m[], struct diff_score *o)
 {
