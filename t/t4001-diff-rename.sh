@@ -277,10 +277,11 @@ test_expect_success 'basename similarity vs best similarity' '
 	git add file.txt file.md &&
 	git commit -a -m "rename" &&
 	git diff-tree -r -M --name-status HEAD^ HEAD >actual &&
-	# subdir/file.txt is 88% similar to file.md and 78% similar to file.txt
+	# subdir/file.txt is 88% similar to file.md, 78% similar to file.txt,
+	# but since same basenames are checked first...
 	cat >expected <<-\EOF &&
-	R088	subdir/file.txt	file.md
-	A	file.txt
+	A	file.md
+	R078	subdir/file.txt	file.txt
 	EOF
 	test_cmp expected actual
 '
