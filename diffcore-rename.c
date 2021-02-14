@@ -454,6 +454,54 @@ static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, i
 	return count;
 }
 
+static void remove_unneeded_paths_from_src(int detecting_copies)
+{
+	int i, new_num_src;
+
+	if (detecting_copies)
+		return; /* nothing to remove */
+	if (break_idx)
+		return; /* culling incompatible with break detection */
+
+	/*
+	 * Note on reasons why we cull unneeded sources but not destinations:
+	 *   1) Pairings are stored in rename_dst (not rename_src), which we
+	 *      need to keep around.  So, we just can't cull rename_dst even
+	 *      if we wanted to.  But doing so wouldn't help because...
+	 *
+	 *   2) There is a matrix pairwise comparison that follows the
+	 *      "Performing inexact rename detection" progress message.
+	 *      Iterating over the destinations is done in the outer loop,
+	 *      hence we only iterate over each of those once and we can
+	 *      easily skip the outer loop early if the destination isn't
+	 *      relevant.  That's only one check per destination path to
+	 *      skip.
+	 *
+	 *      By contrast, the sources are iterated in the inner loop; if
+	 *      we check whether a source can be skipped, then we'll be
+	 *      checking it N separate times, once for each destination.
+	 *      We don't want to have to iterate over known-not-needed
+	 *      sources N times each, so avoid that by removing the sources
+	 *      from rename_src here.
+	 */
+	for (i = 0, new_num_src = 0; i < rename_src_nr; i++) {
+		/*
+		 * renames are stored in rename_dst, so if a rename has
+		 * already been detected using this source, we can just
+		 * remove the source knowing rename_dst has its info.
+		 */
+		if (rename_src[i].p->one->rename_used)
+			continue;
+
+		if (new_num_src < i)
+			memcpy(&rename_src[new_num_src], &rename_src[i],
+			       sizeof(struct diff_rename_src));
+		new_num_src++;
+	}
+
+	rename_src_nr = new_num_src;
+}
+
 void diffcore_rename(struct diff_options *options)
 {
 	int detect_rename = options->detect_rename;
@@ -529,14 +577,10 @@ void diffcore_rename(struct diff_options *options)
 	if (minimum_score == MAX_SCORE)
 		goto cleanup;
 
-	/*
-	 * Calculate how many renames are left (but all the source
-	 * files still remain as options for rename/copies!)
-	 */
+	/* Calculate how many renames are left */
 	num_destinations = (rename_dst_nr - rename_count);
+	remove_unneeded_paths_from_src(want_copies);
 	num_sources = rename_src_nr;
-	if (!want_copies)
-		num_sources -= rename_count;
 
 	/* All done? */
 	if (!num_destinations || !num_sources)
@@ -578,8 +622,7 @@ void diffcore_rename(struct diff_options *options)
 			struct diff_filespec *one = rename_src[j].p->one;
 			struct diff_score this_src;
 
-			if (one->rename_used && !want_copies)
-				continue;
+			assert(!one->rename_used || want_copies || break_idx);
 
 			if (skip_unmodified &&
 			    diff_unmodified_pair(rename_src[j].p))
