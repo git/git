@@ -383,9 +383,53 @@ MAYBE_UNUSED
 static int find_basename_matches(struct diff_options *options,
 				 int minimum_score)
 {
-	int i;
+	/*
+	 * When I checked in early 2020, over 76% of file renames in linux
+	 * just moved files to a different directory but kept the same
+	 * basename.  gcc did that with over 64% of renames, gecko did it
+	 * with over 79%, and WebKit did it with over 89%.
+	 *
+	 * Therefore we can bypass the normal exhaustive NxM matrix
+	 * comparison of similarities between all potential rename sources
+	 * and destinations by instead using file basename as a hint (i.e.
+	 * the portion of the filename after the last '/'), checking for
+	 * similarity between files with the same basename, and if we find
+	 * a pair that are sufficiently similar, record the rename pair and
+	 * exclude those two from the NxM matrix.
+	 *
+	 * This *might* cause us to find a less than optimal pairing (if
+	 * there is another file that we are even more similar to but has a
+	 * different basename).  Given the huge performance advantage
+	 * basename matching provides, and given the frequency with which
+	 * people use the same basename in real world projects, that's a
+	 * trade-off we are willing to accept when doing just rename
+	 * detection.
+	 *
+	 * If someone wants copy detection that implies they are willing to
+	 * spend more cycles to find similarities between files, so it may
+	 * be less likely that this heuristic is wanted.  If someone is
+	 * doing break detection, that means they do not want filename
+	 * similarity to imply any form of content similiarity, and thus
+	 * this heuristic would definitely be incompatible.
+	 */
+
+	int i, renames = 0;
 	struct strintmap sources;
 	struct strintmap dests;
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	/*
+	 * The prefeteching stuff wants to know if it can skip prefetching
+	 * blobs that are unmodified...and will then do a little extra work
+	 * to verify that the oids are indeed different before prefetching.
+	 * Unmodified blobs are only relevant when doing copy detection;
+	 * when limiting to rename detection, diffcore_rename[_extended]()
+	 * will never be called with unmodified source paths fed to us, so
+	 * the extra work necessary to check if rename_src entries are
+	 * unmodified would be a small waste.
+	 */
+	int skip_unmodified = 0;
 
 	/*
 	 * Create maps of basename -> fullname(s) for remaining sources and
@@ -422,12 +466,44 @@ static int find_basename_matches(struct diff_options *options,
 			strintmap_set(&dests, base, i);
 	}
 
-	/* TODO: Make use of basenames source and destination basenames */
+	/* Now look for basename matchups and do similarity estimation */
+	strintmap_for_each_entry(&sources, &iter, entry) {
+		const char *base = entry->key;
+		intptr_t src_index = (intptr_t)entry->value;
+		intptr_t dst_index;
+		if (src_index == -1)
+			continue;
+
+		if (0 <= (dst_index = strintmap_get(&dests, base))) {
+			struct diff_filespec *one, *two;
+			int score;
+
+			/* Estimate the similarity */
+			one = rename_src[src_index].p->one;
+			two = rename_dst[dst_index].p->two;
+			score = estimate_similarity(options->repo, one, two,
+						    minimum_score, skip_unmodified);
+
+			/* If sufficiently similar, record as rename pair */
+			if (score < minimum_score)
+				continue;
+			record_rename_pair(dst_index, src_index, score);
+			renames++;
+
+			/*
+			 * Found a rename so don't need text anymore; if we
+			 * didn't find a rename, the filespec_blob would get
+			 * re-used when doing the matrix of comparisons.
+			 */
+			diff_free_filespec_blob(one);
+			diff_free_filespec_blob(two);
+		}
+	}
 
 	strintmap_clear(&sources);
 	strintmap_clear(&dests);
 
-	return 0;
+	return renames;
 }
 
 #define NUM_CANDIDATE_PER_DST 4
