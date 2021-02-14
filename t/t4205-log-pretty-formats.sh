@@ -972,4 +972,20 @@ test_expect_success '%(describe) vs git describe' '
 	test_must_be_empty err
 '
 
+test_expect_success '%(describe:match=...) vs git describe --match ...' '
+	test_when_finished "git tag -d tag-match" &&
+	git tag -a -m tagged tag-match&&
+	git describe --match "*-match" >expect &&
+	git log -1 --format="%(describe:match=*-match)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(describe:exclude=...) vs git describe --exclude ...' '
+	test_when_finished "git tag -d tag-exclude" &&
+	git tag -a -m tagged tag-exclude &&
+	git describe --exclude "*-exclude" >expect &&
+	git log -1 --format="%(describe:exclude=*-exclude)" >actual &&
+	test_cmp expect actual
+'
+
 test_done
