@@ -962,4 +962,14 @@ test_expect_success 'log --pretty=reference is colored appropriately' '
 	test_cmp expect actual
 '
 
+test_expect_success '%(describe) vs git describe' '
+	git log --format="%H" | while read hash
+	do
+		echo "$hash $(git describe $hash)"
+	done >expect &&
+	git log --format="%H %(describe)" >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
 test_done
