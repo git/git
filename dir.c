@@ -1035,6 +1035,9 @@ static int add_patterns_from_buffer(char *buf, size_t size,
 				    const char *base, int baselen,
 				    struct pattern_list *pl);
 
+/* Flags for add_patterns() */
+#define PATTERN_NOFOLLOW (1<<0)
+
 /*
  * Given a file with name "fname", read it (either from disk, or from
  * an index if 'istate' is non-null), parse it and store the
@@ -1054,7 +1057,11 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	size_t size = 0;
 	char *buf;
 
-	fd = open(fname, O_RDONLY);
+	if (flags & PATTERN_NOFOLLOW)
+		fd = open_nofollow(fname, O_RDONLY);
+	else
+		fd = open(fname, O_RDONLY);
+
 	if (fd < 0 || fstat(fd, &st) < 0) {
 		if (fd < 0)
 			warn_on_fopen_errors(fname);
@@ -1558,7 +1565,8 @@ static void prep_exclude(struct dir_struct *dir,
 			strbuf_addbuf(&sb, &dir->basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
 			pl->src = strbuf_detach(&sb, NULL);
-			add_patterns(pl->src, pl->src, stk->baselen, pl, istate, 0,
+			add_patterns(pl->src, pl->src, stk->baselen, pl, istate,
+				     PATTERN_NOFOLLOW,
 				     untracked ? &oid_stat : NULL);
 		}
 		/*
