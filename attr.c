@@ -280,6 +280,7 @@ static const char blank[] = " \t\r\n";
 
 /* Flags usable in read_attr() and parse_attr_line() family of functions. */
 #define READ_ATTR_MACRO_OK (1<<0)
+#define READ_ATTR_NOFOLLOW (1<<1)
 
 /*
  * Parse a whitespace-delimited attribute state (i.e., "attr",
@@ -704,13 +705,23 @@ void git_attr_set_direction(enum git_attr_direction new_direction)
 
 static struct attr_stack *read_attr_from_file(const char *path, unsigned flags)
 {
-	FILE *fp = fopen_or_warn(path, "r");
+	int fd;
+	FILE *fp;
 	struct attr_stack *res;
 	char buf[2048];
 	int lineno = 0;
 
-	if (!fp)
+	if (flags & READ_ATTR_NOFOLLOW)
+		fd = open_nofollow(path, O_RDONLY);
+	else
+		fd = open(path, O_RDONLY);
+
+	if (fd < 0) {
+		warn_on_fopen_errors(path);
 		return NULL;
+	}
+	fp = xfdopen(fd, "r");
+
 	res = xcalloc(1, sizeof(*res));
 	while (fgets(buf, sizeof(buf), fp)) {
 		char *bufp = buf;
@@ -870,7 +881,7 @@ static void bootstrap_attr_stack(const struct index_state *istate,
 	}
 
 	/* root directory */
-	e = read_attr(istate, GITATTRIBUTES_FILE, flags);
+	e = read_attr(istate, GITATTRIBUTES_FILE, flags | READ_ATTR_NOFOLLOW);
 	push_stack(stack, e, xstrdup(""), 0);
 
 	/* info frame */
@@ -961,7 +972,7 @@ static void prepare_attr_stack(const struct index_state *istate,
 		strbuf_add(&pathbuf, path + pathbuf.len, (len - pathbuf.len));
 		strbuf_addf(&pathbuf, "/%s", GITATTRIBUTES_FILE);
 
-		next = read_attr(istate, pathbuf.buf, 0);
+		next = read_attr(istate, pathbuf.buf, READ_ATTR_NOFOLLOW);
 
 		/* reset the pathbuf to not include "/.gitattributes" */
 		strbuf_setlen(&pathbuf, len);
