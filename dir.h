@@ -420,7 +420,8 @@ int hashmap_contains_parent(struct hashmap *map,
 struct pattern_list *add_pattern_list(struct dir_struct *dir,
 				      int group_type, const char *src);
 int add_patterns_from_file_to_list(const char *fname, const char *base, int baselen,
-				   struct pattern_list *pl, struct  index_state *istate);
+				   struct pattern_list *pl, struct index_state *istate,
+				   unsigned flags);
 void add_patterns_from_file(struct dir_struct *, const char *fname);
 int add_patterns_from_blob_to_list(struct object_id *oid,
 				   const char *base, int baselen,
