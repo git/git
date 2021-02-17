@@ -31,6 +31,58 @@ include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
 
+EXAMPLES
+--------
+
+* Print the list of commits reachable from the current branch.
++
+----------
+git rev-list HEAD
+----------
+
+* Print the list of commits on this branch, but not present in the
+  upstream branch.
++
+----------
+git rev-list @{upstream}..HEAD
+----------
+
+* Format commits with their author and commit message (see also the
+  porcelain linkgit:git-log[1]).
++
+----------
+git rev-list --format=medium HEAD
+----------
+
+* Format commits along with their diffs (see also the porcelain
+  linkgit:git-log[1], which can do this in a single process).
++
+----------
+git rev-list HEAD |
+git diff-tree --stdin --format=medium -p
+----------
+
+* Print the list of commits on the current branch that touched any
+  file in the `Documentation` directory.
++
+----------
+git rev-list HEAD -- Documentation/
+----------
+
+* Print the list of commits authored by you in the past year, on
+  any branch, tag, or other ref.
++
+----------
+git rev-list --author=you@example.com --since=1.year.ago --all
+----------
+
+* Print the list of objects reachable from the current branch (i.e., all
+  commits and the blobs and trees they contain).
++
+----------
+git rev-list --objects HEAD
+----------
+
 GIT
 ---
 Part of the linkgit:git[1] suite
