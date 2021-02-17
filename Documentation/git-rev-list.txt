@@ -83,6 +83,47 @@ git rev-list --author=you@example.com --since=1.year.ago --all
 git rev-list --objects HEAD
 ----------
 
+* Compare the disk size of all reachable objects, versus those
+  reachable from reflogs, versus the total packed size. This can tell
+  you whether running `git repack -ad` might reduce the repository size
+  (by dropping unreachable objects), and whether expiring reflogs might
+  help.
++
+----------
+# reachable objects
+git rev-list --disk-usage --objects --all
+# plus reflogs
+git rev-list --disk-usage --objects --all --reflog
+# total disk size used
+du -c .git/objects/pack/*.pack .git/objects/??/*
+# alternative to du: add up "size" and "size-pack" fields
+git count-objects -v
+----------
+
+* Report the disk size of each branch, not including objects used by the
+  current branch. This can find outliers that are contributing to a
+  bloated repository size (e.g., because somebody accidentally committed
+  large build artifacts).
++
+----------
+git for-each-ref --format='%(refname)' |
+while read branch
+do
+	size=$(git rev-list --disk-usage --objects HEAD..$branch)
+	echo "$size $branch"
+done |
+sort -n
+----------
+
+* Compare the on-disk size of branches in one group of refs, excluding
+  another. If you co-mingle objects from multiple remotes in a single
+  repository, this can show which remotes are contributing to the
+  repository size (taking the size of `origin` as a baseline).
++
+----------
+git rev-list --disk-usage --objects --remotes=$suspect --not --remotes=origin
+----------
+
 GIT
 ---
 Part of the linkgit:git[1] suite
