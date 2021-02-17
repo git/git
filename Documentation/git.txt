@@ -88,7 +88,7 @@ foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 	empty string, instead the environment variable itself must be
 	set to the empty string.  It is an error if the `<envvar>` does not exist
 	in the environment. `<envvar>` may not contain an equals sign
-	to avoid ambiguity with `<name>`s which contain one.
+	to avoid ambiguity with `<name>` containing one.
 +
 This is useful for cases where you want to pass transitory
 configuration options to git, but are doing so on OS's where
