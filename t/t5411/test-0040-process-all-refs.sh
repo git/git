@@ -92,14 +92,12 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL)" '
 	 + <OID-B>...<OID-A> HEAD -> refs/pull/124/head (forced update)
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-B> refs/heads/bar
 	<COMMIT-A> refs/heads/baz
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(A)             bar(A)  baz(B)
