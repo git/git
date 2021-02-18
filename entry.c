@@ -282,7 +282,7 @@ static int write_entry(struct cache_entry *ce,
 		new_blob = read_blob_entry(ce, &size);
 		if (!new_blob)
 			return error("unable to read sha1 file of %s (%s)",
-				     path, oid_to_hex(&ce->oid));
+				     ce->name, oid_to_hex(&ce->oid));
 
 		/*
 		 * We can't make a real symlink; write out a regular file entry
@@ -309,7 +309,7 @@ static int write_entry(struct cache_entry *ce,
 			new_blob = read_blob_entry(ce, &size);
 			if (!new_blob)
 				return error("unable to read sha1 file of %s (%s)",
-					     path, oid_to_hex(&ce->oid));
+					     ce->name, oid_to_hex(&ce->oid));
 		}
 
 		/*
@@ -354,7 +354,7 @@ static int write_entry(struct cache_entry *ce,
 
 	case S_IFGITLINK:
 		if (to_tempfile)
-			return error("cannot create temporary submodule %s", path);
+			return error("cannot create temporary submodule %s", ce->name);
 		if (mkdir(path, 0777) < 0)
 			return error("cannot create submodule directory %s", path);
 		sub = submodule_from_ce(ce);
@@ -365,7 +365,7 @@ static int write_entry(struct cache_entry *ce,
 		break;
 
 	default:
-		return error("unknown file mode for %s in index", path);
+		return error("unknown file mode for %s in index", ce->name);
 	}
 
 finish:
