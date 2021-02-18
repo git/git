@@ -373,8 +373,6 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	int patinforet;
 	size_t jitsizearg;
 
-	assert(opt->pcre2);
-
 	p->pcre2_compile_context = NULL;
 
 	/* pcre2_global_context is initialized in append_grep_pattern */
@@ -555,7 +553,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 #endif
 	if (p->fixed || p->is_fixed) {
 #ifdef USE_LIBPCRE2
-		opt->pcre2 = 1;
 		if (p->is_fixed) {
 			compile_pcre2_pattern(p, opt);
 		} else {
