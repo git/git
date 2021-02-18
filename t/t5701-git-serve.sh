@@ -15,7 +15,7 @@ test_expect_success 'test capability advertisement' '
 	cat >expect <<-EOF &&
 	version 2
 	agent=git/$(git version | cut -d" " -f3)
-	ls-refs
+	ls-refs=unborn
 	fetch=shallow
 	server-option
 	object-format=$(test_oid algo)

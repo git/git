@@ -979,7 +979,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int err = 0, complete_refs_before_fetch = 1;
 	int submodule_progress;
 
-	struct strvec ref_prefixes = STRVEC_INIT;
+	struct transport_ls_refs_options transport_ls_refs_options =
+		TRANSPORT_LS_REFS_OPTIONS_INIT;
 
 	packet_trace_identity("clone");
 
@@ -1257,14 +1258,17 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		transport->smart_options->check_self_contained_and_connected = 1;
 
 
-	strvec_push(&ref_prefixes, "HEAD");
-	refspec_ref_prefixes(&remote->fetch, &ref_prefixes);
+	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
+	refspec_ref_prefixes(&remote->fetch,
+			     &transport_ls_refs_options.ref_prefixes);
 	if (option_branch)
-		expand_ref_prefix(&ref_prefixes, option_branch);
+		expand_ref_prefix(&transport_ls_refs_options.ref_prefixes,
+				  option_branch);
 	if (!option_no_tags)
-		strvec_push(&ref_prefixes, "refs/tags/");
+		strvec_push(&transport_ls_refs_options.ref_prefixes,
+			    "refs/tags/");
 
-	refs = transport_get_remote_refs(transport, &ref_prefixes);
+	refs = transport_get_remote_refs(transport, &transport_ls_refs_options);
 
 	if (refs) {
 		int hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
@@ -1326,8 +1330,19 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		remote_head = NULL;
 		option_no_checkout = 1;
 		if (!option_bare) {
-			const char *branch = git_default_branch_name(0);
-			char *ref = xstrfmt("refs/heads/%s", branch);
+			const char *branch;
+			char *ref;
+
+			if (transport_ls_refs_options.unborn_head_target &&
+			    skip_prefix(transport_ls_refs_options.unborn_head_target,
+					"refs/heads/", &branch)) {
+				ref = transport_ls_refs_options.unborn_head_target;
+				transport_ls_refs_options.unborn_head_target = NULL;
+				create_symref("HEAD", ref, reflog_msg.buf);
+			} else {
+				branch = git_default_branch_name(0);
+				ref = xstrfmt("refs/heads/%s", branch);
+			}
 
 			install_branch_config(0, branch, remote_name, ref);
 			free(ref);
@@ -1380,6 +1395,7 @@ cleanup:
 	strbuf_release(&key);
 	junk_mode = JUNK_LEAVE_ALL;
 
-	strvec_clear(&ref_prefixes);
+	strvec_clear(&transport_ls_refs_options.ref_prefixes);
+	free(transport_ls_refs_options.unborn_head_target);
 	return err;
 }

@@ -1455,7 +1455,8 @@ static int do_fetch(struct transport *transport,
 	int autotags = (transport->remote->fetch_tags == 1);
 	int retcode = 0;
 	const struct ref *remote_refs;
-	struct strvec ref_prefixes = STRVEC_INIT;
+	struct transport_ls_refs_options transport_ls_refs_options =
+		TRANSPORT_LS_REFS_OPTIONS_INIT;
 	int must_list_refs = 1;
 
 	if (tags == TAGS_DEFAULT) {
@@ -1475,7 +1476,7 @@ static int do_fetch(struct transport *transport,
 	if (rs->nr) {
 		int i;
 
-		refspec_ref_prefixes(rs, &ref_prefixes);
+		refspec_ref_prefixes(rs, &transport_ls_refs_options.ref_prefixes);
 
 		/*
 		 * We can avoid listing refs if all of them are exact
@@ -1489,22 +1490,25 @@ static int do_fetch(struct transport *transport,
 			}
 		}
 	} else if (transport->remote && transport->remote->fetch.nr)
-		refspec_ref_prefixes(&transport->remote->fetch, &ref_prefixes);
+		refspec_ref_prefixes(&transport->remote->fetch,
+				     &transport_ls_refs_options.ref_prefixes);
 
 	if (tags == TAGS_SET || tags == TAGS_DEFAULT) {
 		must_list_refs = 1;
-		if (ref_prefixes.nr)
-			strvec_push(&ref_prefixes, "refs/tags/");
+		if (transport_ls_refs_options.ref_prefixes.nr)
+			strvec_push(&transport_ls_refs_options.ref_prefixes,
+				    "refs/tags/");
 	}
 
 	if (must_list_refs) {
 		trace2_region_enter("fetch", "remote_refs", the_repository);
-		remote_refs = transport_get_remote_refs(transport, &ref_prefixes);
+		remote_refs = transport_get_remote_refs(transport,
+							&transport_ls_refs_options);
 		trace2_region_leave("fetch", "remote_refs", the_repository);
 	} else
 		remote_refs = NULL;
 
-	strvec_clear(&ref_prefixes);
+	strvec_clear(&transport_ls_refs_options.ref_prefixes);
 
 	ref_map = get_ref_map(transport->remote, remote_refs, rs,
 			      tags, &autotags);
