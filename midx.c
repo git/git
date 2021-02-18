@@ -458,6 +458,9 @@ struct write_midx_context {
 	struct multi_pack_index *m;
 	struct progress *progress;
 	unsigned pack_paths_checked;
+
+	struct pack_midx_entry *entries;
+	uint32_t entries_nr;
 };
 
 static void add_pack_to_midx(const char *full_path, size_t full_path_len,
@@ -678,11 +681,11 @@ static size_t write_midx_pack_names(struct hashfile *f, void *data)
 }
 
 static size_t write_midx_oid_fanout(struct hashfile *f,
-				    struct pack_midx_entry *objects,
-				    uint32_t nr_objects)
+				    void *data)
 {
-	struct pack_midx_entry *list = objects;
-	struct pack_midx_entry *last = objects + nr_objects;
+	struct write_midx_context *ctx = data;
+	struct pack_midx_entry *list = ctx->entries;
+	struct pack_midx_entry *last = ctx->entries + ctx->entries_nr;
 	uint32_t count = 0;
 	uint32_t i;
 
@@ -706,18 +709,19 @@ static size_t write_midx_oid_fanout(struct hashfile *f,
 	return MIDX_CHUNK_FANOUT_SIZE;
 }
 
-static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
-				    struct pack_midx_entry *objects,
-				    uint32_t nr_objects)
+static size_t write_midx_oid_lookup(struct hashfile *f,
+				    void *data)
 {
-	struct pack_midx_entry *list = objects;
+	struct write_midx_context *ctx = data;
+	unsigned char hash_len = the_hash_algo->rawsz;
+	struct pack_midx_entry *list = ctx->entries;
 	uint32_t i;
 	size_t written = 0;
 
-	for (i = 0; i < nr_objects; i++) {
+	for (i = 0; i < ctx->entries_nr; i++) {
 		struct pack_midx_entry *obj = list++;
 
-		if (i < nr_objects - 1) {
+		if (i < ctx->entries_nr - 1) {
 			struct pack_midx_entry *next = list;
 			if (oidcmp(&obj->oid, &next->oid) >= 0)
 				BUG("OIDs not in order: %s >= %s",
@@ -805,8 +809,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	uint64_t written = 0;
 	uint32_t chunk_ids[MIDX_MAX_CHUNKS + 1];
 	uint64_t chunk_offsets[MIDX_MAX_CHUNKS + 1];
-	uint32_t nr_entries, num_large_offsets = 0;
-	struct pack_midx_entry *entries = NULL;
+	uint32_t num_large_offsets = 0;
 	struct progress *progress = NULL;
 	int large_offsets_needed = 0;
 	int pack_name_concat_len = 0;
@@ -852,12 +855,12 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	if (ctx.m && ctx.nr == ctx.m->num_packs && !packs_to_drop)
 		goto cleanup;
 
-	entries = get_sorted_entries(ctx.m, ctx.info, ctx.nr, &nr_entries);
+	ctx.entries = get_sorted_entries(ctx.m, ctx.info, ctx.nr, &ctx.entries_nr);
 
-	for (i = 0; i < nr_entries; i++) {
-		if (entries[i].offset > 0x7fffffff)
+	for (i = 0; i < ctx.entries_nr; i++) {
+		if (ctx.entries[i].offset > 0x7fffffff)
 			num_large_offsets++;
-		if (entries[i].offset > 0xffffffff)
+		if (ctx.entries[i].offset > 0xffffffff)
 			large_offsets_needed = 1;
 	}
 
@@ -947,10 +950,10 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 
 	cur_chunk++;
 	chunk_ids[cur_chunk] = MIDX_CHUNKID_OBJECTOFFSETS;
-	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + nr_entries * the_hash_algo->rawsz;
+	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + ctx.entries_nr * the_hash_algo->rawsz;
 
 	cur_chunk++;
-	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + nr_entries * MIDX_CHUNK_OFFSET_WIDTH;
+	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + ctx.entries_nr * MIDX_CHUNK_OFFSET_WIDTH;
 	if (large_offsets_needed) {
 		chunk_ids[cur_chunk] = MIDX_CHUNKID_LARGEOFFSETS;
 
@@ -993,19 +996,19 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 				break;
 
 			case MIDX_CHUNKID_OIDFANOUT:
-				written += write_midx_oid_fanout(f, entries, nr_entries);
+				written += write_midx_oid_fanout(f, &ctx);
 				break;
 
 			case MIDX_CHUNKID_OIDLOOKUP:
-				written += write_midx_oid_lookup(f, the_hash_algo->rawsz, entries, nr_entries);
+				written += write_midx_oid_lookup(f, &ctx);
 				break;
 
 			case MIDX_CHUNKID_OBJECTOFFSETS:
-				written += write_midx_object_offsets(f, large_offsets_needed, pack_perm, entries, nr_entries);
+				written += write_midx_object_offsets(f, large_offsets_needed, pack_perm, ctx.entries, ctx.entries_nr);
 				break;
 
 			case MIDX_CHUNKID_LARGEOFFSETS:
-				written += write_midx_large_offsets(f, num_large_offsets, entries, nr_entries);
+				written += write_midx_large_offsets(f, num_large_offsets, ctx.entries, ctx.entries_nr);
 				break;
 
 			default:
@@ -1035,7 +1038,7 @@ cleanup:
 	}
 
 	free(ctx.info);
-	free(entries);
+	free(ctx.entries);
 	free(pack_perm);
 	free(midx_name);
 	return result;
