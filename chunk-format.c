@@ -97,6 +97,7 @@ int read_table_of_contents(struct chunkfile *cf,
 			   uint64_t toc_offset,
 			   int toc_length)
 {
+	int i;
 	uint32_t chunk_id;
 	const unsigned char *table_of_contents = mfile + toc_offset;
 
@@ -121,6 +122,14 @@ int read_table_of_contents(struct chunkfile *cf,
 			error(_("improper chunk offset(s) %"PRIx64" and %"PRIx64""),
 			      chunk_offset, next_chunk_offset);
 			return -1;
+		}
+
+		for (i = 0; i < cf->chunks_nr; i++) {
+			if (cf->chunks[i].id == chunk_id) {
+				error(_("duplicate chunk ID %"PRIx32" found"),
+					chunk_id);
+				return -1;
+			}
 		}
 
 		cf->chunks[cf->chunks_nr].id = chunk_id;
