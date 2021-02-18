@@ -81,7 +81,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: git-for-windows/setup-git-for-windows-sdk@v0
     - name: build
       shell: bash
@@ -134,7 +134,7 @@ jobs:
       GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: git-for-windows/setup-git-for-windows-sdk@v0
     - name: download vcpkg artifacts
       shell: powershell
@@ -232,7 +232,7 @@ jobs:
       jobname: ${{matrix.vector.jobname}}
     runs-on: ${{matrix.vector.pool}}
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - run: ci/install-dependencies.sh
     - run: ci/run-build-and-tests.sh
     - run: ci/print-test-failures.sh
@@ -277,7 +277,7 @@ jobs:
       jobname: StaticAnalysis
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
   documentation:
@@ -287,6 +287,6 @@ jobs:
       jobname: Documentation
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - run: ci/install-dependencies.sh
     - run: ci/test-documentation.sh
