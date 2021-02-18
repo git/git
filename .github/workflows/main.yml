@@ -89,7 +89,9 @@ jobs:
         HOME: ${{runner.workspace}}
         NO_PERL: 1
       run: ci/make-test-artifacts.sh artifacts
-    - name: upload build artifacts
+    - name: zip up tracked files
+      run: git archive -o artifacts/tracked.tar.gz HEAD
+    - name: upload tracked files and build artifacts
       uses: actions/upload-artifact@v2
       with:
         name: windows-artifacts
@@ -102,15 +104,14 @@ jobs:
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
-    - uses: actions/checkout@v1
-    - name: download build artifacts
+    - name: download tracked files and build artifacts
       uses: actions/download-artifact@v2
       with:
         name: windows-artifacts
         path: ${{github.workspace}}
-    - name: extract build artifacts
+    - name: extract tracked files and build artifacts
       shell: bash
-      run: tar xf artifacts.tar.gz
+      run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
     - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: test
       shell: bash
@@ -169,7 +170,9 @@ jobs:
       run: |
         mkdir -p artifacts &&
         eval "$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts 2>&1 | grep ^tar)"
-    - name: upload build artifacts
+    - name: zip up tracked files
+      run: git archive -o artifacts/tracked.tar.gz HEAD
+    - name: upload tracked files and build artifacts
       uses: actions/upload-artifact@v2
       with:
         name: vs-artifacts
@@ -182,16 +185,15 @@ jobs:
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
-    - uses: actions/checkout@v1
     - uses: git-for-windows/setup-git-for-windows-sdk@v1
-    - name: download build artifacts
+    - name: download tracked files and build artifacts
       uses: actions/download-artifact@v2
       with:
         name: vs-artifacts
         path: ${{github.workspace}}
-    - name: extract build artifacts
+    - name: extract tracked files and build artifacts
       shell: bash
-      run: tar xf artifacts.tar.gz
+      run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
     - name: test
       shell: bash
       env:
