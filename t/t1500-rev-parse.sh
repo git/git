@@ -243,4 +243,19 @@ test_expect_success 'showing the superproject correctly' '
 	test_cmp expect out
 '
 
+# at least one external project depends on this behavior:
+test_expect_success 'rev-parse --since= unsqueezed ordering' '
+	x1=--since=1970-01-01T00:00:01Z &&
+	x2=--since=1970-01-01T00:00:02Z &&
+	x3=--since=1970-01-01T00:00:03Z &&
+	git rev-parse $x1 $x1 $x3 $x2 >actual &&
+	cat >expect <<-EOF &&
+	--max-age=1
+	--max-age=1
+	--max-age=3
+	--max-age=2
+	EOF
+	test_cmp expect actual
+'
+
 test_done
