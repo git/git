@@ -44,8 +44,22 @@ esac
 
 vername=$(echo "$vername" | tr "-" ".")
 
-git log --use-mailmap --format='%aN,' "$previous" | sort -u >"$tmpbase.prev"
-git log --use-mailmap --format='%aN,' "$previous..$commit" | sort -u >"$tmpbase.this"
+people () {
+	git shortlog -s --no-merges \
+		--group=author \
+		--group=trailer:co-authored-by \
+		--group=trailer:reviewed-by \
+		--group=trailer:mentored-by \
+		--group=trailer:helped-by \
+		--group=trailer:reported-by \
+		"$@" |
+	sed -e 's/^[ 	0-9]*[ 	]//' -e 's/$/,/' |
+	sort -u
+}
+
+people "$previous" >"$tmpbase.prev"
+people "$previous..$commit" >"$tmpbase.this"
+
 comm -12 "$tmpbase.prev" "$tmpbase.this" >"$tmpbase.old"
 comm -13 "$tmpbase.prev" "$tmpbase.this" >"$tmpbase.new"
 
