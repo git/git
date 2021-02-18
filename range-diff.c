@@ -11,6 +11,7 @@
 #include "pretty.h"
 #include "userdiff.h"
 #include "apply.h"
+#include "revision.h"
 
 struct patch_util {
 	/* For the search for an exact match */
@@ -563,4 +564,32 @@ int show_range_diff(const char *range1, const char *range2,
 	string_list_clear(&branch2, 1);
 
 	return res;
+}
+
+int is_range_diff_range(const char *arg)
+{
+	char *copy = xstrdup(arg); /* setup_revisions() modifies it */
+	const char *argv[] = { "", copy, "--", NULL };
+	int i, positive = 0, negative = 0;
+	struct rev_info revs;
+
+	init_revisions(&revs, NULL);
+	if (setup_revisions(3, argv, &revs, NULL) == 1) {
+		for (i = 0; i < revs.pending.nr; i++)
+			if (revs.pending.objects[i].item->flags & UNINTERESTING)
+				negative++;
+			else
+				positive++;
+		for (i = 0; i < revs.pending.nr; i++) {
+			struct object *obj = revs.pending.objects[i].item;
+
+			if (obj->type == OBJ_COMMIT)
+				clear_commit_marks((struct commit *)obj,
+						   ALL_REV_FLAGS);
+		}
+	}
+
+	free(copy);
+	object_array_clear(&revs.pending);
+	return negative > 0 && positive > 0;
 }
