@@ -842,4 +842,22 @@ test_expect_success 'mergetool --tool-help shows recognized tools' '
 	grep meld mergetools
 '
 
+test_expect_success 'mergetool hideResolved' '
+	test_config mergetool.hideResolved true &&
+	test_when_finished "git reset --hard" &&
+	git checkout -b test${test_count}_b main &&
+	test_write_lines >file1 base "" a &&
+	git commit -a -m "base" &&
+	test_write_lines >file1 base "" c &&
+	git commit -a -m "remote update" &&
+	git checkout -b test${test_count}_a HEAD~ &&
+	test_write_lines >file1 local "" b &&
+	git commit -a -m "local update" &&
+	test_must_fail git merge test${test_count}_b &&
+	yes "" | git mergetool file1 &&
+	test_write_lines >expect local "" c &&
+	test_cmp expect file1 &&
+	git commit -m "test resolved with mergetool"
+'
+
 test_done

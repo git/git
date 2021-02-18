@@ -13,6 +13,11 @@ mergetool.<tool>.cmd::
 	merged; 'MERGED' contains the name of the file to which the merge
 	tool should write the results of a successful merge.
 
+mergetool.<tool>.hideResolved::
+	Allows the user to override the global `mergetool.hideResolved` value
+	for a specific tool. See `mergetool.hideResolved` for the full
+	description.
+
 mergetool.<tool>.trustExitCode::
 	For a custom merge command, specify whether the exit code of
 	the merge command can be used to determine whether the merge was
@@ -39,6 +44,16 @@ mergetool.meld.useAutoMerge::
 	is supported and will only use `--auto-merge` when available.  A
 	value of `false` avoids using `--auto-merge` altogether, and is the
 	default value.
+
+mergetool.hideResolved::
+	During a merge Git will automatically resolve as many conflicts as
+	possible and write the 'MERGED' file containing conflict markers around
+	any conflicts that it cannot resolve; 'LOCAL' and 'REMOTE' normally
+	represent the versions of the file from before Git's conflict
+	resolution. This flag causes 'LOCAL' and 'REMOTE' to be overwriten so
+	that only the unresolved conflicts are presented to the merge tool. Can
+	be configured per-tool via the `mergetool.<tool>.hideResolved`
+	configuration variable. Defaults to `true`.
 
 mergetool.keepBackup::
 	After performing a merge, the original file with conflict markers
