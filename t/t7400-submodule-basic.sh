@@ -55,7 +55,7 @@ test_expect_success 'add aborts on repository with no commits' '
 	EOF
 	git init repo-no-commits &&
 	test_must_fail git submodule add ../a ./repo-no-commits 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'status should ignore inner git repo when not added' '
@@ -185,7 +185,7 @@ test_expect_success 'submodule add to .gitignored path fails' '
 		git add --force .gitignore &&
 		git commit -m"Ignore everything" &&
 		! git submodule add "$submodurl" submod >actual 2>&1 &&
-		test_i18ncmp expect actual
+		test_cmp expect actual
 	)
 '
 

@@ -446,7 +446,7 @@ test_expect_success 'mv issues a warning when section is not found in .gitmodule
 	echo "warning: Could not find section in .gitmodules where path=sub" >expect.err &&
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
-	test_i18ncmp expect.err actual.err &&
+	test_cmp expect.err actual.err &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
 	(

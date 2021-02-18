@@ -167,7 +167,7 @@ test_expect_success '"list" all worktrees --verbose with prunable' '
 	rm -rf prunable &&
 	git worktree list --verbose >out &&
 	sed -n "s/  */ /g;/\/prunable  *[0-9a-f].*$/,/prunable: .*$/p" <out >actual &&
-	test_i18ncmp actual expect
+	test_cmp actual expect
 '
 
 test_expect_success 'bare repo setup' '

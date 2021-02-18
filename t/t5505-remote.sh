@@ -59,7 +59,7 @@ test_expect_success 'add remote whose URL agrees with url.<...>.insteadOf' '
 	git remote add myremote git@host.com:team/repo.git
 '
 
-test_expect_success C_LOCALE_OUTPUT 'remote information for the origin' '
+test_expect_success 'remote information for the origin' '
 	(
 		cd test &&
 		tokens_match origin "$(git remote)" &&
@@ -81,7 +81,7 @@ test_expect_success 'add another remote' '
 	)
 '
 
-test_expect_success C_LOCALE_OUTPUT 'check remote-tracking' '
+test_expect_success 'check remote-tracking' '
 	(
 		cd test &&
 		check_remote_track origin main side &&
@@ -107,7 +107,7 @@ test_expect_success 'remove remote' '
 	)
 '
 
-test_expect_success C_LOCALE_OUTPUT 'remove remote' '
+test_expect_success 'remove remote' '
 	(
 		cd test &&
 		tokens_match origin "$(git remote)" &&
@@ -140,8 +140,8 @@ test_expect_success 'remove remote protects local branches' '
 		git remote rm oops 2>actual2 &&
 		git branch -d foobranch &&
 		git tag -d footag &&
-		test_i18ncmp expect1 actual1 &&
-		test_i18ncmp expect2 actual2
+		test_cmp expect1 actual1 &&
+		test_cmp expect2 actual2
 	)
 '
 
@@ -150,7 +150,7 @@ test_expect_success 'remove errors out early when deleting non-existent branch' 
 		cd test &&
 		echo "error: No such remote: '\''foo'\''" >expect &&
 		test_expect_code 2 git remote rm foo 2>actual &&
-		test_i18ncmp expect actual
+		test_cmp expect actual
 	)
 '
 
@@ -178,7 +178,7 @@ test_expect_success 'rename errors out early when deleting non-existent branch' 
 		cd test &&
 		echo "error: No such remote: '\''foo'\''" >expect &&
 		test_expect_code 2 git remote rename foo bar 2>actual &&
-		test_i18ncmp expect actual
+		test_cmp expect actual
 	)
 '
 
@@ -186,14 +186,14 @@ test_expect_success 'rename errors out early when when new name is invalid' '
 	test_config remote.foo.vcs bar &&
 	echo "fatal: '\''invalid...name'\'' is not a valid remote name" >expect &&
 	test_must_fail git remote rename foo invalid...name 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'add existing foreign_vcs remote' '
 	test_config remote.foo.vcs bar &&
 	echo "error: remote foo already exists." >expect &&
 	test_expect_code 3 git remote add foo bar 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'add existing foreign_vcs remote' '
@@ -201,13 +201,13 @@ test_expect_success 'add existing foreign_vcs remote' '
 	test_config remote.bar.vcs bar &&
 	echo "error: remote bar already exists." >expect &&
 	test_expect_code 3 git remote rename foo bar 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'add invalid foreign_vcs remote' '
 	echo "fatal: '\''invalid...name'\'' is not a valid remote name" >expect &&
 	test_must_fail git remote add invalid...name bar 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 cat >test/expect <<EOF
@@ -267,7 +267,7 @@ test_expect_success 'show' '
 		git config --add remote.two.push refs/heads/main:refs/heads/another &&
 		git remote show origin two >output &&
 		git branch -d rebase octopus &&
-		test_i18ncmp expect output
+		test_cmp expect output
 	)
 '
 
@@ -294,7 +294,7 @@ test_expect_success 'show -n' '
 		cd test &&
 		git remote show -n origin >output &&
 		mv ../one.unreachable ../one &&
-		test_i18ncmp expect output
+		test_cmp expect output
 	)
 '
 
@@ -337,7 +337,7 @@ test_expect_success 'set-head --auto has no problem w/multiple HEADs' '
 		git fetch two "refs/heads/*:refs/remotes/two/*" &&
 		git remote set-head --auto two >output 2>&1 &&
 		echo "two/HEAD set to main" >expect &&
-		test_i18ncmp expect output
+		test_cmp expect output
 	)
 '
 
@@ -369,7 +369,7 @@ test_expect_success 'prune --dry-run' '
 		git remote prune --dry-run origin >output &&
 		git rev-parse refs/remotes/origin/side2 &&
 		test_must_fail git rev-parse refs/remotes/origin/side &&
-		test_i18ncmp expect output
+		test_cmp expect output
 	)
 '
 

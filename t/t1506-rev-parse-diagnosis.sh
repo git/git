@@ -15,7 +15,7 @@ test_did_you_mean ()
 	fatal: path '$2$3' $4, but not ${5:-$SQ$3$SQ}
 	hint: Did you mean '$1:$2$3'${2:+ aka $SQ$1:./$3$SQ}?
 	EOF
-	test_i18ncmp expected error
+	test_cmp expected error
 }
 
 HASH_file=

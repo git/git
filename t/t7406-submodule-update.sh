@@ -155,9 +155,9 @@ test_expect_success 'submodule update --init --recursive from subdirectory' '
 	 cd tmp &&
 	 git submodule update --init --recursive ../super >../../actual 2>../../actual2
 	) &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	sort actual2 >actual2.sorted &&
-	test_i18ncmp expect2 actual2.sorted
+	test_cmp expect2 actual2.sorted
 '
 
 cat <<EOF >expect2
@@ -174,7 +174,7 @@ test_expect_success 'submodule update --init from and of subdirectory' '
 	  git submodule update --init sub 2>../../actual2
 	 )
 	) &&
-	test_i18ncmp expect2 actual2
+	test_cmp expect2 actual2
 '
 
 test_expect_success 'submodule update does not fetch already present commits' '
@@ -192,7 +192,7 @@ test_expect_success 'submodule update does not fetch already present commits' '
 	(cd super &&
 	  git submodule update > ../actual 2> ../actual.err
 	) &&
-	test_i18ncmp expected actual &&
+	test_cmp expected actual &&
 	test_must_be_empty actual.err
 '
 
@@ -461,7 +461,7 @@ test_expect_success 'submodule update - command in .git/config catches failure' 
 	(cd super &&
 	 test_must_fail git submodule update submodule 2>../actual
 	) &&
-	test_i18ncmp actual expect
+	test_cmp actual expect
 '
 
 cat << EOF >expect
@@ -479,7 +479,7 @@ test_expect_success 'submodule update - command in .git/config catches failure -
 	 mkdir tmp && cd tmp &&
 	 test_must_fail git submodule update ../submodule 2>../../actual
 	) &&
-	test_i18ncmp actual expect
+	test_cmp actual expect
 '
 
 test_expect_success 'submodule update - command run for initial population of submodule' '
@@ -488,7 +488,7 @@ test_expect_success 'submodule update - command run for initial population of su
 	EOF
 	rm -rf super/submodule &&
 	test_must_fail git -C super submodule update 2>actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	git -C super submodule update --checkout
 '
 
@@ -509,7 +509,7 @@ test_expect_success 'recursive submodule update - command in .git/config catches
 	 mkdir -p tmp && cd tmp &&
 	 test_must_fail git submodule update --recursive ../super 2>../../actual
 	) &&
-	test_i18ncmp actual expect
+	test_cmp actual expect
 '
 
 test_expect_success 'submodule init does not copy command into .git/config' '

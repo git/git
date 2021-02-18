@@ -95,7 +95,7 @@ test_expect_success 'test --parseopt help output' '
 |EOF
 END_EXPECT
 	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'test --parseopt help output no switches' '
@@ -108,7 +108,7 @@ test_expect_success 'test --parseopt help output no switches' '
 |EOF
 END_EXPECT
 	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec_no_switches &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'test --parseopt help output hidden switches' '
@@ -121,7 +121,7 @@ test_expect_success 'test --parseopt help output hidden switches' '
 |EOF
 END_EXPECT
 	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec_only_hidden_switches &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'test --parseopt help-all output hidden switches' '
@@ -136,7 +136,7 @@ test_expect_success 'test --parseopt help-all output hidden switches' '
 |EOF
 END_EXPECT
 	test_expect_code 129 git rev-parse --parseopt -- --help-all > output < optionspec_only_hidden_switches &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'test --parseopt invalid switch help output' '
@@ -176,7 +176,7 @@ test_expect_success 'test --parseopt invalid switch help output' '
 |
 END_EXPECT
 	test_expect_code 129 git rev-parse --parseopt -- --does-not-exist 1>/dev/null 2>output < optionspec &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'setup expect.1' "

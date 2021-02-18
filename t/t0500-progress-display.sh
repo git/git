@@ -29,7 +29,7 @@ test_expect_success 'simple progress display' '
 	test-tool progress "Working hard" <in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'progress display with total' '
@@ -48,7 +48,7 @@ test_expect_success 'progress display with total' '
 	test-tool progress --total=3 "Working hard" <in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'progress display breaks long lines #1' '
@@ -72,7 +72,7 @@ EOF
 		<in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'progress display breaks long lines #2' '
@@ -100,7 +100,7 @@ EOF
 		<in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'progress display breaks long lines #3 - even the first is too long' '
@@ -126,7 +126,7 @@ EOF
 		<in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'progress display breaks long lines #4 - title line matches terminal width' '
@@ -150,7 +150,7 @@ EOF
 		<in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 # Progress counter goes backwards, this should not happen in practice.
@@ -172,7 +172,7 @@ test_expect_success 'progress shortens - crazy caller' '
 	test-tool progress --total=1000 "Working hard" <in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'progress display with throughput' '
@@ -201,7 +201,7 @@ test_expect_success 'progress display with throughput' '
 	test-tool progress "Working hard" <in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'progress display with throughput and total' '
@@ -226,7 +226,7 @@ test_expect_success 'progress display with throughput and total' '
 	test-tool progress --total=40 "Working hard" <in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'cover up after throughput shortens' '
@@ -255,7 +255,7 @@ test_expect_success 'cover up after throughput shortens' '
 	test-tool progress "Working hard" <in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'cover up after throughput shortens a lot' '
@@ -280,7 +280,7 @@ test_expect_success 'cover up after throughput shortens a lot' '
 	test-tool progress "Working hard" <in 2>stderr &&
 
 	show_cr <stderr >out &&
-	test_i18ncmp expect out
+	test_cmp expect out
 '
 
 test_expect_success 'progress generates traces' '

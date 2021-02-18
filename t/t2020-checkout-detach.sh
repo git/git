@@ -163,7 +163,7 @@ test_expect_success 'tracking count is accurate after orphan check' '
 	git config branch.child.merge refs/heads/main &&
 	git checkout child^ &&
 	git checkout child >stdout &&
-	test_i18ncmp expect stdout
+	test_cmp expect stdout
 '
 
 test_expect_success 'no advice given for explicit detached head state' '
@@ -237,15 +237,15 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 	sane_unset GIT_PRINT_SHA1_ELLIPSIS &&
 	git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 1st_detach actual &&
+	test_cmp 1st_detach actual &&
 
 	GIT_PRINT_SHA1_ELLIPSIS="no" git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 2nd_detach actual &&
+	test_cmp 2nd_detach actual &&
 
 	GIT_PRINT_SHA1_ELLIPSIS= git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 3rd_detach actual &&
+	test_cmp 3rd_detach actual &&
 
 	sane_unset GIT_PRINT_SHA1_ELLIPSIS &&
 
@@ -256,17 +256,17 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 	# Make no mention of the env var at all
 	git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 1st_detach actual &&
+	test_cmp 1st_detach actual &&
 
 	GIT_PRINT_SHA1_ELLIPSIS='nope' &&
 	git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 2nd_detach actual &&
+	test_cmp 2nd_detach actual &&
 
 	GIT_PRINT_SHA1_ELLIPSIS=nein &&
 	git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 3rd_detach actual &&
+	test_cmp 3rd_detach actual &&
 
 	true
 "
@@ -319,15 +319,15 @@ test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked
 
 	GIT_PRINT_SHA1_ELLIPSIS=yes git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 1st_detach actual &&
+	test_cmp 1st_detach actual &&
 
 	GIT_PRINT_SHA1_ELLIPSIS=Yes git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 2nd_detach actual &&
+	test_cmp 2nd_detach actual &&
 
 	GIT_PRINT_SHA1_ELLIPSIS=YES git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
-	test_i18ncmp 3rd_detach actual &&
+	test_cmp 3rd_detach actual &&
 
 	true
 "

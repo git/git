@@ -56,9 +56,9 @@ EOF
 		git commit -m delete &&
 		test_must_fail git merge main &&
 		test_must_fail git commit --dry-run >../actual &&
-		test_i18ncmp ../expect ../actual &&
+		test_cmp ../expect ../actual &&
 		git status >../actual &&
-		test_i18ncmp ../expect ../actual
+		test_cmp ../expect ../actual
 	)
 '
 
@@ -151,7 +151,7 @@ Unmerged paths:
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -185,7 +185,7 @@ Unmerged paths:
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -210,7 +210,7 @@ Unmerged paths:
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual &&
+	test_cmp expected actual &&
 	git reset --hard &&
 	git checkout main
 '
@@ -227,7 +227,7 @@ test_expect_success 'status --branch with detached HEAD' '
 	?? expected
 	?? mdconflict/
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 ## Duplicate the above test and verify --porcelain=v1 arg parsing.
@@ -243,7 +243,7 @@ test_expect_success 'status --porcelain=v1 --branch with detached HEAD' '
 	?? expected
 	?? mdconflict/
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 ## Verify parser error on invalid --porcelain argument.

@@ -98,7 +98,7 @@ test_expect_success 'creating a tag with --create-reflog should create reflog' '
 	git tag --create-reflog tag_with_reflog &&
 	git reflog exists refs/tags/tag_with_reflog &&
 	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'annotated tag with --create-reflog has correct message' '
@@ -109,7 +109,7 @@ test_expect_success 'annotated tag with --create-reflog has correct message' '
 	git tag -m "annotated tag" --create-reflog tag_with_reflog &&
 	git reflog exists refs/tags/tag_with_reflog &&
 	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success '--create-reflog does not create reflog on failure' '
@@ -1434,7 +1434,7 @@ test_expect_success 'message in editor has initial comment: first line' '
 	# check the first line --- should be empty
 	echo >first.expect &&
 	sed -e 1q <actual >first.actual &&
-	test_i18ncmp first.expect first.actual
+	test_cmp first.expect first.actual
 '
 
 test_expect_success \
@@ -1757,7 +1757,7 @@ test_expect_success 'recursive tagging should give advice' '
 	hint: Disable this message with "git config advice.nestedTag false"
 	EOF
 	git tag -m nested nested annotated-v4.0 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'multiple --points-at are OR-ed together' '

@@ -59,7 +59,7 @@ test_expect_success 'advice from failed cherry-pick' "
 	EOF
 	test_must_fail git cherry-pick picked 2>actual &&
 
-	test_i18ncmp expected actual
+	test_cmp expected actual
 "
 
 test_expect_success 'advice from failed cherry-pick --no-commit' "
@@ -73,7 +73,7 @@ test_expect_success 'advice from failed cherry-pick --no-commit' "
 	EOF
 	test_must_fail git cherry-pick --no-commit picked 2>actual &&
 
-	test_i18ncmp expected actual
+	test_cmp expected actual
 "
 
 test_expect_success 'failed cherry-pick sets CHERRY_PICK_HEAD' '
@@ -256,7 +256,7 @@ test_expect_success \
 
 	test_must_fail git cherry-pick picked &&
 
-	test_i18ncmp expected .git/MERGE_MSG
+	test_cmp expected .git/MERGE_MSG
 '
 
 test_expect_success \
@@ -276,7 +276,7 @@ test_expect_success \
 
 	test_must_fail git cherry-pick --cleanup=scissors picked &&
 
-	test_i18ncmp expected .git/MERGE_MSG
+	test_cmp expected .git/MERGE_MSG
 '
 
 test_expect_success 'failed cherry-pick describes conflict in work tree' '
@@ -465,7 +465,7 @@ test_expect_success \
 	test_must_fail git revert picked &&
 
 	sed "s/$OID_REGEX/OBJID/" .git/MERGE_MSG >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success \
@@ -488,7 +488,7 @@ test_expect_success \
 	test_must_fail git revert --cleanup=scissors picked &&
 
 	sed "s/$OID_REGEX/OBJID/" .git/MERGE_MSG >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'failed cherry-pick does not forget -s' '

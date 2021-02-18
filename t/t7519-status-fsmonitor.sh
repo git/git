@@ -236,7 +236,7 @@ test_expect_success 'refresh_index() invalidates fsmonitor cache' '
 	git reset HEAD~1 &&
 	git status >actual &&
 	git -c core.fsmonitor= status >expect &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 # test fsmonitor with and without preloadIndex
@@ -273,7 +273,7 @@ do
 			git add dir2/new &&
 			git status >actual &&
 			git -c core.fsmonitor= status >expect &&
-			test_i18ncmp expect actual
+			test_cmp expect actual
 		'
 
 		# Make sure it's actually skipping the check for modified and untracked

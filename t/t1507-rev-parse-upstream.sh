@@ -172,7 +172,7 @@ test_expect_success 'branch@{u} error message when no upstream' '
 	fatal: no upstream configured for branch ${SQ}non-tracking${SQ}
 	EOF
 	error_message non-tracking@{u} &&
-	test_i18ncmp expect error
+	test_cmp expect error
 '
 
 test_expect_success '@{u} error message when no upstream' '
@@ -180,7 +180,7 @@ test_expect_success '@{u} error message when no upstream' '
 	fatal: no upstream configured for branch ${SQ}main${SQ}
 	EOF
 	test_must_fail git rev-parse --verify @{u} 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'branch@{u} error message with misspelt branch' '
@@ -188,7 +188,7 @@ test_expect_success 'branch@{u} error message with misspelt branch' '
 	fatal: no such branch: ${SQ}no-such-branch${SQ}
 	EOF
 	error_message no-such-branch@{u} &&
-	test_i18ncmp expect error
+	test_cmp expect error
 '
 
 test_expect_success '@{u} error message when not on a branch' '
@@ -197,7 +197,7 @@ test_expect_success '@{u} error message when not on a branch' '
 	EOF
 	git checkout HEAD^0 &&
 	test_must_fail git rev-parse --verify @{u} 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'branch@{u} error message if upstream branch not fetched' '
@@ -205,7 +205,7 @@ test_expect_success 'branch@{u} error message if upstream branch not fetched' '
 	fatal: upstream branch ${SQ}refs/heads/side${SQ} not stored as a remote-tracking branch
 	EOF
 	error_message bad-upstream@{u} &&
-	test_i18ncmp expect error
+	test_cmp expect error
 '
 
 test_expect_success 'pull works when tracking a local branch' '

@@ -34,19 +34,19 @@ EOF
 test_expect_success 'apply --stat output for binary file change' '
 	git diff >diff &&
 	git apply --stat --summary <diff >current &&
-	test_i18ncmp expected current
+	test_cmp expected current
 '
 
 test_expect_success 'diff --shortstat output for binary file change' '
 	tail -n 1 expected >expect &&
 	git diff --shortstat >current &&
-	test_i18ncmp expect current
+	test_cmp expect current
 '
 
 test_expect_success 'diff --shortstat output for binary file change only' '
 	echo " 1 file changed, 0 insertions(+), 0 deletions(-)" >expected &&
 	git diff --shortstat -- b >current &&
-	test_i18ncmp expected current
+	test_cmp expected current
 '
 
 test_expect_success 'apply --numstat notices binary file change' '
@@ -63,7 +63,7 @@ test_expect_success 'apply --numstat understands diff --binary format' '
 
 # apply needs to be able to skip the binary material correctly
 # in order to report the line number of a corrupt patch.
-test_expect_success C_LOCALE_OUTPUT 'apply detecting corrupt patch correctly' '
+test_expect_success 'apply detecting corrupt patch correctly' '
 	git diff >output &&
 	sed -e "s/-CIT/xCIT/" <output >broken &&
 	test_must_fail git apply --stat --summary broken 2>detected &&
@@ -73,7 +73,7 @@ test_expect_success C_LOCALE_OUTPUT 'apply detecting corrupt patch correctly' '
 	test "$detected" = xCIT
 '
 
-test_expect_success C_LOCALE_OUTPUT 'apply detecting corrupt patch correctly' '
+test_expect_success 'apply detecting corrupt patch correctly' '
 	git diff --binary | sed -e "s/-CIT/xCIT/" >broken &&
 	test_must_fail git apply --stat --summary broken 2>detected &&
 	detected=$(cat detected) &&

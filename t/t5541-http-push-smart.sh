@@ -118,7 +118,7 @@ test_expect_success 'rejected update prints status' '
 	git commit -m dev2 &&
 	test_must_fail git push origin dev2 2>act &&
 	sed -e "/^remote: /s/ *$//" <act >cmp &&
-	test_i18ncmp exp cmp
+	test_cmp exp cmp
 '
 rm -f "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/hooks/update"
 

@@ -906,7 +906,7 @@ test_expect_success 'am empty-file does not infloop' '
 	test_tick &&
 	test_must_fail git am empty-file 2>actual &&
 	echo Patch format detection failed. >expected &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'am --message-id really adds the message id' '

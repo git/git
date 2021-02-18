@@ -84,14 +84,14 @@ test_expect_success 'packing produces a long delta' '
 	pack=$(git pack-objects --all --window=0 </dev/null pack) &&
 	echo 9 >expect &&
 	max_chain pack-$pack.pack >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success '--depth limits depth' '
 	pack=$(git pack-objects --all --depth=5 </dev/null pack) &&
 	echo 5 >expect &&
 	max_chain pack-$pack.pack >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_done
