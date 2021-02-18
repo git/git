@@ -40,30 +40,6 @@ static struct grep_opt grep_defaults = {
 	.output = std_output,
 };
 
-#ifdef USE_LIBPCRE2
-#define GREP_PCRE2_DEBUG_MALLOC 0
-
-static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
-{
-	void *pointer = malloc(size);
-#if GREP_PCRE2_DEBUG_MALLOC
-	static int count = 1;
-	fprintf(stderr, "PCRE2:%p -> #%02d: alloc(%lu)\n", pointer, count++, size);
-#endif
-	return pointer;
-}
-
-static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
-{
-#if GREP_PCRE2_DEBUG_MALLOC
-	static int count = 1;
-	if (pointer)
-		fprintf(stderr, "PCRE2:%p -> #%02d: free()\n", pointer, count++);
-#endif
-	free(pointer);
-}
-#endif
-
 static const char *color_grep_slots[] = {
 	[GREP_COLOR_CONTEXT]	    = "context",
 	[GREP_COLOR_FILENAME]	    = "filename",
@@ -355,6 +331,28 @@ static int is_fixed(const char *s, size_t len)
 }
 
 #ifdef USE_LIBPCRE2
+#define GREP_PCRE2_DEBUG_MALLOC 0
+
+static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
+{
+	void *pointer = malloc(size);
+#if GREP_PCRE2_DEBUG_MALLOC
+	static int count = 1;
+	fprintf(stderr, "PCRE2:%p -> #%02d: alloc(%lu)\n", pointer, count++, size);
+#endif
+	return pointer;
+}
+
+static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
+{
+#if GREP_PCRE2_DEBUG_MALLOC
+	static int count = 1;
+	if (pointer)
+		fprintf(stderr, "PCRE2:%p -> #%02d: free()\n", pointer, count++);
+#endif
+	free(pointer);
+}
+
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
 {
 	int error;
