@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2021, #02; Wed, 10)
-X-master-at: f9f2520108bab26a750bcbb00518dc27672cf0a2
-X-next-at: 12f37433bd80c76d67aa57b8e233c31bae0a769d
+Subject: What's cooking in git.git (Feb 2021, #03; Wed, 17)
+X-master-at: 328c10930387d301560f7cbcd3351cc485a13381
+X-next-at: 45526154a57d15947cad7262230d0b935cedb9d3
 
-What's cooking in git.git (Feb 2021, #02; Wed, 10)
+What's cooking in git.git (Feb 2021, #03; Wed, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,9 +12,7 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The seventh batch of topics are in 'master'.  On the 'maint' front,
-bunch of fixes that have already been in 'master' were merged there
-and the result has been tagged as Git 2.30.1.
+The eighth batch of topics are in 'master'.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -47,380 +45,80 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/detox-gettext-tests (2021-01-21) 3 commits
-  (merged to 'next' on 2021-02-01 at 5573b4913c)
- + tests: remove uses of GIT_TEST_GETTEXT_POISON=false
- + tests: remove support for GIT_TEST_GETTEXT_POISON
- + ci: remove GETTEXT_POISON jobs
+* ab/tests-various-fixup (2021-01-23) 10 commits
+  (merged to 'next' on 2021-02-01 at a604a6e217)
+ + rm tests: actually test for SIGPIPE in SIGPIPE test
+ + archive tests: use a cheaper "zipinfo -h" invocation to get header
+ + upload-pack tests: avoid a non-zero "grep" exit status
+ + git-svn tests: rewrite brittle tests to use "--[no-]merges".
+ + git svn mergeinfo tests: refactor "test -z" to use test_must_be_empty
+ + git svn mergeinfo tests: modernize redirection & quoting style
+ + cache-tree tests: explicitly test HEAD and index differences
+ + cache-tree tests: use a sub-shell with less indirection
+ + cache-tree tests: remove unused $2 parameter
+ + cache-tree tests: refactor for modern test style
 
- Get rid of "GETTEXT_POISON" support altogether, which may or may
- not be controversial.
-
-
-* ab/grep-pcre-invalid-utf8 (2021-01-24) 2 commits
-  (merged to 'next' on 2021-02-01 at 60be521876)
- + grep/pcre2: better support invalid UTF-8 haystacks
- + grep/pcre2 tests: don't rely on invalid UTF-8 data test
-
- Update support for invalid UTF-8 in PCRE2.
+ Various test updates.
 
 
-* ab/lose-grep-debug (2021-01-26) 1 commit
-  (merged to 'next' on 2021-01-31 at 9b7548efce)
- + grep/log: remove hidden --debug and --grep-debug options
+* en/merge-ort-perf (2021-01-23) 6 commits
+  (merged to 'next' on 2021-02-01 at ca3c07579b)
+ + merge-ort: begin performance work; instrument with trace2_region_* calls
+ + merge-ort: ignore the directory rename split conflict for now
+ + merge-ort: fix massive leak
+ + Merge branch 'en/ort-directory-rename' into en/merge-ort-perf
+ + Merge branch 'en/ort-conflict-handling' into en/merge-ort-perf
+ + Merge branch 'en/diffcore-rename' into en/merge-ort-perf
+ (this branch uses en/ort-directory-rename.)
 
- Lose the debugging aid that may have been useful in the past, but
- no longer is, in the "grep" codepaths.
-
-
-* ab/retire-pcre1 (2021-01-23) 2 commits
-  (merged to 'next' on 2021-02-01 at 532a0a8228)
- + Remove support for v1 of the PCRE library
- + config.mak.uname: remove redundant NO_LIBPCRE1_JIT flag
-
- The support for deprecated PCRE1 library has been dropped.
+ The "ort" merge strategy.
 
 
-* ds/cache-tree-basics (2021-01-15) 10 commits
-  (merged to 'next' on 2021-01-25 at 29ee74df7b)
- + cache-tree: speed up consecutive path comparisons
- + cache-tree: use ce_namelen() instead of strlen()
- + index-format: discuss recursion of cache-tree better
- + index-format: update preamble to cache tree extension
- + index-format: use 'cache tree' over 'cached tree'
- + cache-tree: trace regions for prime_cache_tree
- + cache-tree: trace regions for I/O
- + cache-tree: use trace2 in cache_tree_update()
- + unpack-trees: add trace2 regions
- + tree-walk: report recursion counts
- (this branch is used by ds/more-index-cleanups.)
-
- Document, clean-up and optimize the code around the cache-tree
- extension in the index.
-
-
-* ds/more-index-cleanups (2021-01-23) 9 commits
-  (merged to 'next' on 2021-02-01 at bcdfa11e73)
- + t1092: test interesting sparse-checkout scenarios
- + test-lib: test_region looks for trace2 regions
- + sparse-checkout: load sparse-checkout patterns
- + name-hash: use trace2 regions for init
- + repository: add repo reference to index_state
- + fsmonitor: de-duplicate BUG()s around dirty bits
- + cache-tree: extract subtree_pos()
- + cache-tree: simplify verify_cache() prototype
- + cache-tree: clean up cache_tree_update()
-
- Cleaning various codepaths up.
-
-
-* en/ort-conflict-handling (2021-01-04) 10 commits
-  (merged to 'next' on 2021-01-25 at 369c1516c4)
- + merge-ort: add handling for different types of files at same path
- + merge-ort: copy find_first_merges() implementation from merge-recursive.c
- + merge-ort: implement format_commit()
- + merge-ort: copy and adapt merge_submodule() from merge-recursive.c
- + merge-ort: copy and adapt merge_3way() from merge-recursive.c
- + merge-ort: flesh out implementation of handle_content_merge()
- + merge-ort: handle book-keeping around two- and three-way content merge
- + merge-ort: implement unique_path() helper
- + merge-ort: handle directory/file conflicts that remain
- + merge-ort: handle D/F conflict where directory disappears due to merge
+* en/ort-directory-rename (2021-01-20) 18 commits
+  (merged to 'next' on 2021-02-01 at 5c1cdd13a1)
+ + merge-ort: fix a directory rename detection bug
+ + merge-ort: process_renames() now needs more defensiveness
+ + merge-ort: implement apply_directory_rename_modifications()
+ + merge-ort: add a new toplevel_dir field
+ + merge-ort: implement handle_path_level_conflicts()
+ + merge-ort: implement check_for_directory_rename()
+ + merge-ort: implement apply_dir_rename() and check_dir_renamed()
+ + merge-ort: implement compute_collisions()
+ + merge-ort: modify collect_renames() for directory rename handling
+ + merge-ort: implement handle_directory_level_conflicts()
+ + merge-ort: implement compute_rename_counts()
+ + merge-ort: copy get_renamed_dir_portion() from merge-recursive.c
+ + merge-ort: add outline of get_provisional_directory_renames()
+ + merge-ort: add outline for computing directory renames
+ + merge-ort: collect which directories are removed in dirs_removed
+ + merge-ort: initialize and free new directory rename data structures
+ + merge-ort: add new data structures for directory rename detection
+ + Merge branch 'en/merge-ort-3' into en/ort-directory-rename
  (this branch is used by en/merge-ort-perf.)
 
- ORT merge strategy learns more support for merge conflicts.
+ ORT merge strategy learns to infer "renamed directory" while
+ merging.
 
 
-* jk/p5303-sed-portability-fix (2021-01-29) 1 commit
-  (merged to 'next' on 2021-01-31 at 5f2957e738)
- + p5303: avoid sed GNU-ism
+* jk/complete-branch-force-delete (2021-02-03) 3 commits
+  (merged to 'next' on 2021-02-03 at 6454bb89b5)
+ + doc/git-branch: fix awkward wording for "-c"
+ + completion: handle other variants of "branch -m"
+ + completion: treat "branch -D" the same way as "branch -d"
 
- A perf script was made more portable.
+ The command line completion (in contrib/) completed "git branch -d"
+ with branch names, but "git branch -D" offered tagnames in addition,
+ which has been corrected.  "git branch -M" had the same problem.
 
 
-* jk/pretty-lazy-load-commit (2021-01-28) 1 commit
-  (merged to 'next' on 2021-02-01 at acf7353a32)
- + pretty: lazy-load commit data when expanding user-format
+* jv/upload-pack-filter-spec-quotefix (2021-02-02) 2 commits
+  (merged to 'next' on 2021-02-03 at 2e34f74e3a)
+ + t5544: clarify 'hook works with partial clone' test
+  (merged to 'next' on 2021-01-31 at 789bf4154e)
+ + upload-pack.c: fix filter spec quoting bug
 
- Some pretty-format specifiers do not need the data in commit object
- (e.g. "%H"), but we were over-eager to load and parse it, which has
- been made even lazier.
-
-
-* jk/t0000-cleanups (2021-01-28) 4 commits
-  (merged to 'next' on 2021-01-31 at 357f8fe097)
- + t0000: consistently use single quotes for outer tests
- + t0000: run cleaning test inside sub-test
- + t0000: run prereq tests inside sub-test
- + t0000: keep clean-up tests together
-
- Code clean-up.
-
-
-* jk/use-oid-pos (2021-01-28) 6 commits
-  (merged to 'next' on 2021-01-31 at 10ccafb739)
- + oid_pos(): access table through const pointers
- + hash_pos(): convert to oid_pos()
- + rerere: use strmap to store rerere directories
- + rerere: tighten rr-cache dirname check
- + rerere: check dirname format while iterating rr_cache directory
- + commit_graft_pos(): take an oid instead of a bare hash
-
- Code clean-up to ensure our use of hashtables using object names as
- keys use the "struct object_id" objects, not the raw hash values.
-
-
-* jk/weather-balloon-require-variadic-macro (2021-01-27) 1 commit
-  (merged to 'next' on 2021-01-31 at 8d5207bd85)
- + git-compat-util: always enable variadic macros
-
- We've carried compatibility codepaths for compilers without
- variadic macros for quite some time, but the world may be ready for
- them to be removed.  Force compilation failure on exotic platforms
- where variadic macros are not available to find out who screams in
- such a way that we can easily revert if it turns out that the world
- is not yet ready.
-
-
-* js/rebase-i-commit-cleanup-fix (2021-01-28) 1 commit
-  (merged to 'next' on 2021-01-31 at 358f562e1f)
- + rebase -i: do leave commit message intact in fixup! chains
-
- When "git rebase -i" processes "fixup" insn, there is no reason to
- clean up the commit log message, but we did the usual stripspace
- processing.  This has been corrected.
-
-
-* jv/pack-objects-narrower-ref-iteration (2021-01-22) 1 commit
-  (merged to 'next' on 2021-01-26 at 8a0d178c01)
- + builtin/pack-objects.c: avoid iterating all refs
-
- The "pack-objects" command needs to iterate over all the tags when
- automatic tag following is enabled, but it actually iterated over
- all refs and then discarded everything outside "refs/tags/"
- hierarchy, which was quite wasteful.
-
-
-* pb/blame-funcname-range-userdiff (2021-01-30) 1 commit
-  (merged to 'next' on 2021-01-31 at 107d10fe4f)
- + annotate-tests: quote variable expansions containing path names
-
- Test fix.
-
-
-* pb/ci-matrix-wo-shortcut (2021-01-27) 1 commit
-  (merged to 'next' on 2021-01-31 at 2384693758)
- + ci: do not cancel all jobs of a matrix if one fails
-
- Our setting of GitHub CI test jobs were a bit too eager to give up
- once there is even one failure found.  Tweak the knob to allow
- other jobs keep running even when we see a failure, so that we can
- find more failures in a single run.
-
-
-* ph/use-delete-refs (2021-01-21) 1 commit
-  (merged to 'next' on 2021-01-26 at e03486152e)
- + use delete_refs when deleting tags or branches
-
- When removing many branches and tags, the code used to do so one
- ref at a time.  There is another API it can use to delete multiple
- refs, and it makes quite a lot of performance difference when the
- refs are packed.
-
-
-* rs/worktree-list-verbose (2021-01-30) 7 commits
-  (merged to 'next' on 2021-02-01 at b57a6ce4c6)
- + worktree: teach `list` verbose mode
- + worktree: teach `list` to annotate prunable worktree
- + worktree: teach `list --porcelain` to annotate locked worktree
- + t2402: ensure locked worktree is properly cleaned up
- + worktree: teach worktree_lock_reason() to gently handle main worktree
- + worktree: teach worktree to lazy-load "prunable" reason
- + worktree: libify should_prune_worktree()
-
- `git worktree list` now annotates worktrees as prunable, shows
- locked and prunable attributes in --porcelain mode, and gained
- a --verbose option.
- cf. <CAPig+cTt-TyOR8kc6YvBVLpf-bgFdJ+FVYA2NvG_Vvn7tMbBkQ@mail.gmail.com>
-
-
-* sg/t7800-difftool-robustify (2021-01-09) 1 commit
-  (merged to 'next' on 2021-01-31 at fb72af8200)
- + t7800-difftool: don't accidentally match tmp dirs
-
- Test fix.
-
-
-* sg/test-stress-jobs (2021-01-26) 1 commit
-  (merged to 'next' on 2021-02-01 at 0b7aae84e3)
- + test-lib: prevent '--stress-jobs=X' from being ignored
-
- Test framework fix.
-
-
-* so/log-diff-merge (2020-12-21) 32 commits
-  (merged to 'next' on 2021-01-25 at 63977ef287)
- + t4013: add tests for --diff-merges=first-parent
- + doc/git-show: include --diff-merges description
- + doc/rev-list-options: document --first-parent changes merges format
- + doc/diff-generate-patch: mention new --diff-merges option
- + doc/git-log: describe new --diff-merges options
- + diff-merges: add '--diff-merges=1' as synonym for 'first-parent'
- + diff-merges: add old mnemonic counterparts to --diff-merges
- + diff-merges: let new options enable diff without -p
- + diff-merges: do not imply -p for new options
- + diff-merges: implement new values for --diff-merges
- + diff-merges: make -m/-c/--cc explicitly mutually exclusive
- + diff-merges: refactor opt settings into separate functions
- + diff-merges: get rid of now empty diff_merges_init_revs()
- + diff-merges: group diff-merge flags next to each other inside 'rev_info'
- + diff-merges: split 'ignore_merges' field
- + diff-merges: fix -m to properly override -c/--cc
- + t4013: add tests for -m failing to override -c/--cc
- + t4013: support test_expect_failure through ':failure' magic
- + diff-merges: revise revs->diff flag handling
- + diff-merges: handle imply -p on -c/--cc logic for log.c
- + diff-merges: introduce revs->first_parent_merges flag
- + diff-merges: new function diff_merges_set_dense_combined_if_unset()
- + diff-merges: new function diff_merges_suppress()
- + diff-merges: re-arrange functions to match the order they are called in
- + diff-merges: rename diff_merges_default_to_enable() to match semantics
- + diff-merges: move checks for first_parent_only out of the module
- + diff-merges: rename all functions to have common prefix
- + revision: move diff merges functions to its own diff-merges.c
- + revision: provide implementation for diff merges tweaks
- + revision: factor out initialization of diff-merge related settings
- + revision: factor out setup of diff-merge related settings
- + revision: factor out parsing of diff-merge related options
-
- "git log" learned a new "--diff-merges=<how>" option.
-
-
-* tb/ls-refs-optim (2021-01-22) 3 commits
-  (merged to 'next' on 2021-01-26 at 09edbf7d9a)
- + ls-refs.c: traverse prefixes of disjoint "ref-prefix" sets
- + ls-refs.c: initialize 'prefixes' before using it
- + refs: expose 'for_each_fullref_in_prefixes'
-
- The ls-refs protocol operation has been optimized to narrow the
- sub-hierarchy of refs/ it walks to produce response.
-
-
-* zh/ls-files-deduplicate (2021-01-23) 3 commits
-  (merged to 'next' on 2021-01-26 at af7522d2cf)
- + ls-files.c: add --deduplicate option
- + ls_files.c: consolidate two for loops into one
- + ls_files.c: bugfix for --deleted and --modified
-
- "git ls-files" can and does show multiple entries when the index is
- unmerged, which is a source for confusion unless -s/-u option is in
- use.  A new option --deduplicate has been introduced.
-
---------------------------------------------------
-[New Topics]
-
-* js/range-diff-one-side-only (2021-02-06) 6 commits
-  (merged to 'next' on 2021-02-08 at 8c35ed8523)
- + range-diff: offer --left-only/--right-only options
- + range-diff: move the diffopt initialization down one layer
- + range-diff: combine all options in a single data structure
- + range-diff: simplify code spawning `git log`
- + range-diff: libify the read_patches() function again
- + range-diff: avoid leaking memory in two error code paths
-
- The "git range-diff" command learned "--(left|right)-only" option
- to show only one side of the compared range.
-
- Will merge to 'master'.
-
-
-* cm/rebase-i-updates (2021-02-10) 11 commits
- - doc/rebase -i: fix typo in the documentation of 'fixup' command
- - t/t3437: fixup the test 'multiple fixup -c opens editor once'
- - t/t3437: use named commits in the tests
- - t/t3437: simplify and document the test helpers
- - t/t3437: check the author date of fixed up commit
- - t/t3437: remove the dependency of 'expected-message' file from tests
- - t/t3437: fixup here-docs in the 'setup' test
- - t/lib-rebase: update the documentation of FAKE_LINES
- - rebase -i: clarify and fix 'fixup -c' rebase-todo help
- - sequencer: rename a few functions
- - sequencer: fixup the datatype of the 'flag' argument
- (this branch uses cm/rebase-i.)
-
- Follow-up fixes to "cm/rebase-i" topic.
-
- Will merge to 'next' after waiting for a few more days for comments.
-
-
-* cw/pack-vs-bigfilethreashold (2021-02-09) 2 commits
- - fixup! doc: mention bigFileThreshold for packing
- - doc: mention bigFileThreshold for packing
-
- Doc update.
-
- Expecting a reroll.
- cf. <F63929A8-7BC9-43A7-9E7B-118433F62588@gmx.ch>
-
-
-* ds/maintenance-pack-refs (2021-02-09) 2 commits
- - maintenance: incremental strategy runs pack-refs weekly
- - maintenance: add pack-refs task
-
- "git maintenance" tool learned a new "pack-refs" maintenance task.
-
- Will merge to 'next' after waiting for a few more days for comments.
-
-
-
-* jk/mailmap-only-at-root (2021-02-10) 1 commit
- - mailmap: only look for .mailmap in work tree
-
- The .mailmap is documented to be read only from the root level of a
- working tree, but a stray file in a bare repository also was read
- by accident, which has been corrected.
-
- Will merge to 'next'.
-
-
-* jk/rev-list-disk-usage (2021-02-09) 3 commits
- - fixup! rev-list: add --disk-usage option for calculating disk usage
- - rev-list: add --disk-usage option for calculating disk usage
- - t: add --no-tag option to test_commit
-
- "git rev-list" command learned "--disk-usage" option.
-
-
-* jt/trace2-BUG (2021-02-09) 1 commit
-  (merged to 'next' on 2021-02-09 at 94911ad676)
- + usage: trace2 BUG() invocations
-
- Even though invocations of "die()" were logged to the trace2
- system, "BUG()"s were not, which has been corrected.
-
- Will merge to 'master'.
-
-
-* mt/checkout-index-corner-cases (2021-02-09) 2 commits
- - checkout-index: omit entries with no tempname from --temp output
- - write_entry(): fix misuses of `path` in error messages
-
- The error codepath around the "--temp/--prefix" feature of "git
- checkout-index" has been improved.
-
- Expecting additional tests.
-
-
-* mt/grep-cached-untracked (2021-02-09) 1 commit
- - grep: error out if --untracked is used with --cached
-
- "git grep --untracked" is meant to be "let's ALSO find in these
- files on the filesystem" when looking for matches in the working
- tree files, and does not make any sense if the primary search is
- done against the index, or the tree objects.  The "--cached" and
- "--untracked" options have been marked as mutually incompatible.
-
- Will merge to 'next'.
+ Fix in passing custom args from "git clone" to "upload-pack" on the
+ other side.
 
 
 * tb/ci-run-cocci-with-18.04 (2021-02-08) 1 commit
@@ -431,63 +129,305 @@ Release tarballs are available at:
  has been updated to one that lack coccinelle; until it gets fixed,
  work it around by sticking to the previous release (18.04).
 
+
+* tb/pack-revindex-on-disk (2021-01-28) 10 commits
+  (merged to 'next' on 2021-02-01 at bd6a780213)
+ + t5325: check both on-disk and in-memory reverse index
+ + pack-revindex: ensure that on-disk reverse indexes are given precedence
+ + t: support GIT_TEST_WRITE_REV_INDEX
+ + t: prepare for GIT_TEST_WRITE_REV_INDEX
+ + Documentation/config/pack.txt: advertise 'pack.writeReverseIndex'
+ + builtin/pack-objects.c: respect 'pack.writeReverseIndex'
+ + builtin/index-pack.c: write reverse indexes
+ + builtin/index-pack.c: allow stripping arbitrary extensions
+ + pack-write.c: prepare to write 'pack-*.rev' files
+ + packfile: prepare for the existence of '*.rev' files
+ (this branch is used by tb/reverse-midx.)
+
+ Introduce an on-disk file to record revindex for packdata, which
+ traditionally was always created on the fly and only in-core.
+
+
+* tb/precompose-prefix-too (2021-02-03) 1 commit
+  (merged to 'next' on 2021-02-05 at 1dd43136b1)
+ + MacOS: precompose_argv_prefix()
+
+ When commands are started from a subdirectory, they may have to
+ compare the path to the subdirectory (called prefix and found out
+ from $(pwd)) with the tracked paths.  On macOS, $(pwd) and
+ readdir() yield decomposed path, while the tracked paths are
+ usually normalized to the precomposed form, causing mismatch.  This
+ has been fixed by taking the same approach used to normalize the
+ command line arguments.
+
+--------------------------------------------------
+[New Topics]
+
+* tb/reverse-midx (2021-02-10) 9 commits
+ - pack-revindex: write multi-pack reverse indexes
+ - pack-write.c: extract 'write_rev_file_order'
+ - pack-revindex: read multi-pack reverse indexes
+ - Documentation/technical: describe multi-pack reverse indexes
+ - midx: make some functions non-static
+ - midx: keep track of the checksum
+ - midx: don't free midx_name early
+ - midx: allow marking a pack as preferred
+ - t/helper/test-read-midx.c: add '--show-objects'
+
+ An on-disk reverse-index to map the in-pack location of an object
+ back to its object name across multiple packfiles is introduced.
+
+
+* ab/detox-gettext-tests (2021-02-10) 4 commits
+ - tests: remove most uses of test_i18ncmp
+ - tests: remove last uses of C_LOCALE_OUTPUT
+ - tests: remove most uses of C_LOCALE_OUTPUT
+ - tests: remove last uses of GIT_TEST_GETTEXT_POISON=false
+
+ Removal of GIT_TEST_GETTEXT_POISON continues.
+
+ Will merge to 'next'.
+
+
+* ab/diff-deferred-free (2021-02-11) 2 commits
+  (merged to 'next' on 2021-02-12 at 5e24106122)
+ + diff: plug memory leak from regcomp() on {log,diff} -I
+ + diff: add an API for deferred freeing
+
+ A small memleak in "diff -I<regexp>" has been corrected.
+
  Will merge to 'master'.
 
 
-* ab/test-lib (2021-02-10) 12 commits
- - test-lib-functions: split out {debug,path,text} helpers
- - test-lib-functions: assert correct parameter count
- - test-lib-functions: remove bug-inducing "diagnostics" helper param
- - test libs: rename "diff-lib" to "lib-diff"
- - t/.gitattributes: sort lines
- - test-lib-functions: move function to lib-bitmap.sh
- - test libs: rename gitweb-lib.sh to lib-gitweb.sh
- - test libs: rename bundle helper to "lib-bundle.sh"
- - test-lib-functions: remove generate_zero_bytes() wrapper
- - test-lib-functions: move test_set_index_version() to its user
- - test lib: change "error" to "BUG" as appropriate
- - test-lib: remove check_var_migration
+* ak/config-bad-bool-error (2021-02-11) 1 commit
+  (merged to 'next' on 2021-02-12 at 76784be663)
+ + config: improve error message for boolean config
 
- Test framework clean-up.
+ The error message given when a configuration variable that is
+ expected to have a boolean value has been improved.
+
+ Will merge to 'master'.
 
 
-* dl/stash-cleanup (2021-02-09) 7 commits
- - stash: declare ref_stash as an array
- - t3905: use test_cmp() to check file contents
- - t3905: replace test -s with test_file_not_empty
- - t3905: remove nested git in command substitution
- - t3905: move all commands into test cases
- - t3905: remove spaces after redirect operators
- - git-stash.txt: be explicit about subcommand options
+* jc/diffcore-rotate (2021-02-16) 1 commit
+ - diff: --{rotate,skip}-to=<path>
 
- Documentation, code and test clean-up around "git stash".
-
- Will merge to 'next' and to 'master' soonish.
- This is an early part of a topic that added a new feature to the 
- command, but the implementation is expected to need a handful of
- iterations; I split the preparatory part up to fast-track it.
-
-
-* ew/rev-parse-since-test (2021-02-10) 1 commit
- - t1500: ensure current --since= behavior remains
-
- Test to make sure "git rev-parse one-thing one-thing" gives
- the same thing twice (when one-thing is --since=X).
+ "git {diff,log} --{skip,rotate}-to=<path>" allows the user to
+ discard diff output for early paths or move them to the end of the
+ output.
 
  Will merge to 'next'.
 
 
-* js/fsck-name-objects-fix (2021-02-10) 2 commits
- - fsck --name-objects: be more careful parsing generation numbers
- - t1450: robustify `remove_object()`
+* js/commit-graph-warning (2021-02-11) 1 commit
+  (merged to 'next' on 2021-02-12 at e9faad550a)
+ + commit-graph: when incompatible with graphs, indicate why
 
- Fix "git fsck --name-objects" which apparently has not been used by
- anybody who is motivated enough to report breakage.
+ When certain features (e.g. grafts) used in the repository are
+ incompatible with the use of the commit-graph, we used to silently
+ turned commit-graph off; we now tell the user what we are doing.
+
+ Will merge to 'master'.
+
+
+* js/reflog-expire-stale-fix (2021-02-11) 1 commit
+  (merged to 'next' on 2021-02-12 at 899034efca)
+ + reflog expire --stale-fix: be generous about missing objects
+
+ "git reflog expire --stale-fix" can be used to repair the reflog by
+ removing entries that refer to objects that have been pruned away,
+ but was not careful to tolerate missing objects.
+
+ Will merge to 'master'.
+
+
+* mz/doc-notes-are-not-anchors (2021-02-10) 1 commit
+ - docs: clarify that refs/notes/ do not keep the attached objects alive
+
+ Objects that lost references can be pruned away, even when they
+ have notes attached to it (and these notes will become dangling,
+ which in turn can be pruned with "git notes prune").  This has been
+ clarified in the documentation.
 
  Will merge to 'next'.
+
+
+* en/diffcore-rename (2021-02-15) 8 commits
+ - merge-ort: call diffcore_rename() directly
+ - gitdiffcore doc: mention new preliminary step for rename detection
+ - diffcore-rename: guide inexact rename detection based on basenames
+ - diffcore-rename: complete find_basename_matches()
+ - diffcore-rename: compute basenames of source and dest candidates
+ - t4001: add a test comparing basename similarity and content similarity
+ - diffcore-rename: filter rename_src list when possible
+ - diffcore-rename: no point trying to find a match better than exact
+
+ Performance optimization work on the rename detection continues.
+
+ Will merge to 'next'.
+
+
+* ab/pickaxe-pcre2 (2021-02-16) 24 commits
+ - pickaxe -G: don't special-case create/delete
+ - pickaxe -G: terminate early on matching lines
+ - xdiff-interface: support early exit in xdiff_outf()
+ - xdiff-interface: allow early return from xdiff_emit_{line,hunk}_fn
+ - pickaxe -S: slightly optimize contains()
+ - pickaxe: rename variables in has_changes() for brevity
+ - pickaxe -S: support content with NULs under --pickaxe-regex
+ - pickaxe: assert that we must have a needle under -G or -S
+ - pickaxe: refactor function selection in diffcore-pickaxe()
+ - perf: add performance test for pickaxe
+ - pickaxe/style: consolidate declarations and assignments
+ - diff.h: move pickaxe fields together again
+ - pickaxe: die when --find-object and --pickaxe-all are combined
+ - pickaxe: die when -G and --pickaxe-regex are combined
+ - pickaxe tests: test for -G, -S and --find-object incompatibility
+ - pickaxe tests: add test for "log -S" not being a regex
+ - pickaxe tests: add test for diffgrep_consume() internals
+ - pickaxe tests: refactor to use test_commit --append --printf
+ - test-lib functions: add --printf option to test_commit
+ - test-lib-functions: reword "test_commit --append" docs
+ - test-lib-functions: document and test test_commit --no-tag
+ - grep/pcre2 tests: reword comments referring to kwset
+ - Merge branch 'jk/rev-list-disk-usage' into ab/pickaxe-pcre2
+ - Merge branch 'ab/test-lib' into ab/pickaxe-pcre2
+ (this branch uses ab/test-lib and jk/rev-list-disk-usage.)
+
+
+* cm/rebase-i-fixup-amend-reword (2021-02-17) 6 commits
+ - doc/git-commit: add documentation for fixup[amend|reword] options
+ - t3437: use --fixup with options to create amend! commit
+ - t7500: add tests for --fixup[amend|reword] options
+ - commit: add a reword suboption to --fixup
+ - commit: add amend suboption to --fixup to create amend! commit
+ - sequencer: export subject_length()
+ (this branch uses cm/rebase-i and cm/rebase-i-updates.)
+
+ "git commit --fixup" learns to optionally create "amend!" and
+ "reword!"  commits, that use the log message in "fixup" commit
+ as the message of the resulting commit.
+
+
+* dl/stash-show-untracked (2021-02-16) 4 commits
+ - SQUASH???
+ - SQUASH???
+ - stash show: learn stash.showIncludeUntracked
+ - stash show: teach --include-untracked and --only-untracked
+ (this branch uses dl/stash-cleanup.)
+
+ "git stash show" learned to optionally show untracked part of the
+ stash.
+
+
+* es/config-hooks-part-1 (2021-02-16) 17 commits
+ - hooks: allow callers to capture output
+ - run-command: allow capturing of collated output
+ - hook: provide stdin by string_list or callback
+ - run-command: add stdin callback for parallelization
+ - hook: allow specifying working directory for hooks
+ - hook: allow parallel hook execution
+ - run-command: allow stdin for run_processes_parallel
+ - hook: support passing stdin to hooks
+ - hook: replace find_hook() with hook_exists()
+ - hook: add 'run' subcommand
+ - parse-options: parse into strvec
+ - hook: implement hookcmd.<name>.skip
+ - hook: respect hook.runHookDir
+ - hook: include hookdir hook in list
+ - hook: add list command
+ - hook: scaffolding for git-hook subcommand
+ - doc: propose hooks managed by the config
+ (this branch is used by es/config-hooks.)
+
+ A way to specify hooks in the configuration files is introduced.
+
+ Will merge to 'next'.
+
+
+* jh/fsmonitor-prework (2021-02-16) 11 commits
+ - fsmonitor: refactor initialization of fsmonitor_last_update token
+ - fsmonitor: allow all entries for a folder to be invalidated
+ - fsmonitor: log FSMN token when reading and writing the index
+ - fsmonitor: log invocation of FSMonitor hook to trace2
+ - read-cache: log the number of scanned files to trace2
+ - read-cache: log the number of lstat calls to trace2
+ - preload-index: log the number of lstat calls to trace2
+ - p7519: add trace logging during perf test
+ - p7519: move watchman cleanup earlier in the test
+ - p7519: fix watchman watch-list test on Windows
+ - p7519: do not rely on "xargs -d" in test
+
+ Preliminary changes to fsmonitor integration.
+
+ Will merge to 'next'.
+
+
+* jk/open-dotgitx-with-nofollow (2021-02-16) 6 commits
+ - mailmap: do not respect symlinks for in-tree .mailmap
+ - exclude: do not respect symlinks for in-tree .gitignore
+ - attr: do not respect symlinks for in-tree .gitattributes
+ - exclude: add flags parameter to add_patterns()
+ - attr: convert "macro_ok" into a flags field
+ - add open_nofollow() helper
+
+ It does not make sense to make ".gitattributes", ".gitignore" and
+ ".mailmap" symlinks, as they are supposed to be usable from the
+ object store (think: bare repositories where HEAD:.mailmap etc. are
+ used).  When these files are symbolic links, we used to read the
+ contents of the files pointed by them by mistake, which has been
+ corrected.
+
+
+* js/doc-proto-v2-response-end (2021-02-17) 1 commit
+ - doc: fix naming of response-end-pkt
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* ma/doc-markup-fix (2021-02-17) 2 commits
+ - gitmailmap.txt: fix rendering of e-mail addresses
+ - rev-list-options.txt: fix rendering of bonus paragraph
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* rs/blame-optim (2021-02-17) 1 commit
+ - blame: remove unnecessary use of get_commit_info()
+
+ Optimization in "git blame"
+
+ Will merge to 'next'.
+
+
+* rs/pretty-describe (2021-02-17) 2 commits
+ - pretty: add merge and exclude options to %(describe)
+ - pretty: add %(describe)
+
+ "git log --format='...'" learned "%(describe)" placeholder.
 
 --------------------------------------------------
 [Stalled]
+
+* ab/make-cleanup (2021-02-01) 6 commits
+ - Makefile: add {program,xdiff,test,git}-objs & objects targets
+ - Makefile: split OBJECTS into OBJECTS and GIT_OBJS
+ - Makefile: sort OBJECTS assignment for subsequent change
+ - Makefile: split up long OBJECTS line
+ - Makefile: guard against TEST_OBJS in the environment
+ - Makefile: remove "all" on "$(FUZZ_OBJS)"
+
+ Reorganize Makefile to allow building git.o and other essential
+ objects without extra stuff needed only for testing.
+
+ Expecting a reroll (or retraction)
+ cf. <YBuZVfnc0ECuoKkK@coredump.intra.peff.net>
+ cf. <xmqq1rdzjuaa.fsf@gitster.c.googlers.com>
+
 
 * jk/symlinked-dotgitx-files (2020-10-23) 9 commits
  - docs: document symlink restrictions for .git* files
@@ -573,7 +513,177 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* sv/t7001-modernize (2021-02-09) 10 commits
+* js/range-diff-one-side-only (2021-02-06) 6 commits
+  (merged to 'next' on 2021-02-08 at 8c35ed8523)
+ + range-diff: offer --left-only/--right-only options
+ + range-diff: move the diffopt initialization down one layer
+ + range-diff: combine all options in a single data structure
+ + range-diff: simplify code spawning `git log`
+ + range-diff: libify the read_patches() function again
+ + range-diff: avoid leaking memory in two error code paths
+
+ The "git range-diff" command learned "--(left|right)-only" option
+ to show only one side of the compared range.
+
+ Will merge to 'master'.
+
+
+* cm/rebase-i-updates (2021-02-10) 11 commits
+  (merged to 'next' on 2021-02-12 at e29227780b)
+ + doc/rebase -i: fix typo in the documentation of 'fixup' command
+ + t/t3437: fixup the test 'multiple fixup -c opens editor once'
+ + t/t3437: use named commits in the tests
+ + t/t3437: simplify and document the test helpers
+ + t/t3437: check the author date of fixed up commit
+ + t/t3437: remove the dependency of 'expected-message' file from tests
+ + t/t3437: fixup here-docs in the 'setup' test
+ + t/lib-rebase: update the documentation of FAKE_LINES
+ + rebase -i: clarify and fix 'fixup -c' rebase-todo help
+ + sequencer: rename a few functions
+ + sequencer: fixup the datatype of the 'flag' argument
+ (this branch is used by cm/rebase-i-fixup-amend-reword; uses cm/rebase-i.)
+
+ Follow-up fixes to "cm/rebase-i" topic.
+
+ Will merge to 'master', together with "cm/rebase-i".
+
+
+* cw/pack-vs-bigfilethreashold (2021-02-09) 2 commits
+ - fixup! doc: mention bigFileThreshold for packing
+ - doc: mention bigFileThreshold for packing
+
+ Doc update.
+
+ Expecting a reroll.
+ cf. <F63929A8-7BC9-43A7-9E7B-118433F62588@gmx.ch>
+
+
+* ds/maintenance-pack-refs (2021-02-09) 2 commits
+  (merged to 'next' on 2021-02-11 at 36f56bc9ec)
+ + maintenance: incremental strategy runs pack-refs weekly
+ + maintenance: add pack-refs task
+
+ "git maintenance" tool learned a new "pack-refs" maintenance task.
+
+ Will merge to 'master'.
+
+
+* jk/mailmap-only-at-root (2021-02-10) 1 commit
+  (merged to 'next' on 2021-02-10 at fbd122fd6c)
+ + mailmap: only look for .mailmap in work tree
+
+ The .mailmap is documented to be read only from the root level of a
+ working tree, but a stray file in a bare repository also was read
+ by accident, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* jk/rev-list-disk-usage (2021-02-11) 2 commits
+  (merged to 'next' on 2021-02-11 at 6fb701f287)
+ + rev-list: add --disk-usage option for calculating disk usage
+ + t: add --no-tag option to test_commit
+ (this branch is used by ab/pickaxe-pcre2.)
+
+ "git rev-list" command learned "--disk-usage" option.
+
+ Will merge to 'master'.
+
+
+* jt/trace2-BUG (2021-02-09) 1 commit
+  (merged to 'next' on 2021-02-09 at 94911ad676)
+ + usage: trace2 BUG() invocations
+
+ Even though invocations of "die()" were logged to the trace2
+ system, "BUG()"s were not, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* mt/checkout-index-corner-cases (2021-02-16) 2 commits
+ - checkout-index: omit entries with no tempname from --temp output
+ - write_entry(): fix misuses of `path` in error messages
+
+ The error codepath around the "--temp/--prefix" feature of "git
+ checkout-index" has been improved.
+
+ Will merge to 'next'.
+
+
+* mt/grep-cached-untracked (2021-02-09) 1 commit
+  (merged to 'next' on 2021-02-10 at e1fca79104)
+ + grep: error out if --untracked is used with --cached
+
+ "git grep --untracked" is meant to be "let's ALSO find in these
+ files on the filesystem" when looking for matches in the working
+ tree files, and does not make any sense if the primary search is
+ done against the index, or the tree objects.  The "--cached" and
+ "--untracked" options have been marked as mutually incompatible.
+
+ Will merge to 'master'.
+
+
+* ab/test-lib (2021-02-12) 11 commits
+  (merged to 'next' on 2021-02-12 at 666a0422dc)
+ + test-lib-functions: assert correct parameter count
+ + test-lib-functions: remove bug-inducing "diagnostics" helper param
+ + test libs: rename "diff-lib" to "lib-diff"
+ + t/.gitattributes: sort lines
+ + test-lib-functions: move function to lib-bitmap.sh
+ + test libs: rename gitweb-lib.sh to lib-gitweb.sh
+ + test libs: rename bundle helper to "lib-bundle.sh"
+ + test-lib-functions: remove generate_zero_bytes() wrapper
+ + test-lib-functions: move test_set_index_version() to its user
+ + test lib: change "error" to "BUG" as appropriate
+ + test-lib: remove check_var_migration
+ (this branch is used by ab/pickaxe-pcre2.)
+
+ Test framework clean-up.
+
+ Will merge to 'master'.
+
+
+* dl/stash-cleanup (2021-02-11) 7 commits
+  (merged to 'next' on 2021-02-11 at ae1cde1380)
+ + stash: declare ref_stash as an array
+ + t3905: use test_cmp() to check file contents
+ + t3905: replace test -s with test_file_not_empty
+ + t3905: remove nested git in command substitution
+ + t3905: move all commands into test cases
+ + t3905: remove spaces after redirect operators
+ + git-stash.txt: be explicit about subcommand options
+ (this branch is used by dl/stash-show-untracked.)
+
+ Documentation, code and test clean-up around "git stash".
+
+ Will merge to 'master'.
+ This is an early part of a topic that added a new feature to the
+ command, but the implementation is expected to need a handful of
+ iterations; I split the preparatory part up to fast-track it.
+
+
+* ew/rev-parse-since-test (2021-02-10) 1 commit
+  (merged to 'next' on 2021-02-11 at 2490918be8)
+ + t1500: ensure current --since= behavior remains
+
+ Test to make sure "git rev-parse one-thing one-thing" gives
+ the same thing twice (when one-thing is --since=X).
+
+ Will merge to 'master'.
+
+
+* js/fsck-name-objects-fix (2021-02-10) 2 commits
+  (merged to 'next' on 2021-02-10 at 79afd7ebdc)
+ + fsck --name-objects: be more careful parsing generation numbers
+ + t1450: robustify `remove_object()`
+
+ Fix "git fsck --name-objects" which apparently has not been used by
+ anybody who is motivated enough to report breakage.
+
+ Will merge to 'master'.
+
+
+* sv/t7001-modernize (2021-02-11) 10 commits
  - t7001: use `test` rather than `[`
  - t7001: use here-docs instead of echo
  - t7001: put each command on a separate line
@@ -587,6 +697,8 @@ Release tarballs are available at:
 
  Test script modernization.
 
+ Expecting the final version with corrected author attribution.
+
 
 * mt/grep-sparse-checkout (2021-02-09) 1 commit
  - grep: honor sparse-checkout on working tree searches
@@ -596,18 +708,6 @@ Release tarballs are available at:
 
  Break out and fast-track bugfix from the remainder of the topic.
  cf. <CABPp-BFkACtF6LHkFJNt9dTOmwfQbf8ZO=BTrPYwPSmbqc9+hg@mail.gmail.com>
-
-
-* ab/make-cleanup (2021-02-01) 6 commits
- - Makefile: add {program,xdiff,test,git}-objs & objects targets
- - Makefile: split OBJECTS into OBJECTS and GIT_OBJS
- - Makefile: sort OBJECTS assignment for subsequent change
- - Makefile: split up long OBJECTS line
- - Makefile: guard against TEST_OBJS in the environment
- - Makefile: remove "all" on "$(FUZZ_OBJS)"
-
- Reorganize Makefile to allow building git.o and other essential
- objects without extra stuff needed only for testing.
 
 
 * ds/commit-graph-genno-fix (2021-02-01) 6 commits
@@ -623,63 +723,54 @@ Release tarballs are available at:
  Fix incremental update of commit-graph file around corrected commit
  date data.
 
- Will merge to 'master'.
+ Will merge to 'master', together with "ak/corrected-commit-date".
 
 
-* jh/simple-ipc (2021-02-01) 13 commits
+* jh/simple-ipc (2021-02-17) 12 commits
+ - t0052: add simple-ipc tests and t/helper/test-simple-ipc tool
  - simple-ipc: add Unix domain socket implementation
- - unix-socket: do not call die in unix_stream_connect()
- - unix-socket: add no-chdir option to unix_stream_listen()
- - unix-socket: add options to unix_stream_listen()
+ - unix-socket: create `unix_stream_server__listen_with_lock()`
+ - unix-socket: disallow chdir() when creating unix domain sockets
+ - unix-socket: add backlog size option to unix_stream_listen()
  - unix-socket: elimiate static unix_stream_socket() helper function
- - simple-ipc: add t/helper/test-simple-ipc and t0052
  - simple-ipc: add win32 implementation
  - simple-ipc: design documentation for new IPC mechanism
- - pkt-line: accept additional options in read_packetized_to_strbuf()
+ - pkt-line: add options argument to read_packetized_to_strbuf()
  - pkt-line: (optionally) libify the packet readers
- - pkt-line: optionally skip the flush packet in write_packetized_from_buf()
- - pkt-line: add write_packetized_from_buf2() that takes scratch buffer
- - pkt-line: promote static buffer in packet_write_gently() to callers
+ - pkt-line: do not issue flush packets in write_packetized_*()
+ - pkt-line: eliminate the need for static buffer in packet_write_gently()
 
  A simple IPC interface gets introduced to build services like
  fsmonitor on top.
 
 
 * ab/pager-exit-log (2021-02-01) 4 commits
- - pager: properly log pager exit code when signalled
- - run-command: add braces for "if" block in wait_or_whine()
- - pager: test for exit code with and without SIGPIPE
- - pager: refactor wait_for_pager() function
+  (merged to 'next' on 2021-02-12 at ffe9f2d364)
+ + pager: properly log pager exit code when signalled
+ + run-command: add braces for "if" block in wait_or_whine()
+ + pager: test for exit code with and without SIGPIPE
+ + pager: refactor wait_for_pager() function
 
  When a pager spawned by us exited, the trace log did not record its
  exit status correctly, which has been corrected.
 
-
-* jk/complete-branch-force-delete (2021-02-03) 3 commits
-  (merged to 'next' on 2021-02-03 at 6454bb89b5)
- + doc/git-branch: fix awkward wording for "-c"
- + completion: handle other variants of "branch -m"
- + completion: treat "branch -D" the same way as "branch -d"
-
- The command line completion (in contrib/) completed "git branch -d"
- with branch names, but "git branch -D" offered tagnames in addition,
- which has been corrected.  "git branch -M" had the same problem.
-
  Will merge to 'master'.
+ The original "what should we do with SIGPIPE?" question remains, though.
 
 
 * ta/hash-function-transition-doc (2021-02-05) 6 commits
- - doc: use https links
- - doc hash-function-transition: move rationale upwards
- - doc hash-function-transition: fix incomplete sentence
- - doc hash-function-transition: use upper case consistently
- - doc hash-function-transition: use SHA-1 and SHA-256 consistently
- - doc hash-function-transition: fix asciidoc output
+  (merged to 'next' on 2021-02-12 at f620f3cfd3)
+ + doc: use https links
+ + doc hash-function-transition: move rationale upwards
+ + doc hash-function-transition: fix incomplete sentence
+ + doc hash-function-transition: use upper case consistently
+ + doc hash-function-transition: use SHA-1 and SHA-256 consistently
+ + doc hash-function-transition: fix asciidoc output
 
  Update formatting and grammar of the hash transition plan
  documentation, plus some updates.
 
- Will merge to 'next' after waiting for comments for a few days.
+ Will merge to 'master'.
 
 
 * ds/chunked-file-api (2021-02-05) 17 commits
@@ -706,7 +797,7 @@ Release tarballs are available at:
  by the multi-pack-index and commit-graph files have been factored
  out, to help codepaths for both filetypes to become more rebust.
 
- Will merge to 'next' after waiting for a few days.
+ Getting there.
 
 
 * ds/merge-base-independent (2021-02-01) 5 commits
@@ -721,10 +812,11 @@ Release tarballs are available at:
  done and was kept from the very beginning of the feature.
 
 
-* hv/trailer-formatting (2021-02-06) 3 commits
+* hv/trailer-formatting (2021-02-15) 4 commits
  - ref-filter: use pretty.c logic for trailers
  - pretty.c: capture invalid trailer argument
  - pretty.c: refactor trailer logic to `format_set_trailers_options()`
+ - t6300: use function to test trailer options
 
  The logic to handle "trailer" related placeholders in the
  "--format=" mechanisms in the "log" family and "for-each-ref"
@@ -746,21 +838,6 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* tb/precompose-prefix-too (2021-02-03) 1 commit
-  (merged to 'next' on 2021-02-05 at 1dd43136b1)
- + MacOS: precompose_argv_prefix()
-
- When commands are started from a subdirectory, they may have to
- compare the path to the subdirectory (called prefix and found out
- from $(pwd)) with the tracked paths.  On macOS, $(pwd) and
- readdir() yield decomposed path, while the tracked paths are
- usually normalized to the precomposed form, causing mismatch.  This
- has been fixed by taking the same approach used to normalize the
- command line arguments.
-
- Will merge to 'master'.
-
-
 * cm/rebase-i (2021-01-29) 9 commits
   (merged to 'next' on 2021-02-01 at 4f9aa6cec3)
  + doc/git-rebase: add documentation for fixup [-C|-c] options
@@ -772,11 +849,11 @@ Release tarballs are available at:
  + rebase -i: comment out squash!/fixup! subjects from squash message
  + sequencer: factor out code to append squash message
  + rebase -i: only write fixup-message when it's needed
- (this branch is used by cm/rebase-i-updates.)
+ (this branch is used by cm/rebase-i-fixup-amend-reword and cm/rebase-i-updates.)
 
  "rebase -i" is getting cleaned up and also enhanced.
 
- Will cook in 'next' while waiting for the 'updates' topic.
+ Will merge to 'master', together with "cm/rebase-i-updates".
 
 
 * tb/geometric-repack (2021-02-03) 8 commits
@@ -820,11 +897,14 @@ Release tarballs are available at:
 
 
 * jx/t5411-unique-filenames (2021-01-22) 2 commits
- - t5411: refactor check of refs using test_cmp_refs
- - t5411: use different out file to prevent overwriting
+  (merged to 'next' on 2021-02-11 at bc5c67f70f)
+ + t5411: refactor check of refs using test_cmp_refs
+ + t5411: use different out file to prevent overwriting
 
  Avoid individual tests in t5411 from getting affected by each other
  by forcing them to use separate output files during the test.
+
+ Will merge to 'master'.
 
 
 * jt/transfer-fsck-across-packs (2021-01-25) 5 commits
@@ -844,111 +924,21 @@ Release tarballs are available at:
  objects that must be inspected later and check them in the calling
  "fetch-pack" process.
 
-
-* jv/upload-pack-filter-spec-quotefix (2021-02-02) 2 commits
-  (merged to 'next' on 2021-02-03 at 2e34f74e3a)
- + t5544: clarify 'hook works with partial clone' test
-  (merged to 'next' on 2021-01-31 at 789bf4154e)
- + upload-pack.c: fix filter spec quoting bug
-
- Fix in passing custom args from "git clone" to "upload-pack" on the
- other side.
-
- Will merge to 'master'.
+ Expecting an update.
 
 
-* ab/tests-various-fixup (2021-01-23) 10 commits
-  (merged to 'next' on 2021-02-01 at a604a6e217)
- + rm tests: actually test for SIGPIPE in SIGPIPE test
- + archive tests: use a cheaper "zipinfo -h" invocation to get header
- + upload-pack tests: avoid a non-zero "grep" exit status
- + git-svn tests: rewrite brittle tests to use "--[no-]merges".
- + git svn mergeinfo tests: refactor "test -z" to use test_must_be_empty
- + git svn mergeinfo tests: modernize redirection & quoting style
- + cache-tree tests: explicitly test HEAD and index differences
- + cache-tree tests: use a sub-shell with less indirection
- + cache-tree tests: remove unused $2 parameter
- + cache-tree tests: refactor for modern test style
-
- Various test updates.
-
- Will merge to 'master'.
-
-
-* en/ort-directory-rename (2021-01-20) 18 commits
-  (merged to 'next' on 2021-02-01 at 5c1cdd13a1)
- + merge-ort: fix a directory rename detection bug
- + merge-ort: process_renames() now needs more defensiveness
- + merge-ort: implement apply_directory_rename_modifications()
- + merge-ort: add a new toplevel_dir field
- + merge-ort: implement handle_path_level_conflicts()
- + merge-ort: implement check_for_directory_rename()
- + merge-ort: implement apply_dir_rename() and check_dir_renamed()
- + merge-ort: implement compute_collisions()
- + merge-ort: modify collect_renames() for directory rename handling
- + merge-ort: implement handle_directory_level_conflicts()
- + merge-ort: implement compute_rename_counts()
- + merge-ort: copy get_renamed_dir_portion() from merge-recursive.c
- + merge-ort: add outline of get_provisional_directory_renames()
- + merge-ort: add outline for computing directory renames
- + merge-ort: collect which directories are removed in dirs_removed
- + merge-ort: initialize and free new directory rename data structures
- + merge-ort: add new data structures for directory rename detection
- + Merge branch 'en/merge-ort-3' into en/ort-directory-rename
- (this branch is used by en/merge-ort-perf.)
-
- ORT merge strategy learns to infer "renamed directory" while
- merging.
-
- Will merge to 'master'.
-
-
-* bc/signed-objects-with-both-hashes (2021-02-09) 7 commits
- - SQUASH???
- - gpg-interface: remove other signature headers before verifying
- - ref-filter: hoist signature parsing
- - commit: allow parsing arbitrary buffers with headers
- - gpg-interface: improve interface for parsing tags
- - commit: ignore additional signatures when parsing signed commits
- - ref-filter: switch some uses of unsigned long to size_t
+* bc/signed-objects-with-both-hashes (2021-02-10) 6 commits
+  (merged to 'next' on 2021-02-11 at 391cc85104)
+ + gpg-interface: remove other signature headers before verifying
+ + ref-filter: hoist signature parsing
+ + commit: allow parsing arbitrary buffers with headers
+ + gpg-interface: improve interface for parsing tags
+ + commit: ignore additional signatures when parsing signed commits
+ + ref-filter: switch some uses of unsigned long to size_t
 
  Signed commits and tags now allow verification of objects, whose
  two object names (one in SHA-1, the other in SHA-256) are both
  signed.
-
- Looking good.
-
-
-* tb/pack-revindex-on-disk (2021-01-28) 10 commits
-  (merged to 'next' on 2021-02-01 at bd6a780213)
- + t5325: check both on-disk and in-memory reverse index
- + pack-revindex: ensure that on-disk reverse indexes are given precedence
- + t: support GIT_TEST_WRITE_REV_INDEX
- + t: prepare for GIT_TEST_WRITE_REV_INDEX
- + Documentation/config/pack.txt: advertise 'pack.writeReverseIndex'
- + builtin/pack-objects.c: respect 'pack.writeReverseIndex'
- + builtin/index-pack.c: write reverse indexes
- + builtin/index-pack.c: allow stripping arbitrary extensions
- + pack-write.c: prepare to write 'pack-*.rev' files
- + packfile: prepare for the existence of '*.rev' files
-
- Introduce an on-disk file to record revindex for packdata, which
- traditionally was always created on the fly and only in-core.
-
- Will merge to 'master'.
-
-
-* en/merge-ort-perf (2021-01-23) 6 commits
-  (merged to 'next' on 2021-02-01 at ca3c07579b)
- + merge-ort: begin performance work; instrument with trace2_region_* calls
- + merge-ort: ignore the directory rename split conflict for now
- + merge-ort: fix massive leak
- + Merge branch 'en/ort-directory-rename' into en/merge-ort-perf
- + Merge branch 'en/ort-conflict-handling' into en/merge-ort-perf
- + Merge branch 'en/diffcore-rename' into en/merge-ort-perf
- (this branch uses en/ort-directory-rename.)
-
- The "ort" merge strategy.
 
  Will merge to 'master'.
 
@@ -971,7 +961,7 @@ Release tarballs are available at:
  The commit-graph learned to use corrected commit dates instead of
  the generation number to help topological revision traversal.
 
- Will merge to 'master' together with ds/commit-graph-genno-fix.
+ Will merge to 'master', together with "ds/commit-graph-genno-fix".
 
 
 * mr/bisect-in-c-4 (2021-02-03) 7 commits
@@ -1019,7 +1009,7 @@ Release tarballs are available at:
  Looking good.
 
 
-* es/config-hooks (2020-12-21) 34 commits
+* es/config-hooks (2021-02-16) 17 commits
  - run-command: stop thinking about hooks
  - receive-pack: convert receive hooks to hook.h
  - post-update: use hook.h library
@@ -1037,23 +1027,7 @@ Release tarballs are available at:
  - merge: use config-based hooks for post-merge hook
  - am: convert applypatch hooks to use config
  - commit: use config-based hooks
- - hooks: allow callers to capture output
- - run-command: allow capturing of collated output
- - hook: provide stdin by string_list or callback
- - run-command: add stdin callback for parallelization
- - hook: allow specifying working directory for hooks
- - hook: allow parallel hook execution
- - run-command: allow stdin for run_processes_parallel
- - hook: support passing stdin to hooks
- - hook: replace find_hook() with hook_exists()
- - hook: add 'run' subcommand
- - parse-options: parse into strvec
- - hook: implement hookcmd.<name>.skip
- - hook: respect hook.runHookDir
- - hook: include hookdir hook in list
- - hook: add list command
- - hook: scaffolding for git-hook subcommand
- - doc: propose hooks managed by the config
+ (this branch uses es/config-hooks-part-1.)
 
  The "hooks defined in config" topic.
 
