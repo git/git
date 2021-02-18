@@ -244,7 +244,7 @@ static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 	const unsigned char *offset_data;
 	uint32_t offset32;
 
-	offset_data = m->chunk_object_offsets + pos * MIDX_CHUNK_OFFSET_WIDTH;
+	offset_data = m->chunk_object_offsets + (off_t)pos * MIDX_CHUNK_OFFSET_WIDTH;
 	offset32 = get_be32(offset_data + sizeof(uint32_t));
 
 	if (m->chunk_large_offsets && offset32 & MIDX_LARGE_OFFSET_NEEDED) {
@@ -260,7 +260,8 @@ static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 
 static uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 {
-	return get_be32(m->chunk_object_offsets + pos * MIDX_CHUNK_OFFSET_WIDTH);
+	return get_be32(m->chunk_object_offsets +
+			(off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
 }
 
 static int nth_midxed_pack_entry(struct repository *r,
@@ -912,15 +913,15 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	add_chunk(cf, MIDX_CHUNKID_OIDFANOUT, MIDX_CHUNK_FANOUT_SIZE,
 		  write_midx_oid_fanout);
 	add_chunk(cf, MIDX_CHUNKID_OIDLOOKUP,
-		  ctx.entries_nr * the_hash_algo->rawsz,
+		  (size_t)ctx.entries_nr * the_hash_algo->rawsz,
 		  write_midx_oid_lookup);
 	add_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS,
-		  ctx.entries_nr * MIDX_CHUNK_OFFSET_WIDTH,
+		  (size_t)ctx.entries_nr * MIDX_CHUNK_OFFSET_WIDTH,
 		  write_midx_object_offsets);
 
 	if (ctx.large_offsets_needed)
 		add_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS,
-			ctx.num_large_offsets * MIDX_CHUNK_LARGE_OFFSET_WIDTH,
+			(size_t)ctx.num_large_offsets * MIDX_CHUNK_LARGE_OFFSET_WIDTH,
 			write_midx_large_offsets);
 
 	write_midx_header(f, get_num_chunks(cf), ctx.nr - dropped_packs);
