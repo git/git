@@ -40,17 +40,13 @@ test_expect_success 'HEAD is part of refs, valid objects appear valid' '
 # specific corruption you test afterwards, lest a later test trip over
 # it.
 
-test_expect_success 'setup: helpers for corruption tests' '
-	sha1_file() {
-		remainder=${1#??} &&
-		firsttwo=${1%$remainder} &&
-		echo ".git/objects/$firsttwo/$remainder"
-	} &&
+sha1_file () {
+	git rev-parse --git-path objects/$(test_oid_to_path "$1")
+}
 
-	remove_object() {
-		rm "$(sha1_file "$1")"
-	}
-'
+remove_object () {
+	rm "$(sha1_file "$1")"
+}
 
 test_expect_success 'object with bad sha1' '
 	sha=$(echo blob | git hash-object -w --stdin) &&
@@ -662,13 +658,15 @@ test_expect_success 'fsck --name-objects' '
 	git init name-objects &&
 	(
 		cd name-objects &&
+		git config core.logAllRefUpdates false &&
 		test_commit julius caesar.t &&
-		test_commit augustus &&
-		test_commit caesar &&
+		test_commit augustus44 &&
+		test_commit caesar  &&
 		remove_object $(git rev-parse julius:caesar.t) &&
-		test_must_fail git fsck --name-objects >out &&
 		tree=$(git rev-parse --verify julius:) &&
-		test_i18ngrep "$tree (refs/tags/julius:" out
+		git tag -d julius &&
+		test_must_fail git fsck --name-objects >out &&
+		test_i18ngrep "$tree (refs/tags/augustus44\\^:" out
 	)
 '
 
