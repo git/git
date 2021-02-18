@@ -11,6 +11,8 @@ struct chunk_info {
 	uint32_t id;
 	uint64_t size;
 	chunk_write_fn write_fn;
+
+	const void *start;
 };
 
 struct chunkfile {
@@ -87,4 +89,82 @@ int write_chunkfile(struct chunkfile *cf, void *data)
 	}
 
 	return 0;
+}
+
+int read_table_of_contents(struct chunkfile *cf,
+			   const unsigned char *mfile,
+			   size_t mfile_size,
+			   uint64_t toc_offset,
+			   int toc_length)
+{
+	uint32_t chunk_id;
+	const unsigned char *table_of_contents = mfile + toc_offset;
+
+	ALLOC_GROW(cf->chunks, toc_length, cf->chunks_alloc);
+
+	while (toc_length--) {
+		uint64_t chunk_offset, next_chunk_offset;
+
+		chunk_id = get_be32(table_of_contents);
+		chunk_offset = get_be64(table_of_contents + 4);
+
+		if (!chunk_id) {
+			error(_("terminating chunk id appears earlier than expected"));
+			return 1;
+		}
+
+		table_of_contents += CHUNK_TOC_ENTRY_SIZE;
+		next_chunk_offset = get_be64(table_of_contents + 4);
+
+		if (next_chunk_offset < chunk_offset ||
+		    next_chunk_offset > mfile_size - the_hash_algo->rawsz) {
+			error(_("improper chunk offset(s) %"PRIx64" and %"PRIx64""),
+			      chunk_offset, next_chunk_offset);
+			return -1;
+		}
+
+		cf->chunks[cf->chunks_nr].id = chunk_id;
+		cf->chunks[cf->chunks_nr].start = mfile + chunk_offset;
+		cf->chunks[cf->chunks_nr].size = next_chunk_offset - chunk_offset;
+		cf->chunks_nr++;
+	}
+
+	chunk_id = get_be32(table_of_contents);
+	if (chunk_id) {
+		error(_("final chunk has non-zero id %"PRIx32""), chunk_id);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int pair_chunk_fn(const unsigned char *chunk_start,
+			 size_t chunk_size,
+			 void *data)
+{
+	const unsigned char **p = data;
+	*p = chunk_start;
+	return 0;
+}
+
+int pair_chunk(struct chunkfile *cf,
+	       uint32_t chunk_id,
+	       const unsigned char **p)
+{
+	return read_chunk(cf, chunk_id, pair_chunk_fn, p);
+}
+
+int read_chunk(struct chunkfile *cf,
+	       uint32_t chunk_id,
+	       chunk_read_fn fn,
+	       void *data)
+{
+	int i;
+
+	for (i = 0; i < cf->chunks_nr; i++) {
+		if (cf->chunks[i].id == chunk_id)
+			return fn(cf->chunks[i].start, cf->chunks[i].size, data);
+	}
+
+	return CHUNK_NOT_FOUND;
 }
