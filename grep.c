@@ -373,7 +373,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	int patinforet;
 	size_t jitsizearg;
 
-	/* pcre2_global_context is initialized in append_grep_pattern */
+	/* pcre2_global_context is initialized in grep_init */
 	if (opt->ignore_case) {
 		if (!opt->ignore_locale && has_non_ascii(p->pattern)) {
 			if (!pcre2_global_context)
