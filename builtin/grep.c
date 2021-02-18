@@ -1152,6 +1152,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (!use_index && (untracked || cached))
 		die(_("--cached or --untracked cannot be used with --no-index"));
 
+	if (untracked && cached)
+		die(_("--untracked cannot be used with --cached"));
+
 	if (!use_index || untracked) {
 		int use_exclude = (opt_exclude < 0) ? use_index : !!opt_exclude;
 		hit = grep_directory(&opt, &pathspec, use_exclude, use_index);
