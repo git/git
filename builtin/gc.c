@@ -54,7 +54,6 @@ static const char *prune_worktrees_expire = "3.months.ago";
 static unsigned long big_pack_threshold;
 static unsigned long max_delta_cache_size = DEFAULT_DELTA_CACHE_SIZE;
 
-static struct strvec pack_refs_cmd = STRVEC_INIT;
 static struct strvec reflog = STRVEC_INIT;
 static struct strvec repack = STRVEC_INIT;
 static struct strvec prune = STRVEC_INIT;
@@ -161,6 +160,15 @@ static void gc_config(void)
 	git_config_get_ulong("pack.deltacachesize", &max_delta_cache_size);
 
 	git_config(git_default_config, NULL);
+}
+
+struct maintenance_run_opts;
+static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *opts)
+{
+	struct strvec pack_refs_cmd = STRVEC_INIT;
+	strvec_pushl(&pack_refs_cmd, "pack-refs", "--all", "--prune", NULL);
+
+	return run_command_v_opt(pack_refs_cmd.v, RUN_GIT_CMD);
 }
 
 static int too_many_loose_objects(void)
@@ -518,8 +526,8 @@ static void gc_before_repack(void)
 	if (done++)
 		return;
 
-	if (pack_refs && run_command_v_opt(pack_refs_cmd.v, RUN_GIT_CMD))
-		die(FAILED_RUN, pack_refs_cmd.v[0]);
+	if (pack_refs && maintenance_task_pack_refs(NULL))
+		die(FAILED_RUN, "pack-refs");
 
 	if (prune_reflogs && run_command_v_opt(reflog.v, RUN_GIT_CMD))
 		die(FAILED_RUN, reflog.v[0]);
@@ -556,7 +564,6 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_gc_usage, builtin_gc_options);
 
-	strvec_pushl(&pack_refs_cmd, "pack-refs", "--all", "--prune", NULL);
 	strvec_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
 	strvec_pushl(&prune, "prune", "--expire", NULL);
@@ -1224,6 +1231,7 @@ enum maintenance_task_label {
 	TASK_INCREMENTAL_REPACK,
 	TASK_GC,
 	TASK_COMMIT_GRAPH,
+	TASK_PACK_REFS,
 
 	/* Leave as final value */
 	TASK__COUNT
@@ -1254,6 +1262,11 @@ static struct maintenance_task tasks[] = {
 		"commit-graph",
 		maintenance_task_commit_graph,
 		should_write_commit_graph,
+	},
+	[TASK_PACK_REFS] = {
+		"pack-refs",
+		maintenance_task_pack_refs,
+		NULL,
 	},
 };
 
@@ -1339,6 +1352,8 @@ static void initialize_maintenance_strategy(void)
 		tasks[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY;
 		tasks[TASK_LOOSE_OBJECTS].enabled = 1;
 		tasks[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY;
+		tasks[TASK_PACK_REFS].enabled = 1;
+		tasks[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY;
 	}
 }
 
