@@ -218,6 +218,12 @@ test_commit () {
 		--signoff)
 			signoff="$1"
 			;;
+		--date)
+			notick=yes
+			GIT_COMMITTER_DATE="$2"
+			GIT_AUTHOR_DATE="$2"
+			shift
+			;;
 		-C)
 			indir="$2"
 			shift

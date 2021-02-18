@@ -4,11 +4,7 @@ Git commit graph format
 The Git commit graph stores a list of commit OIDs and some associated
 metadata, including:
 
-- The generation number of the commit. Commits with no parents have
-  generation number 1; commits with parents have generation number
-  one more than the maximum generation number of its parents. We
-  reserve zero as special, and can be used to mark a generation
-  number invalid or as "not computed".
+- The generation number of the commit.
 
 - The root tree OID.
 
@@ -86,12 +82,32 @@ CHUNK DATA:
       position. If there are more than two parents, the second value
       has its most-significant bit on and the other bits store an array
       position into the Extra Edge List chunk.
-    * The next 8 bytes store the generation number of the commit and
+    * The next 8 bytes store the topological level (generation number v1)
+      of the commit and
       the commit time in seconds since EPOCH. The generation number
       uses the higher 30 bits of the first 4 bytes, while the commit
       time uses the 32 bits of the second 4 bytes, along with the lowest
       2 bits of the lowest byte, storing the 33rd and 34th bit of the
       commit time.
+
+  Generation Data (ID: {'G', 'D', 'A', 'T' }) (N * 4 bytes) [Optional]
+    * This list of 4-byte values store corrected commit date offsets for the
+      commits, arranged in the same order as commit data chunk.
+    * If the corrected commit date offset cannot be stored within 31 bits,
+      the value has its most-significant bit on and the other bits store
+      the position of corrected commit date into the Generation Data Overflow
+      chunk.
+    * Generation Data chunk is present only when commit-graph file is written
+      by compatible versions of Git and in case of split commit-graph chains,
+      the topmost layer also has Generation Data chunk.
+
+  Generation Data Overflow (ID: {'G', 'D', 'O', 'V' }) [Optional]
+    * This list of 8-byte values stores the corrected commit date offsets
+      for commits with corrected commit date offsets that cannot be
+      stored within 31 bits.
+    * Generation Data Overflow chunk is present only when Generation Data
+      chunk is present and atleast one corrected commit date offset cannot
+      be stored within 31 bits.
 
   Extra Edge List (ID: {'E', 'D', 'G', 'E'}) [Optional]
       This list of 4-byte values store the second through nth parents for
