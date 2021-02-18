@@ -10,6 +10,7 @@ SYNOPSIS
 [verse]
 'git range-diff' [--color=[<when>]] [--no-color] [<diff-options>]
 	[--no-dual-color] [--creation-factor=<factor>]
+	[--left-only | --right-only]
 	( <range1> <range2> | <rev1>...<rev2> | <base> <rev1> <rev2> )
 
 DESCRIPTION
@@ -67,6 +68,14 @@ to revert to color all lines according to the outer diff markers
 	and addition of another), and a smaller one in the reverse case.
 	See the ``Algorithm`` section below for an explanation why this is
 	needed.
+
+--left-only::
+	Suppress commits that are missing from the first specified range
+	(or the "left range" when using the `<rev1>...<rev2>` format).
+
+--right-only::
+	Suppress commits that are missing from the second specified range
+	(or the "right range" when using the `<rev1>...<rev2>` format).
 
 --[no-]notes[=<ref>]::
 	This flag is passed to the `git log` program
