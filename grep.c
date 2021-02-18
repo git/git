@@ -45,7 +45,8 @@ static pcre2_general_context *pcre2_global_context;
 
 static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
 {
-	return malloc(size);
+	void *pointer = malloc(size);
+	return pointer;
 }
 
 static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
