@@ -234,15 +234,27 @@ static int remove_redundant_with_gen(struct repository *r,
 {
 	int i, count_non_stale = 0, count_still_independent = cnt;
 	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
-	struct commit **walk_start;
+	struct commit **walk_start, **sorted;
 	size_t walk_start_nr = 0, walk_start_alloc = cnt;
+	int min_gen_pos = 0;
+
+	/*
+	 * Sort the input by generation number, ascending. This allows
+	 * us to increase the "min_generation" limit when we discover
+	 * the commit with lowest generation is STALE. The index
+	 * min_gen_pos points to the current position within 'array'
+	 * that is not yet known to be STALE.
+	 */
+	ALLOC_ARRAY(sorted, cnt);
+	COPY_ARRAY(sorted, array, cnt);
+	QSORT(sorted, cnt, compare_commits_by_gen);
+	min_generation = commit_graph_generation(sorted[0]);
 
 	ALLOC_ARRAY(walk_start, walk_start_alloc);
 
 	/* Mark all parents of the input as STALE */
 	for (i = 0; i < cnt; i++) {
 		struct commit_list *parents;
-		timestamp_t generation;
 
 		repo_parse_commit(r, array[i]);
 		array[i]->object.flags |= RESULT;
@@ -257,11 +269,6 @@ static int remove_redundant_with_gen(struct repository *r,
 			}
 			parents = parents->next;
 		}
-
-		generation = commit_graph_generation(array[i]);
-
-		if (generation < min_generation)
-			min_generation = generation;
 	}
 
 	QSORT(walk_start, walk_start_nr, compare_commits_by_gen);
@@ -293,6 +300,12 @@ static int remove_redundant_with_gen(struct repository *r,
 				c->object.flags &= ~RESULT;
 				if (--count_still_independent <= 1)
 					break;
+				if (oideq(&c->object.oid, &sorted[min_gen_pos]->object.oid)) {
+					while (min_gen_pos < cnt - 1 &&
+					       (sorted[min_gen_pos]->object.flags & STALE))
+						min_gen_pos++;
+					min_generation = commit_graph_generation(sorted[min_gen_pos]);
+				}
 			}
 
 			if (commit_graph_generation(c) < min_generation) {
@@ -316,6 +329,7 @@ static int remove_redundant_with_gen(struct repository *r,
 		}
 		free_commit_list(stack);
 	}
+	free(sorted);
 
 	/* clear result */
 	for (i = 0; i < cnt; i++)
