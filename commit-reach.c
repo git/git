@@ -156,15 +156,9 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	return ret;
 }
 
-static int remove_redundant(struct repository *r, struct commit **array, int cnt)
+static int remove_redundant_no_gen(struct repository *r,
+				   struct commit **array, int cnt)
 {
-	/*
-	 * Some commit in the array may be an ancestor of
-	 * another commit.  Move the independent commits to the
-	 * beginning of 'array' and return their number. Callers
-	 * should not rely upon the contents of 'array' after
-	 * that number.
-	 */
 	struct commit **work;
 	unsigned char *redundant;
 	int *filled_index;
@@ -214,6 +208,100 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 	free(redundant);
 	free(filled_index);
 	return filled;
+}
+
+static int remove_redundant_with_gen(struct repository *r,
+				     struct commit **array, int cnt)
+{
+	int i, count_non_stale = 0;
+	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
+	struct commit **walk_start;
+	size_t walk_start_nr = 0, walk_start_alloc = cnt;
+	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
+
+	ALLOC_ARRAY(walk_start, walk_start_alloc);
+
+	/* Mark all parents of the input as STALE */
+	for (i = 0; i < cnt; i++) {
+		struct commit_list *parents;
+		timestamp_t generation;
+
+		repo_parse_commit(r, array[i]);
+		parents = array[i]->parents;
+
+		while (parents) {
+			repo_parse_commit(r, parents->item);
+			if (!(parents->item->object.flags & STALE)) {
+				parents->item->object.flags |= STALE;
+				ALLOC_GROW(walk_start, walk_start_nr + 1, walk_start_alloc);
+				walk_start[walk_start_nr++] = parents->item;
+				prio_queue_put(&queue, parents->item);
+			}
+			parents = parents->next;
+		}
+
+		generation = commit_graph_generation(array[i]);
+
+		if (generation < min_generation)
+			min_generation = generation;
+	}
+
+	/* push the STALE bits up to min generation */
+	while (queue.nr) {
+		struct commit_list *parents;
+		struct commit *c = prio_queue_get(&queue);
+
+		repo_parse_commit(r, c);
+
+		if (commit_graph_generation(c) < min_generation)
+			continue;
+
+		parents = c->parents;
+		while (parents) {
+			if (!(parents->item->object.flags & STALE)) {
+				parents->item->object.flags |= STALE;
+				prio_queue_put(&queue, parents->item);
+			}
+			parents = parents->next;
+		}
+	}
+
+	/* rearrange array */
+	for (i = count_non_stale = 0; i < cnt; i++) {
+		if (!(array[i]->object.flags & STALE))
+			array[count_non_stale++] = array[i];
+	}
+
+	/* clear marks */
+	clear_commit_marks_many(walk_start_nr, walk_start, STALE);
+	free(walk_start);
+
+	return count_non_stale;
+}
+
+static int remove_redundant(struct repository *r, struct commit **array, int cnt)
+{
+	/*
+	 * Some commit in the array may be an ancestor of
+	 * another commit.  Move the independent commits to the
+	 * beginning of 'array' and return their number. Callers
+	 * should not rely upon the contents of 'array' after
+	 * that number.
+	 */
+	if (generation_numbers_enabled(r)) {
+		int i;
+
+		/*
+		 * If we have a single commit with finite generation
+		 * number, then the _with_gen algorithm is preferred.
+		 */
+		for (i = 0; i < cnt; i++) {
+			if (commit_graph_generation(array[i]) < GENERATION_NUMBER_INFINITY)
+				return remove_redundant_with_gen(r, array, cnt);
+		}
+	}
+
+	return remove_redundant_no_gen(r, array, cnt);
 }
 
 static struct commit_list *get_merge_bases_many_0(struct repository *r,
