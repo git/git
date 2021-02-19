@@ -181,7 +181,13 @@ def prompt(prompt_text):
 if bytes is not str:
     # For python3, always encode and decode as appropriate
     def decode_text_stream(s):
-        return s.decode() if isinstance(s, bytes) else s
+        if not isinstance(s, bytes):
+            return s
+        try:
+            return s.decode()
+        except UnicodeDecodeError as e:
+            print(e)
+            return s.decode('iso-8859-1')
     def encode_text_stream(s):
         return s.encode() if isinstance(s, str) else s
 else:
