@@ -34,6 +34,14 @@ OPTIONS
 	This is the default behaviour; the option is provided to
 	override any configuration settings.
 
+--rotate-to=<file>::
+	Start showing the diff for the given path,
+	the paths before it will move to end and output.
+
+--skip-to=<file>::
+	Start showing the diff for the given path, skipping all
+	the paths before it.
+
 -t <tool>::
 --tool=<tool>::
 	Use the diff tool specified by <tool>.  Valid values include

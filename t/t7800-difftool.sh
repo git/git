@@ -762,4 +762,36 @@ test_expect_success 'difftool --gui, --tool and --extcmd are mutually exclusive'
 	test_must_fail git difftool --gui --tool=test-tool --extcmd=cat
 '
 
+test_expect_success 'difftool --rotate-to' '
+	difftool_test_setup &&
+	test_when_finished git reset --hard &&
+	echo 1 >1 &&
+	echo 2 >2 &&
+	echo 4 >4 &&
+	git add 1 2 4 &&
+	git commit -a -m "124" &&
+	git difftool --no-prompt --extcmd=cat --rotate-to="2" HEAD^ >output&&
+	cat >expect <<-\EOF &&
+	2
+	4
+	1
+	EOF
+	test_cmp output expect
+'
+
+test_expect_success 'difftool --skip-to' '
+	difftool_test_setup &&
+	test_when_finished git reset --hard &&
+	git difftool --no-prompt --extcmd=cat --skip-to="2" HEAD^ >output &&
+	cat >expect <<-\EOF &&
+	2
+	4
+	EOF
+	test_cmp output expect
+'
+
+test_expect_success 'difftool --rotate/skip-to error condition' '
+	test_must_fail git difftool --no-prompt --extcmd=cat --rotate-to="3" HEAD^ &&
+	test_must_fail git difftool --no-prompt --extcmd=cat --skip-to="3" HEAD^
+'
 test_done
