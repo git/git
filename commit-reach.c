@@ -17,6 +17,21 @@
 
 static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
 
+static int compare_commits_by_gen(const void *_a, const void *_b)
+{
+	const struct commit *a = *(const struct commit * const *)_a;
+	const struct commit *b = *(const struct commit * const *)_b;
+
+	timestamp_t generation_a = commit_graph_generation(a);
+	timestamp_t generation_b = commit_graph_generation(b);
+
+	if (generation_a < generation_b)
+		return -1;
+	if (generation_a > generation_b)
+		return 1;
+	return 0;
+}
+
 static int queue_has_nonstale(struct prio_queue *queue)
 {
 	int i;
@@ -645,21 +660,6 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 	if (filter->with_commit_tag_algo)
 		return contains_tag_algo(commit, list, cache) == CONTAINS_YES;
 	return repo_is_descendant_of(the_repository, commit, list);
-}
-
-static int compare_commits_by_gen(const void *_a, const void *_b)
-{
-	const struct commit *a = *(const struct commit * const *)_a;
-	const struct commit *b = *(const struct commit * const *)_b;
-
-	timestamp_t generation_a = commit_graph_generation(a);
-	timestamp_t generation_b = commit_graph_generation(b);
-
-	if (generation_a < generation_b)
-		return -1;
-	if (generation_a > generation_b)
-		return 1;
-	return 0;
 }
 
 int can_all_from_reach_with_flag(struct object_array *from,
