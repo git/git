@@ -130,7 +130,7 @@ ignored, then the directory is not shown, but all contents are shown.
 --column[=<options>]::
 --no-column::
 	Display untracked files in columns. See configuration variable
-	column.status for option syntax.`--column` and `--no-column`
+	`column.status` for option syntax. `--column` and `--no-column`
 	without options are equivalent to 'always' and 'never'
 	respectively.
 
