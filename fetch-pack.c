@@ -797,12 +797,13 @@ static void write_promisor_file(const char *keep_name,
 }
 
 /*
- * Pass 1 as "only_packfile" if the pack received is the only pack in this
- * fetch request (that is, if there were no packfile URIs provided).
+ * If packfile URIs were provided, pass a non-NULL pointer to index_pack_args.
+ * The strings to pass as the --index-pack-arg arguments to http-fetch will be
+ * stored there. (It must be freed by the caller.)
  */
 static int get_pack(struct fetch_pack_args *args,
 		    int xd[2], struct string_list *pack_lockfiles,
-		    int only_packfile,
+		    struct strvec *index_pack_args,
 		    struct ref **sought, int nr_sought)
 {
 	struct async demux;
@@ -845,7 +846,7 @@ static int get_pack(struct fetch_pack_args *args,
 		strvec_push(&cmd.args, alternate_shallow_file);
 	}
 
-	if (do_keep || args->from_promisor) {
+	if (do_keep || args->from_promisor || index_pack_args) {
 		if (pack_lockfiles)
 			cmd.out = -1;
 		cmd_name = "index-pack";
@@ -863,7 +864,7 @@ static int get_pack(struct fetch_pack_args *args,
 				     "--keep=fetch-pack %"PRIuMAX " on %s",
 				     (uintmax_t)getpid(), hostname);
 		}
-		if (only_packfile && args->check_self_contained_and_connected)
+		if (!index_pack_args && args->check_self_contained_and_connected)
 			strvec_push(&cmd.args, "--check-self-contained-and-connected");
 		else
 			/*
@@ -901,7 +902,7 @@ static int get_pack(struct fetch_pack_args *args,
 	    : transfer_fsck_objects >= 0
 	    ? transfer_fsck_objects
 	    : 0) {
-		if (args->from_promisor || !only_packfile)
+		if (args->from_promisor || index_pack_args)
 			/*
 			 * We cannot use --strict in index-pack because it
 			 * checks both broken objects and links, but we only
@@ -911,6 +912,13 @@ static int get_pack(struct fetch_pack_args *args,
 		else
 			strvec_pushf(&cmd.args, "--strict%s",
 				     fsck_msg_types.buf);
+	}
+
+	if (index_pack_args) {
+		int i;
+
+		for (i = 0; i < cmd.args.nr; i++)
+			strvec_push(index_pack_args, cmd.args.v[i]);
 	}
 
 	cmd.in = demux.out;
@@ -1084,7 +1092,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		alternate_shallow_file = setup_temporary_shallow(si->shallow);
 	else
 		alternate_shallow_file = NULL;
-	if (get_pack(args, fd, pack_lockfiles, 1, sought, nr_sought))
+	if (get_pack(args, fd, pack_lockfiles, NULL, sought, nr_sought))
 		die(_("git fetch-pack: fetch failed."));
 
  all_done:
@@ -1535,6 +1543,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	int seen_ack = 0;
 	struct string_list packfile_uris = STRING_LIST_INIT_DUP;
 	int i;
+	struct strvec index_pack_args = STRVEC_INIT;
 
 	negotiator = &negotiator_alloc;
 	fetch_negotiator_init(r, negotiator);
@@ -1624,7 +1633,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				receive_packfile_uris(&reader, &packfile_uris);
 			process_section_header(&reader, "packfile", 0);
 			if (get_pack(args, fd, pack_lockfiles,
-				     !packfile_uris.nr, sought, nr_sought))
+				     packfile_uris.nr ? &index_pack_args : NULL,
+				     sought, nr_sought))
 				die(_("git fetch-pack: fetch failed."));
 			do_check_stateless_delimiter(args, &reader);
 
@@ -1636,6 +1646,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	}
 
 	for (i = 0; i < packfile_uris.nr; i++) {
+		int j;
 		struct child_process cmd = CHILD_PROCESS_INIT;
 		char packname[GIT_MAX_HEXSZ + 1];
 		const char *uri = packfile_uris.items[i].string +
@@ -1645,9 +1656,9 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		strvec_pushf(&cmd.args, "--packfile=%.*s",
 			     (int) the_hash_algo->hexsz,
 			     packfile_uris.items[i].string);
-		strvec_push(&cmd.args, "--index-pack-arg=index-pack");
-		strvec_push(&cmd.args, "--index-pack-arg=--stdin");
-		strvec_push(&cmd.args, "--index-pack-arg=--keep");
+		for (j = 0; j < index_pack_args.nr; j++)
+			strvec_pushf(&cmd.args, "--index-pack-arg=%s",
+				     index_pack_args.v[j]);
 		strvec_push(&cmd.args, uri);
 		cmd.git_cmd = 1;
 		cmd.no_stdin = 1;
@@ -1683,6 +1694,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 						 packname));
 	}
 	string_list_clear(&packfile_uris, 0);
+	strvec_clear(&index_pack_args);
 
 	if (negotiator)
 		negotiator->release(negotiator);
