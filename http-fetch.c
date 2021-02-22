@@ -3,6 +3,7 @@
 #include "exec-cmd.h"
 #include "http.h"
 #include "walker.h"
+#include "strvec.h"
 
 static const char http_fetch_usage[] = "git http-fetch "
 "[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin | --packfile=hash | commit-id] url";
@@ -43,11 +44,9 @@ static int fetch_using_walker(const char *raw_url, int get_verbosely,
 	return rc;
 }
 
-static const char *index_pack_args[] =
-	{"index-pack", "--stdin", "--keep", NULL};
-
 static void fetch_single_packfile(struct object_id *packfile_hash,
-				  const char *url) {
+				  const char *url,
+				  const char **index_pack_args) {
 	struct http_pack_request *preq;
 	struct slot_results results;
 	int ret;
@@ -90,6 +89,7 @@ int cmd_main(int argc, const char **argv)
 	int packfile = 0;
 	int nongit;
 	struct object_id packfile_hash;
+	struct strvec index_pack_args = STRVEC_INIT;
 
 	setup_git_directory_gently(&nongit);
 
@@ -116,6 +116,8 @@ int cmd_main(int argc, const char **argv)
 			packfile = 1;
 			if (parse_oid_hex(p, &packfile_hash, &end) || *end)
 				die(_("argument to --packfile must be a valid hash (got '%s')"), p);
+		} else if (skip_prefix(argv[arg], "--index-pack-arg=", &p)) {
+			strvec_push(&index_pack_args, p);
 		}
 		arg++;
 	}
@@ -128,9 +130,17 @@ int cmd_main(int argc, const char **argv)
 	git_config(git_default_config, NULL);
 
 	if (packfile) {
-		fetch_single_packfile(&packfile_hash, argv[arg]);
+		if (!index_pack_args.nr)
+			die(_("--packfile requires --index-pack-args"));
+
+		fetch_single_packfile(&packfile_hash, argv[arg],
+				      index_pack_args.v);
+
 		return 0;
 	}
+
+	if (index_pack_args.nr)
+		die(_("--index-pack-args can only be used with --packfile"));
 
 	if (commits_on_stdin) {
 		commits = walker_targets_stdin(&commit_id, &write_ref);
