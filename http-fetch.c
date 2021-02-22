@@ -43,6 +43,9 @@ static int fetch_using_walker(const char *raw_url, int get_verbosely,
 	return rc;
 }
 
+static const char *index_pack_args[] =
+	{"index-pack", "--stdin", "--keep", NULL};
+
 static void fetch_single_packfile(struct object_id *packfile_hash,
 				  const char *url) {
 	struct http_pack_request *preq;
@@ -55,7 +58,8 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
 	if (preq == NULL)
 		die("couldn't create http pack request");
 	preq->slot->results = &results;
-	preq->generate_keep = 1;
+	preq->index_pack_args = index_pack_args;
+	preq->preserve_index_pack_stdout = 1;
 
 	if (start_active_slot(preq->slot)) {
 		run_active_slot(preq->slot);
