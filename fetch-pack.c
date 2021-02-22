@@ -796,6 +796,26 @@ static void write_promisor_file(const char *keep_name,
 	strbuf_release(&promisor_name);
 }
 
+static void parse_gitmodules_oids(int fd, struct oidset *gitmodules_oids)
+{
+	int len = the_hash_algo->hexsz + 1; /* hash + NL */
+
+	do {
+		char hex_hash[GIT_MAX_HEXSZ + 1];
+		int read_len = read_in_full(fd, hex_hash, len);
+		struct object_id oid;
+		const char *end;
+
+		if (!read_len)
+			return;
+		if (read_len != len)
+			die("invalid length read %d", read_len);
+		if (parse_oid_hex(hex_hash, &oid, &end) || *end != '\n')
+			die("invalid hash");
+		oidset_insert(gitmodules_oids, &oid);
+	} while (1);
+}
+
 /*
  * If packfile URIs were provided, pass a non-NULL pointer to index_pack_args.
  * The strings to pass as the --index-pack-arg arguments to http-fetch will be
@@ -804,7 +824,8 @@ static void write_promisor_file(const char *keep_name,
 static int get_pack(struct fetch_pack_args *args,
 		    int xd[2], struct string_list *pack_lockfiles,
 		    struct strvec *index_pack_args,
-		    struct ref **sought, int nr_sought)
+		    struct ref **sought, int nr_sought,
+		    struct oidset *gitmodules_oids)
 {
 	struct async demux;
 	int do_keep = args->keep_pack;
@@ -812,6 +833,7 @@ static int get_pack(struct fetch_pack_args *args,
 	struct pack_header header;
 	int pass_header = 0;
 	struct child_process cmd = CHILD_PROCESS_INIT;
+	int fsck_objects = 0;
 	int ret;
 
 	memset(&demux, 0, sizeof(demux));
@@ -846,8 +868,15 @@ static int get_pack(struct fetch_pack_args *args,
 		strvec_push(&cmd.args, alternate_shallow_file);
 	}
 
-	if (do_keep || args->from_promisor || index_pack_args) {
-		if (pack_lockfiles)
+	if (fetch_fsck_objects >= 0
+	    ? fetch_fsck_objects
+	    : transfer_fsck_objects >= 0
+	    ? transfer_fsck_objects
+	    : 0)
+		fsck_objects = 1;
+
+	if (do_keep || args->from_promisor || index_pack_args || fsck_objects) {
+		if (pack_lockfiles || fsck_objects)
 			cmd.out = -1;
 		cmd_name = "index-pack";
 		strvec_push(&cmd.args, cmd_name);
@@ -897,11 +926,7 @@ static int get_pack(struct fetch_pack_args *args,
 		strvec_pushf(&cmd.args, "--pack_header=%"PRIu32",%"PRIu32,
 			     ntohl(header.hdr_version),
 				 ntohl(header.hdr_entries));
-	if (fetch_fsck_objects >= 0
-	    ? fetch_fsck_objects
-	    : transfer_fsck_objects >= 0
-	    ? transfer_fsck_objects
-	    : 0) {
+	if (fsck_objects) {
 		if (args->from_promisor || index_pack_args)
 			/*
 			 * We cannot use --strict in index-pack because it
@@ -925,10 +950,15 @@ static int get_pack(struct fetch_pack_args *args,
 	cmd.git_cmd = 1;
 	if (start_command(&cmd))
 		die(_("fetch-pack: unable to fork off %s"), cmd_name);
-	if (do_keep && pack_lockfiles) {
-		char *pack_lockfile = index_pack_lockfile(cmd.out);
+	if (do_keep && (pack_lockfiles || fsck_objects)) {
+		int is_well_formed;
+		char *pack_lockfile = index_pack_lockfile(cmd.out, &is_well_formed);
+
+		if (!is_well_formed)
+			die(_("fetch-pack: invalid index-pack output"));
 		if (pack_lockfile)
 			string_list_append_nodup(pack_lockfiles, pack_lockfile);
+		parse_gitmodules_oids(cmd.out, gitmodules_oids);
 		close(cmd.out);
 	}
 
@@ -963,6 +993,22 @@ static int cmp_ref_by_name(const void *a_, const void *b_)
 	return strcmp(a->name, b->name);
 }
 
+static void fsck_gitmodules_oids(struct oidset *gitmodules_oids)
+{
+	struct oidset_iter iter;
+	const struct object_id *oid;
+	struct fsck_options fo = FSCK_OPTIONS_STRICT;
+
+	if (!oidset_size(gitmodules_oids))
+		return;
+
+	oidset_iter_init(gitmodules_oids, &iter);
+	while ((oid = oidset_iter_next(&iter)))
+		register_found_gitmodules(oid);
+	if (fsck_finish(&fo))
+		die("fsck failed");
+}
+
 static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 				 int fd[2],
 				 const struct ref *orig_ref,
@@ -977,6 +1023,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	int agent_len;
 	struct fetch_negotiator negotiator_alloc;
 	struct fetch_negotiator *negotiator;
+	struct oidset gitmodules_oids = OIDSET_INIT;
 
 	negotiator = &negotiator_alloc;
 	fetch_negotiator_init(r, negotiator);
@@ -1092,8 +1139,10 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		alternate_shallow_file = setup_temporary_shallow(si->shallow);
 	else
 		alternate_shallow_file = NULL;
-	if (get_pack(args, fd, pack_lockfiles, NULL, sought, nr_sought))
+	if (get_pack(args, fd, pack_lockfiles, NULL, sought, nr_sought,
+		     &gitmodules_oids))
 		die(_("git fetch-pack: fetch failed."));
+	fsck_gitmodules_oids(&gitmodules_oids);
 
  all_done:
 	if (negotiator)
@@ -1544,6 +1593,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct string_list packfile_uris = STRING_LIST_INIT_DUP;
 	int i;
 	struct strvec index_pack_args = STRVEC_INIT;
+	struct oidset gitmodules_oids = OIDSET_INIT;
 
 	negotiator = &negotiator_alloc;
 	fetch_negotiator_init(r, negotiator);
@@ -1634,7 +1684,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			process_section_header(&reader, "packfile", 0);
 			if (get_pack(args, fd, pack_lockfiles,
 				     packfile_uris.nr ? &index_pack_args : NULL,
-				     sought, nr_sought))
+				     sought, nr_sought, &gitmodules_oids))
 				die(_("git fetch-pack: fetch failed."));
 			do_check_stateless_delimiter(args, &reader);
 
@@ -1677,6 +1727,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 		packname[the_hash_algo->hexsz] = '\0';
 
+		parse_gitmodules_oids(cmd.out, &gitmodules_oids);
+
 		close(cmd.out);
 
 		if (finish_command(&cmd))
@@ -1695,6 +1747,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	}
 	string_list_clear(&packfile_uris, 0);
 	strvec_clear(&index_pack_args);
+
+	fsck_gitmodules_oids(&gitmodules_oids);
 
 	if (negotiator)
 		negotiator->release(negotiator);
