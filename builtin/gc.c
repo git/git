@@ -1461,11 +1461,23 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 	return maintenance_run_tasks(&opts);
 }
 
+static char *get_maintpath(void)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *p = the_repository->worktree ?
+		the_repository->worktree : the_repository->gitdir;
+
+	strbuf_realpath(&sb, p, 1);
+	return strbuf_detach(&sb, NULL);
+}
+
 static int maintenance_register(void)
 {
+	int rc;
 	char *config_value;
 	struct child_process config_set = CHILD_PROCESS_INIT;
 	struct child_process config_get = CHILD_PROCESS_INIT;
+	char *maintpath = get_maintpath();
 
 	/* Disable foreground maintenance */
 	git_config_set("maintenance.auto", "false");
@@ -1478,40 +1490,44 @@ static int maintenance_register(void)
 
 	config_get.git_cmd = 1;
 	strvec_pushl(&config_get.args, "config", "--global", "--get",
-		     "--fixed-value", "maintenance.repo",
-		     the_repository->worktree ? the_repository->worktree
-					      : the_repository->gitdir,
-			 NULL);
+		     "--fixed-value", "maintenance.repo", maintpath, NULL);
 	config_get.out = -1;
 
-	if (start_command(&config_get))
-		return error(_("failed to run 'git config'"));
+	if (start_command(&config_get)) {
+		rc = error(_("failed to run 'git config'"));
+		goto done;
+	}
 
 	/* We already have this value in our config! */
-	if (!finish_command(&config_get))
-		return 0;
+	if (!finish_command(&config_get)) {
+		rc = 0;
+		goto done;
+	}
 
 	config_set.git_cmd = 1;
 	strvec_pushl(&config_set.args, "config", "--add", "--global", "maintenance.repo",
-		     the_repository->worktree ? the_repository->worktree
-					      : the_repository->gitdir,
-		     NULL);
+		     maintpath, NULL);
 
-	return run_command(&config_set);
+	rc = run_command(&config_set);
+
+done:
+	free(maintpath);
+	return rc;
 }
 
 static int maintenance_unregister(void)
 {
+	int rc;
 	struct child_process config_unset = CHILD_PROCESS_INIT;
+	char *maintpath = get_maintpath();
 
 	config_unset.git_cmd = 1;
 	strvec_pushl(&config_unset.args, "config", "--global", "--unset",
-		     "--fixed-value", "maintenance.repo",
-		     the_repository->worktree ? the_repository->worktree
-					      : the_repository->gitdir,
-		     NULL);
+		     "--fixed-value", "maintenance.repo", maintpath, NULL);
 
-	return run_command(&config_unset);
+	rc = run_command(&config_unset);
+	free(maintpath);
+	return rc;
 }
 
 static const char *get_frequency(enum schedule_priority schedule)

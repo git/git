@@ -632,4 +632,17 @@ test_expect_success 'fails when running outside of a repository' '
 	nongit test_must_fail git maintenance unregister
 '
 
+test_expect_success 'register and unregister bare repo' '
+	test_when_finished "git config --global --unset-all maintenance.repo || :" &&
+	test_might_fail git config --global --unset-all maintenance.repo &&
+	git init --bare barerepo &&
+	(
+		cd barerepo &&
+		git maintenance register &&
+		git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
+		git maintenance unregister &&
+		test_must_fail git config --global --get-all maintenance.repo
+	)
+'
+
 test_done
