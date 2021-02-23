@@ -87,7 +87,7 @@ int verify_pack_index(struct packed_git *);
 int verify_pack(struct repository *, struct packed_git *, verify_fn fn, struct progress *, uint32_t);
 off_t write_pack_header(struct hashfile *f, uint32_t);
 void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
-char *index_pack_lockfile(int fd);
+char *index_pack_lockfile(int fd, int *is_well_formed);
 
 struct ref;
 

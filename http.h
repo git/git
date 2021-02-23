@@ -218,12 +218,12 @@ struct http_pack_request {
 	char *url;
 
 	/*
-	 * If this is true, finish_http_pack_request() will pass "--keep" to
-	 * index-pack, resulting in the creation of a keep file, and will not
-	 * suppress its stdout (that is, the "keep\t<hash>\n" line will be
-	 * printed to stdout).
+	 * index-pack command to run. Must be terminated by NULL.
+	 *
+	 * If NULL, defaults to	{"index-pack", "--stdin", NULL}.
 	 */
-	unsigned generate_keep : 1;
+	const char **index_pack_args;
+	unsigned preserve_index_pack_stdout : 1;
 
 	FILE *packfile;
 	struct strbuf tmpfile;

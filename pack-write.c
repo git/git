@@ -380,7 +380,7 @@ void fixup_pack_header_footer(int pack_fd,
 	fsync_or_die(pack_fd, pack_name);
 }
 
-char *index_pack_lockfile(int ip_out)
+char *index_pack_lockfile(int ip_out, int *is_well_formed)
 {
 	char packname[GIT_MAX_HEXSZ + 6];
 	const int len = the_hash_algo->hexsz + 6;
@@ -394,11 +394,17 @@ char *index_pack_lockfile(int ip_out)
 	 */
 	if (read_in_full(ip_out, packname, len) == len && packname[len-1] == '\n') {
 		const char *name;
+
+		if (is_well_formed)
+			*is_well_formed = 1;
 		packname[len-1] = 0;
 		if (skip_prefix(packname, "keep\t", &name))
 			return xstrfmt("%s/pack/pack-%s.keep",
 				       get_object_directory(), name);
+		return NULL;
 	}
+	if (is_well_formed)
+		*is_well_formed = 0;
 	return NULL;
 }
 
