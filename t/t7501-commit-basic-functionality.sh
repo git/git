@@ -11,7 +11,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY/diff-lib.sh"
+. "$TEST_DIRECTORY/lib-diff.sh"
 
 author='The Real Author <someguy@his.email.org>'
 

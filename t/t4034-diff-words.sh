@@ -3,7 +3,7 @@
 test_description='word diff colors'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 cat >pre.simple <<-\EOF
 	h(4)

@@ -13,7 +13,7 @@ or warnings to log.'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-. ./gitweb-lib.sh
+. ./lib-gitweb.sh
 
 # ----------------------------------------------------------------------
 # no commits (empty, just initialized repository)

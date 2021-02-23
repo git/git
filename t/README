@@ -917,13 +917,13 @@ library for your script to use.
 
    Check whether a file has the length it is expected to.
 
- - test_path_is_file <path> [<diagnosis>]
-   test_path_is_dir <path> [<diagnosis>]
-   test_path_is_missing <path> [<diagnosis>]
+ - test_path_is_file <path>
+   test_path_is_dir <path>
+   test_path_is_missing <path>
 
    Check if the named path is a file, if the named path is a
    directory, or if the named path does not exist, respectively,
-   and fail otherwise, showing the <diagnosis> text.
+   and fail otherwise.
 
  - test_when_finished <script>
 
