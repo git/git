@@ -303,8 +303,20 @@ jobs:
           mkdir -p "$HOME" &&
           git config --global user.name "$USER_NAME" &&
           git config --global user.email "$USER_EMAIL"
-      - uses: actions/checkout@v2
+      - name: Download bundle-artifacts
         if: env.SKIP != 'true'
+        uses: actions/download-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+      - name: Check out git/git
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          git -c init.defaultBranch=main init &&
+          git remote add -f origin https://github.com/git-for-windows/git &&
+          git fetch --tags bundle-artifacts/git.bundle $(cat bundle-artifacts/next_version) &&
+          git reset --hard $(cat bundle-artifacts/next_version)
       - name: initialize vcpkg
         if: env.SKIP != 'true'
         uses: actions/checkout@v2
