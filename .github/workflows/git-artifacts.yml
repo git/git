@@ -39,42 +39,13 @@ jobs:
           git config --global user.name "$USER_NAME" &&
           git config --global user.email "$USER_EMAIL" &&
           echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
-      - name: Determine latest git-sdk-64-extra-artifacts build ID
-        id: determine-latest-sdk64-extra-build-id
-        shell: bash
-        run: |
-          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-          id=$(curl "$urlbase?definitions=29&statusFilter=completed&resultFilter=succeeded&\$top=1" |
-            jq -r '.value[0].id')
-
-          echo "Latest ID is ${id}"
-          echo "::set-output name=id::$id"
-      - name: Cache git-sdk-64-build-installers
-        id: cache-sdk-build-installers
-        uses: actions/cache@v2
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
         with:
-          path: git-sdk-64-build-installers
-          key: build-installers-64-${{ steps.determine-latest-sdk64-extra-build-id.outputs.id }}
-      - name: Download git-sdk-64-build-installers
-        if: steps.cache-sdk-build-installers.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # Use Git Bash to download and unpack the artifact
-
-          ## Get artifact
-          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-          id=${{ steps.determine-latest-sdk64-extra-build-id.outputs.id }}
-          download_url=$(curl "$urlbase/$id/artifacts" |
-            jq -r '.value[] | select(.name == "git-sdk-64-build-installers").resource.downloadUrl')
-
-          curl -o artifacts.zip "$download_url"
-
-          ## Unpack artifact
-          unzip artifacts.zip
+          flavor: build-installers
       - name: Clone build-extra
         shell: bash
         run: |
-          d=git-sdk-64-build-installers/usr/src/build-extra &&
+          d=/usr/src/build-extra &&
           if test ! -d $d/.git
           then
             git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
@@ -88,7 +59,7 @@ jobs:
         run: |
           echo '${{secrets.PRIVGPGKEY}}' | tr % '\n' | gpg $GPG_OPTIONS --import &&
           mkdir -p home &&
-          git config --global gpg.program "$PWD/git-sdk-64-build-installers/usr/src/build-extra/gnupg-with-gpgkey.sh" &&
+          git config --global gpg.program "/usr/src/build-extra/gnupg-with-gpgkey.sh" &&
           info="$(gpg --list-keys --with-colons "${GPGKEY%% *}" | cut -d : -f 1,10 | sed -n '/^uid/{s|uid:||p;q}')" &&
           git config --global user.name "${info% <*}" &&
           git config --global user.email "<${info#*<}"
@@ -97,28 +68,26 @@ jobs:
       - name: Generate bundle artifacts
         env:
           GPGKEY: ${{secrets.GPGKEY}}
-        shell: powershell
+        shell: bash
         run: |
-          & .\git-sdk-64-build-installers\git-cmd.exe --command=usr\bin\bash.exe -lc @"
-            printf '#!/bin/sh\n\nexec /mingw64/bin/git.exe "`$@"\n' >/usr/bin/git &&
-            mkdir -p bundle-artifacts &&
+          printf '#!/bin/sh\n\nexec /mingw64/bin/git.exe "$@"\n' >/usr/bin/git &&
+          mkdir -p bundle-artifacts &&
 
-            { test -n \"`$REPOSITORY\" || REPOSITORY='${{github.repository}}'; } &&
-            { test -n \"`$REF\" || REF='${{github.ref}}'; } &&
-            git -c init.defaultBranch=main init --bare &&
-            git remote add -f origin https://github.com/git-for-windows/git &&
-            git fetch \"https://github.com/`$REPOSITORY\" \"`$REF:`$REF\" &&
+          { test -n "$REPOSITORY" || REPOSITORY='${{github.repository}}'; } &&
+          { test -n "$REF" || REF='${{github.ref}}'; } &&
+          git -c init.defaultBranch=main init --bare &&
+          git remote add -f origin https://github.com/git-for-windows/git &&
+          git fetch "https://github.com/$REPOSITORY" "$REF:$REF" &&
 
-            tag_name=\"`$(git describe --match 'v[0-9]*' FETCH_HEAD)-`$(date +%Y%m%d%H%M%S)\" &&
-            echo \"prerelease-`${tag_name#v}\" >bundle-artifacts/ver &&
-            echo \"`${tag_name#v}\" >bundle-artifacts/display_version &&
-            echo \"`$tag_name\" >bundle-artifacts/next_version &&
-            git tag `$(test -z \"`$GPGKEY\" || echo \" -s\") -m \"Snapshot build\" \"`$tag_name\" FETCH_HEAD &&
-            git bundle create bundle-artifacts/git.bundle origin/main..\"`$tag_name\" &&
+          tag_name="$(git describe --match 'v[0-9]*' FETCH_HEAD)-$(date +%Y%m%d%H%M%S)" &&
+          echo "prerelease-${tag_name#v}" >bundle-artifacts/ver &&
+          echo "${tag_name#v}" >bundle-artifacts/display_version &&
+          echo "$tag_name" >bundle-artifacts/next_version &&
+          git tag $(test -z "$GPGKEY" || echo " -s") -m "Snapshot build" "$tag_name" FETCH_HEAD &&
+          git bundle create bundle-artifacts/git.bundle origin/main.."$tag_name" &&
 
-            sh -x /usr/src/build-extra/please.sh mention feature \"Snapshot of `$(git show -s  --pretty='tformat:%h (%s, %ad)' --date=short FETCH_HEAD)\" &&
-            git -C /usr/src/build-extra bundle create \"`$PWD/bundle-artifacts/build-extra.bundle\" origin/main..main
-          "@
+          sh -x /usr/src/build-extra/please.sh mention feature "Snapshot of $(git show -s  --pretty='tformat:%h (%s, %ad)' --date=short FETCH_HEAD)" &&
+          git -C /usr/src/build-extra bundle create "$PWD/bundle-artifacts/build-extra.bundle" origin/main..main
       - name: Clean up temporary files
         if: always()
         shell: bash
@@ -166,29 +135,10 @@ jobs:
           git config --global user.name "$USER_NAME" &&
           git config --global user.email "$USER_EMAIL" &&
           echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
-      - name: Cache git-sdk-64-build-installers
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
         if: env.SKIP != 'true'
-        id: cache-sdk-build-installers
-        uses: actions/cache@v2
         with:
-          path: git-sdk-64-build-installers
-          key: build-installers-64-${{ needs.bundle-artifacts.outputs.latest-sdk64-extra-build-id }}
-      - name: Download git-sdk-64-build-installers
-        if: env.SKIP != 'true' && steps.cache-sdk-build-installers.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # Use Git Bash to download and unpack the artifact
-
-          ## Get artifact
-          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-          id=${{ needs.pkg.outputs.latest-sdk64-extra-build-id }}
-          download_url=$(curl "$urlbase/$id/artifacts" |
-            jq -r '.value[] | select(.name == "git-sdk-64-build-installers").resource.downloadUrl')
-
-          curl -o artifacts.zip "$download_url"
-
-          ## Unpack artifact
-          unzip artifacts.zip
+          flavor: build-installers
       - name: Download bundle-artifacts
         if: env.SKIP != 'true'
         uses: actions/download-artifact@v1
@@ -199,7 +149,7 @@ jobs:
         if: env.SKIP != 'true'
         shell: bash
         run: |
-          d=git-sdk-64-build-installers/usr/src/build-extra &&
+          d=/usr/src/build-extra &&
           if test ! -d $d/.git
           then
             git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
@@ -242,32 +192,33 @@ jobs:
         if: env.SKIP != 'true'
         env:
           GPGKEY: "${{secrets.GPGKEY}}"
-        shell: powershell
+        shell: bash
         run: |
-          & git-sdk-64-build-installers\usr\bin\sh.exe -lc @"
-            set -x
+          set -x
 
-            # Restrict `PATH` to MSYS2 and to Visual Studio (to let `cv2pdb` find the relevant DLLs)
-            PATH=\"`/mingw64/bin:/usr/bin:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin${{matrix.arch.bin}}:/C/Windows/system32\"
+          # Make sure that there is a `/usr/bin/git` that can be used by `makepkg-mingw`
+          printf '#!/bin/sh\n\nexec /mingw64/bin/git.exe "$@"\n' >/usr/bin/git &&
 
-            type -p mspdb140.dll || exit 1
-            sh -x /usr/src/build-extra/please.sh build-mingw-w64-git --only-${{matrix.arch.bitness}}-bit --build-src-pkg -o artifacts HEAD &&
-            cp bundle-artifacts/ver artifacts/ &&
-            if test -n \"`$GPGKEY\"
-            then
-              for tar in artifacts/*.tar*
-              do
-                /usr/src/build-extra/gnupg-with-gpgkey.sh --detach-sign --no-armor `$tar
-              done
-            fi &&
+          # Restrict `PATH` to MSYS2 and to Visual Studio (to let `cv2pdb` find the relevant DLLs)
+          PATH="/mingw64/bin:/usr/bin:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin${{matrix.arch.bin}}:/C/Windows/system32"
 
-            b=`$PWD/artifacts &&
-            version=`$(cat bundle-artifacts/next_version) &&
-            (cd /usr/src/MINGW-packages/mingw-w64-git &&
-            cp PKGBUILD.`$version PKGBUILD &&
-            git commit -s -m \"mingw-w64-git: new version (`$version)\" PKGBUILD &&
-            git bundle create \"`$b\"/MINGW-packages.bundle origin/main..main)
-          "@
+          type -p mspdb140.dll || exit 1
+          sh -x /usr/src/build-extra/please.sh build-mingw-w64-git --only-${{matrix.arch.bitness}}-bit --build-src-pkg -o artifacts HEAD &&
+          cp bundle-artifacts/ver artifacts/ &&
+          if test -n "$GPGKEY"
+          then
+            for tar in artifacts/*.tar*
+            do
+              /usr/src/build-extra/gnupg-with-gpgkey.sh --detach-sign --no-armor $tar
+            done
+          fi &&
+
+          b=$PWD/artifacts &&
+          version=$(cat bundle-artifacts/next_version) &&
+          (cd /usr/src/MINGW-packages/mingw-w64-git &&
+          cp PKGBUILD.$version PKGBUILD &&
+          git commit -s -m "mingw-w64-git: new version ($version)" PKGBUILD &&
+          git bundle create "$b"/MINGW-packages.bundle origin/main..main)
       - name: Clean up temporary files
         if: always() && env.SKIP != 'true'
         shell: bash
@@ -417,63 +368,15 @@ jobs:
         with:
           name: bundle-artifacts
           path: bundle-artifacts
-      - name: Cache git-sdk-64-build-installers
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
         if: env.SKIP != 'true' && matrix.arch.bitness == '64'
-        id: cache-sdk64-build-installers
-        uses: actions/cache@v2
         with:
-          path: git-sdk-64-build-installers
-          key: build-installers-64-${{ needs.pkg.outputs.latest-sdk64-extra-build-id }}
-      - name: Download git-sdk-64-build-installers
-        if: env.SKIP != 'true' && matrix.arch.bitness == '64' && steps.cache-sdk64-build-installers.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # Use Git Bash to download and unpack the artifact
-
-          ## Get artifact
-          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-          id=${{ needs.pkg.outputs.latest-sdk64-extra-build-id }}
-          download_url="$(curl "$urlbase/$id/artifacts" |
-            jq -r '.value[] | select(.name == "git-sdk-64-build-installers").resource.downloadUrl')"
-
-          curl -o artifacts.zip "$download_url"
-
-          ## Unpack artifact
-          unzip artifacts.zip
-      - name: Determine latest git-sdk-32-extra-artifacts build ID
+          flavor: build-installers
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
         if: env.SKIP != 'true' && matrix.arch.bitness == '32'
-        id: determine-latest-sdk32-extra-build-id
-        shell: bash
-        run: |
-          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-          id=$(curl "$urlbase?definitions=30&statusFilter=completed&resultFilter=succeeded&\$top=1" |
-            jq -r '.value[0].id')
-
-          echo "Latest ID is ${id}"
-          echo "::set-output name=id::$id"
-      - name: Cache git-sdk-32-build-installers
-        if: env.SKIP != 'true' && matrix.arch.bitness == '32'
-        id: cache-sdk32-build-installers
-        uses: actions/cache@v2
         with:
-          path: git-sdk-32-build-installers
-          key: build-installers-32-${{ steps.determine-latest-sdk32-extra-build-id.outputs.id }}
-      - name: Download git-sdk-32-build-installers
-        if: env.SKIP != 'true' && matrix.arch.bitness == '32' && steps.cache-sdk32-build-installers.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # Use Git Bash to download and unpack the artifact
-
-          ## Get artifact
-          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-          id=${{ steps.determine-latest-sdk32-extra-build-id.outputs.id }}
-          download_url=$(curl "$urlbase/$id/artifacts" |
-            jq -r '.value[] | select(.name == "git-sdk-32-build-installers").resource.downloadUrl')
-
-          curl -o artifacts.zip "$download_url"
-
-          ## Unpack artifact
-          unzip artifacts.zip
+          flavor: build-installers
+          architecture: i686
       - name: Download arm64 artifact
         if: env.SKIP != 'true' && matrix.arch.arm64 == true
         uses: actions/download-artifact@v1
@@ -484,7 +387,7 @@ jobs:
         if: env.SKIP != 'true'
         shell: bash
         run: |
-          d=git-sdk-${{matrix.arch.bitness}}-build-installers/usr/src/build-extra &&
+          d=/usr/src/build-extra &&
           if test ! -d $d/.git
           then
             git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
@@ -506,38 +409,34 @@ jobs:
           git config --global alias.signtool '!sh "/usr/src/build-extra/signtool.sh"'
       - name: Build ${{matrix.arch.bitness}}-bit ${{matrix.artifact.name}}
         if: env.SKIP != 'true'
-        shell: powershell
+        shell: bash
         run: |
-          & .\git-sdk-${{matrix.arch.bitness}}-build-installers\usr\bin\bash.exe -lc @"
-            set -x
-            if test "${{matrix.arch.arm64}}" = true
-            then
-              ARM64="--include-arm64-artifacts=\"$PWD/arm64\""
-            else
-              ARM64=
-            fi
+          set -x
+          if test "${{matrix.arch.arm64}}" = true
+          then
+            ARM64="--include-arm64-artifacts=\"$PWD/arm64\""
+          else
+            ARM64=
+          fi
 
-            eval /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git `$ARM64 --version=`$(cat pkg-${{matrix.arch.name}}/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-[0-9]*.tar.xz --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-doc-html-[0-9]*.tar.xz &&
-            if test portable = '${{matrix.artifact.name}}' && test -n \"`$(git config alias.signtool)\"
-            then
-              git signtool artifacts/PortableGit-*.exe
-            fi &&
-            openssl dgst -sha256 artifacts/${{matrix.artifact.fileprefix}}-*.${{matrix.artifact.fileextension}} | sed \"s/.* //\" >artifacts/sha-256.txt
-          "@
+          eval /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git $ARM64 --version=$(cat pkg-${{matrix.arch.name}}/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-[0-9]*.tar.xz --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-doc-html-[0-9]*.tar.xz &&
+          if test portable = '${{matrix.artifact.name}}' && test -n "$(git config alias.signtool)"
+          then
+            git signtool artifacts/PortableGit-*.exe
+          fi &&
+          openssl dgst -sha256 artifacts/${{matrix.artifact.fileprefix}}-*.${{matrix.artifact.fileextension}} | sed "s/.* //" >artifacts/sha-256.txt
       - name: Copy package-versions and pdbs
         if: env.SKIP != 'true' && matrix.artifact.name == 'installer'
-        shell: powershell
+        shell: bash
         run: |
-          & .\git-sdk-${{matrix.arch.bitness}}-build-installers\usr\bin\bash.exe -lc @"
-            cp /usr/src/build-extra/installer/package-versions.txt artifacts/ &&
+          cp /usr/src/build-extra/installer/package-versions.txt artifacts/ &&
 
-            a=`$PWD/artifacts &&
-            p=`$PWD/pkg-${{matrix.arch.name}} &&
-            (cd /usr/src/build-extra &&
-            mkdir -p cached-source-packages &&
-            cp \"`$p\"/*-pdb* cached-source-packages/ &&
-            GIT_CONFIG_PARAMETERS=\"'windows.sdk${{matrix.arch.bitness}}.path='\" ./please.sh bundle_pdbs --arch=${{matrix.arch.name}} --directory=\"`$a\" installer/package-versions.txt)
-          "@
+          a=$PWD/artifacts &&
+          p=$PWD/pkg-${{matrix.arch.name}} &&
+          (cd /usr/src/build-extra &&
+          mkdir -p cached-source-packages &&
+          cp "$p"/*-pdb* cached-source-packages/ &&
+          GIT_CONFIG_PARAMETERS="'windows.sdk${{matrix.arch.bitness}}.path='" ./please.sh bundle_pdbs --arch=${{matrix.arch.name}} --directory="$a" installer/package-versions.txt)
       - name: Clean up temporary files
         if: always() && env.SKIP != 'true'
         shell: bash
@@ -578,34 +477,15 @@ jobs:
         with:
           name: bundle-artifacts
           path: bundle-artifacts
-      - name: Cache git-sdk-64-build-installers
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
         if: env.SKIP != 'true'
-        id: cache-sdk-build-installers
-        uses: actions/cache@v2
         with:
-          path: git-sdk-64-build-installers
-          key: build-installers-64-${{ needs.pkg.outputs.latest-sdk64-extra-build-id }}
-      - name: Download git-sdk-64-build-installers
-        if: env.SKIP != 'true' && steps.cache-sdk-build-installers.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # Use Git Bash to download and unpack the artifact
-
-          ## Get artifact
-          urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-          id=${{ needs.pkg.outputs.latest-sdk64-extra-build-id }}
-          download_url=$(curl "$urlbase/$id/artifacts" |
-            jq -r '.value[] | select(.name == "git-sdk-64-build-installers").resource.downloadUrl')
-
-          curl -o artifacts.zip "$download_url"
-
-          ## Unpack artifact
-          unzip artifacts.zip
+          flavor: build-installers
       - name: Clone and update build-extra
         if: env.SKIP != 'true'
         shell: bash
         run: |
-          d=git-sdk-64-build-installers/usr/src/build-extra &&
+          d=/usr/src/build-extra &&
           if test ! -d $d/.git
           then
             git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
@@ -618,13 +498,11 @@ jobs:
         if: env.SKIP != 'true'
       - name: Build 64-bit NuGet packages
         if: env.SKIP != 'true'
-        shell: powershell
+        shell: bash
         run: |
-          & .\git-sdk-64-build-installers\usr\bin\bash.exe -lc @"
-            /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=`$(cat pkg-x86_64/ver) -o artifacts --nuget --pkg=pkg-x86_64/mingw-w64-x86_64-git-[0-9]*.tar.xz --pkg=pkg-x86_64/mingw-w64-x86_64-git-doc-html-[0-9]*.tar.xz &&
-            /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=`$(cat pkg-x86_64/ver) -o artifacts --nuget-mingit &&
-            openssl dgst -sha256 artifacts/Git*.nupkg | sed \"s/.* //\" >artifacts/sha-256.txt
-          "@
+          /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=$(cat pkg-x86_64/ver) -o artifacts --nuget --pkg=pkg-x86_64/mingw-w64-x86_64-git-[0-9]*.tar.xz --pkg=pkg-x86_64/mingw-w64-x86_64-git-doc-html-[0-9]*.tar.xz &&
+          /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=$(cat pkg-x86_64/ver) -o artifacts --nuget-mingit &&
+          openssl dgst -sha256 artifacts/Git*.nupkg | sed "s/.* //" >artifacts/sha-256.txt
       - name: Publish nuget-x86_64
         if: env.SKIP != 'true'
         uses: actions/upload-artifact@v1
