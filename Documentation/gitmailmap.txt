@@ -50,9 +50,9 @@ which allows mailmap to replace both the name and the email of a
 commit matching both the specified commit name and email address.
 
 Both E-Mails and names are matched case-insensitively. For example
-this would also match the 'Commit Name <commit@email.xx>' above:
+this would also match the 'Commit Name <commit&#64;email.xx>' above:
 --
-Proper Name <proper@email.xx> CoMmIt NaMe <CoMmIt@EmAiL.xX>
+	Proper Name <proper@email.xx> CoMmIt NaMe <CoMmIt@EmAiL.xX>
 --
 
 EXAMPLES
@@ -79,9 +79,9 @@ Jane Doe <jane@example.com>
 Jane Doe <jane@desktop.(none)>
 ------------
 
-Note that there's no need to map the name for 'jane@laptop.(none)' to
+Note that there's no need to map the name for '<jane&#64;laptop.(none)>' to
 only correct the names. However, leaving the obviously broken
-`<jane@laptop.(none)>' and '<jane@desktop.(none)>' E-Mails as-is is
+'<jane&#64;laptop.(none)>' and '<jane&#64;desktop.(none)>' E-Mails as-is is
 usually not what you want. A `.mailmap` file which also corrects those
 is:
 
