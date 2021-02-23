@@ -224,8 +224,10 @@ jobs:
         run: |
           & git-sdk-64-build-installers\usr\bin\sh.exe -lc @"
             set -x
-            # Let `cv2pdb` find the DLLs
-            PATH=\"`$PATH:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin${{matrix.arch.bin}}\"
+
+            # Restrict `PATH` to MSYS2 and to Visual Studio (to let `cv2pdb` find the relevant DLLs)
+            PATH=\"`/mingw64/bin:/usr/bin:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin${{matrix.arch.bin}}:/C/Windows/system32\"
+
             type -p mspdb140.dll || exit 1
             sh -x /usr/src/build-extra/please.sh build-mingw-w64-git --only-${{matrix.arch.bitness}}-bit --build-src-pkg -o artifacts HEAD &&
             cp bundle-artifacts/ver artifacts/ &&
