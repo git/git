@@ -2042,7 +2042,10 @@ static int fill_pack_entry(const struct object_id *oid,
 	return 1;
 }
 
-int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e)
+static int find_one_pack_entry(struct repository *r,
+			       const struct object_id *oid,
+			       struct pack_entry *e,
+			       int kept_only)
 {
 	struct list_head *pos;
 	struct multi_pack_index *m;
@@ -2052,24 +2055,75 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 		return 0;
 
 	for (m = r->objects->multi_pack_index; m; m = m->next) {
-		if (fill_midx_entry(r, oid, e, m))
+		if (!fill_midx_entry(r, oid, e, m))
+			continue;
+
+		if (!kept_only)
+			return 1;
+
+		if (((kept_only & ON_DISK_KEEP_PACKS) && e->p->pack_keep) ||
+		    ((kept_only & IN_CORE_KEEP_PACKS) && e->p->pack_keep_in_core))
 			return 1;
 	}
 
 	list_for_each(pos, &r->objects->packed_git_mru) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);
-		if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
-			list_move(&p->mru, &r->objects->packed_git_mru);
-			return 1;
+		if (p->multi_pack_index && !kept_only) {
+			/*
+			 * If this pack is covered by the MIDX, we'd have found
+			 * the object already in the loop above if it was here,
+			 * so don't bother looking.
+			 *
+			 * The exception is if we are looking only at kept
+			 * packs. An object can be present in two packs covered
+			 * by the MIDX, one kept and one not-kept. And as the
+			 * MIDX points to only one copy of each object, it might
+			 * have returned only the non-kept version above. We
+			 * have to check again to be thorough.
+			 */
+			continue;
+		}
+		if (!kept_only ||
+		    (((kept_only & ON_DISK_KEEP_PACKS) && p->pack_keep) ||
+		     ((kept_only & IN_CORE_KEEP_PACKS) && p->pack_keep_in_core))) {
+			if (fill_pack_entry(oid, e, p)) {
+				list_move(&p->mru, &r->objects->packed_git_mru);
+				return 1;
+			}
 		}
 	}
 	return 0;
+}
+
+int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e)
+{
+	return find_one_pack_entry(r, oid, e, 0);
+}
+
+int find_kept_pack_entry(struct repository *r,
+			 const struct object_id *oid,
+			 unsigned flags,
+			 struct pack_entry *e)
+{
+	/*
+	 * Load all packs, including midx packs, since our "kept" strategy
+	 * relies on that. We're relying on the side effect of it setting up
+	 * r->objects->packed_git, which is a little ugly.
+	 */
+	get_all_packs(r);
+	return find_one_pack_entry(r, oid, e, flags);
 }
 
 int has_object_pack(const struct object_id *oid)
 {
 	struct pack_entry e;
 	return find_pack_entry(the_repository, oid, &e);
+}
+
+int has_object_kept_pack(const struct object_id *oid, unsigned flags)
+{
+	struct pack_entry e;
+	return find_kept_pack_entry(the_repository, oid, flags, &e);
 }
 
 int has_pack_index(const unsigned char *sha1)
