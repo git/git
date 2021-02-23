@@ -140,7 +140,21 @@ jobs:
             bitness: 32
             bin: ''
     steps:
+      - name: Determine whether this job should be skipped
+        shell: bash
+        run: |
+          for e in ${BUILD_ONLY:-pkg}
+          do
+            case $e in
+            *-${{matrix.arch.name}}) exit 0;; # build this artifact
+            *-arm64) test i686 != ${{matrix.arch.name}} || exit 0;; # pkg-i686 is required for the ARM64 version
+            *-*) ;; # not this build artifact, keep looking
+            *) exit 0;; # build this artifact
+            esac
+          done
+          echo "SKIP=true" >>$GITHUB_ENV
       - name: Configure user
+        if: env.SKIP != 'true'
         shell: bash
         run:
           USER_NAME="${{github.actor}}" &&
@@ -150,13 +164,14 @@ jobs:
           git config --global user.email "$USER_EMAIL" &&
           echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
       - name: Cache git-sdk-64-build-installers
+        if: env.SKIP != 'true'
         id: cache-sdk-build-installers
         uses: actions/cache@v2
         with:
           path: git-sdk-64-build-installers
           key: build-installers-64-${{ needs.bundle-artifacts.outputs.latest-sdk64-extra-build-id }}
       - name: Download git-sdk-64-build-installers
-        if: steps.cache-sdk-build-installers.outputs.cache-hit != 'true'
+        if: env.SKIP != 'true' && steps.cache-sdk-build-installers.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # Use Git Bash to download and unpack the artifact
@@ -172,11 +187,13 @@ jobs:
           ## Unpack artifact
           unzip artifacts.zip
       - name: Download bundle-artifacts
+        if: env.SKIP != 'true'
         uses: actions/download-artifact@v1
         with:
           name: bundle-artifacts
           path: bundle-artifacts
       - name: Clone and update build-extra
+        if: env.SKIP != 'true'
         shell: bash
         run: |
           d=git-sdk-64-build-installers/usr/src/build-extra &&
@@ -189,6 +206,7 @@ jobs:
           fi &&
           git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
       - name: Check out git/git
+        if: env.SKIP != 'true'
         shell: bash
         run: |
           git -c init.defaultBranch=main init &&
@@ -199,7 +217,7 @@ jobs:
         env:
           CODESIGN_P12: ${{secrets.CODESIGN_P12}}
           CODESIGN_PASS: ${{secrets.CODESIGN_PASS}}
-        if: env.CODESIGN_P12 != '' && env.CODESIGN_PASS != ''
+        if: env.SKIP != 'true' && env.CODESIGN_P12 != '' && env.CODESIGN_PASS != ''
         shell: bash
         run: |
           cd home &&
@@ -208,7 +226,7 @@ jobs:
           echo -n "$CODESIGN_PASS" >.sig/codesign.pass
           git config --global alias.signtool '!sh "/usr/src/build-extra/signtool.sh"'
       - name: Prepare home directory for GPG signing
-        if: env.GPGKEY != ''
+        if: env.SKIP != 'true' && env.GPGKEY != ''
         shell: bash
         run: |
           echo '${{secrets.PRIVGPGKEY}}' | tr % '\n' | gpg $GPG_OPTIONS --import &&
@@ -218,6 +236,7 @@ jobs:
         env:
           GPGKEY: ${{secrets.GPGKEY}}
       - name: Build mingw-w64-${{matrix.arch.name}}-git
+        if: env.SKIP != 'true'
         env:
           GPGKEY: "${{secrets.GPGKEY}}"
         shell: powershell
@@ -247,10 +266,11 @@ jobs:
             git bundle create \"`$b\"/MINGW-packages.bundle origin/main..main)
           "@
       - name: Clean up temporary files
-        if: always()
+        if: always() && env.SKIP != 'true'
         shell: bash
         run: rm -rf home
       - name: Publish mingw-w64-${{matrix.arch.name}}-git
+        if: env.SKIP != 'true'
         uses: actions/upload-artifact@v1
         with:
           name: pkg-${{matrix.arch.name}}
@@ -259,7 +279,20 @@ jobs:
     needs: bundle-artifacts
     runs-on: windows-latest
     steps:
+      - name: Determine whether this job should be skipped
+        shell: bash
+        run: |
+          for e in ${BUILD_ONLY:-pkg}
+          do
+            case $e in
+            *-arm64) exit 0;; # build this artifact
+            *-*) ;; # not this build artifact, keep looking
+            *) exit 0;; # build this artifact
+            esac
+          done
+          echo "SKIP=true" >>$GITHUB_ENV
       - name: Configure user
+        if: env.SKIP != 'true'
         shell: bash
         run:
           USER_NAME="${{github.actor}}" &&
@@ -268,34 +301,43 @@ jobs:
           git config --global user.name "$USER_NAME" &&
           git config --global user.email "$USER_EMAIL"
       - uses: actions/checkout@v2
+        if: env.SKIP != 'true'
       - name: initialize vcpkg
+        if: env.SKIP != 'true'
         uses: actions/checkout@v2
         with:
           repository: 'microsoft/vcpkg'
           path: 'compat/vcbuild/vcpkg'
       - name: download vcpkg artifacts
+        if: env.SKIP != 'true'
         uses: git-for-windows/get-azure-pipelines-artifact@v0
         with:
           repository: git/git
           definitionId: 9
       - name: add msbuild to PATH
+        if: env.SKIP != 'true'
         uses: microsoft/setup-msbuild@v1
       - name: copy dlls to root
+        if: env.SKIP != 'true'
         shell: powershell
         run: |
           & compat\vcbuild\vcpkg_copy_dlls.bat release arm64-windows
           if (!$?) { exit(1) }
       - name: generate Visual Studio solution
+        if: env.SKIP != 'true'
         shell: bash
         run: |
           cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/arm64-windows \
           -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=arm64 -DVCPKG_ARCH=arm64-windows \
           -DCMAKE_INSTALL_PREFIX="`pwd`/git-arm64" -DSKIP_DASHED_BUILT_INS=ON
       - name: MSBuild
+        if: env.SKIP != 'true'
         run: msbuild git.sln -property:Configuration=Release
       - name: Link the Git executables
+        if: env.SKIP != 'true'
         run: msbuild INSTALL.vcxproj -property:Configuration=Release
       - name: upload build artifacts
+        if: env.SKIP != 'true'
         uses: actions/upload-artifact@v1
         with:
           name: arm64-artifacts
