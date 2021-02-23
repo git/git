@@ -257,51 +257,51 @@ jobs:
     needs: bundle-artifacts
     runs-on: windows-latest
     steps:
-    - name: Configure user
-      shell: bash
-      run:
-        USER_NAME="${{github.actor}}" &&
-        USER_EMAIL="${{github.actor}}@users.noreply.github.com" &&
-        mkdir -p "$HOME" &&
-        git config --global user.name "$USER_NAME" &&
-        git config --global user.email "$USER_EMAIL"
-    - uses: actions/checkout@v2
-    - name: initialize vcpkg
-      uses: actions/checkout@v2
-      with:
-        repository: 'microsoft/vcpkg'
-        path: 'compat/vcbuild/vcpkg'
-    - name: download vcpkg artifacts
-      shell: powershell
-      run: |
-        $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
-        $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
-        $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
-        (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
-        Expand-Archive compat.zip -DestinationPath . -Force
-        Remove-Item compat.zip
-    - name: add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1
-    - name: copy dlls to root
-      shell: powershell
-      run: |
-        & compat\vcbuild\vcpkg_copy_dlls.bat release arm64-windows
-        if (!$?) { exit(1) }
-    - name: generate Visual Studio solution
-      shell: bash
-      run: |
-        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/arm64-windows \
-        -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=arm64 -DVCPKG_ARCH=arm64-windows \
-        -DCMAKE_INSTALL_PREFIX="`pwd`/git-arm64" -DSKIP_DASHED_BUILT_INS=ON
-    - name: MSBuild
-      run: msbuild git.sln -property:Configuration=Release
-    - name: Link the Git executables
-      run: msbuild INSTALL.vcxproj -property:Configuration=Release
-    - name: upload build artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: arm64-artifacts
-        path: ./git-arm64
+      - name: Configure user
+        shell: bash
+        run:
+          USER_NAME="${{github.actor}}" &&
+          USER_EMAIL="${{github.actor}}@users.noreply.github.com" &&
+          mkdir -p "$HOME" &&
+          git config --global user.name "$USER_NAME" &&
+          git config --global user.email "$USER_EMAIL"
+      - uses: actions/checkout@v2
+      - name: initialize vcpkg
+        uses: actions/checkout@v2
+        with:
+          repository: 'microsoft/vcpkg'
+          path: 'compat/vcbuild/vcpkg'
+      - name: download vcpkg artifacts
+        shell: powershell
+        run: |
+          $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
+          $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
+          $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
+          (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
+          Expand-Archive compat.zip -DestinationPath . -Force
+          Remove-Item compat.zip
+      - name: add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1
+      - name: copy dlls to root
+        shell: powershell
+        run: |
+          & compat\vcbuild\vcpkg_copy_dlls.bat release arm64-windows
+          if (!$?) { exit(1) }
+      - name: generate Visual Studio solution
+        shell: bash
+        run: |
+          cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/arm64-windows \
+          -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=arm64 -DVCPKG_ARCH=arm64-windows \
+          -DCMAKE_INSTALL_PREFIX="`pwd`/git-arm64" -DSKIP_DASHED_BUILT_INS=ON
+      - name: MSBuild
+        run: msbuild git.sln -property:Configuration=Release
+      - name: Link the Git executables
+        run: msbuild INSTALL.vcxproj -property:Configuration=Release
+      - name: upload build artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: arm64-artifacts
+          path: ./git-arm64
   artifacts:
     runs-on: windows-latest
     needs: [pkg, build-arm64]
