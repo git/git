@@ -482,14 +482,12 @@ jobs:
         if: always() && env.SKIP != 'true'
         shell: bash
         run: rm -rf home
-
       - name: Publish ${{matrix.artifact.name}}-${{matrix.arch.name}}
         if: env.SKIP != 'true' && matrix.arch.arm64 != true
         uses: actions/upload-artifact@v1
         with:
           name: ${{matrix.artifact.name}}-${{matrix.arch.name}}
           path: artifacts
-
       - name: Publish ${{matrix.artifact.name}}-arm64
         if: env.SKIP != 'true' && matrix.arch.arm64 == true
         uses: actions/upload-artifact@v1
