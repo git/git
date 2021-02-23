@@ -502,7 +502,7 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	struct signature_check sigc = { 0 };
 	int status;
 
-	if (parse_signed_commit(commit, &payload, &signature) <= 0)
+	if (parse_signed_commit(commit, &payload, &signature, the_hash_algo) <= 0)
 		goto out;
 
 	status = check_signature(payload.buf, payload.len, signature.buf,
@@ -548,7 +548,8 @@ static int show_one_mergetag(struct commit *commit,
 	struct strbuf verify_message;
 	struct signature_check sigc = { 0 };
 	int status, nth;
-	size_t payload_size;
+	struct strbuf payload = STRBUF_INIT;
+	struct strbuf signature = STRBUF_INIT;
 
 	hash_object_file(the_hash_algo, extra->value, extra->len,
 			 type_name(OBJ_TAG), &oid);
@@ -571,13 +572,11 @@ static int show_one_mergetag(struct commit *commit,
 		strbuf_addf(&verify_message,
 			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
 
-	payload_size = parse_signature(extra->value, extra->len);
 	status = -1;
-	if (extra->len > payload_size) {
+	if (parse_signature(extra->value, extra->len, &payload, &signature)) {
 		/* could have a good signature */
-		status = check_signature(extra->value, payload_size,
-					 extra->value + payload_size,
-					 extra->len - payload_size, &sigc);
+		status = check_signature(payload.buf, payload.len,
+					 signature.buf, signature.len, &sigc);
 		if (sigc.gpg_output)
 			strbuf_addstr(&verify_message, sigc.gpg_output);
 		else
@@ -588,6 +587,8 @@ static int show_one_mergetag(struct commit *commit,
 
 	show_sig_lines(opt, status, verify_message.buf);
 	strbuf_release(&verify_message);
+	strbuf_release(&payload);
+	strbuf_release(&signature);
 	return 0;
 }
 

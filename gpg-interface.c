@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "commit.h"
 #include "config.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -345,7 +346,7 @@ void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 		fputs(output, stderr);
 }
 
-size_t parse_signature(const char *buf, size_t size)
+size_t parse_signed_buffer(const char *buf, size_t size)
 {
 	size_t len = 0;
 	size_t match = size;
@@ -359,6 +360,18 @@ size_t parse_signature(const char *buf, size_t size)
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}
 	return match;
+}
+
+int parse_signature(const char *buf, size_t size, struct strbuf *payload, struct strbuf *signature)
+{
+	size_t match = parse_signed_buffer(buf, size);
+	if (match != size) {
+		strbuf_add(payload, buf, match);
+		remove_signature(payload);
+		strbuf_add(signature, buf + match, size - match);
+		return 1;
+	}
+	return 0;
 }
 
 void set_signing_key(const char *key)
