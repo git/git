@@ -2390,12 +2390,12 @@ TEST_OBJS := $(patsubst %$X,%.o,$(TEST_PROGRAMS)) $(patsubst %,t/helper/%,$(TEST
 
 OBJECTS += $(LIB_OBJS)
 OBJECTS += $(BUILTIN_OBJS)
+OBJECTS += common-main.o
+OBJECTS += git.o
 OBJECTS += $(PROGRAM_OBJS)
 OBJECTS += $(TEST_OBJS)
 OBJECTS += $(XDIFF_OBJS)
 OBJECTS += $(FUZZ_OBJS)
-OBJECTS += common-main.o
-OBJECTS += git.o
 ifndef NO_CURL
 	OBJECTS += http.o http-walker.o remote-curl.o
 endif
