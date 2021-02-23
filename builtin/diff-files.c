@@ -54,6 +54,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	}
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
+	rev.diffopt.rotate_to_strict = 1;
 
 	/*
 	 * Make sure there are NO revision (i.e. pending object) parameter,
