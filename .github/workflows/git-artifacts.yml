@@ -415,7 +415,7 @@ jobs:
           ## Unpack artifact
           unzip artifacts.zip
       - name: Download arm64 artifact
-        if: matrix.arch.arm64 == true
+        if: env.SKIP != 'true' && matrix.arch.arm64 == true
         uses: actions/download-artifact@v1
         with:
           name: arm64-artifacts
