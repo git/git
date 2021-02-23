@@ -398,7 +398,7 @@ test_expect_success 'git add --chmod --dry-run reports error for non regular fil
 	git reset --hard &&
 	test_ln_s_add foo foo4 &&
 	git add --chmod=+x --dry-run foo4 2>stderr &&
-	grep "cannot chmod +x .foo4." stderr
+	test_i18ngrep "cannot chmod +x .foo4." stderr
 '
 
 test_expect_success 'git add --chmod --dry-run reports error for unmatched pathspec' '
