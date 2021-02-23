@@ -1064,7 +1064,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 
 	if (!all) {
 		fprintf(stderr, _("No testable commit found.\n"
-			"Maybe you started with bad path parameters?\n"));
+			"Maybe you started with bad path arguments?\n"));
 
 		return BISECT_NO_TESTABLE_COMMIT;
 	}
