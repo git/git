@@ -7,10 +7,13 @@ on:
     inputs:
       build_only:
         description: 'Optionally restrict what artifacts to build'
+        required: false
       ref:
         description: 'Optionally override which branch to build'
+        required: false
       repository:
         description: 'Optionally override from where to fetch the specified ref'
+        required: false
 
 env:
   GPG_OPTIONS: "--batch --yes --no-tty --list-options no-show-photos --verify-options no-show-photos --pinentry-mode loopback"
