@@ -367,6 +367,144 @@ static int find_exact_renames(struct diff_options *options)
 	return renames;
 }
 
+static const char *get_basename(const char *filename)
+{
+	/*
+	 * gitbasename() has to worry about special drives, multiple
+	 * directory separator characters, trailing slashes, NULL or
+	 * empty strings, etc.  We only work on filenames as stored in
+	 * git, and thus get to ignore all those complications.
+	 */
+	const char *base = strrchr(filename, '/');
+	return base ? base + 1 : filename;
+}
+
+static int find_basename_matches(struct diff_options *options,
+				 int minimum_score)
+{
+	/*
+	 * When I checked in early 2020, over 76% of file renames in linux
+	 * just moved files to a different directory but kept the same
+	 * basename.  gcc did that with over 64% of renames, gecko did it
+	 * with over 79%, and WebKit did it with over 89%.
+	 *
+	 * Therefore we can bypass the normal exhaustive NxM matrix
+	 * comparison of similarities between all potential rename sources
+	 * and destinations by instead using file basename as a hint (i.e.
+	 * the portion of the filename after the last '/'), checking for
+	 * similarity between files with the same basename, and if we find
+	 * a pair that are sufficiently similar, record the rename pair and
+	 * exclude those two from the NxM matrix.
+	 *
+	 * This *might* cause us to find a less than optimal pairing (if
+	 * there is another file that we are even more similar to but has a
+	 * different basename).  Given the huge performance advantage
+	 * basename matching provides, and given the frequency with which
+	 * people use the same basename in real world projects, that's a
+	 * trade-off we are willing to accept when doing just rename
+	 * detection.
+	 *
+	 * If someone wants copy detection that implies they are willing to
+	 * spend more cycles to find similarities between files, so it may
+	 * be less likely that this heuristic is wanted.  If someone is
+	 * doing break detection, that means they do not want filename
+	 * similarity to imply any form of content similiarity, and thus
+	 * this heuristic would definitely be incompatible.
+	 */
+
+	int i, renames = 0;
+	struct strintmap sources;
+	struct strintmap dests;
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	/*
+	 * The prefeteching stuff wants to know if it can skip prefetching
+	 * blobs that are unmodified...and will then do a little extra work
+	 * to verify that the oids are indeed different before prefetching.
+	 * Unmodified blobs are only relevant when doing copy detection;
+	 * when limiting to rename detection, diffcore_rename[_extended]()
+	 * will never be called with unmodified source paths fed to us, so
+	 * the extra work necessary to check if rename_src entries are
+	 * unmodified would be a small waste.
+	 */
+	int skip_unmodified = 0;
+
+	/*
+	 * Create maps of basename -> fullname(s) for remaining sources and
+	 * dests.
+	 */
+	strintmap_init_with_options(&sources, -1, NULL, 0);
+	strintmap_init_with_options(&dests, -1, NULL, 0);
+	for (i = 0; i < rename_src_nr; ++i) {
+		char *filename = rename_src[i].p->one->path;
+		const char *base;
+
+		/* exact renames removed in remove_unneeded_paths_from_src() */
+		assert(!rename_src[i].p->one->rename_used);
+
+		/* Record index within rename_src (i) if basename is unique */
+		base = get_basename(filename);
+		if (strintmap_contains(&sources, base))
+			strintmap_set(&sources, base, -1);
+		else
+			strintmap_set(&sources, base, i);
+	}
+	for (i = 0; i < rename_dst_nr; ++i) {
+		char *filename = rename_dst[i].p->two->path;
+		const char *base;
+
+		if (rename_dst[i].is_rename)
+			continue; /* involved in exact match already. */
+
+		/* Record index within rename_dst (i) if basename is unique */
+		base = get_basename(filename);
+		if (strintmap_contains(&dests, base))
+			strintmap_set(&dests, base, -1);
+		else
+			strintmap_set(&dests, base, i);
+	}
+
+	/* Now look for basename matchups and do similarity estimation */
+	strintmap_for_each_entry(&sources, &iter, entry) {
+		const char *base = entry->key;
+		intptr_t src_index = (intptr_t)entry->value;
+		intptr_t dst_index;
+		if (src_index == -1)
+			continue;
+
+		if (0 <= (dst_index = strintmap_get(&dests, base))) {
+			struct diff_filespec *one, *two;
+			int score;
+
+			/* Estimate the similarity */
+			one = rename_src[src_index].p->one;
+			two = rename_dst[dst_index].p->two;
+			score = estimate_similarity(options->repo, one, two,
+						    minimum_score, skip_unmodified);
+
+			/* If sufficiently similar, record as rename pair */
+			if (score < minimum_score)
+				continue;
+			record_rename_pair(dst_index, src_index, score);
+			renames++;
+
+			/*
+			 * Found a rename so don't need text anymore; if we
+			 * didn't find a rename, the filespec_blob would get
+			 * re-used when doing the matrix of comparisons.
+			 */
+			diff_free_filespec_blob(one);
+			diff_free_filespec_blob(two);
+		}
+	}
+
+	strintmap_clear(&sources);
+	strintmap_clear(&dests);
+
+	return renames;
+}
+
 #define NUM_CANDIDATE_PER_DST 4
 static void record_if_better(struct diff_score m[], struct diff_score *o)
 {
@@ -454,6 +592,54 @@ static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, i
 	return count;
 }
 
+static void remove_unneeded_paths_from_src(int detecting_copies)
+{
+	int i, new_num_src;
+
+	if (detecting_copies)
+		return; /* nothing to remove */
+	if (break_idx)
+		return; /* culling incompatible with break detection */
+
+	/*
+	 * Note on reasons why we cull unneeded sources but not destinations:
+	 *   1) Pairings are stored in rename_dst (not rename_src), which we
+	 *      need to keep around.  So, we just can't cull rename_dst even
+	 *      if we wanted to.  But doing so wouldn't help because...
+	 *
+	 *   2) There is a matrix pairwise comparison that follows the
+	 *      "Performing inexact rename detection" progress message.
+	 *      Iterating over the destinations is done in the outer loop,
+	 *      hence we only iterate over each of those once and we can
+	 *      easily skip the outer loop early if the destination isn't
+	 *      relevant.  That's only one check per destination path to
+	 *      skip.
+	 *
+	 *      By contrast, the sources are iterated in the inner loop; if
+	 *      we check whether a source can be skipped, then we'll be
+	 *      checking it N separate times, once for each destination.
+	 *      We don't want to have to iterate over known-not-needed
+	 *      sources N times each, so avoid that by removing the sources
+	 *      from rename_src here.
+	 */
+	for (i = 0, new_num_src = 0; i < rename_src_nr; i++) {
+		/*
+		 * renames are stored in rename_dst, so if a rename has
+		 * already been detected using this source, we can just
+		 * remove the source knowing rename_dst has its info.
+		 */
+		if (rename_src[i].p->one->rename_used)
+			continue;
+
+		if (new_num_src < i)
+			memcpy(&rename_src[new_num_src], &rename_src[i],
+			       sizeof(struct diff_rename_src));
+		new_num_src++;
+	}
+
+	rename_src_nr = new_num_src;
+}
+
 void diffcore_rename(struct diff_options *options)
 {
 	int detect_rename = options->detect_rename;
@@ -463,9 +649,11 @@ void diffcore_rename(struct diff_options *options)
 	struct diff_score *mx;
 	int i, j, rename_count, skip_unmodified = 0;
 	int num_destinations, dst_cnt;
+	int num_sources, want_copies;
 	struct progress *progress = NULL;
 
 	trace2_region_enter("diff", "setup", options->repo);
+	want_copies = (detect_rename == DIFF_DETECT_COPY);
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
 
@@ -502,7 +690,7 @@ void diffcore_rename(struct diff_options *options)
 				p->one->rename_used++;
 			register_rename_src(p);
 		}
-		else if (detect_rename == DIFF_DETECT_COPY) {
+		else if (want_copies) {
 			/*
 			 * Increment the "rename_used" score by
 			 * one, to indicate ourselves as a user.
@@ -527,17 +715,60 @@ void diffcore_rename(struct diff_options *options)
 	if (minimum_score == MAX_SCORE)
 		goto cleanup;
 
-	/*
-	 * Calculate how many renames are left (but all the source
-	 * files still remain as options for rename/copies!)
-	 */
+	num_sources = rename_src_nr;
+
+	if (want_copies || break_idx) {
+		/*
+		 * Cull sources:
+		 *   - remove ones corresponding to exact renames
+		 */
+		trace2_region_enter("diff", "cull after exact", options->repo);
+		remove_unneeded_paths_from_src(want_copies);
+		trace2_region_leave("diff", "cull after exact", options->repo);
+	} else {
+		/* Determine minimum score to match basenames */
+		double factor = 0.5;
+		char *basename_factor = getenv("GIT_BASENAME_FACTOR");
+		int min_basename_score;
+
+		if (basename_factor)
+			factor = strtol(basename_factor, NULL, 10)/100.0;
+		assert(factor >= 0.0 && factor <= 1.0);
+		min_basename_score = minimum_score +
+			(int)(factor * (MAX_SCORE - minimum_score));
+
+		/*
+		 * Cull sources:
+		 *   - remove ones involved in renames (found via exact match)
+		 */
+		trace2_region_enter("diff", "cull after exact", options->repo);
+		remove_unneeded_paths_from_src(want_copies);
+		trace2_region_leave("diff", "cull after exact", options->repo);
+
+		/* Utilize file basenames to quickly find renames. */
+		trace2_region_enter("diff", "basename matches", options->repo);
+		rename_count += find_basename_matches(options,
+						      min_basename_score);
+		trace2_region_leave("diff", "basename matches", options->repo);
+
+		/*
+		 * Cull sources, again:
+		 *   - remove ones involved in renames (found via basenames)
+		 */
+		trace2_region_enter("diff", "cull basename", options->repo);
+		remove_unneeded_paths_from_src(want_copies);
+		trace2_region_leave("diff", "cull basename", options->repo);
+	}
+
+	/* Calculate how many rename destinations are left */
 	num_destinations = (rename_dst_nr - rename_count);
+	num_sources = rename_src_nr; /* rename_src_nr reflects lower number */
 
 	/* All done? */
-	if (!num_destinations)
+	if (!num_destinations || !num_sources)
 		goto cleanup;
 
-	switch (too_many_rename_candidates(num_destinations, rename_src_nr,
+	switch (too_many_rename_candidates(num_destinations, num_sources,
 					   options)) {
 	case 1:
 		goto cleanup;
@@ -553,7 +784,7 @@ void diffcore_rename(struct diff_options *options)
 	if (options->show_rename_progress) {
 		progress = start_delayed_progress(
 				_("Performing inexact rename detection"),
-				(uint64_t)num_destinations * (uint64_t)rename_src_nr);
+				(uint64_t)num_destinations * (uint64_t)num_sources);
 	}
 
 	mx = xcalloc(st_mult(NUM_CANDIDATE_PER_DST, num_destinations),
@@ -563,7 +794,7 @@ void diffcore_rename(struct diff_options *options)
 		struct diff_score *m;
 
 		if (rename_dst[i].is_rename)
-			continue; /* dealt with exact match already. */
+			continue; /* exact or basename match already handled */
 
 		m = &mx[dst_cnt * NUM_CANDIDATE_PER_DST];
 		for (j = 0; j < NUM_CANDIDATE_PER_DST; j++)
@@ -572,6 +803,8 @@ void diffcore_rename(struct diff_options *options)
 		for (j = 0; j < rename_src_nr; j++) {
 			struct diff_filespec *one = rename_src[j].p->one;
 			struct diff_score this_src;
+
+			assert(!one->rename_used || want_copies || break_idx);
 
 			if (skip_unmodified &&
 			    diff_unmodified_pair(rename_src[j].p))
@@ -594,7 +827,7 @@ void diffcore_rename(struct diff_options *options)
 		}
 		dst_cnt++;
 		display_progress(progress,
-				 (uint64_t)dst_cnt * (uint64_t)rename_src_nr);
+				 (uint64_t)dst_cnt * (uint64_t)num_sources);
 	}
 	stop_progress(&progress);
 
@@ -602,7 +835,7 @@ void diffcore_rename(struct diff_options *options)
 	STABLE_QSORT(mx, dst_cnt * NUM_CANDIDATE_PER_DST, score_compare);
 
 	rename_count += find_renames(mx, dst_cnt, minimum_score, 0);
-	if (detect_rename == DIFF_DETECT_COPY)
+	if (want_copies)
 		rename_count += find_renames(mx, dst_cnt, minimum_score, 1);
 	free(mx);
 	trace2_region_leave("diff", "inexact renames", options->repo);
