@@ -386,6 +386,16 @@ test_expect_success POSIXPERM 'git add --chmod=[+-]x does not change the working
 	! test -x foo4
 '
 
+test_expect_success 'git add --chmod fails with non regular files (but updates the other paths)' '
+	git reset --hard &&
+	test_ln_s_add foo foo3 &&
+	touch foo4 &&
+	test_must_fail git add --chmod=+x foo3 foo4 2>stderr &&
+	test_i18ngrep "cannot chmod +x .foo3." stderr &&
+	test_mode_in_index 120000 foo3 &&
+	test_mode_in_index 100755 foo4
+'
+
 test_expect_success 'git add --chmod honors --dry-run' '
 	git reset --hard &&
 	echo foo >foo4 &&
@@ -397,7 +407,7 @@ test_expect_success 'git add --chmod honors --dry-run' '
 test_expect_success 'git add --chmod --dry-run reports error for non regular files' '
 	git reset --hard &&
 	test_ln_s_add foo foo4 &&
-	git add --chmod=+x --dry-run foo4 2>stderr &&
+	test_must_fail git add --chmod=+x --dry-run foo4 2>stderr &&
 	test_i18ngrep "cannot chmod +x .foo4." stderr
 '
 
@@ -429,11 +439,17 @@ test_expect_success 'no file status change if no pathspec is given in subdir' '
 '
 
 test_expect_success 'all statuses changed in folder if . is given' '
-	rm -fr empty &&
-	git add --chmod=+x . &&
-	test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
-	git add --chmod=-x . &&
-	test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
+	git init repo &&
+	(
+		cd repo &&
+		mkdir -p sub/dir &&
+		touch x y z sub/a sub/dir/b &&
+		git add -A &&
+		git add --chmod=+x . &&
+		test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
+		git add --chmod=-x . &&
+		test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
+	)
 '
 
 test_expect_success CASE_INSENSITIVE_FS 'path is case-insensitive' '
