@@ -450,7 +450,13 @@ jobs:
         run: |
           & .\git-sdk-${{matrix.arch.bitness}}-build-installers\usr\bin\bash.exe -lc @"
             set -x
-            [[ \"${{matrix.arch.arm64}}\" = true ]] && ARM64=\"--include-arm64-artifacts=\\\"`$PWD/arm64\\\"\" || ARM64=
+            if test "${{matrix.arch.arm64}}" = true
+            then
+              ARM64="--include-arm64-artifacts=\"$PWD/arm64\""
+            else
+              ARM64=
+            fi
+
             /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git `$ARM64 --version=`$(cat pkg-${{matrix.arch.name}}/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-[0-9]*.tar.xz --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-doc-html-[0-9]*.tar.xz &&
             if test portable = '${{matrix.artifact.name}}' && test -n \"`$(git config alias.signtool)\"
             then
