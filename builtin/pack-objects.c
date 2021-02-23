@@ -1188,7 +1188,8 @@ static int have_duplicate_entry(const struct object_id *oid,
 	return 1;
 }
 
-static int want_found_object(int exclude, struct packed_git *p)
+static int want_found_object(const struct object_id *oid, int exclude,
+			     struct packed_git *p)
 {
 	if (exclude)
 		return 1;
@@ -1204,24 +1205,79 @@ static int want_found_object(int exclude, struct packed_git *p)
 	 * make sure no copy of this object appears in _any_ pack that makes us
 	 * to omit the object, so we need to check all the packs.
 	 *
-	 * We can however first check whether these options can possible matter;
+	 * We can however first check whether these options can possibly matter;
 	 * if they do not matter we know we want the object in generated pack.
 	 * Otherwise, we signal "-1" at the end to tell the caller that we do
 	 * not know either way, and it needs to check more packs.
 	 */
-	if (!ignore_packed_keep_on_disk &&
-	    !ignore_packed_keep_in_core &&
-	    (!local || !have_non_local_packs))
-		return 1;
 
+	/*
+	 * Objects in packs borrowed from elsewhere are discarded regardless of
+	 * if they appear in other packs that weren't borrowed.
+	 */
 	if (local && !p->pack_local)
 		return 0;
-	if (p->pack_local &&
-	    ((ignore_packed_keep_on_disk && p->pack_keep) ||
-	     (ignore_packed_keep_in_core && p->pack_keep_in_core)))
-		return 0;
+
+	/*
+	 * Then handle .keep first, as we have a fast(er) path there.
+	 */
+	if (ignore_packed_keep_on_disk || ignore_packed_keep_in_core) {
+		/*
+		 * Set the flags for the kept-pack cache to be the ones we want
+		 * to ignore.
+		 *
+		 * That is, if we are ignoring objects in on-disk keep packs,
+		 * then we want to search through the on-disk keep and ignore
+		 * the in-core ones.
+		 */
+		unsigned flags = 0;
+		if (ignore_packed_keep_on_disk)
+			flags |= ON_DISK_KEEP_PACKS;
+		if (ignore_packed_keep_in_core)
+			flags |= IN_CORE_KEEP_PACKS;
+
+		if (ignore_packed_keep_on_disk && p->pack_keep)
+			return 0;
+		if (ignore_packed_keep_in_core && p->pack_keep_in_core)
+			return 0;
+		if (has_object_kept_pack(oid, flags))
+			return 0;
+	}
+
+	/*
+	 * At this point we know definitively that either we don't care about
+	 * keep-packs, or the object is not in one. Keep checking other
+	 * conditions...
+	 */
+	if (!local || !have_non_local_packs)
+		return 1;
 
 	/* we don't know yet; keep looking for more packs */
+	return -1;
+}
+
+static int want_object_in_pack_one(struct packed_git *p,
+				   const struct object_id *oid,
+				   int exclude,
+				   struct packed_git **found_pack,
+				   off_t *found_offset)
+{
+	off_t offset;
+
+	if (p == *found_pack)
+		offset = *found_offset;
+	else
+		offset = find_pack_entry_one(oid->hash, p);
+
+	if (offset) {
+		if (!*found_pack) {
+			if (!is_pack_valid(p))
+				return -1;
+			*found_offset = offset;
+			*found_pack = p;
+		}
+		return want_found_object(oid, exclude, p);
+	}
 	return -1;
 }
 
@@ -1252,7 +1308,7 @@ static int want_object_in_pack(const struct object_id *oid,
 	 * are present we will determine the answer right now.
 	 */
 	if (*found_pack) {
-		want = want_found_object(exclude, *found_pack);
+		want = want_found_object(oid, exclude, *found_pack);
 		if (want != -1)
 			return want;
 	}
@@ -1260,51 +1316,20 @@ static int want_object_in_pack(const struct object_id *oid,
 	for (m = get_multi_pack_index(the_repository); m; m = m->next) {
 		struct pack_entry e;
 		if (fill_midx_entry(the_repository, oid, &e, m)) {
-			struct packed_git *p = e.p;
-			off_t offset;
-
-			if (p == *found_pack)
-				offset = *found_offset;
-			else
-				offset = find_pack_entry_one(oid->hash, p);
-
-			if (offset) {
-				if (!*found_pack) {
-					if (!is_pack_valid(p))
-						continue;
-					*found_offset = offset;
-					*found_pack = p;
-				}
-				want = want_found_object(exclude, p);
-				if (want != -1)
-					return want;
-			}
+			want = want_object_in_pack_one(e.p, oid, exclude, found_pack, found_offset);
+			if (want != -1)
+				return want;
 		}
 	}
 
 	list_for_each(pos, get_packed_git_mru(the_repository)) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);
-		off_t offset;
-
-		if (p == *found_pack)
-			offset = *found_offset;
-		else
-			offset = find_pack_entry_one(oid->hash, p);
-
-		if (offset) {
-			if (!*found_pack) {
-				if (!is_pack_valid(p))
-					continue;
-				*found_offset = offset;
-				*found_pack = p;
-			}
-			want = want_found_object(exclude, p);
-			if (!exclude && want > 0)
-				list_move(&p->mru,
-					  get_packed_git_mru(the_repository));
-			if (want != -1)
-				return want;
-		}
+		want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset);
+		if (!exclude && want > 0)
+			list_move(&p->mru,
+				  get_packed_git_mru(the_repository));
+		if (want != -1)
+			return want;
 	}
 
 	if (uri_protocols.nr) {
