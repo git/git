@@ -28,11 +28,11 @@ repack_into_n () {
 			push @commits, $_ if $. % 5 == 1;
 		}
 		print reverse @commits;
-	' "$1" >pushes
+	' "$1" >pushes &&
 
 	# create base packfile
 	head -n 1 pushes |
-	git pack-objects --delta-base-offset --revs staging/pack
+	git pack-objects --delta-base-offset --revs staging/pack &&
 
 	# and then incrementals between each pair of commits
 	last= &&
