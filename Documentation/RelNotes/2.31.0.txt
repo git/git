@@ -85,6 +85,10 @@ UI, Workflows & Features
  * The error message given when a configuration variable that is
    expected to have a boolean value has been improved.
 
+ * Signed commits and tags now allow verification of objects, whose
+   two object names (one in SHA-1, the other in SHA-256) are both
+   signed.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -168,6 +172,9 @@ Performance, Internal Implementation, Development Support etc.
    the generation number to help topological revision traversal.
 
  * Piecemeal of rewrite of "git bisect" in C continues.
+
+ * When a pager spawned by us exited, the trace log did not record its
+   exit status correctly, which has been corrected.
 
 
 Fixes since v2.30
