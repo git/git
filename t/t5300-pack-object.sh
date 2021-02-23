@@ -532,4 +532,101 @@ test_expect_success 'prefetch objects' '
 	test_line_count = 1 donelines
 '
 
+test_expect_success 'setup for --stdin-packs tests' '
+	git init stdin-packs &&
+	(
+		cd stdin-packs &&
+
+		test_commit A &&
+		test_commit B &&
+		test_commit C &&
+
+		for id in A B C
+		do
+			git pack-objects .git/objects/pack/pack-$id \
+				--incremental --revs <<-EOF
+			refs/tags/$id
+			EOF
+		done &&
+
+		ls -la .git/objects/pack
+	)
+'
+
+test_expect_success '--stdin-packs with excluded packs' '
+	(
+		cd stdin-packs &&
+
+		PACK_A="$(basename .git/objects/pack/pack-A-*.pack)" &&
+		PACK_B="$(basename .git/objects/pack/pack-B-*.pack)" &&
+		PACK_C="$(basename .git/objects/pack/pack-C-*.pack)" &&
+
+		git pack-objects test --stdin-packs <<-EOF &&
+		$PACK_A
+		^$PACK_B
+		$PACK_C
+		EOF
+
+		(
+			git show-index <$(ls .git/objects/pack/pack-A-*.idx) &&
+			git show-index <$(ls .git/objects/pack/pack-C-*.idx)
+		) >expect.raw &&
+		git show-index <$(ls test-*.idx) >actual.raw &&
+
+		cut -d" " -f2 <expect.raw | sort >expect &&
+		cut -d" " -f2 <actual.raw | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--stdin-packs is incompatible with --filter' '
+	(
+		cd stdin-packs &&
+		test_must_fail git pack-objects --stdin-packs --stdout \
+			--filter=blob:none </dev/null 2>err &&
+		test_i18ngrep "cannot use --filter with --stdin-packs" err
+	)
+'
+
+test_expect_success '--stdin-packs is incompatible with --revs' '
+	(
+		cd stdin-packs &&
+		test_must_fail git pack-objects --stdin-packs --revs out \
+			</dev/null 2>err &&
+		test_i18ngrep "cannot use internal rev list with --stdin-packs" err
+	)
+'
+
+test_expect_success '--stdin-packs with loose objects' '
+	(
+		cd stdin-packs &&
+
+		PACK_A="$(basename .git/objects/pack/pack-A-*.pack)" &&
+		PACK_B="$(basename .git/objects/pack/pack-B-*.pack)" &&
+		PACK_C="$(basename .git/objects/pack/pack-C-*.pack)" &&
+
+		test_commit D && # loose
+
+		git pack-objects test2 --stdin-packs --unpacked <<-EOF &&
+		$PACK_A
+		^$PACK_B
+		$PACK_C
+		EOF
+
+		(
+			git show-index <$(ls .git/objects/pack/pack-A-*.idx) &&
+			git show-index <$(ls .git/objects/pack/pack-C-*.idx) &&
+			git rev-list --objects --no-object-names \
+				refs/tags/C..refs/tags/D
+
+		) >expect.raw &&
+		ls -la . &&
+		git show-index <$(ls test2-*.idx) >actual.raw &&
+
+		cut -d" " -f2 <expect.raw | sort >expect &&
+		cut -d" " -f2 <actual.raw | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
