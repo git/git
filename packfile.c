@@ -2042,10 +2042,7 @@ static int fill_pack_entry(const struct object_id *oid,
 	return 1;
 }
 
-static int find_one_pack_entry(struct repository *r,
-			       const struct object_id *oid,
-			       struct pack_entry *e,
-			       int kept_only)
+int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e)
 {
 	struct list_head *pos;
 	struct multi_pack_index *m;
@@ -2055,49 +2052,63 @@ static int find_one_pack_entry(struct repository *r,
 		return 0;
 
 	for (m = r->objects->multi_pack_index; m; m = m->next) {
-		if (!fill_midx_entry(r, oid, e, m))
-			continue;
-
-		if (!kept_only)
-			return 1;
-
-		if (((kept_only & ON_DISK_KEEP_PACKS) && e->p->pack_keep) ||
-		    ((kept_only & IN_CORE_KEEP_PACKS) && e->p->pack_keep_in_core))
+		if (fill_midx_entry(r, oid, e, m))
 			return 1;
 	}
 
 	list_for_each(pos, &r->objects->packed_git_mru) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);
-		if (p->multi_pack_index && !kept_only) {
-			/*
-			 * If this pack is covered by the MIDX, we'd have found
-			 * the object already in the loop above if it was here,
-			 * so don't bother looking.
-			 *
-			 * The exception is if we are looking only at kept
-			 * packs. An object can be present in two packs covered
-			 * by the MIDX, one kept and one not-kept. And as the
-			 * MIDX points to only one copy of each object, it might
-			 * have returned only the non-kept version above. We
-			 * have to check again to be thorough.
-			 */
-			continue;
-		}
-		if (!kept_only ||
-		    (((kept_only & ON_DISK_KEEP_PACKS) && p->pack_keep) ||
-		     ((kept_only & IN_CORE_KEEP_PACKS) && p->pack_keep_in_core))) {
-			if (fill_pack_entry(oid, e, p)) {
-				list_move(&p->mru, &r->objects->packed_git_mru);
-				return 1;
-			}
+		if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
+			list_move(&p->mru, &r->objects->packed_git_mru);
+			return 1;
 		}
 	}
 	return 0;
 }
 
-int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e)
+static void maybe_invalidate_kept_pack_cache(struct repository *r,
+					     unsigned flags)
 {
-	return find_one_pack_entry(r, oid, e, 0);
+	if (!r->objects->kept_pack_cache.packs)
+		return;
+	if (r->objects->kept_pack_cache.flags == flags)
+		return;
+	FREE_AND_NULL(r->objects->kept_pack_cache.packs);
+	r->objects->kept_pack_cache.flags = 0;
+}
+
+static struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
+{
+	maybe_invalidate_kept_pack_cache(r, flags);
+
+	if (!r->objects->kept_pack_cache.packs) {
+		struct packed_git **packs = NULL;
+		size_t nr = 0, alloc = 0;
+		struct packed_git *p;
+
+		/*
+		 * We want "all" packs here, because we need to cover ones that
+		 * are used by a midx, as well. We need to look in every one of
+		 * them (instead of the midx itself) to cover duplicates. It's
+		 * possible that an object is found in two packs that the midx
+		 * covers, one kept and one not kept, but the midx returns only
+		 * the non-kept version.
+		 */
+		for (p = get_all_packs(r); p; p = p->next) {
+			if ((p->pack_keep && (flags & ON_DISK_KEEP_PACKS)) ||
+			    (p->pack_keep_in_core && (flags & IN_CORE_KEEP_PACKS))) {
+				ALLOC_GROW(packs, nr + 1, alloc);
+				packs[nr++] = p;
+			}
+		}
+		ALLOC_GROW(packs, nr + 1, alloc);
+		packs[nr] = NULL;
+
+		r->objects->kept_pack_cache.packs = packs;
+		r->objects->kept_pack_cache.flags = flags;
+	}
+
+	return r->objects->kept_pack_cache.packs;
 }
 
 int find_kept_pack_entry(struct repository *r,
@@ -2105,13 +2116,15 @@ int find_kept_pack_entry(struct repository *r,
 			 unsigned flags,
 			 struct pack_entry *e)
 {
-	/*
-	 * Load all packs, including midx packs, since our "kept" strategy
-	 * relies on that. We're relying on the side effect of it setting up
-	 * r->objects->packed_git, which is a little ugly.
-	 */
-	get_all_packs(r);
-	return find_one_pack_entry(r, oid, e, flags);
+	struct packed_git **cache;
+
+	for (cache = kept_pack_cache(r, flags); *cache; cache++) {
+		struct packed_git *p = *cache;
+		if (fill_pack_entry(oid, e, p))
+			return 1;
+	}
+
+	return 0;
 }
 
 int has_object_pack(const struct object_id *oid)
