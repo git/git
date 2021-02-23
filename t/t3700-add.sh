@@ -386,6 +386,26 @@ test_expect_success POSIXPERM 'git add --chmod=[+-]x does not change the working
 	! test -x foo4
 '
 
+test_expect_success 'git add --chmod honors --dry-run' '
+	git reset --hard &&
+	echo foo >foo4 &&
+	git add foo4 &&
+	git add --chmod=+x --dry-run foo4 &&
+	test_mode_in_index 100644 foo4
+'
+
+test_expect_success 'git add --chmod --dry-run reports error for non regular files' '
+	git reset --hard &&
+	test_ln_s_add foo foo4 &&
+	git add --chmod=+x --dry-run foo4 2>stderr &&
+	grep "cannot chmod +x .foo4." stderr
+'
+
+test_expect_success 'git add --chmod --dry-run reports error for unmatched pathspec' '
+	test_must_fail git add --chmod=+x --dry-run nonexistent 2>stderr &&
+	test_i18ngrep "pathspec .nonexistent. did not match any files" stderr
+'
+
 test_expect_success 'no file status change if no pathspec is given' '
 	>foo5 &&
 	>foo6 &&
