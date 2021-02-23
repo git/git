@@ -338,9 +338,14 @@ jobs:
       - name: Determine whether this job should be skipped
         shell: bash
         run: |
+          suffix=${{matrix.arch.name}}
+          if test true = ${{matrix.arch.arm64}}
+          then
+            suffix=arm64
+          fi
           case " $BUILD_ONLY " in
           '  ') ;; # not set; build all
-          *" ${{matrix.artifact.name}} "*|*" ${{matrix.artifact.name}}-${{matrix.arch.name}} "*) ;; # build this artifact
+          *" ${{matrix.artifact.name}} "*|*" ${{matrix.artifact.name}}-$suffix "*) ;; # build this artifact
           *) echo "SKIP=true" >>$GITHUB_ENV;;
           esac
       - name: Download pkg-${{matrix.arch.name}}
