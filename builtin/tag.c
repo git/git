@@ -572,7 +572,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	object_ref = argc == 2 ? argv[1] : "HEAD";
 	if (argc > 2)
-		die(_("too many params"));
+		die(_("too many arguments"));
 
 	if (get_oid(object_ref, &object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
