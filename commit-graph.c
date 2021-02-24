@@ -1715,7 +1715,6 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	struct lock_file lk = LOCK_INIT;
 	const unsigned hashsz = the_hash_algo->rawsz;
 	struct strbuf progress_title = STRBUF_INIT;
-	int num_chunks = 3;
 	struct object_id file_hash;
 	struct chunkfile *cf;
 
@@ -1811,11 +1810,11 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		strbuf_addf(&progress_title,
 			    Q_("Writing out commit graph in %d pass",
 			       "Writing out commit graph in %d passes",
-			       num_chunks),
-			    num_chunks);
+			       get_num_chunks(cf)),
+			    get_num_chunks(cf));
 		ctx->progress = start_delayed_progress(
 			progress_title.buf,
-			num_chunks * ctx->commits.nr);
+			get_num_chunks(cf) * ctx->commits.nr);
 	}
 
 	write_chunkfile(cf, ctx);
