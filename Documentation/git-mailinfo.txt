@@ -53,7 +53,7 @@ character.
 	The commit log message, author name and author email are
 	taken from the e-mail, and after minimally decoding MIME
 	transfer encoding, re-coded in the charset specified by
-	i18n.commitencoding (defaulting to UTF-8) by transliterating
+	`i18n.commitEncoding` (defaulting to UTF-8) by transliterating
 	them.  This used to be optional but now it is the default.
 +
 Note that the patch is always used as-is without charset
@@ -61,7 +61,7 @@ conversion, even with this flag.
 
 --encoding=<encoding>::
 	Similar to -u.  But when re-coding, the charset specified here is
-	used instead of the one specified by i18n.commitencoding or UTF-8.
+	used instead of the one specified by `i18n.commitEncoding` or UTF-8.
 
 -n::
 	Disable all charset re-coding of the metadata.

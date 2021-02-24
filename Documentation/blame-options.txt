@@ -1,6 +1,6 @@
 -b::
 	Show blank SHA-1 for boundary commits.  This can also
-	be controlled via the `blame.blankboundary` config option.
+	be controlled via the `blame.blankBoundary` config option.
 
 --root::
 	Do not treat root commits as boundaries.  This can also be
