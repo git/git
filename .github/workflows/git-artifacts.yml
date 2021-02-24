@@ -309,6 +309,8 @@ jobs:
       matrix:
         artifact:
           - name: installer
+            fileprefix: Git
+            fileextension: exe
           - name: portable
             fileprefix: PortableGit
             fileextension: exe
