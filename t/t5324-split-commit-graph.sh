@@ -489,7 +489,7 @@ test_expect_success 'setup repo for mixed generation commit-graph-chain' '
 			test_commit $i &&
 			git branch commits/$i || return 1
 		done &&
-		git commit-graph write --reachable --split &&
+		git -c commitGraph.generationVersion=2 commit-graph write --reachable --split &&
 		graph_read_expect $NUM_FIRST_LAYER_COMMITS &&
 		test_line_count = 1 $graphdir/commit-graph-chain &&
 		for i in $(test_seq $SECOND_LAYER_SEQUENCE_START $SECOND_LAYER_SEQUENCE_END)
@@ -497,7 +497,7 @@ test_expect_success 'setup repo for mixed generation commit-graph-chain' '
 			test_commit $i &&
 			git branch commits/$i || return 1
 		done &&
-		GIT_TEST_COMMIT_GRAPH_NO_GDAT=1 git commit-graph write --reachable --split=no-merge &&
+		git -c commitGraph.generationVersion=1 commit-graph write --reachable --split=no-merge &&
 		test_line_count = 2 $graphdir/commit-graph-chain &&
 		test-tool read-graph >output &&
 		cat >expect <<-EOF &&
