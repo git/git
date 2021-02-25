@@ -221,7 +221,7 @@ static int add(int argc, const char **argv)
 
 	if (fetch_tags != TAGS_DEFAULT) {
 		strbuf_reset(&buf);
-		strbuf_addf(&buf, "remote.%s.tagopt", name);
+		strbuf_addf(&buf, "remote.%s.tagOpt", name);
 		git_config_set(buf.buf,
 			       fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
