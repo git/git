@@ -227,6 +227,7 @@ int mingw_rmdir(const char *path);
 
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
+#undef OPEN_RETURNS_EINTR
 
 int mingw_fgetc(FILE *stream);
 #define fgetc mingw_fgetc
