@@ -425,13 +425,11 @@ static void setup_default_color_by_age(void)
 	parse_color_fields("blue,12 month ago,white,1 month ago,red");
 }
 
-static void determine_line_heat(struct blame_entry *ent, const char **dest_color)
+static void determine_line_heat(struct commit_info *ci, const char **dest_color)
 {
 	int i = 0;
-	struct commit_info ci;
-	get_commit_info(ent->suspect->commit, &ci, 1);
 
-	while (i < colorfield_nr && ci.author_time > colorfield[i].hop)
+	while (i < colorfield_nr && ci->author_time > colorfield[i].hop)
 		i++;
 
 	*dest_color = colorfield[i].col;
@@ -453,7 +451,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	cp = blame_nth_line(sb, ent->lno);
 
 	if (opt & OUTPUT_SHOW_AGE_WITH_COLOR) {
-		determine_line_heat(ent, &default_color);
+		determine_line_heat(&ci, &default_color);
 		color = default_color;
 		reset = GIT_COLOR_RESET;
 	}
