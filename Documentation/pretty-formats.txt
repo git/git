@@ -208,6 +208,17 @@ The placeholders are:
 '%cs':: committer date, short format (`YYYY-MM-DD`)
 '%d':: ref names, like the --decorate option of linkgit:git-log[1]
 '%D':: ref names without the " (", ")" wrapping.
+'%(describe[:options])':: human-readable name, like
+			  linkgit:git-describe[1]; empty string for
+			  undescribable commits.  The `describe` string
+			  may be followed by a colon and zero or more
+			  comma-separated options.
++
+** 'match=<pattern>': Only consider tags matching the given
+   `glob(7)` pattern, excluding the "refs/tags/" prefix.
+** 'exclude=<pattern>': Do not consider tags matching the given
+   `glob(7)` pattern, excluding the "refs/tags/" prefix.
+
 '%S':: ref name given on the command line by which the commit was reached
        (like `git log --source`), only works with `git log`
 '%e':: encoding
