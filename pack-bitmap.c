@@ -1430,3 +1430,84 @@ int bitmap_has_oid_in_uninteresting(struct bitmap_index *bitmap_git,
 	return bitmap_git &&
 		bitmap_walk_contains(bitmap_git, bitmap_git->haves, oid);
 }
+
+static off_t get_disk_usage_for_type(struct bitmap_index *bitmap_git,
+				     enum object_type object_type)
+{
+	struct bitmap *result = bitmap_git->result;
+	struct packed_git *pack = bitmap_git->pack;
+	off_t total = 0;
+	struct ewah_iterator it;
+	eword_t filter;
+	size_t i;
+
+	init_type_iterator(&it, bitmap_git, object_type);
+	for (i = 0; i < result->word_alloc &&
+			ewah_iterator_next(&filter, &it); i++) {
+		eword_t word = result->words[i] & filter;
+		size_t base = (i * BITS_IN_EWORD);
+		unsigned offset;
+
+		if (!word)
+			continue;
+
+		for (offset = 0; offset < BITS_IN_EWORD; offset++) {
+			size_t pos;
+
+			if ((word >> offset) == 0)
+				break;
+
+			offset += ewah_bit_ctz64(word >> offset);
+			pos = base + offset;
+			total += pack_pos_to_offset(pack, pos + 1) -
+				 pack_pos_to_offset(pack, pos);
+		}
+	}
+
+	return total;
+}
+
+static off_t get_disk_usage_for_extended(struct bitmap_index *bitmap_git)
+{
+	struct bitmap *result = bitmap_git->result;
+	struct packed_git *pack = bitmap_git->pack;
+	struct eindex *eindex = &bitmap_git->ext_index;
+	off_t total = 0;
+	struct object_info oi = OBJECT_INFO_INIT;
+	off_t object_size;
+	size_t i;
+
+	oi.disk_sizep = &object_size;
+
+	for (i = 0; i < eindex->count; i++) {
+		struct object *obj = eindex->objects[i];
+
+		if (!bitmap_get(result, pack->num_objects + i))
+			continue;
+
+		if (oid_object_info_extended(the_repository, &obj->oid, &oi, 0) < 0)
+			die(_("unable to get disk usage of %s"),
+			    oid_to_hex(&obj->oid));
+
+		total += object_size;
+	}
+	return total;
+}
+
+off_t get_disk_usage_from_bitmap(struct bitmap_index *bitmap_git,
+				 struct rev_info *revs)
+{
+	off_t total = 0;
+
+	total += get_disk_usage_for_type(bitmap_git, OBJ_COMMIT);
+	if (revs->tree_objects)
+		total += get_disk_usage_for_type(bitmap_git, OBJ_TREE);
+	if (revs->blob_objects)
+		total += get_disk_usage_for_type(bitmap_git, OBJ_BLOB);
+	if (revs->tag_objects)
+		total += get_disk_usage_for_type(bitmap_git, OBJ_TAG);
+
+	total += get_disk_usage_for_extended(bitmap_git);
+
+	return total;
+}
