@@ -32,4 +32,27 @@ test_expect_success 'checkout-index reports errors (stdin)' '
 	test_i18ngrep not.in.the.cache stderr
 '
 
+test_expect_success 'checkout-index --temp correctly reports error on missing blobs' '
+	test_when_finished git reset --hard &&
+	missing_blob=$(echo "no such blob here" | git hash-object --stdin) &&
+	cat >objs <<-EOF &&
+	100644 $missing_blob	file
+	120000 $missing_blob	symlink
+	EOF
+	git update-index --index-info <objs &&
+
+	test_must_fail git checkout-index --temp symlink file 2>stderr &&
+	test_i18ngrep "unable to read sha1 file of file ($missing_blob)" stderr &&
+	test_i18ngrep "unable to read sha1 file of symlink ($missing_blob)" stderr
+'
+
+test_expect_success 'checkout-index --temp correctly reports error for submodules' '
+	git init sub &&
+	test_commit -C sub file &&
+	git submodule add ./sub &&
+	git commit -m sub &&
+	test_must_fail git checkout-index --temp sub 2>stderr &&
+	test_i18ngrep "cannot create temporary submodule sub" stderr
+'
+
 test_done
