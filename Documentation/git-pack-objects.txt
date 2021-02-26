@@ -85,6 +85,16 @@ base-name::
 	reference was included in the resulting packfile.  This
 	can be useful to send new tags to native Git clients.
 
+--stdin-packs::
+	Read the basenames of packfiles (e.g., `pack-1234abcd.pack`)
+	from the standard input, instead of object names or revision
+	arguments. The resulting pack contains all objects listed in the
+	included packs (those not beginning with `^`), excluding any
+	objects listed in the excluded packs (beginning with `^`).
++
+Incompatible with `--revs`, or options that imply `--revs` (such as
+`--all`), with the exception of `--unpacked`, which is compatible.
+
 --window=<n>::
 --depth=<n>::
 	These two options affect how the objects contained in

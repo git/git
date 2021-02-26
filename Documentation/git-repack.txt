@@ -165,6 +165,29 @@ depth is 4095.
 	Pass the `--delta-islands` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
+-g=<factor>::
+--geometric=<factor>::
+	Arrange resulting pack structure so that each successive pack
+	contains at least `<factor>` times the number of objects as the
+	next-largest pack.
++
+`git repack` ensures this by determining a "cut" of packfiles that need
+to be repacked into one in order to ensure a geometric progression. It
+picks the smallest set of packfiles such that as many of the larger
+packfiles (by count of objects contained in that pack) may be left
+intact.
++
+Unlike other repack modes, the set of objects to pack is determined
+uniquely by the set of packs being "rolled-up"; in other words, the
+packs determined to need to be combined in order to restore a geometric
+progression.
++
+When `--unpacked` is specified, loose objects are implicitly included in
+this "roll-up", without respect to their reachability. This is subject
+to change in the future. This option (implying a drastically different
+repack mode) is not guaranteed to work with all other combinations of
+option to `git repack`).
+
 CONFIGURATION
 -------------
 

@@ -1188,7 +1188,8 @@ static int have_duplicate_entry(const struct object_id *oid,
 	return 1;
 }
 
-static int want_found_object(int exclude, struct packed_git *p)
+static int want_found_object(const struct object_id *oid, int exclude,
+			     struct packed_git *p)
 {
 	if (exclude)
 		return 1;
@@ -1204,24 +1205,79 @@ static int want_found_object(int exclude, struct packed_git *p)
 	 * make sure no copy of this object appears in _any_ pack that makes us
 	 * to omit the object, so we need to check all the packs.
 	 *
-	 * We can however first check whether these options can possible matter;
+	 * We can however first check whether these options can possibly matter;
 	 * if they do not matter we know we want the object in generated pack.
 	 * Otherwise, we signal "-1" at the end to tell the caller that we do
 	 * not know either way, and it needs to check more packs.
 	 */
-	if (!ignore_packed_keep_on_disk &&
-	    !ignore_packed_keep_in_core &&
-	    (!local || !have_non_local_packs))
-		return 1;
 
+	/*
+	 * Objects in packs borrowed from elsewhere are discarded regardless of
+	 * if they appear in other packs that weren't borrowed.
+	 */
 	if (local && !p->pack_local)
 		return 0;
-	if (p->pack_local &&
-	    ((ignore_packed_keep_on_disk && p->pack_keep) ||
-	     (ignore_packed_keep_in_core && p->pack_keep_in_core)))
-		return 0;
+
+	/*
+	 * Then handle .keep first, as we have a fast(er) path there.
+	 */
+	if (ignore_packed_keep_on_disk || ignore_packed_keep_in_core) {
+		/*
+		 * Set the flags for the kept-pack cache to be the ones we want
+		 * to ignore.
+		 *
+		 * That is, if we are ignoring objects in on-disk keep packs,
+		 * then we want to search through the on-disk keep and ignore
+		 * the in-core ones.
+		 */
+		unsigned flags = 0;
+		if (ignore_packed_keep_on_disk)
+			flags |= ON_DISK_KEEP_PACKS;
+		if (ignore_packed_keep_in_core)
+			flags |= IN_CORE_KEEP_PACKS;
+
+		if (ignore_packed_keep_on_disk && p->pack_keep)
+			return 0;
+		if (ignore_packed_keep_in_core && p->pack_keep_in_core)
+			return 0;
+		if (has_object_kept_pack(oid, flags))
+			return 0;
+	}
+
+	/*
+	 * At this point we know definitively that either we don't care about
+	 * keep-packs, or the object is not in one. Keep checking other
+	 * conditions...
+	 */
+	if (!local || !have_non_local_packs)
+		return 1;
 
 	/* we don't know yet; keep looking for more packs */
+	return -1;
+}
+
+static int want_object_in_pack_one(struct packed_git *p,
+				   const struct object_id *oid,
+				   int exclude,
+				   struct packed_git **found_pack,
+				   off_t *found_offset)
+{
+	off_t offset;
+
+	if (p == *found_pack)
+		offset = *found_offset;
+	else
+		offset = find_pack_entry_one(oid->hash, p);
+
+	if (offset) {
+		if (!*found_pack) {
+			if (!is_pack_valid(p))
+				return -1;
+			*found_offset = offset;
+			*found_pack = p;
+		}
+		return want_found_object(oid, exclude, p);
+	}
 	return -1;
 }
 
@@ -1252,7 +1308,7 @@ static int want_object_in_pack(const struct object_id *oid,
 	 * are present we will determine the answer right now.
 	 */
 	if (*found_pack) {
-		want = want_found_object(exclude, *found_pack);
+		want = want_found_object(oid, exclude, *found_pack);
 		if (want != -1)
 			return want;
 	}
@@ -1260,51 +1316,20 @@ static int want_object_in_pack(const struct object_id *oid,
 	for (m = get_multi_pack_index(the_repository); m; m = m->next) {
 		struct pack_entry e;
 		if (fill_midx_entry(the_repository, oid, &e, m)) {
-			struct packed_git *p = e.p;
-			off_t offset;
-
-			if (p == *found_pack)
-				offset = *found_offset;
-			else
-				offset = find_pack_entry_one(oid->hash, p);
-
-			if (offset) {
-				if (!*found_pack) {
-					if (!is_pack_valid(p))
-						continue;
-					*found_offset = offset;
-					*found_pack = p;
-				}
-				want = want_found_object(exclude, p);
-				if (want != -1)
-					return want;
-			}
+			want = want_object_in_pack_one(e.p, oid, exclude, found_pack, found_offset);
+			if (want != -1)
+				return want;
 		}
 	}
 
 	list_for_each(pos, get_packed_git_mru(the_repository)) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);
-		off_t offset;
-
-		if (p == *found_pack)
-			offset = *found_offset;
-		else
-			offset = find_pack_entry_one(oid->hash, p);
-
-		if (offset) {
-			if (!*found_pack) {
-				if (!is_pack_valid(p))
-					continue;
-				*found_offset = offset;
-				*found_pack = p;
-			}
-			want = want_found_object(exclude, p);
-			if (!exclude && want > 0)
-				list_move(&p->mru,
-					  get_packed_git_mru(the_repository));
-			if (want != -1)
-				return want;
-		}
+		want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset);
+		if (!exclude && want > 0)
+			list_move(&p->mru,
+				  get_packed_git_mru(the_repository));
+		if (want != -1)
+			return want;
 	}
 
 	if (uri_protocols.nr) {
@@ -2986,6 +3011,190 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 	return git_default_config(k, v, cb);
 }
 
+/* Counters for trace2 output when in --stdin-packs mode. */
+static int stdin_packs_found_nr;
+static int stdin_packs_hints_nr;
+
+static int add_object_entry_from_pack(const struct object_id *oid,
+				      struct packed_git *p,
+				      uint32_t pos,
+				      void *_data)
+{
+	struct rev_info *revs = _data;
+	struct object_info oi = OBJECT_INFO_INIT;
+	off_t ofs;
+	enum object_type type;
+
+	display_progress(progress_state, ++nr_seen);
+
+	if (have_duplicate_entry(oid, 0))
+		return 0;
+
+	ofs = nth_packed_object_offset(p, pos);
+	if (!want_object_in_pack(oid, 0, &p, &ofs))
+		return 0;
+
+	oi.typep = &type;
+	if (packed_object_info(the_repository, p, ofs, &oi) < 0)
+		die(_("could not get type of object %s in pack %s"),
+		    oid_to_hex(oid), p->pack_name);
+	else if (type == OBJ_COMMIT) {
+		/*
+		 * commits in included packs are used as starting points for the
+		 * subsequent revision walk
+		 */
+		add_pending_oid(revs, NULL, oid, 0);
+	}
+
+	stdin_packs_found_nr++;
+
+	create_object_entry(oid, type, 0, 0, 0, p, ofs);
+
+	return 0;
+}
+
+static void show_commit_pack_hint(struct commit *commit, void *_data)
+{
+	/* nothing to do; commits don't have a namehash */
+}
+
+static void show_object_pack_hint(struct object *object, const char *name,
+				  void *_data)
+{
+	struct object_entry *oe = packlist_find(&to_pack, &object->oid);
+	if (!oe)
+		return;
+
+	/*
+	 * Our 'to_pack' list was constructed by iterating all objects packed in
+	 * included packs, and so doesn't have a non-zero hash field that you
+	 * would typically pick up during a reachability traversal.
+	 *
+	 * Make a best-effort attempt to fill in the ->hash and ->no_try_delta
+	 * here using a now in order to perhaps improve the delta selection
+	 * process.
+	 */
+	oe->hash = pack_name_hash(name);
+	oe->no_try_delta = name && no_try_delta(name);
+
+	stdin_packs_hints_nr++;
+}
+
+static int pack_mtime_cmp(const void *_a, const void *_b)
+{
+	struct packed_git *a = ((const struct string_list_item*)_a)->util;
+	struct packed_git *b = ((const struct string_list_item*)_b)->util;
+
+	/*
+	 * order packs by descending mtime so that objects are laid out
+	 * roughly as newest-to-oldest
+	 */
+	if (a->mtime < b->mtime)
+		return 1;
+	else if (b->mtime < a->mtime)
+		return -1;
+	else
+		return 0;
+}
+
+static void read_packs_list_from_stdin(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct string_list include_packs = STRING_LIST_INIT_DUP;
+	struct string_list exclude_packs = STRING_LIST_INIT_DUP;
+	struct string_list_item *item = NULL;
+
+	struct packed_git *p;
+	struct rev_info revs;
+
+	repo_init_revisions(the_repository, &revs, NULL);
+	/*
+	 * Use a revision walk to fill in the namehash of objects in the include
+	 * packs. To save time, we'll avoid traversing through objects that are
+	 * in excluded packs.
+	 *
+	 * That may cause us to avoid populating all of the namehash fields of
+	 * all included objects, but our goal is best-effort, since this is only
+	 * an optimization during delta selection.
+	 */
+	revs.no_kept_objects = 1;
+	revs.keep_pack_cache_flags |= IN_CORE_KEEP_PACKS;
+	revs.blob_objects = 1;
+	revs.tree_objects = 1;
+	revs.tag_objects = 1;
+
+	while (strbuf_getline(&buf, stdin) != EOF) {
+		if (!buf.len)
+			continue;
+
+		if (*buf.buf == '^')
+			string_list_append(&exclude_packs, buf.buf + 1);
+		else
+			string_list_append(&include_packs, buf.buf);
+
+		strbuf_reset(&buf);
+	}
+
+	string_list_sort(&include_packs);
+	string_list_sort(&exclude_packs);
+
+	for (p = get_all_packs(the_repository); p; p = p->next) {
+		const char *pack_name = pack_basename(p);
+
+		item = string_list_lookup(&include_packs, pack_name);
+		if (!item)
+			item = string_list_lookup(&exclude_packs, pack_name);
+
+		if (item)
+			item->util = p;
+	}
+
+	/*
+	 * First handle all of the excluded packs, marking them as kept in-core
+	 * so that later calls to add_object_entry() discards any objects that
+	 * are also found in excluded packs.
+	 */
+	for_each_string_list_item(item, &exclude_packs) {
+		struct packed_git *p = item->util;
+		if (!p)
+			die(_("could not find pack '%s'"), item->string);
+		p->pack_keep_in_core = 1;
+	}
+
+	/*
+	 * Order packs by ascending mtime; use QSORT directly to access the
+	 * string_list_item's ->util pointer, which string_list_sort() does not
+	 * provide.
+	 */
+	QSORT(include_packs.items, include_packs.nr, pack_mtime_cmp);
+
+	for_each_string_list_item(item, &include_packs) {
+		struct packed_git *p = item->util;
+		if (!p)
+			die(_("could not find pack '%s'"), item->string);
+		for_each_object_in_pack(p,
+					add_object_entry_from_pack,
+					&revs,
+					FOR_EACH_OBJECT_PACK_ORDER);
+	}
+
+	if (prepare_revision_walk(&revs))
+		die(_("revision walk setup failed"));
+	traverse_commit_list(&revs,
+			     show_commit_pack_hint,
+			     show_object_pack_hint,
+			     NULL);
+
+	trace2_data_intmax("pack-objects", the_repository, "stdin_packs_found",
+			   stdin_packs_found_nr);
+	trace2_data_intmax("pack-objects", the_repository, "stdin_packs_hints",
+			   stdin_packs_hints_nr);
+
+	strbuf_release(&buf);
+	string_list_clear(&include_packs, 0);
+	string_list_clear(&exclude_packs, 0);
+}
+
 static void read_object_list_from_stdin(void)
 {
 	char line[GIT_MAX_HEXSZ + 1 + PATH_MAX + 2];
@@ -3489,6 +3698,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	struct strvec rp = STRVEC_INIT;
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
 	int rev_list_index = 0;
+	int stdin_packs = 0;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
 	struct option pack_objects_options[] = {
 		OPT_SET_INT('q', "quiet", &progress,
@@ -3539,6 +3749,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT_F(0, "indexed-objects", &rev_list_index,
 			      N_("include objects referred to by the index"),
 			      1, PARSE_OPT_NONEG),
+		OPT_BOOL(0, "stdin-packs", &stdin_packs,
+			 N_("read packs from stdin")),
 		OPT_BOOL(0, "stdout", &pack_to_stdout,
 			 N_("output pack to stdout")),
 		OPT_BOOL(0, "include-tag", &include_tag,
@@ -3645,7 +3857,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		use_internal_rev_list = 1;
 		strvec_push(&rp, "--indexed-objects");
 	}
-	if (rev_list_unpacked) {
+	if (rev_list_unpacked && !stdin_packs) {
 		use_internal_rev_list = 1;
 		strvec_push(&rp, "--unpacked");
 	}
@@ -3690,7 +3902,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (filter_options.choice) {
 		if (!pack_to_stdout)
 			die(_("cannot use --filter without --stdout"));
+		if (stdin_packs)
+			die(_("cannot use --filter with --stdin-packs"));
 	}
+
+	if (stdin_packs && use_internal_rev_list)
+		die(_("cannot use internal rev list with --stdin-packs"));
 
 	/*
 	 * "soft" reasons not to use bitmaps - for on-disk repack by default we want
@@ -3750,7 +3967,13 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (progress)
 		progress_state = start_progress(_("Enumerating objects"), 0);
-	if (!use_internal_rev_list)
+	if (stdin_packs) {
+		/* avoids adding objects in excluded packs */
+		ignore_packed_keep_in_core = 1;
+		read_packs_list_from_stdin();
+		if (rev_list_unpacked)
+			add_unreachable_loose_objects();
+	} else if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
 		get_object_list(rp.nr, rp.v);
