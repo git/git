@@ -222,7 +222,7 @@ static int clear_stash(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
 	if (argc)
-		return error(_("git stash clear with parameters is "
+		return error(_("git stash clear with arguments is "
 			       "unimplemented"));
 
 	return do_clear_stash();
