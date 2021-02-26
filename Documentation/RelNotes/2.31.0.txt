@@ -89,6 +89,22 @@ UI, Workflows & Features
    two object names (one in SHA-1, the other in SHA-256) are both
    signed.
 
+ * "git rev-list" command learned "--disk-usage" option.
+
+ * "git {diff,log} --{skip,rotate}-to=<path>" allows the user to
+   discard diff output for early paths or move them to the end of the
+   output.
+
+ * "git difftool" learned "--skip-to=<path>" option to restart an
+   interrupted session from an arbitrary path.
+
+ * "git grep" has been tweaked to be limited to the sparse checkout
+   paths.
+
+ * "git rebase --[no-]fork-point" gained a configuration variable
+   rebase.forkPoint so that users do not have to keep specifying a
+   non-default setting.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -175,6 +191,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * When a pager spawned by us exited, the trace log did not record its
    exit status correctly, which has been corrected.
+
+ * Removal of GIT_TEST_GETTEXT_POISON continues.
+
+ * The code to implement "git merge-base --independent" was poorly
+   done and was kept from the very beginning of the feature.
 
 
 Fixes since v2.30
@@ -274,5 +295,33 @@ Fixes since v2.30
    turned commit-graph off; we now tell the user what we are doing.
    (merge c85eec7fc3 js/commit-graph-warning later to maint).
 
+ * Objects that lost references can be pruned away, even when they
+   have notes attached to it (and these notes will become dangling,
+   which in turn can be pruned with "git notes prune").  This has been
+   clarified in the documentation.
+   (merge fa9ab027ba mz/doc-notes-are-not-anchors later to maint).
+
+ * The error codepath around the "--temp/--prefix" feature of "git
+   checkout-index" has been improved.
+   (merge 3f7ba60350 mt/checkout-index-corner-cases later to maint).
+
+ * The "git maintenance register" command had trouble registering bare
+   repositories, which had been corrected.
+
+ * A handful of multi-word configuration variable names in
+   documentation that are spelled in all lowercase have been corrected
+   to use the more canonical camelCase.
+   (merge 7dd0eaa39c dl/doc-config-camelcase later to maint).
+
+ * "git push $there --delete ''" should have been diagnosed as an
+   error, but instead turned into a matching push, which has been
+   corrected.
+   (merge 20e416409f jc/push-delete-nothing later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e3f5da7e60 sg/t7800-difftool-robustify later to maint).
+   (merge 9d336655ba js/doc-proto-v2-response-end later to maint).
+   (merge 1b5b8cf072 jc/maint-column-doc-typofix later to maint).
+   (merge 3a837b58e3 cw/pack-config-doc later to maint).
+   (merge 01168a9d89 ug/doc-commit-approxidate later to maint).
+   (merge b865734760 js/params-vs-args later to maint).
