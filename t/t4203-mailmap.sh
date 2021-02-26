@@ -932,4 +932,35 @@ test_expect_success 'find top-level mailmap from subdir' '
 	test_cmp expect actual
 '
 
+test_expect_success SYMLINKS 'set up symlink tests' '
+	git commit --allow-empty -m foo --author="Orig <orig@example.com>" &&
+	echo "New <new@example.com> <orig@example.com>" >map &&
+	rm -f .mailmap
+'
+
+test_expect_success SYMLINKS 'symlinks respected in mailmap.file' '
+	test_when_finished "rm symlink" &&
+	ln -s map symlink &&
+	git -c mailmap.file="$(pwd)/symlink" log -1 --format=%aE >actual &&
+	echo "new@example.com" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success SYMLINKS 'symlinks respected in non-repo shortlog' '
+	git log -1 >input &&
+	test_when_finished "nongit rm .mailmap" &&
+	nongit ln -sf "$TRASH_DIRECTORY/map" .mailmap &&
+	nongit git shortlog -s <input >actual &&
+	echo "     1	New" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success SYMLINKS 'symlinks not respected in-tree' '
+	test_when_finished "rm .mailmap" &&
+	ln -s map .mailmap &&
+	git log -1 --format=%aE >actual &&
+	echo "orig@example.com" >expect&&
+	test_cmp expect actual
+'
+
 test_done
