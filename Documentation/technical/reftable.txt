@@ -872,17 +872,11 @@ A repository must set its `$GIT_DIR/config` to configure reftable:
 Layout
 ^^^^^^
 
-A collection of reftable files are stored in the `$GIT_DIR/reftable/`
-directory:
-
-....
-00000001-00000001.log
-00000002-00000002.ref
-00000003-00000003.ref
-....
-
-where reftable files are named by a unique name such as produced by the
-function `${min_update_index}-${max_update_index}.ref`.
+A collection of reftable files are stored in the `$GIT_DIR/reftable/` directory.
+Their names should have a random element, such that each filename is globally
+unique; this helps avoid spurious failures on Windows, where open files cannot
+be removed or overwritten. It suggested to use
+`${min_update_index}-${max_update_index}-${random}.ref` as a naming convention.
 
 Log-only files use the `.log` extension, while ref-only and mixed ref
 and log files use `.ref`. extension.
@@ -893,9 +887,9 @@ current files, one per line, in order, from oldest (base) to newest
 
 ....
 $ cat .git/reftable/tables.list
-00000001-00000001.log
-00000002-00000002.ref
-00000003-00000003.ref
+00000001-00000001-RANDOM1.log
+00000002-00000002-RANDOM2.ref
+00000003-00000003-RANDOM3.ref
 ....
 
 Readers must read `$GIT_DIR/reftable/tables.list` to determine which
@@ -940,7 +934,7 @@ new reftable and atomically appending it to the stack:
 3.  Select `update_index` to be most recent file's
 `max_update_index + 1`.
 4.  Prepare temp reftable `tmp_XXXXXX`, including log entries.
-5.  Rename `tmp_XXXXXX` to `${update_index}-${update_index}.ref`.
+5.  Rename `tmp_XXXXXX` to `${update_index}-${update_index}-${random}.ref`.
 6.  Copy `tables.list` to `tables.list.lock`, appending file from (5).
 7.  Rename `tables.list.lock` to `tables.list`.
 
@@ -993,7 +987,7 @@ prevents other processes from trying to compact these files.
 should always be the case, assuming that other processes are adhering to
 the locking protocol.
 7.  Rename `${min_update_index}-${max_update_index}_XXXXXX` to
-`${min_update_index}-${max_update_index}.ref`.
+`${min_update_index}-${max_update_index}-${random}.ref`.
 8.  Write the new stack to `tables.list.lock`, replacing `B` and `C`
 with the file from (4).
 9.  Rename `tables.list.lock` to `tables.list`.
@@ -1004,6 +998,22 @@ This strategy permits compactions to proceed independently of updates.
 
 Each reftable (compacted or not) is uniquely identified by its name, so
 open reftables can be cached by their name.
+
+Windows
+^^^^^^^
+
+On windows, and other systems that do not allow deleting or renaming to open
+files, compaction may succeed, but other readers may prevent obsolete tables
+from being deleted.
+
+On these platforms, the following strategy can be followed: on closing a
+reftable stack, reload `tables.list`, and delete any tables no longer mentioned
+in `tables.list`.
+
+Irregular program exit may still leave about unused files. In this case, a
+cleanup operation can read `tables.list`, note its modification timestamp, and
+delete any unreferenced `*.ref` files that are older.
+
 
 Alternatives considered
 ~~~~~~~~~~~~~~~~~~~~~~~
