@@ -17,6 +17,25 @@
 
 static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
 
+static int compare_commits_by_gen(const void *_a, const void *_b)
+{
+	const struct commit *a = *(const struct commit * const *)_a;
+	const struct commit *b = *(const struct commit * const *)_b;
+
+	timestamp_t generation_a = commit_graph_generation(a);
+	timestamp_t generation_b = commit_graph_generation(b);
+
+	if (generation_a < generation_b)
+		return -1;
+	if (generation_a > generation_b)
+		return 1;
+	if (a->date < b->date)
+		return -1;
+	if (a->date > b->date)
+		return 1;
+	return 0;
+}
+
 static int queue_has_nonstale(struct prio_queue *queue)
 {
 	int i;
@@ -156,14 +175,9 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	return ret;
 }
 
-static int remove_redundant(struct repository *r, struct commit **array, int cnt)
+static int remove_redundant_no_gen(struct repository *r,
+				   struct commit **array, int cnt)
 {
-	/*
-	 * Some commit in the array may be an ancestor of
-	 * another commit.  Move such commit to the end of
-	 * the array, and return the number of commits that
-	 * are independent from each other.
-	 */
 	struct commit **work;
 	unsigned char *redundant;
 	int *filled_index;
@@ -209,13 +223,154 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 	for (i = filled = 0; i < cnt; i++)
 		if (!redundant[i])
 			array[filled++] = work[i];
-	for (j = filled, i = 0; i < cnt; i++)
-		if (redundant[i])
-			array[j++] = work[i];
 	free(work);
 	free(redundant);
 	free(filled_index);
 	return filled;
+}
+
+static int remove_redundant_with_gen(struct repository *r,
+				     struct commit **array, int cnt)
+{
+	int i, count_non_stale = 0, count_still_independent = cnt;
+	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
+	struct commit **walk_start, **sorted;
+	size_t walk_start_nr = 0, walk_start_alloc = cnt;
+	int min_gen_pos = 0;
+
+	/*
+	 * Sort the input by generation number, ascending. This allows
+	 * us to increase the "min_generation" limit when we discover
+	 * the commit with lowest generation is STALE. The index
+	 * min_gen_pos points to the current position within 'array'
+	 * that is not yet known to be STALE.
+	 */
+	ALLOC_ARRAY(sorted, cnt);
+	COPY_ARRAY(sorted, array, cnt);
+	QSORT(sorted, cnt, compare_commits_by_gen);
+	min_generation = commit_graph_generation(sorted[0]);
+
+	ALLOC_ARRAY(walk_start, walk_start_alloc);
+
+	/* Mark all parents of the input as STALE */
+	for (i = 0; i < cnt; i++) {
+		struct commit_list *parents;
+
+		repo_parse_commit(r, array[i]);
+		array[i]->object.flags |= RESULT;
+		parents = array[i]->parents;
+
+		while (parents) {
+			repo_parse_commit(r, parents->item);
+			if (!(parents->item->object.flags & STALE)) {
+				parents->item->object.flags |= STALE;
+				ALLOC_GROW(walk_start, walk_start_nr + 1, walk_start_alloc);
+				walk_start[walk_start_nr++] = parents->item;
+			}
+			parents = parents->next;
+		}
+	}
+
+	QSORT(walk_start, walk_start_nr, compare_commits_by_gen);
+
+	/* remove STALE bit for now to allow walking through parents */
+	for (i = 0; i < walk_start_nr; i++)
+		walk_start[i]->object.flags &= ~STALE;
+
+	/*
+	 * Start walking from the highest generation. Hopefully, it will
+	 * find all other items during the first-parent walk, and we can
+	 * terminate early. Otherwise, we will do the same amount of work
+	 * as before.
+	 */
+	for (i = walk_start_nr - 1; i >= 0 && count_still_independent > 1; i--) {
+		/* push the STALE bits up to min generation */
+		struct commit_list *stack = NULL;
+
+		commit_list_insert(walk_start[i], &stack);
+		walk_start[i]->object.flags |= STALE;
+
+		while (stack) {
+			struct commit_list *parents;
+			struct commit *c = stack->item;
+
+			repo_parse_commit(r, c);
+
+			if (c->object.flags & RESULT) {
+				c->object.flags &= ~RESULT;
+				if (--count_still_independent <= 1)
+					break;
+				if (oideq(&c->object.oid, &sorted[min_gen_pos]->object.oid)) {
+					while (min_gen_pos < cnt - 1 &&
+					       (sorted[min_gen_pos]->object.flags & STALE))
+						min_gen_pos++;
+					min_generation = commit_graph_generation(sorted[min_gen_pos]);
+				}
+			}
+
+			if (commit_graph_generation(c) < min_generation) {
+				pop_commit(&stack);
+				continue;
+			}
+
+			parents = c->parents;
+			while (parents) {
+				if (!(parents->item->object.flags & STALE)) {
+					parents->item->object.flags |= STALE;
+					commit_list_insert(parents->item, &stack);
+					break;
+				}
+				parents = parents->next;
+			}
+
+			/* pop if all parents have been visited already */
+			if (!parents)
+				pop_commit(&stack);
+		}
+		free_commit_list(stack);
+	}
+	free(sorted);
+
+	/* clear result */
+	for (i = 0; i < cnt; i++)
+		array[i]->object.flags &= ~RESULT;
+
+	/* rearrange array */
+	for (i = count_non_stale = 0; i < cnt; i++) {
+		if (!(array[i]->object.flags & STALE))
+			array[count_non_stale++] = array[i];
+	}
+
+	/* clear marks */
+	clear_commit_marks_many(walk_start_nr, walk_start, STALE);
+	free(walk_start);
+
+	return count_non_stale;
+}
+
+static int remove_redundant(struct repository *r, struct commit **array, int cnt)
+{
+	/*
+	 * Some commit in the array may be an ancestor of
+	 * another commit.  Move the independent commits to the
+	 * beginning of 'array' and return their number. Callers
+	 * should not rely upon the contents of 'array' after
+	 * that number.
+	 */
+	if (generation_numbers_enabled(r)) {
+		int i;
+
+		/*
+		 * If we have a single commit with finite generation
+		 * number, then the _with_gen algorithm is preferred.
+		 */
+		for (i = 0; i < cnt; i++) {
+			if (commit_graph_generation(array[i]) < GENERATION_NUMBER_INFINITY)
+				return remove_redundant_with_gen(r, array, cnt);
+		}
+	}
+
+	return remove_redundant_no_gen(r, array, cnt);
 }
 
 static struct commit_list *get_merge_bases_many_0(struct repository *r,
@@ -559,21 +714,6 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 	if (filter->with_commit_tag_algo)
 		return contains_tag_algo(commit, list, cache) == CONTAINS_YES;
 	return repo_is_descendant_of(the_repository, commit, list);
-}
-
-static int compare_commits_by_gen(const void *_a, const void *_b)
-{
-	const struct commit *a = *(const struct commit * const *)_a;
-	const struct commit *b = *(const struct commit * const *)_b;
-
-	timestamp_t generation_a = commit_graph_generation(a);
-	timestamp_t generation_b = commit_graph_generation(b);
-
-	if (generation_a < generation_b)
-		return -1;
-	if (generation_a > generation_b)
-		return 1;
-	return 0;
 }
 
 int can_all_from_reach_with_flag(struct object_array *from,
