@@ -820,6 +820,11 @@ test_expect_success 'push --delete refuses src:dest refspecs' '
 	test_must_fail git push testrepo --delete main:foo
 '
 
+test_expect_success 'push --delete refuses empty string' '
+	mk_test testrepo heads/master &&
+	test_must_fail git push testrepo --delete ""
+'
+
 test_expect_success 'warn on push to HEAD of non-bare repository' '
 	mk_test testrepo heads/main &&
 	(
