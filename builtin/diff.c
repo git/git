@@ -491,6 +491,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	}
 
 	rev.diffopt.flags.recursive = 1;
+	rev.diffopt.rotate_to_strict = 1;
 
 	setup_diff_pager(&rev.diffopt);
 

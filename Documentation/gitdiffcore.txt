@@ -74,6 +74,7 @@ into another list.  There are currently 5 such transformations:
 - diffcore-merge-broken
 - diffcore-pickaxe
 - diffcore-order
+- diffcore-rotate
 
 These are applied in sequence.  The set of filepairs 'git diff-{asterisk}'
 commands find are used as the input to diffcore-break, and
@@ -275,6 +276,26 @@ Documentation
 *.c
 t
 ------------------------------------------------
+
+diffcore-rotate: For Changing At Which Path Output Starts
+---------------------------------------------------------
+
+This transformation takes one pathname, and rotates the set of
+filepairs so that the filepair for the given pathname comes first,
+optionally discarding the paths that come before it.  This is used
+to implement the `--skip-to` and the `--rotate-to` options.  It is
+an error when the specified pathname is not in the set of filepairs,
+but it is not useful to error out when used with "git log" family of
+commands, because it is unreasonable to expect that a given path
+would be modified by each and every commit shown by the "git log"
+command.  For this reason, when used with "git log", the filepair
+that sorts the same as, or the first one that sorts after, the given
+pathname is where the output starts.
+
+Use of this transformation combined with diffcore-order will produce
+unexpected results, as the input to this transformation is likely
+not sorted when diffcore-order is in effect.
+
 
 SEE ALSO
 --------

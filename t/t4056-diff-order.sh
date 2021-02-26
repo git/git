@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='diff order'
+test_description='diff order & rotate'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -126,5 +126,75 @@ do
 		test_cmp expect_$i actual
 	'
 done
+
+### rotate and skip
+
+test_expect_success 'rotate and skip setup' '
+	>sample1.t &&
+	>sample2.t &&
+	>sample3.t &&
+	>sample4.t &&
+	git add sample[1234].t &&
+	git commit -m "added" sample[1234].t &&
+	echo modified >>sample1.t &&
+	echo modified >>sample2.t &&
+	echo modified >>sample4.t &&
+	git commit -m "updated" sample[1234].t
+'
+
+test_expect_success 'diff --rotate-to' '
+	git diff --rotate-to=sample2.t --name-only HEAD^ >actual &&
+	test_write_lines sample2.t sample4.t sample1.t >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'diff --skip-to' '
+	git diff --skip-to=sample2.t --name-only HEAD^ >actual &&
+	test_write_lines sample2.t sample4.t >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'diff --rotate/skip-to error condition' '
+	test_must_fail git diff --rotate-to=sample3.t HEAD^ &&
+	test_must_fail git diff --skip-to=sample3.t HEAD^
+'
+
+test_expect_success 'log --rotate-to' '
+	git log --rotate-to=sample3.t --raw HEAD~2.. >raw &&
+	# just distill the commit header and paths
+	sed -n -e "s/^commit.*/commit/p" \
+	       -e "/^:/s/^.*	//p" raw >actual &&
+
+	cat >expect <<-\EOF &&
+	commit
+	sample4.t
+	sample1.t
+	sample2.t
+	commit
+	sample3.t
+	sample4.t
+	sample1.t
+	sample2.t
+	EOF
+
+	test_cmp expect actual
+'
+
+test_expect_success 'log --skip-to' '
+	git log --skip-to=sample3.t --raw HEAD~2.. >raw &&
+	# just distill the commit header and paths
+	sed -n -e "s/^commit.*/commit/p" \
+	       -e "/^:/s/^.*	//p" raw >actual &&
+
+	cat >expect <<-\EOF &&
+	commit
+	sample4.t
+	commit
+	sample3.t
+	sample4.t
+	EOF
+
+	test_cmp expect actual
+'
 
 test_done
