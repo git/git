@@ -113,7 +113,7 @@ test_expect_success 'rebase off of the previous branch using "-"' '
 	test_cmp expect.forkpoint actual.forkpoint &&
 	# the next one is dubious---we may want to say "-",
 	# instead of @{-1}, in the message
-	test_i18ncmp expect.messages actual.messages
+	test_cmp expect.messages actual.messages
 '
 
 test_expect_success 'rebase a single mode change' '

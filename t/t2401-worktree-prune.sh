@@ -23,7 +23,7 @@ test_expect_success 'prune files inside $GIT_DIR/worktrees' '
 	cat >expect <<EOF &&
 Removing worktrees/abc: not a valid directory
 EOF
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	! test -f .git/worktrees/abc &&
 	! test -d .git/worktrees
 '
@@ -35,7 +35,7 @@ test_expect_success 'prune directories without gitdir' '
 Removing worktrees/def: gitdir file does not exist
 EOF
 	git worktree prune --verbose >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	! test -d .git/worktrees/def &&
 	! test -d .git/worktrees
 '

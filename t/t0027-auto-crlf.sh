@@ -83,7 +83,7 @@ check_warning () {
 	*) echo >&2 "Illegal 1": "$1" ; return false ;;
 	esac
 	grep "will be replaced by" "$2" | sed -e "s/\(.*\) in [^ ]*$/\1/" | uniq  >"$2".actual
-	test_i18ncmp "$2".expect "$2".actual
+	test_cmp "$2".expect "$2".actual
 }
 
 commit_check_warn () {

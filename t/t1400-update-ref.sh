@@ -374,7 +374,7 @@ test_expect_success 'Query "main@{May 25 2005}" (before history)' '
 	echo "$C" >expect &&
 	test_cmp expect o &&
 	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
-	test_i18ncmp expect e
+	test_cmp expect e
 '
 test_expect_success 'Query main@{2005-05-25} (before history)' '
 	test_when_finished "rm -f o e" &&
@@ -382,7 +382,7 @@ test_expect_success 'Query main@{2005-05-25} (before history)' '
 	echo "$C" >expect &&
 	test_cmp expect o &&
 	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
-	test_i18ncmp expect e
+	test_cmp expect e
 '
 test_expect_success 'Query "main@{May 26 2005 23:31:59}" (1 second before history)' '
 	test_when_finished "rm -f o e" &&
@@ -390,7 +390,7 @@ test_expect_success 'Query "main@{May 26 2005 23:31:59}" (1 second before histor
 	echo "$C" >expect &&
 	test_cmp expect o &&
 	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
-	test_i18ncmp expect e
+	test_cmp expect e
 '
 test_expect_success 'Query "main@{May 26 2005 23:32:00}" (exactly history start)' '
 	test_when_finished "rm -f o e" &&

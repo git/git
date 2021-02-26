@@ -87,10 +87,8 @@ test_expect_success 'safecrlf: print warning only once' '
 	git commit -m "nowarn" &&
 	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >doublewarn &&
 	git add doublewarn 2>err &&
-	if test_have_prereq C_LOCALE_OUTPUT
-	then
-		test $(grep "CRLF will be replaced by LF" err | wc -l) = 1
-	fi
+	grep "CRLF will be replaced by LF" err >err.warnings &&
+	test_line_count = 1 err.warnings
 '
 
 

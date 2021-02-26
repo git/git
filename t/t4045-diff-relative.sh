@@ -61,7 +61,7 @@ check_stat () {
 	EOF
 	test_expect_success "--stat $*" "
 		git -C '$dir' diff --stat $* HEAD^ >actual &&
-		test_i18ncmp expected actual
+		test_cmp expected actual
 	"
 }
 

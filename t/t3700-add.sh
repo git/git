@@ -304,7 +304,7 @@ test_expect_success 'error on a repository with no commits' '
 	error: '"'empty/'"' does not have a commit checked out
 	fatal: adding files failed
 	EOF
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'git add --dry-run of existing changed file' "
@@ -320,7 +320,7 @@ test_expect_success 'git add --dry-run of non-existing file' "
 
 test_expect_success 'git add --dry-run of an existing file output' "
 	echo \"fatal: pathspec 'ignored-file' did not match any files\" >expect &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 "
 
 cat >expect.err <<\EOF
@@ -339,8 +339,8 @@ test_expect_success 'git add --dry-run --ignore-missing of non-existing file' '
 '
 
 test_expect_success 'git add --dry-run --ignore-missing of non-existing file output' '
-	test_i18ncmp expect.out actual.out &&
-	test_i18ncmp expect.err actual.err
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
 '
 
 test_expect_success 'git add empty string should fail' '

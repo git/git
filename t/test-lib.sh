@@ -1489,11 +1489,6 @@ test -n "$USE_LIBPCRE2" && test_set_prereq PCRE
 test -n "$USE_LIBPCRE2" && test_set_prereq LIBPCRE2
 test -z "$NO_GETTEXT" && test_set_prereq GETTEXT
 
-# Used to be used for GIT_TEST_GETTEXT_POISON=false. Only here as a
-# shim for other in-flight changes. Should not be used and will be
-# removed soon.
-test_set_prereq C_LOCALE_OUTPUT
-
 if test -z "$GIT_TEST_CHECK_CACHE_TREE"
 then
 	GIT_TEST_CHECK_CACHE_TREE=true

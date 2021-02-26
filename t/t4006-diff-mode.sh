@@ -39,13 +39,13 @@ test_expect_success '--stat output after text chmod' '
 	 1 file changed, 0 insertions(+), 0 deletions(-)
 	EOF
 	git diff HEAD --stat >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success '--shortstat output after text chmod' '
 	tail -n 1 <expect >expect.short &&
 	git diff HEAD --shortstat >actual &&
-	test_i18ncmp expect.short actual
+	test_cmp expect.short actual
 '
 
 test_expect_success '--stat output after binary chmod' '
@@ -56,13 +56,13 @@ test_expect_success '--stat output after binary chmod' '
 	 2 files changed, 0 insertions(+), 0 deletions(-)
 	EOF
 	git diff HEAD --stat >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success '--shortstat output after binary chmod' '
 	tail -n 1 <expect >expect.short &&
 	git diff HEAD --shortstat >actual &&
-	test_i18ncmp expect.short actual
+	test_cmp expect.short actual
 '
 
 test_done

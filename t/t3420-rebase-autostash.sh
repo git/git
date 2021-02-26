@@ -110,7 +110,7 @@ testrebase () {
 		fi &&
 		create_expected_success_$suffix &&
 		sed "$remove_progress_re" <actual >actual2 &&
-		test_i18ncmp expected actual2
+		test_cmp expected actual2
 	'
 
 	test_expect_success "rebase$type: dirty index, non-conflicting rebase" '
@@ -231,7 +231,7 @@ testrebase () {
 		fi &&
 		create_expected_failure_$suffix &&
 		sed "$remove_progress_re" <actual >actual2 &&
-		test_i18ncmp expected actual2
+		test_cmp expected actual2
 	'
 }
 

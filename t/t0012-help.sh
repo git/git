@@ -55,7 +55,7 @@ test_expect_success "--help does not work for guides" "
 		git: 'revisions' is not a git command. See 'git --help'.
 	EOF
 	test_must_fail git revisions --help 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 "
 
 test_expect_success 'git help' '

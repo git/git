@@ -370,7 +370,7 @@ test_expect_success 'setup expected' '
 '
 
 # Test splitting the first patch, then adding both
-test_expect_success C_LOCALE_OUTPUT 'add first line works' '
+test_expect_success 'add first line works' '
 	git commit -am "clear local changes" &&
 	git apply patch &&
 	printf "%s\n" s y y | git add -p file 2>error |
@@ -974,7 +974,7 @@ test_expect_success 'show help from add--helper' '
 	EOF
 	test_write_lines h | force_color git add -i >actual.colored &&
 	test_decode_color <actual.colored >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_done

@@ -18,7 +18,7 @@ test_expect_success 'bogus GIT_INDEX_VERSION issues warning' '
 			warning: GIT_INDEX_VERSION set, but the value is invalid.
 			Using version Z
 		EOF
-		test_i18ncmp expect.err actual.err
+		test_cmp expect.err actual.err
 	)
 '
 
@@ -32,7 +32,7 @@ test_expect_success 'out of bounds GIT_INDEX_VERSION issues warning' '
 			warning: GIT_INDEX_VERSION set, but the value is invalid.
 			Using version Z
 		EOF
-		test_i18ncmp expect.err actual.err
+		test_cmp expect.err actual.err
 	)
 '
 
@@ -55,7 +55,7 @@ test_expect_success 'out of bounds index.version issues warning' '
 			warning: index.version set, but the value is invalid.
 			Using version Z
 		EOF
-		test_i18ncmp expect.err actual.err
+		test_cmp expect.err actual.err
 	)
 '
 

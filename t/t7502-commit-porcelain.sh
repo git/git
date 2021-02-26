@@ -13,7 +13,7 @@ commit_msg_is () {
 
 	printf "%s" "$(git log --pretty=format:%s%b -1)" >$actual &&
 	printf "%s" "$1" >$expect &&
-	test_i18ncmp $expect $actual
+	test_cmp $expect $actual
 }
 
 # Arguments: [<prefix] [<commit message>] [<commit options>]
@@ -35,7 +35,7 @@ check_summary_oneline() {
 	SUMMARY_POSTFIX="$(git log -1 --pretty='format:%h')"
 	echo "[$SUMMARY_PREFIX $SUMMARY_POSTFIX] $2" >exp &&
 
-	test_i18ncmp exp act
+	test_cmp exp act
 }
 
 test_expect_success 'output summary format' '
@@ -300,7 +300,7 @@ echo "sample
 # with '#' will be ignored, and an empty message aborts the commit." >expect
 
 test_expect_success 'cleanup commit messages (strip option,-F,-e): output' '
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'cleanup commit message (fail on invalid cleanup mode option)' '

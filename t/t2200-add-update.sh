@@ -135,7 +135,7 @@ test_expect_success 'add -n -u should not add but just report' '
 	after=$(git ls-files -s check top) &&
 
 	test "$before" = "$after" &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 
 '
 

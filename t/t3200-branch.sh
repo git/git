@@ -695,7 +695,7 @@ test_expect_success 'deleting a symref' '
 	git branch -d symref >actual &&
 	test_path_is_file .git/refs/heads/target &&
 	test_path_is_missing .git/refs/heads/symref &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'deleting a dangling symref' '
@@ -704,7 +704,7 @@ test_expect_success 'deleting a dangling symref' '
 	echo "Deleted branch dangling-symref (was nowhere)." >expect &&
 	git branch -d dangling-symref >actual &&
 	test_path_is_missing .git/refs/heads/dangling-symref &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'deleting a self-referential symref' '
@@ -713,7 +713,7 @@ test_expect_success 'deleting a self-referential symref' '
 	echo "Deleted branch self-reference (was refs/heads/self-reference)." >expect &&
 	git branch -d self-reference >actual &&
 	test_path_is_missing .git/refs/heads/self-reference &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'renaming a symref is not allowed' '
@@ -808,7 +808,7 @@ test_expect_success 'test deleting branch without config' '
 	sha1=$(git rev-parse my7 | cut -c 1-7) &&
 	echo "Deleted branch my7 (was $sha1)." >expect &&
 	git branch -d my7 >actual 2>&1 &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'deleting currently checked out branch fails' '
@@ -843,7 +843,7 @@ test_expect_success 'branch from tag w/--track causes failure' '
 test_expect_success '--set-upstream-to fails on multiple branches' '
 	echo "fatal: too many arguments to set new upstream" >expect &&
 	test_must_fail git branch --set-upstream-to main a b c 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on detached HEAD' '
@@ -851,13 +851,13 @@ test_expect_success '--set-upstream-to fails on detached HEAD' '
 	test_when_finished git checkout - &&
 	echo "fatal: could not set upstream of HEAD to main when it does not point to any branch." >expect &&
 	test_must_fail git branch --set-upstream-to main 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on a missing dst branch' '
 	echo "fatal: branch '"'"'does-not-exist'"'"' does not exist" >expect &&
 	test_must_fail git branch --set-upstream-to main does-not-exist 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on a missing src branch' '
@@ -868,7 +868,7 @@ test_expect_success '--set-upstream-to fails on a missing src branch' '
 test_expect_success '--set-upstream-to fails on a non-ref' '
 	echo "fatal: Cannot setup tracking information; starting point '"'"'HEAD^{}'"'"' is not a branch." >expect &&
 	test_must_fail git branch --set-upstream-to HEAD^{} 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on locked config' '
@@ -899,7 +899,7 @@ test_expect_success 'use --set-upstream-to modify a particular branch' '
 test_expect_success '--unset-upstream should fail if given a non-existent branch' '
 	echo "fatal: Branch '"'"'i-dont-exist'"'"' has no upstream information" >expect &&
 	test_must_fail git branch --unset-upstream i-dont-exist 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--unset-upstream should fail if config is locked' '
@@ -921,13 +921,13 @@ test_expect_success 'test --unset-upstream on HEAD' '
 	# fail for a branch without upstream set
 	echo "fatal: Branch '"'"'main'"'"' has no upstream information" >expect &&
 	test_must_fail git branch --unset-upstream 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--unset-upstream should fail on multiple branches' '
 	echo "fatal: too many arguments to unset upstream" >expect &&
 	test_must_fail git branch --unset-upstream a b c 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--unset-upstream should fail on detached HEAD' '
@@ -935,7 +935,7 @@ test_expect_success '--unset-upstream should fail on detached HEAD' '
 	test_when_finished git checkout - &&
 	echo "fatal: could not unset upstream of HEAD when it does not point to any branch." >expect &&
 	test_must_fail git branch --unset-upstream 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success 'test --unset-upstream on a particular branch' '
@@ -957,7 +957,7 @@ test_expect_success '--set-upstream-to notices an error to set branch as own ups
 	EOF
 	test_expect_code 1 git config branch.my13.remote &&
 	test_expect_code 1 git config branch.my13.merge &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 # Keep this test last, as it changes the current branch
