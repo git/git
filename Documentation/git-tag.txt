@@ -134,7 +134,7 @@ options for details.
 --column[=<options>]::
 --no-column::
 	Display tag listing in columns. See configuration variable
-	column.tag for option syntax.`--column` and `--no-column`
+	`column.tag` for option syntax. `--column` and `--no-column`
 	without options are equivalent to 'always' and 'never' respectively.
 +
 This option is only applicable when listing tags without annotation lines.
