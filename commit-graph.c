@@ -2471,6 +2471,7 @@ cleanup:
 	free(ctx->graph_name);
 	free(ctx->commits.list);
 	oid_array_clear(&ctx->oids);
+	clear_topo_level_slab(&topo_levels);
 
 	if (ctx->commit_graph_filenames_after) {
 		for (i = 0; i < ctx->num_commit_graphs_after; i++) {
