@@ -367,6 +367,19 @@ static int find_exact_renames(struct diff_options *options)
 	return renames;
 }
 
+struct dir_rename_info {
+	struct strintmap idx_map;
+	struct strmap dir_rename_guess;
+	struct strmap *dir_rename_count;
+	unsigned setup;
+};
+
+static char *get_dirname(const char *filename)
+{
+	char *slash = strrchr(filename, '/');
+	return slash ? xstrndup(filename, slash - filename) : xstrdup("");
+}
+
 static const char *get_basename(const char *filename)
 {
 	/*
@@ -379,14 +392,86 @@ static const char *get_basename(const char *filename)
 	return base ? base + 1 : filename;
 }
 
-static int idx_possible_rename(char *filename)
+static int idx_possible_rename(char *filename, struct dir_rename_info *info)
 {
-	/* Unconditionally return -1, "not found", for now */
-	return -1;
+	/*
+	 * Our comparison of files with the same basename (see
+	 * find_basename_matches() below), is only helpful when after exact
+	 * rename detection we have exactly one file with a given basename
+	 * among the rename sources and also only exactly one file with
+	 * that basename among the rename destinations.  When we have
+	 * multiple files with the same basename in either set, we do not
+	 * know which to compare against.  However, there are some
+	 * filenames that occur in large numbers (particularly
+	 * build-related filenames such as 'Makefile', '.gitignore', or
+	 * 'build.gradle' that potentially exist within every single
+	 * subdirectory), and for performance we want to be able to quickly
+	 * find renames for these files too.
+	 *
+	 * The reason basename comparisons are a useful heuristic was that it
+	 * is common for people to move files across directories while keeping
+	 * their filename the same.  If we had a way of determining or even
+	 * making a good educated guess about which directory these non-unique
+	 * basename files had moved the file to, we could check it.
+	 * Luckily...
+	 *
+	 * When an entire directory is in fact renamed, we have two factors
+	 * helping us out:
+	 *   (a) the original directory disappeared giving us a hint
+	 *       about when we can apply an extra heuristic.
+	 *   (a) we often have several files within that directory and
+	 *       subdirectories that are renamed without changes
+	 * So, rules for a heuristic:
+	 *   (0) If there basename matches are non-unique (the condition under
+	 *       which this function is called) AND
+	 *   (1) the directory in which the file was found has disappeared
+	 *       (i.e. dirs_removed is non-NULL and has a relevant entry) THEN
+	 *   (2) use exact renames of files within the directory to determine
+	 *       where the directory is likely to have been renamed to.  IF
+	 *       there is at least one exact rename from within that
+	 *       directory, we can proceed.
+	 *   (3) If there are multiple places the directory could have been
+	 *       renamed to based on exact renames, ignore all but one of them.
+	 *       Just use the destination with the most renames going to it.
+	 *   (4) Check if applying that directory rename to the original file
+	 *       would result in a destination filename that is in the
+	 *       potential rename set.  If so, return the index of the
+	 *       destination file (the index within rename_dst).
+	 *   (5) Compare the original file and returned destination for
+	 *       similarity, and if they are sufficiently similar, record the
+	 *       rename.
+	 *
+	 * This function, idx_possible_rename(), is only responsible for (4).
+	 * The conditions/steps in (1)-(3) will be handled via setting up
+	 * dir_rename_count and dir_rename_guess in a future
+	 * initialize_dir_rename_info() function.  Steps (0) and (5) are
+	 * handled by the caller of this function.
+	 */
+	char *old_dir, *new_dir;
+	struct strbuf new_path = STRBUF_INIT;
+	int idx;
+
+	if (!info->setup)
+		return -1;
+
+	old_dir = get_dirname(filename);
+	new_dir = strmap_get(&info->dir_rename_guess, old_dir);
+	free(old_dir);
+	if (!new_dir)
+		return -1;
+
+	strbuf_addstr(&new_path, new_dir);
+	strbuf_addch(&new_path, '/');
+	strbuf_addstr(&new_path, get_basename(filename));
+
+	idx = strintmap_get(&info->idx_map, new_path.buf);
+	strbuf_release(&new_path);
+	return idx;
 }
 
 static int find_basename_matches(struct diff_options *options,
-				 int minimum_score)
+				 int minimum_score,
+				 struct dir_rename_info *info)
 {
 	/*
 	 * When I checked in early 2020, over 76% of file renames in linux
@@ -494,7 +579,7 @@ static int find_basename_matches(struct diff_options *options,
 			dst_index = strintmap_get(&dests, base);
 			if (src_index == -1 || dst_index == -1) {
 				src_index = i;
-				dst_index = idx_possible_rename(filename);
+				dst_index = idx_possible_rename(filename, info);
 			}
 			if (dst_index == -1)
 				continue;
@@ -677,8 +762,10 @@ void diffcore_rename(struct diff_options *options)
 	int num_destinations, dst_cnt;
 	int num_sources, want_copies;
 	struct progress *progress = NULL;
+	struct dir_rename_info info;
 
 	trace2_region_enter("diff", "setup", options->repo);
+	info.setup = 0;
 	want_copies = (detect_rename == DIFF_DETECT_COPY);
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
@@ -774,7 +861,8 @@ void diffcore_rename(struct diff_options *options)
 		/* Utilize file basenames to quickly find renames. */
 		trace2_region_enter("diff", "basename matches", options->repo);
 		rename_count += find_basename_matches(options,
-						      min_basename_score);
+						      min_basename_score,
+						      &info);
 		trace2_region_leave("diff", "basename matches", options->repo);
 
 		/*
