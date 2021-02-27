@@ -380,6 +380,45 @@ static char *get_dirname(const char *filename)
 	return slash ? xstrndup(filename, slash - filename) : xstrdup("");
 }
 
+static void initialize_dir_rename_info(struct dir_rename_info *info)
+{
+	int i;
+
+	info->setup = 1;
+
+	strintmap_init_with_options(&info->idx_map, -1, NULL, 0);
+	strmap_init_with_options(&info->dir_rename_guess, NULL, 0);
+	info->dir_rename_count = NULL;
+
+	/*
+	 * Loop setting up both info->idx_map.
+	 */
+	for (i = 0; i < rename_dst_nr; ++i) {
+		/*
+		 * For non-renamed files, make idx_map contain mapping of
+		 *   filename -> index (index within rename_dst, that is)
+		 */
+		if (!rename_dst[i].is_rename) {
+			char *filename = rename_dst[i].p->two->path;
+			strintmap_set(&info->idx_map, filename, i);
+		}
+	}
+}
+
+static void cleanup_dir_rename_info(struct dir_rename_info *info)
+{
+	if (!info->setup)
+		return;
+
+	/* idx_map */
+	strintmap_clear(&info->idx_map);
+
+	/* dir_rename_guess */
+	strmap_clear(&info->dir_rename_guess, 1);
+
+	/* Nothing to do for dir_rename_count, yet */
+}
+
 static const char *get_basename(const char *filename)
 {
 	/*
@@ -858,6 +897,11 @@ void diffcore_rename(struct diff_options *options)
 		remove_unneeded_paths_from_src(want_copies);
 		trace2_region_leave("diff", "cull after exact", options->repo);
 
+		/* Preparation for basename-driven matching. */
+		trace2_region_enter("diff", "dir rename setup", options->repo);
+		initialize_dir_rename_info(&info);
+		trace2_region_leave("diff", "dir rename setup", options->repo);
+
 		/* Utilize file basenames to quickly find renames. */
 		trace2_region_enter("diff", "basename matches", options->repo);
 		rename_count += find_basename_matches(options,
@@ -1026,6 +1070,7 @@ void diffcore_rename(struct diff_options *options)
 		if (rename_dst[i].filespec_to_free)
 			free_filespec(rename_dst[i].filespec_to_free);
 
+	cleanup_dir_rename_info(&info);
 	FREE_AND_NULL(rename_dst);
 	rename_dst_nr = rename_dst_alloc = 0;
 	FREE_AND_NULL(rename_src);
