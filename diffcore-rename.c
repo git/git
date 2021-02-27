@@ -389,6 +389,24 @@ static void dirname_munge(char *filename)
 	*slash = '\0';
 }
 
+static const char *get_highest_rename_path(struct strintmap *counts)
+{
+	int highest_count = 0;
+	const char *highest_destination_dir = NULL;
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	strintmap_for_each_entry(counts, &iter, entry) {
+		const char *destination_dir = entry->key;
+		intptr_t count = (intptr_t)entry->value;
+		if (count > highest_count) {
+			highest_count = count;
+			highest_destination_dir = destination_dir;
+		}
+	}
+	return highest_destination_dir;
+}
+
 static void increment_count(struct dir_rename_info *info,
 			    char *old_dir,
 			    char *new_dir)
@@ -512,6 +530,8 @@ static void initialize_dir_rename_info(struct dir_rename_info *info,
 				       struct strset *dirs_removed,
 				       struct strmap *dir_rename_count)
 {
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
 	int i;
 
 	if (!dirs_removed) {
@@ -557,6 +577,23 @@ static void initialize_dir_rename_info(struct dir_rename_info *info,
 		update_dir_rename_counts(info, dirs_removed,
 					 rename_dst[i].p->one->path,
 					 rename_dst[i].p->two->path);
+	}
+
+	/*
+	 * Now we collapse
+	 *    dir_rename_count: old_directory -> {new_directory -> count}
+	 * down to
+	 *    dir_rename_guess: old_directory -> best_new_directory
+	 * where best_new_directory is the one with the highest count.
+	 */
+	strmap_for_each_entry(info->dir_rename_count, &iter, entry) {
+		/* entry->key is source_dir */
+		struct strintmap *counts = entry->value;
+		char *best_newdir;
+
+		best_newdir = xstrdup(get_highest_rename_path(counts));
+		strmap_put(&info->dir_rename_guess, entry->key,
+			   best_newdir);
 	}
 }
 
@@ -682,10 +719,10 @@ static int idx_possible_rename(char *filename, struct dir_rename_info *info)
 	 *       rename.
 	 *
 	 * This function, idx_possible_rename(), is only responsible for (4).
-	 * The conditions/steps in (1)-(3) will be handled via setting up
-	 * dir_rename_count and dir_rename_guess in a future
-	 * initialize_dir_rename_info() function.  Steps (0) and (5) are
-	 * handled by the caller of this function.
+	 * The conditions/steps in (1)-(3) are handled via setting up
+	 * dir_rename_count and dir_rename_guess in
+	 * initialize_dir_rename_info().  Steps (0) and (5) are handled by
+	 * the caller of this function.
 	 */
 	char *old_dir, *new_dir;
 	struct strbuf new_path = STRBUF_INIT;
