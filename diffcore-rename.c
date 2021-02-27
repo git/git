@@ -388,7 +388,7 @@ static void dirname_munge(char *filename)
 	*slash = '\0';
 }
 
-static void increment_count(struct strmap *dir_rename_count,
+static void increment_count(struct dir_rename_info *info,
 			    char *old_dir,
 			    char *new_dir)
 {
@@ -396,20 +396,20 @@ static void increment_count(struct strmap *dir_rename_count,
 	struct strmap_entry *e;
 
 	/* Get the {new_dirs -> counts} mapping using old_dir */
-	e = strmap_get_entry(dir_rename_count, old_dir);
+	e = strmap_get_entry(info->dir_rename_count, old_dir);
 	if (e) {
 		counts = e->value;
 	} else {
 		counts = xmalloc(sizeof(*counts));
 		strintmap_init_with_options(counts, 0, NULL, 1);
-		strmap_put(dir_rename_count, old_dir, counts);
+		strmap_put(info->dir_rename_count, old_dir, counts);
 	}
 
 	/* Increment the count for new_dir */
 	strintmap_incr(counts, new_dir, 1);
 }
 
-static void update_dir_rename_counts(struct strmap *dir_rename_count,
+static void update_dir_rename_counts(struct dir_rename_info *info,
 				     struct strset *dirs_removed,
 				     const char *oldname,
 				     const char *newname)
@@ -463,7 +463,7 @@ static void update_dir_rename_counts(struct strmap *dir_rename_count,
 		}
 
 		if (strset_contains(dirs_removed, old_dir))
-			increment_count(dir_rename_count, old_dir, new_dir);
+			increment_count(info, old_dir, new_dir);
 		else
 			break;
 
@@ -479,12 +479,15 @@ static void update_dir_rename_counts(struct strmap *dir_rename_count,
 	free(new_dir);
 }
 
-static void compute_dir_rename_counts(struct strmap *dir_rename_count,
-				      struct strset *dirs_removed)
+static void compute_dir_rename_counts(struct dir_rename_info *info,
+				      struct strset *dirs_removed,
+				      struct strmap *dir_rename_count)
 {
 	int i;
 
-	/* Set up dir_rename_count */
+	info->setup = 1;
+	info->dir_rename_count = dir_rename_count;
+
 	for (i = 0; i < rename_dst_nr; ++i) {
 		/* File not part of directory rename counts if not a rename */
 		if (!rename_dst[i].is_rename)
@@ -497,7 +500,7 @@ static void compute_dir_rename_counts(struct strmap *dir_rename_count,
 		 * the old filename and the new filename and count how many
 		 * times that pairing occurs.
 		 */
-		update_dir_rename_counts(dir_rename_count, dirs_removed,
+		update_dir_rename_counts(info, dirs_removed,
 					 rename_dst[i].p->one->path,
 					 rename_dst[i].p->two->path);
 	}
@@ -551,7 +554,9 @@ static void cleanup_dir_rename_info(struct dir_rename_info *info)
 	/* dir_rename_guess */
 	strmap_clear(&info->dir_rename_guess, 1);
 
-	/* Nothing to do for dir_rename_count, yet */
+	/* dir_rename_count */
+	partial_clear_dir_rename_count(info->dir_rename_count);
+	strmap_clear(info->dir_rename_count, 1);
 }
 
 static const char *get_basename(const char *filename)
@@ -1140,7 +1145,7 @@ void diffcore_rename_extended(struct diff_options *options,
 	/*
 	 * Now that renames have been computed, compute dir_rename_count */
 	if (dirs_removed && dir_rename_count)
-		compute_dir_rename_counts(dir_rename_count, dirs_removed);
+		compute_dir_rename_counts(&info, dirs_removed, dir_rename_count);
 
 	/* At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
