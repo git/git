@@ -528,6 +528,18 @@ static void initialize_dir_rename_info(struct dir_rename_info *info)
 	}
 }
 
+void partial_clear_dir_rename_count(struct strmap *dir_rename_count)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	strmap_for_each_entry(dir_rename_count, &iter, entry) {
+		struct strintmap *counts = entry->value;
+		strintmap_clear(counts);
+	}
+	strmap_partial_clear(dir_rename_count, 1);
+}
+
 static void cleanup_dir_rename_info(struct dir_rename_info *info)
 {
 	if (!info->setup)

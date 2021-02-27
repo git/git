@@ -351,17 +351,11 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 
 	/* Free memory used by various renames maps */
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; ++i) {
-		struct hashmap_iter iter;
-		struct strmap_entry *entry;
-
 		strset_func(&renames->dirs_removed[i]);
 
-		strmap_for_each_entry(&renames->dir_rename_count[i],
-				      &iter, entry) {
-			struct strintmap *counts = entry->value;
-			strintmap_clear(counts);
-		}
-		strmap_func(&renames->dir_rename_count[i], 1);
+		partial_clear_dir_rename_count(&renames->dir_rename_count[i]);
+		if (!reinitialize)
+			strmap_clear(&renames->dir_rename_count[i], 1);
 
 		strmap_func(&renames->dir_renames[i], 0);
 	}
