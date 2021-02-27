@@ -419,6 +419,28 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 	char new_dir_first_char = new_dir[0];
 	int first_time_in_loop = 1;
 
+	if (!info->setup)
+		/*
+		 * info->setup is 0 here in two cases: (1) all auxiliary
+		 * vars (like dirs_removed) were NULL so
+		 * initialize_dir_rename_info() returned early, or (2)
+		 * either break detection or copy detection are active so
+		 * that we never called initialize_dir_rename_info().  In
+		 * the former case, we don't have enough info to know if
+		 * directories were renamed (because dirs_removed lets us
+		 * know about a necessary prerequisite, namely if they were
+		 * removed), and in the latter, we don't care about
+		 * directory renames or find_basename_matches.
+		 *
+		 * This matters because both basename and inexact matching
+		 * will also call update_dir_rename_counts().  In either of
+		 * the above two cases info->dir_rename_counts will not
+		 * have been properly initialized which prevents us from
+		 * updating it, but in these two cases we don't care about
+		 * dir_rename_counts anyway, so we can just exit early.
+		 */
+		return;
+
 	while (1) {
 		dirname_munge(old_dir);
 		dirname_munge(new_dir);
@@ -479,45 +501,29 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 	free(new_dir);
 }
 
-static void compute_dir_rename_counts(struct dir_rename_info *info,
-				      struct strset *dirs_removed,
-				      struct strmap *dir_rename_count)
+static void initialize_dir_rename_info(struct dir_rename_info *info,
+				       struct strset *dirs_removed,
+				       struct strmap *dir_rename_count)
 {
 	int i;
 
-	info->setup = 1;
-	info->dir_rename_count = dir_rename_count;
-
-	for (i = 0; i < rename_dst_nr; ++i) {
-		/* File not part of directory rename counts if not a rename */
-		if (!rename_dst[i].is_rename)
-			continue;
-
-		/*
-		 * Make dir_rename_count contain a map of a map:
-		 *   old_directory -> {new_directory -> count}
-		 * In other words, for every pair look at the directories for
-		 * the old filename and the new filename and count how many
-		 * times that pairing occurs.
-		 */
-		update_dir_rename_counts(info, dirs_removed,
-					 rename_dst[i].p->one->path,
-					 rename_dst[i].p->two->path);
+	if (!dirs_removed) {
+		info->setup = 0;
+		return;
 	}
-}
-
-static void initialize_dir_rename_info(struct dir_rename_info *info)
-{
-	int i;
-
 	info->setup = 1;
 
+	info->dir_rename_count = dir_rename_count;
+	if (!info->dir_rename_count) {
+		info->dir_rename_count = xmalloc(sizeof(*dir_rename_count));
+		strmap_init(info->dir_rename_count);
+	}
 	strintmap_init_with_options(&info->idx_map, -1, NULL, 0);
 	strmap_init_with_options(&info->dir_rename_guess, NULL, 0);
-	info->dir_rename_count = NULL;
 
 	/*
-	 * Loop setting up both info->idx_map.
+	 * Loop setting up both info->idx_map, and doing setup of
+	 * info->dir_rename_count.
 	 */
 	for (i = 0; i < rename_dst_nr; ++i) {
 		/*
@@ -527,7 +533,20 @@ static void initialize_dir_rename_info(struct dir_rename_info *info)
 		if (!rename_dst[i].is_rename) {
 			char *filename = rename_dst[i].p->two->path;
 			strintmap_set(&info->idx_map, filename, i);
+			continue;
 		}
+
+		/*
+		 * For everything else (i.e. renamed files), make
+		 * dir_rename_count contain a map of a map:
+		 *   old_directory -> {new_directory -> count}
+		 * In other words, for every pair look at the directories for
+		 * the old filename and the new filename and count how many
+		 * times that pairing occurs.
+		 */
+		update_dir_rename_counts(info, dirs_removed,
+					 rename_dst[i].p->one->path,
+					 rename_dst[i].p->two->path);
 	}
 }
 
@@ -682,7 +701,8 @@ static int idx_possible_rename(char *filename, struct dir_rename_info *info)
 
 static int find_basename_matches(struct diff_options *options,
 				 int minimum_score,
-				 struct dir_rename_info *info)
+				 struct dir_rename_info *info,
+				 struct strset *dirs_removed)
 {
 	/*
 	 * When I checked in early 2020, over 76% of file renames in linux
@@ -810,6 +830,8 @@ static int find_basename_matches(struct diff_options *options,
 				continue;
 			record_rename_pair(dst_index, src_index, score);
 			renames++;
+			update_dir_rename_counts(info, dirs_removed,
+						 one->path, two->path);
 
 			/*
 			 * Found a rename so don't need text anymore; if we
@@ -893,7 +915,12 @@ static int too_many_rename_candidates(int num_destinations, int num_sources,
 	return 1;
 }
 
-static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, int copies)
+static int find_renames(struct diff_score *mx,
+			int dst_cnt,
+			int minimum_score,
+			int copies,
+			struct dir_rename_info *info,
+			struct strset *dirs_removed)
 {
 	int count = 0, i;
 
@@ -910,6 +937,9 @@ static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, i
 			continue;
 		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
 		count++;
+		update_dir_rename_counts(info, dirs_removed,
+					 rename_src[mx[i].src].p->one->path,
+					 rename_dst[mx[i].dst].p->two->path);
 	}
 	return count;
 }
@@ -981,6 +1011,8 @@ void diffcore_rename_extended(struct diff_options *options,
 	info.setup = 0;
 	assert(!dir_rename_count || strmap_empty(dir_rename_count));
 	want_copies = (detect_rename == DIFF_DETECT_COPY);
+	if (dirs_removed && (break_idx || want_copies))
+		BUG("dirs_removed incompatible with break/copy detection");
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
 
@@ -1074,14 +1106,15 @@ void diffcore_rename_extended(struct diff_options *options,
 
 		/* Preparation for basename-driven matching. */
 		trace2_region_enter("diff", "dir rename setup", options->repo);
-		initialize_dir_rename_info(&info);
+		initialize_dir_rename_info(&info,
+					   dirs_removed, dir_rename_count);
 		trace2_region_leave("diff", "dir rename setup", options->repo);
 
 		/* Utilize file basenames to quickly find renames. */
 		trace2_region_enter("diff", "basename matches", options->repo);
 		rename_count += find_basename_matches(options,
 						      min_basename_score,
-						      &info);
+						      &info, dirs_removed);
 		trace2_region_leave("diff", "basename matches", options->repo);
 
 		/*
@@ -1167,18 +1200,15 @@ void diffcore_rename_extended(struct diff_options *options,
 	/* cost matrix sorted by most to least similar pair */
 	STABLE_QSORT(mx, dst_cnt * NUM_CANDIDATE_PER_DST, score_compare);
 
-	rename_count += find_renames(mx, dst_cnt, minimum_score, 0);
+	rename_count += find_renames(mx, dst_cnt, minimum_score, 0,
+				     &info, dirs_removed);
 	if (want_copies)
-		rename_count += find_renames(mx, dst_cnt, minimum_score, 1);
+		rename_count += find_renames(mx, dst_cnt, minimum_score, 1,
+					     &info, dirs_removed);
 	free(mx);
 	trace2_region_leave("diff", "inexact renames", options->repo);
 
  cleanup:
-	/*
-	 * Now that renames have been computed, compute dir_rename_count */
-	if (dirs_removed && dir_rename_count)
-		compute_dir_rename_counts(&info, dirs_removed, dir_rename_count);
-
 	/* At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
