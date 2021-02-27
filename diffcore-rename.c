@@ -379,6 +379,12 @@ static const char *get_basename(const char *filename)
 	return base ? base + 1 : filename;
 }
 
+static int idx_possible_rename(char *filename)
+{
+	/* Unconditionally return -1, "not found", for now */
+	return -1;
+}
+
 static int find_basename_matches(struct diff_options *options,
 				 int minimum_score)
 {
@@ -415,8 +421,6 @@ static int find_basename_matches(struct diff_options *options,
 	int i, renames = 0;
 	struct strintmap sources;
 	struct strintmap dests;
-	struct hashmap_iter iter;
-	struct strmap_entry *entry;
 
 	/*
 	 * The prefeteching stuff wants to know if it can skip prefetching
@@ -466,16 +470,38 @@ static int find_basename_matches(struct diff_options *options,
 	}
 
 	/* Now look for basename matchups and do similarity estimation */
-	strintmap_for_each_entry(&sources, &iter, entry) {
-		const char *base = entry->key;
-		intptr_t src_index = (intptr_t)entry->value;
+	for (i = 0; i < rename_src_nr; ++i) {
+		char *filename = rename_src[i].p->one->path;
+		const char *base = NULL;
+		intptr_t src_index;
 		intptr_t dst_index;
-		if (src_index == -1)
-			continue;
 
-		if (0 <= (dst_index = strintmap_get(&dests, base))) {
+		/*
+		 * If the basename is unique among remaining sources, then
+		 * src_index will equal 'i' and we can attempt to match it
+		 * to a unique basename in the destinations.  Otherwise,
+		 * use directory rename heuristics, if possible.
+		 */
+		base = get_basename(filename);
+		src_index = strintmap_get(&sources, base);
+		assert(src_index == -1 || src_index == i);
+
+		if (strintmap_contains(&dests, base)) {
 			struct diff_filespec *one, *two;
 			int score;
+
+			/* Find a matching destination, if possible */
+			dst_index = strintmap_get(&dests, base);
+			if (src_index == -1 || dst_index == -1) {
+				src_index = i;
+				dst_index = idx_possible_rename(filename);
+			}
+			if (dst_index == -1)
+				continue;
+
+			/* Ignore this dest if already used in a rename */
+			if (rename_dst[dst_index].is_rename)
+				continue; /* already used previously */
 
 			/* Estimate the similarity */
 			one = rename_src[src_index].p->one;
