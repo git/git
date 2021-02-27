@@ -371,6 +371,7 @@ struct dir_rename_info {
 	struct strintmap idx_map;
 	struct strmap dir_rename_guess;
 	struct strmap *dir_rename_count;
+	struct strset *relevant_source_dirs;
 	unsigned setup;
 };
 
@@ -442,7 +443,13 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 		return;
 
 	while (1) {
+		/* Get old_dir, skip if its directory isn't relevant. */
 		dirname_munge(old_dir);
+		if (info->relevant_source_dirs &&
+		    !strset_contains(info->relevant_source_dirs, old_dir))
+			break;
+
+		/* Get new_dir */
 		dirname_munge(new_dir);
 
 		/*
@@ -520,6 +527,9 @@ static void initialize_dir_rename_info(struct dir_rename_info *info,
 	}
 	strintmap_init_with_options(&info->idx_map, -1, NULL, 0);
 	strmap_init_with_options(&info->dir_rename_guess, NULL, 0);
+
+	/* Setup info->relevant_source_dirs */
+	info->relevant_source_dirs = dirs_removed;
 
 	/*
 	 * Loop setting up both info->idx_map, and doing setup of
