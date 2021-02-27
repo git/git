@@ -380,6 +380,129 @@ static char *get_dirname(const char *filename)
 	return slash ? xstrndup(filename, slash - filename) : xstrdup("");
 }
 
+static void dirname_munge(char *filename)
+{
+	char *slash = strrchr(filename, '/');
+	if (!slash)
+		slash = filename;
+	*slash = '\0';
+}
+
+static void increment_count(struct strmap *dir_rename_count,
+			    char *old_dir,
+			    char *new_dir)
+{
+	struct strintmap *counts;
+	struct strmap_entry *e;
+
+	/* Get the {new_dirs -> counts} mapping using old_dir */
+	e = strmap_get_entry(dir_rename_count, old_dir);
+	if (e) {
+		counts = e->value;
+	} else {
+		counts = xmalloc(sizeof(*counts));
+		strintmap_init_with_options(counts, 0, NULL, 1);
+		strmap_put(dir_rename_count, old_dir, counts);
+	}
+
+	/* Increment the count for new_dir */
+	strintmap_incr(counts, new_dir, 1);
+}
+
+static void update_dir_rename_counts(struct strmap *dir_rename_count,
+				     struct strset *dirs_removed,
+				     const char *oldname,
+				     const char *newname)
+{
+	char *old_dir = xstrdup(oldname);
+	char *new_dir = xstrdup(newname);
+	char new_dir_first_char = new_dir[0];
+	int first_time_in_loop = 1;
+
+	while (1) {
+		dirname_munge(old_dir);
+		dirname_munge(new_dir);
+
+		/*
+		 * When renaming
+		 *   "a/b/c/d/e/foo.c" -> "a/b/some/thing/else/e/foo.c"
+		 * then this suggests that both
+		 *   a/b/c/d/e/ => a/b/some/thing/else/e/
+		 *   a/b/c/d/   => a/b/some/thing/else/
+		 * so we want to increment counters for both.  We do NOT,
+		 * however, also want to suggest that there was the following
+		 * rename:
+		 *   a/b/c/ => a/b/some/thing/
+		 * so we need to quit at that point.
+		 *
+		 * Note the when first_time_in_loop, we only strip off the
+		 * basename, and we don't care if that's different.
+		 */
+		if (!first_time_in_loop) {
+			char *old_sub_dir = strchr(old_dir, '\0')+1;
+			char *new_sub_dir = strchr(new_dir, '\0')+1;
+			if (!*new_dir) {
+				/*
+				 * Special case when renaming to root directory,
+				 * i.e. when new_dir == "".  In this case, we had
+				 * something like
+				 *    a/b/subdir => subdir
+				 * and so dirname_munge() sets things up so that
+				 *    old_dir = "a/b\0subdir\0"
+				 *    new_dir = "\0ubdir\0"
+				 * We didn't have a '/' to overwrite a '\0' onto
+				 * in new_dir, so we have to compare differently.
+				 */
+				if (new_dir_first_char != old_sub_dir[0] ||
+				    strcmp(old_sub_dir+1, new_sub_dir))
+					break;
+			} else {
+				if (strcmp(old_sub_dir, new_sub_dir))
+					break;
+			}
+		}
+
+		if (strset_contains(dirs_removed, old_dir))
+			increment_count(dir_rename_count, old_dir, new_dir);
+		else
+			break;
+
+		/* If we hit toplevel directory ("") for old or new dir, quit */
+		if (!*old_dir || !*new_dir)
+			break;
+
+		first_time_in_loop = 0;
+	}
+
+	/* Free resources we don't need anymore */
+	free(old_dir);
+	free(new_dir);
+}
+
+static void compute_dir_rename_counts(struct strmap *dir_rename_count,
+				      struct strset *dirs_removed)
+{
+	int i;
+
+	/* Set up dir_rename_count */
+	for (i = 0; i < rename_dst_nr; ++i) {
+		/* File not part of directory rename counts if not a rename */
+		if (!rename_dst[i].is_rename)
+			continue;
+
+		/*
+		 * Make dir_rename_count contain a map of a map:
+		 *   old_directory -> {new_directory -> count}
+		 * In other words, for every pair look at the directories for
+		 * the old filename and the new filename and count how many
+		 * times that pairing occurs.
+		 */
+		update_dir_rename_counts(dir_rename_count, dirs_removed,
+					 rename_dst[i].p->one->path,
+					 rename_dst[i].p->two->path);
+	}
+}
+
 static void initialize_dir_rename_info(struct dir_rename_info *info)
 {
 	int i;
@@ -790,7 +913,9 @@ static void remove_unneeded_paths_from_src(int detecting_copies)
 	rename_src_nr = new_num_src;
 }
 
-void diffcore_rename(struct diff_options *options)
+void diffcore_rename_extended(struct diff_options *options,
+			      struct strset *dirs_removed,
+			      struct strmap *dir_rename_count)
 {
 	int detect_rename = options->detect_rename;
 	int minimum_score = options->rename_score;
@@ -805,6 +930,7 @@ void diffcore_rename(struct diff_options *options)
 
 	trace2_region_enter("diff", "setup", options->repo);
 	info.setup = 0;
+	assert(!dir_rename_count || strmap_empty(dir_rename_count));
 	want_copies = (detect_rename == DIFF_DETECT_COPY);
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
@@ -999,6 +1125,11 @@ void diffcore_rename(struct diff_options *options)
 	trace2_region_leave("diff", "inexact renames", options->repo);
 
  cleanup:
+	/*
+	 * Now that renames have been computed, compute dir_rename_count */
+	if (dirs_removed && dir_rename_count)
+		compute_dir_rename_counts(dir_rename_count, dirs_removed);
+
 	/* At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
@@ -1081,4 +1212,9 @@ void diffcore_rename(struct diff_options *options)
 	}
 	trace2_region_leave("diff", "write back to queue", options->repo);
 	return;
+}
+
+void diffcore_rename(struct diff_options *options)
+{
+	diffcore_rename_extended(options, NULL, NULL);
 }
