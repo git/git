@@ -5,6 +5,7 @@
 #include "pathspec.h"
 
 struct repository;
+struct pretty_print_context;
 
 struct archiver_args {
 	struct repository *repo;
@@ -22,6 +23,7 @@ struct archiver_args {
 	unsigned int convert : 1;
 	int compression_level;
 	struct string_list extra_files;
+	struct pretty_print_context *pretty_ctx;
 };
 
 /* main api */

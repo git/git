@@ -1247,6 +1247,14 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		struct child_process cmd = CHILD_PROCESS_INIT;
 		struct strbuf out = STRBUF_INIT;
 		struct strbuf err = STRBUF_INIT;
+		struct pretty_print_describe_status *describe_status;
+
+		describe_status = c->pretty_ctx->describe_status;
+		if (describe_status) {
+			if (!describe_status->max_invocations)
+				return 0;
+			describe_status->max_invocations--;
+		}
 
 		cmd.git_cmd = 1;
 		strvec_push(&cmd.args, "describe");
