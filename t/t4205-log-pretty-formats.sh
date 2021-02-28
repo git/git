@@ -965,8 +965,17 @@ test_expect_success 'log --pretty=reference is colored appropriately' '
 test_expect_success '%(describe) vs git describe' '
 	git log --format="%H" | while read hash
 	do
-		echo "$hash $(git describe $hash)"
+		if desc=$(git describe $hash)
+		then
+			: >expect-contains-good
+		else
+			: >expect-contains-bad
+		fi &&
+		echo "$hash $desc"
 	done >expect &&
+	test_path_exists expect-contains-good &&
+	test_path_exists expect-contains-bad &&
+
 	git log --format="%H %(describe)" >actual 2>err &&
 	test_cmp expect actual &&
 	test_must_be_empty err
