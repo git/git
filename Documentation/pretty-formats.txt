@@ -212,7 +212,9 @@ The placeholders are:
 			  linkgit:git-describe[1]; empty string for
 			  undescribable commits.  The `describe` string
 			  may be followed by a colon and zero or more
-			  comma-separated options.
+			  comma-separated options.  Descriptions can be
+			  inconsistent when tags are added or removed at
+			  the same time.
 +
 ** 'match=<pattern>': Only consider tags matching the given
    `glob(7)` pattern, excluding the "refs/tags/" prefix.
