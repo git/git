@@ -473,7 +473,8 @@ reference-transaction
 
 This hook is invoked by any Git command that performs reference
 updates. It executes whenever a reference transaction is prepared,
-committed or aborted and may thus get called multiple times.
+committed or aborted and may thus get called multiple times. The hook
+does not cover symbolic references (but that may change in the future).
 
 The hook takes exactly one argument, which is the current state the
 given reference transaction is in:
@@ -491,6 +492,14 @@ For each reference update that was added to the transaction, the hook
 receives on standard input a line of the format:
 
   <old-value> SP <new-value> SP <ref-name> LF
+
+where `<old-value>` is the old object name passed into the reference
+transaction, `<new-value>` is the new object name to be stored in the
+ref and `<ref-name>` is the full name of the ref. When force updating
+the reference regardless of its current value or when the reference is
+to be created anew, `<old-value>` is the all-zeroes object name. To
+distinguish these cases, you can inspect the current value of
+`<ref-name>` via `git rev-parse`.
 
 The exit status of the hook is ignored for any state except for the
 "prepared" state. In the "prepared" state, a non-zero exit status will
