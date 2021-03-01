@@ -197,6 +197,31 @@ Performance, Internal Implementation, Development Support etc.
  * The code to implement "git merge-base --independent" was poorly
    done and was kept from the very beginning of the feature.
 
+ * Preliminary changes to fsmonitor integration.
+
+ * Performance optimization work on the rename detection continues.
+
+ * The common code to deal with "chunked file format" that is shared
+   by the multi-pack-index and commit-graph files have been factored
+   out, to help codepaths for both filetypes to become more robust.
+
+ * The approach to "fsck" the incoming objects in "index-pack" is
+   attractive for performance reasons (we have them already in core,
+   inflated and ready to be inspected), but fundamentally cannot be
+   applied fully when we receive more than one pack stream, as a tree
+   object in one pack may refer to a blob object in another pack as
+   ".gitmodules", when we want to inspect blobs that are used as
+   ".gitmodules" file, for example.  Teach "index-pack" to emit
+   objects that must be inspected later and check them in the calling
+   "fetch-pack" process.
+
+ * The logic to handle "trailer" related placeholders in the
+   "--format=" mechanisms in the "log" family and "for-each-ref"
+   family is getting unified.
+
+ * Raise the buffer size used when writing the index file out from
+   (obviously too small) 8kB to (clearly sufficiently large) 128kB.
+
 
 Fixes since v2.30
 -----------------
@@ -317,6 +342,12 @@ Fixes since v2.30
    error, but instead turned into a matching push, which has been
    corrected.
    (merge 20e416409f jc/push-delete-nothing later to maint).
+
+ * Test script modernization.
+   (merge 488acf15df sv/t7001-modernize later to maint).
+
+ * An under-allocation for the untracked cache data has been corrected.
+   (merge 6347d649bc jh/untracked-cache-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e3f5da7e60 sg/t7800-difftool-robustify later to maint).
