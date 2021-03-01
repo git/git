@@ -163,6 +163,8 @@ test_expect_success 'setup' '
 	.gitignore
 	expect*
 	actual*
+	flush*
+	trace*
 	EOF
 
 	git -c core.useBuiltinFSMonitor= add . &&
@@ -481,5 +483,100 @@ test_expect_success 'worktree with .git file' '
 	git -C wt-secondary fsmonitor--daemon --stop &&
 	test_must_fail git -C wt-secondary fsmonitor--daemon --is-running
 '
+
+# TODO Repeat one of the "edit" tests on wt-secondary and confirm that
+# TODO we get the same events and behavior -- that is, that fsmonitor--daemon
+# TODO correctly listens to events on both the working directory and to the
+# TODO referenced GITDIR.
+
+test_expect_success 'cleanup worktrees' '
+	kill_repo wt-secondary &&
+	kill_repo wt-base
+'
+
+# The next few tests perform arbitrary/contrived file operations and
+# confirm that status is correct.  That is, that the data (or lack of
+# data) from fsmonitor doesn't cause incorrect results.  And doesn't
+# cause incorrect results when the untracked-cache is enabled.
+
+test_lazy_prereq UNTRACKED_CACHE '
+	{ git update-index --test-untracked-cache; ret=$?; } &&
+	test $ret -ne 1
+'
+
+test_expect_success 'Matrix: setup for untracked-cache,fsmonitor matrix' '
+	test_might_fail git config --unset core.useBuiltinFSMonitor &&
+	git update-index --no-fsmonitor &&
+	test_might_fail git fsmonitor--daemon --stop
+'
+
+matrix_clean_up_repo () {
+	git reset --hard HEAD
+	git clean -fd
+}
+
+matrix_try () {
+	uc=$1
+	fsm=$2
+	fn=$3
+
+	test_expect_success "Matrix[uc:$uc][fsm:$fsm] $fn" '
+		matrix_clean_up_repo &&
+		$fn &&
+		if test $uc = false -a $fsm = false
+		then
+			git status --porcelain=v1 >.git/expect.$fn
+		else
+			git status --porcelain=v1 >.git/actual.$fn
+			test_cmp .git/expect.$fn .git/actual.$fn
+		fi
+	'
+
+	return $?
+}
+
+uc_values="false"
+test_have_prereq UNTRACKED_CACHE && uc_values="false true"
+for uc_val in $uc_values
+do
+	if test $uc_val = false
+	then
+		test_expect_success "Matrix[uc:$uc_val] disable untracked cache" '
+			git config core.untrackedcache false &&
+			git update-index --no-untracked-cache
+		'
+	else
+		test_expect_success "Matrix[uc:$uc_val] enable untracked cache" '
+			git config core.untrackedcache true &&
+			git update-index --untracked-cache
+		'
+	fi
+
+	fsm_values="false true"
+	for fsm_val in $fsm_values
+	do
+		if test $fsm_val = false
+		then
+			test_expect_success "Matrix[uc:$uc_val][fsm:$fsm_val] disable fsmonitor" '
+				test_might_fail git config --unset core.useBuiltinFSMonitor &&
+				git update-index --no-fsmonitor &&
+				test_might_fail git fsmonitor--daemon --stop 2>/dev/null
+			'
+		else
+			test_expect_success "Matrix[uc:$uc_val][fsm:$fsm_val] enable fsmonitor" '
+				git config core.useBuiltinFSMonitor true &&
+				git fsmonitor--daemon --start &&
+				git update-index --fsmonitor
+			'
+		fi
+
+		matrix_try $uc_val $fsm_val edit_files
+		matrix_try $uc_val $fsm_val delete_files
+		matrix_try $uc_val $fsm_val create_files
+		matrix_try $uc_val $fsm_val rename_files
+		matrix_try $uc_val $fsm_val file_to_directory
+		matrix_try $uc_val $fsm_val directory_to_file
+	done
+done
 
 test_done
