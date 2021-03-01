@@ -1,3 +1,9 @@
+commitGraph.generationVersion::
+	Specifies the type of generation number version to use when writing
+	or reading the commit-graph file. If version 1 is specified, then
+	the corrected commit dates will not be written or read. Defaults to
+	2.
+
 commitGraph.maxNewFilters::
 	Specifies the default value for the `--max-new-filters` option of `git
 	commit-graph write` (c.f., linkgit:git-commit-graph[1]).
