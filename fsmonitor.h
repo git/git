@@ -45,6 +45,11 @@ void tweak_fsmonitor(struct index_state *istate);
 void refresh_fsmonitor(struct index_state *istate);
 
 /*
+ * Does the received result contain the "trivial" response?
+ */
+int fsmonitor_is_trivial_response(const struct strbuf *query_result);
+
+/*
  * Set the given cache entries CE_FSMONITOR_VALID bit. This should be
  * called any time the cache entry has been updated to reflect the
  * current state of the file on disk.
