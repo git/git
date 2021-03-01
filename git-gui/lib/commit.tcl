@@ -141,6 +141,20 @@ proc setup_commit_encoding {msg_wt {quiet 0}} {
 	}
 }
 
+proc strip_msg {msg} {
+	set cmd [concat [list | ] [_git_cmd stripspace] --strip-comments]
+	_trace_exec $cmd
+	set fd [open $cmd r+]
+	fconfigure $fd -translation binary -encoding utf-8
+
+	puts -nonewline $fd $msg
+	close $fd w
+	set result [read $fd]
+	close $fd
+
+	return $result
+}
+
 proc commit_tree {} {
 	global HEAD commit_type file_states ui_comm repo_config
 	global pch_error
@@ -207,8 +221,8 @@ You must stage at least 1 file before you can commit.
 
 	# -- A message is required.
 	#
-	set msg [string trim [$ui_comm get 1.0 end]]
-	regsub -all -line {[ \t\r]+$} $msg {} msg
+	set msg [strip_msg [$ui_comm get 1.0 end]]
+
 	if {$msg eq {}} {
 		error_popup [mc "Please supply a commit message.
 
