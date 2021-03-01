@@ -97,6 +97,7 @@ test_expect_success 'by default no tags will be kept updated' '
 test_expect_success 'clone with --no-tags' '
 	(
 		cd dir_all_no_tags &&
+		grep tagOpt .git/config &&
 		git fetch &&
 		git for-each-ref refs/tags >../actual
 	) &&
