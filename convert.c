@@ -883,10 +883,15 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 	if (err)
 		goto done;
 
-	if (fd >= 0)
-		err = write_packetized_from_fd(fd, process->in);
-	else
-		err = write_packetized_from_buf(src, len, process->in);
+	if (fd >= 0) {
+		struct packet_scratch_space scratch;
+		err = write_packetized_from_fd_no_flush(fd, process->in, &scratch);
+	} else
+		err = write_packetized_from_buf_no_flush(src, len, process->in);
+	if (err)
+		goto done;
+
+	err = packet_flush_gently(process->in);
 	if (err)
 		goto done;
 
@@ -903,7 +908,8 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 		if (err)
 			goto done;
 
-		err = read_packetized_to_strbuf(process->out, &nbuf) < 0;
+		err = read_packetized_to_strbuf(process->out, &nbuf,
+						PACKET_READ_GENTLE_ON_EOF) < 0;
 		if (err)
 			goto done;
 
