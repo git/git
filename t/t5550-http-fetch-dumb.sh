@@ -227,7 +227,10 @@ test_expect_success 'http-fetch --packfile' '
 
 	git init packfileclient &&
 	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git && ls objects/pack/pack-*.pack) &&
-	git -C packfileclient http-fetch --packfile=$ARBITRARY "$HTTPD_URL"/dumb/repo_pack.git/$p >out &&
+	git -C packfileclient http-fetch --packfile=$ARBITRARY \
+		--index-pack-arg=index-pack --index-pack-arg=--stdin \
+		--index-pack-arg=--keep \
+		"$HTTPD_URL"/dumb/repo_pack.git/$p >out &&
 
 	grep "^keep.[0-9a-f]\{16,\}$" out &&
 	cut -c6- out >packhash &&
