@@ -169,6 +169,26 @@ a similarity score different from the default of 50% by giving a
 number after the "-M" or "-C" option (e.g. "-M8" to tell it to use
 8/10 = 80%).
 
+Note that when rename detection is on but both copy and break
+detection are off, rename detection adds a preliminary step that first
+checks if files are moved across directories while keeping their
+filename the same.  If there is a file added to a directory whose
+contents is sufficiently similar to a file with the same name that got
+deleted from a different directory, it will mark them as renames and
+exclude them from the later quadratic step (the one that pairwise
+compares all unmatched files to find the "best" matches, determined by
+the highest content similarity).  So, for example, if a deleted
+docs/ext.txt and an added docs/config/ext.txt are similar enough, they
+will be marked as a rename and prevent an added docs/ext.md that may
+be even more similar to the deleted docs/ext.txt from being considered
+as the rename destination in the later step.  For this reason, the
+preliminary "match same filename" step uses a bit higher threshold to
+mark a file pair as a rename and stop considering other candidates for
+better matches.  At most, one comparison is done per file in this
+preliminary pass; so if there are several remaining ext.txt files
+throughout the directory hierarchy after exact rename detection, this
+preliminary step will be skipped for those files.
+
 Note.  When the "-C" option is used with `--find-copies-harder`
 option, 'git diff-{asterisk}' commands feed unmodified filepairs to
 diffcore mechanism as well as modified ones.  This lets the copy
