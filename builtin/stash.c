@@ -768,6 +768,7 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 
 static int show_stat = 1;
 static int show_patch;
+static int show_include_untracked;
 static int use_legacy_stash;
 
 static int git_stash_config(const char *var, const char *value, void *cb)
@@ -778,6 +779,10 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "stash.showpatch")) {
 		show_patch = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "stash.showincludeuntracked")) {
+		show_include_untracked = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "stash.usebuiltin")) {
@@ -868,6 +873,9 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 
 		if (show_patch)
 			rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
+
+		if (show_include_untracked)
+			show_untracked = UNTRACKED_INCLUDE;
 
 		if (!show_stat && !show_patch) {
 			free_stash_info(&info);
