@@ -153,7 +153,7 @@ EXAMPLES
 --------
 
  - The pattern `hello.*` matches any file or folder
-   whose name begins with `hello`. If one wants to restrict
+   whose name begins with `hello.`. If one wants to restrict
    this only to the directory and not in its subdirectories,
    one can prepend the pattern with a slash, i.e. `/hello.*`;
    the pattern now matches `hello.txt`, `hello.c` but not
