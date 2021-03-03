@@ -449,13 +449,14 @@ static const char *dwim_branch(const char *path, const char **new_branch)
 	const char *s = worktree_basename(path, &n);
 	const char *branchname = xstrndup(s, n);
 	struct strbuf ref = STRBUF_INIT;
+	int branch_exists;
 
+	branch_exists = (!strbuf_check_branch_ref(&ref, branchname) &&
+			 ref_exists(ref.buf));
+	strbuf_release(&ref);
 	UNLEAK(branchname);
-	if (!strbuf_check_branch_ref(&ref, branchname) &&
-	    ref_exists(ref.buf)) {
-		strbuf_release(&ref);
+	if (branch_exists)
 		return branchname;
-	}
 
 	*new_branch = branchname;
 	if (guess_remote) {
