@@ -625,6 +625,8 @@ static int show_gitcomp(const struct option *opts, int show_all)
  *
  * Right now this is only used to preprocess and substitute
  * OPTION_ALIAS.
+ *
+ * The returned options should be freed using free_preprocessed_options.
  */
 static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 					 const struct option *options)
@@ -691,6 +693,21 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 	}
 
 	return newopt;
+}
+
+static void free_preprocessed_options(const struct option ** preprocessed_options, const struct option *original_options)
+{
+	int i;
+
+	if (!*preprocessed_options) {
+		return;
+	}
+	for (i = 0; original_options[i].type != OPTION_END; i++) {
+		if (original_options[i].type == OPTION_ALIAS) {
+			free((void *)(*preprocessed_options)[i].help);
+		}
+	}
+	free((void *)*preprocessed_options);
 }
 
 static int usage_with_options_internal(struct parse_opt_ctx_t *,
@@ -838,15 +855,17 @@ int parse_options(int argc, const char **argv, const char *prefix,
 		  int flags)
 {
 	struct parse_opt_ctx_t ctx;
-	struct option *real_options;
+	const struct option *preprocessed_options, *original_options = NULL;
 
 	disallow_abbreviated_options =
 		git_env_bool("GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS", 0);
 
 	memset(&ctx, 0, sizeof(ctx));
-	real_options = preprocess_options(&ctx, options);
-	if (real_options)
-		options = real_options;
+	preprocessed_options = preprocess_options(&ctx, options);
+	if (preprocessed_options) {
+		original_options = options;
+		options = preprocessed_options;
+	}
 	parse_options_start_1(&ctx, argc, argv, prefix, options, flags);
 	switch (parse_options_step(&ctx, options, usagestr)) {
 	case PARSE_OPT_HELP:
@@ -870,7 +889,7 @@ int parse_options(int argc, const char **argv, const char *prefix,
 	}
 
 	precompose_argv_prefix(argc, argv, NULL);
-	free(real_options);
+	free_preprocessed_options(&preprocessed_options, original_options);
 	free(ctx.alias_groups);
 	return parse_options_end(&ctx);
 }
