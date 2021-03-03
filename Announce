@@ -140,6 +140,10 @@ then
 	Thanks for your continued support.
 
 	$(fmt_people "$tmpbase.old")
+
+	[*] We are counting not just the authorship contribution but
+	    issue reporting, testing and reviewing that are recorded
+	    in the commit trailers.
 	EOF
 fi
 
