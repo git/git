@@ -425,7 +425,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 			dwim_ref(rev, strlen(rev), &dummy, &ref, 0);
 			if (ref && !starts_with(ref, "refs/"))
-				ref = NULL;
+				FREE_AND_NULL(ref);
 
 			err = reset_index(ref, &oid, reset_type, quiet);
 			if (reset_type == KEEP && !err)
