@@ -416,6 +416,13 @@ jobs:
         with:
           name: arm64-artifacts
           path: ${{github.workspace}}/arm64
+      # Workaround for Git Credential Manager Core on ARM64: https://github.com/git-for-windows/git/issues/3015
+      - name: Create git-credential-manager-core wrapper for ARM64
+        if: env.SKIP != 'true' && matrix.arch.arm64 == true
+        shell: bash
+        run: |
+          printf '%s\n' '#!/bin/sh' 'exec /mingw32/libexec/git-core/git-credential-manager-core.exe "$@"' > arm64/libexec/git-core/git-credential-manager-core
+          chmod +x arm64/libexec/git-core/git-credential-manager-core
       - name: Clone and update build-extra
         if: env.SKIP != 'true'
         shell: bash
