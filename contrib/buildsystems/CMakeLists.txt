@@ -200,8 +200,6 @@ list(APPEND compat_SOURCES sha1dc_git.c sha1dc/sha1.c sha1dc/ubc_check.c block-s
 
 
 add_compile_definitions(PAGER_ENV="LESS=FRX LV=-c"
-			ETC_GITATTRIBUTES="etc/gitattributes"
-			ETC_GITCONFIG="etc/gitconfig"
 			GIT_EXEC_PATH="libexec/git-core"
 			GIT_LOCALE_PATH="share/locale"
 			GIT_MAN_PATH="share/man"
@@ -216,10 +214,15 @@ add_compile_definitions(PAGER_ENV="LESS=FRX LV=-c"
 
 if(WIN32)
 	set(FALLBACK_RUNTIME_PREFIX /mingw64)
-	add_compile_definitions(FALLBACK_RUNTIME_PREFIX="${FALLBACK_RUNTIME_PREFIX}")
+	# Move system config into top-level /etc/
+	add_compile_definitions(FALLBACK_RUNTIME_PREFIX="${FALLBACK_RUNTIME_PREFIX}"
+		ETC_GITATTRIBUTES="../etc/gitattributes"
+		ETC_GITCONFIG="../etc/gitconfig")
 else()
 	set(FALLBACK_RUNTIME_PREFIX /home/$ENV{USER})
-	add_compile_definitions(FALLBACK_RUNTIME_PREFIX="${FALLBACK_RUNTIME_PREFIX}")
+	add_compile_definitions(FALLBACK_RUNTIME_PREFIX="${FALLBACK_RUNTIME_PREFIX}"
+		ETC_GITATTRIBUTES="etc/gitattributes"
+		ETC_GITCONFIG="etc/gitconfig")
 endif()
 
 
