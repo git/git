@@ -24,9 +24,15 @@ static int check_symref(const char *HEAD, int quiet, int shorten, int print)
 			return 1;
 	}
 	if (print) {
-		if (shorten)
-			refname = shorten_unambiguous_ref(refname, 0);
-		puts(refname);
+		if (shorten) {
+			const char *shortened_refname;
+
+			shortened_refname = shorten_unambiguous_ref(refname, 0);
+			puts(shortened_refname);
+			free((void *)shortened_refname);
+		} else {
+			puts(refname);
+		}
 	}
 	return 0;
 }
