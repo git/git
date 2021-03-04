@@ -76,8 +76,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2021-02-26 22:09+0800\n"
-"PO-Revision-Date: 2021-02-27 15:40+0100\n"
+"POT-Creation-Date: 2021-03-04 22:41+0800\n"
+"PO-Revision-Date: 2021-03-04 21:45+0100\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -1182,7 +1182,7 @@ msgstr "le patch a échoué : %s:%ld"
 msgid "cannot checkout %s"
 msgstr "extraction de %s impossible"
 
-#: apply.c:3405 apply.c:3416 apply.c:3462 midx.c:73 pack-revindex.c:213
+#: apply.c:3405 apply.c:3416 apply.c:3462 midx.c:86 pack-revindex.c:213
 #: setup.c:308
 #, c-format
 msgid "failed to read %s"
@@ -1927,7 +1927,7 @@ msgstr ""
 "--reverse et --first-parent ensemble nécessitent la spécification d'un "
 "dernier commit"
 
-#: blame.c:2821 bundle.c:213 ref-filter.c:2202 remote.c:2041 sequencer.c:2146
+#: blame.c:2821 bundle.c:213 ref-filter.c:2206 remote.c:2041 sequencer.c:2146
 #: sequencer.c:4641 submodule.c:856 builtin/commit.c:1045 builtin/log.c:411
 #: builtin/log.c:1016 builtin/log.c:1624 builtin/log.c:2045 builtin/log.c:2335
 #: builtin/merge.c:424 builtin/pack-objects.c:3395 builtin/pack-objects.c:3410
@@ -2197,274 +2197,273 @@ msgstr "impossible de créer '%s'"
 msgid "index-pack died"
 msgstr "l'index de groupe a disparu"
 
+#: chunk-format.c:113
+msgid "terminating chunk id appears earlier than expected"
+msgstr "l'identifiant de terminaison de tronçon apparaît plus tôt qu'attendu"
+
+#: chunk-format.c:122
+#, c-format
+msgid "improper chunk offset(s) %<PRIx64> and %<PRIx64>"
+msgstr "décalage(s) de section incorrect(s) %<PRIx64> et %<PRIx64>"
+
+#: chunk-format.c:129
+#, c-format
+msgid "duplicate chunk ID %<PRIx32> found"
+msgstr "ID de section dupliqué %<PRIx32>"
+
+#: chunk-format.c:143
+#, c-format
+msgid "final chunk has non-zero id %<PRIx32>"
+msgstr "la section finale a un id non nul %<PRIx32>"
+
 #: color.c:329
 #, c-format
 msgid "invalid color value: %.*s"
 msgstr "Valeur invalide de couleur : %.*s"
 
-#: commit-graph.c:198 midx.c:47
+#: commit-graph.c:197 midx.c:46
 msgid "invalid hash version"
 msgstr "version d'empreinte invalide"
 
-#: commit-graph.c:219
-msgid "repository contains replace objects; skipping commit-graph"
-msgstr "le dépôt contient des object de remplacement ; saut du graphe de commits"
-
-#: commit-graph.c:228
-msgid "repository contains (deprecated) grafts; skipping commit-graph"
-msgstr "le dépôt contient des greffes (déconseillées) ; saut du graphe de commits"
-
-#: commit-graph.c:233
-msgid "repository is shallow; skipping commit-graph"
-msgstr "le dépôt est superficiel ; saut du graphe de commit"
-
-#: commit-graph.c:264
+#: commit-graph.c:255
 msgid "commit-graph file is too small"
 msgstr "le graphe de commit est trop petit"
 
-#: commit-graph.c:329
+#: commit-graph.c:348
 #, c-format
 msgid "commit-graph signature %X does not match signature %X"
 msgstr ""
 "la signature du graphe de commit %X ne correspond pas à la signature %X"
 
-#: commit-graph.c:336
+#: commit-graph.c:355
 #, c-format
 msgid "commit-graph version %X does not match version %X"
 msgstr "la version %X du graphe de commit ne correspond pas à la version %X"
 
-#: commit-graph.c:343
+#: commit-graph.c:362
 #, c-format
 msgid "commit-graph hash version %X does not match version %X"
 msgstr ""
 "l'empreinte de la version %X du graphe de commit ne correspond pas à la "
 "version %X"
 
-#: commit-graph.c:360
+#: commit-graph.c:379
 #, c-format
 msgid "commit-graph file is too small to hold %u chunks"
 msgstr "le graphe de commit est trop petit pour contenir %u sections"
 
-#: commit-graph.c:379
-#, c-format
-msgid "commit-graph improper chunk offset %08x%08x"
-msgstr "décalage de bloc %08x%08x du graphe de commit inadéquat"
-
-#: commit-graph.c:465
-#, c-format
-msgid "commit-graph chunk id %08x appears multiple times"
-msgstr "l'id de bloc de graphe de commit %08x apparaît des multiples fois"
-
-#: commit-graph.c:531
+#: commit-graph.c:472
 msgid "commit-graph has no base graphs chunk"
 msgstr "le graphe de commit n'a pas de section de graphes de base"
 
-#: commit-graph.c:541
+#: commit-graph.c:482
 msgid "commit-graph chain does not match"
 msgstr "la chaîne de graphe de commit ne correspond pas"
 
-#: commit-graph.c:589
+#: commit-graph.c:530
 #, c-format
 msgid "invalid commit-graph chain: line '%s' not a hash"
 msgstr ""
 "chaîne de graphe de commit invalide : la ligne '%s' n'est pas une empreinte"
 
-#: commit-graph.c:613
+#: commit-graph.c:554
 msgid "unable to find all commit-graph files"
 msgstr "impossible de trouver tous les fichiers du graphe de commit"
 
-#: commit-graph.c:794 commit-graph.c:831
+#: commit-graph.c:735 commit-graph.c:772
 msgid "invalid commit position. commit-graph is likely corrupt"
 msgstr ""
 "position de commit invalide. Le graphe de commit est vraisemblablement "
 "corrompu"
 
-#: commit-graph.c:815
+#: commit-graph.c:756
 #, c-format
 msgid "could not find commit %s"
 msgstr "impossible de trouver le commit %s"
 
-#: commit-graph.c:848
+#: commit-graph.c:789
 msgid "commit-graph requires overflow generation data but has none"
-msgstr "le graphe de commits requiert des données de génération de débordement mais n'en contient pas"
+msgstr ""
+"le graphe de commits requiert des données de génération de débordement mais "
+"n'en contient pas"
 
-#: commit-graph.c:1121 builtin/am.c:1292
+#: commit-graph.c:1065 builtin/am.c:1292
 #, c-format
 msgid "unable to parse commit %s"
 msgstr "impossible d'analyser le commit %s"
 
-#: commit-graph.c:1378 builtin/pack-objects.c:2872
+#: commit-graph.c:1327 builtin/pack-objects.c:2872
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "impossible d'obtenir le type de l'objet %s"
 
-#: commit-graph.c:1409
+#: commit-graph.c:1358
 msgid "Loading known commits in commit graph"
 msgstr "Lecture des commits connus dans un graphe de commit"
 
-#: commit-graph.c:1426
+#: commit-graph.c:1375
 msgid "Expanding reachable commits in commit graph"
 msgstr "Expansion des commits joignables dans un graphe de commit"
 
-#: commit-graph.c:1446
+#: commit-graph.c:1395
 msgid "Clearing commit marks in commit graph"
 msgstr "Suppression les marques de commit dans le graphe de commits"
 
-#: commit-graph.c:1465
+#: commit-graph.c:1414
 msgid "Computing commit graph topological levels"
 msgstr "Calcul des niveaux topologiques du graphe de commits"
 
-#: commit-graph.c:1518
+#: commit-graph.c:1467
 msgid "Computing commit graph generation numbers"
 msgstr "Calcul des chiffres de génération du graphe de commits"
 
-#: commit-graph.c:1599
+#: commit-graph.c:1548
 msgid "Computing commit changed paths Bloom filters"
 msgstr "Calcul des filtres Bloom des chemins modifiés du commit"
 
-#: commit-graph.c:1676
+#: commit-graph.c:1625
 msgid "Collecting referenced commits"
 msgstr "Collecte des commits référencés"
 
-#: commit-graph.c:1701
+#: commit-graph.c:1650
 #, c-format
 msgid "Finding commits for commit graph in %d pack"
 msgid_plural "Finding commits for commit graph in %d packs"
 msgstr[0] "Recherche de commits pour un graphe de commits dans %d paquet"
 msgstr[1] "Recherche de commits pour un graphe de commits dans %d paquets"
 
-#: commit-graph.c:1714
+#: commit-graph.c:1663
 #, c-format
 msgid "error adding pack %s"
 msgstr "erreur à l'ajout du packet %s"
 
-#: commit-graph.c:1718
+#: commit-graph.c:1667
 #, c-format
 msgid "error opening index for %s"
 msgstr "erreur à l'ouverture de l'index pour %s"
 
-#: commit-graph.c:1755
+#: commit-graph.c:1704
 msgid "Finding commits for commit graph among packed objects"
 msgstr ""
 "Recherche de commits pour un graphe de commits parmi les objets empaquetés"
 
-#: commit-graph.c:1773
+#: commit-graph.c:1722
 msgid "Finding extra edges in commit graph"
 msgstr "Recherche d'arêtes supplémentaires dans un graphe de commits"
 
-#: commit-graph.c:1821
+#: commit-graph.c:1771
 msgid "failed to write correct number of base graph ids"
 msgstr "échec à l'écriture le nombre correct d'id de base de fusion"
 
-#: commit-graph.c:1863 midx.c:819
+#: commit-graph.c:1802 midx.c:794
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "impossible de créer les répertoires de premier niveau de %s"
 
-#: commit-graph.c:1876
+#: commit-graph.c:1815
 msgid "unable to create temporary graph layer"
 msgstr "impossible de créer une couche de graphe temporaire"
 
-#: commit-graph.c:1881
+#: commit-graph.c:1820
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr "impossible de régler les droits partagés pour '%s'"
 
-#: commit-graph.c:1966
+#: commit-graph.c:1879
 #, c-format
 msgid "Writing out commit graph in %d pass"
 msgid_plural "Writing out commit graph in %d passes"
 msgstr[0] "Écriture le graphe de commits en %d passe"
 msgstr[1] "Écriture le graphe de commits en %d passes"
 
-#: commit-graph.c:2011
+#: commit-graph.c:1915
 msgid "unable to open commit-graph chain file"
 msgstr "impossible d'ouvrir le fichier de graphe de commit"
 
-#: commit-graph.c:2027
+#: commit-graph.c:1931
 msgid "failed to rename base commit-graph file"
 msgstr "échec du renommage du fichier de graphe de commits"
 
-#: commit-graph.c:2047
+#: commit-graph.c:1951
 msgid "failed to rename temporary commit-graph file"
 msgstr "impossible de renommer le fichier temporaire de graphe de commits"
 
-#: commit-graph.c:2180
+#: commit-graph.c:2084
 msgid "Scanning merged commits"
 msgstr "Analyse des commits de fusion"
 
-#: commit-graph.c:2224
+#: commit-graph.c:2128
 msgid "Merging commit-graph"
 msgstr "fusion du graphe de commits"
 
-#: commit-graph.c:2331
+#: commit-graph.c:2235
 msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
 msgstr ""
 "essai d'écriture de graphe de commits, mais 'core.commitGraph' est désactivé"
 
-#: commit-graph.c:2438
+#: commit-graph.c:2342
 msgid "too many commits to write graph"
 msgstr "trop de commits pour écrire un graphe"
 
-#: commit-graph.c:2536
+#: commit-graph.c:2440
 msgid "the commit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
 "le graphe de commit a une somme de contrôle incorrecte et est "
 "vraisemblablement corrompu"
 
-#: commit-graph.c:2546
+#: commit-graph.c:2450
 #, c-format
 msgid "commit-graph has incorrect OID order: %s then %s"
 msgstr "le graphe de commit a un ordre d'OID incorrect : %s puis %s"
 
-#: commit-graph.c:2556 commit-graph.c:2571
+#: commit-graph.c:2460 commit-graph.c:2475
 #, c-format
 msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr ""
 "le graphe de commit a une valeur de dispersion incorrecte : dispersion[%d] = "
 "%u != %u"
 
-#: commit-graph.c:2563
+#: commit-graph.c:2467
 #, c-format
 msgid "failed to parse commit %s from commit-graph"
 msgstr "échec de l'analyse le commit %s depuis le graphe de commits"
 
-#: commit-graph.c:2581
+#: commit-graph.c:2485
 msgid "Verifying commits in commit graph"
 msgstr "Verification des commits dans le graphe de commits"
 
-#: commit-graph.c:2596
+#: commit-graph.c:2500
 #, c-format
 msgid "failed to parse commit %s from object database for commit-graph"
 msgstr ""
 "échec de l'analyse du commit %s depuis la base de données d'objets pour le "
 "graphe de commit"
 
-#: commit-graph.c:2603
+#: commit-graph.c:2507
 #, c-format
 msgid "root tree OID for commit %s in commit-graph is %s != %s"
 msgstr ""
 "l'OID de l'arbre racine pour le commit %s dans le graphe de commit est %s != "
 "%s"
 
-#: commit-graph.c:2613
+#: commit-graph.c:2517
 #, c-format
 msgid "commit-graph parent list for commit %s is too long"
 msgstr ""
 "la liste des parents du graphe de commit pour le commit %s est trop longue"
 
-#: commit-graph.c:2622
+#: commit-graph.c:2526
 #, c-format
 msgid "commit-graph parent for %s is %s != %s"
 msgstr "le parent du graphe de commit pour %s est %s != %s"
 
-#: commit-graph.c:2636
+#: commit-graph.c:2540
 #, c-format
 msgid "commit-graph parent list for commit %s terminates early"
 msgstr ""
 "la liste de parents du graphe de commit pour le commit %s se termine trop tôt"
 
-#: commit-graph.c:2641
+#: commit-graph.c:2545
 #, c-format
 msgid ""
 "commit-graph has generation number zero for commit %s, but non-zero elsewhere"
@@ -2472,7 +2471,7 @@ msgstr ""
 "le graphe de commit a un numéro de génération nul pour le commit %s, mais "
 "non-nul ailleurs"
 
-#: commit-graph.c:2645
+#: commit-graph.c:2549
 #, c-format
 msgid ""
 "commit-graph has non-zero generation number for commit %s, but zero elsewhere"
@@ -2480,12 +2479,14 @@ msgstr ""
 "le graphe de commit a un numéro de génération non-nul pour le commit %s, "
 "mais nul ailleurs"
 
-#: commit-graph.c:2662
+#: commit-graph.c:2566
 #, c-format
 msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
-msgstr "la génération du graphe de commit pour le commit %s est %<PRIuMAX> < %<PRIuMAX>"
+msgstr ""
+"la génération du graphe de commit pour le commit %s est %<PRIuMAX> < "
+"%<PRIuMAX>"
 
-#: commit-graph.c:2668
+#: commit-graph.c:2572
 #, c-format
 msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
@@ -3073,7 +3074,8 @@ msgstr ""
 
 #: connect.c:1190
 msgid "newline is forbidden in git:// hosts and repo paths"
-msgstr "le retour chariot est interdit dans les hôtes git:// et les chemins de dépôt"
+msgstr ""
+"le retour chariot est interdit dans les hôtes git:// et les chemins de dépôt"
 
 #: connect.c:1247
 msgid "ssh variant 'simple' does not support -4"
@@ -4053,7 +4055,7 @@ msgstr ""
 msgid "failed to read orderfile '%s'"
 msgstr "impossible de lire le fichier de commande '%s'"
 
-#: diffcore-rename.c:555
+#: diffcore-rename.c:786
 msgid "Performing inexact rename detection"
 msgstr "Détection de renommage inexact en cours"
 
@@ -4107,17 +4109,17 @@ msgstr "echec de l'obtention d'information de kernel"
 msgid "untracked cache is disabled on this system or location"
 msgstr "Le cache non suivi est désactivé sur ce système ou sur cet endroit"
 
-#: dir.c:3537
+#: dir.c:3534
 #, c-format
 msgid "index file corrupt in repo %s"
 msgstr "fichier d'index corrompu dans le dépôt %s"
 
-#: dir.c:3582 dir.c:3587
+#: dir.c:3579 dir.c:3584
 #, c-format
 msgid "could not create directories for %s"
 msgstr "impossible de créer les répertoires pour %s"
 
-#: dir.c:3616
+#: dir.c:3613
 #, c-format
 msgid "could not migrate git directory from '%s' to '%s'"
 msgstr "impossible de migrer le répertoire git de '%s' vers '%s'"
@@ -4179,32 +4181,32 @@ msgstr "impossible d'écrire sur un distant"
 msgid "--stateless-rpc requires multi_ack_detailed"
 msgstr "--stateless-rpc nécessite multi_ack_detailed"
 
-#: fetch-pack.c:378 fetch-pack.c:1400
+#: fetch-pack.c:378 fetch-pack.c:1457
 #, c-format
 msgid "invalid shallow line: %s"
 msgstr "ligne de superficiel invalide : %s"
 
-#: fetch-pack.c:384 fetch-pack.c:1406
+#: fetch-pack.c:384 fetch-pack.c:1463
 #, c-format
 msgid "invalid unshallow line: %s"
 msgstr "ligne de fin de superficiel invalide : %s"
 
-#: fetch-pack.c:386 fetch-pack.c:1408
+#: fetch-pack.c:386 fetch-pack.c:1465
 #, c-format
 msgid "object not found: %s"
 msgstr "objet non trouvé : %s"
 
-#: fetch-pack.c:389 fetch-pack.c:1411
+#: fetch-pack.c:389 fetch-pack.c:1468
 #, c-format
 msgid "error in object: %s"
 msgstr "Erreur dans l'objet : %s"
 
-#: fetch-pack.c:391 fetch-pack.c:1413
+#: fetch-pack.c:391 fetch-pack.c:1470
 #, c-format
 msgid "no shallow found: %s"
 msgstr "Pas de superficiel trouvé : %s"
 
-#: fetch-pack.c:394 fetch-pack.c:1417
+#: fetch-pack.c:394 fetch-pack.c:1474
 #, c-format
 msgid "expected shallow/unshallow, got %s"
 msgstr "superficiel/non superficiel attendu, %s trouvé"
@@ -4242,157 +4244,161 @@ msgstr "Marquage de %s comme terminé"
 msgid "already have %s (%s)"
 msgstr "%s déjà possédé (%s)"
 
-#: fetch-pack.c:821
+#: fetch-pack.c:844
 msgid "fetch-pack: unable to fork off sideband demultiplexer"
 msgstr "fetch-pack : impossible de dupliquer le démultiplexeur latéral"
 
-#: fetch-pack.c:829
+#: fetch-pack.c:852
 msgid "protocol error: bad pack header"
 msgstr "erreur de protocole : mauvais entête de paquet"
 
-#: fetch-pack.c:913
+#: fetch-pack.c:946
 #, c-format
 msgid "fetch-pack: unable to fork off %s"
 msgstr "fetch-pack : impossible de dupliquer %s"
 
-#: fetch-pack.c:931
+#: fetch-pack.c:952
+msgid "fetch-pack: invalid index-pack output"
+msgstr "fetch-pack : sortie d'index de pack invalide"
+
+#: fetch-pack.c:969
 #, c-format
 msgid "%s failed"
 msgstr "échec de %s"
 
-#: fetch-pack.c:933
+#: fetch-pack.c:971
 msgid "error in sideband demultiplexer"
 msgstr "erreur dans le démultiplexer latéral"
 
-#: fetch-pack.c:976
+#: fetch-pack.c:1031
 #, c-format
 msgid "Server version is %.*s"
 msgstr "La version du serveur est %.*s"
 
-#: fetch-pack.c:984 fetch-pack.c:990 fetch-pack.c:993 fetch-pack.c:999
-#: fetch-pack.c:1003 fetch-pack.c:1007 fetch-pack.c:1011 fetch-pack.c:1015
-#: fetch-pack.c:1019 fetch-pack.c:1023 fetch-pack.c:1027 fetch-pack.c:1031
-#: fetch-pack.c:1037 fetch-pack.c:1043 fetch-pack.c:1048 fetch-pack.c:1053
+#: fetch-pack.c:1039 fetch-pack.c:1045 fetch-pack.c:1048 fetch-pack.c:1054
+#: fetch-pack.c:1058 fetch-pack.c:1062 fetch-pack.c:1066 fetch-pack.c:1070
+#: fetch-pack.c:1074 fetch-pack.c:1078 fetch-pack.c:1082 fetch-pack.c:1086
+#: fetch-pack.c:1092 fetch-pack.c:1098 fetch-pack.c:1103 fetch-pack.c:1108
 #, c-format
 msgid "Server supports %s"
 msgstr "Le serveur supporte %s"
 
-#: fetch-pack.c:986
+#: fetch-pack.c:1041
 msgid "Server does not support shallow clients"
 msgstr "Le serveur ne supporte les clients superficiels"
 
-#: fetch-pack.c:1046
+#: fetch-pack.c:1101
 msgid "Server does not support --shallow-since"
 msgstr "Le receveur ne gère pas --shallow-since"
 
-#: fetch-pack.c:1051
+#: fetch-pack.c:1106
 msgid "Server does not support --shallow-exclude"
 msgstr "Le receveur ne gère pas --shallow-exclude"
 
-#: fetch-pack.c:1055
+#: fetch-pack.c:1110
 msgid "Server does not support --deepen"
 msgstr "Le receveur ne gère pas --deepen"
 
-#: fetch-pack.c:1057
+#: fetch-pack.c:1112
 msgid "Server does not support this repository's object format"
 msgstr "Le serveur ne supporte pas ce format d'objets de ce dépôt"
 
-#: fetch-pack.c:1070
+#: fetch-pack.c:1125
 msgid "no common commits"
 msgstr "pas de commit commun"
 
-#: fetch-pack.c:1082 fetch-pack.c:1622
+#: fetch-pack.c:1138 fetch-pack.c:1682
 msgid "git fetch-pack: fetch failed."
 msgstr "git fetch-pack : échec de le récupération."
 
-#: fetch-pack.c:1208
+#: fetch-pack.c:1265
 #, c-format
 msgid "mismatched algorithms: client %s; server %s"
 msgstr "non-correspondance des algorithmes : client %s ; serveur %s"
 
-#: fetch-pack.c:1212
+#: fetch-pack.c:1269
 #, c-format
 msgid "the server does not support algorithm '%s'"
 msgstr "Le serveur ne supporte pas l'algorithme '%s'"
 
-#: fetch-pack.c:1232
+#: fetch-pack.c:1289
 msgid "Server does not support shallow requests"
 msgstr "Le serveur ne supporte pas les requêtes superficielles"
 
-#: fetch-pack.c:1239
+#: fetch-pack.c:1296
 msgid "Server supports filter"
 msgstr "Le serveur supporte filter"
 
-#: fetch-pack.c:1278
+#: fetch-pack.c:1335
 msgid "unable to write request to remote"
 msgstr "impossible d'écrire la requête sur le distant"
 
-#: fetch-pack.c:1296
+#: fetch-pack.c:1353
 #, c-format
 msgid "error reading section header '%s'"
 msgstr "erreur à la lecture de l'entête de section '%s'"
 
-#: fetch-pack.c:1302
+#: fetch-pack.c:1359
 #, c-format
 msgid "expected '%s', received '%s'"
 msgstr "'%s' attendu, '%s' reçu"
 
-#: fetch-pack.c:1363
+#: fetch-pack.c:1420
 #, c-format
 msgid "unexpected acknowledgment line: '%s'"
 msgstr "ligne d'acquittement inattendue : '%s'"
 
-#: fetch-pack.c:1368
+#: fetch-pack.c:1425
 #, c-format
 msgid "error processing acks: %d"
 msgstr "erreur lors du traitement des acquittements : %d"
 
-#: fetch-pack.c:1378
+#: fetch-pack.c:1435
 msgid "expected packfile to be sent after 'ready'"
 msgstr "fichier paquet attendu à envoyer après 'ready'"
 
-#: fetch-pack.c:1380
+#: fetch-pack.c:1437
 msgid "expected no other sections to be sent after no 'ready'"
 msgstr "aucune autre section attendue à envoyer après absence de 'ready'"
 
-#: fetch-pack.c:1422
+#: fetch-pack.c:1479
 #, c-format
 msgid "error processing shallow info: %d"
 msgstr "erreur lors du traitement de l'information de superficialité : %d"
 
-#: fetch-pack.c:1469
+#: fetch-pack.c:1526
 #, c-format
 msgid "expected wanted-ref, got '%s'"
 msgstr "wanted-ref attendu, '%s' trouvé"
 
-#: fetch-pack.c:1474
+#: fetch-pack.c:1531
 #, c-format
 msgid "unexpected wanted-ref: '%s'"
 msgstr "wanted-ref inattendu : '%s'"
 
-#: fetch-pack.c:1479
+#: fetch-pack.c:1536
 #, c-format
 msgid "error processing wanted refs: %d"
 msgstr "erreur lors du traitement des références voulues : %d"
 
-#: fetch-pack.c:1509
+#: fetch-pack.c:1566
 msgid "git fetch-pack: expected response end packet"
 msgstr "git fetch-pack : paquet de fin de réponse attendu"
 
-#: fetch-pack.c:1891
+#: fetch-pack.c:1960
 msgid "no matching remote head"
 msgstr "pas de HEAD distante correspondante"
 
-#: fetch-pack.c:1914 builtin/clone.c:693
+#: fetch-pack.c:1983 builtin/clone.c:693
 msgid "remote did not send all necessary objects"
 msgstr "le serveur distant n'a pas envoyé tous les objets nécessaires"
 
-#: fetch-pack.c:1941
+#: fetch-pack.c:2010
 #, c-format
 msgid "no such remote ref %s"
 msgstr "référence distante inconnue %s"
 
-#: fetch-pack.c:1944
+#: fetch-pack.c:2013
 #, c-format
 msgid "Server does not allow request for unadvertised object %s"
 msgstr "Le serveur n'autorise pas de requête pour l'objet %s non annoncé"
@@ -4760,43 +4766,44 @@ msgstr "valeur invalide '%s' pour lsrefs.unborn"
 msgid "expected flush after ls-refs arguments"
 msgstr "vidage attendu après les arguments ls-refs"
 
-#: merge-ort.c:855 merge-recursive.c:1191
+#: merge-ort.c:888 merge-recursive.c:1191
 #, c-format
 msgid "Failed to merge submodule %s (not checked out)"
 msgstr "Échec de la fusion du sous-module %s (non extrait)"
 
-#: merge-ort.c:864 merge-recursive.c:1198
+#: merge-ort.c:897 merge-recursive.c:1198
 #, c-format
 msgid "Failed to merge submodule %s (commits not present)"
 msgstr "Échec de fusion du sous-module %s (commits non présents)"
 
-#: merge-ort.c:873 merge-recursive.c:1205
+#: merge-ort.c:906 merge-recursive.c:1205
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
 msgstr ""
 "Échec de la fusion du sous-module %s (les commits ne descendent pas de la "
 "base de fusion)"
 
-#: merge-ort.c:883 merge-ort.c:890
+#: merge-ort.c:916 merge-ort.c:923
 #, c-format
 msgid "Note: Fast-forwarding submodule %s to %s"
 msgstr "Note : Avance rapide du sous-module %s à %s"
 
-#: merge-ort.c:911
+#: merge-ort.c:944
 #, c-format
 msgid "Failed to merge submodule %s"
 msgstr "Échec de la fusion du sous-module %s"
 
-#: merge-ort.c:918
+#: merge-ort.c:951
 #, c-format
 msgid ""
 "Failed to merge submodule %s, but a possible merge resolution exists:\n"
 "%s\n"
 msgstr ""
-"Échec de fusion du sous-module %s mais une résolution possible de fusion existe :\n"
+"Échec de fusion du sous-module %s mais une résolution possible de fusion "
+"existe :\n"
 "%s\n"
 
-#: merge-ort.c:922 merge-recursive.c:1259
+#: merge-ort.c:955 merge-recursive.c:1259
 #, c-format
 msgid ""
 "If this is correct simply add it to the index for example\n"
@@ -4813,30 +4820,31 @@ msgstr ""
 "\n"
 "qui acceptera cette suggestion.\n"
 
-#: merge-ort.c:935
+#: merge-ort.c:968
 #, c-format
 msgid ""
 "Failed to merge submodule %s, but multiple possible merges exist:\n"
 "%s"
 msgstr ""
-"Échec de fusion du sous-module %s mais de multiples solutions de fusion existent :\n"
+"Échec de fusion du sous-module %s mais de multiples solutions de fusion "
+"existent :\n"
 "%s"
 
-#: merge-ort.c:1094 merge-recursive.c:1341
+#: merge-ort.c:1127 merge-recursive.c:1341
 msgid "Failed to execute internal merge"
 msgstr "Échec à l'exécution de la fusion interne"
 
-#: merge-ort.c:1099 merge-recursive.c:1346
+#: merge-ort.c:1132 merge-recursive.c:1346
 #, c-format
 msgid "Unable to add %s to database"
 msgstr "Impossible d'ajouter %s à la base de données"
 
-#: merge-ort.c:1106 merge-recursive.c:1378
+#: merge-ort.c:1139 merge-recursive.c:1378
 #, c-format
 msgid "Auto-merging %s"
 msgstr "Fusion automatique de %s"
 
-#: merge-ort.c:1245 merge-recursive.c:2100
+#: merge-ort.c:1278 merge-recursive.c:2100
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
@@ -4845,7 +4853,7 @@ msgstr ""
 "CONFLIT (renommage implicite de répertoire) : le répertoire/fichier %s gêne "
 "des renommages implicites de répertoire déplaçant les chemins suivants : %s."
 
-#: merge-ort.c:1255 merge-recursive.c:2110
+#: merge-ort.c:1288 merge-recursive.c:2110
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Cannot map more than one path to %s; "
@@ -4854,15 +4862,18 @@ msgstr ""
 "CONFLIT (renommage implicite de répertoire) : impossible de transformer "
 "plusieurs chemins sur %s ; les chemins concernés sont : %s"
 
-#: merge-ort.c:1438
+#: merge-ort.c:1471
 #, c-format
 msgid ""
 "CONFLICT (directory rename split): Unclear where to rename %s to; it was "
 "renamed to multiple other directories, with no destination getting a "
 "majority of the files."
-msgstr "CONFLIT (renommage de répertoire coupé) : le renommage de %s n'est pas clair parce que le répertoire a été renommé en plusieurs autres répertoires, sans aucune destination récupérant la majorité des fichiers."
+msgstr ""
+"CONFLIT (renommage de répertoire coupé) : le renommage de %s n'est pas clair "
+"parce que le répertoire a été renommé en plusieurs autres répertoires, sans "
+"aucune destination récupérant la majorité des fichiers."
 
-#: merge-ort.c:1604 merge-recursive.c:2447
+#: merge-ort.c:1637 merge-recursive.c:2447
 #, c-format
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
@@ -4871,7 +4882,7 @@ msgstr ""
 "AVERTISSEMENT : ne renomme pas %s->%s dans %s, parce que %s lui-même a été "
 "renommé."
 
-#: merge-ort.c:1748 merge-recursive.c:3215
+#: merge-ort.c:1781 merge-recursive.c:3215
 #, c-format
 msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
@@ -4880,7 +4891,7 @@ msgstr ""
 "Chemin mis à jour : %s ajouté dans %s dans un répertoire qui a été renommé "
 "en %s ; déplacé dans %s."
 
-#: merge-ort.c:1755 merge-recursive.c:3222
+#: merge-ort.c:1788 merge-recursive.c:3222
 #, c-format
 msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
@@ -4889,7 +4900,7 @@ msgstr ""
 "Chemin mis à jour : %s renommé en %s dans %s, dans un répertoire qui a été "
 "renommé en %s ; déplacé dans %s."
 
-#: merge-ort.c:1768 merge-recursive.c:3218
+#: merge-ort.c:1801 merge-recursive.c:3218
 #, c-format
 msgid ""
 "CONFLICT (file location): %s added in %s inside a directory that was renamed "
@@ -4899,7 +4910,7 @@ msgstr ""
 "a été renommé dans %s, ce qui suggère qu'il devrait peut-être être déplacé "
 "vers %s."
 
-#: merge-ort.c:1776 merge-recursive.c:3225
+#: merge-ort.c:1809 merge-recursive.c:3225
 #, c-format
 msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
@@ -4909,74 +4920,86 @@ msgstr ""
 "répertoire qui a été renommé dans %s, ce qui suggère qu'il devrait peut-être "
 "être déplacé vers %s."
 
-#: merge-ort.c:1919
+#: merge-ort.c:1952
 #, c-format
 msgid "CONFLICT (rename/rename): %s renamed to %s in %s and to %s in %s."
-msgstr "CONFLIT (renommage/renommage) : %s renommé en %s dans %s et en %s dans %s."
+msgstr ""
+"CONFLIT (renommage/renommage) : %s renommé en %s dans %s et en %s dans %s."
 
-#: merge-ort.c:2014
+#: merge-ort.c:2047
 #, c-format
 msgid ""
 "CONFLICT (rename involved in collision): rename of %s -> %s has content "
 "conflicts AND collides with another path; this may result in nested conflict "
 "markers."
-msgstr "CONFLIT (renommage au sein d'une collision) : lre renommage de %s -> %s a des conflits de contenu ET entre en collision avec un autre chemin ; ceci peut resulter en des marqueurs de conflit imbriqués."
+msgstr ""
+"CONFLIT (renommage au sein d'une collision) : lre renommage de %s -> %s a "
+"des conflits de contenu ET entre en collision avec un autre chemin ; ceci "
+"peut resulter en des marqueurs de conflit imbriqués."
 
-#: merge-ort.c:2033 merge-ort.c:2057
+#: merge-ort.c:2066 merge-ort.c:2090
 #, c-format
 msgid "CONFLICT (rename/delete): %s renamed to %s in %s, but deleted in %s."
-msgstr "CONFLIT (renommage/suppression) : Renommage de %s en %s dans %s mais supprimé dans %s."
+msgstr ""
+"CONFLIT (renommage/suppression) : Renommage de %s en %s dans %s mais "
+"supprimé dans %s."
 
-#: merge-ort.c:2683
+#: merge-ort.c:2735
 #, c-format
 msgid ""
 "CONFLICT (file/directory): directory in the way of %s from %s; moving it to "
 "%s instead."
-msgstr "CONFLIT (fichier/répertoire) : répertoire au milieu de %s depuis %s ; déplacement dans %s à la place."
+msgstr ""
+"CONFLIT (fichier/répertoire) : répertoire au milieu de %s depuis %s ; "
+"déplacement dans %s à la place."
 
-#: merge-ort.c:2756
+#: merge-ort.c:2808
 #, c-format
 msgid ""
 "CONFLICT (distinct types): %s had different types on each side; renamed %s "
 "of them so each can be recorded somewhere."
-msgstr "CONFLIT (types différents) : %s a des types différents des deux côtés ; renommé la version %s de manière à pouvoir enregistrer les deux quelque part."
+msgstr ""
+"CONFLIT (types différents) : %s a des types différents des deux côtés ; "
+"renommé la version %s de manière à pouvoir enregistrer les deux quelque part."
 
-#: merge-ort.c:2760
+#: merge-ort.c:2812
 msgid "both"
 msgstr "les deux"
 
-#: merge-ort.c:2760
+#: merge-ort.c:2812
 msgid "one"
 msgstr "un"
 
-#: merge-ort.c:2855 merge-recursive.c:3052
+#: merge-ort.c:2907 merge-recursive.c:3052
 msgid "content"
 msgstr "contenu"
 
-#: merge-ort.c:2857 merge-recursive.c:3056
+#: merge-ort.c:2909 merge-recursive.c:3056
 msgid "add/add"
 msgstr "ajout/ajout"
 
-#: merge-ort.c:2859 merge-recursive.c:3101
+#: merge-ort.c:2911 merge-recursive.c:3101
 msgid "submodule"
 msgstr "sous-module"
 
-#: merge-ort.c:2861 merge-recursive.c:3102
+#: merge-ort.c:2913 merge-recursive.c:3102
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "CONFLIT (%s) : Conflit de fusion dans %s"
 
-#: merge-ort.c:2886
+#: merge-ort.c:2938
 #, c-format
 msgid ""
 "CONFLICT (modify/delete): %s deleted in %s and modified in %s.  Version %s "
 "of %s left in tree."
-msgstr "CONFLIT (modification/suppression) : %s supprimé dans %s et modifié dans %s. Version %s de %s laissée dans l'arbre."
+msgstr ""
+"CONFLIT (modification/suppression) : %s supprimé dans %s et modifié dans %s. "
+"Version %s de %s laissée dans l'arbre."
 
 #. TRANSLATORS: The %s arguments are: 1) tree hash of a merge
 #. base, and 2-3) the trees for the two trees we're merging.
 #.
-#: merge-ort.c:3354
+#: merge-ort.c:3406
 #, c-format
 msgid "collecting merge info failed for trees %s, %s, %s"
 msgstr "échec de collecte l'information de fusion pour les arbres %s, %s, %s"
@@ -5298,118 +5321,108 @@ msgstr "impossible de lire le cache"
 msgid "unable to write new index file"
 msgstr "impossible d'écrire le nouveau fichier d'index"
 
-#: midx.c:80
+#: midx.c:62
+msgid "multi-pack-index OID fanout is of the wrong size"
+msgstr "l'étalement de l'OID d'index multi-paquet n'a pas la bonne taille"
+
+#: midx.c:93
 #, c-format
 msgid "multi-pack-index file %s is too small"
 msgstr "le fichier d'index multi-paquet %s est trop petit"
 
-#: midx.c:96
+#: midx.c:109
 #, c-format
 msgid "multi-pack-index signature 0x%08x does not match signature 0x%08x"
 msgstr ""
 "la signature de l'index multi-paquet 0x%08x ne correspond pas à la signature "
 "0x%08x"
 
-#: midx.c:101
+#: midx.c:114
 #, c-format
 msgid "multi-pack-index version %d not recognized"
 msgstr "la version d'index multi-paquet %d n'est pas reconnue"
 
-#: midx.c:106
+#: midx.c:119
 #, c-format
 msgid "multi-pack-index hash version %u does not match version %u"
 msgstr ""
 "la version d'empreinte d'index multi-paquet %u ne correspond pas à la "
 "version %u"
 
-#: midx.c:123
-msgid "invalid chunk offset (too large)"
-msgstr "décalage de section invalide (trop grand)"
-
-#: midx.c:147
-msgid "terminating multi-pack-index chunk id appears earlier than expected"
-msgstr ""
-"identifiant de terminaison de tronçon d'index multi-paquet terminant "
-"apparaît plus tôt qu'attendu"
-
-#: midx.c:160
+#: midx.c:136
 msgid "multi-pack-index missing required pack-name chunk"
 msgstr "index multi-paquet manque de tronçon de nom de paquet"
 
-#: midx.c:162
+#: midx.c:138
 msgid "multi-pack-index missing required OID fanout chunk"
 msgstr "index multi-paquet manque de tronçon de d'étalement OID requis"
 
-#: midx.c:164
+#: midx.c:140
 msgid "multi-pack-index missing required OID lookup chunk"
-msgstr "index multi-paquet manque de tronçon de recherche OID"
+msgstr "index multi-paquet manque de tronçon de recherche OID requis"
 
-#: midx.c:166
+#: midx.c:142
 msgid "multi-pack-index missing required object offsets chunk"
-msgstr "index multi-paquet manque de tronçon de décalage d'objet"
+msgstr "index multi-paquet manque de tronçon de décalage d'objet requis"
 
-#: midx.c:180
+#: midx.c:158
 #, c-format
 msgid "multi-pack-index pack names out of order: '%s' before '%s'"
 msgstr ""
 "index multi-paquet les noms de paquets sont en désordre : '%s' avant '%s'"
 
-#: midx.c:223
+#: midx.c:202
 #, c-format
 msgid "bad pack-int-id: %u (%u total packs)"
 msgstr "mauvais pack-int-id : %u (%u paquets au total)"
 
-#: midx.c:273
+#: midx.c:252
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
 msgstr ""
 "l'index multi-paquet stock un décalage en 64-bit, mais off_t est trop petit"
 
-#: midx.c:480
+#: midx.c:467
 #, c-format
 msgid "failed to add packfile '%s'"
 msgstr "échec de l'ajout du fichier paquet '%s'"
 
-#: midx.c:486
+#: midx.c:473
 #, c-format
 msgid "failed to open pack-index '%s'"
 msgstr "échec à l'ouverture du fichier paquet '%s'"
 
-#: midx.c:546
+#: midx.c:533
 #, c-format
 msgid "failed to locate object %d in packfile"
 msgstr "échec de localisation de l'objet %d dans le fichier paquet"
 
-#: midx.c:846
+#: midx.c:821
 msgid "Adding packfiles to multi-pack-index"
 msgstr "Ajout de fichiers paquet à un index multi-paquet"
 
-#: midx.c:879
+#: midx.c:855
 #, c-format
 msgid "did not see pack-file %s to drop"
 msgstr "fichier paquet à éliminer %s non trouvé"
 
-#: midx.c:931
+#: midx.c:904
 msgid "no pack files to index."
 msgstr "Aucun fichier paquet à l'index."
 
-#: midx.c:982
-msgid "Writing chunks to multi-pack-index"
-msgstr "Écriture des sections dans l'index multi-paquet"
-
-#: midx.c:1060
+#: midx.c:965
 #, c-format
 msgid "failed to clear multi-pack-index at %s"
 msgstr "échec du nettoyage de l'index de multi-paquet à %s"
 
-#: midx.c:1116
+#: midx.c:1021
 msgid "multi-pack-index file exists, but failed to parse"
 msgstr "le fichier d'index multi-paquet existe mais n'a pu être analysé"
 
-#: midx.c:1124
+#: midx.c:1029
 msgid "Looking for referenced packfiles"
 msgstr "Recherche de fichiers paquets référencés"
 
-#: midx.c:1139
+#: midx.c:1044
 #, c-format
 msgid ""
 "oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
@@ -5417,55 +5430,55 @@ msgstr ""
 "étalement oid en désordre : étalement[%d] = %<PRIx32> > %<PRIx32> = "
 "étalement[%d]"
 
-#: midx.c:1144
+#: midx.c:1049
 msgid "the midx contains no oid"
 msgstr "le midx ne contient aucun oid"
 
-#: midx.c:1153
+#: midx.c:1058
 msgid "Verifying OID order in multi-pack-index"
 msgstr "Vérification de l'ordre des OID dans l'index multi-paquet"
 
-#: midx.c:1162
+#: midx.c:1067
 #, c-format
 msgid "oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"
 msgstr "recherche d'oid en désordre : oid[%d] = %s >= %s = oid[%d]"
 
-#: midx.c:1182
+#: midx.c:1087
 msgid "Sorting objects by packfile"
 msgstr "Classement des objets par fichier paquet"
 
-#: midx.c:1189
+#: midx.c:1094
 msgid "Verifying object offsets"
 msgstr "Vérification des décalages des objets"
 
-#: midx.c:1205
+#: midx.c:1110
 #, c-format
 msgid "failed to load pack entry for oid[%d] = %s"
 msgstr "échec de la lecture de l'élément de cache pour oid[%d] = %s"
 
-#: midx.c:1211
+#: midx.c:1116
 #, c-format
 msgid "failed to load pack-index for packfile %s"
 msgstr "impossible de lire le fichier paquet %s"
 
-#: midx.c:1220
+#: midx.c:1125
 #, c-format
 msgid "incorrect object offset for oid[%d] = %s: %<PRIx64> != %<PRIx64>"
 msgstr "décalage d'objet incorrect pour oid[%d] = %s : %<PRIx64> != %<PRIx64>"
 
-#: midx.c:1245
+#: midx.c:1150
 msgid "Counting referenced objects"
 msgstr "Comptage des objets référencés"
 
-#: midx.c:1255
+#: midx.c:1160
 msgid "Finding and deleting unreferenced packfiles"
 msgstr "Recherche et effacement des fichiers paquets non-référencés"
 
-#: midx.c:1446
+#: midx.c:1351
 msgid "could not start pack-objects"
 msgstr "Impossible de démarrer le groupement d'objets"
 
-#: midx.c:1466
+#: midx.c:1371
 msgid "could not finish pack-objects"
 msgstr "Impossible de finir le groupement d'objets"
 
@@ -5956,7 +5969,7 @@ msgstr "stat impossible de %s"
 msgid "failed to make %s readable"
 msgstr "échec de rendre %s lisible"
 
-#: pack-write.c:502
+#: pack-write.c:508
 #, c-format
 msgid "could not write '%s' promisor file"
 msgstr "impossible d'écrire le fichier de prometteur '%s'"
@@ -6228,11 +6241,11 @@ msgstr "erreur de protocole : mauvaise longueur de ligne %d"
 msgid "remote error: %s"
 msgstr "erreur distante : %s"
 
-#: preload-index.c:119
+#: preload-index.c:125
 msgid "Refreshing index"
 msgstr "Rafraîchissement de l'index"
 
-#: preload-index.c:138
+#: preload-index.c:144
 #, c-format
 msgid "unable to create threaded lstat: %s"
 msgstr "impossible de créer le lstat en fil : %s"
@@ -6347,11 +6360,11 @@ msgstr "fstat de '%s' impossible"
 msgid "'%s' appears as both a file and as a directory"
 msgstr "'%s' existe à la fois comme un fichier et un répertoire"
 
-#: read-cache.c:1524
+#: read-cache.c:1532
 msgid "Refresh index"
 msgstr "Rafraîchir l'index"
 
-#: read-cache.c:1639
+#: read-cache.c:1657
 #, c-format
 msgid ""
 "index.version set, but the value is invalid.\n"
@@ -6360,7 +6373,7 @@ msgstr ""
 "version d'index renseignée, mais la valeur est invalide.\n"
 "Utilisation de la version %i"
 
-#: read-cache.c:1649
+#: read-cache.c:1667
 #, c-format
 msgid ""
 "GIT_INDEX_VERSION set, but the value is invalid.\n"
@@ -6369,55 +6382,55 @@ msgstr ""
 "GIT_INDEX_VERSION est renseigné, mais la valeur est invalide.\n"
 "Utilisation de la version %i"
 
-#: read-cache.c:1705
+#: read-cache.c:1723
 #, c-format
 msgid "bad signature 0x%08x"
 msgstr "signature incorrecte 0x%08x"
 
-#: read-cache.c:1708
+#: read-cache.c:1726
 #, c-format
 msgid "bad index version %d"
 msgstr "mauvaise version d'index %d"
 
-#: read-cache.c:1717
+#: read-cache.c:1735
 msgid "bad index file sha1 signature"
 msgstr "mauvaise signature sha1 d'index"
 
-#: read-cache.c:1747
+#: read-cache.c:1765
 #, c-format
 msgid "index uses %.4s extension, which we do not understand"
 msgstr "l'index utilise l'extension %.4s qui n'est pas comprise"
 
-#: read-cache.c:1749
+#: read-cache.c:1767
 #, c-format
 msgid "ignoring %.4s extension"
 msgstr "extension %.4s ignorée"
 
-#: read-cache.c:1786
+#: read-cache.c:1804
 #, c-format
 msgid "unknown index entry format 0x%08x"
 msgstr "format d'entrée d'index inconnu 0x%08x"
 
-#: read-cache.c:1802
+#: read-cache.c:1820
 #, c-format
 msgid "malformed name field in the index, near path '%s'"
 msgstr "champ de nom malformé dans l'index, près du chemin '%s'"
 
-#: read-cache.c:1859
+#: read-cache.c:1877
 msgid "unordered stage entries in index"
 msgstr "entrées de préparation non ordonnées dans l'index"
 
-#: read-cache.c:1862
+#: read-cache.c:1880
 #, c-format
 msgid "multiple stage entries for merged file '%s'"
 msgstr "entrées multiples de préparation pour le fichier fusionné '%s'"
 
-#: read-cache.c:1865
+#: read-cache.c:1883
 #, c-format
 msgid "unordered stage entries for '%s'"
 msgstr "entrées de préparation non ordonnées pour '%s'"
 
-#: read-cache.c:1971 read-cache.c:2262 rerere.c:549 rerere.c:583 rerere.c:1095
+#: read-cache.c:1989 read-cache.c:2280 rerere.c:549 rerere.c:583 rerere.c:1095
 #: submodule.c:1634 builtin/add.c:546 builtin/check-ignore.c:181
 #: builtin/checkout.c:504 builtin/checkout.c:690 builtin/clean.c:991
 #: builtin/commit.c:364 builtin/diff-tree.c:122 builtin/grep.c:505
@@ -6426,82 +6439,82 @@ msgstr "entrées de préparation non ordonnées pour '%s'"
 msgid "index file corrupt"
 msgstr "fichier d'index corrompu"
 
-#: read-cache.c:2115
+#: read-cache.c:2133
 #, c-format
 msgid "unable to create load_cache_entries thread: %s"
 msgstr "impossible de créer le fil load_cache_entries : %s"
 
-#: read-cache.c:2128
+#: read-cache.c:2146
 #, c-format
 msgid "unable to join load_cache_entries thread: %s"
 msgstr "impossible de joindre le fil load_cach_entries : %s"
 
-#: read-cache.c:2161
+#: read-cache.c:2179
 #, c-format
 msgid "%s: index file open failed"
 msgstr "%s : l'ouverture du fichier d'index a échoué"
 
-#: read-cache.c:2165
+#: read-cache.c:2183
 #, c-format
 msgid "%s: cannot stat the open index"
 msgstr "%s : impossible de faire un stat sur l'index ouvert"
 
-#: read-cache.c:2169
+#: read-cache.c:2187
 #, c-format
 msgid "%s: index file smaller than expected"
 msgstr "%s : fichier d'index plus petit qu'attendu"
 
-#: read-cache.c:2173
+#: read-cache.c:2191
 #, c-format
 msgid "%s: unable to map index file"
 msgstr "%s : impossible de mapper le fichier d'index"
 
-#: read-cache.c:2215
+#: read-cache.c:2233
 #, c-format
 msgid "unable to create load_index_extensions thread: %s"
 msgstr "impossible de créer le fil load_index_extensions : %s"
 
-#: read-cache.c:2242
+#: read-cache.c:2260
 #, c-format
 msgid "unable to join load_index_extensions thread: %s"
 msgstr "impossible de joindre le fil load_index_extensions : %s"
 
-#: read-cache.c:2274
+#: read-cache.c:2292
 #, c-format
 msgid "could not freshen shared index '%s'"
 msgstr "impossible de rafraîchir l'index partagé '%s'"
 
-#: read-cache.c:2321
+#: read-cache.c:2339
 #, c-format
 msgid "broken index, expect %s in %s, got %s"
 msgstr "index cassé, %s attendu dans %s, %s obtenu"
 
-#: read-cache.c:3017 strbuf.c:1171 wrapper.c:633 builtin/merge.c:1141
+#: read-cache.c:3035 strbuf.c:1171 wrapper.c:633 builtin/merge.c:1141
 #, c-format
 msgid "could not close '%s'"
 msgstr "impossible de fermer '%s'"
 
-#: read-cache.c:3120 sequencer.c:2487 sequencer.c:4239
+#: read-cache.c:3138 sequencer.c:2487 sequencer.c:4239
 #, c-format
 msgid "could not stat '%s'"
 msgstr "stat impossible de '%s'"
 
-#: read-cache.c:3133
+#: read-cache.c:3151
 #, c-format
 msgid "unable to open git dir: %s"
 msgstr "impossible d'ouvrir le répertoire git : %s"
 
-#: read-cache.c:3145
+#: read-cache.c:3163
 #, c-format
 msgid "unable to unlink: %s"
 msgstr "échec lors de l'unlink : %s"
 
-#: read-cache.c:3170
+#: read-cache.c:3188
 #, c-format
 msgid "cannot fix permission bits on '%s'"
 msgstr "impossible de régler les bits de droit de '%s'"
 
-#: read-cache.c:3319
+#: read-cache.c:3337
 #, c-format
 msgid "%s: cannot drop to stage #0"
 msgstr "%s : impossible de revenir à l'étape 0"
@@ -6680,243 +6693,248 @@ msgstr "en retard de %d"
 msgid "ahead %d, behind %d"
 msgstr "en avance de %d, en retard de %d"
 
-#: ref-filter.c:169
+#: ref-filter.c:175
 #, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "format attendu : %%(color:<couleur>)"
 
-#: ref-filter.c:171
+#: ref-filter.c:177
 #, c-format
 msgid "unrecognized color: %%(color:%s)"
 msgstr "couleur non reconnue : %%(color:%s)"
 
-#: ref-filter.c:193
+#: ref-filter.c:199
 #, c-format
 msgid "Integer value expected refname:lstrip=%s"
 msgstr "Valeur entière attendue refname:lstrip=%s"
 
-#: ref-filter.c:197
+#: ref-filter.c:203
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "Valeur entière attendue refname:rstrip=%s"
 
-#: ref-filter.c:199
+#: ref-filter.c:205
 #, c-format
 msgid "unrecognized %%(%s) argument: %s"
 msgstr "argument %%(%s) non reconnu : %s"
 
-#: ref-filter.c:254
+#: ref-filter.c:260
 #, c-format
 msgid "%%(objecttype) does not take arguments"
 msgstr "%%(objecttype) n'accepte pas d'argument"
 
-#: ref-filter.c:276
+#: ref-filter.c:282
 #, c-format
 msgid "unrecognized %%(objectsize) argument: %s"
 msgstr "argument %%(objectsize) non reconnu : %s"
 
-#: ref-filter.c:284
+#: ref-filter.c:290
 #, c-format
 msgid "%%(deltabase) does not take arguments"
 msgstr "%%(deltabase) n'accepte pas d'argument"
 
-#: ref-filter.c:296
+#: ref-filter.c:302
 #, c-format
 msgid "%%(body) does not take arguments"
 msgstr "%%(body) n'accepte pas d'argument"
 
-#: ref-filter.c:309
+#: ref-filter.c:315
 #, c-format
 msgid "unrecognized %%(subject) argument: %s"
 msgstr "argument %%(subject) non reconnu : %s"
 
-#: ref-filter.c:330
+#: ref-filter.c:334
+#, c-format
+msgid "expected %%(trailers:key=<value>)"
+msgstr "%%(trailers:key=<value>) attendu"
+
+#: ref-filter.c:336
 #, c-format
 msgid "unknown %%(trailers) argument: %s"
 msgstr "argument %%(trailers) inconnu : %s"
 
-#: ref-filter.c:363
+#: ref-filter.c:367
 #, c-format
 msgid "positive value expected contents:lines=%s"
 msgstr "valeur positive attendue contents:lines=%s"
 
-#: ref-filter.c:365
+#: ref-filter.c:369
 #, c-format
 msgid "unrecognized %%(contents) argument: %s"
 msgstr "argument %%(contents) non reconnu : %s"
 
-#: ref-filter.c:380
+#: ref-filter.c:384
 #, c-format
 msgid "positive value expected '%s' in %%(%s)"
 msgstr "valeur positive attendue '%s' dans %%(%s)"
 
-#: ref-filter.c:384
+#: ref-filter.c:388
 #, c-format
 msgid "unrecognized argument '%s' in %%(%s)"
 msgstr "argument '%s' non reconnu dans %%(%s)"
 
-#: ref-filter.c:398
+#: ref-filter.c:402
 #, c-format
 msgid "unrecognized email option: %s"
 msgstr "option de courriel non reconnue : %s"
 
-#: ref-filter.c:428
+#: ref-filter.c:432
 #, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "format attendu : %%(align:<largeur>,<position>)"
 
-#: ref-filter.c:440
+#: ref-filter.c:444
 #, c-format
 msgid "unrecognized position:%s"
 msgstr "position non reconnue : %s"
 
-#: ref-filter.c:447
+#: ref-filter.c:451
 #, c-format
 msgid "unrecognized width:%s"
 msgstr "largeur non reconnue : %s"
 
-#: ref-filter.c:456
+#: ref-filter.c:460
 #, c-format
 msgid "unrecognized %%(align) argument: %s"
 msgstr "argument %%(align) non reconnu : %s"
 
-#: ref-filter.c:464
+#: ref-filter.c:468
 #, c-format
 msgid "positive width expected with the %%(align) atom"
 msgstr "valeur positive attendue avec l'atome %%(align)"
 
-#: ref-filter.c:482
+#: ref-filter.c:486
 #, c-format
 msgid "unrecognized %%(if) argument: %s"
 msgstr "argument %%(if) non reconnu : %s"
 
-#: ref-filter.c:584
+#: ref-filter.c:588
 #, c-format
 msgid "malformed field name: %.*s"
 msgstr "nom de champ malformé %.*s"
 
-#: ref-filter.c:611
+#: ref-filter.c:615
 #, c-format
 msgid "unknown field name: %.*s"
 msgstr "nom de champ inconnu : %.*s"
 
-#: ref-filter.c:615
+#: ref-filter.c:619
 #, c-format
 msgid ""
 "not a git repository, but the field '%.*s' requires access to object data"
 msgstr ""
 "pas un dépôt git, mais le champ '%.*s' nécessite l'accès aux données d'objet"
 
-#: ref-filter.c:739
+#: ref-filter.c:743
 #, c-format
 msgid "format: %%(if) atom used without a %%(then) atom"
 msgstr "format : atome %%(if) utilisé sans un atome %%(then)"
 
-#: ref-filter.c:802
+#: ref-filter.c:806
 #, c-format
 msgid "format: %%(then) atom used without an %%(if) atom"
 msgstr "format : atome %%(then) utilisé sans un atome %%(if)"
 
-#: ref-filter.c:804
+#: ref-filter.c:808
 #, c-format
 msgid "format: %%(then) atom used more than once"
 msgstr "format : atome %%(then) utilisé plus d'une fois"
 
-#: ref-filter.c:806
+#: ref-filter.c:810
 #, c-format
 msgid "format: %%(then) atom used after %%(else)"
 msgstr "format: atome %%(then) utilisé après %%(else)"
 
-#: ref-filter.c:834
+#: ref-filter.c:838
 #, c-format
 msgid "format: %%(else) atom used without an %%(if) atom"
 msgstr "format : atome %%(else) utilisé sans un atome %%(if)"
 
-#: ref-filter.c:836
+#: ref-filter.c:840
 #, c-format
 msgid "format: %%(else) atom used without a %%(then) atom"
 msgstr "format : atome %%(else) utilisé sans un atome %%(then)"
 
-#: ref-filter.c:838
+#: ref-filter.c:842
 #, c-format
 msgid "format: %%(else) atom used more than once"
 msgstr "format : atome %%(else) utilisé plus d'une fois"
 
-#: ref-filter.c:853
+#: ref-filter.c:857
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "format : atome %%(end) utilisé sans atome correspondant"
 
-#: ref-filter.c:910
+#: ref-filter.c:914
 #, c-format
 msgid "malformed format string %s"
 msgstr "Chaîne de formatage mal formée %s"
 
-#: ref-filter.c:1551
+#: ref-filter.c:1555
 #, c-format
 msgid "(no branch, rebasing %s)"
 msgstr "(aucune branche, rebasage de %s)"
 
-#: ref-filter.c:1554
+#: ref-filter.c:1558
 #, c-format
 msgid "(no branch, rebasing detached HEAD %s)"
 msgstr "(aucune branche, rebasage de la HEAD détachée %s)"
 
-#: ref-filter.c:1557
+#: ref-filter.c:1561
 #, c-format
 msgid "(no branch, bisect started on %s)"
 msgstr "(aucune branche, bisect a démarré sur %s)"
 
-#: ref-filter.c:1561
+#: ref-filter.c:1565
 #, c-format
 msgid "(HEAD detached at %s)"
 msgstr "(HEAD détachée sur %s)"
 
-#: ref-filter.c:1564
+#: ref-filter.c:1568
 #, c-format
 msgid "(HEAD detached from %s)"
 msgstr "(HEAD détachée depuis %s)"
 
-#: ref-filter.c:1567
+#: ref-filter.c:1571
 msgid "(no branch)"
 msgstr "(aucune branche)"
 
-#: ref-filter.c:1599 ref-filter.c:1808
+#: ref-filter.c:1603 ref-filter.c:1812
 #, c-format
 msgid "missing object %s for %s"
 msgstr "objet manquant %s pour %s"
 
-#: ref-filter.c:1609
+#: ref-filter.c:1613
 #, c-format
 msgid "parse_object_buffer failed on %s for %s"
 msgstr "échec de parse_object_buffer sur %s pour %s"
 
-#: ref-filter.c:1992
+#: ref-filter.c:1996
 #, c-format
 msgid "malformed object at '%s'"
 msgstr "objet malformé à '%s'"
 
-#: ref-filter.c:2081
+#: ref-filter.c:2085
 #, c-format
 msgid "ignoring ref with broken name %s"
 msgstr "réf avec un nom cassé %s ignoré"
 
-#: ref-filter.c:2086 refs.c:676
+#: ref-filter.c:2090 refs.c:676
 #, c-format
 msgid "ignoring broken ref %s"
 msgstr "réf cassé %s ignoré"
 
-#: ref-filter.c:2426
+#: ref-filter.c:2430
 #, c-format
 msgid "format: %%(end) atom missing"
 msgstr "format: atome %%(end) manquant"
 
-#: ref-filter.c:2525
+#: ref-filter.c:2529
 #, c-format
 msgid "malformed object name %s"
 msgstr "nom d'objet malformé %s"
 
-#: ref-filter.c:2530
+#: ref-filter.c:2534
 #, c-format
 msgid "option `%s' must point to a commit"
 msgstr "l'option '%s' doit pointer sur un commit"
@@ -9582,7 +9600,8 @@ msgstr "impossible de localiser le dépôt ; .git n'est pas un fichier"
 
 #: worktree.c:737
 msgid "unable to locate repository; .git file does not reference a repository"
-msgstr "impossible de localiser le dépôt ; .git ne fait pas référence à un dépôt"
+msgstr ""
+"impossible de localiser le dépôt ; .git ne fait pas référence à un dépôt"
 
 #: worktree.c:741
 msgid "unable to locate repository; .git file broken"
@@ -11206,15 +11225,20 @@ msgstr "référence à ignorer %s introuvable"
 
 #: builtin/blame.c:867
 msgid "show blame entries as we find them, incrementally"
-msgstr "montrer les éléments de blâme au fur et à mesure de leur découverte, de manière incrémentale"
+msgstr ""
+"montrer les éléments de blâme au fur et à mesure de leur découverte, de "
+"manière incrémentale"
 
 #: builtin/blame.c:868
 msgid "do not show object names of boundary commits (Default: off)"
-msgstr "ne pas montrer les noms des objets pour les commits de limite (Défaut : désactivé)"
+msgstr ""
+"ne pas montrer les noms des objets pour les commits de limite (Défaut : "
+"désactivé)"
 
 #: builtin/blame.c:869
 msgid "do not treat root commits as boundaries (Default: off)"
-msgstr "ne pas traiter les commits racine comme des limites (Défaut : désactivé)"
+msgstr ""
+"ne pas traiter les commits racine comme des limites (Défaut : désactivé)"
 
 #: builtin/blame.c:870
 msgid "show work cost statistics"
@@ -11294,11 +11318,13 @@ msgstr "colorier les lignes par âge"
 
 #: builtin/blame.c:887
 msgid "spend extra cycles to find better match"
-msgstr "dépenser des cycles supplémentaires pour trouver une meilleure correspondance"
+msgstr ""
+"dépenser des cycles supplémentaires pour trouver une meilleure correspondance"
 
 #: builtin/blame.c:888
 msgid "use revisions from <file> instead of calling git-rev-list"
-msgstr "utiliser les révisions du fichier <fichier> au lieu d'appeler git-rev-list"
+msgstr ""
+"utiliser les révisions du fichier <fichier> au lieu d'appeler git-rev-list"
 
 #: builtin/blame.c:889
 msgid "use <file>'s contents as the final image"
@@ -11322,7 +11348,9 @@ msgstr "plage"
 
 #: builtin/blame.c:893
 msgid "process only line range <start>,<end> or function :<funcname>"
-msgstr "traiter seulement l'intervalle de ligne <début>,<fin> ou la fonction : <nom-de-fonction>"
+msgstr ""
+"traiter seulement l'intervalle de ligne <début>,<fin> ou la fonction : <nom-"
+"de-fonction>"
 
 #: builtin/blame.c:945
 msgid "--progress can't be used with --incremental or porcelain formats"
@@ -14809,7 +14837,9 @@ msgstr "convertit <depuis> en <vers> dans la sortie anonymisée"
 
 #: builtin/fast-export.c:1229
 msgid "reference parents which are not in fast-export stream by object id"
-msgstr "référencer les parents qui ne sont pas dans le flux d'export rapide par id d'objet"
+msgstr ""
+"référencer les parents qui ne sont pas dans le flux d'export rapide par id "
+"d'objet"
 
 #: builtin/fast-export.c:1231
 msgid "show original object ids of blobs/commits"
@@ -15891,7 +15921,7 @@ msgstr "nombre de fils spécifié invalide (%d) pour %s"
 #. variable for tweaking threads, currently
 #. grep.threads
 #.
-#: builtin/grep.c:285 builtin/index-pack.c:1589 builtin/index-pack.c:1792
+#: builtin/grep.c:285 builtin/index-pack.c:1589 builtin/index-pack.c:1808
 #: builtin/pack-objects.c:2944
 #, c-format
 msgid "no threads support, ignoring %s"
@@ -16568,38 +16598,38 @@ msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "longueur chaînée = %d : %lu objet"
 msgstr[1] "longueur chaînée = %d : %lu objets"
 
-#: builtin/index-pack.c:1749
+#: builtin/index-pack.c:1765
 msgid "Cannot come back to cwd"
 msgstr "Impossible de revenir au répertoire de travail courant"
 
-#: builtin/index-pack.c:1803 builtin/index-pack.c:1806
-#: builtin/index-pack.c:1822 builtin/index-pack.c:1826
+#: builtin/index-pack.c:1819 builtin/index-pack.c:1822
+#: builtin/index-pack.c:1838 builtin/index-pack.c:1842
 #, c-format
 msgid "bad %s"
 msgstr "mauvais %s"
 
-#: builtin/index-pack.c:1832 builtin/init-db.c:392 builtin/init-db.c:625
+#: builtin/index-pack.c:1848 builtin/init-db.c:392 builtin/init-db.c:625
 #, c-format
 msgid "unknown hash algorithm '%s'"
 msgstr "algorithme d'empreinte inconnu '%s'"
 
-#: builtin/index-pack.c:1851
+#: builtin/index-pack.c:1867
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin ne peut pas être utilisé sans --stdin"
 
-#: builtin/index-pack.c:1853
+#: builtin/index-pack.c:1869
 msgid "--stdin requires a git repository"
 msgstr "--stdin requiert un dépôt git"
 
-#: builtin/index-pack.c:1855
+#: builtin/index-pack.c:1871
 msgid "--object-format cannot be used with --stdin"
 msgstr "--object-format ne peut pas être utilisé avec --stdin"
 
-#: builtin/index-pack.c:1870
+#: builtin/index-pack.c:1886
 msgid "--verify with no packfile name given"
 msgstr "--verify sans nom de fichier paquet donné"
 
-#: builtin/index-pack.c:1936 builtin/unpack-objects.c:582
+#: builtin/index-pack.c:1956 builtin/unpack-objects.c:582
 msgid "fsck error in pack objects"
 msgstr "erreur de fsck dans les objets paquets"
 
@@ -18625,7 +18655,9 @@ msgstr ""
 msgid ""
 "write_reuse_object: could not locate %s, expected at offset %<PRIuMAX> in "
 "pack %s"
-msgstr "write_reuse_object : impossible de localiser %s, attendu à l'offset %<PRIuMAX> dans le paquet %s"
+msgstr ""
+"write_reuse_object : impossible de localiser %s, attendu à l'offset "
+"%<PRIuMAX> dans le paquet %s"
 
 #: builtin/pack-objects.c:448
 #, c-format
@@ -21852,7 +21884,9 @@ msgstr "trier la sortie sur le nombre de validations par auteur"
 
 #: builtin/shortlog.c:356
 msgid "suppress commit descriptions, only provides commit count"
-msgstr "supprimer les descriptions de validation, fournit seulement le nombre de validations"
+msgstr ""
+"supprimer les descriptions de validation, fournit seulement le nombre de "
+"validations"
 
 #: builtin/shortlog.c:358
 msgid "show the email address of each author"
@@ -22244,7 +22278,8 @@ msgid ""
 "            %s -> %s\n"
 "         to make room.\n"
 msgstr ""
-"AVERTISSEMENT : un fichier non-suivi en travers d'un fichier suivi ! Renommage\n"
+"AVERTISSEMENT : un fichier non-suivi en travers d'un fichier suivi ! "
+"Renommage\n"
 "            %s -> %s\n"
 "         pour faire de la place.\n"
 
@@ -22474,7 +22509,8 @@ msgstr ""
 
 #: builtin/submodule--helper.c:565
 msgid "suppress output of entering each submodule command"
-msgstr "supprimer la sortie lors de l'entrée dans chaque commande de sous-module"
+msgstr ""
+"supprimer la sortie lors de l'entrée dans chaque commande de sous-module"
 
 #: builtin/submodule--helper.c:567 builtin/submodule--helper.c:888
 #: builtin/submodule--helper.c:1487
@@ -22551,7 +22587,9 @@ msgstr "supprimer la sortie d'état du sous-module"
 msgid ""
 "use commit stored in the index instead of the one stored in the submodule "
 "HEAD"
-msgstr "utiliser le commit stocké dans l'index au lieu de celui stocké dans la HEAD du sous-module"
+msgstr ""
+"utiliser le commit stocké dans l'index au lieu de celui stocké dans la HEAD "
+"du sous-module"
 
 #: builtin/submodule--helper.c:893
 msgid "git submodule status [--quiet] [--cached] [--recursive] [<path>...]"
@@ -22639,7 +22677,8 @@ msgstr "échec de mise à jour du dépôt distant pour le sous-module '%s'"
 
 #: builtin/submodule--helper.c:1485
 msgid "suppress output of synchronizing submodule url"
-msgstr "supprimer la sortie lors de la synchronisation de l'URL d'un sous-module"
+msgstr ""
+"supprimer la sortie lors de la synchronisation de l'URL d'un sous-module"
 
 #: builtin/submodule--helper.c:1492
 msgid "git submodule--helper sync [--quiet] [--recursive] [<path>]"
@@ -22686,7 +22725,9 @@ msgstr "Sous-module '%s' (%s) non enregistré pour le chemin '%s'\n"
 
 #: builtin/submodule--helper.c:1624
 msgid "remove submodule working trees even if they contain local changes"
-msgstr "éliminer les arbres de travail des sous-modules même s'ils contiennent des modifications locales"
+msgstr ""
+"éliminer les arbres de travail des sous-modules même s'ils contiennent des "
+"modifications locales"
 
 #: builtin/submodule--helper.c:1625
 msgid "unregister all submodules"
@@ -23714,7 +23755,8 @@ msgstr "afficher les annotations étendues et les raisons, si disponible"
 
 #: builtin/worktree.c:682
 msgid "add 'prunable' annotation to worktrees older than <time>"
-msgstr "ajouter l'annotation 'prunable' aux arbres de travail plus vieux que <temps>"
+msgstr ""
+"ajouter l'annotation 'prunable' aux arbres de travail plus vieux que <temps>"
 
 #: builtin/worktree.c:691
 msgid "--verbose and --porcelain are mutually exclusive"
@@ -23871,14 +23913,22 @@ msgstr "écrire l'objet arbre pour un sous-répertoire <préfixe>"
 msgid "only useful for debugging"
 msgstr "seulement utile pour le débogage"
 
-#: http-fetch.c:114
+#: http-fetch.c:118
 #, c-format
 msgid "argument to --packfile must be a valid hash (got '%s')"
 msgstr "l'argument de --packfile doit être une empreinte valide ('%s' reçu)"
 
-#: http-fetch.c:122
+#: http-fetch.c:128
 msgid "not a git repository"
 msgstr "pas un dépôt git"
+
+#: http-fetch.c:134
+msgid "--packfile requires --index-pack-args"
+msgstr "--packfile nécessite --index-pack-args"
+
+#: http-fetch.c:143
+msgid "--index-pack-args can only be used with --packfile"
+msgstr "--index-pack-args ne peut être utilisé qu'avec --packfile"
 
 #: t/helper/test-fast-rebase.c:141
 msgid "unhandled options"
@@ -23916,10 +23966,13 @@ msgid ""
 "           <command> [<args>]"
 msgstr ""
 "git [--version] [--help] [-C <chemin>] [-c <nom>=<valeur>]\n"
-"           [--exec-path[=<chemin>]] [--html-path] [--man-path] [--info-path]\n"
-"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]\n"
+"           [--exec-path[=<chemin>]] [--html-path] [--man-path] [--info-"
+"path]\n"
+"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
+"bare]\n"
 "           [--git-dir=<chemin>] [--work-tree=<chemin>] [--namespace=<nom>]\n"
-"           [--super-prefix=<chemin>] [--config-env=<nom>=<variable-d-environnement>]\n"
+"           [--super-prefix=<chemin>] [--config-env=<nom>=<variable-d-"
+"environnement>]\n"
 "           <commande> [<args>]"
 
 #: git.c:36
@@ -24947,7 +25000,8 @@ msgstr "Spécifie les fichiers non-suivis à ignorer intentionnellement"
 
 #: command-list.h:209
 msgid "Map author/committer names and/or E-Mail addresses"
-msgstr "Fait correspondre les noms d'auteur/validateur avec les adresses de courriel"
+msgstr ""
+"Fait correspondre les noms d'auteur/validateur avec les adresses de courriel"
 
 #: command-list.h:210
 msgid "Defining submodule properties"
@@ -26334,3 +26388,28 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
+
+#~ msgid "repository contains replace objects; skipping commit-graph"
+#~ msgstr ""
+#~ "le dépôt contient des object de remplacement ; saut du graphe de commits"
+
+#~ msgid "repository contains (deprecated) grafts; skipping commit-graph"
+#~ msgstr ""
+#~ "le dépôt contient des greffes (déconseillées) ; saut du graphe de commits"
+
+#~ msgid "repository is shallow; skipping commit-graph"
+#~ msgstr "le dépôt est superficiel ; saut du graphe de commit"
+
+#, c-format
+#~ msgid "commit-graph improper chunk offset %08x%08x"
+#~ msgstr "décalage de bloc %08x%08x du graphe de commit inadéquat"
+
+#, c-format
+#~ msgid "commit-graph chunk id %08x appears multiple times"
+#~ msgstr "l'id de bloc de graphe de commit %08x apparaît des multiples fois"
+
+#~ msgid "invalid chunk offset (too large)"
+#~ msgstr "décalage de section invalide (trop grand)"
+
+#~ msgid "Writing chunks to multi-pack-index"
+#~ msgstr "Écriture des sections dans l'index multi-paquet"
