@@ -86,7 +86,12 @@ OPTIONS
 	Die if the pack contains broken links. For internal use only.
 
 --fsck-objects::
-	Die if the pack contains broken objects. For internal use only.
+	For internal use only.
++
+Die if the pack contains broken objects. If the pack contains a tree
+pointing to a .gitmodules blob that does not exist, prints the hash of
+that blob (for the caller to check) after the hash that goes into the
+name of the pack/idx file (see "Notes").
 
 --threads=<n>::
 	Specifies the number of threads to spawn when resolving

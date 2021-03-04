@@ -875,6 +875,7 @@ set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
 set default_config(user.name) {}
 set default_config(user.email) {}
+set default_config(core.commentchar) "#"
 
 set default_config(gui.encoding) [encoding system]
 set default_config(gui.matchtrackingbranch) false
@@ -3436,6 +3437,10 @@ proc trace_commit_type {varname args} {
 	merge         {set txt [mc "Merge Commit Message:"]}
 	*             {set txt [mc "Commit Message:"]}
 	}
+
+	set comment_char [get_config core.commentchar]
+	set txt [string cat $txt \
+				 [mc " (Lines starting with '$comment_char' will be ignored)"]]
 	$ui_coml conf -text $txt
 }
 trace add variable commit_type write trace_commit_type

@@ -2275,7 +2275,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		status = start_command(&child);
 		if (status)
 			return "index-pack fork failed";
-		pack_lockfile = index_pack_lockfile(child.out);
+		pack_lockfile = index_pack_lockfile(child.out, NULL);
 		close(child.out);
 		status = finish_command(&child);
 		if (status)

@@ -2259,6 +2259,9 @@ void release_http_pack_request(struct http_pack_request *preq)
 	free(preq);
 }
 
+static const char *default_index_pack_args[] =
+	{"index-pack", "--stdin", NULL};
+
 int finish_http_pack_request(struct http_pack_request *preq)
 {
 	struct child_process ip = CHILD_PROCESS_INIT;
@@ -2270,17 +2273,15 @@ int finish_http_pack_request(struct http_pack_request *preq)
 
 	tmpfile_fd = xopen(preq->tmpfile.buf, O_RDONLY);
 
-	strvec_push(&ip.args, "index-pack");
-	strvec_push(&ip.args, "--stdin");
 	ip.git_cmd = 1;
 	ip.in = tmpfile_fd;
-	if (preq->generate_keep) {
-		strvec_pushf(&ip.args, "--keep=git %"PRIuMAX,
-			     (uintmax_t)getpid());
+	ip.argv = preq->index_pack_args ? preq->index_pack_args
+					: default_index_pack_args;
+
+	if (preq->preserve_index_pack_stdout)
 		ip.out = 0;
-	} else {
+	else
 		ip.no_stdout = 1;
-	}
 
 	if (run_command(&ip)) {
 		ret = -1;

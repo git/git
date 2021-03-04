@@ -1364,7 +1364,9 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 					     struct cache_entry *ce,
 					     unsigned int options, int *err,
-					     int *changed_ret)
+					     int *changed_ret,
+					     int *t2_did_lstat,
+					     int *t2_did_scan)
 {
 	struct stat st;
 	struct cache_entry *updated;
@@ -1406,6 +1408,8 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 		return NULL;
 	}
 
+	if (t2_did_lstat)
+		*t2_did_lstat = 1;
 	if (lstat(ce->name, &st) < 0) {
 		if (ignore_missing && errno == ENOENT)
 			return ce;
@@ -1442,6 +1446,8 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 		}
 	}
 
+	if (t2_did_scan)
+		*t2_did_scan = 1;
 	if (ie_modified(istate, ce, &st, options)) {
 		if (err)
 			*err = EINVAL;
@@ -1519,6 +1525,8 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	const char *added_fmt;
 	const char *unmerged_fmt;
 	struct progress *progress = NULL;
+	int t2_sum_lstat = 0;
+	int t2_sum_scan = 0;
 
 	if (flags & REFRESH_PROGRESS && isatty(2))
 		progress = start_delayed_progress(_("Refresh index"),
@@ -1536,11 +1544,14 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	 * we only have to do the special cases that are left.
 	 */
 	preload_index(istate, pathspec, 0);
+	trace2_region_enter("index", "refresh", NULL);
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new_entry;
 		int cache_errno = 0;
 		int changed = 0;
 		int filtered = 0;
+		int t2_did_lstat = 0;
+		int t2_did_scan = 0;
 
 		ce = istate->cache[i];
 		if (ignore_submodules && S_ISGITLINK(ce->ce_mode))
@@ -1566,7 +1577,11 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		if (filtered)
 			continue;
 
-		new_entry = refresh_cache_ent(istate, ce, options, &cache_errno, &changed);
+		new_entry = refresh_cache_ent(istate, ce, options,
+					      &cache_errno, &changed,
+					      &t2_did_lstat, &t2_did_scan);
+		t2_sum_lstat += t2_did_lstat;
+		t2_sum_scan += t2_did_scan;
 		if (new_entry == ce)
 			continue;
 		if (progress)
@@ -1602,6 +1617,9 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 
 		replace_index_entry(istate, i, new_entry);
 	}
+	trace2_data_intmax("index", NULL, "refresh/sum_lstat", t2_sum_lstat);
+	trace2_data_intmax("index", NULL, "refresh/sum_scan", t2_sum_scan);
+	trace2_region_leave("index", "refresh", NULL);
 	if (progress) {
 		display_progress(progress, istate->cache_nr);
 		stop_progress(&progress);
@@ -1614,7 +1632,7 @@ struct cache_entry *refresh_cache_entry(struct index_state *istate,
 					struct cache_entry *ce,
 					unsigned int options)
 {
-	return refresh_cache_ent(istate, ce, options, NULL, NULL);
+	return refresh_cache_ent(istate, ce, options, NULL, NULL, NULL, NULL);
 }
 
 
@@ -2447,7 +2465,7 @@ int repo_index_has_changes(struct repository *repo,
 	}
 }
 
-#define WRITE_BUFFER_SIZE 8192
+#define WRITE_BUFFER_SIZE (128 * 1024)
 static unsigned char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
 

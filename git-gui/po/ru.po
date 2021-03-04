@@ -331,7 +331,7 @@ msgstr "Добавить изменённые файлы в индекс"
 
 #: git-gui.sh:2936
 msgid "Unstage From Commit"
-msgstr "Убрать из издекса"
+msgstr "Убрать из индекса"
 
 #: git-gui.sh:2942 lib/index.tcl:521
 msgid "Revert Changes"
