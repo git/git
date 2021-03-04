@@ -199,7 +199,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Preliminary changes to fsmonitor integration.
 
- * Performance optimization work on the rename detection continues.
+ * Performance improvements for rename detection.
 
  * The common code to deal with "chunked file format" that is shared
    by the multi-pack-index and commit-graph files have been factored
