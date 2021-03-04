@@ -222,6 +222,11 @@ Performance, Internal Implementation, Development Support etc.
  * Raise the buffer size used when writing the index file out from
    (obviously too small) 8kB to (clearly sufficiently large) 128kB.
 
+ * It is reported that open() on some platforms (e.g. macOS Big Sur)
+   can return EINTR even though our timers are set up with SA_RESTART.
+   A workaround has been implemented and enabled for macOS to rerun
+   open() transparently from the caller when this happens.
+
 
 Fixes since v2.30
 -----------------
