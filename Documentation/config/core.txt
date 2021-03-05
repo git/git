@@ -71,7 +71,7 @@ git by avoiding unnecessary scanning of files that have not changed.
 +
 See the "fsmonitor-watchman" section of linkgit:githooks[5].
 +
-Note: The value of this config setting is ignored if the
+Note: The value of this config setting is ignored if the (experimental)
 built-in file system monitor is enabled (see `core.useBuiltinFSMonitor`).
 
 core.fsmonitorHookVersion::
@@ -91,7 +91,7 @@ Note: The value of this config setting is ignored if the
 built-in file system monitor is enabled (see `core.useBuiltinFSMonitor`).
 
 core.useBuiltinFSMonitor::
-	If set to true, enable the built-in file system monitor
+	(EXPERIMENTAL) If set to true, enable the built-in file system monitor
 	daemon for this working directory (linkgit:git-fsmonitor--daemon[1]).
 +
 Like hook-based file system monitors, the built-in file system monitor
