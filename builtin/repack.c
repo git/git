@@ -545,12 +545,14 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	strvec_push(&cmd.args, "--non-empty");
 	if (!geometry) {
 		/*
-		 * 'git pack-objects' will up all objects loose or packed
-		 * (either rolling them up or leaving them alone), so don't pass
-		 * these options.
+		 * We need to grab all reachable objects, including those that
+		 * are reachable from reflogs and the index.
 		 *
-		 * The implementation of 'git pack-objects --stdin-packs'
-		 * makes them redundant (and the two are incompatible).
+		 * When repacking into a geometric progression of packs,
+		 * however, we ask 'git pack-objects --stdin-packs', and it is
+		 * not about packing objects based on reachability but about
+		 * repacking all the objects in specified packs and loose ones
+		 * (indeed, --stdin-packs is incompatible with these options).
 		 */
 		strvec_push(&cmd.args, "--all");
 		strvec_push(&cmd.args, "--reflog");
