@@ -411,7 +411,7 @@ void remove_fsmonitor(struct index_state *istate)
 void tweak_fsmonitor(struct index_state *istate)
 {
 	unsigned int i;
-	int fsmonitor_enabled = git_config_get_fsmonitor();
+	int fsmonitor_enabled = repo_config_get_fsmonitor(istate->repo ? istate->repo : the_repository);
 
 	if (istate->fsmonitor_dirty) {
 		if (fsmonitor_enabled) {
