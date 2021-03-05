@@ -363,6 +363,12 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	for (i = geometry->pack_nr - 1; i > 0; i--) {
 		struct packed_git *ours = geometry->pack[i];
 		struct packed_git *prev = geometry->pack[i - 1];
+
+		if (unsigned_mult_overflows(factor, geometry_pack_weight(prev)))
+			die(_("pack %s too large to consider in geometric "
+			      "progression"),
+			    prev->pack_name);
+
 		if (geometry_pack_weight(ours) < factor * geometry_pack_weight(prev))
 			break;
 	}
@@ -388,11 +394,25 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	 * packs in the heavy half need to be joined into it (if any) to restore
 	 * the geometric progression.
 	 */
-	for (i = 0; i < split; i++)
-		total_size += geometry_pack_weight(geometry->pack[i]);
+	for (i = 0; i < split; i++) {
+		struct packed_git *p = geometry->pack[i];
+
+		if (unsigned_add_overflows(total_size, geometry_pack_weight(p)))
+			die(_("pack %s too large to roll up"), p->pack_name);
+		total_size += geometry_pack_weight(p);
+	}
 	for (i = split; i < geometry->pack_nr; i++) {
 		struct packed_git *ours = geometry->pack[i];
+
+		if (unsigned_mult_overflows(factor, total_size))
+			die(_("pack %s too large to roll up"), ours->pack_name);
+
 		if (geometry_pack_weight(ours) < factor * total_size) {
+			if (unsigned_add_overflows(total_size,
+						   geometry_pack_weight(ours)))
+				die(_("pack %s too large to roll up"),
+				    ours->pack_name);
+
 			split++;
 			total_size += geometry_pack_weight(ours);
 		} else
