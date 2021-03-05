@@ -351,7 +351,7 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	uint32_t split;
 	off_t total_size = 0;
 
-	if (geometry->pack_nr <= 1) {
+	if (!geometry->pack_nr) {
 		geometry->split = geometry->pack_nr;
 		return;
 	}

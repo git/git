@@ -20,6 +20,21 @@ test_expect_success '--geometric with no packs' '
 	)
 '
 
+test_expect_success '--geometric with one pack' '
+	git init geometric &&
+	test_when_finished "rm -fr geometric" &&
+	(
+		cd geometric &&
+
+		test_commit "base" &&
+		git repack -d &&
+
+		git repack --geometric 2 >out &&
+
+		test_i18ngrep "Nothing new to pack" out
+	)
+'
+
 test_expect_success '--geometric with an intact progression' '
 	git init geometric &&
 	test_when_finished "rm -fr geometric" &&
