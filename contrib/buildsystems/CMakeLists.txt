@@ -695,13 +695,17 @@ endif()
 
 parse_makefile_for_executables(git_builtin_extra "BUILT_INS")
 
+option(SKIP_DASHED_BUILT_INS "Skip hardlinking the dashed versions of the built-ins")
+
 #Creating hardlinks
+if(NOT SKIP_DASHED_BUILT_INS)
 foreach(s ${git_SOURCES} ${git_builtin_extra})
 	string(REPLACE "${CMAKE_SOURCE_DIR}/builtin/" "" s ${s})
 	string(REPLACE ".c" "" s ${s})
 	file(APPEND ${CMAKE_BINARY_DIR}/CreateLinks.cmake "file(CREATE_LINK git${EXE_EXTENSION} git-${s}${EXE_EXTENSION})\n")
 	list(APPEND git_links ${CMAKE_BINARY_DIR}/git-${s}${EXE_EXTENSION})
 endforeach()
+endif()
 
 if(CURL_FOUND)
 	set(remote_exes
