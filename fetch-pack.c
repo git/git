@@ -852,7 +852,7 @@ static int get_pack(struct fetch_pack_args *args,
 	else
 		demux.out = xd[0];
 
-	if (!args->keep_pack && unpack_limit) {
+	if (!args->keep_pack && unpack_limit && !index_pack_args) {
 
 		if (read_pack_header(demux.out, &header))
 			die(_("protocol error: bad pack header"));
@@ -885,7 +885,7 @@ static int get_pack(struct fetch_pack_args *args,
 			strvec_push(&cmd.args, "-v");
 		if (args->use_thin_pack)
 			strvec_push(&cmd.args, "--fix-thin");
-		if (do_keep && (args->lock_pack || unpack_limit)) {
+		if ((do_keep || index_pack_args) && (args->lock_pack || unpack_limit)) {
 			char hostname[HOST_NAME_MAX + 1];
 			if (xgethostname(hostname, sizeof(hostname)))
 				xsnprintf(hostname, sizeof(hostname), "localhost");
