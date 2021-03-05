@@ -356,8 +356,6 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 		return;
 	}
 
-	split = geometry->pack_nr - 1;
-
 	/*
 	 * First, count the number of packs (in descending order of size) which
 	 * already form a geometric progression.
@@ -365,11 +363,11 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	for (i = geometry->pack_nr - 1; i > 0; i--) {
 		struct packed_git *ours = geometry->pack[i];
 		struct packed_git *prev = geometry->pack[i - 1];
-		if (geometry_pack_weight(ours) >= factor * geometry_pack_weight(prev))
-			split--;
-		else
+		if (geometry_pack_weight(ours) < factor * geometry_pack_weight(prev))
 			break;
 	}
+
+	split = i;
 
 	if (split) {
 		/*
