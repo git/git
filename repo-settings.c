@@ -2,13 +2,14 @@
 #include "config.h"
 #include "repository.h"
 #include "midx.h"
-#include "compat/fsmonitor/fsm-listen.h"
+#include "fsmonitor-ipc.h"
+#include "fsmonitor-settings.h"
 
 #define UPDATE_DEFAULT_BOOL(s,v) do { if (s == -1) { s = v; } } while(0)
 
 void prepare_repo_settings(struct repository *r)
 {
-	int value;
+	int value, feature_many_files = 0;
 	char *strval;
 
 	if (r->settings.initialized)
@@ -62,6 +63,7 @@ void prepare_repo_settings(struct repository *r)
 	UPDATE_DEFAULT_BOOL(r->settings.core_multi_pack_index, 1);
 
 	if (!repo_config_get_bool(r, "feature.manyfiles", &value) && value) {
+		feature_many_files = 1;
 		UPDATE_DEFAULT_BOOL(r->settings.index_version, 4);
 		UPDATE_DEFAULT_BOOL(r->settings.core_untracked_cache, UNTRACKED_CACHE_WRITE);
 	}
@@ -70,8 +72,11 @@ void prepare_repo_settings(struct repository *r)
 		r->settings.fetch_write_commit_graph = value;
 	UPDATE_DEFAULT_BOOL(r->settings.fetch_write_commit_graph, 0);
 
-	if (!repo_config_get_bool(r, "feature.experimental", &value) && value)
+	if (!repo_config_get_bool(r, "feature.experimental", &value) && value) {
 		UPDATE_DEFAULT_BOOL(r->settings.fetch_negotiation_algorithm, FETCH_NEGOTIATION_SKIPPING);
+		if (feature_many_files && fsmonitor_ipc__is_supported())
+			fsm_settings__set_ipc(r);
+	}
 
 	/* Hack for test programs like test-dump-untracked-cache */
 	if (ignore_untracked_cache_config)
