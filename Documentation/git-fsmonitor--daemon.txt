@@ -3,7 +3,7 @@ git-fsmonitor--daemon(1)
 
 NAME
 ----
-git-fsmonitor--daemon - Builtin file system monitor daemon
+git-fsmonitor--daemon - (EXPERIMENTAL) Builtin file system monitor daemon
 
 SYNOPSIS
 --------
@@ -19,6 +19,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+
+NOTE! This command is still only an experiment, subject to change dramatically
+(or even to be abandoned).
 
 Monitors files and directories in the working directory for changes using
 platform-specific file system notification facilities.
