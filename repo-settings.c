@@ -63,6 +63,8 @@ void prepare_repo_settings(struct repository *r)
 	/*
 	 * Non-boolean config
 	 */
+	r->settings.fsmonitor = NULL; /* lazy loaded */
+
 	if (!repo_config_get_int(r, "index.version", &value))
 		r->settings.index_version = value;
 
