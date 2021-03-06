@@ -1,12 +1,15 @@
 #include "cache.h"
+#include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
 #include "object-store.h"
 #include "repository.h"
+#include "tmp-objdir.h"
 #include "commit.h"
 #include "tag.h"
 #include "graph.h"
 #include "log-tree.h"
+#include "merge-ort.h"
 #include "reflog-walk.h"
 #include "refs.h"
 #include "string-list.h"
@@ -16,6 +19,7 @@
 #include "line-log.h"
 #include "help.h"
 #include "range-diff.h"
+#include "dir.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -902,6 +906,60 @@ static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 	return !opt->loginfo;
 }
 
+static int do_remerge_diff(struct rev_info *opt,
+			   struct commit_list *parents,
+			   struct object_id *oid,
+			   struct commit *commit)
+{
+	struct merge_options o;
+	struct commit_list *bases;
+	struct merge_result res;
+	struct pretty_print_context ctx = {0};
+	struct strbuf commit1 = STRBUF_INIT;
+	struct strbuf commit2 = STRBUF_INIT;
+
+	/* Setup merge options */
+	init_merge_options(&o, the_repository);
+	memset(&res, 0, sizeof(res));
+	o.show_rename_progress = 0;
+
+	ctx.abbrev = DEFAULT_ABBREV;
+	format_commit_message(parents->item,       "%h (%s)", &commit1, &ctx);
+	format_commit_message(parents->next->item, "%h (%s)", &commit2, &ctx);
+	o.branch1 = commit1.buf;
+	o.branch2 = commit2.buf;
+	o.record_conflict_msgs_as_headers = 1;
+
+	/* Parse the relevant commits and get the merge bases */
+	parse_commit_or_die(parents->item);
+	parse_commit_or_die(parents->next->item);
+	bases = get_merge_bases(parents->item, parents->next->item);
+
+	/* Re-merge the parents */
+	merge_incore_recursive(&o,
+			       bases, parents->item, parents->next->item,
+			       &res);
+
+	/* Show the diff */
+	opt->diffopt.additional_path_headers = res.path_messages;
+	diff_tree_oid(&res.tree->object.oid, oid, "", &opt->diffopt);
+	log_tree_diff_flush(opt);
+
+	/* Cleanup */
+	opt->diffopt.additional_path_headers = NULL;
+	strbuf_release(&commit1);
+	strbuf_release(&commit2);
+	merge_finalize(&o, &res);
+
+	/* Clean up the temporary object directory */
+	if (opt->remerge_objdir != NULL)
+		tmp_objdir_discard_objects(opt->remerge_objdir);
+	else
+		BUG("unable to remove temporary object directory");
+
+	return !opt->loginfo;
+}
+
 /*
  * Show the diff of a commit.
  *
@@ -936,6 +994,18 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	}
 
 	if (is_merge) {
+		int octopus = (parents->next->next != NULL);
+
+		if (opt->remerge_diff) {
+			if (octopus) {
+				show_log(opt);
+				fprintf(opt->diffopt.file,
+					"diff: warning: Skipping remerge-diff "
+					"for octopus merges.\n");
+				return 1;
+			}
+			return do_remerge_diff(opt, parents, oid, commit);
+		}
 		if (opt->combine_merges)
 			return do_diff_combined(opt, commit);
 		if (opt->separate_merges) {

@@ -35,6 +35,8 @@
 #include "repository.h"
 #include "commit-reach.h"
 #include "range-diff.h"
+#include "dir.h"
+#include "tmp-objdir.h"
 
 #define MAIL_DEFAULT_WRAP 72
 #define COVER_FROM_AUTO_MAX_SUBJECT_LEN 100
@@ -407,6 +409,13 @@ static int cmd_log_walk(struct rev_info *rev)
 	int saved_nrl = 0;
 	int saved_dcctc = 0;
 
+	if (rev->remerge_diff) {
+		rev->remerge_objdir = tmp_objdir_create("remerge-diff");
+		if (!rev->remerge_objdir)
+			die(_("unable to create temporary object directory"));
+		tmp_objdir_replace_primary_odb(rev->remerge_objdir, 1);
+	}
+
 	if (rev->early_output)
 		setup_early_output();
 
@@ -448,6 +457,11 @@ static int cmd_log_walk(struct rev_info *rev)
 	rev->diffopt.needed_rename_limit = saved_nrl;
 	rev->diffopt.no_free = 0;
 	diff_free(&rev->diffopt);
+
+	if (rev->remerge_diff) {
+		tmp_objdir_destroy(rev->remerge_objdir);
+		rev->remerge_objdir = NULL;
+	}
 
 	if (rev->diffopt.output_format & DIFF_FORMAT_CHECKDIFF &&
 	    rev->diffopt.flags.check_failed) {
@@ -1943,6 +1957,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		die(_("--name-status does not make sense"));
 	if (rev.diffopt.output_format & DIFF_FORMAT_CHECKDIFF)
 		die(_("--check does not make sense"));
+	if (rev.remerge_diff)
+		die(_("--remerge_diff does not make sense"));
 
 	if (!use_patch_format &&
 		(!rev.diffopt.output_format ||
