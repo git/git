@@ -636,7 +636,7 @@ static int do_recursive_merge(struct repository *r,
 	for (i = 0; i < opts->xopts_nr; i++)
 		parse_merge_opt(&o, opts->xopts[i]);
 
-	if (opts->strategy && !strcmp(opts->strategy, "ort")) {
+	if (!opts->strategy || !strcmp(opts->strategy, "ort")) {
 		memset(&result, 0, sizeof(result));
 		merge_incore_nonrecursive(&o, base_tree, head_tree, next_tree,
 					    &result);
@@ -3988,7 +3988,7 @@ static int do_merge(struct repository *r,
 	o.branch2 = ref_name.buf;
 	o.buffer_output = 2;
 
-	if (opts->strategy && !strcmp(opts->strategy, "ort")) {
+	if (!opts->strategy || !strcmp(opts->strategy, "ort")) {
 		/*
 		 * TODO: Should use merge_incore_recursive() and
 		 * merge_switch_to_result(), skipping the call to
