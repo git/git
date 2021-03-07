@@ -187,7 +187,7 @@ mark a file pair as a rename and stop considering other candidates for
 better matches.  At most, one comparison is done per file in this
 preliminary pass; so if there are several remaining ext.txt files
 throughout the directory hierarchy after exact rename detection, this
-preliminary step will be skipped for those files.
+preliminary step may be skipped for those files.
 
 Note.  When the "-C" option is used with `--find-copies-harder`
 option, 'git diff-{asterisk}' commands feed unmodified filepairs to
