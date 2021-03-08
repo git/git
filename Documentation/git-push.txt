@@ -600,7 +600,7 @@ EXAMPLES
 
 `git push origin`::
 	Without additional configuration, pushes the current branch to
-	the configured upstream (`remote.origin.merge` configuration
+	the configured upstream (`branch.<name>.merge` configuration
 	variable) if it has the same name as the current branch, and
 	errors out without pushing otherwise.
 +
