@@ -2,6 +2,7 @@
 #include "config.h"
 #include "repository.h"
 #include "midx.h"
+#include "fsmonitor-ipc.h"
 
 #define UPDATE_DEFAULT_BOOL(s,v) do { if (s == -1) { s = v; } } while(0)
 
@@ -73,13 +74,9 @@ void prepare_repo_settings(struct repository *r)
 
 	if (!repo_config_get_bool(r, "feature.experimental", &value) && value) {
 		UPDATE_DEFAULT_BOOL(r->settings.fetch_negotiation_algorithm, FETCH_NEGOTIATION_SKIPPING);
-#ifdef HAVE_FSMONITOR_DAEMON_BACKEND
-		if (feature_many_files)
+		if (feature_many_files && fsmonitor_ipc__is_supported())
 			UPDATE_DEFAULT_BOOL(r->settings.use_builtin_fsmonitor,
 					    1);
-#else
-		(void)feature_many_files;
-#endif
 	}
 
 	/* Hack for test programs like test-dump-untracked-cache */

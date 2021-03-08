@@ -82,7 +82,7 @@ static int normalize_path_in_utf8(FILE_NOTIFY_INFORMATION *info,
 		if (len > 0)
 			goto normalize;
 		if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-			error("[GLE %ld] could not convert path to UTF-8: '%.*S'",
+			error("[GLE %ld] could not convert path to UTF-8: '%.*ls'",
 			      GetLastError(),
 			      (int)(info->FileNameLength / sizeof(WCHAR)),
 			      info->FileName);
