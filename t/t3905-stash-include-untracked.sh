@@ -297,4 +297,112 @@ test_expect_success 'stash -u with globs' '
 	test_path_is_missing untracked.txt
 '
 
+test_expect_success 'stash show --include-untracked shows untracked files' '
+	git reset --hard &&
+	git clean -xf &&
+	>untracked &&
+	>tracked &&
+	git add tracked &&
+	empty_blob_oid=$(git rev-parse --short :tracked) &&
+	git stash -u &&
+
+	cat >expect <<-EOF &&
+	 tracked   | 0
+	 untracked | 0
+	 2 files changed, 0 insertions(+), 0 deletions(-)
+	EOF
+	git stash show --include-untracked >actual &&
+	test_cmp expect actual &&
+	git stash show -u >actual &&
+	test_cmp expect actual &&
+	git stash show --no-include-untracked --include-untracked >actual &&
+	test_cmp expect actual &&
+	git stash show --only-untracked --include-untracked >actual &&
+	test_cmp expect actual &&
+	git -c stash.showIncludeUntracked=true stash show >actual &&
+	test_cmp expect actual &&
+
+	cat >expect <<-EOF &&
+	diff --git a/tracked b/tracked
+	new file mode 100644
+	index 0000000..$empty_blob_oid
+	diff --git a/untracked b/untracked
+	new file mode 100644
+	index 0000000..$empty_blob_oid
+	EOF
+	git stash show -p --include-untracked >actual &&
+	test_cmp expect actual &&
+	git stash show --include-untracked -p >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stash show --only-untracked only shows untracked files' '
+	git reset --hard &&
+	git clean -xf &&
+	>untracked &&
+	>tracked &&
+	git add tracked &&
+	empty_blob_oid=$(git rev-parse --short :tracked) &&
+	git stash -u &&
+
+	cat >expect <<-EOF &&
+	 untracked | 0
+	 1 file changed, 0 insertions(+), 0 deletions(-)
+	EOF
+	git stash show --only-untracked >actual &&
+	test_cmp expect actual &&
+	git stash show --no-include-untracked --only-untracked >actual &&
+	test_cmp expect actual &&
+	git stash show --include-untracked --only-untracked >actual &&
+	test_cmp expect actual &&
+
+	cat >expect <<-EOF &&
+	diff --git a/untracked b/untracked
+	new file mode 100644
+	index 0000000..$empty_blob_oid
+	EOF
+	git stash show -p --only-untracked >actual &&
+	test_cmp expect actual &&
+	git stash show --only-untracked -p >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stash show --no-include-untracked cancels --{include,show}-untracked' '
+	git reset --hard &&
+	git clean -xf &&
+	>untracked &&
+	>tracked &&
+	git add tracked &&
+	git stash -u &&
+
+	cat >expect <<-EOF &&
+	 tracked | 0
+	 1 file changed, 0 insertions(+), 0 deletions(-)
+	EOF
+	git stash show --only-untracked --no-include-untracked >actual &&
+	test_cmp expect actual &&
+	git stash show --include-untracked --no-include-untracked >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stash show --include-untracked errors on duplicate files' '
+	git reset --hard &&
+	git clean -xf &&
+	>tracked &&
+	git add tracked &&
+	tree=$(git write-tree) &&
+	i_commit=$(git commit-tree -p HEAD -m "index on any-branch" "$tree") &&
+	test_when_finished "rm -f untracked_index" &&
+	u_commit=$(
+		GIT_INDEX_FILE="untracked_index" &&
+		export GIT_INDEX_FILE &&
+		git update-index --add tracked &&
+		u_tree=$(git write-tree) &&
+		git commit-tree -m "untracked files on any-branch" "$u_tree"
+	) &&
+	w_commit=$(git commit-tree -p HEAD -p "$i_commit" -p "$u_commit" -m "WIP on any-branch" "$tree") &&
+	test_must_fail git stash show --include-untracked "$w_commit" 2>err &&
+	test_i18ngrep "worktree and untracked commit have duplicate entries: tracked" err
+'
+
 test_done
