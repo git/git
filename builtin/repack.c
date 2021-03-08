@@ -351,12 +351,10 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	uint32_t split;
 	off_t total_size = 0;
 
-	if (geometry->pack_nr <= 1) {
+	if (!geometry->pack_nr) {
 		geometry->split = geometry->pack_nr;
 		return;
 	}
-
-	split = geometry->pack_nr - 1;
 
 	/*
 	 * First, count the number of packs (in descending order of size) which
@@ -365,11 +363,17 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	for (i = geometry->pack_nr - 1; i > 0; i--) {
 		struct packed_git *ours = geometry->pack[i];
 		struct packed_git *prev = geometry->pack[i - 1];
-		if (geometry_pack_weight(ours) >= factor * geometry_pack_weight(prev))
-			split--;
-		else
+
+		if (unsigned_mult_overflows(factor, geometry_pack_weight(prev)))
+			die(_("pack %s too large to consider in geometric "
+			      "progression"),
+			    prev->pack_name);
+
+		if (geometry_pack_weight(ours) < factor * geometry_pack_weight(prev))
 			break;
 	}
+
+	split = i;
 
 	if (split) {
 		/*
@@ -390,11 +394,25 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	 * packs in the heavy half need to be joined into it (if any) to restore
 	 * the geometric progression.
 	 */
-	for (i = 0; i < split; i++)
-		total_size += geometry_pack_weight(geometry->pack[i]);
+	for (i = 0; i < split; i++) {
+		struct packed_git *p = geometry->pack[i];
+
+		if (unsigned_add_overflows(total_size, geometry_pack_weight(p)))
+			die(_("pack %s too large to roll up"), p->pack_name);
+		total_size += geometry_pack_weight(p);
+	}
 	for (i = split; i < geometry->pack_nr; i++) {
 		struct packed_git *ours = geometry->pack[i];
+
+		if (unsigned_mult_overflows(factor, total_size))
+			die(_("pack %s too large to roll up"), ours->pack_name);
+
 		if (geometry_pack_weight(ours) < factor * total_size) {
+			if (unsigned_add_overflows(total_size,
+						   geometry_pack_weight(ours)))
+				die(_("pack %s too large to roll up"),
+				    ours->pack_name);
+
 			split++;
 			total_size += geometry_pack_weight(ours);
 		} else
@@ -527,12 +545,14 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	strvec_push(&cmd.args, "--non-empty");
 	if (!geometry) {
 		/*
-		 * 'git pack-objects' will up all objects loose or packed
-		 * (either rolling them up or leaving them alone), so don't pass
-		 * these options.
+		 * We need to grab all reachable objects, including those that
+		 * are reachable from reflogs and the index.
 		 *
-		 * The implementation of 'git pack-objects --stdin-packs'
-		 * makes them redundant (and the two are incompatible).
+		 * When repacking into a geometric progression of packs,
+		 * however, we ask 'git pack-objects --stdin-packs', and it is
+		 * not about packing objects based on reachability but about
+		 * repacking all the objects in specified packs and loose ones
+		 * (indeed, --stdin-packs is incompatible with these options).
 		 */
 		strvec_push(&cmd.args, "--all");
 		strvec_push(&cmd.args, "--reflog");

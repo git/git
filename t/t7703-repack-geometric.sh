@@ -20,6 +20,21 @@ test_expect_success '--geometric with no packs' '
 	)
 '
 
+test_expect_success '--geometric with one pack' '
+	git init geometric &&
+	test_when_finished "rm -fr geometric" &&
+	(
+		cd geometric &&
+
+		test_commit "base" &&
+		git repack -d &&
+
+		git repack --geometric 2 >out &&
+
+		test_i18ngrep "Nothing new to pack" out
+	)
+'
+
 test_expect_success '--geometric with an intact progression' '
 	git init geometric &&
 	test_when_finished "rm -fr geometric" &&
@@ -36,6 +51,37 @@ test_expect_success '--geometric with an intact progression' '
 		find $objdir/pack -name "*.pack" | sort >actual &&
 
 		test_cmp expect actual
+	)
+'
+
+test_expect_success '--geometric with loose objects' '
+	git init geometric &&
+	test_when_finished "rm -fr geometric" &&
+	(
+		cd geometric &&
+
+		# These packs already form a geometric progression.
+		test_commit_bulk --start=1 1 && # 3 objects
+		test_commit_bulk --start=2 2 && # 6 objects
+		# The loose objects are packed together, breaking the
+		# progression.
+		test_commit loose && # 3 objects
+
+		find $objdir/pack -name "*.pack" | sort >before &&
+		git repack --geometric 2 -d &&
+		find $objdir/pack -name "*.pack" | sort >after &&
+
+		comm -13 before after >new &&
+		comm -23 before after >removed &&
+
+		test_line_count = 1 new &&
+		test_must_be_empty removed &&
+
+		git repack --geometric 2 -d &&
+		find $objdir/pack -name "*.pack" | sort >after &&
+
+		# The progression (3, 3, 6) is combined into one new pack.
+		test_line_count = 1 after
 	)
 '
 
