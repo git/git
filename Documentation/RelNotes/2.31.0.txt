@@ -16,6 +16,8 @@ Backward incompatible and other important changes
 
  * The support for deprecated PCRE1 library has been dropped.
 
+ * Fixes for CVE-2021-21300 in Git 2.30.2 (and earlier) is included.
+
 
 UI, Workflows & Features
 
