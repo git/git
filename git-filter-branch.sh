@@ -492,7 +492,7 @@ then
 		sha1=$(git rev-parse "$ref"^0)
 		test -f "$workdir"/../map/$sha1 && continue
 		ancestor=$(git rev-list --simplify-merges -1 "$ref" "$@")
-		test "$ancestor" && echo $(map $ancestor) >> "$workdir"/../map/$sha1
+		test "$ancestor" && echo $(map $ancestor) >"$workdir"/../map/$sha1
 	done < "$tempdir"/heads
 fi
 
@@ -534,14 +534,7 @@ do
 		fi
 	;;
 	*)
-		# NEEDSWORK: possibly add -Werror, making this an error
-		warn "WARNING: '$ref' was rewritten into multiple commits:"
-		warn "$rewritten"
-		warn "WARNING: Ref '$ref' points to the first one now."
-		rewritten=$(echo "$rewritten" | head -n 1)
-		git update-ref -m "filter-branch: rewrite to first" \
-				"$ref" $rewritten $sha1 ||
-			die "Could not rewrite $ref"
+		die "BUG: multiple ancestors in map file?"
 	;;
 	esac
 	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1 ||
