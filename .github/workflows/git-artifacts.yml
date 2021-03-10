@@ -392,8 +392,8 @@ jobs:
         if: matrix.arch.arm64 == true
         shell: bash
         run: |
-          printf '%s\n' '#!/bin/sh' 'exec /mingw32/libexec/git-core/git-credential-manager-core.exe "$@"' > arm64/bin/git-credential-manager-core
-          chmod +x arm64/bin/git-credential-manager-core
+          printf '%s\n' '#!/bin/sh' 'exec /mingw32/libexec/git-core/git-credential-manager-core.exe "$@"' > arm64/libexec/git-core/git-credential-manager-core
+          chmod +x arm64/libexec/git-core/git-credential-manager-core
       - name: Clone and update build-extra
         if: env.SKIP != 'true'
         shell: bash
