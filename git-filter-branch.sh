@@ -498,8 +498,6 @@ fi
 
 # Finally update the refs
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 echo
 while read ref
 do
@@ -519,7 +517,7 @@ do
 		git update-ref -m "filter-branch: delete" -d "$ref" $sha1 ||
 			die "Could not delete $ref"
 	;;
-	$_x40)
+	*)
 		echo "Ref '$ref' was rewritten"
 		if ! git update-ref -m "filter-branch: rewrite" \
 					"$ref" $rewritten $sha1 2>/dev/null; then
@@ -532,9 +530,6 @@ do
 				die "Could not rewrite $ref"
 			fi
 		fi
-	;;
-	*)
-		die "BUG: multiple ancestors in map file?"
 	;;
 	esac
 	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1 ||
