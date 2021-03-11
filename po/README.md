@@ -340,4 +340,50 @@ Usage for git-po-helper:
 
 Run "git-po-helper" without arguments to show usage.
 
+
+Conventions
+-----------
+
+There are some conventions that l10n contributors must follow:
+
+1. The subject of each l10n commit should be prefixed with "l10n: ".
+2. Do not use non-ASCII characters in the subject of a commit.
+3. The length of commit subject (first line of the commit log) should
+   be less than 50 characters, and the length of other lines of the
+   commit log should be no more than 72 characters.
+4. Add "Signed-off-by" trailer to your commit log, like other commits
+   in Git. You can automatically add the trailer by committing with
+   the following command:
+
+        git commit -s
+
+5. Check syntax with "msgfmt" or the following command before creating
+   your commit:
+
+        git-po-helper check-po <XX.po>
+
+6. Squash trivial commits to make history clear.
+7. DO NOT edit files outside "po/" directory.
+8. Other subsystems ("git-gui", "gitk", and Git itself) have their
+   own workflow. See [Documentation/SubmittingPatches][] for
+   instructions on how to contribute patches to these subsystems.
+
+To contribute for a new l10n language, contributor should follow
+additional conventions:
+
+1. Initialize proper filename of the "XX.po" file conforming to
+   iso-639 and iso-3166.
+2. Must complete a minimal translation based on the "po-core/core.pot"
+   template. Using the following command to initialize the minimal
+   "po-core/XX.po" file:
+
+        git-po-helper init --core <your-language>
+
+3. Add a new entry in the "po/TEAMS" file with proper format, and check
+   the syntax of "po/TEAMS" by runnning the following command:
+
+        git-po-helper team --check
+
+
 [git-po-helper/README]: https://github.com/git-l10n/git-po-helper#readme
+[Documentation/SubmittingPatches]: Documentation/SubmittingPatches
