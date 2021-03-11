@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2021, #02; Mon, 8)
-X-master-at: be7935ed8bff19f481b033d0d242c5d5f239ed50
-X-next-at: 510d4cfa5f76b646b8e82232cbaed56bd0170dae
+Subject: What's cooking in git.git (Mar 2021, #03; Wed, 10)
+X-master-at: 13d7ab6b5d7929825b626f050b62a11241ea4945
+X-next-at: 7f7177462022378fff6bd671b691b9f3771eb75b
 
-What's cooking in git.git (Mar 2021, #02; Mon, 8)
+What's cooking in git.git (Mar 2021, #03; Wed, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,7 +12,8 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The second release candidate Git v2.31.0-rc2 will be tagged tomorrow.
+The second release candidate Git v2.31.0-rc2, together with
+maintenance releases for CVE-2021-21300, have been released.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -43,119 +44,47 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jk/open-returns-eintr (2021-03-01) 2 commits
-  (merged to 'next' on 2021-03-02 at 7f0218e627)
- + config.mak.uname: enable OPEN_RETURNS_EINTR for macOS Big Sur
- + Makefile: add OPEN_RETURNS_EINTR knob
-
- Work around platforms whose open() is reported to return EINTR (it
- shouldn't, as we do our signals with SA_RESTART).
-
---------------------------------------------------
 [New Topics]
 
-* ab/make-cocci-dedup (2021-03-05) 4 commits
- - Makefile/coccicheck: set SPATCH_BATCH_SIZE to 8
- - Makefile/coccicheck: allow for setting xargs concurrency
- - Makefile/coccicheck: speed up and fix bug with duplicate hunks
- - Makefile/coccicheck: add comment heading for all SPATCH flags
+* ab/tests-cleanup-around-sha1 (2021-03-10) 4 commits
+ - tests: get rid of $_x05 from the test suite
+ - shortlog tests: rewrite to get rid of --abbrev=35 hardcoding
+ - test-lib: remove unused $_x40 and $_z40 variables
+ - git-bisect: remove unused SHA-1 $x40 shell variable
 
- An attempt to speed up the coccicheck target with incorrect
- results.
+ Remove variables that hold regexp and glob that match fixed number
+ of hexadecimal digits from the test suite.
 
- A reroll exists to address correctness issue, but not picked up.
-
-
-* ab/read-tree (2021-03-08) 6 commits
- - tree.h API: remove "stage" parameter from read_tree_recursive()
- - tree.h API: remove support for starting at prefix != ""
- - ls-files: refactor away read_tree()
- - ls-files: don't needlessly pass around stage variable
- - tree.c API: move read_tree() into builtin/ls-files.c
- - ls-files tests: add meaningful --with-tree tests
-
- Code simplification by removing support for a caller that is long gone.
- 
- Looked good.
+ Expecting a reroll.
+ At least the last one weakens a test; there may be similar breakage
+ due to not understanding what they are trying to test.
 
 
-* ab/unexpected-object-type (2021-03-08) 7 commits
- - tag: don't misreport type of tagged objects in errors
- - object tests: add test for unexpected objects in tags
- - object.c: add a utility function for "expected type X, got Y"
- - tree.c: fix misindentation in parse_tree_gently()
- - oid_object_info(): return "enum object_type"
- - object.c: make type_from_string() return "enum object_type"
- - object.c: refactor type_from_string_gently()
+* jk/filter-branch-sha256 (2021-03-10) 3 commits
+ - filter-branch: drop $_x40 glob
+ - filter-branch: drop multiple-ancestor warning
+ - t7003: test ref rewriting explicitly
 
- Error reporting upon object type mismatch has been improved
-
- Looked good.
-
-
-* ah/make-fuzz-all-doc-update (2021-03-04) 1 commit
- - Makefile: update 'make fuzz-all' docs to reflect modern clang
-
- Update insn in Makefile comments to run fuzz-all target.
-
- Needs review.
- cf. <pull.889.v3.git.1615223682911.gitgitgadget@gmail.com>
- cf. <defff7a3-2104-4fa1-7750-0b13ca5cdf59@ahunt.org>
-
-
-* ah/plugleaks (2021-03-08) 7 commits
- - parse-options: don't leak alias help messages
- - init-db: silence template_dir leak when converting to absolute path
- - init: remove git_init_db_config() while fixing leaks
- - worktree: fix leak in dwim_branch()
- - clone: free or UNLEAK further pointers when finished
- - reset: free instead of leaking unneeded ref
- - symbolic-ref: don't leak shortened refname in check_symref()
-
- Plug or annotate remaining leaks that trigger while running the
- very basic set of tests.
-
-
-* bc/clone-bare-with-conflicting-config (2021-03-08) 1 commit
- - builtin/init-db: handle bare clones when core.bare set to false
-
- "git -c core.bare=false clone --bare ..." would have segfaulted,
- which has been corrected.
+ Code clean-up.
 
  Will merge to 'next'.
+ In the longer term, we might want to remove filter-branch and nudge
+ folks to more modern tools.
 
 
-* dl/cat-file-doc-cleanup (2021-03-03) 2 commits
- - git-cat-file.txt: remove references to "sha1"
- - git-cat-file.txt: monospace args, placeholders and filenames
+* jn/mergetool-hideresolved-is-optional (2021-03-10) 1 commit
+ - mergetool: do not enable hideResolved by default
 
- Doc cleanup.
+ Disable the recent mergetool's hideresolved feature by default for
+ backward compatibility and safety.
 
- Will merge to 'next'.
-
-
-* jh/simple-ipc-cleanups (2021-03-04) 9 commits
- - SQUASH???
- - simple-ipc: update design documentation with more details
- - test-simple-ipc: add --token=<token> string option
- - test-simple-ipc: refactor command line option processing in helper
- - unix-stream-server: add st_dev and st_mode to socket stolen checks
- - simple-ipc: move error handling up a level
- - unix-stream-server: create unix-stream-server.c
- - unix-socket: simplify initialization of unix_stream_listen_opts
- - pkt-line: remove buffer arg from write_packetized_from_fd_no_flush()
- (this branch uses jh/simple-ipc.)
+ Expecting a reroll.  
+ We may want to give a more meaning log message to explain why it is
+ undesirable to turn it on by default.
 
 
-* jr/doc-ignore-typofix (2021-03-03) 1 commit
- - doc: .gitignore documentation typofix
-
- Doc cleanup.
-
- Will merge to 'next'.
-
+--------------------------------------------------
+[Graduated to 'master']
 
 * jt/transfer-fsck-across-packs-fix (2021-03-05) 1 commit
   (merged to 'next' on 2021-03-07 at c79f295216)
@@ -164,48 +93,7 @@ Release tarballs are available at:
  The code to fsck objects received across multiple packs during a
  single git fetch session has been broken when the packfile URI
  feature was in use.  A workaround has been added by disabling the
- codepath to avoid keeping a packfile that is too small.
-
- Will merge to 'master'.
-
-
-* rr/mailmap-entry-self (2021-03-08) 1 commit
- - Add entry for Ramkumar Ramachandra
-
- Will merge to 'next'.
-
-
-* rs/xcalloc-takes-nelem-first (2021-03-08) 1 commit
- - fix xcalloc() argument order
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* sv/t9801-test-path-is-file-cleanup (2021-03-03) 1 commit
- - t9801: replace test -f with test_path_is_file
-
- Test cleanup.
-
- Will merge to 'next'.
-
-
-* tb/git-mv-icase-fix (2021-03-03) 1 commit
- - git mv foo FOO ; git mv foo bar gave an assert
-
- Fix a corner case bug in "git mv" on case insensitive systems,
- which was introduced in 2.29 timeframe.
-
- Will merge to 'next'.
-
-
-* tb/push-simple-uses-branch-merge-config (2021-03-08) 1 commit
- - Documentation/git-push.txt: correct configuration typo
-
- Doc update.
-
- cf. <YEaM7ruZCvaQQbPI@nand.local>
+ codepath that avoids keeping a packfile that is too small.
 
 --------------------------------------------------
 [Stalled]
@@ -347,6 +235,133 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* ab/make-cocci-dedup (2021-03-05) 4 commits
+ - Makefile/coccicheck: set SPATCH_BATCH_SIZE to 8
+ - Makefile/coccicheck: allow for setting xargs concurrency
+ - Makefile/coccicheck: speed up and fix bug with duplicate hunks
+ - Makefile/coccicheck: add comment heading for all SPATCH flags
+
+ An attempt to speed up the coccicheck target with incorrect
+ results.
+
+ A reroll exists to address correctness issue, but not picked up.
+
+
+* ab/read-tree (2021-03-08) 6 commits
+ - tree.h API: remove "stage" parameter from read_tree_recursive()
+ - tree.h API: remove support for starting at prefix != ""
+ - ls-files: refactor away read_tree()
+ - ls-files: don't needlessly pass around stage variable
+ - tree.c API: move read_tree() into builtin/ls-files.c
+ - ls-files tests: add meaningful --with-tree tests
+
+ Code simplification by removing support for a caller that is long gone.
+
+ Looked good.
+
+
+* ab/unexpected-object-type (2021-03-08) 7 commits
+ - tag: don't misreport type of tagged objects in errors
+ - object tests: add test for unexpected objects in tags
+ - object.c: add a utility function for "expected type X, got Y"
+ - tree.c: fix misindentation in parse_tree_gently()
+ - oid_object_info(): return "enum object_type"
+ - object.c: make type_from_string() return "enum object_type"
+ - object.c: refactor type_from_string_gently()
+
+ Error reporting upon object type mismatch has been improved
+
+ Looked good.
+
+
+* ah/make-fuzz-all-doc-update (2021-03-08) 1 commit
+ - Makefile: update 'make fuzz-all' docs to reflect modern clang
+
+ Update insn in Makefile comments to run fuzz-all target.
+
+ Needs review.
+ cf. <pull.889.v3.git.1615223682911.gitgitgadget@gmail.com>
+ cf. <defff7a3-2104-4fa1-7750-0b13ca5cdf59@ahunt.org>
+
+
+* ah/plugleaks (2021-03-08) 7 commits
+ - parse-options: don't leak alias help messages
+ - init-db: silence template_dir leak when converting to absolute path
+ - init: remove git_init_db_config() while fixing leaks
+ - worktree: fix leak in dwim_branch()
+ - clone: free or UNLEAK further pointers when finished
+ - reset: free instead of leaking unneeded ref
+ - symbolic-ref: don't leak shortened refname in check_symref()
+
+ Plug or annotate remaining leaks that trigger while running the
+ very basic set of tests.
+
+
+* bc/clone-bare-with-conflicting-config (2021-03-10) 1 commit
+ - builtin/init-db: handle bare clones when core.bare set to false
+
+ "git -c core.bare=false clone --bare ..." would have segfaulted,
+ which has been corrected.
+
+ Will merge to 'next'.
+
+
+* dl/cat-file-doc-cleanup (2021-03-03) 2 commits
+ - git-cat-file.txt: remove references to "sha1"
+ - git-cat-file.txt: monospace args, placeholders and filenames
+
+ Doc cleanup.
+
+ Will merge to 'next'.
+
+
+* jr/doc-ignore-typofix (2021-03-03) 1 commit
+ - doc: .gitignore documentation typofix
+
+ Doc cleanup.
+
+ Will merge to 'next'.
+
+
+* rr/mailmap-entry-self (2021-03-08) 1 commit
+ - Add entry for Ramkumar Ramachandra
+
+ Will merge to 'next'.
+
+
+* rs/xcalloc-takes-nelem-first (2021-03-08) 1 commit
+ - fix xcalloc() argument order
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* sv/t9801-test-path-is-file-cleanup (2021-03-03) 1 commit
+ - t9801: replace test -f with test_path_is_file
+
+ Test cleanup.
+
+ Will merge to 'next'.
+
+
+* tb/git-mv-icase-fix (2021-03-03) 1 commit
+ - git mv foo FOO ; git mv foo bar gave an assert
+
+ Fix a corner case bug in "git mv" on case insensitive systems,
+ which was introduced in 2.29 timeframe.
+
+ Will merge to 'next'.
+
+
+* tb/push-simple-uses-branch-merge-config (2021-03-08) 1 commit
+ - Documentation/git-push.txt: correct configuration typo
+
+ Doc update.
+
+ cf. <YEaM7ruZCvaQQbPI@nand.local>
+
 
 * ab/remote-write-config-in-camel-case (2021-02-24) 2 commits
   (merged to 'next' on 2021-03-01 at a01bd0d8e4)
@@ -527,13 +542,13 @@ Release tarballs are available at:
  cf. <20210216115801.4773-1-avarab@gmail.com>
 
 
-* cm/rebase-i-fixup-amend-reword (2021-03-01) 6 commits
+* cm/rebase-i-fixup-amend-reword (2021-03-10) 6 commits
  - doc/git-commit: add documentation for fixup=[amend|reword] options
  - t3437: use --fixup with options to create amend! commit
  - t7500: add tests for --fixup=[amend|reword] options
  - commit: add a reword suboption to --fixup
  - commit: add amend suboption to --fixup to create amend! commit
- - sequencer: export subject_length()
+ - sequencer: export and rename subject_length()
  (this branch uses cm/rebase-i and cm/rebase-i-updates.)
 
  "git commit --fixup=<commit>", which was to tweak the changes made
@@ -543,7 +558,6 @@ Release tarballs are available at:
  respectively.
 
  Getting there.
- cf. <20210301084512.27170-1-charvi077@gmail.com>
 
 
 * jk/open-dotgitx-with-nofollow (2021-02-16) 6 commits
@@ -598,26 +612,25 @@ Release tarballs are available at:
  Will cook in 'next', together with "cm/rebase-i".
 
 
-* jh/simple-ipc (2021-02-17) 12 commits
-  (merged to 'next' on 2021-03-01 at 6604451f18)
- + t0052: add simple-ipc tests and t/helper/test-simple-ipc tool
- + simple-ipc: add Unix domain socket implementation
- + unix-socket: create `unix_stream_server__listen_with_lock()`
- + unix-socket: disallow chdir() when creating unix domain sockets
- + unix-socket: add backlog size option to unix_stream_listen()
- + unix-socket: elimiate static unix_stream_socket() helper function
- + simple-ipc: add win32 implementation
- + simple-ipc: design documentation for new IPC mechanism
- + pkt-line: add options argument to read_packetized_to_strbuf()
- + pkt-line: (optionally) libify the packet readers
- + pkt-line: do not issue flush packets in write_packetized_*()
- + pkt-line: eliminate the need for static buffer in packet_write_gently()
- (this branch is used by jh/simple-ipc-cleanups.)
+* jh/simple-ipc (2021-03-09) 12 commits
+ - t0052: add simple-ipc tests and t/helper/test-simple-ipc tool
+ - simple-ipc: add Unix domain socket implementation
+ - unix-stream-server: create unix domain socket under lock
+ - unix-socket: disallow chdir() when creating unix domain sockets
+ - unix-socket: add backlog size option to unix_stream_listen()
+ - unix-socket: eliminate static unix_stream_socket() helper function
+ - simple-ipc: add win32 implementation
+ - simple-ipc: design documentation for new IPC mechanism
+ - pkt-line: add options argument to read_packetized_to_strbuf()
+ - pkt-line: add PACKET_READ_GENTLE_ON_READ_ERROR option
+ - pkt-line: do not issue flush packets in write_packetized_*()
+ - pkt-line: eliminate the need for static buffer in packet_write_gently()
 
  A simple IPC interface gets introduced to build services like
  fsmonitor on top.
 
- Will cook in 'next'.
+ Replaced with a new iteration.
+
 
 
 * cm/rebase-i (2021-01-29) 9 commits
@@ -698,3 +711,19 @@ Release tarballs are available at:
 
  cw/pack-config-doc supersedes this with a bit more coverage on
  related knobs.
+
+
+* jh/simple-ipc-cleanups (2021-03-04) 9 commits
+ - SQUASH???
+ - simple-ipc: update design documentation with more details
+ - test-simple-ipc: add --token=<token> string option
+ - test-simple-ipc: refactor command line option processing in helper
+ - unix-stream-server: add st_dev and st_mode to socket stolen checks
+ - simple-ipc: move error handling up a level
+ - unix-stream-server: create unix-stream-server.c
+ - unix-socket: simplify initialization of unix_stream_listen_opts
+ - pkt-line: remove buffer arg from write_packetized_from_fd_no_flush()
+
+ After kicking jh/simple-ipc out of 'next' and rewinding
+ jh/simple-ipc to contain the incremental clean-up in this follow-up
+ topic, it is no longer needed, hence retired.
