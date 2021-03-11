@@ -89,6 +89,20 @@ struct rename_info {
 	struct strmap dir_renames[3];
 
 	/*
+	 * relevant_sources: deleted paths for which we need rename detection
+	 *
+	 * relevant_sources is a set of deleted paths on each side of
+	 * history for which we need rename detection.  If a path is deleted
+	 * on one side of history, we need to detect if it is part of a
+	 * rename if either
+	 *    * we need to detect renames for an ancestor directory
+	 *    * the file is modified/deleted on the other side of history
+	 * If neither of those are true, we can skip rename detection for
+	 * that path.
+	 */
+	struct strset relevant_sources[3];
+
+	/*
 	 * needed_limit: value needed for inexact rename detection to run
 	 *
 	 * If the current rename limit wasn't high enough for inexact
@@ -358,6 +372,8 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 			strmap_clear(&renames->dir_rename_count[i], 1);
 
 		strmap_func(&renames->dir_renames[i], 0);
+
+		strset_func(&renames->relevant_sources[i]);
 	}
 
 	if (!reinitialize) {
@@ -533,11 +549,20 @@ static void add_pair(struct merge_options *opt,
 		     struct name_entry *names,
 		     const char *pathname,
 		     unsigned side,
-		     unsigned is_add /* if false, is_delete */)
+		     unsigned is_add /* if false, is_delete */,
+		     unsigned match_mask)
 {
 	struct diff_filespec *one, *two;
 	struct rename_info *renames = &opt->priv->renames;
 	int names_idx = is_add ? side : 0;
+
+	if (!is_add) {
+		unsigned content_relevant = (match_mask == 0);
+		unsigned location_relevant = 1; /* FIXME: compute this */
+
+		if (content_relevant || location_relevant)
+			strset_add(&renames->relevant_sources[side], pathname);
+	}
 
 	one = alloc_filespec(pathname);
 	two = alloc_filespec(pathname);
@@ -575,11 +600,13 @@ static void collect_rename_info(struct merge_options *opt,
 
 		/* Check for deletion on side */
 		if ((filemask & 1) && !(filemask & side_mask))
-			add_pair(opt, names, fullname, side, 0 /* delete */);
+			add_pair(opt, names, fullname, side, 0 /* delete */,
+				 match_mask & filemask);
 
 		/* Check for addition on side */
 		if (!(filemask & 1) && (filemask & side_mask))
-			add_pair(opt, names, fullname, side, 1 /* add */);
+			add_pair(opt, names, fullname, side, 1 /* add */,
+				 match_mask & filemask);
 	}
 }
 
@@ -3227,6 +3254,8 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 		strmap_init_with_options(&renames->dir_rename_count[i],
 					 NULL, 1);
 		strmap_init_with_options(&renames->dir_renames[i],
+					 NULL, 0);
+		strset_init_with_options(&renames->relevant_sources[i],
 					 NULL, 0);
 	}
 

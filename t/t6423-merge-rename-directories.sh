@@ -4895,6 +4895,77 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 	)
 '
 
+# Testcase 12g, Testcase with two kinds of "relevant" renames
+#   Commit O: somefile_O, subdir/{a_O,b_O}
+#   Commit A: somefile_A, subdir/{a_O,b_O,c_A}
+#   Commit B: newfile_B,  newdir/{a_B,b_B}
+#   Expected: newfile_{merged}, newdir/{a_B,b_B,c_A}
+
+test_setup_12g () {
+	test_create_repo 12g &&
+	(
+		cd 12g &&
+
+		mkdir -p subdir &&
+		test_write_lines upon a time there was a >somefile &&
+		test_write_lines 1 2 3 4 5 6 7 8 9 10 >subdir/a &&
+		test_write_lines one two three four five six >subdir/b &&
+		git add . &&
+		test_tick &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		test_write_lines once upon a time there was a >somefile &&
+		> subdir/c &&
+		git add somefile subdir/c &&
+		test_tick &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		git mv somefile newfile &&
+		git mv subdir newdir &&
+		echo repo >>newfile &&
+		test_write_lines 1 2 3 4 5 6 7 8 9 10 11 >newdir/a &&
+		test_write_lines one two three four five six seven >newdir/b &&
+		git add newfile newdir &&
+		test_tick &&
+		git commit -m "B"
+	)
+}
+
+test_expect_success '12g: Testcase with two kinds of "relevant" renames' '
+	test_setup_12g &&
+	(
+		cd 12g &&
+
+		git checkout A^0 &&
+
+		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+
+		test_write_lines once upon a time there was a repo >expect &&
+		test_cmp expect newfile &&
+
+		git ls-files -s >out &&
+		test_line_count = 4 out &&
+
+		git rev-parse >actual \
+			HEAD:newdir/a  HEAD:newdir/b   HEAD:newdir/c &&
+		git rev-parse >expect \
+			B:newdir/a     B:newdir/b      A:subdir/c &&
+		test_cmp expect actual &&
+
+		test_must_fail git rev-parse HEAD:subdir/a &&
+		test_must_fail git rev-parse HEAD:subdir/b &&
+		test_must_fail git rev-parse HEAD:subdir/c &&
+		test_path_is_missing subdir/ &&
+		test_path_is_file newdir/c
+	)
+'
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #
