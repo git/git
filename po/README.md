@@ -40,6 +40,30 @@ language, so that the l10n coordinator only needs to interact with one
 person per language.
 
 
+Core translation
+----------------
+The core translation is the smallest set of work that must be completed
+for a new language translation. Because there are more than 5000 messages
+in the template message file "po/git.pot" that need to be translated,
+this is not a piece of cake for the contributor for a new language.
+
+The core template message file which contains a small set of messages
+will be generated in "po-core/core.pot" automatically by running a helper
+program named "git-po-helper" (described later).
+
+    git-po-helper init --core XX.po
+
+After translating the generated "po-core/XX.po", you can merge it to
+"po/XX.po" using the following commands:
+
+    msgcat po-core/XX.po po/XX.po -s -o /tmp/XX.po
+    mv /tmp/XX.po po/XX.po
+    git-po-helper update XX.po
+
+Edit "po/XX.po" by hand to fix "fuzzy" messages, which may have misplaced
+translated messages and duplicate messages.
+
+
 Translation Process Flow
 ------------------------
 The overall data-flow looks like this:
