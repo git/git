@@ -286,3 +286,34 @@ Testing marked strings
 
 Git's tests are run under LANG=C LC_ALL=C. So the tests do not need be
 changed to account for translations as they're added.
+
+
+PO helper
+---------
+
+To make the maintenance of XX.po easier, the l10n coordinator and l10n
+team leaders can use a helper program named "git-po-helper". It is a
+wrapper to gettext suite, specifically written for the purpose of Git
+l10n workflow.
+
+To build and install the helper program from source, see
+[git-po-helper/README][].
+
+Usage for git-po-helper:
+
+  - To start a new language translation:
+
+        git-po-helper init XX.po
+
+  - To update your XX.po file:
+
+        git-po-helper update XX.po
+
+  - To check commit log and syntax of XX.po:
+
+        git-po-helper check-po XX.po
+        git-po-helper check-commits
+
+Run "git-po-helper" without arguments to show usage.
+
+[git-po-helper/README]: https://github.com/git-l10n/git-po-helper#readme
