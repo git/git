@@ -51,6 +51,12 @@ enum merge_side {
 	MERGE_SIDE2 = 2
 };
 
+struct traversal_callback_data {
+	unsigned long mask;
+	unsigned long dirmask;
+	struct name_entry names[3];
+};
+
 struct rename_info {
 	/*
 	 * All variables that are arrays of size 3 correspond to data tracked
@@ -101,6 +107,22 @@ struct rename_info {
 	 * that path.
 	 */
 	struct strset relevant_sources[3];
+
+	/*
+	 * callback_data_*: supporting data structures for alternate traversal
+	 *
+	 * We sometimes need to be able to traverse through all the files
+	 * in a given tree before all immediate subdirectories within that
+	 * tree.  Since traverse_trees() doesn't do that naturally, we have
+	 * a traverse_trees_wrapper() that stores any immediate
+	 * subdirectories while traversing files, then traverses the
+	 * immediate subdirectories later.  These callback_data* variables
+	 * store the information for the subdirectories so that we can do
+	 * that traversal order.
+	 */
+	struct traversal_callback_data *callback_data;
+	int callback_data_nr, callback_data_alloc;
+	char *callback_data_traverse_path;
 
 	/*
 	 * needed_limit: value needed for inexact rename detection to run
@@ -396,6 +418,10 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 		}
 		strmap_clear(&opti->output, 0);
 	}
+
+	/* Clean out callback_data as well. */
+	FREE_AND_NULL(renames->callback_data);
+	renames->callback_data_nr = renames->callback_data_alloc = 0;
 }
 
 static int err(struct merge_options *opt, const char *err, ...)
