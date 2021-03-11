@@ -527,6 +527,7 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 }
 
 static void initialize_dir_rename_info(struct dir_rename_info *info,
+				       struct strset *relevant_sources,
 				       struct strset *dirs_removed,
 				       struct strmap *dir_rename_count)
 {
@@ -534,7 +535,7 @@ static void initialize_dir_rename_info(struct dir_rename_info *info,
 	struct strmap_entry *entry;
 	int i;
 
-	if (!dirs_removed) {
+	if (!dirs_removed && !relevant_sources) {
 		info->setup = 0;
 		return;
 	}
@@ -549,7 +550,20 @@ static void initialize_dir_rename_info(struct dir_rename_info *info,
 	strmap_init_with_options(&info->dir_rename_guess, NULL, 0);
 
 	/* Setup info->relevant_source_dirs */
-	info->relevant_source_dirs = dirs_removed;
+	info->relevant_source_dirs = NULL;
+	if (dirs_removed || !relevant_sources) {
+		info->relevant_source_dirs = dirs_removed; /* might be NULL */
+	} else {
+		info->relevant_source_dirs = xmalloc(sizeof(struct strintmap));
+		strset_init(info->relevant_source_dirs);
+		strset_for_each_entry(relevant_sources, &iter, entry) {
+			char *dirname = get_dirname(entry->key);
+			if (!dirs_removed ||
+			    strset_contains(dirs_removed, dirname))
+				strset_add(info->relevant_source_dirs, dirname);
+			free(dirname);
+		}
+	}
 
 	/*
 	 * Loop setting up both info->idx_map, and doing setup of
@@ -626,6 +640,13 @@ static void cleanup_dir_rename_info(struct dir_rename_info *info,
 
 	/* dir_rename_guess */
 	strmap_clear(&info->dir_rename_guess, 1);
+
+	/* relevant_source_dirs */
+	if (info->relevant_source_dirs &&
+	    info->relevant_source_dirs != dirs_removed) {
+		strset_clear(info->relevant_source_dirs);
+		FREE_AND_NULL(info->relevant_source_dirs);
+	}
 
 	/* dir_rename_count */
 	if (!keep_dir_rename_count) {
@@ -749,6 +770,7 @@ static int idx_possible_rename(char *filename, struct dir_rename_info *info)
 static int find_basename_matches(struct diff_options *options,
 				 int minimum_score,
 				 struct dir_rename_info *info,
+				 struct strset *relevant_sources,
 				 struct strset *dirs_removed)
 {
 	/*
@@ -838,6 +860,11 @@ static int find_basename_matches(struct diff_options *options,
 		const char *base = NULL;
 		intptr_t src_index;
 		intptr_t dst_index;
+
+		/* Skip irrelevant sources */
+		if (relevant_sources &&
+		    !strset_contains(relevant_sources, filename))
+			continue;
 
 		/*
 		 * If the basename is unique among remaining sources, then
@@ -1164,7 +1191,7 @@ void diffcore_rename_extended(struct diff_options *options,
 
 		/* Preparation for basename-driven matching. */
 		trace2_region_enter("diff", "dir rename setup", options->repo);
-		initialize_dir_rename_info(&info,
+		initialize_dir_rename_info(&info, relevant_sources,
 					   dirs_removed, dir_rename_count);
 		trace2_region_leave("diff", "dir rename setup", options->repo);
 
@@ -1172,7 +1199,9 @@ void diffcore_rename_extended(struct diff_options *options,
 		trace2_region_enter("diff", "basename matches", options->repo);
 		rename_count += find_basename_matches(options,
 						      min_basename_score,
-						      &info, dirs_removed);
+						      &info,
+						      relevant_sources,
+						      dirs_removed);
 		trace2_region_leave("diff", "basename matches", options->repo);
 
 		/*
