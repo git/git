@@ -35,18 +35,26 @@ struct bitmap *bitmap_new(void)
 	return bitmap_word_alloc(32);
 }
 
+struct bitmap *bitmap_dup(const struct bitmap *src)
+{
+	struct bitmap *dst = bitmap_word_alloc(src->word_alloc);
+	COPY_ARRAY(dst->words, src->words, src->word_alloc);
+	return dst;
+}
+
+static void bitmap_grow(struct bitmap *self, size_t word_alloc)
+{
+	size_t old_size = self->word_alloc;
+	ALLOC_GROW(self->words, word_alloc, self->word_alloc);
+	memset(self->words + old_size, 0x0,
+	       (self->word_alloc - old_size) * sizeof(eword_t));
+}
+
 void bitmap_set(struct bitmap *self, size_t pos)
 {
 	size_t block = EWAH_BLOCK(pos);
 
-	if (block >= self->word_alloc) {
-		size_t old_size = self->word_alloc;
-		self->word_alloc = block ? block * 2 : 1;
-		REALLOC_ARRAY(self->words, self->word_alloc);
-		memset(self->words + old_size, 0x0,
-			(self->word_alloc - old_size) * sizeof(eword_t));
-	}
-
+	bitmap_grow(self, block + 1);
 	self->words[block] |= EWAH_MASK(pos);
 }
 
@@ -121,6 +129,15 @@ void bitmap_and_not(struct bitmap *self, struct bitmap *other)
 		self->words[i] &= ~other->words[i];
 }
 
+void bitmap_or(struct bitmap *self, const struct bitmap *other)
+{
+	size_t i;
+
+	bitmap_grow(self, other->word_alloc);
+	for (i = 0; i < other->word_alloc; i++)
+		self->words[i] |= other->words[i];
+}
+
 void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 {
 	size_t original_size = self->word_alloc;
@@ -176,6 +193,27 @@ int bitmap_equals(struct bitmap *self, struct bitmap *other)
 	}
 
 	return 1;
+}
+
+int bitmap_is_subset(struct bitmap *self, struct bitmap *other)
+{
+	size_t common_size, i;
+
+	if (self->word_alloc < other->word_alloc)
+		common_size = self->word_alloc;
+	else {
+		common_size = other->word_alloc;
+		for (i = common_size; i < self->word_alloc; i++) {
+			if (self->words[i])
+				return 1;
+		}
+	}
+
+	for (i = 0; i < common_size; i++) {
+		if (self->words[i] & ~other->words[i])
+			return 1;
+	}
+	return 0;
 }
 
 void bitmap_reset(struct bitmap *bitmap)

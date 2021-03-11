@@ -67,19 +67,15 @@ static void get_root_part(struct strbuf *resolved, struct strbuf *remaining)
 #endif
 
 /*
- * Return the real path (i.e., absolute path, with symlinks resolved
- * and extra slashes removed) equivalent to the specified path.  (If
- * you want an absolute path but don't mind links, use
- * absolute_path().)  Places the resolved realpath in the provided strbuf.
- *
- * The directory part of path (i.e., everything up to the last
- * dir_sep) must denote a valid, existing directory, but the last
- * component need not exist.  If die_on_error is set, then die with an
- * informative error message if there is a problem.  Otherwise, return
- * NULL on errors (without generating any output).
+ * If set, any number of trailing components may be missing; otherwise, only one
+ * may be.
  */
-char *strbuf_realpath(struct strbuf *resolved, const char *path,
-		      int die_on_error)
+#define REALPATH_MANY_MISSING (1 << 0)
+/* Should we die if there's an error? */
+#define REALPATH_DIE_ON_ERROR (1 << 1)
+
+static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
+			       int flags)
 {
 	struct strbuf remaining = STRBUF_INIT;
 	struct strbuf next = STRBUF_INIT;
@@ -89,11 +85,14 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 	struct stat st;
 
 	if (!*path) {
-		if (die_on_error)
+		if (flags & REALPATH_DIE_ON_ERROR)
 			die("The empty string is not a valid path");
 		else
 			goto error_out;
 	}
+
+	if (platform_strbuf_realpath(resolved, path))
+		return resolved->buf;
 
 	strbuf_addstr(&remaining, path);
 	get_root_part(resolved, &remaining);
@@ -101,7 +100,7 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 	if (!resolved->len) {
 		/* relative path; can use CWD as the initial resolved path */
 		if (strbuf_getcwd(resolved)) {
-			if (die_on_error)
+			if (flags & REALPATH_DIE_ON_ERROR)
 				die_errno("unable to get current working directory");
 			else
 				goto error_out;
@@ -129,8 +128,9 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 
 		if (lstat(resolved->buf, &st)) {
 			/* error out unless this was the last component */
-			if (errno != ENOENT || remaining.len) {
-				if (die_on_error)
+			if (errno != ENOENT ||
+			   (!(flags & REALPATH_MANY_MISSING) && remaining.len)) {
+				if (flags & REALPATH_DIE_ON_ERROR)
 					die_errno("Invalid path '%s'",
 						  resolved->buf);
 				else
@@ -143,7 +143,7 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 			if (num_symlinks++ > MAXSYMLINKS) {
 				errno = ELOOP;
 
-				if (die_on_error)
+				if (flags & REALPATH_DIE_ON_ERROR)
 					die("More than %d nested symlinks "
 					    "on path '%s'", MAXSYMLINKS, path);
 				else
@@ -153,7 +153,7 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 			len = strbuf_readlink(&symlink, resolved->buf,
 					      st.st_size);
 			if (len < 0) {
-				if (die_on_error)
+				if (flags & REALPATH_DIE_ON_ERROR)
 					die_errno("Invalid symlink '%s'",
 						  resolved->buf);
 				else
@@ -200,6 +200,37 @@ error_out:
 		strbuf_reset(resolved);
 
 	return retval;
+}
+
+/*
+ * Return the real path (i.e., absolute path, with symlinks resolved
+ * and extra slashes removed) equivalent to the specified path.  (If
+ * you want an absolute path but don't mind links, use
+ * absolute_path().)  Places the resolved realpath in the provided strbuf.
+ *
+ * The directory part of path (i.e., everything up to the last
+ * dir_sep) must denote a valid, existing directory, but the last
+ * component need not exist.  If die_on_error is set, then die with an
+ * informative error message if there is a problem.  Otherwise, return
+ * NULL on errors (without generating any output).
+ */
+char *strbuf_realpath(struct strbuf *resolved, const char *path,
+		      int die_on_error)
+{
+	return strbuf_realpath_1(resolved, path,
+				 die_on_error ? REALPATH_DIE_ON_ERROR : 0);
+}
+
+/*
+ * Just like strbuf_realpath, but allows an arbitrary number of path
+ * components to be missing.
+ */
+char *strbuf_realpath_forgiving(struct strbuf *resolved, const char *path,
+				int die_on_error)
+{
+	return strbuf_realpath_1(resolved, path,
+				 ((die_on_error ? REALPATH_DIE_ON_ERROR : 0) |
+				  REALPATH_MANY_MISSING));
 }
 
 char *real_pathdup(const char *path, int die_on_error)

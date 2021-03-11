@@ -22,7 +22,7 @@
 #define AB_DELAY_WARNING_IN_MS (2 * 1000)
 
 static const char cut_line[] =
-"------------------------ >8 ------------------------\n";
+"------------------------ >8 ------------------------";
 
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
@@ -606,7 +606,9 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	if (s->ignore_submodule_arg) {
 		rev.diffopt.flags.override_submodule_config = 1;
 		handle_ignore_submodules_arg(&rev.diffopt, s->ignore_submodule_arg);
-	}
+	} else if (!rev.diffopt.flags.ignore_submodule_set &&
+			s->show_untracked_files != SHOW_NO_UNTRACKED_FILES)
+		handle_ignore_submodules_arg(&rev.diffopt, "none");
 	rev.diffopt.format_callback = wt_status_collect_changed_cb;
 	rev.diffopt.format_callback_data = s;
 	rev.diffopt.detect_rename = s->detect_rename >= 0 ? s->detect_rename : rev.diffopt.detect_rename;
@@ -999,15 +1001,22 @@ conclude:
 	status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
 }
 
+static inline int starts_with_newline(const char *p)
+{
+    return *p == '\n' || (*p == '\r' && p[1] == '\n');
+}
+
 size_t wt_status_locate_end(const char *s, size_t len)
 {
 	const char *p;
 	struct strbuf pattern = STRBUF_INIT;
 
 	strbuf_addf(&pattern, "\n%c %s", comment_line_char, cut_line);
-	if (starts_with(s, pattern.buf + 1))
+	if (starts_with(s, pattern.buf + 1) &&
+	    starts_with_newline(s + pattern.len - 1))
 		len = 0;
-	else if ((p = strstr(s, pattern.buf)))
+	else if ((p = strstr(s, pattern.buf)) &&
+		 starts_with_newline(p + pattern.len))
 		len = p - s + 1;
 	strbuf_release(&pattern);
 	return len;

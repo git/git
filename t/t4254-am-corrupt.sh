@@ -60,7 +60,7 @@ test_expect_success 'try to apply corrupted patch' '
 	test_must_fail git -c advice.amWorkDir=false am bad-patch.diff 2>actual &&
 	echo "error: git diff header lacks filename information (line 4)" >expected &&
 	test_path_is_file f &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success "NUL in commit message's body" '

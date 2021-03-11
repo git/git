@@ -7,6 +7,7 @@
 #include "tag.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "config.h"
 
 static const char * const show_ref_usage[] = {
 	N_("git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"),
@@ -40,7 +41,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	if (!deref_tags)
 		return;
 
-	if (!peel_ref(refname, &peeled)) {
+	if (!peel_iterated_oid(oid, &peeled)) {
 		hex = find_unique_abbrev(&peeled, abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}

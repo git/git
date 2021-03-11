@@ -8,6 +8,9 @@ test_description='git-cvsserver access
 tests read access to a git repository with the
 cvs CLI client via git-cvsserver server'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then
@@ -45,7 +48,7 @@ test_expect_success 'setup' '
   touch secondrootfile &&
   git add secondrootfile &&
   git commit -m "second root") &&
-  git fetch secondroot master &&
+  git fetch secondroot main &&
   git merge --allow-unrelated-histories FETCH_HEAD &&
   git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
   GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
@@ -57,7 +60,7 @@ test_expect_success 'setup' '
 # note that cvs doesn't accept absolute pathnames
 # as argument to co -d
 test_expect_success 'basic checkout' \
-  'GIT_CONFIG="$git_config" cvs -Q co -d cvswork master &&
+  'GIT_CONFIG="$git_config" cvs -Q co -d cvswork main &&
    test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5 | head -n 1))" = "empty/1.1/" &&
    test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5 | sed -ne \$p))" = "secondrootfile/1.1/"'
 
@@ -226,7 +229,7 @@ GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true || exit 1
 
 test_expect_success 'gitcvs.enabled = false' \
   'GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false &&
-   if GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1
+   if GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1
    then
      echo unexpected cvs success
      false
@@ -240,14 +243,14 @@ rm -fr cvswork2
 test_expect_success 'gitcvs.ext.enabled = true' \
   'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled true &&
    GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false &&
-   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
+   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
    test_cmp cvswork cvswork2'
 
 rm -fr cvswork2
 test_expect_success 'gitcvs.ext.enabled = false' \
   'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled false &&
    GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
-   if GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1
+   if GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1
    then
      echo unexpected cvs success
      false
@@ -261,21 +264,21 @@ rm -fr cvswork2
 test_expect_success 'gitcvs.dbname' \
   'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled true &&
    GIT_DIR="$SERVERDIR" git config gitcvs.dbname %Ggitcvs.%a.%m.sqlite &&
-   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
+   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
    test_cmp cvswork cvswork2 &&
-   test -f "$SERVERDIR/gitcvs.ext.master.sqlite" &&
-   cmp "$SERVERDIR/gitcvs.master.sqlite" "$SERVERDIR/gitcvs.ext.master.sqlite"'
+   test -f "$SERVERDIR/gitcvs.ext.main.sqlite" &&
+   cmp "$SERVERDIR/gitcvs.main.sqlite" "$SERVERDIR/gitcvs.ext.main.sqlite"'
 
 rm -fr cvswork2
 test_expect_success 'gitcvs.ext.dbname' \
   'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled true &&
    GIT_DIR="$SERVERDIR" git config gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
    GIT_DIR="$SERVERDIR" git config gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
-   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
+   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
    test_cmp cvswork cvswork2 &&
-   test -f "$SERVERDIR/gitcvs1.ext.master.sqlite" &&
-   test ! -f "$SERVERDIR/gitcvs2.ext.master.sqlite" &&
-   cmp "$SERVERDIR/gitcvs.master.sqlite" "$SERVERDIR/gitcvs1.ext.master.sqlite"'
+   test -f "$SERVERDIR/gitcvs1.ext.main.sqlite" &&
+   test ! -f "$SERVERDIR/gitcvs2.ext.main.sqlite" &&
+   cmp "$SERVERDIR/gitcvs.main.sqlite" "$SERVERDIR/gitcvs1.ext.main.sqlite"'
 
 
 #------------
@@ -457,7 +460,7 @@ cd "$WORKDIR"
 test_expect_success 'cvs update (module list supports packed refs)' '
     GIT_DIR="$SERVERDIR" git pack-refs --all &&
     GIT_CONFIG="$git_config" cvs -n up -d 2> out &&
-    grep "cvs update: New directory \`master'\''" < out
+    grep "cvs update: New directory \`main'\''" < out
 '
 
 #------------
@@ -499,8 +502,8 @@ test_expect_success 'cvs status (no subdirs in header)' '
 cd "$WORKDIR"
 test_expect_success 'cvs co -c (shows module database)' '
     GIT_CONFIG="$git_config" cvs co -c > out &&
-    grep "^master[	 ][ 	]*master$" <out &&
-    ! grep -v "^master[	 ][ 	]*master$" <out
+    grep "^main[	 ][ 	]*main$" <out &&
+    ! grep -v "^main[	 ][ 	]*main$" <out
 '
 
 #------------
@@ -526,7 +529,7 @@ test_expect_success 'cvs co -c (shows module database)' '
 
 sed -e 's/^x//' -e 's/SP$/ /' > "$WORKDIR/expect" <<EOF
 x
-xRCS file: $WORKDIR/gitcvs.git/master/merge,v
+xRCS file: $WORKDIR/gitcvs.git/main/merge,v
 xWorking file: merge
 xhead: 1.4
 xbranch:

@@ -191,11 +191,16 @@ struct rev_info {
 			match_missing:1,
 			no_commit_id:1,
 			verbose_header:1,
+			always_show_header:1,
+			/* Diff-merge flags */
+			explicit_diff_merges: 1,
+			merges_need_diff: 1,
+			separate_merges: 1,
 			combine_merges:1,
 			combined_all_paths:1,
+			combined_imply_patch:1,
 			dense_combined_merges:1,
-			always_show_header:1;
-	int             ignore_merges:2;
+			first_parent_merges:1;
 
 	/* Format info */
 	int		show_notes;

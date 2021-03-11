@@ -7,6 +7,9 @@ test_description='git reset
 
 Documented tests for git reset'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 commit_msg () {
@@ -72,14 +75,14 @@ test_expect_success 'reset --hard message' '
 	hex=$(git log -1 --format="%h") &&
 	git reset --hard >.actual &&
 	echo HEAD is now at $hex $(commit_msg) >.expected &&
-	test_i18ncmp .expected .actual
+	test_cmp .expected .actual
 '
 
 test_expect_success 'reset --hard message (ISO8859-1 logoutputencoding)' '
 	hex=$(git log -1 --format="%h") &&
 	git -c "i18n.logOutputEncoding=$test_encoding" reset --hard >.actual &&
 	echo HEAD is now at $hex $(commit_msg $test_encoding) >.expected &&
-	test_i18ncmp .expected .actual
+	test_cmp .expected .actual
 '
 
 test_expect_success 'giving a non existing revision should fail' '
@@ -145,7 +148,7 @@ test_expect_success 'trying to do reset --soft with pending merge should fail' '
 	printf "1st line 2nd file\n2nd line 2nd file\n3rd line" >secondfile &&
 	git commit -a -m "the change in branch2" &&
 
-	git checkout master &&
+	git checkout main &&
 	git branch -D branch1 branch2 &&
 	check_changes $head5
 '
@@ -167,7 +170,7 @@ test_expect_success 'trying to do reset --soft with pending checkout merge shoul
 	printf "1st line 2nd file\n2nd line 2nd file\n3rd line" >secondfile &&
 	git commit -a -m "the line in branch3" &&
 
-	git checkout master &&
+	git checkout main &&
 	git branch -D branch3 branch4 &&
 	check_changes $head5
 '
@@ -380,7 +383,7 @@ test_expect_success '--hard reset to ORIG_HEAD should clear a fast-forward merge
 	git reset --hard ORIG_HEAD &&
 	check_changes $head5 &&
 
-	git checkout master &&
+	git checkout main &&
 	git branch -D branch1 branch2 &&
 	check_changes $head5
 '
@@ -466,7 +469,7 @@ test_expect_success '--mixed refreshes the index' '
 	EOF
 	echo 123 >>file2 &&
 	git reset --mixed HEAD >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'resetting specific path that is unmerged' '

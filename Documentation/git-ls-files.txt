@@ -13,6 +13,7 @@ SYNOPSIS
 		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])*
 		(-[c|d|o|i|s|u|k|m])*
 		[--eol]
+		[--deduplicate]
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
@@ -79,6 +80,13 @@ OPTIONS
 -z::
 	\0 line termination on output and do not quote filenames.
 	See OUTPUT below for more information.
+
+--deduplicate::
+	When only filenames are shown, suppress duplicates that may
+	come from having multiple stages during a merge, or giving
+	`--deleted` and `--modified` option at the same time.
+	When any of the `-t`, `--unmerged`, or `--stage` option is
+	in use, this option has no effect.
 
 -x <pattern>::
 --exclude=<pattern>::

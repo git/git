@@ -2,6 +2,9 @@
 
 test_description='git p4 tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '
@@ -198,7 +201,7 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 	EOF
 	chmod 755 badp4dir/p4 &&
 	(
-		PATH="$TRASH_DIRECTORY/badp4dir:$PATH" &&
+		PATH="$TRASH_DIRECTORY/badp4dir$PATH_SEP$PATH" &&
 		export PATH &&
 		test_expect_code 1 git p4 clone --dest="$git" //depot >errs 2>&1
 	) &&
@@ -226,7 +229,7 @@ test_expect_success 'clone --bare should make a bare repository' '
 		git config --get --bool core.bare true &&
 		git rev-parse --verify refs/remotes/p4/master &&
 		git rev-parse --verify refs/remotes/p4/HEAD &&
-		git rev-parse --verify refs/heads/master &&
+		git rev-parse --verify refs/heads/main &&
 		git rev-parse --verify HEAD
 	)
 '

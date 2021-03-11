@@ -7,10 +7,10 @@ perf: pre-clean
 	./run
 
 pre-clean:
-	rm -rf test-results
+	rm -rf test-results test-trace
 
 clean:
-	rm -rf build "trash directory".* test-results
+	rm -rf build "trash directory".* test-results test-trace
 
 test-lint:
 	$(MAKE) -C .. test-lint

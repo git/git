@@ -4,6 +4,9 @@ test_description='test git rev-parse diagnosis for invalid argument'
 
 exec </dev/null
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_did_you_mean ()
@@ -12,7 +15,7 @@ test_did_you_mean ()
 	fatal: path '$2$3' $4, but not ${5:-$SQ$3$SQ}
 	hint: Did you mean '$1:$2$3'${2:+ aka $SQ$1:./$3$SQ}?
 	EOF
-	test_i18ncmp expected error
+	test_cmp expected error
 }
 
 HASH_file=
@@ -137,10 +140,10 @@ test_expect_success 'incorrect file in :path and :N:path' '
 '
 
 test_expect_success 'invalid @{n} reference' '
-	test_must_fail git rev-parse master@{99999} >output 2>error &&
+	test_must_fail git rev-parse main@{99999} >output 2>error &&
 	test_must_be_empty output &&
 	test_i18ngrep "log for [^ ]* only has [0-9][0-9]* entries" error  &&
-	test_must_fail git rev-parse --verify master@{99999} >output 2>error &&
+	test_must_fail git rev-parse --verify main@{99999} >output 2>error &&
 	test_must_be_empty output &&
 	test_i18ngrep "log for [^ ]* only has [0-9][0-9]* entries" error
 '

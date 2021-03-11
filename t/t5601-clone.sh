@@ -2,6 +2,9 @@
 
 test_description=clone
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 X=
@@ -37,7 +40,7 @@ test_expect_success 'clone with excess parameters (2)' '
 
 '
 
-test_expect_success C_LOCALE_OUTPUT 'output from clone' '
+test_expect_success 'output from clone' '
 	rm -fr dst &&
 	git clone -n "file://$(pwd)/src" dst >output 2>&1 &&
 	test $(grep Clon output | wc -l) = 1
@@ -66,6 +69,13 @@ test_expect_success 'clone respects GIT_WORK_TREE' '
 	test -f bare/config &&
 	test -f worktree/file
 
+'
+
+test_expect_success CASE_INSENSITIVE_FS 'core.worktree is not added due to path case' '
+
+	mkdir UPPERCASE &&
+	git clone src "$(pwd)/uppercase" &&
+	test "unset" = "$(git -C UPPERCASE config --default unset core.worktree)"
 '
 
 test_expect_success 'clone from hooks' '
@@ -217,7 +227,7 @@ test_expect_success 'clone respects global branch.autosetuprebase' '
 		rm -fr dst &&
 		git clone src dst &&
 		cd dst &&
-		actual="z$(git config branch.master.rebase)" &&
+		actual="z$(git config branch.main.rebase)" &&
 		test ztrue = $actual
 	)
 '
@@ -591,7 +601,7 @@ test_expect_success 'clone from a repository with two identical branches' '
 
 	(
 		cd src &&
-		git checkout -b another master
+		git checkout -b another main
 	) &&
 	git clone src target-11 &&
 	test "z$( cd target-11 && git symbolic-ref HEAD )" = zrefs/heads/another

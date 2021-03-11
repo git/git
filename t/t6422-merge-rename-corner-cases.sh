@@ -3,6 +3,9 @@
 test_description="recursive merge corner cases w/ renames but not criss-crosses"
 # t6036 has corner cases that involve both criss-cross merges and renames
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
 
@@ -1130,7 +1133,7 @@ test_conflicts_with_adds_and_renames() {
 	# Setup:
 	#          L
 	#         / \
-	#   master   ?
+	#     main   ?
 	#         \ /
 	#          R
 	#
@@ -1260,7 +1263,7 @@ test_conflicts_with_adds_and_renames() {
 				:2:three           \
 				:3:three           &&
 			git rev-parse >expected        \
-				master:irrelevant_file \
+				main:irrelevant_file \
 				file_v2                \
 				file_v4                &&
 			test_cmp expected actual &&
@@ -1290,12 +1293,12 @@ test_conflicts_with_adds_and_renames add    add
 # Setup:
 #          L
 #         / \
-#   master   ?
+#     main   ?
 #         \ /
 #          R
 #
 # Where:
-#   master has two files, named 'one' and 'two'.
+#   main has two files, named 'one' and 'two'.
 #   branches L and R both modify 'one', in conflicting ways.
 #   branches L and R both modify 'two', in conflicting ways.
 #   branch L also renames 'one' to 'three'.
@@ -1376,7 +1379,7 @@ test_expect_success 'check nested conflicts from rename/rename(2to1)' '
 		test_line_count = 1 out &&
 
 		# Compare :2:three to expected values
-		git cat-file -p master:one >base &&
+		git cat-file -p main:one >base &&
 		git cat-file -p L:three >ours &&
 		git cat-file -p R:one >theirs &&
 		test_must_fail git merge-file    \
@@ -1387,7 +1390,7 @@ test_expect_success 'check nested conflicts from rename/rename(2to1)' '
 		test_cmp expect L-three &&
 
 		# Compare :2:three to expected values
-		git cat-file -p master:two >base &&
+		git cat-file -p main:two >base &&
 		git cat-file -p L:two >ours &&
 		git cat-file -p R:three >theirs &&
 		test_must_fail git merge-file    \

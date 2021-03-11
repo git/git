@@ -2,6 +2,9 @@
 
 test_description='push from/to a shallow clone'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 commit() {
@@ -44,9 +47,9 @@ test_expect_success 'push from shallow clone' '
 	(
 	cd shallow &&
 	commit 5 &&
-	git push ../.git +master:refs/remotes/shallow/master
+	git push ../.git +main:refs/remotes/shallow/main
 	) &&
-	git log --format=%s shallow/master >actual &&
+	git log --format=%s shallow/main >actual &&
 	git fsck &&
 	cat <<EOF >expect &&
 5
@@ -61,10 +64,10 @@ EOF
 test_expect_success 'push from shallow clone, with grafted roots' '
 	(
 	cd shallow2 &&
-	test_must_fail git push ../.git +master:refs/remotes/shallow2/master 2>err &&
-	grep "shallow2/master.*shallow update not allowed" err
+	test_must_fail git push ../.git +main:refs/remotes/shallow2/main 2>err &&
+	grep "shallow2/main.*shallow update not allowed" err
 	) &&
-	test_must_fail git rev-parse shallow2/master &&
+	test_must_fail git rev-parse shallow2/main &&
 	git fsck
 '
 
@@ -72,9 +75,9 @@ test_expect_success 'add new shallow root with receive.updateshallow on' '
 	test_config receive.shallowupdate true &&
 	(
 	cd shallow2 &&
-	git push ../.git +master:refs/remotes/shallow2/master
+	git push ../.git +main:refs/remotes/shallow2/main
 	) &&
-	git log --format=%s shallow2/master >actual &&
+	git log --format=%s shallow2/main >actual &&
 	git fsck &&
 	cat <<EOF >expect &&
 c
@@ -87,12 +90,12 @@ test_expect_success 'push from shallow to shallow' '
 	(
 	cd shallow &&
 	git --git-dir=../shallow2/.git config receive.shallowupdate true &&
-	git push ../shallow2/.git +master:refs/remotes/shallow/master &&
+	git push ../shallow2/.git +main:refs/remotes/shallow/main &&
 	git --git-dir=../shallow2/.git config receive.shallowupdate false
 	) &&
 	(
 	cd shallow2 &&
-	git log --format=%s shallow/master >actual &&
+	git log --format=%s shallow/main >actual &&
 	git fsck &&
 	cat <<EOF >expect &&
 5
@@ -106,10 +109,10 @@ EOF
 test_expect_success 'push from full to shallow' '
 	! git --git-dir=shallow2/.git cat-file blob $(echo 1|git hash-object --stdin) &&
 	commit 1 &&
-	git push shallow2/.git +master:refs/remotes/top/master &&
+	git push shallow2/.git +main:refs/remotes/top/main &&
 	(
 	cd shallow2 &&
-	git log --format=%s top/master >actual &&
+	git log --format=%s top/main >actual &&
 	git fsck &&
 	cat <<EOF >expect &&
 1

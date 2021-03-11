@@ -3,6 +3,7 @@
 #include "dir.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "fsmonitor-ipc.h"
 #include "run-command.h"
 #include "strbuf.h"
 
@@ -13,14 +14,19 @@
 
 struct trace_key trace_fsmonitor = TRACE_KEY_INIT(FSMONITOR);
 
+static void assert_index_minimum(struct index_state *istate, size_t pos)
+{
+	if (pos > istate->cache_nr)
+		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
+		    (uintmax_t)pos, istate->cache_nr);
+}
+
 static void fsmonitor_ewah_callback(size_t pos, void *is)
 {
 	struct index_state *istate = (struct index_state *)is;
 	struct cache_entry *ce;
 
-	if (pos >= istate->cache_nr)
-		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" >= %u)",
-		    (uintmax_t)pos, istate->cache_nr);
+	assert_index_minimum(istate, pos + 1);
 
 	ce = istate->cache[pos];
 	ce->ce_flags &= ~CE_FSMONITOR_VALID;
@@ -82,12 +88,14 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 	}
 	istate->fsmonitor_dirty = fsmonitor_dirty;
 
-	if (!istate->split_index &&
-	    istate->fsmonitor_dirty->bit_size > istate->cache_nr)
-		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
-		    (uintmax_t)istate->fsmonitor_dirty->bit_size, istate->cache_nr);
+	if (!istate->split_index)
+		assert_index_minimum(istate, istate->fsmonitor_dirty->bit_size);
 
-	trace_printf_key(&trace_fsmonitor, "read fsmonitor extension successful");
+	trace2_data_string("index", NULL, "extension/fsmn/read/token",
+			   istate->fsmonitor_last_update);
+	trace_printf_key(&trace_fsmonitor,
+			 "read fsmonitor extension successful '%s'",
+			 istate->fsmonitor_last_update);
 	return 0;
 }
 
@@ -110,10 +118,8 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 	uint32_t ewah_size = 0;
 	int fixup = 0;
 
-	if (!istate->split_index &&
-	    istate->fsmonitor_dirty->bit_size > istate->cache_nr)
-		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
-		    (uintmax_t)istate->fsmonitor_dirty->bit_size, istate->cache_nr);
+	if (!istate->split_index)
+		assert_index_minimum(istate, istate->fsmonitor_dirty->bit_size);
 
 	put_be32(&hdr_version, INDEX_EXTENSION_VERSION2);
 	strbuf_add(sb, &hdr_version, sizeof(uint32_t));
@@ -133,18 +139,36 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 	put_be32(&ewah_size, sb->len - ewah_start);
 	memcpy(sb->buf + fixup, &ewah_size, sizeof(uint32_t));
 
-	trace_printf_key(&trace_fsmonitor, "write fsmonitor extension successful");
+	trace2_data_string("index", NULL, "extension/fsmn/write/token",
+			   istate->fsmonitor_last_update);
+	trace_printf_key(&trace_fsmonitor,
+			 "write fsmonitor extension successful '%s'",
+			 istate->fsmonitor_last_update);
 }
 
 /*
  * Call the query-fsmonitor hook passing the last update token of the saved results.
  */
-static int query_fsmonitor(int version, const char *last_update, struct strbuf *query_result)
+static int query_fsmonitor(int version, struct index_state *istate, struct strbuf *query_result)
 {
+	struct repository *r = istate->repo ? istate->repo : the_repository;
+	const char *last_update = istate->fsmonitor_last_update;
 	struct child_process cp = CHILD_PROCESS_INIT;
+	int result;
 
 	if (!core_fsmonitor)
 		return -1;
+
+	if (r->settings.use_builtin_fsmonitor > 0) {
+#ifdef HAVE_FSMONITOR_DAEMON_BACKEND
+		return fsmonitor_ipc__send_query(last_update, query_result);
+#else
+		/* Fake a trivial response. */
+		warning(_("fsmonitor--daemon unavailable; falling back"));
+		strbuf_add(query_result, "/", 2);
+		return 0;
+#endif
+	}
 
 	strvec_push(&cp.args, core_fsmonitor);
 	strvec_pushf(&cp.args, "%d", version);
@@ -152,16 +176,63 @@ static int query_fsmonitor(int version, const char *last_update, struct strbuf *
 	cp.use_shell = 1;
 	cp.dir = get_git_work_tree();
 
-	return capture_command(&cp, query_result, 1024);
+	trace2_region_enter("fsm_hook", "query", NULL);
+
+	result = capture_command(&cp, query_result, 1024);
+
+	if (result)
+		trace2_data_intmax("fsm_hook", NULL, "query/failed", result);
+	else {
+		trace2_data_intmax("fsm_hook", NULL, "query/response-length",
+				   query_result->len);
+
+		if (fsmonitor_is_trivial_response(query_result))
+			trace2_data_intmax("fsm_hook", NULL,
+					   "query/trivial-response", 1);
+	}
+
+	trace2_region_leave("fsm_hook", "query", NULL);
+
+	return result;
 }
 
-static void fsmonitor_refresh_callback(struct index_state *istate, const char *name)
+int fsmonitor_is_trivial_response(const struct strbuf *query_result)
 {
-	int pos = index_name_pos(istate, name, strlen(name));
+	static char trivial_response[3] = { '\0', '/', '\0' };
+	int is_trivial = !memcmp(trivial_response,
+				 &query_result->buf[query_result->len - 3], 3);
 
-	if (pos >= 0) {
-		struct cache_entry *ce = istate->cache[pos];
-		ce->ce_flags &= ~CE_FSMONITOR_VALID;
+	return is_trivial;
+}
+
+static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
+{
+	int i, len = strlen(name);
+	if (name[len - 1] == '/') {
+
+		/*
+		 * TODO We should binary search to find the first path with
+		 * TODO this directory prefix.  Then linearly update entries
+		 * TODO while the prefix matches.  Taking care to search without
+		 * TODO the trailing slash -- because '/' sorts after a few
+		 * TODO interesting special chars, like '.' and ' '.
+		 */
+
+		/* Mark all entries for the folder invalid */
+		for (i = 0; i < istate->cache_nr; i++) {
+			if (istate->cache[i]->ce_flags & CE_FSMONITOR_VALID &&
+			    starts_with(istate->cache[i]->name, name))
+				istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
+		}
+		/* Need to remove the / from the path for the untracked cache */
+		name[len - 1] = '\0';
+	} else {
+		int pos = index_name_pos(istate, name, strlen(name));
+
+		if (pos >= 0) {
+			struct cache_entry *ce = istate->cache[pos];
+			ce->ce_flags &= ~CE_FSMONITOR_VALID;
+		}
 	}
 
 	/*
@@ -206,7 +277,7 @@ void refresh_fsmonitor(struct index_state *istate)
 	if (istate->fsmonitor_last_update) {
 		if (hook_version == -1 || hook_version == HOOK_INTERFACE_VERSION2) {
 			query_success = !query_fsmonitor(HOOK_INTERFACE_VERSION2,
-				istate->fsmonitor_last_update, &query_result);
+				istate, &query_result);
 
 			if (query_success) {
 				if (hook_version < 0)
@@ -236,7 +307,7 @@ void refresh_fsmonitor(struct index_state *istate)
 
 		if (hook_version == HOOK_INTERFACE_VERSION1) {
 			query_success = !query_fsmonitor(HOOK_INTERFACE_VERSION1,
-				istate->fsmonitor_last_update, &query_result);
+				istate, &query_result);
 		}
 
 		trace_performance_since(last_update, "fsmonitor process '%s'", core_fsmonitor);
@@ -282,21 +353,60 @@ void refresh_fsmonitor(struct index_state *istate)
 	}
 	strbuf_release(&query_result);
 
+	/*
+	 * If the fsmonitor response and the subsequent scan of the disk
+	 * did not cause the in-memory index to be marked dirty, then force
+	 * it so that we advance the fsmonitor token in our extension, so
+	 * that future requests don't keep re-requesting the same range.
+	 */
+	if (istate->fsmonitor_last_update &&
+	    strcmp(istate->fsmonitor_last_update, last_update_token.buf))
+		istate->cache_changed |= FSMONITOR_CHANGED;
+
 	/* Now that we've updated istate, save the last_update_token */
 	FREE_AND_NULL(istate->fsmonitor_last_update);
 	istate->fsmonitor_last_update = strbuf_detach(&last_update_token, NULL);
 }
 
+/*
+ * The caller wants to turn on FSMonitor.  And when the caller writes
+ * the index to disk, a FSMonitor extension should be included.  This
+ * requires that `istate->fsmonitor_last_update` not be NULL.  But we
+ * have not actually talked to a FSMonitor process yet, so we don't
+ * have an initial value for this field.
+ *
+ * For a protocol V1 FSMonitor process, this field is a formatted
+ * "nanoseconds since epoch" field.  However, for a protocol V2
+ * FSMonitor process, this field is an opaque token.
+ *
+ * Historically, `add_fsmonitor()` has initialized this field to the
+ * current time for protocol V1 processes.  There are lots of race
+ * conditions here, but that code has shipped...
+ *
+ * The only true solution is to use a V2 FSMonitor and get a current
+ * or default token value (that it understands), but we cannot do that
+ * until we have actually talked to an instance of the FSMonitor process
+ * (but the protocol requires that we send a token first...).
+ *
+ * For simplicity, just initialize like we have a V1 process and require
+ * that V2 processes adapt.
+ */
+static void initialize_fsmonitor_last_update(struct index_state *istate)
+{
+	struct strbuf last_update = STRBUF_INIT;
+
+	strbuf_addf(&last_update, "%"PRIu64"", getnanotime());
+	istate->fsmonitor_last_update = strbuf_detach(&last_update, NULL);
+}
+
 void add_fsmonitor(struct index_state *istate)
 {
 	unsigned int i;
-	struct strbuf last_update = STRBUF_INIT;
 
 	if (!istate->fsmonitor_last_update) {
 		trace_printf_key(&trace_fsmonitor, "add fsmonitor");
 		istate->cache_changed |= FSMONITOR_CHANGED;
-		strbuf_addf(&last_update, "%"PRIu64"", getnanotime());
-		istate->fsmonitor_last_update = strbuf_detach(&last_update, NULL);
+		initialize_fsmonitor_last_update(istate);
 
 		/* reset the fsmonitor state */
 		for (i = 0; i < istate->cache_nr; i++)
@@ -325,7 +435,7 @@ void remove_fsmonitor(struct index_state *istate)
 void tweak_fsmonitor(struct index_state *istate)
 {
 	unsigned int i;
-	int fsmonitor_enabled = git_config_get_fsmonitor();
+	int fsmonitor_enabled = repo_config_get_fsmonitor(istate->repo ? istate->repo : the_repository);
 
 	if (istate->fsmonitor_dirty) {
 		if (fsmonitor_enabled) {
@@ -335,9 +445,7 @@ void tweak_fsmonitor(struct index_state *istate)
 			}
 
 			/* Mark all previously saved entries as dirty */
-			if (istate->fsmonitor_dirty->bit_size > istate->cache_nr)
-				BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
-				    (uintmax_t)istate->fsmonitor_dirty->bit_size, istate->cache_nr);
+			assert_index_minimum(istate, istate->fsmonitor_dirty->bit_size);
 			ewah_each_bit(istate->fsmonitor_dirty, fsmonitor_ewah_callback, istate);
 
 			refresh_fsmonitor(istate);

@@ -2,6 +2,9 @@
 
 test_description='auto squash'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -303,23 +306,23 @@ test_auto_fixup_fixup () {
 	fi
 }
 
-test_expect_success C_LOCALE_OUTPUT 'fixup! fixup!' '
+test_expect_success 'fixup! fixup!' '
 	test_auto_fixup_fixup fixup fixup
 '
 
-test_expect_success C_LOCALE_OUTPUT 'fixup! squash!' '
+test_expect_success 'fixup! squash!' '
 	test_auto_fixup_fixup fixup squash
 '
 
-test_expect_success C_LOCALE_OUTPUT 'squash! squash!' '
+test_expect_success 'squash! squash!' '
 	test_auto_fixup_fixup squash squash
 '
 
-test_expect_success C_LOCALE_OUTPUT 'squash! fixup!' '
+test_expect_success 'squash! fixup!' '
 	test_auto_fixup_fixup squash fixup
 '
 
-test_expect_success C_LOCALE_OUTPUT 'autosquash with custom inst format' '
+test_expect_success 'autosquash with custom inst format' '
 	git reset --hard base &&
 	git config --add rebase.instructionFormat "[%an @ %ar] %s"  &&
 	echo 2 >file1 &&
@@ -407,7 +410,7 @@ test_expect_success 'wrapped original subject' '
 
 test_expect_success 'abort last squash' '
 	test_when_finished "test_might_fail git rebase --abort" &&
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout main" &&
 
 	git checkout -b some-squashes &&
 	git commit --allow-empty -m first &&
@@ -438,6 +441,14 @@ test_expect_success 'fixup a fixup' '
 	git commit -m "squash! $(git rev-parse HEAD^^)" -m W --allow-empty &&
 	git rebase -ki --autosquash HEAD~5 &&
 	test XZWY = $(git show | tr -cd W-Z)
+'
+
+test_expect_success 'fixup does not clean up commit message' '
+	oneline="#818" &&
+	git commit --allow-empty -m "$oneline" &&
+	git commit --fixup HEAD --allow-empty &&
+	git -c commit.cleanup=strip rebase -ki --autosquash HEAD~2 &&
+	test "$oneline" = "$(git show -s --format=%s)"
 '
 
 test_done

@@ -115,7 +115,7 @@ test_expect_success 'create empty repository' '
 
 test_expect_success 'fetch fails' '
 
-	test_must_fail git fetch .. master
+	test_must_fail git fetch .. main
 
 '
 

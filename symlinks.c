@@ -267,6 +267,13 @@ int has_dirs_only_path(const char *name, int len, int prefix_len)
  */
 static int threaded_has_dirs_only_path(struct cache_def *cache, const char *name, int len, int prefix_len)
 {
+	/*
+	 * Note: this function is used by the checkout machinery, which also
+	 * takes care to properly reset the cache when it performs an operation
+	 * that would leave the cache outdated. If this function starts caching
+	 * anything else besides FL_DIR, remember to also invalidate the cache
+	 * when creating or deleting paths that might be in the cache.
+	 */
 	return lstat_cache(cache, name, len,
 			   FL_DIR|FL_FULLPATH, prefix_len) &
 		FL_DIR;
@@ -320,4 +327,21 @@ void schedule_dir_for_removal(const char *name, int len)
 void remove_scheduled_dirs(void)
 {
 	do_remove_scheduled_dirs(0);
+}
+
+void invalidate_lstat_cache(void)
+{
+	reset_lstat_cache(&default_cache);
+}
+
+#undef rmdir
+int lstat_cache_aware_rmdir(const char *path)
+{
+	/* Any change in this function must be made also in `mingw_rmdir()` */
+	int ret = rmdir(path);
+
+	if (!ret)
+		invalidate_lstat_cache();
+
+	return ret;
 }

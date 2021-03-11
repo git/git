@@ -1,12 +1,30 @@
 #!/bin/sh
 
 test_description='test local clone'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 repo_is_hardlinked() {
 	find "$1/objects" -type f -links 1 >output &&
 	test_line_count = 0 output
 }
+
+if test_have_prereq MINGW,BUSYBOX
+then
+	# BusyBox' `find` does not support `-links`. Besides, BusyBox-w32's
+	# lstat() does not report hard links, just like Git's mingw_lstat()
+	# (from where BusyBox-w32 got its initial implementation).
+	repo_is_hardlinked() {
+		for f in $(find "$1/objects" -type f)
+		do
+			"$SYSTEMROOT"/system32/fsutil.exe \
+				hardlink list $f >links &&
+			test_line_count -gt 1 links || return 1
+		done
+	}
+fi
 
 test_expect_success 'preparing origin repository' '
 	: >file && git add . && git commit -m1 &&
@@ -15,7 +33,7 @@ test_expect_success 'preparing origin repository' '
 	test "$(cd a.git && git config --bool core.bare)" = true &&
 	test "$(cd x && git config --bool core.bare)" = true &&
 	git bundle create b1.bundle --all &&
-	git bundle create b2.bundle master &&
+	git bundle create b2.bundle main &&
 	mkdir dir &&
 	cp b1.bundle dir/b3 &&
 	cp b1.bundle b4
@@ -84,7 +102,7 @@ test_expect_success 'bundle clone with nonexistent HEAD' '
 	git clone b2.bundle b2 &&
 	(cd b2 &&
 	git fetch &&
-	test_must_fail git rev-parse --verify refs/heads/master)
+	test_must_fail git rev-parse --verify refs/heads/main)
 '
 
 test_expect_success 'clone empty repository' '
@@ -98,9 +116,9 @@ test_expect_success 'clone empty repository' '
 	 echo "content" >> foo &&
 	 git add foo &&
 	 git commit -m "Initial commit" &&
-	 git push origin master &&
-	 expected=$(git rev-parse master) &&
-	 actual=$(git --git-dir=../empty/.git rev-parse master) &&
+	 git push origin main &&
+	 expected=$(git rev-parse main) &&
+	 actual=$(git --git-dir=../empty/.git rev-parse main) &&
 	 test $actual = $expected)
 '
 

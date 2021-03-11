@@ -252,7 +252,15 @@ endif::git-rev-list[]
 			  interpreted by
 			  linkgit:git-interpret-trailers[1]. The
 			  `trailers` string may be followed by a colon
-			  and zero or more comma-separated options:
+			  and zero or more comma-separated options.
+			  If any option is provided multiple times the
+			  last occurance wins.
++
+The boolean options accept an optional value `[=<BOOL>]`. The values
+`true`, `false`, `on`, `off` etc. are all accepted. See the "boolean"
+sub-section in "EXAMPLES" in linkgit:git-config[1]. If a boolean
+option is given with no value, it's enabled.
++
 ** 'key=<K>': only show trailers with specified key. Matching is done
    case-insensitively and trailing colon is optional. If option is
    given multiple times trailer lines matching any of the keys are
@@ -261,27 +269,25 @@ endif::git-rev-list[]
    desired it can be disabled with `only=false`.  E.g.,
    `%(trailers:key=Reviewed-by)` shows trailer lines with key
    `Reviewed-by`.
-** 'only[=val]': select whether non-trailer lines from the trailer
-   block should be included. The `only` keyword may optionally be
-   followed by an equal sign and one of `true`, `on`, `yes` to omit or
-   `false`, `off`, `no` to show the non-trailer lines. If option is
-   given without value it is enabled. If given multiple times the last
-   value is used.
+** 'only[=<BOOL>]': select whether non-trailer lines from the trailer
+   block should be included.
 ** 'separator=<SEP>': specify a separator inserted between trailer
    lines. When this option is not given each trailer line is
    terminated with a line feed character. The string SEP may contain
    the literal formatting codes described above. To use comma as
    separator one must use `%x2C` as it would otherwise be parsed as
-   next option. If separator option is given multiple times only the
-   last one is used. E.g., `%(trailers:key=Ticket,separator=%x2C )`
+   next option. E.g., `%(trailers:key=Ticket,separator=%x2C )`
    shows all trailer lines whose key is "Ticket" separated by a comma
    and a space.
-** 'unfold[=val]': make it behave as if interpret-trailer's `--unfold`
-   option was given. In same way as to for `only` it can be followed
-   by an equal sign and explicit value. E.g.,
+** 'unfold[=<BOOL>]': make it behave as if interpret-trailer's `--unfold`
+   option was given. E.g.,
    `%(trailers:only,unfold=true)` unfolds and shows all trailer lines.
-** 'valueonly[=val]': skip over the key part of the trailer line and only
-   show the value part. Also this optionally allows explicit value.
+** 'keyonly[=<BOOL>]': only show the key part of the trailer.
+** 'valueonly[=<BOOL>]': only show the value part of the trailer.
+** 'key_value_separator=<SEP>': specify a separator inserted between
+   trailer lines. When this option is not given each trailer key-value
+   pair is separated by ": ". Otherwise it shares the same semantics
+   as 'separator=<SEP>' above.
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will

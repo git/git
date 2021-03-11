@@ -60,32 +60,46 @@ void probe_utf8_pathname_composition(void)
 	strbuf_release(&path);
 }
 
+static inline const char *precompose_string_if_needed(const char *in)
+{
+	size_t inlen;
+	size_t outlen;
+	if (has_non_ascii(in, (size_t)-1, &inlen)) {
+		iconv_t ic_prec;
+		char *out;
+		if (precomposed_unicode < 0)
+			git_config_get_bool("core.precomposeunicode", &precomposed_unicode);
+		if (precomposed_unicode != 1)
+			return in;
+		ic_prec = iconv_open(repo_encoding, path_encoding);
+		if (ic_prec == (iconv_t) -1)
+			return in;
 
-void precompose_argv(int argc, const char **argv)
+		out = reencode_string_iconv(in, inlen, ic_prec, 0, &outlen);
+		if (out) {
+			if (outlen == inlen && !memcmp(in, out, outlen))
+				free(out); /* no need to return indentical */
+			else
+				in = out;
+		}
+		iconv_close(ic_prec);
+
+	}
+	return in;
+}
+
+const char *precompose_argv_prefix(int argc, const char **argv, const char *prefix)
 {
 	int i = 0;
-	const char *oldarg;
-	char *newarg;
-	iconv_t ic_precompose;
-
-	if (precomposed_unicode != 1)
-		return;
-
-	ic_precompose = iconv_open(repo_encoding, path_encoding);
-	if (ic_precompose == (iconv_t) -1)
-		return;
 
 	while (i < argc) {
-		size_t namelen;
-		oldarg = argv[i];
-		if (has_non_ascii(oldarg, (size_t)-1, &namelen)) {
-			newarg = reencode_string_iconv(oldarg, namelen, ic_precompose, 0, NULL);
-			if (newarg)
-				argv[i] = newarg;
-		}
+		argv[i] = precompose_string_if_needed(argv[i]);
 		i++;
 	}
-	iconv_close(ic_precompose);
+	if (prefix) {
+		prefix = precompose_string_if_needed(prefix);
+	}
+	return prefix;
 }
 
 

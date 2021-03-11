@@ -181,7 +181,7 @@ test_expect_success 'diffstat for rename quotes funny filename' '
 	git diff-index -M -p $t0 >diff &&
 	git apply --stat <diff >diffstat &&
 	sed -e "s/|.*//" -e "s/ *\$//" <diffstat >current &&
-	test_i18ncmp expected current
+	test_cmp expected current
 '
 
 test_expect_success 'numstat for rename quotes funny filename' '

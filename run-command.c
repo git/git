@@ -551,8 +551,11 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 
 	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
 		;	/* nothing */
-	if (in_signal)
-		return 0;
+	if (in_signal) {
+		if (WIFEXITED(status))
+			code = WEXITSTATUS(status);
+		return code;
+	}
 
 	if (waiting < 0) {
 		failed_errno = errno;
@@ -990,6 +993,7 @@ int finish_command(struct child_process *cmd)
 	int ret = wait_or_whine(cmd->pid, cmd->argv[0], 0);
 	trace2_child_exit(cmd, ret);
 	child_process_clear(cmd);
+	invalidate_lstat_cache();
 	return ret;
 }
 
@@ -1291,13 +1295,19 @@ error:
 int finish_async(struct async *async)
 {
 #ifdef NO_PTHREADS
-	return wait_or_whine(async->pid, "child process", 0);
+	int ret = wait_or_whine(async->pid, "child process", 0);
+
+	invalidate_lstat_cache();
+
+	return ret;
 #else
 	void *ret = (void *)(intptr_t)(-1);
 
 	if (pthread_join(async->tid, &ret))
 		error("pthread_join failed");
+	invalidate_lstat_cache();
 	return (int)(intptr_t)ret;
+
 #endif
 }
 

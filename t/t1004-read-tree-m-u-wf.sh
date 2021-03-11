@@ -2,6 +2,9 @@
 
 test_description='read-tree -m -u checks working tree files'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
@@ -20,17 +23,17 @@ test_expect_success 'two-way setup' '
 	git branch side &&
 	git tag -f branch-point &&
 
-	echo file2 is not tracked on the master branch anymore &&
+	echo file2 is not tracked on the main branch anymore &&
 	rm -f file2 subdir/file2 &&
 	git update-index --remove file2 subdir/file2 &&
-	git commit -a -m "master removes file2 and subdir/file2"
+	git commit -a -m "main removes file2 and subdir/file2"
 '
 
 test_expect_success 'two-way not clobbering' '
 
-	echo >file2 master creates untracked file2 &&
-	echo >subdir/file2 master creates untracked subdir/file2 &&
-	if err=$(read_tree_u_must_succeed -m -u master side 2>&1)
+	echo >file2 main creates untracked file2 &&
+	echo >subdir/file2 main creates untracked subdir/file2 &&
+	if err=$(read_tree_u_must_succeed -m -u main side 2>&1)
 	then
 		echo should have complained
 		false
@@ -43,7 +46,7 @@ echo file2 >.gitignore
 
 test_expect_success 'two-way with incorrect --exclude-per-directory (1)' '
 
-	if err=$(read_tree_u_must_succeed -m --exclude-per-directory=.gitignore master side 2>&1)
+	if err=$(read_tree_u_must_succeed -m --exclude-per-directory=.gitignore main side 2>&1)
 	then
 		echo should have complained
 		false
@@ -54,7 +57,7 @@ test_expect_success 'two-way with incorrect --exclude-per-directory (1)' '
 
 test_expect_success 'two-way with incorrect --exclude-per-directory (2)' '
 
-	if err=$(read_tree_u_must_succeed -m -u --exclude-per-directory=foo --exclude-per-directory=.gitignore master side 2>&1)
+	if err=$(read_tree_u_must_succeed -m -u --exclude-per-directory=foo --exclude-per-directory=.gitignore main side 2>&1)
 	then
 		echo should have complained
 		false
@@ -65,7 +68,7 @@ test_expect_success 'two-way with incorrect --exclude-per-directory (2)' '
 
 test_expect_success 'two-way clobbering a ignored file' '
 
-	read_tree_u_must_succeed -m -u --exclude-per-directory=.gitignore master side
+	read_tree_u_must_succeed -m -u --exclude-per-directory=.gitignore main side
 '
 
 rm -f .gitignore
@@ -81,21 +84,21 @@ test_expect_success 'three-way not complaining on an untracked path in both' '
 	git update-index --add file3 subdir/file3 &&
 	git commit -a -m "side adds file3 and removes file2" &&
 
-	git checkout master &&
-	echo >file2 file two is untracked on the master side &&
-	echo >subdir/file2 file two is untracked on the master side &&
+	git checkout main &&
+	echo >file2 file two is untracked on the main side &&
+	echo >subdir/file2 file two is untracked on the main side &&
 
-	read_tree_u_must_succeed -m -u branch-point master side
+	read_tree_u_must_succeed -m -u branch-point main side
 '
 
 test_expect_success 'three-way not clobbering a working tree file' '
 
 	git reset --hard &&
 	rm -f file2 subdir/file2 file3 subdir/file3 &&
-	git checkout master &&
-	echo >file3 file three created in master, untracked &&
-	echo >subdir/file3 file three created in master, untracked &&
-	if err=$(read_tree_u_must_succeed -m -u branch-point master side 2>&1)
+	git checkout main &&
+	echo >file3 file three created in main, untracked &&
+	echo >subdir/file3 file three created in main, untracked &&
+	if err=$(read_tree_u_must_succeed -m -u branch-point main side 2>&1)
 	then
 		echo should have complained
 		false
@@ -110,11 +113,11 @@ test_expect_success 'three-way not complaining on an untracked file' '
 
 	git reset --hard &&
 	rm -f file2 subdir/file2 file3 subdir/file3 &&
-	git checkout master &&
-	echo >file3 file three created in master, untracked &&
-	echo >subdir/file3 file three created in master, untracked &&
+	git checkout main &&
+	echo >file3 file three created in main, untracked &&
+	echo >subdir/file3 file three created in main, untracked &&
 
-	read_tree_u_must_succeed -m -u --exclude-per-directory=.gitignore branch-point master side
+	read_tree_u_must_succeed -m -u --exclude-per-directory=.gitignore branch-point main side
 '
 
 test_expect_success '3-way not overwriting local changes (setup)' '

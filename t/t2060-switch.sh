@@ -2,6 +2,9 @@
 
 test_description='switch basic functionality'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -23,41 +26,41 @@ test_expect_success 'switch branch' '
 '
 
 test_expect_success 'switch and detach' '
-	test_when_finished git switch master &&
-	test_must_fail git switch master^{commit} &&
-	git switch --detach master^{commit} &&
+	test_when_finished git switch main &&
+	test_must_fail git switch main^{commit} &&
+	git switch --detach main^{commit} &&
 	test_must_fail git symbolic-ref HEAD
 '
 
 test_expect_success 'switch and detach current branch' '
-	test_when_finished git switch master &&
-	git switch master &&
+	test_when_finished git switch main &&
+	git switch main &&
 	git switch --detach &&
 	test_must_fail git symbolic-ref HEAD
 '
 
 test_expect_success 'switch and create branch' '
-	test_when_finished git switch master &&
-	git switch -c temp master^ &&
-	test_cmp_rev master^ refs/heads/temp &&
+	test_when_finished git switch main &&
+	git switch -c temp main^ &&
+	test_cmp_rev main^ refs/heads/temp &&
 	echo refs/heads/temp >expected-branch &&
 	git symbolic-ref HEAD >actual-branch &&
 	test_cmp expected-branch actual-branch
 '
 
 test_expect_success 'force create branch from HEAD' '
-	test_when_finished git switch master &&
-	git switch --detach master &&
+	test_when_finished git switch main &&
+	git switch --detach main &&
 	test_must_fail git switch -c temp &&
 	git switch -C temp &&
-	test_cmp_rev master refs/heads/temp &&
+	test_cmp_rev main refs/heads/temp &&
 	echo refs/heads/temp >expected-branch &&
 	git symbolic-ref HEAD >actual-branch &&
 	test_cmp expected-branch actual-branch
 '
 
 test_expect_success 'new orphan branch from empty' '
-	test_when_finished git switch master &&
+	test_when_finished git switch main &&
 	test_must_fail git switch --orphan new-orphan HEAD &&
 	git switch --orphan new-orphan &&
 	test_commit orphan &&
@@ -69,7 +72,7 @@ test_expect_success 'new orphan branch from empty' '
 '
 
 test_expect_success 'orphan branch works with --discard-changes' '
-	test_when_finished git switch master &&
+	test_when_finished git switch main &&
 	echo foo >foo.txt &&
 	git switch --discard-changes --orphan new-orphan2 &&
 	git ls-files >tracked-files &&
@@ -77,7 +80,7 @@ test_expect_success 'orphan branch works with --discard-changes' '
 '
 
 test_expect_success 'switching ignores file of same branch name' '
-	test_when_finished git switch master &&
+	test_when_finished git switch main &&
 	: >first-branch &&
 	git switch first-branch &&
 	echo refs/heads/first-branch >expected &&
@@ -86,7 +89,7 @@ test_expect_success 'switching ignores file of same branch name' '
 '
 
 test_expect_success 'guess and create branch' '
-	test_when_finished git switch master &&
+	test_when_finished git switch main &&
 	test_must_fail git switch --no-guess foo &&
 	test_config checkout.guess false &&
 	test_must_fail git switch foo &&

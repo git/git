@@ -33,7 +33,7 @@ test_refspec fetch '::'						invalid
 test_refspec push 'refs/heads/*:refs/remotes/frotz/*'
 test_refspec push 'refs/heads/*:refs/remotes/frotz'		invalid
 test_refspec push 'refs/heads:refs/remotes/frotz/*'		invalid
-test_refspec push 'refs/heads/master:refs/remotes/frotz/xyzzy'
+test_refspec push 'refs/heads/main:refs/remotes/frotz/xyzzy'
 
 
 # These have invalid LHS, but we do not have a formal "valid sha-1
@@ -41,18 +41,18 @@ test_refspec push 'refs/heads/master:refs/remotes/frotz/xyzzy'
 # code.  They will be caught downstream anyway, but we may want to
 # have tighter check later...
 
-: test_refspec push 'refs/heads/master::refs/remotes/frotz/xyzzy'	invalid
+: test_refspec push 'refs/heads/main::refs/remotes/frotz/xyzzy'	invalid
 : test_refspec push 'refs/heads/maste :refs/remotes/frotz/xyzzy'	invalid
 
 test_refspec fetch 'refs/heads/*:refs/remotes/frotz/*'
 test_refspec fetch 'refs/heads/*:refs/remotes/frotz'		invalid
 test_refspec fetch 'refs/heads:refs/remotes/frotz/*'		invalid
-test_refspec fetch 'refs/heads/master:refs/remotes/frotz/xyzzy'
-test_refspec fetch 'refs/heads/master::refs/remotes/frotz/xyzzy'	invalid
+test_refspec fetch 'refs/heads/main:refs/remotes/frotz/xyzzy'
+test_refspec fetch 'refs/heads/main::refs/remotes/frotz/xyzzy'	invalid
 test_refspec fetch 'refs/heads/maste :refs/remotes/frotz/xyzzy'	invalid
 
-test_refspec push 'master~1:refs/remotes/frotz/backup'
-test_refspec fetch 'master~1:refs/remotes/frotz/backup'		invalid
+test_refspec push 'main~1:refs/remotes/frotz/backup'
+test_refspec fetch 'main~1:refs/remotes/frotz/backup'		invalid
 test_refspec push 'HEAD~4:refs/remotes/frotz/new'
 test_refspec fetch 'HEAD~4:refs/remotes/frotz/new'		invalid
 

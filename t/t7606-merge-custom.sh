@@ -4,7 +4,7 @@ test_description="git merge
 
 Testing a custom strategy.
 
-*   (HEAD, master) Merge commit 'c3'
+*   (HEAD, main) Merge commit 'c3'
 |\
 | * (tag: c3) c3
 * | (tag: c1) c1
@@ -23,7 +23,7 @@ test_expect_success 'set up custom strategy' '
 	EOF
 
 	chmod +x git-merge-theirs &&
-	PATH=.:$PATH &&
+	PATH=.$PATH_SEP$PATH &&
 	export PATH
 '
 

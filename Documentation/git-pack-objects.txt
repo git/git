@@ -400,6 +400,17 @@ Note that we pick a single island for each regex to go into, using "last
 one wins" ordering (which allows repo-specific config to take precedence
 over user-wide config, and so forth).
 
+
+CONFIGURATION
+-------------
+
+Various configuration variables affect packing, see
+linkgit:git-config[1] (search for "pack" and "delta").
+
+Notably, delta compression is not used on objects larger than the
+`core.bigFileThreshold` configuration variable and on files with the
+attribute `delta` set to false.
+
 SEE ALSO
 --------
 linkgit:git-rev-list[1]

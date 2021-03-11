@@ -602,6 +602,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	 */
 	if (cb.cmd.stalefix) {
 		repo_init_revisions(the_repository, &cb.cmd.revs, prefix);
+		cb.cmd.revs.do_not_die_on_missing_tree = 1;
+		cb.cmd.revs.ignore_missing = 1;
+		cb.cmd.revs.ignore_missing_links = 1;
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			printf(_("Marking reachable objects..."));
 		mark_reachable_objects(&cb.cmd.revs, 0, 0, NULL);
@@ -766,6 +769,7 @@ N_("git reflog [ show | expire | delete | exists ]");
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
+	git_config(git_default_config, NULL);
 	if (argc > 1 && !strcmp(argv[1], "-h"))
 		usage(_(reflog_usage));
 

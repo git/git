@@ -38,19 +38,27 @@ struct update_callback_data {
 	int add_errors;
 };
 
-static void chmod_pathspec(struct pathspec *pathspec, char flip)
+static int chmod_pathspec(struct pathspec *pathspec, char flip, int show_only)
 {
-	int i;
+	int i, ret = 0;
 
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
+		int err;
 
 		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
 			continue;
 
-		if (chmod_cache_entry(ce, flip) < 0)
-			fprintf(stderr, "cannot chmod %cx '%s'\n", flip, ce->name);
+		if (!show_only)
+			err = chmod_cache_entry(ce, flip);
+		else
+			err = S_ISREG(ce->ce_mode) ? 0 : -1;
+
+		if (err < 0)
+			ret = error(_("cannot chmod %cx '%s'"), flip, ce->name);
 	}
+
+	return ret;
 }
 
 static int fix_unmerged_status(struct diff_filepair *p,
@@ -540,6 +548,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	die_in_unpopulated_submodule(&the_index, prefix);
 	die_path_inside_submodule(&the_index, &pathspec);
 
+	enable_fscache(0);
+	/* We do not really re-read the index but update the up-to-date flags */
+	preload_index(&the_index, &pathspec, 0);
+
 	dir_init(&dir);
 	if (add_new_files) {
 		int baselen;
@@ -609,7 +621,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		exit_status |= add_files(&dir, flags);
 
 	if (chmod_arg && pathspec.nr)
-		chmod_pathspec(&pathspec, chmod_arg[0]);
+		exit_status |= chmod_pathspec(&pathspec, chmod_arg[0], show_only);
 	unplug_bulk_checkin();
 
 finish:
@@ -618,6 +630,7 @@ finish:
 		die(_("Unable to write new index file"));
 
 	dir_clear(&dir);
+	enable_fscache(0);
 	UNLEAK(pathspec);
 	return exit_status;
 }

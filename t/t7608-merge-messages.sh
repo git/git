@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test auto-generated merge messages'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check_oneline() {
@@ -10,51 +13,51 @@ check_oneline() {
 }
 
 test_expect_success 'merge local branch' '
-	test_commit master-1 &&
+	test_commit main-1 &&
 	git checkout -b local-branch &&
 	test_commit branch-1 &&
-	git checkout master &&
-	test_commit master-2 &&
+	git checkout main &&
+	test_commit main-2 &&
 	git merge local-branch &&
 	check_oneline "Merge branch Qlocal-branchQ"
 '
 
 test_expect_success 'merge octopus branches' '
-	git checkout -b octopus-a master &&
+	git checkout -b octopus-a main &&
 	test_commit octopus-1 &&
-	git checkout -b octopus-b master &&
+	git checkout -b octopus-b main &&
 	test_commit octopus-2 &&
-	git checkout master &&
+	git checkout main &&
 	git merge octopus-a octopus-b &&
 	check_oneline "Merge branches Qoctopus-aQ and Qoctopus-bQ"
 '
 
 test_expect_success 'merge tag' '
-	git checkout -b tag-branch master &&
+	git checkout -b tag-branch main &&
 	test_commit tag-1 &&
-	git checkout master &&
-	test_commit master-3 &&
+	git checkout main &&
+	test_commit main-3 &&
 	git merge tag-1 &&
 	check_oneline "Merge tag Qtag-1Q"
 '
 
 test_expect_success 'ambiguous tag' '
-	git checkout -b ambiguous master &&
+	git checkout -b ambiguous main &&
 	test_commit ambiguous &&
-	git checkout master &&
-	test_commit master-4 &&
+	git checkout main &&
+	test_commit main-4 &&
 	git merge ambiguous &&
 	check_oneline "Merge tag QambiguousQ"
 '
 
 test_expect_success 'remote-tracking branch' '
-	git checkout -b remote master &&
+	git checkout -b remote main &&
 	test_commit remote-1 &&
-	git update-ref refs/remotes/origin/master remote &&
-	git checkout master &&
-	test_commit master-5 &&
-	git merge origin/master &&
-	check_oneline "Merge remote-tracking branch Qorigin/masterQ"
+	git update-ref refs/remotes/origin/main remote &&
+	git checkout main &&
+	test_commit main-5 &&
+	git merge origin/main &&
+	check_oneline "Merge remote-tracking branch Qorigin/mainQ"
 '
 
 test_done

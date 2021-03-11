@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "commit.h"
 #include "config.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -345,7 +346,7 @@ void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 		fputs(output, stderr);
 }
 
-size_t parse_signature(const char *buf, size_t size)
+size_t parse_signed_buffer(const char *buf, size_t size)
 {
 	size_t len = 0;
 	size_t match = size;
@@ -359,6 +360,18 @@ size_t parse_signature(const char *buf, size_t size)
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}
 	return match;
+}
+
+int parse_signature(const char *buf, size_t size, struct strbuf *payload, struct strbuf *signature)
+{
+	size_t match = parse_signed_buffer(buf, size);
+	if (match != size) {
+		strbuf_add(payload, buf, match);
+		remove_signature(payload);
+		strbuf_add(signature, buf + match, size - match);
+		return 1;
+	}
+	return 0;
 }
 
 void set_signing_key(const char *key)
@@ -432,11 +445,9 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	struct child_process gpg = CHILD_PROCESS_INIT;
 	int ret;
 	size_t i, j, bottom;
-	struct strbuf gpg_status = STRBUF_INIT;
 
 	strvec_pushl(&gpg.args,
 		     use_format->program,
-		     "--status-fd=2",
 		     "-bsau", signing_key,
 		     NULL);
 
@@ -448,12 +459,10 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	 */
 	sigchain_push(SIGPIPE, SIG_IGN);
 	ret = pipe_command(&gpg, buffer->buf, buffer->len,
-			   signature, 1024, &gpg_status, 0);
+			   signature, 1024, NULL, 0);
 	sigchain_pop(SIGPIPE);
 
-	ret |= !strstr(gpg_status.buf, "\n[GNUPG:] SIG_CREATED ");
-	strbuf_release(&gpg_status);
-	if (ret)
+	if (ret || signature->len == bottom)
 		return error(_("gpg failed to sign the data"));
 
 	/* Strip CR from the line endings, in case we are on Windows. */

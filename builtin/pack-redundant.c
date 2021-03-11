@@ -560,6 +560,7 @@ static void load_all(void)
 int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 {
 	int i;
+	int i_still_use_this = 0;
 	struct pack_list *min = NULL, *red, *pl;
 	struct llist *ignore;
 	struct object_id *oid;
@@ -586,10 +587,22 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 			alt_odb = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--i-still-use-this")) {
+			i_still_use_this = 1;
+			continue;
+		}
 		if (*arg == '-')
 			usage(pack_redundant_usage);
 		else
 			break;
+	}
+
+	if (!i_still_use_this) {
+		fputs(_("'git pack-redundant' is nominated for removal.\n"
+			"If you still use this command, please add an extra\n"
+			"option, '--i-still-use-this', on the command line\n"
+			"and let us know you still use it by sending an e-mail\n"
+			"to <git@vger.kernel.org>.  Thanks.\n"), stderr);
 	}
 
 	if (load_all_packs)

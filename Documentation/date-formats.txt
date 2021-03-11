@@ -1,10 +1,7 @@
 DATE FORMATS
 ------------
 
-The `GIT_AUTHOR_DATE`, `GIT_COMMITTER_DATE` environment variables
-ifdef::git-commit[]
-and the `--date` option
-endif::git-commit[]
+The `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` environment variables
 support the following date formats:
 
 Git internal format::
@@ -26,3 +23,9 @@ ISO 8601::
 +
 NOTE: In addition, the date part is accepted in the following formats:
 `YYYY.MM.DD`, `MM/DD/YYYY` and `DD.MM.YYYY`.
+
+ifdef::git-commit[]
+In addition to recognizing all date formats above, the `--date` option
+will also try to make sense of other, more human-centric date formats,
+such as relative dates like "yesterday" or "last Friday at noon".
+endif::git-commit[]

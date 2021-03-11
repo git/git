@@ -6,6 +6,7 @@
 
 struct commit;
 struct strbuf;
+struct process_trailer_options;
 
 /* Commit formats */
 enum cmit_fmt {
@@ -141,5 +142,16 @@ int commit_format_is_empty(enum cmit_fmt);
 
 /* Make subject of commit message suitable for filename */
 void format_sanitized_subject(struct strbuf *sb, const char *msg, size_t len);
+
+/*
+ * Set values of fields in "struct process_trailer_options"
+ * according to trailers arguments.
+ */
+int format_set_trailers_options(struct process_trailer_options *opts,
+			struct string_list *filter_list,
+			struct strbuf *sepbuf,
+			struct strbuf *kvsepbuf,
+			const char **arg,
+			char **invalid_arg);
 
 #endif /* PRETTY_H */

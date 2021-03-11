@@ -170,7 +170,7 @@ test_expect_success 'pull --rebase --recurse-submodules (no submodule changes, n
 	# create topic branch in clone, not based on any remote-tracking branch
 	git -C superclone checkout -b feat HEAD~1 &&
 	test_commit -C superclone first_on_feat &&
-	git -C superclone pull --rebase --recurse-submodules origin master
+	git -C superclone pull --rebase --recurse-submodules origin HEAD
 '
 
 # NOTE:
@@ -200,8 +200,8 @@ test_expect_success 'branch has no merge base with remote-tracking counterpart' 
 
 	git clone parent child &&
 
-	# Reset master so that it has no merge base with
-	# refs/remotes/origin/master.
+	# Reset the current branch so that it has no merge base with
+	# the remote-tracking branch.
 	OTHER=$(git -C child commit-tree -m bar \
 		$(git -C child rev-parse HEAD^{tree})) &&
 	git -C child reset --hard "$OTHER" &&

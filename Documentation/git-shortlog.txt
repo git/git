@@ -111,11 +111,11 @@ include::rev-list-options.txt[]
 MAPPING AUTHORS
 ---------------
 
-The `.mailmap` feature is used to coalesce together commits by the same
-person in the shortlog, where their name and/or email address was
-spelled differently.
+See linkgit:gitmailmap[5].
 
-include::mailmap.txt[]
+Note that if `git shortlog` is run outside of a repository (to process
+log contents on standard input), it will look for a `.mailmap` file in
+the current directory.
 
 GIT
 ---

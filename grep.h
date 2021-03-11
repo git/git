@@ -1,15 +1,6 @@
 #ifndef GREP_H
 #define GREP_H
 #include "color.h"
-#ifdef USE_LIBPCRE1
-#include <pcre.h>
-#ifndef PCRE_NO_UTF8_CHECK
-#define PCRE_NO_UTF8_CHECK 0
-#endif
-#else
-typedef int pcre;
-typedef int pcre_extra;
-#endif
 #ifdef USE_LIBPCRE2
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
@@ -17,6 +8,10 @@ typedef int pcre_extra;
 typedef int pcre2_code;
 typedef int pcre2_match_data;
 typedef int pcre2_compile_context;
+#endif
+#ifndef PCRE2_MATCH_INVALID_UTF
+/* PCRE2_MATCH_* dummy also with !USE_LIBPCRE2, for test-pcre2-config.c */
+#define PCRE2_MATCH_INVALID_UTF 0
 #endif
 #include "thread-utils.h"
 #include "userdiff.h"
@@ -71,10 +66,6 @@ struct grep_pat {
 	size_t patternlen;
 	enum grep_header_field field;
 	regex_t regexp;
-	pcre *pcre1_regexp;
-	pcre_extra *pcre1_extra_info;
-	const unsigned char *pcre1_tables;
-	int pcre1_jit_on;
 	pcre2_code *pcre2_pattern;
 	pcre2_match_data *pcre2_match_data;
 	pcre2_compile_context *pcre2_compile_context;
@@ -136,7 +127,6 @@ struct grep_opt {
 	int word_regexp;
 	int fixed;
 	int all_match;
-	int debug;
 #define GREP_BINARY_DEFAULT	0
 #define GREP_BINARY_NOMATCH	1
 #define GREP_BINARY_TEXT	2
@@ -144,7 +134,6 @@ struct grep_opt {
 	int allow_textconv;
 	int extended;
 	int use_reflog_filter;
-	int pcre1;
 	int pcre2;
 	int relative;
 	int pathname;

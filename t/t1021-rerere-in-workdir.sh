@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='rerere run in a workdir'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success SYMLINKS setup '
@@ -19,7 +22,7 @@ test_expect_success SYMLINKS setup '
 	test_tick &&
 	git commit -a -m goodbye &&
 
-	git checkout master
+	git checkout main
 '
 
 test_expect_success SYMLINKS 'rerere in workdir' '

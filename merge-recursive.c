@@ -986,7 +986,7 @@ static int update_file_flags(struct merge_options *opt,
 			char *lnk = xmemdupz(buf, size);
 			safe_create_leading_directories_const(path);
 			unlink(path);
-			if (symlink(lnk, path))
+			if (create_symlink(&opt->priv->orig_index, lnk, path))
 				ret = err(opt, _("failed to symlink '%s': %s"),
 					  path, strerror(errno));
 			free(lnk);
@@ -3515,17 +3515,6 @@ static int merge_trees_internal(struct merge_options *opt,
 		return -1;
 
 	return clean;
-}
-
-static struct commit_list *reverse_commit_list(struct commit_list *list)
-{
-	struct commit_list *next = NULL, *current, *backup;
-	for (current = list; current; current = backup) {
-		backup = current->next;
-		current->next = next;
-		next = current;
-	}
-	return next;
 }
 
 /*

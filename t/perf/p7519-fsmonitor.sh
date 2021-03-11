@@ -24,7 +24,8 @@ test_description="Test core.fsmonitor"
 # GIT_PERF_7519_SPLIT_INDEX: used to configure core.splitIndex
 # GIT_PERF_7519_FSMONITOR: used to configure core.fsMonitor. May be an
 #   absolute path to an integration. May be a space delimited list of
-#   absolute paths to integrations.
+#   absolute paths to integrations.  (This hook or list of hooks does not
+#   include the built-in fsmonitor--daemon.)
 #
 # The big win for using fsmonitor is the elimination of the need to scan the
 # working directory looking for changed and untracked files. If the file
@@ -32,6 +33,8 @@ test_description="Test core.fsmonitor"
 #
 # GIT_PERF_7519_DROP_CACHE: if set, the OS caches are dropped between tests
 #
+# GIT_PERF_7519_TRACE: if set, enable trace logging during the test.
+#   Trace logs will be grouped by fsmonitor provider.
 
 test_perf_large_repo
 test_checkout_worktree
@@ -70,6 +73,32 @@ then
 	fi
 fi
 
+trace_start() {
+	if test -n "$GIT_PERF_7519_TRACE"
+	then
+		name="$1"
+		TEST_TRACE_DIR="$TEST_OUTPUT_DIRECTORY/test-trace/p7519/"
+		echo "Writing trace logging to $TEST_TRACE_DIR"
+
+		mkdir -p "$TEST_TRACE_DIR"
+
+		# Start Trace2 logging and any other GIT_TRACE_* logs that you
+		# want for this named test case.
+
+		GIT_TRACE2_PERF="$TEST_TRACE_DIR/$name.trace2perf"
+		export GIT_TRACE2_PERF
+
+		>"$GIT_TRACE2_PERF"
+	fi
+}
+
+trace_stop() {
+	if test -n "$GIT_PERF_7519_TRACE"
+	then
+		unset GIT_TRACE2_PERF
+	fi
+}
+
 test_expect_success "one time repo setup" '
 	# set untrackedCache depending on the environment
 	if test -n "$GIT_PERF_7519_UNTRACKED_CACHE"
@@ -101,16 +130,22 @@ test_expect_success "one time repo setup" '
 	# If Watchman exists, watch the work tree and attempt a query.
 	if test_have_prereq WATCHMAN; then
 		watchman watch "$GIT_WORK_TREE" &&
-		watchman watch-list | grep -q -F "$GIT_WORK_TREE"
+		watchman watch-list | grep -q -F "p7519-fsmonitor"
 	fi
 '
 
 setup_for_fsmonitor() {
 	# set INTEGRATION_SCRIPT depending on the environment
-	if test -n "$INTEGRATION_PATH"
+	if test -n "$USE_FSMONITOR_DAEMON"
 	then
+		git config core.useBuiltinFSMonitor true &&
+		INTEGRATION_SCRIPT=false
+	elif test -n "$INTEGRATION_PATH"
+	then
+		git config core.useBuiltinFSMonitor false &&
 		INTEGRATION_SCRIPT="$INTEGRATION_PATH"
 	else
+		git config core.useBuiltinFSMonitor false &&
 		#
 		# Choose integration script based on existence of Watchman.
 		# Fall back to an empty integration script.
@@ -169,8 +204,18 @@ test_fsmonitor_suite() {
 		git status -uall
 	'
 
+	# Update the mtimes on upto 100k files to make status think
+	# that they are dirty.  For simplicity, omit any files with
+	# LFs (i.e. anything that ls-files thinks it needs to dquote).
+	# Then fully backslash-quote the paths to capture any
+	# whitespace so that they pass thru xargs properly.
+	#
 	test_perf_w_drop_caches "status (dirty) ($DESC)" '
-		git ls-files | head -100000 | xargs -d "\n" touch -h &&
+		git ls-files | \
+			head -100000 | \
+			grep -v \" | \
+			sed '\''s/\(.\)/\\\1/g'\'' | \
+			xargs test-tool chmtime -300 &&
 		git status
 	'
 
@@ -203,6 +248,12 @@ test_fsmonitor_suite() {
 	'
 }
 
+#
+# Run a full set of perf tests using each Hook-based fsmonitor provider,
+# such as Watchman.
+#
+
+trace_start fsmonitor-watchman
 if test -n "$GIT_PERF_7519_FSMONITOR"; then
 	for INTEGRATION_PATH in $GIT_PERF_7519_FSMONITOR; do
 		test_expect_success "setup for fsmonitor $INTEGRATION_PATH" 'setup_for_fsmonitor'
@@ -213,14 +264,6 @@ else
 	test_fsmonitor_suite
 fi
 
-test_expect_success "setup without fsmonitor" '
-	unset INTEGRATION_SCRIPT &&
-	git config --unset core.fsmonitor &&
-	git update-index --no-fsmonitor
-'
-
-test_fsmonitor_suite
-
 if test_have_prereq WATCHMAN
 then
 	watchman watch-del "$GIT_WORK_TREE" >/dev/null 2>&1 &&
@@ -228,6 +271,47 @@ then
 	# Work around Watchman bug on Windows where it holds on to handles
 	# preventing the removal of the trash directory
 	watchman shutdown-server >/dev/null 2>&1
+fi
+trace_stop
+
+#
+# Run a full set of perf tests with the fsmonitor feature disabled.
+#
+
+trace_start fsmonitor-disabled
+test_expect_success "setup without fsmonitor" '
+	unset INTEGRATION_SCRIPT &&
+	git config --unset core.fsmonitor &&
+	git update-index --no-fsmonitor
+'
+
+test_fsmonitor_suite
+trace_stop
+
+#
+# Run a full set of perf tests using the built-in fsmonitor--daemon.
+# It does not use the Hook API, so it has a different setup.
+# Explicitly start the daemon here and before we start client commands
+# so that we can later add custom tracing.
+#
+
+test_lazy_prereq HAVE_FSMONITOR_DAEMON '
+	git version --build-options | grep "feature:" | grep "fsmonitor--daemon"
+'
+
+if test_have_prereq HAVE_FSMONITOR_DAEMON
+then
+	USE_FSMONITOR_DAEMON=t
+
+	trace_start fsmonitor--daemon--server
+	git fsmonitor--daemon --start
+
+	trace_start fsmonitor--daemon--client
+	test_expect_success "setup for fsmonitor--daemon" 'setup_for_fsmonitor'
+	test_fsmonitor_suite
+
+	git fsmonitor--daemon --stop
+	trace_stop
 fi
 
 test_done

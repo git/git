@@ -2905,7 +2905,7 @@ test_setup_9e () {
 	)
 }
 
-test_expect_success C_LOCALE_OUTPUT '9e: N-to-1 whammo' '
+test_expect_success '9e: N-to-1 whammo' '
 	test_setup_9e &&
 	(
 		cd 9e &&

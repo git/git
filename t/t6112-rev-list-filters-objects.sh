@@ -2,6 +2,9 @@
 
 test_description='git rev-list using object filtering'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test the blob:none filter.
@@ -223,7 +226,7 @@ test_expect_success 'verify sparse:oid=oid-ish omits top-level files' '
 	sort >expected &&
 
 	git -C r3 rev-list --quiet --objects --filter-print-omitted \
-		--filter=sparse:oid=master:pattern HEAD >revs &&
+		--filter=sparse:oid=main:pattern HEAD >revs &&
 	awk -f print_1.awk revs |
 	sed "s/~//" |
 	sort >observed &&
@@ -436,7 +439,7 @@ test_expect_success 'add sparse pattern blobs whose paths have reserved chars' '
 
 test_expect_success 'combine:... with more than two sub-filters' '
 	git -C r3 rev-list --objects \
-		--filter=combine:tree:3+blob:limit=40+sparse:oid=master:pattern \
+		--filter=combine:tree:3+blob:limit=40+sparse:oid=main:pattern \
 		HEAD >actual &&
 
 	expect_has HEAD "" &&
@@ -454,7 +457,7 @@ test_expect_success 'combine:... with more than two sub-filters' '
 	cp actual expect &&
 
 	git -C r3 rev-list --objects \
-		--filter=combine:tree:3+blob:limit=40+sparse:oid=master:pattern1%2brenamed%25 \
+		--filter=combine:tree:3+blob:limit=40+sparse:oid=main:pattern1%2brenamed%25 \
 		HEAD >actual &&
 	test_cmp expect actual &&
 
@@ -464,23 +467,23 @@ test_expect_success 'combine:... with more than two sub-filters' '
 	test_when_finished "rm -f trace1" &&
 	GIT_TRACE=$(pwd)/trace1 git -C r3 rev-list --objects \
 		--filter=tree:3 --filter=blob:limit=40 \
-		--filter=sparse:oid="master:p;at%ter+n" \
+		--filter=sparse:oid="main:p;at%ter+n" \
 		HEAD >actual &&
 
 	test_cmp expect actual &&
-	grep "Add to combine filter-spec: sparse:oid=master:p%3bat%25ter%2bn" \
+	grep "Add to combine filter-spec: sparse:oid=main:p%3bat%25ter%2bn" \
 		trace1 &&
 
 	# Repeat the above test, but this time, the characters to encode are in
 	# the LHS of the combined filter.
 	test_when_finished "rm -f trace2" &&
 	GIT_TRACE=$(pwd)/trace2 git -C r3 rev-list --objects \
-		--filter=sparse:oid=master:^~pattern \
+		--filter=sparse:oid=main:^~pattern \
 		--filter=tree:3 --filter=blob:limit=40 \
 		HEAD >actual &&
 
 	test_cmp expect actual &&
-	grep "Add to combine filter-spec: sparse:oid=master:%5e%7epattern" \
+	grep "Add to combine filter-spec: sparse:oid=main:%5e%7epattern" \
 		trace2
 '
 

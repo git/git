@@ -50,12 +50,10 @@ test_expect_success "proc-receive: update branch and new tag ($PROTOCOL)" '
 	 * [new reference] v123 -> refs/pull/124/head
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(A)
@@ -63,14 +61,12 @@ test_expect_success "proc-receive: update branch and new tag ($PROTOCOL)" '
 test_expect_success "setup upstream: create tags/v123 ($PROTOCOL)" '
 	git -C "$upstream" update-ref refs/heads/topic $A &&
 	git -C "$upstream" update-ref refs/tags/v123 $TAG &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	<COMMIT-A> refs/heads/topic
 	<TAG-v123> refs/tags/v123
 	EOF
-	test_cmp expect actual
 '
 
 test_expect_success "setup proc-receive hook ($PROTOCOL)" '
@@ -125,11 +121,9 @@ test_expect_success "proc-receive: create/delete branch, and delete tag ($PROTOC
 	 * [new reference] <COMMIT-A> -> refs/pull/124/head
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	<COMMIT-B> refs/heads/topic
 	EOF
-	test_cmp expect actual
 '

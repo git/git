@@ -2,6 +2,9 @@
 
 test_description='fetch/clone from a shallow clone'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 commit() {
@@ -49,7 +52,7 @@ test_expect_success 'fetch from shallow clone' '
 	cd shallow2 &&
 	git fetch &&
 	git fsck &&
-	git log --format=%s origin/master >actual &&
+	git log --format=%s origin/main >actual &&
 	test_write_lines 5 4 3 >expect &&
 	test_cmp expect actual
 	)
@@ -64,7 +67,7 @@ test_expect_success 'fetch --depth from shallow clone' '
 	cd shallow2 &&
 	git fetch --depth=2 &&
 	git fsck &&
-	git log --format=%s origin/master >actual &&
+	git log --format=%s origin/main >actual &&
 	test_write_lines 6 5 >expect &&
 	test_cmp expect actual
 	)
@@ -75,7 +78,7 @@ test_expect_success 'fetch --unshallow from shallow clone' '
 	cd shallow2 &&
 	git fetch --unshallow &&
 	git fsck &&
-	git log --format=%s origin/master >actual &&
+	git log --format=%s origin/main >actual &&
 	test_write_lines 6 5 4 3 >expect &&
 	test_cmp expect actual
 	)
@@ -89,7 +92,7 @@ test_expect_success 'fetch --unshallow from a full clone' '
 	test_write_lines 4 3 >expect &&
 	test_cmp expect actual &&
 	git -c fetch.writeCommitGraph fetch --unshallow &&
-	git log origin/master --format=%s >actual &&
+	git log origin/main --format=%s >actual &&
 	test_write_lines 4 3 2 1 >expect &&
 	test_cmp expect actual
 	)
@@ -104,9 +107,9 @@ test_expect_success 'fetch something upstream has but hidden by clients shallow 
 	git commit -m add-1-back &&
 	(
 	cd shallow2 &&
-	git fetch ../.git +refs/heads/master:refs/remotes/top/master &&
+	git fetch ../.git +refs/heads/main:refs/remotes/top/main &&
 	git fsck &&
-	git log --format=%s top/master >actual &&
+	git log --format=%s top/main >actual &&
 	test_write_lines add-1-back 4 3 >expect &&
 	test_cmp expect actual
 	) &&
@@ -135,7 +138,7 @@ test_expect_success 'fetch that requires changes in .git/shallow is filtered' '
 test_expect_success 'fetch --update-shallow' '
 	(
 	cd shallow &&
-	git checkout master &&
+	git checkout main &&
 	commit 7 &&
 	git tag -m foo heavy-tag HEAD^ &&
 	git tag light-tag HEAD^:tracked
@@ -146,13 +149,13 @@ test_expect_success 'fetch --update-shallow' '
 	git fsck &&
 	git for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
 	cat <<-\EOF >expect.refs &&
-	refs/remotes/shallow/master
+	refs/remotes/shallow/main
 	refs/remotes/shallow/no-shallow
 	refs/tags/heavy-tag
 	refs/tags/light-tag
 	EOF
 	test_cmp expect.refs actual.refs &&
-	git log --format=%s shallow/master >actual &&
+	git log --format=%s shallow/main >actual &&
 	test_write_lines 7 6 5 4 3 >expect &&
 	test_cmp expect actual
 	)
@@ -161,7 +164,7 @@ test_expect_success 'fetch --update-shallow' '
 test_expect_success 'fetch --update-shallow (with fetch.writeCommitGraph)' '
 	(
 	cd shallow &&
-	git checkout master &&
+	git checkout main &&
 	commit 8 &&
 	git tag -m foo heavy-tag-for-graph HEAD^ &&
 	git tag light-tag-for-graph HEAD^:tracked
@@ -173,7 +176,7 @@ test_expect_success 'fetch --update-shallow (with fetch.writeCommitGraph)' '
 	git fsck &&
 	git for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
 	cat <<-EOF >expect.refs &&
-	refs/remotes/shallow/master
+	refs/remotes/shallow/main
 	refs/remotes/shallow/no-shallow
 	refs/tags/heavy-tag
 	refs/tags/heavy-tag-for-graph
@@ -181,7 +184,7 @@ test_expect_success 'fetch --update-shallow (with fetch.writeCommitGraph)' '
 	refs/tags/light-tag-for-graph
 	EOF
 	test_cmp expect.refs actual.refs &&
-	git log --format=%s shallow/master >actual &&
+	git log --format=%s shallow/main >actual &&
 	test_write_lines 8 7 6 5 4 3 >expect &&
 	test_cmp expect actual
 	)
@@ -206,7 +209,7 @@ test_expect_success '.git/shallow is edited by repack' '
 	test_commit -C shallow-server E &&
 	test_commit -C shallow-server D &&
 	d="$(git -C shallow-server rev-parse --verify D^0)" &&
-	git -C shallow-server checkout master &&
+	git -C shallow-server checkout main &&
 
 	git clone --depth=1 --no-tags --no-single-branch \
 		"file://$PWD/shallow-server" shallow-client &&
@@ -244,7 +247,7 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	git -C "$REPO" config protocol.version 2 &&
 	git -C client config protocol.version 2 &&
 
-	git -C client fetch --depth=2 "$HTTPD_URL/one_time_perl/repo" master:a_branch &&
+	git -C client fetch --depth=2 "$HTTPD_URL/one_time_perl/repo" main:a_branch &&
 
 	# Craft a situation in which the server sends back an unshallow request
 	# with an empty packfile. This is done by refetching with a shorter
@@ -256,7 +259,7 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	       >"$HTTPD_ROOT_PATH/one-time-perl" &&
 	test_must_fail env GIT_TEST_SIDEBAND_ALL=0 git -C client \
 		fetch --depth=1 "$HTTPD_URL/one_time_perl/repo" \
-		master:a_branch &&
+		main:a_branch &&
 
 	# Ensure that the one-time-perl script was used.
 	! test -e "$HTTPD_ROOT_PATH/one-time-perl" &&

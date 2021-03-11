@@ -4,6 +4,9 @@
 #
 
 test_description='prune'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 day=$((60*60*24))
@@ -119,7 +122,7 @@ test_expect_success 'prune: do not prune detached HEAD with no reflog' '
 test_expect_success 'prune: prune former HEAD after checking out branch' '
 
 	head_oid=$(git rev-parse HEAD) &&
-	git checkout --quiet master &&
+	git checkout --quiet main &&
 	git prune -v >prune_actual &&
 	grep "$head_oid" prune_actual
 

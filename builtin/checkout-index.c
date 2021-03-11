@@ -23,22 +23,35 @@ static struct checkout state = CHECKOUT_INIT;
 static void write_tempfile_record(const char *name, const char *prefix)
 {
 	int i;
+	int have_tempname = 0;
 
 	if (CHECKOUT_ALL == checkout_stage) {
-		for (i = 1; i < 4; i++) {
-			if (i > 1)
-				putchar(' ');
-			if (topath[i][0])
-				fputs(topath[i], stdout);
-			else
-				putchar('.');
-		}
-	} else
-		fputs(topath[checkout_stage], stdout);
+		for (i = 1; i < 4; i++)
+			if (topath[i][0]) {
+				have_tempname = 1;
+				break;
+			}
 
-	putchar('\t');
-	write_name_quoted_relative(name, prefix, stdout,
-				   nul_term_line ? '\0' : '\n');
+		if (have_tempname) {
+			for (i = 1; i < 4; i++) {
+				if (i > 1)
+					putchar(' ');
+				if (topath[i][0])
+					fputs(topath[i], stdout);
+				else
+					putchar('.');
+			}
+		}
+	} else if (topath[checkout_stage][0]) {
+		have_tempname = 1;
+		fputs(topath[checkout_stage], stdout);
+	}
+
+	if (have_tempname) {
+		putchar('\t');
+		write_name_quoted_relative(name, prefix, stdout,
+					   nul_term_line ? '\0' : '\n');
+	}
 
 	for (i = 0; i < 4; i++) {
 		topath[i][0] = 0;

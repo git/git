@@ -72,18 +72,6 @@ static int cmd_pack_refs(struct ref_store *refs, const char **argv)
 	return refs_pack_refs(refs, flags);
 }
 
-static int cmd_peel_ref(struct ref_store *refs, const char **argv)
-{
-	const char *refname = notnull(*argv++, "refname");
-	struct object_id oid;
-	int ret;
-
-	ret = refs_peel_ref(refs, refname, &oid);
-	if (!ret)
-		puts(oid_to_hex(&oid));
-	return ret;
-}
-
 static int cmd_create_symref(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
@@ -255,7 +243,6 @@ struct command {
 
 static struct command commands[] = {
 	{ "pack-refs", cmd_pack_refs },
-	{ "peel-ref", cmd_peel_ref },
 	{ "create-symref", cmd_create_symref },
 	{ "delete-refs", cmd_delete_refs },
 	{ "rename-ref", cmd_rename_ref },

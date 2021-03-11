@@ -12,6 +12,9 @@
 # bug.
 
 test_description='git cvsimport testing for correct patchset estimation'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-cvs.sh
 
 setup_cvs_test_repository t9603
@@ -20,16 +23,16 @@ test_expect_failure PERL 'import with criss cross times on revisions' '
 	git cvsimport -p"-x" -C module-git module &&
 	(
 		cd module-git &&
-		git log --pretty=format:%s > ../actual-master &&
+		git log --pretty=format:%s > ../actual-main &&
 		git log A~2..A --pretty="format:%s %ad" -- > ../actual-A &&
-		echo "" >> ../actual-master &&
+		echo "" >> ../actual-main &&
 		echo "" >> ../actual-A
 	) &&
 	echo "Rev 4
 Rev 3
 Rev 2
-Rev 1" > expect-master &&
-	test_cmp expect-master actual-master &&
+Rev 1" > expect-main &&
+	test_cmp expect-main actual-main &&
 
 	echo "Rev 5 Branch A Wed Mar 11 19:09:10 2009 +0000
 Rev 4 Branch A Wed Mar 11 19:03:52 2009 +0000" > expect-A &&

@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='basic tests for fast-export --anonymize'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup simple repo' '
@@ -51,7 +54,7 @@ test_expect_success 'stream retains other as refname' '
 '
 
 test_expect_success 'stream omits other refnames' '
-	! grep master stream &&
+	! grep main stream &&
 	! grep mytag stream
 '
 
@@ -85,7 +88,7 @@ test_expect_success 'repo has original shape and timestamps' '
 	shape () {
 		git log --format="%m %ct" --left-right --boundary "$@"
 	} &&
-	(cd .. && shape master...other) >expect &&
+	(cd .. && shape main...other) >expect &&
 	shape $main_branch...$other_branch >actual &&
 	test_cmp expect actual
 '

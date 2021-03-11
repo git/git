@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='various Windows-only path tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if test_have_prereq CYGWIN
@@ -17,20 +20,29 @@ fi
 UNCPATH="$(winpwd)"
 case "$UNCPATH" in
 [A-Z]:*)
+	WITHOUTDRIVE="${UNCPATH#?:}"
 	# Use administrative share e.g. \\localhost\C$\git-sdk-64\usr\src\git
 	# (we use forward slashes here because MSYS2 and Git accept them, and
 	# they are easier on the eyes)
-	UNCPATH="//localhost/${UNCPATH%%:*}\$/${UNCPATH#?:}"
-	test -d "$UNCPATH" || {
-		skip_all='could not access administrative share; skipping'
-		test_done
-	}
+	UNCPATH="//localhost/${UNCPATH%%:*}\$$WITHOUTDRIVE"
 	;;
 *)
 	skip_all='skipping UNC path tests, cannot determine current path as UNC'
 	test_done
 	;;
 esac
+
+test_expect_success 'clone into absolute path lacking a drive prefix' '
+	USINGBACKSLASHES="$(echo "$WITHOUTDRIVE"/without-drive-prefix |
+		tr / \\\\)" &&
+	git clone . "$USINGBACKSLASHES" &&
+	test -f without-drive-prefix/.git/HEAD
+'
+
+test -d "$UNCPATH" || {
+	skip_all='could not access administrative share; skipping'
+	test_done
+}
 
 test_expect_success setup '
 	test_commit initial
@@ -53,7 +65,7 @@ test_expect_success fetch '
 	git init to-fetch &&
 	(
 		cd to-fetch &&
-		git fetch "$UNCPATH" master
+		git fetch "$UNCPATH" main
 	)
 '
 

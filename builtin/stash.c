@@ -87,7 +87,7 @@ static const char * const git_stash_save_usage[] = {
 	NULL
 };
 
-static const char *ref_stash = "refs/stash";
+static const char ref_stash[] = "refs/stash";
 static struct strbuf stash_index_path = STRBUF_INIT;
 
 /*
@@ -222,7 +222,7 @@ static int clear_stash(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
 	if (argc)
-		return error(_("git stash clear with parameters is "
+		return error(_("git stash clear with arguments is "
 			       "unimplemented"));
 
 	return do_clear_stash();

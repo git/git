@@ -34,7 +34,7 @@ expect_from_stdin () {
 test_stderr () {
 	expected="$1"
 	expect_in stderr "$1" &&
-	test_i18ncmp "$HOME/expected-stderr" "$HOME/stderr"
+	test_cmp "$HOME/expected-stderr" "$HOME/stderr"
 }
 
 broken_c_unquote () {

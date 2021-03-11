@@ -130,7 +130,7 @@ ignored, then the directory is not shown, but all contents are shown.
 --column[=<options>]::
 --no-column::
 	Display untracked files in columns. See configuration variable
-	column.status for option syntax.`--column` and `--no-column`
+	`column.status` for option syntax. `--column` and `--no-column`
 	without options are equivalent to 'always' and 'never'
 	respectively.
 
@@ -148,6 +148,13 @@ ignored, then the directory is not shown, but all contents are shown.
 	Turn on rename detection, optionally setting the similarity
 	threshold.
 	See also linkgit:git-diff[1] `--find-renames`.
+
+--no-lock-index::
+--lock-index::
+	(DEPRECATED: use --no-optional-locks instead)
+	Specifies whether `git status` should try to lock the index and
+	update it afterwards if any changes were detected. Defaults to
+	`--lock-index`.
 
 <pathspec>...::
 	See the 'pathspec' entry in linkgit:gitglossary[7].

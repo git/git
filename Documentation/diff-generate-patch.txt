@@ -81,9 +81,9 @@ Combined diff format
 Any diff-generating command can take the `-c` or `--cc` option to
 produce a 'combined diff' when showing a merge. This is the default
 format when showing merges with linkgit:git-diff[1] or
-linkgit:git-show[1]. Note also that you can give the `-m` option to any
-of these commands to force generation of diffs with individual parents
-of a merge.
+linkgit:git-show[1]. Note also that you can give suitable
+`--diff-merges` option to any of these commands to force generation of
+diffs in specific format.
 
 A "combined diff" format looks like this:
 

@@ -5,6 +5,7 @@
 #include "connect.h"
 #include "oid-array.h"
 #include "protocol.h"
+#include "config.h"
 
 static const char fetch_pack_usage[] =
 "git fetch-pack [--all] [--stdin] [--quiet | -q] [--keep | -k] [--thin] "
@@ -57,6 +58,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	struct packet_reader reader;
 	enum protocol_version version;
 
+	git_config(git_default_config, NULL);
 	fetch_if_missing = 0;
 
 	packet_trace_identity("fetch-pack");
@@ -220,7 +222,8 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	version = discover_version(&reader);
 	switch (version) {
 	case protocol_v2:
-		get_remote_refs(fd[1], &reader, &ref, 0, NULL, NULL, args.stateless_rpc);
+		get_remote_refs(fd[1], &reader, &ref, 0, NULL, NULL,
+				args.stateless_rpc);
 		break;
 	case protocol_v1:
 	case protocol_v0:

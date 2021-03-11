@@ -5,6 +5,9 @@ test_description='"git fetch" with negative refspecs.
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -22,12 +25,12 @@ test_expect_success "clone and setup child repos" '
 		git switch -c alternate &&
 		echo >file updated again by one &&
 		git commit -a -m "updated by one again" &&
-		git switch master
+		git switch main
 	) &&
 	git clone . two &&
 	(
 		cd two &&
-		git config branch.master.remote one &&
+		git config branch.main.remote one &&
 		git config remote.one.url ../one/.git/ &&
 		git config remote.one.fetch +refs/heads/*:refs/remotes/one/* &&
 		git config --add remote.one.fetch ^refs/heads/alternate
@@ -43,9 +46,9 @@ test_expect_success "fetch one" '
 		test_must_fail git rev-parse --verify refs/remotes/one/alternate &&
 		git fetch one &&
 		test_must_fail git rev-parse --verify refs/remotes/one/alternate &&
-		git rev-parse --verify refs/remotes/one/master &&
-		mine=$(git rev-parse refs/remotes/one/master) &&
-		his=$(cd ../one && git rev-parse refs/heads/master) &&
+		git rev-parse --verify refs/remotes/one/main &&
+		mine=$(git rev-parse refs/remotes/one/main) &&
+		his=$(cd ../one && git rev-parse refs/heads/main) &&
 		test "z$mine" = "z$his"
 	)
 '
@@ -57,7 +60,7 @@ test_expect_success "fetch with negative refspec on commandline" '
 		cd three &&
 		alternate_in_one=$(cd ../one && git rev-parse refs/heads/alternate) &&
 		echo $alternate_in_one >expect &&
-		git fetch ../one/.git refs/heads/*:refs/remotes/one/* ^refs/heads/master &&
+		git fetch ../one/.git refs/heads/*:refs/remotes/one/* ^refs/heads/main &&
 		cut -f -1 .git/FETCH_HEAD >actual &&
 		test_cmp expect actual
 	)
@@ -68,8 +71,8 @@ test_expect_success "fetch with negative sha1 refspec fails" '
 	git commit -a -m "updated by origin yet again" &&
 	(
 		cd three &&
-		master_in_one=$(cd ../one && git rev-parse refs/heads/master) &&
-		test_must_fail git fetch ../one/.git refs/heads/*:refs/remotes/one/* ^$master_in_one
+		main_in_one=$(cd ../one && git rev-parse refs/heads/main) &&
+		test_must_fail git fetch ../one/.git refs/heads/*:refs/remotes/one/* ^$main_in_one
 	)
 '
 
@@ -92,10 +95,10 @@ test_expect_success "fetch with negative pattern refspec does not expand prefix"
 	(
 		cd three &&
 		alternate_in_one=$(cd ../one && git rev-parse refs/heads/alternate) &&
-		master_in_one=$(cd ../one && git rev-parse refs/heads/master) &&
+		main_in_one=$(cd ../one && git rev-parse refs/heads/main) &&
 		echo $alternate_in_one >expect &&
-		echo $master_in_one >>expect &&
-		git fetch ../one/.git refs/heads/*:refs/remotes/one/* ^master &&
+		echo $main_in_one >>expect &&
+		git fetch ../one/.git refs/heads/*:refs/remotes/one/* ^main &&
 		cut -f -1 .git/FETCH_HEAD >actual &&
 		test_cmp expect actual
 	)

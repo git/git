@@ -4,6 +4,9 @@ test_description='git-merge
 
 Do not overwrite changes.'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -136,7 +139,7 @@ test_expect_success 'will not overwrite untracked file in leading path' '
 	cp important sub &&
 	cp important sub2 &&
 	test_must_fail git merge sub 2>out &&
-	test_i18ncmp out expect &&
+	test_cmp out expect &&
 	test_path_is_missing .git/MERGE_HEAD &&
 	test_cmp important sub &&
 	test_cmp important sub2 &&
@@ -171,7 +174,7 @@ test_expect_success 'will not overwrite untracked file on unborn branch' '
 	git checkout --orphan new &&
 	cp important c0.c &&
 	test_must_fail git merge c0 2>out &&
-	test_i18ncmp out expect
+	test_cmp out expect
 '
 
 test_expect_success 'will not overwrite untracked file on unborn branch .git/MERGE_HEAD sanity etc.' '
@@ -193,7 +196,7 @@ test_expect_success 'set up unborn branch and content' '
 '
 
 test_expect_success 'will not clobber WT/index when merging into unborn' '
-	git merge master &&
+	git merge main &&
 	grep foo tracked-file &&
 	git show :tracked-file >expect &&
 	grep foo expect &&

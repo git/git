@@ -202,6 +202,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	int remote_branch = 0;
 	struct strbuf bname = STRBUF_INIT;
 	unsigned allowed_interpret;
+	struct string_list refs_to_delete = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
+	int branch_name_pos;
 
 	switch (kinds) {
 	case FILTER_REFS_REMOTES:
@@ -219,6 +222,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	default:
 		die(_("cannot use -a with -d"));
 	}
+	branch_name_pos = strcspn(fmt, "%");
 
 	if (!force) {
 		head_rev = lookup_commit_reference(the_repository, &head_oid);
@@ -265,29 +269,34 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			goto next;
 		}
 
-		if (delete_ref(NULL, name, is_null_oid(&oid) ? NULL : &oid,
-			       REF_NO_DEREF)) {
-			error(remote_branch
-			      ? _("Error deleting remote-tracking branch '%s'")
-			      : _("Error deleting branch '%s'"),
-			      bname.buf);
-			ret = 1;
-			goto next;
-		}
-		if (!quiet) {
-			printf(remote_branch
-			       ? _("Deleted remote-tracking branch %s (was %s).\n")
-			       : _("Deleted branch %s (was %s).\n"),
-			       bname.buf,
-			       (flags & REF_ISBROKEN) ? "broken"
-			       : (flags & REF_ISSYMREF) ? target
-			       : find_unique_abbrev(&oid, DEFAULT_ABBREV));
-		}
-		delete_branch_config(bname.buf);
+		item = string_list_append(&refs_to_delete, name);
+		item->util = xstrdup((flags & REF_ISBROKEN) ? "broken"
+				    : (flags & REF_ISSYMREF) ? target
+				    : find_unique_abbrev(&oid, DEFAULT_ABBREV));
 
 	next:
 		free(target);
 	}
+
+	if (delete_refs(NULL, &refs_to_delete, REF_NO_DEREF))
+		ret = 1;
+
+	for_each_string_list_item(item, &refs_to_delete) {
+		char *describe_ref = item->util;
+		char *name = item->string;
+		if (!ref_exists(name)) {
+			char *refname = name + branch_name_pos;
+			if (!quiet)
+				printf(remote_branch
+					? _("Deleted remote-tracking branch %s (was %s).\n")
+					: _("Deleted branch %s (was %s).\n"),
+					name + branch_name_pos, describe_ref);
+
+			delete_branch_config(refname);
+		}
+		free(describe_ref);
+	}
+	string_list_clear(&refs_to_delete, 0);
 
 	free(name);
 	strbuf_release(&bname);

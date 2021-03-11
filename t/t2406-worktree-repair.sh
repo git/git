@@ -104,6 +104,16 @@ test_expect_success 'repo not found; .git not file' '
 	test_i18ngrep ".git is not a file" err
 '
 
+test_expect_success 'repo not found; .git not referencing repo' '
+	test_when_finished "rm -rf side not-a-repo && git worktree prune" &&
+	git worktree add --detach side &&
+	sed s,\.git/worktrees/side$,not-a-repo, side/.git >side/.newgit &&
+	mv side/.newgit side/.git &&
+	mkdir not-a-repo &&
+	test_must_fail git worktree repair side 2>err &&
+	test_i18ngrep ".git file does not reference a repository" err
+'
+
 test_expect_success 'repo not found; .git file broken' '
 	test_when_finished "rm -rf orig moved && git worktree prune" &&
 	git worktree add --detach orig &&
@@ -174,6 +184,22 @@ test_expect_success 'repair multiple gitdir files' '
 	test_i18ngrep "gitdir incorrect:.*orig1/gitdir$" out &&
 	test_i18ngrep "gitdir incorrect:.*orig2/gitdir$" out &&
 	test_must_be_empty err
+'
+
+test_expect_success 'repair moved main and linked worktrees' '
+	test_when_finished "rm -rf main side mainmoved sidemoved" &&
+	test_create_repo main &&
+	test_commit -C main init &&
+	git -C main worktree add --detach ../side &&
+	sed "s,side/\.git$,sidemoved/.git," \
+		main/.git/worktrees/side/gitdir >expect-gitdir &&
+	sed "s,main/.git/worktrees/side$,mainmoved/.git/worktrees/side," \
+		side/.git >expect-gitfile &&
+	mv main mainmoved &&
+	mv side sidemoved &&
+	git -C mainmoved worktree repair ../sidemoved &&
+	test_cmp expect-gitdir mainmoved/.git/worktrees/side/gitdir &&
+	test_cmp expect-gitfile sidemoved/.git
 '
 
 test_done
