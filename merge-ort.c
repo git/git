@@ -109,6 +109,14 @@ struct rename_info {
 	struct strset relevant_sources[3];
 
 	/*
+	 * dir_rename_mask:
+	 *   0: optimization removing unmodified potential rename source okay
+	 *   2 or 4: optimization okay, but must check for files added to dir
+	 *   7: optimization forbidden; need rename source in case of dir rename
+	 */
+	unsigned dir_rename_mask:3;
+
+	/*
 	 * callback_data_*: supporting data structures for alternate traversal
 	 *
 	 * We sometimes need to be able to traverse through all the files
@@ -419,6 +427,8 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 		strmap_clear(&opti->output, 0);
 	}
 
+	renames->dir_rename_mask = 0;
+
 	/* Clean out callback_data as well. */
 	FREE_AND_NULL(renames->callback_data);
 	renames->callback_data_nr = renames->callback_data_alloc = 0;
@@ -520,11 +530,15 @@ static int traverse_trees_wrapper_callback(int n,
 {
 	struct merge_options *opt = info->data;
 	struct rename_info *renames = &opt->priv->renames;
+	unsigned filemask = mask & ~dirmask;
 
 	assert(n==3);
 
 	if (!renames->callback_data_traverse_path)
 		renames->callback_data_traverse_path = xstrdup(info->traverse_path);
+
+	if (filemask && filemask == renames->dir_rename_mask)
+		renames->dir_rename_mask = 0x07;
 
 	ALLOC_GROW(renames->callback_data, renames->callback_data_nr + 1,
 		   renames->callback_data_alloc);
@@ -544,7 +558,6 @@ static int traverse_trees_wrapper_callback(int n,
  *     additional details before the "real" traversal
  *   - loop through the saved entries and call the original callback on them
  */
-MAYBE_UNUSED
 static int traverse_trees_wrapper(struct index_state *istate,
 				  int n,
 				  struct tree_desc *t,
@@ -555,6 +568,8 @@ static int traverse_trees_wrapper(struct index_state *istate,
 	char *old_callback_data_traverse_path;
 	struct merge_options *opt = info->data;
 	struct rename_info *renames = &opt->priv->renames;
+
+	assert(renames->dir_rename_mask == 2 || renames->dir_rename_mask == 4);
 
 	old_callback_data_traverse_path = renames->callback_data_traverse_path;
 	old_fn = info->fn;
@@ -647,7 +662,8 @@ static void add_pair(struct merge_options *opt,
 		     const char *pathname,
 		     unsigned side,
 		     unsigned is_add /* if false, is_delete */,
-		     unsigned match_mask)
+		     unsigned match_mask,
+		     unsigned dir_rename_mask)
 {
 	struct diff_filespec *one, *two;
 	struct rename_info *renames = &opt->priv->renames;
@@ -655,7 +671,7 @@ static void add_pair(struct merge_options *opt,
 
 	if (!is_add) {
 		unsigned content_relevant = (match_mask == 0);
-		unsigned location_relevant = 1; /* FIXME: compute this */
+		unsigned location_relevant = (dir_rename_mask == 0x07);
 
 		if (content_relevant || location_relevant)
 			strset_add(&renames->relevant_sources[side], pathname);
@@ -679,6 +695,36 @@ static void collect_rename_info(struct merge_options *opt,
 	struct rename_info *renames = &opt->priv->renames;
 	unsigned side;
 
+	/*
+	 * Update dir_rename_mask (determines ignore-rename-source validity)
+	 *
+	 * dir_rename_mask helps us keep track of when directory rename
+	 * detection may be relevant.  Basically, whenver a directory is
+	 * removed on one side of history, and a file is added to that
+	 * directory on the other side of history, directory rename
+	 * detection is relevant (meaning we have to detect renames for all
+	 * files within that directory to deduce where the directory
+	 * moved).  Also, whenever a directory needs directory rename
+	 * detection, due to the "majority rules" choice for where to move
+	 * it (see t6423 testcase 1f), we also need to detect renames for
+	 * all files within subdirectories of that directory as well.
+	 *
+	 * Here we haven't looked at files within the directory yet, we are
+	 * just looking at the directory itself.  So, if we aren't yet in
+	 * a case where a parent directory needed directory rename detection
+	 * (i.e. dir_rename_mask != 0x07), and if the directory was removed
+	 * on one side of history, record the mask of the other side of
+	 * history in dir_rename_mask.
+	 */
+	if (renames->dir_rename_mask != 0x07 &&
+	    (dirmask == 3 || dirmask == 5)) {
+		/* simple sanity check */
+		assert(renames->dir_rename_mask == 0 ||
+		       renames->dir_rename_mask == (dirmask & ~1));
+		/* update dir_rename_mask; have it record mask of new side */
+		renames->dir_rename_mask = (dirmask & ~1);
+	}
+
 	/* Update dirs_removed, as needed */
 	if (dirmask == 1 || dirmask == 3 || dirmask == 5) {
 		/* absent_mask = 0x07 - dirmask; sides = absent_mask/2 */
@@ -698,12 +744,14 @@ static void collect_rename_info(struct merge_options *opt,
 		/* Check for deletion on side */
 		if ((filemask & 1) && !(filemask & side_mask))
 			add_pair(opt, names, fullname, side, 0 /* delete */,
-				 match_mask & filemask);
+				 match_mask & filemask,
+				 renames->dir_rename_mask);
 
 		/* Check for addition on side */
 		if (!(filemask & 1) && (filemask & side_mask))
 			add_pair(opt, names, fullname, side, 1 /* add */,
-				 match_mask & filemask);
+				 match_mask & filemask,
+				 renames->dir_rename_mask);
 	}
 }
 
@@ -721,12 +769,14 @@ static int collect_merge_info_callback(int n,
 	 */
 	struct merge_options *opt = info->data;
 	struct merge_options_internal *opti = opt->priv;
+	struct rename_info *renames = &opt->priv->renames;
 	struct string_list_item pi;  /* Path Info */
 	struct conflict_info *ci; /* typed alias to pi.util (which is void*) */
 	struct name_entry *p;
 	size_t len;
 	char *fullpath;
 	const char *dirname = opti->current_dir_name;
+	unsigned prev_dir_rename_mask = renames->dir_rename_mask;
 	unsigned filemask = mask & ~dirmask;
 	unsigned match_mask = 0; /* will be updated below */
 	unsigned mbase_null = !(mask & 1);
@@ -867,8 +917,13 @@ static int collect_merge_info_callback(int n,
 
 		original_dir_name = opti->current_dir_name;
 		opti->current_dir_name = pi.string;
-		ret = traverse_trees(NULL, 3, t, &newinfo);
+		if (renames->dir_rename_mask == 0 ||
+		    renames->dir_rename_mask == 0x07)
+			ret = traverse_trees(NULL, 3, t, &newinfo);
+		else
+			ret = traverse_trees_wrapper(NULL, 3, t, &newinfo);
 		opti->current_dir_name = original_dir_name;
+		renames->dir_rename_mask = prev_dir_rename_mask;
 
 		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++)
 			free(buf[i]);
