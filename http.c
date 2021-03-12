@@ -1635,8 +1635,7 @@ static int handle_curl_result(struct slot_results *results)
 
 	if (results->curl_result == CURLE_OK) {
 		credential_approve(&http_auth);
-		if (proxy_auth.password)
-			credential_approve(&proxy_auth);
+		credential_approve(&proxy_auth);
 		credential_approve(&cert_auth);
 		return HTTP_OK;
 	} else if (results->curl_result == CURLE_SSL_CERTPROBLEM) {
