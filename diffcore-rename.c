@@ -1129,7 +1129,7 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 	 * a majority.
 	 */
 
-	int i;
+	int i, new_num_src;
 	struct hashmap_iter iter;
 	struct strmap_entry *entry;
 
@@ -1193,6 +1193,55 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 				      RELEVANT_FOR_ANCESTOR);
 		}
 	}
+
+	for (i = 0, new_num_src = 0; i < rename_src_nr; i++) {
+		struct diff_filespec *one = rename_src[i].p->one;
+		int val;
+
+		val = strintmap_get(relevant_sources, one->path);
+
+		/*
+		 * sources that were not found in relevant_sources should
+		 * have already been removed by a prior call to
+		 * remove_unneeded_paths_from_src()
+		 */
+		assert(val != -1);
+
+		if (val == RELEVANT_LOCATION) {
+			int removable = 1;
+			char *dir = get_dirname(one->path);
+			while (1) {
+				char *freeme = dir;
+				int res = strintmap_get(dirs_removed, dir);
+
+				/* Quit if not found or irrelevant */
+				if (res == NOT_RELEVANT)
+					break;
+				/* If RELEVANT_FOR_SELF, can't remove */
+				if (res == RELEVANT_FOR_SELF) {
+					removable = 0;
+					break;
+				}
+				/* Else continue searching upwards */
+				assert(res == RELEVANT_FOR_ANCESTOR);
+				dir = get_dirname(dir);
+				free(freeme);
+			}
+			free(dir);
+			if (removable) {
+				strintmap_set(relevant_sources, one->path,
+					      RELEVANT_NO_MORE);
+				continue;
+			}
+		}
+
+		if (new_num_src < i)
+			memcpy(&rename_src[new_num_src], &rename_src[i],
+			       sizeof(struct diff_rename_src));
+		new_num_src++;
+	}
+
+	rename_src_nr = new_num_src;
 }
 
 void diffcore_rename_extended(struct diff_options *options,
