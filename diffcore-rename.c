@@ -699,7 +699,8 @@ static void cleanup_dir_rename_info(struct dir_rename_info *info,
 	/*
 	 * Although dir_rename_count was passed in
 	 * diffcore_rename_extended() and we want to keep it around and
-	 * return it to that caller, we first want to remove any data
+	 * return it to that caller, we first want to remove any counts in
+	 * the maps associated with UNKNOWN_DIR entries and any data
 	 * associated with directories that weren't renamed.
 	 */
 	strmap_for_each_entry(info->dir_rename_count, &iter, entry) {
@@ -711,6 +712,9 @@ static void cleanup_dir_rename_info(struct dir_rename_info *info,
 			strintmap_clear(counts);
 			continue;
 		}
+
+		if (strintmap_contains(counts, UNKNOWN_DIR))
+			strintmap_remove(counts, UNKNOWN_DIR);
 	}
 	for (i = 0; i < to_remove.nr; ++i)
 		strmap_remove(info->dir_rename_count,
@@ -1125,6 +1129,7 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 	 * a majority.
 	 */
 
+	int i;
 	struct hashmap_iter iter;
 	struct strmap_entry *entry;
 
@@ -1134,10 +1139,38 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 		return; /* culling incompatbile with break detection */
 
 	/*
-	 * FIXME: Supplement dir_rename_count with number of potential
-	 * renames, marking all potential rename sources as mapping to
-	 * UNKNOWN_DIR.
+	 * Supplement dir_rename_count with number of potential renames,
+	 * marking all potential rename sources as mapping to UNKNOWN_DIR.
 	 */
+	for (i = 0; i < rename_src_nr; i++) {
+		char *old_dir;
+		struct diff_filespec *one = rename_src[i].p->one;
+
+		/*
+		 * sources that are part of a rename will have already been
+		 * removed by a prior call to remove_unneeded_paths_from_src()
+		 */
+		assert(!one->rename_used);
+
+		old_dir = get_dirname(one->path);
+		while (*old_dir != '\0' &&
+		       NOT_RELEVANT != strintmap_get(dirs_removed, old_dir)) {
+			char *freeme = old_dir;
+
+			increment_count(info, old_dir, UNKNOWN_DIR);
+			old_dir = get_dirname(old_dir);
+
+			/* Free resources we don't need anymore */
+			free(freeme);
+		}
+		/*
+		 * old_dir and new_dir free'd in increment_count, but
+		 * get_dirname() gives us a new pointer we need to free for
+		 * old_dir.  Also, if the loop runs 0 times we need old_dir
+		 * to be freed.
+		 */
+		free(old_dir);
+	}
 
 	/*
 	 * For any directory which we need a potential rename detected for
