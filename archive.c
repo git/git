@@ -37,13 +37,10 @@ void init_archivers(void)
 
 static void format_subst(const struct commit *commit,
 			 const char *src, size_t len,
-			 struct strbuf *buf)
+			 struct strbuf *buf, struct pretty_print_context *ctx)
 {
 	char *to_free = NULL;
 	struct strbuf fmt = STRBUF_INIT;
-	struct pretty_print_context ctx = {0};
-	ctx.date_mode.type = DATE_NORMAL;
-	ctx.abbrev = DEFAULT_ABBREV;
 
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
@@ -61,7 +58,7 @@ static void format_subst(const struct commit *commit,
 		strbuf_add(&fmt, b + 8, c - b - 8);
 
 		strbuf_add(buf, src, b - src);
-		format_commit_message(commit, fmt.buf, buf, &ctx);
+		format_commit_message(commit, fmt.buf, buf, ctx);
 		len -= c + 1 - src;
 		src  = c + 1;
 	}
@@ -94,7 +91,7 @@ static void *object_file_to_archive(const struct archiver_args *args,
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
 		convert_to_working_tree(args->repo->index, path, buf.buf, buf.len, &buf, &meta);
 		if (commit)
-			format_subst(commit, buf.buf, buf.len, &buf);
+			format_subst(commit, buf.buf, buf.len, &buf, args->pretty_ctx);
 		buffer = strbuf_detach(&buf, &size);
 		*sizep = size;
 	}
@@ -633,12 +630,19 @@ int write_archive(int argc, const char **argv, const char *prefix,
 		  const char *name_hint, int remote)
 {
 	const struct archiver *ar = NULL;
+	struct pretty_print_describe_status describe_status = {0};
+	struct pretty_print_context ctx = {0};
 	struct archiver_args args;
 	int rc;
 
 	git_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
 	git_config(git_default_config, NULL);
 
+	describe_status.max_invocations = 1;
+	ctx.date_mode.type = DATE_NORMAL;
+	ctx.abbrev = DEFAULT_ABBREV;
+	ctx.describe_status = &describe_status;
+	args.pretty_ctx = &ctx;
 	args.repo = repo;
 	args.prefix = prefix;
 	string_list_init(&args.extra_files, 1);
