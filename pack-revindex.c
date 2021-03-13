@@ -253,7 +253,8 @@ cleanup:
 		*data_p = (const uint32_t *)data;
 	}
 
-	close(fd);
+	if (fd >= 0)
+		close(fd);
 	return ret;
 }
 
