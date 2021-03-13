@@ -407,6 +407,28 @@ static const char *get_highest_rename_path(struct strintmap *counts)
 	return highest_destination_dir;
 }
 
+static char *UNKNOWN_DIR = "/";  /* placeholder -- short, illegal directory */
+
+static int dir_rename_already_determinable(struct strintmap *counts)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+	int first = 0, second = 0, unknown = 0;
+	strintmap_for_each_entry(counts, &iter, entry) {
+		const char *destination_dir = entry->key;
+		intptr_t count = (intptr_t)entry->value;
+		if (!strcmp(destination_dir, UNKNOWN_DIR)) {
+			unknown = count;
+		} else if (count >= first) {
+			second = first;
+			first = count;
+		} else if (count >= second) {
+			second = count;
+		}
+	}
+	return first > second + unknown;
+}
+
 static void increment_count(struct dir_rename_info *info,
 			    char *old_dir,
 			    char *new_dir)
@@ -1096,17 +1118,48 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 					   struct strintmap *dirs_removed)
 {
 	/*
-	 * Not yet implemented; directory renames are determined via an
-	 * aggregate of all renames under them and using a "majority wins"
-	 * rule.  The fact that "majority wins", though, means we don't need
-	 * all the renames under the given directory, we only need enough to
-	 * ensure we have a majority.
-	 *
-	 * For now, we don't have enough information to know if we have a
-	 * majority after exact renames and basename-guided rename detection,
-	 * so just return early without doing any extra filtering.
+	 * Directory renames are determined via an aggregate of all renames
+	 * under them and using a "majority wins" rule.  The fact that
+	 * "majority wins", though, means we don't need all the renames
+	 * under the given directory, we only need enough to ensure we have
+	 * a majority.
 	 */
-	return;
+
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	if (!dirs_removed || !relevant_sources)
+		return; /* nothing to cull */
+	if (break_idx)
+		return; /* culling incompatbile with break detection */
+
+	/*
+	 * FIXME: Supplement dir_rename_count with number of potential
+	 * renames, marking all potential rename sources as mapping to
+	 * UNKNOWN_DIR.
+	 */
+
+	/*
+	 * For any directory which we need a potential rename detected for
+	 * (i.e. those marked as RELEVANT_FOR_SELF in dirs_removed), check
+	 * whether we have enough renames to satisfy the "majority rules"
+	 * requirement such that detecting any more renames of files under
+	 * it won't change the result.  For any such directory, mark that
+	 * we no longer need to detect a rename for it.  However, since we
+	 * might need to still detect renames for an ancestor of that
+	 * directory, use RELEVANT_FOR_ANCESTOR.
+	 */
+	strmap_for_each_entry(info->dir_rename_count, &iter, entry) {
+		/* entry->key is source_dir */
+		struct strintmap *counts = entry->value;
+
+		if (strintmap_get(dirs_removed, entry->key) ==
+		    RELEVANT_FOR_SELF &&
+		    dir_rename_already_determinable(counts)) {
+			strintmap_set(dirs_removed, entry->key,
+				      RELEVANT_FOR_ANCESTOR);
+		}
+	}
 }
 
 void diffcore_rename_extended(struct diff_options *options,
