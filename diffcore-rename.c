@@ -371,7 +371,7 @@ struct dir_rename_info {
 	struct strintmap idx_map;
 	struct strmap dir_rename_guess;
 	struct strmap *dir_rename_count;
-	struct strset *relevant_source_dirs;
+	struct strintmap *relevant_source_dirs;
 	unsigned setup;
 };
 
@@ -429,7 +429,7 @@ static void increment_count(struct dir_rename_info *info,
 }
 
 static void update_dir_rename_counts(struct dir_rename_info *info,
-				     struct strset *dirs_removed,
+				     struct strintmap *dirs_removed,
 				     const char *oldname,
 				     const char *newname)
 {
@@ -464,7 +464,7 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 		/* Get old_dir, skip if its directory isn't relevant. */
 		dirname_munge(old_dir);
 		if (info->relevant_source_dirs &&
-		    !strset_contains(info->relevant_source_dirs, old_dir))
+		    !strintmap_contains(info->relevant_source_dirs, old_dir))
 			break;
 
 		/* Get new_dir */
@@ -509,7 +509,7 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 			}
 		}
 
-		if (strset_contains(dirs_removed, old_dir))
+		if (strintmap_contains(dirs_removed, old_dir))
 			increment_count(info, old_dir, new_dir);
 		else
 			break;
@@ -527,8 +527,8 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 }
 
 static void initialize_dir_rename_info(struct dir_rename_info *info,
-				       struct strset *relevant_sources,
-				       struct strset *dirs_removed,
+				       struct strintmap *relevant_sources,
+				       struct strintmap *dirs_removed,
 				       struct strmap *dir_rename_count)
 {
 	struct hashmap_iter iter;
@@ -555,12 +555,13 @@ static void initialize_dir_rename_info(struct dir_rename_info *info,
 		info->relevant_source_dirs = dirs_removed; /* might be NULL */
 	} else {
 		info->relevant_source_dirs = xmalloc(sizeof(struct strintmap));
-		strset_init(info->relevant_source_dirs);
-		strset_for_each_entry(relevant_sources, &iter, entry) {
+		strintmap_init(info->relevant_source_dirs, 0 /* unused */);
+		strintmap_for_each_entry(relevant_sources, &iter, entry) {
 			char *dirname = get_dirname(entry->key);
 			if (!dirs_removed ||
-			    strset_contains(dirs_removed, dirname))
-				strset_add(info->relevant_source_dirs, dirname);
+			    strintmap_contains(dirs_removed, dirname))
+				strintmap_set(info->relevant_source_dirs,
+					      dirname, 0 /* value irrelevant */);
 			free(dirname);
 		}
 	}
@@ -624,7 +625,7 @@ void partial_clear_dir_rename_count(struct strmap *dir_rename_count)
 }
 
 static void cleanup_dir_rename_info(struct dir_rename_info *info,
-				    struct strset *dirs_removed,
+				    struct strintmap *dirs_removed,
 				    int keep_dir_rename_count)
 {
 	struct hashmap_iter iter;
@@ -644,7 +645,7 @@ static void cleanup_dir_rename_info(struct dir_rename_info *info,
 	/* relevant_source_dirs */
 	if (info->relevant_source_dirs &&
 	    info->relevant_source_dirs != dirs_removed) {
-		strset_clear(info->relevant_source_dirs);
+		strintmap_clear(info->relevant_source_dirs);
 		FREE_AND_NULL(info->relevant_source_dirs);
 	}
 
@@ -666,7 +667,7 @@ static void cleanup_dir_rename_info(struct dir_rename_info *info,
 		const char *source_dir = entry->key;
 		struct strintmap *counts = entry->value;
 
-		if (!strset_contains(dirs_removed, source_dir)) {
+		if (!strintmap_contains(dirs_removed, source_dir)) {
 			string_list_append(&to_remove, source_dir);
 			strintmap_clear(counts);
 			continue;
@@ -770,8 +771,8 @@ static int idx_possible_rename(char *filename, struct dir_rename_info *info)
 static int find_basename_matches(struct diff_options *options,
 				 int minimum_score,
 				 struct dir_rename_info *info,
-				 struct strset *relevant_sources,
-				 struct strset *dirs_removed)
+				 struct strintmap *relevant_sources,
+				 struct strintmap *dirs_removed)
 {
 	/*
 	 * When I checked in early 2020, over 76% of file renames in linux
@@ -863,7 +864,7 @@ static int find_basename_matches(struct diff_options *options,
 
 		/* Skip irrelevant sources */
 		if (relevant_sources &&
-		    !strset_contains(relevant_sources, filename))
+		    !strintmap_contains(relevant_sources, filename))
 			continue;
 
 		/*
@@ -994,7 +995,7 @@ static int find_renames(struct diff_score *mx,
 			int minimum_score,
 			int copies,
 			struct dir_rename_info *info,
-			struct strset *dirs_removed)
+			struct strintmap *dirs_removed)
 {
 	int count = 0, i;
 
@@ -1019,7 +1020,7 @@ static int find_renames(struct diff_score *mx,
 }
 
 static void remove_unneeded_paths_from_src(int detecting_copies,
-					   struct strset *interesting)
+					   struct strintmap *interesting)
 {
 	int i, new_num_src;
 
@@ -1061,7 +1062,7 @@ static void remove_unneeded_paths_from_src(int detecting_copies,
 			continue;
 
 		/* If we don't care about the source path, skip it */
-		if (interesting && !strset_contains(interesting, one->path))
+		if (interesting && !strintmap_contains(interesting, one->path))
 			continue;
 
 		if (new_num_src < i)
@@ -1074,8 +1075,8 @@ static void remove_unneeded_paths_from_src(int detecting_copies,
 }
 
 static void handle_early_known_dir_renames(struct dir_rename_info *info,
-					   struct strset *relevant_sources,
-					   struct strset *dirs_removed)
+					   struct strintmap *relevant_sources,
+					   struct strintmap *dirs_removed)
 {
 	/*
 	 * Not yet implemented; directory renames are determined via an
@@ -1092,8 +1093,8 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 }
 
 void diffcore_rename_extended(struct diff_options *options,
-			      struct strset *relevant_sources,
-			      struct strset *dirs_removed,
+			      struct strintmap *relevant_sources,
+			      struct strintmap *dirs_removed,
 			      struct strmap *dir_rename_count)
 {
 	int detect_rename = options->detect_rename;
