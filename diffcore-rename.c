@@ -461,6 +461,8 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 		return;
 
 	while (1) {
+		int drd_flag = NOT_RELEVANT;
+
 		/* Get old_dir, skip if its directory isn't relevant. */
 		dirname_munge(old_dir);
 		if (info->relevant_source_dirs &&
@@ -509,16 +511,31 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 			}
 		}
 
-		if (strintmap_contains(dirs_removed, old_dir))
+		/*
+		 * Above we suggested that we'd keep recording renames for
+		 * all ancestor directories where the trailing directories
+		 * matched, i.e. for
+		 *   "a/b/c/d/e/foo.c" -> "a/b/some/thing/else/e/foo.c"
+		 * we'd increment rename counts for each of
+		 *   a/b/c/d/e/ => a/b/some/thing/else/e/
+		 *   a/b/c/d/   => a/b/some/thing/else/
+		 * However, we only need the rename counts for directories
+		 * in dirs_removed whose value is RELEVANT_FOR_SELF.
+		 * However, we add one special case of also recording it for
+		 * first_time_in_loop because find_basename_matches() can
+		 * use that as a hint to find a good pairing.
+		 */
+		if (dirs_removed)
+			drd_flag = strintmap_get(dirs_removed, old_dir);
+		if (drd_flag == RELEVANT_FOR_SELF || first_time_in_loop)
 			increment_count(info, old_dir, new_dir);
-		else
-			break;
 
+		first_time_in_loop = 0;
+		if (drd_flag == NOT_RELEVANT)
+			break;
 		/* If we hit toplevel directory ("") for old or new dir, quit */
 		if (!*old_dir || !*new_dir)
 			break;
-
-		first_time_in_loop = 0;
 	}
 
 	/* Free resources we don't need anymore */
