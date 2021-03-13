@@ -1073,6 +1073,24 @@ static void remove_unneeded_paths_from_src(int detecting_copies,
 	rename_src_nr = new_num_src;
 }
 
+static void handle_early_known_dir_renames(struct dir_rename_info *info,
+					   struct strset *relevant_sources,
+					   struct strset *dirs_removed)
+{
+	/*
+	 * Not yet implemented; directory renames are determined via an
+	 * aggregate of all renames under them and using a "majority wins"
+	 * rule.  The fact that "majority wins", though, means we don't need
+	 * all the renames under the given directory, we only need enough to
+	 * ensure we have a majority.
+	 *
+	 * For now, we don't have enough information to know if we have a
+	 * majority after exact renames and basename-guided rename detection,
+	 * so just return early without doing any extra filtering.
+	 */
+	return;
+}
+
 void diffcore_rename_extended(struct diff_options *options,
 			      struct strset *relevant_sources,
 			      struct strset *dirs_removed,
@@ -1208,9 +1226,16 @@ void diffcore_rename_extended(struct diff_options *options,
 		 * Cull sources, again:
 		 *   - remove ones involved in renames (found via basenames)
 		 *   - remove ones not found in relevant_sources
+		 * and
+		 *   - remove ones in relevant_sources which are needed only
+		 *     for directory renames IF no ancestory directory
+		 *     actually needs to know any more individual path
+		 *     renames under them
 		 */
 		trace2_region_enter("diff", "cull basename", options->repo);
 		remove_unneeded_paths_from_src(want_copies, relevant_sources);
+		handle_early_known_dir_renames(&info, relevant_sources,
+					       dirs_removed);
 		trace2_region_leave("diff", "cull basename", options->repo);
 	}
 
