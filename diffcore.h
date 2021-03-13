@@ -161,6 +161,13 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *,
 				 struct diff_filespec *);
 void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
+/* dir_rename_relevance: the reason we want rename information for a dir */
+enum dir_rename_relevance {
+	NOT_RELEVANT = 0,
+	RELEVANT_FOR_ANCESTOR = 1,
+	RELEVANT_FOR_SELF = 2
+};
+
 void partial_clear_dir_rename_count(struct strmap *dir_rename_count);
 
 void diffcore_break(struct repository *, int);

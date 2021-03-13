@@ -667,7 +667,7 @@ static void cleanup_dir_rename_info(struct dir_rename_info *info,
 		const char *source_dir = entry->key;
 		struct strintmap *counts = entry->value;
 
-		if (!strintmap_contains(dirs_removed, source_dir)) {
+		if (!strintmap_get(dirs_removed, source_dir)) {
 			string_list_append(&to_remove, source_dir);
 			strintmap_clear(counts);
 			continue;

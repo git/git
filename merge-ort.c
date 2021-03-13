@@ -73,6 +73,10 @@ struct rename_info {
 
 	/*
 	 * dirs_removed: directories removed on a given side of history.
+	 *
+	 * The keys of dirs_removed[side] are the directories that were removed
+	 * on the given side of history.  The value of the strintmap for each
+	 * directory is a value from enum dir_rename_relevance.
 	 */
 	struct strintmap dirs_removed[3];
 
@@ -729,10 +733,41 @@ static void collect_rename_info(struct merge_options *opt,
 	if (dirmask == 1 || dirmask == 3 || dirmask == 5) {
 		/* absent_mask = 0x07 - dirmask; sides = absent_mask/2 */
 		unsigned sides = (0x07 - dirmask)/2;
+		unsigned relevance = (renames->dir_rename_mask == 0x07) ?
+					RELEVANT_FOR_ANCESTOR : NOT_RELEVANT;
+		/*
+		 * Record relevance of this directory.  However, note that
+		 * when collect_merge_info_callback() recurses into this
+		 * directory and calls collect_rename_info() on paths
+		 * within that directory, if we find a path that was added
+		 * to this directory on the other side of history, we will
+		 * upgrade this value to RELEVANT_FOR_SELF; see below.
+		 */
 		if (sides & 1)
-			strintmap_set(&renames->dirs_removed[1], fullname, 1);
+			strintmap_set(&renames->dirs_removed[1], fullname,
+				      relevance);
 		if (sides & 2)
-			strintmap_set(&renames->dirs_removed[2], fullname, 1);
+			strintmap_set(&renames->dirs_removed[2], fullname,
+				      relevance);
+	}
+
+	/*
+	 * Here's the block that potentially upgrades to RELEVANT_FOR_SELF.
+	 * When we run across a file added to a directory.  In such a case,
+	 * find the directory of the file and upgrade its relevance.
+	 */
+	if (renames->dir_rename_mask == 0x07 &&
+	    (filemask == 2 || filemask == 4)) {
+		/*
+		 * Need directory rename for parent directory on other side
+		 * of history from added file.  Thus
+		 *    side = (~filemask & 0x06) >> 1
+		 * or
+		 *    side = 3 - (filemask/2).
+		 */
+		unsigned side = 3 - (filemask >> 1);
+		strintmap_set(&renames->dirs_removed[side], dirname,
+			      RELEVANT_FOR_SELF);
 	}
 
 	if (filemask == 0 || filemask == 7)
@@ -3446,7 +3481,7 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	renames = &opt->priv->renames;
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; i++) {
 		strintmap_init_with_options(&renames->dirs_removed[i],
-					    0, NULL, 0);
+					    NOT_RELEVANT, NULL, 0);
 		strmap_init_with_options(&renames->dir_rename_count[i],
 					 NULL, 1);
 		strmap_init_with_options(&renames->dir_renames[i],
