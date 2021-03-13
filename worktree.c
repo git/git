@@ -53,7 +53,7 @@ static struct worktree *get_main_worktree(void)
 	strbuf_add_real_path(&worktree_path, get_git_common_dir());
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
-	worktree = xcalloc(1, sizeof(*worktree));
+	CALLOC_ARRAY(worktree, 1);
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	/*
 	 * NEEDSWORK: If this function is called from a secondary worktree and
@@ -84,7 +84,7 @@ static struct worktree *get_linked_worktree(const char *id)
 	strbuf_rtrim(&worktree_path);
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
-	worktree = xcalloc(1, sizeof(*worktree));
+	CALLOC_ARRAY(worktree, 1);
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	worktree->id = xstrdup(id);
 	add_head_info(worktree);

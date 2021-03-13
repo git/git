@@ -39,7 +39,7 @@ static struct string_list *get_parameters(void)
 	if (!query_params) {
 		const char *query = getenv("QUERY_STRING");
 
-		query_params = xcalloc(1, sizeof(*query_params));
+		CALLOC_ARRAY(query_params, 1);
 		while (query && *query) {
 			char *name = url_decode_parameter_name(&query);
 			char *value = url_decode_parameter_value(&query);

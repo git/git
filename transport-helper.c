@@ -745,13 +745,13 @@ static int push_update_ref_status(struct strbuf *buf,
 			die(_("'option' without a matching 'ok/error' directive"));
 		if (state->new_report) {
 			if (!state->hint->report) {
-				state->hint->report = xcalloc(1, sizeof(struct ref_push_report));
+				CALLOC_ARRAY(state->hint->report, 1);
 				state->report = state->hint->report;
 			} else {
 				state->report = state->hint->report;
 				while (state->report->next)
 					state->report = state->report->next;
-				state->report->next = xcalloc(1, sizeof(struct ref_push_report));
+				CALLOC_ARRAY(state->report->next, 1);
 				state->report = state->report->next;
 			}
 			state->new_report = 0;

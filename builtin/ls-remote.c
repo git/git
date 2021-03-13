@@ -88,7 +88,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 
 	if (argc > 1) {
 		int i;
-		pattern = xcalloc(argc, sizeof(const char *));
+		CALLOC_ARRAY(pattern, argc);
 		for (i = 1; i < argc; i++) {
 			pattern[i - 1] = xstrfmt("*/%s", argv[i]);
 		}

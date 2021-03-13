@@ -423,7 +423,7 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	show_list("bisection 2 sorted", 0, nr, list);
 
 	*all = nr;
-	weights = xcalloc(on_list, sizeof(*weights));
+	CALLOC_ARRAY(weights, on_list);
 
 	/* Do the real work of finding bisection commit. */
 	best = do_find_bisection(list, nr, weights, bisect_flags);

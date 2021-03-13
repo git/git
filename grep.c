@@ -621,7 +621,7 @@ static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 	case GREP_PATTERN: /* atom */
 	case GREP_PATTERN_HEAD:
 	case GREP_PATTERN_BODY:
-		x = xcalloc(1, sizeof (struct grep_expr));
+		CALLOC_ARRAY(x, 1);
 		x->node = GREP_NODE_ATOM;
 		x->u.atom = p;
 		*list = p->next;
@@ -651,7 +651,7 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 		if (!p->next)
 			die("--not not followed by pattern expression");
 		*list = p->next;
-		x = xcalloc(1, sizeof (struct grep_expr));
+		CALLOC_ARRAY(x, 1);
 		x->node = GREP_NODE_NOT;
 		x->u.unary = compile_pattern_not(list);
 		if (!x->u.unary)
@@ -676,7 +676,7 @@ static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 		y = compile_pattern_and(list);
 		if (!y)
 			die("--and not followed by pattern expression");
-		z = xcalloc(1, sizeof (struct grep_expr));
+		CALLOC_ARRAY(z, 1);
 		z->node = GREP_NODE_AND;
 		z->u.binary.left = x;
 		z->u.binary.right = y;
@@ -696,7 +696,7 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 		y = compile_pattern_or(list);
 		if (!y)
 			die("not a pattern expression %s", p->pattern);
-		z = xcalloc(1, sizeof (struct grep_expr));
+		CALLOC_ARRAY(z, 1);
 		z->node = GREP_NODE_OR;
 		z->u.binary.left = x;
 		z->u.binary.right = y;

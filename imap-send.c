@@ -963,9 +963,9 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const c
 	char *arg, *rsp;
 	int s = -1, preauth;
 
-	ctx = xcalloc(1, sizeof(*ctx));
+	CALLOC_ARRAY(ctx, 1);
 
-	ctx->imap = imap = xcalloc(1, sizeof(*imap));
+	ctx->imap = CALLOC_ARRAY(imap, 1);
 	imap->buf.sock.fd[0] = imap->buf.sock.fd[1] = -1;
 	imap->in_progress_append = &imap->in_progress;
 

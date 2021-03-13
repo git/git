@@ -277,7 +277,7 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 				*computed |= BLOOM_TRUNC_EMPTY;
 			filter->len = 1;
 		}
-		filter->data = xcalloc(filter->len, sizeof(unsigned char));
+		CALLOC_ARRAY(filter->data, filter->len);
 
 		hashmap_for_each_entry(&pathmap, &iter, e, entry) {
 			struct bloom_key key;

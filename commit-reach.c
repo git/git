@@ -183,7 +183,7 @@ static int remove_redundant_no_gen(struct repository *r,
 	int *filled_index;
 	int i, j, filled;
 
-	work = xcalloc(cnt, sizeof(*work));
+	CALLOC_ARRAY(work, cnt);
 	redundant = xcalloc(cnt, 1);
 	ALLOC_ARRAY(filled_index, cnt - 1);
 
@@ -399,7 +399,7 @@ static struct commit_list *get_merge_bases_many_0(struct repository *r,
 
 	/* There are more than one */
 	cnt = commit_list_count(result);
-	rslt = xcalloc(cnt, sizeof(*rslt));
+	CALLOC_ARRAY(rslt, cnt);
 	for (list = result, i = 0; list; list = list->next)
 		rslt[i++] = list->item;
 	free_commit_list(result);
@@ -541,7 +541,7 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 		p->item->object.flags |= STALE;
 		num_head++;
 	}
-	array = xcalloc(num_head, sizeof(*array));
+	CALLOC_ARRAY(array, num_head);
 	for (p = heads, i = 0; p; p = p->next) {
 		if (p->item->object.flags & STALE) {
 			array[i++] = p->item;

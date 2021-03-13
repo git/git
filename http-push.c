@@ -896,7 +896,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 
-	lock = xcalloc(1, sizeof(*lock));
+	CALLOC_ARRAY(lock, 1);
 	lock->timeout = -1;
 
 	if (start_active_slot(slot)) {
@@ -1713,7 +1713,7 @@ int cmd_main(int argc, const char **argv)
 	int new_refs;
 	struct ref *ref, *local_refs;
 
-	repo = xcalloc(1, sizeof(*repo));
+	CALLOC_ARRAY(repo, 1);
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {

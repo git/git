@@ -546,7 +546,7 @@ static int link_alt_odb_entry(struct repository *r, const char *entry,
 		return -1;
 	}
 
-	ent = xcalloc(1, sizeof(*ent));
+	CALLOC_ARRAY(ent, 1);
 	ent->path = xstrdup(pathbuf.buf);
 
 	/* add the alternate entry */

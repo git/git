@@ -188,13 +188,13 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 			}
 			if (new_report) {
 				if (!hint->report) {
-					hint->report = xcalloc(1, sizeof(struct ref_push_report));
+					CALLOC_ARRAY(hint->report, 1);
 					report = hint->report;
 				} else {
 					report = hint->report;
 					while (report->next)
 						report = report->next;
-					report->next = xcalloc(1, sizeof(struct ref_push_report));
+					CALLOC_ARRAY(report->next, 1);
 					report = report->next;
 				}
 				new_report = 0;

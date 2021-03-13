@@ -225,7 +225,7 @@ static void init_dir_mutex(void)
 {
 	int j;
 
-	lazy_dir_mutex_array = xcalloc(LAZY_MAX_MUTEX, sizeof(pthread_mutex_t));
+	CALLOC_ARRAY(lazy_dir_mutex_array, LAZY_MAX_MUTEX);
 
 	for (j = 0; j < LAZY_MAX_MUTEX; j++)
 		init_recursive_mutex(&lazy_dir_mutex_array[j]);
@@ -514,9 +514,9 @@ static void threaded_lazy_init_name_hash(
 	k_start = 0;
 	nr_each = DIV_ROUND_UP(istate->cache_nr, lazy_nr_dir_threads);
 
-	lazy_entries = xcalloc(istate->cache_nr, sizeof(struct lazy_entry));
-	td_dir = xcalloc(lazy_nr_dir_threads, sizeof(struct lazy_dir_thread_data));
-	td_name = xcalloc(1, sizeof(struct lazy_name_thread_data));
+	CALLOC_ARRAY(lazy_entries, istate->cache_nr);
+	CALLOC_ARRAY(td_dir, lazy_nr_dir_threads);
+	CALLOC_ARRAY(td_name, 1);
 
 	init_dir_mutex();
 

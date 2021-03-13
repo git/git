@@ -3322,7 +3322,7 @@ static void option_rewrite_submodules(const char *arg, struct string_list *list)
 		die(_("Expected format name:filename for submodule rewrite option"));
 	*f = '\0';
 	f++;
-	ms = xcalloc(1, sizeof(*ms));
+	CALLOC_ARRAY(ms, 1);
 
 	fp = fopen(f, "r");
 	if (!fp)
@@ -3519,9 +3519,9 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 
 	alloc_objects(object_entry_alloc);
 	strbuf_init(&command_buf, 0);
-	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
-	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
-	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
+	CALLOC_ARRAY(atom_table, atom_table_sz);
+	CALLOC_ARRAY(branch_table, branch_table_sz);
+	CALLOC_ARRAY(avail_tree_table, avail_tree_table_sz);
 	marks = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
 
 	hashmap_init(&object_table, object_entry_hashcmp, NULL, 0);

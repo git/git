@@ -136,7 +136,7 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 	diff_tree_oid(base, remote, "", &opt);
 	diffcore_std(&opt);
 
-	changes = xcalloc(diff_queued_diff.nr, sizeof(struct notes_merge_pair));
+	CALLOC_ARRAY(changes, diff_queued_diff.nr);
 
 	for (i = 0; i < diff_queued_diff.nr; i++) {
 		struct diff_filepair *p = diff_queued_diff.queue[i];

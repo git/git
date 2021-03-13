@@ -88,3 +88,11 @@ expression n;
 @@
 - ptr = xmalloc((n) * sizeof(T));
 + ALLOC_ARRAY(ptr, n);
+
+@@
+type T;
+T *ptr;
+expression n;
+@@
+- ptr = xcalloc(n, \( sizeof(*ptr) \| sizeof(T) \) )
++ CALLOC_ARRAY(ptr, n)

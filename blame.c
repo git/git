@@ -951,13 +951,13 @@ static int *fuzzy_find_matching_lines(struct blame_origin *parent,
 	max_search_distance_b = ((2 * max_search_distance_a + 1) * length_b
 				 - 1) / length_a;
 
-	result = xcalloc(sizeof(int), length_b);
-	second_best_result = xcalloc(sizeof(int), length_b);
-	certainties = xcalloc(sizeof(int), length_b);
+	CALLOC_ARRAY(result, length_b);
+	CALLOC_ARRAY(second_best_result, length_b);
+	CALLOC_ARRAY(certainties, length_b);
 
 	/* See get_similarity() for details of similarities. */
 	similarity_count = length_b * (max_search_distance_a * 2 + 1);
-	similarities = xcalloc(sizeof(int), similarity_count);
+	CALLOC_ARRAY(similarities, similarity_count);
 
 	for (i = 0; i < length_b; ++i) {
 		result[i] = -1;
@@ -995,7 +995,7 @@ static void fill_origin_fingerprints(struct blame_origin *o)
 		return;
 	o->num_lines = find_line_starts(&line_starts, o->file.ptr,
 					o->file.size);
-	o->fingerprints = xcalloc(sizeof(struct fingerprint), o->num_lines);
+	CALLOC_ARRAY(o->fingerprints, o->num_lines);
 	get_line_fingerprints(o->fingerprints, o->file.ptr, line_starts,
 			      0, o->num_lines);
 	free(line_starts);
@@ -1853,8 +1853,7 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 	diffp = NULL;
 
 	if (ignore_diffs && same - tlno > 0) {
-		line_blames = xcalloc(sizeof(struct blame_line_tracker),
-				      same - tlno);
+		CALLOC_ARRAY(line_blames, same - tlno);
 		guess_line_blames(parent, target, tlno, offset, same,
 				  parent_len, line_blames);
 	}
@@ -2216,7 +2215,7 @@ static struct blame_list *setup_blame_list(struct blame_entry *unblamed,
 	for (e = unblamed, num_ents = 0; e; e = e->next)
 		num_ents++;
 	if (num_ents) {
-		blame_list = xcalloc(num_ents, sizeof(struct blame_list));
+		CALLOC_ARRAY(blame_list, num_ents);
 		for (e = unblamed, i = 0; e; e = e->next)
 			blame_list[i++].ent = e;
 	}
@@ -2428,7 +2427,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	else if (num_sg < ARRAY_SIZE(sg_buf))
 		memset(sg_buf, 0, sizeof(sg_buf));
 	else
-		sg_origin = xcalloc(num_sg, sizeof(*sg_origin));
+		CALLOC_ARRAY(sg_origin, num_sg);
 
 	/*
 	 * The first pass looks for unrenamed path to optimize for

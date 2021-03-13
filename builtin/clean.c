@@ -623,7 +623,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 				nr += chosen[i];
 		}
 
-		result = xcalloc(st_add(nr, 1), sizeof(int));
+		CALLOC_ARRAY(result, st_add(nr, 1));
 		for (i = 0; i < stuff->nr && j < nr; i++) {
 			if (chosen[i])
 				result[j++] = i;

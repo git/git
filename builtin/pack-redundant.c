@@ -373,7 +373,7 @@ static void sort_pack_list(struct pack_list **pl)
 		return;
 
 	/* prepare an array of packed_list for easier sorting */
-	ary = xcalloc(n, sizeof(struct pack_list *));
+	CALLOC_ARRAY(ary, n);
 	for (n = 0, p = *pl; p; p = p->next)
 		ary[n++] = p;
 

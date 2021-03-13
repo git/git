@@ -1171,7 +1171,7 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	 * if (verify_signed_buffer(buf, len, buf + len, size - len, ...))
 	 *	warn("warning: signed tag unverified.");
 	 */
-	mergetag = xcalloc(1, sizeof(*mergetag));
+	CALLOC_ARRAY(mergetag, 1);
 	mergetag->key = xstrdup("mergetag");
 	mergetag->value = buf;
 	mergetag->len = size;
@@ -1336,7 +1336,7 @@ static struct commit_extra_header *read_commit_extra_header_lines(
 			 excluded_header_field(line, eof - line, exclude))
 			continue;
 
-		it = xcalloc(1, sizeof(*it));
+		CALLOC_ARRAY(it, 1);
 		it->key = xmemdupz(line, eof-line);
 		*tail = it;
 		tail = &it->next;

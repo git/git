@@ -72,7 +72,7 @@ void repo_set_gitdir(struct repository *repo,
 	repo_set_commondir(repo, o->commondir);
 
 	if (!repo->objects->odb) {
-		repo->objects->odb = xcalloc(1, sizeof(*repo->objects->odb));
+		CALLOC_ARRAY(repo->objects->odb, 1);
 		repo->objects->odb_tail = &repo->objects->odb->next;
 	}
 	expand_base_dir(&repo->objects->odb->path, o->object_dir,
@@ -262,7 +262,7 @@ void repo_clear(struct repository *repo)
 int repo_read_index(struct repository *repo)
 {
 	if (!repo->index)
-		repo->index = xcalloc(1, sizeof(*repo->index));
+		CALLOC_ARRAY(repo->index, 1);
 
 	/* Complete the double-reference */
 	if (!repo->index->repo)

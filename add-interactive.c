@@ -476,7 +476,7 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 
 			add_file_item(s->files, name);
 
-			entry = xcalloc(sizeof(*entry), 1);
+			CALLOC_ARRAY(entry, 1);
 			hashmap_entry_init(&entry->ent, hash);
 			entry->name = s->files->items[s->files->nr - 1].string;
 			entry->item = s->files->items[s->files->nr - 1].util;

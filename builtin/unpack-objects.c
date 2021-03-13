@@ -46,7 +46,7 @@ static struct obj_buffer *lookup_object_buffer(struct object *base)
 static void add_object_buffer(struct object *object, char *buffer, unsigned long size)
 {
 	struct obj_buffer *obj;
-	obj = xcalloc(1, sizeof(struct obj_buffer));
+	CALLOC_ARRAY(obj, 1);
 	obj->buffer = buffer;
 	obj->size = size;
 	if (add_decoration(&obj_decorate, object, obj))
@@ -500,7 +500,7 @@ static void unpack_all(void)
 
 	if (!quiet)
 		progress = start_progress(_("Unpacking objects"), nr_objects);
-	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
+	CALLOC_ARRAY(obj_list, nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
 		display_progress(progress, i + 1);

@@ -549,7 +549,7 @@ static int lock_raw_ref(struct files_ref_store *refs,
 
 	/* First lock the file so it can't change out from under us. */
 
-	*lock_p = lock = xcalloc(1, sizeof(*lock));
+	*lock_p = CALLOC_ARRAY(lock, 1);
 
 	lock->ref_name = xstrdup(refname);
 	files_ref_path(refs, &ref_file, refname);
@@ -843,7 +843,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 
 	overlay_iter = overlay_ref_iterator_begin(loose_iter, packed_iter);
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable,
 			       overlay_iter->ordered);
@@ -930,7 +930,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 	files_assert_main_repository(refs, "lock_ref_oid_basic");
 	assert(err);
 
-	lock = xcalloc(1, sizeof(struct ref_lock));
+	CALLOC_ARRAY(lock, 1);
 
 	if (mustexist)
 		resolve_flags |= RESOLVE_REF_READING;
@@ -2152,7 +2152,7 @@ static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
 		return empty_ref_iterator_begin();
 	}
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 
 	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable, 0);
@@ -2597,7 +2597,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	if (!transaction->nr)
 		goto cleanup;
 
-	backend_data = xcalloc(1, sizeof(*backend_data));
+	CALLOC_ARRAY(backend_data, 1);
 	transaction->backend_data = backend_data;
 
 	/*

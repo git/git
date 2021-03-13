@@ -145,8 +145,8 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
 
-	m->pack_names = xcalloc(m->num_packs, sizeof(*m->pack_names));
-	m->packs = xcalloc(m->num_packs, sizeof(*m->packs));
+	CALLOC_ARRAY(m->pack_names, m->num_packs);
+	CALLOC_ARRAY(m->packs, m->num_packs);
 
 	cur_pack_name = (const char *)m->chunk_pack_names;
 	for (i = 0; i < m->num_packs; i++) {
@@ -1144,7 +1144,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 	if (!m)
 		return 0;
 
-	count = xcalloc(m->num_packs, sizeof(uint32_t));
+	CALLOC_ARRAY(count, m->num_packs);
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(_("Counting referenced objects"),
@@ -1315,7 +1315,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	if (!m)
 		return 0;
 
-	include_pack = xcalloc(m->num_packs, sizeof(unsigned char));
+	CALLOC_ARRAY(include_pack, m->num_packs);
 
 	if (batch_size) {
 		if (fill_included_packs_batch(r, m, include_pack, batch_size))

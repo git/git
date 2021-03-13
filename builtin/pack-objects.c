@@ -1635,7 +1635,7 @@ static void add_preferred_base(struct object_id *oid)
 		}
 	}
 
-	it = xcalloc(1, sizeof(*it));
+	CALLOC_ARRAY(it, 1);
 	it->next = pbase_tree;
 	pbase_tree = it;
 
@@ -2096,7 +2096,7 @@ static void get_object_details(void)
 		progress_state = start_progress(_("Counting objects"),
 						to_pack.nr_objects);
 
-	sorted_by_offset = xcalloc(to_pack.nr_objects, sizeof(struct object_entry *));
+	CALLOC_ARRAY(sorted_by_offset, to_pack.nr_objects);
 	for (i = 0; i < to_pack.nr_objects; i++)
 		sorted_by_offset[i] = to_pack.objects + i;
 	QSORT(sorted_by_offset, to_pack.nr_objects, pack_offset_sort);
@@ -2428,7 +2428,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 	struct unpacked *array;
 	unsigned long mem_usage = 0;
 
-	array = xcalloc(window, sizeof(struct unpacked));
+	CALLOC_ARRAY(array, window);
 
 	for (;;) {
 		struct object_entry *entry;
@@ -2665,7 +2665,7 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 	if (progress > pack_to_stdout)
 		fprintf_ln(stderr, _("Delta compression using up to %d threads"),
 			   delta_search_threads);
-	p = xcalloc(delta_search_threads, sizeof(*p));
+	CALLOC_ARRAY(p, delta_search_threads);
 
 	/* Partition the work amongst work threads. */
 	for (i = 0; i < delta_search_threads; i++) {

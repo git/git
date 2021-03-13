@@ -2324,7 +2324,7 @@ struct http_pack_request *new_direct_http_pack_request(
 	off_t prev_posn = 0;
 	struct http_pack_request *preq;
 
-	preq = xcalloc(1, sizeof(*preq));
+	CALLOC_ARRAY(preq, 1);
 	strbuf_init(&preq->tmpfile, 0);
 
 	preq->url = url;
@@ -2419,7 +2419,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	off_t prev_posn = 0;
 	struct http_object_request *freq;
 
-	freq = xcalloc(1, sizeof(*freq));
+	CALLOC_ARRAY(freq, 1);
 	strbuf_init(&freq->tmpfile, 0);
 	oidcpy(&freq->oid, oid);
 	freq->localfile = -1;

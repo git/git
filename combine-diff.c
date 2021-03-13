@@ -214,11 +214,11 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 	 *   - Else if we have NEW, insert newend lline into base and
 	 *   consume newend
 	 */
-	lcs = xcalloc(st_add(origbaselen, 1), sizeof(int*));
-	directions = xcalloc(st_add(origbaselen, 1), sizeof(enum coalesce_direction*));
+	CALLOC_ARRAY(lcs, st_add(origbaselen, 1));
+	CALLOC_ARRAY(directions, st_add(origbaselen, 1));
 	for (i = 0; i < origbaselen + 1; i++) {
-		lcs[i] = xcalloc(st_add(lennew, 1), sizeof(int));
-		directions[i] = xcalloc(st_add(lennew, 1), sizeof(enum coalesce_direction));
+		CALLOC_ARRAY(lcs[i], st_add(lennew, 1));
+		CALLOC_ARRAY(directions[i], st_add(lennew, 1));
 		directions[i][0] = BASE;
 	}
 	for (j = 1; j < lennew + 1; j++)
@@ -398,8 +398,8 @@ static void consume_hunk(void *state_,
 		state->lost_bucket = &state->sline[state->nb-1];
 	}
 	if (!state->sline[state->nb-1].p_lno)
-		state->sline[state->nb-1].p_lno =
-			xcalloc(state->num_parent, sizeof(unsigned long));
+		CALLOC_ARRAY(state->sline[state->nb - 1].p_lno,
+			     state->num_parent);
 	state->sline[state->nb-1].p_lno[state->n] = state->ob;
 }
 
@@ -1159,7 +1159,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	if (result_size && result[result_size-1] != '\n')
 		cnt++; /* incomplete line */
 
-	sline = xcalloc(st_add(cnt, 2), sizeof(*sline));
+	CALLOC_ARRAY(sline, st_add(cnt, 2));
 	sline[0].bol = result;
 	for (lno = 0, cp = result; cp < result + result_size; cp++) {
 		if (*cp == '\n') {
@@ -1178,7 +1178,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	/* Even p_lno[cnt+1] is valid -- that is for the end line number
 	 * for deletion hunk at the end.
 	 */
-	sline[0].p_lno = xcalloc(st_mult(st_add(cnt, 2), num_parent), sizeof(unsigned long));
+	CALLOC_ARRAY(sline[0].p_lno, st_mult(st_add(cnt, 2), num_parent));
 	for (lno = 0; lno <= cnt; lno++)
 		sline[lno+1].p_lno = sline[lno].p_lno + num_parent;
 
@@ -1319,7 +1319,7 @@ static struct diff_filepair *combined_pair(struct combine_diff_path *p,
 	struct diff_filespec *pool;
 
 	pair = xmalloc(sizeof(*pair));
-	pool = xcalloc(st_add(num_parent, 1), sizeof(struct diff_filespec));
+	CALLOC_ARRAY(pool, st_add(num_parent, 1));
 	pair->one = pool + 1;
 	pair->two = pool;
 
@@ -1348,7 +1348,7 @@ static void handle_combined_callback(struct diff_options *opt,
 	struct diff_queue_struct q;
 	int i;
 
-	q.queue = xcalloc(num_paths, sizeof(struct diff_filepair *));
+	CALLOC_ARRAY(q.queue, num_paths);
 	q.alloc = num_paths;
 	q.nr = num_paths;
 	for (i = 0, p = paths; p; p = p->next)

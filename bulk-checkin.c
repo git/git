@@ -211,7 +211,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 
 	/* Note: idx is non-NULL when we are writing */
 	if ((flags & HASH_WRITE_OBJECT) != 0)
-		idx = xcalloc(1, sizeof(*idx));
+		CALLOC_ARRAY(idx, 1);
 
 	already_hashed_to = 0;
 
