@@ -99,16 +99,18 @@ struct rename_info {
 	struct strmap dir_renames[3];
 
 	/*
-	 * relevant_sources: deleted paths for which we need rename detection
+	 * relevant_sources: deleted paths wanted in rename detection, and why
 	 *
 	 * relevant_sources is a set of deleted paths on each side of
 	 * history for which we need rename detection.  If a path is deleted
 	 * on one side of history, we need to detect if it is part of a
 	 * rename if either
-	 *    * we need to detect renames for an ancestor directory
 	 *    * the file is modified/deleted on the other side of history
+	 *    * we need to detect renames for an ancestor directory
 	 * If neither of those are true, we can skip rename detection for
-	 * that path.
+	 * that path.  The reason is stored as a value from enum
+	 * file_rename_relevance, as the reason can inform the algorithm in
+	 * diffcore_rename_extended().
 	 */
 	struct strintmap relevant_sources[3];
 
@@ -677,8 +679,11 @@ static void add_pair(struct merge_options *opt,
 		unsigned content_relevant = (match_mask == 0);
 		unsigned location_relevant = (dir_rename_mask == 0x07);
 
-		if (content_relevant || location_relevant)
-			strintmap_set(&renames->relevant_sources[side], pathname, 1);
+		if (content_relevant || location_relevant) {
+			/* content_relevant trumps location_relevant */
+			strintmap_set(&renames->relevant_sources[side], pathname,
+				      content_relevant ? RELEVANT_CONTENT : RELEVANT_LOCATION);
+		}
 	}
 
 	one = alloc_filespec(pathname);
