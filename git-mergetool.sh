@@ -358,13 +358,8 @@ merge_file () {
 		    enabled=false
 		fi
 	else
-		# The user does not have a preference. Ask the tool.
-		if hide_resolved_enabled
-		then
-		    enabled=true
-		else
-		    enabled=false
-		fi
+		# The user does not have a preference. Default to disabled.
+		enabled=false
 	fi
 
 	if test "$enabled" = true
