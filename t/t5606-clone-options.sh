@@ -104,6 +104,14 @@ test_expect_success 'redirected clone -v does show progress' '
 
 '
 
+test_expect_success 'clone does not segfault with --bare and core.bare=false' '
+	test_config_global core.bare false &&
+	git clone --bare parent clone-bare &&
+	echo true >expect &&
+	git -C clone-bare rev-parse --is-bare-repository >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'chooses correct default initial branch name' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	git -c init.defaultBranch=foo init --bare empty &&
