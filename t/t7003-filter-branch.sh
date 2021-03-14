@@ -506,4 +506,35 @@ test_expect_success 'rewrite repository including refs that point at non-commit 
 	! fgrep fatal filter-output
 '
 
+test_expect_success 'filter-branch handles ref deletion' '
+	git switch --orphan empty-commit &&
+	git commit --allow-empty -m "empty commit" &&
+	git tag empty &&
+	git branch to-delete &&
+	git filter-branch -f --prune-empty to-delete >out 2>&1 &&
+	grep "to-delete.*was deleted" out &&
+	test_must_fail git rev-parse --verify to-delete
+'
+
+test_expect_success 'filter-branch handles ref rewrite' '
+	git checkout empty &&
+	test_commit to-drop &&
+	git branch rewrite &&
+	git filter-branch -f \
+		--index-filter "git rm --ignore-unmatch --cached to-drop.t" \
+		 rewrite >out 2>&1 &&
+	grep "rewrite.*was rewritten" out &&
+	! grep -i warning out &&
+	git diff-tree empty rewrite
+'
+
+test_expect_success 'filter-branch handles ancestor rewrite' '
+	test_commit to-exclude &&
+	git branch ancestor &&
+	git filter-branch -f ancestor -- :^to-exclude.t >out 2>&1 &&
+	grep "ancestor.*was rewritten" out &&
+	! grep -i warning out &&
+	git diff-tree HEAD^ ancestor
+'
+
 test_done
