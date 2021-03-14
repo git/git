@@ -951,13 +951,13 @@ static int *fuzzy_find_matching_lines(struct blame_origin *parent,
 	max_search_distance_b = ((2 * max_search_distance_a + 1) * length_b
 				 - 1) / length_a;
 
-	result = xcalloc(sizeof(int), length_b);
-	second_best_result = xcalloc(sizeof(int), length_b);
-	certainties = xcalloc(sizeof(int), length_b);
+	result = xcalloc(length_b, sizeof(int));
+	second_best_result = xcalloc(length_b, sizeof(int));
+	certainties = xcalloc(length_b, sizeof(int));
 
 	/* See get_similarity() for details of similarities. */
 	similarity_count = length_b * (max_search_distance_a * 2 + 1);
-	similarities = xcalloc(sizeof(int), similarity_count);
+	similarities = xcalloc(similarity_count, sizeof(int));
 
 	for (i = 0; i < length_b; ++i) {
 		result[i] = -1;
@@ -995,7 +995,7 @@ static void fill_origin_fingerprints(struct blame_origin *o)
 		return;
 	o->num_lines = find_line_starts(&line_starts, o->file.ptr,
 					o->file.size);
-	o->fingerprints = xcalloc(sizeof(struct fingerprint), o->num_lines);
+	o->fingerprints = xcalloc(o->num_lines, sizeof(struct fingerprint));
 	get_line_fingerprints(o->fingerprints, o->file.ptr, line_starts,
 			      0, o->num_lines);
 	free(line_starts);
@@ -1853,8 +1853,8 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 	diffp = NULL;
 
 	if (ignore_diffs && same - tlno > 0) {
-		line_blames = xcalloc(sizeof(struct blame_line_tracker),
-				      same - tlno);
+		line_blames = xcalloc(same - tlno,
+				      sizeof(struct blame_line_tracker));
 		guess_line_blames(parent, target, tlno, offset, same,
 				  parent_len, line_blames);
 	}

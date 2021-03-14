@@ -772,7 +772,8 @@ static int if_atom_handler(struct atom_value *atomv, struct ref_formatting_state
 			   struct strbuf *unused_err)
 {
 	struct ref_formatting_stack *new_stack;
-	struct if_then_else *if_then_else = xcalloc(sizeof(struct if_then_else), 1);
+	struct if_then_else *if_then_else = xcalloc(1,
+						    sizeof(struct if_then_else));
 
 	if_then_else->str = atomv->atom->u.if_then_else.str;
 	if_then_else->cmp_status = atomv->atom->u.if_then_else.cmp_status;
@@ -2185,7 +2186,7 @@ static void reach_filter(struct ref_array *array,
 	if (!check_reachable)
 		return;
 
-	to_clear = xcalloc(sizeof(struct commit *), array->nr);
+	to_clear = xcalloc(array->nr, sizeof(struct commit *));
 
 	repo_init_revisions(the_repository, &revs, NULL);
 
