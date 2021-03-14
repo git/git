@@ -53,7 +53,7 @@ mergetool.hideResolved::
 	resolution. This flag causes 'LOCAL' and 'REMOTE' to be overwriten so
 	that only the unresolved conflicts are presented to the merge tool. Can
 	be configured per-tool via the `mergetool.<tool>.hideResolved`
-	configuration variable. Defaults to `true`.
+	configuration variable. Defaults to `false`.
 
 mergetool.keepBackup::
 	After performing a merge, the original file with conflict markers
