@@ -35,42 +35,42 @@ OPTIONS
 
 -t::
 	Instead of the content, show the object type identified by
-	<object>.
+	`<object>`.
 
 -s::
 	Instead of the content, show the object size identified by
-	<object>.
+	`<object>`.
 
 -e::
-	Exit with zero status if <object> exists and is a valid
-	object. If <object> is of an invalid format exit with non-zero and
+	Exit with zero status if `<object>` exists and is a valid
+	object. If `<object>` is of an invalid format exit with non-zero and
 	emits an error on stderr.
 
 -p::
-	Pretty-print the contents of <object> based on its type.
+	Pretty-print the contents of `<object>` based on its type.
 
 <type>::
-	Typically this matches the real type of <object> but asking
+	Typically this matches the real type of `<object>` but asking
 	for a type that can trivially be dereferenced from the given
-	<object> is also permitted.  An example is to ask for a
-	"tree" with <object> being a commit object that contains it,
-	or to ask for a "blob" with <object> being a tag object that
+	`<object>` is also permitted.  An example is to ask for a
+	"tree" with `<object>` being a commit object that contains it,
+	or to ask for a "blob" with `<object>` being a tag object that
 	points at it.
 
 --textconv::
 	Show the content as transformed by a textconv filter. In this case,
-	<object> has to be of the form <tree-ish>:<path>, or :<path> in
+	`<object>` has to be of the form `<tree-ish>:<path>`, or `:<path>` in
 	order to apply the filter to the content recorded in the index at
-	<path>.
+	`<path>`.
 
 --filters::
 	Show the content as converted by the filters configured in
-	the current working tree for the given <path> (i.e. smudge filters,
-	end-of-line conversion, etc). In this case, <object> has to be of
-	the form <tree-ish>:<path>, or :<path>.
+	the current working tree for the given `<path>` (i.e. smudge filters,
+	end-of-line conversion, etc). In this case, `<object>` has to be of
+	the form `<tree-ish>:<path>`, or `:<path>`.
 
 --path=<path>::
-	For use with --textconv or --filters, to allow specifying an object
+	For use with `--textconv` or `--filters`, to allow specifying an object
 	name and a path separately, e.g. when it is difficult to figure out
 	the revision from which the blob came.
 
@@ -115,15 +115,15 @@ OPTIONS
 	repository.
 
 --allow-unknown-type::
-	Allow -s or -t to query broken/corrupt objects of unknown type.
+	Allow `-s` or `-t` to query broken/corrupt objects of unknown type.
 
 --follow-symlinks::
-	With --batch or --batch-check, follow symlinks inside the
+	With `--batch` or `--batch-check`, follow symlinks inside the
 	repository when requesting objects with extended SHA-1
 	expressions of the form tree-ish:path-in-tree.  Instead of
 	providing output about the link itself, provide output about
 	the linked-to object.  If a symlink points outside the
-	tree-ish (e.g. a link to /foo or a root-level link to ../foo),
+	tree-ish (e.g. a link to `/foo` or a root-level link to `../foo`),
 	the portion of the link which is outside the tree will be
 	printed.
 +
@@ -175,15 +175,15 @@ respectively print:
 
 OUTPUT
 ------
-If `-t` is specified, one of the <type>.
+If `-t` is specified, one of the `<type>`.
 
-If `-s` is specified, the size of the <object> in bytes.
+If `-s` is specified, the size of the `<object>` in bytes.
 
-If `-e` is specified, no output, unless the <object> is malformed.
+If `-e` is specified, no output, unless the `<object>` is malformed.
 
-If `-p` is specified, the contents of <object> are pretty-printed.
+If `-p` is specified, the contents of `<object>` are pretty-printed.
 
-If <type> is specified, the raw (though uncompressed) contents of the <object>
+If `<type>` is specified, the raw (though uncompressed) contents of the `<object>`
 will be returned.
 
 BATCH OUTPUT
@@ -200,7 +200,7 @@ object, with placeholders of the form `%(atom)` expanded, followed by a
 newline. The available atoms are:
 
 `objectname`::
-	The 40-hex object name of the object.
+	The full hex representation of the object name.
 
 `objecttype`::
 	The type of the object (the same as `cat-file -t` reports).
@@ -215,8 +215,9 @@ newline. The available atoms are:
 
 `deltabase`::
 	If the object is stored as a delta on-disk, this expands to the
-	40-hex sha1 of the delta base object. Otherwise, expands to the
-	null sha1 (40 zeroes). See `CAVEATS` below.
+	full hex representation of the delta base object name.
+	Otherwise, expands to the null OID (all zeroes). See `CAVEATS`
+	below.
 
 `rest`::
 	If this atom is used in the output string, input lines are split
@@ -235,14 +236,14 @@ newline.
 For example, `--batch` without a custom format would produce:
 
 ------------
-<sha1> SP <type> SP <size> LF
+<oid> SP <type> SP <size> LF
 <contents> LF
 ------------
 
 Whereas `--batch-check='%(objectname) %(objecttype)'` would produce:
 
 ------------
-<sha1> SP <type> LF
+<oid> SP <type> LF
 ------------
 
 If a name is specified on stdin that cannot be resolved to an object in
@@ -258,7 +259,7 @@ If a name is specified that might refer to more than one object (an ambiguous sh
 <object> SP ambiguous LF
 ------------
 
-If --follow-symlinks is used, and a symlink in the repository points
+If `--follow-symlinks` is used, and a symlink in the repository points
 outside the repository, then `cat-file` will ignore any custom format
 and print:
 
@@ -267,11 +268,11 @@ symlink SP <size> LF
 <symlink> LF
 ------------
 
-The symlink will either be absolute (beginning with a /), or relative
-to the tree root.  For instance, if dir/link points to ../../foo, then
-<symlink> will be ../foo.  <size> is the size of the symlink in bytes.
+The symlink will either be absolute (beginning with a `/`), or relative
+to the tree root.  For instance, if dir/link points to `../../foo`, then
+`<symlink>` will be `../foo`.  `<size>` is the size of the symlink in bytes.
 
-If --follow-symlinks is used, the following error messages will be
+If `--follow-symlinks` is used, the following error messages will be
 displayed:
 
 ------------
