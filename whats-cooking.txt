@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2021, #03; Wed, 10)
-X-master-at: 13d7ab6b5d7929825b626f050b62a11241ea4945
-X-next-at: 7f7177462022378fff6bd671b691b9f3771eb75b
+Subject: What's cooking in git.git (Mar 2021, #04; Sun, 14)
+X-master-at: 8775279891fd186ce847b7ddb7f0ac2339504300
+X-next-at: c8bc67eb22fa994c4b7386cb001aaa95940877c6
 
-What's cooking in git.git (Mar 2021, #03; Wed, 10)
+What's cooking in git.git (Mar 2021, #04; Sun, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,8 +12,7 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The second release candidate Git v2.31.0-rc2, together with
-maintenance releases for CVE-2021-21300, have been released.
+Git 2.31 final is expected to be tagged on Mar 15, 2021 (monday).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -44,81 +43,62 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
 
-* ab/tests-cleanup-around-sha1 (2021-03-10) 4 commits
- - tests: get rid of $_x05 from the test suite
- - shortlog tests: rewrite to get rid of --abbrev=35 hardcoding
- - test-lib: remove unused $_x40 and $_z40 variables
- - git-bisect: remove unused SHA-1 $x40 shell variable
-
- Remove variables that hold regexp and glob that match fixed number
- of hexadecimal digits from the test suite.
-
- Expecting a reroll.
- At least the last one weakens a test; there may be similar breakage
- due to not understanding what they are trying to test.
-
-
-* jk/filter-branch-sha256 (2021-03-10) 3 commits
- - filter-branch: drop $_x40 glob
- - filter-branch: drop multiple-ancestor warning
- - t7003: test ref rewriting explicitly
-
- Code clean-up.
-
- Will merge to 'next'.
- In the longer term, we might want to remove filter-branch and nudge
- folks to more modern tools.
-
-
-* jn/mergetool-hideresolved-is-optional (2021-03-10) 1 commit
- - mergetool: do not enable hideResolved by default
+* jn/mergetool-hideresolved-is-optional (2021-03-13) 2 commits
+  (merged to 'next' on 2021-03-13 at 23f5a25716)
+ + doc: describe mergetool configuration in git-mergetool(1)
+ + mergetool: do not enable hideResolved by default
 
  Disable the recent mergetool's hideresolved feature by default for
  backward compatibility and safety.
 
- Expecting a reroll.  
- We may want to give a more meaning log message to explain why it is
- undesirable to turn it on by default.
 
+* tb/pack-revindex-on-disk (2021-02-26) 1 commit
+  (merged to 'next' on 2021-03-12 at 7aa348d3b3)
+ + pack-revindex.c: don't close unopened file descriptors
+
+ Fix for a topic in 'master'.
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* jt/transfer-fsck-across-packs-fix (2021-03-05) 1 commit
-  (merged to 'next' on 2021-03-07 at c79f295216)
- + fetch-pack: do not mix --pack_header and packfile uri
+* en/ort-perf-batch-9 (2021-03-10) 8 commits
+ - diffcore-rename: avoid doing basename comparisons for irrelevant sources
+ - merge-ort: skip rename detection entirely if possible
+ - merge-ort: use relevant_sources to filter possible rename sources
+ - merge-ort: precompute whether directory rename detection is needed
+ - merge-ort: introduce wrappers for alternate tree traversal
+ - merge-ort: add data structures for an alternate tree traversal
+ - merge-ort: precompute subset of sources for which we need rename detection
+ - diffcore-rename: enable filtering possible rename sources
+ (this branch uses en/ort-perf-batch-8.)
 
- The code to fsck objects received across multiple packs during a
- single git fetch session has been broken when the packfile URI
- feature was in use.  A workaround has been added by disabling the
- codepath that avoids keeping a packfile that is too small.
+
+* js/http-pki-credential-store (2021-03-11) 2 commits
+ - http: drop the check for an empty proxy password before approving
+ - http: store credential when PKI auth is used
+
+ The http codepath learned to let the credential layer to cache the
+ password used to unlock a certificate that has successfully been
+ used.
+
+
+* rs/avoid-null-statement-after-macro-call (2021-03-13) 2 commits
+ - mem-pool: drop trailing semicolon from macro definition
+ - block-sha1: drop trailing semicolon from macro definition
+
+
+* rs/calloc-array (2021-03-13) 2 commits
+ - use CALLOC_ARRAY
+ - git-compat-util.h: drop trailing semicolon from macro definition
+
+
+* jk/slimmed-down (2021-03-14) 1 commit
+ - vcs-svn: remove header files as well
 
 --------------------------------------------------
 [Stalled]
-
-* hn/reftable (2021-03-08) 17 commits
- - SQUASH??? calloc(nmemb,size)
- - SQUASH??? allow t0031 to run with any default branch name
- - Add "test-tool dump-reftable" command.
- - git-prompt: prepare for reftable refs backend
- - Reftable support for git-core
- - reftable: rest of library
- - reftable: reftable file level tests
- - reftable: read reftable files
- - reftable: write reftable files
- - reftable: a generic binary tree implementation
- - reftable: reading/writing blocks
- - reftable: (de)serialization for the polymorphic record type.
- - reftable: add blocksource, an abstraction for random access reads
- - reftable: utility functions
- - reftable: add error related functionality
- - reftable: add LICENSE
- - init-db: set the_repository->hash_algo early on
-
- The "reftable" backend for the refs API.
-
 
 * mt/parallel-checkout-part-1 (2020-12-16) 9 commits
  - entry: add checkout_entry_ca() taking preloaded conv_attrs
@@ -134,43 +114,6 @@ Release tarballs are available at:
  Parallel checkout.
 
  Looking good.
-
-
-* es/config-hooks-part-1 (2021-02-16) 17 commits
- - hooks: allow callers to capture output
- - run-command: allow capturing of collated output
- - hook: provide stdin by string_list or callback
- - run-command: add stdin callback for parallelization
- - hook: allow specifying working directory for hooks
- - hook: allow parallel hook execution
- - run-command: allow stdin for run_processes_parallel
- - hook: support passing stdin to hooks
- - hook: replace find_hook() with hook_exists()
- - hook: add 'run' subcommand
- - parse-options: parse into strvec
- - hook: implement hookcmd.<name>.skip
- - hook: respect hook.runHookDir
- - hook: include hookdir hook in list
- - hook: add list command
- - hook: scaffolding for git-hook subcommand
- - doc: propose hooks managed by the config
- (this branch is used by es/config-hooks.)
-
- A way to specify hooks in the configuration files is introduced.
-
- Expecting another reroll??
- cf. <YC7o2rUQOEdiMdqh@google.com>
-
-
-* dl/stash-show-untracked (2021-03-05) 2 commits
-  (merged to 'next' on 2021-03-08 at 510d4cfa5f)
- + stash show: learn stash.showIncludeUntracked
- + stash show: teach --include-untracked and --only-untracked
-
- "git stash show" learned to optionally show untracked part of the
- stash.
-
- Will cook in 'next'.
 
 
 * ab/fsck-api-cleanup (2021-02-18) 10 commits
@@ -236,29 +179,93 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ab/make-cocci-dedup (2021-03-05) 4 commits
+* dl/stash-show-untracked (2021-03-05) 2 commits
+  (merged to 'next' on 2021-03-08 at 510d4cfa5f)
+ + stash show: learn stash.showIncludeUntracked
+ + stash show: teach --include-untracked and --only-untracked
+
+ "git stash show" learned to optionally show untracked part of the
+ stash.
+
+ Will cook in 'next'.
+
+
+* hn/reftable (2021-03-12) 15 commits
+ - Add "test-tool dump-reftable" command.
+ - git-prompt: prepare for reftable refs backend
+ - Reftable support for git-core
+ - reftable: rest of library
+ - reftable: reftable file level tests
+ - reftable: read reftable files
+ - reftable: write reftable files
+ - reftable: a generic binary tree implementation
+ - reftable: reading/writing blocks
+ - reftable: (de)serialization for the polymorphic record type.
+ - reftable: add blocksource, an abstraction for random access reads
+ - reftable: utility functions
+ - reftable: add error related functionality
+ - reftable: add LICENSE
+ - init-db: set the_repository->hash_algo early on
+
+ The "reftable" backend for the refs API.
+
+
+* ab/tests-cleanup-around-sha1 (2021-03-10) 4 commits
+ - tests: get rid of $_x05 from the test suite
+ - shortlog tests: rewrite to get rid of --abbrev=35 hardcoding
+ - test-lib: remove unused $_x40 and $_z40 variables
+ - git-bisect: remove unused SHA-1 $x40 shell variable
+
+ Remove variables that hold regexp and glob that match fixed number
+ of hexadecimal digits from the test suite.
+
+ Expecting a reroll.
+ At least the last one weakens a test and should be dropped; there
+ may be similar breakage due to not understanding what they are
+ trying to test.
+
+
+* jk/filter-branch-sha256 (2021-03-10) 3 commits
+  (merged to 'next' on 2021-03-14 at e4e624590a)
+ + filter-branch: drop $_x40 glob
+ + filter-branch: drop multiple-ancestor warning
+ + t7003: test ref rewriting explicitly
+
+ Code clean-up.
+
+ Will cook in 'next'.
+ In the longer term, we might want to remove filter-branch and nudge
+ folks to more modern tools.
+
+
+* ab/make-cocci-dedup (2021-03-12) 5 commits
+ - Makefile/coccicheck: use --include-headers-for-types
  - Makefile/coccicheck: set SPATCH_BATCH_SIZE to 8
  - Makefile/coccicheck: allow for setting xargs concurrency
  - Makefile/coccicheck: speed up and fix bug with duplicate hunks
  - Makefile/coccicheck: add comment heading for all SPATCH flags
 
- An attempt to speed up the coccicheck target with incorrect
- results.
+ Coccicheck update.
 
- A reroll exists to address correctness issue, but not picked up.
+ IIUC, the "speed up" claimed in the intermediate steps are all gone
+ when correctness is brought back in with the last step.  The series
+ needs a restructuring to avoid confuing readers with "it produces
+ incorrect result very quickly" followed by "we now produce right
+ result, even more correct than the original, but we are not all
+ that fast" progression.
 
 
-* ab/read-tree (2021-03-08) 6 commits
- - tree.h API: remove "stage" parameter from read_tree_recursive()
- - tree.h API: remove support for starting at prefix != ""
- - ls-files: refactor away read_tree()
- - ls-files: don't needlessly pass around stage variable
- - tree.c API: move read_tree() into builtin/ls-files.c
- - ls-files tests: add meaningful --with-tree tests
+* ab/read-tree (2021-03-11) 6 commits
+ . tree.h API: remove "stage" parameter from read_tree_recursive()
+ . tree.h API: remove support for starting at prefix != ""
+ . ls-files: refactor away read_tree()
+ . ls-files: don't needlessly pass around stage variable
+ . tree.c API: move read_tree() into builtin/ls-files.c
+ . ls-files tests: add meaningful --with-tree tests
 
  Code simplification by removing support for a caller that is long gone.
 
- Looked good.
+ It turns out that a new caller is just about to happen.
 
 
 * ab/unexpected-object-type (2021-03-08) 7 commits
@@ -272,21 +279,22 @@ Release tarballs are available at:
 
  Error reporting upon object type mismatch has been improved
 
- Looked good.
+ Looked good except for some rewrites.
 
 
 * ah/make-fuzz-all-doc-update (2021-03-08) 1 commit
- - Makefile: update 'make fuzz-all' docs to reflect modern clang
+  (merged to 'next' on 2021-03-13 at e82816998f)
+ + Makefile: update 'make fuzz-all' docs to reflect modern clang
 
  Update insn in Makefile comments to run fuzz-all target.
 
- Needs review.
- cf. <pull.889.v3.git.1615223682911.gitgitgadget@gmail.com>
- cf. <defff7a3-2104-4fa1-7750-0b13ca5cdf59@ahunt.org>
+ Will cook in 'next'.
 
 
-* ah/plugleaks (2021-03-08) 7 commits
+* ah/plugleaks (2021-03-14) 9 commits
+ - transport: also free remote_refs in transport_disconnect()
  - parse-options: don't leak alias help messages
+ - parse-options: convert bitfield values to use binary shift
  - init-db: silence template_dir leak when converting to absolute path
  - init: remove git_init_db_config() while fixing leaks
  - worktree: fix leak in dwim_branch()
@@ -299,67 +307,73 @@ Release tarballs are available at:
 
 
 * bc/clone-bare-with-conflicting-config (2021-03-10) 1 commit
- - builtin/init-db: handle bare clones when core.bare set to false
+  (merged to 'next' on 2021-03-14 at 963a86199c)
+ + builtin/init-db: handle bare clones when core.bare set to false
 
  "git -c core.bare=false clone --bare ..." would have segfaulted,
  which has been corrected.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * dl/cat-file-doc-cleanup (2021-03-03) 2 commits
- - git-cat-file.txt: remove references to "sha1"
- - git-cat-file.txt: monospace args, placeholders and filenames
+  (merged to 'next' on 2021-03-13 at f1a216175a)
+ + git-cat-file.txt: remove references to "sha1"
+ + git-cat-file.txt: monospace args, placeholders and filenames
 
  Doc cleanup.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jr/doc-ignore-typofix (2021-03-03) 1 commit
- - doc: .gitignore documentation typofix
+  (merged to 'next' on 2021-03-13 at 0ce1e751b1)
+ + doc: .gitignore documentation typofix
 
  Doc cleanup.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * rr/mailmap-entry-self (2021-03-08) 1 commit
- - Add entry for Ramkumar Ramachandra
+  (merged to 'next' on 2021-03-13 at 9f98a99713)
+ + Add entry for Ramkumar Ramachandra
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * rs/xcalloc-takes-nelem-first (2021-03-08) 1 commit
- - fix xcalloc() argument order
+  (merged to 'next' on 2021-03-14 at 312660a5ce)
+ + fix xcalloc() argument order
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * sv/t9801-test-path-is-file-cleanup (2021-03-03) 1 commit
- - t9801: replace test -f with test_path_is_file
+  (merged to 'next' on 2021-03-13 at 14997360bb)
+ + t9801: replace test -f with test_path_is_file
 
  Test cleanup.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * tb/git-mv-icase-fix (2021-03-03) 1 commit
- - git mv foo FOO ; git mv foo bar gave an assert
+  (merged to 'next' on 2021-03-14 at 700e7556f1)
+ + git mv foo FOO ; git mv foo bar gave an assert
 
  Fix a corner case bug in "git mv" on case insensitive systems,
  which was introduced in 2.29 timeframe.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* tb/push-simple-uses-branch-merge-config (2021-03-08) 1 commit
+* tb/push-simple-uses-branch-merge-config (2021-03-13) 1 commit
  - Documentation/git-push.txt: correct configuration typo
 
  Doc update.
-
  cf. <YEaM7ruZCvaQQbPI@nand.local>
 
 
@@ -412,6 +426,9 @@ Release tarballs are available at:
 
  Various updates to tests around "git describe"
 
+ Expecting a reroll.
+ cf.
+
 
 * en/ort-perf-batch-8 (2021-02-26) 10 commits
   (merged to 'next' on 2021-03-07 at f03b2c1acd)
@@ -425,6 +442,7 @@ Release tarballs are available at:
  + diffcore-rename: add a mapping of destination names to their indices
  + diffcore-rename: provide basic implementation of idx_possible_rename()
  + diffcore-rename: use directory rename guided basename comparisons
+ (this branch is used by en/ort-perf-batch-9.)
 
  Rename detection rework continues.
 
@@ -442,20 +460,20 @@ Release tarballs are available at:
 
 
 * ps/update-ref-trans-hook-doc (2021-03-01) 2 commits
- - githooks.txt: clarify documentation on reference-transaction hook
- - githooks.txt: replace mentions of SHA-1 specific properties
+  (merged to 'next' on 2021-03-14 at 41c418967d)
+ + githooks.txt: clarify documentation on reference-transaction hook
+ + githooks.txt: replace mentions of SHA-1 specific properties
 
+ Doc update.
 
-* tb/pack-revindex-on-disk (2021-02-26) 1 commit
- - pack-revindex.c: don't close unopened file descriptors
+ Will cook in 'next'.
 
 
 * zh/format-patch-fractional-reroll-count (2021-03-01) 1 commit
  - format-patch: allow a non-integral version numbers
 
 
-* ab/make-cleanup (2021-02-23) 6 commits
- - Makefile: build "$(FUZZ_OBJS)" in CI, not under "all"
+* ab/make-cleanup (2021-02-23) 5 commits
  - Makefile: add {program,xdiff,test,git,fuzz}-objs & objects targets
  - Makefile: split OBJECTS into OBJECTS and GIT_OBJS
  - Makefile: sort OBJECTS assignment for subsequent change
@@ -465,8 +483,7 @@ Release tarballs are available at:
  Reorganize Makefile to allow building git.o and other essential
  objects without extra stuff needed only for testing.
 
- The last step is of dubious value, but otherwise looked OK.
- cf. <YDVJZnmTiBYZ4iPM@coredump.intra.peff.net>
+ Will merge to 'next'.
 
 
 * ab/grep-pcre2-allocfix (2021-02-17) 10 commits
@@ -487,7 +504,8 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* tb/reverse-midx (2021-02-24) 16 commits
+* tb/reverse-midx (2021-03-11) 17 commits
+ - midx.c: improve cache locality in midx_pack_order_cmp()
  - pack-revindex: write multi-pack reverse indexes
  - pack-write.c: extract 'write_rev_file_order'
  - pack-revindex: read multi-pack reverse indexes
@@ -538,11 +556,8 @@ Release tarballs are available at:
  Rewrite the backend for "diff -G/-S" to use pcre2 engine when
  available.
 
- Needs review.
- cf. <20210216115801.4773-1-avarab@gmail.com>
 
-
-* cm/rebase-i-fixup-amend-reword (2021-03-10) 6 commits
+* cm/rebase-i-fixup-amend-reword (2021-03-13) 6 commits
  - doc/git-commit: add documentation for fixup=[amend|reword] options
  - t3437: use --fixup with options to create amend! commit
  - t7500: add tests for --fixup=[amend|reword] options
@@ -557,7 +572,8 @@ Release tarballs are available at:
  tweak both the message and the contents, and only the message,
  respectively.
 
- Getting there.
+ Expecting a reroll.
+ cf. <CAPSFM5c7ULGxThtFjPam33wMzK3kprds97zwJ63stc_Ct24nmQ@mail.gmail.com>
 
 
 * jk/open-dotgitx-with-nofollow (2021-02-16) 6 commits
@@ -579,7 +595,9 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* rs/pretty-describe (2021-03-01) 4 commits
+* rs/pretty-describe (2021-03-11) 5 commits
+  (merged to 'next' on 2021-03-12 at e987259477)
+ + archive: expand only a single %(describe) per archive
   (merged to 'next' on 2021-03-01 at bee9248828)
  + pretty: document multiple %(describe) being inconsistent
  + t4205: assert %(describe) test coverage
@@ -629,8 +647,7 @@ Release tarballs are available at:
  A simple IPC interface gets introduced to build services like
  fsmonitor on top.
 
- Replaced with a new iteration.
-
+ Will merge to 'next'.
 
 
 * cm/rebase-i (2021-01-29) 9 commits
@@ -676,8 +693,11 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* es/config-hooks (2021-02-16) 17 commits
+* es/config-hooks (2021-03-10) 37 commits
+ - docs: unify githooks and git-hook manpages
  - run-command: stop thinking about hooks
+ - git-send-email: use 'git hook run' for 'sendemail-validate'
+ - bugreport: use hook_exists instead of find_hook
  - receive-pack: convert receive hooks to hook.h
  - post-update: use hook.h library
  - proc-receive: acquire hook list from hook.h
@@ -694,11 +714,27 @@ Release tarballs are available at:
  - merge: use config-based hooks for post-merge hook
  - am: convert applypatch hooks to use config
  - commit: use config-based hooks
- (this branch uses es/config-hooks-part-1.)
+ - hooks: allow callers to capture output
+ - run-command: allow capturing of collated output
+ - hook: provide stdin by string_list or callback
+ - run-command: add stdin callback for parallelization
+ - hook: allow specifying working directory for hooks
+ - hook: allow parallel hook execution
+ - run-command: allow stdin for run_processes_parallel
+ - hook: support passing stdin to hooks
+ - hook: introduce hook_exists()
+ - hook: add 'run' subcommand
+ - parse-options: parse into strvec
+ - hook: implement hookcmd.<name>.skip
+ - hook: teach hook.runHookDir
+ - hook: include hookdir hook in list
+ - hook: add list command
+ - hook: scaffolding for git-hook subcommand
+ - doc: propose hooks managed by the config
 
  The "hooks defined in config" topic.
 
- Expecting doc updates, but otherwise seems to be progressing nicely.
+ Looking good.
 
 --------------------------------------------------
 [Discarded]
@@ -727,3 +763,25 @@ Release tarballs are available at:
  After kicking jh/simple-ipc out of 'next' and rewinding
  jh/simple-ipc to contain the incremental clean-up in this follow-up
  topic, it is no longer needed, hence retired.
+
+
+* es/config-hooks-part-1 (2021-02-16) 17 commits
+ . hooks: allow callers to capture output
+ . run-command: allow capturing of collated output
+ . hook: provide stdin by string_list or callback
+ . run-command: add stdin callback for parallelization
+ . hook: allow specifying working directory for hooks
+ . hook: allow parallel hook execution
+ . run-command: allow stdin for run_processes_parallel
+ . hook: support passing stdin to hooks
+ . hook: replace find_hook() with hook_exists()
+ . hook: add 'run' subcommand
+ . parse-options: parse into strvec
+ . hook: implement hookcmd.<name>.skip
+ . hook: respect hook.runHookDir
+ . hook: include hookdir hook in list
+ . hook: add list command
+ . hook: scaffolding for git-hook subcommand
+ . doc: propose hooks managed by the config
+
+ Now replaced by es/config-hooks topic.
