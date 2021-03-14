@@ -138,7 +138,7 @@ given); `template` (if a `-t` option was given or the
 configuration option `commit.template` is set); `merge` (if the
 commit is a merge or a `.git/MERGE_MSG` file exists); `squash`
 (if a `.git/SQUASH_MSG` file exists); or `commit`, followed by
-a commit SHA-1 (if a `-c`, `-C` or `--amend` option was given).
+a commit object name (if a `-c`, `-C` or `--amend` option was given).
 
 If the exit status is non-zero, `git commit` will abort.
 
@@ -231,19 +231,19 @@ named remote is not being used both values will be the same.
 Information about what is to be pushed is provided on the hook's standard
 input with lines of the form:
 
-  <local ref> SP <local sha1> SP <remote ref> SP <remote sha1> LF
+  <local ref> SP <local object name> SP <remote ref> SP <remote object name> LF
 
 For instance, if the command +git push origin master:foreign+ were run the
 hook would receive a line like the following:
 
   refs/heads/master 67890 refs/heads/foreign 12345
 
-although the full, 40-character SHA-1s would be supplied.  If the foreign ref
-does not yet exist the `<remote SHA-1>` will be 40 `0`.  If a ref is to be
-deleted, the `<local ref>` will be supplied as `(delete)` and the `<local
-SHA-1>` will be 40 `0`.  If the local commit was specified by something other
-than a name which could be expanded (such as `HEAD~`, or a SHA-1) it will be
-supplied as it was originally given.
+although the full object name would be supplied.  If the foreign ref does not
+yet exist the `<remote object name>` will be the all-zeroes object name.  If a
+ref is to be deleted, the `<local ref>` will be supplied as `(delete)` and the
+`<local object name>` will be the all-zeroes object name.  If the local commit
+was specified by something other than a name which could be expanded (such as
+`HEAD~`, or an object name) it will be supplied as it was originally given.
 
 If this hook exits with a non-zero status, `git push` will abort without
 pushing anything.  Information about why the push is rejected may be sent
@@ -268,7 +268,7 @@ input a line of the format:
 where `<old-value>` is the old object name stored in the ref,
 `<new-value>` is the new object name to be stored in the ref and
 `<ref-name>` is the full name of the ref.
-When creating a new ref, `<old-value>` is 40 `0`.
+When creating a new ref, `<old-value>` is the all-zeroes object name.
 
 If the hook exits with non-zero status, none of the refs will be
 updated. If the hook exits with zero, updating of individual refs can
@@ -473,7 +473,8 @@ reference-transaction
 
 This hook is invoked by any Git command that performs reference
 updates. It executes whenever a reference transaction is prepared,
-committed or aborted and may thus get called multiple times.
+committed or aborted and may thus get called multiple times. The hook
+does not cover symbolic references (but that may change in the future).
 
 The hook takes exactly one argument, which is the current state the
 given reference transaction is in:
@@ -491,6 +492,14 @@ For each reference update that was added to the transaction, the hook
 receives on standard input a line of the format:
 
   <old-value> SP <new-value> SP <ref-name> LF
+
+where `<old-value>` is the old object name passed into the reference
+transaction, `<new-value>` is the new object name to be stored in the
+ref and `<ref-name>` is the full name of the ref. When force updating
+the reference regardless of its current value or when the reference is
+to be created anew, `<old-value>` is the all-zeroes object name. To
+distinguish these cases, you can inspect the current value of
+`<ref-name>` via `git rev-parse`.
 
 The exit status of the hook is ignored for any state except for the
 "prepared" state. In the "prepared" state, a non-zero exit status will
@@ -550,7 +559,7 @@ command-dependent arguments may be passed in the future.
 The hook receives a list of the rewritten commits on stdin, in the
 format
 
-  <old-sha1> SP <new-sha1> [ SP <extra-info> ] LF
+  <old-object-name> SP <new-object-name> [ SP <extra-info> ] LF
 
 The 'extra-info' is again command-dependent.  If it is empty, the
 preceding SP is also omitted.  Currently, no commands pass any
@@ -566,7 +575,7 @@ rebase::
 	For the 'squash' and 'fixup' operation, all commits that were
 	squashed are listed as being rewritten to the squashed commit.
 	This means that there will be several lines sharing the same
-	'new-sha1'.
+	'new-object-name'.
 +
 The commits are guaranteed to be listed in the order that they were
 processed by rebase.
