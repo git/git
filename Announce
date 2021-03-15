@@ -82,7 +82,7 @@ EOF
 	then
 		cat <<-EOF
 		It is comprised of $cnt non-merge commits since $previous,
-		contributed by $all people, $new of which are new faces.
+		contributed by $all people, $new of which are new faces [*].
 		EOF
 	fi
 ) | fmt -68
@@ -110,6 +110,7 @@ EOF
 
 cat <<\EOF
 
+  url = https://git.kernel.org/pub/scm/git/git
   url = https://kernel.googlesource.com/pub/scm/git/git
   url = git://repo.or.cz/alt-git.git
   url = https://github.com/gitster/git
