@@ -1,0 +1,25 @@
+git push origin v1.5
+Counting objects: 14, done.
+Delta compression using up to 8 threads.
+Compressing objects: 100% (12/12), done.
+Writing objects: 100% (14/14), 2.05 KiB | 0 bytes/s, done.
+Total 14 (delta 3), reused 0 (delta 0)
+To git@github.com:schacon/simplegit.git
+ * [new tag]         v1.5 -> v1.5{
+	"WEBHOOKS":[
+		"3.18.12.63",
+		"3.130.192.231",
+		"13.235.14.237",
+		"13.235.122.149",
+		"35.154.171.200",
+		"52.15.183.38",
+		"54.187.174.169",
+		"54.187.205.235",
+		"54.187.216.72",
+		"54.241.31.99",
+		"54.241.31.102",
+		"54.241.34.107"
+	]
+}git push pushes both types of tags
+git push <remote> --tags will push both lightweight and annotated tags. There is currently no option to push only lightweight tags, but if you use git push <remote> --follow-tags only annotated tags will be pushed to the remote.$ git config --global alias.visual '!gitk'
+prev | next
