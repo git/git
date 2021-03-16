@@ -92,7 +92,7 @@ expression n;
 @@
 type T;
 T *ptr;
-expression n;
+expression n != 1;
 @@
 - ptr = xcalloc(n, \( sizeof(*ptr) \| sizeof(T) \) )
 + CALLOC_ARRAY(ptr, n)
