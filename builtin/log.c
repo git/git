@@ -644,6 +644,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	opt.def = "HEAD";
 	opt.tweak = show_setup_revisions_tweak;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
+	UNLEAK(rev);
 
 	if (!rev.no_walk)
 		return cmd_log_walk(&rev);
