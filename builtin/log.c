@@ -702,7 +702,8 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			ret = error(_("unknown type: %d"), o->type);
 		}
 	}
-	free(objects);
+	UNLEAK(objects);
+
 	return ret;
 }
 
