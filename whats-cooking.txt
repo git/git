@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2021, #04; Sun, 14)
-X-master-at: 8775279891fd186ce847b7ddb7f0ac2339504300
-X-next-at: c8bc67eb22fa994c4b7386cb001aaa95940877c6
+Subject: What's cooking in git.git (Mar 2021, #05; Wed, 17)
+X-master-at: a5828ae6b52137b913b978e16cd2334482eb4c1f
+X-next-at: 576ba9dcdaf1007243f5a5cb4bf1a1e7b8fcf850
 
-What's cooking in git.git (Mar 2021, #04; Sun, 14)
+What's cooking in git.git (Mar 2021, #05; Wed, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,7 +12,17 @@ only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.31 final is expected to be tagged on Mar 15, 2021 (monday).
+Git 2.31 has been tagged.  We will hopefully either (1) not see
+brown-paper-bag breakages at all, or (2) will see some but can
+immediately deal with them, in coming couple of days.  After that,
+the 2.32 cycle will gain steam, starting next week.  Let's see.
+
+Many topics marked as "Will cook in 'next'" should be marked for
+merging to 'master' now, but that hasn't happened yet.  Please
+nominate those that should be kicked back from 'next' to 'seen', if
+there are any.  Please also nominate those that should be among the
+first batch of topics to be in 'master' (after a handful of 2.31
+regression fixes go through 'next' down to 'master', that is).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -43,59 +53,102 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jn/mergetool-hideresolved-is-optional (2021-03-13) 2 commits
-  (merged to 'next' on 2021-03-13 at 23f5a25716)
- + doc: describe mergetool configuration in git-mergetool(1)
- + mergetool: do not enable hideResolved by default
-
- Disable the recent mergetool's hideresolved feature by default for
- backward compatibility and safety.
-
-
-* tb/pack-revindex-on-disk (2021-02-26) 1 commit
-  (merged to 'next' on 2021-03-12 at 7aa348d3b3)
- + pack-revindex.c: don't close unopened file descriptors
-
- Fix for a topic in 'master'.
-
---------------------------------------------------
 [New Topics]
 
-* en/ort-perf-batch-9 (2021-03-10) 8 commits
- - diffcore-rename: avoid doing basename comparisons for irrelevant sources
- - merge-ort: skip rename detection entirely if possible
- - merge-ort: use relevant_sources to filter possible rename sources
- - merge-ort: precompute whether directory rename detection is needed
- - merge-ort: introduce wrappers for alternate tree traversal
- - merge-ort: add data structures for an alternate tree traversal
- - merge-ort: precompute subset of sources for which we need rename detection
- - diffcore-rename: enable filtering possible rename sources
- (this branch uses en/ort-perf-batch-8.)
+* jc/calloc-fix (2021-03-15) 1 commit
+ - xcalloc: use CALLOC_ARRAY() when applicable
+
+ Code clean-up.
+
+ Will merge to 'next'.
 
 
-* js/http-pki-credential-store (2021-03-11) 2 commits
- - http: drop the check for an empty proxy password before approving
- - http: store credential when PKI auth is used
+* ab/tree-walk-with-object-type (2021-03-17) 32 commits
+ - tree-walk.h API: add a tree_entry_extract_type() function
+ - blame: emit a better error on 'git blame directory'
+ - tree-walk.h API: add a get_tree_entry_path() function
+ - tree-walk.h API: add get_tree_entry_all()
+ - tree-walk.h API: add a tree_entry_extract_all() function
+ - tree-entry.h API: rename tree_entry_extract() to tree_entry_extract_mode()
+ - tree-walk.h API: document and format tree_entry_extract()
+ - tree-walk.h API: add get_tree_entry_type()
+ - match-trees: use "tmp" for mode in shift_tree_by()
+ - tree-walk.h API: rename get_tree_entry() to get_tree_entry_mode()
+ - tree-walk.h API: formatting changes for subsequent commit
+ - tree-walk.h users: use temporary variable(s) for "mode"
+ - fsck.c: switch on "object_type" in fsck_walk_tree()
+ - merge-ort: correct reference to test in 62fdec17a11
+ - merge-tree tests: test for the mode comparison in same_entry()
+ - tree-walk.h users: migrate miscellaneous "mode" to "object_type"
+ - tree-walk.h users: refactor chained "mode" if/else into switch
+ - tree-walk.h users: migrate "p->mode &&" pattern
+ - tree.h API: make read_tree_fn_t take an "enum object_type"
+ - archive: get rid of 'stage' parameter
+ - tree.h users: format argument lists in archive.c
+ - tree.h: format argument lists of read_tree_recursive() users
+ - tree-walk.h users: switch object_type(...) to new .object_type
+ - cache.h: have base_name_compare() take "is tree?", not "mode"
+ - diff tests: test that "mode" is passed when sorting
+ - mktree tests: test that "mode" is passed when sorting
+ - fast-import tests: test for sorting dir/file foo v.s. foo.txt
+ - tree-walk.c: migrate to using new "object_type" field when possible
+ - tree-walk.h: add object_type member to name_entry
+ - cache.h: add a comment to object_type()
+ - notes & match-trees: use name_entry's "pathlen" member
+ - diff.c: remove redundant canon_mode() call
+ (this branch uses ab/read-tree.)
 
- The http codepath learned to let the credential layer to cache the
- password used to unlock a certificate that has successfully been
- used.
+ Code clean-up.
+
+ I am not exactly sure where this series wants to go, other than
+ unnecessarily churning the code.  Seems to break "diff --no-index"
+ rather badly, too (e.g. t4050, t4002, among others).
 
 
-* rs/avoid-null-statement-after-macro-call (2021-03-13) 2 commits
- - mem-pool: drop trailing semicolon from macro definition
- - block-sha1: drop trailing semicolon from macro definition
+* jh/fsmonitor-prework (2021-03-17) 1 commit
+ - fsmonitor: avoid global-buffer-overflow READ when checking trivial response
+
+ The fsmonitor interface read from its input without making sure
+ there is something to read from.  This bug is new in 2.31
+ timeframe.
+
+ Will merge to 'next'.
 
 
-* rs/calloc-array (2021-03-13) 2 commits
- - use CALLOC_ARRAY
- - git-compat-util.h: drop trailing semicolon from macro definition
+* jk/bisect-peel-tag-fix (2021-03-17) 1 commit
+ - bisect: peel annotated tags to commits
+
+ "git bisect" reimplemented more in C during 2.30 timeframe did not
+ take an annotated tag as a good/bad endpoint well.  This regression
+ has been corrected.
+
+ Will merge to 'next'.
 
 
-* jk/slimmed-down (2021-03-14) 1 commit
- - vcs-svn: remove header files as well
+* js/fsmonitor-unpack-fix (2021-03-17) 2 commits
+ - fsmonitor: do not forget to release the token in `discard_index()`
+ - fsmonitor: fix memory corruption in some corner cases
+
+ The data structure used by fsmonitor interface was not properly
+ duplicated during an in-core merge, leading to use-after-free etc.
+
+ Will merge to 'next'.
+
+
+* jt/clone-unborn-head (2021-03-17) 1 commit
+ - t5606: run clone branch name test with protocol v2
+
+ Test fix.
+
+ Will merge to 'next'.
+
+
+* km/config-doc-typofix (2021-03-17) 1 commit
+ - config.txt: add missing period
+
+ Docfix.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -116,47 +169,8 @@ Release tarballs are available at:
  Looking good.
 
 
-* ab/fsck-api-cleanup (2021-02-18) 10 commits
- - fsck.h: update FSCK_OPTIONS_* for object_name
- - fsck.c: give "FOREACH_MSG_ID" a more specific name
- - fsck.c: undefine temporary STR macro after use
- - fsck.c: call parse_msg_type() early in fsck_set_msg_type()
- - fsck.h: move FSCK_{FATAL,INFO,ERROR,WARN,IGNORE} into an enum
- - fsck.c: rename remaining fsck_msg_id "id" to "msg_id"
- - fsck.c: move definition of msg_id into append_msg_id()
- - fsck.c: rename variables in fsck_set_msg_type() for less confusion
- - fsck.h: use "enum object_type" instead of "int"
- - fsck.h: indent arguments to of fsck_set_msg_type
-
- Preliminary fsck API clean-up.
-
- Expecting a reroll.
- cf. <xmqqczwxc8bw.fsf@gitster.g>
-
-
-* jk/symlinked-dotgitx-files (2020-10-23) 9 commits
- - docs: document symlink restrictions for .git* files
- - fsck: complain when .gitattributes or .gitignore is a symlink
- - verify_path(): disallow symlinks in .gitattributes and .gitignore
- - t0060: test obscured .gitattributes and .gitignore matching
- - t7450: test .gitmodules symlink matching against obscured names
- - t7450: test verify_path() handling of gitmodules
- - t7415: rename to expand scope
- - fsck_tree(): wrap some long lines
- - fsck_tree(): fix shadowed variable
-
- "git fsck" and the corresponding check done during the transport
- learned to ensure that in-tree files like `.gitignore` and
- `.gitattributes` are not symbolic links.
-
- It seems that there are real projects with .gitignore recorded as
- symlinks, which may need to loosen the fsck setting.  Do we need to
- introduce a class that is separate from symlinked .gitmodules that
- has potential consequences that is more/less grave, so that these
- projects can opt out of the new checks?
-
-
-* ag/merge-strategies-in-c (2020-11-24) 13 commits
+* ag/merge-strategies-in-c (2021-03-15) 14 commits
+ - SQUASH??? CALLOC_ARRAY()
  - sequencer: use the "octopus" merge strategy without forking
  - sequencer: use the "resolve" strategy without forking
  - merge: use the "octopus" strategy without forking
@@ -178,6 +192,85 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* ab/fsck-api-cleanup (2021-03-17) 19 commits
+ - fetch-pack: use new fsck API to printing dangling submodules
+ - fetch-pack: use file-scope static struct for fsck_options
+ - fetch-pack: don't needlessly copy fsck_options
+ - fsck.c: move gitmodules_{found,done} into fsck_options
+ - fsck.c: add an fsck_set_msg_type() API that takes enums
+ - fsck.c: pass along the fsck_msg_id in the fsck_error callback
+ - fsck.[ch]: move FOREACH_FSCK_MSG_ID & fsck_msg_id from *.c to *.h
+ - fsck.c: give "FOREACH_MSG_ID" a more specific name
+ - fsck.c: undefine temporary STR macro after use
+ - fsck.c: call parse_msg_type() early in fsck_set_msg_type()
+ - fsck.h: re-order and re-assign "enum fsck_msg_type"
+ - fsck.h: move FSCK_{FATAL,INFO,ERROR,WARN,IGNORE} into an enum
+ - fsck.c: refactor fsck_msg_type() to limit scope of "int msg_type"
+ - fsck.c: rename remaining fsck_msg_id "id" to "msg_id"
+ - fsck.c: move definition of msg_id into append_msg_id()
+ - fsck.c: rename variables in fsck_set_msg_type() for less confusion
+ - fsck.h: use "enum object_type" instead of "int"
+ - fsck.h: use designed initializers for FSCK_OPTIONS_{DEFAULT,STRICT}
+ - fsck.c: refactor and rename common config callback
+
+ Fsck API clean-up.
+ cf. <20210317182054.5986-1-avarab@gmail.com>
+
+
+* en/ort-perf-batch-9 (2021-03-10) 8 commits
+ - diffcore-rename: avoid doing basename comparisons for irrelevant sources
+ - merge-ort: skip rename detection entirely if possible
+ - merge-ort: use relevant_sources to filter possible rename sources
+ - merge-ort: precompute whether directory rename detection is needed
+ - merge-ort: introduce wrappers for alternate tree traversal
+ - merge-ort: add data structures for an alternate tree traversal
+ - merge-ort: precompute subset of sources for which we need rename detection
+ - diffcore-rename: enable filtering possible rename sources
+ (this branch uses en/ort-perf-batch-8.)
+
+ More ort.
+
+ Ready?
+
+
+* js/http-pki-credential-store (2021-03-11) 2 commits
+ - http: drop the check for an empty proxy password before approving
+ - http: store credential when PKI auth is used
+
+ The http codepath learned to let the credential layer to cache the
+ password used to unlock a certificate that has successfully been
+ used.
+
+ Will merge to 'next'.
+
+
+* rs/avoid-null-statement-after-macro-call (2021-03-17) 2 commits
+ - mem-pool: drop trailing semicolon from macro definition
+ - block-sha1: drop trailing semicolon from macro definition
+
+ Fix macros that can silently inject unintended null-statements.
+
+ Will merge to 'next'.
+
+
+* rs/calloc-array (2021-03-15) 3 commits
+ - cocci: allow xcalloc(1, size)
+ - use CALLOC_ARRAY
+ - git-compat-util.h: drop trailing semicolon from macro definition
+
+ CALLOC_ARRAY() macro replaces many uses of xcalloc().
+
+ Will merge to 'next'.
+
+
+* jk/slimmed-down (2021-03-14) 1 commit
+ - vcs-svn: remove header files as well
+
+ Unused code removal.
+
+ Will merge to 'next'.
+
 
 * dl/stash-show-untracked (2021-03-05) 2 commits
   (merged to 'next' on 2021-03-08 at 510d4cfa5f)
@@ -247,6 +340,7 @@ Release tarballs are available at:
 
  Coccicheck update.
 
+ Expecting a reroll.
  IIUC, the "speed up" claimed in the intermediate steps are all gone
  when correctness is brought back in with the last step.  The series
  needs a restructuring to avoid confuing readers with "it produces
@@ -255,17 +349,23 @@ Release tarballs are available at:
  that fast" progression.
 
 
-* ab/read-tree (2021-03-11) 6 commits
- . tree.h API: remove "stage" parameter from read_tree_recursive()
- . tree.h API: remove support for starting at prefix != ""
- . ls-files: refactor away read_tree()
- . ls-files: don't needlessly pass around stage variable
- . tree.c API: move read_tree() into builtin/ls-files.c
- . ls-files tests: add meaningful --with-tree tests
+* ab/read-tree (2021-03-17) 9 commits
+ - tree.h API: expose read_tree_1() as read_tree_at()
+ - show tests: add test for "git show <tree>"
+ - tree.h API: rename read_tree_recursive() to read_tree()
+ - tree.h API: remove "stage" parameter from read_tree_recursive()
+ - tree.h API: remove support for starting at prefix != ""
+ - ls-files: refactor away read_tree()
+ - ls-files: don't needlessly pass around stage variable
+ - tree.c API: move read_tree() into builtin/ls-files.c
+ - ls-files tests: add meaningful --with-tree tests
+ (this branch is used by ab/tree-walk-with-object-type.)
 
  Code simplification by removing support for a caller that is long gone.
 
- It turns out that a new caller is just about to happen.
+ Expecting a reroll.
+ Mostly good, but the progression shows "oops we screwed up" earlier
+ in the series that is then fixed later.
 
 
 * ab/unexpected-object-type (2021-03-08) 7 commits
@@ -279,6 +379,7 @@ Release tarballs are available at:
 
  Error reporting upon object type mismatch has been improved
 
+ Expecting a reroll.
  Looked good except for some rewrites.
 
 
@@ -304,6 +405,8 @@ Release tarballs are available at:
 
  Plug or annotate remaining leaks that trigger while running the
  very basic set of tests.
+
+ Ready?
 
 
 * bc/clone-bare-with-conflicting-config (2021-03-10) 1 commit
@@ -557,7 +660,7 @@ Release tarballs are available at:
  available.
 
 
-* cm/rebase-i-fixup-amend-reword (2021-03-13) 6 commits
+* cm/rebase-i-fixup-amend-reword (2021-03-15) 6 commits
  - doc/git-commit: add documentation for fixup=[amend|reword] options
  - t3437: use --fixup with options to create amend! commit
  - t7500: add tests for --fixup=[amend|reword] options
@@ -571,9 +674,6 @@ Release tarballs are available at:
  learned "--fixup=(amend|reword):<commit>", that can be used to
  tweak both the message and the contents, and only the message,
  respectively.
-
- Expecting a reroll.
- cf. <CAPSFM5c7ULGxThtFjPam33wMzK3kprds97zwJ63stc_Ct24nmQ@mail.gmail.com>
 
 
 * jk/open-dotgitx-with-nofollow (2021-02-16) 6 commits
@@ -630,7 +730,8 @@ Release tarballs are available at:
  Will cook in 'next', together with "cm/rebase-i".
 
 
-* jh/simple-ipc (2021-03-09) 12 commits
+* jh/simple-ipc (2021-03-15) 13 commits
+ - SQUASH??? CALLOC_ARRAY()
  - t0052: add simple-ipc tests and t/helper/test-simple-ipc tool
  - simple-ipc: add Unix domain socket implementation
  - unix-stream-server: create unix domain socket under lock
@@ -785,3 +886,28 @@ Release tarballs are available at:
  . doc: propose hooks managed by the config
 
  Now replaced by es/config-hooks topic.
+
+
+
+* jk/symlinked-dotgitx-files (2020-10-23) 9 commits
+ . docs: document symlink restrictions for .git* files
+ . fsck: complain when .gitattributes or .gitignore is a symlink
+ . verify_path(): disallow symlinks in .gitattributes and .gitignore
+ . t0060: test obscured .gitattributes and .gitignore matching
+ . t7450: test .gitmodules symlink matching against obscured names
+ . t7450: test verify_path() handling of gitmodules
+ . t7415: rename to expand scope
+ . fsck_tree(): wrap some long lines
+ . fsck_tree(): fix shadowed variable
+
+ "git fsck" and the corresponding check done during the transport
+ learned to ensure that in-tree files like `.gitignore` and
+ `.gitattributes` are not symbolic links.
+
+ It seems that there are real projects with .gitignore recorded as
+ symlinks, which may need to loosen the fsck setting.  Do we need to
+ introduce a class that is separate from symlinked .gitmodules that
+ has potential consequences that is more/less grave, so that these
+ projects can opt out of the new checks?
+
+
