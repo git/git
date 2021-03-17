@@ -101,7 +101,7 @@ write_basic_state () {
 }
 
 apply_autostash () {
-	if test -f "$state_dir/autostash"
+	if test_path_is_file "$state_dir/autostash"
 	then
 		stash_sha1=$(cat "$state_dir/autostash")
 		if git stash apply $stash_sha1 >/dev/null 2>&1
@@ -238,9 +238,9 @@ make_patch () {
 		echo "Root commit"
 		;;
 	esac > "$state_dir"/patch
-	test -f "$msg" ||
+	test_path_is_file "$msg" ||
 		commit_message "$1" > "$msg"
-	test -f "$author_script" ||
+	test_path_is_file "$author_script" ||
 		get_author_ident_from_commit "$1" > "$author_script"
 }
 
@@ -344,7 +344,7 @@ pick_one_preserving_merges () {
 	esac
 	sha1=$(git rev-parse $sha1)
 
-	if test -f "$state_dir"/current-commit && test "$fast_forward" = t
+	if test_path_is_file "$state_dir"/current-commit && test "$fast_forward" = t
 	then
 		while read current_commit
 		do
@@ -368,7 +368,7 @@ pick_one_preserving_merges () {
 		p=$(expr "$pend" : ' \([^ ]*\)')
 		pend="${pend# $p}"
 
-		if test -f "$rewritten"/$p
+		if test_path_is_file "$rewritten"/$p
 		then
 			new_p=$(cat "$rewritten"/$p)
 
@@ -389,7 +389,7 @@ pick_one_preserving_merges () {
 				;;
 			esac
 		else
-			if test -f "$dropped"/$p
+			if test_path_is_file "$dropped"/$p
 			then
 				fast_forward=f
 				replacement="$(cat "$dropped"/$p)"
@@ -463,7 +463,7 @@ skip_nth_commit_message () {
 }
 
 update_squash_messages () {
-	if test -f "$squash_msg"; then
+	if test_path_is_file "$squash_msg"; then
 		mv "$squash_msg" "$squash_msg".bak || exit
 		count=$(($(sed -n \
 			-e "1s/^$comment_char[^0-9]*\([0-9][0-9]*\).*/\1/p" \
@@ -627,7 +627,7 @@ you are able to reword the commit.")"
 		esac
 		comment_for_reflog $squash_style
 
-		test -f "$done" && has_action "$done" ||
+		test_path_is_file "$done" && has_action "$done" ||
 			die "$(eval_gettext "Cannot '\$squash_style' without a previous commit")"
 
 		mark_action_done
@@ -650,7 +650,7 @@ you are able to reword the commit.")"
 			;;
 		*)
 			# This is the final command of this squash/fixup group
-			if test -f "$fixup_msg"
+			if test_path_is_file "$fixup_msg"
 			then
 				do_with_author git commit --amend --no-verify -F "$fixup_msg" \
 					${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
@@ -801,7 +801,7 @@ initiate_action () {
 			rm "$GIT_DIR"/CHERRY_PICK_HEAD ||
 			die "$(gettext "Could not remove CHERRY_PICK_HEAD")"
 		else
-			if ! test -f "$author_script"
+			if ! test_path_is_file "$author_script"
 			then
 				gpg_sign_opt_quoted=${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")}
 				die "$(eval_gettext "\
@@ -822,7 +822,7 @@ In both cases, once you're done, continue with:
 			fi
 			. "$author_script" ||
 				die "$(gettext "Error trying to find the author identity to amend commit")"
-			if test -f "$amend"
+			if test_path_is_file "$amend"
 			then
 				current_head=$(git rev-parse --verify HEAD)
 				test "$current_head" = $(cat "$amend") ||
@@ -1014,7 +1014,7 @@ git_rebase__preserve_merges () {
 			preserve=t
 			for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)
 			do
-				if test -f "$rewritten"/$p
+				if test_path_is_file "$rewritten"/$p
 				then
 					preserve=f
 				fi
@@ -1039,7 +1039,7 @@ git_rebase__preserve_merges () {
 	git rev-list $revisions |
 	while read rev
 	do
-		if test -f "$rewritten"/$rev &&
+		if test_path_is_file "$rewritten"/$rev &&
 		   ! sane_grep "$rev" "$state_dir"/not-cherry-picks >/dev/null
 		then
 			# Use -f2 because if rev-list is telling us this commit is
