@@ -71,11 +71,6 @@ static const char *printable_type(const struct object_id *oid,
 	return ret;
 }
 
-static int fsck_config(const char *var, const char *value, void *cb)
-{
-	return fsck_config_internal(var, value, cb, &fsck_obj_options);
-}
-
 static int objerror(struct object *obj, const char *err)
 {
 	errors_found |= ERROR_OBJECT;
@@ -803,7 +798,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	if (name_objects)
 		fsck_enable_object_names(&fsck_walk_options);
 
-	git_config(fsck_config, NULL);
+	git_config(git_fsck_config, &fsck_obj_options);
 
 	if (connectivity_only) {
 		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);

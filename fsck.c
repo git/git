@@ -1323,9 +1323,9 @@ int fsck_finish(struct fsck_options *options)
 	return ret;
 }
 
-int fsck_config_internal(const char *var, const char *value, void *cb,
-			 struct fsck_options *options)
+int git_fsck_config(const char *var, const char *value, void *cb)
 {
+	struct fsck_options *options = cb;
 	if (strcmp(var, "fsck.skiplist") == 0) {
 		const char *path;
 		struct strbuf sb = STRBUF_INIT;
