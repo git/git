@@ -30,7 +30,7 @@
  */
 static int check_removed(const struct cache_entry *ce, struct stat *st)
 {
-	if (lstat(ce->name, st) < 0) {
+	if (!(ce->ce_flags & CE_FSMONITOR_VALID) && lstat(ce->name, st) < 0) {
 		if (!is_missing_file_error(errno))
 			return -1;
 		return 1;
@@ -574,12 +574,15 @@ int run_diff_index(struct rev_info *revs, unsigned int option)
 	struct object_id oid;
 	const char *name;
 	char merge_base_hex[GIT_MAX_HEXSZ + 1];
+	struct index_state *istate = revs->diffopt.repo->index;
 
 	if (revs->pending.nr != 1)
 		BUG("run_diff_index must be passed exactly one tree");
 
 	trace_performance_enter();
 	ent = revs->pending.objects;
+
+	refresh_fsmonitor(istate);
 
 	if (merge_base) {
 		diff_get_merge_base(revs, &oid);
