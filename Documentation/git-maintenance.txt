@@ -106,7 +106,7 @@ any object transfer.
 
 gc::
 	Clean up unnecessary files and optimize the local repository. "GC"
-	stands for "garbage collection," but this task performs many
+	stands for "garbage collection", but this task performs many
 	smaller tasks. This task can be expensive for large repositories,
 	as it repacks all Git objects into a single pack-file. It can also
 	be disruptive in some situations, as it deletes stale data. See
