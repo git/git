@@ -202,36 +202,23 @@ int threaded_has_symlink_leading_path(struct cache_def *cache, const char *name,
 	return lstat_cache(cache, name, len, FL_SYMLINK|FL_DIR, USE_ONLY_LSTAT) & FL_SYMLINK;
 }
 
-/*
- * Return non-zero if path 'name' has a leading symlink component
- */
 int has_symlink_leading_path(const char *name, int len)
 {
 	return threaded_has_symlink_leading_path(&default_cache, name, len);
 }
 
-/*
- * Return zero if path 'name' has a leading symlink component or
- * if some leading path component does not exists.
- *
- * Return -1 if leading path exists and is a directory.
- *
- * Return path length if leading path exists and is neither a
- * directory nor a symlink.
- */
 int check_leading_path(const char *name, int len)
 {
 	return threaded_check_leading_path(&default_cache, name, len);
 }
 
 /*
- * Return zero if path 'name' has a leading symlink component or
- * if some leading path component does not exists.
+ * Return zero if some leading path component of 'name' does not exist.
  *
  * Return -1 if leading path exists and is a directory.
  *
- * Return path length if leading path exists and is neither a
- * directory nor a symlink.
+ * Return the length of a leading component if it either exists but it's not a
+ * directory, or if we were unable to lstat() it.
  */
 static int threaded_check_leading_path(struct cache_def *cache, const char *name, int len)
 {
@@ -246,13 +233,6 @@ static int threaded_check_leading_path(struct cache_def *cache, const char *name
 		return match_len;
 }
 
-/*
- * Return non-zero if all path components of 'name' exists as a
- * directory.  If prefix_len > 0, we will test with the stat()
- * function instead of the lstat() function for a prefix length of
- * 'prefix_len', thus we then allow for symlinks in the prefix part as
- * long as those points to real existing directories.
- */
 int has_dirs_only_path(const char *name, int len, int prefix_len)
 {
 	return threaded_has_dirs_only_path(&default_cache, name, len, prefix_len);
