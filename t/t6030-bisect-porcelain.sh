@@ -939,4 +939,16 @@ test_expect_success 'git bisect reset cleans bisection state properly' '
 	test_path_is_missing ".git/BISECT_START"
 '
 
+test_expect_success 'bisect handles annotated tags' '
+	test_commit commit-one &&
+	git tag -m foo tag-one &&
+	test_commit commit-two &&
+	git tag -m foo tag-two &&
+	git bisect start &&
+	git bisect good tag-one &&
+	git bisect bad tag-two >output &&
+	bad=$(git rev-parse --verify tag-two^{commit}) &&
+	grep "$bad is the first bad commit" output
+'
+
 test_done

@@ -874,12 +874,19 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 	 */
 
 	for (; argc; argc--, argv++) {
+		struct commit *commit;
+
 		if (get_oid(*argv, &oid)){
 			error(_("Bad rev input: %s"), *argv);
 			oid_array_clear(&revs);
 			return BISECT_FAILED;
 		}
-		oid_array_append(&revs, &oid);
+
+		commit = lookup_commit_reference(the_repository, &oid);
+		if (!commit)
+			die(_("Bad rev input (not a commit): %s"), *argv);
+
+		oid_array_append(&revs, &commit->object.oid);
 	}
 
 	if (strbuf_read_file(&buf, git_path_bisect_expected_rev(), 0) < the_hash_algo->hexsz ||
