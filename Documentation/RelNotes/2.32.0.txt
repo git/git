@@ -1,0 +1,51 @@
+Git 2.32 Release Notes
+======================
+
+Updates since v2.32
+-------------------
+
+Backward incompatible and other important changes
+
+
+UI, Workflows & Features
+
+
+Performance, Internal Implementation, Development Support etc.
+
+
+Fixes since v2.31
+-----------------
+
+ * The fsmonitor interface read from its input without making sure
+   there is something to read from.  This bug is new in 2.31
+   timeframe.
+   (merge 097ea2c848 jh/fsmonitor-prework later to maint).
+
+ * The data structure used by fsmonitor interface was not properly
+   duplicated during an in-core merge, leading to use-after-free etc.
+   (merge 4abc57848d js/fsmonitor-unpack-fix later to maint).
+
+ * "git bisect" reimplemented more in C during 2.30 timeframe did not
+   take an annotated tag as a good/bad endpoint well.  This regression
+   has been corrected.
+   (merge 7730f85594 jk/bisect-peel-tag-fix later to maint).
+
+ * Fix macros that can silently inject unintended null-statements.
+   (merge 116affac3f rs/avoid-null-statement-after-macro-call later to maint).
+
+ * CALLOC_ARRAY() macro replaces many uses of xcalloc().
+   (merge 1c57cc70ec rs/calloc-array later to maint).
+
+ * Update insn in Makefile comments to run fuzz-all target.
+   (merge 68b5c3aa48 ah/make-fuzz-all-doc-update later to maint).
+
+ * Fix a corner case bug in "git mv" on case insensitive systems,
+   which was introduced in 2.29 timeframe.
+   (merge 93c3d297b5 tb/git-mv-icase-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 486f4bd183 jc/calloc-fix later to maint).
+   (merge 5f70859c15 jt/clone-unborn-head later to maint).
+   (merge cfd409ed09 km/config-doc-typofix later to maint).
+   (merge 8588aa8657 jk/slimmed-down later to maint).
+   (merge 241b5d3ebe rs/xcalloc-takes-nelem-first later to maint).
