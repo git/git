@@ -5,7 +5,7 @@
 #include "cache.h"
 #include "mem-pool.h"
 
-#define BLOCK_GROWTH_SIZE 1024*1024 - sizeof(struct mp_block);
+#define BLOCK_GROWTH_SIZE (1024 * 1024 - sizeof(struct mp_block))
 
 /*
  * Allocate a new mp_block and insert it after the block specified in
