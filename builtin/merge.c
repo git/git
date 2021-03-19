@@ -210,7 +210,7 @@ static struct strategy *get_strategy(const char *name)
 		exit(1);
 	}
 
-	ret = xcalloc(1, sizeof(struct strategy));
+	CALLOC_ARRAY(ret, 1);
 	ret->name = xstrdup(name);
 	ret->attr = NO_TRIVIAL;
 	return ret;

@@ -151,7 +151,7 @@ static struct remote *make_remote(const char *name, int len)
 	if (e)
 		return container_of(e, struct remote, ent);
 
-	ret = xcalloc(1, sizeof(struct remote));
+	CALLOC_ARRAY(ret, 1);
 	ret->prune = -1;  /* unspecified */
 	ret->prune_tags = -1;  /* unspecified */
 	ret->name = xstrndup(name, len);
@@ -186,7 +186,7 @@ static struct branch *make_branch(const char *name, size_t len)
 	}
 
 	ALLOC_GROW(branches, branches_nr + 1, branches_alloc);
-	ret = xcalloc(1, sizeof(struct branch));
+	CALLOC_ARRAY(ret, 1);
 	branches[branches_nr++] = ret;
 	ret->name = xstrndup(name, len);
 	ret->refname = xstrfmt("refs/heads/%s", ret->name);
@@ -207,7 +207,7 @@ static struct rewrite *make_rewrite(struct rewrites *r,
 	}
 
 	ALLOC_GROW(r->rewrite, r->rewrite_nr + 1, r->rewrite_alloc);
-	ret = xcalloc(1, sizeof(struct rewrite));
+	CALLOC_ARRAY(ret, 1);
 	r->rewrite[r->rewrite_nr++] = ret;
 	ret->base = xstrndup(base, len);
 	ret->baselen = len;
@@ -1664,7 +1664,7 @@ static void set_merge(struct branch *ret)
 
 	remote = remote_get(ret->remote_name);
 
-	ret->merge = xcalloc(ret->merge_nr, sizeof(*ret->merge));
+	CALLOC_ARRAY(ret->merge, ret->merge_nr);
 	for (i = 0; i < ret->merge_nr; i++) {
 		ret->merge[i] = xcalloc(1, sizeof(**ret->merge));
 		ret->merge[i]->src = xstrdup(ret->merge_name[i]);

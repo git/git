@@ -211,7 +211,7 @@ static void start_threads(struct grep_opt *opt)
 		strbuf_init(&todo[i].out, 0);
 	}
 
-	threads = xcalloc(num_threads, sizeof(*threads));
+	CALLOC_ARRAY(threads, num_threads);
 	for (i = 0; i < num_threads; i++) {
 		int err;
 		struct grep_opt *o = grep_opt_dup(opt);

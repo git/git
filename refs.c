@@ -1007,7 +1007,7 @@ struct ref_transaction *ref_store_transaction_begin(struct ref_store *refs,
 	struct ref_transaction *tr;
 	assert(err);
 
-	tr = xcalloc(1, sizeof(struct ref_transaction));
+	CALLOC_ARRAY(tr, 1);
 	tr->ref_store = refs;
 	return tr;
 }
@@ -1306,7 +1306,7 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
 		while (len && ref[len - 1] == '/')
 			ref[--len] = '\0';
 		if (!hide_refs) {
-			hide_refs = xcalloc(1, sizeof(*hide_refs));
+			CALLOC_ARRAY(hide_refs, 1);
 			hide_refs->strdup_strings = 1;
 		}
 		string_list_append(hide_refs, ref);

@@ -1028,7 +1028,7 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
 			break;
 	if (!drv) {
-		drv = xcalloc(1, sizeof(struct convert_driver));
+		CALLOC_ARRAY(drv, 1);
 		drv->name = xmemdupz(name, namelen);
 		*user_convert_tail = drv;
 		user_convert_tail = &(drv->next);

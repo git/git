@@ -62,7 +62,7 @@ static struct entry *rev_list_push(struct data *data, struct commit *commit, int
 	struct entry *entry;
 	commit->object.flags |= mark | SEEN;
 
-	entry = xcalloc(1, sizeof(*entry));
+	CALLOC_ARRAY(entry, 1);
 	entry->commit = commit;
 	prio_queue_put(&data->rev_list, entry);
 
@@ -241,7 +241,7 @@ void skipping_negotiator_init(struct fetch_negotiator *negotiator)
 	negotiator->next = next;
 	negotiator->ack = ack;
 	negotiator->release = release;
-	negotiator->data = data = xcalloc(1, sizeof(*data));
+	negotiator->data = CALLOC_ARRAY(data, 1);
 	data->rev_list.compare = compare;
 
 	if (marked)

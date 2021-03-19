@@ -871,7 +871,7 @@ void transport_take_over(struct transport *transport,
 		BUG("taking over transport requires non-NULL "
 		    "smart_options field.");
 
-	data = xcalloc(1, sizeof(*data));
+	CALLOC_ARRAY(data, 1);
 	data->options = *transport->smart_options;
 	data->conn = child;
 	data->fd[0] = data->conn->out;

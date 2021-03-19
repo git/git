@@ -787,8 +787,7 @@ void diffcore_rename(struct diff_options *options)
 				(uint64_t)num_destinations * (uint64_t)num_sources);
 	}
 
-	mx = xcalloc(st_mult(NUM_CANDIDATE_PER_DST, num_destinations),
-		     sizeof(*mx));
+	CALLOC_ARRAY(mx, st_mult(NUM_CANDIDATE_PER_DST, num_destinations));
 	for (dst_cnt = i = 0; i < rename_dst_nr; i++) {
 		struct diff_filespec *two = rename_dst[i].p->two;
 		struct diff_score *m;

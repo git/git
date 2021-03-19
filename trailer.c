@@ -445,7 +445,7 @@ static struct arg_item *get_conf_item(const char *name)
 	}
 
 	/* Item does not already exists, create it */
-	item = xcalloc(sizeof(*item), 1);
+	CALLOC_ARRAY(item, 1);
 	duplicate_conf(&item->conf, &default_conf_info);
 	item->conf.name = xstrdup(name);
 

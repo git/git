@@ -196,7 +196,7 @@ void display_throughput(struct progress *progress, uint64_t total)
 	now_ns = progress_getnanotime(progress);
 
 	if (!tp) {
-		progress->throughput = tp = xcalloc(1, sizeof(*tp));
+		progress->throughput = CALLOC_ARRAY(tp, 1);
 		tp->prev_total = tp->curr_total = total;
 		tp->prev_ns = now_ns;
 		strbuf_init(&tp->display, 0);

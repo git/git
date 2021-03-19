@@ -296,7 +296,7 @@ static void line_log_data_insert(struct line_log_data **list,
 		return;
 	}
 
-	p = xcalloc(1, sizeof(struct line_log_data));
+	CALLOC_ARRAY(p, 1);
 	p->path = path;
 	range_set_append(&p->ranges, begin, end);
 	if (ip) {

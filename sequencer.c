@@ -5171,7 +5171,7 @@ void todo_list_add_exec_commands(struct todo_list *todo_list,
 	int i, insert, nr = 0, alloc = 0;
 	struct todo_item *items = NULL, *base_items = NULL;
 
-	base_items = xcalloc(commands->nr, sizeof(struct todo_item));
+	CALLOC_ARRAY(base_items, commands->nr);
 	for (i = 0; i < commands->nr; i++) {
 		size_t command_len = strlen(commands->items[i].string);
 

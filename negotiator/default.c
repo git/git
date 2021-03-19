@@ -167,7 +167,7 @@ void default_negotiator_init(struct fetch_negotiator *negotiator)
 	negotiator->next = next;
 	negotiator->ack = ack;
 	negotiator->release = release;
-	negotiator->data = ns = xcalloc(1, sizeof(*ns));
+	negotiator->data = CALLOC_ARRAY(ns, 1);
 	ns->rev_list.compare = compare_commits_by_commit_date;
 
 	if (marked)

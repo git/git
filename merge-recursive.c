@@ -303,7 +303,7 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 		return;
 	}
 
-	ci = xcalloc(1, sizeof(struct rename_conflict_info));
+	CALLOC_ARRAY(ci, 1);
 	ci->rename_type = rename_type;
 	ci->ren1 = ren1;
 	ci->ren2 = ren2;
@@ -2389,8 +2389,7 @@ static void compute_collisions(struct hashmap *collisions,
 			continue;
 		collision_ent = collision_find_entry(collisions, new_path);
 		if (!collision_ent) {
-			collision_ent = xcalloc(1,
-						sizeof(struct collision_entry));
+			CALLOC_ARRAY(collision_ent, 1);
 			hashmap_entry_init(&collision_ent->ent,
 						strhash(new_path));
 			hashmap_put(collisions, &collision_ent->ent);
@@ -2594,7 +2593,7 @@ static struct string_list *get_renames(struct merge_options *opt,
 	struct string_list *renames;
 
 	compute_collisions(&collisions, dir_renames, pairs);
-	renames = xcalloc(1, sizeof(struct string_list));
+	CALLOC_ARRAY(renames, 1);
 
 	for (i = 0; i < pairs->nr; ++i) {
 		struct string_list_item *item;
@@ -3664,7 +3663,7 @@ static int merge_start(struct merge_options *opt, struct tree *head)
 		return -1;
 	}
 
-	opt->priv = xcalloc(1, sizeof(*opt->priv));
+	CALLOC_ARRAY(opt->priv, 1);
 	string_list_init(&opt->priv->df_conflict_file_set, 1);
 	return 0;
 }

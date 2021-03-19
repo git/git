@@ -208,7 +208,7 @@ static int remove_fetched_oids(struct repository *repo,
 
 	if (remaining_nr) {
 		int j = 0;
-		new_oids = xcalloc(remaining_nr, sizeof(*new_oids));
+		CALLOC_ARRAY(new_oids, remaining_nr);
 		for (i = 0; i < oid_nr; i++)
 			if (remaining[i])
 				oidcpy(&new_oids[j++], &old_oids[i]);

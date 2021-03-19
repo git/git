@@ -130,7 +130,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	if (!find_merge_parent(merge_parents, &oid, NULL))
 		return 0; /* subsumed by other parents */
 
-	origin_data = xcalloc(1, sizeof(struct origin_data));
+	CALLOC_ARRAY(origin_data, 1);
 	oidcpy(&origin_data->oid, &oid);
 
 	if (line[len - 1] == '\n')

@@ -2233,14 +2233,12 @@ static void init_diff_words_data(struct emit_callback *ecbdata,
 	struct diff_options *o = xmalloc(sizeof(struct diff_options));
 	memcpy(o, orig_opts, sizeof(struct diff_options));
 
-	ecbdata->diff_words =
-		xcalloc(1, sizeof(struct diff_words_data));
+	CALLOC_ARRAY(ecbdata->diff_words, 1);
 	ecbdata->diff_words->type = o->word_diff;
 	ecbdata->diff_words->opt = o;
 
 	if (orig_opts->emitted_symbols)
-		o->emitted_symbols =
-			xcalloc(1, sizeof(struct emitted_diff_symbols));
+		CALLOC_ARRAY(o->emitted_symbols, 1);
 
 	if (!o->word_regex)
 		o->word_regex = userdiff_word_regex(one, o->repo->index);
@@ -2509,7 +2507,7 @@ static struct diffstat_file *diffstat_add(struct diffstat_t *diffstat,
 					  const char *name_b)
 {
 	struct diffstat_file *x;
-	x = xcalloc(1, sizeof(*x));
+	CALLOC_ARRAY(x, 1);
 	ALLOC_GROW(diffstat->files, diffstat->nr + 1, diffstat->alloc);
 	diffstat->files[diffstat->nr++] = x;
 	if (name_b) {
@@ -4918,7 +4916,7 @@ static int diff_opt_find_object(const struct option *option,
 		return error(_("unable to resolve '%s'"), arg);
 
 	if (!opt->objfind)
-		opt->objfind = xcalloc(1, sizeof(*opt->objfind));
+		CALLOC_ARRAY(opt->objfind, 1);
 
 	opt->pickaxe_opts |= DIFF_PICKAXE_KIND_OBJFIND;
 	opt->flags.recursive = 1;

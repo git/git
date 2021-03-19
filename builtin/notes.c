@@ -730,7 +730,7 @@ static int merge_commit(struct notes_merge_options *o)
 	else
 		oidclr(&parent_oid);
 
-	t = xcalloc(1, sizeof(struct notes_tree));
+	CALLOC_ARRAY(t, 1);
 	init_notes(t, "NOTES_MERGE_PARTIAL", combine_notes_overwrite, 0);
 
 	o->local_ref = local_ref_to_free =

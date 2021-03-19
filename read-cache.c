@@ -2097,7 +2097,7 @@ static unsigned long load_cache_entries_threaded(struct index_state *istate, con
 	/* ensure we have no more threads than we have blocks to process */
 	if (nr_threads > ieot->nr)
 		nr_threads = ieot->nr;
-	data = xcalloc(nr_threads, sizeof(*data));
+	CALLOC_ARRAY(data, nr_threads);
 
 	offset = ieot_start = 0;
 	ieot_blocks = DIV_ROUND_UP(ieot->nr, nr_threads);
@@ -2199,7 +2199,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	istate->version = ntohl(hdr->hdr_version);
 	istate->cache_nr = ntohl(hdr->hdr_entries);
 	istate->cache_alloc = alloc_nr(istate->cache_nr);
-	istate->cache = xcalloc(istate->cache_alloc, sizeof(*istate->cache));
+	CALLOC_ARRAY(istate->cache, istate->cache_alloc);
 	istate->initialized = 1;
 
 	p.istate = istate;
@@ -2326,7 +2326,7 @@ int read_index_from(struct index_state *istate, const char *path,
 	if (split_index->base)
 		discard_index(split_index->base);
 	else
-		split_index->base = xcalloc(1, sizeof(*split_index->base));
+		CALLOC_ARRAY(split_index->base, 1);
 
 	base_oid_hex = oid_to_hex(&split_index->base_oid);
 	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
@@ -3428,7 +3428,7 @@ void stat_validity_update(struct stat_validity *sv, int fd)
 		stat_validity_clear(sv);
 	else {
 		if (!sv->sd)
-			sv->sd = xcalloc(1, sizeof(struct stat_data));
+			CALLOC_ARRAY(sv->sd, 1);
 		fill_stat_data(sv->sd, &st);
 	}
 }

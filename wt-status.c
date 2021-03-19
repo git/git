@@ -456,7 +456,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		it = string_list_insert(&s->change, p->two->path);
 		d = it->util;
 		if (!d) {
-			d = xcalloc(1, sizeof(*d));
+			CALLOC_ARRAY(d, 1);
 			it->util = d;
 		}
 		if (!d->worktree_status)
@@ -540,7 +540,7 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 		it = string_list_insert(&s->change, p->two->path);
 		d = it->util;
 		if (!d) {
-			d = xcalloc(1, sizeof(*d));
+			CALLOC_ARRAY(d, 1);
 			it->util = d;
 		}
 		if (!d->index_status)
@@ -671,7 +671,7 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 		it = string_list_insert(&s->change, ce->name);
 		d = it->util;
 		if (!d) {
-			d = xcalloc(1, sizeof(*d));
+			CALLOC_ARRAY(d, 1);
 			it->util = d;
 		}
 		if (ce_stage(ce)) {

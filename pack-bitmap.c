@@ -978,7 +978,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 
 	/* try to open a bitmapped pack, but don't parse it yet
 	 * because we may not need to use it */
-	bitmap_git = xcalloc(1, sizeof(*bitmap_git));
+	CALLOC_ARRAY(bitmap_git, 1);
 	if (open_pack_bitmap(revs->repo, bitmap_git) < 0)
 		goto cleanup;
 
@@ -1388,7 +1388,7 @@ uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 	uint32_t *reposition;
 
 	num_objects = bitmap_git->pack->num_objects;
-	reposition = xcalloc(num_objects, sizeof(uint32_t));
+	CALLOC_ARRAY(reposition, num_objects);
 
 	for (i = 0; i < num_objects; ++i) {
 		struct object_id oid;

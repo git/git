@@ -1576,8 +1576,7 @@ static void compute_collisions(struct strmap *collisions,
 		if (collision_info) {
 			free(new_path);
 		} else {
-			collision_info = xcalloc(1,
-						 sizeof(struct collision_info));
+			CALLOC_ARRAY(collision_info, 1);
 			string_list_init(&collision_info->source_files, 0);
 			strmap_put(collisions, new_path, collision_info);
 		}
@@ -1718,7 +1717,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 		struct conflict_info *dir_ci;
 		char *cur_dir = dirs_to_insert.items[i].string;
 
-		dir_ci = xcalloc(1, sizeof(*dir_ci));
+		CALLOC_ARRAY(dir_ci, 1);
 
 		dir_ci->merged.directory_name = parent_name;
 		len = strlen(parent_name);
@@ -2703,7 +2702,7 @@ static void process_entry(struct merge_options *opt,
 		 * the directory to remain here, so we need to move this
 		 * path to some new location.
 		 */
-		new_ci = xcalloc(1, sizeof(*new_ci));
+		CALLOC_ARRAY(new_ci, 1);
 		/* We don't really want new_ci->merged.result copied, but it'll
 		 * be overwritten below so it doesn't matter.  We also don't
 		 * want any directory mode/oid values copied, but we'll zero
@@ -3083,7 +3082,7 @@ static int checkout(struct merge_options *opt,
 	unpack_opts.verbose_update = (opt->verbosity > 2);
 	unpack_opts.fn = twoway_merge;
 	if (1/* FIXME: opts->overwrite_ignore*/) {
-		unpack_opts.dir = xcalloc(1, sizeof(*unpack_opts.dir));
+		CALLOC_ARRAY(unpack_opts.dir, 1);
 		unpack_opts.dir->flags |= DIR_SHOW_IGNORED;
 		setup_standard_excludes(unpack_opts.dir);
 	}

@@ -154,7 +154,7 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
 	string_list_remove_empty_items(&list, 0);
 
 	item->attr_check = attr_check_alloc();
-	item->attr_match = xcalloc(list.nr, sizeof(struct attr_match));
+	CALLOC_ARRAY(item->attr_match, list.nr);
 
 	for_each_string_list_item(si, &list) {
 		size_t attr_len;
@@ -561,7 +561,7 @@ void parse_pathspec(struct pathspec *pathspec,
 		if (!(flags & PATHSPEC_PREFER_CWD))
 			BUG("PATHSPEC_PREFER_CWD requires arguments");
 
-		pathspec->items = item = xcalloc(1, sizeof(*item));
+		pathspec->items = CALLOC_ARRAY(item, 1);
 		item->match = xstrdup(prefix);
 		item->original = xstrdup(prefix);
 		item->nowildcard_len = item->len = strlen(prefix);

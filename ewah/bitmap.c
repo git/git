@@ -25,7 +25,7 @@
 struct bitmap *bitmap_word_alloc(size_t word_alloc)
 {
 	struct bitmap *bitmap = xmalloc(sizeof(struct bitmap));
-	bitmap->words = xcalloc(word_alloc, sizeof(eword_t));
+	CALLOC_ARRAY(bitmap->words, word_alloc);
 	bitmap->word_alloc = word_alloc;
 	return bitmap;
 }

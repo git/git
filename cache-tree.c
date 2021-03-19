@@ -564,7 +564,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	 * hence +2.
 	 */
 	it->subtree_alloc = subtree_nr + 2;
-	it->down = xcalloc(it->subtree_alloc, sizeof(struct cache_tree_sub *));
+	CALLOC_ARRAY(it->down, it->subtree_alloc);
 	for (i = 0; i < subtree_nr; i++) {
 		/* read each subtree */
 		struct cache_tree *sub;

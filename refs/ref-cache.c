@@ -530,7 +530,7 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 	if (prime_dir)
 		prime_ref_dir(dir, prefix);
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 	base_ref_iterator_init(ref_iterator, &cache_ref_iterator_vtable, 1);
 	ALLOC_GROW(iter->levels, 10, iter->levels_alloc);

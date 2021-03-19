@@ -2269,7 +2269,7 @@ static void repo_read_config(struct repository *repo)
 	opts.git_dir = repo->gitdir;
 
 	if (!repo->config)
-		repo->config = xcalloc(1, sizeof(struct config_set));
+		CALLOC_ARRAY(repo->config, 1);
 	else
 		git_configset_clear(repo->config);
 

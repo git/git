@@ -840,7 +840,7 @@ static void add_child(struct child_process *cld, struct sockaddr *addr, socklen_
 {
 	struct child *newborn, **cradle;
 
-	newborn = xcalloc(1, sizeof(*newborn));
+	CALLOC_ARRAY(newborn, 1);
 	live_children++;
 	memcpy(&newborn->cld, cld, sizeof(*cld));
 	memcpy(&newborn->address, addr, addrlen);
@@ -1148,7 +1148,7 @@ static int service_loop(struct socketlist *socklist)
 	struct pollfd *pfd;
 	int i;
 
-	pfd = xcalloc(socklist->nr, sizeof(struct pollfd));
+	CALLOC_ARRAY(pfd, socklist->nr);
 
 	for (i = 0; i < socklist->nr; i++) {
 		pfd[i].fd = socklist->list[i];
