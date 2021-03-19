@@ -413,7 +413,7 @@ struct file_item {
 
 static void add_file_item(struct string_list *files, const char *name)
 {
-	struct file_item *item = xcalloc(sizeof(*item), 1);
+	struct file_item *item = xcalloc(1, sizeof(*item));
 
 	string_list_append(files, name)->util = item;
 }
@@ -1120,7 +1120,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	int res = 0;
 
 	for (i = 0; i < ARRAY_SIZE(command_list); i++) {
-		struct command_item *util = xcalloc(sizeof(*util), 1);
+		struct command_item *util = xcalloc(1, sizeof(*util));
 		util->command = command_list[i].command;
 		string_list_append(&commands.items, command_list[i].string)
 			->util = util;

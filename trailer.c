@@ -174,7 +174,7 @@ static void print_all(FILE *outfile, struct list_head *head,
 
 static struct trailer_item *trailer_from_arg(struct arg_item *arg_tok)
 {
-	struct trailer_item *new_item = xcalloc(sizeof(*new_item), 1);
+	struct trailer_item *new_item = xcalloc(1, sizeof(*new_item));
 	new_item->token = arg_tok->token;
 	new_item->value = arg_tok->value;
 	arg_tok->token = arg_tok->value = NULL;
@@ -664,7 +664,7 @@ static void parse_trailer(struct strbuf *tok, struct strbuf *val,
 static struct trailer_item *add_trailer_item(struct list_head *head, char *tok,
 					     char *val)
 {
-	struct trailer_item *new_item = xcalloc(sizeof(*new_item), 1);
+	struct trailer_item *new_item = xcalloc(1, sizeof(*new_item));
 	new_item->token = tok;
 	new_item->value = val;
 	list_add_tail(&new_item->list, head);
@@ -675,7 +675,7 @@ static void add_arg_item(struct list_head *arg_head, char *tok, char *val,
 			 const struct conf_info *conf,
 			 const struct new_trailer_item *new_trailer_item)
 {
-	struct arg_item *new_item = xcalloc(sizeof(*new_item), 1);
+	struct arg_item *new_item = xcalloc(1, sizeof(*new_item));
 	new_item->token = tok;
 	new_item->value = val;
 	duplicate_conf(&new_item->conf, conf);
