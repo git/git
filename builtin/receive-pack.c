@@ -2313,11 +2313,9 @@ static void prepare_shallow_update(struct shallow_info *si)
 	ALLOC_ARRAY(si->used_shallow, si->shallow->nr);
 	assign_shallow_commits_to_refs(si, si->used_shallow, NULL);
 
-	si->need_reachability_test =
-		xcalloc(si->shallow->nr, sizeof(*si->need_reachability_test));
-	si->reachable =
-		xcalloc(si->shallow->nr, sizeof(*si->reachable));
-	si->shallow_ref = xcalloc(si->ref->nr, sizeof(*si->shallow_ref));
+	CALLOC_ARRAY(si->need_reachability_test, si->shallow->nr);
+	CALLOC_ARRAY(si->reachable, si->shallow->nr);
+	CALLOC_ARRAY(si->shallow_ref, si->ref->nr);
 
 	for (i = 0; i < si->nr_ours; i++)
 		si->need_reachability_test[si->ours[i]] = 1;

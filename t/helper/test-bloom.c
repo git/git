@@ -69,7 +69,7 @@ int cmd__bloom(int argc, const char **argv)
 		struct bloom_filter filter;
 		int i = 2;
 		filter.len =  (settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
-		filter.data = xcalloc(filter.len, sizeof(unsigned char));
+		CALLOC_ARRAY(filter.data, filter.len);
 
 		if (argc - 1 < i)
 			usage(bloom_usage);
