@@ -109,7 +109,7 @@ test_expect_success 'chooses correct default initial branch name' '
 	git -c init.defaultBranch=foo init --bare empty &&
 	test_config -C empty lsrefs.unborn advertise &&
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
-	git -c init.defaultBranch=up clone empty whats-up &&
+	git -c init.defaultBranch=up -c protocol.version=2 clone empty whats-up &&
 	test refs/heads/foo = $(git -C whats-up symbolic-ref HEAD) &&
 	test refs/heads/foo = $(git -C whats-up config branch.foo.merge)
 '
