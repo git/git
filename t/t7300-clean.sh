@@ -28,15 +28,15 @@ test_expect_success 'git clean with skip-worktree .gitignore' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.out &&
-	test ! -f src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so &&
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so &&
 	git update-index --no-skip-worktree .gitignore &&
 	git checkout .gitignore
 '
@@ -46,15 +46,15 @@ test_expect_success 'git clean' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.out &&
-	test ! -f src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -63,15 +63,15 @@ test_expect_success 'git clean src/' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean src/ &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test ! -f src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -80,15 +80,15 @@ test_expect_success 'git clean src/ src/' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean src/ src/ &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test ! -f src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -97,16 +97,16 @@ test_expect_success 'git clean with prefix' '
 	mkdir -p build docs src/test &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so src/test/1.c &&
 	(cd src/ && git clean) &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test ! -f src/part3.c &&
-	test_path_is_file src/test/1.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_exists src/test/1.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -162,16 +162,16 @@ test_expect_success 'git clean -d with prefix and path' '
 	mkdir -p build docs src/feature &&
 	touch a.out src/part3.c src/feature/file.c docs/manual.txt obj.o build/lib.so &&
 	(cd src/ && git clean -d feature/) &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test_path_is_file src/part3.c &&
-	test ! -f src/feature/file.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_exists src/part3.c &&
+	test_path_is_missing src/feature/file.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -181,16 +181,16 @@ test_expect_success SYMLINKS 'git clean symbolic link' '
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	ln -s docs/manual.txt src/part4.c &&
 	git clean &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.out &&
-	test ! -f src/part3.c &&
-	test ! -f src/part4.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_is_missing src/part4.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -198,13 +198,13 @@ test_expect_success 'git clean with wildcard' '
 
 	touch a.clean b.clean other.c &&
 	git clean "*.clean" &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.clean &&
-	test ! -f b.clean &&
-	test_path_is_file other.c
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.clean &&
+	test_path_is_missing b.clean &&
+	test_path_exists other.c
 
 '
 
@@ -213,15 +213,15 @@ test_expect_success 'git clean -n' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -n &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test_path_is_file src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_exists src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -230,15 +230,15 @@ test_expect_success 'git clean -d' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -d &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.out &&
-	test ! -f src/part3.c &&
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.out &&
+	test_path_is_missing src/part3.c &&
 	test ! -d docs &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -247,16 +247,16 @@ test_expect_success 'git clean -d src/ examples/' '
 	mkdir -p build docs examples &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so examples/1.c &&
 	git clean -d src/ examples/ &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test ! -f src/part3.c &&
-	test ! -f examples/1.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_is_missing examples/1.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -265,15 +265,15 @@ test_expect_success 'git clean -x' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -x &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.out &&
-	test ! -f src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test ! -f obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_is_missing obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -282,14 +282,14 @@ test_expect_success 'git clean -d -x' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -d -x &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.out &&
-	test ! -f src/part3.c &&
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.out &&
+	test_path_is_missing src/part3.c &&
 	test ! -d docs &&
-	test ! -f obj.o &&
+	test_path_is_missing obj.o &&
 	test ! -d build
 
 '
@@ -299,14 +299,14 @@ test_expect_success 'git clean -d -x with ignored tracked directory' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -d -x -e src &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.out &&
-	test_path_is_file src/part3.c &&
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.out &&
+	test_path_exists src/part3.c &&
 	test ! -d docs &&
-	test ! -f obj.o &&
+	test_path_is_missing obj.o &&
 	test ! -d build
 
 '
@@ -316,15 +316,15 @@ test_expect_success 'git clean -X' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -X &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test_path_is_file src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test ! -f obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_exists src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_is_missing obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -333,14 +333,14 @@ test_expect_success 'git clean -d -X' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -d -X &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test_path_is_file src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test ! -f obj.o &&
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_exists src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_is_missing obj.o &&
 	test ! -d build
 
 '
@@ -350,14 +350,14 @@ test_expect_success 'git clean -d -X with ignored tracked directory' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -d -X -e src &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test ! -f src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test ! -f obj.o &&
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_is_missing obj.o &&
 	test ! -d build
 
 '
@@ -381,29 +381,29 @@ test_expect_success 'clean.requireForce and -n' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	git clean -n &&
-	test_path_is_file Makefile &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test_path_is_file a.out &&
-	test_path_is_file src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists Makefile &&
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_exists a.out &&
+	test_path_exists src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
 test_expect_success 'clean.requireForce and -f' '
 
 	git clean -f &&
-	test_path_is_file README &&
-	test_path_is_file src/part1.c &&
-	test_path_is_file src/part2.c &&
-	test ! -f a.out &&
-	test ! -f src/part3.c &&
-	test_path_is_file docs/manual.txt &&
-	test_path_is_file obj.o &&
-	test_path_is_file build/lib.so
+	test_path_exists README &&
+	test_path_exists src/part1.c &&
+	test_path_exists src/part2.c &&
+	test_path_is_missing a.out &&
+	test_path_is_missing src/part3.c &&
+	test_path_exists docs/manual.txt &&
+	test_path_exists obj.o &&
+	test_path_exists build/lib.so
 
 '
 
@@ -446,10 +446,10 @@ test_expect_success 'nested git work tree' '
 		test_commit deeply.nested deeper.world
 	) &&
 	git clean -f -d &&
-	test_path_is_file foo/.git/index &&
-	test_path_is_file foo/hello.world &&
-	test_path_is_file baz/boo/.git/index &&
-	test_path_is_file baz/boo/deeper.world &&
+	test_path_exists foo/.git/index &&
+	test_path_exists foo/hello.world &&
+	test_path_exists baz/boo/.git/index &&
+	test_path_exists baz/boo/deeper.world &&
 	! test -d bar
 '
 
@@ -488,12 +488,12 @@ test_expect_success 'should not clean submodules' '
 	git checkout before_sub2 &&
 	>to_clean/should_clean.this &&
 	git clean -f -d &&
-	test_path_is_file repo/.git/index &&
-	test_path_is_file repo/hello.world &&
-	test_path_is_file sub1/.git &&
-	test_path_is_file sub1/hello.world &&
-	test_path_is_file sub2/.git &&
-	test_path_is_file sub2/hello.world &&
+	test_path_exists repo/.git/index &&
+	test_path_exists repo/hello.world &&
+	test_path_exists sub1/.git &&
+	test_path_exists sub1/hello.world &&
+	test_path_exists sub2/.git &&
+	test_path_exists sub2/hello.world &&
 	test_path_is_missing to_clean
 '
 
@@ -506,8 +506,8 @@ test_expect_success POSIXPERM,SANITY 'should avoid cleaning possible submodules'
 	chmod 0 possible_sub1/.git &&
 	>to_clean/should_clean.this &&
 	git clean -f -d &&
-	test_path_is_file possible_sub1/.git &&
-	test_path_is_file possible_sub1/hello.world &&
+	test_path_exists possible_sub1/.git &&
+	test_path_exists possible_sub1/hello.world &&
 	test_path_is_missing to_clean
 '
 
@@ -517,7 +517,7 @@ test_expect_success 'nested (empty) git should be kept' '
 	mkdir to_clean &&
 	>to_clean/should_clean.this &&
 	git clean -f -d &&
-	test_path_is_file empty_repo/.git/HEAD &&
+	test_path_exists empty_repo/.git/HEAD &&
 	test_path_is_missing to_clean
 '
 
@@ -559,9 +559,9 @@ test_expect_success 'giving path in nested git work tree will NOT remove it' '
 		test_commit msg bar/baz/hello.world
 	) &&
 	git clean -f -d repo/bar/baz &&
-	test_path_is_file repo/.git/HEAD &&
+	test_path_exists repo/.git/HEAD &&
 	test_path_is_dir repo/bar/ &&
-	test_path_is_file repo/bar/baz/hello.world
+	test_path_exists repo/bar/baz/hello.world
 '
 
 test_expect_success 'giving path to nested .git will not remove it' '
@@ -573,7 +573,7 @@ test_expect_success 'giving path to nested .git will not remove it' '
 		test_commit msg hello.world
 	) &&
 	git clean -f -d repo/.git &&
-	test_path_is_file repo/.git/HEAD &&
+	test_path_exists repo/.git/HEAD &&
 	test_path_is_dir repo/.git/refs &&
 	test_path_is_dir repo/.git/objects &&
 	test_path_is_dir untracked/
@@ -589,7 +589,7 @@ test_expect_success 'giving path to nested .git/ will NOT remove contents' '
 	) &&
 	git clean -f -d repo/.git/ &&
 	test_path_is_dir repo/.git &&
-	test_path_is_file repo/.git/HEAD &&
+	test_path_exists repo/.git/HEAD &&
 	test_path_is_dir untracked/
 '
 
@@ -663,11 +663,11 @@ test_expect_success 'git clean -d skips untracked dirs containing ignored files'
 	touch foo/bar foo/baz foo/a/aa/ignoreme foo/b/ignoreme foo/b/bb/1 foo/b/bb/2 &&
 	git clean -df &&
 	test_path_is_dir foo &&
-	test_path_is_file foo/bar &&
+	test_path_exists foo/bar &&
 	test_path_is_missing foo/baz &&
-	test_path_is_file foo/a/aa/ignoreme &&
+	test_path_exists foo/a/aa/ignoreme &&
 	test_path_is_missing foo/a/aa/aaa &&
-	test_path_is_file foo/b/ignoreme &&
+	test_path_exists foo/b/ignoreme &&
 	test_path_is_missing foo/b/bb
 '
 
@@ -688,9 +688,9 @@ test_expect_success 'git clean -d skips nested repo containing ignored files' '
 
 	git clean -fd &&
 
-	test_path_is_file nested-repo-with-ignored-file/.git/index &&
-	test_path_is_file nested-repo-with-ignored-file/ignoreme &&
-	test_path_is_file nested-repo-with-ignored-file/file
+	test_path_exists nested-repo-with-ignored-file/.git/index &&
+	test_path_exists nested-repo-with-ignored-file/ignoreme &&
+	test_path_exists nested-repo-with-ignored-file/file
 '
 
 test_expect_success 'git clean handles being told what to clean' '
