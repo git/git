@@ -185,10 +185,10 @@ static int query_fsmonitor(int version, const char *last_update, struct strbuf *
 int fsmonitor_is_trivial_response(const struct strbuf *query_result)
 {
 	static char trivial_response[3] = { '\0', '/', '\0' };
-	int is_trivial = !memcmp(trivial_response,
-				 &query_result->buf[query_result->len - 3], 3);
 
-	return is_trivial;
+	return query_result->len >= 3 &&
+		!memcmp(trivial_response,
+			&query_result->buf[query_result->len - 3], 3);
 }
 
 static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
