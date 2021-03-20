@@ -40,8 +40,8 @@ sub describe_relation {
 			     phrase_these(@{$topic_info->{'uses'}}));
 	}
 
-	if (exists $topic_info->{'shares'}) {
-		push @desc, ("is tangled with " .
+	if (0 && exists $topic_info->{'shares'}) {
+		push @desc, ("shares commits with " .
 			     phrase_these(@{$topic_info->{'shares'}}));
 	}
 
