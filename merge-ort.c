@@ -410,7 +410,7 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 	string_list_clear(&opti->paths_to_free, 0);
 	opti->paths_to_free.strdup_strings = 0;
 
-	if (opti->attr_index.cache_nr)
+	if (opti->attr_index.cache_nr) /* true iff opt->renormalize */
 		discard_index(&opti->attr_index);
 
 	/* Free memory used by various renames maps */
@@ -1201,6 +1201,63 @@ static int merge_submodule(struct merge_options *opt,
 	return 0;
 }
 
+static void initialize_attr_index(struct merge_options *opt)
+{
+	/*
+	 * The renormalize_buffer() functions require attributes, and
+	 * annoyingly those can only be read from the working tree or from
+	 * an index_state.  merge-ort doesn't have an index_state, so we
+	 * generate a fake one containing only attribute information.
+	 */
+	struct merged_info *mi;
+	struct index_state *attr_index = &opt->priv->attr_index;
+	struct cache_entry *ce;
+
+	attr_index->initialized = 1;
+
+	if (!opt->renormalize)
+		return;
+
+	mi = strmap_get(&opt->priv->paths, GITATTRIBUTES_FILE);
+	if (!mi)
+		return;
+
+	if (mi->clean) {
+		int len = strlen(GITATTRIBUTES_FILE);
+		ce = make_empty_cache_entry(attr_index, len);
+		ce->ce_mode = create_ce_mode(mi->result.mode);
+		ce->ce_flags = create_ce_flags(0);
+		ce->ce_namelen = len;
+		oidcpy(&ce->oid, &mi->result.oid);
+		memcpy(ce->name, GITATTRIBUTES_FILE, len);
+		add_index_entry(attr_index, ce,
+				ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
+		get_stream_filter(attr_index, GITATTRIBUTES_FILE, &ce->oid);
+	} else {
+		int stage, len;
+		struct conflict_info *ci;
+
+		ASSIGN_AND_VERIFY_CI(ci, mi);
+		for (stage = 0; stage < 3; stage++) {
+			unsigned stage_mask = (1 << stage);
+
+			if (!(ci->filemask & stage_mask))
+				continue;
+			len = strlen(GITATTRIBUTES_FILE);
+			ce = make_empty_cache_entry(attr_index, len);
+			ce->ce_mode = create_ce_mode(ci->stages[stage].mode);
+			ce->ce_flags = create_ce_flags(stage);
+			ce->ce_namelen = len;
+			oidcpy(&ce->oid, &ci->stages[stage].oid);
+			memcpy(ce->name, GITATTRIBUTES_FILE, len);
+			add_index_entry(attr_index, ce,
+					ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
+			get_stream_filter(attr_index, GITATTRIBUTES_FILE,
+					  &ce->oid);
+		}
+	}
+}
+
 static int merge_3way(struct merge_options *opt,
 		      const char *path,
 		      const struct object_id *o,
@@ -1214,6 +1271,9 @@ static int merge_3way(struct merge_options *opt,
 	struct ll_merge_options ll_opts = {0};
 	char *base, *name1, *name2;
 	int merge_status;
+
+	if (!opt->priv->attr_index.initialized)
+		initialize_attr_index(opt);
 
 	ll_opts.renormalize = opt->renormalize;
 	ll_opts.extra_marker_size = extra_marker_size;
@@ -1253,7 +1313,7 @@ static int merge_3way(struct merge_options *opt,
 
 	merge_status = ll_merge(result_buf, path, &orig, base,
 				&src1, name1, &src2, name2,
-				opt->repo->index, &ll_opts);
+				&opt->priv->attr_index, &ll_opts);
 
 	free(base);
 	free(name1);
