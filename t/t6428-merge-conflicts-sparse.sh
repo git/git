@@ -76,7 +76,7 @@ test_setup_numerals () {
 	)
 }
 
-test_expect_merge_algorithm success failure 'conflicting entries written to worktree even if sparse' '
+test_expect_success 'conflicting entries written to worktree even if sparse' '
 	test_setup_numerals plain &&
 	(
 		cd numerals_plain &&
@@ -112,7 +112,7 @@ test_expect_merge_algorithm success failure 'conflicting entries written to work
 	)
 '
 
-test_expect_merge_algorithm failure failure 'present-despite-SKIP_WORKTREE handled reasonably' '
+test_expect_merge_algorithm failure success 'present-despite-SKIP_WORKTREE handled reasonably' '
 	test_setup_numerals in_the_way &&
 	(
 		cd numerals_in_the_way &&
