@@ -3496,6 +3496,9 @@ void merge_switch_to_result(struct merge_options *opt,
 {
 	assert(opt->priv == NULL);
 	if (result->clean >= 0 && update_worktree_and_index) {
+		const char *filename;
+		FILE *fp;
+
 		trace2_region_enter("merge", "checkout", opt->repo);
 		if (checkout(opt, head, result->tree)) {
 			/* failure to function */
@@ -3514,6 +3517,13 @@ void merge_switch_to_result(struct merge_options *opt,
 		}
 		opt->priv = NULL;
 		trace2_region_leave("merge", "record_conflicted", opt->repo);
+
+		trace2_region_enter("merge", "write_auto_merge", opt->repo);
+		filename = git_path_auto_merge(opt->repo);
+		fp = xfopen(filename, "w");
+		fprintf(fp, "%s\n", oid_to_hex(&result->tree->object.oid));
+		fclose(fp);
+		trace2_region_leave("merge", "write_auto_merge", opt->repo);
 	}
 
 	if (display_update_msgs) {
