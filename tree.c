@@ -13,7 +13,6 @@ const char *tree_type = "tree";
 
 int read_tree_at(struct repository *r,
 		 struct tree *tree, struct strbuf *base,
-		 int stage,
 		 const struct pathspec *pathspec,
 		 read_tree_fn_t fn, void *context)
 {
@@ -39,7 +38,7 @@ int read_tree_at(struct repository *r,
 		}
 
 		switch (fn(&entry.oid, base,
-			   entry.path, entry.mode, stage, context)) {
+			   entry.path, entry.mode, context)) {
 		case 0:
 			continue;
 		case READ_TREE_RECURSIVE:
@@ -73,7 +72,7 @@ int read_tree_at(struct repository *r,
 		strbuf_add(base, entry.path, len);
 		strbuf_addch(base, '/');
 		retval = read_tree_at(r, lookup_tree(r, &oid),
-				      base, stage, pathspec,
+				      base, pathspec,
 				      fn, context);
 		strbuf_setlen(base, oldlen);
 		if (retval)
@@ -82,17 +81,13 @@ int read_tree_at(struct repository *r,
 	return 0;
 }
 
-int read_tree_recursive(struct repository *r,
-			struct tree *tree,
-			const char *base, int baselen,
-			int stage, const struct pathspec *pathspec,
-			read_tree_fn_t fn, void *context)
+int read_tree(struct repository *r,
+	      struct tree *tree,
+	      const struct pathspec *pathspec,
+	      read_tree_fn_t fn, void *context)
 {
 	struct strbuf sb = STRBUF_INIT;
-	int ret;
-
-	strbuf_add(&sb, base, baselen);
-	ret = read_tree_at(r, tree, &sb, stage, pathspec, fn, context);
+	int ret = read_tree_at(r, tree, &sb, pathspec, fn, context);
 	strbuf_release(&sb);
 	return ret;
 }
