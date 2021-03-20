@@ -18,11 +18,13 @@ inst_prefix=$(
 )
 
 force= with_dash= test_long= M= install= nodoc= notest= bootstrap= branches= jobs=
-scratch= noprove= memtrash=--memtrash
+scratch= noprove= memtrash=--memtrash with_cocci=
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
 	--dash) with_dash=y ;;
+	--cocci) with_cocci=y ;;
+	--no-cocci) with_cocci= ;;
 	--long) test_long=--long ;;
 	--noinstall) install=noinstall ;;
 	--nodoc) nodoc=y ;;
@@ -199,6 +201,11 @@ do
 		esac &&
 
 		save=$(git rev-parse HEAD) &&
+
+		if test -n "$with_cocci"
+		then
+			Meta/Make $M $jobs -- coccicheck
+		fi &&
 
 		Meta/Make $M $jobs -- SPARSE_FLAGS=-Wsparse-error sparse &&
 
