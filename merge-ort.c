@@ -3551,6 +3551,23 @@ void merge_finalize(struct merge_options *opt,
 
 /*** Function Grouping: helper functions for merge_incore_*() ***/
 
+static struct tree *shift_tree_object(struct repository *repo,
+				      struct tree *one, struct tree *two,
+				      const char *subtree_shift)
+{
+	struct object_id shifted;
+
+	if (!*subtree_shift) {
+		shift_tree(repo, &one->object.oid, &two->object.oid, &shifted, 0);
+	} else {
+		shift_tree_by(repo, &one->object.oid, &two->object.oid, &shifted,
+			      subtree_shift);
+	}
+	if (oideq(&two->object.oid, &shifted))
+		return two;
+	return lookup_tree(repo, &shifted);
+}
+
 static inline void set_commit_tree(struct commit *c, struct tree *t)
 {
 	c->maybe_tree = t;
@@ -3679,6 +3696,13 @@ static void merge_ort_nonrecursive_internal(struct merge_options *opt,
 					    struct merge_result *result)
 {
 	struct object_id working_tree_oid;
+
+	if (opt->subtree_shift) {
+		side2 = shift_tree_object(opt->repo, side1, side2,
+					  opt->subtree_shift);
+		merge_base = shift_tree_object(opt->repo, side1, merge_base,
+					       opt->subtree_shift);
+	}
 
 	trace2_region_enter("merge", "collect_merge_info", opt->repo);
 	if (collect_merge_info(opt, merge_base, side1, side2) != 0) {
