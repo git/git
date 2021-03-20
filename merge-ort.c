@@ -2549,6 +2549,61 @@ static int string_list_df_name_compare(const char *one, const char *two)
 	return onelen - twolen;
 }
 
+static int read_oid_strbuf(struct merge_options *opt,
+			   const struct object_id *oid,
+			   struct strbuf *dst)
+{
+	void *buf;
+	enum object_type type;
+	unsigned long size;
+	buf = read_object_file(oid, &type, &size);
+	if (!buf)
+		return err(opt, _("cannot read object %s"), oid_to_hex(oid));
+	if (type != OBJ_BLOB) {
+		free(buf);
+		return err(opt, _("object %s is not a blob"), oid_to_hex(oid));
+	}
+	strbuf_attach(dst, buf, size, size + 1);
+	return 0;
+}
+
+static int blob_unchanged(struct merge_options *opt,
+			  const struct version_info *base,
+			  const struct version_info *side,
+			  const char *path)
+{
+	struct strbuf basebuf = STRBUF_INIT;
+	struct strbuf sidebuf = STRBUF_INIT;
+	int ret = 0; /* assume changed for safety */
+	const struct index_state *idx = &opt->priv->attr_index;
+
+	if (!idx->initialized)
+		initialize_attr_index(opt);
+
+	if (base->mode != side->mode)
+		return 0;
+	if (oideq(&base->oid, &side->oid))
+		return 1;
+
+	if (read_oid_strbuf(opt, &base->oid, &basebuf) ||
+	    read_oid_strbuf(opt, &side->oid, &sidebuf))
+		goto error_return;
+	/*
+	 * Note: binary | is used so that both renormalizations are
+	 * performed.  Comparison can be skipped if both files are
+	 * unchanged since their sha1s have already been compared.
+	 */
+	if (renormalize_buffer(idx, path, basebuf.buf, basebuf.len, &basebuf) |
+	    renormalize_buffer(idx, path, sidebuf.buf, sidebuf.len, &sidebuf))
+		ret = (basebuf.len == sidebuf.len &&
+		       !memcmp(basebuf.buf, sidebuf.buf, basebuf.len));
+
+error_return:
+	strbuf_release(&basebuf);
+	strbuf_release(&sidebuf);
+	return ret;
+}
+
 struct directory_versions {
 	/*
 	 * versions: list of (basename -> version_info)
@@ -3136,8 +3191,13 @@ static void process_entry(struct merge_options *opt,
 		modify_branch = (side == 1) ? opt->branch1 : opt->branch2;
 		delete_branch = (side == 1) ? opt->branch2 : opt->branch1;
 
-		if (ci->path_conflict &&
-		    oideq(&ci->stages[0].oid, &ci->stages[side].oid)) {
+		if (opt->renormalize &&
+		    blob_unchanged(opt, &ci->stages[0], &ci->stages[side],
+				   path)) {
+			ci->merged.is_null = 1;
+			ci->merged.clean = 1;
+		} else if (ci->path_conflict &&
+			   oideq(&ci->stages[0].oid, &ci->stages[side].oid)) {
 			/*
 			 * This came from a rename/delete; no action to take,
 			 * but avoid printing "modify/delete" conflict notice
