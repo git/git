@@ -425,7 +425,7 @@ static int read_one_entry_opt(struct index_state *istate,
 			      const struct object_id *oid,
 			      const char *base, int baselen,
 			      const char *pathname,
-			      unsigned mode, int stage, int opt)
+			      unsigned mode, int opt)
 {
 	int len;
 	struct cache_entry *ce;
@@ -437,7 +437,7 @@ static int read_one_entry_opt(struct index_state *istate,
 	ce = make_empty_cache_entry(istate, baselen + len);
 
 	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = create_ce_flags(stage);
+	ce->ce_flags = create_ce_flags(1);
 	ce->ce_namelen = baselen + len;
 	memcpy(ce->name, base, baselen);
 	memcpy(ce->name + baselen, pathname, len+1);
@@ -451,7 +451,7 @@ static int read_one_entry(const struct object_id *oid, struct strbuf *base,
 {
 	struct index_state *istate = context;
 	return read_one_entry_opt(istate, oid, base->buf, base->len, pathname,
-				  mode, stage,
+				  mode,
 				  ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
 }
 
@@ -465,26 +465,17 @@ static int read_one_entry_quick(const struct object_id *oid, struct strbuf *base
 {
 	struct index_state *istate = context;
 	return read_one_entry_opt(istate, oid, base->buf, base->len, pathname,
-				  mode, stage,
+				  mode,
 				  ADD_CACHE_JUST_APPEND);
 }
 
 
-static int read_tree(struct repository *r, struct tree *tree, int stage,
+static int read_tree(struct repository *r, struct tree *tree,
 		     struct pathspec *match, struct index_state *istate)
 {
 	read_tree_fn_t fn = NULL;
 	int i, err;
 
-	/*
-	 * Currently the only existing callers of this function all
-	 * call it with stage=1 and after making sure there is nothing
-	 * at that stage; we could always use read_one_entry_quick().
-	 *
-	 * But when we decide to straighten out git-read-tree not to
-	 * use unpack_trees() in some cases, this will probably start
-	 * to matter.
-	 */
 
 	/*
 	 * See if we have cache entry at the stage.  If so,
@@ -493,13 +484,13 @@ static int read_tree(struct repository *r, struct tree *tree, int stage,
 	 */
 	for (i = 0; !fn && i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
-		if (ce_stage(ce) == stage)
+		if (ce_stage(ce) == 1)
 			fn = read_one_entry;
 	}
 
 	if (!fn)
 		fn = read_one_entry_quick;
-	err = read_tree_recursive(r, tree, "", 0, stage, match, fn, istate);
+	err = read_tree_recursive(r, tree, "", 0, 0, match, fn, istate);
 	if (fn == read_one_entry || err)
 		return err;
 
@@ -549,7 +540,7 @@ void overlay_tree_on_index(struct index_state *istate,
 			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
 	} else
 		memset(&pathspec, 0, sizeof(pathspec));
-	if (read_tree(the_repository, tree, 1, &pathspec, istate))
+	if (read_tree(the_repository, tree, &pathspec, istate))
 		die("unable to read tree entries %s", tree_name);
 
 	for (i = 0; i < istate->cache_nr; i++) {
