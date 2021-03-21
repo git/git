@@ -625,6 +625,8 @@ static int show_gitcomp(const struct option *opts, int show_all)
  *
  * Right now this is only used to preprocess and substitute
  * OPTION_ALIAS.
+ *
+ * The returned options should be freed using free_preprocessed_options.
  */
 static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 					 const struct option *options)
@@ -678,6 +680,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 			newopt[i].short_name = short_name;
 			newopt[i].long_name = long_name;
 			newopt[i].help = strbuf_detach(&help, NULL);
+			newopt[i].flags |= PARSE_OPT_FROM_ALIAS;
 			break;
 		}
 
@@ -691,6 +694,20 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 	}
 
 	return newopt;
+}
+
+static void free_preprocessed_options(struct option *options)
+{
+	int i;
+
+	if (!options)
+		return;
+
+	for (i = 0; options[i].type != OPTION_END; i++) {
+		if (options[i].flags & PARSE_OPT_FROM_ALIAS)
+			free((void *)options[i].help);
+	}
+	free(options);
 }
 
 static int usage_with_options_internal(struct parse_opt_ctx_t *,
@@ -870,7 +887,7 @@ int parse_options(int argc, const char **argv, const char *prefix,
 	}
 
 	precompose_argv_prefix(argc, argv, NULL);
-	free(real_options);
+	free_preprocessed_options(real_options);
 	free(ctx.alias_groups);
 	return parse_options_end(&ctx);
 }
