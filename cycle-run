@@ -1,0 +1,88 @@
+#!/bin/sh
+
+: ${RANGE:=origin/master..origin/seen} ${J:=j32} ${OKNG:="(OK|NG)"}
+
+test_it () {
+	commit=$1 subject=$2
+	log=".Cycle/log.$commit"
+	rm -f "$log"
+	git ls-files -x Meta -x .Cycle -o -z | xargs -r -0 rm -rf
+
+	(
+		echo "*** log for $subject ***" &&
+
+		D= &&
+		git checkout --detach "$commit" &&
+		if ! Meta/Make -$J
+		then
+			D=DEVELOPER=
+			Meta/Make -$J -- DEVELOPER=
+		fi &&
+		Meta/Make -$J -- $D test &&
+		Meta/Make -$J -- $D doc
+
+		status=$?
+
+		# Does 'distclean' clean them up properly?
+		Meta/Make -- $D distclean >/dev/null
+		case $(git ls-files -x Meta -x .Cycle -o | wc -l) in
+		0) exit "$status" ;;
+		*) git ls-files -x Meta -x .Cycle -o
+		   exit 1 ;;
+		esac
+	) >"$log" 2>&1
+	case $? in
+	0)	rm -f "$log" ;;
+	*)	return 1 ;;
+	esac
+}
+
+test_them () {
+	while read merge parent sides
+	do
+		for side in $sides
+		do
+			git rev-parse --verify --quiet "$side" || continue
+			echo "TEST M $merge"
+			egrep "^$OKNG $side" .Cycle/log >/dev/null && continue
+			echo "TEST $side $merge"
+		done
+	done |
+	sed -n -e 's/^TEST //p' >.Cycle/plan
+
+	count=$(wc -l <.Cycle/plan)
+	case $count in 0) return ;; esac
+
+	total=$count
+	echo TEST $count ON $(date) >>.Cycle/log
+	while read side merge
+	do
+		case "$side" in
+		M)	
+			commit=$merge
+			subject=$(git show -s --format="%s" "$merge") ;;
+		*)
+			commit=$side
+			subject=$(
+				git show -s --format="%s" "$merge" |
+				sed -e 's/^Merge branch '\''\(.*\)'\'' into .*/\1/'
+			) ;;
+		esac
+
+		echo >&2 -n "$count/$total ?? $subject"
+		if test_it $commit "$subject"
+		then
+			OK=OK
+		else
+			OK=NG
+		fi
+		echo "$OK $commit $count" >>.Cycle/log
+		echo >&2 "$count/$total $OK $subject"
+		count=$(( $count - 1 ))
+	done <.Cycle/plan
+}
+
+: >>.Cycle/log
+git fetch
+git rev-list --first-parent --parents $RANGE |
+test_them
