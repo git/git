@@ -16,6 +16,11 @@ test_expect_success 'setup' '
 	echo 1 >non/git/b
 '
 
+test_expect_success 'git diff --no-index --exit-code' '
+	git diff --no-index --exit-code a/1 non/git/a &&
+	test_expect_code 1 git diff --no-index --exit-code a/1 a/2
+'
+
 test_expect_success 'git diff --no-index directories' '
 	test_expect_code 1 git diff --no-index a b >cnt &&
 	test_line_count = 14 cnt
