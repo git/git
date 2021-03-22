@@ -257,6 +257,30 @@ test_expect_success 'required filter clean failure' '
 	test_must_fail git add test.fc
 '
 
+test_expect_success 'required filter with absent clean field' '
+	test_config filter.absentclean.smudge cat &&
+	test_config filter.absentclean.required true &&
+
+	echo "*.ac filter=absentclean" >.gitattributes &&
+
+	echo test >test.ac &&
+	test_must_fail git add test.ac 2>stderr &&
+	test_i18ngrep "fatal: test.ac: clean filter .absentclean. failed" stderr
+'
+
+test_expect_success 'required filter with absent smudge field' '
+	test_config filter.absentsmudge.clean cat &&
+	test_config filter.absentsmudge.required true &&
+
+	echo "*.as filter=absentsmudge" >.gitattributes &&
+
+	echo test >test.as &&
+	git add test.as &&
+	rm -f test.as &&
+	test_must_fail git checkout -- test.as 2>stderr &&
+	test_i18ngrep "fatal: test.as: smudge filter absentsmudge failed" stderr
+'
+
 test_expect_success 'filtering large input to small output should use little memory' '
 	test_config filter.devnull.clean "cat >/dev/null" &&
 	test_config filter.devnull.required true &&

@@ -1456,7 +1456,6 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 	convert_attrs(istate, &ca, path);
 
 	assert(ca.drv);
-	assert(ca.drv->clean || ca.drv->process);
 
 	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
 		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
