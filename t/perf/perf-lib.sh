@@ -70,6 +70,19 @@ test_perf_do_repo_symlink_config_ () {
 	test_have_prereq SYMLINKS || git config core.symlinks false
 }
 
+test_perf_copy_repo_contents () {
+	for stuff in "$1"/*
+	do
+		case "$stuff" in
+		*/objects|*/hooks|*/config|*/commondir|*/gitdir|*/worktrees)
+			;;
+		*)
+			cp -R "$stuff" "$repo/.git/" || exit 1
+			;;
+		esac
+	done
+}
+
 test_perf_create_repo_from () {
 	test "$#" = 2 ||
 	BUG "not 2 parameters to test-create-repo"
@@ -77,20 +90,20 @@ test_perf_create_repo_from () {
 	source="$2"
 	source_git="$("$MODERN_GIT" -C "$source" rev-parse --git-dir)"
 	objects_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-path objects)"
+	common_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-common-dir)"
 	mkdir -p "$repo/.git"
 	(
 		cd "$source" &&
 		{ cp -Rl "$objects_dir" "$repo/.git/" 2>/dev/null ||
 			cp -R "$objects_dir" "$repo/.git/"; } &&
-		for stuff in "$source_git"/*; do
-			case "$stuff" in
-				*/objects|*/hooks|*/config|*/commondir)
-					;;
-				*)
-					cp -R "$stuff" "$repo/.git/" || exit 1
-					;;
-			esac
-		done
+
+		# common_dir must come first here, since we want source_git to
+		# take precedence and overwrite any overlapping files
+		test_perf_copy_repo_contents "$common_dir"
+		if test "$source_git" != "$common_dir"
+		then
+			test_perf_copy_repo_contents "$source_git"
+		fi
 	) &&
 	(
 		cd "$repo" &&
