@@ -1,16 +1,34 @@
 Git 2.32 Release Notes
 ======================
 
+Backward compatibility notes
+----------------------------
+
+ * ".gitattributes", ".gitignore", and ".mailmap" files that are
+   symbolic links are ignored.
+
+
 Updates since v2.32
 -------------------
 
-Backward incompatible and other important changes
-
-
 UI, Workflows & Features
+
+ * It does not make sense to make ".gitattributes", ".gitignore" and
+   ".mailmap" symlinks, as they are supposed to be usable from the
+   object store (think: bare repositories where HEAD:.mailmap etc. are
+   used).  When these files are symbolic links, we used to read the
+   contents of the files pointed by them by mistake, which has been
+   corrected.
+
+ * "git stash show" learned to optionally show untracked part of the
+   stash.
+
+ * "git log --format='...'" learned "%(describe)" placeholder.
 
 
 Performance, Internal Implementation, Development Support etc.
+
+ * Rename detection rework continues.
 
 
 Fixes since v2.31
@@ -43,9 +61,39 @@ Fixes since v2.31
    which was introduced in 2.29 timeframe.
    (merge 93c3d297b5 tb/git-mv-icase-fix later to maint).
 
+ * We had a code to diagnose and die cleanly when a required
+   clean/smudge filter is missing, but an assert before that
+   unnecessarily fired, hiding the end-user facing die() message.
+   (merge 6fab35f748 mt/cleanly-die-upon-missing-required-filter later to maint).
+
+ * Update C code that sets a few configuration variables when a remote
+   is configured so that it spells configuration variable names in the
+   canonical camelCase.
+   (merge 0f1da600e6 ab/remote-write-config-in-camel-case later to maint).
+
+ * A new configuration variable has been introduced to allow choosing
+   which version of the generation number gets used in the
+   commit-graph file.
+   (merge 702110aac6 ds/commit-graph-generation-config later to maint).
+
+ * Perf test update to work better in secondary worktrees.
+   (merge 36e834abc1 jk/perf-in-worktrees later to maint).
+
+ * Updates to memory allocation code around the use of pcre2 library.
+   (merge c1760352e0 ab/grep-pcre2-allocfix later to maint).
+
+ * "git -c core.bare=false clone --bare ..." would have segfaulted,
+   which has been corrected.
+   (merge 75555676ad bc/clone-bare-with-conflicting-config later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 486f4bd183 jc/calloc-fix later to maint).
    (merge 5f70859c15 jt/clone-unborn-head later to maint).
    (merge cfd409ed09 km/config-doc-typofix later to maint).
    (merge 8588aa8657 jk/slimmed-down later to maint).
    (merge 241b5d3ebe rs/xcalloc-takes-nelem-first later to maint).
+   (merge f451960708 dl/cat-file-doc-cleanup later to maint).
+   (merge 12604a8d0c sv/t9801-test-path-is-file-cleanup later to maint).
+   (merge ea7e63921c jr/doc-ignore-typofix later to maint).
+   (merge 23c781f173 ps/update-ref-trans-hook-doc later to maint).
+   (merge 42efa1231a jk/filter-branch-sha256 later to maint).
