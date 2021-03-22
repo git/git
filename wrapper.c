@@ -678,3 +678,19 @@ int is_empty_or_missing_file(const char *filename)
 
 	return !st.st_size;
 }
+
+int open_nofollow(const char *path, int flags)
+{
+#ifdef O_NOFOLLOW
+	return open(path, flags | O_NOFOLLOW);
+#else
+	struct stat st;
+	if (lstat(path, &st) < 0)
+		return -1;
+	if (S_ISLNK(st.st_mode)) {
+		errno = ELOOP;
+		return -1;
+	}
+	return open(path, flags);
+#endif
+}

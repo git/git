@@ -157,20 +157,30 @@ static void read_mailmap_line(struct string_list *map, char *buffer)
 		add_mapping(map, name1, email1, name2, email2);
 }
 
-static int read_mailmap_file(struct string_list *map, const char *filename)
+/* Flags for read_mailmap_file() */
+#define MAILMAP_NOFOLLOW (1<<0)
+
+static int read_mailmap_file(struct string_list *map, const char *filename,
+			     unsigned flags)
 {
 	char buffer[1024];
 	FILE *f;
+	int fd;
 
 	if (!filename)
 		return 0;
 
-	f = fopen(filename, "r");
-	if (!f) {
+	if (flags & MAILMAP_NOFOLLOW)
+		fd = open_nofollow(filename, O_RDONLY);
+	else
+		fd = open(filename, O_RDONLY);
+
+	if (fd < 0) {
 		if (errno == ENOENT)
 			return 0;
 		return error_errno("unable to open mailmap at %s", filename);
 	}
+	f = xfdopen(fd, "r");
 
 	while (fgets(buffer, sizeof(buffer), f) != NULL)
 		read_mailmap_line(map, buffer);
@@ -226,10 +236,12 @@ int read_mailmap(struct string_list *map)
 		git_mailmap_blob = "HEAD:.mailmap";
 
 	if (!startup_info->have_repository || !is_bare_repository())
-		err |= read_mailmap_file(map, ".mailmap");
+		err |= read_mailmap_file(map, ".mailmap",
+					 startup_info->have_repository ?
+					 MAILMAP_NOFOLLOW : 0);
 	if (startup_info->have_repository)
 		err |= read_mailmap_blob(map, git_mailmap_blob);
-	err |= read_mailmap_file(map, git_mailmap_file);
+	err |= read_mailmap_file(map, git_mailmap_file, 0);
 	return err;
 }
 

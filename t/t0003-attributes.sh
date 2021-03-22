@@ -4,12 +4,16 @@ test_description=gitattributes
 
 . ./test-lib.sh
 
-attr_check () {
+attr_check_basic () {
 	path="$1" expect="$2" git_opts="$3" &&
 
 	git $git_opts check-attr test -- "$path" >actual 2>err &&
 	echo "$path: test: $expect" >expect &&
-	test_cmp expect actual &&
+	test_cmp expect actual
+}
+
+attr_check () {
+	attr_check_basic "$@" &&
 	test_must_be_empty err
 }
 
@@ -331,12 +335,38 @@ test_expect_success 'binary macro expanded by -a' '
 	test_cmp expect actual
 '
 
-
 test_expect_success 'query binary macro directly' '
 	echo "file binary" >.gitattributes &&
 	echo file: binary: set >expect &&
 	git check-attr binary file >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success SYMLINKS 'set up symlink tests' '
+	echo "* test" >attr &&
+	rm -f .gitattributes
+'
+
+test_expect_success SYMLINKS 'symlinks respected in core.attributesFile' '
+	test_when_finished "rm symlink" &&
+	ln -s attr symlink &&
+	test_config core.attributesFile "$(pwd)/symlink" &&
+	attr_check file set
+'
+
+test_expect_success SYMLINKS 'symlinks respected in info/attributes' '
+	test_when_finished "rm .git/info/attributes" &&
+	ln -s ../../attr .git/info/attributes &&
+	attr_check file set
+'
+
+test_expect_success SYMLINKS 'symlinks not respected in-tree' '
+	test_when_finished "rm -rf .gitattributes subdir" &&
+	ln -s attr .gitattributes &&
+	mkdir subdir &&
+	ln -s ../attr subdir/.gitattributes &&
+	attr_check_basic subdir/file unspecified &&
+	test_i18ngrep "unable to access.*gitattributes" err
 '
 
 test_done
