@@ -83,6 +83,14 @@ test_them () {
 }
 
 : >>.Cycle/log
+git reflog expire --expire=now --expire-unreachable=now --all
+git gc
+
+for l in .Cycle/log.[0-9a-f]*
+do
+	x=${l##*.}
+	git rev-parse --verify "$x" >/dev/null 2>&1 || rm -f "$l"
+done
+
 git fetch
-git rev-list --first-parent --parents $RANGE |
-test_them
+git rev-list --first-parent --parents $RANGE | test_them
