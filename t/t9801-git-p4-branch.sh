@@ -203,19 +203,19 @@ test_expect_success 'git p4 clone simple branches' '
 		git p4 clone --dest=. --detect-branches //depot@all &&
 		git log --all --graph --decorate --stat &&
 		git reset --hard p4/depot/branch1 &&
-		test -f file1 &&
-		test -f file2 &&
-		test -f file3 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
 		grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
-		test -f file1 &&
-		test -f file2 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
 		test ! -f file3 &&
 		! grep update file2 &&
 		git reset --hard p4/depot/branch3 &&
-		test -f file1 &&
-		test -f file2 &&
-		test -f file3 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
 		grep update file2 &&
 		cd "$cli" &&
 		cd branch1 &&
@@ -606,22 +606,22 @@ test_expect_success 'git p4 clone simple branches with base folder on server sid
 		git p4 clone --dest=. --use-client-spec  --detect-branches //depot@all &&
 		git log --all --graph --decorate --stat &&
 		git reset --hard p4/depot/branch1 &&
-		test -f file1 &&
-		test -f file2 &&
-		test -f file3 &&
-		test -f sub_file1 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		test_path_is_file sub_file1 &&
 		grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
-		test -f file1 &&
-		test -f file2 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
 		test ! -f file3 &&
-		test -f sub_file1 &&
+		test_path_is_file sub_file1 &&
 		! grep update file2 &&
 		git reset --hard p4/depot/branch3 &&
-		test -f file1 &&
-		test -f file2 &&
-		test -f file3 &&
-		test -f sub_file1 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		test_path_is_file sub_file1 &&
 		grep update file2 &&
 		cd "$cli" &&
 		cd branch1 &&
