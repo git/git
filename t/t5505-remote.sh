@@ -594,6 +594,7 @@ test_expect_success 'add --no-tags' '
 		cd add-no-tags &&
 		git init &&
 		git remote add -f --no-tags origin ../one &&
+		grep tagOpt .git/config &&
 		git tag -l some-tag >../test/output &&
 		git tag -l foobar-tag >../test/output &&
 		git config remote.origin.tagopt >>../test/output
@@ -756,6 +757,7 @@ test_expect_success 'rename a remote' '
 		cd four &&
 		git config branch.main.pushRemote origin &&
 		git remote rename origin upstream &&
+		grep "pushRemote" .git/config &&
 		test -z "$(git for-each-ref refs/remotes/origin)" &&
 		test "$(git symbolic-ref refs/remotes/upstream/HEAD)" = "refs/remotes/upstream/main" &&
 		test "$(git rev-parse upstream/main)" = "$(git rev-parse main)" &&
@@ -772,6 +774,7 @@ test_expect_success 'rename a remote renames repo remote.pushDefault' '
 		cd four.1 &&
 		git config remote.pushDefault origin &&
 		git remote rename origin upstream &&
+		grep pushDefault .git/config &&
 		test "$(git config --local remote.pushDefault)" = "upstream"
 	)
 '
