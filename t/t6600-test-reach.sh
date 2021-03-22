@@ -55,7 +55,7 @@ test_expect_success 'setup' '
 	git show-ref -s commit-5-5 | git commit-graph write --stdin-commits &&
 	mv .git/objects/info/commit-graph commit-graph-half &&
 	chmod u+w commit-graph-half &&
-	GIT_TEST_COMMIT_GRAPH_NO_GDAT=1 git commit-graph write --reachable &&
+	git -c commitGraph.generationVersion=1 commit-graph write --reachable &&
 	mv .git/objects/info/commit-graph commit-graph-no-gdat &&
 	chmod u+w commit-graph-no-gdat &&
 	git config core.commitGraph true

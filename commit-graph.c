@@ -96,6 +96,13 @@ define_commit_slab(commit_graph_data_slab, struct commit_graph_data);
 static struct commit_graph_data_slab commit_graph_data_slab =
 	COMMIT_SLAB_INIT(1, commit_graph_data_slab);
 
+static int get_configured_generation_version(struct repository *r)
+{
+	int version = 2;
+	repo_config_get_int(r, "commitgraph.generationversion", &version);
+	return version;
+}
+
 uint32_t commit_graph_position(const struct commit *c)
 {
 	struct commit_graph_data *data =
@@ -394,10 +401,13 @@ struct commit_graph *parse_commit_graph(struct repository *r,
 	pair_chunk(cf, GRAPH_CHUNKID_DATA, &graph->chunk_commit_data);
 	pair_chunk(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges);
 	pair_chunk(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs);
-	pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
-		   &graph->chunk_generation_data);
-	pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
-		   &graph->chunk_generation_data_overflow);
+
+	if (get_configured_generation_version(r) >= 2) {
+		pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
+			&graph->chunk_generation_data);
+		pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
+			&graph->chunk_generation_data_overflow);
+	}
 
 	if (r->settings.commit_graph_read_changed_paths) {
 		pair_chunk(cf, GRAPH_CHUNKID_BLOOMINDEXES,
@@ -1839,8 +1849,6 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	add_chunk(cf, GRAPH_CHUNKID_DATA, (hashsz + 16) * ctx->commits.nr,
 		  write_graph_chunk_data);
 
-	if (git_env_bool(GIT_TEST_COMMIT_GRAPH_NO_GDAT, 0))
-		ctx->write_generation_data = 0;
 	if (ctx->write_generation_data)
 		add_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
 			  sizeof(uint32_t) * ctx->commits.nr,
@@ -2223,6 +2231,7 @@ int write_commit_graph(struct object_directory *odb,
 		       enum commit_graph_write_flags flags,
 		       const struct commit_graph_opts *opts)
 {
+	struct repository *r = the_repository;
 	struct write_commit_graph_context *ctx;
 	uint32_t i;
 	int res = 0;
@@ -2230,23 +2239,23 @@ int write_commit_graph(struct object_directory *odb,
 	struct bloom_filter_settings bloom_settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 	struct topo_level_slab topo_levels;
 
-	prepare_repo_settings(the_repository);
-	if (!the_repository->settings.core_commit_graph) {
+	prepare_repo_settings(r);
+	if (!r->settings.core_commit_graph) {
 		warning(_("attempting to write a commit-graph, but 'core.commitGraph' is disabled"));
 		return 0;
 	}
-	if (!commit_graph_compatible(the_repository))
+	if (!commit_graph_compatible(r))
 		return 0;
 
 	CALLOC_ARRAY(ctx, 1);
-	ctx->r = the_repository;
+	ctx->r = r;
 	ctx->odb = odb;
 	ctx->append = flags & COMMIT_GRAPH_WRITE_APPEND ? 1 : 0;
 	ctx->report_progress = flags & COMMIT_GRAPH_WRITE_PROGRESS ? 1 : 0;
 	ctx->split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
 	ctx->opts = opts;
 	ctx->total_bloom_filter_data_size = 0;
-	ctx->write_generation_data = 1;
+	ctx->write_generation_data = (get_configured_generation_version(r) == 2);
 	ctx->num_generation_data_overflows = 0;
 
 	bloom_settings.bits_per_entry = git_env_ulong("GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY",
