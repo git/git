@@ -351,17 +351,11 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 
 	/* Free memory used by various renames maps */
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; ++i) {
-		struct hashmap_iter iter;
-		struct strmap_entry *entry;
-
 		strset_func(&renames->dirs_removed[i]);
 
-		strmap_for_each_entry(&renames->dir_rename_count[i],
-				      &iter, entry) {
-			struct strintmap *counts = entry->value;
-			strintmap_clear(counts);
-		}
-		strmap_func(&renames->dir_rename_count[i], 1);
+		partial_clear_dir_rename_count(&renames->dir_rename_count[i]);
+		if (!reinitialize)
+			strmap_clear(&renames->dir_rename_count[i], 1);
 
 		strmap_func(&renames->dir_renames[i], 0);
 	}
@@ -1302,131 +1296,6 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	return new_path;
 }
 
-static void dirname_munge(char *filename)
-{
-	char *slash = strrchr(filename, '/');
-	if (!slash)
-		slash = filename;
-	*slash = '\0';
-}
-
-static void increment_count(struct strmap *dir_rename_count,
-			    char *old_dir,
-			    char *new_dir)
-{
-	struct strintmap *counts;
-	struct strmap_entry *e;
-
-	/* Get the {new_dirs -> counts} mapping using old_dir */
-	e = strmap_get_entry(dir_rename_count, old_dir);
-	if (e) {
-		counts = e->value;
-	} else {
-		counts = xmalloc(sizeof(*counts));
-		strintmap_init_with_options(counts, 0, NULL, 1);
-		strmap_put(dir_rename_count, old_dir, counts);
-	}
-
-	/* Increment the count for new_dir */
-	strintmap_incr(counts, new_dir, 1);
-}
-
-static void update_dir_rename_counts(struct strmap *dir_rename_count,
-				     struct strset *dirs_removed,
-				     const char *oldname,
-				     const char *newname)
-{
-	char *old_dir = xstrdup(oldname);
-	char *new_dir = xstrdup(newname);
-	char new_dir_first_char = new_dir[0];
-	int first_time_in_loop = 1;
-
-	while (1) {
-		dirname_munge(old_dir);
-		dirname_munge(new_dir);
-
-		/*
-		 * When renaming
-		 *   "a/b/c/d/e/foo.c" -> "a/b/some/thing/else/e/foo.c"
-		 * then this suggests that both
-		 *   a/b/c/d/e/ => a/b/some/thing/else/e/
-		 *   a/b/c/d/   => a/b/some/thing/else/
-		 * so we want to increment counters for both.  We do NOT,
-		 * however, also want to suggest that there was the following
-		 * rename:
-		 *   a/b/c/ => a/b/some/thing/
-		 * so we need to quit at that point.
-		 *
-		 * Note the when first_time_in_loop, we only strip off the
-		 * basename, and we don't care if that's different.
-		 */
-		if (!first_time_in_loop) {
-			char *old_sub_dir = strchr(old_dir, '\0')+1;
-			char *new_sub_dir = strchr(new_dir, '\0')+1;
-			if (!*new_dir) {
-				/*
-				 * Special case when renaming to root directory,
-				 * i.e. when new_dir == "".  In this case, we had
-				 * something like
-				 *    a/b/subdir => subdir
-				 * and so dirname_munge() sets things up so that
-				 *    old_dir = "a/b\0subdir\0"
-				 *    new_dir = "\0ubdir\0"
-				 * We didn't have a '/' to overwrite a '\0' onto
-				 * in new_dir, so we have to compare differently.
-				 */
-				if (new_dir_first_char != old_sub_dir[0] ||
-				    strcmp(old_sub_dir+1, new_sub_dir))
-					break;
-			} else {
-				if (strcmp(old_sub_dir, new_sub_dir))
-					break;
-			}
-		}
-
-		if (strset_contains(dirs_removed, old_dir))
-			increment_count(dir_rename_count, old_dir, new_dir);
-		else
-			break;
-
-		/* If we hit toplevel directory ("") for old or new dir, quit */
-		if (!*old_dir || !*new_dir)
-			break;
-
-		first_time_in_loop = 0;
-	}
-
-	/* Free resources we don't need anymore */
-	free(old_dir);
-	free(new_dir);
-}
-
-static void compute_rename_counts(struct diff_queue_struct *pairs,
-				  struct strmap *dir_rename_count,
-				  struct strset *dirs_removed)
-{
-	int i;
-
-	for (i = 0; i < pairs->nr; ++i) {
-		struct diff_filepair *pair = pairs->queue[i];
-
-		/* File not part of directory rename if it wasn't renamed */
-		if (pair->status != 'R')
-			continue;
-
-		/*
-		 * Make dir_rename_count contain a map of a map:
-		 *   old_directory -> {new_directory -> count}
-		 * In other words, for every pair look at the directories for
-		 * the old filename and the new filename and count how many
-		 * times that pairing occurs.
-		 */
-		update_dir_rename_counts(dir_rename_count, dirs_removed,
-					 pair->one->path,
-					 pair->two->path);
-	}
-}
-
 static void get_provisional_directory_renames(struct merge_options *opt,
 					      unsigned side,
 					      int *clean)
@@ -1435,9 +1304,6 @@ static void get_provisional_directory_renames(struct merge_options *opt,
 	struct strmap_entry *entry;
 	struct rename_info *renames = &opt->priv->renames;
 
-	compute_rename_counts(&renames->pairs[side],
-			      &renames->dir_rename_count[side],
-			      &renames->dirs_removed[side]);
 	/*
 	 * Collapse
 	 *    dir_rename_count: old_directory -> {new_directory -> count}
@@ -2161,7 +2027,9 @@ static void detect_regular_renames(struct merge_options *opt,
 
 	diff_queued_diff = renames->pairs[side_index];
 	trace2_region_enter("diff", "diffcore_rename", opt->repo);
-	diffcore_rename(&diff_opts);
+	diffcore_rename_extended(&diff_opts,
+				 &renames->dirs_removed[side_index],
+				 &renames->dir_rename_count[side_index]);
 	trace2_region_leave("diff", "diffcore_rename", opt->repo);
 	resolve_diffpair_statuses(&diff_queued_diff);
 
