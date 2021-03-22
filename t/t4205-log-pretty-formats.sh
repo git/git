@@ -962,4 +962,39 @@ test_expect_success 'log --pretty=reference is colored appropriately' '
 	test_cmp expect actual
 '
 
+test_expect_success '%(describe) vs git describe' '
+	git log --format="%H" | while read hash
+	do
+		if desc=$(git describe $hash)
+		then
+			: >expect-contains-good
+		else
+			: >expect-contains-bad
+		fi &&
+		echo "$hash $desc"
+	done >expect &&
+	test_path_exists expect-contains-good &&
+	test_path_exists expect-contains-bad &&
+
+	git log --format="%H %(describe)" >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
+test_expect_success '%(describe:match=...) vs git describe --match ...' '
+	test_when_finished "git tag -d tag-match" &&
+	git tag -a -m tagged tag-match&&
+	git describe --match "*-match" >expect &&
+	git log -1 --format="%(describe:match=*-match)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(describe:exclude=...) vs git describe --exclude ...' '
+	test_when_finished "git tag -d tag-exclude" &&
+	git tag -a -m tagged tag-exclude &&
+	git describe --exclude "*-exclude" >expect &&
+	git log -1 --format="%(describe:exclude=*-exclude)" >actual &&
+	test_cmp expect actual
+'
+
 test_done

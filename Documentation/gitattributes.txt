@@ -1174,7 +1174,8 @@ tag then no replacement will be done.  The placeholders are the same
 as those for the option `--pretty=format:` of linkgit:git-log[1],
 except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
 in the file.  E.g. the string `$Format:%H$` will be replaced by the
-commit hash.
+commit hash.  However, only one `%(describe)` placeholder is expanded
+per archive to avoid denial-of-service attacks.
 
 
 Packing objects

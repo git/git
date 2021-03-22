@@ -24,6 +24,10 @@ enum cmit_fmt {
 	CMIT_FMT_UNSPECIFIED
 };
 
+struct pretty_print_describe_status {
+	unsigned int max_invocations;
+};
+
 struct pretty_print_context {
 	/*
 	 * Callers should tweak these to change the behavior of pp_* functions.
@@ -45,6 +49,7 @@ struct pretty_print_context {
 	int color;
 	struct ident_split *from_ident;
 	unsigned encode_email_headers:1;
+	struct pretty_print_describe_status *describe_status;
 
 	/*
 	 * Fields below here are manipulated internally by pp_* functions and
