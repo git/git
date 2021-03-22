@@ -216,6 +216,10 @@ test_fsmonitor_suite() {
 		git diff
 	'
 
+	test_perf_w_drop_caches "diff HEAD ($DESC)" '
+		git diff HEAD
+	'
+
 	test_perf_w_drop_caches "diff -- 0_files ($DESC)" '
 		git diff -- 1_file
 	'

@@ -50,6 +50,17 @@ void refresh_fsmonitor(struct index_state *istate);
 int fsmonitor_is_trivial_response(const struct strbuf *query_result);
 
 /*
+ * Check if refresh_fsmonitor has been called at least once.
+ * refresh_fsmonitor is idempotent. Returns true if fsmonitor is
+ * not enabled (since the state will be "fresh" w/ CE_FSMONITOR_VALID unset)
+ * This version is useful for assertions
+ */
+static inline int is_fsmonitor_refreshed(const struct index_state *istate)
+{
+	return !core_fsmonitor || istate->fsmonitor_has_run_once;
+}
+
+/*
  * Set the given cache entries CE_FSMONITOR_VALID bit. This should be
  * called any time the cache entry has been updated to reflect the
  * current state of the file on disk.
