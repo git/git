@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git stash' list [<log-options>]
-'git stash' show [<diff-options>] [<stash>]
+'git stash' show [-u|--include-untracked|--only-untracked] [<diff-options>] [<stash>]
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
@@ -83,7 +83,7 @@ stash@{1}: On master: 9cc0589... Add git-stash
 The command takes options applicable to the 'git log'
 command to control what is shown and how. See linkgit:git-log[1].
 
-show [<diff-options>] [<stash>]::
+show [-u|--include-untracked|--only-untracked] [<diff-options>] [<stash>]::
 
 	Show the changes recorded in the stash entry as a diff between the
 	stashed contents and the commit back when the stash entry was first
@@ -91,8 +91,8 @@ show [<diff-options>] [<stash>]::
 	By default, the command shows the diffstat, but it will accept any
 	format known to 'git diff' (e.g., `git stash show -p stash@{1}`
 	to view the second most recent entry in patch form).
-	You can use stash.showStat and/or stash.showPatch config variables
-	to change the default behavior.
+	You can use stash.showIncludeUntracked, stash.showStat, and
+	stash.showPatch config variables to change the default behavior.
 
 pop [--index] [-q|--quiet] [<stash>]::
 
@@ -160,10 +160,18 @@ up with `git clean`.
 
 -u::
 --include-untracked::
-	This option is only valid for `push` and `save` commands.
+--no-include-untracked::
+	When used with the `push` and `save` commands,
+	all untracked files are also stashed and then cleaned up with
+	`git clean`.
 +
-All untracked files are also stashed and then cleaned up with
-`git clean`.
+When used with the `show` command, show the untracked files in the stash
+entry as part of the diff.
+
+--only-untracked::
+	This option is only valid for the `show` command.
++
+Show only the untracked files in the stash entry as part of the diff.
 
 --index::
 	This option is only valid for `pop` and `apply` commands.

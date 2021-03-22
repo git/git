@@ -3053,7 +3053,7 @@ _git_stash ()
 			__gitcomp "--name-status --oneline --patch-with-stat"
 			;;
 		show,--*)
-			__gitcomp "$__git_diff_common_options"
+			__gitcomp "--include-untracked --only-untracked $__git_diff_common_options"
 			;;
 		branch,--*)
 			;;

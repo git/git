@@ -2563,3 +2563,25 @@ int oneway_merge(const struct cache_entry * const *src,
 	}
 	return merged_entry(a, old, o);
 }
+
+/*
+ * Merge worktree and untracked entries in a stash entry.
+ *
+ * Ignore all index entries. Collapse remaining trees but make sure that they
+ * don't have any conflicting files.
+ */
+int stash_worktree_untracked_merge(const struct cache_entry * const *src,
+				   struct unpack_trees_options *o)
+{
+	const struct cache_entry *worktree = src[1];
+	const struct cache_entry *untracked = src[2];
+
+	if (o->merge_size != 2)
+		BUG("invalid merge_size: %d", o->merge_size);
+
+	if (worktree && untracked)
+		return error(_("worktree and untracked commit have duplicate entries: %s"),
+			     super_prefixed(worktree->name));
+
+	return merged_entry(worktree ? worktree : untracked, NULL, o);
+}

@@ -768,6 +768,7 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 
 static int show_stat = 1;
 static int show_patch;
+static int show_include_untracked;
 static int use_legacy_stash;
 
 static int git_stash_config(const char *var, const char *value, void *cb)
@@ -780,11 +781,42 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 		show_patch = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "stash.showincludeuntracked")) {
+		show_include_untracked = git_config_bool(var, value);
+		return 0;
+	}
 	if (!strcmp(var, "stash.usebuiltin")) {
 		use_legacy_stash = !git_config_bool(var, value);
 		return 0;
 	}
 	return git_diff_basic_config(var, value, cb);
+}
+
+static void diff_include_untracked(const struct stash_info *info, struct diff_options *diff_opt)
+{
+	const struct object_id *oid[] = { &info->w_commit, &info->u_tree };
+	struct tree *tree[ARRAY_SIZE(oid)];
+	struct tree_desc tree_desc[ARRAY_SIZE(oid)];
+	struct unpack_trees_options unpack_tree_opt = { 0 };
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(oid); i++) {
+		tree[i] = parse_tree_indirect(oid[i]);
+		if (parse_tree(tree[i]) < 0)
+			die(_("failed to parse tree"));
+		init_tree_desc(&tree_desc[i], tree[i]->buffer, tree[i]->size);
+	}
+
+	unpack_tree_opt.head_idx = -1;
+	unpack_tree_opt.src_index = &the_index;
+	unpack_tree_opt.dst_index = &the_index;
+	unpack_tree_opt.merge = 1;
+	unpack_tree_opt.fn = stash_worktree_untracked_merge;
+
+	if (unpack_trees(ARRAY_SIZE(tree_desc), tree_desc, &unpack_tree_opt))
+		die(_("failed to unpack trees"));
+
+	do_diff_cache(&info->b_commit, diff_opt);
 }
 
 static int show_stash(int argc, const char **argv, const char *prefix)
@@ -795,13 +827,28 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 	struct strvec stash_args = STRVEC_INIT;
 	struct strvec revision_args = STRVEC_INIT;
+	enum {
+		UNTRACKED_NONE,
+		UNTRACKED_INCLUDE,
+		UNTRACKED_ONLY
+	} show_untracked = UNTRACKED_NONE;
 	struct option options[] = {
+		OPT_SET_INT('u', "include-untracked", &show_untracked,
+			    N_("include untracked files in the stash"),
+			    UNTRACKED_INCLUDE),
+		OPT_SET_INT_F(0, "only-untracked", &show_untracked,
+			      N_("only show untracked files in the stash"),
+			      UNTRACKED_ONLY, PARSE_OPT_NONEG),
 		OPT_END()
 	};
 
 	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
 	init_revisions(&rev, prefix);
+
+	argc = parse_options(argc, argv, prefix, options, git_stash_show_usage,
+			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
+			     PARSE_OPT_KEEP_DASHDASH);
 
 	strvec_push(&revision_args, argv[0]);
 	for (i = 1; i < argc; i++) {
@@ -827,6 +874,9 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 		if (show_patch)
 			rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 
+		if (show_include_untracked)
+			show_untracked = UNTRACKED_INCLUDE;
+
 		if (!show_stat && !show_patch) {
 			free_stash_info(&info);
 			return 0;
@@ -845,7 +895,17 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 
 	rev.diffopt.flags.recursive = 1;
 	setup_diff_pager(&rev.diffopt);
-	diff_tree_oid(&info.b_commit, &info.w_commit, "", &rev.diffopt);
+	switch (show_untracked) {
+	case UNTRACKED_NONE:
+		diff_tree_oid(&info.b_commit, &info.w_commit, "", &rev.diffopt);
+		break;
+	case UNTRACKED_ONLY:
+		diff_root_tree_oid(&info.u_tree, "", &rev.diffopt);
+		break;
+	case UNTRACKED_INCLUDE:
+		diff_include_untracked(&info, &rev.diffopt);
+		break;
+	}
 	log_tree_diff_flush(&rev);
 
 	free_stash_info(&info);
