@@ -162,13 +162,18 @@ int packed_object_info(struct repository *r,
 void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1);
 const struct packed_git *has_packed_and_bad(struct repository *r, const unsigned char *sha1);
 
+#define ON_DISK_KEEP_PACKS 1
+#define IN_CORE_KEEP_PACKS 2
+
 /*
  * Iff a pack file in the given repository contains the object named by sha1,
  * return true and store its location to e.
  */
 int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e);
+int find_kept_pack_entry(struct repository *r, const struct object_id *oid, unsigned flags, struct pack_entry *e);
 
 int has_object_pack(const struct object_id *oid);
+int has_object_kept_pack(const struct object_id *oid, unsigned flags);
 
 int has_pack_index(const unsigned char *sha1);
 

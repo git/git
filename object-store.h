@@ -153,6 +153,11 @@ struct raw_object_store {
 	/* A most-recently-used ordered version of the packed_git list. */
 	struct list_head packed_git_mru;
 
+	struct {
+		struct packed_git **packs;
+		unsigned flags;
+	} kept_pack_cache;
+
 	/*
 	 * A map of packfiles to packed_git structs for tracking which
 	 * packs have been loaded already.
