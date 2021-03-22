@@ -40,20 +40,6 @@ static struct grep_opt grep_defaults = {
 	.output = std_output,
 };
 
-#ifdef USE_LIBPCRE2
-static pcre2_general_context *pcre2_global_context;
-
-static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
-{
-	return malloc(size);
-}
-
-static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
-{
-	free(pointer);
-}
-#endif
-
 static const char *color_grep_slots[] = {
 	[GREP_COLOR_CONTEXT]	    = "context",
 	[GREP_COLOR_FILENAME]	    = "filename",
@@ -152,20 +138,9 @@ int grep_config(const char *var, const char *value, void *cb)
  * Initialize one instance of grep_opt and copy the
  * default values from the template we read the configuration
  * information in an earlier call to git_config(grep_config).
- *
- * If using PCRE, make sure that the library is configured
- * to use the same allocator as Git (e.g. nedmalloc on Windows).
- *
- * Any allocated memory needs to be released in grep_destroy().
  */
 void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix)
 {
-#if defined(USE_LIBPCRE2)
-	if (!pcre2_global_context)
-		pcre2_global_context = pcre2_general_context_create(
-					pcre2_malloc, pcre2_free, NULL);
-#endif
-
 	*opt = grep_defaults;
 
 	opt->repo = repo;
@@ -173,13 +148,6 @@ void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix
 	opt->prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
 	opt->pattern_tail = &opt->pattern_list;
 	opt->header_tail = &opt->header_list;
-}
-
-void grep_destroy(void)
-{
-#ifdef USE_LIBPCRE2
-	pcre2_general_context_free(pcre2_global_context);
-#endif
 }
 
 static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, struct grep_opt *opt)
@@ -363,6 +331,28 @@ static int is_fixed(const char *s, size_t len)
 }
 
 #ifdef USE_LIBPCRE2
+#define GREP_PCRE2_DEBUG_MALLOC 0
+
+static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
+{
+	void *pointer = malloc(size);
+#if GREP_PCRE2_DEBUG_MALLOC
+	static int count = 1;
+	fprintf(stderr, "PCRE2:%p -> #%02d: alloc(%lu)\n", pointer, count++, size);
+#endif
+	return pointer;
+}
+
+static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
+{
+#if GREP_PCRE2_DEBUG_MALLOC
+	static int count = 1;
+	if (pointer)
+		fprintf(stderr, "PCRE2:%p -> #%02d: free()\n", pointer, count++);
+#endif
+	free(pointer);
+}
+
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
 {
 	int error;
@@ -373,17 +363,20 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	int patinforet;
 	size_t jitsizearg;
 
-	assert(opt->pcre2);
+	/*
+	 * Call pcre2_general_context_create() before calling any
+	 * other pcre2_*(). It sets up our malloc()/free() functions
+	 * with which everything else is allocated.
+	 */
+	p->pcre2_general_context = pcre2_general_context_create(
+		pcre2_malloc, pcre2_free, NULL);
+	if (!p->pcre2_general_context)
+		die("Couldn't allocate PCRE2 general context");
 
-	p->pcre2_compile_context = NULL;
-
-	/* pcre2_global_context is initialized in append_grep_pattern */
 	if (opt->ignore_case) {
 		if (!opt->ignore_locale && has_non_ascii(p->pattern)) {
-			if (!pcre2_global_context)
-				BUG("pcre2_global_context uninitialized");
-			p->pcre2_tables = pcre2_maketables(pcre2_global_context);
-			p->pcre2_compile_context = pcre2_compile_context_create(NULL);
+			p->pcre2_tables = pcre2_maketables(p->pcre2_general_context);
+			p->pcre2_compile_context = pcre2_compile_context_create(p->pcre2_general_context);
 			pcre2_set_character_tables(p->pcre2_compile_context,
 							p->pcre2_tables);
 		}
@@ -393,28 +386,18 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	    !(!opt->ignore_case && (p->fixed || p->is_fixed)))
 		options |= (PCRE2_UTF | PCRE2_MATCH_INVALID_UTF);
 
+#ifdef GIT_PCRE2_VERSION_10_36_OR_HIGHER
 	/* Work around https://bugs.exim.org/show_bug.cgi?id=2642 fixed in 10.36 */
-	if (PCRE2_MATCH_INVALID_UTF && options & (PCRE2_UTF | PCRE2_CASELESS)) {
-		struct strbuf buf;
-		int len;
-		int err;
-
-		if ((len = pcre2_config(PCRE2_CONFIG_VERSION, NULL)) < 0)
-			BUG("pcre2_config(..., NULL) failed: %d", len);
-		strbuf_init(&buf, len + 1);
-		if ((err = pcre2_config(PCRE2_CONFIG_VERSION, buf.buf)) < 0)
-			BUG("pcre2_config(..., buf.buf) failed: %d", err);
-		if (versioncmp(buf.buf, "10.36") < 0)
-			options |= PCRE2_NO_START_OPTIMIZE;
-		strbuf_release(&buf);
-	}
+	if (PCRE2_MATCH_INVALID_UTF && options & (PCRE2_UTF | PCRE2_CASELESS))
+		options |= PCRE2_NO_START_OPTIMIZE;
+#endif
 
 	p->pcre2_pattern = pcre2_compile((PCRE2_SPTR)p->pattern,
 					 p->patternlen, options, &error, &erroffset,
 					 p->pcre2_compile_context);
 
 	if (p->pcre2_pattern) {
-		p->pcre2_match_data = pcre2_match_data_create_from_pattern(p->pcre2_pattern, NULL);
+		p->pcre2_match_data = pcre2_match_data_create_from_pattern(p->pcre2_pattern, p->pcre2_general_context);
 		if (!p->pcre2_match_data)
 			die("Couldn't allocate PCRE2 match data");
 	} else {
@@ -493,7 +476,12 @@ static void free_pcre2_pattern(struct grep_pat *p)
 	pcre2_compile_context_free(p->pcre2_compile_context);
 	pcre2_code_free(p->pcre2_pattern);
 	pcre2_match_data_free(p->pcre2_match_data);
+#ifdef GIT_PCRE2_VERSION_10_34_OR_HIGHER
+	pcre2_maketables_free(p->pcre2_general_context, p->pcre2_tables);
+#else
 	free((void *)p->pcre2_tables);
+#endif
+	pcre2_general_context_free(p->pcre2_general_context);
 }
 #else /* !USE_LIBPCRE2 */
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
@@ -555,7 +543,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 #endif
 	if (p->fixed || p->is_fixed) {
 #ifdef USE_LIBPCRE2
-		opt->pcre2 = 1;
 		if (p->is_fixed) {
 			compile_pcre2_pattern(p, opt);
 		} else {
