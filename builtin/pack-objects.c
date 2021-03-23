@@ -815,8 +815,8 @@ static struct reused_chunk {
 	/* The offset of the first object of this chunk in the original
 	 * packfile. */
 	off_t original;
-	/* The offset of the first object of this chunk in the generated
-	 * packfile minus "original". */
+	/* The difference for "original" minus the offset of the first object of
+	 * this chunk in the generated packfile. */
 	off_t difference;
 } *reused_chunks;
 static int reused_chunks_nr;
