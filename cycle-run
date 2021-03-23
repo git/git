@@ -3,23 +3,25 @@
 : ${RANGE:=origin/master..origin/seen} ${J:=j32} ${OKNG:="(OK|NG)"}
 
 test_it () {
-	commit=$1 subject=$2
+	type=$1 commit=$2 subject=$3
 	log=".Cycle/log.$commit"
 	rm -f "$log"
 	git ls-files -x Meta -x .Cycle -o -z | xargs -r -0 rm -rf
 
 	(
 		echo "*** log for $subject ***" &&
-
-		D= &&
-		git checkout --detach "$commit" &&
-		if ! Meta/Make -$J
-		then
-			D=DEVELOPER=
-			Meta/Make -$J -- DEVELOPER=
-		fi &&
-		Meta/Make -$J -- $D test &&
-		Meta/Make -$J -- $D doc
+		case "$type" in
+		C)
+			Meta/Make -$J
+			;;
+		M)
+			Meta/Make -$J -- SPARSE_FLAGS=-Wsparse-error sparse
+			;;
+		T)
+			Meta/Make -$J -- test &&
+			Meta/Make -$J -- doc
+			;;
+		esac
 
 		status=$?
 
@@ -40,13 +42,23 @@ test_it () {
 test_them () {
 	while read merge parent sides
 	do
-		for side in $sides
-		do
-			git rev-parse --verify --quiet "$side" || continue
+		case "$parent" in
+		?*)
+			egrep "^$OKNG M$merge" .Cycle/log >/dev/null && continue
 			echo "TEST M $merge"
-			egrep "^$OKNG $side" .Cycle/log >/dev/null && continue
-			echo "TEST $side $merge"
-		done
+			for tip in $sides
+			do
+				git rev-parse --verify --quiet "$tip" || continue
+				egrep "^$OKNG T$tip" .Cycle/log >/dev/null && continue
+				echo "TEST $tip $merge"
+			done
+			;;
+		'')
+			commit=$merge
+			git rev-parse --verify --quiet "$commit" || continue
+			egrep "^$OKNG C$commit" .Cycle/log >/dev/null ||
+			echo "TEST C $commit"
+		esac
 	done |
 	sed -n -e 's/^TEST //p' >.Cycle/plan
 
@@ -55,14 +67,20 @@ test_them () {
 
 	total=$count
 	echo TEST $count ON $(date) >>.Cycle/log
-	while read side merge
+	while read tip merge
 	do
-		case "$side" in
-		M)	
+		case "$tip" in
+		M)
+			type=M
+			commit=$merge
+			subject=$(git show -s --format="%s" "$merge") ;;
+		C)
+			type=C
 			commit=$merge
 			subject=$(git show -s --format="%s" "$merge") ;;
 		*)
-			commit=$side
+			type=T
+			commit=$tip
 			subject=$(
 				git show -s --format="%s" "$merge" |
 				sed -e 's/^Merge branch '\''\(.*\)'\'' into .*/\1/'
@@ -70,13 +88,13 @@ test_them () {
 		esac
 
 		echo >&2 -n "$count/$total ?? $subject"
-		if test_it $commit "$subject"
+		if test_it $type $commit "$subject"
 		then
 			OK=OK
 		else
 			OK=NG
 		fi
-		echo "$OK $commit $count" >>.Cycle/log
+		echo "$OK $type$commit $count" >>.Cycle/log
 		echo >&2 "$count/$total $OK $subject"
 		count=$(( $count - 1 ))
 	done <.Cycle/plan
@@ -93,4 +111,5 @@ do
 done
 
 git fetch
+git rev-list --no-merges $RANGE | test_them
 git rev-list --first-parent --parents $RANGE | test_them
