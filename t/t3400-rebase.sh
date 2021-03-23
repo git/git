@@ -388,22 +388,6 @@ test_expect_success 'rebase--merge.sh and --show-current-patch' '
 	)
 '
 
-test_expect_success 'rebase -c rebase.useBuiltin=false warning' '
-	expected="rebase.useBuiltin support has been removed" &&
-
-	# Only warn when the legacy rebase is requested...
-	test_must_fail git -c rebase.useBuiltin=false rebase 2>err &&
-	test_i18ngrep "$expected" err &&
-	test_must_fail env GIT_TEST_REBASE_USE_BUILTIN=false git rebase 2>err &&
-	test_i18ngrep "$expected" err &&
-
-	# ...not when we would have used the built-in anyway
-	test_must_fail git -c rebase.useBuiltin=true rebase 2>err &&
-	test_must_be_empty err &&
-	test_must_fail env GIT_TEST_REBASE_USE_BUILTIN=true git rebase 2>err &&
-	test_must_be_empty err
-'
-
 test_expect_success 'switch to branch checked out here' '
 	git checkout main &&
 	git rebase main main
