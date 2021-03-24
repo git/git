@@ -1474,12 +1474,12 @@ _git_branch ()
 
 _git_bundle ()
 {
-	local cmd="${words[2]}"
+	local cmd="${words[__git_subcommand_idx+1]}"
 	case "$cword" in
-	2)
+	$((__git_subcommand_idx+1)))
 		__gitcomp "create list-heads verify unbundle"
 		;;
-	3)
+	$((__git_subcommand_idx+2)))
 		# looking for a file
 		;;
 	*)
@@ -1894,7 +1894,7 @@ _git_grep ()
 	esac
 
 	case "$cword,$prev" in
-	2,*|*,-*)
+	$((__git_subcommand_idx+1)),*|*,-*)
 		__git_complete_symbol && return
 		;;
 	esac
@@ -3013,66 +3013,65 @@ _git_sparse_checkout ()
 
 _git_stash ()
 {
-	local save_opts='--all --keep-index --no-keep-index --quiet --patch --include-untracked'
 	local subcommands='push list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands save")"
-	if [ -z "$subcommand" -a -n "$(__git_find_on_cmdline "-p")" ]; then
-		subcommand="push"
-	fi
+
 	if [ -z "$subcommand" ]; then
-		case "$cur" in
-		--*)
-			__gitcomp "$save_opts"
+		case "$((cword - __git_subcommand_idx)),$cur" in
+		*,--*)
+			__gitcomp_builtin stash_push
 			;;
-		sa*)
-			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
-				__gitcomp "save"
-			fi
+		1,sa*)
+			__gitcomp "save"
 			;;
-		*)
-			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
-				__gitcomp "$subcommands"
-			fi
+		1,*)
+			__gitcomp "$subcommands"
 			;;
 		esac
-	else
-		case "$subcommand,$cur" in
-		push,--*)
-			__gitcomp "$save_opts --message"
-			;;
-		save,--*)
-			__gitcomp "$save_opts"
-			;;
-		apply,--*|pop,--*)
-			__gitcomp "--index --quiet"
-			;;
-		drop,--*)
-			__gitcomp "--quiet"
-			;;
-		list,--*)
-			__gitcomp "--name-status --oneline --patch-with-stat"
-			;;
-		show,--*)
-			__gitcomp "--include-untracked --only-untracked $__git_diff_common_options"
-			;;
-		branch,--*)
-			;;
-		branch,*)
-			if [ $cword -eq 3 ]; then
-				__git_complete_refs
-			else
-				__gitcomp_nl "$(__git stash list \
-						| sed -n -e 's/:.*//p')"
-			fi
-			;;
-		show,*|apply,*|drop,*|pop,*)
+		return
+	fi
+
+	case "$subcommand,$cur" in
+	push,--*)
+		__gitcomp_builtin stash_push
+		;;
+	save,--*)
+		__gitcomp_builtin stash_save
+		;;
+	pop,--*)
+		__gitcomp_builtin stash_pop
+		;;
+	apply,--*)
+		__gitcomp_builtin stash_apply
+		;;
+	drop,--*)
+		__gitcomp_builtin stash_drop
+		;;
+	list,--*)
+		# NEEDSWORK: can we somehow unify this with the options in _git_log() and _git_show()
+		__gitcomp_builtin stash_list "$__git_log_common_options $__git_diff_common_options"
+		;;
+	show,--*)
+		__gitcomp_builtin stash_show "$__git_diff_common_options"
+		;;
+	branch,--*)
+		__gitcomp_builtin stash_branch
+		;;
+	branch,*)
+		if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
+			__git_complete_refs
+		else
 			__gitcomp_nl "$(__git stash list \
 					| sed -n -e 's/:.*//p')"
-			;;
-		*)
-			;;
-		esac
-	fi
+		fi
+		;;
+	show,*|apply,*|drop,*|pop,*)
+		__gitcomp_nl "$(__git stash list \
+				| sed -n -e 's/:.*//p')"
+		;;
+	*)
+		;;
+	esac
 }
 
 _git_submodule ()
@@ -3277,11 +3276,9 @@ __git_complete_worktree_paths ()
 _git_worktree ()
 {
 	local subcommands="add list lock move prune remove unlock"
-	local subcommand subcommand_idx
+	local subcommand
 
-	subcommand="$(__git_find_on_cmdline --show-idx "$subcommands")"
-	subcommand_idx="${subcommand% *}"
-	subcommand="${subcommand#* }"
+	subcommand="$(__git_find_on_cmdline "$subcommands")"
 
 	case "$subcommand,$cur" in
 	,*)
@@ -3306,7 +3303,7 @@ _git_worktree ()
 			# be either the 'add' subcommand, the unstuck
 			# argument of an option (e.g. branch for -b|-B), or
 			# the path for the new worktree.
-			if [ $cword -eq $((subcommand_idx+1)) ]; then
+			if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
 				# Right after the 'add' subcommand: have to
 				# complete the path, so fall back to Bash
 				# filename completion.
@@ -3330,7 +3327,7 @@ _git_worktree ()
 		__git_complete_worktree_paths
 		;;
 	move,*)
-		if [ $cword -eq $((subcommand_idx+1)) ]; then
+		if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
 			# The first parameter must be an existing working
 			# tree to be moved.
 			__git_complete_worktree_paths
@@ -3398,6 +3395,7 @@ __git_main ()
 {
 	local i c=1 command __git_dir __git_repo_path
 	local __git_C_args C_args_count=0
+	local __git_subcommand_idx
 
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
@@ -3412,7 +3410,7 @@ __git_main ()
 			__git_C_args[C_args_count++]="${words[c]}"
 			;;
 		-*) ;;
-		*) command="$i"; break ;;
+		*) command="$i"; __git_subcommand_idx="$c"; break ;;
 		esac
 		((c++))
 	done
