@@ -47,6 +47,12 @@ test_expect_success setup '
 	git add .
 '
 
+test_expect_success 'usage' '
+	test_expect_code 128 git ls-files --with-tree=HEAD -u &&
+	test_expect_code 128 git ls-files --with-tree=HEAD -s &&
+	test_expect_code 128 git ls-files --recurse-submodules --with-tree=HEAD
+'
+
 test_expect_success 'git ls-files --with-tree should succeed from subdir' '
 	# We have to run from a sub-directory to trigger prune_path
 	# Then we finally get to run our --with-tree test
@@ -59,5 +65,40 @@ test_expect_success 'git ls-files --with-tree should succeed from subdir' '
 test_expect_success \
     'git ls-files --with-tree should add entries from named tree.' \
     'test_cmp expected output'
+
+test_expect_success 'no duplicates in --with-tree output' '
+	git ls-files --with-tree=HEAD >actual &&
+	sort -u actual >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'setup: output in a conflict' '
+	test_create_repo conflict &&
+	test_commit -C conflict BASE file &&
+	test_commit -C conflict A file foo &&
+	git -C conflict reset --hard BASE &&
+	test_commit -C conflict B file bar
+'
+
+test_expect_success 'output in a conflict' '
+	test_must_fail git -C conflict merge A B &&
+	cat >expected <<-\EOF &&
+	file
+	file
+	file
+	file
+	EOF
+	git -C conflict ls-files --with-tree=HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'output with removed .git/index' '
+	cat >expected <<-\EOF &&
+	file
+	EOF
+	rm conflict/.git/index &&
+	git -C conflict ls-files --with-tree=HEAD >actual &&
+	test_cmp expected actual
+'
 
 test_done

@@ -104,7 +104,6 @@ struct directory {
 	struct object_id oid;
 	int baselen, len;
 	unsigned mode;
-	int stage;
 	char path[FLEX_ARRAY];
 };
 
@@ -135,7 +134,7 @@ static int check_attr_export_subst(const struct attr_check *check)
 }
 
 static int write_archive_entry(const struct object_id *oid, const char *base,
-		int baselen, const char *filename, unsigned mode, int stage,
+		int baselen, const char *filename, unsigned mode,
 		void *context)
 {
 	static struct strbuf path = STRBUF_INIT;
@@ -194,7 +193,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 static void queue_directory(const unsigned char *sha1,
 		struct strbuf *base, const char *filename,
-		unsigned mode, int stage, struct archiver_context *c)
+		unsigned mode, struct archiver_context *c)
 {
 	struct directory *d;
 	size_t len = st_add4(base->len, 1, strlen(filename), 1);
@@ -202,7 +201,6 @@ static void queue_directory(const unsigned char *sha1,
 	d->up	   = c->bottom;
 	d->baselen = base->len;
 	d->mode	   = mode;
-	d->stage   = stage;
 	c->bottom  = d;
 	d->len = xsnprintf(d->path, len, "%.*s%s/", (int)base->len, base->buf, filename);
 	hashcpy(d->oid.hash, sha1);
@@ -221,14 +219,14 @@ static int write_directory(struct archiver_context *c)
 		write_directory(c) ||
 		write_archive_entry(&d->oid, d->path, d->baselen,
 				    d->path + d->baselen, d->mode,
-				    d->stage, c) != READ_TREE_RECURSIVE;
+				    c) != READ_TREE_RECURSIVE;
 	free(d);
 	return ret ? -1 : 0;
 }
 
 static int queue_or_write_archive_entry(const struct object_id *oid,
 		struct strbuf *base, const char *filename,
-		unsigned mode, int stage, void *context)
+		unsigned mode, void *context)
 {
 	struct archiver_context *c = context;
 
@@ -253,14 +251,14 @@ static int queue_or_write_archive_entry(const struct object_id *oid,
 		if (check_attr_export_ignore(check))
 			return 0;
 		queue_directory(oid->hash, base, filename,
-				mode, stage, c);
+				mode, c);
 		return READ_TREE_RECURSIVE;
 	}
 
 	if (write_directory(c))
 		return -1;
 	return write_archive_entry(oid, base->buf, base->len, filename, mode,
-				   stage, context);
+				   context);
 }
 
 struct extra_file_info {
@@ -313,10 +311,10 @@ int write_archive_entries(struct archiver_args *args,
 		git_attr_set_direction(GIT_ATTR_INDEX);
 	}
 
-	err = read_tree_recursive(args->repo, args->tree, "",
-				  0, 0, &args->pathspec,
-				  queue_or_write_archive_entry,
-				  &context);
+	err = read_tree(args->repo, args->tree,
+			&args->pathspec,
+			queue_or_write_archive_entry,
+			&context);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
 	while (context.bottom) {
@@ -375,7 +373,7 @@ struct path_exists_context {
 
 static int reject_entry(const struct object_id *oid, struct strbuf *base,
 			const char *filename, unsigned mode,
-			int stage, void *context)
+			void *context)
 {
 	int ret = -1;
 	struct path_exists_context *ctx = context;
@@ -402,9 +400,9 @@ static int path_exists(struct archiver_args *args, const char *path)
 	ctx.args = args;
 	parse_pathspec(&ctx.pathspec, 0, 0, "", paths);
 	ctx.pathspec.recursive = 1;
-	ret = read_tree_recursive(args->repo, args->tree, "",
-				  0, 0, &ctx.pathspec,
-				  reject_entry, &ctx);
+	ret = read_tree(args->repo, args->tree,
+			&ctx.pathspec,
+			reject_entry, &ctx);
 	clear_pathspec(&ctx.pathspec);
 	return ret != 0;
 }
