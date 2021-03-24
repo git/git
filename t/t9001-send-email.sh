@@ -513,6 +513,38 @@ do
 
 done
 
+test_expect_success $PREREQ "--validate respects relative core.hooksPath path" '
+	clean_fake_sendmail &&
+	mkdir my-hooks &&
+	test_when_finished "rm my-hooks.ran" &&
+	write_script my-hooks/sendemail-validate <<-\EOF &&
+	>my-hooks.ran
+	exit 1
+	EOF
+	test_config core.hooksPath "my-hooks" &&
+	test_must_fail git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--validate \
+		longline.patch 2>err &&
+	test_path_is_file my-hooks.ran &&
+	grep "rejected by sendemail-validate" err
+'
+
+test_expect_success $PREREQ "--validate respects absolute core.hooksPath path" '
+	test_config core.hooksPath "$(pwd)/my-hooks" &&
+	test_when_finished "rm my-hooks.ran" &&
+	test_must_fail git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--validate \
+		longline.patch 2>err &&
+	test_path_is_file my-hooks.ran &&
+	grep "rejected by sendemail-validate" err
+'
+
 for enc in 7bit 8bit quoted-printable base64
 do
 	test_expect_success $PREREQ "--transfer-encoding=$enc produces correct header" '
