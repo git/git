@@ -1474,12 +1474,12 @@ _git_branch ()
 
 _git_bundle ()
 {
-	local cmd="${words[2]}"
+	local cmd="${words[__git_subcommand_idx+1]}"
 	case "$cword" in
-	2)
+	$((__git_subcommand_idx+1)))
 		__gitcomp "create list-heads verify unbundle"
 		;;
-	3)
+	$((__git_subcommand_idx+2)))
 		# looking for a file
 		;;
 	*)
@@ -1894,7 +1894,7 @@ _git_grep ()
 	esac
 
 	case "$cword,$prev" in
-	2,*|*,-*)
+	$((__git_subcommand_idx+1)),*|*,-*)
 		__git_complete_symbol && return
 		;;
 	esac
@@ -3058,7 +3058,7 @@ _git_stash ()
 		branch,--*)
 			;;
 		branch,*)
-			if [ $cword -eq 3 ]; then
+			if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
 				__git_complete_refs
 			else
 				__gitcomp_nl "$(__git stash list \
@@ -3277,11 +3277,9 @@ __git_complete_worktree_paths ()
 _git_worktree ()
 {
 	local subcommands="add list lock move prune remove unlock"
-	local subcommand subcommand_idx
+	local subcommand
 
-	subcommand="$(__git_find_on_cmdline --show-idx "$subcommands")"
-	subcommand_idx="${subcommand% *}"
-	subcommand="${subcommand#* }"
+	subcommand="$(__git_find_on_cmdline "$subcommands")"
 
 	case "$subcommand,$cur" in
 	,*)
@@ -3306,7 +3304,7 @@ _git_worktree ()
 			# be either the 'add' subcommand, the unstuck
 			# argument of an option (e.g. branch for -b|-B), or
 			# the path for the new worktree.
-			if [ $cword -eq $((subcommand_idx+1)) ]; then
+			if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
 				# Right after the 'add' subcommand: have to
 				# complete the path, so fall back to Bash
 				# filename completion.
@@ -3330,7 +3328,7 @@ _git_worktree ()
 		__git_complete_worktree_paths
 		;;
 	move,*)
-		if [ $cword -eq $((subcommand_idx+1)) ]; then
+		if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
 			# The first parameter must be an existing working
 			# tree to be moved.
 			__git_complete_worktree_paths
@@ -3398,6 +3396,7 @@ __git_main ()
 {
 	local i c=1 command __git_dir __git_repo_path
 	local __git_C_args C_args_count=0
+	local __git_subcommand_idx
 
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
@@ -3412,7 +3411,7 @@ __git_main ()
 			__git_C_args[C_args_count++]="${words[c]}"
 			;;
 		-*) ;;
-		*) command="$i"; break ;;
+		*) command="$i"; __git_subcommand_idx="$c"; break ;;
 		esac
 		((c++))
 	done
