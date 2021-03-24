@@ -2336,6 +2336,16 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->unpacked = 1;
 	} else if (starts_with(arg, "--unpacked=")) {
 		die(_("--unpacked=<packfile> no longer supported"));
+	} else if (!strcmp(arg, "--no-kept-objects")) {
+		revs->no_kept_objects = 1;
+		revs->keep_pack_cache_flags |= IN_CORE_KEEP_PACKS;
+		revs->keep_pack_cache_flags |= ON_DISK_KEEP_PACKS;
+	} else if (skip_prefix(arg, "--no-kept-objects=", &optarg)) {
+		revs->no_kept_objects = 1;
+		if (!strcmp(optarg, "in-core"))
+			revs->keep_pack_cache_flags |= IN_CORE_KEEP_PACKS;
+		if (!strcmp(optarg, "on-disk"))
+			revs->keep_pack_cache_flags |= ON_DISK_KEEP_PACKS;
 	} else if (!strcmp(arg, "-r")) {
 		revs->diff = 1;
 		revs->diffopt.flags.recursive = 1;
@@ -3795,6 +3805,11 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 		return commit_ignore;
 	if (revs->unpacked && has_object_pack(&commit->object.oid))
 		return commit_ignore;
+	if (revs->no_kept_objects) {
+		if (has_object_kept_pack(&commit->object.oid,
+					 revs->keep_pack_cache_flags))
+			return commit_ignore;
+	}
 	if (commit->object.flags & UNINTERESTING)
 		return commit_ignore;
 	if (revs->line_level_traverse && !want_ancestry(revs)) {

@@ -2066,10 +2066,77 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 	return 0;
 }
 
+static void maybe_invalidate_kept_pack_cache(struct repository *r,
+					     unsigned flags)
+{
+	if (!r->objects->kept_pack_cache.packs)
+		return;
+	if (r->objects->kept_pack_cache.flags == flags)
+		return;
+	FREE_AND_NULL(r->objects->kept_pack_cache.packs);
+	r->objects->kept_pack_cache.flags = 0;
+}
+
+static struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
+{
+	maybe_invalidate_kept_pack_cache(r, flags);
+
+	if (!r->objects->kept_pack_cache.packs) {
+		struct packed_git **packs = NULL;
+		size_t nr = 0, alloc = 0;
+		struct packed_git *p;
+
+		/*
+		 * We want "all" packs here, because we need to cover ones that
+		 * are used by a midx, as well. We need to look in every one of
+		 * them (instead of the midx itself) to cover duplicates. It's
+		 * possible that an object is found in two packs that the midx
+		 * covers, one kept and one not kept, but the midx returns only
+		 * the non-kept version.
+		 */
+		for (p = get_all_packs(r); p; p = p->next) {
+			if ((p->pack_keep && (flags & ON_DISK_KEEP_PACKS)) ||
+			    (p->pack_keep_in_core && (flags & IN_CORE_KEEP_PACKS))) {
+				ALLOC_GROW(packs, nr + 1, alloc);
+				packs[nr++] = p;
+			}
+		}
+		ALLOC_GROW(packs, nr + 1, alloc);
+		packs[nr] = NULL;
+
+		r->objects->kept_pack_cache.packs = packs;
+		r->objects->kept_pack_cache.flags = flags;
+	}
+
+	return r->objects->kept_pack_cache.packs;
+}
+
+int find_kept_pack_entry(struct repository *r,
+			 const struct object_id *oid,
+			 unsigned flags,
+			 struct pack_entry *e)
+{
+	struct packed_git **cache;
+
+	for (cache = kept_pack_cache(r, flags); *cache; cache++) {
+		struct packed_git *p = *cache;
+		if (fill_pack_entry(oid, e, p))
+			return 1;
+	}
+
+	return 0;
+}
+
 int has_object_pack(const struct object_id *oid)
 {
 	struct pack_entry e;
 	return find_pack_entry(the_repository, oid, &e);
+}
+
+int has_object_kept_pack(const struct object_id *oid, unsigned flags)
+{
+	struct pack_entry e;
+	return find_kept_pack_entry(the_repository, oid, flags, &e);
 }
 
 int has_pack_index(const unsigned char *sha1)
