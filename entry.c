@@ -530,7 +530,7 @@ void unlink_entry(const struct cache_entry *ce)
 		submodule_move_head(ce->name, "HEAD", NULL,
 				    SUBMODULE_MOVE_HEAD_FORCE);
 	}
-	if (!check_leading_path(ce->name, ce_namelen(ce)))
+	if (check_leading_path(ce->name, ce_namelen(ce), 1) >= 0)
 		return;
 	if (remove_or_warn(ce->ce_mode, ce->name))
 		return;
