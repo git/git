@@ -73,11 +73,11 @@ test_them () {
 		M)
 			type=M
 			commit=$merge
-			subject=$(git show -s --format="%s" "$merge") ;;
+			subject=$(git show -s --format="%s" "$commit") ;;
 		C)
 			type=C
 			commit=$merge
-			subject=$(git show -s --format="%s" "$merge") ;;
+			subject=$(git show -s --format="%s" "$commit") ;;
 		*)
 			type=T
 			commit=$tip
@@ -111,5 +111,7 @@ do
 done
 
 git fetch
-git rev-list --no-merges $RANGE | test_them
-git rev-list --first-parent --parents $RANGE | test_them
+(
+	git rev-list --no-merges $RANGE
+	git rev-list --first-parent --parents $RANGE
+) | test_them
