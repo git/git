@@ -25,10 +25,25 @@ UI, Workflows & Features
 
  * "git log --format='...'" learned "%(describe)" placeholder.
 
+ * "git repack" so far has been only capable of repacking everything
+   under the sun into a single pack (or split by size).  A cleverer
+   strategy to reduce the cost of repacking a repository has been
+   introduced.
+
 
 Performance, Internal Implementation, Development Support etc.
 
  * Rename detection rework continues.
+
+ * GIT_TEST_FAIL_PREREQS is a mechanism to skip test pieces with
+   prerequisites to catch broken tests that depend on the side effects
+   of optional pieces, but did not work at all when negative
+   prerequisites were involved.
+   (merge 27d578d904 jk/fail-prereq-testfix later to maint).
+
+ * "git diff-index" codepath has been taught to trust fsmonitor status
+   to reduce number of lstat() calls.
+   (merge 7e5aa13d2c nk/diff-index-fsmonitor later to maint).
 
 
 Fixes since v2.31
@@ -97,3 +112,4 @@ Fixes since v2.31
    (merge ea7e63921c jr/doc-ignore-typofix later to maint).
    (merge 23c781f173 ps/update-ref-trans-hook-doc later to maint).
    (merge 42efa1231a jk/filter-branch-sha256 later to maint).
+   (merge 4c8e3dca6e tb/push-simple-uses-branch-merge-config later to maint).
