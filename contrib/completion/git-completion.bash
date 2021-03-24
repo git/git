@@ -3013,26 +3013,19 @@ _git_sparse_checkout ()
 
 _git_stash ()
 {
-	local save_opts='--all --keep-index --no-keep-index --quiet --patch --include-untracked'
 	local subcommands='push list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands save")"
-	if [ -z "$subcommand" -a -n "$(__git_find_on_cmdline "-p")" ]; then
-		subcommand="push"
-	fi
+
 	if [ -z "$subcommand" ]; then
-		case "$cur" in
-		--*)
-			__gitcomp "$save_opts"
+		case "$((cword - __git_subcommand_idx)),$cur" in
+		*,--*)
+			__gitcomp_builtin stash_push
 			;;
-		sa*)
-			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
-				__gitcomp "save"
-			fi
+		1,sa*)
+			__gitcomp "save"
 			;;
-		*)
-			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
-				__gitcomp "$subcommands"
-			fi
+		1,*)
+			__gitcomp "$subcommands"
 			;;
 		esac
 		return
@@ -3040,24 +3033,29 @@ _git_stash ()
 
 	case "$subcommand,$cur" in
 	push,--*)
-		__gitcomp "$save_opts --message"
+		__gitcomp_builtin stash_push
 		;;
 	save,--*)
-		__gitcomp "$save_opts"
+		__gitcomp_builtin stash_save
 		;;
-	apply,--*|pop,--*)
-		__gitcomp "--index --quiet"
+	pop,--*)
+		__gitcomp_builtin stash_pop
+		;;
+	apply,--*)
+		__gitcomp_builtin stash_apply
 		;;
 	drop,--*)
-		__gitcomp "--quiet"
+		__gitcomp_builtin stash_drop
 		;;
 	list,--*)
-		__gitcomp "--name-status --oneline --patch-with-stat"
+		# NEEDSWORK: can we somehow unify this with the options in _git_log() and _git_show()
+		__gitcomp_builtin stash_list "$__git_log_common_options $__git_diff_common_options"
 		;;
 	show,--*)
-		__gitcomp "$__git_diff_common_options"
+		__gitcomp_builtin stash_show "$__git_diff_common_options"
 		;;
 	branch,--*)
+		__gitcomp_builtin stash_branch
 		;;
 	branch,*)
 		if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
