@@ -3035,44 +3035,45 @@ _git_stash ()
 			fi
 			;;
 		esac
-	else
-		case "$subcommand,$cur" in
-		push,--*)
-			__gitcomp "$save_opts --message"
-			;;
-		save,--*)
-			__gitcomp "$save_opts"
-			;;
-		apply,--*|pop,--*)
-			__gitcomp "--index --quiet"
-			;;
-		drop,--*)
-			__gitcomp "--quiet"
-			;;
-		list,--*)
-			__gitcomp "--name-status --oneline --patch-with-stat"
-			;;
-		show,--*)
-			__gitcomp "$__git_diff_common_options"
-			;;
-		branch,--*)
-			;;
-		branch,*)
-			if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
-				__git_complete_refs
-			else
-				__gitcomp_nl "$(__git stash list \
-						| sed -n -e 's/:.*//p')"
-			fi
-			;;
-		show,*|apply,*|drop,*|pop,*)
+		return
+	fi
+
+	case "$subcommand,$cur" in
+	push,--*)
+		__gitcomp "$save_opts --message"
+		;;
+	save,--*)
+		__gitcomp "$save_opts"
+		;;
+	apply,--*|pop,--*)
+		__gitcomp "--index --quiet"
+		;;
+	drop,--*)
+		__gitcomp "--quiet"
+		;;
+	list,--*)
+		__gitcomp "--name-status --oneline --patch-with-stat"
+		;;
+	show,--*)
+		__gitcomp "$__git_diff_common_options"
+		;;
+	branch,--*)
+		;;
+	branch,*)
+		if [ $cword -eq $((__git_subcommand_idx+2)) ]; then
+			__git_complete_refs
+		else
 			__gitcomp_nl "$(__git stash list \
 					| sed -n -e 's/:.*//p')"
-			;;
-		*)
-			;;
-		esac
-	fi
+		fi
+		;;
+	show,*|apply,*|drop,*|pop,*)
+		__gitcomp_nl "$(__git stash list \
+				| sed -n -e 's/:.*//p')"
+		;;
+	*)
+		;;
+	esac
 }
 
 _git_submodule ()
