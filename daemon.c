@@ -566,14 +566,14 @@ static void parse_host_and_port(char *hostport, char **host,
 
 /*
  * Sanitize a string from the client so that it's OK to be inserted into a
- * filesystem path. Specifically, we disallow slashes, runs of "..", and
- * trailing and leading dots, which means that the client cannot escape
- * our base path via ".." traversal.
+ * filesystem path. Specifically, we disallow directory separators, runs
+ * of "..", and trailing and leading dots, which means that the client
+ * cannot escape our base path via ".." traversal.
  */
 static void sanitize_client(struct strbuf *out, const char *in)
 {
 	for (; *in; in++) {
-		if (*in == '/')
+		if (is_dir_sep(*in))
 			continue;
 		if (*in == '.' && (!out->len || out->buf[out->len - 1] == '.'))
 			continue;
