@@ -8,7 +8,7 @@ Backward compatibility notes
    symbolic links are ignored.
 
 
-Updates since v2.32
+Updates since v2.31
 -------------------
 
 UI, Workflows & Features
@@ -30,6 +30,16 @@ UI, Workflows & Features
    strategy to reduce the cost of repacking a repository has been
    introduced.
 
+ * The http codepath learned to let the credential layer to cache the
+   password used to unlock a certificate that has successfully been
+   used.
+
+ * "git commit --fixup=<commit>", which was to tweak the changes made
+   to the contents while keeping the original log message intact,
+   learned "--fixup=(amend|reword):<commit>", that can be used to
+   tweak both the message and the contents, and only the message,
+   respectively.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -44,6 +54,10 @@ Performance, Internal Implementation, Development Support etc.
  * "git diff-index" codepath has been taught to trust fsmonitor status
    to reduce number of lstat() calls.
    (merge 7e5aa13d2c nk/diff-index-fsmonitor later to maint).
+
+ * Reorganize Makefile to allow building git.o and other essential
+   objects without extra stuff needed only for testing.
+
 
 
 Fixes since v2.31
