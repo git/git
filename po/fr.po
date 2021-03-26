@@ -3996,7 +3996,7 @@ msgstr "<chemin>"
 
 #: diff.c:5616
 msgid "show the change in the specified path first"
-msgstr "afficher la modification dans les fichier spécifié en premier"
+msgstr "afficher la modification dans le chemin spécifié en premier"
 
 #: diff.c:5619
 msgid "skip the output to the specified path"
