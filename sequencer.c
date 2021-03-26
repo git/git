@@ -1732,20 +1732,6 @@ enum todo_item_flags {
 	TODO_EDIT_FIXUP_MSG    = (1 << 2),
 };
 
-static size_t subject_length(const char *body)
-{
-	const char *p = body;
-	while (*p) {
-		const char *next = skip_blank_lines(p);
-		if (next != p)
-			break;
-		p = strchrnul(p, '\n');
-		if (*p)
-			p++;
-	}
-	return p - body;
-}
-
 static const char first_commit_msg_str[] = N_("This is the 1st commit message:");
 static const char nth_commit_msg_fmt[] = N_("This is the commit message #%d:");
 static const char skip_first_commit_msg_str[] = N_("The 1st commit message will be skipped:");
@@ -1869,7 +1855,7 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 	if (starts_with(body, "amend!") ||
 	    ((command == TODO_SQUASH || seen_squash(opts)) &&
 	     (starts_with(body, "squash!") || starts_with(body, "fixup!"))))
-		commented_len = subject_length(body);
+		commented_len = commit_subject_length(body);
 
 	strbuf_addf(buf, "\n%c ", comment_line_char);
 	strbuf_addf(buf, _(nth_commit_msg_fmt),
