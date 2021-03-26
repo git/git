@@ -1752,8 +1752,7 @@ static const char skip_first_commit_msg_str[] = N_("The 1st commit message will 
 static const char skip_nth_commit_msg_fmt[] = N_("The commit message #%d will be skipped:");
 static const char combined_commit_msg_fmt[] = N_("This is a combination of %d commits.");
 
-static int check_fixup_flag(enum todo_command command,
-			    enum todo_item_flags flag)
+static int is_fixup_flag(enum todo_command command, unsigned flag)
 {
 	return command == TODO_FIXUP && ((flag & TODO_REPLACE_FIXUP_MSG) ||
 					 (flag & TODO_EDIT_FIXUP_MSG));
@@ -1858,7 +1857,7 @@ static void update_squash_message_for_fixup(struct strbuf *msg)
 
 static int append_squash_message(struct strbuf *buf, const char *body,
 			 enum todo_command command, struct replay_opts *opts,
-			 enum todo_item_flags flag)
+			 unsigned flag)
 {
 	const char *fixup_msg;
 	size_t commented_len = 0, fixup_off;
@@ -1882,7 +1881,7 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 	strbuf_addstr(buf, body + commented_len);
 
 	/* fixup -C after squash behaves like squash */
-	if (check_fixup_flag(command, flag) && !seen_squash(opts)) {
+	if (is_fixup_flag(command, flag) && !seen_squash(opts)) {
 		/*
 		 * We're replacing the commit message so we need to
 		 * append the Signed-off-by: trailer if the user
@@ -1914,7 +1913,7 @@ static int update_squash_messages(struct repository *r,
 				  enum todo_command command,
 				  struct commit *commit,
 				  struct replay_opts *opts,
-				  enum todo_item_flags flag)
+				  unsigned flag)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int res = 0;
@@ -1937,7 +1936,7 @@ static int update_squash_messages(struct repository *r,
 			    opts->current_fixup_count + 2);
 		strbuf_splice(&buf, 0, eol - buf.buf, header.buf, header.len);
 		strbuf_release(&header);
-		if (check_fixup_flag(command, flag) && !seen_squash(opts))
+		if (is_fixup_flag(command, flag) && !seen_squash(opts))
 			update_squash_message_for_fixup(&buf);
 	} else {
 		struct object_id head;
@@ -1960,11 +1959,11 @@ static int update_squash_messages(struct repository *r,
 		strbuf_addf(&buf, "%c ", comment_line_char);
 		strbuf_addf(&buf, _(combined_commit_msg_fmt), 2);
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
-		strbuf_addstr(&buf, check_fixup_flag(command, flag) ?
+		strbuf_addstr(&buf, is_fixup_flag(command, flag) ?
 			      _(skip_first_commit_msg_str) :
 			      _(first_commit_msg_str));
 		strbuf_addstr(&buf, "\n\n");
-		if (check_fixup_flag(command, flag))
+		if (is_fixup_flag(command, flag))
 			strbuf_add_commented_lines(&buf, body, strlen(body));
 		else
 			strbuf_addstr(&buf, body);
@@ -1977,7 +1976,7 @@ static int update_squash_messages(struct repository *r,
 			     oid_to_hex(&commit->object.oid));
 	find_commit_subject(message, &body);
 
-	if (command == TODO_SQUASH || check_fixup_flag(command, flag)) {
+	if (command == TODO_SQUASH || is_fixup_flag(command, flag)) {
 		res = append_squash_message(&buf, body, command, opts, flag);
 	} else if (command == TODO_FIXUP) {
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
@@ -5670,7 +5669,7 @@ static int subject2item_cmp(const void *fndata,
 
 define_commit_slab(commit_todo_item, struct todo_item *);
 
-static inline int skip_fixup_amend_squash(const char *subject, const char **p) {
+static int skip_fixupish(const char *subject, const char **p) {
 	return skip_prefix(subject, "fixup! ", p) ||
 	       skip_prefix(subject, "amend! ", p) ||
 	       skip_prefix(subject, "squash! ", p);
@@ -5734,13 +5733,13 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 		format_subject(&buf, subject, " ");
 		subject = subjects[i] = strbuf_detach(&buf, &subject_len);
 		unuse_commit_buffer(item->commit, commit_buffer);
-		if (skip_fixup_amend_squash(subject, &p)) {
+		if (skip_fixupish(subject, &p)) {
 			struct commit *commit2;
 
 			for (;;) {
 				while (isspace(*p))
 					p++;
-				if (!skip_fixup_amend_squash(p, &p))
+				if (!skip_fixupish(p, &p))
 					break;
 			}
 

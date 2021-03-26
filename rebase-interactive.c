@@ -44,9 +44,10 @@ void append_todo_help(int command_count,
 "r, reword <commit> = use commit, but edit the commit message\n"
 "e, edit <commit> = use commit, but stop for amending\n"
 "s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\", but discard this\n"
-"                   commit's log message. Use -C to replace with this\n"
-"                   commit message or -c to edit the commit message\n"
+"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
+"                   commit's log message, unless -C is used, in which case\n"
+"                   keep only this commit's message; -c is same as -C but\n"
+"                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
 "d, drop <commit> = remove commit\n"
@@ -55,7 +56,7 @@ void append_todo_help(int command_count,
 "m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
 ".       create a merge commit using the original merge commit's\n"
 ".       message (or the oneline, if no original merge commit was\n"
-".       specified). Use -c <commit> to reword the commit message.\n"
+".       specified); use -c <commit> to reword the commit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n");
 	unsigned edit_todo = !(shortrevisions && shortonto);

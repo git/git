@@ -15,10 +15,11 @@
 #       specified line.
 #
 #   "<cmd> <lineno>" -- add a line with the specified command
-#       ("pick", "squash", "fixup", "edit", "reword" or "drop") and the
-#       SHA1 taken from the specified line.
+#       ("pick", "squash", "fixup"|"fixup_-C"|"fixup_-c", "edit", "reword" or "drop")
+#       and the SHA1 taken from the specified line.
 #
-#   "exec_cmd_with_args" -- add an "exec cmd with args" line.
+#   "_" -- add a space, like "fixup_-C" implies "fixup -C" and
+#       "exec_cmd_with_args" add an "exec cmd with args" line.
 #
 #   "#" -- Add a comment line.
 #
