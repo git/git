@@ -12,10 +12,12 @@ test_it () {
 		echo "*** log for $subject ***" &&
 		case "$type" in
 		C)
-			Meta/Make -$J
+			Meta/Make -$J &&
+			Meta/Make -$J -- SPARSE_FLAGS=-Wsparse-error sparse
 			;;
 		M)
-			Meta/Make -$J -- SPARSE_FLAGS=-Wsparse-error sparse
+			Meta/Make -$J -- SPARSE_FLAGS=-Wsparse-error sparse &&
+			Meta/Make -$J -- test
 			;;
 		T)
 			Meta/Make -$J -- test &&
