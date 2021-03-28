@@ -273,11 +273,11 @@ static int object_on_skiplist(struct fsck_options *opts,
 __attribute__((format (printf, 5, 6)))
 static int report(struct fsck_options *options,
 		  const struct object_id *oid, enum object_type object_type,
-		  enum fsck_msg_id id, const char *fmt, ...)
+		  enum fsck_msg_id msg_id, const char *fmt, ...)
 {
 	va_list ap;
 	struct strbuf sb = STRBUF_INIT;
-	int msg_type = fsck_msg_type(id, options), result;
+	int msg_type = fsck_msg_type(msg_id, options), result;
 
 	if (msg_type == FSCK_IGNORE)
 		return 0;
@@ -291,7 +291,7 @@ static int report(struct fsck_options *options,
 		msg_type = FSCK_WARN;
 
 	prepare_msg_ids();
-	strbuf_addf(&sb, "%s: ", msg_id_info[id].camelcased);
+	strbuf_addf(&sb, "%s: ", msg_id_info[msg_id].camelcased);
 
 	va_start(ap, fmt);
 	strbuf_vaddf(&sb, fmt, ap);
