@@ -1717,6 +1717,7 @@ static int print_dangling_gitmodules(struct fsck_options *o,
 				     const struct object_id *oid,
 				     enum object_type object_type,
 				     enum fsck_msg_type msg_type,
+				     enum fsck_msg_id msg_id,
 				     const char *message)
 {
 	/*
@@ -1727,7 +1728,7 @@ static int print_dangling_gitmodules(struct fsck_options *o,
 		printf("%s\n", oid_to_hex(oid));
 		return 0;
 	}
-	return fsck_error_function(o, oid, object_type, msg_type, message);
+	return fsck_error_function(o, oid, object_type, msg_type, msg_id, message);
 }
 
 int cmd_index_pack(int argc, const char **argv, const char *prefix)
