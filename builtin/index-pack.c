@@ -1716,7 +1716,8 @@ static void show_pack_info(int stat_only)
 static int print_dangling_gitmodules(struct fsck_options *o,
 				     const struct object_id *oid,
 				     enum object_type object_type,
-				     int msg_type, const char *message)
+				     enum fsck_msg_type msg_type,
+				     const char *message)
 {
 	/*
 	 * NEEDSWORK: Plumb the MSG_ID (from fsck.c) here and use it
