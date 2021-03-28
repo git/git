@@ -998,7 +998,7 @@ static void fsck_gitmodules_oids(struct oidset *gitmodules_oids)
 
 	oidset_iter_init(gitmodules_oids, &iter);
 	while ((oid = oidset_iter_next(&iter)))
-		register_found_gitmodules(oid);
+		register_found_gitmodules(&fo, oid);
 	if (fsck_finish(&fo))
 		die("fsck failed");
 }
