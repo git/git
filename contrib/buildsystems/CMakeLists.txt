@@ -836,7 +836,7 @@ list(TRANSFORM git_perl_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 
 #install
 foreach(program ${PROGRAMS_BUILT})
-if(${program} STREQUAL git OR ${program} STREQUAL git-shell)
+if(program STREQUAL "git" OR program STREQUAL "git-shell")
 install(TARGETS ${program}
 	RUNTIME DESTINATION bin)
 else()
