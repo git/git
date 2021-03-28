@@ -82,7 +82,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: git-for-windows/setup-git-for-windows-sdk@v0
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: build
       shell: bash
       env:
@@ -112,7 +112,7 @@ jobs:
     - name: extract tracked files and build artifacts
       shell: bash
       run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
-    - uses: git-for-windows/setup-git-for-windows-sdk@v0
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: test
       shell: bash
       run: ci/run-test-slice.sh ${{matrix.nr}} 10
@@ -139,21 +139,17 @@ jobs:
         arch: [x64, arm64]
     steps:
     - uses: actions/checkout@v2
-    - uses: git-for-windows/setup-git-for-windows-sdk@v0
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: initialize vcpkg
       uses: actions/checkout@v2
       with:
         repository: 'microsoft/vcpkg'
         path: 'compat/vcbuild/vcpkg'
     - name: download vcpkg artifacts
-      shell: powershell
-      run: |
-        $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
-        $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
-        $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
-        (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
-        Expand-Archive compat.zip -DestinationPath . -Force
-        Remove-Item compat.zip
+      uses: git-for-windows/get-azure-pipelines-artifact@v0
+      with:
+        repository: git/git
+        definitionId: 9
     - name: add msbuild to PATH
       uses: microsoft/setup-msbuild@v1
     - name: copy dlls to root
@@ -189,7 +185,7 @@ jobs:
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
-    - uses: git-for-windows/setup-git-for-windows-sdk@v0
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: download tracked files and build artifacts
       uses: actions/download-artifact@v2
       with:
