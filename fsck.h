@@ -111,6 +111,12 @@ int fsck_error_function(struct fsck_options *o,
 			const struct object_id *oid, enum object_type object_type,
 			enum fsck_msg_type msg_type, enum fsck_msg_id msg_id,
 			const char *message);
+int fsck_error_cb_print_missing_gitmodules(struct fsck_options *o,
+					   const struct object_id *oid,
+					   enum object_type object_type,
+					   enum fsck_msg_type msg_type,
+					   enum fsck_msg_id msg_id,
+					   const char *message);
 
 struct fsck_options {
 	fsck_walk_func walk;
@@ -135,6 +141,12 @@ struct fsck_options {
 	.gitmodules_done = OIDSET_INIT, \
 	.error_func = fsck_error_function, \
 }
+#define FSCK_OPTIONS_MISSING_GITMODULES { \
+	.strict = 1, \
+	.gitmodules_found = OIDSET_INIT, \
+	.gitmodules_done = OIDSET_INIT, \
+	.error_func = fsck_error_cb_print_missing_gitmodules, \
+}
 
 /* descend in all linked child objects
  * the return value is:
@@ -151,9 +163,6 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options);
  */
 int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options);
-
-void register_found_gitmodules(struct fsck_options *options,
-			       const struct object_id *oid);
 
 /*
  * fsck a tag, and pass info about it back to the caller. This is
