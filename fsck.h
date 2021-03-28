@@ -4,11 +4,13 @@
 #include "oidset.h"
 
 enum fsck_msg_type {
-	FSCK_INFO  = -2,
-	FSCK_FATAL = -1,
-	FSCK_ERROR = 1,
+	/* for internal use only */
+	FSCK_IGNORE,
+	FSCK_INFO,
+	FSCK_FATAL,
+	/* "public", fed to e.g. error_func callbacks */
+	FSCK_ERROR,
 	FSCK_WARN,
-	FSCK_IGNORE
 };
 
 struct fsck_options;
