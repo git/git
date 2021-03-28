@@ -264,24 +264,6 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 	free(to_free);
 }
 
-static void append_msg_id(struct strbuf *sb, const char *msg_id)
-{
-	for (;;) {
-		char c = *(msg_id)++;
-
-		if (!c)
-			break;
-		if (c != '_')
-			strbuf_addch(sb, tolower(c));
-		else {
-			assert(*msg_id);
-			strbuf_addch(sb, *(msg_id)++);
-		}
-	}
-
-	strbuf_addstr(sb, ": ");
-}
-
 static int object_on_skiplist(struct fsck_options *opts,
 			      const struct object_id *oid)
 {
@@ -308,7 +290,8 @@ static int report(struct fsck_options *options,
 	else if (msg_type == FSCK_INFO)
 		msg_type = FSCK_WARN;
 
-	append_msg_id(&sb, msg_id_info[id].id_string);
+	prepare_msg_ids();
+	strbuf_addf(&sb, "%s: ", msg_id_info[id].camelcased);
 
 	va_start(ap, fmt);
 	strbuf_vaddf(&sb, fmt, ap);
