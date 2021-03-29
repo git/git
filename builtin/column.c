@@ -27,10 +27,10 @@ int cmd_column(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "command", &real_command, N_("name"), N_("lookup config vars")),
 		OPT_COLUMN(0, "mode", &colopts, N_("layout to use")),
 		OPT_INTEGER(0, "raw-mode", &colopts, N_("layout to use")),
-		OPT_INTEGER(0, "width", &copts.width, N_("Maximum width")),
-		OPT_STRING(0, "indent", &copts.indent, N_("string"), N_("Padding space on left border")),
-		OPT_INTEGER(0, "nl", &copts.nl, N_("Padding space on right border")),
-		OPT_INTEGER(0, "padding", &copts.padding, N_("Padding space between columns")),
+		OPT_INTEGER(0, "width", &copts.width, N_("maximum width")),
+		OPT_STRING(0, "indent", &copts.indent, N_("string"), N_("padding space on left border")),
+		OPT_INTEGER(0, "nl", &copts.nl, N_("padding space on right border")),
+		OPT_INTEGER(0, "padding", &copts.padding, N_("padding space between columns")),
 		OPT_END()
 	};
 
