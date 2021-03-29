@@ -811,14 +811,18 @@ list(TRANSFORM git_shell_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 list(TRANSFORM git_perl_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 
 #install
-install(TARGETS git git-shell
+foreach(program ${PROGRAMS_BUILT})
+if(program STREQUAL "git" OR program STREQUAL "git-shell")
+install(TARGETS ${program}
 	RUNTIME DESTINATION bin)
+else()
+install(TARGETS ${program}
+	RUNTIME DESTINATION libexec/git-core)
+endif()
+endforeach()
+
 install(PROGRAMS ${CMAKE_BINARY_DIR}/git-cvsserver
 	DESTINATION bin)
-
-list(REMOVE_ITEM PROGRAMS_BUILT git git-shell)
-install(TARGETS ${PROGRAMS_BUILT}
-	RUNTIME DESTINATION libexec/git-core)
 
 set(bin_links
 	git-receive-pack git-upload-archive git-upload-pack)
