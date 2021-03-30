@@ -5,8 +5,23 @@
 #include "midx.h"
 #include "trace2.h"
 
+#define BUILTIN_MIDX_WRITE_USAGE \
+	N_("git multi-pack-index [<options>] write")
+
+#define BUILTIN_MIDX_VERIFY_USAGE \
+	N_("git multi-pack-index [<options>] verify")
+
+#define BUILTIN_MIDX_EXPIRE_USAGE \
+	N_("git multi-pack-index [<options>] expire")
+
+#define BUILTIN_MIDX_REPACK_USAGE \
+	N_("git multi-pack-index [<options>] repack [--batch-size=<size>]")
+
 static char const * const builtin_multi_pack_index_usage[] = {
-	N_("git multi-pack-index [<options>] (write|verify|expire|repack --batch-size=<size>)"),
+	BUILTIN_MIDX_WRITE_USAGE,
+	BUILTIN_MIDX_VERIFY_USAGE,
+	BUILTIN_MIDX_EXPIRE_USAGE,
+	BUILTIN_MIDX_REPACK_USAGE,
 	NULL
 };
 
