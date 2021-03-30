@@ -1,21 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2021, #07; Mon, 22)
-X-master-at: 142430338477d9d1bb25be66267225fb58498d92
-X-next-at: 6335e70b5e894eb553908aed65279cb1c81a147e
+Subject: What's cooking in git.git (Mar 2021, #08; Tue, 30)
+X-master-at: a65ce7f831aa5fcc596c6d23fcde543d98b39bd7
+X-next-at: f1725819714fbcd96c47ae5f14e00cc01045272f
 
-What's cooking in git.git (Mar 2021, #07; Mon, 22)
+What's cooking in git.git (Mar 2021, #08; Tue, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The tip of the 'next' has been rewound and rebuilt from the tip of
-'master'.  Matheus's parallel checkout (part 1) topic has been
-ejected from 'next' to be replaced with a new iteration when it
-comes.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,229 +43,144 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/grep-pcre2-allocfix (2021-02-17) 10 commits
-  (merged to 'next' on 2021-03-04 at 26d2b726b1)
- + grep/pcre2: move definitions of pcre2_{malloc,free}
- + grep/pcre2: move back to thread-only PCREv2 structures
- + grep/pcre2: actually make pcre2 use custom allocator
- + grep/pcre2: use pcre2_maketables_free() function
- + grep/pcre2: use compile-time PCREv2 version test
- + grep/pcre2: add GREP_PCRE2_DEBUG_MALLOC debug mode
- + grep/pcre2: prepare to add debugging to pcre2_malloc()
- + grep/pcre2: correct reference to grep_init() in comment
- + grep/pcre2: drop needless assignment to NULL
- + grep/pcre2: drop needless assignment + assert() on opt->pcre2
+* ab/detox-gettext-tests (2021-03-23) 1 commit
+  (merged to 'next' on 2021-03-24 at 00123ddc8d)
+ + mktag tests: fix broken "&&" chain
 
- Updates to memory allocation code around the use of pcre2 library.
+ Testfix.
 
 
-* ab/remote-write-config-in-camel-case (2021-02-24) 2 commits
-  (merged to 'next' on 2021-03-01 at a01bd0d8e4)
- + remote: write camel-cased *.pushRemote on rename
- + remote: add camel-cased *.tagOpt key, like clone
+* ab/diff-no-index-tests (2021-03-22) 2 commits
+  (merged to 'next' on 2021-03-24 at a099113753)
+ + diff --no-index tests: test mode normalization
+ + diff --no-index tests: add test for --exit-code
 
- Update C code that sets a few configuration variables when a remote
- is configured so that it spells configuration variable names in the
- canonical camelCase.
+ More test coverage over "diff --no-index".
 
 
-* bc/clone-bare-with-conflicting-config (2021-03-10) 1 commit
-  (merged to 'next' on 2021-03-14 at 963a86199c)
- + builtin/init-db: handle bare clones when core.bare set to false
+* ab/make-cleanup (2021-02-23) 5 commits
+  (merged to 'next' on 2021-03-22 at e9e16c9fc4)
+ + Makefile: add {program,xdiff,test,git,fuzz}-objs & objects targets
+ + Makefile: split OBJECTS into OBJECTS and GIT_OBJS
+ + Makefile: sort OBJECTS assignment for subsequent change
+ + Makefile: split up long OBJECTS line
+ + Makefile: guard against TEST_OBJS in the environment
 
- "git -c core.bare=false clone --bare ..." would have segfaulted,
- which has been corrected.
+ Originally merged to 'next' on 2021-03-19
 
-
-* dl/cat-file-doc-cleanup (2021-03-03) 2 commits
-  (merged to 'next' on 2021-03-13 at f1a216175a)
- + git-cat-file.txt: remove references to "sha1"
- + git-cat-file.txt: monospace args, placeholders and filenames
-
- Doc cleanup.
+ Reorganize Makefile to allow building git.o and other essential
+ objects without extra stuff needed only for testing.
 
 
-* dl/stash-show-untracked (2021-03-05) 2 commits
-  (merged to 'next' on 2021-03-08 at 510d4cfa5f)
- + stash show: learn stash.showIncludeUntracked
- + stash show: teach --include-untracked and --only-untracked
+* ab/read-tree (2021-03-20) 8 commits
+  (merged to 'next' on 2021-03-24 at e1241a4890)
+ + tree.h API: simplify read_tree_recursive() signature
+ + tree.h API: expose read_tree_1() as read_tree_at()
+ + archive: stop passing "stage" through read_tree_recursive()
+ + ls-files: refactor away read_tree()
+ + ls-files: don't needlessly pass around stage variable
+ + tree.c API: move read_tree() into builtin/ls-files.c
+ + ls-files tests: add meaningful --with-tree tests
+ + show tests: add test for "git show <tree>"
+ (this branch is used by ds/sparse-index and ds/sparse-index-protections.)
 
- "git stash show" learned to optionally show untracked part of the
- stash.
-
-
-* ds/commit-graph-generation-config (2021-02-25) 2 commits
-  (merged to 'next' on 2021-03-01 at 926537ea97)
- + commit-graph: use config to specify generation type
- + commit-graph: create local repository pointer
-
- A new configuration variable has been introduced to allow choosing
- which version of the generation number gets used in the
- commit-graph file.
+ Code simplification by removing support for a caller that is long gone.
 
 
-* en/ort-perf-batch-8 (2021-02-26) 10 commits
-  (merged to 'next' on 2021-03-07 at f03b2c1acd)
- + diffcore-rename: compute dir_rename_guess from dir_rename_counts
- + diffcore-rename: limit dir_rename_counts computation to relevant dirs
- + diffcore-rename: compute dir_rename_counts in stages
- + diffcore-rename: extend cleanup_dir_rename_info()
- + diffcore-rename: move dir_rename_counts into dir_rename_info struct
- + diffcore-rename: add function for clearing dir_rename_count
- + Move computation of dir_rename_count from merge-ort to diffcore-rename
- + diffcore-rename: add a mapping of destination names to their indices
- + diffcore-rename: provide basic implementation of idx_possible_rename()
- + diffcore-rename: use directory rename guided basename comparisons
- (this branch is used by en/ort-perf-batch-10, en/ort-perf-batch-9 and en/ort-readiness.)
+* ab/remove-rebase-usebuiltin (2021-03-23) 1 commit
+  (merged to 'next' on 2021-03-24 at 39517a1c41)
+ + rebase: remove transitory rebase.useBuiltin setting & env
 
- Rename detection rework continues.
+ Remove the final hint that we used to have a scripted "git rebase".
 
 
-* jk/filter-branch-sha256 (2021-03-10) 3 commits
-  (merged to 'next' on 2021-03-14 at e4e624590a)
- + filter-branch: drop $_x40 glob
- + filter-branch: drop multiple-ancestor warning
- + t7003: test ref rewriting explicitly
-
- Code clean-up.
- In the longer term, we might want to remove filter-branch and nudge
- folks to more modern tools.
-
-
-* jk/open-dotgitx-with-nofollow (2021-02-16) 6 commits
-  (merged to 'next' on 2021-02-25 at a784bf7be6)
- + mailmap: do not respect symlinks for in-tree .mailmap
- + exclude: do not respect symlinks for in-tree .gitignore
- + attr: do not respect symlinks for in-tree .gitattributes
- + exclude: add flags parameter to add_patterns()
- + attr: convert "macro_ok" into a flags field
- + add open_nofollow() helper
-
- It does not make sense to make ".gitattributes", ".gitignore" and
- ".mailmap" symlinks, as they are supposed to be usable from the
- object store (think: bare repositories where HEAD:.mailmap etc. are
- used).  When these files are symbolic links, we used to read the
- contents of the files pointed by them by mistake, which has been
- corrected.
-
-
-* jk/perf-in-worktrees (2021-02-26) 2 commits
-  (merged to 'next' on 2021-03-02 at ea298cb298)
- + t/perf: avoid copying worktree files from test repo
- + t/perf: handle worktrees as test repos
-
- Perf test update to work better in secondary worktrees.
-
-
-* jr/doc-ignore-typofix (2021-03-03) 1 commit
-  (merged to 'next' on 2021-03-13 at 0ce1e751b1)
- + doc: .gitignore documentation typofix
-
- Doc cleanup.
-
-
-* mt/cleanly-die-upon-missing-required-filter (2021-02-26) 1 commit
-  (merged to 'next' on 2021-03-01 at 357954af7c)
- + convert: fail gracefully upon missing clean cmd on required filter
-
- We had a code to diagnose and die cleanly when a required
- clean/smudge filter is missing, but an assert before that
- unnecessarily fired, hiding the end-user facing die() message.
-
-
-* ps/update-ref-trans-hook-doc (2021-03-01) 2 commits
-  (merged to 'next' on 2021-03-14 at 41c418967d)
- + githooks.txt: clarify documentation on reference-transaction hook
- + githooks.txt: replace mentions of SHA-1 specific properties
+* bs/asciidoctor-installation-hints (2021-03-19) 1 commit
+  (merged to 'next' on 2021-03-24 at 93980207f7)
+ + INSTALL: note on using Asciidoctor to build doc
 
  Doc update.
 
 
-* rr/mailmap-entry-self (2021-03-08) 1 commit
-  (merged to 'next' on 2021-03-13 at 9f98a99713)
- + Add entry for Ramkumar Ramachandra
+* cm/rebase-i (2021-01-29) 9 commits
+  (merged to 'next' on 2021-03-22 at d5612f5a75)
+ + doc/git-rebase: add documentation for fixup [-C|-c] options
+ + rebase -i: teach --autosquash to work with amend!
+ + t3437: test script for fixup [-C|-c] options in interactive rebase
+ + rebase -i: add fixup [-C | -c] command
+ + sequencer: use const variable for commit message comments
+ + sequencer: pass todo_item to do_pick_commit()
+ + rebase -i: comment out squash!/fixup! subjects from squash message
+ + sequencer: factor out code to append squash message
+ + rebase -i: only write fixup-message when it's needed
+ (this branch is used by cm/rebase-i-fixup-amend-reword and cm/rebase-i-updates.)
 
- Will merge to 'master'.
+ Originally merged to 'next' on 2021-02-01
 
-
-* rs/pretty-describe (2021-03-11) 5 commits
-  (merged to 'next' on 2021-03-12 at e987259477)
- + archive: expand only a single %(describe) per archive
-  (merged to 'next' on 2021-03-01 at bee9248828)
- + pretty: document multiple %(describe) being inconsistent
- + t4205: assert %(describe) test coverage
-  (merged to 'next' on 2021-02-25 at 2347ed8fe6)
- + pretty: add merge and exclude options to %(describe)
- + pretty: add %(describe)
-
- "git log --format='...'" learned "%(describe)" placeholder.
+ "rebase -i" is getting cleaned up and also enhanced.
 
 
-* sv/t9801-test-path-is-file-cleanup (2021-03-03) 1 commit
-  (merged to 'next' on 2021-03-13 at 14997360bb)
- + t9801: replace test -f with test_path_is_file
+* cm/rebase-i-fixup-amend-reword (2021-03-15) 6 commits
+  (merged to 'next' on 2021-03-22 at 6335e70b5e)
+ + doc/git-commit: add documentation for fixup=[amend|reword] options
+ + t3437: use --fixup with options to create amend! commit
+ + t7500: add tests for --fixup=[amend|reword] options
+ + commit: add a reword suboption to --fixup
+ + commit: add amend suboption to --fixup to create amend! commit
+ + sequencer: export and rename subject_length()
+ (this branch uses cm/rebase-i and cm/rebase-i-updates.)
 
- Test cleanup.
+ Originally merged to 'next' on 2021-03-19
 
---------------------------------------------------
-[New Topics]
+ "git commit --fixup=<commit>", which was to tweak the changes made
+ to the contents while keeping the original log message intact,
+ learned "--fixup=(amend|reword):<commit>", that can be used to
+ tweak both the message and the contents, and only the message,
+ respectively.
 
-* ab/diff-no-index-tests (2021-03-22) 2 commits
- - diff --no-index tests: test mode normalization
- - diff --no-index tests: add test for --exit-code
 
- More test coverage over "diff --no-index".
+* cm/rebase-i-updates (2021-02-10) 11 commits
+  (merged to 'next' on 2021-03-22 at 067e2829d9)
+ + doc/rebase -i: fix typo in the documentation of 'fixup' command
+ + t/t3437: fixup the test 'multiple fixup -c opens editor once'
+ + t/t3437: use named commits in the tests
+ + t/t3437: simplify and document the test helpers
+ + t/t3437: check the author date of fixed up commit
+ + t/t3437: remove the dependency of 'expected-message' file from tests
+ + t/t3437: fixup here-docs in the 'setup' test
+ + t/lib-rebase: update the documentation of FAKE_LINES
+ + rebase -i: clarify and fix 'fixup -c' rebase-todo help
+ + sequencer: rename a few functions
+ + sequencer: fixup the datatype of the 'flag' argument
+ (this branch is used by cm/rebase-i-fixup-amend-reword; uses cm/rebase-i.)
 
- Will merge to 'next'.
+ Originally merged to 'next' on 2021-02-12
+
+ Follow-up fixes to "cm/rebase-i" topic.
 
 
 * cs/http-use-basic-after-failed-negotiate (2021-03-22) 1 commit
- - remote-curl: fall back to basic auth if Negotiate fails
+  (merged to 'next' on 2021-03-24 at 252983daa3)
+ + remote-curl: fall back to basic auth if Negotiate fails
 
  When accessing a server with a URL like https://user:pass@site/, we
  did not to fall back to the basic authentication with the
  credential material embedded in the URL after the "Negotiate"
  authentication failed.  Now we do.
 
- Will merge to 'next'.
 
---------------------------------------------------
-[Cooking]
+* hx/pack-objects-chunk-comment (2021-03-24) 1 commit
+  (merged to 'next' on 2021-03-24 at e1c9ec9b71)
+ + pack-objects: fix comment of reused_chunk.difference
 
-* ds/sparse-index (2021-03-20) 20 commits
- - p2000: add sparse-index repos
- - sparse-index: loose integration with cache_tree_verify()
- - cache-tree: integrate with sparse directory entries
- - sparse-checkout: disable sparse-index
- - sparse-checkout: toggle sparse index from builtin
- - sparse-index: create extension for compatibility
- - sparse-index: check index conversion happens
- - unpack-trees: allow sparse directories
- - submodule: sparse-index should not collapse links
- - sparse-index: convert from full to sparse
- - sparse-checkout: hold pattern list in index
- - unpack-trees: ensure full index
- - test-tool: don't force full index
- - test-read-cache: print cache entries with --table
- - t1092: compare sparse-checkout to sparse-index
- - sparse-index: implement ensure_full_index()
- - sparse-index: add guard to ensure full index
- - t1092: clean up script quoting
- - t/perf: add performance test for sparse operations
- - sparse-index: design doc and format update
- (this branch is used by ds/sparse-index-protections; uses ab/read-tree.)
+ Comment update.
 
 
-* en/ort-perf-batch-10 (2021-03-18) 8 commits
- - diffcore-rename: determine which relevant_sources are no longer relevant
- - merge-ort: record the reason that we want a rename for a file
- - diffcore-rename: add computation of number of unknown renames
- - diffcore-rename: check if we have enough renames for directories early on
- - diffcore-rename: only compute dir_rename_count for relevant directories
- - merge-ort: record the reason that we want a rename for a directory
- - merge-ort, diffcore-rename: tweak dirs_removed and relevant_source type
- - diffcore-rename: take advantage of "majority rules" to skip more renames
- (this branch is used by en/ort-readiness; uses en/ort-perf-batch-9.)
+* jc/doc-format-patch-clarify (2021-03-24) 1 commit
+  (merged to 'next' on 2021-03-26 at 421c7c469f)
+ + format-patch: give an overview of what a "patch" message is
+
+ Explain pieces of the format-patch output upfront before the rest
+ of the documentation starts referring to them.
 
 
 * jk/fail-prereq-testfix (2021-03-18) 1 commit
@@ -284,7 +194,239 @@ Release tarballs are available at:
  of optional pieces, but did not work at all when negative
  prerequisites were involved.
 
+
+* js/http-pki-credential-store (2021-03-11) 2 commits
+  (merged to 'next' on 2021-03-22 at 0df16bc9b3)
+ + http: drop the check for an empty proxy password before approving
+ + http: store credential when PKI auth is used
+
+ Originally merged to 'next' on 2021-03-19
+
+ The http codepath learned to let the credential layer to cache the
+ password used to unlock a certificate that has successfully been
+ used.
+
+
+* mt/checkout-remove-nofollow (2021-03-18) 2 commits
+  (merged to 'next' on 2021-03-24 at 7a0bd7a95f)
+ + checkout: don't follow symlinks when removing entries
+ + symlinks: update comment on threaded_check_leading_path()
+
+ When "git checkout" removes a path that does not exist in the
+ commit it is checking out, it wasn't careful enough not to follow
+ symbolic links, which has been corrected.
+
+
+* nk/diff-index-fsmonitor (2021-03-18) 3 commits
+  (merged to 'next' on 2021-03-22 at 3d4fa0bc51)
+ + fsmonitor: add perf test for git diff HEAD
+ + fsmonitor: add assertion that fsmonitor is valid to check_removed
+ + fsmonitor: skip lstat deletion check during git diff-index
+
+ Originally merged to 'next' on 2021-03-19
+
+ "git diff-index" codepath has been taught to trust fsmonitor status
+ to reduce number of lstat() calls.
+
+
+* rf/send-email-hookspath (2021-03-23) 1 commit
+  (merged to 'next' on 2021-03-24 at 84079a6e0f)
+ + git-send-email: Respect core.hooksPath setting
+
+ "git send-email" learned to honor the core.hooksPath configuration.
+
+
+* tb/geometric-repack (2021-03-19) 14 commits
+  (merged to 'next' on 2021-03-22 at 8147f00207)
+ + builtin/pack-objects.c: ignore missing links with --stdin-packs
+ + builtin/repack.c: reword comment around pack-objects flags
+ + builtin/repack.c: be more conservative with unsigned overflows
+ + builtin/repack.c: assign pack split later
+ + t7703: test --geometric repack with loose objects
+ + builtin/repack.c: do not repack single packs with --geometric
+ + builtin/repack.c: add '--geometric' option
+ + packfile: add kept-pack cache for find_kept_pack_entry()
+ + builtin/pack-objects.c: rewrite honor-pack-keep logic
+ + p5303: measure time to repack with keep
+ + p5303: add missing &&-chains
+ + builtin/pack-objects.c: add '--stdin-packs' option
+ + revision: learn '--no-kept-objects'
+ + packfile: introduce 'find_kept_pack_entry()'
+
+ Originally merged to 'next' on 2021-03-08
+
+ "git repack" so far has been only capable of repacking everything
+ under the sun into a single pack (or split by size).  A cleverer
+ strategy to reduce the cost of repacking a repository has been
+ introduced.
+
+
+* tb/push-simple-uses-branch-merge-config (2021-03-13) 1 commit
+  (merged to 'next' on 2021-03-22 at bec0a72090)
+ + Documentation/git-push.txt: correct configuration typo
+
+ Originally merged to 'next' on 2021-03-19
+
+ Doc update.
+
+--------------------------------------------------
+[New Topics]
+
+* zh/commit-trailer (2021-03-23) 1 commit
+ - commit: add --trailer option
+
+ "git commit" learned "--trailer <key>[=<value>]" option; together
+ with the interpret-trailers command, this will make it easier to
+ support custom trailers.
+
+ Will merge to 'next'.
+
+
+* ab/userdiff-tests (2021-03-23) 10 commits
+ - blame tests: simplify userdiff driver test
+ - blame tests: don't rely on t/t4018/ directory
+ - userdiff: remove support for "broken" tests
+ - userdiff tests: list builtin drivers via test-tool
+ - userdiff tests: explicitly test "default" pattern
+ - userdiff: add and use for_each_userdiff_driver()
+ - userdiff style: normalize pascal regex declaration
+ - userdiff style: declare patterns with consistent style
+ - userdiff style: re-order drivers in alphabetical order
+ - userdiff: refactor away the parse_bool() function
+
+ A bit of code clean-up and a lot of test clean-up around userdiff
+ area.
+
+ A reroll promised "at some point".
+ cf. <87im5gp2ze.fsf@evledraar.gmail.com>
+
+
+* ds/clarify-hashwrite (2021-03-26) 1 commit
+  (merged to 'next' on 2021-03-30 at 701f5c0696)
+ + csum-file: make hashwrite() more readable
+
+ The hashwrite() API always resulted in a call to write(2), even
+ when writing a small amount of bytes that would still fit in the
+ internal buffer held by the hashfile struct.  It has been updated
+ to delay the writing until the buffer is filled or the hashfile
+ concluded for performance.
+
  Will merge to 'master'.
+
+
+* en/ort-perf-batch-11 (2021-03-25) 7 commits
+ - merge-ort, diffcore-rename: employ cached renames when possible
+ - merge-ort: add helper functions for using cached renames
+ - merge-ort: preserve cached renames for the appropriate side
+ - merge-ort: avoid accidental API mis-use
+ - merge-ort: add code to check for whether cached renames can be reused
+ - merge-ort: populate caches of rename detection results
+ - merge-ort: add data structures for in-memory caching of rename detection
+ (this branch uses en/ort-perf-batch-10, en/ort-perf-batch-9 and en/ort-readiness.)
+
+
+* rs/daemon-sanitize-dir-sep (2021-03-26) 1 commit
+ - daemon: sanitize all directory separators
+
+ "git daemon" has been tightened against systems that take backslash
+ as directory separator.
+
+
+* ar/userdiff-scheme (2021-03-27) 1 commit
+ - userdiff: add support for Scheme
+
+ Userdiff patterns for "Scheme" has been added.
+
+ Expecting a reroll.
+
+
+* js/cmake-vsbuild (2021-03-29) 4 commits
+ - cmake(install): include vcpkg dlls
+ - cmake: add a preparatory work-around to accommodate `vcpkg`
+ - cmake(install): fix double .exe suffixes
+ - cmake: support SKIP_DASHED_BUILT_INS
+
+ CMake update for vsbuild.
+
+ Will merge to 'next'.
+
+
+* js/security-md (2021-03-27) 2 commits
+ - Document how we do embargoed releases
+ - SECURITY: describe how to report vulnerabilities
+
+ SECURITY.md that is facing individual contributors and end users
+ has been introduced.  Also a procedure to follow when preparing
+ embargoed releases has been spelled out.
+
+
+* ab/make-tags-quiet (2021-03-27) 1 commit
+ - Makefile: add QUIET_GEN to "tags" and "TAGS" targets
+
+
+* cc/downcase-opt-help (2021-03-29) 1 commit
+ - column, range-diff: downcase option description
+
+
+* en/sequencer-edit-upon-conflict-fix (2021-03-29) 1 commit
+ - sequencer: fix edit handling for cherry-pick and revert messages
+
+
+* gk/gitweb-redacted-email (2021-03-29) 1 commit
+ - gitweb: redacted e-mail addresses feature.
+
+
+* ll/clone-reject-shallow (2021-03-29) 1 commit
+ - builtin/clone.c: add --reject-shallow option
+
+--------------------------------------------------
+[Cooking]
+
+* ds/sparse-index (2021-03-30) 21 commits
+ - p2000: add sparse-index repos
+ - sparse-index: loose integration with cache_tree_verify()
+ - cache-tree: integrate with sparse directory entries
+ - sparse-checkout: disable sparse-index
+ - sparse-checkout: toggle sparse index from builtin
+ - sparse-index: add index.sparse config option
+ - sparse-index: check index conversion happens
+ - unpack-trees: allow sparse directories
+ - submodule: sparse-index should not collapse links
+ - sparse-index: convert from full to sparse
+ - sparse-index: add 'sdir' index extension
+ - sparse-checkout: hold pattern list in index
+ - unpack-trees: ensure full index
+ - test-tool: don't force full index
+ - test-read-cache: print cache entries with --table
+ - t1092: compare sparse-checkout to sparse-index
+ - sparse-index: implement ensure_full_index()
+ - sparse-index: add guard to ensure full index
+ - t1092: clean up script quoting
+ - t/perf: add performance test for sparse operations
+ - sparse-index: design doc and format update
+
+ Both in-core and on-disk index has been updated to optionally omit
+ individual entries and replace them with the tree object that
+ corresponds to the directory that contains them when the "cone"
+ mode of sparse checkout is in use.
+
+
+* en/ort-perf-batch-10 (2021-03-18) 8 commits
+ - diffcore-rename: determine which relevant_sources are no longer relevant
+ - merge-ort: record the reason that we want a rename for a file
+ - diffcore-rename: add computation of number of unknown renames
+ - diffcore-rename: check if we have enough renames for directories early on
+ - diffcore-rename: only compute dir_rename_count for relevant directories
+ - merge-ort: record the reason that we want a rename for a directory
+ - merge-ort, diffcore-rename: tweak dirs_removed and relevant_source type
+ - diffcore-rename: take advantage of "majority rules" to skip more renames
+ (this branch is used by en/ort-perf-batch-11 and en/ort-readiness; uses en/ort-perf-batch-9.)
+
+ I made a mistake of picking these up before they got sufficient
+ exposure to the reviewers and ended up a source of potential mess
+ when it turns out that any of the earlier ones need rewriting (I
+ probably should stop picking up nested series that exceeds reviewer
+ bandwidth), but how ready is this and subsequent topics?
 
 
 * mt/add-rm-in-sparse-checkout (2021-03-18) 7 commits
@@ -303,38 +445,13 @@ Release tarballs are available at:
  cf. <xmqqlfajnn6w.fsf@gitster.g>
 
 
-* mt/checkout-remove-nofollow (2021-03-18) 2 commits
- - checkout: don't follow symlinks when removing entries
- - symlinks: update comment on threaded_check_leading_path()
-
- When "git checkout" removes a path that does not exist in the
- commit it is checking out, it wasn't careful enough not to follow
- symbolic links, which has been corrected.
-
- Will merge to 'next'.
-
-
-* mt/parallel-checkout-part-2 (2021-03-21) 5 commits
+* mt/parallel-checkout-part-2 (2021-03-23) 5 commits
  - parallel-checkout: add design documentation
  - parallel-checkout: support progress displaying
  - parallel-checkout: add configuration options
  - parallel-checkout: make it truly parallel
  - unpack-trees: add basic support for parallel checkout
  (this branch uses mt/parallel-checkout-part-1.)
-
-
-* nk/diff-index-fsmonitor (2021-03-18) 3 commits
-  (merged to 'next' on 2021-03-22 at 3d4fa0bc51)
- + fsmonitor: add perf test for git diff HEAD
- + fsmonitor: add assertion that fsmonitor is valid to check_removed
- + fsmonitor: skip lstat deletion check during git diff-index
-
- Originally merged to 'next' on 2021-03-19
-
- "git diff-index" codepath has been taught to trust fsmonitor status
- to reduce number of lstat() calls.
-
- Will merge to 'master'.
 
 
 * ps/pack-bitmap-optim (2021-03-22) 1 commit
@@ -347,56 +464,69 @@ Release tarballs are available at:
  cf. <xmqqk0q4ov95.fsf@gitster.g>
 
 
-* bs/asciidoctor-installation-hints (2021-03-19) 1 commit
- - INSTALL: note on using Asciidoctor to build doc
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* dl/complete-stash (2021-03-18) 3 commits
- - git-completion.bash: use __gitcomp_builtin() in _git_stash()
- - git-completion.bash: fix `git <args>... stash branch` bug
- - git-completion.bash: extract from else in _git_stash()
+* dl/complete-stash (2021-03-24) 3 commits
+  (merged to 'next' on 2021-03-24 at ce573a99cc)
+ + git-completion.bash: use __gitcomp_builtin() in _git_stash()
+ + git-completion.bash: extract from else in _git_stash()
+ + git-completion.bash: pass $__git_subcommand_idx from __git_main()
 
  Update "git stash branch<TAB>" command line completion (in contrib/).
 
- Expecting a reroll.
- cf. <xmqqtup7nnld.fsf@gitster.g>
+ cf. <20210327183554.GD2271@szeder.dev>
 
 
-* ds/sparse-index-protections (2021-03-20) 27 commits
- - name-hash: use expand_to_path()
- - sparse-index: expand_to_path()
- - revision: ensure full index
- - resolve-undo: ensure full index
- - read-cache: ensure full index
- - pathspec: ensure full index
- - merge-recursive: ensure full index
- - merge-ort: ensure full index
- - entry: ensure full index
- - dir: ensure full index
- - diff-lib: ensure full index
- - update-index: ensure full index
- - sparse-checkout: ensure full index
- - rm: ensure full index
- - merge-index: ensure full index
- - ls-files: ensure full index
- - grep: ensure full index
- - fsck: ensure full index
- - difftool: ensure full index
- - commit: ensure full index
- - checkout: ensure full index
- - checkout-index: ensure full index
- - add: ensure full index
- - cache: move ensure_full_index() to cache.h
- - sparse-index: API protection strategy
- - read-cache: expand on query into sparse-directory entry
- - *: remove 'const' qualifier for struct index_state
- (this branch uses ab/read-tree and ds/sparse-index.)
+* ds/sparse-index-protections (2021-03-23) 47 commits
+ . name-hash: use expand_to_path()
+ . sparse-index: expand_to_path()
+ . revision: ensure full index
+ . resolve-undo: ensure full index
+ . read-cache: ensure full index
+ . pathspec: ensure full index
+ . merge-recursive: ensure full index
+ . merge-ort: ensure full index
+ . entry: ensure full index
+ . dir: ensure full index
+ . diff-lib: ensure full index
+ . update-index: ensure full index
+ . sparse-checkout: ensure full index
+ . rm: ensure full index
+ . merge-index: ensure full index
+ . ls-files: ensure full index
+ . grep: ensure full index
+ . fsck: ensure full index
+ . difftool: ensure full index
+ . commit: ensure full index
+ . checkout: ensure full index
+ . checkout-index: ensure full index
+ . add: ensure full index
+ . cache: move ensure_full_index() to cache.h
+ . sparse-index: API protection strategy
+ . read-cache: expand on query into sparse-directory entry
+ . *: remove 'const' qualifier for struct index_state
+ . p2000: add sparse-index repos
+ . sparse-index: loose integration with cache_tree_verify()
+ . cache-tree: integrate with sparse directory entries
+ . sparse-checkout: disable sparse-index
+ . sparse-checkout: toggle sparse index from builtin
+ . sparse-index: create extension for compatibility
+ . sparse-index: check index conversion happens
+ . unpack-trees: allow sparse directories
+ . submodule: sparse-index should not collapse links
+ . sparse-index: convert from full to sparse
+ . sparse-checkout: hold pattern list in index
+ . unpack-trees: ensure full index
+ . test-tool: don't force full index
+ . test-read-cache: print cache entries with --table
+ . t1092: compare sparse-checkout to sparse-index
+ . sparse-index: implement ensure_full_index()
+ . sparse-index: add guard to ensure full index
+ . t1092: clean up script quoting
+ . t/perf: add performance test for sparse operations
+ . sparse-index: design doc and format update
 
- Sparse-index technology demonstration.
+ Builds on top of the sparse-index infrastructure to mark operations
+ that are not ready to mark with the sparse index, causing them to
+ fall back on fully-populated index that they always have worked with.
 
 
 * en/ort-readiness (2021-03-20) 13 commits
@@ -413,7 +543,7 @@ Release tarballs are available at:
  - merge-ort: have ll_merge() use a special attr_index for renormalization
  - merge-ort: add a special minimal index just for renormalization
  - merge-ort: use STABLE_QSORT instead of QSORT where required
- (this branch uses en/ort-perf-batch-10 and en/ort-perf-batch-9.)
+ (this branch is used by en/ort-perf-batch-11; uses en/ort-perf-batch-10 and en/ort-perf-batch-9.)
 
  Plug the ort merge backend throughout the rest of the system, and
  start testing it as a replacement for the recursive backend.
@@ -439,30 +569,31 @@ Release tarballs are available at:
  The resolve and octopus merge strategy backends have been rewritten
  in C.
 
- Ready?
+ Expecting a (hopefully final) reroll.
+ cf. <nycvar.QRO.7.76.6.2103241142220.50@tvgsbejvaqbjf.bet>
 
 
-* mt/parallel-checkout-part-1 (2021-03-21) 10 commits
- - stash: adjust for recent change to entry.h
- - entry: add checkout_entry_ca() taking preloaded conv_attrs
- - entry: move conv_attrs lookup up to checkout_entry()
- - entry: extract update_ce_after_write() from write_entry()
- - entry: make fstat_output() and read_blob_entry() public
- - entry: extract a header file for entry.c functions
- - convert: add classification for conv_attrs struct
- - convert: add get_stream_filter_ca() variant
- - convert: add [async_]convert_to_working_tree_ca() variants
- - convert: make convert_attrs() and convert structs public
+* mt/parallel-checkout-part-1 (2021-03-23) 9 commits
+  (merged to 'next' on 2021-03-30 at e8995d1046)
+ + entry: add checkout_entry_ca() taking preloaded conv_attrs
+ + entry: move conv_attrs lookup up to checkout_entry()
+ + entry: extract update_ce_after_write() from write_entry()
+ + entry: make fstat_output() and read_blob_entry() public
+ + entry: extract a header file for entry.c functions
+ + convert: add classification for conv_attrs struct
+ + convert: add get_stream_filter_ca() variant
+ + convert: add [async_]convert_to_working_tree_ca() variants
+ + convert: make convert_attrs() and convert structs public
  (this branch is used by mt/parallel-checkout-part-2.)
 
  Originally merged to 'next' on 2021-03-21
 
  Preparatory API changes for parallel checkout.
 
- Kicked out of 'next' tentatively and wait for a replacement.
+ Will merge to 'master'.
 
 
-* ab/fsck-api-cleanup (2021-03-17) 19 commits
+* ab/fsck-api-cleanup (2021-03-28) 19 commits
  - fetch-pack: use new fsck API to printing dangling submodules
  - fetch-pack: use file-scope static struct for fsck_options
  - fetch-pack: don't needlessly copy fsck_options
@@ -477,14 +608,16 @@ Release tarballs are available at:
  - fsck.h: move FSCK_{FATAL,INFO,ERROR,WARN,IGNORE} into an enum
  - fsck.c: refactor fsck_msg_type() to limit scope of "int msg_type"
  - fsck.c: rename remaining fsck_msg_id "id" to "msg_id"
- - fsck.c: move definition of msg_id into append_msg_id()
+ - fsck.c: remove (mostly) redundant append_msg_id() function
  - fsck.c: rename variables in fsck_set_msg_type() for less confusion
  - fsck.h: use "enum object_type" instead of "int"
  - fsck.h: use designed initializers for FSCK_OPTIONS_{DEFAULT,STRICT}
  - fsck.c: refactor and rename common config callback
 
  Fsck API clean-up.
- cf. <20210317182054.5986-1-avarab@gmail.com>
+
+ Will merge to 'next'?
+ cf. <xmqq5z1alnmu.fsf@gitster.g>
 
 
 * en/ort-perf-batch-9 (2021-03-10) 8 commits
@@ -496,24 +629,12 @@ Release tarballs are available at:
  - merge-ort: add data structures for an alternate tree traversal
  - merge-ort: precompute subset of sources for which we need rename detection
  - diffcore-rename: enable filtering possible rename sources
- (this branch is used by en/ort-perf-batch-10 and en/ort-readiness.)
+ (this branch is used by en/ort-perf-batch-10, en/ort-perf-batch-11 and en/ort-readiness.)
 
  The ort merge backend has been optimized by skipping irrelevant
  renames.
 
-
-* js/http-pki-credential-store (2021-03-11) 2 commits
-  (merged to 'next' on 2021-03-22 at 0df16bc9b3)
- + http: drop the check for an empty proxy password before approving
- + http: store credential when PKI auth is used
-
- Originally merged to 'next' on 2021-03-19
-
- The http codepath learned to let the credential layer to cache the
- password used to unlock a certificate that has successfully been
- used.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * hn/reftable (2021-03-12) 15 commits
@@ -536,87 +657,40 @@ Release tarballs are available at:
  The "reftable" backend for the refs API.
 
 
-* ab/tests-cleanup-around-sha1 (2021-03-10) 4 commits
- - tests: get rid of $_x05 from the test suite
- - shortlog tests: rewrite to get rid of --abbrev=35 hardcoding
- - test-lib: remove unused $_x40 and $_z40 variables
- - git-bisect: remove unused SHA-1 $x40 shell variable
-
- Remove variables that hold regexp and glob that match fixed number
- of hexadecimal digits from the test suite.
-
- Expecting a reroll.
- At least the last one weakens a test and should be dropped; there
- may be similar breakage due to not understanding what they are
- trying to test.
-
-
-* ab/make-cocci-dedup (2021-03-22) 4 commits
- - Makefile/coccicheck: set SPATCH_BATCH_SIZE to 8
- - Makefile/coccicheck: allow for setting xargs concurrency
- - Makefile/coccicheck: speed up and fix bug with duplicate hunks
- - Makefile/coccicheck: add comment heading for all SPATCH flags
-
- Coccicheck update.
-
- cf. <cover.1616414951.git.avarab@gmail.com>
-
-
-* ab/read-tree (2021-03-20) 8 commits
- - tree.h API: simplify read_tree_recursive() signature
- - tree.h API: expose read_tree_1() as read_tree_at()
- - archive: stop passing "stage" through read_tree_recursive()
- - ls-files: refactor away read_tree()
- - ls-files: don't needlessly pass around stage variable
- - tree.c API: move read_tree() into builtin/ls-files.c
- - ls-files tests: add meaningful --with-tree tests
- - show tests: add test for "git show <tree>"
- (this branch is used by ds/sparse-index and ds/sparse-index-protections.)
-
- Code simplification by removing support for a caller that is long gone.
-
- Will merge to 'next'.
-
-
-* ab/unexpected-object-type (2021-03-08) 7 commits
+* ab/unexpected-object-type (2021-03-27) 10 commits
  - tag: don't misreport type of tagged objects in errors
  - object tests: add test for unexpected objects in tags
+ - object.c: add and use oid_is_type_or_die_msg() function
  - object.c: add a utility function for "expected type X, got Y"
  - tree.c: fix misindentation in parse_tree_gently()
- - oid_object_info(): return "enum object_type"
+ - object-name.c: make dependency on object_type order more obvious
+ - object-file.c: make oid_object_info() return "enum object_type"
  - object.c: make type_from_string() return "enum object_type"
  - object.c: refactor type_from_string_gently()
+ - object.c: stop supporting len == -1 in type_from_string_gently()
 
  Error reporting upon object type mismatch has been improved
 
- Expecting a reroll.
- Looked good except for some rewrites.
+ cf. <YGBL88lYheyFmwCg@coredump.intra.peff.net>
+ ... we would be much better off to say something like "somebody
+ expected X to be a commit, but now somebody else expects it to be a
+ blob", which is all that we can reliably say.
 
 
 * ah/plugleaks (2021-03-21) 9 commits
- - transport: also free remote_refs in transport_disconnect()
- - parse-options: don't leak alias help messages
- - parse-options: convert bitfield values to use binary shift
- - init-db: silence template_dir leak when converting to absolute path
- - init: remove git_init_db_config() while fixing leaks
- - worktree: fix leak in dwim_branch()
- - clone: free or UNLEAK further pointers when finished
- - reset: free instead of leaking unneeded ref
- - symbolic-ref: don't leak shortened refname in check_symref()
+  (merged to 'next' on 2021-03-30 at 78636ede89)
+ + transport: also free remote_refs in transport_disconnect()
+ + parse-options: don't leak alias help messages
+ + parse-options: convert bitfield values to use binary shift
+ + init-db: silence template_dir leak when converting to absolute path
+ + init: remove git_init_db_config() while fixing leaks
+ + worktree: fix leak in dwim_branch()
+ + clone: free or UNLEAK further pointers when finished
+ + reset: free instead of leaking unneeded ref
+ + symbolic-ref: don't leak shortened refname in check_symref()
 
  Plug or annotate remaining leaks that trigger while running the
  very basic set of tests.
-
- Ready?
-
-
-* tb/push-simple-uses-branch-merge-config (2021-03-13) 1 commit
-  (merged to 'next' on 2021-03-22 at bec0a72090)
- + Documentation/git-push.txt: correct configuration typo
-
- Originally merged to 'next' on 2021-03-19
-
- Doc update.
 
  Will merge to 'master'.
 
@@ -639,32 +713,17 @@ Release tarballs are available at:
  cf. <xmqq1rcj6hzr.fsf@gitster.g>
 
 
-* zh/format-patch-fractional-reroll-count (2021-03-21) 1 commit
- - format-patch: allow a non-integral version numbers
+* zh/format-patch-fractional-reroll-count (2021-03-23) 1 commit
+  (merged to 'next' on 2021-03-26 at 3c29ec9a02)
+ + format-patch: allow a non-integral version numbers
 
  "git format-patch -v<n>" learned to allow a reroll count that is
  not an integer.
 
- Will merge to 'next'.
-
-
-* ab/make-cleanup (2021-02-23) 5 commits
-  (merged to 'next' on 2021-03-22 at e9e16c9fc4)
- + Makefile: add {program,xdiff,test,git,fuzz}-objs & objects targets
- + Makefile: split OBJECTS into OBJECTS and GIT_OBJS
- + Makefile: sort OBJECTS assignment for subsequent change
- + Makefile: split up long OBJECTS line
- + Makefile: guard against TEST_OBJS in the environment
-
- Originally merged to 'next' on 2021-03-19
-
- Reorganize Makefile to allow building git.o and other essential
- objects without extra stuff needed only for testing.
-
  Will merge to 'master'.
 
 
-* tb/reverse-midx (2021-03-11) 17 commits
+* tb/reverse-midx (2021-03-30) 17 commits
  - midx.c: improve cache locality in midx_pack_order_cmp()
  - pack-revindex: write multi-pack reverse indexes
  - pack-write.c: extract 'write_rev_file_order'
@@ -686,7 +745,7 @@ Release tarballs are available at:
  An on-disk reverse-index to map the in-pack location of an object
  back to its object name across multiple packfiles is introduced.
 
- Ready???
+ Will merge to 'next'.
 
 
 * ab/pickaxe-pcre2 (2021-02-18) 24 commits
@@ -718,115 +777,26 @@ Release tarballs are available at:
  Rewrite the backend for "diff -G/-S" to use pcre2 engine when
  available.
 
- Ready???
-
-
-* cm/rebase-i-fixup-amend-reword (2021-03-15) 6 commits
-  (merged to 'next' on 2021-03-22 at 6335e70b5e)
- + doc/git-commit: add documentation for fixup=[amend|reword] options
- + t3437: use --fixup with options to create amend! commit
- + t7500: add tests for --fixup=[amend|reword] options
- + commit: add a reword suboption to --fixup
- + commit: add amend suboption to --fixup to create amend! commit
- + sequencer: export and rename subject_length()
- (this branch uses cm/rebase-i and cm/rebase-i-updates.)
-
- Originally merged to 'next' on 2021-03-19
-
- "git commit --fixup=<commit>", which was to tweak the changes made
- to the contents while keeping the original log message intact,
- learned "--fixup=(amend|reword):<commit>", that can be used to
- tweak both the message and the contents, and only the message,
- respectively.
-
- Will merge to 'master'.
-
-
-* cm/rebase-i-updates (2021-02-10) 11 commits
-  (merged to 'next' on 2021-03-22 at 067e2829d9)
- + doc/rebase -i: fix typo in the documentation of 'fixup' command
- + t/t3437: fixup the test 'multiple fixup -c opens editor once'
- + t/t3437: use named commits in the tests
- + t/t3437: simplify and document the test helpers
- + t/t3437: check the author date of fixed up commit
- + t/t3437: remove the dependency of 'expected-message' file from tests
- + t/t3437: fixup here-docs in the 'setup' test
- + t/lib-rebase: update the documentation of FAKE_LINES
- + rebase -i: clarify and fix 'fixup -c' rebase-todo help
- + sequencer: rename a few functions
- + sequencer: fixup the datatype of the 'flag' argument
- (this branch is used by cm/rebase-i-fixup-amend-reword; uses cm/rebase-i.)
-
- Originally merged to 'next' on 2021-02-12
-
- Follow-up fixes to "cm/rebase-i" topic.
-
- Will merge to 'master'.
+ Needs (hopefully the final round of) review.
 
 
 * jh/simple-ipc (2021-03-22) 12 commits
- - t0052: add simple-ipc tests and t/helper/test-simple-ipc tool
- - simple-ipc: add Unix domain socket implementation
- - unix-stream-server: create unix domain socket under lock
- - unix-socket: disallow chdir() when creating unix domain sockets
- - unix-socket: add backlog size option to unix_stream_listen()
- - unix-socket: eliminate static unix_stream_socket() helper function
- - simple-ipc: add win32 implementation
- - simple-ipc: design documentation for new IPC mechanism
- - pkt-line: add options argument to read_packetized_to_strbuf()
- - pkt-line: add PACKET_READ_GENTLE_ON_READ_ERROR option
- - pkt-line: do not issue flush packets in write_packetized_*()
- - pkt-line: eliminate the need for static buffer in packet_write_gently()
+  (merged to 'next' on 2021-03-24 at 3ebcedf89a)
+ + t0052: add simple-ipc tests and t/helper/test-simple-ipc tool
+ + simple-ipc: add Unix domain socket implementation
+ + unix-stream-server: create unix domain socket under lock
+ + unix-socket: disallow chdir() when creating unix domain sockets
+ + unix-socket: add backlog size option to unix_stream_listen()
+ + unix-socket: eliminate static unix_stream_socket() helper function
+ + simple-ipc: add win32 implementation
+ + simple-ipc: design documentation for new IPC mechanism
+ + pkt-line: add options argument to read_packetized_to_strbuf()
+ + pkt-line: add PACKET_READ_GENTLE_ON_READ_ERROR option
+ + pkt-line: do not issue flush packets in write_packetized_*()
+ + pkt-line: eliminate the need for static buffer in packet_write_gently()
 
  A simple IPC interface gets introduced to build services like
  fsmonitor on top.
-
- Will merge to 'next'.
-
-
-* cm/rebase-i (2021-01-29) 9 commits
-  (merged to 'next' on 2021-03-22 at d5612f5a75)
- + doc/git-rebase: add documentation for fixup [-C|-c] options
- + rebase -i: teach --autosquash to work with amend!
- + t3437: test script for fixup [-C|-c] options in interactive rebase
- + rebase -i: add fixup [-C | -c] command
- + sequencer: use const variable for commit message comments
- + sequencer: pass todo_item to do_pick_commit()
- + rebase -i: comment out squash!/fixup! subjects from squash message
- + sequencer: factor out code to append squash message
- + rebase -i: only write fixup-message when it's needed
- (this branch is used by cm/rebase-i-fixup-amend-reword and cm/rebase-i-updates.)
-
- Originally merged to 'next' on 2021-02-01
-
- "rebase -i" is getting cleaned up and also enhanced.
-
- Will merge to 'master'.
-
-
-* tb/geometric-repack (2021-03-19) 14 commits
-  (merged to 'next' on 2021-03-22 at 8147f00207)
- + builtin/pack-objects.c: ignore missing links with --stdin-packs
- + builtin/repack.c: reword comment around pack-objects flags
- + builtin/repack.c: be more conservative with unsigned overflows
- + builtin/repack.c: assign pack split later
- + t7703: test --geometric repack with loose objects
- + builtin/repack.c: do not repack single packs with --geometric
- + builtin/repack.c: add '--geometric' option
- + packfile: add kept-pack cache for find_kept_pack_entry()
- + builtin/pack-objects.c: rewrite honor-pack-keep logic
- + p5303: measure time to repack with keep
- + p5303: add missing &&-chains
- + builtin/pack-objects.c: add '--stdin-packs' option
- + revision: learn '--no-kept-objects'
- + packfile: introduce 'find_kept_pack_entry()'
-
- Originally merged to 'next' on 2021-03-08
-
- "git repack" so far has been only capable of repacking everything
- under the sun into a single pack (or split by size).  A cleverer
- strategy to reduce the cost of repacking a repository has been
- introduced.
 
  Will merge to 'master'.
 
@@ -877,113 +847,27 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
-* cw/pack-vs-bigfilethreashold (2021-02-09) 2 commits
- . fixup! doc: mention bigFileThreshold for packing
- . doc: mention bigFileThreshold for packing
+* ab/make-cocci-dedup (2021-03-22) 4 commits
+ . Makefile/coccicheck: set SPATCH_BATCH_SIZE to 8
+ . Makefile/coccicheck: allow for setting xargs concurrency
+ . Makefile/coccicheck: speed up and fix bug with duplicate hunks
+ . Makefile/coccicheck: add comment heading for all SPATCH flags
 
- Doc update.
+ Coccicheck update.
 
- cw/pack-config-doc supersedes this with a bit more coverage on
- related knobs.
-
-
-* jh/simple-ipc-cleanups (2021-03-04) 9 commits
- - SQUASH???
- - simple-ipc: update design documentation with more details
- - test-simple-ipc: add --token=<token> string option
- - test-simple-ipc: refactor command line option processing in helper
- - unix-stream-server: add st_dev and st_mode to socket stolen checks
- - simple-ipc: move error handling up a level
- - unix-stream-server: create unix-stream-server.c
- - unix-socket: simplify initialization of unix_stream_listen_opts
- - pkt-line: remove buffer arg from write_packetized_from_fd_no_flush()
-
- After kicking jh/simple-ipc out of 'next' and rewinding
- jh/simple-ipc to contain the incremental clean-up in this follow-up
- topic, it is no longer needed, hence retired.
+ Retracted.
+ cf. <cover.1616414951.git.avarab@gmail.com>
+ cf. <87k0psnzv5.fsf@evledraar.gmail.com>
 
 
-* es/config-hooks-part-1 (2021-02-16) 17 commits
- . hooks: allow callers to capture output
- . run-command: allow capturing of collated output
- . hook: provide stdin by string_list or callback
- . run-command: add stdin callback for parallelization
- . hook: allow specifying working directory for hooks
- . hook: allow parallel hook execution
- . run-command: allow stdin for run_processes_parallel
- . hook: support passing stdin to hooks
- . hook: replace find_hook() with hook_exists()
- . hook: add 'run' subcommand
- . parse-options: parse into strvec
- . hook: implement hookcmd.<name>.skip
- . hook: respect hook.runHookDir
- . hook: include hookdir hook in list
- . hook: add list command
- . hook: scaffolding for git-hook subcommand
- . doc: propose hooks managed by the config
+* ab/tests-cleanup-around-sha1 (2021-03-10) 4 commits
+ - tests: get rid of $_x05 from the test suite
+ - shortlog tests: rewrite to get rid of --abbrev=35 hardcoding
+ - test-lib: remove unused $_x40 and $_z40 variables
+ - git-bisect: remove unused SHA-1 $x40 shell variable
 
- Now replaced by es/config-hooks topic.
+ Remove variables that hold regexp and glob that match fixed number
+ of hexadecimal digits from the test suite.
 
-
-* jk/symlinked-dotgitx-files (2020-10-23) 9 commits
- . docs: document symlink restrictions for .git* files
- . fsck: complain when .gitattributes or .gitignore is a symlink
- . verify_path(): disallow symlinks in .gitattributes and .gitignore
- . t0060: test obscured .gitattributes and .gitignore matching
- . t7450: test .gitmodules symlink matching against obscured names
- . t7450: test verify_path() handling of gitmodules
- . t7415: rename to expand scope
- . fsck_tree(): wrap some long lines
- . fsck_tree(): fix shadowed variable
-
- "git fsck" and the corresponding check done during the transport
- learned to ensure that in-tree files like `.gitignore` and
- `.gitattributes` are not symbolic links.
-
- It seems that there are real projects with .gitignore recorded as
- symlinks, which may need to loosen the fsck setting.  Do we need to
- introduce a class that is separate from symlinked .gitmodules that
- has potential consequences that is more/less grave, so that these
- projects can opt out of the new checks?
-
-
-* ab/tree-walk-with-object-type (2021-03-17) 32 commits
- . tree-walk.h API: add a tree_entry_extract_type() function
- . blame: emit a better error on 'git blame directory'
- . tree-walk.h API: add a get_tree_entry_path() function
- . tree-walk.h API: add get_tree_entry_all()
- . tree-walk.h API: add a tree_entry_extract_all() function
- . tree-entry.h API: rename tree_entry_extract() to tree_entry_extract_mode()
- . tree-walk.h API: document and format tree_entry_extract()
- . tree-walk.h API: add get_tree_entry_type()
- . match-trees: use "tmp" for mode in shift_tree_by()
- . tree-walk.h API: rename get_tree_entry() to get_tree_entry_mode()
- . tree-walk.h API: formatting changes for subsequent commit
- . tree-walk.h users: use temporary variable(s) for "mode"
- . fsck.c: switch on "object_type" in fsck_walk_tree()
- . merge-ort: correct reference to test in 62fdec17a11
- . merge-tree tests: test for the mode comparison in same_entry()
- . tree-walk.h users: migrate miscellaneous "mode" to "object_type"
- . tree-walk.h users: refactor chained "mode" if/else into switch
- . tree-walk.h users: migrate "p->mode &&" pattern
- . tree.h API: make read_tree_fn_t take an "enum object_type"
- . archive: get rid of 'stage' parameter
- . tree.h users: format argument lists in archive.c
- . tree.h: format argument lists of read_tree_recursive() users
- . tree-walk.h users: switch object_type(...) to new .object_type
- . cache.h: have base_name_compare() take "is tree?", not "mode"
- . diff tests: test that "mode" is passed when sorting
- . mktree tests: test that "mode" is passed when sorting
- . fast-import tests: test for sorting dir/file foo v.s. foo.txt
- . tree-walk.c: migrate to using new "object_type" field when possible
- . tree-walk.h: add object_type member to name_entry
- . cache.h: add a comment to object_type()
- . notes & match-trees: use name_entry's "pathlen" member
- . diff.c: remove redundant canon_mode() call
- (this branch uses ab/read-tree.)
-
- Code clean-up.
-
- I am not exactly sure where this series wants to go, other than
- unnecessarily churning the code.  Seems to break "diff --no-index"
- rather badly, too (e.g. t4050, t4002, among others).
+ Retracted, to be replaced by another series.
+ cf. <878s67o09v.fsf@evledraar.gmail.com>
