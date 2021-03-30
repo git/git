@@ -1,10 +1,3 @@
-rebase.useBuiltin::
-	Unused configuration variable. Used in Git versions 2.20 and
-	2.21 as an escape hatch to enable the legacy shellscript
-	implementation of rebase. Now the built-in rewrite of it in C
-	is always used. Setting this will emit a warning, to alert any
-	remaining users that setting this now does nothing.
-
 rebase.backend::
 	Default backend to use for rebasing.  Possible choices are
 	'apply' or 'merge'.  In the future, if the merge backend gains

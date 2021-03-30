@@ -100,7 +100,6 @@ struct rebase_options {
 	char *strategy, *strategy_opts;
 	struct strbuf git_format_patch_opt;
 	int reschedule_failed_exec;
-	int use_legacy_rebase;
 	int reapply_cherry_picks;
 	int fork_point;
 };
@@ -1102,11 +1101,6 @@ static int rebase_config(const char *var, const char *value, void *data)
 		return 0;
 	}
 
-	if (!strcmp(var, "rebase.usebuiltin")) {
-		opts->use_legacy_rebase = !git_config_bool(var, value);
-		return 0;
-	}
-
 	if (!strcmp(var, "rebase.backend")) {
 		return git_config_string(&opts->default_backend, var, value);
 	}
@@ -1440,11 +1434,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	/* options.gpg_sign_opt will be either "-S" or NULL */
 	gpg_sign = options.gpg_sign_opt ? "" : NULL;
 	FREE_AND_NULL(options.gpg_sign_opt);
-
-	if (options.use_legacy_rebase ||
-	    !git_env_bool("GIT_TEST_REBASE_USE_BUILTIN", -1))
-		warning(_("the rebase.useBuiltin support has been removed!\n"
-			  "See its entry in 'git help config' for details."));
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "%s/applying", apply_dir());
