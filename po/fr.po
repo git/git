@@ -11387,7 +11387,7 @@ msgstr "git branch [<options>] [-r | -a] [--merged | --no-merged]"
 
 #: builtin/branch.c:30
 msgid "git branch [<options>] [-l] [-f] <branch-name> [<start-point>]"
-msgstr "git branch [<options] [-l] [-f] <nom-de-branche> [<point-de-départ>]"
+msgstr "git branch [<options>] [-l] [-f] <nom-de-branche> [<point-de-départ>]"
 
 #: builtin/branch.c:31
 msgid "git branch [<options>] [-r] (-d | -D) <branch-name>..."
