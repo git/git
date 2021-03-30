@@ -44,6 +44,13 @@ Git index format
   localization, no special casing of directory separator '/'). Entries
   with the same name are sorted by their stage field.
 
+  An index entry typically represents a file. However, if sparse-checkout
+  is enabled in cone mode (`core.sparseCheckoutCone` is enabled) and the
+  `extensions.sparseIndex` extension is enabled, then the index may
+  contain entries for directories outside of the sparse-checkout definition.
+  These entries have mode `040000`, include the `SKIP_WORKTREE` bit, and
+  the path ends in a directory separator.
+
   32-bit ctime seconds, the last time a file's metadata changed
     this is stat(2) data
 
