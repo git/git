@@ -1942,7 +1942,7 @@ sub validate_patch {
 	my ($fn, $xfer_encoding) = @_;
 
 	if ($repo) {
-		my $validate_hook = catfile(catdir($repo->repo_path(), 'hooks'),
+		my $validate_hook = catfile($repo->hooks_path(),
 					    'sendemail-validate');
 		my $hook_error;
 		if (-x $validate_hook) {
