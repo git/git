@@ -63,6 +63,8 @@ static int cmd_multi_pack_index_write(int argc, const char **argv)
 {
 	struct option *options = common_opts;
 
+	trace2_cmd_mode(argv[0]);
+
 	argc = parse_options(argc, argv, NULL,
 			     options, builtin_multi_pack_index_write_usage,
 			     PARSE_OPT_KEEP_UNKNOWN);
@@ -77,6 +79,8 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv)
 {
 	struct option *options = common_opts;
 
+	trace2_cmd_mode(argv[0]);
+
 	argc = parse_options(argc, argv, NULL,
 			     options, builtin_multi_pack_index_verify_usage,
 			     PARSE_OPT_KEEP_UNKNOWN);
@@ -90,6 +94,8 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv)
 static int cmd_multi_pack_index_expire(int argc, const char **argv)
 {
 	struct option *options = common_opts;
+
+	trace2_cmd_mode(argv[0]);
 
 	argc = parse_options(argc, argv, NULL,
 			     options, builtin_multi_pack_index_expire_usage,
@@ -111,6 +117,8 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv)
 	};
 
 	options = add_common_options(builtin_multi_pack_index_repack_options);
+
+	trace2_cmd_mode(argv[0]);
 
 	argc = parse_options(argc, argv, NULL,
 			     options,
@@ -146,8 +154,6 @@ int cmd_multi_pack_index(int argc, const char **argv,
 	if (argc == 0)
 		usage_with_options(builtin_multi_pack_index_usage,
 				   builtin_multi_pack_index_options);
-
-	trace2_cmd_mode(argv[0]);
 
 	if (!strcmp(argv[0], "repack"))
 		return cmd_multi_pack_index_repack(argc, argv);
