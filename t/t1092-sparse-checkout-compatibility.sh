@@ -2,9 +2,6 @@
 
 test_description='compare full workdir to sparse workdir'
 
-# The verify_cache_tree() check is not sparse-aware (yet).
-# So, disable the check until that integration is complete.
-GIT_TEST_CHECK_CACHE_TREE=0
 GIT_TEST_SPLIT_INDEX=0
 GIT_TEST_SPARSE_INDEX=
 
