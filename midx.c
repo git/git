@@ -818,46 +818,49 @@ static int write_midx_large_offsets(struct hashfile *f,
 	return 0;
 }
 
-static int midx_pack_order_cmp(const void *va, const void *vb, void *_ctx)
+struct midx_pack_order_data {
+	uint32_t nr;
+	uint32_t pack;
+	off_t offset;
+};
+
+static int midx_pack_order_cmp(const void *va, const void *vb)
 {
-	struct write_midx_context *ctx = _ctx;
-
-	struct pack_midx_entry *a = &ctx->entries[*(const uint32_t *)va];
-	struct pack_midx_entry *b = &ctx->entries[*(const uint32_t *)vb];
-
-	uint32_t perm_a = ctx->pack_perm[a->pack_int_id];
-	uint32_t perm_b = ctx->pack_perm[b->pack_int_id];
-
-	/* Sort objects in the preferred pack ahead of any others. */
-	if (a->preferred > b->preferred)
+	const struct midx_pack_order_data *a = va, *b = vb;
+	if (a->pack < b->pack)
 		return -1;
-	if (a->preferred < b->preferred)
+	else if (a->pack > b->pack)
 		return 1;
-
-	/* Then, order objects by which packs they appear in. */
-	if (perm_a < perm_b)
+	else if (a->offset < b->offset)
 		return -1;
-	if (perm_a > perm_b)
+	else if (a->offset > b->offset)
 		return 1;
-
-	/* Then, disambiguate by their offset within each pack. */
-	if (a->offset < b->offset)
-		return -1;
-	if (a->offset > b->offset)
-		return 1;
-
-	return 0;
+	else
+		return 0;
 }
 
 static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 {
+	struct midx_pack_order_data *data;
 	uint32_t *pack_order;
 	uint32_t i;
 
+	ALLOC_ARRAY(data, ctx->entries_nr);
+	for (i = 0; i < ctx->entries_nr; i++) {
+		struct pack_midx_entry *e = &ctx->entries[i];
+		data[i].nr = i;
+		data[i].pack = ctx->pack_perm[e->pack_int_id];
+		if (!e->preferred)
+			data[i].pack |= (1U << 31);
+		data[i].offset = e->offset;
+	}
+
+	QSORT(data, ctx->entries_nr, midx_pack_order_cmp);
+
 	ALLOC_ARRAY(pack_order, ctx->entries_nr);
 	for (i = 0; i < ctx->entries_nr; i++)
-		pack_order[i] = i;
-	QSORT_S(pack_order, ctx->entries_nr, midx_pack_order_cmp, ctx);
+		pack_order[i] = data[i].nr;
+	free(data);
 
 	return pack_order;
 }
