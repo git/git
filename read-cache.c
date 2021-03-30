@@ -101,6 +101,9 @@ static const char *alternate_index_output;
 
 static void set_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
+	if (S_ISSPARSEDIR(ce->ce_mode))
+		istate->sparse_index = 1;
+
 	istate->cache[nr] = ce;
 	add_name_hash(istate, ce);
 }
@@ -2272,6 +2275,12 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 			   istate->version);
 	trace2_data_intmax("index", the_repository, "read/cache_nr",
 			   istate->cache_nr);
+
+	if (!istate->repo)
+		istate->repo = the_repository;
+	prepare_repo_settings(istate->repo);
+	if (istate->repo->settings.command_requires_full_index)
+		ensure_full_index(istate);
 
 	return istate->cache_nr;
 
