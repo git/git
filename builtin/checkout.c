@@ -114,7 +114,7 @@ static int post_checkout_hook(struct commit *old_commit, struct commit *new_comm
 }
 
 static int update_some(const struct object_id *oid, struct strbuf *base,
-		const char *pathname, unsigned mode, int stage, void *context)
+		const char *pathname, unsigned mode, void *context)
 {
 	int len;
 	struct cache_entry *ce;
@@ -155,8 +155,8 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 
 static int read_tree_some(struct tree *tree, const struct pathspec *pathspec)
 {
-	read_tree_recursive(the_repository, tree, "", 0, 0,
-			    pathspec, update_some, NULL);
+	read_tree(the_repository, tree,
+		  pathspec, update_some, NULL);
 
 	/* update the index with the given tree's info
 	 * for all args, expanding wildcards, and exit
@@ -322,7 +322,7 @@ static void mark_ce_for_checkout_overlay(struct cache_entry *ce,
 	 * If it comes from the tree-ish, we already know it
 	 * matches the pathspec and could just stamp
 	 * CE_MATCHED to it from update_some(). But we still
-	 * need ps_matched and read_tree_recursive (and
+	 * need ps_matched and read_tree (and
 	 * eventually tree_entry_interesting) cannot fill
 	 * ps_matched yet. Once it can, we can avoid calling
 	 * match_pathspec() for _all_ entries when
