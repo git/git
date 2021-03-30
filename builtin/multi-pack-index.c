@@ -4,9 +4,10 @@
 #include "parse-options.h"
 #include "midx.h"
 #include "trace2.h"
+#include "object-store.h"
 
 #define BUILTIN_MIDX_WRITE_USAGE \
-	N_("git multi-pack-index [<options>] write")
+	N_("git multi-pack-index [<options>] write [--preferred-pack=<pack>]")
 
 #define BUILTIN_MIDX_VERIFY_USAGE \
 	N_("git multi-pack-index [<options>] verify")
@@ -43,6 +44,7 @@ static char const * const builtin_multi_pack_index_usage[] = {
 
 static struct opts_multi_pack_index {
 	const char *object_dir;
+	const char *preferred_pack;
 	unsigned long batch_size;
 	unsigned flags;
 } opts;
@@ -61,7 +63,15 @@ static struct option *add_common_options(struct option *prev)
 
 static int cmd_multi_pack_index_write(int argc, const char **argv)
 {
-	struct option *options = common_opts;
+	struct option *options;
+	static struct option builtin_multi_pack_index_write_options[] = {
+		OPT_STRING(0, "preferred-pack", &opts.preferred_pack,
+			   N_("preferred-pack"),
+			   N_("pack for reuse when computing a multi-pack bitmap")),
+		OPT_END(),
+	};
+
+	options = add_common_options(builtin_multi_pack_index_write_options);
 
 	trace2_cmd_mode(argv[0]);
 
@@ -72,7 +82,10 @@ static int cmd_multi_pack_index_write(int argc, const char **argv)
 		usage_with_options(builtin_multi_pack_index_write_usage,
 				   options);
 
-	return write_midx_file(opts.object_dir, opts.flags);
+	FREE_AND_NULL(options);
+
+	return write_midx_file(opts.object_dir, opts.preferred_pack,
+			       opts.flags);
 }
 
 static int cmd_multi_pack_index_verify(int argc, const char **argv)

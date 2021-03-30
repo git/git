@@ -234,6 +234,48 @@ test_expect_success 'warn on improper hash version' '
 	)
 '
 
+test_expect_success 'midx picks objects from preferred pack' '
+	test_when_finished rm -rf preferred.git &&
+	git init --bare preferred.git &&
+	(
+		cd preferred.git &&
+
+		a=$(echo "a" | git hash-object -w --stdin) &&
+		b=$(echo "b" | git hash-object -w --stdin) &&
+		c=$(echo "c" | git hash-object -w --stdin) &&
+
+		# Set up two packs, duplicating the object "B" at different
+		# offsets.
+		#
+		# Note that the "BC" pack (the one we choose as preferred) sorts
+		# lexically after the "AB" pack, meaning that omitting the
+		# --preferred-pack argument would cause this test to fail (since
+		# the MIDX code would select the copy of "b" in the "AB" pack).
+		git pack-objects objects/pack/test-AB <<-EOF &&
+		$a
+		$b
+		EOF
+		bc=$(git pack-objects objects/pack/test-BC <<-EOF
+		$b
+		$c
+		EOF
+		) &&
+
+		git multi-pack-index --object-dir=objects \
+			write --preferred-pack=test-BC-$bc.idx 2>err &&
+		test_must_be_empty err &&
+
+		test-tool read-midx --show-objects objects >out &&
+
+		ofs=$(git show-index <objects/pack/test-BC-$bc.idx | grep $b |
+			cut -d" " -f1) &&
+		printf "%s %s\tobjects/pack/test-BC-%s.pack\n" \
+			"$b" "$ofs" "$bc" >expect &&
+		grep ^$b out >actual &&
+
+		test_cmp expect actual
+	)
+'
 
 test_expect_success 'verify multi-pack-index success' '
 	git multi-pack-index verify --object-dir=$objdir

@@ -9,7 +9,8 @@ git-multi-pack-index - Write and verify multi-pack-indexes
 SYNOPSIS
 --------
 [verse]
-'git multi-pack-index' [--object-dir=<dir>] [--[no-]progress] <subcommand>
+'git multi-pack-index' [--object-dir=<dir>] [--[no-]progress]
+	[--preferred-pack=<pack>] <subcommand>
 
 DESCRIPTION
 -----------
@@ -30,7 +31,16 @@ OPTIONS
 The following subcommands are available:
 
 write::
-	Write a new MIDX file.
+	Write a new MIDX file. The following options are available for
+	the `write` sub-command:
++
+--
+	--preferred-pack=<pack>::
+		Optionally specify the tie-breaking pack used when
+		multiple packs contain the same object. If not given,
+		ties are broken in favor of the pack with the lowest
+		mtime.
+--
 
 verify::
 	Verify the contents of the MIDX file.

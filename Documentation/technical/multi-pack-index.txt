@@ -43,8 +43,9 @@ Design Details
   a change in format.
 
 - The MIDX keeps only one record per object ID. If an object appears
-  in multiple packfiles, then the MIDX selects the copy in the most-
-  recently modified packfile.
+  in multiple packfiles, then the MIDX selects the copy in the
+  preferred packfile, otherwise selecting from the most-recently
+  modified packfile.
 
 - If there exist packfiles in the pack directory not registered in
   the MIDX, then those packfiles are loaded into the `packed_git`
