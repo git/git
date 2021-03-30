@@ -40,6 +40,7 @@ struct multi_pack_index {
 };
 
 #define MIDX_PROGRESS     (1 << 0)
+#define MIDX_WRITE_REV_INDEX (1 << 1)
 
 char *get_midx_rev_filename(struct multi_pack_index *m);
 

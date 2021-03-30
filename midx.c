@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "repository.h"
 #include "chunk-format.h"
+#include "pack.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -462,6 +463,7 @@ struct write_midx_context {
 	uint32_t entries_nr;
 
 	uint32_t *pack_perm;
+	uint32_t *pack_order;
 	unsigned large_offsets_needed:1;
 	uint32_t num_large_offsets;
 
@@ -816,6 +818,70 @@ static int write_midx_large_offsets(struct hashfile *f,
 	return 0;
 }
 
+static int midx_pack_order_cmp(const void *va, const void *vb, void *_ctx)
+{
+	struct write_midx_context *ctx = _ctx;
+
+	struct pack_midx_entry *a = &ctx->entries[*(const uint32_t *)va];
+	struct pack_midx_entry *b = &ctx->entries[*(const uint32_t *)vb];
+
+	uint32_t perm_a = ctx->pack_perm[a->pack_int_id];
+	uint32_t perm_b = ctx->pack_perm[b->pack_int_id];
+
+	/* Sort objects in the preferred pack ahead of any others. */
+	if (a->preferred > b->preferred)
+		return -1;
+	if (a->preferred < b->preferred)
+		return 1;
+
+	/* Then, order objects by which packs they appear in. */
+	if (perm_a < perm_b)
+		return -1;
+	if (perm_a > perm_b)
+		return 1;
+
+	/* Then, disambiguate by their offset within each pack. */
+	if (a->offset < b->offset)
+		return -1;
+	if (a->offset > b->offset)
+		return 1;
+
+	return 0;
+}
+
+static uint32_t *midx_pack_order(struct write_midx_context *ctx)
+{
+	uint32_t *pack_order;
+	uint32_t i;
+
+	ALLOC_ARRAY(pack_order, ctx->entries_nr);
+	for (i = 0; i < ctx->entries_nr; i++)
+		pack_order[i] = i;
+	QSORT_S(pack_order, ctx->entries_nr, midx_pack_order_cmp, ctx);
+
+	return pack_order;
+}
+
+static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
+				     struct write_midx_context *ctx)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *tmp_file;
+
+	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex(midx_hash));
+
+	tmp_file = write_rev_file_order(NULL, ctx->pack_order, ctx->entries_nr,
+					midx_hash, WRITE_REV);
+
+	if (finalize_object_file(tmp_file, buf.buf))
+		die(_("cannot store reverse index file"));
+
+	strbuf_release(&buf);
+}
+
+static void clear_midx_files_ext(struct repository *r, const char *ext,
+				 unsigned char *keep_hash);
+
 static int write_midx_internal(const char *object_dir, struct multi_pack_index *m,
 			       struct string_list *packs_to_drop,
 			       const char *preferred_pack_name,
@@ -1001,6 +1067,14 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 
 	finalize_hashfile(f, midx_hash, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
 	free_chunkfile(cf);
+
+	if (flags & MIDX_WRITE_REV_INDEX)
+		ctx.pack_order = midx_pack_order(&ctx);
+
+	if (flags & MIDX_WRITE_REV_INDEX)
+		write_midx_reverse_index(midx_name, midx_hash, &ctx);
+	clear_midx_files_ext(the_repository, ".rev", midx_hash);
+
 	commit_lock_file(&lk);
 
 cleanup:
@@ -1015,6 +1089,7 @@ cleanup:
 	free(ctx.info);
 	free(ctx.entries);
 	free(ctx.pack_perm);
+	free(ctx.pack_order);
 	free(midx_name);
 	return result;
 }
@@ -1025,6 +1100,44 @@ int write_midx_file(const char *object_dir,
 {
 	return write_midx_internal(object_dir, NULL, NULL, preferred_pack_name,
 				   flags);
+}
+
+struct clear_midx_data {
+	char *keep;
+	const char *ext;
+};
+
+static void clear_midx_file_ext(const char *full_path, size_t full_path_len,
+				const char *file_name, void *_data)
+{
+	struct clear_midx_data *data = _data;
+
+	if (!(starts_with(file_name, "multi-pack-index-") &&
+	      ends_with(file_name, data->ext)))
+		return;
+	if (data->keep && !strcmp(data->keep, file_name))
+		return;
+
+	if (unlink(full_path))
+		die_errno(_("failed to remove %s"), full_path);
+}
+
+static void clear_midx_files_ext(struct repository *r, const char *ext,
+				 unsigned char *keep_hash)
+{
+	struct clear_midx_data data;
+	memset(&data, 0, sizeof(struct clear_midx_data));
+
+	if (keep_hash)
+		data.keep = xstrfmt("multi-pack-index-%s%s",
+				    hash_to_hex(keep_hash), ext);
+	data.ext = ext;
+
+	for_each_file_in_pack_dir(r->objects->odb->path,
+				  clear_midx_file_ext,
+				  &data);
+
+	free(data.keep);
 }
 
 void clear_midx_file(struct repository *r)
@@ -1038,6 +1151,8 @@ void clear_midx_file(struct repository *r)
 
 	if (remove_path(midx))
 		die(_("failed to clear multi-pack-index at %s"), midx);
+
+	clear_midx_files_ext(r, ".rev", NULL);
 
 	free(midx);
 }
