@@ -201,21 +201,12 @@ static void write_rev_header(struct hashfile *f)
 }
 
 static void write_rev_index_positions(struct hashfile *f,
-				      struct pack_idx_entry **objects,
+				      uint32_t *pack_order,
 				      uint32_t nr_objects)
 {
-	uint32_t *pack_order;
 	uint32_t i;
-
-	ALLOC_ARRAY(pack_order, nr_objects);
-	for (i = 0; i < nr_objects; i++)
-		pack_order[i] = i;
-	QSORT_S(pack_order, nr_objects, pack_order_cmp, objects);
-
 	for (i = 0; i < nr_objects; i++)
 		hashwrite_be32(f, pack_order[i]);
-
-	free(pack_order);
 }
 
 static void write_rev_trailer(struct hashfile *f, const unsigned char *hash)
@@ -228,6 +219,29 @@ const char *write_rev_file(const char *rev_name,
 			   uint32_t nr_objects,
 			   const unsigned char *hash,
 			   unsigned flags)
+{
+	uint32_t *pack_order;
+	uint32_t i;
+	const char *ret;
+
+	ALLOC_ARRAY(pack_order, nr_objects);
+	for (i = 0; i < nr_objects; i++)
+		pack_order[i] = i;
+	QSORT_S(pack_order, nr_objects, pack_order_cmp, objects);
+
+	ret = write_rev_file_order(rev_name, pack_order, nr_objects, hash,
+				   flags);
+
+	free(pack_order);
+
+	return ret;
+}
+
+const char *write_rev_file_order(const char *rev_name,
+				 uint32_t *pack_order,
+				 uint32_t nr_objects,
+				 const unsigned char *hash,
+				 unsigned flags)
 {
 	struct hashfile *f;
 	int fd;
@@ -262,7 +276,7 @@ const char *write_rev_file(const char *rev_name,
 
 	write_rev_header(f);
 
-	write_rev_index_positions(f, objects, nr_objects);
+	write_rev_index_positions(f, pack_order, nr_objects);
 	write_rev_trailer(f, hash);
 
 	if (rev_name && adjust_shared_perm(rev_name) < 0)
