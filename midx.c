@@ -811,6 +811,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 			       unsigned flags)
 {
 	char *midx_name;
+	unsigned char midx_hash[GIT_MAX_RAWSZ];
 	uint32_t i;
 	struct hashfile *f = NULL;
 	struct lock_file lk;
@@ -987,7 +988,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	write_midx_header(f, get_num_chunks(cf), ctx.nr - dropped_packs);
 	write_chunkfile(cf, &ctx);
 
-	finalize_hashfile(f, NULL, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
+	finalize_hashfile(f, midx_hash, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
 	free_chunkfile(cf);
 	commit_lock_file(&lk);
 
