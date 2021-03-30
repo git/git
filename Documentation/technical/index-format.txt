@@ -392,3 +392,15 @@ The remaining data of each directory block is grouped by type:
 	in this block of entries.
 
     - 32-bit count of cache entries in this block
+
+== Sparse Directory Entries
+
+  When using sparse-checkout in cone mode, some entire directories within
+  the index can be summarized by pointing to a tree object instead of the
+  entire expanded list of paths within that tree. An index containing such
+  entries is a "sparse index". Index format versions 4 and less were not
+  implemented with such entries in mind. Thus, for these versions, an
+  index containing sparse directory entries will include this extension
+  with signature { 's', 'd', 'i', 'r' }. Like the split-index extension,
+  tools should avoid interacting with a sparse index unless they understand
+  this extension.

@@ -47,6 +47,7 @@
 #define CACHE_EXT_FSMONITOR 0x46534D4E	  /* "FSMN" */
 #define CACHE_EXT_ENDOFINDEXENTRIES 0x454F4945	/* "EOIE" */
 #define CACHE_EXT_INDEXENTRYOFFSETTABLE 0x49454F54 /* "IEOT" */
+#define CACHE_EXT_SPARSE_DIRECTORIES 0x73646972 /* "sdir" */
 
 /* changes that can be kept in $GIT_DIR/index (basically all extensions) */
 #define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED | \
@@ -1763,6 +1764,10 @@ static int read_index_extension(struct index_state *istate,
 	case CACHE_EXT_INDEXENTRYOFFSETTABLE:
 		/* already handled in do_read_index() */
 		break;
+	case CACHE_EXT_SPARSE_DIRECTORIES:
+		/* no content, only an indicator */
+		istate->sparse_index = 1;
+		break;
 	default:
 		if (*ext < 'A' || 'Z' < *ext)
 			return error(_("index uses %.4s extension, which we do not understand"),
@@ -3018,6 +3023,10 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
 		strbuf_release(&sb);
 		if (err)
+			return -1;
+	}
+	if (istate->sparse_index) {
+		if (write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_SPARSE_DIRECTORIES, 0) < 0)
 			return -1;
 	}
 
