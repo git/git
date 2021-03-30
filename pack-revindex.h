@@ -14,6 +14,20 @@
  *
  * - offset: the byte offset within the .pack file at which the object contents
  *   can be found
+ *
+ * The revindex can also be used with a multi-pack index (MIDX). In this
+ * setting:
+ *
+ *   - index position refers to an object's numeric position within the MIDX
+ *
+ *   - pack position refers to an object's position within a non-existent pack
+ *     described by the MIDX. The pack structure is described in
+ *     Documentation/technical/pack-format.txt.
+ *
+ *     It is effectively a concatanation of all packs in the MIDX (ordered by
+ *     their numeric ID within the MIDX) in their original order within each
+ *     pack), removing duplicates, and placing the preferred pack (if any)
+ *     first.
  */
 
 
@@ -24,6 +38,7 @@
 #define GIT_TEST_REV_INDEX_DIE_IN_MEMORY "GIT_TEST_REV_INDEX_DIE_IN_MEMORY"
 
 struct packed_git;
+struct multi_pack_index;
 
 /*
  * load_pack_revindex populates the revindex's internal data-structures for the
@@ -33,6 +48,22 @@ struct packed_git;
  * (instead of using the in-memory variant).
  */
 int load_pack_revindex(struct packed_git *p);
+
+/*
+ * load_midx_revindex loads the '.rev' file corresponding to the given
+ * multi-pack index by mmap-ing it and assigning pointers in the
+ * multi_pack_index to point at it.
+ *
+ * A negative number is returned on error.
+ */
+int load_midx_revindex(struct multi_pack_index *m);
+
+/*
+ * Frees resources associated with a multi-pack reverse index.
+ *
+ * A negative number is returned on error.
+ */
+int close_midx_revindex(struct multi_pack_index *m);
 
 /*
  * offset_to_pack_pos converts an object offset to a pack position. This
@@ -70,5 +101,27 @@ uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos);
  * file when using the on-disk format.
  */
 off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos);
+
+/*
+ * pack_pos_to_midx converts the object at position "pos" within the MIDX
+ * pseudo-pack into a MIDX position.
+ *
+ * If the reverse index has not yet been loaded, or the position is out of
+ * bounds, this function aborts.
+ *
+ * This function runs in time O(log N) with the number of objects in the MIDX.
+ */
+uint32_t pack_pos_to_midx(struct multi_pack_index *m, uint32_t pos);
+
+/*
+ * midx_to_pack_pos converts from the MIDX-relative position at "at" to the
+ * corresponding pack position.
+ *
+ * If the reverse index has not yet been loaded, or the position is out of
+ * bounds, this function aborts.
+ *
+ * This function runs in constant time.
+ */
+int midx_to_pack_pos(struct multi_pack_index *midx, uint32_t at, uint32_t *pos);
 
 #endif

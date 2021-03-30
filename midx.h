@@ -15,6 +15,10 @@ struct multi_pack_index {
 	const unsigned char *data;
 	size_t data_len;
 
+	const uint32_t *revindex_data;
+	const uint32_t *revindex_map;
+	size_t revindex_len;
+
 	uint32_t signature;
 	unsigned char version;
 	unsigned char hash_len;
@@ -36,6 +40,8 @@ struct multi_pack_index {
 };
 
 #define MIDX_PROGRESS     (1 << 0)
+
+char *get_midx_rev_filename(struct multi_pack_index *m);
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id);
