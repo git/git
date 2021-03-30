@@ -63,6 +63,30 @@ struct checkout_metadata {
 	struct object_id blob;
 };
 
+enum convert_crlf_action {
+	CRLF_UNDEFINED,
+	CRLF_BINARY,
+	CRLF_TEXT,
+	CRLF_TEXT_INPUT,
+	CRLF_TEXT_CRLF,
+	CRLF_AUTO,
+	CRLF_AUTO_INPUT,
+	CRLF_AUTO_CRLF
+};
+
+struct convert_driver;
+
+struct conv_attrs {
+	struct convert_driver *drv;
+	enum convert_crlf_action attr_action; /* What attr says */
+	enum convert_crlf_action crlf_action; /* When no attr is set, use core.autocrlf */
+	int ident;
+	const char *working_tree_encoding; /* Supported encoding or default encoding if NULL */
+};
+
+void convert_attrs(const struct index_state *istate,
+		   struct conv_attrs *ca, const char *path);
+
 extern enum eol core_eol;
 extern char *check_roundtrip_encoding;
 const char *get_cached_convert_stats_ascii(const struct index_state *istate,
@@ -75,15 +99,34 @@ const char *get_convert_attr_ascii(const struct index_state *istate,
 int convert_to_git(const struct index_state *istate,
 		   const char *path, const char *src, size_t len,
 		   struct strbuf *dst, int conv_flags);
-int convert_to_working_tree(const struct index_state *istate,
-			    const char *path, const char *src,
-			    size_t len, struct strbuf *dst,
-			    const struct checkout_metadata *meta);
-int async_convert_to_working_tree(const struct index_state *istate,
-				  const char *path, const char *src,
-				  size_t len, struct strbuf *dst,
-				  const struct checkout_metadata *meta,
-				  void *dco);
+int convert_to_working_tree_ca(const struct conv_attrs *ca,
+			       const char *path, const char *src,
+			       size_t len, struct strbuf *dst,
+			       const struct checkout_metadata *meta);
+int async_convert_to_working_tree_ca(const struct conv_attrs *ca,
+				     const char *path, const char *src,
+				     size_t len, struct strbuf *dst,
+				     const struct checkout_metadata *meta,
+				     void *dco);
+static inline int convert_to_working_tree(const struct index_state *istate,
+					  const char *path, const char *src,
+					  size_t len, struct strbuf *dst,
+					  const struct checkout_metadata *meta)
+{
+	struct conv_attrs ca;
+	convert_attrs(istate, &ca, path);
+	return convert_to_working_tree_ca(&ca, path, src, len, dst, meta);
+}
+static inline int async_convert_to_working_tree(const struct index_state *istate,
+						const char *path, const char *src,
+						size_t len, struct strbuf *dst,
+						const struct checkout_metadata *meta,
+						void *dco)
+{
+	struct conv_attrs ca;
+	convert_attrs(istate, &ca, path);
+	return async_convert_to_working_tree_ca(&ca, path, src, len, dst, meta, dco);
+}
 int async_query_available_blobs(const char *cmd,
 				struct string_list *available_paths);
 int renormalize_buffer(const struct index_state *istate,
@@ -136,6 +179,8 @@ struct stream_filter; /* opaque */
 struct stream_filter *get_stream_filter(const struct index_state *istate,
 					const char *path,
 					const struct object_id *);
+struct stream_filter *get_stream_filter_ca(const struct conv_attrs *ca,
+					   const struct object_id *oid);
 void free_stream_filter(struct stream_filter *);
 int is_null_stream_filter(struct stream_filter *);
 
@@ -154,5 +199,38 @@ int is_null_stream_filter(struct stream_filter *);
 int stream_filter(struct stream_filter *,
 		  const char *input, size_t *isize_p,
 		  char *output, size_t *osize_p);
+
+enum conv_attrs_classification {
+	/*
+	 * The blob must be loaded into a buffer before it can be
+	 * smudged. All smudging is done in-proc.
+	 */
+	CA_CLASS_INCORE,
+
+	/*
+	 * The blob must be loaded into a buffer, but uses a
+	 * single-file driver filter, such as rot13.
+	 */
+	CA_CLASS_INCORE_FILTER,
+
+	/*
+	 * The blob must be loaded into a buffer, but uses a
+	 * long-running driver process, such as LFS. This might or
+	 * might not use delayed operations. (The important thing is
+	 * that there is a single subordinate long-running process
+	 * handling all associated blobs and in case of delayed
+	 * operations, may hold per-blob state.)
+	 */
+	CA_CLASS_INCORE_PROCESS,
+
+	/*
+	 * The blob can be streamed and smudged without needing to
+	 * completely read it into a buffer.
+	 */
+	CA_CLASS_STREAMABLE,
+};
+
+enum conv_attrs_classification classify_conv_attrs(
+	const struct conv_attrs *ca);
 
 #endif /* CONVERT_H */
