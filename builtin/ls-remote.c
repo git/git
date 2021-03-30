@@ -124,8 +124,6 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		int hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
 		repo_set_hash_algo(the_repository, hash_algo);
 	}
-	if (transport_disconnect(transport))
-		return 1;
 
 	if (!dest && !quiet)
 		fprintf(stderr, "From %s\n", *remote->url);
@@ -151,5 +149,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	}
 
 	ref_array_clear(&ref_array);
+	if (transport_disconnect(transport))
+		return 1;
 	return status;
 }
