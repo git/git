@@ -14,13 +14,12 @@ static struct opts_multi_pack_index {
 	const char *object_dir;
 	unsigned long batch_size;
 	int progress;
+	unsigned flags;
 } opts;
 
 int cmd_multi_pack_index(int argc, const char **argv,
 			 const char *prefix)
 {
-	unsigned flags = 0;
-
 	static struct option builtin_multi_pack_index_options[] = {
 		OPT_FILENAME(0, "object-dir", &opts.object_dir,
 		  N_("object directory containing set of packfile and pack-index pairs")),
@@ -40,7 +39,7 @@ int cmd_multi_pack_index(int argc, const char **argv,
 	if (!opts.object_dir)
 		opts.object_dir = get_object_directory();
 	if (opts.progress)
-		flags |= MIDX_PROGRESS;
+		opts.flags |= MIDX_PROGRESS;
 
 	if (argc == 0)
 		usage_with_options(builtin_multi_pack_index_usage,
@@ -55,16 +54,16 @@ int cmd_multi_pack_index(int argc, const char **argv,
 
 	if (!strcmp(argv[0], "repack"))
 		return midx_repack(the_repository, opts.object_dir,
-			(size_t)opts.batch_size, flags);
+			(size_t)opts.batch_size, opts.flags);
 	if (opts.batch_size)
 		die(_("--batch-size option is only for 'repack' subcommand"));
 
 	if (!strcmp(argv[0], "write"))
-		return write_midx_file(opts.object_dir, flags);
+		return write_midx_file(opts.object_dir, opts.flags);
 	if (!strcmp(argv[0], "verify"))
-		return verify_midx_file(the_repository, opts.object_dir, flags);
+		return verify_midx_file(the_repository, opts.object_dir, opts.flags);
 	if (!strcmp(argv[0], "expire"))
-		return expire_midx_packs(the_repository, opts.object_dir, flags);
+		return expire_midx_packs(the_repository, opts.object_dir, opts.flags);
 
 	die(_("unrecognized subcommand: %s"), argv[0]);
 }
