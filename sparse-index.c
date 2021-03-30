@@ -4,6 +4,145 @@
 #include "tree.h"
 #include "pathspec.h"
 #include "trace2.h"
+#include "cache-tree.h"
+#include "config.h"
+#include "dir.h"
+#include "fsmonitor.h"
+
+static struct cache_entry *construct_sparse_dir_entry(
+				struct index_state *istate,
+				const char *sparse_dir,
+				struct cache_tree *tree)
+{
+	struct cache_entry *de;
+
+	de = make_cache_entry(istate, S_IFDIR, &tree->oid, sparse_dir, 0, 0);
+
+	de->ce_flags |= CE_SKIP_WORKTREE;
+	return de;
+}
+
+/*
+ * Returns the number of entries "inserted" into the index.
+ */
+static int convert_to_sparse_rec(struct index_state *istate,
+				 int num_converted,
+				 int start, int end,
+				 const char *ct_path, size_t ct_pathlen,
+				 struct cache_tree *ct)
+{
+	int i, can_convert = 1;
+	int start_converted = num_converted;
+	enum pattern_match_result match;
+	int dtype;
+	struct strbuf child_path = STRBUF_INIT;
+	struct pattern_list *pl = istate->sparse_checkout_patterns;
+
+	/*
+	 * Is the current path outside of the sparse cone?
+	 * Then check if the region can be replaced by a sparse
+	 * directory entry (everything is sparse and merged).
+	 */
+	match = path_matches_pattern_list(ct_path, ct_pathlen,
+					  NULL, &dtype, pl, istate);
+	if (match != NOT_MATCHED)
+		can_convert = 0;
+
+	for (i = start; can_convert && i < end; i++) {
+		struct cache_entry *ce = istate->cache[i];
+
+		if (ce_stage(ce) ||
+		    !(ce->ce_flags & CE_SKIP_WORKTREE))
+			can_convert = 0;
+	}
+
+	if (can_convert) {
+		struct cache_entry *se;
+		se = construct_sparse_dir_entry(istate, ct_path, ct);
+
+		istate->cache[num_converted++] = se;
+		return 1;
+	}
+
+	for (i = start; i < end; ) {
+		int count, span, pos = -1;
+		const char *base, *slash;
+		struct cache_entry *ce = istate->cache[i];
+
+		/*
+		 * Detect if this is a normal entry outside of any subtree
+		 * entry.
+		 */
+		base = ce->name + ct_pathlen;
+		slash = strchr(base, '/');
+
+		if (slash)
+			pos = cache_tree_subtree_pos(ct, base, slash - base);
+
+		if (pos < 0) {
+			istate->cache[num_converted++] = ce;
+			i++;
+			continue;
+		}
+
+		strbuf_setlen(&child_path, 0);
+		strbuf_add(&child_path, ce->name, slash - ce->name + 1);
+
+		span = ct->down[pos]->cache_tree->entry_count;
+		count = convert_to_sparse_rec(istate,
+					      num_converted, i, i + span,
+					      child_path.buf, child_path.len,
+					      ct->down[pos]->cache_tree);
+		num_converted += count;
+		i += span;
+	}
+
+	strbuf_release(&child_path);
+	return num_converted - start_converted;
+}
+
+int convert_to_sparse(struct index_state *istate)
+{
+	if (istate->split_index || istate->sparse_index ||
+	    !core_apply_sparse_checkout || !core_sparse_checkout_cone)
+		return 0;
+
+	/*
+	 * For now, only create a sparse index with the
+	 * GIT_TEST_SPARSE_INDEX environment variable. We will relax
+	 * this once we have a proper way to opt-in (and later still,
+	 * opt-out).
+	 */
+	if (!git_env_bool("GIT_TEST_SPARSE_INDEX", 0))
+		return 0;
+
+	if (!istate->sparse_checkout_patterns) {
+		istate->sparse_checkout_patterns = xcalloc(1, sizeof(struct pattern_list));
+		if (get_sparse_checkout_patterns(istate->sparse_checkout_patterns) < 0)
+			return 0;
+	}
+
+	if (!istate->sparse_checkout_patterns->use_cone_patterns) {
+		warning(_("attempting to use sparse-index without cone mode"));
+		return -1;
+	}
+
+	if (cache_tree_update(istate, 0)) {
+		warning(_("unable to update cache-tree, staying full"));
+		return -1;
+	}
+
+	remove_fsmonitor(istate);
+
+	trace2_region_enter("index", "convert_to_sparse", istate->repo);
+	istate->cache_nr = convert_to_sparse_rec(istate,
+						 0, 0, istate->cache_nr,
+						 "", 0, istate->cache_tree);
+	istate->drop_cache_tree = 1;
+	istate->sparse_index = 1;
+	trace2_region_leave("index", "convert_to_sparse", istate->repo);
+	return 0;
+}
 
 static void set_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {

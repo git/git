@@ -6,6 +6,7 @@
 #include "object-store.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
+#include "sparse-index.h"
 
 #ifndef DEBUG_CACHE_TREE
 #define DEBUG_CACHE_TREE 0
@@ -441,6 +442,8 @@ int cache_tree_update(struct index_state *istate, int flags)
 
 	if (i)
 		return i;
+
+	ensure_full_index(istate);
 
 	if (!istate->cache_tree)
 		istate->cache_tree = cache_tree();

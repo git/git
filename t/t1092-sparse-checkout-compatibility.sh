@@ -2,6 +2,11 @@
 
 test_description='compare full workdir to sparse workdir'
 
+# The verify_cache_tree() check is not sparse-aware (yet).
+# So, disable the check until that integration is complete.
+GIT_TEST_CHECK_CACHE_TREE=0
+GIT_TEST_SPLIT_INDEX=0
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -121,7 +126,9 @@ run_on_all () {
 test_all_match () {
 	run_on_all "$@" &&
 	test_cmp full-checkout-out sparse-checkout-out &&
-	test_cmp full-checkout-err sparse-checkout-err
+	test_cmp full-checkout-out sparse-index-out &&
+	test_cmp full-checkout-err sparse-checkout-err &&
+	test_cmp full-checkout-err sparse-index-err
 }
 
 test_sparse_match () {
@@ -130,6 +137,38 @@ test_sparse_match () {
 	test_cmp sparse-checkout-err sparse-index-err
 }
 
+test_expect_success 'sparse-index contents' '
+	init_repos &&
+
+	test-tool -C sparse-index read-cache --table >cache &&
+	for dir in folder1 folder2 x
+	do
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
+		grep "040000 tree $TREE	$dir/" cache \
+			|| return 1
+	done &&
+
+	GIT_TEST_SPARSE_INDEX=1 git -C sparse-index sparse-checkout set folder1 &&
+
+	test-tool -C sparse-index read-cache --table >cache &&
+	for dir in deep folder2 x
+	do
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
+		grep "040000 tree $TREE	$dir/" cache \
+			|| return 1
+	done &&
+
+	GIT_TEST_SPARSE_INDEX=1 git -C sparse-index sparse-checkout set deep/deeper1 &&
+
+	test-tool -C sparse-index read-cache --table >cache &&
+	for dir in deep/deeper2 folder1 folder2 x
+	do
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
+		grep "040000 tree $TREE	$dir/" cache \
+			|| return 1
+	done
+'
+
 test_expect_success 'expanded in-memory index matches full index' '
 	init_repos &&
 	test_sparse_match test-tool read-cache --expand --table
@@ -137,6 +176,7 @@ test_expect_success 'expanded in-memory index matches full index' '
 
 test_expect_success 'status with options' '
 	init_repos &&
+	test_sparse_match ls &&
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git status --porcelain=v2 -z -u &&
 	test_all_match git status --porcelain=v2 -uno &&
@@ -273,6 +313,17 @@ test_expect_failure 'checkout and reset (mixed)' '
 	test_all_match git reset update-folder2
 '
 
+# Ensure that sparse-index behaves identically to
+# sparse-checkout with a full index.
+test_expect_success 'checkout and reset (mixed) [sparse]' '
+	init_repos &&
+
+	test_sparse_match git checkout -b reset-test update-deep &&
+	test_sparse_match git reset deepest &&
+	test_sparse_match git reset update-folder1 &&
+	test_sparse_match git reset update-folder2
+'
+
 test_expect_success 'merge' '
 	init_repos &&
 
@@ -309,14 +360,20 @@ test_expect_success 'clean' '
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git clean -f &&
 	test_all_match git status --porcelain=v2 &&
+	test_sparse_match ls &&
+	test_sparse_match ls folder1 &&
 
 	test_all_match git clean -xf &&
 	test_all_match git status --porcelain=v2 &&
+	test_sparse_match ls &&
+	test_sparse_match ls folder1 &&
 
 	test_all_match git clean -xdf &&
 	test_all_match git status --porcelain=v2 &&
+	test_sparse_match ls &&
+	test_sparse_match ls folder1 &&
 
-	test_path_is_dir sparse-checkout/folder1
+	test_sparse_match test_path_is_dir folder1
 '
 
 test_done
