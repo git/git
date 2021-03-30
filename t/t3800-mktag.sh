@@ -17,7 +17,7 @@ check_verify_failure () {
 		grep '$2' message &&
 		if test '$3' != '--no-strict'
 		then
-			test_must_fail git mktag --no-strict <tag.sig 2>message.no-strict &&xb
+			test_must_fail git mktag --no-strict <tag.sig 2>message.no-strict &&
 			grep '$2' message.no-strict
 		fi
 	"
