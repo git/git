@@ -2097,7 +2097,7 @@ static int verify_absent_1(const struct cache_entry *ce,
 	if (o->index_only || o->reset || !o->update)
 		return 0;
 
-	len = check_leading_path(ce->name, ce_namelen(ce));
+	len = check_leading_path(ce->name, ce_namelen(ce), 0);
 	if (!len)
 		return 0;
 	else if (len > 0) {

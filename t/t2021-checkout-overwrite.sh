@@ -51,4 +51,16 @@ test_expect_success SYMLINKS 'the symlink remained' '
 	test -h a/b
 '
 
+test_expect_success SYMLINKS 'checkout -f must not follow symlinks when removing entries' '
+	git checkout -f start &&
+	mkdir dir &&
+	>dir/f &&
+	git add dir/f &&
+	git commit -m "add dir/f" &&
+	mv dir untracked &&
+	ln -s untracked dir &&
+	git checkout -f HEAD~ &&
+	test_path_is_file untracked/f
+'
+
 test_done
