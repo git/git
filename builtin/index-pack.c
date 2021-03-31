@@ -120,7 +120,7 @@ static int nr_threads;
 static int from_stdin;
 static int strict;
 static int do_fsck_object;
-static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
+static struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_GITMODULES;
 static int verbose;
 static int show_resolving_progress;
 static int show_stat;
@@ -212,7 +212,8 @@ static void cleanup_thread(void)
 	free(thread_data);
 }
 
-static int mark_link(struct object *obj, int type, void *data, struct fsck_options *options)
+static int mark_link(struct object *obj, enum object_type type,
+		     void *data, struct fsck_options *options)
 {
 	if (!obj)
 		return -1;
@@ -1712,22 +1713,6 @@ static void show_pack_info(int stat_only)
 	}
 }
 
-static int print_dangling_gitmodules(struct fsck_options *o,
-				     const struct object_id *oid,
-				     enum object_type object_type,
-				     int msg_type, const char *message)
-{
-	/*
-	 * NEEDSWORK: Plumb the MSG_ID (from fsck.c) here and use it
-	 * instead of relying on this string check.
-	 */
-	if (starts_with(message, "gitmodulesMissing")) {
-		printf("%s\n", oid_to_hex(oid));
-		return 0;
-	}
-	return fsck_error_function(o, oid, object_type, msg_type, message);
-}
-
 int cmd_index_pack(int argc, const char **argv, const char *prefix)
 {
 	int i, fix_thin_pack = 0, verify = 0, stat_only = 0, rev_index;
@@ -1948,13 +1933,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	else
 		close(input_fd);
 
-	if (do_fsck_object) {
-		struct fsck_options fo = fsck_options;
-
-		fo.error_func = print_dangling_gitmodules;
-		if (fsck_finish(&fo))
-			die(_("fsck error in pack objects"));
-	}
+	if (do_fsck_object && fsck_finish(&fsck_options))
+		die(_("fsck error in pack objects"));
 
 	free(objects);
 	strbuf_release(&index_name_buf);
