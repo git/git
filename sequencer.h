@@ -31,8 +31,10 @@ enum commit_msg_cleanup_mode {
 struct replay_opts {
 	enum replay_action action;
 
-	/* Boolean options */
+	/* Tri-state options: unspecified, false, or true */
 	int edit;
+
+	/* Boolean options */
 	int record_origin;
 	int no_commit;
 	int signoff;
@@ -71,7 +73,7 @@ struct replay_opts {
 	/* Only used by REPLAY_NONE */
 	struct rev_info *revs;
 };
-#define REPLAY_OPTS_INIT { .action = -1, .current_fixups = STRBUF_INIT }
+#define REPLAY_OPTS_INIT { .edit = -1, .action = -1, .current_fixups = STRBUF_INIT }
 
 /*
  * Note that ordering matters in this enum. Not only must it match the mapping
