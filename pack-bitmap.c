@@ -1350,6 +1350,24 @@ void test_bitmap_walk(struct rev_info *revs)
 	free_bitmap_index(bitmap_git);
 }
 
+int test_bitmap_commits(struct repository *r)
+{
+	struct bitmap_index *bitmap_git = prepare_bitmap_git(r);
+	struct object_id oid;
+	MAYBE_UNUSED void *value;
+
+	if (!bitmap_git)
+		die("failed to load bitmap indexes");
+
+	kh_foreach(bitmap_git->bitmaps, oid, value, {
+		printf("%s\n", oid_to_hex(&oid));
+	});
+
+	free_bitmap_index(bitmap_git);
+
+	return 0;
+}
+
 int rebuild_bitmap(const uint32_t *reposition,
 		   struct ewah_bitmap *source,
 		   struct bitmap *dest)
