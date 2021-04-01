@@ -567,6 +567,27 @@ static int index_name_stage_pos(struct index_state *istate, const char *name, in
 		}
 		first = next+1;
 	}
+
+	if (istate->sparse_index &&
+	    first > 0) {
+		/* Note: first <= istate->cache_nr */
+		struct cache_entry *ce = istate->cache[first - 1];
+
+		/*
+		 * If we are in a sparse-index _and_ the entry before the
+		 * insertion position is a sparse-directory entry that is
+		 * an ancestor of 'name', then we need to expand the index
+		 * and search again. This will only trigger once, because
+		 * thereafter the index is fully expanded.
+		 */
+		if (S_ISSPARSEDIR(ce->ce_mode) &&
+		    ce_namelen(ce) < namelen &&
+		    !strncmp(name, ce->name, ce_namelen(ce))) {
+			ensure_full_index(istate);
+			return index_name_stage_pos(istate, name, namelen, stage);
+		}
+	}
+
 	return -first-1;
 }
 
