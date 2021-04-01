@@ -138,7 +138,7 @@ static const char *gather_convert_stats_ascii(const char *data, unsigned long si
 	}
 }
 
-const char *get_cached_convert_stats_ascii(const struct index_state *istate,
+const char *get_cached_convert_stats_ascii(struct index_state *istate,
 					   const char *path)
 {
 	const char *ret;
@@ -222,7 +222,7 @@ static void check_global_conv_flags_eol(const char *path,
 	}
 }
 
-static int has_crlf_in_index(const struct index_state *istate, const char *path)
+static int has_crlf_in_index(struct index_state *istate, const char *path)
 {
 	unsigned long sz;
 	void *data;
@@ -496,7 +496,7 @@ static int encode_to_worktree(const char *path, const char *src, size_t src_len,
 	return 1;
 }
 
-static int crlf_to_git(const struct index_state *istate,
+static int crlf_to_git(struct index_state *istate,
 		       const char *path, const char *src, size_t len,
 		       struct strbuf *buf,
 		       enum crlf_action crlf_action, int conv_flags)
@@ -1307,7 +1307,7 @@ struct conv_attrs {
 
 static struct attr_check *check;
 
-static void convert_attrs(const struct index_state *istate,
+static void convert_attrs(struct index_state *istate,
 			  struct conv_attrs *ca, const char *path)
 {
 	struct attr_check_item *ccheck = NULL;
@@ -1369,7 +1369,7 @@ void reset_parsed_attributes(void)
 	user_convert_tail = NULL;
 }
 
-int would_convert_to_git_filter_fd(const struct index_state *istate, const char *path)
+int would_convert_to_git_filter_fd(struct index_state *istate, const char *path)
 {
 	struct conv_attrs ca;
 
@@ -1388,7 +1388,7 @@ int would_convert_to_git_filter_fd(const struct index_state *istate, const char 
 	return apply_filter(path, NULL, 0, -1, NULL, ca.drv, CAP_CLEAN, NULL, NULL);
 }
 
-const char *get_convert_attr_ascii(const struct index_state *istate, const char *path)
+const char *get_convert_attr_ascii(struct index_state *istate, const char *path)
 {
 	struct conv_attrs ca;
 
@@ -1414,7 +1414,7 @@ const char *get_convert_attr_ascii(const struct index_state *istate, const char 
 	return "";
 }
 
-int convert_to_git(const struct index_state *istate,
+int convert_to_git(struct index_state *istate,
 		   const char *path, const char *src, size_t len,
 		   struct strbuf *dst, int conv_flags)
 {
@@ -1448,7 +1448,7 @@ int convert_to_git(const struct index_state *istate,
 	return ret | ident_to_git(src, len, dst, ca.ident);
 }
 
-void convert_to_git_filter_fd(const struct index_state *istate,
+void convert_to_git_filter_fd(struct index_state *istate,
 			      const char *path, int fd, struct strbuf *dst,
 			      int conv_flags)
 {
@@ -1466,7 +1466,7 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 	ident_to_git(dst->buf, dst->len, dst, ca.ident);
 }
 
-static int convert_to_working_tree_internal(const struct index_state *istate,
+static int convert_to_working_tree_internal(struct index_state *istate,
 					    const char *path, const char *src,
 					    size_t len, struct strbuf *dst,
 					    int normalizing,
@@ -1510,7 +1510,7 @@ static int convert_to_working_tree_internal(const struct index_state *istate,
 	return ret | ret_filter;
 }
 
-int async_convert_to_working_tree(const struct index_state *istate,
+int async_convert_to_working_tree(struct index_state *istate,
 				  const char *path, const char *src,
 				  size_t len, struct strbuf *dst,
 				  const struct checkout_metadata *meta,
@@ -1519,7 +1519,7 @@ int async_convert_to_working_tree(const struct index_state *istate,
 	return convert_to_working_tree_internal(istate, path, src, len, dst, 0, meta, dco);
 }
 
-int convert_to_working_tree(const struct index_state *istate,
+int convert_to_working_tree(struct index_state *istate,
 			    const char *path, const char *src,
 			    size_t len, struct strbuf *dst,
 			    const struct checkout_metadata *meta)
@@ -1527,7 +1527,7 @@ int convert_to_working_tree(const struct index_state *istate,
 	return convert_to_working_tree_internal(istate, path, src, len, dst, 0, meta, NULL);
 }
 
-int renormalize_buffer(const struct index_state *istate, const char *path,
+int renormalize_buffer(struct index_state *istate, const char *path,
 		       const char *src, size_t len, struct strbuf *dst)
 {
 	int ret = convert_to_working_tree_internal(istate, path, src, len, dst, 1, NULL, NULL);
@@ -1964,7 +1964,7 @@ static struct stream_filter *ident_filter(const struct object_id *oid)
  * Note that you would be crazy to set CRLF, smudge/clean or ident to a
  * large binary blob you would want us not to slurp into the memory!
  */
-struct stream_filter *get_stream_filter(const struct index_state *istate,
+struct stream_filter *get_stream_filter(struct index_state *istate,
 					const char *path,
 					const struct object_id *oid)
 {

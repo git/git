@@ -20,7 +20,7 @@
  * to use find_pathspecs_matching_against_index() instead.
  */
 void add_pathspec_matches_against_index(const struct pathspec *pathspec,
-					const struct index_state *istate,
+					struct index_state *istate,
 					char *seen)
 {
 	int num_unmatched = 0, i;
@@ -51,7 +51,7 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
  * given pathspecs achieves against all items in the index.
  */
 char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
-					    const struct index_state *istate)
+					    struct index_state *istate)
 {
 	char *seen = xcalloc(pathspec->nr, 1);
 	add_pathspec_matches_against_index(pathspec, istate, seen);
@@ -702,7 +702,7 @@ void clear_pathspec(struct pathspec *pathspec)
 	pathspec->nr = 0;
 }
 
-int match_pathspec_attrs(const struct index_state *istate,
+int match_pathspec_attrs(struct index_state *istate,
 			 const char *name, int namelen,
 			 const struct pathspec_item *item)
 {

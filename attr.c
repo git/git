@@ -718,7 +718,7 @@ static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 	return res;
 }
 
-static struct attr_stack *read_attr_from_index(const struct index_state *istate,
+static struct attr_stack *read_attr_from_index(struct index_state *istate,
 					       const char *path,
 					       int macro_ok)
 {
@@ -748,7 +748,7 @@ static struct attr_stack *read_attr_from_index(const struct index_state *istate,
 	return res;
 }
 
-static struct attr_stack *read_attr(const struct index_state *istate,
+static struct attr_stack *read_attr(struct index_state *istate,
 				    const char *path, int macro_ok)
 {
 	struct attr_stack *res = NULL;
@@ -840,7 +840,7 @@ static void push_stack(struct attr_stack **attr_stack_p,
 	}
 }
 
-static void bootstrap_attr_stack(const struct index_state *istate,
+static void bootstrap_attr_stack(struct index_state *istate,
 				 struct attr_stack **stack)
 {
 	struct attr_stack *e;
@@ -878,7 +878,7 @@ static void bootstrap_attr_stack(const struct index_state *istate,
 	push_stack(stack, e, NULL, 0);
 }
 
-static void prepare_attr_stack(const struct index_state *istate,
+static void prepare_attr_stack(struct index_state *istate,
 			       const char *path, int dirlen,
 			       struct attr_stack **stack)
 {
@@ -1078,7 +1078,7 @@ static void determine_macros(struct all_attrs_item *all_attrs,
  * If check->check_nr is non-zero, only attributes in check[] are collected.
  * Otherwise all attributes are collected.
  */
-static void collect_some_attrs(const struct index_state *istate,
+static void collect_some_attrs(struct index_state *istate,
 			       const char *path,
 			       struct attr_check *check)
 {
@@ -1107,7 +1107,7 @@ static void collect_some_attrs(const struct index_state *istate,
 	fill(path, pathlen, basename_offset, check->stack, check->all_attrs, rem);
 }
 
-void git_check_attr(const struct index_state *istate,
+void git_check_attr(struct index_state *istate,
 		    const char *path,
 		    struct attr_check *check)
 {
@@ -1124,7 +1124,7 @@ void git_check_attr(const struct index_state *istate,
 	}
 }
 
-void git_all_attrs(const struct index_state *istate,
+void git_all_attrs(struct index_state *istate,
 		   const char *path, struct attr_check *check)
 {
 	int i;

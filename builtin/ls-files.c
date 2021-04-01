@@ -57,7 +57,7 @@ static const char *tag_modified = "";
 static const char *tag_skip_worktree = "";
 static const char *tag_resolve_undo = "";
 
-static void write_eolinfo(const struct index_state *istate,
+static void write_eolinfo(struct index_state *istate,
 			  const struct cache_entry *ce, const char *path)
 {
 	if (show_eol) {
@@ -122,7 +122,7 @@ static void print_debug(const struct cache_entry *ce)
 	}
 }
 
-static void show_dir_entry(const struct index_state *istate,
+static void show_dir_entry(struct index_state *istate,
 			   const char *tag, struct dir_entry *ent)
 {
 	int len = max_prefix_len;
@@ -139,7 +139,7 @@ static void show_dir_entry(const struct index_state *istate,
 	write_name(ent->name);
 }
 
-static void show_other_files(const struct index_state *istate,
+static void show_other_files(struct index_state *istate,
 			     const struct dir_struct *dir)
 {
 	int i;
@@ -152,7 +152,7 @@ static void show_other_files(const struct index_state *istate,
 	}
 }
 
-static void show_killed_files(const struct index_state *istate,
+static void show_killed_files(struct index_state *istate,
 			      const struct dir_struct *dir)
 {
 	int i;
@@ -254,7 +254,7 @@ static void show_ce(struct repository *repo, struct dir_struct *dir,
 	}
 }
 
-static void show_ru_info(const struct index_state *istate)
+static void show_ru_info(struct index_state *istate)
 {
 	struct string_list_item *item;
 

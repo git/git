@@ -2987,7 +2987,7 @@ static int blob_unchanged(struct merge_options *opt,
 	struct strbuf obuf = STRBUF_INIT;
 	struct strbuf abuf = STRBUF_INIT;
 	int ret = 0; /* assume changed for safety */
-	const struct index_state *idx = opt->repo->index;
+	struct index_state *idx = opt->repo->index;
 
 	if (a->mode != o->mode)
 		return 0;

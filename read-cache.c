@@ -549,7 +549,7 @@ int cache_name_stage_compare(const char *name1, int len1, int stage1, const char
 	return 0;
 }
 
-static int index_name_stage_pos(const struct index_state *istate, const char *name, int namelen, int stage)
+static int index_name_stage_pos(struct index_state *istate, const char *name, int namelen, int stage)
 {
 	int first, last;
 
@@ -570,7 +570,7 @@ static int index_name_stage_pos(const struct index_state *istate, const char *na
 	return -first-1;
 }
 
-int index_name_pos(const struct index_state *istate, const char *name, int namelen)
+int index_name_pos(struct index_state *istate, const char *name, int namelen)
 {
 	return index_name_stage_pos(istate, name, namelen, 0);
 }
@@ -3389,8 +3389,8 @@ int repo_read_index_unmerged(struct repository *repo)
  * We helpfully remove a trailing "/" from directories so that
  * the output of read_directory can be used as-is.
  */
-int index_name_is_other(const struct index_state *istate, const char *name,
-		int namelen)
+int index_name_is_other(struct index_state *istate, const char *name,
+			int namelen)
 {
 	int pos;
 	if (namelen && name[namelen - 1] == '/')
@@ -3408,7 +3408,7 @@ int index_name_is_other(const struct index_state *istate, const char *name,
 	return 1;
 }
 
-void *read_blob_data_from_index(const struct index_state *istate,
+void *read_blob_data_from_index(struct index_state *istate,
 				const char *path, unsigned long *size)
 {
 	int pos, len;
