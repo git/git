@@ -85,8 +85,41 @@ index, as well.
 
 Next, consumers of the index will be guarded against operating on a
 sparse-index by inserting calls to `ensure_full_index()` or
-`expand_index_to_path()`. After these guards are in place, we can begin
-leaving sparse-directory entries in the in-memory index structure.
+`expand_index_to_path()`. If a specific path is requested, then those will
+be protected from within the `index_file_exists()` and `index_name_pos()`
+API calls: they will call `ensure_full_index()` if necessary. The
+intention here is to preserve existing behavior when interacting with a
+sparse-checkout. We don't want a change to happen by accident, without
+tests. Many of these locations may not need any change before removing the
+guards, but we should not do so without tests to ensure the expected
+behavior happens.
+
+It may be desirable to _change_ the behavior of some commands in the
+presence of a sparse index or more generally in any sparse-checkout
+scenario. In such cases, these should be carefully communicated and
+tested. No such behavior changes are intended during this phase.
+
+During a scan of the codebase, not every iteration of the cache entries
+needs an `ensure_full_index()` check. The basic reasons include:
+
+1. The loop is scanning for entries with non-zero stage. These entries
+   are not collapsed into a sparse-directory entry.
+
+2. The loop is scanning for submodules. These entries are not collapsed
+   into a sparse-directory entry.
+
+3. The loop is part of the index API, especially around reading or
+   writing the format.
+
+4. The loop is checking for correct order of cache entries and that is
+   correct if and only if the sparse-directory entries are in the correct
+   location.
+
+5. The loop ignores entries with the `SKIP_WORKTREE` bit set, or is
+   otherwise already aware of sparse directory entries.
+
+6. The sparse-index is disabled at this point when using the split-index
+   feature, so no effort is made to protect the split-index API.
 
 Even after inserting these guards, we will keep expanding sparse-indexes
 for most Git commands using the `command_requires_full_index` repository
