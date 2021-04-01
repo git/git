@@ -122,6 +122,21 @@ pack.useSparse::
 	commits contain certain types of direct renames. Default is
 	`true`.
 
+pack.preferBitmapTips::
+	When selecting which commits will receive bitmaps, prefer a
+	commit at the tip of any reference that is a suffix of any value
+	of this configuration over any other commits in the "selection
+	window".
++
+Note that setting this configuration to `refs/foo` does not mean that
+the commits at the tips of `refs/foo/bar` and `refs/foo/baz` will
+necessarily be selected. This is because commits are selected for
+bitmaps from within a series of windows of variable length.
++
+If a commit at the tip of any reference which is a suffix of any value
+of this configuration is seen in a window, it is immediately given
+preference over any other commit in that window.
+
 pack.writeBitmaps (deprecated)::
 	This is a deprecated synonym for `repack.writeBitmaps`.
 

@@ -13,6 +13,7 @@
 #include "repository.h"
 #include "object-store.h"
 #include "list-objects-filter-options.h"
+#include "config.h"
 
 /*
  * An entry on the bitmap index, representing the bitmap for a given
@@ -1528,4 +1529,9 @@ off_t get_disk_usage_from_bitmap(struct bitmap_index *bitmap_git,
 	total += get_disk_usage_for_extended(bitmap_git);
 
 	return total;
+}
+
+const struct string_list *bitmap_preferred_tips(struct repository *r)
+{
+	return repo_config_get_value_multi(r, "pack.preferbitmaptips");
 }
