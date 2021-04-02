@@ -759,6 +759,15 @@ test_expect_success 'partial clone using HTTP' '
 	partial_clone "$HTTPD_DOCUMENT_ROOT_PATH/server" "$HTTPD_URL/smart/server"
 '
 
+test_expect_success 'reject cloning shallow repository using HTTP' '
+	test_when_finished "rm -rf repo" &&
+	git clone --bare --no-local --depth=1 src "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	test_must_fail git clone --reject-shallow $HTTPD_URL/smart/repo.git repo 2>err &&
+	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+
+	git clone --no-reject-shallow $HTTPD_URL/smart/repo.git repo
+'
+
 # DO NOT add non-httpd-specific tests here, because the last part of this
 # test script is only executed when httpd is available and enabled.
 
