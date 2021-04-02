@@ -47,6 +47,9 @@ UI, Workflows & Features
 
  * "git send-email" learned to honor the core.hooksPath configuration.
 
+ * "git format-patch -v<n>" learned to allow a reroll count that is
+   not an integer.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -65,6 +68,10 @@ Performance, Internal Implementation, Development Support etc.
  * Reorganize Makefile to allow building git.o and other essential
    objects without extra stuff needed only for testing.
 
+ * Preparatory API changes for parallel checkout.
+
+ * A simple IPC interface gets introduced to build services like
+   fsmonitor on top.
 
 
 Fixes since v2.31
