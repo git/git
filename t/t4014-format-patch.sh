@@ -386,6 +386,30 @@ test_expect_success 'reroll count (-v)' '
 	! grep -v "^Subject: \[PATCH v4 [0-3]/3\] " subjects
 '
 
+test_expect_success 'reroll count (-v) with a fractional number' '
+	rm -fr patches &&
+	git format-patch -o patches --cover-letter -v4.4 main..side >list &&
+	! grep -v "^patches/v4.4-000[0-3]-" list &&
+	sed -n -e "/^Subject: /p" $(cat list) >subjects &&
+	! grep -v "^Subject: \[PATCH v4.4 [0-3]/3\] " subjects
+'
+
+test_expect_success 'reroll (-v) count with a non number' '
+	rm -fr patches &&
+	git format-patch -o patches --cover-letter -v4rev2 main..side >list &&
+	! grep -v "^patches/v4rev2-000[0-3]-" list &&
+	sed -n -e "/^Subject: /p" $(cat list) >subjects &&
+	! grep -v "^Subject: \[PATCH v4rev2 [0-3]/3\] " subjects
+'
+
+test_expect_success 'reroll (-v) count with a non-pathname character' '
+	rm -fr patches &&
+	git format-patch -o patches --cover-letter -v4---..././../--1/.2//  main..side >list &&
+	! grep -v "patches/v4-\.-\.-\.-1-\.2-000[0-3]-" list &&
+	sed -n -e "/^Subject: /p" $(cat list) >subjects &&
+	! grep -v "^Subject: \[PATCH v4---\.\.\./\./\.\./--1/\.2// [0-3]/3\] " subjects
+'
+
 check_threading () {
 	expect="$1" &&
 	shift &&
@@ -2251,6 +2275,16 @@ test_expect_success 'interdiff: cover-letter' '
 '
 
 test_expect_success 'interdiff: reroll-count' '
+	git format-patch --cover-letter --interdiff=boop~2 -v2 -1 boop &&
+	test_i18ngrep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
+'
+
+test_expect_success 'interdiff: reroll-count with a non-integer' '
+	git format-patch --cover-letter --interdiff=boop~2 -v2.2 -1 boop &&
+	test_i18ngrep "^Interdiff:$" v2.2-0000-cover-letter.patch
+'
+
+test_expect_success 'interdiff: reroll-count with a integer' '
 	git format-patch --cover-letter --interdiff=boop~2 -v2 -1 boop &&
 	test_i18ngrep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
 '
