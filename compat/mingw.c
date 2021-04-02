@@ -1248,7 +1248,7 @@ static const char *quote_arg_msys2(const char *arg)
 
 static const char *parse_interpreter(const char *cmd)
 {
-	static char buf[100];
+	static char buf[MAX_PATH];
 	char *p, *opt;
 	int n, fd;
 
