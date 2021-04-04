@@ -554,4 +554,42 @@ test_expect_success 'fetch with bitmaps can reuse old base' '
 	)
 '
 
+test_expect_success 'pack.preferBitmapTips' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		# create enough commits that not all are receive bitmap
+		# coverage even if they are all at the tip of some reference.
+		test_commit_bulk --message="%s" 103 &&
+
+		git rev-list HEAD >commits.raw &&
+		sort <commits.raw >commits &&
+
+		git log --format="create refs/tags/%s %H" HEAD >refs &&
+		git update-ref --stdin <refs &&
+
+		git repack -adb &&
+		test-tool bitmap list-commits | sort >bitmaps &&
+
+		# remember which commits did not receive bitmaps
+		comm -13 bitmaps commits >before &&
+		test_file_not_empty before &&
+
+		# mark the commits which did not receive bitmaps as preferred,
+		# and generate the bitmap again
+		perl -pe "s{^}{create refs/tags/include/$. }" <before |
+			git update-ref --stdin &&
+		git -c pack.preferBitmapTips=refs/tags/include repack -adb &&
+
+		# finally, check that the commit(s) without bitmap coverage
+		# are not the same ones as before
+		test-tool bitmap list-commits | sort >bitmaps &&
+		comm -13 bitmaps commits >after &&
+
+		! test_cmp before after
+	)
+'
+
 test_done
