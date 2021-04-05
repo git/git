@@ -413,7 +413,7 @@ ifeq ($(uname_S),Windows)
 	# link.exe next to, and required by, cl.exe, we have to prepend this
 	# onto the existing $PATH.
 	#
-	SANE_TOOL_PATH ?= $(msvc_bin_dir_msys)
+	SANE_TOOL_PATH ?= $(msvc_bin_dir_msys):$(sdk_ver_bin_dir_msys)
 	HAVE_ALLOCA_H = YesPlease
 	NO_PREAD = YesPlease
 	NEEDS_CRYPTO_WITH_SSL = YesPlease
@@ -473,6 +473,7 @@ endif
 	# See https://msdn.microsoft.com/en-us/library/ms235330.aspx
 	EXTLIBS = user32.lib advapi32.lib shell32.lib wininet.lib ws2_32.lib invalidcontinue.obj kernel32.lib ntdll.lib
 	PTHREAD_LIBS =
+	RC = compat/vcbuild/scripts/rc.pl
 	lib =
 	BASIC_CFLAGS += $(vcpkg_inc) $(sdk_includes) $(msvc_includes)
 ifndef DEBUG
