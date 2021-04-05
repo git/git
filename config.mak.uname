@@ -506,6 +506,7 @@ endif
 	# handle twice, or to access the osfhandle of an already-closed stdout
 	# See https://msdn.microsoft.com/en-us/library/ms235330.aspx
 	EXTLIBS = user32.lib advapi32.lib shell32.lib wininet.lib ws2_32.lib invalidcontinue.obj kernel32.lib ntdll.lib
+	GITLIBS += git.res
 	PTHREAD_LIBS =
 	RC = compat/vcbuild/scripts/rc.pl
 	lib =
