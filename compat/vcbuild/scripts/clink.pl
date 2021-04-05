@@ -122,6 +122,8 @@ while (@ARGV) {
 		push(@cflags, "-wd4996");
 	} elsif ("$arg" =~ /^-W[a-z]/) {
 		# let's ignore those
+	} elsif ("$arg" eq "-fno-stack-protector") {
+		# eat this
 	} else {
 		push(@args, $arg);
 	}
