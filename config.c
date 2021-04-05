@@ -1,4 +1,4 @@
-/*
+/*# Git
  * GIT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
