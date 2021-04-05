@@ -15,6 +15,7 @@ my @cflags = ();
 my @lflags = ();
 my $is_linking = 0;
 my $is_debug = 0;
+my $is_gui = 0;
 while (@ARGV) {
 	my $arg = shift @ARGV;
 	if ("$arg" eq "-DDEBUG") {
@@ -124,11 +125,21 @@ while (@ARGV) {
 		# let's ignore those
 	} elsif ("$arg" eq "-fno-stack-protector") {
 		# eat this
+	} elsif ("$arg" eq "-mwindows") {
+		$is_gui = 1;
 	} else {
 		push(@args, $arg);
 	}
 }
 if ($is_linking) {
+	if ($is_gui) {
+		push(@args, "-ENTRY:wWinMainCRTStartup");
+		push(@args, "-SUBSYSTEM:WINDOWS");
+	} else {
+		push(@args, "-ENTRY:wmainCRTStartup");
+		push(@args, "-SUBSYSTEM:CONSOLE");
+	}
+
 	push(@args, @lflags);
 	unshift(@args, "link.exe");
 } else {
