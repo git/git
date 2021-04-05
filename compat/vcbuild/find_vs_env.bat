@@ -99,6 +99,7 @@ REM ================================================================
 
    SET sdk_dir=%WindowsSdkDir%
    SET sdk_ver=%WindowsSDKVersion%
+   SET sdk_ver_bin_dir=%WindowsSdkVerBinPath%%tgt%
    SET si=%sdk_dir%Include\%sdk_ver%
    SET sdk_includes=-I"%si%ucrt" -I"%si%um" -I"%si%shared"
    SET sl=%sdk_dir%lib\%sdk_ver%
@@ -130,6 +131,7 @@ REM ================================================================
 
    SET sdk_dir=%WindowsSdkDir%
    SET sdk_ver=%WindowsSDKVersion%
+   SET sdk_ver_bin_dir=%WindowsSdkVerBinPath%bin\amd64
    SET si=%sdk_dir%Include\%sdk_ver%
    SET sdk_includes=-I"%si%ucrt" -I"%si%um" -I"%si%shared" -I"%si%winrt"
    SET sl=%sdk_dir%lib\%sdk_ver%
@@ -159,6 +161,11 @@ REM ================================================================
 
    echo msvc_includes=%msvc_includes%
    echo msvc_libs=%msvc_libs%
+
+   echo sdk_ver_bin_dir=%sdk_ver_bin_dir%
+   SET X1=%sdk_ver_bin_dir:C:=/C%
+   SET X2=%X1:\=/%
+   echo sdk_ver_bin_dir_msys=%X2%
 
    echo sdk_includes=%sdk_includes%
    echo sdk_libs=%sdk_libs%
