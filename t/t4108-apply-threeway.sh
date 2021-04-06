@@ -160,4 +160,24 @@ test_expect_success 'apply -3 with add/add conflict (dirty working tree)' '
 	test_cmp three.save three
 '
 
+test_expect_success 'apply -3 with ambiguous repeating file' '
+	git reset --hard &&
+	test_write_lines 1 2 1 2 1 2 1 2 1 2 1 >one_two_repeat &&
+	git add one_two_repeat &&
+	git commit -m "init one" &&
+	test_write_lines 1 2 1 2 1 2 1 2 one 2 1 >one_two_repeat &&
+	git commit -a -m "change one" &&
+
+	git diff HEAD~ >Repeat.diff &&
+	git reset --hard HEAD~ &&
+
+	test_write_lines 1 2 1 2 1 2 one 2 1 2 one >one_two_repeat &&
+	git commit -a -m "change surrounding one" &&
+
+	git apply --index --3way Repeat.diff &&
+	test_write_lines 1 2 1 2 1 2 one 2 one 2 one >expect &&
+
+	test_cmp expect one_two_repeat
+'
+
 test_done
