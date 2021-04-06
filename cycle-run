@@ -41,24 +41,30 @@ test_it () {
 	esac
 }
 
+tested () {
+	# sign=$1 commit=$2
+	egrep "^$OKNG $1($2|$(git rev-parse "$2^{tree}"))" .Cycle/log >/dev/null
+}
+
 test_them () {
 	while read merge parent sides
 	do
 		case "$parent" in
 		?*)
-			egrep "^$OKNG M$merge" .Cycle/log >/dev/null && continue
+			tested M $merge && continue
 			echo "TEST M $merge"
+
 			for tip in $sides
 			do
 				git rev-parse --verify --quiet "$tip" || continue
-				egrep "^$OKNG T$tip" .Cycle/log >/dev/null && continue
+				tested T $tip && continue
 				echo "TEST $tip $merge"
 			done
 			;;
 		'')
 			commit=$merge
 			git rev-parse --verify --quiet "$commit" || continue
-			egrep "^$OKNG C$commit" .Cycle/log >/dev/null ||
+			tested C $commit && continue
 			echo "TEST C $commit"
 		esac
 	done |
@@ -97,6 +103,7 @@ test_them () {
 			OK=NG
 		fi
 		echo "$OK $type$commit $count" >>.Cycle/log
+		echo "$OK $type$(git rev-parse $commit^{tree}) $count" >>.Cycle/log
 		echo >&2 "$count/$total $OK $subject"
 		count=$(( $count - 1 ))
 	done <.Cycle/plan
