@@ -422,8 +422,12 @@ test_expect_success $PREREQ 'reject long lines' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--transfer-encoding=8bit \
 		$patches longline.patch \
-		2>errors &&
-	grep longline.patch errors
+		2>actual &&
+	cat >expect <<-\EOF &&
+	fatal: longline.patch: 35: patch contains a line longer than 998 characters
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success $PREREQ 'no patch was sent' '
@@ -527,9 +531,13 @@ test_expect_success $PREREQ "--validate respects relative core.hooksPath path" '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--validate \
-		longline.patch 2>err &&
+		longline.patch 2>actual &&
 	test_path_is_file my-hooks.ran &&
-	grep "rejected by sendemail-validate" err
+	cat >expect <<-\EOF &&
+	fatal: longline.patch: rejected by sendemail-validate hook
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success $PREREQ "--validate respects absolute core.hooksPath path" '
@@ -540,9 +548,13 @@ test_expect_success $PREREQ "--validate respects absolute core.hooksPath path" '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--validate \
-		longline.patch 2>err &&
+		longline.patch 2>actual &&
 	test_path_is_file my-hooks.ran &&
-	grep "rejected by sendemail-validate" err
+	cat >expect <<-\EOF &&
+	fatal: longline.patch: rejected by sendemail-validate hook
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
 '
 
 for enc in 7bit 8bit quoted-printable base64
