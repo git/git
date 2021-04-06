@@ -219,8 +219,8 @@ sub system_or_msg {
 	my $exit_code = $? >> 8;
 	return unless $signalled or $exit_code;
 
-	return sprintf(__("failed to run command %s, died with code %d"),
-		       "@$args", $exit_code);
+	return sprintf(__("fatal: command '%s' died with exit code %d"),
+		       $args->[0], $exit_code);
 }
 
 sub system_or_die {
@@ -1964,7 +1964,8 @@ sub validate_patch {
 		}
 		if ($hook_error) {
 			die sprintf(__("fatal: %s: rejected by sendemail-validate hook\n" .
-				       "warning: no patches were sent\n"), $fn);
+				       "%s\n" .
+				       "warning: no patches were sent\n"), $fn, $hook_error);
 		}
 	}
 
@@ -1975,9 +1976,8 @@ sub validate_patch {
 			or die sprintf(__("unable to open %s: %s\n"), $fn, $!);
 		while (my $line = <$fh>) {
 			if (length($line) > 998) {
-				die sprintf(__("fatal: %s: %d: patch contains a line longer than 998 characters\n" .
-					       "warning: no patches were sent\n"),
-					    $fn, $.);
+				die sprintf(__("fatal: %s:%d is longer than 998 characters\n" .
+					       "warning: no patches were sent\n"), $fn, $.);
 			}
 		}
 	}
