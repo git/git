@@ -15,6 +15,12 @@ test_expect_success 'setup bitmap config' '
 	git config pack.writebitmaps true
 '
 
+# we need to create the tag up front such that it is covered by the repack and
+# thus by generated bitmaps.
+test_expect_success 'create tags' '
+	git tag --message="tag pointing to HEAD" perf-tag HEAD
+'
+
 test_perf 'repack to disk' '
 	git repack -ad
 '
@@ -41,6 +47,14 @@ test_perf 'rev-list (commits)' '
 
 test_perf 'rev-list (objects)' '
 	git rev-list --all --use-bitmap-index --objects >/dev/null
+'
+
+test_perf 'rev-list with tag negated via --not --all (objects)' '
+	git rev-list perf-tag --not --all --use-bitmap-index --objects >/dev/null
+'
+
+test_perf 'rev-list with negative tag (objects)' '
+	git rev-list HEAD --not perf-tag --use-bitmap-index --objects >/dev/null
 '
 
 test_perf 'rev-list count with blob:none' '
