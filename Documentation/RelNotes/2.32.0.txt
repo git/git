@@ -50,6 +50,10 @@ UI, Workflows & Features
  * "git format-patch -v<n>" learned to allow a reroll count that is
    not an integer.
 
+ * "git commit" learned "--trailer <key>[=<value>]" option; together
+   with the interpret-trailers command, this will make it easier to
+   support custom trailers.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -72,6 +76,18 @@ Performance, Internal Implementation, Development Support etc.
 
  * A simple IPC interface gets introduced to build services like
    fsmonitor on top.
+
+ * Fsck API clean-up.
+
+ * SECURITY.md that is facing individual contributors and end users
+   has been introduced.  Also a procedure to follow when preparing
+   embargoed releases has been spelled out.
+   (merge 09420b7648 js/security-md later to maint).
+
+ * Optimize "rev-list --use-bitmap-index --objects" corner case that
+   uses negative tags as the stopping points.
+
+ * CMake update for vsbuild.
 
 
 Fixes since v2.31
@@ -126,6 +142,19 @@ Fixes since v2.31
    commit it is checking out, it wasn't careful enough not to follow
    symbolic links, which has been corrected.
    (merge fab78a0c3d mt/checkout-remove-nofollow later to maint).
+
+ * A few option description strings started with capital letters,
+   which were corrected.
+   (merge 5ee90326dc cc/downcase-opt-help later to maint).
+
+ * Plug or annotate remaining leaks that trigger while running the
+   very basic set of tests.
+   (merge 68ffe095a2 ah/plugleaks later to maint).
+
+ * The hashwrite() API uses a buffering mechanism to avoid calling
+   write(2) too frequently. This logic has been refactored to be
+   easier to understand.
+   (merge ddaf1f62e3 ds/clarify-hashwrite later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
