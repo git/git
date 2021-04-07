@@ -1452,6 +1452,8 @@ int transport_disconnect(struct transport *transport)
 	int ret = 0;
 	if (transport->vtable->disconnect)
 		ret = transport->vtable->disconnect(transport);
+	if (transport->got_remote_refs)
+		free_refs((void *)transport->remote_refs);
 	free(transport);
 	return ret;
 }

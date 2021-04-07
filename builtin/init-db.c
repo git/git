@@ -25,7 +25,6 @@
 
 static int init_is_bare_repository = 0;
 static int init_shared_repository = -1;
-static const char *init_db_template_dir;
 
 static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 			     DIR *dir)
@@ -94,7 +93,7 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 	}
 }
 
-static void copy_templates(const char *template_dir)
+static void copy_templates(const char *template_dir, const char *init_template_dir)
 {
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf template_path = STRBUF_INIT;
@@ -107,7 +106,7 @@ static void copy_templates(const char *template_dir)
 	if (!template_dir)
 		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
 	if (!template_dir)
-		template_dir = init_db_template_dir;
+		template_dir = init_template_dir;
 	if (!template_dir)
 		template_dir = to_free = system_path(DEFAULT_GIT_TEMPLATE_DIR);
 	if (!template_dir[0]) {
@@ -152,17 +151,6 @@ free_return:
 	strbuf_release(&path);
 	strbuf_release(&template_path);
 	clear_repository_format(&template_format);
-}
-
-static int git_init_db_config(const char *k, const char *v, void *cb)
-{
-	if (!strcmp(k, "init.templatedir"))
-		return git_config_pathname(&init_db_template_dir, k, v);
-
-	if (starts_with(k, "core."))
-		return platform_core_config(k, v, cb);
-
-	return 0;
 }
 
 /*
@@ -212,11 +200,8 @@ static int create_default_files(const char *template_path,
 	int reinit;
 	int filemode;
 	struct strbuf err = STRBUF_INIT;
+	const char *init_template_dir = NULL;
 	const char *work_tree = get_git_work_tree();
-
-	/* Just look for `init.templatedir` */
-	init_db_template_dir = NULL; /* re-set in case it was set before */
-	git_config(git_init_db_config, NULL);
 
 	/*
 	 * First copy the templates -- we might have the default
@@ -227,7 +212,8 @@ static int create_default_files(const char *template_path,
 	 * values (since we've just potentially changed what's available on
 	 * disk).
 	 */
-	copy_templates(template_path);
+	git_config_get_value("init.templatedir", &init_template_dir);
+	copy_templates(template_path, init_template_dir);
 	git_config_clear();
 	reset_shared_repository();
 	git_config(git_default_config, NULL);
@@ -422,8 +408,8 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	}
 	startup_info->have_repository = 1;
 
-	/* Just look for `core.hidedotfiles` */
-	git_config(git_init_db_config, NULL);
+	/* Ensure `core.hidedotfiles` is processed */
+	git_config(platform_core_config, NULL);
 
 	safe_create_dir(git_dir, 0);
 
@@ -575,8 +561,10 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	if (real_git_dir && !is_absolute_path(real_git_dir))
 		real_git_dir = real_pathdup(real_git_dir, 1);
 
-	if (template_dir && *template_dir && !is_absolute_path(template_dir))
+	if (template_dir && *template_dir && !is_absolute_path(template_dir)) {
 		template_dir = absolute_pathdup(template_dir);
+		UNLEAK(template_dir);
+	}
 
 	if (argc == 1) {
 		int mkdir_tried = 0;
