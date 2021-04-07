@@ -265,7 +265,6 @@ sub handleCompileLine
             shift @parts;
         } elsif ("$part" eq "-c") {
             # ignore compile flag
-        } elsif ("$part" eq "-c") {
         } elsif ($part =~ /^.?-I/) {
             push(@incpaths, $part);
         } elsif ($part =~ /^.?-D/) {
