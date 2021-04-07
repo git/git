@@ -92,6 +92,13 @@ sub createProject {
     my $rcdefines = $defines;
     $rcdefines =~ s/(?<!\\)"/\\$&/g;
 
+    my $entrypoint = 'wmainCRTStartup';
+    my $subsystem = 'Console';
+    if (grep /^-mwindows$/, @{$$build_structure{"$prefix${name}_LFLAGS"}}) {
+        $entrypoint = 'wWinMainCRTStartup';
+        $subsystem = 'Windows';
+    }
+
     my $dir = $vcxproj;
     $dir =~ s/\/[^\/]*$//;
     die "Could not create the directory $dir for $label project!\n" unless (-d "$dir" || mkdir "$dir");
@@ -179,9 +186,9 @@ sub createProject {
       <AdditionalLibraryDirectories>\$(VCPKGLibDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>\$(VCPKGLibs);\$(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>invalidcontinue.obj %(AdditionalOptions)</AdditionalOptions>
-      <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
+      <EntryPointSymbol>$entrypoint</EntryPointSymbol>
       <ManifestFile>$cdup\\compat\\win32\\git.manifest</ManifestFile>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>$subsystem</SubSystem>
     </Link>
 EOM
     if ($target eq 'libgit') {
