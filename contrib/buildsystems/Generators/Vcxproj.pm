@@ -89,6 +89,9 @@ sub createProject {
     $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
 
+    my $rcdefines = $defines;
+    $rcdefines =~ s/(?<!\\)"/\\$&/g;
+
     my $dir = $vcxproj;
     $dir =~ s/\/[^\/]*$//;
     die "Could not create the directory $dir for $label project!\n" unless (-d "$dir" || mkdir "$dir");
@@ -203,6 +206,9 @@ EOM
       <PreprocessorDefinitions>WIN32;_DEBUG;$defines;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;$rcdefines;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
@@ -216,6 +222,9 @@ EOM
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;$rcdefines;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -225,9 +234,15 @@ EOM
   <ItemGroup>
 EOM
     foreach(@sources) {
-        print F << "EOM";
+        if (/\.rc$/) {
+            print F << "EOM";
+    <ResourceCompile Include="$_" />
+EOM
+        } else {
+            print F << "EOM";
     <ClCompile Include="$_" />
 EOM
+        }
     }
     print F << "EOM";
   </ItemGroup>
