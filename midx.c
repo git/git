@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "repository.h"
 #include "chunk-format.h"
+#include "pack.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -47,9 +48,20 @@ static uint8_t oid_version(void)
 	}
 }
 
+static const unsigned char *get_midx_checksum(struct multi_pack_index *m)
+{
+	return m->data + m->data_len - the_hash_algo->rawsz;
+}
+
 static char *get_midx_filename(const char *object_dir)
 {
 	return xstrfmt("%s/pack/multi-pack-index", object_dir);
+}
+
+char *get_midx_rev_filename(struct multi_pack_index *m)
+{
+	return xstrfmt("%s/pack/multi-pack-index-%s.rev",
+		       m->object_dir, hash_to_hex(get_midx_checksum(m)));
 }
 
 static int midx_read_oid_fanout(const unsigned char *chunk_start,
@@ -239,7 +251,7 @@ struct object_id *nth_midxed_object_oid(struct object_id *oid,
 	return oid;
 }
 
-static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
+off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 {
 	const unsigned char *offset_data;
 	uint32_t offset32;
@@ -258,7 +270,7 @@ static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 	return offset32;
 }
 
-static uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
+uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 {
 	return get_be32(m->chunk_object_offsets +
 			(off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
@@ -431,6 +443,14 @@ static int pack_info_compare(const void *_a, const void *_b)
 	return strcmp(a->pack_name, b->pack_name);
 }
 
+static int idx_or_pack_name_cmp(const void *_va, const void *_vb)
+{
+	const char *pack_name = _va;
+	const struct pack_info *compar = _vb;
+
+	return cmp_idx_or_pack_name(pack_name, compar->pack_name);
+}
+
 struct write_midx_context {
 	struct pack_info *info;
 	uint32_t nr;
@@ -443,8 +463,11 @@ struct write_midx_context {
 	uint32_t entries_nr;
 
 	uint32_t *pack_perm;
+	uint32_t *pack_order;
 	unsigned large_offsets_needed:1;
 	uint32_t num_large_offsets;
+
+	int preferred_pack_idx;
 };
 
 static void add_pack_to_midx(const char *full_path, size_t full_path_len,
@@ -489,6 +512,7 @@ struct pack_midx_entry {
 	uint32_t pack_int_id;
 	time_t pack_mtime;
 	uint64_t offset;
+	unsigned preferred : 1;
 };
 
 static int midx_oid_compare(const void *_a, const void *_b)
@@ -499,6 +523,12 @@ static int midx_oid_compare(const void *_a, const void *_b)
 
 	if (cmp)
 		return cmp;
+
+	/* Sort objects in a preferred pack first when multiple copies exist. */
+	if (a->preferred > b->preferred)
+		return -1;
+	if (a->preferred < b->preferred)
+		return 1;
 
 	if (a->pack_mtime > b->pack_mtime)
 		return -1;
@@ -527,7 +557,8 @@ static int nth_midxed_pack_midx_entry(struct multi_pack_index *m,
 static void fill_pack_entry(uint32_t pack_int_id,
 			    struct packed_git *p,
 			    uint32_t cur_object,
-			    struct pack_midx_entry *entry)
+			    struct pack_midx_entry *entry,
+			    int preferred)
 {
 	if (nth_packed_object_id(&entry->oid, p, cur_object) < 0)
 		die(_("failed to locate object %d in packfile"), cur_object);
@@ -536,6 +567,7 @@ static void fill_pack_entry(uint32_t pack_int_id,
 	entry->pack_mtime = p->mtime;
 
 	entry->offset = nth_packed_object_offset(p, cur_object);
+	entry->preferred = !!preferred;
 }
 
 /*
@@ -552,7 +584,8 @@ static void fill_pack_entry(uint32_t pack_int_id,
 static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 						  struct pack_info *info,
 						  uint32_t nr_packs,
-						  uint32_t *nr_objects)
+						  uint32_t *nr_objects,
+						  int preferred_pack)
 {
 	uint32_t cur_fanout, cur_pack, cur_object;
 	uint32_t alloc_fanout, alloc_objects, total_objects = 0;
@@ -589,12 +622,17 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 				nth_midxed_pack_midx_entry(m,
 							   &entries_by_fanout[nr_fanout],
 							   cur_object);
+				if (nth_midxed_pack_int_id(m, cur_object) == preferred_pack)
+					entries_by_fanout[nr_fanout].preferred = 1;
+				else
+					entries_by_fanout[nr_fanout].preferred = 0;
 				nr_fanout++;
 			}
 		}
 
 		for (cur_pack = start_pack; cur_pack < nr_packs; cur_pack++) {
 			uint32_t start = 0, end;
+			int preferred = cur_pack == preferred_pack;
 
 			if (cur_fanout)
 				start = get_pack_fanout(info[cur_pack].p, cur_fanout - 1);
@@ -602,7 +640,11 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 
 			for (cur_object = start; cur_object < end; cur_object++) {
 				ALLOC_GROW(entries_by_fanout, nr_fanout + 1, alloc_fanout);
-				fill_pack_entry(cur_pack, info[cur_pack].p, cur_object, &entries_by_fanout[nr_fanout]);
+				fill_pack_entry(cur_pack,
+						info[cur_pack].p,
+						cur_object,
+						&entries_by_fanout[nr_fanout],
+						preferred);
 				nr_fanout++;
 			}
 		}
@@ -776,10 +818,80 @@ static int write_midx_large_offsets(struct hashfile *f,
 	return 0;
 }
 
+struct midx_pack_order_data {
+	uint32_t nr;
+	uint32_t pack;
+	off_t offset;
+};
+
+static int midx_pack_order_cmp(const void *va, const void *vb)
+{
+	const struct midx_pack_order_data *a = va, *b = vb;
+	if (a->pack < b->pack)
+		return -1;
+	else if (a->pack > b->pack)
+		return 1;
+	else if (a->offset < b->offset)
+		return -1;
+	else if (a->offset > b->offset)
+		return 1;
+	else
+		return 0;
+}
+
+static uint32_t *midx_pack_order(struct write_midx_context *ctx)
+{
+	struct midx_pack_order_data *data;
+	uint32_t *pack_order;
+	uint32_t i;
+
+	ALLOC_ARRAY(data, ctx->entries_nr);
+	for (i = 0; i < ctx->entries_nr; i++) {
+		struct pack_midx_entry *e = &ctx->entries[i];
+		data[i].nr = i;
+		data[i].pack = ctx->pack_perm[e->pack_int_id];
+		if (!e->preferred)
+			data[i].pack |= (1U << 31);
+		data[i].offset = e->offset;
+	}
+
+	QSORT(data, ctx->entries_nr, midx_pack_order_cmp);
+
+	ALLOC_ARRAY(pack_order, ctx->entries_nr);
+	for (i = 0; i < ctx->entries_nr; i++)
+		pack_order[i] = data[i].nr;
+	free(data);
+
+	return pack_order;
+}
+
+static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
+				     struct write_midx_context *ctx)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *tmp_file;
+
+	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex(midx_hash));
+
+	tmp_file = write_rev_file_order(NULL, ctx->pack_order, ctx->entries_nr,
+					midx_hash, WRITE_REV);
+
+	if (finalize_object_file(tmp_file, buf.buf))
+		die(_("cannot store reverse index file"));
+
+	strbuf_release(&buf);
+}
+
+static void clear_midx_files_ext(struct repository *r, const char *ext,
+				 unsigned char *keep_hash);
+
 static int write_midx_internal(const char *object_dir, struct multi_pack_index *m,
-			       struct string_list *packs_to_drop, unsigned flags)
+			       struct string_list *packs_to_drop,
+			       const char *preferred_pack_name,
+			       unsigned flags)
 {
 	char *midx_name;
+	unsigned char midx_hash[GIT_MAX_RAWSZ];
 	uint32_t i;
 	struct hashfile *f = NULL;
 	struct lock_file lk;
@@ -828,7 +940,19 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	if (ctx.m && ctx.nr == ctx.m->num_packs && !packs_to_drop)
 		goto cleanup;
 
-	ctx.entries = get_sorted_entries(ctx.m, ctx.info, ctx.nr, &ctx.entries_nr);
+	ctx.preferred_pack_idx = -1;
+	if (preferred_pack_name) {
+		for (i = 0; i < ctx.nr; i++) {
+			if (!cmp_idx_or_pack_name(preferred_pack_name,
+						  ctx.info[i].pack_name)) {
+				ctx.preferred_pack_idx = i;
+				break;
+			}
+		}
+	}
+
+	ctx.entries = get_sorted_entries(ctx.m, ctx.info, ctx.nr, &ctx.entries_nr,
+					 ctx.preferred_pack_idx);
 
 	ctx.large_offsets_needed = 0;
 	for (i = 0; i < ctx.entries_nr; i++) {
@@ -889,13 +1013,30 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 			pack_name_concat_len += strlen(ctx.info[i].pack_name) + 1;
 	}
 
+	/* Check that the preferred pack wasn't expired (if given). */
+	if (preferred_pack_name) {
+		struct pack_info *preferred = bsearch(preferred_pack_name,
+						      ctx.info, ctx.nr,
+						      sizeof(*ctx.info),
+						      idx_or_pack_name_cmp);
+
+		if (!preferred)
+			warning(_("unknown preferred pack: '%s'"),
+				preferred_pack_name);
+		else {
+			uint32_t perm = ctx.pack_perm[preferred->orig_pack_int_id];
+			if (perm == PACK_EXPIRED)
+				warning(_("preferred pack '%s' is expired"),
+					preferred_pack_name);
+		}
+	}
+
 	if (pack_name_concat_len % MIDX_CHUNK_ALIGNMENT)
 		pack_name_concat_len += MIDX_CHUNK_ALIGNMENT -
 					(pack_name_concat_len % MIDX_CHUNK_ALIGNMENT);
 
 	hold_lock_file_for_update(&lk, midx_name, LOCK_DIE_ON_ERROR);
 	f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
-	FREE_AND_NULL(midx_name);
 
 	if (ctx.m)
 		close_midx(ctx.m);
@@ -927,8 +1068,16 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	write_midx_header(f, get_num_chunks(cf), ctx.nr - dropped_packs);
 	write_chunkfile(cf, &ctx);
 
-	finalize_hashfile(f, NULL, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
+	finalize_hashfile(f, midx_hash, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
 	free_chunkfile(cf);
+
+	if (flags & MIDX_WRITE_REV_INDEX)
+		ctx.pack_order = midx_pack_order(&ctx);
+
+	if (flags & MIDX_WRITE_REV_INDEX)
+		write_midx_reverse_index(midx_name, midx_hash, &ctx);
+	clear_midx_files_ext(the_repository, ".rev", midx_hash);
+
 	commit_lock_file(&lk);
 
 cleanup:
@@ -943,13 +1092,55 @@ cleanup:
 	free(ctx.info);
 	free(ctx.entries);
 	free(ctx.pack_perm);
+	free(ctx.pack_order);
 	free(midx_name);
 	return result;
 }
 
-int write_midx_file(const char *object_dir, unsigned flags)
+int write_midx_file(const char *object_dir,
+		    const char *preferred_pack_name,
+		    unsigned flags)
 {
-	return write_midx_internal(object_dir, NULL, NULL, flags);
+	return write_midx_internal(object_dir, NULL, NULL, preferred_pack_name,
+				   flags);
+}
+
+struct clear_midx_data {
+	char *keep;
+	const char *ext;
+};
+
+static void clear_midx_file_ext(const char *full_path, size_t full_path_len,
+				const char *file_name, void *_data)
+{
+	struct clear_midx_data *data = _data;
+
+	if (!(starts_with(file_name, "multi-pack-index-") &&
+	      ends_with(file_name, data->ext)))
+		return;
+	if (data->keep && !strcmp(data->keep, file_name))
+		return;
+
+	if (unlink(full_path))
+		die_errno(_("failed to remove %s"), full_path);
+}
+
+static void clear_midx_files_ext(struct repository *r, const char *ext,
+				 unsigned char *keep_hash)
+{
+	struct clear_midx_data data;
+	memset(&data, 0, sizeof(struct clear_midx_data));
+
+	if (keep_hash)
+		data.keep = xstrfmt("multi-pack-index-%s%s",
+				    hash_to_hex(keep_hash), ext);
+	data.ext = ext;
+
+	for_each_file_in_pack_dir(r->objects->odb->path,
+				  clear_midx_file_ext,
+				  &data);
+
+	free(data.keep);
 }
 
 void clear_midx_file(struct repository *r)
@@ -963,6 +1154,8 @@ void clear_midx_file(struct repository *r)
 
 	if (remove_path(midx))
 		die(_("failed to clear multi-pack-index at %s"), midx);
+
+	clear_midx_files_ext(r, ".rev", NULL);
 
 	free(midx);
 }
@@ -1184,7 +1377,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 	free(count);
 
 	if (packs_to_drop.nr)
-		result = write_midx_internal(object_dir, m, &packs_to_drop, flags);
+		result = write_midx_internal(object_dir, m, &packs_to_drop, NULL, flags);
 
 	string_list_clear(&packs_to_drop, 0);
 	return result;
@@ -1373,7 +1566,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 		goto cleanup;
 	}
 
-	result = write_midx_internal(object_dir, m, NULL, flags);
+	result = write_midx_internal(object_dir, m, NULL, NULL, flags);
 	m = NULL;
 
 cleanup:

@@ -721,7 +721,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	remove_temporary_files();
 
 	if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0))
-		write_midx_file(get_object_directory(), 0);
+		write_midx_file(get_object_directory(), NULL, 0);
 
 	string_list_clear(&names, 0);
 	string_list_clear(&rollback, 0);
