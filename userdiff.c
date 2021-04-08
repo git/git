@@ -259,20 +259,33 @@ static struct userdiff_driver driver_false = {
 	{ NULL, 0 }
 };
 
-static struct userdiff_driver *userdiff_find_by_namelen(const char *k, size_t len)
+struct find_by_namelen_data {
+	const char *name;
+	size_t len;
+	struct userdiff_driver *driver;
+};
+
+static int userdiff_find_by_namelen_cb(struct userdiff_driver *driver,
+				       enum userdiff_driver_type type, void *priv)
 {
-	int i;
-	for (i = 0; i < ndrivers; i++) {
-		struct userdiff_driver *drv = drivers + i;
-		if (!strncmp(drv->name, k, len) && !drv->name[len])
-			return drv;
+	struct find_by_namelen_data *cb_data = priv;
+
+	if (!strncmp(driver->name, cb_data->name, cb_data->len) &&
+	    !driver->name[cb_data->len]) {
+		cb_data->driver = driver;
+		return 1; /* tell the caller to stop iterating */
 	}
-	for (i = 0; i < ARRAY_SIZE(builtin_drivers); i++) {
-		struct userdiff_driver *drv = builtin_drivers + i;
-		if (!strncmp(drv->name, k, len) && !drv->name[len])
-			return drv;
-	}
-	return NULL;
+	return 0;
+}
+
+static struct userdiff_driver *userdiff_find_by_namelen(const char *name, size_t len)
+{
+	struct find_by_namelen_data udcbdata = {
+		.name = name,
+		.len = len,
+	};
+	for_each_userdiff_driver(userdiff_find_by_namelen_cb, &udcbdata);
+	return udcbdata.driver;
 }
 
 static int parse_funcname(struct userdiff_funcname *f, const char *k,
@@ -378,4 +391,37 @@ struct userdiff_driver *userdiff_get_textconv(struct repository *r,
 	}
 
 	return driver;
+}
+
+static int for_each_userdiff_driver_list(each_userdiff_driver_fn fn,
+					 enum userdiff_driver_type type, void *cb_data,
+					 struct userdiff_driver *drv,
+					 int drv_size)
+{
+	int i;
+	int ret;
+	for (i = 0; i < drv_size; i++) {
+		struct userdiff_driver *item = drv + i;
+		if ((ret = fn(item, type, cb_data)))
+			return ret;
+	}
+	return 0;
+}
+
+int for_each_userdiff_driver(each_userdiff_driver_fn fn, void *cb_data)
+{
+	int ret;
+
+	ret = for_each_userdiff_driver_list(fn, USERDIFF_DRIVER_TYPE_CUSTOM,
+					    cb_data, drivers, ndrivers);
+	if (ret)
+		return ret;
+
+	ret = for_each_userdiff_driver_list(fn, USERDIFF_DRIVER_TYPE_BUILTIN,
+					    cb_data, builtin_drivers,
+					    ARRAY_SIZE(builtin_drivers));
+	if (ret)
+		return ret;
+
+	return 0;
 }
