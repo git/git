@@ -1075,6 +1075,11 @@ static int merge_3way(struct merge_options *opt,
 	read_mmblob(&src1, &a->oid);
 	read_mmblob(&src2, &b->oid);
 
+	/*
+	 * FIXME: Using a->path for normalization rules in ll_merge could be
+	 * wrong if we renamed from a->path to b->path.  We should use the
+	 * target path for where the file will be written.
+	 */
 	merge_status = ll_merge(result_buf, a->path, &orig, base,
 				&src1, name1, &src2, name2,
 				opt->repo->index, &ll_opts);
@@ -1154,6 +1159,8 @@ static void print_commit(struct commit *commit)
 	struct strbuf sb = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 	ctx.date_mode.type = DATE_NORMAL;
+	/* FIXME: Merge this with output_commit_title() */
+	assert(!merge_remote_util(commit));
 	format_commit_message(commit, " %h: %m %s", &sb, &ctx);
 	fprintf(stderr, "%s\n", sb.buf);
 	strbuf_release(&sb);
@@ -1177,6 +1184,11 @@ static int merge_submodule(struct merge_options *opt,
 	int search = !opt->priv->call_depth;
 
 	/* store a in result in case we fail */
+	/* FIXME: This is the WRONG resolution for the recursive case when
+	 * we need to be careful to avoid accidentally matching either side.
+	 * Should probably use o instead there, much like we do for merging
+	 * binaries.
+	 */
 	oidcpy(result, a);
 
 	/* we can not handle deletion conflicts */
@@ -1301,6 +1313,13 @@ static int merge_mode_and_contents(struct merge_options *opt,
 
 	if ((S_IFMT & a->mode) != (S_IFMT & b->mode)) {
 		result->clean = 0;
+		/*
+		 * FIXME: This is a bad resolution for recursive case; for
+		 * the recursive case we want something that is unlikely to
+		 * accidentally match either side.  Also, while it makes
+		 * sense to prefer regular files over symlinks, it doesn't
+		 * make sense to prefer regular files over submodules.
+		 */
 		if (S_ISREG(a->mode)) {
 			result->blob.mode = a->mode;
 			oidcpy(&result->blob.oid, &a->oid);
@@ -1349,6 +1368,7 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			free(result_buf.ptr);
 			if (ret)
 				return ret;
+			/* FIXME: bug, what if modes didn't match? */
 			result->clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
 			result->clean = merge_submodule(opt, &result->blob.oid,
@@ -2663,6 +2683,14 @@ static int process_renames(struct merge_options *opt,
 	struct string_list b_by_dst = STRING_LIST_INIT_NODUP;
 	const struct rename *sre;
 
+	/*
+	 * FIXME: As string-list.h notes, it's O(n^2) to build a sorted
+	 * string_list one-by-one, but O(n log n) to build it unsorted and
+	 * then sort it.  Note that as we build the list, we do not need to
+	 * check if the existing destination path is already in the list,
+	 * because the structure of diffcore_rename guarantees we won't
+	 * have duplicates.
+	 */
 	for (i = 0; i < a_renames->nr; i++) {
 		sre = a_renames->items[i].util;
 		string_list_insert(&a_by_dst, sre->pair->two->path)->util
@@ -3601,6 +3629,15 @@ static int merge_recursive_internal(struct merge_options *opt,
 			return err(opt, _("merge returned no commit"));
 	}
 
+	/*
+	 * FIXME: Since merge_recursive_internal() is only ever called by
+	 * places that ensure the index is loaded first
+	 * (e.g. builtin/merge.c, rebase/sequencer, etc.), in the common
+	 * case where the merge base was unique that means when we get here
+	 * we immediately discard the index and re-read it, which is a
+	 * complete waste of time.  We should only be discarding and
+	 * re-reading if we were forced to recurse.
+	 */
 	discard_index(opt->repo->index);
 	if (!opt->priv->call_depth)
 		repo_read_index(opt->repo);
