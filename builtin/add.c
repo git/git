@@ -187,7 +187,7 @@ static void refresh(int verbose, const struct pathspec *pathspec)
 	for (i = 0; i < pathspec->nr; i++) {
 		if (!seen[i])
 			die(_("pathspec '%s' did not match any files"),
-			    pathspec->items[i].match);
+			    pathspec->items[i].original);
 	}
 	free(seen);
 }
