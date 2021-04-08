@@ -1,0 +1,6 @@
+(define (my-func first second)
+  ; This is a (moderately) cool function.
+  (that\place (+ 3 4))
+  (define |a greeting| "hello")
+  (let ((c (add1 first)))
+    (format "one more than the total is %d" (+ c second))))
