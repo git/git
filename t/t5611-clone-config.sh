@@ -95,6 +95,31 @@ test_expect_success 'clone -c remote.<remote>.fetch=<refspec> --origin=<name>' '
 	test_cmp expect actual
 '
 
+test_expect_success 'set up shallow repository' '
+	git clone --depth=1 --no-local . shallow-repo
+'
+
+test_expect_success 'clone.rejectshallow=true should reject cloning shallow repo' '
+	test_when_finished "rm -rf out" &&
+	test_must_fail git -c clone.rejectshallow=true clone --no-local shallow-repo out 2>err &&
+	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+
+	git -c clone.rejectshallow=false clone --no-local shallow-repo out
+'
+
+test_expect_success 'option --[no-]reject-shallow override clone.rejectshallow config' '
+	test_when_finished "rm -rf out" &&
+	test_must_fail git -c clone.rejectshallow=false clone --reject-shallow --no-local shallow-repo out 2>err &&
+	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+
+	git -c clone.rejectshallow=true clone --no-reject-shallow --no-local shallow-repo out
+'
+
+test_expect_success 'clone.rejectshallow=true should succeed cloning normal repo' '
+	test_when_finished "rm -rf out" &&
+	git -c clone.rejectshallow=true clone --no-local . out
+'
+
 test_expect_success MINGW 'clone -c core.hideDotFiles' '
 	test_commit attributes .gitattributes "" &&
 	rm -rf child &&
