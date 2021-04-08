@@ -77,7 +77,7 @@ __git_find_repo_path ()
 		test -d "$__git_dir" &&
 		__git_repo_path="$__git_dir"
 	elif [ -n "${GIT_DIR-}" ]; then
-		test -d "${GIT_DIR-}" &&
+		test -d "$GIT_DIR" &&
 		__git_repo_path="$GIT_DIR"
 	elif [ -d .git ]; then
 		__git_repo_path=.git
@@ -427,7 +427,7 @@ __gitcomp_builtin ()
 
 	if [ -z "$options" ]; then
 		local completion_helper
-		if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
+		if [ "${GIT_COMPLETION_SHOW_ALL-}" = "1" ]; then
 			completion_helper="--git-completion-helper-all"
 		else
 			completion_helper="--git-completion-helper"
@@ -1910,7 +1910,7 @@ _git_help ()
 		return
 		;;
 	esac
-	if test -n "$GIT_TESTING_ALL_COMMAND_LIST"
+	if test -n "${GIT_TESTING_ALL_COMMAND_LIST-}"
 	then
 		__gitcomp "$GIT_TESTING_ALL_COMMAND_LIST $(__git --list-cmds=alias,list-guide) gitk"
 	else
