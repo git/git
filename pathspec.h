@@ -149,11 +149,17 @@ static inline int ps_strcmp(const struct pathspec_item *item,
 		return strcmp(s1, s2);
 }
 
+enum ps_skip_worktree_action {
+  PS_HEED_SKIP_WORKTREE = 0,
+  PS_IGNORE_SKIP_WORKTREE = 1
+};
 void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 					const struct index_state *istate,
-					char *seen);
+					char *seen,
+					enum ps_skip_worktree_action sw_action);
 char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
-					    const struct index_state *istate);
+					    const struct index_state *istate,
+					    enum ps_skip_worktree_action sw_action);
 int match_pathspec_attrs(const struct index_state *istate,
 			 const char *name, int namelen,
 			 const struct pathspec_item *item);

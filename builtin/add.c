@@ -177,7 +177,8 @@ static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec, 
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
-	add_pathspec_matches_against_index(pathspec, &the_index, seen);
+	add_pathspec_matches_against_index(pathspec, &the_index, seen,
+					   PS_HEED_SKIP_WORKTREE);
 	return seen;
 }
 
@@ -578,7 +579,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		int i;
 
 		if (!seen)
-			seen = find_pathspecs_matching_against_index(&pathspec, &the_index);
+			seen = find_pathspecs_matching_against_index(&pathspec,
+					&the_index, PS_HEED_SKIP_WORKTREE);
 
 		/*
 		 * file_exists() assumes exact match
