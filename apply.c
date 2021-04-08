@@ -134,8 +134,6 @@ int check_apply_state(struct apply_state *state, int force_apply)
 
 	if (state->apply_with_reject && state->threeway)
 		return error(_("--reject and --3way cannot be used together."));
-	if (state->cached && state->threeway)
-		return error(_("--cached and --3way cannot be used together."));
 	if (state->threeway) {
 		if (is_not_gitdir)
 			return error(_("--3way outside a repository"));
@@ -4646,7 +4644,12 @@ static int write_out_results(struct apply_state *state, struct patch *list)
 		}
 		string_list_clear(&cpath, 0);
 
-		repo_rerere(state->repo, 0);
+		/*
+		 * rerere relies on the partially merged result being in the working
+		 * tree with conflict markers, but that isn't written with --cached.
+		 */
+		if (!state->cached)
+			repo_rerere(state->repo, 0);
 	}
 
 	return errs;
