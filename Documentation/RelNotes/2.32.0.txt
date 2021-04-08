@@ -54,6 +54,10 @@ UI, Workflows & Features
    with the interpret-trailers command, this will make it easier to
    support custom trailers.
 
+ * "git clone --reject-shallow" option fails the clone as soon as we
+   notice that we are cloning from a shallow repository.
+
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -88,6 +92,11 @@ Performance, Internal Implementation, Development Support etc.
    uses negative tags as the stopping points.
 
  * CMake update for vsbuild.
+
+ * An on-disk reverse-index to map the in-pack location of an object
+   back to its object name across multiple packfiles is introduced.
+
+ * Generate [ec]tags under $(QUIET_GEN).
 
 
 Fixes since v2.31
@@ -155,6 +164,15 @@ Fixes since v2.31
    write(2) too frequently. This logic has been refactored to be
    easier to understand.
    (merge ddaf1f62e3 ds/clarify-hashwrite later to maint).
+
+ * "git cherry-pick/revert" with or without "--[no-]edit" did not spawn
+   the editor as expected (e.g. "revert --no-edit" after a conflict
+   still asked to edit the message), which has been corrected.
+   (merge 39edfd5cbc en/sequencer-edit-upon-conflict-fix later to maint).
+
+ * "git daemon" has been tightened against systems that take backslash
+   as directory separator.
+   (merge 9a7f1ce8b7 rs/daemon-sanitize-dir-sep later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
