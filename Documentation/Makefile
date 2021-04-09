@@ -478,7 +478,11 @@ print-man1:
 	@for i in $(MAN1_TXT); do echo $$i; done
 
 lint-docs::
-	$(QUIET_LINT)$(PERL_PATH) lint-gitlink.perl
+	$(QUIET_LINT)$(PERL_PATH) lint-gitlink.perl \
+		$(HOWTO_TXT) $(DOC_DEP_TXT) \
+		--section=1 $(MAN1_TXT) \
+		--section=5 $(MAN5_TXT) \
+		--section=7 $(MAN7_TXT)
 
 ifeq ($(wildcard po/Makefile),po/Makefile)
 doc-l10n install-l10n::
