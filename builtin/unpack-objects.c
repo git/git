@@ -72,7 +72,7 @@ static void *fill(int min)
 		ssize_t ret = xread(0, buffer + len, sizeof(buffer) - len);
 		if (ret <= 0) {
 			if (!ret)
-				die("early EOF");
+				die("early eof");
 			die_errno("read error on input");
 		}
 		len += ret;
@@ -212,12 +212,12 @@ static int check_object(struct object *obj, enum object_type type,
 
 	obj_buf = lookup_object_buffer(obj);
 	if (!obj_buf)
-		die("Whoops! Cannot find object '%s'", oid_to_hex(&obj->oid));
+		die("whoops! cannot find object '%s'", oid_to_hex(&obj->oid));
 	if (fsck_object(obj, obj_buf->buffer, obj_buf->size, &fsck_options))
 		die("fsck error in packed object");
 	fsck_options.walk = check_object;
 	if (fsck_walk(obj, NULL, &fsck_options))
-		die("Error on reachable objects of %s", oid_to_hex(&obj->oid));
+		die("error on reachable objects of %s", oid_to_hex(&obj->oid));
 	write_cached_object(obj, obj_buf);
 	return 0;
 }

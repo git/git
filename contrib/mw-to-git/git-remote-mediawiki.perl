@@ -169,22 +169,22 @@ sub parse_command {
 		return 0;
 	}
 	if ($cmd[0] eq 'capabilities') {
-		die("Too many arguments for capabilities\n")
+		die("too many arguments for capabilities\n")
 		    if (defined($cmd[1]));
 		mw_capabilities();
 	} elsif ($cmd[0] eq 'list') {
-		die("Too many arguments for list\n") if (defined($cmd[2]));
+		die("too many arguments for list\n") if (defined($cmd[2]));
 		mw_list($cmd[1]);
 	} elsif ($cmd[0] eq 'import') {
-		die("Invalid argument for import\n")
+		die("invalid argument for import\n")
 		    if ($cmd[1] eq EMPTY);
-		die("Too many arguments for import\n")
+		die("too many arguments for import\n")
 		    if (defined($cmd[2]));
 		mw_import($cmd[1]);
 	} elsif ($cmd[0] eq 'option') {
-		die("Invalid arguments for option\n")
+		die("invalid arguments for option\n")
 		    if ($cmd[1] eq EMPTY || $cmd[2] eq EMPTY);
-		die("Too many arguments for option\n")
+		die("too many arguments for option\n")
 		    if (defined($cmd[3]));
 		mw_option($cmd[1],$cmd[2]);
 	} elsif ($cmd[0] eq 'push') {
@@ -808,7 +808,7 @@ sub get_more_refs {
 		} elsif ($line eq "\n") {
 			return @refs;
 		} else {
-			die("Invalid command in a '$cmd' batch: $_\n");
+			die("invalid command in a '$cmd' batch: $_\n");
 		}
 	}
 	return;
@@ -1145,7 +1145,7 @@ sub mw_push {
 	my $pushed;
 	for my $refspec (@refsspecs) {
 		my ($force, $local, $remote) = $refspec =~ /^(\+)?([^:]*):([^:]*)$/
-		    or die("Invalid refspec for push. Expected <src>:<dst> or +<src>:<dst>\n");
+		    or die("invalid refspec for push. expected <src>:<dst> or +<src>:<dst>\n");
 		if ($force) {
 			print {*STDERR} "Warning: forced push not allowed on a MediaWiki.\n";
 		}
@@ -1272,7 +1272,7 @@ sub mw_push_revision {
 				return error_non_fast_forward($remote);
 			}
 			if ($status ne 'ok') {
-				die("Unknown error from mw_push_file()\n");
+				die("unknown error from mw_push_file()\n");
 			}
 		}
 		if (!$dumb_push) {

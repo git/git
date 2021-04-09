@@ -492,7 +492,7 @@ static struct ref *get_ref_map(struct remote *remote,
 		for (i = 0; i < fetch_refspec->nr; i++)
 			get_fetch_map(ref_map, &fetch_refspec->items[i], &oref_tail, 1);
 	} else if (refmap.nr) {
-		die("--refmap option is only meaningful with command-line refspec(s).");
+		die("--refmap option is only meaningful with command-line refspec(s)");
 	} else {
 		/* Use the defaults */
 		struct branch *branch = branch_get(NULL);

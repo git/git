@@ -110,11 +110,11 @@ diff a/ls-tree.c b/ls-tree.c
 +	buf = read_object_with_reference(sha1, "tree", &size, rsha);
 +	free(buf);
 +	if (!buf)
-+		die("Could not read %s", sha1_to_hex(sha1));
++		die("could not read %s", sha1_to_hex(sha1));
 +
 +	root_tree = lookup_tree(rsha);
 +	if (!root_tree)
-+		die("Could not read %s", sha1_to_hex(sha1));
++		die("could not read %s", sha1_to_hex(sha1));
 +
 +	/* Prepare a fake entry */
 +	root_entry.directory = 1;

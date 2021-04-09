@@ -103,10 +103,10 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	if (!remote) {
 		if (dest)
 			die("bad repository '%s'", dest);
-		die("No remote configured to list refs from.");
+		die("no remote configured to list refs from");
 	}
 	if (!remote->url_nr)
-		die("remote %s has no configured URL", dest);
+		die("remote %s has no configured url", dest);
 
 	if (get_url) {
 		printf("%s\n", *remote->url);

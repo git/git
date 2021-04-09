@@ -20,7 +20,7 @@ Backward compatibility notes.
 
  * Git now avoids blindly falling back to ".git" when the setup
    sequence said we are _not_ in Git repository.  A corner case that
-   happens to work right now may be broken by a call to die("BUG").
+   happens to work right now may be broken by a call to die("bug").
    We've tried hard to locate such cases and fixed them, but there
    might still be cases that need to be addressed--bug reports are
    greatly appreciated.
@@ -483,7 +483,7 @@ notes for details).
 
  * Git now avoids blindly falling back to ".git" when the setup
    sequence said we are _not_ in Git repository.  A corner case that
-   happens to work right now may be broken by a call to die("BUG").
+   happens to work right now may be broken by a call to die("bug").
    (merge b1ef400eec jk/no-looking-at-dotgit-outside-repo-final later to maint).
 
  * A few commands that recently learned the "--recurse-submodule"

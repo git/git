@@ -76,7 +76,7 @@ static int nfvasprintf(char **strp, const char *fmt, va_list ap)
 
 	len = vsnprintf(tmp, sizeof(tmp), fmt, ap);
 	if (len < 0)
-		die("Fatal: Out of memory");
+		die("fatal: out of memory");
 	if (len >= sizeof(tmp))
 		die("imap command overflow!");
 	*strp = xmemdupz(tmp, len);
@@ -890,7 +890,7 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 	if (decoded_len < 0)
 		die("invalid challenge %s", challenge_64);
 	if (!HMAC(EVP_md5(), pass, strlen(pass), (unsigned char *)challenge, decoded_len, hash, NULL))
-		die("HMAC error");
+		die("hmac error");
 
 	hex[32] = 0;
 	for (i = 0; i < 16; i++) {
@@ -906,7 +906,7 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 	encoded_len = EVP_EncodeBlock((unsigned char *)response_64,
 				      (unsigned char *)response, resp_len);
 	if (encoded_len < 0)
-		die("EVP_EncodeBlock error");
+		die("evp_encodeblock error");
 	return (char *)response_64;
 }
 
@@ -914,7 +914,7 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 
 static char *cram(const char *challenge_64, const char *user, const char *pass)
 {
-	die("If you want to use CRAM-MD5 authenticate method, "
+	die("if you want to use cram-md5 authenticate method, "
 	    "you have to build git-imap-send with OpenSSL library.");
 }
 

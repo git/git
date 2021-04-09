@@ -1078,7 +1078,7 @@ static CURL *get_curl_handle(void)
 		}
 
 		if (!proxy_auth.host)
-			die("Invalid proxy URL '%s'", curl_http_proxy);
+			die("invalid proxy url '%s'", curl_http_proxy);
 
 		curl_easy_setopt(result, CURLOPT_PROXY, proxy_auth.host);
 #if LIBCURL_VERSION_NUM >= 0x071304

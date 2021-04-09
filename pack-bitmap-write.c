@@ -100,7 +100,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 			break;
 
 		default:
-			die("Missing type information for %s (%d/%d)",
+			die("missing type information for %s (%d/%d)",
 			    oid_to_hex(&entry->idx.oid), real_type,
 			    oe_type(entry));
 		}
@@ -130,7 +130,7 @@ static uint32_t find_object_pos(const struct object_id *oid)
 	struct object_entry *entry = packlist_find(writer.to_pack, oid);
 
 	if (!entry) {
-		die("Failed to write bitmap index. Packfile doesn't have full closure "
+		die("failed to write bitmap index. packfile doesn't have full closure "
 			"(object %s is missing)", oid_to_hex(oid));
 	}
 
@@ -427,7 +427,7 @@ static void store_selected(struct bb_commit *ent, struct commit *commit)
 
 	hash_pos = kh_put_oid_map(writer.bitmaps, commit->object.oid, &hash_ret);
 	if (hash_ret == 0)
-		die("Duplicate entry when writing index: %s",
+		die("duplicate entry when writing index: %s",
 		    oid_to_hex(&commit->object.oid));
 	kh_value(writer.bitmaps, hash_pos) = stored;
 }
@@ -607,7 +607,7 @@ static int hashwrite_ewah_helper(void *f, const void *buf, size_t len)
 static inline void dump_bitmap(struct hashfile *f, struct ewah_bitmap *bitmap)
 {
 	if (ewah_serialize_to(bitmap, hashwrite_ewah_helper, f) < 0)
-		die("Failed to write bitmap index");
+		die("failed to write bitmap index");
 }
 
 static const struct object_id *oid_access(size_t pos, const void *table)

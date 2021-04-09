@@ -219,7 +219,7 @@ static void record_rename_pair(int dst_index, int src_index, int score)
 	struct diff_filepair *dst = rename_dst[dst_index].p;
 
 	if (dst->renamed_pair)
-		die("internal error: dst already matched.");
+		die("internal error: dst already matched");
 
 	src->one->rename_used++;
 	src->one->count++;

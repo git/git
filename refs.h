@@ -850,7 +850,7 @@ struct ref_store *get_main_ref_store(struct repository *r);
  *
  * 	const char *path = "path/to/submodule"
  * 	if (add_submodule_odb(path))
- * 		die("Error submodule '%s' not populated.", path);
+ * 		die("error submodule '%s' not populated", path);
  *
  * `add_submodule_odb()` will return zero on success. If you
  * do not do this you will get an error for each ref that it does not point

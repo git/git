@@ -1054,7 +1054,7 @@ finished_rebase:
 		strbuf_addstr(&dir, opts->state_dir);
 		remove_dir_recursively(&dir, 0);
 		strbuf_release(&dir);
-		die("Nothing to do");
+		die("nothing to do");
 	}
 
 	strbuf_release(&script_snippet);
@@ -1649,7 +1649,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		} else if (skip_prefix(option, "--whitespace=", &p)) {
 			if (*p && strcmp(p, "warn") && strcmp(p, "nowarn") &&
 			    strcmp(p, "error") && strcmp(p, "error-all"))
-				die("Invalid whitespace option: '%s'", p);
+				die("invalid whitespace option: '%s'", p);
 		}
 	}
 

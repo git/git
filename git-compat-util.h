@@ -831,7 +831,7 @@ int git_atexit(void (*handler)(void));
 static inline size_t st_add(size_t a, size_t b)
 {
 	if (unsigned_add_overflows(a, b))
-		die("size_t overflow: %"PRIuMAX" + %"PRIuMAX,
+		die("size_t overflow: %"priumax" + %"PRIuMAX,
 		    (uintmax_t)a, (uintmax_t)b);
 	return a + b;
 }
@@ -841,7 +841,7 @@ static inline size_t st_add(size_t a, size_t b)
 static inline size_t st_mult(size_t a, size_t b)
 {
 	if (unsigned_mult_overflows(a, b))
-		die("size_t overflow: %"PRIuMAX" * %"PRIuMAX,
+		die("size_t overflow: %"priumax" * %"PRIuMAX,
 		    (uintmax_t)a, (uintmax_t)b);
 	return a * b;
 }
@@ -849,7 +849,7 @@ static inline size_t st_mult(size_t a, size_t b)
 static inline size_t st_sub(size_t a, size_t b)
 {
 	if (a < b)
-		die("size_t underflow: %"PRIuMAX" - %"PRIuMAX,
+		die("size_t underflow: %"priumax" - %"PRIuMAX,
 		    (uintmax_t)a, (uintmax_t)b);
 	return a - b;
 }
@@ -984,7 +984,7 @@ static inline size_t xsize_t(off_t len)
 	size_t size = (size_t) len;
 
 	if (len != (off_t) size)
-		die("Cannot handle files this big");
+		die("cannot handle files this big");
 	return size;
 }
 

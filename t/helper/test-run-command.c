@@ -153,7 +153,7 @@ static int testsuite(int argc, const char **argv)
 
 	dir = opendir(".");
 	if (!dir)
-		die("Could not open the current directory");
+		die("could not open the current directory");
 	while ((d = readdir(dir))) {
 		const char *p = d->d_name;
 
@@ -177,7 +177,7 @@ static int testsuite(int argc, const char **argv)
 	closedir(dir);
 
 	if (!suite.tests.nr)
-		die("No tests match!");
+		die("no tests match!");
 	if (max_jobs > suite.tests.nr)
 		max_jobs = suite.tests.nr;
 
@@ -343,15 +343,15 @@ static int inherit_handle(const char *argv0)
 	cp.in = -1;
 	cp.no_stdout = cp.no_stderr = 1;
 	if (start_command(&cp) < 0)
-		die("Could not start child process");
+		die("could not start child process");
 
 	/* Then close it, and try to delete it. */
 	close(tmp);
 	if (unlink(path))
-		die("Could not delete '%s'", path);
+		die("could not delete '%s'", path);
 
 	if (close(cp.in) < 0 || finish_command(&cp) < 0)
-		die("Child did not finish");
+		die("child did not finish");
 
 	return 0;
 }
@@ -361,7 +361,7 @@ static int inherit_handle_child(void)
 	struct strbuf buf = STRBUF_INIT;
 
 	if (strbuf_read(&buf, 0, 0) < 0)
-		die("Could not read stdin");
+		die("could not read stdin");
 	printf("Received %s\n", buf.buf);
 	strbuf_release(&buf);
 

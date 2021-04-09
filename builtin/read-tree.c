@@ -29,7 +29,7 @@ static int list_tree(struct object_id *oid)
 	struct tree *tree;
 
 	if (nr_trees >= MAX_UNPACK_TREES)
-		die("I cannot read more than %d trees", MAX_UNPACK_TREES);
+		die("i cannot read more than %d trees", MAX_UNPACK_TREES);
 	tree = parse_tree_indirect(oid);
 	if (!tree)
 		return -1;
@@ -61,7 +61,7 @@ static int exclude_per_directory_cb(const struct option *opt, const char *arg,
 	opts = (struct unpack_trees_options *)opt->value;
 
 	if (opts->dir)
-		die("more than one --exclude-per-directory given.");
+		die("more than one --exclude-per-directory given");
 
 	dir = xcalloc(1, sizeof(*opts->dir));
 	dir->flags |= DIR_SHOW_IGNORED;
@@ -172,7 +172,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 
 	prefix_set = opts.prefix ? 1 : 0;
 	if (1 < opts.merge + opts.reset + prefix_set)
-		die("Which one? -m, --reset, or --prefix?");
+		die("which one? -m, --reset, or --prefix?");
 
 	/*
 	 * NEEDSWORK
@@ -194,7 +194,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 		const char *arg = argv[i];
 
 		if (get_oid(arg, &oid))
-			die("Not a valid object name %s", arg);
+			die("not a valid object name %s", arg);
 		if (list_tree(&oid) < 0)
 			die("failed to unpack tree object %s", arg);
 		stage++;

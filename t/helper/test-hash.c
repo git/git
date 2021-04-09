@@ -24,7 +24,7 @@ int cmd_hash_impl(int ac, const char **av, int algo)
 		fprintf(stderr, "bufsz %u is too big, halving...\n", bufsz);
 		bufsz /= 2;
 		if (bufsz < 1024)
-			die("OOPS");
+			die("oops");
 	}
 
 	algop->init_fn(&ctx);

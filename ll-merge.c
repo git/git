@@ -203,7 +203,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	dict[5].placeholder = NULL; dict[5].value = NULL;
 
 	if (fn->cmdline == NULL)
-		die("custom merge driver %s lacks command line.", fn->name);
+		die("custom merge driver %s lacks command line", fn->name);
 
 	result->ptr = NULL;
 	result->size = 0;

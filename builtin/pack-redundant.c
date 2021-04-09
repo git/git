@@ -537,14 +537,14 @@ static struct pack_list * add_pack_file(const char *filename)
 	struct packed_git *p = get_all_packs(the_repository);
 
 	if (strlen(filename) < 40)
-		die("Bad pack filename: %s", filename);
+		die("bad pack filename: %s", filename);
 
 	while (p) {
 		if (strstr(p->pack_name, filename))
 			return add_pack(p);
 		p = p->next;
 	}
-	die("Filename %s not found in packed_git", filename);
+	die("filename %s not found in packed_git", filename);
 }
 
 static void load_all(void)
@@ -612,7 +612,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 			add_pack_file(*(argv + i++));
 
 	if (local_packs == NULL)
-		die("Zero packs found!");
+		die("zero packs found!");
 
 	load_all_objects();
 
@@ -625,7 +625,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 		while (fgets(buf, sizeof(buf), stdin)) {
 			oid = xmalloc(sizeof(*oid));
 			if (get_oid_hex(buf, oid))
-				die("Bad object ID on stdin: %s", buf);
+				die("bad object id on stdin: %s", buf);
 			llist_insert_sorted_unique(ignore, oid, NULL);
 		}
 	}

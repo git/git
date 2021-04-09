@@ -518,7 +518,7 @@ def p4_describe(change, shelved=False):
     d = ds[0]
 
     if "p4ExitCode" in d:
-        die("p4 describe -s %d exited with %d: %s" % (change, d["p4ExitCode"],
+        die("p4 describe -s %d exited with %d: %s" % (change, d["p4exitcode"],
                                                       str(d)))
     if "code" in d:
         if d["code"] == "error":
@@ -629,7 +629,7 @@ def getP4OpenedType(file):
     if match:
         return match.group(1)
     else:
-        die("Could not determine file type for %s (result: '%s')" % (file, result))
+        die("could not determine file type for %s (result: '%s')" % (file, result))
 
 # Return the set of all p4 labels
 def getP4Labels(depotPaths):
@@ -1208,7 +1208,7 @@ def getClientSpec():
     for view_num in range(len(view_keys)):
         k = "View%d" % view_num
         if k not in view_keys:
-            die("Expected view key %s missing" % k)
+            die("expected view key %s missing" % k)
         view.append(entry[k])
 
     return view
@@ -1476,7 +1476,7 @@ class P4UserMap:
             if 'User' in r:
                 self.myP4UserId = r['User']
                 return r['User']
-        die("Could not find your p4 user id")
+        die("could not find your p4 user id")
 
     def p4UserIsMe(self, p4User):
         # return True if the given p4 user is actually me
@@ -1562,7 +1562,7 @@ class P4RollBack(Command):
         maxChange = int(args[0])
 
         if "p4ExitCode" in p4Cmd("changes -m 1"):
-            die("Problems executing p4");
+            die("problems executing p4");
 
         if self.rollbackLocalBranches:
             refPrefix = "refs/heads/"
@@ -1691,11 +1691,11 @@ class P4Submit(Command, P4UserMap):
         self.no_verify = False
 
         if gitConfig('git-p4.largeFileSystem'):
-            die("Large file system not supported for git-p4 submit command. Please remove it from config.")
+            die("large file system not supported for git-p4 submit command. please remove it from config")
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
-            die("You have files opened with perforce! Close them before starting the sync.")
+            die("you have files opened with perforce! close them before starting the sync")
 
     def separate_jobs_from_description(self, message):
         """Extract and return a possible Jobs field in the commit
@@ -1796,7 +1796,7 @@ class P4Submit(Command, P4UserMap):
                 if gitConfigBool("git-p4.allowMissingP4Users"):
                     print("%s" % msg)
                 else:
-                    die("Error: %s\nSet git-p4.allowMissingP4Users to true to allow this." % msg)
+                    die("error: %s\nset git-p4.allowmissingp4users to true to allow this" % msg)
 
     def lastP4Changelist(self):
         # Get back the last changelist number submitted in this client spec. This
@@ -1815,13 +1815,13 @@ class P4Submit(Command, P4UserMap):
         for r in results:
             if 'change' in r:
                 return r['change']
-        die("Could not get changelist number for last submit - cannot patch up user details")
+        die("could not get changelist number for last submit - cannot patch up user details")
 
     def modifyChangelistUser(self, changelist, newUser):
         # fixup the user field of a changelist after it has been submitted.
         changes = p4CmdList("change -o %s" % changelist)
         if len(changes) != 1:
-            die("Bad output from p4 change modifying %s to user %s" %
+            die("bad output from p4 change modifying %s to user %s" %
                 (changelist, newUser))
 
         c = changes[0]
@@ -1834,11 +1834,11 @@ class P4Submit(Command, P4UserMap):
         for r in result:
             if 'code' in r:
                 if r['code'] == 'error':
-                    die("Could not modify user field of changelist %s to %s:%s" % (changelist, newUser, r['data']))
+                    die("could not modify user field of changelist %s to %s:%s" % (changelist, newUser, r['data']))
             if 'data' in r:
                 print("Updated user field for changelist %s to %s" % (changelist, newUser))
                 return
-        die("Could not modify user field of changelist %s to %s" % (changelist, newUser))
+        die("could not modify user field of changelist %s to %s" % (changelist, newUser))
 
     def canChangeChangelists(self):
         # check to see if we have p4 admin or super-user permissions, either of
@@ -2364,7 +2364,7 @@ class P4Submit(Command, P4UserMap):
         elif len(args) == 1:
             self.master = args[0]
             if not branchExists(self.master):
-                die("Branch %s does not exist" % self.master)
+                die("branch %s does not exist" % self.master)
         else:
             return False
 
@@ -2375,7 +2375,7 @@ class P4Submit(Command, P4UserMap):
         if self.master:
             allowSubmit = gitConfig("git-p4.allowSubmit")
             if len(allowSubmit) > 0 and not self.master in allowSubmit.split(","):
-                die("%s is not in git-p4.allowSubmit" % self.master)
+                die("%s is not in git-p4.allowsubmit" % self.master)
 
         [upstream, settings] = findUpstreamBranchPoint()
         self.depotPath = settings['depot-paths'][0]
@@ -2387,14 +2387,14 @@ class P4Submit(Command, P4UserMap):
 
         if self.preserveUser:
             if not self.canChangeChangelists():
-                die("Cannot preserve user names without p4 super-user or admin permissions")
+                die("cannot preserve user names without p4 super-user or admin permissions")
 
         # if not set from the command line, try the config file
         if self.conflict_behavior is None:
             val = gitConfig("git-p4.conflict")
             if val:
                 if val not in self.conflict_behavior_choices:
-                    die("Invalid value '%s' for config git-p4.conflict" % val)
+                    die("invalid value '%s' for config git-p4.conflict" % val)
             else:
                 val = "ask"
             self.conflict_behavior = val
@@ -2422,7 +2422,7 @@ class P4Submit(Command, P4UserMap):
             self.clientPath = p4Where(self.depotPath)
 
         if self.clientPath == "":
-            die("Error: Cannot locate perforce checkout of %s in client view" % self.depotPath)
+            die("error: cannot locate perforce checkout of %s in client view" % self.depotPath)
 
         print("Perforce checkout for depot path %s located at %s" % (self.depotPath, self.clientPath))
         self.oldWorkingDirectory = os.getcwd()
@@ -2553,7 +2553,7 @@ class P4Submit(Command, P4UserMap):
                     elif self.conflict_behavior == "quit":
                         response = "q"
                     else:
-                        die("Unknown conflict_behavior '%s'" %
+                        die("unknown conflict_behavior '%s'" %
                             self.conflict_behavior)
 
                     if response == "s":
@@ -2643,14 +2643,14 @@ class View(object):
             # First word is double quoted.  Find its end.
             close_quote_index = view_line.find('"', 1)
             if close_quote_index <= 0:
-                die("No first-word closing quote found: %s" % view_line)
+                die("no first-word closing quote found: %s" % view_line)
             depot_side = view_line[1:close_quote_index]
             # skip closing quote and space
             rhs_index = close_quote_index + 1 + 1
         else:
             space_index = view_line.find(" ")
             if space_index <= 0:
-                die("No word-splitting space found: %s" % view_line)
+                die("no word-splitting space found: %s" % view_line)
             depot_side = view_line[0:space_index]
             rhs_index = space_index + 1
 
@@ -2670,7 +2670,7 @@ class View(object):
     def convert_client_path(self, clientFile):
         # chop off //client/ part to make it relative
         if not decode_path(clientFile).startswith(self.client_prefix):
-            die("No prefix '%s' on clientFile '%s'" %
+            die("no prefix '%s' on clientfile '%s'" %
                 (self.client_prefix, clientFile))
         return clientFile[len(self.client_prefix):]
 
@@ -2689,7 +2689,7 @@ class View(object):
                 # assume error is "... file(s) not in client view"
                 continue
             if "clientFile" not in res:
-                die("No clientFile in 'p4 where' output")
+                die("no clientfile in 'p4 where' output")
             if "unmap" in res:
                 # it will list all of them, but only one not unmap-ped
                 continue
@@ -3078,9 +3078,9 @@ class P4Sync(Command, P4UserMap):
             # ignore errors, but make sure it exits first
             self.importProcess.wait()
             if f:
-                die("Error from p4 print for %s: %s" % (f, err))
+                die("error from p4 print for %s: %s" % (f, err))
             else:
-                die("Error from p4 print: %s" % err)
+                die("error from p4 print: %s" % err)
 
         if 'depotFile' in marshalled and self.stream_have_file_info:
             # start of a new file - output the old one first
@@ -3566,7 +3566,7 @@ class P4Sync(Command, P4UserMap):
                 earliestCommit = "^%s" % next
             else:
                 if next == latestCommit:
-                    die("Infinite loop while looking in ref %s for change %s. Check your branch mappings" % (ref, change))
+                    die("infinite loop while looking in ref %s for change %s. check your branch mappings" % (ref, change))
                 latestCommit = "%s^@" % next
 
         return ""
@@ -3982,7 +3982,7 @@ class P4Sync(Command, P4UserMap):
                     bad_changesfile = True
                     break
         if bad_changesfile:
-            die("Option --changesfile is incompatible with revision specifiers")
+            die("option --changesfile is incompatible with revision specifiers")
 
         newPaths = []
         for p in self.depotPaths:
@@ -4104,13 +4104,13 @@ class P4Rebase(Command):
 
     def rebase(self):
         if os.system("git update-index --refresh") != 0:
-            die("Some files in your working directory are modified and different than what is in your index. You can use git update-index <filename> to bring the index up to date or stash away all your changes with git stash.");
+            die("some files in your working directory are modified and different than what is in your index. you can use git update-index <filename> to bring the index up to date or stash away all your changes with git stash");
         if len(read_pipe("git diff-index HEAD --")) > 0:
-            die("You have uncommitted changes. Please commit them before rebasing or stash them away with git stash.");
+            die("you have uncommitted changes. please commit them before rebasing or stash them away with git stash");
 
         [upstream, settings] = findUpstreamBranchPoint()
         if len(upstream) == 0:
-            die("Cannot find upstream branchpoint for rebase")
+            die("cannot find upstream branchpoint for rebase")
 
         # the branchpoint may be p4/foo~3, so strip off the parent
         upstream = re.sub("~[0-9]+$", "", upstream)

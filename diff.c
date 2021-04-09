@@ -3972,7 +3972,7 @@ int diff_populate_filespec(struct repository *r,
 		conv_flags = CONV_EOL_RNDTRP_WARN;
 
 	if (!DIFF_FILE_VALID(s))
-		die("internal error: asking to populate invalid file.");
+		die("internal error: asking to populate invalid file");
 	if (S_ISDIR(s->mode))
 		return -1;
 
@@ -4729,7 +4729,7 @@ int parse_long_opt(const char *opt, const char **argv,
 		return 0;
 	/* separate form: --option value */
 	if (!argv[1])
-		die("Option '--%s' requires a value", opt);
+		die("option '--%s' requires a value", opt);
 	*optarg = argv[1];
 	return 2;
 }

@@ -466,17 +466,17 @@ static void update_one(const char *path)
 	}
 	if (mark_valid_only) {
 		if (mark_ce_flags(path, CE_VALID, mark_valid_only == MARK_FLAG))
-			die("Unable to mark file %s", path);
+			die("unable to mark file %s", path);
 		return;
 	}
 	if (mark_skip_worktree_only) {
 		if (mark_ce_flags(path, CE_SKIP_WORKTREE, mark_skip_worktree_only == MARK_FLAG))
-			die("Unable to mark file %s", path);
+			die("unable to mark file %s", path);
 		return;
 	}
 	if (mark_fsmonitor_only) {
 		if (mark_ce_flags(path, CE_FSMONITOR_VALID, mark_fsmonitor_only == MARK_FLAG))
-			die("Unable to mark file %s", path);
+			die("unable to mark file %s", path);
 		return;
 	}
 
@@ -487,7 +487,7 @@ static void update_one(const char *path)
 		return;
 	}
 	if (process_path(path, &st, stat_errno))
-		die("Unable to process path %s", path);
+		die("unable to process path %s", path);
 	report("add '%s'", path);
 }
 
@@ -698,7 +698,7 @@ static int unresolve_one(const char *path)
 static void read_head_pointers(void)
 {
 	if (read_ref("HEAD", &head_oid))
-		die("No HEAD -- no initial commit yet?");
+		die("no head -- no initial commit yet?");
 	if (read_ref("MERGE_HEAD", &merge_head_oid)) {
 		fprintf(stderr, "Not in the middle of a merge.\n");
 		exit(0);
@@ -1236,7 +1236,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			unable_to_lock_die(get_index_file(), lock_error);
 		}
 		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
-			die("Unable to write new index file");
+			die("unable to write new index file");
 	}
 
 	rollback_lock_file(&lock_file);

@@ -1395,7 +1395,7 @@ static void grab_values(struct atom_value *val, int deref, struct object *obj, v
 		/* grab_blob_values(val, deref, obj, buf, sz); */
 		break;
 	default:
-		die("Eh?  Object of type %d?", obj->type);
+		die("eh?  object of type %d?", obj->type);
 	}
 }
 

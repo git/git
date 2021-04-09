@@ -121,7 +121,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		hashwrite(f, obj->oid.hash, the_hash_algo->rawsz);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
 		    (i && oideq(&list[-2]->oid, &obj->oid)))
-			die("The same object %s appears twice in the pack",
+			die("the same object %s appears twice in the pack",
 			    oid_to_hex(&obj->oid));
 	}
 
@@ -373,7 +373,7 @@ void fixup_pack_header_footer(int pack_fd,
 			unsigned char hash[GIT_MAX_RAWSZ];
 			the_hash_algo->final_fn(hash, &old_hash_ctx);
 			if (!hasheq(hash, partial_pack_hash))
-				die("Unexpected checksum for %s "
+				die("unexpected checksum for %s "
 				    "(disk corruption?)", pack_name);
 			/*
 			 * Now let's compute the SHA1 of the remainder of the

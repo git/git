@@ -959,11 +959,11 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 
 	switch (dwim_ref(refname, strlen(refname), &oid, &full_refname, 0)) {
 	case 0:
-		die("No such ref: '%s'", refname);
+		die("no such ref: '%s'", refname);
 	case 1:
 		break; /* good */
 	default:
-		die("Ambiguous refname: '%s'", refname);
+		die("ambiguous refname: '%s'", refname);
 	}
 
 	memset(&revs, 0, sizeof(revs));

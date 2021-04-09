@@ -29,7 +29,7 @@ static void command_loop(int input_fd, int output_fd)
 		size_t i;
 		if (!fgets(buffer, MAXCOMMAND - 1, stdin)) {
 			if (ferror(stdin))
-				die("Input error");
+				die("input error");
 			return;
 		}
 		/* Strip end of line characters. */
@@ -45,10 +45,10 @@ static void command_loop(int input_fd, int output_fd)
 			fflush(stdout);
 			if (bidirectional_transfer_loop(input_fd,
 				output_fd))
-				die("Copying data between file descriptors failed");
+				die("copying data between file descriptors failed");
 			return;
 		} else {
-			die("Bad command: %s", buffer);
+			die("bad command: %s", buffer);
 		}
 	}
 }
@@ -65,7 +65,7 @@ int cmd_remote_fd(int argc, const char **argv, const char *prefix)
 	input_fd = (int)strtoul(argv[2], &end, 10);
 
 	if ((end == argv[2]) || (*end != ',' && *end != '/' && *end))
-		die("Bad URL syntax");
+		die("bad url syntax");
 
 	if (*end == '/' || !*end) {
 		output_fd = input_fd;
@@ -74,7 +74,7 @@ int cmd_remote_fd(int argc, const char **argv, const char *prefix)
 		output_fd = (int)strtoul(end + 1, &end2, 10);
 
 		if ((end2 == end + 1) || (*end2 != '/' && *end2))
-			die("Bad URL syntax");
+			die("bad url syntax");
 	}
 
 	command_loop(input_fd, output_fd);

@@ -58,7 +58,7 @@ struct pathspec {
 #define GUARD_PATHSPEC(ps, mask) \
 	do { \
 		if ((ps)->magic & ~(mask))	       \
-			die("BUG:%s:%d: unsupported magic %x",	\
+			die("bug:%s:%d: unsupported magic %x",	\
 			    __FILE__, __LINE__, (ps)->magic & ~(mask)); \
 	} while (0)
 

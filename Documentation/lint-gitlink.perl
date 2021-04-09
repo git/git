@@ -5,7 +5,7 @@ use Getopt::Long;
 
 my $basedir = ".";
 GetOptions("basedir=s" => \$basedir)
-	or die("Cannot parse command line arguments\n");
+	or die("cannot parse command line arguments\n");
 
 my $found_errors = 0;
 

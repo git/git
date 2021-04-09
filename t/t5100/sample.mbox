@@ -126,7 +126,7 @@ diff --git a/connect.c b/connect.c
 --- a/connect.c
 +++ b/connect.c
 @@ -96,42 +96,57 @@ static enum protocol get_protocol(const 
- 	die("I don't handle protocol '%s'", name);
+ 	die("i don't handle protocol '%s'", name);
  }
  
 -static void lookup_host(const char *host, struct sockaddr *in)
@@ -136,7 +136,7 @@ diff --git a/connect.c b/connect.c
 -
 -	ret = getaddrinfo(host, NULL, NULL, &res);
 -	if (ret)
--		die("Unable to look up %s (%s)", host, gai_strerror(ret));
+-		die("unable to look up %s (%s)", host, gai_strerror(ret));
 -	*in = *res->ai_addr;
 -	freeaddrinfo(res);
 -}
@@ -183,7 +183,7 @@ diff --git a/connect.c b/connect.c
 +
 +	gai = getaddrinfo(host, port, &hints, &ai);
 +	if (gai)
-+		die("Unable to look up %s (%s)", host, gai_strerror(gai));
++		die("unable to look up %s (%s)", host, gai_strerror(gai));
 +
 +	for (ai0 = ai; ai; ai = ai->ai_next) {
 +		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);

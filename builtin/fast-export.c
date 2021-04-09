@@ -319,7 +319,7 @@ static void export_blob(const struct object_id *oid)
 	}
 
 	if (!object)
-		die("Could not read blob %s", oid_to_hex(oid));
+		die("could not read blob %s", oid_to_hex(oid));
 
 	mark_next_object(object);
 
@@ -491,7 +491,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 			break;
 
 		default:
-			die("Unexpected comparison status '%c' for %s, %s",
+			die("unexpected comparison status '%c' for %s, %s",
 				q->queue[i]->status,
 				ospec->path ? ospec->path : "none",
 				spec->path ? spec->path : "none");
@@ -690,7 +690,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		case REENCODE_NO:
 			break;
 		case REENCODE_ABORT:
-			die("Encountered commit-specific encoding %s in commit "
+			die("encountered commit-specific encoding %s in commit "
 			    "%s; use --reencode=[yes|no] to handle it",
 			    encoding, oid_to_hex(&commit->object.oid));
 		}
@@ -921,7 +921,7 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 			tag = (struct tag *)tag->tagged;
 		}
 		if (!tag)
-			die("Tag %s points nowhere?", e->name);
+			die("tag %s points nowhere?", e->name);
 		return (struct commit *)tag;
 	}
 	default:

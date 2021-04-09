@@ -29,7 +29,7 @@ BEGIN {
 		$ENV{GITPERLLIB} ||
 		do {
 			my $perllibdir = __git_system_path('@@PERLLIBDIR_REL@@');
-			(-e $perllibdir) || die("Invalid system path ($relpath): $path");
+			(-e $perllibdir) || die("invalid system path ($relpath): $path");
 			$perllibdir;
 		}
 	);

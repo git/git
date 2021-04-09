@@ -39,7 +39,7 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 			if (!ret)
 				return term;
 			if (num == 0)
-				die("-L invalid empty range");
+				die("-l invalid empty range");
 			if (spec[0] == '-')
 				num = 0 - num;
 			if (0 < num)
@@ -56,7 +56,7 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	if (term != spec) {
 		if (ret) {
 			if (num <= 0)
-				die("-L invalid line number: %ld", num);
+				die("-l invalid line number: %ld", num);
 			*ret = num;
 		}
 		return term;
@@ -110,7 +110,7 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	else {
 		char errbuf[1024];
 		regerror(reg_error, &regexp, errbuf, 1024);
-		die("-L parameter '%s' starting at line %ld: %s",
+		die("-l parameter '%s' starting at line %ld: %s",
 		    spec + 1, begin + 1, errbuf);
 	}
 }
@@ -143,7 +143,7 @@ static const char *find_funcname_matching_regexp(xdemitconf_t *xecfg, const char
 		else if (reg_error) {
 			char errbuf[1024];
 			regerror(reg_error, regexp, errbuf, 1024);
-			die("-L parameter: regexec() failed: %s", errbuf);
+			die("-l parameter: regexec() failed: %s", errbuf);
 		}
 		/* determine extent of line matched */
 		bol = start+match[0].rm_so;
@@ -210,19 +210,19 @@ static const char *parse_range_funcname(
 	if (reg_error) {
 		char errbuf[1024];
 		regerror(reg_error, &regexp, errbuf, 1024);
-		die("-L parameter '%s': %s", pattern, errbuf);
+		die("-l parameter '%s': %s", pattern, errbuf);
 	}
 
 	p = find_funcname_matching_regexp(xecfg, (char*) start, &regexp);
 	if (!p)
-		die("-L parameter '%s' starting at line %ld: no match",
+		die("-l parameter '%s' starting at line %ld: no match",
 		    pattern, anchor + 1);
 	*begin = 0;
 	while (p > nth_line_cb(cb_data, *begin))
 		(*begin)++;
 
 	if (*begin >= lines)
-		die("-L parameter '%s' matches at EOF", pattern);
+		die("-l parameter '%s' matches at eof", pattern);
 
 	*end = *begin+1;
 	while (*end < lines) {

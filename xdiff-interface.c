@@ -259,7 +259,7 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value, int cflags)
 
 		reg->negate = (*value == '!');
 		if (reg->negate && i == regs->nr - 1)
-			die("Last expression must not be negated: %s", value);
+			die("last expression must not be negated: %s", value);
 		if (*value == '!')
 			value++;
 		if (ep)
@@ -267,7 +267,7 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value, int cflags)
 		else
 			expression = value;
 		if (regcomp(&reg->re, expression, cflags))
-			die("Invalid regexp to look for hunk header: %s", expression);
+			die("invalid regexp to look for hunk header: %s", expression);
 		free(buffer);
 		value = ep ? ep + 1 : NULL;
 	}

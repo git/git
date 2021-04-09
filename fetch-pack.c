@@ -1537,7 +1537,7 @@ static void receive_packfile_uris(struct packet_reader *reader,
 		string_list_append(uris, reader->line);
 	}
 	if (reader->status != PACKET_READ_DELIM)
-		die("expected DELIM");
+		die("expected delim");
 }
 
 enum fetch_state {
@@ -1700,12 +1700,12 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 		if (read_in_full(cmd.out, packname, 5) < 0 ||
 		    memcmp(packname, "keep\t", 5))
-			die("fetch-pack: expected keep then TAB at start of http-fetch output");
+			die("fetch-pack: expected keep then tab at start of http-fetch output");
 
 		if (read_in_full(cmd.out, packname,
 				 the_hash_algo->hexsz + 1) < 0 ||
 		    packname[the_hash_algo->hexsz] != '\n')
-			die("fetch-pack: expected hash then LF at end of http-fetch output");
+			die("fetch-pack: expected hash then lf at end of http-fetch output");
 
 		packname[the_hash_algo->hexsz] = '\0';
 

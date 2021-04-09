@@ -2506,7 +2506,7 @@ static int push_check(int argc, const char **argv, const char *prefix)
 					if (!detached_head &&
 					    !strcmp(head, superproject_head))
 						break;
-					die("HEAD does not match the named branch in the superproject");
+					die("head does not match the named branch in the superproject");
 				}
 				/* fallthrough */
 			default:

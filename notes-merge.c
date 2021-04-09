@@ -292,7 +292,7 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
 		o->has_worktree = 1;
 	} else if (!file_exists(git_path(NOTES_MERGE_WORKTREE)))
 		/* NOTES_MERGE_WORKTREE should already be established */
-		die("missing '%s'. This should not happen",
+		die("missing '%s'. this should not happen",
 		    git_path(NOTES_MERGE_WORKTREE));
 }
 
@@ -359,7 +359,7 @@ static int ll_merge_in_worktree(struct notes_merge_options *o,
 	free(remote.ptr);
 
 	if ((status < 0) || !result_buf.ptr)
-		die("Failed to execute internal merge");
+		die("failed to execute internal merge");
 
 	write_buf_to_worktree(&p->obj, result_buf.ptr, result_buf.size);
 	free(result_buf.ptr);
@@ -467,7 +467,7 @@ static int merge_one_change(struct notes_merge_options *o,
 			    "(combine_notes_cat_sort_uniq)");
 		return 0;
 	}
-	die("Unknown strategy (%i).", o->strategy);
+	die("unknown strategy (%i)", o->strategy);
 }
 
 static int merge_changes(struct notes_merge_options *o,
@@ -554,12 +554,12 @@ int notes_merge(struct notes_merge_options *o,
 
 	/* Dereference o->local_ref into local_sha1 */
 	if (read_ref_full(o->local_ref, 0, &local_oid, NULL))
-		die("Failed to resolve local notes ref '%s'", o->local_ref);
+		die("failed to resolve local notes ref '%s'", o->local_ref);
 	else if (!check_refname_format(o->local_ref, 0) &&
 		is_null_oid(&local_oid))
 		local = NULL; /* local_oid == null_oid indicates unborn ref */
 	else if (!(local = lookup_commit_reference(o->repo, &local_oid)))
-		die("Could not parse local commit %s (%s)",
+		die("could not parse local commit %s (%s)",
 		    oid_to_hex(&local_oid), o->local_ref);
 	trace_printf("\tlocal commit: %.7s\n", oid_to_hex(&local_oid));
 
@@ -573,17 +573,17 @@ int notes_merge(struct notes_merge_options *o,
 			oidclr(&remote_oid);
 			remote = NULL;
 		} else {
-			die("Failed to resolve remote notes ref '%s'",
+			die("failed to resolve remote notes ref '%s'",
 			    o->remote_ref);
 		}
 	} else if (!(remote = lookup_commit_reference(o->repo, &remote_oid))) {
-		die("Could not parse remote commit %s (%s)",
+		die("could not parse remote commit %s (%s)",
 		    oid_to_hex(&remote_oid), o->remote_ref);
 	}
 	trace_printf("\tremote commit: %.7s\n", oid_to_hex(&remote_oid));
 
 	if (!local && !remote)
-		die("Cannot merge empty notes ref (%s) into empty notes ref "
+		die("cannot merge empty notes ref (%s) into empty notes ref "
 		    "(%s)", o->remote_ref, o->local_ref);
 	if (!local) {
 		/* result == remote commit */
@@ -714,9 +714,9 @@ int notes_merge_commit(struct notes_merge_options *o,
 		if (stat(path.buf, &st))
 			die_errno("Failed to stat '%s'", path.buf);
 		if (index_path(o->repo->index, &blob_oid, path.buf, &st, HASH_WRITE_OBJECT))
-			die("Failed to write blob object from '%s'", path.buf);
+			die("failed to write blob object from '%s'", path.buf);
 		if (add_note(partial_tree, &obj_oid, &blob_oid, NULL))
-			die("Failed to add resolved note '%s' to notes tree",
+			die("failed to add resolved note '%s' to notes tree",
 			    path.buf);
 		if (o->verbosity >= 4)
 			printf("Added resolved note for object %s: %s\n",

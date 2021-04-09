@@ -118,7 +118,7 @@ static enum fsck_msg_type parse_msg_type(const char *str)
 	else if (!strcmp(str, "ignore"))
 		return FSCK_IGNORE;
 	else
-		die("Unknown fsck message type: '%s'", str);
+		die("unknown fsck message type: '%s'", str);
 }
 
 int is_valid_msg_type(const char *msg_id, const char *msg_type)
@@ -152,10 +152,10 @@ void fsck_set_msg_type(struct fsck_options *options,
 	enum fsck_msg_type msg_type = parse_msg_type(msg_type_str);
 
 	if (msg_id < 0)
-		die("Unhandled message id: %s", msg_id_str);
+		die("unhandled message id: %s", msg_id_str);
 
 	if (msg_type != FSCK_ERROR && msg_id_info[msg_id].msg_type == FSCK_FATAL)
-		die("Cannot demote %s to %s", msg_id_str, msg_type_str);
+		die("cannot demote %s to %s", msg_id_str, msg_type_str);
 
 	fsck_set_msg_type_from_ids(options, msg_id, msg_type);
 }
@@ -190,7 +190,7 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 		}
 
 		if (equal == len)
-			die("Missing '=': '%s'", buf);
+			die("missing '=': '%s'", buf);
 
 		fsck_set_msg_type(options, buf, buf + equal + 1);
 		buf += len + 1;

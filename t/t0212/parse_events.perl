@@ -49,7 +49,7 @@ GetOptions("children!" => \$show_children,
 	   "threads!"  => \$show_threads,
 	   "HEREDOC!"  => \$gen_heredoc,
 	   "VERSION=s" => \$gen_version    )
-    or die("Error in command line arguments\n");
+    or die("error in command line arguments\n");
 
 
 # SIDs contains timestamps and PIDs of the process and its parents.

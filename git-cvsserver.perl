@@ -266,7 +266,7 @@ while (<STDIN>)
         # a response. If it is, the client will hang, we'll hang, and the whole
         # thing will be custard.
         $log->fatal("Don't understand command $_\n");
-        die("Unknown command $_");
+        die("unknown command $_");
     }
 }
 
@@ -2872,9 +2872,9 @@ sub transmitfile
         if ( defined ( $options->{targetfile} ) )
         {
             my $targetfile = $options->{targetfile};
-            open NEWFILE, ">", $targetfile or die("Couldn't open '$targetfile' for writing : $!");
+            open NEWFILE, ">", $targetfile or die("couldn't open '$targetfile' for writing : $!");
             print NEWFILE $_ while ( <$fh> );
-            close NEWFILE or die("Failed to write '$targetfile': $!");
+            close NEWFILE or die("failed to write '$targetfile': $!");
         } elsif ( defined ( $options->{print} ) && $options->{print} ) {
             while ( <$fh> ) {
                 if( /\n\z/ ) {
@@ -2889,7 +2889,7 @@ sub transmitfile
         }
         close $fh or die ("Couldn't close filehandle for transmitfile(): $!");
     } else {
-        die("Couldn't execute git-cat-file");
+        die("couldn't execute git-cat-file");
     }
 }
 
@@ -3474,7 +3474,7 @@ sub new
 
     if ( defined ( $filename ) )
     {
-        open $self->{fh}, ">>", $filename or die("Couldn't open '$filename' for writing : $!");
+        open $self->{fh}, ">>", $filename or die("couldn't open '$filename' for writing : $!");
     }
 
     return $self;
@@ -3494,7 +3494,7 @@ sub setfile
 
     if ( defined ( $filename ) )
     {
-        open $self->{fh}, ">>", $filename or die("Couldn't open '$filename' for writing : $!");
+        open $self->{fh}, ">>", $filename or die("couldn't open '$filename' for writing : $!");
     }
 
     return unless ( defined ( $self->{buffer} ) and ref $self->{buffer} eq "ARRAY" );
@@ -3822,7 +3822,7 @@ sub update
     my $commitinfo = ::safe_pipe_capture('git', 'cat-file', 'commit', $self->{module});
     unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{$state->{hexsz}}/ )
     {
-        die("Invalid module '$self->{module}'");
+        die("invalid module '$self->{module}'");
     }
 
 
@@ -3955,14 +3955,14 @@ sub update
 
         if ( defined ( $lastpicked ) )
         {
-            my $filepipe = open(FILELIST, '-|', 'git', 'diff-tree', '-z', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git', 'diff-tree', '-z', '-r', $lastpicked, $commit->{hash}) or die("cannot call git-diff-tree : $!");
 	    local ($/) = "\0";
             while ( <FILELIST> )
             {
 		chomp;
                 unless ( /^:\d{6}\s+([0-7]{6})\s+[a-f0-9]{$state->{hexsz}}\s+([a-f0-9]{$state->{hexsz}})\s+(\w)$/o )
                 {
-                    die("Couldn't process git-diff-tree line : $_");
+                    die("couldn't process git-diff-tree line : $_");
                 }
 		my ($mode, $hash, $change) = ($1, $2, $3);
 		my $name = <FILELIST>;
@@ -4025,14 +4025,14 @@ sub update
             # this is used to detect files removed from the repo
             my $seen_files = {};
 
-            my $filepipe = open(FILELIST, '-|', 'git', 'ls-tree', '-z', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git', 'ls-tree', '-z', '-r', $commit->{hash}) or die("cannot call git-ls-tree : $!");
 	    local $/ = "\0";
             while ( <FILELIST> )
             {
 		chomp;
                 unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
                 {
-                    die("Couldn't process git-ls-tree line : $_");
+                    die("couldn't process git-ls-tree line : $_");
                 }
 
                 my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
@@ -4331,7 +4331,7 @@ sub getAnyHead
     my @files;
     {
         open(my $filePipe, '-|', 'git', 'ls-tree', '-z', '-r', $hash)
-                or die("Cannot call git-ls-tree : $!");
+                or die("cannot call git-ls-tree : $!");
         local $/ = "\0";
         @files=<$filePipe>;
         close $filePipe;
@@ -4344,7 +4344,7 @@ sub getAnyHead
         $line=~s/\0$//;
         unless ( $line=~/^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
         {
-            die("Couldn't process git-ls-tree line : $_");
+            die("couldn't process git-ls-tree line : $_");
         }
 
         my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
@@ -4410,14 +4410,14 @@ sub getRevisionDirMap
         }
 
         open(my $filePipe, '-|', 'git', 'ls-tree', '-z', '-r', $hash)
-                or die("Cannot call git-ls-tree : $!");
+                or die("cannot call git-ls-tree : $!");
         local $/ = "\0";
         while ( <$filePipe> )
         {
             chomp;
             unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
             {
-                die("Couldn't process git-ls-tree line : $_");
+                die("couldn't process git-ls-tree line : $_");
             }
 
             my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
@@ -4815,7 +4815,7 @@ sub getMetaFromCommithash
     # meta data about $filename:
     open(my $filePipe, '-|', 'git', 'ls-tree', '-z',
                 $commit->{hash}, '--', $filename)
-            or die("Cannot call git-ls-tree : $!");
+            or die("cannot call git-ls-tree : $!");
     local $/ = "\0";
     my $line;
     $line=<$filePipe>;
@@ -4828,7 +4828,7 @@ sub getMetaFromCommithash
     chomp $line;
     unless ( $line=~m/^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
     {
-        die("Couldn't process git-ls-tree line : $line\n");
+        die("couldn't process git-ls-tree line : $line\n");
     }
     my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
 
@@ -4912,7 +4912,7 @@ sub commitmessage
     my $commithash = shift;
     my $tablename = $self->tablename("commitmsgs");
 
-    die("Need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
+    die("need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
 
     my $db_query;
     $db_query = $self->{dbh}->prepare_cached("SELECT value FROM $tablename WHERE key=?",{},1);

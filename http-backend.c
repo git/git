@@ -354,7 +354,7 @@ static ssize_t get_content_length(void)
 	const char *str = getenv("CONTENT_LENGTH");
 
 	if (str && *str && !git_parse_ssize_t(str, &val))
-		die("failed to parse CONTENT_LENGTH: %s", str);
+		die("failed to parse content_length: %s", str);
 	return val;
 }
 
@@ -685,7 +685,7 @@ static char* getdir(void)
 
 	if (root && *root) {
 		if (!pathinfo || !*pathinfo)
-			die("GIT_PROJECT_ROOT is set but PATH_INFO is not");
+			die("git_project_root is set but path_info is not");
 		if (daemon_avoid_alias(pathinfo))
 			die("'%s': aliased", pathinfo);
 		end_url_with_slash(&buf, root);
@@ -696,7 +696,7 @@ static char* getdir(void)
 	} else if (path && *path) {
 		return xstrdup(path);
 	} else
-		die("No GIT_PROJECT_ROOT or PATH_TRANSLATED from server");
+		die("no git_project_root or path_translated from server");
 	return NULL;
 }
 
@@ -749,7 +749,7 @@ int cmd_main(int argc, const char **argv)
 	set_die_is_recursing_routine(die_webcgi_recursing);
 
 	if (!method)
-		die("No REQUEST_METHOD from server");
+		die("no request_method from server");
 	if (!strcmp(method, "HEAD"))
 		method = "GET";
 	dir = getdir();
@@ -760,7 +760,7 @@ int cmd_main(int argc, const char **argv)
 		regmatch_t out[1];
 
 		if (regcomp(&re, c->pattern, REG_EXTENDED))
-			die("Bogus regex in service table: %s", c->pattern);
+			die("bogus regex in service table: %s", c->pattern);
 		if (!regexec(&re, dir, 1, out, 0)) {
 			size_t n;
 

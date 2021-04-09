@@ -545,7 +545,7 @@ static void die_no_single_rev(int quiet)
 	if (quiet)
 		exit(1);
 	else
-		die("Needed a single revision");
+		die("needed a single revision");
 }
 
 static const char builtin_rev_parse_usage[] =

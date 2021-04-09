@@ -564,7 +564,7 @@ static void *find_mark(struct mark_set *s, uintmax_t idnum)
 			oe = s->data.marked[idnum];
 	}
 	if (!oe)
-		die("mark :%" PRIuMAX " not declared", orig_idnum);
+		die("mark :%" priumax " not declared", orig_idnum);
 	return oe;
 }
 
@@ -604,9 +604,9 @@ static struct branch *new_branch(const char *name)
 	struct branch *b = lookup_branch(name);
 
 	if (b)
-		die("Invalid attempt to create duplicate branch: %s", name);
+		die("invalid attempt to create duplicate branch: %s", name);
 	if (check_refname_format(name, REFNAME_ALLOW_ONELEVEL))
-		die("Branch name doesn't conform to GIT standards: %s", name);
+		die("branch name doesn't conform to git standards: %s", name);
 
 	b = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct branch));
 	b->name = mem_pool_strdup(&fi_mem_pool, name);
@@ -1108,7 +1108,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 			size_t cnt = in_sz < len ? in_sz : (size_t)len;
 			size_t n = fread(in_buf, 1, cnt, stdin);
 			if (!n && feof(stdin))
-				die("EOF in data (%" PRIuMAX " bytes remaining)", len);
+				die("eof in data (%" priumax " bytes remaining)", len);
 
 			the_hash_algo->update_fn(&c, in_buf, n);
 			s.next_in = in_buf;
@@ -1249,16 +1249,16 @@ static void load_tree(struct tree_entry *root)
 	myoe = find_object(oid);
 	if (myoe && myoe->pack_id != MAX_PACK_ID) {
 		if (myoe->type != OBJ_TREE)
-			die("Not a tree: %s", oid_to_hex(oid));
+			die("not a tree: %s", oid_to_hex(oid));
 		t->delta_depth = myoe->depth;
 		buf = gfi_unpack_entry(myoe, &size);
 		if (!buf)
-			die("Can't load tree %s", oid_to_hex(oid));
+			die("can't load tree %s", oid_to_hex(oid));
 	} else {
 		enum object_type type;
 		buf = read_object_file(oid, &type, &size);
 		if (!buf || type != OBJ_TREE)
-			die("Can't load tree %s", oid_to_hex(oid));
+			die("can't load tree %s", oid_to_hex(oid));
 	}
 
 	c = buf;
@@ -1272,7 +1272,7 @@ static void load_tree(struct tree_entry *root)
 		e->tree = NULL;
 		c = get_mode(c, &e->versions[1].mode);
 		if (!c)
-			die("Corrupt mode in %s", oid_to_hex(oid));
+			die("corrupt mode in %s", oid_to_hex(oid));
 		e->versions[0].mode = e->versions[1].mode;
 		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
@@ -1382,7 +1382,7 @@ static void tree_content_replace(
 	struct tree_content *newtree)
 {
 	if (!S_ISDIR(mode))
-		die("Root cannot be a non-directory");
+		die("root cannot be a non-directory");
 	oidclr(&root->versions[0].oid);
 	oidcpy(&root->versions[1].oid, oid);
 	if (root->tree)
@@ -1405,9 +1405,9 @@ static int tree_content_set(
 	slash1 = strchrnul(p, '/');
 	n = slash1 - p;
 	if (!n)
-		die("Empty path component found in input");
+		die("empty path component found in input");
 	if (!*slash1 && !S_ISDIR(mode) && subtree)
-		die("Non-directories cannot have subtrees");
+		die("non-directories cannot have subtrees");
 
 	if (!root->tree)
 		load_tree(root);
@@ -1558,7 +1558,7 @@ static int tree_content_get(
 	slash1 = strchrnul(p, '/');
 	n = slash1 - p;
 	if (!n && !allow_root)
-		die("Empty path component found in input");
+		die("empty path component found in input");
 
 	if (!root->tree)
 		load_tree(root);
@@ -1859,7 +1859,7 @@ static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 	strbuf_reset(sb);
 
 	if (!skip_prefix(command_buf.buf, "data ", &data))
-		die("Expected 'data n' command, found: %s", command_buf.buf);
+		die("expected 'data n' command, found: %s", command_buf.buf);
 
 	if (skip_prefix(data, "<<", &data)) {
 		char *term = xstrdup(data);
@@ -1867,7 +1867,7 @@ static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 
 		for (;;) {
 			if (strbuf_getline_lf(&command_buf, stdin) == EOF)
-				die("EOF in data (terminator '%s' not found)", term);
+				die("eof in data (terminator '%s' not found)", term);
 			if (term_len == command_buf.len
 				&& !strcmp(term, command_buf.buf))
 				break;
@@ -1890,7 +1890,7 @@ static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 		while (n < length) {
 			size_t s = strbuf_fread(sb, length - n, stdin);
 			if (!s && feof(stdin))
-				die("EOF in data (%lu bytes remaining)",
+				die("eof in data (%lu bytes remaining)",
 					(unsigned long)(length - n));
 			n += s;
 		}
@@ -1947,15 +1947,15 @@ static char *parse_ident(const char *buf)
 
 	ltgt = buf + strcspn(buf, "<>");
 	if (*ltgt != '<')
-		die("Missing < in ident string: %s", buf);
+		die("missing < in ident string: %s", buf);
 	if (ltgt != buf && ltgt[-1] != ' ')
-		die("Missing space before < in ident string: %s", buf);
+		die("missing space before < in ident string: %s", buf);
 	ltgt = ltgt + 1 + strcspn(ltgt + 1, "<>");
 	if (*ltgt != '>')
-		die("Missing > in ident string: %s", buf);
+		die("missing > in ident string: %s", buf);
 	ltgt++;
 	if (*ltgt != ' ')
-		die("Missing space after > in ident string: %s", buf);
+		die("missing space after > in ident string: %s", buf);
 	ltgt++;
 	name_len = ltgt - buf;
 	strbuf_add(&ident, buf, name_len);
@@ -1963,19 +1963,19 @@ static char *parse_ident(const char *buf)
 	switch (whenspec) {
 	case WHENSPEC_RAW:
 		if (validate_raw_date(ltgt, &ident, 1) < 0)
-			die("Invalid raw date \"%s\" in ident: %s", ltgt, buf);
+			die("invalid raw date \"%s\" in ident: %s", ltgt, buf);
 		break;
 	case WHENSPEC_RAW_PERMISSIVE:
 		if (validate_raw_date(ltgt, &ident, 0) < 0)
-			die("Invalid raw date \"%s\" in ident: %s", ltgt, buf);
+			die("invalid raw date \"%s\" in ident: %s", ltgt, buf);
 		break;
 	case WHENSPEC_RFC2822:
 		if (parse_date(ltgt, &ident) < 0)
-			die("Invalid rfc2822 date \"%s\" in ident: %s", ltgt, buf);
+			die("invalid rfc2822 date \"%s\" in ident: %s", ltgt, buf);
 		break;
 	case WHENSPEC_NOW:
 		if (strcmp("now", ltgt))
-			die("Date in ident must be 'now': %s", buf);
+			die("date in ident must be 'now': %s", buf);
 		datestamp(&ident);
 		break;
 	}
@@ -2069,7 +2069,7 @@ static void construct_path_with_fanout(const char *hex_sha1,
 {
 	unsigned int i = 0, j = 0;
 	if (fanout >= the_hash_algo->rawsz)
-		die("Too large fanout (%u)", fanout);
+		die("too large fanout (%u)", fanout);
 	while (fanout) {
 		path[i++] = hex_sha1[j++];
 		path[i++] = hex_sha1[j++];
@@ -2143,7 +2143,7 @@ static uintmax_t do_change_note_fanout(
 
 			/* Rename fullpath to realpath */
 			if (!tree_content_remove(orig_root, fullpath, &leaf, 0))
-				die("Failed to remove path %s", fullpath);
+				die("failed to remove path %s", fullpath);
 			tree_content_set(orig_root, realpath,
 				&leaf.versions[1].oid,
 				leaf.versions[1].mode,
@@ -2216,7 +2216,7 @@ static uintmax_t parse_mark_ref(const char *p, char **endptr)
 	p++;
 	mark = strtoumax(p, endptr, 10);
 	if (*endptr == p)
-		die("No value after ':' in mark: %s", command_buf.buf);
+		die("no value after ':' in mark: %s", command_buf.buf);
 	return mark;
 }
 
@@ -2231,7 +2231,7 @@ static uintmax_t parse_mark_ref_eol(const char *p)
 
 	mark = parse_mark_ref(p, &end);
 	if (*end != '\0')
-		die("Garbage after mark: %s", command_buf.buf);
+		die("garbage after mark: %s", command_buf.buf);
 	return mark;
 }
 
@@ -2246,7 +2246,7 @@ static uintmax_t parse_mark_ref_space(const char **p)
 
 	mark = parse_mark_ref(*p, &end);
 	if (*end++ != ' ')
-		die("Missing space after mark: %s", command_buf.buf);
+		die("missing space after mark: %s", command_buf.buf);
 	*p = end;
 	return mark;
 }
@@ -2261,7 +2261,7 @@ static void file_change_m(const char *p, struct branch *b)
 
 	p = get_mode(p, &mode);
 	if (!p)
-		die("Corrupt mode: %s", command_buf.buf);
+		die("corrupt mode: %s", command_buf.buf);
 	switch (mode) {
 	case 0644:
 	case 0755:
@@ -2274,7 +2274,7 @@ static void file_change_m(const char *p, struct branch *b)
 		/* ok */
 		break;
 	default:
-		die("Corrupt mode: %s", command_buf.buf);
+		die("corrupt mode: %s", command_buf.buf);
 	}
 
 	if (*p == ':') {
@@ -2285,16 +2285,16 @@ static void file_change_m(const char *p, struct branch *b)
 		oe = NULL; /* not used with inline_data, but makes gcc happy */
 	} else {
 		if (parse_mapped_oid_hex(p, &oid, &p))
-			die("Invalid dataref: %s", command_buf.buf);
+			die("invalid dataref: %s", command_buf.buf);
 		oe = find_object(&oid);
 		if (*p++ != ' ')
-			die("Missing space after SHA1: %s", command_buf.buf);
+			die("missing space after sha1: %s", command_buf.buf);
 	}
 
 	strbuf_reset(&uq);
 	if (!unquote_c_style(&uq, p, &endp)) {
 		if (*endp)
-			die("Garbage after path in: %s", command_buf.buf);
+			die("garbage after path in: %s", command_buf.buf);
 		p = uq.buf;
 	}
 
@@ -2306,11 +2306,11 @@ static void file_change_m(const char *p, struct branch *b)
 
 	if (S_ISGITLINK(mode)) {
 		if (inline_data)
-			die("Git links cannot be specified 'inline': %s",
+			die("git links cannot be specified 'inline': %s",
 				command_buf.buf);
 		else if (oe) {
 			if (oe->type != OBJ_COMMIT)
-				die("Not a commit (actually a %s): %s",
+				die("not a commit (actually a %s): %s",
 					type_name(oe->type), command_buf.buf);
 		}
 		/*
@@ -2319,7 +2319,7 @@ static void file_change_m(const char *p, struct branch *b)
 		 */
 	} else if (inline_data) {
 		if (S_ISDIR(mode))
-			die("Directories cannot be specified 'inline': %s",
+			die("directories cannot be specified 'inline': %s",
 				command_buf.buf);
 		if (p != uq.buf) {
 			strbuf_addstr(&uq, p);
@@ -2345,7 +2345,7 @@ static void file_change_m(const char *p, struct branch *b)
 					S_ISDIR(mode) ?  "Tree" : "Blob",
 					command_buf.buf);
 		if (type != expected)
-			die("Not a %s (actually a %s): %s",
+			die("not a %s (actually a %s): %s",
 				type_name(expected), type_name(type),
 				command_buf.buf);
 	}
@@ -2365,7 +2365,7 @@ static void file_change_d(const char *p, struct branch *b)
 	strbuf_reset(&uq);
 	if (!unquote_c_style(&uq, p, &endp)) {
 		if (*endp)
-			die("Garbage after path in: %s", command_buf.buf);
+			die("garbage after path in: %s", command_buf.buf);
 		p = uq.buf;
 	}
 	tree_content_remove(&b->branch_tree, p, NULL, 1);
@@ -2382,24 +2382,24 @@ static void file_change_cr(const char *s, struct branch *b, int rename)
 	strbuf_reset(&s_uq);
 	if (!unquote_c_style(&s_uq, s, &endp)) {
 		if (*endp != ' ')
-			die("Missing space after source: %s", command_buf.buf);
+			die("missing space after source: %s", command_buf.buf);
 	} else {
 		endp = strchr(s, ' ');
 		if (!endp)
-			die("Missing space after source: %s", command_buf.buf);
+			die("missing space after source: %s", command_buf.buf);
 		strbuf_add(&s_uq, s, endp - s);
 	}
 	s = s_uq.buf;
 
 	endp++;
 	if (!*endp)
-		die("Missing dest: %s", command_buf.buf);
+		die("missing dest: %s", command_buf.buf);
 
 	d = endp;
 	strbuf_reset(&d_uq);
 	if (!unquote_c_style(&d_uq, d, &endp)) {
 		if (*endp)
-			die("Garbage after dest in: %s", command_buf.buf);
+			die("garbage after dest in: %s", command_buf.buf);
 		d = d_uq.buf;
 	}
 
@@ -2409,7 +2409,7 @@ static void file_change_cr(const char *s, struct branch *b, int rename)
 	else
 		tree_content_get(&b->branch_tree, s, &leaf, 1);
 	if (!leaf.versions[1].mode)
-		die("Path %s not in branch", s);
+		die("path %s not in branch", s);
 	if (!*d) {	/* C "path/to/subdir" "" */
 		tree_content_replace(&b->branch_tree,
 			&leaf.versions[1].oid,
@@ -2459,23 +2459,23 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		oe = NULL; /* not used with inline_data, but makes gcc happy */
 	} else {
 		if (parse_mapped_oid_hex(p, &oid, &p))
-			die("Invalid dataref: %s", command_buf.buf);
+			die("invalid dataref: %s", command_buf.buf);
 		oe = find_object(&oid);
 		if (*p++ != ' ')
-			die("Missing space after SHA1: %s", command_buf.buf);
+			die("missing space after sha1: %s", command_buf.buf);
 	}
 
 	/* <commit-ish> */
 	s = lookup_branch(p);
 	if (s) {
 		if (is_null_oid(&s->oid))
-			die("Can't add a note on empty branch.");
+			die("can't add a note on empty branch");
 		oidcpy(&commit_oid, &s->oid);
 	} else if (*p == ':') {
 		uintmax_t commit_mark = parse_mark_ref_eol(p);
 		struct object_entry *commit_oe = find_mark(marks, commit_mark);
 		if (commit_oe->type != OBJ_COMMIT)
-			die("Mark :%" PRIuMAX " not a commit", commit_mark);
+			die("mark :%" priumax " not a commit", commit_mark);
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
 	} else if (!get_oid(p, &commit_oid)) {
 		unsigned long size;
@@ -2484,10 +2484,10 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 						       commit_type, &size,
 						       &commit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
-			die("Not a valid commit: %s", p);
+			die("not a valid commit: %s", p);
 		free(buf);
 	} else
-		die("Invalid ref name or SHA1 expression: %s", p);
+		die("invalid ref name or sha1 expression: %s", p);
 
 	if (inline_data) {
 		if (p != uq.buf) {
@@ -2498,15 +2498,15 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		parse_and_store_blob(&last_blob, &oid, 0);
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
-			die("Not a blob (actually a %s): %s",
+			die("not a blob (actually a %s): %s",
 				type_name(oe->type), command_buf.buf);
 	} else if (!is_null_oid(&oid)) {
 		enum object_type type = oid_object_info(the_repository, &oid,
 							NULL);
 		if (type < 0)
-			die("Blob not found: %s", command_buf.buf);
+			die("blob not found: %s", command_buf.buf);
 		if (type != OBJ_BLOB)
-			die("Not a blob (actually a %s): %s",
+			die("not a blob (actually a %s): %s",
 			    type_name(type), command_buf.buf);
 	}
 
@@ -2535,10 +2535,10 @@ static void file_change_deleteall(struct branch *b)
 static void parse_from_commit(struct branch *b, char *buf, unsigned long size)
 {
 	if (!buf || size < the_hash_algo->hexsz + 6)
-		die("Not a valid commit: %s", oid_to_hex(&b->oid));
+		die("not a valid commit: %s", oid_to_hex(&b->oid));
 	if (memcmp("tree ", buf, 5)
 		|| get_oid_hex(buf + 5, &b->branch_tree.versions[1].oid))
-		die("The commit %s is corrupt", oid_to_hex(&b->oid));
+		die("the commit %s is corrupt", oid_to_hex(&b->oid));
 	oidcpy(&b->branch_tree.versions[0].oid,
 	       &b->branch_tree.versions[1].oid);
 }
@@ -2569,7 +2569,7 @@ static int parse_objectish(struct branch *b, const char *objectish)
 
 	s = lookup_branch(objectish);
 	if (b == s)
-		die("Can't create a branch from itself: %s", b->name);
+		die("can't create a branch from itself: %s", b->name);
 	else if (s) {
 		struct object_id *t = &s->branch_tree.versions[1].oid;
 		oidcpy(&b->oid, &s->oid);
@@ -2579,7 +2579,7 @@ static int parse_objectish(struct branch *b, const char *objectish)
 		uintmax_t idnum = parse_mark_ref_eol(objectish);
 		struct object_entry *oe = find_mark(marks, idnum);
 		if (oe->type != OBJ_COMMIT)
-			die("Mark :%" PRIuMAX " not a commit", idnum);
+			die("mark :%" priumax " not a commit", idnum);
 		if (!oideq(&b->oid, &oe->idx.oid)) {
 			oidcpy(&b->oid, &oe->idx.oid);
 			if (oe->pack_id != MAX_PACK_ID) {
@@ -2596,7 +2596,7 @@ static int parse_objectish(struct branch *b, const char *objectish)
 			b->delete = 1;
 	}
 	else
-		die("Invalid ref name or SHA1 expression: %s", objectish);
+		die("invalid ref name or sha1 expression: %s", objectish);
 
 	if (b->branch_tree.tree && !oideq(&oid, &b->branch_tree.versions[1].oid)) {
 		release_tree_content_recursive(b->branch_tree.tree);
@@ -2643,7 +2643,7 @@ static struct hash_list *parse_merge(unsigned int *count)
 			uintmax_t idnum = parse_mark_ref_eol(from);
 			struct object_entry *oe = find_mark(marks, idnum);
 			if (oe->type != OBJ_COMMIT)
-				die("Mark :%" PRIuMAX " not a commit", idnum);
+				die("mark :%" priumax " not a commit", idnum);
 			oidcpy(&n->oid, &oe->idx.oid);
 		} else if (!get_oid(from, &n->oid)) {
 			unsigned long size;
@@ -2652,10 +2652,10 @@ static struct hash_list *parse_merge(unsigned int *count)
 							       commit_type,
 							       &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)
-				die("Not a valid commit: %s", from);
+				die("not a valid commit: %s", from);
 			free(buf);
 		} else
-			die("Invalid ref name or SHA1 expression: %s", from);
+			die("invalid ref name or sha1 expression: %s", from);
 
 		n->next = NULL;
 		*tail = n;
@@ -2695,7 +2695,7 @@ static void parse_new_commit(const char *arg)
 		read_next_command();
 	}
 	if (!committer)
-		die("Expected committer but didn't get one");
+		die("expected committer but didn't get one");
 	if (skip_prefix(command_buf.buf, "encoding ", &v)) {
 		encoding = xstrdup(v);
 		read_next_command();
@@ -2805,11 +2805,11 @@ static void parse_new_tag(const char *arg)
 
 	/* from ... */
 	if (!skip_prefix(command_buf.buf, "from ", &from))
-		die("Expected from command, got %s", command_buf.buf);
+		die("expected from command, got %s", command_buf.buf);
 	s = lookup_branch(from);
 	if (s) {
 		if (is_null_oid(&s->oid))
-			die("Can't tag an empty branch.");
+			die("can't tag an empty branch");
 		oidcpy(&oid, &s->oid);
 		type = OBJ_COMMIT;
 	} else if (*from == ':') {
@@ -2823,11 +2823,11 @@ static void parse_new_tag(const char *arg)
 		if (!oe) {
 			type = oid_object_info(the_repository, &oid, NULL);
 			if (type < 0)
-				die("Not a valid object: %s", from);
+				die("not a valid object: %s", from);
 		} else
 			type = oe->type;
 	} else
-		die("Invalid ref name or SHA1 expression: %s", from);
+		die("invalid ref name or sha1 expression: %s", from);
 	read_next_command();
 
 	/* original-oid ... */
@@ -2945,9 +2945,9 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 		return;
 	}
 	if (!buf)
-		die("Can't read object %s", oid_to_hex(oid));
+		die("can't read object %s", oid_to_hex(oid));
 	if (type != OBJ_BLOB)
-		die("Object %s is a %s but a blob was expected.",
+		die("object %s is a %s but a blob was expected",
 		    oid_to_hex(oid), type_name(type));
 	strbuf_reset(&line);
 	strbuf_addf(&line, "%s %s %"PRIuMAX"\n", oid_to_hex(oid),
@@ -2971,11 +2971,11 @@ static void parse_get_mark(const char *p)
 
 	/* get-mark SP <object> LF */
 	if (*p != ':')
-		die("Not a mark: %s", p);
+		die("not a mark: %s", p);
 
 	oe = find_mark(marks, parse_mark_ref_eol(p));
 	if (!oe)
-		die("Unknown mark: %s", command_buf.buf);
+		die("unknown mark: %s", command_buf.buf);
 
 	xsnprintf(output, sizeof(output), "%s\n", oid_to_hex(&oe->idx.oid));
 	cat_blob_write(output, the_hash_algo->hexsz + 1);
@@ -2990,13 +2990,13 @@ static void parse_cat_blob(const char *p)
 	if (*p == ':') {
 		oe = find_mark(marks, parse_mark_ref_eol(p));
 		if (!oe)
-			die("Unknown mark: %s", command_buf.buf);
+			die("unknown mark: %s", command_buf.buf);
 		oidcpy(&oid, &oe->idx.oid);
 	} else {
 		if (parse_mapped_oid_hex(p, &oid, &p))
-			die("Invalid dataref: %s", command_buf.buf);
+			die("invalid dataref: %s", command_buf.buf);
 		if (*p)
-			die("Garbage after SHA1: %s", command_buf.buf);
+			die("garbage after sha1: %s", command_buf.buf);
 		oe = find_object(&oid);
 	}
 
@@ -3028,7 +3028,7 @@ static struct object_entry *dereference(struct object_entry *oe,
 	case OBJ_TAG:
 		break;
 	default:
-		die("Not a tree-ish: %s", command_buf.buf);
+		die("not a tree-ish: %s", command_buf.buf);
 	}
 
 	if (oe->pack_id != MAX_PACK_ID) {	/* in a pack being written */
@@ -3038,19 +3038,19 @@ static struct object_entry *dereference(struct object_entry *oe,
 		buf = read_object_file(oid, &unused, &size);
 	}
 	if (!buf)
-		die("Can't load object %s", oid_to_hex(oid));
+		die("can't load object %s", oid_to_hex(oid));
 
 	/* Peel one layer. */
 	switch (oe->type) {
 	case OBJ_TAG:
 		if (size < hexsz + strlen("object ") ||
 		    get_oid_hex(buf + strlen("object "), oid))
-			die("Invalid SHA1 in tag: %s", command_buf.buf);
+			die("invalid sha1 in tag: %s", command_buf.buf);
 		break;
 	case OBJ_COMMIT:
 		if (size < hexsz + strlen("tree ") ||
 		    get_oid_hex(buf + strlen("tree "), oid))
-			die("Invalid SHA1 in commit: %s", command_buf.buf);
+			die("invalid sha1 in commit: %s", command_buf.buf);
 	}
 
 	free(buf);
@@ -3101,14 +3101,14 @@ static struct object_entry *parse_treeish_dataref(const char **p)
 	if (**p == ':') {	/* <mark> */
 		e = find_mark(marks, parse_mark_ref_space(p));
 		if (!e)
-			die("Unknown mark: %s", command_buf.buf);
+			die("unknown mark: %s", command_buf.buf);
 		oidcpy(&oid, &e->idx.oid);
 	} else {	/* <sha1> */
 		if (parse_mapped_oid_hex(*p, &oid, p))
-			die("Invalid dataref: %s", command_buf.buf);
+			die("invalid dataref: %s", command_buf.buf);
 		e = find_object(&oid);
 		if (*(*p)++ != ' ')
-			die("Missing space after tree-ish: %s", command_buf.buf);
+			die("missing space after tree-ish: %s", command_buf.buf);
 	}
 
 	while (!e || e->type != OBJ_TREE)
@@ -3151,7 +3151,7 @@ static void parse_ls(const char *p, struct branch *b)
 	/* ls SP (<tree-ish> SP)? <path> */
 	if (*p == '"') {
 		if (!b)
-			die("Not in a commit: %s", command_buf.buf);
+			die("not in a commit: %s", command_buf.buf);
 		root = &b->branch_tree;
 	} else {
 		struct object_entry *e = parse_treeish_dataref(&p);
@@ -3166,9 +3166,9 @@ static void parse_ls(const char *p, struct branch *b)
 		const char *endp;
 		strbuf_reset(&uq);
 		if (unquote_c_style(&uq, p, &endp))
-			die("Invalid path: %s", command_buf.buf);
+			die("invalid path: %s", command_buf.buf);
 		if (*endp)
-			die("Garbage after path in: %s", command_buf.buf);
+			die("garbage after path in: %s", command_buf.buf);
 		p = uq.buf;
 	}
 	tree_content_get(root, p, &leaf, 1);
@@ -3245,7 +3245,7 @@ static void option_import_marks(const char *marks,
 {
 	if (import_marks_file) {
 		if (from_stream)
-			die("Only one import-marks command allowed per stream");
+			die("only one import-marks command allowed per stream");
 
 		/* read previous mark file */
 		if(!import_marks_file_from_stream)
@@ -3423,23 +3423,23 @@ static int parse_one_feature(const char *feature, int from_stream)
 static void parse_feature(const char *feature)
 {
 	if (seen_data_command)
-		die("Got feature command '%s' after data command", feature);
+		die("got feature command '%s' after data command", feature);
 
 	if (parse_one_feature(feature, 1))
 		return;
 
-	die("This version of fast-import does not support feature %s.", feature);
+	die("this version of fast-import does not support feature %s", feature);
 }
 
 static void parse_option(const char *option)
 {
 	if (seen_data_command)
-		die("Got option command '%s' after data command", option);
+		die("got option command '%s' after data command", option);
 
 	if (parse_one_option(option))
 		return;
 
-	die("This version of fast-import does not support option: %s", option);
+	die("this version of fast-import does not support option: %s", option);
 }
 
 static void git_pack_config(void)
@@ -3582,7 +3582,7 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 		else if (starts_with(command_buf.buf, "option "))
 			/* ignore non-git options*/;
 		else
-			die("Unsupported command: %s", command_buf.buf);
+			die("unsupported command: %s", command_buf.buf);
 
 		if (checkpoint_requested)
 			checkpoint();

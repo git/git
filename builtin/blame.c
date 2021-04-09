@@ -664,7 +664,7 @@ static void sanity_check_on_fail(struct blame_scoreboard *sb, int baa)
 	int opt = OUTPUT_SHOW_SCORE | OUTPUT_SHOW_NUMBER | OUTPUT_SHOW_NAME;
 	find_alignment(sb, &opt);
 	output(sb, opt);
-	die("Baa %d!", baa);
+	die("baa %d!", baa);
 }
 
 static unsigned parse_score(const char *arg)
@@ -1071,7 +1071,7 @@ parse_done:
 					&head_oid, NULL) ||
 		    !(head_commit = lookup_commit_reference_gently(revs.repo,
 							     &head_oid, 1)))
-			die("no such ref: HEAD");
+			die("no such ref: head");
 
 		add_pending_object(&revs, &head_commit->object, "HEAD");
 	}

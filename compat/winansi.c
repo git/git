@@ -630,7 +630,7 @@ void winansi_init(void)
 	/* create a named pipe to communicate with the console thread */
 	if (swprintf(name, ARRAY_SIZE(name) - 1, L"\\\\.\\pipe\\winansi%lu",
 		     GetCurrentProcessId()) < 0)
-		die("Could not initialize winansi pipe name");
+		die("could not initialize winansi pipe name");
 	hwrite = CreateNamedPipeW(name, PIPE_ACCESS_OUTBOUND,
 		PIPE_TYPE_BYTE | PIPE_WAIT, 1, BUFFER_SIZE, 0, 0, NULL);
 	if (hwrite == INVALID_HANDLE_VALUE)

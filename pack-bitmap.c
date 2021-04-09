@@ -1274,7 +1274,7 @@ static void test_show_object(struct object *object, const char *name,
 
 	bitmap_pos = bitmap_position(tdata->bitmap_git, &object->oid);
 	if (bitmap_pos < 0)
-		die("Object not in bitmap: %s\n", oid_to_hex(&object->oid));
+		die("object not in bitmap: %s\n", oid_to_hex(&object->oid));
 
 	bitmap_set(tdata->base, bitmap_pos);
 	display_progress(tdata->prg, ++tdata->seen);
@@ -1288,7 +1288,7 @@ static void test_show_commit(struct commit *commit, void *data)
 	bitmap_pos = bitmap_position(tdata->bitmap_git,
 				     &commit->object.oid);
 	if (bitmap_pos < 0)
-		die("Object not in bitmap: %s\n", oid_to_hex(&commit->object.oid));
+		die("object not in bitmap: %s\n", oid_to_hex(&commit->object.oid));
 
 	bitmap_set(tdata->base, bitmap_pos);
 	display_progress(tdata->prg, ++tdata->seen);
@@ -1323,7 +1323,7 @@ void test_bitmap_walk(struct rev_info *revs)
 	}
 
 	if (result == NULL)
-		die("Commit %s doesn't have an indexed bitmap", oid_to_hex(&root->oid));
+		die("commit %s doesn't have an indexed bitmap", oid_to_hex(&root->oid));
 
 	revs->tag_objects = 1;
 	revs->tree_objects = 1;

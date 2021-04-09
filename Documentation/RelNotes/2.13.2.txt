@@ -11,7 +11,7 @@ Fixes since v2.13.1
  * "git checkout --recurse-submodules" did not quite work with a
    submodule that itself has submodules.
 
- * Introduce the BUG() macro to improve die("BUG: ...").
+ * Introduce the BUG() macro to improve die("bug: ").
 
  * The "run-command" API implementation has been made more robust
    against dead-locking in a threaded environment.

@@ -1049,7 +1049,7 @@ static void *threaded_second_pass(void *data)
 				int offset = ref_deltas[parent->ref_first++].obj_no;
 				child_obj = objects + offset;
 				if (child_obj->real_type != OBJ_REF_DELTA)
-					die("REF_DELTA at offset %"PRIuMAX" already resolved (duplicate base %s?)",
+					die("ref_delta at offset %"priumax" already resolved (duplicate base %s?)",
 					    (uintmax_t) child_obj->idx.offset,
 					    oid_to_hex(&parent->obj->idx.oid));
 				child_obj->real_type = parent->obj->real_type;

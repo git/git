@@ -16,7 +16,7 @@ void create_notes_commit(struct repository *r,
 	assert(t->initialized);
 
 	if (write_notes_tree(t, &tree_oid))
-		die("Failed to write notes tree to database");
+		die("failed to write notes tree to database");
 
 	if (!parents) {
 		/* Deduce parent commit from t->ref */
@@ -24,7 +24,7 @@ void create_notes_commit(struct repository *r,
 		if (!read_ref(t->ref, &parent_oid)) {
 			struct commit *parent = lookup_commit(r, &parent_oid);
 			if (parse_commit(parent))
-				die("Failed to find/parse commit %s", t->ref);
+				die("failed to find/parse commit %s", t->ref);
 			commit_list_insert(parent, &parents);
 		}
 		/* else: t->ref points to nothing, assume root/orphan commit */
@@ -32,7 +32,7 @@ void create_notes_commit(struct repository *r,
 
 	if (commit_tree(msg, msg_len, &tree_oid, parents, result_oid, NULL,
 			NULL))
-		die("Failed to commit notes tree to database");
+		die("failed to commit notes tree to database");
 }
 
 void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)

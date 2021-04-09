@@ -12,11 +12,11 @@ int cmd_main(int argc, const char **argv)
 
 	/* First, print all parameters into $TRASH_DIRECTORY/ssh-output */
 	if (!trash_directory)
-		die("Need a TRASH_DIRECTORY!");
+		die("need a trash_directory!");
 	strbuf_addf(&buf, "%s/ssh-output", trash_directory);
 	f = fopen(buf.buf, "w");
 	if (!f)
-		die("Could not write to %s", buf.buf);
+		die("could not write to %s", buf.buf);
 	for (i = 0; i < argc; i++)
 		fprintf(f, "%s%s", i > 0 ? " " : "", i > 0 ? argv[i] : "ssh:");
 	fprintf(f, "\n");

@@ -1863,10 +1863,10 @@ static void prepare_show_merge(struct rev_info *revs)
 	struct index_state *istate = revs->repo->index;
 
 	if (get_oid("HEAD", &oid))
-		die("--merge without HEAD?");
+		die("--merge without head?");
 	head = lookup_commit_or_die(&oid, "HEAD");
 	if (get_oid("MERGE_HEAD", &oid))
-		die("--merge without MERGE_HEAD?");
+		die("--merge without merge_head?");
 	other = lookup_commit_or_die(&oid, "MERGE_HEAD");
 	add_pending_object(revs, &head->object, "HEAD");
 	add_pending_object(revs, &other->object, "MERGE_HEAD");
@@ -3510,7 +3510,7 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 	struct topo_walk_info *info = revs->topo_walk_info;
 	if (process_parents(revs, commit, NULL, NULL) < 0) {
 		if (!revs->ignore_missing_links)
-			die("Failed to traverse parents of commit %s",
+			die("failed to traverse parents of commit %s",
 			    oid_to_hex(&commit->object.oid));
 	}
 
@@ -3998,7 +3998,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 				expand_topo_walk(revs, commit);
 			else if (process_parents(revs, commit, &revs->commits, NULL) < 0) {
 				if (!revs->ignore_missing_links)
-					die("Failed to traverse parents of commit %s",
+					die("failed to traverse parents of commit %s",
 						oid_to_hex(&commit->object.oid));
 			}
 		}
@@ -4007,7 +4007,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 		case commit_ignore:
 			continue;
 		case commit_error:
-			die("Failed to simplify parents of commit %s",
+			die("failed to simplify parents of commit %s",
 			    oid_to_hex(&commit->object.oid));
 		default:
 			if (revs->track_linear)

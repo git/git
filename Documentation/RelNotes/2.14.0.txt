@@ -13,7 +13,7 @@ Backward compatibility notes and other notable changes.
 
  * Git now avoids blindly falling back to ".git" when the setup
    sequence said we are _not_ in Git repository.  A corner case that
-   happens to work right now may be broken by a call to die("BUG").
+   happens to work right now may be broken by a call to die("bug").
    We've tried hard to locate such cases and fixed them, but there
    might still be cases that need to be addressed--bug reports are
    greatly appreciated.
@@ -323,7 +323,7 @@ notes for details).
    themselves that are meant to be run with /bin/sh, ought to be
    checked out with eol=LF even on Windows.
 
- * Introduce the BUG() macro to improve die("BUG: ...").
+ * Introduce the BUG() macro to improve die("bug: ").
 
  * Clarify documentation for include.path and includeIf.<condition>.path
    configuration variables.

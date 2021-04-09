@@ -18,7 +18,7 @@ static int memory_limit_check(size_t size, int gentle)
 			      (uintmax_t)size, (uintmax_t)limit);
 			return -1;
 		} else
-			die("attempting to allocate %"PRIuMAX" over limit %"PRIuMAX,
+			die("attempting to allocate %"priumax" over limit %"PRIuMAX,
 			    (uintmax_t)size, (uintmax_t)limit);
 	}
 	return 0;
@@ -28,7 +28,7 @@ char *xstrdup(const char *str)
 {
 	char *ret = strdup(str);
 	if (!ret)
-		die("Out of memory, strdup failed");
+		die("out of memory, strdup failed");
 	return ret;
 }
 
@@ -43,7 +43,7 @@ static void *do_xmalloc(size_t size, int gentle)
 		ret = malloc(1);
 	if (!ret) {
 		if (!gentle)
-			die("Out of memory, malloc failed (tried to allocate %lu bytes)",
+			die("out of memory, malloc failed (tried to allocate %lu bytes)",
 			    (unsigned long)size);
 		else {
 			error("Out of memory, malloc failed (tried to allocate %lu bytes)",
@@ -70,7 +70,7 @@ static void *do_xmallocz(size_t size, int gentle)
 			error("Data too large to fit into virtual memory space.");
 			return NULL;
 		} else
-			die("Data too large to fit into virtual memory space.");
+			die("data too large to fit into virtual memory space");
 	}
 	ret = do_xmalloc(size + 1, gentle);
 	if (ret)
@@ -125,7 +125,7 @@ void *xrealloc(void *ptr, size_t size)
 	memory_limit_check(size, 0);
 	ret = realloc(ptr, size);
 	if (!ret)
-		die("Out of memory, realloc failed");
+		die("out of memory, realloc failed");
 	return ret;
 }
 
@@ -141,7 +141,7 @@ void *xcalloc(size_t nmemb, size_t size)
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
 	if (!ret)
-		die("Out of memory, calloc failed");
+		die("out of memory, calloc failed");
 	return ret;
 }
 

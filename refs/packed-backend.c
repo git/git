@@ -250,7 +250,7 @@ static NORETURN void die_unterminated_line(const char *path,
 	if (len < 80)
 		die("unterminated line in %s: %.*s", path, (int)len, p);
 	else
-		die("unterminated line in %s: %.75s...", path, p);
+		die("unterminated line in %s: %.75s", path, p);
 }
 
 static NORETURN void die_invalid_line(const char *path,
@@ -263,7 +263,7 @@ static NORETURN void die_invalid_line(const char *path,
 	else if (eol - p < 80)
 		die("unexpected line in %s: %.*s", path, (int)(eol - p), p);
 	else
-		die("unexpected line in %s: %.75s...", path, p);
+		die("unexpected line in %s: %.75s", path, p);
 
 }
 
