@@ -1213,6 +1213,38 @@ static int add_haves(struct fetch_negotiator *negotiator,
 	return haves_added;
 }
 
+static void write_fetch_command_and_capabilities(struct strbuf *req_buf,
+						 const struct string_list *server_options)
+{
+	const char *hash_name;
+
+	if (server_supports_v2("fetch", 1))
+		packet_buf_write(req_buf, "command=fetch");
+	if (server_supports_v2("agent", 0))
+		packet_buf_write(req_buf, "agent=%s", git_user_agent_sanitized());
+	if (advertise_sid && server_supports_v2("session-id", 0))
+		packet_buf_write(req_buf, "session-id=%s", trace2_session_id());
+	if (server_options && server_options->nr &&
+	    server_supports_v2("server-option", 1)) {
+		int i;
+		for (i = 0; i < server_options->nr; i++)
+			packet_buf_write(req_buf, "server-option=%s",
+					 server_options->items[i].string);
+	}
+
+	if (server_feature_v2("object-format", &hash_name)) {
+		int hash_algo = hash_algo_by_name(hash_name);
+		if (hash_algo_by_ptr(the_hash_algo) != hash_algo)
+			die(_("mismatched algorithms: client %s; server %s"),
+			    the_hash_algo->name, hash_name);
+		packet_buf_write(req_buf, "object-format=%s", the_hash_algo->name);
+	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1) {
+		die(_("the server does not support algorithm '%s'"),
+		    the_hash_algo->name);
+	}
+	packet_buf_delim(req_buf);
+}
+
 static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      struct fetch_pack_args *args,
 			      const struct ref *wants, struct oidset *common,
@@ -1221,35 +1253,10 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 {
 	int haves_added;
 	int done_sent = 0;
-	const char *hash_name;
 	struct strbuf req_buf = STRBUF_INIT;
 
-	if (server_supports_v2("fetch", 1))
-		packet_buf_write(&req_buf, "command=fetch");
-	if (server_supports_v2("agent", 0))
-		packet_buf_write(&req_buf, "agent=%s", git_user_agent_sanitized());
-	if (advertise_sid && server_supports_v2("session-id", 0))
-		packet_buf_write(&req_buf, "session-id=%s", trace2_session_id());
-	if (args->server_options && args->server_options->nr &&
-	    server_supports_v2("server-option", 1)) {
-		int i;
-		for (i = 0; i < args->server_options->nr; i++)
-			packet_buf_write(&req_buf, "server-option=%s",
-					 args->server_options->items[i].string);
-	}
+	write_fetch_command_and_capabilities(&req_buf, args->server_options);
 
-	if (server_feature_v2("object-format", &hash_name)) {
-		int hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo_by_ptr(the_hash_algo) != hash_algo)
-			die(_("mismatched algorithms: client %s; server %s"),
-			    the_hash_algo->name, hash_name);
-		packet_buf_write(&req_buf, "object-format=%s", the_hash_algo->name);
-	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1) {
-		die(_("the server does not support algorithm '%s'"),
-		    the_hash_algo->name);
-	}
-
-	packet_buf_delim(&req_buf);
 	if (args->use_thin_pack)
 		packet_buf_write(&req_buf, "thin-pack");
 	if (args->no_progress)
