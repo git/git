@@ -762,3 +762,7 @@ IMPLEMENTATION DETAILS
   message indicating the p4 depot location and change number.  This
   line is used by later 'git p4 sync' operations to know which p4
   changes are new.
+
+GIT
+---
+Part of the linkgit:git[1] suite
