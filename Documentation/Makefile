@@ -483,7 +483,8 @@ lint-docs::
 		--section=1 $(MAN1_TXT) \
 		--section=5 $(MAN5_TXT) \
 		--section=7 $(MAN7_TXT); \
-	$(PERL_PATH) lint-man-end-blurb.perl $(MAN_TXT)
+	$(PERL_PATH) lint-man-end-blurb.perl $(MAN_TXT); \
+	$(PERL_PATH) lint-man-section-order.perl $(MAN_TXT);
 
 ifeq ($(wildcard po/Makefile),po/Makefile)
 doc-l10n install-l10n::
