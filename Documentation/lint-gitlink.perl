@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
 use File::Find;
 use Getopt::Long;
 
@@ -45,7 +47,7 @@ sub lint {
 				report($where, $target, "no such source");
 				next;
 			}
-			$real_section = grab_section($page);
+			my $real_section = grab_section($page);
 			if ($real_section != $section) {
 				report($where, $target,
 					"wrong section (should be $real_section)");
