@@ -200,12 +200,6 @@ Alternatively, you can undo the 'git rebase' with
 
     git rebase --abort
 
-CONFIGURATION
--------------
-
-include::config/rebase.txt[]
-include::config/sequencer.txt[]
-
 OPTIONS
 -------
 --onto <newbase>::
@@ -1265,6 +1259,12 @@ reset onto
 merge tlsv1.3
 merge cmake
 ------------
+
+CONFIGURATION
+-------------
+
+include::config/rebase.txt[]
+include::config/sequencer.txt[]
 
 BUGS
 ----

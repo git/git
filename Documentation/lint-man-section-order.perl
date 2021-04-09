@@ -18,24 +18,13 @@ my %SECTIONS;
 		'DESCRIPTION' => {
 			required => 1,
 			order => $order++,
-			bad => {
-				'git-mktag.txt' => 'OPTIONS',
-				'git-cvsserver.txt' => 'OPTIONS',
-			},
 		},
 		'OPTIONS' => {
 			order => $order++,
 			required => 0,
-			bad => {
-				'git-grep.txt' => 'CONFIGURATION',
-				'git-rebase.txt' => 'CONFIGURATION',
-			},
 		},
 		'CONFIGURATION' => {
 			order => $order++,
-			bad => {
-				'git-svn.txt' => 'BUGS',
-			},
 		},
 		'BUGS' => {
 			order => $order++,
@@ -77,16 +66,7 @@ while (my $line = <>) {
 
 		my $expected_last = $expected_order[-2];
 		my $actual_last = $actual_order[-2];
-		my $except_last = $SECTIONS{$line}->{bad}->{$ARGV} || '';
-		if (($SECTIONS{$line}->{bad}->{$ARGV} || '') eq $actual_last) {
-			# Either we're whitelisted, or ...
-			next
-		} elsif (exists $SECTIONS{$actual_last}->{bad}->{$ARGV}) {
-			# ... we're complaing about the next section
-			# which is out of order because this one is,
-			# don't complain about that one.
-			next;
-		} elsif ($actual_last ne $expected_last) {
+		if ($actual_last ne $expected_last) {
 			report("section '$line' incorrectly ordered, comes after '$actual_last'");
 		}
 		next;
