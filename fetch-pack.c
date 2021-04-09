@@ -1195,11 +1195,9 @@ static void add_common(struct strbuf *req_buf, struct oidset *common)
 }
 
 static int add_haves(struct fetch_negotiator *negotiator,
-		     int seen_ack,
 		     struct strbuf *req_buf,
-		     int *haves_to_send, int *in_vain)
+		     int *haves_to_send)
 {
-	int ret = 0;
 	int haves_added = 0;
 	const struct object_id *oid;
 
@@ -1209,17 +1207,10 @@ static int add_haves(struct fetch_negotiator *negotiator,
 			break;
 	}
 
-	*in_vain += haves_added;
-	if (!haves_added || (seen_ack && *in_vain >= MAX_IN_VAIN)) {
-		/* Send Done */
-		packet_buf_write(req_buf, "done\n");
-		ret = 1;
-	}
-
 	/* Increase haves to send on next round */
 	*haves_to_send = next_flush(1, *haves_to_send);
 
-	return ret;
+	return haves_added;
 }
 
 static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
@@ -1228,7 +1219,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      int *haves_to_send, int *in_vain,
 			      int sideband_all, int seen_ack)
 {
-	int ret = 0;
+	int haves_added;
+	int done_sent = 0;
 	const char *hash_name;
 	struct strbuf req_buf = STRBUF_INIT;
 
@@ -1312,9 +1304,13 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	/* Add all of the common commits we've found in previous rounds */
 	add_common(&req_buf, common);
 
-	/* Add initial haves */
-	ret = add_haves(negotiator, seen_ack, &req_buf,
-			haves_to_send, in_vain);
+	haves_added = add_haves(negotiator, &req_buf, haves_to_send);
+	*in_vain += haves_added;
+	if (!haves_added || (seen_ack && *in_vain >= MAX_IN_VAIN)) {
+		/* Send Done */
+		packet_buf_write(&req_buf, "done\n");
+		done_sent = 1;
+	}
 
 	/* Send request */
 	packet_buf_flush(&req_buf);
@@ -1322,7 +1318,7 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 		die_errno(_("unable to write request to remote"));
 
 	strbuf_release(&req_buf);
-	return ret;
+	return done_sent;
 }
 
 /*
