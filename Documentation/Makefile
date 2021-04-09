@@ -2,6 +2,7 @@
 MAN1_TXT =
 MAN5_TXT =
 MAN7_TXT =
+HOWTO_TXT =
 TECH_DOCS =
 ARTICLES =
 SP_ARTICLES =
@@ -41,6 +42,8 @@ MAN7_TXT += gitsubmodules.txt
 MAN7_TXT += gittutorial-2.txt
 MAN7_TXT += gittutorial.txt
 MAN7_TXT += gitworkflows.txt
+
+HOWTO_TXT += $(wildcard howto/*.txt)
 
 ifdef MAN_FILTER
 MAN_TXT = $(filter $(MAN_FILTER),$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
@@ -428,9 +431,9 @@ $(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
 	$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@+ && \
 	mv $@+ $@
 
-howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
+howto-index.txt: howto-index.sh $(HOWTO_TXT)
 	$(QUIET_GEN)$(RM) $@+ $@ && \
-	'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(wildcard howto/*.txt)) >$@+ && \
+	'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(HOWTO_TXT)) >$@+ && \
 	mv $@+ $@
 
 $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
@@ -439,7 +442,7 @@ $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
 WEBDOC_DEST = /pub/software/scm/git/docs
 
 howto/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
-$(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt GIT-ASCIIDOCFLAGS
+$(patsubst %.txt,%.html,$(HOWTO_TXT)): %.html : %.txt GIT-ASCIIDOCFLAGS
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
 	sed -e '1,/^$$/d' $< | \
 	$(TXT_TO_HTML) - >$@+ && \
