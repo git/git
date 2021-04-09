@@ -213,6 +213,14 @@ static void process_tree(struct traversal_context *ctx,
 	free_tree_buffer(tree);
 }
 
+static void process_tag(struct traversal_context *ctx,
+			struct tag *tag,
+			const char *name)
+{
+	tag->object.flags |= SEEN;
+	ctx->show_object(&tag->object, name, ctx->show_data);
+}
+
 static void mark_edge_parents_uninteresting(struct commit *commit,
 					    struct rev_info *revs,
 					    show_edge_fn show_edge)
@@ -334,8 +342,7 @@ static void traverse_trees_and_blobs(struct traversal_context *ctx,
 		if (obj->flags & (UNINTERESTING | SEEN))
 			continue;
 		if (obj->type == OBJ_TAG) {
-			obj->flags |= SEEN;
-			ctx->show_object(obj, name, ctx->show_data);
+			process_tag(ctx, (struct tag *)obj, name);
 			continue;
 		}
 		if (!path)
