@@ -1351,35 +1351,11 @@ static int process_section_header(struct packet_reader *reader,
 	return ret;
 }
 
-enum common_found {
-	/*
-	 * No commit was found to be possessed by both the client and the
-	 * server, and "ready" was not received.
-	 */
-	NO_COMMON_FOUND,
-
-	/*
-	 * At least one commit was found to be possessed by both the client and
-	 * the server, and "ready" was not received.
-	 */
-	COMMON_FOUND,
-
-	/*
-	 * "ready" was received, indicating that the server is ready to send
-	 * the packfile without any further negotiation.
-	 */
-	READY
-};
-
-static enum common_found process_acks(struct fetch_negotiator *negotiator,
-				      struct packet_reader *reader,
-				      struct oidset *common)
+static int process_ack(struct fetch_negotiator *negotiator,
+		       struct packet_reader *reader,
+		       struct object_id *common_oid,
+		       int *received_ready)
 {
-	/* received */
-	int received_ready = 0;
-	int received_ack = 0;
-
-	process_section_header(reader, "acknowledgments", 0);
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
 		const char *arg;
 
@@ -1387,20 +1363,17 @@ static enum common_found process_acks(struct fetch_negotiator *negotiator,
 			continue;
 
 		if (skip_prefix(reader->line, "ACK ", &arg)) {
-			struct object_id oid;
-			received_ack = 1;
-			if (!get_oid_hex(arg, &oid)) {
+			if (!get_oid_hex(arg, common_oid)) {
 				struct commit *commit;
-				oidset_insert(common, &oid);
-				commit = lookup_commit(the_repository, &oid);
+				commit = lookup_commit(the_repository, common_oid);
 				if (negotiator)
 					negotiator->ack(negotiator, commit);
 			}
-			continue;
+			return 1;
 		}
 
 		if (!strcmp(reader->line, "ready")) {
-			received_ready = 1;
+			*received_ready = 1;
 			continue;
 		}
 
@@ -1418,13 +1391,12 @@ static enum common_found process_acks(struct fetch_negotiator *negotiator,
 	 * sent. Therefore, a DELIM is expected if "ready" is sent, and a FLUSH
 	 * otherwise.
 	 */
-	if (received_ready && reader->status != PACKET_READ_DELIM)
+	if (*received_ready && reader->status != PACKET_READ_DELIM)
 		die(_("expected packfile to be sent after 'ready'"));
-	if (!received_ready && reader->status != PACKET_READ_FLUSH)
+	if (!*received_ready && reader->status != PACKET_READ_FLUSH)
 		die(_("expected no other sections to be sent after no 'ready'"));
 
-	return received_ready ? READY :
-		(received_ack ? COMMON_FOUND : NO_COMMON_FOUND);
+	return 0;
 }
 
 static void receive_shallow_info(struct fetch_pack_args *args,
@@ -1573,6 +1545,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct fetch_negotiator negotiator_alloc;
 	struct fetch_negotiator *negotiator;
 	int seen_ack = 0;
+	struct object_id common_oid;
+	int received_ready = 0;
 	struct string_list packfile_uris = STRING_LIST_INIT_DUP;
 	int i;
 	struct strvec index_pack_args = STRVEC_INIT;
@@ -1631,22 +1605,22 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			break;
 		case FETCH_PROCESS_ACKS:
 			/* Process ACKs/NAKs */
-			switch (process_acks(negotiator, &reader, &common)) {
-			case READY:
+			process_section_header(&reader, "acknowledgments", 0);
+			while (process_ack(negotiator, &reader, &common_oid,
+					   &received_ready)) {
+				in_vain = 0;
+				seen_ack = 1;
+				oidset_insert(&common, &common_oid);
+			}
+			if (received_ready) {
 				/*
 				 * Don't check for response delimiter; get_pack() will
 				 * read the rest of this response.
 				 */
 				state = FETCH_GET_PACK;
-				break;
-			case COMMON_FOUND:
-				in_vain = 0;
-				seen_ack = 1;
-				/* fallthrough */
-			case NO_COMMON_FOUND:
+			} else {
 				do_check_stateless_delimiter(args, &reader);
 				state = FETCH_SEND_REQUEST;
-				break;
 			}
 			break;
 		case FETCH_GET_PACK:
