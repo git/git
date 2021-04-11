@@ -1054,7 +1054,7 @@ finished_rebase:
 		strbuf_addstr(&dir, opts->state_dir);
 		remove_dir_recursively(&dir, 0);
 		strbuf_release(&dir);
-		die("Nothing to do");
+		die("nothing to do");
 	}
 
 	strbuf_release(&script_snippet);
@@ -1438,7 +1438,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "%s/applying", apply_dir());
 	if(file_exists(buf.buf))
-		die(_("It looks like 'git am' is in progress. Cannot rebase."));
+		die(_("it looks like 'git am' is in progress. cannot rebase"));
 
 	if (is_directory(apply_dir())) {
 		options.type = REBASE_APPLY;
@@ -1493,11 +1493,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		die(_("cannot combine '--root' with '--fork-point'"));
 
 	if (action != ACTION_NONE && !in_progress)
-		die(_("No rebase in progress?"));
+		die(_("no rebase in progress?"));
 	setenv(GIT_REFLOG_ACTION_ENVIRONMENT, "rebase", 0);
 
 	if (action == ACTION_EDIT_TODO && !is_merge(&options))
-		die(_("The --edit-todo action can only be used during "
+		die(_("the --edit-todo action can only be used during "
 		      "interactive rebase."));
 
 	if (trace2_is_enabled()) {
@@ -1520,7 +1520,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		/* Sanity check */
 		if (get_oid("HEAD", &head))
-			die(_("Cannot read HEAD"));
+			die(_("cannot read head"));
 
 		fd = hold_locked_index(&lock_file, 0);
 		if (repo_read_index(the_repository) < 0)
@@ -1616,7 +1616,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			"git rebase (--continue | --abort | --skip)";
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "rm -fr \"%s\"", options.state_dir);
-		die(_("It seems that there is already a %s directory, and\n"
+		die(_("it seems that there is already a %s directory, and\n"
 		      "I wonder if you are in the middle of another rebase.  "
 		      "If that is the\n"
 		      "case, please try\n\t%s\n"
@@ -1644,12 +1644,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		else if (skip_prefix(option, "-C", &p)) {
 			while (*p)
 				if (!isdigit(*(p++)))
-					die(_("switch `C' expects a "
+					die(_("switch `c' expects a "
 					      "numerical value"));
 		} else if (skip_prefix(option, "--whitespace=", &p)) {
 			if (*p && strcmp(p, "warn") && strcmp(p, "nowarn") &&
 			    strcmp(p, "error") && strcmp(p, "error-all"))
-				die("Invalid whitespace option: '%s'", p);
+				die("invalid whitespace option: '%s'", p);
 		}
 	}
 
@@ -1686,7 +1686,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		else if (!strcmp("rebase-cousins", rebase_merges))
 			options.rebase_cousins = 1;
 		else if (strcmp("no-rebase-cousins", rebase_merges))
-			die(_("Unknown mode: %s"), rebase_merges);
+			die(_("unknown mode: %s"), rebase_merges);
 		options.rebase_merges = 1;
 		imply_merge(&options, "--rebase-merges");
 	}
@@ -1768,7 +1768,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(options.default_backend, "apply"))
 			options.type = REBASE_APPLY;
 		else
-			die(_("Unknown rebase backend: %s"),
+			die(_("unknown rebase backend: %s"),
 			    options.default_backend);
 	}
 
@@ -1852,7 +1852,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (!options.onto_name) {
 			if (commit_tree("", 0, the_hash_algo->empty_tree, NULL,
 					&squash_onto, NULL, NULL) < 0)
-				die(_("Could not create new root commit"));
+				die(_("could not create new root commit"));
 			options.squash_onto = &squash_onto;
 			options.onto_name = squash_onto_name =
 				xstrdup(oid_to_hex(&squash_onto));
@@ -1889,7 +1889,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	} else {
 		options.onto = peel_committish(options.onto_name);
 		if (!options.onto)
-			die(_("Does not point to a valid commit '%s'"),
+			die(_("does not point to a valid commit '%s'"),
 				options.onto_name);
 	}
 
@@ -1925,7 +1925,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			xstrdup_or_null(resolve_ref_unsafe("HEAD", 0, NULL,
 					 &flags));
 		if (!options.head_name)
-			die(_("No such ref: %s"), "HEAD");
+			die(_("no such ref: %s"), "HEAD");
 		if (flags & REF_ISSYMREF) {
 			if (!skip_prefix(options.head_name,
 					 "refs/heads/", &branch_name))
@@ -1936,7 +1936,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			branch_name = "HEAD";
 		}
 		if (get_oid("HEAD", &options.orig_head))
-			die(_("Could not resolve HEAD to a revision"));
+			die(_("could not resolve head to a revision"));
 	} else
 		BUG("unexpected number of arguments left to parse");
 
@@ -2024,7 +2024,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (!ok_to_skip_pre_rebase &&
 	    run_hook_le(NULL, "pre-rebase", options.upstream_arg,
 			argc ? argv[0] : NULL, NULL))
-		die(_("The pre-rebase hook refused to rebase."));
+		die(_("the pre-rebase hook refused to rebase"));
 
 	if (options.flags & REBASE_DIFFSTAT) {
 		struct diff_options opts;
@@ -2068,7 +2068,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		       RESET_HEAD_DETACH | RESET_ORIG_HEAD |
 		       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
 		       NULL, msg.buf, DEFAULT_REFLOG_ACTION))
-		die(_("Could not detach HEAD"));
+		die(_("could not detach head"));
 	strbuf_release(&msg);
 
 	/*

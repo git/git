@@ -17,7 +17,7 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 		length = xsize_t(len.QuadPart - offset);
 
 	if (!(flags & MAP_PRIVATE))
-		die("Invalid usage of mmap when built with USE_WIN32_MMAP");
+		die("invalid usage of mmap when built with use_win32_mmap");
 
 	hmap = CreateFileMapping(osfhandle, NULL,
 		prot == PROT_READ ? PAGE_READONLY : PAGE_WRITECOPY, 0, 0, NULL);

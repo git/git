@@ -1919,7 +1919,7 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			return ret;
 		} else {
 			if (only_to_die)
-				die(_("invalid object name '%.*s'."), len, name);
+				die(_("invalid object name '%.*s'"), len, name);
 		}
 	}
 	return ret;

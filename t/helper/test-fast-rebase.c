@@ -120,7 +120,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 
 	/* Sanity check */
 	if (get_oid("HEAD", &head))
-		die(_("Cannot read HEAD"));
+		die(_("cannot read head"));
 	assert(oideq(&onto->object.oid, &head));
 
 	hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
@@ -175,7 +175,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 		free((char*)merge_opt.ancestor);
 		merge_opt.ancestor = NULL;
 		if (!result.clean)
-			die("Aborting: Hit a conflict and restarting is not implemented.");
+			die("aborting: hit a conflict and restarting is not implemented");
 		last_picked_commit = commit;
 		last_commit = create_commit(result.tree, commit, last_commit);
 	}
@@ -196,10 +196,10 @@ int cmd__fast_rebase(int argc, const char **argv)
 		       &last_picked_commit->object.oid,
 		       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
 		error(_("could not update %s"), argv[4]);
-		die("Failed to update %s", argv[4]);
+		die("failed to update %s", argv[4]);
 	}
 	if (create_symref("HEAD", branch_name.buf, reflog_msg.buf) < 0)
-		die(_("unable to update HEAD"));
+		die(_("unable to update head"));
 	strbuf_release(&reflog_msg);
 	strbuf_release(&branch_name);
 

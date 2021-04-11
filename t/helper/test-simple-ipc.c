@@ -13,7 +13,7 @@
 #ifndef SUPPORTS_SIMPLE_IPC
 int cmd__simple_ipc(int argc, const char **argv)
 {
-	die("simple IPC not available on this platform");
+	die("simple ipc not available on this platform");
 }
 #else
 
@@ -782,6 +782,6 @@ int cmd__simple_ipc(int argc, const char **argv)
 		return !!client__multiple();
 	}
 
-	die("Unhandled subcommand: '%s'", cl_args.subcommand);
+	die("unhandled subcommand: '%s'", cl_args.subcommand);
 }
 #endif

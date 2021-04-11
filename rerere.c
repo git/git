@@ -198,7 +198,7 @@ static void read_rr(struct repository *r, struct string_list *rr)
 
 		/* There has to be the hash, tab, path and then NUL */
 		if (buf.len < hexsz + 2 || get_sha1_hex(buf.buf, hash))
-			die(_("corrupt MERGE_RR"));
+			die(_("corrupt merge_rr"));
 
 		if (buf.buf[hexsz] != '.') {
 			variant = 0;
@@ -207,10 +207,10 @@ static void read_rr(struct repository *r, struct string_list *rr)
 			errno = 0;
 			variant = strtol(buf.buf + hexsz + 1, &path, 10);
 			if (errno)
-				die(_("corrupt MERGE_RR"));
+				die(_("corrupt merge_rr"));
 		}
 		if (*(path++) != '\t')
-			die(_("corrupt MERGE_RR"));
+			die(_("corrupt merge_rr"));
 		buf.buf[hexsz] = '\0';
 		id = new_rerere_id_hex(buf.buf);
 		id->variant = variant;

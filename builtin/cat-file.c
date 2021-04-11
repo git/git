@@ -81,7 +81,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	if (get_oid_with_context(the_repository, obj_name,
 				 GET_OID_RECORD_PATH,
 				 &oid, &obj_context))
-		die("Not a valid object name %s", obj_name);
+		die("not a valid object name %s", obj_name);
 
 	if (!path)
 		path = obj_context.path;
@@ -134,7 +134,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	case 'p':
 		type = oid_object_info(the_repository, &oid, NULL);
 		if (type < 0)
-			die("Not a valid object name %s", obj_name);
+			die("not a valid object name %s", obj_name);
 
 		/* custom pretty-print here */
 		if (type == OBJ_TREE) {
@@ -148,7 +148,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			return stream_blob(&oid);
 		buf = read_object_file(&oid, &type, &size);
 		if (!buf)
-			die("Cannot read object %s", obj_name);
+			die("cannot read object %s", obj_name);
 
 		/* otherwise just spit out the data */
 		break;

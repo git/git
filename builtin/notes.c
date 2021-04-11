@@ -194,7 +194,7 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 		strbuf_reset(&d->buf);
 
 		if (launch_editor(d->edit_path, &d->buf, NULL)) {
-			die(_("please supply the note contents using either -m or -F option"));
+			die(_("please supply the note contents using either -m or -f option"));
 		}
 		strbuf_stripspace(&d->buf, 1);
 	}
@@ -260,12 +260,12 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 		strbuf_addch(&d->buf, '\n');
 
 	if (get_oid(arg, &object))
-		die(_("failed to resolve '%s' as a valid ref."), arg);
+		die(_("failed to resolve '%s' as a valid ref"), arg);
 	if (!(buf = read_object_file(&object, &type, &len)))
-		die(_("failed to read object '%s'."), arg);
+		die(_("failed to read object '%s'"), arg);
 	if (type != OBJ_BLOB) {
 		free(buf);
-		die(_("cannot read note data from non-blob object '%s'."), arg);
+		die(_("cannot read note data from non-blob object '%s'"), arg);
 	}
 	strbuf_add(&d->buf, buf, len);
 	free(buf);
@@ -306,13 +306,13 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 
 		split = strbuf_split(&buf, ' ');
 		if (!split[0] || !split[1])
-			die(_("malformed input line: '%s'."), buf.buf);
+			die(_("malformed input line: '%s'"), buf.buf);
 		strbuf_rtrim(split[0]);
 		strbuf_rtrim(split[1]);
 		if (get_oid(split[0]->buf, &from_obj))
-			die(_("failed to resolve '%s' as a valid ref."), split[0]->buf);
+			die(_("failed to resolve '%s' as a valid ref"), split[0]->buf);
 		if (get_oid(split[1]->buf, &to_obj))
-			die(_("failed to resolve '%s' as a valid ref."), split[1]->buf);
+			die(_("failed to resolve '%s' as a valid ref"), split[1]->buf);
 
 		if (rewrite_cmd)
 			err = copy_note_for_rewrite(c, &from_obj, &to_obj);
@@ -380,7 +380,7 @@ static int list(int argc, const char **argv, const char *prefix)
 	t = init_notes_check("list", 0);
 	if (argc) {
 		if (get_oid(argv[0], &object))
-			die(_("failed to resolve '%s' as a valid ref."), argv[0]);
+			die(_("failed to resolve '%s' as a valid ref"), argv[0]);
 		note = get_note(t, &object);
 		if (note) {
 			puts(oid_to_hex(note));
@@ -435,7 +435,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	object_ref = argc > 1 ? argv[1] : "HEAD";
 
 	if (get_oid(object_ref, &object))
-		die(_("failed to resolve '%s' as a valid ref."), object_ref);
+		die(_("failed to resolve '%s' as a valid ref"), object_ref);
 
 	t = init_notes_check("add", NOTES_INIT_WRITABLE);
 	note = get_note(t, &object);
@@ -523,12 +523,12 @@ static int copy(int argc, const char **argv, const char *prefix)
 	}
 
 	if (get_oid(argv[0], &from_obj))
-		die(_("failed to resolve '%s' as a valid ref."), argv[0]);
+		die(_("failed to resolve '%s' as a valid ref"), argv[0]);
 
 	object_ref = 1 < argc ? argv[1] : "HEAD";
 
 	if (get_oid(object_ref, &object))
-		die(_("failed to resolve '%s' as a valid ref."), object_ref);
+		die(_("failed to resolve '%s' as a valid ref"), object_ref);
 
 	t = init_notes_check("copy", NOTES_INIT_WRITABLE);
 	note = get_note(t, &object);
@@ -607,7 +607,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	object_ref = 1 < argc ? argv[1] : "HEAD";
 
 	if (get_oid(object_ref, &object))
-		die(_("failed to resolve '%s' as a valid ref."), object_ref);
+		die(_("failed to resolve '%s' as a valid ref"), object_ref);
 
 	t = init_notes_check(argv[0], NOTES_INIT_WRITABLE);
 	note = get_note(t, &object);
@@ -669,7 +669,7 @@ static int show(int argc, const char **argv, const char *prefix)
 	object_ref = argc ? argv[0] : "HEAD";
 
 	if (get_oid(object_ref, &object))
-		die(_("failed to resolve '%s' as a valid ref."), object_ref);
+		die(_("failed to resolve '%s' as a valid ref"), object_ref);
 
 	t = init_notes_check("show", 0);
 	note = get_note(t, &object);
@@ -719,11 +719,11 @@ static int merge_commit(struct notes_merge_options *o)
 	 */
 
 	if (get_oid("NOTES_MERGE_PARTIAL", &oid))
-		die(_("failed to read ref NOTES_MERGE_PARTIAL"));
+		die(_("failed to read ref notes_merge_partial"));
 	else if (!(partial = lookup_commit_reference(the_repository, &oid)))
-		die(_("could not find commit from NOTES_MERGE_PARTIAL."));
+		die(_("could not find commit from notes_merge_partial"));
 	else if (parse_commit(partial))
-		die(_("could not parse commit from NOTES_MERGE_PARTIAL."));
+		die(_("could not parse commit from notes_merge_partial"));
 
 	if (partial->parents)
 		oidcpy(&parent_oid, &partial->parents->item->object.oid);
@@ -736,7 +736,7 @@ static int merge_commit(struct notes_merge_options *o)
 	o->local_ref = local_ref_to_free =
 		resolve_refdup("NOTES_MERGE_REF", 0, &oid, NULL);
 	if (!o->local_ref)
-		die(_("failed to resolve NOTES_MERGE_REF"));
+		die(_("failed to resolve notes_merge_ref"));
 
 	if (notes_merge_commit(o, t, partial, &oid))
 		die(_("failed to finalize notes merge"));

@@ -267,7 +267,7 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 		char *promisor_name;
 
 		if (line.len != the_hash_algo->hexsz)
-			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
+			die(_("repack: expecting full hex object id lines only from pack-objects"));
 		item = string_list_append(names, line.buf);
 
 		/*
@@ -509,7 +509,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (keep_unreachable &&
 	    (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE)))
-		die(_("--keep-unreachable and -A are incompatible"));
+		die(_("--keep-unreachable and -a are incompatible"));
 
 	if (write_bitmaps < 0) {
 		if (!(pack_everything & ALL_INTO_ONE) ||
@@ -524,7 +524,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (geometric_factor) {
 		if (pack_everything)
-			die(_("--geometric is incompatible with -A, -a"));
+			die(_("--geometric is incompatible with -a, -a"));
 		init_pack_geometry(&geometry);
 		split_pack_geometry(geometry, geometric_factor);
 	}
@@ -622,7 +622,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	out = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, out) != EOF) {
 		if (line.len != the_hash_algo->hexsz)
-			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
+			die(_("repack: expecting full hex object id lines only from pack-objects"));
 		string_list_append(&names, line.buf);
 	}
 	fclose(out);

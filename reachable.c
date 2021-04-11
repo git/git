@@ -173,7 +173,7 @@ static void *lookup_object_by_type(struct repository *r,
 	case OBJ_BLOB:
 		return lookup_blob(r, oid);
 	default:
-		die("BUG: unknown object type %d", type);
+		die("bug: unknown object type %d", type);
 	}
 }
 

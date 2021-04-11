@@ -111,7 +111,7 @@ static int parse_next_oid(const char **next, const char *end,
 		if (!**next || **next == line_termination)
 			return 1;
 		if (**next != ' ')
-			die("%s %s: expected SP but got: %s",
+			die("%s %s: expected sp but got: %s",
 			    command, refname, *next);
 		(*next)++;
 		*next = parse_arg(*next, &arg);
@@ -125,7 +125,7 @@ static int parse_next_oid(const char **next, const char *end,
 	} else {
 		/* With -z, read the next NUL-terminated line */
 		if (**next)
-			die("%s %s: expected NUL but got: %s",
+			die("%s %s: expected nul but got: %s",
 			    command, refname, *next);
 		(*next)++;
 		if (*next == end)
@@ -510,7 +510,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, git_update_ref_usage,
 			     0);
 	if (msg && !*msg)
-		die("Refusing to perform update with empty message.");
+		die("refusing to perform update with empty message");
 
 	create_reflog_flag = create_reflog ? REF_FORCE_CREATE_REFLOG : 0;
 
@@ -544,7 +544,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		value = argv[1];
 		oldval = argv[2];
 		if (get_oid(value, &oid))
-			die("%s: not a valid SHA1", value);
+			die("%s: not a valid sha1", value);
 	}
 
 	if (oldval) {
@@ -555,7 +555,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 			 */
 			oidclr(&oldoid);
 		else if (get_oid(oldval, &oldoid))
-			die("%s: not a valid old SHA1", oldval);
+			die("%s: not a valid old sha1", oldval);
 	}
 
 	if (delete)

@@ -434,7 +434,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 					 "         to make room.\n"),
 				       ce->name, new_path.buf);
 				if (rename(ce->name, new_path.buf))
-					die("Failed to move %s to %s\n",
+					die("failed to move %s to %s\n",
 					    ce->name, new_path.buf);
 				strbuf_release(&new_path);
 			}
@@ -470,7 +470,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	repo_hold_locked_index(the_repository, &lock, LOCK_DIE_ON_ERROR);
 	if (write_locked_index(&the_index, &lock,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
-		die(_("Unable to write index."));
+		die(_("unable to write index"));
 }
 
 static int do_apply_stash(const char *prefix, struct stash_info *info,

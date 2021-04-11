@@ -681,7 +681,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			 * location; error out even if XDG_CONFIG_HOME
 			 * is set and points at a sane location.
 			 */
-			die(_("$HOME not set"));
+			die(_("$home not set"));
 
 		given_config_source.scope = CONFIG_SCOPE_GLOBAL;
 

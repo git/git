@@ -1170,7 +1170,7 @@ static void die_with_unpushed_submodules(struct string_list *needs_pushing)
 
 	string_list_clear(needs_pushing, 0);
 
-	die(_("Aborting."));
+	die(_("aborting"));
 }
 
 static int run_pre_push_hook(struct transport *transport,

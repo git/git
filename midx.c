@@ -147,9 +147,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	if (pair_chunk(cf, MIDX_CHUNKID_PACKNAMES, &m->chunk_pack_names) == CHUNK_NOT_FOUND)
 		die(_("multi-pack-index missing required pack-name chunk"));
 	if (read_chunk(cf, MIDX_CHUNKID_OIDFANOUT, midx_read_oid_fanout, m) == CHUNK_NOT_FOUND)
-		die(_("multi-pack-index missing required OID fanout chunk"));
+		die(_("multi-pack-index missing required oid fanout chunk"));
 	if (pair_chunk(cf, MIDX_CHUNKID_OIDLOOKUP, &m->chunk_oid_lookup) == CHUNK_NOT_FOUND)
-		die(_("multi-pack-index missing required OID lookup chunk"));
+		die(_("multi-pack-index missing required oid lookup chunk"));
 	if (pair_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS, &m->chunk_object_offsets) == CHUNK_NOT_FOUND)
 		die(_("multi-pack-index missing required object offsets chunk"));
 

@@ -484,7 +484,7 @@ static int got_oid(struct upload_pack_data *data,
 		   const char *hex, struct object_id *oid)
 {
 	if (get_oid_hex(hex, oid))
-		die("git upload-pack: expected SHA1 object, got '%s'", hex);
+		die("git upload-pack: expected sha1 object, got '%s'", hex);
 	if (!has_object_file_with_flags(oid,
 					OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
 		return -1;
@@ -576,7 +576,7 @@ static int get_common_commits(struct upload_pack_data *data,
 			packet_write_fmt(1, "NAK\n");
 			return -1;
 		}
-		die("git upload-pack: expected SHA1 list, got '%s'", reader->line);
+		die("git upload-pack: expected sha1 list, got '%s'", reader->line);
 	}
 }
 
@@ -945,7 +945,7 @@ static int process_deepen(const char *line, int *depth)
 		char *end = NULL;
 		*depth = (int)strtol(arg, &end, 0);
 		if (!end || *end || *depth <= 0)
-			die("Invalid deepen: %s", line);
+			die("invalid deepen: %s", line);
 		return 1;
 	}
 
@@ -961,7 +961,7 @@ static int process_deepen_since(const char *line, timestamp_t *deepen_since, int
 		if (!end || *end || !deepen_since ||
 		    /* revisions.c's max_age -1 is special */
 		    *deepen_since == -1)
-			die("Invalid deepen-since: %s", line);
+			die("invalid deepen-since: %s", line);
 		*deepen_rev_list = 1;
 		return 1;
 	}
@@ -1449,7 +1449,7 @@ static int parse_have(const char *line, struct oid_array *haves)
 		struct object_id oid;
 
 		if (get_oid_hex(arg, &oid))
-			die("git upload-pack: expected SHA1 object, got '%s'", arg);
+			die("git upload-pack: expected sha1 object, got '%s'", arg);
 		oid_array_append(haves, &oid);
 		return 1;
 	}

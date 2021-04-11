@@ -54,12 +54,12 @@ int read_tree_at(struct repository *r,
 
 			commit = lookup_commit(r, &entry.oid);
 			if (!commit)
-				die("Commit %s in submodule path %s%s not found",
+				die("commit %s in submodule path %s%s not found",
 				    oid_to_hex(&entry.oid),
 				    base->buf, entry.path);
 
 			if (parse_commit(commit))
-				die("Invalid commit %s in submodule path %s%s",
+				die("invalid commit %s in submodule path %s%s",
 				    oid_to_hex(&entry.oid),
 				    base->buf, entry.path);
 

@@ -80,9 +80,9 @@ static void prepare_move_submodule(const char *src, int first,
 {
 	struct strbuf submodule_dotgit = STRBUF_INIT;
 	if (!S_ISGITLINK(active_cache[first]->ce_mode))
-		die(_("Directory %s is in index and no submodule?"), src);
+		die(_("directory %s is in index and no submodule?"), src);
 	if (!is_staging_gitmodules_ok(&the_index))
-		die(_("Please stage your changes to .gitmodules or stash them to proceed"));
+		die(_("please stage your changes to .gitmodules or stash them to proceed"));
 	strbuf_addf(&submodule_dotgit, "%s/.git", src);
 	*submodule_gitfile = read_gitfile(submodule_dotgit.buf);
 	if (*submodule_gitfile)
@@ -301,7 +301,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 	if (write_locked_index(&the_index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
-		die(_("Unable to write new index file"));
+		die(_("unable to write new index file"));
 
 	return 0;
 }

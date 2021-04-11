@@ -317,7 +317,7 @@ static int save_state(struct object_id *stash)
 	cp.git_cmd = 1;
 
 	if (start_command(&cp))
-		die(_("could not run stash."));
+		die(_("could not run stash"));
 	len = strbuf_read(&buffer, cp.out, 1024);
 	close(cp.out);
 
@@ -595,7 +595,7 @@ static void parse_branch_merge_options(char *bmo)
 		return;
 	argc = split_cmdline(bmo, &argv);
 	if (argc < 0)
-		die(_("Bad branch.%s.mergeoptions string: %s"), branch,
+		die(_("bad branch.%s.mergeoptions string: %s"), branch,
 		    _(split_cmdline_strerror(argc)));
 	REALLOC_ARRAY(argv, argc + 2);
 	MOVE_ARRAY(argv + 1, argv, argc + 1);
@@ -734,7 +734,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
 		for (x = 0; x < xopts_nr; x++)
 			if (parse_merge_opt(&o, xopts[x]))
-				die(_("Unknown option for merge-recursive: -X%s"), xopts[x]);
+				die(_("unknown option for merge-recursive: -x%s"), xopts[x]);
 
 		o.branch1 = head_arg;
 		o.branch2 = merge_remote_util(remoteheads->item)->name;
@@ -996,16 +996,16 @@ static int setup_with_upstream(const char ***argv)
 	const char **args;
 
 	if (!branch)
-		die(_("No current branch."));
+		die(_("no current branch"));
 	if (!branch->remote_name)
-		die(_("No remote for the current branch."));
+		die(_("no remote for the current branch"));
 	if (!branch->merge_nr)
-		die(_("No default upstream defined for the current branch."));
+		die(_("no default upstream defined for the current branch"));
 
 	args = xcalloc(st_add(branch->merge_nr, 1), sizeof(char *));
 	for (i = 0; i < branch->merge_nr; i++) {
 		if (!branch->merge[i]->dst)
-			die(_("No remote-tracking branch for %s from %s"),
+			die(_("no remote-tracking branch for %s from %s"),
 			    branch->merge[i]->src, branch->remote_name);
 		args[i] = branch->merge[i]->dst;
 	}
@@ -1062,7 +1062,7 @@ static int default_edit_option(void)
 	if (e) {
 		int v = git_parse_maybe_bool(e);
 		if (v < 0)
-			die(_("Bad value '%s' in environment '%s'"), e, name);
+			die(_("bad value '%s' in environment '%s'"), e, name);
 		return v;
 	}
 
@@ -1313,7 +1313,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			      builtin_merge_usage, builtin_merge_options);
 
 		if (!file_exists(git_path_merge_head(the_repository)))
-			die(_("There is no merge to abort (MERGE_HEAD missing)."));
+			die(_("there is no merge to abort (merge_head missing)"));
 
 		if (read_oneliner(&stash_oid, git_path_merge_autostash(the_repository),
 		    READ_ONELINER_SKIP_IF_EMPTY))
@@ -1348,7 +1348,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			      builtin_merge_usage, builtin_merge_options);
 
 		if (!file_exists(git_path_merge_head(the_repository)))
-			die(_("There is no merge in progress (MERGE_HEAD missing)."));
+			die(_("there is no merge in progress (merge_head missing)"));
 
 		/* Invoke 'git commit' */
 		ret = cmd_commit(nargc, nargv, prefix);
@@ -1364,17 +1364,17 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * add/rm <file>', just 'git commit'.
 		 */
 		if (advice_resolve_conflict)
-			die(_("You have not concluded your merge (MERGE_HEAD exists).\n"
+			die(_("you have not concluded your merge (merge_head exists).\n"
 				  "Please, commit your changes before you merge."));
 		else
-			die(_("You have not concluded your merge (MERGE_HEAD exists)."));
+			die(_("you have not concluded your merge (merge_head exists)"));
 	}
 	if (ref_exists("CHERRY_PICK_HEAD")) {
 		if (advice_resolve_conflict)
-			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
+			die(_("you have not concluded your cherry-pick (cherry_pick_head exists).\n"
 			    "Please, commit your changes before you merge."));
 		else
-			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."));
+			die(_("you have not concluded your cherry-pick (cherry_pick_head exists)"));
 	}
 	resolve_undo_clear();
 
@@ -1388,9 +1388,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (squash) {
 		if (fast_forward == FF_NO)
-			die(_("You cannot combine --squash with --no-ff."));
+			die(_("you cannot combine --squash with --no-ff"));
 		if (option_commit > 0)
-			die(_("You cannot combine --squash with --commit."));
+			die(_("you cannot combine --squash with --commit"));
 		/*
 		 * squash can now silently disable option_commit - this is not
 		 * a problem as it is only overriding the default, not a user
@@ -1406,7 +1406,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (default_to_upstream)
 			argc = setup_with_upstream(&argv);
 		else
-			die(_("No commit specified and merge.defaultToUpstream not set."));
+			die(_("no commit specified and merge.defaulttoupstream not set"));
 	} else if (argc == 1 && !strcmp(argv[0], "-")) {
 		argv[0] = "@{-1}";
 	}
@@ -1423,16 +1423,16 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 */
 		struct object_id *remote_head_oid;
 		if (squash)
-			die(_("Squash commit into empty head not supported yet"));
+			die(_("squash commit into empty head not supported yet"));
 		if (fast_forward == FF_NO)
-			die(_("Non-fast-forward commit does not make sense into "
+			die(_("non-fast-forward commit does not make sense into "
 			    "an empty head"));
 		remoteheads = collect_parents(head_commit, &head_subsumed,
 					      argc, argv, NULL);
 		if (!remoteheads)
 			die(_("%s - not something we can merge"), argv[0]);
 		if (remoteheads->next)
-			die(_("Can merge only exactly one commit into empty head"));
+			die(_("can merge only exactly one commit into empty head"));
 
 		if (verify_signatures)
 			verify_merge_signature(remoteheads->item, verbosity,
@@ -1616,7 +1616,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	}
 
 	if (fast_forward == FF_ONLY)
-		die(_("Not possible to fast-forward, aborting."));
+		die(_("not possible to fast-forward, aborting"));
 
 	if (autostash)
 		create_autostash(the_repository,

@@ -261,7 +261,7 @@ static int set_config(enum sparse_checkout_mode mode)
 	const char *config_path;
 
 	if (upgrade_repository_format(1) < 0)
-		die(_("unable to upgrade repository format to enable worktreeConfig"));
+		die(_("unable to upgrade repository format to enable worktreeconfig"));
 	if (git_config_set_gently("extensions.worktreeConfig", "true")) {
 		error(_("failed to set extensions.worktreeConfig setting"));
 		return 1;
@@ -430,7 +430,7 @@ static void add_patterns_from_input(struct pattern_list *pl,
 				if (line.buf[0] == '"') {
 					strbuf_reset(&unquoted);
 					if (unquote_c_style(&unquoted, line.buf, NULL))
-						die(_("unable to unquote C-style string '%s'"),
+						die(_("unable to unquote c-style string '%s'"),
 						line.buf);
 
 					strbuf_swap(&unquoted, &line);

@@ -912,7 +912,7 @@ void safe_create_dir(const char *dir, int share)
 		}
 	}
 	else if (share && adjust_shared_perm(dir))
-		die(_("Could not make %s writable by group"), dir);
+		die(_("could not make %s writable by group"), dir);
 }
 
 static int have_same_root(const char *path1, const char *path2)

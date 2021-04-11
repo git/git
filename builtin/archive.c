@@ -34,7 +34,7 @@ static int run_remote_archiver(int argc, const char **argv,
 
 	_remote = remote_get(remote);
 	if (!_remote->url[0])
-		die(_("git archive: Remote with no URL"));
+		die(_("git archive: remote with no url"));
 	transport = transport_get(_remote, _remote->url[0]);
 	transport_connect(transport, "git-upload-archive", exec, fd);
 
@@ -58,10 +58,10 @@ static int run_remote_archiver(int argc, const char **argv,
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	if (packet_reader_read(&reader) != PACKET_READ_NORMAL)
-		die(_("git archive: expected ACK/NAK, got a flush packet"));
+		die(_("git archive: expected ack/nak, got a flush packet"));
 	if (strcmp(reader.line, "ACK")) {
 		if (starts_with(reader.line, "NACK "))
-			die(_("git archive: NACK %s"), reader.line + 5);
+			die(_("git archive: nack %s"), reader.line + 5);
 		die(_("git archive: protocol error"));
 	}
 

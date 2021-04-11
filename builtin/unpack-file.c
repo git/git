@@ -29,7 +29,7 @@ int cmd_unpack_file(int argc, const char **argv, const char *prefix)
 	if (argc != 2 || !strcmp(argv[1], "-h"))
 		usage("git unpack-file <sha1>");
 	if (get_oid(argv[1], &oid))
-		die("Not a valid object name %s", argv[1]);
+		die("not a valid object name %s", argv[1]);
 
 	git_config(git_default_config, NULL);
 

@@ -75,7 +75,7 @@ static struct worktree *get_linked_worktree(const char *id)
 	struct strbuf worktree_path = STRBUF_INIT;
 
 	if (!id)
-		die("Missing linked worktree name");
+		die("missing linked worktree name");
 
 	strbuf_git_common_path(&path, the_repository, "worktrees/%s/gitdir", id);
 	if (strbuf_read_file(&worktree_path, path.buf, 0) <= 0)

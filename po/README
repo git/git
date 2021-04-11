@@ -190,7 +190,7 @@ General advice:
    Or in C, from builtin/revert.c:
 
        /* TRANSLATORS: %s will be "revert" or "cherry-pick" */
-       die(_("%s: Unable to write new index file"), action_name(opts));
+       die(_("%s: unable to write new index file"), action_name(opts));
 
 We provide wrappers for C, Shell and Perl programs. Here's how they're
 used:

@@ -884,7 +884,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 
 		commit = lookup_commit_reference(the_repository, &oid);
 		if (!commit)
-			die(_("Bad rev input (not a commit): %s"), *argv);
+			die(_("bad rev input (not a commit): %s"), *argv);
 
 		oid_array_append(&revs, &commit->object.oid);
 	}

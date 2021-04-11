@@ -319,7 +319,7 @@ static void export_blob(const struct object_id *oid)
 	}
 
 	if (!object)
-		die("Could not read blob %s", oid_to_hex(oid));
+		die("could not read blob %s", oid_to_hex(oid));
 
 	mark_next_object(object);
 
@@ -491,7 +491,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 			break;
 
 		default:
-			die("Unexpected comparison status '%c' for %s, %s",
+			die("unexpected comparison status '%c' for %s, %s",
 				q->queue[i]->status,
 				ospec->path ? ospec->path : "none",
 				spec->path ? spec->path : "none");
@@ -690,7 +690,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		case REENCODE_NO:
 			break;
 		case REENCODE_ABORT:
-			die("Encountered commit-specific encoding %s in commit "
+			die("encountered commit-specific encoding %s in commit "
 			    "%s; use --reencode=[yes|no] to handle it",
 			    encoding, oid_to_hex(&commit->object.oid));
 		}
@@ -865,7 +865,7 @@ static void handle_tag(const char *name, struct tag *tag)
 			return;
 		case REWRITE:
 			if (tagged->type == OBJ_TAG && !mark_tags) {
-				die(_("Error: Cannot export nested tags unless --mark-tags is specified."));
+				die(_("error: cannot export nested tags unless --mark-tags is specified"));
 			} else if (tagged->type == OBJ_COMMIT) {
 				p = rewrite_commit((struct commit *)tagged);
 				if (!p) {
@@ -921,7 +921,7 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 			tag = (struct tag *)tag->tagged;
 		}
 		if (!tag)
-			die("Tag %s points nowhere?", e->name);
+			die("tag %s points nowhere?", e->name);
 		return (struct commit *)tag;
 	}
 	default:
@@ -1268,7 +1268,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		printf("feature done\n");
 
 	if (import_filename && import_filename_if_exists)
-		die(_("Cannot pass both --import-marks and --import-marks-if-exists"));
+		die(_("cannot pass both --import-marks and --import-marks-if-exists"));
 	if (import_filename)
 		import_marks(import_filename, 0);
 	else if (import_filename_if_exists)

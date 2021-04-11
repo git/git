@@ -37,7 +37,7 @@ static void flush(struct hashfile *f, const void *buf, unsigned int count)
 			return;
 		}
 		if (!ret)
-			die("sha1 file '%s' write error. Out of diskspace", f->name);
+			die("sha1 file '%s' write error. out of diskspace", f->name);
 		die_errno("sha1 file '%s' write error", f->name);
 	}
 }

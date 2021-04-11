@@ -126,7 +126,7 @@ diff --git a/connect.c b/connect.c
 --- a/connect.c
 +++ b/connect.c
 @@ -96,42 +96,57 @@ static enum protocol get_protocol(const 
- 	die("I don't handle protocol '%s'", name);
+ 	die("i don't handle protocol '%s'", name);
  }
  
 -static void lookup_host(const char *host, struct sockaddr *in)

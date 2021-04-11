@@ -219,7 +219,7 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 	for_each_ref(show_ref, NULL);
 	if (!found_match) {
 		if (verify && !quiet)
-			die("No match");
+			die("no match");
 		return 1;
 	}
 	return 0;

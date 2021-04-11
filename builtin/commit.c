@@ -319,7 +319,7 @@ static void create_base_index(const struct commit *current_head)
 	opts.fn = oneway_merge;
 	tree = parse_tree_indirect(&current_head->object.oid);
 	if (!tree)
-		die(_("failed to unpack HEAD tree object"));
+		die(_("failed to unpack head tree object"));
 	parse_tree(tree);
 	init_tree_desc(&t, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts))
@@ -369,7 +369,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 
 	if (!pathspec.nr && (also || (only && !allow_empty &&
 	    (!amend || (fixup_message && strcmp(fixup_prefix, "amend"))))))
-		die(_("No paths with --include/--only does not make sense."));
+		die(_("no paths with --include/--only does not make sense"));
 
 	if (read_cache_preload(&pathspec) < 0)
 		die(_("index file corrupt"));
@@ -484,11 +484,11 @@ static const char *prepare_index(const char **argv, const char *prefix,
 
 	if (whence != FROM_COMMIT) {
 		if (whence == FROM_MERGE)
-			die(_("cannot do a partial commit during a merge."));
+			die(_("cannot do a partial commit during a merge"));
 		else if (is_from_cherry_pick(whence))
-			die(_("cannot do a partial commit during a cherry-pick."));
+			die(_("cannot do a partial commit during a cherry-pick"));
 		else if (is_from_rebase(whence))
-			die(_("cannot do a partial commit during a rebase."));
+			die(_("cannot do a partial commit during a rebase"));
 	}
 
 	if (list_paths(&partial, !current_head ? NULL : "HEAD", &pathspec))
@@ -968,7 +968,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		const char *parent = "HEAD";
 
 		if (!active_nr && read_cache() < 0)
-			die(_("Cannot read index"));
+			die(_("cannot read index"));
 
 		if (amend)
 			parent = "HEAD^1";
@@ -1109,7 +1109,7 @@ static const char *find_author_by_nickname(const char *name)
 		clear_mailmap(&mailmap);
 		return strbuf_detach(&buf, NULL);
 	}
-	die(_("--author '%s' is not 'Name <email>' and matches no existing author"), name);
+	die(_("--author '%s' is not 'name <email>' and matches no existing author"), name);
 }
 
 static void handle_ignored_arg(struct wt_status *s)
@@ -1123,7 +1123,7 @@ static void handle_ignored_arg(struct wt_status *s)
 	else if (!strcmp(ignored_arg, "matching"))
 		s->show_ignored_mode = SHOW_MATCHING_IGNORED;
 	else
-		die(_("Invalid ignored mode '%s'"), ignored_arg);
+		die(_("invalid ignored mode '%s'"), ignored_arg);
 }
 
 static void handle_untracked_files_arg(struct wt_status *s)
@@ -1141,7 +1141,7 @@ static void handle_untracked_files_arg(struct wt_status *s)
 	 * git-completion.bash when you add new options
 	 */
 	else
-		die(_("Invalid untracked files mode '%s'"), untracked_files_arg);
+		die(_("invalid untracked files mode '%s'"), untracked_files_arg);
 }
 
 static const char *read_commit_message(const char *name)
@@ -1212,9 +1212,9 @@ static void finalize_deferred_config(struct wt_status *s)
 static void check_fixup_reword_options(int argc, const char *argv[]) {
 	if (whence != FROM_COMMIT) {
 		if (whence == FROM_MERGE)
-			die(_("You are in the middle of a merge -- cannot reword."));
+			die(_("you are in the middle of a merge -- cannot reword"));
 		else if (is_from_cherry_pick(whence))
-			die(_("You are in the middle of a cherry-pick -- cannot reword."));
+			die(_("you are in the middle of a cherry-pick -- cannot reword"));
 	}
 	if (argc)
 		die(_("cannot combine reword option of --fixup with path '%s'"), *argv);
@@ -1238,7 +1238,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		force_author = find_author_by_nickname(force_author);
 
 	if (force_author && renew_authorship)
-		die(_("Using both --reset-author and --author does not make sense"));
+		die(_("using both --reset-author and --author does not make sense"));
 
 	if (logfile || have_option_m || use_message)
 		use_editor = 0;
@@ -1247,17 +1247,17 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	/* Sanity check options */
 	if (amend && !current_head)
-		die(_("You have nothing to amend."));
+		die(_("you have nothing to amend"));
 	if (amend && whence != FROM_COMMIT) {
 		if (whence == FROM_MERGE)
-			die(_("You are in the middle of a merge -- cannot amend."));
+			die(_("you are in the middle of a merge -- cannot amend"));
 		else if (is_from_cherry_pick(whence))
-			die(_("You are in the middle of a cherry-pick -- cannot amend."));
+			die(_("you are in the middle of a cherry-pick -- cannot amend"));
 		else if (whence == FROM_REBASE_PICK)
-			die(_("You are in the middle of a rebase -- cannot amend."));
+			die(_("you are in the middle of a rebase -- cannot amend"));
 	}
 	if (fixup_message && squash_message)
-		die(_("Options --squash and --fixup cannot be used together"));
+		die(_("options --squash and --fixup cannot be used together"));
 	if (use_message)
 		f++;
 	if (edit_message)
@@ -1267,7 +1267,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (logfile)
 		f++;
 	if (f > 1)
-		die(_("Only one of -c/-C/-F/--fixup can be used."));
+		die(_("only one of -c/-c/-f/--fixup can be used"));
 	if (have_option_m && (edit_message || use_message || logfile))
 		die((_("Option -m cannot be combined with -c/-C/-F.")));
 	if (f || have_option_m)
@@ -1278,7 +1278,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		use_message = "HEAD";
 	if (!use_message && !is_from_cherry_pick(whence) &&
 	    !is_from_rebase(whence) && renew_authorship)
-		die(_("--reset-author can be used only with -C, -c or --amend."));
+		die(_("--reset-author can be used only with -c, -c or --amend"));
 	if (use_message) {
 		use_message_buffer = read_commit_message(use_message);
 		if (!renew_authorship) {
@@ -1296,7 +1296,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		interactive = 1;
 
 	if (also + only + all + interactive > 1)
-		die(_("Only one of --include/--only/--all/--interactive/--patch can be used."));
+		die(_("only one of --include/--only/--all/--interactive/--patch can be used"));
 
 	if (fixup_message) {
 		/*
@@ -1518,7 +1518,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	if (s.show_ignored_mode == SHOW_MATCHING_IGNORED &&
 	    s.show_untracked_files == SHOW_NO_UNTRACKED_FILES)
-		die(_("Unsupported combination of ignored and untracked-files arguments"));
+		die(_("unsupported combination of ignored and untracked-files arguments"));
 
 	parse_pathspec(&s.pathspec, 0,
 		       PATHSPEC_PREFER_FULL,
@@ -1685,7 +1685,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	else {
 		current_head = lookup_commit_or_die(&oid, "HEAD");
 		if (parse_commit(current_head))
-			die(_("could not parse HEAD commit"));
+			die(_("could not parse head commit"));
 	}
 	verbose = -1; /* unspecified */
 	argc = parse_and_validate_options(argc, argv, builtin_commit_options,
@@ -1730,7 +1730,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 			parent = get_merge_parent(m.buf);
 			if (!parent)
-				die(_("Corrupt MERGE_HEAD file (%s)"), m.buf);
+				die(_("corrupt merge_head file (%s)"), m.buf);
 			pptr = commit_list_append(parent, pptr);
 		}
 		fclose(fp);

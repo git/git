@@ -189,7 +189,7 @@ static enum ack_type get_ack(struct packet_reader *reader,
 	const char *arg;
 
 	if (packet_reader_read(reader) != PACKET_READ_NORMAL)
-		die(_("git fetch-pack: expected ACK/NAK, got a flush packet"));
+		die(_("git fetch-pack: expected ack/nak, got a flush packet"));
 	len = reader->pktlen;
 
 	if (!strcmp(reader->line, "NAK"))
@@ -209,7 +209,7 @@ static enum ack_type get_ack(struct packet_reader *reader,
 			return ACK;
 		}
 	}
-	die(_("git fetch-pack: expected ACK/NAK, got '%s'"), reader->line);
+	die(_("git fetch-pack: expected ack/nak, got '%s'"), reader->line);
 }
 
 static void send_request(struct fetch_pack_args *args,
@@ -1022,7 +1022,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (server_supports("shallow"))
 		print_verbose(args, _("Server supports %s"), "shallow");
 	else if (args->depth > 0 || is_repository_shallow(r))
-		die(_("Server does not support shallow clients"));
+		die(_("server does not support shallow clients"));
 	if (args->depth > 0 || args->deepen_since || args->deepen_not)
 		args->deepen = 1;
 	if (server_supports("multi_ack_detailed")) {
@@ -1082,18 +1082,18 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		print_verbose(args, _("Server supports %s"), "deepen-since");
 		deepen_since_ok = 1;
 	} else if (args->deepen_since)
-		die(_("Server does not support --shallow-since"));
+		die(_("server does not support --shallow-since"));
 	if (server_supports("deepen-not")) {
 		print_verbose(args, _("Server supports %s"), "deepen-not");
 		deepen_not_ok = 1;
 	} else if (args->deepen_not)
-		die(_("Server does not support --shallow-exclude"));
+		die(_("server does not support --shallow-exclude"));
 	if (server_supports("deepen-relative"))
 		print_verbose(args, _("Server supports %s"), "deepen-relative");
 	else if (args->deepen_relative)
-		die(_("Server does not support --deepen"));
+		die(_("server does not support --deepen"));
 	if (!server_supports_hash(the_hash_algo->name, NULL))
-		die(_("Server does not support this repository's object format"));
+		die(_("server does not support this repository's object format"));
 
 	mark_complete_and_common_ref(negotiator, args, &ref);
 	filter_refs(args, &ref, sought, nr_sought);
@@ -1115,13 +1115,13 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 					NULL);
 	else if (si->nr_ours || si->nr_theirs) {
 		if (args->reject_shallow_remote)
-			die(_("source repository is shallow, reject to clone."));
+			die(_("source repository is shallow, reject to clone"));
 		alternate_shallow_file = setup_temporary_shallow(si->shallow);
 	} else
 		alternate_shallow_file = NULL;
 	if (get_pack(args, fd, pack_lockfiles, NULL, sought, nr_sought,
 		     &fsck_options.gitmodules_found))
-		die(_("git fetch-pack: fetch failed."));
+		die(_("git fetch-pack: fetch failed"));
 	if (fsck_finish(&fsck_options))
 		die("fsck failed");
 
@@ -1273,7 +1273,7 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	if (server_supports_feature("fetch", "shallow", 0))
 		add_shallow_requests(&req_buf, args);
 	else if (is_repository_shallow(the_repository) || args->deepen)
-		die(_("Server does not support shallow requests"));
+		die(_("server does not support shallow requests"));
 
 	/* Add filter */
 	if (server_supports_feature("fetch", "filter", 0) &&
@@ -1487,7 +1487,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 		prepare_shallow_info(si, shallows);
 		if (si->nr_ours || si->nr_theirs) {
 			if (args->reject_shallow_remote)
-				die(_("source repository is shallow, reject to clone."));
+				die(_("source repository is shallow, reject to clone"));
 			alternate_shallow_file =
 				setup_temporary_shallow(si->shallow);
 		} else
@@ -1537,7 +1537,7 @@ static void receive_packfile_uris(struct packet_reader *reader,
 		string_list_append(uris, reader->line);
 	}
 	if (reader->status != PACKET_READ_DELIM)
-		die("expected DELIM");
+		die("expected delim");
 }
 
 enum fetch_state {
@@ -1667,7 +1667,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			if (get_pack(args, fd, pack_lockfiles,
 				     packfile_uris.nr ? &index_pack_args : NULL,
 				     sought, nr_sought, &fsck_options.gitmodules_found))
-				die(_("git fetch-pack: fetch failed."));
+				die(_("git fetch-pack: fetch failed"));
 			do_check_stateless_delimiter(args, &reader);
 
 			state = FETCH_DONE;
@@ -1700,12 +1700,12 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 		if (read_in_full(cmd.out, packname, 5) < 0 ||
 		    memcmp(packname, "keep\t", 5))
-			die("fetch-pack: expected keep then TAB at start of http-fetch output");
+			die("fetch-pack: expected keep then tab at start of http-fetch output");
 
 		if (read_in_full(cmd.out, packname,
 				 the_hash_algo->hexsz + 1) < 0 ||
 		    packname[the_hash_algo->hexsz] != '\n')
-			die("fetch-pack: expected hash then LF at end of http-fetch output");
+			die("fetch-pack: expected hash then lf at end of http-fetch output");
 
 		packname[the_hash_algo->hexsz] = '\0';
 

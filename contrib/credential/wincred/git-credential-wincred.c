@@ -28,7 +28,7 @@ static void *xmalloc(size_t size)
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret)
-		 die("Out of memory");
+		 die("out of memory");
 	return ret;
 }
 
@@ -106,7 +106,7 @@ static void write_item(const char *what, LPCWSTR wbuf, int wlen)
 	buf = xmalloc(len);
 
 	if (!WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, buf, len, NULL, FALSE))
-		die("WideCharToMultiByte failed!");
+		die("widechartomultibyte failed!");
 
 	printf("%s=", what);
 	fwrite(buf, 1, len, stdout);
@@ -220,7 +220,7 @@ static void store_credential(void)
 	cred.UserName = wusername;
 
 	if (!CredWriteW(&cred, 0))
-		die("CredWrite failed");
+		die("credwrite failed");
 }
 
 static void erase_credential(void)

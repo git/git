@@ -115,7 +115,7 @@ static void verify_working_tree_path(struct repository *r,
 		 !strcmp(r->index->cache[-1 - pos]->name, path))
 		; /* path is in the index, unmerged */
 	else
-		die("no such path '%s' in HEAD", path);
+		die("no such path '%s' in head", path);
 }
 
 static struct commit_list **append_parent(struct repository *r,
@@ -198,7 +198,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	parent_tail = &commit->parents;
 
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
-		die("no such ref: HEAD");
+		die("no such ref: head");
 
 	parent_tail = append_parent(r, parent_tail, &head_oid);
 	append_merge_parents(r, parent_tail);
@@ -1033,7 +1033,7 @@ static void fill_origin_blob(struct diff_options *opt,
 		file->size = file_size;
 
 		if (!file->ptr)
-			die("Cannot read blob %s for path %s",
+			die("cannot read blob %s for path %s",
 			    oid_to_hex(&o->blob_oid),
 			    o->path);
 		o->file = *file;
@@ -2670,9 +2670,9 @@ static struct commit *find_single_final(struct rev_info *revs,
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
 		if (!obj || obj->type != OBJ_COMMIT)
-			die("Non commit %s?", revs->pending.objects[i].name);
+			die("non commit %s?", revs->pending.objects[i].name);
 		if (found)
-			die("More than one commit to dig from %s and %s?",
+			die("more than one commit to dig from %s and %s?",
 			    revs->pending.objects[i].name, name);
 		found = (struct commit *)obj;
 		name = revs->pending.objects[i].name;
@@ -2737,9 +2737,9 @@ static struct commit *find_single_initial(struct rev_info *revs,
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
 		if (!obj || obj->type != OBJ_COMMIT)
-			die("Non commit %s?", revs->pending.objects[i].name);
+			die("non commit %s?", revs->pending.objects[i].name);
 		if (found)
-			die("More than one commit to dig up from, %s and %s?",
+			die("more than one commit to dig up from, %s and %s?",
 			    revs->pending.objects[i].name, name);
 		found = (struct commit *) obj;
 		name = revs->pending.objects[i].name;
@@ -2748,7 +2748,7 @@ static struct commit *find_single_initial(struct rev_info *revs,
 	if (!name)
 		found = dwim_reverse_initial(revs, &name);
 	if (!name)
-		die("No commit to dig up from?");
+		die("no commit to dig up from?");
 
 	if (name_p)
 		*name_p = xstrdup(name);
@@ -2773,7 +2773,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 	init_blame_suspects(&blame_suspects);
 
 	if (sb->reverse && sb->contents_from)
-		die(_("--contents and --reverse do not blend well."));
+		die(_("--contents and --reverse do not blend well"));
 
 	if (!sb->repo)
 		BUG("repo is NULL");

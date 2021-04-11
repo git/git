@@ -545,7 +545,7 @@ static void die_no_single_rev(int quiet)
 	if (quiet)
 		exit(1);
 	else
-		die("Needed a single revision");
+		die("needed a single revision");
 }
 
 static const char builtin_rev_parse_usage[] =
@@ -988,7 +988,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--shared-index-path")) {
 				if (read_cache() < 0)
-					die(_("Could not read the index"));
+					die(_("could not read the index"));
 				if (the_index.split_index) {
 					const struct object_id *oid = &the_index.split_index->base_oid;
 					const char *path = git_path("sharedindex.%s", oid_to_hex(oid));

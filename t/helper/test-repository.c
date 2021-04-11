@@ -20,14 +20,14 @@ static void test_parse_commit_in_graph(const char *gitdir, const char *worktree,
 	memset(the_repository, 0, sizeof(*the_repository));
 
 	if (repo_init(&r, gitdir, worktree))
-		die("Couldn't init repo");
+		die("couldn't init repo");
 
 	repo_set_hash_algo(the_repository, hash_algo_by_ptr(r.hash_algo));
 
 	c = lookup_commit(&r, commit_oid);
 
 	if (!parse_commit_in_graph(&r, c))
-		die("Couldn't parse commit");
+		die("couldn't parse commit");
 
 	printf("%"PRItime, c->date);
 	for (parent = c->parents; parent; parent = parent->next)
@@ -50,7 +50,7 @@ static void test_get_commit_tree_in_graph(const char *gitdir,
 	memset(the_repository, 0, sizeof(*the_repository));
 
 	if (repo_init(&r, gitdir, worktree))
-		die("Couldn't init repo");
+		die("couldn't init repo");
 
 	repo_set_hash_algo(the_repository, hash_algo_by_ptr(r.hash_algo));
 
@@ -61,10 +61,10 @@ static void test_get_commit_tree_in_graph(const char *gitdir,
 	 * parse it first.
 	 */
 	if (!parse_commit_in_graph(&r, c))
-		die("Couldn't parse commit");
+		die("couldn't parse commit");
 	tree = get_commit_tree_in_graph(&r, c);
 	if (!tree)
-		die("Couldn't get commit tree");
+		die("couldn't get commit tree");
 
 	printf("%s\n", oid_to_hex(&tree->object.oid));
 

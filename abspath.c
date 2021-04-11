@@ -86,7 +86,7 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
 
 	if (!*path) {
 		if (flags & REALPATH_DIE_ON_ERROR)
-			die("The empty string is not a valid path");
+			die("the empty string is not a valid path");
 		else
 			goto error_out;
 	}
@@ -141,7 +141,7 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
 				errno = ELOOP;
 
 				if (flags & REALPATH_DIE_ON_ERROR)
-					die("More than %d nested symlinks "
+					die("more than %d nested symlinks "
 					    "on path '%s'", MAXSYMLINKS, path);
 				else
 					goto error_out;

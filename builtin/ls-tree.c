@@ -167,7 +167,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	if (argc < 1)
 		usage_with_options(ls_tree_usage, ls_tree_options);
 	if (get_oid(argv[0], &oid))
-		die("Not a valid object name %s", argv[0]);
+		die("not a valid object name %s", argv[0]);
 
 	/*
 	 * show_recursive() rolls its own matching code and is

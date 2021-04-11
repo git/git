@@ -32,7 +32,7 @@ void git_test_write_commit_graph_or_die(void)
 
 	if (write_commit_graph_reachable(the_repository->objects->odb,
 					 flags, NULL))
-		die("failed to write commit-graph under GIT_TEST_COMMIT_GRAPH");
+		die("failed to write commit-graph under git_test_commit_graph");
 }
 
 #define GRAPH_SIGNATURE 0x43475048 /* "CGPH" */

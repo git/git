@@ -37,14 +37,14 @@ static char *get_default_remote(void)
 	const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
 
 	if (!refname)
-		die(_("No such ref: %s"), "HEAD");
+		die(_("no such ref: %s"), "HEAD");
 
 	/* detached HEAD */
 	if (!strcmp(refname, "HEAD"))
 		return xstrdup("origin");
 
 	if (!skip_prefix(refname, "refs/heads/", &refname))
-		die(_("Expecting a full ref name, got %s"), refname);
+		die(_("expecting a full ref name, got %s"), refname);
 
 	strbuf_addf(&sb, "branch.%s.remote", refname);
 	if (git_config_get_string(sb.buf, &dest))
@@ -469,7 +469,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 	sub = submodule_from_path(the_repository, &null_oid, path);
 
 	if (!sub)
-		die(_("No url found for submodule path '%s' in .gitmodules"),
+		die(_("no url found for submodule path '%s' in .gitmodules"),
 			displaypath);
 
 	if (!is_submodule_populated_gently(path, NULL))
@@ -524,7 +524,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		printf(_("Entering '%s'\n"), displaypath);
 
 	if (info->argv[0] && run_command(&cp))
-		die(_("run_command returned non-zero status for %s\n."),
+		die(_("run_command returned non-zero status for %s\n"),
 			displaypath);
 
 	if (info->recursive) {
@@ -626,7 +626,7 @@ static void init_submodule(const char *path, const char *prefix,
 	sub = submodule_from_path(the_repository, &null_oid, path);
 
 	if (!sub)
-		die(_("No url found for submodule path '%s' in .gitmodules"),
+		die(_("no url found for submodule path '%s' in .gitmodules"),
 			displaypath);
 
 	/*
@@ -649,7 +649,7 @@ static void init_submodule(const char *path, const char *prefix,
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
 	if (git_config_get_string(sb.buf, &url)) {
 		if (!sub->url)
-			die(_("No url found for submodule path '%s' in .gitmodules"),
+			die(_("no url found for submodule path '%s' in .gitmodules"),
 				displaypath);
 
 		url = xstrdup(sub->url);
@@ -663,7 +663,7 @@ static void init_submodule(const char *path, const char *prefix,
 		}
 
 		if (git_config_set_gently(sb.buf, url))
-			die(_("Failed to register url for submodule path '%s'"),
+			die(_("failed to register url for submodule path '%s'"),
 			    displaypath);
 		if (!(flags & OPT_QUIET))
 			fprintf(stderr,
@@ -684,7 +684,7 @@ static void init_submodule(const char *path, const char *prefix,
 			upd = xstrdup(submodule_strategy_to_string(&sub->update_strategy));
 
 		if (git_config_set_gently(sb.buf, upd))
-			die(_("Failed to register update mode for submodule path '%s'"), displaypath);
+			die(_("failed to register update mode for submodule path '%s'"), displaypath);
 	}
 	strbuf_release(&sb);
 	free(displaypath);
@@ -832,7 +832,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 			goto cleanup;
 		}
 		if (refs_head_ref(refs, handle_submodule_head_ref, &oid))
-			die(_("could not resolve HEAD ref inside the "
+			die(_("could not resolve head ref inside the "
 			      "submodule '%s'"), path);
 
 		print_status(flags, '+', path, &oid, displaypath);
@@ -1332,7 +1332,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 		}
 	} else {
 		if (get_oid("HEAD", &head_oid))
-			die(_("could not fetch a revision for HEAD"));
+			die(_("could not fetch a revision for head"));
 	}
 
 	if (files) {
@@ -1543,7 +1543,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 		 * absorbgitdirs and (possibly) warn.
 		 */
 		if (is_directory(sub_git_dir))
-			die(_("Submodule work tree '%s' contains a .git "
+			die(_("submodule work tree '%s' contains a .git "
 			      "directory (use 'rm -rf' if you really want "
 			      "to remove it including all of its history)"),
 			    displaypath);
@@ -1555,7 +1555,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 				     path, NULL);
 
 			if (run_command(&cp_rm))
-				die(_("Submodule work tree '%s' contains local "
+				die(_("submodule work tree '%s' contains local "
 				      "modifications; use '-f' to discard them"),
 				      displaypath);
 		}
@@ -1641,7 +1641,7 @@ static int module_deinit(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!argc && !all)
-		die(_("Use '--all' if you really want to deinitialize all submodules"));
+		die(_("use '--all' if you really want to deinitialize all submodules"));
 
 	if (module_list_compute(argc, argv, prefix, &pathspec, &list) < 0)
 		return 1;
@@ -1788,14 +1788,14 @@ static void prepare_possible_alternates(const char *sm_name,
 	else if (!strcmp(error_strategy, "ignore"))
 		sas.error_mode = SUBMODULE_ALTERNATE_ERROR_IGNORE;
 	else
-		die(_("Value '%s' for submodule.alternateErrorStrategy is not recognized"), error_strategy);
+		die(_("value '%s' for submodule.alternateerrorstrategy is not recognized"), error_strategy);
 
 	if (!strcmp(sm_alternate, "superproject"))
 		foreach_alt_odb(add_possible_reference_from_superproject, &sas);
 	else if (!strcmp(sm_alternate, "no"))
 		; /* do nothing */
 	else
-		die(_("Value '%s' for submodule.alternateLocation is not recognized"), sm_alternate);
+		die(_("value '%s' for submodule.alternatelocation is not recognized"), sm_alternate);
 
 	free(sm_alternate);
 	free(error_strategy);
@@ -1933,11 +1933,11 @@ static void determine_submodule_update_strategy(struct repository *r,
 
 	if (update) {
 		if (parse_submodule_update_strategy(update, out) < 0)
-			die(_("Invalid update mode '%s' for submodule path '%s'"),
+			die(_("invalid update mode '%s' for submodule path '%s'"),
 				update, path);
 	} else if (!repo_config_get_string_tmp(r, key, &val)) {
 		if (parse_submodule_update_strategy(val, out) < 0)
-			die(_("Invalid update mode '%s' configured for submodule path '%s'"),
+			die(_("invalid update mode '%s' configured for submodule path '%s'"),
 				val, path);
 	} else if (sub->update_strategy.type != SM_UPDATE_UNSPECIFIED) {
 		if (sub->update_strategy.type == SM_UPDATE_COMMAND)
@@ -2411,16 +2411,16 @@ static const char *remote_submodule_branch(const char *path)
 		const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
 
 		if (!refname)
-			die(_("No such ref: %s"), "HEAD");
+			die(_("no such ref: %s"), "HEAD");
 
 		/* detached HEAD */
 		if (!strcmp(refname, "HEAD"))
-			die(_("Submodule (%s) branch configured to inherit "
+			die(_("submodule (%s) branch configured to inherit "
 			      "branch from superproject, but the superproject "
 			      "is not on any branch"), sub->name);
 
 		if (!skip_prefix(refname, "refs/heads/", &refname))
-			die(_("Expecting a full ref name, got %s"), refname);
+			die(_("expecting a full ref name, got %s"), refname);
 		return refname;
 	}
 
@@ -2466,7 +2466,7 @@ static int push_check(int argc, const char **argv, const char *prefix)
 	/* Get the submodule's head ref and determine if it is detached */
 	head = resolve_refdup("HEAD", 0, &head_oid, NULL);
 	if (!head)
-		die(_("Failed to resolve HEAD as a valid ref."));
+		die(_("failed to resolve head as a valid ref"));
 	if (!strcmp(head, "HEAD"))
 		detached_head = 1;
 
@@ -2506,7 +2506,7 @@ static int push_check(int argc, const char **argv, const char *prefix)
 					if (!detached_head &&
 					    !strcmp(head, superproject_head))
 						break;
-					die("HEAD does not match the named branch in the superproject");
+					die("head does not match the named branch in the superproject");
 				}
 				/* fallthrough */
 			default:

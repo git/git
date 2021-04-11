@@ -536,7 +536,7 @@ int create_bundle(struct repository *r, const char *path,
 	/* write bundle refs */
 	ref_count = write_bundle_refs(bundle_fd, &revs_copy);
 	if (!ref_count)
-		die(_("Refusing to create empty bundle."));
+		die(_("refusing to create empty bundle"));
 	else if (ref_count < 0)
 		goto err;
 

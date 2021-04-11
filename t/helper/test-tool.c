@@ -110,7 +110,7 @@ int cmd_main(int argc, const char **argv)
 		die_usage();
 
 	if (working_directory && chdir(working_directory) < 0)
-		die("Could not cd to '%s'", working_directory);
+		die("could not cd to '%s'", working_directory);
 
 	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
 		if (!strcmp(cmds[i].name, argv[1])) {

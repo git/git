@@ -1093,7 +1093,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			if (done < 0)
 				die_errno("read error '%s'", elem->path);
 			else if (done < len)
-				die("early EOF '%s'", elem->path);
+				die("early eof '%s'", elem->path);
 
 			/* If not a fake symlink, apply filters, e.g. autocrlf */
 			if (is_file) {

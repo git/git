@@ -289,7 +289,7 @@ static int checkout_merged(int pos, const struct checkout *state, int *nr_checko
 	 * when it may contain conflicts).
 	 */
 	if (write_object_file(result_buf.ptr, result_buf.size, blob_type, &oid))
-		die(_("Unable to add merge result for '%s'"), path);
+		die(_("unable to add merge result for '%s'"), path);
 	free(result_buf.ptr);
 	ce = make_transient_cache_entry(mode, &oid, path, 2);
 	if (!ce)
@@ -449,7 +449,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		    opts->ignore_unmerged_opt, "-m");
 
 	if (opts->new_branch)
-		die(_("Cannot update paths and switch to branch '%s' at the same time."),
+		die(_("cannot update paths and switch to branch '%s' at the same time"),
 		    opts->new_branch);
 
 	if (!opts->checkout_worktree && !opts->checkout_index)
@@ -909,7 +909,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 		}
 	} else if (new_branch_info->path) {	/* Switch branches. */
 		if (create_symref("HEAD", new_branch_info->path, msg.buf) < 0)
-			die(_("unable to update HEAD"));
+			die(_("unable to update head"));
 		if (!opts->quiet) {
 			if (old_branch_info->path && !strcmp(new_branch_info->path, old_branch_info->path)) {
 				if (opts->new_branch_force)
@@ -1079,7 +1079,7 @@ static int switch_branches(const struct checkout_opts *opts,
 		new_branch_info->name = "HEAD";
 		new_branch_info->commit = old_branch_info.commit;
 		if (!new_branch_info->commit)
-			die(_("You are on a branch yet to be born"));
+			die(_("you are on a branch yet to be born"));
 		parse_commit_or_die(new_branch_info->commit);
 
 		if (opts->only_merge_on_switching_branches)
@@ -1261,7 +1261,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	else if (dash_dash_pos == 1)
 		has_dash_dash = 1; /* case (3) or (1) */
 	else if (dash_dash_pos >= 2)
-		die(_("only one reference expected, %d given."), dash_dash_pos);
+		die(_("only one reference expected, %d given"), dash_dash_pos);
 	opts->count_checkout_paths = !opts->quiet && !has_dash_dash;
 
 	if (!strcmp(arg, "-"))
@@ -1348,7 +1348,7 @@ static int switch_unborn_to_new_branch(const struct checkout_opts *opts)
 	trace2_cmd_mode("unborn");
 
 	if (!opts->new_branch)
-		die(_("You are on a branch yet to be born"));
+		die(_("you are on a branch yet to be born"));
 	strbuf_addf(&branch_ref, "refs/heads/%s", opts->new_branch);
 	status = create_symref("HEAD", branch_ref.buf, "checkout -b");
 	strbuf_release(&branch_ref);
@@ -1452,7 +1452,7 @@ static int checkout_branch(struct checkout_opts *opts,
 		opts->track = git_branch_track;
 
 	if (new_branch_info->name && !new_branch_info->commit)
-		die(_("Cannot switch branch to a non-commit '%s'"),
+		die(_("cannot switch branch to a non-commit '%s'"),
 		    new_branch_info->name);
 
 	if (!opts->switch_branch_doing_nothing_is_ok &&

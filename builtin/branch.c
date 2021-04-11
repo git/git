@@ -227,7 +227,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	if (!force) {
 		head_rev = lookup_commit_reference(the_repository, &head_oid);
 		if (!head_rev)
-			die(_("Couldn't look up commit object for HEAD"));
+			die(_("couldn't look up commit object for head"));
 	}
 	for (i = 0; i < argc; i++, strbuf_reset(&bname)) {
 		char *target = NULL;
@@ -466,13 +466,13 @@ static void print_current_branch_name(void)
 	const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	const char *shortname;
 	if (!refname)
-		die(_("could not resolve HEAD"));
+		die(_("could not resolve head"));
 	else if (!(flags & REF_ISSYMREF))
 		return;
 	else if (skip_prefix(refname, "refs/heads/", &shortname))
 		puts(shortname);
 	else
-		die(_("HEAD (%s) points outside of refs/heads/"), refname);
+		die(_("head (%s) points outside of refs/heads/"), refname);
 }
 
 static void reject_rebase_or_bisect_branch(const char *target)
@@ -487,11 +487,11 @@ static void reject_rebase_or_bisect_branch(const char *target)
 			continue;
 
 		if (is_worktree_being_rebased(wt, target))
-			die(_("Branch %s is being rebased at %s"),
+			die(_("branch %s is being rebased at %s"),
 			    target, wt->path);
 
 		if (is_worktree_being_bisected(wt, target))
-			die(_("Branch %s is being bisected at %s"),
+			die(_("branch %s is being bisected at %s"),
 			    target, wt->path);
 	}
 
@@ -508,9 +508,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 
 	if (!oldname) {
 		if (copy)
-			die(_("cannot copy the current branch while not on any."));
+			die(_("cannot copy the current branch while not on any"));
 		else
-			die(_("cannot rename the current branch while not on any."));
+			die(_("cannot rename the current branch while not on any"));
 	}
 
 	if (strbuf_check_branch_ref(&oldref, oldname)) {
@@ -521,7 +521,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 		if (ref_exists(oldref.buf))
 			recovery = 1;
 		else
-			die(_("Invalid branch name: '%s'"), oldname);
+			die(_("invalid branch name: '%s'"), oldname);
 	}
 
 	/*
@@ -550,9 +550,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	if (!copy &&
 	    (!head || strcmp(oldname, head) || !is_null_oid(&head_oid)) &&
 	    rename_ref(oldref.buf, newref.buf, logmsg.buf))
-		die(_("Branch rename failed"));
+		die(_("branch rename failed"));
 	if (copy && copy_existing_ref(oldref.buf, newref.buf, logmsg.buf))
-		die(_("Branch copy failed"));
+		die(_("branch copy failed"));
 
 	if (recovery) {
 		if (copy)
@@ -565,7 +565,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 
 	if (!copy &&
 	    replace_each_worktree_head_symref(oldref.buf, newref.buf, logmsg.buf))
-		die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
+		die(_("branch renamed to %s, but head is not updated!"), newname);
 
 	strbuf_release(&logmsg);
 
@@ -574,9 +574,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	strbuf_addf(&newsection, "branch.%s", interpreted_newname);
 	strbuf_release(&newref);
 	if (!copy && git_config_rename_section(oldsection.buf, newsection.buf) < 0)
-		die(_("Branch is renamed, but update of config-file failed"));
+		die(_("branch is renamed, but update of config-file failed"));
 	if (copy && strcmp(oldname, newname) && git_config_copy_section(oldsection.buf, newsection.buf) < 0)
-		die(_("Branch is copied, but update of config-file failed"));
+		die(_("branch is copied, but update of config-file failed"));
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);
 }
@@ -686,11 +686,11 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	head = resolve_refdup("HEAD", 0, &head_oid, NULL);
 	if (!head)
-		die(_("Failed to resolve HEAD as a valid ref."));
+		die(_("failed to resolve head as a valid ref"));
 	if (!strcmp(head, "HEAD"))
 		filter.detached = 1;
 	else if (!skip_prefix(head, "refs/heads/", &head))
-		die(_("HEAD not found below refs/heads!"));
+		die(_("head not found below refs/heads!"));
 
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
@@ -761,7 +761,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 		if (!argc) {
 			if (filter.detached)
-				die(_("Cannot give description to detached HEAD"));
+				die(_("cannot give description to detached head"));
 			branch_name = head;
 		} else if (argc == 1)
 			branch_name = argv[0];
@@ -809,7 +809,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 		if (!branch) {
 			if (!argc || !strcmp(argv[0], "HEAD"))
-				die(_("could not set upstream of HEAD to %s when "
+				die(_("could not set upstream of head to %s when "
 				      "it does not point to any branch."),
 				    new_upstream);
 			die(_("no such branch '%s'"), argv[0]);
@@ -833,13 +833,13 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 		if (!branch) {
 			if (!argc || !strcmp(argv[0], "HEAD"))
-				die(_("could not unset upstream of HEAD when "
+				die(_("could not unset upstream of head when "
 				      "it does not point to any branch."));
 			die(_("no such branch '%s'"), argv[0]);
 		}
 
 		if (!branch_has_merge_config(branch))
-			die(_("Branch '%s' has no upstream information"), branch->name);
+			die(_("branch '%s' has no upstream information"), branch->name);
 
 		strbuf_addf(&buf, "branch.%s.remote", branch->name);
 		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
@@ -849,11 +849,11 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		strbuf_release(&buf);
 	} else if (argc > 0 && argc <= 2) {
 		if (filter.kind != FILTER_REFS_BRANCHES)
-			die(_("The -a, and -r, options to 'git branch' do not take a branch name.\n"
+			die(_("the -a, and -r, options to 'git branch' do not take a branch name.\n"
 				  "Did you mean to use: -a|-r --list <pattern>?"));
 
 		if (track == BRANCH_TRACK_OVERRIDE)
-			die(_("the '--set-upstream' option is no longer supported. Please use '--track' or '--set-upstream-to' instead."));
+			die(_("the '--set-upstream' option is no longer supported. please use '--track' or '--set-upstream-to' instead"));
 
 		create_branch(the_repository,
 			      argv[0], (argc == 2) ? argv[1] : head,

@@ -3207,7 +3207,7 @@ static void read_object_list_from_stdin(void)
 			if (feof(stdin))
 				break;
 			if (!ferror(stdin))
-				die("BUG: fgets returned NULL, not EOF, not error!");
+				die("bug: fgets returned null, not eof, not error!");
 			if (errno != EINTR)
 				die_errno("fgets");
 			clearerr(stdin);
@@ -3215,13 +3215,13 @@ static void read_object_list_from_stdin(void)
 		}
 		if (line[0] == '-') {
 			if (get_oid_hex(line+1, &oid))
-				die(_("expected edge object ID, got garbage:\n %s"),
+				die(_("expected edge object id, got garbage:\n %s"),
 				    line);
 			add_preferred_base(&oid);
 			continue;
 		}
 		if (parse_oid_hex(line, &oid, &p))
-			die(_("expected object ID, got garbage:\n %s"), line);
+			die(_("expected object id, got garbage:\n %s"), line);
 
 		add_preferred_base_object(p + 1);
 		add_object_entry(&oid, OBJ_NONE, p + 1, 0);

@@ -127,7 +127,7 @@ static char *attr_value_unescape(const char *value)
 	for (src = value, dst = ret; *src; src++, dst++) {
 		if (*src == '\\') {
 			if (!src[1])
-				die(_("Escape character '\\' not allowed as "
+				die(_("escape character '\\' not allowed as "
 				      "last character in attr value"));
 			src++;
 		}
@@ -145,7 +145,7 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
 	struct string_list list = STRING_LIST_INIT_DUP;
 
 	if (item->attr_check || item->attr_match)
-		die(_("Only one 'attr:' specification is allowed."));
+		die(_("only one 'attr:' specification is allowed"));
 
 	if (!value || !*value)
 		die(_("attr spec must not be empty"));
@@ -324,12 +324,12 @@ static const char *parse_long_magic(unsigned *magic, int *prefix_len,
 		}
 
 		if (ARRAY_SIZE(pathspec_magic) <= i)
-			die(_("Invalid pathspec magic '%.*s' in '%s'"),
+			die(_("invalid pathspec magic '%.*s' in '%s'"),
 			    (int) len, pos, elem);
 	}
 
 	if (*pos != ')')
-		die(_("Missing ')' at the end of pathspec magic in '%s'"),
+		die(_("missing ')' at the end of pathspec magic in '%s'"),
 		    elem);
 	pos++;
 
@@ -367,7 +367,7 @@ static const char *parse_short_magic(unsigned *magic, const char *elem)
 		}
 
 		if (ARRAY_SIZE(pathspec_magic) <= i)
-			die(_("Unimplemented pathspec magic '%c' in '%s'"),
+			die(_("unimplemented pathspec magic '%c' in '%s'"),
 			    ch, elem);
 	}
 

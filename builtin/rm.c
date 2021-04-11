@@ -279,7 +279,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!pathspec.nr)
-		die(_("No pathspec was given. Which files should I remove?"));
+		die(_("no pathspec was given. which files should i remove?"));
 
 	if (!index_only)
 		setup_work_tree();
@@ -403,7 +403,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	if (write_locked_index(&the_index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
-		die(_("Unable to write new index file"));
+		die(_("unable to write new index file"));
 
 	return 0;
 }

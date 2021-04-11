@@ -483,7 +483,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	rev.diffopt.ita_invisible_in_index = 1;
 
 	if (nongit)
-		die(_("Not a git repository"));
+		die(_("not a git repository"));
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format) {
 		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
@@ -529,7 +529,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			obj = parse_object(the_repository, &obj->oid);
 		obj = deref_tag(the_repository, obj, NULL, 0);
 		if (!obj)
-			die(_("invalid object '%s' given."), name);
+			die(_("invalid object '%s' given"), name);
 		if (obj->type == OBJ_COMMIT)
 			obj = &get_commit_tree(((struct commit *)obj))->object;
 
@@ -545,7 +545,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			blobs++;
 
 		} else {
-			die(_("unhandled object '%s' given."), name);
+			die(_("unhandled object '%s' given"), name);
 		}
 	}
 	if (rev.prune_data.nr)

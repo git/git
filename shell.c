@@ -42,7 +42,7 @@ static void cd_to_homedir(void)
 {
 	const char *home = getenv("HOME");
 	if (!home)
-		die("could not determine user's home directory; HOME is unset");
+		die("could not determine user's home directory; home is unset");
 	if (chdir(home) == -1)
 		die("could not chdir to user's home directory");
 }
@@ -141,7 +141,7 @@ int cmd_main(int argc, const char **argv)
 		/* Allow the user to run an interactive shell */
 		cd_to_homedir();
 		if (access(COMMAND_DIR, R_OK | X_OK) == -1) {
-			die("Interactive git shell is not enabled.\n"
+			die("interactive git shell is not enabled.\n"
 			    "hint: ~/" COMMAND_DIR " should exist "
 			    "and have read and execute access.");
 		}
@@ -153,7 +153,7 @@ int cmd_main(int argc, const char **argv)
 		 * "cmd arg", where "cmd" is a very limited subset of git
 		 * commands or a command in the COMMAND_DIR
 		 */
-		die("Run with no arguments or with -c cmd");
+		die("run with no arguments or with -c cmd");
 	}
 
 	prog = xstrdup(argv[2]);

@@ -652,7 +652,7 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 	 * enough to hold a single line of input, anyway.
 	 */
 	if (errno == ENOMEM)
-		die("Out of memory, getdelim failed");
+		die("out of memory, getdelim failed");
 
 	/*
 	 * Restore strbuf invariants; if getdelim left us with a NULL pointer,
@@ -892,7 +892,7 @@ void strbuf_humanise_rate(struct strbuf *buf, off_t bytes)
 void strbuf_add_absolute_path(struct strbuf *sb, const char *path)
 {
 	if (!*path)
-		die("The empty string is not a valid path");
+		die("the empty string is not a valid path");
 	if (!is_absolute_path(path)) {
 		struct stat cwd_stat, pwd_stat;
 		size_t orig_len = sb->len;

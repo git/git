@@ -1980,7 +1980,7 @@ static int update_background_schedule(int enable)
 	if (testing) {
 		char *sep = strchr(testing, ':');
 		if (!sep)
-			die("GIT_TEST_MAINT_SCHEDULER unparseable: %s", testing);
+			die("git_test_maint_scheduler unparseable: %s", testing);
 		*sep = '\0';
 		scheduler = testing;
 		cmd = sep + 1;

@@ -984,7 +984,7 @@ static inline size_t xsize_t(off_t len)
 	size_t size = (size_t) len;
 
 	if (len != (off_t) size)
-		die("Cannot handle files this big");
+		die("cannot handle files this big");
 	return size;
 }
 

@@ -26,7 +26,7 @@ void diffcore_rotate(struct diff_options *opt)
 	if (q->nr <= i) {
 		/* we did not find the specified path */
 		if (opt->rotate_to_strict)
-			die(_("No such path '%s' in the diff"), opt->rotate_to);
+			die(_("no such path '%s' in the diff"), opt->rotate_to);
 		return;
 	}
 

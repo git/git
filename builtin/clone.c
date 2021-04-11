@@ -289,7 +289,7 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	strip_suffix_mem(start, &len, is_bundle ? ".bundle" : ".git");
 
 	if (!len || (len == 1 && *start == '/'))
-		die(_("No directory name could be guessed.\n"
+		die(_("no directory name could be guessed.\n"
 		      "Please specify a directory on the command line"));
 
 	if (is_bare)
@@ -722,7 +722,7 @@ static void update_head(const struct ref *our, const struct ref *remote,
 	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
 		/* Local default branch link */
 		if (create_symref("HEAD", our->name, NULL) < 0)
-			die(_("unable to update HEAD"));
+			die(_("unable to update head"));
 		if (!option_bare) {
 			update_ref(msg, "HEAD", &our->old_oid, NULL, 0,
 				   UPDATE_REFS_DIE_ON_ERR);
@@ -791,7 +791,7 @@ static int checkout(int submodule_progress)
 		FREE_AND_NULL(head);
 	} else {
 		if (!starts_with(head, "refs/heads/"))
-			die(_("HEAD not found below refs/heads!"));
+			die(_("head not found below refs/heads!"));
 	}
 
 	/* We need to be in the new work tree for the checkout */
@@ -1015,10 +1015,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (option_bare) {
 		if (option_origin)
-			die(_("--bare and --origin %s options are incompatible."),
+			die(_("--bare and --origin %s options are incompatible"),
 			    option_origin);
 		if (real_git_dir)
-			die(_("--bare and --separate-git-dir are incompatible."));
+			die(_("--bare and --separate-git-dir are incompatible"));
 		option_no_checkout = 1;
 	}
 
@@ -1066,7 +1066,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	else {
 		work_tree = getenv("GIT_WORK_TREE");
 		if (work_tree && path_exists(work_tree))
-			die(_("working tree '%s' already exists."), work_tree);
+			die(_("working tree '%s' already exists"), work_tree);
 	}
 
 	if (option_bare || work_tree)
@@ -1235,7 +1235,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			warning(_("--filter is ignored in local clones; use file:// instead."));
 		if (!access(mkpath("%s/shallow", path), F_OK)) {
 			if (reject_shallow)
-				die(_("source repository is shallow, reject to clone."));
+				die(_("source repository is shallow, reject to clone"));
 			if (option_local > 0)
 				warning(_("source repository is shallow, ignoring --local"));
 			is_local = 0;
@@ -1334,7 +1334,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				find_remote_branch(mapped_refs, option_branch);
 
 			if (!our_head_points_at)
-				die(_("Remote branch %s not found in upstream %s"),
+				die(_("remote branch %s not found in upstream %s"),
 				    option_branch, remote_name);
 		}
 		else
@@ -1342,7 +1342,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 	else {
 		if (option_branch)
-			die(_("Remote branch %s not found in upstream %s"),
+			die(_("remote branch %s not found in upstream %s"),
 					option_branch, remote_name);
 
 		warning(_("You appear to have cloned an empty repository."));

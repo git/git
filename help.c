@@ -588,7 +588,7 @@ const char *help_unknown_cmd(const char *cmd)
 	QSORT(main_cmds.names, main_cmds.cnt, levenshtein_compare);
 
 	if (!main_cmds.cnt)
-		die(_("Uh oh. Your system reports no Git commands at all."));
+		die(_("uh oh. your system reports no git commands at all"));
 
 	/* skip and count prefix matches */
 	for (n = 0; n < main_cmds.cnt && !main_cmds.names[n]->len; n++)

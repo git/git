@@ -261,7 +261,7 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 
 	type = oid_object_info(the_repository, object, NULL);
 	if (type <= OBJ_NONE)
-		die(_("bad object type."));
+		die(_("bad object type"));
 
 	if (type == OBJ_TAG)
 		advise_if_enabled(ADVICE_NESTED_TAG, _(message_advice_nested_tag),
@@ -553,7 +553,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	if (msg.given || msgfile) {
 		if (msg.given && msgfile)
-			die(_("only one -F or -m option is allowed."));
+			die(_("only one -f or -m option is allowed"));
 		if (msg.given)
 			strbuf_addbuf(&buf, &(msg.buf));
 		else {
@@ -575,10 +575,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die(_("too many arguments"));
 
 	if (get_oid(object_ref, &object))
-		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
+		die(_("failed to resolve '%s' as a valid ref"), object_ref);
 
 	if (strbuf_check_tag_ref(&ref, tag))
-		die(_("'%s' is not a valid tag name."), tag);
+		die(_("'%s' is not a valid tag name"), tag);
 
 	if (read_ref(ref.buf, &prev))
 		oidclr(&prev);
@@ -595,7 +595,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	else if (!strcmp(cleanup_arg, "whitespace"))
 		opt.cleanup_mode = CLEANUP_SPACE;
 	else
-		die(_("Invalid cleanup mode %s"), cleanup_arg);
+		die(_("invalid cleanup mode %s"), cleanup_arg);
 
 	create_reflog_msg(&object, &reflog_msg);
 

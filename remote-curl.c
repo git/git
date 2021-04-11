@@ -500,7 +500,7 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		    transport_anonymize_url(url.buf));
 	case HTTP_NOAUTH:
 		show_http_message(&type, &charset, &buffer);
-		die(_("Authentication failed for '%s'"),
+		die(_("authentication failed for '%s'"),
 		    transport_anonymize_url(url.buf));
 	default:
 		show_http_message(&type, &charset, &buffer);
@@ -639,7 +639,7 @@ static int rpc_read_from_out(struct rpc_state *rpc, int options,
 		switch (*status) {
 		case PACKET_READ_EOF:
 			if (!(options & PACKET_READ_GENTLE_ON_EOF))
-				die(_("shouldn't have EOF when not gentle on EOF"));
+				die(_("shouldn't have eof when not gentle on eof"));
 			break;
 		case PACKET_READ_NORMAL:
 			set_packet_header(buf - 4, *appended);

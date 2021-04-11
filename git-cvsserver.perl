@@ -266,7 +266,7 @@ while (<STDIN>)
         # a response. If it is, the client will hang, we'll hang, and the whole
         # thing will be custard.
         $log->fatal("Don't understand command $_\n");
-        die("Unknown command $_");
+        die("unknown command $_");
     }
 }
 
@@ -2889,7 +2889,7 @@ sub transmitfile
         }
         close $fh or die ("Couldn't close filehandle for transmitfile(): $!");
     } else {
-        die("Couldn't execute git-cat-file");
+        die("couldn't execute git-cat-file");
     }
 }
 
@@ -3822,7 +3822,7 @@ sub update
     my $commitinfo = ::safe_pipe_capture('git', 'cat-file', 'commit', $self->{module});
     unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{$state->{hexsz}}/ )
     {
-        die("Invalid module '$self->{module}'");
+        die("invalid module '$self->{module}'");
     }
 
 
@@ -3962,7 +3962,7 @@ sub update
 		chomp;
                 unless ( /^:\d{6}\s+([0-7]{6})\s+[a-f0-9]{$state->{hexsz}}\s+([a-f0-9]{$state->{hexsz}})\s+(\w)$/o )
                 {
-                    die("Couldn't process git-diff-tree line : $_");
+                    die("couldn't process git-diff-tree line : $_");
                 }
 		my ($mode, $hash, $change) = ($1, $2, $3);
 		my $name = <FILELIST>;
@@ -4032,7 +4032,7 @@ sub update
 		chomp;
                 unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
                 {
-                    die("Couldn't process git-ls-tree line : $_");
+                    die("couldn't process git-ls-tree line : $_");
                 }
 
                 my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
@@ -4344,7 +4344,7 @@ sub getAnyHead
         $line=~s/\0$//;
         unless ( $line=~/^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
         {
-            die("Couldn't process git-ls-tree line : $_");
+            die("couldn't process git-ls-tree line : $_");
         }
 
         my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
@@ -4417,7 +4417,7 @@ sub getRevisionDirMap
             chomp;
             unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
             {
-                die("Couldn't process git-ls-tree line : $_");
+                die("couldn't process git-ls-tree line : $_");
             }
 
             my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
@@ -4828,7 +4828,7 @@ sub getMetaFromCommithash
     chomp $line;
     unless ( $line=~m/^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
     {
-        die("Couldn't process git-ls-tree line : $line\n");
+        die("couldn't process git-ls-tree line : $line\n");
     }
     my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
 
@@ -4912,7 +4912,7 @@ sub commitmessage
     my $commithash = shift;
     my $tablename = $self->tablename("commitmsgs");
 
-    die("Need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
+    die("need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
 
     my $db_query;
     $db_query = $self->{dbh}->prepare_cached("SELECT value FROM $tablename WHERE key=?",{},1);

@@ -277,7 +277,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 
 	if (read_cache() < 0)
-		die(_("Could not read the index"));
+		die(_("could not read the index"));
 
 	repo_init_revisions(the_repository, &rev, prefix);
 	rev.diffopt.context = 7;
@@ -288,11 +288,11 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	rev.diffopt.flags.ignore_dirty_submodules = 1;
 	out = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	if (out < 0)
-		die(_("Could not open '%s' for writing."), file);
+		die(_("could not open '%s' for writing"), file);
 	rev.diffopt.file = xfdopen(out, "w");
 	rev.diffopt.close_file = 1;
 	if (run_diff_files(&rev, 0))
-		die(_("Could not write patch"));
+		die(_("could not write patch"));
 
 	if (launch_editor(file, NULL, NULL))
 		die(_("editing patch failed"));
@@ -300,12 +300,12 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	if (stat(file, &st))
 		die_errno(_("Could not stat '%s'"), file);
 	if (!st.st_size)
-		die(_("Empty patch. Aborted."));
+		die(_("empty patch. aborted"));
 
 	child.git_cmd = 1;
 	child.argv = apply_argv;
 	if (run_command(&child))
-		die(_("Could not apply '%s'"), file);
+		die(_("could not apply '%s'"), file);
 
 	unlink(file);
 	free(file);
@@ -487,10 +487,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		addremove = 0; /* "-u" was given but not "-A" */
 
 	if (addremove && take_worktree_changes)
-		die(_("-A and -u are mutually incompatible"));
+		die(_("-a and -u are mutually incompatible"));
 
 	if (!show_only && ignore_missing)
-		die(_("Option --ignore-missing can only be used together with --dry-run"));
+		die(_("option --ignore-missing can only be used together with --dry-run"));
 
 	if (chmod_arg && ((chmod_arg[0] != '-' && chmod_arg[0] != '+') ||
 			  chmod_arg[1] != 'x' || chmod_arg[2]))
@@ -623,7 +623,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 finish:
 	if (write_locked_index(&the_index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
-		die(_("Unable to write new index file"));
+		die(_("unable to write new index file"));
 
 	dir_clear(&dir);
 	UNLEAK(pathspec);

@@ -178,7 +178,7 @@ int cmd__config(int argc, const char **argv)
 		goto exit0;
 	}
 
-	die("%s: Please check the syntax and the function name", argv[0]);
+	die("%s: please check the syntax and the function name", argv[0]);
 
 exit0:
 	git_configset_clear(&cs);

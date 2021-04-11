@@ -486,7 +486,7 @@ static void read_bisect_paths(struct strvec *array)
 	while (strbuf_getline_lf(&str, fp) != EOF) {
 		strbuf_trim(&str);
 		if (sq_dequote_to_strvec(str.buf, array))
-			die(_("Badly quoted content in file '%s': %s"),
+			die(_("badly quoted content in file '%s': %s"),
 			    filename, str.buf);
 	}
 
@@ -763,7 +763,7 @@ static struct commit *get_commit_reference(struct repository *r,
 {
 	struct commit *c = lookup_commit_reference(r, oid);
 	if (!c)
-		die(_("Not a valid commit name %s"), oid_to_hex(oid));
+		die(_("not a valid commit name %s"), oid_to_hex(oid));
 	return c;
 }
 

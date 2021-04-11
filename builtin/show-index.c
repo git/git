@@ -28,7 +28,7 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 	if (hash_name) {
 		hash_algo = hash_algo_by_name(hash_name);
 		if (hash_algo == GIT_HASH_UNKNOWN)
-			die(_("Unknown hash algorithm"));
+			die(_("unknown hash algorithm"));
 		repo_set_hash_algo(the_repository, hash_algo);
 	}
 

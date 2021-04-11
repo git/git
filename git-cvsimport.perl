@@ -90,7 +90,7 @@ sub read_author_info($) {
 sub write_author_info($) {
 	my ($file) = @_;
 	open my $f, '>', $file or
-	  die("Failed to open $file for writing: $!");
+	  die("failed to open $file for writing: $!");
 
 	foreach (keys %conv_author_name) {
 		print $f "$_=$conv_author_name{$_} <$conv_author_email{$_}>";
@@ -316,7 +316,7 @@ sub conn {
 			}
 
 			if (1 < @loc) {
-				die("Multiple cvs password files have ".
+				die("multiple cvs password files have ".
 				    "entries for CVSROOT $opt_d: @loc");
 			} elsif (!$pass) {
 				$pass = "A";

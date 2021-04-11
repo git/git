@@ -93,7 +93,7 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 		strvec_push(&pack_opts, "--all-progress-implied");
 
 	if (!startup_info->have_repository)
-		die(_("Need a repository to create a bundle."));
+		die(_("need a repository to create a bundle"));
 	return !!create_bundle(the_repository, bundle_file, argc, argv, &pack_opts, version);
 }
 
@@ -160,7 +160,7 @@ static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix) 
 	if ((bundle_fd = read_bundle_header(bundle_file, &header)) < 0)
 		return 1;
 	if (!startup_info->have_repository)
-		die(_("Need a repository to unbundle."));
+		die(_("need a repository to unbundle"));
 	return !!unbundle(the_repository, &header, bundle_fd, 0) ||
 		list_bundle_refs(&header, argc, argv);
 }

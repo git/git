@@ -522,7 +522,7 @@ static void enable_service(const char *name, int ena)
 			return;
 		}
 	}
-	die("No such service %s", name);
+	die("no such service %s", name);
 }
 
 static void make_service_overridable(const char *name, int ena)
@@ -534,7 +534,7 @@ static void make_service_overridable(const char *name, int ena)
 			return;
 		}
 	}
-	die("No such service %s", name);
+	die("no such service %s", name);
 }
 
 static void parse_host_and_port(char *hostport, char **host,
@@ -545,7 +545,7 @@ static void parse_host_and_port(char *hostport, char **host,
 
 		end = strchr(hostport, ']');
 		if (!end)
-			die("Invalid request ('[' without ']')");
+			die("invalid request ('[' without ']')");
 		*end = '\0';
 		*host = hostport + 1;
 		if (!end[1])
@@ -553,7 +553,7 @@ static void parse_host_and_port(char *hostport, char **host,
 		else if (end[1] == ':')
 			*port = end + 2;
 		else
-			die("Garbage after end of host part");
+			die("garbage after end of host part");
 	} else {
 		*host = hostport;
 		*port = strrchr(hostport, ':');
@@ -627,7 +627,7 @@ static char *parse_host_arg(struct hostinfo *hi, char *extra_args, int buflen)
 			extra_args = val + vallen;
 		}
 		if (extra_args < end && *extra_args)
-			die("Invalid request");
+			die("invalid request");
 	}
 
 	return extra_args;

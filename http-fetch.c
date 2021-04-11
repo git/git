@@ -63,11 +63,11 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
 	if (start_active_slot(preq->slot)) {
 		run_active_slot(preq->slot);
 		if (results.curl_result != CURLE_OK) {
-			die("Unable to get pack file %s\n%s", preq->url,
+			die("unable to get pack file %s\n%s", preq->url,
 			    curl_errorstr);
 		}
 	} else {
-		die("Unable to start request");
+		die("unable to start request");
 	}
 
 	if ((ret = finish_http_pack_request(preq)))

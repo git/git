@@ -955,7 +955,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 
 	if (split_mail(state, patch_format, paths, keep_cr) < 0) {
 		am_destroy(state);
-		die(_("Failed to split patches."));
+		die(_("failed to split patches"));
 	}
 
 	if (state->rebasing)
@@ -1623,11 +1623,11 @@ static void do_commit(const struct am_state *state)
 static void validate_resume_state(const struct am_state *state)
 {
 	if (!state->msg)
-		die(_("cannot resume: %s does not exist."),
+		die(_("cannot resume: %s does not exist"),
 			am_path(state, "final-commit"));
 
 	if (!state->author_name || !state->author_email || !state->author_date)
-		die(_("cannot resume: %s does not exist."),
+		die(_("cannot resume: %s does not exist"),
 			am_path(state, "author-script"));
 }
 
@@ -1705,7 +1705,7 @@ static void am_run(struct am_state *state, int resume)
 
 	if (repo_index_has_changes(the_repository, NULL, &sb)) {
 		write_state_bool(state, "dirtyindex", 1);
-		die(_("Dirty index: cannot apply patches (dirty: %s)"), sb.buf);
+		die(_("dirty index: cannot apply patches (dirty: %s)"), sb.buf);
 	}
 
 	strbuf_release(&sb);
@@ -2344,7 +2344,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		 *    unattended.
 		 */
 		if (argc || (resume.mode == RESUME_FALSE && !isatty(0)))
-			die(_("previous rebase directory %s still exists but mbox given."),
+			die(_("previous rebase directory %s still exists but mbox given"),
 				state.dir);
 
 		if (resume.mode == RESUME_FALSE)
@@ -2368,13 +2368,13 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 				return 0;
 			}
 
-			die(_("Stray %s directory found.\n"
+			die(_("stray %s directory found.\n"
 				"Use \"git am --abort\" to remove it."),
 				state.dir);
 		}
 
 		if (resume.mode)
-			die(_("Resolve operation not in progress, we are not resuming."));
+			die(_("resolve operation not in progress, we are not resuming"));
 
 		for (i = 0; i < argc; i++) {
 			if (is_absolute_path(argv[i]) || !prefix)

@@ -302,7 +302,7 @@ static void *fill(int min)
 				sizeof(input_buffer) - input_len);
 		if (ret <= 0) {
 			if (!ret)
-				die(_("early EOF"));
+				die(_("early eof"));
 			die_errno(_("read error on input"));
 		}
 		input_len += ret;
@@ -755,13 +755,13 @@ static int compare_objects(const unsigned char *buf, unsigned long size,
 	while (size) {
 		ssize_t len = read_istream(data->st, data->buf, size);
 		if (len == 0)
-			die(_("SHA1 COLLISION FOUND WITH %s !"),
+			die(_("sha1 collision found with %s !"),
 			    oid_to_hex(&data->entry->idx.oid));
 		if (len < 0)
 			die(_("unable to read %s"),
 			    oid_to_hex(&data->entry->idx.oid));
 		if (memcmp(buf, data->buf, len))
-			die(_("SHA1 COLLISION FOUND WITH %s !"),
+			die(_("sha1 collision found with %s !"),
 			    oid_to_hex(&data->entry->idx.oid));
 		size -= len;
 		buf += len;
@@ -785,7 +785,7 @@ static int check_collison(struct object_entry *entry)
 	if (!data.st)
 		return -1;
 	if (size != entry->size || type != entry->type)
-		die(_("SHA1 COLLISION FOUND WITH %s !"),
+		die(_("sha1 collision found with %s !"),
 		    oid_to_hex(&entry->idx.oid));
 	unpack_data(entry, compare_objects, &data);
 	close_istream(data.st);
@@ -824,7 +824,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 		if (has_type < 0)
 			die(_("cannot read existing object info %s"), oid_to_hex(oid));
 		if (has_type != type || has_size != size)
-			die(_("SHA1 COLLISION FOUND WITH %s !"), oid_to_hex(oid));
+			die(_("sha1 collision found with %s !"), oid_to_hex(oid));
 		has_data = read_object_file(oid, &has_type, &has_size);
 		read_unlock();
 		if (!data)
@@ -833,7 +833,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			die(_("cannot read existing object %s"), oid_to_hex(oid));
 		if (size != has_size || type != has_type ||
 		    memcmp(data, has_data, size) != 0)
-			die(_("SHA1 COLLISION FOUND WITH %s !"), oid_to_hex(oid));
+			die(_("sha1 collision found with %s !"), oid_to_hex(oid));
 		free(has_data);
 	}
 
@@ -868,7 +868,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			    fsck_object(obj, buf, size, &fsck_options))
 				die(_("fsck error in packed object"));
 			if (strict && fsck_walk(obj, NULL, &fsck_options))
-				die(_("Not all child objects of %s are reachable"), oid_to_hex(&obj->oid));
+				die(_("not all child objects of %s are reachable"), oid_to_hex(&obj->oid));
 
 			if (obj->type == OBJ_TREE) {
 				struct tree *item = (struct tree *) obj;
@@ -1049,7 +1049,7 @@ static void *threaded_second_pass(void *data)
 				int offset = ref_deltas[parent->ref_first++].obj_no;
 				child_obj = objects + offset;
 				if (child_obj->real_type != OBJ_REF_DELTA)
-					die("REF_DELTA at offset %"PRIuMAX" already resolved (duplicate base %s?)",
+					die("ref_delta at offset %"PRIuMAX" already resolved (duplicate base %s?)",
 					    (uintmax_t) child_obj->idx.offset,
 					    oid_to_hex(&parent->obj->idx.oid));
 				child_obj->real_type = parent->obj->real_type;
@@ -1193,7 +1193,7 @@ static void parse_pack_objects(unsigned char *hash)
 	flush();
 	the_hash_algo->final_fn(hash, &input_ctx);
 	if (!hasheq(fill(the_hash_algo->rawsz), hash))
-		die(_("pack is corrupted (SHA1 mismatch)"));
+		die(_("pack is corrupted (sha1 mismatch)"));
 	use(the_hash_algo->rawsz);
 
 	/* If input_fd is a file, we should have reached its end now. */
@@ -1298,7 +1298,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 					 curr_pack, nr_objects,
 					 read_hash, consumed_bytes-the_hash_algo->rawsz);
 		if (!hasheq(read_hash, tail_hash))
-			die(_("Unexpected tail checksum for %s "
+			die(_("unexpected tail checksum for %s "
 			      "(disk corruption?)"), curr_pack);
 	}
 	if (nr_ofs_deltas + nr_ref_deltas != nr_resolved_deltas)
@@ -1648,9 +1648,9 @@ static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
 	struct packed_git *p = add_packed_git(pack_name, strlen(pack_name), 1);
 
 	if (!p)
-		die(_("Cannot open existing pack file '%s'"), pack_name);
+		die(_("cannot open existing pack file '%s'"), pack_name);
 	if (open_pack_index(p))
-		die(_("Cannot open existing pack idx file for '%s'"), pack_name);
+		die(_("cannot open existing pack idx file for '%s'"), pack_name);
 
 	/* Read the attributes from the existing idx file */
 	opts->version = p->index_version;
@@ -1747,7 +1747,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	reset_pack_idx_option(&opts);
 	git_config(git_index_pack_config, &opts);
 	if (prefix && chdir(prefix))
-		die(_("Cannot come back to cwd"));
+		die(_("cannot come back to cwd"));
 
 	if (git_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
 		rev_index = 1;

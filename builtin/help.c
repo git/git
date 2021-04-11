@@ -473,7 +473,7 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
 	if (!strstr(html_path, "://")) {
 		if (stat(mkpath("%s/git.html", html_path), &st)
 		    || !S_ISREG(st.st_mode))
-			die("'%s': not a documentation directory.", html_path);
+			die("'%s': not a documentation directory", html_path);
 	}
 
 	strbuf_init(page_path, 0);

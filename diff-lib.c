@@ -554,7 +554,7 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 		struct object_id oid;
 
 		if (get_oid("HEAD", &oid))
-			die(_("unable to get HEAD"));
+			die(_("unable to get head"));
 
 		mb_child[1] = lookup_commit_reference(the_repository, &oid);
 	}

@@ -679,7 +679,7 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 				oid_to_hex_r(hex, &list->objects[i].item->oid);
 				name = hex;
 			}
-			die(_("invalid object '%s' given."), name);
+			die(_("invalid object '%s' given"), name);
 		}
 
 		/* load the gitmodules file for this rev */

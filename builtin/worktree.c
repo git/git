@@ -501,7 +501,7 @@ static int add(int ac, const char **av, const char *prefix)
 	opts.checkout = 1;
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
 	if (!!opts.detach + !!new_branch + !!new_branch_force > 1)
-		die(_("-b, -B, and --detach are mutually exclusive"));
+		die(_("-b, -b, and --detach are mutually exclusive"));
 	if (ac < 1 || ac > 2)
 		usage_with_options(worktree_usage, options);
 
@@ -731,7 +731,7 @@ static int lock_worktree(int ac, const char **av, const char *prefix)
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
 	if (is_main_worktree(wt))
-		die(_("The main working tree cannot be locked or unlocked"));
+		die(_("the main working tree cannot be locked or unlocked"));
 
 	old_reason = worktree_lock_reason(wt);
 	if (old_reason) {
@@ -764,7 +764,7 @@ static int unlock_worktree(int ac, const char **av, const char *prefix)
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
 	if (is_main_worktree(wt))
-		die(_("The main working tree cannot be locked or unlocked"));
+		die(_("the main working tree cannot be locked or unlocked"));
 	if (!worktree_lock_reason(wt))
 		die(_("'%s' is not locked"), av[0]);
 	ret = unlink_or_warn(git_common_path("worktrees/%s/locked", wt->id));

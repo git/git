@@ -59,7 +59,7 @@ static char *strip_escapes(const char *str, const char *service,
 					break;
 				/* fallthrough */
 			default:
-				die("Bad remote-ext placeholder '%%%c'.",
+				die("bad remote-ext placeholder '%%%c'",
 					str[rpos]);
 			}
 			escape = 0;
@@ -148,7 +148,7 @@ static int run_child(const char *arg, const char *service)
 	parse_argv(&child.args, arg, service);
 
 	if (start_command(&child) < 0)
-		die("Can't run specified command");
+		die("can't run specified command");
 
 	if (git_req)
 		send_git_request(child.in, service, git_req, git_req_vhost);
@@ -171,7 +171,7 @@ static int command_loop(const char *child)
 		size_t i;
 		if (!fgets(buffer, MAXCOMMAND - 1, stdin)) {
 			if (ferror(stdin))
-				die("Command input error");
+				die("command input error");
 			exit(0);
 		}
 		/* Strip end of line characters. */

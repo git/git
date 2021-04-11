@@ -492,7 +492,7 @@ static struct ref *get_ref_map(struct remote *remote,
 		for (i = 0; i < fetch_refspec->nr; i++)
 			get_fetch_map(ref_map, &fetch_refspec->items[i], &oref_tail, 1);
 	} else if (refmap.nr) {
-		die("--refmap option is only meaningful with command-line refspec(s).");
+		die("--refmap option is only meaningful with command-line refspec(s)");
 	} else {
 		/* Use the defaults */
 		struct branch *branch = branch_get(NULL);
@@ -523,7 +523,7 @@ static struct ref *get_ref_map(struct remote *remote,
 		} else {
 			ref_map = get_remote_ref(remote_refs, "HEAD");
 			if (!ref_map)
-				die(_("Couldn't find remote ref HEAD"));
+				die(_("couldn't find remote ref head"));
 			ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			tail = &ref_map->next;
 		}
@@ -1321,7 +1321,7 @@ static void check_not_current_branch(struct ref *ref_map)
 	for (; ref_map; ref_map = ref_map->next)
 		if (ref_map->peer_ref && !strcmp(current_branch->refname,
 					ref_map->peer_ref->name))
-			die(_("Refusing to fetch into current branch %s "
+			die(_("refusing to fetch into current branch %s "
 			    "of non-bare repository"), current_branch->refname);
 }
 
@@ -1340,7 +1340,7 @@ static void set_option(struct transport *transport, const char *name, const char
 {
 	int r = transport_set_option(transport, name, value);
 	if (r < 0)
-		die(_("Option \"%s\" value \"%s\" is not valid for %s"),
+		die(_("option \"%s\" value \"%s\" is not valid for %s"),
 		    name, value, transport->url);
 	if (r > 0)
 		warning(_("Option \"%s\" is ignored for %s\n"),
@@ -1831,7 +1831,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 	int remote_via_config = remote_is_configured(remote, 0);
 
 	if (!remote)
-		die(_("No remote repository specified.  Please, specify either a URL or a\n"
+		die(_("no remote repository specified.  please, specify either a url or a\n"
 		    "remote name from which new revisions should be fetched."));
 
 	gtransport = prepare_transport(remote, 1);
@@ -1867,7 +1867,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 		if (!strcmp(argv[i], "tag")) {
 			i++;
 			if (i >= argc)
-				die(_("You need to specify a tag name."));
+				die(_("you need to specify a tag name"));
 
 			refspec_appendf(&rs, "refs/tags/%s:refs/tags/%s",
 					argv[i], argv[i]);
@@ -1932,7 +1932,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	if (deepen_relative) {
 		if (deepen_relative < 0)
-			die(_("Negative depth in --deepen is not supported"));
+			die(_("negative depth in --deepen is not supported"));
 		if (depth)
 			die(_("--deepen and --depth are mutually exclusive"));
 		depth = xstrfmt("%d", deepen_relative);
@@ -1969,14 +1969,14 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		/* All arguments are assumed to be remotes or groups */
 		for (i = 0; i < argc; i++)
 			if (!add_remote_or_group(argv[i], &list))
-				die(_("No such remote or remote group: %s"), argv[i]);
+				die(_("no such remote or remote group: %s"), argv[i]);
 	} else {
 		/* Single remote or group */
 		(void) add_remote_or_group(argv[0], &list);
 		if (list.nr > 1) {
 			/* More than one remote */
 			if (argc > 1)
-				die(_("Fetching a group and specifying refspecs does not make sense"));
+				die(_("fetching a group and specifying refspecs does not make sense"));
 		} else {
 			/* Zero or one remotes */
 			remote = remote_get(argv[0]);

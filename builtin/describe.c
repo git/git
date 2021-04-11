@@ -421,11 +421,11 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 			return;
 		}
 		if (unannotated_cnt)
-			die(_("No annotated tags can describe '%s'.\n"
+			die(_("no annotated tags can describe '%s'.\n"
 			    "However, there were unannotated tags: try --tags."),
 			    oid_to_hex(cmit_oid));
 		else
-			die(_("No tags can describe '%s'.\n"
+			die(_("no tags can describe '%s'.\n"
 			    "Try --always, or create some tags."),
 			    oid_to_hex(cmit_oid));
 	}
@@ -529,7 +529,7 @@ static void describe(const char *arg, int last_one)
 		fprintf(stderr, _("describe %s\n"), arg);
 
 	if (get_oid(arg, &oid))
-		die(_("Not a valid object name %s"), arg);
+		die(_("not a valid object name %s"), arg);
 	cmit = lookup_commit_reference_gently(the_repository, &oid, 1);
 
 	if (cmit)
@@ -619,7 +619,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	hashmap_init(&names, commit_name_neq, NULL, 0);
 	for_each_rawref(get_name, NULL);
 	if (!hashmap_get_size(&names) && !always)
-		die(_("No names found, cannot describe anything."));
+		die(_("no names found, cannot describe anything"));
 
 	if (argc == 0) {
 		if (broken) {

@@ -327,7 +327,7 @@ static void print_highlight_menu_stuff(struct menu_stuff *stuff, int **chosen)
 
 	switch (stuff->type) {
 	default:
-		die("Bad type of menu_stuff when print menu");
+		die("bad type of menu_stuff when print menu");
 	case MENU_STUFF_TYPE_MENU_ITEM:
 		menu_item = (struct menu_item *)stuff->stuff;
 		for (i = 0; i < stuff->nr; i++, menu_item++) {
@@ -381,7 +381,7 @@ static int find_unique(const char *choice, struct menu_stuff *menu_stuff)
 	len = strlen(choice);
 	switch (menu_stuff->type) {
 	default:
-		die("Bad type of menu_stuff when parse choice");
+		die("bad type of menu_stuff when parse choice");
 	case MENU_STUFF_TYPE_MENU_ITEM:
 
 		menu_item = (struct menu_item *)menu_stuff->stuff;
@@ -926,10 +926,10 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	dir_init(&dir);
 	if (!interactive && !dry_run && !force) {
 		if (config_set)
-			die(_("clean.requireForce set to true and neither -i, -n, nor -f given; "
+			die(_("clean.requireforce set to true and neither -i, -n, nor -f given; "
 				  "refusing to clean"));
 		else
-			die(_("clean.requireForce defaults to true and neither -i, -n, nor -f given;"
+			die(_("clean.requireforce defaults to true and neither -i, -n, nor -f given;"
 				  " refusing to clean"));
 	}
 
@@ -941,7 +941,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
 	if (ignored && ignored_only)
-		die(_("-x and -X cannot be used together"));
+		die(_("-x and -x cannot be used together"));
 	if (!ignored)
 		setup_standard_excludes(&dir);
 	if (ignored_only)

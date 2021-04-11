@@ -3972,7 +3972,7 @@ int diff_populate_filespec(struct repository *r,
 		conv_flags = CONV_EOL_RNDTRP_WARN;
 
 	if (!DIFF_FILE_VALID(s))
-		die("internal error: asking to populate invalid file.");
+		die("internal error: asking to populate invalid file");
 	if (S_ISDIR(s->mode))
 		return -1;
 
@@ -4626,7 +4626,7 @@ void diff_setup_done(struct diff_options *options)
 		die(_("--name-only, --name-status, --check and -s are mutually exclusive"));
 
 	if (HAS_MULTI_BITS(options->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK))
-		die(_("-G, -S and --find-object are mutually exclusive"));
+		die(_("-g, -s and --find-object are mutually exclusive"));
 
 	/*
 	 * Most of the time we can say "there are changes"
@@ -4729,7 +4729,7 @@ int parse_long_opt(const char *opt, const char **argv,
 		return 0;
 	/* separate form: --option value */
 	if (!argv[1])
-		die("Option '--%s' requires a value", opt);
+		die("option '--%s' requires a value", opt);
 	*optarg = argv[1];
 	return 2;
 }
@@ -4790,7 +4790,7 @@ static int parse_dirstat_opt(struct diff_options *options, const char *params)
 {
 	struct strbuf errmsg = STRBUF_INIT;
 	if (parse_dirstat_params(options, params, &errmsg))
-		die(_("Failed to parse --dirstat/-X option parameter:\n%s"),
+		die(_("failed to parse --dirstat/-x option parameter:\n%s"),
 		    errmsg.buf);
 	strbuf_release(&errmsg);
 	/*

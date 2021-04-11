@@ -401,7 +401,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 
 	buf = fill_tree_descriptor(the_repository, &desc, &subtree->val_oid);
 	if (!buf)
-		die("Could not read %s for notes-index",
+		die("could not read %s for notes-index",
 		     oid_to_hex(&subtree->val_oid));
 
 	prefix_len = subtree->key_oid.hash[KEY_INDEX];
@@ -457,7 +457,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		oidcpy(&l->val_oid, &entry.oid);
 		if (note_tree_insert(t, node, n, l, type,
 				     combine_notes_concatenate))
-			die("Failed to load %s %s into notes tree "
+			die("failed to load %s %s into notes tree "
 			    "from %s",
 			    type == PTR_TYPE_NOTE ? "note" : "subtree",
 			    oid_to_hex(&object_oid), t->ref);
@@ -1019,9 +1019,9 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	    get_oid_treeish(notes_ref, &object_oid))
 		return;
 	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, &object_oid))
-		die("Cannot use notes ref %s", notes_ref);
+		die("cannot use notes ref %s", notes_ref);
 	if (get_tree_entry(the_repository, &object_oid, "", &oid, &mode))
-		die("Failed to read notes tree referenced by %s (%s)",
+		die("failed to read notes tree referenced by %s (%s)",
 		    notes_ref, oid_to_hex(&object_oid));
 
 	oidclr(&root_tree.key_oid);

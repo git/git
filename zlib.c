@@ -73,7 +73,7 @@ void git_inflate_init(git_zstream *strm)
 	zlib_post_call(strm);
 	if (status == Z_OK)
 		return;
-	die("inflateInit: %s (%s)", zerr_to_string(status),
+	die("inflateinit: %s (%s)", zerr_to_string(status),
 	    strm->z.msg ? strm->z.msg : "no message");
 }
 
@@ -91,7 +91,7 @@ void git_inflate_init_gzip_only(git_zstream *strm)
 	zlib_post_call(strm);
 	if (status == Z_OK)
 		return;
-	die("inflateInit2: %s (%s)", zerr_to_string(status),
+	die("inflateinit2: %s (%s)", zerr_to_string(status),
 	    strm->z.msg ? strm->z.msg : "no message");
 }
 
@@ -165,7 +165,7 @@ void git_deflate_init(git_zstream *strm, int level)
 	zlib_post_call(strm);
 	if (status == Z_OK)
 		return;
-	die("deflateInit: %s (%s)", zerr_to_string(status),
+	die("deflateinit: %s (%s)", zerr_to_string(status),
 	    strm->z.msg ? strm->z.msg : "no message");
 }
 
@@ -181,7 +181,7 @@ static void do_git_deflate_init(git_zstream *strm, int level, int windowBits)
 	zlib_post_call(strm);
 	if (status == Z_OK)
 		return;
-	die("deflateInit2: %s (%s)", zerr_to_string(status),
+	die("deflateinit2: %s (%s)", zerr_to_string(status),
 	    strm->z.msg ? strm->z.msg : "no message");
 }
 

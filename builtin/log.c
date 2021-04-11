@@ -210,7 +210,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		die(_("unrecognized argument: %s"), argv[1]);
 
 	if (rev->line_level_traverse && rev->prune_data.nr)
-		die(_("-L<range>:<file> cannot be used with pathspec"));
+		die(_("-l<range>:<file> cannot be used with pathspec"));
 
 	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);

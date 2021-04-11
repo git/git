@@ -1078,7 +1078,7 @@ static CURL *get_curl_handle(void)
 		}
 
 		if (!proxy_auth.host)
-			die("Invalid proxy URL '%s'", curl_http_proxy);
+			die("invalid proxy url '%s'", curl_http_proxy);
 
 		curl_easy_setopt(result, CURLOPT_PROXY, proxy_auth.host);
 #if LIBCURL_VERSION_NUM >= 0x071304
@@ -1136,11 +1136,11 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 				strbuf_addf(&buf, "\n\t%s", backends[i]->name);
 			die("%s", buf.buf);
 		case CURLSSLSET_NO_BACKENDS:
-			die(_("Could not set SSL backend to '%s': "
+			die(_("could not set ssl backend to '%s': "
 			      "cURL was built without SSL backends"),
 			    http_ssl_backend);
 		case CURLSSLSET_TOO_LATE:
-			die(_("Could not set SSL backend to '%s': already set"),
+			die(_("could not set ssl backend to '%s': already set"),
 			    http_ssl_backend);
 		case CURLSSLSET_OK:
 			break; /* Okay! */

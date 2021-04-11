@@ -1900,7 +1900,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 		    ret);
 	ret = git_deflate_end_gently(&stream);
 	if (ret != Z_OK)
-		die(_("deflateEnd on object %s failed (%d)"), oid_to_hex(oid),
+		die(_("deflateend on object %s failed (%d)"), oid_to_hex(oid),
 		    ret);
 	the_hash_algo->final_fn(parano_oid.hash, &c);
 	if (!oideq(oid, &parano_oid))

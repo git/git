@@ -13,11 +13,11 @@ static int normalize_ceiling_entry(struct string_list_item *item, void *unused)
 	char *ceil = item->string;
 
 	if (!*ceil)
-		die("Empty path is not supported");
+		die("empty path is not supported");
 	if (!is_absolute_path(ceil))
-		die("Path \"%s\" is not absolute", ceil);
+		die("path \"%s\" is not absolute", ceil);
 	if (normalize_path_copy(ceil, ceil) < 0)
-		die("Path \"%s\" could not be normalized", ceil);
+		die("path \"%s\" could not be normalized", ceil);
 	return 1;
 }
 
@@ -31,7 +31,7 @@ static void normalize_argv_string(const char **var, const char *input)
 		*var = input;
 
 	if (*var && (**var == '<' || **var == '('))
-		die("Bad value: %s\n", input);
+		die("bad value: %s\n", input);
 }
 
 struct test_data {
@@ -326,7 +326,7 @@ int cmd__path_utils(int argc, const char **argv)
 		 * that use forward slashes.
 		 */
 		if (normalize_path_copy(path, path))
-			die("Path \"%s\" could not be normalized", argv[2]);
+			die("path \"%s\" could not be normalized", argv[2]);
 		string_list_split(&ceiling_dirs, argv[3], PATH_SEP, -1);
 		filter_string_list(&ceiling_dirs, 0,
 				   normalize_ceiling_entry, NULL);

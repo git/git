@@ -62,7 +62,7 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 				(int)ARRAY_SIZE(bases)-1, argv[i]);
 	}
 	if (argc - i != 3) /* "--" "<head>" "<remote>" */
-		die(_("not handling anything other than two heads merge."));
+		die(_("not handling anything other than two heads merge"));
 
 	if (repo_read_index_unmerged(the_repository))
 		die_resolve_conflict("merge");
