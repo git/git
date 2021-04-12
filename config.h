@@ -327,6 +327,7 @@ int config_error_nonbool(const char *);
 #endif
 
 char *git_system_config(void);
+void git_global_config(char **user, char **xdg);
 
 int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
 
