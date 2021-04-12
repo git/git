@@ -63,6 +63,9 @@ test_expect_success 'usage' '
 	grep "mutually exclusive" err &&
 
 	test_expect_code 128 git log -Sstring --find-object=HEAD 2>err &&
+	grep "mutually exclusive" err &&
+
+	test_expect_code 128 git log --pickaxe-all --find-object=HEAD 2>err &&
 	grep "mutually exclusive" err
 '
 
