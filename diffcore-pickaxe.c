@@ -70,13 +70,9 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 
 static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
 {
-	unsigned int cnt;
-	unsigned long sz;
-	const char *data;
-
-	sz = mf->size;
-	data = mf->ptr;
-	cnt = 0;
+	unsigned int cnt = 0;
+	unsigned long sz = mf->size;
+	const char *data = mf->ptr;
 
 	if (regexp) {
 		regmatch_t regmatch;
