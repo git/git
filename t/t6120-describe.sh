@@ -17,11 +17,26 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 check_describe () {
+	indir= &&
+	while test $# != 0
+	do
+		case "$1" in
+		-C)
+			indir="$2"
+			shift
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done &&
+	indir=${indir:+"$indir"/} &&
 	expect="$1"
 	shift
 	describe_opts="$@"
 	test_expect_success "describe $describe_opts" '
-		git describe $describe_opts >raw &&
+		git ${indir:+ -C "$indir"} describe $describe_opts >raw &&
 		sed -e "s/-g[0-9a-f]*\$/-gHASH/" <raw >actual &&
 		echo "$expect" >expect &&
 		test_cmp expect actual
@@ -486,10 +501,7 @@ test_expect_success 'setup: describe commits with disjoint bases' '
 	)
 '
 
-(
-	cd disjoint1 &&
-	check_describe "A-3-gHASH" HEAD
-)
+check_describe -C disjoint1 "A-3-gHASH" HEAD
 
 #           B
 #   o---o---o------------.
@@ -515,9 +527,6 @@ test_expect_success 'setup: describe commits with disjoint bases 2' '
 	)
 '
 
-(
-	cd disjoint2 &&
-	check_describe "B-3-gHASH" HEAD
-)
+check_describe -C disjoint2 "B-3-gHASH" HEAD
 
 test_done
