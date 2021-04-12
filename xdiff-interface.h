@@ -11,6 +11,23 @@
  */
 #define MAX_XDIFF_SIZE (1024UL * 1024 * 1023)
 
+/**
+ * The `xdiff_emit_line_fn` function can return 1 to abort early, or 0
+ * to continue processing. Note that doing so is an all-or-nothing
+ * affair, as returning 1 will return all the way to the top-level,
+ * e.g. the xdi_diff_outf() call to generate the diff.
+ *
+ * Thus returning 1 means you won't be getting any more diff lines. If
+ * you need something in-between those two options you'll to use
+ * `xdl_emit_hunk_consume_func_t` and implement your own version of
+ * xdl_emit_diff().
+ *
+ * We may extend the interface in the future to understand other more
+ * granular return values. While you should return 1 to exit early,
+ * doing so will currently make your early return indistinguishable
+ * from an error internal to xdiff, xdiff itself will see that
+ * non-zero return and translate it to -1.
+ */
 typedef int (*xdiff_emit_line_fn)(void *, char *, unsigned long);
 typedef void (*xdiff_emit_hunk_fn)(void *data,
 				   long old_begin, long old_nr,
