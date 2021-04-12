@@ -217,8 +217,15 @@ static void process_tag(struct traversal_context *ctx,
 			struct tag *tag,
 			const char *name)
 {
-	tag->object.flags |= SEEN;
-	ctx->show_object(&tag->object, name, ctx->show_data);
+	enum list_objects_filter_result r;
+
+	r = list_objects_filter__filter_object(ctx->revs->repo, LOFS_TAG,
+					       &tag->object, NULL, NULL,
+					       ctx->filter);
+	if (r & LOFR_MARK_SEEN)
+		tag->object.flags |= SEEN;
+	if (r & LOFR_DO_SHOW)
+		ctx->show_object(&tag->object, name, ctx->show_data);
 }
 
 static void mark_edge_parents_uninteresting(struct commit *commit,
@@ -368,6 +375,12 @@ static void do_traverse(struct traversal_context *ctx)
 	strbuf_init(&csp, PATH_MAX);
 
 	while ((commit = get_revision(ctx->revs)) != NULL) {
+		enum list_objects_filter_result r;
+
+		r = list_objects_filter__filter_object(ctx->revs->repo,
+				LOFS_COMMIT, &commit->object,
+				NULL, NULL, ctx->filter);
+
 		/*
 		 * an uninteresting boundary commit may not have its tree
 		 * parsed yet, but we are not going to show them anyway
@@ -382,7 +395,11 @@ static void do_traverse(struct traversal_context *ctx)
 			die(_("unable to load root tree for commit %s"),
 			      oid_to_hex(&commit->object.oid));
 		}
-		ctx->show_commit(commit, ctx->show_data);
+
+		if (r & LOFR_MARK_SEEN)
+			commit->object.flags |= SEEN;
+		if (r & LOFR_DO_SHOW)
+			ctx->show_commit(commit, ctx->show_data);
 
 		if (ctx->revs->tree_blobs_in_commit_order)
 			/*
