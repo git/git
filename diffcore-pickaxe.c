@@ -68,7 +68,8 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	return ecbdata.hit;
 }
 
-static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
+static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws,
+			     unsigned int limit)
 {
 	unsigned int cnt = 0;
 	unsigned long sz = mf->size;
@@ -88,6 +89,9 @@ static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
 				sz--;
 			}
 			cnt++;
+
+			if (limit && cnt == limit)
+				return cnt;
 		}
 
 	} else { /* Classic exact string match */
@@ -99,6 +103,9 @@ static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
 			sz -= offset + kwsm.size[0];
 			data += offset + kwsm.size[0];
 			cnt++;
+
+			if (limit && cnt == limit)
+				return cnt;
 		}
 	}
 	return cnt;
@@ -108,8 +115,8 @@ static int has_changes(mmfile_t *one, mmfile_t *two,
 		       struct diff_options *o,
 		       regex_t *regexp, kwset_t kws)
 {
-	unsigned int c1 = one ? contains(one, regexp, kws) : 0;
-	unsigned int c2 = two ? contains(two, regexp, kws) : 0;
+	unsigned int c1 = one ? contains(one, regexp, kws, 0) : 0;
+	unsigned int c2 = two ? contains(two, regexp, kws, c1 + 1) : 0;
 	return c1 != c2;
 }
 
