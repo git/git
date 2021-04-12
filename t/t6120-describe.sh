@@ -21,7 +21,7 @@ check_describe () {
 	shift
 	describe_opts="$@"
 	test_expect_success "describe $describe_opts" '
-		git describe $describe_opts 2>err.actual >raw &&
+		git describe $describe_opts >raw &&
 		sed -e "s/-g[0-9a-f]*\$/-gHASH/" <raw >actual &&
 		echo "$expect" >expect &&
 		test_cmp expect actual
@@ -90,20 +90,17 @@ test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 '
 
 check_describe tags/A --all A^0
-test_expect_success 'no warning was displayed for A' '
-	test_must_be_empty err.actual
-'
 
-test_expect_success 'rename tag A to Q locally' '
-	mv .git/refs/tags/A .git/refs/tags/Q
-'
-cat - >err.expect <<EOF
-warning: tag 'Q' is externally known as 'A'
-EOF
-check_describe A-8-gHASH HEAD
-test_expect_success 'warning was displayed for Q' '
-	test_cmp err.expect err.actual
-'
+test_expect_success 'renaming tag A to Q locally produces a warning' "
+	mv .git/refs/tags/A .git/refs/tags/Q &&
+	git describe HEAD 2>err >out &&
+	cat >expected <<-\EOF &&
+	warning: tag 'Q' is externally known as 'A'
+	EOF
+	test_cmp expected err &&
+	grep -E '^A-8-g[0-9a-f]+$' out
+"
+
 test_expect_success 'misnamed annotated tag forces long output' '
 	description=$(git describe --no-long Q^0) &&
 	expr "$description" : "A-0-g[0-9a-f]*$" &&
