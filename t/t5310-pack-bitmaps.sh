@@ -461,6 +461,29 @@ test_expect_success 'truncated bitmap fails gracefully (cache)' '
 	test_i18ngrep corrupted.bitmap.index stderr
 '
 
+test_expect_success 'enumerating progress counts pack-reused objects' '
+	count=$(git rev-list --objects --all --count) &&
+	git repack -adb &&
+
+	# check first with only reused objects; confirm that our progress
+	# showed the right number, and also that we did pack-reuse as expected.
+	# Check only the final "done" line of the meter (there may be an
+	# arbitrary number of intermediate lines ending with CR).
+	GIT_PROGRESS_DELAY=0 \
+		git pack-objects --all --stdout --progress \
+		</dev/null >/dev/null 2>stderr &&
+	grep "Enumerating objects: $count, done" stderr &&
+	grep "pack-reused $count" stderr &&
+
+	# now the same but with one non-reused object
+	git commit --allow-empty -m "an extra commit object" &&
+	GIT_PROGRESS_DELAY=0 \
+		git pack-objects --all --stdout --progress \
+		</dev/null >/dev/null 2>stderr &&
+	grep "Enumerating objects: $((count+1)), done" stderr &&
+	grep "pack-reused $count" stderr
+'
+
 # have_delta <obj> <expected_base>
 #
 # Note that because this relies on cat-file, it might find _any_ copy of an
