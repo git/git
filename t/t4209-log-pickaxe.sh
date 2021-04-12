@@ -107,37 +107,35 @@ test_expect_success 'log -S --no-textconv (missing textconv tool)' '
 '
 
 test_expect_success 'setup log -[GS] binary & --text' '
-	git checkout --orphan GS-binary-and-text &&
-	git read-tree --empty &&
-	printf "a\na\0a\n" >data.bin &&
-	git add data.bin &&
-	git commit -m "create binary file" data.bin &&
-	printf "a\na\0a\n" >>data.bin &&
-	git commit -m "modify binary file" data.bin &&
-	git rm data.bin &&
-	git commit -m "delete binary file" data.bin &&
-	git log >full-log
+	test_create_repo GS-bin-txt &&
+	test_commit -C GS-bin-txt --printf A data.bin "a\na\0a\n" &&
+	test_commit -C GS-bin-txt --append --printf B data.bin "a\na\0a\n" &&
+	test_commit -C GS-bin-txt C data.bin "" &&
+	git -C GS-bin-txt log >full-log
 '
 
 test_expect_success 'log -G ignores binary files' '
-	git log -Ga >log &&
+	git -C GS-bin-txt log -Ga >log &&
 	test_must_be_empty log
 '
 
 test_expect_success 'log -G looks into binary files with -a' '
-	git log -a -Ga >log &&
+	git -C GS-bin-txt log -a -Ga >log &&
 	test_cmp log full-log
 '
 
 test_expect_success 'log -G looks into binary files with textconv filter' '
-	test_when_finished "rm .gitattributes" &&
-	echo "* diff=bin" >.gitattributes &&
-	git -c diff.bin.textconv=cat log -Ga >log &&
+	test_when_finished "rm GS-bin-txt/.gitattributes" &&
+	(
+		cd GS-bin-txt &&
+		echo "* diff=bin" >.gitattributes &&
+		git -c diff.bin.textconv=cat log -Ga >../log
+	) &&
 	test_cmp log full-log
 '
 
 test_expect_success 'log -S looks into binary files' '
-	git log -Sa >log &&
+	git -C GS-bin-txt log -Sa >log &&
 	test_cmp log full-log
 '
 
