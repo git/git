@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2021, #02; Thu, 8)
+Subject: What's cooking in git.git (Apr 2021, #03; Mon, 12)
 X-master-at: 89b43f80a514aee58b662ad606e6352e03eaeee4
-X-next-at: be11c130afeab11780014fb555625b10f13c8463
+X-next-at: 7d1e84936f59976b1fce260a447d8781a07cd620
 
-What's cooking in git.git (Apr 2021, #02; Thu, 8)
+What's cooking in git.git (Apr 2021, #03; Mon, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -41,174 +41,249 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ab/fsck-api-cleanup (2021-03-28) 19 commits
-  (merged to 'next' on 2021-03-31 at 30c3303dba)
- + fetch-pack: use new fsck API to printing dangling submodules
- + fetch-pack: use file-scope static struct for fsck_options
- + fetch-pack: don't needlessly copy fsck_options
- + fsck.c: move gitmodules_{found,done} into fsck_options
- + fsck.c: add an fsck_set_msg_type() API that takes enums
- + fsck.c: pass along the fsck_msg_id in the fsck_error callback
- + fsck.[ch]: move FOREACH_FSCK_MSG_ID & fsck_msg_id from *.c to *.h
- + fsck.c: give "FOREACH_MSG_ID" a more specific name
- + fsck.c: undefine temporary STR macro after use
- + fsck.c: call parse_msg_type() early in fsck_set_msg_type()
- + fsck.h: re-order and re-assign "enum fsck_msg_type"
- + fsck.h: move FSCK_{FATAL,INFO,ERROR,WARN,IGNORE} into an enum
- + fsck.c: refactor fsck_msg_type() to limit scope of "int msg_type"
- + fsck.c: rename remaining fsck_msg_id "id" to "msg_id"
- + fsck.c: remove (mostly) redundant append_msg_id() function
- + fsck.c: rename variables in fsck_set_msg_type() for less confusion
- + fsck.h: use "enum object_type" instead of "int"
- + fsck.h: use designed initializers for FSCK_OPTIONS_{DEFAULT,STRICT}
- + fsck.c: refactor and rename common config callback
+* jt/fetch-pack-request-fix (2021-04-08) 1 commit
+ - fetch-pack: buffer object-format with other args
+ (this branch is used by jt/push-negotiation.)
 
- Fsck API clean-up.
+ Will merge to 'next'.
 
 
-* ab/make-tags-quiet (2021-04-01) 1 commit
-  (merged to 'next' on 2021-04-01 at 9ea45b61b8)
- + Makefile: add QUIET_GEN to "tags" and "TAGS" targets
+* jt/push-negotiation (2021-04-08) 6 commits
+ - send-pack: support push negotiation
+ - fetch: teach independent negotiation (no packfile)
+ - fetch-pack: refactor command and capability write
+ - fetch-pack: refactor add_haves()
+ - fetch-pack: refactor process_acks()
+ - Merge branch 'jt/fetch-pack-request-fix' into jt/push-negotiation
+ (this branch uses jt/fetch-pack-request-fix.)
 
- Generate [ec]tags under $(QUIET_GEN).
+ "git push" learns to discover common ancestor with the receiving
+ end over protocol v2.
 
+ Waiting for reviews.
 
-* ah/plugleaks (2021-03-21) 9 commits
-  (merged to 'next' on 2021-03-30 at 78636ede89)
- + transport: also free remote_refs in transport_disconnect()
- + parse-options: don't leak alias help messages
- + parse-options: convert bitfield values to use binary shift
- + init-db: silence template_dir leak when converting to absolute path
- + init: remove git_init_db_config() while fixing leaks
- + worktree: fix leak in dwim_branch()
- + clone: free or UNLEAK further pointers when finished
- + reset: free instead of leaking unneeded ref
- + symbolic-ref: don't leak shortened refname in check_symref()
+* ab/doc-lint (2021-04-10) 7 commits
+ - docs: fix linting issues due to incorrect relative section order
+ - doc lint: lint relative section order
+ - doc lint: lint and fix missing "GIT" end sections
+ - doc lint: fix bugs in, simplify and improve lint script
+ - doc lint: Perl "strict" and "warnings" in lint-gitlink.perl
+ - Documentation/Makefile: make doc.dep dependencies a variable again
+ - Documentation/Makefile: make $(wildcard howto/*.txt) a var
 
- Plug or annotate remaining leaks that trigger while running the
- very basic set of tests.
+ Dev support.
 
-
-* cc/downcase-opt-help (2021-03-29) 1 commit
-  (merged to 'next' on 2021-03-31 at 0df5c647b9)
- + column, range-diff: downcase option description
-
- A few option description strings started with capital letters,
- which were corrected.
+ Waiting for reviews to conclude.
 
 
-* ds/clarify-hashwrite (2021-03-26) 1 commit
-  (merged to 'next' on 2021-03-30 at 701f5c0696)
- + csum-file: make hashwrite() more readable
+* ab/rebase-no-reschedule-failed-exec (2021-04-10) 2 commits
+ - rebase: don't override --no-reschedule-failed-exec with config
+ - rebase tests: camel-case rebase.rescheduleFailedExec consistently
 
- The hashwrite() API uses a buffering mechanism to avoid calling
- write(2) too frequently. This logic has been refactored to be
- easier to understand.
+ "git rebase --[no-]reschedule-failed-exec" did not work well with
+ its configuration variable, which has been corrected.
 
-
-* en/ort-perf-batch-9 (2021-03-10) 8 commits
-  (merged to 'next' on 2021-04-01 at cc5254aadc)
- + diffcore-rename: avoid doing basename comparisons for irrelevant sources
- + merge-ort: skip rename detection entirely if possible
- + merge-ort: use relevant_sources to filter possible rename sources
- + merge-ort: precompute whether directory rename detection is needed
- + merge-ort: introduce wrappers for alternate tree traversal
- + merge-ort: add data structures for an alternate tree traversal
- + merge-ort: precompute subset of sources for which we need rename detection
- + diffcore-rename: enable filtering possible rename sources
- (this branch is used by en/ort-perf-batch-10, en/ort-perf-batch-11 and en/ort-readiness.)
-
- The ort merge backend has been optimized by skipping irrelevant
- renames.
+ Waiting for reviews to conclude.
 
 
-* en/sequencer-edit-upon-conflict-fix (2021-03-31) 1 commit
-  (merged to 'next' on 2021-04-01 at 2e3c705a73)
- + sequencer: fix edit handling for cherry-pick and revert messages
+* ah/plugleaks (2021-04-10) 9 commits
+ - builtin/rm: avoid leaking pathspec and seen
+ - builtin/rebase: release git_format_patch_opt too
+ - builtin/for-each-ref: free filter and UNLEAK sorting.
+ - builtin/checkout: clear pending objects after diffing
+ - builtin/check-ignore: clear_pathspec before returning
+ - builtin/bugreport: don't leak prefixed filename
+ - branch: FREE_AND_NULL instead of NULL'ing real_ref
+ - bloom: clear each bloom_key after use
+ - wt-status: fix multiple small leaks
 
- "git cherry-pick/revert" with or without "--[no-]edit" did not spawn
- the editor as expected (e.g. "revert --no-edit" after a conflict
- still asked to edit the message), which has been corrected.
+ Plug various leans reported by LSAN.
 
-
-* js/cmake-vsbuild (2021-03-29) 4 commits
-  (merged to 'next' on 2021-03-31 at e0c4369f65)
- + cmake(install): include vcpkg dlls
- + cmake: add a preparatory work-around to accommodate `vcpkg`
- + cmake(install): fix double .exe suffixes
- + cmake: support SKIP_DASHED_BUILT_INS
-
- CMake update for vsbuild.
-
-
-* js/security-md (2021-03-27) 2 commits
-  (merged to 'next' on 2021-03-31 at 28f64fee38)
- + Document how we do embargoed releases
- + SECURITY: describe how to report vulnerabilities
-
- SECURITY.md that is facing individual contributors and end users
- has been introduced.  Also a procedure to follow when preparing
- embargoed releases has been spelled out.
+ Waiting for reroll.
+ What is queued here is a subset of the original series that
+ looked (at least to me) to be obviously correct.
 
 
-* ll/clone-reject-shallow (2021-04-01) 1 commit
-  (merged to 'next' on 2021-04-01 at 9b13372e1a)
- + builtin/clone.c: add --reject-shallow option
+* bc/hash-transition-interop-part-1 (2021-04-10) 16 commits
+ - fixup! hash: provide per-algorithm null OIDs
+ - hex: print objects using the hash algorithm member
+ - hex: default to the_hash_algo on zero algorithm value
+ - builtin/pack-objects: avoid using struct object_id for pack hash
+ - commit-graph: don't store file hashes as struct object_id
+ - builtin/show-index: set the algorithm for object IDs
+ - hash: provide per-algorithm null OIDs
+ - hash: set and copy algo field in struct object_id
+ - cache: compare the entire buffer for struct object_id
+ - builtin/pack-redundant: avoid casting buffers to struct object_id
+ - Use the final_oid_fn to finalize hashing of object IDs
+ - hash: add a function to finalize object IDs
+ - Always use oidread to read into struct object_id
+ - cache: add an algo member to struct object_id
+ - builtin/hash-object: allow literally hashing with a given algorithm
+ - sha1-file: allow hashing objects literally with any algorithm
 
- "git clone --reject-shallow" option fails the clone as soon as we
- notice that we are cloning from a shallow repository.
+ SHA-256 transition.
 
-
-* ps/pack-bitmap-optim (2021-03-22) 1 commit
-  (merged to 'next' on 2021-03-31 at 12bb775d9a)
- + pack-bitmap: avoid traversal of objects referenced by uninteresting tag
-
- Optimize "rev-list --use-bitmap-index --objects" corner case that
- uses negative tags as the stopping points.
-
-
-* rs/daemon-sanitize-dir-sep (2021-03-26) 1 commit
-  (merged to 'next' on 2021-04-01 at c8f43b1c8d)
- + daemon: sanitize all directory separators
-
- "git daemon" has been tightened against systems that take backslash
- as directory separator.
-
-
-* tb/reverse-midx (2021-04-01) 17 commits
-  (merged to 'next' on 2021-04-01 at 17c9542606)
- + midx.c: improve cache locality in midx_pack_order_cmp()
- + pack-revindex: write multi-pack reverse indexes
- + pack-write.c: extract 'write_rev_file_order'
- + pack-revindex: read multi-pack reverse indexes
- + Documentation/technical: describe multi-pack reverse indexes
- + midx: make some functions non-static
- + midx: keep track of the checksum
- + midx: don't free midx_name early
- + midx: allow marking a pack as preferred
- + t/helper/test-read-midx.c: add '--show-objects'
- + builtin/multi-pack-index.c: display usage on unrecognized command
- + builtin/multi-pack-index.c: don't enter bogus cmd_mode
- + builtin/multi-pack-index.c: split sub-commands
- + builtin/multi-pack-index.c: define common usage with a macro
- + builtin/multi-pack-index.c: don't handle 'progress' separately
- + builtin/multi-pack-index.c: inline 'flags' with options
- + Merge branch 'ds/chunked-file-api' into tb/reverse-midx
-
- An on-disk reverse-index to map the in-pack location of an object
- back to its object name across multiple packfiles is introduced.
+ Seems to break the tests when merged to 'seen'.
 
 
-* zh/commit-trailer (2021-03-23) 1 commit
-  (merged to 'next' on 2021-03-31 at f17d196ee1)
- + commit: add --trailer option
- (this branch is used by zh/trailer-cmd.)
+* ps/rev-list-object-type-filter (2021-04-12) 8 commits
+ - rev-list: allow filtering of provided items
+ - pack-bitmap: implement combined filter
+ - pack-bitmap: implement object type filter
+ - list-objects: implement object type filter
+ - list-objects: support filtering by tag and commit
+ - list-objects: move tag processing into its own function
+ - revision: mark commit parents as NOT_USER_GIVEN
+ - uploadpack.txt: document implication of `uploadpackfilter.allow`
 
- "git commit" learned "--trailer <key>[=<value>]" option; together
- with the interpret-trailers command, this will make it easier to
- support custom trailers.
+ "git rev-list" learns the "--filter=object:type=<type>" option,
+ which can be used to exclude objects of the given kind from the
+ packfile generated by pack-objects.
+
+ Waiting for reviews to conclude.
+ cf. <cover.1618234575.git.ps@pks.im>
+
+
+* tb/multi-pack-bitmaps (2021-04-10) 23 commits
+ - p5326: perf tests for MIDX bitmaps
+ - p5310: extract full and partial bitmap tests
+ - midx: respect 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
+ - t7700: update to work with MIDX bitmap test knob
+ - t5319: don't write MIDX bitmaps in t5319
+ - t5310: disable GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP
+ - t5326: test multi-pack bitmap behavior
+ - t/helper/test-read-midx.c: add --checksum mode
+ - t5310: move some tests to lib-bitmap.sh
+ - pack-bitmap: write multi-pack bitmaps
+ - pack-bitmap: read multi-pack bitmaps
+ - pack-bitmap.c: introduce 'bitmap_is_preferred_refname()'
+ - pack-bitmap.c: introduce 'nth_bitmap_object_oid()'
+ - pack-bitmap.c: introduce 'bitmap_num_objects()'
+ - midx: respect 'core.multiPackIndex' when writing
+ - midx: clear auxiliary .rev after replacing the MIDX
+ - midx: make a number of functions non-static
+ - Documentation: describe MIDX-based bitmaps
+ - Documentation: build 'technical/bitmap-format' by default
+ - pack-bitmap-write.c: free existing bitmaps
+ - pack-bitmap-write.c: gracefully fail to write non-closed bitmaps
+ - pack-bitmap.c: harden 'test_bitmap_walk()' to check type bitmaps
+ - Merge branch 'tb/pack-preferred-tips-to-give-bitmap' into tb/multi-pack-bitmaps
+ (this branch uses tb/pack-preferred-tips-to-give-bitmap.)
+
+ The reachability bitmap file used to be generated only for a single
+ pack, but now we've learned to generate bitmaps for history that
+ span across multiple packfiles.
+
+ Waiting for reviews.
+ cf. <cover.1617991824.git.me@ttaylorr.com>
+
+
+* ab/svn-tests-set-e-fix (2021-04-12) 2 commits
+ - svn tests: refactor away a "set -e" in test body
+ - svn tests: remove legacy re-setup from init-clone test
+
+ Test clean-up.
+
+ Waiting for reviews.
+
+
+* ab/test-lib-updates (2021-04-12) 16 commits
+ - test-lib-functions: remove last two parameter count assertions
+ - Revert and amend "test-lib-functions: assert correct parameter count"
+ - test-lib-functions: use "return 1" instead of "false"
+ - test-lib-functions: normalize test_path_is_missing() debugging
+ - test-lib: modernize test_create_repo() function
+ - test-lib: do not show advice about init.defaultBranch under --verbose
+ - test-lib: reformat argument list in test_create_repo()
+ - submodule tests: use symbolic-ref --short to discover branch name
+ - test-lib functions: add --printf option to test_commit
+ - describe tests: convert setup to use test_commit
+ - test-lib functions: add an --annotated-tag option to "test_commit"
+ - test-lib-functions: document test_commit --no-tag
+ - test-lib-functions: reword "test_commit --append" docs
+ - test-lib tests: remove dead GIT_TEST_FRAMEWORK_SELFTEST variable
+ - test-lib: bring $remove_trash out of retirement
+ - check-non-portable-shell: complain about "test" a/-o instead of &&/||
+ (this branch is used by ab/describe-tests-fix and ab/pickaxe-pcre2.)
+
+ Test clean-up.
+
+ Waiting for reviews.
+
+
+* ah/merge-ort-ubsan-fix (2021-04-12) 1 commit
+ - merge-ort: only do pointer arithmetic for non-empty lists
+
+ Code clean-up for merge-ort backend.
+
+ Will merge to 'next'?
+
+
+* ao/p4-avoid-decoding (2021-04-12) 2 commits
+ - git-p4: do not decode data from perforce by default
+ - git-p4: avoid decoding more data from perforce
+
+ "git p4" in Python-2 days used to accept a lot more kinds of data
+ from Perforce server as uninterrupted byte sequence, but after
+ switching to Python-3, too many things are expected to be in UTF-8,
+ which broke traditional use cases.
+
+ Waiting for reviews.
+
+
+* hn/refs-trace-errno (2021-04-12) 1 commit
+ - refs: print errno for read_raw_ref if GIT_TRACE_REFS is set
+
+ Show errno in the trace output in the error codepath that calls
+ read_raw_ref method.
+
+ Waiting for reviews to conclude.
+ cf. <xmqq4kgbb2ic.fsf@gitster.g>
+
+
+* hn/reftable-tables-doc-update (2021-04-12) 1 commit
+ - reftable: document an alternate cleanup method on Windows
+
+ Doc updte.
+
+ Will merge to 'next'.
+
+
+* jk/pack-objects-bitmap-progress-fix (2021-04-12) 1 commit
+ - pack-objects: update "nr_seen" progress based on pack-reused count
+
+ When "git pack-objects" makes a literal copy of a part of existing
+ packfile using the reachability bitmaps, its update to the progress
+ meter was broken.
+
+ Will merge to 'next'.
+
+
+* ma/t0091-bugreport-fix (2021-04-12) 1 commit
+ - t0091-bugreport.sh: actually verify some content of report
+
+ Test fix.
+
+ Waiting for an Ack.
+
+
+* ps/config-global-override (2021-04-12) 3 commits
+ - config: allow overriding of global and system configuration
+ - config: unify code paths to get global config paths
+ - config: rename `git_etc_config()`
+
+ Replace GIT_CONFIG_NOSYSTEM mechanism to decline from reading the
+ system-wide configuration file with GIT_CONFIG_SYSTEM that lets
+ users specify from which file to read the system-wide configuration
+ (setting it to an empty file would essentially be the same as
+ setting NOSYSTEM), and introduce GIT_CONFIG_GLOBAL to override the
+ per-user configuration in $HOME/.gitconfig.
+
+ Expecting a (hopefully final) reroll.
+ cf. <xmqq4kgbfn8o.fsf@gitster.g>
 
 --------------------------------------------------
 [Stalled]
@@ -270,29 +345,24 @@ Release tarballs are available at:
  blob", which is all that we can reliably say.
 
 
-* ab/describe-tests-fix (2021-03-01) 10 commits
- - test-lib: return 1 from test_expect_{success,failure}
- - svn tests: refactor away a "set -e" in test body
- - svn tests: remove legacy re-setup from init-clone test
+* ab/describe-tests-fix (2021-04-12) 5 commits
  - describe tests: support -C in "check_describe"
  - describe tests: fix nested "test_expect_success" call
- - describe tests: convert setup to use test_commit
- - test-lib functions: add an --annotated-tag option to "test_commit"
- - describe tests: always assert empty stderr from "describe"
+ - describe tests: don't rely on err.actual from "check_describe"
  - describe tests: refactor away from glob matching
  - describe tests: improve test for --work-tree & --dirty
+ (this branch uses ab/test-lib-updates.)
 
  Various updates to tests around "git describe"
 
- Expecting a reroll.
- cf. <xmqq1rcj6hzr.fsf@gitster.g>
 
-
-* ab/pickaxe-pcre2 (2021-02-18) 24 commits
+* ab/pickaxe-pcre2 (2021-04-12) 22 commits
+ - xdiff-interface: replace discard_hunk_line() with a flag
+ - xdiff users: use designated initializers for out_line
  - pickaxe -G: don't special-case create/delete
  - pickaxe -G: terminate early on matching lines
- - xdiff-interface: support early exit in xdiff_outf()
- - xdiff-interface: allow early return from xdiff_emit_{line,hunk}_fn
+ - xdiff-interface: allow early return from xdiff_emit_line_fn
+ - xdiff-interface: prepare for allowing early return
  - pickaxe -S: slightly optimize contains()
  - pickaxe: rename variables in has_changes() for brevity
  - pickaxe -S: support content with NULs under --pickaxe-regex
@@ -303,22 +373,16 @@ Release tarballs are available at:
  - diff.h: move pickaxe fields together again
  - pickaxe: die when --find-object and --pickaxe-all are combined
  - pickaxe: die when -G and --pickaxe-regex are combined
+ - pickaxe tests: add missing test for --no-pickaxe-regex being an error
  - pickaxe tests: test for -G, -S and --find-object incompatibility
  - pickaxe tests: add test for "log -S" not being a regex
  - pickaxe tests: add test for diffgrep_consume() internals
  - pickaxe tests: refactor to use test_commit --append --printf
- - test-lib functions: add --printf option to test_commit
- - test-lib-functions: reword "test_commit --append" docs
- - test-lib-functions: document and test test_commit --no-tag
  - grep/pcre2 tests: reword comments referring to kwset
- - Merge branch 'jk/rev-list-disk-usage' into ab/pickaxe-pcre2
- - Merge branch 'ab/test-lib' into ab/pickaxe-pcre2
+ (this branch uses ab/test-lib-updates.)
 
  Rewrite the backend for "diff -G/-S" to use pcre2 engine when
  available.
-
- Needs (hopefully the final round of) reroll and its review.
- cf. <xmqqh7ksb5j7.fsf@gitster.g>, <xmqqa6qkb5fi.fsf@gitster.g>, etc.
 
 
 * es/config-hooks (2021-03-10) 36 commits
@@ -362,7 +426,7 @@ Release tarballs are available at:
  The "hooks defined in config" topic.
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * cc/test-helper-bloom-usage-fix (2021-04-05) 1 commit
   (merged to 'next' on 2021-04-06 at 4895f33fee)
@@ -374,7 +438,8 @@ Release tarballs are available at:
 
 
 * jz/apply-run-3way-first (2021-04-06) 1 commit
- - git-apply: try threeway first when "--3way" is used
+  (merged to 'next' on 2021-04-08 at f826bcc6b8)
+ + git-apply: try threeway first when "--3way" is used
  (this branch is used by jz/apply-3way-cached.)
 
  "git apply --3way" has always been "to fall back to 3-way merge
@@ -383,14 +448,12 @@ Release tarballs are available at:
  is given, of course) and then straight patch application is used as
  a fallback when it fails.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* ds/maintenance-prefetch-fix (2021-04-06) 5 commits
- - maintenance: allow custom refspecs during prefetch
- - test-tool: test refspec input/output
- - refspec: output a refspec item
- - test-lib: use exact match for test_subcommand
+* ds/maintenance-prefetch-fix (2021-04-10) 3 commits
+ - maintenance: use 'git fetch --prefetch'
+ - fetch: add --prefetch option
  - maintenance: simplify prefetch logic
 
  The prefetch task in "git maintenance" assumed that "git fetch"
@@ -399,19 +462,20 @@ Release tarballs are available at:
  branches there.
 
  Expecting a reroll.
- cf. <35fa99cf-ba24-f13e-0607-f9acce2905cf@gmail.com>
+ cf. <e7f09182-3b75-f2a3-c9c7-0055cc377a32@gmail.com>
 
 
 * ab/complete-cherry-pick-head (2021-04-07) 1 commit
- - bash completion: complete CHERRY_PICK_HEAD
+  (merged to 'next' on 2021-04-09 at 5810d0e2c2)
+ + bash completion: complete CHERRY_PICK_HEAD
 
  The command line completion (in contrib/) has learned that
  CHERRY_PICK_HEAD is a possible pseudo-ref.
 
- Will merge to 'next'?
+ Will merge to 'master'.
 
 
-* mr/bisect-in-c-4 (2021-04-07) 4 commits
+* mr/bisect-in-c-4 (2021-04-11) 4 commits
  - bisect--helper: retire `--bisect-next-check` subcommand
  - bisect--helper: reimplement `bisect_run` shell function in C
  - bisect--helper: reimplement `bisect_visualize()`shell function in C
@@ -420,36 +484,39 @@ Release tarballs are available at:
  The codepaths involved in running "git bisect visualize" and "git
  bisect run" has been rewritten in C.
 
- Expecting a reroll.
- cf. <xmqqo8epydwx.fsf@gitster.g>, <xmqqeeflycf9.fsf@gitster.g>
+ 
+ cf. <xmqq35vwh8qk.fsf@gitster.g>, <xmqqy2doftrj.fsf@gitster.g>
 
 
 * ab/detox-config-gettext (2021-04-08) 1 commit
- - config.c: remove last remnant of GIT_TEST_GETTEXT_POISON
+  (merged to 'next' on 2021-04-08 at 01d6ff5069)
+ + config.c: remove last remnant of GIT_TEST_GETTEXT_POISON
 
  The last remnant of gettext-poison has been removed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jz/apply-3way-cached (2021-04-07) 1 commit
- - git-apply: allow simultaneous --cached and --3way options
+  (merged to 'next' on 2021-04-09 at 7d1e84936f)
+ + git-apply: allow simultaneous --cached and --3way options
  (this branch uses jz/apply-run-3way-first.)
 
  "git apply" now takes "--3way" and "--cached" at the same time, and
  work and record results only in the index.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * vs/completion-with-set-u (2021-04-08) 1 commit
- - completion: audit and guard $GIT_* against unset use
+  (merged to 'next' on 2021-04-08 at b9b8bde89d)
+ + completion: audit and guard $GIT_* against unset use
 
  The command-line completion script (in contrib/) had a couple of
  references that would have given a warning under the "-u" (nounset)
  option.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/bugreport-fixes (2021-04-08) 1 commit
@@ -459,10 +526,9 @@ Release tarballs are available at:
  when the former was split out of the latter, which has been
  corrected.
 
- Will merge to 'next'.
+ Expecting a reroll.
+ cf. <20210409212044.GD2947267@szeder.dev>
 
---------------------------------------------------
-[Cooking]
 
 * mt/add-rm-in-sparse-checkout (2021-04-08) 7 commits
  - rm: honor sparse checkout patterns
@@ -518,6 +584,7 @@ Release tarballs are available at:
  + builtin/pack-objects.c: respect 'pack.preferBitmapTips'
  + t/helper/test-bitmap.c: initial commit
  + pack-bitmap: add 'test_bitmap_commits()' helper
+ (this branch is used by tb/multi-pack-bitmaps.)
 
  A configuration variable has been added to force tips of certain
  refs to be given a reachability bitmap.
@@ -535,8 +602,9 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* zh/trailer-cmd (2021-04-02) 1 commit
- - trailer: add new trailer.<token>.cmd config option
+* zh/trailer-cmd (2021-04-12) 2 commits
+ - trailer: add new .cmd config option
+ - docs: correct descript of trailer.<token>.command
 
  The way the command line specified by the trailer.<token>.command
  configuration variable receives the end-user supplied value was
@@ -544,8 +612,10 @@ Release tarballs are available at:
  same goal in a safer and more intuitive way has been added, as
  the trailer.<token>.cmd configuration variable, to replace it.
 
- Expecting a reroll.
- cf. <CAP8UFD08Lagij6oqpOJkpbzMLRgQ08=mDfiyf1qXyD5VW6Ae7A@mail.gmail.com>
+ Waiting for reviews.
+ I doubt it is a good idea to copy the "run once even without being
+ asked" from .command interface.
+ cf. <xmqqwnt7b5fg.fsf@gitster.g>
 
 
 * fm/user-manual-use-preface (2021-04-03) 1 commit
@@ -606,8 +676,9 @@ Release tarballs are available at:
  Will merge to 'next'?
 
 
-* gk/gitweb-redacted-email (2021-03-31) 1 commit
- - gitweb: add "e-mail privacy" feature to redact e-mail addresses
+* gk/gitweb-redacted-email (2021-04-08) 1 commit
+  (merged to 'next' on 2021-04-08 at 8a19c3cd6e)
+ + gitweb: add "e-mail privacy" feature to redact e-mail addresses
 
  "gitweb" learned "e-mail privacy" feature to redact strings that
  look like e-mail addresses on various pages.
@@ -675,9 +746,10 @@ Release tarballs are available at:
  - unpack-trees: add basic support for parallel checkout
 
 
-* ds/sparse-index-protections (2021-03-31) 25 commits
+* ds/sparse-index-protections (2021-04-12) 26 commits
  - name-hash: use expand_to_path()
  - sparse-index: expand_to_path()
+ - name-hash: don't add directories to name_hash
  - revision: ensure full index
  - resolve-undo: ensure full index
  - read-cache: ensure full index
@@ -709,34 +781,40 @@ Release tarballs are available at:
 
 
 * en/ort-readiness (2021-03-20) 13 commits
- - Add testing with merge-ort merge strategy
- - t6423: mark remaining expected failure under merge-ort as such
- - Revert "merge-ort: ignore the directory rename split conflict for now"
- - merge-recursive: add a bunch of FIXME comments documenting known bugs
- - merge-ort: write $GIT_DIR/AUTO_MERGE whenever we hit a conflict
- - t: mark several submodule merging tests as fixed under merge-ort
- - merge-ort: implement CE_SKIP_WORKTREE handling with conflicted entries
- - t6428: new test for SKIP_WORKTREE handling and conflicts
- - merge-ort: support subtree shifting
- - merge-ort: let renormalization change modify/delete into clean delete
- - merge-ort: have ll_merge() use a special attr_index for renormalization
- - merge-ort: add a special minimal index just for renormalization
- - merge-ort: use STABLE_QSORT instead of QSORT where required
+  (merged to 'next' on 2021-04-08 at 20283a3f10)
+ + Add testing with merge-ort merge strategy
+ + t6423: mark remaining expected failure under merge-ort as such
+ + Revert "merge-ort: ignore the directory rename split conflict for now"
+ + merge-recursive: add a bunch of FIXME comments documenting known bugs
+ + merge-ort: write $GIT_DIR/AUTO_MERGE whenever we hit a conflict
+ + t: mark several submodule merging tests as fixed under merge-ort
+ + merge-ort: implement CE_SKIP_WORKTREE handling with conflicted entries
+ + t6428: new test for SKIP_WORKTREE handling and conflicts
+ + merge-ort: support subtree shifting
+ + merge-ort: let renormalization change modify/delete into clean delete
+ + merge-ort: have ll_merge() use a special attr_index for renormalization
+ + merge-ort: add a special minimal index just for renormalization
+ + merge-ort: use STABLE_QSORT instead of QSORT where required
  (this branch is used by en/ort-perf-batch-11; uses en/ort-perf-batch-10.)
 
  Plug the ort merge backend throughout the rest of the system, and
  start testing it as a replacement for the recursive backend.
 
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
-* hn/reftable (2021-03-12) 15 commits
+* hn/reftable (2021-04-12) 20 commits
  - Add "test-tool dump-reftable" command.
  - git-prompt: prepare for reftable refs backend
  - Reftable support for git-core
- - reftable: rest of library
+ - reftable: add dump utility
+ - reftable: implement stack, a mutable database of reftable files.
+ - reftable: implement refname validation
+ - reftable: add merged table view
+ - reftable: add a heap-based priority queue for reftable records
  - reftable: reftable file level tests
  - reftable: read reftable files
+ - reftable: generic interface to tables
  - reftable: write reftable files
  - reftable: a generic binary tree implementation
  - reftable: reading/writing blocks
@@ -749,7 +827,7 @@ Release tarballs are available at:
 
  The "reftable" backend for the refs API.
 
- What's the status of this topic?
+ Waiting for reviews.
 
 --------------------------------------------------
 [Discarded]
