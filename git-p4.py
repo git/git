@@ -764,13 +764,15 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
         while True:
             entry = marshal.load(p4.stdout)
             if bytes is not str:
-                # Decode unmarshalled dict to use str keys and values, except for:
-                #   - `data` which may contain arbitrary binary data
-                #   - `depotFile[0-9]*`, `path`, or `clientFile` which may contain non-UTF8 encoded text
+                # Decode unmarshalled dict to use str keys and values, except
+                # for cases where the values may not be valid UTF-8.
+                binary_keys = ('data', 'path', 'clientFile', 'Description',
+                               'desc', 'Email', 'FullName', 'Owner', 'time',
+                               'user', 'User')
                 decoded_entry = {}
                 for key, value in entry.items():
                     key = key.decode()
-                    if isinstance(value, bytes) and not (key in ('data', 'path', 'clientFile') or key.startswith('depotFile')):
+                    if isinstance(value, bytes) and not (key in binary_keys or key.startswith('depotFile')):
                         value = value.decode()
                     decoded_entry[key] = value
                 # Parse out data if it's an error response
@@ -949,11 +951,11 @@ def gitConfigInt(key):
             _gitConfig[key] = None
     return _gitConfig[key]
 
-def gitConfigList(key):
+def gitConfigList(key, raw=False):
     if key not in _gitConfig:
-        s = read_pipe(["git", "config", "--get-all", key], ignore_error=True)
+        s = read_pipe(["git", "config", "--get-all", key], ignore_error=True, raw=raw)
         _gitConfig[key] = s.strip().splitlines()
-        if _gitConfig[key] == ['']:
+        if _gitConfig[key] == [''] or _gitConfig[key] == [b'']:
             _gitConfig[key] = []
     return _gitConfig[key]
 
@@ -1499,35 +1501,35 @@ class P4UserMap:
         for output in p4CmdList("users"):
             if "User" not in output:
                 continue
-            self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
+            self.users[output["User"]] = output["FullName"] + b" <" + output["Email"] + b">"
             self.emails[output["Email"]] = output["User"]
 
-        mapUserConfigRegex = re.compile(r"^\s*(\S+)\s*=\s*(.+)\s*<(\S+)>\s*$", re.VERBOSE)
-        for mapUserConfig in gitConfigList("git-p4.mapUser"):
+        mapUserConfigRegex = re.compile(br"^\s*(\S+)\s*=\s*(.+)\s*<(\S+)>\s*$", re.VERBOSE)
+        for mapUserConfig in gitConfigList("git-p4.mapUser", raw=True):
             mapUser = mapUserConfigRegex.findall(mapUserConfig)
             if mapUser and len(mapUser[0]) == 3:
                 user = mapUser[0][0]
                 fullname = mapUser[0][1]
                 email = mapUser[0][2]
-                self.users[user] = fullname + " <" + email + ">"
+                self.users[user] = fullname + b" <" + email + b">"
                 self.emails[email] = user
 
-        s = ''
+        s = b''
         for (key, val) in self.users.items():
-            s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
+            s += b"%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
 
-        open(self.getUserCacheFilename(), 'w').write(s)
+        open(self.getUserCacheFilename(), 'wb').write(s)
         self.userMapFromPerforceServer = True
 
     def loadUserMapFromCache(self):
         self.users = {}
         self.userMapFromPerforceServer = False
         try:
-            cache = open(self.getUserCacheFilename(), 'r')
+            cache = open(self.getUserCacheFilename(), 'rb')
             lines = cache.readlines()
             cache.close()
             for line in lines:
-                entry = line.strip().split("\t")
+                entry = line.strip().split(b"\t")
                 self.users[entry[0]] = entry[1]
         except IOError:
             self.getUserMapFromPerforceServer()
@@ -1780,7 +1782,7 @@ class P4Submit(Command, P4UserMap):
         # Return the tuple (perforce user,git email) for a given git commit id
         self.getUserMapFromPerforceServer()
         gitEmail = read_pipe(["git", "log", "--max-count=1",
-                              "--format=%ae", id])
+                              "--format=%ae", id], raw=True)
         gitEmail = gitEmail.strip()
         if gitEmail not in self.emails:
             return (None,gitEmail)
@@ -1911,7 +1913,7 @@ class P4Submit(Command, P4UserMap):
             template += key + ':'
             if key == 'Description':
                 template += '\n'
-            for field_line in change_entry[key].splitlines():
+            for field_line in decode_text_stream(change_entry[key]).splitlines():
                 template += '\t'+field_line+'\n'
         if len(files_list) > 0:
             template += '\n'
@@ -2163,7 +2165,7 @@ class P4Submit(Command, P4UserMap):
            submitTemplate += "\n######## Actual user %s, modified after commit\n" % p4User
 
         if self.checkAuthorship and not self.p4UserIsMe(p4User):
-            submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
+            submitTemplate += "######## git author %s does not match your p4 account.\n" % decode_text_stream(gitEmail)
             submitTemplate += "######## Use option --preserve-user to modify authorship.\n"
             submitTemplate += "######## Variable git-p4.skipUserNameCheck hides this message.\n"
 
@@ -2802,7 +2804,7 @@ class P4Sync(Command, P4UserMap):
         self.knownBranches = {}
         self.initialParents = {}
 
-        self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
+        self.tz = b"%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
         self.labels = {}
 
     # Force a checkpoint in fast-import and wait for it to finish
@@ -3161,7 +3163,7 @@ class P4Sync(Command, P4UserMap):
         if userid in self.users:
             return self.users[userid]
         else:
-            return "%s <a@b>" % userid
+            return b"%s <a@b>" % userid
 
     def streamTag(self, gitStream, labelName, labelDetails, commit, epoch):
         """ Stream a p4 tag.
@@ -3184,9 +3186,9 @@ class P4Sync(Command, P4UserMap):
             email = self.make_email(owner)
         else:
             email = self.make_email(self.p4UserId())
-        tagger = "%s %s %s" % (email, epoch, self.tz)
+        tagger = b"%s %s %s" % (email, epoch, self.tz)
 
-        gitStream.write("tagger %s\n" % tagger)
+        gitStream.write(b"tagger %s\n" % tagger)
 
         print("labelDetails=",labelDetails)
         if 'Description' in labelDetails:
@@ -3279,12 +3281,11 @@ class P4Sync(Command, P4UserMap):
         self.gitStream.write("commit %s\n" % branch)
         self.gitStream.write("mark :%s\n" % details["change"])
         self.committedChanges.add(int(details["change"]))
-        committer = ""
         if author not in self.users:
             self.getUserMapFromPerforceServer()
-        committer = "%s %s %s" % (self.make_email(author), epoch, self.tz)
+        committer = b"%s %s %s" % (self.make_email(author), epoch, self.tz)
 
-        self.gitStream.write("committer %s\n" % committer)
+        self.gitStream.write(b"committer %s\n" % committer)
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
@@ -3422,7 +3423,7 @@ class P4Sync(Command, P4UserMap):
                         print("Could not convert label time %s" % labelDetails['Update'])
                         tmwhen = 1
 
-                    when = int(time.mktime(tmwhen))
+                    when = b"%i" % int(time.mktime(tmwhen))
                     self.streamTag(stream, name, labelDetails, gitCommit, when)
                     if verbose:
                         print("p4 label %s mapped to git commit %s" % (name, gitCommit))
@@ -3708,7 +3709,7 @@ class P4Sync(Command, P4UserMap):
         print("Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch))
 
         details = {}
-        details["user"] = "git perforce import user"
+        details["user"] = b"git perforce import user"
         details["desc"] = ("Initial import of %s from the state at revision %s\n"
                            % (' '.join(self.depotPaths), revision))
         details["change"] = revision
