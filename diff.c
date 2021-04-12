@@ -4628,6 +4628,9 @@ void diff_setup_done(struct diff_options *options)
 	if (HAS_MULTI_BITS(options->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK))
 		die(_("-G, -S and --find-object are mutually exclusive"));
 
+	if (HAS_MULTI_BITS(options->pickaxe_opts & DIFF_PICKAXE_KINDS_G_REGEX_MASK))
+		die(_("-G and --pickaxe-regex are mutually exclusive, use --pickaxe-regex with -S"));
+
 	/*
 	 * Most of the time we can say "there are changes"
 	 * only by checking if there are changed paths, but

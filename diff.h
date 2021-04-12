@@ -556,6 +556,8 @@ int git_config_rename(const char *var, const char *value);
 #define DIFF_PICKAXE_KINDS_MASK (DIFF_PICKAXE_KIND_S | \
 				 DIFF_PICKAXE_KIND_G | \
 				 DIFF_PICKAXE_KIND_OBJFIND)
+#define DIFF_PICKAXE_KINDS_G_REGEX_MASK (DIFF_PICKAXE_KIND_G | \
+					 DIFF_PICKAXE_REGEX)
 
 #define DIFF_PICKAXE_IGNORE_CASE	32
 
