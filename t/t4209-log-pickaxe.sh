@@ -66,6 +66,18 @@ test_expect_success 'usage' '
 	grep "mutually exclusive" err
 '
 
+test_expect_success 'usage: --no-pickaxe-regex' '
+	cat >expect <<-\EOF &&
+	fatal: unrecognized argument: --no-pickaxe-regex
+	EOF
+
+	test_expect_code 128 git log -Sstring --no-pickaxe-regex 2>actual &&
+	test_cmp expect actual &&
+
+	test_expect_code 128 git log -Gstring --no-pickaxe-regex 2>err &&
+	test_cmp expect actual
+'
+
 test_log	expect_initial	--grep initial
 test_log	expect_nomatch	--grep InItial
 test_log_icase	expect_initial	--grep InItial
