@@ -215,4 +215,12 @@ test_expect_success 'log -S looks into binary files' '
 	test_cmp log full-log
 '
 
+test_expect_success 'log -S --pickaxe-regex looks into binary files' '
+	git -C GS-bin-txt log --pickaxe-regex -Sa >log &&
+	test_cmp log full-log &&
+
+	git -C GS-bin-txt log --pickaxe-regex -S"[a]" >log &&
+	test_cmp log full-log
+'
+
 test_done
