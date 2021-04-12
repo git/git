@@ -469,7 +469,7 @@ test_expect_success 'name-rev covers all conditions while looking at parents' '
 #  o-----o---o----x
 #        A
 #
-test_expect_success 'describe commits with disjoint bases' '
+test_expect_success 'setup: describe commits with disjoint bases' '
 	git init disjoint1 &&
 	(
 		cd disjoint1 &&
@@ -482,11 +482,14 @@ test_expect_success 'describe commits with disjoint bases' '
 		git checkout --orphan branch && rm file &&
 		echo B > file2 && git add file2 && git commit -m B &&
 		git tag B -a -m B &&
-		git merge --no-ff --allow-unrelated-histories main -m x &&
-
-		check_describe "A-3-gHASH" HEAD
+		git merge --no-ff --allow-unrelated-histories main -m x
 	)
 '
+
+(
+	cd disjoint1 &&
+	check_describe "A-3-gHASH" HEAD
+)
 
 #           B
 #   o---o---o------------.
@@ -494,7 +497,7 @@ test_expect_success 'describe commits with disjoint bases' '
 #                  o---o---x
 #                  A
 #
-test_expect_success 'describe commits with disjoint bases 2' '
+test_expect_success 'setup: describe commits with disjoint bases 2' '
 	git init disjoint2 &&
 	(
 		cd disjoint2 &&
@@ -508,10 +511,13 @@ test_expect_success 'describe commits with disjoint bases 2' '
 		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:01" git commit -m o &&
 		echo B >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:02" git commit -m B &&
 		git tag B -a -m B &&
-		git merge --no-ff --allow-unrelated-histories main -m x &&
-
-		check_describe "B-3-gHASH" HEAD
+		git merge --no-ff --allow-unrelated-histories main -m x
 	)
 '
+
+(
+	cd disjoint2 &&
+	check_describe "B-3-gHASH" HEAD
+)
 
 test_done
