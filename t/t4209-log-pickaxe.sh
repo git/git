@@ -55,6 +55,17 @@ test_expect_success setup '
 	git rev-parse --verify HEAD >expect_second
 '
 
+test_expect_success 'usage' '
+	test_expect_code 128 git log -Gregex -Sstring 2>err &&
+	grep "mutually exclusive" err &&
+
+	test_expect_code 128 git log -Gregex --find-object=HEAD 2>err &&
+	grep "mutually exclusive" err &&
+
+	test_expect_code 128 git log -Sstring --find-object=HEAD 2>err &&
+	grep "mutually exclusive" err
+'
+
 test_log	expect_initial	--grep initial
 test_log	expect_nomatch	--grep InItial
 test_log_icase	expect_initial	--grep InItial
