@@ -132,9 +132,6 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 			 oidset_contains(o->objfind, &p->two->oid));
 	}
 
-	if (!o->pickaxe[0])
-		return 0;
-
 	if (o->flags.allow_textconv) {
 		textconv_one = get_textconv(o->repo, p->one);
 		textconv_two = get_textconv(o->repo, p->two);
@@ -230,6 +227,9 @@ void diffcore_pickaxe(struct diff_options *o)
 	kwset_t kws = NULL;
 	pickaxe_fn fn;
 
+	if (opts & ~DIFF_PICKAXE_KIND_OBJFIND &&
+	    (!needle || !*needle))
+		BUG("should have needle under -G or -S");
 	if (opts & (DIFF_PICKAXE_REGEX | DIFF_PICKAXE_KIND_G)) {
 		int cflags = REG_EXTENDED | REG_NEWLINE;
 		if (o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE)
