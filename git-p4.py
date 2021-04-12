@@ -764,15 +764,19 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
         while True:
             entry = marshal.load(p4.stdout)
             if bytes is not str:
-                # Decode unmarshalled dict to use str keys and values, except
-                # for cases where the values may not be valid UTF-8.
-                binary_keys = ('data', 'path', 'clientFile', 'Description',
-                               'desc', 'Email', 'FullName', 'Owner', 'time',
-                               'user', 'User')
+                # Decode unmarshalled dict to use str keys and values where it
+                # is expected that the data is always valid UTF-8.
+                text_keys = ('action', 'change', 'Change', 'Client', 'code',
+                             'fileSize', 'headAction', 'headRev', 'headType',
+                             'Jobs', 'label', 'options', 'perm', 'rev', 'Root',
+                             'Status', 'type', 'Update')
+                text_key_prefixes = ('action', 'File', 'job', 'rev', 'type',
+                                     'View')
                 decoded_entry = {}
                 for key, value in entry.items():
                     key = key.decode()
-                    if isinstance(value, bytes) and not (key in binary_keys or key.startswith('depotFile')):
+                    if isinstance(value, bytes) and (key in text_keys or
+                            any(filter(key.startswith, text_key_prefixes))):
                         value = value.decode()
                     decoded_entry[key] = value
                 # Parse out data if it's an error response
