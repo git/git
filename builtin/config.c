@@ -695,7 +695,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 	}
 	else if (use_system_config) {
-		given_config_source.file = git_etc_gitconfig();
+		given_config_source.file = git_system_config();
 		given_config_source.scope = CONFIG_SCOPE_SYSTEM;
 	} else if (use_local_config) {
 		given_config_source.file = git_pathdup("config");
