@@ -54,14 +54,6 @@ int git_xmerge_config(const char *var, const char *value, void *cb);
 extern int git_xmerge_style;
 
 /*
- * Can be used as a no-op hunk_fn for xdi_diff_outf(), since a NULL
- * one just sends the hunk line to the line_fn callback).
- */
-void discard_hunk_line(void *priv,
-		       long ob, long on, long nb, long nn,
-		       const char *func, long funclen);
-
-/*
  * Compare the strings l1 with l2 which are of size s1 and s2 respectively.
  * Returns 1 if the strings are deemed equal, 0 otherwise.
  * The `flags` given as XDF_WHITESPACE_FLAGS determine how white spaces

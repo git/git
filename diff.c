@@ -3725,7 +3725,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xpp.anchors_nr = o->anchors_nr;
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
-		if (xdi_diff_outf(&mf1, &mf2, discard_hunk_line,
+		xecfg.flags = XDL_EMIT_NO_HUNK_HDR;
+		if (xdi_diff_outf(&mf1, &mf2, NULL,
 				  diffstat_consume, diffstat, &xpp, &xecfg))
 			die("unable to generate diffstat for %s", one->path);
 
@@ -6233,8 +6234,8 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 
 		xpp.flags = 0;
 		xecfg.ctxlen = 3;
-		xecfg.flags = 0;
-		if (xdi_diff_outf(&mf1, &mf2, discard_hunk_line,
+		xecfg.flags = XDL_EMIT_NO_HUNK_HDR;
+		if (xdi_diff_outf(&mf1, &mf2, NULL,
 				  patch_id_consume, &data, &xpp, &xecfg))
 			return error("unable to generate patch-id diff for %s",
 				     p->one->path);

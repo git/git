@@ -53,6 +53,7 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	memset(&xecfg, 0, sizeof(xecfg));
 	ecbdata.regexp = regexp;
 	ecbdata.hit = 0;
+	xecfg.flags = XDL_EMIT_NO_HUNK_HDR;
 	xecfg.ctxlen = o->context;
 	xecfg.interhunkctxlen = o->interhunkcontext;
 
@@ -60,7 +61,7 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	 * An xdiff error might be our "data->hit" from above. See the
 	 * comment for xdiff_emit_line_fn in xdiff-interface.h
 	 */
-	ret = xdi_diff_outf(one, two, discard_hunk_line, diffgrep_consume,
+	ret = xdi_diff_outf(one, two, NULL, diffgrep_consume,
 			    &ecbdata, &xpp, &xecfg);
 	if (ecbdata.hit)
 		return 1;
