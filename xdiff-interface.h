@@ -27,6 +27,10 @@
  * doing so will currently make your early return indistinguishable
  * from an error internal to xdiff, xdiff itself will see that
  * non-zero return and translate it to -1.
+ *
+ * See "diff_grep" in diffcore-pickaxe.c for a trick to work around
+ * this, i.e. using the "consume_callback_data" to note the desired
+ * early return.
  */
 typedef int (*xdiff_emit_line_fn)(void *, char *, unsigned long);
 typedef void (*xdiff_emit_hunk_fn)(void *data,
