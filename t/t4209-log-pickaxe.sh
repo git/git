@@ -106,11 +106,18 @@ test_expect_success 'log -S --no-textconv (missing textconv tool)' '
 	rm .gitattributes
 '
 
-test_expect_success 'setup log -[GS] plain' '
+test_expect_success 'setup log -[GS] plain & regex' '
 	test_create_repo GS-plain &&
 	test_commit -C GS-plain --append A data.txt "a" &&
 	test_commit -C GS-plain --append B data.txt "a a" &&
-	test_commit -C GS-plain C data.txt "" &&
+	test_commit -C GS-plain --append C data.txt "b" &&
+	test_commit -C GS-plain --append D data.txt "[b]" &&
+	test_commit -C GS-plain E data.txt "" &&
+
+	# We also include E, the deletion commit
+	git -C GS-plain log --grep="[ABE]" >A-to-B-then-E-log &&
+	git -C GS-plain log --grep="[CDE]" >C-to-D-then-E-log &&
+	git -C GS-plain log --grep="[DE]" >D-then-E-log &&
 	git -C GS-plain log >full-log
 '
 
@@ -118,7 +125,24 @@ test_expect_success 'log -G trims diff new/old [-+]' '
 	git -C GS-plain log -G"[+-]a" >log &&
 	test_must_be_empty log &&
 	git -C GS-plain log -G"^a" >log &&
-	test_cmp log full-log
+	test_cmp log A-to-B-then-E-log
+'
+
+test_expect_success 'log -S<pat> is not a regex, but -S<pat> --pickaxe-regex is' '
+	git -C GS-plain log -S"a" >log &&
+	test_cmp log A-to-B-then-E-log &&
+
+	git -C GS-plain log -S"[a]" >log &&
+	test_must_be_empty log &&
+
+	git -C GS-plain log -S"[a]" --pickaxe-regex >log &&
+	test_cmp log A-to-B-then-E-log &&
+
+	git -C GS-plain log -S"[b]" >log &&
+	test_cmp log D-then-E-log &&
+
+	git -C GS-plain log -S"[b]" --pickaxe-regex >log &&
+	test_cmp log C-to-D-then-E-log
 '
 
 test_expect_success 'setup log -[GS] binary & --text' '
