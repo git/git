@@ -242,16 +242,21 @@ static int debug_read_raw_ref(struct ref_store *ref_store, const char *refname,
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
 	int res = 0;
+	int saved_errno = 0;
 
 	oidcpy(oid, &null_oid);
+	errno = 0;
 	res = drefs->refs->be->read_raw_ref(drefs->refs, refname, oid, referent,
 					    type);
+	saved_errno = errno;
 
 	if (res == 0) {
 		trace_printf_key(&trace_refs, "read_raw_ref: %s: %s (=> %s) type %x: %d\n",
 			refname, oid_to_hex(oid), referent->buf, *type, res);
 	} else {
-		trace_printf_key(&trace_refs, "read_raw_ref: %s: %d\n", refname, res);
+		trace_printf_key(&trace_refs,
+				 "read_raw_ref: %s: %d (errno %d)\n", refname,
+				 res, saved_errno);
 	}
 	return res;
 }
