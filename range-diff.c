@@ -274,9 +274,10 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
 	hashmap_clear(&map);
 }
 
-static void diffsize_consume(void *data, char *line, unsigned long len)
+static int diffsize_consume(void *data, char *line, unsigned long len)
 {
 	(*(int *)data)++;
+	return 0;
 }
 
 static void diffsize_hunk(void *data, long ob, long on, long nb, long nn,

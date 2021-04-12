@@ -19,21 +19,22 @@ struct diffgrep_cb {
 	int hit;
 };
 
-static void diffgrep_consume(void *priv, char *line, unsigned long len)
+static int diffgrep_consume(void *priv, char *line, unsigned long len)
 {
 	struct diffgrep_cb *data = priv;
 	regmatch_t regmatch;
 
 	if (line[0] != '+' && line[0] != '-')
-		return;
+		return 0;
 	if (data->hit)
 		/*
 		 * NEEDSWORK: we should have a way to terminate the
 		 * caller early.
 		 */
-		return;
+		return 0;
 	data->hit = !regexec_buf(data->regexp, line + 1, len - 1, 1,
 				 &regmatch, 0);
+	return 0;
 }
 
 static int diff_grep(mmfile_t *one, mmfile_t *two,
