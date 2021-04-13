@@ -3547,6 +3547,37 @@ static void record_recent_commit(struct commit *commit, void *data)
 	oid_array_append(&recent_objects, &commit->object.oid);
 }
 
+static int mark_bitmap_preferred_tip(const char *refname,
+				     const struct object_id *oid, int flags,
+				     void *_data)
+{
+	struct object_id peeled;
+	struct object *object;
+
+	if (!peel_iterated_oid(oid, &peeled))
+		oid = &peeled;
+
+	object = parse_object_or_die(oid, refname);
+	if (object->type == OBJ_COMMIT)
+		object->flags |= NEEDS_BITMAP;
+
+	return 0;
+}
+
+static void mark_bitmap_preferred_tips(void)
+{
+	struct string_list_item *item;
+	const struct string_list *preferred_tips;
+
+	preferred_tips = bitmap_preferred_tips(the_repository);
+	if (!preferred_tips)
+		return;
+
+	for_each_string_list_item(item, preferred_tips) {
+		for_each_ref_in(item->string, mark_bitmap_preferred_tip, NULL);
+	}
+}
+
 static void get_object_list(int ac, const char **av)
 {
 	struct rev_info revs;
@@ -3600,6 +3631,9 @@ static void get_object_list(int ac, const char **av)
 
 	if (use_delta_islands)
 		load_delta_islands(the_repository, progress);
+
+	if (write_bitmap_index)
+		mark_bitmap_preferred_tips();
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
