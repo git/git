@@ -157,7 +157,7 @@ test_expect_success 'sequence of fixup, fixup -C & squash --signoff works' '
 		git -c commit.status=false rebase -ik --signoff A &&
 	git diff-tree --exit-code --patch HEAD B3 -- &&
 	test_cmp_rev HEAD^ A &&
-	test_i18ncmp "$TEST_DIRECTORY/t3437/expected-squash-message" \
+	test_cmp "$TEST_DIRECTORY/t3437/expected-squash-message" \
 		actual-squash-message
 '
 
@@ -191,7 +191,7 @@ test_expect_success 'sequence squash, fixup & fixup -c gives combined message' '
 	FAKE_LINES="1 squash 2 fixup 3 fixup_-c 4" \
 		FAKE_MESSAGE_COPY=actual-combined-message \
 		git -c commit.status=false rebase -i A &&
-	test_i18ncmp "$TEST_DIRECTORY/t3437/expected-combined-message" \
+	test_cmp "$TEST_DIRECTORY/t3437/expected-combined-message" \
 		actual-combined-message &&
 	test_cmp_rev HEAD^ A
 '
@@ -204,7 +204,7 @@ test_expect_success 'fixup -C works upon --autosquash with amend!' '
 						--signoff A &&
 	git diff-tree --exit-code --patch HEAD B3 -- &&
 	test_cmp_rev HEAD^ A &&
-	test_i18ncmp "$TEST_DIRECTORY/t3437/expected-squash-message" \
+	test_cmp "$TEST_DIRECTORY/t3437/expected-squash-message" \
 		actual-squash-message
 '
 
