@@ -1,0 +1,4 @@
+(defmethod {print point} RIGHT
+  (lambda (self)
+    (with ((point x y) self)
+      (printf "{ChangeMe x:~a y:~a}~n" x y))))
