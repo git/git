@@ -217,12 +217,12 @@ sub do_edit {
 		$editor = Git::command_oneline('var', 'GIT_EDITOR');
 	}
 	if (defined($multiedit) && !$multiedit) {
-		map {
+		for (@_) {
 			system('sh', '-c', $editor.' "$@"', $editor, $_);
 			if (($? & 127) || ($? >> 8)) {
 				die(__("the editor exited uncleanly, aborting everything"));
 			}
-		} @_;
+		}
 	} else {
 		system('sh', '-c', $editor.' "$@"', $editor, @_);
 		if (($? & 127) || ($? >> 8)) {
