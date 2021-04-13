@@ -1134,4 +1134,14 @@ test_expect_success 'for-each-ref --ignore-case works on multiple sort keys' '
 	test_cmp expect actual
 '
 
+test_expect_success 'for-each-ref reports broken tags' '
+	git tag -m "good tag" broken-tag-good HEAD &&
+	git cat-file tag broken-tag-good >good &&
+	sed s/commit/blob/ <good >bad &&
+	bad=$(git hash-object -w -t tag bad) &&
+	git update-ref refs/tags/broken-tag-bad $bad &&
+	test_must_fail git for-each-ref --format="%(*objectname)" \
+		refs/tags/broken-tag-*
+'
+
 test_done
