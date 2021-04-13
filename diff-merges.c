@@ -2,6 +2,11 @@
 
 #include "revision.h"
 
+typedef void (*diff_merges_setup_func_t)(struct rev_info *);
+static void set_separate(struct rev_info *revs);
+
+static diff_merges_setup_func_t set_to_default = set_separate;
+
 static void suppress(struct rev_info *revs)
 {
 	revs->separate_merges = 0;
@@ -66,6 +71,8 @@ static void set_diff_merges(struct rev_info *revs, const char *optarg)
 		set_combined(revs);
 	else if (!strcmp(optarg, "cc") || !strcmp(optarg, "dense-combined"))
 		set_dense_combined(revs);
+	else if (!strcmp(optarg, "on"))
+		set_to_default(revs);
 	else
 		die(_("unknown value for --diff-merges: %s"), optarg);
 
