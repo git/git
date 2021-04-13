@@ -57,6 +57,11 @@ UI, Workflows & Features
  * "git clone --reject-shallow" option fails the clone as soon as we
    notice that we are cloning from a shallow repository.
 
+ * A configuration variable has been added to force tips of certain
+   refs to be given a reachability bitmap.
+
+ * "gitweb" learned "e-mail privacy" feature to redact strings that
+   look like e-mail addresses on various pages.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -97,6 +102,11 @@ Performance, Internal Implementation, Development Support etc.
    back to its object name across multiple packfiles is introduced.
 
  * Generate [ec]tags under $(QUIET_GEN).
+
+ * Clean-up codepaths that implements "git send-email --validate"
+   option and improves the message from it.
+
+ * The last remnant of gettext-poison has been removed.
 
 
 Fixes since v2.31
@@ -174,6 +184,19 @@ Fixes since v2.31
    as directory separator.
    (merge 9a7f1ce8b7 rs/daemon-sanitize-dir-sep later to maint).
 
+ * A NULL-dereference bug has been corrected in an error codepath in
+   "git for-each-ref", "git branch --list" etc.
+   (merge c685450880 jk/ref-filter-segfault-fix later to maint).
+
+ * Streamline the codepath to fix the UTF-8 encoding issues in the
+   argv[] and the prefix on macOS.
+   (merge c7d0e61016 tb/precompose-prefix-simplify later to maint).
+
+ * The command-line completion script (in contrib/) had a couple of
+   references that would have given a warning under the "-u" (nounset)
+   option.
+   (merge c5c0548d79 vs/completion-with-set-u later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
    (merge 12604a8d0c sv/t9801-test-path-is-file-cleanup later to maint).
@@ -186,3 +209,5 @@ Fixes since v2.31
    (merge 2be927f3d1 ab/diff-no-index-tests later to maint).
    (merge 76593c09bb ab/detox-gettext-tests later to maint).
    (merge 28e29ee38b jc/doc-format-patch-clarify later to maint).
+   (merge fc12b6fdde fm/user-manual-use-preface later to maint).
+   (merge dba94e3a85 cc/test-helper-bloom-usage-fix later to maint).
