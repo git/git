@@ -60,10 +60,12 @@ void probe_utf8_pathname_composition(void)
 	strbuf_release(&path);
 }
 
-static inline const char *precompose_string_if_needed(const char *in)
+const char *precompose_string_if_needed(const char *in)
 {
 	size_t inlen;
 	size_t outlen;
+	if (!in)
+		return NULL;
 	if (has_non_ascii(in, (size_t)-1, &inlen)) {
 		iconv_t ic_prec;
 		char *out;
@@ -96,10 +98,7 @@ const char *precompose_argv_prefix(int argc, const char **argv, const char *pref
 		argv[i] = precompose_string_if_needed(argv[i]);
 		i++;
 	}
-	if (prefix) {
-		prefix = precompose_string_if_needed(prefix);
-	}
-	return prefix;
+	return precompose_string_if_needed(prefix);
 }
 
 

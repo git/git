@@ -256,6 +256,11 @@ static inline const char *precompose_argv_prefix(int argc, const char **argv, co
 {
 	return prefix;
 }
+static inline const char *precompose_string_if_needed(const char *in)
+{
+	return in;
+}
+
 #define probe_utf8_pathname_composition()
 #endif
 
