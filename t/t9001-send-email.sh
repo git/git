@@ -415,15 +415,23 @@ test_expect_success $PREREQ 'reject long lines' '
 	z512=$z64$z64$z64$z64$z64$z64$z64$z64 &&
 	clean_fake_sendmail &&
 	cp $patches longline.patch &&
-	echo $z512$z512 >>longline.patch &&
+	cat >>longline.patch <<-EOF &&
+	$z512$z512
+	not a long line
+	$z512$z512
+	EOF
 	test_must_fail git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--transfer-encoding=8bit \
 		$patches longline.patch \
-		2>errors &&
-	grep longline.patch errors
+		2>actual &&
+	cat >expect <<-\EOF &&
+	fatal: longline.patch:35 is longer than 998 characters
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success $PREREQ 'no patch was sent' '
@@ -527,22 +535,33 @@ test_expect_success $PREREQ "--validate respects relative core.hooksPath path" '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--validate \
-		longline.patch 2>err &&
+		longline.patch 2>actual &&
 	test_path_is_file my-hooks.ran &&
-	grep "rejected by sendemail-validate" err
+	cat >expect <<-EOF &&
+	fatal: longline.patch: rejected by sendemail-validate hook
+	fatal: command '"'"'$(pwd)/my-hooks/sendemail-validate'"'"' died with exit code 1
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success $PREREQ "--validate respects absolute core.hooksPath path" '
-	test_config core.hooksPath "$(pwd)/my-hooks" &&
+	hooks_path="$(pwd)/my-hooks" &&
+	test_config core.hooksPath "$hooks_path" &&
 	test_when_finished "rm my-hooks.ran" &&
 	test_must_fail git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--validate \
-		longline.patch 2>err &&
+		longline.patch 2>actual &&
 	test_path_is_file my-hooks.ran &&
-	grep "rejected by sendemail-validate" err
+	cat >expect <<-EOF &&
+	fatal: longline.patch: rejected by sendemail-validate hook
+	fatal: command '"'"'$hooks_path/sendemail-validate'"'"' died with exit code 1
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
 '
 
 for enc in 7bit 8bit quoted-printable base64
