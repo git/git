@@ -1,8 +1,11 @@
 Error reporting in git
 ======================
 
-`die`, `usage`, `error`, and `warning` report errors of various
-kinds.
+`BUG`, `die`, `usage`, `error`, and `warning` report errors of
+various kinds.
+
+- `BUG` is for failed internal assertions that should never happen,
+  i.e. a bug in git itself.
 
 - `die` is for fatal application errors.  It prints a message to
   the user and exits with status 128.
