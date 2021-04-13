@@ -979,8 +979,8 @@ test_expect_success 'fetch with branches' '
 	mk_empty testrepo &&
 	git branch second $the_first_commit &&
 	git checkout second &&
-	mkdir testrepo/.git/branches &&
-	echo ".." > testrepo/.git/branches/branch1 &&
+	mkdir -p testrepo/.git/branches &&
+	echo ".." >testrepo/.git/branches/branch1 &&
 	(
 		cd testrepo &&
 		git fetch branch1 &&
@@ -993,8 +993,8 @@ test_expect_success 'fetch with branches' '
 
 test_expect_success 'fetch with branches containing #' '
 	mk_empty testrepo &&
-	mkdir testrepo/.git/branches &&
-	echo "..#second" > testrepo/.git/branches/branch2 &&
+	mkdir -p testrepo/.git/branches &&
+	echo "..#second" >testrepo/.git/branches/branch2 &&
 	(
 		cd testrepo &&
 		git fetch branch2 &&
@@ -1010,8 +1010,8 @@ test_expect_success 'push with branches' '
 	git checkout second &&
 
 	test_when_finished "rm -rf .git/branches" &&
-	mkdir .git/branches &&
-	echo "testrepo" > .git/branches/branch1 &&
+	mkdir -p .git/branches &&
+	echo "testrepo" >.git/branches/branch1 &&
 
 	git push branch1 &&
 	(
@@ -1026,8 +1026,8 @@ test_expect_success 'push with branches containing #' '
 	mk_empty testrepo &&
 
 	test_when_finished "rm -rf .git/branches" &&
-	mkdir .git/branches &&
-	echo "testrepo#branch3" > .git/branches/branch2 &&
+	mkdir -p .git/branches &&
+	echo "testrepo#branch3" >.git/branches/branch2 &&
 
 	git push branch2 &&
 	(
@@ -1556,7 +1556,7 @@ EOF
 	git init no-thin &&
 	git --git-dir=no-thin/.git config receive.unpacklimit 0 &&
 	git push no-thin/.git refs/heads/main:refs/heads/foo &&
-	echo modified >> path1 &&
+	echo modified >>path1 &&
 	git commit -am modified &&
 	git repack -adf &&
 	rcvpck="git receive-pack --reject-thin-pack-for-testing" &&
