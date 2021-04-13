@@ -90,6 +90,17 @@ static void set_diff_merges(struct rev_info *revs, const char *optarg)
  * Public functions. They are in the order they are called.
  */
 
+int diff_merges_config(const char *value)
+{
+	diff_merges_setup_func_t func = func_by_opt(value);
+
+	if (!func)
+		return -1;
+
+	set_to_default = func;
+	return 0;
+}
+
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 {
 	int argcount = 1;

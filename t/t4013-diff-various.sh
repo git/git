@@ -460,6 +460,29 @@ test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
 	test_cmp expected actual
 '
 
+test_expect_success 'deny wrong log.diffMerges config' '
+	test_config log.diffMerges wrong-value &&
+	test_expect_code 128 git log
+'
+
+test_expect_success 'git config log.diffMerges first-parent' '
+	git log -p --diff-merges=first-parent master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges first-parent &&
+	git log -p --diff-merges=on master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git config log.diffMerges first-parent vs -m' '
+	git log -p --diff-merges=first-parent master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges first-parent &&
+	git log -p -m master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'log -S requires an argument' '
 	test_must_fail git log -S
 '
