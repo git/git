@@ -1180,20 +1180,6 @@ static void die_bad_number(const char *name, const char *value)
 	}
 }
 
-NORETURN
-static void die_bad_bool(const char *name, const char *value)
-{
-	if (!strcmp(name, "GIT_TEST_GETTEXT_POISON"))
-		/*
-		 * We explicitly *don't* use _() here since it would
-		 * cause an infinite loop with _() needing to call
-		 * use_gettext_poison().
-		 */
-		die("bad boolean config value '%s' for '%s'", value, name);
-	else
-		die(_("bad boolean config value '%s' for '%s'"), value, name);
-}
-
 int git_config_int(const char *name, const char *value)
 {
 	int ret;
@@ -1268,7 +1254,7 @@ int git_config_bool(const char *name, const char *value)
 {
 	int v = git_parse_maybe_bool(value);
 	if (v < 0)
-		die_bad_bool(name, value);
+		die(_("bad boolean config value '%s' for '%s'"), value, name);
 	return v;
 }
 
