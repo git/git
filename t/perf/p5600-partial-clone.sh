@@ -23,4 +23,8 @@ test_perf 'checkout of result' '
 	git -C worktree checkout -f
 '
 
+test_perf 'fsck' '
+	git -C bare.git fsck
+'
+
 test_done
