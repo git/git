@@ -6487,8 +6487,8 @@ msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):\n"
 msgstr ""
-"Peligro: algunos commits pueden haber sido botados de forma accidental.\n"
-"Commits botados (empezando con el más nuevo):\n"
+"Peligro: algunos commits pueden haber sido descartados de forma accidental.\n"
+"Commits descartados (empezando con el más nuevo):\n"
 
 #: rebase-interactive.c:200
 #, c-format
@@ -7766,7 +7766,7 @@ msgstr "no se pudo aplicar %s... %s"
 #: sequencer.c:2100
 #, c-format
 msgid "dropping %s %s -- patch contents already upstream\n"
-msgstr "botando $%s %s -- contenidos del parche ya están en upstream\n"
+msgstr "descartando $%s %s -- contenidos del parche ya están en upstream\n"
 
 #: sequencer.c:2158
 #, c-format
@@ -21986,7 +21986,7 @@ msgstr "intento de recrear el index"
 #: builtin/stash.c:633
 #, c-format
 msgid "Dropped %s (%s)"
-msgstr "Botado %s (%s)"
+msgstr "Descartado %s (%s)"
 
 #: builtin/stash.c:636
 #, c-format
@@ -25853,7 +25853,7 @@ msgstr "error: no es posible extraer una dirección válida de %s\n"
 #. at this point.
 #: git-send-email.perl:1053
 msgid "What to do with this address? ([q]uit|[d]rop|[e]dit): "
-msgstr "¿Que hacer con esta dirección? ([q]salir|[d]botar|[e]ditar): "
+msgstr "¿Que hacer con esta dirección? ([q]salir|[d]escartar|[e]ditar): "
 
 #: git-send-email.perl:1370
 #, perl-format
