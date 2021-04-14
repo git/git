@@ -117,10 +117,13 @@ If in doubt which identifier to use, run `git log --no-merges` on the
 files you are modifying to see the current conventions.
 
 [[summary-section]]
-It's customary to start the remainder of the first line after "area: "
-with a lower-case letter. E.g. "doc: clarify...", not "doc:
-Clarify...", or "githooks.txt: improve...", not "githooks.txt:
-Improve...".
+The title sentence after the "area:" prefix omits the full stop at the
+end, and its first word is not capitalized unless there is a reason to
+capitalize it other than because it is the first word in the sentence.
+E.g. "doc: clarify...", not "doc: Clarify...", or "githooks.txt:
+improve...", not "githooks.txt: Improve...".  But "refs: HEAD is also
+treated as a ref" is correct, as we spell `HEAD` in all caps even when
+it appears in the middle of a sentence.
 
 [[meaningful-message]]
 The body should provide a meaningful commit message, which:
