@@ -889,7 +889,7 @@ static int packed_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	} else if ((iter->base.flags & (REF_ISBROKEN | REF_ISSYMREF))) {
 		return -1;
 	} else {
-		return !!peel_object(&iter->oid, peeled);
+		return peel_object(&iter->oid, peeled) ? -1 : 0;
 	}
 }
 
