@@ -194,13 +194,16 @@ int packet_write_fmt_gently(int fd, const char *fmt, ...)
 	return status;
 }
 
-static int packet_write_gently(const int fd_out, const char *buf, size_t size)
+static int do_packet_write(const int fd_out, const char *buf, size_t size,
+			   struct strbuf *err)
 {
 	char header[4];
 	size_t packet_size;
 
-	if (size > LARGE_PACKET_DATA_MAX)
-		return error(_("packet write failed - data exceeds max packet size"));
+	if (size > LARGE_PACKET_DATA_MAX) {
+		strbuf_addstr(err, _("packet write failed - data exceeds max packet size"));
+		return -1;
+	}
 
 	packet_trace(buf, size, 1);
 	packet_size = size + 4;
@@ -215,15 +218,29 @@ static int packet_write_gently(const int fd_out, const char *buf, size_t size)
 	 */
 
 	if (write_in_full(fd_out, header, 4) < 0 ||
-	    write_in_full(fd_out, buf, size) < 0)
-		return error(_("packet write failed"));
+	    write_in_full(fd_out, buf, size) < 0) {
+		strbuf_addf(err, _("packet write failed: %s"), strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
+static int packet_write_gently(const int fd_out, const char *buf, size_t size)
+{
+	struct strbuf err = STRBUF_INIT;
+	if (do_packet_write(fd_out, buf, size, &err)) {
+		error("%s", err.buf);
+		strbuf_release(&err);
+		return -1;
+	}
 	return 0;
 }
 
 void packet_write(int fd_out, const char *buf, size_t size)
 {
-	if (packet_write_gently(fd_out, buf, size))
-		die_errno(_("packet write failed"));
+	struct strbuf err = STRBUF_INIT;
+	if (do_packet_write(fd_out, buf, size, &err))
+		die("%s", err.buf);
 }
 
 void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
