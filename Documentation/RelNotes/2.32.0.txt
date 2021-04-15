@@ -63,6 +63,18 @@ UI, Workflows & Features
  * "gitweb" learned "e-mail privacy" feature to redact strings that
    look like e-mail addresses on various pages.
 
+ * "git apply --3way" has always been "to fall back to 3-way merge
+   only when straight application fails". Swap the order of falling
+   back so that 3-way is always attempted first (only when the option
+   is given, of course) and then straight patch application is used as
+   a fallback when it fails.
+
+ * "git apply" now takes "--3way" and "--cached" at the same time, and
+   work and record results only in the index.
+
+ * The command line completion (in contrib/) has learned that
+   CHERRY_PICK_HEAD is a possible pseudo-ref.
+
 
 Performance, Internal Implementation, Development Support etc.
 
