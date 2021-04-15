@@ -119,4 +119,11 @@ test_expect_success TTY 'quiet push' '
 	test_must_be_empty output
 '
 
+test_expect_success TTY 'quiet push -u' '
+	ensure_fresh_upstream &&
+
+	test_terminal git push --quiet -u --no-progress upstream main 2>&1 | tee output &&
+	test_must_be_empty output
+'
+
 test_done

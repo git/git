@@ -108,11 +108,11 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		if (!remotename || !starts_with(remotename, "refs/heads/"))
 			continue;
 
-		if (!pretend)
-			install_branch_config(BRANCH_CONFIG_VERBOSE,
-				localname + 11, transport->remote->name,
-				remotename);
-		else
+		if (!pretend) {
+			int flag = transport->verbose < 0 ? 0 : BRANCH_CONFIG_VERBOSE;
+			install_branch_config(flag, localname + 11,
+				transport->remote->name, remotename);
+		} else if (transport->verbose >= 0)
 			printf(_("Would set upstream of '%s' to '%s' of '%s'\n"),
 				localname + 11, remotename + 11,
 				transport->remote->name);
