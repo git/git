@@ -23,4 +23,16 @@ test_perf 'checkout of result' '
 	git -C worktree checkout -f
 '
 
+test_perf 'fsck' '
+	git -C bare.git fsck
+'
+
+test_perf 'count commits' '
+	git -C bare.git rev-list --all --count
+'
+
+test_perf 'count non-promisor commits' '
+	git -C bare.git rev-list --all --count --exclude-promisor-objects
+'
+
 test_done
