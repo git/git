@@ -2653,23 +2653,15 @@ static void write_tree(struct object_id *result_oid,
 		       size_t hash_size)
 {
 	size_t maxlen = 0, extra;
-	unsigned int nr = versions->nr - offset;
+	unsigned int nr;
 	struct strbuf buf = STRBUF_INIT;
-	struct string_list relevant_entries = STRING_LIST_INIT_NODUP;
 	int i;
 
-	/*
-	 * We want to sort the last (versions->nr-offset) entries in versions.
-	 * Do so by abusing the string_list API a bit: make another string_list
-	 * that contains just those entries and then sort them.
-	 *
-	 * We won't use relevant_entries again and will let it just pop off the
-	 * stack, so there won't be allocation worries or anything.
-	 */
-	relevant_entries.items = versions->items + offset;
-	relevant_entries.nr = versions->nr - offset;
-	/* No need for STABLE_QSORT -- filenames must be unique */
-	QSORT(relevant_entries.items, relevant_entries.nr, tree_entry_order);
+	assert(offset <= versions->nr);
+	nr = versions->nr - offset;
+	if (versions->nr)
+		/* No need for STABLE_QSORT -- filenames must be unique */
+		QSORT(versions->items + offset, nr, tree_entry_order);
 
 	/* Pre-allocate some space in buf */
 	extra = hash_size + 8; /* 8: 6 for mode, 1 for space, 1 for NUL char */
