@@ -120,6 +120,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * The last remnant of gettext-poison has been removed.
 
+ * The test framework has been taught to optionally turn the default
+   merge strategy to "ort" throughout the system where we use
+   three-way merges internally, like cherry-pick, rebase etc.,
+   primarily to enhance its test coverage (the strategy has been
+   available as an explicit "-s ort" choice).
+
 
 Fixes since v2.31
 -----------------
