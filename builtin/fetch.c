@@ -48,6 +48,7 @@ enum {
 static int fetch_prune_config = -1; /* unspecified */
 static int fetch_show_forced_updates = 1;
 static uint64_t forced_updates_ms = 0;
+static int prefetch = 0;
 static int prune = -1; /* unspecified */
 #define PRUNE_BY_DEFAULT 0 /* do we prune by default? */
 
@@ -158,6 +159,8 @@ static struct option builtin_fetch_options[] = {
 		    N_("do not fetch all tags (--no-tags)"), TAGS_UNSET),
 	OPT_INTEGER('j', "jobs", &max_jobs,
 		    N_("number of submodules fetched in parallel")),
+	OPT_BOOL(0, "prefetch", &prefetch,
+		 N_("modify the refspec to place all refs within refs/prefetch/")),
 	OPT_BOOL('p', "prune", &prune,
 		 N_("prune remote-tracking branches no longer on remote")),
 	OPT_BOOL('P', "prune-tags", &prune_tags,
@@ -436,6 +439,56 @@ static void find_non_local_tags(const struct ref *refs,
 	oidset_clear(&fetch_oids);
 }
 
+static void filter_prefetch_refspec(struct refspec *rs)
+{
+	int i;
+
+	if (!prefetch)
+		return;
+
+	for (i = 0; i < rs->nr; i++) {
+		struct strbuf new_dst = STRBUF_INIT;
+		char *old_dst;
+		const char *sub = NULL;
+
+		if (rs->items[i].negative)
+			continue;
+		if (!rs->items[i].dst ||
+		    (rs->items[i].src &&
+		     !strncmp(rs->items[i].src, "refs/tags/", 10))) {
+			int j;
+
+			free(rs->items[i].src);
+			free(rs->items[i].dst);
+
+			for (j = i + 1; j < rs->nr; j++) {
+				rs->items[j - 1] = rs->items[j];
+				rs->raw[j - 1] = rs->raw[j];
+			}
+			rs->nr--;
+			i--;
+			continue;
+		}
+
+		old_dst = rs->items[i].dst;
+		strbuf_addstr(&new_dst, "refs/prefetch/");
+
+		/*
+		 * If old_dst starts with "refs/", then place
+		 * sub after that prefix. Otherwise, start at
+		 * the beginning of the string.
+		 */
+		if (!skip_prefix(old_dst, "refs/", &sub))
+			sub = old_dst;
+		strbuf_addstr(&new_dst, sub);
+
+		rs->items[i].dst = strbuf_detach(&new_dst, NULL);
+		rs->items[i].force = 1;
+
+		free(old_dst);
+	}
+}
+
 static struct ref *get_ref_map(struct remote *remote,
 			       const struct ref *remote_refs,
 			       struct refspec *rs,
@@ -451,6 +504,10 @@ static struct ref *get_ref_map(struct remote *remote,
 
 	struct hashmap existing_refs;
 	int existing_refs_populated = 0;
+
+	filter_prefetch_refspec(rs);
+	if (remote)
+		filter_prefetch_refspec(&remote->fetch);
 
 	if (rs->nr) {
 		struct refspec *fetch_refspec;
@@ -520,7 +577,7 @@ static struct ref *get_ref_map(struct remote *remote,
 			if (has_merge &&
 			    !strcmp(branch->remote_name, remote->name))
 				add_merge_config(&ref_map, remote_refs, branch, &tail);
-		} else {
+		} else if (!prefetch) {
 			ref_map = get_remote_ref(remote_refs, "HEAD");
 			if (!ref_map)
 				die(_("Couldn't find remote ref HEAD"));
