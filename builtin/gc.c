@@ -879,14 +879,13 @@ static int fetch_remote(struct remote *remote, void *cbdata)
 	struct child_process child = CHILD_PROCESS_INIT;
 
 	child.git_cmd = 1;
-	strvec_pushl(&child.args, "fetch", remote->name, "--prune", "--no-tags",
+	strvec_pushl(&child.args, "fetch", remote->name,
+		     "--prefetch", "--prune", "--no-tags",
 		     "--no-write-fetch-head", "--recurse-submodules=no",
-		     "--refmap=", NULL);
+		     NULL);
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--quiet");
-
-	strvec_pushf(&child.args, "+refs/heads/*:refs/prefetch/%s/*", remote->name);
 
 	return !!run_command(&child);
 }
