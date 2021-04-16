@@ -878,6 +878,9 @@ static int fetch_remote(struct remote *remote, void *cbdata)
 	struct maintenance_run_opts *opts = cbdata;
 	struct child_process child = CHILD_PROCESS_INIT;
 
+	if (remote->skip_default_update)
+		return 0;
+
 	child.git_cmd = 1;
 	strvec_pushl(&child.args, "fetch", remote->name,
 		     "--prefetch", "--prune", "--no-tags",

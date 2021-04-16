@@ -153,7 +153,13 @@ test_expect_success 'prefetch multiple remotes' '
 
 	test_cmp_config refs/prefetch/ log.excludedecoration &&
 	git log --oneline --decorate --all >log &&
-	! grep "prefetch" log
+	! grep "prefetch" log &&
+
+	test_when_finished git config --unset remote.remote1.skipFetchAll &&
+	git config remote.remote1.skipFetchAll true &&
+	GIT_TRACE2_EVENT="$(pwd)/skip-remote1.txt" git maintenance run --task=prefetch 2>/dev/null &&
+	test_subcommand ! git fetch remote1 $fetchargs <skip-remote1.txt &&
+	test_subcommand git fetch remote2 $fetchargs <skip-remote1.txt
 '
 
 test_expect_success 'prefetch and existing log.excludeDecoration values' '
