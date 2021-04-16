@@ -1129,7 +1129,7 @@ __git_pretty_aliases ()
 # __git_aliased_command requires 1 argument
 __git_aliased_command ()
 {
-	local cur=$1 last list word cmdline
+	local cur=$1 last list= word cmdline
 
 	while [[ -n "$cur" ]]; do
 		if [[ "$list" == *" $cur "* ]]; then
