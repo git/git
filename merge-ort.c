@@ -73,8 +73,12 @@ struct rename_info {
 
 	/*
 	 * dirs_removed: directories removed on a given side of history.
+	 *
+	 * The keys of dirs_removed[side] are the directories that were removed
+	 * on the given side of history.  The value of the strintmap for each
+	 * directory is a value from enum dir_rename_relevance.
 	 */
-	struct strset dirs_removed[3];
+	struct strintmap dirs_removed[3];
 
 	/*
 	 * dir_rename_count: tracking where parts of a directory were renamed to
@@ -95,18 +99,20 @@ struct rename_info {
 	struct strmap dir_renames[3];
 
 	/*
-	 * relevant_sources: deleted paths for which we need rename detection
+	 * relevant_sources: deleted paths wanted in rename detection, and why
 	 *
 	 * relevant_sources is a set of deleted paths on each side of
 	 * history for which we need rename detection.  If a path is deleted
 	 * on one side of history, we need to detect if it is part of a
 	 * rename if either
-	 *    * we need to detect renames for an ancestor directory
 	 *    * the file is modified/deleted on the other side of history
+	 *    * we need to detect renames for an ancestor directory
 	 * If neither of those are true, we can skip rename detection for
-	 * that path.
+	 * that path.  The reason is stored as a value from enum
+	 * file_rename_relevance, as the reason can inform the algorithm in
+	 * diffcore_rename_extended().
 	 */
-	struct strset relevant_sources[3];
+	struct strintmap relevant_sources[3];
 
 	/*
 	 * dir_rename_mask:
@@ -362,8 +368,8 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 	int i;
 	void (*strmap_func)(struct strmap *, int) =
 		reinitialize ? strmap_partial_clear : strmap_clear;
-	void (*strset_func)(struct strset *) =
-		reinitialize ? strset_partial_clear : strset_clear;
+	void (*strintmap_func)(struct strintmap *) =
+		reinitialize ? strintmap_partial_clear : strintmap_clear;
 
 	/*
 	 * We marked opti->paths with strdup_strings = 0, so that we
@@ -395,7 +401,7 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 
 	/* Free memory used by various renames maps */
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; ++i) {
-		strset_func(&renames->dirs_removed[i]);
+		strintmap_func(&renames->dirs_removed[i]);
 
 		partial_clear_dir_rename_count(&renames->dir_rename_count[i]);
 		if (!reinitialize)
@@ -403,7 +409,7 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 
 		strmap_func(&renames->dir_renames[i], 0);
 
-		strset_func(&renames->relevant_sources[i]);
+		strintmap_func(&renames->relevant_sources[i]);
 	}
 
 	if (!reinitialize) {
@@ -673,8 +679,11 @@ static void add_pair(struct merge_options *opt,
 		unsigned content_relevant = (match_mask == 0);
 		unsigned location_relevant = (dir_rename_mask == 0x07);
 
-		if (content_relevant || location_relevant)
-			strset_add(&renames->relevant_sources[side], pathname);
+		if (content_relevant || location_relevant) {
+			/* content_relevant trumps location_relevant */
+			strintmap_set(&renames->relevant_sources[side], pathname,
+				      content_relevant ? RELEVANT_CONTENT : RELEVANT_LOCATION);
+		}
 	}
 
 	one = alloc_filespec(pathname);
@@ -729,10 +738,41 @@ static void collect_rename_info(struct merge_options *opt,
 	if (dirmask == 1 || dirmask == 3 || dirmask == 5) {
 		/* absent_mask = 0x07 - dirmask; sides = absent_mask/2 */
 		unsigned sides = (0x07 - dirmask)/2;
+		unsigned relevance = (renames->dir_rename_mask == 0x07) ?
+					RELEVANT_FOR_ANCESTOR : NOT_RELEVANT;
+		/*
+		 * Record relevance of this directory.  However, note that
+		 * when collect_merge_info_callback() recurses into this
+		 * directory and calls collect_rename_info() on paths
+		 * within that directory, if we find a path that was added
+		 * to this directory on the other side of history, we will
+		 * upgrade this value to RELEVANT_FOR_SELF; see below.
+		 */
 		if (sides & 1)
-			strset_add(&renames->dirs_removed[1], fullname);
+			strintmap_set(&renames->dirs_removed[1], fullname,
+				      relevance);
 		if (sides & 2)
-			strset_add(&renames->dirs_removed[2], fullname);
+			strintmap_set(&renames->dirs_removed[2], fullname,
+				      relevance);
+	}
+
+	/*
+	 * Here's the block that potentially upgrades to RELEVANT_FOR_SELF.
+	 * When we run across a file added to a directory.  In such a case,
+	 * find the directory of the file and upgrade its relevance.
+	 */
+	if (renames->dir_rename_mask == 0x07 &&
+	    (filemask == 2 || filemask == 4)) {
+		/*
+		 * Need directory rename for parent directory on other side
+		 * of history from added file.  Thus
+		 *    side = (~filemask & 0x06) >> 1
+		 * or
+		 *    side = 3 - (filemask/2).
+		 */
+		unsigned side = 3 - (filemask >> 1);
+		strintmap_set(&renames->dirs_removed[side], dirname,
+			      RELEVANT_FOR_SELF);
 	}
 
 	if (filemask == 0 || filemask == 7)
@@ -1511,6 +1551,9 @@ static void get_provisional_directory_renames(struct merge_options *opt,
 			}
 		}
 
+		if (max == 0)
+			continue;
+
 		if (bad_max == max) {
 			path_msg(opt, source_dir, 0,
 			       _("CONFLICT (directory rename split): "
@@ -2160,7 +2203,7 @@ static inline int possible_side_renames(struct rename_info *renames,
 					unsigned side_index)
 {
 	return renames->pairs[side_index].nr > 0 &&
-	       !strset_empty(&renames->relevant_sources[side_index]);
+	       !strintmap_empty(&renames->relevant_sources[side_index]);
 }
 
 static inline int possible_renames(struct rename_info *renames)
@@ -3444,14 +3487,14 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	/* Initialization of various renames fields */
 	renames = &opt->priv->renames;
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; i++) {
-		strset_init_with_options(&renames->dirs_removed[i],
-					 NULL, 0);
+		strintmap_init_with_options(&renames->dirs_removed[i],
+					    NOT_RELEVANT, NULL, 0);
 		strmap_init_with_options(&renames->dir_rename_count[i],
 					 NULL, 1);
 		strmap_init_with_options(&renames->dir_renames[i],
 					 NULL, 0);
-		strset_init_with_options(&renames->relevant_sources[i],
-					 NULL, 0);
+		strintmap_init_with_options(&renames->relevant_sources[i],
+					    0, NULL, 0);
 	}
 
 	/*
