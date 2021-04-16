@@ -2281,6 +2281,7 @@ static int do_pick_commit(struct repository *r,
 		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
 				NULL, 0);
 		unlink(git_path_merge_msg(r));
+		unlink(git_path_auto_merge(r));
 		fprintf(stderr,
 			_("dropping %s %s -- patch contents already upstream\n"),
 			oid_to_hex(&commit->object.oid), msg.subject);
@@ -2643,6 +2644,8 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 		opts.action = REPLAY_REVERT;
 		need_cleanup = 1;
 	}
+
+	unlink(git_path_auto_merge(r));
 
 	if (!need_cleanup)
 		return;
@@ -4304,6 +4307,7 @@ static int pick_commits(struct repository *r,
 			unlink(rebase_path_stopped_sha());
 			unlink(rebase_path_amend());
 			unlink(git_path_merge_head(r));
+			unlink(git_path_auto_merge(r));
 			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 
 			if (item->command == TODO_BREAK) {
@@ -4717,6 +4721,7 @@ static int commit_staged_changes(struct repository *r,
 		return error(_("could not commit staged changes."));
 	unlink(rebase_path_amend());
 	unlink(git_path_merge_head(r));
+	unlink(git_path_auto_merge(r));
 	if (final_fixup) {
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());
