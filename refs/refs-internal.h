@@ -592,6 +592,10 @@ typedef int reflog_exists_fn(struct ref_store *ref_store, const char *refname);
 typedef int create_reflog_fn(struct ref_store *ref_store, const char *refname,
 			     int force_create, struct strbuf *err);
 typedef int delete_reflog_fn(struct ref_store *ref_store, const char *refname);
+
+/*
+ * `flags` accepts a bitmask of `enum expire_reflog_flags`.
+ */
 typedef int reflog_expire_fn(struct ref_store *ref_store,
 			     const char *refname, const struct object_id *oid,
 			     unsigned int flags,
