@@ -7,8 +7,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 reset_state () {
-	git checkout main &&
-	cp saved_reflog .git/logs/HEAD
+	rm -rf .git && "$TAR" xf .git-saved.tar
 }
 
 test_expect_success setup '
@@ -17,7 +16,7 @@ test_expect_success setup '
 	git branch side &&
 	test_tick &&
 	git commit --allow-empty -m second &&
-	cat .git/logs/HEAD >saved_reflog
+	"$TAR" cf .git-saved.tar .git
 '
 
 test_expect_success baseline '
