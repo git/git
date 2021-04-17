@@ -395,7 +395,7 @@ test_expect_success '--prune-empty is able to prune root commit' '
 test_expect_success '--prune-empty is able to prune entire branch' '
 	git branch prune-entire B &&
 	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t B.t" prune-entire &&
-	test_path_is_missing .git/refs/heads/prune-entire &&
+	test_must_fail git rev-parse refs/heads/prune-entire &&
 	test_must_fail git reflog exists refs/heads/prune-entire
 '
 
