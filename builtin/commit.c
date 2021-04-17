@@ -261,6 +261,8 @@ static int list_paths(struct string_list *list, const char *with_tree,
 		free(max_prefix);
 	}
 
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(&the_index);
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
 		struct string_list_item *item;
@@ -976,6 +978,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (get_oid(parent, &oid)) {
 			int i, ita_nr = 0;
 
+			/* TODO: audit for interaction with sparse-index. */
+			ensure_full_index(&the_index);
 			for (i = 0; i < active_nr; i++)
 				if (ce_intent_to_add(active_cache[i]))
 					ita_nr++;

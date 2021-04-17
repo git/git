@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "thread-utils.h"
 #include "trace2.h"
+#include "sparse-index.h"
 
 struct dir_entry {
 	struct hashmap_entry ent;
@@ -109,8 +110,11 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 	if (ce->ce_flags & CE_HASHED)
 		return;
 	ce->ce_flags |= CE_HASHED;
-	hashmap_entry_init(&ce->ent, memihash(ce->name, ce_namelen(ce)));
-	hashmap_add(&istate->name_hash, &ce->ent);
+
+	if (!S_ISSPARSEDIR(ce->ce_mode)) {
+		hashmap_entry_init(&ce->ent, memihash(ce->name, ce_namelen(ce)));
+		hashmap_add(&istate->name_hash, &ce->ent);
+	}
 
 	if (ignore_case)
 		add_dir_entry(istate, ce);
@@ -680,6 +684,7 @@ int index_dir_exists(struct index_state *istate, const char *name, int namelen)
 	struct dir_entry *dir;
 
 	lazy_init_name_hash(istate);
+	expand_to_path(istate, name, namelen, 0);
 	dir = find_dir_entry(istate, name, namelen);
 	return dir && dir->nr;
 }
@@ -690,6 +695,7 @@ void adjust_dirname_case(struct index_state *istate, char *name)
 	const char *ptr = startPtr;
 
 	lazy_init_name_hash(istate);
+	expand_to_path(istate, name, strlen(name), 0);
 	while (*ptr) {
 		while (*ptr && *ptr != '/')
 			ptr++;
@@ -713,6 +719,7 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
 	unsigned int hash = memihash(name, namelen);
 
 	lazy_init_name_hash(istate);
+	expand_to_path(istate, name, namelen, icase);
 
 	ce = hashmap_get_entry_from_hash(&istate->name_hash, hash, NULL,
 					 struct cache_entry, ent);

@@ -33,7 +33,7 @@ static struct oid_array ref_tips_after_fetch;
  * will be disabled because we can't guess what might be configured in
  * .gitmodules unless the user resolves the conflict.
  */
-int is_gitmodules_unmerged(const struct index_state *istate)
+int is_gitmodules_unmerged(struct index_state *istate)
 {
 	int pos = index_name_pos(istate, GITMODULES_FILE, strlen(GITMODULES_FILE));
 	if (pos < 0) { /* .gitmodules not found or isn't merged */
@@ -301,7 +301,7 @@ int is_submodule_populated_gently(const char *path, int *return_error_code)
 /*
  * Dies if the provided 'prefix' corresponds to an unpopulated submodule
  */
-void die_in_unpopulated_submodule(const struct index_state *istate,
+void die_in_unpopulated_submodule(struct index_state *istate,
 				  const char *prefix)
 {
 	int i, prefixlen;
@@ -331,7 +331,7 @@ void die_in_unpopulated_submodule(const struct index_state *istate,
 /*
  * Dies if any paths in the provided pathspec descends into a submodule
  */
-void die_path_inside_submodule(const struct index_state *istate,
+void die_path_inside_submodule(struct index_state *istate,
 			       const struct pathspec *ps)
 {
 	int i, j;

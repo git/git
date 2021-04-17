@@ -283,3 +283,76 @@ void ensure_full_index(struct index_state *istate)
 
 	trace2_region_leave("index", "ensure_full_index", istate->repo);
 }
+
+/*
+ * This static global helps avoid infinite recursion between
+ * expand_to_path() and index_file_exists().
+ */
+static int in_expand_to_path = 0;
+
+void expand_to_path(struct index_state *istate,
+		    const char *path, size_t pathlen, int icase)
+{
+	struct strbuf path_mutable = STRBUF_INIT;
+	size_t substr_len;
+
+	/* prevent extra recursion */
+	if (in_expand_to_path)
+		return;
+
+	if (!istate || !istate->sparse_index)
+		return;
+
+	if (!istate->repo)
+		istate->repo = the_repository;
+
+	in_expand_to_path = 1;
+
+	/*
+	 * We only need to actually expand a region if the
+	 * following are both true:
+	 *
+	 * 1. 'path' is not already in the index.
+	 * 2. Some parent directory of 'path' is a sparse directory.
+	 */
+
+	if (index_file_exists(istate, path, pathlen, icase))
+		goto cleanup;
+
+	strbuf_add(&path_mutable, path, pathlen);
+	strbuf_addch(&path_mutable, '/');
+
+	/* Check the name hash for all parent directories */
+	substr_len = 0;
+	while (substr_len < pathlen) {
+		char temp;
+		char *replace = strchr(path_mutable.buf + substr_len, '/');
+
+		if (!replace)
+			break;
+
+		/* replace the character _after_ the slash */
+		replace++;
+		temp = *replace;
+		*replace = '\0';
+		if (index_file_exists(istate, path_mutable.buf,
+				      path_mutable.len, icase)) {
+			/*
+			 * We found a parent directory in the name-hash
+			 * hashtable, because only sparse directory entries
+			 * have a trailing '/' character.  Since "path" wasn't
+			 * in the index, perhaps it exists within this
+			 * sparse-directory.  Expand accordingly.
+			 */
+			ensure_full_index(istate);
+			break;
+		}
+
+		*replace = temp;
+		substr_len = replace - path_mutable.buf;
+	}
+
+cleanup:
+	strbuf_release(&path_mutable);
+	in_expand_to_path = 0;
+}
