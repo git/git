@@ -22,9 +22,10 @@ test_expect_success 'shared = 0400 (faulty permission u-w)' '
 	)
 '
 
+# TODO(hanwen): for REFTABLE should inspect group-readable of .git/reftable/
 for u in 002 022
 do
-	test_expect_success POSIXPERM "shared=1 does not clear bits preset by umask $u" '
+	test_expect_success REFFILES,POSIXPERM "shared=1 does not clear bits preset by umask $u" '
 		mkdir sub && (
 			cd sub &&
 			umask $u &&
@@ -114,7 +115,8 @@ test_expect_success POSIXPERM 'info/refs respects umask in unshared repo' '
 	test_cmp expect actual
 '
 
-test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
+# For reftable, the check on .git/reftable/ is sufficient.
+test_expect_success REFFILES,POSIXPERM 'git reflog expire honors core.sharedRepository' '
 	umask 077 &&
 	git config core.sharedRepository group &&
 	git reflog expire --all &&
@@ -201,7 +203,7 @@ test_expect_success POSIXPERM 're-init respects core.sharedrepository (remote)' 
 	test_cmp expect actual
 '
 
-test_expect_success POSIXPERM 'template can set core.sharedrepository' '
+test_expect_success REFFILES,POSIXPERM 'template can set core.sharedrepository' '
 	rm -rf child.git &&
 	umask 0022 &&
 	git config core.sharedrepository 0666 &&
