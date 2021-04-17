@@ -2,6 +2,11 @@
 
 #include "revision.h"
 
+typedef void (*diff_merges_setup_func_t)(struct rev_info *);
+static void set_separate(struct rev_info *revs);
+
+static diff_merges_setup_func_t set_to_default = set_separate;
+
 static void suppress(struct rev_info *revs)
 {
 	revs->separate_merges = 0;
@@ -29,10 +34,10 @@ static void set_m(struct rev_info *revs)
 {
 	/*
 	 * To "diff-index", "-m" means "match missing", and to the "log"
-	 * family of commands, it means "show full diff for merges". Set
+	 * family of commands, it means "show default diff for merges". Set
 	 * both fields appropriately.
 	 */
-	set_separate(revs);
+	set_to_default(revs);
 	revs->match_missing = 1;
 }
 
@@ -50,32 +55,51 @@ static void set_dense_combined(struct rev_info *revs)
 	revs->dense_combined_merges = 1;
 }
 
+static diff_merges_setup_func_t func_by_opt(const char *optarg)
+{
+	if (!strcmp(optarg, "off") || !strcmp(optarg, "none"))
+		return suppress;
+	if (!strcmp(optarg, "1") || !strcmp(optarg, "first-parent"))
+		return set_first_parent;
+	else if (!strcmp(optarg, "separate"))
+		return set_separate;
+	else if (!strcmp(optarg, "c") || !strcmp(optarg, "combined"))
+		return set_combined;
+	else if (!strcmp(optarg, "cc") || !strcmp(optarg, "dense-combined"))
+		return set_dense_combined;
+	else if (!strcmp(optarg, "m") || !strcmp(optarg, "on"))
+		return set_to_default;
+	return NULL;
+}
+
 static void set_diff_merges(struct rev_info *revs, const char *optarg)
 {
-	if (!strcmp(optarg, "off") || !strcmp(optarg, "none")) {
-		suppress(revs);
-		/* Return early to leave revs->merges_need_diff unset */
-		return;
-	}
+	diff_merges_setup_func_t func = func_by_opt(optarg);
 
-	if (!strcmp(optarg, "1") || !strcmp(optarg, "first-parent"))
-		set_first_parent(revs);
-	else if (!strcmp(optarg, "m") || !strcmp(optarg, "separate"))
-		set_separate(revs);
-	else if (!strcmp(optarg, "c") || !strcmp(optarg, "combined"))
-		set_combined(revs);
-	else if (!strcmp(optarg, "cc") || !strcmp(optarg, "dense-combined"))
-		set_dense_combined(revs);
-	else
+	if (!func)
 		die(_("unknown value for --diff-merges: %s"), optarg);
 
-	/* The flag is cleared by set_xxx() functions, so don't move this up */
-	revs->merges_need_diff = 1;
+	func(revs);
+
+	/* NOTE: the merges_need_diff flag is cleared by func() call */
+	if (func != suppress)
+		revs->merges_need_diff = 1;
 }
 
 /*
  * Public functions. They are in the order they are called.
  */
+
+int diff_merges_config(const char *value)
+{
+	diff_merges_setup_func_t func = func_by_opt(value);
+
+	if (!func)
+		return -1;
+
+	set_to_default = func;
+	return 0;
+}
 
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 {
