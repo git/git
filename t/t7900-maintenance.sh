@@ -356,8 +356,6 @@ test_expect_success 'pack-refs task' '
 	done &&
 	GIT_TRACE2_EVENT="$(pwd)/pack-refs.txt" \
 		git maintenance run --task=pack-refs &&
-	ls .git/refs/heads/ >after &&
-	test_must_be_empty after &&
 	test_subcommand git pack-refs --all --prune <pack-refs.txt
 '
 
