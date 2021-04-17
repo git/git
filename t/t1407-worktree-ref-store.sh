@@ -52,7 +52,14 @@ test_expect_success 'create_symref(FOO, refs/heads/main)' '
 	test_cmp expected actual
 '
 
-test_expect_success 'for_each_reflog()' '
+# Some refs (refs/bisect/*, pseudorefs) are kept per worktree, so they should
+# only appear in the for-each-reflog output if it is called from the correct
+# worktree, which is exercised in this test. This test is poorly written (and
+# therefore marked REFFILES) for mulitple reasons: 1) it creates invalidly
+# formatted log entres. 2) it uses direct FS access for creating the reflogs. 3)
+# PSEUDO-WT and refs/bisect/random do not create reflogs by default, so it is
+# not testing a realistic scenario.
+test_expect_success REFFILES 'for_each_reflog()' '
 	echo $ZERO_OID > .git/logs/PSEUDO-MAIN &&
 	mkdir -p     .git/logs/refs/bisect &&
 	echo $ZERO_OID > .git/logs/refs/bisect/random &&
