@@ -80,8 +80,18 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	if (!maxcount || array.nr < maxcount)
 		maxcount = array.nr;
-	for (i = 0; i < maxcount; i++)
-		show_ref_array_item(array.items[i], &format);
+	for (i = 0; i < maxcount; i++) {
+		struct strbuf output = STRBUF_INIT;
+		struct strbuf err = STRBUF_INIT;
+
+		if (format_ref_array_item(array.items[i], &format, &output, &err))
+			die("%s", err.buf);
+		fwrite(output.buf, 1, output.len, stdout);
+		putchar('\n');
+
+		strbuf_release(&err);
+		strbuf_release(&output);
+	}
 	ref_array_clear(&array);
 	return 0;
 }
