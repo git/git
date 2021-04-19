@@ -5,6 +5,7 @@
 
 struct cache_entry;
 struct checkout;
+struct progress;
 
 /****************************************************************
  * Users of parallel checkout
@@ -31,13 +32,15 @@ void init_parallel_checkout(void);
  * for later write and return 0.
  */
 int enqueue_checkout(struct cache_entry *ce, struct conv_attrs *ca);
+size_t pc_queue_size(void);
 
 /*
  * Write all the queued entries, returning 0 on success. If the number of
  * entries is smaller than the specified threshold, the operation is performed
  * sequentially.
  */
-int run_parallel_checkout(struct checkout *state, int num_workers, int threshold);
+int run_parallel_checkout(struct checkout *state, int num_workers, int threshold,
+			  struct progress *progress, unsigned int *progress_cnt);
 
 /****************************************************************
  * Interface with checkout--worker
