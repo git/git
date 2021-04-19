@@ -1849,6 +1849,12 @@ char *git_system_config(void)
 	return system_path(ETC_GITCONFIG);
 }
 
+void git_global_config(char **user_config, char **xdg_config)
+{
+	*user_config = expand_user_path("~/.gitconfig", 0);
+	*xdg_config = xdg_config_home("config");
+}
+
 /*
  * Parse environment variable 'k' as a boolean (in various
  * possible spellings); if missing, use the default value 'def'.
@@ -1881,8 +1887,8 @@ static int do_git_config_sequence(const struct config_options *opts,
 {
 	int ret = 0;
 	char *system_config = git_system_config();
-	char *xdg_config = xdg_config_home("config");
-	char *user_config = expand_user_path("~/.gitconfig", 0);
+	char *xdg_config = NULL;
+	char *user_config = NULL;
 	char *repo_config;
 	enum config_scope prev_parsing_scope = current_parsing_scope;
 
@@ -1900,6 +1906,8 @@ static int do_git_config_sequence(const struct config_options *opts,
 		ret += git_config_from_file(fn, system_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_GLOBAL;
+	git_global_config(&user_config, &xdg_config);
+
 	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))
 		ret += git_config_from_file(fn, xdg_config, data);
 
