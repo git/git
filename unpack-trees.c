@@ -17,6 +17,7 @@
 #include "object-store.h"
 #include "promisor-remote.h"
 #include "entry.h"
+#include "parallel-checkout.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
@@ -441,7 +442,6 @@ static int check_updates(struct unpack_trees_options *o,
 	if (should_update_submodules())
 		load_gitmodules_file(index, &state);
 
-	enable_delayed_checkout(&state);
 	if (has_promisor_remote()) {
 		/*
 		 * Prefetch the objects that are to be checked out in the loop
@@ -464,6 +464,9 @@ static int check_updates(struct unpack_trees_options *o,
 					   to_fetch.oid, to_fetch.nr);
 		oid_array_clear(&to_fetch);
 	}
+
+	enable_delayed_checkout(&state);
+	init_parallel_checkout();
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
@@ -477,6 +480,7 @@ static int check_updates(struct unpack_trees_options *o,
 		}
 	}
 	stop_progress(&progress);
+	errs |= run_parallel_checkout(&state);
 	errs |= finish_delayed_checkout(&state, NULL);
 	git_attr_set_direction(GIT_ATTR_CHECKIN);
 
