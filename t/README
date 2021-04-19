@@ -1126,6 +1126,12 @@ use these, and "test_set_prereq" for how to define your own.
 
    Git wasn't compiled with NO_PTHREADS=YesPlease.
 
+ - REFFILES
+
+   Test is specific to packed/loose ref storage, and should be
+   disabled for other ref storage backends
+
+
 Tips for Writing Tests
 ----------------------
 
