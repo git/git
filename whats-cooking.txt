@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2021, #04; Thu, 15)
-X-master-at: d1b10fc6d84d49796026e567833b88c7f8886c35
-X-next-at: 2be84b2adec173cb8ec032d604b94d60c1637cb9
+Subject: What's cooking in git.git (Apr 2021, #05; Mon, 19)
+X-master-at: b0c09ab8796fb736efa432b8e817334f3e5ee75a
+X-next-at: 90b4fd31cda88325bdebf89b7d407491b176f853
 
-What's cooking in git.git (Apr 2021, #04; Thu, 15)
+What's cooking in git.git (Apr 2021, #05; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -43,214 +43,117 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/complete-cherry-pick-head (2021-04-07) 1 commit
-  (merged to 'next' on 2021-04-09 at 5810d0e2c2)
- + bash completion: complete CHERRY_PICK_HEAD
+* ah/merge-ort-ubsan-fix (2021-04-12) 1 commit
+  (merged to 'next' on 2021-04-13 at 41713a32bd)
+ + merge-ort: only do pointer arithmetic for non-empty lists
 
- The command line completion (in contrib/) has learned that
- CHERRY_PICK_HEAD is a possible pseudo-ref.
-
-
-* ab/detox-config-gettext (2021-04-08) 1 commit
-  (merged to 'next' on 2021-04-08 at 01d6ff5069)
- + config.c: remove last remnant of GIT_TEST_GETTEXT_POISON
-
- The last remnant of gettext-poison has been removed.
+ Code clean-up for merge-ort backend.
 
 
-* ab/perl-do-not-abuse-map (2021-04-02) 1 commit
-  (merged to 'next' on 2021-04-03 at 4eaf558557)
- + git-send-email: replace "map" in void context with "for"
- (this branch is used by ab/send-email-validate-errors.)
+* en/ort-perf-batch-10 (2021-03-18) 8 commits
+  (merged to 'next' on 2021-04-07 at 9826d89311)
+ + diffcore-rename: determine which relevant_sources are no longer relevant
+ + merge-ort: record the reason that we want a rename for a file
+ + diffcore-rename: add computation of number of unknown renames
+ + diffcore-rename: check if we have enough renames for directories early on
+ + diffcore-rename: only compute dir_rename_count for relevant directories
+ + merge-ort: record the reason that we want a rename for a directory
+ + merge-ort, diffcore-rename: tweak dirs_removed and relevant_source type
+ + diffcore-rename: take advantage of "majority rules" to skip more renames
+ (this branch is used by en/ort-perf-batch-11 and en/ort-readiness.)
 
- Perl critique.
-
-
-* ab/send-email-validate-errors (2021-04-06) 3 commits
-  (merged to 'next' on 2021-04-06 at d7fb1dbde0)
- + git-send-email: improve --validate error output
- + git-send-email: refactor duplicate $? checks into a function
- + git-send-email: test full --validate output
- (this branch uses ab/perl-do-not-abuse-map.)
-
- Clean-up codepaths that implements "git send-email --validate"
- option and improves the message from it.
+ Various rename detection optimization to help "ort" merge strategy
+ backend.
 
 
-* cc/test-helper-bloom-usage-fix (2021-04-05) 1 commit
-  (merged to 'next' on 2021-04-06 at 4895f33fee)
- + test-bloom: fix missing 'bloom' from usage string
+* en/ort-readiness (2021-03-20) 13 commits
+  (merged to 'next' on 2021-04-08 at 20283a3f10)
+ + Add testing with merge-ort merge strategy
+ + t6423: mark remaining expected failure under merge-ort as such
+ + Revert "merge-ort: ignore the directory rename split conflict for now"
+ + merge-recursive: add a bunch of FIXME comments documenting known bugs
+ + merge-ort: write $GIT_DIR/AUTO_MERGE whenever we hit a conflict
+ + t: mark several submodule merging tests as fixed under merge-ort
+ + merge-ort: implement CE_SKIP_WORKTREE handling with conflicted entries
+ + t6428: new test for SKIP_WORKTREE handling and conflicts
+ + merge-ort: support subtree shifting
+ + merge-ort: let renormalization change modify/delete into clean delete
+ + merge-ort: have ll_merge() use a special attr_index for renormalization
+ + merge-ort: add a special minimal index just for renormalization
+ + merge-ort: use STABLE_QSORT instead of QSORT where required
+ (this branch is used by en/ort-perf-batch-11; uses en/ort-perf-batch-10.)
 
- Usage message fix for a test helper.
-
-
-* fm/user-manual-use-preface (2021-04-03) 1 commit
-  (merged to 'next' on 2021-04-05 at 0ae8f63207)
- + user-manual.txt: assign preface an id and a title
-
- Doc update to improve git.info
-
-
-* gk/gitweb-redacted-email (2021-04-08) 1 commit
-  (merged to 'next' on 2021-04-08 at 8a19c3cd6e)
- + gitweb: add "e-mail privacy" feature to redact e-mail addresses
-
- "gitweb" learned "e-mail privacy" feature to redact strings that
- look like e-mail addresses on various pages.
-
-
-* jk/ref-filter-segfault-fix (2021-04-01) 1 commit
-  (merged to 'next' on 2021-04-02 at 03596563b7)
- + ref-filter: fix NULL check for parse object failure
-
- A NULL-dereference bug has been corrected in an error codepath in
- "git for-each-ref", "git branch --list" etc.
-
-
-* jz/apply-3way-cached (2021-04-07) 1 commit
-  (merged to 'next' on 2021-04-09 at 7d1e84936f)
- + git-apply: allow simultaneous --cached and --3way options
- (this branch uses jz/apply-run-3way-first.)
-
- "git apply" now takes "--3way" and "--cached" at the same time, and
- work and record results only in the index.
-
-
-* jz/apply-run-3way-first (2021-04-06) 1 commit
-  (merged to 'next' on 2021-04-08 at f826bcc6b8)
- + git-apply: try threeway first when "--3way" is used
- (this branch is used by jz/apply-3way-cached.)
-
- "git apply --3way" has always been "to fall back to 3-way merge
- only when straight application fails". Swap the order of falling
- back so that 3-way is always attempted first (only when the option
- is given, of course) and then straight patch application is used as
- a fallback when it fails.
-
-
-* tb/pack-preferred-tips-to-give-bitmap (2021-03-31) 3 commits
-  (merged to 'next' on 2021-04-03 at cd7024ecd8)
- + builtin/pack-objects.c: respect 'pack.preferBitmapTips'
- + t/helper/test-bitmap.c: initial commit
- + pack-bitmap: add 'test_bitmap_commits()' helper
- (this branch is used by tb/multi-pack-bitmaps.)
-
- A configuration variable has been added to force tips of certain
- refs to be given a reachability bitmap.
-
-
-* tb/precompose-prefix-simplify (2021-04-05) 2 commits
-  (merged to 'next' on 2021-04-05 at 78e8ed11b7)
- + macOS: precompose startup_info->prefix
- + precompose_utf8: make precompose_string_if_needed() public
-
- Streamline the codepath to fix the UTF-8 encoding issues in the
- argv[] and the prefix on macOS.
-
-
-* vs/completion-with-set-u (2021-04-08) 1 commit
-  (merged to 'next' on 2021-04-08 at b9b8bde89d)
- + completion: audit and guard $GIT_* against unset use
-
- The command-line completion script (in contrib/) had a couple of
- references that would have given a warning under the "-u" (nounset)
- option.
+ Plug the ort merge backend throughout the rest of the system, and
+ start testing it as a replacement for the recursive backend.
 
 --------------------------------------------------
 [New Topics]
 
-* ab/detox-gettext-tests (2021-04-13) 1 commit
-  (merged to 'next' on 2021-04-15 at db0da2903a)
- + tests: remove all uses of test_i18cmp
+* ba/object-info (2021-04-15) 2 commits
+ - SQUASH???
+ - object-info: support for retrieving object info
 
- Test clean-up.
-
- Will merge to 'master'.
-
-
-* ab/fsck-unexpected-type (2021-04-13) 6 commits
- - fsck: report invalid object type-path combinations
- - fsck: report invalid types recorded in objects
- - object-store.h: move read_loose_object() below 'struct object_info'
- - fsck: don't hard die on invalid object types
- - fsck tests: refactor one test to use a sub-repo
- - cache.h: move object functions to object-store.h
-
- "git fsck" has been taught to report mismatch between expected and
- actual types of an object better.
+ Over-the-wire protocol learns a new request type to ask for object
+ sizes given a list of object names.
 
 
-* ab/usage-error-docs (2021-04-13) 3 commits
-  (merged to 'next' on 2021-04-15 at dbbbaa5eea)
- + api docs: document that BUG() emits a trace2 error event
- + api docs: document BUG() in api-error-handling.txt
- + usage.c: don't copy/paste the same comment three times
+* js/access-nul-emulation-on-windows (2021-04-16) 1 commit
+  (merged to 'next' on 2021-04-16 at 3017437e51)
+ + msvc: avoid calling `access("NUL", flags)`
 
- Documentation updates, with unrelated comment updates, too.
+ Portability fix.
 
  Will merge to 'master'.
 
 
-* jk/promisor-optim (2021-04-13) 3 commits
-  (merged to 'next' on 2021-04-15 at 41f303ef9b)
- + revision: avoid parsing with --exclude-promisor-objects
- + lookup_unknown_object(): take a repository argument
- + is_promisor_object(): free tree buffer after parsing
- (this branch is used by rs/repack-without-loosening-promised-objects.)
+* zh/format-ref-array-optim (2021-04-19) 2 commits
+ - ref-filter: reuse output buffer
+ - ref-filter: get rid of show_ref_array_item
 
- Handling of "promisor packs" that allows certain objects to be
- missing and lazily retrievable has been optimized (a bit).
+ "git (branch|tag) --format=..." has been micro-optimized.
 
- Will merge to 'master'.
+ Almost there?
 
 
-* so/log-diff-merge (2021-04-13) 5 commits
- - doc/diff-options: document new --diff-merges features
- - diff-merges: introduce log.diffMerges config variable
- - diff-merges: adapt -m to enable default diff format
- - diff-merges: refactor set_diff_merges()
- - diff-merges: introduce --diff-merges=on
+* vs/completion-with-set-u (2021-04-16) 1 commit
+ - completion: avoid aliased command lookup error in nounset mode
 
- "git log" learned "--diff-merges=<style>" option, with an
- associated configuration variable log.diffMerges.
-
- Seems to break t9902.
-
-
-* rs/repack-without-loosening-promised-objects (2021-04-14) 2 commits
- - repack: avoid loosening promisor pack objects in partial clones
- - repack: teach --no-prune-packed to skip `git prune-packed`
- (this branch uses jk/promisor-optim.)
-
- "git repack -A -d" in a partial clone unnecessarily loosened
- objects in promisor pack.
-
-
-* jc/doc-do-not-capitalize-clarification (2021-04-14) 1 commit
-  (merged to 'next' on 2021-04-15 at 873f7a1f84)
- + doc: clarify "do not capitalize the first word" rule
-
- Doc update for developers.
-
- Will merge to 'master'.
-
-
-* mt/pkt-write-errors (2021-04-15) 1 commit
- - pkt-line: do not report packet write errors twice
-
- When packet_write() fails, we gave an extra error message
- unnecessarily, which has been corrected.
+ Effort to make the command line completion (in contrib/) safe with
+ "set -u" continues.
 
  Will merge to 'next'.
 
 
-* ow/push-quiet-set-upstream (2021-04-15) 1 commit
- - transport: respect verbosity when setting upstream
+* hn/prep-tests-for-reftable (2021-04-19) 18 commits
+ - t1415: set REFFILES for test specific to storage format
+ - t4202: mark bogus head hash test with REFFILES
+ - t7003: check reflog existence only for REFFILES
+ - t7900: mark pack-refs tests as REFFILES
+ - t1404: mark tests that muck with .git directly as REFFILES.
+ - t2017: mark --orphan/logAllRefUpdates=false test as REFFILES
+ - t1414: mark corruption test with REFFILES
+ - t1407: require REFFILES for for_each_reflog test
+ - test-lib: provide test prereq REFFILES
+ - t5304: use "reflog expire --all" to clear the reflog
+ - t7003: use rev-parse rather than FS inspection
+ - t5000: inspect HEAD using git-rev-parse
+ - t1301: fix typo in error message
+ - t1413: use tar to save and restore entire .git directory
+ - t1401-symbolic-ref: avoid direct filesystem access
+ - t5601: read HEAD using rev-parse
+ - t9300: check ref existence using git-rev-parse rather than FS check
+ - t4202: split testcase for invalid HEAD symref and HEAD hash
 
- "git push --quiet --set-upstream" was not quiet when setting the
- upstream branch configuration, which has been corrected.
+ Preliminary clean-up of tests before the main reftable changes
+ hits the codebase.
 
- Will merge to 'next'.
+
+* ps/config-env-option-with-separate-value (2021-04-19) 2 commits
+ - git: support separate arg for `--config-env`'s value
+ - git.txt: fix synopsis of `--config-env` missing the equals sign
+
+ "git --config-env var=val cmd" weren't accepted (only
+ --config-env=var=val was).
 
 --------------------------------------------------
 [Stalled]
@@ -390,6 +293,107 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ab/detox-gettext-tests (2021-04-13) 1 commit
+  (merged to 'next' on 2021-04-15 at db0da2903a)
+ + tests: remove all uses of test_i18cmp
+
+ Test clean-up.
+
+ Will merge to 'master'.
+
+
+* ab/fsck-unexpected-type (2021-04-13) 6 commits
+ - fsck: report invalid object type-path combinations
+ - fsck: report invalid types recorded in objects
+ - object-store.h: move read_loose_object() below 'struct object_info'
+ - fsck: don't hard die on invalid object types
+ - fsck tests: refactor one test to use a sub-repo
+ - cache.h: move object functions to object-store.h
+
+ "git fsck" has been taught to report mismatch between expected and
+ actual types of an object better.
+
+
+* ab/usage-error-docs (2021-04-13) 3 commits
+  (merged to 'next' on 2021-04-15 at dbbbaa5eea)
+ + api docs: document that BUG() emits a trace2 error event
+ + api docs: document BUG() in api-error-handling.txt
+ + usage.c: don't copy/paste the same comment three times
+
+ Documentation updates, with unrelated comment updates, too.
+
+ Will merge to 'master'.
+
+
+* jk/promisor-optim (2021-04-13) 3 commits
+  (merged to 'next' on 2021-04-15 at 41f303ef9b)
+ + revision: avoid parsing with --exclude-promisor-objects
+ + lookup_unknown_object(): take a repository argument
+ + is_promisor_object(): free tree buffer after parsing
+ (this branch is used by rs/repack-without-loosening-promised-objects.)
+
+ Handling of "promisor packs" that allows certain objects to be
+ missing and lazily retrievable has been optimized (a bit).
+
+ Will merge to 'master'.
+
+
+* so/log-diff-merge (2021-04-16) 5 commits
+  (merged to 'next' on 2021-04-17 at 6c1eba8ee3)
+ + doc/diff-options: document new --diff-merges features
+ + diff-merges: introduce log.diffMerges config variable
+ + diff-merges: adapt -m to enable default diff format
+ + diff-merges: refactor set_diff_merges()
+ + diff-merges: introduce --diff-merges=on
+ (this branch uses sg/bugreport-fixes.)
+
+ "git log" learned "--diff-merges=<style>" option, with an
+ associated configuration variable log.diffMerges.
+
+ Will merge to 'master'.
+
+
+* rs/repack-without-loosening-promised-objects (2021-04-19) 1 commit
+ - repack: avoid loosening promisor objects in partial clones
+ (this branch uses jk/promisor-optim.)
+
+ "git repack -A -d" in a partial clone unnecessarily loosened
+ objects in promisor pack.
+
+ Almost there.
+ cf. <20210419191553.581877-1-jonathantanmy@google.com>
+ cf. <xmqqa6pt98j4.fsf@gitster.g>
+
+
+* jc/doc-do-not-capitalize-clarification (2021-04-14) 1 commit
+  (merged to 'next' on 2021-04-15 at 873f7a1f84)
+ + doc: clarify "do not capitalize the first word" rule
+
+ Doc update for developers.
+
+ Will merge to 'master'.
+
+
+* mt/pkt-write-errors (2021-04-15) 1 commit
+  (merged to 'next' on 2021-04-16 at 4a82d89ff3)
+ + pkt-line: do not report packet write errors twice
+
+ When packet_write() fails, we gave an extra error message
+ unnecessarily, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* ow/push-quiet-set-upstream (2021-04-15) 1 commit
+  (merged to 'next' on 2021-04-16 at 9466d4ef38)
+ + transport: respect verbosity when setting upstream
+
+ "git push --quiet --set-upstream" was not quiet when setting the
+ upstream branch configuration, which has been corrected.
+
+ Will merge to 'master'.
+
+
 * jt/fetch-pack-request-fix (2021-04-08) 1 commit
   (merged to 'next' on 2021-04-15 at 25c02ce3c3)
  + fetch-pack: buffer object-format with other args
@@ -455,7 +459,8 @@ Release tarballs are available at:
  looked (at least to me) to be obviously correct.
 
 
-* bc/hash-transition-interop-part-1 (2021-04-10) 16 commits
+* bc/hash-transition-interop-part-1 (2021-04-19) 17 commits
+ - http-push: set algorithm when reading object ID
  - fixup! hash: provide per-algorithm null OIDs
  - hex: print objects using the hash algorithm member
  - hex: default to the_hash_algo on zero algorithm value
@@ -475,10 +480,11 @@ Release tarballs are available at:
 
  SHA-256 transition.
 
- Seems to break the tests when merged to 'seen'.
+ Expecting a reroll.
+ cf. <YHzmjhLy2QjDefXy@camp.crustytoothpaste.net>
 
 
-* ps/rev-list-object-type-filter (2021-04-12) 8 commits
+* ps/rev-list-object-type-filter (2021-04-19) 8 commits
  - rev-list: allow filtering of provided items
  - pack-bitmap: implement combined filter
  - pack-bitmap: implement object type filter
@@ -492,7 +498,8 @@ Release tarballs are available at:
  which can be used to exclude objects of the given kind from the
  packfile generated by pack-objects.
 
- Seems to break the tests when merged to 'seen'.
+ Will merge to 'next'?
+ cf. <cover.1618832437.git.ps@pks.im>
 
 
 * tb/multi-pack-bitmaps (2021-04-10) 23 commits
@@ -535,6 +542,7 @@ Release tarballs are available at:
  Test clean-up.
 
  Waiting for reviews.
+ cf. <87mttx121j.fsf@evledraar.gmail.com>
 
 
 * ab/test-lib-updates (2021-04-12) 16 commits
@@ -558,16 +566,7 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Waiting for reviews.
-
-
-* ah/merge-ort-ubsan-fix (2021-04-12) 1 commit
-  (merged to 'next' on 2021-04-13 at 41713a32bd)
- + merge-ort: only do pointer arithmetic for non-empty lists
-
- Code clean-up for merge-ort backend.
-
- Will merge to 'master'.
+ Waiting for review discussion to conclude.
 
 
 * ao/p4-avoid-decoding (2021-04-12) 2 commits
@@ -621,11 +620,10 @@ Release tarballs are available at:
  cf. <YHYZTLl90rkWWVOr@google.com>, <87a6q22dei.fsf@evledraar.gmail.com>
 
 
-* ps/config-global-override (2021-04-13) 3 commits
-  (merged to 'next' on 2021-04-15 at 60a58d74ab)
- + config: allow overriding of global and system configuration
- + config: unify code paths to get global config paths
- + config: rename `git_etc_config()`
+* ps/config-global-override (2021-04-19) 3 commits
+ - config: allow overriding of global and system configuration
+ - config: unify code paths to get global config paths
+ - config: rename `git_etc_config()`
 
  Replace GIT_CONFIG_NOSYSTEM mechanism to decline from reading the
  system-wide configuration file with GIT_CONFIG_SYSTEM that lets
@@ -634,21 +632,23 @@ Release tarballs are available at:
  setting NOSYSTEM), and introduce GIT_CONFIG_GLOBAL to override the
  per-user configuration in $HOME/.gitconfig.
 
- Will merge to 'master'.
+ Will merge to 'next'?
+ Reverted from 'next' to fix GIT_CONFIG_NOSYSTEM regression.
 
 
-* ds/maintenance-prefetch-fix (2021-04-10) 3 commits
- - maintenance: use 'git fetch --prefetch'
- - fetch: add --prefetch option
- - maintenance: simplify prefetch logic
+* ds/maintenance-prefetch-fix (2021-04-16) 4 commits
+  (merged to 'next' on 2021-04-16 at 0a1818e235)
+ + maintenance: respect remote.*.skipFetchAll
+ + maintenance: use 'git fetch --prefetch'
+ + fetch: add --prefetch option
+ + maintenance: simplify prefetch logic
 
  The prefetch task in "git maintenance" assumed that "git fetch"
  from any remote would fetch all its local branches, which would
  fetch too much if the user is interested in only a subset of
  branches there.
 
- Expecting a reroll.
- cf. <e7f09182-3b75-f2a3-c9c7-0055cc377a32@gmail.com>
+ Will merge to 'master'.
 
 
 * mr/bisect-in-c-4 (2021-04-11) 4 commits
@@ -666,14 +666,15 @@ Release tarballs are available at:
 
 
 * sg/bugreport-fixes (2021-04-08) 1 commit
- - Makefile: add missing dependencies of 'config-list.h'
+  (merged to 'next' on 2021-04-16 at e93602f4df)
+ + Makefile: add missing dependencies of 'config-list.h'
+ (this branch is used by so/log-diff-merge.)
 
  The dependencies for config-list.h and command-list.h were broken
  when the former was split out of the latter, which has been
  corrected.
 
- Expecting a reroll.
- cf. <20210409212044.GD2947267@szeder.dev>
+ Will merge to 'master'.
 
 
 * mt/add-rm-in-sparse-checkout (2021-04-08) 7 commits
@@ -714,10 +715,16 @@ Release tarballs are available at:
  - fsmonitor-ipc: create client routines for git-fsmonitor--daemon
  - Merge branch 'jh/simple-ipc' into jh/rfc-builtin-fsmonitor
 
+ An attempt to write and ship with a watchman equivalent tailored
+ for our use.
 
-* zh/trailer-cmd (2021-04-12) 2 commits
+ Will discard.
+ ... as nobody seems to be interested.
+
+
+* zh/trailer-cmd (2021-04-17) 2 commits
  - trailer: add new .cmd config option
- - docs: correct descript of trailer.<token>.command
+ - docs: correct description of .command
 
  The way the command line specified by the trailer.<token>.command
  configuration variable receives the end-user supplied value was
@@ -725,10 +732,8 @@ Release tarballs are available at:
  same goal in a safer and more intuitive way has been added, as
  the trailer.<token>.cmd configuration variable, to replace it.
 
- Waiting for reviews.
- I doubt it is a good idea to copy the "run once even without being
- asked" from .command interface.
- cf. <xmqqwnt7b5fg.fsf@gitster.g>
+ Waiting for reviews to conclude.
+ cf. <xmqq5z0kbl8x.fsf@gitster.g>
 
 
 * ab/userdiff-tests (2021-04-08) 9 commits
@@ -791,115 +796,83 @@ Release tarballs are available at:
  On hold, waiting for the "protections" topic to stablize.
 
 
-* en/ort-perf-batch-10 (2021-03-18) 8 commits
-  (merged to 'next' on 2021-04-07 at 9826d89311)
- + diffcore-rename: determine which relevant_sources are no longer relevant
- + merge-ort: record the reason that we want a rename for a file
- + diffcore-rename: add computation of number of unknown renames
- + diffcore-rename: check if we have enough renames for directories early on
- + diffcore-rename: only compute dir_rename_count for relevant directories
- + merge-ort: record the reason that we want a rename for a directory
- + merge-ort, diffcore-rename: tweak dirs_removed and relevant_source type
- + diffcore-rename: take advantage of "majority rules" to skip more renames
- (this branch is used by en/ort-perf-batch-11 and en/ort-readiness.)
-
- Various rename detection optimization to help "ort" merge strategy
- backend.
-
- Will merge to 'master'.
-
-
-* mt/parallel-checkout-part-2 (2021-04-08) 5 commits
+* mt/parallel-checkout-part-2 (2021-04-19) 5 commits
  - parallel-checkout: add design documentation
  - parallel-checkout: support progress displaying
  - parallel-checkout: add configuration options
  - parallel-checkout: make it truly parallel
  - unpack-trees: add basic support for parallel checkout
 
+ The checkout machinery has been taught to perform the actual
+ write-out of the files in parallel when able.
+
+ Will merge to 'next'.
+
 
 * ds/sparse-index-protections (2021-04-14) 26 commits
- - name-hash: use expand_to_path()
- - sparse-index: expand_to_path()
- - name-hash: don't add directories to name_hash
- - revision: ensure full index
- - resolve-undo: ensure full index
- - read-cache: ensure full index
- - pathspec: ensure full index
- - merge-recursive: ensure full index
- - entry: ensure full index
- - dir: ensure full index
- - update-index: ensure full index
- - stash: ensure full index
- - rm: ensure full index
- - merge-index: ensure full index
- - ls-files: ensure full index
- - grep: ensure full index
- - fsck: ensure full index
- - difftool: ensure full index
- - commit: ensure full index
- - checkout: ensure full index
- - checkout-index: ensure full index
- - add: ensure full index
- - cache: move ensure_full_index() to cache.h
- - read-cache: expand on query into sparse-directory entry
- - *: remove 'const' qualifier for struct index_state
- - sparse-index: API protection strategy
+  (merged to 'next' on 2021-04-17 at f1c40f89ba)
+ + name-hash: use expand_to_path()
+ + sparse-index: expand_to_path()
+ + name-hash: don't add directories to name_hash
+ + revision: ensure full index
+ + resolve-undo: ensure full index
+ + read-cache: ensure full index
+ + pathspec: ensure full index
+ + merge-recursive: ensure full index
+ + entry: ensure full index
+ + dir: ensure full index
+ + update-index: ensure full index
+ + stash: ensure full index
+ + rm: ensure full index
+ + merge-index: ensure full index
+ + ls-files: ensure full index
+ + grep: ensure full index
+ + fsck: ensure full index
+ + difftool: ensure full index
+ + commit: ensure full index
+ + checkout: ensure full index
+ + checkout-index: ensure full index
+ + add: ensure full index
+ + cache: move ensure_full_index() to cache.h
+ + read-cache: expand on query into sparse-directory entry
+ + *: remove 'const' qualifier for struct index_state
+ + sparse-index: API protection strategy
  (this branch uses ds/sparse-index.)
 
  Builds on top of the sparse-index infrastructure to mark operations
  that are not ready to mark with the sparse index, causing them to
  fall back on fully-populated index that they always have worked with.
 
-
-* en/ort-readiness (2021-03-20) 13 commits
-  (merged to 'next' on 2021-04-08 at 20283a3f10)
- + Add testing with merge-ort merge strategy
- + t6423: mark remaining expected failure under merge-ort as such
- + Revert "merge-ort: ignore the directory rename split conflict for now"
- + merge-recursive: add a bunch of FIXME comments documenting known bugs
- + merge-ort: write $GIT_DIR/AUTO_MERGE whenever we hit a conflict
- + t: mark several submodule merging tests as fixed under merge-ort
- + merge-ort: implement CE_SKIP_WORKTREE handling with conflicted entries
- + t6428: new test for SKIP_WORKTREE handling and conflicts
- + merge-ort: support subtree shifting
- + merge-ort: let renormalization change modify/delete into clean delete
- + merge-ort: have ll_merge() use a special attr_index for renormalization
- + merge-ort: add a special minimal index just for renormalization
- + merge-ort: use STABLE_QSORT instead of QSORT where required
- (this branch is used by en/ort-perf-batch-11; uses en/ort-perf-batch-10.)
-
- Plug the ort merge backend throughout the rest of the system, and
- start testing it as a replacement for the recursive backend.
-
  Will merge to 'master'.
 
 
 * hn/reftable (2021-04-14) 21 commits
- - SQUASH??? reftable: prepare for hash-algo recorded in each oid
- - Add "test-tool dump-reftable" command.
- - git-prompt: prepare for reftable refs backend
- - Reftable support for git-core
- - reftable: add dump utility
- - reftable: implement stack, a mutable database of reftable files.
- - reftable: implement refname validation
- - reftable: add merged table view
- - reftable: add a heap-based priority queue for reftable records
- - reftable: reftable file level tests
- - reftable: read reftable files
- - reftable: generic interface to tables
- - reftable: write reftable files
- - reftable: a generic binary tree implementation
- - reftable: reading/writing blocks
- - reftable: (de)serialization for the polymorphic record type.
- - reftable: add blocksource, an abstraction for random access reads
- - reftable: utility functions
- - reftable: add error related functionality
- - reftable: add LICENSE
- - init-db: set the_repository->hash_algo early on
+ . SQUASH??? reftable: prepare for hash-algo recorded in each oid
+ . Add "test-tool dump-reftable" command.
+ . git-prompt: prepare for reftable refs backend
+ . Reftable support for git-core
+ . reftable: add dump utility
+ . reftable: implement stack, a mutable database of reftable files.
+ . reftable: implement refname validation
+ . reftable: add merged table view
+ . reftable: add a heap-based priority queue for reftable records
+ . reftable: reftable file level tests
+ . reftable: read reftable files
+ . reftable: generic interface to tables
+ . reftable: write reftable files
+ . reftable: a generic binary tree implementation
+ . reftable: reading/writing blocks
+ . reftable: (de)serialization for the polymorphic record type.
+ . reftable: add blocksource, an abstraction for random access reads
+ . reftable: utility functions
+ . reftable: add error related functionality
+ . reftable: add LICENSE
+ . init-db: set the_repository->hash_algo early on
 
  The "reftable" backend for the refs API.
 
- Waiting for reviews.
+ Reroll exists; needs picking up.
+ cf. <pull.847.v7.git.git.1618832276.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Discarded]
