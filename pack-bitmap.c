@@ -779,9 +779,6 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	eword_t mask;
 	uint32_t i;
 
-	if (type != OBJ_BLOB && type != OBJ_TREE)
-		BUG("filter_bitmap_exclude_type: unsupported type '%d'", type);
-
 	/*
 	 * The non-bitmap version of this filter never removes
 	 * objects which the other side specifically asked for,
@@ -911,6 +908,24 @@ static void filter_bitmap_tree_depth(struct bitmap_index *bitmap_git,
 				   OBJ_BLOB);
 }
 
+static void filter_bitmap_object_type(struct bitmap_index *bitmap_git,
+				      struct object_list *tip_objects,
+				      struct bitmap *to_filter,
+				      enum object_type object_type)
+{
+	if (object_type < OBJ_COMMIT || object_type > OBJ_TAG)
+		BUG("filter_bitmap_object_type given invalid object");
+
+	if (object_type != OBJ_TAG)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TAG);
+	if (object_type != OBJ_COMMIT)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_COMMIT);
+	if (object_type != OBJ_TREE)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TREE);
+	if (object_type != OBJ_BLOB)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_BLOB);
+}
+
 static int filter_bitmap(struct bitmap_index *bitmap_git,
 			 struct object_list *tip_objects,
 			 struct bitmap *to_filter,
@@ -940,6 +955,14 @@ static int filter_bitmap(struct bitmap_index *bitmap_git,
 			filter_bitmap_tree_depth(bitmap_git, tip_objects,
 						 to_filter,
 						 filter->tree_exclude_depth);
+		return 0;
+	}
+
+	if (filter->choice == LOFC_OBJECT_TYPE) {
+		if (bitmap_git)
+			filter_bitmap_object_type(bitmap_git, tip_objects,
+						  to_filter,
+						  filter->object_type);
 		return 0;
 	}
 

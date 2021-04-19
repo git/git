@@ -10,7 +10,8 @@ test_expect_success 'set up bitmapped repo' '
 	test_commit much-larger-blob-one &&
 	git repack -adb &&
 	test_commit two &&
-	test_commit much-larger-blob-two
+	test_commit much-larger-blob-two &&
+	git tag tag
 '
 
 test_expect_success 'filters fallback to non-bitmap traversal' '
@@ -73,6 +74,28 @@ test_expect_success 'tree:1 filter' '
 	git rev-list --use-bitmap-index \
 		     --objects --filter=tree:1 HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'object:type filter' '
+	git rev-list --objects --filter=object:type=tag tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=object:type=tag tag >actual &&
+	test_cmp expect actual &&
+
+	git rev-list --objects --filter=object:type=commit tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=object:type=commit tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git rev-list --objects --filter=object:type=tree tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=object:type=tree tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git rev-list --objects --filter=object:type=blob tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=object:type=blob tag >actual &&
+	test_bitmap_traversal expect actual
 '
 
 test_done
