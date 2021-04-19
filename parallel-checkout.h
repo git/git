@@ -17,6 +17,7 @@ enum pc_status {
 };
 
 enum pc_status parallel_checkout_status(void);
+void get_parallel_checkout_configs(int *num_workers, int *threshold);
 
 /*
  * Put parallel checkout into the PC_ACCEPTING_ENTRIES state. Should be used
@@ -31,8 +32,12 @@ void init_parallel_checkout(void);
  */
 int enqueue_checkout(struct cache_entry *ce, struct conv_attrs *ca);
 
-/* Write all the queued entries, returning 0 on success.*/
-int run_parallel_checkout(struct checkout *state);
+/*
+ * Write all the queued entries, returning 0 on success. If the number of
+ * entries is smaller than the specified threshold, the operation is performed
+ * sequentially.
+ */
+int run_parallel_checkout(struct checkout *state, int num_workers, int threshold);
 
 /****************************************************************
  * Interface with checkout--worker
