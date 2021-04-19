@@ -98,4 +98,11 @@ test_expect_success 'object:type filter' '
 	test_bitmap_traversal expect actual
 '
 
+test_expect_success 'combine filter' '
+	git rev-list --objects --filter=blob:limit=1000 --filter=object:type=blob tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=blob:limit=1000 --filter=object:type=blob tag >actual &&
+	test_bitmap_traversal expect actual
+'
+
 test_done
