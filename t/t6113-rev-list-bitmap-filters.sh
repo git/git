@@ -98,11 +98,47 @@ test_expect_success 'object:type filter' '
 	test_bitmap_traversal expect actual
 '
 
+test_expect_success 'object:type filter with --filter-provided-objects' '
+	git rev-list --objects --filter-provided-objects --filter=object:type=tag tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=object:type=tag tag >actual &&
+	test_cmp expect actual &&
+
+	git rev-list --objects --filter-provided-objects --filter=object:type=commit tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=object:type=commit tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git rev-list --objects --filter-provided-objects --filter=object:type=tree tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=object:type=tree tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git rev-list --objects --filter-provided-objects --filter=object:type=blob tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=object:type=blob tag >actual &&
+	test_bitmap_traversal expect actual
+'
+
 test_expect_success 'combine filter' '
 	git rev-list --objects --filter=blob:limit=1000 --filter=object:type=blob tag >expect &&
 	git rev-list --use-bitmap-index \
 		     --objects --filter=blob:limit=1000 --filter=object:type=blob tag >actual &&
 	test_bitmap_traversal expect actual
+'
+
+test_expect_success 'combine filter with --filter-provided-objects' '
+	git rev-list --objects --filter-provided-objects --filter=blob:limit=1000 --filter=object:type=blob tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=blob:limit=1000 --filter=object:type=blob tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git cat-file --batch-check="%(objecttype) %(objectsize)" <actual >objects &&
+	while read objecttype objectsize
+	do
+		test "$objecttype" = blob || return 1
+		test "$objectsize" -le 1000 || return 1
+	done <objects
 '
 
 test_done

@@ -933,6 +933,11 @@ equivalent.
 --no-filter::
 	Turn off any previous `--filter=` argument.
 
+--filter-provided-objects::
+	Filter the list of explicitly provided objects, which would otherwise
+	always be printed even if they did not match any of the filters. Only
+	useful with `--filter=`.
+
 --filter-print-omitted::
 	Only useful with `--filter=`; prints a list of the objects omitted
 	by the filter.  Object IDs are prefixed with a ``~'' character.
