@@ -5,6 +5,7 @@
 #include "version.h"
 #include "strvec.h"
 #include "ls-refs.h"
+#include "protocol-caps.h"
 #include "serve.h"
 #include "upload-pack.h"
 
@@ -78,6 +79,7 @@ static struct protocol_capability capabilities[] = {
 	{ "server-option", always_advertise, NULL },
 	{ "object-format", object_format_advertise, NULL },
 	{ "session-id", session_id_advertise, NULL },
+	{ "object-info", always_advertise, cap_object_info },
 };
 
 static void advertise_capabilities(void)
