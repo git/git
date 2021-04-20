@@ -3400,17 +3400,35 @@ __git_main ()
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
-		--git-dir=*) __git_dir="${i#--git-dir=}" ;;
-		--git-dir)   ((c++)) ; __git_dir="${words[c]}" ;;
-		--bare)      __git_dir="." ;;
-		--help) command="help"; break ;;
-		-c|--work-tree|--namespace) ((c++)) ;;
-		-C)	__git_C_args[C_args_count++]=-C
+		--git-dir=*)
+			__git_dir="${i#--git-dir=}"
+			;;
+		--git-dir)
+			((c++))
+			__git_dir="${words[c]}"
+			;;
+		--bare)
+			__git_dir="."
+			;;
+		--help)
+			command="help"
+			break
+			;;
+		-c|--work-tree|--namespace)
+			((c++))
+			;;
+		-C)
+			__git_C_args[C_args_count++]=-C
 			((c++))
 			__git_C_args[C_args_count++]="${words[c]}"
 			;;
-		-*) ;;
-		*) command="$i"; __git_subcommand_idx="$c"; break ;;
+		-*)
+			;;
+		*)
+			command="$i"
+			__git_subcommand_idx="$c"
+			break
+			;;
 		esac
 		((c++))
 	done
@@ -3432,7 +3450,8 @@ __git_main ()
 			;;
 		esac
 		case "$cur" in
-		--*)   __gitcomp "
+		--*)
+			__gitcomp "
 			--paginate
 			--no-pager
 			--git-dir=
