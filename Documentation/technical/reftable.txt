@@ -1011,8 +1011,13 @@ reftable stack, reload `tables.list`, and delete any tables no longer mentioned
 in `tables.list`.
 
 Irregular program exit may still leave about unused files. In this case, a
-cleanup operation can read `tables.list`, note its modification timestamp, and
-delete any unreferenced `*.ref` files that are older.
+cleanup operation should proceed as follows:
+
+* take a lock `tables.list.lock` to prevent concurrent modifications
+* refresh the reftable stack, by reading `tables.list`
+* for each `*.ref` file, remove it if
+** it is not mentioned in `tables.list`, and
+** its max update_index is not beyond the max update_index of the stack
 
 
 Alternatives considered
