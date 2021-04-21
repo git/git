@@ -685,6 +685,8 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 int mingw_access(const char *filename, int mode)
 {
 	wchar_t wfilename[MAX_PATH];
+	if (!strcmp("nul", filename) || !strcmp("/dev/null", filename))
+		return 0;
 	if (xutftowcs_path(wfilename, filename) < 0)
 		return -1;
 	/* X_OK is not supported by the MSVCRT version */
