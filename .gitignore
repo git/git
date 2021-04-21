@@ -33,6 +33,7 @@
 /git-check-mailmap
 /git-check-ref-format
 /git-checkout
+/git-checkout--worker
 /git-checkout-index
 /git-cherry
 /git-cherry-pick
