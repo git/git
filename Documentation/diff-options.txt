@@ -300,11 +300,14 @@ explained for the configuration variable `core.quotePath` (see
 linkgit:git-config[1]).
 
 --name-only::
-	Show only names of changed files.
+	Show only names of changed files. The file names are often encoded in UTF-8.
+	For more information see the discussion about encoding in the linkgit:git-log[1]
+	manual page.
 
 --name-status::
 	Show only names and status of changed files. See the description
 	of the `--diff-filter` option on what the status letters mean.
+	Just like `--name-only` the file names are often encoded in UTF-8.
 
 --submodule[=<format>]::
 	Specify how differences in submodules are shown.  When specifying
