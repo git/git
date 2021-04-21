@@ -1025,13 +1025,6 @@ test_cmp_bin () {
 	cmp "$@"
 }
 
-# Wrapper for test_cmp which used to be used for
-# GIT_TEST_GETTEXT_POISON=false. Only here as a shim for other
-# in-flight changes. Should not be used and will be removed soon.
-test_i18ncmp () {
-	test_cmp "$@"
-}
-
 # Wrapper for grep which used to be used for
 # GIT_TEST_GETTEXT_POISON=false. Only here as a shim for other
 # in-flight changes. Should not be used and will be removed soon.
