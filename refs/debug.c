@@ -244,6 +244,7 @@ static int debug_read_raw_ref(struct ref_store *ref_store, const char *refname,
 	int res = 0;
 
 	oidcpy(oid, &null_oid);
+	errno = 0;
 	res = drefs->refs->be->read_raw_ref(drefs->refs, refname, oid, referent,
 					    type);
 
@@ -251,7 +252,9 @@ static int debug_read_raw_ref(struct ref_store *ref_store, const char *refname,
 		trace_printf_key(&trace_refs, "read_raw_ref: %s: %s (=> %s) type %x: %d\n",
 			refname, oid_to_hex(oid), referent->buf, *type, res);
 	} else {
-		trace_printf_key(&trace_refs, "read_raw_ref: %s: %d\n", refname, res);
+		trace_printf_key(&trace_refs,
+				 "read_raw_ref: %s: %d (errno %d)\n", refname,
+				 res, errno);
 	}
 	return res;
 }
