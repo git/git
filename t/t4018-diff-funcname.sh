@@ -48,6 +48,7 @@ diffpatterns="
 	python
 	ruby
 	rust
+	scheme
 	tex
 	custom1
 	custom2
