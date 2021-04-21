@@ -55,12 +55,13 @@ static NORETURN void usage_builtin(const char *err, va_list params)
 	exit(129);
 }
 
+/*
+ * We call trace2_cmd_error_va() in the below functions first and
+ * expect it to va_copy 'params' before using it (because an 'ap' can
+ * only be walked once).
+ */
 static NORETURN void die_builtin(const char *err, va_list params)
 {
-	/*
-	 * We call this trace2 function first and expect it to va_copy 'params'
-	 * before using it (because an 'ap' can only be walked once).
-	 */
 	trace2_cmd_error_va(err, params);
 
 	vreportf("fatal: ", err, params);
@@ -70,10 +71,6 @@ static NORETURN void die_builtin(const char *err, va_list params)
 
 static void error_builtin(const char *err, va_list params)
 {
-	/*
-	 * We call this trace2 function first and expect it to va_copy 'params'
-	 * before using it (because an 'ap' can only be walked once).
-	 */
 	trace2_cmd_error_va(err, params);
 
 	vreportf("error: ", err, params);
@@ -81,10 +78,6 @@ static void error_builtin(const char *err, va_list params)
 
 static void warn_builtin(const char *warn, va_list params)
 {
-	/*
-	 * We call this trace2 function first and expect it to va_copy 'params'
-	 * before using it (because an 'ap' can only be walked once).
-	 */
 	trace2_cmd_error_va(warn, params);
 
 	vreportf("warning: ", warn, params);
