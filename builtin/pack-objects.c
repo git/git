@@ -3527,7 +3527,8 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 			&reuse_packfile_bitmap)) {
 		assert(reuse_packfile_objects);
 		nr_result += reuse_packfile_objects;
-		display_progress(progress_state, nr_result);
+		nr_seen += reuse_packfile_objects;
+		display_progress(progress_state, nr_seen);
 	}
 
 	traverse_bitmap_commit_list(bitmap_git, revs,
