@@ -1006,8 +1006,8 @@ __git_complete_revlist ()
 
 __git_complete_remote_or_refspec ()
 {
-	local cur_="$cur" cmd="${words[1]}"
-	local i c=2 remote="" pfx="" lhs=1 no_complete_refspec=0
+	local cur_="$cur" cmd="${words[__git_cmd_idx]}"
+	local i c=$((__git_cmd_idx+1)) remote="" pfx="" lhs=1 no_complete_refspec=0
 	if [ "$cmd" = "remote" ]; then
 		((c++))
 	fi
@@ -1176,7 +1176,7 @@ __git_aliased_command ()
 # --show-idx: Optionally show the index of the found word in the $words array.
 __git_find_on_cmdline ()
 {
-	local word c=1 show_idx
+	local word c="$__git_cmd_idx" show_idx
 
 	while test $# -gt 1; do
 		case "$1" in
@@ -1221,7 +1221,7 @@ __git_find_last_on_cmdline ()
 	done
 	local wordlist="$1"
 
-	while [ $c -gt 1 ]; do
+	while [ $c -gt "$__git_cmd_idx" ]; do
 		((c--))
 		for word in $wordlist; do
 			if [ "$word" = "${words[c]}" ]; then
@@ -1306,7 +1306,7 @@ __git_count_arguments ()
 	local word i c=0
 
 	# Skip "git" (first argument)
-	for ((i=1; i < ${#words[@]}; i++)); do
+	for ((i="$__git_cmd_idx"; i < ${#words[@]}; i++)); do
 		word="${words[i]}"
 
 		case "$word" in
@@ -1442,7 +1442,7 @@ __git_ref_fieldlist="refname objecttype objectsize objectname upstream push HEAD
 
 _git_branch ()
 {
-	local i c=1 only_local_ref="n" has_r="n"
+	local i c="$__git_cmd_idx" only_local_ref="n" has_r="n"
 
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
@@ -2474,7 +2474,7 @@ _git_switch ()
 __git_config_get_set_variables ()
 {
 	local prevword word config_file= c=$cword
-	while [ $c -gt 1 ]; do
+	while [ $c -gt "$__git_cmd_idx" ]; do
 		word="${words[c]}"
 		case "$word" in
 		--system|--global|--local|--file=*)
@@ -3224,7 +3224,7 @@ _git_svn ()
 
 _git_tag ()
 {
-	local i c=1 f=0
+	local i c="$__git_cmd_idx" f=0
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
@@ -3276,9 +3276,11 @@ __git_complete_worktree_paths ()
 _git_worktree ()
 {
 	local subcommands="add list lock move prune remove unlock"
-	local subcommand
+	local subcommand subcommand_idx
 
-	subcommand="$(__git_find_on_cmdline "$subcommands")"
+	subcommand="$(__git_find_on_cmdline --show-idx "$subcommands")"
+	subcommand_idx="${subcommand% *}"
+	subcommand="${subcommand#* }"
 
 	case "$subcommand,$cur" in
 	,*)
@@ -3303,7 +3305,7 @@ _git_worktree ()
 			# be either the 'add' subcommand, the unstuck
 			# argument of an option (e.g. branch for -b|-B), or
 			# the path for the new worktree.
-			if [ $cword -eq $((__git_cmd_idx+2)) ]; then
+			if [ $cword -eq $((subcommand_idx+1)) ]; then
 				# Right after the 'add' subcommand: have to
 				# complete the path, so fall back to Bash
 				# filename completion.
@@ -3327,7 +3329,7 @@ _git_worktree ()
 		__git_complete_worktree_paths
 		;;
 	move,*)
-		if [ $cword -eq $((__git_cmd_idx+2)) ]; then
+		if [ $cword -eq $((subcommand_idx+1)) ]; then
 			# The first parameter must be an existing working
 			# tree to be moved.
 			__git_complete_worktree_paths
