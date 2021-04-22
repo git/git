@@ -3032,21 +3032,6 @@ _git_stash ()
 	fi
 
 	case "$subcommand,$cur" in
-	push,--*)
-		__gitcomp_builtin stash_push
-		;;
-	save,--*)
-		__gitcomp_builtin stash_save
-		;;
-	pop,--*)
-		__gitcomp_builtin stash_pop
-		;;
-	apply,--*)
-		__gitcomp_builtin stash_apply
-		;;
-	drop,--*)
-		__gitcomp_builtin stash_drop
-		;;
 	list,--*)
 		# NEEDSWORK: can we somehow unify this with the options in _git_log() and _git_show()
 		__gitcomp_builtin stash_list "$__git_log_common_options $__git_diff_common_options"
@@ -3054,8 +3039,8 @@ _git_stash ()
 	show,--*)
 		__gitcomp_builtin stash_show "$__git_diff_common_options"
 		;;
-	branch,--*)
-		__gitcomp_builtin stash_branch
+	*,--*)
+		__gitcomp_builtin "stash_$subcommand"
 		;;
 	branch,*)
 		if [ $cword -eq $((__git_cmd_idx+2)) ]; then
@@ -3068,8 +3053,6 @@ _git_stash ()
 	show,*|apply,*|drop,*|pop,*)
 		__gitcomp_nl "$(__git stash list \
 				| sed -n -e 's/:.*//p')"
-		;;
-	*)
 		;;
 	esac
 }
