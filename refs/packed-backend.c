@@ -726,7 +726,8 @@ static struct snapshot *get_snapshot(struct packed_ref_store *refs)
 
 static int packed_read_raw_ref(struct ref_store *ref_store,
 			       const char *refname, struct object_id *oid,
-			       struct strbuf *referent, unsigned int *type)
+			       struct strbuf *referent, unsigned int *type,
+			       int *failure_errno)
 {
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_READ, "read_raw_ref");
@@ -739,7 +740,7 @@ static int packed_read_raw_ref(struct ref_store *ref_store,
 
 	if (!rec) {
 		/* refname is not a packed reference. */
-		errno = ENOENT;
+		*failure_errno = ENOENT;
 		return -1;
 	}
 

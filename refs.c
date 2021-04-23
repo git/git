@@ -1675,13 +1675,16 @@ int refs_read_raw_ref(struct ref_store *ref_store,
 		      const char *refname, struct object_id *oid,
 		      struct strbuf *referent, unsigned int *type)
 {
+	int result, failure;
 	if (!strcmp(refname, "FETCH_HEAD") || !strcmp(refname, "MERGE_HEAD")) {
 		return refs_read_special_head(ref_store, refname, oid, referent,
 					      type);
 	}
 
-	return ref_store->be->read_raw_ref(ref_store, refname, oid, referent,
-					   type);
+	result = ref_store->be->read_raw_ref(ref_store, refname, oid, referent,
+					     type, &failure);
+	errno = failure;
+	return result;
 }
 
 /* This function needs to return a meaningful errno on failure */
