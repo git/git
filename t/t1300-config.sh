@@ -2092,21 +2092,20 @@ test_expect_success 'override global and system config' '
 	git config --show-scope --list >output &&
 	test_cmp expect output &&
 
-	sane_unset GIT_CONFIG_NOSYSTEM &&
-
 	cat >expect <<-EOF &&
 	system	system.config=true
 	global	global.config=true
 	local	local.config=true
 	EOF
-	GIT_CONFIG_SYSTEM=custom-system-config GIT_CONFIG_GLOBAL=custom-global-config \
+	GIT_CONFIG_NOSYSTEM=false GIT_CONFIG_SYSTEM=custom-system-config GIT_CONFIG_GLOBAL=custom-global-config \
 		git config --show-scope --list >output &&
 	test_cmp expect output &&
 
 	cat >expect <<-EOF &&
 	local	local.config=true
 	EOF
-	GIT_CONFIG_SYSTEM=/dev/null GIT_CONFIG_GLOBAL=/dev/null git config --show-scope --list >output &&
+	GIT_CONFIG_NOSYSTEM=false GIT_CONFIG_SYSTEM=/dev/null GIT_CONFIG_GLOBAL=/dev/null \
+		git config --show-scope --list >output &&
 	test_cmp expect output
 '
 
