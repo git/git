@@ -245,3 +245,4 @@ Release/
 /git.VC.db
 *.dSYM
 /contrib/buildsystems/out
+CMakeSettings.json
