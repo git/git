@@ -527,8 +527,7 @@ test_expect_success 'strbuf_utf8_replace() not producing NUL' '
 
 # ISO strict date format
 test_expect_success 'ISO and ISO-strict date formats display the same values' '
-	git log --format=%ai%n%ci |
-	sed -e "s/ /T/; s/ //; s/..\$/:&/" >expected &&
+	git log --format=%ad%n%cd --date=iso-strict >expected &&
 	git log --format=%aI%n%cI >actual &&
 	test_cmp expected actual
 '
