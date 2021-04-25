@@ -83,5 +83,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < maxcount; i++)
 		show_ref_array_item(array.items[i], &format);
 	ref_array_clear(&array);
+	free_commit_list(filter.with_commit);
+	free_commit_list(filter.no_commit);
+	UNLEAK(sorting);
 	return 0;
 }
