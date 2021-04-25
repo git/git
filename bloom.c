@@ -283,6 +283,7 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 			struct bloom_key key;
 			fill_bloom_key(e->path, strlen(e->path), &key, settings);
 			add_key_to_filter(&key, filter, settings);
+			clear_bloom_key(&key);
 		}
 
 	cleanup:
