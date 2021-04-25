@@ -118,6 +118,7 @@ static int check_ignore(struct dir_struct *dir,
 			num_ignored++;
 	}
 	free(seen);
+	clear_pathspec(&pathspec);
 
 	return num_ignored;
 }
