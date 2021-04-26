@@ -95,6 +95,29 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
 /* Number of algorithms supported (including unknown). */
 #define GIT_HASH_NALGOS (GIT_HASH_SHA256 + 1)
 
+/* The length in bytes and in hex digits of an object name (SHA-1 value). */
+#define GIT_SHA1_RAWSZ 20
+#define GIT_SHA1_HEXSZ (2 * GIT_SHA1_RAWSZ)
+/* The block size of SHA-1. */
+#define GIT_SHA1_BLKSZ 64
+
+/* The length in bytes and in hex digits of an object name (SHA-256 value). */
+#define GIT_SHA256_RAWSZ 32
+#define GIT_SHA256_HEXSZ (2 * GIT_SHA256_RAWSZ)
+/* The block size of SHA-256. */
+#define GIT_SHA256_BLKSZ 64
+
+/* The length in byte and in hex digits of the largest possible hash value. */
+#define GIT_MAX_RAWSZ GIT_SHA256_RAWSZ
+#define GIT_MAX_HEXSZ GIT_SHA256_HEXSZ
+/* The largest possible block size for any supported hash. */
+#define GIT_MAX_BLKSZ GIT_SHA256_BLKSZ
+
+struct object_id {
+	unsigned char hash[GIT_MAX_RAWSZ];
+	int algo;
+};
+
 /* A suitably aligned type for stack allocations of hash contexts. */
 union git_hash_ctx {
 	git_SHA_CTX sha1;
@@ -106,6 +129,7 @@ typedef void (*git_hash_init_fn)(git_hash_ctx *ctx);
 typedef void (*git_hash_clone_fn)(git_hash_ctx *dst, const git_hash_ctx *src);
 typedef void (*git_hash_update_fn)(git_hash_ctx *ctx, const void *in, size_t len);
 typedef void (*git_hash_final_fn)(unsigned char *hash, git_hash_ctx *ctx);
+typedef void (*git_hash_final_oid_fn)(struct object_id *oid, git_hash_ctx *ctx);
 
 struct git_hash_algo {
 	/*
@@ -138,6 +162,9 @@ struct git_hash_algo {
 	/* The hash finalization function. */
 	git_hash_final_fn final_fn;
 
+	/* The hash finalization function for object IDs. */
+	git_hash_final_oid_fn final_oid_fn;
+
 	/* The OID of the empty tree. */
 	const struct object_id *empty_tree;
 
@@ -160,29 +187,6 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 {
 	return p - hash_algos;
 }
-
-/* The length in bytes and in hex digits of an object name (SHA-1 value). */
-#define GIT_SHA1_RAWSZ 20
-#define GIT_SHA1_HEXSZ (2 * GIT_SHA1_RAWSZ)
-/* The block size of SHA-1. */
-#define GIT_SHA1_BLKSZ 64
-
-/* The length in bytes and in hex digits of an object name (SHA-256 value). */
-#define GIT_SHA256_RAWSZ 32
-#define GIT_SHA256_HEXSZ (2 * GIT_SHA256_RAWSZ)
-/* The block size of SHA-256. */
-#define GIT_SHA256_BLKSZ 64
-
-/* The length in byte and in hex digits of the largest possible hash value. */
-#define GIT_MAX_RAWSZ GIT_SHA256_RAWSZ
-#define GIT_MAX_HEXSZ GIT_SHA256_HEXSZ
-/* The largest possible block size for any supported hash. */
-#define GIT_MAX_BLKSZ GIT_SHA256_BLKSZ
-
-struct object_id {
-	unsigned char hash[GIT_MAX_RAWSZ];
-	int algo;
-};
 
 #define the_hash_algo the_repository->hash_algo
 

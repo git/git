@@ -89,6 +89,12 @@ static void git_hash_sha1_final(unsigned char *hash, git_hash_ctx *ctx)
 	git_SHA1_Final(hash, &ctx->sha1);
 }
 
+static void git_hash_sha1_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+{
+	git_SHA1_Final(oid->hash, &ctx->sha1);
+	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
+}
+
 
 static void git_hash_sha256_init(git_hash_ctx *ctx)
 {
@@ -108,6 +114,16 @@ static void git_hash_sha256_update(git_hash_ctx *ctx, const void *data, size_t l
 static void git_hash_sha256_final(unsigned char *hash, git_hash_ctx *ctx)
 {
 	git_SHA256_Final(hash, &ctx->sha256);
+}
+
+static void git_hash_sha256_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+{
+	git_SHA256_Final(oid->hash, &ctx->sha256);
+	/*
+	 * This currently does nothing, so the compiler should optimize it out,
+	 * but keep it in case we extend the hash size again.
+	 */
+	memset(oid->hash + GIT_SHA256_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA256_RAWSZ);
 }
 
 static void git_hash_unknown_init(git_hash_ctx *ctx)
@@ -130,6 +146,12 @@ static void git_hash_unknown_final(unsigned char *hash, git_hash_ctx *ctx)
 	BUG("trying to finalize unknown hash");
 }
 
+static void git_hash_unknown_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+{
+	BUG("trying to finalize unknown hash");
+}
+
+
 const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 	{
 		NULL,
@@ -141,6 +163,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		git_hash_unknown_clone,
 		git_hash_unknown_update,
 		git_hash_unknown_final,
+		git_hash_unknown_final_oid,
 		NULL,
 		NULL,
 	},
@@ -155,6 +178,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		git_hash_sha1_clone,
 		git_hash_sha1_update,
 		git_hash_sha1_final,
+		git_hash_sha1_final_oid,
 		&empty_tree_oid,
 		&empty_blob_oid,
 	},
@@ -169,6 +193,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		git_hash_sha256_clone,
 		git_hash_sha256_update,
 		git_hash_sha256_final,
+		git_hash_sha256_final_oid,
 		&empty_tree_oid_sha256,
 		&empty_blob_oid_sha256,
 	}
