@@ -170,6 +170,9 @@ struct git_hash_algo {
 
 	/* The OID of the empty blob. */
 	const struct object_id *empty_blob;
+
+	/* The all-zeros OID. */
+	const struct object_id *null_oid;
 };
 extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
 
@@ -190,7 +193,7 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 
 #define the_hash_algo the_repository->hash_algo
 
-extern const struct object_id null_oid;
+const struct object_id *null_oid(void);
 
 static inline int hashcmp_algop(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
 {
@@ -246,7 +249,7 @@ static inline int oideq(const struct object_id *oid1, const struct object_id *oi
 
 static inline int is_null_oid(const struct object_id *oid)
 {
-	return oideq(oid, &null_oid);
+	return oideq(oid, null_oid());
 }
 
 static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)

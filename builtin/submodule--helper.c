@@ -426,7 +426,8 @@ static int module_list(int argc, const char **argv, const char *prefix)
 		const struct cache_entry *ce = list.entries[i];
 
 		if (ce_stage(ce))
-			printf("%06o %s U\t", ce->ce_mode, oid_to_hex(&null_oid));
+			printf("%06o %s U\t", ce->ce_mode,
+			       oid_to_hex(null_oid()));
 		else
 			printf("%06o %s %d\t", ce->ce_mode,
 			       oid_to_hex(&ce->oid), ce_stage(ce));
@@ -466,7 +467,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 
 	displaypath = get_submodule_displaypath(path, info->prefix);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -623,7 +624,7 @@ static void init_submodule(const char *path, const char *prefix,
 
 	displaypath = get_submodule_displaypath(path, prefix);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -783,14 +784,14 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	struct strbuf buf = STRBUF_INIT;
 	const char *git_dir;
 
-	if (!submodule_from_path(the_repository, &null_oid, path))
+	if (!submodule_from_path(the_repository, null_oid(), path))
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
 		      path);
 
 	displaypath = get_submodule_displaypath(path, prefix);
 
 	if ((CE_STAGEMASK & ce_flags) >> CE_STAGESHIFT) {
-		print_status(flags, 'U', path, &null_oid, displaypath);
+		print_status(flags, 'U', path, null_oid(), displaypath);
 		goto cleanup;
 	}
 
@@ -916,7 +917,7 @@ static int module_name(int argc, const char **argv, const char *prefix)
 	if (argc != 2)
 		usage(_("git submodule--helper name <path>"));
 
-	sub = submodule_from_path(the_repository, &null_oid, argv[1]);
+	sub = submodule_from_path(the_repository, null_oid(), argv[1]);
 
 	if (!sub)
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -1040,7 +1041,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	char *errmsg = NULL;
 	int total_commits = -1;
 
-	if (!info->cached && oideq(&p->oid_dst, &null_oid)) {
+	if (!info->cached && oideq(&p->oid_dst, null_oid())) {
 		if (S_ISGITLINK(p->mod_dst)) {
 			struct ref_store *refs = get_submodule_ref_store(p->sm_path);
 			if (refs)
@@ -1177,7 +1178,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 
 		if (info->for_status && p->status != 'A' &&
 		    (sub = submodule_from_path(the_repository,
-					       &null_oid, p->sm_path))) {
+					       null_oid(), p->sm_path))) {
 			char *config_key = NULL;
 			const char *value;
 			int ignore_all = 0;
@@ -1373,7 +1374,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	if (!is_submodule_active(the_repository, path))
 		return;
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (sub && sub->url) {
 		if (starts_with_dot_dot_slash(sub->url) ||
@@ -1525,7 +1526,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 	struct strbuf sb_config = STRBUF_INIT;
 	char *sub_git_dir = xstrfmt("%s/.git", path);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub || !sub->name)
 		goto cleanup;
@@ -1925,7 +1926,7 @@ static void determine_submodule_update_strategy(struct repository *r,
 						const char *update,
 						struct submodule_update_strategy *out)
 {
-	const struct submodule *sub = submodule_from_path(r, &null_oid, path);
+	const struct submodule *sub = submodule_from_path(r, null_oid(), path);
 	char *key;
 	const char *val;
 
@@ -2077,7 +2078,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		goto cleanup;
 	}
 
-	sub = submodule_from_path(the_repository, &null_oid, ce->name);
+	sub = submodule_from_path(the_repository, null_oid(), ce->name);
 
 	if (suc->recursive_prefix)
 		displaypath = relative_path(suc->recursive_prefix,
@@ -2395,7 +2396,7 @@ static const char *remote_submodule_branch(const char *path)
 	const char *branch = NULL;
 	char *key;
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 	if (!sub)
 		return NULL;
 
@@ -2533,7 +2534,7 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 
 	path = argv[1];
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 	if (!sub)
 		BUG("We could get the submodule handle before?");
 

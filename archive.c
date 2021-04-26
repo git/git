@@ -275,8 +275,10 @@ int write_archive_entries(struct archiver_args *args,
 	int err;
 	struct strbuf path_in_archive = STRBUF_INIT;
 	struct strbuf content = STRBUF_INIT;
-	struct object_id fake_oid = null_oid;
+	struct object_id fake_oid;
 	int i;
+
+	oidcpy(&fake_oid, null_oid());
 
 	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
 		size_t len = args->baselen;

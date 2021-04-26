@@ -210,7 +210,7 @@ static void show_submodule(struct repository *superproject,
 {
 	struct repository subrepo;
 	const struct submodule *sub = submodule_from_path(superproject,
-							  &null_oid, path);
+							  null_oid(), path);
 
 	if (repo_submodule_init(&subrepo, superproject, sub))
 		return;

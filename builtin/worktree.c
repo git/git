@@ -331,7 +331,7 @@ static int add_worktree(const char *path, const char *refname,
 	 */
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/HEAD", sb_repo.buf);
-	write_file(sb.buf, "%s", oid_to_hex(&null_oid));
+	write_file(sb.buf, "%s", oid_to_hex(null_oid()));
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
 	write_file(sb.buf, "../..");
@@ -394,7 +394,7 @@ done:
 			cp.argv = NULL;
 			cp.trace2_hook_name = "post-checkout";
 			strvec_pushl(&cp.args, absolute_path(hook),
-				     oid_to_hex(&null_oid),
+				     oid_to_hex(null_oid()),
 				     oid_to_hex(&commit->object.oid),
 				     "1", NULL);
 			ret = run_command(&cp);

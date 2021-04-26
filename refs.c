@@ -1107,7 +1107,7 @@ int ref_transaction_create(struct ref_transaction *transaction,
 	if (!new_oid || is_null_oid(new_oid))
 		BUG("create called without valid new_oid");
 	return ref_transaction_update(transaction, refname, new_oid,
-				      &null_oid, flags, msg, err);
+				      null_oid(), flags, msg, err);
 }
 
 int ref_transaction_delete(struct ref_transaction *transaction,
@@ -1119,7 +1119,7 @@ int ref_transaction_delete(struct ref_transaction *transaction,
 	if (old_oid && is_null_oid(old_oid))
 		BUG("delete called with old_oid set to zeros");
 	return ref_transaction_update(transaction, refname,
-				      &null_oid, old_oid,
+				      null_oid(), old_oid,
 				      flags, msg, err);
 }
 

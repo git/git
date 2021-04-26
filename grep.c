@@ -1494,7 +1494,7 @@ static int fill_textconv_grep(struct repository *r,
 		fill_filespec(df, gs->identifier, 1, 0100644);
 		break;
 	case GREP_SOURCE_FILE:
-		fill_filespec(df, &null_oid, 0, 0100644);
+		fill_filespec(df, null_oid(), 0, 0100644);
 		break;
 	default:
 		BUG("attempt to textconv something without a path?");

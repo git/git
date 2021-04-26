@@ -421,7 +421,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			 * has not been resolved yet.
 			 */
 			oidclr(&obj_list[nr].oid);
-			add_delta_to_list(nr, &null_oid, base_offset, delta_data, delta_size);
+			add_delta_to_list(nr, null_oid(), base_offset,
+					  delta_data, delta_size);
 			return;
 		}
 	}
