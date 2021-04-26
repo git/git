@@ -1030,7 +1030,7 @@ static void write_pack_file(void)
 	write_order = compute_write_order();
 
 	do {
-		struct object_id oid;
+		unsigned char hash[GIT_MAX_RAWSZ];
 		char *pack_tmp_name = NULL;
 
 		if (pack_to_stdout)
@@ -1059,13 +1059,13 @@ static void write_pack_file(void)
 		 * If so, rewrite it like in fast-import
 		 */
 		if (pack_to_stdout) {
-			finalize_hashfile(f, oid.hash, CSUM_HASH_IN_STREAM | CSUM_CLOSE);
+			finalize_hashfile(f, hash, CSUM_HASH_IN_STREAM | CSUM_CLOSE);
 		} else if (nr_written == nr_remaining) {
-			finalize_hashfile(f, oid.hash, CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
+			finalize_hashfile(f, hash, CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 		} else {
-			int fd = finalize_hashfile(f, oid.hash, 0);
-			fixup_pack_header_footer(fd, oid.hash, pack_tmp_name,
-						 nr_written, oid.hash, offset);
+			int fd = finalize_hashfile(f, hash, 0);
+			fixup_pack_header_footer(fd, hash, pack_tmp_name,
+						 nr_written, hash, offset);
 			close(fd);
 			if (write_bitmap_index) {
 				if (write_bitmap_index != WRITE_BITMAP_QUIET)
@@ -1100,17 +1100,17 @@ static void write_pack_file(void)
 			strbuf_addf(&tmpname, "%s-", base_name);
 
 			if (write_bitmap_index) {
-				bitmap_writer_set_checksum(oid.hash);
+				bitmap_writer_set_checksum(hash);
 				bitmap_writer_build_type_index(
 					&to_pack, written_list, nr_written);
 			}
 
 			finish_tmp_packfile(&tmpname, pack_tmp_name,
 					    written_list, nr_written,
-					    &pack_idx_opts, oid.hash);
+					    &pack_idx_opts, hash);
 
 			if (write_bitmap_index) {
-				strbuf_addf(&tmpname, "%s.bitmap", oid_to_hex(&oid));
+				strbuf_addf(&tmpname, "%s.bitmap", hash_to_hex(hash));
 
 				stop_progress(&progress_state);
 
@@ -1124,7 +1124,7 @@ static void write_pack_file(void)
 
 			strbuf_release(&tmpname);
 			free(pack_tmp_name);
-			puts(oid_to_hex(&oid));
+			puts(hash_to_hex(hash));
 		}
 
 		/* mark written objects as written to previous pack */
