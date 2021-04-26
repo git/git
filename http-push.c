@@ -1022,6 +1022,8 @@ static void remote_ls(const char *path, int flags,
 /* extract hex from sharded "xx/x{38}" filename */
 static int get_oid_hex_from_objpath(const char *path, struct object_id *oid)
 {
+	oid->algo = hash_algo_by_ptr(the_hash_algo);
+
 	if (strlen(path) != the_hash_algo->hexsz + 1)
 		return -1;
 
