@@ -181,6 +181,7 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 
 struct object_id {
 	unsigned char hash[GIT_MAX_RAWSZ];
+	int algo;
 };
 
 #define the_hash_algo the_repository->hash_algo
