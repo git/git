@@ -940,7 +940,7 @@ static int store_object(
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, hdrlen);
 	the_hash_algo->update_fn(&c, dat->buf, dat->len);
-	the_hash_algo->final_fn(oid.hash, &c);
+	the_hash_algo->final_oid_fn(&oid, &c);
 	if (oidout)
 		oidcpy(oidout, &oid);
 
@@ -1136,7 +1136,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 		}
 	}
 	git_deflate_end(&s);
-	the_hash_algo->final_fn(oid.hash, &c);
+	the_hash_algo->final_oid_fn(&oid, &c);
 
 	if (oidout)
 		oidcpy(oidout, &oid);

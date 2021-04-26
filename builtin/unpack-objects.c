@@ -576,7 +576,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	the_hash_algo->init_fn(&ctx);
 	unpack_all();
 	the_hash_algo->update_fn(&ctx, buffer, offset);
-	the_hash_algo->final_fn(oid.hash, &ctx);
+	the_hash_algo->final_oid_fn(&oid, &ctx);
 	if (strict) {
 		write_rest();
 		if (fsck_finish(&fsck_options))
