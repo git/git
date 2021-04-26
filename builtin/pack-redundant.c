@@ -20,7 +20,7 @@ static int load_all_packs, verbose, alt_odb;
 
 struct llist_item {
 	struct llist_item *next;
-	const struct object_id *oid;
+	struct object_id oid;
 };
 static struct llist {
 	struct llist_item *front;
@@ -95,10 +95,10 @@ static struct llist * llist_copy(struct llist *list)
 
 static inline struct llist_item *llist_insert(struct llist *list,
 					      struct llist_item *after,
-					      const struct object_id *oid)
+					      const unsigned char *oid)
 {
 	struct llist_item *new_item = llist_item_get();
-	new_item->oid = oid;
+	oidread(&new_item->oid, oid);
 	new_item->next = NULL;
 
 	if (after != NULL) {
@@ -118,7 +118,7 @@ static inline struct llist_item *llist_insert(struct llist *list,
 }
 
 static inline struct llist_item *llist_insert_back(struct llist *list,
-						   const struct object_id *oid)
+						   const unsigned char *oid)
 {
 	return llist_insert(list, list->back, oid);
 }
@@ -130,9 +130,9 @@ static inline struct llist_item *llist_insert_sorted_unique(struct llist *list,
 
 	l = (hint == NULL) ? list->front : hint;
 	while (l) {
-		int cmp = oidcmp(l->oid, oid);
+		int cmp = oidcmp(&l->oid, oid);
 		if (cmp > 0) { /* we insert before this entry */
-			return llist_insert(list, prev, oid);
+			return llist_insert(list, prev, oid->hash);
 		}
 		if (!cmp) { /* already exists */
 			return l;
@@ -141,11 +141,11 @@ static inline struct llist_item *llist_insert_sorted_unique(struct llist *list,
 		l = l->next;
 	}
 	/* insert at the end */
-	return llist_insert_back(list, oid);
+	return llist_insert_back(list, oid->hash);
 }
 
 /* returns a pointer to an item in front of sha1 */
-static inline struct llist_item * llist_sorted_remove(struct llist *list, const struct object_id *oid, struct llist_item *hint)
+static inline struct llist_item * llist_sorted_remove(struct llist *list, const unsigned char *oid, struct llist_item *hint)
 {
 	struct llist_item *prev, *l;
 
@@ -153,7 +153,7 @@ redo_from_start:
 	l = (hint == NULL) ? list->front : hint;
 	prev = NULL;
 	while (l) {
-		const int cmp = oidcmp(l->oid, oid);
+		const int cmp = hashcmp(l->oid.hash, oid);
 		if (cmp > 0) /* not in list, since sorted */
 			return prev;
 		if (!cmp) { /* found */
@@ -188,7 +188,7 @@ static void llist_sorted_difference_inplace(struct llist *A,
 	b = B->front;
 
 	while (b) {
-		hint = llist_sorted_remove(A, b->oid, hint);
+		hint = llist_sorted_remove(A, b->oid.hash, hint);
 		b = b->next;
 	}
 }
@@ -260,10 +260,10 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
 			p1_hint = llist_sorted_remove(p1->unique_objects,
-					(const struct object_id *)(p1_base + p1_off),
+					p1_base + p1_off,
 					p1_hint);
 			p2_hint = llist_sorted_remove(p2->unique_objects,
-					(const struct object_id *)(p1_base + p1_off),
+					p1_base + p1_off,
 					p2_hint);
 			p1_off += p1_step;
 			p2_off += p2_step;
@@ -455,7 +455,7 @@ static void load_all_objects(void)
 		l = pl->remaining_objects->front;
 		while (l) {
 			hint = llist_insert_sorted_unique(all_objects,
-							  l->oid, hint);
+							  &l->oid, hint);
 			l = l->next;
 		}
 		pl = pl->next;
@@ -521,7 +521,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 	base += 256 * 4 + ((p->index_version < 2) ? 4 : 8);
 	step = the_hash_algo->rawsz + ((p->index_version < 2) ? 4 : 0);
 	while (off < p->num_objects * step) {
-		llist_insert_back(l.remaining_objects, (const struct object_id *)(base + off));
+		llist_insert_back(l.remaining_objects, base + off);
 		off += step;
 	}
 	l.all_objects_size = l.remaining_objects->size;
