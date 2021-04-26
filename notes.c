@@ -352,7 +352,7 @@ static void add_non_note(struct notes_tree *t, char *path,
 	n->next = NULL;
 	n->path = path;
 	n->mode = mode;
-	hashcpy(n->oid.hash, sha1);
+	oidread(&n->oid, sha1);
 	t->prev_non_note = n;
 
 	if (!t->first_non_note) {
@@ -1134,7 +1134,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	hashcpy(l.key_oid.hash, object_sha1);
+	oidread(&l.key_oid, object_sha1);
 	oidclr(&l.val_oid);
 	note_tree_remove(t, t->root, 0, &l);
 	if (is_null_oid(&l.val_oid)) /* no note was removed */

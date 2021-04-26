@@ -49,7 +49,7 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 	desc->entry.path = path;
 	desc->entry.mode = canon_mode(mode);
 	desc->entry.pathlen = len - 1;
-	hashcpy(desc->entry.oid.hash, (const unsigned char *)path + len);
+	oidread(&desc->entry.oid, (const unsigned char *)path + len);
 
 	return 0;
 }

@@ -1845,7 +1845,7 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 	ce->ce_flags = flags & ~CE_NAMEMASK;
 	ce->ce_namelen = len;
 	ce->index = 0;
-	hashcpy(ce->oid.hash, ondisk->data);
+	oidread(&ce->oid, ondisk->data);
 	memcpy(ce->name, name, len);
 	ce->name[len] = '\0';
 
@@ -2195,7 +2195,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (verify_hdr(hdr, mmap_size) < 0)
 		goto unmap;
 
-	hashcpy(istate->oid.hash, (const unsigned char *)hdr + mmap_size - the_hash_algo->rawsz);
+	oidread(&istate->oid, (const unsigned char *)hdr + mmap_size - the_hash_algo->rawsz);
 	istate->version = ntohl(hdr->hdr_version);
 	istate->cache_nr = ntohl(hdr->hdr_entries);
 	istate->cache_alloc = alloc_nr(istate->cache_nr);

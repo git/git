@@ -1276,8 +1276,8 @@ static void load_tree(struct tree_entry *root)
 		e->versions[0].mode = e->versions[1].mode;
 		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
-		hashcpy(e->versions[0].oid.hash, (unsigned char *)c);
-		hashcpy(e->versions[1].oid.hash, (unsigned char *)c);
+		oidread(&e->versions[0].oid, (unsigned char *)c);
+		oidread(&e->versions[1].oid, (unsigned char *)c);
 		c += the_hash_algo->rawsz;
 	}
 	free(buf);

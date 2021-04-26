@@ -203,7 +203,7 @@ static void queue_directory(const unsigned char *sha1,
 	d->mode	   = mode;
 	c->bottom  = d;
 	d->len = xsnprintf(d->path, len, "%.*s%s/", (int)base->len, base->buf, filename);
-	hashcpy(d->oid.hash, sha1);
+	oidread(&d->oid, sha1);
 }
 
 static int write_directory(struct archiver_context *c)

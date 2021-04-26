@@ -355,7 +355,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	struct object_id base_oid;
 
 	if (type == OBJ_REF_DELTA) {
-		hashcpy(base_oid.hash, fill(the_hash_algo->rawsz));
+		oidread(&base_oid, fill(the_hash_algo->rawsz));
 		use(the_hash_algo->rawsz);
 		delta_data = get_data(delta_size);
 		if (dry_run || !delta_data) {
