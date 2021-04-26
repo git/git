@@ -192,36 +192,56 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 
 extern const struct object_id null_oid;
 
-static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
+static inline int hashcmp_algop(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
 {
 	/*
 	 * Teach the compiler that there are only two possibilities of hash size
 	 * here, so that it can optimize for this case as much as possible.
 	 */
-	if (the_hash_algo->rawsz == GIT_MAX_RAWSZ)
+	if (algop->rawsz == GIT_MAX_RAWSZ)
 		return memcmp(sha1, sha2, GIT_MAX_RAWSZ);
 	return memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
 }
 
-static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
+static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 {
-	return hashcmp(oid1->hash, oid2->hash);
+	return hashcmp_algop(sha1, sha2, the_hash_algo);
 }
 
-static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2)
+static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
+{
+	const struct git_hash_algo *algop;
+	if (!oid1->algo)
+		algop = the_hash_algo;
+	else
+		algop = &hash_algos[oid1->algo];
+	return hashcmp_algop(oid1->hash, oid2->hash, algop);
+}
+
+static inline int hasheq_algop(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
 {
 	/*
 	 * We write this here instead of deferring to hashcmp so that the
 	 * compiler can properly inline it and avoid calling memcmp.
 	 */
-	if (the_hash_algo->rawsz == GIT_MAX_RAWSZ)
+	if (algop->rawsz == GIT_MAX_RAWSZ)
 		return !memcmp(sha1, sha2, GIT_MAX_RAWSZ);
 	return !memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
 }
 
+static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2)
+{
+	return hasheq_algop(sha1, sha2, the_hash_algo);
+}
+
 static inline int oideq(const struct object_id *oid1, const struct object_id *oid2)
 {
-	return hasheq(oid1->hash, oid2->hash);
+	const struct git_hash_algo *algop;
+	if (!oid1->algo)
+		algop = the_hash_algo;
+	else
+		algop = &hash_algos[oid1->algo];
+	return hasheq_algop(oid1->hash, oid2->hash, algop);
 }
 
 static inline int is_null_oid(const struct object_id *oid)
@@ -237,6 +257,7 @@ static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 {
 	memcpy(dst->hash, src->hash, GIT_MAX_RAWSZ);
+	dst->algo = src->algo;
 }
 
 static inline struct object_id *oiddup(const struct object_id *src)
@@ -254,11 +275,13 @@ static inline void hashclr(unsigned char *hash)
 static inline void oidclr(struct object_id *oid)
 {
 	memset(oid->hash, 0, GIT_MAX_RAWSZ);
+	oid->algo = hash_algo_by_ptr(the_hash_algo);
 }
 
 static inline void oidread(struct object_id *oid, const unsigned char *hash)
 {
 	memcpy(oid->hash, hash, the_hash_algo->rawsz);
+	oid->algo = hash_algo_by_ptr(the_hash_algo);
 }
 
 static inline int is_empty_blob_sha1(const unsigned char *sha1)
@@ -279,6 +302,11 @@ static inline int is_empty_tree_sha1(const unsigned char *sha1)
 static inline int is_empty_tree_oid(const struct object_id *oid)
 {
 	return oideq(oid, the_hash_algo->empty_tree);
+}
+
+static inline void oid_set_algo(struct object_id *oid, const struct git_hash_algo *algop)
+{
+	oid->algo = hash_algo_by_ptr(algop);
 }
 
 const char *empty_tree_oid_hex(void);

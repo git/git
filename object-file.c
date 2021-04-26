@@ -57,16 +57,20 @@
 
 const struct object_id null_oid;
 static const struct object_id empty_tree_oid = {
-	EMPTY_TREE_SHA1_BIN_LITERAL
+	.hash = EMPTY_TREE_SHA1_BIN_LITERAL,
+	.algo = GIT_HASH_SHA1,
 };
 static const struct object_id empty_blob_oid = {
-	EMPTY_BLOB_SHA1_BIN_LITERAL
+	.hash = EMPTY_BLOB_SHA1_BIN_LITERAL,
+	.algo = GIT_HASH_SHA1,
 };
 static const struct object_id empty_tree_oid_sha256 = {
-	EMPTY_TREE_SHA256_BIN_LITERAL
+	.hash = EMPTY_TREE_SHA256_BIN_LITERAL,
+	.algo = GIT_HASH_SHA256,
 };
 static const struct object_id empty_blob_oid_sha256 = {
-	EMPTY_BLOB_SHA256_BIN_LITERAL
+	.hash = EMPTY_BLOB_SHA256_BIN_LITERAL,
+	.algo = GIT_HASH_SHA256,
 };
 
 static void git_hash_sha1_init(git_hash_ctx *ctx)
@@ -93,6 +97,7 @@ static void git_hash_sha1_final_oid(struct object_id *oid, git_hash_ctx *ctx)
 {
 	git_SHA1_Final(oid->hash, &ctx->sha1);
 	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
+	oid->algo = GIT_HASH_SHA1;
 }
 
 
@@ -124,6 +129,7 @@ static void git_hash_sha256_final_oid(struct object_id *oid, git_hash_ctx *ctx)
 	 * but keep it in case we extend the hash size again.
 	 */
 	memset(oid->hash + GIT_SHA256_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA256_RAWSZ);
+	oid->algo = GIT_HASH_SHA256;
 }
 
 static void git_hash_unknown_init(git_hash_ctx *ctx)
@@ -2340,6 +2346,7 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 		if (namelen == the_hash_algo->hexsz - 2 &&
 		    !hex_to_bytes(oid.hash + 1, de->d_name,
 				  the_hash_algo->rawsz - 1)) {
+			oid_set_algo(&oid, the_hash_algo);
 			if (obj_cb) {
 				r = obj_cb(&oid, path->buf, data);
 				if (r)
