@@ -280,20 +280,6 @@ rev_exists () {
 	fi
 }
 
-rev_is_descendant_of_branch () {
-	newrev="$1"
-	branch="$2"
-	branch_hash=$(git rev-parse "$branch")
-	match=$(git rev-list -1 "$branch_hash" "^$newrev")
-
-	if test -z "$match"
-	then
-		return 0
-	else
-		return 1
-	fi
-}
-
 # if a commit doesn't have a parent, this might not work.  But we only want
 # to remove the parent from the rev-list, and since it doesn't exist, it won't
 # be there anyway, so do nothing in that case.
@@ -811,7 +797,7 @@ cmd_split () {
 	then
 		if rev_exists "refs/heads/$branch"
 		then
-			if ! rev_is_descendant_of_branch "$latest_new" "$branch"
+			if ! git merge-base --is-ancestor "$branch" "$latest_new"
 			then
 				die "Branch '$branch' is not an ancestor of commit '$latest_new'."
 			fi
