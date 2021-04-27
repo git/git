@@ -44,17 +44,6 @@ squash        merge subtree changes as a single commit
 m,message=    use the given message as the commit message for the merge commit
 "
 
-arg_debug=
-arg_command=
-arg_prefix=
-arg_split_branch=
-arg_split_onto=
-arg_split_rejoin=
-arg_split_ignore_joins=
-arg_split_annotate=
-arg_addmerge_squash=
-arg_addmerge_message=
-
 indent=0
 
 # Usage: debug [MSG...]
@@ -106,10 +95,61 @@ main () {
 	then
 		set -- -h
 	fi
-	eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+	set_args="$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+	eval "$set_args"
 	. git-sh-setup
 	require_work_tree
 
+	# First figure out the command and whether we use --rejoin, so
+	# that we can provide more helpful validation when we do the
+	# "real" flag parsing.
+	arg_split_rejoin=
+	allow_split=
+	allow_addmerge=
+	while test $# -gt 0
+	do
+		opt="$1"
+		shift
+		case "$opt" in
+			--annotate|-b|-P|-m|--onto)
+				shift
+				;;
+			--rejoin)
+				arg_split_rejoin=1
+				;;
+			--no-rejoin)
+				arg_split_rejoin=
+				;;
+			--)
+				break
+				;;
+		esac
+	done
+	arg_command=$1
+	case "$arg_command" in
+	add|merge|pull)
+		allow_addmerge=1
+		;;
+	split|push)
+		allow_split=1
+		allow_addmerge=$arg_split_rejoin
+		;;
+	*)
+		die "Unknown command '$arg_command'"
+		;;
+	esac
+	# Reset the arguments array for "real" flag parsing.
+	eval "$set_args"
+
+	# Begin "real" flag parsing.
+	arg_debug=
+	arg_prefix=
+	arg_split_branch=
+	arg_split_onto=
+	arg_split_ignore_joins=
+	arg_split_annotate=
+	arg_addmerge_squash=
+	arg_addmerge_message=
 	while test $# -gt 0
 	do
 		opt="$1"
@@ -123,13 +163,16 @@ main () {
 			arg_debug=1
 			;;
 		--annotate)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_split_annotate="$1"
 			shift
 			;;
 		--no-annotate)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_split_annotate=
 			;;
 		-b)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_split_branch="$1"
 			shift
 			;;
@@ -138,6 +181,7 @@ main () {
 			shift
 			;;
 		-m)
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_addmerge_message="$1"
 			shift
 			;;
@@ -145,28 +189,34 @@ main () {
 			arg_prefix=
 			;;
 		--onto)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_split_onto="$1"
 			shift
 			;;
 		--no-onto)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_split_onto=
 			;;
 		--rejoin)
-			arg_split_rejoin=1
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			;;
 		--no-rejoin)
-			arg_split_rejoin=
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			;;
 		--ignore-joins)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_split_ignore_joins=1
 			;;
 		--no-ignore-joins)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_split_ignore_joins=
 			;;
 		--squash)
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_addmerge_squash=1
 			;;
 		--no-squash)
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
 			arg_addmerge_squash=
 			;;
 		--)
@@ -177,18 +227,7 @@ main () {
 			;;
 		esac
 	done
-
-	arg_command="$1"
 	shift
-
-	case "$arg_command" in
-	add|merge|pull|split|push)
-		:
-		;;
-	*)
-		die "Unknown command '$arg_command'"
-		;;
-	esac
 
 	if test -z "$arg_prefix"
 	then

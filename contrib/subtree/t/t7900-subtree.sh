@@ -33,6 +33,12 @@ test_create_commit () (
 	git commit -m "$commit" || error "Could not commit"
 )
 
+test_wrong_flag() {
+	test_must_fail "$@" >out 2>err &&
+	test_must_be_empty out &&
+	grep "flag does not make sense with" err
+}
+
 last_commit_subject () {
 	git log --pretty=format:%s -1
 }
@@ -69,6 +75,22 @@ test_expect_success 'no pull from non-existent subtree' '
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		test_must_fail git subtree pull --prefix="sub dir" ./"sub proj" HEAD
+	)
+'
+
+test_expect_success 'add rejects flags for split' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		test_wrong_flag git subtree add --prefix="sub dir" --annotate=foo FETCH_HEAD &&
+		test_wrong_flag git subtree add --prefix="sub dir" --branch=foo FETCH_HEAD &&
+		test_wrong_flag git subtree add --prefix="sub dir" --ignore-joins FETCH_HEAD &&
+		test_wrong_flag git subtree add --prefix="sub dir" --onto=foo FETCH_HEAD &&
+		test_wrong_flag git subtree add --prefix="sub dir" --rejoin FETCH_HEAD
 	)
 '
 
@@ -127,6 +149,28 @@ test_expect_success 'add subproj as subtree into sub dir/ with --squash and --pr
 #
 # Tests for 'git subtree merge'
 #
+
+test_expect_success 'merge rejects flags for split' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		test_wrong_flag git subtree merge --prefix="sub dir" --annotate=foo FETCH_HEAD &&
+		test_wrong_flag git subtree merge --prefix="sub dir" --branch=foo FETCH_HEAD &&
+		test_wrong_flag git subtree merge --prefix="sub dir" --ignore-joins FETCH_HEAD &&
+		test_wrong_flag git subtree merge --prefix="sub dir" --onto=foo FETCH_HEAD &&
+		test_wrong_flag git subtree merge --prefix="sub dir" --rejoin FETCH_HEAD
+	)
+'
 
 test_expect_success 'merge new subproj history into sub dir/ with --prefix' '
 	subtree_test_create_repo "$test_count" &&
@@ -259,6 +303,30 @@ test_expect_success 'split requires path given by option --prefix must exist' '
 		test_debug "printf '"actual: "'" &&
 		test_debug "cat actual" &&
 		test_cmp expected actual
+	)
+'
+
+test_expect_success 'split rejects flags for add' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
+		test_wrong_flag git subtree split --prefix="sub dir" --squash &&
+		test_wrong_flag git subtree split --prefix="sub dir" --message=foo
 	)
 '
 
@@ -542,6 +610,26 @@ test_expect_success 'pull basic operation' '
 	)
 '
 
+test_expect_success 'pull rejects flags for split' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	(
+		test_must_fail git subtree pull --prefix="sub dir" --annotate=foo ./"sub proj" HEAD &&
+		test_must_fail git subtree pull --prefix="sub dir" --branch=foo ./"sub proj" HEAD &&
+		test_must_fail git subtree pull --prefix="sub dir" --ignore-joins ./"sub proj" HEAD &&
+		test_must_fail git subtree pull --prefix="sub dir" --onto=foo ./"sub proj" HEAD &&
+		test_must_fail git subtree pull --prefix="sub dir" --rejoin ./"sub proj" HEAD
+	)
+'
+
 #
 # Tests for 'git subtree push'
 #
@@ -581,6 +669,29 @@ test_expect_success 'push requires path given by option --prefix must exist' '
 		test_debug "printf '"actual: "'" &&
 		test_debug "cat actual" &&
 		test_cmp expected actual
+	)
+'
+
+test_expect_success 'push rejects flags for add' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		test_wrong_flag git subtree split --prefix="sub dir" --squash ./"sub proj" from-mainline &&
+		test_wrong_flag git subtree split --prefix="sub dir" --message=foo ./"sub proj" from-mainline
 	)
 '
 
