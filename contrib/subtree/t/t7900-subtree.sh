@@ -22,33 +22,6 @@ subtree_test_create_repo () {
 	git -C "$1" config log.date relative
 }
 
-# Make sure no patch changes more than one file.
-# The original set of commits changed only one file each.
-# A multi-file change would imply that we pruned commits
-# too aggressively.
-join_commits () {
-	commit=
-	all=
-	while read x y
-	do
-		if test -z "$x"
-		then
-			continue
-		elif test "$x" = "commit:"
-		then
-			if test -n "$commit"
-			then
-				echo "$commit $all"
-				all=
-			fi
-			commit="$y"
-		else
-			all="$all $y"
-		fi
-	done
-	echo "$commit $all"
-}
-
 test_create_commit () (
 	repo=$1 &&
 	commit=$2 &&
@@ -869,19 +842,12 @@ test_expect_success 'verify one file change per commit' '
 		cd "$test_count" &&
 		git subtree split --prefix="sub dir2" --branch subproj2-br &&
 
-		x= &&
-		git log --pretty=format:"commit: %H" | join_commits |
-		(
-			while read commit a b
-			do
-				test_debug "echo Verifying commit $commit"
-				test_debug "echo a: $a"
-				test_debug "echo b: $b"
-				test "$b" = ""
-				x=1
-			done
-			test "$x" = 1
-		)
+		git log --format="%H" >commit-list &&
+		while read commit
+		do
+			git log -n1 --format="" --name-only "$commit" >file-list &&
+			test_line_count -le 1 file-list || return 1
+		done <commit-list
 	)
 '
 
