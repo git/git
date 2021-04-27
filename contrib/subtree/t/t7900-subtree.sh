@@ -820,6 +820,28 @@ test_expect_success 'push "sub dir"/ with --branch for an incompatible branch' '
 	)
 '
 
+test_expect_success 'push "sub dir"/ with a local rev' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		bad_tree=$(git rev-parse --verify HEAD:"sub dir") &&
+		good_tree=$(git rev-parse --verify HEAD^:"sub dir") &&
+		git subtree push --prefix="sub dir" --annotate="*" ./"sub proj" HEAD^:from-mainline &&
+		split_tree=$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline:) &&
+		test "$split_tree" = "$good_tree"
+	)
+'
+
 #
 # Validity checking
 #

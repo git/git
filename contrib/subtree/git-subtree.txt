@@ -16,7 +16,7 @@ SYNOPSIS
 
 [verse]
 'git subtree' [<options>] -P <prefix> pull <repository> <remote-ref>
-'git subtree' [<options>] -P <prefix> push <repository> <remote-ref>
+'git subtree' [<options>] -P <prefix> push <repository> <refspec>
 
 DESCRIPTION
 -----------
@@ -115,11 +115,13 @@ pull <repository> <remote-ref>::
 	it fetches the given ref from the specified remote
 	repository.
 
-push <repository> <remote-ref>::
-	Does a 'split' using the <prefix> subtree of HEAD and then
-	does a 'git push' to push the result to the <repository> and
-	<remote-ref>.  This can be used to push your subtree to
-	different branches of the remote repository.
+push <repository> [+][<local-commit>:]<remote-ref>::
+	Does a 'split' using the <prefix> subtree of <local-commit>
+	and then does a 'git push' to push the result to the
+	<repository> and <remote-ref>.  This can be used to push your
+	subtree to different branches of the remote repository.  Just
+	as with 'split', if no <local-commit> is given, then HEAD is
+	used.  The optional leading '+' is ignored.
 
 OPTIONS FOR ALL COMMANDS
 ------------------------

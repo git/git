@@ -27,7 +27,7 @@ git subtree add   --prefix=<prefix> <repository> <ref>
 git subtree merge --prefix=<prefix> <commit>
 git subtree split --prefix=<prefix> [<commit>]
 git subtree pull  --prefix=<prefix> <repository> <ref>
-git subtree push  --prefix=<prefix> <repository> <ref>
+git subtree push  --prefix=<prefix> <repository> <refspec>
 --
 h,help        show the help
 q             quiet
@@ -952,20 +952,30 @@ cmd_pull () {
 	cmd_merge FETCH_HEAD
 }
 
-# Usage: cmd_push REPOSITORY REMOTEREF
+# Usage: cmd_push REPOSITORY [+][LOCALREV:]REMOTEREF
 cmd_push () {
 	if test $# -ne 2
 	then
-		die "You must provide <repository> <ref>"
+		die "You must provide <repository> <refspec>"
 	fi
-	ensure_valid_ref_format "$2"
 	if test -e "$dir"
 	then
 		repository=$1
-		refspec=$2
+		refspec=${2#+}
+		remoteref=${refspec#*:}
+		if test "$remoteref" = "$refspec"
+		then
+			localrevname_presplit=HEAD
+		else
+			localrevname_presplit=${refspec%%:*}
+		fi
+		ensure_valid_ref_format "$remoteref"
+		localrev_presplit=$(git rev-parse -q --verify "$localrevname_presplit^{commit}") ||
+			die "'$localrevname_presplit' does not refer to a commit"
+
 		echo "git push using: " "$repository" "$refspec"
-		localrev=$(cmd_split) || die
-		git push "$repository" "$localrev":"refs/heads/$refspec"
+		localrev=$(cmd_split "$localrev_presplit") || die
+		git push "$repository" "$localrev":"refs/heads/$remoteref"
 	else
 		die "'$dir' must already exist. Try 'git subtree add'."
 	fi
