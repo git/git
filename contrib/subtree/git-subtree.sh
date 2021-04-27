@@ -33,15 +33,15 @@ h,help        show the help
 q             quiet
 d             show debug messages
 P,prefix=     the name of the subdir to split out
-m,message=    use the given message as the commit message for the merge commit
  options for 'split'
 annotate=     add a prefix to commit message of new commits
 b,branch=     create a new branch from the split subtree
 ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
- options for 'add' and 'merge' (also: 'pull')
+ options for 'add' and 'merge' (also: 'pull' and 'split --rejoin')
 squash        merge subtree changes as a single commit
+m,message=    use the given message as the commit message for the merge commit
 "
 
 arg_debug=
@@ -346,7 +346,8 @@ find_latest_squash () {
 				then
 					# a rejoin commit?
 					# Pretend its sub was a squash.
-					sq="$sub"
+					sq=$(git rev-parse --verify "$sq^2") ||
+						die
 				fi
 				debug "Squash found: $sq $sub"
 				echo "$sq" "$sub"
@@ -452,6 +453,13 @@ add_msg () {
 		commit_message="$arg_addmerge_message"
 	else
 		commit_message="Add '$dir/' from commit '$latest_new'"
+	fi
+	if test -n "$arg_split_rejoin"
+	then
+		# If this is from a --rejoin, then rejoin_msg has
+		# already inserted the `git-subtree-xxx:` tags
+		echo "$commit_message"
+		return
 	fi
 	cat <<-EOF
 		$commit_message
@@ -775,7 +783,12 @@ cmd_add_commit () {
 	rev=$(git rev-parse --verify "$1^{commit}") || exit $?
 
 	debug "Adding $dir as '$rev'..."
-	git read-tree --prefix="$dir" $rev || exit $?
+	if test -z "$arg_split_rejoin"
+	then
+		# Only bother doing this if this is a genuine 'add',
+		# not a synthetic 'add' from '--rejoin'.
+		git read-tree --prefix="$dir" $rev || exit $?
+	fi
 	git checkout -- "$dir" || exit $?
 	tree=$(git write-tree) || exit $?
 
@@ -813,6 +826,11 @@ cmd_split () {
 			die "'$1' does not refer to a commit"
 	else
 		die "You must provide exactly one revision.  Got: '$*'"
+	fi
+
+	if test -n "$arg_split_rejoin"
+	then
+		ensure_clean
 	fi
 
 	debug "Splitting $dir..."
@@ -857,10 +875,13 @@ cmd_split () {
 	then
 		debug "Merging split branch into HEAD..."
 		latest_old=$(cache_get latest_old) || exit $?
-		git merge -s ours \
-			--allow-unrelated-histories \
-			-m "$(rejoin_msg "$dir" "$latest_old" "$latest_new")" \
-			"$latest_new" >&2 || exit $?
+		arg_addmerge_message="$(rejoin_msg "$dir" "$latest_old" "$latest_new")" || exit $?
+		if test -z "$(find_latest_squash "$dir")"
+		then
+			cmd_add "$latest_new" >&2 || exit $?
+		else
+			cmd_merge "$latest_new" >&2 || exit $?
+		fi
 	fi
 	if test -n "$arg_split_branch"
 	then
