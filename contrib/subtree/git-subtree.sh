@@ -243,7 +243,7 @@ cache_miss () {
 }
 
 check_parents () {
-	missed=$(cache_miss "$1")
+	missed=$(cache_miss "$1") || exit $?
 	local indent=$(($2 + 1))
 	for miss in $missed
 	do
@@ -345,7 +345,7 @@ find_latest_squash () {
 			sub=
 			;;
 		esac
-	done
+	done || exit $?
 }
 
 find_existing_splits () {
@@ -394,7 +394,7 @@ find_existing_splits () {
 			sub=
 			;;
 		esac
-	done
+	done || exit $?
 }
 
 copy_commit () {
@@ -508,7 +508,7 @@ subtree_for_commit () {
 		test "$type" = "commit" && continue  # ignore submodules
 		echo $tree
 		break
-	done
+	done || exit $?
 }
 
 tree_changed () {
@@ -518,7 +518,7 @@ tree_changed () {
 	then
 		return 0   # weird parents, consider it changed
 	else
-		ptree=$(toptree_for_commit $1)
+		ptree=$(toptree_for_commit $1) || exit $?
 		if test "$ptree" != "$tree"
 		then
 			return 0   # changed
@@ -652,7 +652,7 @@ process_split_commit () {
 	progress "$revcount/$revmax ($createcount) [$extracount]"
 
 	debug "Processing commit: $rev"
-	exists=$(cache_get "$rev")
+	exists=$(cache_get "$rev") || exit $?
 	if test -n "$exists"
 	then
 		debug "  prior: $exists"
@@ -661,10 +661,10 @@ process_split_commit () {
 	createcount=$(($createcount + 1))
 	debug "  parents: $parents"
 	check_parents "$parents" "$indent"
-	newparents=$(cache_get $parents)
+	newparents=$(cache_get $parents) || exit $?
 	debug "  newparents: $newparents"
 
-	tree=$(subtree_for_commit "$rev" "$dir")
+	tree=$(subtree_for_commit "$rev" "$dir") || exit $?
 	debug "  tree is: $tree"
 
 	# ugly.  is there no better way to tell if this is a subtree
@@ -750,7 +750,7 @@ cmd_add_commit () {
 		commit=$(add_squashed_msg "$rev" "$dir" |
 			git commit-tree "$tree" $headp -p "$rev") || exit $?
 	else
-		revp=$(peel_committish "$rev") &&
+		revp=$(peel_committish "$rev") || exit $?
 		commit=$(add_msg "$dir" $headrev "$rev" |
 			git commit-tree "$tree" $headp -p "$revp") || exit $?
 	fi
@@ -773,10 +773,10 @@ cmd_split () {
 			# any parent we find there can be used verbatim
 			debug "  cache: $rev"
 			cache_set "$rev" "$rev"
-		done
+		done || exit $?
 	fi
 
-	unrevs="$(find_existing_splits "$dir" "$revs")"
+	unrevs="$(find_existing_splits "$dir" "$revs")" || exit $?
 
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
@@ -792,7 +792,7 @@ cmd_split () {
 		process_split_commit "$rev" "$parents" 0
 	done || exit $?
 
-	latest_new=$(cache_get latest_new)
+	latest_new=$(cache_get latest_new) || exit $?
 	if test -z "$latest_new"
 	then
 		die "No new revisions were found"
@@ -801,7 +801,7 @@ cmd_split () {
 	if test -n "$rejoin"
 	then
 		debug "Merging split branch into HEAD..."
-		latest_old=$(cache_get latest_old)
+		latest_old=$(cache_get latest_old) || exit $?
 		git merge -s ours \
 			--allow-unrelated-histories \
 			-m "$(rejoin_msg "$dir" "$latest_old" "$latest_new")" \
@@ -834,7 +834,7 @@ cmd_merge () {
 
 	if test -n "$squash"
 	then
-		first_split="$(find_latest_squash "$dir")"
+		first_split="$(find_latest_squash "$dir")" || exit $?
 		if test -z "$first_split"
 		then
 			die "Can't squash-merge: '$dir' was never added."
