@@ -55,11 +55,13 @@ arg_split_annotate=
 arg_addmerge_squash=
 arg_addmerge_message=
 
+indent=0
+
 # Usage: debug [MSG...]
 debug () {
 	if test -n "$arg_debug"
 	then
-		printf "%s\n" "$*" >&2
+		printf "%$(($indent * 2))s%s\n" '' "$*" >&2
 	fi
 }
 
@@ -251,17 +253,17 @@ cache_miss () {
 	done
 }
 
-# Usage: check_parents PARENTS_EXPR INDENT
+# Usage: check_parents PARENTS_EXPR
 check_parents () {
-	assert test $# = 2
+	assert test $# = 1
 	missed=$(cache_miss "$1") || exit $?
-	local indent=$(($2 + 1))
+	local indent=$(($indent + 1))
 	for miss in $missed
 	do
 		if ! test -r "$cachedir/notree/$miss"
 		then
-			debug "  incorrect order: $miss"
-			process_split_commit "$miss" "" "$indent"
+			debug "incorrect order: $miss"
+			process_split_commit "$miss" ""
 		fi
 	done
 }
@@ -314,6 +316,8 @@ try_remove_previous () {
 find_latest_squash () {
 	assert test $# = 1
 	debug "Looking for latest squash ($dir)..."
+	local indent=$(($indent + 1))
+
 	dir="$1"
 	sq=
 	main=
@@ -360,6 +364,8 @@ find_latest_squash () {
 find_existing_splits () {
 	assert test $# = 2
 	debug "Looking for prior splits..."
+	local indent=$(($indent + 1))
+
 	dir="$1"
 	rev="$2"
 	main=
@@ -385,7 +391,7 @@ find_existing_splits () {
 			die "could not rev-parse split hash $b from commit $sq"
 			;;
 		END)
-			debug "  Main is: '$main'"
+			debug "Main is: '$main'"
 			if test -z "$main" -a -n "$sub"
 			then
 				# squash commits refer to a subtree
@@ -668,12 +674,11 @@ ensure_valid_ref_format () {
 		die "'$1' does not look like a ref"
 }
 
-# Usage: process_split_commit REV PARENTS INDENT
+# Usage: process_split_commit REV PARENTS
 process_split_commit () {
-	assert test $# = 3
+	assert test $# = 2
 	local rev="$1"
 	local parents="$2"
-	local indent=$3
 
 	if test $indent -eq 0
 	then
@@ -688,20 +693,21 @@ process_split_commit () {
 	progress "$revcount/$revmax ($createcount) [$extracount]"
 
 	debug "Processing commit: $rev"
+	local indent=$(($indent + 1))
 	exists=$(cache_get "$rev") || exit $?
 	if test -n "$exists"
 	then
-		debug "  prior: $exists"
+		debug "prior: $exists"
 		return
 	fi
 	createcount=$(($createcount + 1))
-	debug "  parents: $parents"
-	check_parents "$parents" "$indent"
+	debug "parents: $parents"
+	check_parents "$parents"
 	newparents=$(cache_get $parents) || exit $?
-	debug "  newparents: $newparents"
+	debug "newparents: $newparents"
 
 	tree=$(subtree_for_commit "$rev" "$dir") || exit $?
-	debug "  tree is: $tree"
+	debug "tree is: $tree"
 
 	# ugly.  is there no better way to tell if this is a subtree
 	# vs. a mainline commit?  Does it matter?
@@ -716,7 +722,7 @@ process_split_commit () {
 	fi
 
 	newrev=$(copy_or_skip "$rev" "$tree" "$newparents") || exit $?
-	debug "  newrev is: $newrev"
+	debug "newrev is: $newrev"
 	cache_set "$rev" "$newrev"
 	cache_set latest_new "$newrev"
 	cache_set latest_old "$rev"
@@ -820,7 +826,7 @@ cmd_split () {
 		do
 			# the 'onto' history is already just the subdir, so
 			# any parent we find there can be used verbatim
-			debug "  cache: $rev"
+			debug "cache: $rev"
 			cache_set "$rev" "$rev"
 		done || exit $?
 	fi
@@ -838,7 +844,7 @@ cmd_split () {
 	eval "$grl" |
 	while read rev parents
 	do
-		process_split_commit "$rev" "$parents" 0
+		process_split_commit "$rev" "$parents"
 	done || exit $?
 
 	latest_new=$(cache_get latest_new) || exit $?
