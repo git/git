@@ -5,6 +5,22 @@
 # Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>
 #
 
+if test -z "$GIT_EXEC_PATH" || test "${PATH#"${GIT_EXEC_PATH}:"}" = "$PATH" || ! test -f "$GIT_EXEC_PATH/git-sh-setup"
+then
+	echo >&2 'It looks like either your git installation or your'
+	echo >&2 'git-subtree installation is broken.'
+	echo >&2
+	echo >&2 "Tips:"
+	echo >&2 " - If \`git --exec-path\` does not print the correct path to"
+	echo >&2 "   your git install directory, then set the GIT_EXEC_PATH"
+	echo >&2 "   environment variable to the correct directory."
+	echo >&2 " - Make sure that your \`${0##*/}\` file is either in your"
+	echo >&2 "   PATH or in your git exec path (\`$(git --exec-path)\`)."
+	echo >&2 " - You should run git-subtree as \`git ${0##*/git-}\`,"
+	echo >&2 "   not as \`${0##*/}\`." >&2
+	exit 126
+fi
+
 OPTS_SPEC="\
 git subtree add   --prefix=<prefix> <commit>
 git subtree add   --prefix=<prefix> <repository> <ref>
@@ -27,8 +43,6 @@ rejoin        merge the new branch back into HEAD
  options for 'add', 'merge', and 'pull'
 squash        merge subtree changes as a single commit
 "
-
-PATH=$PATH:$(git --exec-path)
 
 arg_debug=
 arg_command=
