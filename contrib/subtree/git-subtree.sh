@@ -852,23 +852,12 @@ cmd_merge () {
 		rev="$new"
 	fi
 
-	version=$(git version)
-	if test "$version" \< "git version 1.7"
+	if test -n "$message"
 	then
-		if test -n "$message"
-		then
-			git merge -s subtree --message="$message" "$rev"
-		else
-			git merge -s subtree "$rev"
-		fi
+		git merge -Xsubtree="$prefix" \
+		    --message="$message" "$rev"
 	else
-		if test -n "$message"
-		then
-			git merge -Xsubtree="$prefix" \
-				--message="$message" "$rev"
-		else
-			git merge -Xsubtree="$prefix" $rev
-		fi
+		git merge -Xsubtree="$prefix" $rev
 	fi
 }
 
