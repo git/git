@@ -4,10 +4,7 @@
 #
 # Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>
 #
-if test $# -eq 0
-then
-	set -- -h
-fi
+
 OPTS_SPEC="\
 git subtree add   --prefix=<prefix> <commit>
 git subtree add   --prefix=<prefix> <repository> <ref>
@@ -30,12 +27,8 @@ rejoin        merge the new branch back into HEAD
  options for 'add', 'merge', and 'pull'
 squash        merge subtree changes as a single commit
 "
-eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
 
 PATH=$PATH:$(git --exec-path)
-. git-sh-setup
-
-require_work_tree
 
 quiet=
 branch=
@@ -84,126 +77,138 @@ ensure_single_rev () {
 	fi
 }
 
-while test $# -gt 0
-do
-	opt="$1"
+main () {
+	if test $# -eq 0
+	then
+		set -- -h
+	fi
+	eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+	. git-sh-setup
+	require_work_tree
+
+	while test $# -gt 0
+	do
+		opt="$1"
+		shift
+
+		case "$opt" in
+		-q)
+			quiet=1
+			;;
+		-d)
+			debug=1
+			;;
+		--annotate)
+			annotate="$1"
+			shift
+			;;
+		--no-annotate)
+			annotate=
+			;;
+		-b)
+			branch="$1"
+			shift
+			;;
+		-P)
+			prefix="${1%/}"
+			shift
+			;;
+		-m)
+			message="$1"
+			shift
+			;;
+		--no-prefix)
+			prefix=
+			;;
+		--onto)
+			onto="$1"
+			shift
+			;;
+		--no-onto)
+			onto=
+			;;
+		--rejoin)
+			rejoin=1
+			;;
+		--no-rejoin)
+			rejoin=
+			;;
+		--ignore-joins)
+			ignore_joins=1
+			;;
+		--no-ignore-joins)
+			ignore_joins=
+			;;
+		--squash)
+			squash=1
+			;;
+		--no-squash)
+			squash=
+			;;
+		--)
+			break
+			;;
+		*)
+			die "Unexpected option: $opt"
+			;;
+		esac
+	done
+
+	command="$1"
 	shift
 
-	case "$opt" in
-	-q)
-		quiet=1
+	case "$command" in
+	add|merge|pull)
+		default=
 		;;
-	-d)
-		debug=1
-		;;
-	--annotate)
-		annotate="$1"
-		shift
-		;;
-	--no-annotate)
-		annotate=
-		;;
-	-b)
-		branch="$1"
-		shift
-		;;
-	-P)
-		prefix="${1%/}"
-		shift
-		;;
-	-m)
-		message="$1"
-		shift
-		;;
-	--no-prefix)
-		prefix=
-		;;
-	--onto)
-		onto="$1"
-		shift
-		;;
-	--no-onto)
-		onto=
-		;;
-	--rejoin)
-		rejoin=1
-		;;
-	--no-rejoin)
-		rejoin=
-		;;
-	--ignore-joins)
-		ignore_joins=1
-		;;
-	--no-ignore-joins)
-		ignore_joins=
-		;;
-	--squash)
-		squash=1
-		;;
-	--no-squash)
-		squash=
-		;;
-	--)
-		break
+	split|push)
+		default="--default HEAD"
 		;;
 	*)
-		die "Unexpected option: $opt"
+		die "Unknown command '$command'"
 		;;
 	esac
-done
 
-command="$1"
-shift
-
-case "$command" in
-add|merge|pull)
-	default=
-	;;
-split|push)
-	default="--default HEAD"
-	;;
-*)
-	die "Unknown command '$command'"
-	;;
-esac
-
-if test -z "$prefix"
-then
-	die "You must provide the --prefix option."
-fi
-
-case "$command" in
-add)
-	test -e "$prefix" &&
-		die "prefix '$prefix' already exists."
-	;;
-*)
-	test -e "$prefix" ||
-		die "'$prefix' does not exist; use 'git subtree add'"
-	;;
-esac
-
-dir="$(dirname "$prefix/.")"
-
-if test "$command" != "pull" &&
-		test "$command" != "add" &&
-		test "$command" != "push"
-then
-	revs=$(git rev-parse $default --revs-only "$@") || exit $?
-	dirs=$(git rev-parse --no-revs --no-flags "$@") || exit $?
-	ensure_single_rev $revs
-	if test -n "$dirs"
+	if test -z "$prefix"
 	then
-		die "Error: Use --prefix instead of bare filenames."
+		die "You must provide the --prefix option."
 	fi
-fi
 
-debug "command: {$command}"
-debug "quiet: {$quiet}"
-debug "revs: {$revs}"
-debug "dir: {$dir}"
-debug "opts: {$*}"
-debug
+	case "$command" in
+	add)
+		test -e "$prefix" &&
+			die "prefix '$prefix' already exists."
+		;;
+	*)
+		test -e "$prefix" ||
+			die "'$prefix' does not exist; use 'git subtree add'"
+		;;
+	esac
+
+	dir="$(dirname "$prefix/.")"
+
+	if test "$command" != "pull" &&
+			test "$command" != "add" &&
+			test "$command" != "push"
+	then
+		revs=$(git rev-parse $default --revs-only "$@") || exit $?
+		dirs=$(git rev-parse --no-revs --no-flags "$@") || exit $?
+		ensure_single_rev $revs
+		if test -n "$dirs"
+		then
+			die "Error: Use --prefix instead of bare filenames."
+		fi
+	fi
+
+	debug "command: {$command}"
+	debug "quiet: {$quiet}"
+	debug "revs: {$revs}"
+	debug "dir: {$dir}"
+	debug "opts: {$*}"
+	debug
+
+	"cmd_$command" "$@"
+}
 
 cache_setup () {
 	cachedir="$GIT_DIR/subtree-cache/$$"
@@ -898,4 +903,4 @@ cmd_push () {
 	fi
 }
 
-"cmd_$command" "$@"
+main "$@"
