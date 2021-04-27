@@ -13,12 +13,14 @@ TEST_DIRECTORY=$(pwd)/../../../t
 export TEST_DIRECTORY
 . "$TEST_DIRECTORY"/test-lib.sh
 
+# Use our own wrapper around test-lib.sh's test_create_repo, in order
+# to set log.date=relative.  `git subtree` parses the output of `git
+# log`, and so it must be careful to not be affected by settings that
+# change the `git log` output.  We test this by setting
+# log.date=relative for every repo in the tests.
 subtree_test_create_repo () {
 	test_create_repo "$1" &&
-	(
-		cd "$1" &&
-		git config log.date relative
-	)
+	git -C "$1" config log.date relative
 }
 
 create () {
@@ -242,8 +244,8 @@ test_expect_success 'merge the added subproj again, should do nothing' '
 '
 
 test_expect_success 'merge new subproj history into subdir/ with a slash appended to the argument of --prefix' '
-	test_create_repo "$test_count" &&
-	test_create_repo "$test_count/subproj" &&
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/subproj" &&
 	test_create_commit "$test_count" main1 &&
 	test_create_commit "$test_count/subproj" sub1 &&
 	(
