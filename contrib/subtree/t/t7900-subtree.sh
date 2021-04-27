@@ -33,7 +33,7 @@ test_create_commit () (
 	git commit -m "$commit" || error "Could not commit"
 )
 
-last_commit_message () {
+last_commit_subject () {
 	git log --pretty=format:%s -1
 }
 
@@ -74,7 +74,7 @@ test_expect_success 'add subproj as subtree into sub dir/ with --prefix' '
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
-		test "$(last_commit_message)" = "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
+		test "$(last_commit_subject)" = "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
 '
 
@@ -87,7 +87,7 @@ test_expect_success 'add subproj as subtree into sub dir/ with --prefix and --me
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" --message="Added subproject" FETCH_HEAD &&
-		test "$(last_commit_message)" = "Added subproject"
+		test "$(last_commit_subject)" = "Added subproject"
 	)
 '
 
@@ -100,7 +100,7 @@ test_expect_success 'add subproj as subtree into sub dir/ with --prefix as -P an
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree add -P "sub dir" -m "Added subproject" FETCH_HEAD &&
-		test "$(last_commit_message)" = "Added subproject"
+		test "$(last_commit_subject)" = "Added subproject"
 	)
 '
 
@@ -113,7 +113,7 @@ test_expect_success 'add subproj as subtree into sub dir/ with --squash and --pr
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" --message="Added subproject with squash" --squash FETCH_HEAD &&
-		test "$(last_commit_message)" = "Added subproject with squash"
+		test "$(last_commit_subject)" = "Added subproject with squash"
 	)
 '
 
@@ -136,7 +136,7 @@ test_expect_success 'merge new subproj history into sub dir/ with --prefix' '
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
-		test "$(last_commit_message)" = "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
+		test "$(last_commit_subject)" = "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
 '
 
@@ -155,7 +155,7 @@ test_expect_success 'merge new subproj history into sub dir/ with --prefix and -
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" --message="Merged changes from subproject" FETCH_HEAD &&
-		test "$(last_commit_message)" = "Merged changes from subproject"
+		test "$(last_commit_subject)" = "Merged changes from subproject"
 	)
 '
 
@@ -174,7 +174,7 @@ test_expect_success 'merge new subproj history into sub dir/ with --squash and -
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" --message="Merged changes from subproject using squash" --squash FETCH_HEAD &&
-		test "$(last_commit_message)" = "Merged changes from subproject using squash"
+		test "$(last_commit_subject)" = "Merged changes from subproject using squash"
 	)
 '
 
@@ -209,7 +209,7 @@ test_expect_success 'merge new subproj history into subdir/ with a slash appende
 		cd "$test_count" &&
 		git fetch ./subproj HEAD &&
 		git subtree merge --prefix=subdir/ FETCH_HEAD &&
-		test "$(last_commit_message)" = "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
+		test "$(last_commit_subject)" = "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
 '
 
@@ -275,7 +275,7 @@ test_expect_success 'split sub dir/ with --rejoin' '
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
 		git subtree split --prefix="sub dir" --annotate="*" --rejoin &&
-		test "$(last_commit_message)" = "Split '\''sub dir/'\'' into commit '\''$split_hash'\''"
+		test "$(last_commit_subject)" = "Split '\''sub dir/'\'' into commit '\''$split_hash'\''"
 	)
 '
 
@@ -290,7 +290,7 @@ test_expect_success 'split sub dir/ with --rejoin from scratch' '
 		git commit -m"sub dir file" &&
 		split_hash=$(git subtree split --prefix="sub dir" --rejoin) &&
 		git subtree split --prefix="sub dir" --rejoin &&
-		test "$(last_commit_message)" = "Split '\''sub dir/'\'' into commit '\''$split_hash'\''"
+		test "$(last_commit_subject)" = "Split '\''sub dir/'\'' into commit '\''$split_hash'\''"
 	)
 '
 
@@ -313,7 +313,7 @@ test_expect_success 'split sub dir/ with --rejoin and --message' '
 		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		git subtree split --prefix="sub dir" --message="Split & rejoin" --annotate="*" --rejoin &&
-		test "$(last_commit_message)" = "Split & rejoin"
+		test "$(last_commit_subject)" = "Split & rejoin"
 	)
 '
 
@@ -878,7 +878,7 @@ test_expect_success 'push split to subproj' '
 		git subtree push ./"sub proj" --prefix "sub dir" sub-branch-1 &&
 		cd ./"sub proj" &&
 		git checkout sub-branch-1 &&
-		test "$(last_commit_message)" = "sub dir/main-sub3"
+		test "$(last_commit_subject)" = "sub dir/main-sub3"
 	)
 '
 
