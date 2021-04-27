@@ -67,7 +67,27 @@ debug () {
 progress () {
 	if test -z "$GIT_QUIET"
 	then
-		printf "%s\r" "$*" >&2
+		if test -z "$arg_debug"
+		then
+			# Debug mode is off.
+			#
+			# Print one progress line that we keep updating (use
+			# "\r" to return to the beginning of the line, rather
+			# than "\n" to start a new line).  This only really
+			# works when stderr is a terminal.
+			printf "%s\r" "$*" >&2
+		else
+			# Debug mode is on.  The `debug` function is regularly
+			# printing to stderr.
+			#
+			# Don't do the one-line-with-"\r" thing, because on a
+			# terminal the debug output would overwrite and hide the
+			# progress output.  Add a "progress:" prefix to make the
+			# progress output and the debug output easy to
+			# distinguish.  This ensures maximum readability whether
+			# stderr is a terminal or a file.
+			printf "progress: %s\n" "$*" >&2
+		fi
 	fi
 }
 
