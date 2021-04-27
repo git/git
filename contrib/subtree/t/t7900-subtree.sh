@@ -10,7 +10,6 @@ and split subcommands of git subtree.
 '
 
 TEST_DIRECTORY=$(pwd)/../../../t
-export TEST_DIRECTORY
 . "$TEST_DIRECTORY"/test-lib.sh
 
 # Use our own wrapper around test-lib.sh's test_create_repo, in order
@@ -21,15 +20,6 @@ export TEST_DIRECTORY
 subtree_test_create_repo () {
 	test_create_repo "$1" &&
 	git -C "$1" config log.date relative
-}
-
-create () {
-	echo "$1" >"$1" &&
-	git add "$1"
-}
-
-undo () {
-	git reset --hard HEAD~
 }
 
 # Make sure no patch changes more than one file.
@@ -404,7 +394,7 @@ test_expect_success 'check hash of split' '
 		(
 			cd ./"sub proj" &&
 			subdir_hash=$(git rev-parse HEAD) &&
-			test ''"$new_hash"'' = "$subdir_hash"
+			test "$new_hash" = "$subdir_hash"
 		)
 	)
 '
