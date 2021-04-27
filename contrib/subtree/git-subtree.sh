@@ -25,9 +25,9 @@ OPTS_SPEC="\
 git subtree add   --prefix=<prefix> <commit>
 git subtree add   --prefix=<prefix> <repository> <ref>
 git subtree merge --prefix=<prefix> <commit>
+git subtree split --prefix=<prefix> [<commit>]
 git subtree pull  --prefix=<prefix> <repository> <ref>
 git subtree push  --prefix=<prefix> <repository> <ref>
-git subtree split --prefix=<prefix> <commit>
 --
 h,help        show the help
 q             quiet
@@ -40,7 +40,7 @@ b,branch=     create a new branch from the split subtree
 ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
- options for 'add', 'merge', and 'pull'
+ options for 'add' and 'merge' (also: 'pull')
 squash        merge subtree changes as a single commit
 "
 
