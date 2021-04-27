@@ -76,13 +76,6 @@ assert () {
 	fi
 }
 
-ensure_single_rev () {
-	if test $# -ne 1
-	then
-		die "You must provide exactly one revision.  Got: '$*'"
-	fi
-}
-
 main () {
 	if test $# -eq 0
 	then
@@ -164,11 +157,8 @@ main () {
 	shift
 
 	case "$arg_command" in
-	add|merge|pull)
-		default=
-		;;
-	split|push)
-		default="--default HEAD"
+	add|merge|pull|split|push)
+		:
 		;;
 	*)
 		die "Unknown command '$arg_command'"
@@ -193,22 +183,8 @@ main () {
 
 	dir="$(dirname "$arg_prefix/.")"
 
-	if test "$arg_command" != "pull" &&
-			test "$arg_command" != "add" &&
-			test "$arg_command" != "push"
-	then
-		revs=$(git rev-parse $default --revs-only "$@") || exit $?
-		dirs=$(git rev-parse --no-revs --no-flags "$@") || exit $?
-		ensure_single_rev $revs
-		if test -n "$dirs"
-		then
-			die "Error: Use --prefix instead of bare filenames."
-		fi
-	fi
-
 	debug "command: {$arg_command}"
 	debug "quiet: {$GIT_QUIET}"
-	debug "revs: {$revs}"
 	debug "dir: {$dir}"
 	debug "opts: {$*}"
 	debug
@@ -714,14 +690,13 @@ cmd_add_repository () {
 	repository=$1
 	refspec=$2
 	git fetch "$@" || exit $?
-	revs=FETCH_HEAD
-	set -- $revs
-	cmd_add_commit "$@"
+	cmd_add_commit FETCH_HEAD
 }
 
 cmd_add_commit () {
-	rev=$(git rev-parse $default --revs-only "$@") || exit $?
-	ensure_single_rev $rev
+	# The rev has already been validated by cmd_add(), we just
+	# need to normalize it.
+	rev=$(git rev-parse --verify "$1^{commit}") || exit $?
 
 	debug "Adding $dir as '$rev'..."
 	git read-tree --prefix="$dir" $rev || exit $?
@@ -752,6 +727,17 @@ cmd_add_commit () {
 }
 
 cmd_split () {
+	if test $# -eq 0
+	then
+		rev=$(git rev-parse HEAD)
+	elif test $# -eq 1
+	then
+		rev=$(git rev-parse -q --verify "$1^{commit}") ||
+			die "'$1' does not refer to a commit"
+	else
+		die "You must provide exactly one revision.  Got: '$*'"
+	fi
+
 	debug "Splitting $dir..."
 	cache_setup || exit $?
 
@@ -768,12 +754,12 @@ cmd_split () {
 		done || exit $?
 	fi
 
-	unrevs="$(find_existing_splits "$dir" "$revs")" || exit $?
+	unrevs="$(find_existing_splits "$dir" "$rev")" || exit $?
 
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
-	grl='git rev-list --topo-order --reverse --parents $revs $unrevs'
+	grl='git rev-list --topo-order --reverse --parents $rev $unrevs'
 	revmax=$(eval "$grl" | wc -l)
 	revcount=0
 	createcount=0
@@ -820,8 +806,10 @@ cmd_split () {
 }
 
 cmd_merge () {
-	rev=$(git rev-parse $default --revs-only "$@") || exit $?
-	ensure_single_rev $rev
+	test $# -eq 1 ||
+		die "You must provide exactly one revision.  Got: '$*'"
+	rev=$(git rev-parse -q --verify "$1^{commit}") ||
+		die "'$1' does not refer to a commit"
 	ensure_clean
 
 	if test -n "$arg_addmerge_squash"
@@ -861,9 +849,7 @@ cmd_pull () {
 	ensure_clean
 	ensure_valid_ref_format "$2"
 	git fetch "$@" || exit $?
-	revs=FETCH_HEAD
-	set -- $revs
-	cmd_merge "$@"
+	cmd_merge FETCH_HEAD
 }
 
 cmd_push () {
