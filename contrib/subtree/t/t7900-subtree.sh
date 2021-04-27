@@ -428,6 +428,133 @@ test_expect_success 'split "sub dir"/ with --branch for an incompatible branch' 
 '
 
 #
+# Tests for 'git subtree pull'
+#
+
+test_expect_success 'pull requires option --prefix' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	(
+		cd "$test_count" &&
+		test_must_fail git subtree pull ./"sub proj" HEAD >out 2>err &&
+
+		echo "You must provide the --prefix option." >expected &&
+		test_must_be_empty out &&
+		test_cmp expected err
+	)
+'
+
+test_expect_success 'pull requires path given by option --prefix must exist' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		test_must_fail git subtree pull --prefix="sub dir" ./"sub proj" HEAD >out 2>err &&
+
+		echo "'\''sub dir'\'' does not exist; use '\''git subtree add'\''" >expected &&
+		test_must_be_empty out &&
+		test_cmp expected err
+	)
+'
+
+test_expect_success 'pull basic operation' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	(
+		cd "$test_count" &&
+		exp=$(git -C "sub proj" rev-parse --verify HEAD:) &&
+		git subtree pull --prefix="sub dir" ./"sub proj" HEAD &&
+		act=$(git rev-parse --verify HEAD:"sub dir") &&
+		test "$act" = "$exp"
+	)
+'
+
+#
+# Tests for 'git subtree push'
+#
+
+test_expect_success 'push requires option --prefix' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD &&
+		echo "You must provide the --prefix option." >expected &&
+		test_must_fail git subtree push "./sub proj" from-mainline >actual 2>&1 &&
+		test_debug "printf '"expected: "'" &&
+		test_debug "cat expected" &&
+		test_debug "printf '"actual: "'" &&
+		test_debug "cat actual" &&
+		test_cmp expected actual
+	)
+'
+
+test_expect_success 'push requires path given by option --prefix must exist' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD &&
+		echo "'\''non-existent-directory'\'' does not exist; use '\''git subtree add'\''" >expected &&
+		test_must_fail git subtree push --prefix=non-existent-directory "./sub proj" from-mainline >actual 2>&1 &&
+		test_debug "printf '"expected: "'" &&
+		test_debug "cat expected" &&
+		test_debug "printf '"actual: "'" &&
+		test_debug "cat actual" &&
+		test_cmp expected actual
+	)
+'
+
+test_expect_success 'push basic operation' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		before=$(git rev-parse --verify HEAD) &&
+		split_hash=$(git subtree split --prefix="sub dir") &&
+		git subtree push --prefix="sub dir" ./"sub proj" from-mainline &&
+		test "$before" = "$(git rev-parse --verify HEAD)" &&
+		test "$split_hash" = "$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+#
 # Validity checking
 #
 
