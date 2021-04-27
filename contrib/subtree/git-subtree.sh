@@ -655,10 +655,6 @@ process_split_commit () {
 }
 
 cmd_add () {
-	if test -e "$dir"
-	then
-		die "'$dir' already exists.  Cannot add."
-	fi
 
 	ensure_clean
 
