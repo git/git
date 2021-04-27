@@ -5,8 +5,8 @@
 #
 test_description='Basic porcelain support for subtrees
 
-This test verifies the basic operation of the add, pull, merge
-and split subcommands of git subtree.
+This test verifies the basic operation of the add, merge, split, pull,
+and push subcommands of git subtree.
 '
 
 TEST_DIRECTORY=$(pwd)/../../../t
@@ -607,6 +607,216 @@ test_expect_success 'push basic operation' '
 		git subtree push --prefix="sub dir" ./"sub proj" from-mainline &&
 		test "$before" = "$(git rev-parse --verify HEAD)" &&
 		test "$split_hash" = "$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+test_expect_success 'push sub dir/ with --rejoin' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
+		git subtree push --prefix="sub dir" --annotate="*" --rejoin ./"sub proj" from-mainline &&
+		test "$(last_commit_subject)" = "Split '\''sub dir/'\'' into commit '\''$split_hash'\''" &&
+		test "$split_hash" = "$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+test_expect_success 'push sub dir/ with --rejoin from scratch' '
+	subtree_test_create_repo "$test_count" &&
+	test_create_commit "$test_count" main1 &&
+	(
+		cd "$test_count" &&
+		mkdir "sub dir" &&
+		echo file >"sub dir"/file &&
+		git add "sub dir/file" &&
+		git commit -m"sub dir file" &&
+		split_hash=$(git subtree split --prefix="sub dir" --rejoin) &&
+		git init --bare "sub proj.git" &&
+		git subtree push --prefix="sub dir" --rejoin ./"sub proj.git" from-mainline &&
+		test "$(last_commit_subject)" = "Split '\''sub dir/'\'' into commit '\''$split_hash'\''" &&
+		test "$split_hash" = "$(git -C "sub proj.git" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+test_expect_success 'push sub dir/ with --rejoin and --message' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		git subtree push --prefix="sub dir" --message="Split & rejoin" --annotate="*" --rejoin ./"sub proj" from-mainline &&
+		test "$(last_commit_subject)" = "Split & rejoin" &&
+		split_hash="$(git rev-parse --verify HEAD^2)" &&
+		test "$split_hash" = "$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+test_expect_success 'push "sub dir"/ with --rejoin and --squash' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" --squash FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git subtree pull --prefix="sub dir" --squash ./"sub proj" HEAD &&
+		MAIN=$(git rev-parse --verify HEAD) &&
+		SUB=$(git -C "sub proj" rev-parse --verify HEAD) &&
+
+		SPLIT=$(git subtree split --prefix="sub dir" --annotate="*") &&
+		git subtree push --prefix="sub dir" --annotate="*" --rejoin --squash ./"sub proj" from-mainline &&
+
+		test_must_fail git merge-base --is-ancestor $SUB HEAD &&
+		test_must_fail git merge-base --is-ancestor $SPLIT HEAD &&
+		git rev-list HEAD ^$MAIN >commit-list &&
+		test_line_count = 2 commit-list &&
+		test "$(git rev-parse --verify HEAD:)"           = "$(git rev-parse --verify $MAIN:)" &&
+		test "$(git rev-parse --verify HEAD:"sub dir")"  = "$(git rev-parse --verify $SPLIT:)" &&
+		test "$(git rev-parse --verify HEAD^1)"          = $MAIN &&
+		test "$(git rev-parse --verify HEAD^2)"         != $SPLIT &&
+		test "$(git rev-parse --verify HEAD^2:)"         = "$(git rev-parse --verify $SPLIT:)" &&
+		test "$(last_commit_subject)" = "Split '\''sub dir/'\'' into commit '\''$SPLIT'\''" &&
+		test "$SPLIT" = "$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+test_expect_success 'push "sub dir"/ with --branch' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
+		git subtree push --prefix="sub dir" --annotate="*" --branch subproj-br ./"sub proj" from-mainline &&
+		test "$(git rev-parse subproj-br)" = "$split_hash" &&
+		test "$split_hash" = "$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+test_expect_success 'check hash of push' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
+		git subtree push --prefix="sub dir" --annotate="*" --branch subproj-br ./"sub proj" from-mainline &&
+		test "$(git rev-parse subproj-br)" = "$split_hash" &&
+		# Check hash of split
+		new_hash=$(git rev-parse subproj-br^2) &&
+		(
+			cd ./"sub proj" &&
+			subdir_hash=$(git rev-parse HEAD) &&
+			test "$new_hash" = "$subdir_hash"
+		) &&
+		test "$split_hash" = "$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+test_expect_success 'push "sub dir"/ with --branch for an existing branch' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git branch subproj-br FETCH_HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
+		git subtree push --prefix="sub dir" --annotate="*" --branch subproj-br ./"sub proj" from-mainline &&
+		test "$(git rev-parse subproj-br)" = "$split_hash" &&
+		test "$split_hash" = "$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline)"
+	)
+'
+
+test_expect_success 'push "sub dir"/ with --branch for an incompatible branch' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git branch init HEAD &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir"/main-sub1 &&
+	test_create_commit "$test_count" main2 &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	test_create_commit "$test_count" "sub dir"/main-sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" FETCH_HEAD &&
+		test_must_fail git subtree push --prefix="sub dir" --branch init "./sub proj" from-mainline
 	)
 '
 

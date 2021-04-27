@@ -137,11 +137,11 @@ OPTIONS FOR ALL COMMANDS
 	want to manipulate.  This option is mandatory
 	for all commands.
 
-OPTIONS FOR 'add' AND 'merge' (ALSO: 'pull' AND 'split --rejoin')
------------------------------------------------------------------
+OPTIONS FOR 'add' AND 'merge' (ALSO: 'pull', 'split --rejoin', AND 'push --rejoin')
+-----------------------------------------------------------------------------------
 These options for 'add' and 'merge' may also be given to 'pull' (which
-wraps 'merge') and 'split --rejoin' (which wraps either 'add' or
-'merge' as appropriate).
+wraps 'merge'), 'split --rejoin' (which wraps either 'add' or 'merge'
+as appropriate), and 'push --rejoin' (which wraps 'split --rejoin').
 
 --squash::
 	Instead of merging the entire history from the subtree project, produce
@@ -173,9 +173,10 @@ subproject.
 --message=<message>::
 	Specify <message> as the commit message for the merge commit.
 
-OPTIONS FOR 'split'
--------------------
-These options are only valid for 'split'.
+OPTIONS FOR 'split' (ALSO: 'push')
+----------------------------------
+These options for 'split' may also be given to 'push' (which wraps
+'split').
 
 --annotate=<annotation>::
 	When generating synthetic history, add <annotation> as a prefix to each
