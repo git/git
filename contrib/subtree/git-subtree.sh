@@ -30,7 +30,6 @@ squash        merge subtree changes as a single commit
 
 PATH=$PATH:$(git --exec-path)
 
-quiet=
 branch=
 debug=
 command=
@@ -49,15 +48,8 @@ debug () {
 	fi
 }
 
-say () {
-	if test -z "$quiet"
-	then
-		printf "%s\n" "$*" >&2
-	fi
-}
-
 progress () {
-	if test -z "$quiet"
+	if test -z "$GIT_QUIET"
 	then
 		printf "%s\r" "$*" >&2
 	fi
@@ -93,7 +85,7 @@ main () {
 
 		case "$opt" in
 		-q)
-			quiet=1
+			GIT_QUIET=1
 			;;
 		-d)
 			debug=1
@@ -201,7 +193,7 @@ main () {
 	fi
 
 	debug "command: {$command}"
-	debug "quiet: {$quiet}"
+	debug "quiet: {$GIT_QUIET}"
 	debug "revs: {$revs}"
 	debug "dir: {$dir}"
 	debug "opts: {$*}"
@@ -698,7 +690,7 @@ cmd_add () {
 
 		cmd_add_repository "$@"
 	else
-		say "error: parameters were '$@'"
+		say >&2 "error: parameters were '$@'"
 		die "Provide either a commit or a repository and commit."
 	fi
 }
@@ -742,7 +734,7 @@ cmd_add_commit () {
 	fi
 	git reset "$commit" || exit $?
 
-	say "Added dir '$dir'"
+	say >&2 "Added dir '$dir'"
 }
 
 cmd_split () {
@@ -807,7 +799,7 @@ cmd_split () {
 		fi
 		git update-ref -m 'subtree split' \
 			"refs/heads/$branch" "$latest_new" || exit $?
-		say "$action branch '$branch'"
+		say >&2 "$action branch '$branch'"
 	fi
 	echo "$latest_new"
 	exit 0
@@ -830,7 +822,7 @@ cmd_merge () {
 		sub=$2
 		if test "$sub" = "$rev"
 		then
-			say "Subtree is already at commit $rev."
+			say >&2 "Subtree is already at commit $rev."
 			exit 0
 		fi
 		new=$(new_squash_commit "$old" "$sub" "$rev") || exit $?
