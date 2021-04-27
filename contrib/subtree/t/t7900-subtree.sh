@@ -103,7 +103,7 @@ test_expect_success 'no merge from non-existent subtree' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		test_must_fail git subtree merge --prefix="sub dir" FETCH_HEAD
 	)
 '
@@ -116,8 +116,8 @@ test_expect_success 'no pull from non-existent subtree' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
-		test_must_fail git subtree pull --prefix="sub dir" ./"sub proj" master
+		git fetch ./"sub proj" HEAD &&
+		test_must_fail git subtree pull --prefix="sub dir" ./"sub proj" HEAD
 	)'
 
 next_test
@@ -128,7 +128,7 @@ test_expect_success 'add subproj as subtree into sub dir/ with --prefix' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
 		check_equal "$(last_commit_message)" "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
@@ -142,7 +142,7 @@ test_expect_success 'add subproj as subtree into sub dir/ with --prefix and --me
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" --message="Added subproject" FETCH_HEAD &&
 		check_equal "$(last_commit_message)" "Added subproject"
 	)
@@ -156,7 +156,7 @@ test_expect_success 'add subproj as subtree into sub dir/ with --prefix as -P an
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add -P "sub dir" -m "Added subproject" FETCH_HEAD &&
 		check_equal "$(last_commit_message)" "Added subproject"
 	)
@@ -170,7 +170,7 @@ test_expect_success 'add subproj as subtree into sub dir/ with --squash and --pr
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" --message="Added subproject with squash" --squash FETCH_HEAD &&
 		check_equal "$(last_commit_message)" "Added subproject with squash"
 	)
@@ -188,13 +188,13 @@ test_expect_success 'merge new subproj history into sub dir/ with --prefix' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count/sub proj" sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		check_equal "$(last_commit_message)" "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
@@ -208,13 +208,13 @@ test_expect_success 'merge new subproj history into sub dir/ with --prefix and -
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count/sub proj" sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" --message="Merged changes from subproject" FETCH_HEAD &&
 		check_equal "$(last_commit_message)" "Merged changes from subproject"
 	)
@@ -228,13 +228,13 @@ test_expect_success 'merge new subproj history into sub dir/ with --squash and -
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count/sub proj" sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" --message="Merged changes from subproject using squash" --squash FETCH_HEAD &&
 		check_equal "$(last_commit_message)" "Merged changes from subproject using squash"
 	)
@@ -248,7 +248,7 @@ test_expect_success 'merge the added subproj again, should do nothing' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
 		# this shouldn not actually do anything, since FETCH_HEAD
 		# is already a parent
@@ -265,13 +265,13 @@ test_expect_success 'merge new subproj history into subdir/ with a slash appende
 	test_create_commit "$test_count/subproj" sub1 &&
 	(
 		cd "$test_count" &&
-		git fetch ./subproj master &&
+		git fetch ./subproj HEAD &&
 		git subtree add --prefix=subdir/ FETCH_HEAD
 	) &&
 	test_create_commit "$test_count/subproj" sub2 &&
 	(
 		cd "$test_count" &&
-		git fetch ./subproj master &&
+		git fetch ./subproj HEAD &&
 		git subtree merge --prefix=subdir/ FETCH_HEAD &&
 		check_equal "$(last_commit_message)" "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
@@ -289,7 +289,7 @@ test_expect_success 'split requires option --prefix' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
 		echo "You must provide the --prefix option." > expected &&
 		test_must_fail git subtree split > actual 2>&1 &&
@@ -309,7 +309,7 @@ test_expect_success 'split requires path given by option --prefix must exist' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
 		echo "'\''non-existent-directory'\'' does not exist; use '\''git subtree add'\''" > expected &&
 		test_must_fail git subtree split --prefix=non-existent-directory > actual 2>&1 &&
@@ -329,7 +329,7 @@ test_expect_success 'split sub dir/ with --rejoin' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -338,7 +338,7 @@ test_expect_success 'split sub dir/ with --rejoin' '
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
 		git subtree split --prefix="sub dir" --annotate="*" --rejoin &&
@@ -370,7 +370,7 @@ test_expect_success 'split sub dir/ with --rejoin and --message' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -379,7 +379,7 @@ test_expect_success 'split sub dir/ with --rejoin and --message' '
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		git subtree split --prefix="sub dir" --message="Split & rejoin" --annotate="*" --rejoin &&
 		check_equal "$(last_commit_message)" "Split & rejoin"
@@ -394,7 +394,7 @@ test_expect_success 'split "sub dir"/ with --branch' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -403,7 +403,7 @@ test_expect_success 'split "sub dir"/ with --branch' '
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br &&
@@ -419,7 +419,7 @@ test_expect_success 'check hash of split' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -428,7 +428,7 @@ test_expect_success 'check hash of split' '
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br &&
@@ -451,7 +451,7 @@ test_expect_success 'split "sub dir"/ with --branch for an existing branch' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git branch subproj-br FETCH_HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
@@ -461,7 +461,7 @@ test_expect_success 'split "sub dir"/ with --branch for an existing branch' '
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br &&
@@ -478,7 +478,7 @@ test_expect_success 'split "sub dir"/ with --branch for an incompatible branch' 
 	(
 		cd "$subtree_test_count" &&
 		git branch init HEAD &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -487,7 +487,7 @@ test_expect_success 'split "sub dir"/ with --branch for an incompatible branch' 
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		test_must_fail git subtree split --prefix="sub dir" --branch init
 	)
@@ -505,7 +505,7 @@ test_expect_success 'make sure exactly the right set of files ends up in the sub
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -514,7 +514,7 @@ test_expect_success 'make sure exactly the right set of files ends up in the sub
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br --rejoin
 	) &&
@@ -555,7 +555,7 @@ test_expect_success 'make sure the subproj *only* contains commits that affect t
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -564,7 +564,7 @@ test_expect_success 'make sure the subproj *only* contains commits that affect t
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br --rejoin
 	) &&
@@ -606,7 +606,7 @@ test_expect_success 'make sure exactly the right set of files ends up in the mai
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -615,7 +615,7 @@ test_expect_success 'make sure exactly the right set of files ends up in the mai
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br --rejoin
 	) &&
@@ -643,7 +643,7 @@ test_expect_success 'make sure exactly the right set of files ends up in the mai
 	) &&
 	(
 		cd "$subtree_test_count" &&
-		git subtree pull --prefix="sub dir" ./"sub proj" master &&
+		git subtree pull --prefix="sub dir" ./"sub proj" HEAD &&
 
 		test_write_lines main1 main2 >chkm &&
 		test_write_lines main-sub1 main-sub2 main-sub3 main-sub4 >chkms &&
@@ -666,7 +666,7 @@ test_expect_success 'make sure each filename changed exactly once in the entire 
 	(
 		cd "$subtree_test_count" &&
 		git config log.date relative &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -675,7 +675,7 @@ test_expect_success 'make sure each filename changed exactly once in the entire 
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br --rejoin
 	) &&
@@ -703,7 +703,7 @@ test_expect_success 'make sure each filename changed exactly once in the entire 
 	) &&
 	(
 		cd "$subtree_test_count" &&
-		git subtree pull --prefix="sub dir" ./"sub proj" master &&
+		git subtree pull --prefix="sub dir" ./"sub proj" HEAD &&
 
 		test_write_lines main1 main2 >chkm &&
 		test_write_lines sub1 sub2 sub3 sub4 >chks &&
@@ -731,7 +731,7 @@ test_expect_success 'make sure the --rejoin commits never make it into subproj' 
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -740,7 +740,7 @@ test_expect_success 'make sure the --rejoin commits never make it into subproj' 
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br --rejoin
 	) &&
@@ -768,7 +768,7 @@ test_expect_success 'make sure the --rejoin commits never make it into subproj' 
 	) &&
 	(
 		cd "$subtree_test_count" &&
-		git subtree pull --prefix="sub dir" ./"sub proj" master &&
+		git subtree pull --prefix="sub dir" ./"sub proj" HEAD &&
 		check_equal "$(git log --pretty=format:"%s" HEAD^2 | grep -i split)" ""
 	)
 '
@@ -781,7 +781,7 @@ test_expect_success 'make sure no "git subtree" tagged commits make it into subp
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -790,7 +790,7 @@ test_expect_success 'make sure no "git subtree" tagged commits make it into subp
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		git subtree split --prefix="sub dir" --annotate="*" --branch subproj-br --rejoin
 	) &&
@@ -818,7 +818,7 @@ test_expect_success 'make sure no "git subtree" tagged commits make it into subp
 	) &&
 	(
 		cd "$subtree_test_count" &&
-		git subtree pull --prefix="sub dir" ./"sub proj" master &&
+		git subtree pull --prefix="sub dir" ./"sub proj" HEAD &&
 
 		# They are meaningless to subproj since one side of the merge refers to the mainline
 		check_equal "$(git log --pretty=format:"%s%n%b" HEAD^2 | grep "git-subtree.*:")" ""
@@ -837,13 +837,13 @@ test_expect_success 'make sure "git subtree split" find the correct parent' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count/sub proj" sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git branch subproj-ref FETCH_HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD
 	) &&
@@ -853,7 +853,7 @@ test_expect_success 'make sure "git subtree split" find the correct parent' '
 		git subtree split --prefix="sub dir" --branch subproj-br &&
 
 		# at this point, the new commit parent should be subproj-ref, if it is
-		# not, something went wrong (the "newparent" of "master~" commit should
+		# not, something went wrong (the "newparent" of "HEAD~" commit should
 		# have been sub2, but it was not, because its cache was not set to
 		# itself)
 		check_equal "$(git log --pretty=format:%P -1 subproj-br)" "$(git rev-parse subproj-ref)"
@@ -868,13 +868,13 @@ test_expect_success 'split a new subtree without --onto option' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count/sub proj" sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -903,14 +903,14 @@ test_expect_success 'verify one file change per commit' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git branch sub1 FETCH_HEAD &&
 		git subtree add --prefix="sub dir" sub1
 	) &&
 	test_create_commit "$subtree_test_count/sub proj" sub2 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -947,7 +947,7 @@ test_expect_success 'push split to subproj' '
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub1 &&
@@ -958,7 +958,7 @@ test_expect_success 'push split to subproj' '
 		cd $subtree_test_count/"sub proj" &&
                 git branch sub-branch-1 &&
                 cd .. &&
-		git fetch ./"sub proj" master &&
+		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD
 	) &&
 	test_create_commit "$subtree_test_count" "sub dir"/main-sub3 &&
@@ -994,6 +994,7 @@ test_expect_success 'push split to subproj' '
 next_test
 test_expect_success 'subtree descendant check' '
 	subtree_test_create_repo "$subtree_test_count" &&
+	defaultBranch=$(sed "s,ref: refs/heads/,," "$subtree_test_count/.git/HEAD") &&
 	test_create_commit "$subtree_test_count" folder_subtree/a &&
 	(
 		cd "$subtree_test_count" &&
@@ -1010,7 +1011,7 @@ test_expect_success 'subtree descendant check' '
 	(
 		cd "$subtree_test_count" &&
 		git cherry-pick $cherry &&
-		git checkout master &&
+		git checkout $defaultBranch &&
 		git merge -m "merge should be kept on subtree" branch &&
 		git branch no_subtree_work_branch
 	) &&
@@ -1022,10 +1023,10 @@ test_expect_success 'subtree descendant check' '
 	test_create_commit "$subtree_test_count" not_a_subtree_change &&
 	(
 		cd "$subtree_test_count" &&
-		git checkout master &&
+		git checkout $defaultBranch &&
 		git merge -m "merge should be skipped on subtree" no_subtree_work_branch &&
 
-		git subtree split --prefix folder_subtree/ --branch subtree_tip master &&
+		git subtree split --prefix folder_subtree/ --branch subtree_tip $defaultBranch &&
 		git subtree split --prefix folder_subtree/ --branch subtree_branch branch &&
 		check_equal $(git rev-list --count subtree_tip..subtree_branch) 0
 	)
