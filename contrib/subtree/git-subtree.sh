@@ -58,14 +58,14 @@ progress () {
 assert () {
 	if ! "$@"
 	then
-		die "assertion failed: " "$@"
+		die "assertion failed: $*"
 	fi
 }
 
 ensure_single_rev () {
 	if test $# -ne 1
 	then
-		die "You must provide exactly one revision.  Got: '$@'"
+		die "You must provide exactly one revision.  Got: '$*'"
 	fi
 }
 
@@ -690,7 +690,7 @@ cmd_add () {
 
 		cmd_add_repository "$@"
 	else
-		say >&2 "error: parameters were '$@'"
+		say >&2 "error: parameters were '$*'"
 		die "Provide either a commit or a repository and commit."
 	fi
 }
