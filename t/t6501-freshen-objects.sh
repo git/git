@@ -43,15 +43,25 @@ commit () {
 }
 
 maybe_repack () {
-	if test -n "$repack"; then
+	case "$title" in
+	loose)
+		: skip repack
+		;;
+	repack)
 		git repack -ad
-	fi
+		;;
+	bitmap)
+		git repack -adb
+		;;
+	*)
+		echo >&2 "unknown test type in maybe_repack"
+		return 1
+		;;
+	esac
 }
 
-for repack in '' true; do
-	title=${repack:+repack}
-	title=${title:-loose}
-
+for title in loose repack bitmap
+do
 	test_expect_success "make repo completely empty ($title)" '
 		rm -rf .git &&
 		git init
