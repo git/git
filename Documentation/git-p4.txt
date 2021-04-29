@@ -638,6 +638,15 @@ git-p4.pathEncoding::
 	to transcode the paths to UTF-8. As an example, Perforce on Windows
 	often uses "cp1252" to encode path names.
 
+git-p4.fallbackEncoding::
+	Perforce changeset descriptions can be stored in any encoding.
+	Git-p4 first tries to interpret each description as UTF-8. If that
+	fails, this config allows another encoding to be tried. You can specify,
+	for example, "cp1252". If git-p4.fallbackEncoding is "replace", UTF-8 will
+	be used, with invalid UTF-8 characters replaced by the Unicode replacement
+	character. The default is "none": there is no fallback, and any non UTF-8
+	character will cause git-p4 to immediately fail.
+
 git-p4.largeFileSystem::
 	Specify the system that is used for large (binary) files. Please note
 	that large file systems do not support the 'git p4 submit' command.
