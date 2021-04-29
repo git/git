@@ -1126,6 +1126,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		break;
 	case BISECT_SKIP:
 		set_terms(&terms, "bad", "good");
+		get_terms(&terms);
 		res = bisect_skip(&terms, argv, argc);
 		break;
 	default:
