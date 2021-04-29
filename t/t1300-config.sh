@@ -1372,14 +1372,27 @@ test_expect_success 'git --config-env=key=envvar support' '
 	cat >expect <<-\EOF &&
 	value
 	value
+	value
+	value
+	false
 	false
 	EOF
 	{
 		ENVVAR=value git --config-env=core.name=ENVVAR config core.name &&
+		ENVVAR=value git --config-env core.name=ENVVAR config core.name &&
 		ENVVAR=value git --config-env=foo.CamelCase=ENVVAR config foo.camelcase &&
-		ENVVAR= git --config-env=foo.flag=ENVVAR config --bool foo.flag
+		ENVVAR=value git --config-env foo.CamelCase=ENVVAR config foo.camelcase &&
+		ENVVAR= git --config-env=foo.flag=ENVVAR config --bool foo.flag &&
+		ENVVAR= git --config-env foo.flag=ENVVAR config --bool foo.flag
 	} >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'git --config-env with missing value' '
+	test_must_fail env ENVVAR=value git --config-env 2>error &&
+	grep "no config key given for --config-env" error &&
+	test_must_fail env ENVVAR=value git --config-env config core.name 2>error &&
+	grep "invalid config format: config" error
 '
 
 test_expect_success 'git --config-env fails with invalid parameters' '
