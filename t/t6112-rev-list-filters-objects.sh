@@ -159,6 +159,78 @@ test_expect_success 'verify blob:limit=1m' '
 	test_must_be_empty observed
 '
 
+# Test object:type=<type> filter.
+
+test_expect_success 'setup object-type' '
+	test_create_repo object-type &&
+	test_commit --no-tag -C object-type message blob &&
+	git -C object-type tag tag -m tag-message
+'
+
+test_expect_success 'verify object:type= fails with invalid type' '
+	test_must_fail git -C object-type rev-list --objects --filter=object:type= HEAD &&
+	test_must_fail git -C object-type rev-list --objects --filter=object:type=invalid HEAD
+'
+
+test_expect_success 'verify object:type=blob prints blob and commit' '
+	git -C object-type rev-parse HEAD >expected &&
+	printf "%s blob\n" $(git -C object-type rev-parse HEAD:blob) >>expected &&
+	git -C object-type rev-list --objects --filter=object:type=blob HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=tree prints tree and commit' '
+	(
+		git -C object-type rev-parse HEAD &&
+		printf "%s \n" $(git -C object-type rev-parse HEAD^{tree})
+	) >expected &&
+	git -C object-type rev-list --objects --filter=object:type=tree HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=commit prints commit' '
+	git -C object-type rev-parse HEAD >expected &&
+	git -C object-type rev-list --objects --filter=object:type=commit HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=tag prints tag' '
+	(
+		git -C object-type rev-parse HEAD &&
+		printf "%s tag\n" $(git -C object-type rev-parse tag)
+	) >expected &&
+	git -C object-type rev-list --objects --filter=object:type=tag tag >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=blob prints only blob with --filter-provided-objects' '
+	printf "%s blob\n" $(git -C object-type rev-parse HEAD:blob) >expected &&
+	git -C object-type rev-list --objects \
+		--filter=object:type=blob --filter-provided-objects HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=tree prints only tree with --filter-provided-objects' '
+	printf "%s \n" $(git -C object-type rev-parse HEAD^{tree}) >expected &&
+	git -C object-type rev-list --objects \
+		--filter=object:type=tree HEAD --filter-provided-objects >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=commit prints only commit with --filter-provided-objects' '
+	git -C object-type rev-parse HEAD >expected &&
+	git -C object-type rev-list --objects \
+		--filter=object:type=commit --filter-provided-objects HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=tag prints only tag with --filter-provided-objects' '
+	printf "%s tag\n" $(git -C object-type rev-parse tag) >expected &&
+	git -C object-type rev-list --objects \
+		--filter=object:type=tag --filter-provided-objects tag >actual &&
+	test_cmp expected actual
+'
+
 # Test sparse:path=<path> filter.
 # !!!!
 # NOTE: sparse:path filter support has been dropped for security reasons,

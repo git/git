@@ -780,9 +780,6 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	eword_t mask;
 	uint32_t i;
 
-	if (type != OBJ_BLOB && type != OBJ_TREE)
-		BUG("filter_bitmap_exclude_type: unsupported type '%d'", type);
-
 	/*
 	 * The non-bitmap version of this filter never removes
 	 * objects which the other side specifically asked for,
@@ -912,6 +909,24 @@ static void filter_bitmap_tree_depth(struct bitmap_index *bitmap_git,
 				   OBJ_BLOB);
 }
 
+static void filter_bitmap_object_type(struct bitmap_index *bitmap_git,
+				      struct object_list *tip_objects,
+				      struct bitmap *to_filter,
+				      enum object_type object_type)
+{
+	if (object_type < OBJ_COMMIT || object_type > OBJ_TAG)
+		BUG("filter_bitmap_object_type given invalid object");
+
+	if (object_type != OBJ_TAG)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TAG);
+	if (object_type != OBJ_COMMIT)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_COMMIT);
+	if (object_type != OBJ_TREE)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TREE);
+	if (object_type != OBJ_BLOB)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_BLOB);
+}
+
 static int filter_bitmap(struct bitmap_index *bitmap_git,
 			 struct object_list *tip_objects,
 			 struct bitmap *to_filter,
@@ -944,6 +959,24 @@ static int filter_bitmap(struct bitmap_index *bitmap_git,
 		return 0;
 	}
 
+	if (filter->choice == LOFC_OBJECT_TYPE) {
+		if (bitmap_git)
+			filter_bitmap_object_type(bitmap_git, tip_objects,
+						  to_filter,
+						  filter->object_type);
+		return 0;
+	}
+
+	if (filter->choice == LOFC_COMBINE) {
+		int i;
+		for (i = 0; i < filter->sub_nr; i++) {
+			if (filter_bitmap(bitmap_git, tip_objects, to_filter,
+					  &filter->sub[i]) < 0)
+				return -1;
+		}
+		return 0;
+	}
+
 	/* filter choice not handled */
 	return -1;
 }
@@ -954,7 +987,8 @@ static int can_filter_bitmap(struct list_objects_filter_options *filter)
 }
 
 struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
-					 struct list_objects_filter_options *filter)
+					 struct list_objects_filter_options *filter,
+					 int filter_provided_objects)
 {
 	unsigned int i;
 
@@ -1049,7 +1083,8 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 	if (haves_bitmap)
 		bitmap_and_not(wants_bitmap, haves_bitmap);
 
-	filter_bitmap(bitmap_git, wants, wants_bitmap, filter);
+	filter_bitmap(bitmap_git, (filter && filter_provided_objects) ? NULL : wants,
+		      wants_bitmap, filter);
 
 	bitmap_git->result = wants_bitmap;
 	bitmap_git->haves = haves_bitmap;

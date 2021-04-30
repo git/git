@@ -10,7 +10,8 @@ test_expect_success 'set up bitmapped repo' '
 	test_commit much-larger-blob-one &&
 	git repack -adb &&
 	test_commit two &&
-	test_commit much-larger-blob-two
+	test_commit much-larger-blob-two &&
+	git tag tag
 '
 
 test_expect_success 'filters fallback to non-bitmap traversal' '
@@ -73,6 +74,71 @@ test_expect_success 'tree:1 filter' '
 	git rev-list --use-bitmap-index \
 		     --objects --filter=tree:1 HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'object:type filter' '
+	git rev-list --objects --filter=object:type=tag tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=object:type=tag tag >actual &&
+	test_cmp expect actual &&
+
+	git rev-list --objects --filter=object:type=commit tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=object:type=commit tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git rev-list --objects --filter=object:type=tree tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=object:type=tree tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git rev-list --objects --filter=object:type=blob tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=object:type=blob tag >actual &&
+	test_bitmap_traversal expect actual
+'
+
+test_expect_success 'object:type filter with --filter-provided-objects' '
+	git rev-list --objects --filter-provided-objects --filter=object:type=tag tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=object:type=tag tag >actual &&
+	test_cmp expect actual &&
+
+	git rev-list --objects --filter-provided-objects --filter=object:type=commit tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=object:type=commit tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git rev-list --objects --filter-provided-objects --filter=object:type=tree tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=object:type=tree tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git rev-list --objects --filter-provided-objects --filter=object:type=blob tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=object:type=blob tag >actual &&
+	test_bitmap_traversal expect actual
+'
+
+test_expect_success 'combine filter' '
+	git rev-list --objects --filter=blob:limit=1000 --filter=object:type=blob tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=blob:limit=1000 --filter=object:type=blob tag >actual &&
+	test_bitmap_traversal expect actual
+'
+
+test_expect_success 'combine filter with --filter-provided-objects' '
+	git rev-list --objects --filter-provided-objects --filter=blob:limit=1000 --filter=object:type=blob tag >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter-provided-objects --filter=blob:limit=1000 --filter=object:type=blob tag >actual &&
+	test_bitmap_traversal expect actual &&
+
+	git cat-file --batch-check="%(objecttype) %(objectsize)" <actual >objects &&
+	while read objecttype objectsize
+	do
+		test "$objecttype" = blob || return 1
+		test "$objectsize" -le 1000 || return 1
+	done <objects
 '
 
 test_done

@@ -398,7 +398,8 @@ static inline int parse_missing_action_value(const char *value)
 }
 
 static int try_bitmap_count(struct rev_info *revs,
-			    struct list_objects_filter_options *filter)
+			    struct list_objects_filter_options *filter,
+			    int filter_provided_objects)
 {
 	uint32_t commit_count = 0,
 		 tag_count = 0,
@@ -433,7 +434,7 @@ static int try_bitmap_count(struct rev_info *revs,
 	 */
 	max_count = revs->max_count;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter);
+	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
 
@@ -450,7 +451,8 @@ static int try_bitmap_count(struct rev_info *revs,
 }
 
 static int try_bitmap_traversal(struct rev_info *revs,
-				struct list_objects_filter_options *filter)
+				struct list_objects_filter_options *filter,
+				int filter_provided_objects)
 {
 	struct bitmap_index *bitmap_git;
 
@@ -461,7 +463,7 @@ static int try_bitmap_traversal(struct rev_info *revs,
 	if (revs->max_count >= 0)
 		return -1;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter);
+	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
 
@@ -471,14 +473,15 @@ static int try_bitmap_traversal(struct rev_info *revs,
 }
 
 static int try_bitmap_disk_usage(struct rev_info *revs,
-				 struct list_objects_filter_options *filter)
+				 struct list_objects_filter_options *filter,
+				 int filter_provided_objects)
 {
 	struct bitmap_index *bitmap_git;
 
 	if (!show_disk_usage)
 		return -1;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter);
+	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
 
@@ -499,6 +502,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
+	int filter_provided_objects = 0;
 	const char *show_progress = NULL;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
@@ -599,6 +603,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			list_objects_filter_set_no_filter(&filter_options);
 			continue;
 		}
+		if (!strcmp(arg, "--filter-provided-objects")) {
+			filter_provided_objects = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--filter-print-omitted")) {
 			arg_print_omitted = 1;
 			continue;
@@ -665,11 +673,11 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		progress = start_delayed_progress(show_progress, 0);
 
 	if (use_bitmap_index) {
-		if (!try_bitmap_count(&revs, &filter_options))
+		if (!try_bitmap_count(&revs, &filter_options, filter_provided_objects))
 			return 0;
-		if (!try_bitmap_disk_usage(&revs, &filter_options))
+		if (!try_bitmap_disk_usage(&revs, &filter_options, filter_provided_objects))
 			return 0;
-		if (!try_bitmap_traversal(&revs, &filter_options))
+		if (!try_bitmap_traversal(&revs, &filter_options, filter_provided_objects))
 			return 0;
 	}
 
@@ -692,6 +700,16 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 		if (bisect_show_vars)
 			return show_bisect_vars(&info, reaches, all);
+	}
+
+	if (filter_provided_objects) {
+		struct commit_list *c;
+		for (i = 0; i < revs.pending.nr; i++) {
+			struct object_array_entry *pending = revs.pending.objects + i;
+			pending->item->flags |= NOT_USER_GIVEN;
+		}
+		for (c = revs.commits; c; c = c->next)
+			c->item->object.flags |= NOT_USER_GIVEN;
 	}
 
 	if (arg_print_omitted)
