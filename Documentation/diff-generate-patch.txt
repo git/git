@@ -11,7 +11,7 @@ linkgit:git-diff-files[1]
 with the `-p` option produces patch text.
 You can customize the creation of patch text via the
 `GIT_EXTERNAL_DIFF` and the `GIT_DIFF_OPTS` environment variables
-(see linkgit:git[1]).
+(see linkgit:git[1]), and the `diff` attribute (see linkgit:gitattributes[5]).
 
 What the -p option produces is slightly different from the traditional
 diff format:
@@ -73,6 +73,11 @@ separate lines indicate the old and the new mode.
       diff --git a/b b/a
       rename from b
       rename to a
+
+5.  Hunk headers mention the name of the function to which the hunk
+    applies.  See "Defining a custom hunk-header" in
+    linkgit:gitattributes[5] for details of how to tailor to this to
+    specific languages.
 
 
 Combined diff format
