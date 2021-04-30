@@ -1061,25 +1061,6 @@ with different name spaces.  For example:
 	branches = stable/*:refs/remotes/svn/stable/*
 	branches = debug/*:refs/remotes/svn/debug/*
 
-BUGS
-----
-
-We ignore all SVN properties except svn:executable.  Any unhandled
-properties are logged to $GIT_DIR/svn/<refname>/unhandled.log
-
-Renamed and copied directories are not detected by Git and hence not
-tracked when committing to SVN.  I do not plan on adding support for
-this as it's quite difficult and time-consuming to get working for all
-the possible corner cases (Git doesn't do it, either).  Committing
-renamed and copied files is fully supported if they're similar enough
-for Git to detect them.
-
-In SVN, it is possible (though discouraged) to commit changes to a tag
-(because a tag is just a directory copy, thus technically the same as a
-branch). When cloning an SVN repository, 'git svn' cannot know if such a
-commit to a tag will happen in the future. Thus it acts conservatively
-and imports all SVN tags as branches, prefixing the tag name with 'tags/'.
-
 CONFIGURATION
 -------------
 
@@ -1165,6 +1146,25 @@ $GIT_DIR/svn/\**/.rev_map.*::
 'git svn fetch' and 'git svn rebase' automatically update the rev_map
 if it is missing or not up to date.  'git svn reset' automatically
 rewinds it.
+
+BUGS
+----
+
+We ignore all SVN properties except svn:executable.  Any unhandled
+properties are logged to $GIT_DIR/svn/<refname>/unhandled.log
+
+Renamed and copied directories are not detected by Git and hence not
+tracked when committing to SVN.  I do not plan on adding support for
+this as it's quite difficult and time-consuming to get working for all
+the possible corner cases (Git doesn't do it, either).  Committing
+renamed and copied files is fully supported if they're similar enough
+for Git to detect them.
+
+In SVN, it is possible (though discouraged) to commit changes to a tag
+(because a tag is just a directory copy, thus technically the same as a
+branch). When cloning an SVN repository, 'git svn' cannot know if such a
+commit to a tag will happen in the future. Thus it acts conservatively
+and imports all SVN tags as branches, prefixing the tag name with 'tags/'.
 
 SEE ALSO
 --------

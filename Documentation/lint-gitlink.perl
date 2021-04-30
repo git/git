@@ -1,71 +1,67 @@
 #!/usr/bin/perl
 
-use File::Find;
-use Getopt::Long;
+use strict;
+use warnings;
 
-my $basedir = ".";
-GetOptions("basedir=s" => \$basedir)
-	or die("Cannot parse command line arguments\n");
+# Parse arguments, a simple state machine for input like:
+#
+# howto/*.txt config/*.txt --section=1 git.txt git-add.txt [...] --to-lint git-add.txt a-file.txt [...]
+my %TXT;
+my %SECTION;
+my $section;
+my $lint_these = 0;
+for my $arg (@ARGV) {
+	if (my ($sec) = $arg =~ /^--section=(\d+)$/s) {
+		$section = $sec;
+		next;
+	}
 
-my $found_errors = 0;
+	my ($name) = $arg =~ /^(.*?)\.txt$/s;
+	unless (defined $section) {
+		$TXT{$name} = $arg;
+		next;
+	}
 
+	$SECTION{$name} = $section;
+}
+
+my $exit_code = 0;
 sub report {
-	my ($where, $what, $error) = @_;
-	print "$where: $error: $what\n";
-	$found_errors = 1;
+	my ($pos, $line, $target, $msg) = @_;
+	substr($line, $pos) = "' <-- HERE";
+	$line =~ s/^\s+//;
+	print "$ARGV:$.: error: $target: $msg, shown with 'HERE' below:\n";
+	print "$ARGV:$.:\t'$line\n";
+	$exit_code = 1;
 }
 
-sub grab_section {
-	my ($page) = @_;
-	open my $fh, "<", "$basedir/$page.txt";
-	my $firstline = <$fh>;
-	chomp $firstline;
-	close $fh;
-	my ($section) = ($firstline =~ /.*\((\d)\)$/);
-	return $section;
-}
+@ARGV = sort values %TXT;
+die "BUG: Nothing to process!" unless @ARGV;
+while (<>) {
+	my $line = $_;
+	while ($line =~ m/linkgit:((.*?)\[(\d)\])/g) {
+		my $pos = pos $line;
+		my ($target, $page, $section) = ($1, $2, $3);
 
-sub lint {
-	my ($file) = @_;
-	open my $fh, "<", $file
-		or return;
-	while (<$fh>) {
-		my $where = "$file:$.";
-		while (s/linkgit:((.*?)\[(\d)\])//) {
-			my ($target, $page, $section) = ($1, $2, $3);
+		# De-AsciiDoc
+		$page =~ s/{litdd}/--/g;
 
-			# De-AsciiDoc
-			$page =~ s/{litdd}/--/g;
-
-			if ($page !~ /^git/) {
-				report($where, $target, "nongit link");
-				next;
-			}
-			if (! -f "$basedir/$page.txt") {
-				report($where, $target, "no such source");
-				next;
-			}
-			$real_section = grab_section($page);
-			if ($real_section != $section) {
-				report($where, $target,
-					"wrong section (should be $real_section)");
-				next;
-			}
+		if (!exists $TXT{$page}) {
+			report($pos, $line, $target, "link outside of our own docs");
+			next;
+		}
+		if (!exists $SECTION{$page}) {
+			report($pos, $line, $target, "link outside of our sectioned docs");
+			next;
+		}
+		my $real_section = $SECTION{$page};
+		if ($section != $SECTION{$page}) {
+			report($pos, $line, $target, "wrong section (should be $real_section)");
+			next;
 		}
 	}
-	close $fh;
+	# this resets our $. for each file
+	close ARGV if eof;
 }
 
-sub lint_it {
-	lint($File::Find::name) if -f && /\.txt$/;
-}
-
-if (!@ARGV) {
-	find({ wanted => \&lint_it, no_chdir => 1 }, $basedir);
-} else {
-	for (@ARGV) {
-		lint($_);
-	}
-}
-
-exit $found_errors;
+exit $exit_code;
