@@ -1153,7 +1153,7 @@ static void receive_needs(struct upload_pack_data *data,
 static int mark_our_ref(const char *refname, const char *refname_full,
 			const struct object_id *oid)
 {
-	struct object *o = lookup_unknown_object(oid);
+	struct object *o = lookup_unknown_object(the_repository, oid);
 
 	if (ref_is_hidden(refname, refname_full)) {
 		o->flags |= HIDDEN_REF;
