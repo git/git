@@ -631,6 +631,9 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		traverse_commit_list_filtered(filter, revs,
 					      show_commit, show_object,
 					      &show_data, NULL);
+
+		revs->include_check = NULL;
+		revs->include_check_data = NULL;
 	}
 
 	return base;
