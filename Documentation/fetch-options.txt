@@ -110,6 +110,11 @@ ifndef::git-pull[]
 	setting `fetch.writeCommitGraph`.
 endif::git-pull[]
 
+--prefetch::
+	Modify the configured refspec to place all refs into the
+	`refs/prefetch/` namespace. See the `prefetch` task in
+	linkgit:git-maintenance[1].
+
 -p::
 --prune::
 	Before fetching, remove any remote-tracking references that no

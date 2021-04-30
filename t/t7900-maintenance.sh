@@ -141,19 +141,25 @@ test_expect_success 'prefetch multiple remotes' '
 	test_commit -C clone1 one &&
 	test_commit -C clone2 two &&
 	GIT_TRACE2_EVENT="$(pwd)/run-prefetch.txt" git maintenance run --task=prefetch 2>/dev/null &&
-	fetchargs="--prune --no-tags --no-write-fetch-head --recurse-submodules=no --refmap= --quiet" &&
-	test_subcommand git fetch remote1 $fetchargs +refs/heads/\\*:refs/prefetch/remote1/\\* <run-prefetch.txt &&
-	test_subcommand git fetch remote2 $fetchargs +refs/heads/\\*:refs/prefetch/remote2/\\* <run-prefetch.txt &&
+	fetchargs="--prefetch --prune --no-tags --no-write-fetch-head --recurse-submodules=no --quiet" &&
+	test_subcommand git fetch remote1 $fetchargs <run-prefetch.txt &&
+	test_subcommand git fetch remote2 $fetchargs <run-prefetch.txt &&
 	test_path_is_missing .git/refs/remotes &&
-	git log prefetch/remote1/one &&
-	git log prefetch/remote2/two &&
+	git log prefetch/remotes/remote1/one &&
+	git log prefetch/remotes/remote2/two &&
 	git fetch --all &&
-	test_cmp_rev refs/remotes/remote1/one refs/prefetch/remote1/one &&
-	test_cmp_rev refs/remotes/remote2/two refs/prefetch/remote2/two &&
+	test_cmp_rev refs/remotes/remote1/one refs/prefetch/remotes/remote1/one &&
+	test_cmp_rev refs/remotes/remote2/two refs/prefetch/remotes/remote2/two &&
 
 	test_cmp_config refs/prefetch/ log.excludedecoration &&
 	git log --oneline --decorate --all >log &&
-	! grep "prefetch" log
+	! grep "prefetch" log &&
+
+	test_when_finished git config --unset remote.remote1.skipFetchAll &&
+	git config remote.remote1.skipFetchAll true &&
+	GIT_TRACE2_EVENT="$(pwd)/skip-remote1.txt" git maintenance run --task=prefetch 2>/dev/null &&
+	test_subcommand ! git fetch remote1 $fetchargs <skip-remote1.txt &&
+	test_subcommand git fetch remote2 $fetchargs <skip-remote1.txt
 '
 
 test_expect_success 'prefetch and existing log.excludeDecoration values' '
