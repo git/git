@@ -77,6 +77,9 @@ UI, Workflows & Features
 
  * Userdiff patterns for "Scheme" has been added.
 
+ * "git log" learned "--diff-merges=<style>" option, with an
+   associated configuration variable log.diffMerges.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -130,6 +133,21 @@ Performance, Internal Implementation, Development Support etc.
 
  * A bit of code clean-up and a lot of test clean-up around userdiff
    area.
+
+ * Handling of "promisor packs" that allows certain objects to be
+   missing and lazily retrievable has been optimized (a bit).
+
+ * When packet_write() fails, we gave an extra error message
+   unnecessarily, which has been corrected.
+
+ * The checkout machinery has been taught to perform the actual
+   write-out of the files in parallel when able.
+
+ * Show errno in the trace output in the error codepath that calls
+   read_raw_ref method.
+
+ * Effort to make the command line completion (in contrib/) safe with
+   "set -u" continues.
 
 
 Fixes since v2.31
@@ -229,6 +247,20 @@ Fixes since v2.31
    when the former was split out of the latter, which has been
    corrected.
    (merge 56550ea718 sg/bugreport-fixes later to maint).
+
+ * "git push --quiet --set-upstream" was not quiet when setting the
+   upstream branch configuration, which has been corrected.
+   (merge f3cce896a8 ow/push-quiet-set-upstream later to maint).
+
+ * The prefetch task in "git maintenance" assumed that "git fetch"
+   from any remote would fetch all its local branches, which would
+   fetch too much if the user is interested in only a subset of
+   branches there.
+   (merge 32f67888d8 ds/maintenance-prefetch-fix later to maint).
+
+ * Clarify that pathnames recorded in Git trees are most often (but
+   not necessarily) encoded in UTF-8.
+   (merge 9364bf465d ab/pathname-encoding-doc later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
