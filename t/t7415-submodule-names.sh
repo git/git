@@ -191,7 +191,7 @@ test_expect_success 'fsck detects corrupt .gitmodules' '
 	)
 '
 
-test_expect_success MINGW 'prevent git~1 squatting on Windows' '
+test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
 	git init squatting &&
 	(
 		cd squatting &&
@@ -219,10 +219,13 @@ test_expect_success MINGW 'prevent git~1 squatting on Windows' '
 		test_tick &&
 		git -c core.protectNTFS=false commit -m "module"
 	) &&
-	test_must_fail git -c core.protectNTFS=false \
-		clone --recurse-submodules squatting squatting-clone 2>err &&
-	test_i18ngrep -e "directory not empty" -e "not an empty directory" err &&
-	! grep gitdir squatting-clone/d/a/git~2
+	if test_have_prereq MINGW
+	then
+		test_must_fail git -c core.protectNTFS=false \
+			clone --recurse-submodules squatting squatting-clone 2>err &&
+		test_i18ngrep -e "directory not empty" -e "not an empty directory" err &&
+		! grep gitdir squatting-clone/d/a/git~2
+	fi
 '
 
 test_expect_success 'git dirs of sibling submodules must not be nested' '
