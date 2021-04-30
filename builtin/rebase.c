@@ -2109,6 +2109,7 @@ cleanup:
 	free(options.head_name);
 	free(options.gpg_sign_opt);
 	free(options.cmd);
+	strbuf_release(&options.git_format_patch_opt);
 	free(squash_onto_name);
 	return ret;
 }

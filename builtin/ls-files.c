@@ -607,7 +607,7 @@ static int option_parse_exclude_standard(const struct option *opt,
 int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 {
 	int require_work_tree = 0, show_tag = 0, i;
-	const char *max_prefix;
+	char *max_prefix;
 	struct dir_struct dir;
 	struct pattern_list *pl;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
@@ -785,5 +785,6 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	}
 
 	dir_clear(&dir);
+	free(max_prefix);
 	return 0;
 }

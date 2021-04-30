@@ -342,6 +342,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		if (!seen_any)
 			exit(ret);
 	}
+	clear_pathspec(&pathspec);
+	free(seen);
 
 	if (!index_only)
 		submodules_absorb_gitdir_if_needed();

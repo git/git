@@ -1393,20 +1393,20 @@ static int limit_list(struct rev_info *revs)
 {
 	int slop = SLOP;
 	timestamp_t date = TIME_MAX;
-	struct commit_list *list = revs->commits;
+	struct commit_list *original_list = revs->commits;
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
 	struct commit_list *bottom = NULL;
 	struct commit *interesting_cache = NULL;
 
 	if (revs->ancestry_path) {
-		bottom = collect_bottom_commits(list);
+		bottom = collect_bottom_commits(original_list);
 		if (!bottom)
 			die("--ancestry-path given but there are no bottom commits");
 	}
 
-	while (list) {
-		struct commit *commit = pop_commit(&list);
+	while (original_list) {
+		struct commit *commit = pop_commit(&original_list);
 		struct object *obj = &commit->object;
 		show_early_output_fn_t show;
 
@@ -1415,11 +1415,11 @@ static int limit_list(struct rev_info *revs)
 
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			obj->flags |= UNINTERESTING;
-		if (process_parents(revs, commit, &list, NULL) < 0)
+		if (process_parents(revs, commit, &original_list, NULL) < 0)
 			return -1;
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
-			slop = still_interesting(list, date, slop, &interesting_cache);
+			slop = still_interesting(original_list, date, slop, &interesting_cache);
 			if (slop)
 				continue;
 			break;
@@ -1452,14 +1452,17 @@ static int limit_list(struct rev_info *revs)
 	 * Check if any commits have become TREESAME by some of their parents
 	 * becoming UNINTERESTING.
 	 */
-	if (limiting_can_increase_treesame(revs))
+	if (limiting_can_increase_treesame(revs)) {
+		struct commit_list *list = NULL;
 		for (list = newlist; list; list = list->next) {
 			struct commit *c = list->item;
 			if (c->object.flags & (UNINTERESTING | TREESAME))
 				continue;
 			update_treesame(revs, c);
 		}
+	}
 
+	free_commit_list(original_list);
 	revs->commits = newlist;
 	return 0;
 }
