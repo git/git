@@ -525,15 +525,14 @@ test_expect_success 'strbuf_utf8_replace() not producing NUL' '
 	! grep Q actual
 '
 
-# ISO strict date format
-test_expect_success 'ISO and ISO-strict date formats display the same values' '
-	git log --format=%ai%n%ci |
-	sed -e "s/ /T/; s/ //; s/..\$/:&/" >expected &&
+# --date=[XXX] and corresponding %a[X] %c[X] format equivalency
+test_expect_success '--date=iso-strict %ad%cd is the same as %aI%cI' '
+	git log --format=%ad%n%cd --date=iso-strict >expected &&
 	git log --format=%aI%n%cI >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'short date' '
+test_expect_success '--date=short %ad%cd is the same as %as%cs' '
 	git log --format=%ad%n%cd --date=short >expected &&
 	git log --format=%as%n%cs >actual &&
 	test_cmp expected actual
