@@ -44,6 +44,13 @@ Git index format
   localization, no special casing of directory separator '/'). Entries
   with the same name are sorted by their stage field.
 
+  An index entry typically represents a file. However, if sparse-checkout
+  is enabled in cone mode (`core.sparseCheckoutCone` is enabled) and the
+  `extensions.sparseIndex` extension is enabled, then the index may
+  contain entries for directories outside of the sparse-checkout definition.
+  These entries have mode `040000`, include the `SKIP_WORKTREE` bit, and
+  the path ends in a directory separator.
+
   32-bit ctime seconds, the last time a file's metadata changed
     this is stat(2) data
 
@@ -385,3 +392,15 @@ The remaining data of each directory block is grouped by type:
 	in this block of entries.
 
     - 32-bit count of cache entries in this block
+
+== Sparse Directory Entries
+
+  When using sparse-checkout in cone mode, some entire directories within
+  the index can be summarized by pointing to a tree object instead of the
+  entire expanded list of paths within that tree. An index containing such
+  entries is a "sparse index". Index format versions 4 and less were not
+  implemented with such entries in mind. Thus, for these versions, an
+  index containing sparse directory entries will include this extension
+  with signature { 's', 'd', 'i', 'r' }. Like the split-index extension,
+  tools should avoid interacting with a sparse index unless they understand
+  this extension.

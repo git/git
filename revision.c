@@ -1680,6 +1680,8 @@ static void do_add_index_objects_to_pending(struct rev_info *revs,
 {
 	int i;
 
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 		struct blob *blob;

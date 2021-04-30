@@ -84,19 +84,19 @@ struct conv_attrs {
 	const char *working_tree_encoding; /* Supported encoding or default encoding if NULL */
 };
 
-void convert_attrs(const struct index_state *istate,
+void convert_attrs(struct index_state *istate,
 		   struct conv_attrs *ca, const char *path);
 
 extern enum eol core_eol;
 extern char *check_roundtrip_encoding;
-const char *get_cached_convert_stats_ascii(const struct index_state *istate,
+const char *get_cached_convert_stats_ascii(struct index_state *istate,
 					   const char *path);
 const char *get_wt_convert_stats_ascii(const char *path);
-const char *get_convert_attr_ascii(const struct index_state *istate,
+const char *get_convert_attr_ascii(struct index_state *istate,
 				   const char *path);
 
 /* returns 1 if *dst was used */
-int convert_to_git(const struct index_state *istate,
+int convert_to_git(struct index_state *istate,
 		   const char *path, const char *src, size_t len,
 		   struct strbuf *dst, int conv_flags);
 int convert_to_working_tree_ca(const struct conv_attrs *ca,
@@ -108,7 +108,7 @@ int async_convert_to_working_tree_ca(const struct conv_attrs *ca,
 				     size_t len, struct strbuf *dst,
 				     const struct checkout_metadata *meta,
 				     void *dco);
-static inline int convert_to_working_tree(const struct index_state *istate,
+static inline int convert_to_working_tree(struct index_state *istate,
 					  const char *path, const char *src,
 					  size_t len, struct strbuf *dst,
 					  const struct checkout_metadata *meta)
@@ -117,7 +117,7 @@ static inline int convert_to_working_tree(const struct index_state *istate,
 	convert_attrs(istate, &ca, path);
 	return convert_to_working_tree_ca(&ca, path, src, len, dst, meta);
 }
-static inline int async_convert_to_working_tree(const struct index_state *istate,
+static inline int async_convert_to_working_tree(struct index_state *istate,
 						const char *path, const char *src,
 						size_t len, struct strbuf *dst,
 						const struct checkout_metadata *meta,
@@ -129,20 +129,20 @@ static inline int async_convert_to_working_tree(const struct index_state *istate
 }
 int async_query_available_blobs(const char *cmd,
 				struct string_list *available_paths);
-int renormalize_buffer(const struct index_state *istate,
+int renormalize_buffer(struct index_state *istate,
 		       const char *path, const char *src, size_t len,
 		       struct strbuf *dst);
-static inline int would_convert_to_git(const struct index_state *istate,
+static inline int would_convert_to_git(struct index_state *istate,
 				       const char *path)
 {
 	return convert_to_git(istate, path, NULL, 0, NULL, 0);
 }
 /* Precondition: would_convert_to_git_filter_fd(path) == true */
-void convert_to_git_filter_fd(const struct index_state *istate,
+void convert_to_git_filter_fd(struct index_state *istate,
 			      const char *path, int fd,
 			      struct strbuf *dst,
 			      int conv_flags);
-int would_convert_to_git_filter_fd(const struct index_state *istate,
+int would_convert_to_git_filter_fd(struct index_state *istate,
 				   const char *path);
 
 /*
@@ -176,7 +176,7 @@ void reset_parsed_attributes(void);
 
 struct stream_filter; /* opaque */
 
-struct stream_filter *get_stream_filter(const struct index_state *istate,
+struct stream_filter *get_stream_filter(struct index_state *istate,
 					const char *path,
 					const struct object_id *);
 struct stream_filter *get_stream_filter_ca(const struct conv_attrs *ca,

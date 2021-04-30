@@ -2,11 +2,15 @@
 
 test_description='compare full workdir to sparse workdir'
 
+GIT_TEST_SPLIT_INDEX=0
+GIT_TEST_SPARSE_INDEX=
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
 	git init initial-repo &&
 	(
+		GIT_TEST_SPARSE_INDEX=0 &&
 		cd initial-repo &&
 		echo a >a &&
 		echo "after deep" >e &&
@@ -87,39 +91,102 @@ init_repos () {
 
 	cp -r initial-repo sparse-checkout &&
 	git -C sparse-checkout reset --hard &&
-	git -C sparse-checkout sparse-checkout init --cone &&
+
+	cp -r initial-repo sparse-index &&
+	git -C sparse-index reset --hard &&
 
 	# initialize sparse-checkout definitions
-	git -C sparse-checkout sparse-checkout set deep
+	git -C sparse-checkout sparse-checkout init --cone &&
+	git -C sparse-checkout sparse-checkout set deep &&
+	git -C sparse-index sparse-checkout init --cone --sparse-index &&
+	test_cmp_config -C sparse-index true index.sparse &&
+	git -C sparse-index sparse-checkout set deep
 }
 
 run_on_sparse () {
 	(
 		cd sparse-checkout &&
-		$* >../sparse-checkout-out 2>../sparse-checkout-err
+		"$@" >../sparse-checkout-out 2>../sparse-checkout-err
+	) &&
+	(
+		cd sparse-index &&
+		"$@" >../sparse-index-out 2>../sparse-index-err
 	)
 }
 
 run_on_all () {
 	(
 		cd full-checkout &&
-		$* >../full-checkout-out 2>../full-checkout-err
+		"$@" >../full-checkout-out 2>../full-checkout-err
 	) &&
-	run_on_sparse $*
+	run_on_sparse "$@"
 }
 
 test_all_match () {
-	run_on_all $* &&
+	run_on_all "$@" &&
 	test_cmp full-checkout-out sparse-checkout-out &&
-	test_cmp full-checkout-err sparse-checkout-err
+	test_cmp full-checkout-out sparse-index-out &&
+	test_cmp full-checkout-err sparse-checkout-err &&
+	test_cmp full-checkout-err sparse-index-err
 }
+
+test_sparse_match () {
+	run_on_sparse "$@" &&
+	test_cmp sparse-checkout-out sparse-index-out &&
+	test_cmp sparse-checkout-err sparse-index-err
+}
+
+test_expect_success 'sparse-index contents' '
+	init_repos &&
+
+	test-tool -C sparse-index read-cache --table >cache &&
+	for dir in folder1 folder2 x
+	do
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
+		grep "040000 tree $TREE	$dir/" cache \
+			|| return 1
+	done &&
+
+	git -C sparse-index sparse-checkout set folder1 &&
+
+	test-tool -C sparse-index read-cache --table >cache &&
+	for dir in deep folder2 x
+	do
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
+		grep "040000 tree $TREE	$dir/" cache \
+			|| return 1
+	done &&
+
+	git -C sparse-index sparse-checkout set deep/deeper1 &&
+
+	test-tool -C sparse-index read-cache --table >cache &&
+	for dir in deep/deeper2 folder1 folder2 x
+	do
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
+		grep "040000 tree $TREE	$dir/" cache \
+			|| return 1
+	done &&
+
+	# Disabling the sparse-index removes tree entries with full ones
+	git -C sparse-index sparse-checkout init --no-sparse-index &&
+
+	test-tool -C sparse-index read-cache --table >cache &&
+	! grep "040000 tree" cache &&
+	test_sparse_match test-tool read-cache --table
+'
+
+test_expect_success 'expanded in-memory index matches full index' '
+	init_repos &&
+	test_sparse_match test-tool read-cache --expand --table
+'
 
 test_expect_success 'status with options' '
 	init_repos &&
+	test_sparse_match ls &&
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git status --porcelain=v2 -z -u &&
 	test_all_match git status --porcelain=v2 -uno &&
-	run_on_all "touch README.md" &&
+	run_on_all touch README.md &&
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git status --porcelain=v2 -z -u &&
 	test_all_match git status --porcelain=v2 -uno &&
@@ -135,7 +202,7 @@ test_expect_success 'add, commit, checkout' '
 	write_script edit-contents <<-\EOF &&
 	echo text >>$1
 	EOF
-	run_on_all "../edit-contents README.md" &&
+	run_on_all ../edit-contents README.md &&
 
 	test_all_match git add README.md &&
 	test_all_match git status --porcelain=v2 &&
@@ -144,7 +211,7 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout HEAD~1 &&
 	test_all_match git checkout - &&
 
-	run_on_all "../edit-contents README.md" &&
+	run_on_all ../edit-contents README.md &&
 
 	test_all_match git add -A &&
 	test_all_match git status --porcelain=v2 &&
@@ -153,7 +220,7 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout HEAD~1 &&
 	test_all_match git checkout - &&
 
-	run_on_all "../edit-contents deep/newfile" &&
+	run_on_all ../edit-contents deep/newfile &&
 
 	test_all_match git status --porcelain=v2 -uno &&
 	test_all_match git status --porcelain=v2 &&
@@ -186,7 +253,7 @@ test_expect_success 'diff --staged' '
 	write_script edit-contents <<-\EOF &&
 	echo text >>README.md
 	EOF
-	run_on_all "../edit-contents" &&
+	run_on_all ../edit-contents &&
 
 	test_all_match git diff &&
 	test_all_match git diff --staged &&
@@ -252,6 +319,17 @@ test_expect_failure 'checkout and reset (mixed)' '
 	test_all_match git reset update-folder2
 '
 
+# Ensure that sparse-index behaves identically to
+# sparse-checkout with a full index.
+test_expect_success 'checkout and reset (mixed) [sparse]' '
+	init_repos &&
+
+	test_sparse_match git checkout -b reset-test update-deep &&
+	test_sparse_match git reset deepest &&
+	test_sparse_match git reset update-folder1 &&
+	test_sparse_match git reset update-folder2
+'
+
 test_expect_success 'merge' '
 	init_repos &&
 
@@ -280,7 +358,7 @@ test_expect_success 'clean' '
 	echo bogus >>.gitignore &&
 	run_on_all cp ../.gitignore . &&
 	test_all_match git add .gitignore &&
-	test_all_match git commit -m ignore-bogus-files &&
+	test_all_match git commit -m "ignore bogus files" &&
 
 	run_on_sparse mkdir folder1 &&
 	run_on_all touch folder1/bogus &&
@@ -288,14 +366,51 @@ test_expect_success 'clean' '
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git clean -f &&
 	test_all_match git status --porcelain=v2 &&
+	test_sparse_match ls &&
+	test_sparse_match ls folder1 &&
 
 	test_all_match git clean -xf &&
 	test_all_match git status --porcelain=v2 &&
+	test_sparse_match ls &&
+	test_sparse_match ls folder1 &&
 
 	test_all_match git clean -xdf &&
 	test_all_match git status --porcelain=v2 &&
+	test_sparse_match ls &&
+	test_sparse_match ls folder1 &&
 
-	test_path_is_dir sparse-checkout/folder1
+	test_sparse_match test_path_is_dir folder1
+'
+
+test_expect_success 'submodule handling' '
+	init_repos &&
+
+	test_all_match mkdir modules &&
+	test_all_match touch modules/a &&
+	test_all_match git add modules &&
+	test_all_match git commit -m "add modules directory" &&
+
+	run_on_all git submodule add "$(pwd)/initial-repo" modules/sub &&
+	test_all_match git commit -m "add submodule" &&
+
+	# having a submodule prevents "modules" from collapse
+	test-tool -C sparse-index read-cache --table >cache &&
+	grep "100644 blob .*	modules/a" cache &&
+	grep "160000 commit $(git -C initial-repo rev-parse HEAD)	modules/sub" cache
+'
+
+test_expect_success 'sparse-index is expanded and converted back' '
+	init_repos &&
+
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+		git -C sparse-index -c core.fsmonitor="" reset --hard &&
+	test_region index convert_to_sparse trace2.txt &&
+	test_region index ensure_full_index trace2.txt &&
+
+	rm trace2.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+		git -C sparse-index -c core.fsmonitor="" status -uno &&
+	test_region index ensure_full_index trace2.txt
 '
 
 test_done

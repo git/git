@@ -41,6 +41,9 @@ struct repo_settings {
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
 
 	int core_multi_pack_index;
+
+	unsigned command_requires_full_index:1,
+		 sparse_index:1;
 };
 
 struct repository {

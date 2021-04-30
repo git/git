@@ -204,6 +204,8 @@ struct cache_entry {
 #error "CE_EXTENDED_FLAGS out of range"
 #endif
 
+#define S_ISSPARSEDIR(m) ((m) == S_IFDIR)
+
 /* Forward structure decls */
 struct pathspec;
 struct child_process;
@@ -249,6 +251,8 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 {
 	if (S_ISLNK(mode))
 		return S_IFLNK;
+	if (S_ISSPARSEDIR(mode))
+		return S_IFDIR;
 	if (S_ISDIR(mode) || S_ISGITLINK(mode))
 		return S_IFGITLINK;
 	return S_IFREG | ce_permissions(mode);
@@ -305,6 +309,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 struct split_index;
 struct untracked_cache;
 struct progress;
+struct pattern_list;
 
 struct index_state {
 	struct cache_entry **cache;
@@ -319,7 +324,14 @@ struct index_state {
 		 drop_cache_tree : 1,
 		 updated_workdir : 1,
 		 updated_skipworktree : 1,
-		 fsmonitor_has_run_once : 1;
+		 fsmonitor_has_run_once : 1,
+
+		 /*
+		  * sparse_index == 1 when sparse-directory
+		  * entries exist. Requires sparse-checkout
+		  * in cone mode.
+		  */
+		 sparse_index : 1;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
 	struct object_id oid;
@@ -329,6 +341,7 @@ struct index_state {
 	struct mem_pool *ce_mem_pool;
 	struct progress *progress;
 	struct repository *repo;
+	struct pattern_list *sparse_checkout_patterns;
 };
 
 /* Name hashing */
@@ -337,6 +350,7 @@ void add_name_hash(struct index_state *istate, struct cache_entry *ce);
 void remove_name_hash(struct index_state *istate, struct cache_entry *ce);
 void free_name_hash(struct index_state *istate);
 
+void ensure_full_index(struct index_state *istate);
 
 /* Cache entry creation and cleanup */
 
@@ -722,6 +736,8 @@ int read_index_from(struct index_state *, const char *path,
 		    const char *gitdir);
 int is_index_unborn(struct index_state *);
 
+void ensure_full_index(struct index_state *istate);
+
 /* For use with `write_locked_index()`. */
 #define COMMIT_LOCK		(1 << 0)
 #define SKIP_IF_UNCHANGED	(1 << 1)
@@ -785,7 +801,7 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
  * index_name_pos(&index, "f", 1) -> -3
  * index_name_pos(&index, "g", 1) -> -5
  */
-int index_name_pos(const struct index_state *, const char *name, int namelen);
+int index_name_pos(struct index_state *, const char *name, int namelen);
 
 /*
  * Some functions return the negative complement of an insert position when a
@@ -835,8 +851,8 @@ int add_file_to_index(struct index_state *, const char *path, int flags);
 int chmod_index_entry(struct index_state *, struct cache_entry *ce, char flip);
 int ce_same_name(const struct cache_entry *a, const struct cache_entry *b);
 void set_object_name_for_intent_to_add_entry(struct cache_entry *ce);
-int index_name_is_other(const struct index_state *, const char *, int);
-void *read_blob_data_from_index(const struct index_state *, const char *, unsigned long *);
+int index_name_is_other(struct index_state *, const char *, int);
+void *read_blob_data_from_index(struct index_state *, const char *, unsigned long *);
 
 /* do stat comparison even if CE_VALID is true */
 #define CE_MATCH_IGNORE_VALID		01
@@ -1044,6 +1060,7 @@ struct repository_format {
 	int worktree_config;
 	int is_bare;
 	int hash_algo;
+	int sparse_index;
 	char *work_tree;
 	struct string_list unknown_extensions;
 	struct string_list v1_only_extensions;
