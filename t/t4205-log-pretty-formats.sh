@@ -538,6 +538,12 @@ test_expect_success '--date=short %ad%cd is the same as %as%cs' '
 	test_cmp expected actual
 '
 
+test_expect_success '--date=human %ad%cd is the same as %ah%ch' '
+	git log --format=%ad%n%cd --date=human >expected &&
+	git log --format=%ah%n%ch >actual &&
+	test_cmp expected actual
+'
+
 # get new digests (with no abbreviations)
 test_expect_success 'set up log decoration tests' '
 	head1=$(git rev-parse --verify HEAD~0) &&
