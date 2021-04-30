@@ -617,6 +617,14 @@ See also INCOMPATIBLE OPTIONS below.
 --no-reschedule-failed-exec::
 	Automatically reschedule `exec` commands that failed. This only makes
 	sense in interactive mode (or when an `--exec` option was provided).
++
+Even though this option applies once a rebase is started, it's set for
+the whole rebase at the start based on either the
+`rebase.rescheduleFailedExec` configuration (see linkgit:git-config[1]
+or "CONFIGURATION" below) or whether this option is
+provided. Otherwise an explicit `--no-reschedule-failed-exec` at the
+start would be overridden by the presence of
+`rebase.rescheduleFailedExec=true` configuration.
 
 INCOMPATIBLE OPTIONS
 --------------------
