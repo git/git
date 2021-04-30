@@ -149,11 +149,25 @@ static inline int ps_strcmp(const struct pathspec_item *item,
 		return strcmp(s1, s2);
 }
 
+enum ps_skip_worktree_action {
+  PS_HEED_SKIP_WORKTREE = 0,
+  PS_IGNORE_SKIP_WORKTREE = 1
+};
 void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 					struct index_state *istate,
-					char *seen);
+					char *seen,
+					enum ps_skip_worktree_action sw_action);
 char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
-					    struct index_state *istate);
+					    struct index_state *istate,
+					    enum ps_skip_worktree_action sw_action);
+char *find_pathspecs_matching_skip_worktree(const struct pathspec *pathspec);
+static inline int matches_skip_worktree(const struct pathspec *pathspec,
+					int item, char **seen_ptr)
+{
+	if (!*seen_ptr)
+		*seen_ptr = find_pathspecs_matching_skip_worktree(pathspec);
+	return (*seen_ptr)[item];
+}
 int match_pathspec_attrs(struct index_state *istate,
 			 const char *name, int namelen,
 			 const struct pathspec_item *item);

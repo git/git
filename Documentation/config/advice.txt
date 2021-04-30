@@ -119,4 +119,8 @@ advice.*::
 	addEmptyPathspec::
 		Advice shown if a user runs the add command without providing
 		the pathspec parameter.
+	updateSparsePath::
+		Advice shown when either linkgit:git-add[1] or linkgit:git-rm[1]
+		is asked to update index entries outside the current sparse
+		checkout.
 --

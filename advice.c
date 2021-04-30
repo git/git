@@ -2,6 +2,7 @@
 #include "config.h"
 #include "color.h"
 #include "help.h"
+#include "string-list.h"
 
 int advice_fetch_show_forced_updates = 1;
 int advice_push_update_rejected = 1;
@@ -136,6 +137,7 @@ static struct {
 	[ADVICE_STATUS_HINTS]				= { "statusHints", 1 },
 	[ADVICE_STATUS_U_OPTION]			= { "statusUoption", 1 },
 	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE] = { "submoduleAlternateErrorStrategyDie", 1 },
+	[ADVICE_UPDATE_SPARSE_PATH]			= { "updateSparsePath", 1 },
 	[ADVICE_WAITING_FOR_EDITOR]			= { "waitingForEditor", 1 },
 };
 
@@ -282,6 +284,24 @@ void NORETURN die_conclude_merge(void)
 	if (advice_resolve_conflict)
 		advise(_("Please, commit your changes before merging."));
 	die(_("Exiting because of unfinished merge."));
+}
+
+void advise_on_updating_sparse_paths(struct string_list *pathspec_list)
+{
+	struct string_list_item *item;
+
+	if (!pathspec_list->nr)
+		return;
+
+	fprintf(stderr, _("The following pathspecs didn't match any"
+			  " eligible path, but they do match index\n"
+			  "entries outside the current sparse checkout:\n"));
+	for_each_string_list_item(item, pathspec_list)
+		fprintf(stderr, "%s\n", item->string);
+
+	advise_if_enabled(ADVICE_UPDATE_SPARSE_PATH,
+			  _("Disable or modify the sparsity rules if you intend"
+			    " to update such entries."));
 }
 
 void detach_advice(const char *new_name)
