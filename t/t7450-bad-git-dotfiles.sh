@@ -1,9 +1,16 @@
 #!/bin/sh
 
-test_description='check handling of .. in submodule names
+test_description='check broken or malicious patterns in .git* files
 
-Exercise the name-checking function on a variety of names, and then give a
-real-world setup that confirms we catch this in practice.
+Such as:
+
+  - presence of .. in submodule names;
+    Exercise the name-checking function on a variety of names, and then give a
+    real-world setup that confirms we catch this in practice.
+
+  - nested submodule names
+
+  - symlinked .gitmodules, etc
 '
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
