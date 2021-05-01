@@ -148,12 +148,13 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 		{
 			printf "100644 blob $content\t$tricky\n" &&
 			printf "120000 blob $target\t.gitmodules\n"
-		} | git mktree &&
+		} >bad-tree &&
+		tree=$(git mktree <bad-tree) &&
 
 		# Check not only that we fail, but that it is due to the
 		# symlink detector
 		test_must_fail git fsck 2>output &&
-		grep gitmodulesSymlink output
+		grep "tree $tree: gitmodulesSymlink" output
 	)
 '
 
