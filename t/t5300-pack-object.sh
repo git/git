@@ -34,8 +34,22 @@ test_expect_success 'setup' '
 	} >expect
 '
 
+# usage: check_deltas <stderr_from_pack_objects> <cmp_op> <nr_deltas>
+# e.g.: check_deltas stderr -gt 0
+check_deltas() {
+	deltas=$(perl -lne '/delta (\d+)/ and print $1' "$1") &&
+	shift &&
+	if ! test "$deltas" "$@"
+	then
+		echo >&2 "unexpected number of deltas (compared $delta $*)"
+		return 1
+	fi
+}
+
 test_expect_success 'pack without delta' '
-	packname_1=$(git pack-objects --window=0 test-1 <obj-list)
+	packname_1=$(git pack-objects --progress --window=0 test-1 \
+			<obj-list 2>stderr) &&
+	check_deltas stderr = 0
 '
 
 test_expect_success 'pack-objects with bogus arguments' '
@@ -62,7 +76,8 @@ test_expect_success 'unpack without delta' '
 '
 
 test_expect_success 'pack with REF_DELTA' '
-	packname_2=$(git pack-objects test-2 <obj-list)
+	packname_2=$(git pack-objects --progress test-2 <obj-list 2>stderr) &&
+	check_deltas stderr -gt 0
 '
 
 test_expect_success 'unpack with REF_DELTA' '
@@ -70,7 +85,9 @@ test_expect_success 'unpack with REF_DELTA' '
 '
 
 test_expect_success 'pack with OFS_DELTA' '
-	packname_3=$(git pack-objects --delta-base-offset test-3 <obj-list)
+	packname_3=$(git pack-objects --progress --delta-base-offset test-3 \
+			<obj-list 2>stderr) &&
+	check_deltas stderr -gt 0
 '
 
 test_expect_success 'unpack with OFS_DELTA' '
