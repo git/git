@@ -579,7 +579,9 @@ static int fsck_tree(const struct object_id *tree_oid,
 	struct name_stack df_dup_candidates = { NULL };
 
 	if (init_tree_desc_gently(&desc, buffer, size)) {
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_BAD_TREE,
+				 "cannot be parsed as a tree");
 		return retval;
 	}
 
@@ -630,7 +632,9 @@ static int fsck_tree(const struct object_id *tree_oid,
 		}
 
 		if (update_tree_entry_gently(&desc)) {
-			retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
+			retval += report(options, tree_oid, OBJ_TREE,
+					 FSCK_MSG_BAD_TREE,
+					 "cannot be parsed as a tree");
 			break;
 		}
 
@@ -678,25 +682,45 @@ static int fsck_tree(const struct object_id *tree_oid,
 	name_stack_clear(&df_dup_candidates);
 
 	if (has_null_sha1)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_NULL_SHA1, "contains entries pointing to null sha1");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_NULL_SHA1,
+				 "contains entries pointing to null sha1");
 	if (has_full_path)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_FULL_PATHNAME, "contains full pathnames");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_FULL_PATHNAME,
+				 "contains full pathnames");
 	if (has_empty_name)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_EMPTY_NAME, "contains empty pathname");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_EMPTY_NAME,
+				 "contains empty pathname");
 	if (has_dot)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_HAS_DOT, "contains '.'");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_HAS_DOT,
+				 "contains '.'");
 	if (has_dotdot)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_HAS_DOTDOT, "contains '..'");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_HAS_DOTDOT,
+				 "contains '..'");
 	if (has_dotgit)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_HAS_DOTGIT, "contains '.git'");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_HAS_DOTGIT,
+				 "contains '.git'");
 	if (has_zero_pad)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_ZERO_PADDED_FILEMODE, "contains zero-padded file modes");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_ZERO_PADDED_FILEMODE,
+				 "contains zero-padded file modes");
 	if (has_bad_modes)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_BAD_FILEMODE, "contains bad file modes");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_BAD_FILEMODE,
+				 "contains bad file modes");
 	if (has_dup_entries)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_DUPLICATE_ENTRIES, "contains duplicate file entries");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_DUPLICATE_ENTRIES,
+				 "contains duplicate file entries");
 	if (not_properly_sorted)
-		retval += report(options, tree_oid, OBJ_TREE, FSCK_MSG_TREE_NOT_SORTED, "not properly sorted");
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_TREE_NOT_SORTED,
+				 "not properly sorted");
 	return retval;
 }
 
