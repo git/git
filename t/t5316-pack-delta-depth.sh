@@ -102,4 +102,11 @@ test_expect_success '--depth=0 disables deltas' '
 	test_cmp expect actual
 '
 
+test_expect_success 'negative depth disables deltas' '
+	pack=$(git pack-objects --all --depth=-1 </dev/null pack) &&
+	echo 0 >expect &&
+	max_chain pack-$pack.pack >actual &&
+	test_cmp expect actual
+'
+
 test_done
