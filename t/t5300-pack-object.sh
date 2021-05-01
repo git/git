@@ -613,4 +613,9 @@ test_expect_success '--stdin-packs with broken links' '
 	)
 '
 
+test_expect_success 'negative window clamps to 0' '
+	git pack-objects --progress --window=-1 neg-window <obj-list 2>stderr &&
+	check_deltas stderr = 0
+'
+
 test_done
