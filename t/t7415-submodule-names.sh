@@ -151,10 +151,9 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 		} | git mktree &&
 
 		# Check not only that we fail, but that it is due to the
-		# symlink detector; this grep string comes from the config
-		# variable name and will not be translated.
+		# symlink detector
 		test_must_fail git fsck 2>output &&
-		test_i18ngrep gitmodulesSymlink output
+		grep gitmodulesSymlink output
 	)
 '
 
