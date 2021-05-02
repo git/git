@@ -40,7 +40,7 @@ Values 1-4 satisfy the requirements of parse_commit_gently().
 
 There are two definitions of generation number:
 1. Corrected committer dates (generation number v2)
-2. Topological levels (generation nummber v1)
+2. Topological levels (generation number v1)
 
 Define "corrected committer date" of a commit recursively as follows:
 
