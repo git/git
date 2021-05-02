@@ -253,21 +253,20 @@ static int git_work_tree_initialized;
  */
 void set_git_work_tree(const char *new_work_tree)
 {
-	struct strbuf realpath = STRBUF_INIT;
-
 	if (git_work_tree_initialized) {
+		struct strbuf realpath = STRBUF_INIT;
+
 		strbuf_realpath(&realpath, new_work_tree, 1);
 		new_work_tree = realpath.buf;
 		if (strcmp(new_work_tree, the_repository->worktree))
 			die("internal error: work tree has already been set\n"
 			    "Current worktree: %s\nNew worktree: %s",
 			    the_repository->worktree, new_work_tree);
+		strbuf_release(&realpath);
 		return;
 	}
 	git_work_tree_initialized = 1;
 	repo_set_worktree(the_repository, new_work_tree);
-
-	strbuf_release(&realpath);
 }
 
 const char *get_git_work_tree(void)
