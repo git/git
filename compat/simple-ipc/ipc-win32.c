@@ -345,7 +345,7 @@ struct ipc_server_thread_data {
 
 /*
  * On Windows, the conceptual "ipc-server" is implemented as a pool of
- * n idential/peer "server-thread" threads.  That is, there is no
+ * n identical/peer "server-thread" threads.  That is, there is no
  * hierarchy of threads; and therefore no controller thread managing
  * the pool.  Each thread has an independent handle to the named pipe,
  * receives incoming connections, processes the client, and re-uses

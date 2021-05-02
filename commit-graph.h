@@ -13,7 +13,7 @@
  * This method is only used to enhance coverage of the commit-graph
  * feature in the test suite with the GIT_TEST_COMMIT_GRAPH and
  * GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS environment variables. Do not
- * call this method oustide of a builtin, and only if you know what
+ * call this method outside of a builtin, and only if you know what
  * you are doing!
  */
 void git_test_write_commit_graph_or_die(void);
