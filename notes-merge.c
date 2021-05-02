@@ -628,7 +628,7 @@ int notes_merge(struct notes_merge_options *o,
 	if (oideq(&remote->object.oid, base_oid)) {
 		/* Already merged; result == local commit */
 		if (o->verbosity >= 2)
-			printf("Already up to date!\n");
+			printf_ln("Already up to date.");
 		oidcpy(result_oid, &local->object.oid);
 		goto found_result;
 	}

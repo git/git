@@ -1610,7 +1610,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			}
 		}
 		if (up_to_date) {
-			finish_up_to_date(_("Already up to date. Yeeah!"));
+			finish_up_to_date(_("Already up to date."));
 			goto done;
 		}
 	}
