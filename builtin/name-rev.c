@@ -595,7 +595,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 	}
 
 	if (cutoff) {
-		/* check for undeflow */
+		/* check for underflow */
 		if (cutoff > TIME_MIN + CUTOFF_DATE_SLOP)
 			cutoff = cutoff - CUTOFF_DATE_SLOP;
 		else
