@@ -375,7 +375,7 @@ test_merge () {
 #   --start=<n>:
 #	number commit messages from <n> (default: 1)
 #   --message=<msg>:
-#	use <msg> as the commit mesasge (default: "commit %s")
+#	use <msg> as the commit message (default: "commit %s")
 #   --filename=<fn>:
 #	modify <fn> in each commit (default: %s.t)
 #   --contents=<string>:

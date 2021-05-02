@@ -42,7 +42,7 @@ test_expect_success 'cherry-pick conflict with --rerere-autoupdate' '
 	git reset --hard bar-dev
 '
 
-test_expect_success 'cherry-pick conflict repsects rerere.autoUpdate' '
+test_expect_success 'cherry-pick conflict respects rerere.autoUpdate' '
 	test_config rerere.autoUpdate true &&
 	test_must_fail git cherry-pick foo..bar-main &&
 	test_cmp foo-expect foo &&

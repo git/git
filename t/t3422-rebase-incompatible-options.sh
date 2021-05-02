@@ -23,7 +23,7 @@ test_expect_success 'setup' '
 '
 
 #
-# Rebase has lots of useful options like --whitepsace=fix, which are
+# Rebase has lots of useful options like --whitespace=fix, which are
 # actually all built in terms of flags to git-am.  Since neither
 # --merge nor --interactive (nor any options that imply those two) use
 # git-am, using them together will result in flags like --whitespace=fix

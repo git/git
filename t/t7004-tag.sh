@@ -1838,7 +1838,7 @@ test_expect_success 'invalid sort parameter on command line' '
 	test_must_fail git tag -l --sort=notvalid "foo*" >actual
 '
 
-test_expect_success 'invalid sort parameter in configuratoin' '
+test_expect_success 'invalid sort parameter in configuration' '
 	test_config tag.sort "v:notvalid" &&
 	test_must_fail git tag -l "foo*"
 '

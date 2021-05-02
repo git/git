@@ -10,7 +10,7 @@ test_expect_success "setup proc-receive hook (fall-through, $PROTOCOL/porcelain)
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
 # git push         :                       refs/for/main/topic(B)
-test_expect_success "proc-receive: fall throught, let receive-pack to execute ($PROTOCOL/porcelain)" '
+test_expect_success "proc-receive: fall through, let receive-pack to execute ($PROTOCOL/porcelain)" '
 	git -C workbench push --porcelain origin \
 		$B:refs/for/main/topic \
 		>out 2>&1 &&
