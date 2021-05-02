@@ -2,7 +2,7 @@
 *.[ch] whitespace=indent,trail,space diff=cpp
 *.sh whitespace=indent,trail,space eol=lf
 *.perl eol=lf diff=perl
-*.pl eof=lf diff=perl
+*.pl eol=lf diff=perl
 *.pm eol=lf diff=perl
 *.py eol=lf diff=python
 *.bat eol=crlf
