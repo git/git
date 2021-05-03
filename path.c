@@ -1493,6 +1493,11 @@ int is_ntfs_dotgitattributes(const char *name)
 	return is_ntfs_dot_str(name, "gitattributes", "gi7d29");
 }
 
+int is_ntfs_dotmailmap(const char *name)
+{
+	return is_ntfs_dot_str(name, "mailmap", "maba30");
+}
+
 int looks_like_command_line_option(const char *str)
 {
 	return str && str[0] == '-';
