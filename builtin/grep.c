@@ -421,7 +421,7 @@ static int grep_submodule(struct grep_opt *opt,
 	struct grep_opt subopt;
 	int hit;
 
-	sub = submodule_from_path(superproject, &null_oid, path);
+	sub = submodule_from_path(superproject, null_oid(), path);
 
 	if (!is_submodule_active(superproject, path))
 		return 0;

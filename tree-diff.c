@@ -161,7 +161,7 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	memcpy(p->path + base->len, path, pathlen);
 	p->path[len] = 0;
 	p->mode = mode;
-	oidcpy(&p->oid, oid ? oid : &null_oid);
+	oidcpy(&p->oid, oid ? oid : null_oid());
 
 	return p;
 }
@@ -243,7 +243,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 				mode_i = tp[i].entry.mode;
 			}
 			else {
-				oid_i = &null_oid;
+				oid_i = null_oid();
 				mode_i = 0;
 			}
 

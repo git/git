@@ -55,18 +55,29 @@
 	"\x6f\xe1\x41\xf7\x74\x91\x20\xa3\x03\x72" \
 	"\x18\x13"
 
-const struct object_id null_oid;
 static const struct object_id empty_tree_oid = {
-	EMPTY_TREE_SHA1_BIN_LITERAL
+	.hash = EMPTY_TREE_SHA1_BIN_LITERAL,
+	.algo = GIT_HASH_SHA1,
 };
 static const struct object_id empty_blob_oid = {
-	EMPTY_BLOB_SHA1_BIN_LITERAL
+	.hash = EMPTY_BLOB_SHA1_BIN_LITERAL,
+	.algo = GIT_HASH_SHA1,
+};
+static const struct object_id null_oid_sha1 = {
+	.hash = {0},
+	.algo = GIT_HASH_SHA1,
 };
 static const struct object_id empty_tree_oid_sha256 = {
-	EMPTY_TREE_SHA256_BIN_LITERAL
+	.hash = EMPTY_TREE_SHA256_BIN_LITERAL,
+	.algo = GIT_HASH_SHA256,
 };
 static const struct object_id empty_blob_oid_sha256 = {
-	EMPTY_BLOB_SHA256_BIN_LITERAL
+	.hash = EMPTY_BLOB_SHA256_BIN_LITERAL,
+	.algo = GIT_HASH_SHA256,
+};
+static const struct object_id null_oid_sha256 = {
+	.hash = {0},
+	.algo = GIT_HASH_SHA256,
 };
 
 static void git_hash_sha1_init(git_hash_ctx *ctx)
@@ -87,6 +98,13 @@ static void git_hash_sha1_update(git_hash_ctx *ctx, const void *data, size_t len
 static void git_hash_sha1_final(unsigned char *hash, git_hash_ctx *ctx)
 {
 	git_SHA1_Final(hash, &ctx->sha1);
+}
+
+static void git_hash_sha1_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+{
+	git_SHA1_Final(oid->hash, &ctx->sha1);
+	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
+	oid->algo = GIT_HASH_SHA1;
 }
 
 
@@ -110,6 +128,17 @@ static void git_hash_sha256_final(unsigned char *hash, git_hash_ctx *ctx)
 	git_SHA256_Final(hash, &ctx->sha256);
 }
 
+static void git_hash_sha256_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+{
+	git_SHA256_Final(oid->hash, &ctx->sha256);
+	/*
+	 * This currently does nothing, so the compiler should optimize it out,
+	 * but keep it in case we extend the hash size again.
+	 */
+	memset(oid->hash + GIT_SHA256_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA256_RAWSZ);
+	oid->algo = GIT_HASH_SHA256;
+}
+
 static void git_hash_unknown_init(git_hash_ctx *ctx)
 {
 	BUG("trying to init unknown hash");
@@ -130,6 +159,12 @@ static void git_hash_unknown_final(unsigned char *hash, git_hash_ctx *ctx)
 	BUG("trying to finalize unknown hash");
 }
 
+static void git_hash_unknown_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+{
+	BUG("trying to finalize unknown hash");
+}
+
+
 const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 	{
 		NULL,
@@ -141,6 +176,8 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		git_hash_unknown_clone,
 		git_hash_unknown_update,
 		git_hash_unknown_final,
+		git_hash_unknown_final_oid,
+		NULL,
 		NULL,
 		NULL,
 	},
@@ -155,8 +192,10 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		git_hash_sha1_clone,
 		git_hash_sha1_update,
 		git_hash_sha1_final,
+		git_hash_sha1_final_oid,
 		&empty_tree_oid,
 		&empty_blob_oid,
+		&null_oid_sha1,
 	},
 	{
 		"sha256",
@@ -169,10 +208,17 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		git_hash_sha256_clone,
 		git_hash_sha256_update,
 		git_hash_sha256_final,
+		git_hash_sha256_final_oid,
 		&empty_tree_oid_sha256,
 		&empty_blob_oid_sha256,
+		&null_oid_sha256,
 	}
 };
+
+const struct object_id *null_oid(void)
+{
+	return the_hash_algo->null_oid;
+}
 
 const char *empty_tree_oid_hex(void)
 {
@@ -1029,7 +1075,7 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 			break;
 		r->hash_algo->update_fn(&c, buf, readlen);
 	}
-	r->hash_algo->final_fn(real_oid.hash, &c);
+	r->hash_algo->final_oid_fn(&real_oid, &c);
 	close_istream(st);
 	return !oideq(oid, &real_oid) ? -1 : 0;
 }
@@ -1730,7 +1776,7 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 	algo->init_fn(&c);
 	algo->update_fn(&c, hdr, *hdrlen);
 	algo->update_fn(&c, buf, len);
-	algo->final_fn(oid->hash, &c);
+	algo->final_oid_fn(oid, &c);
 }
 
 /*
@@ -1902,7 +1948,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	if (ret != Z_OK)
 		die(_("deflateEnd on object %s failed (%d)"), oid_to_hex(oid),
 		    ret);
-	the_hash_algo->final_fn(parano_oid.hash, &c);
+	the_hash_algo->final_oid_fn(&parano_oid, &c);
 	if (!oideq(oid, &parano_oid))
 		die(_("confused by unstable object source data for %s"),
 		    oid_to_hex(oid));
@@ -2315,6 +2361,7 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 		if (namelen == the_hash_algo->hexsz - 2 &&
 		    !hex_to_bytes(oid.hash + 1, de->d_name,
 				  the_hash_algo->rawsz - 1)) {
+			oid_set_algo(&oid, the_hash_algo);
 			if (obj_cb) {
 				r = obj_cb(&oid, path->buf, data);
 				if (r)
@@ -2483,7 +2530,7 @@ static int check_stream_oid(git_zstream *stream,
 		return -1;
 	}
 
-	the_hash_algo->final_fn(real_oid.hash, &c);
+	the_hash_algo->final_oid_fn(&real_oid, &c);
 	if (!oideq(expected_oid, &real_oid)) {
 		error(_("hash mismatch for %s (expected %s)"), path,
 		      oid_to_hex(expected_oid));
