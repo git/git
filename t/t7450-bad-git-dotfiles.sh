@@ -139,7 +139,7 @@ test_expect_success 'index-pack --strict works for non-repo pack' '
 	grep gitmodulesName output
 '
 
-test_expect_success 'fsck detects symlinked .gitmodules file' '
+test_expect_success 'set up repo with symlinked .gitmodules file' '
 	git init symlink &&
 	(
 		cd symlink &&
@@ -155,14 +155,27 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 		{
 			printf "100644 blob $content\t$tricky\n" &&
 			printf "120000 blob $target\t.gitmodules\n"
-		} >bad-tree &&
-		tree=$(git mktree <bad-tree) &&
+		} >bad-tree
+	) &&
+	tree=$(git -C symlink mktree <symlink/bad-tree)
+'
+
+test_expect_success 'fsck detects symlinked .gitmodules file' '
+	(
+		cd symlink &&
 
 		# Check not only that we fail, but that it is due to the
 		# symlink detector
 		test_must_fail git fsck 2>output &&
 		grep "tree $tree: gitmodulesSymlink" output
 	)
+'
+
+test_expect_success 'refuse to load symlinked .gitmodules into index' '
+	test_must_fail git -C symlink read-tree $tree 2>err &&
+	grep "invalid path.*gitmodules" err &&
+	git -C symlink ls-files >out &&
+	test_must_be_empty out
 '
 
 test_expect_success 'fsck detects non-blob .gitmodules' '
