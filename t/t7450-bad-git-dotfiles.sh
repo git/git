@@ -140,6 +140,18 @@ test_expect_success 'index-pack --strict works for non-repo pack' '
 '
 
 check_dotx_symlink () {
+	fsck_must_fail=test_must_fail
+	fsck_prefix=error
+	refuse_index=t
+	case "$1" in
+	--warning)
+		fsck_must_fail=
+		fsck_prefix=warning
+		refuse_index=
+		shift
+		;;
+	esac
+
 	name=$1
 	type=$2
 	path=$3
@@ -172,11 +184,12 @@ check_dotx_symlink () {
 
 			# Check not only that we fail, but that it is due to the
 			# symlink detector
-			test_must_fail git fsck 2>output &&
-			grep "tree $tree: ${name}Symlink" output
+			$fsck_must_fail git fsck 2>output &&
+			grep "$fsck_prefix.*tree $tree: ${name}Symlink" output
 		)
 	'
 
+	test -n "$refuse_index" &&
 	test_expect_success "refuse to load symlinked $name into index ($type)" '
 		test_must_fail \
 			git -C $dir \
@@ -192,6 +205,18 @@ check_dotx_symlink () {
 check_dotx_symlink gitmodules vanilla .gitmodules
 check_dotx_symlink gitmodules ntfs ".gitmodules ."
 check_dotx_symlink gitmodules hfs ".${u200c}gitmodules"
+
+check_dotx_symlink --warning gitattributes vanilla .gitattributes
+check_dotx_symlink --warning gitattributes ntfs ".gitattributes ."
+check_dotx_symlink --warning gitattributes hfs ".${u200c}gitattributes"
+
+check_dotx_symlink --warning gitignore vanilla .gitignore
+check_dotx_symlink --warning gitignore ntfs ".gitignore ."
+check_dotx_symlink --warning gitignore hfs ".${u200c}gitignore"
+
+check_dotx_symlink --warning mailmap vanilla .mailmap
+check_dotx_symlink --warning mailmap ntfs ".mailmap ."
+check_dotx_symlink --warning mailmap hfs ".${u200c}mailmap"
 
 test_expect_success 'fsck detects non-blob .gitmodules' '
 	git init non-blob &&
