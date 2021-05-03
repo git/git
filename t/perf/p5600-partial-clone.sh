@@ -35,4 +35,8 @@ test_perf 'count non-promisor commits' '
 	git -C bare.git rev-list --all --count --exclude-promisor-objects
 '
 
+test_perf 'gc' '
+	git -C bare.git gc
+'
+
 test_done
