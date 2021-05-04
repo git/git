@@ -175,6 +175,11 @@ For shell scripts specifically (not exhaustive):
 
    does not have such a problem.
 
+ - Even though "local" is not part of POSIX, we make heavy use of it
+   in our test suite.  We do not use it in scripted Porcelains, and
+   hopefully nobody starts using "local" before they are reimplemented
+   in C ;-)
+
 
 For C programs:
 
