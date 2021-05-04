@@ -3462,7 +3462,7 @@ static int merge_trees_internal(struct merge_options *opt,
 	}
 
 	if (oideq(&merge_base->object.oid, &merge->object.oid)) {
-		output(opt, 0, _("Already up to date!"));
+		output(opt, 0, _("Already up to date."));
 		*result = head;
 		return 1;
 	}
