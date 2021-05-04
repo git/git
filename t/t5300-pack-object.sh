@@ -8,125 +8,91 @@ test_description='git pack-object
 '
 . ./test-lib.sh
 
-TRASH=$(pwd)
+test_expect_success 'setup' '
+	rm -f .git/index* &&
+	perl -e "print \"a\" x 4096;" >a &&
+	perl -e "print \"b\" x 4096;" >b &&
+	perl -e "print \"c\" x 4096;" >c &&
+	test-tool genrandom "seed a" 2097152 >a_big &&
+	test-tool genrandom "seed b" 2097152 >b_big &&
+	git update-index --add a a_big b b_big c &&
+	cat c >d && echo foo >>d && git update-index --add d &&
+	tree=$(git write-tree) &&
+	commit=$(git commit-tree $tree </dev/null) &&
+	{
+		echo $tree &&
+		echo $commit &&
+		git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
+	} >obj-list &&
+	{
+		git diff-tree --root -p $commit &&
+		while read object
+		do
+			t=$(git cat-file -t $object) &&
+			git cat-file $t $object || return 1
+		done <obj-list
+	} >expect
+'
 
-test_expect_success \
-    'setup' \
-    'rm -f .git/index* &&
-     perl -e "print \"a\" x 4096;" > a &&
-     perl -e "print \"b\" x 4096;" > b &&
-     perl -e "print \"c\" x 4096;" > c &&
-     test-tool genrandom "seed a" 2097152 > a_big &&
-     test-tool genrandom "seed b" 2097152 > b_big &&
-     git update-index --add a a_big b b_big c &&
-     cat c >d && echo foo >>d && git update-index --add d &&
-     tree=$(git write-tree) &&
-     commit=$(git commit-tree $tree </dev/null) && {
-	 echo $tree &&
-	 echo $commit &&
-	 git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
-     } >obj-list && {
-	 git diff-tree --root -p $commit &&
-	 while read object
-	 do
-	    t=$(git cat-file -t $object) &&
-	    git cat-file $t $object || return 1
-	 done <obj-list
-     } >expect'
+# usage: check_deltas <stderr_from_pack_objects> <cmp_op> <nr_deltas>
+# e.g.: check_deltas stderr -gt 0
+check_deltas() {
+	deltas=$(perl -lne '/delta (\d+)/ and print $1' "$1") &&
+	shift &&
+	if ! test "$deltas" "$@"
+	then
+		echo >&2 "unexpected number of deltas (compared $delta $*)"
+		return 1
+	fi
+}
 
-test_expect_success \
-    'pack without delta' \
-    'packname_1=$(git pack-objects --window=0 test-1 <obj-list)'
+test_expect_success 'pack without delta' '
+	packname_1=$(git pack-objects --progress --window=0 test-1 \
+			<obj-list 2>stderr) &&
+	check_deltas stderr = 0
+'
 
-test_expect_success \
-    'pack-objects with bogus arguments' \
-    'test_must_fail git pack-objects --window=0 test-1 blah blah <obj-list'
+test_expect_success 'pack-objects with bogus arguments' '
+	test_must_fail git pack-objects --window=0 test-1 blah blah <obj-list
+'
 
-rm -fr .git2
-mkdir .git2
+check_unpack () {
+	test_when_finished "rm -rf git2" &&
+	git init --bare git2 &&
+	git -C git2 unpack-objects -n <"$1".pack &&
+	git -C git2 unpack-objects <"$1".pack &&
+	(cd .git && find objects -type f -print) |
+	while read path
+	do
+		cmp git2/$path .git/$path || {
+			echo $path differs.
+			return 1
+		}
+	done
+}
 
-test_expect_success \
-    'unpack without delta' \
-    "GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     git init &&
-     git unpack-objects -n <test-1-${packname_1}.pack &&
-     git unpack-objects <test-1-${packname_1}.pack"
+test_expect_success 'unpack without delta' '
+	check_unpack test-1-${packname_1}
+'
 
-unset GIT_OBJECT_DIRECTORY
-cd "$TRASH/.git2"
+test_expect_success 'pack with REF_DELTA' '
+	packname_2=$(git pack-objects --progress test-2 <obj-list 2>stderr) &&
+	check_deltas stderr -gt 0
+'
 
-test_expect_success \
-    'check unpack without delta' \
-    '(cd ../.git && find objects -type f -print) |
-     while read path
-     do
-         cmp $path ../.git/$path || {
-	     echo $path differs.
-	     return 1
-	 }
-     done'
-cd "$TRASH"
+test_expect_success 'unpack with REF_DELTA' '
+	check_unpack test-2-${packname_2}
+'
 
-test_expect_success \
-    'pack with REF_DELTA' \
-    'pwd &&
-     packname_2=$(git pack-objects test-2 <obj-list)'
+test_expect_success 'pack with OFS_DELTA' '
+	packname_3=$(git pack-objects --progress --delta-base-offset test-3 \
+			<obj-list 2>stderr) &&
+	check_deltas stderr -gt 0
+'
 
-rm -fr .git2
-mkdir .git2
-
-test_expect_success \
-    'unpack with REF_DELTA' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     git init &&
-     git unpack-objects -n <test-2-${packname_2}.pack &&
-     git unpack-objects <test-2-${packname_2}.pack'
-
-unset GIT_OBJECT_DIRECTORY
-cd "$TRASH/.git2"
-test_expect_success \
-    'check unpack with REF_DELTA' \
-    '(cd ../.git && find objects -type f -print) |
-     while read path
-     do
-         cmp $path ../.git/$path || {
-	     echo $path differs.
-	     return 1
-	 }
-     done'
-cd "$TRASH"
-
-test_expect_success \
-    'pack with OFS_DELTA' \
-    'pwd &&
-     packname_3=$(git pack-objects --delta-base-offset test-3 <obj-list)'
-
-rm -fr .git2
-mkdir .git2
-
-test_expect_success \
-    'unpack with OFS_DELTA' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     git init &&
-     git unpack-objects -n <test-3-${packname_3}.pack &&
-     git unpack-objects <test-3-${packname_3}.pack'
-
-unset GIT_OBJECT_DIRECTORY
-cd "$TRASH/.git2"
-test_expect_success \
-    'check unpack with OFS_DELTA' \
-    '(cd ../.git && find objects -type f -print) |
-     while read path
-     do
-         cmp $path ../.git/$path || {
-	     echo $path differs.
-	     return 1
-	 }
-     done'
-cd "$TRASH"
+test_expect_success 'unpack with OFS_DELTA' '
+	check_unpack test-3-${packname_3}
+'
 
 test_expect_success 'compare delta flavors' '
 	perl -e '\''
@@ -135,55 +101,33 @@ test_expect_success 'compare delta flavors' '
 	'\'' test-2-$packname_2.pack test-3-$packname_3.pack
 '
 
-rm -fr .git2
-mkdir .git2
+check_use_objects () {
+	test_when_finished "rm -rf git2" &&
+	git init --bare git2 &&
+	cp "$1".pack "$1".idx git2/objects/pack &&
+	(
+		cd git2 &&
+		git diff-tree --root -p $commit &&
+		while read object
+		do
+			t=$(git cat-file -t $object) &&
+			git cat-file $t $object || exit 1
+		done
+	) <obj-list >current &&
+	cmp expect current
+}
 
-test_expect_success \
-    'use packed objects' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     git init &&
-     cp test-1-${packname_1}.pack test-1-${packname_1}.idx .git2/objects/pack && {
-	 git diff-tree --root -p $commit &&
-	 while read object
-	 do
-	    t=$(git cat-file -t $object) &&
-	    git cat-file $t $object || return 1
-	 done <obj-list
-    } >current &&
-    cmp expect current'
+test_expect_success 'use packed objects' '
+	check_use_objects test-1-${packname_1}
+'
 
-test_expect_success \
-    'use packed deltified (REF_DELTA) objects' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     rm -f .git2/objects/pack/test-* &&
-     cp test-2-${packname_2}.pack test-2-${packname_2}.idx .git2/objects/pack && {
-	 git diff-tree --root -p $commit &&
-	 while read object
-	 do
-	    t=$(git cat-file -t $object) &&
-	    git cat-file $t $object || return 1
-	 done <obj-list
-    } >current &&
-    cmp expect current'
+test_expect_success 'use packed deltified (REF_DELTA) objects' '
+	check_use_objects test-2-${packname_2}
+'
 
-test_expect_success \
-    'use packed deltified (OFS_DELTA) objects' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     rm -f .git2/objects/pack/test-* &&
-     cp test-3-${packname_3}.pack test-3-${packname_3}.idx .git2/objects/pack && {
-	 git diff-tree --root -p $commit &&
-	 while read object
-	 do
-	    t=$(git cat-file -t $object) &&
-	    git cat-file $t $object || return 1
-	 done <obj-list
-    } >current &&
-    cmp expect current'
-
-unset GIT_OBJECT_DIRECTORY
+test_expect_success 'use packed deltified (OFS_DELTA) objects' '
+	check_use_objects test-3-${packname_3}
+'
 
 test_expect_success 'survive missing objects/pack directory' '
 	(
@@ -667,6 +611,11 @@ test_expect_success '--stdin-packs with broken links' '
 		cut -d" " -f2 <actual.raw | sort >actual &&
 		test_cmp expect actual
 	)
+'
+
+test_expect_success 'negative window clamps to 0' '
+	git pack-objects --progress --window=-1 neg-window <obj-list 2>stderr &&
+	check_deltas stderr = 0
 '
 
 test_done

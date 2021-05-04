@@ -69,6 +69,7 @@ test_expect_success 'create series of packs' '
 max_chain() {
 	git index-pack --verify-stat-only "$1" >output &&
 	perl -lne '
+	  BEGIN { $len = 0 }
 	  /chain length = (\d+)/ and $len = $1;
 	  END { print $len }
 	' output
@@ -90,6 +91,20 @@ test_expect_success 'packing produces a long delta' '
 test_expect_success '--depth limits depth' '
 	pack=$(git pack-objects --all --depth=5 </dev/null pack) &&
 	echo 5 >expect &&
+	max_chain pack-$pack.pack >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--depth=0 disables deltas' '
+	pack=$(git pack-objects --all --depth=0 </dev/null pack) &&
+	echo 0 >expect &&
+	max_chain pack-$pack.pack >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'negative depth disables deltas' '
+	pack=$(git pack-objects --all --depth=-1 </dev/null pack) &&
+	echo 0 >expect &&
 	max_chain pack-$pack.pack >actual &&
 	test_cmp expect actual
 '
