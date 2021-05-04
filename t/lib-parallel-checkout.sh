@@ -1,5 +1,8 @@
 # Helpers for tests invoking parallel-checkout
 
+# Parallel checkout tests need full control of the number of workers
+unset GIT_TEST_CHECKOUT_WORKERS
+
 set_checkout_config () {
 	if test $# -ne 2
 	then
