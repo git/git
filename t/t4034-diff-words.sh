@@ -184,6 +184,11 @@ test_expect_success 'word diff with a regular expression' '
 	word_diff --color-words="[a-z]+"
 '
 
+test_expect_success 'word diff with zero length matches' '
+	cp expect.letter-runs-are-words expect &&
+	word_diff --color-words="[a-z${LF}]*"
+'
+
 test_expect_success 'set up a diff driver' '
 	git config diff.testdriver.wordRegex "[^[:space:]]" &&
 	cat <<-\EOF >.gitattributes
