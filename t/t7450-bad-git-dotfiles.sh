@@ -1,9 +1,16 @@
 #!/bin/sh
 
-test_description='check handling of .. in submodule names
+test_description='check broken or malicious patterns in .git* files
 
-Exercise the name-checking function on a variety of names, and then give a
-real-world setup that confirms we catch this in practice.
+Such as:
+
+  - presence of .. in submodule names;
+    Exercise the name-checking function on a variety of names, and then give a
+    real-world setup that confirms we catch this in practice.
+
+  - nested submodule names
+
+  - symlinked .gitmodules, etc
 '
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
@@ -132,31 +139,84 @@ test_expect_success 'index-pack --strict works for non-repo pack' '
 	grep gitmodulesName output
 '
 
-test_expect_success 'fsck detects symlinked .gitmodules file' '
-	git init symlink &&
-	(
-		cd symlink &&
+check_dotx_symlink () {
+	fsck_must_fail=test_must_fail
+	fsck_prefix=error
+	refuse_index=t
+	case "$1" in
+	--warning)
+		fsck_must_fail=
+		fsck_prefix=warning
+		refuse_index=
+		shift
+		;;
+	esac
 
-		# Make the tree directly to avoid index restrictions.
-		#
-		# Because symlinks store the target as a blob, choose
-		# a pathname that could be parsed as a .gitmodules file
-		# to trick naive non-symlink-aware checking.
-		tricky="[foo]bar=true" &&
-		content=$(git hash-object -w ../.gitmodules) &&
-		target=$(printf "$tricky" | git hash-object -w --stdin) &&
-		{
-			printf "100644 blob $content\t$tricky\n" &&
-			printf "120000 blob $target\t.gitmodules\n"
-		} | git mktree &&
+	name=$1
+	type=$2
+	path=$3
+	dir=symlink-$name-$type
 
-		# Check not only that we fail, but that it is due to the
-		# symlink detector; this grep string comes from the config
-		# variable name and will not be translated.
-		test_must_fail git fsck 2>output &&
-		test_i18ngrep gitmodulesSymlink output
-	)
-'
+	test_expect_success "set up repo with symlinked $name ($type)" '
+		git init $dir &&
+		(
+			cd $dir &&
+
+			# Make the tree directly to avoid index restrictions.
+			#
+			# Because symlinks store the target as a blob, choose
+			# a pathname that could be parsed as a .gitmodules file
+			# to trick naive non-symlink-aware checking.
+			tricky="[foo]bar=true" &&
+			content=$(git hash-object -w ../.gitmodules) &&
+			target=$(printf "$tricky" | git hash-object -w --stdin) &&
+			{
+				printf "100644 blob $content\t$tricky\n" &&
+				printf "120000 blob $target\t$path\n"
+			} >bad-tree
+		) &&
+		tree=$(git -C $dir mktree <$dir/bad-tree)
+	'
+
+	test_expect_success "fsck detects symlinked $name ($type)" '
+		(
+			cd $dir &&
+
+			# Check not only that we fail, but that it is due to the
+			# symlink detector
+			$fsck_must_fail git fsck 2>output &&
+			grep "$fsck_prefix.*tree $tree: ${name}Symlink" output
+		)
+	'
+
+	test -n "$refuse_index" &&
+	test_expect_success "refuse to load symlinked $name into index ($type)" '
+		test_must_fail \
+			git -C $dir \
+			    -c core.protectntfs \
+			    -c core.protecthfs \
+			    read-tree $tree 2>err &&
+		grep "invalid path.*$name" err &&
+		git -C $dir ls-files -s >out &&
+		test_must_be_empty out
+	'
+}
+
+check_dotx_symlink gitmodules vanilla .gitmodules
+check_dotx_symlink gitmodules ntfs ".gitmodules ."
+check_dotx_symlink gitmodules hfs ".${u200c}gitmodules"
+
+check_dotx_symlink --warning gitattributes vanilla .gitattributes
+check_dotx_symlink --warning gitattributes ntfs ".gitattributes ."
+check_dotx_symlink --warning gitattributes hfs ".${u200c}gitattributes"
+
+check_dotx_symlink --warning gitignore vanilla .gitignore
+check_dotx_symlink --warning gitignore ntfs ".gitignore ."
+check_dotx_symlink --warning gitignore hfs ".${u200c}gitignore"
+
+check_dotx_symlink --warning mailmap vanilla .mailmap
+check_dotx_symlink --warning mailmap ntfs ".mailmap ."
+check_dotx_symlink --warning mailmap hfs ".${u200c}mailmap"
 
 test_expect_success 'fsck detects non-blob .gitmodules' '
 	git init non-blob &&

@@ -55,6 +55,13 @@ this would also match the 'Commit Name <commit&#64;email.xx>' above:
 	Proper Name <proper@email.xx> CoMmIt NaMe <CoMmIt@EmAiL.xX>
 --
 
+NOTES
+-----
+
+Git does not follow symbolic links when accessing a `.mailmap` file in
+the working tree. This keeps behavior consistent when the file is
+accessed from the index or a tree versus from the filesystem.
+
 EXAMPLES
 --------
 
