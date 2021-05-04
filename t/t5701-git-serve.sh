@@ -16,7 +16,7 @@ test_expect_success 'test capability advertisement' '
 	version 2
 	agent=git/$(git version | cut -d" " -f3)
 	ls-refs=unborn
-	fetch=shallow
+	fetch=shallow wait-for-done
 	server-option
 	object-format=$(test_oid algo)
 	0000

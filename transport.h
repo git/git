@@ -47,6 +47,12 @@ struct git_transport_options {
 	 * transport_set_option().
 	 */
 	struct oid_array *negotiation_tips;
+
+	/*
+	 * If allocated, whenever transport_fetch_refs() is called, add known
+	 * common commits to this oidset instead of fetching any packfiles.
+	 */
+	struct oidset *acked_commits;
 };
 
 enum transport_family {
