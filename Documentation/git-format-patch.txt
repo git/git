@@ -36,7 +36,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Prepare each commit with its "patch" in
+Prepare each non-merge commit with its "patch" in
 one "message" per commit, formatted to resemble a UNIX mailbox.
 The output of this command is convenient for e-mail submission or
 for use with 'git am'.
@@ -739,6 +739,14 @@ use it only when you know the recipient uses Git to apply your patch.
 ------------
 $ git format-patch -3
 ------------
+
+CAVEATS
+-------
+
+Note that `format-patch` will omit merge commits from the output, even
+if they are part of the requested range. A simple "patch" does not
+include enough information for the receiving end to reproduce the same
+merge commit.
 
 SEE ALSO
 --------
