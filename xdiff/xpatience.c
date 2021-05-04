@@ -284,9 +284,6 @@ static int walk_common_sequence(struct hashmap *map, struct entry *first,
 
 		/* Recurse */
 		if (next1 > line1 || next2 > line2) {
-			struct hashmap submap;
-
-			memset(&submap, 0, sizeof(submap));
 			if (patience_diff(map->file1, map->file2,
 					map->xpp, map->env,
 					line1, next1 - line1,
