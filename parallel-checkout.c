@@ -8,6 +8,7 @@
 #include "sigchain.h"
 #include "streaming.h"
 #include "thread-utils.h"
+#include "trace2.h"
 
 struct pc_worker {
 	struct child_process cp;
@@ -326,6 +327,7 @@ void write_pc_item(struct parallel_checkout_item *pc_item,
 	if (dir_sep && !has_dirs_only_path(path.buf, dir_sep - path.buf,
 					   state->base_dir_len)) {
 		pc_item->status = PC_ITEM_COLLIDED;
+		trace2_data_string("pcheckout", NULL, "collision/dirname", path.buf);
 		goto out;
 	}
 
@@ -341,6 +343,8 @@ void write_pc_item(struct parallel_checkout_item *pc_item,
 			 * call should have already caught these cases.
 			 */
 			pc_item->status = PC_ITEM_COLLIDED;
+			trace2_data_string("pcheckout", NULL,
+					   "collision/basename", path.buf);
 		} else {
 			error_errno("failed to open file '%s'", path.buf);
 			pc_item->status = PC_ITEM_FAILED;
