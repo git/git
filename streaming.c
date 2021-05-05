@@ -42,20 +42,6 @@ struct stream_vtbl {
 	ssize_t read_istream_ ##name \
 	(struct git_istream *st, char *buf, size_t sz)
 
-/* forward declaration */
-static open_method_decl(incore);
-static open_method_decl(loose);
-static open_method_decl(pack_non_delta);
-static struct git_istream *attach_stream_filter(struct git_istream *st,
-						struct stream_filter *filter);
-
-
-static open_istream_fn open_istream_tbl[] = {
-	open_istream_incore,
-	open_istream_loose,
-	open_istream_pack_non_delta,
-};
-
 #define FILTER_BUFFER (1024*16)
 
 struct filtered_istream {
@@ -96,80 +82,6 @@ struct git_istream {
 		struct filtered_istream filtered;
 	} u;
 };
-
-int close_istream(struct git_istream *st)
-{
-	int r = st->vtbl->close(st);
-	free(st);
-	return r;
-}
-
-ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
-{
-	return st->vtbl->read(st, buf, sz);
-}
-
-static enum input_source istream_source(struct repository *r,
-					const struct object_id *oid,
-					enum object_type *type,
-					struct object_info *oi)
-{
-	unsigned long size;
-	int status;
-
-	oi->typep = type;
-	oi->sizep = &size;
-	status = oid_object_info_extended(r, oid, oi, 0);
-	if (status < 0)
-		return stream_error;
-
-	switch (oi->whence) {
-	case OI_LOOSE:
-		return loose;
-	case OI_PACKED:
-		if (!oi->u.packed.is_delta && big_file_threshold < size)
-			return pack_non_delta;
-		/* fallthru */
-	default:
-		return incore;
-	}
-}
-
-struct git_istream *open_istream(struct repository *r,
-				 const struct object_id *oid,
-				 enum object_type *type,
-				 unsigned long *size,
-				 struct stream_filter *filter)
-{
-	struct git_istream *st;
-	struct object_info oi = OBJECT_INFO_INIT;
-	const struct object_id *real = lookup_replace_object(r, oid);
-	enum input_source src = istream_source(r, real, type, &oi);
-
-	if (src < 0)
-		return NULL;
-
-	st = xmalloc(sizeof(*st));
-	if (open_istream_tbl[src](st, r, &oi, real, type)) {
-		if (open_istream_incore(st, r, &oi, real, type)) {
-			free(st);
-			return NULL;
-		}
-	}
-	if (filter) {
-		/* Add "&& !is_null_stream_filter(filter)" for performance */
-		struct git_istream *nst = attach_stream_filter(st, filter);
-		if (!nst) {
-			close_istream(st);
-			return NULL;
-		}
-		st = nst;
-	}
-
-	*size = st->size;
-	return st;
-}
-
 
 /*****************************************************************
  *
@@ -508,10 +420,93 @@ static open_method_decl(incore)
 	return st->u.incore.buf ? 0 : -1;
 }
 
+/*****************************************************************************
+ * static helpers variables and functions for users of streaming interface
+ *****************************************************************************/
+
+static open_istream_fn open_istream_tbl[] = {
+	open_istream_incore,
+	open_istream_loose,
+	open_istream_pack_non_delta,
+};
+
+static enum input_source istream_source(struct repository *r,
+					const struct object_id *oid,
+					enum object_type *type,
+					struct object_info *oi)
+{
+	unsigned long size;
+	int status;
+
+	oi->typep = type;
+	oi->sizep = &size;
+	status = oid_object_info_extended(r, oid, oi, 0);
+	if (status < 0)
+		return stream_error;
+
+	switch (oi->whence) {
+	case OI_LOOSE:
+		return loose;
+	case OI_PACKED:
+		if (!oi->u.packed.is_delta && big_file_threshold < size)
+			return pack_non_delta;
+		/* fallthru */
+	default:
+		return incore;
+	}
+}
+
 
 /****************************************************************
  * Users of streaming interface
  ****************************************************************/
+
+int close_istream(struct git_istream *st)
+{
+	int r = st->vtbl->close(st);
+	free(st);
+	return r;
+}
+
+ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
+{
+	return st->vtbl->read(st, buf, sz);
+}
+
+struct git_istream *open_istream(struct repository *r,
+				 const struct object_id *oid,
+				 enum object_type *type,
+				 unsigned long *size,
+				 struct stream_filter *filter)
+{
+	struct git_istream *st;
+	struct object_info oi = OBJECT_INFO_INIT;
+	const struct object_id *real = lookup_replace_object(r, oid);
+	enum input_source src = istream_source(r, real, type, &oi);
+
+	if (src < 0)
+		return NULL;
+
+	st = xmalloc(sizeof(*st));
+	if (open_istream_tbl[src](st, r, &oi, real, type)) {
+		if (open_istream_incore(st, r, &oi, real, type)) {
+			free(st);
+			return NULL;
+		}
+	}
+	if (filter) {
+		/* Add "&& !is_null_stream_filter(filter)" for performance */
+		struct git_istream *nst = attach_stream_filter(st, filter);
+		if (!nst) {
+			close_istream(st);
+			return NULL;
+		}
+		st = nst;
+	}
+
+	*size = st->size;
+	return st;
+}
 
 int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter *filter,
 		      int can_seek)
