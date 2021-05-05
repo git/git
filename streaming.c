@@ -8,13 +8,6 @@
 #include "replace-object.h"
 #include "packfile.h"
 
-enum input_source {
-	stream_error = -1,
-	incore = 0,
-	loose = 1,
-	pack_non_delta = 2
-};
-
 typedef int (*open_istream_fn)(struct git_istream *,
 			       struct repository *,
 			       struct object_info *,
@@ -424,16 +417,10 @@ static open_method_decl(incore)
  * static helpers variables and functions for users of streaming interface
  *****************************************************************************/
 
-static open_istream_fn open_istream_tbl[] = {
-	open_istream_incore,
-	open_istream_loose,
-	open_istream_pack_non_delta,
-};
-
-static enum input_source istream_source(struct repository *r,
-					const struct object_id *oid,
-					enum object_type *type,
-					struct object_info *oi)
+static open_istream_fn istream_source(struct repository *r,
+				      const struct object_id *oid,
+				      enum object_type *type,
+				      struct object_info *oi)
 {
 	unsigned long size;
 	int status;
@@ -442,20 +429,19 @@ static enum input_source istream_source(struct repository *r,
 	oi->sizep = &size;
 	status = oid_object_info_extended(r, oid, oi, 0);
 	if (status < 0)
-		return stream_error;
+		return NULL;
 
 	switch (oi->whence) {
 	case OI_LOOSE:
-		return loose;
+		return open_istream_loose;
 	case OI_PACKED:
 		if (!oi->u.packed.is_delta && big_file_threshold < size)
-			return pack_non_delta;
+			return open_istream_pack_non_delta;
 		/* fallthru */
 	default:
-		return incore;
+		return open_istream_incore;
 	}
 }
-
 
 /****************************************************************
  * Users of streaming interface
@@ -482,13 +468,13 @@ struct git_istream *open_istream(struct repository *r,
 	struct git_istream *st;
 	struct object_info oi = OBJECT_INFO_INIT;
 	const struct object_id *real = lookup_replace_object(r, oid);
-	enum input_source src = istream_source(r, real, type, &oi);
+	open_istream_fn open_fn = istream_source(r, real, type, &oi);
 
-	if (src < 0)
+	if (!open_fn)
 		return NULL;
 
 	st = xmalloc(sizeof(*st));
-	if (open_istream_tbl[src](st, r, &oi, real, type)) {
+	if (open_fn(st, r, &oi, real, type)) {
 		if (open_istream_incore(st, r, &oi, real, type)) {
 			free(st);
 			return NULL;
