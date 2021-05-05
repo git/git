@@ -16,9 +16,19 @@ BEGIN {
 our @EXPORT = qw(__ __n N__);
 our @EXPORT_OK = @EXPORT;
 
+# See Git::LoadCPAN's NO_PERL_CPAN_FALLBACKS_STR for a description of
+# this "'@@' [...] '@@'" pattern.
+use constant NO_GETTEXT_STR => '@@' . 'NO_GETTEXT' . '@@';
+use constant NO_GETTEXT => (
+	q[@@NO_GETTEXT@@] ne ''
+	and
+	q[@@NO_GETTEXT@@] ne NO_GETTEXT_STR
+);
+
 sub __bootstrap_locale_messages {
 	our $TEXTDOMAIN = 'git';
 	our $TEXTDOMAINDIR ||= $ENV{GIT_TEXTDOMAINDIR} || '@@LOCALEDIR@@';
+	die "NO_GETTEXT=" . NO_GETTEXT_STR if NO_GETTEXT;
 
 	require POSIX;
 	POSIX->import(qw(setlocale));
