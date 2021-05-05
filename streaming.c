@@ -21,20 +21,6 @@ struct stream_vtbl {
 	read_istream_fn read;
 };
 
-#define open_method_decl(name) \
-	int open_istream_ ##name \
-	(struct git_istream *st, struct repository *r, \
-	 struct object_info *oi, const struct object_id *oid, \
-	 enum object_type *type)
-
-#define close_method_decl(name) \
-	int close_istream_ ##name \
-	(struct git_istream *st)
-
-#define read_method_decl(name) \
-	ssize_t read_istream_ ##name \
-	(struct git_istream *st, char *buf, size_t sz)
-
 #define FILTER_BUFFER (1024*16)
 
 struct filtered_istream {
@@ -95,13 +81,14 @@ static void close_deflated_stream(struct git_istream *st)
  *
  *****************************************************************/
 
-static close_method_decl(filtered)
+static int close_istream_filtered(struct git_istream *st)
 {
 	free_stream_filter(st->u.filtered.filter);
 	return close_istream(st->u.filtered.upstream);
 }
 
-static read_method_decl(filtered)
+static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
+				     size_t sz)
 {
 	struct filtered_istream *fs = &(st->u.filtered);
 	size_t filled = 0;
@@ -187,7 +174,7 @@ static struct git_istream *attach_stream_filter(struct git_istream *st,
  *
  *****************************************************************/
 
-static read_method_decl(loose)
+static ssize_t read_istream_loose(struct git_istream *st, char *buf, size_t sz)
 {
 	size_t total_read = 0;
 
@@ -232,7 +219,7 @@ static read_method_decl(loose)
 	return total_read;
 }
 
-static close_method_decl(loose)
+static int close_istream_loose(struct git_istream *st)
 {
 	close_deflated_stream(st);
 	munmap(st->u.loose.mapped, st->u.loose.mapsize);
@@ -244,7 +231,10 @@ static struct stream_vtbl loose_vtbl = {
 	read_istream_loose,
 };
 
-static open_method_decl(loose)
+static int open_istream_loose(struct git_istream *st, struct repository *r,
+			      struct object_info *oi,
+			      const struct object_id *oid,
+			      enum object_type *type)
 {
 	st->u.loose.mapped = map_loose_object(r, oid, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
@@ -275,7 +265,8 @@ static open_method_decl(loose)
  *
  *****************************************************************/
 
-static read_method_decl(pack_non_delta)
+static ssize_t read_istream_pack_non_delta(struct git_istream *st, char *buf,
+					   size_t sz)
 {
 	size_t total_read = 0;
 
@@ -333,7 +324,7 @@ static read_method_decl(pack_non_delta)
 	return total_read;
 }
 
-static close_method_decl(pack_non_delta)
+static int close_istream_pack_non_delta(struct git_istream *st)
 {
 	close_deflated_stream(st);
 	return 0;
@@ -344,7 +335,11 @@ static struct stream_vtbl pack_non_delta_vtbl = {
 	read_istream_pack_non_delta,
 };
 
-static open_method_decl(pack_non_delta)
+static int open_istream_pack_non_delta(struct git_istream *st,
+				       struct repository *r,
+				       struct object_info *oi,
+				       const struct object_id *oid,
+				       enum object_type *type)
 {
 	struct pack_window *window;
 	enum object_type in_pack_type;
@@ -379,13 +374,13 @@ static open_method_decl(pack_non_delta)
  *
  *****************************************************************/
 
-static close_method_decl(incore)
+static int close_istream_incore(struct git_istream *st)
 {
 	free(st->u.incore.buf);
 	return 0;
 }
 
-static read_method_decl(incore)
+static ssize_t read_istream_incore(struct git_istream *st, char *buf, size_t sz)
 {
 	size_t read_size = sz;
 	size_t remainder = st->size - st->u.incore.read_ptr;
@@ -404,7 +399,9 @@ static struct stream_vtbl incore_vtbl = {
 	read_istream_incore,
 };
 
-static open_method_decl(incore)
+static int open_istream_incore(struct git_istream *st, struct repository *r,
+			   struct object_info *oi, const struct object_id *oid,
+			   enum object_type *type)
 {
 	st->u.incore.buf = read_object_file_extended(r, oid, type, &st->size, 0);
 	st->u.incore.read_ptr = 0;
