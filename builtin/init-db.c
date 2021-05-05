@@ -469,6 +469,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
 	}
 
+	clear_repository_format(&repo_fmt);
 	free(original_git_dir);
 	return 0;
 }
