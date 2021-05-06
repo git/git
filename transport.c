@@ -392,16 +392,29 @@ static int fetch_refs_via_pack(struct transport *transport,
 	else if (data->version <= protocol_v1)
 		die_if_server_options(transport);
 
+	if (data->options.acked_commits) {
+		if (data->version < protocol_v2) {
+			warning(_("--negotiate-only requires protocol v2"));
+			ret = -1;
+		} else if (!server_supports_feature("fetch", "wait-for-done", 0)) {
+			warning(_("server does not support wait-for-done"));
+			ret = -1;
+		} else {
+			negotiate_using_fetch(data->options.negotiation_tips,
+					      transport->server_options,
+					      transport->stateless_rpc,
+					      data->fd,
+					      data->options.acked_commits);
+			ret = 0;
+		}
+		goto cleanup;
+	}
+
 	refs = fetch_pack(&args, data->fd,
 			  refs_tmp ? refs_tmp : transport->remote_refs,
 			  to_fetch, nr_heads, &data->shallow,
 			  &transport->pack_lockfiles, data->version);
 
-	close(data->fd[0]);
-	close(data->fd[1]);
-	if (finish_connect(data->conn))
-		ret = -1;
-	data->conn = NULL;
 	data->got_remote_heads = 0;
 	data->options.self_contained_and_connected =
 		args.self_contained_and_connected;
@@ -411,6 +424,13 @@ static int fetch_refs_via_pack(struct transport *transport,
 		ret = -1;
 	if (report_unmatched_refs(to_fetch, nr_heads))
 		ret = -1;
+
+cleanup:
+	close(data->fd[0]);
+	close(data->fd[1]);
+	if (finish_connect(data->conn))
+		ret = -1;
+	data->conn = NULL;
 
 	free_refs(refs_tmp);
 	free_refs(refs);

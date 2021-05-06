@@ -684,6 +684,16 @@ static int fetch(struct transport *transport,
 		return transport->vtable->fetch(transport, nr_heads, to_fetch);
 	}
 
+	/*
+	 * If we reach here, then the server, the client, and/or the transport
+	 * helper does not support protocol v2. --negotiate-only requires
+	 * protocol v2.
+	 */
+	if (data->transport_options.acked_commits) {
+		warning(_("--negotiate-only requires protocol v2"));
+		return -1;
+	}
+
 	if (!data->get_refs_list_called)
 		get_refs_list_using_list(transport, 0);
 

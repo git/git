@@ -60,7 +60,7 @@ struct object_array {
 /*
  * object flag allocation:
  * revision.h:               0---------10         15             23------26
- * fetch-pack.c:             01
+ * fetch-pack.c:             01    67
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
  * upload-pack.c:                4       11-----14  16-----19
