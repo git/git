@@ -484,6 +484,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (patch_interactive)
 		add_interactive = 1;
 	if (add_interactive) {
+		if (show_only)
+			die(_("--dry-run is incompatible with --interactive/--patch"));
 		if (pathspec_from_file)
 			die(_("--pathspec-from-file is incompatible with --interactive/--patch"));
 		exit(interactive_add(argv + 1, prefix, patch_interactive));
