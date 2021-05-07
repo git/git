@@ -294,7 +294,7 @@ void create_branch(struct repository *r,
 			if (explicit_tracking)
 				die(_(upstream_not_branch), start_name);
 			else
-				real_ref = NULL;
+				FREE_AND_NULL(real_ref);
 		}
 		break;
 	default:

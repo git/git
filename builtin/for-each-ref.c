@@ -94,5 +94,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	strbuf_release(&err);
 	strbuf_release(&output);
 	ref_array_clear(&array);
+	free_commit_list(filter.with_commit);
+	free_commit_list(filter.no_commit);
+	UNLEAK(sorting);
 	return 0;
 }
