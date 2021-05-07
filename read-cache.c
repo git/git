@@ -1011,7 +1011,7 @@ inside:
 				}
 			}
 			if (protect_ntfs) {
-#ifdef GIT_WINDOWS_NATIVE
+#if defined GIT_WINDOWS_NATIVE || defined __CYGWIN__
 				if (c == '\\')
 					return 0;
 #endif
