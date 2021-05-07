@@ -1003,7 +1003,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
-		int matches = 0;
 		struct stat st;
 		const char *rel;
 
@@ -1013,8 +1012,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		if (lstat(ent->name, &st))
 			die_errno("Cannot lstat '%s'", ent->name);
 
-		if (S_ISDIR(st.st_mode) && !remove_directories &&
-		    matches != MATCHED_EXACTLY)
+		if (S_ISDIR(st.st_mode) && !remove_directories)
 			continue;
 
 		rel = relative_path(ent->name, prefix, &buf);
