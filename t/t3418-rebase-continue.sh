@@ -282,12 +282,35 @@ test_expect_success '--reschedule-failed-exec' '
 	test_i18ngrep "has been rescheduled" err
 '
 
-test_expect_success 'rebase.reschedulefailedexec only affects `rebase -i`' '
-	test_config rebase.reschedulefailedexec true &&
+test_expect_success 'rebase.rescheduleFailedExec only affects `rebase -i`' '
+	test_config rebase.rescheduleFailedExec true &&
 	test_must_fail git rebase -x false HEAD^ &&
 	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
 	git rebase --abort &&
 	git rebase HEAD^
+'
+
+test_expect_success 'rebase.rescheduleFailedExec=true & --no-reschedule-failed-exec' '
+	test_when_finished "git rebase --abort" &&
+	test_config rebase.rescheduleFailedExec true &&
+	test_must_fail git rebase -x false --no-reschedule-failed-exec HEAD~2 &&
+	test_must_fail git rebase --continue 2>err &&
+	! grep "has been rescheduled" err
+'
+
+test_expect_success 'new rebase.rescheduleFailedExec=true setting in an ongoing rebase is ignored' '
+	test_when_finished "git rebase --abort" &&
+	test_must_fail git rebase -x false HEAD~2 &&
+	test_config rebase.rescheduleFailedExec true &&
+	test_must_fail git rebase --continue 2>err &&
+	! grep "has been rescheduled" err
+'
+
+test_expect_success 'there is no --no-reschedule-failed-exec in an ongoing rebase' '
+	test_when_finished "git rebase --abort" &&
+	test_must_fail git rebase -x false HEAD~2 &&
+	test_expect_code 129 git rebase --continue --no-reschedule-failed-exec &&
+	test_expect_code 129 git rebase --edit-todo --no-reschedule-failed-exec
 '
 
 test_done
