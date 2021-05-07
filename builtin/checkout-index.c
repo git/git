@@ -12,6 +12,7 @@
 #include "cache-tree.h"
 #include "parse-options.h"
 #include "entry.h"
+#include "parallel-checkout.h"
 
 #define CHECKOUT_ALL 4
 static int nul_term_line;
@@ -115,7 +116,7 @@ static int checkout_file(const char *name, const char *prefix)
 	return -1;
 }
 
-static void checkout_all(const char *prefix, int prefix_length)
+static int checkout_all(const char *prefix, int prefix_length)
 {
 	int i, errs = 0;
 	struct cache_entry *last_ce = NULL;
@@ -144,11 +145,7 @@ static void checkout_all(const char *prefix, int prefix_length)
 	}
 	if (last_ce && to_tempfile)
 		write_tempfile_record(last_ce->name, prefix);
-	if (errs)
-		/* we have already done our error reporting.
-		 * exit with the same code as die().
-		 */
-		exit(128);
+	return !!errs;
 }
 
 static const char * const builtin_checkout_index_usage[] = {
@@ -184,6 +181,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	int force = 0, quiet = 0, not_new = 0;
 	int index_opt = 0;
 	int err = 0;
+	int pc_workers, pc_threshold;
 	struct option builtin_checkout_index_options[] = {
 		OPT_BOOL('a', "all", &all,
 			N_("check out all files in the index")),
@@ -238,6 +236,10 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 	}
 
+	get_parallel_checkout_configs(&pc_workers, &pc_threshold);
+	if (pc_workers > 1)
+		init_parallel_checkout();
+
 	/* Check out named files first */
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
@@ -277,11 +279,15 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		strbuf_release(&buf);
 	}
 
+	if (all)
+		err |= checkout_all(prefix, prefix_length);
+
+	if (pc_workers > 1)
+		err |= run_parallel_checkout(&state, pc_workers, pc_threshold,
+					     NULL, NULL);
+
 	if (err)
 		return 1;
-
-	if (all)
-		checkout_all(prefix, prefix_length);
 
 	if (is_lock_file_locked(&lock_file) &&
 	    write_locked_index(&the_index, &lock_file, COMMIT_LOCK))

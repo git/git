@@ -370,16 +370,20 @@ struct cache_entry *make_empty_cache_entry(struct index_state *istate,
 					   size_t name_len);
 
 /*
- * Create a cache_entry that is not intended to be added to an index.
- * Caller is responsible for discarding the cache_entry
- * with `discard_cache_entry`.
+ * Create a cache_entry that is not intended to be added to an index. If
+ * `ce_mem_pool` is not NULL, the entry is allocated within the given memory
+ * pool. Caller is responsible for discarding "loose" entries with
+ * `discard_cache_entry()` and the memory pool with
+ * `mem_pool_discard(ce_mem_pool, should_validate_cache_entries())`.
  */
 struct cache_entry *make_transient_cache_entry(unsigned int mode,
 					       const struct object_id *oid,
 					       const char *path,
-					       int stage);
+					       int stage,
+					       struct mem_pool *ce_mem_pool);
 
-struct cache_entry *make_empty_transient_cache_entry(size_t name_len);
+struct cache_entry *make_empty_transient_cache_entry(size_t len,
+						     struct mem_pool *ce_mem_pool);
 
 /*
  * Discard cache entry.
