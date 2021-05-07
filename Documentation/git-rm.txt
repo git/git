@@ -23,7 +23,9 @@ branch, and no updates to their contents can be staged in the index,
 though that default behavior can be overridden with the `-f` option.
 When `--cached` is given, the staged content has to
 match either the tip of the branch or the file on disk,
-allowing the file to be removed from just the index.
+allowing the file to be removed from just the index. When
+sparse-checkouts are in use (see linkgit:git-sparse-checkout[1]),
+`git rm` will only remove paths within the sparse-checkout patterns.
 
 
 OPTIONS
