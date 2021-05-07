@@ -24,6 +24,18 @@ Usage:
 [verse]
 'git-cvsserver' [<options>] [pserver|server] [<directory> ...]
 
+DESCRIPTION
+-----------
+
+This application is a CVS emulation layer for Git.
+
+It is highly functional. However, not all methods are implemented,
+and for those methods that are implemented,
+not all switches are implemented.
+
+Testing has been done using both the CLI CVS client, and the Eclipse CVS
+plugin. Most functionality works fine with both of these clients.
+
 OPTIONS
 -------
 
@@ -56,18 +68,6 @@ are given, all are allowed. This is an additional restriction, gitcvs
 access still needs to be enabled by the `gitcvs.enabled` config option
 unless `--export-all` was given, too.
 
-
-DESCRIPTION
------------
-
-This application is a CVS emulation layer for Git.
-
-It is highly functional. However, not all methods are implemented,
-and for those methods that are implemented,
-not all switches are implemented.
-
-Testing has been done using both the CLI CVS client, and the Eclipse CVS
-plugin. Most functionality works fine with both of these clients.
 
 LIMITATIONS
 -----------
