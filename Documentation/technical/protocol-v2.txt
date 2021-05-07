@@ -522,3 +522,34 @@ packet-line, and must not contain non-printable or whitespace characters. The
 current implementation uses trace2 session IDs (see
 link:api-trace2.html[api-trace2] for details), but this may change and users of
 the session ID should not rely on this fact.
+
+object-info
+~~~~~~~~~~~
+
+`object-info` is the command to retrieve information about one or more objects.
+Its main purpose is to allow a client to make decisions based on this
+information without having to fully fetch objects. Object size is the only
+information that is currently supported.
+
+An `object-info` request takes the following arguments:
+
+	size
+	Requests size information to be returned for each listed object id.
+
+	oid <oid>
+	Indicates to the server an object which the client wants to obtain
+	information for.
+
+The response of `object-info` is a list of the the requested object ids
+and associated requested information, each separated by a single space.
+
+	output = info flush-pkt
+
+	info = PKT-LINE(attrs) LF)
+		*PKT-LINE(obj-info LF)
+
+	attrs = attr | attrs SP attrs
+
+	attr = "size"
+
+	obj-info = obj-id SP obj-size
