@@ -892,6 +892,9 @@ or units.  n may be zero.  The suffixes k, m, and g can be used to name
 units in KiB, MiB, or GiB.  For example, 'blob:limit=1k' is the same
 as 'blob:limit=1024'.
 +
+The form '--filter=object:type=(tag|commit|tree|blob)' omits all objects
+which are not of the requested type.
++
 The form '--filter=sparse:oid=<blob-ish>' uses a sparse-checkout
 specification contained in the blob (or blob-expression) '<blob-ish>'
 to omit blobs that would not be not required for a sparse checkout on
@@ -929,6 +932,11 @@ equivalent.
 
 --no-filter::
 	Turn off any previous `--filter=` argument.
+
+--filter-provided-objects::
+	Filter the list of explicitly provided objects, which would otherwise
+	always be printed even if they did not match any of the filters. Only
+	useful with `--filter=`.
 
 --filter-print-omitted::
 	Only useful with `--filter=`; prints a list of the objects omitted

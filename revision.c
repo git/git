@@ -1123,7 +1123,7 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 				mark_parents_uninteresting(p);
 			if (p->object.flags & SEEN)
 				continue;
-			p->object.flags |= SEEN;
+			p->object.flags |= (SEEN | NOT_USER_GIVEN);
 			if (list)
 				commit_list_insert_by_date(p, list);
 			if (queue)
@@ -1165,7 +1165,7 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 		}
 		p->object.flags |= left_flag;
 		if (!(p->object.flags & SEEN)) {
-			p->object.flags |= SEEN;
+			p->object.flags |= (SEEN | NOT_USER_GIVEN);
 			if (list)
 				commit_list_insert_by_date(p, list);
 			if (queue)
