@@ -352,4 +352,20 @@ test_expect_success 'trivial prune with bitmaps enabled' '
 	test_must_fail git cat-file -e $blob
 '
 
+test_expect_success 'old reachable-from-recent retained with bitmaps' '
+	git repack -adb &&
+	to_drop=$(echo bitmap-from-recent-1 | git hash-object -w --stdin) &&
+	test-tool chmtime -86400 .git/objects/$(test_oid_to_path $to_drop) &&
+	to_save=$(echo bitmap-from-recent-2 | git hash-object -w --stdin) &&
+	test-tool chmtime -86400 .git/objects/$(test_oid_to_path $to_save) &&
+	tree=$(printf "100644 blob $to_save\tfile\n" | git mktree) &&
+	test-tool chmtime -86400 .git/objects/$(test_oid_to_path $tree) &&
+	commit=$(echo foo | git commit-tree $tree) &&
+	git prune --expire=12.hours.ago &&
+	git cat-file -e $commit &&
+	git cat-file -e $tree &&
+	git cat-file -e $to_save &&
+	test_must_fail git cat-file -e $to_drop
+'
+
 test_done
