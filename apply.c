@@ -3570,7 +3570,7 @@ static int try_threeway(struct apply_state *state,
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
 		return error(_("repository lacks the necessary blob to perform 3-way merge."));
 
-	if (state->apply_verbosity > verbosity_silent)
+	if (state->apply_verbosity > verbosity_silent && patch->direct_to_threeway)
 		fprintf(stderr, _("Performing three-way merge...\n"));
 
 	img = strbuf_detach(&buf, &len);
@@ -3637,6 +3637,10 @@ static int apply_data(struct apply_state *state, struct patch *patch,
 		return -1;
 
 	if (!state->threeway || try_threeway(state, &image, patch, st, ce) < 0) {
+		if (state->apply_verbosity > verbosity_silent &&
+		    state->threeway && !patch->direct_to_threeway)
+			fprintf(stderr, _("Falling back to direct application...\n"));
+
 		/* Note: with --reject, apply_fragments() returns 0 */
 		if (patch->direct_to_threeway || apply_fragments(state, &image, patch) < 0)
 			return -1;
