@@ -255,6 +255,14 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			git_config_push_parameter((*argv)[1]);
 			(*argv)++;
 			(*argc)--;
+		} else if (!strcmp(cmd, "--config-env")) {
+			if (*argc < 2) {
+				fprintf(stderr, _("no config key given for --config-env\n" ));
+				usage(git_usage_string);
+			}
+			git_config_push_env((*argv)[1]);
+			(*argv)++;
+			(*argc)--;
 		} else if (skip_prefix(cmd, "--config-env=", &cmd)) {
 			git_config_push_env(cmd);
 		} else if (!strcmp(cmd, "--literal-pathspecs")) {
