@@ -24,6 +24,7 @@ struct mailinfo {
 	struct strbuf charset;
 	unsigned int format_flowed:1;
 	unsigned int delsp:1;
+	unsigned int have_quoted_cr:1;
 	char *message_id;
 	enum  {
 		TE_DONTCARE, TE_QP, TE_BASE64

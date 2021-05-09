@@ -994,6 +994,11 @@ static void handle_filter_flowed(struct mailinfo *mi, struct strbuf *line,
 	const char *rest;
 
 	if (!mi->format_flowed) {
+		if (len >= 2 &&
+		    line->buf[len - 2] == '\r' &&
+		    line->buf[len - 1] == '\n') {
+			mi->have_quoted_cr = 1;
+		}
 		handle_filter(mi, line);
 		return;
 	}
@@ -1033,6 +1038,12 @@ static void handle_filter_flowed(struct mailinfo *mi, struct strbuf *line,
 	handle_filter(mi, line);
 }
 
+static void summarize_quoted_cr(struct mailinfo *mi)
+{
+	if (mi->have_quoted_cr)
+		warning(_("quoted CRLF detected"));
+}
+
 static void handle_body(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf prev = STRBUF_INIT;
@@ -1051,6 +1062,8 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 				handle_filter(mi, &prev);
 				strbuf_reset(&prev);
 			}
+			summarize_quoted_cr(mi);
+			mi->have_quoted_cr = 0;
 			if (!handle_boundary(mi, line))
 				goto handle_body_out;
 		}
@@ -1100,6 +1113,7 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 
 	if (prev.len)
 		handle_filter(mi, &prev);
+	summarize_quoted_cr(mi);
 
 	flush_inbody_header_accum(mi);
 
