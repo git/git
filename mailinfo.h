@@ -8,6 +8,7 @@
 enum quoted_cr_action {
 	quoted_cr_nowarn,
 	quoted_cr_warn,
+	quoted_cr_strip,
 };
 
 struct mailinfo {

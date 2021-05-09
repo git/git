@@ -259,6 +259,12 @@ test_expect_success 'mailinfo warn CR in base64 encoded email' '
 	check_quoted_cr_mail quoted-cr/0001 --quoted-cr=nowarn &&
 	test_must_be_empty quoted-cr/0001.err &&
 	check_quoted_cr_mail quoted-cr/0002 --quoted-cr=nowarn &&
+	test_must_be_empty quoted-cr/0002.err &&
+	cp quoted-cr/0001-expected.msg quoted-cr/0002-expected.msg &&
+	cp quoted-cr/0001-expected.patch quoted-cr/0002-expected.patch &&
+	check_quoted_cr_mail quoted-cr/0001 --quoted-cr=strip &&
+	test_must_be_empty quoted-cr/0001.err &&
+	check_quoted_cr_mail quoted-cr/0002 --quoted-cr=strip &&
 	test_must_be_empty quoted-cr/0002.err
 '
 

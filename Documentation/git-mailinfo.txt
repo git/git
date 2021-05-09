@@ -102,6 +102,7 @@ The valid actions are:
 *	`nowarn`: Git will do nothing when such a CRLF is found.
 *	`warn`: Git will issue a warning for each message if such a CRLF is
 	found.
+*	`strip`: Git will convert those CRLF to LF.
 --
 +
 The default action could be set by configuration option `mailinfo.quotedCR`.
