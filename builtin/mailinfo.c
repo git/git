@@ -38,6 +38,15 @@ static int parse_opt_explicit_encoding(const struct option *opt,
 	return 0;
 }
 
+static int parse_opt_quoted_cr(const struct option *opt, const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+
+	if (mailinfo_parse_quoted_cr_action(arg, opt->value) != 0)
+		return error(_("bad action '%s' for '%s'"), arg, "--quoted-cr");
+	return 0;
+}
+
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
 	struct metainfo_charset meta_charset;
@@ -61,6 +70,9 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 			       N_("re-code metadata to this encoding"),
 			       PARSE_OPT_NONEG, parse_opt_explicit_encoding),
 		OPT_BOOL(0, "scissors", &mi.use_scissors, N_("use scissors")),
+		OPT_CALLBACK_F(0, "quoted-cr", &mi.quoted_cr, N_("<action>"),
+			       N_("action when quoted CR is found"),
+			       PARSE_OPT_NONEG, parse_opt_quoted_cr),
 		OPT_HIDDEN_BOOL(0, "inbody-headers", &mi.use_inbody_headers,
 			 N_("use headers in message's body")),
 		OPT_END()

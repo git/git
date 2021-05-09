@@ -5,6 +5,11 @@
 
 #define MAX_BOUNDARIES 5
 
+enum quoted_cr_action {
+	quoted_cr_nowarn,
+	quoted_cr_warn,
+};
+
 struct mailinfo {
 	FILE *input;
 	FILE *output;
@@ -14,6 +19,7 @@ struct mailinfo {
 	struct strbuf email;
 	int keep_subject;
 	int keep_non_patch_brackets_in_subject;
+	int quoted_cr; /* enum quoted_cr_action */
 	int add_message_id;
 	int use_scissors;
 	int use_inbody_headers;
@@ -40,6 +46,7 @@ struct mailinfo {
 	int input_error;
 };
 
+int mailinfo_parse_quoted_cr_action(const char *actionstr, int *action);
 void setup_mailinfo(struct mailinfo *);
 int mailinfo(struct mailinfo *, const char *msg, const char *patch);
 void clear_mailinfo(struct mailinfo *);

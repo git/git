@@ -255,7 +255,11 @@ test_expect_success 'mailinfo warn CR in base64 encoded email' '
 	check_quoted_cr_mail quoted-cr/0001 &&
 	test_must_be_empty quoted-cr/0001.err &&
 	check_quoted_cr_mail quoted-cr/0002 &&
-	grep "quoted CRLF detected" quoted-cr/0002.err
+	grep "quoted CRLF detected" quoted-cr/0002.err &&
+	check_quoted_cr_mail quoted-cr/0001 --quoted-cr=nowarn &&
+	test_must_be_empty quoted-cr/0001.err &&
+	check_quoted_cr_mail quoted-cr/0002 --quoted-cr=nowarn &&
+	test_must_be_empty quoted-cr/0002.err
 '
 
 test_done
