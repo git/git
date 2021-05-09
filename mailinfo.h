@@ -6,6 +6,7 @@
 #define MAX_BOUNDARIES 5
 
 enum quoted_cr_action {
+	quoted_cr_unset = -1,
 	quoted_cr_nowarn,
 	quoted_cr_warn,
 	quoted_cr_strip,

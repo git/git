@@ -15,6 +15,7 @@ SYNOPSIS
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
+	 [--quoted-cr=<action>]
 	 [(<mbox> | <Maildir>)...]
 'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)])
 
@@ -58,6 +59,9 @@ OPTIONS
 
 --no-scissors::
 	Ignore scissors lines (see linkgit:git-mailinfo[1]).
+
+--quoted-cr=<action>::
+	This flag will be passed down to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 
 -m::
 --message-id::
