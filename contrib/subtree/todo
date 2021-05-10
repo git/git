@@ -23,9 +23,9 @@
 
 	"pull" and "merge" commands should fail if you've never merged
 		that --prefix before
-		
+
 	docs should provide an example of "add"
-	
+
 	note that the initial split doesn't *have* to have a commitid
 		specified... that's just an optimization
 
@@ -33,7 +33,7 @@
 		get a misleading "prefix must end with /" message from
 		one of the other git tools that git-subtree calls.  Should
 		detect this situation and print the *real* problem.
-	
+
 	"pull --squash" should do fetch-synthesize-merge, but instead just
 		does "pull" directly, which doesn't work at all.
 

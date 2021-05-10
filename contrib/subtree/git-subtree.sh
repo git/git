@@ -4,208 +4,261 @@
 #
 # Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>
 #
-if test $# -eq 0
+
+if test -z "$GIT_EXEC_PATH" || test "${PATH#"${GIT_EXEC_PATH}:"}" = "$PATH" || ! test -f "$GIT_EXEC_PATH/git-sh-setup"
 then
-	set -- -h
+	echo >&2 'It looks like either your git installation or your'
+	echo >&2 'git-subtree installation is broken.'
+	echo >&2
+	echo >&2 "Tips:"
+	echo >&2 " - If \`git --exec-path\` does not print the correct path to"
+	echo >&2 "   your git install directory, then set the GIT_EXEC_PATH"
+	echo >&2 "   environment variable to the correct directory."
+	echo >&2 " - Make sure that your \`${0##*/}\` file is either in your"
+	echo >&2 "   PATH or in your git exec path (\`$(git --exec-path)\`)."
+	echo >&2 " - You should run git-subtree as \`git ${0##*/git-}\`,"
+	echo >&2 "   not as \`${0##*/}\`." >&2
+	exit 126
 fi
+
 OPTS_SPEC="\
 git subtree add   --prefix=<prefix> <commit>
 git subtree add   --prefix=<prefix> <repository> <ref>
 git subtree merge --prefix=<prefix> <commit>
+git subtree split --prefix=<prefix> [<commit>]
 git subtree pull  --prefix=<prefix> <repository> <ref>
-git subtree push  --prefix=<prefix> <repository> <ref>
-git subtree split --prefix=<prefix> <commit>
+git subtree push  --prefix=<prefix> <repository> <refspec>
 --
 h,help        show the help
 q             quiet
 d             show debug messages
 P,prefix=     the name of the subdir to split out
-m,message=    use the given message as the commit message for the merge commit
- options for 'split'
+ options for 'split' (also: 'push')
 annotate=     add a prefix to commit message of new commits
 b,branch=     create a new branch from the split subtree
 ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
- options for 'add', 'merge', and 'pull'
+ options for 'add' and 'merge' (also: 'pull', 'split --rejoin', and 'push --rejoin')
 squash        merge subtree changes as a single commit
+m,message=    use the given message as the commit message for the merge commit
 "
-eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
 
-PATH=$PATH:$(git --exec-path)
-. git-sh-setup
+indent=0
 
-require_work_tree
-
-quiet=
-branch=
-debug=
-command=
-onto=
-rejoin=
-ignore_joins=
-annotate=
-squash=
-message=
-prefix=
-
+# Usage: debug [MSG...]
 debug () {
-	if test -n "$debug"
+	if test -n "$arg_debug"
 	then
-		printf "%s\n" "$*" >&2
+		printf "%$(($indent * 2))s%s\n" '' "$*" >&2
 	fi
 }
 
-say () {
-	if test -z "$quiet"
-	then
-		printf "%s\n" "$*" >&2
-	fi
-}
-
+# Usage: progress [MSG...]
 progress () {
-	if test -z "$quiet"
+	if test -z "$GIT_QUIET"
 	then
-		printf "%s\r" "$*" >&2
+		if test -z "$arg_debug"
+		then
+			# Debug mode is off.
+			#
+			# Print one progress line that we keep updating (use
+			# "\r" to return to the beginning of the line, rather
+			# than "\n" to start a new line).  This only really
+			# works when stderr is a terminal.
+			printf "%s\r" "$*" >&2
+		else
+			# Debug mode is on.  The `debug` function is regularly
+			# printing to stderr.
+			#
+			# Don't do the one-line-with-"\r" thing, because on a
+			# terminal the debug output would overwrite and hide the
+			# progress output.  Add a "progress:" prefix to make the
+			# progress output and the debug output easy to
+			# distinguish.  This ensures maximum readability whether
+			# stderr is a terminal or a file.
+			printf "progress: %s\n" "$*" >&2
+		fi
 	fi
 }
 
+# Usage: assert CMD...
 assert () {
 	if ! "$@"
 	then
-		die "assertion failed: " "$@"
+		die "assertion failed: $*"
 	fi
 }
 
-ensure_single_rev () {
-	if test $# -ne 1
+main () {
+	if test $# -eq 0
 	then
-		die "You must provide exactly one revision.  Got: '$@'"
+		set -- -h
 	fi
-}
+	set_args="$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+	eval "$set_args"
+	. git-sh-setup
+	require_work_tree
 
-while test $# -gt 0
-do
-	opt="$1"
-	shift
-
-	case "$opt" in
-	-q)
-		quiet=1
-		;;
-	-d)
-		debug=1
-		;;
-	--annotate)
-		annotate="$1"
+	# First figure out the command and whether we use --rejoin, so
+	# that we can provide more helpful validation when we do the
+	# "real" flag parsing.
+	arg_split_rejoin=
+	allow_split=
+	allow_addmerge=
+	while test $# -gt 0
+	do
+		opt="$1"
 		shift
+		case "$opt" in
+			--annotate|-b|-P|-m|--onto)
+				shift
+				;;
+			--rejoin)
+				arg_split_rejoin=1
+				;;
+			--no-rejoin)
+				arg_split_rejoin=
+				;;
+			--)
+				break
+				;;
+		esac
+	done
+	arg_command=$1
+	case "$arg_command" in
+	add|merge|pull)
+		allow_addmerge=1
 		;;
-	--no-annotate)
-		annotate=
-		;;
-	-b)
-		branch="$1"
-		shift
-		;;
-	-P)
-		prefix="${1%/}"
-		shift
-		;;
-	-m)
-		message="$1"
-		shift
-		;;
-	--no-prefix)
-		prefix=
-		;;
-	--onto)
-		onto="$1"
-		shift
-		;;
-	--no-onto)
-		onto=
-		;;
-	--rejoin)
-		rejoin=1
-		;;
-	--no-rejoin)
-		rejoin=
-		;;
-	--ignore-joins)
-		ignore_joins=1
-		;;
-	--no-ignore-joins)
-		ignore_joins=
-		;;
-	--squash)
-		squash=1
-		;;
-	--no-squash)
-		squash=
-		;;
-	--)
-		break
+	split|push)
+		allow_split=1
+		allow_addmerge=$arg_split_rejoin
 		;;
 	*)
-		die "Unexpected option: $opt"
+		die "Unknown command '$arg_command'"
 		;;
 	esac
-done
+	# Reset the arguments array for "real" flag parsing.
+	eval "$set_args"
 
-command="$1"
-shift
+	# Begin "real" flag parsing.
+	arg_debug=
+	arg_prefix=
+	arg_split_branch=
+	arg_split_onto=
+	arg_split_ignore_joins=
+	arg_split_annotate=
+	arg_addmerge_squash=
+	arg_addmerge_message=
+	while test $# -gt 0
+	do
+		opt="$1"
+		shift
 
-case "$command" in
-add|merge|pull)
-	default=
-	;;
-split|push)
-	default="--default HEAD"
-	;;
-*)
-	die "Unknown command '$command'"
-	;;
-esac
+		case "$opt" in
+		-q)
+			GIT_QUIET=1
+			;;
+		-d)
+			arg_debug=1
+			;;
+		--annotate)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_split_annotate="$1"
+			shift
+			;;
+		--no-annotate)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_split_annotate=
+			;;
+		-b)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_split_branch="$1"
+			shift
+			;;
+		-P)
+			arg_prefix="${1%/}"
+			shift
+			;;
+		-m)
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_addmerge_message="$1"
+			shift
+			;;
+		--no-prefix)
+			arg_prefix=
+			;;
+		--onto)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_split_onto="$1"
+			shift
+			;;
+		--no-onto)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_split_onto=
+			;;
+		--rejoin)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			;;
+		--no-rejoin)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			;;
+		--ignore-joins)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_split_ignore_joins=1
+			;;
+		--no-ignore-joins)
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_split_ignore_joins=
+			;;
+		--squash)
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_addmerge_squash=1
+			;;
+		--no-squash)
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			arg_addmerge_squash=
+			;;
+		--)
+			break
+			;;
+		*)
+			die "Unexpected option: $opt"
+			;;
+		esac
+	done
+	shift
 
-if test -z "$prefix"
-then
-	die "You must provide the --prefix option."
-fi
-
-case "$command" in
-add)
-	test -e "$prefix" &&
-		die "prefix '$prefix' already exists."
-	;;
-*)
-	test -e "$prefix" ||
-		die "'$prefix' does not exist; use 'git subtree add'"
-	;;
-esac
-
-dir="$(dirname "$prefix/.")"
-
-if test "$command" != "pull" &&
-		test "$command" != "add" &&
-		test "$command" != "push"
-then
-	revs=$(git rev-parse $default --revs-only "$@") || exit $?
-	dirs=$(git rev-parse --no-revs --no-flags "$@") || exit $?
-	ensure_single_rev $revs
-	if test -n "$dirs"
+	if test -z "$arg_prefix"
 	then
-		die "Error: Use --prefix instead of bare filenames."
+		die "You must provide the --prefix option."
 	fi
-fi
 
-debug "command: {$command}"
-debug "quiet: {$quiet}"
-debug "revs: {$revs}"
-debug "dir: {$dir}"
-debug "opts: {$*}"
-debug
+	case "$arg_command" in
+	add)
+		test -e "$arg_prefix" &&
+			die "prefix '$arg_prefix' already exists."
+		;;
+	*)
+		test -e "$arg_prefix" ||
+			die "'$arg_prefix' does not exist; use 'git subtree add'"
+		;;
+	esac
 
+	dir="$(dirname "$arg_prefix/.")"
+
+	debug "command: {$arg_command}"
+	debug "quiet: {$GIT_QUIET}"
+	debug "dir: {$dir}"
+	debug "opts: {$*}"
+	debug
+
+	"cmd_$arg_command" "$@"
+}
+
+# Usage: cache_setup
 cache_setup () {
+	assert test $# = 0
 	cachedir="$GIT_DIR/subtree-cache/$$"
 	rm -rf "$cachedir" ||
 		die "Can't delete old cachedir: $cachedir"
@@ -216,6 +269,7 @@ cache_setup () {
 	debug "Using cachedir: $cachedir" >&2
 }
 
+# Usage: cache_get [REVS...]
 cache_get () {
 	for oldrev in "$@"
 	do
@@ -227,6 +281,7 @@ cache_get () {
 	done
 }
 
+# Usage: cache_miss [REVS...]
 cache_miss () {
 	for oldrev in "$@"
 	do
@@ -237,24 +292,30 @@ cache_miss () {
 	done
 }
 
+# Usage: check_parents PARENTS_EXPR
 check_parents () {
-	missed=$(cache_miss "$1")
-	local indent=$(($2 + 1))
+	assert test $# = 1
+	missed=$(cache_miss "$1") || exit $?
+	local indent=$(($indent + 1))
 	for miss in $missed
 	do
 		if ! test -r "$cachedir/notree/$miss"
 		then
-			debug "  incorrect order: $miss"
-			process_split_commit "$miss" "" "$indent"
+			debug "incorrect order: $miss"
+			process_split_commit "$miss" ""
 		fi
 	done
 }
 
+# Usage: set_notree REV
 set_notree () {
+	assert test $# = 1
 	echo "1" > "$cachedir/notree/$1"
 }
 
+# Usage: cache_set OLDREV NEWREV
 cache_set () {
+	assert test $# = 2
 	oldrev="$1"
 	newrev="$2"
 	if test "$oldrev" != "latest_old" &&
@@ -266,7 +327,9 @@ cache_set () {
 	echo "$newrev" >"$cachedir/$oldrev"
 }
 
+# Usage: rev_exists REV
 rev_exists () {
+	assert test $# = 1
 	if git rev-parse "$1" >/dev/null 2>&1
 	then
 		return 0
@@ -275,32 +338,25 @@ rev_exists () {
 	fi
 }
 
-rev_is_descendant_of_branch () {
-	newrev="$1"
-	branch="$2"
-	branch_hash=$(git rev-parse "$branch")
-	match=$(git rev-list -1 "$branch_hash" "^$newrev")
-
-	if test -z "$match"
-	then
-		return 0
-	else
-		return 1
-	fi
-}
-
-# if a commit doesn't have a parent, this might not work.  But we only want
+# Usage: try_remove_previous REV
+#
+# If a commit doesn't have a parent, this might not work.  But we only want
 # to remove the parent from the rev-list, and since it doesn't exist, it won't
 # be there anyway, so do nothing in that case.
 try_remove_previous () {
+	assert test $# = 1
 	if rev_exists "$1^"
 	then
 		echo "^$1^"
 	fi
 }
 
+# Usage: find_latest_squash DIR
 find_latest_squash () {
+	assert test $# = 1
 	debug "Looking for latest squash ($dir)..."
+	local indent=$(($indent + 1))
+
 	dir="$1"
 	sq=
 	main=
@@ -319,7 +375,7 @@ find_latest_squash () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse "$b^0")" ||
+			sub="$(git rev-parse "$b^{commit}")" ||
 			die "could not rev-parse split hash $b from commit $sq"
 			;;
 		END)
@@ -329,7 +385,8 @@ find_latest_squash () {
 				then
 					# a rejoin commit?
 					# Pretend its sub was a squash.
-					sq="$sub"
+					sq=$(git rev-parse --verify "$sq^2") ||
+						die
 				fi
 				debug "Squash found: $sq $sub"
 				echo "$sq" "$sub"
@@ -340,22 +397,26 @@ find_latest_squash () {
 			sub=
 			;;
 		esac
-	done
+	done || exit $?
 }
 
+# Usage: find_existing_splits DIR REV
 find_existing_splits () {
+	assert test $# = 2
 	debug "Looking for prior splits..."
+	local indent=$(($indent + 1))
+
 	dir="$1"
-	revs="$2"
+	rev="$2"
 	main=
 	sub=
 	local grep_format="^git-subtree-dir: $dir/*\$"
-	if test -n "$ignore_joins"
+	if test -n "$arg_split_ignore_joins"
 	then
 		grep_format="^Add '$dir/' from commit '"
 	fi
 	git log --grep="$grep_format" \
-		--no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' $revs |
+		--no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' "$rev" |
 	while read a b junk
 	do
 		case "$a" in
@@ -366,11 +427,11 @@ find_existing_splits () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse "$b^0")" ||
+			sub="$(git rev-parse "$b^{commit}")" ||
 			die "could not rev-parse split hash $b from commit $sq"
 			;;
 		END)
-			debug "  Main is: '$main'"
+			debug "Main is: '$main'"
 			if test -z "$main" -a -n "$sub"
 			then
 				# squash commits refer to a subtree
@@ -389,10 +450,12 @@ find_existing_splits () {
 			sub=
 			;;
 		esac
-	done
+	done || exit $?
 }
 
+# Usage: copy_commit REV TREE FLAGS_STR
 copy_commit () {
+	assert test $# = 3
 	# We're going to set some environment vars here, so
 	# do it in a subshell to get rid of them safely later
 	debug copy_commit "{$1}" "{$2}" "{$3}"
@@ -411,22 +474,31 @@ copy_commit () {
 			GIT_COMMITTER_EMAIL \
 			GIT_COMMITTER_DATE
 		(
-			printf "%s" "$annotate"
+			printf "%s" "$arg_split_annotate"
 			cat
 		) |
 		git commit-tree "$2" $3  # reads the rest of stdin
 	) || die "Can't copy commit $1"
 }
 
+# Usage: add_msg DIR LATEST_OLD LATEST_NEW
 add_msg () {
+	assert test $# = 3
 	dir="$1"
 	latest_old="$2"
 	latest_new="$3"
-	if test -n "$message"
+	if test -n "$arg_addmerge_message"
 	then
-		commit_message="$message"
+		commit_message="$arg_addmerge_message"
 	else
 		commit_message="Add '$dir/' from commit '$latest_new'"
+	fi
+	if test -n "$arg_split_rejoin"
+	then
+		# If this is from a --rejoin, then rejoin_msg has
+		# already inserted the `git-subtree-xxx:` tags
+		echo "$commit_message"
+		return
 	fi
 	cat <<-EOF
 		$commit_message
@@ -437,22 +509,26 @@ add_msg () {
 	EOF
 }
 
+# Usage: add_squashed_msg REV DIR
 add_squashed_msg () {
-	if test -n "$message"
+	assert test $# = 2
+	if test -n "$arg_addmerge_message"
 	then
-		echo "$message"
+		echo "$arg_addmerge_message"
 	else
 		echo "Merge commit '$1' as '$2'"
 	fi
 }
 
+# Usage: rejoin_msg DIR LATEST_OLD LATEST_NEW
 rejoin_msg () {
+	assert test $# = 3
 	dir="$1"
 	latest_old="$2"
 	latest_new="$3"
-	if test -n "$message"
+	if test -n "$arg_addmerge_message"
 	then
-		commit_message="$message"
+		commit_message="$arg_addmerge_message"
 	else
 		commit_message="Split '$dir/' into commit '$latest_new'"
 	fi
@@ -465,7 +541,9 @@ rejoin_msg () {
 	EOF
 }
 
+# Usage: squash_msg DIR OLD_SUBTREE_COMMIT NEW_SUBTREE_COMMIT
 squash_msg () {
+	assert test $# = 3
 	dir="$1"
 	oldsub="$2"
 	newsub="$3"
@@ -487,12 +565,16 @@ squash_msg () {
 	echo "git-subtree-split: $newsub"
 }
 
+# Usage: toptree_for_commit COMMIT
 toptree_for_commit () {
+	assert test $# = 1
 	commit="$1"
 	git rev-parse --verify "$commit^{tree}" || exit $?
 }
 
+# Usage: subtree_for_commit COMMIT DIR
 subtree_for_commit () {
+	assert test $# = 2
 	commit="$1"
 	dir="$2"
 	git ls-tree "$commit" -- "$dir" |
@@ -503,17 +585,19 @@ subtree_for_commit () {
 		test "$type" = "commit" && continue  # ignore submodules
 		echo $tree
 		break
-	done
+	done || exit $?
 }
 
+# Usage: tree_changed TREE [PARENTS...]
 tree_changed () {
+	assert test $# -gt 0
 	tree=$1
 	shift
 	if test $# -ne 1
 	then
 		return 0   # weird parents, consider it changed
 	else
-		ptree=$(toptree_for_commit $1)
+		ptree=$(toptree_for_commit $1) || exit $?
 		if test "$ptree" != "$tree"
 		then
 			return 0   # changed
@@ -523,7 +607,9 @@ tree_changed () {
 	fi
 }
 
+# Usage: new_squash_commit OLD_SQUASHED_COMMIT OLD_NONSQUASHED_COMMIT NEW_NONSQUASHED_COMMIT
 new_squash_commit () {
+	assert test $# = 3
 	old="$1"
 	oldsub="$2"
 	newsub="$3"
@@ -538,7 +624,9 @@ new_squash_commit () {
 	fi
 }
 
+# Usage: copy_or_skip REV TREE NEWPARENTS
 copy_or_skip () {
+	assert test $# = 3
 	rev="$1"
 	tree="$2"
 	newparents="$3"
@@ -613,7 +701,9 @@ copy_or_skip () {
 	fi
 }
 
+# Usage: ensure_clean
 ensure_clean () {
+	assert test $# = 0
 	if ! git diff-index HEAD --exit-code --quiet 2>&1
 	then
 		die "Working tree has modifications.  Cannot add."
@@ -624,15 +714,18 @@ ensure_clean () {
 	fi
 }
 
+# Usage: ensure_valid_ref_format REF
 ensure_valid_ref_format () {
+	assert test $# = 1
 	git check-ref-format "refs/heads/$1" ||
 		die "'$1' does not look like a ref"
 }
 
+# Usage: process_split_commit REV PARENTS
 process_split_commit () {
+	assert test $# = 2
 	local rev="$1"
 	local parents="$2"
-	local indent=$3
 
 	if test $indent -eq 0
 	then
@@ -647,20 +740,21 @@ process_split_commit () {
 	progress "$revcount/$revmax ($createcount) [$extracount]"
 
 	debug "Processing commit: $rev"
-	exists=$(cache_get "$rev")
+	local indent=$(($indent + 1))
+	exists=$(cache_get "$rev") || exit $?
 	if test -n "$exists"
 	then
-		debug "  prior: $exists"
+		debug "prior: $exists"
 		return
 	fi
 	createcount=$(($createcount + 1))
-	debug "  parents: $parents"
-	check_parents "$parents" "$indent"
-	newparents=$(cache_get $parents)
-	debug "  newparents: $newparents"
+	debug "parents: $parents"
+	check_parents "$parents"
+	newparents=$(cache_get $parents) || exit $?
+	debug "newparents: $newparents"
 
-	tree=$(subtree_for_commit "$rev" "$dir")
-	debug "  tree is: $tree"
+	tree=$(subtree_for_commit "$rev" "$dir") || exit $?
+	debug "tree is: $tree"
 
 	# ugly.  is there no better way to tell if this is a subtree
 	# vs. a mainline commit?  Does it matter?
@@ -675,17 +769,15 @@ process_split_commit () {
 	fi
 
 	newrev=$(copy_or_skip "$rev" "$tree" "$newparents") || exit $?
-	debug "  newrev is: $newrev"
+	debug "newrev is: $newrev"
 	cache_set "$rev" "$newrev"
 	cache_set latest_new "$newrev"
 	cache_set latest_old "$rev"
 }
 
+# Usage: cmd_add REV
+#    Or: cmd_add REPOSITORY REF
 cmd_add () {
-	if test -e "$dir"
-	then
-		die "'$dir' already exists.  Cannot add."
-	fi
 
 	ensure_clean
 
@@ -707,27 +799,35 @@ cmd_add () {
 
 		cmd_add_repository "$@"
 	else
-		say "error: parameters were '$@'"
+		say >&2 "error: parameters were '$*'"
 		die "Provide either a commit or a repository and commit."
 	fi
 }
 
+# Usage: cmd_add_repository REPOSITORY REFSPEC
 cmd_add_repository () {
+	assert test $# = 2
 	echo "git fetch" "$@"
 	repository=$1
 	refspec=$2
 	git fetch "$@" || exit $?
-	revs=FETCH_HEAD
-	set -- $revs
-	cmd_add_commit "$@"
+	cmd_add_commit FETCH_HEAD
 }
 
+# Usage: cmd_add_commit REV
 cmd_add_commit () {
-	rev=$(git rev-parse $default --revs-only "$@") || exit $?
-	ensure_single_rev $rev
+	# The rev has already been validated by cmd_add(), we just
+	# need to normalize it.
+	assert test $# = 1
+	rev=$(git rev-parse --verify "$1^{commit}") || exit $?
 
 	debug "Adding $dir as '$rev'..."
-	git read-tree --prefix="$dir" $rev || exit $?
+	if test -z "$arg_split_rejoin"
+	then
+		# Only bother doing this if this is a genuine 'add',
+		# not a synthetic 'add' from '--rejoin'.
+		git read-tree --prefix="$dir" $rev || exit $?
+	fi
 	git checkout -- "$dir" || exit $?
 	tree=$(git write-tree) || exit $?
 
@@ -739,44 +839,61 @@ cmd_add_commit () {
 		headp=
 	fi
 
-	if test -n "$squash"
+	if test -n "$arg_addmerge_squash"
 	then
 		rev=$(new_squash_commit "" "" "$rev") || exit $?
 		commit=$(add_squashed_msg "$rev" "$dir" |
 			git commit-tree "$tree" $headp -p "$rev") || exit $?
 	else
-		revp=$(peel_committish "$rev") &&
+		revp=$(peel_committish "$rev") || exit $?
 		commit=$(add_msg "$dir" $headrev "$rev" |
 			git commit-tree "$tree" $headp -p "$revp") || exit $?
 	fi
 	git reset "$commit" || exit $?
 
-	say "Added dir '$dir'"
+	say >&2 "Added dir '$dir'"
 }
 
+# Usage: cmd_split [REV]
 cmd_split () {
+	if test $# -eq 0
+	then
+		rev=$(git rev-parse HEAD)
+	elif test $# -eq 1
+	then
+		rev=$(git rev-parse -q --verify "$1^{commit}") ||
+			die "'$1' does not refer to a commit"
+	else
+		die "You must provide exactly one revision.  Got: '$*'"
+	fi
+
+	if test -n "$arg_split_rejoin"
+	then
+		ensure_clean
+	fi
+
 	debug "Splitting $dir..."
 	cache_setup || exit $?
 
-	if test -n "$onto"
+	if test -n "$arg_split_onto"
 	then
-		debug "Reading history for --onto=$onto..."
-		git rev-list $onto |
+		debug "Reading history for --onto=$arg_split_onto..."
+		git rev-list $arg_split_onto |
 		while read rev
 		do
 			# the 'onto' history is already just the subdir, so
 			# any parent we find there can be used verbatim
-			debug "  cache: $rev"
+			debug "cache: $rev"
 			cache_set "$rev" "$rev"
-		done
+		done || exit $?
 	fi
 
-	unrevs="$(find_existing_splits "$dir" "$revs")"
+	unrevs="$(find_existing_splits "$dir" "$rev")" || exit $?
 
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
-	grl='git rev-list --topo-order --reverse --parents $revs $unrevs'
+	grl='git rev-list --topo-order --reverse --parents $rev $unrevs'
 	revmax=$(eval "$grl" | wc -l)
 	revcount=0
 	createcount=0
@@ -784,52 +901,58 @@ cmd_split () {
 	eval "$grl" |
 	while read rev parents
 	do
-		process_split_commit "$rev" "$parents" 0
+		process_split_commit "$rev" "$parents"
 	done || exit $?
 
-	latest_new=$(cache_get latest_new)
+	latest_new=$(cache_get latest_new) || exit $?
 	if test -z "$latest_new"
 	then
 		die "No new revisions were found"
 	fi
 
-	if test -n "$rejoin"
+	if test -n "$arg_split_rejoin"
 	then
 		debug "Merging split branch into HEAD..."
-		latest_old=$(cache_get latest_old)
-		git merge -s ours \
-			--allow-unrelated-histories \
-			-m "$(rejoin_msg "$dir" "$latest_old" "$latest_new")" \
-			"$latest_new" >&2 || exit $?
-	fi
-	if test -n "$branch"
-	then
-		if rev_exists "refs/heads/$branch"
+		latest_old=$(cache_get latest_old) || exit $?
+		arg_addmerge_message="$(rejoin_msg "$dir" "$latest_old" "$latest_new")" || exit $?
+		if test -z "$(find_latest_squash "$dir")"
 		then
-			if ! rev_is_descendant_of_branch "$latest_new" "$branch"
+			cmd_add "$latest_new" >&2 || exit $?
+		else
+			cmd_merge "$latest_new" >&2 || exit $?
+		fi
+	fi
+	if test -n "$arg_split_branch"
+	then
+		if rev_exists "refs/heads/$arg_split_branch"
+		then
+			if ! git merge-base --is-ancestor "$arg_split_branch" "$latest_new"
 			then
-				die "Branch '$branch' is not an ancestor of commit '$latest_new'."
+				die "Branch '$arg_split_branch' is not an ancestor of commit '$latest_new'."
 			fi
 			action='Updated'
 		else
 			action='Created'
 		fi
 		git update-ref -m 'subtree split' \
-			"refs/heads/$branch" "$latest_new" || exit $?
-		say "$action branch '$branch'"
+			"refs/heads/$arg_split_branch" "$latest_new" || exit $?
+		say >&2 "$action branch '$arg_split_branch'"
 	fi
 	echo "$latest_new"
 	exit 0
 }
 
+# Usage: cmd_merge REV
 cmd_merge () {
-	rev=$(git rev-parse $default --revs-only "$@") || exit $?
-	ensure_single_rev $rev
+	test $# -eq 1 ||
+		die "You must provide exactly one revision.  Got: '$*'"
+	rev=$(git rev-parse -q --verify "$1^{commit}") ||
+		die "'$1' does not refer to a commit"
 	ensure_clean
 
-	if test -n "$squash"
+	if test -n "$arg_addmerge_squash"
 	then
-		first_split="$(find_latest_squash "$dir")"
+		first_split="$(find_latest_squash "$dir")" || exit $?
 		if test -z "$first_split"
 		then
 			die "Can't squash-merge: '$dir' was never added."
@@ -839,7 +962,7 @@ cmd_merge () {
 		sub=$2
 		if test "$sub" = "$rev"
 		then
-			say "Subtree is already at commit $rev."
+			say >&2 "Subtree is already at commit $rev."
 			exit 0
 		fi
 		new=$(new_squash_commit "$old" "$sub" "$rev") || exit $?
@@ -847,26 +970,16 @@ cmd_merge () {
 		rev="$new"
 	fi
 
-	version=$(git version)
-	if test "$version" \< "git version 1.7"
+	if test -n "$arg_addmerge_message"
 	then
-		if test -n "$message"
-		then
-			git merge -s subtree --message="$message" "$rev"
-		else
-			git merge -s subtree "$rev"
-		fi
+		git merge -Xsubtree="$arg_prefix" \
+			--message="$arg_addmerge_message" "$rev"
 	else
-		if test -n "$message"
-		then
-			git merge -Xsubtree="$prefix" \
-				--message="$message" "$rev"
-		else
-			git merge -Xsubtree="$prefix" $rev
-		fi
+		git merge -Xsubtree="$arg_prefix" $rev
 	fi
 }
 
+# Usage: cmd_pull REPOSITORY REMOTEREF
 cmd_pull () {
 	if test $# -ne 2
 	then
@@ -875,27 +988,36 @@ cmd_pull () {
 	ensure_clean
 	ensure_valid_ref_format "$2"
 	git fetch "$@" || exit $?
-	revs=FETCH_HEAD
-	set -- $revs
-	cmd_merge "$@"
+	cmd_merge FETCH_HEAD
 }
 
+# Usage: cmd_push REPOSITORY [+][LOCALREV:]REMOTEREF
 cmd_push () {
 	if test $# -ne 2
 	then
-		die "You must provide <repository> <ref>"
+		die "You must provide <repository> <refspec>"
 	fi
-	ensure_valid_ref_format "$2"
 	if test -e "$dir"
 	then
 		repository=$1
-		refspec=$2
+		refspec=${2#+}
+		remoteref=${refspec#*:}
+		if test "$remoteref" = "$refspec"
+		then
+			localrevname_presplit=HEAD
+		else
+			localrevname_presplit=${refspec%%:*}
+		fi
+		ensure_valid_ref_format "$remoteref"
+		localrev_presplit=$(git rev-parse -q --verify "$localrevname_presplit^{commit}") ||
+			die "'$localrevname_presplit' does not refer to a commit"
+
 		echo "git push using: " "$repository" "$refspec"
-		localrev=$(git subtree split --prefix="$prefix") || die
-		git push "$repository" "$localrev":"refs/heads/$refspec"
+		localrev=$(cmd_split "$localrev_presplit") || die
+		git push "$repository" "$localrev":"refs/heads/$remoteref"
 	else
 		die "'$dir' must already exist. Try 'git subtree add'."
 	fi
 }
 
-"cmd_$command" "$@"
+main "$@"
