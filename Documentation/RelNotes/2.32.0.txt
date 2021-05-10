@@ -107,6 +107,8 @@ UI, Workflows & Features
  * The command line completion (in contrib/) for "git stash" has been
    updated.
 
+ * "git subtree" updates.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -313,6 +315,9 @@ Fixes since v2.31
 
  * Portability fix for command line completion script (in contrib/).
    (merge f2acf763e2 si/zsh-complete-comment-fix later to maint).
+
+ * "git repack -A -d" in a partial clone unnecessarily loosened
+   objects in promisor pack.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
