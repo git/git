@@ -1690,10 +1690,10 @@ void wt_status_get_state(struct repository *r,
 	if (!sequencer_get_last_command(r, &action)) {
 		if (action == REPLAY_PICK) {
 			state->cherry_pick_in_progress = 1;
-			oidcpy(&state->cherry_pick_head_oid, &null_oid);
+			oidcpy(&state->cherry_pick_head_oid, null_oid());
 		} else {
 			state->revert_in_progress = 1;
-			oidcpy(&state->revert_head_oid, &null_oid);
+			oidcpy(&state->revert_head_oid, null_oid());
 		}
 	}
 	if (get_detached_from)

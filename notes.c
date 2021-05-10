@@ -352,7 +352,7 @@ static void add_non_note(struct notes_tree *t, char *path,
 	n->next = NULL;
 	n->path = path;
 	n->mode = mode;
-	hashcpy(n->oid.hash, sha1);
+	oidread(&n->oid, sha1);
 	t->prev_non_note = n;
 
 	if (!t->first_non_note) {
@@ -455,6 +455,8 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		CALLOC_ARRAY(l, 1);
 		oidcpy(&l->key_oid, &object_oid);
 		oidcpy(&l->val_oid, &entry.oid);
+		oid_set_algo(&l->key_oid, the_hash_algo);
+		oid_set_algo(&l->val_oid, the_hash_algo);
 		if (note_tree_insert(t, node, n, l, type,
 				     combine_notes_concatenate))
 			die("Failed to load %s %s into notes tree "
@@ -484,6 +486,7 @@ handle_non_note:
 				strbuf_addch(&non_note_path, '/');
 			}
 			strbuf_addstr(&non_note_path, entry.path);
+			oid_set_algo(&entry.oid, the_hash_algo);
 			add_non_note(t, strbuf_detach(&non_note_path, NULL),
 				     entry.mode, entry.oid.hash);
 		}
@@ -1134,7 +1137,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	hashcpy(l.key_oid.hash, object_sha1);
+	oidread(&l.key_oid, object_sha1);
 	oidclr(&l.val_oid);
 	note_tree_remove(t, t->root, 0, &l);
 	if (is_null_oid(&l.val_oid)) /* no note was removed */
@@ -1324,7 +1327,7 @@ int copy_note(struct notes_tree *t,
 	if (note)
 		return add_note(t, to_obj, note, combine_notes);
 	else if (existing_note)
-		return add_note(t, to_obj, &null_oid, combine_notes);
+		return add_note(t, to_obj, null_oid(), combine_notes);
 
 	return 0;
 }

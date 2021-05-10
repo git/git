@@ -870,7 +870,7 @@ static void handle_tag(const char *name, struct tag *tag)
 				p = rewrite_commit((struct commit *)tagged);
 				if (!p) {
 					printf("reset %s\nfrom %s\n\n",
-					       name, oid_to_hex(&null_oid));
+					       name, oid_to_hex(null_oid()));
 					free(buf);
 					return;
 				}
@@ -884,7 +884,7 @@ static void handle_tag(const char *name, struct tag *tag)
 
 	if (tagged->type == OBJ_TAG) {
 		printf("reset %s\nfrom %s\n\n",
-		       name, oid_to_hex(&null_oid));
+		       name, oid_to_hex(null_oid()));
 	}
 	skip_prefix(name, "refs/tags/", &name);
 	printf("tag %s\n", name);
@@ -1016,7 +1016,7 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				 * it.
 				 */
 				printf("reset %s\nfrom %s\n\n",
-				       name, oid_to_hex(&null_oid));
+				       name, oid_to_hex(null_oid()));
 				continue;
 			}
 
@@ -1035,7 +1035,7 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				if (!reference_excluded_commits) {
 					/* delete the ref */
 					printf("reset %s\nfrom %s\n\n",
-					       name, oid_to_hex(&null_oid));
+					       name, oid_to_hex(null_oid()));
 					continue;
 				}
 				/* set ref to commit using oid, not mark */
@@ -1146,7 +1146,7 @@ static void handle_deletes(void)
 			continue;
 
 		printf("reset %s\nfrom %s\n\n",
-				refspec->dst, oid_to_hex(&null_oid));
+				refspec->dst, oid_to_hex(null_oid()));
 	}
 }
 

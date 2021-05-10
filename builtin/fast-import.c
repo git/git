@@ -940,7 +940,7 @@ static int store_object(
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, hdrlen);
 	the_hash_algo->update_fn(&c, dat->buf, dat->len);
-	the_hash_algo->final_fn(oid.hash, &c);
+	the_hash_algo->final_oid_fn(&oid, &c);
 	if (oidout)
 		oidcpy(oidout, &oid);
 
@@ -1136,7 +1136,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 		}
 	}
 	git_deflate_end(&s);
-	the_hash_algo->final_fn(oid.hash, &c);
+	the_hash_algo->final_oid_fn(&oid, &c);
 
 	if (oidout)
 		oidcpy(oidout, &oid);
@@ -1276,8 +1276,8 @@ static void load_tree(struct tree_entry *root)
 		e->versions[0].mode = e->versions[1].mode;
 		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
-		hashcpy(e->versions[0].oid.hash, (unsigned char *)c);
-		hashcpy(e->versions[1].oid.hash, (unsigned char *)c);
+		oidread(&e->versions[0].oid, (unsigned char *)c);
+		oidread(&e->versions[1].oid, (unsigned char *)c);
 		c += the_hash_algo->rawsz;
 	}
 	free(buf);

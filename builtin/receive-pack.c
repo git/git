@@ -329,7 +329,7 @@ static void write_head_info(void)
 	for_each_alternate_ref(show_one_alternate_ref, &seen);
 	oidset_clear(&seen);
 	if (!sent_capabilities)
-		show_ref("capabilities^{}", &null_oid);
+		show_ref("capabilities^{}", null_oid());
 
 	advertise_shallow_grafts(1);
 

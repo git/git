@@ -232,7 +232,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				   ce_intent_to_add(ce)) {
 				newmode = ce_mode_from_stat(ce, st.st_mode);
 				diff_addremove(&revs->diffopt, '+', newmode,
-					       &null_oid, 0, ce->name, 0);
+					       null_oid(), 0, ce->name, 0);
 				continue;
 			}
 
@@ -249,7 +249,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		}
 		oldmode = ce->ce_mode;
 		old_oid = &ce->oid;
-		new_oid = changed ? &null_oid : &ce->oid;
+		new_oid = changed ? null_oid() : &ce->oid;
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    old_oid, new_oid,
 			    !is_null_oid(old_oid),
@@ -307,7 +307,7 @@ static int get_stat_data(const struct index_state *istate,
 						    0, dirty_submodule);
 		if (changed) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
-			oid = &null_oid;
+			oid = null_oid();
 		}
 	}
 
