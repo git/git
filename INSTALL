@@ -29,7 +29,7 @@ If you're willing to trade off (much) longer build time for a later
 faster git you can also do a profile feedback build with
 
 	$ make prefix=/usr profile
-	# make prefix=/usr PROFILE=BUILD install
+	# make prefix=/usr PROFILE=BUILD install 
 
 This will run the complete test suite as training workload and then
 rebuild git with the generated profile feedback. This results in a git
