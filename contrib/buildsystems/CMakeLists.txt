@@ -63,10 +63,20 @@ endif()
 
 if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
 	set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+	message("settting CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
 endif()
 
 if(USE_VCPKG)
 	set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg")
+	message("WIN32: ${WIN32}") # show its underlying text values
+	message("VCPKG_DIR: ${VCPKG_DIR}")
+	message("VCPKG_ARCH: ${VCPKG_ARCH}") # maybe unset
+	message("MSVC: ${MSVC}")
+	message("CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
+	message("CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
+	message("CMAKE_GENERATOR_PLATFORM: ${CMAKE_GENERATOR_PLATFORM}")
+	message("CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
+	message("ENV(CMAKE_EXPORT_COMPILE_COMMANDS): $ENV{CMAKE_EXPORT_COMPILE_COMMANDS}")
 	if(NOT EXISTS ${VCPKG_DIR})
 		message("Initializing vcpkg and building the Git's dependencies (this will take a while...)")
 		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat ${VCPKG_ARCH})
