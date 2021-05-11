@@ -271,7 +271,7 @@ endif::git-rev-list[]
 			  `trailers` string may be followed by a colon
 			  and zero or more comma-separated options.
 			  If any option is provided multiple times the
-			  last occurance wins.
+			  last occurrence wins.
 +
 The boolean options accept an optional value `[=<BOOL>]`. The values
 `true`, `false`, `on`, `off` etc. are all accepted. See the "boolean"
