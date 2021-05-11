@@ -420,9 +420,9 @@ fetch_in_submodule () (
 	cd "$1" &&
 	if test $# -eq 3
 	then
-		echo "$3" | git fetch --stdin ${2:+"$2"}
+		echo "$3" | git fetch ${GIT_QUIET:+--quiet} --stdin ${2:+"$2"}
 	else
-		git fetch ${2:+"$2"}
+		git fetch ${GIT_QUIET:+--quiet} ${2:+"$2"}
 	fi
 )
 
