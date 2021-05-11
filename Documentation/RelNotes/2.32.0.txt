@@ -109,6 +109,18 @@ UI, Workflows & Features
 
  * "git subtree" updates.
 
+ * It is now documented that "format-patch" skips merges.
+
+ * Options to "git pack-objects" that take numeric values like
+   --window and --depth should not accept negative values; the input
+   validation has been tightened.
+
+ * The way the command line specified by the trailer.<token>.command
+   configuration variable receives the end-user supplied value was
+   both error prone and misleading.  An alternative to achieve the
+   same goal in a safer and more intuitive way has been added, as
+   the trailer.<token>.cmd configuration variable, to replace it.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -318,6 +330,20 @@ Fixes since v2.31
 
  * "git repack -A -d" in a partial clone unnecessarily loosened
    objects in promisor pack.
+
+ * "git bisect skip" when custom words are used for new/old did not
+   work, which has been corrected.
+
+ * A few variants of informational message "Already up-to-date" has
+   been rephrased.
+   (merge ad9322da03 js/merge-already-up-to-date-message-reword later to maint).
+
+ * "git submodule update --quiet" did not propagate the quiet option
+   down to underlying "git fetch", which has been corrected.
+   (merge 62af4bdd42 nc/submodule-update-quiet later to maint).
+
+ * Document that our test can use "local" keyword.
+   (merge a84fd3bcc6 jc/test-allows-local later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
