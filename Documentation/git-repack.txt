@@ -186,7 +186,7 @@ When `--unpacked` is specified, loose objects are implicitly included in
 this "roll-up", without respect to their reachability. This is subject
 to change in the future. This option (implying a drastically different
 repack mode) is not guaranteed to work with all other combinations of
-option to `git repack`).
+option to `git repack`.
 
 CONFIGURATION
 -------------
