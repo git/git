@@ -67,6 +67,9 @@ enum fsck_msg_type {
 	FUNC(NUL_IN_COMMIT, WARN) \
 	/* infos (reported as warnings, but ignored by default) */ \
 	FUNC(GITMODULES_PARSE, INFO) \
+	FUNC(GITIGNORE_SYMLINK, INFO) \
+	FUNC(GITATTRIBUTES_SYMLINK, INFO) \
+	FUNC(MAILMAP_SYMLINK, INFO) \
 	FUNC(BAD_TAG_NAME, INFO) \
 	FUNC(MISSING_TAGGER_ENTRY, INFO) \
 	/* ignored (elevated when requested) */ \

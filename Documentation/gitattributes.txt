@@ -1247,6 +1247,12 @@ to:
 [attr]binary -diff -merge -text
 ------------
 
+NOTES
+-----
+
+Git does not follow symbolic links when accessing a `.gitattributes`
+file in the working tree. This keeps behavior consistent when the file
+is accessed from the index or a tree versus from the filesystem.
 
 EXAMPLES
 --------
