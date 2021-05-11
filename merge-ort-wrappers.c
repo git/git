@@ -30,7 +30,7 @@ int merge_ort_nonrecursive(struct merge_options *opt,
 		return -1;
 
 	if (oideq(&merge_base->object.oid, &merge->object.oid)) {
-		printf(_("Already up to date!"));
+		printf_ln(_("Already up to date."));
 		return 1;
 	}
 
