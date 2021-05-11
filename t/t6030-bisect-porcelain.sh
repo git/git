@@ -922,6 +922,17 @@ test_expect_success 'bisect start takes options and revs in any order' '
 	test_cmp expected actual
 '
 
+# Bisect is started with --term-new and --term-old arguments,
+# then skip. The HEAD should be changed.
+test_expect_success 'bisect skip works with --term*' '
+	git bisect reset &&
+	git bisect start --term-new=fixed --term-old=unfixed HEAD $HASH1 &&
+	hash_skipped_from=$(git rev-parse --verify HEAD) &&
+	git bisect skip &&
+	hash_skipped_to=$(git rev-parse --verify HEAD) &&
+	test "$hash_skipped_from" != "$hash_skipped_to"
+'
+
 test_expect_success 'git bisect reset cleans bisection state properly' '
 	git bisect reset &&
 	git bisect start &&
