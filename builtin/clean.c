@@ -189,10 +189,8 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 	strbuf_complete(path, '/');
 
 	len = path->len;
-	while ((e = readdir(dir)) != NULL) {
+	while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		struct stat st;
-		if (is_dot_or_dotdot(e->d_name))
-			continue;
 
 		strbuf_setlen(path, len);
 		strbuf_addstr(path, e->d_name);

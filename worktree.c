@@ -128,10 +128,8 @@ struct worktree **get_worktrees(void)
 	dir = opendir(path.buf);
 	strbuf_release(&path);
 	if (dir) {
-		while ((d = readdir(dir)) != NULL) {
+		while ((d = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 			struct worktree *linked = NULL;
-			if (is_dot_or_dotdot(d->d_name))
-				continue;
 
 			if ((linked = get_linked_worktree(d->d_name))) {
 				ALLOC_GROW(list, counter + 1, alloc);
@@ -486,13 +484,9 @@ int submodule_uses_worktrees(const char *path)
 	if (!dir)
 		return 0;
 
-	while ((d = readdir(dir)) != NULL) {
-		if (is_dot_or_dotdot(d->d_name))
-			continue;
-
+	d = readdir_skip_dot_and_dotdot(dir);
+	if (d != NULL)
 		ret = 1;
-		break;
-	}
 	closedir(dir);
 	return ret;
 }
