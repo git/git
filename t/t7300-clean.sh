@@ -769,7 +769,7 @@ test_expect_success 'avoid traversing into ignored directories' '
 	test_cmp trace.expect trace.relevant
 '
 
-test_expect_failure 'traverse into directories that may have ignored entries' '
+test_expect_success 'traverse into directories that may have ignored entries' '
 	test_when_finished rm -f output &&
 	test_create_repo need-to-traverse-into-hierarchy &&
 	(
