@@ -769,4 +769,23 @@ test_expect_failure 'avoid traversing into ignored directories' '
 	test_cmp trace.expect trace.relevant
 '
 
+test_expect_failure 'traverse into directories that may have ignored entries' '
+	test_when_finished rm -f output &&
+	test_create_repo need-to-traverse-into-hierarchy &&
+	(
+		cd need-to-traverse-into-hierarchy &&
+		mkdir -p modules/foobar/src/generated &&
+		> modules/foobar/src/generated/code.c &&
+		> modules/foobar/Makefile &&
+		echo "/modules/**/src/generated/" >.gitignore &&
+
+		git clean -fX modules/foobar >../output &&
+
+		grep Removing ../output &&
+
+		test_path_is_missing modules/foobar/src/generated/code.c &&
+		test_path_is_file modules/foobar/Makefile
+	)
+'
+
 test_done
