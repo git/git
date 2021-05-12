@@ -405,4 +405,19 @@ test_expect_success 'stash show --include-untracked errors on duplicate files' '
 	test_i18ngrep "worktree and untracked commit have duplicate entries: tracked" err
 '
 
+test_expect_success 'stash show --{include,only}-untracked on stashes without untracked entries' '
+	git reset --hard &&
+	git clean -xf &&
+	>tracked &&
+	git add tracked &&
+	git stash &&
+
+	git stash show >expect &&
+	git stash show --include-untracked >actual &&
+	test_cmp expect actual &&
+
+	git stash show --only-untracked >actual &&
+	test_must_be_empty actual
+'
+
 test_done
