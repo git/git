@@ -367,7 +367,7 @@ test_expect_success 'stash show --only-untracked only shows untracked files' '
 	test_cmp expect actual
 '
 
-test_expect_success 'stash show --no-include-untracked cancels --{include,show}-untracked' '
+test_expect_success 'stash show --no-include-untracked cancels --{include,only}-untracked' '
 	git reset --hard &&
 	git clean -xf &&
 	>untracked &&
