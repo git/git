@@ -367,7 +367,7 @@ test_expect_success 'stash show --only-untracked only shows untracked files' '
 	test_cmp expect actual
 '
 
-test_expect_success 'stash show --no-include-untracked cancels --{include,show}-untracked' '
+test_expect_success 'stash show --no-include-untracked cancels --{include,only}-untracked' '
 	git reset --hard &&
 	git clean -xf &&
 	>untracked &&
@@ -403,6 +403,21 @@ test_expect_success 'stash show --include-untracked errors on duplicate files' '
 	w_commit=$(git commit-tree -p HEAD -p "$i_commit" -p "$u_commit" -m "WIP on any-branch" "$tree") &&
 	test_must_fail git stash show --include-untracked "$w_commit" 2>err &&
 	test_i18ngrep "worktree and untracked commit have duplicate entries: tracked" err
+'
+
+test_expect_success 'stash show --{include,only}-untracked on stashes without untracked entries' '
+	git reset --hard &&
+	git clean -xf &&
+	>tracked &&
+	git add tracked &&
+	git stash &&
+
+	git stash show >expect &&
+	git stash show --include-untracked >actual &&
+	test_cmp expect actual &&
+
+	git stash show --only-untracked >actual &&
+	test_must_be_empty actual
 '
 
 test_done
