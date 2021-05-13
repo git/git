@@ -2053,7 +2053,7 @@ static void fn_out_diff_words_aux(void *priv,
 static int find_word_boundaries(mmfile_t *buffer, regex_t *word_regex,
 		int *begin, int *end)
 {
-	if (word_regex && *begin < buffer->size) {
+	while (word_regex && *begin < buffer->size) {
 		regmatch_t match[1];
 		if (!regexec_buf(word_regex, buffer->ptr + *begin,
 				 buffer->size - *begin, 1, match, 0)) {
@@ -2061,9 +2061,13 @@ static int find_word_boundaries(mmfile_t *buffer, regex_t *word_regex,
 					'\n', match[0].rm_eo - match[0].rm_so);
 			*end = p ? p - buffer->ptr : match[0].rm_eo + *begin;
 			*begin += match[0].rm_so;
-			return *begin >= *end;
+			if (*begin == *end)
+				(*begin)++;
+			else
+				return *begin > *end;
+		} else {
+			return -1;
 		}
-		return -1;
 	}
 
 	/* find the next word */
