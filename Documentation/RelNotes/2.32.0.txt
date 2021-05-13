@@ -121,6 +121,9 @@ UI, Workflows & Features
    same goal in a safer and more intuitive way has been added, as
    the trailer.<token>.cmd configuration variable, to replace it.
 
+ * "git add -i --dry-run" does not dry-run, which was surprising.  The
+   combination of options has taught to error out.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -194,6 +197,9 @@ Performance, Internal Implementation, Development Support etc.
    various formats.
 
  * The reflog expiry machinery has been taught to emit trace events.
+
+ * Over-the-wire protocol learns a new request type to ask for object
+   sizes given a list of object names.
 
 
 Fixes since v2.31
@@ -345,6 +351,13 @@ Fixes since v2.31
  * Document that our test can use "local" keyword.
    (merge a84fd3bcc6 jc/test-allows-local later to maint).
 
+ * The word-diff mode has been taught to work better with a word
+   regexp that can match an empty string.
+   (merge 0324e8fc6b pw/word-diff-zero-width-matches later to maint).
+
+ * "git p4" learned to find branch points more efficiently.
+   (merge 6b79818bfb jk/p4-locate-branch-point-optim later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
    (merge 12604a8d0c sv/t9801-test-path-is-file-cleanup later to maint).
@@ -364,3 +377,5 @@ Fixes since v2.31
    (merge 151b6c2dd7 jc/doc-do-not-capitalize-clarification later to maint).
    (merge 9160068ac6 js/access-nul-emulation-on-windows later to maint).
    (merge 7a14acdbe6 po/diff-patch-doc later to maint).
+   (merge f91371b948 pw/patience-diff-clean-up later to maint).
+   (merge 3a7f0908b6 mt/clean-clean later to maint).
