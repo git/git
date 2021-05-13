@@ -349,6 +349,10 @@ test_expect_success 'git add --dry-run --ignore-missing of non-existing file out
 	test_cmp expect.err actual.err
 '
 
+test_expect_success 'git add --dry-run --interactive should fail' '
+	test_must_fail git add --dry-run --interactive
+'
+
 test_expect_success 'git add empty string should fail' '
 	test_must_fail git add ""
 '
