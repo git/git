@@ -196,6 +196,11 @@ appropriately before running "make". Short options can be bundled, i.e.
 	this feature by setting the GIT_TEST_CHAIN_LINT environment
 	variable to "1" or "0", respectively.
 
+	A few test scripts disable some of the more advanced
+	chain-linting detection in the name of efficiency. You can
+	override this by setting the GIT_TEST_CHAIN_LINT_HARDER
+	environment variable to "1".
+
 --stress::
 	Run the test script repeatedly in multiple parallel jobs until
 	one of them fails.  Useful for reproducing rare failures in
