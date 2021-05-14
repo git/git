@@ -448,9 +448,9 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 				     const char *oldname,
 				     const char *newname)
 {
-	char *old_dir = xstrdup(oldname);
-	char *new_dir = xstrdup(newname);
-	char new_dir_first_char = new_dir[0];
+	char *old_dir;
+	char *new_dir;
+	const char new_dir_first_char = newname[0];
 	int first_time_in_loop = 1;
 
 	if (!info->setup)
@@ -474,6 +474,10 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 		 * dir_rename_counts anyway, so we can just exit early.
 		 */
 		return;
+
+
+	old_dir = xstrdup(oldname);
+	new_dir = xstrdup(newname);
 
 	while (1) {
 		int drd_flag = NOT_RELEVANT;
