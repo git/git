@@ -139,7 +139,7 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 	replay.ignore_date = opts->ignore_date;
 	replay.gpg_sign = xstrdup_or_null(opts->gpg_sign_opt);
 	if (opts->strategy)
-		replay.strategy = opts->strategy;
+		replay.strategy = xstrdup_or_null(opts->strategy);
 	else if (!replay.strategy && replay.default_strategy) {
 		replay.strategy = replay.default_strategy;
 		replay.default_strategy = NULL;
@@ -2109,6 +2109,7 @@ cleanup:
 	free(options.head_name);
 	free(options.gpg_sign_opt);
 	free(options.cmd);
+	free(options.strategy);
 	strbuf_release(&options.git_format_patch_opt);
 	free(squash_onto_name);
 	return ret;
