@@ -139,7 +139,7 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 	replay.ignore_date = opts->ignore_date;
 	replay.gpg_sign = xstrdup_or_null(opts->gpg_sign_opt);
 	if (opts->strategy)
-		replay.strategy = opts->strategy;
+		replay.strategy = xstrdup_or_null(opts->strategy);
 	else if (!replay.strategy && replay.default_strategy) {
 		replay.strategy = replay.default_strategy;
 		replay.default_strategy = NULL;
@@ -1723,7 +1723,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	if (options.strategy) {
-		options.strategy = xstrdup(options.strategy);
 		switch (options.type) {
 		case REBASE_APPLY:
 			die(_("--strategy requires --merge or --interactive"));
@@ -1776,7 +1775,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (options.type == REBASE_MERGE &&
 	    !options.strategy &&
 	    getenv("GIT_TEST_MERGE_ALGORITHM"))
-		options.strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
+		options.strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
 
 	switch (options.type) {
 	case REBASE_MERGE:
