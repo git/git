@@ -52,8 +52,8 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2020-12-15 16:27+0800\n"
-"PO-Revision-Date: 2020-05-28 18:14+0200\n"
-"Last-Translator: Jordi Mas <jmas@softcatala.org>\n"
+"PO-Revision-Date: 2021-05-14 10:22-0600\n"
+"Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -13354,7 +13354,7 @@ msgstr ""
 #: builtin/commit.c:1069
 #, c-format
 msgid "Invalid ignored mode '%s'"
-msgstr "Mode ignorat no vàlid «%s»"
+msgstr "Mode d'ignorància no vàlid «%s»"
 
 #: builtin/commit.c:1087 builtin/commit.c:1331
 #, c-format
@@ -13490,9 +13490,8 @@ msgstr ""
 "detecta canvis de noms, i opcionalment estableix un índex de semblança"
 
 #: builtin/commit.c:1415
-#, fuzzy
 msgid "Unsupported combination of ignored and untracked-files arguments"
-msgstr "Combinació d'arguments ignorats i no seguits"
+msgstr "No s'admet la combinació d'arguments d'ignorància i de fitxers no seguits"
 
 #: builtin/commit.c:1497
 msgid "suppress summary after successful commit"
