@@ -3050,12 +3050,21 @@ static void process_entry(struct merge_options *opt,
 				rename_b = 1;
 			}
 
-			path_msg(opt, path, 0,
-				 _("CONFLICT (distinct types): %s had different "
-				   "types on each side; renamed %s of them so "
-				   "each can be recorded somewhere."),
-				 path,
-				 (rename_a && rename_b) ? _("both") : _("one"));
+			if (rename_a && rename_b) {
+				path_msg(opt, path, 0,
+					 _("CONFLICT (distinct types): %s had "
+					   "different types on each side; "
+					   "renamed both of them so each can "
+					   "be recorded somewhere."),
+					 path);
+			} else {
+				path_msg(opt, path, 0,
+					 _("CONFLICT (distinct types): %s had "
+					   "different types on each side; "
+					   "renamed one of them so each can be "
+					   "recorded somewhere."),
+					 path);
+			}
 
 			ci->merged.clean = 0;
 			memcpy(new_ci, ci, sizeof(*new_ci));
