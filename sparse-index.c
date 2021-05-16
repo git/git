@@ -102,7 +102,7 @@ static int convert_to_sparse_rec(struct index_state *istate,
 	return num_converted - start_converted;
 }
 
-static int set_index_sparse_config(struct repository *repo, int enable)
+int set_sparse_index_config(struct repository *repo, int enable)
 {
 	int res;
 	char *config_path = repo_git_path(repo, "config.worktree");
@@ -110,15 +110,6 @@ static int set_index_sparse_config(struct repository *repo, int enable)
 					    "index.sparse",
 					    enable ? "true" : NULL);
 	free(config_path);
-
-	prepare_repo_settings(repo);
-	repo->settings.sparse_index = 1;
-	return res;
-}
-
-int set_sparse_index_config(struct repository *repo, int enable)
-{
-	int res = set_index_sparse_config(repo, enable);
 
 	prepare_repo_settings(repo);
 	repo->settings.sparse_index = enable;
