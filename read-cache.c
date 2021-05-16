@@ -839,8 +839,11 @@ struct cache_entry *make_empty_cache_entry(struct index_state *istate, size_t le
 	return mem_pool__ce_calloc(find_mem_pool(istate), len);
 }
 
-struct cache_entry *make_empty_transient_cache_entry(size_t len)
+struct cache_entry *make_empty_transient_cache_entry(size_t len,
+						     struct mem_pool *ce_mem_pool)
 {
+	if (ce_mem_pool)
+		return mem_pool__ce_calloc(ce_mem_pool, len);
 	return xcalloc(1, cache_entry_size(len));
 }
 
@@ -874,8 +877,11 @@ struct cache_entry *make_cache_entry(struct index_state *istate,
 	return ret;
 }
 
-struct cache_entry *make_transient_cache_entry(unsigned int mode, const struct object_id *oid,
-					       const char *path, int stage)
+struct cache_entry *make_transient_cache_entry(unsigned int mode,
+					       const struct object_id *oid,
+					       const char *path,
+					       int stage,
+					       struct mem_pool *ce_mem_pool)
 {
 	struct cache_entry *ce;
 	int len;
@@ -886,7 +892,7 @@ struct cache_entry *make_transient_cache_entry(unsigned int mode, const struct o
 	}
 
 	len = strlen(path);
-	ce = make_empty_transient_cache_entry(len);
+	ce = make_empty_transient_cache_entry(len, ce_mem_pool);
 
 	oidcpy(&ce->oid, oid);
 	memcpy(ce->name, path, len);

@@ -8,6 +8,7 @@
 #include "sigchain.h"
 #include "streaming.h"
 #include "thread-utils.h"
+#include "trace2.h"
 
 struct pc_worker {
 	struct child_process cp;
@@ -34,6 +35,20 @@ static const int DEFAULT_NUM_WORKERS = 1;
 
 void get_parallel_checkout_configs(int *num_workers, int *threshold)
 {
+	char *env_workers = getenv("GIT_TEST_CHECKOUT_WORKERS");
+
+	if (env_workers && *env_workers) {
+		if (strtol_i(env_workers, 10, num_workers)) {
+			die("invalid value for GIT_TEST_CHECKOUT_WORKERS: '%s'",
+			    env_workers);
+		}
+		if (*num_workers < 1)
+			*num_workers = online_cpus();
+
+		*threshold = 0;
+		return;
+	}
+
 	if (git_config_get_int("checkout.workers", num_workers))
 		*num_workers = DEFAULT_NUM_WORKERS;
 	else if (*num_workers < 1)
@@ -326,6 +341,7 @@ void write_pc_item(struct parallel_checkout_item *pc_item,
 	if (dir_sep && !has_dirs_only_path(path.buf, dir_sep - path.buf,
 					   state->base_dir_len)) {
 		pc_item->status = PC_ITEM_COLLIDED;
+		trace2_data_string("pcheckout", NULL, "collision/dirname", path.buf);
 		goto out;
 	}
 
@@ -341,6 +357,8 @@ void write_pc_item(struct parallel_checkout_item *pc_item,
 			 * call should have already caught these cases.
 			 */
 			pc_item->status = PC_ITEM_COLLIDED;
+			trace2_data_string("pcheckout", NULL,
+					   "collision/basename", path.buf);
 		} else {
 			error_errno("failed to open file '%s'", path.buf);
 			pc_item->status = PC_ITEM_FAILED;
