@@ -346,6 +346,14 @@ explained below.
 	client should download from all given URIs. Currently, the
 	protocols supported are "http" and "https".
 
+If the 'wait-for-done' feature is advertised, the following argument
+can be included in the client's request.
+
+    wait-for-done
+	Indicates to the server that it should never send "ready", but
+	should wait for the client to say "done" before sending the
+	packfile.
+
 The response of `fetch` is broken into a number of sections separated by
 delimiter packets (0001), with each section beginning with its section
 header. Most sections are sent only when the packfile is sent.

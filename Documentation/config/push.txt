@@ -120,3 +120,10 @@ push.useForceIfIncludes::
 	`--force-if-includes` as an option to linkgit:git-push[1]
 	in the command line. Adding `--no-force-if-includes` at the
 	time of push overrides this configuration setting.
+
+push.negotiate::
+	If set to "true", attempt to reduce the size of the packfile
+	sent by rounds of negotiation in which the client and the
+	server attempt to find commits in common. If "false", Git will
+	rely solely on the server's ref advertisement to find commits
+	in common.

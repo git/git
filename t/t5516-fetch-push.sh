@@ -191,6 +191,41 @@ test_expect_success 'fetch with pushInsteadOf (should not rewrite)' '
 	)
 '
 
+grep_wrote () {
+	object_count=$1
+	file_name=$2
+	grep 'write_pack_file/wrote.*"value":"'$1'"' $2
+}
+
+test_expect_success 'push with negotiation' '
+	# Without negotiation
+	mk_empty testrepo &&
+	git push testrepo $the_first_commit:refs/remotes/origin/first_commit &&
+	git -C testrepo config receive.hideRefs refs/remotes/origin/first_commit &&
+	echo now pushing without negotiation &&
+	GIT_TRACE2_EVENT="$(pwd)/event" git -c protocol.version=2 push testrepo refs/heads/main:refs/remotes/origin/main &&
+	grep_wrote 5 event && # 2 commits, 2 trees, 1 blob
+
+	# Same commands, but with negotiation
+	rm event &&
+	mk_empty testrepo &&
+	git push testrepo $the_first_commit:refs/remotes/origin/first_commit &&
+	git -C testrepo config receive.hideRefs refs/remotes/origin/first_commit &&
+	GIT_TRACE2_EVENT="$(pwd)/event" git -c protocol.version=2 -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main &&
+	grep_wrote 2 event # 1 commit, 1 tree
+'
+
+test_expect_success 'push with negotiation proceeds anyway even if negotiation fails' '
+	rm event &&
+	mk_empty testrepo &&
+	git push testrepo $the_first_commit:refs/remotes/origin/first_commit &&
+	git -C testrepo config receive.hideRefs refs/remotes/origin/first_commit &&
+	GIT_TEST_PROTOCOL_VERSION=0 GIT_TRACE2_EVENT="$(pwd)/event" \
+		git -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main 2>err &&
+	grep_wrote 5 event && # 2 commits, 2 trees, 1 blob
+	test_i18ngrep "push negotiation failed" err
+'
+
 test_expect_success 'push without wildcard' '
 	mk_empty testrepo &&
 
