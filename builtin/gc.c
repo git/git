@@ -1909,6 +1909,7 @@ static int crontab_update_schedule(int run_maintenance, int fd, const char *cmd)
 		else if (!in_old_region)
 			fprintf(cron_in, "%s\n", line.buf);
 	}
+	strbuf_release(&line);
 
 	if (run_maintenance) {
 		struct strbuf line_format = STRBUF_INIT;
@@ -1971,8 +1972,10 @@ static int update_background_schedule(int enable)
 		cmd = sep + 1;
 	}
 
-	if (hold_lock_file_for_update(&lk, lock_path, LOCK_NO_DEREF) < 0)
-		return error(_("another process is scheduling background maintenance"));
+	if (hold_lock_file_for_update(&lk, lock_path, LOCK_NO_DEREF) < 0) {
+		result = error(_("another process is scheduling background maintenance"));
+		goto cleanup;
+	}
 
 	if (!strcmp(scheduler, "launchctl"))
 		result = launchctl_update_schedule(enable, get_lock_file_fd(&lk), cmd);
@@ -1984,6 +1987,9 @@ static int update_background_schedule(int enable)
 		die("unknown background scheduler: %s", scheduler);
 
 	rollback_lock_file(&lk);
+
+cleanup:
+	free(lock_path);
 	free(testing);
 	return result;
 }
