@@ -1598,4 +1598,13 @@ test_expect_success 'transaction cannot restart ongoing transaction' '
 	test_must_fail git show-ref --verify refs/heads/restart
 '
 
+test_expect_success 'directory not created deleting packed ref' '
+	git branch d1/d2/r1 HEAD &&
+	git pack-refs --all &&
+	test_path_is_missing .git/refs/heads/d1/d2 &&
+	git update-ref -d refs/heads/d1/d2/r1 &&
+	test_path_is_missing .git/refs/heads/d1/d2 &&
+	test_path_is_missing .git/refs/heads/d1
+'
+
 test_done
