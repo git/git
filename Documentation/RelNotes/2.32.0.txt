@@ -124,6 +124,15 @@ UI, Workflows & Features
  * "git add -i --dry-run" does not dry-run, which was surprising.  The
    combination of options has taught to error out.
 
+ * "git push" learns to discover common ancestor with the receiving
+   end over protocol v2.  This will hopefully make "git push" as
+   efficient as "git fetch" in avoiding objects from getting
+   transferred unnecessarily.
+
+ * "git mailinfo" (hence "git am") learned the "--quoted-cr" option to
+   control how lines ending with CRLF wrapped in base64 or qp are
+   handled.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -358,6 +367,10 @@ Fixes since v2.31
  * "git p4" learned to find branch points more efficiently.
    (merge 6b79818bfb jk/p4-locate-branch-point-optim later to maint).
 
+ * When "git update-ref -d" removes a ref that is packed, it left
+   empty directories under $GIT_DIR/refs/ for
+   (merge 5f03e5126d wc/packed-ref-removal-cleanup later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
    (merge 12604a8d0c sv/t9801-test-path-is-file-cleanup later to maint).
@@ -379,3 +392,6 @@ Fixes since v2.31
    (merge 7a14acdbe6 po/diff-patch-doc later to maint).
    (merge f91371b948 pw/patience-diff-clean-up later to maint).
    (merge 3a7f0908b6 mt/clean-clean later to maint).
+   (merge d4e2d15a8b ab/streaming-simplify later to maint).
+   (merge 0e59f7ad67 ah/merge-ort-i18n later to maint).
+   (merge e6f68f62e0 ls/typofix later to maint).
