@@ -41,27 +41,17 @@ The Steps to Build Git with VS2015 or VS2017 from the command line.
 
 ================================================================
 
-Alternatively, run `make vcxproj` and then load the generated `git.sln` in
-Visual Studio. The initial build will install the vcpkg system and build the
+Alternatively, just open Git's top-level directory in Visual Studio, via
+`File>Open>Folder...`. This will use CMake internally to generate the
+project definitions. It will also install the vcpkg system and build the
 dependencies automatically. This will take a while.
 
-Instead of generating the `git.sln` file yourself (which requires a full Git
-for Windows SDK), you may want to consider fetching the `vs/master` branch of
-https://github.com/git-for-windows/git instead (which is updated automatically
-via CI running `make vcxproj`). The `vs/master` branch does not require a Git
-for Windows to build, but you can run the test scripts in a regular Git Bash.
+You can also generate the Visual Studio solution manually by downloading
+and running CMake explicitly rather than letting Visual Studio doing
+that implicitly.
 
-Note that `make vcxproj` will automatically add and commit the generated `.sln`
-and `.vcxproj` files to the repo. This is necessary to allow building a
-fully-testable Git in Visual Studio, where a regular Git Bash can be used to
-run the test scripts (as opposed to a full Git for Windows SDK): a number of
-build targets, such as Git commands implemented as Unix shell scripts (where
-`@@SHELL_PATH@@` and other placeholders are interpolated) require a full-blown
-Git for Windows SDK (which is about 10x the size of a regular Git for Windows
-installation).
-
-If your plan is to open a Pull Request with Git for Windows, it is a good idea
-to drop this commit before submitting.
+Another, deprecated option is to run `make vcxproj`. This option is
+superseded by the CMake-based build, and will be removed at some point.
 
 ================================================================
 The Steps of Build Git with VS2008
