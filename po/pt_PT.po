@@ -788,8 +788,8 @@ msgstr "'git apply --cached' falhou"
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
 msgstr ""
-"Problema na submissão de pedaço editado. Editar de novo (responder
-\"n\" para \"não\" descarta!) [y/n]? "
+"Problema na submissão de pedaço editado. Editar de novo (responder "
+"\"n\" para \"não\" descarta!) [y/n]? "
 
 #: add-patch.c:1289
 #, fuzzy
@@ -6510,12 +6510,12 @@ msgstr "publicação sem destino (push.default é 'nothing')"
 
 #: remote.c:1804
 msgid "cannot resolve 'simple' push to a single destination"
-msgstr "não é possível resolver a publicação 'simple' num único destino"
+msgstr "incapaz resolver atiranço 'simple' para destino único"
 
 #: remote.c:1933
 #, fuzzy, c-format
 msgid "couldn't find remote ref %s"
-msgstr "Referência remota HEAD não encontrada"
+msgstr "incapaz encontrar ref remoto %s"
 
 #: remote.c:1946
 #, c-format
@@ -6595,7 +6595,7 @@ msgstr "  (use \"git pull\" para integrar o ramo remoto no seu ramo)\n"
 #: remote.c:2348
 #, fuzzy, c-format
 msgid "cannot parse expected object name '%s'"
-msgstr "não é possível ler o objeto %s: '%s'"
+msgstr "incapaz analisar nome de objeto esperado '%s'"
 
 #: replace-object.c:21
 #, fuzzy, c-format
@@ -6619,7 +6619,7 @@ msgstr ""
 #: rerere.c:264 rerere.c:269
 #, fuzzy
 msgid "unable to write rerere record"
-msgstr "não é possível escrever o objeto de nota"
+msgstr "incapaz escrever registro rerere"
 
 #: rerere.c:495
 #, c-format
@@ -6634,7 +6634,7 @@ msgstr "falha ao invocar stat de '%s'"
 #: rerere.c:503 rerere.c:1039
 #, fuzzy, c-format
 msgid "could not parse conflict hunks in '%s'"
-msgstr "não foi possível analisar o objeto '%s'"
+msgstr "incapaz analisar pedaços conflituosos em '%s'"
 
 #: rerere.c:684
 #, fuzzy, c-format
@@ -6664,7 +6664,7 @@ msgstr ""
 #: rerere.c:803
 #, fuzzy, c-format
 msgid "cannot unlink stray '%s'"
-msgstr "não é possível criar a ligação simbólica '%s' '%s'"
+msgstr "incapaz deslinkar o perdido '%s'"
 
 #: rerere.c:807
 #, c-format
@@ -6675,7 +6675,7 @@ msgstr ""
 #: builtin/submodule--helper.c:1878 builtin/submodule--helper.c:1890
 #, c-format
 msgid "could not create directory '%s'"
-msgstr "não foi possível criar o diretório '%s'"
+msgstr "incapaz criar pasta '%s'"
 
 #: rerere.c:1057
 #, fuzzy, c-format
@@ -6700,17 +6700,17 @@ msgstr ""
 #: rerere.c:1096
 #, fuzzy, c-format
 msgid "Forgot resolution for '%s'\n"
-msgstr "não foi possível resolver a referência '%s'\n"
+msgstr "Está esquecida resolução para '%s'\n"
 
 #: rerere.c:1199
 #, fuzzy
 msgid "unable to open rr-cache directory"
-msgstr "não é possível de obter o diretório de trabalho atual"
+msgstr "incapaz abrir pasta rr-cache"
 
 #: reset.c:42
 #, fuzzy
 msgid "could not determine HEAD revision"
-msgstr "não foi possível destacar HEAD"
+msgstr "incapaz determinar revisão de HEAD"
 
 #: reset.c:70 reset.c:76 sequencer.c:3460
 #, fuzzy, c-format
@@ -24692,8 +24692,8 @@ msgstr "Incapaz de encontrar revisão atual ${remote_name}/${branch} em path de 
 msgid ""
 "Unable to fetch in submodule path '$displaypath'; trying to directly fetch "
 "$sha1:"
-msgstr "Incapaz de buscar em path de submódulo '$displaypath'; tentando
-buscar $sha1 directamente:"
+msgstr "Incapaz de buscar em path de submódulo '$displaypath'; tentando "
+"buscar $sha1 directamente:"
 
 #: git-submodule.sh:607
 #, sh-format
