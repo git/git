@@ -263,6 +263,22 @@ static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 	dst->algo = src->algo;
 }
 
+/* Like oidcpy() but zero-pads the unused bytes in dst's hash array. */
+static inline void oidcpy_with_padding(struct object_id *dst,
+				       struct object_id *src)
+{
+	size_t hashsz;
+
+	if (!src->algo)
+		hashsz = the_hash_algo->rawsz;
+	else
+		hashsz = hash_algos[src->algo].rawsz;
+
+	memcpy(dst->hash, src->hash, hashsz);
+	memset(dst->hash + hashsz, 0, GIT_MAX_RAWSZ - hashsz);
+	dst->algo = src->algo;
+}
+
 static inline struct object_id *oiddup(const struct object_id *src)
 {
 	struct object_id *dst = xmalloc(sizeof(struct object_id));
