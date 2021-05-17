@@ -25,21 +25,14 @@ static void flush(struct hashfile *f, const void *buf, unsigned int count)
 			die("sha1 file '%s' validation error", f->name);
 	}
 
-	for (;;) {
-		int ret = xwrite(f->fd, buf, count);
-		if (ret > 0) {
-			f->total += ret;
-			display_throughput(f->tp, f->total);
-			buf = (char *) buf + ret;
-			count -= ret;
-			if (count)
-				continue;
-			return;
-		}
-		if (!ret)
+	if (write_in_full(f->fd, buf, count) < 0) {
+		if (errno == ENOSPC)
 			die("sha1 file '%s' write error. Out of diskspace", f->name);
 		die_errno("sha1 file '%s' write error", f->name);
 	}
+
+	f->total += count;
+	display_throughput(f->tp, f->total);
 }
 
 void hashflush(struct hashfile *f)
