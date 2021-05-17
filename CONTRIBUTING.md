@@ -78,22 +78,12 @@ release MSVC builds):
     make MSVC=1 DEBUG=1 -j12 clean
 ```
 
-### Using `vs/master` Solution
+### Using the IDE
 
-If you prefer working in Visual Studio with a solution full of projects, then there is a
-branch in Git for Windows called [`vs/master`](https://github.com/git-for-windows/git/branches).
-This branch is kept up-to-date with the `master` branch, except it has one more commit that
-contains the solution and project files. Read [the wiki page on this approach](https://github.com/git-for-windows/git/wiki/Compiling-Git-with-Visual-Studio) for more information.
-
-I want to make a small warning before you start working on the `vs/master` branch. If you
-create a new topic branch based on `vs/master`, you will need to rebase onto `master` before
-you can submit a pull request. The commit at the tip of `vs/master` is not intended to ever
-become part of the `master` branch. If you created a branch, `myTopic` based on `vs/master`,
-then use the following rebase command to move it onto the `master` branch:
-
-```
-git rebase --onto master vs/master myTopic
-```
+If you prefer working in Visual Studio with a solution full of projects, then you can use
+CMake, either by letting Visual Studio configure it automatically (simply open Git's
+top-level directory via `File>Open>Folder...`) or by (downloading and) running
+[CMake](https://cmake.org) manually.
 
 What to Change?
 ---------------
