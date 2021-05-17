@@ -159,6 +159,18 @@ in the po/ directory, where XX.po is the file you want to update.
 Once you are done testing the translation (see below), commit the result
 and ask the l10n coordinator to pull from you.
 
+Fuzzy translation
+-----------------
+
+Fuzzy translation is a translation marked by comment "fuzzy" to let you
+know that the translation is out of date because the "msgid" has been
+changed. A fuzzy translation will be ignored when compiling using "msgfmt".
+Fuzzy translation can be marked by hands, but for most cases they are
+marked automatically when running "msgmerge" to update your "XX.po" file.
+
+After fixing the corresponding translation, you must remove the "fuzzy"
+tag in the comment.
+
 
 Testing your changes
 --------------------
