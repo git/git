@@ -62,8 +62,4 @@ Note: even if those builds are not exactly "nightly", they are sometimes referre
 
 ## Following upstream's developments
 
-The [gitforwindows/git repository](https://github.com/git-for-windows/git) also provides the `shears/*` and `vs/master` branches. The `shears/*` branches reflect Git for Windows' patches, rebased onto the upstream integration branches, [updated (mostly) via automated CI builds](https://dev.azure.com/git-for-windows/git/_build?definitionId=25).
-
-# Other special branches
-
-Currently, there is only one other special-purpose branch in Git for Windows: the `vs/master` branch. It adds a commit on top of git-for-Windows/git's `master`, providing the project files ready to build Git in Visual Studio using the MSVC tool chain, [also updated via automated builds](https://dev.azure.com/git-for-windows/git/_build?definitionId=27).
+The [gitforwindows/git repository](https://github.com/git-for-windows/git) also provides the `shears/*` branches. The `shears/*` branches reflect Git for Windows' patches, rebased onto the upstream integration branches, [updated (mostly) via automated CI builds](https://dev.azure.com/git-for-windows/git/_build?definitionId=25).
