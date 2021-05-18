@@ -2522,46 +2522,6 @@ int repo_index_has_changes(struct repository *repo,
 	}
 }
 
-#define WRITE_BUFFER_SIZE (128 * 1024)
-static unsigned char write_buffer[WRITE_BUFFER_SIZE];
-static unsigned long write_buffer_len;
-
-MAYBE_UNUSED
-static int ce_write_flush(git_hash_ctx *context, int fd)
-{
-	unsigned int buffered = write_buffer_len;
-	if (buffered) {
-		the_hash_algo->update_fn(context, write_buffer, buffered);
-		if (write_in_full(fd, write_buffer, buffered) < 0)
-			return -1;
-		write_buffer_len = 0;
-	}
-	return 0;
-}
-
-MAYBE_UNUSED
-static int ce_write(git_hash_ctx *context, int fd, void *data, unsigned int len)
-{
-	while (len) {
-		unsigned int buffered = write_buffer_len;
-		unsigned int partial = WRITE_BUFFER_SIZE - buffered;
-		if (partial > len)
-			partial = len;
-		memcpy(write_buffer + buffered, data, partial);
-		buffered += partial;
-		if (buffered == WRITE_BUFFER_SIZE) {
-			write_buffer_len = buffered;
-			if (ce_write_flush(context, fd))
-				return -1;
-			buffered = 0;
-		}
-		write_buffer_len = buffered;
-		len -= partial;
-		data = (char *) data + partial;
-	}
-	return 0;
-}
-
 static int write_index_ext_header(struct hashfile *f,
 				  git_hash_ctx *eoie_f,
 				  unsigned int ext,
@@ -2577,30 +2537,6 @@ static int write_index_ext_header(struct hashfile *f,
 		the_hash_algo->update_fn(eoie_f, &sz, sizeof(sz));
 	}
 	return 0;
-}
-
-MAYBE_UNUSED
-static int ce_flush(git_hash_ctx *context, int fd, unsigned char *hash)
-{
-	unsigned int left = write_buffer_len;
-
-	if (left) {
-		write_buffer_len = 0;
-		the_hash_algo->update_fn(context, write_buffer, left);
-	}
-
-	/* Flush first if not enough space for hash signature */
-	if (left + the_hash_algo->rawsz > WRITE_BUFFER_SIZE) {
-		if (write_in_full(fd, write_buffer, left) < 0)
-			return -1;
-		left = 0;
-	}
-
-	/* Append the hash signature at the end */
-	the_hash_algo->final_fn(write_buffer + left, context);
-	hashcpy(hash, write_buffer + left);
-	left += the_hash_algo->rawsz;
-	return (write_in_full(fd, write_buffer, left) < 0) ? -1 : 0;
 }
 
 static void ce_smudge_racily_clean_entry(struct index_state *istate,
