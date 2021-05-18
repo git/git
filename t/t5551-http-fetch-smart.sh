@@ -533,7 +533,7 @@ test_expect_success 'http auth remembers successful credentials' '
 	expect_askpass none
 '
 
-test_expect_failure 'http auth forgets bogus credentials' '
+test_expect_success 'http auth forgets bogus credentials' '
 	# seed credential store with bogus values. In real life,
 	# this would probably come from a password which worked
 	# for a previous request.
