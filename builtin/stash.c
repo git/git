@@ -207,10 +207,16 @@ static int get_stash_info(struct stash_info *info, int argc, const char **argv)
 static int do_clear_stash(void)
 {
 	struct object_id obj;
+	int result;
 	if (get_oid(ref_stash, &obj))
 		return 0;
 
-	return delete_ref(NULL, ref_stash, &obj, 0);
+	result = delete_ref(NULL, ref_stash, &obj, 0);
+
+	/* Ignore error; this is necessary for reftable, which keeps reflogs
+	 * even when refs are deleted. */
+	delete_reflog(ref_stash);
+	return result;
 }
 
 static int clear_stash(int argc, const char **argv, const char *prefix)
