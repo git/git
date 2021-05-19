@@ -118,10 +118,8 @@ static void prune_worktrees(void)
 	struct dirent *d;
 	if (!dir)
 		return;
-	while ((d = readdir(dir)) != NULL) {
+	while ((d = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		char *path;
-		if (is_dot_or_dotdot(d->d_name))
-			continue;
 		strbuf_reset(&reason);
 		if (should_prune_worktree(d->d_name, &reason, &path, expire))
 			prune_worktree(d->d_name, reason.buf);

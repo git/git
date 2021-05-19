@@ -2350,10 +2350,8 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 	strbuf_addch(path, '/');
 	baselen = path->len;
 
-	while ((de = readdir(dir))) {
+	while ((de = readdir_skip_dot_and_dotdot(dir))) {
 		size_t namelen;
-		if (is_dot_or_dotdot(de->d_name))
-			continue;
 
 		namelen = strlen(de->d_name);
 		strbuf_setlen(path, baselen);

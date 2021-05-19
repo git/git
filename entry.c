@@ -58,11 +58,8 @@ static void remove_subtree(struct strbuf *path)
 
 	if (!dir)
 		die_errno("cannot opendir '%s'", path->buf);
-	while ((de = readdir(dir)) != NULL) {
+	while ((de = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		struct stat st;
-
-		if (is_dot_or_dotdot(de->d_name))
-			continue;
 
 		strbuf_addch(path, '/');
 		strbuf_addstr(path, de->d_name);

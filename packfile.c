@@ -813,10 +813,7 @@ void for_each_file_in_pack_dir(const char *objdir,
 	}
 	strbuf_addch(&path, '/');
 	dirnamelen = path.len;
-	while ((de = readdir(dir)) != NULL) {
-		if (is_dot_or_dotdot(de->d_name))
-			continue;
-
+	while ((de = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		strbuf_setlen(&path, dirnamelen);
 		strbuf_addstr(&path, de->d_name);
 
