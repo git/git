@@ -124,7 +124,8 @@ int cmd__fast_rebase(int argc, const char **argv)
 	assert(oideq(&onto->object.oid, &head));
 
 	hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
-	assert(repo_read_index(the_repository) >= 0);
+	if (repo_read_index(the_repository) < 0)
+		BUG("Could not read index");
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	revs.verbose_header = 1;
