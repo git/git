@@ -101,10 +101,10 @@ test_expect_success 'caching renames does not preclude finding new ones' '
 # dramatic change in size of the file, but remembering the rename and
 # reusing it is reasonable too.
 #
-# Rename detection (diffcore_rename_extended()) will run twice here; it is
-# not needed on the topic side of history for either of the two commits
-# being merged, but it is needed on the upstream side of history for each
-# commit being picked.
+# We do test here that we expect rename detection to only be run once total
+# (the topic side of history doesn't need renames, and with caching we
+# should be able to only run rename detection on the upstream side one
+# time.)
 test_expect_success 'cherry-pick both a commit and its immediate revert' '
 	test_create_repo pick-commit-and-its-immediate-revert &&
 	(
@@ -140,11 +140,11 @@ test_expect_success 'cherry-pick both a commit and its immediate revert' '
 		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
 		export GIT_TRACE2_PERF &&
 
-		test_might_fail test-tool fast-rebase --onto HEAD upstream~1 topic &&
+		test-tool fast-rebase --onto HEAD upstream~1 topic &&
 		#git cherry-pick upstream~1..topic &&
 
 		grep region_enter.*diffcore_rename trace.output >calls &&
-		test_line_count = 2 calls
+		test_line_count = 1 calls
 	)
 '
 
@@ -304,9 +304,11 @@ test_expect_success 'rename same file identically, then add file to old dir' '
 # Here we are just concerned that cached renames might prevent us from seeing
 # the rename conflict, and we want to ensure that we do get a conflict.
 #
-# While at it, also test that we do rename detection three times.  We have to
-# detect renames on the upstream side of history once for each merge, plus
-# Topic_2 has renames.
+# While at it, though, we do test that we only try to detect renames 2
+# times and not three.  (The first merge needs to detect renames on the
+# upstream side.  Traditionally, the second merge would need to detect
+# renames on both sides of history, but our caching of upstream renames
+# should avoid the need to re-detect upstream renames.)
 #
 test_expect_success 'cached dir rename does not prevent noticing later conflict' '
 	test_create_repo dir-rename-cache-not-occluding-later-conflict &&
@@ -357,7 +359,7 @@ test_expect_success 'cached dir rename does not prevent noticing later conflict'
 		grep CONFLICT..rename/rename output &&
 
 		grep region_enter.*diffcore_rename trace.output >calls &&
-		test_line_count = 3 calls
+		test_line_count = 2 calls
 	)
 '
 
@@ -412,10 +414,17 @@ test_setup_upstream_rename () {
 # commit to mess up its location either.  We want to make sure that
 # olddir/newfile doesn't exist in the result and that newdir/newfile does.
 #
-# We also expect rename detection to occur three times.  Although it is
-# typically needed two times per commit, there are no deleted files on the
-# topic side of history, so we only need to detect renames on the upstream
-# side for each of the 3 commits we need to pick.
+# We also test that we only do rename detection twice.  We never need
+# rename detection on the topic side of history, but we do need it twice on
+# the upstream side of history.  For the first topic commit, we only need
+# the
+#   relevant-rename -> renamed
+# rename, because olddir is unmodified by Topic_1.  For Topic_2, however,
+# the new file being added to olddir means files that were previously
+# irrelevant for rename detection are now relevant, forcing us to repeat
+# rename detection for the paths we don't already have cached.  Topic_3 also
+# tweaks olddir/newfile, but the renames in olddir/ will have been cached
+# from the second rename detection run.
 #
 test_expect_success 'dir rename unneeded, then add new file to old dir' '
 	test_setup_upstream_rename dir-rename-unneeded-until-new-file &&
@@ -450,7 +459,7 @@ test_expect_success 'dir rename unneeded, then add new file to old dir' '
 		#git cherry-pick upstream..topic &&
 
 		grep region_enter.*diffcore_rename trace.output >calls &&
-		test_line_count = 3 calls &&
+		test_line_count = 2 calls &&
 
 		git ls-files >tracked &&
 		test_line_count = 5 tracked &&
@@ -516,7 +525,7 @@ test_expect_success 'dir rename unneeded, then rename existing file into old dir
 		#git cherry-pick upstream..topic &&
 
 		grep region_enter.*diffcore_rename trace.output >calls &&
-		test_line_count = 4 calls &&
+		test_line_count = 3 calls &&
 
 		test_path_is_missing somefile &&
 		test_path_is_missing olddir/newfile &&
@@ -648,9 +657,8 @@ test_expect_success 'caching renames only on upstream side, part 1' '
 # for the wrong side of history.
 #
 #
-# This testcase should only need three calls to diffcore_rename_extended(),
-# because there are no renames on the topic side of history for picking
-# Topic_2.
+# This testcase should only need two calls to diffcore_rename_extended(),
+# both for the first merge, one for each side of history.
 #
 test_expect_success 'caching renames only on upstream side, part 2' '
 	test_setup_topic_rename cache-renames-only-upstream-rename-file &&
@@ -677,7 +685,7 @@ test_expect_success 'caching renames only on upstream side, part 2' '
 		#git cherry-pick upstream..topic &&
 
 		grep region_enter.*diffcore_rename trace.output >calls &&
-		test_line_count = 3 calls &&
+		test_line_count = 2 calls &&
 
 		git ls-files >tracked &&
 		test_line_count = 4 tracked &&

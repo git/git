@@ -763,15 +763,48 @@ static void add_pair(struct merge_options *opt,
 	struct rename_info *renames = &opt->priv->renames;
 	int names_idx = is_add ? side : 0;
 
-	if (!is_add) {
+	if (is_add) {
+		if (strset_contains(&renames->cached_target_names[side],
+				    pathname))
+			return;
+	} else {
 		unsigned content_relevant = (match_mask == 0);
 		unsigned location_relevant = (dir_rename_mask == 0x07);
 
+		/*
+		 * If pathname is found in cached_irrelevant[side] due to
+		 * previous pick but for this commit content is relevant,
+		 * then we need to remove it from cached_irrelevant.
+		 */
+		if (content_relevant)
+			/* strset_remove is no-op if strset doesn't have key */
+			strset_remove(&renames->cached_irrelevant[side],
+				      pathname);
+
+		/*
+		 * We do not need to re-detect renames for paths that we already
+		 * know the pairing, i.e. for cached_pairs (or
+		 * cached_irrelevant).  However, handle_deferred_entries() needs
+		 * to loop over the union of keys from relevant_sources[side] and
+		 * cached_pairs[side], so for simplicity we set relevant_sources
+		 * for all the cached_pairs too and then strip them back out in
+		 * prune_cached_from_relevant() at the beginning of
+		 * detect_regular_renames().
+		 */
 		if (content_relevant || location_relevant) {
 			/* content_relevant trumps location_relevant */
 			strintmap_set(&renames->relevant_sources[side], pathname,
 				      content_relevant ? RELEVANT_CONTENT : RELEVANT_LOCATION);
 		}
+
+		/*
+		 * Avoid creating pair if we've already cached rename results.
+		 * Note that we do this after setting relevant_sources[side]
+		 * as noted in the comment above.
+		 */
+		if (strmap_contains(&renames->cached_pairs[side], pathname) ||
+		    strset_contains(&renames->cached_irrelevant[side], pathname))
+			return;
 	}
 
 	one = alloc_filespec(pathname);
@@ -2360,7 +2393,9 @@ static inline int possible_side_renames(struct rename_info *renames,
 static inline int possible_renames(struct rename_info *renames)
 {
 	return possible_side_renames(renames, 1) ||
-	       possible_side_renames(renames, 2);
+	       possible_side_renames(renames, 2) ||
+	       !strmap_empty(&renames->cached_pairs[1]) ||
+	       !strmap_empty(&renames->cached_pairs[2]);
 }
 
 static void resolve_diffpair_statuses(struct diff_queue_struct *q)
@@ -2384,7 +2419,6 @@ static void resolve_diffpair_statuses(struct diff_queue_struct *q)
 	}
 }
 
-MAYBE_UNUSED
 static void prune_cached_from_relevant(struct rename_info *renames,
 				       unsigned side)
 {
@@ -2404,7 +2438,6 @@ static void prune_cached_from_relevant(struct rename_info *renames,
 	}
 }
 
-MAYBE_UNUSED
 static void use_cached_pairs(struct merge_options *opt,
 			     struct strmap *cached_pairs,
 			     struct diff_queue_struct *pairs)
@@ -2507,6 +2540,7 @@ static void detect_regular_renames(struct merge_options *opt,
 	struct diff_options diff_opts;
 	struct rename_info *renames = &opt->priv->renames;
 
+	prune_cached_from_relevant(renames, side_index);
 	if (!possible_side_renames(renames, side_index)) {
 		/*
 		 * No rename detection needed for this side, but we still need
@@ -2535,7 +2569,8 @@ static void detect_regular_renames(struct merge_options *opt,
 	diffcore_rename_extended(&diff_opts,
 				 &renames->relevant_sources[side_index],
 				 &renames->dirs_removed[side_index],
-				 &renames->dir_rename_count[side_index]);
+				 &renames->dir_rename_count[side_index],
+				 &renames->cached_pairs[side_index]);
 	trace2_region_leave("diff", "diffcore_rename", opt->repo);
 	resolve_diffpair_statuses(&diff_queued_diff);
 
@@ -2643,6 +2678,8 @@ static int detect_and_process_renames(struct merge_options *opt,
 	trace2_region_enter("merge", "regular renames", opt->repo);
 	detect_regular_renames(opt, MERGE_SIDE1);
 	detect_regular_renames(opt, MERGE_SIDE2);
+	use_cached_pairs(opt, &renames->cached_pairs[1], &renames->pairs[1]);
+	use_cached_pairs(opt, &renames->cached_pairs[2], &renames->pairs[2]);
 	trace2_region_leave("merge", "regular renames", opt->repo);
 
 	trace2_region_enter("merge", "directory renames", opt->repo);
