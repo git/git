@@ -293,6 +293,7 @@ diff-tree --stat initial mode
 diff-tree --summary initial mode
 
 diff-tree master
+diff-tree -m master
 diff-tree -p master
 diff-tree -p -m master
 diff-tree -c master
