@@ -371,6 +371,25 @@ Fixes since v2.31
    empty directories under $GIT_DIR/refs/ for
    (merge 5f03e5126d wc/packed-ref-removal-cleanup later to maint).
 
+ * "git clean" and "git ls-files -i" had confusion around working on
+   or showing ignored paths inside an ignored directory, which has
+   been corrected.
+   (merge b548f0f156 en/dir-traversal later to maint).
+
+ * The handling of "%(push)" formatting element of "for-each-ref" and
+   friends was broken when the same codepath started handling
+   "%(push:<what>)", which has been corrected.
+   (merge 1e1c4c5eac zh/ref-filter-push-remote-fix later to maint).
+
+ * The bash prompt script (in contrib/) did not work under "set -u".
+   (merge 5c0cbdb107 en/prompt-under-set-u later to maint).
+
+ * The "chainlint" feature in the test framework is a handy way to
+   catch common mistakes in writing new tests, but tends to get
+   expensive.  An knob to selectively disable it has been introduced
+   to help running tests that the developer has not modified.
+   (merge 2d86a96220 jk/test-chainlint-softer later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
    (merge 12604a8d0c sv/t9801-test-path-is-file-cleanup later to maint).
