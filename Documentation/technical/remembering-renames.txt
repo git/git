@@ -214,12 +214,14 @@ in-memory cache of renames and thus doesn't need to be considered further.
 In the special case that E->A does rename the file but also renames it to
 newfile, then there is no conflict from the renaming and the merge can
 succeed.  In this special case, the rename is not valid to cache because
-the second merge will find A:newfile in the MERGE_BASE.  So a
-rename/rename(1to1) needs to be specially handled by pruning renames from
-the cache and decrementing the dir_rename_counts in the current and leading
-directories associated with those renames.  Or, since these are really
-rare, one could just take the easy way out and disable the remembering
-renames optimization when a rename/rename(1to1) happens.
+the second merge will find A:newfile in the MERGE_BASE (see also the new
+testcases in t6429 with "rename same file identically" in their
+description).  So a rename/rename(1to1) needs to be specially handled by
+pruning renames from the cache and decrementing the dir_rename_counts in
+the current and leading directories associated with those renames.  Or,
+since these are really rare, one could just take the easy way out and
+disable the remembering renames optimization when a rename/rename(1to1)
+happens.
 
 The previous paragraph handled the cases for E->A renaming oldfile, let's
 continue assuming that oldfile is not renamed in A.
