@@ -2111,6 +2111,9 @@ static int process_renames(struct merge_options *opt,
 			VERIFY_CI(side2);
 
 			if (!strcmp(pathnames[1], pathnames[2])) {
+				struct rename_info *ri = &opt->priv->renames;
+				int j;
+
 				/* Both sides renamed the same way */
 				assert(side1 == side2);
 				memcpy(&side1->stages[0], &base->stages[0],
@@ -2119,6 +2122,16 @@ static int process_renames(struct merge_options *opt,
 				/* Mark base as resolved by removal */
 				base->merged.is_null = 1;
 				base->merged.clean = 1;
+
+				/*
+				 * Disable remembering renames optimization;
+				 * rename/rename(1to1) is incredibly rare, and
+				 * just disabling the optimization is easier
+				 * than purging cached_pairs,
+				 * cached_target_names, and dir_rename_counts.
+				 */
+				for (j = 0; j < 3; j++)
+					ri->merge_trees[j] = NULL;
 
 				/* We handled both renames, i.e. i+1 handled */
 				i++;
@@ -3918,7 +3931,22 @@ static void merge_check_renames_reusable(struct merge_options *opt,
 
 	renames = &opti->renames;
 	merge_trees = renames->merge_trees;
-	/* merge_trees[0..2] will only be NULL if opti is */
+
+	/*
+	 * Handle case where previous merge operation did not want cache to
+	 * take effect, e.g. because rename/rename(1to1) makes it invalid.
+	 */
+	if (!merge_trees[0]) {
+		assert(!merge_trees[0] && !merge_trees[1] && !merge_trees[2]);
+		renames->cached_pairs_valid_side = 0; /* neither side valid */
+		return;
+	}
+
+	/*
+	 * Handle other cases; note that merge_trees[0..2] will only
+	 * be NULL if opti is, or if all three were manually set to
+	 * NULL by e.g. rename/rename(1to1) handling.
+	 */
 	assert(merge_trees[0] && merge_trees[1] && merge_trees[2]);
 
 	/* Check if we meet a condition for re-using cached_pairs */
