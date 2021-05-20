@@ -486,17 +486,18 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 	/* Free memory used by various renames maps */
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; ++i) {
 		strintmap_func(&renames->dirs_removed[i]);
-
-		partial_clear_dir_rename_count(&renames->dir_rename_count[i]);
-		if (!reinitialize)
-			strmap_clear(&renames->dir_rename_count[i], 1);
-
 		strmap_func(&renames->dir_renames[i], 0);
-
 		strintmap_func(&renames->relevant_sources[i]);
-		strset_func(&renames->cached_target_names[i]);
-		strmap_func(&renames->cached_pairs[i], 1);
-		strset_func(&renames->cached_irrelevant[i]);
+		if (!reinitialize)
+			assert(renames->cached_pairs_valid_side == 0);
+		if (i != renames->cached_pairs_valid_side) {
+			strset_func(&renames->cached_target_names[i]);
+			strmap_func(&renames->cached_pairs[i], 1);
+			strset_func(&renames->cached_irrelevant[i]);
+			partial_clear_dir_rename_count(&renames->dir_rename_count[i]);
+			if (!reinitialize)
+				strmap_clear(&renames->dir_rename_count[i], 1);
+		}
 	}
 	renames->cached_pairs_valid_side = 0;
 	renames->dir_rename_mask = 0;
@@ -2456,6 +2457,7 @@ static void detect_regular_renames(struct merge_options *opt,
 		return;
 	}
 
+	partial_clear_dir_rename_count(&renames->dir_rename_count[side_index]);
 	repo_diff_setup(opt->repo, &diff_opts);
 	diff_opts.flags.recursive = 1;
 	diff_opts.flags.rename_empty = 0;
