@@ -6,6 +6,7 @@ typedef void (*diff_merges_setup_func_t)(struct rev_info *);
 static void set_separate(struct rev_info *revs);
 
 static diff_merges_setup_func_t set_to_default = set_separate;
+static int suppress_parsing;
 
 static void suppress(struct rev_info *revs)
 {
@@ -28,17 +29,6 @@ static void set_first_parent(struct rev_info *revs)
 {
 	set_separate(revs);
 	revs->first_parent_merges = 1;
-}
-
-static void set_m(struct rev_info *revs)
-{
-	/*
-	 * To "diff-index", "-m" means "match missing", and to the "log"
-	 * family of commands, it means "show default diff for merges". Set
-	 * both fields appropriately.
-	 */
-	set_to_default(revs);
-	revs->match_missing = 1;
 }
 
 static void set_combined(struct rev_info *revs)
@@ -101,14 +91,22 @@ int diff_merges_config(const char *value)
 	return 0;
 }
 
+void diff_merges_suppress_options_parsing(void)
+{
+	suppress_parsing = 1;
+}
+
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 {
 	int argcount = 1;
 	const char *optarg;
 	const char *arg = argv[0];
 
+	if (suppress_parsing)
+		return 0;
+
 	if (!strcmp(arg, "-m")) {
-		set_m(revs);
+		set_to_default(revs);
 	} else if (!strcmp(arg, "-c")) {
 		set_combined(revs);
 		revs->combined_imply_patch = 1;
@@ -155,6 +153,9 @@ void diff_merges_set_dense_combined_if_unset(struct rev_info *revs)
 
 void diff_merges_setup_revs(struct rev_info *revs)
 {
+	if (suppress_parsing)
+		return;
+
 	if (revs->combine_merges == 0)
 		revs->dense_combined_merges = 0;
 	if (revs->separate_merges == 0)
