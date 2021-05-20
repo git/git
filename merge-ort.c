@@ -2371,6 +2371,53 @@ static void resolve_diffpair_statuses(struct diff_queue_struct *q)
 	}
 }
 
+MAYBE_UNUSED
+static void prune_cached_from_relevant(struct rename_info *renames,
+				       unsigned side)
+{
+	/* Reason for this function described in add_pair() */
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	/* Remove from relevant_sources all entries in cached_pairs[side] */
+	strmap_for_each_entry(&renames->cached_pairs[side], &iter, entry) {
+		strintmap_remove(&renames->relevant_sources[side],
+				 entry->key);
+	}
+	/* Remove from relevant_sources all entries in cached_irrelevant[side] */
+	strset_for_each_entry(&renames->cached_irrelevant[side], &iter, entry) {
+		strintmap_remove(&renames->relevant_sources[side],
+				 entry->key);
+	}
+}
+
+MAYBE_UNUSED
+static void use_cached_pairs(struct merge_options *opt,
+			     struct strmap *cached_pairs,
+			     struct diff_queue_struct *pairs)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	/*
+	 * Add to side_pairs all entries from renames->cached_pairs[side_index].
+	 * (Info in cached_irrelevant[side_index] is not relevant here.)
+	 */
+	strmap_for_each_entry(cached_pairs, &iter, entry) {
+		struct diff_filespec *one, *two;
+		const char *old_name = entry->key;
+		const char *new_name = entry->value;
+		if (!new_name)
+			new_name = old_name;
+
+		/* We don't care about oid/mode, only filenames and status */
+		one = alloc_filespec(old_name);
+		two = alloc_filespec(new_name);
+		diff_queue(pairs, one, two);
+		pairs->queue[pairs->nr-1]->status = entry->value ? 'R' : 'D';
+	}
+}
+
 static void cache_new_pair(struct rename_info *renames,
 			   int side,
 			   char *old_path,
