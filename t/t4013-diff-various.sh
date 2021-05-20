@@ -337,6 +337,7 @@ log -m -p --first-parent master
 log -m -p master
 log --cc -m -p master
 log -c -m -p master
+log -m --raw master
 log -SF master
 log -S F master
 log -SF -p master
