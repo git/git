@@ -494,6 +494,19 @@ test_expect_success 'git config log.diffMerges first-parent vs -m' '
 	test_cmp expected actual
 '
 
+# -m in "git diff-index" means "match missing", that differs
+# from its meaning in "git diff". Let's check it in diff-index.
+# The line in the output for removed file should disappear when
+# we provide -m in diff-index.
+test_expect_success 'git diff-index -m' '
+	rm -f file1 &&
+	git diff-index HEAD >without-m &&
+	lines_count=$(wc -l <without-m) &&
+	git diff-index -m HEAD >with-m &&
+	git restore file1 &&
+	test_line_count = $((lines_count - 1)) with-m
+'
+
 test_expect_success 'log -S requires an argument' '
 	test_must_fail git log -S
 '
