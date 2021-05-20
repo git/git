@@ -759,6 +759,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (opt_with_value(arg, "--path-format", &arg)) {
+				if (!arg)
+					die("--path-format requires an argument");
 				if (!strcmp(arg, "absolute")) {
 					format = FORMAT_CANONICAL;
 				} else if (!strcmp(arg, "relative")) {
