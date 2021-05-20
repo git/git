@@ -26,7 +26,7 @@ static const char * const git_stash_usage[] = {
 	N_("git stash drop [-q|--quiet] [<stash>]"),
 	N_("git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"),
 	N_("git stash branch <branchname> [<stash>]"),
-	N_("git stash clear"),
+	"git stash clear",
 	N_("git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 	   "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
 	   "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
@@ -67,7 +67,7 @@ static const char * const git_stash_branch_usage[] = {
 };
 
 static const char * const git_stash_clear_usage[] = {
-	N_("git stash clear"),
+	"git stash clear",
 	NULL
 };
 
