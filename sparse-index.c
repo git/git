@@ -34,7 +34,7 @@ static int convert_to_sparse_rec(struct index_state *istate,
 	int i, can_convert = 1;
 	int start_converted = num_converted;
 	enum pattern_match_result match;
-	int dtype;
+	int dtype = DT_UNKNOWN;
 	struct strbuf child_path = STRBUF_INIT;
 	struct pattern_list *pl = istate->sparse_checkout_patterns;
 
