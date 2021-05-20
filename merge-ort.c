@@ -52,6 +52,8 @@ enum merge_side {
 	MERGE_SIDE2 = 2
 };
 
+static unsigned RESULT_INITIALIZED = 0x1abe11ed; /* unlikely accidental value */
+
 struct traversal_callback_data {
 	unsigned long mask;
 	unsigned long dirmask;
@@ -3768,6 +3770,10 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	assert(opt->obuf.len == 0);
 
 	assert(opt->priv == NULL);
+	if (result->_properly_initialized != 0 &&
+	    result->_properly_initialized != RESULT_INITIALIZED)
+		BUG("struct merge_result passed to merge_incore_*recursive() must be zeroed or filled with values from a previous run");
+	assert(!!result->priv == !!result->_properly_initialized);
 	if (result->priv) {
 		opt->priv = result->priv;
 		result->priv = NULL;
@@ -3927,6 +3933,7 @@ static void merge_ort_nonrecursive_internal(struct merge_options *opt,
 	result->clean &= strmap_empty(&opt->priv->conflicted);
 	if (!opt->priv->call_depth) {
 		result->priv = opt->priv;
+		result->_properly_initialized = RESULT_INITIALIZED;
 		opt->priv = NULL;
 	}
 }
