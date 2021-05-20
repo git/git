@@ -129,6 +129,11 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	adjusting to updated upstream from time to time, and
 	this option allows you to ignore the individual commits
 	brought in to your history by such a merge.
+ifdef::git-log[]
++
+This option also changes default diff format for merge commits
+to `first-parent`, see `--diff-merges=first-parent` for details.
+endif::git-log[]
 
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
@@ -222,6 +227,15 @@ ifdef::git-rev-list[]
 	test the exit status to see if a range of objects is fully
 	connected (or not).  It is faster than redirecting stdout
 	to `/dev/null` as the output does not have to be formatted.
+
+--disk-usage::
+	Suppress normal output; instead, print the sum of the bytes used
+	for on-disk storage by the selected commits or objects. This is
+	equivalent to piping the output into `git cat-file
+	--batch-check='%(objectsize:disk)'`, except that it runs much
+	faster (especially with `--use-bitmap-index`). See the `CAVEATS`
+	section in linkgit:git-cat-file[1] for the limitations of what
+	"on-disk storage" means.
 endif::git-rev-list[]
 
 --cherry-mark::
@@ -878,6 +892,9 @@ or units.  n may be zero.  The suffixes k, m, and g can be used to name
 units in KiB, MiB, or GiB.  For example, 'blob:limit=1k' is the same
 as 'blob:limit=1024'.
 +
+The form '--filter=object:type=(tag|commit|tree|blob)' omits all objects
+which are not of the requested type.
++
 The form '--filter=sparse:oid=<blob-ish>' uses a sparse-checkout
 specification contained in the blob (or blob-expression) '<blob-ish>'
 to omit blobs that would not be not required for a sparse checkout on
@@ -915,6 +932,11 @@ equivalent.
 
 --no-filter::
 	Turn off any previous `--filter=` argument.
+
+--filter-provided-objects::
+	Filter the list of explicitly provided objects, which would otherwise
+	always be printed even if they did not match any of the filters. Only
+	useful with `--filter=`.
 
 --filter-print-omitted::
 	Only useful with `--filter=`; prints a list of the objects omitted

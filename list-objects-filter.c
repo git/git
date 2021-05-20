@@ -21,7 +21,7 @@
  * in the traversal (until we mark it SEEN).  This is a way to
  * let us silently de-dup calls to show() in the caller.  This
  * is subtly different from the "revision.h:SHOWN" and the
- * "sha1-name.c:ONELINE_SEEN" bits.  And also different from
+ * "object-name.c:ONELINE_SEEN" bits.  And also different from
  * the non-de-dup usage in pack-bitmap.c
  */
 #define FILTER_SHOWN_BUT_REVISIT (1<<21)
@@ -81,6 +81,16 @@ static enum list_objects_filter_result filter_blobs_none(
 	switch (filter_situation) {
 	default:
 		BUG("unknown filter_situation: %d", filter_situation);
+
+	case LOFS_TAG:
+		assert(obj->type == OBJ_TAG);
+		/* always include all tag objects */
+		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+
+	case LOFS_COMMIT:
+		assert(obj->type == OBJ_COMMIT);
+		/* always include all commit objects */
+		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	case LOFS_BEGIN_TREE:
 		assert(obj->type == OBJ_TREE);
@@ -173,6 +183,16 @@ static enum list_objects_filter_result filter_trees_depth(
 	default:
 		BUG("unknown filter_situation: %d", filter_situation);
 
+	case LOFS_TAG:
+		assert(obj->type == OBJ_TAG);
+		/* always include all tag objects */
+		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+
+	case LOFS_COMMIT:
+		assert(obj->type == OBJ_COMMIT);
+		/* always include all commit objects */
+		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+
 	case LOFS_END_TREE:
 		assert(obj->type == OBJ_TREE);
 		filter_data->current_depth--;
@@ -186,7 +206,7 @@ static enum list_objects_filter_result filter_trees_depth(
 		seen_info = oidmap_get(
 			&filter_data->seen_at_depth, &obj->oid);
 		if (!seen_info) {
-			seen_info = xcalloc(1, sizeof(*seen_info));
+			CALLOC_ARRAY(seen_info, 1);
 			oidcpy(&seen_info->base.oid, &obj->oid);
 			seen_info->depth = filter_data->current_depth;
 			oidmap_put(&filter_data->seen_at_depth, seen_info);
@@ -266,6 +286,16 @@ static enum list_objects_filter_result filter_blobs_limit(
 	switch (filter_situation) {
 	default:
 		BUG("unknown filter_situation: %d", filter_situation);
+
+	case LOFS_TAG:
+		assert(obj->type == OBJ_TAG);
+		/* always include all tag objects */
+		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+
+	case LOFS_COMMIT:
+		assert(obj->type == OBJ_COMMIT);
+		/* always include all commit objects */
+		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	case LOFS_BEGIN_TREE:
 		assert(obj->type == OBJ_TREE);
@@ -370,6 +400,16 @@ static enum list_objects_filter_result filter_sparse(
 	switch (filter_situation) {
 	default:
 		BUG("unknown filter_situation: %d", filter_situation);
+
+	case LOFS_TAG:
+		assert(obj->type == OBJ_TAG);
+		/* always include all tag objects */
+		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+
+	case LOFS_COMMIT:
+		assert(obj->type == OBJ_COMMIT);
+		/* always include all commit objects */
+		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	case LOFS_BEGIN_TREE:
 		assert(obj->type == OBJ_TREE);
@@ -505,6 +545,81 @@ static void filter_sparse_oid__init(
 	filter->free_fn = filter_sparse_free;
 }
 
+/*
+ * A filter for list-objects to omit large blobs.
+ * And to OPTIONALLY collect a list of the omitted OIDs.
+ */
+struct filter_object_type_data {
+	enum object_type object_type;
+};
+
+static enum list_objects_filter_result filter_object_type(
+	struct repository *r,
+	enum list_objects_filter_situation filter_situation,
+	struct object *obj,
+	const char *pathname,
+	const char *filename,
+	struct oidset *omits,
+	void *filter_data_)
+{
+	struct filter_object_type_data *filter_data = filter_data_;
+
+	switch (filter_situation) {
+	default:
+		BUG("unknown filter_situation: %d", filter_situation);
+
+	case LOFS_TAG:
+		assert(obj->type == OBJ_TAG);
+		if (filter_data->object_type == OBJ_TAG)
+			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+		return LOFR_MARK_SEEN;
+
+	case LOFS_COMMIT:
+		assert(obj->type == OBJ_COMMIT);
+		if (filter_data->object_type == OBJ_COMMIT)
+			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+		return LOFR_MARK_SEEN;
+
+	case LOFS_BEGIN_TREE:
+		assert(obj->type == OBJ_TREE);
+
+		/*
+		 * If we only want to show commits or tags, then there is no
+		 * need to walk down trees.
+		 */
+		if (filter_data->object_type == OBJ_COMMIT ||
+		    filter_data->object_type == OBJ_TAG)
+			return LOFR_SKIP_TREE;
+
+		if (filter_data->object_type == OBJ_TREE)
+			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+
+		return LOFR_MARK_SEEN;
+
+	case LOFS_BLOB:
+		assert(obj->type == OBJ_BLOB);
+
+		if (filter_data->object_type == OBJ_BLOB)
+			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+		return LOFR_MARK_SEEN;
+
+	case LOFS_END_TREE:
+		return LOFR_ZERO;
+	}
+}
+
+static void filter_object_type__init(
+	struct list_objects_filter_options *filter_options,
+	struct filter *filter)
+{
+	struct filter_object_type_data *d = xcalloc(1, sizeof(*d));
+	d->object_type = filter_options->object_type;
+
+	filter->filter_data = d;
+	filter->filter_object_fn = filter_object_type;
+	filter->free_fn = free;
+}
+
 /* A filter which only shows objects shown by all sub-filters. */
 struct combine_filter_data {
 	struct subfilter *sub;
@@ -626,7 +741,7 @@ static void filter_combine__init(
 	size_t sub;
 
 	d->nr = filter_options->sub_nr;
-	d->sub = xcalloc(d->nr, sizeof(*d->sub));
+	CALLOC_ARRAY(d->sub, d->nr);
 	for (sub = 0; sub < d->nr; sub++)
 		d->sub[sub].filter = list_objects_filter__init(
 			filter->omits ? &d->sub[sub].omits : NULL,
@@ -651,6 +766,7 @@ static filter_init_fn s_filters[] = {
 	filter_blobs_limit__init,
 	filter_trees_depth__init,
 	filter_sparse_oid__init,
+	filter_object_type__init,
 	filter_combine__init,
 };
 
@@ -674,7 +790,7 @@ struct filter *list_objects_filter__init(
 	if (!init_fn)
 		return NULL;
 
-	filter = xcalloc(1, sizeof(*filter));
+	CALLOC_ARRAY(filter, 1);
 	filter->omits = omitted;
 	init_fn(filter_options, filter);
 	return filter;

@@ -100,7 +100,7 @@ test_expect_success 'use ref advertisement to filter out commits' '
 	git -C server checkout --orphan anotherbranch &&
 	test_commit -C server to_fetch &&
 
-	# The server advertising "c3" (as "refs/heads/master") means that we do
+	# The server advertising "c3" (as "refs/heads/main") means that we do
 	# not need to send any ancestors of "c3", but we still need to send "c3"
 	# itself.
 	test_config -C client fetch.negotiationalgorithm skipping &&

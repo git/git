@@ -6,7 +6,7 @@
 #include "refs.h"
 #include "list-objects.h"
 #include "quote.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "run-command.h"
 #include "log-tree.h"
 #include "bisect.h"
@@ -423,7 +423,7 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	show_list("bisection 2 sorted", 0, nr, list);
 
 	*all = nr;
-	weights = xcalloc(on_list, sizeof(*weights));
+	CALLOC_ARRAY(weights, on_list);
 
 	/* Do the real work of finding bisection commit. */
 	best = do_find_bisection(list, nr, weights, bisect_flags);
@@ -1064,7 +1064,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 
 	if (!all) {
 		fprintf(stderr, _("No testable commit found.\n"
-			"Maybe you started with bad path parameters?\n"));
+			"Maybe you started with bad path arguments?\n"));
 
 		return BISECT_NO_TESTABLE_COMMIT;
 	}

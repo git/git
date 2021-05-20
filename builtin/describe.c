@@ -194,7 +194,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 	}
 
 	/* Is it annotated? */
-	if (!peel_ref(path, &peeled)) {
+	if (!peel_iterated_oid(oid, &peeled)) {
 		is_annotated = !oideq(oid, &peeled);
 	} else {
 		oidcpy(&peeled, oid);
@@ -502,7 +502,7 @@ static void describe_blob(struct object_id oid, struct strbuf *dst)
 {
 	struct rev_info revs;
 	struct strvec args = STRVEC_INIT;
-	struct process_commit_data pcd = { null_oid, oid, dst, &revs};
+	struct process_commit_data pcd = { *null_oid(), oid, dst, &revs};
 
 	strvec_pushl(&args, "internal: The first arg is not parsed",
 		     "--objects", "--in-commit-order", "--reverse", "HEAD",

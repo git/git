@@ -49,7 +49,17 @@
  * - Once you finish feeding the pairs of files, call `diffcore_std()`.
  * This will tell the diffcore library to go ahead and do its work.
  *
- * - Calling `diff_flush()` will produce the output.
+ * - Calling `diff_flush()` will produce the output, it will call
+ *   `diff_free()` to free any resources, e.g. those allocated in
+ *   `diff_opt_parse()`.
+ *
+ * - Set `.no_free = 1` before calling `diff_flush()` to defer the
+ *   freeing of allocated memory in diff_options. This is useful when
+ *   `diff_flush()` is being called in a loop, rather than as a
+ *   one-off. When setting `.no_free = 1` you must ensure that
+ *   `diff_free()` is called at the end, either by flipping the flag
+ *   before the last `diff_flush()` call, or by flipping it before
+ *   calling `diff_free()` yourself.
  */
 
 struct combine_diff_path;
@@ -178,6 +188,7 @@ struct diff_flags {
 	unsigned diff_from_contents;
 	unsigned dirty_submodules;
 	unsigned ignore_untracked_in_submodules;
+	unsigned ignore_submodule_set;
 	unsigned ignore_dirty_submodules;
 	unsigned override_submodule_config;
 	unsigned dirstat_by_line;
@@ -225,6 +236,27 @@ enum diff_submodule_format {
  */
 struct diff_options {
 	const char *orderfile;
+
+	/*
+	 * "--rotate-to=<file>" would start showing at <file> and when
+	 * the output reaches the end, wrap around by default.
+	 * Setting skip_instead_of_rotate to true stops the output at the
+	 * end, effectively discarding the earlier part of the output
+	 * before <file>'s diff (this is used to implement the
+	 * "--skip-to=<file>" option).
+	 *
+	 * When rotate_to_strict is set, it is an error if there is no
+	 * <file> in the diff.  Otherwise, the output starts at the
+	 * path that is the same as, or first path that sorts after,
+	 * <file>.  Because it is unreasonable to require the exact
+	 * match for "git log -p --rotate-to=<file>" (i.e. not all
+	 * commit would touch that single <file>), "git log" sets it
+	 * to false.  "git diff" sets it to true to detect an error
+	 * in the command line option.
+	 */
+	const char *rotate_to;
+	int skip_instead_of_rotate;
+	int rotate_to_strict;
 
 	/**
 	 * A constant string (can and typically does contain newlines to look for
@@ -364,6 +396,8 @@ struct diff_options {
 
 	struct repository *repo;
 	struct option *parseopts;
+
+	int no_free;
 };
 
 unsigned diff_filter_bit(char status);
@@ -558,6 +592,7 @@ void diffcore_fix_diff_index(void);
 
 int diff_queue_is_empty(void);
 void diff_flush(struct diff_options*);
+void diff_free(struct diff_options*);
 void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
 
 /* diff-raw status letters */

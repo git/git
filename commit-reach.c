@@ -17,6 +17,25 @@
 
 static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
 
+static int compare_commits_by_gen(const void *_a, const void *_b)
+{
+	const struct commit *a = *(const struct commit * const *)_a;
+	const struct commit *b = *(const struct commit * const *)_b;
+
+	timestamp_t generation_a = commit_graph_generation(a);
+	timestamp_t generation_b = commit_graph_generation(b);
+
+	if (generation_a < generation_b)
+		return -1;
+	if (generation_a > generation_b)
+		return 1;
+	if (a->date < b->date)
+		return -1;
+	if (a->date > b->date)
+		return 1;
+	return 0;
+}
+
 static int queue_has_nonstale(struct prio_queue *queue)
 {
 	int i;
@@ -32,14 +51,14 @@ static int queue_has_nonstale(struct prio_queue *queue)
 static struct commit_list *paint_down_to_common(struct repository *r,
 						struct commit *one, int n,
 						struct commit **twos,
-						int min_generation)
+						timestamp_t min_generation)
 {
 	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
 	struct commit_list *result = NULL;
 	int i;
-	uint32_t last_gen = GENERATION_NUMBER_INFINITY;
+	timestamp_t last_gen = GENERATION_NUMBER_INFINITY;
 
-	if (!min_generation)
+	if (!min_generation && !corrected_commit_dates_enabled(r))
 		queue.compare = compare_commits_by_commit_date;
 
 	one->object.flags |= PARENT1;
@@ -58,10 +77,10 @@ static struct commit_list *paint_down_to_common(struct repository *r,
 		struct commit *commit = prio_queue_get(&queue);
 		struct commit_list *parents;
 		int flags;
-		uint32_t generation = commit_graph_generation(commit);
+		timestamp_t generation = commit_graph_generation(commit);
 
 		if (min_generation && generation > last_gen)
-			BUG("bad generation skip %8x > %8x at %s",
+			BUG("bad generation skip %"PRItime" > %"PRItime" at %s",
 			    generation, last_gen,
 			    oid_to_hex(&commit->object.oid));
 		last_gen = generation;
@@ -156,20 +175,15 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	return ret;
 }
 
-static int remove_redundant(struct repository *r, struct commit **array, int cnt)
+static int remove_redundant_no_gen(struct repository *r,
+				   struct commit **array, int cnt)
 {
-	/*
-	 * Some commit in the array may be an ancestor of
-	 * another commit.  Move such commit to the end of
-	 * the array, and return the number of commits that
-	 * are independent from each other.
-	 */
 	struct commit **work;
 	unsigned char *redundant;
 	int *filled_index;
 	int i, j, filled;
 
-	work = xcalloc(cnt, sizeof(*work));
+	CALLOC_ARRAY(work, cnt);
 	redundant = xcalloc(cnt, 1);
 	ALLOC_ARRAY(filled_index, cnt - 1);
 
@@ -177,12 +191,12 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 		repo_parse_commit(r, array[i]);
 	for (i = 0; i < cnt; i++) {
 		struct commit_list *common;
-		uint32_t min_generation = commit_graph_generation(array[i]);
+		timestamp_t min_generation = commit_graph_generation(array[i]);
 
 		if (redundant[i])
 			continue;
 		for (j = filled = 0; j < cnt; j++) {
-			uint32_t curr_generation;
+			timestamp_t curr_generation;
 			if (i == j || redundant[j])
 				continue;
 			filled_index[filled] = j;
@@ -209,13 +223,154 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 	for (i = filled = 0; i < cnt; i++)
 		if (!redundant[i])
 			array[filled++] = work[i];
-	for (j = filled, i = 0; i < cnt; i++)
-		if (redundant[i])
-			array[j++] = work[i];
 	free(work);
 	free(redundant);
 	free(filled_index);
 	return filled;
+}
+
+static int remove_redundant_with_gen(struct repository *r,
+				     struct commit **array, int cnt)
+{
+	int i, count_non_stale = 0, count_still_independent = cnt;
+	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
+	struct commit **walk_start, **sorted;
+	size_t walk_start_nr = 0, walk_start_alloc = cnt;
+	int min_gen_pos = 0;
+
+	/*
+	 * Sort the input by generation number, ascending. This allows
+	 * us to increase the "min_generation" limit when we discover
+	 * the commit with lowest generation is STALE. The index
+	 * min_gen_pos points to the current position within 'array'
+	 * that is not yet known to be STALE.
+	 */
+	ALLOC_ARRAY(sorted, cnt);
+	COPY_ARRAY(sorted, array, cnt);
+	QSORT(sorted, cnt, compare_commits_by_gen);
+	min_generation = commit_graph_generation(sorted[0]);
+
+	ALLOC_ARRAY(walk_start, walk_start_alloc);
+
+	/* Mark all parents of the input as STALE */
+	for (i = 0; i < cnt; i++) {
+		struct commit_list *parents;
+
+		repo_parse_commit(r, array[i]);
+		array[i]->object.flags |= RESULT;
+		parents = array[i]->parents;
+
+		while (parents) {
+			repo_parse_commit(r, parents->item);
+			if (!(parents->item->object.flags & STALE)) {
+				parents->item->object.flags |= STALE;
+				ALLOC_GROW(walk_start, walk_start_nr + 1, walk_start_alloc);
+				walk_start[walk_start_nr++] = parents->item;
+			}
+			parents = parents->next;
+		}
+	}
+
+	QSORT(walk_start, walk_start_nr, compare_commits_by_gen);
+
+	/* remove STALE bit for now to allow walking through parents */
+	for (i = 0; i < walk_start_nr; i++)
+		walk_start[i]->object.flags &= ~STALE;
+
+	/*
+	 * Start walking from the highest generation. Hopefully, it will
+	 * find all other items during the first-parent walk, and we can
+	 * terminate early. Otherwise, we will do the same amount of work
+	 * as before.
+	 */
+	for (i = walk_start_nr - 1; i >= 0 && count_still_independent > 1; i--) {
+		/* push the STALE bits up to min generation */
+		struct commit_list *stack = NULL;
+
+		commit_list_insert(walk_start[i], &stack);
+		walk_start[i]->object.flags |= STALE;
+
+		while (stack) {
+			struct commit_list *parents;
+			struct commit *c = stack->item;
+
+			repo_parse_commit(r, c);
+
+			if (c->object.flags & RESULT) {
+				c->object.flags &= ~RESULT;
+				if (--count_still_independent <= 1)
+					break;
+				if (oideq(&c->object.oid, &sorted[min_gen_pos]->object.oid)) {
+					while (min_gen_pos < cnt - 1 &&
+					       (sorted[min_gen_pos]->object.flags & STALE))
+						min_gen_pos++;
+					min_generation = commit_graph_generation(sorted[min_gen_pos]);
+				}
+			}
+
+			if (commit_graph_generation(c) < min_generation) {
+				pop_commit(&stack);
+				continue;
+			}
+
+			parents = c->parents;
+			while (parents) {
+				if (!(parents->item->object.flags & STALE)) {
+					parents->item->object.flags |= STALE;
+					commit_list_insert(parents->item, &stack);
+					break;
+				}
+				parents = parents->next;
+			}
+
+			/* pop if all parents have been visited already */
+			if (!parents)
+				pop_commit(&stack);
+		}
+		free_commit_list(stack);
+	}
+	free(sorted);
+
+	/* clear result */
+	for (i = 0; i < cnt; i++)
+		array[i]->object.flags &= ~RESULT;
+
+	/* rearrange array */
+	for (i = count_non_stale = 0; i < cnt; i++) {
+		if (!(array[i]->object.flags & STALE))
+			array[count_non_stale++] = array[i];
+	}
+
+	/* clear marks */
+	clear_commit_marks_many(walk_start_nr, walk_start, STALE);
+	free(walk_start);
+
+	return count_non_stale;
+}
+
+static int remove_redundant(struct repository *r, struct commit **array, int cnt)
+{
+	/*
+	 * Some commit in the array may be an ancestor of
+	 * another commit.  Move the independent commits to the
+	 * beginning of 'array' and return their number. Callers
+	 * should not rely upon the contents of 'array' after
+	 * that number.
+	 */
+	if (generation_numbers_enabled(r)) {
+		int i;
+
+		/*
+		 * If we have a single commit with finite generation
+		 * number, then the _with_gen algorithm is preferred.
+		 */
+		for (i = 0; i < cnt; i++) {
+			if (commit_graph_generation(array[i]) < GENERATION_NUMBER_INFINITY)
+				return remove_redundant_with_gen(r, array, cnt);
+		}
+	}
+
+	return remove_redundant_no_gen(r, array, cnt);
 }
 
 static struct commit_list *get_merge_bases_many_0(struct repository *r,
@@ -244,7 +399,7 @@ static struct commit_list *get_merge_bases_many_0(struct repository *r,
 
 	/* There are more than one */
 	cnt = commit_list_count(result);
-	rslt = xcalloc(cnt, sizeof(*rslt));
+	CALLOC_ARRAY(rslt, cnt);
 	for (list = result, i = 0; list; list = list->next)
 		rslt[i++] = list->item;
 	free_commit_list(result);
@@ -321,7 +476,7 @@ int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
 {
 	struct commit_list *bases;
 	int ret = 0, i;
-	uint32_t generation, max_generation = GENERATION_NUMBER_ZERO;
+	timestamp_t generation, max_generation = GENERATION_NUMBER_ZERO;
 
 	if (repo_parse_commit(r, commit))
 		return ret;
@@ -386,7 +541,7 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 		p->item->object.flags |= STALE;
 		num_head++;
 	}
-	array = xcalloc(num_head, sizeof(*array));
+	CALLOC_ARRAY(array, num_head);
 	for (p = heads, i = 0; p; p = p->next) {
 		if (p->item->object.flags & STALE) {
 			array[i++] = p->item;
@@ -470,7 +625,7 @@ static int in_commit_list(const struct commit_list *want, struct commit *c)
 static enum contains_result contains_test(struct commit *candidate,
 					  const struct commit_list *want,
 					  struct contains_cache *cache,
-					  uint32_t cutoff)
+					  timestamp_t cutoff)
 {
 	enum contains_result *cached = contains_cache_at(cache, candidate);
 
@@ -506,11 +661,11 @@ static enum contains_result contains_tag_algo(struct commit *candidate,
 {
 	struct contains_stack contains_stack = { 0, 0, NULL };
 	enum contains_result result;
-	uint32_t cutoff = GENERATION_NUMBER_INFINITY;
+	timestamp_t cutoff = GENERATION_NUMBER_INFINITY;
 	const struct commit_list *p;
 
 	for (p = want; p; p = p->next) {
-		uint32_t generation;
+		timestamp_t generation;
 		struct commit *c = p->item;
 		load_commit_graph_info(the_repository, c);
 		generation = commit_graph_generation(c);
@@ -561,26 +716,11 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 	return repo_is_descendant_of(the_repository, commit, list);
 }
 
-static int compare_commits_by_gen(const void *_a, const void *_b)
-{
-	const struct commit *a = *(const struct commit * const *)_a;
-	const struct commit *b = *(const struct commit * const *)_b;
-
-	uint32_t generation_a = commit_graph_generation(a);
-	uint32_t generation_b = commit_graph_generation(b);
-
-	if (generation_a < generation_b)
-		return -1;
-	if (generation_a > generation_b)
-		return 1;
-	return 0;
-}
-
 int can_all_from_reach_with_flag(struct object_array *from,
 				 unsigned int with_flag,
 				 unsigned int assign_flag,
 				 time_t min_commit_date,
-				 uint32_t min_generation)
+				 timestamp_t min_generation)
 {
 	struct commit **list = NULL;
 	int i;
@@ -681,13 +821,13 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 	time_t min_commit_date = cutoff_by_min_date ? from->item->date : 0;
 	struct commit_list *from_iter = from, *to_iter = to;
 	int result;
-	uint32_t min_generation = GENERATION_NUMBER_INFINITY;
+	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
 
 	while (from_iter) {
 		add_object_array(&from_iter->item->object, NULL, &from_objs);
 
 		if (!parse_commit(from_iter->item)) {
-			uint32_t generation;
+			timestamp_t generation;
 			if (from_iter->item->date < min_commit_date)
 				min_commit_date = from_iter->item->date;
 
@@ -701,7 +841,7 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 
 	while (to_iter) {
 		if (!parse_commit(to_iter->item)) {
-			uint32_t generation;
+			timestamp_t generation;
 			if (to_iter->item->date < min_commit_date)
 				min_commit_date = to_iter->item->date;
 
@@ -741,13 +881,13 @@ struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
 	struct commit_list *found_commits = NULL;
 	struct commit **to_last = to + nr_to;
 	struct commit **from_last = from + nr_from;
-	uint32_t min_generation = GENERATION_NUMBER_INFINITY;
+	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
 	int num_to_find = 0;
 
 	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
 
 	for (item = to; item < to_last; item++) {
-		uint32_t generation;
+		timestamp_t generation;
 		struct commit *c = *item;
 
 		parse_commit(c);

@@ -103,6 +103,7 @@ struct upload_pack_data {
 	unsigned use_ofs_delta : 1;
 	unsigned no_progress : 1;
 	unsigned use_include_tag : 1;
+	unsigned wait_for_done : 1;
 	unsigned allow_filter : 1;
 	unsigned allow_filter_fallback : 1;
 	unsigned long tree_filter_max_depth;
@@ -305,14 +306,7 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	if (pack_data->filter_options.choice) {
 		const char *spec =
 			expand_list_objects_filter_spec(&pack_data->filter_options);
-		if (pack_objects.use_shell) {
-			struct strbuf buf = STRBUF_INIT;
-			sq_quote_buf(&buf, spec);
-			strvec_pushf(&pack_objects.args, "--filter=%s", buf.buf);
-			strbuf_release(&buf);
-		} else {
-			strvec_pushf(&pack_objects.args, "--filter=%s", spec);
-		}
+		strvec_pushf(&pack_objects.args, "--filter=%s", spec);
 	}
 	if (uri_protocols) {
 		for (i = 0; i < uri_protocols->nr; i++)
@@ -500,7 +494,7 @@ static int got_oid(struct upload_pack_data *data,
 
 static int ok_to_give_up(struct upload_pack_data *data)
 {
-	uint32_t min_generation = GENERATION_NUMBER_ZERO;
+	timestamp_t min_generation = GENERATION_NUMBER_ZERO;
 
 	if (!data->have_obj.nr)
 		return 0;
@@ -1160,7 +1154,7 @@ static void receive_needs(struct upload_pack_data *data,
 static int mark_our_ref(const char *refname, const char *refname_full,
 			const struct object_id *oid)
 {
-	struct object *o = lookup_unknown_object(oid);
+	struct object *o = lookup_unknown_object(the_repository, oid);
 
 	if (ref_is_hidden(refname, refname_full)) {
 		o->flags |= HIDDEN_REF;
@@ -1232,7 +1226,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		packet_write_fmt(1, "%s %s\n", oid_to_hex(oid), refname_nons);
 	}
 	capabilities = NULL;
-	if (!peel_ref(refname, &peeled))
+	if (!peel_iterated_oid(oid, &peeled))
 		packet_write_fmt(1, "%s %s^{}\n", oid_to_hex(&peeled), refname_nons);
 	return 0;
 }
@@ -1503,6 +1497,10 @@ static void process_args(struct packet_reader *request,
 			data->done = 1;
 			continue;
 		}
+		if (!strcmp(arg, "wait-for-done")) {
+			data->wait_for_done = 1;
+			continue;
+		}
 
 		/* Shallow related arguments */
 		if (process_shallow(arg, &data->shallows))
@@ -1585,7 +1583,7 @@ static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
 				    oid_to_hex(&acks->oid[i]));
 	}
 
-	if (ok_to_give_up(data)) {
+	if (!data->wait_for_done && ok_to_give_up(data)) {
 		/* Send Ready */
 		packet_writer_write(&data->writer, "ready\n");
 		return 1;
@@ -1675,10 +1673,13 @@ int upload_pack_v2(struct repository *r, struct strvec *keys,
 		case FETCH_PROCESS_ARGS:
 			process_args(request, &data);
 
-			if (!data.want_obj.nr) {
+			if (!data.want_obj.nr && !data.wait_for_done) {
 				/*
-				 * Request didn't contain any 'want' lines,
-				 * guess they didn't want anything.
+				 * Request didn't contain any 'want' lines (and
+				 * the request does not contain
+				 * "wait-for-done", in which it is reasonable
+				 * to just send 'have's without 'want's); guess
+				 * they didn't want anything.
 				 */
 				state = FETCH_DONE;
 			} else if (data.haves.nr) {
@@ -1730,7 +1731,7 @@ int upload_pack_advertise(struct repository *r,
 		int allow_sideband_all_value;
 		char *str = NULL;
 
-		strbuf_addstr(value, "shallow");
+		strbuf_addstr(value, "shallow wait-for-done");
 
 		if (!repo_config_get_bool(the_repository,
 					 "uploadpack.allowfilter",

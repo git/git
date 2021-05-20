@@ -30,9 +30,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Modifies the index or directory cache. Each file mentioned is updated
-into the index and any 'unmerged' or 'needs updating' state is
-cleared.
+Modifies the index. Each file mentioned is updated into the index and
+any 'unmerged' or 'needs updating' state is cleared.
 
 See also linkgit:git-add[1] for a more user-friendly way to do some of
 the most common operations on the index.

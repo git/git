@@ -12,6 +12,7 @@
 #include "submodule.h"
 #include "utf8.h"
 #include "worktree.h"
+#include "quote.h"
 
 static const char * const worktree_usage[] = {
 	N_("git worktree add [<options>] <path> [<commit-ish>]"),
@@ -67,79 +68,6 @@ static void delete_worktrees_dir_if_empty(void)
 	rmdir(git_path("worktrees")); /* ignore failed removal */
 }
 
-/*
- * Return true if worktree entry should be pruned, along with the reason for
- * pruning. Otherwise, return false and the worktree's path, or NULL if it
- * cannot be determined. Caller is responsible for freeing returned path.
- */
-static int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath)
-{
-	struct stat st;
-	char *path;
-	int fd;
-	size_t len;
-	ssize_t read_result;
-
-	*wtpath = NULL;
-	if (!is_directory(git_path("worktrees/%s", id))) {
-		strbuf_addstr(reason, _("not a valid directory"));
-		return 1;
-	}
-	if (file_exists(git_path("worktrees/%s/locked", id)))
-		return 0;
-	if (stat(git_path("worktrees/%s/gitdir", id), &st)) {
-		strbuf_addstr(reason, _("gitdir file does not exist"));
-		return 1;
-	}
-	fd = open(git_path("worktrees/%s/gitdir", id), O_RDONLY);
-	if (fd < 0) {
-		strbuf_addf(reason, _("unable to read gitdir file (%s)"),
-			    strerror(errno));
-		return 1;
-	}
-	len = xsize_t(st.st_size);
-	path = xmallocz(len);
-
-	read_result = read_in_full(fd, path, len);
-	if (read_result < 0) {
-		strbuf_addf(reason, _("unable to read gitdir file (%s)"),
-			    strerror(errno));
-		close(fd);
-		free(path);
-		return 1;
-	}
-	close(fd);
-
-	if (read_result != len) {
-		strbuf_addf(reason,
-			    _("short read (expected %"PRIuMAX" bytes, read %"PRIuMAX")"),
-			    (uintmax_t)len, (uintmax_t)read_result);
-		free(path);
-		return 1;
-	}
-	while (len && (path[len - 1] == '\n' || path[len - 1] == '\r'))
-		len--;
-	if (!len) {
-		strbuf_addstr(reason, _("invalid gitdir file"));
-		free(path);
-		return 1;
-	}
-	path[len] = '\0';
-	if (!file_exists(path)) {
-		if (stat(git_path("worktrees/%s/index", id), &st) ||
-		    st.st_mtime <= expire) {
-			strbuf_addstr(reason, _("gitdir file points to non-existent location"));
-			free(path);
-			return 1;
-		} else {
-			*wtpath = path;
-			return 0;
-		}
-	}
-	*wtpath = path;
-	return 0;
-}
-
 static void prune_worktree(const char *id, const char *reason)
 {
 	if (show_only || verbose)
@@ -190,12 +118,10 @@ static void prune_worktrees(void)
 	struct dirent *d;
 	if (!dir)
 		return;
-	while ((d = readdir(dir)) != NULL) {
+	while ((d = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		char *path;
-		if (is_dot_or_dotdot(d->d_name))
-			continue;
 		strbuf_reset(&reason);
-		if (should_prune_worktree(d->d_name, &reason, &path))
+		if (should_prune_worktree(d->d_name, &reason, &path, expire))
 			prune_worktree(d->d_name, reason.buf);
 		else if (path)
 			string_list_append(&kept, path)->util = xstrdup(d->d_name);
@@ -403,7 +329,7 @@ static int add_worktree(const char *path, const char *refname,
 	 */
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/HEAD", sb_repo.buf);
-	write_file(sb.buf, "%s", oid_to_hex(&null_oid));
+	write_file(sb.buf, "%s", oid_to_hex(null_oid()));
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
 	write_file(sb.buf, "../..");
@@ -466,7 +392,7 @@ done:
 			cp.argv = NULL;
 			cp.trace2_hook_name = "post-checkout";
 			strvec_pushl(&cp.args, absolute_path(hook),
-				     oid_to_hex(&null_oid),
+				     oid_to_hex(null_oid()),
 				     oid_to_hex(&commit->object.oid),
 				     "1", NULL);
 			ret = run_command(&cp);
@@ -518,16 +444,18 @@ static void print_preparing_worktree_line(int detach,
 static const char *dwim_branch(const char *path, const char **new_branch)
 {
 	int n;
+	int branch_exists;
 	const char *s = worktree_basename(path, &n);
 	const char *branchname = xstrndup(s, n);
 	struct strbuf ref = STRBUF_INIT;
 
 	UNLEAK(branchname);
-	if (!strbuf_check_branch_ref(&ref, branchname) &&
-	    ref_exists(ref.buf)) {
-		strbuf_release(&ref);
+
+	branch_exists = !strbuf_check_branch_ref(&ref, branchname) &&
+			ref_exists(ref.buf);
+	strbuf_release(&ref);
+	if (branch_exists)
 		return branchname;
-	}
 
 	*new_branch = branchname;
 	if (guess_remote) {
@@ -642,6 +570,8 @@ static int add(int ac, const char **av, const char *prefix)
 
 static void show_worktree_porcelain(struct worktree *wt)
 {
+	const char *reason;
+
 	printf("worktree %s\n", wt->path);
 	if (wt->is_bare)
 		printf("bare\n");
@@ -652,6 +582,20 @@ static void show_worktree_porcelain(struct worktree *wt)
 		else if (wt->head_ref)
 			printf("branch %s\n", wt->head_ref);
 	}
+
+	reason = worktree_lock_reason(wt);
+	if (reason && *reason) {
+		struct strbuf sb = STRBUF_INIT;
+		quote_c_style(reason, &sb, NULL, 0);
+		printf("locked %s\n", sb.buf);
+		strbuf_release(&sb);
+	} else if (reason)
+		printf("locked\n");
+
+	reason = worktree_prune_reason(wt, expire);
+	if (reason)
+		printf("prunable %s\n", reason);
+
 	printf("\n");
 }
 
@@ -660,6 +604,7 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 	struct strbuf sb = STRBUF_INIT;
 	int cur_path_len = strlen(wt->path);
 	int path_adj = cur_path_len - utf8_strwidth(wt->path);
+	const char *reason;
 
 	strbuf_addf(&sb, "%-*s ", 1 + path_maxlen + path_adj, wt->path);
 	if (wt->is_bare)
@@ -677,8 +622,17 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 			strbuf_addstr(&sb, "(error)");
 	}
 
-	if (!is_main_worktree(wt) && worktree_lock_reason(wt))
+	reason = worktree_lock_reason(wt);
+	if (verbose && reason && *reason)
+		strbuf_addf(&sb, "\n\tlocked: %s", reason);
+	else if (reason)
 		strbuf_addstr(&sb, " locked");
+
+	reason = worktree_prune_reason(wt, expire);
+	if (verbose && reason)
+		strbuf_addf(&sb, "\n\tprunable: %s", reason);
+	else if (reason)
+		strbuf_addstr(&sb, " prunable");
 
 	printf("%s\n", sb.buf);
 	strbuf_release(&sb);
@@ -723,12 +677,18 @@ static int list(int ac, const char **av, const char *prefix)
 
 	struct option options[] = {
 		OPT_BOOL(0, "porcelain", &porcelain, N_("machine-readable output")),
+		OPT__VERBOSE(&verbose, N_("show extended annotations and reasons, if available")),
+		OPT_EXPIRY_DATE(0, "expire", &expire,
+				N_("add 'prunable' annotation to worktrees older than <time>")),
 		OPT_END()
 	};
 
+	expire = TIME_MAX;
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
 	if (ac)
 		usage_with_options(worktree_usage, options);
+	else if (verbose && porcelain)
+		die(_("--verbose and --porcelain are mutually exclusive"));
 	else {
 		struct worktree **worktrees = get_worktrees();
 		int path_maxlen = 0, abbrev = DEFAULT_ABBREV, i;
@@ -1052,10 +1012,10 @@ static int repair(int ac, const char **av, const char *prefix)
 	int rc = 0;
 
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
-	repair_worktrees(report_repair, &rc);
 	p = ac > 0 ? av : self;
 	for (; *p; p++)
 		repair_worktree_at_path(*p, report_repair, &rc);
+	repair_worktrees(report_repair, &rc);
 	return rc;
 }
 

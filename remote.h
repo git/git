@@ -6,6 +6,8 @@
 #include "hashmap.h"
 #include "refspec.h"
 
+struct transport_ls_refs_options;
+
 /**
  * The API gives access to the configuration related to remotes. It handles
  * all three configuration mechanisms historically and currently used by Git,
@@ -134,7 +136,7 @@ struct ref {
 	 * should be 0, so that xcalloc'd structures get it
 	 * by default.
 	 */
-	enum {
+	enum fetch_head_status {
 		FETCH_HEAD_MERGE = -1,
 		FETCH_HEAD_NOT_FOR_MERGE = 0,
 		FETCH_HEAD_IGNORE = 1
@@ -196,7 +198,7 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 /* Used for protocol v2 in order to retrieve refs from a remote */
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     struct ref **list, int for_push,
-			     const struct strvec *ref_prefixes,
+			     struct transport_ls_refs_options *transport_options,
 			     const struct string_list *server_options,
 			     int stateless_rpc);
 

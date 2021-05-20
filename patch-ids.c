@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "diff.h"
 #include "commit.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "patch-ids.h"
 
 static int patch_id_defined(struct commit *commit)
@@ -89,7 +89,7 @@ static int init_patch_id_entry(struct patch_id *patch,
 	return 0;
 }
 
-struct patch_id *has_commit_patch_id(struct commit *commit,
+struct patch_id *patch_id_iter_first(struct commit *commit,
 				     struct patch_ids *ids)
 {
 	struct patch_id patch;
@@ -104,6 +104,18 @@ struct patch_id *has_commit_patch_id(struct commit *commit,
 	return hashmap_get_entry(&ids->patches, &patch, ent, NULL);
 }
 
+struct patch_id *patch_id_iter_next(struct patch_id *cur,
+				    struct patch_ids *ids)
+{
+	return hashmap_get_next_entry(&ids->patches, cur, ent);
+}
+
+int has_commit_patch_id(struct commit *commit,
+			struct patch_ids *ids)
+{
+	return !!patch_id_iter_first(commit, ids);
+}
+
 struct patch_id *add_commit_patch_id(struct commit *commit,
 				     struct patch_ids *ids)
 {
@@ -112,7 +124,7 @@ struct patch_id *add_commit_patch_id(struct commit *commit,
 	if (!patch_id_defined(commit))
 		return NULL;
 
-	key = xcalloc(1, sizeof(*key));
+	CALLOC_ARRAY(key, 1);
 	if (init_patch_id_entry(key, commit, ids)) {
 		free(key);
 		return NULL;

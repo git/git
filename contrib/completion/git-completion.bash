@@ -29,6 +29,15 @@
 # tell the completion to use commit completion.  This also works with aliases
 # of form "!sh -c '...'".  For example, "!sh -c ': git commit ; ... '".
 #
+# If you have a command that is not part of git, but you would still
+# like completion, you can use __git_complete:
+#
+#   __git_complete gl git_log
+#
+# Or if it's a main command (i.e. git or gitk):
+#
+#   __git_complete gk gitk
+#
 # Compatible with bash 3.2.57.
 #
 # You can set the following environment variables to influence the behavior of
@@ -68,7 +77,7 @@ __git_find_repo_path ()
 		test -d "$__git_dir" &&
 		__git_repo_path="$__git_dir"
 	elif [ -n "${GIT_DIR-}" ]; then
-		test -d "${GIT_DIR-}" &&
+		test -d "$GIT_DIR" &&
 		__git_repo_path="$GIT_DIR"
 	elif [ -d .git ]; then
 		__git_repo_path=.git
@@ -418,7 +427,7 @@ __gitcomp_builtin ()
 
 	if [ -z "$options" ]; then
 		local completion_helper
-		if [ "$GIT_COMPLETION_SHOW_ALL" = "1" ]; then
+		if [ "${GIT_COMPLETION_SHOW_ALL-}" = "1" ]; then
 			completion_helper="--git-completion-helper-all"
 		else
 			completion_helper="--git-completion-helper"
@@ -735,7 +744,7 @@ __git_refs ()
 			track=""
 			;;
 		*)
-			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD REBASE_HEAD; do
+			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD REBASE_HEAD CHERRY_PICK_HEAD; do
 				case "$i" in
 				$match*)
 					if [ -e "$dir/$i" ]; then
@@ -997,8 +1006,8 @@ __git_complete_revlist ()
 
 __git_complete_remote_or_refspec ()
 {
-	local cur_="$cur" cmd="${words[1]}"
-	local i c=2 remote="" pfx="" lhs=1 no_complete_refspec=0
+	local cur_="$cur" cmd="${words[__git_cmd_idx]}"
+	local i c=$((__git_cmd_idx+1)) remote="" pfx="" lhs=1 no_complete_refspec=0
 	if [ "$cmd" = "remote" ]; then
 		((c++))
 	fi
@@ -1120,7 +1129,7 @@ __git_pretty_aliases ()
 # __git_aliased_command requires 1 argument
 __git_aliased_command ()
 {
-	local cur=$1 last list word cmdline
+	local cur=$1 last list= word cmdline
 
 	while [[ -n "$cur" ]]; do
 		if [[ "$list" == *" $cur "* ]]; then
@@ -1167,7 +1176,7 @@ __git_aliased_command ()
 # --show-idx: Optionally show the index of the found word in the $words array.
 __git_find_on_cmdline ()
 {
-	local word c=1 show_idx
+	local word c="$__git_cmd_idx" show_idx
 
 	while test $# -gt 1; do
 		case "$1" in
@@ -1212,7 +1221,7 @@ __git_find_last_on_cmdline ()
 	done
 	local wordlist="$1"
 
-	while [ $c -gt 1 ]; do
+	while [ $c -gt "$__git_cmd_idx" ]; do
 		((c--))
 		for word in $wordlist; do
 			if [ "$word" = "${words[c]}" ]; then
@@ -1297,7 +1306,7 @@ __git_count_arguments ()
 	local word i c=0
 
 	# Skip "git" (first argument)
-	for ((i=1; i < ${#words[@]}; i++)); do
+	for ((i="$__git_cmd_idx"; i < ${#words[@]}; i++)); do
 		word="${words[i]}"
 
 		case "$word" in
@@ -1324,6 +1333,7 @@ __git_whitespacelist="nowarn warn error error-all fix"
 __git_patchformat="mbox stgit stgit-series hg mboxrd"
 __git_showcurrentpatch="diff raw"
 __git_am_inprogress_options="--skip --continue --resolved --abort --quit --show-current-patch"
+__git_quoted_cr="nowarn warn strip"
 
 _git_am ()
 {
@@ -1343,6 +1353,10 @@ _git_am ()
 		;;
 	--show-current-patch=*)
 		__gitcomp "$__git_showcurrentpatch" "" "${cur##--show-current-patch=}"
+		return
+		;;
+	--quoted-cr=*)
+		__gitcomp "$__git_quoted_cr" "" "${cur##--quoted-cr=}"
 		return
 		;;
 	--*)
@@ -1433,13 +1447,15 @@ __git_ref_fieldlist="refname objecttype objectsize objectname upstream push HEAD
 
 _git_branch ()
 {
-	local i c=1 only_local_ref="n" has_r="n"
+	local i c="$__git_cmd_idx" only_local_ref="n" has_r="n"
 
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
-		-d|--delete|-m|--move)	only_local_ref="y" ;;
-		-r|--remotes)		has_r="y" ;;
+		-d|-D|--delete|-m|-M|--move|-c|-C|--copy)
+			only_local_ref="y" ;;
+		-r|--remotes)
+			has_r="y" ;;
 		esac
 		((c++))
 	done
@@ -1463,12 +1479,12 @@ _git_branch ()
 
 _git_bundle ()
 {
-	local cmd="${words[2]}"
+	local cmd="${words[__git_cmd_idx+1]}"
 	case "$cword" in
-	2)
+	$((__git_cmd_idx+1)))
 		__gitcomp "create list-heads verify unbundle"
 		;;
-	3)
+	$((__git_cmd_idx+2)))
 		# looking for a file
 		;;
 	*)
@@ -1883,7 +1899,7 @@ _git_grep ()
 	esac
 
 	case "$cword,$prev" in
-	2,*|*,-*)
+	$((__git_cmd_idx+1)),*|*,-*)
 		__git_complete_symbol && return
 		;;
 	esac
@@ -1899,7 +1915,7 @@ _git_help ()
 		return
 		;;
 	esac
-	if test -n "$GIT_TESTING_ALL_COMMAND_LIST"
+	if test -n "${GIT_TESTING_ALL_COMMAND_LIST-}"
 	then
 		__gitcomp "$GIT_TESTING_ALL_COMMAND_LIST $(__git --list-cmds=alias,list-guide) gitk"
 	else
@@ -2463,7 +2479,7 @@ _git_switch ()
 __git_config_get_set_variables ()
 {
 	local prevword word config_file= c=$cword
-	while [ $c -gt 1 ]; do
+	while [ $c -gt "$__git_cmd_idx" ]; do
 		word="${words[c]}"
 		case "$word" in
 		--system|--global|--local|--file=*)
@@ -3002,66 +3018,48 @@ _git_sparse_checkout ()
 
 _git_stash ()
 {
-	local save_opts='--all --keep-index --no-keep-index --quiet --patch --include-untracked'
 	local subcommands='push list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands save")"
-	if [ -z "$subcommand" -a -n "$(__git_find_on_cmdline "-p")" ]; then
-		subcommand="push"
-	fi
+
 	if [ -z "$subcommand" ]; then
-		case "$cur" in
-		--*)
-			__gitcomp "$save_opts"
+		case "$((cword - __git_cmd_idx)),$cur" in
+		*,--*)
+			__gitcomp_builtin stash_push
 			;;
-		sa*)
-			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
-				__gitcomp "save"
-			fi
+		1,sa*)
+			__gitcomp "save"
 			;;
-		*)
-			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
-				__gitcomp "$subcommands"
-			fi
+		1,*)
+			__gitcomp "$subcommands"
 			;;
 		esac
-	else
-		case "$subcommand,$cur" in
-		push,--*)
-			__gitcomp "$save_opts --message"
-			;;
-		save,--*)
-			__gitcomp "$save_opts"
-			;;
-		apply,--*|pop,--*)
-			__gitcomp "--index --quiet"
-			;;
-		drop,--*)
-			__gitcomp "--quiet"
-			;;
-		list,--*)
-			__gitcomp "--name-status --oneline --patch-with-stat"
-			;;
-		show,--*)
-			__gitcomp "$__git_diff_common_options"
-			;;
-		branch,--*)
-			;;
-		branch,*)
-			if [ $cword -eq 3 ]; then
-				__git_complete_refs
-			else
-				__gitcomp_nl "$(__git stash list \
-						| sed -n -e 's/:.*//p')"
-			fi
-			;;
-		show,*|apply,*|drop,*|pop,*)
+		return
+	fi
+
+	case "$subcommand,$cur" in
+	list,--*)
+		# NEEDSWORK: can we somehow unify this with the options in _git_log() and _git_show()
+		__gitcomp_builtin stash_list "$__git_log_common_options $__git_diff_common_options"
+		;;
+	show,--*)
+		__gitcomp_builtin stash_show "$__git_diff_common_options"
+		;;
+	*,--*)
+		__gitcomp_builtin "stash_$subcommand"
+		;;
+	branch,*)
+		if [ $cword -eq $((__git_cmd_idx+2)) ]; then
+			__git_complete_refs
+		else
 			__gitcomp_nl "$(__git stash list \
 					| sed -n -e 's/:.*//p')"
-			;;
-		*)
-			;;
-		esac
-	fi
+		fi
+		;;
+	show,*|apply,*|drop,*|pop,*)
+		__gitcomp_nl "$(__git stash list \
+				| sed -n -e 's/:.*//p')"
+		;;
+	esac
 }
 
 _git_submodule ()
@@ -3214,7 +3212,7 @@ _git_svn ()
 
 _git_tag ()
 {
-	local i c=1 f=0
+	local i c="$__git_cmd_idx" f=0
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
@@ -3257,9 +3255,10 @@ _git_whatchanged ()
 __git_complete_worktree_paths ()
 {
 	local IFS=$'\n'
+	# Generate completion reply from worktree list skipping the first
+	# entry: it's the path of the main worktree, which can't be moved,
+	# removed, locked, etc.
 	__gitcomp_nl "$(git worktree list --porcelain |
-		# Skip the first entry: it's the path of the main worktree,
-		# which can't be moved, removed, locked, etc.
 		sed -n -e '2,$ s/^worktree //p')"
 }
 
@@ -3358,15 +3357,19 @@ __git_support_parseopt_helper () {
 	esac
 }
 
+__git_have_func () {
+	declare -f -- "$1" >/dev/null 2>&1
+}
+
 __git_complete_command () {
 	local command="$1"
 	local completion_func="_git_${command//-/_}"
-	if ! declare -f $completion_func >/dev/null 2>/dev/null &&
-		declare -f _completion_loader >/dev/null 2>/dev/null
+	if ! __git_have_func $completion_func &&
+		__git_have_func _completion_loader
 	then
 		_completion_loader "git-$command"
 	fi
-	if declare -f $completion_func >/dev/null 2>/dev/null
+	if __git_have_func $completion_func
 	then
 		$completion_func
 		return 0
@@ -3383,21 +3386,40 @@ __git_main ()
 {
 	local i c=1 command __git_dir __git_repo_path
 	local __git_C_args C_args_count=0
+	local __git_cmd_idx
 
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
-		--git-dir=*) __git_dir="${i#--git-dir=}" ;;
-		--git-dir)   ((c++)) ; __git_dir="${words[c]}" ;;
-		--bare)      __git_dir="." ;;
-		--help) command="help"; break ;;
-		-c|--work-tree|--namespace) ((c++)) ;;
-		-C)	__git_C_args[C_args_count++]=-C
+		--git-dir=*)
+			__git_dir="${i#--git-dir=}"
+			;;
+		--git-dir)
+			((c++))
+			__git_dir="${words[c]}"
+			;;
+		--bare)
+			__git_dir="."
+			;;
+		--help)
+			command="help"
+			break
+			;;
+		-c|--work-tree|--namespace)
+			((c++))
+			;;
+		-C)
+			__git_C_args[C_args_count++]=-C
 			((c++))
 			__git_C_args[C_args_count++]="${words[c]}"
 			;;
-		-*) ;;
-		*) command="$i"; break ;;
+		-*)
+			;;
+		*)
+			command="$i"
+			__git_cmd_idx="$c"
+			break
+			;;
 		esac
 		((c++))
 	done
@@ -3419,7 +3441,8 @@ __git_main ()
 			;;
 		esac
 		case "$cur" in
-		--*)   __gitcomp "
+		--*)
+			__gitcomp "
 			--paginate
 			--no-pager
 			--git-dir=
@@ -3493,10 +3516,7 @@ __git_func_wrap ()
 	$1
 }
 
-# Setup completion for certain functions defined above by setting common
-# variables and workarounds.
-# This is NOT a public function; use at your own risk.
-__git_complete ()
+___git_complete ()
 {
 	local wrapper="__git_wrap${2}"
 	eval "$wrapper () { __git_func_wrap $2 ; }"
@@ -3504,13 +3524,33 @@ __git_complete ()
 		|| complete -o default -o nospace -F $wrapper $1
 }
 
-__git_complete git __git_main
-__git_complete gitk __gitk_main
+# Setup the completion for git commands
+# 1: command or alias
+# 2: function to call (e.g. `git`, `gitk`, `git_fetch`)
+__git_complete ()
+{
+	local func
+
+	if __git_have_func $2; then
+		func=$2
+	elif __git_have_func __$2_main; then
+		func=__$2_main
+	elif __git_have_func _$2; then
+		func=_$2
+	else
+		echo "ERROR: could not find function '$2'" 1>&2
+		return 1
+	fi
+	___git_complete $1 $func
+}
+
+___git_complete git __git_main
+___git_complete gitk __gitk_main
 
 # The following are necessary only for Cygwin, and only are needed
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 #
 if [ "$OSTYPE" = cygwin ]; then
-	__git_complete git.exe __git_main
+	___git_complete git.exe __git_main
 fi

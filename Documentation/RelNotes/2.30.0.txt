@@ -81,8 +81,8 @@ UI, Workflows & Features
  * "git update-ref --stdin" learns to take multiple transactions in a
    single session.
 
- * Various subcommands of "git config" that takes value_regex
-   learn the "--literal-value" option to take the value_regex option
+ * Various subcommands of "git config" that take value_regex
+   learned the "--literal-value" option to take the value_regex option
    as a literal string.
 
  * The transport layer was taught to optionally exchange the session
@@ -120,11 +120,11 @@ Performance, Internal Implementation, Development Support etc.
    test pieces to run.
 
  * Adjust tests so that they won't scream when the default initial
-   branch name is changed to 'main'.
+   branch name is different from 'master'.
 
  * Rewriting "git bisect" in C continues.
 
- * More preliminary tests have been added to document desired outcome
+ * More preliminary tests have been added to document desired outcomes
    of various "directory rename" situations.
 
  * Micro clean-up of a couple of test scripts.
@@ -135,9 +135,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to detect premature EOF in the sideband demultiplexer has
    been cleaned up.
-
- * Test scripts are being prepared to transition of the default branch
-   name to 'main'.
 
  * "git fetch --depth=<n>" over the stateless RPC / smart HTTP
    transport handled EOF from the client poorly at the server end.
@@ -252,7 +249,7 @@ Fixes since v2.29
    (merge c779386182 jc/sequencer-stopped-sha-simplify later to maint).
 
  * The code to see if "git stash drop" can safely remove refs/stash
-   has been made more carerful.
+   has been made more careful.
    (merge 4f44c5659b rs/empty-reflog-check-fix later to maint).
 
  * "git log -L<range>:<path>" is documented to take no pathspec, but
@@ -299,7 +296,7 @@ Fixes since v2.29
    (merge 81c4c5cf2e jk/4gb-idx later to maint).
 
  * Since jgit does not yet work with SHA-256 repositories, mark the
-   tests that uses it not to run unless we are testing with ShA-1
+   tests that use it not to run unless we are testing with ShA-1
    repositories.
    (merge ea699b4adc sg/t5310-jgit-wants-sha1 later to maint).
 
@@ -337,7 +334,7 @@ Fixes since v2.29
    (merge 506ec2fbda tb/idx-midx-race-fix later to maint).
 
  * "git apply" adjusted the permission bits of working-tree files and
-   directories according core.sharedRepository setting by mistake and
+   directories according to core.sharedRepository setting by mistake and
    for a long time, which has been corrected.
    (merge eb3c027e17 mt/do-not-use-scld-in-working-tree later to maint).
 
@@ -363,7 +360,7 @@ Fixes since v2.29
  * Tighten error checking in the codepath that responds to "git fetch".
    (merge d43a21bdbb jk/check-config-parsing-error-in-upload-pack later to maint).
 
- * "git pack-redandant" when there is only one packfile used to crash,
+ * "git pack-redundant" when there is only one packfile used to crash,
    which has been corrected.
    (merge 0696232390 jx/pack-redundant-on-single-pack later to maint).
 

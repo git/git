@@ -232,25 +232,38 @@ trailer.<token>.ifmissing::
 	that option for trailers with the specified <token>.
 
 trailer.<token>.command::
-	This option can be used to specify a shell command that will
-	be called to automatically add or modify a trailer with the
-	specified <token>.
+	This option behaves in the same way as 'trailer.<token>.cmd', except
+	that it doesn't pass anything as argument to the specified command.
+	Instead the first occurrence of substring $ARG is replaced by the
+	value that would be passed as argument.
 +
-When this option is specified, the behavior is as if a special
-'<token>=<value>' argument were added at the beginning of the command
-line, where <value> is taken to be the standard output of the
-specified command with any leading and trailing whitespace trimmed
-off.
+The 'trailer.<token>.command' option has been deprecated in favor of
+'trailer.<token>.cmd' due to the fact that $ARG in the user's command is
+only replaced once and that the original way of replacing $ARG is not safe.
 +
-If the command contains the `$ARG` string, this string will be
-replaced with the <value> part of an existing trailer with the same
-<token>, if any, before the command is launched.
+When both 'trailer.<token>.cmd' and 'trailer.<token>.command' are given
+for the same <token>, 'trailer.<token>.cmd' is used and
+'trailer.<token>.command' is ignored.
+
+trailer.<token>.cmd::
+	This option can be used to specify a shell command that will be called:
+	once to automatically add a trailer with the specified <token>, and then
+	each time a '--trailer <token>=<value>' argument to modify the <value> of
+	the trailer that this option would produce.
 +
-If some '<token>=<value>' arguments are also passed on the command
-line, when a 'trailer.<token>.command' is configured, the command will
-also be executed for each of these arguments. And the <value> part of
-these arguments, if any, will be used to replace the `$ARG` string in
-the command.
+When the specified command is first called to add a trailer
+with the specified <token>, the behavior is as if a special
+'--trailer <token>=<value>' argument was added at the beginning
+of the "git interpret-trailers" command, where <value>
+is taken to be the standard output of the command with any
+leading and trailing whitespace trimmed off.
++
+If some '--trailer <token>=<value>' arguments are also passed
+on the command line, the command is called again once for each
+of these arguments with the same <token>. And the <value> part
+of these arguments, if any, will be passed to the command as its
+first argument. This way the command can produce a <value> computed
+from the <value> passed in the '--trailer <token>=<value>' argument.
 
 EXAMPLES
 --------
@@ -331,6 +344,55 @@ $ echo "subject" | git interpret-trailers --trailer fix=42
 subject
 
 Fix #42
+------------
+
+* Configure a 'help' trailer with a cmd use a script `glog-find-author`
+  which search specified author identity from git log in git repository
+  and show how it works:
++
+------------
+$ cat ~/bin/glog-find-author
+#!/bin/sh
+test -n "$1" && git log --author="$1" --pretty="%an <%ae>" -1 || true
+$ git config trailer.help.key "Helped-by: "
+$ git config trailer.help.ifExists "addIfDifferentNeighbor"
+$ git config trailer.help.cmd "~/bin/glog-find-author"
+$ git interpret-trailers --trailer="help:Junio" --trailer="help:Couder" <<EOF
+> subject
+>
+> message
+>
+> EOF
+subject
+
+message
+
+Helped-by: Junio C Hamano <gitster@pobox.com>
+Helped-by: Christian Couder <christian.couder@gmail.com>
+------------
+
+* Configure a 'ref' trailer with a cmd use a script `glog-grep`
+  to grep last relevant commit from git log in the git repository
+  and show how it works:
++
+------------
+$ cat ~/bin/glog-grep
+#!/bin/sh
+test -n "$1" && git log --grep "$1" --pretty=reference -1 || true
+$ git config trailer.ref.key "Reference-to: "
+$ git config trailer.ref.ifExists "replace"
+$ git config trailer.ref.cmd "~/bin/glog-grep"
+$ git interpret-trailers --trailer="ref:Add copyright notices." <<EOF
+> subject
+>
+> message
+>
+> EOF
+subject
+
+message
+
+Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
 ------------
 
 * Configure a 'see' trailer with a command to show the subject of a

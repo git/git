@@ -211,7 +211,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 
 	/* Note: idx is non-NULL when we are writing */
 	if ((flags & HASH_WRITE_OBJECT) != 0)
-		idx = xcalloc(1, sizeof(*idx));
+		CALLOC_ARRAY(idx, 1);
 
 	already_hashed_to = 0;
 
@@ -238,7 +238,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 		if (lseek(fd, seekback, SEEK_SET) == (off_t) -1)
 			return error("cannot seek back");
 	}
-	the_hash_algo->final_fn(result_oid->hash, &ctx);
+	the_hash_algo->final_oid_fn(result_oid, &ctx);
 	if (!idx)
 		return 0;
 

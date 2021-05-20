@@ -5,6 +5,9 @@
 
 test_description='Test remote-helper import and export commands'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
@@ -71,18 +74,18 @@ test_expect_success 'fetch multiple branches' '
 	(cd local &&
 	 git fetch
 	) &&
-	compare_refs server master local refs/remotes/origin/master &&
+	compare_refs server main local refs/remotes/origin/main &&
 	compare_refs server new local refs/remotes/origin/new
 '
 
 test_expect_success 'push when remote has extra refs' '
 	(cd local &&
-	 git reset --hard origin/master &&
+	 git reset --hard origin/main &&
 	 echo content >>file &&
 	 git commit -a -m six &&
 	 git push
 	) &&
-	compare_refs local master server master
+	compare_refs local main server main
 '
 
 test_expect_success 'push new branch by name' '
@@ -174,7 +177,7 @@ test_expect_failure 'pushing without marks' '
 
 test_expect_success 'push all with existing object' '
 	(cd local &&
-	git branch dup2 master &&
+	git branch dup2 main &&
 	git push origin --all
 	) &&
 	compare_refs local dup2 server dup2
@@ -182,7 +185,7 @@ test_expect_success 'push all with existing object' '
 
 test_expect_success 'push ref with existing object' '
 	(cd local &&
-	git branch dup master &&
+	git branch dup main &&
 	git push origin dup
 	) &&
 	compare_refs local dup server dup
@@ -190,7 +193,7 @@ test_expect_success 'push ref with existing object' '
 
 test_expect_success GPG 'push signed tag' '
 	(cd local &&
-	git checkout master &&
+	git checkout main &&
 	git tag -s -m signed-tag signed-tag &&
 	git push origin signed-tag
 	) &&
@@ -200,7 +203,7 @@ test_expect_success GPG 'push signed tag' '
 
 test_expect_success GPG 'push signed tag with signed-tags capability' '
 	(cd local &&
-	git checkout master &&
+	git checkout main &&
 	git tag -s -m signed-tag signed-tag-2 &&
 	GIT_REMOTE_TESTGIT_SIGNED_TAGS=1 git push origin signed-tag-2
 	) &&
@@ -209,7 +212,7 @@ test_expect_success GPG 'push signed tag with signed-tags capability' '
 
 test_expect_success 'push update refs' '
 	(cd local &&
-	git checkout -b update master &&
+	git checkout -b update main &&
 	echo update >>file &&
 	git commit -a -m update &&
 	git push origin update &&
@@ -260,7 +263,7 @@ test_expect_success 'proper failure checks for fetching' '
 test_expect_success 'proper failure checks for pushing' '
 	test_when_finished "rm -rf local/git.marks local/testgit.marks" &&
 	(cd local &&
-	git checkout -b crash master &&
+	git checkout -b crash main &&
 	echo crash >>file &&
 	git commit -a -m crash &&
 	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git push --all &&
@@ -272,7 +275,7 @@ test_expect_success 'proper failure checks for pushing' '
 
 test_expect_success 'push messages' '
 	(cd local &&
-	git checkout -b new_branch master &&
+	git checkout -b new_branch main &&
 	echo new >>file &&
 	git commit -a -m new &&
 	git push origin new_branch &&
@@ -286,7 +289,7 @@ test_expect_success 'push messages' '
 
 test_expect_success 'fetch HEAD' '
 	(cd server &&
-	git checkout master &&
+	git checkout main &&
 	echo more >>file &&
 	git commit -a -m more
 	) &&
@@ -298,7 +301,7 @@ test_expect_success 'fetch HEAD' '
 
 test_expect_success 'fetch url' '
 	(cd server &&
-	git checkout master &&
+	git checkout main &&
 	echo more >>file &&
 	git commit -a -m more
 	) &&

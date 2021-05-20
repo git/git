@@ -2,6 +2,9 @@
 
 test_description='test cherry-picking (and reverting) a root commit'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -30,7 +33,7 @@ test_expect_success setup '
 test_expect_success 'cherry-pick a root commit' '
 
 	git checkout second^0 &&
-	git cherry-pick master &&
+	git cherry-pick main &&
 	echo first >expect &&
 	test_cmp expect file1
 
@@ -38,14 +41,14 @@ test_expect_success 'cherry-pick a root commit' '
 
 test_expect_success 'revert a root commit' '
 
-	git revert master &&
+	git revert main &&
 	test_path_is_missing file1
 
 '
 
 test_expect_success 'cherry-pick a root commit with an external strategy' '
 
-	git cherry-pick --strategy=resolve master &&
+	git cherry-pick --strategy=resolve main &&
 	echo first >expect &&
 	test_cmp expect file1
 
@@ -53,7 +56,7 @@ test_expect_success 'cherry-pick a root commit with an external strategy' '
 
 test_expect_success 'revert a root commit with an external strategy' '
 
-	git revert --strategy=resolve master &&
+	git revert --strategy=resolve main &&
 	test_path_is_missing file1
 
 '
@@ -65,7 +68,7 @@ test_expect_success 'cherry-pick two root commits' '
 	echo third >expect.file3 &&
 
 	git checkout second^0 &&
-	git cherry-pick master third &&
+	git cherry-pick main third &&
 
 	test_cmp expect.file1 file1 &&
 	test_cmp expect.file2 file2 &&

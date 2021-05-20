@@ -5,6 +5,9 @@
 
 test_description='test bash completion'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-bash.sh
 
 complete ()
@@ -1876,6 +1879,7 @@ test_expect_success '__git_find_on_cmdline - single match' '
 	(
 		words=(git command --opt list) &&
 		cword=${#words[@]} &&
+		__git_cmd_idx=1 &&
 		__git_find_on_cmdline "add list remove" >actual
 	) &&
 	test_cmp expect actual
@@ -1886,6 +1890,7 @@ test_expect_success '__git_find_on_cmdline - multiple matches' '
 	(
 		words=(git command -o --opt remove list add) &&
 		cword=${#words[@]} &&
+		__git_cmd_idx=1 &&
 		__git_find_on_cmdline "add list remove" >actual
 	) &&
 	test_cmp expect actual
@@ -1895,6 +1900,7 @@ test_expect_success '__git_find_on_cmdline - no match' '
 	(
 		words=(git command --opt branch) &&
 		cword=${#words[@]} &&
+		__git_cmd_idx=1 &&
 		__git_find_on_cmdline "add list remove" >actual
 	) &&
 	test_must_be_empty actual
@@ -1905,6 +1911,7 @@ test_expect_success '__git_find_on_cmdline - single match with index' '
 	(
 		words=(git command --opt list) &&
 		cword=${#words[@]} &&
+		__git_cmd_idx=1 &&
 		__git_find_on_cmdline --show-idx "add list remove" >actual
 	) &&
 	test_cmp expect actual
@@ -1915,6 +1922,7 @@ test_expect_success '__git_find_on_cmdline - multiple matches with index' '
 	(
 		words=(git command -o --opt remove list add) &&
 		cword=${#words[@]} &&
+		__git_cmd_idx=1 &&
 		__git_find_on_cmdline --show-idx "add list remove" >actual
 	) &&
 	test_cmp expect actual
@@ -1924,9 +1932,21 @@ test_expect_success '__git_find_on_cmdline - no match with index' '
 	(
 		words=(git command --opt branch) &&
 		cword=${#words[@]} &&
+		__git_cmd_idx=1 &&
 		__git_find_on_cmdline --show-idx "add list remove" >actual
 	) &&
 	test_must_be_empty actual
+'
+
+test_expect_success '__git_find_on_cmdline - ignores matches before command with index' '
+	echo "6 remove" >expect &&
+	(
+		words=(git -C remove command -o --opt remove list add) &&
+		cword=${#words[@]} &&
+		__git_cmd_idx=3 &&
+		__git_find_on_cmdline --show-idx "add list remove" >actual
+	) &&
+	test_cmp expect actual
 '
 
 test_expect_success '__git_get_config_variables' '
@@ -2272,6 +2292,7 @@ do
 		(
 			words=(git push '$flag' other ma) &&
 			cword=${#words[@]} cur=${words[cword-1]} &&
+			__git_cmd_idx=1 &&
 			__git_complete_remote_or_refspec &&
 			print_comp
 		) &&
@@ -2285,6 +2306,7 @@ do
 		(
 			words=(git push other '$flag' ma) &&
 			cword=${#words[@]} cur=${words[cword-1]} &&
+			__git_cmd_idx=1 &&
 			__git_complete_remote_or_refspec &&
 			print_comp
 		) &&
@@ -2303,6 +2325,7 @@ test_expect_success 'git config - variable name' '
 	test_completion "git config log.d" <<-\EOF
 	log.date Z
 	log.decorate Z
+	log.diffMerges Z
 	EOF
 '
 
@@ -2324,6 +2347,7 @@ test_expect_success 'git -c - variable name' '
 	test_completion "git -c log.d" <<-\EOF
 	log.date=Z
 	log.decorate=Z
+	log.diffMerges=Z
 	EOF
 '
 
@@ -2345,6 +2369,7 @@ test_expect_success 'git clone --config= - variable name' '
 	test_completion "git clone --config=log.d" <<-\EOF
 	log.date=Z
 	log.decorate=Z
+	log.diffMerges=Z
 	EOF
 '
 
@@ -2363,7 +2388,6 @@ test_expect_success 'sourcing the completion script clears cached commands' '
 '
 
 test_expect_success 'sourcing the completion script clears cached merge strategies' '
-	GIT_TEST_GETTEXT_POISON=false &&
 	__git_compute_merge_strategies &&
 	verbose test -n "$__git_merge_strategies" &&
 	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
@@ -2378,6 +2402,26 @@ test_expect_success 'sourcing the completion script clears cached --options' '
 	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
 	verbose test -z "$__gitcomp_builtin_checkout" &&
 	verbose test -z "$__gitcomp_builtin_notes_edit"
+'
+
+test_expect_success '__git_complete' '
+	unset -f __git_wrap__git_main &&
+
+	__git_complete foo __git_main &&
+	__git_have_func __git_wrap__git_main &&
+	unset -f __git_wrap__git_main &&
+
+	__git_complete gf _git_fetch &&
+	__git_have_func __git_wrap_git_fetch &&
+
+	__git_complete foo git &&
+	__git_have_func __git_wrap__git_main &&
+	unset -f __git_wrap__git_main &&
+
+	__git_complete gd git_diff &&
+	__git_have_func __git_wrap_git_diff &&
+
+	test_must_fail __git_complete ga missing
 '
 
 test_done

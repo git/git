@@ -2,6 +2,9 @@
 
 test_description='recursive merge corner cases involving criss-cross merges'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
 
@@ -385,7 +388,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete' '
 		test_line_count = 2 out &&
 
 		git rev-parse >expect       \
-			master:file  B:file &&
+			main:file    B:file &&
 		git rev-parse   >actual      \
 			:1:file      :2:file &&
 		test_cmp expect actual
@@ -407,7 +410,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 		test_line_count = 2 out &&
 
 		git rev-parse >expect       \
-			master:file  B:file &&
+			main:file    B:file &&
 		git rev-parse   >actual      \
 			:1:file      :3:file &&
 		test_cmp expect actual
@@ -1553,12 +1556,12 @@ test_expect_failure 'check conflicting modes for regular file' '
 # Setup:
 #          L1---L2
 #         /  \ /  \
-#   master    X    ?
+#     main    X    ?
 #         \  / \  /
 #          R1---R2
 #
 # Where:
-#   master has two files, named 'b' and 'a'
+#   main has two files, named 'b' and 'a'
 #   branches L1 and R1 both modify each of the two files in conflicting ways
 #
 #   L2 is a merge of R1 into L1; more on it later.
@@ -1663,7 +1666,7 @@ test_expect_success 'check nested conflicts' '
 		cd nested_conflicts &&
 
 		git clean -f &&
-		MASTER=$(git rev-parse --short master) &&
+		MAIN=$(git rev-parse --short main) &&
 		git checkout L2^0 &&
 
 		# Merge must fail; there is a conflict
@@ -1679,24 +1682,24 @@ test_expect_success 'check nested conflicts' '
 		test_line_count = 1 out &&
 
 		# Create a and b from virtual merge base X
-		git cat-file -p master:a >base &&
+		git cat-file -p main:a >base &&
 		git cat-file -p L1:a >ours &&
 		git cat-file -p R1:a >theirs &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "$MASTER"  \
+			-L "$MAIN"  \
 			-L "Temporary merge branch 2" \
 			ours  \
 			base  \
 			theirs &&
 		sed -e "s/^\([<|=>]\)/\1\1/" ours >vmb_a &&
 
-		git cat-file -p master:b >base &&
+		git cat-file -p main:b >base &&
 		git cat-file -p L1:b >ours &&
 		git cat-file -p R1:b >theirs &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "$MASTER"  \
+			-L "$MAIN"  \
 			-L "Temporary merge branch 2" \
 			ours  \
 			base  \
@@ -1748,12 +1751,12 @@ test_expect_success 'check nested conflicts' '
 # Setup:
 #          L1---L2---L3
 #         /  \ /  \ /  \
-#   master    X1   X2   ?
+#     main    X1   X2   ?
 #         \  / \  / \  /
 #          R1---R2---R3
 #
 # Where:
-#   master has one file named 'content'
+#   main has one file named 'content'
 #   branches L1 and R1 both modify each of the two files in conflicting ways
 #
 #   L<n> (n>1) is a merge of R<n-1> into L<n-1>
@@ -1834,7 +1837,7 @@ test_expect_success 'check virtual merge base with nested conflicts' '
 	(
 		cd virtual_merge_base_has_nested_conflicts &&
 
-		MASTER=$(git rev-parse --short master) &&
+		MAIN=$(git rev-parse --short main) &&
 		git checkout L3^0 &&
 
 		# Merge must fail; there is a conflict
@@ -1857,13 +1860,13 @@ test_expect_success 'check virtual merge base with nested conflicts' '
 		# Imitate X1 merge base, except without long enough conflict
 		# markers because a subsequent sed will modify them.  Put
 		# result into vmb.
-		git cat-file -p master:content >base &&
+		git cat-file -p main:content >base &&
 		git cat-file -p L:content >left &&
 		git cat-file -p R:content >right &&
 		cp left merged-once &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "$MASTER"  \
+			-L "$MAIN"  \
 			-L "Temporary merge branch 2" \
 			merged-once \
 			base        \

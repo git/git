@@ -1,5 +1,8 @@
 = Git User Manual
 
+[preface]
+== Introduction
+
 Git is a fast distributed revision control system.
 
 This manual is designed to be readable by someone with basic UNIX

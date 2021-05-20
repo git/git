@@ -5,8 +5,11 @@
 
 test_description='Various diff formatting options'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 test_expect_success setup '
 
@@ -175,6 +178,7 @@ process_diffs () {
 V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
 while read magic cmd
 do
+	status=success
 	case "$magic" in
 	'' | '#'*)
 		continue ;;
@@ -183,6 +187,10 @@ do
 		label="$magic-$cmd"
 		case "$magic" in
 		noellipses) ;;
+		failure)
+			status=failure
+			magic=
+			label="$cmd" ;;
 		*)
 			BUG "unknown magic $magic" ;;
 		esac ;;
@@ -195,7 +203,7 @@ do
 	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
-	test_expect_success "git $cmd # magic is ${magic:-(not used)}" '
+	test_expect_$status "git $cmd # magic is ${magic:-(not used)}" '
 		{
 			echo "$ git $cmd"
 			case "$magic" in
@@ -214,7 +222,7 @@ do
 			process_diffs "$expect" >expect &&
 			case $cmd in
 			*format-patch* | *-stat*)
-				test_i18ncmp expect actual;;
+				test_cmp expect actual;;
 			*)
 				test_cmp expect actual;;
 			esac &&
@@ -323,8 +331,12 @@ log --no-diff-merges -p --first-parent master
 log --diff-merges=off -p --first-parent master
 log --first-parent --diff-merges=off -p master
 log -p --first-parent master
+log -p --diff-merges=first-parent master
+log --diff-merges=first-parent master
 log -m -p --first-parent master
 log -m -p master
+log --cc -m -p master
+log -c -m -p master
 log -SF master
 log -S F master
 log -SF -p master
@@ -439,6 +451,37 @@ diff-tree --format=%N note
 diff-tree --stat --compact-summary initial mode
 diff-tree -R --stat --compact-summary initial mode
 EOF
+
+test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
+	git log -p --diff-merges=separate master >result &&
+	process_diffs result >expected &&
+	git log -p --diff-merges=on master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'deny wrong log.diffMerges config' '
+	test_config log.diffMerges wrong-value &&
+	test_expect_code 128 git log
+'
+
+test_expect_success 'git config log.diffMerges first-parent' '
+	git log -p --diff-merges=first-parent master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges first-parent &&
+	git log -p --diff-merges=on master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git config log.diffMerges first-parent vs -m' '
+	git log -p --diff-merges=first-parent master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges first-parent &&
+	git log -p -m master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
 
 test_expect_success 'log -S requires an argument' '
 	test_must_fail git log -S

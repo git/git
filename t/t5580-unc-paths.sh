@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='various Windows-only path tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if test_have_prereq CYGWIN
@@ -53,7 +56,7 @@ test_expect_success fetch '
 	git init to-fetch &&
 	(
 		cd to-fetch &&
-		git fetch "$UNCPATH" master
+		git fetch "$UNCPATH" main
 	)
 '
 

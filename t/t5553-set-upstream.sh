@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='"git fetch/pull --set-upstream" basic tests.'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check_config () {
@@ -32,9 +35,9 @@ test_expect_success 'setup bare parent fetch' '
 	git remote add upstream parent
 '
 
-test_expect_success 'setup commit on master and other fetch' '
+test_expect_success 'setup commit on main and other fetch' '
 	test_commit one &&
-	git push upstream master &&
+	git push upstream main &&
 	git checkout -b other &&
 	test_commit two &&
 	git push upstream other
@@ -43,38 +46,38 @@ test_expect_success 'setup commit on master and other fetch' '
 # tests for fetch --set-upstream
 
 test_expect_success 'fetch --set-upstream does not set upstream w/o branch' '
-	clear_config master other &&
-	git checkout master &&
+	clear_config main other &&
+	git checkout main &&
 	git fetch --set-upstream upstream &&
-	check_config_missing master &&
+	check_config_missing main &&
 	check_config_missing other
 '
 
-test_expect_success 'fetch --set-upstream upstream master sets branch master but not other' '
-	clear_config master other &&
-	git fetch --set-upstream upstream master &&
-	check_config master upstream refs/heads/master &&
+test_expect_success 'fetch --set-upstream upstream main sets branch main but not other' '
+	clear_config main other &&
+	git fetch --set-upstream upstream main &&
+	check_config main upstream refs/heads/main &&
 	check_config_missing other
 '
 
 test_expect_success 'fetch --set-upstream upstream other sets branch other' '
-	clear_config master other &&
+	clear_config main other &&
 	git fetch --set-upstream upstream other &&
-	check_config master upstream refs/heads/other &&
+	check_config main upstream refs/heads/other &&
 	check_config_missing other
 '
 
-test_expect_success 'fetch --set-upstream master:other does not set the branch other2' '
+test_expect_success 'fetch --set-upstream main:other does not set the branch other2' '
 	clear_config other2 &&
-	git fetch --set-upstream upstream master:other2 &&
+	git fetch --set-upstream upstream main:other2 &&
 	check_config_missing other2
 '
 
 test_expect_success 'fetch --set-upstream http://nosuchdomain.example.com fails with invalid url' '
-	# master explicitly not cleared, we check that it is not touched from previous value
+	# main explicitly not cleared, we check that it is not touched from previous value
 	clear_config other other2 &&
 	test_must_fail git fetch --set-upstream http://nosuchdomain.example.com &&
-	check_config master upstream refs/heads/other &&
+	check_config main upstream refs/heads/other &&
 	check_config_missing other &&
 	check_config_missing other2
 '
@@ -83,7 +86,7 @@ test_expect_success 'fetch --set-upstream with valid URL sets upstream to URL' '
 	clear_config other other2 &&
 	url="file://$PWD" &&
 	git fetch --set-upstream "$url" &&
-	check_config master "$url" HEAD &&
+	check_config main "$url" HEAD &&
 	check_config_missing other &&
 	check_config_missing other2
 '
@@ -96,30 +99,30 @@ test_expect_success 'setup bare parent pull' '
 	git remote add upstream parent
 '
 
-test_expect_success 'setup commit on master and other pull' '
+test_expect_success 'setup commit on main and other pull' '
 	test_commit three &&
-	git push --tags upstream master &&
+	git push --tags upstream main &&
 	test_commit four &&
 	git push upstream other
 '
 
-test_expect_success 'pull --set-upstream upstream master sets branch master but not other' '
-	clear_config master other &&
-	git pull --set-upstream upstream master &&
-	check_config master upstream refs/heads/master &&
+test_expect_success 'pull --set-upstream upstream main sets branch main but not other' '
+	clear_config main other &&
+	git pull --set-upstream upstream main &&
+	check_config main upstream refs/heads/main &&
 	check_config_missing other
 '
 
-test_expect_success 'pull --set-upstream master:other2 does not set the branch other2' '
+test_expect_success 'pull --set-upstream main:other2 does not set the branch other2' '
 	clear_config other2 &&
-	git pull --set-upstream upstream master:other2 &&
+	git pull --set-upstream upstream main:other2 &&
 	check_config_missing other2
 '
 
-test_expect_success 'pull --set-upstream upstream other sets branch master' '
-	clear_config master other &&
+test_expect_success 'pull --set-upstream upstream other sets branch main' '
+	clear_config main other &&
 	git pull --set-upstream upstream other &&
-	check_config master upstream refs/heads/other &&
+	check_config main upstream refs/heads/other &&
 	check_config_missing other
 '
 
@@ -130,47 +133,47 @@ test_expect_success 'pull --set-upstream upstream tag does not set the tag' '
 '
 
 test_expect_success 'pull --set-upstream http://nosuchdomain.example.com fails with invalid url' '
-	# master explicitly not cleared, we check that it is not touched from previous value
+	# main explicitly not cleared, we check that it is not touched from previous value
 	clear_config other other2 three &&
 	test_must_fail git pull --set-upstream http://nosuchdomain.example.com &&
-	check_config master upstream refs/heads/other &&
+	check_config main upstream refs/heads/other &&
 	check_config_missing other &&
 	check_config_missing other2 &&
 	check_config_missing three
 '
 
 test_expect_success 'pull --set-upstream upstream HEAD sets branch HEAD' '
-	clear_config master other &&
+	clear_config main other &&
 	git pull --set-upstream upstream HEAD &&
-	check_config master upstream HEAD &&
+	check_config main upstream HEAD &&
 	git checkout other &&
 	git pull --set-upstream upstream HEAD &&
 	check_config other upstream HEAD
 '
 
 test_expect_success 'pull --set-upstream upstream with more than one branch does nothing' '
-	clear_config master three &&
-	git pull --set-upstream upstream master three &&
-	check_config_missing master &&
+	clear_config main three &&
+	git pull --set-upstream upstream main three &&
+	check_config_missing main &&
 	check_config_missing three
 '
 
 test_expect_success 'pull --set-upstream with valid URL sets upstream to URL' '
-	clear_config master other other2 &&
-	git checkout master &&
+	clear_config main other other2 &&
+	git checkout main &&
 	url="file://$PWD" &&
 	git pull --set-upstream "$url" &&
-	check_config master "$url" HEAD &&
+	check_config main "$url" HEAD &&
 	check_config_missing other &&
 	check_config_missing other2
 '
 
 test_expect_success 'pull --set-upstream with valid URL and branch sets branch' '
-	clear_config master other other2 &&
-	git checkout master &&
+	clear_config main other other2 &&
+	git checkout main &&
 	url="file://$PWD" &&
-	git pull --set-upstream "$url" master &&
-	check_config master "$url" refs/heads/master &&
+	git pull --set-upstream "$url" main &&
+	check_config main "$url" refs/heads/main &&
 	check_config_missing other &&
 	check_config_missing other2
 '

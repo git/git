@@ -940,7 +940,7 @@ static int store_object(
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, hdrlen);
 	the_hash_algo->update_fn(&c, dat->buf, dat->len);
-	the_hash_algo->final_fn(oid.hash, &c);
+	the_hash_algo->final_oid_fn(&oid, &c);
 	if (oidout)
 		oidcpy(oidout, &oid);
 
@@ -1136,7 +1136,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 		}
 	}
 	git_deflate_end(&s);
-	the_hash_algo->final_fn(oid.hash, &c);
+	the_hash_algo->final_oid_fn(&oid, &c);
 
 	if (oidout)
 		oidcpy(oidout, &oid);
@@ -1276,8 +1276,8 @@ static void load_tree(struct tree_entry *root)
 		e->versions[0].mode = e->versions[1].mode;
 		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
-		hashcpy(e->versions[0].oid.hash, (unsigned char *)c);
-		hashcpy(e->versions[1].oid.hash, (unsigned char *)c);
+		oidread(&e->versions[0].oid, (unsigned char *)c);
+		oidread(&e->versions[1].oid, (unsigned char *)c);
 		c += the_hash_algo->rawsz;
 	}
 	free(buf);
@@ -3322,7 +3322,7 @@ static void option_rewrite_submodules(const char *arg, struct string_list *list)
 		die(_("Expected format name:filename for submodule rewrite option"));
 	*f = '\0';
 	f++;
-	ms = xcalloc(1, sizeof(*ms));
+	CALLOC_ARRAY(ms, 1);
 
 	fp = fopen(f, "r");
 	if (!fp)
@@ -3519,9 +3519,9 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 
 	alloc_objects(object_entry_alloc);
 	strbuf_init(&command_buf, 0);
-	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
-	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
-	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
+	CALLOC_ARRAY(atom_table, atom_table_sz);
+	CALLOC_ARRAY(branch_table, branch_table_sz);
+	CALLOC_ARRAY(avail_tree_table, avail_tree_table_sz);
 	marks = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
 
 	hashmap_init(&object_table, object_entry_hashcmp, NULL, 0);

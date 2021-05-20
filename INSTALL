@@ -197,7 +197,9 @@ Issues of note:
    Building and installing the pdf file additionally requires
    dblatex.  Version >= 0.2.7 is known to work.
 
-   All formats require at least asciidoc 8.4.1.
+   All formats require at least asciidoc 8.4.1. Alternatively, you can
+   use Asciidoctor (requires Ruby) by passing USE_ASCIIDOCTOR=YesPlease
+   to make. You need at least Asciidoctor version 1.5.
 
    There are also "make quick-install-doc", "make quick-install-man"
    and "make quick-install-html" which install preformatted man pages

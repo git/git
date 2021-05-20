@@ -76,7 +76,7 @@ unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len)
 static void alloc_table(struct hashmap *map, unsigned int size)
 {
 	map->tablesize = size;
-	map->table = xcalloc(size, sizeof(struct hashmap_entry *));
+	CALLOC_ARRAY(map->table, size);
 
 	/* calculate resize thresholds for new size */
 	map->grow_at = (unsigned int) ((uint64_t) size * HASHMAP_LOAD_FACTOR / 100);

@@ -896,7 +896,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 
-	lock = xcalloc(1, sizeof(*lock));
+	CALLOC_ARRAY(lock, 1);
 	lock->timeout = -1;
 
 	if (start_active_slot(slot)) {
@@ -1022,6 +1022,8 @@ static void remote_ls(const char *path, int flags,
 /* extract hex from sharded "xx/x{38}" filename */
 static int get_oid_hex_from_objpath(const char *path, struct object_id *oid)
 {
+	oid->algo = hash_algo_by_ptr(the_hash_algo);
+
 	if (strlen(path) != the_hash_algo->hexsz + 1)
 		return -1;
 
@@ -1436,7 +1438,7 @@ static void one_remote_ref(const char *refname)
 	 * may be required for updating server info later.
 	 */
 	if (repo->can_update_info_refs && !has_object_file(&ref->old_oid)) {
-		obj = lookup_unknown_object(&ref->old_oid);
+		obj = lookup_unknown_object(the_repository, &ref->old_oid);
 		fprintf(stderr,	"  fetch %s for %s\n",
 			oid_to_hex(&ref->old_oid), refname);
 		add_fetch_request(obj);
@@ -1713,7 +1715,7 @@ int cmd_main(int argc, const char **argv)
 	int new_refs;
 	struct ref *ref, *local_refs;
 
-	repo = xcalloc(1, sizeof(*repo));
+	CALLOC_ARRAY(repo, 1);
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {

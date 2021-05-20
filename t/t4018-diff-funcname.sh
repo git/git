@@ -25,33 +25,26 @@ test_expect_success 'setup' '
 	echo B >B.java
 '
 
+test_expect_success 'setup: test-tool userdiff' '
+	# Make sure additions to builtin_drivers are sorted
+	test_when_finished "rm builtin-drivers.sorted" &&
+	test-tool userdiff list-builtin-drivers >builtin-drivers &&
+	test_file_not_empty builtin-drivers &&
+	sort <builtin-drivers >builtin-drivers.sorted &&
+	test_cmp builtin-drivers.sorted builtin-drivers &&
+
+	# Ditto, but "custom" requires the .git directory and config
+	# to be setup and read.
+	test_when_finished "rm custom-drivers.sorted" &&
+	test-tool userdiff list-custom-drivers >custom-drivers &&
+	test_file_not_empty custom-drivers &&
+	sort <custom-drivers >custom-drivers.sorted &&
+	test_cmp custom-drivers.sorted custom-drivers
+'
+
 diffpatterns="
-	ada
-	bash
-	bibtex
-	cpp
-	csharp
-	css
-	dts
-	elixir
-	fortran
-	fountain
-	golang
-	html
-	java
-	markdown
-	matlab
-	objc
-	pascal
-	perl
-	php
-	python
-	ruby
-	rust
-	tex
-	custom1
-	custom2
-	custom3
+	$(cat builtin-drivers)
+	$(cat custom-drivers)
 "
 
 for p in $diffpatterns
@@ -101,13 +94,7 @@ test_expect_success 'setup hunk header tests' '
 # check each individual file
 for i in $(git ls-files)
 do
-	if grep broken "$i" >/dev/null 2>&1
-	then
-		result=failure
-	else
-		result=success
-	fi
-	test_expect_$result "hunk header: $i" "
+	test_expect_success "hunk header: $i" "
 		git diff -U1 $i >actual &&
 		grep '@@ .* @@.*RIGHT' actual
 	"

@@ -37,13 +37,10 @@ void init_archivers(void)
 
 static void format_subst(const struct commit *commit,
 			 const char *src, size_t len,
-			 struct strbuf *buf)
+			 struct strbuf *buf, struct pretty_print_context *ctx)
 {
 	char *to_free = NULL;
 	struct strbuf fmt = STRBUF_INIT;
-	struct pretty_print_context ctx = {0};
-	ctx.date_mode.type = DATE_NORMAL;
-	ctx.abbrev = DEFAULT_ABBREV;
 
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
@@ -61,7 +58,7 @@ static void format_subst(const struct commit *commit,
 		strbuf_add(&fmt, b + 8, c - b - 8);
 
 		strbuf_add(buf, src, b - src);
-		format_commit_message(commit, fmt.buf, buf, &ctx);
+		format_commit_message(commit, fmt.buf, buf, ctx);
 		len -= c + 1 - src;
 		src  = c + 1;
 	}
@@ -94,7 +91,7 @@ static void *object_file_to_archive(const struct archiver_args *args,
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
 		convert_to_working_tree(args->repo->index, path, buf.buf, buf.len, &buf, &meta);
 		if (commit)
-			format_subst(commit, buf.buf, buf.len, &buf);
+			format_subst(commit, buf.buf, buf.len, &buf, args->pretty_ctx);
 		buffer = strbuf_detach(&buf, &size);
 		*sizep = size;
 	}
@@ -107,7 +104,6 @@ struct directory {
 	struct object_id oid;
 	int baselen, len;
 	unsigned mode;
-	int stage;
 	char path[FLEX_ARRAY];
 };
 
@@ -138,7 +134,7 @@ static int check_attr_export_subst(const struct attr_check *check)
 }
 
 static int write_archive_entry(const struct object_id *oid, const char *base,
-		int baselen, const char *filename, unsigned mode, int stage,
+		int baselen, const char *filename, unsigned mode,
 		void *context)
 {
 	static struct strbuf path = STRBUF_INIT;
@@ -197,7 +193,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 static void queue_directory(const unsigned char *sha1,
 		struct strbuf *base, const char *filename,
-		unsigned mode, int stage, struct archiver_context *c)
+		unsigned mode, struct archiver_context *c)
 {
 	struct directory *d;
 	size_t len = st_add4(base->len, 1, strlen(filename), 1);
@@ -205,10 +201,9 @@ static void queue_directory(const unsigned char *sha1,
 	d->up	   = c->bottom;
 	d->baselen = base->len;
 	d->mode	   = mode;
-	d->stage   = stage;
 	c->bottom  = d;
 	d->len = xsnprintf(d->path, len, "%.*s%s/", (int)base->len, base->buf, filename);
-	hashcpy(d->oid.hash, sha1);
+	oidread(&d->oid, sha1);
 }
 
 static int write_directory(struct archiver_context *c)
@@ -224,14 +219,14 @@ static int write_directory(struct archiver_context *c)
 		write_directory(c) ||
 		write_archive_entry(&d->oid, d->path, d->baselen,
 				    d->path + d->baselen, d->mode,
-				    d->stage, c) != READ_TREE_RECURSIVE;
+				    c) != READ_TREE_RECURSIVE;
 	free(d);
 	return ret ? -1 : 0;
 }
 
 static int queue_or_write_archive_entry(const struct object_id *oid,
 		struct strbuf *base, const char *filename,
-		unsigned mode, int stage, void *context)
+		unsigned mode, void *context)
 {
 	struct archiver_context *c = context;
 
@@ -256,14 +251,14 @@ static int queue_or_write_archive_entry(const struct object_id *oid,
 		if (check_attr_export_ignore(check))
 			return 0;
 		queue_directory(oid->hash, base, filename,
-				mode, stage, c);
+				mode, c);
 		return READ_TREE_RECURSIVE;
 	}
 
 	if (write_directory(c))
 		return -1;
 	return write_archive_entry(oid, base->buf, base->len, filename, mode,
-				   stage, context);
+				   context);
 }
 
 struct extra_file_info {
@@ -280,8 +275,10 @@ int write_archive_entries(struct archiver_args *args,
 	int err;
 	struct strbuf path_in_archive = STRBUF_INIT;
 	struct strbuf content = STRBUF_INIT;
-	struct object_id fake_oid = null_oid;
+	struct object_id fake_oid;
 	int i;
+
+	oidcpy(&fake_oid, null_oid());
 
 	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
 		size_t len = args->baselen;
@@ -316,10 +313,10 @@ int write_archive_entries(struct archiver_args *args,
 		git_attr_set_direction(GIT_ATTR_INDEX);
 	}
 
-	err = read_tree_recursive(args->repo, args->tree, "",
-				  0, 0, &args->pathspec,
-				  queue_or_write_archive_entry,
-				  &context);
+	err = read_tree(args->repo, args->tree,
+			&args->pathspec,
+			queue_or_write_archive_entry,
+			&context);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
 	while (context.bottom) {
@@ -378,7 +375,7 @@ struct path_exists_context {
 
 static int reject_entry(const struct object_id *oid, struct strbuf *base,
 			const char *filename, unsigned mode,
-			int stage, void *context)
+			void *context)
 {
 	int ret = -1;
 	struct path_exists_context *ctx = context;
@@ -405,9 +402,9 @@ static int path_exists(struct archiver_args *args, const char *path)
 	ctx.args = args;
 	parse_pathspec(&ctx.pathspec, 0, 0, "", paths);
 	ctx.pathspec.recursive = 1;
-	ret = read_tree_recursive(args->repo, args->tree, "",
-				  0, 0, &ctx.pathspec,
-				  reject_entry, &ctx);
+	ret = read_tree(args->repo, args->tree,
+			&ctx.pathspec,
+			reject_entry, &ctx);
 	clear_pathspec(&ctx.pathspec);
 	return ret != 0;
 }
@@ -633,12 +630,19 @@ int write_archive(int argc, const char **argv, const char *prefix,
 		  const char *name_hint, int remote)
 {
 	const struct archiver *ar = NULL;
+	struct pretty_print_describe_status describe_status = {0};
+	struct pretty_print_context ctx = {0};
 	struct archiver_args args;
 	int rc;
 
 	git_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
 	git_config(git_default_config, NULL);
 
+	describe_status.max_invocations = 1;
+	ctx.date_mode.type = DATE_NORMAL;
+	ctx.abbrev = DEFAULT_ABBREV;
+	ctx.describe_status = &describe_status;
+	args.pretty_ctx = &ctx;
 	args.repo = repo;
 	args.prefix = prefix;
 	string_list_init(&args.extra_files, 1);

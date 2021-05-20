@@ -15,6 +15,7 @@ SYNOPSIS
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
+	 [--quoted-cr=<action>]
 	 [(<mbox> | <Maildir>)...]
 'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)])
 
@@ -59,6 +60,9 @@ OPTIONS
 --no-scissors::
 	Ignore scissors lines (see linkgit:git-mailinfo[1]).
 
+--quoted-cr=<action>::
+	This flag will be passed down to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+
 -m::
 --message-id::
 	Pass the `-m` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]),
@@ -79,7 +83,7 @@ OPTIONS
 	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
-	`i18n.commitencoding` can be used to specify project's
+	`i18n.commitEncoding` can be used to specify project's
 	preferred encoding if it is not UTF-8).
 +
 This was optional in prior versions of git, but now it is the

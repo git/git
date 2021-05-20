@@ -21,3 +21,24 @@ checkout.guess::
 	Provides the default value for the `--guess` or `--no-guess`
 	option in `git checkout` and `git switch`. See
 	linkgit:git-switch[1] and linkgit:git-checkout[1].
+
+checkout.workers::
+	The number of parallel workers to use when updating the working tree.
+	The default is one, i.e. sequential execution. If set to a value less
+	than one, Git will use as many workers as the number of logical cores
+	available. This setting and `checkout.thresholdForParallelism` affect
+	all commands that perform checkout. E.g. checkout, clone, reset,
+	sparse-checkout, etc.
++
+Note: parallel checkout usually delivers better performance for repositories
+located on SSDs or over NFS. For repositories on spinning disks and/or machines
+with a small number of cores, the default sequential checkout often performs
+better. The size and compression level of a repository might also influence how
+well the parallel version performs.
+
+checkout.thresholdForParallelism::
+	When running parallel checkout with a small number of files, the cost
+	of subprocess spawning and inter-process communication might outweigh
+	the parallelization gains. This setting allows to define the minimum
+	number of files for which parallel checkout should be attempted. The
+	default is 100.

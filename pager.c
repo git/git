@@ -11,29 +11,25 @@
 static struct child_process pager_process = CHILD_PROCESS_INIT;
 static const char *pager_program;
 
-static void wait_for_pager(int in_signal)
+static void close_pager_fds(void)
 {
-	if (!in_signal) {
-		fflush(stdout);
-		fflush(stderr);
-	}
 	/* signal EOF to pager */
 	close(1);
 	close(2);
-	if (in_signal)
-		finish_command_in_signal(&pager_process);
-	else
-		finish_command(&pager_process);
 }
 
 static void wait_for_pager_atexit(void)
 {
-	wait_for_pager(0);
+	fflush(stdout);
+	fflush(stderr);
+	close_pager_fds();
+	finish_command(&pager_process);
 }
 
 static void wait_for_pager_signal(int signo)
 {
-	wait_for_pager(1);
+	close_pager_fds();
+	finish_command_in_signal(&pager_process);
 	sigchain_pop(signo);
 	raise(signo);
 }

@@ -303,7 +303,7 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 		return;
 	}
 
-	ci = xcalloc(1, sizeof(struct rename_conflict_info));
+	CALLOC_ARRAY(ci, 1);
 	ci->rename_type = rename_type;
 	ci->ren1 = ren1;
 	ci->ren2 = ren2;
@@ -453,7 +453,7 @@ static void unpack_trees_finish(struct merge_options *opt)
 
 static int save_files_dirs(const struct object_id *oid,
 			   struct strbuf *base, const char *path,
-			   unsigned int mode, int stage, void *context)
+			   unsigned int mode, void *context)
 {
 	struct path_hashmap_entry *entry;
 	int baselen = base->len;
@@ -473,8 +473,8 @@ static void get_files_dirs(struct merge_options *opt, struct tree *tree)
 {
 	struct pathspec match_all;
 	memset(&match_all, 0, sizeof(match_all));
-	read_tree_recursive(opt->repo, tree, "", 0, 0,
-			    &match_all, save_files_dirs, opt);
+	read_tree(opt->repo, tree,
+		  &match_all, save_files_dirs, opt);
 }
 
 static int get_tree_entry_if_blob(struct repository *r,
@@ -486,7 +486,7 @@ static int get_tree_entry_if_blob(struct repository *r,
 
 	ret = get_tree_entry(r, tree, path, &dfs->oid, &dfs->mode);
 	if (S_ISDIR(dfs->mode)) {
-		oidcpy(&dfs->oid, &null_oid);
+		oidcpy(&dfs->oid, null_oid());
 		dfs->mode = 0;
 	}
 	return ret;
@@ -522,6 +522,8 @@ static struct string_list *get_unmerged(struct index_state *istate)
 
 	unmerged->strdup_strings = 1;
 
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct string_list_item *item;
 		struct stage_data *e;
@@ -1075,6 +1077,11 @@ static int merge_3way(struct merge_options *opt,
 	read_mmblob(&src1, &a->oid);
 	read_mmblob(&src2, &b->oid);
 
+	/*
+	 * FIXME: Using a->path for normalization rules in ll_merge could be
+	 * wrong if we renamed from a->path to b->path.  We should use the
+	 * target path for where the file will be written.
+	 */
 	merge_status = ll_merge(result_buf, a->path, &orig, base,
 				&src1, name1, &src2, name2,
 				opt->repo->index, &ll_opts);
@@ -1154,6 +1161,8 @@ static void print_commit(struct commit *commit)
 	struct strbuf sb = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 	ctx.date_mode.type = DATE_NORMAL;
+	/* FIXME: Merge this with output_commit_title() */
+	assert(!merge_remote_util(commit));
 	format_commit_message(commit, " %h: %m %s", &sb, &ctx);
 	fprintf(stderr, "%s\n", sb.buf);
 	strbuf_release(&sb);
@@ -1177,6 +1186,11 @@ static int merge_submodule(struct merge_options *opt,
 	int search = !opt->priv->call_depth;
 
 	/* store a in result in case we fail */
+	/* FIXME: This is the WRONG resolution for the recursive case when
+	 * we need to be careful to avoid accidentally matching either side.
+	 * Should probably use o instead there, much like we do for merging
+	 * binaries.
+	 */
 	oidcpy(result, a);
 
 	/* we can not handle deletion conflicts */
@@ -1301,6 +1315,13 @@ static int merge_mode_and_contents(struct merge_options *opt,
 
 	if ((S_IFMT & a->mode) != (S_IFMT & b->mode)) {
 		result->clean = 0;
+		/*
+		 * FIXME: This is a bad resolution for recursive case; for
+		 * the recursive case we want something that is unlikely to
+		 * accidentally match either side.  Also, while it makes
+		 * sense to prefer regular files over symlinks, it doesn't
+		 * make sense to prefer regular files over submodules.
+		 */
 		if (S_ISREG(a->mode)) {
 			result->blob.mode = a->mode;
 			oidcpy(&result->blob.oid, &a->oid);
@@ -1349,6 +1370,7 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			free(result_buf.ptr);
 			if (ret)
 				return ret;
+			/* FIXME: bug, what if modes didn't match? */
 			result->clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
 			result->clean = merge_submodule(opt, &result->blob.oid,
@@ -1604,7 +1626,7 @@ static int handle_file_collision(struct merge_options *opt,
 
 	/* Store things in diff_filespecs for functions that need it */
 	null.path = (char *)collide_path;
-	oidcpy(&null.oid, &null_oid);
+	oidcpy(&null.oid, null_oid());
 	null.mode = 0;
 
 	if (merge_mode_and_contents(opt, &null, a, b, collide_path,
@@ -2389,8 +2411,7 @@ static void compute_collisions(struct hashmap *collisions,
 			continue;
 		collision_ent = collision_find_entry(collisions, new_path);
 		if (!collision_ent) {
-			collision_ent = xcalloc(1,
-						sizeof(struct collision_entry));
+			CALLOC_ARRAY(collision_ent, 1);
 			hashmap_entry_init(&collision_ent->ent,
 						strhash(new_path));
 			hashmap_put(collisions, &collision_ent->ent);
@@ -2594,7 +2615,7 @@ static struct string_list *get_renames(struct merge_options *opt,
 	struct string_list *renames;
 
 	compute_collisions(&collisions, dir_renames, pairs);
-	renames = xcalloc(1, sizeof(struct string_list));
+	CALLOC_ARRAY(renames, 1);
 
 	for (i = 0; i < pairs->nr; ++i) {
 		struct string_list_item *item;
@@ -2664,6 +2685,14 @@ static int process_renames(struct merge_options *opt,
 	struct string_list b_by_dst = STRING_LIST_INIT_NODUP;
 	const struct rename *sre;
 
+	/*
+	 * FIXME: As string-list.h notes, it's O(n^2) to build a sorted
+	 * string_list one-by-one, but O(n log n) to build it unsorted and
+	 * then sort it.  Note that as we build the list, we do not need to
+	 * check if the existing destination path is already in the list,
+	 * because the structure of diffcore_rename guarantees we won't
+	 * have duplicates.
+	 */
 	for (i = 0; i < a_renames->nr; i++) {
 		sre = a_renames->items[i].util;
 		string_list_insert(&a_by_dst, sre->pair->two->path)->util
@@ -2790,11 +2819,11 @@ static int process_renames(struct merge_options *opt,
 			dst_other.mode = ren1->dst_entry->stages[other_stage].mode;
 			try_merge = 0;
 
-			if (oideq(&src_other.oid, &null_oid) &&
+			if (oideq(&src_other.oid, null_oid()) &&
 			    ren1->dir_rename_original_type == 'A') {
 				setup_rename_conflict_info(RENAME_VIA_DIR,
 							   opt, ren1, NULL);
-			} else if (oideq(&src_other.oid, &null_oid)) {
+			} else if (oideq(&src_other.oid, null_oid())) {
 				setup_rename_conflict_info(RENAME_DELETE,
 							   opt, ren1, NULL);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
@@ -2813,7 +2842,7 @@ static int process_renames(struct merge_options *opt,
 						      1, /* update_cache */
 						      0  /* update_wd    */))
 					clean_merge = -1;
-			} else if (!oideq(&dst_other.oid, &null_oid)) {
+			} else if (!oideq(&dst_other.oid, null_oid())) {
 				/*
 				 * Probably not a clean merge, but it's
 				 * premature to set clean_merge to 0 here,
@@ -2987,7 +3016,7 @@ static int blob_unchanged(struct merge_options *opt,
 	struct strbuf obuf = STRBUF_INIT;
 	struct strbuf abuf = STRBUF_INIT;
 	int ret = 0; /* assume changed for safety */
-	const struct index_state *idx = opt->repo->index;
+	struct index_state *idx = opt->repo->index;
 
 	if (a->mode != o->mode)
 		return 0;
@@ -3433,7 +3462,7 @@ static int merge_trees_internal(struct merge_options *opt,
 	}
 
 	if (oideq(&merge_base->object.oid, &merge->object.oid)) {
-		output(opt, 0, _("Already up to date!"));
+		output(opt, 0, _("Already up to date."));
 		*result = head;
 		return 1;
 	}
@@ -3515,17 +3544,6 @@ static int merge_trees_internal(struct merge_options *opt,
 		return -1;
 
 	return clean;
-}
-
-static struct commit_list *reverse_commit_list(struct commit_list *list)
-{
-	struct commit_list *next = NULL, *current, *backup;
-	for (current = list; current; current = backup) {
-		backup = current->next;
-		current->next = next;
-		next = current;
-	}
-	return next;
 }
 
 /*
@@ -3613,6 +3631,15 @@ static int merge_recursive_internal(struct merge_options *opt,
 			return err(opt, _("merge returned no commit"));
 	}
 
+	/*
+	 * FIXME: Since merge_recursive_internal() is only ever called by
+	 * places that ensure the index is loaded first
+	 * (e.g. builtin/merge.c, rebase/sequencer, etc.), in the common
+	 * case where the merge base was unique that means when we get here
+	 * we immediately discard the index and re-read it, which is a
+	 * complete waste of time.  We should only be discarding and
+	 * re-reading if we were forced to recurse.
+	 */
 	discard_index(opt->repo->index);
 	if (!opt->priv->call_depth)
 		repo_read_index(opt->repo);
@@ -3675,7 +3702,7 @@ static int merge_start(struct merge_options *opt, struct tree *head)
 		return -1;
 	}
 
-	opt->priv = xcalloc(1, sizeof(*opt->priv));
+	CALLOC_ARRAY(opt->priv, 1);
 	string_list_init(&opt->priv->df_conflict_file_set, 1);
 	return 0;
 }

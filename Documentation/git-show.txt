@@ -45,10 +45,13 @@ include::pretty-options.txt[]
 include::pretty-formats.txt[]
 
 
-COMMON DIFF OPTIONS
--------------------
+DIFF FORMATTING
+---------------
+The options below can be used to change the way `git show` generates
+diff output.
 
 :git-log: 1
+:diff-merges-default: `dense-combined`
 include::diff-options.txt[]
 
 include::diff-generate-patch.txt[]

@@ -492,7 +492,9 @@ test_expect_success '3a-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 		test_cmp expect actual &&
 
 		test_must_fail git rev-parse HEAD:bq HEAD:foo/bq &&
-		test_path_is_missing bq foo/bq foo/whatever
+		test_path_is_missing bq &&
+		test_path_is_missing foo/bq &&
+		test_path_is_missing foo/whatever
 	)
 '
 
@@ -522,7 +524,9 @@ test_expect_success '3a-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 		test_cmp expect actual &&
 
 		test_must_fail git rev-parse HEAD:bq HEAD:foo/bq &&
-		test_path_is_missing bq foo/bq foo/whatever
+		test_path_is_missing bq &&
+		test_path_is_missing foo/bq &&
+		test_path_is_missing foo/whatever
 	)
 '
 
@@ -588,7 +592,9 @@ test_expect_success '3b-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 		test_cmp expect actual &&
 
 		test_must_fail git rev-parse HEAD:bq HEAD:foo/bq &&
-		test_path_is_missing bq foo/bq foo/whatever
+		test_path_is_missing bq &&
+		test_path_is_missing foo/bq &&
+		test_path_is_missing foo/whatever
 	)
 '
 
@@ -618,7 +624,9 @@ test_expect_success '3b-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 		test_cmp expect actual &&
 
 		test_must_fail git rev-parse HEAD:bq HEAD:foo/bq &&
-		test_path_is_missing bq foo/bq foo/whatever
+		test_path_is_missing bq &&
+		test_path_is_missing foo/bq &&
+		test_path_is_missing foo/whatever
 	)
 '
 

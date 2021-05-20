@@ -9,15 +9,18 @@ This test verifies that "git submodule update" detaches the HEAD of the
 submodule and "git submodule update --rebase/--merge" does not detach the HEAD.
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 
 compare_head()
 {
-    sha_master=$(git rev-list --max-count=1 master)
+    sha_main=$(git rev-list --max-count=1 main)
     sha_head=$(git rev-list --max-count=1 HEAD)
 
-    test "$sha_master" = "$sha_head"
+    test "$sha_main" = "$sha_head"
 }
 
 
@@ -152,9 +155,9 @@ test_expect_success 'submodule update --init --recursive from subdirectory' '
 	 cd tmp &&
 	 git submodule update --init --recursive ../super >../../actual 2>../../actual2
 	) &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	sort actual2 >actual2.sorted &&
-	test_i18ncmp expect2 actual2.sorted
+	test_cmp expect2 actual2.sorted
 '
 
 cat <<EOF >expect2
@@ -171,7 +174,7 @@ test_expect_success 'submodule update --init from and of subdirectory' '
 	  git submodule update --init sub 2>../../actual2
 	 )
 	) &&
-	test_i18ncmp expect2 actual2
+	test_cmp expect2 actual2
 '
 
 test_expect_success 'submodule update does not fetch already present commits' '
@@ -189,7 +192,7 @@ test_expect_success 'submodule update does not fetch already present commits' '
 	(cd super &&
 	  git submodule update > ../actual 2> ../actual.err
 	) &&
-	test_i18ncmp expected actual &&
+	test_cmp expected actual &&
 	test_must_be_empty actual.err
 '
 
@@ -262,14 +265,14 @@ test_expect_success 'submodule update --remote should fetch upstream changes wit
 		cd super &&
 		git submodule update --remote --force submodule &&
 		git -C submodule log -1 --oneline >actual &&
-		git -C ../submodule log -1 --oneline master >expect &&
+		git -C ../submodule log -1 --oneline main >expect &&
 		test_cmp expect actual &&
 		git checkout -b test-branch &&
 		git submodule update --remote --force submodule &&
 		git -C submodule log -1 --oneline >actual &&
 		git -C ../submodule log -1 --oneline test-branch >expect &&
 		test_cmp expect actual &&
-		git checkout master &&
+		git checkout main &&
 		git branch -d test-branch &&
 		git reset --hard HEAD^
 	)
@@ -282,7 +285,7 @@ test_expect_success 'local config should override .gitmodules branch' '
 	 git add file &&
 	 test_tick &&
 	 git commit -m "upstream line5" &&
-	 git checkout master
+	 git checkout main
 	) &&
 	(cd super &&
 	 git config submodule.submodule.branch test-branch &&
@@ -292,9 +295,9 @@ test_expect_success 'local config should override .gitmodules branch' '
 	)
 '
 
-test_expect_success 'submodule update --rebase staying on master' '
+test_expect_success 'submodule update --rebase staying on main' '
 	(cd super/submodule &&
-	  git checkout master
+	  git checkout main
 	) &&
 	(cd super &&
 	 (cd submodule &&
@@ -306,7 +309,7 @@ test_expect_success 'submodule update --rebase staying on master' '
 	)
 '
 
-test_expect_success 'submodule update --merge staying on master' '
+test_expect_success 'submodule update --merge staying on main' '
 	(cd super/submodule &&
 	  git reset --hard HEAD~1
 	) &&
@@ -458,7 +461,7 @@ test_expect_success 'submodule update - command in .git/config catches failure' 
 	(cd super &&
 	 test_must_fail git submodule update submodule 2>../actual
 	) &&
-	test_i18ncmp actual expect
+	test_cmp actual expect
 '
 
 cat << EOF >expect
@@ -476,7 +479,7 @@ test_expect_success 'submodule update - command in .git/config catches failure -
 	 mkdir tmp && cd tmp &&
 	 test_must_fail git submodule update ../submodule 2>../../actual
 	) &&
-	test_i18ncmp actual expect
+	test_cmp actual expect
 '
 
 test_expect_success 'submodule update - command run for initial population of submodule' '
@@ -485,7 +488,7 @@ test_expect_success 'submodule update - command run for initial population of su
 	EOF
 	rm -rf super/submodule &&
 	test_must_fail git -C super submodule update 2>actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	git -C super submodule update --checkout
 '
 
@@ -506,7 +509,7 @@ test_expect_success 'recursive submodule update - command in .git/config catches
 	 mkdir -p tmp && cd tmp &&
 	 test_must_fail git submodule update --recursive ../super 2>../../actual
 	) &&
-	test_i18ncmp actual expect
+	test_cmp actual expect
 '
 
 test_expect_success 'submodule init does not copy command into .git/config' '
@@ -609,7 +612,7 @@ test_expect_success 'submodule update - update=none in .git/config' '
 	(cd super &&
 	 git config submodule.submodule.update none &&
 	 (cd submodule &&
-	  git checkout master &&
+	  git checkout main &&
 	  compare_head
 	 ) &&
 	 git diff --name-only >out &&
@@ -629,7 +632,7 @@ test_expect_success 'submodule update - update=none in .git/config but --checkou
 	(cd super &&
 	 git config submodule.submodule.update none &&
 	 (cd submodule &&
-	  git checkout master &&
+	  git checkout main &&
 	  compare_head
 	 ) &&
 	 git diff --name-only >out &&
@@ -689,7 +692,7 @@ test_expect_success 'submodule update continues after checkout error' '
 test_expect_success 'submodule update continues after recursive checkout error' '
 	(cd super &&
 	 git reset --hard HEAD &&
-	 git checkout master &&
+	 git checkout main &&
 	 git submodule update &&
 	 (cd submodule &&
 	  git submodule add ../submodule subsubmodule &&
@@ -733,7 +736,7 @@ test_expect_success 'submodule update continues after recursive checkout error' 
 
 test_expect_success 'submodule update exit immediately in case of merge conflict' '
 	(cd super &&
-	 git checkout master &&
+	 git checkout main &&
 	 git reset --hard HEAD &&
 	 (cd submodule &&
 	  (cd subsubmodule &&
@@ -751,7 +754,7 @@ test_expect_success 'submodule update exit immediately in case of merge conflict
 	 git add submodule2 &&
 	 git commit -m "two_new_submodule_commits" &&
 	 (cd submodule &&
-	  git checkout master &&
+	  git checkout main &&
 	  test_commit "conflict" file &&
 	  echo "conflict" > file
 	 ) &&
@@ -770,7 +773,7 @@ test_expect_success 'submodule update exit immediately in case of merge conflict
 
 test_expect_success 'submodule update exit immediately after recursive rebase error' '
 	(cd super &&
-	 git checkout master &&
+	 git checkout main &&
 	 git reset --hard HEAD &&
 	 (cd submodule &&
 	  git reset --hard HEAD &&
@@ -786,7 +789,7 @@ test_expect_success 'submodule update exit immediately after recursive rebase er
 	 git add submodule2 &&
 	 git commit -m "two_new_submodule_commits" &&
 	 (cd submodule &&
-	  git checkout master &&
+	  git checkout main &&
 	  test_commit "conflict2" file &&
 	  echo "conflict" > file
 	 ) &&
@@ -878,21 +881,21 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir re
 	git clone subsubsuper_update_r subsubsuper_update_r2 &&
 	(cd subsubsuper_update_r2 &&
 	 test_commit "update_subsubsuper" file &&
-	 git push origin master
+	 git push origin main
 	) &&
 	git clone subsuper_update_r subsuper_update_r2 &&
 	(cd subsuper_update_r2 &&
 	 test_commit "update_subsuper" file &&
 	 git submodule add ../subsubsuper_update_r subsubmodule &&
 	 git commit -am "subsubmodule" &&
-	 git push origin master
+	 git push origin main
 	) &&
 	git clone super_update_r super_update_r2 &&
 	(cd super_update_r2 &&
 	 test_commit "update_super" file &&
 	 git submodule add ../subsuper_update_r submodule &&
 	 git commit -am "submodule" &&
-	 git push origin master
+	 git push origin main
 	) &&
 	rm -rf super_update_r2 &&
 	git clone super_update_r super_update_r2 &&
@@ -911,7 +914,7 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir re
 
 test_expect_success 'submodule add properly re-creates deeper level submodules' '
 	(cd super &&
-	 git reset --hard master &&
+	 git reset --hard main &&
 	 rm -rf deeper/ &&
 	 git submodule add --force ../submodule deeper/submodule
 	)
@@ -1031,6 +1034,30 @@ test_expect_success 'submodule update --quiet passes quietness to merge/rebase' 
 	 git submodule update --rebase -v >out 2>err &&
 	 test_file_not_empty out &&
 	 test_must_be_empty err
+	)
+'
+
+test_expect_success 'submodule update --quiet passes quietness to fetch with a shallow clone' '
+	test_when_finished "rm -rf super4 super5 super6" &&
+	git clone . super4 &&
+	(cd super4 &&
+	 git submodule add --quiet file://"$TRASH_DIRECTORY"/submodule submodule3 &&
+	 git commit -am "setup submodule3"
+	) &&
+	(cd submodule &&
+	  test_commit line6 file
+	) &&
+	git clone super4 super5 &&
+	(cd super5 &&
+	 git submodule update --quiet --init --depth=1 submodule3 >out 2>err &&
+	 test_must_be_empty out &&
+	 test_must_be_empty err
+	) &&
+	git clone super4 super6 &&
+	(cd super6 &&
+	 git submodule update --init --depth=1 submodule3 >out 2>err &&
+	 test_file_not_empty out &&
+	 test_file_not_empty err
 	)
 '
 

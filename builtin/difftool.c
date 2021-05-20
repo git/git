@@ -23,6 +23,7 @@
 #include "lockfile.h"
 #include "object-store.h"
 #include "dir.h"
+#include "entry.h"
 
 static int trust_exit_code;
 
@@ -322,7 +323,7 @@ static int checkout_path(unsigned mode, struct object_id *oid,
 	struct cache_entry *ce;
 	int ret;
 
-	ce = make_transient_cache_entry(mode, oid, path, 0);
+	ce = make_transient_cache_entry(mode, oid, path, 0, NULL);
 	ret = checkout_entry(ce, state, NULL, NULL);
 
 	discard_cache_entry(ce);
@@ -583,6 +584,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	} else
 		setenv("GIT_DIFFTOOL_DIRDIFF", "true", 1);
 	rc = run_command_v_opt(helper_argv, flags);
+
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(&wtindex);
 
 	/*
 	 * If the diff includes working copy files and those

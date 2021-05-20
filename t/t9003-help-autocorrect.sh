@@ -56,11 +56,8 @@ test_expect_success 'autocorrect can be declined altogether' '
 	git config help.autocorrect never &&
 
 	test_must_fail git lfg 2>actual &&
-	if test_have_prereq C_LOCALE_OUTPUT
-	then
-		grep "is not a git command" actual &&
-		test_line_count = 1 actual
-	fi
+	grep "is not a git command" actual &&
+	test_line_count = 1 actual
 '
 
 test_done

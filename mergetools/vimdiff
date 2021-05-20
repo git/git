@@ -15,6 +15,17 @@ merge_cmd () {
 				"$LOCAL" "$MERGED" "$REMOTE"
 		fi
 		;;
+	*vimdiff1)
+		"$merge_tool_path" -f -d \
+			-c 'echon "Resolve conflicts leftward then save. Use :cq to abort."' \
+			"$LOCAL" "$REMOTE"
+		ret="$?"
+		if test "$ret" -eq 0
+		then
+			cp -- "$LOCAL" "$MERGED"
+		fi
+		return "$ret"
+		;;
 	*vimdiff2)
 		"$merge_tool_path" -f -d -c 'wincmd l' \
 			"$LOCAL" "$MERGED" "$REMOTE"
@@ -52,7 +63,7 @@ exit_code_trustable () {
 
 list_tool_variants () {
 	for prefix in '' g n; do
-		for suffix in '' 2 3; do
+		for suffix in '' 1 2 3; do
 			echo "${prefix}vimdiff${suffix}"
 		done
 	done

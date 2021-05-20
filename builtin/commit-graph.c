@@ -78,7 +78,7 @@ static int graph_verify(int argc, const char **argv)
 	static struct option builtin_commit_graph_verify_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
 			   N_("dir"),
-			   N_("The object directory to store the graph")),
+			   N_("the object directory to store the graph")),
 		OPT_BOOL(0, "shallow", &opts.shallow,
 			 N_("if the commit-graph is split, only verify the tip file")),
 		OPT_BOOL(0, "progress", &opts.progress, N_("force progress reporting")),
@@ -208,7 +208,7 @@ static int graph_write(int argc, const char **argv)
 	static struct option builtin_commit_graph_write_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
 			N_("dir"),
-			N_("The object directory to store the graph")),
+			N_("the object directory to store the graph")),
 		OPT_BOOL(0, "reachable", &opts.reachable,
 			N_("start walk at all refs")),
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
@@ -314,7 +314,7 @@ int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 	static struct option builtin_commit_graph_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
 			N_("dir"),
-			N_("The object directory to store the graph")),
+			N_("the object directory to store the graph")),
 		OPT_END(),
 	};
 

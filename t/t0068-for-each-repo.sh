@@ -27,4 +27,10 @@ test_expect_success 'run based on configured value' '
 	grep again message
 '
 
+test_expect_success 'do nothing on empty config' '
+	# the whole thing would fail if for-each-ref iterated even
+	# once, because "git help --no-such-option" would fail
+	git for-each-repo --config=bogus.config -- help --no-such-option
+'
+
 test_done

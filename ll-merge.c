@@ -268,7 +268,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		if (!strncmp(fn->name, name, namelen) && !fn->name[namelen])
 			break;
 	if (!fn) {
-		fn = xcalloc(1, sizeof(struct ll_merge_driver));
+		CALLOC_ARRAY(fn, 1);
 		fn->name = xmemdupz(name, namelen);
 		fn->fn = ll_ext_merge;
 		*ll_user_merge_tail = fn;

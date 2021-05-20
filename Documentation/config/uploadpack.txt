@@ -59,15 +59,16 @@ uploadpack.allowFilter::
 
 uploadpackfilter.allow::
 	Provides a default value for unspecified object filters (see: the
-	below configuration variable).
+	below configuration variable). If set to `true`, this will also
+	enable all filters which get added in the future.
 	Defaults to `true`.
 
 uploadpackfilter.<filter>.allow::
 	Explicitly allow or ban the object filter corresponding to
 	`<filter>`, where `<filter>` may be one of: `blob:none`,
-	`blob:limit`, `tree`, `sparse:oid`, or `combine`. If using
-	combined filters, both `combine` and all of the nested filter
-	kinds must be allowed. Defaults to `uploadpackfilter.allow`.
+	`blob:limit`, `object:type`, `tree`, `sparse:oid`, or `combine`.
+	If using combined filters, both `combine` and all of the nested
+	filter kinds must be allowed. Defaults to `uploadpackfilter.allow`.
 
 uploadpackfilter.tree.maxDepth::
 	Only allow `--filter=tree:<n>` when `<n>` is no more than the value of

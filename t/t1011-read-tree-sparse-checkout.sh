@@ -2,7 +2,7 @@
 
 test_description='sparse checkout tests
 
-* (tag: removed, master) removed
+* (tag: removed, main) removed
 | D	sub/added
 * (HEAD, tag: top) modified and added
 | M	init.t
@@ -253,7 +253,7 @@ warning: The following paths were already present and thus not updated despite s
 
 After fixing the above paths, you may want to run `git sparse-checkout reapply`.
 EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'checkout without --ignore-skip-worktree-bits' '

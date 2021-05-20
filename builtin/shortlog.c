@@ -61,8 +61,7 @@ static void insert_one_record(struct shortlog *log,
 	if (log->summary)
 		item->util = (void *)(UTIL_TO_INT(item) + 1);
 	else {
-		const char *dot3 = log->common_repo_prefix;
-		char *buffer, *p;
+		char *buffer;
 		struct strbuf subject = STRBUF_INIT;
 		const char *eol;
 
@@ -81,17 +80,6 @@ static void insert_one_record(struct shortlog *log,
 			oneline++;
 		format_subject(&subject, oneline, " ");
 		buffer = strbuf_detach(&subject, NULL);
-
-		if (dot3) {
-			int dot3len = strlen(dot3);
-			if (dot3len > 5) {
-				while ((p = strstr(buffer, dot3)) != NULL) {
-					int taillen = strlen(p) - dot3len;
-					memcpy(p, "/.../", 5);
-					memmove(p + 5, p + dot3len, taillen + 1);
-				}
-			}
-		}
 
 		if (item->util == NULL)
 			item->util = xcalloc(1, sizeof(struct string_list));
@@ -342,7 +330,7 @@ void shortlog_init(struct shortlog *log)
 {
 	memset(log, 0, sizeof(*log));
 
-	read_mailmap(&log->mailmap, &log->common_repo_prefix);
+	read_mailmap(&log->mailmap);
 
 	log->list.strdup_strings = 1;
 	log->wrap = DEFAULT_WRAPLEN;
@@ -360,19 +348,19 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 
 	const struct option options[] = {
 		OPT_BIT('c', "committer", &log.groups,
-			N_("Group by committer rather than author"),
+			N_("group by committer rather than author"),
 			SHORTLOG_GROUP_COMMITTER),
 		OPT_BOOL('n', "numbered", &log.sort_by_number,
 			 N_("sort output according to the number of commits per author")),
 		OPT_BOOL('s', "summary", &log.summary,
-			 N_("Suppress commit descriptions, only provides commit count")),
+			 N_("suppress commit descriptions, only provides commit count")),
 		OPT_BOOL('e', "email", &log.email,
-			 N_("Show the email address of each author")),
+			 N_("show the email address of each author")),
 		OPT_CALLBACK_F('w', NULL, &log, N_("<w>[,<i1>[,<i2>]]"),
-			N_("Linewrap output"), PARSE_OPT_OPTARG,
+			N_("linewrap output"), PARSE_OPT_OPTARG,
 			&parse_wrap_args),
 		OPT_CALLBACK(0, "group", &log, N_("field"),
-			N_("Group by field"), parse_group_option),
+			N_("group by field"), parse_group_option),
 		OPT_END(),
 	};
 

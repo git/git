@@ -126,7 +126,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.tweak = diff_tree_tweak_rev;
 
-	precompose_argv(argc, argv);
+	prefix = precompose_argv_prefix(argc, argv, prefix);
 	argc = setup_revisions(argc, argv, opt, &s_r_opt);
 
 	memset(&w, 0, sizeof(w));
@@ -155,6 +155,8 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		die(_("--stdin and --merge-base are mutually exclusive"));
 	if (merge_base && opt->pending.nr != 2)
 		die(_("--merge-base only works with two commits"));
+
+	opt->diffopt.rotate_to_strict = 1;
 
 	/*
 	 * NOTE!  We expect "a..b" to expand to "^a b" but it is
@@ -192,6 +194,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		int saved_nrl = 0;
 		int saved_dcctc = 0;
 
+		opt->diffopt.rotate_to_strict = 0;
 		if (opt->diffopt.detect_rename) {
 			if (!the_index.cache)
 				repo_read_index(the_repository);

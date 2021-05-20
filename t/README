@@ -196,6 +196,11 @@ appropriately before running "make". Short options can be bundled, i.e.
 	this feature by setting the GIT_TEST_CHAIN_LINT environment
 	variable to "1" or "0", respectively.
 
+	A few test scripts disable some of the more advanced
+	chain-linting detection in the name of efficiency. You can
+	override this by setting the GIT_TEST_CHAIN_LINT_HARDER
+	environment variable to "1".
+
 --stress::
 	Run the test script repeatedly in multiple parallel jobs until
 	one of them fails.  Useful for reproducing rare failures in
@@ -358,12 +363,6 @@ whether this mode is active, and e.g. skip some tests that are hard to
 refactor to deal with it. The "SYMLINKS" prerequisite is currently
 excluded as so much relies on it, but this might change in the future.
 
-GIT_TEST_GETTEXT_POISON=<boolean> turns all strings marked for
-translation into gibberish if true. Used for spotting those tests that
-need to be marked with a C_LOCALE_OUTPUT prerequisite when adding more
-strings for translation. See "Testing marked strings" in po/README for
-details.
-
 GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
 test suite. Accept any boolean values that are accepted by git-config.
 
@@ -438,6 +437,16 @@ is used.
 GIT_TEST_DEFAULT_HASH=<hash-algo> specifies which hash algorithm to
 use in the test scripts. Recognized values for <hash-algo> are "sha1"
 and "sha256".
+
+GIT_TEST_WRITE_REV_INDEX=<boolean>, when true enables the
+'pack.writeReverseIndex' setting.
+
+GIT_TEST_SPARSE_INDEX=<boolean>, when true enables index writes to use the
+sparse-index format by default.
+
+GIT_TEST_CHECKOUT_WORKERS=<n> overrides the 'checkout.workers' setting
+to <n> and 'checkout.thresholdForParallelism' to 0, forcing the
+execution of the parallel-checkout code.
 
 Naming Tests
 ------------
@@ -917,13 +926,13 @@ library for your script to use.
 
    Check whether a file has the length it is expected to.
 
- - test_path_is_file <path> [<diagnosis>]
-   test_path_is_dir <path> [<diagnosis>]
-   test_path_is_missing <path> [<diagnosis>]
+ - test_path_is_file <path>
+   test_path_is_dir <path>
+   test_path_is_missing <path>
 
    Check if the named path is a file, if the named path is a
    directory, or if the named path does not exist, respectively,
-   and fail otherwise, showing the <diagnosis> text.
+   and fail otherwise.
 
  - test_when_finished <script>
 
@@ -1103,18 +1112,6 @@ use these, and "test_set_prereq" for how to define your own.
 
    Git was compiled with support for PCRE. Wrap any tests
    that use git-grep --perl-regexp or git-grep -P in these.
-
- - LIBPCRE1
-
-   Git was compiled with PCRE v1 support via
-   USE_LIBPCRE1=YesPlease. Wrap any PCRE using tests that for some
-   reason need v1 of the PCRE library instead of v2 in these.
-
- - LIBPCRE2
-
-   Git was compiled with PCRE v2 support via
-   USE_LIBPCRE2=YesPlease. Wrap any PCRE using tests that for some
-   reason need v2 of the PCRE library instead of v1 in these.
 
  - CASE_INSENSITIVE_FS
 

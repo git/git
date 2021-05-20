@@ -2,6 +2,9 @@
 
 test_description='git apply --3way'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 print_sanitized_conflicted_diff () {
@@ -24,14 +27,14 @@ test_expect_success setup '
 	test_tick &&
 	test_write_lines 1 two 3 4 5 six 7 >one &&
 	test_write_lines 1 two 3 4 5 6 7 >two &&
-	git commit -a -m master &&
+	git commit -a -m main &&
 
 	git checkout side &&
 	test_write_lines 1 2 3 4 five 6 7 >one &&
 	test_write_lines 1 2 3 4 five 6 7 >two &&
 	git commit -a -m side &&
 
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'apply without --3way' '
@@ -39,7 +42,7 @@ test_expect_success 'apply without --3way' '
 
 	# should fail to apply
 	git reset --hard &&
-	git checkout master^0 &&
+	git checkout main^0 &&
 	test_must_fail git apply --index P.diff &&
 	# should leave things intact
 	git diff-files --exit-code &&
@@ -52,14 +55,14 @@ test_apply_with_3way () {
 
 	# The corresponding conflicted merge
 	git reset --hard &&
-	git checkout master^0 &&
+	git checkout main^0 &&
 	test_must_fail git merge --no-commit side &&
 	git ls-files -s >expect.ls &&
 	print_sanitized_conflicted_diff >expect.diff &&
 
 	# should fail to apply
 	git reset --hard &&
-	git checkout master^0 &&
+	git checkout main^0 &&
 	test_must_fail git apply --index --3way P.diff &&
 	git ls-files -s >actual.ls &&
 	print_sanitized_conflicted_diff >actual.diff &&
@@ -86,7 +89,7 @@ test_expect_success 'apply with --3way with rerere enabled' '
 
 	# The corresponding conflicted merge
 	git reset --hard &&
-	git checkout master^0 &&
+	git checkout main^0 &&
 	test_must_fail git merge --no-commit side &&
 
 	# Manually resolve and record the resolution
@@ -96,7 +99,7 @@ test_expect_success 'apply with --3way with rerere enabled' '
 
 	# should fail to apply
 	git reset --hard &&
-	git checkout master^0 &&
+	git checkout main^0 &&
 	test_must_fail git apply --index --3way P.diff &&
 
 	# but rerere should have replayed the recorded resolution
@@ -155,6 +158,76 @@ test_expect_success 'apply -3 with add/add conflict (dirty working tree)' '
 	test_cmp expect.ls actual.ls &&
 	test_cmp four.save four &&
 	test_cmp three.save three
+'
+
+test_expect_success 'apply -3 with ambiguous repeating file' '
+	git reset --hard &&
+	test_write_lines 1 2 1 2 1 2 1 2 1 2 1 >one_two_repeat &&
+	git add one_two_repeat &&
+	git commit -m "init one" &&
+	test_write_lines 1 2 1 2 1 2 1 2 one 2 1 >one_two_repeat &&
+	git commit -a -m "change one" &&
+
+	git diff HEAD~ >Repeat.diff &&
+	git reset --hard HEAD~ &&
+
+	test_write_lines 1 2 1 2 1 2 one 2 1 2 one >one_two_repeat &&
+	git commit -a -m "change surrounding one" &&
+
+	git apply --index --3way Repeat.diff &&
+	test_write_lines 1 2 1 2 1 2 one 2 one 2 one >expect &&
+
+	test_cmp expect one_two_repeat
+'
+
+test_expect_success 'apply with --3way --cached clean apply' '
+	# Merging side should be similar to applying this patch
+	git diff ...side >P.diff &&
+
+	# The corresponding cleanly applied merge
+	git reset --hard &&
+	git checkout main~ &&
+	git merge --no-commit side &&
+	git ls-files -s >expect.ls &&
+
+	# should succeed
+	git reset --hard &&
+	git checkout main~ &&
+	git apply --cached --3way P.diff &&
+	git ls-files -s >actual.ls &&
+	print_sanitized_conflicted_diff >actual.diff &&
+
+	# The cache should resemble the corresponding merge
+	# (both files at stage #0)
+	test_cmp expect.ls actual.ls &&
+	# However the working directory should not change
+	>expect.diff &&
+	test_cmp expect.diff actual.diff
+'
+
+test_expect_success 'apply with --3way --cached and conflicts' '
+	# Merging side should be similar to applying this patch
+	git diff ...side >P.diff &&
+
+	# The corresponding conflicted merge
+	git reset --hard &&
+	git checkout main^0 &&
+	test_must_fail git merge --no-commit side &&
+	git ls-files -s >expect.ls &&
+
+	# should fail to apply
+	git reset --hard &&
+	git checkout main^0 &&
+	test_must_fail git apply --cached --3way P.diff &&
+	git ls-files -s >actual.ls &&
+	print_sanitized_conflicted_diff >actual.diff &&
+
+	# The cache should resemble the corresponding merge
+	# (one file at stage #0, one file at stages #1 #2 #3)
+	test_cmp expect.ls actual.ls &&
+	# However the working directory should not change
+	>expect.diff &&
+	test_cmp expect.diff actual.diff
 '
 
 test_done

@@ -90,7 +90,7 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
 {
 	xrecord_t **records = pass == 1 ?
 		map->env->xdf1.recs : map->env->xdf2.recs;
-	xrecord_t *record = records[line - 1], *other;
+	xrecord_t *record = records[line - 1];
 	/*
 	 * After xdl_prepare_env() (or more precisely, due to
 	 * xdl_classify_record()), the "ha" member of the records (AKA lines)
@@ -104,11 +104,7 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
 	int index = (int)((record->ha << 1) % map->alloc);
 
 	while (map->entries[index].line1) {
-		other = map->env->xdf1.recs[map->entries[index].line1 - 1];
-		if (map->entries[index].hash != record->ha ||
-				!xdl_recmatch(record->ptr, record->size,
-					other->ptr, other->size,
-					map->xpp->flags)) {
+		if (map->entries[index].hash != record->ha) {
 			if (++index >= map->alloc)
 				index = 0;
 			continue;
@@ -253,8 +249,7 @@ static int match(struct hashmap *map, int line1, int line2)
 {
 	xrecord_t *record1 = map->env->xdf1.recs[line1 - 1];
 	xrecord_t *record2 = map->env->xdf2.recs[line2 - 1];
-	return xdl_recmatch(record1->ptr, record1->size,
-		record2->ptr, record2->size, map->xpp->flags);
+	return record1->ha == record2->ha;
 }
 
 static int patience_diff(mmfile_t *file1, mmfile_t *file2,
@@ -289,9 +284,6 @@ static int walk_common_sequence(struct hashmap *map, struct entry *first,
 
 		/* Recurse */
 		if (next1 > line1 || next2 > line2) {
-			struct hashmap submap;
-
-			memset(&submap, 0, sizeof(submap));
 			if (patience_diff(map->file1, map->file2,
 					map->xpp, map->env,
 					line1, next1 - line1,

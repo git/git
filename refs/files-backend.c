@@ -45,10 +45,10 @@
 #define REF_UPDATE_VIA_HEAD (1 << 8)
 
 /*
- * Used as a flag in ref_update::flags when the loose reference has
- * been deleted.
+ * Used as a flag in ref_update::flags when a reference has been
+ * deleted and the ref's parent directories may need cleanup.
  */
-#define REF_DELETED_LOOSE (1 << 9)
+#define REF_DELETED_RMDIR (1 << 9)
 
 struct ref_lock {
 	char *ref_name;
@@ -549,7 +549,7 @@ static int lock_raw_ref(struct files_ref_store *refs,
 
 	/* First lock the file so it can't change out from under us. */
 
-	*lock_p = lock = xcalloc(1, sizeof(*lock));
+	*lock_p = CALLOC_ARRAY(lock, 1);
 
 	lock->ref_name = xstrdup(refname);
 	files_ref_path(refs, &ref_file, refname);
@@ -843,7 +843,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 
 	overlay_iter = overlay_ref_iterator_begin(loose_iter, packed_iter);
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable,
 			       overlay_iter->ordered);
@@ -930,7 +930,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 	files_assert_main_repository(refs, "lock_ref_oid_basic");
 	assert(err);
 
-	lock = xcalloc(1, sizeof(struct ref_lock));
+	CALLOC_ARRAY(lock, 1);
 
 	if (mustexist)
 		resolve_flags |= RESOLVE_REF_READING;
@@ -1084,7 +1084,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 	ref_transaction_add_update(
 			transaction, r->name,
 			REF_NO_DEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_IS_PRUNING,
-			&null_oid, &r->oid, NULL);
+			null_oid(), &r->oid, NULL);
 	if (ref_transaction_commit(transaction, &err))
 		goto cleanup;
 
@@ -1824,12 +1824,12 @@ static int create_symref_locked(struct files_ref_store *refs,
 
 	if (!fdopen_lock_file(&lock->lk, "w"))
 		return error("unable to fdopen %s: %s",
-			     lock->lk.tempfile->filename.buf, strerror(errno));
+			     get_lock_file_path(&lock->lk), strerror(errno));
 
 	update_symref_reflog(refs, lock, refname, target, logmsg);
 
 	/* no error check; commit_ref will check ferror */
-	fprintf(lock->lk.tempfile->fp, "ref: %s\n", target);
+	fprintf(get_lock_file_fp(&lock->lk), "ref: %s\n", target);
 	if (commit_ref(lock) < 0)
 		return error("unable to write symref for %s: %s", refname,
 			     strerror(errno));
@@ -2152,7 +2152,7 @@ static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
 		return empty_ref_iterator_begin();
 	}
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 
 	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable, 0);
@@ -2597,7 +2597,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	if (!transaction->nr)
 		goto cleanup;
 
-	backend_data = xcalloc(1, sizeof(*backend_data));
+	CALLOC_ARRAY(backend_data, 1);
 	transaction->backend_data = backend_data;
 
 	/*
@@ -2852,6 +2852,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY)) {
+			update->flags |= REF_DELETED_RMDIR;
 			if (!(update->type & REF_ISPACKED) ||
 			    update->type & REF_ISSYMREF) {
 				/* It is a loose reference. */
@@ -2861,7 +2862,6 @@ static int files_transaction_finish(struct ref_store *ref_store,
 					ret = TRANSACTION_GENERIC_ERROR;
 					goto cleanup;
 				}
-				update->flags |= REF_DELETED_LOOSE;
 			}
 		}
 	}
@@ -2874,9 +2874,9 @@ cleanup:
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 
-		if (update->flags & REF_DELETED_LOOSE) {
+		if (update->flags & REF_DELETED_RMDIR) {
 			/*
-			 * The loose reference was deleted. Delete any
+			 * The reference was deleted. Delete any
 			 * empty parent directories. (Note that this
 			 * can only work because we have already
 			 * removed the lockfile.)

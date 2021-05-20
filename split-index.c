@@ -5,7 +5,7 @@
 struct split_index *init_split_index(struct index_state *istate)
 {
 	if (!istate->split_index) {
-		istate->split_index = xcalloc(1, sizeof(*istate->split_index));
+		CALLOC_ARRAY(istate->split_index, 1);
 		istate->split_index->refcount = 1;
 	}
 	return istate->split_index;
@@ -21,7 +21,7 @@ int read_link_extension(struct index_state *istate,
 	if (sz < the_hash_algo->rawsz)
 		return error("corrupt link extension (too short)");
 	si = init_split_index(istate);
-	hashcpy(si->base_oid.hash, data);
+	oidread(&si->base_oid, data);
 	data += the_hash_algo->rawsz;
 	sz -= the_hash_algo->rawsz;
 	if (!sz)
@@ -87,7 +87,7 @@ void move_cache_to_base_index(struct index_state *istate)
 		mem_pool_combine(istate->ce_mem_pool, istate->split_index->base->ce_mem_pool);
 	}
 
-	si->base = xcalloc(1, sizeof(*si->base));
+	CALLOC_ARRAY(si->base, 1);
 	si->base->version = istate->version;
 	/* zero timestamp disables racy test in ce_write_index() */
 	si->base->timestamp = istate->timestamp;

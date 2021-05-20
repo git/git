@@ -2,6 +2,9 @@
 
 test_description='auto squash'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -81,8 +84,7 @@ test_auto_squash () {
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! first" &&
-
+	git commit -m "squash! first" -m "extra para for first" &&
 	git tag $1 &&
 	test_tick &&
 	git rebase $2 -i HEAD^^^ &&
@@ -139,7 +141,7 @@ test_expect_success 'auto squash that matches 2 commits' '
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! first" &&
+	git commit -m "squash! first" -m "extra para for first" &&
 	git tag final-multisquash &&
 	test_tick &&
 	git rebase --autosquash -i HEAD~4 &&
@@ -192,7 +194,7 @@ test_expect_success 'auto squash that matches a sha1' '
 	git add -u &&
 	test_tick &&
 	oid=$(git rev-parse --short HEAD^) &&
-	git commit -m "squash! $oid" &&
+	git commit -m "squash! $oid" -m "extra para" &&
 	git tag final-shasquash &&
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
@@ -203,7 +205,8 @@ test_expect_success 'auto squash that matches a sha1' '
 	git cat-file blob HEAD^:file1 >actual &&
 	test_cmp expect actual &&
 	git cat-file commit HEAD^ >commit &&
-	grep squash commit >actual &&
+	! grep "squash" commit &&
+	grep "^extra para" commit >actual &&
 	test_line_count = 1 actual
 '
 
@@ -213,7 +216,7 @@ test_expect_success 'auto squash that matches longer sha1' '
 	git add -u &&
 	test_tick &&
 	oid=$(git rev-parse --short=11 HEAD^) &&
-	git commit -m "squash! $oid" &&
+	git commit -m "squash! $oid" -m "extra para" &&
 	git tag final-longshasquash &&
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
@@ -224,7 +227,8 @@ test_expect_success 'auto squash that matches longer sha1' '
 	git cat-file blob HEAD^:file1 >actual &&
 	test_cmp expect actual &&
 	git cat-file commit HEAD^ >commit &&
-	grep squash commit >actual &&
+	! grep "squash" commit &&
+	grep "^extra para" commit >actual &&
 	test_line_count = 1 actual
 '
 
@@ -233,7 +237,7 @@ test_auto_commit_flags () {
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit --$1 first-commit &&
+	git commit --$1 first-commit -m "extra para for first" &&
 	git tag final-commit-$1 &&
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
@@ -261,11 +265,11 @@ test_auto_fixup_fixup () {
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "$1! first" &&
+	git commit -m "$1! first" -m "extra para for first" &&
 	echo 2 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "$1! $2! first" &&
+	git commit -m "$1! $2! first" -m "second extra para for first" &&
 	git tag "final-$1-$2" &&
 	test_tick &&
 	(
@@ -303,35 +307,35 @@ test_auto_fixup_fixup () {
 	fi
 }
 
-test_expect_success C_LOCALE_OUTPUT 'fixup! fixup!' '
+test_expect_success 'fixup! fixup!' '
 	test_auto_fixup_fixup fixup fixup
 '
 
-test_expect_success C_LOCALE_OUTPUT 'fixup! squash!' '
+test_expect_success 'fixup! squash!' '
 	test_auto_fixup_fixup fixup squash
 '
 
-test_expect_success C_LOCALE_OUTPUT 'squash! squash!' '
+test_expect_success 'squash! squash!' '
 	test_auto_fixup_fixup squash squash
 '
 
-test_expect_success C_LOCALE_OUTPUT 'squash! fixup!' '
+test_expect_success 'squash! fixup!' '
 	test_auto_fixup_fixup squash fixup
 '
 
-test_expect_success C_LOCALE_OUTPUT 'autosquash with custom inst format' '
+test_expect_success 'autosquash with custom inst format' '
 	git reset --hard base &&
 	git config --add rebase.instructionFormat "[%an @ %ar] %s"  &&
 	echo 2 >file1 &&
 	git add -u &&
 	test_tick &&
 	oid=$(git rev-parse --short HEAD^) &&
-	git commit -m "squash! $oid" &&
+	git commit -m "squash! $oid" -m "extra para for first" &&
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
 	subject=$(git log -n 1 --format=%s HEAD~2) &&
-	git commit -m "squash! $subject" &&
+	git commit -m "squash! $subject" -m "second extra para for first" &&
 	git tag final-squash-instFmt &&
 	test_tick &&
 	git rebase --autosquash -i HEAD~4 &&
@@ -342,8 +346,9 @@ test_expect_success C_LOCALE_OUTPUT 'autosquash with custom inst format' '
 	git cat-file blob HEAD^:file1 >actual &&
 	test_cmp expect actual &&
 	git cat-file commit HEAD^ >commit &&
-	grep squash commit >actual &&
-	test_line_count = 2 actual
+	! grep "squash" commit &&
+	grep first commit >actual &&
+	test_line_count = 3 actual
 '
 
 test_expect_success 'autosquash with empty custom instructionFormat' '
@@ -407,7 +412,7 @@ test_expect_success 'wrapped original subject' '
 
 test_expect_success 'abort last squash' '
 	test_when_finished "test_might_fail git rebase --abort" &&
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout main" &&
 
 	git checkout -b some-squashes &&
 	git commit --allow-empty -m first &&
@@ -438,6 +443,14 @@ test_expect_success 'fixup a fixup' '
 	git commit -m "squash! $(git rev-parse HEAD^^)" -m W --allow-empty &&
 	git rebase -ki --autosquash HEAD~5 &&
 	test XZWY = $(git show | tr -cd W-Z)
+'
+
+test_expect_success 'fixup does not clean up commit message' '
+	oneline="#818" &&
+	git commit --allow-empty -m "$oneline" &&
+	git commit --fixup HEAD --allow-empty &&
+	git -c commit.cleanup=strip rebase -ki --autosquash HEAD~2 &&
+	test "$oneline" = "$(git show -s --format=%s)"
 '
 
 test_done

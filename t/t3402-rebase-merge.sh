@@ -5,6 +5,9 @@
 
 test_description='git rebase --merge test'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 T="A quick brown fox
@@ -19,10 +22,10 @@ test_expect_success setup '
 	git commit -m"initial" &&
 	git branch side &&
 	echo "11 $T" >>original &&
-	git commit -a -m"master updates a bit." &&
+	git commit -a -m"main updates a bit." &&
 
 	echo "12 $T" >>original &&
-	git commit -a -m"master updates a bit more." &&
+	git commit -a -m"main updates a bit more." &&
 
 	git checkout side &&
 	(echo "0 $T" && cat original) >renamed &&
@@ -47,13 +50,13 @@ test_expect_success setup '
 '
 
 test_expect_success 'reference merge' '
-	git merge -s recursive -m "reference merge" master
+	git merge -s recursive -m "reference merge" main
 '
 
 PRE_REBASE=$(git rev-parse test-rebase)
 test_expect_success rebase '
 	git checkout test-rebase &&
-	GIT_TRACE=1 git rebase --merge master
+	GIT_TRACE=1 git rebase --merge main
 '
 
 test_expect_success 'test-rebase@{1} is pre rebase' '
@@ -72,24 +75,24 @@ test_expect_success 'merge and rebase should match' '
 '
 
 test_expect_success 'rebase the other way' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git rebase --merge side
 '
 
 test_expect_success 'rebase -Xtheirs' '
-	git checkout -b conflicting master~2 &&
+	git checkout -b conflicting main~2 &&
 	echo "AB $T" >> original &&
 	git commit -mconflicting original &&
-	git rebase -Xtheirs master &&
+	git rebase -Xtheirs main &&
 	grep AB original &&
 	! grep 11 original
 '
 
 test_expect_success 'rebase -Xtheirs from orphan' '
-	git checkout --orphan orphan-conflicting master~2 &&
+	git checkout --orphan orphan-conflicting main~2 &&
 	echo "AB $T" >> original &&
 	git commit -morphan-conflicting original &&
-	git rebase -Xtheirs master &&
+	git rebase -Xtheirs main &&
 	grep AB original &&
 	! grep 11 original
 '
@@ -107,9 +110,9 @@ test_expect_success 'merge and rebase should match' '
 
 test_expect_success 'picking rebase' '
 	git reset --hard side &&
-	git rebase --merge --onto master side^^ &&
-	mb=$(git merge-base master HEAD) &&
-	if test "$mb" = "$(git rev-parse master)"
+	git rebase --merge --onto main side^^ &&
+	mb=$(git merge-base main HEAD) &&
+	if test "$mb" = "$(git rev-parse main)"
 	then
 		echo happy
 	else
@@ -140,11 +143,11 @@ test_expect_success 'rebase -s funny -Xopt' '
 	EOF
 	chmod +x test-bin/git-merge-funny &&
 	git reset --hard &&
-	git checkout -b test-funny master^ &&
+	git checkout -b test-funny main^ &&
 	test_commit funny &&
 	(
 		PATH=./test-bin:$PATH &&
-		git rebase -s funny -Xopt master
+		git rebase -s funny -Xopt main
 	) &&
 	test -f funny.was.run
 '
@@ -165,7 +168,7 @@ test_expect_success 'rebase --skip works with two conflicts in a row' '
 test_expect_success '--reapply-cherry-picks' '
 	git init repo &&
 
-	# O(1-10) -- O(1-11) -- O(0-10) master
+	# O(1-10) -- O(1-11) -- O(0-10) main
 	#        \
 	#         -- O(1-11) -- O(1-12) otherbranch
 
@@ -187,18 +190,18 @@ test_expect_success '--reapply-cherry-picks' '
 	git -C repo commit -a -m "add 12 in another branch" &&
 
 	# Regular rebase fails, because the 1-11 commit is deduplicated
-	test_must_fail git -C repo rebase --merge master 2> err &&
+	test_must_fail git -C repo rebase --merge main 2> err &&
 	test_i18ngrep "error: could not apply.*add 12 in another branch" err &&
 	git -C repo rebase --abort &&
 
 	# With --reapply-cherry-picks, it works
-	git -C repo rebase --merge --reapply-cherry-picks master
+	git -C repo rebase --merge --reapply-cherry-picks main
 '
 
 test_expect_success '--reapply-cherry-picks refrains from reading unneeded blobs' '
 	git init server &&
 
-	# O(1-10) -- O(1-11) -- O(1-12) master
+	# O(1-10) -- O(1-11) -- O(1-12) main
 	#        \
 	#         -- O(0-10) otherbranch
 
@@ -220,18 +223,18 @@ test_expect_success '--reapply-cherry-picks refrains from reading unneeded blobs
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
 
 	git clone --filter=blob:none "file://$(pwd)/server" client &&
-	git -C client checkout origin/master &&
+	git -C client checkout origin/main &&
 	git -C client checkout origin/otherbranch &&
 
 	# Sanity check to ensure that the blobs from the merge base and "add
 	# 11" are missing
 	git -C client rev-list --objects --all --missing=print >missing_list &&
-	MERGE_BASE_BLOB=$(git -C server rev-parse master^^:file.txt) &&
-	ADD_11_BLOB=$(git -C server rev-parse master^:file.txt) &&
+	MERGE_BASE_BLOB=$(git -C server rev-parse main^^:file.txt) &&
+	ADD_11_BLOB=$(git -C server rev-parse main^:file.txt) &&
 	grep "[?]$MERGE_BASE_BLOB" missing_list &&
 	grep "[?]$ADD_11_BLOB" missing_list &&
 
-	git -C client rebase --merge --reapply-cherry-picks origin/master &&
+	git -C client rebase --merge --reapply-cherry-picks origin/main &&
 
 	# The blob from the merge base had to be fetched, but not "add 11"
 	git -C client rev-list --objects --all --missing=print >missing_list &&

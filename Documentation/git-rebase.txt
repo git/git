@@ -200,12 +200,6 @@ Alternatively, you can undo the 'git rebase' with
 
     git rebase --abort
 
-CONFIGURATION
--------------
-
-include::config/rebase.txt[]
-include::config/sequencer.txt[]
-
 OPTIONS
 -------
 --onto <newbase>::
@@ -593,16 +587,17 @@ See also INCOMPATIBLE OPTIONS below.
 
 --autosquash::
 --no-autosquash::
-	When the commit log message begins with "squash! ..." (or
-	"fixup! ..."), and there is already a commit in the todo list that
-	matches the same `...`, automatically modify the todo list of rebase
-	-i so that the commit marked for squashing comes right after the
-	commit to be modified, and change the action of the moved commit
-	from `pick` to `squash` (or `fixup`).  A commit matches the `...` if
-	the commit subject matches, or if the `...` refers to the commit's
-	hash. As a fall-back, partial matches of the commit subject work,
-	too.  The recommended way to create fixup/squash commits is by using
-	the `--fixup`/`--squash` options of linkgit:git-commit[1].
+	When the commit log message begins with "squash! ..." or "fixup! ..."
+	or "amend! ...", and there is already a commit in the todo list that
+	matches the same `...`, automatically modify the todo list of
+	`rebase -i`, so that the commit marked for squashing comes right after
+	the commit to be modified, and change the action of the moved commit
+	from `pick` to `squash` or `fixup` or `fixup -C` respectively. A commit
+	matches the `...` if the commit subject matches, or if the `...` refers
+	to the commit's hash. As a fall-back, partial matches of the commit
+	subject work, too. The recommended way to create fixup/amend/squash
+	commits is by using the `--fixup`, `--fixup=amend:` or `--fixup=reword:`
+	and `--squash` options respectively of linkgit:git-commit[1].
 +
 If the `--autosquash` option is enabled by default using the
 configuration variable `rebase.autoSquash`, this option can be
@@ -622,6 +617,14 @@ See also INCOMPATIBLE OPTIONS below.
 --no-reschedule-failed-exec::
 	Automatically reschedule `exec` commands that failed. This only makes
 	sense in interactive mode (or when an `--exec` option was provided).
++
+Even though this option applies once a rebase is started, it's set for
+the whole rebase at the start based on either the
+`rebase.rescheduleFailedExec` configuration (see linkgit:git-config[1]
+or "CONFIGURATION" below) or whether this option is
+provided. Otherwise an explicit `--no-reschedule-failed-exec` at the
+start would be overridden by the presence of
+`rebase.rescheduleFailedExec=true` configuration.
 
 INCOMPATIBLE OPTIONS
 --------------------
@@ -887,9 +890,17 @@ If you want to fold two or more commits into one, replace the command
 "pick" for the second and subsequent commits with "squash" or "fixup".
 If the commits had different authors, the folded commit will be
 attributed to the author of the first commit.  The suggested commit
-message for the folded commit is the concatenation of the commit
-messages of the first commit and of those with the "squash" command,
-but omits the commit messages of commits with the "fixup" command.
+message for the folded commit is the concatenation of the first
+commit's message with those identified by "squash" commands, omitting the
+messages of commits identified by "fixup" commands, unless "fixup -c"
+is used.  In that case the suggested commit message is only the message
+of the "fixup -c" commit, and an editor is opened allowing you to edit
+the message.  The contents (patch) of the "fixup -c" commit are still
+incorporated into the folded commit. If there is more than one "fixup -c"
+commit, the message from the final one is used.  You can also use
+"fixup -C" to get the same behavior as "fixup -c" except without opening
+an editor.
+
 
 'git rebase' will stop when "pick" has been replaced with "edit" or
 when a command fails due to merge errors. When you are done editing
@@ -1256,6 +1267,12 @@ reset onto
 merge tlsv1.3
 merge cmake
 ------------
+
+CONFIGURATION
+-------------
+
+include::config/rebase.txt[]
+include::config/sequencer.txt[]
 
 BUGS
 ----

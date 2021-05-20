@@ -11,7 +11,7 @@ check_relative() {
 	echo "$t -> $2" >expect
 	test_expect_${3:-success} "relative date ($2)" "
 	test-tool date relative $t >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 	"
 }
 
@@ -139,7 +139,7 @@ check_date_format_human() {
 	echo "$t -> $2" >expect
 	test_expect_success "human date $t" '
 		test-tool date human $t >actual &&
-		test_i18ncmp expect actual
+		test_cmp expect actual
 '
 }
 

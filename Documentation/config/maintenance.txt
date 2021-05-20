@@ -15,8 +15,9 @@ maintenance.strategy::
 * `none`: This default setting implies no task are run at any schedule.
 * `incremental`: This setting optimizes for performing small maintenance
   activities that do not delete any data. This does not schedule the `gc`
-  task, but runs the `prefetch` and `commit-graph` tasks hourly and the
-  `loose-objects` and `incremental-repack` tasks daily.
+  task, but runs the `prefetch` and `commit-graph` tasks hourly, the
+  `loose-objects` and `incremental-repack` tasks daily, and the `pack-refs`
+  task weekly.
 
 maintenance.<task>.enabled::
 	This boolean config option controls whether the maintenance task

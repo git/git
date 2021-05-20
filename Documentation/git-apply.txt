@@ -84,12 +84,13 @@ OPTIONS
 
 -3::
 --3way::
-	When the patch does not apply cleanly, fall back on 3-way merge if
-	the patch records the identity of blobs it is supposed to apply to,
-	and we have those blobs available locally, possibly leaving the
+	Attempt 3-way merge if the patch records the identity of blobs it is supposed
+	to apply to and we have those blobs available locally, possibly leaving the
 	conflict markers in the files in the working tree for the user to
-	resolve.  This option implies the `--index` option, and is incompatible
-	with the `--reject` and the `--cached` options.
+	resolve.  This option implies the `--index` option unless the
+	`--cached` option is used, and is incompatible with the `--reject` option.
+	When used with the `--cached` option, any conflicts are left at higher stages
+	in the cache.
 
 --build-fake-ancestor=<file>::
 	Newer 'git diff' output has embedded 'index information'

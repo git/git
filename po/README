@@ -284,23 +284,5 @@ Perl:
 Testing marked strings
 ----------------------
 
-Even if you've correctly marked porcelain strings for translation
-something in the test suite might still depend on the US English
-version of the strings, e.g. to grep some error message or other
-output.
-
-To smoke out issues like these, Git tested with a translation mode that
-emits gibberish on every call to gettext. To use it run the test suite
-with it, e.g.:
-
-    cd t && GIT_TEST_GETTEXT_POISON=true prove -j 9 ./t[0-9]*.sh
-
-If tests break with it you should inspect them manually and see if
-what you're translating is sane, i.e. that you're not translating
-plumbing output.
-
-If not you should replace calls to grep with test_i18ngrep, or
-test_cmp calls with test_i18ncmp. If that's not enough you can skip
-the whole test by making it depend on the C_LOCALE_OUTPUT
-prerequisite. See existing test files with this prerequisite for
-examples.
+Git's tests are run under LANG=C LC_ALL=C. So the tests do not need be
+changed to account for translations as they're added.

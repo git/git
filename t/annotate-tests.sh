@@ -95,7 +95,7 @@ test_expect_success 'blame 2 authors' '
 '
 
 test_expect_success 'setup B1 lines (branch1)' '
-	git checkout -b branch1 master &&
+	git checkout -b branch1 main &&
 	echo "3A slow green fox jumps into the" >>file &&
 	echo "well." >>file &&
 	GIT_AUTHOR_NAME="B1" GIT_AUTHOR_EMAIL="B1@test.git" \
@@ -107,7 +107,7 @@ test_expect_success 'blame 2 authors + 1 branch1 author' '
 '
 
 test_expect_success 'setup B2 lines (branch2)' '
-	git checkout -b branch2 master &&
+	git checkout -b branch2 main &&
 	sed -e "s/2A quick brown/4A quick brown lazy dog/" <file >file.new &&
 	mv file.new file &&
 	GIT_AUTHOR_NAME="B2" GIT_AUTHOR_EMAIL="B2@test.git" \
@@ -131,11 +131,11 @@ test_expect_success 'blame --first-parent blames merge for branch1' '
 '
 
 test_expect_success 'blame ancestor' '
-	check_count -h master A 2 B 2
+	check_count -h main A 2 B 2
 '
 
 test_expect_success 'blame great-ancestor' '
-	check_count -h master^ A 2
+	check_count -h main^ A 2
 '
 
 test_expect_success 'setup evil merge' '
@@ -479,22 +479,26 @@ test_expect_success 'blame -L ^:RE (absolute: end-of-file)' '
 	check_count -f hello.c -L$n -L^:ma.. F 4 G 1 H 1
 '
 
-test_expect_success 'setup -L :funcname with userdiff driver' '
-	echo "fortran-* diff=fortran" >.gitattributes &&
-	fortran_file=fortran-external-function &&
-	orig_file="$TEST_DIRECTORY/t4018/$fortran_file" &&
-	cp $orig_file . &&
-	git add $fortran_file &&
-	GIT_AUTHOR_NAME="A" GIT_AUTHOR_EMAIL="A@test.git" \
-	git commit -m "add fortran file" &&
-	sed -e "s/ChangeMe/IWasChanged/" <"$orig_file" >$fortran_file &&
-	git add $fortran_file &&
-	GIT_AUTHOR_NAME="B" GIT_AUTHOR_EMAIL="B@test.git" \
-	git commit -m "change fortran file"
-'
-
 test_expect_success 'blame -L :funcname with userdiff driver' '
-	check_count -f fortran-external-function -L:RIGHT A 7 B 1
+	cat >file.template <<-\EOF &&
+	DO NOT MATCH THIS LINE
+	function RIGHT(a, b) result(c)
+	AS THE DEFAULT DRIVER WOULD
+
+	integer, intent(in) :: ChangeMe
+	EOF
+
+	fortran_file=file.f03 &&
+	test_when_finished "rm .gitattributes" &&
+	echo "$fortran_file diff=fortran" >.gitattributes &&
+
+	test_commit --author "A <A@test.git>" \
+		"add" "$fortran_file" \
+		"$(cat file.template)" &&
+	test_commit --author "B <B@test.git>" \
+		"change" "$fortran_file" \
+		"$(cat file.template | sed -e s/ChangeMe/IWasChanged/)" &&
+	check_count -f "$fortran_file" -L:RIGHT A 3 B 1
 '
 
 test_expect_success 'setup incremental' '

@@ -426,7 +426,8 @@ static int module_list(int argc, const char **argv, const char *prefix)
 		const struct cache_entry *ce = list.entries[i];
 
 		if (ce_stage(ce))
-			printf("%06o %s U\t", ce->ce_mode, oid_to_hex(&null_oid));
+			printf("%06o %s U\t", ce->ce_mode,
+			       oid_to_hex(null_oid()));
 		else
 			printf("%06o %s %d\t", ce->ce_mode,
 			       oid_to_hex(&ce->oid), ce_stage(ce));
@@ -466,7 +467,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 
 	displaypath = get_submodule_displaypath(path, info->prefix);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -562,9 +563,9 @@ static int module_foreach(int argc, const char **argv, const char *prefix)
 	struct module_list list = MODULE_LIST_INIT;
 
 	struct option module_foreach_options[] = {
-		OPT__QUIET(&info.quiet, N_("Suppress output of entering each submodule command")),
+		OPT__QUIET(&info.quiet, N_("suppress output of entering each submodule command")),
 		OPT_BOOL(0, "recursive", &info.recursive,
-			 N_("Recurse into nested submodules")),
+			 N_("recurse into nested submodules")),
 		OPT_END()
 	};
 
@@ -623,7 +624,7 @@ static void init_submodule(const char *path, const char *prefix,
 
 	displaypath = get_submodule_displaypath(path, prefix);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -706,7 +707,7 @@ static int module_init(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 
 	struct option module_init_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress output for initializing a submodule")),
+		OPT__QUIET(&quiet, N_("suppress output for initializing a submodule")),
 		OPT_END()
 	};
 
@@ -783,14 +784,14 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	struct strbuf buf = STRBUF_INIT;
 	const char *git_dir;
 
-	if (!submodule_from_path(the_repository, &null_oid, path))
+	if (!submodule_from_path(the_repository, null_oid(), path))
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
 		      path);
 
 	displaypath = get_submodule_displaypath(path, prefix);
 
 	if ((CE_STAGEMASK & ce_flags) >> CE_STAGESHIFT) {
-		print_status(flags, 'U', path, &null_oid, displaypath);
+		print_status(flags, 'U', path, null_oid(), displaypath);
 		goto cleanup;
 	}
 
@@ -883,8 +884,8 @@ static int module_status(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 
 	struct option module_status_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress submodule status output")),
-		OPT_BIT(0, "cached", &info.flags, N_("Use commit stored in the index instead of the one stored in the submodule HEAD"), OPT_CACHED),
+		OPT__QUIET(&quiet, N_("suppress submodule status output")),
+		OPT_BIT(0, "cached", &info.flags, N_("use commit stored in the index instead of the one stored in the submodule HEAD"), OPT_CACHED),
 		OPT_BIT(0, "recursive", &info.flags, N_("recurse into nested submodules"), OPT_RECURSIVE),
 		OPT_END()
 	};
@@ -916,7 +917,7 @@ static int module_name(int argc, const char **argv, const char *prefix)
 	if (argc != 2)
 		usage(_("git submodule--helper name <path>"));
 
-	sub = submodule_from_path(the_repository, &null_oid, argv[1]);
+	sub = submodule_from_path(the_repository, null_oid(), argv[1]);
 
 	if (!sub)
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -1040,7 +1041,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	char *errmsg = NULL;
 	int total_commits = -1;
 
-	if (!info->cached && oideq(&p->oid_dst, &null_oid)) {
+	if (!info->cached && oideq(&p->oid_dst, null_oid())) {
 		if (S_ISGITLINK(p->mod_dst)) {
 			struct ref_store *refs = get_submodule_ref_store(p->sm_path);
 			if (refs)
@@ -1177,7 +1178,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 
 		if (info->for_status && p->status != 'A' &&
 		    (sub = submodule_from_path(the_repository,
-					       &null_oid, p->sm_path))) {
+					       null_oid(), p->sm_path))) {
 			char *config_key = NULL;
 			const char *value;
 			int ignore_all = 0;
@@ -1257,7 +1258,7 @@ static int compute_summary_module_list(struct object_id *head_oid,
 	git_config(git_diff_basic_config, NULL);
 	init_revisions(&rev, info->prefix);
 	rev.abbrev = 0;
-	precompose_argv(diff_args.nr, diff_args.v);
+	precompose_argv_prefix(diff_args.nr, diff_args.v, NULL);
 	setup_revisions(diff_args.nr, diff_args.v, &rev, NULL);
 	rev.diffopt.output_format = DIFF_FORMAT_NO_OUTPUT | DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = submodule_summary_callback;
@@ -1299,7 +1300,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "cached", &cached,
 			 N_("use the commit stored in the index instead of the submodule HEAD")),
 		OPT_BOOL(0, "files", &files,
-			 N_("to compare the commit in the index with that in the submodule HEAD")),
+			 N_("compare the commit in the index with that in the submodule HEAD")),
 		OPT_BOOL(0, "for-status", &for_status,
 			 N_("skip submodules with 'ignore_config' value set to 'all'")),
 		OPT_INTEGER('n', "summary-limit", &summary_limit,
@@ -1373,7 +1374,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	if (!is_submodule_active(the_repository, path))
 		return;
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (sub && sub->url) {
 		if (starts_with_dot_dot_slash(sub->url) ||
@@ -1482,9 +1483,9 @@ static int module_sync(int argc, const char **argv, const char *prefix)
 	int recursive = 0;
 
 	struct option module_sync_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress output of synchronizing submodule url")),
+		OPT__QUIET(&quiet, N_("suppress output of synchronizing submodule url")),
 		OPT_BOOL(0, "recursive", &recursive,
-			N_("Recurse into nested submodules")),
+			N_("recurse into nested submodules")),
 		OPT_END()
 	};
 
@@ -1525,7 +1526,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 	struct strbuf sb_config = STRBUF_INIT;
 	char *sub_git_dir = xstrfmt("%s/.git", path);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub || !sub->name)
 		goto cleanup;
@@ -1620,9 +1621,9 @@ static int module_deinit(int argc, const char **argv, const char *prefix)
 	int all = 0;
 
 	struct option module_deinit_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress submodule status output")),
-		OPT__FORCE(&force, N_("Remove submodule working trees even if they contain local changes"), 0),
-		OPT_BOOL(0, "all", &all, N_("Unregister all submodules")),
+		OPT__QUIET(&quiet, N_("suppress submodule status output")),
+		OPT__FORCE(&force, N_("remove submodule working trees even if they contain local changes"), 0),
+		OPT_BOOL(0, "all", &all, N_("unregister all submodules")),
 		OPT_END()
 	};
 
@@ -1925,7 +1926,7 @@ static void determine_submodule_update_strategy(struct repository *r,
 						const char *update,
 						struct submodule_update_strategy *out)
 {
-	const struct submodule *sub = submodule_from_path(r, &null_oid, path);
+	const struct submodule *sub = submodule_from_path(r, null_oid(), path);
 	char *key;
 	const char *val;
 
@@ -2077,7 +2078,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		goto cleanup;
 	}
 
-	sub = submodule_from_path(the_repository, &null_oid, ce->name);
+	sub = submodule_from_path(the_repository, null_oid(), ce->name);
 
 	if (suc->recursive_prefix)
 		displaypath = relative_path(suc->recursive_prefix,
@@ -2337,7 +2338,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "dissociate", &suc.dissociate,
 			   N_("use --reference only while cloning")),
 		OPT_STRING(0, "depth", &suc.depth, "<depth>",
-			   N_("Create a shallow clone truncated to the "
+			   N_("create a shallow clone truncated to the "
 			      "specified number of revisions")),
 		OPT_INTEGER('j', "jobs", &suc.max_jobs,
 			    N_("parallel jobs")),
@@ -2395,7 +2396,7 @@ static const char *remote_submodule_branch(const char *path)
 	const char *branch = NULL;
 	char *key;
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 	if (!sub)
 		return NULL;
 
@@ -2533,7 +2534,7 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 
 	path = argv[1];
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 	if (!sub)
 		BUG("We could get the submodule handle before?");
 
@@ -2678,7 +2679,7 @@ static int module_set_url(int argc, const char **argv, const char *prefix)
 	char *config_name;
 
 	struct option options[] = {
-		OPT__QUIET(&quiet, N_("Suppress output for setting url of a submodule")),
+		OPT__QUIET(&quiet, N_("suppress output for setting url of a submodule")),
 		OPT_END()
 	};
 	const char *const usage[] = {

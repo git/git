@@ -2,7 +2,11 @@
 
 test_description='merging with submodules'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-merge.sh
 
 #
 # history
@@ -27,7 +31,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m root &&
 
-	git checkout -b a master &&
+	git checkout -b a main &&
 	(cd sub &&
 	 echo A > file &&
 	 git add file &&
@@ -37,7 +41,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m a &&
 
-	git checkout -b b master &&
+	git checkout -b b main &&
 	(cd sub &&
 	 echo B > file &&
 	 git add file &&
@@ -254,22 +258,22 @@ test_expect_success 'setup for recursive merge with submodule' '
 	 (cd sub &&
 	  git init &&
 	  test_commit a &&
-	  git checkout -b sub-b master &&
+	  git checkout -b sub-b main &&
 	  test_commit b &&
-	  git checkout -b sub-c master &&
+	  git checkout -b sub-c main &&
 	  test_commit c &&
 	  git checkout -b sub-bc sub-b &&
 	  git merge sub-c &&
 	  git checkout -b sub-cb sub-c &&
 	  git merge sub-b &&
-	  git checkout master) &&
+	  git checkout main) &&
 	 git add sub &&
 	 git commit -m a &&
-	 git checkout -b top-b master &&
+	 git checkout -b top-b main &&
 	 (cd sub && git checkout sub-b) &&
 	 git add sub &&
 	 git commit -m b &&
-	 git checkout -b top-c master &&
+	 git checkout -b top-c main &&
 	 (cd sub && git checkout sub-c) &&
 	 git add sub &&
 	 git commit -m c &&
@@ -325,7 +329,7 @@ test_expect_success 'setup file/submodule conflict' '
 	)
 '
 
-test_expect_failure 'file/submodule conflict' '
+test_expect_merge_algorithm failure success 'file/submodule conflict' '
 	test_when_finished "git -C file-submodule reset --hard" &&
 	(
 		cd file-submodule &&
@@ -434,7 +438,7 @@ test_expect_failure 'directory/submodule conflict; keep submodule clean' '
 	)
 '
 
-test_expect_failure !FAIL_PREREQS 'directory/submodule conflict; should not treat submodule files as untracked or in the way' '
+test_expect_merge_algorithm failure success !FAIL_PREREQS 'directory/submodule conflict; should not treat submodule files as untracked or in the way' '
 	test_when_finished "git -C directory-submodule/path reset --hard" &&
 	test_when_finished "git -C directory-submodule reset --hard" &&
 	(

@@ -115,7 +115,7 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 			else
 				refspec_appendf(&rs, "refs/tags/%s", ref);
 		} else if (deleterefs) {
-			if (strchr(ref, ':'))
+			if (strchr(ref, ':') || !*ref)
 				die(_("--delete only accepts plain target ref names"));
 			refspec_appendf(&rs, ":%s", ref);
 		} else if (!strchr(ref, ':')) {

@@ -5,6 +5,9 @@
 
 test_description='git rev-list involving submodules that this repo has'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -36,7 +39,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success "Ilari's test" '
-	git rev-list --objects super master ^super^
+	git rev-list --objects super main ^super^
 '
 
 test_done

@@ -78,7 +78,7 @@ test_expect_success 'gc --keep-largest-pack' '
 		git gc &&
 		( cd .git/objects/pack && ls *.pack ) >pack-list &&
 		test_line_count = 1 pack-list &&
-		BASE_PACK=.git/objects/pack/pack-*.pack &&
+		cp pack-list base-pack-list &&
 		test_commit four &&
 		git repack -d &&
 		test_commit five &&
@@ -90,7 +90,7 @@ test_expect_success 'gc --keep-largest-pack' '
 		test_line_count = 2 pack-list &&
 		awk "/^P /{print \$2}" <.git/objects/info/packs >pack-info &&
 		test_line_count = 2 pack-info &&
-		test_path_is_file $BASE_PACK &&
+		test_path_is_file .git/objects/pack/$(cat base-pack-list) &&
 		git fsck
 	)
 '
@@ -106,17 +106,17 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 	test_commit "$(test_oid obj2)" &&
 	# Our first gc will create a pack; our second will create a second pack
 	git gc --auto &&
-	ls .git/objects/pack | sort >existing_packs &&
+	ls .git/objects/pack/pack-*.pack | sort >existing_packs &&
 	test_commit "$(test_oid obj3)" &&
 	test_commit "$(test_oid obj4)" &&
 
 	git gc --auto 2>err &&
 	test_i18ngrep ! "^warning:" err &&
-	ls .git/objects/pack/ | sort >post_packs &&
+	ls .git/objects/pack/pack-*.pack | sort >post_packs &&
 	comm -1 -3 existing_packs post_packs >new &&
 	comm -2 -3 existing_packs post_packs >del &&
 	test_line_count = 0 del && # No packs are deleted
-	test_line_count = 2 new # There is one new pack and its .idx
+	test_line_count = 1 new # There is one new pack
 '
 
 test_expect_success 'gc --no-quiet' '

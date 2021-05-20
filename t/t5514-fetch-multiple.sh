@@ -2,6 +2,9 @@
 
 test_description='fetch --all works correctly'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 setup_repository () {
@@ -17,7 +20,7 @@ setup_repository () {
 	git add elif &&
 	test_tick &&
 	git commit -m "Second" &&
-	git checkout master
+	git checkout main
 	)
 }
 
@@ -32,16 +35,16 @@ test_expect_success setup '
 '
 
 cat > test/expect << EOF
-  one/master
+  one/main
   one/side
-  origin/HEAD -> origin/master
-  origin/master
+  origin/HEAD -> origin/main
+  origin/main
   origin/side
   three/another
-  three/master
+  three/main
   three/side
   two/another
-  two/master
+  two/main
   two/side
 EOF
 
@@ -70,15 +73,15 @@ test_expect_success 'git fetch --all should continue if a remote has errors' '
 test_expect_success 'git fetch --all does not allow non-option arguments' '
 	(cd test &&
 	 test_must_fail git fetch --all origin &&
-	 test_must_fail git fetch --all origin master)
+	 test_must_fail git fetch --all origin main)
 '
 
 cat > expect << EOF
-  origin/HEAD -> origin/master
-  origin/master
+  origin/HEAD -> origin/main
+  origin/main
   origin/side
   three/another
-  three/master
+  three/main
   three/side
 EOF
 
@@ -92,10 +95,10 @@ test_expect_success 'git fetch --multiple (but only one remote)' '
 '
 
 cat > expect << EOF
-  one/master
+  one/main
   one/side
   two/another
-  two/master
+  two/main
   two/side
 EOF
 
@@ -133,13 +136,13 @@ test_expect_success 'git fetch --all (skipFetchAll)' '
 '
 
 cat > expect << EOF
-  one/master
+  one/main
   one/side
   three/another
-  three/master
+  three/main
   three/side
   two/another
-  two/master
+  two/main
   two/side
 EOF
 

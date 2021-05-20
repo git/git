@@ -14,6 +14,7 @@ struct git_transport_options {
 	unsigned check_self_contained_and_connected : 1;
 	unsigned self_contained_and_connected : 1;
 	unsigned update_shallow : 1;
+	unsigned reject_shallow : 1;
 	unsigned deepen_relative : 1;
 
 	/* see documentation of corresponding flag in fetch-pack.h */
@@ -46,6 +47,12 @@ struct git_transport_options {
 	 * transport_set_option().
 	 */
 	struct oid_array *negotiation_tips;
+
+	/*
+	 * If allocated, whenever transport_fetch_refs() is called, add known
+	 * common commits to this oidset instead of fetching any packfiles.
+	 */
+	struct oidset *acked_commits;
 };
 
 enum transport_family {
@@ -194,6 +201,9 @@ void transport_check_allowed(const char *type);
 /* Aggressively fetch annotated tags if possible */
 #define TRANS_OPT_FOLLOWTAGS "followtags"
 
+/* Reject shallow repo transport */
+#define TRANS_OPT_REJECT_SHALLOW "rejectshallow"
+
 /* Accept refs that may update .git/shallow without --depth */
 #define TRANS_OPT_UPDATE_SHALLOW "updateshallow"
 
@@ -233,17 +243,32 @@ int transport_push(struct repository *repo,
 		   struct refspec *rs, int flags,
 		   unsigned int * reject_reasons);
 
+struct transport_ls_refs_options {
+	/*
+	 * Optionally, a list of ref prefixes can be provided which can be sent
+	 * to the server (when communicating using protocol v2) to enable it to
+	 * limit the ref advertisement.  Since ref filtering is done on the
+	 * server's end (and only when using protocol v2),
+	 * transport_get_remote_refs() could return refs which don't match the
+	 * provided ref_prefixes.
+	 */
+	struct strvec ref_prefixes;
+
+	/*
+	 * If unborn_head_target is not NULL, and the remote reports HEAD as
+	 * pointing to an unborn branch, transport_get_remote_refs() stores the
+	 * unborn branch in unborn_head_target. It should be freed by the
+	 * caller.
+	 */
+	char *unborn_head_target;
+};
+#define TRANSPORT_LS_REFS_OPTIONS_INIT { STRVEC_INIT }
+
 /*
  * Retrieve refs from a remote.
- *
- * Optionally a list of ref prefixes can be provided which can be sent to the
- * server (when communicating using protocol v2) to enable it to limit the ref
- * advertisement.  Since ref filtering is done on the server's end (and only
- * when using protocol v2), this can return refs which don't match the provided
- * ref_prefixes.
  */
 const struct ref *transport_get_remote_refs(struct transport *transport,
-					    const struct strvec *ref_prefixes);
+					    struct transport_ls_refs_options *transport_options);
 
 /*
  * Fetch the hash algorithm used by a remote.

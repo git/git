@@ -12,8 +12,8 @@ test_expect_success "setup proc-receive hook (unexpected ref, $PROTOCOL/porcelai
 test_expect_success "proc-receive: report unknown reference ($PROTOCOL/porcelain)" '
 	test_must_fail git -C workbench push --porcelain origin \
 		HEAD:refs/for/a/b/c/my/topic \
-		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		>out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	remote: # pre-receive hook
 	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/my/topic
@@ -26,10 +26,8 @@ test_expect_success "proc-receive: report unknown reference ($PROTOCOL/porcelain
 	Done
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-A> refs/heads/main
 	EOF
-	test_cmp expect actual
 '

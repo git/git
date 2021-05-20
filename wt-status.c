@@ -456,7 +456,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		it = string_list_insert(&s->change, p->two->path);
 		d = it->util;
 		if (!d) {
-			d = xcalloc(1, sizeof(*d));
+			CALLOC_ARRAY(d, 1);
 			it->util = d;
 		}
 		if (!d->worktree_status)
@@ -540,7 +540,7 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 		it = string_list_insert(&s->change, p->two->path);
 		d = it->util;
 		if (!d) {
-			d = xcalloc(1, sizeof(*d));
+			CALLOC_ARRAY(d, 1);
 			it->util = d;
 		}
 		if (!d->index_status)
@@ -606,7 +606,9 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	if (s->ignore_submodule_arg) {
 		rev.diffopt.flags.override_submodule_config = 1;
 		handle_ignore_submodules_arg(&rev.diffopt, s->ignore_submodule_arg);
-	}
+	} else if (!rev.diffopt.flags.ignore_submodule_set &&
+			s->show_untracked_files != SHOW_NO_UNTRACKED_FILES)
+		handle_ignore_submodules_arg(&rev.diffopt, "none");
 	rev.diffopt.format_callback = wt_status_collect_changed_cb;
 	rev.diffopt.format_callback_data = s;
 	rev.diffopt.detect_rename = s->detect_rename >= 0 ? s->detect_rename : rev.diffopt.detect_rename;
@@ -614,6 +616,7 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	rev.diffopt.rename_score = s->rename_score >= 0 ? s->rename_score : rev.diffopt.rename_score;
 	copy_pathspec(&rev.prune_data, &s->pathspec);
 	run_diff_files(&rev, 0);
+	clear_pathspec(&rev.prune_data);
 }
 
 static void wt_status_collect_changes_index(struct wt_status *s)
@@ -650,6 +653,8 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	rev.diffopt.rename_score = s->rename_score >= 0 ? s->rename_score : rev.diffopt.rename_score;
 	copy_pathspec(&rev.prune_data, &s->pathspec);
 	run_diff_index(&rev, 1);
+	object_array_clear(&rev.pending);
+	clear_pathspec(&rev.prune_data);
 }
 
 static void wt_status_collect_changes_initial(struct wt_status *s)
@@ -669,7 +674,7 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 		it = string_list_insert(&s->change, ce->name);
 		d = it->util;
 		if (!d) {
-			d = xcalloc(1, sizeof(*d));
+			CALLOC_ARRAY(d, 1);
 			it->util = d;
 		}
 		if (ce_stage(ce)) {
@@ -1685,10 +1690,10 @@ void wt_status_get_state(struct repository *r,
 	if (!sequencer_get_last_command(r, &action)) {
 		if (action == REPLAY_PICK) {
 			state->cherry_pick_in_progress = 1;
-			oidcpy(&state->cherry_pick_head_oid, &null_oid);
+			oidcpy(&state->cherry_pick_head_oid, null_oid());
 		} else {
 			state->revert_in_progress = 1;
-			oidcpy(&state->revert_head_oid, &null_oid);
+			oidcpy(&state->revert_head_oid, null_oid());
 		}
 	}
 	if (get_detached_from)
@@ -1742,9 +1747,9 @@ static void wt_longstatus_print(struct wt_status *s)
 			} else if (s->state.detached_from) {
 				branch_name = s->state.detached_from;
 				if (s->state.detached_at)
-					on_what = HEAD_DETACHED_AT;
+					on_what = _("HEAD detached at ");
 				else
-					on_what = HEAD_DETACHED_FROM;
+					on_what = _("HEAD detached from ");
 			} else {
 				branch_name = "";
 				on_what = _("Not currently on any branch.");
@@ -2478,6 +2483,7 @@ int has_uncommitted_changes(struct repository *r,
 
 	diff_setup_done(&rev_info.diffopt);
 	result = run_diff_index(&rev_info, 1);
+	object_array_clear(&rev_info.pending);
 	return diff_result_code(&rev_info.diffopt, result);
 }
 

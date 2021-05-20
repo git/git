@@ -5,12 +5,14 @@
 #include "lockfile.h"
 #include "packfile.h"
 #include "object-store.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "midx.h"
 #include "progress.h"
 #include "trace2.h"
 #include "run-command.h"
 #include "repository.h"
+#include "chunk-format.h"
+#include "pack.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -21,14 +23,12 @@
 #define MIDX_HEADER_SIZE 12
 #define MIDX_MIN_SIZE (MIDX_HEADER_SIZE + the_hash_algo->rawsz)
 
-#define MIDX_MAX_CHUNKS 5
 #define MIDX_CHUNK_ALIGNMENT 4
 #define MIDX_CHUNKID_PACKNAMES 0x504e414d /* "PNAM" */
 #define MIDX_CHUNKID_OIDFANOUT 0x4f494446 /* "OIDF" */
 #define MIDX_CHUNKID_OIDLOOKUP 0x4f49444c /* "OIDL" */
 #define MIDX_CHUNKID_OBJECTOFFSETS 0x4f4f4646 /* "OOFF" */
 #define MIDX_CHUNKID_LARGEOFFSETS 0x4c4f4646 /* "LOFF" */
-#define MIDX_CHUNKLOOKUP_WIDTH (sizeof(uint32_t) + sizeof(uint64_t))
 #define MIDX_CHUNK_FANOUT_SIZE (sizeof(uint32_t) * 256)
 #define MIDX_CHUNK_OFFSET_WIDTH (2 * sizeof(uint32_t))
 #define MIDX_CHUNK_LARGE_OFFSET_WIDTH (sizeof(uint64_t))
@@ -48,9 +48,33 @@ static uint8_t oid_version(void)
 	}
 }
 
+static const unsigned char *get_midx_checksum(struct multi_pack_index *m)
+{
+	return m->data + m->data_len - the_hash_algo->rawsz;
+}
+
 static char *get_midx_filename(const char *object_dir)
 {
 	return xstrfmt("%s/pack/multi-pack-index", object_dir);
+}
+
+char *get_midx_rev_filename(struct multi_pack_index *m)
+{
+	return xstrfmt("%s/pack/multi-pack-index-%s.rev",
+		       m->object_dir, hash_to_hex(get_midx_checksum(m)));
+}
+
+static int midx_read_oid_fanout(const unsigned char *chunk_start,
+				size_t chunk_size, void *data)
+{
+	struct multi_pack_index *m = data;
+	m->chunk_oid_fanout = (uint32_t *)chunk_start;
+
+	if (chunk_size != 4 * 256) {
+		error(_("multi-pack-index OID fanout is of the wrong size"));
+		return 1;
+	}
+	return 0;
 }
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local)
@@ -64,6 +88,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	char *midx_name = get_midx_filename(object_dir);
 	uint32_t i;
 	const char *cur_pack_name;
+	struct chunkfile *cf = NULL;
 
 	fd = git_open(midx_name);
 
@@ -113,62 +138,27 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	m->num_packs = get_be32(m->data + MIDX_BYTE_NUM_PACKS);
 
-	for (i = 0; i < m->num_chunks; i++) {
-		uint32_t chunk_id = get_be32(m->data + MIDX_HEADER_SIZE +
-					     MIDX_CHUNKLOOKUP_WIDTH * i);
-		uint64_t chunk_offset = get_be64(m->data + MIDX_HEADER_SIZE + 4 +
-						 MIDX_CHUNKLOOKUP_WIDTH * i);
+	cf = init_chunkfile(NULL);
 
-		if (chunk_offset >= m->data_len)
-			die(_("invalid chunk offset (too large)"));
+	if (read_table_of_contents(cf, m->data, midx_size,
+				   MIDX_HEADER_SIZE, m->num_chunks))
+		goto cleanup_fail;
 
-		switch (chunk_id) {
-			case MIDX_CHUNKID_PACKNAMES:
-				m->chunk_pack_names = m->data + chunk_offset;
-				break;
-
-			case MIDX_CHUNKID_OIDFANOUT:
-				m->chunk_oid_fanout = (uint32_t *)(m->data + chunk_offset);
-				break;
-
-			case MIDX_CHUNKID_OIDLOOKUP:
-				m->chunk_oid_lookup = m->data + chunk_offset;
-				break;
-
-			case MIDX_CHUNKID_OBJECTOFFSETS:
-				m->chunk_object_offsets = m->data + chunk_offset;
-				break;
-
-			case MIDX_CHUNKID_LARGEOFFSETS:
-				m->chunk_large_offsets = m->data + chunk_offset;
-				break;
-
-			case 0:
-				die(_("terminating multi-pack-index chunk id appears earlier than expected"));
-				break;
-
-			default:
-				/*
-				 * Do nothing on unrecognized chunks, allowing future
-				 * extensions to add optional chunks.
-				 */
-				break;
-		}
-	}
-
-	if (!m->chunk_pack_names)
+	if (pair_chunk(cf, MIDX_CHUNKID_PACKNAMES, &m->chunk_pack_names) == CHUNK_NOT_FOUND)
 		die(_("multi-pack-index missing required pack-name chunk"));
-	if (!m->chunk_oid_fanout)
+	if (read_chunk(cf, MIDX_CHUNKID_OIDFANOUT, midx_read_oid_fanout, m) == CHUNK_NOT_FOUND)
 		die(_("multi-pack-index missing required OID fanout chunk"));
-	if (!m->chunk_oid_lookup)
+	if (pair_chunk(cf, MIDX_CHUNKID_OIDLOOKUP, &m->chunk_oid_lookup) == CHUNK_NOT_FOUND)
 		die(_("multi-pack-index missing required OID lookup chunk"));
-	if (!m->chunk_object_offsets)
+	if (pair_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS, &m->chunk_object_offsets) == CHUNK_NOT_FOUND)
 		die(_("multi-pack-index missing required object offsets chunk"));
+
+	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets);
 
 	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
 
-	m->pack_names = xcalloc(m->num_packs, sizeof(*m->pack_names));
-	m->packs = xcalloc(m->num_packs, sizeof(*m->packs));
+	CALLOC_ARRAY(m->pack_names, m->num_packs);
+	CALLOC_ARRAY(m->packs, m->num_packs);
 
 	cur_pack_name = (const char *)m->chunk_pack_names;
 	for (i = 0; i < m->num_packs; i++) {
@@ -190,6 +180,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 cleanup_fail:
 	free(m);
 	free(midx_name);
+	free(cf);
 	if (midx_map)
 		munmap(midx_map, midx_size);
 	if (0 <= fd)
@@ -256,16 +247,16 @@ struct object_id *nth_midxed_object_oid(struct object_id *oid,
 	if (n >= m->num_objects)
 		return NULL;
 
-	hashcpy(oid->hash, m->chunk_oid_lookup + m->hash_len * n);
+	oidread(oid, m->chunk_oid_lookup + m->hash_len * n);
 	return oid;
 }
 
-static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
+off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 {
 	const unsigned char *offset_data;
 	uint32_t offset32;
 
-	offset_data = m->chunk_object_offsets + pos * MIDX_CHUNK_OFFSET_WIDTH;
+	offset_data = m->chunk_object_offsets + (off_t)pos * MIDX_CHUNK_OFFSET_WIDTH;
 	offset32 = get_be32(offset_data + sizeof(uint32_t));
 
 	if (m->chunk_large_offsets && offset32 & MIDX_LARGE_OFFSET_NEEDED) {
@@ -279,9 +270,10 @@ static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 	return offset32;
 }
 
-static uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
+uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 {
-	return get_be32(m->chunk_object_offsets + pos * MIDX_CHUNK_OFFSET_WIDTH);
+	return get_be32(m->chunk_object_offsets +
+			(off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
 }
 
 static int nth_midxed_pack_entry(struct repository *r,
@@ -451,49 +443,67 @@ static int pack_info_compare(const void *_a, const void *_b)
 	return strcmp(a->pack_name, b->pack_name);
 }
 
-struct pack_list {
+static int idx_or_pack_name_cmp(const void *_va, const void *_vb)
+{
+	const char *pack_name = _va;
+	const struct pack_info *compar = _vb;
+
+	return cmp_idx_or_pack_name(pack_name, compar->pack_name);
+}
+
+struct write_midx_context {
 	struct pack_info *info;
 	uint32_t nr;
 	uint32_t alloc;
 	struct multi_pack_index *m;
 	struct progress *progress;
 	unsigned pack_paths_checked;
+
+	struct pack_midx_entry *entries;
+	uint32_t entries_nr;
+
+	uint32_t *pack_perm;
+	uint32_t *pack_order;
+	unsigned large_offsets_needed:1;
+	uint32_t num_large_offsets;
+
+	int preferred_pack_idx;
 };
 
 static void add_pack_to_midx(const char *full_path, size_t full_path_len,
 			     const char *file_name, void *data)
 {
-	struct pack_list *packs = (struct pack_list *)data;
+	struct write_midx_context *ctx = data;
 
 	if (ends_with(file_name, ".idx")) {
-		display_progress(packs->progress, ++packs->pack_paths_checked);
-		if (packs->m && midx_contains_pack(packs->m, file_name))
+		display_progress(ctx->progress, ++ctx->pack_paths_checked);
+		if (ctx->m && midx_contains_pack(ctx->m, file_name))
 			return;
 
-		ALLOC_GROW(packs->info, packs->nr + 1, packs->alloc);
+		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
 
-		packs->info[packs->nr].p = add_packed_git(full_path,
-							  full_path_len,
-							  0);
+		ctx->info[ctx->nr].p = add_packed_git(full_path,
+						      full_path_len,
+						      0);
 
-		if (!packs->info[packs->nr].p) {
+		if (!ctx->info[ctx->nr].p) {
 			warning(_("failed to add packfile '%s'"),
 				full_path);
 			return;
 		}
 
-		if (open_pack_index(packs->info[packs->nr].p)) {
+		if (open_pack_index(ctx->info[ctx->nr].p)) {
 			warning(_("failed to open pack-index '%s'"),
 				full_path);
-			close_pack(packs->info[packs->nr].p);
-			FREE_AND_NULL(packs->info[packs->nr].p);
+			close_pack(ctx->info[ctx->nr].p);
+			FREE_AND_NULL(ctx->info[ctx->nr].p);
 			return;
 		}
 
-		packs->info[packs->nr].pack_name = xstrdup(file_name);
-		packs->info[packs->nr].orig_pack_int_id = packs->nr;
-		packs->info[packs->nr].expired = 0;
-		packs->nr++;
+		ctx->info[ctx->nr].pack_name = xstrdup(file_name);
+		ctx->info[ctx->nr].orig_pack_int_id = ctx->nr;
+		ctx->info[ctx->nr].expired = 0;
+		ctx->nr++;
 	}
 }
 
@@ -502,6 +512,7 @@ struct pack_midx_entry {
 	uint32_t pack_int_id;
 	time_t pack_mtime;
 	uint64_t offset;
+	unsigned preferred : 1;
 };
 
 static int midx_oid_compare(const void *_a, const void *_b)
@@ -512,6 +523,12 @@ static int midx_oid_compare(const void *_a, const void *_b)
 
 	if (cmp)
 		return cmp;
+
+	/* Sort objects in a preferred pack first when multiple copies exist. */
+	if (a->preferred > b->preferred)
+		return -1;
+	if (a->preferred < b->preferred)
+		return 1;
 
 	if (a->pack_mtime > b->pack_mtime)
 		return -1;
@@ -540,7 +557,8 @@ static int nth_midxed_pack_midx_entry(struct multi_pack_index *m,
 static void fill_pack_entry(uint32_t pack_int_id,
 			    struct packed_git *p,
 			    uint32_t cur_object,
-			    struct pack_midx_entry *entry)
+			    struct pack_midx_entry *entry,
+			    int preferred)
 {
 	if (nth_packed_object_id(&entry->oid, p, cur_object) < 0)
 		die(_("failed to locate object %d in packfile"), cur_object);
@@ -549,6 +567,7 @@ static void fill_pack_entry(uint32_t pack_int_id,
 	entry->pack_mtime = p->mtime;
 
 	entry->offset = nth_packed_object_offset(p, cur_object);
+	entry->preferred = !!preferred;
 }
 
 /*
@@ -565,7 +584,8 @@ static void fill_pack_entry(uint32_t pack_int_id,
 static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 						  struct pack_info *info,
 						  uint32_t nr_packs,
-						  uint32_t *nr_objects)
+						  uint32_t *nr_objects,
+						  int preferred_pack)
 {
 	uint32_t cur_fanout, cur_pack, cur_object;
 	uint32_t alloc_fanout, alloc_objects, total_objects = 0;
@@ -602,12 +622,17 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 				nth_midxed_pack_midx_entry(m,
 							   &entries_by_fanout[nr_fanout],
 							   cur_object);
+				if (nth_midxed_pack_int_id(m, cur_object) == preferred_pack)
+					entries_by_fanout[nr_fanout].preferred = 1;
+				else
+					entries_by_fanout[nr_fanout].preferred = 0;
 				nr_fanout++;
 			}
 		}
 
 		for (cur_pack = start_pack; cur_pack < nr_packs; cur_pack++) {
 			uint32_t start = 0, end;
+			int preferred = cur_pack == preferred_pack;
 
 			if (cur_fanout)
 				start = get_pack_fanout(info[cur_pack].p, cur_fanout - 1);
@@ -615,7 +640,11 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 
 			for (cur_object = start; cur_object < end; cur_object++) {
 				ALLOC_GROW(entries_by_fanout, nr_fanout + 1, alloc_fanout);
-				fill_pack_entry(cur_pack, info[cur_pack].p, cur_object, &entries_by_fanout[nr_fanout]);
+				fill_pack_entry(cur_pack,
+						info[cur_pack].p,
+						cur_object,
+						&entries_by_fanout[nr_fanout],
+						preferred);
 				nr_fanout++;
 			}
 		}
@@ -643,27 +672,26 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 	return deduplicated_entries;
 }
 
-static size_t write_midx_pack_names(struct hashfile *f,
-				    struct pack_info *info,
-				    uint32_t num_packs)
+static int write_midx_pack_names(struct hashfile *f, void *data)
 {
+	struct write_midx_context *ctx = data;
 	uint32_t i;
 	unsigned char padding[MIDX_CHUNK_ALIGNMENT];
 	size_t written = 0;
 
-	for (i = 0; i < num_packs; i++) {
+	for (i = 0; i < ctx->nr; i++) {
 		size_t writelen;
 
-		if (info[i].expired)
+		if (ctx->info[i].expired)
 			continue;
 
-		if (i && strcmp(info[i].pack_name, info[i - 1].pack_name) <= 0)
+		if (i && strcmp(ctx->info[i].pack_name, ctx->info[i - 1].pack_name) <= 0)
 			BUG("incorrect pack-file order: %s before %s",
-			    info[i - 1].pack_name,
-			    info[i].pack_name);
+			    ctx->info[i - 1].pack_name,
+			    ctx->info[i].pack_name);
 
-		writelen = strlen(info[i].pack_name) + 1;
-		hashwrite(f, info[i].pack_name, writelen);
+		writelen = strlen(ctx->info[i].pack_name) + 1;
+		hashwrite(f, ctx->info[i].pack_name, writelen);
 		written += writelen;
 	}
 
@@ -672,18 +700,17 @@ static size_t write_midx_pack_names(struct hashfile *f,
 	if (i < MIDX_CHUNK_ALIGNMENT) {
 		memset(padding, 0, sizeof(padding));
 		hashwrite(f, padding, i);
-		written += i;
 	}
 
-	return written;
+	return 0;
 }
 
-static size_t write_midx_oid_fanout(struct hashfile *f,
-				    struct pack_midx_entry *objects,
-				    uint32_t nr_objects)
+static int write_midx_oid_fanout(struct hashfile *f,
+				 void *data)
 {
-	struct pack_midx_entry *list = objects;
-	struct pack_midx_entry *last = objects + nr_objects;
+	struct write_midx_context *ctx = data;
+	struct pack_midx_entry *list = ctx->entries;
+	struct pack_midx_entry *last = ctx->entries + ctx->entries_nr;
 	uint32_t count = 0;
 	uint32_t i;
 
@@ -704,21 +731,21 @@ static size_t write_midx_oid_fanout(struct hashfile *f,
 		list = next;
 	}
 
-	return MIDX_CHUNK_FANOUT_SIZE;
+	return 0;
 }
 
-static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
-				    struct pack_midx_entry *objects,
-				    uint32_t nr_objects)
+static int write_midx_oid_lookup(struct hashfile *f,
+				 void *data)
 {
-	struct pack_midx_entry *list = objects;
+	struct write_midx_context *ctx = data;
+	unsigned char hash_len = the_hash_algo->rawsz;
+	struct pack_midx_entry *list = ctx->entries;
 	uint32_t i;
-	size_t written = 0;
 
-	for (i = 0; i < nr_objects; i++) {
+	for (i = 0; i < ctx->entries_nr; i++) {
 		struct pack_midx_entry *obj = list++;
 
-		if (i < nr_objects - 1) {
+		if (i < ctx->entries_nr - 1) {
 			struct pack_midx_entry *next = list;
 			if (oidcmp(&obj->oid, &next->oid) >= 0)
 				BUG("OIDs not in order: %s >= %s",
@@ -727,50 +754,48 @@ static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
 		}
 
 		hashwrite(f, obj->oid.hash, (int)hash_len);
-		written += hash_len;
 	}
 
-	return written;
+	return 0;
 }
 
-static size_t write_midx_object_offsets(struct hashfile *f, int large_offset_needed,
-					uint32_t *perm,
-					struct pack_midx_entry *objects, uint32_t nr_objects)
+static int write_midx_object_offsets(struct hashfile *f,
+				     void *data)
 {
-	struct pack_midx_entry *list = objects;
+	struct write_midx_context *ctx = data;
+	struct pack_midx_entry *list = ctx->entries;
 	uint32_t i, nr_large_offset = 0;
-	size_t written = 0;
 
-	for (i = 0; i < nr_objects; i++) {
+	for (i = 0; i < ctx->entries_nr; i++) {
 		struct pack_midx_entry *obj = list++;
 
-		if (perm[obj->pack_int_id] == PACK_EXPIRED)
+		if (ctx->pack_perm[obj->pack_int_id] == PACK_EXPIRED)
 			BUG("object %s is in an expired pack with int-id %d",
 			    oid_to_hex(&obj->oid),
 			    obj->pack_int_id);
 
-		hashwrite_be32(f, perm[obj->pack_int_id]);
+		hashwrite_be32(f, ctx->pack_perm[obj->pack_int_id]);
 
-		if (large_offset_needed && obj->offset >> 31)
+		if (ctx->large_offsets_needed && obj->offset >> 31)
 			hashwrite_be32(f, MIDX_LARGE_OFFSET_NEEDED | nr_large_offset++);
-		else if (!large_offset_needed && obj->offset >> 32)
+		else if (!ctx->large_offsets_needed && obj->offset >> 32)
 			BUG("object %s requires a large offset (%"PRIx64") but the MIDX is not writing large offsets!",
 			    oid_to_hex(&obj->oid),
 			    obj->offset);
 		else
 			hashwrite_be32(f, (uint32_t)obj->offset);
-
-		written += MIDX_CHUNK_OFFSET_WIDTH;
 	}
 
-	return written;
+	return 0;
 }
 
-static size_t write_midx_large_offsets(struct hashfile *f, uint32_t nr_large_offset,
-				       struct pack_midx_entry *objects, uint32_t nr_objects)
+static int write_midx_large_offsets(struct hashfile *f,
+				    void *data)
 {
-	struct pack_midx_entry *list = objects, *end = objects + nr_objects;
-	size_t written = 0;
+	struct write_midx_context *ctx = data;
+	struct pack_midx_entry *list = ctx->entries;
+	struct pack_midx_entry *end = ctx->entries + ctx->entries_nr;
+	uint32_t nr_large_offset = ctx->num_large_offsets;
 
 	while (nr_large_offset) {
 		struct pack_midx_entry *obj;
@@ -785,34 +810,96 @@ static size_t write_midx_large_offsets(struct hashfile *f, uint32_t nr_large_off
 		if (!(offset >> 31))
 			continue;
 
-		written += hashwrite_be64(f, offset);
+		hashwrite_be64(f, offset);
 
 		nr_large_offset--;
 	}
 
-	return written;
+	return 0;
 }
 
-static int write_midx_internal(const char *object_dir, struct multi_pack_index *m,
-			       struct string_list *packs_to_drop, unsigned flags)
+struct midx_pack_order_data {
+	uint32_t nr;
+	uint32_t pack;
+	off_t offset;
+};
+
+static int midx_pack_order_cmp(const void *va, const void *vb)
 {
-	unsigned char cur_chunk, num_chunks = 0;
+	const struct midx_pack_order_data *a = va, *b = vb;
+	if (a->pack < b->pack)
+		return -1;
+	else if (a->pack > b->pack)
+		return 1;
+	else if (a->offset < b->offset)
+		return -1;
+	else if (a->offset > b->offset)
+		return 1;
+	else
+		return 0;
+}
+
+static uint32_t *midx_pack_order(struct write_midx_context *ctx)
+{
+	struct midx_pack_order_data *data;
+	uint32_t *pack_order;
+	uint32_t i;
+
+	ALLOC_ARRAY(data, ctx->entries_nr);
+	for (i = 0; i < ctx->entries_nr; i++) {
+		struct pack_midx_entry *e = &ctx->entries[i];
+		data[i].nr = i;
+		data[i].pack = ctx->pack_perm[e->pack_int_id];
+		if (!e->preferred)
+			data[i].pack |= (1U << 31);
+		data[i].offset = e->offset;
+	}
+
+	QSORT(data, ctx->entries_nr, midx_pack_order_cmp);
+
+	ALLOC_ARRAY(pack_order, ctx->entries_nr);
+	for (i = 0; i < ctx->entries_nr; i++)
+		pack_order[i] = data[i].nr;
+	free(data);
+
+	return pack_order;
+}
+
+static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
+				     struct write_midx_context *ctx)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *tmp_file;
+
+	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex(midx_hash));
+
+	tmp_file = write_rev_file_order(NULL, ctx->pack_order, ctx->entries_nr,
+					midx_hash, WRITE_REV);
+
+	if (finalize_object_file(tmp_file, buf.buf))
+		die(_("cannot store reverse index file"));
+
+	strbuf_release(&buf);
+}
+
+static void clear_midx_files_ext(struct repository *r, const char *ext,
+				 unsigned char *keep_hash);
+
+static int write_midx_internal(const char *object_dir, struct multi_pack_index *m,
+			       struct string_list *packs_to_drop,
+			       const char *preferred_pack_name,
+			       unsigned flags)
+{
 	char *midx_name;
+	unsigned char midx_hash[GIT_MAX_RAWSZ];
 	uint32_t i;
 	struct hashfile *f = NULL;
 	struct lock_file lk;
-	struct pack_list packs;
-	uint32_t *pack_perm = NULL;
-	uint64_t written = 0;
-	uint32_t chunk_ids[MIDX_MAX_CHUNKS + 1];
-	uint64_t chunk_offsets[MIDX_MAX_CHUNKS + 1];
-	uint32_t nr_entries, num_large_offsets = 0;
-	struct pack_midx_entry *entries = NULL;
-	struct progress *progress = NULL;
-	int large_offsets_needed = 0;
+	struct write_midx_context ctx = { 0 };
 	int pack_name_concat_len = 0;
 	int dropped_packs = 0;
 	int result = 0;
+	struct chunkfile *cf;
 
 	midx_name = get_midx_filename(object_dir);
 	if (safe_create_leading_directories(midx_name))
@@ -820,61 +907,74 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 			  midx_name);
 
 	if (m)
-		packs.m = m;
+		ctx.m = m;
 	else
-		packs.m = load_multi_pack_index(object_dir, 1);
+		ctx.m = load_multi_pack_index(object_dir, 1);
 
-	packs.nr = 0;
-	packs.alloc = packs.m ? packs.m->num_packs : 16;
-	packs.info = NULL;
-	ALLOC_ARRAY(packs.info, packs.alloc);
+	ctx.nr = 0;
+	ctx.alloc = ctx.m ? ctx.m->num_packs : 16;
+	ctx.info = NULL;
+	ALLOC_ARRAY(ctx.info, ctx.alloc);
 
-	if (packs.m) {
-		for (i = 0; i < packs.m->num_packs; i++) {
-			ALLOC_GROW(packs.info, packs.nr + 1, packs.alloc);
+	if (ctx.m) {
+		for (i = 0; i < ctx.m->num_packs; i++) {
+			ALLOC_GROW(ctx.info, ctx.nr + 1, ctx.alloc);
 
-			packs.info[packs.nr].orig_pack_int_id = i;
-			packs.info[packs.nr].pack_name = xstrdup(packs.m->pack_names[i]);
-			packs.info[packs.nr].p = NULL;
-			packs.info[packs.nr].expired = 0;
-			packs.nr++;
+			ctx.info[ctx.nr].orig_pack_int_id = i;
+			ctx.info[ctx.nr].pack_name = xstrdup(ctx.m->pack_names[i]);
+			ctx.info[ctx.nr].p = NULL;
+			ctx.info[ctx.nr].expired = 0;
+			ctx.nr++;
 		}
 	}
 
-	packs.pack_paths_checked = 0;
+	ctx.pack_paths_checked = 0;
 	if (flags & MIDX_PROGRESS)
-		packs.progress = start_delayed_progress(_("Adding packfiles to multi-pack-index"), 0);
+		ctx.progress = start_delayed_progress(_("Adding packfiles to multi-pack-index"), 0);
 	else
-		packs.progress = NULL;
+		ctx.progress = NULL;
 
-	for_each_file_in_pack_dir(object_dir, add_pack_to_midx, &packs);
-	stop_progress(&packs.progress);
+	for_each_file_in_pack_dir(object_dir, add_pack_to_midx, &ctx);
+	stop_progress(&ctx.progress);
 
-	if (packs.m && packs.nr == packs.m->num_packs && !packs_to_drop)
+	if (ctx.m && ctx.nr == ctx.m->num_packs && !packs_to_drop)
 		goto cleanup;
 
-	entries = get_sorted_entries(packs.m, packs.info, packs.nr, &nr_entries);
-
-	for (i = 0; i < nr_entries; i++) {
-		if (entries[i].offset > 0x7fffffff)
-			num_large_offsets++;
-		if (entries[i].offset > 0xffffffff)
-			large_offsets_needed = 1;
+	ctx.preferred_pack_idx = -1;
+	if (preferred_pack_name) {
+		for (i = 0; i < ctx.nr; i++) {
+			if (!cmp_idx_or_pack_name(preferred_pack_name,
+						  ctx.info[i].pack_name)) {
+				ctx.preferred_pack_idx = i;
+				break;
+			}
+		}
 	}
 
-	QSORT(packs.info, packs.nr, pack_info_compare);
+	ctx.entries = get_sorted_entries(ctx.m, ctx.info, ctx.nr, &ctx.entries_nr,
+					 ctx.preferred_pack_idx);
+
+	ctx.large_offsets_needed = 0;
+	for (i = 0; i < ctx.entries_nr; i++) {
+		if (ctx.entries[i].offset > 0x7fffffff)
+			ctx.num_large_offsets++;
+		if (ctx.entries[i].offset > 0xffffffff)
+			ctx.large_offsets_needed = 1;
+	}
+
+	QSORT(ctx.info, ctx.nr, pack_info_compare);
 
 	if (packs_to_drop && packs_to_drop->nr) {
 		int drop_index = 0;
 		int missing_drops = 0;
 
-		for (i = 0; i < packs.nr && drop_index < packs_to_drop->nr; i++) {
-			int cmp = strcmp(packs.info[i].pack_name,
+		for (i = 0; i < ctx.nr && drop_index < packs_to_drop->nr; i++) {
+			int cmp = strcmp(ctx.info[i].pack_name,
 					 packs_to_drop->items[drop_index].string);
 
 			if (!cmp) {
 				drop_index++;
-				packs.info[i].expired = 1;
+				ctx.info[i].expired = 1;
 			} else if (cmp > 0) {
 				error(_("did not see pack-file %s to drop"),
 				      packs_to_drop->items[drop_index].string);
@@ -882,7 +982,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 				missing_drops++;
 				i--;
 			} else {
-				packs.info[i].expired = 0;
+				ctx.info[i].expired = 0;
 			}
 		}
 
@@ -898,19 +998,37 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	 *
 	 * pack_perm[old_id] = new_id
 	 */
-	ALLOC_ARRAY(pack_perm, packs.nr);
-	for (i = 0; i < packs.nr; i++) {
-		if (packs.info[i].expired) {
+	ALLOC_ARRAY(ctx.pack_perm, ctx.nr);
+	for (i = 0; i < ctx.nr; i++) {
+		if (ctx.info[i].expired) {
 			dropped_packs++;
-			pack_perm[packs.info[i].orig_pack_int_id] = PACK_EXPIRED;
+			ctx.pack_perm[ctx.info[i].orig_pack_int_id] = PACK_EXPIRED;
 		} else {
-			pack_perm[packs.info[i].orig_pack_int_id] = i - dropped_packs;
+			ctx.pack_perm[ctx.info[i].orig_pack_int_id] = i - dropped_packs;
 		}
 	}
 
-	for (i = 0; i < packs.nr; i++) {
-		if (!packs.info[i].expired)
-			pack_name_concat_len += strlen(packs.info[i].pack_name) + 1;
+	for (i = 0; i < ctx.nr; i++) {
+		if (!ctx.info[i].expired)
+			pack_name_concat_len += strlen(ctx.info[i].pack_name) + 1;
+	}
+
+	/* Check that the preferred pack wasn't expired (if given). */
+	if (preferred_pack_name) {
+		struct pack_info *preferred = bsearch(preferred_pack_name,
+						      ctx.info, ctx.nr,
+						      sizeof(*ctx.info),
+						      idx_or_pack_name_cmp);
+
+		if (!preferred)
+			warning(_("unknown preferred pack: '%s'"),
+				preferred_pack_name);
+		else {
+			uint32_t perm = ctx.pack_perm[preferred->orig_pack_int_id];
+			if (perm == PACK_EXPIRED)
+				warning(_("preferred pack '%s' is expired"),
+					preferred_pack_name);
+		}
 	}
 
 	if (pack_name_concat_len % MIDX_CHUNK_ALIGNMENT)
@@ -918,133 +1036,111 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 					(pack_name_concat_len % MIDX_CHUNK_ALIGNMENT);
 
 	hold_lock_file_for_update(&lk, midx_name, LOCK_DIE_ON_ERROR);
-	f = hashfd(lk.tempfile->fd, lk.tempfile->filename.buf);
-	FREE_AND_NULL(midx_name);
+	f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
 
-	if (packs.m)
-		close_midx(packs.m);
+	if (ctx.m)
+		close_midx(ctx.m);
 
-	cur_chunk = 0;
-	num_chunks = large_offsets_needed ? 5 : 4;
-
-	if (packs.nr - dropped_packs == 0) {
+	if (ctx.nr - dropped_packs == 0) {
 		error(_("no pack files to index."));
 		result = 1;
 		goto cleanup;
 	}
 
-	written = write_midx_header(f, num_chunks, packs.nr - dropped_packs);
+	cf = init_chunkfile(f);
 
-	chunk_ids[cur_chunk] = MIDX_CHUNKID_PACKNAMES;
-	chunk_offsets[cur_chunk] = written + (num_chunks + 1) * MIDX_CHUNKLOOKUP_WIDTH;
+	add_chunk(cf, MIDX_CHUNKID_PACKNAMES, pack_name_concat_len,
+		  write_midx_pack_names);
+	add_chunk(cf, MIDX_CHUNKID_OIDFANOUT, MIDX_CHUNK_FANOUT_SIZE,
+		  write_midx_oid_fanout);
+	add_chunk(cf, MIDX_CHUNKID_OIDLOOKUP,
+		  (size_t)ctx.entries_nr * the_hash_algo->rawsz,
+		  write_midx_oid_lookup);
+	add_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS,
+		  (size_t)ctx.entries_nr * MIDX_CHUNK_OFFSET_WIDTH,
+		  write_midx_object_offsets);
 
-	cur_chunk++;
-	chunk_ids[cur_chunk] = MIDX_CHUNKID_OIDFANOUT;
-	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + pack_name_concat_len;
+	if (ctx.large_offsets_needed)
+		add_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS,
+			(size_t)ctx.num_large_offsets * MIDX_CHUNK_LARGE_OFFSET_WIDTH,
+			write_midx_large_offsets);
 
-	cur_chunk++;
-	chunk_ids[cur_chunk] = MIDX_CHUNKID_OIDLOOKUP;
-	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + MIDX_CHUNK_FANOUT_SIZE;
+	write_midx_header(f, get_num_chunks(cf), ctx.nr - dropped_packs);
+	write_chunkfile(cf, &ctx);
 
-	cur_chunk++;
-	chunk_ids[cur_chunk] = MIDX_CHUNKID_OBJECTOFFSETS;
-	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + nr_entries * the_hash_algo->rawsz;
+	finalize_hashfile(f, midx_hash, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
+	free_chunkfile(cf);
 
-	cur_chunk++;
-	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + nr_entries * MIDX_CHUNK_OFFSET_WIDTH;
-	if (large_offsets_needed) {
-		chunk_ids[cur_chunk] = MIDX_CHUNKID_LARGEOFFSETS;
+	if (flags & MIDX_WRITE_REV_INDEX)
+		ctx.pack_order = midx_pack_order(&ctx);
 
-		cur_chunk++;
-		chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] +
-					   num_large_offsets * MIDX_CHUNK_LARGE_OFFSET_WIDTH;
-	}
+	if (flags & MIDX_WRITE_REV_INDEX)
+		write_midx_reverse_index(midx_name, midx_hash, &ctx);
+	clear_midx_files_ext(the_repository, ".rev", midx_hash);
 
-	chunk_ids[cur_chunk] = 0;
-
-	for (i = 0; i <= num_chunks; i++) {
-		if (i && chunk_offsets[i] < chunk_offsets[i - 1])
-			BUG("incorrect chunk offsets: %"PRIu64" before %"PRIu64,
-			    chunk_offsets[i - 1],
-			    chunk_offsets[i]);
-
-		if (chunk_offsets[i] % MIDX_CHUNK_ALIGNMENT)
-			BUG("chunk offset %"PRIu64" is not properly aligned",
-			    chunk_offsets[i]);
-
-		hashwrite_be32(f, chunk_ids[i]);
-		hashwrite_be64(f, chunk_offsets[i]);
-
-		written += MIDX_CHUNKLOOKUP_WIDTH;
-	}
-
-	if (flags & MIDX_PROGRESS)
-		progress = start_delayed_progress(_("Writing chunks to multi-pack-index"),
-					  num_chunks);
-	for (i = 0; i < num_chunks; i++) {
-		if (written != chunk_offsets[i])
-			BUG("incorrect chunk offset (%"PRIu64" != %"PRIu64") for chunk id %"PRIx32,
-			    chunk_offsets[i],
-			    written,
-			    chunk_ids[i]);
-
-		switch (chunk_ids[i]) {
-			case MIDX_CHUNKID_PACKNAMES:
-				written += write_midx_pack_names(f, packs.info, packs.nr);
-				break;
-
-			case MIDX_CHUNKID_OIDFANOUT:
-				written += write_midx_oid_fanout(f, entries, nr_entries);
-				break;
-
-			case MIDX_CHUNKID_OIDLOOKUP:
-				written += write_midx_oid_lookup(f, the_hash_algo->rawsz, entries, nr_entries);
-				break;
-
-			case MIDX_CHUNKID_OBJECTOFFSETS:
-				written += write_midx_object_offsets(f, large_offsets_needed, pack_perm, entries, nr_entries);
-				break;
-
-			case MIDX_CHUNKID_LARGEOFFSETS:
-				written += write_midx_large_offsets(f, num_large_offsets, entries, nr_entries);
-				break;
-
-			default:
-				BUG("trying to write unknown chunk id %"PRIx32,
-				    chunk_ids[i]);
-		}
-
-		display_progress(progress, i + 1);
-	}
-	stop_progress(&progress);
-
-	if (written != chunk_offsets[num_chunks])
-		BUG("incorrect final offset %"PRIu64" != %"PRIu64,
-		    written,
-		    chunk_offsets[num_chunks]);
-
-	finalize_hashfile(f, NULL, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
 	commit_lock_file(&lk);
 
 cleanup:
-	for (i = 0; i < packs.nr; i++) {
-		if (packs.info[i].p) {
-			close_pack(packs.info[i].p);
-			free(packs.info[i].p);
+	for (i = 0; i < ctx.nr; i++) {
+		if (ctx.info[i].p) {
+			close_pack(ctx.info[i].p);
+			free(ctx.info[i].p);
 		}
-		free(packs.info[i].pack_name);
+		free(ctx.info[i].pack_name);
 	}
 
-	free(packs.info);
-	free(entries);
-	free(pack_perm);
+	free(ctx.info);
+	free(ctx.entries);
+	free(ctx.pack_perm);
+	free(ctx.pack_order);
 	free(midx_name);
 	return result;
 }
 
-int write_midx_file(const char *object_dir, unsigned flags)
+int write_midx_file(const char *object_dir,
+		    const char *preferred_pack_name,
+		    unsigned flags)
 {
-	return write_midx_internal(object_dir, NULL, NULL, flags);
+	return write_midx_internal(object_dir, NULL, NULL, preferred_pack_name,
+				   flags);
+}
+
+struct clear_midx_data {
+	char *keep;
+	const char *ext;
+};
+
+static void clear_midx_file_ext(const char *full_path, size_t full_path_len,
+				const char *file_name, void *_data)
+{
+	struct clear_midx_data *data = _data;
+
+	if (!(starts_with(file_name, "multi-pack-index-") &&
+	      ends_with(file_name, data->ext)))
+		return;
+	if (data->keep && !strcmp(data->keep, file_name))
+		return;
+
+	if (unlink(full_path))
+		die_errno(_("failed to remove %s"), full_path);
+}
+
+static void clear_midx_files_ext(struct repository *r, const char *ext,
+				 unsigned char *keep_hash)
+{
+	struct clear_midx_data data;
+	memset(&data, 0, sizeof(struct clear_midx_data));
+
+	if (keep_hash)
+		data.keep = xstrfmt("multi-pack-index-%s%s",
+				    hash_to_hex(keep_hash), ext);
+	data.ext = ext;
+
+	for_each_file_in_pack_dir(r->objects->odb->path,
+				  clear_midx_file_ext,
+				  &data);
+
+	free(data.keep);
 }
 
 void clear_midx_file(struct repository *r)
@@ -1058,6 +1154,8 @@ void clear_midx_file(struct repository *r)
 
 	if (remove_path(midx))
 		die(_("failed to clear multi-pack-index at %s"), midx);
+
+	clear_midx_files_ext(r, ".rev", NULL);
 
 	free(midx);
 }
@@ -1239,7 +1337,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 	if (!m)
 		return 0;
 
-	count = xcalloc(m->num_packs, sizeof(uint32_t));
+	CALLOC_ARRAY(count, m->num_packs);
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(_("Counting referenced objects"),
@@ -1279,7 +1377,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 	free(count);
 
 	if (packs_to_drop.nr)
-		result = write_midx_internal(object_dir, m, &packs_to_drop, flags);
+		result = write_midx_internal(object_dir, m, &packs_to_drop, NULL, flags);
 
 	string_list_clear(&packs_to_drop, 0);
 	return result;
@@ -1410,7 +1508,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	if (!m)
 		return 0;
 
-	include_pack = xcalloc(m->num_packs, sizeof(unsigned char));
+	CALLOC_ARRAY(include_pack, m->num_packs);
 
 	if (batch_size) {
 		if (fill_included_packs_batch(r, m, include_pack, batch_size))
@@ -1468,7 +1566,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 		goto cleanup;
 	}
 
-	result = write_midx_internal(object_dir, m, NULL, flags);
+	result = write_midx_internal(object_dir, m, NULL, NULL, flags);
 	m = NULL;
 
 cleanup:

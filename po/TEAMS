@@ -29,6 +29,10 @@ Repository:	https://github.com/jnavila/git
 Leader:		Jean-Noël Avila <jn.avila@free.fr>
 Members:	Sébastien Helleu <flashcode@flashtux.org>
 
+Language:	id (Indonesian)
+Repository:	https://github.com/bagasme/git-po
+Leader:		Bagas Sanjaya <bagasdotme@gmail.com>
+
 Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
@@ -41,6 +45,10 @@ Repository:	https://github.com/git-l10n-ko/git-l10n-ko/
 Leader:		Gwan-gyeong Mun <elongbug@gmail.com>
 Members:	Changwoo Ryu <cwryu@debian.org>
 		Sihyeon Jang <uneedsihyeon@gmail.com>
+
+Language:	pl (Polish)
+Repository:	https://github.com/Arusekk/git-po
+Leader:		Arusekk <arek_koz@o2.pl>
 
 Language:	pt_PT (Portuguese - Portugal)
 Repository:	https://github.com/git-l10n-pt-PT/git-po/

@@ -6,6 +6,9 @@ test_description='Tests git bisect functionality'
 
 exec </dev/null
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 add_line_into_file()
@@ -89,9 +92,9 @@ test_expect_success 'bisect start without -- takes unknown arg as pathspec' '
 	grep bar ".git/BISECT_NAMES"
 '
 
-test_expect_success 'bisect reset: back in the master branch' '
+test_expect_success 'bisect reset: back in the main branch' '
 	git bisect reset &&
-	echo "* master" > branch.expect &&
+	echo "* main" > branch.expect &&
 	git branch > branch.output &&
 	cmp branch.expect branch.output
 '
@@ -102,7 +105,7 @@ test_expect_success 'bisect reset: back in another branch' '
 	git bisect good $HASH1 &&
 	git bisect bad $HASH3 &&
 	git bisect reset &&
-	echo "  master" > branch.expect &&
+	echo "  main" > branch.expect &&
 	echo "* other" >> branch.expect &&
 	git branch > branch.output &&
 	cmp branch.expect branch.output
@@ -348,7 +351,7 @@ test_expect_success 'bisect skip many ranges' '
 
 test_expect_success 'bisect starting with a detached HEAD' '
 	git bisect reset &&
-	git checkout master^ &&
+	git checkout main^ &&
 	HEAD=$(git rev-parse --verify HEAD) &&
 	git bisect start &&
 	test $HEAD = $(cat .git/BISECT_START) &&
@@ -575,9 +578,9 @@ test_expect_success 'skipping away from skipped commit' '
 	test "$para3" = "$PARA_HASH3"
 '
 
-test_expect_success 'erroring out when using bad path parameters' '
+test_expect_success 'erroring out when using bad path arguments' '
 	test_must_fail git bisect start $PARA_HASH7 $HASH1 -- foobar 2> error.txt &&
-	test_i18ngrep "bad path parameters" error.txt
+	test_i18ngrep "bad path arguments" error.txt
 '
 
 test_expect_success 'test bisection on bare repo - --no-checkout specified' '
@@ -716,7 +719,7 @@ test_expect_success 'bisect: --no-checkout - target after breakage' '
 test_expect_success 'bisect: demonstrate identification of damage boundary' "
 	git bisect reset &&
 	git checkout broken &&
-	git bisect start broken master --no-checkout &&
+	git bisect start broken main --no-checkout &&
 	test_must_fail git bisect run \"\$SHELL_PATH\" -c '
 		GOOD=\$(git for-each-ref \"--format=%(objectname)\" refs/bisect/good-*) &&
 		git rev-list --objects BISECT_HEAD --not \$GOOD >tmp.\$\$ &&
@@ -826,7 +829,7 @@ test_expect_success 'bisect terms needs 0 or 1 argument' '
 	test_must_fail git bisect terms 1 2 &&
 	test_must_fail git bisect terms 2>actual &&
 	echo "error: no terms defined" >expected &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'bisect terms shows good/bad after start' '
@@ -900,7 +903,7 @@ test_expect_success 'bisect start --term-* does store terms' '
 	Your current terms are two for the old state
 	and one for the new state.
 	EOF
-	test_i18ncmp expected actual &&
+	test_cmp expected actual &&
 	git bisect terms --term-bad >actual &&
 	echo one >expected &&
 	test_cmp expected actual &&
@@ -919,6 +922,17 @@ test_expect_success 'bisect start takes options and revs in any order' '
 	test_cmp expected actual
 '
 
+# Bisect is started with --term-new and --term-old arguments,
+# then skip. The HEAD should be changed.
+test_expect_success 'bisect skip works with --term*' '
+	git bisect reset &&
+	git bisect start --term-new=fixed --term-old=unfixed HEAD $HASH1 &&
+	hash_skipped_from=$(git rev-parse --verify HEAD) &&
+	git bisect skip &&
+	hash_skipped_to=$(git rev-parse --verify HEAD) &&
+	test "$hash_skipped_from" != "$hash_skipped_to"
+'
+
 test_expect_success 'git bisect reset cleans bisection state properly' '
 	git bisect reset &&
 	git bisect start &&
@@ -926,14 +940,26 @@ test_expect_success 'git bisect reset cleans bisection state properly' '
 	git bisect bad $HASH4 &&
 	git bisect reset &&
 	test -z "$(git for-each-ref "refs/bisect/*")" &&
-	test_path_is_missing "$GIT_DIR/BISECT_EXPECTED_REV" &&
-	test_path_is_missing "$GIT_DIR/BISECT_ANCESTORS_OK" &&
-	test_path_is_missing "$GIT_DIR/BISECT_LOG" &&
-	test_path_is_missing "$GIT_DIR/BISECT_RUN" &&
-	test_path_is_missing "$GIT_DIR/BISECT_TERMS" &&
-	test_path_is_missing "$GIT_DIR/head-name" &&
-	test_path_is_missing "$GIT_DIR/BISECT_HEAD" &&
-	test_path_is_missing "$GIT_DIR/BISECT_START"
+	test_path_is_missing ".git/BISECT_EXPECTED_REV" &&
+	test_path_is_missing ".git/BISECT_ANCESTORS_OK" &&
+	test_path_is_missing ".git/BISECT_LOG" &&
+	test_path_is_missing ".git/BISECT_RUN" &&
+	test_path_is_missing ".git/BISECT_TERMS" &&
+	test_path_is_missing ".git/head-name" &&
+	test_path_is_missing ".git/BISECT_HEAD" &&
+	test_path_is_missing ".git/BISECT_START"
+'
+
+test_expect_success 'bisect handles annotated tags' '
+	test_commit commit-one &&
+	git tag -m foo tag-one &&
+	test_commit commit-two &&
+	git tag -m foo tag-two &&
+	git bisect start &&
+	git bisect good tag-one &&
+	git bisect bad tag-two >output &&
+	bad=$(git rev-parse --verify tag-two^{commit}) &&
+	grep "$bad is the first bad commit" output
 '
 
 test_done

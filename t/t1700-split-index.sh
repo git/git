@@ -2,6 +2,9 @@
 
 test_description='split index mode tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # We need total control of index splitting here
@@ -496,7 +499,7 @@ test_expect_success 'do not refresh null base index' '
 		test_commit initial &&
 		git checkout -b side-branch &&
 		test_commit extra &&
-		git checkout master &&
+		git checkout main &&
 		git update-index --split-index &&
 		test_commit more &&
 		# must not write a new shareindex, or we wont catch the problem

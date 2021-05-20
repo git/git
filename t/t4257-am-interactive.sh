@@ -10,7 +10,7 @@ test_expect_success 'set up patches to apply' '
 	git format-patch --stdout -2 >mbox &&
 
 	git reset --hard unrelated &&
-	test_commit conflict-master file master base
+	test_commit conflict-main file main base
 '
 
 # Sanity check our setup.

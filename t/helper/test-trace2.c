@@ -198,6 +198,14 @@ static int ut_006data(int argc, const char **argv)
 	return 0;
 }
 
+static int ut_007bug(int argc, const char **argv)
+{
+	/*
+	 * Exercise BUG() to ensure that the message is printed to trace2.
+	 */
+	BUG("the bug message");
+}
+
 /*
  * Usage:
  *     test-tool trace2 <ut_name_1> <ut_usage_1>
@@ -214,6 +222,7 @@ static struct unit_test ut_table[] = {
 	{ ut_004child,    "004child",  "[<child_command_line>]" },
 	{ ut_005exec,     "005exec",   "<git_command_args>" },
 	{ ut_006data,     "006data",   "[<category> <key> <value>]+" },
+	{ ut_007bug,      "007bug",    "" },
 };
 /* clang-format on */
 

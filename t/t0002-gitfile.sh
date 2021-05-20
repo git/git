@@ -4,6 +4,9 @@ test_description='.git file
 
 Verify that plumbing commands work when .git is a file
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 objpath() {
@@ -96,7 +99,7 @@ test_expect_success 'enter_repo non-strict mode' '
 	git ls-remote enter_repo >actual &&
 	cat >expected <<-EOF &&
 	$head	HEAD
-	$head	refs/heads/master
+	$head	refs/heads/main
 	$head	refs/tags/foo
 	EOF
 	test_cmp expected actual
@@ -111,7 +114,7 @@ test_expect_success 'enter_repo linked checkout' '
 	git ls-remote foo >actual &&
 	cat >expected <<-EOF &&
 	$head	HEAD
-	$head	refs/heads/master
+	$head	refs/heads/main
 	$head	refs/tags/foo
 	EOF
 	test_cmp expected actual
@@ -122,7 +125,7 @@ test_expect_success 'enter_repo strict mode' '
 	git ls-remote --upload-pack="git upload-pack --strict" foo/.git >actual &&
 	cat >expected <<-EOF &&
 	$head	HEAD
-	$head	refs/heads/master
+	$head	refs/heads/main
 	$head	refs/tags/foo
 	EOF
 	test_cmp expected actual

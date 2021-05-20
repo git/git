@@ -4,6 +4,9 @@
 #
 
 test_description='Test the post-merge hook.'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -15,7 +18,7 @@ test_expect_success setup '
 	git update-index a &&
 	tree1=$(git write-tree) &&
 	commit1=$(echo modify | git commit-tree $tree1 -p $commit0) &&
-	git update-ref refs/heads/master $commit0 &&
+	git update-ref refs/heads/main $commit0 &&
 	git clone ./. clone1 &&
 	GIT_DIR=clone1/.git git update-index --add a &&
 	git clone ./. clone2 &&

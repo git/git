@@ -684,6 +684,16 @@ static int fetch(struct transport *transport,
 		return transport->vtable->fetch(transport, nr_heads, to_fetch);
 	}
 
+	/*
+	 * If we reach here, then the server, the client, and/or the transport
+	 * helper does not support protocol v2. --negotiate-only requires
+	 * protocol v2.
+	 */
+	if (data->transport_options.acked_commits) {
+		warning(_("--negotiate-only requires protocol v2"));
+		return -1;
+	}
+
 	if (!data->get_refs_list_called)
 		get_refs_list_using_list(transport, 0);
 
@@ -745,13 +755,13 @@ static int push_update_ref_status(struct strbuf *buf,
 			die(_("'option' without a matching 'ok/error' directive"));
 		if (state->new_report) {
 			if (!state->hint->report) {
-				state->hint->report = xcalloc(1, sizeof(struct ref_push_report));
+				CALLOC_ARRAY(state->hint->report, 1);
 				state->report = state->hint->report;
 			} else {
 				state->report = state->hint->report;
 				while (state->report->next)
 					state->report = state->report->next;
-				state->report->next = xcalloc(1, sizeof(struct ref_push_report));
+				CALLOC_ARRAY(state->report->next, 1);
 				state->report = state->report->next;
 			}
 			state->new_report = 0;
@@ -1162,13 +1172,14 @@ static int has_attribute(const char *attrs, const char *attr)
 }
 
 static struct ref *get_refs_list(struct transport *transport, int for_push,
-				 const struct strvec *ref_prefixes)
+				 struct transport_ls_refs_options *transport_options)
 {
 	get_helper(transport);
 
 	if (process_connect(transport, for_push)) {
 		do_take_over(transport);
-		return transport->vtable->get_refs_list(transport, for_push, ref_prefixes);
+		return transport->vtable->get_refs_list(transport, for_push,
+							transport_options);
 	}
 
 	return get_refs_list_using_list(transport, for_push);

@@ -196,6 +196,12 @@ test_expect_success 'git add --refresh with pathspec' '
 	grep baz actual
 '
 
+test_expect_success 'git add --refresh correctly reports no match error' "
+	echo \"fatal: pathspec ':(icase)nonexistent' did not match any files\" >expect &&
+	test_must_fail git add --refresh ':(icase)nonexistent' 2>actual &&
+	test_cmp expect actual
+"
+
 test_expect_success POSIXPERM,SANITY 'git add should fail atomically upon an unreadable file' '
 	git reset --hard &&
 	date >foo1 &&
@@ -304,7 +310,7 @@ test_expect_success 'error on a repository with no commits' '
 	error: '"'empty/'"' does not have a commit checked out
 	fatal: adding files failed
 	EOF
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'git add --dry-run of existing changed file' "
@@ -320,7 +326,7 @@ test_expect_success 'git add --dry-run of non-existing file' "
 
 test_expect_success 'git add --dry-run of an existing file output' "
 	echo \"fatal: pathspec 'ignored-file' did not match any files\" >expect &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 "
 
 cat >expect.err <<\EOF
@@ -339,8 +345,12 @@ test_expect_success 'git add --dry-run --ignore-missing of non-existing file' '
 '
 
 test_expect_success 'git add --dry-run --ignore-missing of non-existing file output' '
-	test_i18ncmp expect.out actual.out &&
-	test_i18ncmp expect.err actual.err
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success 'git add --dry-run --interactive should fail' '
+	test_must_fail git add --dry-run --interactive
 '
 
 test_expect_success 'git add empty string should fail' '
@@ -386,6 +396,36 @@ test_expect_success POSIXPERM 'git add --chmod=[+-]x does not change the working
 	! test -x foo4
 '
 
+test_expect_success 'git add --chmod fails with non regular files (but updates the other paths)' '
+	git reset --hard &&
+	test_ln_s_add foo foo3 &&
+	touch foo4 &&
+	test_must_fail git add --chmod=+x foo3 foo4 2>stderr &&
+	test_i18ngrep "cannot chmod +x .foo3." stderr &&
+	test_mode_in_index 120000 foo3 &&
+	test_mode_in_index 100755 foo4
+'
+
+test_expect_success 'git add --chmod honors --dry-run' '
+	git reset --hard &&
+	echo foo >foo4 &&
+	git add foo4 &&
+	git add --chmod=+x --dry-run foo4 &&
+	test_mode_in_index 100644 foo4
+'
+
+test_expect_success 'git add --chmod --dry-run reports error for non regular files' '
+	git reset --hard &&
+	test_ln_s_add foo foo4 &&
+	test_must_fail git add --chmod=+x --dry-run foo4 2>stderr &&
+	test_i18ngrep "cannot chmod +x .foo4." stderr
+'
+
+test_expect_success 'git add --chmod --dry-run reports error for unmatched pathspec' '
+	test_must_fail git add --chmod=+x --dry-run nonexistent 2>stderr &&
+	test_i18ngrep "pathspec .nonexistent. did not match any files" stderr
+'
+
 test_expect_success 'no file status change if no pathspec is given' '
 	>foo5 &&
 	>foo6 &&
@@ -409,11 +449,17 @@ test_expect_success 'no file status change if no pathspec is given in subdir' '
 '
 
 test_expect_success 'all statuses changed in folder if . is given' '
-	rm -fr empty &&
-	git add --chmod=+x . &&
-	test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
-	git add --chmod=-x . &&
-	test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
+	git init repo &&
+	(
+		cd repo &&
+		mkdir -p sub/dir &&
+		touch x y z sub/a sub/dir/b &&
+		git add -A &&
+		git add --chmod=+x . &&
+		test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
+		git add --chmod=-x . &&
+		test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
+	)
 '
 
 test_expect_success CASE_INSENSITIVE_FS 'path is case-insensitive' '

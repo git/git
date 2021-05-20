@@ -2,6 +2,9 @@
 
 test_description='merge simplification'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 note () {
@@ -43,7 +46,7 @@ test_expect_success setup '
 	git add side &&
 	test_tick && git commit -m "Side root" &&
 	note J &&
-	git checkout master &&
+	git checkout main &&
 
 	echo "Hello" >file &&
 	echo "second" >lost &&
@@ -65,7 +68,7 @@ test_expect_success setup '
 	note D &&
 
 	test_tick &&
-	test_must_fail git merge -m "merge" master &&
+	test_must_fail git merge -m "merge" main &&
 	>lost && git commit -a -m "merge" &&
 	note E &&
 
@@ -74,7 +77,7 @@ test_expect_success setup '
 	test_tick && git commit -m "Irrelevant change" &&
 	note F &&
 
-	git checkout master &&
+	git checkout main &&
 	echo "Yet another" >elif &&
 	git add elif &&
 	test_tick && git commit -m "Another irrelevant change" &&
@@ -87,7 +90,7 @@ test_expect_success setup '
 	test_tick && git commit -a -m "Final change" &&
 	note I &&
 
-	git checkout master &&
+	git checkout main &&
 	test_tick && git merge --allow-unrelated-histories -m "Coolest" unrelated &&
 	note K &&
 

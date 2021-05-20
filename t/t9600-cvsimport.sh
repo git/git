@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='git cvsimport basic tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-cvs.sh
 
 if ! test_have_prereq NOT_ROOT; then
@@ -159,6 +162,6 @@ test_expect_success PERL 'no .git/cvs-revisions created by default' '
 
 '
 
-test_expect_success PERL 'test entire HEAD' 'test_cmp_branch_tree master'
+test_expect_success PERL 'test entire HEAD' 'test_cmp_branch_tree main'
 
 test_done

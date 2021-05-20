@@ -126,8 +126,15 @@ struct child_process {
 	 */
 	unsigned silent_exec_failure:1;
 
-	unsigned stdout_to_stderr:1;
+	/**
+	 * Run the command from argv[0] using a shell (but note that we may
+	 * still optimize out the shell call if the command contains no
+	 * metacharacters). Note that further arguments to the command in
+	 * argv[1], etc, do not need to be shell-quoted.
+	 */
 	unsigned use_shell:1;
+
+	unsigned stdout_to_stderr:1;
 	unsigned clean_on_exit:1;
 	unsigned wait_after_clean:1;
 	void (*clean_on_exit_handler)(struct child_process *process);

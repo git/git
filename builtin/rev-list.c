@@ -80,6 +80,19 @@ static int arg_show_object_names = 1;
 
 #define DEFAULT_OIDSET_SIZE     (16*1024)
 
+static int show_disk_usage;
+static off_t total_disk_usage;
+
+static off_t get_object_disk_usage(struct object *obj)
+{
+	off_t size;
+	struct object_info oi = OBJECT_INFO_INIT;
+	oi.disk_sizep = &size;
+	if (oid_object_info_extended(the_repository, &obj->oid, &oi, 0) < 0)
+		die(_("unable to get disk usage of %s"), oid_to_hex(&obj->oid));
+	return size;
+}
+
 static void finish_commit(struct commit *commit);
 static void show_commit(struct commit *commit, void *data)
 {
@@ -87,6 +100,9 @@ static void show_commit(struct commit *commit, void *data)
 	struct rev_info *revs = info->revs;
 
 	display_progress(progress, ++progress_counter);
+
+	if (show_disk_usage)
+		total_disk_usage += get_object_disk_usage(&commit->object);
 
 	if (info->flags & REV_LIST_QUIET) {
 		finish_commit(commit);
@@ -258,6 +274,8 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 	if (finish_object(obj, name, cb_data))
 		return;
 	display_progress(progress, ++progress_counter);
+	if (show_disk_usage)
+		total_disk_usage += get_object_disk_usage(obj);
 	if (info->flags & REV_LIST_QUIET)
 		return;
 
@@ -380,7 +398,8 @@ static inline int parse_missing_action_value(const char *value)
 }
 
 static int try_bitmap_count(struct rev_info *revs,
-			    struct list_objects_filter_options *filter)
+			    struct list_objects_filter_options *filter,
+			    int filter_provided_objects)
 {
 	uint32_t commit_count = 0,
 		 tag_count = 0,
@@ -415,7 +434,7 @@ static int try_bitmap_count(struct rev_info *revs,
 	 */
 	max_count = revs->max_count;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter);
+	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
 
@@ -432,7 +451,8 @@ static int try_bitmap_count(struct rev_info *revs,
 }
 
 static int try_bitmap_traversal(struct rev_info *revs,
-				struct list_objects_filter_options *filter)
+				struct list_objects_filter_options *filter,
+				int filter_provided_objects)
 {
 	struct bitmap_index *bitmap_git;
 
@@ -443,12 +463,30 @@ static int try_bitmap_traversal(struct rev_info *revs,
 	if (revs->max_count >= 0)
 		return -1;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter);
+	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
 
 	traverse_bitmap_commit_list(bitmap_git, revs, &show_object_fast);
 	free_bitmap_index(bitmap_git);
+	return 0;
+}
+
+static int try_bitmap_disk_usage(struct rev_info *revs,
+				 struct list_objects_filter_options *filter,
+				 int filter_provided_objects)
+{
+	struct bitmap_index *bitmap_git;
+
+	if (!show_disk_usage)
+		return -1;
+
+	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
+	if (!bitmap_git)
+		return -1;
+
+	printf("%"PRIuMAX"\n",
+	       (uintmax_t)get_disk_usage_from_bitmap(bitmap_git, revs));
 	return 0;
 }
 
@@ -464,6 +502,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
+	int filter_provided_objects = 0;
 	const char *show_progress = NULL;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
@@ -564,6 +603,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			list_objects_filter_set_no_filter(&filter_options);
 			continue;
 		}
+		if (!strcmp(arg, "--filter-provided-objects")) {
+			filter_provided_objects = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--filter-print-omitted")) {
 			arg_print_omitted = 1;
 			continue;
@@ -581,6 +624,12 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 		if (!strcmp(arg, ("--object-names"))) {
 			arg_show_object_names = 1;
+			continue;
+		}
+
+		if (!strcmp(arg, "--disk-usage")) {
+			show_disk_usage = 1;
+			info.flags |= REV_LIST_QUIET;
 			continue;
 		}
 
@@ -624,9 +673,11 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		progress = start_delayed_progress(show_progress, 0);
 
 	if (use_bitmap_index) {
-		if (!try_bitmap_count(&revs, &filter_options))
+		if (!try_bitmap_count(&revs, &filter_options, filter_provided_objects))
 			return 0;
-		if (!try_bitmap_traversal(&revs, &filter_options))
+		if (!try_bitmap_disk_usage(&revs, &filter_options, filter_provided_objects))
+			return 0;
+		if (!try_bitmap_traversal(&revs, &filter_options, filter_provided_objects))
 			return 0;
 	}
 
@@ -649,6 +700,16 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 		if (bisect_show_vars)
 			return show_bisect_vars(&info, reaches, all);
+	}
+
+	if (filter_provided_objects) {
+		struct commit_list *c;
+		for (i = 0; i < revs.pending.nr; i++) {
+			struct object_array_entry *pending = revs.pending.objects + i;
+			pending->item->flags |= NOT_USER_GIVEN;
+		}
+		for (c = revs.commits; c; c = c->next)
+			c->item->object.flags |= NOT_USER_GIVEN;
 	}
 
 	if (arg_print_omitted)
@@ -689,6 +750,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		else
 			printf("%d\n", revs.count_left + revs.count_right);
 	}
+
+	if (show_disk_usage)
+		printf("%"PRIuMAX"\n", (uintmax_t)total_disk_usage);
 
 	return 0;
 }

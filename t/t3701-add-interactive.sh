@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='add -i basic tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -367,7 +370,7 @@ test_expect_success 'setup expected' '
 '
 
 # Test splitting the first patch, then adding both
-test_expect_success C_LOCALE_OUTPUT 'add first line works' '
+test_expect_success 'add first line works' '
 	git commit -am "clear local changes" &&
 	git apply patch &&
 	printf "%s\n" s y y | git add -p file 2>error |
@@ -549,8 +552,8 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	test_commit non-conflict &&
 	git checkout -b side &&
 	test_commit side conflict.t &&
-	git checkout master &&
-	test_commit master conflict.t &&
+	git checkout main &&
+	test_commit main conflict.t &&
 	test_must_fail git merge side &&
 	echo changed >non-conflict.t &&
 	echo y | git add -p >output &&
@@ -849,6 +852,12 @@ test_expect_success 'setup different kinds of dirty submodules' '
 	cat >expected <<-\EOF &&
 	dirty-both-ways
 	dirty-head
+	EOF
+	test_cmp expected actual &&
+	git -C for-submodules diff-files --name-only --ignore-submodules=none >actual &&
+	cat >expected <<-\EOF &&
+	dirty-both-ways
+	dirty-head
 	dirty-otherwise
 	EOF
 	test_cmp expected actual &&
@@ -965,7 +974,7 @@ test_expect_success 'show help from add--helper' '
 	EOF
 	test_write_lines h | force_color git add -i >actual.colored &&
 	test_decode_color <actual.colored >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_done

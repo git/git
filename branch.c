@@ -294,7 +294,7 @@ void create_branch(struct repository *r,
 			if (explicit_tracking)
 				die(_(upstream_not_branch), start_name);
 			else
-				real_ref = NULL;
+				FREE_AND_NULL(real_ref);
 		}
 		break;
 	default:
@@ -322,7 +322,7 @@ void create_branch(struct repository *r,
 		transaction = ref_transaction_begin(&err);
 		if (!transaction ||
 		    ref_transaction_update(transaction, ref.buf,
-					   &oid, forcing ? NULL : &null_oid,
+					   &oid, forcing ? NULL : null_oid(),
 					   0, msg, &err) ||
 		    ref_transaction_commit(transaction, &err))
 			die("%s", err.buf);
@@ -344,6 +344,7 @@ void remove_merge_branch_state(struct repository *r)
 	unlink(git_path_merge_rr(r));
 	unlink(git_path_merge_msg(r));
 	unlink(git_path_merge_mode(r));
+	unlink(git_path_auto_merge(r));
 	save_autostash(git_path_merge_autostash(r));
 }
 

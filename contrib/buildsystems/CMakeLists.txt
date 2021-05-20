@@ -58,6 +58,10 @@ if(WIN32)
 
 	# In the vcpkg edition, we need this to be able to link to libcurl
 	set(CURL_NO_CURL_CMAKE ON)
+
+	# Copy the necessary vcpkg DLLs (like iconv) to the install dir
+	set(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)
+	set(CMAKE_TOOLCHAIN_FILE ${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 endif()
 
 find_program(SH_EXE sh PATHS "C:/Program Files/Git/bin")
@@ -243,7 +247,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_definitions(PROCFS_EXECUTABLE_PATH="/proc/self/exe" HAVE_DEV_TTY )
-	list(APPEND compat_SOURCES unix-socket.c)
+	list(APPEND compat_SOURCES unix-socket.c unix-stream-server.c)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	list(APPEND compat_SOURCES compat/simple-ipc/ipc-shared.c compat/simple-ipc/ipc-win32.c)
+else()
+	list(APPEND compat_SOURCES compat/simple-ipc/ipc-shared.c compat/simple-ipc/ipc-unix-socket.c)
 endif()
 
 set(EXE_EXTENSION ${CMAKE_EXECUTABLE_SUFFIX})
@@ -685,13 +695,17 @@ endif()
 
 parse_makefile_for_executables(git_builtin_extra "BUILT_INS")
 
+option(SKIP_DASHED_BUILT_INS "Skip hardlinking the dashed versions of the built-ins")
+
 #Creating hardlinks
+if(NOT SKIP_DASHED_BUILT_INS)
 foreach(s ${git_SOURCES} ${git_builtin_extra})
 	string(REPLACE "${CMAKE_SOURCE_DIR}/builtin/" "" s ${s})
 	string(REPLACE ".c" "" s ${s})
 	file(APPEND ${CMAKE_BINARY_DIR}/CreateLinks.cmake "file(CREATE_LINK git${EXE_EXTENSION} git-${s}${EXE_EXTENSION})\n")
 	list(APPEND git_links ${CMAKE_BINARY_DIR}/git-${s}${EXE_EXTENSION})
 endforeach()
+endif()
 
 if(CURL_FOUND)
 	set(remote_exes
@@ -807,14 +821,18 @@ list(TRANSFORM git_shell_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 list(TRANSFORM git_perl_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 
 #install
-install(TARGETS git git-shell
+foreach(program ${PROGRAMS_BUILT})
+if(program STREQUAL "git" OR program STREQUAL "git-shell")
+install(TARGETS ${program}
 	RUNTIME DESTINATION bin)
+else()
+install(TARGETS ${program}
+	RUNTIME DESTINATION libexec/git-core)
+endif()
+endforeach()
+
 install(PROGRAMS ${CMAKE_BINARY_DIR}/git-cvsserver
 	DESTINATION bin)
-
-list(REMOVE_ITEM PROGRAMS_BUILT git git-shell)
-install(TARGETS ${PROGRAMS_BUILT}
-	RUNTIME DESTINATION libexec/git-core)
 
 set(bin_links
 	git-receive-pack git-upload-archive git-upload-pack)
@@ -828,12 +846,12 @@ install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/git-shell${EXE_EXTENS
 
 foreach(b ${git_links})
 	string(REPLACE "${CMAKE_BINARY_DIR}" "" b ${b})
-	install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/git${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/git-core/${b}${EXE_EXTENSION})")
+	install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/git${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/git-core/${b})")
 endforeach()
 
 foreach(b ${git_http_links})
 	string(REPLACE "${CMAKE_BINARY_DIR}" "" b ${b})
-	install(CODE "file(CREATE_LINK  ${CMAKE_INSTALL_PREFIX}/libexec/git-core/git-remote-http${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/git-core/${b}${EXE_EXTENSION})")
+	install(CODE "file(CREATE_LINK  ${CMAKE_INSTALL_PREFIX}/libexec/git-core/git-remote-http${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/git-core/${b})")
 endforeach()
 
 install(PROGRAMS ${git_shell_scripts} ${git_perl_scripts} ${CMAKE_BINARY_DIR}/git-p4
@@ -910,9 +928,7 @@ set(PYTHON_PATH /usr/bin/python)
 set(TAR tar)
 set(NO_CURL )
 set(NO_EXPAT )
-set(USE_LIBPCRE1 )
 set(USE_LIBPCRE2 )
-set(NO_LIBPCRE1_JIT )
 set(NO_PERL )
 set(NO_PTHREADS )
 set(NO_PYTHON )
@@ -949,8 +965,6 @@ file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "PYTHON_PATH='${PYTHON_PATH}'\
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "TAR='${TAR}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_CURL='${NO_CURL}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_EXPAT='${NO_EXPAT}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "USE_LIBPCRE1='${USE_LIBPCRE1}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_LIBPCRE1_JIT='${NO_LIBPCRE1_JIT}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_PERL='${NO_PERL}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_PTHREADS='${NO_PTHREADS}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_UNIX_SOCKETS='${NO_UNIX_SOCKETS}'\n")

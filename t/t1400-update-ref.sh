@@ -4,6 +4,9 @@
 #
 
 test_description='Test git update-ref and basic ref logging'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 Z=$ZERO_OID
@@ -371,7 +374,7 @@ test_expect_success 'Query "main@{May 25 2005}" (before history)' '
 	echo "$C" >expect &&
 	test_cmp expect o &&
 	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
-	test_i18ncmp expect e
+	test_cmp expect e
 '
 test_expect_success 'Query main@{2005-05-25} (before history)' '
 	test_when_finished "rm -f o e" &&
@@ -379,7 +382,7 @@ test_expect_success 'Query main@{2005-05-25} (before history)' '
 	echo "$C" >expect &&
 	test_cmp expect o &&
 	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
-	test_i18ncmp expect e
+	test_cmp expect e
 '
 test_expect_success 'Query "main@{May 26 2005 23:31:59}" (1 second before history)' '
 	test_when_finished "rm -f o e" &&
@@ -387,7 +390,7 @@ test_expect_success 'Query "main@{May 26 2005 23:31:59}" (1 second before histor
 	echo "$C" >expect &&
 	test_cmp expect o &&
 	echo "warning: log for '\''main'\'' only goes back to $ed" >expect &&
-	test_i18ncmp expect e
+	test_cmp expect e
 '
 test_expect_success 'Query "main@{May 26 2005 23:32:00}" (exactly history start)' '
 	test_when_finished "rm -f o e" &&
@@ -1593,6 +1596,15 @@ test_expect_success 'transaction cannot restart ongoing transaction' '
 	EOF
 	test_must_fail git update-ref --stdin <stdin >actual &&
 	test_must_fail git show-ref --verify refs/heads/restart
+'
+
+test_expect_success 'directory not created deleting packed ref' '
+	git branch d1/d2/r1 HEAD &&
+	git pack-refs --all &&
+	test_path_is_missing .git/refs/heads/d1/d2 &&
+	git update-ref -d refs/heads/d1/d2/r1 &&
+	test_path_is_missing .git/refs/heads/d1/d2 &&
+	test_path_is_missing .git/refs/heads/d1
 '
 
 test_done

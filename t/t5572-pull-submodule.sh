@@ -42,8 +42,11 @@ git_pull_noff () {
 	$2 git pull --no-ff
 }
 
-KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
-KNOWN_FAILURE_NOFF_MERGE_ATTEMPTS_TO_MERGE_REMOVED_SUBMODULE_FILES=1
+if test "$GIT_TEST_MERGE_ALGORITHM" != ort
+then
+	KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
+	KNOWN_FAILURE_NOFF_MERGE_ATTEMPTS_TO_MERGE_REMOVED_SUBMODULE_FILES=1
+fi
 test_submodule_switch_func "git_pull_noff"
 
 test_expect_success 'pull --recurse-submodule setup' '
@@ -170,7 +173,7 @@ test_expect_success 'pull --rebase --recurse-submodules (no submodule changes, n
 	# create topic branch in clone, not based on any remote-tracking branch
 	git -C superclone checkout -b feat HEAD~1 &&
 	test_commit -C superclone first_on_feat &&
-	git -C superclone pull --rebase --recurse-submodules origin master
+	git -C superclone pull --rebase --recurse-submodules origin HEAD
 '
 
 # NOTE:
@@ -200,8 +203,8 @@ test_expect_success 'branch has no merge base with remote-tracking counterpart' 
 
 	git clone parent child &&
 
-	# Reset master so that it has no merge base with
-	# refs/remotes/origin/master.
+	# Reset the current branch so that it has no merge base with
+	# the remote-tracking branch.
 	OTHER=$(git -C child commit-tree -m bar \
 		$(git -C child rev-parse HEAD^{tree})) &&
 	git -C child reset --hard "$OTHER" &&

@@ -108,11 +108,11 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		if (!remotename || !starts_with(remotename, "refs/heads/"))
 			continue;
 
-		if (!pretend)
-			install_branch_config(BRANCH_CONFIG_VERBOSE,
-				localname + 11, transport->remote->name,
-				remotename);
-		else
+		if (!pretend) {
+			int flag = transport->verbose < 0 ? 0 : BRANCH_CONFIG_VERBOSE;
+			install_branch_config(flag, localname + 11,
+				transport->remote->name, remotename);
+		} else if (transport->verbose >= 0)
 			printf(_("Would set upstream of '%s' to '%s' of '%s'\n"),
 				localname + 11, remotename + 11,
 				transport->remote->name);
@@ -127,7 +127,7 @@ struct bundle_transport_data {
 
 static struct ref *get_refs_from_bundle(struct transport *transport,
 					int for_push,
-					const struct strvec *ref_prefixes)
+					struct transport_ls_refs_options *transport_options)
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;
@@ -236,6 +236,9 @@ static int set_git_option(struct git_transport_options *opts,
 		list_objects_filter_die_if_populated(&opts->filter_options);
 		parse_list_objects_filter(&opts->filter_options, value);
 		return 0;
+	} else if (!strcmp(name, TRANS_OPT_REJECT_SHALLOW)) {
+		opts->reject_shallow = !!value;
+		return 0;
 	}
 	return 1;
 }
@@ -280,7 +283,7 @@ static void die_if_server_options(struct transport *transport)
  * remote refs.
  */
 static struct ref *handshake(struct transport *transport, int for_push,
-			     const struct strvec *ref_prefixes,
+			     struct transport_ls_refs_options *options,
 			     int must_list_refs)
 {
 	struct git_transport_data *data = transport->data;
@@ -303,7 +306,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 			trace2_data_string("transfer", NULL, "server-sid", server_sid);
 		if (must_list_refs)
 			get_remote_refs(data->fd[1], &reader, &refs, for_push,
-					ref_prefixes,
+					options,
 					transport->server_options,
 					transport->stateless_rpc);
 		break;
@@ -334,9 +337,9 @@ static struct ref *handshake(struct transport *transport, int for_push,
 }
 
 static struct ref *get_refs_via_connect(struct transport *transport, int for_push,
-					const struct strvec *ref_prefixes)
+					struct transport_ls_refs_options *options)
 {
-	return handshake(transport, for_push, ref_prefixes, 1);
+	return handshake(transport, for_push, options, 1);
 }
 
 static int fetch_refs_via_pack(struct transport *transport,
@@ -370,6 +373,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.stateless_rpc = transport->stateless_rpc;
 	args.server_options = transport->server_options;
 	args.negotiation_tips = data->options.negotiation_tips;
+	args.reject_shallow_remote = transport->smart_options->reject_shallow;
 
 	if (!data->got_remote_heads) {
 		int i;
@@ -388,16 +392,29 @@ static int fetch_refs_via_pack(struct transport *transport,
 	else if (data->version <= protocol_v1)
 		die_if_server_options(transport);
 
+	if (data->options.acked_commits) {
+		if (data->version < protocol_v2) {
+			warning(_("--negotiate-only requires protocol v2"));
+			ret = -1;
+		} else if (!server_supports_feature("fetch", "wait-for-done", 0)) {
+			warning(_("server does not support wait-for-done"));
+			ret = -1;
+		} else {
+			negotiate_using_fetch(data->options.negotiation_tips,
+					      transport->server_options,
+					      transport->stateless_rpc,
+					      data->fd,
+					      data->options.acked_commits);
+			ret = 0;
+		}
+		goto cleanup;
+	}
+
 	refs = fetch_pack(&args, data->fd,
 			  refs_tmp ? refs_tmp : transport->remote_refs,
 			  to_fetch, nr_heads, &data->shallow,
 			  &transport->pack_lockfiles, data->version);
 
-	close(data->fd[0]);
-	close(data->fd[1]);
-	if (finish_connect(data->conn))
-		ret = -1;
-	data->conn = NULL;
 	data->got_remote_heads = 0;
 	data->options.self_contained_and_connected =
 		args.self_contained_and_connected;
@@ -407,6 +424,13 @@ static int fetch_refs_via_pack(struct transport *transport,
 		ret = -1;
 	if (report_unmatched_refs(to_fetch, nr_heads))
 		ret = -1;
+
+cleanup:
+	close(data->fd[0]);
+	close(data->fd[1]);
+	if (finish_connect(data->conn))
+		ret = -1;
+	data->conn = NULL;
 
 	free_refs(refs_tmp);
 	free_refs(refs);
@@ -871,7 +895,7 @@ void transport_take_over(struct transport *transport,
 		BUG("taking over transport requires non-NULL "
 		    "smart_options field.");
 
-	data = xcalloc(1, sizeof(*data));
+	CALLOC_ARRAY(data, 1);
 	data->options = *transport->smart_options;
 	data->conn = child;
 	data->fd[0] = data->conn->out;
@@ -1252,19 +1276,20 @@ int transport_push(struct repository *r,
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
-		struct strvec ref_prefixes = STRVEC_INIT;
+		struct transport_ls_refs_options transport_options =
+			TRANSPORT_LS_REFS_OPTIONS_INIT;
 
 		if (check_push_refs(local_refs, rs) < 0)
 			return -1;
 
-		refspec_ref_prefixes(rs, &ref_prefixes);
+		refspec_ref_prefixes(rs, &transport_options.ref_prefixes);
 
 		trace2_region_enter("transport_push", "get_refs_list", r);
 		remote_refs = transport->vtable->get_refs_list(transport, 1,
-							       &ref_prefixes);
+							       &transport_options);
 		trace2_region_leave("transport_push", "get_refs_list", r);
 
-		strvec_clear(&ref_prefixes);
+		strvec_clear(&transport_options.ref_prefixes);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
@@ -1380,12 +1405,12 @@ int transport_push(struct repository *r,
 }
 
 const struct ref *transport_get_remote_refs(struct transport *transport,
-					    const struct strvec *ref_prefixes)
+					    struct transport_ls_refs_options *transport_options)
 {
 	if (!transport->got_remote_refs) {
 		transport->remote_refs =
 			transport->vtable->get_refs_list(transport, 0,
-							 ref_prefixes);
+							 transport_options);
 		transport->got_remote_refs = 1;
 	}
 
@@ -1451,6 +1476,8 @@ int transport_disconnect(struct transport *transport)
 	int ret = 0;
 	if (transport->vtable->disconnect)
 		ret = transport->vtable->disconnect(transport);
+	if (transport->got_remote_refs)
+		free_refs((void *)transport->remote_refs);
 	free(transport);
 	return ret;
 }

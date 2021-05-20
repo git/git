@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test various @{X} syntax combinations together'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check() {
@@ -30,8 +33,8 @@ fail() {
 }
 
 test_expect_success 'setup' '
-	test_commit master-one &&
-	test_commit master-two &&
+	test_commit main-one &&
+	test_commit main-two &&
 	git checkout -b upstream-branch &&
 	test_commit upstream-one &&
 	test_commit upstream-two &&
@@ -47,7 +50,7 @@ test_expect_success 'setup' '
 	git checkout -b new-branch &&
 	test_commit new-one &&
 	test_commit new-two &&
-	git branch -u master old-branch &&
+	git branch -u main old-branch &&
 	git branch -u upstream-branch new-branch
 '
 
@@ -62,8 +65,8 @@ check "@{-1}@{1}" commit old-one
 check "@{u}" ref refs/heads/upstream-branch
 check "HEAD@{u}" ref refs/heads/upstream-branch
 check "@{u}@{1}" commit upstream-one
-check "@{-1}@{u}" ref refs/heads/master
-check "@{-1}@{u}@{1}" commit master-one
+check "@{-1}@{u}" ref refs/heads/main
+check "@{-1}@{u}@{1}" commit main-one
 check "@" commit new-two
 check "@@{u}" ref refs/heads/upstream-branch
 check "@@/at-test" ref refs/heads/@@/at-test
@@ -98,5 +101,18 @@ test_expect_success 'create path with @' '
 
 check "@:normal" blob content
 check "@:fun@ny" blob content
+
+test_expect_success '@{1} works with only one reflog entry' '
+	git checkout -B newbranch main &&
+	git reflog expire --expire=now refs/heads/newbranch &&
+	git commit --allow-empty -m "first after expiration" &&
+	test_cmp_rev newbranch~ newbranch@{1}
+'
+
+test_expect_success '@{0} works with empty reflog' '
+	git checkout -B newbranch main &&
+	git reflog expire --expire=now refs/heads/newbranch &&
+	test_cmp_rev newbranch newbranch@{0}
+'
 
 test_done

@@ -13,8 +13,8 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL)" '
 	test_must_fail git -C workbench push origin \
 		$B:refs/heads/main \
 		HEAD:refs/for/main/topic \
-		>out 2>&1 &&
-	make_user_friendly_and_stable_output <out >actual &&
+		>out-$test_count 2>&1 &&
+	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	remote: # pre-receive hook
 	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
@@ -30,12 +30,10 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL)" '
 	 ! [remote rejected] HEAD -> refs/for/main/topic (proc-receive failed to report status)
 	EOF
 	test_cmp expect actual &&
-	git -C "$upstream" show-ref >out &&
-	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
+
+	test_cmp_refs -C "$upstream" <<-EOF
 	<COMMIT-B> refs/heads/main
 	EOF
-	test_cmp expect actual
 '
 
 # Refs of upstream : main(B)

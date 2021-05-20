@@ -4,7 +4,7 @@ test_description="git merge
 
 Testing a custom strategy.
 
-*   (HEAD, master) Merge commit 'c3'
+*   (HEAD, main) Merge commit 'c3'
 |\
 | * (tag: c3) c3
 * | (tag: c1) c1

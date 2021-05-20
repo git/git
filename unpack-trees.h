@@ -114,5 +114,7 @@ int bind_merge(const struct cache_entry * const *src,
 	       struct unpack_trees_options *o);
 int oneway_merge(const struct cache_entry * const *src,
 		 struct unpack_trees_options *o);
+int stash_worktree_untracked_merge(const struct cache_entry * const *src,
+				   struct unpack_trees_options *o);
 
 #endif

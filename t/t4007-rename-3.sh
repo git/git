@@ -7,17 +7,17 @@ test_description='Rename interaction with pathspec.
 
 '
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
 test_expect_success 'prepare reference tree' '
 	mkdir path0 path1 &&
-	cp "$TEST_DIRECTORY"/diff-lib/COPYING path0/COPYING &&
+	cp "$TEST_DIRECTORY"/lib-diff/COPYING path0/COPYING &&
 	git update-index --add path0/COPYING &&
 	tree=$(git write-tree) &&
 	echo $tree
 '
 
-blob=$(git hash-object "$TEST_DIRECTORY/diff-lib/COPYING")
+blob=$(git hash-object "$TEST_DIRECTORY/lib-diff/COPYING")
 test_expect_success 'prepare work tree' '
 	cp path0/COPYING path1/COPYING &&
 	git update-index --add --remove path0/COPYING path1/COPYING

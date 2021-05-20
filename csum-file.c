@@ -89,32 +89,35 @@ int finalize_hashfile(struct hashfile *f, unsigned char *result, unsigned int fl
 void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
 {
 	while (count) {
-		unsigned offset = f->offset;
-		unsigned left = sizeof(f->buffer) - offset;
+		unsigned left = sizeof(f->buffer) - f->offset;
 		unsigned nr = count > left ? left : count;
-		const void *data;
 
 		if (f->do_crc)
 			f->crc32 = crc32(f->crc32, buf, nr);
 
 		if (nr == sizeof(f->buffer)) {
-			/* process full buffer directly without copy */
-			data = buf;
+			/*
+			 * Flush a full batch worth of data directly
+			 * from the input, skipping the memcpy() to
+			 * the hashfile's buffer. In this block,
+			 * f->offset is necessarily zero.
+			 */
+			the_hash_algo->update_fn(&f->ctx, buf, nr);
+			flush(f, buf, nr);
 		} else {
-			memcpy(f->buffer + offset, buf, nr);
-			data = f->buffer;
+			/*
+			 * Copy to the hashfile's buffer, flushing only
+			 * if it became full.
+			 */
+			memcpy(f->buffer + f->offset, buf, nr);
+			f->offset += nr;
+			left -= nr;
+			if (!left)
+				hashflush(f);
 		}
 
 		count -= nr;
-		offset += nr;
 		buf = (char *) buf + nr;
-		left -= nr;
-		if (!left) {
-			the_hash_algo->update_fn(&f->ctx, data, offset);
-			flush(f, data, offset);
-			offset = 0;
-		}
-		f->offset = offset;
 	}
 }
 

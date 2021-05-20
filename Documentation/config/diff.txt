@@ -85,6 +85,8 @@ diff.ignoreSubmodules::
 	and 'git status' when `status.submoduleSummary` is set unless it is
 	overridden by using the --ignore-submodules command-line option.
 	The 'git submodule' commands are not affected by this setting.
+	By default this is set to untracked so that any untracked
+	submodules are ignored.
 
 diff.mnemonicPrefix::
 	If set, 'git diff' uses a prefix pair that is different from the

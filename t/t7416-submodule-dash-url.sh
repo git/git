@@ -201,4 +201,19 @@ test_expect_success 'fsck rejects embedded newline in relative url' '
 	grep gitmodulesUrl err
 '
 
+test_expect_success 'fsck rejects embedded newline in git url' '
+	git checkout --orphan git-newline &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "foo"]
+	url = "git://example.com:1234/repo%0a.git"
+	EOF
+	git add .gitmodules &&
+	git commit -m "git url with newline" &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C dst config transfer.fsckObjects true &&
+	test_must_fail git push dst HEAD 2>err &&
+	grep gitmodulesUrl err
+'
+
 test_done

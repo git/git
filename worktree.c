@@ -15,6 +15,7 @@ void free_worktrees(struct worktree **worktrees)
 		free(worktrees[i]->id);
 		free(worktrees[i]->head_ref);
 		free(worktrees[i]->lock_reason);
+		free(worktrees[i]->prune_reason);
 		free(worktrees[i]);
 	}
 	free (worktrees);
@@ -52,7 +53,7 @@ static struct worktree *get_main_worktree(void)
 	strbuf_add_real_path(&worktree_path, get_git_common_dir());
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
-	worktree = xcalloc(1, sizeof(*worktree));
+	CALLOC_ARRAY(worktree, 1);
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	/*
 	 * NEEDSWORK: If this function is called from a secondary worktree and
@@ -83,7 +84,7 @@ static struct worktree *get_linked_worktree(const char *id)
 	strbuf_rtrim(&worktree_path);
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
-	worktree = xcalloc(1, sizeof(*worktree));
+	CALLOC_ARRAY(worktree, 1);
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	worktree->id = xstrdup(id);
 	add_head_info(worktree);
@@ -127,10 +128,8 @@ struct worktree **get_worktrees(void)
 	dir = opendir(path.buf);
 	strbuf_release(&path);
 	if (dir) {
-		while ((d = readdir(dir)) != NULL) {
+		while ((d = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 			struct worktree *linked = NULL;
-			if (is_dot_or_dotdot(d->d_name))
-				continue;
 
 			if ((linked = get_linked_worktree(d->d_name))) {
 				ALLOC_GROW(list, counter + 1, alloc);
@@ -224,7 +223,8 @@ int is_main_worktree(const struct worktree *wt)
 
 const char *worktree_lock_reason(struct worktree *wt)
 {
-	assert(!is_main_worktree(wt));
+	if (is_main_worktree(wt))
+		return NULL;
 
 	if (!wt->lock_reason_valid) {
 		struct strbuf path = STRBUF_INIT;
@@ -243,6 +243,25 @@ const char *worktree_lock_reason(struct worktree *wt)
 	}
 
 	return wt->lock_reason;
+}
+
+const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire)
+{
+	struct strbuf reason = STRBUF_INIT;
+	char *path = NULL;
+
+	if (is_main_worktree(wt))
+		return NULL;
+	if (wt->prune_reason_valid)
+		return wt->prune_reason;
+
+	if (should_prune_worktree(wt->id, &reason, &path, expire))
+		wt->prune_reason = strbuf_detach(&reason, NULL);
+	wt->prune_reason_valid = 1;
+
+	strbuf_release(&reason);
+	free(path);
+	return wt->prune_reason;
 }
 
 /* convenient wrapper to deal with NULL strbuf */
@@ -465,13 +484,9 @@ int submodule_uses_worktrees(const char *path)
 	if (!dir)
 		return 0;
 
-	while ((d = readdir(dir)) != NULL) {
-		if (is_dot_or_dotdot(d->d_name))
-			continue;
-
+	d = readdir_skip_dot_and_dotdot(dir);
+	if (d != NULL)
 		ret = 1;
-		break;
-	}
 	closedir(dir);
 	return ret;
 }
@@ -645,6 +660,42 @@ static int is_main_worktree_path(const char *path)
 }
 
 /*
+ * If both the main worktree and linked worktree have been moved, then the
+ * gitfile /path/to/worktree/.git won't point into the repository, thus we
+ * won't know which <repo>/worktrees/<id>/gitdir to repair. However, we may
+ * be able to infer the gitdir by manually reading /path/to/worktree/.git,
+ * extracting the <id>, and checking if <repo>/worktrees/<id> exists.
+ */
+static char *infer_backlink(const char *gitfile)
+{
+	struct strbuf actual = STRBUF_INIT;
+	struct strbuf inferred = STRBUF_INIT;
+	const char *id;
+
+	if (strbuf_read_file(&actual, gitfile, 0) < 0)
+		goto error;
+	if (!starts_with(actual.buf, "gitdir:"))
+		goto error;
+	if (!(id = find_last_dir_sep(actual.buf)))
+		goto error;
+	strbuf_trim(&actual);
+	id++; /* advance past '/' to point at <id> */
+	if (!*id)
+		goto error;
+	strbuf_git_common_path(&inferred, the_repository, "worktrees/%s", id);
+	if (!is_directory(inferred.buf))
+		goto error;
+
+	strbuf_release(&actual);
+	return strbuf_detach(&inferred, NULL);
+
+error:
+	strbuf_release(&actual);
+	strbuf_release(&inferred);
+	return NULL;
+}
+
+/*
  * Repair <repo>/worktrees/<id>/gitdir if missing, corrupt, or not pointing at
  * the worktree's path.
  */
@@ -675,6 +726,11 @@ void repair_worktree_at_path(const char *path,
 	if (err == READ_GITFILE_ERR_NOT_A_FILE) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
 		goto done;
+	} else if (err == READ_GITFILE_ERR_NOT_A_REPO) {
+		if (!(backlink = infer_backlink(realdotgit.buf))) {
+			fn(1, realdotgit.buf, _("unable to locate repository; .git file does not reference a repository"), cb_data);
+			goto done;
+		}
 	} else if (err) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git file broken"), cb_data);
 		goto done;
@@ -699,4 +755,72 @@ done:
 	strbuf_release(&gitdir);
 	strbuf_release(&realdotgit);
 	strbuf_release(&dotgit);
+}
+
+int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath, timestamp_t expire)
+{
+	struct stat st;
+	char *path;
+	int fd;
+	size_t len;
+	ssize_t read_result;
+
+	*wtpath = NULL;
+	if (!is_directory(git_path("worktrees/%s", id))) {
+		strbuf_addstr(reason, _("not a valid directory"));
+		return 1;
+	}
+	if (file_exists(git_path("worktrees/%s/locked", id)))
+		return 0;
+	if (stat(git_path("worktrees/%s/gitdir", id), &st)) {
+		strbuf_addstr(reason, _("gitdir file does not exist"));
+		return 1;
+	}
+	fd = open(git_path("worktrees/%s/gitdir", id), O_RDONLY);
+	if (fd < 0) {
+		strbuf_addf(reason, _("unable to read gitdir file (%s)"),
+			    strerror(errno));
+		return 1;
+	}
+	len = xsize_t(st.st_size);
+	path = xmallocz(len);
+
+	read_result = read_in_full(fd, path, len);
+	if (read_result < 0) {
+		strbuf_addf(reason, _("unable to read gitdir file (%s)"),
+			    strerror(errno));
+		close(fd);
+		free(path);
+		return 1;
+	}
+	close(fd);
+
+	if (read_result != len) {
+		strbuf_addf(reason,
+			    _("short read (expected %"PRIuMAX" bytes, read %"PRIuMAX")"),
+			    (uintmax_t)len, (uintmax_t)read_result);
+		free(path);
+		return 1;
+	}
+	while (len && (path[len - 1] == '\n' || path[len - 1] == '\r'))
+		len--;
+	if (!len) {
+		strbuf_addstr(reason, _("invalid gitdir file"));
+		free(path);
+		return 1;
+	}
+	path[len] = '\0';
+	if (!file_exists(path)) {
+		if (stat(git_path("worktrees/%s/index", id), &st) ||
+		    st.st_mtime <= expire) {
+			strbuf_addstr(reason, _("gitdir file points to non-existent location"));
+			free(path);
+			return 1;
+		} else {
+			*wtpath = path;
+			return 0;
+		}
+	}
+	*wtpath = path;
+	return 0;
 }

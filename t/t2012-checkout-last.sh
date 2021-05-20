@@ -2,16 +2,15 @@
 
 test_description='checkout can switch to last branch and merge base'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	echo hello >world &&
-	git add world &&
-	git commit -m initial &&
+	test_commit initial world hello &&
 	git branch other &&
-	echo "hello again" >>world &&
-	git add world &&
-	git commit -m second
+	test_commit --append second world "hello again"
 '
 
 test_expect_success '"checkout -" does not work initially' '
@@ -24,7 +23,7 @@ test_expect_success 'first branch switch' '
 
 test_expect_success '"checkout -" switches back' '
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/master"
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
 '
 
 test_expect_success '"checkout -" switches forth' '
@@ -93,61 +92,59 @@ test_expect_success 'switch to twelfth from the last' '
 
 test_expect_success 'merge base test setup' '
 	git checkout -b another other &&
-	echo "hello again" >>world &&
-	git add world &&
-	git commit -m third
+	test_commit --append third world "hello again"
 '
 
-test_expect_success 'another...master' '
+test_expect_success 'another...main' '
 	git checkout another &&
-	git checkout another...master &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify master^)"
+	git checkout another...main &&
+	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify main^)"
 '
 
-test_expect_success '...master' '
+test_expect_success '...main' '
 	git checkout another &&
-	git checkout ...master &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify master^)"
+	git checkout ...main &&
+	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify main^)"
 '
 
-test_expect_success 'master...' '
+test_expect_success 'main...' '
 	git checkout another &&
-	git checkout master... &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify master^)"
+	git checkout main... &&
+	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify main^)"
 '
 
 test_expect_success '"checkout -" works after a rebase A' '
-	git checkout master &&
+	git checkout main &&
 	git checkout other &&
-	git rebase master &&
+	git rebase main &&
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/master"
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
 '
 
 test_expect_success '"checkout -" works after a rebase A B' '
-	git branch moodle master~1 &&
-	git checkout master &&
+	git branch moodle main~1 &&
+	git checkout main &&
 	git checkout other &&
-	git rebase master moodle &&
+	git rebase main moodle &&
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/master"
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
 '
 
 test_expect_success '"checkout -" works after a rebase -i A' '
-	git checkout master &&
+	git checkout main &&
 	git checkout other &&
-	git rebase -i master &&
+	git rebase -i main &&
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/master"
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
 '
 
 test_expect_success '"checkout -" works after a rebase -i A B' '
-	git branch foodle master~1 &&
-	git checkout master &&
+	git branch foodle main~1 &&
+	git checkout main &&
 	git checkout other &&
-	git rebase master foodle &&
+	git rebase main foodle &&
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/master"
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
 '
 
 test_done

@@ -2,6 +2,9 @@
 
 test_description='commit-msg hook'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'with no hook' '
@@ -142,12 +145,12 @@ test_expect_success '--no-verify with failing hook (editor)' '
 test_expect_success 'merge fails with failing hook' '
 
 	test_when_finished "git branch -D newbranch" &&
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout --orphan newbranch &&
 	: >file2 &&
 	git add file2 &&
 	git commit --no-verify file2 -m in-side-branch &&
-	test_must_fail git merge --allow-unrelated-histories master &&
+	test_must_fail git merge --allow-unrelated-histories main &&
 	commit_msg_is "in-side-branch" # HEAD before merge
 
 '
@@ -155,14 +158,14 @@ test_expect_success 'merge fails with failing hook' '
 test_expect_success 'merge bypasses failing hook with --no-verify' '
 
 	test_when_finished "git branch -D newbranch" &&
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout --orphan newbranch &&
 	git rm -f file &&
 	: >file2 &&
 	git add file2 &&
 	git commit --no-verify file2 -m in-side-branch &&
-	git merge --no-verify --allow-unrelated-histories master &&
-	commit_msg_is "Merge branch '\''master'\'' into newbranch"
+	git merge --no-verify --allow-unrelated-histories main &&
+	commit_msg_is "Merge branch '\''main'\'' into newbranch"
 '
 
 
@@ -248,28 +251,28 @@ test_expect_success "hook doesn't edit commit message (editor)" '
 
 test_expect_success 'hook called in git-merge picks up commit message' '
 	test_when_finished "git branch -D newbranch" &&
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout --orphan newbranch &&
 	git rm -f file &&
 	: >file2 &&
 	git add file2 &&
 	git commit --no-verify file2 -m in-side-branch &&
-	git merge --allow-unrelated-histories master &&
+	git merge --allow-unrelated-histories main &&
 	commit_msg_is "new message"
 '
 
 test_expect_failure 'merge --continue remembers --no-verify' '
 	test_when_finished "git branch -D newbranch" &&
-	test_when_finished "git checkout -f master" &&
-	git checkout master &&
+	test_when_finished "git checkout -f main" &&
+	git checkout main &&
 	echo a >file2 &&
 	git add file2 &&
-	git commit --no-verify -m "add file2 to master" &&
-	git checkout -b newbranch master^ &&
+	git commit --no-verify -m "add file2 to main" &&
+	git checkout -b newbranch main^ &&
 	echo b >file2 &&
 	git add file2 &&
 	git commit --no-verify file2 -m in-side-branch &&
-	git merge --no-verify -m not-rewritten-by-hook master &&
+	git merge --no-verify -m not-rewritten-by-hook main &&
 	# resolve conflict:
 	echo c >file2 &&
 	git add file2 &&

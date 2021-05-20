@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='basic clone options'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -8,14 +11,15 @@ test_expect_success 'setup' '
 	mkdir parent &&
 	(cd parent && git init &&
 	 echo one >file && git add file &&
-	 git commit -m one)
+	 git commit -m one) &&
+	git clone --depth=1 --no-local parent shallow-repo
 
 '
 
 test_expect_success 'clone -o' '
 
 	git clone -o foo parent clone-o &&
-	git -C clone-o rev-parse --verify refs/remotes/foo/master
+	git -C clone-o rev-parse --verify refs/remotes/foo/main
 
 '
 
@@ -42,10 +46,34 @@ test_expect_success 'disallows --bare with --separate-git-dir' '
 
 '
 
+test_expect_success 'reject cloning shallow repository' '
+	test_when_finished "rm -rf repo" &&
+	test_must_fail git clone --reject-shallow shallow-repo out 2>err &&
+	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+
+	git clone --no-reject-shallow shallow-repo repo
+'
+
+test_expect_success 'reject cloning non-local shallow repository' '
+	test_when_finished "rm -rf repo" &&
+	test_must_fail git clone --reject-shallow --no-local shallow-repo out 2>err &&
+	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+
+	git clone --no-reject-shallow --no-local shallow-repo repo
+'
+
+test_expect_success 'succeed cloning normal repository' '
+	test_when_finished "rm -rf chilad1 child2 child3 child4 " &&
+	git clone --reject-shallow parent child1 &&
+	git clone --reject-shallow --no-local parent child2 &&
+	git clone --no-reject-shallow parent child3 &&
+	git clone --no-reject-shallow --no-local parent child4
+'
+
 test_expect_success 'uses "origin" for default remote name' '
 
 	git clone parent clone-default-origin &&
-	git -C clone-default-origin rev-parse --verify refs/remotes/origin/master
+	git -C clone-default-origin rev-parse --verify refs/remotes/origin/main
 
 '
 
@@ -74,14 +102,14 @@ test_expect_success 'prefers config "clone.defaultRemoteName" over default' '
 
 	test_config_global clone.defaultRemoteName from_config &&
 	git clone parent clone-config-origin &&
-	git -C clone-config-origin rev-parse --verify refs/remotes/from_config/master
+	git -C clone-config-origin rev-parse --verify refs/remotes/from_config/main
 
 '
 
 test_expect_success 'prefers --origin over -c config' '
 
 	git clone -c clone.defaultRemoteName=inline --origin from_option parent clone-o-and-inline-config &&
-	git -C clone-o-and-inline-config rev-parse --verify refs/remotes/from_option/master
+	git -C clone-o-and-inline-config rev-parse --verify refs/remotes/from_option/main
 
 '
 
@@ -101,12 +129,22 @@ test_expect_success 'redirected clone -v does show progress' '
 
 '
 
+test_expect_success 'clone does not segfault with --bare and core.bare=false' '
+	test_config_global core.bare false &&
+	git clone --bare parent clone-bare &&
+	echo true >expect &&
+	git -C clone-bare rev-parse --is-bare-repository >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'chooses correct default initial branch name' '
-	git init --bare empty &&
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
-	git -c init.defaultBranch=up clone empty whats-up &&
-	test refs/heads/up = $(git -C whats-up symbolic-ref HEAD) &&
-	test refs/heads/up = $(git -C whats-up config branch.up.merge)
+	git -c init.defaultBranch=foo init --bare empty &&
+	test_config -C empty lsrefs.unborn advertise &&
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=up -c protocol.version=2 clone empty whats-up &&
+	test refs/heads/foo = $(git -C whats-up symbolic-ref HEAD) &&
+	test refs/heads/foo = $(git -C whats-up config branch.foo.merge)
 '
 
 test_expect_success 'guesses initial branch name correctly' '

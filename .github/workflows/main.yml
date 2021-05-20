@@ -123,6 +123,7 @@ jobs:
     runs-on: windows-latest
     needs: [windows-build]
     strategy:
+      fail-fast: false
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
@@ -185,6 +186,11 @@ jobs:
         ## Unzip and remove the artifact
         unzip artifacts.zip
         rm artifacts.zip
+    - name: initialize vcpkg
+      uses: actions/checkout@v2
+      with:
+        repository: 'microsoft/vcpkg'
+        path: 'compat/vcbuild/vcpkg'
     - name: download vcpkg artifacts
       shell: powershell
       run: |
@@ -227,6 +233,7 @@ jobs:
     runs-on: windows-latest
     needs: [vs-build, windows-build]
     strategy:
+      fail-fast: false
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
@@ -272,6 +279,7 @@ jobs:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     strategy:
+      fail-fast: false
       matrix:
         vector:
           - jobname: linux-clang
@@ -286,7 +294,7 @@ jobs:
           - jobname: osx-gcc
             cc: gcc
             pool: macos-latest
-          - jobname: GETTEXT_POISON
+          - jobname: linux-gcc-default
             cc: gcc
             pool: ubuntu-latest
     env:
@@ -309,6 +317,7 @@ jobs:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     strategy:
+      fail-fast: false
       matrix:
         vector:
         - jobname: linux-musl
@@ -336,7 +345,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: StaticAnalysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
     - run: ci/install-dependencies.sh
