@@ -140,6 +140,48 @@ struct rename_info {
 	char *callback_data_traverse_path;
 
 	/*
+	 * cached_pairs: Caching of renames and deletions.
+	 *
+	 * These are mappings recording renames and deletions of individual
+	 * files (not directories).  They are thus a map from an old
+	 * filename to either NULL (for deletions) or a new filename (for
+	 * renames).
+	 */
+	struct strmap cached_pairs[3];
+
+	/*
+	 * cached_target_names: just the destinations from cached_pairs
+	 *
+	 * We sometimes want a fast lookup to determine if a given filename
+	 * is one of the destinations in cached_pairs.  cached_target_names
+	 * is thus duplicative information, but it provides a fast lookup.
+	 */
+	struct strset cached_target_names[3];
+
+	/*
+	 * cached_irrelevant: Caching of rename_sources that aren't relevant.
+	 *
+	 * If we try to detect a rename for a source path and succeed, it's
+	 * part of a rename.  If we try to detect a rename for a source path
+	 * and fail, then it's a delete.  If we do not try to detect a rename
+	 * for a path, then we don't know if it's a rename or a delete.  If
+	 * merge-ort doesn't think the path is relevant, then we just won't
+	 * cache anything for that path.  But there's a slight problem in
+	 * that merge-ort can think a path is RELEVANT_LOCATION, but due to
+	 * commit 9bd342137e ("diffcore-rename: determine which
+	 * relevant_sources are no longer relevant", 2021-03-13),
+	 * diffcore-rename can downgrade the path to RELEVANT_NO_MORE.  To
+	 * avoid excessive calls to diffcore_rename_extended() we still need
+	 * to cache such paths, though we cannot record them as either
+	 * renames or deletes.  So we cache them here as a "turned out to be
+	 * irrelevant *for this commit*" as they are often also irrelevant
+	 * for subsequent commits, though we will have to do some extra
+	 * checking to see whether such paths become relevant for rename
+	 * detection when cherry-picking/rebasing subsequent commits.
+	 */
+	struct strset cached_irrelevant[3];
+
+	/*
 	 * needed_limit: value needed for inexact rename detection to run
 	 *
 	 * If the current rename limit wasn't high enough for inexact
@@ -381,6 +423,8 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 		reinitialize ? strmap_partial_clear : strmap_clear;
 	void (*strintmap_func)(struct strintmap *) =
 		reinitialize ? strintmap_partial_clear : strintmap_clear;
+	void (*strset_func)(struct strset *) =
+		reinitialize ? strset_partial_clear : strset_clear;
 
 	/*
 	 * We marked opti->paths with strdup_strings = 0, so that we
@@ -424,6 +468,9 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 		strmap_func(&renames->dir_renames[i], 0);
 
 		strintmap_func(&renames->relevant_sources[i]);
+		strset_func(&renames->cached_target_names[i]);
+		strmap_func(&renames->cached_pairs[i], 1);
+		strset_func(&renames->cached_irrelevant[i]);
 	}
 
 	if (!reinitialize) {
@@ -3675,6 +3722,12 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 					 NULL, 0);
 		strintmap_init_with_options(&renames->relevant_sources[i],
 					    0, NULL, 0);
+		strmap_init_with_options(&renames->cached_pairs[i],
+					 NULL, 1);
+		strset_init_with_options(&renames->cached_irrelevant[i],
+					 NULL, 1);
+		strset_init_with_options(&renames->cached_target_names[i],
+					 NULL, 0);
 	}
 
 	/*
