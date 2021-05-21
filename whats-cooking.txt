@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2021, #03; Thu, 20)
-X-master-at: 88dd4282d949cdafff516650c1be8aaf4d67983f
-X-next-at: 0aeb996cc0ef25ce07f2e6c059b1bbb68acd0d56
+Subject: What's cooking in git.git (May 2021, #04; Fri, 21)
+X-master-at: 107691cb07aab771585844fcd39d5e1c7f1ed14b
+X-next-at: 9fa02ecfa5e5f011e451f8bd05fb4d21cca946ed
 
-What's cooking in git.git (May 2021, #03; Thu, 20)
+What's cooking in git.git (May 2021, #04; Fri, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -43,350 +43,12 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/perl-makefile-cleanup (2021-05-13) 5 commits
-  (merged to 'next' on 2021-05-13 at 6cf377a1bc)
- + Makefile: make PERL_DEFINES recursively expanded
-  (merged to 'next' on 2021-05-10 at 23b48398e6)
- + perl: use mock i18n functions under NO_GETTEXT=Y
- + Makefile: regenerate *.pm on NO_PERL_CPAN_FALLBACKS change
- + Makefile: regenerate perl/build/* if GIT-PERL-DEFINES changes
- + Makefile: don't re-define PERL_DEFINES
-
- Build procedure clean-up.
-
-
-* ab/sparse-index-cleanup (2021-05-06) 1 commit
-  (merged to 'next' on 2021-05-10 at bbb0239571)
- + sparse-index.c: remove set_index_sparse_config()
-
- Code clean-up.
-
-
-* ab/streaming-simplify (2021-05-06) 5 commits
-  (merged to 'next' on 2021-05-07 at 0992a78c75)
- + streaming.c: move {open,close,read} from vtable to "struct git_istream"
- + streaming.c: stop passing around "object_info *" to open()
- + streaming.c: remove {open,close,read}_method_decl() macros
- + streaming.c: remove enum/function/vtbl indirection
- + streaming.c: avoid forward declarations
-
- Code clean-up.
-
-
-* ah/merge-ort-i18n (2021-05-11) 1 commit
-  (merged to 'next' on 2021-05-12 at bda497af01)
- + merge-ort: split "distinct types" message into two translatable messages
-
- An i18n fix.
-
-
-* ba/object-info (2021-04-20) 1 commit
-  (merged to 'next' on 2021-05-07 at e2cb0e4ef1)
- + object-info: support for retrieving object info
-
- Over-the-wire protocol learns a new request type to ask for object
- sizes given a list of object names.
-
-
-* dd/mailinfo-quoted-cr (2021-05-10) 6 commits
-  (merged to 'next' on 2021-05-12 at a4bcfd18b9)
- + am: learn to process quoted lines that ends with CRLF
- + mailinfo: allow stripping quoted CR without warning
- + mailinfo: allow squelching quoted CRLF warning
- + mailinfo: warn if CRLF found in decoded base64/QP email
- + mailinfo: stop parsing options manually
- + mailinfo: load default metainfo_charset lazily
-
- "git mailinfo" (hence "git am") learned the "--quoted-cr" option to
- control how lines ending with CRLF wrapped in base64 or qp are
- handled.
-
-
-* dl/stash-show-untracked-fixup (2021-05-13) 2 commits
-  (merged to 'next' on 2021-05-13 at 267a756b92)
- + stash show: fix segfault with --{include,only}-untracked
- + t3905: correct test title
-
- The code to handle options recently added to "git stash show"
- around untracked part of the stash segfaulted when these options
- were used on a stash entry that does not record untracked part.
-
-
-* en/dir-traversal (2021-05-13) 9 commits
-  (merged to 'next' on 2021-05-14 at 316f9264c1)
- + dir: introduce readdir_skip_dot_and_dotdot() helper
- + dir: update stale description of treat_directory()
- + dir: traverse into untracked directories if they may have ignored subfiles
- + dir: avoid unnecessary traversal into ignored directory
- + t3001, t7300: add testcase showcasing missed directory traversal
- + t7300: add testcase showing unnecessary traversal into ignored directory
- + ls-files: error out on -i unless -o or -c are specified
- + dir: report number of visited directories and paths with trace2
- + dir: convert trace calls to trace2 equivalents
-
- "git clean" and "git ls-files -i" had confusion around working on
- or showing ignored paths inside an ignored directory, which has
- been corrected.
-
-
-* en/prompt-under-set-u (2021-05-13) 1 commit
-  (merged to 'next' on 2021-05-16 at 4467131ca3)
- + git-prompt: work under set -u
-
- The bash prompt script (in contrib/) did not work under "set -u".
-
-
-* ew/sha256-clone-remote-curl-fix (2021-05-12) 1 commit
-  (merged to 'next' on 2021-05-14 at 6d6a81717a)
- + remote-curl: fix clone on sha256 repos
-
- "git clone" from SHA256 repository by Git built with SHA-1 as the
- default hash algorithm over the dumb HTTP protocol did not
- correctly set up the resulting repository, which has been corrected.
-
-
-* jk/p4-locate-branch-point-optim (2021-05-06) 2 commits
-  (merged to 'next' on 2021-05-07 at 0fa60c3af3)
- + git-p4: speed up search for branch parent
- + git-p4: ensure complex branches are cloned correctly
-
- "git p4" learned to find branch points more efficiently.
-
-
-* jk/test-chainlint-softer (2021-05-13) 1 commit
-  (merged to 'next' on 2021-05-16 at 2f4f4454ea)
- + t: avoid sed-based chain-linting in some expensive cases
-
- The "chainlint" feature in the test framework is a handy way to
- catch common mistakes in writing new tests, but tends to get
- expensive.  An knob to selectively disable it has been introduced
- to help running tests that the developer has not modified.
-
-
-* jt/push-negotiation (2021-05-05) 6 commits
-  (merged to 'next' on 2021-05-06 at 644a1bc4ee)
- + send-pack: support push negotiation
- + fetch: teach independent negotiation (no packfile)
- + fetch-pack: refactor command and capability write
- + fetch-pack: refactor add_haves()
- + fetch-pack: refactor process_acks()
- + Merge branch 'jt/fetch-pack-request-fix' into jt/push-negotiation
-
- "git push" learns to discover common ancestor with the receiving
- end over protocol v2.
-
-
-* lh/maintenance-leakfix (2021-05-12) 1 commit
-  (merged to 'next' on 2021-05-13 at 38d02fe309)
- + maintenance: fix two memory leaks
-
- Will merge to 'master'.
-
-
-* ls/typofix (2021-05-13) 1 commit
-  (merged to 'next' on 2021-05-13 at d0b92b2b10)
- + pretty: fix a typo in the documentation for %(trailers)
-
- Will merge to 'master'.
-
-
-* ma/typofixes (2021-05-10) 2 commits
-  (merged to 'next' on 2021-05-12 at 99cc0d265e)
- + pretty-formats.txt: add missing space
- + git-repack.txt: remove spurious ")"
-
- A couple of trivial typofixes.
-
-
-* mt/clean-clean (2021-05-07) 1 commit
-  (merged to 'next' on 2021-05-07 at 51e40b7ddd)
- + clean: remove unnecessary variable
-
- Code clean-up.
-
-
-* mt/parallel-checkout-part-3 (2021-05-05) 8 commits
-  (merged to 'next' on 2021-05-07 at 0393d61c0c)
- + ci: run test round with parallel-checkout enabled
- + parallel-checkout: add tests related to .gitattributes
- + t0028: extract encoding helpers to lib-encoding.sh
- + parallel-checkout: add tests related to path collisions
- + parallel-checkout: add tests for basic operations
- + checkout-index: add parallel checkout support
- + builtin/checkout.c: complete parallel checkout support
- + make_transient_cache_entry(): optionally alloc from mem_pool
-
- The final part of "parallel checkout".
-
-
-* ow/no-dryrun-in-add-i (2021-05-07) 1 commit
-  (merged to 'next' on 2021-05-07 at e822750e3a)
- + add: die if both --dry-run and --interactive are given
-
- "git add -i --dry-run" does not dry-run, which was surprising.  The
- combination of options has taught to error out.
-
-
-* pw/patience-diff-clean-up (2021-05-05) 2 commits
-  (merged to 'next' on 2021-05-06 at 1ce651569c)
- + patience diff: remove unused variable
- + patience diff: remove unnecessary string comparisons
-
- Code clean-up.
-
-
-* pw/word-diff-zero-width-matches (2021-05-05) 1 commit
-  (merged to 'next' on 2021-05-06 at e5653da568)
- + word diff: handle zero length matches
-
- The word-diff mode has been taught to work better with a word
- regexp that can match an empty string.
-
-
-* wc/packed-ref-removal-cleanup (2021-05-11) 1 commit
-  (merged to 'next' on 2021-05-13 at 58e8c23f29)
- + refs: cleanup directories when deleting packed ref
-
- When "git update-ref -d" removes a ref that is packed, it left
- empty directories under $GIT_DIR/refs/ for
-
-
-* zh/ref-filter-push-remote-fix (2021-05-12) 1 commit
-  (merged to 'next' on 2021-05-16 at d90e8df2b7)
- + ref-filter: fix read invalid union member bug
-
- The handling of "%(push)" formatting element of "for-each-ref" and
- friends was broken when the same codepath started handling
- "%(push:<what>)", which has been corrected.
-
---------------------------------------------------
-[New Topics]
-
-* ab/send-email-optim (2021-05-13) 9 commits
- - send-email: move trivial config handling to Perl
- - perl: lazily load some common Git.pm setup code
- - send-email: lazily load modules for a big speedup
- - send-email: get rid of indirect object syntax
- - send-email: use function syntax instead of barewords
- - send-email: lazily shell out to "git var"
- - send-email: lazily load config for a big speedup
- - send-email: refactor sendemail.smtpencryption config parsing
- - send-email: remove non-working support for "sendemail.smtpssl"
-
- "git send-email" optimization.
-
- Looking good.
- May want to update with Eric's suggestion.
- cf. <20210512180517.GA11354@dcvr>
- I've squashed in typofixes while queuing.
-
-
-* ab/update-submitting-patches (2021-05-13) 3 commits
- - SubmittingPatches: remove pine-specific hints from MUA hints
- - SubmittingPatches: replace discussion of Travis with GitHub Actions
- - SubmittingPatches: move discussion of Signed-off-by above "send"
-
- Reorganize and update the SubmitingPatches document.
-
- Expecting a reroll.
- cf. <xmqq4kf7fueq.fsf@gitster.g>, <20210512235136.GB10785@localhost>
-
-
-* zh/ref-filter-atom-type (2021-05-14) 2 commits
-  (merged to 'next' on 2021-05-16 at 48fd717185)
- + ref-filter: introduce enum atom_type
- + ref-filter: add objectsize to used_atom
-
- The code to handle the "--format" option in "for-each-ref" and
- friends made too many string comparisons on %(atom)s used in the
- format string, which has been corrected by converting them into
- enum when the format string is parsed.
-
- Will cook in 'next'.
-
-
-* tl/fix-packfile-uri-doc (2021-05-14) 1 commit
- - packfile-uri.txt: fix blobPackfileUri description
-
- Doc fix.
-
- Will merge to 'next'?
- cf. <xmqq8s4c6fbg.fsf@gitster.g>
-
-
-* ga/send-email-sendmail-cmd (2021-05-17) 1 commit
- - git-send-email: add option to specify sendmail command
-
- "git send-email" learned the "--sendmail-cmd" command line option
- and the "sendemail.sendmailCmd" configuration variable, which is a
- more sensible approach than the current way of repurposing the
- "smtp-server" that is meant to name the server to instead name the
- command to talk to the server.
-
- Will merge to 'next'.
-
-
-* ah/doc-describe (2021-05-17) 1 commit
- - describe-doc: clarify default length of abbreviation
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* ah/merge-usage-i18n-fix (2021-05-16) 1 commit
- - merge: don't translate literal commands
-
- i18n update.
-
- Will merge to 'next'.
-
-
-* ah/stash-usage-i18n-fix (2021-05-17) 1 commit
- - stash: don't translate literal commands
-
- i18n update.
-
- Will merge to 'next'.
-
-
-* ah/submodule-helper-module-summary-parseopt (2021-05-17) 1 commit
- - submodule: use the imperative mood to describe the --files option
-
- Message update.
-
- Will merge to 'next'.
-
-
-* ef/mailinfo-short-name (2021-05-17) 1 commit
-  (merged to 'next' on 2021-05-20 at 5ee67911ea)
- + mailinfo: don't discard names under 3 characters
-
- We historically rejected a very short string as an author name
- while accepting a patch e-mail, which has been loosened.
-
- Will cook in 'next'.
-
-
-* wm/rev-parse-path-format-wo-arg (2021-05-17) 2 commits
- - rev-parse: mark die() messages for translation
- - rev-parse: fix segfault with missing --path-format argument
-
- The "rev-parse" command did not diagnose the lack of argument to
- "--path-format" option, which was introduced in v2.31 era, which
- has been corrected.
-
- Will merge to 'next'.
-
-
 * cs/http-use-basic-after-failed-negotiate (2021-05-19) 2 commits
   (merged to 'next' on 2021-05-20 at 1c75b2d80c)
  + Revert "remote-curl: fall back to basic auth if Negotiate fails"
  + t5551: test http interaction with credential helpers
 
  Regression fix for a change made during this cycle.
-
- Will merge to 'master'.
 
 
 * ds/sparse-index-protections (2021-05-18) 1 commit
@@ -396,56 +58,6 @@ Release tarballs are available at:
  Fix access to uninitialized piece of memory, introduced during this
  cycle.
 
- Will merge to 'master'.
-
-
-* ds/write-index-with-hashfile-api (2021-05-19) 4 commits
- - read-cache: delete unused hashing methods
- - read-cache: use hashfile instead of git_hash_ctx
- - csum-file.h: increase hashfile buffer size
- - hashfile: use write_in_full()
-
- Use the hashfile API in the codepath that writes the index file to
- reduce code duplication.
-
- Will merge to 'next'.
-
-
-* jc/clarify-revision-range (2021-05-18) 1 commit
- - revisions(7): clarify that most commands take a single revision range
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* jh/simple-ipc-sans-pthread (2021-05-19) 1 commit
- - simple-ipc: correct ifdefs when NO_PTHREADS is defined
-
- The "simple-ipc" did not compile without pthreads support, but the
- build procedure was not properly account for it.
-
- Expecting a reroll.
-
-
-* jn/size-t-casted-to-off-t-fix (2021-05-19) 1 commit
-  (merged to 'next' on 2021-05-20 at bbde7e6616)
- + xsize_t: avoid implementation defined behavior when len < 0
-
- Rewrite code that triggers undefined behaiour warning.
-
- Will cook in 'next'.
-
-
-* mt/parallel-checkout-with-padded-oidcpy (2021-05-18) 1 commit
-  (merged to 'next' on 2021-05-20 at 016cab0381)
- + parallel-checkout: send the new object_id algo field to the workers
-
- The parallel checkout codepath did not initialize object ID field
- used to talk to the worker processes in a futureproof way.
-
- Will cook in 'next'.
-
 
 * tz/c-locale-output-is-no-more (2021-05-18) 1 commit
   (merged to 'next' on 2021-05-20 at 47820de46e)
@@ -453,7 +65,73 @@ Release tarballs are available at:
 
  Test update.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* ah/fetch-reject-warning-grammofix (2021-05-20) 1 commit
+ - fetch: improve grammar of "shallow roots" message
+
+ Message update.
+
+
+* ah/setup-extensions-message-i18n-fix (2021-05-20) 1 commit
+ - setup: split "extensions found" messages into singular and plural
+
+ Message update.
+
+
+* jk/clone-clean-upon-transport-error (2021-05-19) 1 commit
+ - clone: clean up directory after transport_fetch_refs() failure
+
+ Recent "git clone" left a temporary directory behind when the
+ transport layer returned an failure.
+
+ Will merge to 'next'.
+
+
+* jk/doc-color-pager (2021-05-20) 1 commit
+ - doc: explain the use of color.pager
+
+ The documentation for "color.pager" configuration variable has been
+ updated.
+
+ Will merge to 'next'.
+
+
+* jk/fetch-pack-v2-half-close-early (2021-05-20) 1 commit
+ - fetch-pack: signal v2 server that we are done making requests
+
+ "git fetch" over protocol v2 left its side of the socket open after
+ it finished speaking, which unnecessarily wasted the resource on
+ the other side.
+
+ Will merge to 'next'.
+
+
+* ry/clarify-fast-forward-in-glossary (2021-05-19) 1 commit
+ - docs: improve fast-forward in glossary content
+
+ The description of "fast-forward" in the glossary has been updated.
+
+ Will merge to 'next'.
+
+
+* wm/rev-parse-die-i18n (2021-05-17) 1 commit
+ - rev-parse: mark die() messages for translation
+ (this branch uses wm/rev-parse-path-format-wo-arg.)
+
+ Quite a many die() messages in rev-parse haven't been marked for
+ translation.
+
+ Will merge to 'next'.
+
+
+* es/trace2-log-parent-process-name (2021-05-21) 1 commit
+ - tr2: log parent process name
+
+
+* ps/rev-list-object-type-filter (2021-05-21) 1 commit
+ - help: fix small typo in error message
 
 --------------------------------------------------
 [Stalled]
@@ -629,13 +307,179 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* so/log-m-implies-p (2021-05-19) 9 commits
+* ab/send-email-optim (2021-05-21) 10 commits
+ - perl: nano-optimize by replacing Cwd::cwd() with Cwd::getcwd()
+ - send-email: move trivial config handling to Perl
+ - perl: lazily load some common Git.pm setup code
+ - send-email: lazily load modules for a big speedup
+ - send-email: get rid of indirect object syntax
+ - send-email: use function syntax instead of barewords
+ - send-email: lazily shell out to "git var"
+ - send-email: lazily load config for a big speedup
+ - send-email: refactor sendemail.smtpencryption config parsing
+ - send-email: remove non-working support for "sendemail.smtpssl"
+
+ "git send-email" optimization.
+
+
+* ab/update-submitting-patches (2021-05-13) 3 commits
+ - SubmittingPatches: remove pine-specific hints from MUA hints
+ - SubmittingPatches: replace discussion of Travis with GitHub Actions
+ - SubmittingPatches: move discussion of Signed-off-by above "send"
+
+ Reorganize and update the SubmitingPatches document.
+
+ Expecting a reroll.
+ cf. <xmqq4kf7fueq.fsf@gitster.g>, <20210512235136.GB10785@localhost>
+
+
+* zh/ref-filter-atom-type (2021-05-14) 2 commits
+  (merged to 'next' on 2021-05-16 at 48fd717185)
+ + ref-filter: introduce enum atom_type
+ + ref-filter: add objectsize to used_atom
+
+ The code to handle the "--format" option in "for-each-ref" and
+ friends made too many string comparisons on %(atom)s used in the
+ format string, which has been corrected by converting them into
+ enum when the format string is parsed.
+
+ Will cook in 'next'.
+
+
+* tl/fix-packfile-uri-doc (2021-05-14) 1 commit
+ - packfile-uri.txt: fix blobPackfileUri description
+
+ Doc fix.
+
+ Will merge to 'next'?
+ cf. <xmqq8s4c6fbg.fsf@gitster.g>
+
+
+* ga/send-email-sendmail-cmd (2021-05-17) 1 commit
+ - git-send-email: add option to specify sendmail command
+
+ "git send-email" learned the "--sendmail-cmd" command line option
+ and the "sendemail.sendmailCmd" configuration variable, which is a
+ more sensible approach than the current way of repurposing the
+ "smtp-server" that is meant to name the server to instead name the
+ command to talk to the server.
+
+ Will merge to 'next'.
+
+
+* ah/doc-describe (2021-05-17) 1 commit
+ - describe-doc: clarify default length of abbreviation
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* ah/merge-usage-i18n-fix (2021-05-16) 1 commit
+  (merged to 'next' on 2021-05-20 at e26a60d624)
+ + merge: don't translate literal commands
+
+ i18n update.
+
+ Will cook in 'next'.
+
+
+* ah/stash-usage-i18n-fix (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-20 at 68e6a46117)
+ + stash: don't translate literal commands
+
+ i18n update.
+
+ Will cook in 'next'.
+
+
+* ah/submodule-helper-module-summary-parseopt (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-20 at 928e72b83f)
+ + submodule: use the imperative mood to describe the --files option
+
+ Message update.
+
+ Will cook in 'next'.
+
+
+* ef/mailinfo-short-name (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-20 at 5ee67911ea)
+ + mailinfo: don't discard names under 3 characters
+
+ We historically rejected a very short string as an author name
+ while accepting a patch e-mail, which has been loosened.
+
+ Will cook in 'next'.
+
+
+* wm/rev-parse-path-format-wo-arg (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-20 at 5d3c8ba2bf)
+ + rev-parse: fix segfault with missing --path-format argument
+ (this branch is used by wm/rev-parse-die-i18n.)
+
+ The "rev-parse" command did not diagnose the lack of argument to
+ "--path-format" option, which was introduced in v2.31 era, which
+ has been corrected.
+
+ Will merge to 'master'.
+
+
+* ds/write-index-with-hashfile-api (2021-05-19) 4 commits
+ - read-cache: delete unused hashing methods
+ - read-cache: use hashfile instead of git_hash_ctx
+ - csum-file.h: increase hashfile buffer size
+ - hashfile: use write_in_full()
+
+ Use the hashfile API in the codepath that writes the index file to
+ reduce code duplication.
+
+ Will merge to 'next'.
+
+
+* jc/clarify-revision-range (2021-05-18) 1 commit
+ - revisions(7): clarify that most commands take a single revision range
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* jh/simple-ipc-sans-pthread (2021-05-21) 1 commit
+ - simple-ipc: correct ifdefs when NO_PTHREADS is defined
+
+ The "simple-ipc" did not compile without pthreads support, but the
+ build procedure was not properly account for it.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* jn/size-t-casted-to-off-t-fix (2021-05-19) 1 commit
+  (merged to 'next' on 2021-05-20 at bbde7e6616)
+ + xsize_t: avoid implementation defined behavior when len < 0
+
+ Rewrite code that triggers undefined behaiour warning.
+
+ Will cook in 'next'.
+
+
+* mt/parallel-checkout-with-padded-oidcpy (2021-05-18) 1 commit
+  (merged to 'next' on 2021-05-20 at 016cab0381)
+ + parallel-checkout: send the new object_id algo field to the workers
+
+ The parallel checkout codepath did not initialize object ID field
+ used to talk to the worker processes in a futureproof way.
+
+ Will cook in 'next'.
+
+
+* so/log-m-implies-p (2021-05-21) 10 commits
  - diff-merges: let "-m" imply "-p"
  - diff-merges: rename "combined_imply_patch" to "merges_imply_patch"
  - stash list: stop passing "-m" to "git log"
  - git-svn: stop passing "-m" to "git rev-list"
  - diff-merges: move specific diff-index "-m" handling to diff-index
  - t4013: test "git diff-index -m"
+ - t4013: test "git diff-tree -m"
  - t4013: test "git log -m --stat"
  - t4013: test "git log -m --raw"
  - t4013: test that "-m" alone has no effect in "git log"
@@ -644,7 +488,7 @@ Release tarballs are available at:
  if any, of diff is desired did not have any visible effect; it now
  implies some form of diff (by default "--patch") is produced.
 
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
 * bc/doc-asciidoctor-to-man-wo-xmlto (2021-05-14) 2 commits
@@ -655,13 +499,11 @@ Release tarballs are available at:
  xmlto has been introduced.
 
 
-* ab/trace2-squelch-gcc-warning (2021-05-11) 1 commit
+* ab/trace2-squelch-gcc-warning (2021-05-21) 2 commits
+ - WEATHER-BALLOON: be extra paranoid???
  - trace2: refactor to avoid gcc warning under -O3
 
  Workaround compiler warnings.
-
- Expecting a reroll.
- cf. <YJrIMbr6VkYGQMfs@coredump.intra.peff.net>
 
 
 * hn/refs-errno-cleanup (2021-04-30) 8 commits
@@ -680,7 +522,7 @@ Release tarballs are available at:
  Waiting for reviews.
 
 
-* en/ort-perf-batch-11 (2021-05-04) 13 commits
+* en/ort-perf-batch-11 (2021-05-20) 13 commits
  - merge-ort, diffcore-rename: employ cached renames when possible
  - merge-ort: handle interactions of caching and rename/rename(1to1) cases
  - merge-ort: add helper functions for using cached renames
@@ -698,7 +540,7 @@ Release tarballs are available at:
  Optimize out repeated rename detection in a sequence of mergy
  operations.
 
- Waiting for reviews.
+ Will merge to 'next'.
 
 
 * ls/fast-export-signed (2021-05-03) 5 commits
@@ -865,19 +707,25 @@ Release tarballs are available at:
 
  Waiting for reviews.
 
---------------------------------------------------
-[Discarded]
 
-* ab/fsck-unexpected-type (2021-04-13) 6 commits
- . fsck: report invalid object type-path combinations
- . fsck: report invalid types recorded in objects
- . object-store.h: move read_loose_object() below 'struct object_info'
- . fsck: don't hard die on invalid object types
- . fsck tests: refactor one test to use a sub-repo
- . cache.h: move object functions to object-store.h
+* ab/fsck-unexpected-type (2021-05-21) 17 commits
+ - fsck: report invalid object type-path combinations
+ - fsck: report invalid types recorded in objects
+ - object-store.h: move read_loose_object() below 'struct object_info'
+ - fsck: don't hard die on invalid object types
+ - object-file.c: return -1, not "status" from unpack_loose_header()
+ - object-file.c: return -2 on "header too long" in unpack_loose_header()
+ - object-file.c: stop dying in parse_loose_header()
+ - object-file.c: add missing braces to loose_object_info()
+ - object-file.c: make parse_loose_header_extended() public
+ - cache.h: move object functions to object-store.h
+ - cat-file tests: test for current --allow-unknown-type behavior
+ - cat-file tests: add corrupt loose object test
+ - rev-list tests: test for behavior with invalid object types
+ - cat-file tests: test that --allow-unknown-type isn't on by default
+ - cat-file tests: test for missing object with -t and -s
+ - fsck tests: add test for fsck-ing an unknown type
+ - fsck tests: refactor one test to use a sub-repo
 
  "git fsck" has been taught to report mismatch between expected and
  actual types of an object better.
-
- Retracted for now.
- cf. <cover-0.5-00000000000-20210505T122816Z-avarab@gmail.com>
