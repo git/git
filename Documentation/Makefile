@@ -296,8 +296,7 @@ docdep_prereqs = \
 	cmd-list.made $(cmds_txt)
 
 doc.dep : $(docdep_prereqs) $(DOC_DEP_TXT) build-docdep.perl
-	$(QUIET_GEN)$(RM) $@+ $@ && \
-	$(PERL_PATH) ./build-docdep.perl >$@+ $(QUIET_STDERR) && \
+	$(QUIET_GEN)$(PERL_PATH) ./build-docdep.perl >$@+ $(QUIET_STDERR) && \
 	mv $@+ $@
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -318,8 +317,7 @@ cmds_txt = cmds-ancillaryinterrogators.txt \
 $(cmds_txt): cmd-list.made
 
 cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
-	$(QUIET_GEN)$(RM) $@ && \
-	$(PERL_PATH) ./cmd-list.perl ../command-list.txt $(cmds_txt) $(QUIET_STDERR) && \
+	$(QUIET_GEN)$(PERL_PATH) ./cmd-list.perl ../command-list.txt $(cmds_txt) $(QUIET_STDERR) && \
 	date >$@
 
 mergetools_txt = mergetools-diff.txt mergetools-merge.txt
@@ -327,7 +325,7 @@ mergetools_txt = mergetools-diff.txt mergetools-merge.txt
 $(mergetools_txt): mergetools-list.made
 
 mergetools-list.made: ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
-	$(QUIET_GEN)$(RM) $@ && \
+	$(QUIET_GEN) \
 	$(SHELL_PATH) -c 'MERGE_TOOLS_DIR=../mergetools && \
 		. ../git-mergetool--lib.sh && \
 		show_tool_names can_diff "* " || :' >mergetools-diff.txt && \
@@ -357,30 +355,25 @@ clean:
 	$(RM) GIT-ASCIIDOCFLAGS
 
 $(MAN_HTML): %.html : %.txt $(ASCIIDOC_DEPS)
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_HTML) -d manpage -o $@+ $< && \
+	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -d manpage -o $@+ $< && \
 	mv $@+ $@
 
 $(OBSOLETE_HTML): %.html : %.txto $(ASCIIDOC_DEPS)
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_HTML) -o $@+ $< && \
+	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -o $@+ $< && \
 	mv $@+ $@
 
 manpage-base-url.xsl: manpage-base-url.xsl.in
 	$(QUIET_GEN)sed "s|@@MAN_BASE_URL@@|$(MAN_BASE_URL)|" $< > $@
 
 %.1 %.5 %.7 : %.xml manpage-base-url.xsl $(wildcard manpage*.xsl)
-	$(QUIET_XMLTO)$(RM) $@ && \
-	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
+	$(QUIET_XMLTO)$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.xml : %.txt $(ASCIIDOC_DEPS)
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_XML) -d manpage -o $@+ $< && \
+	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d manpage -o $@+ $< && \
 	mv $@+ $@
 
 user-manual.xml: user-manual.txt user-manual.conf asciidoctor-extensions.rb GIT-ASCIIDOCFLAGS
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_XML) -d book -o $@+ $< && \
+	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d book -o $@+ $< && \
 	mv $@+ $@
 
 technical/api-index.txt: technical/api-index-skel.txt \
@@ -402,27 +395,24 @@ XSLTOPTS += --stringparam html.stylesheet docbook-xsl.css
 XSLTOPTS += --param generate.consistent.ids 1
 
 user-manual.html: user-manual.xml $(XSLT)
-	$(QUIET_XSLTPROC)$(RM) $@+ $@ && \
-	xsltproc $(XSLTOPTS) -o $@+ $(XSLT) $< && \
+	$(QUIET_XSLTPROC)xsltproc $(XSLTOPTS) -o $@+ $(XSLT) $< && \
 	mv $@+ $@
 
 git.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi
 
 user-manual.texi: user-manual.xml
-	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
-	$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@++ && \
+	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@++ && \
 	$(PERL_PATH) fix-texi.perl <$@++ >$@+ && \
 	rm $@++ && \
 	mv $@+ $@
 
 user-manual.pdf: user-manual.xml
-	$(QUIET_DBLATEX)$(RM) $@+ $@ && \
-	$(DBLATEX) -o $@+ $(DBLATEX_COMMON) $< && \
+	$(QUIET_DBLATEX)$(DBLATEX) -o $@+ $(DBLATEX_COMMON) $< && \
 	mv $@+ $@
 
 gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
-	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
+	$(QUIET_DB2TEXI) \
 	($(foreach xml,$(sort $(MAN_XML)),xsltproc -o $(xml)+ texi.xsl $(xml) && \
 		$(DOCBOOK2X_TEXI) --encoding=UTF-8 --to-stdout $(xml)+ && \
 		rm $(xml)+ &&) true) > $@++ && \
@@ -434,13 +424,11 @@ gitman.info: gitman.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split --no-validate $*.texi
 
 $(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
-	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
-	$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@+ && \
+	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@+ && \
 	mv $@+ $@
 
 howto-index.txt: howto-index.sh $(HOWTO_TXT)
-	$(QUIET_GEN)$(RM) $@+ $@ && \
-	'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(HOWTO_TXT)) >$@+ && \
+	$(QUIET_GEN)'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(HOWTO_TXT)) >$@+ && \
 	mv $@+ $@
 
 $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
@@ -450,7 +438,7 @@ WEBDOC_DEST = /pub/software/scm/git/docs
 
 howto/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
 $(patsubst %.txt,%.html,$(HOWTO_TXT)): %.html : %.txt GIT-ASCIIDOCFLAGS
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
+	$(QUIET_ASCIIDOC) \
 	sed -e '1,/^$$/d' $< | \
 	$(TXT_TO_HTML) - >$@+ && \
 	mv $@+ $@
