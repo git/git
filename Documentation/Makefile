@@ -296,8 +296,7 @@ docdep_prereqs = \
 	cmd-list.made $(cmds_txt)
 
 doc.dep : $(docdep_prereqs) $(DOC_DEP_TXT) build-docdep.perl
-	$(QUIET_GEN)$(PERL_PATH) ./build-docdep.perl >$@+ $(QUIET_STDERR) && \
-	mv $@+ $@
+	$(QUIET_GEN)$(PERL_PATH) ./build-docdep.perl >$@ $(QUIET_STDERR)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include doc.dep
@@ -355,12 +354,10 @@ clean:
 	$(RM) GIT-ASCIIDOCFLAGS
 
 $(MAN_HTML): %.html : %.txt $(ASCIIDOC_DEPS)
-	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -d manpage -o $@+ $< && \
-	mv $@+ $@
+	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -d manpage -o $@ $<
 
 $(OBSOLETE_HTML): %.html : %.txto $(ASCIIDOC_DEPS)
-	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -o $@+ $< && \
-	mv $@+ $@
+	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -o $@ $<
 
 manpage-base-url.xsl: manpage-base-url.xsl.in
 	$(QUIET_GEN)sed "s|@@MAN_BASE_URL@@|$(MAN_BASE_URL)|" $< > $@
@@ -369,12 +366,10 @@ manpage-base-url.xsl: manpage-base-url.xsl.in
 	$(QUIET_XMLTO)$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.xml : %.txt $(ASCIIDOC_DEPS)
-	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d manpage -o $@+ $< && \
-	mv $@+ $@
+	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d manpage -o $@ $<
 
 user-manual.xml: user-manual.txt user-manual.conf asciidoctor-extensions.rb GIT-ASCIIDOCFLAGS
-	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d book -o $@+ $< && \
-	mv $@+ $@
+	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d book -o $@ $<
 
 technical/api-index.txt: technical/api-index-skel.txt \
 	technical/api-index.sh $(patsubst %,%.txt,$(API_DOCS))
@@ -395,41 +390,35 @@ XSLTOPTS += --stringparam html.stylesheet docbook-xsl.css
 XSLTOPTS += --param generate.consistent.ids 1
 
 user-manual.html: user-manual.xml $(XSLT)
-	$(QUIET_XSLTPROC)xsltproc $(XSLTOPTS) -o $@+ $(XSLT) $< && \
-	mv $@+ $@
+	$(QUIET_XSLTPROC)xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
 
 git.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi
 
 user-manual.texi: user-manual.xml
-	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@++ && \
-	$(PERL_PATH) fix-texi.perl <$@++ >$@+ && \
-	rm $@++ && \
-	mv $@+ $@
+	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@+ && \
+	$(PERL_PATH) fix-texi.perl <$@+ >$@ && \
+	rm $@+
 
 user-manual.pdf: user-manual.xml
-	$(QUIET_DBLATEX)$(DBLATEX) -o $@+ $(DBLATEX_COMMON) $< && \
-	mv $@+ $@
+	$(QUIET_DBLATEX)$(DBLATEX) -o $@ $(DBLATEX_COMMON) $<
 
 gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
 	$(QUIET_DB2TEXI) \
 	($(foreach xml,$(sort $(MAN_XML)),xsltproc -o $(xml)+ texi.xsl $(xml) && \
 		$(DOCBOOK2X_TEXI) --encoding=UTF-8 --to-stdout $(xml)+ && \
-		rm $(xml)+ &&) true) > $@++ && \
-	$(PERL_PATH) cat-texi.perl $@ <$@++ >$@+ && \
-	rm $@++ && \
-	mv $@+ $@
+		rm $(xml)+ &&) true) > $@+ && \
+	$(PERL_PATH) cat-texi.perl $@ <$@+ >$@ && \
+	rm $@+
 
 gitman.info: gitman.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split --no-validate $*.texi
 
 $(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
-	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@+ && \
-	mv $@+ $@
+	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@
 
 howto-index.txt: howto-index.sh $(HOWTO_TXT)
-	$(QUIET_GEN)'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(HOWTO_TXT)) >$@+ && \
-	mv $@+ $@
+	$(QUIET_GEN)'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(HOWTO_TXT)) >$@
 
 $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.txt
@@ -440,8 +429,7 @@ howto/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
 $(patsubst %.txt,%.html,$(HOWTO_TXT)): %.html : %.txt GIT-ASCIIDOCFLAGS
 	$(QUIET_ASCIIDOC) \
 	sed -e '1,/^$$/d' $< | \
-	$(TXT_TO_HTML) - >$@+ && \
-	mv $@+ $@
+	$(TXT_TO_HTML) - >$@
 
 install-webdoc : html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(WEBDOC_DEST)
@@ -481,5 +469,8 @@ ifeq ($(wildcard po/Makefile),po/Makefile)
 doc-l10n install-l10n::
 	$(MAKE) -C po $@
 endif
+
+# Delete the target file on error
+.DELETE_ON_ERROR:
 
 .PHONY: FORCE
