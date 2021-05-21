@@ -398,7 +398,7 @@ git.info: user-manual.texi
 user-manual.texi: user-manual.xml
 	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@+ && \
 	$(PERL_PATH) fix-texi.perl <$@+ >$@ && \
-	rm $@+
+	$(RM) $@+
 
 user-manual.pdf: user-manual.xml
 	$(QUIET_DBLATEX)$(DBLATEX) -o $@ $(DBLATEX_COMMON) $<
@@ -407,9 +407,9 @@ gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
 	$(QUIET_DB2TEXI) \
 	($(foreach xml,$(sort $(MAN_XML)),xsltproc -o $(xml)+ texi.xsl $(xml) && \
 		$(DOCBOOK2X_TEXI) --encoding=UTF-8 --to-stdout $(xml)+ && \
-		rm $(xml)+ &&) true) > $@+ && \
+		$(RM) $(xml)+ &&) true) > $@+ && \
 	$(PERL_PATH) cat-texi.perl $@ <$@+ >$@ && \
-	rm $@+
+	$(RM) $@+
 
 gitman.info: gitman.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split --no-validate $*.texi
