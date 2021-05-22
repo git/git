@@ -385,6 +385,11 @@ Fixes since v2.31
    to help running tests that the developer has not modified.
    (merge 2d86a96220 jk/test-chainlint-softer later to maint).
 
+ * The "rev-parse" command did not diagnose the lack of argument to
+   "--path-format" option, which was introduced in v2.31 era, which
+   has been corrected.
+   (merge 99fc555188 wm/rev-parse-path-format-wo-arg later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f451960708 dl/cat-file-doc-cleanup later to maint).
    (merge 12604a8d0c sv/t9801-test-path-is-file-cleanup later to maint).
