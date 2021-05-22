@@ -333,6 +333,8 @@ test_expect_success 'stash show --include-untracked shows untracked files' '
 	git stash show -p --include-untracked >actual &&
 	test_cmp expect actual &&
 	git stash show --include-untracked -p >actual &&
+	test_cmp expect actual &&
+	git -c stash.showIncludeUntracked=true stash show -p >actual &&
 	test_cmp expect actual
 '
 
