@@ -70,6 +70,7 @@ git send-email --dump-aliases
 
   Sending:
     --envelope-sender       <str>  * Email envelope sender.
+    --sendmail-cmd          <str>  * Command to run to send email.
     --smtp-server       <str:int>  * Outgoing SMTP server to use. The port
                                      is optional. Default 'localhost'.
     --smtp-server-option    <str>  * Outgoing SMTP server option to use.
@@ -252,6 +253,7 @@ my ($confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
 my ($compose_encoding);
+my ($sendmail_cmd);
 # Variables with corresponding config settings & hardcoded defaults
 my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
 my $thread = 1;
@@ -299,6 +301,7 @@ my %config_settings = (
     "assume8bitencoding" => \$auto_8bit_encoding,
     "composeencoding" => \$compose_encoding,
     "transferencoding" => \$target_xfer_encoding,
+    "sendmailcmd" => \$sendmail_cmd,
 );
 
 my %config_path_settings = (
@@ -432,6 +435,7 @@ $rc = GetOptions(
 		    "no-bcc" => \$no_bcc,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "no-chain-reply-to" => sub {$chain_reply_to = 0},
+		    "sendmail-cmd=s" => \$sendmail_cmd,
 		    "smtp-server=s" => \$smtp_server,
 		    "smtp-server-option=s" => \@smtp_server_options,
 		    "smtp-server-port=s" => \$smtp_server_port,
@@ -1003,16 +1007,19 @@ if (defined $reply_to) {
 	$reply_to = sanitize_address($reply_to);
 }
 
-if (!defined $smtp_server) {
+if (!defined $sendmail_cmd && !defined $smtp_server) {
 	my @sendmail_paths = qw( /usr/sbin/sendmail /usr/lib/sendmail );
 	push @sendmail_paths, map {"$_/sendmail"} split /:/, $ENV{PATH};
 	foreach (@sendmail_paths) {
 		if (-x $_) {
-			$smtp_server = $_;
+			$sendmail_cmd = $_;
 			last;
 		}
 	}
-	$smtp_server ||= 'localhost'; # could be 127.0.0.1, too... *shrug*
+
+	if (!defined $sendmail_cmd) {
+		$smtp_server = 'localhost'; # could be 127.0.0.1, too... *shrug*
+	}
 }
 
 if ($compose && $compose > 0) {
@@ -1492,11 +1499,17 @@ EOF
 
 	if ($dry_run) {
 		# We don't want to send the email.
-	} elsif (file_name_is_absolute($smtp_server)) {
+	} elsif (defined $sendmail_cmd || file_name_is_absolute($smtp_server)) {
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
 		if (!$pid) {
-			exec($smtp_server, @sendmail_parameters) or die $!;
+			if (defined $sendmail_cmd) {
+				exec ("sh", "-c", "$sendmail_cmd \"\$@\"", "-", @sendmail_parameters)
+					or die $!;
+			} else {
+				exec ($smtp_server, @sendmail_parameters)
+					or die $!;
+			}
 		}
 		print $sm "$header\n$message";
 		close $sm or die $!;
@@ -1592,14 +1605,21 @@ EOF
 		printf($dry_run ? __("Dry-Sent %s\n") : __("Sent %s\n"), $subject);
 	} else {
 		print($dry_run ? __("Dry-OK. Log says:\n") : __("OK. Log says:\n"));
-		if (!file_name_is_absolute($smtp_server)) {
+		if (!defined $sendmail_cmd && !file_name_is_absolute($smtp_server)) {
 			print "Server: $smtp_server\n";
 			print "MAIL FROM:<$raw_from>\n";
 			foreach my $entry (@recipients) {
 			    print "RCPT TO:<$entry>\n";
 			}
 		} else {
-			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
+			my $sm;
+			if (defined $sendmail_cmd) {
+				$sm = $sendmail_cmd;
+			} else {
+				$sm = $smtp_server;
+			}
+
+			print "Sendmail: $sm ".join(' ',@sendmail_parameters)."\n";
 		}
 		print $header, "\n";
 		if ($smtp) {
