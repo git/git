@@ -1,16 +1,24 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2021, #04; Fri, 21)
-X-master-at: 107691cb07aab771585844fcd39d5e1c7f1ed14b
-X-next-at: 9fa02ecfa5e5f011e451f8bd05fb4d21cca946ed
+Subject: What's cooking in git.git (May 2021, #05; Sat, 22)
+X-master-at: de88ac70f3a801262eb3aa087e5d9a712be0a54a
+X-next-at: 3cb6fa43cd00a825d13bf67004b2df69d9efb73b
 
-What's cooking in git.git (May 2021, #04; Fri, 21)
+What's cooking in git.git (May 2021, #05; Sat, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
 with '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+The Git 2.32-rc1 has been tagged for testing.  From now on, please
+allocate some bandwidth for finding and fixing regressions in what
+is already in the release candidates, rather than new stuff.  I may
+still pick up new topics that are not yet anywhere in my tree, and
+an update of topics that are queued in 'seen', but only on "time
+permits" basis---fixes to what happened between v2.31.0..master get
+higher priority than all the rest.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -43,95 +51,38 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cs/http-use-basic-after-failed-negotiate (2021-05-19) 2 commits
-  (merged to 'next' on 2021-05-20 at 1c75b2d80c)
- + Revert "remote-curl: fall back to basic auth if Negotiate fails"
- + t5551: test http interaction with credential helpers
+* dl/stash-show-untracked-fixup (2021-05-22) 1 commit
+  (merged to 'next' on 2021-05-22 at bbe06ef834)
+ + stash show: use stash.showIncludeUntracked even when diff options given
 
- Regression fix for a change made during this cycle.
-
-
-* ds/sparse-index-protections (2021-05-18) 1 commit
-  (merged to 'next' on 2021-05-20 at 2b8d511fda)
- + sparse-index: fix uninitialized jump
-
- Fix access to uninitialized piece of memory, introduced during this
- cycle.
+ Another brown paper bag inconsistency fix for a new feature
+ introduced during this cycle.
 
 
-* tz/c-locale-output-is-no-more (2021-05-18) 1 commit
-  (merged to 'next' on 2021-05-20 at 47820de46e)
- + t7500: remove non-existant C_LOCALE_OUTPUT prereq
+* jh/simple-ipc-sans-pthread (2021-05-21) 1 commit
+  (merged to 'next' on 2021-05-22 at 4332dd2012)
+ + simple-ipc: correct ifdefs when NO_PTHREADS is defined
 
- Test update.
+ The "simple-ipc" did not compile without pthreads support, but the
+ build procedure was not properly account for it.
+
+
+* wm/rev-parse-path-format-wo-arg (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-20 at 5d3c8ba2bf)
+ + rev-parse: fix segfault with missing --path-format argument
+ (this branch is used by wm/rev-parse-die-i18n.)
+
+ The "rev-parse" command did not diagnose the lack of argument to
+ "--path-format" option, which was introduced in v2.31 era, which
+ has been corrected.
 
 --------------------------------------------------
 [New Topics]
 
-* ah/fetch-reject-warning-grammofix (2021-05-20) 1 commit
- - fetch: improve grammar of "shallow roots" message
+* dd/honor-users-tar-in-tests (2021-05-22) 1 commit
+ - t: use configured TAR instead of tar
 
- Message update.
-
-
-* ah/setup-extensions-message-i18n-fix (2021-05-20) 1 commit
- - setup: split "extensions found" messages into singular and plural
-
- Message update.
-
-
-* jk/clone-clean-upon-transport-error (2021-05-19) 1 commit
- - clone: clean up directory after transport_fetch_refs() failure
-
- Recent "git clone" left a temporary directory behind when the
- transport layer returned an failure.
-
- Will merge to 'next'.
-
-
-* jk/doc-color-pager (2021-05-20) 1 commit
- - doc: explain the use of color.pager
-
- The documentation for "color.pager" configuration variable has been
- updated.
-
- Will merge to 'next'.
-
-
-* jk/fetch-pack-v2-half-close-early (2021-05-20) 1 commit
- - fetch-pack: signal v2 server that we are done making requests
-
- "git fetch" over protocol v2 left its side of the socket open after
- it finished speaking, which unnecessarily wasted the resource on
- the other side.
-
- Will merge to 'next'.
-
-
-* ry/clarify-fast-forward-in-glossary (2021-05-19) 1 commit
- - docs: improve fast-forward in glossary content
-
- The description of "fast-forward" in the glossary has been updated.
-
- Will merge to 'next'.
-
-
-* wm/rev-parse-die-i18n (2021-05-17) 1 commit
- - rev-parse: mark die() messages for translation
- (this branch uses wm/rev-parse-path-format-wo-arg.)
-
- Quite a many die() messages in rev-parse haven't been marked for
- translation.
-
- Will merge to 'next'.
-
-
-* es/trace2-log-parent-process-name (2021-05-21) 1 commit
- - tr2: log parent process name
-
-
-* ps/rev-list-object-type-filter (2021-05-21) 1 commit
- - help: fix small typo in error message
+ Test portability fix.
 
 --------------------------------------------------
 [Stalled]
@@ -167,13 +118,13 @@ Release tarballs are available at:
  safely accept changeset descriptions that aren't written in UTF-8.
 
 
-* ds/status-with-sparse-index (2021-05-16) 14 commits
+* ds/status-with-sparse-index (2021-05-22) 14 commits
  - fsmonitor: integrate with sparse index
  - wt-status: expand added sparse directory entries
  - status: use sparse-index throughout
  - status: skip sparse-checkout percentage with sparse-index
  - dir.c: accept a directory as part of cone-mode patterns
- - unpack-trees: stop recursing into sparse directories
+ - unpack-trees: be careful around sparse directory entries
  - unpack-trees: compare sparse directories correctly
  - unpack-trees: preserve cache_bottom
  - t1092: add tests for status/add and sparse files
@@ -185,9 +136,6 @@ Release tarballs are available at:
 
  "git status" codepath learned to work with sparsely populated index
  without hydrating it fully.
-
- Expecting a reroll.
- cf. <05932ebc-04ac-b3c5-a460-5d37d8604fd9@gmail.com>
 
 
 * jh/rfc-builtin-fsmonitor (2021-05-04) 24 commits
@@ -307,6 +255,74 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ah/fetch-reject-warning-grammofix (2021-05-20) 1 commit
+ - fetch: improve grammar of "shallow roots" message
+
+ Message update.
+
+
+* ah/setup-extensions-message-i18n-fix (2021-05-20) 1 commit
+ - setup: split "extensions found" messages into singular and plural
+
+ Message update.
+
+
+* jk/clone-clean-upon-transport-error (2021-05-19) 1 commit
+  (merged to 'next' on 2021-05-22 at 464b1f187c)
+ + clone: clean up directory after transport_fetch_refs() failure
+
+ Recent "git clone" left a temporary directory behind when the
+ transport layer returned an failure.
+
+ Will cook in 'next'.
+
+
+* jk/doc-color-pager (2021-05-20) 1 commit
+ - doc: explain the use of color.pager
+
+ The documentation for "color.pager" configuration variable has been
+ updated.
+
+ Will merge to 'next'.
+
+
+* jk/fetch-pack-v2-half-close-early (2021-05-20) 1 commit
+ - fetch-pack: signal v2 server that we are done making requests
+
+ "git fetch" over protocol v2 left its side of the socket open after
+ it finished speaking, which unnecessarily wasted the resource on
+ the other side.
+
+ Will merge to 'next'.
+
+
+* ry/clarify-fast-forward-in-glossary (2021-05-19) 1 commit
+  (merged to 'next' on 2021-05-22 at 97a851d59f)
+ + docs: improve fast-forward in glossary content
+
+ The description of "fast-forward" in the glossary has been updated.
+
+ Will cook in 'next'.
+
+
+* wm/rev-parse-die-i18n (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-22 at 65c256d92b)
+ + rev-parse: mark die() messages for translation
+
+ Quite a many die() messages in rev-parse haven't been marked for
+ translation.
+
+ Will cook in 'next'.
+
+
+* es/trace2-log-parent-process-name (2021-05-21) 1 commit
+ - tr2: log parent process name
+
+
+* ps/rev-list-object-type-filter (2021-05-21) 1 commit
+ - help: fix small typo in error message
+
+
 * ab/send-email-optim (2021-05-21) 10 commits
  - perl: nano-optimize by replacing Cwd::cwd() with Cwd::getcwd()
  - send-email: move trivial config handling to Perl
@@ -356,7 +372,8 @@ Release tarballs are available at:
 
 
 * ga/send-email-sendmail-cmd (2021-05-17) 1 commit
- - git-send-email: add option to specify sendmail command
+  (merged to 'next' on 2021-05-22 at 755df67f0e)
+ + git-send-email: add option to specify sendmail command
 
  "git send-email" learned the "--sendmail-cmd" command line option
  and the "sendemail.sendmailCmd" configuration variable, which is a
@@ -364,15 +381,16 @@ Release tarballs are available at:
  "smtp-server" that is meant to name the server to instead name the
  command to talk to the server.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ah/doc-describe (2021-05-17) 1 commit
- - describe-doc: clarify default length of abbreviation
+  (merged to 'next' on 2021-05-22 at 8f3925fd41)
+ + describe-doc: clarify default length of abbreviation
 
  Doc update.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ah/merge-usage-i18n-fix (2021-05-16) 1 commit
@@ -412,18 +430,6 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* wm/rev-parse-path-format-wo-arg (2021-05-17) 1 commit
-  (merged to 'next' on 2021-05-20 at 5d3c8ba2bf)
- + rev-parse: fix segfault with missing --path-format argument
- (this branch is used by wm/rev-parse-die-i18n.)
-
- The "rev-parse" command did not diagnose the lack of argument to
- "--path-format" option, which was introduced in v2.31 era, which
- has been corrected.
-
- Will merge to 'master'.
-
-
 * ds/write-index-with-hashfile-api (2021-05-19) 4 commits
  - read-cache: delete unused hashing methods
  - read-cache: use hashfile instead of git_hash_ctx
@@ -437,20 +443,12 @@ Release tarballs are available at:
 
 
 * jc/clarify-revision-range (2021-05-18) 1 commit
- - revisions(7): clarify that most commands take a single revision range
+  (merged to 'next' on 2021-05-22 at 83a689d8ad)
+ + revisions(7): clarify that most commands take a single revision range
 
  Doc update.
 
- Will merge to 'next'.
-
-
-* jh/simple-ipc-sans-pthread (2021-05-21) 1 commit
- - simple-ipc: correct ifdefs when NO_PTHREADS is defined
-
- The "simple-ipc" did not compile without pthreads support, but the
- build procedure was not properly account for it.
-
- Will merge to 'next' and then to 'master'.
+ Will cook in 'next'.
 
 
 * jn/size-t-casted-to-off-t-fix (2021-05-19) 1 commit
@@ -499,11 +497,12 @@ Release tarballs are available at:
  xmlto has been introduced.
 
 
-* ab/trace2-squelch-gcc-warning (2021-05-21) 2 commits
- - WEATHER-BALLOON: be extra paranoid???
+* ab/trace2-squelch-gcc-warning (2021-05-21) 1 commit
  - trace2: refactor to avoid gcc warning under -O3
 
  Workaround compiler warnings.
+
+ Will merge to 'next'.
 
 
 * hn/refs-errno-cleanup (2021-04-30) 8 commits
