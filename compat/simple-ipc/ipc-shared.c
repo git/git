@@ -4,7 +4,13 @@
 #include "pkt-line.h"
 #include "thread-utils.h"
 
-#ifdef SUPPORTS_SIMPLE_IPC
+#ifndef SUPPORTS_SIMPLE_IPC
+/*
+ * This source file should only be compiled when Simple IPC is supported.
+ * See the top-level Makefile.
+ */
+#error SUPPORTS_SIMPLE_IPC not defined
+#endif
 
 int ipc_server_run(const char *path, const struct ipc_server_opts *opts,
 		   ipc_server_application_cb *application_cb,
@@ -24,5 +30,3 @@ int ipc_server_run(const char *path, const struct ipc_server_opts *opts,
 
 	return ret;
 }
-
-#endif /* SUPPORTS_SIMPLE_IPC */
