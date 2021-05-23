@@ -293,7 +293,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2021-05-17 16:02+0800\n"
-"PO-Revision-Date: 2021-05-20 15:14+0800\n"
+"PO-Revision-Date: 2021-05-23 15:30+0800\n"
 "Last-Translator: Yi-Jyun Pan <pan93412@gmail.com>\n"
 "Language-Team: Chinese (Traditional) <zh-l10n@lists.linux.org.tw>\n"
 "Language: zh_TW\n"
@@ -877,8 +877,8 @@ msgid ""
 "edit again.  If all lines of the hunk are removed, then the edit is\n"
 "aborted and the hunk is left unchanged.\n"
 msgstr ""
-"如果不能乾淨地套用，您將有機會重新編輯。如果此區塊的全部內容刪除，則\n"
-"此次編輯被終止，此區塊不會被修改。\n"
+"如果未乾淨套用，您就有機會重新編輯。若刪掉此區塊的全部內容，則會中止\n"
+"本次編輯，區塊則不會被修改。\n"
 
 #: add-patch.c:1132
 msgid "could not parse hunk header"
@@ -903,7 +903,7 @@ msgstr "「git apply --cached」失敗"
 #: add-patch.c:1246 git-add--interactive.perl:1242
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
-msgstr "您的編輯塊不能被應用。重新編輯（選擇 \"no\" 捨棄！） [y/n]? "
+msgstr "未套用編輯區塊。是否重新編輯（輸入 “no” 捨棄！） [y/n]? "
 
 #: add-patch.c:1289
 msgid "The selected hunks do not apply to the index!"
@@ -953,7 +953,7 @@ msgstr "沒有其它可供跳轉的區塊"
 
 #: add-patch.c:1548 git-add--interactive.perl:1606
 msgid "go to which hunk (<ret> to see more)? "
-msgstr "跳轉到哪個區塊（<Enter> 檢視更多）？ "
+msgstr "要跳轉到哪個區塊（<Enter> 檢視更多）？ "
 
 #: add-patch.c:1549 git-add--interactive.perl:1608
 msgid "go to which hunk? "
@@ -994,7 +994,7 @@ msgstr "對不起，不能分割這個區塊"
 #: add-patch.c:1623
 #, c-format
 msgid "Split into %d hunks."
-msgstr "分割為 %d 塊。"
+msgstr "分割為 %d 個區塊。"
 
 #: add-patch.c:1627
 msgid "Sorry, cannot edit this hunk"
@@ -1222,7 +1222,7 @@ msgstr "recount：意外的行：%.*s"
 #: apply.c:1549
 #, c-format
 msgid "patch fragment without header at line %d: %.*s"
-msgstr "第 %d 行的修補檔片段沒有標頭訊息：%.*s"
+msgstr "第 %d 行的修補檔區塊沒有標頭訊息：%.*s"
 
 #: apply.c:1752
 msgid "new file depends on old contents"
@@ -1291,7 +1291,7 @@ msgstr[0] "區塊 #%d 成功套用於 %d（位移 %d 行）。"
 #: apply.c:3068
 #, c-format
 msgid "Context reduced to (%ld/%ld) to apply fragment at %d"
-msgstr "上下文減少到（%ld/%ld）以在第 %d 行套用修補檔片段"
+msgstr "上下文減少到（%ld/%ld）以在第 %d 行套用修補檔區塊"
 
 #: apply.c:3074
 #, c-format
@@ -1561,12 +1561,12 @@ msgstr "不能開啟 %s"
 #: apply.c:4592
 #, c-format
 msgid "Hunk #%d applied cleanly."
-msgstr "第 #%d 個片段成功應用。"
+msgstr "成功套用第 #%d 個區塊。"
 
 #: apply.c:4596
 #, c-format
 msgid "Rejected hunk #%d."
-msgstr "拒絕第 #%d 個片段。"
+msgstr "拒絕第 #%d 個區塊。"
 
 #: apply.c:4725
 #, c-format
@@ -1602,7 +1602,7 @@ msgstr[0] "%d 行新增了空白字元誤用。"
 #, c-format
 msgid "%d line applied after fixing whitespace errors."
 msgid_plural "%d lines applied after fixing whitespace errors."
-msgstr[0] "修復空白錯誤後，應用了 %d 行。"
+msgstr[0] "修復空白錯誤後，套用了 %d 行。"
 
 #: apply.c:4967 builtin/add.c:679 builtin/mv.c:304 builtin/rm.c:423
 msgid "Unable to write new index file"
@@ -1610,11 +1610,11 @@ msgstr "無法寫入新索引檔案"
 
 #: apply.c:4995
 msgid "don't apply changes matching the given path"
-msgstr "不要應用與給出路徑向符合的變更"
+msgstr "不要套用符合提供路徑的變更"
 
 #: apply.c:4998
 msgid "apply changes matching the given path"
-msgstr "應用與給出路徑向符合的變更"
+msgstr "套用符合提供路徑的變更"
 
 #: apply.c:5000 builtin/am.c:2317
 msgid "num"
@@ -1642,7 +1642,7 @@ msgstr "不套用修補檔，而是顯示輸入的概要"
 
 #: apply.c:5014
 msgid "instead of applying the patch, see if the patch is applicable"
-msgstr "不套用修補檔，而是檢視修補檔是否可應用"
+msgstr "不套用修補檔，而是檢視修補檔是否可套用"
 
 #: apply.c:5016
 msgid "make sure the patch is applicable to the current index"
@@ -1705,11 +1705,11 @@ msgstr "無需至少一行上下文"
 
 #: apply.c:5049
 msgid "leave the rejected hunks in corresponding *.rej files"
-msgstr "將拒絕的修補檔片段儲存在對應的 *.rej 檔案中"
+msgstr "將拒絕的修補檔區塊儲存在對應的 *.rej 檔案中"
 
 #: apply.c:5051
 msgid "allow overlapping hunks"
-msgstr "允許重疊的修補檔片段"
+msgstr "允許重疊的修補檔區塊"
 
 #: apply.c:5052 builtin/add.c:364 builtin/check-ignore.c:22
 #: builtin/commit.c:1474 builtin/count-objects.c:98 builtin/fsck.c:755
@@ -1723,7 +1723,7 @@ msgstr "允許不正確的檔案末尾換行符號"
 
 #: apply.c:5057
 msgid "do not trust the line counts in the hunk headers"
-msgstr "不信任修補檔片段的標頭訊息中的行號"
+msgstr "不信任修補檔區塊的標頭訊息中的行號"
 
 #: apply.c:5059 builtin/am.c:2305
 msgid "root"
@@ -3322,7 +3322,7 @@ msgstr "%s：smudge 過濾器 %s 失敗"
 #: credential.c:96
 #, c-format
 msgid "skipping credential lookup for key: credential.%s"
-msgstr "跳過鍵的憑證查詢：credential.%s"
+msgstr "略過鍵的憑證查詢：credential.%s"
 
 #: credential.c:112
 msgid "refusing to work with credential missing host field"
@@ -3724,7 +3724,7 @@ msgstr "生成差異統計的簡潔摘要"
 
 #: diff.c:5444
 msgid "output a binary diff that can be applied"
-msgstr "輸出一個可以應用的二進位差異"
+msgstr "輸出一個可以套用的二進位差異"
 
 #: diff.c:5447
 msgid "show full pre- and post-image object names on the \"index\" lines"
@@ -4882,7 +4882,7 @@ msgstr ""
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
 "renamed."
-msgstr "警告：避免應用 %s -> %s 的重新命名到 %s，因為 %s 本身已被重新命名。"
+msgstr "警告：避免套用 %s -> %s 的重新命名到 %s，因為 %s 本身已被重新命名。"
 
 #: merge-ort.c:1932 merge-recursive.c:3244
 #, c-format
@@ -5343,19 +5343,19 @@ msgstr "multi-pack-index 雜湊版本 %u 與版本 %u 不符合"
 
 #: midx.c:148
 msgid "multi-pack-index missing required pack-name chunk"
-msgstr "多包索引缺少必需的包名塊"
+msgstr "多包索引缺少必需的包名區塊"
 
 #: midx.c:150
 msgid "multi-pack-index missing required OID fanout chunk"
-msgstr "多包索引缺少必需的物件 ID 扇出塊"
+msgstr "多包索引缺少必需的物件 ID fanout 區塊"
 
 #: midx.c:152
 msgid "multi-pack-index missing required OID lookup chunk"
-msgstr "多包索引缺少必需的物件 ID 查詢塊"
+msgstr "多包索引缺少必需的物件 ID 查詢區塊"
 
 #: midx.c:154
 msgid "multi-pack-index missing required object offsets chunk"
-msgstr "多包索引缺少必需的物件位移塊"
+msgstr "多包索引缺少必需的物件位移區塊"
 
 #: midx.c:170
 #, c-format
@@ -7328,7 +7328,7 @@ msgstr "重新整理 '%s' 失敗"
 #: rerere.c:487 rerere.c:1023
 #, c-format
 msgid "could not parse conflict hunks in '%s'"
-msgstr "不能解析 '%s' 中的衝突塊"
+msgstr "不能解析 '%s' 中的衝突區塊"
 
 #: rerere.c:668
 #, c-format
@@ -7495,7 +7495,7 @@ msgstr "接收端不支援推送選項"
 #: sequencer.c:196
 #, c-format
 msgid "invalid commit message cleanup mode '%s'"
-msgstr "無效的提交訊息清理模式 '%s'"
+msgstr "無效的提交說明清理模式 '%s'"
 
 #: sequencer.c:324
 #, c-format
@@ -7892,7 +7892,7 @@ msgstr "不能還原 %s... %s"
 #: sequencer.c:2266
 #, c-format
 msgid "could not apply %s... %s"
-msgstr "不能應用 %s... %s"
+msgstr "不能套用 %s... %s"
 
 #: sequencer.c:2287
 #, c-format
@@ -8053,11 +8053,11 @@ msgstr "沒有正在進行的揀選"
 
 #: sequencer.c:3239
 msgid "failed to skip the commit"
-msgstr "無法跳過這個提交"
+msgstr "無法略過這個提交"
 
 #: sequencer.c:3246
 msgid "there is nothing to skip"
-msgstr "沒有要跳過的"
+msgstr "沒有要略過的"
 
 #: sequencer.c:3249
 #, c-format
@@ -8099,7 +8099,7 @@ msgstr ""
 #: sequencer.c:3446
 #, c-format
 msgid "Could not apply %s... %.*s"
-msgstr "不能應用 %s... %.*s"
+msgstr "不能套用 %s... %.*s"
 
 #: sequencer.c:3453
 #, c-format
@@ -8229,7 +8229,7 @@ msgstr "無法 reset --hard"
 #: sequencer.c:4120
 #, c-format
 msgid "Applied autostash.\n"
-msgstr "已應用 autostash。\n"
+msgstr "已套用 autostash。\n"
 
 #: sequencer.c:4132
 #, c-format
@@ -8390,7 +8390,7 @@ msgstr "無事可做"
 
 #: sequencer.c:5651
 msgid "could not skip unnecessary pick commands"
-msgstr "無法跳過不必要的揀選"
+msgstr "無法略過不必要的揀選"
 
 #: sequencer.c:5751
 msgid "the script was already rearranged."
@@ -8693,7 +8693,7 @@ msgstr "無效 --ignore-submodules 參數：%s"
 msgid ""
 "Submodule in commit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
-msgstr "%s 提交位於路徑：'%s' 的子模組與同名的子模組衝突。跳過。"
+msgstr "%s 提交位於路徑：'%s' 的子模組與同名的子模組衝突。略過。"
 
 #: submodule.c:921
 #, c-format
@@ -9475,7 +9475,7 @@ msgstr "無效的埠號"
 
 #: urlmatch.c:371
 msgid "invalid '..' path segment"
-msgstr "無效的 '..' 路徑片段"
+msgstr "無效的 '..' 路徑區塊"
 
 #: walker.c:170
 msgid "Fetching objects"
@@ -9808,7 +9808,7 @@ msgstr "  （解決衝突，然後執行 \"git am --continue\"）"
 #  譯者：請維持前導空格
 #: wt-status.c:1175
 msgid "  (use \"git am --skip\" to skip this patch)"
-msgstr "  （使用 \"git am --skip\" 跳過此修補檔）"
+msgstr "  （使用 \"git am --skip\" 略過此修補檔）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1177
@@ -9866,7 +9866,7 @@ msgstr "  （解決衝突，然後執行 \"git rebase --continue\"）"
 #  譯者：請維持前導空格
 #: wt-status.c:1374
 msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  （使用 \"git rebase --skip\" 跳過此修補檔）"
+msgstr "  （使用 \"git rebase --skip\" 略過此修補檔）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1376
@@ -9940,7 +9940,7 @@ msgstr "  （所有衝突已解決：執行 \"git cherry-pick --continue\"）"
 #  譯者：請維持前導空格
 #: wt-status.c:1438
 msgid "  (use \"git cherry-pick --skip\" to skip this patch)"
-msgstr "  （使用 \"git cherry-pick --skip\" 跳過此修補檔）"
+msgstr "  （使用 \"git cherry-pick --skip\" 略過此修補檔）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1440
@@ -9974,7 +9974,7 @@ msgstr "  （所有衝突已解決：執行 \"git revert --continue\"）"
 #  譯者：請維持前導空格
 #: wt-status.c:1467
 msgid "  (use \"git revert --skip\" to skip this patch)"
-msgstr "  （使用 \"git revert --skip\" 跳過此修補檔）"
+msgstr "  （使用 \"git revert --skip\" 略過此修補檔）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1469
@@ -10224,7 +10224,7 @@ msgstr "空修補檔。異常終止。"
 #: builtin/add.c:335
 #, c-format
 msgid "Could not apply '%s'"
-msgstr "不能應用 '%s'"
+msgstr "不能套用 '%s'"
 
 #: builtin/add.c:343
 msgid "The following paths are ignored by one of your .gitignore files:\n"
@@ -10246,7 +10246,7 @@ msgstr "互動式挑選資料區塊"
 
 #: builtin/add.c:368
 msgid "edit current diff and apply"
-msgstr "編輯目前差異並應用"
+msgstr "編輯目前差異並套用"
 
 #: builtin/add.c:369
 msgid "allow adding otherwise ignored files"
@@ -10278,7 +10278,7 @@ msgstr "不新增，只重新整理索引"
 
 #: builtin/add.c:379
 msgid "just skip files which cannot be added because of errors"
-msgstr "跳過因發生錯誤不能新增的檔案"
+msgstr "略過因發生錯誤不能新增的檔案"
 
 #: builtin/add.c:380
 msgid "check if - even missing - files are ignored in dry run"
@@ -10424,7 +10424,7 @@ msgstr "無法解析修補檔 '%s'"
 
 #: builtin/am.c:813
 msgid "Only one StGIT patch series can be applied at once"
-msgstr "一次只能有一個 StGIT 修補檔佇列被應用"
+msgstr "一次只能有一個 StGIT 修補檔佇列被套用"
 
 #: builtin/am.c:861
 msgid "invalid timestamp"
@@ -10459,7 +10459,7 @@ msgstr "當您解決這一問題，執行 \"%s --continue\"。"
 #: builtin/am.c:1126
 #, c-format
 msgid "If you prefer to skip this patch, run \"%s --skip\" instead."
-msgstr "如果您想要跳過這一修補檔，則執行 \"%s --skip\"。"
+msgstr "如果您想要略過這一修補檔，則執行 \"%s --skip\"。"
 
 #: builtin/am.c:1127
 #, c-format
@@ -10543,11 +10543,11 @@ msgstr "髒索引：不能套用修補檔（髒檔案：%s）"
 #: builtin/am.c:1796 builtin/am.c:1864
 #, c-format
 msgid "Applying: %.*s"
-msgstr "應用：%.*s"
+msgstr "套用：%.*s"
 
 #: builtin/am.c:1813
 msgid "No changes -- Patch already applied."
-msgstr "沒有變更 —— 修補檔已經應用過。"
+msgstr "沒有變更——修補檔已經套用過。"
 
 #: builtin/am.c:1819
 #, c-format
@@ -10566,7 +10566,7 @@ msgid ""
 msgstr ""
 "沒有變更 —— 您是不是忘了執行 'git add'？\n"
 "如果沒有什麼要新增到暫存區的，則很可能是其它提交已經引入了相同的變更。\n"
-"您也許想要跳過這個修補檔。"
+"您也許想要略過這個修補檔。"
 
 #: builtin/am.c:1874
 msgid ""
@@ -10637,7 +10637,7 @@ msgstr "靜默模式"
 
 #: builtin/am.c:2275
 msgid "add a Signed-off-by trailer to the commit message"
-msgstr "在提交訊息結尾加入 Signed-off-by"
+msgstr "在提交說明結尾加入 Signed-off-by"
 
 #: builtin/am.c:2278
 msgid "recode into utf8 (default)"
@@ -10711,7 +10711,7 @@ msgstr "和 --continue 同義"
 
 #: builtin/am.c:2335
 msgid "skip the current patch"
-msgstr "跳過目前修補檔"
+msgstr "略過目前修補檔"
 
 #: builtin/am.c:2338
 msgid "restore the original branch and abort the patching operation"
@@ -11104,7 +11104,7 @@ msgstr "從指定檔案重放二分搜尋過程"
 
 #: builtin/bisect--helper.c:1070
 msgid "skip some commits for checkout"
-msgstr "跳過要檢出的部分提交"
+msgstr "略過要檢出的部分提交"
 
 #: builtin/bisect--helper.c:1072
 msgid "no log for BISECT_WRITE"
@@ -11206,7 +11206,7 @@ msgstr "顯示成適合機器讀取的格式"
 
 #: builtin/blame.c:876
 msgid "show porcelain format with per-line commit information"
-msgstr "顯示每一列適合機器的提交訊息"
+msgstr "顯示每一列適合機器的提交說明"
 
 #: builtin/blame.c:877
 msgid "use the same output mode as git-annotate (Default: off)"
@@ -13316,7 +13316,7 @@ msgstr "訊息"
 
 #: builtin/commit-tree.c:115 builtin/commit.c:1614
 msgid "commit message"
-msgstr "提交訊息"
+msgstr "提交說明"
 
 #: builtin/commit-tree.c:118
 msgid "read commit log message from file"
@@ -13390,7 +13390,7 @@ msgstr ""
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"來繼續揀選剩餘提交。如果您想跳過此提交，使用：\n"
+"來繼續揀選剩餘提交。如果您想略過此提交，使用：\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
@@ -14694,7 +14694,7 @@ msgstr "使用 done 功能終止串流"
 
 #: builtin/fast-export.c:1221
 msgid "skip output of blob data"
-msgstr "跳過資料物件資料的輸出"
+msgstr "略過資料物件資料的輸出"
 
 #: builtin/fast-export.c:1222 builtin/log.c:1823
 msgid "refspec"
@@ -16319,7 +16319,7 @@ msgstr "%s 的所有子物件並非都可以取得"
 
 #: builtin/index-pack.c:932 builtin/index-pack.c:979
 msgid "failed to apply delta"
-msgstr "應用 delta 失敗"
+msgstr "套用 delta 失敗"
 
 #: builtin/index-pack.c:1162
 msgid "Receiving objects"
@@ -16655,7 +16655,7 @@ msgstr "只輸出尾部署名"
 
 #: builtin/interpret-trailers.c:106
 msgid "do not apply config rules"
-msgstr "不要應用設定規則"
+msgstr "不要套用組態設定規則"
 
 #: builtin/interpret-trailers.c:107
 msgid "join whitespace-continued values"
@@ -17305,7 +17305,7 @@ msgstr "保留主旨中不是 PATCH 的方括號"
 
 #: builtin/mailinfo.c:62
 msgid "copy Message-ID to the end of commit message"
-msgstr "複製 Message-ID 至提交訊息末尾"
+msgstr "複製 Message-ID 至提交說明末尾"
 
 #: builtin/mailinfo.c:64
 msgid "re-code metadata to i18n.commitEncoding"
@@ -17506,7 +17506,7 @@ msgstr "（和 --stat 同義）"
 
 #: builtin/merge.c:262 builtin/pull.c:142
 msgid "add (at most <n>) entries from shortlog to merge commit message"
-msgstr "在合併提交訊息中新增（最多 <n> 條）精簡提交記錄"
+msgstr "在合併提交說明中新增（最多 <n> 條）精簡提交記錄"
 
 #: builtin/merge.c:265 builtin/pull.c:148
 msgid "create a single commit instead of doing a merge"
@@ -17646,7 +17646,7 @@ msgid ""
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
-"請輸入一個提交訊息以解釋此合併的必要性，尤其是將一個更新後的上游分支\n"
+"請輸入一個提交說明以解釋此合併的必要性，尤其是將一個更新後的上游分支\n"
 "合併到主題分支。\n"
 "\n"
 
@@ -17663,7 +17663,7 @@ msgstr "以 '%c' 開始的行將被忽略，而空的提交說明將終止提交
 
 #: builtin/merge.c:888
 msgid "Empty commit message."
-msgstr "空提交訊息。"
+msgstr "空提交說明。"
 
 #: builtin/merge.c:903
 #, c-format
@@ -17956,7 +17956,7 @@ msgstr "強制移動/重指令，即使目標存在"
 
 #: builtin/mv.c:127
 msgid "skip move/rename errors"
-msgstr "跳過移動/重新命名錯誤"
+msgstr "略過移動/重新命名錯誤"
 
 #: builtin/mv.c:170
 #, c-format
@@ -19544,7 +19544,7 @@ msgstr "不更新索引區和工作區"
 
 #: builtin/read-tree.c:151
 msgid "skip applying sparse checkout filter"
-msgstr "跳過應用稀疏檢出過濾器"
+msgstr "略過套用稀疏檢出過濾器"
 
 #: builtin/read-tree.c:153
 msgid "debug unpack-trees"
@@ -19636,7 +19636,7 @@ msgstr "繼續重定基底"
 
 #: builtin/rebase.c:511
 msgid "skip commit"
-msgstr "跳過提交"
+msgstr "略過提交"
 
 #: builtin/rebase.c:512
 msgid "edit the todo list"
@@ -19772,7 +19772,7 @@ msgid ""
 msgstr ""
 "手動解決所有衝突，執行 \"git add/rm <衝突的檔案>\" 標記\n"
 "衝突已解決，然後執行 \"git rebase --continue\"。您也可以執行\n"
-"\"git rebase --skip\" 指令跳過這個提交。如果想要終止執行並回到\n"
+"\"git rebase --skip\" 指令略過這個提交。如果想要終止執行並回到\n"
 "\"git rebase\" 執行之前的狀態，執行 \"git rebase --abort\"。"
 
 #: builtin/rebase.c:896
@@ -19892,7 +19892,7 @@ msgstr "繼續"
 
 #: builtin/rebase.c:1357
 msgid "skip current patch and continue"
-msgstr "跳過目前修補檔並繼續"
+msgstr "略過目前修補檔並繼續"
 
 #  譯者：請維持前導空格
 #: builtin/rebase.c:1359
@@ -21436,7 +21436,7 @@ msgstr "取消反轉或揀選動作"
 
 #: builtin/revert.c:105
 msgid "skip current commit and continue"
-msgstr "跳過目前提交並繼續"
+msgstr "略過目前提交並繼續"
 
 #: builtin/revert.c:107
 msgid "don't automatically commit"
@@ -22183,7 +22183,7 @@ msgstr "git stripspace [-c | --comment-lines]"
 
 #: builtin/stripspace.c:37
 msgid "skip and remove all lines starting with comment character"
-msgstr "跳過和移除所有的備註行"
+msgstr "略過和移除所有的備註行"
 
 #: builtin/stripspace.c:40
 msgid "prepend comment character and space to each line"
@@ -24104,7 +24104,7 @@ msgstr "套用信箱格式的系列修補檔"
 
 #: command-list.h:52
 msgid "Annotate file lines with commit information"
-msgstr "使用提交訊息備註檔案行"
+msgstr "使用提交說明備註檔案行"
 
 #: command-list.h:53
 msgid "Apply a patch to files and/or to the index"
@@ -24172,7 +24172,7 @@ msgstr "尋找尚未套用到上游的提交"
 
 #: command-list.h:69
 msgid "Apply the changes introduced by some existing commits"
-msgstr "應用一些現存提交引入的修改"
+msgstr "套用一些現存提交引入的修改"
 
 #: command-list.h:70
 msgid "Graphical alternative to git-commit"
@@ -24284,7 +24284,7 @@ msgstr "重寫分支"
 
 #: command-list.h:97
 msgid "Produce a merge commit message"
-msgstr "生成一個合併提交訊息"
+msgstr "生成一個合併提交說明"
 
 #: command-list.h:98
 msgid "Output information on each ref"
@@ -24493,7 +24493,7 @@ msgstr "將樹訊息讀取到索引"
 
 #: command-list.h:149
 msgid "Reapply commits on top of another base tip"
-msgstr "在另一個分支上重新應用提交"
+msgstr "在另一個分支上重新套用提交"
 
 #: command-list.h:150
 msgid "Receive what is pushed into the repository"
@@ -24997,7 +24997,7 @@ msgstr "無法遞迴進子模組路徑 '$displaypath'"
 
 #: git-rebase--preserve-merges.sh:109
 msgid "Applied autostash."
-msgstr "已應用 autostash。"
+msgstr "已套用 autostash。"
 
 #: git-rebase--preserve-merges.sh:112
 #, sh-format
@@ -25010,7 +25010,7 @@ msgid ""
 "Your changes are safe in the stash.\n"
 "You can run \"git stash pop\" or \"git stash drop\" at any time.\n"
 msgstr ""
-"應用 autostash 導致衝突。\n"
+"套用 autostash 導致衝突。\n"
 "您的修改安全地儲存在儲藏區中。\n"
 "您可以在任何時候執行 \"git stash pop\" 或 \"git stash drop\"。\n"
 
@@ -25128,7 +25128,7 @@ msgstr "這是提交說明 #${n}："
 #: git-rebase--preserve-merges.sh:462
 #, sh-format
 msgid "The commit message #${n} will be skipped:"
-msgstr "提交說明 #${n} 將被跳過："
+msgstr "提交說明 #${n} 將被略過："
 
 #: git-rebase--preserve-merges.sh:473
 #, sh-format
@@ -25149,7 +25149,7 @@ msgstr "這是一個 2 個提交的組合。"
 #: git-rebase--preserve-merges.sh:572
 #, sh-format
 msgid "Could not apply $sha1... $rest"
-msgstr "不能應用 $sha1... $rest"
+msgstr "不能套用 $sha1... $rest"
 
 #: git-rebase--preserve-merges.sh:601
 #, sh-format
@@ -25385,26 +25385,26 @@ msgstr[0] "建立了 %d 個路徑\n"
 msgid ""
 "If the patch applies cleanly, the edited hunk will immediately be\n"
 "marked for staging."
-msgstr "如果修補檔能乾淨地套用，編輯塊將立即標記為暫存。"
+msgstr "如果修補檔能乾淨地套用，編輯區塊將立即標記為暫存。"
 
 #: git-add--interactive.perl:1059
 msgid ""
 "If the patch applies cleanly, the edited hunk will immediately be\n"
 "marked for stashing."
-msgstr "如果修補檔能乾淨地套用，編輯塊將立即標記為儲藏。"
+msgstr "如果修補檔能乾淨地套用，編輯區塊將立即標記為儲藏。"
 
 #: git-add--interactive.perl:1062
 msgid ""
 "If the patch applies cleanly, the edited hunk will immediately be\n"
 "marked for unstaging."
-msgstr "如果修補檔能乾淨地套用，編輯塊將立即標記為未暫存。"
+msgstr "如果修補檔能乾淨地套用，編輯區塊將立即標記為未暫存。"
 
 #: git-add--interactive.perl:1065 git-add--interactive.perl:1074
 #: git-add--interactive.perl:1080
 msgid ""
 "If the patch applies cleanly, the edited hunk will immediately be\n"
 "marked for applying."
-msgstr "如果修補檔能乾淨地套用，編輯塊將立即標記為應用。"
+msgstr "如果修補檔能乾淨地套用，編輯區塊將立即標記為套用。"
 
 #: git-add--interactive.perl:1068 git-add--interactive.perl:1071
 #: git-add--interactive.perl:1077
@@ -25572,7 +25572,7 @@ msgstr ""
 
 #: git-add--interactive.perl:1345
 msgid "The selected hunks do not apply to the index!\n"
-msgstr "選中的區塊不能套用到索引！\n"
+msgstr "選取區塊不能套用到索引！\n"
 
 #: git-add--interactive.perl:1360
 #, perl-format
@@ -25629,7 +25629,7 @@ msgstr "沒有和提供模式相符合的區塊\n"
 
 #: git-add--interactive.perl:1696 git-add--interactive.perl:1718
 msgid "No previous hunk\n"
-msgstr "沒有前一個區塊\n"
+msgstr "沒有上一個區塊\n"
 
 #: git-add--interactive.perl:1705 git-add--interactive.perl:1724
 msgid "No next hunk\n"
@@ -25832,7 +25832,7 @@ msgstr "無法開啟 %s.final: %s"
 
 #: git-send-email.perl:838
 msgid "Summary email is empty, skipping it\n"
-msgstr "摘要信件為空，跳過\n"
+msgstr "摘要信件為空，略過\n"
 
 #. TRANSLATORS: please keep [y/N] as is.
 #: git-send-email.perl:873
@@ -25905,7 +25905,7 @@ msgid ""
 "    run 'git config --global sendemail.confirm auto'.\n"
 "\n"
 msgstr ""
-"    以上的抄送列表（Cc）已經用修補檔提交訊息中發現的位址進行\n"
+"    以上的抄送列表（Cc）已經用修補檔提交說明中發現的位址進行\n"
 "    了擴展。預設 send-email 會給出提示。這個行為可以透過\n"
 "    sendemail.confirm 設定設定。\n"
 "\n"
