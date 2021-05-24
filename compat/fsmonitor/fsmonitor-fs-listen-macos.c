@@ -190,6 +190,12 @@ static int ef_is_root_renamed(const FSEventStreamEventFlags ef)
 		ef & kFSEventStreamEventFlagItemRenamed);
 }
 
+static int ef_is_dropped(const FSEventStreamEventFlags ef)
+{
+	return (ef & kFSEventStreamEventFlagKernelDropped ||
+		ef & kFSEventStreamEventFlagUserDropped);
+}
+
 static void fsevent_callback(ConstFSEventStreamRef streamRef,
 			     void *ctx,
 			     size_t num_of_events,
@@ -205,6 +211,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 	const char *path_k;
 	const char *slash;
 	int k;
+	struct strbuf tmp = STRBUF_INIT;
 
 	/*
 	 * Build a list of all filesystem changes into a private/local
@@ -220,7 +227,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 		 * If you want to debug FSEvents, log them to GIT_TRACE_FSMONITOR.
 		 * Please don't log them to Trace2.
 		 *
-		 * trace_printf_key(&trace_fsmonitor, "XXX '%s'", path_k);
+		 * trace_printf_key(&trace_fsmonitor, "Path: '%s'", path_k);
 		 */
 
 		/*
@@ -236,18 +243,14 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 		 *     they are conceptually relative to the just flushed
 		 *     token).
 		 */
-		if ((event_flags[k] & kFSEventStreamEventFlagKernelDropped) ||
-		    (event_flags[k] & kFSEventStreamEventFlagUserDropped)) {
+		if (ef_is_dropped(event_flags[k])) {
 			/*
 			 * see also kFSEventStreamEventFlagMustScanSubDirs
 			 */
-			trace2_data_string("fsmonitor", NULL,
-					   "fsm-listen/kernel", "dropped");
+			trace_printf_key(&trace_fsmonitor, "event: dropped");
 
 			fsmonitor_force_resync(state);
-
-			if (fsmonitor_batch__free(batch))
-				BUG("batch should not have a next");
+			fsmonitor_batch__pop(batch);
 			string_list_clear(&cookie_list, 0);
 
 			/*
@@ -284,15 +287,13 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 			 * we have to quit.
 			 */
 			if (ef_is_root_delete(event_flags[k])) {
-				trace2_data_string("fsmonitor", NULL,
-						   "fsm-listen/gitdir",
-						   "removed");
+				trace_printf_key(&trace_fsmonitor,
+						 "event: gitdir removed");
 				goto force_shutdown;
 			}
 			if (ef_is_root_renamed(event_flags[k])) {
-				trace2_data_string("fsmonitor", NULL,
-						   "fsm-listen/gitdir",
-						   "renamed");
+				trace_printf_key(&trace_fsmonitor,
+						 "event: gitdir renamed");
 				goto force_shutdown;
 			}
 			break;
@@ -303,7 +304,16 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 			if (trace_pass_fl(&trace_fsmonitor))
 				log_flags_set(path_k, event_flags[k]);
 
-			/* fsevent could be marked as both a file and directory */
+			/*
+			 * Because of the implicit "binning" (the
+			 * kernel calls us at a given frequency) and
+			 * de-duping (the kernel is free to combine
+			 * multiple events for a given pathname), an
+			 * individual fsevent could be marked as both
+			 * a file and directory.  Add it to the queue
+			 * with both spellings so that the client will
+			 * know how much to invalidate/refresh.
+			 */
 
 			if (event_flags[k] & kFSEventStreamEventFlagItemIsFile) {
 				const char *rel = path_k +
@@ -317,13 +327,14 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 			if (event_flags[k] & kFSEventStreamEventFlagItemIsDir) {
 				const char *rel = path_k +
 					state->path_worktree_watch.len + 1;
-				char *p = xstrfmt("%s/", rel);
+
+				strbuf_reset(&tmp);
+				strbuf_addstr(&tmp, rel);
+				strbuf_addch(&tmp, '/');
 
 				if (!batch)
 					batch = fsmonitor_batch__new();
-				fsmonitor_batch__add_path(batch, p);
-
-				free(p);
+				fsmonitor_batch__add_path(batch, tmp.buf);
 			}
 
 			break;
@@ -338,29 +349,31 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 
 	fsmonitor_publish(state, batch, &cookie_list);
 	string_list_clear(&cookie_list, 0);
+	strbuf_release(&tmp);
 	return;
 
 force_shutdown:
-	if (fsmonitor_batch__free(batch))
-		BUG("batch should not have a next");
+	fsmonitor_batch__pop(batch);
 	string_list_clear(&cookie_list, 0);
 
 	data->shutdown_style = FORCE_SHUTDOWN;
 	CFRunLoopStop(data->rl);
+	strbuf_release(&tmp);
 	return;
 }
 
 /*
- * TODO Investigate the proper value for the `latency` argument in the call
- * TODO to `FSEventStreamCreate()`.  I'm not sure that this needs to be a
- * TODO config setting or just something that we tune after some testing.
- * TODO
- * TODO With a latency of 0.1, I was seeing lots of dropped events during
- * TODO the "touch 100000" files test within t/perf/p7519, but with a
- * TODO latency of 0.001 I did not see any dropped events.  So the "correct"
- * TODO value may be somewhere in between.
- * TODO
- * TODO https://developer.apple.com/documentation/coreservices/1443980-fseventstreamcreate
+ * NEEDSWORK: Investigate the proper value for the `latency` argument
+ * in the call to `FSEventStreamCreate()`.  I'm not sure that this
+ * needs to be a config setting or just something that we tune after
+ * some testing.
+ *
+ * With a latency of 0.1, I was seeing lots of dropped events during
+ * the "touch 100000" files test within t/perf/p7519, but with a
+ * latency of 0.001 I did not see any dropped events.  So the
+ * "correct" value may be somewhere in between.
+ *
+ * https://developer.apple.com/documentation/coreservices/1443980-fseventstreamcreate
  */
 
 int fsmonitor_fs_listen__ctor(struct fsmonitor_daemon_state *state)
@@ -378,7 +391,7 @@ int fsmonitor_fs_listen__ctor(struct fsmonitor_daemon_state *state)
 	struct fsmonitor_daemon_backend_data *data;
 	const void *dir_array[2];
 
-	data = xcalloc(1, sizeof(*data));
+	CALLOC_ARRAY(data, 1);
 	state->backend_data = data;
 
 	data->cfsr_worktree_path = CFStringCreateWithCString(

@@ -10,13 +10,10 @@
 #include "pkt-line.h"
 
 static const char * const builtin_fsmonitor__daemon_usage[] = {
-	N_("git fsmonitor--daemon --start [<options>]"),
-	N_("git fsmonitor--daemon --run [<options>]"),
-	N_("git fsmonitor--daemon --stop"),
-	N_("git fsmonitor--daemon --is-running"),
-	N_("git fsmonitor--daemon --query <token>"),
-	N_("git fsmonitor--daemon --query-index"),
-	N_("git fsmonitor--daemon --flush"),
+	N_("git fsmonitor--daemon start [<options>]"),
+	N_("git fsmonitor--daemon run [<options>]"),
+	N_("git fsmonitor--daemon stop"),
+	N_("git fsmonitor--daemon status"),
 	NULL
 };
 
@@ -56,52 +53,6 @@ static int fsmonitor_config(const char *var, const char *value, void *cb)
 /*
  * Acting as a CLIENT.
  *
- * Send an IPC query to a `git-fsmonitor--daemon` SERVER process and
- * ask for the changes since the given token.  This will implicitly
- * start a daemon process if necessary.  The daemon process will
- * persist after we exit.
- *
- * This feature is primarily used by the test suite.
- */
-static int do_as_client__query_token(const char *token)
-{
-	struct strbuf answer = STRBUF_INIT;
-	int ret;
-
-	ret = fsmonitor_ipc__send_query(token, &answer);
-	if (ret < 0)
-		die(_("could not query fsmonitor--daemon"));
-
-	write_in_full(1, answer.buf, answer.len);
-	strbuf_release(&answer);
-
-	return 0;
-}
-
-/*
- * Acting as a CLIENT.
- *
- * Read the `.git/index` to get the last token written to the FSMonitor index
- * extension and use that to make a query.
- *
- * This feature is primarily used by the test suite.
- */
-static int do_as_client__query_from_index(void)
-{
-	struct index_state *istate = the_repository->index;
-
-	setup_git_directory();
-	if (do_read_index(istate, the_repository->index_file, 0) < 0)
-		die("unable to read index file");
-	if (!istate->fsmonitor_last_update)
-		die("index file does not have fsmonitor extension");
-
-	return do_as_client__query_token(istate->fsmonitor_last_update);
-}
-
-/*
- * Acting as a CLIENT.
- *
  * Send a "quit" command to the `git-fsmonitor--daemon` (if running)
  * and wait for it to shutdown.
  */
@@ -126,28 +77,19 @@ static int do_as_client__send_stop(void)
 	return 0;
 }
 
-/*
- * Acting as a CLIENT.
- *
- * Send a "flush" command to the `git-fsmonitor--daemon` (if running)
- * and tell it to flush its cache.
- *
- * This feature is primarily used by the test suite to simulate a loss of
- * sync with the filesystem where we miss kernel events.
- */
-static int do_as_client__send_flush(void)
+static int do_as_client__status(void)
 {
-	struct strbuf answer = STRBUF_INIT;
-	int ret;
+	enum ipc_active_state state = fsmonitor_ipc__get_state();
 
-	ret = fsmonitor_ipc__send_command("flush", &answer);
-	if (ret)
-		return ret;
+	switch (state) {
+	case IPC_STATE__LISTENING:
+		printf(_("The built-in file system monitor is active\n"));
+		return 0;
 
-	write_in_full(1, answer.buf, answer.len);
-	strbuf_release(&answer);
-
-	return 0;
+	default:
+		printf(_("The built-in file system monitor is not active\n"));
+		return 1;
+	}
 }
 
 enum fsmonitor_cookie_item_result {
@@ -174,42 +116,35 @@ static int cookies_cmp(const void *data, const struct hashmap_entry *he1,
 	return strcmp(a->name, keydata ? keydata : b->name);
 }
 
-static enum fsmonitor_cookie_item_result fsmonitor_wait_for_cookie(
+static enum fsmonitor_cookie_item_result with_lock__wait_for_cookie(
 	struct fsmonitor_daemon_state *state)
 {
+	/* assert current thread holding state->main_lock */
+
 	int fd;
-	struct fsmonitor_cookie_item cookie;
+	struct fsmonitor_cookie_item *cookie;
 	struct strbuf cookie_pathname = STRBUF_INIT;
 	struct strbuf cookie_filename = STRBUF_INIT;
-	const char *slash;
+	enum fsmonitor_cookie_item_result result;
 	int my_cookie_seq;
 
-	pthread_mutex_lock(&state->main_lock);
+	CALLOC_ARRAY(cookie, 1);
 
 	my_cookie_seq = state->cookie_seq++;
 
+	strbuf_addf(&cookie_filename, "%i-%i", getpid(), my_cookie_seq);
+
 	strbuf_addbuf(&cookie_pathname, &state->path_cookie_prefix);
-	strbuf_addf(&cookie_pathname, "%i-%i", getpid(), my_cookie_seq);
+	strbuf_addbuf(&cookie_pathname, &cookie_filename);
 
-	slash = find_last_dir_sep(cookie_pathname.buf);
-	if (slash)
-		strbuf_addstr(&cookie_filename, slash + 1);
-	else
-		strbuf_addbuf(&cookie_filename, &cookie_pathname);
-	cookie.name = strbuf_detach(&cookie_filename, NULL);
-	cookie.result = FCIR_INIT;
-	// TODO should we have case-insenstive hash (and in cookie_cmp()) ??
-	hashmap_entry_init(&cookie.entry, strhash(cookie.name));
+	cookie->name = strbuf_detach(&cookie_filename, NULL);
+	cookie->result = FCIR_INIT;
+	hashmap_entry_init(&cookie->entry, strhash(cookie->name));
 
-	/*
-	 * Warning: we are putting the address of a stack variable into a
-	 * global hashmap.  This feels dodgy.  We must ensure that we remove
-	 * it before this thread and stack frame returns.
-	 */
-	hashmap_add(&state->cookies, &cookie.entry);
+	hashmap_add(&state->cookies, &cookie->entry);
 
 	trace_printf_key(&trace_fsmonitor, "cookie-wait: '%s' '%s'",
-			 cookie.name, cookie_pathname.buf);
+			 cookie->name, cookie_pathname.buf);
 
 	/*
 	 * Create the cookie file on disk and then wait for a notification
@@ -218,35 +153,42 @@ static enum fsmonitor_cookie_item_result fsmonitor_wait_for_cookie(
 	fd = open(cookie_pathname.buf, O_WRONLY | O_CREAT | O_EXCL, 0600);
 	if (fd >= 0) {
 		close(fd);
-		unlink_or_warn(cookie_pathname.buf);
+		unlink(cookie_pathname.buf);
 
-		while (cookie.result == FCIR_INIT)
+		/*
+		 * NEEDSWORK: This is an infinite wait (well, unless another
+		 * thread sends us an abort).  I'd like to change this to
+		 * use `pthread_cond_timedwait()` and return an error/timeout
+		 * and let the caller do the trivial response thing.
+		 */
+		while (cookie->result == FCIR_INIT)
 			pthread_cond_wait(&state->cookies_cond,
 					  &state->main_lock);
-
-		hashmap_remove(&state->cookies, &cookie.entry, NULL);
 	} else {
 		error_errno(_("could not create fsmonitor cookie '%s'"),
-			    cookie.name);
+			    cookie->name);
 
-		cookie.result = FCIR_ERROR;
-		hashmap_remove(&state->cookies, &cookie.entry, NULL);
+		cookie->result = FCIR_ERROR;
 	}
 
-	pthread_mutex_unlock(&state->main_lock);
+	hashmap_remove(&state->cookies, &cookie->entry, NULL);
 
-	free((char*)cookie.name);
+	result = cookie->result;
+
+	free((char*)cookie->name);
+	free(cookie);
 	strbuf_release(&cookie_pathname);
-	return cookie.result;
+
+	return result;
 }
 
 /*
  * Mark these cookies as _SEEN and wake up the corresponding client threads.
  */
-static void fsmonitor_cookie_mark_seen(struct fsmonitor_daemon_state *state,
-				       const struct string_list *cookie_names)
+static void with_lock__mark_cookies_seen(struct fsmonitor_daemon_state *state,
+					 const struct string_list *cookie_names)
 {
-	/* assert state->main_lock */
+	/* assert current thread holding state->main_lock */
 
 	int k;
 	int nr_seen = 0;
@@ -274,9 +216,9 @@ static void fsmonitor_cookie_mark_seen(struct fsmonitor_daemon_state *state,
 /*
  * Set _ABORT on all pending cookies and wake up all client threads.
  */
-static void fsmonitor_cookie_abort_all(struct fsmonitor_daemon_state *state)
+static void with_lock__abort_all_cookies(struct fsmonitor_daemon_state *state)
 {
-	/* assert state->main_lock */
+	/* assert current thread holding state->main_lock */
 
 	struct hashmap_iter iter;
 	struct fsmonitor_cookie_item *cookie;
@@ -291,30 +233,6 @@ static void fsmonitor_cookie_abort_all(struct fsmonitor_daemon_state *state)
 
 	if (nr_aborted)
 		pthread_cond_broadcast(&state->cookies_cond);
-}
-
-static int lookup_client_test_delay(void)
-{
-	static int delay_ms = -1;
-
-	const char *s;
-	int ms;
-
-	if (delay_ms >= 0)
-		return delay_ms;
-
-	delay_ms = 0;
-
-	s = getenv("GIT_TEST_FSMONITOR_CLIENT_DELAY");
-	if (!s)
-		return delay_ms;
-
-	ms = atoi(s);
-	if (ms < 0)
-		return delay_ms;
-
-	delay_ms = ms;
-	return delay_ms;
 }
 
 /*
@@ -333,6 +251,9 @@ static int lookup_client_test_delay(void)
  *
  *     "builtin" ":" <token_id> ":" <sequence_nr>
  *
+ * The "builtin" prefix is used as a namespace to avoid conflicts
+ * with other providers (such as Watchman).
+ *
  * The <token_id> is an arbitrary OPAQUE string, such as a GUID,
  * UUID, or {timestamp,pid}.  It is used to group all filesystem
  * events that happened while the daemon was monitoring (and in-sync
@@ -343,9 +264,20 @@ static int lookup_client_test_delay(void)
  *     (There are too many race conditions to rely on file system
  *     event timestamps.)
  *
- * The <sequence_nr> is a simple integer incremented for each event
- * received.  When a new <token_id> is created, the <sequence_nr> is
- * reset to zero.
+ * The <sequence_nr> is a simple integer incremented whenever the
+ * daemon needs to make its state public.  For example, if 1000 file
+ * system events come in, but no clients have requested the data,
+ * the daemon can continue to accumulate file changes in the same
+ * bin and does not need to advance the sequence number.  However,
+ * as soon as a client does arrive, the daemon needs to start a new
+ * bin and increment the sequence number.
+ *
+ *     The sequence number serves as the boundary between 2 sets
+ *     of bins -- the older ones that the client has already seen
+ *     and the newer ones that it hasn't.
+ *
+ * When a new <token_id> is created, the <sequence_nr> is reset to
+ * zero.
  *
  *
  * About Token Ids
@@ -361,12 +293,6 @@ static int lookup_client_test_delay(void)
  *
  * [3] in response to a client "flush" command (for dropped event
  *     testing).
- *
- * [4] MAYBE We might want to change the token_id after very complex
- *     filesystem operations are performed, such as a directory move
- *     sequence that affects many files within.  It might be simpler
- *     to just give up and fake a re-sync (and let the client do a
- *     full scan) than try to enumerate the effects of such a change.
  *
  * When a new token_id is created, the daemon is free to discard all
  * cached filesystem events associated with any previous token_ids.
@@ -384,17 +310,27 @@ struct fsmonitor_token_data {
 	uint64_t client_ref_count;
 };
 
+struct fsmonitor_batch {
+	struct fsmonitor_batch *next;
+	uint64_t batch_seq_nr;
+	const char **interned_paths;
+	size_t nr, alloc;
+	time_t pinned_time;
+};
+
 static struct fsmonitor_token_data *fsmonitor_new_token_data(void)
 {
 	static int test_env_value = -1;
 	static uint64_t flush_count = 0;
 	struct fsmonitor_token_data *token;
+	struct fsmonitor_batch *batch;
 
-	token = (struct fsmonitor_token_data *)xcalloc(1, sizeof(*token));
+	CALLOC_ARRAY(token, 1);
+	batch = fsmonitor_batch__new();
 
 	strbuf_init(&token->token_id, 0);
-	token->batch_head = NULL;
-	token->batch_tail = NULL;
+	token->batch_head = batch;
+	token->batch_tail = batch;
 	token->client_ref_count = 0;
 
 	if (test_env_value < 0)
@@ -420,25 +356,49 @@ static struct fsmonitor_token_data *fsmonitor_new_token_data(void)
 		strbuf_addf(&token->token_id, "test_%08x", test_env_value++);
 	}
 
+	/*
+	 * We created a new <token_id> and are starting a new series
+	 * of tokens with a zero <seq_nr>.
+	 *
+	 * Since clients cannot guess our new (non test) <token_id>
+	 * they will always receive a trivial response (because of the
+	 * mismatch on the <token_id>).  The trivial response will
+	 * tell them our new <token_id> so that subsequent requests
+	 * will be relative to our new series.  (And when sending that
+	 * response, we pin the current head of the batch list.)
+	 *
+	 * Even if the client correctly guesses the <token_id>, their
+	 * request of "builtin:<token_id>:0" asks for all changes MORE
+	 * RECENT than batch/bin 0.
+	 *
+	 * This implies that it is a waste to accumulate paths in the
+	 * initial batch/bin (because they will never be transmitted).
+	 *
+	 * So the daemon could be running for days and watching the
+	 * file system, but doesn't need to actually accumulate any
+	 * paths UNTIL we need to set a reference point for a later
+	 * relative request.
+	 *
+	 * However, it is very useful for testing to always have a
+	 * reference point set.  Pin batch 0 to force early file system
+	 * events to accumulate.
+	 */
+	if (test_env_value)
+		batch->pinned_time = time(NULL);
+
 	return token;
 }
 
-struct fsmonitor_batch {
-	struct fsmonitor_batch *next;
-	uint64_t batch_seq_nr;
-	const char **interned_paths;
-	size_t nr, alloc;
-	time_t pinned_time;
-};
-
 struct fsmonitor_batch *fsmonitor_batch__new(void)
 {
-	struct fsmonitor_batch *batch = xcalloc(1, sizeof(*batch));
+	struct fsmonitor_batch *batch;
+
+	CALLOC_ARRAY(batch, 1);
 
 	return batch;
 }
 
-struct fsmonitor_batch *fsmonitor_batch__free(struct fsmonitor_batch *batch)
+struct fsmonitor_batch *fsmonitor_batch__pop(struct fsmonitor_batch *batch)
 {
 	struct fsmonitor_batch *next;
 
@@ -470,8 +430,6 @@ void fsmonitor_batch__add_path(struct fsmonitor_batch *batch,
 static void fsmonitor_batch__combine(struct fsmonitor_batch *batch_dest,
 				     const struct fsmonitor_batch *batch_src)
 {
-	/* assert state->main_lock */
-
 	size_t k;
 
 	ALLOC_GROW(batch_dest->interned_paths,
@@ -507,30 +465,32 @@ static void fsmonitor_batch__combine(struct fsmonitor_batch *batch_dest,
  * artificial (based on when we pinned the batch item) and not on any
  * filesystem activity.
  */
-#define MY_TIME_DELAY (5 * 60) /* seconds */
+#define MY_TIME_DELAY_SECONDS (5 * 60) /* seconds */
 
-static void fsmonitor_batch__truncate(struct fsmonitor_daemon_state *state,
-				      const struct fsmonitor_batch *batch_marker)
+static void with_lock__truncate_old_batches(
+	struct fsmonitor_daemon_state *state,
+	const struct fsmonitor_batch *batch_marker)
 {
-	/* assert state->main_lock */
+	/* assert current thread holding state->main_lock */
 
 	const struct fsmonitor_batch *batch;
 	struct fsmonitor_batch *rest;
 	struct fsmonitor_batch *p;
-	time_t t;
 
 	if (!batch_marker)
 		return;
 
-	trace_printf_key(&trace_fsmonitor, "TRNC mark (%"PRIu64",%"PRIu64")",
+	trace_printf_key(&trace_fsmonitor, "Truncate: mark (%"PRIu64",%"PRIu64")",
 			 batch_marker->batch_seq_nr,
 			 (uint64_t)batch_marker->pinned_time);
 
 	for (batch = batch_marker; batch; batch = batch->next) {
+		time_t t;
+
 		if (!batch->pinned_time) /* an overflow batch */
 			continue;
 
-		t = batch->pinned_time + MY_TIME_DELAY;
+		t = batch->pinned_time + MY_TIME_DELAY_SECONDS;
 		if (t > batch_marker->pinned_time) /* too close to marker */
 			continue;
 
@@ -545,9 +505,9 @@ truncate_past_here:
 	rest = ((struct fsmonitor_batch *)batch)->next;
 	((struct fsmonitor_batch *)batch)->next = NULL;
 
-	for (p = rest; p; p = fsmonitor_batch__free(p)) {
+	for (p = rest; p; p = fsmonitor_batch__pop(p)) {
 		trace_printf_key(&trace_fsmonitor,
-				 "TRNC kill (%"PRIu64",%"PRIu64")",
+				 "Truncate: kill (%"PRIu64",%"PRIu64")",
 				 p->batch_seq_nr, (uint64_t)p->pinned_time);
 	}
 }
@@ -563,7 +523,7 @@ static void fsmonitor_free_token_data(struct fsmonitor_token_data *token)
 
 	strbuf_release(&token->token_id);
 
-	for (p = token->batch_head; p; p = fsmonitor_batch__free(p))
+	for (p = token->batch_head; p; p = fsmonitor_batch__pop(p))
 		;
 
 	free(token);
@@ -581,53 +541,56 @@ static void fsmonitor_free_token_data(struct fsmonitor_token_data *token)
  * [2] Some of those lost events may have been for cookie files.  We
  *     should assume the worst and abort them rather letting them starve.
  *
- * If there are no readers of the the current token data series, we
- * can free it now.  Otherwise, let the last reader free it.  Either
- * way, the old token data series is no longer associated with our
- * state data.
+ * If there are no concurrent threads readering the current token data
+ * series, we can free it now.  Otherwise, let the last reader free
+ * it.
+ *
+ * Either way, the old token data series is no longer associated with
+ * our state data.
  */
-void fsmonitor_force_resync(struct fsmonitor_daemon_state *state)
+static void with_lock__do_force_resync(struct fsmonitor_daemon_state *state)
 {
+	/* assert current thread holding state->main_lock */
+
 	struct fsmonitor_token_data *free_me = NULL;
 	struct fsmonitor_token_data *new_one = NULL;
 
 	new_one = fsmonitor_new_token_data();
 
-	pthread_mutex_lock(&state->main_lock);
-
-	trace_printf_key(&trace_fsmonitor,
-			 "force resync [old '%s'][new '%s']",
-			 state->current_token_data->token_id.buf,
-			 new_one->token_id.buf);
-
-	fsmonitor_cookie_abort_all(state);
-
 	if (state->current_token_data->client_ref_count == 0)
 		free_me = state->current_token_data;
 	state->current_token_data = new_one;
 
-	pthread_mutex_unlock(&state->main_lock);
-
 	fsmonitor_free_token_data(free_me);
+
+	with_lock__abort_all_cookies(state);
+}
+
+void fsmonitor_force_resync(struct fsmonitor_daemon_state *state)
+{
+	pthread_mutex_lock(&state->main_lock);
+	with_lock__do_force_resync(state);
+	pthread_mutex_unlock(&state->main_lock);
 }
 
 /*
  * Format an opaque token string to send to the client.
  */
-static void fsmonitor_format_response_token(
+static void with_lock__format_response_token(
 	struct strbuf *response_token,
 	const struct strbuf *response_token_id,
 	const struct fsmonitor_batch *batch)
 {
-	uint64_t seq_nr = (batch) ? batch->batch_seq_nr + 1 : 0;
+	/* assert current thread holding state->main_lock */
 
 	strbuf_reset(response_token);
 	strbuf_addf(response_token, "builtin:%s:%"PRIu64,
-		    response_token_id->buf, seq_nr);
+		    response_token_id->buf, batch->batch_seq_nr);
 }
 
 /*
  * Parse an opaque token from the client.
+ * Returns -1 on error.
  */
 static int fsmonitor_parse_client_token(const char *buf_token,
 					struct strbuf *requested_token_id,
@@ -640,16 +603,16 @@ static int fsmonitor_parse_client_token(const char *buf_token,
 	*seq_nr = 0;
 
 	if (!skip_prefix(buf_token, "builtin:", &p))
-		return 1;
+		return -1;
 
 	while (*p && *p != ':')
 		strbuf_addch(requested_token_id, *p++);
 	if (!*p++)
-		return 1;
+		return -1;
 
 	*seq_nr = (uint64_t)strtoumax(p, &p_end, 10);
 	if (*p_end)
-		return 1;
+		return -1;
 
 	return 0;
 }
@@ -673,7 +636,9 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 	intmax_t count = 0, duplicates = 0;
 	kh_str_t *shown;
 	int hash_ret;
-	int result;
+	int do_trivial = 0;
+	int do_flush = 0;
+	int do_cookie = 0;
 	enum fsmonitor_cookie_item_result cookie_result;
 
 	/*
@@ -697,33 +662,19 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 		 * There is no reply to the client.
 		 */
 		return SIMPLE_IPC_QUIT;
-	}
 
-	/*
-	 * For testing purposes, introduce an artificial delay in this
-	 * worker to allow the filesystem listener thread to receive
-	 * any fs events that may have been generated by the client
-	 * process on the other end of the pipe/socket.  This helps
-	 * make the CI/PR test suite runs a little more predictable
-	 * and hopefully eliminates the need to introduce `sleep`
-	 * commands in the test scripts.
-	 */
-	if (state->test_client_delay_ms)
-		sleep_millisec(state->test_client_delay_ms);
-
-	if (!strcmp(command, "flush")) {
+	} else if (!strcmp(command, "flush")) {
 		/*
 		 * Flush all of our cached data and generate a new token
 		 * just like if we lost sync with the filesystem.
 		 *
 		 * Then send a trivial response using the new token.
 		 */
-		fsmonitor_force_resync(state);
-		result = 0;
-		goto send_trivial_response;
-	}
+		do_flush = 1;
+		do_trivial = 1;
+		do_cookie = 1;
 
-	if (!skip_prefix(command, "builtin:", &p)) {
+	} else if (!skip_prefix(command, "builtin:", &p)) {
 		/* assume V1 timestamp or garbage */
 
 		char *p_end;
@@ -734,106 +685,125 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 				  "fsmonitor: invalid command line '%s'" :
 				  "fsmonitor: unsupported V1 protocol '%s'"),
 				 command);
-		result = -1;
-		goto send_trivial_response;
-	}
+		do_trivial = 1;
+		do_cookie = 1;
 
-	/* try V2 token */
+	} else {
+		/* We have "builtin:*" */
+		if (fsmonitor_parse_client_token(command, &requested_token_id,
+						 &requested_oldest_seq_nr)) {
+			trace_printf_key(&trace_fsmonitor,
+					 "fsmonitor: invalid V2 protocol token '%s'",
+					 command);
+			do_trivial = 1;
+			do_cookie = 1;
 
-	if (fsmonitor_parse_client_token(command, &requested_token_id,
-					 &requested_oldest_seq_nr)) {
-		trace_printf_key(&trace_fsmonitor,
-				 "fsmonitor: invalid V2 protocol token '%s'",
-				 command);
-		result = -1;
-		goto send_trivial_response;
+		} else {
+			/*
+			 * We have a V2 valid token:
+			 *     "builtin:<token_id>:<seq_nr>"
+			 */
+			do_cookie = 1;
+		}
 	}
 
 	pthread_mutex_lock(&state->main_lock);
 
-	if (!state->current_token_data) {
-		/*
-		 * We don't have a current token.  This may mean that
-		 * the listener thread has not yet started.
-		 */
-		pthread_mutex_unlock(&state->main_lock);
-		result = 0;
-		goto send_trivial_response;
-	}
-	if (strcmp(requested_token_id.buf,
-		   state->current_token_data->token_id.buf)) {
-		/*
-		 * The client last spoke to a different daemon
-		 * instance -OR- the daemon had to resync with
-		 * the filesystem (and lost events), so reject.
-		 */
-		pthread_mutex_unlock(&state->main_lock);
-		result = 0;
-		trace2_data_string("fsmonitor", the_repository,
-				   "response/token", "different");
-		goto send_trivial_response;
-	}
-	if (!state->current_token_data->batch_tail) {
-		/*
-		 * The listener has not received any filesystem
-		 * events yet since we created the current token.
-		 * We can respond with an empty list, since the
-		 * client has already seen the current token and
-		 * we have nothing new to report.  (This is
-		 * instead of sending a trivial response.)
-		 */
-		pthread_mutex_unlock(&state->main_lock);
-		result = 0;
-		goto send_empty_response;
-	}
-	if (requested_oldest_seq_nr <
-	    state->current_token_data->batch_tail->batch_seq_nr) {
-		/*
-		 * The client wants older events than we have for
-		 * this token_id.  This means that the end of our
-		 * batch list was truncated and we cannot give the
-		 * client a complete snapshot relative to their
-		 * request.
-		 */
-		pthread_mutex_unlock(&state->main_lock);
-
-		trace_printf_key(&trace_fsmonitor,
-				 "client requested truncated data");
-		result = 0;
-		goto send_trivial_response;
-	}
-
-	pthread_mutex_unlock(&state->main_lock);
+	if (!state->current_token_data)
+		BUG("fsmonitor state does not have a current token");
 
 	/*
-	 * Write a cookie file inside the directory being watched in an
-	 * effort to flush out existing filesystem events that we actually
-	 * care about.  Suspend this client thread until we see the filesystem
-	 * events for this cookie file.
+	 * Write a cookie file inside the directory being watched in
+	 * an effort to flush out existing filesystem events that we
+	 * actually care about.  Suspend this client thread until we
+	 * see the filesystem events for this cookie file.
+	 *
+	 * Creating the cookie lets us guarantee that our FS listener
+	 * thread has drained the kernel queue and we are caught up
+	 * with the kernel.
+	 *
+	 * If we cannot create the cookie (or otherwise guarantee that
+	 * we are caught up), we send a trivial response.  We have to
+	 * assume that there might be some very, very recent activity
+	 * on the FS still in flight.
 	 */
-	cookie_result = fsmonitor_wait_for_cookie(state);
-	if (cookie_result != FCIR_SEEN) {
-		error(_("fsmonitor: cookie_result '%d' != SEEN"),
-		      cookie_result);
-		result = 0;
-		goto send_trivial_response;
+	if (do_cookie) {
+		cookie_result = with_lock__wait_for_cookie(state);
+		if (cookie_result != FCIR_SEEN) {
+			error(_("fsmonitor: cookie_result '%d' != SEEN"),
+			      cookie_result);
+			do_trivial = 1;
+		}
 	}
 
-	pthread_mutex_lock(&state->main_lock);
+	if (do_flush)
+		with_lock__do_force_resync(state);
 
-	if (strcmp(requested_token_id.buf,
-		   state->current_token_data->token_id.buf)) {
-		/*
-		 * Ack! The listener thread lost sync with the filesystem
-		 * and created a new token while we were waiting for the
-		 * cookie file to be created!  Just give up.
-		 */
+	/*
+	 * We mark the current head of the batch list as "pinned" so
+	 * that the listener thread will treat this item as read-only
+	 * (and prevent any more paths from being added to it) from
+	 * now on.
+	 */
+	token_data = state->current_token_data;
+	batch_head = token_data->batch_head;
+	((struct fsmonitor_batch *)batch_head)->pinned_time = time(NULL);
+
+	/*
+	 * FSMonitor Protocol V2 requires that we send a response header
+	 * with a "new current token" and then all of the paths that changed
+	 * since the "requested token".  We send the seq_nr of the just-pinned
+	 * head batch so that future requests from a client will be relative
+	 * to it.
+	 */
+	with_lock__format_response_token(&response_token,
+					 &token_data->token_id, batch_head);
+
+	reply(reply_data, response_token.buf, response_token.len + 1);
+	total_response_len += response_token.len + 1;
+
+	trace2_data_string("fsmonitor", the_repository, "response/token",
+			   response_token.buf);
+	trace_printf_key(&trace_fsmonitor, "response token: %s",
+			 response_token.buf);
+
+	if (!do_trivial) {
+		if (strcmp(requested_token_id.buf, token_data->token_id.buf)) {
+			/*
+			 * The client last spoke to a different daemon
+			 * instance -OR- the daemon had to resync with
+			 * the filesystem (and lost events), so reject.
+			 */
+			trace2_data_string("fsmonitor", the_repository,
+					   "response/token", "different");
+			do_trivial = 1;
+
+		} else if (requested_oldest_seq_nr <
+			   token_data->batch_tail->batch_seq_nr) {
+			/*
+			 * The client wants older events than we have for
+			 * this token_id.  This means that the end of our
+			 * batch list was truncated and we cannot give the
+			 * client a complete snapshot relative to their
+			 * request.
+			 */
+			trace_printf_key(&trace_fsmonitor,
+					 "client requested truncated data");
+			do_trivial = 1;
+		}
+	}
+
+	if (do_trivial) {
 		pthread_mutex_unlock(&state->main_lock);
 
-		trace_printf_key(&trace_fsmonitor,
-				 "lost filesystem sync");
-		result = 0;
-		goto send_trivial_response;
+		reply(reply_data, "/", 2);
+
+		trace2_data_intmax("fsmonitor", the_repository,
+				   "response/trivial", 1);
+
+		strbuf_release(&response_token);
+		strbuf_release(&requested_token_id);
+		return 0;
 	}
 
 	/*
@@ -847,39 +817,26 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 	 *
 	 * AND it allows the listener thread to do a token-reset
 	 * (and install a new `current_token_data`).
-	 *
-	 * We mark the current head of the batch list as "pinned" so
-	 * that the listener thread will treat this item as read-only
-	 * (and prevent any more paths from being added to it) from
-	 * now on.
 	 */
-	token_data = state->current_token_data;
 	token_data->client_ref_count++;
-
-	batch_head = token_data->batch_head;
-	((struct fsmonitor_batch *)batch_head)->pinned_time = time(NULL);
 
 	pthread_mutex_unlock(&state->main_lock);
 
 	/*
-	 * FSMonitor Protocol V2 requires that we send a response header
-	 * with a "new current token" and then all of the paths that changed
-	 * since the "requested token".
+	 * The client request is relative to the token that they sent,
+	 * so walk the batch list backwards from the current head back
+	 * to the batch (sequence number) they named.
+	 *
+	 * We use khash to de-dup the list of pathnames.
+	 *
+	 * NEEDSWORK: each batch contains a list of interned strings,
+	 * so we only need to do pointer comparisons here to build the
+	 * hash table.  Currently, we're still comparing the string
+	 * values.
 	 */
-	fsmonitor_format_response_token(&response_token,
-					&token_data->token_id,
-					batch_head);
-
-	reply(reply_data, response_token.buf, response_token.len + 1);
-	total_response_len += response_token.len + 1;
-
-	trace2_data_string("fsmonitor", the_repository, "response/token",
-			   response_token.buf);
-	trace_printf_key(&trace_fsmonitor, "response token: %s", response_token.buf);
-
 	shown = kh_init_str();
 	for (batch = batch_head;
-	     batch && batch->batch_seq_nr >= requested_oldest_seq_nr;
+	     batch && batch->batch_seq_nr > requested_oldest_seq_nr;
 	     batch = batch->next) {
 		size_t k;
 
@@ -921,6 +878,7 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 	kh_release_str(shown);
 
 	pthread_mutex_lock(&state->main_lock);
+
 	if (token_data->client_ref_count > 0)
 		token_data->client_ref_count--;
 
@@ -942,7 +900,7 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 			 * obsolete.  See if we can truncate the list
 			 * and save some memory.
 			 */
-			fsmonitor_batch__truncate(state, batch);
+			with_lock__truncate_old_batches(state, batch);
 		}
 	}
 
@@ -957,51 +915,25 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 	strbuf_release(&payload);
 
 	return 0;
-
-send_trivial_response:
-	pthread_mutex_lock(&state->main_lock);
-	fsmonitor_format_response_token(&response_token,
-					&state->current_token_data->token_id,
-					state->current_token_data->batch_head);
-	pthread_mutex_unlock(&state->main_lock);
-
-	reply(reply_data, response_token.buf, response_token.len + 1);
-	trace2_data_string("fsmonitor", the_repository, "response/token",
-			   response_token.buf);
-	reply(reply_data, "/", 2);
-	trace2_data_intmax("fsmonitor", the_repository, "response/trivial", 1);
-
-	strbuf_release(&response_token);
-	strbuf_release(&requested_token_id);
-
-	return result;
-
-send_empty_response:
-	pthread_mutex_lock(&state->main_lock);
-	fsmonitor_format_response_token(&response_token,
-					&state->current_token_data->token_id,
-					NULL);
-	pthread_mutex_unlock(&state->main_lock);
-
-	reply(reply_data, response_token.buf, response_token.len + 1);
-	trace2_data_string("fsmonitor", the_repository, "response/token",
-			   response_token.buf);
-	trace2_data_intmax("fsmonitor", the_repository, "response/empty", 1);
-
-	strbuf_release(&response_token);
-	strbuf_release(&requested_token_id);
-
-	return 0;
 }
 
 static ipc_server_application_cb handle_client;
 
-static int handle_client(void *data, const char *command,
+static int handle_client(void *data,
+			 const char *command, size_t command_len,
 			 ipc_server_reply_cb *reply,
 			 struct ipc_server_reply_data *reply_data)
 {
 	struct fsmonitor_daemon_state *state = data;
 	int result;
+
+	/*
+	 * The Simple IPC API now supports {char*, len} arguments, but
+	 * FSMonitor always uses proper null-terminated strings, so
+	 * we can ignore the command_len argument.  (Trust, but verify.)
+	 */
+	if (command_len != strlen(command))
+		BUG("FSMonitor assumes text messages");
 
 	trace_printf_key(&trace_fsmonitor, "requested token: %s", command);
 
@@ -1015,7 +947,9 @@ static int handle_client(void *data, const char *command,
 	return result;
 }
 
-#define FSMONITOR_COOKIE_PREFIX ".fsmonitor-daemon-"
+#define FSMONITOR_DIR           "fsmonitor--daemon"
+#define FSMONITOR_COOKIE_DIR    "cookies"
+#define FSMONITOR_COOKIE_PREFIX (FSMONITOR_DIR "/" FSMONITOR_COOKIE_DIR "/")
 
 enum fsmonitor_path_type fsmonitor_classify_path_workdir_relative(
 	const char *rel)
@@ -1119,10 +1053,7 @@ void fsmonitor_publish(struct fsmonitor_daemon_state *state,
 
 		head = state->current_token_data->batch_head;
 		if (!head) {
-			batch->batch_seq_nr = 0;
-			batch->next = NULL;
-			state->current_token_data->batch_head = batch;
-			state->current_token_data->batch_tail = batch;
+			BUG("token does not have batch");
 		} else if (head->pinned_time) {
 			/*
 			 * We cannot alter the current batch list
@@ -1143,6 +1074,13 @@ void fsmonitor_publish(struct fsmonitor_daemon_state *state,
 			batch->batch_seq_nr = head->batch_seq_nr + 1;
 			batch->next = head;
 			state->current_token_data->batch_head = batch;
+		} else if (!head->batch_seq_nr) {
+			/*
+			 * Batch 0 is unpinned.  See the note in
+			 * `fsmonitor_new_token_data()` about why we
+			 * don't need to accumulate these paths.
+			 */
+			fsmonitor_batch__pop(batch);
 		} else if (head->nr + batch->nr > MY_COMBINE_LIMIT) {
 			/*
 			 * The head batch in the list has never been
@@ -1160,12 +1098,12 @@ void fsmonitor_publish(struct fsmonitor_daemon_state *state,
 			 * batch onto the end of the current head batch.
 			 */
 			fsmonitor_batch__combine(head, batch);
-			fsmonitor_batch__free(batch);
+			fsmonitor_batch__pop(batch);
 		}
 	}
 
 	if (cookie_names->nr)
-		fsmonitor_cookie_mark_seen(state, cookie_names);
+		with_lock__mark_cookies_seen(state, cookie_names);
 
 	pthread_mutex_unlock(&state->main_lock);
 }
@@ -1261,7 +1199,6 @@ static int fsmonitor_run_daemon(void)
 	pthread_cond_init(&state.cookies_cond, NULL);
 	state.error_code = 0;
 	state.current_token_data = fsmonitor_new_token_data();
-	state.test_client_delay_ms = lookup_client_test_delay();
 
 	/* Prepare to (recursively) watch the <worktree-root> directory. */
 	strbuf_init(&state.path_worktree_watch, 0);
@@ -1269,8 +1206,10 @@ static int fsmonitor_run_daemon(void)
 	state.nr_paths_watching = 1;
 
 	/*
-	 * If ".git" is not a directory, then <gitdir> is not inside the
-	 * cone of <worktree-root>, so set up a second watch for it.
+	 * We create/delete cookie files inside the .git directory to
+	 * help us keep sync with the file system.  If ".git" is not a
+	 * directory, then <gitdir> is not inside the cone of
+	 * <worktree-root>, so set up a second watch for it.
 	 */
 	strbuf_init(&state.path_gitdir_watch, 0);
 	strbuf_addbuf(&state.path_gitdir_watch, &state.path_worktree_watch);
@@ -1283,12 +1222,20 @@ static int fsmonitor_run_daemon(void)
 
 	/*
 	 * We will write filesystem syncing cookie files into
-	 * <gitdir>/<cookie-prefix><pid>-<seq>.
+	 * <gitdir>/<fsmonitor-dir>/<cookie-dir>/<pid>-<seq>.
 	 */
 	strbuf_init(&state.path_cookie_prefix, 0);
 	strbuf_addbuf(&state.path_cookie_prefix, &state.path_gitdir_watch);
+
 	strbuf_addch(&state.path_cookie_prefix, '/');
-	strbuf_addstr(&state.path_cookie_prefix, FSMONITOR_COOKIE_PREFIX);
+	strbuf_addstr(&state.path_cookie_prefix, FSMONITOR_DIR);
+	mkdir(state.path_cookie_prefix.buf, 0777);
+
+	strbuf_addch(&state.path_cookie_prefix, '/');
+	strbuf_addstr(&state.path_cookie_prefix, FSMONITOR_COOKIE_DIR);
+	mkdir(state.path_cookie_prefix.buf, 0777);
+
+	strbuf_addch(&state.path_cookie_prefix, '/');
 
 	/*
 	 * Confirm that we can create platform-specific resources for the
@@ -1312,12 +1259,11 @@ done:
 	strbuf_release(&state.path_gitdir_watch);
 	strbuf_release(&state.path_cookie_prefix);
 
-	return err;
-}
+	/*
+	 * NEEDSWORK: Consider "rm -rf <gitdir>/<fsmonitor-dir>"
+	 */
 
-static int is_ipc_daemon_listening(void)
-{
-	return fsmonitor_ipc__get_state() == IPC_STATE__LISTENING;
+	return err;
 }
 
 static int try_to_run_foreground_daemon(void)
@@ -1330,7 +1276,7 @@ static int try_to_run_foreground_daemon(void)
 	 * However, this method gives us a nicer error message for a
 	 * common error case.
 	 */
-	if (is_ipc_daemon_listening())
+	if (fsmonitor_ipc__get_state() == IPC_STATE__LISTENING)
 		die("fsmonitor--daemon is already running.");
 
 	return !!fsmonitor_run_daemon();
@@ -1383,7 +1329,7 @@ static int spawn_background_fsmonitor_daemon(pid_t *pid)
 
 	strvec_push(&args, git_exe);
 	strvec_push(&args, "fsmonitor--daemon");
-	strvec_push(&args, "--run");
+	strvec_push(&args, "run");
 
 	*pid = mingw_spawnvpe(args.v[0], args.v, NULL, NULL, in, out, out);
 	close(in);
@@ -1418,7 +1364,6 @@ static int wait_for_background_startup(pid_t pid_child)
 
 		if (pid_seen == -1)
 			return error_errno(_("waitpid failed"));
-
 		else if (pid_seen == 0) {
 			/*
 			 * The child is still running (this should be
@@ -1438,11 +1383,7 @@ static int wait_for_background_startup(pid_t pid_child)
 			time(&now);
 			if (now > time_limit)
 				return error(_("fsmonitor--daemon not online yet"));
-
-			continue;
-		}
-
-		else if (pid_seen == pid_child) {
+		} else if (pid_seen == pid_child) {
 			/*
 			 * The new child daemon process shutdown while
 			 * it was starting up, so it is not listening
@@ -1468,9 +1409,7 @@ static int wait_for_background_startup(pid_t pid_child)
 			 * early shutdown as an error.
 			 */
 			return error(_("fsmonitor--daemon failed to start"));
-		}
-
-		else
+		} else
 			return error(_("waitpid is confused"));
 	}
 }
@@ -1488,7 +1427,7 @@ static int try_to_start_background_daemon(void)
 	 * of creating the background process (and not whether it
 	 * immediately exited).
 	 */
-	if (is_ipc_daemon_listening())
+	if (fsmonitor_ipc__get_state() == IPC_STATE__LISTENING)
 		die("fsmonitor--daemon is already running.");
 
 	/*
@@ -1511,53 +1450,30 @@ static int try_to_start_background_daemon(void)
 
 int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 {
-	enum daemon_mode {
-		UNDEFINED_MODE,
-		START,
-		RUN,
-		STOP,
-		IS_RUNNING,
-		QUERY,
-		QUERY_INDEX,
-		FLUSH,
-	} mode = UNDEFINED_MODE;
+	const char *subcmd;
 
 	struct option options[] = {
-		OPT_CMDMODE(0, "start", &mode,
-			    N_("run the daemon in the background"),
-			    START),
-		OPT_CMDMODE(0, "run", &mode,
-			    N_("run the daemon in the foreground"), RUN),
-		OPT_CMDMODE(0, "stop", &mode, N_("stop the running daemon"),
-			    STOP),
-
-		OPT_CMDMODE(0, "is-running", &mode,
-			    N_("test whether the daemon is running"),
-			    IS_RUNNING),
-
-		OPT_CMDMODE(0, "query", &mode,
-			    N_("query the daemon (starting if necessary)"),
-			    QUERY),
-		OPT_CMDMODE(0, "query-index", &mode,
-			    N_("query the daemon (starting if necessary) using token from index"),
-			    QUERY_INDEX),
-		OPT_CMDMODE(0, "flush", &mode, N_("flush cached filesystem events"),
-			    FLUSH),
-
-		OPT_GROUP(N_("Daemon options")),
 		OPT_INTEGER(0, "ipc-threads",
 			    &fsmonitor__ipc_threads,
 			    N_("use <n> ipc worker threads")),
 		OPT_INTEGER(0, "start-timeout",
 			    &fsmonitor__start_timeout_sec,
 			    N_("Max seconds to wait for background daemon startup")),
+
 		OPT_END()
 	};
+
+	if (argc < 2)
+		usage_with_options(builtin_fsmonitor__daemon_usage, options);
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_fsmonitor__daemon_usage, options);
 
 	git_config(fsmonitor_config, NULL);
+
+	subcmd = argv[1];
+	argv--;
+	argc++;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_fsmonitor__daemon_usage, 0);
@@ -1565,35 +1481,19 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 		die(_("invalid 'ipc-threads' value (%d)"),
 		    fsmonitor__ipc_threads);
 
-	switch (mode) {
-	case START:
+	if (!strcmp(subcmd, "start"))
 		return !!try_to_start_background_daemon();
 
-	case RUN:
+	if (!strcmp(subcmd, "run"))
 		return !!try_to_run_foreground_daemon();
 
-	case STOP:
+	if (!strcmp(subcmd, "stop"))
 		return !!do_as_client__send_stop();
 
-	case IS_RUNNING:
-		return !is_ipc_daemon_listening();
+	if (!strcmp(subcmd, "status"))
+		return !!do_as_client__status();
 
-	case QUERY:
-		if (argc != 1)
-			usage_with_options(builtin_fsmonitor__daemon_usage,
-					   options);
-		return !!do_as_client__query_token(argv[0]);
-
-	case QUERY_INDEX:
-		return !!do_as_client__query_from_index();
-
-	case FLUSH:
-		return !!do_as_client__send_flush();
-
-	case UNDEFINED_MODE:
-	default:
-		die(_("Unhandled command mode %d"), mode);
-	}
+	die(_("Unhandled subcommand '%s'"), subcmd);
 }
 
 #else

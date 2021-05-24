@@ -181,7 +181,10 @@ test_perf_w_drop_caches () {
 }
 
 test_fsmonitor_suite() {
-	if test -n "$INTEGRATION_SCRIPT"; then
+	if test -n "$USE_FSMONITOR_DAEMON"
+	then
+		DESC="builtin fsmonitor--daemon"
+	elif test -n "$INTEGRATION_SCRIPT"; then
 		DESC="fsmonitor=$(basename $INTEGRATION_SCRIPT)"
 	else
 		DESC="fsmonitor=disabled"
@@ -308,13 +311,13 @@ then
 	USE_FSMONITOR_DAEMON=t
 
 	trace_start fsmonitor--daemon--server
-	git fsmonitor--daemon --start
+	git fsmonitor--daemon start
 
 	trace_start fsmonitor--daemon--client
 	test_expect_success "setup for fsmonitor--daemon" 'setup_for_fsmonitor'
 	test_fsmonitor_suite
 
-	git fsmonitor--daemon --stop
+	git fsmonitor--daemon stop
 	trace_stop
 fi
 

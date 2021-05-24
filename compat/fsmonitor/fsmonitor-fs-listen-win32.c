@@ -122,7 +122,7 @@ static struct one_watch *create_watch(struct fsmonitor_daemon_state *state,
 		return NULL;
 	}
 
-	watch = xcalloc(1, sizeof(*watch));
+	CALLOC_ARRAY(watch, 1);
 
 	watch->buf_len = sizeof(watch->buffer); /* assume full MAX_RDCW_BUF */
 
@@ -166,10 +166,24 @@ static int start_rdcw_watch(struct fsmonitor_daemon_backend_data *data,
 	watch->overlapped.hEvent = watch->hEvent;
 
 start_watch:
+	/*
+	 * Queue an async call using Overlapped IO.  This returns immediately.
+	 * Our event handle will be signalled when the real result is available.
+	 *
+	 * The return value here just means that we successfully queued it.
+	 * We won't know if the Read...() actually produces data until later.
+	 */
 	watch->is_active = ReadDirectoryChangesW(
 		watch->hDir, watch->buffer, watch->buf_len, TRUE,
 		dwNotifyFilter, &watch->count, &watch->overlapped, NULL);
 
+	/*
+	 * The kernel throws an invalid parameter error when our buffer
+	 * is too big and we are pointed at a remote directory (and possibly
+	 * for other reasons).  Quietly set it down and try again.
+	 *
+	 * See note about MAX_RDCW_BUF at the top.
+	 */
 	if (!watch->is_active &&
 	    GetLastError() == ERROR_INVALID_PARAMETER &&
 	    watch->buf_len > MAX_RDCW_BUF_FALLBACK) {
@@ -189,15 +203,22 @@ static int recv_rdcw_watch(struct one_watch *watch)
 {
 	watch->is_active = FALSE;
 
+	/*
+	 * The overlapped result is ready.  If the Read...() was successful
+	 * we finally receive the actual result into our buffer.
+	 */
 	if (GetOverlappedResult(watch->hDir, &watch->overlapped, &watch->count,
 				TRUE))
 		return 0;
 
-	// TODO If an external <gitdir> is deleted, the above returns an error.
-	// TODO I'm not sure that there's anything that we can do here other
-	// TODO than failing -- the <worktree>/.git link file would be broken
-	// TODO anyway.  We might try to check for that and return a better
-	// TODO error message.
+	/*
+	 * NEEDSWORK: If an external <gitdir> is deleted, the above
+	 * returns an error.  I'm not sure that there's anything that
+	 * we can do here other than failing -- the <worktree>/.git
+	 * link file would be broken anyway.  We might try to check
+	 * for that and return a better error message, but I'm not
+	 * sure it is worth it.
+	 */
 
 	error("GetOverlappedResult failed on '%s' [GLE %ld]",
 	      watch->path.buf, GetLastError());
@@ -211,6 +232,19 @@ static void cancel_rdcw_watch(struct one_watch *watch)
 	if (!watch || !watch->is_active)
 		return;
 
+	/*
+	 * The calls to ReadDirectoryChangesW() and GetOverlappedResult()
+	 * form a "pair" (my term) where we queue an IO and promise to
+	 * hang around and wait for the kernel to give us the result.
+	 *
+	 * If for some reason after we queue the IO, we have to quit
+	 * or otherwise not stick around for the second half, we must
+	 * tell the kernel to abort the IO.  This prevents the kernel
+	 * from writing to our buffer and/or signalling our event
+	 * after we free them.
+	 *
+	 * (Ask me how much fun it was to track that one down).
+	 */
 	CancelIoEx(watch->hDir, &watch->overlapped);
 	GetOverlappedResult(watch->hDir, &watch->overlapped, &count, TRUE);
 	watch->is_active = FALSE;
@@ -236,8 +270,15 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 	/*
 	 * If the kernel gets more events than will fit in the kernel
 	 * buffer associated with our RDCW handle, it drops them and
-	 * returns a count of zero.  (A successful call, but with
-	 * length zero.)
+	 * returns a count of zero.
+	 *
+	 * Yes, the call returns WITHOUT error and with length zero.
+	 *
+	 * (The "overflow" case is not ambiguous with the "no data" case
+	 * because we did an INFINITE wait.)
+	 *
+	 * This means we have a gap in coverage.  Tell the daemon layer
+	 * to resync.
 	 */
 	if (!watch->count) {
 		trace2_data_string("fsmonitor", NULL, "fsm-listen/kernel",
@@ -300,7 +341,6 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 		default:
 			BUG("unexpected path classification '%d' for '%s'",
 			    t, path.buf);
-			goto skip_this_path;
 		}
 
 skip_this_path:
@@ -316,14 +356,14 @@ skip_this_path:
 	return LISTENER_HAVE_DATA_WORKTREE;
 
 force_shutdown:
-	fsmonitor_batch__free(batch);
+	fsmonitor_batch__pop(batch);
 	string_list_clear(&cookie_list, 0);
 	strbuf_release(&path);
 	return LISTENER_SHUTDOWN;
 }
 
 /*
- * Process filesystem events that happend anywhere (recursively) under the
+ * Process filesystem events that happened anywhere (recursively) under the
  * external <gitdir> (such as non-primary worktrees or submodules).
  * We only care about cookie files that our client threads created here.
  *
@@ -375,7 +415,6 @@ static int process_gitdir_events(struct fsmonitor_daemon_state *state)
 		default:
 			BUG("unexpected path classification '%d' for '%s'",
 			    t, path.buf);
-			goto skip_this_path;
 		}
 
 skip_this_path:
@@ -457,7 +496,7 @@ int fsmonitor_fs_listen__ctor(struct fsmonitor_daemon_state *state)
 {
 	struct fsmonitor_daemon_backend_data *data;
 
-	data = xcalloc(1, sizeof(*data));
+	CALLOC_ARRAY(data, 1);
 
 	data->hEventShutdown = CreateEvent(NULL, TRUE, FALSE, NULL);
 

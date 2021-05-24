@@ -29,6 +29,8 @@ enum fetch_negotiation_setting {
 struct repo_settings {
 	int initialized;
 
+	int use_builtin_fsmonitor;
+
 	int core_commit_graph;
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
@@ -41,8 +43,6 @@ struct repo_settings {
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
 
 	int core_multi_pack_index;
-
-	int use_builtin_fsmonitor;
 
 	unsigned command_requires_full_index:1,
 		 sparse_index:1;

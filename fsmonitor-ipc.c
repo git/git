@@ -1,29 +1,19 @@
 #include "cache.h"
 #include "fsmonitor.h"
+#include "simple-ipc.h"
 #include "fsmonitor-ipc.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "trace2.h"
 
 #ifdef HAVE_FSMONITOR_DAEMON_BACKEND
-#define FSMONITOR_DAEMON_IS_SUPPORTED 1
-#else
-#define FSMONITOR_DAEMON_IS_SUPPORTED 0
-#endif
 
-/*
- * A trivial function so that this source file always defines at least
- * one symbol even when the feature is not supported.  This quiets an
- * annoying compiler error.
- */
 int fsmonitor_ipc__is_supported(void)
 {
-	return FSMONITOR_DAEMON_IS_SUPPORTED;
+	return 1;
 }
 
-#ifdef HAVE_FSMONITOR_DAEMON_BACKEND
-
-GIT_PATH_FUNC(fsmonitor_ipc__get_path, "fsmonitor")
+GIT_PATH_FUNC(fsmonitor_ipc__get_path, "fsmonitor--daemon.ipc")
 
 enum ipc_active_state fsmonitor_ipc__get_state(void)
 {
@@ -32,7 +22,7 @@ enum ipc_active_state fsmonitor_ipc__get_state(void)
 
 static int spawn_daemon(void)
 {
-	const char *args[] = { "fsmonitor--daemon", "--start", NULL };
+	const char *args[] = { "fsmonitor--daemon", "start", NULL };
 
 	return run_command_v_opt_tr2(args, RUN_COMMAND_NO_STDIN | RUN_GIT_CMD,
 				    "fsmonitor");
@@ -63,7 +53,7 @@ try_again:
 	switch (state) {
 	case IPC_STATE__LISTENING:
 		ret = ipc_client_send_command_to_connection(
-			connection, since_token, answer);
+			connection, since_token, strlen(since_token), answer);
 		ipc_client_close_connection(connection);
 
 		trace2_data_intmax("fsm_client", NULL,
@@ -138,7 +128,9 @@ int fsmonitor_ipc__send_command(const char *command,
 		return -1;
 	}
 
-	ret = ipc_client_send_command_to_connection(connection, command, answer);
+	ret = ipc_client_send_command_to_connection(connection,
+						    command, strlen(command),
+						    answer);
 	ipc_client_close_connection(connection);
 
 	if (ret == -1) {
@@ -148,6 +140,40 @@ int fsmonitor_ipc__send_command(const char *command,
 	}
 
 	return 0;
+}
+
+#else
+
+/*
+ * A trivial implementation of the fsmonitor_ipc__ API for unsupported
+ * platforms.
+ */
+
+int fsmonitor_ipc__is_supported(void)
+{
+	return 0;
+}
+
+const char *fsmonitor_ipc__get_path(void)
+{
+	return NULL;
+}
+
+enum ipc_active_state fsmonitor_ipc__get_state(void)
+{
+	return IPC_STATE__OTHER_ERROR;
+}
+
+int fsmonitor_ipc__send_query(const char *since_token,
+			      struct strbuf *answer)
+{
+	return -1;
+}
+
+int fsmonitor_ipc__send_command(const char *command,
+				struct strbuf *answer)
+{
+	return -1;
 }
 
 #endif

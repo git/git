@@ -2,20 +2,17 @@
 #define FSMONITOR_IPC_H
 
 /*
- * Returns true if a filesystem notification backend is defined
- * for this platform.  This symbol must always be visible and
- * outside of the HAVE_ ifdef.
+ * Returns true if built-in file system monitor daemon is defined
+ * for this platform.
  */
 int fsmonitor_ipc__is_supported(void);
-
-#ifdef HAVE_FSMONITOR_DAEMON_BACKEND
-#include "run-command.h"
-#include "simple-ipc.h"
 
 /*
  * Returns the pathname to the IPC named pipe or Unix domain socket
  * where a `git-fsmonitor--daemon` process will listen.  This is a
  * per-worktree value.
+ *
+ * Returns NULL if the daemon is not supported on this platform.
  */
 const char *fsmonitor_ipc__get_path(void);
 
@@ -32,6 +29,8 @@ enum ipc_active_state fsmonitor_ipc__get_state(void);
  * This DOES NOT use the hook interface.
  *
  * Spawn a daemon process in the background if necessary.
+ *
+ * Returns -1 on error; 0 on success.
  */
 int fsmonitor_ipc__send_query(const char *since_token,
 			      struct strbuf *answer);
@@ -40,9 +39,10 @@ int fsmonitor_ipc__send_query(const char *since_token,
  * Connect to a `git-fsmonitor--daemon` process via simple-ipc and
  * send a command verb.  If no daemon is available, we DO NOT try to
  * start one.
+ *
+ * Returns -1 on error; 0 on success.
  */
 int fsmonitor_ipc__send_command(const char *command,
 				struct strbuf *answer);
 
-#endif /* HAVE_FSMONITOR_DAEMON_BACKEND */
 #endif /* FSMONITOR_IPC_H */
