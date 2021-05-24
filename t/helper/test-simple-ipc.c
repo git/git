@@ -112,7 +112,7 @@ static int app__slow_command(ipc_server_reply_cb *reply_cb,
 /*
  * The client sent a command followed by a (possibly very) large buffer.
  */
-static int app__sendbytes_command(const char *received,
+static int app__sendbytes_command(const char *received, size_t received_len,
 				  ipc_server_reply_cb *reply_cb,
 				  struct ipc_server_reply_data *reply_data)
 {
@@ -122,6 +122,13 @@ static int app__sendbytes_command(const char *received,
 	int k;
 	int errs = 0;
 	int ret;
+
+	/*
+	 * The test is setup to send:
+	 *     "sendbytes" SP <n * char>
+	 */
+	if (received_len < strlen("sendbytes "))
+		BUG("received_len is short in app__sendbytes_command");
 
 	if (skip_prefix(received, "sendbytes ", &p))
 		len_ballast = strlen(p);
@@ -160,7 +167,7 @@ static ipc_server_application_cb test_app_cb;
  * by this application.
  */
 static int test_app_cb(void *application_data,
-		       const char *command,
+		       const char *command, size_t command_len,
 		       ipc_server_reply_cb *reply_cb,
 		       struct ipc_server_reply_data *reply_data)
 {
@@ -173,7 +180,7 @@ static int test_app_cb(void *application_data,
 	if (application_data != (void*)&my_app_data)
 		BUG("application_cb: application_data pointer wrong");
 
-	if (!strcmp(command, "quit")) {
+	if (command_len == 4 && !strncmp(command, "quit", 4)) {
 		/*
 		 * The client sent a "quit" command.  This is an async
 		 * request for the server to shutdown.
@@ -193,22 +200,23 @@ static int test_app_cb(void *application_data,
 		return SIMPLE_IPC_QUIT;
 	}
 
-	if (!strcmp(command, "ping")) {
+	if (command_len == 4 && !strncmp(command, "ping", 4)) {
 		const char *answer = "pong";
 		return reply_cb(reply_data, answer, strlen(answer));
 	}
 
-	if (!strcmp(command, "big"))
+	if (command_len == 3 && !strncmp(command, "big", 3))
 		return app__big_command(reply_cb, reply_data);
 
-	if (!strcmp(command, "chunk"))
+	if (command_len == 5 && !strncmp(command, "chunk", 5))
 		return app__chunk_command(reply_cb, reply_data);
 
-	if (!strcmp(command, "slow"))
+	if (command_len == 4 && !strncmp(command, "slow", 4))
 		return app__slow_command(reply_cb, reply_data);
 
-	if (starts_with(command, "sendbytes "))
-		return app__sendbytes_command(command, reply_cb, reply_data);
+	if (command_len >= 10 && starts_with(command, "sendbytes "))
+		return app__sendbytes_command(command, command_len,
+					      reply_cb, reply_data);
 
 	return app__unhandled_command(command, reply_cb, reply_data);
 }
@@ -488,7 +496,9 @@ static int client__send_ipc(void)
 	options.wait_if_busy = 1;
 	options.wait_if_not_found = 0;
 
-	if (!ipc_client_send_command(cl_args.path, &options, command, &buf)) {
+	if (!ipc_client_send_command(cl_args.path, &options,
+				     command, strlen(command),
+				     &buf)) {
 		if (buf.len) {
 			printf("%s\n", buf.buf);
 			fflush(stdout);
@@ -556,7 +566,9 @@ static int do_sendbytes(int bytecount, char byte, const char *path,
 	strbuf_addstr(&buf_send, "sendbytes ");
 	strbuf_addchars(&buf_send, byte, bytecount);
 
-	if (!ipc_client_send_command(path, options, buf_send.buf, &buf_resp)) {
+	if (!ipc_client_send_command(path, options,
+				     buf_send.buf, buf_send.len,
+				     &buf_resp)) {
 		strbuf_rtrim(&buf_resp);
 		printf("sent:%c%08d %s\n", byte, bytecount, buf_resp.buf);
 		fflush(stdout);
