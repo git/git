@@ -70,8 +70,7 @@ core.fsmonitor::
 See the "fsmonitor-watchman" section of linkgit:githooks[5].
 +
 Note: FSMonitor hooks (and this config setting) are ignored if the
-(experimental) built-in FSMonitor is enabled (see
-`core.useBuiltinFSMonitor`).
+built-in FSMonitor is enabled (see `core.useBuiltinFSMonitor`).
 
 core.fsmonitorHookVersion::
 	Sets the version of hook that is to be used when calling the
@@ -90,9 +89,8 @@ Note: FSMonitor hooks (and this config setting) are ignored if the
 built-in FSMonitor is enabled (see `core.useBuiltinFSMonitor`).
 
 core.useBuiltinFSMonitor::
-	(EXPERIMENTAL) If set to true, enable the built-in filesystem
-	event watcher (for technical details, see
-	linkgit:git-fsmonitor--daemon[1]).
+	If set to true, enable the built-in filesystem event watcher (for
+	technical details, see linkgit:git-fsmonitor--daemon[1]).
 +
 Like external (hook-based) FSMonitors, the built-in FSMonitor can speed up
 Git commands that need to refresh the Git index (e.g. `git status`) in a
