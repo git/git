@@ -285,6 +285,14 @@ else()
 	endif()
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	add_compile_definitions(HAVE_FSMONITOR_DAEMON_BACKEND)
+	list(APPEND compat_SOURCES compat/fsmonitor/fsmonitor-fs-listen-win32.c)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+	add_compile_definitions(HAVE_FSMONITOR_DAEMON_BACKEND)
+	list(APPEND compat_SOURCES compat/fsmonitor/fsmonitor-fs-listen-macos.c)
+endif()
+
 set(EXE_EXTENSION ${CMAKE_EXECUTABLE_SUFFIX})
 
 #header checks
