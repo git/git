@@ -2519,6 +2519,12 @@ int git_config_get_max_percent_split_change(void)
 
 int repo_config_get_fsmonitor(struct repository *r)
 {
+	if (!r->worktree) {
+		/* FSMonitor makes no sense in bare repositories */
+		core_fsmonitor = NULL;
+		return 1;
+	}
+
 	if (r->settings.use_builtin_fsmonitor > 0) {
 		core_fsmonitor = "(built-in daemon)";
 		return 1;
