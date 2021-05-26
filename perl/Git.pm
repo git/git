@@ -619,18 +619,6 @@ Return path to the git repository. Must be called on a repository instance.
 
 sub repo_path { $_[0]->{opts}->{Repository} }
 
-=item hooks_path ()
-
-Return path to the hooks directory. Must be called on a repository instance.
-
-=cut
-
-sub hooks_path {
-	my ($self) = @_;
-
-	my $dir = $self->command_oneline('rev-parse', '--git-path', 'hooks');
-	return $dir;
-}
 
 =item wc_path ()
 
