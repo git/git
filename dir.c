@@ -59,6 +59,17 @@ void dir_init(struct dir_struct *dir)
 	memset(dir, 0, sizeof(*dir));
 }
 
+struct dirent *readdir_skip_dot_and_dotdot(DIR *dirp)
+{
+	struct dirent *e;
+
+	while ((e = readdir(dirp)) != NULL) {
+		if (!is_dot_or_dotdot(e->d_name))
+			break;
+	}
+	return e;
+}
+
 int count_slashes(const char *s)
 {
 	int cnt = 0;
@@ -2332,7 +2343,7 @@ static int read_cached_dir(struct cached_dir *cdir)
 	struct dirent *de;
 
 	if (cdir->fdir) {
-		de = readdir(cdir->fdir);
+		de = readdir_skip_dot_and_dotdot(cdir->fdir);
 		if (!de) {
 			cdir->d_name = NULL;
 			cdir->d_type = DT_UNKNOWN;
@@ -2931,11 +2942,9 @@ int is_empty_dir(const char *path)
 	if (!dir)
 		return 0;
 
-	while ((e = readdir(dir)) != NULL)
-		if (!is_dot_or_dotdot(e->d_name)) {
-			ret = 0;
-			break;
-		}
+	e = readdir_skip_dot_and_dotdot(dir);
+	if (e)
+		ret = 0;
 
 	closedir(dir);
 	return ret;
@@ -2975,10 +2984,8 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 	strbuf_complete(path, '/');
 
 	len = path->len;
-	while ((e = readdir(dir)) != NULL) {
+	while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		struct stat st;
-		if (is_dot_or_dotdot(e->d_name))
-			continue;
 
 		strbuf_setlen(path, len);
 		strbuf_addstr(path, e->d_name);
