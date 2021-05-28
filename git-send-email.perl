@@ -334,7 +334,11 @@ sub read_config {
 		my $target = $config_bool_settings{$setting};
 		my $key = "$prefix.$setting";
 		next unless exists $known_keys->{$key};
-		my $v = Git::config_bool(@repo, $key);
+		my $v = (@{$known_keys->{$key}} == 1 &&
+			 (defined $known_keys->{$key}->[0] &&
+			  $known_keys->{$key}->[0] =~ /^(?:true|false)$/s))
+			? $known_keys->{$key}->[0] eq 'true'
+			: Git::config_bool(@repo, $key);
 		next unless defined $v;
 		next if $configured->{$setting}++;
 		$$target = $v;
@@ -363,13 +367,13 @@ sub read_config {
 		my $key = "$prefix.$setting";
 		next unless exists $known_keys->{$key};
 		if (ref($target) eq "ARRAY") {
-			my @values = Git::config(@repo, $key);
-			next unless @values;
+			my @values = @{$known_keys->{$key}};
+			@values = grep { defined } @values;
 			next if $configured->{$setting}++;
 			@$target = @values;
 		}
 		else {
-			my $v = Git::config(@repo, $key);
+			my $v = $known_keys->{$key}->[0];
 			next unless defined $v;
 			next if $configured->{$setting}++;
 			$$target = $v;
@@ -381,12 +385,19 @@ sub config_regexp {
 	my ($regex) = @_;
 	my @ret;
 	eval {
-		@ret = Git::command(
+		my $ret = Git::command(
 			'config',
-			'--name-only',
+			'--null',
 			'--get-regexp',
 			$regex,
 		);
+		@ret = map {
+			# We must always return ($k, $v) here, since
+			# empty config values will be just "key\0",
+			# not "key\nvalue\0".
+			my ($k, $v) = split /\n/, $_, 2;
+			($k, $v);
+		} split /\0/, $ret;
 		1;
 	} or do {
 		# If we have no keys we're OK, otherwise re-throw
@@ -399,8 +410,10 @@ sub config_regexp {
 # parses 'bool' etc.) by only doing so for config keys that exist.
 my %known_config_keys;
 {
-	my @known_config_keys = config_regexp("^sende?mail[.]");
-	@known_config_keys{@known_config_keys} = ();
+	my @kv = config_regexp("^sende?mail[.]");
+	while (my ($k, $v) = splice @kv, 0, 2) {
+		push @{$known_config_keys{$k}} => $v;
+	}
 }
 
 # sendemail.identity yields to --identity. We must parse this
