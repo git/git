@@ -405,7 +405,7 @@ sub command_bidi_pipe {
 	if ($self) {
 		shift;
 		require Cwd;
-		$cwd_save = Cwd::cwd();
+		$cwd_save = Cwd::getcwd();
 		_setup_git_cmd_env($self);
 	}
 	require IPC::Open2;
