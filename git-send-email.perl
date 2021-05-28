@@ -390,6 +390,24 @@ sub read_config {
 	}
 }
 
+sub config_regexp {
+	my ($regex) = @_;
+	my @ret;
+	eval {
+		@ret = Git::command(
+			'config',
+			'--name-only',
+			'--get-regexp',
+			$regex,
+		);
+		1;
+	} or do {
+		# If we have no keys we're OK, otherwise re-throw
+		die $@ if $@->value != 1;
+	};
+	return @ret;
+}
+
 # sendemail.identity yields to --identity. We must parse this
 # special-case first before the rest of the config is read.
 $identity = Git::config(@repo, "sendemail.identity");
@@ -488,7 +506,7 @@ unless ($rc) {
     usage();
 }
 
-if ($forbid_sendmail_variables && (scalar Git::config_regexp("^sendmail[.]")) != 0) {
+if ($forbid_sendmail_variables && (scalar config_regexp("^sendmail[.]")) != 0) {
 	die __("fatal: found configuration options for 'sendmail'\n" .
 		"git-send-email is configured with the sendemail.* options - note the 'e'.\n" .
 		"Set sendemail.forbidSendmailVariables to false to disable this check.\n");
