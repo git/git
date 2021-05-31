@@ -81,12 +81,12 @@ test_expect_success 'prune: prune nonsense parameters' '
 
 test_expect_success 'prune: prune unreachable heads' '
 	git config core.logAllRefUpdates false &&
-	mv .git/logs .git/logs.old &&
-	: > file2 &&
+	>file2 &&
 	git add file2 &&
 	git commit -m temporary &&
 	tmp_head=$(git rev-list -1 HEAD) &&
 	git reset HEAD^ &&
+	git reflog expire --all &&
 	git prune &&
 	test_must_fail git reset $tmp_head --
 '
@@ -94,9 +94,7 @@ test_expect_success 'prune: prune unreachable heads' '
 test_expect_success 'prune: do not prune detached HEAD with no reflog' '
 	git checkout --detach --quiet &&
 	git commit --allow-empty -m "detached commit" &&
-	# verify that there is no reflogs
-	# (should be removed and disabled by previous test)
-	test_path_is_missing .git/logs &&
+	git reflog expire --all &&
 	git prune -n >prune_actual &&
 	test_must_be_empty prune_actual
 '
@@ -104,6 +102,7 @@ test_expect_success 'prune: do not prune detached HEAD with no reflog' '
 test_expect_success 'prune: prune former HEAD after checking out branch' '
 	head_oid=$(git rev-parse HEAD) &&
 	git checkout --quiet main &&
+	git reflog expire --all &&
 	git prune -v >prune_actual &&
 	grep "$head_oid" prune_actual
 '
