@@ -226,7 +226,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 		die(_(message_detached_head_die), remote->name);
 
 	dst = branch->refname;
-	same_remote = remote == remote_get(NULL);
+	same_remote = !strcmp(remote->name, remote_for_branch(branch, NULL));
 
 	switch (push_default) {
 	default:
