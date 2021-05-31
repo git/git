@@ -205,8 +205,8 @@ static const char *get_upstream_ref(struct branch *branch, const char *remote_na
 static void setup_default_push_refspecs(struct remote *remote)
 {
 	struct branch *branch;
-	int same_remote = remote == remote_get(NULL);
 	const char *dst;
+	int same_remote;
 
 	switch (push_default) {
 	case PUSH_DEFAULT_MATCHING:
@@ -226,6 +226,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 		die(_(message_detached_head_die), remote->name);
 
 	dst = branch->refname;
+	same_remote = remote == remote_get(NULL);
 
 	switch (push_default) {
 	default:
