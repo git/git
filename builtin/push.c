@@ -205,14 +205,12 @@ static const char *get_upstream_ref(struct branch *branch, const char *remote_na
 static const char *setup_push_upstream(struct remote *remote, struct branch *branch,
 	int same_remote)
 {
-	const char *upstream_ref;
-	upstream_ref = get_upstream_ref(branch, remote->name);
 	if (!same_remote)
 		die(_("You are pushing to remote '%s', which is not the upstream of\n"
 		      "your current branch '%s', without telling me what to push\n"
 		      "to update which remote branch."),
 		    remote->name, branch->name);
-	return upstream_ref;
+	return get_upstream_ref(branch, remote->name);
 }
 
 static const char *setup_push_current(struct remote *remote, struct branch *branch)
@@ -222,15 +220,9 @@ static const char *setup_push_current(struct remote *remote, struct branch *bran
 
 static const char *setup_push_simple(struct remote *remote, struct branch *branch, int same_remote)
 {
-	if (same_remote) {
-		const char *upstream_ref;
-
-		upstream_ref = get_upstream_ref(branch, remote->name);
-
-		/* Additional safety */
-		if (strcmp(branch->refname, upstream_ref))
+	if (same_remote)
+		if (strcmp(branch->refname, get_upstream_ref(branch, remote->name)))
 			die_push_simple(branch, remote);
-	}
 	return branch->refname;
 }
 
