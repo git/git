@@ -243,7 +243,7 @@ static int is_same_remote(struct remote *remote)
 
 static void setup_default_push_refspecs(struct remote *remote)
 {
-	struct branch *branch = branch_get(NULL);
+	struct branch *branch;
 	int same_remote = is_same_remote(remote);
 
 	switch (push_default) {
@@ -259,6 +259,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 		break;
 	}
 
+	branch = branch_get(NULL);
 	if (!branch)
 		die(_(message_detached_head_die), remote->name);
 
