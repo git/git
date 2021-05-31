@@ -202,8 +202,8 @@ static const char *get_upstream_ref(struct branch *branch, const char *remote_na
 	return branch->merge[0]->src;
 }
 
-static void setup_push_upstream(struct remote *remote, struct branch *branch,
-				int same_remote)
+static const char *setup_push_upstream(struct remote *remote, struct branch *branch,
+	int same_remote)
 {
 	const char *upstream_ref;
 	upstream_ref = get_upstream_ref(branch, remote->name);
@@ -212,16 +212,15 @@ static void setup_push_upstream(struct remote *remote, struct branch *branch,
 		      "your current branch '%s', without telling me what to push\n"
 		      "to update which remote branch."),
 		    remote->name, branch->name);
-
-	refspec_appendf(&rs, "%s:%s", branch->refname, upstream_ref);
+	return upstream_ref;
 }
 
-static void setup_push_current(struct remote *remote, struct branch *branch)
+static const char *setup_push_current(struct remote *remote, struct branch *branch)
 {
-	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
+	return branch->refname;
 }
 
-static void setup_push_simple(struct remote *remote, struct branch *branch, int same_remote)
+static const char *setup_push_simple(struct remote *remote, struct branch *branch, int same_remote)
 {
 	if (same_remote) {
 		const char *upstream_ref;
@@ -232,7 +231,7 @@ static void setup_push_simple(struct remote *remote, struct branch *branch, int 
 		if (strcmp(branch->refname, upstream_ref))
 			die_push_simple(branch, remote);
 	}
-	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
+	return branch->refname;
 }
 
 static int is_same_remote(struct remote *remote)
@@ -245,6 +244,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 {
 	struct branch *branch;
 	int same_remote = is_same_remote(remote);
+	const char *dst;
 
 	switch (push_default) {
 	case PUSH_DEFAULT_MATCHING:
@@ -267,17 +267,19 @@ static void setup_default_push_refspecs(struct remote *remote)
 	default:
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
-		setup_push_simple(remote, branch, same_remote);
-		return;
+		dst = setup_push_simple(remote, branch, same_remote);
+		break;
 
 	case PUSH_DEFAULT_UPSTREAM:
-		setup_push_upstream(remote, branch, same_remote);
-		return;
+		dst = setup_push_upstream(remote, branch, same_remote);
+		break;
 
 	case PUSH_DEFAULT_CURRENT:
-		setup_push_current(remote, branch);
-		return;
+		dst = setup_push_current(remote, branch);
+		break;
 	}
+
+	refspec_appendf(&rs, "%s:%s", branch->refname, dst);
 }
 
 static const char message_advice_pull_before_push[] =
