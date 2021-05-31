@@ -225,14 +225,10 @@ static void setup_push_current(struct remote *remote, struct branch *branch)
 
 static void setup_push_simple(struct remote *remote, struct branch *branch, int same_remote)
 {
-	const char *dst;
-
 	if (!branch)
 		die(_(message_detached_head_die), remote->name);
 
-	if (!same_remote) {
-		dst = branch->refname;
-	} else {
+	if (same_remote) {
 		if (!branch->merge_nr || !branch->merge || !branch->remote_name)
 			die(_("The current branch %s has no upstream branch.\n"
 			    "To push the current branch and set the remote as upstream, use\n"
@@ -248,10 +244,8 @@ static void setup_push_simple(struct remote *remote, struct branch *branch, int 
 		/* Additional safety */
 		if (strcmp(branch->refname, branch->merge[0]->src))
 			die_push_simple(branch, remote);
-
-		dst = branch->merge[0]->src;
 	}
-	refspec_appendf(&rs, "%s:%s", branch->refname, dst);
+	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
 }
 
 static int is_same_remote(struct remote *remote)
