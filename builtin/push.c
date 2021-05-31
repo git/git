@@ -206,8 +206,6 @@ static void setup_push_upstream(struct remote *remote, struct branch *branch,
 				int same_remote)
 {
 	const char *upstream_ref;
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
 	upstream_ref = get_upstream_ref(branch, remote->name);
 	if (!same_remote)
 		die(_("You are pushing to remote '%s', which is not the upstream of\n"
@@ -220,16 +218,11 @@ static void setup_push_upstream(struct remote *remote, struct branch *branch,
 
 static void setup_push_current(struct remote *remote, struct branch *branch)
 {
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
 	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
 }
 
 static void setup_push_simple(struct remote *remote, struct branch *branch, int same_remote)
 {
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
-
 	if (same_remote) {
 		const char *upstream_ref;
 
@@ -265,6 +258,9 @@ static void setup_default_push_refspecs(struct remote *remote)
 	default:
 		break;
 	}
+
+	if (!branch)
+		die(_(message_detached_head_die), remote->name);
 
 	switch (push_default) {
 	default:
