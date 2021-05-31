@@ -186,7 +186,7 @@ static const char message_detached_head_die[] =
 	   "    git push %s HEAD:<name-of-remote-branch>\n");
 
 static void setup_push_upstream(struct remote *remote, struct branch *branch,
-				int same_remote, int simple)
+				int same_remote)
 {
 	if (!branch)
 		die(_(message_detached_head_die), remote->name);
@@ -206,12 +206,6 @@ static void setup_push_upstream(struct remote *remote, struct branch *branch,
 		      "your current branch '%s', without telling me what to push\n"
 		      "to update which remote branch."),
 		    remote->name, branch->name);
-
-	if (simple) {
-		/* Additional safety */
-		if (strcmp(branch->refname, branch->merge[0]->src))
-			die_push_simple(branch, remote);
-	}
 
 	refspec_appendf(&rs, "%s:%s", branch->refname, branch->merge[0]->src);
 }
@@ -271,7 +265,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 		break;
 
 	case PUSH_DEFAULT_UPSTREAM:
-		setup_push_upstream(remote, branch, same_remote, 0);
+		setup_push_upstream(remote, branch, same_remote);
 		break;
 
 	case PUSH_DEFAULT_CURRENT:
