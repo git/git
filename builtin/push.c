@@ -186,7 +186,7 @@ static const char message_detached_head_die[] =
 	   "    git push %s HEAD:<name-of-remote-branch>\n");
 
 static void setup_push_upstream(struct remote *remote, struct branch *branch,
-				int triangular, int simple)
+				int same_remote, int simple)
 {
 	if (!branch)
 		die(_(message_detached_head_die), remote->name);
@@ -201,7 +201,7 @@ static void setup_push_upstream(struct remote *remote, struct branch *branch,
 	if (branch->merge_nr != 1)
 		die(_("The current branch %s has multiple upstream branches, "
 		    "refusing to push."), branch->name);
-	if (triangular)
+	if (!same_remote)
 		die(_("You are pushing to remote '%s', which is not the upstream of\n"
 		      "your current branch '%s', without telling me what to push\n"
 		      "to update which remote branch."),
@@ -223,16 +223,16 @@ static void setup_push_current(struct remote *remote, struct branch *branch)
 	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
 }
 
-static int is_workflow_triangular(struct remote *remote)
+static int is_same_remote(struct remote *remote)
 {
 	struct remote *fetch_remote = remote_get(NULL);
-	return (fetch_remote && fetch_remote != remote);
+	return (!fetch_remote || fetch_remote == remote);
 }
 
 static void setup_default_push_refspecs(struct remote *remote)
 {
 	struct branch *branch = branch_get(NULL);
-	int triangular = is_workflow_triangular(remote);
+	int same_remote = is_same_remote(remote);
 
 	switch (push_default) {
 	default:
@@ -242,14 +242,14 @@ static void setup_default_push_refspecs(struct remote *remote)
 
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
-		if (triangular)
+		if (!same_remote)
 			setup_push_current(remote, branch);
 		else
-			setup_push_upstream(remote, branch, triangular, 1);
+			setup_push_upstream(remote, branch, same_remote, 1);
 		break;
 
 	case PUSH_DEFAULT_UPSTREAM:
-		setup_push_upstream(remote, branch, triangular, 0);
+		setup_push_upstream(remote, branch, same_remote, 0);
 		break;
 
 	case PUSH_DEFAULT_CURRENT:
