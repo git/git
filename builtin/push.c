@@ -185,29 +185,37 @@ static const char message_detached_head_die[] =
 	   "\n"
 	   "    git push %s HEAD:<name-of-remote-branch>\n");
 
-static void setup_push_upstream(struct remote *remote, struct branch *branch,
-				int same_remote)
+static const char *get_upstream_ref(struct branch *branch, const char *remote_name)
 {
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
 	if (!branch->merge_nr || !branch->merge || !branch->remote_name)
 		die(_("The current branch %s has no upstream branch.\n"
 		    "To push the current branch and set the remote as upstream, use\n"
 		    "\n"
 		    "    git push --set-upstream %s %s\n"),
 		    branch->name,
-		    remote->name,
+		    remote_name,
 		    branch->name);
 	if (branch->merge_nr != 1)
 		die(_("The current branch %s has multiple upstream branches, "
 		    "refusing to push."), branch->name);
+
+	return branch->merge[0]->src;
+}
+
+static void setup_push_upstream(struct remote *remote, struct branch *branch,
+				int same_remote)
+{
+	const char *upstream_ref;
+	if (!branch)
+		die(_(message_detached_head_die), remote->name);
+	upstream_ref = get_upstream_ref(branch, remote->name);
 	if (!same_remote)
 		die(_("You are pushing to remote '%s', which is not the upstream of\n"
 		      "your current branch '%s', without telling me what to push\n"
 		      "to update which remote branch."),
 		    remote->name, branch->name);
 
-	refspec_appendf(&rs, "%s:%s", branch->refname, branch->merge[0]->src);
+	refspec_appendf(&rs, "%s:%s", branch->refname, upstream_ref);
 }
 
 static void setup_push_current(struct remote *remote, struct branch *branch)
@@ -223,20 +231,12 @@ static void setup_push_simple(struct remote *remote, struct branch *branch, int 
 		die(_(message_detached_head_die), remote->name);
 
 	if (same_remote) {
-		if (!branch->merge_nr || !branch->merge || !branch->remote_name)
-			die(_("The current branch %s has no upstream branch.\n"
-			    "To push the current branch and set the remote as upstream, use\n"
-			    "\n"
-			    "    git push --set-upstream %s %s\n"),
-			    branch->name,
-			    remote->name,
-			    branch->name);
-		if (branch->merge_nr != 1)
-			die(_("The current branch %s has multiple upstream branches, "
-			    "refusing to push."), branch->name);
+		const char *upstream_ref;
+
+		upstream_ref = get_upstream_ref(branch, remote->name);
 
 		/* Additional safety */
-		if (strcmp(branch->refname, branch->merge[0]->src))
+		if (strcmp(branch->refname, upstream_ref))
 			die_push_simple(branch, remote);
 	}
 	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
