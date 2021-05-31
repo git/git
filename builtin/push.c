@@ -204,8 +204,7 @@ static const char *get_upstream_ref(struct branch *branch, const char *remote_na
 
 static int is_same_remote(struct remote *remote)
 {
-	struct remote *fetch_remote = remote_get(NULL);
-	return (!fetch_remote || fetch_remote == remote);
+	return remote == remote_get(NULL);
 }
 
 static void setup_default_push_refspecs(struct remote *remote)
