@@ -231,14 +231,16 @@ static void setup_default_push_refspecs(struct remote *remote)
 	if (!branch)
 		die(_(message_detached_head_die), remote->name);
 
+	dst = branch->refname;
+
 	switch (push_default) {
 	default:
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
-		if (same_remote)
-			if (strcmp(branch->refname, get_upstream_ref(branch, remote->name)))
-				die_push_simple(branch, remote);
-		dst = branch->refname;
+		if (!same_remote)
+			break;
+		if (strcmp(branch->refname, get_upstream_ref(branch, remote->name)))
+			die_push_simple(branch, remote);
 		break;
 
 	case PUSH_DEFAULT_UPSTREAM:
@@ -251,7 +253,6 @@ static void setup_default_push_refspecs(struct remote *remote)
 		break;
 
 	case PUSH_DEFAULT_CURRENT:
-		dst = branch->refname;
 		break;
 	}
 
