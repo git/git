@@ -202,30 +202,6 @@ static const char *get_upstream_ref(struct branch *branch, const char *remote_na
 	return branch->merge[0]->src;
 }
 
-static const char *setup_push_upstream(struct remote *remote, struct branch *branch,
-	int same_remote)
-{
-	if (!same_remote)
-		die(_("You are pushing to remote '%s', which is not the upstream of\n"
-		      "your current branch '%s', without telling me what to push\n"
-		      "to update which remote branch."),
-		    remote->name, branch->name);
-	return get_upstream_ref(branch, remote->name);
-}
-
-static const char *setup_push_current(struct remote *remote, struct branch *branch)
-{
-	return branch->refname;
-}
-
-static const char *setup_push_simple(struct remote *remote, struct branch *branch, int same_remote)
-{
-	if (same_remote)
-		if (strcmp(branch->refname, get_upstream_ref(branch, remote->name)))
-			die_push_simple(branch, remote);
-	return branch->refname;
-}
-
 static int is_same_remote(struct remote *remote)
 {
 	struct remote *fetch_remote = remote_get(NULL);
@@ -259,15 +235,23 @@ static void setup_default_push_refspecs(struct remote *remote)
 	default:
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
-		dst = setup_push_simple(remote, branch, same_remote);
+		if (same_remote)
+			if (strcmp(branch->refname, get_upstream_ref(branch, remote->name)))
+				die_push_simple(branch, remote);
+		dst = branch->refname;
 		break;
 
 	case PUSH_DEFAULT_UPSTREAM:
-		dst = setup_push_upstream(remote, branch, same_remote);
+		if (!same_remote)
+			die(_("You are pushing to remote '%s', which is not the upstream of\n"
+			      "your current branch '%s', without telling me what to push\n"
+			      "to update which remote branch."),
+			    remote->name, branch->name);
+		dst = get_upstream_ref(branch, remote->name);
 		break;
 
 	case PUSH_DEFAULT_CURRENT:
-		dst = setup_push_current(remote, branch);
+		dst = branch->refname;
 		break;
 	}
 
