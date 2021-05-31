@@ -39,7 +39,7 @@ OPTIONS
 	full ref name (including prefix) will be printed. If 'auto' is
 	specified, then if the output is going to a terminal, the ref names
 	are shown as if 'short' were given, otherwise no ref names are
-	shown. The default option is 'short'.
+	shown. The default option is 'auto'.
 
 --decorate-refs=<pattern>::
 --decorate-refs-exclude=<pattern>::
