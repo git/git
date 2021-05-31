@@ -7,8 +7,15 @@ test_description='basic symbolic-ref tests'
 # the git repo, meaning that further tests will operate on
 # the surrounding git repo instead of the trash directory.
 reset_to_sane() {
-	echo ref: refs/heads/foo >.git/HEAD
+	rm -rf .git &&
+	"$TAR" xf .git.tar
 }
+
+test_expect_success 'setup' '
+	git symbolic-ref HEAD refs/heads/foo &&
+	test_commit file &&
+	"$TAR" cf .git.tar .git/
+'
 
 test_expect_success 'symbolic-ref writes HEAD' '
 	git symbolic-ref HEAD refs/heads/foo &&
