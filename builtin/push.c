@@ -223,6 +223,14 @@ static void setup_push_current(struct remote *remote, struct branch *branch)
 	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
 }
 
+static void setup_push_simple(struct remote *remote, struct branch *branch, int same_remote)
+{
+	if (!same_remote)
+		setup_push_current(remote, branch);
+	else
+		setup_push_upstream(remote, branch, same_remote, 1);
+}
+
 static int is_same_remote(struct remote *remote)
 {
 	struct remote *fetch_remote = remote_get(NULL);
@@ -242,10 +250,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
-		if (!same_remote)
-			setup_push_current(remote, branch);
-		else
-			setup_push_upstream(remote, branch, same_remote, 1);
+		setup_push_simple(remote, branch, same_remote);
 		break;
 
 	case PUSH_DEFAULT_UPSTREAM:
