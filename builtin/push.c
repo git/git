@@ -254,11 +254,20 @@ static void setup_default_push_refspecs(struct remote *remote)
 	int same_remote = is_same_remote(remote);
 
 	switch (push_default) {
-	default:
 	case PUSH_DEFAULT_MATCHING:
 		refspec_append(&rs, ":");
 		return;
 
+	case PUSH_DEFAULT_NOTHING:
+		die(_("You didn't specify any refspecs to push, and "
+		    "push.default is \"nothing\"."));
+		return;
+	default:
+		break;
+	}
+
+	switch (push_default) {
+	default:
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
 		setup_push_simple(remote, branch, same_remote);
@@ -270,11 +279,6 @@ static void setup_default_push_refspecs(struct remote *remote)
 
 	case PUSH_DEFAULT_CURRENT:
 		setup_push_current(remote, branch);
-		return;
-
-	case PUSH_DEFAULT_NOTHING:
-		die(_("You didn't specify any refspecs to push, and "
-		    "push.default is \"nothing\"."));
 		return;
 	}
 }
