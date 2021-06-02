@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2021, #06; Fri, 28)
-X-master-at: 4e42405f00ecbbee412846f48cb0253efeebe726
-X-next-at: 280156cefb2268b8300e6278adc4f77af04d439f
+Subject: What's cooking in git.git (Jun 2021, #01; Wed, 2)
+X-master-at: c09b6306c6ca275ed9d0348a8c8014b2ff723cfb
+X-next-at: 926086ebc4ae8f6b5c7ad3879ed2adde33d6bb1a
 
-What's cooking in git.git (May 2021, #06; Fri, 28)
+What's cooking in git.git (Jun 2021, #01; Wed, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,7 +13,8 @@ topics that are not yet in 'next') while commits prefixed with '+'
 are in 'next'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-The second release candidate Git 2.32-rc2 has been tagged.
+Hopefully the last release candidate for this cycle, -rc3, has been
+tagged.  A big thank-you to those who gave us the last minute fixes.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,133 +47,75 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/pack-linkage-fix (2021-05-27) 1 commit
-  (merged to 'next' on 2021-05-27 at 120d76a959)
- + pack-objects: move static inline from a header to the sole consumer
+* ab/fsck-api-cleanup (2021-06-02) 1 commit
+  (merged to 'next' on 2021-06-02 at 51b09ce3c0)
+ + builtin/fsck.c: don't conflate "int" and "enum" in callback
 
- "ld" on Solaris fails to link some test helpers, which has been
- worked around by reshuffling the inline function definitions from a
- header file to a source file that is the only user of them.
+ Last minute compilation fix.
 
 
-* ab/send-email-inline-hooks-path (2021-05-27) 2 commits
-  (merged to 'next' on 2021-05-27 at 402272f99e)
- + send-email: move "hooks_path" invocation to git-send-email.perl
- + send-email: don't needlessly abs_path() the core.hooksPath
+* da/zsh-completion-fix-for-2.32 (2021-06-02) 1 commit
+  (merged to 'next' on 2021-06-02 at b8b87a5505)
+ + contrib/completion: fix zsh completion regression from 59d85a2a05
 
- Code simplification.
-
-
-* ab/send-email-validate-errors-fix (2021-05-25) 1 commit
-  (merged to 'next' on 2021-05-25 at 1e78c17669)
- + send-email: fix missing error message regression
-
-
-* ds/t1092-fix-flake-from-progress (2021-05-26) 2 commits
-  (merged to 'next' on 2021-05-26 at 5c116071b1)
- + t1092: revert the "-1" hack for emulating "no progress meter"
-  (merged to 'next' on 2021-05-26 at 3a1982b559)
- + t1092: use GIT_PROGRESS_DELAY for consistent results
-
- Workaround flaky tests introduced recently.
-
-
-* en/dir-traversal (2021-05-27) 4 commits
-  (merged to 'next' on 2021-05-27 at 3e70b5a671)
- + dir: introduce readdir_skip_dot_and_dotdot() helper
- + dir: update stale description of treat_directory()
- + Revert "dir: update stale description of treat_directory()"
- + Revert "dir: introduce readdir_skip_dot_and_dotdot() helper"
-
- Fix-up to a topic that is already in 'master'.
-
-
-* jt/send-email-validate-errors-fix (2021-05-25) 1 commit
-  (merged to 'next' on 2021-05-25 at f7659a41c8)
- + t9001-send-email.sh: fix expected absolute paths on Windows
-
- Fix a test breakage.
-
-
-* mt/init-template-userpath-fix (2021-05-25) 1 commit
-  (merged to 'next' on 2021-05-25 at a1b42bf271)
- + init: fix bug regarding ~/ expansion in init.templateDir
-
- Regression fix.
-
-
-* mt/t2080-cp-symlink-fix (2021-05-27) 1 commit
-  (merged to 'next' on 2021-05-27 at 0b90c816b3)
- + t2080: fix cp invocation to copy symlinks instead of following them
-
- Test portability fix.
+ Fix breakages to zsh completion script (in contrib/) due to recent
+ update to the bash completion of the same.
 
 --------------------------------------------------
 [New Topics]
 
-* zh/ref-filter-raw-data (2021-05-25) 4 commits
- - ref-filter: add contents:raw atom
- - SQUASH???
- - ref-filter: support %(contents) for blob, tree
- - quote: add *.quote_buf_with_size functions
+* fc/push-simple-updates (2021-06-02) 7 commits
+ - doc: push: explain default=simple correctly
+ - push: remove unused code in setup_push_upstream()
+ - push: simplify setup_push_simple()
+ - push: reorganize setup_push_simple()
+ - push: copy code to setup_push_simple()
+ - push: hedge code of default=simple
+ - push: rename !triangular to same_remote
+ (this branch is used by fc/push-simple-updates-cleanup.)
 
- Prepare the "ref-filter" machinery that drives the "--format"
- option of "git for-each-ref" and its friends to be used in "git
- cat-file --batch".
-
- Seems to break tests when merged to 'seen'.
-
-
-* fc/doc-build-cleanup (2021-05-24) 5 commits
- - doc: avoid using rm directly
- - doc: simplify Makefile using .DELETE_ON_ERROR
- - doc: remove unnecessary rm instances
- - doc: improve asciidoc dependencies
- - doc: refactor common asciidoc dependencies
-
- Preparatory build procedure clean-up for documentation.
+ Some code and doc clarification around "git push".
 
  Will merge to 'next'.
 
 
-* es/config-based-hooks (2021-05-27) 37 commits
- - docs: link githooks and git-hook manpages
- - doc: clarify fsmonitor-watchman specification
- - run-command: stop thinking about hooks
- - git-send-email: use 'git hook run' for 'sendemail-validate'
- - bugreport: use hook_exists instead of find_hook
- - receive-pack: convert receive hooks to hook.h
- - post-update: use hook.h library
- - proc-receive: acquire hook list from hook.h
- - receive-pack: convert 'update' hook to hook.h
- - reference-transaction: look for hooks in config
- - transport: convert pre-push hook to use config
- - hook: convert 'post-rewrite' hook to config
- - hooks: convert 'post-checkout' hook to hook library
- - git-p4: use 'git hook' to run hooks
- - receive-pack: convert push-to-checkout hook to hook.h
- - read-cache: convert post-index-change hook to use config
- - rebase: teach pre-rebase to use hook.h
- - gc: use hook library for pre-auto-gc hook
- - merge: use config-based hooks for post-merge hook
- - am: convert applypatch hooks to use config
- - commit: use config-based hooks
- - hooks: allow callers to capture output
- - run-command: allow capturing of collated output
- - hook: provide stdin by string_list or callback
- - run-command: add stdin callback for parallelization
- - hook: allow specifying working directory for hooks
- - hook: allow parallel hook execution
- - run-command: allow stdin for run_processes_parallel
- - hook: support passing stdin to hooks
- - hook: introduce hook_exists()
- - hook: add 'run' subcommand
- - parse-options: parse into strvec
- - hook: implement hookcmd.<name>.skip
- - hook: teach hook.runHookDir
- - hook: include hookdir hook in list
- - hook: introduce git-hook subcommand
- - doc: propose hooks managed by the config
+* fc/push-simple-updates-cleanup (2021-06-02) 13 commits
+ - push: don't get a full remote object
+ - push: only check same_remote when needed
+ - push: remove trivial function
+ - push: remove redundant check
+ - push: factor out the typical case
+ - push: get rid of all the setup_push_* functions
+ - push: trivial simplifications
+ - push: make setup_push_* return the dst
+ - push: only get the branch when needed
+ - push: factor out null branch check
+ - push: split switch cases
+ - push: return immediately in trivial switch case
+ - push: create new get_upstream_ref() helper
+ (this branch uses fc/push-simple-updates.)
+
+ Some more code and doc clarification around "git push".
+
+ Will merge to 'next'.
+
+
+* tb/complete-diff-anchored (2021-05-31) 1 commit
+ - completion: add --anchored to diff's options
+
+ The command line completion (in contrib/) learned that "git diff"
+ takes the "--anchored" option.
+
+ Will merge to 'next'.
+
+
+* en/ort-perf-batch-12 (2021-06-02) 5 commits
+ - merge-ort: miscellaneous touch-ups
+ - Fix various issues found in comments
+ - diffcore-rename: enable limiting rename detection to relevant destinations
+ - diffcore-rename: avoid unnecessary strdup'ing in break_idx
+ - merge-ort: replace string_list_df_name_compare with faster alternative
+ (this branch uses en/ort-perf-batch-11.)
 
 --------------------------------------------------
 [Stalled]
@@ -193,34 +136,34 @@ Release tarballs are available at:
 
 
 * hn/reftable (2021-05-20) 28 commits
- - t1404: annotate test cases with REFFILES
- - t1401,t2011: parameterize HEAD.lock for REFTABLE
- - t1301: document what needs to be done for REFTABLE
- - Add "test-tool dump-reftable" command.
- - git-prompt: prepare for reftable refs backend
- - Reftable support for git-core
- - reftable: add dump utility
- - reftable: implement stack, a mutable database of reftable files.
- - reftable: implement refname validation
- - reftable: add merged table view
- - reftable: add a heap-based priority queue for reftable records
- - reftable: reftable file level tests
- - reftable: read reftable files
- - reftable: generic interface to tables
- - reftable: write reftable files
- - reftable: a generic binary tree implementation
- - reftable: reading/writing blocks
- - Provide zlib's uncompress2 from compat/zlib-compat.c
- - reftable: (de)serialization for the polymorphic record type.
- - reftable: add blocksource, an abstraction for random access reads
- - reftable: utility functions
- - reftable: add error related functionality
- - reftable: add LICENSE
- - init-db: set the_repository->hash_algo early on
- - hash.h: provide constants for the hash IDs
- - refs/debug: trace into reflog expiry too
- - refs: document reflog_expire_fn's flag argument
- - refs: make explicit that ref_iterator_peel returns boolean
+ . t1404: annotate test cases with REFFILES
+ . t1401,t2011: parameterize HEAD.lock for REFTABLE
+ . t1301: document what needs to be done for REFTABLE
+ . Add "test-tool dump-reftable" command.
+ . git-prompt: prepare for reftable refs backend
+ . Reftable support for git-core
+ . reftable: add dump utility
+ . reftable: implement stack, a mutable database of reftable files.
+ . reftable: implement refname validation
+ . reftable: add merged table view
+ . reftable: add a heap-based priority queue for reftable records
+ . reftable: reftable file level tests
+ . reftable: read reftable files
+ . reftable: generic interface to tables
+ . reftable: write reftable files
+ . reftable: a generic binary tree implementation
+ . reftable: reading/writing blocks
+ . Provide zlib's uncompress2 from compat/zlib-compat.c
+ . reftable: (de)serialization for the polymorphic record type.
+ . reftable: add blocksource, an abstraction for random access reads
+ . reftable: utility functions
+ . reftable: add error related functionality
+ . reftable: add LICENSE
+ . init-db: set the_repository->hash_algo early on
+ . hash.h: provide constants for the hash IDs
+ . refs/debug: trace into reflog expiry too
+ . refs: document reflog_expire_fn's flag argument
+ . refs: make explicit that ref_iterator_peel returns boolean
 
  The "reftable" backend for the refs API.
 
@@ -252,11 +195,11 @@ Release tarballs are available at:
  cf. <xmqqa6pca0pv.fsf@gitster.g>, <xmqq1rao9zev.fsf@gitster.g>
 
 
-* hn/prep-tests-for-reftable (2021-04-28) 21 commits
+* hn/prep-tests-for-reftable (2021-06-02) 22 commits
  - t1415: set REFFILES for test specific to storage format
  - t4202: mark bogus head hash test with REFFILES
  - t7003: check reflog existence only for REFFILES
- - t7900: mark pack-refs tests as REFFILES
+ - t7900: stop checking for loose refs
  - t1404: mark tests that muck with .git directly as REFFILES.
  - t2017: mark --orphan/logAllRefUpdates=false test as REFFILES
  - t1414: mark corruption test with REFFILES
@@ -270,6 +213,7 @@ Release tarballs are available at:
  - t1301: fix typo in error message
  - t1413: use tar to save and restore entire .git directory
  - t1401-symbolic-ref: avoid direct filesystem access
+ - t1401: use tar to snapshot and restore repo state
  - t5601: read HEAD using rev-parse
  - t9300: check ref existence using test-helper rather than a file system check
  - t/helper/ref-store: initialize oid in resolve-ref
@@ -278,33 +222,33 @@ Release tarballs are available at:
  Preliminary clean-up of tests before the main reftable changes
  hits the codebase.
 
- Waiting for reviews.
+ Will merge to 'next'.
 
 
 * tb/multi-pack-bitmaps (2021-04-10) 23 commits
- - p5326: perf tests for MIDX bitmaps
- - p5310: extract full and partial bitmap tests
- - midx: respect 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
- - t7700: update to work with MIDX bitmap test knob
- - t5319: don't write MIDX bitmaps in t5319
- - t5310: disable GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP
- - t5326: test multi-pack bitmap behavior
- - t/helper/test-read-midx.c: add --checksum mode
- - t5310: move some tests to lib-bitmap.sh
- - pack-bitmap: write multi-pack bitmaps
- - pack-bitmap: read multi-pack bitmaps
- - pack-bitmap.c: introduce 'bitmap_is_preferred_refname()'
- - pack-bitmap.c: introduce 'nth_bitmap_object_oid()'
- - pack-bitmap.c: introduce 'bitmap_num_objects()'
- - midx: respect 'core.multiPackIndex' when writing
- - midx: clear auxiliary .rev after replacing the MIDX
- - midx: make a number of functions non-static
- - Documentation: describe MIDX-based bitmaps
- - Documentation: build 'technical/bitmap-format' by default
- - pack-bitmap-write.c: free existing bitmaps
- - pack-bitmap-write.c: gracefully fail to write non-closed bitmaps
- - pack-bitmap.c: harden 'test_bitmap_walk()' to check type bitmaps
- - Merge branch 'tb/pack-preferred-tips-to-give-bitmap' into tb/multi-pack-bitmaps
+ . p5326: perf tests for MIDX bitmaps
+ . p5310: extract full and partial bitmap tests
+ . midx: respect 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
+ . t7700: update to work with MIDX bitmap test knob
+ . t5319: don't write MIDX bitmaps in t5319
+ . t5310: disable GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP
+ . t5326: test multi-pack bitmap behavior
+ . t/helper/test-read-midx.c: add --checksum mode
+ . t5310: move some tests to lib-bitmap.sh
+ . pack-bitmap: write multi-pack bitmaps
+ . pack-bitmap: read multi-pack bitmaps
+ . pack-bitmap.c: introduce 'bitmap_is_preferred_refname()'
+ . pack-bitmap.c: introduce 'nth_bitmap_object_oid()'
+ . pack-bitmap.c: introduce 'bitmap_num_objects()'
+ . midx: respect 'core.multiPackIndex' when writing
+ . midx: clear auxiliary .rev after replacing the MIDX
+ . midx: make a number of functions non-static
+ . Documentation: describe MIDX-based bitmaps
+ . Documentation: build 'technical/bitmap-format' by default
+ . pack-bitmap-write.c: free existing bitmaps
+ . pack-bitmap-write.c: gracefully fail to write non-closed bitmaps
+ . pack-bitmap.c: harden 'test_bitmap_walk()' to check type bitmaps
+ . Merge branch 'tb/pack-preferred-tips-to-give-bitmap' into tb/multi-pack-bitmaps
 
  The reachability bitmap file used to be generated only for a single
  pack, but now we've learned to generate bitmaps for history that
@@ -451,6 +395,70 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* zh/ref-filter-raw-data (2021-05-31) 2 commits
+ . ref-filter: add %(raw) atom
+ . ref-filter: add obj-type check in grab contents
+
+ Prepare the "ref-filter" machinery that drives the "--format"
+ option of "git for-each-ref" and its friends to be used in "git
+ cat-file --batch".
+
+ Seems to crash with zh/ref-filter-atom-type.
+
+
+* fc/doc-build-cleanup (2021-05-24) 5 commits
+  (merged to 'next' on 2021-05-31 at af103e12f4)
+ + doc: avoid using rm directly
+ + doc: simplify Makefile using .DELETE_ON_ERROR
+ + doc: remove unnecessary rm instances
+ + doc: improve asciidoc dependencies
+ + doc: refactor common asciidoc dependencies
+
+ Preparatory build procedure clean-up for documentation.
+
+ Will cook in 'next'.
+
+
+* es/config-based-hooks (2021-05-27) 37 commits
+ - docs: link githooks and git-hook manpages
+ - doc: clarify fsmonitor-watchman specification
+ - run-command: stop thinking about hooks
+ - git-send-email: use 'git hook run' for 'sendemail-validate'
+ - bugreport: use hook_exists instead of find_hook
+ - receive-pack: convert receive hooks to hook.h
+ - post-update: use hook.h library
+ - proc-receive: acquire hook list from hook.h
+ - receive-pack: convert 'update' hook to hook.h
+ - reference-transaction: look for hooks in config
+ - transport: convert pre-push hook to use config
+ - hook: convert 'post-rewrite' hook to config
+ - hooks: convert 'post-checkout' hook to hook library
+ - git-p4: use 'git hook' to run hooks
+ - receive-pack: convert push-to-checkout hook to hook.h
+ - read-cache: convert post-index-change hook to use config
+ - rebase: teach pre-rebase to use hook.h
+ - gc: use hook library for pre-auto-gc hook
+ - merge: use config-based hooks for post-merge hook
+ - am: convert applypatch hooks to use config
+ - commit: use config-based hooks
+ - hooks: allow callers to capture output
+ - run-command: allow capturing of collated output
+ - hook: provide stdin by string_list or callback
+ - run-command: add stdin callback for parallelization
+ - hook: allow specifying working directory for hooks
+ - hook: allow parallel hook execution
+ - run-command: allow stdin for run_processes_parallel
+ - hook: support passing stdin to hooks
+ - hook: introduce hook_exists()
+ - hook: add 'run' subcommand
+ - parse-options: parse into strvec
+ - hook: implement hookcmd.<name>.skip
+ - hook: teach hook.runHookDir
+ - hook: include hookdir hook in list
+ - hook: introduce git-hook subcommand
+ - doc: propose hooks managed by the config
+
+
 * jh/builtin-fsmonitor (2021-05-24) 30 commits
  - t/perf: avoid copying builtin fsmonitor files into test repo
  - t7527: test status with untracked-cache and fsmonitor--daemon
@@ -577,7 +585,7 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* ab/send-email-optim (2021-05-24) 13 commits
+* ab/send-email-optim (2021-05-28) 13 commits
  - perl: nano-optimize by replacing Cwd::cwd() with Cwd::getcwd()
  - send-email: move trivial config handling to Perl
  - perl: lazily load some common Git.pm setup code
@@ -769,6 +777,7 @@ Release tarballs are available at:
  + fast-rebase: change assert() to BUG()
  + Documentation/technical: describe remembering renames optimization
  + t6423: rename file within directory that other side renamed
+ (this branch is used by en/ort-perf-batch-12.)
 
  Optimize out repeated rename detection in a sequence of mergy
  operations.
@@ -777,40 +786,41 @@ Release tarballs are available at:
 
 
 * ab/test-lib-updates (2021-05-11) 11 commits
- - test-lib: split up and deprecate test_create_repo()
- - test-lib: do not show advice about init.defaultBranch under --verbose
- - test-lib: reformat argument list in test_create_repo()
- - submodule tests: use symbolic-ref --short to discover branch name
- - test-lib functions: add --printf option to test_commit
- - describe tests: convert setup to use test_commit
- - test-lib functions: add an --annotated option to "test_commit"
- - test-lib-functions: document test_commit --no-tag
- - test-lib-functions: reword "test_commit --append" docs
- - test-lib tests: remove dead GIT_TEST_FRAMEWORK_SELFTEST variable
- - test-lib: bring $remove_trash out of retirement
+  (merged to 'next' on 2021-05-31 at 73bf1ecb31)
+ + test-lib: split up and deprecate test_create_repo()
+ + test-lib: do not show advice about init.defaultBranch under --verbose
+ + test-lib: reformat argument list in test_create_repo()
+ + submodule tests: use symbolic-ref --short to discover branch name
+ + test-lib functions: add --printf option to test_commit
+ + describe tests: convert setup to use test_commit
+ + test-lib functions: add an --annotated option to "test_commit"
+ + test-lib-functions: document test_commit --no-tag
+ + test-lib-functions: reword "test_commit --append" docs
+ + test-lib tests: remove dead GIT_TEST_FRAMEWORK_SELFTEST variable
+ + test-lib: bring $remove_trash out of retirement
  (this branch is used by ab/describe-tests-fix and ab/pickaxe-pcre2.)
 
  Test clean-up.
 
 
 * ab/fsck-unexpected-type (2021-05-21) 17 commits
- - fsck: report invalid object type-path combinations
- - fsck: report invalid types recorded in objects
- - object-store.h: move read_loose_object() below 'struct object_info'
- - fsck: don't hard die on invalid object types
- - object-file.c: return -1, not "status" from unpack_loose_header()
- - object-file.c: return -2 on "header too long" in unpack_loose_header()
- - object-file.c: stop dying in parse_loose_header()
- - object-file.c: add missing braces to loose_object_info()
- - object-file.c: make parse_loose_header_extended() public
- - cache.h: move object functions to object-store.h
- - cat-file tests: test for current --allow-unknown-type behavior
- - cat-file tests: add corrupt loose object test
- - rev-list tests: test for behavior with invalid object types
- - cat-file tests: test that --allow-unknown-type isn't on by default
- - cat-file tests: test for missing object with -t and -s
- - fsck tests: add test for fsck-ing an unknown type
- - fsck tests: refactor one test to use a sub-repo
+ . fsck: report invalid object type-path combinations
+ . fsck: report invalid types recorded in objects
+ . object-store.h: move read_loose_object() below 'struct object_info'
+ . fsck: don't hard die on invalid object types
+ . object-file.c: return -1, not "status" from unpack_loose_header()
+ . object-file.c: return -2 on "header too long" in unpack_loose_header()
+ . object-file.c: stop dying in parse_loose_header()
+ . object-file.c: add missing braces to loose_object_info()
+ . object-file.c: make parse_loose_header_extended() public
+ . cache.h: move object functions to object-store.h
+ . cat-file tests: test for current --allow-unknown-type behavior
+ . cat-file tests: add corrupt loose object test
+ . rev-list tests: test for behavior with invalid object types
+ . cat-file tests: test that --allow-unknown-type isn't on by default
+ . cat-file tests: test for missing object with -t and -s
+ . fsck tests: add test for fsck-ing an unknown type
+ . fsck tests: refactor one test to use a sub-repo
 
  "git fsck" has been taught to report mismatch between expected and
  actual types of an object better.
