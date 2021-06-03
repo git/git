@@ -520,14 +520,11 @@ static int batch_objects(struct batch_options *opt)
 		data.info.typep = &data.type;
 
 	if (opt->all_objects) {
+		struct object_cb_data cb;
 		struct object_info empty = OBJECT_INFO_INIT;
 
 		if (!memcmp(&data.info, &empty, sizeof(empty)))
 			data.skip_object_info = 1;
-	}
-
-	if (opt->all_objects) {
-		struct object_cb_data cb;
 
 		if (has_promisor_remote())
 			warning("This repository uses promisor remotes. Some objects may not be loaded.");
