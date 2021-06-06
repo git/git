@@ -67,8 +67,9 @@ stripped (like the above example to point at one of the most important
 message in the Git list).
 
 Some members of the development community can sometimes be found on
-the #git and #git-devel IRC channels on Freenode.  Their logs are
-available at:
+the #git and #git-devel IRC channels on FreeNode (historically, but
+the IRC situation is in flux at the moment).  Their logs are available
+at:
 
         http://colabti.org/irclogger/irclogger_log/git
         http://colabti.org/irclogger/irclogger_log/git-devel
@@ -174,7 +175,7 @@ named with three dotted decimal digits (e.g. "1.8.5"), but we have
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
 
-The last such release was 2.31 done on Mar 15th, 2021.  You can expect
+The last such release was 2.32 done on June 6th, 2021.  You can expect
 that the tip of the "master" branch is always more stable than any of
 the released versions.
 
