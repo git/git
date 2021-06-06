@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2021, #01; Wed, 2)
-X-master-at: c09b6306c6ca275ed9d0348a8c8014b2ff723cfb
-X-next-at: 926086ebc4ae8f6b5c7ad3879ed2adde33d6bb1a
+Subject: What's cooking in git.git (Jun 2021, #02; Sun, 6)
+X-master-at: ebf3c04b262aa27fbb97f8a0156c2347fecafafb
+X-next-at: 935e593368000d8476c1712a0a3d40699d2af34b
 
-What's cooking in git.git (Jun 2021, #01; Wed, 2)
+What's cooking in git.git (Jun 2021, #02; Sun, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,8 +13,14 @@ topics that are not yet in 'next') while commits prefixed with '+'
 are in 'next'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-Hopefully the last release candidate for this cycle, -rc3, has been
-tagged.  A big thank-you to those who gave us the last minute fixes.
+Git 2.32 is out.
+
+As usual, we'll see if people notice brown-paper-bag bugs and deal
+with them, merge down topics that have been cooking in 'next' from
+simpler and obvious topics to more complex ones, and once 'next'
+gets depleted, rewind its tip and take more topics to it.  Hopefully
+all of that will happen by sometime in the middle of week #2 of the
+next cycle (cf. https://tinyurl.com/gitCal).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -47,75 +53,46 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/fsck-api-cleanup (2021-06-02) 1 commit
-  (merged to 'next' on 2021-06-02 at 51b09ce3c0)
- + builtin/fsck.c: don't conflate "int" and "enum" in callback
+* jc/fsync-can-fail-with-eintr (2021-06-05) 1 commit
+  (merged to 'next' on 2021-06-05 at 28992617a1)
+ + fsync(): be prepared to see EINTR
 
- Last minute compilation fix.
+ Last minute portability fix.
 
 
-* da/zsh-completion-fix-for-2.32 (2021-06-02) 1 commit
-  (merged to 'next' on 2021-06-02 at b8b87a5505)
- + contrib/completion: fix zsh completion regression from 59d85a2a05
+* rs/parallel-checkout-test-fix (2021-06-06) 1 commit
+  (merged to 'next' on 2021-06-06 at 834ea5e286)
+ + parallel-checkout: avoid dash local bug in tests
 
- Fix breakages to zsh completion script (in contrib/) due to recent
- update to the bash completion of the same.
+ Test fix.
 
 --------------------------------------------------
 [New Topics]
 
-* fc/push-simple-updates (2021-06-02) 7 commits
- - doc: push: explain default=simple correctly
- - push: remove unused code in setup_push_upstream()
- - push: simplify setup_push_simple()
- - push: reorganize setup_push_simple()
- - push: copy code to setup_push_simple()
- - push: hedge code of default=simple
- - push: rename !triangular to same_remote
- (this branch is used by fc/push-simple-updates-cleanup.)
+* js/trace2-discard-event-docfix (2021-06-04) 1 commit
+ - docs: fix api-trace2 doc for "too_many_files" event
 
- Some code and doc clarification around "git push".
+ Docfix.
 
  Will merge to 'next'.
 
 
-* fc/push-simple-updates-cleanup (2021-06-02) 13 commits
- - push: don't get a full remote object
- - push: only check same_remote when needed
- - push: remove trivial function
- - push: remove redundant check
- - push: factor out the typical case
- - push: get rid of all the setup_push_* functions
- - push: trivial simplifications
- - push: make setup_push_* return the dst
- - push: only get the branch when needed
- - push: factor out null branch check
- - push: split switch cases
- - push: return immediately in trivial switch case
- - push: create new get_upstream_ref() helper
- (this branch uses fc/push-simple-updates.)
+* tk/partial-clone-repack-doc (2021-06-04) 1 commit
+ - Remove warning that repack only works on non-promisor packfiles
 
- Some more code and doc clarification around "git push".
+ Docfix.
 
  Will merge to 'next'.
 
 
-* tb/complete-diff-anchored (2021-05-31) 1 commit
- - completion: add --anchored to diff's options
+* zh/cat-file-batch-fix (2021-06-04) 2 commits
+ - cat-file: merge two block into one
+ - cat-file: handle trivial --batch format with --batch-all-objects
 
- The command line completion (in contrib/) learned that "git diff"
- takes the "--anchored" option.
+ "git cat-file --batch-all-objects"" misbehaved when "--batch" is in
+ use and did not ask for certain object traits.
 
  Will merge to 'next'.
-
-
-* en/ort-perf-batch-12 (2021-06-02) 5 commits
- - merge-ort: miscellaneous touch-ups
- - Fix various issues found in comments
- - diffcore-rename: enable limiting rename detection to relevant destinations
- - diffcore-rename: avoid unnecessary strdup'ing in break_idx
- - merge-ort: replace string_list_df_name_compare with faster alternative
- (this branch uses en/ort-perf-batch-11.)
 
 --------------------------------------------------
 [Stalled]
@@ -394,6 +371,59 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* fc/push-simple-updates (2021-06-02) 7 commits
+ - doc: push: explain default=simple correctly
+ - push: remove unused code in setup_push_upstream()
+ - push: simplify setup_push_simple()
+ - push: reorganize setup_push_simple()
+ - push: copy code to setup_push_simple()
+ - push: hedge code of default=simple
+ - push: rename !triangular to same_remote
+ (this branch is used by fc/push-simple-updates-cleanup.)
+
+ Some code and doc clarification around "git push".
+
+ Will merge to 'next'.
+
+
+* fc/push-simple-updates-cleanup (2021-06-02) 13 commits
+ - push: don't get a full remote object
+ - push: only check same_remote when needed
+ - push: remove trivial function
+ - push: remove redundant check
+ - push: factor out the typical case
+ - push: get rid of all the setup_push_* functions
+ - push: trivial simplifications
+ - push: make setup_push_* return the dst
+ - push: only get the branch when needed
+ - push: factor out null branch check
+ - push: split switch cases
+ - push: return immediately in trivial switch case
+ - push: create new get_upstream_ref() helper
+ (this branch uses fc/push-simple-updates.)
+
+ Some more code and doc clarification around "git push".
+
+ Will merge to 'next'.
+
+
+* tb/complete-diff-anchored (2021-05-31) 1 commit
+ - completion: add --anchored to diff's options
+
+ The command line completion (in contrib/) learned that "git diff"
+ takes the "--anchored" option.
+
+ Will merge to 'next'.
+
+
+* en/ort-perf-batch-12 (2021-06-04) 4 commits
+ - merge-ort: miscellaneous touch-ups
+ - merge-ort: fix various issues found in comments
+ - diffcore-rename: avoid unnecessary strdup'ing in break_idx
+ - merge-ort: replace string_list_df_name_compare with faster alternative
+ (this branch uses en/ort-perf-batch-11.)
+
 
 * zh/ref-filter-raw-data (2021-05-31) 2 commits
  . ref-filter: add %(raw) atom
