@@ -25,3 +25,12 @@ merge_cmd () {
 exit_code_trustable () {
 	true
 }
+
+translate_merge_tool_path() {
+	if type kdiff3 >/dev/null 2>/dev/null
+	then
+		echo kdiff3
+	else
+		mergetool_find_win32_cmd "kdiff3.exe" "Kdiff3"
+	fi
+}
