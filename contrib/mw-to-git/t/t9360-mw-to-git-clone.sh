@@ -86,7 +86,7 @@ test_expect_success 'Git clone works with page added' '
 test_expect_success 'Git clone works with an edited page ' '
 	wiki_reset &&
 	wiki_editpage foo "this page will be edited" \
-		false -s "first edition of page foo"&&
+		false -s "first edition of page foo" &&
 	wiki_editpage foo "this page has been edited and must be on the clone " true &&
 	git clone mediawiki::'"$WIKI_URL"' mw_dir_6 &&
 	test_path_is_file mw_dir_6/Foo.mw &&
