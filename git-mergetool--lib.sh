@@ -18,7 +18,7 @@ mode_ok () {
 }
 
 is_available () {
-	merge_tool_path=$(translate_merge_tool_path "$1") &&
+	merge_tool_path=$(get_merge_tool_path "$1") &&
 	type "$merge_tool_path" >/dev/null 2>&1
 }
 
