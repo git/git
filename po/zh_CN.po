@@ -4646,7 +4646,7 @@ msgstr "在 ls-refs 参数后应该有一个 flush 包"
 
 #: mailinfo.c:1050
 msgid "quoted CRLF detected"
-msgstr "检测到引号中的换行符"
+msgstr "检测到被引用的 CRLF"
 
 #: mailinfo.c:1254 builtin/am.c:176 builtin/mailinfo.c:46
 #, c-format
@@ -4839,14 +4839,14 @@ msgstr "冲突（文件/目录）：目录已存在于 %2$s 中的 %1$s，将其
 msgid ""
 "CONFLICT (distinct types): %s had different types on each side; renamed both "
 "of them so each can be recorded somewhere."
-msgstr "冲突（不同类型）：%s 在每一侧有不同的类型，把它们都重命名以便每个能记录在不同位置。"
+msgstr "冲突（不同类型）：%s 在两侧有不同的类型，将两者都重命名以便它们能记录在不同位置。"
 
 #: merge-ort.c:3062
 #, c-format
 msgid ""
 "CONFLICT (distinct types): %s had different types on each side; renamed one "
 "of them so each can be recorded somewhere."
-msgstr "冲突（不同类型）：%s 在每一侧有不同的类型，重命名它们中的一个以便每个被记录在不同位置。"
+msgstr "冲突（不同类型）：%s 在两侧有不同的类型，将其中之一重命名以便它们能记录在不同位置。"
 
 #: merge-ort.c:3162 merge-recursive.c:3081
 msgid "content"
@@ -4879,7 +4879,7 @@ msgstr ""
 msgid ""
 "Note: %s not up to date and in way of checking out conflicted version; old "
 "copy renamed to %s"
-msgstr "注意：%s 不是最新的，并且正在检出冲突的版本。旧副本重命名为 %s"
+msgstr "注意：%s 不是最新的，并且与要检出的版本冲突。旧副本重命名为 %s"
 
 #. TRANSLATORS: The %s arguments are: 1) tree hash of a merge
 #. base, and 2-3) the trees for the two trees we're merging.
@@ -7344,7 +7344,7 @@ msgstr "send-pack：无法派生 fetch 子进程"
 
 #: send-pack.c:455
 msgid "push negotiation failed; proceeding anyway with push"
-msgstr "推送协商失败；无论如何继续推送"
+msgstr "推送协商失败，但还是继续推送"
 
 #: send-pack.c:520
 msgid "the receiving end does not support this repository's hash algorithm"
@@ -10032,7 +10032,7 @@ msgstr "无法读取 IPC 响应"
 #: compat/simple-ipc/ipc-unix-socket.c:862
 #, c-format
 msgid "could not start accept_thread '%s'"
-msgstr "无法启动  accept_thread '%s'"
+msgstr "无法启动 accept_thread '%s'"
 
 #: compat/simple-ipc/ipc-unix-socket.c:874
 #, c-format
@@ -13799,7 +13799,7 @@ msgstr "终止提交；您未更改来自模版的提交说明。\n"
 #: builtin/commit.c:1788
 #, c-format
 msgid "Aborting commit due to empty commit message body.\n"
-msgstr "终止提交因为提交说明的正文为空。\n"
+msgstr "因提交说明的正文为空而终止提交。\n"
 
 #: builtin/commit.c:1824
 msgid ""
@@ -17184,7 +17184,7 @@ msgstr "保持主题"
 
 #: builtin/mailinfo.c:60
 msgid "keep non patch brackets in subject"
-msgstr "在标题保持无补丁括号标注"
+msgstr "在主题中保持无补丁括号标注"
 
 #: builtin/mailinfo.c:62
 msgid "copy Message-ID to the end of commit message"
@@ -17220,7 +17220,7 @@ msgstr "找到引用的 CR 时的操作"
 
 #: builtin/mailinfo.c:77
 msgid "use headers in message's body"
-msgstr "在消息正文中使用标题"
+msgstr "在消息正文中使用标头"
 
 #: builtin/mailsplit.c:241
 #, c-format
@@ -23620,7 +23620,7 @@ msgstr "test-tool serve-v2 [<选项>]"
 
 #: t/helper/test-serve-v2.c:19
 msgid "exit immediately after advertising capabilities"
-msgstr "对能力广告之后立即退出"
+msgstr "通告能力之后立即退出"
 
 #: t/helper/test-simple-ipc.c:262
 #, c-format
@@ -25920,7 +25920,7 @@ msgid ""
 "fatal: %s:%d is longer than 998 characters\n"
 "warning: no patches were sent\n"
 msgstr ""
-"致命错误：%s:%d 超过 998 字节\n"
+"致命错误：%s:%d 超过 998 字符\n"
 "警告：补丁未能发送\n"
 
 #: git-send-email.perl:1997
