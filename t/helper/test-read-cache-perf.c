@@ -11,8 +11,11 @@ int cmd__read_cache_perf(int argc, const char **argv)
 {
 	struct repository *r = the_repository;
 	int cnt = -1;
+	int refresh = 0;
 	struct option options[] = {
 		OPT_INTEGER(0, "count", &cnt, "number of passes"),
+		OPT_BOOL(0, "refresh", &refresh,
+			 "call refresh_index() in a loop, not read()/discard()"),
 		OPT_END()
 	};
 
@@ -26,10 +29,19 @@ int cmd__read_cache_perf(int argc, const char **argv)
 			      options);
 
 	setup_git_directory();
+	if (refresh)
+		repo_read_index(r);
 	while (cnt--) {
+		if (refresh) {
+			unsigned int flags = REFRESH_QUIET|REFRESH_PROGRESS;
+			refresh_index(r->index, flags, NULL, NULL, NULL);
+			continue;
+		}
 		repo_read_index(r);
 		discard_index(r->index);
 	}
+	if (refresh)
+		discard_index(r->index);
 
 	return 0;
 }
