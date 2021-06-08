@@ -99,12 +99,23 @@ pack.packSizeLimit::
 	packing to a file when repacking, i.e. the git:// protocol
 	is unaffected.  It can be overridden by the `--max-pack-size`
 	option of linkgit:git-repack[1].  Reaching this limit results
-	in the creation of multiple packfiles; which in turn prevents
-	bitmaps from being created.
-	The minimum size allowed is limited to 1 MiB.
-	The default is unlimited.
-	Common unit suffixes of 'k', 'm', or 'g' are
-	supported.
+	in the creation of multiple packfiles.
++
+Note that this option is rarely useful, and may result in a larger total
+on-disk size (because Git will not store deltas between packs), as well
+as worse runtime performance (object lookup within multiple packs is
+slower than a single pack, and optimizations like reachability bitmaps
+cannot cope with multiple packs).
++
+If you need to actively run Git using smaller packfiles (e.g., because your
+filesystem does not support large files), this option may help. But if
+your goal is to transmit a packfile over a medium that supports limited
+sizes (e.g., removable media that cannot store the whole repository),
+you are likely better off creating a single large packfile and splitting
+it using a generic multi-volume archive tool (e.g., Unix `split`).
++
+The minimum size allowed is limited to 1 MiB. The default is unlimited.
+Common unit suffixes of 'k', 'm', or 'g' are supported.
 
 pack.useBitmaps::
 	When true, git will use pack bitmaps (if available) when packing
