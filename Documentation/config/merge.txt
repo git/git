@@ -14,7 +14,7 @@ merge.defaultToUpstream::
 	branches at the remote named by `branch.<current branch>.remote`
 	are consulted, and then they are mapped via `remote.<remote>.fetch`
 	to their corresponding remote-tracking branches, and the tips of
-	these tracking branches are merged.
+	these tracking branches are merged. Defaults to true.
 
 merge.ff::
 	By default, Git does not create an extra merge commit when merging
