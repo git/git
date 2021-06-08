@@ -2533,7 +2533,7 @@ static int compare_pairs(const void *a_, const void *b_)
 	return strcmp(a->one->path, b->one->path);
 }
 
-/* Call diffcore_rename() to compute which files have changed on given side */
+/* Call diffcore_rename() to update deleted/added pairs into rename pairs */
 static void detect_regular_renames(struct merge_options *opt,
 				   unsigned side_index)
 {
@@ -2586,8 +2586,10 @@ static void detect_regular_renames(struct merge_options *opt,
 }
 
 /*
- * Get information of all renames which occurred in 'side_pairs', discarding
- * non-renames.
+ * Get information of all renames which occurred in 'side_pairs', making use
+ * of any implicit directory renames in side_dir_renames (also making use of
+ * implicit directory renames rename_exclusions as needed by
+ * check_for_directory_rename()).  Add all (updated) renames into result.
  */
 static int collect_renames(struct merge_options *opt,
 			   struct diff_queue_struct *result,
