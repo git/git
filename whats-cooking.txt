@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2021, #02; Sun, 6)
+Subject: What's cooking in git.git (Jun 2021, #03; Tue, 8)
 X-master-at: ebf3c04b262aa27fbb97f8a0156c2347fecafafb
 X-next-at: 935e593368000d8476c1712a0a3d40699d2af34b
 
-What's cooking in git.git (Jun 2021, #02; Sun, 6)
+What's cooking in git.git (Jun 2021, #03; Tue, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,14 +13,32 @@ topics that are not yet in 'next') while commits prefixed with '+'
 are in 'next'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-Git 2.32 is out.
+As announced in the previous issue of this report, while we wait to
+see if people notice brown-paper-bag bugs and deal with them, we'd
+start merging down topics that have been cooking in 'next' from
+simpler and obvious ones.  This issue marks the simpler ones to be
+merged to 'master' soonish (please holler if you have a reason some
+of them should wait further fixup):
 
-As usual, we'll see if people notice brown-paper-bag bugs and deal
-with them, merge down topics that have been cooking in 'next' from
-simpler and obvious topics to more complex ones, and once 'next'
-gets depleted, rewind its tip and take more topics to it.  Hopefully
-all of that will happen by sometime in the middle of week #2 of the
-next cycle (cf. https://tinyurl.com/gitCal).
+    ef/mailinfo-short-name
+    mt/parallel-checkout-with-padded-oidcpy
+    jn/size-t-casted-to-off-t-fix
+    ah/merge-usage-i18n-fix
+    ah/stash-usage-i18n-fix
+    ah/submodule-helper-module-summary-parseopt
+    ah/doc-describe
+    jc/clarify-revision-range
+    wm/rev-parse-die-i18n
+    ry/clarify-fast-forward-in-glossary
+    tl/fix-packfile-uri-doc
+    jk/doc-color-pager
+    ah/fetch-reject-warning-grammofix
+    ah/setup-extensions-message-i18n-fix
+
+while leaving topics that touch the code in a more significant ways
+in 'next' for the next batch.  Also those topics that are not yet in
+'next' but are marked to be merged to 'next' would stay out until
+next week when the tip of 'next' gets rebuilt on 2.32.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,46 +69,34 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jc/fsync-can-fail-with-eintr (2021-06-05) 1 commit
-  (merged to 'next' on 2021-06-05 at 28992617a1)
- + fsync(): be prepared to see EINTR
-
- Last minute portability fix.
-
-
-* rs/parallel-checkout-test-fix (2021-06-06) 1 commit
-  (merged to 'next' on 2021-06-06 at 834ea5e286)
- + parallel-checkout: avoid dash local bug in tests
-
- Test fix.
-
---------------------------------------------------
 [New Topics]
 
-* js/trace2-discard-event-docfix (2021-06-04) 1 commit
- - docs: fix api-trace2 doc for "too_many_files" event
+* dd/svn-test-wo-locale-a (2021-06-07) 1 commit
+ - t: use user-specified utf-8 locale for testing svn
 
- Docfix.
-
- Will merge to 'next'.
-
-
-* tk/partial-clone-repack-doc (2021-06-04) 1 commit
- - Remove warning that repack only works on non-promisor packfiles
-
- Docfix.
-
- Will merge to 'next'.
+ "git-svn" tests assumed that "locale -a", which is used to pick an
+ available UTF-8 locale, is available everywhere.  A knob has been
+ introduced to allow testers to specify a suitable locale to use.
 
 
-* zh/cat-file-batch-fix (2021-06-04) 2 commits
- - cat-file: merge two block into one
- - cat-file: handle trivial --batch format with --batch-all-objects
+* fc/completion-updates (2021-06-07) 4 commits
+ - completion: bash: add correct suffix in variables
+ - completion: bash: fix for multiple dash commands
+ - completion: bash: fix for suboptions with value
+ - completion: bash: fix prefix detection in branch.*
 
- "git cat-file --batch-all-objects"" misbehaved when "--batch" is in
- use and did not ask for certain object traits.
+ Command line completion updates.
+
+ Expecting a reroll.
+ cf. <60be6f7fa4435_db80d208f2@natae.notmuch> 
+
+
+* mr/cmake (2021-06-07) 3 commits
+ - cmake: add warning for ignored MSGFMT_EXE
+ - cmake: create compile_commands.json by default
+ - cmake: add knob to disable vcpkg
+
+ CMake update.
 
  Will merge to 'next'.
 
@@ -172,36 +178,6 @@ Release tarballs are available at:
  cf. <xmqqa6pca0pv.fsf@gitster.g>, <xmqq1rao9zev.fsf@gitster.g>
 
 
-* hn/prep-tests-for-reftable (2021-06-02) 22 commits
- - t1415: set REFFILES for test specific to storage format
- - t4202: mark bogus head hash test with REFFILES
- - t7003: check reflog existence only for REFFILES
- - t7900: stop checking for loose refs
- - t1404: mark tests that muck with .git directly as REFFILES.
- - t2017: mark --orphan/logAllRefUpdates=false test as REFFILES
- - t1414: mark corruption test with REFFILES
- - t1407: require REFFILES for for_each_reflog test
- - test-lib: provide test prereq REFFILES
- - t5304: use "reflog expire --all" to clear the reflog
- - t5304: restyle: trim empty lines, drop ':' before >
- - t7003: use rev-parse rather than FS inspection
- - t5000: inspect HEAD using git-rev-parse
- - t5000: reformat indentation to the latest fashion
- - t1301: fix typo in error message
- - t1413: use tar to save and restore entire .git directory
- - t1401-symbolic-ref: avoid direct filesystem access
- - t1401: use tar to snapshot and restore repo state
- - t5601: read HEAD using rev-parse
- - t9300: check ref existence using test-helper rather than a file system check
- - t/helper/ref-store: initialize oid in resolve-ref
- - t4202: split testcase for invalid HEAD symref and HEAD hash
-
- Preliminary clean-up of tests before the main reftable changes
- hits the codebase.
-
- Will merge to 'next'.
-
-
 * tb/multi-pack-bitmaps (2021-04-10) 23 commits
  . p5326: perf tests for MIDX bitmaps
  . p5310: extract full and partial bitmap tests
@@ -262,17 +238,6 @@ Release tarballs are available at:
  which broke traditional use cases.
 
  Waiting for reviews.
-
-
-* ab/update-submitting-patches (2021-05-13) 3 commits
- - SubmittingPatches: remove pine-specific hints from MUA hints
- - SubmittingPatches: replace discussion of Travis with GitHub Actions
- - SubmittingPatches: move discussion of Signed-off-by above "send"
-
- Reorganize and update the SubmitingPatches document.
-
- Expecting a reroll.
- cf. <xmqq4kf7fueq.fsf@gitster.g>, <20210512235136.GB10785@localhost>
 
 
 * ag/merge-strategies-in-c (2021-03-17) 15 commits
@@ -372,6 +337,73 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ab/update-submitting-patches (2021-05-13) 3 commits
+ - SubmittingPatches: remove pine-specific hints from MUA hints
+ - SubmittingPatches: replace discussion of Travis with GitHub Actions
+ - SubmittingPatches: move discussion of Signed-off-by above "send"
+
+ Reorganize and update the SubmitingPatches document.
+
+ Expecting a reroll.
+ cf. <xmqq4kf7fueq.fsf@gitster.g>, <20210512235136.GB10785@localhost>
+
+
+* hn/prep-tests-for-reftable (2021-06-02) 22 commits
+ - t1415: set REFFILES for test specific to storage format
+ - t4202: mark bogus head hash test with REFFILES
+ - t7003: check reflog existence only for REFFILES
+ - t7900: stop checking for loose refs
+ - t1404: mark tests that muck with .git directly as REFFILES.
+ - t2017: mark --orphan/logAllRefUpdates=false test as REFFILES
+ - t1414: mark corruption test with REFFILES
+ - t1407: require REFFILES for for_each_reflog test
+ - test-lib: provide test prereq REFFILES
+ - t5304: use "reflog expire --all" to clear the reflog
+ - t5304: restyle: trim empty lines, drop ':' before >
+ - t7003: use rev-parse rather than FS inspection
+ - t5000: inspect HEAD using git-rev-parse
+ - t5000: reformat indentation to the latest fashion
+ - t1301: fix typo in error message
+ - t1413: use tar to save and restore entire .git directory
+ - t1401-symbolic-ref: avoid direct filesystem access
+ - t1401: use tar to snapshot and restore repo state
+ - t5601: read HEAD using rev-parse
+ - t9300: check ref existence using test-helper rather than a file system check
+ - t/helper/ref-store: initialize oid in resolve-ref
+ - t4202: split testcase for invalid HEAD symref and HEAD hash
+
+ Preliminary clean-up of tests before the main reftable changes
+ hits the codebase.
+
+ Will merge to 'next'.
+
+
+* js/trace2-discard-event-docfix (2021-06-04) 1 commit
+ - docs: fix api-trace2 doc for "too_many_files" event
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* tk/partial-clone-repack-doc (2021-06-04) 1 commit
+ - Remove warning that repack only works on non-promisor packfiles
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* zh/cat-file-batch-fix (2021-06-04) 2 commits
+ - cat-file: merge two block into one
+ - cat-file: handle trivial --batch format with --batch-all-objects
+
+ "git cat-file --batch-all-objects"" misbehaved when "--batch" is in
+ use and did not ask for certain object traits.
+
+ Will merge to 'next'.
+
+
 * fc/push-simple-updates (2021-06-02) 7 commits
  - doc: push: explain default=simple correctly
  - push: remove unused code in setup_push_upstream()
@@ -425,15 +457,18 @@ Release tarballs are available at:
  (this branch uses en/ort-perf-batch-11.)
 
 
-* zh/ref-filter-raw-data (2021-05-31) 2 commits
+* zh/ref-filter-raw-data (2021-06-07) 6 commits
+ . ref-filter: add %(raw:textconv) and %(raw:filters)
+ . ref-filter: teach grab_sub_body_contents() return value and err
+ . ref-filter: add %(rest) atom and --rest option
+ . ref-filter: use non-const ref_format in *_atom_parser()
  . ref-filter: add %(raw) atom
  . ref-filter: add obj-type check in grab contents
+ (this branch uses zh/ref-filter-atom-type.)
 
  Prepare the "ref-filter" machinery that drives the "--format"
  option of "git for-each-ref" and its friends to be used in "git
  cat-file --batch".
-
- Seems to crash with zh/ref-filter-atom-type.
 
 
 * fc/doc-build-cleanup (2021-05-24) 5 commits
@@ -446,7 +481,7 @@ Release tarballs are available at:
 
  Preparatory build procedure clean-up for documentation.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * es/config-based-hooks (2021-05-27) 37 commits
@@ -531,7 +566,7 @@ Release tarballs are available at:
 
  Test portability fix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ah/fetch-reject-warning-grammofix (2021-05-20) 1 commit
@@ -540,7 +575,7 @@ Release tarballs are available at:
 
  Message update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ah/setup-extensions-message-i18n-fix (2021-05-20) 1 commit
@@ -549,7 +584,7 @@ Release tarballs are available at:
 
  Message update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/clone-clean-upon-transport-error (2021-05-19) 1 commit
@@ -569,7 +604,7 @@ Release tarballs are available at:
  The documentation for "color.pager" configuration variable has been
  updated.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/fetch-pack-v2-half-close-early (2021-05-20) 1 commit
@@ -589,7 +624,7 @@ Release tarballs are available at:
 
  The description of "fast-forward" in the glossary has been updated.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * wm/rev-parse-die-i18n (2021-05-17) 1 commit
@@ -599,7 +634,7 @@ Release tarballs are available at:
  Quite a many die() messages in rev-parse haven't been marked for
  translation.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * es/trace2-log-parent-process-name (2021-05-25) 1 commit
@@ -632,11 +667,14 @@ Release tarballs are available at:
 
  "git send-email" optimization.
 
+ Will merge to 'next'.
+
 
 * zh/ref-filter-atom-type (2021-05-14) 2 commits
   (merged to 'next' on 2021-05-16 at 48fd717185)
  + ref-filter: introduce enum atom_type
  + ref-filter: add objectsize to used_atom
+ (this branch is used by zh/ref-filter-raw-data.)
 
  The code to handle the "--format" option in "for-each-ref" and
  friends made too many string comparisons on %(atom)s used in the
@@ -652,7 +690,7 @@ Release tarballs are available at:
 
  Doc fix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ga/send-email-sendmail-cmd (2021-05-17) 1 commit
@@ -674,7 +712,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ah/merge-usage-i18n-fix (2021-05-16) 1 commit
@@ -683,7 +721,7 @@ Release tarballs are available at:
 
  i18n update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ah/stash-usage-i18n-fix (2021-05-17) 1 commit
@@ -692,7 +730,7 @@ Release tarballs are available at:
 
  i18n update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ah/submodule-helper-module-summary-parseopt (2021-05-17) 1 commit
@@ -701,7 +739,7 @@ Release tarballs are available at:
 
  Message update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ef/mailinfo-short-name (2021-05-17) 1 commit
@@ -711,7 +749,7 @@ Release tarballs are available at:
  We historically rejected a very short string as an author name
  while accepting a patch e-mail, which has been loosened.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ds/write-index-with-hashfile-api (2021-05-19) 4 commits
@@ -733,7 +771,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jn/size-t-casted-to-off-t-fix (2021-05-19) 1 commit
@@ -742,7 +780,7 @@ Release tarballs are available at:
 
  Rewrite code that triggers undefined behaiour warning.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * mt/parallel-checkout-with-padded-oidcpy (2021-05-18) 1 commit
@@ -752,7 +790,7 @@ Release tarballs are available at:
  The parallel checkout codepath did not initialize object ID field
  used to talk to the worker processes in a futureproof way.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * so/log-m-implies-p (2021-05-21) 10 commits
@@ -789,7 +827,7 @@ Release tarballs are available at:
 
  Workaround compiler warnings.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * en/ort-perf-batch-11 (2021-05-20) 13 commits
@@ -831,6 +869,8 @@ Release tarballs are available at:
  (this branch is used by ab/describe-tests-fix and ab/pickaxe-pcre2.)
 
  Test clean-up.
+
+ Will cook in 'next'.
 
 
 * ab/fsck-unexpected-type (2021-05-21) 17 commits
