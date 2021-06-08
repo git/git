@@ -177,7 +177,7 @@ int cmd_main(int argc, const char **argv)
 		default:
 			continue;
 		}
-		exit(cmd->exec(cmd->name, arg));
+		return cmd->exec(cmd->name, arg);
 	}
 
 	cd_to_homedir();
