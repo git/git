@@ -685,7 +685,6 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 				  "fsmonitor: unsupported V1 protocol '%s'"),
 				 command);
 		do_trivial = 1;
-		do_cookie = 1;
 
 	} else {
 		/* We have "builtin:*" */
