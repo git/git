@@ -10,6 +10,7 @@ if test -z "$GIT_EXEC_PATH" || ! test -f "$GIT_EXEC_PATH/git-sh-setup" || {
 	test ! "$GIT_EXEC_PATH" -ef "${PATH%%:*}" 2>/dev/null
 }
 then
+	basename=${0##*[/\\]}
 	echo >&2 'It looks like either your git installation or your'
 	echo >&2 'git-subtree installation is broken.'
 	echo >&2
@@ -17,10 +18,10 @@ then
 	echo >&2 " - If \`git --exec-path\` does not print the correct path to"
 	echo >&2 "   your git install directory, then set the GIT_EXEC_PATH"
 	echo >&2 "   environment variable to the correct directory."
-	echo >&2 " - Make sure that your \`${0##*/}\` file is either in your"
+	echo >&2 " - Make sure that your \`$basename\` file is either in your"
 	echo >&2 "   PATH or in your git exec path (\`$(git --exec-path)\`)."
-	echo >&2 " - You should run git-subtree as \`git ${0##*/git-}\`,"
-	echo >&2 "   not as \`${0##*/}\`." >&2
+	echo >&2 " - You should run git-subtree as \`git ${basename#git-}\`,"
+	echo >&2 "   not as \`$basename\`." >&2
 	exit 126
 fi
 
