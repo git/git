@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='show-ref'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -9,7 +12,7 @@ test_expect_success setup '
 	git checkout -b side &&
 	test_commit B &&
 	git tag -f -a -m "annotated B" B &&
-	git checkout master &&
+	git checkout main &&
 	test_commit C &&
 	git branch B A^0
 '
@@ -92,23 +95,23 @@ test_expect_success 'show-ref -d' '
 	git show-ref --verify -d refs/tags/A refs/tags/C >actual &&
 	test_cmp expect actual &&
 
-	echo $(git rev-parse refs/heads/master) refs/heads/master >expect &&
-	git show-ref -d master >actual &&
+	echo $(git rev-parse refs/heads/main) refs/heads/main >expect &&
+	git show-ref -d main >actual &&
 	test_cmp expect actual &&
 
-	git show-ref -d heads/master >actual &&
+	git show-ref -d heads/main >actual &&
 	test_cmp expect actual &&
 
-	git show-ref -d refs/heads/master >actual &&
+	git show-ref -d refs/heads/main >actual &&
 	test_cmp expect actual &&
 
-	git show-ref -d --verify refs/heads/master >actual &&
+	git show-ref -d --verify refs/heads/main >actual &&
 	test_cmp expect actual &&
 
-	test_must_fail git show-ref -d --verify master >actual &&
+	test_must_fail git show-ref -d --verify main >actual &&
 	test_must_be_empty actual &&
 
-	test_must_fail git show-ref -d --verify heads/master >actual &&
+	test_must_fail git show-ref -d --verify heads/main >actual &&
 	test_must_be_empty actual &&
 
 	test_must_fail git show-ref --verify -d A C >actual &&
@@ -120,7 +123,7 @@ test_expect_success 'show-ref -d' '
 '
 
 test_expect_success 'show-ref --heads, --tags, --head, pattern' '
-	for branch in B master side
+	for branch in B main side
 	do
 		echo $(git rev-parse refs/heads/$branch) refs/heads/$branch
 	done >expect.heads &&

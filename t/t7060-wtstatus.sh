@@ -2,6 +2,9 @@
 
 test_description='basic work tree status reporting'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -51,11 +54,11 @@ EOF
 		git checkout -b side HEAD^ &&
 		git rm foo &&
 		git commit -m delete &&
-		test_must_fail git merge master &&
+		test_must_fail git merge main &&
 		test_must_fail git commit --dry-run >../actual &&
-		test_i18ncmp ../expect ../actual &&
+		test_cmp ../expect ../actual &&
 		git status >../actual &&
-		test_i18ncmp ../expect ../actual
+		test_cmp ../expect ../actual
 	)
 '
 
@@ -124,18 +127,18 @@ test_expect_success 'git diff-index --cached -C shows 2 copies + 1 unmerged' '
 
 test_expect_success 'status when conflicts with add and rm advice (deleted by them)' '
 	git reset --hard &&
-	git checkout master &&
+	git checkout main &&
 	test_commit init main.txt init &&
 	git checkout -b second_branch &&
 	git rm main.txt &&
 	git commit -m "main.txt deleted on second_branch" &&
 	test_commit second conflict.txt second &&
-	git checkout master &&
+	git checkout main &&
 	test_commit on_second main.txt on_second &&
-	test_commit master conflict.txt master &&
+	test_commit main conflict.txt main &&
 	test_must_fail git merge second_branch &&
 	cat >expected <<\EOF &&
-On branch master
+On branch main
 You have unmerged paths.
   (fix conflicts and run "git commit")
   (use "git merge --abort" to abort the merge)
@@ -148,7 +151,7 @@ Unmerged paths:
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -157,8 +160,8 @@ test_expect_success 'prepare for conflicts' '
 	git checkout -b conflict &&
 	test_commit one main.txt one &&
 	git branch conflict_second &&
-	git mv main.txt sub_master.txt &&
-	git commit -m "main.txt renamed in sub_master.txt" &&
+	git mv main.txt sub_main.txt &&
+	git commit -m "main.txt renamed in sub_main.txt" &&
 	git checkout conflict_second &&
 	git mv main.txt sub_second.txt &&
 	git commit -m "main.txt renamed in sub_second.txt"
@@ -176,20 +179,20 @@ You have unmerged paths.
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
 	both deleted:    main.txt
-	added by them:   sub_master.txt
+	added by them:   sub_main.txt
 	added by us:     sub_second.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'status when conflicts with only rm advice (both deleted)' '
 	git reset --hard conflict_second &&
 	test_must_fail git merge conflict &&
-	git add sub_master.txt &&
+	git add sub_main.txt &&
 	git add sub_second.txt &&
 	cat >expected <<\EOF &&
 On branch conflict_second
@@ -198,7 +201,7 @@ You have unmerged paths.
   (use "git merge --abort" to abort the merge)
 
 Changes to be committed:
-	new file:   sub_master.txt
+	new file:   sub_main.txt
 
 Unmerged paths:
   (use "git rm <file>..." to mark resolution)
@@ -207,14 +210,14 @@ Unmerged paths:
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual &&
+	test_cmp expected actual &&
 	git reset --hard &&
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'status --branch with detached HEAD' '
 	git reset --hard &&
-	git checkout master^0 &&
+	git checkout main^0 &&
 	git status --branch --porcelain >actual &&
 	cat >expected <<-EOF &&
 	## HEAD (no branch)
@@ -224,13 +227,13 @@ test_expect_success 'status --branch with detached HEAD' '
 	?? expected
 	?? mdconflict/
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 ## Duplicate the above test and verify --porcelain=v1 arg parsing.
 test_expect_success 'status --porcelain=v1 --branch with detached HEAD' '
 	git reset --hard &&
-	git checkout master^0 &&
+	git checkout main^0 &&
 	git status --branch --porcelain=v1 >actual &&
 	cat >expected <<-EOF &&
 	## HEAD (no branch)
@@ -240,7 +243,7 @@ test_expect_success 'status --porcelain=v1 --branch with detached HEAD' '
 	?? expected
 	?? mdconflict/
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 ## Verify parser error on invalid --porcelain argument.

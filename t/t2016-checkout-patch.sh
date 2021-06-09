@@ -18,6 +18,10 @@ test_expect_success PERL 'setup' '
 
 # note: bar sorts before dir/foo, so the first 'n' is always to skip 'bar'
 
+# NEEDSWORK: Since the builtin add-p is used when $GIT_TEST_ADD_I_USE_BUILTIN
+# is given, we should replace the PERL prerequisite with an ADD_I prerequisite
+# which first checks if $GIT_TEST_ADD_I_USE_BUILTIN is defined before checking
+# PERL.
 test_expect_success PERL 'saying "n" does nothing' '
 	set_and_save_state dir/foo work head &&
 	test_write_lines n n | git checkout -p &&
@@ -57,6 +61,13 @@ test_expect_success PERL 'git checkout -p HEAD with change already staged' '
 	test_write_lines n y n | git checkout -p HEAD &&
 	verify_saved_state bar &&
 	verify_state dir/foo head head
+'
+
+test_expect_success PERL 'git checkout -p HEAD^...' '
+	# the third n is to get out in case it mistakenly does not apply
+	test_write_lines n y n | git checkout -p HEAD^... &&
+	verify_saved_state bar &&
+	verify_state dir/foo parent parent
 '
 
 test_expect_success PERL 'git checkout -p HEAD^' '
@@ -110,6 +121,11 @@ test_expect_success PERL 'path limiting works: foo inside dir' '
 
 test_expect_success PERL 'none of this moved HEAD' '
 	verify_saved_head
+'
+
+test_expect_success PERL 'empty tree can be handled' '
+	test_when_finished "git reset --hard" &&
+	git checkout -p $(test_oid empty_tree) --
 '
 
 test_done

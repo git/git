@@ -9,6 +9,7 @@ making sure that we do not segfault or otherwise behave badly.'
 test_expect_success 'extra delim packet in v2 ls-refs args' '
 	{
 		packetize command=ls-refs &&
+		packetize "object-format=$(test_oid algo)" &&
 		printf 0001 &&
 		# protocol expects 0000 flush here
 		printf 0001
@@ -21,6 +22,7 @@ test_expect_success 'extra delim packet in v2 ls-refs args' '
 test_expect_success 'extra delim packet in v2 fetch args' '
 	{
 		packetize command=fetch &&
+		packetize "object-format=$(test_oid algo)" &&
 		printf 0001 &&
 		# protocol expects 0000 flush here
 		printf 0001

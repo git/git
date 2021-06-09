@@ -8,11 +8,9 @@
      this makes literal text easier to distinguish in manpages
      viewed on a tty -->
 <xsl:template match="literal|d:literal">
-	<xsl:value-of select="$git.docbook.backslash"/>
-	<xsl:text>fB</xsl:text>
+	<xsl:text>\fB</xsl:text>
 	<xsl:apply-templates/>
-	<xsl:value-of select="$git.docbook.backslash"/>
-	<xsl:text>fR</xsl:text>
+	<xsl:text>\fR</xsl:text>
 </xsl:template>
 
 </xsl:stylesheet>

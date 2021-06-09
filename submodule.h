@@ -1,7 +1,7 @@
 #ifndef SUBMODULE_H
 #define SUBMODULE_H
 
-struct argv_array;
+struct strvec;
 struct cache_entry;
 struct diff_options;
 struct index_state;
@@ -39,7 +39,7 @@ struct submodule_update_strategy {
 };
 #define SUBMODULE_UPDATE_STRATEGY_INIT {SM_UPDATE_UNSPECIFIED, NULL}
 
-int is_gitmodules_unmerged(const struct index_state *istate);
+int is_gitmodules_unmerged(struct index_state *istate);
 int is_writing_gitmodules_ok(void);
 int is_staging_gitmodules_ok(struct index_state *istate);
 int update_path_in_gitmodules(const char *oldpath, const char *newpath);
@@ -60,16 +60,16 @@ int is_submodule_active(struct repository *repo, const char *path);
  * Otherwise the return error code is the same as of resolve_gitdir_gently.
  */
 int is_submodule_populated_gently(const char *path, int *return_error_code);
-void die_in_unpopulated_submodule(const struct index_state *istate,
+void die_in_unpopulated_submodule(struct index_state *istate,
 				  const char *prefix);
-void die_path_inside_submodule(const struct index_state *istate,
+void die_path_inside_submodule(struct index_state *istate,
 			       const struct pathspec *ps);
 enum submodule_update_type parse_submodule_update_type(const char *value);
 int parse_submodule_update_strategy(const char *value,
 				    struct submodule_update_strategy *dst);
 const char *submodule_strategy_to_string(const struct submodule_update_strategy *s);
 void handle_ignore_submodules_arg(struct diff_options *, const char *);
-void show_submodule_summary(struct diff_options *o, const char *path,
+void show_submodule_diff_summary(struct diff_options *o, const char *path,
 			    struct object_id *one, struct object_id *two,
 			    unsigned dirty_submodule);
 void show_submodule_inline_diff(struct diff_options *o, const char *path,
@@ -84,7 +84,7 @@ int should_update_submodules(void);
 const struct submodule *submodule_from_ce(const struct cache_entry *ce);
 void check_for_new_submodule_commits(struct object_id *oid);
 int fetch_populated_submodules(struct repository *r,
-			       const struct argv_array *options,
+			       const struct strvec *options,
 			       const char *prefix,
 			       int command_line_option,
 			       int default_option,
@@ -143,7 +143,7 @@ void submodule_unset_core_worktree(const struct submodule *sub);
  * a submodule by clearing any repo-specific environment variables, but
  * retaining any config in the environment.
  */
-void prepare_submodule_repo_env(struct argv_array *out);
+void prepare_submodule_repo_env(struct strvec *out);
 
 #define ABSORB_GITDIR_RECURSE_SUBMODULES (1<<0)
 void absorb_git_dir_into_superproject(const char *path,

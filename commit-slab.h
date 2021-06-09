@@ -47,6 +47,16 @@
  *
  *   Call this function before the slab falls out of scope to avoid
  *   leaking memory.
+ *
+ * - void deep_clear_indegree(struct indegree *, void (*free_fn)(int*))
+ *
+ *   Empties the slab, similar to clear_indegree(), but in addition it
+ *   calls the given 'free_fn' for each slab entry to release any
+ *   additional memory that might be owned by the entry (but not the
+ *   entry itself!).
+ *   Note that 'free_fn' might be called even for entries for which no
+ *   indegree_at() call has been made; in this case 'free_fn' is invoked
+ *   with a pointer to a zero-initialized location.
  */
 
 #define define_commit_slab(slabname, elemtype) \

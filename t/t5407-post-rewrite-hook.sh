@@ -4,6 +4,9 @@
 #
 
 test_description='Test the post-rewrite hook.'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -14,7 +17,7 @@ test_expect_success 'setup' '
 	git checkout A^0 &&
 	test_commit E bar E &&
 	test_commit F foo F &&
-	git checkout master
+	git checkout main
 '
 
 mkdir .git/hooks

@@ -6,7 +6,7 @@
 int cmd__parse_pathspec_file(int argc, const char **argv)
 {
 	struct pathspec pathspec;
-	const char *pathspec_from_file = 0;
+	const char *pathspec_from_file = NULL;
 	int pathspec_file_nul = 0, i;
 
 	static const char *const usage[] = {
@@ -20,9 +20,9 @@ int cmd__parse_pathspec_file(int argc, const char **argv)
 		OPT_END()
 	};
 
-	parse_options(argc, argv, 0, options, usage, 0);
+	parse_options(argc, argv, NULL, options, usage, 0);
 
-	parse_pathspec_file(&pathspec, 0, 0, 0, pathspec_from_file,
+	parse_pathspec_file(&pathspec, 0, 0, NULL, pathspec_from_file,
 			    pathspec_file_nul);
 
 	for (i = 0; i < pathspec.nr; i++)

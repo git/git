@@ -70,6 +70,7 @@ struct packed_git {
 	size_t index_size;
 	uint32_t num_objects;
 	uint32_t num_bad_objects;
+	uint32_t crc_offset;
 	unsigned char *bad_object_sha1;
 	int index_version;
 	time_t mtime;
@@ -84,6 +85,9 @@ struct packed_git {
 		 multi_pack_index:1;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct revindex_entry *revindex;
+	const uint32_t *revindex_data;
+	const uint32_t *revindex_map;
+	size_t revindex_size;
 	/* something like ".git/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
 };
@@ -148,6 +152,11 @@ struct raw_object_store {
 	struct packed_git *packed_git;
 	/* A most-recently-used ordered version of the packed_git list. */
 	struct list_head packed_git_mru;
+
+	struct {
+		struct packed_git **packs;
+		unsigned flags;
+	} kept_pack_cache;
 
 	/*
 	 * A map of packfiles to packed_git structs for tracking which
@@ -238,12 +247,33 @@ int read_loose_object(const char *path,
 		      unsigned long *size,
 		      void **contents);
 
+/* Retry packed storage after checking packed and loose storage */
+#define HAS_OBJECT_RECHECK_PACKED 1
+
+/*
+ * Returns 1 if the object exists. This function will not lazily fetch objects
+ * in a partial clone.
+ */
+int has_object(struct repository *r, const struct object_id *oid,
+	       unsigned flags);
+
+/*
+ * These macros and functions are deprecated. If checking existence for an
+ * object that is likely to be missing and/or whose absence is relatively
+ * inconsequential (or is consequential but the caller is prepared to handle
+ * it), use has_object(), which has better defaults (no lazy fetch in a partial
+ * clone and no rechecking of packed storage). In the unlikely event that a
+ * caller needs to assert existence of an object that it fully expects to
+ * exist, and wants to trigger a lazy fetch in a partial clone, use
+ * oid_object_info_extended() with a NULL struct object_info.
+ *
+ * These functions can be removed once all callers have migrated to
+ * has_object() and/or oid_object_info_extended().
+ */
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define has_sha1_file_with_flags(sha1, flags) repo_has_sha1_file_with_flags(the_repository, sha1, flags)
 #define has_sha1_file(sha1) repo_has_sha1_file(the_repository, sha1)
 #endif
-
-/* Same as the above, except for struct object_id. */
 int repo_has_object_file(struct repository *r, const struct object_id *oid);
 int repo_has_object_file_with_flags(struct repository *r,
 				    const struct object_id *oid, int flags);

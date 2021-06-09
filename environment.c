@@ -9,14 +9,16 @@
  */
 #include "cache.h"
 #include "branch.h"
+#include "environment.h"
 #include "repository.h"
 #include "config.h"
 #include "refs.h"
 #include "fmt-merge-msg.h"
 #include "commit.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "object-store.h"
 #include "chdir-notify.h"
+#include "shallow.h"
 
 int trust_executable_bit = 1;
 int trust_ctime = 1;
@@ -34,8 +36,8 @@ int repository_format_precious_objects;
 int repository_format_worktree_config;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
-const char *apply_default_whitespace;
-const char *apply_default_ignorewhitespace;
+char *apply_default_whitespace;
+char *apply_default_ignorewhitespace;
 const char *git_attributes_file;
 const char *git_hooks_path;
 int zlib_compression_level = Z_BEST_SPEED;
@@ -115,6 +117,7 @@ const char * const local_repo_env[] = {
 	ALTERNATE_DB_ENVIRONMENT,
 	CONFIG_ENVIRONMENT,
 	CONFIG_DATA_ENVIRONMENT,
+	CONFIG_COUNT_ENVIRONMENT,
 	DB_ENVIRONMENT,
 	GIT_DIR_ENVIRONMENT,
 	GIT_WORK_TREE_ENVIRONMENT,
@@ -151,19 +154,15 @@ static char *expand_namespace(const char *raw_namespace)
 	return strbuf_detach(&buf, NULL);
 }
 
-/*
- * Wrapper of getenv() that returns a strdup value. This value is kept
- * in argv to be freed later.
- */
-static const char *getenv_safe(struct argv_array *argv, const char *name)
+const char *getenv_safe(struct strvec *argv, const char *name)
 {
 	const char *value = getenv(name);
 
 	if (!value)
 		return NULL;
 
-	argv_array_push(argv, value);
-	return argv->argv[argv->argc - 1];
+	strvec_push(argv, value);
+	return argv->v[argv->nr - 1];
 }
 
 void setup_git_env(const char *git_dir)
@@ -171,7 +170,7 @@ void setup_git_env(const char *git_dir)
 	const char *shallow_file;
 	const char *replace_ref_base;
 	struct set_gitdir_args args = { NULL };
-	struct argv_array to_free = ARGV_ARRAY_INIT;
+	struct strvec to_free = STRVEC_INIT;
 
 	args.commondir = getenv_safe(&to_free, GIT_COMMON_DIR_ENVIRONMENT);
 	args.object_dir = getenv_safe(&to_free, DB_ENVIRONMENT);
@@ -179,7 +178,7 @@ void setup_git_env(const char *git_dir)
 	args.index_file = getenv_safe(&to_free, INDEX_ENVIRONMENT);
 	args.alternate_db = getenv_safe(&to_free, ALTERNATE_DB_ENVIRONMENT);
 	repo_set_gitdir(the_repository, git_dir, &args);
-	argv_array_clear(&to_free);
+	strvec_clear(&to_free);
 
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		read_replace_refs = 0;

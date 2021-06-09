@@ -1,5 +1,7 @@
-#ifndef SHA1_ARRAY_H
-#define SHA1_ARRAY_H
+#ifndef OID_ARRAY_H
+#define OID_ARRAY_H
+
+#include "hash.h"
 
 /**
  * The API provides storage and manipulation of sets of object identifiers.
@@ -106,4 +108,30 @@ void oid_array_filter(struct oid_array *array,
 		      for_each_oid_fn want,
 		      void *cbdata);
 
-#endif /* SHA1_ARRAY_H */
+/**
+ * Sort the array in order of ascending object id.
+ */
+void oid_array_sort(struct oid_array *array);
+
+/**
+ * Find the next unique oid in the array after position "cur".
+ * The array must be sorted for this to work. You can iterate
+ * over unique elements like this:
+ *
+ *   size_t i;
+ *   oid_array_sort(array);
+ *   for (i = 0; i < array->nr; i = oid_array_next_unique(array, i))
+ *	printf("%s", oid_to_hex(array->oids[i]);
+ *
+ * Non-unique iteration can just increment with "i++" to visit each element.
+ */
+static inline size_t oid_array_next_unique(struct oid_array *array, size_t cur)
+{
+	do {
+		cur++;
+	} while (cur < array->nr &&
+		 oideq(array->oid + cur, array->oid + cur - 1));
+	return cur;
+}
+
+#endif /* OID_ARRAY_H */

@@ -18,8 +18,8 @@ void open_in_gdb(void)
 	static struct child_process cp = CHILD_PROCESS_INIT;
 	extern char *_pgmptr;
 
-	argv_array_pushl(&cp.args, "mintty", "gdb", NULL);
-	argv_array_pushf(&cp.args, "--pid=%d", getpid());
+	strvec_pushl(&cp.args, "mintty", "gdb", NULL);
+	strvec_pushf(&cp.args, "--pid=%d", getpid());
 	cp.clean_on_exit = 1;
 	if (start_command(&cp) < 0)
 		die_errno("Could not start gdb");
@@ -290,6 +290,9 @@ int mingw_unlink(const char *pathname)
 	if (xutftowcs_path(wpathname, pathname) < 0)
 		return -1;
 
+	if (DeleteFileW(wpathname))
+		return 0;
+
 	/* read-only files cannot be removed */
 	_wchmod(wpathname, 0666);
 	while ((ret = _wunlink(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
@@ -364,6 +367,8 @@ int mingw_rmdir(const char *pathname)
 	       ask_yes_no_if_possible("Deletion of directory '%s' failed. "
 			"Should I try again?", pathname))
 	       ret = _wrmdir(wpathname);
+	if (!ret)
+		invalidate_lstat_cache();
 	return ret;
 }
 
@@ -680,6 +685,8 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 int mingw_access(const char *filename, int mode)
 {
 	wchar_t wfilename[MAX_PATH];
+	if (!strcmp("nul", filename) || !strcmp("/dev/null", filename))
+		return 0;
 	if (xutftowcs_path(wfilename, filename) < 0)
 		return -1;
 	/* X_OK is not supported by the MSVCRT version */

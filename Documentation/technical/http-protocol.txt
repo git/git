@@ -216,7 +216,7 @@ smart server reply:
    S: 001e# service=git-upload-pack\n
    S: 0000
    S: 004895dcfa3633004da0049d3d0fa03f80589cbcaf31 refs/heads/maint\0multi_ack\n
-   S: 0042d049f6c27a2244e12041955e262a404c7faba355 refs/heads/master\n
+   S: 003fd049f6c27a2244e12041955e262a404c7faba355 refs/heads/master\n
    S: 003c2cb58b79488a98d2721cea644875a8dd0026b115 refs/tags/v1.0\n
    S: 003fa3c2e2402b99163d1d59756e5f207ae21cccba4c refs/tags/v1.0^{}\n
    S: 0000
@@ -401,8 +401,9 @@ at all in the request stream:
 The stream is terminated by a pkt-line flush (`0000`).
 
 A single "want" or "have" command MUST have one hex formatted
-SHA-1 as its value.  Multiple SHA-1s MUST be sent by sending
-multiple commands.
+object name as its value.  Multiple object names MUST be sent by sending
+multiple commands. Object names MUST be given using the object format
+negotiated through the `object-format` capability (default SHA-1).
 
 The `have` list is created by popping the first 32 commits
 from `c_pending`.  Less can be supplied if `c_pending` empties.

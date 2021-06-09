@@ -18,7 +18,7 @@
 	Untyped <<def_object,object>>, e.g. the contents of a file.
 
 [[def_branch]]branch::
-	A "branch" is an active line of development.  The most recent
+	A "branch" is a line of development.  The most recent
 	<<def_commit,commit>> on a branch is referred to as the tip of
 	that branch.  The tip of the branch is referenced by a branch
 	<<def_head,head>>, which moves forward as additional development

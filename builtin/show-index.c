@@ -1,9 +1,12 @@
 #include "builtin.h"
 #include "cache.h"
 #include "pack.h"
+#include "parse-options.h"
 
-static const char show_index_usage[] =
-"git show-index";
+static const char *const show_index_usage[] = {
+	"git show-index [--object-format=<hash-algorithm>]",
+	NULL
+};
 
 int cmd_show_index(int argc, const char **argv, const char *prefix)
 {
@@ -11,10 +14,26 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 	unsigned nr;
 	unsigned int version;
 	static unsigned int top_index[256];
-	const unsigned hashsz = the_hash_algo->rawsz;
+	unsigned hashsz;
+	const char *hash_name = NULL;
+	int hash_algo;
+	const struct option show_index_options[] = {
+		OPT_STRING(0, "object-format", &hash_name, N_("hash-algorithm"),
+			   N_("specify the hash algorithm to use")),
+		OPT_END()
+	};
 
-	if (argc != 1)
-		usage(show_index_usage);
+	argc = parse_options(argc, argv, prefix, show_index_options, show_index_usage, 0);
+
+	if (hash_name) {
+		hash_algo = hash_algo_by_name(hash_name);
+		if (hash_algo == GIT_HASH_UNKNOWN)
+			die(_("Unknown hash algorithm"));
+		repo_set_hash_algo(the_repository, hash_algo);
+	}
+
+	hashsz = the_hash_algo->rawsz;
+
 	if (fread(top_index, 2 * 4, 1, stdin) != 1)
 		die("unable to read header");
 	if (top_index[0] == htonl(PACK_IDX_SIGNATURE)) {
@@ -52,9 +71,11 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 			uint32_t off;
 		} *entries;
 		ALLOC_ARRAY(entries, nr);
-		for (i = 0; i < nr; i++)
+		for (i = 0; i < nr; i++) {
 			if (fread(entries[i].oid.hash, hashsz, 1, stdin) != 1)
 				die("unable to read sha1 %u/%u", i, nr);
+			entries[i].oid.algo = hash_algo_by_ptr(the_hash_algo);
+		}
 		for (i = 0; i < nr; i++)
 			if (fread(&entries[i].crc, 4, 1, stdin) != 1)
 				die("unable to read crc %u/%u", i, nr);

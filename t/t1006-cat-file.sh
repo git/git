@@ -140,8 +140,6 @@ test_expect_success '--batch-check without %(rest) considers whole line' '
 	test_cmp expect actual
 '
 
-test_oid_init
-
 tree_sha1=$(git write-tree)
 tree_size=$(($(test_oid rawsz) + 13))
 tree_pretty_content="100644 blob $hello_sha1	hello"
@@ -168,7 +166,7 @@ tag_content="$tag_header_without_timestamp 0000000000 +0000
 
 $tag_description"
 
-tag_sha1=$(echo_without_newline "$tag_content" | git mktag)
+tag_sha1=$(echo_without_newline "$tag_content" | git hash-object -t tag --stdin -w)
 tag_size=$(strlen "$tag_content")
 
 run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_content" 1

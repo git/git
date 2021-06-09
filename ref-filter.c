@@ -22,7 +22,7 @@
 #include "commit-reach.h"
 #include "worktree.h"
 #include "hashmap.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 static struct ref_msg {
 	const char *gone;
@@ -66,6 +66,12 @@ struct refname_atom {
 	enum { R_NORMAL, R_SHORT, R_LSTRIP, R_RSTRIP } option;
 	int lstrip, rstrip;
 };
+
+static struct ref_trailer_buf {
+	struct string_list filter_list;
+	struct strbuf sepbuf;
+	struct strbuf kvsepbuf;
+} ref_trailer_buf = {STRING_LIST_INIT_NODUP, STRBUF_INIT, STRBUF_INIT};
 
 static struct expand_data {
 	struct object_id oid;
@@ -127,7 +133,8 @@ static struct used_atom {
 			unsigned int nobracket : 1, push : 1, push_remote : 1;
 		} remote_ref;
 		struct {
-			enum { C_BARE, C_BODY, C_BODY_DEP, C_LINES, C_SIG, C_SUB, C_TRAILERS } option;
+			enum { C_BARE, C_BODY, C_BODY_DEP, C_LENGTH, C_LINES,
+			       C_SIG, C_SUB, C_SUB_SANITIZE, C_TRAILERS } option;
 			struct process_trailer_options trailer_opts;
 			unsigned int nlines;
 		} contents;
@@ -138,7 +145,10 @@ static struct used_atom {
 		struct {
 			enum { O_FULL, O_LENGTH, O_SHORT } option;
 			unsigned int length;
-		} objectname;
+		} oid;
+		struct email_option {
+			enum { EO_RAW, EO_TRIM, EO_LOCALPART } option;
+		} email_option;
 		struct refname_atom refname;
 		char *head;
 	} u;
@@ -297,37 +307,38 @@ static int body_atom_parser(const struct ref_format *format, struct used_atom *a
 static int subject_atom_parser(const struct ref_format *format, struct used_atom *atom,
 			       const char *arg, struct strbuf *err)
 {
-	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(subject) does not take arguments"));
-	atom->u.contents.option = C_SUB;
+	if (!arg)
+		atom->u.contents.option = C_SUB;
+	else if (!strcmp(arg, "sanitize"))
+		atom->u.contents.option = C_SUB_SANITIZE;
+	else
+		return strbuf_addf_ret(err, -1, _("unrecognized %%(subject) argument: %s"), arg);
 	return 0;
 }
 
 static int trailers_atom_parser(const struct ref_format *format, struct used_atom *atom,
 				const char *arg, struct strbuf *err)
 {
-	struct string_list params = STRING_LIST_INIT_DUP;
-	int i;
-
 	atom->u.contents.trailer_opts.no_divider = 1;
 
 	if (arg) {
-		string_list_split(&params, arg, ',', -1);
-		for (i = 0; i < params.nr; i++) {
-			const char *s = params.items[i].string;
-			if (!strcmp(s, "unfold"))
-				atom->u.contents.trailer_opts.unfold = 1;
-			else if (!strcmp(s, "only"))
-				atom->u.contents.trailer_opts.only_trailers = 1;
-			else {
-				strbuf_addf(err, _("unknown %%(trailers) argument: %s"), s);
-				string_list_clear(&params, 0);
-				return -1;
-			}
+		const char *argbuf = xstrfmt("%s)", arg);
+		char *invalid_arg = NULL;
+
+		if (format_set_trailers_options(&atom->u.contents.trailer_opts,
+		    &ref_trailer_buf.filter_list,
+		    &ref_trailer_buf.sepbuf,
+		    &ref_trailer_buf.kvsepbuf,
+		    &argbuf, &invalid_arg)) {
+			if (!invalid_arg)
+				strbuf_addf(err, _("expected %%(trailers:key=<value>)"));
+			else
+				strbuf_addf(err, _("unknown %%(trailers) argument: %s"), invalid_arg);
+			free((char *)invalid_arg);
+			return -1;
 		}
 	}
 	atom->u.contents.option = C_TRAILERS;
-	string_list_clear(&params, 0);
 	return 0;
 }
 
@@ -338,13 +349,17 @@ static int contents_atom_parser(const struct ref_format *format, struct used_ato
 		atom->u.contents.option = C_BARE;
 	else if (!strcmp(arg, "body"))
 		atom->u.contents.option = C_BODY;
+	else if (!strcmp(arg, "size"))
+		atom->u.contents.option = C_LENGTH;
 	else if (!strcmp(arg, "signature"))
 		atom->u.contents.option = C_SIG;
 	else if (!strcmp(arg, "subject"))
 		atom->u.contents.option = C_SUB;
-	else if (skip_prefix(arg, "trailers", &arg)) {
-		skip_prefix(arg, ":", &arg);
-		if (trailers_atom_parser(format, atom, *arg ? arg : NULL, err))
+	else if (!strcmp(arg, "trailers")) {
+		if (trailers_atom_parser(format, atom, NULL, err))
+			return -1;
+	} else if (skip_prefix(arg, "trailers:", &arg)) {
+		if (trailers_atom_parser(format, atom, arg, err))
 			return -1;
 	} else if (skip_prefix(arg, "lines=", &arg)) {
 		atom->u.contents.option = C_LINES;
@@ -355,22 +370,36 @@ static int contents_atom_parser(const struct ref_format *format, struct used_ato
 	return 0;
 }
 
-static int objectname_atom_parser(const struct ref_format *format, struct used_atom *atom,
-				  const char *arg, struct strbuf *err)
+static int oid_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			   const char *arg, struct strbuf *err)
 {
 	if (!arg)
-		atom->u.objectname.option = O_FULL;
+		atom->u.oid.option = O_FULL;
 	else if (!strcmp(arg, "short"))
-		atom->u.objectname.option = O_SHORT;
+		atom->u.oid.option = O_SHORT;
 	else if (skip_prefix(arg, "short=", &arg)) {
-		atom->u.objectname.option = O_LENGTH;
-		if (strtoul_ui(arg, 10, &atom->u.objectname.length) ||
-		    atom->u.objectname.length == 0)
-			return strbuf_addf_ret(err, -1, _("positive value expected objectname:short=%s"), arg);
-		if (atom->u.objectname.length < MINIMUM_ABBREV)
-			atom->u.objectname.length = MINIMUM_ABBREV;
+		atom->u.oid.option = O_LENGTH;
+		if (strtoul_ui(arg, 10, &atom->u.oid.length) ||
+		    atom->u.oid.length == 0)
+			return strbuf_addf_ret(err, -1, _("positive value expected '%s' in %%(%s)"), arg, atom->name);
+		if (atom->u.oid.length < MINIMUM_ABBREV)
+			atom->u.oid.length = MINIMUM_ABBREV;
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(objectname) argument: %s"), arg);
+		return strbuf_addf_ret(err, -1, _("unrecognized argument '%s' in %%(%s)"), arg, atom->name);
+	return 0;
+}
+
+static int person_email_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				    const char *arg, struct strbuf *err)
+{
+	if (!arg)
+		atom->u.email_option.option = EO_RAW;
+	else if (!strcmp(arg, "trim"))
+		atom->u.email_option.option = EO_TRIM;
+	else if (!strcmp(arg, "localpart"))
+		atom->u.email_option.option = EO_LOCALPART;
+	else
+		return strbuf_addf_ret(err, -1, _("unrecognized email option: %s"), arg);
 	return 0;
 }
 
@@ -475,25 +504,25 @@ static struct {
 	{ "refname", SOURCE_NONE, FIELD_STR, refname_atom_parser },
 	{ "objecttype", SOURCE_OTHER, FIELD_STR, objecttype_atom_parser },
 	{ "objectsize", SOURCE_OTHER, FIELD_ULONG, objectsize_atom_parser },
-	{ "objectname", SOURCE_OTHER, FIELD_STR, objectname_atom_parser },
+	{ "objectname", SOURCE_OTHER, FIELD_STR, oid_atom_parser },
 	{ "deltabase", SOURCE_OTHER, FIELD_STR, deltabase_atom_parser },
-	{ "tree", SOURCE_OBJ },
-	{ "parent", SOURCE_OBJ },
+	{ "tree", SOURCE_OBJ, FIELD_STR, oid_atom_parser },
+	{ "parent", SOURCE_OBJ, FIELD_STR, oid_atom_parser },
 	{ "numparent", SOURCE_OBJ, FIELD_ULONG },
 	{ "object", SOURCE_OBJ },
 	{ "type", SOURCE_OBJ },
 	{ "tag", SOURCE_OBJ },
 	{ "author", SOURCE_OBJ },
 	{ "authorname", SOURCE_OBJ },
-	{ "authoremail", SOURCE_OBJ },
+	{ "authoremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
 	{ "authordate", SOURCE_OBJ, FIELD_TIME },
 	{ "committer", SOURCE_OBJ },
 	{ "committername", SOURCE_OBJ },
-	{ "committeremail", SOURCE_OBJ },
+	{ "committeremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
 	{ "committerdate", SOURCE_OBJ, FIELD_TIME },
 	{ "tagger", SOURCE_OBJ },
 	{ "taggername", SOURCE_OBJ },
-	{ "taggeremail", SOURCE_OBJ },
+	{ "taggeremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
 	{ "taggerdate", SOURCE_OBJ, FIELD_TIME },
 	{ "creator", SOURCE_OBJ },
 	{ "creatordate", SOURCE_OBJ, FIELD_TIME },
@@ -743,7 +772,8 @@ static int if_atom_handler(struct atom_value *atomv, struct ref_formatting_state
 			   struct strbuf *unused_err)
 {
 	struct ref_formatting_stack *new_stack;
-	struct if_then_else *if_then_else = xcalloc(sizeof(struct if_then_else), 1);
+	struct if_then_else *if_then_else = xcalloc(1,
+						    sizeof(struct if_then_else));
 
 	if_then_else->str = atomv->atom->u.if_then_else.str;
 	if_then_else->cmp_status = atomv->atom->u.if_then_else.cmp_status;
@@ -898,21 +928,27 @@ int verify_ref_format(struct ref_format *format)
 	return 0;
 }
 
-static int grab_objectname(const char *name, const struct object_id *oid,
-			   struct atom_value *v, struct used_atom *atom)
+static const char *do_grab_oid(const char *field, const struct object_id *oid,
+			       struct used_atom *atom)
 {
-	if (starts_with(name, "objectname")) {
-		if (atom->u.objectname.option == O_SHORT) {
-			v->s = xstrdup(find_unique_abbrev(oid, DEFAULT_ABBREV));
-			return 1;
-		} else if (atom->u.objectname.option == O_FULL) {
-			v->s = xstrdup(oid_to_hex(oid));
-			return 1;
-		} else if (atom->u.objectname.option == O_LENGTH) {
-			v->s = xstrdup(find_unique_abbrev(oid, atom->u.objectname.length));
-			return 1;
-		} else
-			BUG("unknown %%(objectname) option");
+	switch (atom->u.oid.option) {
+	case O_FULL:
+		return oid_to_hex(oid);
+	case O_LENGTH:
+		return find_unique_abbrev(oid, atom->u.oid.length);
+	case O_SHORT:
+		return find_unique_abbrev(oid, DEFAULT_ABBREV);
+	default:
+		BUG("unknown %%(%s) option", field);
+	}
+}
+
+static int grab_oid(const char *name, const char *field, const struct object_id *oid,
+		    struct atom_value *v, struct used_atom *atom)
+{
+	if (starts_with(name, field)) {
+		v->s = xstrdup(do_grab_oid(field, oid, atom));
+		return 1;
 	}
 	return 0;
 }
@@ -940,7 +976,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct expand_
 		} else if (!strcmp(name, "deltabase"))
 			v->s = xstrdup(oid_to_hex(&oi->delta_base_oid));
 		else if (deref)
-			grab_objectname(name, &oi->oid, v, &used_atom[i]);
+			grab_oid(name, "objectname", &oi->oid, v, &used_atom[i]);
 	}
 }
 
@@ -979,21 +1015,20 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 			continue;
 		if (deref)
 			name++;
-		if (!strcmp(name, "tree")) {
-			v->s = xstrdup(oid_to_hex(get_commit_tree_oid(commit)));
-		}
-		else if (!strcmp(name, "numparent")) {
+		if (grab_oid(name, "tree", get_commit_tree_oid(commit), v, &used_atom[i]))
+			continue;
+		if (!strcmp(name, "numparent")) {
 			v->value = commit_list_count(commit->parents);
 			v->s = xstrfmt("%lu", (unsigned long)v->value);
 		}
-		else if (!strcmp(name, "parent")) {
+		else if (starts_with(name, "parent")) {
 			struct commit_list *parents;
 			struct strbuf s = STRBUF_INIT;
 			for (parents = commit->parents; parents; parents = parents->next) {
-				struct commit *parent = parents->item;
+				struct object_id *oid = &parents->item->object.oid;
 				if (parents != commit->parents)
 					strbuf_addch(&s, ' ');
-				strbuf_addstr(&s, oid_to_hex(&parent->object.oid));
+				strbuf_addstr(&s, do_grab_oid("parent", oid, &used_atom[i]));
 			}
 			v->s = strbuf_detach(&s, NULL);
 		}
@@ -1034,28 +1069,52 @@ static const char *copy_name(const char *buf)
 	return xstrdup("");
 }
 
-static const char *copy_email(const char *buf)
+static const char *copy_email(const char *buf, struct used_atom *atom)
 {
 	const char *email = strchr(buf, '<');
 	const char *eoemail;
 	if (!email)
 		return xstrdup("");
-	eoemail = strchr(email, '>');
+	switch (atom->u.email_option.option) {
+	case EO_RAW:
+		eoemail = strchr(email, '>');
+		if (eoemail)
+			eoemail++;
+		break;
+	case EO_TRIM:
+		email++;
+		eoemail = strchr(email, '>');
+		break;
+	case EO_LOCALPART:
+		email++;
+		eoemail = strchr(email, '@');
+		if (!eoemail)
+			eoemail = strchr(email, '>');
+		break;
+	default:
+		BUG("unknown email option");
+	}
+
 	if (!eoemail)
 		return xstrdup("");
-	return xmemdupz(email, eoemail + 1 - email);
+	return xmemdupz(email, eoemail - email);
 }
 
 static char *copy_subject(const char *buf, unsigned long len)
 {
-	char *r = xmemdupz(buf, len);
+	struct strbuf sb = STRBUF_INIT;
 	int i;
 
-	for (i = 0; i < len; i++)
-		if (r[i] == '\n')
-			r[i] = ' ';
+	for (i = 0; i < len; i++) {
+		if (buf[i] == '\r' && i + 1 < len && buf[i + 1] == '\n')
+			continue; /* ignore CR in CRLF */
 
-	return r;
+		if (buf[i] == '\n')
+			strbuf_addch(&sb, ' ');
+		else
+			strbuf_addch(&sb, buf[i]);
+	}
+	return strbuf_detach(&sb, NULL);
 }
 
 static void grab_date(const char *buf, struct atom_value *v, const char *atomname)
@@ -1113,7 +1172,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
 			continue;
 		if (name[wholen] != 0 &&
 		    strcmp(name + wholen, "name") &&
-		    strcmp(name + wholen, "email") &&
+		    !starts_with(name + wholen, "email") &&
 		    !starts_with(name + wholen, "date"))
 			continue;
 		if (!wholine)
@@ -1124,8 +1183,8 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
 			v->s = copy_line(wholine);
 		else if (!strcmp(name + wholen, "name"))
 			v->s = copy_name(wholine);
-		else if (!strcmp(name + wholen, "email"))
-			v->s = copy_email(wholine);
+		else if (starts_with(name + wholen, "email"))
+			v->s = copy_email(wholine, &used_atom[i]);
 		else if (starts_with(name + wholen, "date"))
 			grab_date(wholine, v, name);
 	}
@@ -1156,12 +1215,20 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
 }
 
 static void find_subpos(const char *buf,
-			const char **sub, unsigned long *sublen,
-			const char **body, unsigned long *bodylen,
-			unsigned long *nonsiglen,
-			const char **sig, unsigned long *siglen)
+			const char **sub, size_t *sublen,
+			const char **body, size_t *bodylen,
+			size_t *nonsiglen,
+			const char **sig, size_t *siglen)
 {
+	struct strbuf payload = STRBUF_INIT;
+	struct strbuf signature = STRBUF_INIT;
 	const char *eol;
+	const char *end = buf + strlen(buf);
+	const char *sigstart;
+
+	/* parse signature first; we might not even have a subject line */
+	parse_signature(buf, end - buf, &payload, &signature);
+
 	/* skip past header until we hit empty line */
 	while (*buf && *buf != '\n') {
 		eol = strchrnul(buf, '\n');
@@ -1172,31 +1239,32 @@ static void find_subpos(const char *buf,
 	/* skip any empty lines */
 	while (*buf == '\n')
 		buf++;
-
-	/* parse signature first; we might not even have a subject line */
-	*sig = buf + parse_signature(buf, strlen(buf));
-	*siglen = strlen(*sig);
+	*sig = strbuf_detach(&signature, siglen);
+	sigstart = buf + parse_signed_buffer(buf, strlen(buf));
 
 	/* subject is first non-empty line */
 	*sub = buf;
-	/* subject goes to first empty line */
-	while (buf < *sig && *buf && *buf != '\n') {
-		eol = strchrnul(buf, '\n');
-		if (*eol)
-			eol++;
-		buf = eol;
+	/* subject goes to first empty line before signature begins */
+	if ((eol = strstr(*sub, "\n\n"))) {
+		eol = eol < sigstart ? eol : sigstart;
+	/* check if message uses CRLF */
+	} else if (! (eol = strstr(*sub, "\r\n\r\n"))) {
+		/* treat whole message as subject */
+		eol = strrchr(*sub, '\0');
 	}
+	buf = eol;
 	*sublen = buf - *sub;
 	/* drop trailing newline, if present */
-	if (*sublen && (*sub)[*sublen - 1] == '\n')
+	while (*sublen && ((*sub)[*sublen - 1] == '\n' ||
+			   (*sub)[*sublen - 1] == '\r'))
 		*sublen -= 1;
 
 	/* skip any empty lines */
-	while (*buf == '\n')
+	while (*buf == '\n' || *buf == '\r')
 		buf++;
 	*body = buf;
 	*bodylen = strlen(buf);
-	*nonsiglen = *sig - buf;
+	*nonsiglen = sigstart - buf;
 }
 
 /*
@@ -1228,18 +1296,19 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, void *buf)
 {
 	int i;
 	const char *subpos = NULL, *bodypos = NULL, *sigpos = NULL;
-	unsigned long sublen = 0, bodylen = 0, nonsiglen = 0, siglen = 0;
+	size_t sublen = 0, bodylen = 0, nonsiglen = 0, siglen = 0;
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		struct used_atom *atom = &used_atom[i];
 		const char *name = atom->name;
 		struct atom_value *v = &val[i];
+
 		if (!!deref != (*name == '*'))
 			continue;
 		if (deref)
 			name++;
-		if (strcmp(name, "subject") &&
-		    strcmp(name, "body") &&
+		if (strcmp(name, "body") &&
+		    !starts_with(name, "subject") &&
 		    !starts_with(name, "trailers") &&
 		    !starts_with(name, "contents"))
 			continue;
@@ -1251,15 +1320,21 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, void *buf)
 
 		if (atom->u.contents.option == C_SUB)
 			v->s = copy_subject(subpos, sublen);
-		else if (atom->u.contents.option == C_BODY_DEP)
+		else if (atom->u.contents.option == C_SUB_SANITIZE) {
+			struct strbuf sb = STRBUF_INIT;
+			format_sanitized_subject(&sb, subpos, sublen);
+			v->s = strbuf_detach(&sb, NULL);
+		} else if (atom->u.contents.option == C_BODY_DEP)
 			v->s = xmemdupz(bodypos, bodylen);
+		else if (atom->u.contents.option == C_LENGTH)
+			v->s = xstrfmt("%"PRIuMAX, (uintmax_t)strlen(subpos));
 		else if (atom->u.contents.option == C_BODY)
 			v->s = xmemdupz(bodypos, nonsiglen);
 		else if (atom->u.contents.option == C_SIG)
 			v->s = xmemdupz(sigpos, siglen);
 		else if (atom->u.contents.option == C_LINES) {
 			struct strbuf s = STRBUF_INIT;
-			const char *contents_end = bodylen + bodypos - siglen;
+			const char *contents_end = bodypos + nonsiglen;
 
 			/*  Size is the length of the message after removing the signature */
 			append_lines(&s, subpos, contents_end - subpos, atom->u.contents.nlines);
@@ -1273,7 +1348,9 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, void *buf)
 			v->s = strbuf_detach(&s, NULL);
 		} else if (atom->u.contents.option == C_BARE)
 			v->s = xstrdup(subpos);
+
 	}
+	free((void *)sigpos);
 }
 
 /*
@@ -1473,38 +1550,27 @@ char *get_head_description(void)
 	struct wt_status_state state;
 	memset(&state, 0, sizeof(state));
 	wt_status_get_state(the_repository, &state, 1);
-
-	/*
-	 * The ( character must be hard-coded and not part of a localizable
-	 * string, since the description is used as a sort key and compared
-	 * with ref names.
-	 */
-	strbuf_addch(&desc, '(');
 	if (state.rebase_in_progress ||
 	    state.rebase_interactive_in_progress) {
 		if (state.branch)
-			strbuf_addf(&desc, _("no branch, rebasing %s"),
+			strbuf_addf(&desc, _("(no branch, rebasing %s)"),
 				    state.branch);
 		else
-			strbuf_addf(&desc, _("no branch, rebasing detached HEAD %s"),
+			strbuf_addf(&desc, _("(no branch, rebasing detached HEAD %s)"),
 				    state.detached_from);
 	} else if (state.bisect_in_progress)
-		strbuf_addf(&desc, _("no branch, bisect started on %s"),
+		strbuf_addf(&desc, _("(no branch, bisect started on %s)"),
 			    state.branch);
 	else if (state.detached_from) {
 		if (state.detached_at)
-			strbuf_addstr(&desc, HEAD_DETACHED_AT);
+			strbuf_addf(&desc, _("(HEAD detached at %s)"),
+				state.detached_from);
 		else
-			strbuf_addstr(&desc, HEAD_DETACHED_FROM);
-		strbuf_addstr(&desc, state.detached_from);
-	}
-	else
-		strbuf_addstr(&desc, _("no branch"));
-	strbuf_addch(&desc, ')');
+			strbuf_addf(&desc, _("(HEAD detached from %s)"),
+				state.detached_from);
+	} else
+		strbuf_addstr(&desc, _("(no branch)"));
 
-	free(state.branch);
-	free(state.onto);
-	free(state.detached_from);
 	return strbuf_detach(&desc, NULL);
 }
 
@@ -1542,7 +1608,7 @@ static int get_object(struct ref_array_item *ref, int deref, struct object **obj
 
 	if (oi->info.contentp) {
 		*obj = parse_object_buffer(the_repository, &oi->oid, oi->type, oi->size, oi->content, &eaten);
-		if (!obj) {
+		if (!*obj) {
 			if (!eaten)
 				free(oi->content);
 			return strbuf_addf_ret(err, -1, _("parse_object_buffer failed on %s for %s"),
@@ -1579,7 +1645,7 @@ static void lazy_init_worktree_map(void)
 	if (ref_to_worktree_map.worktrees)
 		return;
 
-	ref_to_worktree_map.worktrees = get_worktrees(0);
+	ref_to_worktree_map.worktrees = get_worktrees();
 	hashmap_init(&(ref_to_worktree_map.map), ref_to_worktree_map_cmpfnc, NULL, 0);
 	populate_worktree_map(&(ref_to_worktree_map.map), ref_to_worktree_map.worktrees);
 }
@@ -1611,7 +1677,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	int i;
 	struct object_info empty = OBJECT_INFO_INIT;
 
-	ref->value = xcalloc(used_atom_cnt, sizeof(struct atom_value));
+	CALLOC_ARRAY(ref->value, used_atom_cnt);
 
 	if (need_symref && (ref->flag & REF_ISSYMREF) && !ref->symref) {
 		ref->symref = resolve_refdup(ref->refname, RESOLVE_REF_READING,
@@ -1664,7 +1730,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 			else
 				v->s = xstrdup("");
 			continue;
-		} else if (atom->u.remote_ref.push) {
+		} else if (!strcmp(atom->name, "push") || starts_with(atom->name, "push:")) {
 			const char *branch_name;
 			v->s = xstrdup("");
 			if (!skip_prefix(ref->refname, "refs/heads/",
@@ -1699,7 +1765,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 				v->s = xstrdup(buf + 1);
 			}
 			continue;
-		} else if (!deref && grab_objectname(name, &ref->objectname, v, atom)) {
+		} else if (!deref && grab_oid(name, "objectname", &ref->objectname, v, atom)) {
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
 			if (atom->u.head && !strcmp(ref->refname, atom->u.head))
@@ -1868,64 +1934,6 @@ static int filter_pattern_match(struct ref_filter *filter, const char *refname)
 	return match_pattern(filter, refname);
 }
 
-static int qsort_strcmp(const void *va, const void *vb)
-{
-	const char *a = *(const char **)va;
-	const char *b = *(const char **)vb;
-
-	return strcmp(a, b);
-}
-
-static void find_longest_prefixes_1(struct string_list *out,
-				  struct strbuf *prefix,
-				  const char **patterns, size_t nr)
-{
-	size_t i;
-
-	for (i = 0; i < nr; i++) {
-		char c = patterns[i][prefix->len];
-		if (!c || is_glob_special(c)) {
-			string_list_append(out, prefix->buf);
-			return;
-		}
-	}
-
-	i = 0;
-	while (i < nr) {
-		size_t end;
-
-		/*
-		* Set "end" to the index of the element _after_ the last one
-		* in our group.
-		*/
-		for (end = i + 1; end < nr; end++) {
-			if (patterns[i][prefix->len] != patterns[end][prefix->len])
-				break;
-		}
-
-		strbuf_addch(prefix, patterns[i][prefix->len]);
-		find_longest_prefixes_1(out, prefix, patterns + i, end - i);
-		strbuf_setlen(prefix, prefix->len - 1);
-
-		i = end;
-	}
-}
-
-static void find_longest_prefixes(struct string_list *out,
-				  const char **patterns)
-{
-	struct argv_array sorted = ARGV_ARRAY_INIT;
-	struct strbuf prefix = STRBUF_INIT;
-
-	argv_array_pushv(&sorted, patterns);
-	QSORT(sorted.argv, sorted.argc, qsort_strcmp);
-
-	find_longest_prefixes_1(out, &prefix, sorted.argv, sorted.argc);
-
-	argv_array_clear(&sorted);
-	strbuf_release(&prefix);
-}
-
 /*
  * This is the same as for_each_fullref_in(), but it tries to iterate
  * only over the patterns we'll care about. Note that it _doesn't_ do a full
@@ -1936,10 +1944,6 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 				       void *cb_data,
 				       int broken)
 {
-	struct string_list prefixes = STRING_LIST_INIT_DUP;
-	struct string_list_item *prefix;
-	int ret;
-
 	if (!filter->match_as_path) {
 		/*
 		 * in this case, the patterns are applied after
@@ -1963,16 +1967,8 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		return for_each_fullref_in("", cb, cb_data, broken);
 	}
 
-	find_longest_prefixes(&prefixes, filter->name_patterns);
-
-	for_each_string_list_item(prefix, &prefixes) {
-		ret = for_each_fullref_in(prefix->string, cb, cb_data, broken);
-		if (ret)
-			break;
-	}
-
-	string_list_clear(&prefixes, 0);
-	return ret;
+	return for_each_fullref_in_prefixes(NULL, filter->name_patterns,
+					    cb, cb_data, broken);
 }
 
 /*
@@ -1980,7 +1976,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
  * of oids. If the given ref is a tag, check if the given tag points
  * at one of the oids in the given oid array.
  * NEEDSWORK:
- * 1. Only a single level of inderection is obtained, we might want to
+ * 1. Only a single level of indirection is obtained, we might want to
  * change this to account for multiple levels (e.g. annotated tags
  * pointing to annotated tags pointing to a commit.)
  * 2. As the refs are cached we might know what refname peels to without
@@ -2112,9 +2108,9 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 	 * obtain the commit using the 'oid' available and discard all
 	 * non-commits early. The actual filtering is done later.
 	 */
-	if (filter->merge_commit || filter->with_commit || filter->no_commit || filter->verbose) {
-		commit = lookup_commit_reference_gently(the_repository, oid,
-							1);
+	if (filter->reachable_from || filter->unreachable_from ||
+	    filter->with_commit || filter->no_commit || filter->verbose) {
+		commit = lookup_commit_reference_gently(the_repository, oid, 1);
 		if (!commit)
 			return 0;
 		/* We perform the filtering for the '--contains' option... */
@@ -2169,20 +2165,28 @@ void ref_array_clear(struct ref_array *array)
 	used_atom_cnt = 0;
 
 	if (ref_to_worktree_map.worktrees) {
-		hashmap_free_entries(&(ref_to_worktree_map.map),
+		hashmap_clear_and_free(&(ref_to_worktree_map.map),
 					struct ref_to_worktree_entry, ent);
 		free_worktrees(ref_to_worktree_map.worktrees);
 		ref_to_worktree_map.worktrees = NULL;
 	}
 }
 
-static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata)
+#define EXCLUDE_REACHED 0
+#define INCLUDE_REACHED 1
+static void reach_filter(struct ref_array *array,
+			 struct commit_list *check_reachable,
+			 int include_reached)
 {
 	struct rev_info revs;
 	int i, old_nr;
-	struct ref_filter *filter = ref_cbdata->filter;
-	struct ref_array *array = ref_cbdata->array;
-	struct commit **to_clear = xcalloc(sizeof(struct commit *), array->nr);
+	struct commit **to_clear;
+	struct commit_list *cr;
+
+	if (!check_reachable)
+		return;
+
+	CALLOC_ARRAY(to_clear, array->nr);
 
 	repo_init_revisions(the_repository, &revs, NULL);
 
@@ -2192,8 +2196,11 @@ static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata)
 		to_clear[i] = item->commit;
 	}
 
-	filter->merge_commit->object.flags |= UNINTERESTING;
-	add_pending_object(&revs, &filter->merge_commit->object, "");
+	for (cr = check_reachable; cr; cr = cr->next) {
+		struct commit *merge_commit = cr->item;
+		merge_commit->object.flags |= UNINTERESTING;
+		add_pending_object(&revs, &merge_commit->object, "");
+	}
 
 	revs.limited = 1;
 	if (prepare_revision_walk(&revs))
@@ -2208,14 +2215,19 @@ static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata)
 
 		int is_merged = !!(commit->object.flags & UNINTERESTING);
 
-		if (is_merged == (filter->merge == REF_FILTER_MERGED_INCLUDE))
+		if (is_merged == include_reached)
 			array->items[array->nr++] = array->items[i];
 		else
 			free_array_item(item);
 	}
 
 	clear_commit_marks_many(old_nr, to_clear, ALL_REV_FLAGS);
-	clear_commit_marks(filter->merge_commit, ALL_REV_FLAGS);
+
+	while (check_reachable) {
+		struct commit *merge_commit = pop_commit(&check_reachable);
+		clear_commit_marks(merge_commit, ALL_REV_FLAGS);
+	}
+
 	free(to_clear);
 }
 
@@ -2267,18 +2279,30 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	clear_contains_cache(&ref_cbdata.no_contains_cache);
 
 	/*  Filters that need revision walking */
-	if (filter->merge_commit)
-		do_merge_filter(&ref_cbdata);
+	reach_filter(array, filter->reachable_from, INCLUDE_REACHED);
+	reach_filter(array, filter->unreachable_from, EXCLUDE_REACHED);
 
 	return ret;
+}
+
+static int compare_detached_head(struct ref_array_item *a, struct ref_array_item *b)
+{
+	if (!(a->kind ^ b->kind))
+		BUG("ref_kind_from_refname() should only mark one ref as HEAD");
+	if (a->kind & FILTER_REFS_DETACHED_HEAD)
+		return -1;
+	else if (b->kind & FILTER_REFS_DETACHED_HEAD)
+		return 1;
+	BUG("should have died in the xor check above");
+	return 0;
 }
 
 static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, struct ref_array_item *b)
 {
 	struct atom_value *va, *vb;
 	int cmp;
+	int cmp_detached_head = 0;
 	cmp_type cmp_type = used_atom[s->atom].type;
-	int (*cmp_fn)(const char *, const char *);
 	struct strbuf err = STRBUF_INIT;
 
 	if (get_ref_atom_value(a, s->atom, &va, &err))
@@ -2286,21 +2310,28 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 	if (get_ref_atom_value(b, s->atom, &vb, &err))
 		die("%s", err.buf);
 	strbuf_release(&err);
-	cmp_fn = s->ignore_case ? strcasecmp : strcmp;
-	if (s->version)
+	if (s->sort_flags & REF_SORTING_DETACHED_HEAD_FIRST &&
+	    ((a->kind | b->kind) & FILTER_REFS_DETACHED_HEAD)) {
+		cmp = compare_detached_head(a, b);
+		cmp_detached_head = 1;
+	} else if (s->sort_flags & REF_SORTING_VERSION) {
 		cmp = versioncmp(va->s, vb->s);
-	else if (cmp_type == FIELD_STR)
+	} else if (cmp_type == FIELD_STR) {
+		int (*cmp_fn)(const char *, const char *);
+		cmp_fn = s->sort_flags & REF_SORTING_ICASE
+			? strcasecmp : strcmp;
 		cmp = cmp_fn(va->s, vb->s);
-	else {
+	} else {
 		if (va->value < vb->value)
 			cmp = -1;
 		else if (va->value == vb->value)
-			cmp = cmp_fn(a->refname, b->refname);
+			cmp = 0;
 		else
 			cmp = 1;
 	}
 
-	return (s->reverse) ? -cmp : cmp;
+	return (s->sort_flags & REF_SORTING_REVERSE && !cmp_detached_head)
+		? -cmp : cmp;
 }
 
 static int compare_refs(const void *a_, const void *b_, void *ref_sorting)
@@ -2314,7 +2345,21 @@ static int compare_refs(const void *a_, const void *b_, void *ref_sorting)
 		if (cmp)
 			return cmp;
 	}
-	return 0;
+	s = ref_sorting;
+	return s && s->sort_flags & REF_SORTING_ICASE ?
+		strcasecmp(a->refname, b->refname) :
+		strcmp(a->refname, b->refname);
+}
+
+void ref_sorting_set_sort_flags_all(struct ref_sorting *sorting,
+				    unsigned int mask, int on)
+{
+	for (; sorting; sorting = sorting->next) {
+		if (on)
+			sorting->sort_flags |= mask;
+		else
+			sorting->sort_flags &= ~mask;
+	}
 }
 
 void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
@@ -2390,27 +2435,22 @@ int format_ref_array_item(struct ref_array_item *info,
 	return 0;
 }
 
-void show_ref_array_item(struct ref_array_item *info,
-			 const struct ref_format *format)
-{
-	struct strbuf final_buf = STRBUF_INIT;
-	struct strbuf error_buf = STRBUF_INIT;
-
-	if (format_ref_array_item(info, format, &final_buf, &error_buf))
-		die("%s", error_buf.buf);
-	fwrite(final_buf.buf, 1, final_buf.len, stdout);
-	strbuf_release(&error_buf);
-	strbuf_release(&final_buf);
-	putchar('\n');
-}
-
 void pretty_print_ref(const char *name, const struct object_id *oid,
 		      const struct ref_format *format)
 {
 	struct ref_array_item *ref_item;
+	struct strbuf output = STRBUF_INIT;
+	struct strbuf err = STRBUF_INIT;
+
 	ref_item = new_ref_array_item(name, oid);
 	ref_item->kind = ref_kind_from_refname(name);
-	show_ref_array_item(ref_item, format);
+	if (format_ref_array_item(ref_item, format, &output, &err))
+		die("%s", err.buf);
+	fwrite(output.buf, 1, output.len, stdout);
+	putchar('\n');
+
+	strbuf_release(&err);
+	strbuf_release(&output);
 	free_array_item(ref_item);
 }
 
@@ -2446,17 +2486,17 @@ void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *arg)
 {
 	struct ref_sorting *s;
 
-	s = xcalloc(1, sizeof(*s));
+	CALLOC_ARRAY(s, 1);
 	s->next = *sorting_tail;
 	*sorting_tail = s;
 
 	if (*arg == '-') {
-		s->reverse = 1;
+		s->sort_flags |= REF_SORTING_REVERSE;
 		arg++;
 	}
 	if (skip_prefix(arg, "version:", &arg) ||
 	    skip_prefix(arg, "v:", &arg))
-		s->version = 1;
+		s->sort_flags |= REF_SORTING_VERSION;
 	s->atom = parse_sorting_atom(arg);
 }
 
@@ -2477,31 +2517,22 @@ int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset)
 {
 	struct ref_filter *rf = opt->value;
 	struct object_id oid;
-	int no_merged = starts_with(opt->long_name, "no");
+	struct commit *merge_commit;
 
 	BUG_ON_OPT_NEG(unset);
-
-	if (rf->merge) {
-		if (no_merged) {
-			return error(_("option `%s' is incompatible with --merged"),
-				     opt->long_name);
-		} else {
-			return error(_("option `%s' is incompatible with --no-merged"),
-				     opt->long_name);
-		}
-	}
-
-	rf->merge = no_merged
-		? REF_FILTER_MERGED_OMIT
-		: REF_FILTER_MERGED_INCLUDE;
 
 	if (get_oid(arg, &oid))
 		die(_("malformed object name %s"), arg);
 
-	rf->merge_commit = lookup_commit_reference_gently(the_repository,
-							  &oid, 0);
-	if (!rf->merge_commit)
+	merge_commit = lookup_commit_reference_gently(the_repository, &oid, 0);
+
+	if (!merge_commit)
 		return error(_("option `%s' must point to a commit"), opt->long_name);
+
+	if (starts_with(opt->long_name, "no"))
+		commit_list_insert(merge_commit, &rf->unreachable_from);
+	else
+		commit_list_insert(merge_commit, &rf->reachable_from);
 
 	return 0;
 }

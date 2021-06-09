@@ -37,19 +37,17 @@
 
 /* WARNING: This is also used as REACHABLE in commit-graph.c. */
 #define PULL_MERGE	(1u<<15)
+
+#define TOPO_WALK_EXPLORED	(1u<<23)
+#define TOPO_WALK_INDEGREE	(1u<<24)
+
 /*
  * Indicates object was reached by traversal. i.e. not given by user on
  * command-line or stdin.
- * NEEDSWORK: NOT_USER_GIVEN doesn't apply to commits because we only support
- * filtering trees and blobs, but it may be useful to support filtering commits
- * in the future.
  */
 #define NOT_USER_GIVEN	(1u<<25)
 #define TRACK_LINEAR	(1u<<26)
 #define ALL_REV_FLAGS	(((1u<<11)-1) | NOT_USER_GIVEN | TRACK_LINEAR | PULL_MERGE)
-
-#define TOPO_WALK_EXPLORED	(1u<<27)
-#define TOPO_WALK_INDEGREE	(1u<<28)
 
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
@@ -59,6 +57,8 @@ struct repository;
 struct rev_info;
 struct string_list;
 struct saved_parents;
+struct bloom_key;
+struct bloom_filter_settings;
 define_shared_commit_slab(revision_sources, char *);
 
 struct rev_cmdline_info {
@@ -145,6 +145,7 @@ struct rev_info {
 			edge_hint_aggressive:1,
 			limited:1,
 			unpacked:1,
+			no_kept_objects:1,
 			boundary:2,
 			count:1,
 			left_right:1,
@@ -185,13 +186,19 @@ struct rev_info {
 	unsigned int	diff:1,
 			full_diff:1,
 			show_root_diff:1,
+			match_missing:1,
 			no_commit_id:1,
 			verbose_header:1,
-			ignore_merges:1,
+			always_show_header:1,
+			/* Diff-merge flags */
+			explicit_diff_merges: 1,
+			merges_need_diff: 1,
+			separate_merges: 1,
 			combine_merges:1,
 			combined_all_paths:1,
+			combined_imply_patch:1,
 			dense_combined_merges:1,
-			always_show_header:1;
+			first_parent_merges:1;
 
 	/* Format info */
 	int		show_notes;
@@ -226,7 +233,7 @@ struct rev_info {
 	const char	*mime_boundary;
 	const char	*patch_suffix;
 	int		numbered_files;
-	int		reroll_count;
+	const char	*reroll_count;
 	char		*message_id;
 	struct ident_split from_ident;
 	struct string_list *ref_message_ids;
@@ -234,6 +241,7 @@ struct rev_info {
 	const char	*extra_headers;
 	const char	*log_reencode;
 	const char	*subject_prefix;
+	int		patch_name_max;
 	int		no_inline;
 	int		show_log_size;
 	struct string_list *mailmap;
@@ -296,6 +304,20 @@ struct rev_info {
 	struct revision_sources *sources;
 
 	struct topo_walk_info *topo_walk_info;
+
+	/* Commit graph bloom filter fields */
+	/* The bloom filter key(s) for the pathspec */
+	struct bloom_key *bloom_keys;
+	int bloom_keys_nr;
+
+	/*
+	 * The bloom filter settings used to generate the key.
+	 * This is loaded from the commit-graph being used.
+	 */
+	struct bloom_filter_settings *bloom_filter_settings;
+
+	/* misc. flags related to '--no-kept-objects' */
+	unsigned keep_pack_cache_flags;
 };
 
 int ref_excluded(struct string_list *, const char *path);

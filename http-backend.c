@@ -9,7 +9,7 @@
 #include "run-command.h"
 #include "string-list.h"
 #include "url.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "packfile.h"
 #include "object-store.h"
 #include "protocol.h"
@@ -39,7 +39,7 @@ static struct string_list *get_parameters(void)
 	if (!query_params) {
 		const char *query = getenv("QUERY_STRING");
 
-		query_params = xcalloc(1, sizeof(*query_params));
+		CALLOC_ARRAY(query_params, 1);
 		while (query && *query) {
 			char *name = url_decode_parameter_name(&query);
 			char *value = url_decode_parameter_value(&query);
@@ -477,10 +477,10 @@ static void run_service(const char **argv, int buffer_input)
 		host = "(none)";
 
 	if (!getenv("GIT_COMMITTER_NAME"))
-		argv_array_pushf(&cld.env_array, "GIT_COMMITTER_NAME=%s", user);
+		strvec_pushf(&cld.env_array, "GIT_COMMITTER_NAME=%s", user);
 	if (!getenv("GIT_COMMITTER_EMAIL"))
-		argv_array_pushf(&cld.env_array,
-				 "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
+		strvec_pushf(&cld.env_array,
+			     "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
 
 	cld.argv = argv;
 	if (buffer_input || gzipped_request || req_len >= 0)

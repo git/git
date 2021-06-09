@@ -212,22 +212,41 @@ my $dump_aliases = 0;
 my $multiedit;
 my $editor;
 
+sub system_or_msg {
+	my ($args, $msg) = @_;
+	system(@$args);
+	my $signalled = $? & 127;
+	my $exit_code = $? >> 8;
+	return unless $signalled or $exit_code;
+
+	my @sprintf_args = ($args->[0], $exit_code);
+	if (defined $msg) {
+		# Quiet the 'redundant' warning category, except we
+		# need to support down to Perl 5.8, so we can't do a
+		# "no warnings 'redundant'", since that category was
+		# introduced in perl 5.22, and asking for it will die
+		# on older perls.
+		no warnings;
+		return sprintf($msg, @sprintf_args);
+	}
+	return sprintf(__("fatal: command '%s' died with exit code %d"),
+		       @sprintf_args);
+}
+
+sub system_or_die {
+	my $msg = system_or_msg(@_);
+	die $msg if $msg;
+}
+
 sub do_edit {
 	if (!defined($editor)) {
 		$editor = Git::command_oneline('var', 'GIT_EDITOR');
 	}
+	my $die_msg = __("the editor exited uncleanly, aborting everything");
 	if (defined($multiedit) && !$multiedit) {
-		map {
-			system('sh', '-c', $editor.' "$@"', $editor, $_);
-			if (($? & 127) || ($? >> 8)) {
-				die(__("the editor exited uncleanly, aborting everything"));
-			}
-		} @_;
+		system_or_die(['sh', '-c', $editor.' "$@"', $editor, $_], $die_msg) for @_;
 	} else {
-		system('sh', '-c', $editor.' "$@"', $editor, @_);
-		if (($? & 127) || ($? >> 8)) {
-			die(__("the editor exited uncleanly, aborting everything"));
-		}
+		system_or_die(['sh', '-c', $editor.' "$@"', $editor, @_], $die_msg);
 	}
 }
 
@@ -250,6 +269,7 @@ my $chain_reply_to = 0;
 my $use_xmailer = 1;
 my $validate = 1;
 my $target_xfer_encoding = 'auto';
+my $forbid_sendmail_variables = 1;
 
 my %config_bool_settings = (
     "thread" => \$thread,
@@ -263,6 +283,7 @@ my %config_bool_settings = (
     "multiedit" => \$multiedit,
     "annotate" => \$annotate,
     "xmailer" => \$use_xmailer,
+    "forbidsendmailvariables" => \$forbid_sendmail_variables,
 );
 
 my %config_settings = (
@@ -478,6 +499,12 @@ unless ($rc) {
     usage();
 }
 
+if ($forbid_sendmail_variables && (scalar Git::config_regexp("^sendmail[.]")) != 0) {
+	die __("fatal: found configuration options for 'sendmail'\n" .
+		"git-send-email is configured with the sendemail.* options - note the 'e'.\n" .
+		"Set sendemail.forbidSendmailVariables to false to disable this check.\n");
+}
+
 die __("Cannot run git format-patch from outside a repository\n")
 	if $format_patch and not $repo;
 
@@ -690,9 +717,7 @@ if (@rev_list_opts) {
 if ($validate) {
 	foreach my $f (@files) {
 		unless (-p $f) {
-			my $error = validate_patch($f, $target_xfer_encoding);
-			$error and die sprintf(__("fatal: %s: %s\nwarning: no patches were sent\n"),
-						  $f, $error);
+			validate_patch($f, $target_xfer_encoding);
 		}
 	}
 }
@@ -1699,10 +1724,14 @@ sub process_file {
 				$xfer_encoding = $1 if not defined $xfer_encoding;
 			}
 			elsif (/^In-Reply-To: (.*)/i) {
-				$in_reply_to = $1;
+				if (!$initial_in_reply_to || $thread) {
+					$in_reply_to = $1;
+				}
 			}
 			elsif (/^References: (.*)/i) {
-				$references = $1;
+				if (!$initial_in_reply_to || $thread) {
+					$references = $1;
+				}
 			}
 			elsif (!/^Date:\s/i && /^[-A-Za-z]+:\s+\S/) {
 				push @xh, $_;
@@ -1930,7 +1959,8 @@ sub validate_patch {
 	my ($fn, $xfer_encoding) = @_;
 
 	if ($repo) {
-		my $validate_hook = catfile(catdir($repo->repo_path(), 'hooks'),
+		my $hooks_path = $repo->command_oneline('rev-parse', '--git-path', 'hooks');
+		my $validate_hook = catfile($hooks_path,
 					    'sendemail-validate');
 		my $hook_error;
 		if (-x $validate_hook) {
@@ -1940,11 +1970,14 @@ sub validate_patch {
 			chdir($repo->wc_path() or $repo->repo_path())
 				or die("chdir: $!");
 			local $ENV{"GIT_DIR"} = $repo->repo_path();
-			$hook_error = "rejected by sendemail-validate hook"
-				if system($validate_hook, $target);
+			$hook_error = system_or_msg([$validate_hook, $target]);
 			chdir($cwd_save) or die("chdir: $!");
 		}
-		return $hook_error if $hook_error;
+		if ($hook_error) {
+			die sprintf(__("fatal: %s: rejected by sendemail-validate hook\n" .
+				       "%s\n" .
+				       "warning: no patches were sent\n"), $fn, $hook_error);
+		}
 	}
 
 	# Any long lines will be automatically fixed if we use a suitable transfer
@@ -1954,7 +1987,8 @@ sub validate_patch {
 			or die sprintf(__("unable to open %s: %s\n"), $fn, $!);
 		while (my $line = <$fh>) {
 			if (length($line) > 998) {
-				return sprintf(__("%s: patch contains a line longer than 998 characters"), $.);
+				die sprintf(__("fatal: %s:%d is longer than 998 characters\n" .
+					       "warning: no patches were sent\n"), $fn, $.);
 			}
 		}
 	}

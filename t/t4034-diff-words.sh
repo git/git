@@ -3,7 +3,7 @@
 test_description='word diff colors'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 cat >pre.simple <<-\EOF
 	h(4)
@@ -102,7 +102,7 @@ test_expect_success 'word diff with runs of whitespace' '
 '
 
 test_expect_success '--word-diff=porcelain' '
-	sed 's/#.*$//' >expect <<-EOF &&
+	sed "s/#.*$//" >expect <<-EOF &&
 		diff --git a/pre b/post
 		index $pre..$post 100644
 		--- a/pre
@@ -182,6 +182,11 @@ test_expect_success 'word diff without context' '
 test_expect_success 'word diff with a regular expression' '
 	cp expect.letter-runs-are-words expect &&
 	word_diff --color-words="[a-z]+"
+'
+
+test_expect_success 'word diff with zero length matches' '
+	cp expect.letter-runs-are-words expect &&
+	word_diff --color-words="[a-z${LF}]*"
 '
 
 test_expect_success 'set up a diff driver' '
@@ -325,6 +330,7 @@ test_language_driver perl
 test_language_driver php
 test_language_driver python
 test_language_driver ruby
+test_language_driver scheme
 test_language_driver tex
 
 test_expect_success 'word-diff with diff.sbe' '

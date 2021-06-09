@@ -84,7 +84,7 @@ int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, co
 	process = &entry->process;
 
 	child_process_init(process);
-	argv_array_push(&process->args, cmd);
+	strvec_push(&process->args, cmd);
 	process->use_shell = 1;
 	process->in = -1;
 	process->out = -1;

@@ -66,7 +66,7 @@ EOF
 test_expect_success 'merge output uses pretty names' '
 	git reset --hard c1 &&
 	git merge c2 c3 c4 >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -77,8 +77,14 @@ Merge made by the 'recursive' strategy.
 EOF
 
 test_expect_success 'merge reduces irrelevant remote heads' '
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		mv expected expected.tmp &&
+		sed s/recursive/ort/ expected.tmp >expected &&
+		rm expected.tmp
+	fi &&
 	GIT_MERGE_VERBOSITY=0 git merge c4 c5 >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -95,7 +101,7 @@ EOF
 test_expect_success 'merge fast-forward output uses pretty names' '
 	git reset --hard c0 &&
 	git merge c1 c2 >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_done

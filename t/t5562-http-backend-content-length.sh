@@ -62,8 +62,8 @@ test_expect_success 'setup' '
 	test_copy_bytes 10 <fetch_body >fetch_body.trunc &&
 	hash_next=$(git commit-tree -p HEAD -m next HEAD^{tree}) &&
 	{
-		printf "%s %s refs/heads/newbranch\\0report-status\\n" \
-			"$ZERO_OID" "$hash_next" | packetize &&
+		printf "%s %s refs/heads/newbranch\\0report-status object-format=%s\\n" \
+			"$ZERO_OID" "$hash_next" "$(test_oid algo)" | packetize &&
 		printf 0000 &&
 		echo "$hash_next" | git pack-objects --stdout
 	} >push_body &&

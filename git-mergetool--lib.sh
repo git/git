@@ -43,7 +43,16 @@ show_tool_names () {
 
 	shown_any=
 	( cd "$MERGE_TOOLS_DIR" && ls ) | {
-		while read toolname
+		while read scriptname
+		do
+			setup_tool "$scriptname" 2>/dev/null
+			# We need an actual line feed here
+			variants="$variants
+$(list_tool_variants)"
+		done
+		variants="$(echo "$variants" | sort -u)"
+
+		for toolname in $variants
 		do
 			if setup_tool "$toolname" 2>/dev/null &&
 				(eval "$condition" "$toolname")
@@ -131,6 +140,10 @@ setup_user_tool () {
 	merge_cmd () {
 		( eval $merge_tool_cmd )
 	}
+
+	list_tool_variants () {
+		echo "$tool"
+	}
 }
 
 setup_tool () {
@@ -153,8 +166,16 @@ setup_tool () {
 		return 1
 	}
 
+	hide_resolved_enabled () {
+		return 0
+	}
+
 	translate_merge_tool_path () {
 		echo "$1"
+	}
+
+	list_tool_variants () {
+		echo "$tool"
 	}
 
 	# Most tools' exit codes cannot be trusted, so By default we ignore
@@ -178,18 +199,25 @@ setup_tool () {
 		false
 	}
 
-
-	if ! test -f "$MERGE_TOOLS_DIR/$tool"
+	if test -f "$MERGE_TOOLS_DIR/$tool"
 	then
+		. "$MERGE_TOOLS_DIR/$tool"
+	elif test -f "$MERGE_TOOLS_DIR/${tool%[0-9]}"
+	then
+		. "$MERGE_TOOLS_DIR/${tool%[0-9]}"
+	else
 		setup_user_tool
 		return $?
 	fi
 
-	# Load the redefined functions
-	. "$MERGE_TOOLS_DIR/$tool"
 	# Now let the user override the default command for the tool.  If
 	# they have not done so then this will return 1 which we ignore.
 	setup_user_tool
+
+	if ! list_tool_variants | grep -q "^$tool$"
+	then
+		return 1
+	fi
 
 	if merge_mode && ! can_merge
 	then
@@ -226,6 +254,10 @@ trust_exit_code () {
 	fi
 }
 
+initialize_merge_tool () {
+	# Bring tool-specific functions into scope
+	setup_tool "$1" || return 1
+}
 
 # Entry point for running tools
 run_merge_tool () {
@@ -236,9 +268,6 @@ run_merge_tool () {
 
 	merge_tool_path=$(get_merge_tool_path "$1") || exit
 	base_present="$2"
-
-	# Bring tool-specific functions into scope
-	setup_tool "$1" || return 1
 
 	if merge_mode
 	then
@@ -286,11 +315,14 @@ list_merge_tool_candidates () {
 		tools="$tools smerge"
 	fi
 	case "${VISUAL:-$EDITOR}" in
+	*nvim*)
+		tools="$tools nvimdiff vimdiff emerge"
+		;;
 	*vim*)
-		tools="$tools vimdiff emerge"
+		tools="$tools vimdiff nvimdiff emerge"
 		;;
 	*)
-		tools="$tools emerge vimdiff"
+		tools="$tools emerge vimdiff nvimdiff"
 		;;
 	esac
 }

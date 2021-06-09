@@ -312,7 +312,7 @@ test_expect_success SYMLINKS 'conditional include, gitdir matching symlink, icas
 test_expect_success 'conditional include, onbranch' '
 	echo "[includeIf \"onbranch:foo-branch\"]path=bar9" >>.git/config &&
 	echo "[test]nine=9" >.git/bar9 &&
-	git checkout -b master &&
+	git checkout -b main &&
 	test_must_fail git config test.nine &&
 	git checkout -b foo-branch &&
 	echo 9 >expect &&
@@ -352,9 +352,7 @@ test_expect_success 'include cycles are detected' '
 	git init --bare cycle &&
 	git -C cycle config include.path cycle &&
 	git config -f cycle/cycle include.path config &&
-	test_must_fail \
-		env GIT_TEST_GETTEXT_POISON=false \
-		git -C cycle config --get-all test.value 2>stderr &&
+	test_must_fail git -C cycle config --get-all test.value 2>stderr &&
 	grep "exceeded maximum include depth" stderr
 '
 

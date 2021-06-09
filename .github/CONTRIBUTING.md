@@ -16,4 +16,7 @@ If you prefer video, then [this talk](https://www.youtube.com/watch?v=Q7i_qQW__q
 might be useful to you as the presenter walks you through the contribution
 process by example.
 
+Or, you can follow the ["My First Contribution"](https://git-scm.com/docs/MyFirstContribution)
+tutorial for another example of the contribution process.
+
 Your friendly Git community!

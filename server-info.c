@@ -296,7 +296,7 @@ static void init_pack_info(const char *infofile, int force)
 
 		i = num_pack++;
 		ALLOC_GROW(info, num_pack, alloc);
-		info[i] = xcalloc(1, sizeof(struct pack_info));
+		CALLOC_ARRAY(info[i], 1);
 		info[i]->p = p;
 		info[i]->old_num = -1;
 	}

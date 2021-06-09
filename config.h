@@ -138,6 +138,7 @@ int git_config_from_mem(config_fn_t fn,
 int git_config_from_blob_oid(config_fn_t fn, const char *name,
 			     const struct object_id *oid, void *data);
 void git_config_push_parameter(const char *text);
+void git_config_push_env(const char *spec);
 int git_config_from_parameters(config_fn_t fn, void *data);
 void read_early_config(config_fn_t cb, void *data);
 void read_very_early_config(config_fn_t cb, void *data);
@@ -254,11 +255,31 @@ int git_config_set_gently(const char *, const char *);
  */
 void git_config_set(const char *, const char *);
 
-int git_config_parse_key(const char *, char **, int *);
+int git_config_parse_key(const char *, char **, size_t *);
 int git_config_key_is_valid(const char *key);
-int git_config_set_multivar_gently(const char *, const char *, const char *, int);
-void git_config_set_multivar(const char *, const char *, const char *, int);
-int git_config_set_multivar_in_file_gently(const char *, const char *, const char *, const char *, int);
+
+/*
+ * The following macros specify flag bits that alter the behavior
+ * of the git_config_set_multivar*() methods.
+ */
+
+/*
+ * When CONFIG_FLAGS_MULTI_REPLACE is specified, all matching key/values
+ * are removed before a single new pair is written. If the flag is not
+ * present, then set operations replace only the first match.
+ */
+#define CONFIG_FLAGS_MULTI_REPLACE (1 << 0)
+
+/*
+ * When CONFIG_FLAGS_FIXED_VALUE is specified, match key/value pairs
+ * by string comparison (not regex match) to the provided value_pattern
+ * parameter.
+ */
+#define CONFIG_FLAGS_FIXED_VALUE (1 << 1)
+
+int git_config_set_multivar_gently(const char *, const char *, const char *, unsigned);
+void git_config_set_multivar(const char *, const char *, const char *, unsigned);
+int git_config_set_multivar_in_file_gently(const char *, const char *, const char *, const char *, unsigned);
 
 /**
  * takes four parameters:
@@ -276,13 +297,15 @@ int git_config_set_multivar_in_file_gently(const char *, const char *, const cha
  * - the value regex, as a string. It will disregard key/value pairs where value
  *   does not match.
  *
- * - a multi_replace value, as an int. If value is equal to zero, nothing or only
- *   one matching key/value is replaced, else all matching key/values (regardless
- *   how many) are removed, before the new pair is written.
+ * - a flags value with bits corresponding to the CONFIG_FLAG_* macros.
  *
  * It returns 0 on success.
  */
-void git_config_set_multivar_in_file(const char *, const char *, const char *, const char *, int);
+void git_config_set_multivar_in_file(const char *config_filename,
+				     const char *key,
+				     const char *value,
+				     const char *value_pattern,
+				     unsigned flags);
 
 /**
  * rename or remove sections in the config file
@@ -295,7 +318,6 @@ int git_config_rename_section(const char *, const char *);
 int git_config_rename_section_in_file(const char *, const char *, const char *);
 int git_config_copy_section(const char *, const char *);
 int git_config_copy_section_in_file(const char *, const char *, const char *);
-const char *git_etc_gitconfig(void);
 int git_env_bool(const char *, int);
 unsigned long git_env_ulong(const char *, unsigned long);
 int git_config_system(void);
@@ -303,6 +325,9 @@ int config_error_nonbool(const char *);
 #if defined(__GNUC__)
 #define config_error_nonbool(s) (config_error_nonbool(s), const_error())
 #endif
+
+char *git_system_config(void);
+void git_global_config(char **user, char **xdg);
 
 int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
 
@@ -359,7 +384,7 @@ int git_config_include(const char *name, const char *value, void *data);
  */
 int parse_config_key(const char *var,
 		     const char *section,
-		     const char **subsection, int *subsection_len,
+		     const char **subsection, size_t *subsection_len,
 		     const char **key);
 
 /**
@@ -458,8 +483,8 @@ void git_configset_clear(struct config_set *cs);
  */
 int git_configset_get_value(struct config_set *cs, const char *key, const char **dest);
 
-int git_configset_get_string_const(struct config_set *cs, const char *key, const char **dest);
 int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
+int git_configset_get_string_tmp(struct config_set *cs, const char *key, const char **dest);
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest);
 int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned long *dest);
 int git_configset_get_bool(struct config_set *cs, const char *key, int *dest);
@@ -474,10 +499,10 @@ int repo_config_get_value(struct repository *repo,
 			  const char *key, const char **value);
 const struct string_list *repo_config_get_value_multi(struct repository *repo,
 						      const char *key);
-int repo_config_get_string_const(struct repository *repo,
-				 const char *key, const char **dest);
 int repo_config_get_string(struct repository *repo,
 			   const char *key, char **dest);
+int repo_config_get_string_tmp(struct repository *repo,
+			       const char *key, const char **dest);
 int repo_config_get_int(struct repository *repo,
 			const char *key, int *dest);
 int repo_config_get_ulong(struct repository *repo,
@@ -529,13 +554,14 @@ void git_config_clear(void);
  * error message and returns -1. When the configuration variable `key` is
  * not found, returns 1 without touching `dest`.
  */
-int git_config_get_string_const(const char *key, const char **dest);
+int git_config_get_string(const char *key, char **dest);
 
 /**
- * Similar to `git_config_get_string_const`, except that retrieved value
- * copied into the `dest` parameter is a mutable string.
+ * Similar to `git_config_get_string`, but does not allocate any new
+ * memory; on success `dest` will point to memory owned by the config
+ * machinery, which could be invalidated if it is discarded and reloaded.
  */
-int git_config_get_string(const char *key, char **dest);
+int git_config_get_string_tmp(const char *key, const char **dest);
 
 /**
  * Finds and parses the value to an integer for the configuration variable

@@ -11,29 +11,25 @@
 static struct child_process pager_process = CHILD_PROCESS_INIT;
 static const char *pager_program;
 
-static void wait_for_pager(int in_signal)
+static void close_pager_fds(void)
 {
-	if (!in_signal) {
-		fflush(stdout);
-		fflush(stderr);
-	}
 	/* signal EOF to pager */
 	close(1);
 	close(2);
-	if (in_signal)
-		finish_command_in_signal(&pager_process);
-	else
-		finish_command(&pager_process);
 }
 
 static void wait_for_pager_atexit(void)
 {
-	wait_for_pager(0);
+	fflush(stdout);
+	fflush(stderr);
+	close_pager_fds();
+	finish_command(&pager_process);
 }
 
 static void wait_for_pager_signal(int signo)
 {
-	wait_for_pager(1);
+	close_pager_fds();
+	finish_command_in_signal(&pager_process);
 	sigchain_pop(signo);
 	raise(signo);
 }
@@ -68,7 +64,7 @@ const char *git_pager(int stdout_is_tty)
 	return pager;
 }
 
-static void setup_pager_env(struct argv_array *env)
+static void setup_pager_env(struct strvec *env)
 {
 	const char **argv;
 	int i;
@@ -88,7 +84,7 @@ static void setup_pager_env(struct argv_array *env)
 		*cp = '\0';
 		if (!getenv(argv[i])) {
 			*cp = '=';
-			argv_array_push(env, argv[i]);
+			strvec_push(env, argv[i]);
 		}
 	}
 	free(pager_env);
@@ -97,7 +93,7 @@ static void setup_pager_env(struct argv_array *env)
 
 void prepare_pager_args(struct child_process *pager_process, const char *pager)
 {
-	argv_array_push(&pager_process->args, pager);
+	strvec_push(&pager_process->args, pager);
 	pager_process->use_shell = 1;
 	setup_pager_env(&pager_process->env_array);
 	pager_process->trace2_child_class = "pager";
@@ -126,7 +122,7 @@ void setup_pager(void)
 	/* spawn the pager */
 	prepare_pager_args(&pager_process, pager);
 	pager_process.in = -1;
-	argv_array_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
+	strvec_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
 	if (start_command(&pager_process))
 		return;
 

@@ -10,6 +10,7 @@
 #include "object.h"
 #include "lockfile.h"
 #include "submodule-config.h"
+#include "sparse-index.h"
 
 /* The main repository */
 static struct repository the_repo;
@@ -72,7 +73,7 @@ void repo_set_gitdir(struct repository *repo,
 	repo_set_commondir(repo, o->commondir);
 
 	if (!repo->objects->odb) {
-		repo->objects->odb = xcalloc(1, sizeof(*repo->objects->odb));
+		CALLOC_ARRAY(repo->objects->odb, 1);
 		repo->objects->odb_tail = &repo->objects->odb->next;
 	}
 	expand_base_dir(&repo->objects->odb->path, o->object_dir,
@@ -89,10 +90,6 @@ void repo_set_gitdir(struct repository *repo,
 void repo_set_hash_algo(struct repository *repo, int hash_algo)
 {
 	repo->hash_algo = &hash_algos[hash_algo];
-#ifndef ENABLE_SHA256
-	if (hash_algo != GIT_HASH_SHA1)
-		die(_("The hash algorithm %s is not supported in this build."), repo->hash_algo->name);
-#endif
 }
 
 /*
@@ -265,10 +262,24 @@ void repo_clear(struct repository *repo)
 
 int repo_read_index(struct repository *repo)
 {
-	if (!repo->index)
-		repo->index = xcalloc(1, sizeof(*repo->index));
+	int res;
 
-	return read_index_from(repo->index, repo->index_file, repo->gitdir);
+	if (!repo->index)
+		CALLOC_ARRAY(repo->index, 1);
+
+	/* Complete the double-reference */
+	if (!repo->index->repo)
+		repo->index->repo = repo;
+	else if (repo->index->repo != repo)
+		BUG("repo's index should point back at itself");
+
+	res = read_index_from(repo->index, repo->index_file, repo->gitdir);
+
+	prepare_repo_settings(repo);
+	if (repo->settings.command_requires_full_index)
+		ensure_full_index(repo->index);
+
+	return res;
 }
 
 int repo_hold_locked_index(struct repository *repo,

@@ -2,33 +2,13 @@
 
 test_description='working-tree-encoding conversion via gitattributes'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-encoding.sh"
 
 GIT_TRACE_WORKING_TREE_ENCODING=1 && export GIT_TRACE_WORKING_TREE_ENCODING
-
-test_lazy_prereq NO_UTF16_BOM '
-	test $(printf abc | iconv -f UTF-8 -t UTF-16 | wc -c) = 6
-'
-
-test_lazy_prereq NO_UTF32_BOM '
-	test $(printf abc | iconv -f UTF-8 -t UTF-32 | wc -c) = 12
-'
-
-write_utf16 () {
-	if test_have_prereq NO_UTF16_BOM
-	then
-		printf '\376\377'
-	fi &&
-	iconv -f UTF-8 -t UTF-16
-}
-
-write_utf32 () {
-	if test_have_prereq NO_UTF32_BOM
-	then
-		printf '\0\0\376\377'
-	fi &&
-	iconv -f UTF-8 -t UTF-32
-}
 
 test_expect_success 'setup test files' '
 	git config core.eol lf &&
@@ -215,7 +195,7 @@ test_expect_success 'error if encoding round trip is not the same during refresh
 	TEST_HASH=$(git hash-object --no-filters -w nonsense.utf16le) &&
 	git update-index --add --cacheinfo 100644 $TEST_HASH nonsense.utf16le &&
 	COMMIT=$(git commit-tree -p $(git rev-parse HEAD) -m "plain commit" $(git write-tree)) &&
-	git update-ref refs/heads/master $COMMIT &&
+	git update-ref refs/heads/main $COMMIT &&
 
 	test_must_fail git checkout HEAD^ 2>err.out &&
 	test_i18ngrep "error: .* overwritten by checkout:" err.out
@@ -231,7 +211,7 @@ test_expect_success 'error if encoding garbage is already in Git' '
 	TEST_HASH=$(git hash-object --no-filters -w nonsense.utf16) &&
 	git update-index --add --cacheinfo 100644 $TEST_HASH nonsense.utf16 &&
 	COMMIT=$(git commit-tree -p $(git rev-parse HEAD) -m "plain commit" $(git write-tree)) &&
-	git update-ref refs/heads/master $COMMIT &&
+	git update-ref refs/heads/main $COMMIT &&
 
 	git diff 2>err.out &&
 	test_i18ngrep "error: BOM is required" err.out

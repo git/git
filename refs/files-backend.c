@@ -39,23 +39,16 @@
 #define REF_NEEDS_COMMIT (1 << 6)
 
 /*
- * Used as a flag in ref_update::flags when we want to log a ref
- * update but not actually perform it.  This is used when a symbolic
- * ref update is split up.
- */
-#define REF_LOG_ONLY (1 << 7)
-
-/*
  * Used as a flag in ref_update::flags when the ref_update was via an
  * update to HEAD.
  */
 #define REF_UPDATE_VIA_HEAD (1 << 8)
 
 /*
- * Used as a flag in ref_update::flags when the loose reference has
- * been deleted.
+ * Used as a flag in ref_update::flags when a reference has been
+ * deleted and the ref's parent directories may need cleanup.
  */
-#define REF_DELETED_LOOSE (1 << 9)
+#define REF_DELETED_RMDIR (1 << 9)
 
 struct ref_lock {
 	char *ref_name;
@@ -67,7 +60,6 @@ struct files_ref_store {
 	struct ref_store base;
 	unsigned int store_flags;
 
-	char *gitdir;
 	char *gitcommondir;
 
 	struct ref_cache *loose;
@@ -94,18 +86,17 @@ static struct ref_store *files_ref_store_create(const char *gitdir,
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
 
+	ref_store->gitdir = xstrdup(gitdir);
 	base_ref_store_init(ref_store, &refs_be_files);
 	refs->store_flags = flags;
 
-	refs->gitdir = xstrdup(gitdir);
 	get_common_dir_noenv(&sb, gitdir);
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
 	strbuf_addf(&sb, "%s/packed-refs", refs->gitcommondir);
 	refs->packed_ref_store = packed_ref_store_create(sb.buf, flags);
 	strbuf_release(&sb);
 
-	chdir_notify_reparent("files-backend $GIT_DIR",
-			      &refs->gitdir);
+	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
 	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
 			      &refs->gitcommondir);
 
@@ -176,7 +167,7 @@ static void files_reflog_path(struct files_ref_store *refs,
 	switch (ref_type(refname)) {
 	case REF_TYPE_PER_WORKTREE:
 	case REF_TYPE_PSEUDOREF:
-		strbuf_addf(sb, "%s/logs/%s", refs->gitdir, refname);
+		strbuf_addf(sb, "%s/logs/%s", refs->base.gitdir, refname);
 		break;
 	case REF_TYPE_OTHER_PSEUDOREF:
 	case REF_TYPE_MAIN_PSEUDOREF:
@@ -198,7 +189,7 @@ static void files_ref_path(struct files_ref_store *refs,
 	switch (ref_type(refname)) {
 	case REF_TYPE_PER_WORKTREE:
 	case REF_TYPE_PSEUDOREF:
-		strbuf_addf(sb, "%s/%s", refs->gitdir, refname);
+		strbuf_addf(sb, "%s/%s", refs->base.gitdir, refname);
 		break;
 	case REF_TYPE_MAIN_PSEUDOREF:
 		if (!skip_prefix(refname, "main-worktree/", &refname))
@@ -360,7 +351,6 @@ static int files_read_raw_ref(struct ref_store *ref_store,
 	struct strbuf sb_path = STRBUF_INIT;
 	const char *path;
 	const char *buf;
-	const char *p;
 	struct stat st;
 	int fd;
 	int ret = -1;
@@ -465,29 +455,8 @@ stat_ref:
 	close(fd);
 	strbuf_rtrim(&sb_contents);
 	buf = sb_contents.buf;
-	if (skip_prefix(buf, "ref:", &buf)) {
-		while (isspace(*buf))
-			buf++;
 
-		strbuf_reset(referent);
-		strbuf_addstr(referent, buf);
-		*type |= REF_ISSYMREF;
-		ret = 0;
-		goto out;
-	}
-
-	/*
-	 * Please note that FETCH_HEAD has additional
-	 * data after the sha.
-	 */
-	if (parse_oid_hex(buf, oid, &p) ||
-	    (*p != '\0' && !isspace(*p))) {
-		*type |= REF_ISBROKEN;
-		errno = EINVAL;
-		goto out;
-	}
-
-	ret = 0;
+	ret = parse_loose_ref_contents(buf, oid, referent, type);
 
 out:
 	save_errno = errno;
@@ -495,6 +464,32 @@ out:
 	strbuf_release(&sb_contents);
 	errno = save_errno;
 	return ret;
+}
+
+int parse_loose_ref_contents(const char *buf, struct object_id *oid,
+			     struct strbuf *referent, unsigned int *type)
+{
+	const char *p;
+	if (skip_prefix(buf, "ref:", &buf)) {
+		while (isspace(*buf))
+			buf++;
+
+		strbuf_reset(referent);
+		strbuf_addstr(referent, buf);
+		*type |= REF_ISSYMREF;
+		return 0;
+	}
+
+	/*
+	 * FETCH_HEAD has additional data after the sha.
+	 */
+	if (parse_oid_hex(buf, oid, &p) ||
+	    (*p != '\0' && !isspace(*p))) {
+		*type |= REF_ISBROKEN;
+		errno = EINVAL;
+		return -1;
+	}
+	return 0;
 }
 
 static void unlock_ref(struct ref_lock *lock)
@@ -554,7 +549,7 @@ static int lock_raw_ref(struct files_ref_store *refs,
 
 	/* First lock the file so it can't change out from under us. */
 
-	*lock_p = lock = xcalloc(1, sizeof(*lock));
+	*lock_p = CALLOC_ARRAY(lock, 1);
 
 	lock->ref_name = xstrdup(refname);
 	files_ref_path(refs, &ref_file, refname);
@@ -848,7 +843,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 
 	overlay_iter = overlay_ref_iterator_begin(loose_iter, packed_iter);
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable,
 			       overlay_iter->ordered);
@@ -935,7 +930,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 	files_assert_main_repository(refs, "lock_ref_oid_basic");
 	assert(err);
 
-	lock = xcalloc(1, sizeof(struct ref_lock));
+	CALLOC_ARRAY(lock, 1);
 
 	if (mustexist)
 		resolve_flags |= RESOLVE_REF_READING;
@@ -1089,7 +1084,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 	ref_transaction_add_update(
 			transaction, r->name,
 			REF_NO_DEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_IS_PRUNING,
-			&null_oid, &r->oid, NULL);
+			null_oid(), &r->oid, NULL);
 	if (ref_transaction_commit(transaction, &err))
 		goto cleanup;
 
@@ -1628,8 +1623,10 @@ static int log_ref_write_fd(int fd, const struct object_id *old_oid,
 	int ret = 0;
 
 	strbuf_addf(&sb, "%s %s %s", oid_to_hex(old_oid), oid_to_hex(new_oid), committer);
-	if (msg && *msg)
-		copy_reflog_msg(&sb, msg);
+	if (msg && *msg) {
+		strbuf_addch(&sb, '\t');
+		strbuf_addstr(&sb, msg);
+	}
 	strbuf_addch(&sb, '\n');
 	if (write_in_full(fd, sb.buf, sb.len) < 0)
 		ret = -1;
@@ -1827,12 +1824,12 @@ static int create_symref_locked(struct files_ref_store *refs,
 
 	if (!fdopen_lock_file(&lock->lk, "w"))
 		return error("unable to fdopen %s: %s",
-			     lock->lk.tempfile->filename.buf, strerror(errno));
+			     get_lock_file_path(&lock->lk), strerror(errno));
 
 	update_symref_reflog(refs, lock, refname, target, logmsg);
 
 	/* no error check; commit_ref will check ferror */
-	fprintf(lock->lk.tempfile->fp, "ref: %s\n", target);
+	fprintf(get_lock_file_fp(&lock->lk), "ref: %s\n", target);
 	if (commit_ref(lock) < 0)
 		return error("unable to write symref for %s: %s", refname,
 			     strerror(errno));
@@ -2155,7 +2152,7 @@ static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
 		return empty_ref_iterator_begin();
 	}
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 
 	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable, 0);
@@ -2197,12 +2194,11 @@ static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_st
 		files_downcast(ref_store, REF_STORE_READ,
 			       "reflog_iterator_begin");
 
-	if (!strcmp(refs->gitdir, refs->gitcommondir)) {
+	if (!strcmp(refs->base.gitdir, refs->gitcommondir)) {
 		return reflog_iterator_begin(ref_store, refs->gitcommondir);
 	} else {
 		return merge_ref_iterator_begin(
-			0,
-			reflog_iterator_begin(ref_store, refs->gitdir),
+			0, reflog_iterator_begin(ref_store, refs->base.gitdir),
 			reflog_iterator_begin(ref_store, refs->gitcommondir),
 			reflog_iterator_select, refs);
 	}
@@ -2565,16 +2561,18 @@ static void files_transaction_cleanup(struct files_ref_store *refs,
 		}
 	}
 
-	if (backend_data->packed_transaction &&
-	    ref_transaction_abort(backend_data->packed_transaction, &err)) {
-		error("error aborting transaction: %s", err.buf);
-		strbuf_release(&err);
+	if (backend_data) {
+		if (backend_data->packed_transaction &&
+		    ref_transaction_abort(backend_data->packed_transaction, &err)) {
+			error("error aborting transaction: %s", err.buf);
+			strbuf_release(&err);
+		}
+
+		if (backend_data->packed_refs_locked)
+			packed_refs_unlock(refs->packed_ref_store);
+
+		free(backend_data);
 	}
-
-	if (backend_data->packed_refs_locked)
-		packed_refs_unlock(refs->packed_ref_store);
-
-	free(backend_data);
 
 	transaction->state = REF_TRANSACTION_CLOSED;
 }
@@ -2599,7 +2597,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	if (!transaction->nr)
 		goto cleanup;
 
-	backend_data = xcalloc(1, sizeof(*backend_data));
+	CALLOC_ARRAY(backend_data, 1);
 	transaction->backend_data = backend_data;
 
 	/*
@@ -2854,6 +2852,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY)) {
+			update->flags |= REF_DELETED_RMDIR;
 			if (!(update->type & REF_ISPACKED) ||
 			    update->type & REF_ISSYMREF) {
 				/* It is a loose reference. */
@@ -2863,7 +2862,6 @@ static int files_transaction_finish(struct ref_store *ref_store,
 					ret = TRANSACTION_GENERIC_ERROR;
 					goto cleanup;
 				}
-				update->flags |= REF_DELETED_LOOSE;
 			}
 		}
 	}
@@ -2876,9 +2874,9 @@ cleanup:
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 
-		if (update->flags & REF_DELETED_LOOSE) {
+		if (update->flags & REF_DELETED_RMDIR) {
 			/*
-			 * The loose reference was deleted. Delete any
+			 * The reference was deleted. Delete any
 			 * empty parent directories. (Note that this
 			 * can only work because we have already
 			 * removed the lockfile.)

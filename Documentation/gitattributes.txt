@@ -802,6 +802,9 @@ patterns are available:
 
 - `ada` suitable for source code in the Ada language.
 
+- `bash` suitable for source code in the Bourne-Again SHell language.
+  Covers a superset of POSIX shell function definitions.
+
 - `bibtex` suitable for files with BibTeX coded references.
 
 - `cpp` suitable for source code in the C and C++ languages.
@@ -824,6 +827,8 @@ patterns are available:
 
 - `java` suitable for source code in the Java language.
 
+- `markdown` suitable for Markdown documents.
+
 - `matlab` suitable for source code in the MATLAB and Octave languages.
 
 - `objc` suitable for source code in the Objective-C language.
@@ -839,6 +844,8 @@ patterns are available:
 - `ruby` suitable for source code in the Ruby language.
 
 - `rust` suitable for source code in the Rust language.
+
+- `scheme` suitable for source code in the Scheme language.
 
 - `tex` suitable for source code for LaTeX documents.
 
@@ -1169,7 +1176,8 @@ tag then no replacement will be done.  The placeholders are the same
 as those for the option `--pretty=format:` of linkgit:git-log[1],
 except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
 in the file.  E.g. the string `$Format:%H$` will be replaced by the
-commit hash.
+commit hash.  However, only one `%(describe)` placeholder is expanded
+per archive to avoid denial-of-service attacks.
 
 
 Packing objects
@@ -1239,6 +1247,12 @@ to:
 [attr]binary -diff -merge -text
 ------------
 
+NOTES
+-----
+
+Git does not follow symbolic links when accessing a `.gitattributes`
+file in the working tree. This keeps behavior consistent when the file
+is accessed from the index or a tree versus from the filesystem.
 
 EXAMPLES
 --------

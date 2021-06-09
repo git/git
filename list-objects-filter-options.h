@@ -1,6 +1,7 @@
 #ifndef LIST_OBJECTS_FILTER_OPTIONS_H
 #define LIST_OBJECTS_FILTER_OPTIONS_H
 
+#include "cache.h"
 #include "parse-options.h"
 #include "string-list.h"
 
@@ -13,9 +14,16 @@ enum list_objects_filter_choice {
 	LOFC_BLOB_LIMIT,
 	LOFC_TREE_DEPTH,
 	LOFC_SPARSE_OID,
+	LOFC_OBJECT_TYPE,
 	LOFC_COMBINE,
 	LOFC__COUNT /* must be last */
 };
+
+/*
+ * Returns a configuration key suitable for describing the given object filter,
+ * e.g.: "blob:none", "combine", etc.
+ */
+const char *list_object_filter_config_name(enum list_objects_filter_choice c);
 
 struct list_objects_filter_options {
 	/*
@@ -48,6 +56,7 @@ struct list_objects_filter_options {
 	char *sparse_oid_name;
 	unsigned long blob_limit_value;
 	unsigned long tree_exclude_depth;
+	enum object_type object_type;
 
 	/* LOFC_COMBINE values */
 
@@ -82,9 +91,9 @@ int opt_parse_list_objects_filter(const struct option *opt,
 				  const char *arg, int unset);
 
 #define OPT_PARSE_LIST_OBJECTS_FILTER(fo) \
-	{ OPTION_CALLBACK, 0, CL_ARG__FILTER, fo, N_("args"), \
-	  N_("object filtering"), 0, \
-	  opt_parse_list_objects_filter }
+	OPT_CALLBACK(0, CL_ARG__FILTER, fo, N_("args"), \
+	  N_("object filtering"), \
+	  opt_parse_list_objects_filter)
 
 /*
  * Translates abbreviated numbers in the filter's filter_spec into their

@@ -18,7 +18,8 @@ It is perhaps easiest to start with an example:
 More interesting possibilities exist, though, such as:
 
   * one side of history renames x -> z, and the other renames some file to
-    x/e, causing the need for the merge to do a transitive rename.
+    x/e, causing the need for the merge to do a transitive rename so that
+    the rename ends up at z/e.
 
   * one side of history renames x -> z, but also renames all files within x.
     For example, x/a -> z/alpha, x/b -> z/bravo, etc.
@@ -35,7 +36,7 @@ More interesting possibilities exist, though, such as:
     directory itself contained inner directories that were renamed to yet
     other locations).
 
-  * combinations of the above; see t/t6043-merge-rename-directories.sh for
+  * combinations of the above; see t/t6423-merge-rename-directories.sh for
     various interesting cases.
 
 Limitations -- applicability of directory renames
@@ -62,18 +63,18 @@ directory rename detection applies:
 Limitations -- detailed rules and testcases
 -------------------------------------------
 
-t/t6043-merge-rename-directories.sh contains extensive tests and commentary
+t/t6423-merge-rename-directories.sh contains extensive tests and commentary
 which generate and explore the rules listed above.  It also lists a few
 additional rules:
 
   a) If renames split a directory into two or more others, the directory
      with the most renames, "wins".
 
-  b) Avoid directory-rename-detection for a path, if that path is the
-     source of a rename on either side of a merge.
-
-  c) Only apply implicit directory renames to directories if the other side
+  b) Only apply implicit directory renames to directories if the other side
      of history is the one doing the renaming.
+
+  c) Do not perform directory rename detection for directories which had no
+     new paths added to them.
 
 Limitations -- support in different commands
 --------------------------------------------

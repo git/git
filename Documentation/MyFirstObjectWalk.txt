@@ -182,30 +182,6 @@ its `init_log_defaults()` sets its own state (`decoration_style`) and asks
 `grep` and `diff` to initialize themselves by calling each of their
 initialization functions.
 
-For our first example within `git walken`, we don't intend to use any other
-components within Git, and we don't have any configuration to do.  However, we
-may want to add some later, so for now, we can add an empty placeholder. Create
-a new function in `builtin/walken.c`:
-
-----
-static void init_walken_defaults(void)
-{
-	/*
-	 * We don't actually need the same components `git log` does; leave this
-	 * empty for now.
-	 */
-}
-----
-
-Make sure to add a line invoking it inside of `cmd_walken()`.
-
-----
-int cmd_walken(int argc, const char **argv, const char *prefix)
-{
-	init_walken_defaults();
-}
-----
-
 ==== Configuring From `.gitconfig`
 
 Next, we should have a look at any relevant configuration settings (i.e.,
@@ -388,17 +364,9 @@ Next, let's try to filter the commits we see based on their author. This is
 equivalent to running `git log --author=<pattern>`. We can add a filter by
 modifying `rev_info.grep_filter`, which is a `struct grep_opt`.
 
-First some setup. Add `init_grep_defaults()` to `init_walken_defaults()` and add
-`grep_config()` to `git_walken_config()`:
+First some setup. Add `grep_config()` to `git_walken_config()`:
 
 ----
-static void init_walken_defaults(void)
-{
-	init_grep_defaults(the_repository);
-}
-
-...
-
 static int git_walken_config(const char *var, const char *value, void *cb)
 {
 	grep_config(var, value, cb);

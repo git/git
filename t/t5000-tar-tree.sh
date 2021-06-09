@@ -94,6 +94,16 @@ check_tar() {
 	'
 }
 
+check_added() {
+	dir=$1
+	path_in_fs=$2
+	path_in_archive=$3
+
+	test_expect_success " validate extra file $path_in_archive" '
+		diff -r $path_in_fs $dir/$path_in_archive
+	'
+}
+
 test_expect_success 'setup' '
 	test_oid_cache <<-EOF
 	obj sha1:19f9c8273ec45a8938e6999cb59b3ff66739902a
@@ -163,6 +173,25 @@ test_expect_success 'git-archive --prefix=olde-' '
 '
 
 check_tar with_olde-prefix olde-
+
+test_expect_success 'git archive --add-file' '
+	echo untracked >untracked &&
+	git archive --add-file=untracked HEAD >with_untracked.tar
+'
+
+check_tar with_untracked
+check_added with_untracked untracked untracked
+
+test_expect_success 'git archive --add-file twice' '
+	echo untracked >untracked &&
+	git archive --prefix=one/ --add-file=untracked \
+		--prefix=two/ --add-file=untracked \
+		--prefix= HEAD >with_untracked2.tar
+'
+
+check_tar with_untracked2
+check_added with_untracked2 untracked one/untracked
+check_added with_untracked2 untracked two/untracked
 
 test_expect_success 'git archive on large files' '
     test_config core.bigfilethreshold 1 &&
@@ -402,15 +431,33 @@ test_expect_success TAR_HUGE,LONG_IS_64BIT 'system tar can read our huge size' '
 	test_cmp expect actual
 '
 
-test_expect_success TIME_IS_64BIT 'set up repository with far-future commit' '
+test_expect_success TIME_IS_64BIT 'set up repository with far-future (2^34 - 1) commit' '
 	rm -f .git/index &&
-	echo content >file &&
+	echo foo >file &&
 	git add file &&
-	GIT_COMMITTER_DATE="@68719476737 +0000" \
+	GIT_COMMITTER_DATE="@17179869183 +0000" \
 		git commit -m "tempori parendum"
 '
 
-test_expect_success TIME_IS_64BIT 'generate tar with future mtime' '
+test_expect_success TIME_IS_64BIT 'generate tar with far-future mtime' '
+	git archive HEAD >future.tar
+'
+
+test_expect_success TAR_HUGE,TIME_IS_64BIT,TIME_T_IS_64BIT 'system tar can read our future mtime' '
+	echo 2514 >expect &&
+	tar_info future.tar | cut -d" " -f2 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success TIME_IS_64BIT 'set up repository with far-far-future (2^36 + 1) commit' '
+	rm -f .git/index &&
+	echo content >file &&
+	git add file &&
+	GIT_TEST_COMMIT_GRAPH=0 GIT_COMMITTER_DATE="@68719476737 +0000" \
+		git commit -m "tempori parendum"
+'
+
+test_expect_success TIME_IS_64BIT 'generate tar with far-far-future mtime' '
 	git archive HEAD >future.tar
 '
 

@@ -102,6 +102,12 @@ void trace_repo_setup(const char *prefix);
 int trace_want(struct trace_key *key);
 
 /**
+ * Enables or disables tracing for the specified key, as if the environment
+ * variable was set to the given value.
+ */
+void trace_override_envvar(struct trace_key *key, const char *value);
+
+/**
  * Disables tracing for the specified key, even if the environment variable
  * was set.
  */

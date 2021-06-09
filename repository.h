@@ -23,12 +23,14 @@ enum fetch_negotiation_setting {
 	FETCH_NEGOTIATION_NONE = 0,
 	FETCH_NEGOTIATION_DEFAULT = 1,
 	FETCH_NEGOTIATION_SKIPPING = 2,
+	FETCH_NEGOTIATION_NOOP = 3,
 };
 
 struct repo_settings {
 	int initialized;
 
 	int core_commit_graph;
+	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
 
@@ -37,6 +39,11 @@ struct repo_settings {
 
 	int pack_use_sparse;
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
+
+	int core_multi_pack_index;
+
+	unsigned command_requires_full_index:1,
+		 sparse_index:1;
 };
 
 struct repository {
@@ -195,5 +202,11 @@ int repo_read_index_unmerged(struct repository *);
 void repo_update_index_if_able(struct repository *, struct lock_file *);
 
 void prepare_repo_settings(struct repository *r);
+
+/*
+ * Return 1 if upgrade repository format to target_version succeeded,
+ * 0 if no upgrade is necessary, and -1 when upgrade is not possible.
+ */
+int upgrade_repository_format(int target_version);
 
 #endif /* REPOSITORY_H */

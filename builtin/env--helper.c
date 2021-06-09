@@ -7,18 +7,22 @@ static char const * const env__helper_usage[] = {
 	NULL
 };
 
-static enum {
+enum cmdmode {
 	ENV_HELPER_TYPE_BOOL = 1,
 	ENV_HELPER_TYPE_ULONG
-} cmdmode = 0;
+};
 
 static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)
 {
+	enum cmdmode *cmdmode = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	if (!strcmp(arg, "bool"))
-		cmdmode = ENV_HELPER_TYPE_BOOL;
+		*cmdmode = ENV_HELPER_TYPE_BOOL;
 	else if (!strcmp(arg, "ulong"))
-		cmdmode = ENV_HELPER_TYPE_ULONG;
+		*cmdmode = ENV_HELPER_TYPE_ULONG;
 	else
 		die(_("unrecognized --type argument, %s"), arg);
 
@@ -33,6 +37,7 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 	int ret;
 	int ret_int, default_int;
 	unsigned long ret_ulong, default_ulong;
+	enum cmdmode cmdmode = 0;
 	struct option opts[] = {
 		OPT_CALLBACK_F(0, "type", &cmdmode, N_("type"),
 			       N_("value is given this type"), PARSE_OPT_NONEG,

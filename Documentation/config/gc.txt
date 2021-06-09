@@ -44,9 +44,9 @@ gc.autoDetach::
 
 gc.bigPackThreshold::
 	If non-zero, all packs larger than this limit are kept when
-	`git gc` is run. This is very similar to `--keep-base-pack`
+	`git gc` is run. This is very similar to `--keep-largest-pack`
 	except that all packs that meet the threshold are kept, not
-	just the base pack. Defaults to zero. Common unit suffixes of
+	just the largest pack. Defaults to zero. Common unit suffixes of
 	'k', 'm', or 'g' are supported.
 +
 Note that if the number of kept packs is more than gc.autoPackLimit,
@@ -57,7 +57,7 @@ gc.autoPackLimit and gc.bigPackThreshold should be respected again.
 If the amount of memory estimated for `git repack` to run smoothly is
 not available and `gc.bigPackThreshold` is not set, the largest pack
 will also be excluded (this is the equivalent of running `git gc` with
-`--keep-base-pack`).
+`--keep-largest-pack`).
 
 gc.writeCommitGraph::
 	If true, then gc will rewrite the commit-graph file when

@@ -38,6 +38,19 @@ scope void clear_ ##slabname(struct slabname *s)			\
 	FREE_AND_NULL(s->slab);						\
 }									\
 									\
+scope void deep_clear_ ##slabname(struct slabname *s, void (*free_fn)(elemtype *)) \
+{									\
+	unsigned int i;							\
+	for (i = 0; i < s->slab_count; i++) {				\
+		unsigned int j;						\
+		if (!s->slab[i])					\
+			continue;					\
+		for (j = 0; j < s->slab_size; j++)			\
+			free_fn(&s->slab[i][j * s->stride]);		\
+	}								\
+	clear_ ##slabname(s);						\
+}									\
+									\
 scope elemtype *slabname## _at_peek(struct slabname *s,			\
 						  const struct commit *c, \
 						  int add_if_missing)   \

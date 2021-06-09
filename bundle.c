@@ -10,9 +10,18 @@
 #include "list-objects.h"
 #include "run-command.h"
 #include "refs.h"
-#include "argv-array.h"
+#include "strvec.h"
 
-static const char bundle_signature[] = "# v2 git bundle\n";
+
+static const char v2_bundle_signature[] = "# v2 git bundle\n";
+static const char v3_bundle_signature[] = "# v3 git bundle\n";
+static struct {
+	int version;
+	const char *signature;
+} bundle_sigs[] = {
+	{ 2, v2_bundle_signature },
+	{ 3, v3_bundle_signature },
+};
 
 static void add_to_ref_list(const struct object_id *oid, const char *name,
 		struct ref_list *list)
@@ -23,6 +32,32 @@ static void add_to_ref_list(const struct object_id *oid, const char *name,
 	list->nr++;
 }
 
+static int parse_capability(struct bundle_header *header, const char *capability)
+{
+	const char *arg;
+	if (skip_prefix(capability, "object-format=", &arg)) {
+		int algo = hash_algo_by_name(arg);
+		if (algo == GIT_HASH_UNKNOWN)
+			return error(_("unrecognized bundle hash algorithm: %s"), arg);
+		header->hash_algo = &hash_algos[algo];
+		return 0;
+	}
+	return error(_("unknown capability '%s'"), capability);
+}
+
+static int parse_bundle_signature(struct bundle_header *header, const char *line)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(bundle_sigs); i++) {
+		if (!strcmp(line, bundle_sigs[i].signature)) {
+			header->version = bundle_sigs[i].version;
+			return 0;
+		}
+	}
+	return -1;
+}
+
 static int parse_bundle_header(int fd, struct bundle_header *header,
 			       const char *report_path)
 {
@@ -31,13 +66,15 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 
 	/* The bundle header begins with the signature */
 	if (strbuf_getwholeline_fd(&buf, fd, '\n') ||
-	    strcmp(buf.buf, bundle_signature)) {
+	    parse_bundle_signature(header, buf.buf)) {
 		if (report_path)
-			error(_("'%s' does not look like a v2 bundle file"),
+			error(_("'%s' does not look like a v2 or v3 bundle file"),
 			      report_path);
 		status = -1;
 		goto abort;
 	}
+
+	header->hash_algo = the_hash_algo;
 
 	/* The bundle header ends with an empty line */
 	while (!strbuf_getwholeline_fd(&buf, fd, '\n') &&
@@ -46,18 +83,27 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		int is_prereq = 0;
 		const char *p;
 
+		strbuf_rtrim(&buf);
+
+		if (header->version == 3 && *buf.buf == '@') {
+			if (parse_capability(header, buf.buf + 1)) {
+				status = -1;
+				break;
+			}
+			continue;
+		}
+
 		if (*buf.buf == '-') {
 			is_prereq = 1;
 			strbuf_remove(&buf, 0, 1);
 		}
-		strbuf_rtrim(&buf);
 
 		/*
 		 * Tip lines have object name, SP, and refname.
 		 * Prerequisites have object name that is optionally
 		 * followed by SP and subject line.
 		 */
-		if (parse_oid_hex(buf.buf, &oid, &p) ||
+		if (parse_oid_hex_algop(buf.buf, &oid, &p, header->hash_algo) ||
 		    (*p && !isspace(*p)) ||
 		    (!is_prereq && !*p)) {
 			if (report_path)
@@ -249,16 +295,16 @@ out:
 
 
 /* Write the pack data to bundle_fd */
-static int write_pack_data(int bundle_fd, struct rev_info *revs, struct argv_array *pack_options)
+static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *pack_options)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
 	int i;
 
-	argv_array_pushl(&pack_objects.args,
-			 "pack-objects",
-			 "--stdout", "--thin", "--delta-base-offset",
-			 NULL);
-	argv_array_pushv(&pack_objects.args, pack_options->argv);
+	strvec_pushl(&pack_objects.args,
+		     "pack-objects",
+		     "--stdout", "--thin", "--delta-base-offset",
+		     NULL);
+	strvec_pushv(&pack_objects.args, pack_options->v);
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
 	pack_objects.git_cmd = 1;
@@ -292,48 +338,6 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs, struct argv_arr
 	return 0;
 }
 
-static int compute_and_write_prerequisites(int bundle_fd,
-					   struct rev_info *revs,
-					   int argc, const char **argv)
-{
-	struct child_process rls = CHILD_PROCESS_INIT;
-	struct strbuf buf = STRBUF_INIT;
-	FILE *rls_fout;
-	int i;
-
-	argv_array_pushl(&rls.args,
-			 "rev-list", "--boundary", "--pretty=oneline",
-			 NULL);
-	for (i = 1; i < argc; i++)
-		argv_array_push(&rls.args, argv[i]);
-	rls.out = -1;
-	rls.git_cmd = 1;
-	if (start_command(&rls))
-		return -1;
-	rls_fout = xfdopen(rls.out, "r");
-	while (strbuf_getwholeline(&buf, rls_fout, '\n') != EOF) {
-		struct object_id oid;
-		if (buf.len > 0 && buf.buf[0] == '-') {
-			write_or_die(bundle_fd, buf.buf, buf.len);
-			if (!get_oid_hex(buf.buf + 1, &oid)) {
-				struct object *object = parse_object_or_die(&oid,
-									    buf.buf);
-				object->flags |= UNINTERESTING;
-				add_pending_object(revs, object, buf.buf);
-			}
-		} else if (!get_oid_hex(buf.buf, &oid)) {
-			struct object *object = parse_object_or_die(&oid,
-								    buf.buf);
-			object->flags |= SHOWN;
-		}
-	}
-	strbuf_release(&buf);
-	fclose(rls_fout);
-	if (finish_command(&rls))
-		return error(_("rev-list died"));
-	return 0;
-}
-
 /*
  * Write out bundle refs based on the tips already
  * parsed into revs.pending. As a side effect, may
@@ -357,7 +361,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 
 		if (e->item->flags & UNINTERESTING)
 			continue;
-		if (dwim_ref(e->name, strlen(e->name), &oid, &ref) != 1)
+		if (dwim_ref(e->name, strlen(e->name), &oid, &ref, 0) != 1)
 			goto skip_write_ref;
 		if (read_ref_full(e->name, RESOLVE_REF_READING, &oid, &flag))
 			flag = 0;
@@ -428,14 +432,49 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 	return ref_count;
 }
 
+struct bundle_prerequisites_info {
+	struct object_array *pending;
+	int fd;
+};
+
+static void write_bundle_prerequisites(struct commit *commit, void *data)
+{
+	struct bundle_prerequisites_info *bpi = data;
+	struct object *object;
+	struct pretty_print_context ctx = { 0 };
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!(commit->object.flags & BOUNDARY))
+		return;
+	strbuf_addf(&buf, "-%s ", oid_to_hex(&commit->object.oid));
+	write_or_die(bpi->fd, buf.buf, buf.len);
+
+	ctx.fmt = CMIT_FMT_ONELINE;
+	ctx.output_encoding = get_log_output_encoding();
+	strbuf_reset(&buf);
+	pretty_print_commit(&ctx, commit, &buf);
+	strbuf_trim(&buf);
+
+	object = (struct object *)commit;
+	object->flags |= UNINTERESTING;
+	add_object_array_with_path(object, buf.buf, bpi->pending, S_IFINVALID,
+				   NULL);
+	strbuf_addch(&buf, '\n');
+	write_or_die(bpi->fd, buf.buf, buf.len);
+	strbuf_release(&buf);
+}
+
 int create_bundle(struct repository *r, const char *path,
-		  int argc, const char **argv, struct argv_array *pack_options)
+		  int argc, const char **argv, struct strvec *pack_options, int version)
 {
 	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;
 	int bundle_to_stdout;
 	int ref_count = 0;
-	struct rev_info revs;
+	struct rev_info revs, revs_copy;
+	int min_version = the_hash_algo == &hash_algos[GIT_HASH_SHA1] ? 2 : 3;
+	struct bundle_prerequisites_info bpi;
+	int i;
 
 	bundle_to_stdout = !strcmp(path, "-");
 	if (bundle_to_stdout)
@@ -444,16 +483,26 @@ int create_bundle(struct repository *r, const char *path,
 		bundle_fd = hold_lock_file_for_update(&lock, path,
 						      LOCK_DIE_ON_ERROR);
 
-	/* write signature */
-	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
+	if (version == -1)
+		version = min_version;
+
+	if (version < 2 || version > 3) {
+		die(_("unsupported bundle version %d"), version);
+	} else if (version < min_version) {
+		die(_("cannot write bundle version %d with algorithm %s"), version, the_hash_algo->name);
+	} else if (version == 2) {
+		write_or_die(bundle_fd, v2_bundle_signature, strlen(v2_bundle_signature));
+	} else {
+		const char *capability = "@object-format=";
+		write_or_die(bundle_fd, v3_bundle_signature, strlen(v3_bundle_signature));
+		write_or_die(bundle_fd, capability, strlen(capability));
+		write_or_die(bundle_fd, the_hash_algo->name, strlen(the_hash_algo->name));
+		write_or_die(bundle_fd, "\n", 1);
+	}
 
 	/* init revs to list objects for pack-objects later */
 	save_commit_buffer = 0;
 	repo_init_revisions(r, &revs, NULL);
-
-	/* write prerequisites */
-	if (compute_and_write_prerequisites(bundle_fd, &revs, argc, argv))
-		goto err;
 
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
@@ -462,16 +511,37 @@ int create_bundle(struct repository *r, const char *path,
 		goto err;
 	}
 
-	object_array_remove_duplicates(&revs.pending);
+	/* save revs.pending in revs_copy for later use */
+	memcpy(&revs_copy, &revs, sizeof(revs));
+	revs_copy.pending.nr = 0;
+	revs_copy.pending.alloc = 0;
+	revs_copy.pending.objects = NULL;
+	for (i = 0; i < revs.pending.nr; i++) {
+		struct object_array_entry *e = revs.pending.objects + i;
+		if (e)
+			add_object_array_with_path(e->item, e->name,
+						   &revs_copy.pending,
+						   e->mode, e->path);
+	}
 
-	ref_count = write_bundle_refs(bundle_fd, &revs);
+	/* write prerequisites */
+	revs.boundary = 1;
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
+	bpi.fd = bundle_fd;
+	bpi.pending = &revs_copy.pending;
+	traverse_commit_list(&revs, write_bundle_prerequisites, NULL, &bpi);
+	object_array_remove_duplicates(&revs_copy.pending);
+
+	/* write bundle refs */
+	ref_count = write_bundle_refs(bundle_fd, &revs_copy);
 	if (!ref_count)
 		die(_("Refusing to create empty bundle."));
 	else if (ref_count < 0)
 		goto err;
 
 	/* write pack */
-	if (write_pack_data(bundle_fd, &revs, pack_options))
+	if (write_pack_data(bundle_fd, &revs_copy, pack_options))
 		goto err;
 
 	if (!bundle_to_stdout) {

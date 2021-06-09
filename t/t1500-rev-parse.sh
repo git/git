@@ -1,7 +1,20 @@
 #!/bin/sh
 
 test_description='test git rev-parse'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+
+test_one () {
+	dir="$1" &&
+	expect="$2" &&
+	shift &&
+	shift &&
+	echo "$expect" >expect &&
+	git -C "$dir" rev-parse "$@" >actual &&
+	test_cmp expect actual
+}
 
 # usage: [options] label is-bare is-inside-git is-inside-work prefix git-dir absolute-git-dir
 test_rev_parse () {
@@ -59,9 +72,14 @@ test_rev_parse () {
 ROOT=$(pwd)
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	mkdir -p sub/dir work &&
-	cp -R .git repo.git
+	cp -R .git repo.git &&
+	git checkout -B main &&
+	test_commit abc &&
+	git checkout -b side &&
+	test_commit def &&
+	git checkout main &&
+	git worktree add worktree side
 '
 
 test_rev_parse toplevel false false true '' .git "$ROOT/.git"
@@ -88,6 +106,49 @@ test_rev_parse -C work -g ../repo.git -b f 'GIT_DIR=../repo.git, core.bare = fal
 test_rev_parse -C work -g ../repo.git -b t 'GIT_DIR=../repo.git, core.bare = true' true false false ''
 
 test_rev_parse -C work -g ../repo.git -b u 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
+
+test_expect_success 'rev-parse --path-format=absolute' '
+	test_one "." "$ROOT/.git" --path-format=absolute --git-dir &&
+	test_one "." "$ROOT/.git" --path-format=absolute --git-common-dir &&
+	test_one "sub/dir" "$ROOT/.git" --path-format=absolute --git-dir &&
+	test_one "sub/dir" "$ROOT/.git" --path-format=absolute --git-common-dir &&
+	test_one "worktree" "$ROOT/.git/worktrees/worktree" --path-format=absolute --git-dir &&
+	test_one "worktree" "$ROOT/.git" --path-format=absolute --git-common-dir &&
+	test_one "." "$ROOT" --path-format=absolute --show-toplevel &&
+	test_one "." "$ROOT/.git/objects" --path-format=absolute --git-path objects &&
+	test_one "." "$ROOT/.git/objects/foo/bar/baz" --path-format=absolute --git-path objects/foo/bar/baz
+'
+
+test_expect_success 'rev-parse --path-format=relative' '
+	test_one "." ".git" --path-format=relative --git-dir &&
+	test_one "." ".git" --path-format=relative --git-common-dir &&
+	test_one "sub/dir" "../../.git" --path-format=relative --git-dir &&
+	test_one "sub/dir" "../../.git" --path-format=relative --git-common-dir &&
+	test_one "worktree" "../.git/worktrees/worktree" --path-format=relative --git-dir &&
+	test_one "worktree" "../.git" --path-format=relative --git-common-dir &&
+	test_one "." "./" --path-format=relative --show-toplevel &&
+	test_one "." ".git/objects" --path-format=relative --git-path objects &&
+	test_one "." ".git/objects/foo/bar/baz" --path-format=relative --git-path objects/foo/bar/baz
+'
+
+test_expect_success '--path-format=relative does not affect --absolute-git-dir' '
+	git rev-parse --path-format=relative --absolute-git-dir >actual &&
+	echo "$ROOT/.git" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--path-format can change in the middle of the command line' '
+	git rev-parse --path-format=absolute --git-dir --path-format=relative --git-path objects/foo/bar >actual &&
+	cat >expect <<-EOF &&
+	$ROOT/.git
+	.git/objects/foo/bar
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--path-format does not segfault without an argument' '
+	test_must_fail git rev-parse --path-format
+'
 
 test_expect_success 'git-common-dir from worktree root' '
 	echo .git >expect &&
@@ -175,8 +236,8 @@ test_expect_success 'showing the superproject correctly' '
 	test_commit -C super/dir/sub branch1_commit &&
 	git -C super add dir/sub &&
 	test_commit -C super branch1_commit &&
-	git -C super checkout -b branch2 master &&
-	git -C super/dir/sub checkout -b branch2 master &&
+	git -C super checkout -b branch2 main &&
+	git -C super/dir/sub checkout -b branch2 main &&
 	test_commit -C super/dir/sub branch2_commit &&
 	git -C super add dir/sub &&
 	test_commit -C super branch2_commit &&
@@ -184,6 +245,21 @@ test_expect_success 'showing the superproject correctly' '
 
 	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
 	test_cmp expect out
+'
+
+# at least one external project depends on this behavior:
+test_expect_success 'rev-parse --since= unsqueezed ordering' '
+	x1=--since=1970-01-01T00:00:01Z &&
+	x2=--since=1970-01-01T00:00:02Z &&
+	x3=--since=1970-01-01T00:00:03Z &&
+	git rev-parse $x1 $x1 $x3 $x2 >actual &&
+	cat >expect <<-EOF &&
+	--max-age=1
+	--max-age=1
+	--max-age=3
+	--max-age=2
+	EOF
+	test_cmp expect actual
 '
 
 test_done

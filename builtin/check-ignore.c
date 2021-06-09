@@ -100,7 +100,8 @@ static int check_ignore(struct dir_struct *dir,
 	 * should not be ignored, in order to be consistent with
 	 * 'git status', 'git add' etc.
 	 */
-	seen = find_pathspecs_matching_against_index(&pathspec, &the_index);
+	seen = find_pathspecs_matching_against_index(&pathspec, &the_index,
+						     PS_HEED_SKIP_WORKTREE);
 	for (i = 0; i < pathspec.nr; i++) {
 		full_path = pathspec.items[i].match;
 		pattern = NULL;
@@ -118,6 +119,7 @@ static int check_ignore(struct dir_struct *dir,
 			num_ignored++;
 	}
 	free(seen);
+	clear_pathspec(&pathspec);
 
 	return num_ignored;
 }
@@ -180,7 +182,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 	if (!no_index && read_cache() < 0)
 		die(_("index file corrupt"));
 
-	memset(&dir, 0, sizeof(dir));
+	dir_init(&dir);
 	setup_standard_excludes(&dir);
 
 	if (stdin_paths) {
@@ -190,7 +192,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 		maybe_flush_or_die(stdout, "ignore to stdout");
 	}
 
-	clear_directory(&dir);
+	dir_clear(&dir);
 
 	return !num_ignored;
 }

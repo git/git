@@ -18,11 +18,8 @@ message_body () {
 }
 
 test_expect_success '-C option copies authorship and message' '
-	echo "Initial" >foo &&
-	git add foo &&
-	test_tick &&
-	git commit -m "Initial Commit" --author Frigate\ \<flying@over.world\> &&
-	git tag Initial &&
+	test_commit --author Frigate\ \<flying@over.world\> \
+		"Initial Commit" foo Initial Initial &&
 	echo "Test 1" >>foo &&
 	test_tick &&
 	git commit -a -C Initial &&

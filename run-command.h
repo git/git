@@ -3,7 +3,7 @@
 
 #include "thread-utils.h"
 
-#include "argv-array.h"
+#include "strvec.h"
 
 /**
  * The run-command API offers a versatile tool to run sub-processes with
@@ -52,15 +52,15 @@ struct child_process {
 	 * Note that the ownership of the memory pointed to by .argv stays with the
 	 * caller, but it should survive until `finish_command` completes. If the
 	 * .argv member is NULL, `start_command` will point it at the .args
-	 * `argv_array` (so you may use one or the other, but you must use exactly
+	 * `strvec` (so you may use one or the other, but you must use exactly
 	 * one). The memory in .args will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
 	 *
 	 */
 	const char **argv;
 
-	struct argv_array args;
-	struct argv_array env_array;
+	struct strvec args;
+	struct strvec env_array;
 	pid_t pid;
 
 	int trace2_child_id;
@@ -107,7 +107,7 @@ struct child_process {
 	 *   variable that will be removed from the child process's environment.
 	 *
 	 * If the .env member is NULL, `start_command` will point it at the
-	 * .env_array `argv_array` (so you may use one or the other, but not both).
+	 * .env_array `strvec` (so you may use one or the other, but not both).
 	 * The memory in .env_array will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
 	 */
@@ -126,15 +126,22 @@ struct child_process {
 	 */
 	unsigned silent_exec_failure:1;
 
-	unsigned stdout_to_stderr:1;
+	/**
+	 * Run the command from argv[0] using a shell (but note that we may
+	 * still optimize out the shell call if the command contains no
+	 * metacharacters). Note that further arguments to the command in
+	 * argv[1], etc, do not need to be shell-quoted.
+	 */
 	unsigned use_shell:1;
+
+	unsigned stdout_to_stderr:1;
 	unsigned clean_on_exit:1;
 	unsigned wait_after_clean:1;
 	void (*clean_on_exit_handler)(struct child_process *process);
 	void *clean_on_exit_handler_cbdata;
 };
 
-#define CHILD_PROCESS_INIT { NULL, ARGV_ARRAY_INIT, ARGV_ARRAY_INIT }
+#define CHILD_PROCESS_INIT { NULL, STRVEC_INIT, STRVEC_INIT }
 
 /**
  * The functions: child_process_init, start_command, finish_command,
@@ -218,12 +225,18 @@ LAST_ARG_MUST_BE_NULL
 int run_hook_le(const char *const *env, const char *name, ...);
 int run_hook_ve(const char *const *env, const char *name, va_list args);
 
+/*
+ * Trigger an auto-gc
+ */
+int run_auto_maintenance(int quiet);
+
 #define RUN_COMMAND_NO_STDIN 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
 #define RUN_COMMAND_STDOUT_TO_STDERR 4
 #define RUN_SILENT_EXEC_FAILURE 8
 #define RUN_USING_SHELL 16
 #define RUN_CLEAN_ON_EXIT 32
+#define RUN_WAIT_AFTER_CLEAN 64
 
 /**
  * Convenience functions that encapsulate a sequence of

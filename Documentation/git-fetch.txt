@@ -48,6 +48,10 @@ include::fetch-options.txt[]
 
 include::pull-fetch-param.txt[]
 
+--stdin::
+	Read refspecs, one per line, from stdin in addition to those provided
+	as arguments. The "tag <name>" format is not supported.
+
 include::urls-remotes.txt[]
 
 
@@ -255,14 +259,14 @@ refspec.
 * Using refspecs explicitly:
 +
 ------------------------------------------------
-$ git fetch origin +pu:pu maint:tmp
+$ git fetch origin +seen:seen maint:tmp
 ------------------------------------------------
 +
-This updates (or creates, as necessary) branches `pu` and `tmp` in
+This updates (or creates, as necessary) branches `seen` and `tmp` in
 the local repository by fetching from the branches (respectively)
-`pu` and `maint` from the remote repository.
+`seen` and `maint` from the remote repository.
 +
-The `pu` branch will be updated even if it does not fast-forward,
+The `seen` branch will be updated even if it does not fast-forward,
 because it is prefixed with a plus sign; `tmp` will not be.
 
 * Peek at a remote's branch, without configuring the remote in your local

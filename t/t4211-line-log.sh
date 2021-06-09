@@ -1,12 +1,36 @@
 #!/bin/sh
 
 test_description='test log -L'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup (import history)' '
-	test_oid_init &&
 	git fast-import < "$TEST_DIRECTORY"/t4211/history.export &&
 	git reset --hard
+'
+
+test_expect_success 'basic command line parsing' '
+	# This may fail due to "no such path a.c in commit", or
+	# "-L is incompatible with pathspec", depending on the
+	# order the error is checked.  Either is acceptable.
+	test_must_fail git log -L1,1:a.c -- a.c &&
+
+	# -L requires there is no pathspec
+	test_must_fail git log -L1,1:b.c -- b.c 2>error &&
+	test_i18ngrep "cannot be used with pathspec" error &&
+
+	# This would fail because --follow wants a single path, but
+	# we may fail due to incompatibility between -L/--follow in
+	# the future.  Either is acceptable.
+	test_must_fail git log -L1,1:b.c --follow &&
+	test_must_fail git log --follow -L1,1:b.c &&
+
+	# This would fail because -L wants no pathspec, but
+	# we may fail due to incompatibility between -L/--follow in
+	# the future.  Either is acceptable.
+	test_must_fail git log --follow -L1,1:b.c -- b.c
 '
 
 canned_test_1 () {
@@ -212,6 +236,82 @@ test_expect_success 'fancy rename following #2' '
 	$oid_add_f1_f2 Add file-1 and file-2
 	EOF
 	git log -L1:renamed-2 --oneline --no-patch >actual &&
+	test_cmp expect actual
+'
+
+# Create the following linear history, where each commit does what its
+# subject line promises:
+#
+#   * 66c6410 Modify func2() in file.c
+#   * 50834e5 Modify other-file
+#   * fe5851c Modify func1() in file.c
+#   * 8c7c7dd Add other-file
+#   * d5f4417 Add func1() and func2() in file.c
+test_expect_success 'setup for checking line-log and parent oids' '
+	git checkout --orphan parent-oids &&
+	git reset --hard &&
+
+	cat >file.c <<-\EOF &&
+	int func1()
+	{
+	    return F1;
+	}
+
+	int func2()
+	{
+	    return F2;
+	}
+	EOF
+	git add file.c &&
+	test_tick &&
+	first_tick=$test_tick &&
+	git commit -m "Add func1() and func2() in file.c" &&
+
+	echo 1 >other-file &&
+	git add other-file &&
+	test_tick &&
+	git commit -m "Add other-file" &&
+
+	sed -e "s/F1/F1 + 1/" file.c >tmp &&
+	mv tmp file.c &&
+	git commit -a -m "Modify func1() in file.c" &&
+
+	echo 2 >other-file &&
+	git commit -a -m "Modify other-file" &&
+
+	sed -e "s/F2/F2 + 2/" file.c >tmp &&
+	mv tmp file.c &&
+	git commit -a -m "Modify func2() in file.c" &&
+
+	head_oid=$(git rev-parse --short HEAD) &&
+	prev_oid=$(git rev-parse --short HEAD^) &&
+	root_oid=$(git rev-parse --short HEAD~4)
+'
+
+# Parent oid should be from immediate parent.
+test_expect_success 'parent oids without parent rewriting' '
+	cat >expect <<-EOF &&
+	$head_oid $prev_oid Modify func2() in file.c
+	$root_oid  Add func1() and func2() in file.c
+	EOF
+	git log --format="%h %p %s" --no-patch -L:func2:file.c >actual &&
+	test_cmp expect actual
+'
+
+# Parent oid should be from the most recent ancestor touching func2(),
+# i.e. in this case from the root commit.
+test_expect_success 'parent oids with parent rewriting' '
+	cat >expect <<-EOF &&
+	$head_oid $root_oid Modify func2() in file.c
+	$root_oid  Add func1() and func2() in file.c
+	EOF
+	git log --format="%h %p %s" --no-patch -L:func2:file.c --parents >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'line-log with --before' '
+	echo $root_oid >expect &&
+	git log --format=%h --no-patch -L:func2:file.c --before=$first_tick >actual &&
 	test_cmp expect actual
 '
 

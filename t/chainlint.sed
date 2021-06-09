@@ -117,7 +117,7 @@
 /^[ 	]*!*[ 	]*(..*)[ 	]*[0-9]*[<>|&]/boneline
 
 # multi-line "(...\n...)"
-/^[ 	]*(/bsubshell
+/^[ 	]*(/bsubsh
 
 # innocuous line -- print it and advance to next line
 b
@@ -130,11 +130,11 @@ b
 }
 b
 
-:subshell
+:subsh
 # bare "(" line? -- stash for later printing
 /^[ 	]*([	]*$/ {
 	h
-	bnextline
+	bnextln
 }
 # "(..." line -- split off and stash "(", then process "..." as its own line
 x
@@ -143,7 +143,7 @@ x
 s/(//
 bslurp
 
-:nextline
+:nextln
 N
 s/.*\n//
 
@@ -151,10 +151,10 @@ s/.*\n//
 # incomplete line "...\"
 /\\$/bicmplte
 # multi-line quoted string "...\n..."?
-/"/bdqstring
+/"/bdqstr
 # multi-line quoted string '...\n...'? (but not contraction in string "it's")
 /'/{
-	/"[^'"]*'[^'"]*"/!bsqstring
+	/"[^'"]*'[^'"]*"/!bsqstr
 }
 :folded
 # here-doc -- swallow it
@@ -163,8 +163,8 @@ s/.*\n//
 # before closing ")", "done", "elsif", "else", or "fi" will need to be
 # re-visited to drop "suspect" marking since final line of those constructs
 # legitimately lacks "&&", so "suspect" mark must be removed
-/^[ 	]*#/bnextline
-/^[ 	]*$/bnextline
+/^[ 	]*#/bnextln
+/^[ 	]*$/bnextln
 # in-line comment -- strip it (but not "#" in a string, Bash ${#...} array
 # length, or Perforce "//depot/path#42" revision in filespec)
 /[ 	]#/{
@@ -175,22 +175,22 @@ s/.*\n//
 # multi-line "case ... esac"
 /^[ 	]*case[ 	]..*[ 	]in/bcase
 # multi-line "for ... done" or "while ... done"
-/^[ 	]*for[ 	]..*[ 	]in/bcontinue
-/^[ 	]*while[ 	]/bcontinue
-/^[ 	]*do[ 	]/bcontinue
-/^[ 	]*do[ 	]*$/bcontinue
-/;[ 	]*do/bcontinue
+/^[ 	]*for[ 	]..*[ 	]in/bcont
+/^[ 	]*while[ 	]/bcont
+/^[ 	]*do[ 	]/bcont
+/^[ 	]*do[ 	]*$/bcont
+/;[ 	]*do/bcont
 /^[ 	]*done[ 	]*&&[ 	]*$/bdone
 /^[ 	]*done[ 	]*$/bdone
 /^[ 	]*done[ 	]*[<>|]/bdone
 /^[ 	]*done[ 	]*)/bdone
-/||[ 	]*exit[ 	]/bcontinue
-/||[ 	]*exit[ 	]*$/bcontinue
+/||[ 	]*exit[ 	]/bcont
+/||[ 	]*exit[ 	]*$/bcont
 # multi-line "if...elsif...else...fi"
-/^[ 	]*if[ 	]/bcontinue
-/^[ 	]*then[ 	]/bcontinue
-/^[ 	]*then[ 	]*$/bcontinue
-/;[ 	]*then/bcontinue
+/^[ 	]*if[ 	]/bcont
+/^[ 	]*then[ 	]/bcont
+/^[ 	]*then[ 	]*$/bcont
+/;[ 	]*then/bcont
 /^[ 	]*elif[ 	]/belse
 /^[ 	]*elif[ 	]*$/belse
 /^[ 	]*else[ 	]/belse
@@ -234,10 +234,10 @@ s/.*\n//
 	}
 }
 # line ends with pipe "...|" -- valid; not missing "&&"
-/|[ 	]*$/bcontinue
+/|[ 	]*$/bcont
 # missing end-of-line "&&" -- mark suspect
 /&&[ 	]*$/!s/^/?!AMP?!/
-:continue
+:cont
 # retrieve and print previous line
 x
 n
@@ -250,7 +250,7 @@ s/\\\n//
 bslurp
 
 # check for multi-line double-quoted string "...\n..." -- fold to one line
-:dqstring
+:dqstr
 # remove all quote pairs
 s/"\([^"]*\)"/@!\1@!/g
 # done if no dangling quote
@@ -258,13 +258,13 @@ s/"\([^"]*\)"/@!\1@!/g
 # otherwise, slurp next line and try again
 N
 s/\n//
-bdqstring
+bdqstr
 :dqdone
 s/@!/"/g
 bfolded
 
 # check for multi-line single-quoted string '...\n...' -- fold to one line
-:sqstring
+:sqstr
 # remove all quote pairs
 s/'\([^']*\)'/@!\1@!/g
 # done if no dangling quote
@@ -272,7 +272,7 @@ s/'\([^']*\)'/@!\1@!/g
 # otherwise, slurp next line and try again
 N
 s/\n//
-bsqstring
+bsqstr
 :sqdone
 s/@!/'/g
 bfolded
@@ -282,11 +282,11 @@ bfolded
 :heredoc
 s/^\(.*\)<<[ 	]*[-\\'"]*\([A-Za-z0-9_][A-Za-z0-9_]*\)['"]*/<\2>\1<</
 s/[ 	]*<<//
-:heredsub
+:hdocsub
 N
 /^<\([^>]*\)>.*\n[ 	]*\1[ 	]*$/!{
 	s/\n.*$//
-	bheredsub
+	bhdocsub
 }
 s/^<[^>]*>//
 s/\n.*$//
@@ -305,7 +305,7 @@ bcase
 x
 s/?!AMP?!//
 x
-bcontinue
+bcont
 
 # found "done" closing for-loop or while-loop, or "fi" closing if-then -- drop
 # "suspect" from final contained line since that line legitimately lacks "&&"
@@ -321,10 +321,10 @@ bchkchn
 # found nested multi-line "(...\n...)" -- pass through untouched
 :nest
 x
-:nstslurp
+:nstslrp
 n
 # closing ")" on own line -- stop nested slurp
-/^[ 	]*)/bnstclose
+/^[ 	]*)/bnstcl
 # comment -- not closing ")" if in comment
 /^[ 	]*#/bnstcnt
 # "$((...))" -- arithmetic expansion; not closing ")"
@@ -332,11 +332,11 @@ n
 # "$(...)" -- command substitution; not closing ")"
 /\$([^)][^)]*)[^)]*$/bnstcnt
 # closing "...)" -- stop nested slurp
-/)/bnstclose
+/)/bnstcl
 :nstcnt
 x
-bnstslurp
-:nstclose
+bnstslrp
+:nstcl
 s/^/>>/
 # is it "))" which closes nested and parent subshells?
 /)[ 	]*)/bslurp

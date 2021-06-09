@@ -54,6 +54,7 @@ git-archive                             mainporcelain
 git-bisect                              mainporcelain           info
 git-blame                               ancillaryinterrogators          complete
 git-branch                              mainporcelain           history
+git-bugreport                           ancillaryinterrogators
 git-bundle                              mainporcelain
 git-cat-file                            plumbinginterrogators
 git-check-attr                          purehelpers
@@ -93,6 +94,7 @@ git-fetch-pack                          synchingrepositories
 git-filter-branch                       ancillarymanipulators
 git-fmt-merge-msg                       purehelpers
 git-for-each-ref                        plumbinginterrogators
+git-for-each-repo                       plumbinginterrogators
 git-format-patch                        mainporcelain
 git-fsck                                ancillaryinterrogators          complete
 git-gc                                  mainporcelain
@@ -116,6 +118,7 @@ git-ls-remote                           plumbinginterrogators
 git-ls-tree                             plumbinginterrogators
 git-mailinfo                            purehelpers
 git-mailsplit                           purehelpers
+git-maintenance                         mainporcelain
 git-merge                               mainporcelain           history
 git-merge-base                          plumbinginterrogators
 git-merge-file                          plumbingmanipulators
@@ -133,9 +136,8 @@ git-p4                                  foreignscminterface
 git-pack-objects                        plumbingmanipulators
 git-pack-redundant                      plumbinginterrogators
 git-pack-refs                           ancillarymanipulators
-git-parse-remote                        synchelpers
 git-patch-id                            purehelpers
-git-prune                               ancillarymanipulators
+git-prune                               ancillarymanipulators   complete
 git-prune-packed                        plumbingmanipulators
 git-pull                                mainporcelain           remote
 git-push                                mainporcelain           remote
@@ -194,14 +196,18 @@ git-write-tree                          plumbingmanipulators
 gitattributes                           guide
 gitcli                                  guide
 gitcore-tutorial                        guide
+gitcredentials                          guide
 gitcvs-migration                        guide
 gitdiffcore                             guide
 giteveryday                             guide
+gitfaq                                  guide
 gitglossary                             guide
 githooks                                guide
 gitignore                               guide
+gitmailmap                              guide
 gitmodules                              guide
 gitnamespaces                           guide
+gitremote-helpers                       guide
 gitrepository-layout                    guide
 gitrevisions                            guide
 gitsubmodules                           guide

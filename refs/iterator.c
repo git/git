@@ -393,7 +393,7 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 	if (!*prefix && !trim)
 		return iter0; /* optimization: no need to wrap iterator */
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 
 	base_ref_iterator_init(ref_iterator, &prefix_ref_iterator_vtable, iter0->ordered);

@@ -7,7 +7,7 @@ test_description='Test shallow cloning of repos with submodules'
 pwd=$(pwd)
 
 test_expect_success 'setup' '
-	git checkout -b master &&
+	git checkout -b main &&
 	test_commit commit1 &&
 	test_commit commit2 &&
 	mkdir sub &&

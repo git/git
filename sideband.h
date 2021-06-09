@@ -18,8 +18,12 @@ enum sideband_type {
  *
  * scratch must be a struct strbuf allocated by the caller. It is used to store
  * progress messages split across multiple packets.
+ *
+ * The "status" parameter is a pkt-line response as returned by
+ * packet_read_with_status() (e.g., PACKET_READ_NORMAL).
  */
-int demultiplex_sideband(const char *me, char *buf, int len,
+int demultiplex_sideband(const char *me, int status,
+			 char *buf, int len,
 			 int die_on_error,
 			 struct strbuf *scratch,
 			 enum sideband_type *sideband_type);

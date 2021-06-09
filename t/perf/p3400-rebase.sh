@@ -9,16 +9,16 @@ test_expect_success 'setup rebasing on top of a lot of changes' '
 	git checkout -f -B base &&
 	git checkout -B to-rebase &&
 	git checkout -B upstream &&
-	for i in $(seq 100)
+	for i in $(test_seq 100)
 	do
 		# simulate huge diffs
 		echo change$i >unrelated-file$i &&
-		seq 1000 >>unrelated-file$i &&
+		test_seq 1000 >>unrelated-file$i &&
 		git add unrelated-file$i &&
 		test_tick &&
 		git commit -m commit$i unrelated-file$i &&
 		echo change$i >unrelated-file$i &&
-		seq 1000 | tac >>unrelated-file$i &&
+		test_seq 1000 | tac >>unrelated-file$i &&
 		git add unrelated-file$i &&
 		test_tick &&
 		git commit -m commit$i-reverse unrelated-file$i ||

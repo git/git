@@ -149,11 +149,15 @@ not tracked by Git remain untracked.
 To stop tracking a file that is currently tracked, use
 'git rm --cached'.
 
+Git does not follow symbolic links when accessing a `.gitignore` file in
+the working tree. This keeps behavior consistent when the file is
+accessed from the index or a tree versus from the filesystem.
+
 EXAMPLES
 --------
 
  - The pattern `hello.*` matches any file or folder
-   whose name begins with `hello`. If one wants to restrict
+   whose name begins with `hello.`. If one wants to restrict
    this only to the directory and not in its subdirectories,
    one can prepend the pattern with a slash, i.e. `/hello.*`;
    the pattern now matches `hello.txt`, `hello.c` but not

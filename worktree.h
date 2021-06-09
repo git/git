@@ -11,26 +11,23 @@ struct worktree {
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */
 	char *lock_reason;	/* private - use worktree_lock_reason */
+	char *prune_reason;     /* private - use worktree_prune_reason */
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
 	int is_current;
 	int lock_reason_valid; /* private */
+	int prune_reason_valid; /* private */
 };
-
-/* Functions for acting on the information about worktrees. */
-
-#define GWT_SORT_LINKED (1 << 0) /* keeps linked worktrees sorted */
 
 /*
  * Get the worktrees.  The primary worktree will always be the first returned,
- * and linked worktrees will be pointed to by 'next' in each subsequent
- * worktree.  No specific ordering is done on the linked worktrees.
+ * and linked worktrees will follow in no particular order.
  *
  * The caller is responsible for freeing the memory from the returned
- * worktree(s).
+ * worktrees by calling free_worktrees().
  */
-struct worktree **get_worktrees(unsigned flags);
+struct worktree **get_worktrees(void);
 
 /*
  * Returns 1 if linked worktrees exist, 0 otherwise.
@@ -78,6 +75,27 @@ int is_main_worktree(const struct worktree *wt);
  */
 const char *worktree_lock_reason(struct worktree *wt);
 
+/*
+ * Return the reason string if the given worktree should be pruned, otherwise
+ * NULL if it should not be pruned. `expire` defines a grace period to prune
+ * the worktree when its path does not exist.
+ */
+const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire);
+
+/*
+ * Return true if worktree entry should be pruned, along with the reason for
+ * pruning. Otherwise, return false and the worktree's path in `wtpath`, or
+ * NULL if it cannot be determined. Caller is responsible for freeing
+ * returned path.
+ *
+ * `expire` defines a grace period to prune the worktree when its path
+ * does not exist.
+ */
+int should_prune_worktree(const char *id,
+			  struct strbuf *reason,
+			  char **wtpath,
+			  timestamp_t expire);
+
 #define WT_VALIDATE_WORKTREE_MISSING_OK (1 << 0)
 
 /*
@@ -93,6 +111,29 @@ int validate_worktree(const struct worktree *wt,
  */
 void update_worktree_location(struct worktree *wt,
 			      const char *path_);
+
+typedef void (* worktree_repair_fn)(int iserr, const char *path,
+				    const char *msg, void *cb_data);
+
+/*
+ * Visit each registered linked worktree and repair corruptions. For each
+ * repair made or error encountered while attempting a repair, the callback
+ * function, if non-NULL, is called with the path of the worktree and a
+ * description of the repair or error, along with the callback user-data.
+ */
+void repair_worktrees(worktree_repair_fn, void *cb_data);
+
+/*
+ * Repair administrative files corresponding to the worktree at the given path.
+ * The worktree's .git file pointing at the repository must be intact for the
+ * repair to succeed. Useful for re-associating an orphaned worktree with the
+ * repository if the worktree has been moved manually (without using "git
+ * worktree move"). For each repair made or error encountered while attempting
+ * a repair, the callback function, if non-NULL, is called with the path of the
+ * worktree and a description of the repair or error, along with the callback
+ * user-data.
+ */
+void repair_worktree_at_path(const char *, worktree_repair_fn, void *cb_data);
 
 /*
  * Free up the memory for worktree(s)
@@ -139,13 +180,6 @@ int parse_worktree_ref(const char *worktree_ref, const char **name,
  */
 void strbuf_worktree_ref(const struct worktree *wt,
 			 struct strbuf *sb,
-			 const char *refname);
-
-/*
- * Return a refname suitable for access from the current ref
- * store. The result will be destroyed at the next call.
- */
-const char *worktree_ref(const struct worktree *wt,
 			 const char *refname);
 
 #endif

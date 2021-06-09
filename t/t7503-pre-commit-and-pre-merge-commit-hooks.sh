@@ -2,6 +2,9 @@
 
 test_description='pre-commit and pre-merge-commit hooks'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 HOOKDIR="$(git rev-parse --git-dir)/hooks"
@@ -44,16 +47,16 @@ test_expect_success 'root commit' '
 	git add foo &&
 	git commit -m "make it non-ff" &&
 	git branch side-orig side &&
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'setup conflicting branches' '
-	test_when_finished "git checkout master" &&
-	git checkout -b conflicting-a master &&
+	test_when_finished "git checkout main" &&
+	git checkout -b conflicting-a main &&
 	echo a >conflicting &&
 	git add conflicting &&
 	git commit -m conflicting-a &&
-	git checkout -b conflicting-b master &&
+	git checkout -b conflicting-b main &&
 	echo b >conflicting &&
 	git add conflicting &&
 	git commit -m conflicting-b
@@ -71,8 +74,8 @@ test_expect_success 'with no hook (merge)' '
 	test_when_finished "rm -f actual_hooks" &&
 	git branch -f side side-orig &&
 	git checkout side &&
-	git merge -m "merge master" master &&
-	git checkout master &&
+	git merge -m "merge main" main &&
+	git checkout main &&
 	test_path_is_missing actual_hooks
 '
 
@@ -88,8 +91,8 @@ test_expect_success '--no-verify with no hook (merge)' '
 	test_when_finished "rm -f actual_hooks" &&
 	git branch -f side side-orig &&
 	git checkout side &&
-	git merge --no-verify -m "merge master" master &&
-	git checkout master &&
+	git merge --no-verify -m "merge main" main &&
+	git checkout main &&
 	test_path_is_missing actual_hooks
 '
 
@@ -108,15 +111,15 @@ test_expect_success 'with succeeding hook (merge)' '
 	cp "$HOOKDIR/success.sample" "$PREMERGE" &&
 	echo "$PREMERGE" >expected_hooks &&
 	git checkout side &&
-	git merge -m "merge master" master &&
-	git checkout master &&
+	git merge -m "merge main" main &&
+	git checkout main &&
 	test_cmp expected_hooks actual_hooks
 '
 
 test_expect_success 'automatic merge fails; both hooks are available' '
 	test_when_finished "rm -f \"$PREMERGE\" \"$PRECOMMIT\"" &&
 	test_when_finished "rm -f expected_hooks actual_hooks" &&
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout main" &&
 	cp "$HOOKDIR/success.sample" "$PREMERGE" &&
 	cp "$HOOKDIR/success.sample" "$PRECOMMIT" &&
 
@@ -145,8 +148,8 @@ test_expect_success '--no-verify with succeeding hook (merge)' '
 	cp "$HOOKDIR/success.sample" "$PREMERGE" &&
 	git branch -f side side-orig &&
 	git checkout side &&
-	git merge --no-verify -m "merge master" master &&
-	git checkout master &&
+	git merge --no-verify -m "merge main" main &&
+	git checkout main &&
 	test_path_is_missing actual_hooks
 '
 
@@ -174,8 +177,8 @@ test_expect_success 'with failing hook (merge)' '
 	cp "$HOOKDIR/fail.sample" "$PREMERGE" &&
 	echo "$PREMERGE" >expected_hooks &&
 	git checkout side &&
-	test_must_fail git merge -m "merge master" master &&
-	git checkout master &&
+	test_must_fail git merge -m "merge main" main &&
+	git checkout main &&
 	test_cmp expected_hooks actual_hooks
 '
 
@@ -184,8 +187,8 @@ test_expect_success '--no-verify with failing hook (merge)' '
 	cp "$HOOKDIR/fail.sample" "$PREMERGE" &&
 	git branch -f side side-orig &&
 	git checkout side &&
-	git merge --no-verify -m "merge master" master &&
-	git checkout master &&
+	git merge --no-verify -m "merge main" main &&
+	git checkout main &&
 	test_path_is_missing actual_hooks
 '
 
@@ -212,8 +215,8 @@ test_expect_success POSIXPERM 'with non-executable hook (merge)' '
 	cp "$HOOKDIR/non-exec.sample" "$PREMERGE" &&
 	git branch -f side side-orig &&
 	git checkout side &&
-	git merge -m "merge master" master &&
-	git checkout master &&
+	git merge -m "merge main" main &&
+	git checkout main &&
 	test_path_is_missing actual_hooks
 '
 
@@ -222,8 +225,8 @@ test_expect_success POSIXPERM '--no-verify with non-executable hook (merge)' '
 	cp "$HOOKDIR/non-exec.sample" "$PREMERGE" &&
 	git branch -f side side-orig &&
 	git checkout side &&
-	git merge --no-verify -m "merge master" master &&
-	git checkout master &&
+	git merge --no-verify -m "merge main" main &&
+	git checkout main &&
 	test_path_is_missing actual_hooks
 '
 

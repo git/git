@@ -69,9 +69,8 @@ int parse_merge_opt(struct merge_options *opt, const char *s);
  *
  * Outputs:
  *   - See RETURN VALUES above
- *   - No commit is created
  *   - opt->repo->index has the new index
- *   - $GIT_INDEX_FILE is not updated
+ *   - new index NOT written to disk
  *   - The working tree is updated with results of the merge
  */
 int merge_trees(struct merge_options *opt,
@@ -81,7 +80,7 @@ int merge_trees(struct merge_options *opt,
 
 /*
  * merge_recursive is like merge_trees() but with recursive ancestor
- * consolidation and, if the commit is clean, creation of a commit.
+ * consolidation.
  *
  * NOTE: empirically, about a decade ago it was determined that with more
  *       than two merge bases, optimal behavior was found when the
@@ -91,9 +90,9 @@ int merge_trees(struct merge_options *opt,
  *
  * Outputs:
  *   - See RETURN VALUES above
- *   - If merge is clean, a commit is created and its address written to *result
+ *   - *result is treated as scratch space for temporary recursive merges
  *   - opt->repo->index has the new index
- *   - $GIT_INDEX_FILE is not updated
+ *   - new index NOT written to disk
  *   - The working tree is updated with results of the merge
  */
 int merge_recursive(struct merge_options *opt,
@@ -109,9 +108,9 @@ int merge_recursive(struct merge_options *opt,
  *
  * Outputs:
  *   - See RETURN VALUES above
- *   - If merge is clean, a commit is created and its address written to *result
+ *   - *result is treated as scratch space for temporary recursive merges
  *   - opt->repo->index has the new index
- *   - $GIT_INDEX_FILE is updated
+ *   - new index also written to $GIT_INDEX_FILE on disk
  *   - The working tree is updated with results of the merge
  */
 int merge_recursive_generic(struct merge_options *opt,

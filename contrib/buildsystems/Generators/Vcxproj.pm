@@ -80,6 +80,7 @@ sub createProject {
       $libs_release = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib|vcs-svn\/lib\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
       $libs_debug = $libs_release;
       $libs_debug =~ s/zlib\.lib/zlibd\.lib/g;
+      $libs_debug =~ s/libexpat\.lib/libexpatd\.lib/g;
       $libs_debug =~ s/libcurl\.lib/libcurl-d\.lib/g;
     }
 

@@ -6,16 +6,16 @@
 test_description='Same rename detection as t4003 but testing diff-raw.'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
 test_expect_success 'setup reference tree' '
-	cat "$TEST_DIRECTORY"/diff-lib/COPYING >COPYING &&
+	cat "$TEST_DIRECTORY"/lib-diff/COPYING >COPYING &&
 	echo frotz >rezrov &&
 	git update-index --add COPYING rezrov &&
 	tree=$(git write-tree) &&
 	echo $tree &&
-	sed -e 's/HOWEVER/However/' <COPYING >COPYING.1 &&
-	sed -e 's/GPL/G.P.L/g' <COPYING >COPYING.2 &&
+	sed -e "s/HOWEVER/However/" <COPYING >COPYING.1 &&
+	sed -e "s/GPL/G.P.L/g" <COPYING >COPYING.2 &&
 	origoid=$(git hash-object COPYING) &&
 	oid1=$(git hash-object COPYING.1) &&
 	oid2=$(git hash-object COPYING.2)
@@ -64,7 +64,7 @@ test_expect_success 'validate output from rename/copy detection (#2)' '
 # nows how to say Copy.
 
 test_expect_success 'validate output from rename/copy detection (#3)' '
-	cat "$TEST_DIRECTORY"/diff-lib/COPYING >COPYING &&
+	cat "$TEST_DIRECTORY"/lib-diff/COPYING >COPYING &&
 	git update-index --add --remove COPYING COPYING.1 &&
 
 	cat <<-EOF >expected &&

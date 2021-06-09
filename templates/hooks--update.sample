@@ -60,7 +60,7 @@ esac
 
 # --- Check types
 # if $newrev is 0000...0000, it's a commit to delete a ref.
-zero="0000000000000000000000000000000000000000"
+zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
 if [ "$newrev" = "$zero" ]; then
 	newrev_type=delete
 else

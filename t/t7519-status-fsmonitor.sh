@@ -236,7 +236,7 @@ test_expect_success 'refresh_index() invalidates fsmonitor cache' '
 	git reset HEAD~1 &&
 	git status >actual &&
 	git -c core.fsmonitor= status >expect &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 # test fsmonitor with and without preloadIndex
@@ -273,7 +273,7 @@ do
 			git add dir2/new &&
 			git status >actual &&
 			git -c core.fsmonitor= status >expect &&
-			test_i18ncmp expect actual
+			test_cmp expect actual
 		'
 
 		# Make sure it's actually skipping the check for modified and untracked
@@ -334,7 +334,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 		git config core.fsmonitor .git/hooks/fsmonitor-test &&
 		git update-index --untracked-cache &&
 		git update-index --fsmonitor &&
-		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-before" \
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-before" \
 		git status &&
 		test-tool dump-untracked-cache >../before
 	) &&
@@ -346,12 +346,12 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 	EOF
 	(
 		cd dot-git &&
-		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-after" \
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-after" \
 		git status &&
 		test-tool dump-untracked-cache >../after
 	) &&
-	grep "directory invalidation" trace-before >>before &&
-	grep "directory invalidation" trace-after >>after &&
+	grep "directory-invalidation" trace-before | cut -d"|" -f 9 >>before &&
+	grep "directory-invalidation" trace-after  | cut -d"|" -f 9 >>after &&
 	# UNTR extension unchanged, dir invalidation count unchanged
 	test_cmp before after
 '

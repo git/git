@@ -31,6 +31,7 @@ struct thread_data {
 	struct pathspec pathspec;
 	struct progress_data *progress;
 	int offset, nr;
+	int t2_nr_lstat;
 };
 
 static void *preload_thread(void *_data)
@@ -73,6 +74,7 @@ static void *preload_thread(void *_data)
 			continue;
 		if (threaded_has_symlink_leading_path(&cache, ce->name, ce_namelen(ce)))
 			continue;
+		p->t2_nr_lstat++;
 		if (lstat(ce->name, &st))
 			continue;
 		if (ie_match_stat(index, ce, &st, CE_MATCH_RACY_IS_DIRTY|CE_MATCH_IGNORE_FSMONITOR))
@@ -98,6 +100,7 @@ void preload_index(struct index_state *index,
 	int threads, i, work, offset;
 	struct thread_data data[MAX_PARALLEL];
 	struct progress_data pd;
+	int t2_sum_lstat = 0;
 
 	if (!HAVE_THREADS || !core_preload_index)
 		return;
@@ -107,6 +110,9 @@ void preload_index(struct index_state *index,
 		threads = 2;
 	if (threads < 2)
 		return;
+
+	trace2_region_enter("index", "preload", NULL);
+
 	trace_performance_enter();
 	if (threads > MAX_PARALLEL)
 		threads = MAX_PARALLEL;
@@ -141,10 +147,14 @@ void preload_index(struct index_state *index,
 		struct thread_data *p = data+i;
 		if (pthread_join(p->pthread, NULL))
 			die("unable to join threaded lstat");
+		t2_sum_lstat += p->t2_nr_lstat;
 	}
 	stop_progress(&pd.progress);
 
 	trace_performance_leave("preload index");
+
+	trace2_data_intmax("index", NULL, "preload/sum_lstat", t2_sum_lstat);
+	trace2_region_leave("index", "preload", NULL);
 }
 
 int repo_read_index_preload(struct repository *repo,

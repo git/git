@@ -14,12 +14,13 @@
 #include "mergesort.h"
 #include "commit-slab.h"
 #include "prio-queue.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "wt-status.h"
 #include "advice.h"
 #include "refs.h"
 #include "commit-reach.h"
 #include "run-command.h"
+#include "shallow.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -36,7 +37,7 @@ struct commit *lookup_commit_reference_gently(struct repository *r,
 
 	if (!obj)
 		return NULL;
-	return object_as_type(r, obj, OBJ_COMMIT, quiet);
+	return object_as_type(obj, OBJ_COMMIT, quiet);
 }
 
 struct commit *lookup_commit_reference(struct repository *r, const struct object_id *oid)
@@ -61,7 +62,7 @@ struct commit *lookup_commit(struct repository *r, const struct object_id *oid)
 	struct object *obj = lookup_object(r, oid);
 	if (!obj)
 		return create_object(r, oid, alloc_commit_node(r));
-	return object_as_type(r, obj, OBJ_COMMIT, 0);
+	return object_as_type(obj, OBJ_COMMIT, 0);
 }
 
 struct commit *lookup_commit_reference_by_name(const char *name)
@@ -104,23 +105,23 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
-static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
+static const struct object_id *commit_graft_oid_access(size_t index, const void *table)
 {
-	struct commit_graft **commit_graft_table = table;
-	return commit_graft_table[index]->oid.hash;
+	const struct commit_graft * const *commit_graft_table = table;
+	return &commit_graft_table[index]->oid;
 }
 
-static int commit_graft_pos(struct repository *r, const unsigned char *sha1)
+int commit_graft_pos(struct repository *r, const struct object_id *oid)
 {
-	return sha1_pos(sha1, r->parsed_objects->grafts,
-			r->parsed_objects->grafts_nr,
-			commit_graft_sha1_access);
+	return oid_pos(oid, r->parsed_objects->grafts,
+		       r->parsed_objects->grafts_nr,
+		       commit_graft_oid_access);
 }
 
 int register_commit_graft(struct repository *r, struct commit_graft *graft,
 			  int ignore_dups)
 {
-	int pos = commit_graft_pos(r, graft->oid.hash);
+	int pos = commit_graft_pos(r, &graft->oid);
 
 	if (0 <= pos) {
 		if (ignore_dups)
@@ -231,7 +232,7 @@ struct commit_graft *lookup_commit_graft(struct repository *r, const struct obje
 {
 	int pos;
 	prepare_commit_graft(r);
-	pos = commit_graft_pos(r, oid->hash);
+	pos = commit_graft_pos(r, oid);
 	if (pos < 0)
 		return NULL;
 	return r->parsed_objects->grafts[pos];
@@ -243,19 +244,6 @@ int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 	for (i = ret = 0; i < the_repository->parsed_objects->grafts_nr && !ret; i++)
 		ret = fn(the_repository->parsed_objects->grafts[i], cb_data);
 	return ret;
-}
-
-int unregister_shallow(const struct object_id *oid)
-{
-	int pos = commit_graft_pos(the_repository, oid->hash);
-	if (pos < 0)
-		return -1;
-	if (pos + 1 < the_repository->parsed_objects->grafts_nr)
-		MOVE_ARRAY(the_repository->parsed_objects->grafts + pos,
-			   the_repository->parsed_objects->grafts + pos + 1,
-			   the_repository->parsed_objects->grafts_nr - pos - 1);
-	the_repository->parsed_objects->grafts_nr--;
-	return 0;
 }
 
 struct commit_buffer {
@@ -351,7 +339,7 @@ struct tree *repo_get_commit_tree(struct repository *r,
 	if (commit->maybe_tree || !commit->object.parsed)
 		return commit->maybe_tree;
 
-	if (commit->graph_pos != COMMIT_NOT_FROM_GRAPH)
+	if (commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
 		return get_commit_tree_in_graph(r, commit);
 
 	return NULL;
@@ -435,6 +423,8 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	pptr = &item->parents;
 
 	graft = lookup_commit_graft(r, &item->object.oid);
+	if (graft)
+		r->parsed_objects->substituted_parent = 1;
 	while (bufptr + parent_entry_len < tail && !memcmp(bufptr, "parent ", 7)) {
 		struct commit *new_parent;
 
@@ -545,6 +535,20 @@ int find_commit_subject(const char *commit_buffer, const char **subject)
 	return eol - p;
 }
 
+size_t commit_subject_length(const char *body)
+{
+	const char *p = body;
+	while (*p) {
+		const char *next = skip_blank_lines(p);
+		if (next != p)
+			break;
+		p = strchrnul(p, '\n');
+		if (*p)
+			p++;
+	}
+	return p - body;
+}
+
 struct commit_list *commit_list_insert(struct commit *item, struct commit_list **list_p)
 {
 	struct commit_list *new_list = xmalloc(sizeof(struct commit_list));
@@ -552,6 +556,17 @@ struct commit_list *commit_list_insert(struct commit *item, struct commit_list *
 	new_list->next = *list_p;
 	*list_p = new_list;
 	return new_list;
+}
+
+int commit_list_contains(struct commit *item, struct commit_list *list)
+{
+	while (list) {
+		if (list->item == item)
+			return 1;
+		list = list->next;
+	}
+
+	return 0;
 }
 
 unsigned commit_list_count(const struct commit_list *l)
@@ -571,6 +586,17 @@ struct commit_list *copy_commit_list(struct commit_list *list)
 		list = list->next;
 	}
 	return head;
+}
+
+struct commit_list *reverse_commit_list(struct commit_list *list)
+{
+	struct commit_list *next = NULL, *current, *backup;
+	for (current = list; current; current = backup) {
+		backup = current->next;
+		current->next = next;
+		next = current;
+	}
+	return next;
 }
 
 void free_commit_list(struct commit_list *list)
@@ -741,11 +767,13 @@ int compare_commits_by_author_date(const void *a_, const void *b_,
 int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void *unused)
 {
 	const struct commit *a = a_, *b = b_;
+	const timestamp_t generation_a = commit_graph_generation(a),
+			  generation_b = commit_graph_generation(b);
 
 	/* newer commits first */
-	if (a->generation < b->generation)
+	if (generation_a < generation_b)
 		return 1;
-	else if (a->generation > b->generation)
+	else if (generation_a > generation_b)
 		return -1;
 
 	/* use date as a heuristic when generations are equal */
@@ -929,7 +957,7 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	struct commit *ret = NULL;
 	char *full_refname;
 
-	switch (dwim_ref(refname, strlen(refname), &oid, &full_refname)) {
+	switch (dwim_ref(refname, strlen(refname), &oid, &full_refname, 0)) {
 	case 0:
 		die("No such ref: '%s'", refname);
 	case 1:
@@ -981,7 +1009,7 @@ static const char *gpg_sig_headers[] = {
 	"gpgsig-sha256",
 };
 
-static int do_sign_commit(struct strbuf *buf, const char *keyid)
+int sign_with_header(struct strbuf *buf, const char *keyid)
 {
 	struct strbuf sig = STRBUF_INIT;
 	int inspos, copypos;
@@ -1021,21 +1049,32 @@ static int do_sign_commit(struct strbuf *buf, const char *keyid)
 	return 0;
 }
 
-int parse_signed_commit(const struct commit *commit,
-			struct strbuf *payload, struct strbuf *signature)
-{
 
+
+int parse_signed_commit(const struct commit *commit,
+			struct strbuf *payload, struct strbuf *signature,
+			const struct git_hash_algo *algop)
+{
 	unsigned long size;
 	const char *buffer = get_commit_buffer(commit, &size);
-	int in_signature, saw_signature = -1;
-	const char *line, *tail;
-	const char *gpg_sig_header = gpg_sig_headers[hash_algo_by_ptr(the_hash_algo)];
-	int gpg_sig_header_len = strlen(gpg_sig_header);
+	int ret = parse_buffer_signed_by_header(buffer, size, payload, signature, algop);
+
+	unuse_commit_buffer(commit, buffer);
+	return ret;
+}
+
+int parse_buffer_signed_by_header(const char *buffer,
+				  unsigned long size,
+				  struct strbuf *payload,
+				  struct strbuf *signature,
+				  const struct git_hash_algo *algop)
+{
+	int in_signature = 0, saw_signature = 0, other_signature = 0;
+	const char *line, *tail, *p;
+	const char *gpg_sig_header = gpg_sig_headers[hash_algo_by_ptr(algop)];
 
 	line = buffer;
 	tail = buffer + size;
-	in_signature = 0;
-	saw_signature = 0;
 	while (line < tail) {
 		const char *sig = NULL;
 		const char *next = memchr(line, '\n', tail - line);
@@ -1043,9 +1082,15 @@ int parse_signed_commit(const struct commit *commit,
 		next = next ? next + 1 : tail;
 		if (in_signature && line[0] == ' ')
 			sig = line + 1;
-		else if (starts_with(line, gpg_sig_header) &&
-			 line[gpg_sig_header_len] == ' ')
-			sig = line + gpg_sig_header_len + 1;
+		else if (skip_prefix(line, gpg_sig_header, &p) &&
+			 *p == ' ') {
+			sig = line + strlen(gpg_sig_header) + 1;
+			other_signature = 0;
+		}
+		else if (starts_with(line, "gpgsig"))
+			other_signature = 1;
+		else if (other_signature && line[0] != ' ')
+			other_signature = 0;
 		if (sig) {
 			strbuf_add(signature, sig, next - sig);
 			saw_signature = 1;
@@ -1054,12 +1099,12 @@ int parse_signed_commit(const struct commit *commit,
 			if (*line == '\n')
 				/* dump the whole remainder of the buffer */
 				next = tail;
-			strbuf_add(payload, line, next - line);
+			if (!other_signature)
+				strbuf_add(payload, line, next - line);
 			in_signature = 0;
 		}
 		line = next;
 	}
-	unuse_commit_buffer(commit, buffer);
 	return saw_signature;
 }
 
@@ -1068,23 +1113,29 @@ int remove_signature(struct strbuf *buf)
 	const char *line = buf->buf;
 	const char *tail = buf->buf + buf->len;
 	int in_signature = 0;
-	const char *sig_start = NULL;
-	const char *sig_end = NULL;
+	struct sigbuf {
+		const char *start;
+		const char *end;
+	} sigs[2], *sigp = &sigs[0];
+	int i;
+	const char *orig_buf = buf->buf;
+
+	memset(sigs, 0, sizeof(sigs));
 
 	while (line < tail) {
 		const char *next = memchr(line, '\n', tail - line);
 		next = next ? next + 1 : tail;
 
 		if (in_signature && line[0] == ' ')
-			sig_end = next;
+			sigp->end = next;
 		else if (starts_with(line, "gpgsig")) {
 			int i;
 			for (i = 1; i < GIT_HASH_NALGOS; i++) {
 				const char *p;
 				if (skip_prefix(line, gpg_sig_headers[i], &p) &&
 				    *p == ' ') {
-					sig_start = line;
-					sig_end = next;
+					sigp->start = line;
+					sigp->end = next;
 					in_signature = 1;
 				}
 			}
@@ -1092,15 +1143,18 @@ int remove_signature(struct strbuf *buf)
 			if (*line == '\n')
 				/* dump the whole remainder of the buffer */
 				next = tail;
+			if (in_signature && sigp - sigs != ARRAY_SIZE(sigs))
+				sigp++;
 			in_signature = 0;
 		}
 		line = next;
 	}
 
-	if (sig_start)
-		strbuf_remove(buf, sig_start - buf->buf, sig_end - sig_start);
+	for (i = ARRAY_SIZE(sigs) - 1; i >= 0; i--)
+		if (sigs[i].start)
+			strbuf_remove(buf, sigs[i].start - orig_buf, sigs[i].end - sigs[i].start);
 
-	return sig_start != NULL;
+	return sigs[0].start != NULL;
 }
 
 static void handle_signed_tag(struct commit *parent, struct commit_extra_header ***tail)
@@ -1108,8 +1162,10 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	struct merge_remote_desc *desc;
 	struct commit_extra_header *mergetag;
 	char *buf;
-	unsigned long size, len;
+	unsigned long size;
 	enum object_type type;
+	struct strbuf payload = STRBUF_INIT;
+	struct strbuf signature = STRBUF_INIT;
 
 	desc = merge_remote_util(parent);
 	if (!desc || !desc->obj)
@@ -1117,8 +1173,7 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	buf = read_object_file(&desc->obj->oid, &type, &size);
 	if (!buf || type != OBJ_TAG)
 		goto free_return;
-	len = parse_signature(buf, size);
-	if (size == len)
+	if (!parse_signature(buf, size, &payload, &signature))
 		goto free_return;
 	/*
 	 * We could verify this signature and either omit the tag when
@@ -1130,13 +1185,15 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	 * if (verify_signed_buffer(buf, len, buf + len, size - len, ...))
 	 *	warn("warning: signed tag unverified.");
 	 */
-	mergetag = xcalloc(1, sizeof(*mergetag));
+	CALLOC_ARRAY(mergetag, 1);
 	mergetag->key = xstrdup("mergetag");
 	mergetag->value = buf;
 	mergetag->len = size;
 
 	**tail = mergetag;
 	*tail = &mergetag->next;
+	strbuf_release(&payload);
+	strbuf_release(&signature);
 	return;
 
 free_return:
@@ -1151,7 +1208,7 @@ int check_commit_signature(const struct commit *commit, struct signature_check *
 
 	sigc->result = 'N';
 
-	if (parse_signed_commit(commit, &payload, &signature) <= 0)
+	if (parse_signed_commit(commit, &payload, &signature, the_hash_algo) <= 0)
 		goto out;
 	ret = check_signature(payload.buf, payload.len, signature.buf,
 		signature.len, sigc);
@@ -1293,7 +1350,7 @@ static struct commit_extra_header *read_commit_extra_header_lines(
 			 excluded_header_field(line, eof - line, exclude))
 			continue;
 
-		it = xcalloc(1, sizeof(*it));
+		CALLOC_ARRAY(it, 1);
 		it->key = xmemdupz(line, eof-line);
 		*tail = it;
 		tail = &it->next;
@@ -1324,8 +1381,8 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 	int result;
 
 	append_merge_tag_headers(parents, &tail);
-	result = commit_tree_extended(msg, msg_len, tree, parents, ret,
-				      author, sign_commit, extra);
+	result = commit_tree_extended(msg, msg_len, tree, parents, ret, author,
+				      NULL, sign_commit, extra);
 	free_commit_extra_headers(extra);
 	return result;
 }
@@ -1448,7 +1505,8 @@ N_("Warning: commit message did not conform to UTF-8.\n"
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
 			 struct commit_list *parents, struct object_id *ret,
-			 const char *author, const char *sign_commit,
+			 const char *author, const char *committer,
+			 const char *sign_commit,
 			 struct commit_extra_header *extra)
 {
 	int result;
@@ -1481,7 +1539,9 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	if (!author)
 		author = git_author_info(IDENT_STRICT);
 	strbuf_addf(&buffer, "author %s\n", author);
-	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_STRICT));
+	if (!committer)
+		committer = git_committer_info(IDENT_STRICT);
+	strbuf_addf(&buffer, "committer %s\n", committer);
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
 
@@ -1498,7 +1558,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	if (encoding_is_utf8 && !verify_utf8(&buffer))
 		fprintf(stderr, _(commit_utf8_warn));
 
-	if (sign_commit && do_sign_commit(&buffer, sign_commit)) {
+	if (sign_commit && sign_with_header(&buffer, sign_commit)) {
 		result = -1;
 		goto out;
 	}
@@ -1591,7 +1651,7 @@ const char *find_commit_header(const char *msg, const char *key, size_t *out_len
 
 /*
  * Inspect the given string and determine the true "end" of the log message, in
- * order to find where to put a new Signed-off-by: line.  Ignored are
+ * order to find where to put a new Signed-off-by trailer.  Ignored are
  * trailing comment lines and blank lines.  To support "git commit -s
  * --amend" on an existing commit, we also ignore "Conflicts:".  To
  * support "git commit -v", we truncate at cut lines.
@@ -1638,22 +1698,22 @@ size_t ignore_non_trailer(const char *buf, size_t len)
 int run_commit_hook(int editor_is_used, const char *index_file,
 		    const char *name, ...)
 {
-	struct argv_array hook_env = ARGV_ARRAY_INIT;
+	struct strvec hook_env = STRVEC_INIT;
 	va_list args;
 	int ret;
 
-	argv_array_pushf(&hook_env, "GIT_INDEX_FILE=%s", index_file);
+	strvec_pushf(&hook_env, "GIT_INDEX_FILE=%s", index_file);
 
 	/*
 	 * Let the hook know that no editor will be launched.
 	 */
 	if (!editor_is_used)
-		argv_array_push(&hook_env, "GIT_EDITOR=:");
+		strvec_push(&hook_env, "GIT_EDITOR=:");
 
 	va_start(args, name);
-	ret = run_hook_ve(hook_env.argv,name, args);
+	ret = run_hook_ve(hook_env.v, name, args);
 	va_end(args);
-	argv_array_clear(&hook_env);
+	strvec_clear(&hook_env);
 
 	return ret;
 }

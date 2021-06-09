@@ -25,7 +25,7 @@ test_expect_success 'mode-only change show as a 0-line change' '
 	 4 files changed, 2 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 HEAD >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'binary changes do not count in lines' '
@@ -40,7 +40,7 @@ test_expect_success 'binary changes do not count in lines' '
 	 3 files changed, 2 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'exclude unmerged entries from total file count' '
@@ -62,7 +62,7 @@ test_expect_success 'exclude unmerged entries from total file count' '
 	 3 files changed, 3 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_done

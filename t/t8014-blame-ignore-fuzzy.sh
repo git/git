@@ -248,7 +248,7 @@ Final
 EOF
 
 # The first line of b matches best with the last line of a, but the overall
-# match is better if we match it with the the first line of a.
+# match is better if we match it with the first line of a.
 title11="Piggy in the middle"
 cat <<EOF >a11
 abcdefg

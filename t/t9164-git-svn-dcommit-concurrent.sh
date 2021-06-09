@@ -92,7 +92,7 @@ test_expect_success 'check if post-commit hook creates a concurrent commit' '
 		echo 1 >> file &&
 		svn_cmd commit -m "changing file" &&
 		svn_cmd up &&
-		test_must_fail test_cmp auto_updated_file au_file_saved
+		! test_cmp auto_updated_file au_file_saved
 	)
 '
 
@@ -103,7 +103,7 @@ test_expect_success 'check if pre-commit hook fails' '
 		echo 2 >> file &&
 		svn_cmd commit -m "changing file once again" &&
 		echo 3 >> file &&
-		test_must_fail svn_cmd commit -m "this commit should fail" &&
+		! svn_cmd commit -m "this commit should fail" &&
 		svn_cmd revert file
 	)
 '

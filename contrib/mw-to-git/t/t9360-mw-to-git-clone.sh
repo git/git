@@ -28,7 +28,7 @@ test_expect_success 'Git clone creates the expected git log with one file' '
 		git log --format=%s HEAD^..HEAD >log.tmp
 	) &&
 	echo "this must be the same" >msg.tmp &&
-	diff -b mw_dir_1/log.tmp msg.tmp
+	test_cmp msg.tmp mw_dir_1/log.tmp
 '
 
 
@@ -50,8 +50,8 @@ test_expect_success 'Git clone creates the expected git log with multiple files'
 	echo "this must be the same" >>msgDaddy.tmp &&
 	echo "identical too" >msgDj.tmp &&
 	echo "identical" >>msgDj.tmp &&
-	diff -b mw_dir_2/logDaddy.tmp msgDaddy.tmp &&
-	diff -b mw_dir_2/logDj.tmp msgDj.tmp
+	test_cmp msgDaddy.tmp mw_dir_2/logDaddy.tmp &&
+	test_cmp msgDj.tmp mw_dir_2/logDj.tmp
 '
 
 
@@ -135,7 +135,7 @@ test_expect_success 'Git clone works with one specific page cloned ' '
 		cd mw_dir_8 &&
 		echo "this log must stay" >msg.tmp &&
 		git log --format=%s >log.tmp &&
-		diff -b msg.tmp log.tmp
+		test_cmp msg.tmp log.tmp
 	) &&
 	wiki_check_content mw_dir_8/Namnam.mw Namnam
 '

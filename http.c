@@ -18,7 +18,7 @@
 
 static struct trace_key trace_curl = TRACE_KEY_INIT(CURL);
 static int trace_curl_data = 1;
-static struct string_list cookies_to_redact = STRING_LIST_INIT_DUP;
+static int trace_curl_redact = 1;
 #if LIBCURL_VERSION_NUM >= 0x070a08
 long int git_curl_ipresolve = CURL_IPRESOLVE_WHATEVER;
 #else
@@ -642,8 +642,9 @@ static void redact_sensitive_header(struct strbuf *header)
 {
 	const char *sensitive_header;
 
-	if (skip_prefix(header->buf, "Authorization:", &sensitive_header) ||
-	    skip_prefix(header->buf, "Proxy-Authorization:", &sensitive_header)) {
+	if (trace_curl_redact &&
+	    (skip_prefix(header->buf, "Authorization:", &sensitive_header) ||
+	     skip_prefix(header->buf, "Proxy-Authorization:", &sensitive_header))) {
 		/* The first token is the type, which is OK to log */
 		while (isspace(*sensitive_header))
 			sensitive_header++;
@@ -652,20 +653,15 @@ static void redact_sensitive_header(struct strbuf *header)
 		/* Everything else is opaque and possibly sensitive */
 		strbuf_setlen(header,  sensitive_header - header->buf);
 		strbuf_addstr(header, " <redacted>");
-	} else if (cookies_to_redact.nr &&
+	} else if (trace_curl_redact &&
 		   skip_prefix(header->buf, "Cookie:", &sensitive_header)) {
 		struct strbuf redacted_header = STRBUF_INIT;
-		char *cookie;
+		const char *cookie;
 
 		while (isspace(*sensitive_header))
 			sensitive_header++;
 
-		/*
-		 * The contents of header starting from sensitive_header will
-		 * subsequently be overridden, so it is fine to mutate this
-		 * string (hence the assignment to "char *").
-		 */
-		cookie = (char *) sensitive_header;
+		cookie = sensitive_header;
 
 		while (cookie) {
 			char *equals;
@@ -678,14 +674,8 @@ static void redact_sensitive_header(struct strbuf *header)
 				strbuf_addstr(&redacted_header, cookie);
 				continue;
 			}
-			*equals = 0; /* temporarily set to NUL for lookup */
-			if (string_list_lookup(&cookies_to_redact, cookie)) {
-				strbuf_addstr(&redacted_header, cookie);
-				strbuf_addstr(&redacted_header, "=<redacted>");
-			} else {
-				*equals = '=';
-				strbuf_addstr(&redacted_header, cookie);
-			}
+			strbuf_add(&redacted_header, cookie, equals - cookie);
+			strbuf_addstr(&redacted_header, "=<redacted>");
 			if (semicolon) {
 				/*
 				 * There are more cookies. (Or, for some
@@ -802,6 +792,12 @@ static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size,
 		return 0;
 	}
 	return 0;
+}
+
+void http_trace_curl_no_data(void)
+{
+	trace_override_envvar(&trace_curl, "1");
+	trace_curl_data = 0;
 }
 
 void setup_curl_trace(CURL *handle)
@@ -993,15 +989,12 @@ static CURL *get_curl_handle(void)
 	warning(_("Protocol restrictions not supported with cURL < 7.19.4"));
 #endif
 	if (getenv("GIT_CURL_VERBOSE"))
-		curl_easy_setopt(result, CURLOPT_VERBOSE, 1L);
+		http_trace_curl_no_data();
 	setup_curl_trace(result);
 	if (getenv("GIT_TRACE_CURL_NO_DATA"))
 		trace_curl_data = 0;
-	if (getenv("GIT_REDACT_COOKIES")) {
-		string_list_split(&cookies_to_redact,
-				  getenv("GIT_REDACT_COOKIES"), ',', -1);
-		string_list_sort(&cookies_to_redact);
-	}
+	if (!git_env_bool("GIT_TRACE_REDACT", 1))
+		trace_curl_redact = 0;
 
 	curl_easy_setopt(result, CURLOPT_USERAGENT,
 		user_agent ? user_agent : git_user_agent());
@@ -1642,9 +1635,18 @@ static int handle_curl_result(struct slot_results *results)
 
 	if (results->curl_result == CURLE_OK) {
 		credential_approve(&http_auth);
-		if (proxy_auth.password)
-			credential_approve(&proxy_auth);
+		credential_approve(&proxy_auth);
+		credential_approve(&cert_auth);
 		return HTTP_OK;
+	} else if (results->curl_result == CURLE_SSL_CERTPROBLEM) {
+		/*
+		 * We can't tell from here whether it's a bad path, bad
+		 * certificate, bad password, or something else wrong
+		 * with the certificate.  So we reject the credential to
+		 * avoid caching or saving a bad password.
+		 */
+		credential_reject(&cert_auth);
+		return HTTP_NOAUTH;
 	} else if (missing_target(results))
 		return HTTP_MISSING_TARGET;
 	else if (results->http_code == 401) {
@@ -2266,72 +2268,77 @@ void release_http_pack_request(struct http_pack_request *preq)
 	free(preq);
 }
 
+static const char *default_index_pack_args[] =
+	{"index-pack", "--stdin", NULL};
+
 int finish_http_pack_request(struct http_pack_request *preq)
 {
-	struct packed_git **lst;
-	struct packed_git *p = preq->target;
-	char *tmp_idx;
-	size_t len;
 	struct child_process ip = CHILD_PROCESS_INIT;
-
-	close_pack_index(p);
+	int tmpfile_fd;
+	int ret = 0;
 
 	fclose(preq->packfile);
 	preq->packfile = NULL;
 
-	lst = preq->lst;
+	tmpfile_fd = xopen(preq->tmpfile.buf, O_RDONLY);
+
+	ip.git_cmd = 1;
+	ip.in = tmpfile_fd;
+	ip.argv = preq->index_pack_args ? preq->index_pack_args
+					: default_index_pack_args;
+
+	if (preq->preserve_index_pack_stdout)
+		ip.out = 0;
+	else
+		ip.no_stdout = 1;
+
+	if (run_command(&ip)) {
+		ret = -1;
+		goto cleanup;
+	}
+
+cleanup:
+	close(tmpfile_fd);
+	unlink(preq->tmpfile.buf);
+	return ret;
+}
+
+void http_install_packfile(struct packed_git *p,
+			   struct packed_git **list_to_remove_from)
+{
+	struct packed_git **lst = list_to_remove_from;
+
 	while (*lst != p)
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
-	if (!strip_suffix(preq->tmpfile.buf, ".pack.temp", &len))
-		BUG("pack tmpfile does not end in .pack.temp?");
-	tmp_idx = xstrfmt("%.*s.idx.temp", (int)len, preq->tmpfile.buf);
-
-	argv_array_push(&ip.args, "index-pack");
-	argv_array_pushl(&ip.args, "-o", tmp_idx, NULL);
-	argv_array_push(&ip.args, preq->tmpfile.buf);
-	ip.git_cmd = 1;
-	ip.no_stdin = 1;
-	ip.no_stdout = 1;
-
-	if (run_command(&ip)) {
-		unlink(preq->tmpfile.buf);
-		unlink(tmp_idx);
-		free(tmp_idx);
-		return -1;
-	}
-
-	unlink(sha1_pack_index_name(p->hash));
-
-	if (finalize_object_file(preq->tmpfile.buf, sha1_pack_name(p->hash))
-	 || finalize_object_file(tmp_idx, sha1_pack_index_name(p->hash))) {
-		free(tmp_idx);
-		return -1;
-	}
-
 	install_packed_git(the_repository, p);
-	free(tmp_idx);
-	return 0;
 }
 
 struct http_pack_request *new_http_pack_request(
-	struct packed_git *target, const char *base_url)
-{
-	off_t prev_posn = 0;
-	struct strbuf buf = STRBUF_INIT;
-	struct http_pack_request *preq;
+	const unsigned char *packed_git_hash, const char *base_url) {
 
-	preq = xcalloc(1, sizeof(*preq));
-	strbuf_init(&preq->tmpfile, 0);
-	preq->target = target;
+	struct strbuf buf = STRBUF_INIT;
 
 	end_url_with_slash(&buf, base_url);
 	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
-		hash_to_hex(target->hash));
-	preq->url = strbuf_detach(&buf, NULL);
+		hash_to_hex(packed_git_hash));
+	return new_direct_http_pack_request(packed_git_hash,
+					    strbuf_detach(&buf, NULL));
+}
 
-	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(target->hash));
+struct http_pack_request *new_direct_http_pack_request(
+	const unsigned char *packed_git_hash, char *url)
+{
+	off_t prev_posn = 0;
+	struct http_pack_request *preq;
+
+	CALLOC_ARRAY(preq, 1);
+	strbuf_init(&preq->tmpfile, 0);
+
+	preq->url = url;
+
+	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(packed_git_hash));
 	preq->packfile = fopen(preq->tmpfile.buf, "a");
 	if (!preq->packfile) {
 		error("Unable to open local file %s for pack",
@@ -2355,7 +2362,7 @@ struct http_pack_request *new_http_pack_request(
 		if (http_is_verbose)
 			fprintf(stderr,
 				"Resuming fetch of pack %s at byte %"PRIuMAX"\n",
-				hash_to_hex(target->hash),
+				hash_to_hex(packed_git_hash),
 				(uintmax_t)prev_posn);
 		http_opt_request_remainder(preq->slot->curl, prev_posn);
 	}
@@ -2421,7 +2428,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	off_t prev_posn = 0;
 	struct http_object_request *freq;
 
-	freq = xcalloc(1, sizeof(*freq));
+	CALLOC_ARRAY(freq, 1);
 	strbuf_init(&freq->tmpfile, 0);
 	oidcpy(&freq->oid, oid);
 	freq->localfile = -1;
@@ -2568,7 +2575,7 @@ int finish_http_object_request(struct http_object_request *freq)
 	}
 
 	git_inflate_end(&freq->stream);
-	the_hash_algo->final_fn(freq->real_oid.hash, &freq->c);
+	the_hash_algo->final_oid_fn(&freq->real_oid, &freq->c);
 	if (freq->zret != Z_STREAM_END) {
 		unlink_or_warn(freq->tmpfile.buf);
 		return -1;

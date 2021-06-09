@@ -998,7 +998,7 @@ static int xdl_call_hunk_func(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	return 0;
 }
 
-static void xdl_mark_ignorable(xdchange_t *xscr, xdfenv_t *xe, long flags)
+static void xdl_mark_ignorable_lines(xdchange_t *xscr, xdfenv_t *xe, long flags)
 {
 	xdchange_t *xch;
 
@@ -1014,6 +1014,46 @@ static void xdl_mark_ignorable(xdchange_t *xscr, xdfenv_t *xe, long flags)
 		rec = &xe->xdf2.recs[xch->i2];
 		for (i = 0; i < xch->chg2 && ignore; i++)
 			ignore = xdl_blankline(rec[i]->ptr, rec[i]->size, flags);
+
+		xch->ignore = ignore;
+	}
+}
+
+static int record_matches_regex(xrecord_t *rec, xpparam_t const *xpp) {
+	regmatch_t regmatch;
+	int i;
+
+	for (i = 0; i < xpp->ignore_regex_nr; i++)
+		if (!regexec_buf(xpp->ignore_regex[i], rec->ptr, rec->size, 1,
+				 &regmatch, 0))
+			return 1;
+
+	return 0;
+}
+
+static void xdl_mark_ignorable_regex(xdchange_t *xscr, const xdfenv_t *xe,
+				     xpparam_t const *xpp)
+{
+	xdchange_t *xch;
+
+	for (xch = xscr; xch; xch = xch->next) {
+		xrecord_t **rec;
+		int ignore = 1;
+		long i;
+
+		/*
+		 * Do not override --ignore-blank-lines.
+		 */
+		if (xch->ignore)
+			continue;
+
+		rec = &xe->xdf1.recs[xch->i1];
+		for (i = 0; i < xch->chg1 && ignore; i++)
+			ignore = record_matches_regex(rec[i], xpp);
+
+		rec = &xe->xdf2.recs[xch->i2];
+		for (i = 0; i < xch->chg2 && ignore; i++)
+			ignore = record_matches_regex(rec[i], xpp);
 
 		xch->ignore = ignore;
 	}
@@ -1038,7 +1078,10 @@ int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	}
 	if (xscr) {
 		if (xpp->flags & XDF_IGNORE_BLANK_LINES)
-			xdl_mark_ignorable(xscr, &xe, xpp->flags);
+			xdl_mark_ignorable_lines(xscr, &xe, xpp->flags);
+
+		if (xpp->ignore_regex)
+			xdl_mark_ignorable_regex(xscr, &xe, xpp);
 
 		if (ef(&xe, xscr, ecb, xecfg) < 0) {
 

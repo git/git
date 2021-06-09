@@ -2,6 +2,9 @@
 
 test_description='git rev-list using object filtering'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test the blob:none filter.
@@ -156,6 +159,78 @@ test_expect_success 'verify blob:limit=1m' '
 	test_must_be_empty observed
 '
 
+# Test object:type=<type> filter.
+
+test_expect_success 'setup object-type' '
+	test_create_repo object-type &&
+	test_commit --no-tag -C object-type message blob &&
+	git -C object-type tag tag -m tag-message
+'
+
+test_expect_success 'verify object:type= fails with invalid type' '
+	test_must_fail git -C object-type rev-list --objects --filter=object:type= HEAD &&
+	test_must_fail git -C object-type rev-list --objects --filter=object:type=invalid HEAD
+'
+
+test_expect_success 'verify object:type=blob prints blob and commit' '
+	git -C object-type rev-parse HEAD >expected &&
+	printf "%s blob\n" $(git -C object-type rev-parse HEAD:blob) >>expected &&
+	git -C object-type rev-list --objects --filter=object:type=blob HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=tree prints tree and commit' '
+	(
+		git -C object-type rev-parse HEAD &&
+		printf "%s \n" $(git -C object-type rev-parse HEAD^{tree})
+	) >expected &&
+	git -C object-type rev-list --objects --filter=object:type=tree HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=commit prints commit' '
+	git -C object-type rev-parse HEAD >expected &&
+	git -C object-type rev-list --objects --filter=object:type=commit HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=tag prints tag' '
+	(
+		git -C object-type rev-parse HEAD &&
+		printf "%s tag\n" $(git -C object-type rev-parse tag)
+	) >expected &&
+	git -C object-type rev-list --objects --filter=object:type=tag tag >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=blob prints only blob with --filter-provided-objects' '
+	printf "%s blob\n" $(git -C object-type rev-parse HEAD:blob) >expected &&
+	git -C object-type rev-list --objects \
+		--filter=object:type=blob --filter-provided-objects HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=tree prints only tree with --filter-provided-objects' '
+	printf "%s \n" $(git -C object-type rev-parse HEAD^{tree}) >expected &&
+	git -C object-type rev-list --objects \
+		--filter=object:type=tree HEAD --filter-provided-objects >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=commit prints only commit with --filter-provided-objects' '
+	git -C object-type rev-parse HEAD >expected &&
+	git -C object-type rev-list --objects \
+		--filter=object:type=commit --filter-provided-objects HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'verify object:type=tag prints only tag with --filter-provided-objects' '
+	printf "%s tag\n" $(git -C object-type rev-parse tag) >expected &&
+	git -C object-type rev-list --objects \
+		--filter=object:type=tag --filter-provided-objects tag >actual &&
+	test_cmp expected actual
+'
+
 # Test sparse:path=<path> filter.
 # !!!!
 # NOTE: sparse:path filter support has been dropped for security reasons,
@@ -223,7 +298,7 @@ test_expect_success 'verify sparse:oid=oid-ish omits top-level files' '
 	sort >expected &&
 
 	git -C r3 rev-list --quiet --objects --filter-print-omitted \
-		--filter=sparse:oid=master:pattern HEAD >revs &&
+		--filter=sparse:oid=main:pattern HEAD >revs &&
 	awk -f print_1.awk revs |
 	sed "s/~//" |
 	sort >observed &&
@@ -436,7 +511,7 @@ test_expect_success 'add sparse pattern blobs whose paths have reserved chars' '
 
 test_expect_success 'combine:... with more than two sub-filters' '
 	git -C r3 rev-list --objects \
-		--filter=combine:tree:3+blob:limit=40+sparse:oid=master:pattern \
+		--filter=combine:tree:3+blob:limit=40+sparse:oid=main:pattern \
 		HEAD >actual &&
 
 	expect_has HEAD "" &&
@@ -454,7 +529,7 @@ test_expect_success 'combine:... with more than two sub-filters' '
 	cp actual expect &&
 
 	git -C r3 rev-list --objects \
-		--filter=combine:tree:3+blob:limit=40+sparse:oid=master:pattern1%2brenamed%25 \
+		--filter=combine:tree:3+blob:limit=40+sparse:oid=main:pattern1%2brenamed%25 \
 		HEAD >actual &&
 	test_cmp expect actual &&
 
@@ -464,23 +539,23 @@ test_expect_success 'combine:... with more than two sub-filters' '
 	test_when_finished "rm -f trace1" &&
 	GIT_TRACE=$(pwd)/trace1 git -C r3 rev-list --objects \
 		--filter=tree:3 --filter=blob:limit=40 \
-		--filter=sparse:oid="master:p;at%ter+n" \
+		--filter=sparse:oid="main:p;at%ter+n" \
 		HEAD >actual &&
 
 	test_cmp expect actual &&
-	grep "Add to combine filter-spec: sparse:oid=master:p%3bat%25ter%2bn" \
+	grep "Add to combine filter-spec: sparse:oid=main:p%3bat%25ter%2bn" \
 		trace1 &&
 
 	# Repeat the above test, but this time, the characters to encode are in
 	# the LHS of the combined filter.
 	test_when_finished "rm -f trace2" &&
 	GIT_TRACE=$(pwd)/trace2 git -C r3 rev-list --objects \
-		--filter=sparse:oid=master:^~pattern \
+		--filter=sparse:oid=main:^~pattern \
 		--filter=tree:3 --filter=blob:limit=40 \
 		HEAD >actual &&
 
 	test_cmp expect actual &&
-	grep "Add to combine filter-spec: sparse:oid=master:%5e%7epattern" \
+	grep "Add to combine filter-spec: sparse:oid=main:%5e%7epattern" \
 		trace2
 '
 

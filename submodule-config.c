@@ -103,8 +103,8 @@ static void submodule_cache_clear(struct submodule_cache *cache)
 				ent /* member name */)
 		free_one_config(entry);
 
-	hashmap_free_entries(&cache->for_path, struct submodule_entry, ent);
-	hashmap_free_entries(&cache->for_name, struct submodule_entry, ent);
+	hashmap_clear_and_free(&cache->for_path, struct submodule_entry, ent);
+	hashmap_clear_and_free(&cache->for_name, struct submodule_entry, ent);
 	cache->initialized = 0;
 	cache->gitmodules_read = 0;
 }
@@ -225,7 +225,8 @@ static int name_and_item_from_var(const char *var, struct strbuf *name,
 				  struct strbuf *item)
 {
 	const char *subsection, *key;
-	int subsection_len, parse;
+	size_t subsection_len;
+	int parse;
 	parse = parse_config_key(var, "submodule", &subsection,
 			&subsection_len, &key);
 	if (parse < 0 || !subsection)
@@ -670,7 +671,7 @@ static int gitmodules_cb(const char *var, const char *value, void *data)
 
 	parameter.cache = repo->submodule_cache;
 	parameter.treeish_name = NULL;
-	parameter.gitmodules_oid = &null_oid;
+	parameter.gitmodules_oid = null_oid();
 	parameter.overwrite = 1;
 
 	return parse_config(var, value, &parameter);
@@ -776,10 +777,14 @@ static int gitmodules_fetch_config(const char *var, const char *value, void *cb)
 {
 	struct fetch_config *config = cb;
 	if (!strcmp(var, "submodule.fetchjobs")) {
-		*(config->max_children) = parse_submodule_fetchjobs(var, value);
+		if (config->max_children)
+			*(config->max_children) =
+				parse_submodule_fetchjobs(var, value);
 		return 0;
 	} else if (!strcmp(var, "fetch.recursesubmodules")) {
-		*(config->recurse_submodules) = parse_fetch_recurse_submodules_arg(var, value);
+		if (config->recurse_submodules)
+			*(config->recurse_submodules) =
+				parse_fetch_recurse_submodules_arg(var, value);
 		return 0;
 	}
 

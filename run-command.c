@@ -2,23 +2,24 @@
 #include "run-command.h"
 #include "exec-cmd.h"
 #include "sigchain.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "thread-utils.h"
 #include "strbuf.h"
 #include "string-list.h"
 #include "quote.h"
+#include "config.h"
 
 void child_process_init(struct child_process *child)
 {
 	memset(child, 0, sizeof(*child));
-	argv_array_init(&child->args);
-	argv_array_init(&child->env_array);
+	strvec_init(&child->args);
+	strvec_init(&child->env_array);
 }
 
 void child_process_clear(struct child_process *child)
 {
-	argv_array_clear(&child->args);
-	argv_array_clear(&child->env_array);
+	strvec_clear(&child->args);
+	strvec_clear(&child->env_array);
 }
 
 struct child_to_clean {
@@ -263,31 +264,31 @@ int sane_execvp(const char *file, char * const argv[])
 	return -1;
 }
 
-static const char **prepare_shell_cmd(struct argv_array *out, const char **argv)
+static const char **prepare_shell_cmd(struct strvec *out, const char **argv)
 {
 	if (!argv[0])
 		BUG("shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
 #ifndef GIT_WINDOWS_NATIVE
-		argv_array_push(out, SHELL_PATH);
+		strvec_push(out, SHELL_PATH);
 #else
-		argv_array_push(out, "sh");
+		strvec_push(out, "sh");
 #endif
-		argv_array_push(out, "-c");
+		strvec_push(out, "-c");
 
 		/*
 		 * If we have no extra arguments, we do not even need to
 		 * bother with the "$@" magic.
 		 */
 		if (!argv[1])
-			argv_array_push(out, argv[0]);
+			strvec_push(out, argv[0]);
 		else
-			argv_array_pushf(out, "%s \"$@\"", argv[0]);
+			strvec_pushf(out, "%s \"$@\"", argv[0]);
 	}
 
-	argv_array_pushv(out, argv);
-	return out->argv;
+	strvec_pushv(out, argv);
+	return out->v;
 }
 
 #ifndef GIT_WINDOWS_NATIVE
@@ -401,7 +402,7 @@ static void child_err_spew(struct child_process *cmd, struct child_err *cerr)
 	set_error_routine(old_errfn);
 }
 
-static int prepare_cmd(struct argv_array *out, const struct child_process *cmd)
+static int prepare_cmd(struct strvec *out, const struct child_process *cmd)
 {
 	if (!cmd->argv[0])
 		BUG("command is empty");
@@ -410,14 +411,14 @@ static int prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 	 * Add SHELL_PATH so in the event exec fails with ENOEXEC we can
 	 * attempt to interpret the command with 'sh'.
 	 */
-	argv_array_push(out, SHELL_PATH);
+	strvec_push(out, SHELL_PATH);
 
 	if (cmd->git_cmd) {
 		prepare_git_cmd(out, cmd->argv);
 	} else if (cmd->use_shell) {
 		prepare_shell_cmd(out, cmd->argv);
 	} else {
-		argv_array_pushv(out, cmd->argv);
+		strvec_pushv(out, cmd->argv);
 	}
 
 	/*
@@ -426,13 +427,13 @@ static int prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 	 * there are dir separator characters, we have exec attempt to invoke
 	 * the command directly.
 	 */
-	if (!has_dir_sep(out->argv[1])) {
-		char *program = locate_in_PATH(out->argv[1]);
+	if (!has_dir_sep(out->v[1])) {
+		char *program = locate_in_PATH(out->v[1]);
 		if (program) {
-			free((char *)out->argv[1]);
-			out->argv[1] = program;
+			free((char *)out->v[1]);
+			out->v[1] = program;
 		} else {
-			argv_array_clear(out);
+			strvec_clear(out);
 			errno = ENOENT;
 			return -1;
 		}
@@ -550,8 +551,11 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 
 	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
 		;	/* nothing */
-	if (in_signal)
-		return 0;
+	if (in_signal) {
+		if (WIFEXITED(status))
+			code = WEXITSTATUS(status);
+		return code;
+	}
 
 	if (waiting < 0) {
 		failed_errno = errno;
@@ -672,9 +676,9 @@ int start_command(struct child_process *cmd)
 	char *str;
 
 	if (!cmd->argv)
-		cmd->argv = cmd->args.argv;
+		cmd->argv = cmd->args.v;
 	if (!cmd->env)
-		cmd->env = cmd->env_array.argv;
+		cmd->env = cmd->env_array.v;
 
 	/*
 	 * In case of errors we must keep the promise to close FDs
@@ -742,7 +746,7 @@ fail_pipe:
 	int notify_pipe[2];
 	int null_fd = -1;
 	char **childenv;
-	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
 	struct child_err cerr;
 	struct atfork_state as;
 
@@ -846,10 +850,10 @@ fail_pipe:
 		 * be used in the event exec failed with ENOEXEC at which point
 		 * we will try to interpret the command using 'sh'.
 		 */
-		execve(argv.argv[1], (char *const *) argv.argv + 1,
+		execve(argv.v[1], (char *const *) argv.v + 1,
 		       (char *const *) childenv);
 		if (errno == ENOEXEC)
-			execve(argv.argv[0], (char *const *) argv.argv,
+			execve(argv.v[0], (char *const *) argv.v,
 			       (char *const *) childenv);
 
 		if (errno == ENOENT) {
@@ -888,7 +892,7 @@ fail_pipe:
 
 	if (null_fd >= 0)
 		close(null_fd);
-	argv_array_clear(&argv);
+	strvec_clear(&argv);
 	free(childenv);
 }
 end_of_spawn:
@@ -897,7 +901,7 @@ end_of_spawn:
 {
 	int fhin = 0, fhout = 1, fherr = 2;
 	const char **sargv = cmd->argv;
-	struct argv_array nargv = ARGV_ARRAY_INIT;
+	struct strvec nargv = STRVEC_INIT;
 
 	if (cmd->no_stdin)
 		fhin = open("/dev/null", O_RDWR);
@@ -935,7 +939,7 @@ end_of_spawn:
 	if (cmd->clean_on_exit && cmd->pid >= 0)
 		mark_child_for_cleanup(cmd->pid, cmd);
 
-	argv_array_clear(&nargv);
+	strvec_clear(&nargv);
 	cmd->argv = sargv;
 	if (fhin != 0)
 		close(fhin);
@@ -989,6 +993,7 @@ int finish_command(struct child_process *cmd)
 	int ret = wait_or_whine(cmd->pid, cmd->argv[0], 0);
 	trace2_child_exit(cmd, ret);
 	child_process_clear(cmd);
+	invalidate_lstat_cache();
 	return ret;
 }
 
@@ -1039,6 +1044,7 @@ int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 	cmd.silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
 	cmd.use_shell = opt & RUN_USING_SHELL ? 1 : 0;
 	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
+	cmd.wait_after_clean = opt & RUN_WAIT_AFTER_CLEAN ? 1 : 0;
 	cmd.dir = dir;
 	cmd.env = env;
 	cmd.trace2_child_class = tr2_class;
@@ -1289,13 +1295,19 @@ error:
 int finish_async(struct async *async)
 {
 #ifdef NO_PTHREADS
-	return wait_or_whine(async->pid, "child process", 0);
+	int ret = wait_or_whine(async->pid, "child process", 0);
+
+	invalidate_lstat_cache();
+
+	return ret;
 #else
 	void *ret = (void *)(intptr_t)(-1);
 
 	if (pthread_join(async->tid, &ret))
 		error("pthread_join failed");
+	invalidate_lstat_cache();
 	return (int)(intptr_t)ret;
+
 #endif
 }
 
@@ -1351,9 +1363,9 @@ int run_hook_ve(const char *const *env, const char *name, va_list args)
 	if (!p)
 		return 0;
 
-	argv_array_push(&hook.args, p);
+	strvec_push(&hook.args, p);
 	while ((p = va_arg(args, const char *)))
-		argv_array_push(&hook.args, p);
+		strvec_push(&hook.args, p);
 	hook.env = env;
 	hook.no_stdin = 1;
 	hook.stdout_to_stderr = 1;
@@ -1626,8 +1638,8 @@ static void pp_init(struct parallel_processes *pp,
 	pp->nr_processes = 0;
 	pp->output_owner = 0;
 	pp->shutdown = 0;
-	pp->children = xcalloc(n, sizeof(*pp->children));
-	pp->pfd = xcalloc(n, sizeof(*pp->pfd));
+	CALLOC_ARRAY(pp->children, n);
+	CALLOC_ARRAY(pp->pfd, n);
 	strbuf_init(&pp->buffered_output, 0);
 
 	for (i = 0; i < n; i++) {
@@ -1863,4 +1875,20 @@ int run_processes_parallel_tr2(int n, get_next_task_fn get_next_task,
 	trace2_region_leave(tr2_category, tr2_label, NULL);
 
 	return result;
+}
+
+int run_auto_maintenance(int quiet)
+{
+	int enabled;
+	struct child_process maint = CHILD_PROCESS_INIT;
+
+	if (!git_config_get_bool("maintenance.auto", &enabled) &&
+	    !enabled)
+		return 0;
+
+	maint.git_cmd = 1;
+	strvec_pushl(&maint.args, "maintenance", "run", "--auto", NULL);
+	strvec_push(&maint.args, quiet ? "--quiet" : "--no-quiet");
+
+	return run_command(&maint);
 }

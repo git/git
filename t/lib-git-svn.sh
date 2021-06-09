@@ -78,21 +78,24 @@ maybe_start_httpd () {
 }
 
 convert_to_rev_db () {
-	perl -w -- - "$@" <<\EOF
+	perl -w -- - "$(test_oid rawsz)" "$@" <<\EOF
 use strict;
+my $oidlen = shift;
 @ARGV == 2 or die "usage: convert_to_rev_db <input> <output>";
+my $record_size = $oidlen + 4;
+my $hexlen = $oidlen * 2;
 open my $wr, '+>', $ARGV[1] or die "$!: couldn't open: $ARGV[1]";
 open my $rd, '<', $ARGV[0] or die "$!: couldn't open: $ARGV[0]";
 my $size = (stat($rd))[7];
-($size % 24) == 0 or die "Inconsistent size: $size";
-while (sysread($rd, my $buf, 24) == 24) {
-	my ($r, $c) = unpack('NH40', $buf);
-	my $offset = $r * 41;
+($size % $record_size) == 0 or die "Inconsistent size: $size";
+while (sysread($rd, my $buf, $record_size) == $record_size) {
+	my ($r, $c) = unpack("NH$hexlen", $buf);
+	my $offset = $r * ($hexlen + 1);
 	seek $wr, 0, 2 or die $!;
 	my $pos = tell $wr;
 	if ($pos < $offset) {
-		for (1 .. (($offset - $pos) / 41)) {
-			print $wr (('0' x 40),"\n") or die $!;
+		for (1 .. (($offset - $pos) / ($hexlen + 1))) {
+			print $wr (('0' x $hexlen),"\n") or die $!;
 		}
 	}
 	seek $wr, $offset, 0 or die $!;

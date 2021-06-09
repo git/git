@@ -265,6 +265,32 @@ test_expect_success 'internal getpass does not ask for known username' '
 	EOF
 '
 
+test_expect_success 'git-credential respects core.askPass' '
+	write_script alternate-askpass <<-\EOF &&
+	echo >&2 "alternate askpass invoked"
+	echo alternate-value
+	EOF
+	test_config core.askpass "$PWD/alternate-askpass" &&
+	(
+		# unset GIT_ASKPASS set by lib-credential.sh which would
+		# override our config, but do so in a subshell so that we do
+		# not interfere with other tests
+		sane_unset GIT_ASKPASS &&
+		check fill <<-\EOF
+		protocol=http
+		host=example.com
+		--
+		protocol=http
+		host=example.com
+		username=alternate-value
+		password=alternate-value
+		--
+		alternate askpass invoked
+		alternate askpass invoked
+		EOF
+	)
+'
+
 HELPER="!f() {
 		cat >/dev/null
 		echo username=foo
@@ -363,6 +389,51 @@ test_expect_success 'match percent-encoded values' '
 	username=foo
 	password=bar
 	--
+	EOF
+'
+
+test_expect_success 'match percent-encoded UTF-8 values in path' '
+	test_config credential.https://example.com.useHttpPath true &&
+	test_config credential.https://example.com/perú.git.helper "$HELPER" &&
+	check fill <<-\EOF
+	url=https://example.com/per%C3%BA.git
+	--
+	protocol=https
+	host=example.com
+	path=perú.git
+	username=foo
+	password=bar
+	--
+	EOF
+'
+
+test_expect_success 'match percent-encoded values in username' '
+	test_config credential.https://user%2fname@example.com/foo/bar.git.helper "$HELPER" &&
+	check fill <<-\EOF
+	url=https://user%2fname@example.com/foo/bar.git
+	--
+	protocol=https
+	host=example.com
+	username=foo
+	password=bar
+	--
+	EOF
+'
+
+test_expect_success 'fetch with multiple path components' '
+	test_unconfig credential.helper &&
+	test_config credential.https://example.com/foo/repo.git.helper "verbatim foo bar" &&
+	check fill <<-\EOF
+	url=https://example.com/foo/repo.git
+	--
+	protocol=https
+	host=example.com
+	username=foo
+	password=bar
+	--
+	verbatim: get
+	verbatim: protocol=https
+	verbatim: host=example.com
 	EOF
 '
 
@@ -507,7 +578,7 @@ test_expect_success 'helpers can abort the process' '
 	quit: host=example.com
 	fatal: credential helper '\''quit'\'' told us to quit
 	EOF
-	test_i18ncmp expect stderr
+	test_cmp expect stderr
 '
 
 test_expect_success 'empty helper spec resets helper list' '
@@ -535,7 +606,7 @@ test_expect_success 'url parser rejects embedded newlines' '
 	warning: url contains a newline in its path component: https://one.example.com?%0ahost=two.example.com/
 	fatal: credential url cannot be parsed: https://one.example.com?%0ahost=two.example.com/
 	EOF
-	test_i18ncmp expect stderr
+	test_cmp expect stderr
 '
 
 test_expect_success 'host-less URLs are parsed as empty host' '
@@ -562,7 +633,7 @@ test_expect_success 'credential system refuses to work with missing host' '
 	cat >expect <<-\EOF &&
 	fatal: refusing to work with credential missing host field
 	EOF
-	test_i18ncmp expect stderr
+	test_cmp expect stderr
 '
 
 test_expect_success 'credential system refuses to work with missing protocol' '
@@ -572,7 +643,7 @@ test_expect_success 'credential system refuses to work with missing protocol' '
 	cat >expect <<-\EOF &&
 	fatal: refusing to work with credential missing protocol field
 	EOF
-	test_i18ncmp expect stderr
+	test_cmp expect stderr
 '
 
 # usage: check_host_and_path <url> <expected-host> <expected-path>
@@ -607,6 +678,44 @@ test_expect_success 'url parser handles bare fragment marker' '
 test_expect_success 'url parser not confused by encoded markers' '
 	check_host_and_path https://example.com%23%3f%2f/foo.git \
 		"example.com#?/" foo.git
+'
+
+test_expect_success 'credential config with partial URLs' '
+	echo "echo password=yep" | write_script git-credential-yep &&
+	test_write_lines url=https://user@example.com/repo.git >stdin &&
+	for partial in \
+		example.com \
+		user@example.com \
+		https:// \
+		https://example.com \
+		https://example.com/ \
+		https://user@example.com \
+		https://user@example.com/ \
+		https://example.com/repo.git \
+		https://user@example.com/repo.git \
+		/repo.git
+	do
+		git -c credential.$partial.helper=yep \
+			credential fill <stdin >stdout &&
+		grep yep stdout ||
+		return 1
+	done &&
+
+	for partial in \
+		dont.use.this \
+		http:// \
+		/repo
+	do
+		git -c credential.$partial.helper=yep \
+			credential fill <stdin >stdout &&
+		! grep yep stdout ||
+		return 1
+	done &&
+
+	git -c credential.$partial.helper=yep \
+		-c credential.with%0anewline.username=uh-oh \
+		credential fill <stdin >stdout 2>stderr &&
+	test_i18ngrep "skipping credential lookup for key" stderr
 '
 
 test_done

@@ -55,6 +55,12 @@ OPTIONS
 --output=<file>::
 	Write the archive to <file> instead of stdout.
 
+--add-file=<file>::
+	Add a non-tracked file to the archive.  Can be repeated to add
+	multiple files.  The path of the file in the archive is built
+	by concatenating the value for `--prefix` (if any) and the
+	basename of <file>.
+
 --worktree-attributes::
 	Look for attributes in .gitattributes files in the working tree
 	as well (see <<ATTRIBUTES>>).

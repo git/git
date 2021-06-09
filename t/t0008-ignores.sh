@@ -34,7 +34,7 @@ expect_from_stdin () {
 test_stderr () {
 	expected="$1"
 	expect_in stderr "$1" &&
-	test_i18ncmp "$HOME/expected-stderr" "$HOME/stderr"
+	test_cmp "$HOME/expected-stderr" "$HOME/stderr"
 }
 
 broken_c_unquote () {
@@ -863,6 +863,40 @@ test_expect_success 'info/exclude trumps core.excludesfile' '
 
 	git status --porcelain usually-ignored >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success SYMLINKS 'set up ignore file for symlink tests' '
+	echo "*" >ignore &&
+	rm -f .gitignore .git/info/exclude
+'
+
+test_expect_success SYMLINKS 'symlinks respected in core.excludesFile' '
+	test_when_finished "rm symlink" &&
+	ln -s ignore symlink &&
+	test_config core.excludesFile "$(pwd)/symlink" &&
+	echo file >expect &&
+	git check-ignore file >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
+test_expect_success SYMLINKS 'symlinks respected in info/exclude' '
+	test_when_finished "rm .git/info/exclude" &&
+	ln -s ../../ignore .git/info/exclude &&
+	echo file >expect &&
+	git check-ignore file >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
+test_expect_success SYMLINKS 'symlinks not respected in-tree' '
+	test_when_finished "rm .gitignore" &&
+	ln -s ignore .gitignore &&
+	mkdir subdir &&
+	ln -s ignore subdir/.gitignore &&
+	test_must_fail git check-ignore subdir/file >actual 2>err &&
+	test_must_be_empty actual &&
+	test_i18ngrep "unable to access.*gitignore" err
 '
 
 test_done

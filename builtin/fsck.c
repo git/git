@@ -49,6 +49,7 @@ static int name_objects;
 #define ERROR_PACK 04
 #define ERROR_REFS 010
 #define ERROR_COMMIT_GRAPH 020
+#define ERROR_MULTI_PACK_INDEX 040
 
 static const char *describe_object(const struct object_id *oid)
 {
@@ -70,29 +71,6 @@ static const char *printable_type(const struct object_id *oid,
 	return ret;
 }
 
-static int fsck_config(const char *var, const char *value, void *cb)
-{
-	if (strcmp(var, "fsck.skiplist") == 0) {
-		const char *path;
-		struct strbuf sb = STRBUF_INIT;
-
-		if (git_config_pathname(&path, var, value))
-			return 1;
-		strbuf_addf(&sb, "skiplist=%s", path);
-		free((char *)path);
-		fsck_set_msg_types(&fsck_obj_options, sb.buf);
-		strbuf_release(&sb);
-		return 0;
-	}
-
-	if (skip_prefix(var, "fsck.", &var)) {
-		fsck_set_msg_type(&fsck_obj_options, var, value);
-		return 0;
-	}
-
-	return git_default_config(var, value, cb);
-}
-
 static int objerror(struct object *obj, const char *err)
 {
 	errors_found |= ERROR_OBJECT;
@@ -106,7 +84,9 @@ static int objerror(struct object *obj, const char *err)
 static int fsck_error_func(struct fsck_options *o,
 			   const struct object_id *oid,
 			   enum object_type object_type,
-			   int msg_type, const char *message)
+			   enum fsck_msg_type msg_type,
+			   enum fsck_msg_id msg_id,
+			   const char *message)
 {
 	switch (msg_type) {
 	case FSCK_WARN:
@@ -129,7 +109,8 @@ static int fsck_error_func(struct fsck_options *o,
 
 static struct object_array pending;
 
-static int mark_object(struct object *obj, int type, void *data, struct fsck_options *options)
+static int mark_object(struct object *obj, enum object_type type,
+		       void *data, struct fsck_options *options)
 {
 	struct object *parent = data;
 
@@ -167,7 +148,7 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 		return 0;
 
 	if (!(obj->flags & HAS_OBJ)) {
-		if (parent && !has_object_file(&obj->oid)) {
+		if (parent && !has_object(the_repository, &obj->oid, 1)) {
 			printf_ln(_("broken link from %7s %s\n"
 				    "              to %7s %s"),
 				  printable_type(&parent->oid, parent->type),
@@ -214,7 +195,8 @@ static int traverse_reachable(void)
 	return !!result;
 }
 
-static int mark_used(struct object *obj, int type, void *data, struct fsck_options *options)
+static int mark_used(struct object *obj, enum object_type object_type,
+		     void *data, struct fsck_options *options)
 {
 	if (!obj)
 		return 1;
@@ -240,7 +222,7 @@ static void mark_unreachable_referents(const struct object_id *oid)
 		enum object_type type = oid_object_info(the_repository,
 							&obj->oid, NULL);
 		if (type > 0)
-			object_as_type(the_repository, obj, type, 0);
+			object_as_type(obj, type, 0);
 	}
 
 	options.walk = mark_used;
@@ -576,7 +558,7 @@ static void get_default_heads(void)
 
 	for_each_rawref(fsck_handle_ref, NULL);
 
-	worktrees = get_worktrees(0);
+	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct strbuf ref = STRBUF_INIT;
@@ -744,7 +726,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 
 static void mark_object_for_connectivity(const struct object_id *oid)
 {
-	struct object *obj = lookup_unknown_object(oid);
+	struct object *obj = lookup_unknown_object(the_repository, oid);
 	obj->flags |= HAS_OBJ;
 }
 
@@ -820,7 +802,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	if (name_objects)
 		fsck_enable_object_names(&fsck_walk_options);
 
-	git_config(fsck_config, NULL);
+	git_config(git_fsck_config, &fsck_obj_options);
 
 	if (connectivity_only) {
 		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
@@ -900,6 +882,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
 		read_cache();
+		/* TODO: audit for interaction with sparse-index. */
+		ensure_full_index(&the_index);
 		for (i = 0; i < active_nr; i++) {
 			unsigned int mode;
 			struct blob *blob;
@@ -952,7 +936,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			midx_argv[2] = "--object-dir";
 			midx_argv[3] = odb->path;
 			if (run_command(&midx_verify))
-				errors_found |= ERROR_COMMIT_GRAPH;
+				errors_found |= ERROR_MULTI_PACK_INDEX;
 		}
 	}
 

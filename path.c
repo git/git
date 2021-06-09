@@ -1493,6 +1493,11 @@ int is_ntfs_dotgitattributes(const char *name)
 	return is_ntfs_dot_str(name, "gitattributes", "gi7d29");
 }
 
+int is_ntfs_dotmailmap(const char *name)
+{
+	return is_ntfs_dot_str(name, "mailmap", "maba30");
+}
+
 int looks_like_command_line_option(const char *str)
 {
 	return str && str[0] == '-';
@@ -1528,12 +1533,12 @@ char *xdg_cache_home(const char *filename)
 	return NULL;
 }
 
-REPO_GIT_PATH_FUNC(cherry_pick_head, "CHERRY_PICK_HEAD")
-REPO_GIT_PATH_FUNC(revert_head, "REVERT_HEAD")
 REPO_GIT_PATH_FUNC(squash_msg, "SQUASH_MSG")
 REPO_GIT_PATH_FUNC(merge_msg, "MERGE_MSG")
 REPO_GIT_PATH_FUNC(merge_rr, "MERGE_RR")
 REPO_GIT_PATH_FUNC(merge_mode, "MERGE_MODE")
 REPO_GIT_PATH_FUNC(merge_head, "MERGE_HEAD")
+REPO_GIT_PATH_FUNC(merge_autostash, "MERGE_AUTOSTASH")
+REPO_GIT_PATH_FUNC(auto_merge, "AUTO_MERGE")
 REPO_GIT_PATH_FUNC(fetch_head, "FETCH_HEAD")
 REPO_GIT_PATH_FUNC(shallow, "shallow")

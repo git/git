@@ -9,7 +9,7 @@ git-diff-index - Compare a tree to the working tree or index
 SYNOPSIS
 --------
 [verse]
-'git diff-index' [-m] [--cached] [<common diff options>] <tree-ish> [<path>...]
+'git diff-index' [-m] [--cached] [--merge-base] [<common diff options>] <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------
@@ -27,7 +27,12 @@ include::diff-options.txt[]
 	The id of a tree object to diff against.
 
 --cached::
-	do not consider the on-disk file at all
+	Do not consider the on-disk file at all.
+
+--merge-base::
+	Instead of comparing <tree-ish> directly, use the merge base
+	between <tree-ish> and HEAD instead.  <tree-ish> must be a
+	commit.
 
 -m::
 	By default, files recorded in the index but not checked

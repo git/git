@@ -200,11 +200,6 @@ Alternatively, you can undo the 'git rebase' with
 
     git rebase --abort
 
-CONFIGURATION
--------------
-
-include::config/rebase.txt[]
-
 OPTIONS
 -------
 --onto <newbase>::
@@ -256,9 +251,10 @@ See also INCOMPATIBLE OPTIONS below.
 --quit::
 	Abort the rebase operation but HEAD is not reset back to the
 	original branch. The index and working tree are also left
-	unchanged as a result.
+	unchanged as a result. If a temporary stash entry was created
+	using --autostash, it will be saved to the stash list.
 
---apply:
+--apply::
 	Use applying strategies to rebase (calling `git-am`
 	internally).  This option may become a no-op in the future
 	once the merge backend handles everything the apply one does.
@@ -448,30 +444,53 @@ When --fork-point is active, 'fork_point' will be used instead of
 <branch>` command (see linkgit:git-merge-base[1]).  If 'fork_point'
 ends up being empty, the <upstream> will be used as a fallback.
 +
-If either <upstream> or --root is given on the command line, then the
-default is `--no-fork-point`, otherwise the default is `--fork-point`.
+If <upstream> is given on the command line, then the default is
+`--no-fork-point`, otherwise the default is `--fork-point`.
 +
 If your branch was based on <upstream> but <upstream> was rewound and
 your branch contains commits which were dropped, this option can be used
 with `--keep-base` in order to drop those commits from your branch.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --ignore-whitespace::
+	Ignore whitespace differences when trying to reconcile
+differences. Currently, each backend implements an approximation of
+this behavior:
++
+apply backend: When applying a patch, ignore changes in whitespace in
+context lines. Unfortunately, this means that if the "old" lines being
+replaced by the patch differ only in whitespace from the existing
+file, you will get a merge conflict instead of a successful patch
+application.
++
+merge backend: Treat lines with only whitespace changes as unchanged
+when merging. Unfortunately, this means that any patch hunks that were
+intended to modify whitespace and nothing else will be dropped, even
+if the other side had no changes that conflicted.
+
 --whitespace=<option>::
-	These flags are passed to the 'git apply' program
+	This flag is passed to the 'git apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
 	Implies --apply.
 +
 See also INCOMPATIBLE OPTIONS below.
 
 --committer-date-is-author-date::
+	Instead of using the current time as the committer date, use
+	the author date of the commit being rebased as the committer
+	date. This option implies `--force-rebase`.
+
 --ignore-date::
-	These flags are passed to 'git am' to easily change the dates
-	of the rebased commits (see linkgit:git-am[1]).
+--reset-author-date::
+	Instead of using the author date of the original commit, use
+	the current time as the	author date of the rebased commit.  This
+	option implies `--force-rebase`.
 +
 See also INCOMPATIBLE OPTIONS below.
 
 --signoff::
-	Add a Signed-off-by: trailer to all the rebased commits. Note
+	Add a `Signed-off-by` trailer to all the rebased commits. Note
 	that if `--interactive` is given then only commits marked to be
 	picked, edited or reworded will have the trailer added.
 +
@@ -568,16 +587,17 @@ See also INCOMPATIBLE OPTIONS below.
 
 --autosquash::
 --no-autosquash::
-	When the commit log message begins with "squash! ..." (or
-	"fixup! ..."), and there is already a commit in the todo list that
-	matches the same `...`, automatically modify the todo list of rebase
-	-i so that the commit marked for squashing comes right after the
-	commit to be modified, and change the action of the moved commit
-	from `pick` to `squash` (or `fixup`).  A commit matches the `...` if
-	the commit subject matches, or if the `...` refers to the commit's
-	hash. As a fall-back, partial matches of the commit subject work,
-	too.  The recommended way to create fixup/squash commits is by using
-	the `--fixup`/`--squash` options of linkgit:git-commit[1].
+	When the commit log message begins with "squash! ..." or "fixup! ..."
+	or "amend! ...", and there is already a commit in the todo list that
+	matches the same `...`, automatically modify the todo list of
+	`rebase -i`, so that the commit marked for squashing comes right after
+	the commit to be modified, and change the action of the moved commit
+	from `pick` to `squash` or `fixup` or `fixup -C` respectively. A commit
+	matches the `...` if the commit subject matches, or if the `...` refers
+	to the commit's hash. As a fall-back, partial matches of the commit
+	subject work, too. The recommended way to create fixup/amend/squash
+	commits is by using the `--fixup`, `--fixup=amend:` or `--fixup=reword:`
+	and `--squash` options respectively of linkgit:git-commit[1].
 +
 If the `--autosquash` option is enabled by default using the
 configuration variable `rebase.autoSquash`, this option can be
@@ -597,6 +617,14 @@ See also INCOMPATIBLE OPTIONS below.
 --no-reschedule-failed-exec::
 	Automatically reschedule `exec` commands that failed. This only makes
 	sense in interactive mode (or when an `--exec` option was provided).
++
+Even though this option applies once a rebase is started, it's set for
+the whole rebase at the start based on either the
+`rebase.rescheduleFailedExec` configuration (see linkgit:git-config[1]
+or "CONFIGURATION" below) or whether this option is
+provided. Otherwise an explicit `--no-reschedule-failed-exec` at the
+start would be overridden by the presence of
+`rebase.rescheduleFailedExec=true` configuration.
 
 INCOMPATIBLE OPTIONS
 --------------------
@@ -604,9 +632,6 @@ INCOMPATIBLE OPTIONS
 The following options:
 
  * --apply
- * --committer-date-is-author-date
- * --ignore-date
- * --ignore-whitespace
  * --whitespace
  * -C
 
@@ -633,8 +658,12 @@ In addition, the following pairs of options are incompatible:
  * --preserve-merges and --signoff
  * --preserve-merges and --rebase-merges
  * --preserve-merges and --empty=
+ * --preserve-merges and --ignore-whitespace
+ * --preserve-merges and --committer-date-is-author-date
+ * --preserve-merges and --ignore-date
  * --keep-base and --onto
  * --keep-base and --root
+ * --fork-point and --root
 
 BEHAVIORAL DIFFERENCES
 -----------------------
@@ -722,9 +751,17 @@ Hooks
 ~~~~~
 
 The apply backend has not traditionally called the post-commit hook,
-while the merge backend has.  However, this was by accident of
-implementation rather than by design.  Both backends should have the
-same behavior, though it is not clear which one is correct.
+while the merge backend has.  Both have called the post-checkout hook,
+though the merge backend has squelched its output.  Further, both
+backends only call the post-checkout hook with the starting point
+commit of the rebase, not the intermediate commits nor the final
+commit.  In each case, the calling of these hooks was by accident of
+implementation rather than by design (both backends were originally
+implemented as shell scripts and happened to invoke other commands
+like 'git checkout' or 'git commit' that would call the hooks).  Both
+backends should have the same behavior, though it is not entirely
+clear which, if any, is correct.  We will likely make rebase stop
+calling either of these hooks in the future.
 
 Interruptability
 ~~~~~~~~~~~~~~~~
@@ -853,9 +890,17 @@ If you want to fold two or more commits into one, replace the command
 "pick" for the second and subsequent commits with "squash" or "fixup".
 If the commits had different authors, the folded commit will be
 attributed to the author of the first commit.  The suggested commit
-message for the folded commit is the concatenation of the commit
-messages of the first commit and of those with the "squash" command,
-but omits the commit messages of commits with the "fixup" command.
+message for the folded commit is the concatenation of the first
+commit's message with those identified by "squash" commands, omitting the
+messages of commits identified by "fixup" commands, unless "fixup -c"
+is used.  In that case the suggested commit message is only the message
+of the "fixup -c" commit, and an editor is opened allowing you to edit
+the message.  The contents (patch) of the "fixup -c" commit are still
+incorporated into the folded commit. If there is more than one "fixup -c"
+commit, the message from the final one is used.  You can also use
+"fixup -C" to get the same behavior as "fixup -c" except without opening
+an editor.
+
 
 'git rebase' will stop when "pick" has been replaced with "edit" or
 when a command fails due to merge errors. When you are done editing
@@ -1222,6 +1267,12 @@ reset onto
 merge tlsv1.3
 merge cmake
 ------------
+
+CONFIGURATION
+-------------
+
+include::config/rebase.txt[]
+include::config/sequencer.txt[]
 
 BUGS
 ----

@@ -13,26 +13,27 @@ const char *tag_type = "tag";
 static int run_gpg_verify(const char *buf, unsigned long size, unsigned flags)
 {
 	struct signature_check sigc;
-	size_t payload_size;
+	struct strbuf payload = STRBUF_INIT;
+	struct strbuf signature = STRBUF_INIT;
 	int ret;
 
 	memset(&sigc, 0, sizeof(sigc));
 
-	payload_size = parse_signature(buf, size);
-
-	if (size == payload_size) {
+	if (!parse_signature(buf, size, &payload, &signature)) {
 		if (flags & GPG_VERIFY_VERBOSE)
-			write_in_full(1, buf, payload_size);
+			write_in_full(1, buf, size);
 		return error("no signature found");
 	}
 
-	ret = check_signature(buf, payload_size, buf + payload_size,
-				size - payload_size, &sigc);
+	ret = check_signature(payload.buf, payload.len, signature.buf,
+				signature.len, &sigc);
 
 	if (!(flags & GPG_VERIFY_OMIT_STATUS))
 		print_signature_buffer(&sigc, flags);
 
 	signature_check_clear(&sigc);
+	strbuf_release(&payload);
+	strbuf_release(&signature);
 	return ret;
 }
 
@@ -103,7 +104,7 @@ struct tag *lookup_tag(struct repository *r, const struct object_id *oid)
 	struct object *obj = lookup_object(r, oid);
 	if (!obj)
 		return create_object(r, oid, alloc_tag_node(r));
-	return object_as_type(r, obj, OBJ_TAG, 0);
+	return object_as_type(obj, OBJ_TAG, 0);
 }
 
 static timestamp_t parse_tag_date(const char *buf, const char *tail)

@@ -23,7 +23,9 @@ while (@ARGV) {
 	    # before any "-l*" flags.
 	    $is_debug = 1;
 	}
-	if ("$arg" =~ /^-[DIMGOZ]/) {
+	if ("$arg" =~ /^-I\/mingw(32|64)/) {
+		# eat
+	} elsif ("$arg" =~ /^-[DIMGOZ]/) {
 		push(@cflags, $arg);
 	} elsif ("$arg" eq "-o") {
 		my $file_out = shift @ARGV;
@@ -43,7 +45,7 @@ while (@ARGV) {
 		push(@args, "zlib.lib");
 	    }
 	} elsif ("$arg" eq "-liconv") {
-		push(@args, "libiconv.lib");
+		push(@args, "iconv.lib");
 	} elsif ("$arg" eq "-lcrypto") {
 		push(@args, "libcrypto.lib");
 	} elsif ("$arg" eq "-lssl") {
@@ -64,7 +66,7 @@ while (@ARGV) {
 		}
 		push(@args, $lib);
 	} elsif ("$arg" eq "-lexpat") {
-		push(@args, "expat.lib");
+		push(@args, "libexpat.lib");
 	} elsif ("$arg" =~ /^-L/ && "$arg" ne "-LTCG") {
 		$arg =~ s/^-L/-LIBPATH:/;
 		push(@lflags, $arg);

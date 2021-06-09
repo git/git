@@ -38,38 +38,6 @@ are lists of one or more search expressions separated by newline
 characters.  An empty string as search expression matches all lines.
 
 
-CONFIGURATION
--------------
-
-grep.lineNumber::
-	If set to true, enable `-n` option by default.
-
-grep.column::
-	If set to true, enable the `--column` option by default.
-
-grep.patternType::
-	Set the default matching behavior. Using a value of 'basic', 'extended',
-	'fixed', or 'perl' will enable the `--basic-regexp`, `--extended-regexp`,
-	`--fixed-strings`, or `--perl-regexp` option accordingly, while the
-	value 'default' will return to the default matching behavior.
-
-grep.extendedRegexp::
-	If set to true, enable `--extended-regexp` option by default. This
-	option is ignored when the `grep.patternType` option is set to a value
-	other than 'default'.
-
-grep.threads::
-	Number of grep worker threads to use. If unset (or set to 0), Git will
-	use as many threads as the number of logical cores available.
-
-grep.fullName::
-	If set to true, enable `--full-name` option by default.
-
-grep.fallbackToNoIndex::
-	If set to true, fall back to git grep --no-index if git grep
-	is executed outside of a git repository.  Defaults to false.
-
-
 OPTIONS
 -------
 --cached::
@@ -93,7 +61,7 @@ OPTIONS
 	with `--no-index`.
 
 --recurse-submodules::
-	Recursively search in each submodule that has been initialized and
+	Recursively search in each submodule that is active and
 	checked out in the repository.  When used in combination with the
 	<tree> option the prefix of all submodule output will be the name of
 	the parent project's <tree> object. This option has no effect
@@ -206,8 +174,10 @@ providing this option will cause it to die.
 
 -z::
 --null::
-	Output \0 instead of the character that normally follows a
-	file name.
+	Use \0 as the delimiter for pathnames in the output, and print
+	them verbatim. Without this option, pathnames with "unusual"
+	characters are quoted as explained for the configuration
+	variable core.quotePath (see linkgit:git-config[1]).
 
 -o::
 --only-matching::
@@ -239,7 +209,7 @@ providing this option will cause it to die.
 --show-function::
 	Show the preceding line that contains the function name of
 	the match, unless the matching line is a function name itself.
-	The name is determined in the same way as 'git diff' works out
+	The name is determined in the same way as `git diff` works out
 	patch hunk headers (see 'Defining a custom hunk-header' in
 	linkgit:gitattributes[5]).
 
@@ -264,7 +234,9 @@ providing this option will cause it to die.
 	Show the surrounding text from the previous line containing a
 	function name up to the one before the next function name,
 	effectively showing the whole function in which the match was
-	found.
+	found. The function names are determined in the same way as
+	`git diff` works out patch hunk headers (see 'Defining a
+	custom hunk-header' in linkgit:gitattributes[5]).
 
 --threads <num>::
 	Number of grep worker threads to use.
@@ -358,6 +330,38 @@ When grepping the object store (with `--cached` or giving tree objects), running
 with multiple threads might perform slower than single threaded if `--textconv`
 is given and there're too many text conversions. So if you experience low
 performance in this case, it might be desirable to use `--threads=1`.
+
+CONFIGURATION
+-------------
+
+grep.lineNumber::
+	If set to true, enable `-n` option by default.
+
+grep.column::
+	If set to true, enable the `--column` option by default.
+
+grep.patternType::
+	Set the default matching behavior. Using a value of 'basic', 'extended',
+	'fixed', or 'perl' will enable the `--basic-regexp`, `--extended-regexp`,
+	`--fixed-strings`, or `--perl-regexp` option accordingly, while the
+	value 'default' will return to the default matching behavior.
+
+grep.extendedRegexp::
+	If set to true, enable `--extended-regexp` option by default. This
+	option is ignored when the `grep.patternType` option is set to a value
+	other than 'default'.
+
+grep.threads::
+	Number of grep worker threads to use. If unset (or set to 0), Git will
+	use as many threads as the number of logical cores available.
+
+grep.fullName::
+	If set to true, enable `--full-name` option by default.
+
+grep.fallbackToNoIndex::
+	If set to true, fall back to git grep --no-index if git grep
+	is executed outside of a git repository.  Defaults to false.
+
 
 GIT
 ---

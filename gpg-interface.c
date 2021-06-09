@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "commit.h"
 #include "config.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -282,12 +283,12 @@ static int verify_signed_buffer(const char *payload, size_t payload_size,
 	if (!fmt)
 		BUG("bad signature '%s'", signature);
 
-	argv_array_push(&gpg.args, fmt->program);
-	argv_array_pushv(&gpg.args, fmt->verify_args);
-	argv_array_pushl(&gpg.args,
-			 "--status-fd=1",
-			 "--verify", temp->filename.buf, "-",
-			 NULL);
+	strvec_push(&gpg.args, fmt->program);
+	strvec_pushv(&gpg.args, fmt->verify_args);
+	strvec_pushl(&gpg.args,
+		     "--status-fd=1",
+		     "--verify", temp->filename.buf, "-",
+		     NULL);
 
 	if (!gpg_status)
 		gpg_status = &buf;
@@ -345,7 +346,7 @@ void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 		fputs(output, stderr);
 }
 
-size_t parse_signature(const char *buf, size_t size)
+size_t parse_signed_buffer(const char *buf, size_t size)
 {
 	size_t len = 0;
 	size_t match = size;
@@ -359,6 +360,18 @@ size_t parse_signature(const char *buf, size_t size)
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}
 	return match;
+}
+
+int parse_signature(const char *buf, size_t size, struct strbuf *payload, struct strbuf *signature)
+{
+	size_t match = parse_signed_buffer(buf, size);
+	if (match != size) {
+		strbuf_add(payload, buf, match);
+		remove_signature(payload);
+		strbuf_add(signature, buf + match, size - match);
+		return 1;
+	}
+	return 0;
 }
 
 void set_signing_key(const char *key)
@@ -434,11 +447,11 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	size_t i, j, bottom;
 	struct strbuf gpg_status = STRBUF_INIT;
 
-	argv_array_pushl(&gpg.args,
-			 use_format->program,
-			 "--status-fd=2",
-			 "-bsau", signing_key,
-			 NULL);
+	strvec_pushl(&gpg.args,
+		     use_format->program,
+		     "--status-fd=2",
+		     "-bsau", signing_key,
+		     NULL);
 
 	bottom = signature->len;
 

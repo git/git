@@ -85,6 +85,8 @@ diff.ignoreSubmodules::
 	and 'git status' when `status.submoduleSummary` is set unless it is
 	overridden by using the --ignore-submodules command-line option.
 	The 'git submodule' commands are not affected by this setting.
+	By default this is set to untracked so that any untracked
+	submodules are ignored.
 
 diff.mnemonicPrefix::
 	If set, 'git diff' uses a prefix pair that is different from the
@@ -104,6 +106,10 @@ diff.mnemonicPrefix::
 
 diff.noprefix::
 	If set, 'git diff' does not show any source or destination prefix.
+
+diff.relative::
+	If set to 'true', 'git diff' does not show changes outside of the directory
+	and show pathnames relative to the current directory.
 
 diff.orderFile::
 	File indicating how to order files within a diff.

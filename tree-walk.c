@@ -4,6 +4,7 @@
 #include "object-store.h"
 #include "tree.h"
 #include "pathspec.h"
+#include "json-writer.h"
 
 static const char *get_mode(const char *str, unsigned int *modep)
 {
@@ -48,7 +49,7 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 	desc->entry.path = path;
 	desc->entry.mode = canon_mode(mode);
 	desc->entry.pathlen = len - 1;
-	hashcpy(desc->entry.oid.hash, (const unsigned char *)path + len);
+	oidread(&desc->entry.oid, (const unsigned char *)path + len);
 
 	return 0;
 }
@@ -167,6 +168,25 @@ int tree_entry_gently(struct tree_desc *desc, struct name_entry *entry)
 	return 1;
 }
 
+static int traverse_trees_atexit_registered;
+static int traverse_trees_count;
+static int traverse_trees_cur_depth;
+static int traverse_trees_max_depth;
+
+static void trace2_traverse_trees_statistics_atexit(void)
+{
+	struct json_writer jw = JSON_WRITER_INIT;
+
+	jw_object_begin(&jw, 0);
+	jw_object_intmax(&jw, "traverse_trees_count", traverse_trees_count);
+	jw_object_intmax(&jw, "traverse_trees_max_depth", traverse_trees_max_depth);
+	jw_end(&jw);
+
+	trace2_data_json("traverse_trees", the_repository, "statistics", &jw);
+
+	jw_release(&jw);
+}
+
 void setup_traverse_info(struct traverse_info *info, const char *base)
 {
 	size_t pathlen = strlen(base);
@@ -180,6 +200,11 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 	info->namelen = pathlen;
 	if (pathlen)
 		info->prev = &dummy;
+
+	if (trace2_is_enabled() && !traverse_trees_atexit_registered) {
+		atexit(trace2_traverse_trees_statistics_atexit);
+		traverse_trees_atexit_registered = 1;
+	}
 }
 
 char *make_traverse_path(char *path, size_t pathlen,
@@ -416,6 +441,12 @@ int traverse_trees(struct index_state *istate,
 	int interesting = 1;
 	char *traverse_path;
 
+	traverse_trees_count++;
+	traverse_trees_cur_depth++;
+
+	if (traverse_trees_cur_depth > traverse_trees_max_depth)
+		traverse_trees_max_depth = traverse_trees_cur_depth;
+
 	if (n >= ARRAY_SIZE(entry))
 		BUG("traverse_trees() called with too many trees (%d)", n);
 
@@ -515,6 +546,8 @@ int traverse_trees(struct index_state *istate,
 	free(traverse_path);
 	info->traverse_path = NULL;
 	strbuf_release(&base);
+
+	traverse_trees_cur_depth--;
 	return error;
 }
 
@@ -851,7 +884,14 @@ static int match_entry(const struct pathspec_item *item,
 	if (matchlen > pathlen) {
 		if (match[pathlen] != '/')
 			return 0;
-		if (!S_ISDIR(entry->mode) && !S_ISGITLINK(entry->mode))
+		/*
+		 * Reject non-directories as partial pathnames, except
+		 * when match is a submodule with a trailing slash and
+		 * nothing else (to handle 'submod/' and 'submod'
+		 * uniformly).
+		 */
+		if (!S_ISDIR(entry->mode) &&
+		    (!S_ISGITLINK(entry->mode) || matchlen > pathlen + 1))
 			return 0;
 	}
 

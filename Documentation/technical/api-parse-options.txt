@@ -232,9 +232,9 @@ There are some macros to easily define options:
 	will be overwritten, so this should only be used for options where
 	the last one specified on the command line wins.
 
-`OPT_PASSTHRU_ARGV(short, long, &argv_array_var, arg_str, description, flags)`::
+`OPT_PASSTHRU_ARGV(short, long, &strvec_var, arg_str, description, flags)`::
 	Introduce an option where all instances of it on the command-line will
-	be reconstructed into an argv_array. This is useful when you need to
+	be reconstructed into a strvec. This is useful when you need to
 	pass the command-line option, which can be specified multiple times,
 	to another command.
 

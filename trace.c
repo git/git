@@ -29,7 +29,7 @@ struct trace_key trace_perf_key = TRACE_KEY_INIT(PERFORMANCE);
 struct trace_key trace_setup_key = TRACE_KEY_INIT(SETUP);
 
 /* Get a trace file descriptor from "key" env variable. */
-static int get_trace_fd(struct trace_key *key)
+static int get_trace_fd(struct trace_key *key, const char *override_envvar)
 {
 	const char *trace;
 
@@ -37,7 +37,7 @@ static int get_trace_fd(struct trace_key *key)
 	if (key->initialized)
 		return key->fd;
 
-	trace = getenv(key->key);
+	trace = override_envvar ? override_envvar : getenv(key->key);
 
 	if (!trace || !strcmp(trace, "") ||
 	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
@@ -66,6 +66,18 @@ static int get_trace_fd(struct trace_key *key)
 
 	key->initialized = 1;
 	return key->fd;
+}
+
+void trace_override_envvar(struct trace_key *key, const char *value)
+{
+	trace_disable(key);
+	key->initialized = 0;
+
+	/*
+	 * Invoke get_trace_fd() to initialize key using the given value
+	 * instead of the value of the environment variable.
+	 */
+	get_trace_fd(key, value);
 }
 
 void trace_disable(struct trace_key *key)
@@ -112,7 +124,7 @@ static int prepare_trace_line(const char *file, int line,
 
 static void trace_write(struct trace_key *key, const void *buf, unsigned len)
 {
-	if (write_in_full(get_trace_fd(key), buf, len) < 0) {
+	if (write_in_full(get_trace_fd(key, NULL), buf, len) < 0) {
 		warning("unable to write trace for %s: %s",
 			key->key, strerror(errno));
 		trace_disable(key);
@@ -383,7 +395,7 @@ void trace_repo_setup(const char *prefix)
 
 int trace_want(struct trace_key *key)
 {
-	return !!get_trace_fd(key);
+	return !!get_trace_fd(key, NULL);
 }
 
 #if defined(HAVE_CLOCK_GETTIME) && defined(HAVE_CLOCK_MONOTONIC)

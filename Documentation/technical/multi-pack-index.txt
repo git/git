@@ -43,8 +43,9 @@ Design Details
   a change in format.
 
 - The MIDX keeps only one record per object ID. If an object appears
-  in multiple packfiles, then the MIDX selects the copy in the most-
-  recently modified packfile.
+  in multiple packfiles, then the MIDX selects the copy in the
+  preferred packfile, otherwise selecting from the most-recently
+  modified packfile.
 
 - If there exist packfiles in the pack directory not registered in
   the MIDX, then those packfiles are loaded into the `packed_git`
@@ -59,10 +60,6 @@ Design Details
 
 Future Work
 -----------
-
-- Add a 'verify' subcommand to the 'git midx' builtin to verify the
-  contents of the multi-pack-index file match the offsets listed in
-  the corresponding pack-indexes.
 
 - The multi-pack-index allows many packfiles, especially in a context
   where repacking is expensive (such as a very large repo), or

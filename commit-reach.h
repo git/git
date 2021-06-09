@@ -27,7 +27,9 @@ struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
 
 struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 
-int is_descendant_of(struct commit *commit, struct commit_list *with_commit);
+int repo_is_descendant_of(struct repository *r,
+			  struct commit *commit,
+			  struct commit_list *with_commit);
 int repo_in_merge_bases(struct repository *r,
 			struct commit *commit,
 			struct commit *reference);
@@ -85,7 +87,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 				 unsigned int with_flag,
 				 unsigned int assign_flag,
 				 time_t min_commit_date,
-				 uint32_t min_generation);
+				 timestamp_t min_generation);
 int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 		       int commit_date_cutoff);
 

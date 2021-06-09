@@ -28,26 +28,27 @@ enum parse_opt_type {
 };
 
 enum parse_opt_flags {
-	PARSE_OPT_KEEP_DASHDASH = 1,
-	PARSE_OPT_STOP_AT_NON_OPTION = 2,
-	PARSE_OPT_KEEP_ARGV0 = 4,
-	PARSE_OPT_KEEP_UNKNOWN = 8,
-	PARSE_OPT_NO_INTERNAL_HELP = 16,
-	PARSE_OPT_ONE_SHOT = 32
+	PARSE_OPT_KEEP_DASHDASH = 1 << 0,
+	PARSE_OPT_STOP_AT_NON_OPTION = 1 << 1,
+	PARSE_OPT_KEEP_ARGV0 = 1 << 2,
+	PARSE_OPT_KEEP_UNKNOWN = 1 << 3,
+	PARSE_OPT_NO_INTERNAL_HELP = 1 << 4,
+	PARSE_OPT_ONE_SHOT = 1 << 5,
 };
 
 enum parse_opt_option_flags {
-	PARSE_OPT_OPTARG  = 1,
-	PARSE_OPT_NOARG   = 2,
-	PARSE_OPT_NONEG   = 4,
-	PARSE_OPT_HIDDEN  = 8,
-	PARSE_OPT_LASTARG_DEFAULT = 16,
-	PARSE_OPT_NODASH = 32,
-	PARSE_OPT_LITERAL_ARGHELP = 64,
-	PARSE_OPT_SHELL_EVAL = 256,
-	PARSE_OPT_NOCOMPLETE = 512,
-	PARSE_OPT_COMP_ARG = 1024,
-	PARSE_OPT_CMDMODE = 2048
+	PARSE_OPT_OPTARG  = 1 << 0,
+	PARSE_OPT_NOARG   = 1 << 1,
+	PARSE_OPT_NONEG   = 1 << 2,
+	PARSE_OPT_HIDDEN  = 1 << 3,
+	PARSE_OPT_LASTARG_DEFAULT = 1 << 4,
+	PARSE_OPT_NODASH = 1 << 5,
+	PARSE_OPT_LITERAL_ARGHELP = 1 << 6,
+	PARSE_OPT_FROM_ALIAS = 1 << 7,
+	PARSE_OPT_SHELL_EVAL = 1 << 8,
+	PARSE_OPT_NOCOMPLETE = 1 << 9,
+	PARSE_OPT_COMP_ARG = 1 << 10,
+	PARSE_OPT_CMDMODE = 1 << 11,
 };
 
 enum parse_opt_result {
@@ -82,9 +83,9 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *   stores pointers to the values to be filled.
  *
  * `argh`::
- *   token to explain the kind of argument this option wants. Keep it
- *   homogeneous across the repository. Should be wrapped by N_() for
- *   translation.
+ *   token to explain the kind of argument this option wants. Does not
+ *   begin in capital letter, and does not end with a full stop.
+ *   Should be wrapped by N_() for translation.
  *
  * `help`::
  *   the short help associated to what the option does.
@@ -314,7 +315,7 @@ int parse_opt_passthru_argv(const struct option *, const char *, int);
 #define OPT__FORCE(var, h, f) OPT_COUNTUP_F('f', "force",   (var), (h), (f))
 #define OPT__ABBREV(var)  \
 	{ OPTION_CALLBACK, 0, "abbrev", (var), N_("n"),	\
-	  N_("use <n> digits to display SHA-1s"),	\
+	  N_("use <n> digits to display object names"),	\
 	  PARSE_OPT_OPTARG, &parse_opt_abbrev_cb, 0 }
 #define OPT__COLOR(var, h) \
 	OPT_COLOR_FLAG(0, "color", (var), (h))
@@ -336,5 +337,6 @@ int parse_opt_passthru_argv(const struct option *, const char *, int);
 #define OPT_CLEANUP(v) OPT_STRING(0, "cleanup", v, N_("mode"), N_("how to strip spaces and #comments from message"))
 #define OPT_PATHSPEC_FROM_FILE(v) OPT_FILENAME(0, "pathspec-from-file", v, N_("read pathspec from file"))
 #define OPT_PATHSPEC_FILE_NUL(v)  OPT_BOOL(0, "pathspec-file-nul", v, N_("with --pathspec-from-file, pathspec elements are separated with NUL character"))
+#define OPT_AUTOSTASH(v) OPT_BOOL(0, "autostash", v, N_("automatically stash/stash pop before and after"))
 
 #endif

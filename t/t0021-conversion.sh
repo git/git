@@ -2,6 +2,9 @@
 
 test_description='blob conversion via gitattributes'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 TEST_ROOT="$PWD"
@@ -23,10 +26,6 @@ generate_random_characters () {
 		perl -pe "s/./chr((ord($&) % 26) + ord('a'))/sge" >"$TEST_ROOT/$NAME"
 }
 
-file_size () {
-	test-tool path-utils file-size "$1"
-}
-
 filter_git () {
 	rm -f *.log &&
 	git "$@"
@@ -35,7 +34,7 @@ filter_git () {
 # Compare two files and ensure that `clean` and `smudge` respectively are
 # called at least once if specified in the `expect` file. The actual
 # invocation count is not relevant because their number can vary.
-# c.f. http://lore.kernel.org/git/xmqqshv18i8i.fsf@gitster.mtv.corp.google.com/
+# c.f. https://lore.kernel.org/git/xmqqshv18i8i.fsf@gitster.mtv.corp.google.com/
 test_cmp_count () {
 	expect=$1
 	actual=$2
@@ -50,7 +49,7 @@ test_cmp_count () {
 
 # Compare two files but exclude all `clean` invocations because Git can
 # call `clean` zero or more times.
-# c.f. http://lore.kernel.org/git/xmqqshv18i8i.fsf@gitster.mtv.corp.google.com/
+# c.f. https://lore.kernel.org/git/xmqqshv18i8i.fsf@gitster.mtv.corp.google.com/
 test_cmp_exclude_clean () {
 	expect=$1
 	actual=$2
@@ -258,6 +257,30 @@ test_expect_success 'required filter clean failure' '
 	test_must_fail git add test.fc
 '
 
+test_expect_success 'required filter with absent clean field' '
+	test_config filter.absentclean.smudge cat &&
+	test_config filter.absentclean.required true &&
+
+	echo "*.ac filter=absentclean" >.gitattributes &&
+
+	echo test >test.ac &&
+	test_must_fail git add test.ac 2>stderr &&
+	test_i18ngrep "fatal: test.ac: clean filter .absentclean. failed" stderr
+'
+
+test_expect_success 'required filter with absent smudge field' '
+	test_config filter.absentsmudge.clean cat &&
+	test_config filter.absentsmudge.required true &&
+
+	echo "*.as filter=absentsmudge" >.gitattributes &&
+
+	echo test >test.as &&
+	git add test.as &&
+	rm -f test.as &&
+	test_must_fail git checkout -- test.as 2>stderr &&
+	test_i18ngrep "fatal: test.as: smudge filter absentsmudge failed" stderr
+'
+
 test_expect_success 'filtering large input to small output should use little memory' '
 	test_config filter.devnull.clean "cat >/dev/null" &&
 	test_config filter.devnull.required true &&
@@ -361,9 +384,9 @@ test_expect_success PERL 'required process filter should filter data' '
 		cp "$TEST_ROOT/test3 '\''sq'\'',\$x=.o" "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 		>test4-empty.r &&
 
-		S=$(file_size test.r) &&
-		S2=$(file_size test2.r) &&
-		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		S=$(test_file_size test.r) &&
+		S2=$(test_file_size test2.r) &&
+		S3=$(test_file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
 		M=$(git hash-object test.r) &&
 		M2=$(git hash-object test2.r) &&
 		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
@@ -382,8 +405,8 @@ test_expect_success PERL 'required process filter should filter data' '
 		test_cmp_count expected.log debug.log &&
 
 		git commit -m "test commit 2" &&
-		MASTER=$(git rev-parse --verify master) &&
-		META="ref=refs/heads/master treeish=$MASTER" &&
+		MAIN=$(git rev-parse --verify main) &&
+		META="ref=refs/heads/main treeish=$MAIN" &&
 		rm -f test2.r "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 
 		filter_git checkout --quiet --no-progress . &&
@@ -408,7 +431,7 @@ test_expect_success PERL 'required process filter should filter data' '
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		filter_git checkout --quiet --no-progress master &&
+		filter_git checkout --quiet --no-progress main &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -432,23 +455,23 @@ test_expect_success PERL 'required process filter should filter data for various
 	(
 		cd repo &&
 
-		S=$(file_size test.r) &&
-		S2=$(file_size test2.r) &&
-		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		S=$(test_file_size test.r) &&
+		S2=$(test_file_size test2.r) &&
+		S3=$(test_file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
 		M=$(git hash-object test.r) &&
 		M2=$(git hash-object test2.r) &&
 		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
 		EMPTY=$(git hash-object /dev/null) &&
 
-		MASTER=$(git rev-parse --verify master) &&
+		MAIN=$(git rev-parse --verify main) &&
 
 		cp "$TEST_ROOT/test.o" test5.r &&
 		git add test5.r &&
 		git commit -m "test commit 3" &&
 		git checkout empty-branch &&
-		filter_git rebase --onto empty-branch master^^ master &&
-		MASTER2=$(git rev-parse --verify master) &&
-		META="ref=refs/heads/master treeish=$MASTER2" &&
+		filter_git rebase --onto empty-branch main^^ main &&
+		MAIN2=$(git rev-parse --verify main) &&
+		META="ref=refs/heads/main treeish=$MAIN2" &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -462,8 +485,8 @@ test_expect_success PERL 'required process filter should filter data for various
 		test_cmp_exclude_clean expected.log debug.log &&
 
 		git reset --hard empty-branch &&
-		filter_git reset --hard $MASTER &&
-		META="treeish=$MASTER" &&
+		filter_git reset --hard $MAIN &&
+		META="treeish=$MAIN" &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -475,10 +498,10 @@ test_expect_success PERL 'required process filter should filter data for various
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		git branch old-master $MASTER &&
+		git branch old-main $MAIN &&
 		git reset --hard empty-branch &&
-		filter_git reset --hard old-master &&
-		META="ref=refs/heads/old-master treeish=$MASTER" &&
+		filter_git reset --hard old-main &&
+		META="ref=refs/heads/old-main treeish=$MAIN" &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -491,9 +514,9 @@ test_expect_success PERL 'required process filter should filter data for various
 		test_cmp_exclude_clean expected.log debug.log &&
 
 		git checkout -b merge empty-branch &&
-		git branch -f master $MASTER2 &&
-		filter_git merge master &&
-		META="treeish=$MASTER2" &&
+		git branch -f main $MAIN2 &&
+		filter_git merge main &&
+		META="treeish=$MAIN2" &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -506,8 +529,8 @@ test_expect_success PERL 'required process filter should filter data for various
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		filter_git archive master >/dev/null &&
-		META="ref=refs/heads/master treeish=$MASTER2" &&
+		filter_git archive main >/dev/null &&
+		META="ref=refs/heads/main treeish=$MAIN2" &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -520,7 +543,7 @@ test_expect_success PERL 'required process filter should filter data for various
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		TREE="$(git rev-parse $MASTER2^{tree})" &&
+		TREE="$(git rev-parse $MAIN2^{tree})" &&
 		filter_git archive $TREE >/dev/null &&
 		META="treeish=$TREE" &&
 		cat >expected.log <<-EOF &&
@@ -549,7 +572,7 @@ test_expect_success PERL 'required process filter takes precedence' '
 
 		echo "*.r filter=protocol" >.gitattributes &&
 		cp "$TEST_ROOT/test.o" test.r &&
-		S=$(file_size test.r) &&
+		S=$(test_file_size test.r) &&
 
 		# Check that the process filter is invoked here
 		filter_git add . &&
@@ -573,7 +596,7 @@ test_expect_success PERL 'required process filter should be used only for "clean
 
 		echo "*.r filter=protocol" >.gitattributes &&
 		cp "$TEST_ROOT/test.o" test.r &&
-		S=$(file_size test.r) &&
+		S=$(test_file_size test.r) &&
 
 		filter_git add . &&
 		cat >expected.log <<-EOF &&
@@ -697,9 +720,9 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 		echo "this is going to fail" >smudge-write-fail.o &&
 		cp smudge-write-fail.o smudge-write-fail.r &&
 
-		S=$(file_size test.r) &&
-		S2=$(file_size test2.r) &&
-		SF=$(file_size smudge-write-fail.r) &&
+		S=$(test_file_size test.r) &&
+		S2=$(test_file_size test2.r) &&
+		SF=$(test_file_size smudge-write-fail.r) &&
 		M=$(git hash-object test.r) &&
 		M2=$(git hash-object test2.r) &&
 		MF=$(git hash-object smudge-write-fail.r) &&
@@ -752,9 +775,9 @@ test_expect_success PERL 'process filter should not be restarted if it signals a
 		echo "this will cause an error" >error.o &&
 		cp error.o error.r &&
 
-		S=$(file_size test.r) &&
-		S2=$(file_size test2.r) &&
-		SE=$(file_size error.r) &&
+		S=$(test_file_size test.r) &&
+		S2=$(test_file_size test2.r) &&
+		SE=$(test_file_size error.r) &&
 		M=$(git hash-object test.r) &&
 		M2=$(git hash-object test2.r) &&
 		ME=$(git hash-object error.r) &&
@@ -797,7 +820,7 @@ test_expect_success PERL 'process filter abort stops processing of all further f
 
 		M="blob=$(git hash-object abort.r)" &&
 		rm -f debug.log &&
-		SA=$(file_size abort.r) &&
+		SA=$(test_file_size abort.r) &&
 
 		git add . &&
 		rm -f *.r &&
@@ -859,9 +882,9 @@ test_expect_success PERL 'delayed checkout in process filter' '
 		git commit -m "test commit"
 	) &&
 
-	S=$(file_size "$TEST_ROOT/test.o") &&
-	PM="ref=refs/heads/master treeish=$(git -C repo rev-parse --verify master) " &&
-	M="${PM}blob=$(git -C repo rev-parse --verify master:test.a)" &&
+	S=$(test_file_size "$TEST_ROOT/test.o") &&
+	PM="ref=refs/heads/main treeish=$(git -C repo rev-parse --verify main) " &&
+	M="${PM}blob=$(git -C repo rev-parse --verify main:test.a)" &&
 	cat >a.exp <<-EOF &&
 		START
 		init handshake complete
@@ -955,6 +978,87 @@ test_expect_success PERL 'invalid file in delayed checkout' '
 	rm -rf repo-cloned &&
 	test_must_fail git clone repo repo-cloned 2>git-stderr.log &&
 	grep "error: external filter .* signaled that .unfiltered. is now available although it has not been delayed earlier" git-stderr.log
+'
+
+for mode in 'case' 'utf-8'
+do
+	case "$mode" in
+	case)	dir='A' symlink='a' mode_prereq='CASE_INSENSITIVE_FS' ;;
+	utf-8)
+		dir=$(printf "\141\314\210") symlink=$(printf "\303\244")
+		mode_prereq='UTF8_NFD_TO_NFC' ;;
+	esac
+
+	test_expect_success PERL,SYMLINKS,$mode_prereq \
+	"delayed checkout with $mode-collision don't write to the wrong place" '
+		test_config_global filter.delay.process \
+			"\"$TEST_ROOT/rot13-filter.pl\" --always-delay delayed.log clean smudge delay" &&
+		test_config_global filter.delay.required true &&
+
+		git init $mode-collision &&
+		(
+			cd $mode-collision &&
+			mkdir target-dir &&
+
+			empty_oid=$(printf "" | git hash-object -w --stdin) &&
+			symlink_oid=$(printf "%s" "$PWD/target-dir" | git hash-object -w --stdin) &&
+			attr_oid=$(echo "$dir/z filter=delay" | git hash-object -w --stdin) &&
+
+			cat >objs <<-EOF &&
+			100644 blob $empty_oid	$dir/x
+			100644 blob $empty_oid	$dir/y
+			100644 blob $empty_oid	$dir/z
+			120000 blob $symlink_oid	$symlink
+			100644 blob $attr_oid	.gitattributes
+			EOF
+
+			git update-index --index-info <objs &&
+			git commit -m "test commit"
+		) &&
+
+		git clone $mode-collision $mode-collision-cloned &&
+		# Make sure z was really delayed
+		grep "IN: smudge $dir/z .* \\[DELAYED\\]" $mode-collision-cloned/delayed.log &&
+
+		# Should not create $dir/z at $symlink/z
+		test_path_is_missing $mode-collision/target-dir/z
+	'
+done
+
+test_expect_success PERL,SYMLINKS,CASE_INSENSITIVE_FS \
+"delayed checkout with submodule collision don't write to the wrong place" '
+	git init collision-with-submodule &&
+	(
+		cd collision-with-submodule &&
+		git config filter.delay.process "\"$TEST_ROOT/rot13-filter.pl\" --always-delay delayed.log clean smudge delay" &&
+		git config filter.delay.required true &&
+
+		# We need Git to treat the submodule "a" and the
+		# leading dir "A" as different paths in the index.
+		git config --local core.ignoreCase false &&
+
+		empty_oid=$(printf "" | git hash-object -w --stdin) &&
+		attr_oid=$(echo "A/B/y filter=delay" | git hash-object -w --stdin) &&
+		cat >objs <<-EOF &&
+		100644 blob $empty_oid	A/B/x
+		100644 blob $empty_oid	A/B/y
+		100644 blob $attr_oid	.gitattributes
+		EOF
+		git update-index --index-info <objs &&
+
+		git init a &&
+		mkdir target-dir &&
+		symlink_oid=$(printf "%s" "$PWD/target-dir" | git -C a hash-object -w --stdin) &&
+		echo "120000 blob $symlink_oid	b" >objs &&
+		git -C a update-index --index-info <objs &&
+		git -C a commit -m sub &&
+		git submodule add ./a &&
+		git commit -m super &&
+
+		git checkout --recurse-submodules . &&
+		grep "IN: smudge A/B/y .* \\[DELAYED\\]" delayed.log &&
+		test_path_is_missing target-dir/y
+	)
 '
 
 test_done

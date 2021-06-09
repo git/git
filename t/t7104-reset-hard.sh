@@ -33,7 +33,7 @@ test_expect_success 'reset --hard should restore unmerged ones' '
 
 '
 
-test_expect_success 'reset --hard did not corrupt index or cached-tree' '
+test_expect_success 'reset --hard did not corrupt index or cache-tree' '
 
 	T=$(git write-tree) &&
 	rm -f .git/index &&

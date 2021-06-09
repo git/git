@@ -302,9 +302,9 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				N_("reset HEAD, index and working tree"), MERGE),
 		OPT_SET_INT(0, "keep", &reset_type,
 				N_("reset HEAD but keep local changes"), KEEP),
-		{ OPTION_CALLBACK, 0, "recurse-submodules", NULL,
+		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
 			    "reset", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater },
+			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
 				N_("record only the fact that removed paths will be added later")),
@@ -423,9 +423,9 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			char *ref = NULL;
 			int err;
 
-			dwim_ref(rev, strlen(rev), &dummy, &ref);
+			dwim_ref(rev, strlen(rev), &dummy, &ref, 0);
 			if (ref && !starts_with(ref, "refs/"))
-				ref = NULL;
+				FREE_AND_NULL(ref);
 
 			err = reset_index(ref, &oid, reset_type, quiet);
 			if (reset_type == KEEP && !err)

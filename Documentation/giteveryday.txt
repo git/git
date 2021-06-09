@@ -278,13 +278,13 @@ $ git am -3 -i -s ./+to-apply <4>
 $ compile/test
 $ git switch -c hold/linus && git am -3 -i -s ./+hold-linus <5>
 $ git switch topic/one && git rebase master <6>
-$ git switch -C pu next <7>
+$ git switch -C seen next <7>
 $ git merge topic/one topic/two && git merge hold/linus <8>
 $ git switch maint
 $ git cherry-pick master~4 <9>
 $ compile/test
 $ git tag -s -m "GIT 0.99.9x" v0.99.9x <10>
-$ git fetch ko && for branch in master maint next pu <11>
+$ git fetch ko && for branch in master maint next seen <11>
     do
 	git show-branch ko/$branch $branch <12>
     done
@@ -294,14 +294,14 @@ $ git push --follow-tags ko <13>
 <1> see what you were in the middle of doing, if anything.
 <2> see which branches haven't been merged into `master` yet.
 Likewise for any other integration branches e.g. `maint`, `next`
-and `pu` (potential updates).
+and `seen`.
 <3> read mails, save ones that are applicable, and save others
 that are not quite ready (other mail readers are available).
 <4> apply them, interactively, with your sign-offs.
 <5> create topic branch as needed and apply, again with sign-offs.
 <6> rebase internal topic branch that has not been merged to the
 master or exposed as a part of a stable branch.
-<7> restart `pu` every time from the next.
+<7> restart `seen` every time from the next.
 <8> and bundle topic branches still cooking.
 <9> backport a critical fix.
 <10> create a signed tag.
@@ -323,7 +323,7 @@ repository at kernel.org, and looks like this:
 	fetch = refs/heads/*:refs/remotes/ko/*
 	push = refs/heads/master
 	push = refs/heads/next
-	push = +refs/heads/pu
+	push = +refs/heads/seen
 	push = refs/heads/maint
 ------------
 

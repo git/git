@@ -19,24 +19,23 @@
  * CE_SKIP_WORKTREE marked. If you want to exclude files, make sure you have
  * loaded the index first.
  *
- * - Prepare `struct dir_struct dir` and clear it with `memset(&dir, 0,
- * sizeof(dir))`.
+ * - Prepare `struct dir_struct dir` using `dir_init()` function.
  *
  * - To add single exclude pattern, call `add_pattern_list()` and then
  *   `add_pattern()`.
  *
  * - To add patterns from a file (e.g. `.git/info/exclude`), call
- *   `add_patterns_from_file()` , and/or set `dir.exclude_per_dir`.  A
- *   short-hand function `setup_standard_excludes()` can be used to set
- *   up the standard set of exclude settings.
+ *   `add_patterns_from_file()` , and/or set `dir.exclude_per_dir`.
  *
- * - Set options described in the Data Structure section above.
+ * - A short-hand function `setup_standard_excludes()` can be used to set
+ *   up the standard set of exclude settings, instead of manually calling
+ *   the add_pattern*() family of functions.
  *
- * - Call `read_directory()`.
+ * - Call `fill_directory()`.
  *
- * - Use `dir.entries[]`.
+ * - Use `dir.entries[]` and `dir.ignored[]`.
  *
- * - Call `clear_directory()` when none of the contained elements are no longer in use.
+ * - Call `dir_clear()` when the contained elements are no longer in use.
  *
  */
 
@@ -337,7 +336,13 @@ struct dir_struct {
 	struct oid_stat ss_info_exclude;
 	struct oid_stat ss_excludes_file;
 	unsigned unmanaged_exclude_files;
+
+	/* Stats about the traversal */
+	unsigned visited_paths;
+	unsigned visited_directories;
 };
+
+struct dirent *readdir_skip_dot_and_dotdot(DIR *dirp);
 
 /*Count the number of slashes for string s*/
 int count_slashes(const char *s);
@@ -355,12 +360,14 @@ int count_slashes(const char *s);
 int simple_length(const char *match);
 int no_wildcard(const char *string);
 char *common_prefix(const struct pathspec *pathspec);
-int match_pathspec(const struct index_state *istate,
+int match_pathspec(struct index_state *istate,
 		   const struct pathspec *pathspec,
 		   const char *name, int namelen,
 		   int prefix, char *seen, int is_dir);
 int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
 int within_depth(const char *name, int namelen, int depth, int max_depth);
+
+void dir_init(struct dir_struct *dir);
 
 int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,
@@ -419,7 +426,8 @@ int hashmap_contains_parent(struct hashmap *map,
 struct pattern_list *add_pattern_list(struct dir_struct *dir,
 				      int group_type, const char *src);
 int add_patterns_from_file_to_list(const char *fname, const char *base, int baselen,
-				   struct pattern_list *pl, struct  index_state *istate);
+				   struct pattern_list *pl, struct index_state *istate,
+				   unsigned flags);
 void add_patterns_from_file(struct dir_struct *, const char *fname);
 int add_patterns_from_blob_to_list(struct object_id *oid,
 				   const char *base, int baselen,
@@ -428,7 +436,7 @@ void parse_path_pattern(const char **string, int *patternlen, unsigned *flags, i
 void add_pattern(const char *string, const char *base,
 		 int baselen, struct pattern_list *pl, int srcpos);
 void clear_pattern_list(struct pattern_list *pl);
-void clear_directory(struct dir_struct *dir);
+void dir_clear(struct dir_struct *dir);
 
 int repo_file_exists(struct repository *repo, const char *path);
 int file_exists(const char *);
@@ -447,6 +455,8 @@ int is_empty_dir(const char *dir);
 
 void setup_standard_excludes(struct dir_struct *dir);
 
+char *get_sparse_checkout_filename(void);
+int get_sparse_checkout_patterns(struct pattern_list *pl);
 
 /* Constants for remove_dir_recursively: */
 
@@ -489,12 +499,12 @@ int git_fnmatch(const struct pathspec_item *item,
 		const char *pattern, const char *string,
 		int prefix);
 
-int submodule_path_match(const struct index_state *istate,
+int submodule_path_match(struct index_state *istate,
 			 const struct pathspec *ps,
 			 const char *submodule_name,
 			 char *seen);
 
-static inline int ce_path_match(const struct index_state *istate,
+static inline int ce_path_match(struct index_state *istate,
 				const struct cache_entry *ce,
 				const struct pathspec *pathspec,
 				char *seen)
@@ -503,7 +513,7 @@ static inline int ce_path_match(const struct index_state *istate,
 			      S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode));
 }
 
-static inline int dir_path_match(const struct index_state *istate,
+static inline int dir_path_match(struct index_state *istate,
 				 const struct dir_entry *ent,
 				 const struct pathspec *pathspec,
 				 int prefix, char *seen)

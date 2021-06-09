@@ -14,21 +14,31 @@ static int grep_source_load(struct grep_source *gs);
 static int grep_source_is_binary(struct grep_source *gs,
 				 struct index_state *istate);
 
-static struct grep_opt grep_defaults;
-
-#ifdef USE_LIBPCRE2
-static pcre2_general_context *pcre2_global_context;
-
-static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
+static void std_output(struct grep_opt *opt, const void *buf, size_t size)
 {
-	return malloc(size);
+	fwrite(buf, size, 1, stdout);
 }
 
-static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
-{
-	free(pointer);
-}
-#endif
+static struct grep_opt grep_defaults = {
+	.relative = 1,
+	.pathname = 1,
+	.max_depth = -1,
+	.pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED,
+	.colors = {
+		[GREP_COLOR_CONTEXT] = "",
+		[GREP_COLOR_FILENAME] = "",
+		[GREP_COLOR_FUNCTION] = "",
+		[GREP_COLOR_LINENO] = "",
+		[GREP_COLOR_COLUMNNO] = "",
+		[GREP_COLOR_MATCH_CONTEXT] = GIT_COLOR_BOLD_RED,
+		[GREP_COLOR_MATCH_SELECTED] = GIT_COLOR_BOLD_RED,
+		[GREP_COLOR_SELECTED] = "",
+		[GREP_COLOR_SEP] = GIT_COLOR_CYAN,
+	},
+	.only_matching = 0,
+	.color = -1,
+	.output = std_output,
+};
 
 static const char *color_grep_slots[] = {
 	[GREP_COLOR_CONTEXT]	    = "context",
@@ -41,50 +51,6 @@ static const char *color_grep_slots[] = {
 	[GREP_COLOR_SELECTED]	    = "selected",
 	[GREP_COLOR_SEP]	    = "separator",
 };
-
-static void std_output(struct grep_opt *opt, const void *buf, size_t size)
-{
-	fwrite(buf, size, 1, stdout);
-}
-
-static void color_set(char *dst, const char *color_bytes)
-{
-	xsnprintf(dst, COLOR_MAXLEN, "%s", color_bytes);
-}
-
-/*
- * Initialize the grep_defaults template with hardcoded defaults.
- * We could let the compiler do this, but without C99 initializers
- * the code gets unwieldy and unreadable, so...
- */
-void init_grep_defaults(struct repository *repo)
-{
-	struct grep_opt *opt = &grep_defaults;
-	static int run_once;
-
-	if (run_once)
-		return;
-	run_once++;
-
-	memset(opt, 0, sizeof(*opt));
-	opt->repo = repo;
-	opt->relative = 1;
-	opt->pathname = 1;
-	opt->max_depth = -1;
-	opt->pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
-	color_set(opt->colors[GREP_COLOR_CONTEXT], "");
-	color_set(opt->colors[GREP_COLOR_FILENAME], "");
-	color_set(opt->colors[GREP_COLOR_FUNCTION], "");
-	color_set(opt->colors[GREP_COLOR_LINENO], "");
-	color_set(opt->colors[GREP_COLOR_COLUMNNO], "");
-	color_set(opt->colors[GREP_COLOR_MATCH_CONTEXT], GIT_COLOR_BOLD_RED);
-	color_set(opt->colors[GREP_COLOR_MATCH_SELECTED], GIT_COLOR_BOLD_RED);
-	color_set(opt->colors[GREP_COLOR_SELECTED], "");
-	color_set(opt->colors[GREP_COLOR_SEP], GIT_COLOR_CYAN);
-	opt->only_matching = 0;
-	opt->color = -1;
-	opt->output = std_output;
-}
 
 static int parse_pattern_type_arg(const char *opt, const char *arg)
 {
@@ -114,6 +80,14 @@ int grep_config(const char *var, const char *value, void *cb)
 
 	if (userdiff_config(var, value) < 0)
 		return -1;
+
+	/*
+	 * The instance of grep_opt that we set up here is copied by
+	 * grep_init() to be used by each individual invocation.
+	 * When populating a new field of this structure here, be
+	 * sure to think about ownership -- e.g., you might need to
+	 * override the shallow copy in grep_init() with a deep copy.
+	 */
 
 	if (!strcmp(var, "grep.extendedregexp")) {
 		opt->extended_regexp_option = git_config_bool(var, value);
@@ -164,55 +138,16 @@ int grep_config(const char *var, const char *value, void *cb)
  * Initialize one instance of grep_opt and copy the
  * default values from the template we read the configuration
  * information in an earlier call to git_config(grep_config).
- *
- * If using PCRE, make sure that the library is configured
- * to use the same allocator as Git (e.g. nedmalloc on Windows).
- *
- * Any allocated memory needs to be released in grep_destroy().
  */
 void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix)
 {
-	struct grep_opt *def = &grep_defaults;
-	int i;
+	*opt = grep_defaults;
 
-#if defined(USE_LIBPCRE2)
-	if (!pcre2_global_context)
-		pcre2_global_context = pcre2_general_context_create(
-					pcre2_malloc, pcre2_free, NULL);
-#endif
-
-#ifdef USE_LIBPCRE1
-	pcre_malloc = malloc;
-	pcre_free = free;
-#endif
-
-	memset(opt, 0, sizeof(*opt));
 	opt->repo = repo;
 	opt->prefix = prefix;
 	opt->prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
 	opt->pattern_tail = &opt->pattern_list;
 	opt->header_tail = &opt->header_list;
-
-	opt->only_matching = def->only_matching;
-	opt->color = def->color;
-	opt->extended_regexp_option = def->extended_regexp_option;
-	opt->pattern_type_option = def->pattern_type_option;
-	opt->linenum = def->linenum;
-	opt->columnnum = def->columnnum;
-	opt->max_depth = def->max_depth;
-	opt->pathname = def->pathname;
-	opt->relative = def->relative;
-	opt->output = def->output;
-
-	for (i = 0; i < NR_GREP_COLORS; i++)
-		color_set(opt->colors[i], def->colors[i]);
-}
-
-void grep_destroy(void)
-{
-#ifdef USE_LIBPCRE2
-	pcre2_general_context_free(pcre2_global_context);
-#endif
 }
 
 static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, struct grep_opt *opt)
@@ -251,17 +186,7 @@ static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, st
 		break;
 
 	case GREP_PATTERN_TYPE_PCRE:
-#ifdef USE_LIBPCRE2
 		opt->pcre2 = 1;
-#else
-		/*
-		 * It's important that pcre1 always be assigned to
-		 * even when there's no USE_LIBPCRE* defined. We still
-		 * call the PCRE stub function, it just dies with
-		 * "cannot use Perl-compatible regexes[...]".
-		 */
-		opt->pcre1 = 1;
-#endif
 		break;
 	}
 }
@@ -405,93 +330,29 @@ static int is_fixed(const char *s, size_t len)
 	return 1;
 }
 
-#ifdef USE_LIBPCRE1
-static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
-{
-	const char *error;
-	int erroffset;
-	int options = PCRE_MULTILINE;
-	int study_options = 0;
-
-	if (opt->ignore_case) {
-		if (!opt->ignore_locale && has_non_ascii(p->pattern))
-			p->pcre1_tables = pcre_maketables();
-		options |= PCRE_CASELESS;
-	}
-	if (!opt->ignore_locale && is_utf8_locale() && has_non_ascii(p->pattern))
-		options |= PCRE_UTF8;
-
-	p->pcre1_regexp = pcre_compile(p->pattern, options, &error, &erroffset,
-				      p->pcre1_tables);
-	if (!p->pcre1_regexp)
-		compile_regexp_failed(p, error);
-
-#if defined(PCRE_CONFIG_JIT) && !defined(NO_LIBPCRE1_JIT)
-	pcre_config(PCRE_CONFIG_JIT, &p->pcre1_jit_on);
-	if (opt->debug)
-		fprintf(stderr, "pcre1_jit_on=%d\n", p->pcre1_jit_on);
-
-	if (p->pcre1_jit_on)
-		study_options = PCRE_STUDY_JIT_COMPILE;
-#endif
-
-	p->pcre1_extra_info = pcre_study(p->pcre1_regexp, study_options, &error);
-	if (!p->pcre1_extra_info && error)
-		die("%s", error);
-}
-
-static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
-		regmatch_t *match, int eflags)
-{
-	int ovector[30], ret, flags = PCRE_NO_UTF8_CHECK;
-
-	if (eflags & REG_NOTBOL)
-		flags |= PCRE_NOTBOL;
-
-	ret = pcre_exec(p->pcre1_regexp, p->pcre1_extra_info, line,
-			eol - line, 0, flags, ovector,
-			ARRAY_SIZE(ovector));
-
-	if (ret < 0 && ret != PCRE_ERROR_NOMATCH)
-		die("pcre_exec failed with error code %d", ret);
-	if (ret > 0) {
-		ret = 0;
-		match->rm_so = ovector[0];
-		match->rm_eo = ovector[1];
-	}
-
-	return ret;
-}
-
-static void free_pcre1_regexp(struct grep_pat *p)
-{
-	pcre_free(p->pcre1_regexp);
-#ifdef PCRE_CONFIG_JIT
-	if (p->pcre1_jit_on)
-		pcre_free_study(p->pcre1_extra_info);
-	else
-#endif
-		pcre_free(p->pcre1_extra_info);
-	pcre_free((void *)p->pcre1_tables);
-}
-#else /* !USE_LIBPCRE1 */
-static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
-{
-	die("cannot use Perl-compatible regexes when not compiled with USE_LIBPCRE");
-}
-
-static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
-		regmatch_t *match, int eflags)
-{
-	return 1;
-}
-
-static void free_pcre1_regexp(struct grep_pat *p)
-{
-}
-#endif /* !USE_LIBPCRE1 */
-
 #ifdef USE_LIBPCRE2
+#define GREP_PCRE2_DEBUG_MALLOC 0
+
+static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
+{
+	void *pointer = malloc(size);
+#if GREP_PCRE2_DEBUG_MALLOC
+	static int count = 1;
+	fprintf(stderr, "PCRE2:%p -> #%02d: alloc(%lu)\n", pointer, count++, size);
+#endif
+	return pointer;
+}
+
+static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
+{
+#if GREP_PCRE2_DEBUG_MALLOC
+	static int count = 1;
+	if (pointer)
+		fprintf(stderr, "PCRE2:%p -> #%02d: free()\n", pointer, count++);
+#endif
+	free(pointer);
+}
+
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
 {
 	int error;
@@ -502,17 +363,20 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	int patinforet;
 	size_t jitsizearg;
 
-	assert(opt->pcre2);
+	/*
+	 * Call pcre2_general_context_create() before calling any
+	 * other pcre2_*(). It sets up our malloc()/free() functions
+	 * with which everything else is allocated.
+	 */
+	p->pcre2_general_context = pcre2_general_context_create(
+		pcre2_malloc, pcre2_free, NULL);
+	if (!p->pcre2_general_context)
+		die("Couldn't allocate PCRE2 general context");
 
-	p->pcre2_compile_context = NULL;
-
-	/* pcre2_global_context is initialized in append_grep_pattern */
 	if (opt->ignore_case) {
 		if (!opt->ignore_locale && has_non_ascii(p->pattern)) {
-			if (!pcre2_global_context)
-				BUG("pcre2_global_context uninitialized");
-			p->pcre2_tables = pcre2_maketables(pcre2_global_context);
-			p->pcre2_compile_context = pcre2_compile_context_create(NULL);
+			p->pcre2_tables = pcre2_maketables(p->pcre2_general_context);
+			p->pcre2_compile_context = pcre2_compile_context_create(p->pcre2_general_context);
 			pcre2_set_character_tables(p->pcre2_compile_context,
 							p->pcre2_tables);
 		}
@@ -520,14 +384,20 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	}
 	if (!opt->ignore_locale && is_utf8_locale() && has_non_ascii(p->pattern) &&
 	    !(!opt->ignore_case && (p->fixed || p->is_fixed)))
-		options |= PCRE2_UTF;
+		options |= (PCRE2_UTF | PCRE2_MATCH_INVALID_UTF);
+
+#ifdef GIT_PCRE2_VERSION_10_36_OR_HIGHER
+	/* Work around https://bugs.exim.org/show_bug.cgi?id=2642 fixed in 10.36 */
+	if (PCRE2_MATCH_INVALID_UTF && options & (PCRE2_UTF | PCRE2_CASELESS))
+		options |= PCRE2_NO_START_OPTIMIZE;
+#endif
 
 	p->pcre2_pattern = pcre2_compile((PCRE2_SPTR)p->pattern,
 					 p->patternlen, options, &error, &erroffset,
 					 p->pcre2_compile_context);
 
 	if (p->pcre2_pattern) {
-		p->pcre2_match_data = pcre2_match_data_create_from_pattern(p->pcre2_pattern, NULL);
+		p->pcre2_match_data = pcre2_match_data_create_from_pattern(p->pcre2_pattern, p->pcre2_general_context);
 		if (!p->pcre2_match_data)
 			die("Couldn't allocate PCRE2 match data");
 	} else {
@@ -536,8 +406,6 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	}
 
 	pcre2_config(PCRE2_CONFIG_JIT, &p->pcre2_jit_on);
-	if (opt->debug)
-		fprintf(stderr, "pcre2_jit_on=%d\n", p->pcre2_jit_on);
 	if (p->pcre2_jit_on) {
 		jitret = pcre2_jit_compile(p->pcre2_pattern, PCRE2_JIT_COMPLETE);
 		if (jitret)
@@ -563,9 +431,6 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 			BUG("pcre2_pattern_info() failed: %d", patinforet);
 		if (jitsizearg == 0) {
 			p->pcre2_jit_on = 0;
-			if (opt->debug)
-				fprintf(stderr, "pcre2_jit_on=%d: (*NO_JIT) in regex\n",
-					p->pcre2_jit_on);
 			return;
 		}
 	}
@@ -611,16 +476,16 @@ static void free_pcre2_pattern(struct grep_pat *p)
 	pcre2_compile_context_free(p->pcre2_compile_context);
 	pcre2_code_free(p->pcre2_pattern);
 	pcre2_match_data_free(p->pcre2_match_data);
+#ifdef GIT_PCRE2_VERSION_10_34_OR_HIGHER
+	pcre2_maketables_free(p->pcre2_general_context, p->pcre2_tables);
+#else
 	free((void *)p->pcre2_tables);
+#endif
+	pcre2_general_context_free(p->pcre2_general_context);
 }
 #else /* !USE_LIBPCRE2 */
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
 {
-	/*
-	 * Unreachable until USE_LIBPCRE2 becomes synonymous with
-	 * USE_LIBPCRE. See the sibling comment in
-	 * grep_set_pattern_type_option().
-	 */
 	die("cannot use Perl-compatible regexes when not compiled with USE_LIBPCRE");
 }
 
@@ -644,8 +509,6 @@ static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
 	if (opt->ignore_case)
 		regflags |= REG_ICASE;
 	err = regcomp(&p->regexp, sb.buf, regflags);
-	if (opt->debug)
-		fprintf(stderr, "fixed %s\n", sb.buf);
 	strbuf_release(&sb);
 	if (err) {
 		char errbuf[1024];
@@ -680,7 +543,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 #endif
 	if (p->fixed || p->is_fixed) {
 #ifdef USE_LIBPCRE2
-		opt->pcre2 = 1;
 		if (p->is_fixed) {
 			compile_pcre2_pattern(p, opt);
 		} else {
@@ -721,11 +583,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 		return;
 	}
 
-	if (opt->pcre1) {
-		compile_pcre1_regexp(p, opt);
-		return;
-	}
-
 	if (p->ignore_case)
 		regflags |= REG_ICASE;
 	if (opt->extended_regexp_option)
@@ -751,7 +608,7 @@ static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 	case GREP_PATTERN: /* atom */
 	case GREP_PATTERN_HEAD:
 	case GREP_PATTERN_BODY:
-		x = xcalloc(1, sizeof (struct grep_expr));
+		CALLOC_ARRAY(x, 1);
 		x->node = GREP_NODE_ATOM;
 		x->u.atom = p;
 		*list = p->next;
@@ -781,7 +638,7 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 		if (!p->next)
 			die("--not not followed by pattern expression");
 		*list = p->next;
-		x = xcalloc(1, sizeof (struct grep_expr));
+		CALLOC_ARRAY(x, 1);
 		x->node = GREP_NODE_NOT;
 		x->u.unary = compile_pattern_not(list);
 		if (!x->u.unary)
@@ -806,7 +663,7 @@ static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 		y = compile_pattern_and(list);
 		if (!y)
 			die("--and not followed by pattern expression");
-		z = xcalloc(1, sizeof (struct grep_expr));
+		CALLOC_ARRAY(z, 1);
 		z->node = GREP_NODE_AND;
 		z->u.binary.left = x;
 		z->u.binary.right = y;
@@ -826,7 +683,7 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 		y = compile_pattern_or(list);
 		if (!y)
 			die("not a pattern expression %s", p->pattern);
-		z = xcalloc(1, sizeof (struct grep_expr));
+		CALLOC_ARRAY(z, 1);
 		z->node = GREP_NODE_OR;
 		z->u.binary.left = x;
 		z->u.binary.right = y;
@@ -838,87 +695,6 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
 {
 	return compile_pattern_or(list);
-}
-
-static void indent(int in)
-{
-	while (in-- > 0)
-		fputc(' ', stderr);
-}
-
-static void dump_grep_pat(struct grep_pat *p)
-{
-	switch (p->token) {
-	case GREP_AND: fprintf(stderr, "*and*"); break;
-	case GREP_OPEN_PAREN: fprintf(stderr, "*(*"); break;
-	case GREP_CLOSE_PAREN: fprintf(stderr, "*)*"); break;
-	case GREP_NOT: fprintf(stderr, "*not*"); break;
-	case GREP_OR: fprintf(stderr, "*or*"); break;
-
-	case GREP_PATTERN: fprintf(stderr, "pattern"); break;
-	case GREP_PATTERN_HEAD: fprintf(stderr, "pattern_head"); break;
-	case GREP_PATTERN_BODY: fprintf(stderr, "pattern_body"); break;
-	}
-
-	switch (p->token) {
-	default: break;
-	case GREP_PATTERN_HEAD:
-		fprintf(stderr, "<head %d>", p->field); break;
-	case GREP_PATTERN_BODY:
-		fprintf(stderr, "<body>"); break;
-	}
-	switch (p->token) {
-	default: break;
-	case GREP_PATTERN_HEAD:
-	case GREP_PATTERN_BODY:
-	case GREP_PATTERN:
-		fprintf(stderr, "%.*s", (int)p->patternlen, p->pattern);
-		break;
-	}
-	fputc('\n', stderr);
-}
-
-static void dump_grep_expression_1(struct grep_expr *x, int in)
-{
-	indent(in);
-	switch (x->node) {
-	case GREP_NODE_TRUE:
-		fprintf(stderr, "true\n");
-		break;
-	case GREP_NODE_ATOM:
-		dump_grep_pat(x->u.atom);
-		break;
-	case GREP_NODE_NOT:
-		fprintf(stderr, "(not\n");
-		dump_grep_expression_1(x->u.unary, in+1);
-		indent(in);
-		fprintf(stderr, ")\n");
-		break;
-	case GREP_NODE_AND:
-		fprintf(stderr, "(and\n");
-		dump_grep_expression_1(x->u.binary.left, in+1);
-		dump_grep_expression_1(x->u.binary.right, in+1);
-		indent(in);
-		fprintf(stderr, ")\n");
-		break;
-	case GREP_NODE_OR:
-		fprintf(stderr, "(or\n");
-		dump_grep_expression_1(x->u.binary.left, in+1);
-		dump_grep_expression_1(x->u.binary.right, in+1);
-		indent(in);
-		fprintf(stderr, ")\n");
-		break;
-	}
-}
-
-static void dump_grep_expression(struct grep_opt *opt)
-{
-	struct grep_expr *x = opt->pattern_expression;
-
-	if (opt->all_match)
-		fprintf(stderr, "[all-match]\n");
-	dump_grep_expression_1(x, 0);
-	fflush(NULL);
 }
 
 static struct grep_expr *grep_true_expr(void)
@@ -1001,7 +777,7 @@ static struct grep_expr *grep_splice_or(struct grep_expr *x, struct grep_expr *y
 	return z;
 }
 
-static void compile_grep_patterns_real(struct grep_opt *opt)
+void compile_grep_patterns(struct grep_opt *opt)
 {
 	struct grep_pat *p;
 	struct grep_expr *header_expr = prep_header_patterns(opt);
@@ -1021,7 +797,7 @@ static void compile_grep_patterns_real(struct grep_opt *opt)
 
 	if (opt->all_match || header_expr)
 		opt->extended = 1;
-	else if (!opt->extended && !opt->debug)
+	else if (!opt->extended)
 		return;
 
 	p = opt->pattern_list;
@@ -1042,13 +818,6 @@ static void compile_grep_patterns_real(struct grep_opt *opt)
 		opt->pattern_expression = grep_or_expr(opt->pattern_expression,
 						       header_expr);
 	opt->all_match = 1;
-}
-
-void compile_grep_patterns(struct grep_opt *opt)
-{
-	compile_grep_patterns_real(opt);
-	if (opt->debug)
-		dump_grep_expression(opt);
 }
 
 static void free_pattern_expr(struct grep_expr *x)
@@ -1079,9 +848,7 @@ void free_grep_patterns(struct grep_opt *opt)
 		case GREP_PATTERN: /* atom */
 		case GREP_PATTERN_HEAD:
 		case GREP_PATTERN_BODY:
-			if (p->pcre1_regexp)
-				free_pcre1_regexp(p);
-			else if (p->pcre2_pattern)
+			if (p->pcre2_pattern)
 				free_pcre2_pattern(p);
 			else
 				regfree(&p->regexp);
@@ -1144,9 +911,7 @@ static int patmatch(struct grep_pat *p, char *line, char *eol,
 {
 	int hit;
 
-	if (p->pcre1_regexp)
-		hit = !pcre1match(p, line, eol, match, eflags);
-	else if (p->pcre2_pattern)
+	if (p->pcre2_pattern)
 		hit = !pcre2match(p, line, eol, match, eflags);
 	else
 		hit = !regexec_buf(&p->regexp, line, eol - line, 1, match,
@@ -1729,7 +1494,7 @@ static int fill_textconv_grep(struct repository *r,
 		fill_filespec(df, gs->identifier, 1, 0100644);
 		break;
 	case GREP_SOURCE_FILE:
-		fill_filespec(df, &null_oid, 0, 0100644);
+		fill_filespec(df, null_oid(), 0, 0100644);
 		break;
 	default:
 		BUG("attempt to textconv something without a path?");
@@ -1817,7 +1582,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		 * We might set up the shared textconv cache data here, which
 		 * is not thread-safe. Also, get_oid_with_context() and
 		 * parse_object() might be internally called. As they are not
-		 * currenty thread-safe and might be racy with object reading,
+		 * currently thread-safe and might be racy with object reading,
 		 * obj_read_lock() must be called.
 		 */
 		grep_attr_lock();

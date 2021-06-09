@@ -109,7 +109,9 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	struct object *tree1, *tree2;
 	static struct rev_info *opt = &log_tree_opt;
 	struct setup_revision_opt s_r_opt;
+	struct userformat_want w;
 	int read_stdin = 0;
+	int merge_base = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(diff_tree_usage);
@@ -124,8 +126,16 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.tweak = diff_tree_tweak_rev;
 
-	precompose_argv(argc, argv);
+	prefix = precompose_argv_prefix(argc, argv, prefix);
 	argc = setup_revisions(argc, argv, opt, &s_r_opt);
+
+	memset(&w, 0, sizeof(w));
+	userformat_find_requirements(NULL, &w);
+
+	if (!opt->show_notes_given && w.notes)
+		opt->show_notes = 1;
+	if (opt->show_notes)
+		load_display_notes(&opt->notes_opt);
 
 	while (--argc > 0) {
 		const char *arg = *++argv;
@@ -134,8 +144,19 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 			read_stdin = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--merge-base")) {
+			merge_base = 1;
+			continue;
+		}
 		usage(diff_tree_usage);
 	}
+
+	if (read_stdin && merge_base)
+		die(_("--stdin and --merge-base are mutually exclusive"));
+	if (merge_base && opt->pending.nr != 2)
+		die(_("--merge-base only works with two commits"));
+
+	opt->diffopt.rotate_to_strict = 1;
 
 	/*
 	 * NOTE!  We expect "a..b" to expand to "^a b" but it is
@@ -156,7 +177,12 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	case 2:
 		tree1 = opt->pending.objects[0].item;
 		tree2 = opt->pending.objects[1].item;
-		if (tree2->flags & UNINTERESTING) {
+		if (merge_base) {
+			struct object_id oid;
+
+			diff_get_merge_base(opt, &oid);
+			tree1 = lookup_object(the_repository, &oid);
+		} else if (tree2->flags & UNINTERESTING) {
 			SWAP(tree2, tree1);
 		}
 		diff_tree_oid(&tree1->oid, &tree2->oid, "", &opt->diffopt);
@@ -168,6 +194,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		int saved_nrl = 0;
 		int saved_dcctc = 0;
 
+		opt->diffopt.rotate_to_strict = 0;
 		if (opt->diffopt.detect_rename) {
 			if (!the_index.cache)
 				repo_read_index(the_repository);

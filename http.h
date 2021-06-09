@@ -216,17 +216,35 @@ int http_get_info_packs(const char *base_url,
 
 struct http_pack_request {
 	char *url;
-	struct packed_git *target;
-	struct packed_git **lst;
+
+	/*
+	 * index-pack command to run. Must be terminated by NULL.
+	 *
+	 * If NULL, defaults to	{"index-pack", "--stdin", NULL}.
+	 */
+	const char **index_pack_args;
+	unsigned preserve_index_pack_stdout : 1;
+
 	FILE *packfile;
 	struct strbuf tmpfile;
 	struct active_request_slot *slot;
 };
 
 struct http_pack_request *new_http_pack_request(
-	struct packed_git *target, const char *base_url);
+	const unsigned char *packed_git_hash, const char *base_url);
+struct http_pack_request *new_direct_http_pack_request(
+	const unsigned char *packed_git_hash, char *url);
 int finish_http_pack_request(struct http_pack_request *preq);
 void release_http_pack_request(struct http_pack_request *preq);
+
+/*
+ * Remove p from the given list, and invoke install_packed_git() on it.
+ *
+ * This is a convenience function for users that have obtained a list of packs
+ * from http_get_info_packs() and have chosen a specific pack to fetch.
+ */
+void http_install_packfile(struct packed_git *p,
+			   struct packed_git **list_to_remove_from);
 
 /* Helpers for fetching object */
 struct http_object_request {
@@ -251,6 +269,13 @@ void process_http_object_request(struct http_object_request *freq);
 int finish_http_object_request(struct http_object_request *freq);
 void abort_http_object_request(struct http_object_request *freq);
 void release_http_object_request(struct http_object_request *freq);
+
+/*
+ * Instead of using environment variables to determine if curl tracing happens,
+ * behave as if GIT_TRACE_CURL=1 and GIT_TRACE_CURL_NO_DATA=1 is set. Call this
+ * before calling setup_curl_trace().
+ */
+void http_trace_curl_no_data(void);
 
 /* setup routine for curl_easy_setopt CURLOPT_DEBUGFUNCTION */
 void setup_curl_trace(CURL *handle);

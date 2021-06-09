@@ -18,7 +18,7 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "bulk-checkin.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "submodule.h"
 #include "add-interactive.h"
 
@@ -38,19 +38,30 @@ struct update_callback_data {
 	int add_errors;
 };
 
-static void chmod_pathspec(struct pathspec *pathspec, char flip)
+static int chmod_pathspec(struct pathspec *pathspec, char flip, int show_only)
 {
-	int i;
+	int i, ret = 0;
 
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
+		int err;
+
+		if (ce_skip_worktree(ce))
+			continue;
 
 		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
 			continue;
 
-		if (chmod_cache_entry(ce, flip) < 0)
-			fprintf(stderr, "cannot chmod %cx '%s'\n", flip, ce->name);
+		if (!show_only)
+			err = chmod_cache_entry(ce, flip);
+		else
+			err = S_ISREG(ce->ce_mode) ? 0 : -1;
+
+		if (err < 0)
+			ret = error(_("cannot chmod %cx '%s'"), flip, ce->name);
 	}
+
+	return ret;
 }
 
 static int fix_unmerged_status(struct diff_filepair *p,
@@ -133,9 +144,13 @@ static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
 {
 	int i, retval = 0;
 
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(&the_index);
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 
+		if (ce_skip_worktree(ce))
+			continue;
 		if (ce_stage(ce))
 			continue; /* do not touch unmerged paths */
 		if (!S_ISREG(ce->ce_mode) && !S_ISLNK(ce->ce_mode))
@@ -164,37 +179,63 @@ static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec, 
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
-	add_pathspec_matches_against_index(pathspec, &the_index, seen);
+	add_pathspec_matches_against_index(pathspec, &the_index, seen,
+					   PS_IGNORE_SKIP_WORKTREE);
 	return seen;
 }
 
-static void refresh(int verbose, const struct pathspec *pathspec)
+static int refresh(int verbose, const struct pathspec *pathspec)
 {
 	char *seen;
-	int i;
+	int i, ret = 0;
+	char *skip_worktree_seen = NULL;
+	struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
+	int flags = REFRESH_IGNORE_SKIP_WORKTREE |
+		    (verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET);
 
 	seen = xcalloc(pathspec->nr, 1);
-	refresh_index(&the_index, verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET,
-		      pathspec, seen, _("Unstaged changes after refreshing the index:"));
+	refresh_index(&the_index, flags, pathspec, seen,
+		      _("Unstaged changes after refreshing the index:"));
 	for (i = 0; i < pathspec->nr; i++) {
-		if (!seen[i])
-			die(_("pathspec '%s' did not match any files"),
-			    pathspec->items[i].match);
+		if (!seen[i]) {
+			if (matches_skip_worktree(pathspec, i, &skip_worktree_seen)) {
+				string_list_append(&only_match_skip_worktree,
+						   pathspec->items[i].original);
+			} else {
+				die(_("pathspec '%s' did not match any files"),
+				    pathspec->items[i].original);
+			}
+		}
 	}
+
+	if (only_match_skip_worktree.nr) {
+		advise_on_updating_sparse_paths(&only_match_skip_worktree);
+		ret = 1;
+	}
+
 	free(seen);
+	free(skip_worktree_seen);
+	string_list_clear(&only_match_skip_worktree, 0);
+	return ret;
 }
 
 int run_add_interactive(const char *revision, const char *patch_mode,
 			const struct pathspec *pathspec)
 {
 	int status, i;
-	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct strvec argv = STRVEC_INIT;
 	int use_builtin_add_i =
 		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
 
-	if (use_builtin_add_i < 0)
-		git_config_get_bool("add.interactive.usebuiltin",
-				    &use_builtin_add_i);
+	if (use_builtin_add_i < 0) {
+		int experimental;
+		if (!git_config_get_bool("add.interactive.usebuiltin",
+					 &use_builtin_add_i))
+			; /* ok */
+		else if (!git_config_get_bool("feature.experimental", &experimental) &&
+			 experimental)
+			use_builtin_add_i = 1;
+	}
 
 	if (use_builtin_add_i == 1) {
 		enum add_p_mode mode;
@@ -218,22 +259,22 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 		return !!run_add_p(the_repository, mode, revision, pathspec);
 	}
 
-	argv_array_push(&argv, "add--interactive");
+	strvec_push(&argv, "add--interactive");
 	if (patch_mode)
-		argv_array_push(&argv, patch_mode);
+		strvec_push(&argv, patch_mode);
 	if (revision)
-		argv_array_push(&argv, revision);
-	argv_array_push(&argv, "--");
+		strvec_push(&argv, revision);
+	strvec_push(&argv, "--");
 	for (i = 0; i < pathspec->nr; i++)
 		/* pass original pathspec, to be re-parsed */
-		argv_array_push(&argv, pathspec->items[i].original);
+		strvec_push(&argv, pathspec->items[i].original);
 
-	status = run_command_v_opt(argv.argv, RUN_GIT_CMD);
-	argv_array_clear(&argv);
+	status = run_command_v_opt(argv.v, RUN_GIT_CMD);
+	strvec_clear(&argv);
 	return status;
 }
 
-int interactive_add(int argc, const char **argv, const char *prefix, int patch)
+int interactive_add(const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
 
@@ -330,10 +371,10 @@ static struct option builtin_add_options[] = {
 	OPT_BOOL(0, "renormalize", &add_renormalize, N_("renormalize EOL of tracked files (implies -u)")),
 	OPT_BOOL('N', "intent-to-add", &intent_to_add, N_("record only the fact that the path will be added later")),
 	OPT_BOOL('A', "all", &addremove_explicit, N_("add changes from all tracked and untracked files")),
-	{ OPTION_CALLBACK, 0, "ignore-removal", &addremove_explicit,
+	OPT_CALLBACK_F(0, "ignore-removal", &addremove_explicit,
 	  NULL /* takes no arguments */,
 	  N_("ignore paths removed in the working tree (same as --no-all)"),
-	  PARSE_OPT_NOARG, ignore_removal_cb },
+	  PARSE_OPT_NOARG, ignore_removal_cb),
 	OPT_BOOL( 0 , "refresh", &refresh_only, N_("don't add, only refresh the index")),
 	OPT_BOOL( 0 , "ignore-errors", &ignore_add_errors, N_("just skip files which cannot be added because of errors")),
 	OPT_BOOL( 0 , "ignore-missing", &ignore_missing, N_("check if - even missing - files are ignored in dry run")),
@@ -443,9 +484,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (patch_interactive)
 		add_interactive = 1;
 	if (add_interactive) {
+		if (show_only)
+			die(_("--dry-run is incompatible with --interactive/--patch"));
 		if (pathspec_from_file)
 			die(_("--pathspec-from-file is incompatible with --interactive/--patch"));
-		exit(interactive_add(argc - 1, argv + 1, prefix, patch_interactive));
+		exit(interactive_add(argv + 1, prefix, patch_interactive));
 	}
 	if (legacy_stash_p) {
 		struct pathspec pathspec;
@@ -534,11 +577,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	die_in_unpopulated_submodule(&the_index, prefix);
 	die_path_inside_submodule(&the_index, &pathspec);
 
+	dir_init(&dir);
 	if (add_new_files) {
 		int baselen;
 
 		/* Set up the default git porcelain excludes */
-		memset(&dir, 0, sizeof(dir));
 		if (!ignored_too) {
 			dir.flags |= DIR_COLLECT_IGNORED;
 			setup_standard_excludes(&dir);
@@ -551,15 +594,18 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	if (refresh_only) {
-		refresh(verbose, &pathspec);
+		exit_status |= refresh(verbose, &pathspec);
 		goto finish;
 	}
 
 	if (pathspec.nr) {
 		int i;
+		char *skip_worktree_seen = NULL;
+		struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
 
 		if (!seen)
-			seen = find_pathspecs_matching_against_index(&pathspec, &the_index);
+			seen = find_pathspecs_matching_against_index(&pathspec,
+					&the_index, PS_IGNORE_SKIP_WORKTREE);
 
 		/*
 		 * file_exists() assumes exact match
@@ -573,12 +619,24 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 		for (i = 0; i < pathspec.nr; i++) {
 			const char *path = pathspec.items[i].match;
+
 			if (pathspec.items[i].magic & PATHSPEC_EXCLUDE)
 				continue;
-			if (!seen[i] && path[0] &&
-			    ((pathspec.items[i].magic &
-			      (PATHSPEC_GLOB | PATHSPEC_ICASE)) ||
-			     !file_exists(path))) {
+			if (seen[i])
+				continue;
+
+			if (matches_skip_worktree(&pathspec, i, &skip_worktree_seen)) {
+				string_list_append(&only_match_skip_worktree,
+						   pathspec.items[i].original);
+				continue;
+			}
+
+			/* Don't complain at 'git add .' on empty repo */
+			if (!path[0])
+				continue;
+
+			if ((pathspec.items[i].magic & (PATHSPEC_GLOB | PATHSPEC_ICASE)) ||
+			    !file_exists(path)) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;
 					if (is_excluded(&dir, &the_index, path, &dtype))
@@ -589,7 +647,16 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 					    pathspec.items[i].original);
 			}
 		}
+
+
+		if (only_match_skip_worktree.nr) {
+			advise_on_updating_sparse_paths(&only_match_skip_worktree);
+			exit_status = 1;
+		}
+
 		free(seen);
+		free(skip_worktree_seen);
+		string_list_clear(&only_match_skip_worktree, 0);
 	}
 
 	plug_bulk_checkin();
@@ -603,7 +670,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		exit_status |= add_files(&dir, flags);
 
 	if (chmod_arg && pathspec.nr)
-		chmod_pathspec(&pathspec, chmod_arg[0]);
+		exit_status |= chmod_pathspec(&pathspec, chmod_arg[0], show_only);
 	unplug_bulk_checkin();
 
 finish:
@@ -611,7 +678,7 @@ finish:
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
+	dir_clear(&dir);
 	UNLEAK(pathspec);
-	UNLEAK(dir);
 	return exit_status;
 }
