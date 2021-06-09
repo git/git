@@ -672,7 +672,6 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 		 */
 		do_flush = 1;
 		do_trivial = 1;
-		do_cookie = 1;
 
 	} else if (!skip_prefix(command, "builtin:", &p)) {
 		/* assume V1 timestamp or garbage */
@@ -686,7 +685,6 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 				  "fsmonitor: unsupported V1 protocol '%s'"),
 				 command);
 		do_trivial = 1;
-		do_cookie = 1;
 
 	} else {
 		/* We have "builtin:*" */
@@ -696,7 +694,6 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 					 "fsmonitor: invalid V2 protocol token '%s'",
 					 command);
 			do_trivial = 1;
-			do_cookie = 1;
 
 		} else {
 			/*
