@@ -672,7 +672,6 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 		 */
 		do_flush = 1;
 		do_trivial = 1;
-		do_cookie = 1;
 
 	} else if (!skip_prefix(command, "builtin:", &p)) {
 		/* assume V1 timestamp or garbage */
