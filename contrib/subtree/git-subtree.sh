@@ -5,7 +5,10 @@
 # Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>
 #
 
-if test -z "$GIT_EXEC_PATH" || test "${PATH#"${GIT_EXEC_PATH}:"}" = "$PATH" || ! test -f "$GIT_EXEC_PATH/git-sh-setup"
+if test -z "$GIT_EXEC_PATH" || ! test -f "$GIT_EXEC_PATH/git-sh-setup" || {
+	test "${PATH#"${GIT_EXEC_PATH}:"}" = "$PATH" &&
+	test ! "$GIT_EXEC_PATH" -ef "${PATH%%:*}" 2>/dev/null
+}
 then
 	echo >&2 'It looks like either your git installation or your'
 	echo >&2 'git-subtree installation is broken.'
