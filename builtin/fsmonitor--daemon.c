@@ -694,7 +694,6 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 					 "fsmonitor: invalid V2 protocol token '%s'",
 					 command);
 			do_trivial = 1;
-			do_cookie = 1;
 
 		} else {
 			/*
