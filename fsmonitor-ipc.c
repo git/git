@@ -44,7 +44,7 @@ int fsmonitor_ipc__send_query(const char *since_token,
 	trace2_region_enter("fsm_client", "query", NULL);
 
 	trace2_data_string("fsm_client", NULL, "query/command",
-			   since_token ? since_token : "(null-token)");
+			   since_token);
 
 try_again:
 	state = ipc_client_try_connect(fsmonitor_ipc__get_path(), &options,
@@ -53,7 +53,7 @@ try_again:
 	switch (state) {
 	case IPC_STATE__LISTENING:
 		ret = ipc_client_send_command_to_connection(
-			connection, since_token, since_token ? strlen(since_token) : 0, answer);
+			connection, since_token, strlen(since_token), answer);
 		ipc_client_close_connection(connection);
 
 		trace2_data_intmax("fsm_client", NULL,
