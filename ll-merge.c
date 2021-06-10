@@ -151,7 +151,7 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 	o = *opts;
 	o.variant = XDL_MERGE_FAVOR_UNION;
 	return ll_xdl_merge(drv_unused, result, path_unused,
-			    orig, NULL, src1, NULL, src2, NULL,
+			    orig, orig_name, src1, name1, src2, name2,
 			    &o, marker_size);
 }
 
