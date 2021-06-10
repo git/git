@@ -1126,7 +1126,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			if (rm->status == REF_STATUS_REJECT_SHALLOW) {
 				if (want_status == FETCH_HEAD_MERGE)
-					warning(_("reject %s because shallow roots are not allowed to be updated"),
+					warning(_("rejected %s because shallow roots are not allowed to be updated"),
 						rm->peer_ref ? rm->peer_ref->name : rm->name);
 				continue;
 			}
