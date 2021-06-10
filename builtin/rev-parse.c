@@ -435,11 +435,11 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	/* get the usage up to the first line with a -- on it */
 	for (;;) {
 		if (strbuf_getline(&sb, stdin) == EOF)
-			die("premature end of input");
+			die(_("premature end of input"));
 		ALLOC_GROW(usage, unb + 1, usz);
 		if (!strcmp("--", sb.buf)) {
 			if (unb < 1)
-				die("no usage string given before the `--' separator");
+				die(_("no usage string given before the `--' separator"));
 			usage[unb] = NULL;
 			break;
 		}
@@ -545,7 +545,7 @@ static void die_no_single_rev(int quiet)
 	if (quiet)
 		exit(1);
 	else
-		die("Needed a single revision");
+		die(_("Needed a single revision"));
 }
 
 static const char builtin_rev_parse_usage[] =
@@ -709,10 +709,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--resolve-git-dir")) {
 				const char *gitdir = argv[++i];
 				if (!gitdir)
-					die("--resolve-git-dir requires an argument");
+					die(_("--resolve-git-dir requires an argument"));
 				gitdir = resolve_gitdir(gitdir);
 				if (!gitdir)
-					die("not a gitdir '%s'", argv[i]);
+					die(_("not a gitdir '%s'"), argv[i]);
 				puts(gitdir);
 				continue;
 			}
@@ -736,7 +736,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		if (!seen_end_of_options && *arg == '-') {
 			if (!strcmp(arg, "--git-path")) {
 				if (!argv[i + 1])
-					die("--git-path requires an argument");
+					die(_("--git-path requires an argument"));
 				strbuf_reset(&buf);
 				print_path(git_path("%s", argv[i + 1]), prefix,
 						format,
@@ -746,7 +746,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg,"-n")) {
 				if (++i >= argc)
-					die("-n requires an argument");
+					die(_("-n requires an argument"));
 				if ((filter & DO_FLAGS) && (filter & DO_REVS)) {
 					show(arg);
 					show(argv[i]);
@@ -760,26 +760,26 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (opt_with_value(arg, "--path-format", &arg)) {
 				if (!arg)
-					die("--path-format requires an argument");
+					die(_("--path-format requires an argument"));
 				if (!strcmp(arg, "absolute")) {
 					format = FORMAT_CANONICAL;
 				} else if (!strcmp(arg, "relative")) {
 					format = FORMAT_RELATIVE;
 				} else {
-					die("unknown argument to --path-format: %s", arg);
+					die(_("unknown argument to --path-format: %s"), arg);
 				}
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
 				def = argv[++i];
 				if (!def)
-					die("--default requires an argument");
+					die(_("--default requires an argument"));
 				continue;
 			}
 			if (!strcmp(arg, "--prefix")) {
 				prefix = argv[++i];
 				if (!prefix)
-					die("--prefix requires an argument");
+					die(_("--prefix requires an argument"));
 				startup_info->prefix = prefix;
 				output_prefix = 1;
 				continue;
@@ -848,7 +848,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 					else if (!strcmp(arg, "loose"))
 						abbrev_ref_strict = 0;
 					else
-						die("unknown mode for --abbrev-ref: %s",
+						die(_("unknown mode for --abbrev-ref: %s"),
 						    arg);
 				}
 				continue;
@@ -892,7 +892,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				if (work_tree)
 					print_path(work_tree, prefix, format, DEFAULT_UNMODIFIED);
 				else
-					die("this operation must be run in a work tree");
+					die(_("this operation must be run in a work tree"));
 				continue;
 			}
 			if (!strcmp(arg, "--show-superproject-working-tree")) {
@@ -1020,7 +1020,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				if (strcmp(val, "storage") &&
 				    strcmp(val, "input") &&
 				    strcmp(val, "output"))
-					die("unknown mode for --show-object-format: %s",
+					die(_("unknown mode for --show-object-format: %s"),
 					    arg);
 				puts(the_hash_algo->name);
 				continue;
@@ -1058,7 +1058,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		if (verify)
 			die_no_single_rev(quiet);
 		if (has_dashdash)
-			die("bad revision '%s'", arg);
+			die(_("bad revision '%s'"), arg);
 		as_is = 1;
 		if (!show_file(arg, output_prefix))
 			continue;
