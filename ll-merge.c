@@ -91,7 +91,9 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	 * With -Xtheirs or -Xours, we have cleanly merged;
 	 * otherwise we got a conflict.
 	 */
-	return (opts->variant ? 0 : 1);
+	return opts->variant == XDL_MERGE_FAVOR_OURS ||
+	       opts->variant == XDL_MERGE_FAVOR_THEIRS ?
+	       0 : 1;
 }
 
 static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
