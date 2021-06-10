@@ -287,11 +287,17 @@ sub blurb_text {
 	$master_at ||= '0' x 40;
 	$next_at ||= '0' x 40;
 	$text ||= <<'EOF';
-Here are the topics that have been cooking.  Commits prefixed with '-' are
-only in 'seen' (formerly 'pu'---proposed updates) while commits prefixed
-with '+' are in 'next'.  The ones marked with '.' do not appear in any of
-the integration branches, but I am still holding onto them.
-
+Here are the topics that have been cooking in my tree.  Commits
+prefixed with '-' are only in 'seen' while commits prefixed with '+'
+are in 'next'.  The ones marked with '.' do not appear in any of the
+integration branches, but I am still holding onto them.  Generally,
+being in 'next' is a sign that a topic is stable enough to be used
+and are candidate to be in a future release, while being in 'seen'
+means nothing more than that the maintainer has found it interesting
+for some reason (like "it may have hard-to-resolve conflicts with
+another topic already in flight" or "this may turn out to be
+useful")---do not read too much into a topic being in (or not in)
+'seen'.
 
 
 Copies of the source code to Git live in many repositories, and the

@@ -1,44 +1,29 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2021, #03; Tue, 8)
-X-master-at: ebf3c04b262aa27fbb97f8a0156c2347fecafafb
-X-next-at: 935e593368000d8476c1712a0a3d40699d2af34b
+Subject: What's cooking in git.git (Jun 2021, #04; Thu, 10)
+X-master-at: 211eca0895794362184da2be2a2d812d070719d3
+X-next-at: 62a8d224e6203d9d3d2d1d63a01cf5647ec312c9
 
-What's cooking in git.git (Jun 2021, #03; Tue, 8)
+What's cooking in git.git (Jun 2021, #04; Thu, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
-prefixed with '-' are only in 'seen' (which collects random set of
-topics that are not yet in 'next') while commits prefixed with '+'
+prefixed with '-' are only in 'seen' while commits prefixed with '+'
 are in 'next'.  The ones marked with '.' do not appear in any of the
-integration branches, but I am still holding onto them.
+integration branches, but I am still holding onto them.  Generally,
+being in 'next' is a sign that a topic is stable enough to be used
+and are candidate to be in a future release, while being in 'seen'
+means nothing more than that the maintainer has found it interesting
+for some reason (like "it may have hard-to-resolve conflicts with
+another topic already in flight" or "this may turn out to be
+useful")---do not read too much into a topic being in (or not in)
+'seen'.
 
-As announced in the previous issue of this report, while we wait to
-see if people notice brown-paper-bag bugs and deal with them, we'd
-start merging down topics that have been cooking in 'next' from
-simpler and obvious ones.  This issue marks the simpler ones to be
-merged to 'master' soonish (please holler if you have a reason some
-of them should wait further fixup):
-
-    ef/mailinfo-short-name
-    mt/parallel-checkout-with-padded-oidcpy
-    jn/size-t-casted-to-off-t-fix
-    ah/merge-usage-i18n-fix
-    ah/stash-usage-i18n-fix
-    ah/submodule-helper-module-summary-parseopt
-    ah/doc-describe
-    jc/clarify-revision-range
-    wm/rev-parse-die-i18n
-    ry/clarify-fast-forward-in-glossary
-    tl/fix-packfile-uri-doc
-    jk/doc-color-pager
-    ah/fetch-reject-warning-grammofix
-    ah/setup-extensions-message-i18n-fix
-
-while leaving topics that touch the code in a more significant ways
-in 'next' for the next batch.  Also those topics that are not yet in
-'next' but are marked to be merged to 'next' would stay out until
-next week when the tip of 'next' gets rebuilt on 2.32.
+The first batch of topics that have been cooking in 'next' are now
+in 'master'.  They are all simple and obvious improvements.  The
+next batch is expected to be more extensive.  Also those topics that
+are not yet in 'next' but are marked to be merged to 'next' would
+stay out until the tip of 'next' gets rewound.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -69,36 +54,263 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ah/doc-describe (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-22 at 8f3925fd41)
+ + describe-doc: clarify default length of abbreviation
+
+ Doc update.
+
+
+* ah/fetch-reject-warning-grammofix (2021-05-20) 1 commit
+  (merged to 'next' on 2021-05-28 at 09820da41b)
+ + fetch: improve grammar of "shallow roots" message
+
+ Message update.
+
+
+* ah/merge-usage-i18n-fix (2021-05-16) 1 commit
+  (merged to 'next' on 2021-05-20 at e26a60d624)
+ + merge: don't translate literal commands
+
+ i18n update.
+
+
+* ah/setup-extensions-message-i18n-fix (2021-05-20) 1 commit
+  (merged to 'next' on 2021-05-28 at 562b4e6f10)
+ + setup: split "extensions found" messages into singular and plural
+
+ Message update.
+
+
+* ah/stash-usage-i18n-fix (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-20 at 68e6a46117)
+ + stash: don't translate literal commands
+
+ i18n update.
+
+
+* ah/submodule-helper-module-summary-parseopt (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-20 at 928e72b83f)
+ + submodule: use the imperative mood to describe the --files option
+
+ Message update.
+
+
+* ef/mailinfo-short-name (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-20 at 5ee67911ea)
+ + mailinfo: don't discard names under 3 characters
+
+ We historically rejected a very short string as an author name
+ while accepting a patch e-mail, which has been loosened.
+
+
+* jc/clarify-revision-range (2021-05-18) 1 commit
+  (merged to 'next' on 2021-05-22 at 83a689d8ad)
+ + revisions(7): clarify that most commands take a single revision range
+
+ Doc update.
+
+
+* jk/doc-color-pager (2021-05-20) 1 commit
+  (merged to 'next' on 2021-05-28 at 52e4aa77df)
+ + doc: explain the use of color.pager
+
+ The documentation for "color.pager" configuration variable has been
+ updated.
+
+
+* jn/size-t-casted-to-off-t-fix (2021-05-19) 1 commit
+  (merged to 'next' on 2021-05-20 at bbde7e6616)
+ + xsize_t: avoid implementation defined behavior when len < 0
+
+ Rewrite code that triggers undefined behaiour warning.
+
+
+* mt/parallel-checkout-with-padded-oidcpy (2021-05-18) 1 commit
+  (merged to 'next' on 2021-05-20 at 016cab0381)
+ + parallel-checkout: send the new object_id algo field to the workers
+
+ The parallel checkout codepath did not initialize object ID field
+ used to talk to the worker processes in a futureproof way.
+
+
+* ry/clarify-fast-forward-in-glossary (2021-05-19) 1 commit
+  (merged to 'next' on 2021-05-22 at 97a851d59f)
+ + docs: improve fast-forward in glossary content
+
+ The description of "fast-forward" in the glossary has been updated.
+
+
+* tl/fix-packfile-uri-doc (2021-05-25) 1 commit
+  (merged to 'next' on 2021-05-25 at d047277014)
+ + packfile-uri.txt: fix blobPackfileUri description
+
+ Doc fix.
+
+
+* wm/rev-parse-die-i18n (2021-05-17) 1 commit
+  (merged to 'next' on 2021-05-22 at 65c256d92b)
+ + rev-parse: mark die() messages for translation
+
+ Quite a many die() messages in rev-parse haven't been marked for
+ translation.
+
+--------------------------------------------------
 [New Topics]
 
-* dd/svn-test-wo-locale-a (2021-06-07) 1 commit
- - t: use user-specified utf-8 locale for testing svn
+* ab/cmd-foo-should-return (2021-06-09) 1 commit
+ - builtins + test helpers: use return instead of exit() in cmd_*
 
- "git-svn" tests assumed that "locale -a", which is used to pick an
- available UTF-8 locale, is available everywhere.  A knob has been
- introduced to allow testers to specify a suitable locale to use.
-
-
-* fc/completion-updates (2021-06-07) 4 commits
- - completion: bash: add correct suffix in variables
- - completion: bash: fix for multiple dash commands
- - completion: bash: fix for suboptions with value
- - completion: bash: fix prefix detection in branch.*
-
- Command line completion updates.
-
- Expecting a reroll.
- cf. <60be6f7fa4435_db80d208f2@natae.notmuch> 
-
-
-* mr/cmake (2021-06-07) 3 commits
- - cmake: add warning for ignored MSGFMT_EXE
- - cmake: create compile_commands.json by default
- - cmake: add knob to disable vcpkg
-
- CMake update.
+ Code clean-up.
 
  Will merge to 'next'.
+
+
+* ab/progress-cleanup (2021-06-08) 1 commit
+ - read-cache.c: don't guard calls to progress.c API
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* ab/test-tool-cache-cleanup (2021-06-08) 4 commits
+ - read-cache perf: add a perf test for refresh_index()
+ - test-tool: migrate read-cache-again to parse_options()
+ - test-tool: migrate read-cache-perf to parse_options()
+ - test-tool: split up test-tool read-cache
+
+ Test code shuffling.
+
+ Comments?
+
+
+* ab/xdiff-bug-cleanup (2021-06-08) 1 commit
+ - xdiff: use BUG(...), not xdl_bug(...)
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* ar/test-code-cleanup (2021-06-08) 1 commit
+ - t: fix whitespace around &&
+
+ Test code clean-up.
+
+ Will merge to 'next'.
+
+
+* ba/object-info (2021-06-08) 1 commit
+ - protocol-caps.h: add newline at end of file
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* dd/document-log-decorate-default (2021-06-08) 1 commit
+ - doc/log: correct default for --decorate
+
+ Doc clean-up.
+
+ Will merge to 'next'.
+
+
+* fc/doc-default-to-upstream-config (2021-06-08) 1 commit
+ - doc: merge: mention default of defaulttoupstream
+
+ Doc clean-up.
+
+ Will merge to 'next'.
+
+
+* ms/mergetools-kdiff3-on-windows (2021-06-08) 1 commit
+ - mergetools/kdiff3: make kdiff3 work on Windows too
+
+ On Windows, mergetool has been taught to find kdiff3.exe just like
+ it finds winmerge.exe.
+
+ Will merge to 'next'.
+
+
+* ab/pack-objects-stdin (2021-06-09) 4 commits
+ - pack-objects.c: make use of REV_INFO_STDIN_LINE_PROCESS
+ - pack-objects.c: do stdin parsing via revision.c's API
+ - revision.h: unify "disable_stdin" and "read_from_stdin"
+ - upload-pack: run is_repository_shallow() before setup_revisions()
+
+ Code clean-up.
+
+ Comments?
+
+
+* ar/doc-libera-chat-in-my-first-contrib (2021-06-09) 1 commit
+ - MyFirstContribution: link #git-devel to Libera Chat
+
+ Update MyFirst document.
+
+ Will merge to 'next'.
+
+
+* ar/mailinfo-memcmp-to-skip-prefix (2021-06-09) 1 commit
+ - mailinfo: use starts_with() when checking scissors
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* ar/submodule-add (2021-06-09) 2 commits
+ - submodule--helper: introduce add-config subcommand
+ - submodule--helper: introduce add-clone subcommand
+
+ Rewrite of "git submodule" in C continues.
+
+ Comments?
+
+
+* ds/gender-neutral-doc (2021-06-10) 4 commits
+ - CodingGuidelines: recommend singular they
+ - *: fix typos
+ - *: use singular they in comments
+ - Documentation: use singular they when appropriate
+
+ Attempt to update the documentation not to assume users are of
+ certain gender and adds to guidelines to do so.
+
+ Will wait for conclusion of the on-list discussion.
+
+
+* gh/gitweb-branch-sort (2021-06-10) 1 commit
+ - gitweb: use HEAD as secondary sort key in git_get_heads_list()
+
+ Tie-break branches that point at the same object in the list of
+ branches on GitWeb to show the one pointed at by HEAD early.
+
+ Comments?
+
+
+* jk/doc-max-pack-size (2021-06-09) 1 commit
+ - doc: warn people against --max-pack-size
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* lh/systemd-timers (2021-06-09) 3 commits
+ - maintenance: add support for systemd timers on Linux
+ - maintenance: `git maintenance run` learned `--scheduler=<scheduler>`
+ - cache.h: Introduce a generic "xdg_config_home_for(…)" function
+
+ "git maintenance" scheduler learned to use systemd timers as a
+ possible backend.
+
+ Expecting a reroll.
+ cf. <YMCLQ5pOyg+SSKhD@coredump.intra.peff.net>
 
 --------------------------------------------------
 [Stalled]
@@ -337,7 +549,39 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ab/update-submitting-patches (2021-05-13) 3 commits
+* dd/svn-test-wo-locale-a (2021-06-08) 1 commit
+ - t: use user-specified utf-8 locale for testing svn
+
+ "git-svn" tests assumed that "locale -a", which is used to pick an
+ available UTF-8 locale, is available everywhere.  A knob has been
+ introduced to allow testers to specify a suitable locale to use.
+
+ Will merge to 'next'.
+
+
+* fc/completion-updates (2021-06-07) 4 commits
+ - completion: bash: add correct suffix in variables
+ - completion: bash: fix for multiple dash commands
+ - completion: bash: fix for suboptions with value
+ - completion: bash: fix prefix detection in branch.*
+
+ Command line completion updates.
+
+ Expecting a reroll.
+ cf. <60be6f7fa4435_db80d208f2@natae.notmuch>
+
+
+* mr/cmake (2021-06-07) 3 commits
+ - cmake: add warning for ignored MSGFMT_EXE
+ - cmake: create compile_commands.json by default
+ - cmake: add knob to disable vcpkg
+
+ CMake update.
+
+ Will merge to 'next'.
+
+
+* ab/update-submitting-patches (2021-06-08) 3 commits
  - SubmittingPatches: remove pine-specific hints from MUA hints
  - SubmittingPatches: replace discussion of Travis with GitHub Actions
  - SubmittingPatches: move discussion of Signed-off-by above "send"
@@ -345,7 +589,8 @@ Release tarballs are available at:
  Reorganize and update the SubmitingPatches document.
 
  Expecting a reroll.
- cf. <xmqq4kf7fueq.fsf@gitster.g>, <20210512235136.GB10785@localhost>
+ cf. <20210607172542.GA6312@szeder.dev>
+ cf. <nycvar.QRO.7.76.6.2106072346560.55@tvgsbejvaqbjf.bet>
 
 
 * hn/prep-tests-for-reftable (2021-06-02) 22 commits
@@ -449,18 +694,16 @@ Release tarballs are available at:
  Will merge to 'next'.
 
 
-* en/ort-perf-batch-12 (2021-06-04) 4 commits
+* en/ort-perf-batch-12 (2021-06-09) 4 commits
  - merge-ort: miscellaneous touch-ups
- - merge-ort: fix various issues found in comments
+ - Fix various issues found in comments
  - diffcore-rename: avoid unnecessary strdup'ing in break_idx
  - merge-ort: replace string_list_df_name_compare with faster alternative
  (this branch uses en/ort-perf-batch-11.)
 
 
-* zh/ref-filter-raw-data (2021-06-07) 6 commits
- . ref-filter: add %(raw:textconv) and %(raw:filters)
- . ref-filter: teach grab_sub_body_contents() return value and err
- . ref-filter: add %(rest) atom and --rest option
+* zh/ref-filter-raw-data (2021-06-10) 4 commits
+ . ref-filter: add %(rest) atom
  . ref-filter: use non-const ref_format in *_atom_parser()
  . ref-filter: add %(raw) atom
  . ref-filter: add obj-type check in grab contents
@@ -569,24 +812,6 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* ah/fetch-reject-warning-grammofix (2021-05-20) 1 commit
-  (merged to 'next' on 2021-05-28 at 09820da41b)
- + fetch: improve grammar of "shallow roots" message
-
- Message update.
-
- Will merge to 'master'.
-
-
-* ah/setup-extensions-message-i18n-fix (2021-05-20) 1 commit
-  (merged to 'next' on 2021-05-28 at 562b4e6f10)
- + setup: split "extensions found" messages into singular and plural
-
- Message update.
-
- Will merge to 'master'.
-
-
 * jk/clone-clean-upon-transport-error (2021-05-19) 1 commit
   (merged to 'next' on 2021-05-22 at 464b1f187c)
  + clone: clean up directory after transport_fetch_refs() failure
@@ -595,16 +820,6 @@ Release tarballs are available at:
  transport layer returned an failure.
 
  Will cook in 'next'.
-
-
-* jk/doc-color-pager (2021-05-20) 1 commit
-  (merged to 'next' on 2021-05-28 at 52e4aa77df)
- + doc: explain the use of color.pager
-
- The documentation for "color.pager" configuration variable has been
- updated.
-
- Will merge to 'master'.
 
 
 * jk/fetch-pack-v2-half-close-early (2021-05-20) 1 commit
@@ -618,26 +833,7 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* ry/clarify-fast-forward-in-glossary (2021-05-19) 1 commit
-  (merged to 'next' on 2021-05-22 at 97a851d59f)
- + docs: improve fast-forward in glossary content
-
- The description of "fast-forward" in the glossary has been updated.
-
- Will merge to 'master'.
-
-
-* wm/rev-parse-die-i18n (2021-05-17) 1 commit
-  (merged to 'next' on 2021-05-22 at 65c256d92b)
- + rev-parse: mark die() messages for translation
-
- Quite a many die() messages in rev-parse haven't been marked for
- translation.
-
- Will merge to 'master'.
-
-
-* es/trace2-log-parent-process-name (2021-05-25) 1 commit
+* es/trace2-log-parent-process-name (2021-06-09) 1 commit
  - tr2: log parent process name
 
 
@@ -684,15 +880,6 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* tl/fix-packfile-uri-doc (2021-05-25) 1 commit
-  (merged to 'next' on 2021-05-25 at d047277014)
- + packfile-uri.txt: fix blobPackfileUri description
-
- Doc fix.
-
- Will merge to 'master'.
-
-
 * ga/send-email-sendmail-cmd (2021-05-17) 1 commit
   (merged to 'next' on 2021-05-22 at 755df67f0e)
  + git-send-email: add option to specify sendmail command
@@ -706,52 +893,6 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* ah/doc-describe (2021-05-17) 1 commit
-  (merged to 'next' on 2021-05-22 at 8f3925fd41)
- + describe-doc: clarify default length of abbreviation
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* ah/merge-usage-i18n-fix (2021-05-16) 1 commit
-  (merged to 'next' on 2021-05-20 at e26a60d624)
- + merge: don't translate literal commands
-
- i18n update.
-
- Will merge to 'master'.
-
-
-* ah/stash-usage-i18n-fix (2021-05-17) 1 commit
-  (merged to 'next' on 2021-05-20 at 68e6a46117)
- + stash: don't translate literal commands
-
- i18n update.
-
- Will merge to 'master'.
-
-
-* ah/submodule-helper-module-summary-parseopt (2021-05-17) 1 commit
-  (merged to 'next' on 2021-05-20 at 928e72b83f)
- + submodule: use the imperative mood to describe the --files option
-
- Message update.
-
- Will merge to 'master'.
-
-
-* ef/mailinfo-short-name (2021-05-17) 1 commit
-  (merged to 'next' on 2021-05-20 at 5ee67911ea)
- + mailinfo: don't discard names under 3 characters
-
- We historically rejected a very short string as an author name
- while accepting a patch e-mail, which has been loosened.
-
- Will merge to 'master'.
-
-
 * ds/write-index-with-hashfile-api (2021-05-19) 4 commits
   (merged to 'next' on 2021-05-28 at f0c51ddf7c)
  + read-cache: delete unused hashing methods
@@ -763,34 +904,6 @@ Release tarballs are available at:
  reduce code duplication.
 
  Will cook in 'next'.
-
-
-* jc/clarify-revision-range (2021-05-18) 1 commit
-  (merged to 'next' on 2021-05-22 at 83a689d8ad)
- + revisions(7): clarify that most commands take a single revision range
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* jn/size-t-casted-to-off-t-fix (2021-05-19) 1 commit
-  (merged to 'next' on 2021-05-20 at bbde7e6616)
- + xsize_t: avoid implementation defined behavior when len < 0
-
- Rewrite code that triggers undefined behaiour warning.
-
- Will merge to 'master'.
-
-
-* mt/parallel-checkout-with-padded-oidcpy (2021-05-18) 1 commit
-  (merged to 'next' on 2021-05-20 at 016cab0381)
- + parallel-checkout: send the new object_id algo field to the workers
-
- The parallel checkout codepath did not initialize object ID field
- used to talk to the worker processes in a futureproof way.
-
- Will merge to 'master'.
 
 
 * so/log-m-implies-p (2021-05-21) 10 commits
