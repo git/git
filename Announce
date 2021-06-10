@@ -51,6 +51,7 @@ people () {
 		--group=trailer:reviewed-by \
 		--group=trailer:mentored-by \
 		--group=trailer:helped-by \
+		--group=trailer:tested-by \
 		--group=trailer:reported-by \
 		"$@" |
 	sed -e 's/^[ 	0-9]*[ 	]//' -e 's/$/,/' |
@@ -142,9 +143,9 @@ then
 
 	$(fmt_people "$tmpbase.old")
 
-	[*] We are counting not just the authorship contribution but
-	    issue reporting, testing and reviewing that are recorded
-	    in the commit trailers.
+	[*] We are counting not just the authorship contribution but issue
+	    reporting, mentoring, helping and reviewing that are recorded in
+	    the commit trailers.
 	EOF
 fi
 
