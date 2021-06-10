@@ -1,0 +1,32 @@
+Git 2.33 Release Notes
+======================
+
+Updates since Git 2.32
+----------------------
+
+UI, Workflows & Features
+
+Performance, Internal Implementation, Development Support etc.
+
+
+Fixes since v2.31
+-----------------
+
+ * We historically rejected a very short string as an author name
+   while accepting a patch e-mail, which has been loosened.
+   (merge 72ee47ceeb ef/mailinfo-short-name later to maint).
+
+ * The parallel checkout codepath did not initialize object ID field
+   used to talk to the worker processes in a futureproof way.
+
+ * Rewrite code that triggers undefined behaiour warning.
+   (merge aafa5df0df jn/size-t-casted-to-off-t-fix later to maint).
+
+ * The description of "fast-forward" in the glossary has been updated.
+   (merge e22f2daed0 ry/clarify-fast-forward-in-glossary later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge bfe35a6165 ah/doc-describe later to maint).
+   (merge f302c1e4aa jc/clarify-revision-range later to maint).
+   (merge 3127ff90ea tl/fix-packfile-uri-doc later to maint).
+   (merge a84216c684 jk/doc-color-pager later to maint).
