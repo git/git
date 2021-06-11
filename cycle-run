@@ -12,15 +12,18 @@ test_it () {
 		echo "*** log for $subject ***" &&
 		case "$type" in
 		C)
+			# Single parent commit on a topic
 			Meta/Make -$J &&
 			Meta/Make -$J -- SPARSE_FLAGS=-Wsparse-error sparse
 			;;
 		M)
+			# Merges on the first-parent chain on seen
 			Meta/Make -$J -- SPARSE_FLAGS=-Wsparse-error sparse &&
 			Meta/Make -$J -- test
 			;;
 		T)
-			Meta/Make -$J -- test &&
+			# Commit at the tip of a topic
+			Meta/Make -$J SANITIZE=address,undefined -- test &&
 			Meta/Make -$J -- doc
 			;;
 		esac
