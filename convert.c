@@ -916,6 +916,7 @@ done:
 	else
 		strbuf_swap(dst, &nbuf);
 	strbuf_release(&nbuf);
+	strbuf_release(&filter_status);
 	return !err;
 }
 
@@ -966,6 +967,7 @@ done:
 
 	if (err)
 		handle_filter_error(&filter_status, entry, 0);
+	strbuf_release(&filter_status);
 	return !err;
 }
 
