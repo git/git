@@ -33,6 +33,8 @@ check_verify_failure () {
 		then
 			test_must_fail git mktag <tag.sig 2>err2 &&
 			test_cmp err err2
+		else
+			git mktag --no-strict <tag.sig
 		fi
 	'
 }
