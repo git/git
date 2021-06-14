@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test show-branch with more than 8 heads'
+test_description='test show-branch'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
