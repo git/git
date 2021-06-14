@@ -4966,6 +4966,64 @@ test_expect_success '12g: Testcase with two kinds of "relevant" renames' '
 	)
 '
 
+# Testcase 12h, Testcase with two kinds of "relevant" renames
+#   Commit O: olddir/{a_1, b}
+#   Commit A: newdir/{a_2, b}
+#   Commit B: olddir/{alpha_1, b}
+#   Expected: newdir/{alpha_2, b}
+
+test_setup_12h () {
+	test_create_repo 12h &&
+	(
+		cd 12h &&
+
+		mkdir olddir &&
+		test_seq 3 8 >olddir/a &&
+		>olddir/b &&
+		git add olddir &&
+		git commit -m orig &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		test_seq 3 10 >olddir/a &&
+		git add olddir/a &&
+		git mv olddir newdir &&
+		git commit -m A &&
+
+		git switch B &&
+
+		git mv olddir/a olddir/alpha &&
+		git commit -m B
+	)
+}
+
+test_expect_failure '12h: renaming a file within a renamed directory' '
+	test_setup_12h &&
+	(
+		cd 12h &&
+
+		git checkout A^0 &&
+
+		test_might_fail git -c merge.directoryRenames=true merge -s recursive B^0 &&
+
+		git ls-files >tracked &&
+		test_line_count = 2 tracked &&
+
+		test_path_is_missing olddir/a &&
+		test_path_is_file newdir/alpha &&
+		test_path_is_file newdir/b &&
+
+		git rev-parse >actual \
+			HEAD:newdir/alpha  HEAD:newdir/b &&
+		git rev-parse >expect \
+			A:newdir/a         O:oldir/b &&
+		test_cmp expect actual
+	)
+'
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #
