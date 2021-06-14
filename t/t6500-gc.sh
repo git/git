@@ -95,6 +95,52 @@ test_expect_success 'gc --keep-largest-pack' '
 	)
 '
 
+test_expect_success 'pre-auto-gc hook can stop auto gc' '
+	cat >err.expect <<-\EOF &&
+	no gc for you
+	EOF
+
+	git init pre-auto-gc-hook &&
+	(
+		cd pre-auto-gc-hook &&
+		write_script ".git/hooks/pre-auto-gc" <<-\EOF &&
+		echo >&2 no gc for you &&
+		exit 1
+		EOF
+
+		git config gc.auto 3 &&
+		git config gc.autoDetach false &&
+
+		# We need to create two object whose sha1s start with 17
+		# since this is what git gc counts.  As it happens, these
+		# two blobs will do so.
+		test_commit "$(test_oid obj1)" &&
+		test_commit "$(test_oid obj2)" &&
+
+		git gc --auto >../out.actual 2>../err.actual
+	) &&
+	test_must_be_empty out.actual &&
+	test_cmp err.expect err.actual &&
+
+	cat >err.expect <<-\EOF &&
+	will gc for you
+	Auto packing the repository for optimum performance.
+	See "git help gc" for manual housekeeping.
+	EOF
+
+	(
+		cd pre-auto-gc-hook &&
+		write_script ".git/hooks/pre-auto-gc" <<-\EOF &&
+		echo >&2 will gc for you &&
+		exit 0
+		EOF
+		git gc --auto >../out.actual 2>../err.actual
+	) &&
+
+	test_must_be_empty out.actual &&
+	test_cmp err.expect err.actual
+'
+
 test_expect_success 'auto gc with too many loose objects does not attempt to create bitmaps' '
 	test_config gc.auto 3 &&
 	test_config gc.autodetach false &&
