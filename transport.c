@@ -427,7 +427,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 cleanup:
 	close(data->fd[0]);
-	close(data->fd[1]);
+	if (data->fd[1] >= 0)
+		close(data->fd[1]);
 	if (finish_connect(data->conn))
 		ret = -1;
 	data->conn = NULL;
@@ -869,7 +870,8 @@ static int disconnect_git(struct transport *transport)
 		if (data->got_remote_heads && !transport->stateless_rpc)
 			packet_flush(data->fd[1]);
 		close(data->fd[0]);
-		close(data->fd[1]);
+		if (data->fd[1] >= 0)
+			close(data->fd[1]);
 		finish_connect(data->conn);
 	}
 
