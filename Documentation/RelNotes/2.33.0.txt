@@ -1,15 +1,49 @@
 Git 2.33 Release Notes
 ======================
 
+Backward compatibility notes
+----------------------------
+
+ * The "-m" option in "git log -m" that does not specify which format,
+   if any, of diff is desired did not have any visible effect; it now
+   implies some form of diff (by default "--patch") is produced.
+
+   You can disable the diff output with "git log -m --no-patch", but
+   then there probably isn't much point in passing "-m" in the first
+   place ;-).
+
+
 Updates since Git 2.32
 ----------------------
 
 UI, Workflows & Features
 
+ * "git send-email" learned the "--sendmail-cmd" command line option
+   and the "sendemail.sendmailCmd" configuration variable, which is a
+   more sensible approach than the current way of repurposing the
+   "smtp-server" that is meant to name the server to instead name the
+   command to talk to the server.
+
+ * The "-m" option in "git log -m" that does not specify which format,
+   if any, of diff is desired did not have any visible effect; it now
+   implies some form of diff (by default "--patch") is produced.
+
+
 Performance, Internal Implementation, Development Support etc.
 
+ * The code to handle the "--format" option in "for-each-ref" and
+   friends made too many string comparisons on %(atom)s used in the
+   format string, which has been corrected by converting them into
+   enum when the format string is parsed.
 
-Fixes since v2.31
+ * Use the hashfile API in the codepath that writes the index file to
+   reduce code duplication.
+
+ * Repeated rename detections in a sequence of mergy operations have
+   been optimize out.
+
+
+Fixes since v2.32
 -----------------
 
  * We historically rejected a very short string as an author name
@@ -19,14 +53,26 @@ Fixes since v2.31
  * The parallel checkout codepath did not initialize object ID field
    used to talk to the worker processes in a futureproof way.
 
- * Rewrite code that triggers undefined behaiour warning.
+ * Rewrite code that triggers undefined behaviour warning.
    (merge aafa5df0df jn/size-t-casted-to-off-t-fix later to maint).
 
  * The description of "fast-forward" in the glossary has been updated.
    (merge e22f2daed0 ry/clarify-fast-forward-in-glossary later to maint).
+
+ * Recent "git clone" left a temporary directory behind when the
+   transport layer returned an failure.
+   (merge 6aacb7d861 jk/clone-clean-upon-transport-error later to maint).
+
+ * "git fetch" over protocol v2 left its side of the socket open after
+   it finished speaking, which unnecessarily wasted the resource on
+   the other side.
+   (merge ae1a7eefff jk/fetch-pack-v2-half-close-early later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge bfe35a6165 ah/doc-describe later to maint).
    (merge f302c1e4aa jc/clarify-revision-range later to maint).
    (merge 3127ff90ea tl/fix-packfile-uri-doc later to maint).
    (merge a84216c684 jk/doc-color-pager later to maint).
+   (merge 4e0a64a713 ab/trace2-squelch-gcc-warning later to maint).
+   (merge 225f7fa847 ps/rev-list-object-type-filter later to maint).
+   (merge 5317dfeaed dd/honor-users-tar-in-tests later to maint).
