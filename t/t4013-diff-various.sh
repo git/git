@@ -293,6 +293,7 @@ diff-tree --stat initial mode
 diff-tree --summary initial mode
 
 diff-tree master
+diff-tree -m master
 diff-tree -p master
 diff-tree -p -m master
 diff-tree -c master
@@ -337,6 +338,8 @@ log -m -p --first-parent master
 log -m -p master
 log --cc -m -p master
 log -c -m -p master
+log -m --raw master
+log -m --stat master
 log -SF master
 log -S F master
 log -SF -p master
@@ -452,6 +455,14 @@ diff-tree --stat --compact-summary initial mode
 diff-tree -R --stat --compact-summary initial mode
 EOF
 
+test_expect_success 'log -m matches log -m -p' '
+	git log -m -p master >result &&
+	process_diffs result >expected &&
+	git log -m >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
 	git log -p --diff-merges=separate master >result &&
 	process_diffs result >expected &&
@@ -481,6 +492,19 @@ test_expect_success 'git config log.diffMerges first-parent vs -m' '
 	git log -p -m master >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
+'
+
+# -m in "git diff-index" means "match missing", that differs
+# from its meaning in "git diff". Let's check it in diff-index.
+# The line in the output for removed file should disappear when
+# we provide -m in diff-index.
+test_expect_success 'git diff-index -m' '
+	rm -f file1 &&
+	git diff-index HEAD >without-m &&
+	lines_count=$(wc -l <without-m) &&
+	git diff-index -m HEAD >with-m &&
+	git restore file1 &&
+	test_line_count = $((lines_count - 1)) with-m
 '
 
 test_expect_success 'log -S requires an argument' '
