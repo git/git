@@ -12,15 +12,29 @@ test_description='git mktag: tag object verify test'
 # given in the expect.pat file.
 
 check_verify_failure () {
-	test_expect_success "$1" "
-		test_must_fail git mktag <tag.sig 2>message &&
-		grep '$2' message &&
-		if test '$3' != '--no-strict'
+	subject=$1 &&
+	message=$2 &&
+	shift 2 &&
+
+	no_strict= &&
+	while test $# != 0
+	do
+		case "$1" in
+		--no-strict)
+			no_strict=yes
+			;;
+		esac &&
+		shift
+	done &&
+
+	test_expect_success "fail with [--[no-]strict]: $subject" '
+		test_must_fail git mktag <tag.sig 2>err &&
+		if test -z "$no_strict"
 		then
-			test_must_fail git mktag --no-strict <tag.sig 2>message.no-strict &&
-			grep '$2' message.no-strict
+			test_must_fail git mktag <tag.sig 2>err2 &&
+			test_cmp err err2
 		fi
-	"
+	'
 }
 
 test_expect_mktag_success() {
@@ -243,7 +257,8 @@ tagger . <> 0 +0000
 EOF
 
 check_verify_failure 'verify tag-name check' \
-	'^error:.* badTagName:' '--no-strict'
+	'^error:.* badTagName:' \
+	--no-strict
 
 ############################################################
 # 11. tagger line label check #1
@@ -257,7 +272,8 @@ This is filler
 EOF
 
 check_verify_failure '"tagger" line label check #1' \
-	'^error:.* missingTaggerEntry:' '--no-strict'
+	'^error:.* missingTaggerEntry:' \
+	--no-strict
 
 ############################################################
 # 12. tagger line label check #2
@@ -272,7 +288,8 @@ This is filler
 EOF
 
 check_verify_failure '"tagger" line label check #2' \
-	'^error:.* missingTaggerEntry:' '--no-strict'
+	'^error:.* missingTaggerEntry:' \
+	--no-strict
 
 ############################################################
 # 13. allow missing tag author name like fsck
@@ -301,7 +318,8 @@ tagger T A Gger <
 EOF
 
 check_verify_failure 'disallow malformed tagger' \
-	'^error:.* badEmail:' '--no-strict'
+	'^error:.* badEmail:' \
+	--no-strict
 
 ############################################################
 # 15. allow empty tag email
@@ -425,7 +443,8 @@ this line should not be here
 EOF
 
 check_verify_failure 'detect invalid header entry' \
-	'^error:.* extraHeaderEntry:' '--no-strict'
+	'^error:.* extraHeaderEntry:' \
+	--no-strict
 
 test_expect_success 'invalid header entry config & fsck' '
 	test_must_fail git mktag <tag.sig &&
