@@ -26,6 +26,7 @@
 #include "thread-utils.h"
 #include "progress.h"
 #include "sparse-index.h"
+#include "csum-file.h"
 
 /* Mask for the name length in ce_flags in the on-disk index */
 
@@ -2521,78 +2522,21 @@ int repo_index_has_changes(struct repository *repo,
 	}
 }
 
-#define WRITE_BUFFER_SIZE (128 * 1024)
-static unsigned char write_buffer[WRITE_BUFFER_SIZE];
-static unsigned long write_buffer_len;
-
-static int ce_write_flush(git_hash_ctx *context, int fd)
+static int write_index_ext_header(struct hashfile *f,
+				  git_hash_ctx *eoie_f,
+				  unsigned int ext,
+				  unsigned int sz)
 {
-	unsigned int buffered = write_buffer_len;
-	if (buffered) {
-		the_hash_algo->update_fn(context, write_buffer, buffered);
-		if (write_in_full(fd, write_buffer, buffered) < 0)
-			return -1;
-		write_buffer_len = 0;
+	hashwrite_be32(f, ext);
+	hashwrite_be32(f, sz);
+
+	if (eoie_f) {
+		ext = htonl(ext);
+		sz = htonl(sz);
+		the_hash_algo->update_fn(eoie_f, &ext, sizeof(ext));
+		the_hash_algo->update_fn(eoie_f, &sz, sizeof(sz));
 	}
 	return 0;
-}
-
-static int ce_write(git_hash_ctx *context, int fd, void *data, unsigned int len)
-{
-	while (len) {
-		unsigned int buffered = write_buffer_len;
-		unsigned int partial = WRITE_BUFFER_SIZE - buffered;
-		if (partial > len)
-			partial = len;
-		memcpy(write_buffer + buffered, data, partial);
-		buffered += partial;
-		if (buffered == WRITE_BUFFER_SIZE) {
-			write_buffer_len = buffered;
-			if (ce_write_flush(context, fd))
-				return -1;
-			buffered = 0;
-		}
-		write_buffer_len = buffered;
-		len -= partial;
-		data = (char *) data + partial;
-	}
-	return 0;
-}
-
-static int write_index_ext_header(git_hash_ctx *context, git_hash_ctx *eoie_context,
-				  int fd, unsigned int ext, unsigned int sz)
-{
-	ext = htonl(ext);
-	sz = htonl(sz);
-	if (eoie_context) {
-		the_hash_algo->update_fn(eoie_context, &ext, 4);
-		the_hash_algo->update_fn(eoie_context, &sz, 4);
-	}
-	return ((ce_write(context, fd, &ext, 4) < 0) ||
-		(ce_write(context, fd, &sz, 4) < 0)) ? -1 : 0;
-}
-
-static int ce_flush(git_hash_ctx *context, int fd, unsigned char *hash)
-{
-	unsigned int left = write_buffer_len;
-
-	if (left) {
-		write_buffer_len = 0;
-		the_hash_algo->update_fn(context, write_buffer, left);
-	}
-
-	/* Flush first if not enough space for hash signature */
-	if (left + the_hash_algo->rawsz > WRITE_BUFFER_SIZE) {
-		if (write_in_full(fd, write_buffer, left) < 0)
-			return -1;
-		left = 0;
-	}
-
-	/* Append the hash signature at the end */
-	the_hash_algo->final_fn(write_buffer + left, context);
-	hashcpy(hash, write_buffer + left);
-	left += the_hash_algo->rawsz;
-	return (write_in_full(fd, write_buffer, left) < 0) ? -1 : 0;
 }
 
 static void ce_smudge_racily_clean_entry(struct index_state *istate,
@@ -2673,11 +2617,10 @@ static void copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
 	}
 }
 
-static int ce_write_entry(git_hash_ctx *c, int fd, struct cache_entry *ce,
+static int ce_write_entry(struct hashfile *f, struct cache_entry *ce,
 			  struct strbuf *previous_name, struct ondisk_cache_entry *ondisk)
 {
 	int size;
-	int result;
 	unsigned int saved_namelen;
 	int stripped_name = 0;
 	static unsigned char padding[8] = { 0x00 };
@@ -2693,11 +2636,9 @@ static int ce_write_entry(git_hash_ctx *c, int fd, struct cache_entry *ce,
 	if (!previous_name) {
 		int len = ce_namelen(ce);
 		copy_cache_entry_to_ondisk(ondisk, ce);
-		result = ce_write(c, fd, ondisk, size);
-		if (!result)
-			result = ce_write(c, fd, ce->name, len);
-		if (!result)
-			result = ce_write(c, fd, padding, align_padding_size(size, len));
+		hashwrite(f, ondisk, size);
+		hashwrite(f, ce->name, len);
+		hashwrite(f, padding, align_padding_size(size, len));
 	} else {
 		int common, to_remove, prefix_size;
 		unsigned char to_remove_vi[16];
@@ -2711,13 +2652,10 @@ static int ce_write_entry(git_hash_ctx *c, int fd, struct cache_entry *ce,
 		prefix_size = encode_varint(to_remove, to_remove_vi);
 
 		copy_cache_entry_to_ondisk(ondisk, ce);
-		result = ce_write(c, fd, ondisk, size);
-		if (!result)
-			result = ce_write(c, fd, to_remove_vi, prefix_size);
-		if (!result)
-			result = ce_write(c, fd, ce->name + common, ce_namelen(ce) - common);
-		if (!result)
-			result = ce_write(c, fd, padding, 1);
+		hashwrite(f, ondisk, size);
+		hashwrite(f, to_remove_vi, prefix_size);
+		hashwrite(f, ce->name + common, ce_namelen(ce) - common);
+		hashwrite(f, padding, 1);
 
 		strbuf_splice(previous_name, common, to_remove,
 			      ce->name + common, ce_namelen(ce) - common);
@@ -2727,7 +2665,7 @@ static int ce_write_entry(git_hash_ctx *c, int fd, struct cache_entry *ce,
 		ce->ce_flags &= ~CE_STRIP_NAME;
 	}
 
-	return result;
+	return 0;
 }
 
 /*
@@ -2839,8 +2777,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			  int strip_extensions)
 {
 	uint64_t start = getnanotime();
-	int newfd = tempfile->fd;
-	git_hash_ctx c, eoie_c;
+	struct hashfile *f;
+	git_hash_ctx *eoie_c = NULL;
 	struct cache_header hdr;
 	int i, err = 0, removed, extended, hdr_version;
 	struct cache_entry **cache = istate->cache;
@@ -2853,6 +2791,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	int ieot_entries = 1;
 	struct index_entry_offset_table *ieot = NULL;
 	int nr, nr_threads;
+
+	f = hashfd(tempfile->fd, tempfile->filename.buf);
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
@@ -2882,9 +2822,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	hdr.hdr_version = htonl(hdr_version);
 	hdr.hdr_entries = htonl(entries - removed);
 
-	the_hash_algo->init_fn(&c);
-	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
-		return -1;
+	hashwrite(f, &hdr, sizeof(hdr));
 
 	if (!HAVE_THREADS || git_config_get_index_threads(&nr_threads))
 		nr_threads = 1;
@@ -2919,12 +2857,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		}
 	}
 
-	offset = lseek(newfd, 0, SEEK_CUR);
-	if (offset < 0) {
-		free(ieot);
-		return -1;
-	}
-	offset += write_buffer_len;
+	offset = hashfile_total(f);
+
 	nr = 0;
 	previous_name = (hdr_version == 4) ? &previous_name_buf : NULL;
 
@@ -2959,14 +2893,10 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			if (previous_name)
 				previous_name->buf[0] = 0;
 			nr = 0;
-			offset = lseek(newfd, 0, SEEK_CUR);
-			if (offset < 0) {
-				free(ieot);
-				return -1;
-			}
-			offset += write_buffer_len;
+
+			offset = hashfile_total(f);
 		}
-		if (ce_write_entry(&c, newfd, ce, previous_name, (struct ondisk_cache_entry *)&ondisk) < 0)
+		if (ce_write_entry(f, ce, previous_name, (struct ondisk_cache_entry *)&ondisk) < 0)
 			err = -1;
 
 		if (err)
@@ -2985,14 +2915,16 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		return err;
 	}
 
-	/* Write extension data here */
-	offset = lseek(newfd, 0, SEEK_CUR);
-	if (offset < 0) {
-		free(ieot);
-		return -1;
+	offset = hashfile_total(f);
+
+	/*
+	 * The extension headers must be hashed on their own for the
+	 * EOIE extension. Create a hashfile here to compute that hash.
+	 */
+	if (offset && record_eoie()) {
+		CALLOC_ARRAY(eoie_c, 1);
+		the_hash_algo->init_fn(eoie_c);
 	}
-	offset += write_buffer_len;
-	the_hash_algo->init_fn(&eoie_c);
 
 	/*
 	 * Lets write out CACHE_EXT_INDEXENTRYOFFSETTABLE first so that we
@@ -3005,8 +2937,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		write_ieot_extension(&sb, ieot);
-		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_INDEXENTRYOFFSETTABLE, sb.len) < 0
-			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		err = write_index_ext_header(f, eoie_c, CACHE_EXT_INDEXENTRYOFFSETTABLE, sb.len) < 0;
+		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
 		free(ieot);
 		if (err)
@@ -3018,9 +2950,9 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		err = write_link_extension(&sb, istate) < 0 ||
-			write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_LINK,
-					       sb.len) < 0 ||
-			ce_write(&c, newfd, sb.buf, sb.len) < 0;
+			write_index_ext_header(f, eoie_c, CACHE_EXT_LINK,
+					       sb.len) < 0;
+		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
 		if (err)
 			return -1;
@@ -3029,8 +2961,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		cache_tree_write(&sb, istate->cache_tree);
-		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_TREE, sb.len) < 0
-			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		err = write_index_ext_header(f, eoie_c, CACHE_EXT_TREE, sb.len) < 0;
+		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
 		if (err)
 			return -1;
@@ -3039,9 +2971,9 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		resolve_undo_write(&sb, istate->resolve_undo);
-		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_RESOLVE_UNDO,
-					     sb.len) < 0
-			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		err = write_index_ext_header(f, eoie_c, CACHE_EXT_RESOLVE_UNDO,
+					     sb.len) < 0;
+		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
 		if (err)
 			return -1;
@@ -3050,9 +2982,9 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		write_untracked_extension(&sb, istate->untracked);
-		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_UNTRACKED,
-					     sb.len) < 0 ||
-			ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		err = write_index_ext_header(f, eoie_c, CACHE_EXT_UNTRACKED,
+					     sb.len) < 0;
+		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
 		if (err)
 			return -1;
@@ -3061,14 +2993,14 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		write_fsmonitor_extension(&sb, istate);
-		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_FSMONITOR, sb.len) < 0
-			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		err = write_index_ext_header(f, eoie_c, CACHE_EXT_FSMONITOR, sb.len) < 0;
+		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
 		if (err)
 			return -1;
 	}
 	if (istate->sparse_index) {
-		if (write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_SPARSE_DIRECTORIES, 0) < 0)
+		if (write_index_ext_header(f, eoie_c, CACHE_EXT_SPARSE_DIRECTORIES, 0) < 0)
 			return -1;
 	}
 
@@ -3078,19 +3010,18 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	 * read.  Write it out regardless of the strip_extensions parameter as we need it
 	 * when loading the shared index.
 	 */
-	if (offset && record_eoie()) {
+	if (eoie_c) {
 		struct strbuf sb = STRBUF_INIT;
 
-		write_eoie_extension(&sb, &eoie_c, offset);
-		err = write_index_ext_header(&c, NULL, newfd, CACHE_EXT_ENDOFINDEXENTRIES, sb.len) < 0
-			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		write_eoie_extension(&sb, eoie_c, offset);
+		err = write_index_ext_header(f, NULL, CACHE_EXT_ENDOFINDEXENTRIES, sb.len) < 0;
+		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
 		if (err)
 			return -1;
 	}
 
-	if (ce_flush(&c, newfd, istate->oid.hash))
-		return -1;
+	finalize_hashfile(f, istate->oid.hash, CSUM_HASH_IN_STREAM);
 	if (close_tempfile_gently(tempfile)) {
 		error(_("could not close '%s'"), get_tempfile_path(tempfile));
 		return -1;
