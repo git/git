@@ -1636,7 +1636,7 @@ sub has_no_changes {
 	my $commit = shift;
 
 	my @revs = split / /, command_oneline(
-		qw(rev-list --parents -1 -m), $commit);
+		qw(rev-list --parents -1), $commit);
 
 	# Commits with no parents, e.g. the start of a partial branch,
 	# have changes by definition.

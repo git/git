@@ -167,6 +167,14 @@ Sending
 	`sendemail.envelopeSender` configuration variable; if that is
 	unspecified, choosing the envelope sender is left to your MTA.
 
+--sendmail-cmd=<command>::
+	Specify a command to run to send the email. The command should
+	be sendmail-like; specifically, it must support the `-i` option.
+	The command will be executed in the shell if necessary.  Default
+	is the value of `sendemail.sendmailcmd`.  If unspecified, and if
+	--smtp-server is also unspecified, git-send-email will search
+	for `sendmail` in `/usr/sbin`, `/usr/lib` and $PATH.
+
 --smtp-encryption=<encryption>::
 	Specify the encryption to use, either 'ssl' or 'tls'.  Any other
 	value reverts to plain SMTP.  Default is the value of
@@ -211,13 +219,16 @@ a password is obtained using 'git-credential'.
 
 --smtp-server=<host>::
 	If set, specifies the outgoing SMTP server to use (e.g.
-	`smtp.example.com` or a raw IP address).  Alternatively it can
-	specify a full pathname of a sendmail-like program instead;
-	the program must support the `-i` option.  Default value can
-	be specified by the `sendemail.smtpServer` configuration
-	option; the built-in default is to search for `sendmail` in
-	`/usr/sbin`, `/usr/lib` and $PATH if such program is
-	available, falling back to `localhost` otherwise.
+	`smtp.example.com` or a raw IP address).  If unspecified, and if
+	`--sendmail-cmd` is also unspecified, the default is to search
+	for `sendmail` in `/usr/sbin`, `/usr/lib` and $PATH if such a
+	program is available, falling back to `localhost` otherwise.
++
+For backward compatibility, this option can also specify a full pathname
+of a sendmail-like program instead; the program must support the `-i`
+option.  This method does not support passing arguments or using plain
+command names.  For those use cases, consider using `--sendmail-cmd`
+instead.
 
 --smtp-server-port=<port>::
 	Specifies a port different from the default port (SMTP

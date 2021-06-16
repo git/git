@@ -193,10 +193,10 @@ struct rev_info {
 			/* Diff-merge flags */
 			explicit_diff_merges: 1,
 			merges_need_diff: 1,
+			merges_imply_patch:1,
 			separate_merges: 1,
 			combine_merges:1,
 			combined_all_paths:1,
-			combined_imply_patch:1,
 			dense_combined_merges:1,
 			first_parent_merges:1;
 
