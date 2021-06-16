@@ -97,8 +97,5 @@ submodule.superprojectGitDir::
 	submodules, but is not guaranteed to be present in every submodule. It
 	is set automatically during submodule creation.
 +
-	In situations where more than one superproject references the same
-	submodule worktree, the value of this config and the behavior of
-	operations which use it are undefined. To reference a single project
-	from multiple superprojects, it is better to create a worktree of the
-	submodule for each superproject.
+Because of this configuration variable, it is forbidden to use the
+same submodule worktree shared by multiple superprojects.
