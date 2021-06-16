@@ -1910,6 +1910,10 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		git_config_set_in_file(p, "submodule.alternateErrorStrategy",
 					   error_strategy);
 
+	git_config_set_in_file(p, "submodule.superprojectGitdir",
+			       relative_path(absolute_path(get_git_dir()),
+					     path, &sb));
+
 	free(sm_alternate);
 	free(error_strategy);
 
