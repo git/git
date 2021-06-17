@@ -78,6 +78,19 @@ check_verify_failure () {
 		# will always fail.
 		test_must_fail git -C bad-tag fsck
 	'
+
+	test_expect_success "for-each-ref: $subject" '
+		# Make sure the earlier test created it for us
+		git rev-parse "$bad_tag" &&
+
+		echo "$bad_tag" >"bad-tag/$tag_ref" &&
+
+		printf "%s tag\t%s\n" "$bad_tag" "$tag_ref" >expected &&
+		git -C bad-tag for-each-ref "$tag_ref" >actual &&
+		test_cmp expected actual &&
+
+		test_must_fail git -C bad-tag for-each-ref --format="%(*objectname)"
+	'
 }
 
 test_expect_mktag_success() {
