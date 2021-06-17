@@ -45,15 +45,16 @@ create_commits_in () {
 # of the output.
 make_user_friendly_and_stable_output () {
 	sed \
-		-e "s/  *\$//" \
-		-e "s/   */ /g" \
-		-e "s/	/    /g" \
 		-e "s/$A/<COMMIT-A>/g" \
 		-e "s/$B/<COMMIT-B>/g" \
 		-e "s/$ZERO_OID/<ZERO-OID>/g" \
 		-e "s/$(echo $A | cut -c1-7)[0-9a-f]*/<OID-A>/g" \
 		-e "s/$(echo $B | cut -c1-7)[0-9a-f]*/<OID-B>/g" \
 		-e "s#To $URL_PREFIX/upstream.git#To <URL/of/upstream.git>#"
+}
+
+format_and_save_expect () {
+	sed -e 's/^> //' -e 's/Z$//' >expect
 }
 
 setup_upstream_and_workbench () {
@@ -111,14 +112,14 @@ run_git_push_porcelain_output_test() {
 				next
 		) >out &&
 		make_user_friendly_and_stable_output <out >actual &&
-		cat >expect <<-EOF &&
-		To <URL/of/upstream.git>
-		=    refs/heads/baz:refs/heads/baz    [up to date]
-		     <COMMIT-B>:refs/heads/bar    <OID-A>..<OID-B>
-		-    :refs/heads/foo    [deleted]
-		+    refs/heads/main:refs/heads/main    <OID-B>...<OID-A> (forced update)
-		*    refs/heads/next:refs/heads/next    [new branch]
-		Done
+		format_and_save_expect <<-EOF &&
+		> To <URL/of/upstream.git>
+		> =	refs/heads/baz:refs/heads/baz	[up to date]
+		>  	<COMMIT-B>:refs/heads/bar	<OID-A>..<OID-B>
+		> -	:refs/heads/foo	[deleted]
+		> +	refs/heads/main:refs/heads/main	<OID-B>...<OID-A> (forced update)
+		> *	refs/heads/next:refs/heads/next	[new branch]
+		> Done
 		EOF
 		test_cmp expect actual &&
 
@@ -148,12 +149,12 @@ run_git_push_porcelain_output_test() {
 				next
 		) >out &&
 		make_user_friendly_and_stable_output <out >actual &&
-		cat >expect <<-EOF &&
+		format_and_save_expect <<-EOF &&
 		To <URL/of/upstream.git>
-		=    refs/heads/next:refs/heads/next    [up to date]
-		!    refs/heads/bar:refs/heads/bar    [rejected] (non-fast-forward)
-		!    (delete):refs/heads/baz    [rejected] (atomic push failed)
-		!    refs/heads/main:refs/heads/main    [rejected] (atomic push failed)
+		> =	refs/heads/next:refs/heads/next	[up to date]
+		> !	refs/heads/bar:refs/heads/bar	[rejected] (non-fast-forward)
+		> !	(delete):refs/heads/baz	[rejected] (atomic push failed)
+		> !	refs/heads/main:refs/heads/main	[rejected] (atomic push failed)
 		Done
 		EOF
 		test_cmp expect actual &&
@@ -168,6 +169,7 @@ run_git_push_porcelain_output_test() {
 		EOF
 		test_cmp expect actual
 	'
+
 	test_expect_success "prepare pre-receive hook ($PROTOCOL)" '
 		write_script "$upstream/hooks/pre-receive" <<-EOF
 		exit 1
@@ -189,12 +191,12 @@ run_git_push_porcelain_output_test() {
 				next
 		) >out &&
 		make_user_friendly_and_stable_output <out >actual &&
-		cat >expect <<-EOF &&
+		format_and_save_expect <<-EOF &&
 		To <URL/of/upstream.git>
-		=    refs/heads/next:refs/heads/next    [up to date]
-		!    refs/heads/bar:refs/heads/bar    [remote rejected] (pre-receive hook declined)
-		!    :refs/heads/baz    [remote rejected] (pre-receive hook declined)
-		!    refs/heads/main:refs/heads/main    [remote rejected] (pre-receive hook declined)
+		> =	refs/heads/next:refs/heads/next	[up to date]
+		> !	refs/heads/bar:refs/heads/bar	[remote rejected] (pre-receive hook declined)
+		> !	:refs/heads/baz	[remote rejected] (pre-receive hook declined)
+		> !	refs/heads/main:refs/heads/main	[remote rejected] (pre-receive hook declined)
 		Done
 		EOF
 		test_cmp expect actual &&
@@ -227,12 +229,12 @@ run_git_push_porcelain_output_test() {
 				next
 		) >out &&
 		make_user_friendly_and_stable_output <out >actual &&
-		cat >expect <<-EOF &&
+		format_and_save_expect <<-EOF &&
 		To <URL/of/upstream.git>
-		=    refs/heads/next:refs/heads/next    [up to date]
-		-    :refs/heads/baz    [deleted]
-		     refs/heads/main:refs/heads/main    <OID-A>..<OID-B>
-		!    refs/heads/bar:refs/heads/bar    [rejected] (non-fast-forward)
+		> =	refs/heads/next:refs/heads/next	[up to date]
+		> -	:refs/heads/baz	[deleted]
+		>  	refs/heads/main:refs/heads/main	<OID-A>..<OID-B>
+		> !	refs/heads/bar:refs/heads/bar	[rejected] (non-fast-forward)
 		Done
 		EOF
 		test_cmp expect actual &&
