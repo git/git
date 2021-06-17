@@ -44,11 +44,13 @@ check_verify_failure () {
 	'
 
 	test_expect_success "setup: $subject" '
+		tag_ref=refs/tags/bad_tag &&
+
 		# Reset any leftover state from the last $subject
 		rm -rf bad-tag &&
 
 		git init --bare bad-tag &&
-		git -C bad-tag hash-object -t tag -w --stdin --literally <tag.sig
+		bad_tag=$(git -C bad-tag hash-object -t tag -w --stdin --literally <tag.sig)
 	'
 
 	test_expect_success "hash-object & fsck unreachable: $subject" '
@@ -58,6 +60,23 @@ check_verify_failure () {
 		else
 			test_must_fail git -C bad-tag fsck
 		fi
+	'
+
+	test_expect_success "update-ref & fsck reachable: $subject" '
+		# Make sure the earlier test created it for us
+		git rev-parse "$bad_tag" &&
+
+		# The update-ref of the bad content will fail, do it
+		# anyway to see if it segfaults
+		test_might_fail git -C bad-tag update-ref "$tag_ref" "$bad_tag" &&
+
+		# Manually create the broken, we cannot do it with
+		# update-ref
+		echo "$bad_tag" >"bad-tag/$tag_ref" &&
+
+		# Unlike fsck-ing unreachable content above, this
+		# will always fail.
+		test_must_fail git -C bad-tag fsck
 	'
 }
 
