@@ -85,4 +85,65 @@ test_expect_success 'show-branch --color output' '
 	test_cmp expect actual
 '
 
+test_expect_success 'show branch --remotes' '
+	cat >expect.err <<-\EOF &&
+	No revs to be shown.
+	EOF
+	git show-branch -r 2>actual.err >actual.out &&
+	test_cmp expect.err actual.err &&
+	test_must_be_empty actual.out
+'
+
+test_expect_success 'setup show branch --list' '
+	sed "s/^> //" >expect <<-\EOF
+	>   [branch1] branch1
+	>   [branch2] branch2
+	>   [branch3] branch3
+	>   [branch4] branch4
+	>   [branch5] branch5
+	>   [branch6] branch6
+	>   [branch7] branch7
+	>   [branch8] branch8
+	>   [branch9] branch9
+	> * [branch10] branch10
+	EOF
+'
+
+test_expect_success 'show branch --list' '
+	git show-branch --list $(cat branches.sorted) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'show branch --list has no --color output' '
+	git show-branch --color=always --list $(cat branches.sorted) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'show branch --merge-base with one argument' '
+	for branch in $(cat branches.sorted)
+	do
+		git rev-parse $branch >expect &&
+		git show-branch --merge-base $branch >actual &&
+		test_cmp expect actual
+	done
+'
+
+test_expect_success 'show branch --merge-base with two arguments' '
+	for branch in $(cat branches.sorted)
+	do
+		git rev-parse initial >expect &&
+		git show-branch --merge-base initial $branch >actual &&
+		test_cmp expect actual
+	done
+'
+
+test_expect_success 'show branch --merge-base with N arguments' '
+	git rev-parse initial >expect &&
+	git show-branch --merge-base $(cat branches.sorted) >actual &&
+	test_cmp expect actual &&
+
+	git merge-base $(cat branches.sorted) >actual &&
+	test_cmp expect actual
+'
+
 test_done
