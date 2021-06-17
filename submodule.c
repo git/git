@@ -489,7 +489,8 @@ static void prepare_submodule_repo_env_no_git_dir(struct strvec *out)
 	const char * const *var;
 
 	for (var = local_repo_env; *var; var++) {
-		if (strcmp(*var, CONFIG_DATA_ENVIRONMENT))
+		if (strcmp(*var, CONFIG_DATA_ENVIRONMENT) &&
+		    strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
 			strvec_push(out, *var);
 	}
 }
