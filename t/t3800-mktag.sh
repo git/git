@@ -17,11 +17,16 @@ check_verify_failure () {
 	shift 2 &&
 
 	no_strict= &&
+	fsck_obj_ok= &&
+	no_strict= &&
 	while test $# != 0
 	do
 		case "$1" in
 		--no-strict)
 			no_strict=yes
+			;;
+		--fsck-obj-ok)
+			fsck_obj_ok=yes
 			;;
 		esac &&
 		shift
@@ -35,6 +40,23 @@ check_verify_failure () {
 			test_cmp err err2
 		else
 			git mktag --no-strict <tag.sig
+		fi
+	'
+
+	test_expect_success "setup: $subject" '
+		# Reset any leftover state from the last $subject
+		rm -rf bad-tag &&
+
+		git init --bare bad-tag &&
+		git -C bad-tag hash-object -t tag -w --stdin --literally <tag.sig
+	'
+
+	test_expect_success "hash-object & fsck unreachable: $subject" '
+		if test -n "$fsck_obj_ok"
+		then
+			git -C bad-tag fsck
+		else
+			test_must_fail git -C bad-tag fsck
 		fi
 	'
 }
@@ -183,7 +205,8 @@ tagger . <> 0 +0000
 EOF
 
 check_verify_failure 'verify object (hash/type) check -- correct type, nonexisting object' \
-	'^fatal: could not read tagged object'
+	'^fatal: could not read tagged object' \
+	--fsck-obj-ok
 
 cat >tag.sig <<EOF
 object $head
@@ -216,7 +239,8 @@ tagger . <> 0 +0000
 EOF
 
 check_verify_failure 'verify object (hash/type) check -- mismatched type, valid object' \
-	'^fatal: object.*tagged as.*tree.*but is.*commit'
+	'^fatal: object.*tagged as.*tree.*but is.*commit' \
+	--fsck-obj-ok
 
 ############################################################
 #  9.5. verify object (hash/type) check -- replacement
@@ -245,7 +269,8 @@ tagger . <> 0 +0000
 EOF
 
 check_verify_failure 'verify object (hash/type) check -- mismatched type, valid object' \
-	'^fatal: object.*tagged as.*tree.*but is.*blob'
+	'^fatal: object.*tagged as.*tree.*but is.*blob' \
+	--fsck-obj-ok
 
 ############################################################
 # 10. verify tag-name check
@@ -260,7 +285,8 @@ EOF
 
 check_verify_failure 'verify tag-name check' \
 	'^error:.* badTagName:' \
-	--no-strict
+	--no-strict \
+	--fsck-obj-ok
 
 ############################################################
 # 11. tagger line label check #1
@@ -275,7 +301,8 @@ EOF
 
 check_verify_failure '"tagger" line label check #1' \
 	'^error:.* missingTaggerEntry:' \
-	--no-strict
+	--no-strict \
+	--fsck-obj-ok
 
 ############################################################
 # 12. tagger line label check #2
@@ -291,7 +318,8 @@ EOF
 
 check_verify_failure '"tagger" line label check #2' \
 	'^error:.* missingTaggerEntry:' \
-	--no-strict
+	--no-strict \
+	--fsck-obj-ok
 
 ############################################################
 # 13. allow missing tag author name like fsck
@@ -321,7 +349,8 @@ EOF
 
 check_verify_failure 'disallow malformed tagger' \
 	'^error:.* badEmail:' \
-	--no-strict
+	--no-strict \
+	--fsck-obj-ok
 
 ############################################################
 # 15. allow empty tag email
@@ -446,7 +475,8 @@ EOF
 
 check_verify_failure 'detect invalid header entry' \
 	'^error:.* extraHeaderEntry:' \
-	--no-strict
+	--no-strict \
+	--fsck-obj-ok
 
 test_expect_success 'invalid header entry config & fsck' '
 	test_must_fail git mktag <tag.sig &&
