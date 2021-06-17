@@ -51,6 +51,12 @@ jobs:
             feed: https://github.com/petervanderdoes/gitflow-avh/tags.atom
           - label: curl
             feed: https://github.com/curl/curl/tags.atom
+          - label: libgpg-error
+            feed: https://github.com/gpg/libgpg-error/releases.atom
+            title-pattern: ^libgpg-error-[0-9\.]*$
+          - label: libgcrypt
+            feed: https://github.com/gpg/libgcrypt/releases.atom
+            title-pattern: ^libgcrypt-[0-9\.]*$
           - label: gpg
             feed: https://github.com/gpg/gnupg/releases.atom
           - label: mintty
