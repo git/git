@@ -60,9 +60,9 @@ test_expect_success "proc-receive: multiple rewrite for one ref, no refname for 
 	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/24/124/1        Z
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/changes/25/125/1        Z
 	> To <URL/of/upstream.git>
-	>    <OID-A>..<OID-B>  HEAD -> refs/for/main/topic
+	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/for/main/topic
 	>  * [new reference]   HEAD -> refs/changes/24/124/1
-	>    <OID-A>..<OID-B>  HEAD -> refs/changes/25/125/1
+	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/changes/25/125/1
 	EOF
 	test_cmp expect actual &&
 
@@ -136,8 +136,8 @@ test_expect_success "proc-receive: multiple rewrites for one ref, no refname for
 	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/changes/25/125/1        Z
 	> To <URL/of/upstream.git>
 	>  * [new reference]   HEAD -> refs/changes/24/124/1
-	>    <OID-A>..<OID-B>  HEAD -> refs/for/main/topic
-	>  + <OID-B>...<OID-A> HEAD -> refs/changes/25/125/1 (forced update)
+	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/for/main/topic
+	>  + <COMMIT-B>...<COMMIT-A> HEAD -> refs/changes/25/125/1 (forced update)
 	EOF
 	test_cmp expect actual &&
 
@@ -198,7 +198,7 @@ test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL)" '
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/changes/24/124/2        Z
 	> To <URL/of/upstream.git>
 	>  * [new reference]   HEAD -> refs/changes/23/123/1
-	>    <OID-A>..<OID-B>  HEAD -> refs/changes/24/124/2
+	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/changes/24/124/2
 	EOF
 	test_cmp expect actual &&
 

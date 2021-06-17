@@ -26,7 +26,7 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL)" '
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
 	> To <URL/of/upstream.git>
-	>    <OID-A>..<OID-B>  <COMMIT-B> -> main
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> main
 	>  ! [remote rejected] HEAD -> refs/for/main/topic (proc-receive failed to report status)
 	EOF
 	test_cmp expect actual &&

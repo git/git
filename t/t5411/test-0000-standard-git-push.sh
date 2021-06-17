@@ -15,7 +15,7 @@ test_expect_success "git-push ($PROTOCOL)" '
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
 	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
 	> To <URL/of/upstream.git>
-	>    <OID-A>..<OID-B>  <COMMIT-B> -> main
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> main
 	>  * [new branch]      HEAD -> next
 	EOF
 	test_cmp expect actual &&
@@ -69,7 +69,7 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL)" '
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/next        Z
 	> To <URL/of/upstream.git>
-	>    <OID-A>..<OID-B>  <COMMIT-B> -> next
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> next
 	>  ! [rejected]        main -> main (non-fast-forward)
 	EOF
 	test_cmp expect actual &&
@@ -106,7 +106,7 @@ test_expect_success "git-push -f ($PROTOCOL)" '
 	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic        Z
 	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c        Z
 	> To <URL/of/upstream.git>
-	>  + <OID-B>...<OID-A> main -> main (forced update)
+	>  + <COMMIT-B>...<COMMIT-A> main -> main (forced update)
 	>  - [deleted]         next
 	>  * [new tag]         v123 -> v123
 	>  * [new reference]   main -> refs/review/main/topic

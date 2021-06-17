@@ -55,12 +55,12 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL)" '
 	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/foo        Z
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
-	>    <OID-A>..<OID-B>  <COMMIT-B> -> main
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> main
 	>  * [new branch]      HEAD -> bar
 	>  * [new branch]      HEAD -> baz
 	>  * [new reference]   HEAD -> refs/for/next/topic2
 	>  * [new branch]      HEAD -> foo
-	>    <OID-A>..<OID-B>  HEAD -> refs/for/main/topic
+	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/for/main/topic
 	>  ! [remote rejected] HEAD -> refs/for/next/topic1 (fail to call Web API)
 	>  ! [remote rejected] HEAD -> refs/for/next/topic3 (proc-receive failed to report status)
 	EOF

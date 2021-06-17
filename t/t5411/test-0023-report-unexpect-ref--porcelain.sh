@@ -26,7 +26,7 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL/porcelain)" 
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
 	> To <URL/of/upstream.git>
-	>  	<COMMIT-B>:refs/heads/main	<OID-A>..<OID-B>
+	>  	<COMMIT-B>:refs/heads/main	<COMMIT-A>..<COMMIT-B>
 	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
 	> Done
 	EOF

@@ -85,11 +85,11 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL)" '
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/pull/123/head        Z
 	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/pull/124/head        Z
 	> To <URL/of/upstream.git>
-	>    <OID-A>..<OID-B>  <COMMIT-B> -> bar
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> bar
 	>  - [deleted]         foo
-	>  + <OID-B>...<OID-A> HEAD -> main (forced update)
-	>    <OID-A>..<OID-B>  HEAD -> refs/pull/123/head
-	>  + <OID-B>...<OID-A> HEAD -> refs/pull/124/head (forced update)
+	>  + <COMMIT-B>...<COMMIT-A> HEAD -> main (forced update)
+	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/pull/123/head
+	>  + <COMMIT-B>...<COMMIT-A> HEAD -> refs/pull/124/head (forced update)
 	EOF
 	test_cmp expect actual &&
 

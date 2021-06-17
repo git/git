@@ -55,12 +55,12 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL/porcel
 	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/foo        Z
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
-	>  	<COMMIT-B>:refs/heads/main	<OID-A>..<OID-B>
+	>  	<COMMIT-B>:refs/heads/main	<COMMIT-A>..<COMMIT-B>
 	> *	HEAD:refs/heads/bar	[new branch]
 	> *	HEAD:refs/heads/baz	[new branch]
 	> *	HEAD:refs/for/next/topic2	[new reference]
 	> *	HEAD:refs/heads/foo	[new branch]
-	>  	HEAD:refs/for/main/topic	<OID-A>..<OID-B>
+	>  	HEAD:refs/for/main/topic	<COMMIT-A>..<COMMIT-B>
 	> !	HEAD:refs/for/next/topic1	[remote rejected] (fail to call Web API)
 	> !	HEAD:refs/for/next/topic3	[remote rejected] (proc-receive failed to report status)
 	> Done

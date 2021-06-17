@@ -18,6 +18,18 @@ create_commits_in () {
 	done
 }
 
+get_abbrev_oid () {
+	oid=$1 &&
+	suffix=${oid#???????} &&
+	oid=${oid%$suffix} &&
+	if test -n "$oid"
+	then
+		echo "$oid"
+	else
+		echo "undefined-oid"
+	fi
+}
+
 # Format the output of git-push, git-show-ref and other commands to make a
 # user-friendly and stable text.  We can easily prepare the expect text
 # without having to worry about changes of the commit ID (full or abbrev.)
@@ -28,12 +40,10 @@ create_commits_in () {
 make_user_friendly_and_stable_output () {
 	sed \
 		-e "s/'/\"/g" \
-		-e "s/$A/<COMMIT-A>/g" \
-		-e "s/$B/<COMMIT-B>/g" \
-		-e "s/$TAG/<TAG-v123>/g" \
+		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<COMMIT-A>/g" \
+		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<COMMIT-B>/g" \
+		-e "s/$(get_abbrev_oid $TAG)[0-9a-f]*/<TAG-v123>/g" \
 		-e "s/$ZERO_OID/<ZERO-OID>/g" \
-		-e "s/$(echo $A | cut -c1-7)[0-9a-f]*/<OID-A>/g" \
-		-e "s/$(echo $B | cut -c1-7)[0-9a-f]*/<OID-B>/g" \
 		-e "s#To $URL_PREFIX/upstream.git#To <URL/of/upstream.git>#" \
 		-e "/^error: / d"
 }

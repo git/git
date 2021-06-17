@@ -127,7 +127,7 @@ test_expect_success "proc-receive: report option refname and old-oid ($PROTOCOL/
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/pull/123/head        Z
 	> To <URL/of/upstream.git>
-	>  	HEAD:refs/pull/123/head	<OID-B>..<OID-A>
+	>  	HEAD:refs/pull/123/head	<COMMIT-B>..<COMMIT-A>
 	> Done
 	EOF
 	test_cmp expect actual
@@ -160,7 +160,7 @@ test_expect_success "proc-receive: report option old-oid ($PROTOCOL/porcelain)" 
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
-	>  	HEAD:refs/for/main/topic	<OID-B>..<OID-A>
+	>  	HEAD:refs/for/main/topic	<COMMIT-B>..<COMMIT-A>
 	> Done
 	EOF
 	test_cmp expect actual
@@ -195,7 +195,7 @@ test_expect_success "proc-receive: report option old-oid and new-oid ($PROTOCOL/
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
-	>  	HEAD:refs/for/main/topic	<OID-A>..<OID-B>
+	>  	HEAD:refs/for/main/topic	<COMMIT-A>..<COMMIT-B>
 	> Done
 	EOF
 	test_cmp expect actual
@@ -251,7 +251,7 @@ test_expect_success "proc-receive: report with multiple rewrites ($PROTOCOL/porc
 	> To <URL/of/upstream.git>
 	> *	HEAD:refs/pull/123/head	[new reference]
 	> *	HEAD:refs/for/a/b/c/topic	[new reference]
-	> +	HEAD:refs/pull/124/head	<OID-B>...<OID-A> (forced update)
+	> +	HEAD:refs/pull/124/head	<COMMIT-B>...<COMMIT-A> (forced update)
 	> Done
 	EOF
 	test_cmp expect actual &&

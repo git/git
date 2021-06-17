@@ -46,7 +46,7 @@ test_expect_success "proc-receive: update branch and new tag ($PROTOCOL)" '
 	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/pull/123/head        Z
 	> remote: post-receive< <ZERO-OID> <TAG-v123> refs/pull/124/head        Z
 	> To <URL/of/upstream.git>
-	>    <OID-A>..<OID-B>  <COMMIT-B> -> refs/pull/123/head
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> refs/pull/123/head
 	>  * [new reference]   v123 -> refs/pull/124/head
 	EOF
 	test_cmp expect actual &&
@@ -116,7 +116,7 @@ test_expect_success "proc-receive: create/delete branch, and delete tag ($PROTOC
 	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/pull/124/head        Z
 	> To <URL/of/upstream.git>
 	>  - [deleted]         refs/pull/123/head
-	>    <OID-A>..<OID-B>  <COMMIT-B> -> topic
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> topic
 	>  - [deleted]         v123
 	>  * [new reference]   <COMMIT-A> -> refs/pull/124/head
 	EOF
