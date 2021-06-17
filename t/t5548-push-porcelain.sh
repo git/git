@@ -14,29 +14,16 @@ test_description='Test git push porcelain output'
 # NOTE: Never calling this function from a subshell since variable
 # assignments will disappear when subshell exits.
 create_commits_in () {
-	repo="$1" &&
-	if ! parent=$(git -C "$repo" rev-parse HEAD^{} --)
-	then
-		parent=
-	fi &&
-	T=$(git -C "$repo" write-tree) &&
+	repo="$1" && test -d "$repo" ||
+	error "Repository $repo does not exist."
 	shift &&
 	while test $# -gt 0
 	do
 		name=$1 &&
-		test_tick &&
-		if test -z "$parent"
-		then
-			oid=$(echo $name | git -C "$repo" commit-tree $T)
-		else
-			oid=$(echo $name | git -C "$repo" commit-tree -p $parent $T)
-		fi &&
-		eval $name=$oid &&
-		parent=$oid &&
-		shift ||
-		return 1
-	done &&
-	git -C "$repo" update-ref refs/heads/main $oid
+		shift &&
+		test_commit -C "$repo" --no-tag "$name" &&
+		eval $name=$(git -C "$repo" rev-parse HEAD)
+	done
 }
 
 # Format the output of git-push, git-show-ref and other commands to make a
