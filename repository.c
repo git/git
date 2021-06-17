@@ -11,6 +11,7 @@
 #include "lockfile.h"
 #include "submodule-config.h"
 #include "sparse-index.h"
+#include "promisor-remote.h"
 
 /* The main repository */
 static struct repository the_repo;
@@ -261,6 +262,11 @@ void repo_clear(struct repository *repo)
 		discard_index(repo->index);
 		if (repo->index != &the_index)
 			FREE_AND_NULL(repo->index);
+	}
+
+	if (repo->promisor_remote_config) {
+		promisor_remote_clear(repo->promisor_remote_config);
+		FREE_AND_NULL(repo->promisor_remote_config);
 	}
 }
 
