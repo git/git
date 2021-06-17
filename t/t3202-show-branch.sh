@@ -55,4 +55,34 @@ test_expect_success 'show-branch with showbranch.default' '
 	test_cmp expect actual
 '
 
+test_expect_success 'show-branch --color output' '
+	sed "s/^> //" >expect <<-\EOF &&
+	> <RED>!<RESET> [branch1] branch1
+	>  <GREEN>!<RESET> [branch2] branch2
+	>   <YELLOW>!<RESET> [branch3] branch3
+	>    <BLUE>!<RESET> [branch4] branch4
+	>     <MAGENTA>!<RESET> [branch5] branch5
+	>      <CYAN>!<RESET> [branch6] branch6
+	>       <BOLD;RED>!<RESET> [branch7] branch7
+	>        <BOLD;GREEN>!<RESET> [branch8] branch8
+	>         <BOLD;YELLOW>!<RESET> [branch9] branch9
+	>          <BOLD;BLUE>*<RESET> [branch10] branch10
+	> ----------
+	>          <BOLD;BLUE>*<RESET> [branch10] branch10
+	>         <BOLD;YELLOW>+<RESET>  [branch9] branch9
+	>        <BOLD;GREEN>+<RESET>   [branch8] branch8
+	>       <BOLD;RED>+<RESET>    [branch7] branch7
+	>      <CYAN>+<RESET>     [branch6] branch6
+	>     <MAGENTA>+<RESET>      [branch5] branch5
+	>    <BLUE>+<RESET>       [branch4] branch4
+	>   <YELLOW>+<RESET>        [branch3] branch3
+	>  <GREEN>+<RESET>         [branch2] branch2
+	> <RED>+<RESET>          [branch1] branch1
+	> <RED>+<RESET><GREEN>+<RESET><YELLOW>+<RESET><BLUE>+<RESET><MAGENTA>+<RESET><CYAN>+<RESET><BOLD;RED>+<RESET><BOLD;GREEN>+<RESET><BOLD;YELLOW>+<RESET><BOLD;BLUE>*<RESET> [branch10^] initial
+	EOF
+	git show-branch --color=always $(cat branches.sorted) >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
 test_done
