@@ -5,13 +5,6 @@
 #include "transport.h"
 #include "strvec.h"
 
-static char *repository_format_partial_clone;
-
-void set_repository_format_partial_clone(char *partial_clone)
-{
-	repository_format_partial_clone = xstrdup_or_null(partial_clone);
-}
-
 static int fetch_objects(const char *remote_name,
 			 const struct object_id *oids,
 			 int oid_nr)
@@ -145,15 +138,15 @@ static void promisor_remote_init(void)
 
 	git_config(promisor_remote_config, NULL);
 
-	if (repository_format_partial_clone) {
+	if (the_repository->repository_format_partial_clone) {
 		struct promisor_remote *o, *previous;
 
-		o = promisor_remote_lookup(repository_format_partial_clone,
+		o = promisor_remote_lookup(the_repository->repository_format_partial_clone,
 					   &previous);
 		if (o)
 			promisor_remote_move_to_tail(o, previous);
 		else
-			promisor_remote_new(repository_format_partial_clone);
+			promisor_remote_new(the_repository->repository_format_partial_clone);
 	}
 }
 
