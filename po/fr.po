@@ -21502,7 +21502,7 @@ msgid "HEAD detached from "
 msgstr "HEAD détachée depuis "
 
 msgid "Not currently on any branch."
-msgstr "Actuellement sur aucun branche."
+msgstr "Actuellement sur aucune branche."
 
 msgid "Initial commit"
 msgstr "Validation initiale"
