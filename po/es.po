@@ -14897,7 +14897,7 @@ msgstr "extraer de todos los remotos"
 
 #: builtin/fetch.c:147 builtin/pull.c:245
 msgid "set upstream for git pull/fetch"
-msgstr "configurar upstream para git pulll/fetch"
+msgstr "configurar upstream para git pull/fetch"
 
 #: builtin/fetch.c:149 builtin/pull.c:188
 msgid "append to .git/FETCH_HEAD instead of overwriting"
@@ -19567,7 +19567,7 @@ msgstr "recibir programa de paquete"
 
 #: builtin/push.c:573
 msgid "set upstream for git pull/status"
-msgstr "configurar upstream para git pulll/status"
+msgstr "configurar upstream para git pull/status"
 
 #: builtin/push.c:576
 msgid "prune locally removed refs"

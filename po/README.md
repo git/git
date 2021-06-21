@@ -392,7 +392,7 @@ additional conventions:
         git-po-helper init --core <your-language>
 
 3. Add a new entry in the "po/TEAMS" file with proper format, and check
-   the syntax of "po/TEAMS" by runnning the following command:
+   the syntax of "po/TEAMS" by running the following command:
 
         git-po-helper team --check
 
