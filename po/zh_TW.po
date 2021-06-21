@@ -3199,7 +3199,7 @@ msgstr "關閉 rev-list 的標準輸入失敗"
 #: convert.c:183
 #, c-format
 msgid "illegal crlf_action %d"
-msgstr "非法的 crlf 動作 %d"
+msgstr "非法的 crlf_action %d"
 
 #: convert.c:196
 #, c-format
@@ -5502,7 +5502,7 @@ msgstr "不能建立 lazy_name 執行緒：%s"
 #: name-hash.c:570
 #, c-format
 msgid "unable to join lazy_name thread: %s"
-msgstr "不能加入 lasy_name 執行緒：%s"
+msgstr "不能加入 lazy_name 執行緒：%s"
 
 #: notes-merge.c:277
 #, c-format
@@ -15156,7 +15156,7 @@ msgstr "協定不支援 --negotiate-only，結束。"
 msgid ""
 "--filter can only be used with the remote configured in extensions."
 "partialclone"
-msgstr "只可以將 --filter 用於在 extensions.partialClone 中設定的遠端版本庫"
+msgstr "只可以將 --filter 用於在 extensions.partialclone 中設定的遠端版本庫"
 
 #: builtin/fetch.c:2083
 msgid "--atomic can only be used when fetching from one remote"
@@ -22482,7 +22482,7 @@ msgstr "不能識別 submodule.alternateErrorStrategy 的取值 '%s'"
 #: builtin/submodule--helper.c:1799
 #, c-format
 msgid "Value '%s' for submodule.alternateLocation is not recognized"
-msgstr "不能識別 submodule.alternateLocaion 的取值 '%s'"
+msgstr "不能識別 submodule.alternateLocation 的取值 '%s'"
 
 #: builtin/submodule--helper.c:1823
 msgid "where the new submodule will be cloned to"

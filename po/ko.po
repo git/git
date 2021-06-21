@@ -1702,7 +1702,7 @@ msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
 "%s"
 msgstr ""
-"'diff.submodule' 설정 변수에 오류:\n"
+"'diff.dirstat' 설정 변수에 오류:\n"
 "%s'"
 
 #: diff.c:3823
@@ -2261,12 +2261,12 @@ msgstr "(잘못된 커밋)\n"
 #: merge-recursive.c:320
 #, c-format
 msgid "add_cacheinfo failed for path '%s'; merge aborting."
-msgstr "'%s' 경로에 대해 addinfo_cache 실패. 병합 중지."
+msgstr "'%s' 경로에 대해 add_cacheinfo 실패. 병합 중지."
 
 #: merge-recursive.c:328
 #, c-format
 msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
-msgstr "'%s' 경로에 대해 addinfo_cache 새로 고침 실패. 병합 중지."
+msgstr "'%s' 경로에 대해 add_cacheinfo 새로 고침 실패. 병합 중지."
 
 #: merge-recursive.c:410
 msgid "error building trees"
@@ -10983,7 +10983,7 @@ msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you merge."
 msgstr ""
-"커밋 빼오기를 마치지 않았습니다. (COMMIT_PICK_HEAD 있음)\n"
+"커밋 빼오기를 마치지 않았습니다. (CHERRY_PICK_HEAD 있음)\n"
 "병합하기 전에 변경 사항을 커밋하십시오."
 
 #: builtin/merge.c:1257

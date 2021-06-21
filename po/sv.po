@@ -2734,7 +2734,7 @@ msgstr "Felaktigt %s: \"%s\""
 #: config.c:2512
 #, c-format
 msgid "splitIndex.maxPercentChange value '%d' should be between 0 and 100"
-msgstr "värdet \"%d\" för splitIndex.maxPercentage borde vara mellan 0 och 100"
+msgstr "värdet \"%d\" för splitIndex.maxPercentChange borde vara mellan 0 och 100"
 
 #: config.c:2558
 #, c-format
@@ -4910,7 +4910,7 @@ msgstr "(felaktig incheckning)\n"
 #, c-format
 msgid "add_cacheinfo failed for path '%s'; merge aborting."
 msgstr ""
-"add_cahceinfo misslyckades för sökvägen \"%s\"; avslutar sammanslagningen."
+"add_cacheinfo misslyckades för sökvägen \"%s\"; avslutar sammanslagningen."
 
 #: merge-recursive.c:388
 #, c-format
@@ -6314,12 +6314,12 @@ msgid "index file corrupt"
 msgstr "indexfilen trasig"
 
 #: read-cache.c:2180
-#, c-format
+#, c-format, fuzzy
 msgid "unable to create load_cache_entries thread: %s"
 msgstr "kunde inte läsa in cache_entries-tråden: %s"
 
 #: read-cache.c:2193
-#, c-format
+#, c-format, fuzzy
 msgid "unable to join load_cache_entries thread: %s"
 msgstr "kunde inte utföra join på cache_entries-tråden: %s"
 
@@ -10777,7 +10777,7 @@ msgid ""
 "git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --"
 "term-new]"
 msgstr ""
-"git-bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --"
+"git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --"
 "term-new]"
 
 #: builtin/bisect--helper.c:26

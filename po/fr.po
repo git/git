@@ -4719,12 +4719,12 @@ msgstr "(mauvais commit)\n"
 #: merge-recursive.c:379
 #, c-format
 msgid "add_cacheinfo failed for path '%s'; merge aborting."
-msgstr "échec de addinfo_cache pour le chemin '%s' ; abandon de la fusion."
+msgstr "échec de add_cacheinfo pour le chemin '%s' ; abandon de la fusion."
 
 #: merge-recursive.c:388
 #, c-format
 msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
-msgstr "échec de addinfo_cache pour le chemin '%s' ; abandon de la fusion."
+msgstr "échec de add_cacheinfo pour le chemin '%s' ; abandon de la fusion."
 
 #: merge-recursive.c:876
 #, c-format
@@ -5994,12 +5994,12 @@ msgid "Refresh index"
 msgstr "Rafraîchir l'index"
 
 #: read-cache.c:1700
-#, c-format
+#, c-format, fuzzy
 msgid ""
 "index.version set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
-"version d'index renseignée, mais la valeur est invalide.\n"
+"index.version renseignée, mais la valeur est invalide.\n"
 "Utilisation de la version %i"
 
 #: read-cache.c:1710
@@ -6073,7 +6073,7 @@ msgstr "impossible de créer le fil load_cache_entries : %s"
 #: read-cache.c:2193
 #, c-format
 msgid "unable to join load_cache_entries thread: %s"
-msgstr "impossible de joindre le fil load_cach_entries : %s"
+msgstr "impossible de joindre le fil load_cache_entries : %s"
 
 #: read-cache.c:2226
 #, c-format
@@ -8275,7 +8275,7 @@ msgstr "nom de sous-module suspicieux %s ignoré"
 
 #: submodule-config.c:304
 msgid "negative values not allowed for submodule.fetchjobs"
-msgstr "les valeurs négatives ne sont pas permises pour submodule.fetchJobs"
+msgstr "les valeurs négatives ne sont pas permises pour submodule.fetchjobs"
 
 #: submodule-config.c:402
 #, c-format
@@ -10717,7 +10717,7 @@ msgstr "doit finir avec une couleur"
 #: builtin/blame.c:728
 #, c-format
 msgid "invalid color '%s' in color.blame.repeatedLines"
-msgstr "couleur invalide '%s' dans color.blame.repeatedlines"
+msgstr "couleur invalide '%s' dans color.blame.repeatedLines"
 
 #: builtin/blame.c:746
 msgid "invalid value for blame.coloring"
@@ -13779,7 +13779,7 @@ msgstr "afficher les messages de debug sur stderr"
 
 #: builtin/credential-cache--daemon.c:316
 msgid "credential-cache--daemon unavailable; no unix socket support"
-msgstr "credential-cache-daemon non disponible ; pas de gestion des sockets unix"
+msgstr "credential-cache--daemon non disponible ; pas de gestion des sockets unix"
 
 #: builtin/credential-cache.c:154
 msgid "credential-cache unavailable; no unix socket support"
@@ -14645,7 +14645,7 @@ msgstr "Le protocole ne prend pas en charge --negotiate-only, abandon."
 
 #: builtin/fetch.c:2079
 msgid "--filter can only be used with the remote configured in extensions.partialclone"
-msgstr "--filter ne peut être utilisé qu'avec le dépôt distant configuré dans extensions.partialClone"
+msgstr "--filter ne peut être utilisé qu'avec le dépôt distant configuré dans extensions.partialclone"
 
 #: builtin/fetch.c:2083
 msgid "--atomic can only be used when fetching from one remote"
@@ -23221,7 +23221,7 @@ msgstr "L'épinglage de clé publique n'est pas supporté avec cuRL < 7.44.0"
 
 #: http.c:910
 msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
-msgstr "CURLSSLOPT_NO_REMOVE n'est pas supporté avec cuRL < 7.44.0"
+msgstr "CURLSSLOPT_NO_REVOKE n'est pas supporté avec cuRL < 7.44.0"
 
 #: http.c:989
 msgid "Protocol restrictions not supported with cURL < 7.19.4"

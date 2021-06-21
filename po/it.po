@@ -14953,7 +14953,7 @@ msgid ""
 "--filter can only be used with the remote configured in extensions."
 "partialclone"
 msgstr ""
-"--filter può essere usato solo con il remoto configurato nelle estensioni."
+"--filter può essere usato solo con il remoto configurato nelle extensions."
 "partialclone"
 
 #: builtin/fetch.c:1891
@@ -19253,7 +19253,7 @@ msgstr ""
 
 #: builtin/rebase.c:474
 msgid "git rebase--interactive [<options>]"
-msgstr "git rebase --interactive [<opzioni>]"
+msgstr "git rebase--interactive [<opzioni>]"
 
 #: builtin/rebase.c:487 builtin/rebase.c:1382
 msgid "keep commits which start empty"
@@ -21746,7 +21746,7 @@ msgid "could not generate diff %s^!."
 msgstr "impossibile generare il diff %s^!"
 
 #: builtin/stash.c:422
-msgid "conflicts in index.Try without --index."
+msgid "conflicts in index. Try without --index."
 msgstr "ci sono conflitti nell'indice. Prova senza --index."
 
 #: builtin/stash.c:428

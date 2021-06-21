@@ -4907,13 +4907,13 @@ msgstr "(commit sai)\n"
 #: merge-recursive.c:379
 #, c-format
 msgid "add_cacheinfo failed for path '%s'; merge aborting."
-msgstr "addinfo_cache gặp lỗi đối với đường dẫn “%s”; việc hòa trộn bị bãi bỏ."
+msgstr "add_cacheinfo gặp lỗi đối với đường dẫn “%s”; việc hòa trộn bị bãi bỏ."
 
 #: merge-recursive.c:388
 #, c-format
 msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
 msgstr ""
-"addinfo_cache gặp lỗi khi làm mới đối với đường dẫn “%s”; việc hòa trộn bị "
+"add_cacheinfo gặp lỗi khi làm mới đối với đường dẫn “%s”; việc hòa trộn bị "
 "bãi bỏ."
 
 #: merge-recursive.c:876
@@ -8585,7 +8585,7 @@ msgstr "đang lờ đi tên mô-đun-con mập mờ: %s"
 
 #: submodule-config.c:304
 msgid "negative values not allowed for submodule.fetchjobs"
-msgstr "không cho phép giá trị âm ở submodule.fetchJobs"
+msgstr "không cho phép giá trị âm ở submodule.fetchjobs"
 
 #: submodule-config.c:402
 #, c-format

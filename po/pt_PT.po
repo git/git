@@ -14610,7 +14610,7 @@ msgstr "Referência remota HEAD não encontrada"
 #: builtin/fetch.c:677
 #, c-format
 msgid "configuration fetch.output contains invalid value %s"
-msgstr "a configuração fetch.ouput contém o valor inválido %s"
+msgstr "a configuração fetch.output contém o valor inválido %s"
 
 #: builtin/fetch.c:775
 #, c-format

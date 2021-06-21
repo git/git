@@ -6368,7 +6368,7 @@ msgstr "no es posible crear hilo load_cache_entries: %s"
 #: read-cache.c:2193
 #, c-format
 msgid "unable to join load_cache_entries thread: %s"
-msgstr "no es posible unir hilo load_cache_entires: %s"
+msgstr "no es posible unir hilo load_cache_entries: %s"
 
 #: read-cache.c:2226
 #, c-format
@@ -7957,7 +7957,7 @@ msgstr "revert ya está en progreso"
 #: sequencer.c:3031
 #, c-format
 msgid "try \"git revert (--continue | %s--abort | --quit)\""
-msgstr "intenta \"git revert (--continue | --quit | %s --abort)\""
+msgstr "intenta \"git revert (--continue | %s--abort | --quit)\""
 
 #: sequencer.c:3034
 msgid "cherry-pick is already in progress"
@@ -7966,7 +7966,7 @@ msgstr "cherry-pick ya está en progreso"
 #: sequencer.c:3036
 #, c-format
 msgid "try \"git cherry-pick (--continue | %s--abort | --quit)\""
-msgstr "intenta \"git cherry-pick (--continue | --quit | %s --abort)\""
+msgstr "intenta \"git cherry-pick (--continue | %s--abort | --quit)\""
 
 #: sequencer.c:3050
 #, c-format
@@ -15267,7 +15267,7 @@ msgid ""
 "partialclone"
 msgstr ""
 "--filter solo puede ser usado con el remoto configurado en extensions."
-"partialClone"
+"partialclone"
 
 #: builtin/fetch.c:2083
 msgid "--atomic can only be used when fetching from one remote"
@@ -15684,7 +15684,7 @@ msgstr "reempaquetar todos los otros paquetes excepto el paquete más grande"
 #: builtin/gc.c:576
 #, c-format
 msgid "failed to parse gc.logexpiry value %s"
-msgstr "falló al analizar valor %s de gc.logexpirity"
+msgstr "falló al analizar valor %s de gc.logexpiry"
 
 #: builtin/gc.c:587
 #, c-format
@@ -16890,7 +16890,7 @@ msgstr "%s: modo cover from description inválido"
 
 #: builtin/log.c:850
 msgid "format.headers without value"
-msgstr "formate.headers. sin valor"
+msgstr "format.headers sin valor"
 
 #: builtin/log.c:979
 #, c-format
@@ -22474,7 +22474,7 @@ msgstr "Se esperaba un nombre de ref completo, se obtuvo %s"
 
 #: builtin/submodule--helper.c:64
 msgid "submodule--helper print-default-remote takes no arguments"
-msgstr "subomdule--helper print-default-remote no toma argumentos"
+msgstr "submodule--helper print-default-remote no toma argumentos"
 
 #: builtin/submodule--helper.c:102
 #, c-format

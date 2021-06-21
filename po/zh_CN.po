@@ -142,7 +142,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2021-05-17 16:02+0800\n"
-"PO-Revision-Date: 2021-06-05 22:10+0800\n"
+"PO-Revision-Date: 2021-07-01 16:01+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -3060,7 +3060,7 @@ msgstr "关闭 rev-list 的标准输入失败"
 #: convert.c:183
 #, c-format
 msgid "illegal crlf_action %d"
-msgstr "非法的 crlf 动作 %d"
+msgstr "非法的 crlf_action %d"
 
 #: convert.c:196
 #, c-format
@@ -5373,7 +5373,7 @@ msgstr "不能创建 lazy_name 线程：%s"
 #: name-hash.c:570
 #, c-format
 msgid "unable to join lazy_name thread: %s"
-msgstr "不能加入 lasy_name 线程：%s"
+msgstr "不能加入 lazy_name 线程：%s"
 
 #: notes-merge.c:277
 #, c-format
@@ -15034,7 +15034,7 @@ msgstr "协议不支持 --negotiate-only，退出。"
 msgid ""
 "--filter can only be used with the remote configured in extensions."
 "partialclone"
-msgstr "只可以将 --filter 用于在 extensions.partialClone 中配置的远程仓库"
+msgstr "只可以将 --filter 用于在 extensions.partialclone 中配置的远程仓库"
 
 #: builtin/fetch.c:2083
 msgid "--atomic can only be used when fetching from one remote"
@@ -17726,7 +17726,7 @@ msgstr "错误：标签输入未通过 fsck：%s"
 #: builtin/mktag.c:41
 #, c-format
 msgid "%d (FSCK_IGNORE?) should never trigger this callback"
-msgstr "%d（忽略 FSCK?）不应该触发这个调用"
+msgstr "%d (FSCK_IGNORE?) 永远不应该触发这个回调"
 
 #: builtin/mktag.c:56
 #, c-format
@@ -22356,7 +22356,7 @@ msgstr "不能识别 submodule.alternateErrorStrategy 的取值 '%s'"
 #: builtin/submodule--helper.c:1799
 #, c-format
 msgid "Value '%s' for submodule.alternateLocation is not recognized"
-msgstr "不能识别 submodule.alternateLocaion 的取值 '%s'"
+msgstr "不能识别 submodule.alternateLocation 的取值 '%s'"
 
 #: builtin/submodule--helper.c:1823
 msgid "where the new submodule will be cloned to"
