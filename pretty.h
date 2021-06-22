@@ -73,6 +73,7 @@ static inline int cmit_fmt_is_mail(enum cmit_fmt fmt)
 struct userformat_want {
 	unsigned notes:1;
 	unsigned source:1;
+	unsigned decorate:1;
 };
 void userformat_find_requirements(const char *fmt, struct userformat_want *w);
 

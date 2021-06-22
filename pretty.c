@@ -1735,6 +1735,10 @@ static size_t userformat_want_item(struct strbuf *sb, const char *placeholder,
 	case 'S':
 		w->source = 1;
 		break;
+	case 'd':
+	case 'D':
+		w->decorate = 1;
+		break;
 	}
 	return 0;
 }
