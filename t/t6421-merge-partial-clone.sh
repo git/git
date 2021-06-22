@@ -397,7 +397,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded when a directory
 #
 #   Summary: 4 fetches (1 for 6 objects, 1 for 8, 1 for 3, 1 for 2)
 #
-test_expect_merge_algorithm failure failure 'Objects downloaded with lots of renames and modifications' '
+test_expect_merge_algorithm failure success 'Objects downloaded with lots of renames and modifications' '
 	test_setup_repo &&
 	git clone --sparse --filter=blob:none "file://$(pwd)/server" objects-many &&
 	(
