@@ -207,7 +207,7 @@ test_setup_repo () {
 #
 #   Summary: 2 fetches (1 for 2 objects, 1 for 1 object)
 #
-test_expect_merge_algorithm failure failure 'Objects downloaded for single relevant rename' '
+test_expect_merge_algorithm failure success 'Objects downloaded for single relevant rename' '
 	test_setup_repo &&
 	git clone --sparse --filter=blob:none "file://$(pwd)/server" objects-single &&
 	(
@@ -296,7 +296,7 @@ test_expect_merge_algorithm failure failure 'Objects downloaded for single relev
 #      this are not all that common.)
 #   Summary: 1 fetches for 6 objects
 #
-test_expect_merge_algorithm failure failure 'Objects downloaded when a directory rename triggered' '
+test_expect_merge_algorithm failure success 'Objects downloaded when a directory rename triggered' '
 	test_setup_repo &&
 	git clone --sparse --filter=blob:none "file://$(pwd)/server" objects-dir &&
 	(
