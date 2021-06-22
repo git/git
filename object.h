@@ -158,6 +158,13 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
  */
 struct object *lookup_unknown_object(struct repository *r, const struct object_id *oid);
 
+/*
+ * Dispatch to the appropriate lookup_blob(), lookup_commit(), etc, based on
+ * "type".
+ */
+struct object *lookup_object_by_type(struct repository *r, const struct object_id *oid,
+				     enum object_type type);
+
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);
 
