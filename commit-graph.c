@@ -2422,14 +2422,16 @@ static void graph_report(const char *fmt, ...)
 #define GENERATION_ZERO_EXISTS 1
 #define GENERATION_NUMBER_EXISTS 2
 
+static int commit_graph_checksum_valid(struct commit_graph *g)
+{
+	return hashfile_checksum_valid(g->data, g->data_len);
+}
+
 int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 {
 	uint32_t i, cur_fanout_pos = 0;
 	struct object_id prev_oid, cur_oid;
-	unsigned char checksum[GIT_MAX_HEXSZ];
 	int generation_zero = 0;
-	struct hashfile *f;
-	int devnull;
 	struct progress *progress = NULL;
 	int local_error = 0;
 
@@ -2442,11 +2444,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 	if (verify_commit_graph_error)
 		return verify_commit_graph_error;
 
-	devnull = open("/dev/null", O_WRONLY);
-	f = hashfd(devnull, NULL);
-	hashwrite(f, g->data, g->data_len - g->hash_len);
-	finalize_hashfile(f, checksum, CSUM_CLOSE);
-	if (!hasheq(checksum, g->data + g->data_len - g->hash_len)) {
+	if (!commit_graph_checksum_valid(g)) {
 		graph_report(_("the commit-graph file has incorrect checksum and is likely corrupt"));
 		verify_commit_graph_error = VERIFY_COMMIT_GRAPH_ERROR_HASH;
 	}
