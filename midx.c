@@ -1228,6 +1228,9 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 		return result;
 	}
 
+	if (!midx_checksum_valid(m))
+		midx_report(_("incorrect checksum"));
+
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(_("Looking for referenced packfiles"),
 					  m->num_packs);
