@@ -1424,6 +1424,17 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 		die(_("invalid 'ipc-threads' value (%d)"),
 		    fsmonitor__ipc_threads);
 
+	prepare_repo_settings(the_repository);
+	fsm_settings__set_ipc(the_repository);
+
+	if (fsm_settings__get_mode(the_repository) == FSMONITOR_MODE_INCOMPATIBLE) {
+		struct strbuf buf_reason = STRBUF_INIT;
+		fsm_settings__get_reason(the_repository, &buf_reason);
+		error("%s '%s'", buf_reason.buf, xgetcwd());
+		strbuf_release(&buf_reason);
+		return -1;
+	}
+
 	if (!strcmp(subcmd, "start"))
 		return !!try_to_start_background_daemon();
 
