@@ -189,6 +189,11 @@ http.schannelUseSSLCAInfo::
 	when the `schannel` backend was configured via `http.sslBackend`,
 	unless `http.schannelUseSSLCAInfo` overrides this behavior.
 
+http.sslAutoClientCert::
+	As of cURL v7.77.0, the Secure Channel backend won't automatically
+	send client certificates from the Windows Certificate Store anymore.
+	To opt in to the old behavior, http.sslAutoClientCert can be set.
+
 http.pinnedpubkey::
 	Public key of the https service. It may either be the filename of
 	a PEM or DER encoded public key file or a string starting with
