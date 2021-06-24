@@ -161,6 +161,8 @@ static int http_schannel_check_revoke_mode =
  */
 static int http_schannel_use_ssl_cainfo;
 
+static int http_auto_client_cert;
+
 static int always_auth_proactively(void)
 {
 	return http_proactive_auth != PROACTIVE_AUTH_NONE &&
@@ -446,6 +448,11 @@ static int http_options(const char *var, const char *value,
 
 	if (!strcmp("http.schannelusesslcainfo", var)) {
 		http_schannel_use_ssl_cainfo = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp("http.sslautoclientcert", var)) {
+		http_auto_client_cert = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -1101,13 +1108,24 @@ static CURL *get_curl_handle(void)
 	}
 #endif
 
-	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
-	    http_schannel_check_revoke_mode) {
+	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend)) {
+		long ssl_options = 0;
+		if (http_schannel_check_revoke_mode) {
 #ifdef GIT_CURL_HAVE_CURLSSLOPT_NO_REVOKE
-		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, http_schannel_check_revoke_mode);
+			ssl_options |= http_schannel_check_revoke_mode;
 #else
-		warning(_("CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"));
+			warning(_("CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"));
 #endif
+		}
+
+		if (http_auto_client_cert) {
+#ifdef GIT_CURL_HAVE_CURLSSLOPT_AUTO_CLIENT_CERT
+			ssl_options |= CURLSSLOPT_AUTO_CLIENT_CERT;
+#endif
+		}
+
+		if (ssl_options)
+			curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, ssl_options);
 	}
 
 	if (http_proactive_auth != PROACTIVE_AUTH_NONE)
