@@ -2804,12 +2804,19 @@ static int process_renames(struct merge_options *opt,
 			int renamed_stage = a_renames == renames1 ? 2 : 3;
 			int other_stage =   a_renames == renames1 ? 3 : 2;
 
+			/*
+			 * Directory renames have a funny corner case...
+			 */
+			int renamed_to_self = !strcmp(ren1_src, ren1_dst);
+
 			/* BUG: We should only remove ren1_src in the base
 			 * stage and in other_stage (think of rename +
 			 * add-source case).
 			 */
-			remove_file(opt, 1, ren1_src,
-				    renamed_stage == 2 || !was_tracked(opt, ren1_src));
+			if (!renamed_to_self)
+				remove_file(opt, 1, ren1_src,
+					    renamed_stage == 2 ||
+					    !was_tracked(opt, ren1_src));
 
 			oidcpy(&src_other.oid,
 			       &ren1->src_entry->stages[other_stage].oid);
@@ -2822,6 +2829,9 @@ static int process_renames(struct merge_options *opt,
 			if (oideq(&src_other.oid, null_oid()) &&
 			    ren1->dir_rename_original_type == 'A') {
 				setup_rename_conflict_info(RENAME_VIA_DIR,
+							   opt, ren1, NULL);
+			} else if (renamed_to_self) {
+				setup_rename_conflict_info(RENAME_NORMAL,
 							   opt, ren1, NULL);
 			} else if (oideq(&src_other.oid, null_oid())) {
 				setup_rename_conflict_info(RENAME_DELETE,
@@ -3180,7 +3190,6 @@ static int handle_rename_normal(struct merge_options *opt,
 	struct rename *ren = ci->ren1;
 	struct merge_file_info mfi;
 	int clean;
-	int side = (ren->branch == opt->branch1 ? 2 : 3);
 
 	/* Merge the content and write it out */
 	clean = handle_content_merge(&mfi, opt, path, was_dirty(opt, path),
@@ -3190,9 +3199,7 @@ static int handle_rename_normal(struct merge_options *opt,
 	    opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_CONFLICT &&
 	    ren->dir_rename_original_dest) {
 		if (update_stages(opt, path,
-				  NULL,
-				  side == 2 ? &mfi.blob : NULL,
-				  side == 2 ? NULL : &mfi.blob))
+				  &mfi.blob, &mfi.blob, &mfi.blob))
 			return -1;
 		clean = 0; /* not clean, but conflicted */
 	}
