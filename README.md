@@ -15,6 +15,62 @@ for Windows' [Google Group](http://groups.google.com/group/git-for-windows),
 and [contribute bug
 fixes](https://github.com/git-for-windows/git/wiki/How-to-participate).
 
+To build Git for Windows, please either install [Git for Windows'
+SDK](https://gitforwindows.org/#download-sdk), start its `git-bash.exe`, `cd`
+to your Git worktree and run `make`, or open the Git worktree as a folder in
+Visual Studio.
+
+To verify that your build works, use one of the following methods:
+
+- If you want to test the built executables within Git for Windows' SDK,
+  prepend `<worktree>/bin-wrappers` to the `PATH`.
+- Alternatively, run `make install` in the Git worktree.
+- If you need to test this in a full installer, run `sdk build
+  git-and-installer`.
+- You can also "install" Git into an existing portable Git via `make install
+  DESTDIR=<dir>` where `<dir>` refers to the top-level directory of the
+  portable Git. In this instance, you will want to prepend that portable Git's
+  `/cmd` directory to the `PATH`, or test by running that portable Git's
+  `git-bash.exe` or `git-cmd.exe`.
+- If you built using a recent Visual Studio, you can use the menu item
+  `Build>Install git` (you will want to click on `Project>CMake Settings for
+  Git` first, then click on `Edit JSON` and then point `installRoot` to the
+  `mingw64` directory of an already-unpacked portable Git).
+  
+  As in the previous  bullet point, you will then prepend `/cmd` to the `PATH`
+  or run using the portable Git's `git-bash.exe` or `git-cmd.exe`.
+- If you want to run the built executables in-place, but in a CMD instead of
+  inside a Bash, you can run a snippet like this in the `git-bash.exe` window
+  where Git was built (ensure that the `EOF` line has no leading spaces), and
+  then paste into the CMD window what was put in the clipboard:
+
+  ```sh
+  clip.exe <<EOF
+  set GIT_EXEC_PATH=$(cygpath -aw .)
+  set PATH=$(cygpath -awp ".:contrib/scalar:/mingw64/bin:/usr/bin:$PATH")
+  set GIT_TEMPLATE_DIR=$(cygpath -aw templates/blt)
+  set GITPERLLIB=$(cygpath -aw perl/build/lib)
+  EOF
+  ```
+- If you want to run the built executables in-place, but outside of Git for
+  Windows' SDK, and without an option to set/override any environment
+  variables (e.g. in Visual Studio's debugger), you can call the Git executable
+  by its absolute path and use the `--exec-path` option, like so:
+
+  ```cmd
+  C:\git-sdk-64\usr\src\git\git.exe --exec-path=C:\git-sdk-64\usr\src\git help
+  ```
+
+  Note: for this to work, you have to hard-link (or copy) the `.dll` files from
+  the `/mingw64/bin` directory to the Git worktree, or add the `/mingw64/bin`
+  directory to the `PATH` somehow or other.
+
+To make sure that you are testing the correct binary, call `./git.exe version`
+in the Git worktree, and then call `git version` in a directory/window where
+you want to test Git, and verify that they refer to the same version (you may
+even want to pass the command-line option `--build-options` to look at the
+exact commit from which the Git version was built).
+
 Git - fast, scalable, distributed revision control system
 =========================================================
 
