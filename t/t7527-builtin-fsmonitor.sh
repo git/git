@@ -166,6 +166,71 @@ test_expect_success 'implicit daemon stop (rename .git)' '
 	test_must_fail git -C test_implicit_2 fsmonitor--daemon status
 '
 
+# File systems on Windows may or may not have shortnames.
+# This is a volume-specific setting on modern systems.
+# "C:/" drives are required to have them enabled.  Other
+# hard drives default to disabled.
+#
+# This is a crude test to see if shortnames are enabled
+# on the volume containing the test directory.  It is
+# crude, but it does not require elevation like `fsutil`.
+#
+test_lazy_prereq SHORTNAMES '
+	mkdir .foo &&
+	test -d "FOO~1"
+'
+
+# Here we assume that the shortname of ".git" is "GIT~1".
+test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~1)' '
+	test_when_finished "stop_daemon_delete_repo test_implicit_1s" &&
+
+	git init test_implicit_1s &&
+
+	start_daemon -C test_implicit_1s &&
+
+	# renaming the .git directory will implicitly stop the daemon.
+	# this moves {.git, GIT~1} to {.gitxyz, GITXYZ~1}.
+	# the rename-from FS Event will contain the shortname.
+	#
+	mv test_implicit_1s/GIT~1 test_implicit_1s/.gitxyz &&
+
+	sleep 1 &&
+	# put it back so that our status will not crawl out to our
+	# parent directory.
+	# this moves {.gitxyz, GITXYZ~1} to {.git, GIT~1}.
+	mv test_implicit_1s/.gitxyz test_implicit_1s/.git &&
+
+	test_must_fail git -C test_implicit_1s fsmonitor--daemon status
+'
+
+# Here we first create a file with LONGNAME of "GIT~1" before
+# we create the repo.  This will cause the shortname of ".git"
+# to be "GIT~2".
+test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~2)' '
+	test_when_finished "stop_daemon_delete_repo test_implicit_1s2" &&
+
+	mkdir test_implicit_1s2 &&
+	echo HELLO >test_implicit_1s2/GIT~1 &&
+	git init test_implicit_1s2 &&
+
+	test_path_is_file test_implicit_1s2/GIT~1 &&
+	test_path_is_dir  test_implicit_1s2/GIT~2 &&
+
+	start_daemon -C test_implicit_1s2 &&
+
+	# renaming the .git directory will implicitly stop the daemon.
+	# the rename-from FS Event will contain the shortname.
+	#
+	mv test_implicit_1s2/GIT~2 test_implicit_1s2/.gitxyz &&
+
+	sleep 1 &&
+	# put it back so that our status will not crawl out to our
+	# parent directory.
+	mv test_implicit_1s2/.gitxyz test_implicit_1s2/.git &&
+
+	test_must_fail git -C test_implicit_1s2 fsmonitor--daemon status
+'
+
 test_expect_success 'cannot start multiple daemons' '
 	test_when_finished "stop_daemon_delete_repo test_multiple" &&
 
