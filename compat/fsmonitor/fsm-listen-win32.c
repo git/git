@@ -48,6 +48,8 @@ struct fsmonitor_daemon_backend_data
 #define LISTENER_HAVE_DATA_WORKTREE 1
 #define LISTENER_HAVE_DATA_GITDIR 2
 	int nr_listener_handles;
+
+	struct strbuf dot_git_shortname;
 };
 
 /*
@@ -259,6 +261,62 @@ static void cancel_rdcw_watch(struct one_watch *watch)
 }
 
 /*
+ * Process a single relative pathname event.
+ * Return 1 if we should shutdown.
+ */
+static int process_1_worktree_event(
+	FILE_NOTIFY_INFORMATION *info,
+	struct string_list *cookie_list,
+	struct fsmonitor_batch **batch,
+	const struct strbuf *path,
+	enum fsmonitor_path_type t)
+{
+	const char *slash;
+
+	switch (t) {
+	case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
+		/* special case cookie files within .git */
+
+		/* Use just the filename of the cookie file. */
+		slash = find_last_dir_sep(path->buf);
+		string_list_append(cookie_list,
+				   slash ? slash + 1 : path->buf);
+		break;
+
+	case IS_INSIDE_DOT_GIT:
+		/* ignore everything inside of "<worktree>/.git/" */
+		break;
+
+	case IS_DOT_GIT:
+		/* "<worktree>/.git" was deleted (or renamed away) */
+		if ((info->Action == FILE_ACTION_REMOVED) ||
+		    (info->Action == FILE_ACTION_RENAMED_OLD_NAME)) {
+			trace2_data_string("fsmonitor", NULL,
+					   "fsm-listen/dotgit",
+					   "removed");
+			return 1;
+		}
+		break;
+
+	case IS_WORKDIR_PATH:
+		/* queue normal pathname */
+		if (!*batch)
+			*batch = fsmonitor_batch__new();
+		fsmonitor_batch__add_path(*batch, path->buf);
+		break;
+
+	case IS_GITDIR:
+	case IS_INSIDE_GITDIR:
+	case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
+	default:
+		BUG("unexpected path classification '%d' for '%s'",
+		    t, path->buf);
+	}
+
+	return 0;
+}
+
+/*
  * Process filesystem events that happen anywhere (recursively) under the
  * <worktree> root directory.  For a normal working directory, this includes
  * both version controlled files and the contents of the .git/ directory.
@@ -302,7 +360,6 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 	 */
 	for (;;) {
 		FILE_NOTIFY_INFORMATION *info = (void *)p;
-		const char *slash;
 		enum fsmonitor_path_type t;
 
 		strbuf_reset(&path);
@@ -311,45 +368,45 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 
 		t = fsmonitor_classify_path_workdir_relative(path.buf);
 
-		switch (t) {
-		case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
-			/* special case cookie files within .git */
+		if (process_1_worktree_event(info, &cookie_list, &batch,
+					     &path, t))
+			goto force_shutdown;
 
-			/* Use just the filename of the cookie file. */
-			slash = find_last_dir_sep(path.buf);
-			string_list_append(&cookie_list,
-					   slash ? slash + 1 : path.buf);
-			break;
-
-		case IS_INSIDE_DOT_GIT:
-			/* ignore everything inside of "<worktree>/.git/" */
-			break;
-
-		case IS_DOT_GIT:
-			/* "<worktree>/.git" was deleted (or renamed away) */
-			if ((info->Action == FILE_ACTION_REMOVED) ||
-			    (info->Action == FILE_ACTION_RENAMED_OLD_NAME)) {
-				trace2_data_string("fsmonitor", NULL,
-						   "fsm-listen/dotgit",
-						   "removed");
-				goto force_shutdown;
-			}
-			break;
-
-		case IS_WORKDIR_PATH:
-			/* queue normal pathname */
-			if (!batch)
-				batch = fsmonitor_batch__new();
-			fsmonitor_batch__add_path(batch, path.buf);
-			break;
-
-		case IS_GITDIR:
-		case IS_INSIDE_GITDIR:
-		case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
-		default:
-			BUG("unexpected path classification '%d' for '%s'",
-			    t, path.buf);
-		}
+		/*
+		 * NEEDSWORK: If `path` contains a shortname (that is,
+		 * if any component within it is a shortname), we
+		 * should expand it to a longname (See
+		 * `GetLongPathNameW()`) and re-normalize, classify,
+		 * and process it because our client is probably
+		 * expecting "normal" paths.
+		 *
+		 * HOWEVER, if our process has called `chdir()` to get
+		 * us out of the root of the worktree (so that the
+		 * root directory is not busy), then we have to be
+		 * careful to convert the paths in the INFO array
+		 * (which are relative to the directory of the RDCW
+		 * watch and not the CWD) into absolute paths before
+		 * calling GetLongPathNameW() and then convert the
+		 * computed value back to a RDCW-relative pathname
+		 * (which is what we and the client expect).
+		 *
+		 * FOR NOW, just handle case (1) exactly so that we
+		 * shutdown properly when ".git" is deleted via the
+		 * shortname alias.
+		 *
+		 * We might see case (2) events for cookie files, but
+		 * we can ignore them.
+		 *
+		 * FOR LATER, handle case (3) where the worktree
+		 * events contain shortnames.  We should convert
+		 * them to longnames to avoid confusing the client.
+		 */
+		if (data->dot_git_shortname.len &&
+		    !strcmp(path.buf, data->dot_git_shortname.buf) &&
+		    process_1_worktree_event(info, &cookie_list, &batch,
+					     &data->dot_git_shortname,
+					     IS_DOT_GIT))
+			goto force_shutdown;
 
 skip_this_path:
 		if (!info->NextEntryOffset)
@@ -422,6 +479,14 @@ static int process_gitdir_events(struct fsmonitor_daemon_state *state)
 			BUG("unexpected path classification '%d' for '%s'",
 			    t, path.buf);
 		}
+
+		/*
+		 * WRT shortnames, this external gitdir will not see
+		 * case (1) nor case (3) events.
+		 *
+		 * We might see case (2) events for cookie files, but
+		 * we can ignore them.
+		 */
 
 skip_this_path:
 		if (!info->NextEntryOffset)
@@ -524,6 +589,7 @@ clean_shutdown:
 int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 {
 	struct fsmonitor_daemon_backend_data *data;
+	char shortname[16]; /* a padded 8.3 buffer */
 
 	CALLOC_ARRAY(data, 1);
 
@@ -552,6 +618,52 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 		data->hListener[LISTENER_HAVE_DATA_GITDIR] =
 			data->watch_gitdir->hEvent;
 		data->nr_listener_handles++;
+	}
+
+	/*
+	 * NEEDSWORK: Properly handle 8.3 shortnames.  RDCW events can
+	 * contain a shortname (if another application uses a
+	 * shortname in a system call).  We care about aliasing and
+	 * the use of shortnames for:
+	 *
+	 * (1) ".git",
+	 *     -- if an external process deletes ".git" using "GIT~1",
+	 *        we need to catch that and shutdown.
+	 *
+	 * (2) our cookie files,
+	 *     -- if an external process deletes one of our cookie
+	 *        files using a shortname, we will get a shortname
+	 *        event for it.  However, we should have already
+	 *        gotten a longname event for it when we created the
+	 *        cookie, so we can safely discard the shortname
+	 *        events for cookie files.
+	 *
+	 * (3) the spelling of modified files that we report to clients.
+	 *     -- we need to report the longname to the client because
+	 *        that is what they are expecting.  Presumably, the
+	 *        client is going to lookup the paths that we report
+	 *        in their index and untracked-cache, so we should
+	 *        normalize the data for them.  (Technically, they
+	 *        could adapt, so we could relax this maybe.)
+	 *
+	 * FOR NOW, while our CWD is at the root of the worktree we
+	 * can easily get the spelling of the shortname of ".git" (if
+	 * the volume has shortnames enabled).  For most worktrees
+	 * this value will be "GIT~1", but we don't want to assume
+	 * that.
+	 *
+	 * Capture this so that we can handle (1).
+	 *
+	 * We leave (3) for a future effort.
+	 */
+	strbuf_init(&data->dot_git_shortname, 0);
+	GetShortPathNameA(".git", shortname, sizeof(shortname));
+	if (!strcmp(".git", shortname))
+		trace_printf_key(&trace_fsmonitor, "No shortname for '.git'");
+	else {
+		trace_printf_key(&trace_fsmonitor,
+				 "Shortname of '.git' is '%s'", shortname);
+		strbuf_addstr(&data->dot_git_shortname, shortname);
 	}
 
 	state->backend_data = data;
