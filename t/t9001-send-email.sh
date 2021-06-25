@@ -1829,7 +1829,7 @@ test_expect_success $PREREQ 'sendemail.aliasfiletype=mailrc' '
 	grep "^!somebody@example\.org!$" commandline1
 '
 
-test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
+test_expect_success $PREREQ 'sendemail.aliasesfile=~/.mailrc' '
 	clean_fake_sendmail &&
 	echo "alias sbd  someone@example.org" >"$HOME/.mailrc" &&
 	git config --replace-all sendemail.aliasesfile "~/.mailrc" &&
