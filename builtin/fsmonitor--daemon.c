@@ -9,6 +9,7 @@
 #include "khash.h"
 
 static const char * const builtin_fsmonitor__daemon_usage[] = {
+	N_("git fsmonitor--daemon start [<options>]"),
 	N_("git fsmonitor--daemon run [<options>]"),
 	N_("git fsmonitor--daemon stop"),
 	N_("git fsmonitor--daemon status"),
@@ -22,6 +23,9 @@ static const char * const builtin_fsmonitor__daemon_usage[] = {
 #define FSMONITOR__IPC_THREADS "fsmonitor.ipcthreads"
 static int fsmonitor__ipc_threads = 8;
 
+#define FSMONITOR__START_TIMEOUT "fsmonitor.starttimeout"
+static int fsmonitor__start_timeout_sec = 60;
+
 static int fsmonitor_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, FSMONITOR__IPC_THREADS)) {
@@ -30,6 +34,15 @@ static int fsmonitor_config(const char *var, const char *value, void *cb)
 			return error(_("value of '%s' out of range: %d"),
 				     FSMONITOR__IPC_THREADS, i);
 		fsmonitor__ipc_threads = i;
+		return 0;
+	}
+
+	if (!strcmp(var, FSMONITOR__START_TIMEOUT)) {
+		int i = git_config_int(var, value);
+		if (i < 0)
+			return error(_("value of '%s' out of range: %d"),
+				     FSMONITOR__START_TIMEOUT, i);
+		fsmonitor__start_timeout_sec = i;
 		return 0;
 	}
 
@@ -256,6 +269,194 @@ static int try_to_run_foreground_daemon(void)
 	return !!fsmonitor_run_daemon();
 }
 
+#ifdef GIT_WINDOWS_NATIVE
+/*
+ * Create a background process to run the daemon.  It should be completely
+ * disassociated from the terminal.
+ *
+ * Conceptually like `daemonize()` but different because Windows does not
+ * have `fork(2)`.  Spawn a normal Windows child process but without the
+ * limitations of `start_command()` and `finish_command()`.
+ *
+ * The child process execs the "git fsmonitor--daemon run" command.
+ *
+ * The current process returns so that the caller can wait for the child
+ * to startup before exiting.
+ */
+static int spawn_fsmonitor(pid_t *pid)
+{
+	char git_exe[MAX_PATH];
+	struct strvec args = STRVEC_INIT;
+	int in, out;
+
+	GetModuleFileNameA(NULL, git_exe, MAX_PATH);
+
+	in = open("/dev/null", O_RDONLY);
+	out = open("/dev/null", O_WRONLY);
+
+	strvec_push(&args, git_exe);
+	strvec_push(&args, "fsmonitor--daemon");
+	strvec_push(&args, "run");
+	strvec_pushf(&args, "--ipc-threads=%d", fsmonitor__ipc_threads);
+
+	*pid = mingw_spawnvpe(args.v[0], args.v, NULL, NULL, in, out, out);
+	close(in);
+	close(out);
+
+	strvec_clear(&args);
+
+	if (*pid < 0)
+		return error(_("could not spawn fsmonitor--daemon in the background"));
+
+	return 0;
+}
+#else
+/*
+ * Create a background process to run the daemon.  It should be completely
+ * disassociated from the terminal.
+ *
+ * This is adapted from `daemonize()`.  Use `fork()` to directly
+ * create and run the daemon in the child process.
+ *
+ * The fork-child can just call the run code; it does not need to exec
+ * it.
+ *
+ * The fork-parent returns the child PID so that we can wait for the
+ * child to startup before exiting.
+ */
+static int spawn_fsmonitor(pid_t *pid)
+{
+	*pid = fork();
+
+	switch (*pid) {
+	case 0:
+		if (setsid() == -1)
+			error_errno(_("setsid failed"));
+		close(0);
+		close(1);
+		close(2);
+		sanitize_stdfds();
+
+		return !!fsmonitor_run_daemon();
+
+	case -1:
+		return error_errno(_("could not spawn fsmonitor--daemon in the background"));
+
+	default:
+		return 0;
+	}
+}
+#endif
+
+/*
+ * This is adapted from `wait_or_whine()`.  Watch the child process and
+ * let it get started and begin listening for requests on the socket
+ * before reporting our success.
+ */
+static int wait_for_startup(pid_t pid_child)
+{
+	int status;
+	pid_t pid_seen;
+	enum ipc_active_state s;
+	time_t time_limit, now;
+
+	time(&time_limit);
+	time_limit += fsmonitor__start_timeout_sec;
+
+	for (;;) {
+		pid_seen = waitpid(pid_child, &status, WNOHANG);
+
+		if (pid_seen == -1)
+			return error_errno(_("waitpid failed"));
+		else if (pid_seen == 0) {
+			/*
+			 * The child is still running (this should be
+			 * the normal case).  Try to connect to it on
+			 * the socket and see if it is ready for
+			 * business.
+			 *
+			 * If there is another daemon already running,
+			 * our child will fail to start (possibly
+			 * after a timeout on the lock), but we don't
+			 * care (who responds) if the socket is live.
+			 */
+			s = fsmonitor_ipc__get_state();
+			if (s == IPC_STATE__LISTENING)
+				return 0;
+
+			time(&now);
+			if (now > time_limit)
+				return error(_("fsmonitor--daemon not online yet"));
+		} else if (pid_seen == pid_child) {
+			/*
+			 * The new child daemon process shutdown while
+			 * it was starting up, so it is not listening
+			 * on the socket.
+			 *
+			 * Try to ping the socket in the odd chance
+			 * that another daemon started (or was already
+			 * running) while our child was starting.
+			 *
+			 * Again, we don't care who services the socket.
+			 */
+			s = fsmonitor_ipc__get_state();
+			if (s == IPC_STATE__LISTENING)
+				return 0;
+
+			/*
+			 * We don't care about the WEXITSTATUS() nor
+			 * any of the WIF*(status) values because
+			 * `cmd_fsmonitor__daemon()` does the `!!result`
+			 * trick on all function return values.
+			 *
+			 * So it is sufficient to just report the
+			 * early shutdown as an error.
+			 */
+			return error(_("fsmonitor--daemon failed to start"));
+		} else
+			return error(_("waitpid is confused"));
+	}
+}
+
+static int try_to_start_background_daemon(void)
+{
+	pid_t pid_child;
+	int ret;
+
+	/*
+	 * Before we try to create a background daemon process, see
+	 * if a daemon process is already listening.  This makes it
+	 * easier for us to report an already-listening error to the
+	 * console, since our spawn/daemon can only report the success
+	 * of creating the background process (and not whether it
+	 * immediately exited).
+	 */
+	if (fsmonitor_ipc__get_state() == IPC_STATE__LISTENING)
+		die("fsmonitor--daemon is already running '%s'",
+		    the_repository->worktree);
+
+	printf(_("starting fsmonitor-daemon in '%s'\n"),
+	       the_repository->worktree);
+	fflush(stdout);
+
+	/*
+	 * Run the actual daemon in a background process.
+	 */
+	ret = spawn_fsmonitor(&pid_child);
+	if (pid_child <= 0)
+		return ret;
+
+	/*
+	 * Wait (with timeout) for the background child process get
+	 * started and begin listening on the socket/pipe.  This makes
+	 * the "start" command more synchronous and more reliable in
+	 * tests.
+	 */
+	ret = wait_for_startup(pid_child);
+
+	return ret;
+}
+
 int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 {
 	const char *subcmd;
@@ -264,6 +465,10 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 		OPT_INTEGER(0, "ipc-threads",
 			    &fsmonitor__ipc_threads,
 			    N_("use <n> ipc worker threads")),
+		OPT_INTEGER(0, "start-timeout",
+			    &fsmonitor__start_timeout_sec,
+			    N_("Max seconds to wait for background daemon startup")),
+
 		OPT_END()
 	};
 
@@ -284,6 +489,9 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 	if (fsmonitor__ipc_threads < 1)
 		die(_("invalid 'ipc-threads' value (%d)"),
 		    fsmonitor__ipc_threads);
+
+	if (!strcmp(subcmd, "start"))
+		return !!try_to_start_background_daemon();
 
 	if (!strcmp(subcmd, "run"))
 		return !!try_to_run_foreground_daemon();
