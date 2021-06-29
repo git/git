@@ -2739,7 +2739,7 @@ tags: FORCE
 
 .PHONY: cscope
 cscope:
-	$(RM) cscope*
+	$(QUIET_GEN)$(RM) cscope* && \
 	$(FIND_SOURCE_FILES) | xargs cscope -b
 
 ### Detect prefix changes
