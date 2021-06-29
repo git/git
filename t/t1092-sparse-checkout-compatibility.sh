@@ -560,7 +560,15 @@ test_expect_success 'sparse-index is not expanded' '
 	echo >>sparse-index/a &&
 	ensure_not_expanded commit --include a -m a &&
 	echo >>sparse-index/deep/deeper1/a &&
-	ensure_not_expanded commit --include deep/deeper1/a -m deeper
+	ensure_not_expanded commit --include deep/deeper1/a -m deeper &&
+	ensure_not_expanded checkout rename-out-to-out &&
+	ensure_not_expanded checkout - &&
+	ensure_not_expanded switch rename-out-to-out &&
+	ensure_not_expanded switch - &&
+	git -C sparse-index reset --hard &&
+	ensure_not_expanded checkout rename-out-to-out -- deep/deeper1 &&
+	git -C sparse-index reset --hard &&
+	ensure_not_expanded restore -s rename-out-to-out -- deep/deeper1
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
