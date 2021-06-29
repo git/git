@@ -1682,6 +1682,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_commit_usage, builtin_commit_options);
 
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	status_init_config(&s, git_commit_config);
 	s.commit_template = 1;
 	status_format = STATUS_FORMAT_NONE; /* Ignore status.short */

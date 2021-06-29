@@ -262,6 +262,34 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout -
 '
 
+test_expect_success 'commit including unstaged changes' '
+	init_repos &&
+
+	write_script edit-file <<-\EOF &&
+	echo $1 >$2
+	EOF
+
+	run_on_all ../edit-file 1 a &&
+	run_on_all ../edit-file 1 deep/a &&
+
+	test_all_match git commit -m "-a" -a &&
+	test_all_match git status --porcelain=v2 &&
+
+	run_on_all ../edit-file 2 a &&
+	run_on_all ../edit-file 2 deep/a &&
+
+	test_all_match git commit -m "--include" --include deep/a &&
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git commit -m "--include" --include a &&
+	test_all_match git status --porcelain=v2 &&
+
+	run_on_all ../edit-file 3 a &&
+	run_on_all ../edit-file 3 deep/a &&
+
+	test_all_match git commit -m "--amend" -a --amend &&
+	test_all_match git status --porcelain=v2
+'
+
 test_expect_success 'status/add: outside sparse cone' '
 	init_repos &&
 
@@ -514,14 +542,25 @@ test_expect_success 'sparse-index is expanded and converted back' '
 	test_region index ensure_full_index trace2.txt
 '
 
-test_expect_success 'sparse-index is not expanded' '
-	init_repos &&
-
+ensure_not_expanded () {
 	rm -f trace2.txt &&
 	echo >>sparse-index/untracked.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
-		git -C sparse-index status &&
+		git -C sparse-index "$@" &&
 	test_region ! index ensure_full_index trace2.txt
+}
+
+test_expect_success 'sparse-index is not expanded' '
+	init_repos &&
+
+	ensure_not_expanded status &&
+	ensure_not_expanded commit --allow-empty -m empty &&
+	echo >>sparse-index/a &&
+	ensure_not_expanded commit -a -m a &&
+	echo >>sparse-index/a &&
+	ensure_not_expanded commit --include a -m a &&
+	echo >>sparse-index/deep/deeper1/a &&
+	ensure_not_expanded commit --include deep/deeper1/a -m deeper
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
