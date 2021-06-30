@@ -5000,7 +5000,7 @@ test_setup_12i () {
 	)
 }
 
-test_expect_merge_algorithm failure failure '12i: Directory rename causes rename-to-self' '
+test_expect_merge_algorithm failure success '12i: Directory rename causes rename-to-self' '
 	test_setup_12i &&
 	(
 		cd 12i &&
@@ -5058,7 +5058,7 @@ test_setup_12j () {
 	)
 }
 
-test_expect_merge_algorithm failure failure '12j: Directory rename to root causes rename-to-self' '
+test_expect_merge_algorithm failure success '12j: Directory rename to root causes rename-to-self' '
 	test_setup_12j &&
 	(
 		cd 12j &&
@@ -5116,7 +5116,7 @@ test_setup_12k () {
 	)
 }
 
-test_expect_merge_algorithm failure failure '12k: Directory rename with sibling causes rename-to-self' '
+test_expect_merge_algorithm failure success '12k: Directory rename with sibling causes rename-to-self' '
 	test_setup_12k &&
 	(
 		cd 12k &&
