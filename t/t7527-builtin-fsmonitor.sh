@@ -188,6 +188,36 @@ test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~2)' '
 	test_must_fail git -C test_implicit_1s2 fsmonitor--daemon status
 '
 
+# Confirm that MacOS hides all of the Unicode normalization and/or
+# case folding from the FS events.  That is, are the pathnames in the
+# FS events reported using the spelling on the disk or in the spelling
+# used by the other process.
+#
+# Note that we assume that the filesystem is set to case insensitive.
+#
+# NEEDSWORK: APFS handles Unicode and Unicode normalization
+# differently than HFS+.  I only have an APFS partition, so
+# more testing here would be helpful.
+#
+
+# Rename .git using alternate spelling and confirm that the daemon
+# sees the event using the correct spelling and shutdown.
+test_expect_success UTF8_NFD_TO_NFC 'MacOS event spelling (rename .GIT)' '
+	test_when_finished "stop_daemon_delete_repo test_apfs" &&
+
+	git init test_apfs &&
+	start_daemon test_apfs &&
+
+	test_path_is_dir test_apfs/.git &&
+	test_path_is_dir test_apfs/.GIT &&
+
+	mv test_apfs/.GIT test_apfs/.FOO &&
+	sleep 1 &&
+	mv test_apfs/.FOO test_apfs/.git &&
+
+	test_must_fail git -C test_apfs fsmonitor--daemon status
+'
+
 test_expect_success 'cannot start multiple daemons' '
 	test_when_finished "stop_daemon_delete_repo test_multiple" &&
 
