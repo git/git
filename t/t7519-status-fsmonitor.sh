@@ -394,6 +394,22 @@ test_expect_success 'incompatible bare repo' '
 	test_cmp expect actual
 '
 
+test_expect_success FSMONITOR_DAEMON 'try running fsmonitor-daemon in bare repo' '
+	test_when_finished "rm -rf ./bare-clone" &&
+	git clone --bare . ./bare-clone &&
+	test_must_fail git -C ./bare-clone fsmonitor--daemon run 2>actual &&
+	grep "fsmonitor-daemon does not support bare repos" actual
+'
+
+test_expect_success FSMONITOR_DAEMON 'try running fsmonitor-daemon in virtual repo' '
+	test_when_finished "rm -rf ./fake-virtual-clone" &&
+	git clone . ./fake-virtual-clone &&
+	test_must_fail git -C ./fake-virtual-clone \
+			   -c core.virtualfilesystem=true \
+			   fsmonitor--daemon run 2>actual &&
+	grep "fsmonitor-daemon is incompatible with this repo" actual
+'
+
 test_expect_success 'incompatible core.virtualfilesystem' '
 	test_when_finished "rm -rf ./fake-gvfs-clone" &&
 	git clone . ./fake-gvfs-clone &&

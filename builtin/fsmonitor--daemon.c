@@ -490,6 +490,14 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 		die(_("invalid 'ipc-threads' value (%d)"),
 		    fsmonitor__ipc_threads);
 
+	prepare_repo_settings(the_repository);
+	if (!the_repository->worktree)
+		return error(_("fsmonitor-daemon does not support bare repos '%s'"),
+			     xgetcwd());
+	if (the_repository->settings.fsmonitor_mode == FSMONITOR_MODE_INCOMPATIBLE)
+		return error(_("fsmonitor-daemon is incompatible with this repo '%s'"),
+			     the_repository->worktree);
+
 	if (!strcmp(subcmd, "start"))
 		return !!try_to_start_background_daemon();
 
