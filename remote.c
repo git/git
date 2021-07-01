@@ -1592,7 +1592,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 			else
 				/*
 				 * If the ref isn't stale, and is reachable
-				 * from from one of the reflog entries of
+				 * from one of the reflog entries of
 				 * the local branch, force the update.
 				 */
 				force_ref_update = 1;
