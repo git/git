@@ -1708,3 +1708,9 @@ test_region () {
 
 	return 0
 }
+
+# Print the destination of symlink(s) provided as arguments. Basically
+# the same as the readlink command, but it's not available everywhere.
+test_readlink () {
+	perl -le 'print readlink($_) for @ARGV' "$@"
+}
