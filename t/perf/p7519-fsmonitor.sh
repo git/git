@@ -119,10 +119,11 @@ test_expect_success "one time repo setup" '
 	fi &&
 
 	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
-	for i in $(test_seq 1 10); do touch 10_files/$i; done &&
-	for i in $(test_seq 1 100); do touch 100_files/$i; done &&
-	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
-	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
+	test-tool touch sequence --pattern="10_files/%d" --start=1 --count=10 &&
+	test-tool touch sequence --pattern="100_files/%d" --start=1 --count=100 &&
+	test-tool touch sequence --pattern="1000_files/%d" --start=1 --count=1000 &&
+	test-tool touch sequence --pattern="10000_files/%d" --start=1 --count=10000 &&
+
 	git add 1_file 10_files 100_files 1000_files 10000_files &&
 	git commit -qm "Add files" &&
 
@@ -200,15 +201,12 @@ test_fsmonitor_suite() {
 	# Update the mtimes on upto 100k files to make status think
 	# that they are dirty.  For simplicity, omit any files with
 	# LFs (i.e. anything that ls-files thinks it needs to dquote).
-	# Then fully backslash-quote the paths to capture any
-	# whitespace so that they pass thru xargs properly.
 	#
 	test_perf_w_drop_caches "status (dirty) ($DESC)" '
 		git ls-files | \
 			head -100000 | \
 			grep -v \" | \
-			sed '\''s/\(.\)/\\\1/g'\'' | \
-			xargs test-tool chmtime -300 &&
+			test-tool touch stdin &&
 		git status
 	'
 
