@@ -262,6 +262,7 @@ struct rev_info {
 	int min_parents;
 	int max_parents;
 	int (*include_check)(struct commit *, void *);
+	int (*include_check_obj)(struct object *obj, void *);
 	void *include_check_data;
 
 	/* diff info for patches and for paths limiting */
