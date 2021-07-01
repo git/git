@@ -8,9 +8,9 @@
 #include "cache.h"
 #include "parse-options.h"
 
-char *seq_pattern;
-int seq_start = 1;
-int seq_count = 1;
+static char *seq_pattern;
+static int seq_start = 1;
+static int seq_count = 1;
 
 static int do_touch_one(const char *path)
 {
