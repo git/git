@@ -91,8 +91,8 @@ struct string_list {
 	compare_strings_fn cmp; /* NULL uses strcmp() */
 };
 
-#define STRING_LIST_INIT_NODUP { NULL, 0, 0, 0, NULL }
-#define STRING_LIST_INIT_DUP   { NULL, 0, 0, 1, NULL }
+#define STRING_LIST_INIT_NODUP { 0 }
+#define STRING_LIST_INIT_DUP   { .strdup_strings = 1 }
 
 /* General functions which work with both sorted and unsorted lists. */
 
