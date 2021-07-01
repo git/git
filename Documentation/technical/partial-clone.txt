@@ -242,8 +242,7 @@ remote in a specific order.
   repository and can satisfy all such requests.
 
 - Repack essentially treats promisor and non-promisor packfiles as 2
-  distinct partitions and does not mix them.  Repack currently only works
-  on non-promisor packfiles and loose objects.
+  distinct partitions and does not mix them.
 
 - Dynamic object fetching invokes fetch-pack once *for each item*
   because most algorithms stumble upon a missing object and need to have
@@ -272,9 +271,6 @@ to use those promisor remotes in that order."
 +
 The user might want to work in a triangular work flow with multiple
 promisor remotes that each have an incomplete view of the repository.
-
-- Allow repack to work on promisor packfiles (while keeping them distinct
-  from non-promisor packfiles).
 
 - Allow non-pathname-based filters to make use of packfile bitmaps (when
   present).  This was just an omission during the initial implementation.
