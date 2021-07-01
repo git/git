@@ -383,4 +383,26 @@ test_expect_success 'status succeeds after staging/unstaging' '
 	)
 '
 
+# Test that we detect and disallow repos that are incompatible with FSMonitor.
+test_expect_success 'incompatible bare repo' '
+	test_when_finished "rm -rf ./bare-clone" &&
+	git clone --bare . ./bare-clone &&
+	cat >expect <<-\EOF &&
+	error: repository is incompatible with fsmonitor
+	EOF
+	test_must_fail git -C ./bare-clone update-index --fsmonitor 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'incompatible core.virtualfilesystem' '
+	test_when_finished "rm -rf ./fake-gvfs-clone" &&
+	git clone . ./fake-gvfs-clone &&
+	git -C ./fake-gvfs-clone config core.virtualfilesystem true &&
+	cat >expect <<-\EOF &&
+	error: repository is incompatible with fsmonitor
+	EOF
+	test_must_fail git -C ./fake-gvfs-clone update-index --fsmonitor 2>actual &&
+	test_cmp expect actual
+'
+
 test_done
