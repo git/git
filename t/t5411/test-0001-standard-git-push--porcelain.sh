@@ -7,17 +7,17 @@ test_expect_success "git-push ($PROTOCOL/porcelain)" '
 		HEAD:refs/heads/next \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
-	To <URL/of/upstream.git>
-	     <COMMIT-B>:refs/heads/main    <OID-A>..<OID-B>
-	*    HEAD:refs/heads/next    [new branch]
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
+	> To <URL/of/upstream.git>
+	>  	<COMMIT-B>:refs/heads/main	<COMMIT-A>..<COMMIT-B>
+	> *	HEAD:refs/heads/next	[new branch]
+	> Done
 	EOF
 	test_cmp expect actual &&
 
@@ -38,12 +38,12 @@ test_expect_success "git-push --atomic ($PROTOCOL/porcelain)" '
 	filter_out_user_friendly_and_stable_output \
 		-e "s/^# GETTEXT POISON #//" \
 		-e "/^To / { p; }" \
-		-e "/^! / { p; }" \
+		-e "/^!/ { p; }" \
 		<out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	To <URL/of/upstream.git>
-	!    refs/heads/main:refs/heads/main    [rejected] (non-fast-forward)
-	!    <COMMIT-B>:refs/heads/next    [rejected] (atomic push failed)
+	format_and_save_expect <<-EOF &&
+	> To <URL/of/upstream.git>
+	> !	refs/heads/main:refs/heads/main	[rejected] (non-fast-forward)
+	> !	<COMMIT-B>:refs/heads/next	[rejected] (atomic push failed)
 	EOF
 	test_cmp expect actual &&
 
@@ -65,15 +65,15 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL/porcelain)" '
 		$B:refs/heads/next \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/next
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/next
-	To <URL/of/upstream.git>
-	     <COMMIT-B>:refs/heads/next    <OID-A>..<OID-B>
-	!    refs/heads/main:refs/heads/main    [rejected] (non-fast-forward)
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/next        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/next        Z
+	> To <URL/of/upstream.git>
+	>  	<COMMIT-B>:refs/heads/next	<COMMIT-A>..<COMMIT-B>
+	> !	refs/heads/main:refs/heads/main	[rejected] (non-fast-forward)
+	> Done
 	EOF
 	test_cmp expect actual &&
 
@@ -95,26 +95,26 @@ test_expect_success "git-push -f ($PROTOCOL/porcelain)" '
 		HEAD:refs/heads/a/b/c \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <COMMIT-B> <COMMIT-A> refs/heads/main
-	remote: pre-receive< <COMMIT-B> <ZERO-OID> refs/heads/next
-	remote: pre-receive< <ZERO-OID> <TAG-v123> refs/tags/v123
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-B> <COMMIT-A> refs/heads/main
-	remote: post-receive< <COMMIT-B> <ZERO-OID> refs/heads/next
-	remote: post-receive< <ZERO-OID> <TAG-v123> refs/tags/v123
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c
-	To <URL/of/upstream.git>
-	+    refs/heads/main:refs/heads/main    <OID-B>...<OID-A> (forced update)
-	-    :refs/heads/next    [deleted]
-	*    refs/tags/v123:refs/tags/v123    [new tag]
-	*    refs/heads/main:refs/review/main/topic    [new reference]
-	*    HEAD:refs/heads/a/b/c    [new branch]
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
+	> remote: pre-receive< <COMMIT-B> <ZERO-OID> refs/heads/next        Z
+	> remote: pre-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
+	> remote: post-receive< <COMMIT-B> <ZERO-OID> refs/heads/next        Z
+	> remote: post-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c        Z
+	> To <URL/of/upstream.git>
+	> +	refs/heads/main:refs/heads/main	<COMMIT-B>...<COMMIT-A> (forced update)
+	> -	:refs/heads/next	[deleted]
+	> *	refs/tags/v123:refs/tags/v123	[new tag]
+	> *	refs/heads/main:refs/review/main/topic	[new reference]
+	> *	HEAD:refs/heads/a/b/c	[new branch]
+	> Done
 	EOF
 	test_cmp expect actual &&
 
