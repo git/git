@@ -121,7 +121,7 @@ static void dir_rename_entry_init(struct dir_rename_entry *entry,
 	entry->dir = directory;
 	entry->non_unique_new_dir = 0;
 	strbuf_init(&entry->new_dir, 0);
-	string_list_init(&entry->possible_new_dirs, 0);
+	string_list_init_nodup(&entry->possible_new_dirs);
 }
 
 struct collision_entry {
@@ -3703,7 +3703,7 @@ static int merge_start(struct merge_options *opt, struct tree *head)
 	}
 
 	CALLOC_ARRAY(opt->priv, 1);
-	string_list_init(&opt->priv->df_conflict_file_set, 1);
+	string_list_init_dup(&opt->priv->df_conflict_file_set);
 	return 0;
 }
 

@@ -645,7 +645,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	args.pretty_ctx = &ctx;
 	args.repo = repo;
 	args.prefix = prefix;
-	string_list_init(&args.extra_files, 1);
+	string_list_init_dup(&args.extra_files);
 	argc = parse_archive_args(argc, argv, &ar, &args, name_hint, remote);
 	if (!startup_info->have_repository) {
 		/*

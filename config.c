@@ -2072,7 +2072,7 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 		e = xmalloc(sizeof(*e));
 		hashmap_entry_init(&e->ent, strhash(key));
 		e->key = xstrdup(key);
-		string_list_init(&e->value_list, 1);
+		string_list_init_dup(&e->value_list);
 		hashmap_add(&cs->config_hash, &e->ent);
 	}
 	si = string_list_append_nodup(&e->value_list, xstrdup_or_null(value));

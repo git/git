@@ -1050,7 +1050,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	struct transport *ret = xcalloc(1, sizeof(*ret));
 
 	ret->progress = isatty(2);
-	string_list_init(&ret->pack_lockfiles, 1);
+	string_list_init_dup(&ret->pack_lockfiles);
 
 	if (!remote)
 		BUG("No remote provided to transport_get()");
