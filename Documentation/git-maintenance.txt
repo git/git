@@ -179,6 +179,15 @@ OPTIONS
 	`maintenance.<task>.enabled` configured as `true` are considered.
 	See the 'TASKS' section for the list of accepted `<task>` values.
 
+--scheduler=auto|crontab|launchctl|schtasks::
+	When combined with the `start` subcommand, specify the scheduler
+	for running the hourly, daily and weekly executions of
+	`git maintenance run`.
+	Possible values for `<scheduler>` are `auto`, `crontab` (POSIX),
+	`launchctl` (macOS), and `schtasks` (Windows).
+	When `auto` is specified, the appropriate platform-specific
+	scheduler is used. Default is `auto`.
+
 
 TROUBLESHOOTING
 ---------------
