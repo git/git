@@ -64,7 +64,7 @@ test_crlf_subject_body_and_contents() {
 	while test -n "${atoms}"
 	do
 		set ${atoms} && atom=$1 && shift && atoms="$*" &&
-		set ${files} &&	file=$1 && shift && files="$*" &&
+		set ${files} && file=$1 && shift && files="$*" &&
 		test_expect_success "${command}: --format='%${atom}' works with messages using CRLF" "
 			rm -f expect &&
 			for ref in ${LIB_CRLF_BRANCHES}
