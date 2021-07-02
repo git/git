@@ -147,10 +147,10 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 	transport->hash_algo = data->header.hash_algo;
 
 	for (i = 0; i < data->header.references.nr; i++) {
-		struct ref_list_entry *e = data->header.references.list + i;
-		const char *name = e->name;
+		struct string_list_item *e = data->header.references.items + i;
+		const char *name = e->string;
 		struct ref *ref = alloc_ref(name);
-		struct object_id *oid = &e->oid;
+		struct object_id *oid = e->util;
 		oidcpy(&ref->old_oid, oid);
 		ref->next = result;
 		result = ref;
@@ -177,6 +177,7 @@ static int close_bundle(struct transport *transport)
 	struct bundle_transport_data *data = transport->data;
 	if (data->fd > 0)
 		close(data->fd);
+	bundle_header_release(&data->header);
 	free(data);
 	return 0;
 }
@@ -1083,6 +1084,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		die(_("git-over-rsync is no longer supported"));
 	} else if (url_is_local_not_ssh(url) && is_file(url) && is_bundle(url, 1)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
+		bundle_header_init(&data->header);
 		transport_check_allowed("file");
 		ret->data = data;
 		ret->vtable = &bundle_vtable;
