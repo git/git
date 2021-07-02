@@ -148,8 +148,10 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct ref_list_entry *e = data->header.references.list + i;
-		struct ref *ref = alloc_ref(e->name);
-		oidcpy(&ref->old_oid, &e->oid);
+		const char *name = e->name;
+		struct ref *ref = alloc_ref(name);
+		struct object_id *oid = &e->oid;
+		oidcpy(&ref->old_oid, oid);
 		ref->next = result;
 		result = ref;
 	}
