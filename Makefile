@@ -2675,10 +2675,13 @@ po/git.pot: $(GENERATED_H) FORCE
 .PHONY: pot
 pot: po/git.pot
 
+ifdef NO_GETTEXT
+POFILES :=
+MOFILES :=
+else
 POFILES := $(wildcard po/*.po)
 MOFILES := $(patsubst po/%.po,po/build/locale/%/LC_MESSAGES/git.mo,$(POFILES))
 
-ifndef NO_GETTEXT
 all:: $(MOFILES)
 endif
 
