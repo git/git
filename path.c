@@ -12,6 +12,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "lockfile.h"
+#include "exec-cmd.h"
 
 static int get_st_mode_bits(const char *path, int *mode)
 {
@@ -732,6 +733,10 @@ char *expand_user_path(const char *path, int real_home)
 
 	if (path == NULL)
 		goto return_null;
+#ifdef __MINGW32__
+	if (path[0] == '/')
+		return system_path(path + 1);
+#endif
 	if (path[0] == '~') {
 		const char *first_slash = strchrnul(path, '/');
 		const char *username = path + 1;
@@ -1287,6 +1292,45 @@ char *strip_path_suffix(const char *path, const char *suffix)
 	ssize_t offset = stripped_path_suffix_offset(path, suffix);
 
 	return offset == -1 ? NULL : xstrndup(path, offset);
+}
+
+int is_mount_point_via_stat(struct strbuf *path)
+{
+	size_t len = path->len;
+	unsigned int current_dev;
+	struct stat st;
+
+	if (!strcmp("/", path->buf))
+		return 1;
+
+	strbuf_addstr(path, "/.");
+	if (lstat(path->buf, &st)) {
+		/*
+		 * If we cannot access the current directory, we cannot say
+		 * that it is a bind mount.
+		 */
+		strbuf_setlen(path, len);
+		return 0;
+	}
+	current_dev = st.st_dev;
+
+	/* Now look at the parent directory */
+	strbuf_addch(path, '.');
+	if (lstat(path->buf, &st)) {
+		/*
+		 * If we cannot access the parent directory, we cannot say
+		 * that it is a bind mount.
+		 */
+		strbuf_setlen(path, len);
+		return 0;
+	}
+	strbuf_setlen(path, len);
+
+	/*
+	 * If the device ID differs between current and parent directory,
+	 * then it is a bind mount.
+	 */
+	return current_dev != st.st_dev;
 }
 
 int daemon_avoid_alias(const char *p)
