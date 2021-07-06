@@ -455,9 +455,14 @@ stat_ref:
 	strbuf_rtrim(&sb_contents);
 	buf = sb_contents.buf;
 
-	ret = parse_loose_ref_contents(buf, oid, referent, type);
-
+	ret = parse_loose_ref_contents(buf, oid, referent, type, failure_errno);
+	errno = *failure_errno;
 out:
+	/*
+	 * Many system calls in this function can fail with ENOTDIR/EISDIR, and
+	 * we want to collect all of them, so simply copy the error out from
+	 * errno.
+	 */
 	*failure_errno = errno;
 	strbuf_release(&sb_path);
 	strbuf_release(&sb_contents);
@@ -465,7 +470,8 @@ out:
 }
 
 int parse_loose_ref_contents(const char *buf, struct object_id *oid,
-			     struct strbuf *referent, unsigned int *type)
+			     struct strbuf *referent, unsigned int *type,
+			     int *failure_errno)
 {
 	const char *p;
 	if (skip_prefix(buf, "ref:", &buf)) {
@@ -484,7 +490,7 @@ int parse_loose_ref_contents(const char *buf, struct object_id *oid,
 	if (parse_oid_hex(buf, oid, &p) ||
 	    (*p != '\0' && !isspace(*p))) {
 		*type |= REF_ISBROKEN;
-		errno = EINVAL;
+		*failure_errno = EINVAL;
 		return -1;
 	}
 	return 0;
