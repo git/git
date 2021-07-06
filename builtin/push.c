@@ -185,98 +185,73 @@ static const char message_detached_head_die[] =
 	   "\n"
 	   "    git push %s HEAD:<name-of-remote-branch>\n");
 
-static void setup_push_upstream(struct remote *remote, struct branch *branch,
-				int same_remote)
+static const char *get_upstream_ref(struct branch *branch, const char *remote_name)
 {
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
 	if (!branch->merge_nr || !branch->merge || !branch->remote_name)
 		die(_("The current branch %s has no upstream branch.\n"
 		    "To push the current branch and set the remote as upstream, use\n"
 		    "\n"
 		    "    git push --set-upstream %s %s\n"),
 		    branch->name,
-		    remote->name,
+		    remote_name,
 		    branch->name);
 	if (branch->merge_nr != 1)
 		die(_("The current branch %s has multiple upstream branches, "
 		    "refusing to push."), branch->name);
-	if (!same_remote)
-		die(_("You are pushing to remote '%s', which is not the upstream of\n"
-		      "your current branch '%s', without telling me what to push\n"
-		      "to update which remote branch."),
-		    remote->name, branch->name);
 
-	refspec_appendf(&rs, "%s:%s", branch->refname, branch->merge[0]->src);
-}
-
-static void setup_push_current(struct remote *remote, struct branch *branch)
-{
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
-	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
-}
-
-static void setup_push_simple(struct remote *remote, struct branch *branch, int same_remote)
-{
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
-
-	if (same_remote) {
-		if (!branch->merge_nr || !branch->merge || !branch->remote_name)
-			die(_("The current branch %s has no upstream branch.\n"
-			    "To push the current branch and set the remote as upstream, use\n"
-			    "\n"
-			    "    git push --set-upstream %s %s\n"),
-			    branch->name,
-			    remote->name,
-			    branch->name);
-		if (branch->merge_nr != 1)
-			die(_("The current branch %s has multiple upstream branches, "
-			    "refusing to push."), branch->name);
-
-		/* Additional safety */
-		if (strcmp(branch->refname, branch->merge[0]->src))
-			die_push_simple(branch, remote);
-	}
-	refspec_appendf(&rs, "%s:%s", branch->refname, branch->refname);
-}
-
-static int is_same_remote(struct remote *remote)
-{
-	struct remote *fetch_remote = remote_get(NULL);
-	return (!fetch_remote || fetch_remote == remote);
+	return branch->merge[0]->src;
 }
 
 static void setup_default_push_refspecs(struct remote *remote)
 {
-	struct branch *branch = branch_get(NULL);
-	int same_remote = is_same_remote(remote);
+	struct branch *branch;
+	const char *dst;
+	int same_remote;
 
 	switch (push_default) {
-	default:
 	case PUSH_DEFAULT_MATCHING:
 		refspec_append(&rs, ":");
-		break;
-
-	case PUSH_DEFAULT_UNSPECIFIED:
-	case PUSH_DEFAULT_SIMPLE:
-		setup_push_simple(remote, branch, same_remote);
-		break;
-
-	case PUSH_DEFAULT_UPSTREAM:
-		setup_push_upstream(remote, branch, same_remote);
-		break;
-
-	case PUSH_DEFAULT_CURRENT:
-		setup_push_current(remote, branch);
-		break;
+		return;
 
 	case PUSH_DEFAULT_NOTHING:
 		die(_("You didn't specify any refspecs to push, and "
 		    "push.default is \"nothing\"."));
+		return;
+	default:
 		break;
 	}
+
+	branch = branch_get(NULL);
+	if (!branch)
+		die(_(message_detached_head_die), remote->name);
+
+	dst = branch->refname;
+	same_remote = !strcmp(remote->name, remote_for_branch(branch, NULL));
+
+	switch (push_default) {
+	default:
+	case PUSH_DEFAULT_UNSPECIFIED:
+	case PUSH_DEFAULT_SIMPLE:
+		if (!same_remote)
+			break;
+		if (strcmp(branch->refname, get_upstream_ref(branch, remote->name)))
+			die_push_simple(branch, remote);
+		break;
+
+	case PUSH_DEFAULT_UPSTREAM:
+		if (!same_remote)
+			die(_("You are pushing to remote '%s', which is not the upstream of\n"
+			      "your current branch '%s', without telling me what to push\n"
+			      "to update which remote branch."),
+			    remote->name, branch->name);
+		dst = get_upstream_ref(branch, remote->name);
+		break;
+
+	case PUSH_DEFAULT_CURRENT:
+		break;
+	}
+
+	refspec_appendf(&rs, "%s:%s", branch->refname, dst);
 }
 
 static const char message_advice_pull_before_push[] =
