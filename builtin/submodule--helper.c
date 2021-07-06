@@ -13,7 +13,6 @@
 #include "remote.h"
 #include "refs.h"
 #include "connect.h"
-#include "dir.h"
 
 static char *get_default_remote(void)
 {
