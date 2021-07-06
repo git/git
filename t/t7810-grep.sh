@@ -11,6 +11,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+test_invalid_grep_expression() {
+	params="$@" &&
+	test_expect_success "invalid expression: grep $params" '
+		test_must_fail git grep $params -- nonexisting
+	'
+}
+
 cat >hello.c <<EOF
 #include <assert.h>
 #include <stdio.h>
@@ -88,6 +95,8 @@ test_expect_success setup '
 test_expect_success 'grep should not segfault with a bad input' '
 	test_must_fail git grep "("
 '
+
+test_invalid_grep_expression --and -e A
 
 for H in HEAD ''
 do
