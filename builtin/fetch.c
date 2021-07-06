@@ -1602,6 +1602,10 @@ static int do_fetch(struct transport *transport,
 		struct ref *rm;
 		struct ref *source_ref = NULL;
 
+		if (!branch) {
+			warning(_("not on a branch to use --set-upstream with"));
+			goto skip;
+		}
 		/*
 		 * We're setting the upstream configuration for the
 		 * current branch. The relevant upstream is the
