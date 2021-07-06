@@ -392,7 +392,7 @@ test_expect_success 'B: accept branch name "TEMP_TAG"' '
 		git gc
 		git prune" &&
 	git fast-import <input &&
-	test -f .git/TEMP_TAG &&
+	test $(test-tool ref-store main resolve-ref TEMP_TAG 0 | cut -f1 -d " " ) != "$ZERO_OID" &&
 	test $(git rev-parse main) = $(git rev-parse TEMP_TAG^)
 '
 
