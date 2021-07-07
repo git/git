@@ -1173,7 +1173,7 @@ static int quick_has_loose(struct repository *r,
 
 	prepare_alt_odb(r);
 	for (odb = r->objects->odb; odb; odb = odb->next) {
-		if (oid_array_lookup(odb_loose_cache(odb, oid), oid) >= 0)
+		if (oidtree_contains(odb_loose_cache(odb, oid), oid))
 			return 1;
 	}
 	return 0;
@@ -2452,11 +2452,11 @@ int for_each_loose_object(each_loose_object_fn cb, void *data,
 static int append_loose_object(const struct object_id *oid, const char *path,
 			       void *data)
 {
-	oid_array_append(data, oid);
+	oidtree_insert(data, oid);
 	return 0;
 }
 
-struct oid_array *odb_loose_cache(struct object_directory *odb,
+struct oidtree *odb_loose_cache(struct object_directory *odb,
 				  const struct object_id *oid)
 {
 	int subdir_nr = oid->hash[0];
@@ -2472,24 +2472,25 @@ struct oid_array *odb_loose_cache(struct object_directory *odb,
 
 	bitmap = &odb->loose_objects_subdir_seen[word_index];
 	if (*bitmap & mask)
-		return &odb->loose_objects_cache[subdir_nr];
-
+		return odb->loose_objects_cache;
+	if (!odb->loose_objects_cache) {
+		ALLOC_ARRAY(odb->loose_objects_cache, 1);
+		oidtree_init(odb->loose_objects_cache);
+	}
 	strbuf_addstr(&buf, odb->path);
 	for_each_file_in_obj_subdir(subdir_nr, &buf,
 				    append_loose_object,
 				    NULL, NULL,
-				    &odb->loose_objects_cache[subdir_nr]);
+				    odb->loose_objects_cache);
 	*bitmap |= mask;
 	strbuf_release(&buf);
-	return &odb->loose_objects_cache[subdir_nr];
+	return odb->loose_objects_cache;
 }
 
 void odb_clear_loose_cache(struct object_directory *odb)
 {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(odb->loose_objects_cache); i++)
-		oid_array_clear(&odb->loose_objects_cache[i]);
+	oidtree_clear(odb->loose_objects_cache);
+	FREE_AND_NULL(odb->loose_objects_cache);
 	memset(&odb->loose_objects_subdir_seen, 0,
 	       sizeof(odb->loose_objects_subdir_seen));
 }

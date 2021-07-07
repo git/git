@@ -9,6 +9,7 @@
 #include "thread-utils.h"
 #include "khash.h"
 #include "dir.h"
+#include "oidtree.h"
 
 struct object_directory {
 	struct object_directory *next;
@@ -23,7 +24,7 @@ struct object_directory {
 	 * Be sure to call odb_load_loose_cache() before using.
 	 */
 	uint32_t loose_objects_subdir_seen[8]; /* 256 bits */
-	struct oid_array loose_objects_cache[256];
+	struct oidtree *loose_objects_cache;
 
 	/*
 	 * Path to the alternative object store. If this is a relative path,
@@ -59,7 +60,7 @@ void add_to_alternates_memory(const char *dir);
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
-struct oid_array *odb_loose_cache(struct object_directory *odb,
+struct oidtree *odb_loose_cache(struct object_directory *odb,
 				  const struct object_id *oid);
 
 /* Empty the loose object cache for the specified object directory. */
