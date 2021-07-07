@@ -517,9 +517,9 @@ const char *loose_object_path(struct repository *r, struct strbuf *buf,
  */
 static int alt_odb_usable(struct raw_object_store *o,
 			  struct strbuf *path,
-			  const char *normalized_objdir)
+			  const char *normalized_objdir, khiter_t *pos)
 {
-	struct object_directory *odb;
+	int r;
 
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path->buf)) {
@@ -533,14 +533,20 @@ static int alt_odb_usable(struct raw_object_store *o,
 	 * Prevent the common mistake of listing the same
 	 * thing twice, or object directory itself.
 	 */
-	for (odb = o->odb; odb; odb = odb->next) {
-		if (!fspathcmp(path->buf, odb->path))
-			return 0;
-	}
-	if (!fspathcmp(path->buf, normalized_objdir))
-		return 0;
+	if (!o->odb_by_path) {
+		khiter_t p;
 
-	return 1;
+		o->odb_by_path = kh_init_odb_path_map();
+		assert(!o->odb->next);
+		p = kh_put_odb_path_map(o->odb_by_path, o->odb->path, &r);
+		assert(r == 1); /* never used */
+		kh_value(o->odb_by_path, p) = o->odb;
+	}
+	if (fspatheq(path->buf, normalized_objdir))
+		return 0;
+	*pos = kh_put_odb_path_map(o->odb_by_path, path->buf, &r);
+	/* r: 0 = exists, 1 = never used, 2 = deleted */
+	return r == 0 ? 0 : 1;
 }
 
 /*
@@ -566,6 +572,7 @@ static int link_alt_odb_entry(struct repository *r, const char *entry,
 {
 	struct object_directory *ent;
 	struct strbuf pathbuf = STRBUF_INIT;
+	khiter_t pos;
 
 	if (!is_absolute_path(entry) && relative_base) {
 		strbuf_realpath(&pathbuf, relative_base, 1);
@@ -587,23 +594,25 @@ static int link_alt_odb_entry(struct repository *r, const char *entry,
 	while (pathbuf.len && pathbuf.buf[pathbuf.len - 1] == '/')
 		strbuf_setlen(&pathbuf, pathbuf.len - 1);
 
-	if (!alt_odb_usable(r->objects, &pathbuf, normalized_objdir)) {
+	if (!alt_odb_usable(r->objects, &pathbuf, normalized_objdir, &pos)) {
 		strbuf_release(&pathbuf);
 		return -1;
 	}
 
 	CALLOC_ARRAY(ent, 1);
-	ent->path = xstrdup(pathbuf.buf);
+	/* pathbuf.buf is already in r->objects->odb_by_path */
+	ent->path = strbuf_detach(&pathbuf, NULL);
 
 	/* add the alternate entry */
 	*r->objects->odb_tail = ent;
 	r->objects->odb_tail = &(ent->next);
 	ent->next = NULL;
+	assert(r->objects->odb_by_path);
+	kh_value(r->objects->odb_by_path, pos) = ent;
 
 	/* recursively add alternates */
-	read_info_alternates(r, pathbuf.buf, depth + 1);
+	read_info_alternates(r, ent->path, depth + 1);
 
-	strbuf_release(&pathbuf);
 	return 0;
 }
 
