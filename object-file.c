@@ -567,18 +567,18 @@ static int alt_odb_usable(struct raw_object_store *o,
 static void read_info_alternates(struct repository *r,
 				 const char *relative_base,
 				 int depth);
-static int link_alt_odb_entry(struct repository *r, const char *entry,
+static int link_alt_odb_entry(struct repository *r, const struct strbuf *entry,
 	const char *relative_base, int depth, const char *normalized_objdir)
 {
 	struct object_directory *ent;
 	struct strbuf pathbuf = STRBUF_INIT;
 	khiter_t pos;
 
-	if (!is_absolute_path(entry) && relative_base) {
+	if (!is_absolute_path(entry->buf) && relative_base) {
 		strbuf_realpath(&pathbuf, relative_base, 1);
 		strbuf_addch(&pathbuf, '/');
 	}
-	strbuf_addstr(&pathbuf, entry);
+	strbuf_addbuf(&pathbuf, entry);
 
 	if (strbuf_normalize_path(&pathbuf) < 0 && relative_base) {
 		error(_("unable to normalize alternate object path: %s"),
@@ -669,7 +669,7 @@ static void link_alt_odb_entries(struct repository *r, const char *alt,
 		alt = parse_alt_odb_entry(alt, sep, &entry);
 		if (!entry.len)
 			continue;
-		link_alt_odb_entry(r, entry.buf,
+		link_alt_odb_entry(r, &entry,
 				   relative_base, depth, objdirbuf.buf);
 	}
 	strbuf_release(&entry);
