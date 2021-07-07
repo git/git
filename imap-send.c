@@ -1266,18 +1266,6 @@ static void wrap_in_html(struct strbuf *msg)
 	*msg = buf;
 }
 
-#define CHUNKSIZE 0x1000
-
-static int read_message(FILE *f, struct strbuf *all_msgs)
-{
-	do {
-		if (strbuf_fread(all_msgs, CHUNKSIZE, f) <= 0)
-			break;
-	} while (!feof(f));
-
-	return ferror(f) ? -1 : 0;
-}
-
 static int count_messages(struct strbuf *all_msgs)
 {
 	int count = 0;
@@ -1582,8 +1570,8 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	/* read the messages */
-	if (read_message(stdin, &all_msgs)) {
-		fprintf(stderr, "error reading input\n");
+	if (strbuf_read(&all_msgs, 0, 0) < 0) {
+		error_errno(_("could not read from stdin"));
 		return 1;
 	}
 
