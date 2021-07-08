@@ -39,7 +39,9 @@ OPTIONS
 	full ref name (including prefix) will be printed. If 'auto' is
 	specified, then if the output is going to a terminal, the ref names
 	are shown as if 'short' were given, otherwise no ref names are
-	shown. The default option is 'short'.
+	shown. The option `--decorate` is short-hand for `--decorate=short`.
+	Default to configuration value of `log.decorate` if configured,
+	otherwise, `auto`.
 
 --decorate-refs=<pattern>::
 --decorate-refs-exclude=<pattern>::
