@@ -24,31 +24,31 @@ test_expect_success "proc-receive: multiple rewrite for one ref, no refname for 
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option old-oid <COMMIT-A>
-	remote: proc-receive> option new-oid <COMMIT-B>
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option refname refs/changes/24/124/1
-	remote: proc-receive> option old-oid <ZERO-OID>
-	remote: proc-receive> option new-oid <COMMIT-A>
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option refname refs/changes/25/125/1
-	remote: proc-receive> option old-oid <COMMIT-A>
-	remote: proc-receive> option new-oid <COMMIT-B>
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/24/124/1
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/changes/25/125/1
-	To <URL/of/upstream.git>
-	     HEAD:refs/for/main/topic    <OID-A>..<OID-B>
-	*    HEAD:refs/changes/24/124/1    [new reference]
-	     HEAD:refs/changes/25/125/1    <OID-A>..<OID-B>
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option old-oid <COMMIT-A>        Z
+	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option refname refs/changes/24/124/1        Z
+	> remote: proc-receive> option old-oid <ZERO-OID>        Z
+	> remote: proc-receive> option new-oid <COMMIT-A>        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option refname refs/changes/25/125/1        Z
+	> remote: proc-receive> option old-oid <COMMIT-A>        Z
+	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/24/124/1        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/changes/25/125/1        Z
+	> To <URL/of/upstream.git>
+	>  	HEAD:refs/for/main/topic	<COMMIT-A>..<COMMIT-B>
+	> *	HEAD:refs/changes/24/124/1	[new reference]
+	>  	HEAD:refs/changes/25/125/1	<COMMIT-A>..<COMMIT-B>
+	> Done
 	EOF
 	test_cmp expect actual &&
 
@@ -84,32 +84,32 @@ test_expect_success "proc-receive: multiple rewrites for one ref, no refname for
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option refname refs/changes/24/124/1
-	remote: proc-receive> option old-oid <ZERO-OID>
-	remote: proc-receive> option new-oid <COMMIT-A>
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option old-oid <COMMIT-A>
-	remote: proc-receive> option new-oid <COMMIT-B>
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option refname refs/changes/25/125/1
-	remote: proc-receive> option old-oid <COMMIT-B>
-	remote: proc-receive> option new-oid <COMMIT-A>
-	remote: proc-receive> option forced-update
-	remote: # post-receive hook
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/24/124/1
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic
-	remote: post-receive< <COMMIT-B> <COMMIT-A> refs/changes/25/125/1
-	To <URL/of/upstream.git>
-	*    HEAD:refs/changes/24/124/1    [new reference]
-	     HEAD:refs/for/main/topic    <OID-A>..<OID-B>
-	+    HEAD:refs/changes/25/125/1    <OID-B>...<OID-A> (forced update)
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option refname refs/changes/24/124/1        Z
+	> remote: proc-receive> option old-oid <ZERO-OID>        Z
+	> remote: proc-receive> option new-oid <COMMIT-A>        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option old-oid <COMMIT-A>        Z
+	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option refname refs/changes/25/125/1        Z
+	> remote: proc-receive> option old-oid <COMMIT-B>        Z
+	> remote: proc-receive> option new-oid <COMMIT-A>        Z
+	> remote: proc-receive> option forced-update        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/24/124/1        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
+	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/changes/25/125/1        Z
+	> To <URL/of/upstream.git>
+	> *	HEAD:refs/changes/24/124/1	[new reference]
+	>  	HEAD:refs/for/main/topic	<COMMIT-A>..<COMMIT-B>
+	> +	HEAD:refs/changes/25/125/1	<COMMIT-B>...<COMMIT-A> (forced update)
+	> Done
 	EOF
 	test_cmp expect actual &&
 
@@ -139,24 +139,24 @@ test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL/porc
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option refname refs/changes/23/123/1
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option refname refs/changes/24/124/2
-	remote: proc-receive> option old-oid <COMMIT-A>
-	remote: proc-receive> option new-oid <COMMIT-B>
-	remote: # post-receive hook
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/23/123/1
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/changes/24/124/2
-	To <URL/of/upstream.git>
-	*    HEAD:refs/changes/23/123/1    [new reference]
-	     HEAD:refs/changes/24/124/2    <OID-A>..<OID-B>
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option refname refs/changes/23/123/1        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option refname refs/changes/24/124/2        Z
+	> remote: proc-receive> option old-oid <COMMIT-A>        Z
+	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/23/123/1        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/changes/24/124/2        Z
+	> To <URL/of/upstream.git>
+	> *	HEAD:refs/changes/23/123/1	[new reference]
+	>  	HEAD:refs/changes/24/124/2	<COMMIT-A>..<COMMIT-B>
+	> Done
 	EOF
 	test_cmp expect actual &&
 

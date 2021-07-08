@@ -20,7 +20,7 @@ test_expect_success "proc-receive: bad protocol (unknown version, $PROTOCOL/porc
 		<actual >actual-report &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
-	!    HEAD:refs/for/main/topic    [remote rejected] (fail to run proc-receive hook)
+	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
 	test_cmp expect actual-report &&
@@ -29,8 +29,8 @@ test_expect_success "proc-receive: bad protocol (unknown version, $PROTOCOL/porc
 	# message ("remote: fatal: the remote end hung up unexpectedly") which
 	# is different from the remote HTTP server with different locale settings.
 	grep "^remote: error:" <actual >actual-error &&
-	cat >expect <<-EOF &&
-	remote: error: proc-receive version "2" is not supported
+	format_and_save_expect <<-EOF &&
+	> remote: error: proc-receive version "2" is not supported        Z
 	EOF
 	test_cmp expect actual-error &&
 
@@ -58,7 +58,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-version, $PROTO
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
-	!    HEAD:refs/for/main/topic    [remote rejected] (fail to run proc-receive hook)
+	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
 	test_cmp expect actual &&
@@ -89,7 +89,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-write-version, $PROT
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
-	!    HEAD:refs/for/main/topic    [remote rejected] (fail to run proc-receive hook)
+	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
 	test_cmp expect actual &&
@@ -120,7 +120,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-commands, $PROT
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
-	!    HEAD:refs/for/main/topic    [remote rejected] (fail to run proc-receive hook)
+	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
 	test_cmp expect actual &&
@@ -152,7 +152,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-push-options, $
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
-	!    HEAD:refs/for/main/topic    [remote rejected] (fail to run proc-receive hook)
+	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
 	test_cmp expect actual &&
@@ -182,7 +182,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-write-report, $PROTO
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
-	!    HEAD:refs/for/main/topic    [remote rejected] (fail to run proc-receive hook)
+	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
 	test_cmp expect actual &&
@@ -208,18 +208,18 @@ test_expect_success "proc-receive: bad protocol (no report, $PROTOCOL/porcelain)
 		HEAD:refs/heads/next \
 		HEAD:refs/for/main/topic >out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: # post-receive hook
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
-	To <URL/of/upstream.git>
-	*    HEAD:refs/heads/next    [new branch]
-	!    HEAD:refs/for/main/topic    [remote rejected] (proc-receive failed to report status)
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
+	> To <URL/of/upstream.git>
+	> *	HEAD:refs/heads/next	[new branch]
+	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
+	> Done
 	EOF
 	test_cmp expect actual &&
 
@@ -251,16 +251,16 @@ test_expect_success "proc-receive: bad protocol (no ref, $PROTOCOL/porcelain)" '
 		HEAD:refs/for/main/topic\
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: proc-receive> ok
-	remote: error: proc-receive reported incomplete status line: "ok"
-	To <URL/of/upstream.git>
-	!    HEAD:refs/for/main/topic    [remote rejected] (proc-receive failed to report status)
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive> ok        Z
+	> remote: error: proc-receive reported incomplete status line: "ok"        Z
+	> To <URL/of/upstream.git>
+	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
+	> Done
 	EOF
 	test_cmp expect actual &&
 
@@ -285,16 +285,16 @@ test_expect_success "proc-receive: bad protocol (unknown status, $PROTOCOL/porce
 			HEAD:refs/for/main/topic \
 			>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: proc-receive> xx refs/for/main/topic
-	remote: error: proc-receive reported bad status "xx" on ref "refs/for/main/topic"
-	To <URL/of/upstream.git>
-	!    HEAD:refs/for/main/topic    [remote rejected] (proc-receive failed to report status)
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive> xx refs/for/main/topic        Z
+	> remote: error: proc-receive reported bad status "xx" on ref "refs/for/main/topic"        Z
+	> To <URL/of/upstream.git>
+	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
+	> Done
 	EOF
 	test_cmp expect actual &&
 
