@@ -675,7 +675,7 @@ static int run_file_diff(int prompt, const char *prefix,
 		"GIT_PAGER=", "GIT_EXTERNAL_DIFF=git-difftool--helper", NULL,
 		NULL
 	};
-	int ret = 0, i;
+	int i;
 
 	if (prompt > 0)
 		env[2] = "GIT_DIFFTOOL_PROMPT=true";
@@ -686,8 +686,7 @@ static int run_file_diff(int prompt, const char *prefix,
 	strvec_push(&args, "diff");
 	for (i = 0; i < argc; i++)
 		strvec_push(&args, argv[i]);
-	ret = run_command_v_opt_cd_env(args.v, RUN_GIT_CMD, prefix, env);
-	exit(ret);
+	return run_command_v_opt_cd_env(args.v, RUN_GIT_CMD, prefix, env);
 }
 
 int cmd_difftool(int argc, const char **argv, const char *prefix)
