@@ -268,7 +268,7 @@ test_expect_success 'diff with renames' '
 	for branch in rename-out-to-out rename-out-to-in rename-in-to-out
 	do
 		test_all_match git checkout rename-base &&
-		test_all_match git checkout $branch -- .&&
+		test_all_match git checkout $branch -- . &&
 		test_all_match git diff --staged --no-renames &&
 		test_all_match git diff --staged --find-renames || return 1
 	done

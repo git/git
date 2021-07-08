@@ -770,7 +770,7 @@ test_expect_success 'difftool --rotate-to' '
 	echo 4 >4 &&
 	git add 1 2 4 &&
 	git commit -a -m "124" &&
-	git difftool --no-prompt --extcmd=cat --rotate-to="2" HEAD^ >output&&
+	git difftool --no-prompt --extcmd=cat --rotate-to="2" HEAD^ >output &&
 	cat >expect <<-\EOF &&
 	2
 	4
