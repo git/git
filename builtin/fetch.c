@@ -1990,6 +1990,9 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		fetch_config_from_gitmodules(sfjc, rs);
 	}
 
+	if (negotiate_only && !negotiation_tip.nr)
+		die(_("--negotiate-only needs one or more --negotiate-tip=*"));
+
 	if (deepen_relative) {
 		if (deepen_relative < 0)
 			die(_("Negative depth in --deepen is not supported"));
