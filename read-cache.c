@@ -2233,7 +2233,8 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	mmap = xmmap_gently(NULL, mmap_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (mmap == MAP_FAILED)
-		die_errno(_("%s: unable to map index file"), path);
+		die_errno(_("%s: unable to map index file%s"), path,
+			mmap_os_err());
 	close(fd);
 
 	hdr = (const struct cache_header *)mmap;
