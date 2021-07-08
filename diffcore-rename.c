@@ -54,7 +54,7 @@ static void register_rename_src(struct diff_filepair *p)
 	if (p->broken_pair) {
 		if (!break_idx) {
 			break_idx = xmalloc(sizeof(*break_idx));
-			strintmap_init(break_idx, -1);
+			strintmap_init_with_options(break_idx, -1, NULL, 0);
 		}
 		strintmap_set(break_idx, p->one->path, rename_dst_nr);
 	}
@@ -1543,7 +1543,7 @@ void diffcore_rename_extended(struct diff_options *options,
 			/* all the usual ones need to be kept */
 			diff_q(&outq, p);
 		else
-			/* no need to keep unmodified pairs; FIXME: remove earlier? */
+			/* no need to keep unmodified pairs */
 			pair_to_free = p;
 
 		if (pair_to_free)
