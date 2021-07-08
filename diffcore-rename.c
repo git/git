@@ -87,13 +87,13 @@ struct diff_score {
 	short name_score;
 };
 
-struct prefetch_options {
+struct inexact_prefetch_options {
 	struct repository *repo;
 	int skip_unmodified;
 };
-static void prefetch(void *prefetch_options)
+static void inexact_prefetch(void *prefetch_options)
 {
-	struct prefetch_options *options = prefetch_options;
+	struct inexact_prefetch_options *options = prefetch_options;
 	int i;
 	struct oid_array to_fetch = OID_ARRAY_INIT;
 
@@ -126,7 +126,7 @@ static int estimate_similarity(struct repository *r,
 			       struct diff_filespec *src,
 			       struct diff_filespec *dst,
 			       int minimum_score,
-			       int skip_unmodified)
+			       struct diff_populate_filespec_options *dpf_opt)
 {
 	/* src points at a file that existed in the original tree (or
 	 * optionally a file in the destination tree) and dst points
@@ -143,15 +143,6 @@ static int estimate_similarity(struct repository *r,
 	 */
 	unsigned long max_size, delta_size, base_size, src_copied, literal_added;
 	int score;
-	struct diff_populate_filespec_options dpf_options = {
-		.check_size_only = 1
-	};
-	struct prefetch_options prefetch_options = {r, skip_unmodified};
-
-	if (r == the_repository && has_promisor_remote()) {
-		dpf_options.missing_object_cb = prefetch;
-		dpf_options.missing_object_data = &prefetch_options;
-	}
 
 	/* We deal only with regular files.  Symlink renames are handled
 	 * only when they are exact matches --- in other words, no edits
@@ -169,11 +160,13 @@ static int estimate_similarity(struct repository *r,
 	 * is a possible size - we really should have a flag to
 	 * say whether the size is valid or not!)
 	 */
+	dpf_opt->check_size_only = 1;
+
 	if (!src->cnt_data &&
-	    diff_populate_filespec(r, src, &dpf_options))
+	    diff_populate_filespec(r, src, dpf_opt))
 		return 0;
 	if (!dst->cnt_data &&
-	    diff_populate_filespec(r, dst, &dpf_options))
+	    diff_populate_filespec(r, dst, dpf_opt))
 		return 0;
 
 	max_size = ((src->size > dst->size) ? src->size : dst->size);
@@ -191,11 +184,11 @@ static int estimate_similarity(struct repository *r,
 	if (max_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
-	dpf_options.check_size_only = 0;
+	dpf_opt->check_size_only = 0;
 
-	if (!src->cnt_data && diff_populate_filespec(r, src, &dpf_options))
+	if (!src->cnt_data && diff_populate_filespec(r, src, dpf_opt))
 		return 0;
-	if (!dst->cnt_data && diff_populate_filespec(r, dst, &dpf_options))
+	if (!dst->cnt_data && diff_populate_filespec(r, dst, dpf_opt))
 		return 0;
 
 	if (diffcore_count_changes(r, src, dst,
@@ -823,6 +816,78 @@ static int idx_possible_rename(char *filename, struct dir_rename_info *info)
 	return idx;
 }
 
+struct basename_prefetch_options {
+	struct repository *repo;
+	struct strintmap *relevant_sources;
+	struct strintmap *sources;
+	struct strintmap *dests;
+	struct dir_rename_info *info;
+};
+static void basename_prefetch(void *prefetch_options)
+{
+	struct basename_prefetch_options *options = prefetch_options;
+	struct strintmap *relevant_sources = options->relevant_sources;
+	struct strintmap *sources = options->sources;
+	struct strintmap *dests = options->dests;
+	struct dir_rename_info *info = options->info;
+	int i;
+	struct oid_array to_fetch = OID_ARRAY_INIT;
+
+	/*
+	 * TODO: The following loops mirror the code/logic from
+	 * find_basename_matches(), though not quite exactly.  Maybe
+	 * abstract the iteration logic out somehow?
+	 */
+	for (i = 0; i < rename_src_nr; ++i) {
+		char *filename = rename_src[i].p->one->path;
+		const char *base = NULL;
+		intptr_t src_index;
+		intptr_t dst_index;
+
+		/* Skip irrelevant sources */
+		if (relevant_sources &&
+		    !strintmap_contains(relevant_sources, filename))
+			continue;
+
+		/*
+		 * If the basename is unique among remaining sources, then
+		 * src_index will equal 'i' and we can attempt to match it
+		 * to a unique basename in the destinations.  Otherwise,
+		 * use directory rename heuristics, if possible.
+		 */
+		base = get_basename(filename);
+		src_index = strintmap_get(sources, base);
+		assert(src_index == -1 || src_index == i);
+
+		if (strintmap_contains(dests, base)) {
+			struct diff_filespec *one, *two;
+
+			/* Find a matching destination, if possible */
+			dst_index = strintmap_get(dests, base);
+			if (src_index == -1 || dst_index == -1) {
+				src_index = i;
+				dst_index = idx_possible_rename(filename, info);
+			}
+			if (dst_index == -1)
+				continue;
+
+			/* Ignore this dest if already used in a rename */
+			if (rename_dst[dst_index].is_rename)
+				continue; /* already used previously */
+
+			one = rename_src[src_index].p->one;
+			two = rename_dst[dst_index].p->two;
+
+			/* Add the pairs */
+			diff_add_if_missing(options->repo, &to_fetch, two);
+			diff_add_if_missing(options->repo, &to_fetch, one);
+		}
+	}
+
+	promisor_remote_get_direct(options->repo, to_fetch.oid, to_fetch.nr);
+	oid_array_clear(&to_fetch);
+}
+
 static int find_basename_matches(struct diff_options *options,
 				 int minimum_score,
 				 struct dir_rename_info *info,
@@ -862,18 +927,18 @@ static int find_basename_matches(struct diff_options *options,
 	int i, renames = 0;
 	struct strintmap sources;
 	struct strintmap dests;
-
-	/*
-	 * The prefeteching stuff wants to know if it can skip prefetching
-	 * blobs that are unmodified...and will then do a little extra work
-	 * to verify that the oids are indeed different before prefetching.
-	 * Unmodified blobs are only relevant when doing copy detection;
-	 * when limiting to rename detection, diffcore_rename[_extended]()
-	 * will never be called with unmodified source paths fed to us, so
-	 * the extra work necessary to check if rename_src entries are
-	 * unmodified would be a small waste.
-	 */
-	int skip_unmodified = 0;
+	struct diff_populate_filespec_options dpf_options = {
+		.check_binary = 0,
+		.missing_object_cb = NULL,
+		.missing_object_data = NULL
+	};
+	struct basename_prefetch_options prefetch_options = {
+		.repo = options->repo,
+		.relevant_sources = relevant_sources,
+		.sources = &sources,
+		.dests = &dests,
+		.info = info
+	};
 
 	/*
 	 * Create maps of basename -> fullname(s) for remaining sources and
@@ -908,6 +973,11 @@ static int find_basename_matches(struct diff_options *options,
 			strintmap_set(&dests, base, -1);
 		else
 			strintmap_set(&dests, base, i);
+	}
+
+	if (options->repo == the_repository && has_promisor_remote()) {
+		dpf_options.missing_object_cb = basename_prefetch;
+		dpf_options.missing_object_data = &prefetch_options;
 	}
 
 	/* Now look for basename matchups and do similarity estimation */
@@ -953,7 +1023,7 @@ static int find_basename_matches(struct diff_options *options,
 			one = rename_src[src_index].p->one;
 			two = rename_dst[dst_index].p->two;
 			score = estimate_similarity(options->repo, one, two,
-						    minimum_score, skip_unmodified);
+						    minimum_score, &dpf_options);
 
 			/* If sufficiently similar, record as rename pair */
 			if (score < minimum_score)
@@ -1272,6 +1342,14 @@ void diffcore_rename_extended(struct diff_options *options,
 	int num_sources, want_copies;
 	struct progress *progress = NULL;
 	struct dir_rename_info info;
+	struct diff_populate_filespec_options dpf_options = {
+		.check_binary = 0,
+		.missing_object_cb = NULL,
+		.missing_object_data = NULL
+	};
+	struct inexact_prefetch_options prefetch_options = {
+		.repo = options->repo
+	};
 
 	trace2_region_enter("diff", "setup", options->repo);
 	info.setup = 0;
@@ -1433,6 +1511,13 @@ void diffcore_rename_extended(struct diff_options *options,
 				(uint64_t)num_destinations * (uint64_t)num_sources);
 	}
 
+	/* Finish setting up dpf_options */
+	prefetch_options.skip_unmodified = skip_unmodified;
+	if (options->repo == the_repository && has_promisor_remote()) {
+		dpf_options.missing_object_cb = inexact_prefetch;
+		dpf_options.missing_object_data = &prefetch_options;
+	}
+
 	CALLOC_ARRAY(mx, st_mult(NUM_CANDIDATE_PER_DST, num_destinations));
 	for (dst_cnt = i = 0; i < rename_dst_nr; i++) {
 		struct diff_filespec *two = rename_dst[i].p->two;
@@ -1458,7 +1543,7 @@ void diffcore_rename_extended(struct diff_options *options,
 			this_src.score = estimate_similarity(options->repo,
 							     one, two,
 							     minimum_score,
-							     skip_unmodified);
+							     &dpf_options);
 			this_src.name_score = basename_same(one, two);
 			this_src.dst = i;
 			this_src.src = j;
