@@ -387,7 +387,7 @@ These annotations are:
 ------------
 $ git worktree list
 /path/to/linked-worktree    abcd1234 [master]
-/path/to/locked-worktreee   acbd5678 (brancha) locked
+/path/to/locked-worktree    acbd5678 (brancha) locked
 /path/to/prunable-worktree  5678abc  (detached HEAD) prunable
 ------------
 
