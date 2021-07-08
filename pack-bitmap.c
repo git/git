@@ -525,6 +525,22 @@ static int should_include(struct commit *commit, void *_data)
 	return 1;
 }
 
+static int should_include_obj(struct object *obj, void *_data)
+{
+	struct include_data *data = _data;
+	int bitmap_pos;
+
+	bitmap_pos = bitmap_position(data->bitmap_git, &obj->oid);
+	if (bitmap_pos < 0)
+		return 1;
+	if ((data->seen && bitmap_get(data->seen, bitmap_pos)) ||
+	     bitmap_get(data->base, bitmap_pos)) {
+		obj->flags |= SEEN;
+		return 0;
+	}
+	return 1;
+}
+
 static int add_commit_to_bitmap(struct bitmap_index *bitmap_git,
 				struct bitmap **base,
 				struct commit *commit)
@@ -620,6 +636,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		incdata.seen = seen;
 
 		revs->include_check = should_include;
+		revs->include_check_obj = should_include_obj;
 		revs->include_check_data = &incdata;
 
 		if (prepare_revision_walk(revs))
@@ -633,6 +650,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 					      &show_data, NULL);
 
 		revs->include_check = NULL;
+		revs->include_check_obj = NULL;
 		revs->include_check_data = NULL;
 	}
 
