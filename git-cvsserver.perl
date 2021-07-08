@@ -2149,7 +2149,7 @@ sub req_diff
                    ( $meta2->{revision} or "workingcopy" ));
 
         # TODO: Use --label instead of -L because -L is no longer
-        #  documented and may go away someday.  Not sure if there there are
+        #  documented and may go away someday.  Not sure if there are
         #  versions that only support -L, which would make this change risky?
         #  http://osdir.com/ml/bug-gnu-utils-gnu/2010-12/msg00060.html
         #    ("man diff" should actually document the best migration strategy,

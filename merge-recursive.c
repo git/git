@@ -2152,7 +2152,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
  *      implicit renaming of files that should be left in place.  (See
  *      testcase 6b in t6043 for details.)
  *   2. Prune directory renames if there are still files left in the
- *      the original directory.  These represent a partial directory rename,
+ *      original directory.  These represent a partial directory rename,
  *      i.e. a rename where only some of the files within the directory
  *      were renamed elsewhere.  (Technically, this could be done earlier
  *      in get_directory_renames(), except that would prevent us from

@@ -1968,8 +1968,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	} else if (rev.diffopt.close_file) {
 		/*
 		 * The diff code parsed --output; it has already opened the
-		 * file, but but we must instruct it not to close after each
-		 * diff.
+		 * file, but we must instruct it not to close after each diff.
 		 */
 		rev.diffopt.no_free = 1;
 	} else {

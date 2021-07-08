@@ -685,7 +685,7 @@ static struct attr_stack *read_attr_from_array(const char **list)
  * Callers into the attribute system assume there is a single, system-wide
  * global state where attributes are read from and when the state is flipped by
  * calling git_attr_set_direction(), the stack frames that have been
- * constructed need to be discarded so so that subsequent calls into the
+ * constructed need to be discarded so that subsequent calls into the
  * attribute system will lazily read from the right place.  Since changing
  * direction causes a global paradigm shift, it should not ever be called while
  * another thread could potentially be calling into the attribute system.
