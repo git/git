@@ -885,6 +885,11 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 static void clear_midx_files_ext(struct repository *r, const char *ext,
 				 unsigned char *keep_hash);
 
+static int midx_checksum_valid(struct multi_pack_index *m)
+{
+	return hashfile_checksum_valid(m->data, m->data_len);
+}
+
 static int write_midx_internal(const char *object_dir, struct multi_pack_index *m,
 			       struct string_list *packs_to_drop,
 			       const char *preferred_pack_name,
@@ -910,6 +915,11 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 		ctx.m = m;
 	else
 		ctx.m = load_multi_pack_index(object_dir, 1);
+
+	if (ctx.m && !midx_checksum_valid(ctx.m)) {
+		warning(_("ignoring existing multi-pack-index; checksum mismatch"));
+		ctx.m = NULL;
+	}
 
 	ctx.nr = 0;
 	ctx.alloc = ctx.m ? ctx.m->num_packs : 16;
@@ -1217,6 +1227,9 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 		free(filename);
 		return result;
 	}
+
+	if (!midx_checksum_valid(m))
+		midx_report(_("incorrect checksum"));
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(_("Looking for referenced packfiles"),
