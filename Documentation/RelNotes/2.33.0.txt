@@ -28,6 +28,8 @@ UI, Workflows & Features
    if any, of diff is desired did not have any visible effect; it now
    implies some form of diff (by default "--patch") is produced.
 
+ * The userdiff pattern for C# learned the token "record".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -68,6 +70,64 @@ Fixes since v2.32
    the other side.
    (merge ae1a7eefff jk/fetch-pack-v2-half-close-early later to maint).
 
+ * The command line completion (in contrib/) learned that "git diff"
+   takes the "--anchored" option.
+   (merge d1e7c2cac9 tb/complete-diff-anchored later to maint).
+
+ * "git-svn" tests assumed that "locale -a", which is used to pick an
+   available UTF-8 locale, is available everywhere.  A knob has been
+   introduced to allow testers to specify a suitable locale to use.
+   (merge 482c962de4 dd/svn-test-wo-locale-a later to maint).
+
+ * Update "git subtree" to work better on Windows.
+   (merge 77f37de39f js/subtree-on-windows-fix later to maint).
+
+ * Remove multimail from contrib/
+   (merge f74d11471f js/no-more-multimail later to maint).
+
+ * Make the codebase MSAN clean.
+   (merge 4dbc55e87d ah/uninitialized-reads-fix later to maint).
+
+ * Work around inefficient glob substitution in older versions of bash
+   by rewriting parts of a test.
+   (merge eb87c6f559 jx/t6020-with-older-bash later to maint).
+
+ * Avoid duplicated work while building reachability bitmaps.
+   (merge aa9ad6fee5 jk/bitmap-tree-optim later to maint).
+
+ * We broke "GIT_SKIP_TESTS=t?000" to skip certain tests in recent
+   update, which got fixed.
+
+ * The side-band demultiplexer that is used to display progress output
+   from the remote end did not clear the line properly when the end of
+   line hits at a packet boundary, which has been corrected.
+
+ * Some test scripts assumed that readlink(1) was universally
+   installed and available, which is not the case.
+   (merge 7c0afdf23c jk/test-without-readlink-1 later to maint).
+
+ * Recent update to completion script (in contrib/) broke those who
+   use the __git_complete helper to define completion to their custom
+   command.
+   (merge cea232194d fw/complete-cmd-idx-fix later to maint).
+
+ * Output from some of our tests were affected by the width of the
+   terminal that they were run in, which has been corrected by
+   exporting a fixed value in the COLUMNS environment.
+   (merge c49a177bec ab/fix-columns-to-80-during-tests later to maint).
+
+ * On Windows, mergetool has been taught to find kdiff3.exe just like
+   it finds winmerge.exe.
+   (merge 47eb4c6890 ms/mergetools-kdiff3-on-windows later to maint).
+
+ * When we cannot figure out how wide the terminal is, we use a
+   fallback value of 80 ourselves (which cannot be avoided), but when
+   we run the pager, we export it in COLUMNS, which forces the pager
+   to use the hardcoded value, even when the pager is perfectly
+   capable to figure it out itself.  Stop exporting COLUMNS when we
+   fall back on the hardcoded default value for our own use.
+   (merge 9b6e2c8b98 js/stop-exporting-bogus-columns later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bfe35a6165 ah/doc-describe later to maint).
    (merge f302c1e4aa jc/clarify-revision-range later to maint).
@@ -76,3 +136,20 @@ Fixes since v2.32
    (merge 4e0a64a713 ab/trace2-squelch-gcc-warning later to maint).
    (merge 225f7fa847 ps/rev-list-object-type-filter later to maint).
    (merge 5317dfeaed dd/honor-users-tar-in-tests later to maint).
+   (merge ace6d8e3d6 tk/partial-clone-repack-doc later to maint).
+   (merge 7ba68e0cf1 js/trace2-discard-event-docfix later to maint).
+   (merge 8603c419d3 fc/doc-default-to-upstream-config later to maint).
+   (merge 1d72b604ef jk/revision-squelch-gcc-warning later to maint).
+   (merge abcb66c614 ar/typofix later to maint).
+   (merge 9853830787 ah/graph-typofix later to maint).
+   (merge aac578492d ab/config-hooks-path-testfix later to maint).
+   (merge 98c7656a18 ar/more-typofix later to maint).
+   (merge 6fb9195f6c jk/doc-max-pack-size later to maint).
+   (merge 4184cbd635 ar/mailinfo-memcmp-to-skip-prefix later to maint).
+   (merge 91d2347033 ar/doc-libera-chat-in-my-first-contrib later to maint).
+   (merge 338abb0f04 ab/cmd-foo-should-return later to maint).
+   (merge 546096a5cb ab/xdiff-bug-cleanup later to maint).
+   (merge b7b793d1e7 ab/progress-cleanup later to maint).
+   (merge d94f9b8e90 ba/object-info later to maint).
+   (merge 52ff891c03 ar/test-code-cleanup later to maint).
+   (merge a0538e5c8b dd/document-log-decorate-default later to maint).
