@@ -5024,6 +5024,181 @@ test_expect_failure '12h: renaming a file within a renamed directory' '
 	)
 '
 
+# Testcase 12i, Directory rename causes rename-to-self
+#   Commit O: source/{subdir/foo, bar, baz_1}
+#   Commit A: source/{foo, bar, baz_1}
+#   Commit B: source/{subdir/{foo, bar}, baz_2}
+#   Expected: source/{foo, bar, baz_2}, with conflicts on
+#                source/bar vs. source/subdir/bar
+
+test_setup_12i () {
+	test_create_repo 12i &&
+	(
+		cd 12i &&
+
+		mkdir -p source/subdir &&
+		echo foo >source/subdir/foo &&
+		echo bar >source/bar &&
+		echo baz >source/baz &&
+		git add source &&
+		git commit -m orig &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git mv source/subdir/foo source/foo &&
+		git commit -m A &&
+
+		git switch B &&
+		git mv source/bar source/subdir/bar &&
+		echo more baz >>source/baz &&
+		git commit -m B
+	)
+}
+
+test_expect_success '12i: Directory rename causes rename-to-self' '
+	test_setup_12i &&
+	(
+		cd 12i &&
+
+		git checkout A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+
+		test_path_is_missing source/subdir &&
+		test_path_is_file source/bar &&
+		test_path_is_file source/baz &&
+
+		git ls-files | uniq >tracked &&
+		test_line_count = 3 tracked &&
+
+		git status --porcelain -uno >actual &&
+		cat >expect <<-\EOF &&
+		UU source/bar
+		 M source/baz
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# Testcase 12j, Directory rename to root causes rename-to-self
+#   Commit O: {subdir/foo, bar, baz_1}
+#   Commit A: {foo, bar, baz_1}
+#   Commit B: {subdir/{foo, bar}, baz_2}
+#   Expected: {foo, bar, baz_2}, with conflicts on bar vs. subdir/bar
+
+test_setup_12j () {
+	test_create_repo 12j &&
+	(
+		cd 12j &&
+
+		mkdir -p subdir &&
+		echo foo >subdir/foo &&
+		echo bar >bar &&
+		echo baz >baz &&
+		git add . &&
+		git commit -m orig &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git mv subdir/foo foo &&
+		git commit -m A &&
+
+		git switch B &&
+		git mv bar subdir/bar &&
+		echo more baz >>baz &&
+		git commit -m B
+	)
+}
+
+test_expect_success '12j: Directory rename to root causes rename-to-self' '
+	test_setup_12j &&
+	(
+		cd 12j &&
+
+		git checkout A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+
+		test_path_is_missing subdir &&
+		test_path_is_file bar &&
+		test_path_is_file baz &&
+
+		git ls-files | uniq >tracked &&
+		test_line_count = 3 tracked &&
+
+		git status --porcelain -uno >actual &&
+		cat >expect <<-\EOF &&
+		UU bar
+		 M baz
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# Testcase 12k, Directory rename with sibling causes rename-to-self
+#   Commit O: dirB/foo, dirA/{bar, baz_1}
+#   Commit A: dirA/{foo, bar, baz_1}
+#   Commit B: dirB/{foo, bar}, dirA/baz_2
+#   Expected: dirA/{foo, bar, baz_2}, with conflicts on dirA/bar vs. dirB/bar
+
+test_setup_12k () {
+	test_create_repo 12k &&
+	(
+		cd 12k &&
+
+		mkdir dirA dirB &&
+		echo foo >dirB/foo &&
+		echo bar >dirA/bar &&
+		echo baz >dirA/baz &&
+		git add . &&
+		git commit -m orig &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git mv dirB/* dirA/ &&
+		git commit -m A &&
+
+		git switch B &&
+		git mv dirA/bar dirB/bar &&
+		echo more baz >>dirA/baz &&
+		git commit -m B
+	)
+}
+
+test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
+	test_setup_12k &&
+	(
+		cd 12k &&
+
+		git checkout A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+
+		test_path_is_missing dirB &&
+		test_path_is_file dirA/bar &&
+		test_path_is_file dirA/baz &&
+
+		git ls-files | uniq >tracked &&
+		test_line_count = 3 tracked &&
+
+		git status --porcelain -uno >actual &&
+		cat >expect <<-\EOF &&
+		UU dirA/bar
+		 M dirA/baz
+		EOF
+		test_cmp expect actual
+	)
+'
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #

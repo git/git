@@ -3270,7 +3270,7 @@ static void process_entry(struct merge_options *opt,
 	 *       above.
 	 */
 	if (ci->match_mask) {
-		ci->merged.clean = 1;
+		ci->merged.clean = !ci->df_conflict && !ci->path_conflict;
 		if (ci->match_mask == 6) {
 			/* stages[1] == stages[2] */
 			ci->merged.result.mode = ci->stages[1].mode;
@@ -3282,6 +3282,8 @@ static void process_entry(struct merge_options *opt,
 
 			ci->merged.result.mode = ci->stages[side].mode;
 			ci->merged.is_null = !ci->merged.result.mode;
+			if (ci->merged.is_null)
+				ci->merged.clean = 1;
 			oidcpy(&ci->merged.result.oid, &ci->stages[side].oid);
 
 			assert(othermask == 2 || othermask == 4);
@@ -3454,6 +3456,7 @@ static void process_entry(struct merge_options *opt,
 				   path)) {
 			ci->merged.is_null = 1;
 			ci->merged.clean = 1;
+			assert(!ci->df_conflict && !ci->path_conflict);
 		} else if (ci->path_conflict &&
 			   oideq(&ci->stages[0].oid, &ci->stages[side].oid)) {
 			/*
@@ -3480,6 +3483,7 @@ static void process_entry(struct merge_options *opt,
 		ci->merged.is_null = 1;
 		ci->merged.result.mode = 0;
 		oidcpy(&ci->merged.result.oid, null_oid());
+		assert(!ci->df_conflict);
 		ci->merged.clean = !ci->path_conflict;
 	}
 
