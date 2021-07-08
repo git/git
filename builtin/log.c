@@ -245,6 +245,9 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			rev->abbrev_commit = 0;
 	}
 
+	if (rev->commit_format == CMIT_FMT_USERFORMAT && !w.decorate)
+		decoration_style = 0;
+
 	if (decoration_style) {
 		const struct string_list *config_exclude =
 			repo_config_get_value_multi(the_repository,

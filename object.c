@@ -185,6 +185,24 @@ struct object *lookup_unknown_object(struct repository *r, const struct object_i
 	return obj;
 }
 
+struct object *lookup_object_by_type(struct repository *r,
+			    const struct object_id *oid,
+			    enum object_type type)
+{
+	switch (type) {
+	case OBJ_COMMIT:
+		return (struct object *)lookup_commit(r, oid);
+	case OBJ_TREE:
+		return (struct object *)lookup_tree(r, oid);
+	case OBJ_TAG:
+		return (struct object *)lookup_tag(r, oid);
+	case OBJ_BLOB:
+		return (struct object *)lookup_blob(r, oid);
+	default:
+		die("BUG: unknown object type %d", type);
+	}
+}
+
 struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
 {
 	struct object *obj;
