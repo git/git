@@ -732,14 +732,24 @@ match_pattern_list () {
 	arg="$1"
 	shift
 	test -z "$*" && return 1
-	for pattern_
-	do
-		case "$arg" in
-		$pattern_)
-			return 0
-		esac
-	done
-	return 1
+	# We need to use "$*" to get field-splitting, but we want to
+	# disable globbing, since we are matching against an arbitrary
+	# $arg, not what's in the filesystem. Using "set -f" accomplishes
+	# that, but we must do it in a subshell to avoid impacting the
+	# rest of the script. The exit value of the subshell becomes
+	# the function's return value.
+	(
+		set -f
+		for pattern_ in $*
+		do
+			case "$arg" in
+			$pattern_)
+				exit 0
+				;;
+			esac
+		done
+		exit 1
+	)
 }
 
 match_test_selector_list () {
@@ -848,7 +858,7 @@ maybe_teardown_verbose () {
 last_verbose=t
 maybe_setup_verbose () {
 	test -z "$verbose_only" && return
-	if match_pattern_list $test_count $verbose_only
+	if match_pattern_list $test_count "$verbose_only"
 	then
 		exec 4>&2 3>&1
 		# Emit a delimiting blank line when going from
@@ -878,7 +888,7 @@ maybe_setup_valgrind () {
 		return
 	fi
 	GIT_VALGRIND_ENABLED=
-	if match_pattern_list $test_count $valgrind_only
+	if match_pattern_list $test_count "$valgrind_only"
 	then
 		GIT_VALGRIND_ENABLED=t
 	fi
@@ -1006,7 +1016,7 @@ test_finish_ () {
 test_skip () {
 	to_skip=
 	skipped_reason=
-	if match_pattern_list $this_test.$test_count $GIT_SKIP_TESTS
+	if match_pattern_list $this_test.$test_count "$GIT_SKIP_TESTS"
 	then
 		to_skip=t
 		skipped_reason="GIT_SKIP_TESTS"
@@ -1346,7 +1356,7 @@ fi
 remove_trash=
 this_test=${0##*/}
 this_test=${this_test%%-*}
-if match_pattern_list "$this_test" $GIT_SKIP_TESTS
+if match_pattern_list "$this_test" "$GIT_SKIP_TESTS"
 then
 	say_color info >&3 "skipping test $this_test altogether"
 	skip_all="skip all tests in $this_test"
