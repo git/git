@@ -1729,6 +1729,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--indent-heuristic --no-indent-heuristic
 			--textconv --no-textconv
 			--patch --no-patch
+			--anchored=
 "
 
 __git_diff_difftool_options="--cached --staged --pickaxe-all --pickaxe-regex
