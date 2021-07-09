@@ -82,13 +82,13 @@ test_expect_success 'modify/delete + directory/file conflict' '
 	git checkout delete^0 &&
 	test_must_fail git merge modify &&
 
-	test 5 -eq $(git ls-files -s | wc -l) &&
-	test 4 -eq $(git ls-files -u | wc -l) &&
+	test_stdout_line_count = 5 git ls-files -s &&
+	test_stdout_line_count = 4 git ls-files -u &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test 0 -eq $(git ls-files -o | wc -l)
+		test_stdout_line_count = 0 git ls-files -o
 	else
-		test 1 -eq $(git ls-files -o | wc -l)
+		test_stdout_line_count = 1 git ls-files -o
 	fi &&
 
 	test_path_is_file letters/file &&
@@ -103,13 +103,13 @@ test_expect_success 'modify/delete + directory/file conflict; other way' '
 
 	test_must_fail git merge delete &&
 
-	test 5 -eq $(git ls-files -s | wc -l) &&
-	test 4 -eq $(git ls-files -u | wc -l) &&
+	test_stdout_line_count = 5 git ls-files -s &&
+	test_stdout_line_count = 4 git ls-files -u &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test 0 -eq $(git ls-files -o | wc -l)
+		test_stdout_line_count = 0 git ls-files -o
 	else
-		test 1 -eq $(git ls-files -o | wc -l)
+		test_stdout_line_count = 1 git ls-files -o
 	fi &&
 
 	test_path_is_file letters/file &&
