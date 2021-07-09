@@ -373,9 +373,8 @@ If you like, you can put extra tags at the end:
 . `Acked-by:` says that the person who is more familiar with the area
   the patch attempts to modify liked the patch.
 . `Reviewed-by:`, unlike the other tags, can only be offered by the
-  reviewer and means that she is completely satisfied that the patch
-  is ready for application.  It is usually offered only after a
-  detailed review.
+  reviewers themselves when they are completely satisfied with the
+  patch after a detailed analysis.
 . `Tested-by:` is used to indicate that the person applied the patch
   and found it to have the desired effect.
 
