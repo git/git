@@ -119,6 +119,25 @@ test_expect_success 'pack-object <stdin parsing: [|--revs] with --stdin' '
 	test_cmp err.expect err.actual
 '
 
+test_expect_success 'pack-object <stdin parsing: --stdin-packs handles garbage' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
+
+	# That we get "two" and not "one" has to do with OID
+	# ordering. It happens to be the same here under SHA-1 and
+	# SHA-256. See commentary in pack-objects.c
+	cat >err.expect <<-EOF &&
+	fatal: could not find pack '"'"'$(git -C pack-object-stdin rev-parse two)'"'"'
+	EOF
+	test_must_fail git \
+		-C pack-object-stdin \
+		pack-objects stdin-with-stdin-option --stdin-packs \
+		<in 2>err.actual &&
+	test_cmp err.expect err.actual
+'
+
 # usage: check_deltas <stderr_from_pack_objects> <cmp_op> <nr_deltas>
 # e.g.: check_deltas stderr -gt 0
 check_deltas() {
