@@ -1840,7 +1840,7 @@ static void compute_collisions(struct strmap *collisions,
 			free(new_path);
 		} else {
 			CALLOC_ARRAY(collision_info, 1);
-			string_list_init(&collision_info->source_files, 0);
+			string_list_init_nodup(&collision_info->source_files);
 			strmap_put(collisions, new_path, collision_info);
 		}
 		string_list_insert(&collision_info->source_files,
@@ -4030,7 +4030,7 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	 */
 	strmap_init_with_options(&opt->priv->paths, NULL, 0);
 	strmap_init_with_options(&opt->priv->conflicted, NULL, 0);
-	string_list_init(&opt->priv->paths_to_free, 0);
+	string_list_init_nodup(&opt->priv->paths_to_free);
 
 	/*
 	 * keys & strbufs in output will sometimes need to outlive "paths",

@@ -1425,7 +1425,7 @@ static int packed_transaction_prepare(struct ref_store *ref_store,
 	 */
 
 	CALLOC_ARRAY(data, 1);
-	string_list_init(&data->updates, 0);
+	string_list_init_nodup(&data->updates);
 
 	transaction->backend_data = data;
 

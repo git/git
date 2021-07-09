@@ -141,7 +141,10 @@ struct child_process {
 	void *clean_on_exit_handler_cbdata;
 };
 
-#define CHILD_PROCESS_INIT { NULL, STRVEC_INIT, STRVEC_INIT }
+#define CHILD_PROCESS_INIT { \
+	.args = STRVEC_INIT, \
+	.env_array = STRVEC_INIT, \
+}
 
 /**
  * The functions: child_process_init, start_command, finish_command,

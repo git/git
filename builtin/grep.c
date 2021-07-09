@@ -704,10 +704,9 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 			  int exc_std, int use_index)
 {
-	struct dir_struct dir;
+	struct dir_struct dir = DIR_INIT;
 	int i, hit = 0;
 
-	dir_init(&dir);
 	if (!use_index)
 		dir.flags |= DIR_NO_GITLINKS;
 	if (exc_std)
