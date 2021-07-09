@@ -3377,7 +3377,7 @@ static int make_patch(struct repository *r,
 	log_tree_opt.abbrev = 0;
 	log_tree_opt.diff = 1;
 	log_tree_opt.diffopt.output_format = DIFF_FORMAT_PATCH;
-	log_tree_opt.disable_stdin = 1;
+	log_tree_opt.stdin_handling = REV_INFO_STDIN_IGNORE;
 	log_tree_opt.no_commit_id = 1;
 	log_tree_opt.diffopt.file = fopen(buf.buf, "w");
 	log_tree_opt.diffopt.use_color = GIT_COLOR_NEVER;
@@ -4513,7 +4513,7 @@ cleanup_head_ref:
 			log_tree_opt.diff = 1;
 			log_tree_opt.diffopt.output_format =
 				DIFF_FORMAT_DIFFSTAT;
-			log_tree_opt.disable_stdin = 1;
+			log_tree_opt.stdin_handling = REV_INFO_STDIN_IGNORE;
 
 			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
 			    !get_oid(buf.buf, &orig) &&

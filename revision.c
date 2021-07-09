@@ -2741,14 +2741,17 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			}
 
 			if (!strcmp(arg, "--stdin")) {
-				if (revs->disable_stdin) {
+				switch (revs->stdin_handling) {
+				case REV_INFO_STDIN_IGNORE:
 					argv[left++] = arg;
 					continue;
+				case REV_INFO_STDIN_CONSUME_ON_OPTION:
+					if (revs->consumed_stdin)
+						die("--stdin given twice?");
+					read_revisions_from_stdin(revs, &prune_data);
+					revs->consumed_stdin = 1;
+					continue;
 				}
-				if (revs->read_from_stdin++)
-					die("--stdin given twice?");
-				read_revisions_from_stdin(revs, &prune_data);
-				continue;
 			}
 
 			if (!strcmp(arg, "--end-of-options")) {
