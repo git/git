@@ -48,4 +48,15 @@ check_du HEAD
 check_du --objects HEAD
 check_du --objects HEAD^..HEAD
 
+test_expect_success 'setup garbage repository' '
+	git clone --bare . garbage.git &&
+	garbage_oid=$(git -C garbage.git hash-object -t garbage -w --stdin --literally <one.t) &&
+	git -C garbage.git rev-list --objects --all --disk-usage &&
+
+	# Manually create a ref because "update-ref", "tag" etc. have
+	# no corresponding --literally option.
+	echo $garbage_oid >garbage.git/refs/tags/garbage-tag &&
+	test_must_fail git -C garbage.git rev-list --objects --all --disk-usage
+'
+
 test_done
