@@ -1381,7 +1381,10 @@ int parse_loose_header(const char *hdr,
 	/*
 	 * The length must be followed by a zero byte
 	 */
-	return *hdr ? -1 : type;
+	if (*hdr)
+		return -1;
+
+	return type;
 }
 
 static int loose_object_info(struct repository *r,
