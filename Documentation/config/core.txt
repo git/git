@@ -398,6 +398,17 @@ the largest projects.  You probably do not need to adjust this value.
 +
 Common unit suffixes of 'k', 'm', or 'g' are supported.
 
+core.packMtimeToBumpFiles::
+	Normally we avoid writing existing object by freshening the mtime
+	of the *.pack file which contains it in order to aid some processes
+	such like prune. Use a *.bump file instead of *.pack file will
+	avoid file system cache re-sync the large packfiles on filesystems
+	like NFS, and consequently make git commands faster.
++
+The default is 'false' which means the *.pack file will be freshened by
+default. If set to 'true', the file with the '.bump' suffix will be
+created automatically, and it's mtime will be freshened instead.
+
 core.deltaBaseCacheLimit::
 	Maximum number of bytes per thread to reserve for caching base objects
 	that may be referenced by multiple deltified objects.  By storing the

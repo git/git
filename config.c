@@ -1431,6 +1431,11 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.packmtimetobumpfiles")) {
+		pack_mtime_to_bumpfiles = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.deltabasecachelimit")) {
 		delta_base_cache_limit = git_config_ulong(var, value);
 		return 0;

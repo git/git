@@ -374,7 +374,7 @@ void close_object_store(struct raw_object_store *o)
 
 void unlink_pack_path(const char *pack_name, int force_delete)
 {
-	static const char *exts[] = {".pack", ".idx", ".rev", ".keep", ".bitmap", ".promisor"};
+	static const char *exts[] = {".pack", ".idx", ".rev", ".keep", ".bitmap", ".promisor", ".bump"};
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 	size_t plen;
@@ -741,6 +741,16 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 	p->pack_size = st.st_size;
 	p->pack_local = local;
 	p->mtime = st.st_mtime;
+
+	if (pack_mtime_to_bumpfiles) {
+		struct strbuf name_buf = STRBUF_INIT;
+		const char *filename;
+
+		filename = derive_pack_filename(path, "idx", "bump", &name_buf);
+		if (!stat(filename, &st)) {
+			p->mtime = st.st_mtime;
+		}
+	}
 	if (path_len < the_hash_algo->hexsz ||
 	    get_sha1_hex(path + path_len - the_hash_algo->hexsz, p->hash))
 		hashclr(p->hash);
