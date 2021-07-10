@@ -1229,7 +1229,7 @@ int unpack_loose_header(git_zstream *stream,
 	status = git_inflate(stream, 0);
 	obj_read_lock();
 	if (status < Z_OK)
-		return status;
+		return -1;
 
 	/*
 	 * Check if entire header is unpacked in the first iteration.
