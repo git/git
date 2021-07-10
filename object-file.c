@@ -1393,7 +1393,7 @@ static int loose_object_info(struct repository *r,
 	struct strbuf hdrbuf = STRBUF_INIT;
 	unsigned long size_scratch;
 	enum object_type type_scratch;
-	int parsed_header = 0;
+	struct object_info *oi_header = NULL;
 	int allow_unknown = flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (oi->delta_base_oid)
@@ -1441,18 +1441,20 @@ static int loose_object_info(struct repository *r,
 		if (!parse_loose_header(hdrbuf.len ? hdrbuf.buf : hdr, oi))
 			/*
 			 * oi->{sizep,typep} are meaningless unless
-			 * parse_loose_header() returns >= 0.
+			 * parse_loose_header() returns >= 0. Let's
+			 * access them as "oi_header" (just an alias
+			 * for "oi") below to make that intent clear.
 			 */
-			parsed_header = 1;
+			oi_header = oi;
 		else
 			status = error(_("unable to parse %s header"), oid_to_hex(oid));
 	}
-	if (!allow_unknown && parsed_header && *oi->typep < 0)
+	if (!allow_unknown && oi_header && *oi_header->typep < 0)
 		die(_("invalid object type"));
 
-	if (parsed_header && oi->contentp) {
+	if (oi_header && oi->contentp) {
 		*oi->contentp = unpack_loose_rest(&stream, hdr,
-						  *oi->sizep, oid);
+						  *oi_header->sizep, oid);
 		if (!*oi->contentp) {
 			git_inflate_end(&stream);
 			status = -1;
