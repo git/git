@@ -440,7 +440,7 @@ bogus_sha1=$(echo_without_newline "$bogus_content" | git hash-object -t $bogus_t
 
 test_expect_success 'die on broken object with large type under -t and -s without --allow-unknown-type' '
 	cat >err.expect <<-EOF &&
-	error: unable to unpack $bogus_sha1 header
+	error: header for $bogus_sha1 too long, exceeds 32 bytes
 	fatal: git cat-file: could not get object info
 	EOF
 

@@ -1243,7 +1243,7 @@ int unpack_loose_header(git_zstream *stream,
 	 * --allow-unknown-type".
 	 */
 	if (!header)
-		return -1;
+		return -2;
 
 	/*
 	 * buffer[0..bufsiz] was not large enough.  Copy the partial
@@ -1264,7 +1264,7 @@ int unpack_loose_header(git_zstream *stream,
 		stream->next_out = buffer;
 		stream->avail_out = bufsiz;
 	} while (status != Z_STREAM_END);
-	return -1;
+	return -2;
 }
 
 static void *unpack_loose_rest(git_zstream *stream,
@@ -1433,9 +1433,19 @@ static int loose_object_info(struct repository *r,
 
 	hdr_ret = unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
 				      allow_unknown ? &hdrbuf : NULL);
-	if (hdr_ret < 0) {
+	switch (hdr_ret) {
+	case 0:
+		break;
+	case -1:
 		status = error(_("unable to unpack %s header"),
 			       oid_to_hex(oid));
+		break;
+	case -2:
+		status = error(_("header for %s too long, exceeds %d bytes"),
+			       oid_to_hex(oid), MAX_HEADER_LEN);
+		break;
+	default:
+		BUG("unknown hdr_ret value %d", hdr_ret);
 	}
 	if (!status) {
 		if (!parse_loose_header(hdrbuf.len ? hdrbuf.buf : hdr, oi))
