@@ -2558,7 +2558,7 @@ static void detect_regular_renames(struct merge_options *opt,
 	diff_opts.detect_rename = DIFF_DETECT_RENAME;
 	diff_opts.rename_limit = opt->rename_limit;
 	if (opt->rename_limit <= 0)
-		diff_opts.rename_limit = 1000;
+		diff_opts.rename_limit = 7000;
 	diff_opts.rename_score = opt->rename_score;
 	diff_opts.show_rename_progress = opt->show_rename_progress;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;

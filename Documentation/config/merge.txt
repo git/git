@@ -37,7 +37,7 @@ merge.renameLimit::
 	rename detection during a merge.  If not specified, defaults
 	to the value of diff.renameLimit.  If neither
 	merge.renameLimit nor diff.renameLimit are specified,
-	currently defaults to 1000.  This setting has no effect if
+	currently defaults to 7000.  This setting has no effect if
 	rename detection is turned off.
 
 merge.renames::
