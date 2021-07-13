@@ -44,6 +44,12 @@ Performance, Internal Implementation, Development Support etc.
  * Repeated rename detections in a sequence of mergy operations have
    been optimize out.
 
+ * Preliminary clean-up of tests before the main reftable changes
+   hits the codebase.
+
+ * The backend for "diff -G/-S" has been updated to use pcre2 engine
+   when available.
+
 
 Fixes since v2.32
 -----------------
@@ -128,6 +134,23 @@ Fixes since v2.32
    fall back on the hardcoded default value for our own use.
    (merge 9b6e2c8b98 js/stop-exporting-bogus-columns later to maint).
 
+ * "git cat-file --batch-all-objects"" misbehaved when "--batch" is in
+   use and did not ask for certain object traits.
+   (merge ee02ac6164 zh/cat-file-batch-fix later to maint).
+
+ * Some code and doc clarification around "git push".
+
+ * The "union" conflict resultion variant misbehaved when used with
+   binary merge driver.
+   (merge 382b601acd jk/union-merge-binary later to maint).
+
+ * Prevent "git p4" from failing to submit changes to binary file.
+   (merge 54662d5958 dc/p4-binary-submit-fix later to maint).
+
+ * "git grep --and -e foo" ought to have been diagnosed as an error
+   but instead segfaulted, which has been corrected.
+   (merge fe7fe62d8d rs/grep-parser-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bfe35a6165 ah/doc-describe later to maint).
    (merge f302c1e4aa jc/clarify-revision-range later to maint).
@@ -153,3 +176,6 @@ Fixes since v2.32
    (merge d94f9b8e90 ba/object-info later to maint).
    (merge 52ff891c03 ar/test-code-cleanup later to maint).
    (merge a0538e5c8b dd/document-log-decorate-default later to maint).
+   (merge ce24797d38 mr/cmake later to maint).
+   (merge 9eb542f2ee ab/pre-auto-gc-hook-test later to maint).
+   (merge 9fffc38583 bk/doc-commit-typofix later to maint).
