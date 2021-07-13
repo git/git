@@ -210,6 +210,7 @@ static void write_state_bool(const struct am_state *state,
  * If state->quiet is false, calls fprintf(fp, fmt, ...), and appends a newline
  * at the end.
  */
+__attribute__((format (printf, 3, 4)))
 static void say(const struct am_state *state, FILE *fp, const char *fmt, ...)
 {
 	va_list ap;
