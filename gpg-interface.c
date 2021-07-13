@@ -24,6 +24,7 @@ struct gpg_format {
 	int (*sign_buffer)(struct strbuf *buffer, struct strbuf *signature,
 			   const char *signing_key);
 	const char *(*get_default_key)(void);
+	const char *(*get_key_id)(void);
 };
 
 static const char *openpgp_verify_args[] = {
@@ -61,6 +62,8 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 
 static const char *get_default_ssh_signing_key(void);
 
+static const char *get_ssh_key_id(void);
+
 static struct gpg_format gpg_format[] = {
 	{
 		.name = "openpgp",
@@ -70,6 +73,7 @@ static struct gpg_format gpg_format[] = {
 		.verify_signed_buffer = verify_gpg_signed_buffer,
 		.sign_buffer = sign_buffer_gpg,
 		.get_default_key = NULL,
+		.get_key_id = NULL,
 	},
 	{
 		.name = "x509",
@@ -79,6 +83,7 @@ static struct gpg_format gpg_format[] = {
 		.verify_signed_buffer = verify_gpg_signed_buffer,
 		.sign_buffer = sign_buffer_gpg,
 		.get_default_key = NULL,
+		.get_key_id = NULL,
 	},
 	{
 		.name = "ssh",
@@ -88,6 +93,7 @@ static struct gpg_format gpg_format[] = {
 		.verify_signed_buffer = NULL, /* TODO */
 		.sign_buffer = sign_buffer_ssh,
 		.get_default_key = get_default_ssh_signing_key,
+		.get_key_id = get_ssh_key_id,
 	},
 };
 
@@ -484,6 +490,41 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
+static char *get_ssh_key_fingerprint(const char *signing_key)
+{
+	struct child_process ssh_keygen = CHILD_PROCESS_INIT;
+	int ret = -1;
+	struct strbuf fingerprint_stdout = STRBUF_INIT;
+	struct strbuf **fingerprint;
+
+	/*
+	 * With SSH Signing this can contain a filename or a public key
+	 * For textual representation we usually want a fingerprint
+	 */
+	if (starts_with(signing_key, "ssh-")) {
+		strvec_pushl(&ssh_keygen.args, "ssh-keygen", "-lf", "-", NULL);
+		ret = pipe_command(&ssh_keygen, signing_key,
+				   strlen(signing_key), &fingerprint_stdout, 0,
+				   NULL, 0);
+	} else {
+		strvec_pushl(&ssh_keygen.args, "ssh-keygen", "-lf",
+			     configured_signing_key, NULL);
+		ret = pipe_command(&ssh_keygen, NULL, 0, &fingerprint_stdout, 0,
+				   NULL, 0);
+	}
+
+	if (!!ret)
+		die_errno(_("failed to get the ssh fingerprint for key '%s'"),
+			  signing_key);
+
+	fingerprint = strbuf_split_max(&fingerprint_stdout, ' ', 3);
+	if (!fingerprint[1])
+		die_errno(_("failed to get the ssh fingerprint for key '%s'"),
+			  signing_key);
+
+	return strbuf_detach(fingerprint[1], NULL);
+}
+
 /* Returns the first public key from an ssh-agent to use for signing */
 static const char *get_default_ssh_signing_key(void)
 {
@@ -530,6 +571,21 @@ static const char *get_default_ssh_signing_key(void)
 	strbuf_release(&key_stdout);
 
 	return default_key;
+}
+
+static const char *get_ssh_key_id(void) {
+	return get_ssh_key_fingerprint(get_signing_key());
+}
+
+/* Returns a textual but unique representation of the signing key */
+const char *get_signing_key_id(void)
+{
+	if (use_format->get_key_id) {
+		return use_format->get_key_id();
+	}
+
+	/* GPG/GPGSM only store a key id on this variable */
+	return get_signing_key();
 }
 
 const char *get_signing_key(void)
