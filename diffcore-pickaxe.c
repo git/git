@@ -19,38 +19,31 @@ struct diffgrep_cb {
 	int hit;
 };
 
-static void diffgrep_consume(void *priv, char *line, unsigned long len)
+static int diffgrep_consume(void *priv, char *line, unsigned long len)
 {
 	struct diffgrep_cb *data = priv;
 	regmatch_t regmatch;
 
 	if (line[0] != '+' && line[0] != '-')
-		return;
+		return 0;
 	if (data->hit)
-		/*
-		 * NEEDSWORK: we should have a way to terminate the
-		 * caller early.
-		 */
-		return;
-	data->hit = !regexec_buf(data->regexp, line + 1, len - 1, 1,
-				 &regmatch, 0);
+		BUG("Already matched in diffgrep_consume! Broken xdiff_emit_line_fn?");
+	if (!regexec_buf(data->regexp, line + 1, len - 1, 1,
+			 &regmatch, 0)) {
+		data->hit = 1;
+		return 1;
+	}
+	return 0;
 }
 
 static int diff_grep(mmfile_t *one, mmfile_t *two,
 		     struct diff_options *o,
 		     regex_t *regexp, kwset_t kws)
 {
-	regmatch_t regmatch;
 	struct diffgrep_cb ecbdata;
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
-
-	if (!one)
-		return !regexec_buf(regexp, two->ptr, two->size,
-				    1, &regmatch, 0);
-	if (!two)
-		return !regexec_buf(regexp, one->ptr, one->size,
-				    1, &regmatch, 0);
+	int ret;
 
 	/*
 	 * We have both sides; need to run textual diff and see if
@@ -60,38 +53,47 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	memset(&xecfg, 0, sizeof(xecfg));
 	ecbdata.regexp = regexp;
 	ecbdata.hit = 0;
+	xecfg.flags = XDL_EMIT_NO_HUNK_HDR;
 	xecfg.ctxlen = o->context;
 	xecfg.interhunkctxlen = o->interhunkcontext;
-	if (xdi_diff_outf(one, two, discard_hunk_line, diffgrep_consume,
-			  &ecbdata, &xpp, &xecfg))
-		return 0;
-	return ecbdata.hit;
+
+	/*
+	 * An xdiff error might be our "data->hit" from above. See the
+	 * comment for xdiff_emit_line_fn in xdiff-interface.h
+	 */
+	ret = xdi_diff_outf(one, two, NULL, diffgrep_consume,
+			    &ecbdata, &xpp, &xecfg);
+	if (ecbdata.hit)
+		return 1;
+	if (ret)
+		return ret;
+	return 0;
 }
 
-static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
+static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws,
+			     unsigned int limit)
 {
-	unsigned int cnt;
-	unsigned long sz;
-	const char *data;
-
-	sz = mf->size;
-	data = mf->ptr;
-	cnt = 0;
+	unsigned int cnt = 0;
+	unsigned long sz = mf->size;
+	const char *data = mf->ptr;
 
 	if (regexp) {
 		regmatch_t regmatch;
 		int flags = 0;
 
-		while (sz && *data &&
+		while (sz &&
 		       !regexec_buf(regexp, data, sz, 1, &regmatch, flags)) {
 			flags |= REG_NOTBOL;
 			data += regmatch.rm_eo;
 			sz -= regmatch.rm_eo;
-			if (sz && *data && regmatch.rm_so == regmatch.rm_eo) {
+			if (sz && regmatch.rm_so == regmatch.rm_eo) {
 				data++;
 				sz--;
 			}
 			cnt++;
+
+			if (limit && cnt == limit)
+				return cnt;
 		}
 
 	} else { /* Classic exact string match */
@@ -103,6 +105,9 @@ static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
 			sz -= offset + kwsm.size[0];
 			data += offset + kwsm.size[0];
 			cnt++;
+
+			if (limit && cnt == limit)
+				return cnt;
 		}
 	}
 	return cnt;
@@ -112,9 +117,9 @@ static int has_changes(mmfile_t *one, mmfile_t *two,
 		       struct diff_options *o,
 		       regex_t *regexp, kwset_t kws)
 {
-	unsigned int one_contains = one ? contains(one, regexp, kws) : 0;
-	unsigned int two_contains = two ? contains(two, regexp, kws) : 0;
-	return one_contains != two_contains;
+	unsigned int c1 = one ? contains(one, regexp, kws, 0) : 0;
+	unsigned int c2 = two ? contains(two, regexp, kws, c1 + 1) : 0;
+	return c1 != c2;
 }
 
 static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
@@ -135,9 +140,6 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 			(DIFF_FILE_VALID(p->two) &&
 			 oidset_contains(o->objfind, &p->two->oid));
 	}
-
-	if (!o->pickaxe[0])
-		return 0;
 
 	if (o->flags.allow_textconv) {
 		textconv_one = get_textconv(o->repo, p->one);
@@ -163,9 +165,7 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 	mf1.size = fill_textconv(o->repo, textconv_one, p->one, &mf1.ptr);
 	mf2.size = fill_textconv(o->repo, textconv_two, p->two, &mf2.ptr);
 
-	ret = fn(DIFF_FILE_VALID(p->one) ? &mf1 : NULL,
-		 DIFF_FILE_VALID(p->two) ? &mf2 : NULL,
-		 o, regexp, kws);
+	ret = fn(&mf1, &mf2, o, regexp, kws);
 
 	if (textconv_one)
 		free(mf1.ptr);
@@ -232,13 +232,31 @@ void diffcore_pickaxe(struct diff_options *o)
 	int opts = o->pickaxe_opts;
 	regex_t regex, *regexp = NULL;
 	kwset_t kws = NULL;
+	pickaxe_fn fn;
 
+	if (opts & ~DIFF_PICKAXE_KIND_OBJFIND &&
+	    (!needle || !*needle))
+		BUG("should have needle under -G or -S");
 	if (opts & (DIFF_PICKAXE_REGEX | DIFF_PICKAXE_KIND_G)) {
 		int cflags = REG_EXTENDED | REG_NEWLINE;
 		if (o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE)
 			cflags |= REG_ICASE;
 		regcomp_or_die(&regex, needle, cflags);
 		regexp = &regex;
+
+		if (opts & DIFF_PICKAXE_KIND_G)
+			fn = diff_grep;
+		else if (opts & DIFF_PICKAXE_REGEX)
+			fn = has_changes;
+		else
+			/*
+			 * We don't need to check the combination of
+			 * -G and --pickaxe-regex, by the time we get
+			 * here diff.c has already died if they're
+			 * combined. See the usage tests in
+			 * t4209-log-pickaxe.sh.
+			 */
+			BUG("unreachable");
 	} else if (opts & DIFF_PICKAXE_KIND_S) {
 		if (o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE &&
 		    has_non_ascii(needle)) {
@@ -255,10 +273,14 @@ void diffcore_pickaxe(struct diff_options *o)
 			kwsincr(kws, needle, strlen(needle));
 			kwsprep(kws);
 		}
+		fn = has_changes;
+	} else if (opts & DIFF_PICKAXE_KIND_OBJFIND) {
+		fn = NULL;
+	} else {
+		BUG("unknown pickaxe_opts flag");
 	}
 
-	pickaxe(&diff_queued_diff, o, regexp, kws,
-		(opts & DIFF_PICKAXE_KIND_G) ? diff_grep : has_changes);
+	pickaxe(&diff_queued_diff, o, regexp, kws, fn);
 
 	if (regexp)
 		regfree(regexp);

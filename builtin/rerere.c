@@ -28,7 +28,7 @@ static int diff_two(const char *file1, const char *label1,
 {
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
-	xdemitcb_t ecb;
+	xdemitcb_t ecb = { .out_line = outf };
 	mmfile_t minus, plus;
 	int ret;
 
@@ -41,8 +41,6 @@ static int diff_two(const char *file1, const char *label1,
 	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	ecb.out_hunk = NULL;
-	ecb.out_line = outf;
 	ret = xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 
 	free(minus.ptr);
