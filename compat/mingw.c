@@ -189,6 +189,7 @@ static int read_yes_no_answer(void)
 	return -1;
 }
 
+__attribute__((format (printf, 1, 2)))
 static int ask_yes_no_if_possible(const char *format, ...)
 {
 	char question[4096];

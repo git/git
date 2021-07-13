@@ -44,6 +44,9 @@ void hashflush(struct hashfile *f);
 void crc32_begin(struct hashfile *);
 uint32_t crc32_end(struct hashfile *);
 
+/* Verify checksum validity while reading. Returns non-zero on success. */
+int hashfile_checksum_valid(const unsigned char *data, size_t len);
+
 /*
  * Returns the total number of bytes fed to the hashfile so far (including ones
  * that have not been written out to the descriptor yet).

@@ -53,17 +53,19 @@ test_expect_success 'setup' '
 	test_commit c1 &&
 	hash_head=$(git rev-parse HEAD) &&
 	hash_prev=$(git rev-parse HEAD~1) &&
-	{
-		packetize "want $hash_head" &&
-		printf 0000 &&
-		packetize "have $hash_prev" &&
-		packetize "done"
-	} >fetch_body &&
+	test-tool pkt-line pack >fetch_body <<-EOF &&
+	want $hash_head
+	0000
+	have $hash_prev
+	done
+	0000
+	EOF
 	test_copy_bytes 10 <fetch_body >fetch_body.trunc &&
 	hash_next=$(git commit-tree -p HEAD -m next HEAD^{tree}) &&
 	{
 		printf "%s %s refs/heads/newbranch\\0report-status object-format=%s\\n" \
-			"$ZERO_OID" "$hash_next" "$(test_oid algo)" | packetize &&
+			"$ZERO_OID" "$hash_next" "$(test_oid algo)" |
+			test-tool pkt-line pack-raw-stdin &&
 		printf 0000 &&
 		echo "$hash_next" | git pack-objects --stdout
 	} >push_body &&

@@ -139,11 +139,14 @@ otherwise `stderr`.
 --user-path=<path>::
 	Allow {tilde}user notation to be used in requests.  When
 	specified with no parameter, requests to
-	git://host/{tilde}alice/foo is taken as a request to access
-	'foo' repository in the home directory of user `alice`.
-	If `--user-path=path` is specified, the same request is
-	taken as a request to access `path/foo` repository in
-	the home directory of user `alice`.
+	git://host/{tilde}user/foo is taken as a request to access
+	'foo' repository in the home directory of user `user`.
++
+If `--user-path=infix` is specified, the `infix` is appended to the path
+found with the {tilde}user notation. E.g. a request to access a `some/foo`
+repository (git://host/{tilde}user/some/foo) will resolve to (assuming that
+`$HOME` is `/home`) either `/home/user/infix/some/foo` (or `[...]/foo.git`
+etc., see `--strict-paths` above).
 
 --verbose::
 	Log details about the incoming connections and requested files.

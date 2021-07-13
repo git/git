@@ -53,6 +53,19 @@ enum allow_uor {
 };
 
 /*
+ * "Global" configuration that won't be affected by the type of
+ * request we're doing, or by other request data in "struct
+ * upload_pack_data" below.
+ */
+static int v1_have_startup_config;
+static int config_keepalive = 5;
+static enum allow_uor config_allow_uor;
+static unsigned config_advertise_sid;
+static const char *config_pack_objects_hook;
+static unsigned config_v2_allow_ref_in_want;
+static unsigned config_v2_allow_sideband_all;
+
+/*
  * Please annotate, and if possible group together, fields used only
  * for protocol v0 or only for protocol v2.
  */
@@ -70,7 +83,6 @@ struct upload_pack_data {
 	timestamp_t deepen_since;
 	int deepen_rev_list;
 	int deepen_relative;
-	int keepalive;
 	int shallow_nr;
 	timestamp_t oldest_have;
 
@@ -85,14 +97,11 @@ struct upload_pack_data {
 	int use_sideband;
 
 	struct string_list uri_protocols;
-	enum allow_uor allow_uor;
 
 	struct list_objects_filter_options filter_options;
 	struct string_list allowed_filters;
 
 	struct packet_writer writer;
-
-	const char *pack_objects_hook;
 
 	unsigned stateless_rpc : 1;				/* v0 only */
 	unsigned no_done : 1;					/* v0 only */
@@ -109,9 +118,6 @@ struct upload_pack_data {
 	unsigned long tree_filter_max_depth;
 
 	unsigned done : 1;					/* v2 only */
-	unsigned allow_ref_in_want : 1;				/* v2 only */
-	unsigned allow_sideband_all : 1;			/* v2 only */
-	unsigned advertise_sid : 1;
 };
 
 static void upload_pack_data_init(struct upload_pack_data *data)
@@ -141,9 +147,6 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	data->allow_filter_fallback = 1;
 	data->tree_filter_max_depth = ULONG_MAX;
 	packet_writer_init(&data->writer, 1);
-
-	data->keepalive = 5;
-	data->advertise_sid = 0;
 }
 
 static void upload_pack_data_clear(struct upload_pack_data *data)
@@ -158,8 +161,6 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	object_array_clear(&data->extra_edge_obj);
 	list_objects_filter_release(&data->filter_options);
 	string_list_clear(&data->allowed_filters, 0);
-
-	free((char *)data->pack_objects_hook);
 }
 
 static void reset_timeout(unsigned int timeout)
@@ -277,10 +278,10 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	int i;
 	FILE *pipe_fd;
 
-	if (!pack_data->pack_objects_hook)
+	if (!config_pack_objects_hook)
 		pack_objects.git_cmd = 1;
 	else {
-		strvec_push(&pack_objects.args, pack_data->pack_objects_hook);
+		strvec_push(&pack_objects.args, config_pack_objects_hook);
 		strvec_push(&pack_objects.args, "git");
 		pack_objects.use_shell = 1;
 	}
@@ -371,9 +372,9 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 		if (!pollsize)
 			break;
 
-		polltimeout = pack_data->keepalive < 0
+		polltimeout = config_keepalive < 0
 			? -1
-			: 1000 * pack_data->keepalive;
+			: 1000 * config_keepalive;
 
 		ret = poll(pfd, pollsize, polltimeout);
 
@@ -581,9 +582,9 @@ static int get_common_commits(struct upload_pack_data *data,
 	}
 }
 
-static int is_our_ref(struct object *o, enum allow_uor allow_uor)
+static int is_our_ref(struct object *o)
 {
-	int allow_hidden_ref = (allow_uor &
+	int allow_hidden_ref = (config_allow_uor &
 				(ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
 	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
 }
@@ -593,8 +594,7 @@ static int is_our_ref(struct object *o, enum allow_uor allow_uor)
  */
 static int do_reachable_revlist(struct child_process *cmd,
 				struct object_array *src,
-				struct object_array *reachable,
-				enum allow_uor allow_uor)
+				struct object_array *reachable)
 {
 	static const char *argv[] = {
 		"rev-list", "--stdin", NULL,
@@ -627,14 +627,14 @@ static int do_reachable_revlist(struct child_process *cmd,
 			continue;
 		if (reachable && o->type == OBJ_COMMIT)
 			o->flags &= ~TMP_MARK;
-		if (!is_our_ref(o, allow_uor))
+		if (!is_our_ref(o))
 			continue;
 		if (fprintf(cmd_in, "^%s\n", oid_to_hex(&o->oid)) < 0)
 			goto error;
 	}
 	for (i = 0; i < src->nr; i++) {
 		o = src->objects[i].item;
-		if (is_our_ref(o, allow_uor)) {
+		if (is_our_ref(o)) {
 			if (reachable)
 				add_object_array(o, NULL, reachable);
 			continue;
@@ -671,8 +671,7 @@ static int get_reachable_list(struct upload_pack_data *data,
 	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	const unsigned hexsz = the_hash_algo->hexsz;
 
-	if (do_reachable_revlist(&cmd, &data->shallows, reachable,
-				 data->allow_uor) < 0)
+	if (do_reachable_revlist(&cmd, &data->shallows, reachable) < 0)
 		return -1;
 
 	while ((i = read_in_full(cmd.out, namebuf, hexsz + 1)) == hexsz + 1) {
@@ -703,13 +702,13 @@ static int get_reachable_list(struct upload_pack_data *data,
 	return 0;
 }
 
-static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
+static int has_unreachable(struct object_array *src)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	char buf[1];
 	int i;
 
-	if (do_reachable_revlist(&cmd, src, NULL, allow_uor) < 0)
+	if (do_reachable_revlist(&cmd, src, NULL) < 0)
 		return 1;
 
 	/*
@@ -748,9 +747,9 @@ static void check_non_tip(struct upload_pack_data *data)
 	 * uploadpack.allowReachableSHA1InWant,
 	 * non-tip requests can never happen.
 	 */
-	if (!data->stateless_rpc && !(data->allow_uor & ALLOW_REACHABLE_SHA1))
+	if (!data->stateless_rpc && !(config_allow_uor & ALLOW_REACHABLE_SHA1))
 		goto error;
-	if (!has_unreachable(&data->want_obj, data->allow_uor))
+	if (!has_unreachable(&data->want_obj))
 		/* All the non-tip ones are ancestors of what we advertised */
 		return;
 
@@ -758,7 +757,7 @@ error:
 	/* Pick one of them (we know there at least is one) */
 	for (i = 0; i < data->want_obj.nr; i++) {
 		struct object *o = data->want_obj.objects[i].item;
-		if (!is_our_ref(o, data->allow_uor)) {
+		if (!is_our_ref(o)) {
 			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
 					    oid_to_hex(&o->oid));
@@ -1123,8 +1122,8 @@ static void receive_needs(struct upload_pack_data *data,
 		}
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
-			if (!((data->allow_uor & ALLOW_ANY_SHA1) == ALLOW_ANY_SHA1
-			      || is_our_ref(o, data->allow_uor)))
+			if (!((config_allow_uor & ALLOW_ANY_SHA1) == ALLOW_ANY_SHA1
+			      || is_our_ref(o)))
 				has_non_tip = 1;
 			add_object_array(o, NULL, &data->want_obj);
 		}
@@ -1184,7 +1183,7 @@ static void format_symref_info(struct strbuf *buf, struct string_list *symref)
 }
 
 static void format_session_id(struct strbuf *buf, struct upload_pack_data *d) {
-	if (d->advertise_sid)
+	if (config_advertise_sid)
 		strbuf_addf(buf, " session-id=%s", trace2_session_id());
 }
 
@@ -1210,9 +1209,9 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		packet_write_fmt(1, "%s %s%c%s%s%s%s%s%s%s object-format=%s agent=%s\n",
 			     oid_to_hex(oid), refname_nons,
 			     0, capabilities,
-			     (data->allow_uor & ALLOW_TIP_SHA1) ?
+			     (config_allow_uor & ALLOW_TIP_SHA1) ?
 				     " allow-tip-sha1-in-want" : "",
-			     (data->allow_uor & ALLOW_REACHABLE_SHA1) ?
+			     (config_allow_uor & ALLOW_REACHABLE_SHA1) ?
 				     " allow-reachable-sha1-in-want" : "",
 			     data->stateless_rpc ? " no-done" : "",
 			     symref_info.buf,
@@ -1282,45 +1281,71 @@ static int parse_object_filter_config(const char *var, const char *value,
 	return 0;
 }
 
-static int upload_pack_config(const char *var, const char *value, void *cb_data)
+static int upload_pack_startup_config(const char *var, const char *value,
+				      void *cb_data)
 {
-	struct upload_pack_data *data = cb_data;
-
 	if (!strcmp("uploadpack.allowtipsha1inwant", var)) {
 		if (git_config_bool(var, value))
-			data->allow_uor |= ALLOW_TIP_SHA1;
+			config_allow_uor |= ALLOW_TIP_SHA1;
 		else
-			data->allow_uor &= ~ALLOW_TIP_SHA1;
+			config_allow_uor &= ~ALLOW_TIP_SHA1;
 	} else if (!strcmp("uploadpack.allowreachablesha1inwant", var)) {
 		if (git_config_bool(var, value))
-			data->allow_uor |= ALLOW_REACHABLE_SHA1;
+			config_allow_uor |= ALLOW_REACHABLE_SHA1;
 		else
-			data->allow_uor &= ~ALLOW_REACHABLE_SHA1;
+			config_allow_uor &= ~ALLOW_REACHABLE_SHA1;
 	} else if (!strcmp("uploadpack.allowanysha1inwant", var)) {
 		if (git_config_bool(var, value))
-			data->allow_uor |= ALLOW_ANY_SHA1;
+			config_allow_uor |= ALLOW_ANY_SHA1;
 		else
-			data->allow_uor &= ~ALLOW_ANY_SHA1;
+			config_allow_uor &= ~ALLOW_ANY_SHA1;
 	} else if (!strcmp("uploadpack.keepalive", var)) {
-		data->keepalive = git_config_int(var, value);
-		if (!data->keepalive)
-			data->keepalive = -1;
-	} else if (!strcmp("uploadpack.allowfilter", var)) {
-		data->allow_filter = git_config_bool(var, value);
-	} else if (!strcmp("uploadpack.allowrefinwant", var)) {
-		data->allow_ref_in_want = git_config_bool(var, value);
-	} else if (!strcmp("uploadpack.allowsidebandall", var)) {
-		data->allow_sideband_all = git_config_bool(var, value);
+		config_keepalive = git_config_int(var, value);
+		if (!config_keepalive)
+			config_keepalive = -1;
 	} else if (!strcmp("core.precomposeunicode", var)) {
 		precomposed_unicode = git_config_bool(var, value);
 	} else if (!strcmp("transfer.advertisesid", var)) {
-		data->advertise_sid = git_config_bool(var, value);
+		config_advertise_sid = git_config_bool(var, value);
 	}
 
 	if (current_config_scope() != CONFIG_SCOPE_LOCAL &&
 	    current_config_scope() != CONFIG_SCOPE_WORKTREE) {
 		if (!strcmp("uploadpack.packobjectshook", var))
-			return git_config_string(&data->pack_objects_hook, var, value);
+			return git_config_string(&config_pack_objects_hook, var, value);
+	}
+	return 0;
+}
+
+static int upload_pack_startup_config_v2_only(const char *var,
+					      const char *value, void *cb_data)
+{
+	if (!strcmp("uploadpack.allowrefinwant", var))
+		config_v2_allow_ref_in_want = git_config_bool(var, value);
+	else if (!strcmp("uploadpack.allowsidebandall", var))
+		config_v2_allow_sideband_all = git_config_bool(var, value);
+	return 0;
+}
+
+int serve_upload_pack_startup_config(const char *var, const char *value, void *data)
+{
+	int ret;
+	ret = upload_pack_startup_config(var, value, data);
+	if (ret)
+		return ret;
+	ret = upload_pack_startup_config_v2_only(var, value, data);
+	if (ret)
+		return ret;
+	return 0;
+}
+
+static int upload_pack_config(const char *var, const char *value,
+			      void *cb_data)
+{
+	struct upload_pack_data *data = cb_data;
+
+	if (!strcmp("uploadpack.allowfilter", var)) {
+		data->allow_filter = git_config_bool(var, value);
 	}
 
 	if (parse_object_filter_config(var, value, data) < 0)
@@ -1336,6 +1361,8 @@ void upload_pack(struct upload_pack_options *options)
 
 	upload_pack_data_init(&data);
 
+	if (!v1_have_startup_config++)
+		git_config(upload_pack_startup_config, NULL);
 	git_config(upload_pack_config, &data);
 
 	data.stateless_rpc = options->stateless_rpc;
@@ -1468,7 +1495,7 @@ static void process_args(struct packet_reader *request,
 		/* process want */
 		if (parse_want(&data->writer, arg, &data->want_obj))
 			continue;
-		if (data->allow_ref_in_want &&
+		if (config_v2_allow_ref_in_want &&
 		    parse_want_ref(&data->writer, arg, &data->wanted_refs,
 				   &data->want_obj))
 			continue;
@@ -1526,7 +1553,7 @@ static void process_args(struct packet_reader *request,
 		}
 
 		if ((git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
-		     data->allow_sideband_all) &&
+		     config_v2_allow_sideband_all) &&
 		    !strcmp(arg, "sideband-all")) {
 			data->writer.use_sideband = 1;
 			continue;

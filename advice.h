@@ -90,6 +90,7 @@ int advice_enabled(enum advice_type type);
 /**
  * Checks the visibility of the advice before printing.
  */
+__attribute__((format (printf, 2, 3)))
 void advise_if_enabled(enum advice_type type, const char *advice, ...);
 
 int error_resolve_conflict(const char *me);

@@ -5,10 +5,42 @@
 
 #define UPDATE_DEFAULT_BOOL(s,v) do { if (s == -1) { s = v; } } while(0)
 
+/*
+ * Return 1 if the repo/workdir is incompatible with FSMonitor.
+ */
+static int is_repo_incompatible_with_fsmonitor(struct repository *r)
+{
+	const char *const_strval;
+
+	/*
+	 * Bare repositories don't have a working directory and
+	 * therefore, nothing to watch.
+	 */
+	if (!r->worktree)
+		return 1;
+
+	/*
+	 * GVFS (aka VFS for Git) is incompatible with FSMonitor.
+	 *
+	 * Granted, core Git does not know anything about GVFS and
+	 * we shouldn't make assumptions about a downstream feature,
+	 * but users can install both versions.  And this can lead
+	 * to incorrect results from core Git commands.  So, without
+	 * bringing in any of the GVFS code, do a simple config test
+	 * for a published config setting.  (We do not look at the
+	 * various *_TEST_* environment variables.)
+	 */
+	if (!repo_config_get_value(r, "core.virtualfilesystem", &const_strval))
+		return 1;
+
+	return 0;
+}
+
 void prepare_repo_settings(struct repository *r)
 {
 	int value;
 	char *strval;
+	const char *const_strval;
 
 	if (r->settings.initialized)
 		return;
@@ -25,6 +57,22 @@ void prepare_repo_settings(struct repository *r)
 	UPDATE_DEFAULT_BOOL(r->settings.core_commit_graph, 1);
 	UPDATE_DEFAULT_BOOL(r->settings.commit_graph_read_changed_paths, 1);
 	UPDATE_DEFAULT_BOOL(r->settings.gc_write_commit_graph, 1);
+
+	r->settings.fsmonitor_hook_path = NULL;
+	r->settings.fsmonitor_mode = FSMONITOR_MODE_DISABLED;
+	if (is_repo_incompatible_with_fsmonitor(r))
+		r->settings.fsmonitor_mode = FSMONITOR_MODE_INCOMPATIBLE;
+	else if (!repo_config_get_bool(r, "core.usebuiltinfsmonitor", &value)
+		   && value)
+		r->settings.fsmonitor_mode = FSMONITOR_MODE_IPC;
+	else {
+		if (repo_config_get_pathname(r, "core.fsmonitor", &const_strval))
+			const_strval = getenv("GIT_TEST_FSMONITOR");
+		if (const_strval && *const_strval) {
+			r->settings.fsmonitor_hook_path = strdup(const_strval);
+			r->settings.fsmonitor_mode = FSMONITOR_MODE_HOOK;
+		}
+	}
 
 	if (!repo_config_get_int(r, "index.version", &value))
 		r->settings.index_version = value;

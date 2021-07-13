@@ -73,6 +73,7 @@ test_expect_success 'setup' '
 	expect*
 	actual*
 	marker*
+	trace2*
 	EOF
 '
 
@@ -359,7 +360,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 test_expect_success 'discard_index() also discards fsmonitor info' '
 	test_config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-all" &&
 	test_might_fail git update-index --refresh &&
-	test-tool read-cache --print-and-refresh=tracked 2 >actual &&
+	test-tool read-cache-again --count=2 tracked >actual &&
 	printf "tracked is%s up to date\n" "" " not" >expect &&
 	test_cmp expect actual
 '
@@ -381,6 +382,92 @@ test_expect_success 'status succeeds after staging/unstaging' '
 		FSMONITOR_LIST="$removed" git restore -S $removed &&
 		FSMONITOR_LIST="$removed" git status
 	)
+'
+
+# Test that we detect and disallow repos that are incompatible with FSMonitor.
+test_expect_success 'incompatible bare repo' '
+	test_when_finished "rm -rf ./bare-clone" &&
+	git clone --bare . ./bare-clone &&
+	cat >expect <<-\EOF &&
+	error: repository is incompatible with fsmonitor
+	EOF
+	test_must_fail git -C ./bare-clone update-index --fsmonitor 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success FSMONITOR_DAEMON 'try running fsmonitor-daemon in bare repo' '
+	test_when_finished "rm -rf ./bare-clone" &&
+	git clone --bare . ./bare-clone &&
+	test_must_fail git -C ./bare-clone fsmonitor--daemon run 2>actual &&
+	grep "fsmonitor-daemon does not support bare repos" actual
+'
+
+test_expect_success FSMONITOR_DAEMON 'try running fsmonitor-daemon in virtual repo' '
+	test_when_finished "rm -rf ./fake-virtual-clone" &&
+	git clone . ./fake-virtual-clone &&
+	test_must_fail git -C ./fake-virtual-clone \
+			   -c core.virtualfilesystem=true \
+			   fsmonitor--daemon run 2>actual &&
+	grep "fsmonitor-daemon is incompatible with this repo" actual
+'
+
+test_expect_success 'incompatible core.virtualfilesystem' '
+	test_when_finished "rm -rf ./fake-gvfs-clone" &&
+	git clone . ./fake-gvfs-clone &&
+	git -C ./fake-gvfs-clone config core.virtualfilesystem true &&
+	cat >expect <<-\EOF &&
+	error: repository is incompatible with fsmonitor
+	EOF
+	test_must_fail git -C ./fake-gvfs-clone update-index --fsmonitor 2>actual &&
+	test_cmp expect actual
+'
+
+# Usage:
+# check_sparse_index_behavior [!]
+# If "!" is supplied, then we verify that we do not call ensure_full_index
+# during a call to 'git status'. Otherwise, we verify that we _do_ call it.
+check_sparse_index_behavior () {
+	git status --porcelain=v2 >expect &&
+	git sparse-checkout init --cone --sparse-index &&
+	git sparse-checkout set dir1 dir2 &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+		git status --porcelain=v2 >actual &&
+	test_region $1 index ensure_full_index trace2.txt &&
+	test_region fsm_hook query trace2.txt &&
+	test_cmp expect actual &&
+	rm trace2.txt &&
+	git sparse-checkout disable
+}
+
+test_expect_success 'status succeeds with sparse index' '
+	git reset --hard &&
+
+	test_config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-all" &&
+	check_sparse_index_behavior ! &&
+
+	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+		printf "last_update_token\0"
+	EOF
+	git config core.fsmonitor .git/hooks/fsmonitor-test &&
+	check_sparse_index_behavior ! &&
+
+	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+		printf "last_update_token\0"
+		printf "dir1/modified\0"
+	EOF
+	check_sparse_index_behavior ! &&
+
+	cp -r dir1 dir1a &&
+	git add dir1a &&
+	git commit -m "add dir1a" &&
+
+	# This one modifies outside the sparse-checkout definition
+	# and hence we expect to expand the sparse-index.
+	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+		printf "last_update_token\0"
+		printf "dir1a/modified\0"
+	EOF
+	check_sparse_index_behavior
 '
 
 test_done

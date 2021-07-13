@@ -46,8 +46,8 @@ static const char *interpolated_path;
 static int base_path_relaxed;
 
 /* If defined, ~user notation is allowed and the string is inserted
- * after ~user/.  E.g. a request to git://host/~alice/frotz would
- * go to /home/alice/pub_git/frotz with --user-path=pub_git.
+ * after ~user/.  E.g. a request to git://host/~user/frotz would
+ * go to /home/user/pub_git/frotz with --user-path=pub_git.
  */
 static const char *user_path;
 
@@ -188,9 +188,9 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 			return NULL;
 		}
 		if (*user_path) {
-			/* Got either "~alice" or "~alice/foo";
-			 * rewrite them to "~alice/%s" or
-			 * "~alice/%s/foo".
+			/* Got either "~user" or "~user/foo";
+			 * rewrite them to "~user/%s" or
+			 * "~user/%s/foo".
 			 */
 			int namlen, restlen = strlen(dir);
 			const char *slash = strchr(dir, '/');

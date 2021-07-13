@@ -22,30 +22,25 @@ add_blob() {
 }
 
 test_expect_success setup '
-
-	: > file &&
+	>file &&
 	git add file &&
 	test_tick &&
 	git commit -m initial &&
 	git gc
-
 '
 
 test_expect_success 'prune stale packs' '
-
 	orig_pack=$(echo .git/objects/pack/*.pack) &&
-	: > .git/objects/tmp_1.pack &&
-	: > .git/objects/tmp_2.pack &&
+	>.git/objects/tmp_1.pack &&
+	>.git/objects/tmp_2.pack &&
 	test-tool chmtime =-86501 .git/objects/tmp_1.pack &&
 	git prune --expire 1.day &&
 	test_path_is_file $orig_pack &&
 	test_path_is_file .git/objects/tmp_2.pack &&
 	test_path_is_missing .git/objects/tmp_1.pack
-
 '
 
 test_expect_success 'prune --expire' '
-
 	add_blob &&
 	git prune --expire=1.hour.ago &&
 	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
@@ -54,11 +49,9 @@ test_expect_success 'prune --expire' '
 	git prune --expire 1.day &&
 	verbose test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
-
 '
 
 test_expect_success 'gc: implicit prune --expire' '
-
 	add_blob &&
 	test-tool chmtime =-$((2*$week-30)) $BLOB_FILE &&
 	git gc &&
@@ -68,123 +61,98 @@ test_expect_success 'gc: implicit prune --expire' '
 	git gc &&
 	verbose test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
-
 '
 
 test_expect_success 'gc: refuse to start with invalid gc.pruneExpire' '
-
 	git config gc.pruneExpire invalid &&
 	test_must_fail git gc
-
 '
 
 test_expect_success 'gc: start with ok gc.pruneExpire' '
-
 	git config gc.pruneExpire 2.days.ago &&
 	git gc
-
 '
 
 test_expect_success 'prune: prune nonsense parameters' '
-
 	test_must_fail git prune garbage &&
 	test_must_fail git prune --- &&
 	test_must_fail git prune --no-such-option
-
 '
 
 test_expect_success 'prune: prune unreachable heads' '
-
 	git config core.logAllRefUpdates false &&
-	mv .git/logs .git/logs.old &&
-	: > file2 &&
+	>file2 &&
 	git add file2 &&
 	git commit -m temporary &&
 	tmp_head=$(git rev-list -1 HEAD) &&
 	git reset HEAD^ &&
+	git reflog expire --all &&
 	git prune &&
 	test_must_fail git reset $tmp_head --
-
 '
 
 test_expect_success 'prune: do not prune detached HEAD with no reflog' '
-
 	git checkout --detach --quiet &&
 	git commit --allow-empty -m "detached commit" &&
-	# verify that there is no reflogs
-	# (should be removed and disabled by previous test)
-	test_path_is_missing .git/logs &&
+	git reflog expire --all &&
 	git prune -n >prune_actual &&
 	test_must_be_empty prune_actual
-
 '
 
 test_expect_success 'prune: prune former HEAD after checking out branch' '
-
 	head_oid=$(git rev-parse HEAD) &&
 	git checkout --quiet main &&
+	git reflog expire --all &&
 	git prune -v >prune_actual &&
 	grep "$head_oid" prune_actual
-
 '
 
 test_expect_success 'prune: do not prune heads listed as an argument' '
-
-	: > file2 &&
+	>file2 &&
 	git add file2 &&
 	git commit -m temporary &&
 	tmp_head=$(git rev-list -1 HEAD) &&
 	git reset HEAD^ &&
 	git prune -- $tmp_head &&
 	git reset $tmp_head --
-
 '
 
 test_expect_success 'gc --no-prune' '
-
 	add_blob &&
 	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git config gc.pruneExpire 2.days.ago &&
 	git gc --no-prune &&
 	verbose test 1 = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE
-
 '
 
 test_expect_success 'gc respects gc.pruneExpire' '
-
 	git config gc.pruneExpire 5002.days.ago &&
 	git gc &&
 	test_path_is_file $BLOB_FILE &&
 	git config gc.pruneExpire 5000.days.ago &&
 	git gc &&
 	test_path_is_missing $BLOB_FILE
-
 '
 
 test_expect_success 'gc --prune=<date>' '
-
 	add_blob &&
 	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git gc --prune=5002.days.ago &&
 	test_path_is_file $BLOB_FILE &&
 	git gc --prune=5000.days.ago &&
 	test_path_is_missing $BLOB_FILE
-
 '
 
 test_expect_success 'gc --prune=never' '
-
 	add_blob &&
 	git gc --prune=never &&
 	test_path_is_file $BLOB_FILE &&
 	git gc --prune=now &&
 	test_path_is_missing $BLOB_FILE
-
 '
 
 test_expect_success 'gc respects gc.pruneExpire=never' '
-
 	git config gc.pruneExpire never &&
 	add_blob &&
 	git gc &&
@@ -192,17 +160,14 @@ test_expect_success 'gc respects gc.pruneExpire=never' '
 	git config gc.pruneExpire now &&
 	git gc &&
 	test_path_is_missing $BLOB_FILE
-
 '
 
 test_expect_success 'prune --expire=never' '
-
 	add_blob &&
 	git prune --expire=never &&
 	test_path_is_file $BLOB_FILE &&
 	git prune &&
 	test_path_is_missing $BLOB_FILE
-
 '
 
 test_expect_success 'gc: prune old objects after local clone' '
@@ -222,16 +187,16 @@ test_expect_success 'gc: prune old objects after local clone' '
 test_expect_success 'garbage report in count-objects -v' '
 	test_when_finished "rm -f .git/objects/pack/fake*" &&
 	test_when_finished "rm -f .git/objects/pack/foo*" &&
-	: >.git/objects/pack/foo &&
-	: >.git/objects/pack/foo.bar &&
-	: >.git/objects/pack/foo.keep &&
-	: >.git/objects/pack/foo.pack &&
-	: >.git/objects/pack/fake.bar &&
-	: >.git/objects/pack/fake.keep &&
-	: >.git/objects/pack/fake.pack &&
-	: >.git/objects/pack/fake.idx &&
-	: >.git/objects/pack/fake2.keep &&
-	: >.git/objects/pack/fake3.idx &&
+	>.git/objects/pack/foo &&
+	>.git/objects/pack/foo.bar &&
+	>.git/objects/pack/foo.keep &&
+	>.git/objects/pack/foo.pack &&
+	>.git/objects/pack/fake.bar &&
+	>.git/objects/pack/fake.keep &&
+	>.git/objects/pack/fake.pack &&
+	>.git/objects/pack/fake.idx &&
+	>.git/objects/pack/fake2.keep &&
+	>.git/objects/pack/fake3.idx &&
 	git count-objects -v 2>stderr &&
 	grep "index file .git/objects/pack/fake.idx is too small" stderr &&
 	grep "^warning:" stderr | sort >actual &&
@@ -250,12 +215,12 @@ EOF
 test_expect_success 'clean pack garbage with gc' '
 	test_when_finished "rm -f .git/objects/pack/fake*" &&
 	test_when_finished "rm -f .git/objects/pack/foo*" &&
-	: >.git/objects/pack/foo.keep &&
-	: >.git/objects/pack/foo.pack &&
-	: >.git/objects/pack/fake.idx &&
-	: >.git/objects/pack/fake2.keep &&
-	: >.git/objects/pack/fake2.idx &&
-	: >.git/objects/pack/fake3.keep &&
+	>.git/objects/pack/foo.keep &&
+	>.git/objects/pack/foo.pack &&
+	>.git/objects/pack/fake.idx &&
+	>.git/objects/pack/fake2.keep &&
+	>.git/objects/pack/fake2.idx &&
+	>.git/objects/pack/fake3.keep &&
 	git gc &&
 	git count-objects -v 2>stderr &&
 	grep "^warning:" stderr | sort >actual &&

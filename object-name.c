@@ -87,27 +87,21 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 
 static int match_hash(unsigned, const unsigned char *, const unsigned char *);
 
+static enum cb_next match_prefix(const struct object_id *oid, void *arg)
+{
+	struct disambiguate_state *ds = arg;
+	/* no need to call match_hash, oidtree_each did prefix match */
+	update_candidates(ds, oid);
+	return ds->ambiguous ? CB_BREAK : CB_CONTINUE;
+}
+
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
 	struct object_directory *odb;
 
-	for (odb = ds->repo->objects->odb; odb && !ds->ambiguous; odb = odb->next) {
-		int pos;
-		struct oid_array *loose_objects;
-
-		loose_objects = odb_loose_cache(odb, &ds->bin_pfx);
-		pos = oid_array_lookup(loose_objects, &ds->bin_pfx);
-		if (pos < 0)
-			pos = -1 - pos;
-		while (!ds->ambiguous && pos < loose_objects->nr) {
-			const struct object_id *oid;
-			oid = loose_objects->oid + pos;
-			if (!match_hash(ds->len, ds->bin_pfx.hash, oid->hash))
-				break;
-			update_candidates(ds, oid);
-			pos++;
-		}
-	}
+	for (odb = ds->repo->objects->odb; odb && !ds->ambiguous; odb = odb->next)
+		oidtree_each(odb_loose_cache(odb, &ds->bin_pfx),
+				&ds->bin_pfx, ds->len, match_prefix, ds);
 }
 
 static int match_hash(unsigned len, const unsigned char *a, const unsigned char *b)

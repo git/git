@@ -124,7 +124,7 @@ test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
 		: happy
 		;;
 	*)
-		echo Ooops, .git/logs/refs/heads/main is not 0662 [$actual]
+		echo Ooops, .git/logs/refs/heads/main is not 066x [$actual]
 		false
 		;;
 	esac

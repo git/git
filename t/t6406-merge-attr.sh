@@ -207,4 +207,22 @@ test_expect_success 'custom merge does not lock index' '
 	git merge main
 '
 
+test_expect_success 'binary files with union attribute' '
+	git checkout -b bin-main &&
+	printf "base\0" >bin.txt &&
+	echo "bin.txt merge=union" >.gitattributes &&
+	git add bin.txt .gitattributes &&
+	git commit -m base &&
+
+	printf "one\0" >bin.txt &&
+	git commit -am one &&
+
+	git checkout -b bin-side HEAD^ &&
+	printf "two\0" >bin.txt &&
+	git commit -am two &&
+
+	test_must_fail git merge bin-main 2>stderr &&
+	grep -i "warning.*cannot merge.*HEAD vs. bin-main" stderr
+'
+
 test_done

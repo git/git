@@ -57,7 +57,13 @@ do
 			--upload-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-upload-pack" \
 			origin &&
 		grep \"key\":\"server-sid\" tr2-client-events &&
-		grep \"key\":\"client-sid\" tr2-server-events
+		grep \"key\":\"client-sid\" tr2-server-events &&
+
+		if test "$PROTO" = 2
+		then
+			grep \"event\":\"region_enter\".*\"category\":\"serve\" tr2-server-events &&
+			grep \"event\":\"region_leave\".*\"category\":\"serve\" tr2-server-events
+		fi
 	'
 
 	test_expect_success "session IDs advertised (push v${PROTO})" '
@@ -71,7 +77,13 @@ do
 			--receive-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-receive-pack" \
 			origin HEAD:new-branch &&
 		grep \"key\":\"server-sid\" tr2-client-events &&
-		grep \"key\":\"client-sid\" tr2-server-events
+		grep \"key\":\"client-sid\" tr2-server-events &&
+
+		if test "$PROTO" = 2
+		then
+			! grep \"event\":\"region_enter\".*\"category\":\"serve\" tr2-server-events &&
+			! grep \"event\":\"region_leave\".*\"category\":\"serve\" tr2-server-events
+		fi
 	'
 done
 

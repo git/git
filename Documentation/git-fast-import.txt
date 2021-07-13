@@ -1277,7 +1277,7 @@ must be applied manually if the update is needed.
 An example crash:
 
 ====
-	$ cat >in <<END_OF_INPUT
+	$ cat >in <<-END_OF_INPUT
 	# my very first test commit
 	commit refs/heads/master
 	committer Shawn O. Pearce <spearce> 19283 -0400
@@ -1289,12 +1289,13 @@ An example crash:
 	data <<EOF
 	.gitignore
 	EOF
-	M 777 inline bob
+	M 777 inline file.txt
 	END_OF_INPUT
 
 	$ git fast-import <in
-	fatal: Corrupt mode: M 777 inline bob
+	fatal: Corrupt mode: M 777 inline file.txt
 	fast-import: dumping crash report to .git/fast_import_crash_8434
+	Unpacking objects: 100% (1/1), 32 bytes | 32.00 KiB/s, done.
 
 	$ cat .git/fast_import_crash_8434
 	fast-import crash report:
@@ -1302,7 +1303,7 @@ An example crash:
 	    parent process     : 1391
 	    at Sat Sep 1 00:58:12 2007
 
-	fatal: Corrupt mode: M 777 inline bob
+	fatal: Corrupt mode: M 777 inline file.txt
 
 	Most Recent Commands Before Crash
 	---------------------------------
@@ -1313,7 +1314,7 @@ An example crash:
 	  data <<EOF
 	  M 644 inline .gitignore
 	  data <<EOF
-	* M 777 inline bob
+	* M 777 inline file.txt
 
 	Active Branch LRU
 	-----------------
@@ -1333,6 +1334,9 @@ An example crash:
 	  commit clock: 0
 	  last pack   :
 
+
+	Marks
+	-----
 
 	-------------------
 	END OF CRASH REPORT

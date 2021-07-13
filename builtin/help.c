@@ -436,10 +436,9 @@ static void exec_viewer(const char *name, const char *page)
 		warning(_("'%s': unknown man viewer."), name);
 }
 
-static void show_man_page(const char *git_cmd)
+static void show_man_page(const char *page)
 {
 	struct man_viewer_list *viewer;
-	const char *page = cmd_to_page(git_cmd);
 	const char *fallback = getenv("GIT_MAN_VIEWER");
 
 	setup_man_path();
@@ -453,9 +452,8 @@ static void show_man_page(const char *git_cmd)
 	die(_("no man viewer handled the request"));
 }
 
-static void show_info_page(const char *git_cmd)
+static void show_info_page(const char *page)
 {
-	const char *page = cmd_to_page(git_cmd);
 	setenv("INFOPATH", system_path(GIT_INFO_PATH), 1);
 	execlp("info", "info", "gitman", page, (char *)NULL);
 	die(_("no info viewer handled the request"));
@@ -486,9 +484,8 @@ static void open_html(const char *path)
 	execl_git_cmd("web--browse", "-c", "help.browser", path, (char *)NULL);
 }
 
-static void show_html_page(const char *git_cmd)
+static void show_html_page(const char *page)
 {
-	const char *page = cmd_to_page(git_cmd);
 	struct strbuf page_path; /* it leaks but we exec bellow */
 
 	get_html_page_path(&page_path, page);
@@ -548,6 +545,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 {
 	int nongit;
 	enum help_format parsed_help_format;
+	const char *page;
 
 	argc = parse_options(argc, argv, prefix, builtin_help_options,
 			builtin_help_usage, 0);
@@ -606,16 +604,17 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 
 	argv[0] = check_git_cmd(argv[0]);
 
+	page = cmd_to_page(argv[0]);
 	switch (help_format) {
 	case HELP_FORMAT_NONE:
 	case HELP_FORMAT_MAN:
-		show_man_page(argv[0]);
+		show_man_page(page);
 		break;
 	case HELP_FORMAT_INFO:
-		show_info_page(argv[0]);
+		show_info_page(page);
 		break;
 	case HELP_FORMAT_WEB:
-		show_html_page(argv[0]);
+		show_html_page(page);
 		break;
 	}
 

@@ -134,7 +134,8 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 			      int flags, void *cb_data)
 {
 	struct object *obj;
-	enum decoration_type type = DECORATION_NONE;
+	enum object_type objtype;
+	enum decoration_type deco_type = DECORATION_NONE;
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
 
 	if (filter && !ref_filter_match(refname, filter))
@@ -155,22 +156,23 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		return 0;
 	}
 
-	obj = parse_object(the_repository, oid);
-	if (!obj)
+	objtype = oid_object_info(the_repository, oid, NULL);
+	if (objtype < 0)
 		return 0;
+	obj = lookup_object_by_type(the_repository, oid, objtype);
 
 	if (starts_with(refname, "refs/heads/"))
-		type = DECORATION_REF_LOCAL;
+		deco_type = DECORATION_REF_LOCAL;
 	else if (starts_with(refname, "refs/remotes/"))
-		type = DECORATION_REF_REMOTE;
+		deco_type = DECORATION_REF_REMOTE;
 	else if (starts_with(refname, "refs/tags/"))
-		type = DECORATION_REF_TAG;
+		deco_type = DECORATION_REF_TAG;
 	else if (!strcmp(refname, "refs/stash"))
-		type = DECORATION_REF_STASH;
+		deco_type = DECORATION_REF_STASH;
 	else if (!strcmp(refname, "HEAD"))
-		type = DECORATION_REF_HEAD;
+		deco_type = DECORATION_REF_HEAD;
 
-	add_name_decoration(type, refname, obj);
+	add_name_decoration(deco_type, refname, obj);
 	while (obj->type == OBJ_TAG) {
 		obj = ((struct tag *)obj)->tagged;
 		if (!obj)

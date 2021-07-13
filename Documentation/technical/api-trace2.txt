@@ -493,6 +493,20 @@ about specific error arguments.
 }
 ------------
 
+`"cmd_ancestry"`::
+	This event contains the text command name for the parent (and earlier
+	generations of parents) of the current process, in an array ordered from
+	nearest parent to furthest great-grandparent. It may not be implemented
+	on all platforms.
++
+------------
+{
+	"event":"cmd_ancestry",
+	...
+	"ancestry":["bash","tmux: server","systemd"]
+}
+------------
+
 `"cmd_name"`::
 	This event contains the command name for this git process
 	and the hierarchy of commands from parent git processes.

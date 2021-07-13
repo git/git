@@ -101,9 +101,9 @@ int init_apply_state(struct apply_state *state,
 	state->ws_error_action = warn_on_ws_error;
 	state->ws_ignore_action = ignore_ws_none;
 	state->linenr = 1;
-	string_list_init(&state->fn_table, 0);
-	string_list_init(&state->limit_by_name, 0);
-	string_list_init(&state->symlink_changes, 0);
+	string_list_init_nodup(&state->fn_table);
+	string_list_init_nodup(&state->limit_by_name);
+	string_list_init_nodup(&state->symlink_changes);
 	strbuf_init(&state->root, 0);
 
 	git_apply_config();

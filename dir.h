@@ -342,6 +342,8 @@ struct dir_struct {
 	unsigned visited_directories;
 };
 
+#define DIR_INIT { 0 }
+
 struct dirent *readdir_skip_dot_and_dotdot(DIR *dirp);
 
 /*Count the number of slashes for string s*/
@@ -366,8 +368,6 @@ int match_pathspec(struct index_state *istate,
 		   int prefix, char *seen, int is_dir);
 int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
 int within_depth(const char *name, int namelen, int depth, int max_depth);
-
-void dir_init(struct dir_struct *dir);
 
 int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,
@@ -489,7 +489,9 @@ int remove_dir_recursively(struct strbuf *path, int flag);
 int remove_path(const char *path);
 
 int fspathcmp(const char *a, const char *b);
+int fspatheq(const char *a, const char *b);
 int fspathncmp(const char *a, const char *b, size_t count);
+unsigned int fspathhash(const char *str);
 
 /*
  * The prefix part of pattern must not contains wildcards.

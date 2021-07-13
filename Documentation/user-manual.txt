@@ -2792,7 +2792,7 @@ A fast-forward looks something like this:
 
 In some cases it is possible that the new head will *not* actually be
 a descendant of the old head.  For example, the developer may have
-realized she made a serious mistake, and decided to backtrack,
+realized a serious mistake was made and decided to backtrack,
 resulting in a situation like:
 
 ................................................

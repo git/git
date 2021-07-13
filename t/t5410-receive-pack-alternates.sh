@@ -16,10 +16,6 @@ test_expect_success 'setup' '
 	test_commit private
 '
 
-extract_haves () {
-	depacketize | perl -lne '/^(\S+) \.have/ and print $1'
-}
-
 test_expect_success 'with core.alternateRefsCommand' '
 	write_script fork/alternate-refs <<-\EOF &&
 		git --git-dir="$1" for-each-ref \
@@ -27,18 +23,40 @@ test_expect_success 'with core.alternateRefsCommand' '
 			refs/heads/public/
 	EOF
 	test_config -C fork core.alternateRefsCommand ./alternate-refs &&
-	git rev-parse public/branch >expect &&
-	printf "0000" | git receive-pack fork >actual &&
-	extract_haves <actual >actual.haves &&
-	test_cmp expect actual.haves
+
+	test-tool pkt-line pack >in <<-\EOF &&
+	0000
+	EOF
+
+	cat >expect <<-EOF &&
+	$(git rev-parse main) refs/heads/main
+	$(git rev-parse base) refs/tags/base
+	$(git rev-parse public) .have
+	0000
+	EOF
+
+	git receive-pack fork >out <in &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'with core.alternateRefsPrefixes' '
 	test_config -C fork core.alternateRefsPrefixes "refs/heads/private" &&
-	git rev-parse private/branch >expect &&
-	printf "0000" | git receive-pack fork >actual &&
-	extract_haves <actual >actual.haves &&
-	test_cmp expect actual.haves
+
+	test-tool pkt-line pack >in <<-\EOF &&
+	0000
+	EOF
+
+	cat >expect <<-EOF &&
+	$(git rev-parse main) refs/heads/main
+	$(git rev-parse base) refs/tags/base
+	$(git rev-parse private) .have
+	0000
+	EOF
+
+	git receive-pack fork >out <in &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_done

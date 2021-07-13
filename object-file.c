@@ -517,9 +517,9 @@ const char *loose_object_path(struct repository *r, struct strbuf *buf,
  */
 static int alt_odb_usable(struct raw_object_store *o,
 			  struct strbuf *path,
-			  const char *normalized_objdir)
+			  const char *normalized_objdir, khiter_t *pos)
 {
-	struct object_directory *odb;
+	int r;
 
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path->buf)) {
@@ -533,14 +533,20 @@ static int alt_odb_usable(struct raw_object_store *o,
 	 * Prevent the common mistake of listing the same
 	 * thing twice, or object directory itself.
 	 */
-	for (odb = o->odb; odb; odb = odb->next) {
-		if (!fspathcmp(path->buf, odb->path))
-			return 0;
-	}
-	if (!fspathcmp(path->buf, normalized_objdir))
-		return 0;
+	if (!o->odb_by_path) {
+		khiter_t p;
 
-	return 1;
+		o->odb_by_path = kh_init_odb_path_map();
+		assert(!o->odb->next);
+		p = kh_put_odb_path_map(o->odb_by_path, o->odb->path, &r);
+		assert(r == 1); /* never used */
+		kh_value(o->odb_by_path, p) = o->odb;
+	}
+	if (fspatheq(path->buf, normalized_objdir))
+		return 0;
+	*pos = kh_put_odb_path_map(o->odb_by_path, path->buf, &r);
+	/* r: 0 = exists, 1 = never used, 2 = deleted */
+	return r == 0 ? 0 : 1;
 }
 
 /*
@@ -561,17 +567,18 @@ static int alt_odb_usable(struct raw_object_store *o,
 static void read_info_alternates(struct repository *r,
 				 const char *relative_base,
 				 int depth);
-static int link_alt_odb_entry(struct repository *r, const char *entry,
+static int link_alt_odb_entry(struct repository *r, const struct strbuf *entry,
 	const char *relative_base, int depth, const char *normalized_objdir)
 {
 	struct object_directory *ent;
 	struct strbuf pathbuf = STRBUF_INIT;
+	khiter_t pos;
 
-	if (!is_absolute_path(entry) && relative_base) {
+	if (!is_absolute_path(entry->buf) && relative_base) {
 		strbuf_realpath(&pathbuf, relative_base, 1);
 		strbuf_addch(&pathbuf, '/');
 	}
-	strbuf_addstr(&pathbuf, entry);
+	strbuf_addbuf(&pathbuf, entry);
 
 	if (strbuf_normalize_path(&pathbuf) < 0 && relative_base) {
 		error(_("unable to normalize alternate object path: %s"),
@@ -587,23 +594,25 @@ static int link_alt_odb_entry(struct repository *r, const char *entry,
 	while (pathbuf.len && pathbuf.buf[pathbuf.len - 1] == '/')
 		strbuf_setlen(&pathbuf, pathbuf.len - 1);
 
-	if (!alt_odb_usable(r->objects, &pathbuf, normalized_objdir)) {
+	if (!alt_odb_usable(r->objects, &pathbuf, normalized_objdir, &pos)) {
 		strbuf_release(&pathbuf);
 		return -1;
 	}
 
 	CALLOC_ARRAY(ent, 1);
-	ent->path = xstrdup(pathbuf.buf);
+	/* pathbuf.buf is already in r->objects->odb_by_path */
+	ent->path = strbuf_detach(&pathbuf, NULL);
 
 	/* add the alternate entry */
 	*r->objects->odb_tail = ent;
 	r->objects->odb_tail = &(ent->next);
 	ent->next = NULL;
+	assert(r->objects->odb_by_path);
+	kh_value(r->objects->odb_by_path, pos) = ent;
 
 	/* recursively add alternates */
-	read_info_alternates(r, pathbuf.buf, depth + 1);
+	read_info_alternates(r, ent->path, depth + 1);
 
-	strbuf_release(&pathbuf);
 	return 0;
 }
 
@@ -660,7 +669,7 @@ static void link_alt_odb_entries(struct repository *r, const char *alt,
 		alt = parse_alt_odb_entry(alt, sep, &entry);
 		if (!entry.len)
 			continue;
-		link_alt_odb_entry(r, entry.buf,
+		link_alt_odb_entry(r, &entry,
 				   relative_base, depth, objdirbuf.buf);
 	}
 	strbuf_release(&entry);
@@ -1023,12 +1032,26 @@ void *xmmap_gently(void *start, size_t length,
 	return ret;
 }
 
+const char *mmap_os_err(void)
+{
+	static const char blank[] = "";
+#if defined(__linux__)
+	if (errno == ENOMEM) {
+		/* this continues an existing error message: */
+		static const char enomem[] =
+", check sys.vm.max_map_count and/or RLIMIT_DATA";
+		return enomem;
+	}
+#endif /* OS-specific bits */
+	return blank;
+}
+
 void *xmmap(void *start, size_t length,
 	int prot, int flags, int fd, off_t offset)
 {
 	void *ret = xmmap_gently(start, length, prot, flags, fd, offset);
 	if (ret == MAP_FAILED)
-		die_errno(_("mmap failed"));
+		die_errno(_("mmap failed%s"), mmap_os_err());
 	return ret;
 }
 
@@ -1039,9 +1062,11 @@ void *xmmap(void *start, size_t length,
  * the streaming interface and rehash it to do the same.
  */
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *map, unsigned long size, const char *type)
+			   void *map, unsigned long size, const char *type,
+			   struct object_id *real_oidp)
 {
-	struct object_id real_oid;
+	struct object_id tmp;
+	struct object_id *real_oid = real_oidp ? real_oidp : &tmp;
 	enum object_type obj_type;
 	struct git_istream *st;
 	git_hash_ctx c;
@@ -1049,8 +1074,8 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 	int hdrlen;
 
 	if (map) {
-		hash_object_file(r->hash_algo, map, size, type, &real_oid);
-		return !oideq(oid, &real_oid) ? -1 : 0;
+		hash_object_file(r->hash_algo, map, size, type, real_oid);
+		return !oideq(oid, real_oid) ? -1 : 0;
 	}
 
 	st = open_istream(r, oid, &obj_type, &size, NULL);
@@ -1075,9 +1100,9 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 			break;
 		r->hash_algo->update_fn(&c, buf, readlen);
 	}
-	r->hash_algo->final_oid_fn(&real_oid, &c);
+	r->hash_algo->final_oid_fn(real_oid, &c);
 	close_istream(st);
-	return !oideq(oid, &real_oid) ? -1 : 0;
+	return !oideq(oid, real_oid) ? -1 : 0;
 }
 
 int git_open_cloexec(const char *name, int flags)
@@ -1164,7 +1189,7 @@ static int quick_has_loose(struct repository *r,
 
 	prepare_alt_odb(r);
 	for (odb = r->objects->odb; odb; odb = odb->next) {
-		if (oid_array_lookup(odb_loose_cache(odb, oid), oid) >= 0)
+		if (oidtree_contains(odb_loose_cache(odb, oid), oid))
 			return 1;
 	}
 	return 0;
@@ -1210,11 +1235,12 @@ void *map_loose_object(struct repository *r,
 	return map_loose_object_1(r, NULL, oid, size);
 }
 
-static int unpack_loose_short_header(git_zstream *stream,
-				     unsigned char *map, unsigned long mapsize,
-				     void *buffer, unsigned long bufsiz)
+int unpack_loose_header(git_zstream *stream,
+			unsigned char *map, unsigned long mapsize,
+			void *buffer, unsigned long bufsiz,
+			struct strbuf *header)
 {
-	int ret;
+	int status;
 
 	/* Get the data stream */
 	memset(stream, 0, sizeof(*stream));
@@ -1225,35 +1251,8 @@ static int unpack_loose_short_header(git_zstream *stream,
 
 	git_inflate_init(stream);
 	obj_read_unlock();
-	ret = git_inflate(stream, 0);
+	status = git_inflate(stream, 0);
 	obj_read_lock();
-
-	return ret;
-}
-
-int unpack_loose_header(git_zstream *stream,
-			unsigned char *map, unsigned long mapsize,
-			void *buffer, unsigned long bufsiz)
-{
-	int status = unpack_loose_short_header(stream, map, mapsize,
-					       buffer, bufsiz);
-
-	if (status < Z_OK)
-		return status;
-
-	/* Make sure we have the terminating NUL */
-	if (!memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
-		return -1;
-	return 0;
-}
-
-static int unpack_loose_header_to_strbuf(git_zstream *stream, unsigned char *map,
-					 unsigned long mapsize, void *buffer,
-					 unsigned long bufsiz, struct strbuf *header)
-{
-	int status;
-
-	status = unpack_loose_short_header(stream, map, mapsize, buffer, bufsiz);
 	if (status < Z_OK)
 		return -1;
 
@@ -1262,6 +1261,14 @@ static int unpack_loose_header_to_strbuf(git_zstream *stream, unsigned char *map
 	 */
 	if (memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
 		return 0;
+
+	/*
+	 * We have a header longer than MAX_HEADER_LEN. The "header"
+	 * here is only non-NULL when we run "cat-file
+	 * --allow-unknown-type".
+	 */
+	if (!header)
+		return -2;
 
 	/*
 	 * buffer[0..bufsiz] was not large enough.  Copy the partial
@@ -1282,7 +1289,7 @@ static int unpack_loose_header_to_strbuf(git_zstream *stream, unsigned char *map
 		stream->next_out = buffer;
 		stream->avail_out = bufsiz;
 	} while (status != Z_STREAM_END);
-	return -1;
+	return -2;
 }
 
 static void *unpack_loose_rest(git_zstream *stream,
@@ -1340,8 +1347,7 @@ static void *unpack_loose_rest(git_zstream *stream,
  * too permissive for what we want to check. So do an anal
  * object header parse by hand.
  */
-static int parse_loose_header_extended(const char *hdr, struct object_info *oi,
-				       unsigned int flags)
+int parse_loose_header(const char *hdr, struct object_info *oi)
 {
 	const char *type_buf = hdr;
 	unsigned long size;
@@ -1363,15 +1369,6 @@ static int parse_loose_header_extended(const char *hdr, struct object_info *oi,
 	type = type_from_string_gently(type_buf, type_len, 1);
 	if (oi->type_name)
 		strbuf_add(oi->type_name, type_buf, type_len);
-	/*
-	 * Set type to 0 if its an unknown object and
-	 * we're obtaining the type using '--allow-unknown-type'
-	 * option.
-	 */
-	if ((flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE) && (type < 0))
-		type = 0;
-	else if (type < 0)
-		die(_("invalid object type"));
 	if (oi->typep)
 		*oi->typep = type;
 
@@ -1398,15 +1395,14 @@ static int parse_loose_header_extended(const char *hdr, struct object_info *oi,
 	/*
 	 * The length must be followed by a zero byte
 	 */
-	return *hdr ? -1 : type;
-}
+	if (*hdr)
+		return -1;
 
-int parse_loose_header(const char *hdr, unsigned long *sizep)
-{
-	struct object_info oi = OBJECT_INFO_INIT;
-
-	oi.sizep = sizep;
-	return parse_loose_header_extended(hdr, &oi, 0);
+	/*
+	 * The format is valid, but the type may still be bogus. The
+	 * Caller needs to check its oi->typep.
+	 */
+	return 0;
 }
 
 static int loose_object_info(struct repository *r,
@@ -1417,9 +1413,13 @@ static int loose_object_info(struct repository *r,
 	unsigned long mapsize;
 	void *map;
 	git_zstream stream;
+	int hdr_ret;
 	char hdr[MAX_HEADER_LEN];
 	struct strbuf hdrbuf = STRBUF_INIT;
 	unsigned long size_scratch;
+	enum object_type type_scratch;
+	struct object_info *oi_header = NULL;
+	int allow_unknown = flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (oi->delta_base_oid)
 		oidclr(oi->delta_base_oid);
@@ -1450,41 +1450,60 @@ static int loose_object_info(struct repository *r,
 
 	if (!oi->sizep)
 		oi->sizep = &size_scratch;
+	if (!oi->typep)
+		oi->typep = &type_scratch;
 
 	if (oi->disk_sizep)
 		*oi->disk_sizep = mapsize;
-	if ((flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE)) {
-		if (unpack_loose_header_to_strbuf(&stream, map, mapsize, hdr, sizeof(hdr), &hdrbuf) < 0)
-			status = error(_("unable to unpack %s header with --allow-unknown-type"),
-				       oid_to_hex(oid));
-	} else if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
+
+	hdr_ret = unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
+				      allow_unknown ? &hdrbuf : NULL);
+	switch (hdr_ret) {
+	case 0:
+		break;
+	case -1:
 		status = error(_("unable to unpack %s header"),
 			       oid_to_hex(oid));
-	if (status < 0)
-		; /* Do nothing */
-	else if (hdrbuf.len) {
-		if ((status = parse_loose_header_extended(hdrbuf.buf, oi, flags)) < 0)
-			status = error(_("unable to parse %s header with --allow-unknown-type"),
-				       oid_to_hex(oid));
-	} else if ((status = parse_loose_header_extended(hdr, oi, flags)) < 0)
-		status = error(_("unable to parse %s header"), oid_to_hex(oid));
+		break;
+	case -2:
+		status = error(_("header for %s too long, exceeds %d bytes"),
+			       oid_to_hex(oid), MAX_HEADER_LEN);
+		break;
+	default:
+		BUG("unknown hdr_ret value %d", hdr_ret);
+	}
+	if (!status) {
+		if (!parse_loose_header(hdrbuf.len ? hdrbuf.buf : hdr, oi))
+			/*
+			 * oi->{sizep,typep} are meaningless unless
+			 * parse_loose_header() returns >= 0. Let's
+			 * access them as "oi_header" (just an alias
+			 * for "oi") below to make that intent clear.
+			 */
+			oi_header = oi;
+		else
+			status = error(_("unable to parse %s header"), oid_to_hex(oid));
+	}
+	if (!allow_unknown && oi_header && *oi_header->typep < 0)
+		die(_("invalid object type"));
 
-	if (status >= 0 && oi->contentp) {
+	if (oi_header && oi->contentp) {
 		*oi->contentp = unpack_loose_rest(&stream, hdr,
-						  *oi->sizep, oid);
+						  *oi_header->sizep, oid);
 		if (!*oi->contentp) {
 			git_inflate_end(&stream);
 			status = -1;
 		}
-	} else
+	} else {
 		git_inflate_end(&stream);
+	}
 
 	munmap(map, mapsize);
-	if (status && oi->typep)
-		*oi->typep = status;
 	if (oi->sizep == &size_scratch)
 		oi->sizep = NULL;
 	strbuf_release(&hdrbuf);
+	if (oi->typep == &type_scratch)
+		oi->typep = NULL;
 	oi->whence = OI_LOOSE;
 	return (status < 0) ? status : 0;
 }
@@ -1570,15 +1589,12 @@ static int do_oid_object_info_extended(struct repository *r,
 		}
 
 		/* Check if it is a missing object */
-		if (fetch_if_missing && has_promisor_remote() &&
-		    !already_retried && r == the_repository &&
+		if (fetch_if_missing && repo_has_promisor_remote(r) &&
+		    !already_retried &&
 		    !(flags & OBJECT_INFO_SKIP_FETCH_OBJECT)) {
 			/*
 			 * TODO Investigate checking promisor_remote_get_direct()
 			 * TODO return value and stopping on error here.
-			 * TODO Pass a repository struct through
-			 * promisor_remote_get_direct(), such that arbitrary
-			 * repositories work.
 			 */
 			promisor_remote_get_direct(r, real, 1);
 			already_retried = 1;
@@ -2443,39 +2459,45 @@ int for_each_loose_object(each_loose_object_fn cb, void *data,
 static int append_loose_object(const struct object_id *oid, const char *path,
 			       void *data)
 {
-	oid_array_append(data, oid);
+	oidtree_insert(data, oid);
 	return 0;
 }
 
-struct oid_array *odb_loose_cache(struct object_directory *odb,
+struct oidtree *odb_loose_cache(struct object_directory *odb,
 				  const struct object_id *oid)
 {
 	int subdir_nr = oid->hash[0];
 	struct strbuf buf = STRBUF_INIT;
+	size_t word_bits = bitsizeof(odb->loose_objects_subdir_seen[0]);
+	size_t word_index = subdir_nr / word_bits;
+	size_t mask = 1 << (subdir_nr % word_bits);
+	uint32_t *bitmap;
 
 	if (subdir_nr < 0 ||
-	    subdir_nr >= ARRAY_SIZE(odb->loose_objects_subdir_seen))
+	    subdir_nr >= bitsizeof(odb->loose_objects_subdir_seen))
 		BUG("subdir_nr out of range");
 
-	if (odb->loose_objects_subdir_seen[subdir_nr])
-		return &odb->loose_objects_cache[subdir_nr];
-
+	bitmap = &odb->loose_objects_subdir_seen[word_index];
+	if (*bitmap & mask)
+		return odb->loose_objects_cache;
+	if (!odb->loose_objects_cache) {
+		ALLOC_ARRAY(odb->loose_objects_cache, 1);
+		oidtree_init(odb->loose_objects_cache);
+	}
 	strbuf_addstr(&buf, odb->path);
 	for_each_file_in_obj_subdir(subdir_nr, &buf,
 				    append_loose_object,
 				    NULL, NULL,
-				    &odb->loose_objects_cache[subdir_nr]);
-	odb->loose_objects_subdir_seen[subdir_nr] = 1;
+				    odb->loose_objects_cache);
+	*bitmap |= mask;
 	strbuf_release(&buf);
-	return &odb->loose_objects_cache[subdir_nr];
+	return odb->loose_objects_cache;
 }
 
 void odb_clear_loose_cache(struct object_directory *odb)
 {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(odb->loose_objects_cache); i++)
-		oid_array_clear(&odb->loose_objects_cache[i]);
+	oidtree_clear(odb->loose_objects_cache);
+	FREE_AND_NULL(odb->loose_objects_cache);
 	memset(&odb->loose_objects_subdir_seen, 0,
 	       sizeof(odb->loose_objects_subdir_seen));
 }
@@ -2540,15 +2562,19 @@ static int check_stream_oid(git_zstream *stream,
 
 int read_loose_object(const char *path,
 		      const struct object_id *expected_oid,
-		      enum object_type *type,
-		      unsigned long *size,
-		      void **contents)
+		      struct object_id *real_oid,
+		      void **contents,
+		      struct object_info *oi,
+		      unsigned int oi_flags)
 {
 	int ret = -1;
 	void *map = NULL;
 	unsigned long mapsize;
 	git_zstream stream;
 	char hdr[MAX_HEADER_LEN];
+	int allow_unknown = oi_flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
+	enum object_type *type = oi->typep;
+	unsigned long *size = oi->sizep;
 
 	*contents = NULL;
 
@@ -2558,14 +2584,19 @@ int read_loose_object(const char *path,
 		goto out;
 	}
 
-	if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0) {
+	if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
+				NULL) < 0) {
 		error(_("unable to unpack header of %s"), path);
 		goto out;
 	}
 
-	*type = parse_loose_header(hdr, size);
-	if (*type < 0) {
+	if (parse_loose_header(hdr, oi) < 0) {
 		error(_("unable to parse header of %s"), path);
+		git_inflate_end(&stream);
+		goto out;
+	}
+	if (!allow_unknown && *type < 0) {
+		error(_("header for %s declares an unknown type"), path);
 		git_inflate_end(&stream);
 		goto out;
 	}
@@ -2581,10 +2612,9 @@ int read_loose_object(const char *path,
 			goto out;
 		}
 		if (check_object_signature(the_repository, expected_oid,
-					   *contents, *size,
-					   type_name(*type))) {
-			error(_("hash mismatch for %s (expected %s)"), path,
-			      oid_to_hex(expected_oid));
+					   *contents, *size, oi->type_name->buf, real_oid)) {
+			if (oideq(real_oid, null_oid()))
+				BUG("should only get OID mismatch errors with mapped contents");
 			free(*contents);
 			goto out;
 		}

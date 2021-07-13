@@ -90,18 +90,20 @@ test_expect_success 'upload-pack fails due to error in pack-objects enumeration'
 
 test_expect_success 'upload-pack tolerates EOF just after stateless client wants' '
 	test_commit initial &&
+
 	head=$(git rev-parse HEAD) &&
+	test-tool pkt-line pack >request <<-EOF &&
+	want $head
+	shallow $head
+	deepen 1
+	0000
+	EOF
 
-	{
-		packetize "want $head" &&
-		packetize "shallow $head" &&
-		packetize "deepen 1" &&
-		printf "0000"
-	} >request &&
-
-	printf "0000" >expect &&
-
-	git upload-pack --stateless-rpc . <request >actual &&
+	cat >expect <<-\EOF &&
+	0000
+	EOF
+	git upload-pack --stateless-rpc . <request >out &&
+	test-tool pkt-line unpack <out >actual &&
 	test_cmp expect actual
 '
 

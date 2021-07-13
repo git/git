@@ -185,6 +185,24 @@ struct object *lookup_unknown_object(struct repository *r, const struct object_i
 	return obj;
 }
 
+struct object *lookup_object_by_type(struct repository *r,
+			    const struct object_id *oid,
+			    enum object_type type)
+{
+	switch (type) {
+	case OBJ_COMMIT:
+		return (struct object *)lookup_commit(r, oid);
+	case OBJ_TREE:
+		return (struct object *)lookup_tree(r, oid);
+	case OBJ_TAG:
+		return (struct object *)lookup_tag(r, oid);
+	case OBJ_BLOB:
+		return (struct object *)lookup_blob(r, oid);
+	default:
+		die("BUG: unknown object type %d", type);
+	}
+}
+
 struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
 {
 	struct object *obj;
@@ -261,7 +279,7 @@ struct object *parse_object(struct repository *r, const struct object_id *oid)
 	if ((obj && obj->type == OBJ_BLOB && repo_has_object_file(r, oid)) ||
 	    (!obj && repo_has_object_file(r, oid) &&
 	     oid_object_info(r, oid, NULL) == OBJ_BLOB)) {
-		if (check_object_signature(r, repl, NULL, 0, NULL) < 0) {
+		if (check_object_signature(r, repl, NULL, 0, NULL, NULL) < 0) {
 			error(_("hash mismatch %s"), oid_to_hex(oid));
 			return NULL;
 		}
@@ -272,7 +290,7 @@ struct object *parse_object(struct repository *r, const struct object_id *oid)
 	buffer = repo_read_object_file(r, oid, &type, &size);
 	if (buffer) {
 		if (check_object_signature(r, repl, buffer, size,
-					   type_name(type)) < 0) {
+					   type_name(type), NULL) < 0) {
 			free(buffer);
 			error(_("hash mismatch %s"), oid_to_hex(repl));
 			return NULL;
@@ -511,6 +529,8 @@ static void free_object_directories(struct raw_object_store *o)
 		free_object_directory(o->odb);
 		o->odb = next;
 	}
+	kh_destroy_odb_path_map(o->odb_by_path);
+	o->odb_by_path = NULL;
 }
 
 void raw_object_store_clear(struct raw_object_store *o)

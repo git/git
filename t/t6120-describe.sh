@@ -17,16 +17,29 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 check_describe () {
+	indir= &&
+	while test $# != 0
+	do
+		case "$1" in
+		-C)
+			indir="$2"
+			shift
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done &&
+	indir=${indir:+"$indir"/} &&
 	expect="$1"
 	shift
 	describe_opts="$@"
 	test_expect_success "describe $describe_opts" '
-	R=$(git describe $describe_opts 2>err.actual) &&
-	case "$R" in
-	$expect)	echo happy ;;
-	*)	echo "Oops - $R is not $expect" &&
-		false ;;
-	esac
+		git ${indir:+ -C "$indir"} describe $describe_opts >raw &&
+		sed -e "s/-g[0-9a-f]*\$/-gHASH/" <raw >actual &&
+		echo "$expect" >expect &&
+		test_cmp expect actual
 	'
 }
 
@@ -59,29 +72,29 @@ test_expect_success setup '
 	test_commit --no-tag x file
 '
 
-check_describe A-* HEAD
-check_describe A-* HEAD^
-check_describe R-* HEAD^^
-check_describe A-* HEAD^^2
+check_describe A-8-gHASH HEAD
+check_describe A-7-gHASH HEAD^
+check_describe R-2-gHASH HEAD^^
+check_describe A-3-gHASH HEAD^^2
 check_describe B HEAD^^2^
-check_describe R-* HEAD^^^
+check_describe R-1-gHASH HEAD^^^
 
-check_describe c-* --tags HEAD
-check_describe c-* --tags HEAD^
-check_describe e-* --tags HEAD^^
-check_describe c-* --tags HEAD^^2
+check_describe c-7-gHASH --tags HEAD
+check_describe c-6-gHASH --tags HEAD^
+check_describe e-1-gHASH --tags HEAD^^
+check_describe c-2-gHASH --tags HEAD^^2
 check_describe B --tags HEAD^^2^
 check_describe e --tags HEAD^^^
 
 check_describe heads/main --all HEAD
-check_describe tags/c-* --all HEAD^
+check_describe tags/c-6-gHASH --all HEAD^
 check_describe tags/e --all HEAD^^^
 
-check_describe B-0-* --long HEAD^^2^
-check_describe A-3-* --long HEAD^^2
+check_describe B-0-gHASH --long HEAD^^2^
+check_describe A-3-gHASH --long HEAD^^2
 
-check_describe c-7-* --tags
-check_describe e-3-* --first-parent --tags
+check_describe c-7-gHASH --tags
+check_describe e-3-gHASH --first-parent --tags
 
 test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 	echo "A^0" >expect &&
@@ -92,20 +105,17 @@ test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 '
 
 check_describe tags/A --all A^0
-test_expect_success 'no warning was displayed for A' '
-	test_must_be_empty err.actual
-'
 
-test_expect_success 'rename tag A to Q locally' '
-	mv .git/refs/tags/A .git/refs/tags/Q
-'
-cat - >err.expect <<EOF
-warning: tag 'Q' is externally known as 'A'
-EOF
-check_describe A-* HEAD
-test_expect_success 'warning was displayed for Q' '
-	test_cmp err.expect err.actual
-'
+test_expect_success 'renaming tag A to Q locally produces a warning' "
+	mv .git/refs/tags/A .git/refs/tags/Q &&
+	git describe HEAD 2>err >out &&
+	cat >expected <<-\EOF &&
+	warning: tag 'Q' is externally known as 'A'
+	EOF
+	test_cmp expected err &&
+	grep -E '^A-8-g[0-9a-f]+$' out
+"
+
 test_expect_success 'misnamed annotated tag forces long output' '
 	description=$(git describe --no-long Q^0) &&
 	expr "$description" : "A-0-g[0-9a-f]*$" &&
@@ -129,46 +139,46 @@ test_expect_success 'rename tag Q back to A' '
 '
 
 test_expect_success 'pack tag refs' 'git pack-refs'
-check_describe A-* HEAD
+check_describe A-8-gHASH HEAD
 
 test_expect_success 'describe works from outside repo using --git-dir' '
 	git clone --bare "$TRASH_DIRECTORY" "$TRASH_DIRECTORY/bare" &&
 	git --git-dir "$TRASH_DIRECTORY/bare" describe >out &&
-	grep -E "^A-[1-9][0-9]?-g[0-9a-f]+$" out
+	grep -E "^A-8-g[0-9a-f]+$" out
 '
 
-check_describe "A-*[0-9a-f]" --dirty
+check_describe "A-8-gHASH" --dirty
 
 test_expect_success 'describe --dirty with --work-tree' '
 	(
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
 	) &&
-	grep -E "^A-[1-9][0-9]?-g[0-9a-f]+$" out
+	grep -E "^A-8-g[0-9a-f]+$" out
 '
 
 test_expect_success 'set-up dirty work tree' '
 	echo >>file
 '
 
-check_describe "A-*[0-9a-f]-dirty" --dirty
-
 test_expect_success 'describe --dirty with --work-tree (dirty)' '
+	git describe --dirty >expected &&
 	(
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
 	) &&
-	grep -E "^A-[1-9][0-9]?-g[0-9a-f]+-dirty$" out
+	grep -E "^A-8-g[0-9a-f]+-dirty$" out &&
+	test_cmp expected out
 '
 
-check_describe "A-*[0-9a-f].mod" --dirty=.mod
-
 test_expect_success 'describe --dirty=.mod with --work-tree (dirty)' '
+	git describe --dirty=.mod >expected &&
 	(
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty=.mod >"$TRASH_DIRECTORY/out"
 	) &&
-	grep -E "^A-[1-9][0-9]?-g[0-9a-f]+.mod$" out
+	grep -E "^A-8-g[0-9a-f]+.mod$" out &&
+	test_cmp expected out
 '
 
 test_expect_success 'describe --dirty HEAD' '
@@ -191,21 +201,21 @@ test_expect_success 'set-up matching pattern tests' '
 
 '
 
-check_describe "test-annotated-*" --match="test-*"
+check_describe "test-annotated-3-gHASH" --match="test-*"
 
-check_describe "test1-lightweight-*" --tags --match="test1-*"
+check_describe "test1-lightweight-2-gHASH" --tags --match="test1-*"
 
-check_describe "test2-lightweight-*" --tags --match="test2-*"
+check_describe "test2-lightweight-1-gHASH" --tags --match="test2-*"
 
-check_describe "test2-lightweight-*" --long --tags --match="test2-*" HEAD^
+check_describe "test2-lightweight-0-gHASH" --long --tags --match="test2-*" HEAD^
 
-check_describe "test2-lightweight-*" --long --tags --match="test1-*" --match="test2-*" HEAD^
+check_describe "test2-lightweight-0-gHASH" --long --tags --match="test1-*" --match="test2-*" HEAD^
 
-check_describe "test2-lightweight-*" --long --tags --match="test1-*" --no-match --match="test2-*" HEAD^
+check_describe "test2-lightweight-0-gHASH" --long --tags --match="test1-*" --no-match --match="test2-*" HEAD^
 
-check_describe "test1-lightweight-*" --long --tags --match="test1-*" --match="test3-*" HEAD
+check_describe "test1-lightweight-2-gHASH" --long --tags --match="test1-*" --match="test3-*" HEAD
 
-check_describe "test1-lightweight-*" --long --tags --match="test3-*" --match="test1-*" HEAD
+check_describe "test1-lightweight-2-gHASH" --long --tags --match="test3-*" --match="test1-*" HEAD
 
 test_expect_success 'set-up branches' '
 	git branch branch_A A &&
@@ -215,11 +225,11 @@ test_expect_success 'set-up branches' '
 	git update-ref refs/original/original_branch_A test-annotated~2
 '
 
-check_describe "heads/branch_A*" --all --match="branch_*" --exclude="branch_C" HEAD
+check_describe "heads/branch_A-11-gHASH" --all --match="branch_*" --exclude="branch_C" HEAD
 
-check_describe "remotes/origin/remote_branch_A*" --all --match="origin/remote_branch_*" --exclude="origin/remote_branch_C" HEAD
+check_describe "remotes/origin/remote_branch_A-11-gHASH" --all --match="origin/remote_branch_*" --exclude="origin/remote_branch_C" HEAD
 
-check_describe "original/original_branch_A*" --all test-annotated~1
+check_describe "original/original_branch_A-6-gHASH" --all test-annotated~1
 
 test_expect_success '--match does not work for other types' '
 	test_must_fail git describe --all --match="*original_branch_*" test-annotated~1
@@ -474,7 +484,7 @@ test_expect_success 'name-rev covers all conditions while looking at parents' '
 #  o-----o---o----x
 #        A
 #
-test_expect_success 'describe commits with disjoint bases' '
+test_expect_success 'setup: describe commits with disjoint bases' '
 	git init disjoint1 &&
 	(
 		cd disjoint1 &&
@@ -487,11 +497,11 @@ test_expect_success 'describe commits with disjoint bases' '
 		git checkout --orphan branch && rm file &&
 		echo B > file2 && git add file2 && git commit -m B &&
 		git tag B -a -m B &&
-		git merge --no-ff --allow-unrelated-histories main -m x &&
-
-		check_describe "A-3-*" HEAD
+		git merge --no-ff --allow-unrelated-histories main -m x
 	)
 '
+
+check_describe -C disjoint1 "A-3-gHASH" HEAD
 
 #           B
 #   o---o---o------------.
@@ -499,7 +509,7 @@ test_expect_success 'describe commits with disjoint bases' '
 #                  o---o---x
 #                  A
 #
-test_expect_success 'describe commits with disjoint bases 2' '
+test_expect_success 'setup: describe commits with disjoint bases 2' '
 	git init disjoint2 &&
 	(
 		cd disjoint2 &&
@@ -513,10 +523,10 @@ test_expect_success 'describe commits with disjoint bases 2' '
 		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:01" git commit -m o &&
 		echo B >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:02" git commit -m B &&
 		git tag B -a -m B &&
-		git merge --no-ff --allow-unrelated-histories main -m x &&
-
-		check_describe "B-3-*" HEAD
+		git merge --no-ff --allow-unrelated-histories main -m x
 	)
 '
+
+check_describe -C disjoint2 "B-3-gHASH" HEAD
 
 test_done

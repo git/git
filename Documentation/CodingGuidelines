@@ -551,6 +551,49 @@ Writing Documentation:
  documentation, please see the documentation-related advice in the
  Documentation/SubmittingPatches file).
 
+ In order to ensure the documentation is inclusive, avoid assuming
+ that an unspecified example person is male or female, and think
+ twice before using "he", "him", "she", or "her".  Here are some
+ tips to avoid use of gendered pronouns:
+
+  - Prefer succinctness and matter-of-factly describing functionality
+    in the abstract.  E.g.
+
+     --short:: Emit output in the short-format.
+
+    and avoid something like these overly verbose alternatives:
+
+     --short:: Use this to emit output in the short-format.
+     --short:: You can use this to get output in the short-format.
+     --short:: A user who prefers shorter output could....
+     --short:: Should a person and/or program want shorter output, he
+               she/they/it can...
+
+    This practice often eliminates the need to involve human actors in
+    your description, but it is a good practice regardless of the
+    avoidance of gendered pronouns.
+
+  - When it becomes awkward to stick to this style, prefer "you" when
+    addressing the the hypothetical user, and possibly "we" when
+    discussing how the program might react to the user.  E.g.
+
+      You can use this option instead of --xyz, but we might remove
+      support for it in future versions.
+
+    while keeping in mind that you can probably be less verbose, e.g.
+
+      Use this instead of --xyz. This option might be removed in future
+      versions.
+
+  - If you still need to refer to an example person that is
+    third-person singular, you may resort to "singular they" to avoid
+    "he/she/him/her", e.g.
+
+      A contributor asks their upstream to pull from them.
+
+    Note that this sounds ungrammatical and unnatural to those who
+    learned English as a second language in some parts of the world.
+
  Every user-visible change should be reflected in the documentation.
  The same general rule as for code applies -- imitate the existing
  conventions.

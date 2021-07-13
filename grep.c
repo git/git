@@ -657,6 +657,8 @@ static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 	x = compile_pattern_not(list);
 	p = *list;
 	if (p && p->token == GREP_AND) {
+		if (!x)
+			die("--and not preceded by pattern expression");
 		if (!p->next)
 			die("--and not followed by pattern expression");
 		*list = p->next;

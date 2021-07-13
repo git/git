@@ -498,7 +498,7 @@ test_expect_success 'invalid message options when using --fixup' '
 cat >expected-template <<EOF
 
 # Please enter the commit message for your changes. Lines starting
-# with '#' will be ignored, and an empty message aborts the commit.
+# with '#' will be ignored.
 #
 # Author:    A U Thor <author@example.com>
 #

@@ -34,6 +34,110 @@ test_expect_success 'setup' '
 	} >expect
 '
 
+test_expect_success 'setup pack-object <stdin' '
+	git init pack-object-stdin &&
+	test_commit -C pack-object-stdin one &&
+	test_commit -C pack-object-stdin two
+
+'
+
+test_expect_success 'pack-object <stdin parsing: basic [|--revs]' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	EOF
+
+	git -C pack-object-stdin pack-objects basic-stdin <in &&
+	idx=$(echo pack-object-stdin/basic-stdin-*.idx) &&
+	git show-index <"$idx" >actual &&
+	test_line_count = 1 actual &&
+
+	git -C pack-object-stdin pack-objects --revs basic-stdin-revs <in &&
+	idx=$(echo pack-object-stdin/basic-stdin-revs-*.idx) &&
+	git show-index <"$idx" >actual &&
+	test_line_count = 3 actual
+'
+
+test_expect_success 'pack-object <stdin parsing: [|--revs] bad line' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	garbage
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
+
+	sed "s/^> //g" >err.expect <<-EOF &&
+	fatal: expected object ID, got garbage:
+	>  garbage
+
+	EOF
+	test_must_fail git -C pack-object-stdin pack-objects bad-line-stdin <in 2>err.actual &&
+	test_cmp err.expect err.actual &&
+
+	cat >err.expect <<-EOF &&
+	fatal: bad revision '"'"'garbage'"'"'
+	EOF
+	test_must_fail git -C pack-object-stdin pack-objects --revs bad-line-stdin-revs <in 2>err.actual &&
+	test_cmp err.expect err.actual
+'
+
+test_expect_success 'pack-object <stdin parsing: [|--revs] empty line' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
+
+	sed -e "s/^> //g" -e "s/Z$//g" >err.expect <<-EOF &&
+	fatal: expected object ID, got garbage:
+	>  Z
+
+	EOF
+	test_must_fail git -C pack-object-stdin pack-objects empty-line-stdin <in 2>err.actual &&
+	test_cmp err.expect err.actual &&
+
+	git -C pack-object-stdin pack-objects --revs empty-line-stdin-revs <in &&
+	idx=$(echo pack-object-stdin/empty-line-stdin-revs-*.idx) &&
+	git show-index <"$idx" >actual &&
+	test_line_count = 3 actual
+'
+
+test_expect_success 'pack-object <stdin parsing: [|--revs] with --stdin' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
+
+	# There is the "--stdin-packs is incompatible with --revs"
+	# test below, but we should make sure that the revision.c
+	# --stdin is not picked up
+	cat >err.expect <<-EOF &&
+	fatal: disallowed abbreviated or ambiguous option '"'"'stdin'"'"'
+	EOF
+	test_must_fail git -C pack-object-stdin pack-objects stdin-with-stdin-option --stdin <in 2>err.actual &&
+	test_cmp err.expect err.actual &&
+
+	test_must_fail git -C pack-object-stdin pack-objects --stdin --revs stdin-with-stdin-option-revs 2>err.actual <in &&
+	test_cmp err.expect err.actual
+'
+
+test_expect_success 'pack-object <stdin parsing: --stdin-packs handles garbage' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
+
+	# That we get "two" and not "one" has to do with OID
+	# ordering. It happens to be the same here under SHA-1 and
+	# SHA-256. See commentary in pack-objects.c
+	cat >err.expect <<-EOF &&
+	fatal: could not find pack '"'"'$(git -C pack-object-stdin rev-parse two)'"'"'
+	EOF
+	test_must_fail git \
+		-C pack-object-stdin \
+		pack-objects stdin-with-stdin-option --stdin-packs \
+		<in 2>err.actual &&
+	test_cmp err.expect err.actual
+'
+
 # usage: check_deltas <stderr_from_pack_objects> <cmp_op> <nr_deltas>
 # e.g.: check_deltas stderr -gt 0
 check_deltas() {

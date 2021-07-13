@@ -17,9 +17,25 @@ struct promisor_remote {
 	const char name[FLEX_ARRAY];
 };
 
-void promisor_remote_reinit(void);
-struct promisor_remote *promisor_remote_find(const char *remote_name);
-int has_promisor_remote(void);
+void repo_promisor_remote_reinit(struct repository *r);
+static inline void promisor_remote_reinit(void)
+{
+	repo_promisor_remote_reinit(the_repository);
+}
+
+void promisor_remote_clear(struct promisor_remote_config *config);
+
+struct promisor_remote *repo_promisor_remote_find(struct repository *r, const char *remote_name);
+static inline struct promisor_remote *promisor_remote_find(const char *remote_name)
+{
+	return repo_promisor_remote_find(the_repository, remote_name);
+}
+
+int repo_has_promisor_remote(struct repository *r);
+static inline int has_promisor_remote(void)
+{
+	return repo_has_promisor_remote(the_repository);
+}
 
 /*
  * Fetches all requested objects from all promisor remotes, trying them one at
@@ -31,11 +47,5 @@ int has_promisor_remote(void);
 int promisor_remote_get_direct(struct repository *repo,
 			       const struct object_id *oids,
 			       int oid_nr);
-
-/*
- * This should be used only once from setup.c to set the value we got
- * from the extensions.partialclone config option.
- */
-void set_repository_format_partial_clone(char *partial_clone);
 
 #endif /* PROMISOR_REMOTE_H */

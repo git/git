@@ -280,6 +280,7 @@ static void add_p_state_clear(struct add_p_state *s)
 	clear_add_i_state(&s->s);
 }
 
+__attribute__((format (printf, 2, 3)))
 static void err(struct add_p_state *s, const char *fmt, ...)
 {
 	va_list args;

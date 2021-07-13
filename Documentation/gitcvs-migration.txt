@@ -86,16 +86,20 @@ possibly created from scratch or from a tarball (see
 linkgit:gittutorial[7]), or imported from an already existing CVS
 repository (see the next section).
 
-Assume your existing repo is at /home/alice/myproject.  Create a new "bare"
-repository (a repository without a working tree) and fetch your project into
-it:
+Assume your existing repo is at /home/you/project.  Create a new "bare"
+repository (a repository withoupt a working tree) and fetch your project into
+it.
 
 ------------------------------------------------
-$ mkdir /pub/my-repo.git
-$ cd /pub/my-repo.git
+$ mkdir /var/www-data/deployment.git
+$ cd /var/www-data/deployment.git
 $ git --bare init --shared
-$ git --bare fetch /home/alice/myproject master:master
+$ git --bare fetch /home/you/project master:master
 ------------------------------------------------
+
+(See the "Using Git for collaboration" section in
+linkgit:gittutorial[7] for an extended version of this example that
+doesn't use a bare repository.)
 
 Next, give every team member read/write access to this repository.  One
 easy way to do this is to give all the team members ssh access to the
@@ -107,7 +111,7 @@ Put all the committers in the same group, and make the repository
 writable by that group:
 
 ------------------------------------------------
-$ chgrp -R $group /pub/my-repo.git
+$ chgrp -R $group /var/www-data/deployment.git
 ------------------------------------------------
 
 Make sure committers have a umask of at most 027, so that the directories

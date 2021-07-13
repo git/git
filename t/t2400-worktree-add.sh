@@ -67,9 +67,22 @@ test_expect_success '"add" worktree' '
 '
 
 test_expect_success '"add" worktree with lock' '
-	git rev-parse HEAD >expect &&
 	git worktree add --detach --lock here-with-lock main &&
+	test_when_finished "git worktree unlock here-with-lock || :" &&
 	test -f .git/worktrees/here-with-lock/locked
+'
+
+test_expect_success '"add" worktree with lock and reason' '
+	git worktree add --detach --lock --reason "why not" here-with-lock-reason main &&
+	test_when_finished "git worktree unlock here-with-lock-reason || :" &&
+	test -f .git/worktrees/here-with-lock-reason/locked &&
+	echo why not >expect &&
+	test_cmp expect .git/worktrees/here-with-lock-reason/locked
+'
+
+test_expect_success '"add" worktree with reason but no lock' '
+	test_must_fail git worktree add --detach --reason "why not" here-with-reason-only main &&
+	test_path_is_missing .git/worktrees/here-with-reason-only/locked
 '
 
 test_expect_success '"add" worktree from a subdir' '

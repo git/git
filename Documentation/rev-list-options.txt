@@ -1064,6 +1064,14 @@ ifdef::git-rev-list[]
 --header::
 	Print the contents of the commit in raw-format; each record is
 	separated with a NUL character.
+
+--no-commit-header::
+	Suppress the header line containing "commit" and the object ID printed before
+	the specified format.  This has no effect on the built-in formats; only custom
+	formats are affected.
+
+--commit-header::
+	Overrides a previous `--no-commit-header`.
 endif::git-rev-list[]
 
 --parents::

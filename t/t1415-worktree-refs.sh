@@ -16,7 +16,10 @@ test_expect_success 'setup' '
 	git -C wt2 update-ref refs/worktree/foo HEAD
 '
 
-test_expect_success 'refs/worktree must not be packed' '
+# The 'packed-refs' file is stored directly in .git/. This means it is global
+# to the repository, and can only contain refs that are shared across all
+# worktrees.
+test_expect_success REFFILES 'refs/worktree must not be packed' '
 	git pack-refs --all &&
 	test_path_is_missing .git/refs/tags/wt1 &&
 	test_path_is_file .git/refs/worktree/foo &&
@@ -37,9 +40,8 @@ test_expect_success 'resolve main-worktree/HEAD' '
 '
 
 test_expect_success 'ambiguous main-worktree/HEAD' '
-	mkdir -p .git/refs/heads/main-worktree &&
-	test_when_finished rm -f .git/refs/heads/main-worktree/HEAD &&
-	cp .git/HEAD .git/refs/heads/main-worktree/HEAD &&
+	test_when_finished git update-ref -d refs/heads/main-worktree/HEAD &&
+	git update-ref refs/heads/main-worktree/HEAD $(git rev-parse HEAD) &&
 	git rev-parse main-worktree/HEAD 2>warn &&
 	grep "main-worktree/HEAD.*ambiguous" warn
 '
@@ -51,9 +53,8 @@ test_expect_success 'resolve worktrees/xx/HEAD' '
 '
 
 test_expect_success 'ambiguous worktrees/xx/HEAD' '
-	mkdir -p .git/refs/heads/worktrees/wt1 &&
-	test_when_finished rm -f .git/refs/heads/worktrees/wt1/HEAD &&
-	cp .git/HEAD .git/refs/heads/worktrees/wt1/HEAD &&
+	git update-ref refs/heads/worktrees/wt1/HEAD $(git rev-parse HEAD) &&
+	test_when_finished git update-ref -d refs/heads/worktrees/wt1/HEAD &&
 	git rev-parse worktrees/wt1/HEAD 2>warn &&
 	grep "worktrees/wt1/HEAD.*ambiguous" warn
 '

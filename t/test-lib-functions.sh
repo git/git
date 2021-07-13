@@ -845,6 +845,32 @@ test_line_count () {
 	fi
 }
 
+# SYNOPSIS:
+# 	test_stdout_line_count <bin-ops> <value> <cmd> [<args>...]
+#
+# test_stdout_line_count checks that the output of a command has the number
+# of lines it ought to. For example:
+#
+# test_stdout_line_count = 3 git ls-files -u
+# test_stdout_line_count -gt 10 ls
+test_stdout_line_count () {
+	local ops val trashdir &&
+	if test "$#" -le 3
+	then
+		BUG "expect 3 or more arguments"
+	fi &&
+	ops="$1" &&
+	val="$2" &&
+	shift 2 &&
+	if ! trashdir="$(git rev-parse --git-dir)/trash"; then
+		BUG "expect to be run inside a worktree"
+	fi &&
+	mkdir -p "$trashdir" &&
+	"$@" >"$trashdir/output" &&
+	test_line_count "$ops" "$val" "$trashdir/output"
+}
+
+
 test_file_size () {
 	test "$#" -ne 1 && BUG "1 param"
 	test-tool path-utils file-size "$1"
@@ -1452,48 +1478,6 @@ nongit () {
 		"$@" 2>&7
 	)
 } 7>&2 2>&4
-
-# convert function arguments or stdin (if not arguments given) to pktline
-# representation. If multiple arguments are given, they are separated by
-# whitespace and put in a single packet. Note that data containing NULs must be
-# given on stdin, and that empty input becomes an empty packet, not a flush
-# packet (for that you can just print 0000 yourself).
-packetize () {
-	if test $# -gt 0
-	then
-		packet="$*"
-		printf '%04x%s' "$((4 + ${#packet}))" "$packet"
-	else
-		perl -e '
-			my $packet = do { local $/; <STDIN> };
-			printf "%04x%s", 4 + length($packet), $packet;
-		'
-	fi
-}
-
-# Parse the input as a series of pktlines, writing the result to stdout.
-# Sideband markers are removed automatically, and the output is routed to
-# stderr if appropriate.
-#
-# NUL bytes are converted to "\\0" for ease of parsing with text tools.
-depacketize () {
-	perl -e '
-		while (read(STDIN, $len, 4) == 4) {
-			if ($len eq "0000") {
-				print "FLUSH\n";
-			} else {
-				read(STDIN, $buf, hex($len) - 4);
-				$buf =~ s/\0/\\0/g;
-				if ($buf =~ s/^[\x2\x3]//) {
-					print STDERR $buf;
-				} else {
-					$buf =~ s/^\x1//;
-					print $buf;
-				}
-			}
-		}
-	'
-}
 
 # Converts base-16 data into base-8. The output is given as a sequence of
 # escaped octals, suitable for consumption by 'printf'.

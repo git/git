@@ -461,6 +461,7 @@ static void winansi_exit(void)
 	CloseHandle(hthread);
 }
 
+__attribute__((format (printf, 1, 2)))
 static void die_lasterr(const char *fmt, ...)
 {
 	va_list params;

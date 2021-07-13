@@ -448,7 +448,7 @@ test_expect_success 'fsck detects command in .gitmodules' '
 '
 
 cat << EOF >expect
-Execution of 'false $submodulesha1' failed in submodule path 'submodule'
+fatal: Execution of 'false $submodulesha1' failed in submodule path 'submodule'
 EOF
 
 test_expect_success 'submodule update - command in .git/config catches failure' '
@@ -465,7 +465,7 @@ test_expect_success 'submodule update - command in .git/config catches failure' 
 '
 
 cat << EOF >expect
-Execution of 'false $submodulesha1' failed in submodule path '../submodule'
+fatal: Execution of 'false $submodulesha1' failed in submodule path '../submodule'
 EOF
 
 test_expect_success 'submodule update - command in .git/config catches failure -- subdirectory' '
@@ -484,7 +484,7 @@ test_expect_success 'submodule update - command in .git/config catches failure -
 
 test_expect_success 'submodule update - command run for initial population of submodule' '
 	cat >expect <<-EOF &&
-	Execution of '\''false $submodulesha1'\'' failed in submodule path '\''submodule'\''
+	fatal: Execution of '\''false $submodulesha1'\'' failed in submodule path '\''submodule'\''
 	EOF
 	rm -rf super/submodule &&
 	test_must_fail git -C super submodule update 2>actual &&
@@ -493,8 +493,8 @@ test_expect_success 'submodule update - command run for initial population of su
 '
 
 cat << EOF >expect
-Execution of 'false $submodulesha1' failed in submodule path '../super/submodule'
-Failed to recurse into submodule path '../super'
+fatal: Execution of 'false $submodulesha1' failed in submodule path '../super/submodule'
+fatal: Failed to recurse into submodule path '../super'
 EOF
 
 test_expect_success 'recursive submodule update - command in .git/config catches failure -- subdirectory' '
@@ -1058,6 +1058,16 @@ test_expect_success 'submodule update --quiet passes quietness to fetch with a s
 	 git submodule update --init --depth=1 submodule3 >out 2>err &&
 	 test_file_not_empty out &&
 	 test_file_not_empty err
+	)
+'
+
+test_expect_success 'submodule update adds superproject gitdir to older repos' '
+	(cd super &&
+	 git -C submodule config --unset submodule.superprojectGitdir &&
+	 git submodule update &&
+	 echo "../.git" >expect &&
+	 git -C submodule config submodule.superprojectGitdir >actual &&
+	 test_cmp expect actual
 	)
 '
 

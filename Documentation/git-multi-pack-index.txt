@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git multi-pack-index' [--object-dir=<dir>] [--[no-]progress]
-	[--preferred-pack=<pack>] <subcommand>
+	[--preferred-pack=<pack>] [--[no-]bitmap] <subcommand>
 
 DESCRIPTION
 -----------
@@ -40,6 +40,9 @@ write::
 		multiple packs contain the same object. If not given,
 		ties are broken in favor of the pack with the lowest
 		mtime.
+
+	--[no-]bitmap::
+		Control whether or not a multi-pack bitmap is written.
 --
 
 verify::
@@ -80,6 +83,13 @@ EXAMPLES
 -----------------------------------------------
 $ git multi-pack-index write
 -----------------------------------------------
+
+* Write a MIDX file for the packfiles in the current .git folder with a
+corresponding bitmap.
++
+-------------------------------------------------------------
+$ git multi-pack-index write --preferred-pack <pack> --bitmap
+-------------------------------------------------------------
 
 * Write a MIDX file for the packfiles in an alternate object store.
 +

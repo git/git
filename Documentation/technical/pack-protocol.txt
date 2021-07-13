@@ -136,10 +136,10 @@ directory, because the Git client will run:
 The exception is if a '~' is used, in which case
 we execute it without the leading '/'.
 
-      ssh://user@example.com/~alice/project.git,
+      ssh://user@example.com/~www-data/project.git,
 		     |
 		     v
-   ssh user@example.com "git-upload-pack '~alice/project.git'"
+   ssh user@example.com "git-upload-pack '~www-data/project.git'"
 
 Depending on the value of the `protocol.version` configuration variable,
 Git may attempt to send Extra Parameters as a colon-separated string in

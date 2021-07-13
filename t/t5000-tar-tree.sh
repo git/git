@@ -111,25 +111,34 @@ test_expect_success 'setup' '
 	EOF
 '
 
-test_expect_success \
-    'populate workdir' \
-    'mkdir a &&
-     echo simple textfile >a/a &&
-     ten=0123456789 && hundred=$ten$ten$ten$ten$ten$ten$ten$ten$ten$ten &&
-     echo long filename >a/four$hundred &&
-     mkdir a/bin &&
-     test-tool genrandom "frotz" 500000 >a/bin/sh &&
-     printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
-     printf "A not substituted O" >a/substfile2 &&
-     if test_have_prereq SYMLINKS; then
-	ln -s a a/l1
-     else
-	printf %s a > a/l1
-     fi &&
-     (p=long_path_to_a_file && cd a &&
-      for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
-      echo text >file_with_long_path) &&
-     (cd a && find .) | sort >a.lst'
+test_expect_success 'populate workdir' '
+	mkdir a &&
+	echo simple textfile >a/a &&
+	ten=0123456789 &&
+	hundred="$ten$ten$ten$ten$ten$ten$ten$ten$ten$ten" &&
+	echo long filename >"a/four$hundred" &&
+	mkdir a/bin &&
+	test-tool genrandom "frotz" 500000 >a/bin/sh &&
+	printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
+	printf "A not substituted O" >a/substfile2 &&
+	if test_have_prereq SYMLINKS
+	then
+		ln -s a a/l1
+	else
+		printf %s a >a/l1
+	fi &&
+	(
+		p=long_path_to_a_file &&
+		cd a &&
+		for depth in 1 2 3 4 5
+		do
+			mkdir $p &&
+			cd $p
+		done &&
+		echo text >file_with_long_path
+	) &&
+	(cd a && find .) | sort >a.lst
+'
 
 test_expect_success \
     'add ignored file' \
@@ -147,18 +156,18 @@ test_expect_success 'setup export-subst' '
 		>a/substfile1
 '
 
-test_expect_success \
-    'create bare clone' \
-    'git clone --bare . bare.git &&
-     cp .git/info/attributes bare.git/info/attributes'
+test_expect_success 'create bare clone' '
+	git clone --bare . bare.git &&
+	cp .git/info/attributes bare.git/info/attributes
+'
 
-test_expect_success \
-    'remove ignored file' \
-    'rm a/ignored'
+test_expect_success 'remove ignored file' '
+	rm a/ignored
+'
 
-test_expect_success \
-    'git archive' \
-    'git archive HEAD >b.tar'
+test_expect_success 'git archive' '
+	git archive HEAD >b.tar
+'
 
 check_tar b
 
@@ -194,26 +203,28 @@ check_added with_untracked2 untracked one/untracked
 check_added with_untracked2 untracked two/untracked
 
 test_expect_success 'git archive on large files' '
-    test_config core.bigfilethreshold 1 &&
-    git archive HEAD >b3.tar &&
-    test_cmp_bin b.tar b3.tar
+	test_config core.bigfilethreshold 1 &&
+	git archive HEAD >b3.tar &&
+	test_cmp_bin b.tar b3.tar
 '
 
-test_expect_success \
-    'git archive in a bare repo' \
-    '(cd bare.git && git archive HEAD) >b3.tar'
+test_expect_success 'git archive in a bare repo' '
+	git --git-dir bare.git archive HEAD >b3.tar
+'
 
-test_expect_success \
-    'git archive vs. the same in a bare repo' \
-    'test_cmp_bin b.tar b3.tar'
+test_expect_success 'git archive vs. the same in a bare repo' '
+	test_cmp_bin b.tar b3.tar
+'
 
-test_expect_success 'git archive with --output' \
-    'git archive --output=b4.tar HEAD &&
-    test_cmp_bin b.tar b4.tar'
+test_expect_success 'git archive with --output' '
+	git archive --output=b4.tar HEAD &&
+	test_cmp_bin b.tar b4.tar
+'
 
-test_expect_success 'git archive --remote' \
-    'git archive --remote=. HEAD >b5.tar &&
-    test_cmp_bin b.tar b5.tar'
+test_expect_success 'git archive --remote' '
+	git archive --remote=. HEAD >b5.tar &&
+	test_cmp_bin b.tar b5.tar
+'
 
 test_expect_success 'git archive --remote with configured remote' '
 	git config remote.foo.url . &&
@@ -224,18 +235,19 @@ test_expect_success 'git archive --remote with configured remote' '
 	test_cmp_bin b.tar b5-nick.tar
 '
 
-test_expect_success \
-    'validate file modification time' \
-    'mkdir extract &&
-     "$TAR" xf b.tar -C extract a/a &&
-     test-tool chmtime --get extract/a/a >b.mtime &&
-     echo "1117231200" >expected.mtime &&
-     test_cmp expected.mtime b.mtime'
+test_expect_success 'validate file modification time' '
+	mkdir extract &&
+	"$TAR" xf b.tar -C extract a/a &&
+	test-tool chmtime --get extract/a/a >b.mtime &&
+	echo "1117231200" >expected.mtime &&
+	test_cmp expected.mtime b.mtime
+'
 
-test_expect_success \
-    'git get-tar-commit-id' \
-    'git get-tar-commit-id <b.tar >b.commitid &&
-     test_cmp .git/$(git symbolic-ref HEAD) b.commitid'
+test_expect_success 'git get-tar-commit-id' '
+	git get-tar-commit-id <b.tar >actual &&
+	git rev-parse HEAD >expect &&
+	test_cmp expect actual
+'
 
 test_expect_success 'git archive with --output, override inferred format' '
 	git archive --format=tar --output=d4.zip HEAD &&

@@ -277,13 +277,13 @@ $ cat msg.txt
 subject
 
 message
-$ cat msg.txt | git interpret-trailers --trailer 'sign: Alice <alice@example.com>' --trailer 'sign: Bob <bob@example.com>'
+$ cat msg.txt | git interpret-trailers --trailer 'sign: J. Doe <jdoe@example.com>' --trailer 'sign: M. Smith <msmith@example.com>'
 subject
 
 message
 
-Signed-off-by: Alice <alice@example.com>
-Signed-off-by: Bob <bob@example.com>
+Signed-off-by: J. Doe <jdoe@example.com>
+Signed-off-by: M. Smith <msmith@example.com>
 ------------
 
 * Use the `--in-place` option to edit a message file in place:
@@ -294,15 +294,15 @@ subject
 
 message
 
-Signed-off-by: Bob <bob@example.com>
-$ git interpret-trailers --trailer 'Acked-by: Alice <alice@example.com>' --in-place msg.txt
+Signed-off-by: M. Smith <msmith@example.com>
+$ git interpret-trailers --trailer 'Acked-by: J. Doe <jdoe@example.com>' --in-place msg.txt
 $ cat msg.txt
 subject
 
 message
 
-Signed-off-by: Bob <bob@example.com>
-Acked-by: Alice <alice@example.com>
+Signed-off-by: M. Smith <msmith@example.com>
+Acked-by: J. Doe <jdoe@example.com>
 ------------
 
 * Extract the last commit as a patch, and add a 'Cc' and a
@@ -311,7 +311,7 @@ Acked-by: Alice <alice@example.com>
 ------------
 $ git format-patch -1
 0001-foo.patch
-$ git interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Reviewed-by: Bob <bob@example.com>' 0001-foo.patch >0001-bar.patch
+$ git interpret-trailers --trailer 'Cc: J. Doe <jdoe@example.com>' --trailer 'Reviewed-by: M. Smith <msmith@example.com>' 0001-foo.patch >0001-bar.patch
 ------------
 
 * Configure a 'sign' trailer with a command to automatically add a
@@ -326,12 +326,12 @@ $ git config trailer.sign.command 'echo "$(git config user.name) <$(git config u
 $ git interpret-trailers <<EOF
 > EOF
 
-Signed-off-by: Bob <bob@example.com>
+Signed-off-by: M. Smith <msmith@example.com>
 $ git interpret-trailers <<EOF
-> Signed-off-by: Alice <alice@example.com>
+> Signed-off-by: J. Doe <jdoe@example.com>
 > EOF
 
-Signed-off-by: Alice <alice@example.com>
+Signed-off-by: J. Doe <jdoe@example.com>
 ------------
 
 * Configure a 'fix' trailer with a key that contains a '#' and no

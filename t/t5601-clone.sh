@@ -305,7 +305,8 @@ test_expect_success 'clone from original with relative alternate' '
 test_expect_success 'clone checking out a tag' '
 	git clone --branch=some-tag src dst.tag &&
 	GIT_DIR=src/.git git rev-parse some-tag >expected &&
-	test_cmp expected dst.tag/.git/HEAD &&
+	GIT_DIR=dst.tag/.git git rev-parse HEAD >actual &&
+	test_cmp expected actual &&
 	GIT_DIR=dst.tag/.git git config remote.origin.fetch >fetch.actual &&
 	echo "+refs/heads/*:refs/remotes/origin/*" >fetch.expected &&
 	test_cmp fetch.expected fetch.actual
@@ -750,6 +751,30 @@ test_expect_success 'batch missing blob request does not inadvertently try to fe
 
 	# Make sure that it succeeds
 	git clone --filter=blob:limit=0 "file://$(pwd)/server" client
+'
+
+test_expect_success 'clone with submodule with update=none is not active' '
+	rm -rf server client &&
+
+	test_create_repo server &&
+	echo a >server/a &&
+	echo b >server/b &&
+	git -C server add a b &&
+	git -C server commit -m x &&
+
+	echo aa >server/a &&
+	echo bb >server/b &&
+	git -C server submodule add --name c "$(pwd)/repo_for_submodule" c &&
+	git -C server config -f .gitmodules submodule.c.update none &&
+	git -C server add a b c .gitmodules &&
+	git -C server commit -m x &&
+
+	git clone --recurse-submodules server client &&
+	git -C client config submodule.c.active >actual &&
+	echo false >expected &&
+	test_cmp actual expected &&
+	# This would fail if the submodule were active, since it is not checked out.
+	git -C client reset --recurse-submodules --hard
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh

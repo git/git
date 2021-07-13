@@ -7,37 +7,26 @@
 #include "pkt-line.h"
 #include "config.h"
 
-static int config_read;
-static int advertise_unborn;
-static int allow_unborn;
+/* "unborn" is on by default if there's no lsrefs.unborn config */
+static int advertise_unborn = 1;
+static int allow_unborn = 1;
 
-static void ensure_config_read(void)
+int ls_refs_startup_config(const char *var, const char *value, void *data)
 {
-	const char *str = NULL;
-
-	if (config_read)
-		return;
-
-	if (repo_config_get_string_tmp(the_repository, "lsrefs.unborn", &str)) {
-		/*
-		 * If there is no such config, advertise and allow it by
-		 * default.
-		 */
-		advertise_unborn = 1;
-		allow_unborn = 1;
-	} else {
-		if (!strcmp(str, "advertise")) {
-			advertise_unborn = 1;
+	if (!strcmp(var, "lsrefs.unborn")) {
+		if (!strcmp(value, "advertise")) {
+			/* Allowed and advertised by default */
+		} else if (!strcmp(value, "allow")) {
+			advertise_unborn = 0;
 			allow_unborn = 1;
-		} else if (!strcmp(str, "allow")) {
-			allow_unborn = 1;
-		} else if (!strcmp(str, "ignore")) {
-			/* do nothing */
+		} else if (!strcmp(value, "ignore")) {
+			advertise_unborn = 0;
+			allow_unborn = 0;
 		} else {
-			die(_("invalid value '%s' for lsrefs.unborn"), str);
+			die(_("invalid value '%s' for lsrefs.unborn"), value);
 		}
 	}
-	config_read = 1;
+	return 0;
 }
 
 /*
@@ -145,8 +134,6 @@ int ls_refs(struct repository *r, struct strvec *keys,
 
 	memset(&data, 0, sizeof(data));
 	strvec_init(&data.prefixes);
-
-	ensure_config_read();
 	git_config(ls_refs_config, NULL);
 
 	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
@@ -179,7 +166,6 @@ int ls_refs(struct repository *r, struct strvec *keys,
 int ls_refs_advertise(struct repository *r, struct strbuf *value)
 {
 	if (value) {
-		ensure_config_read();
 		if (advertise_unborn)
 			strbuf_addstr(value, "unborn");
 	}

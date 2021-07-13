@@ -55,6 +55,43 @@ test_expect_success setup '
 	git rev-parse --verify HEAD >expect_second
 '
 
+test_expect_success 'usage' '
+	test_expect_code 129 git log -S 2>err &&
+	test_i18ngrep "switch.*requires a value" err &&
+
+	test_expect_code 129 git log -G 2>err &&
+	test_i18ngrep "switch.*requires a value" err &&
+
+	test_expect_code 128 git log -Gregex -Sstring 2>err &&
+	grep "mutually exclusive" err &&
+
+	test_expect_code 128 git log -Gregex --find-object=HEAD 2>err &&
+	grep "mutually exclusive" err &&
+
+	test_expect_code 128 git log -Sstring --find-object=HEAD 2>err &&
+	grep "mutually exclusive" err &&
+
+	test_expect_code 128 git log --pickaxe-all --find-object=HEAD 2>err &&
+	grep "mutually exclusive" err
+'
+
+test_expect_success 'usage: --pickaxe-regex' '
+	test_expect_code 128 git log -Gregex --pickaxe-regex 2>err &&
+	grep "mutually exclusive" err
+'
+
+test_expect_success 'usage: --no-pickaxe-regex' '
+	cat >expect <<-\EOF &&
+	fatal: unrecognized argument: --no-pickaxe-regex
+	EOF
+
+	test_expect_code 128 git log -Sstring --no-pickaxe-regex 2>actual &&
+	test_cmp expect actual &&
+
+	test_expect_code 128 git log -Gstring --no-pickaxe-regex 2>err &&
+	test_cmp expect actual
+'
+
 test_log	expect_initial	--grep initial
 test_log	expect_nomatch	--grep InItial
 test_log_icase	expect_initial	--grep InItial
@@ -106,38 +143,83 @@ test_expect_success 'log -S --no-textconv (missing textconv tool)' '
 	rm .gitattributes
 '
 
+test_expect_success 'setup log -[GS] plain & regex' '
+	test_create_repo GS-plain &&
+	test_commit -C GS-plain --append A data.txt "a" &&
+	test_commit -C GS-plain --append B data.txt "a a" &&
+	test_commit -C GS-plain --append C data.txt "b" &&
+	test_commit -C GS-plain --append D data.txt "[b]" &&
+	test_commit -C GS-plain E data.txt "" &&
+
+	# We also include E, the deletion commit
+	git -C GS-plain log --grep="[ABE]" >A-to-B-then-E-log &&
+	git -C GS-plain log --grep="[CDE]" >C-to-D-then-E-log &&
+	git -C GS-plain log --grep="[DE]" >D-then-E-log &&
+	git -C GS-plain log >full-log
+'
+
+test_expect_success 'log -G trims diff new/old [-+]' '
+	git -C GS-plain log -G"[+-]a" >log &&
+	test_must_be_empty log &&
+	git -C GS-plain log -G"^a" >log &&
+	test_cmp log A-to-B-then-E-log
+'
+
+test_expect_success 'log -S<pat> is not a regex, but -S<pat> --pickaxe-regex is' '
+	git -C GS-plain log -S"a" >log &&
+	test_cmp log A-to-B-then-E-log &&
+
+	git -C GS-plain log -S"[a]" >log &&
+	test_must_be_empty log &&
+
+	git -C GS-plain log -S"[a]" --pickaxe-regex >log &&
+	test_cmp log A-to-B-then-E-log &&
+
+	git -C GS-plain log -S"[b]" >log &&
+	test_cmp log D-then-E-log &&
+
+	git -C GS-plain log -S"[b]" --pickaxe-regex >log &&
+	test_cmp log C-to-D-then-E-log
+'
+
 test_expect_success 'setup log -[GS] binary & --text' '
-	git checkout --orphan GS-binary-and-text &&
-	git read-tree --empty &&
-	printf "a\na\0a\n" >data.bin &&
-	git add data.bin &&
-	git commit -m "create binary file" data.bin &&
-	printf "a\na\0a\n" >>data.bin &&
-	git commit -m "modify binary file" data.bin &&
-	git rm data.bin &&
-	git commit -m "delete binary file" data.bin &&
-	git log >full-log
+	test_create_repo GS-bin-txt &&
+	test_commit -C GS-bin-txt --printf A data.bin "a\na\0a\n" &&
+	test_commit -C GS-bin-txt --append --printf B data.bin "a\na\0a\n" &&
+	test_commit -C GS-bin-txt C data.bin "" &&
+	git -C GS-bin-txt log >full-log
 '
 
 test_expect_success 'log -G ignores binary files' '
-	git log -Ga >log &&
+	git -C GS-bin-txt log -Ga >log &&
 	test_must_be_empty log
 '
 
 test_expect_success 'log -G looks into binary files with -a' '
-	git log -a -Ga >log &&
+	git -C GS-bin-txt log -a -Ga >log &&
 	test_cmp log full-log
 '
 
 test_expect_success 'log -G looks into binary files with textconv filter' '
-	test_when_finished "rm .gitattributes" &&
-	echo "* diff=bin" >.gitattributes &&
-	git -c diff.bin.textconv=cat log -Ga >log &&
+	test_when_finished "rm GS-bin-txt/.gitattributes" &&
+	(
+		cd GS-bin-txt &&
+		echo "* diff=bin" >.gitattributes &&
+		git -c diff.bin.textconv=cat log -Ga >../log
+	) &&
 	test_cmp log full-log
 '
 
 test_expect_success 'log -S looks into binary files' '
-	git log -Sa >log &&
+	git -C GS-bin-txt log -Sa >log &&
+	test_cmp log full-log
+'
+
+test_expect_success 'log -S --pickaxe-regex looks into binary files' '
+	git -C GS-bin-txt log --pickaxe-regex -Sa >log &&
+	test_cmp log full-log &&
+
+	git -C GS-bin-txt log --pickaxe-regex -S"[a]" >log &&
 	test_cmp log full-log
 '
 

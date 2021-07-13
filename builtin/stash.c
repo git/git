@@ -991,9 +991,8 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 {
 	int i;
 	int found = 0;
-	struct dir_struct dir;
+	struct dir_struct dir = DIR_INIT;
 
-	dir_init(&dir);
 	if (include_untracked != INCLUDE_ALL_FILES)
 		setup_standard_excludes(&dir);
 

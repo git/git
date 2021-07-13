@@ -410,6 +410,19 @@ test_expect_success 'git-fsck incorrect offset' '
 		"git -c core.multipackindex=true fsck"
 '
 
+test_expect_success 'corrupt MIDX is not reused' '
+	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
+		"incorrect object offset" &&
+	git multi-pack-index write 2>err &&
+	test_i18ngrep checksum.mismatch err &&
+	git multi-pack-index verify
+'
+
+test_expect_success 'verify incorrect checksum' '
+	pos=$(($(wc -c <$objdir/pack/multi-pack-index) - 1)) &&
+	corrupt_midx_and_verify $pos "\377" $objdir "incorrect checksum"
+'
+
 test_expect_success 'repack progress off for redirected stderr' '
 	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir repack 2>err &&
 	test_line_count = 0 err
@@ -474,7 +487,8 @@ test_expect_success 'repack preserves multi-pack-index when creating packs' '
 compare_results_with_midx "after repack"
 
 test_expect_success 'multi-pack-index and pack-bitmap' '
-	git -c repack.writeBitmaps=true repack -ad &&
+	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+		git -c repack.writeBitmaps=true repack -ad &&
 	git multi-pack-index write &&
 	git rev-list --test-bitmap HEAD
 '

@@ -90,3 +90,12 @@ submodule.alternateErrorStrategy::
 	`ignore`, `info`, `die`. Default is `die`. Note that if set to `ignore`
 	or `info`, and if there is an error with the computed alternate, the
 	clone proceeds as if no alternate was specified.
+
+submodule.superprojectGitDir::
+	The relative path from the submodule's worktree  to the superproject's
+	gitdir. This config should only be present in projects which are
+	submodules, but is not guaranteed to be present in every submodule. It
+	is set automatically during submodule creation.
++
+Because of this configuration variable, it is forbidden to use the
+same submodule worktree shared by multiple superprojects.

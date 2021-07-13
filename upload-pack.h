@@ -19,5 +19,7 @@ int upload_pack_v2(struct repository *r, struct strvec *keys,
 struct strbuf;
 int upload_pack_advertise(struct repository *r,
 			  struct strbuf *value);
+int serve_upload_pack_startup_config(const char *var, const char *value,
+				     void *data);
 
 #endif /* UPLOAD_PACK_H */

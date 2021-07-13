@@ -72,7 +72,7 @@ Using direct mode:
 [imap]
     folder = "INBOX.Drafts"
     host = imap://imap.example.com
-    user = bob
+    user = jdoe
     pass = p4ssw0rd
 .........................
 
@@ -82,7 +82,7 @@ Using direct mode with SSL:
 [imap]
     folder = "INBOX.Drafts"
     host = imaps://imap.example.com
-    user = bob
+    user = jdoe
     pass = p4ssw0rd
     port = 123
     ; sslVerify = false

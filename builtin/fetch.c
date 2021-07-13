@@ -1428,7 +1428,9 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 		if (!has_glob_specials(s)) {
 			struct object_id oid;
 			if (get_oid(s, &oid))
-				die("%s is not a valid object", s);
+				die(_("%s is not a valid object"), s);
+			if (!has_object(the_repository, &oid, 0))
+				die(_("%s is not a valid object"), s);
 			oid_array_append(oids, &oid);
 			continue;
 		}
@@ -1602,6 +1604,10 @@ static int do_fetch(struct transport *transport,
 		struct ref *rm;
 		struct ref *source_ref = NULL;
 
+		if (!branch) {
+			warning(_("not on a branch to use --set-upstream with"));
+			goto skip;
+		}
 		/*
 		 * We're setting the upstream configuration for the
 		 * current branch. The relevant upstream is the
@@ -1817,6 +1823,7 @@ static int fetch_multiple(struct string_list *list, int max_children)
 		result = run_processes_parallel_tr2(max_children,
 						    &fetch_next_remote,
 						    &fetch_failed_to_start,
+						    NULL, NULL,
 						    &fetch_finished,
 						    &state,
 						    "fetch", "parallel/fetch");
@@ -1989,6 +1996,9 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 		fetch_config_from_gitmodules(sfjc, rs);
 	}
+
+	if (negotiate_only && !negotiation_tip.nr)
+		die(_("--negotiate-only needs one or more --negotiate-tip=*"));
 
 	if (deepen_relative) {
 		if (deepen_relative < 0)

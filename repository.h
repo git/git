@@ -10,6 +10,7 @@ struct lock_file;
 struct pathspec;
 struct raw_object_store;
 struct submodule_cache;
+struct promisor_remote_config;
 
 enum untracked_cache_setting {
 	UNTRACKED_CACHE_UNSET = -1,
@@ -26,6 +27,14 @@ enum fetch_negotiation_setting {
 	FETCH_NEGOTIATION_NOOP = 3,
 };
 
+enum fsmonitor_mode {
+	FSMONITOR_MODE_INCOMPATIBLE = -2,
+	FSMONITOR_MODE_UNSET = -1,
+	FSMONITOR_MODE_DISABLED = 0,
+	FSMONITOR_MODE_HOOK = 1, /* core.fsmonitor */
+	FSMONITOR_MODE_IPC = 2, /* core.useBuiltinFSMonitor */
+};
+
 struct repo_settings {
 	int initialized;
 
@@ -33,6 +42,9 @@ struct repo_settings {
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
+
+	enum fsmonitor_mode fsmonitor_mode;
+	char *fsmonitor_hook_path;
 
 	int index_version;
 	enum untracked_cache_setting core_untracked_cache;
@@ -138,6 +150,10 @@ struct repository {
 
 	/* True if commit-graph has been disabled within this process. */
 	int commit_graph_disabled;
+
+	/* Configurations related to promisor remotes. */
+	char *repository_format_partial_clone;
+	struct promisor_remote_config *promisor_remote_config;
 
 	/* Configurations */
 

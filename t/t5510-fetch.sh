@@ -1214,6 +1214,15 @@ test_expect_success '--negotiation-tip understands abbreviated SHA-1' '
 	check_negotiation_tip
 '
 
+test_expect_success '--negotiation-tip rejects missing OIDs' '
+	setup_negotiation_tip server server 0 &&
+	test_must_fail git -C client fetch \
+		--negotiation-tip=alpha_1 \
+		--negotiation-tip=$(test_oid zero) \
+		origin alpha_s beta_s 2>err &&
+	test_i18ngrep "is not a valid object" err
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 

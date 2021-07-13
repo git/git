@@ -280,79 +280,79 @@ out.
 Using Git for collaboration
 ---------------------------
 
-Suppose that Alice has started a new project with a Git repository in
-/home/alice/project, and that Bob, who has a home directory on the
-same machine, wants to contribute.
+Suppose that you've started a new project with a Git repository in
+/home/you/project, and you'd like another user on the same local
+machine to be able to contribute to it. E.g. a www-data user to serve
+the content up with a webserver.
 
-Bob begins with:
+As the `www-data` user do:
 
 ------------------------------------------------
-bob$ git clone /home/alice/project myrepo
+www-data$ git clone /home/you/project /var/www-data/deployment
 ------------------------------------------------
 
-This creates a new directory "myrepo" containing a clone of Alice's
+This creates a new directory "deployment" containing a clone of your
 repository.  The clone is on an equal footing with the original
 project, possessing its own copy of the original project's history.
 
-Bob then makes some changes and commits them:
+As `www-data` you then makes some changes and commit them:
 
 ------------------------------------------------
 (edit files)
-bob$ git commit -a
+www-data$ git commit -a
 (repeat as necessary)
 ------------------------------------------------
 
-When he's ready, he tells Alice to pull changes from the repository
-at /home/bob/myrepo.  She does this with:
+You can then pull those changes to the checkout in your home directory
+at /home/you/project:
 
 ------------------------------------------------
-alice$ cd /home/alice/project
-alice$ git pull /home/bob/myrepo master
+you$ cd /home/you/project
+you$ git pull /var/www-data/deployment master
 ------------------------------------------------
 
-This merges the changes from Bob's "master" branch into Alice's
-current branch.  If Alice has made her own changes in the meantime,
-then she may need to manually fix any conflicts.
+This merges the changes from the deployment repo's "master" branch into your
+current branch.  If you've made other changes there in the meantime,
+you may need to manually fix any conflicts.
 
 The "pull" command thus performs two operations: it fetches changes
 from a remote branch, then merges them into the current branch.
 
-Note that in general, Alice would want her local changes committed before
-initiating this "pull".  If Bob's work conflicts with what Alice did since
-their histories forked, Alice will use her working tree and the index to
+In general you'd want changes in your home directory to be committed before
+initiating this "pull".  If your www-data work conflicts with them you
+can use your working tree and the index to
 resolve conflicts, and existing local changes will interfere with the
 conflict resolution process (Git will still perform the fetch but will
-refuse to merge --- Alice will have to get rid of her local changes in
+refuse to merge --- You'll have to get rid of your local changes in
 some way and pull again when this happens).
 
-Alice can peek at what Bob did without merging first, using the "fetch"
-command; this allows Alice to inspect what Bob did, using a special
-symbol "FETCH_HEAD", in order to determine if he has anything worth
+You can look at those changes merging first, using the "fetch"
+command; this allows you to inspect the remote state, using a special
+symbol "FETCH_HEAD", in order to determine if there's anything worth
 pulling, like this:
 
 ------------------------------------------------
-alice$ git fetch /home/bob/myrepo master
-alice$ git log -p HEAD..FETCH_HEAD
+$ git fetch /var/www-data/deployment master
+you$ git log -p HEAD..FETCH_HEAD
 ------------------------------------------------
 
-This operation is safe even if Alice has uncommitted local changes.
+This operation is safe even if you've got uncommitted local changes.
 The range notation "HEAD..FETCH_HEAD" means "show everything that is reachable
 from the FETCH_HEAD but exclude anything that is reachable from HEAD".
-Alice already knows everything that leads to her current state (HEAD),
-and reviews what Bob has in his state (FETCH_HEAD) that she has not
-seen with this command.
+You know about everything that leads to your current state (HEAD),
+and can review the state of the www-data repoistory (FETCH_HEAD).
 
-If Alice wants to visualize what Bob did since their histories forked
-she can issue the following command:
+If you want to visualize that difference
+you can issue the following command:
 
 ------------------------------------------------
 $ gitk HEAD..FETCH_HEAD
 ------------------------------------------------
 
-This uses the same two-dot range notation we saw earlier with 'git log'.
+This uses the same two-dot range notation that 'git log' does.
 
-Alice may want to view what both of them did since they forked.
-She can use three-dot form instead of the two-dot form:
+To see commits from both repositories did since they forked.
+use three-dot form instead of the two-dot form:
 
 ------------------------------------------------
 $ gitk HEAD...FETCH_HEAD
@@ -364,11 +364,11 @@ exclude anything that is reachable from both of them".
 Please note that these range notation can be used with both gitk
 and "git log".
 
-After inspecting what Bob did, if there is nothing urgent, Alice may
-decide to continue working without pulling from Bob.  If Bob's history
-does have something Alice would immediately need, Alice may choose to
-stash her work-in-progress first, do a "pull", and then finally unstash
-her work-in-progress on top of the resulting history.
+After inspecting the difference you may
+decide to continue working without pulling from www-data.  If that history
+does have something you need you can
+stash your work-in-progress first, do a "pull", and then finally unstash
+it on top of the resulting history.
 
 When you are working in a small closely knit group, it is not
 unusual to interact with the same repository over and over
@@ -376,79 +376,77 @@ again.  By defining 'remote' repository shorthand, you can make
 it easier:
 
 ------------------------------------------------
-alice$ git remote add bob /home/bob/myrepo
+you$ git remote add deployment /var/www-data/deployment
 ------------------------------------------------
 
-With this, Alice can perform the first part of the "pull" operation
-alone using the 'git fetch' command without merging them with her own
-branch, using:
+With this, you can use the "deployment" name for that remote
+as an argument to 'git pull' or 'git fetch':
 
 -------------------------------------
-alice$ git fetch bob
+you$ git fetch deployment
 -------------------------------------
 
-Unlike the longhand form, when Alice fetches from Bob using a
+Unlike the longhand form, when you fetch using a
 remote repository shorthand set up with 'git remote', what was
 fetched is stored in a remote-tracking branch, in this case
-`bob/master`.  So after this:
+`deployment/master`.  So after this:
 
 -------------------------------------
-alice$ git log -p master..bob/master
+you$ git log -p master..deployment/master
 -------------------------------------
 
-shows a list of all the changes that Bob made since he branched from
-Alice's master branch.
+shows a list of all the changes in deployment/master since it branched
+off from your master branch.
 
-After examining those changes, Alice
-could merge the changes into her master branch:
-
--------------------------------------
-alice$ git merge bob/master
--------------------------------------
-
-This `merge` can also be done by 'pulling from her own remote-tracking
-branch', like this:
+After examining those changes, you can merge them into your master branch:
 
 -------------------------------------
-alice$ git pull . remotes/bob/master
+you$ git merge deployment/master
+-------------------------------------
+
+This `merge` can also be done by 'pulling from the remote-tracking
+branch':
+
+-------------------------------------
+you$ git pull . remotes/deployment/master
 -------------------------------------
 
 Note that git pull always merges into the current branch,
 regardless of what else is given on the command line.
 
-Later, Bob can update his repo with Alice's latest changes using
+Later, the www-data clone can be updated with your latest changes using
 
 -------------------------------------
-bob$ git pull
+www-data$ git pull
 -------------------------------------
 
-Note that he doesn't need to give the path to Alice's repository;
-when Bob cloned Alice's repository, Git stored the location of her
-repository in the repository configuration, and that location is
+Note that you don't need to supply the path to the original repository;
+when you cloned it the path was stored in
+the repository configuration, and that location is
 used for pulls:
 
 -------------------------------------
-bob$ git config --get remote.origin.url
-/home/alice/project
+www-data$ git config --get remote.origin.url
+/home/you/project
 -------------------------------------
 
 (The complete configuration created by 'git clone' is visible using
 `git config -l`, and the linkgit:git-config[1] man page
 explains the meaning of each option.)
 
-Git also keeps a pristine copy of Alice's master branch under the
+That cloned repository also keeps a copy of its remote master branch under the
 name "origin/master":
 
 -------------------------------------
-bob$ git branch -r
+www-data$ git branch -r
   origin/master
 -------------------------------------
 
-If Bob later decides to work from a different host, he can still
+If you decide to move that deployment clone to a diffeent host, you can still
 perform clones and pulls using the ssh protocol:
 
 -------------------------------------
-bob$ git clone alice.org:/home/alice/project myrepo
+www-data$ git clone you.example.org:/home/you/project myrepo
 -------------------------------------
 
 Alternatively, Git has a native protocol, or can use http;

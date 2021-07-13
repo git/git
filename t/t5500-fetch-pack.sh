@@ -872,14 +872,17 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 	git commit-graph write --reachable &&
 	git config core.commitGraph true &&
 
-	GIT_PROTOCOL=version=2 git upload-pack . <<-EOF >/dev/null
-	0012command=fetch
-	$(echo "object-format=$(test_oid algo)" | packetize)
-	00010013deepen-since 1
-	$(echo "want $(git rev-parse other)" | packetize)
-	$(echo "have $(git rev-parse main)" | packetize)
+	test-tool pkt-line pack >in <<-EOF &&
+	command=fetch
+	object-format=$(test_oid algo)
+	0001
+	deepen-since 1
+	want $(git rev-parse other)
+	have $(git rev-parse main)
 	0000
 	EOF
+
+	GIT_PROTOCOL=version=2 git upload-pack . <in >/dev/null
 	)
 '
 

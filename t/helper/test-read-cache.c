@@ -5,6 +5,12 @@
 #include "commit.h"
 #include "tree.h"
 #include "sparse-index.h"
+#include "parse-options.h"
+
+static const char *read_cache_usage[] = {
+	"test-tool read-cache [<options>...]",
+	NULL
+};
 
 static void print_cache_entry(struct cache_entry *ce)
 {
@@ -34,49 +40,33 @@ static void print_cache(struct index_state *istate)
 int cmd__read_cache(int argc, const char **argv)
 {
 	struct repository *r = the_repository;
-	int i, cnt = 1;
-	const char *name = NULL;
 	int table = 0, expand = 0;
+	struct option options[] = {
+		OPT_BOOL(0, "table", &table,
+			 "print a dump of the cache"),
+		OPT_BOOL(0, "expand", &expand,
+			 "call ensure_full_index()"),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, "test-tools", options, read_cache_usage, 0);
+	if (argc > 0)
+		usage_msg_opt("Too many arguments.", read_cache_usage, options);
 
 	initialize_the_repository();
 	prepare_repo_settings(r);
 	r->settings.command_requires_full_index = 0;
 
-	for (++argv, --argc; *argv && starts_with(*argv, "--"); ++argv, --argc) {
-		if (skip_prefix(*argv, "--print-and-refresh=", &name))
-			continue;
-		if (!strcmp(*argv, "--table"))
-			table = 1;
-		else if (!strcmp(*argv, "--expand"))
-			expand = 1;
-	}
-
-	if (argc == 1)
-		cnt = strtol(argv[0], NULL, 0);
 	setup_git_directory();
 	git_config(git_default_config, NULL);
+	repo_read_index(r);
 
-	for (i = 0; i < cnt; i++) {
-		repo_read_index(r);
+	if (expand)
+		ensure_full_index(r->index);
 
-		if (expand)
-			ensure_full_index(r->index);
+	if (table)
+		print_cache(r->index);
+	discard_index(r->index);
 
-		if (name) {
-			int pos;
-
-			refresh_index(r->index, REFRESH_QUIET,
-				      NULL, NULL, NULL);
-			pos = index_name_pos(r->index, name, strlen(name));
-			if (pos < 0)
-				die("%s not in index", name);
-			printf("%s is%s up to date\n", name,
-			       ce_uptodate(r->index->cache[pos]) ? "" : " not");
-			write_file(name, "%d\n", i);
-		}
-		if (table)
-			print_cache(r->index);
-		discard_index(r->index);
-	}
 	return 0;
 }

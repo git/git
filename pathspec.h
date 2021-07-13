@@ -108,7 +108,7 @@ struct pathspec {
  *
  * A similar process is applied when a new pathspec magic is added. The designer
  * lifts the GUARD_PATHSPEC restriction in the functions that support the new
- * magic. At the same time (s)he has to make sure this new feature will be
+ * magic while at the same time making sure this new feature will be
  * caught at parse_pathspec() in commands that cannot handle the new magic in
  * some cases. grepping parse_pathspec() should help.
  */

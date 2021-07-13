@@ -788,12 +788,14 @@ FILE *git_fopen(const char*, const char*);
 #undef snprintf
 #endif
 #define snprintf git_snprintf
+__attribute__((format (printf, 3, 4)))
 int git_snprintf(char *str, size_t maxsize,
 		 const char *format, ...);
 #ifdef vsnprintf
 #undef vsnprintf
 #endif
 #define vsnprintf git_vsnprintf
+__attribute__((format (printf, 3, 0)))
 int git_vsnprintf(char *str, size_t maxsize,
 		  const char *format, va_list ap);
 #endif
@@ -876,6 +878,7 @@ char *xstrndup(const char *str, size_t len);
 void *xrealloc(void *ptr, size_t size);
 void *xcalloc(size_t nmemb, size_t size);
 void *xmmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+const char *mmap_os_err(void);
 void *xmmap_gently(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 int xopen(const char *path, int flags, ...);
 ssize_t xread(int fd, void *buf, size_t len);

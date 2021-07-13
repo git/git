@@ -226,6 +226,12 @@ newline. The available atoms are:
 	after that first run of whitespace (i.e., the "rest" of the
 	line) are output in place of the `%(rest)` atom.
 
+Note that most of the atoms in `for-each-ref --format` are now supported,
+such as `%(tree)`, `%(parent)`, `%(author)`, `%(tagger)`, `%(if)`,
+`%(then)`, `%(else)`, `%(end)`. But these atoms will be rejected:
+`%(refname)`, `%(symref)`, `%(upstream)`, `%(push)`, `%(worktreepath)`,
+`%(flag)`, `%(HEAD)`. See linkgit:git-for-each-ref[1].
+
 If no format is specified, the default format is `%(objectname)
 %(objecttype) %(objectsize)`.
 
