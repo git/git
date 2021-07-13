@@ -721,7 +721,7 @@ as 'blob:limit=1024'.
 +
 The form '--filter=sparse:oid=<blob-ish>' uses a sparse-checkout
 specification contained in the blob (or blob-expression) '<blob-ish>'
-to omit blobs that would not be not required for a sparse checkout on
+to omit blobs that would not be required for a sparse checkout on
 the requested refs.
 +
 The form '--filter=sparse:path=<path>' similarly uses a sparse-checkout
