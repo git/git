@@ -36,7 +36,7 @@ To verify that your build works, use one of the following methods:
   `Build>Install git` (you will want to click on `Project>CMake Settings for
   Git` first, then click on `Edit JSON` and then point `installRoot` to the
   `mingw64` directory of an already-unpacked portable Git).
-  
+
   As in the previous  bullet point, you will then prepend `/cmd` to the `PATH`
   or run using the portable Git's `git-bash.exe` or `git-cmd.exe`.
 - If you want to run the built executables in-place, but in a CMD instead of
