@@ -1376,7 +1376,7 @@ enum pattern_match_result path_matches_pattern_list(
 	struct path_pattern *pattern;
 	struct strbuf parent_pathname = STRBUF_INIT;
 	int result = NOT_MATCHED;
-	const char *slash_pos;
+	size_t slash_pos;
 
 	if (!pl->use_cone_patterns) {
 		pattern = last_matching_pattern_from_list(pathname, pathlen, basename,
@@ -1397,21 +1397,35 @@ enum pattern_match_result path_matches_pattern_list(
 	strbuf_addch(&parent_pathname, '/');
 	strbuf_add(&parent_pathname, pathname, pathlen);
 
+	/*
+	 * Directory entries are matched if and only if a file
+	 * contained immediately within them is matched. For the
+	 * case of a directory entry, modify the path to create
+	 * a fake filename within this directory, allowing us to
+	 * use the file-base matching logic in an equivalent way.
+	 */
+	if (parent_pathname.len > 0 &&
+	    parent_pathname.buf[parent_pathname.len - 1] == '/') {
+		slash_pos = parent_pathname.len - 1;
+		strbuf_add(&parent_pathname, "-", 1);
+	} else {
+		const char *slash_ptr = strrchr(parent_pathname.buf, '/');
+		slash_pos = slash_ptr ? slash_ptr - parent_pathname.buf : 0;
+	}
+
 	if (hashmap_contains_path(&pl->recursive_hashmap,
 				  &parent_pathname)) {
 		result = MATCHED_RECURSIVE;
 		goto done;
 	}
 
-	slash_pos = strrchr(parent_pathname.buf, '/');
-
-	if (slash_pos == parent_pathname.buf) {
+	if (!slash_pos) {
 		/* include every file in root */
 		result = MATCHED;
 		goto done;
 	}
 
-	strbuf_setlen(&parent_pathname, slash_pos - parent_pathname.buf);
+	strbuf_setlen(&parent_pathname, slash_pos);
 
 	if (hashmap_contains_path(&pl->parent_hashmap, &parent_pathname)) {
 		result = MATCHED;
