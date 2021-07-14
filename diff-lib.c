@@ -325,6 +325,11 @@ static void show_new_file(struct rev_info *revs,
 	unsigned dirty_submodule = 0;
 	struct index_state *istate = revs->diffopt.repo->index;
 
+	if (new_file && S_ISSPARSEDIR(new_file->ce_mode)) {
+		diff_tree_oid(NULL, &new_file->oid, new_file->name, &revs->diffopt);
+		return;
+	}
+
 	/*
 	 * New file in the index: it might actually be different in
 	 * the working tree.
@@ -346,6 +351,20 @@ static int show_modified(struct rev_info *revs,
 	const struct object_id *oid;
 	unsigned dirty_submodule = 0;
 	struct index_state *istate = revs->diffopt.repo->index;
+
+	assert(S_ISSPARSEDIR(old_entry->ce_mode) ==
+	       S_ISSPARSEDIR(new_entry->ce_mode));
+
+	/*
+	 * If both are sparse directory entries, then expand the
+	 * modifications to the file level. If only one was a sparse
+	 * directory, then they appear as an add and delete instead of
+	 * a modification.
+	 */
+	if (S_ISSPARSEDIR(new_entry->ce_mode)) {
+		diff_tree_oid(&old_entry->oid, &new_entry->oid, new_entry->name, &revs->diffopt);
+		return 0;
+	}
 
 	if (get_stat_data(istate, new_entry, &oid, &mode, cached, match_missing,
 			  &dirty_submodule, &revs->diffopt) < 0) {
