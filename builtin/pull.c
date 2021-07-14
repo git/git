@@ -946,20 +946,20 @@ static int get_can_ff(struct object_id *orig_head, struct object_id *orig_merge_
 	return ret;
 }
 
-static void show_advice_pull_non_ff(void)
+static void NORETURN die_pull_non_ff(void)
 {
-	advise(_("Pulling without specifying how to reconcile divergent branches is\n"
-		 "discouraged. You can squelch this message by running one of the following\n"
-		 "commands sometime before your next pull:\n"
-		 "\n"
-		 "  git config pull.rebase false  # merge (the default strategy)\n"
-		 "  git config pull.rebase true   # rebase\n"
-		 "  git config pull.ff only       # fast-forward only\n"
-		 "\n"
-		 "You can replace \"git config\" with \"git config --global\" to set a default\n"
-		 "preference for all repositories. You can also pass --rebase, --no-rebase,\n"
-		 "or --ff-only on the command line to override the configured default per\n"
-		 "invocation.\n"));
+	die(_("You have divergent branches and need to specify how to reconcile them.\n"
+	      "You can do so by running one of the following commands sometime before\n"
+	      "your next pull:\n"
+	      "\n"
+	      "  git config pull.rebase false  # merge (the default strategy)\n"
+	      "  git config pull.rebase true   # rebase\n"
+	      "  git config pull.ff only       # fast-forward only\n"
+	      "\n"
+	      "You can replace \"git config\" with \"git config --global\" to set a default\n"
+	      "preference for all repositories. You can also pass --rebase, --no-rebase,\n"
+	      "or --ff-only on the command line to override the configured default per\n"
+	      "invocation.\n"));
 }
 
 int cmd_pull(int argc, const char **argv, const char *prefix)
@@ -1074,9 +1074,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (opt_ff) {
 			if (!strcmp(opt_ff, "--ff-only"))
 				die_ff_impossible();
-		} else {
-			if (rebase_unspecified && opt_verbosity >= 0)
-				show_advice_pull_non_ff();
+		} else if (rebase_unspecified) {
+			die_pull_non_ff();
 		}
 	}
 

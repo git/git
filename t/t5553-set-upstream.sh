@@ -108,27 +108,27 @@ test_expect_success 'setup commit on main and other pull' '
 
 test_expect_success 'pull --set-upstream upstream main sets branch main but not other' '
 	clear_config main other &&
-	git pull --set-upstream upstream main &&
+	git pull --no-rebase --set-upstream upstream main &&
 	check_config main upstream refs/heads/main &&
 	check_config_missing other
 '
 
 test_expect_success 'pull --set-upstream main:other2 does not set the branch other2' '
 	clear_config other2 &&
-	git pull --set-upstream upstream main:other2 &&
+	git pull --no-rebase --set-upstream upstream main:other2 &&
 	check_config_missing other2
 '
 
 test_expect_success 'pull --set-upstream upstream other sets branch main' '
 	clear_config main other &&
-	git pull --set-upstream upstream other &&
+	git pull --no-rebase --set-upstream upstream other &&
 	check_config main upstream refs/heads/other &&
 	check_config_missing other
 '
 
 test_expect_success 'pull --set-upstream upstream tag does not set the tag' '
 	clear_config three &&
-	git pull --tags --set-upstream upstream three &&
+	git pull --no-rebase --tags --set-upstream upstream three &&
 	check_config_missing three
 '
 
@@ -144,16 +144,16 @@ test_expect_success 'pull --set-upstream http://nosuchdomain.example.com fails w
 
 test_expect_success 'pull --set-upstream upstream HEAD sets branch HEAD' '
 	clear_config main other &&
-	git pull --set-upstream upstream HEAD &&
+	git pull --no-rebase --set-upstream upstream HEAD &&
 	check_config main upstream HEAD &&
 	git checkout other &&
-	git pull --set-upstream upstream HEAD &&
+	git pull --no-rebase --set-upstream upstream HEAD &&
 	check_config other upstream HEAD
 '
 
 test_expect_success 'pull --set-upstream upstream with more than one branch does nothing' '
 	clear_config main three &&
-	git pull --set-upstream upstream main three &&
+	git pull --no-rebase --set-upstream upstream main three &&
 	check_config_missing main &&
 	check_config_missing three
 '

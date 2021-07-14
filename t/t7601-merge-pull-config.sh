@@ -86,10 +86,8 @@ test_expect_success 'pull.rebase not set and --ff-only given' '
 
 test_expect_success 'pull.rebase not set (not-fast-forward)' '
 	git reset --hard c2 &&
-	git -c color.advice=always pull . c1 2>err &&
-	test_decode_color <err >decoded &&
-	test_i18ngrep "<YELLOW>hint: " decoded &&
-	test_i18ngrep "Pulling without specifying how to reconcile" decoded
+	test_must_fail git pull . c1 2>err &&
+	test_i18ngrep "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=true (not-fast-forward)' '
