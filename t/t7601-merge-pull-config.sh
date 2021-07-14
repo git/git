@@ -331,7 +331,7 @@ test_expect_success 'Multiple heads warns about inability to fast forward' '
 	test_i18ngrep "You have divergent branches" err
 '
 
-test_expect_failure 'Multiple can never be fast forwarded' '
+test_expect_success 'Multiple can never be fast forwarded' '
 	git reset --hard c0 &&
 	test_must_fail git -c pull.ff=only pull . c1 c2 c3 2>err &&
 	test_i18ngrep ! "You have divergent branches" err &&
