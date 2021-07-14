@@ -350,6 +350,27 @@ jobs:
     - uses: actions/checkout@v1
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
+  sparse:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    env:
+      jobname: sparse
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Download a current `sparse` package
+      # Ubuntu's `sparse` version is too old for us
+      uses: git-for-windows/get-azure-pipelines-artifact@v0
+      with:
+        repository: git/git
+        definitionId: 10
+        artifact: sparse-20.04
+    - name: Install the current `sparse` package
+      run: sudo dpkg -i sparse-20.04/sparse_*.deb
+    - name: Install other dependencies
+      run: |
+        sudo apt-get install -q -y libssl-dev libcurl4-openssl-dev libexpat-dev gettext zlib1g-dev
+    - uses: actions/checkout@v2
+    - run: make sparse
   documentation:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
