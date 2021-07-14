@@ -1052,13 +1052,15 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	const struct name_entry *n,
 	int stage,
 	struct index_state *istate,
-	int is_transient)
+	int is_transient,
+	int is_sparse_directory)
 {
 	size_t len = traverse_path_len(info, tree_entry_len(n));
+	size_t alloc_len = is_sparse_directory ? len + 1 : len;
 	struct cache_entry *ce =
 		is_transient ?
-		make_empty_transient_cache_entry(len, NULL) :
-		make_empty_cache_entry(istate, len);
+		make_empty_transient_cache_entry(alloc_len, NULL) :
+		make_empty_cache_entry(istate, alloc_len);
 
 	ce->ce_mode = create_ce_mode(n->mode);
 	ce->ce_flags = create_ce_flags(stage);
@@ -1066,6 +1068,13 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	oidcpy(&ce->oid, &n->oid);
 	/* len+1 because the cache_entry allocates space for NUL */
 	make_traverse_path(ce->name, len + 1, info, n->path, n->pathlen);
+
+	if (is_sparse_directory) {
+		ce->name[len] = '/';
+		ce->name[len + 1] = '\0';
+		ce->ce_namelen++;
+		ce->ce_flags |= CE_SKIP_WORKTREE;
+	}
 
 	return ce;
 }
@@ -1085,9 +1094,16 @@ static int unpack_single_entry(int n, unsigned long mask,
 	struct unpack_trees_options *o = info->data;
 	unsigned long conflicts = info->df_conflicts | dirmask;
 
-	/* Do we have *only* directories? Nothing to do */
 	if (mask == dirmask && !src[0])
 		return 0;
+
+	/*
+	 * When we have a sparse directory entry for src[0],
+	 * then this isn't necessarily a directory-file conflict.
+	 */
+	if (mask == dirmask && src[0] &&
+	    S_ISSPARSEDIR(src[0]->ce_mode))
+		conflicts = 0;
 
 	/*
 	 * Ok, we've filled in up to any potential index entry in src[0],
@@ -1118,7 +1134,9 @@ static int unpack_single_entry(int n, unsigned long mask,
 		 * not stored in the index.  otherwise construct the
 		 * cache entry from the index aware logic.
 		 */
-		src[i + o->merge] = create_ce_entry(info, names + i, stage, &o->result, o->merge);
+		src[i + o->merge] = create_ce_entry(info, names + i, stage,
+						    &o->result, o->merge,
+						    bit & dirmask);
 	}
 
 	if (o->merge) {
@@ -1222,16 +1240,71 @@ static int find_cache_pos(struct traverse_info *info,
 	return -1;
 }
 
+/*
+ * Given a sparse directory entry 'ce', compare ce->name to
+ * info->name + '/' + p->path + '/' if info->name is non-empty.
+ * Compare ce->name to p->path + '/' otherwise. Note that
+ * ce->name must end in a trailing '/' because it is a sparse
+ * directory entry.
+ */
+static int sparse_dir_matches_path(const struct cache_entry *ce,
+				   struct traverse_info *info,
+				   const struct name_entry *p)
+{
+	assert(S_ISSPARSEDIR(ce->ce_mode));
+	assert(ce->name[ce->ce_namelen - 1] == '/');
+
+	if (info->namelen)
+		return ce->ce_namelen == info->namelen + p->pathlen + 2 &&
+		       ce->name[info->namelen] == '/' &&
+		       !strncmp(ce->name, info->name, info->namelen) &&
+		       !strncmp(ce->name + info->namelen + 1, p->path, p->pathlen);
+	return ce->ce_namelen == p->pathlen + 1 &&
+	       !strncmp(ce->name, p->path, p->pathlen);
+}
+
 static struct cache_entry *find_cache_entry(struct traverse_info *info,
 					    const struct name_entry *p)
 {
+	struct cache_entry *ce;
 	int pos = find_cache_pos(info, p->path, p->pathlen);
 	struct unpack_trees_options *o = info->data;
 
 	if (0 <= pos)
 		return o->src_index->cache[pos];
-	else
+
+	/*
+	 * Check for a sparse-directory entry named "path/".
+	 * Due to the input p->path not having a trailing
+	 * slash, the negative 'pos' value overshoots the
+	 * expected position, hence "-2" instead of "-1".
+	 */
+	pos = -pos - 2;
+
+	if (pos < 0 || pos >= o->src_index->cache_nr)
 		return NULL;
+
+	/*
+	 * Due to lexicographic sorting and sparse directory
+	 * entries ending with a trailing slash, our path as a
+	 * sparse directory (e.g "subdir/") and	our path as a
+	 * file (e.g. "subdir") might be separated by other
+	 * paths (e.g. "subdir-").
+	 */
+	while (pos >= 0) {
+		ce = o->src_index->cache[pos];
+
+		if (strncmp(ce->name, p->path, p->pathlen))
+			return NULL;
+
+		if (S_ISSPARSEDIR(ce->ce_mode) &&
+		    sparse_dir_matches_path(ce, info, p))
+			return ce;
+
+		pos--;
+	}
+
+	return NULL;
 }
 
 static void debug_path(struct traverse_info *info)
@@ -1264,6 +1337,21 @@ static void debug_unpack_callback(int n,
 	putchar('\n');
 	for (i = 0; i < n; i++)
 		debug_name_entry(i, names + i);
+}
+
+/*
+ * Returns true if and only if the given cache_entry is a
+ * sparse-directory entry that matches the given name_entry
+ * from the tree walk at the given traverse_info.
+ */
+static int is_sparse_directory_entry(struct cache_entry *ce,
+				     struct name_entry *name,
+				     struct traverse_info *info)
+{
+	if (!ce || !name || !S_ISSPARSEDIR(ce->ce_mode))
+		return 0;
+
+	return sparse_dir_matches_path(ce, info, name);
 }
 
 /*
@@ -1352,9 +1440,12 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 			}
 		}
 
-		if (traverse_trees_recursive(n, dirmask, mask & ~dirmask,
-					     names, info) < 0)
+		if (!is_sparse_directory_entry(src[0], names, info) &&
+		    traverse_trees_recursive(n, dirmask, mask & ~dirmask,
+						    names, info) < 0) {
 			return -1;
+		}
+
 		return mask;
 	}
 
