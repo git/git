@@ -12,15 +12,9 @@ jobs:
   check-whitespace:
     runs-on: ubuntu-latest
     steps:
-    - name: Set commit count
-      shell: bash
-      run: echo "COMMIT_DEPTH=$((1+$COMMITS))" >>$GITHUB_ENV
-      env:
-        COMMITS: ${{ github.event.pull_request.commits }}
-
     - uses: actions/checkout@v2
       with:
-        fetch-depth: ${{ env.COMMIT_DEPTH }}
+        fetch-depth: 0
 
     - name: git log --check
       id: check_out
@@ -47,7 +41,7 @@ jobs:
             echo "${dash} ${etc}"
             ;;
           esac
-        done <<< $(git log --check --pretty=format:"---% h% s" -${{github.event.pull_request.commits}})
+        done <<< $(git log --check --pretty=format:"---% h% s" ${{github.event.pull_request.base.sha}}..)
 
         if test -n "${log}"
         then
