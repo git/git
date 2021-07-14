@@ -143,7 +143,13 @@ See also <<FILES>>.
 
 -f config-file::
 --file config-file::
-	Use the given config file instead of the one specified by GIT_CONFIG.
+	For writing options: write to the specified file rather than the
+	repository `.git/config`.
++
+For reading options: read only from the specified file rather than from all
+available files.
++
+See also <<FILES>>.
 
 --blob blob::
 	Similar to `--file` but use the given blob instead of a file. E.g.
