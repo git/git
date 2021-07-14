@@ -341,11 +341,6 @@ can specify any filename you want.
 ENVIRONMENT
 -----------
 
-GIT_CONFIG::
-	Take the configuration from the given file instead of .git/config.
-	Using the "--global" option forces this to ~/.gitconfig. Using the
-	"--system" option forces this to $(prefix)/etc/gitconfig.
-
 GIT_CONFIG_GLOBAL::
 GIT_CONFIG_SYSTEM::
 	Take the configuration from the given files instead from global or
@@ -373,6 +368,12 @@ This is useful for cases where you want to spawn multiple git commands
 with a common configuration but cannot depend on a configuration file,
 for example when writing scripts.
 
+GIT_CONFIG::
+	If no `--file` option is provided to `git config`, use the file
+	given by `GIT_CONFIG` as if it were provided via `--file`. This
+	variable has no effect on other Git commands, and is mostly for
+	historical compatibility; there is generally no reason to use it
+	instead of the `--file` option.
 
 [[EXAMPLES]]
 EXAMPLES
