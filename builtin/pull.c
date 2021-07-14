@@ -27,42 +27,6 @@
 #include "commit-reach.h"
 #include "sequencer.h"
 
-/**
- * Parses the value of --rebase. If value is a false value, returns
- * REBASE_FALSE. If value is a true value, returns REBASE_TRUE. If value is
- * "merges", returns REBASE_MERGES. If value is "preserve", returns
- * REBASE_PRESERVE. If value is a invalid value, dies with a fatal error if
- * fatal is true, otherwise returns REBASE_INVALID.
- */
-static enum rebase_type parse_config_rebase(const char *key, const char *value,
-		int fatal)
-{
-	enum rebase_type v = rebase_parse_value(value);
-	if (v != REBASE_INVALID)
-		return v;
-
-	if (fatal)
-		die(_("Invalid value for %s: %s"), key, value);
-	else
-		error(_("Invalid value for %s: %s"), key, value);
-
-	return REBASE_INVALID;
-}
-
-/**
- * Callback for --rebase, which parses arg with parse_config_rebase().
- */
-static int parse_opt_rebase(const struct option *opt, const char *arg, int unset)
-{
-	enum rebase_type *value = opt->value;
-
-	if (arg)
-		*value = parse_config_rebase("--rebase", arg, 0);
-	else
-		*value = unset ? REBASE_FALSE : REBASE_TRUE;
-	return *value == REBASE_INVALID ? -1 : 0;
-}
-
 static const char * const pull_usage[] = {
 	N_("git pull [<options>] [<repository> [<refspec>...]]"),
 	NULL
@@ -111,6 +75,42 @@ static char *opt_ipv6;
 static int opt_show_forced_updates = -1;
 static char *set_upstream;
 static struct strvec opt_fetch = STRVEC_INIT;
+
+/**
+ * Parses the value of --rebase. If value is a false value, returns
+ * REBASE_FALSE. If value is a true value, returns REBASE_TRUE. If value is
+ * "merges", returns REBASE_MERGES. If value is "preserve", returns
+ * REBASE_PRESERVE. If value is a invalid value, dies with a fatal error if
+ * fatal is true, otherwise returns REBASE_INVALID.
+ */
+static enum rebase_type parse_config_rebase(const char *key, const char *value,
+		int fatal)
+{
+	enum rebase_type v = rebase_parse_value(value);
+	if (v != REBASE_INVALID)
+		return v;
+
+	if (fatal)
+		die(_("Invalid value for %s: %s"), key, value);
+	else
+		error(_("Invalid value for %s: %s"), key, value);
+
+	return REBASE_INVALID;
+}
+
+/**
+ * Callback for --rebase, which parses arg with parse_config_rebase().
+ */
+static int parse_opt_rebase(const struct option *opt, const char *arg, int unset)
+{
+	enum rebase_type *value = opt->value;
+
+	if (arg)
+		*value = parse_config_rebase("--rebase", arg, 0);
+	else
+		*value = unset ? REBASE_FALSE : REBASE_TRUE;
+	return *value == REBASE_INVALID ? -1 : 0;
+}
 
 static struct option pull_options[] = {
 	/* Shared options */
