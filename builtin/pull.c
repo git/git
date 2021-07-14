@@ -109,6 +109,11 @@ static int parse_opt_rebase(const struct option *opt, const char *arg, int unset
 		*value = parse_config_rebase("--rebase", arg, 0);
 	else
 		*value = unset ? REBASE_FALSE : REBASE_TRUE;
+
+	/* --rebase overrides earlier --ff-only and --no-ff */
+	if (*value != REBASE_FALSE)
+		opt_ff = "--ff";
+
 	return *value == REBASE_INVALID ? -1 : 0;
 }
 
@@ -118,6 +123,10 @@ static int parse_opt_ff(const struct option *opt, const char *arg, int unset)
 		opt_ff = "--no-ff";
 	else
 		opt_ff = xstrfmt("--%s", opt->long_name);
+
+	/* --ff-only and --no-ff override earlier --rebase */
+	if (strcmp(opt_ff, "--ff"))
+		opt_rebase = REBASE_FALSE;
 
 	return 0;
 }
@@ -983,6 +992,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	if (opt_rebase < 0)
 		opt_rebase = config_get_rebase(&rebase_unspecified);
+
+	if (opt_rebase != REBASE_FALSE && opt_ff && strcmp(opt_ff, "--ff"))
+		die(_("pull.rebase and pull.ff are incompatible; please unset one"));
 
 	if (read_cache_unmerged())
 		die_resolve_conflict("pull");

@@ -121,6 +121,9 @@ When false, merge the current branch into the upstream branch.
 +
 When `interactive`, enable the interactive mode of rebase.
 +
+Note that these flags are incompatible with --no-ff and --ff-only; if
+such incompatible flags are given, the last one will take precedence.
++
 See `pull.rebase`, `branch.<name>.rebase` and `branch.autoSetupRebase` in
 linkgit:git-config[1] if you want to make `git pull` always use
 `--rebase` instead of merging.

@@ -7,12 +7,13 @@ pull.ff::
 	line). When set to `only`, only such fast-forward merges are
 	allowed (equivalent to giving the `--ff-only` option from the
 	command line). This setting overrides `merge.ff` when pulling.
+	Incompatible with pull.rebase.
 
 pull.rebase::
 	When true, rebase branches on top of the fetched branch, instead
 	of merging the default branch from the default remote when "git
 	pull" is run. See "branch.<name>.rebase" for setting this on a
-	per-branch basis.
+	per-branch basis.  Incompatible with pull.ff.
 +
 When `merges` (or just 'm'), pass the `--rebase-merges` option to 'git rebase'
 so that the local merge commits are included in the rebase (see

@@ -143,6 +143,73 @@ test_expect_success 'pull.rebase not set and --ff-only given (not-fast-forward)'
 	test_i18ngrep ! "Pulling without specifying how to reconcile" err
 '
 
+test_does_rebase() {
+	git reset --hard c2 &&
+	git "$@" . c1 &&
+	# Check that we actually did a rebase
+	git rev-list --count HEAD >actual &&
+	git rev-list --merges --count HEAD >>actual &&
+	test_write_lines 3 0 >expect &&
+	test_cmp expect actual &&
+	rm actual expect
+}
+
+test_does_merge() {
+	git reset --hard c2 &&
+	git "$@" . c1 &&
+	# Check that we actually did a merge
+	git rev-list --count HEAD >actual &&
+	git rev-list --merges --count HEAD >>actual &&
+	test_write_lines 4 1 >expect &&
+	test_cmp expect actual &&
+	rm actual expect
+}
+
+test_attempts_fast_forward() {
+	git reset --hard c2 &&
+	test_must_fail git "$@" . c1 2>err &&
+	test_i18ngrep "Not possible to fast-forward, aborting" err
+}
+
+test_expect_success 'conflicting options: --ff-only --rebase' '
+	test_does_rebase pull --ff-only --rebase
+'
+
+test_expect_success 'conflicting options: --no-ff --rebase' '
+	test_does_rebase pull --no-ff --rebase
+'
+
+test_expect_success 'conflicting options: -c pull.ff=false --rebase' '
+	test_does_rebase -c pull.ff=false pull --rebase
+'
+
+test_expect_success 'conflicting options: -c pull.ff=only --rebase' '
+	test_does_rebase -c pull.ff=only pull --rebase
+'
+
+test_expect_success 'conflicting options: --rebase --ff-only' '
+	test_attempts_fast_forward pull --rebase --ff-only
+'
+
+test_expect_success 'conflicting options: --rebase --no-ff' '
+	test_does_merge pull --rebase --no-ff
+'
+
+test_expect_success 'conflicting options: -c pull.rebase=true --no-ff' '
+	test_does_merge -c pull.rebase=true pull --no-ff
+'
+
+test_expect_success 'conflicting options: -c pull.rebase=true --ff-only' '
+	test_attempts_fast_forward -c pull.rebase=true pull --ff-only
+'
+
+test_expect_success 'report conflicting configuration' '
+	git reset --hard c2 &&
+	test_must_fail git -c pull.ff=false -c pull.rebase=true pull . c1 2>err &&
+	test_i18ngrep "pull.rebase and pull.ff are incompatible; please unset one" err
+
+'
+
 test_expect_success 'merge c1 with c2' '
 	git reset --hard c1 &&
 	test -f c0.c &&
