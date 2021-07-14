@@ -51,21 +51,5 @@ jobs:
 
         if test -n "${log}"
         then
-          echo "::set-output name=checkout::"${log}""
           exit 2
         fi
-
-    - name: Add Check Output as Comment
-      uses: actions/github-script@v3
-      id: add-comment
-      env:
-        log: ${{ steps.check_out.outputs.checkout }}
-      with:
-        script: |
-            await github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `Whitespace errors found in workflow ${{ github.workflow }}:\n\n\`\`\`\n${process.env.log.replace(/\\n/g, "\n")}\n\`\`\``
-            })
-      if: ${{ failure() }}
