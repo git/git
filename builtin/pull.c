@@ -112,6 +112,16 @@ static int parse_opt_rebase(const struct option *opt, const char *arg, int unset
 	return *value == REBASE_INVALID ? -1 : 0;
 }
 
+static int parse_opt_ff(const struct option *opt, const char *arg, int unset)
+{
+	if (unset)
+		opt_ff = "--no-ff";
+	else
+		opt_ff = xstrfmt("--%s", opt->long_name);
+
+	return 0;
+}
+
 static struct option pull_options[] = {
 	/* Shared options */
 	OPT__VERBOSITY(&opt_verbosity),
@@ -154,12 +164,14 @@ static struct option pull_options[] = {
 		N_("edit message before committing"),
 		PARSE_OPT_NOARG),
 	OPT_CLEANUP(&cleanup_arg),
-	OPT_PASSTHRU(0, "ff", &opt_ff, NULL,
-		N_("allow fast-forward"),
-		PARSE_OPT_NOARG),
-	OPT_PASSTHRU(0, "ff-only", &opt_ff, NULL,
-		N_("abort if fast-forward is not possible"),
-		PARSE_OPT_NOARG | PARSE_OPT_NONEG),
+	OPT_CALLBACK_F(0, "ff", &opt_ff, NULL,
+			N_("allow fast-forward"),
+			PARSE_OPT_NOARG,
+			parse_opt_ff),
+	OPT_CALLBACK_F(0, "ff-only", &opt_ff, NULL,
+			N_("abort if fast-forward is not possible"),
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			parse_opt_ff),
 	OPT_PASSTHRU(0, "verify-signatures", &opt_verify_signatures, NULL,
 		N_("verify that the named commit has a valid GPG signature"),
 		PARSE_OPT_NOARG),
