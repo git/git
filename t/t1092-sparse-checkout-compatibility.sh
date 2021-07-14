@@ -392,8 +392,8 @@ test_expect_failure 'blame with pathspec outside sparse definition' '
 	test_all_match git blame deep/deeper2/deepest/a
 '
 
-# TODO: reset currently does not behave as expected when in a
-# sparse-checkout.
+# NEEDSWORK: a sparse-checkout behaves differently from a full checkout
+# in this scenario, but it shouldn't.
 test_expect_failure 'checkout and reset (mixed)' '
 	init_repos &&
 
@@ -403,8 +403,8 @@ test_expect_failure 'checkout and reset (mixed)' '
 	test_all_match git reset update-folder2
 '
 
-# Ensure that sparse-index behaves identically to
-# sparse-checkout with a full index.
+# NEEDSWORK: a sparse-checkout behaves differently from a full checkout
+# in this scenario, but it shouldn't.
 test_expect_success 'checkout and reset (mixed) [sparse]' '
 	init_repos &&
 
@@ -524,6 +524,8 @@ test_expect_success 'sparse-index is not expanded' '
 	test_region ! index ensure_full_index trace2.txt
 '
 
+# NEEDSWORK: a sparse-checkout behaves differently from a full checkout
+# in this scenario, but it shouldn't.
 test_expect_success 'reset mixed and checkout orphan' '
 	init_repos &&
 
