@@ -120,7 +120,7 @@ diff.orderFile::
 diff.renameLimit::
 	The number of files to consider in the exhaustive portion of
 	copy/rename detection; equivalent to the 'git diff' option
-	`-l`.  If not set, the default value is currently 400.  This
+	`-l`.  If not set, the default value is currently 1000.  This
 	setting has no effect if rename detection is turned off.
 
 diff.renames::
