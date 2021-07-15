@@ -598,6 +598,7 @@ of a delete/create pair.
 	prevents the exhaustive portion of rename/copy detection from
 	running if the number of source/destination files involved
 	exceeds the specified number.  Defaults to diff.renameLimit.
+	Note that a value of 0 is treated as unlimited.
 
 ifndef::git-format-patch[]
 --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]::
