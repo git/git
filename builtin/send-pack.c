@@ -230,6 +230,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	args.atomic = atomic;
 	args.stateless_rpc = stateless_rpc;
 	args.push_options = push_options.nr ? &push_options : NULL;
+	args.url = dest;
 
 	if (from_stdin) {
 		if (args.stateless_rpc) {
