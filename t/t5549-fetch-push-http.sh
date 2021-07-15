@@ -27,6 +27,7 @@ setup_client_and_server () {
 	git init "$SERVER" &&
 	test_when_finished 'rm -rf "$SERVER"' &&
 	test_config -C "$SERVER" http.receivepack true &&
+	test_commit -C "$SERVER" unrelated_commit &&
 	git -C client push "$URI" first_commit:refs/remotes/origin/first_commit &&
 	git -C "$SERVER" config receive.hideRefs refs/remotes/origin/first_commit
 }
