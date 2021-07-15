@@ -1,7 +1,8 @@
 Git for Windows
 ===============
 
-[![Build status](https://github.com/git-for-windows/git/workflows/CI/PR/badge.svg)](https://github.com/git-for-windows/git/actions?query=branch%3Amaster+event%3Apush)
+[![Open in Visual Studio Code](https://open.vscode.dev/badges/open-in-vscode.svg)](https://open.vscode.dev/git-for-windows/git)
+[![Build status](https://github.com/git-for-windows/git/workflows/CI/PR/badge.svg)](https://github.com/git-for-windows/git/actions?query=branch%3Amain+event%3Apush)
 [![Join the chat at https://gitter.im/git-for-windows/git](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/git-for-windows/git?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This is [Git for Windows](http://git-for-windows.github.io/), the Windows port
@@ -36,7 +37,7 @@ To verify that your build works, use one of the following methods:
   `Build>Install git` (you will want to click on `Project>CMake Settings for
   Git` first, then click on `Edit JSON` and then point `installRoot` to the
   `mingw64` directory of an already-unpacked portable Git).
-  
+
   As in the previous  bullet point, you will then prepend `/cmd` to the `PATH`
   or run using the portable Git's `git-bash.exe` or `git-cmd.exe`.
 - If you want to run the built executables in-place, but in a CMD instead of
