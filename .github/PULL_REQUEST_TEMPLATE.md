@@ -9,7 +9,7 @@ please be aware that the Git community does not use the github.com issues
 or pull request mechanism for their contributions.
 
 Instead, we use the Git mailing list (git@vger.kernel.org) for code and
-documenatation submissions, code reviews, and bug reports. The
+documentation submissions, code reviews, and bug reports. The
 mailing list is plain text only (anything with HTML is sent directly
 to the spam folder).
 
