@@ -2404,6 +2404,19 @@ test_expect_success 'sourcing the completion script clears cached --options' '
 	verbose test -z "$__gitcomp_builtin_notes_edit"
 '
 
+test_expect_success 'option aliases are not shown by default' '
+	test_completion "git clone --recurs" "--recurse-submodules "
+'
+
+test_expect_success 'option aliases are shown with GIT_COMPLETION_SHOW_ALL' '
+	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+	GIT_COMPLETION_SHOW_ALL=1 && export GIT_COMPLETION_SHOW_ALL &&
+	test_completion "git clone --recurs" <<-\EOF
+	--recurse-submodules Z
+	--recursive Z
+	EOF
+'
+
 test_expect_success '__git_complete' '
 	unset -f __git_wrap__git_main &&
 
