@@ -1018,8 +1018,8 @@ static int collect_merge_info_callback(int n,
 	if (side1_matches_mbase && side2_matches_mbase) {
 		/* mbase, side1, & side2 all match; use mbase as resolution */
 		setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
-				names, names+0, mbase_null, 0,
-				filemask, dirmask, 1);
+				names, names+0, mbase_null, 0 /* df_conflict */,
+				filemask, dirmask, 1 /* resolved */);
 		return mask;
 	}
 
@@ -1061,14 +1061,24 @@ static int collect_merge_info_callback(int n,
 	}
 
 	/*
-	 * Gather additional information used in rename detection.
+	 * Sometimes we can tell that a source path need not be included in
+	 * rename detection -- namely, whenever either
+	 *    side1_matches_mbase && side2_null
+	 * or
+	 *    side2_matches_mbase && side1_null
+	 * However, we call collect_rename_info() even in those cases,
+	 * because exact renames are cheap and would let us remove both a
+	 * source and destination path.  We'll cull the unneeded sources
+	 * later.
 	 */
 	collect_rename_info(opt, names, dirname, fullpath,
 			    filemask, dirmask, match_mask);
 
 	/*
-	 * Record information about the path so we can resolve later in
-	 * process_entries.
+	 * None of the special cases above matched, so we have a
+	 * provisional conflict.  (Rename detection might allow us to
+	 * unconflict some more cases, but that comes later so all we can
+	 * do now is record the different non-null file hashes.)
 	 */
 	setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
 			names, NULL, 0, df_conflict, filemask, dirmask, 0);
