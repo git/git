@@ -62,6 +62,53 @@ struct traversal_callback_data {
 	struct name_entry names[3];
 };
 
+struct deferred_traversal_data {
+	/*
+	 * possible_trivial_merges: directories to be explored only when needed
+	 *
+	 * possible_trivial_merges is a map of directory names to
+	 * dir_rename_mask.  When we detect that a directory is unchanged on
+	 * one side, we can sometimes resolve the directory without recursing
+	 * into it.  Renames are the only things that can prevent such an
+	 * optimization.  However, for rename sources:
+	 *   - If no parent directory needed directory rename detection, then
+	 *     no path under such a directory can be a relevant_source.
+	 * and for rename destinations:
+	 *   - If no cached rename has a target path under the directory AND
+	 *   - If there are no unpaired relevant_sources elsewhere in the
+	 *     repository
+	 * then we don't need any path under this directory for a rename
+	 * destination.  The only way to know the last item above is to defer
+	 * handling such directories until the end of collect_merge_info(),
+	 * in handle_deferred_entries().
+	 *
+	 * For each we store dir_rename_mask, since that's the only bit of
+	 * information we need, other than the path, to resume the recursive
+	 * traversal.
+	 */
+	struct strintmap possible_trivial_merges;
+
+	/*
+	 * trivial_merges_okay: if trivial directory merges are okay
+	 *
+	 * See possible_trivial_merges above.  The "no unpaired
+	 * relevant_sources elsewhere in the repository" is a single boolean
+	 * per merge side, which we store here.  Note that while 0 means no,
+	 * 1 only means "maybe" rather than "yes"; we optimistically set it
+	 * to 1 initially and only clear when we determine it is unsafe to
+	 * do trivial directory merges.
+	 */
+	unsigned trivial_merges_okay;
+
+	/*
+	 * target_dirs: ancestor directories of rename targets
+	 *
+	 * target_dirs contains all directory names that are an ancestor of
+	 * any rename destination.
+	 */
+	struct strset target_dirs;
+};
+
 struct rename_info {
 	/*
 	 * All variables that are arrays of size 3 correspond to data tracked
@@ -118,6 +165,8 @@ struct rename_info {
 	 * diffcore_rename_extended().
 	 */
 	struct strintmap relevant_sources[3];
+
+	struct deferred_traversal_data deferred[3];
 
 	/*
 	 * dir_rename_mask:
@@ -500,6 +549,11 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 			if (!reinitialize)
 				strmap_clear(&renames->dir_rename_count[i], 1);
 		}
+	}
+	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; ++i) {
+		strintmap_func(&renames->deferred[i].possible_trivial_merges);
+		strset_func(&renames->deferred[i].target_dirs);
+		renames->deferred[i].trivial_merges_okay = 1; /* 1 == maybe */
 	}
 	renames->cached_pairs_valid_side = 0;
 	renames->dir_rename_mask = 0;
@@ -4064,6 +4118,13 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 					 NULL, 1);
 		strset_init_with_options(&renames->cached_target_names[i],
 					 NULL, 0);
+	}
+	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; i++) {
+		strintmap_init_with_options(&renames->deferred[i].possible_trivial_merges,
+					    0, NULL, 0);
+		strset_init_with_options(&renames->deferred[i].target_dirs,
+					 NULL, 1);
+		renames->deferred[i].trivial_merges_okay = 1; /* 1 == maybe */
 	}
 
 	/*
