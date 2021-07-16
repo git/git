@@ -325,6 +325,28 @@ test_expect_success 'pull.rebase=false and --ff, ff not possible' '
 
 # End of groupings for conflicting merge vs. rebase flags/options
 
+test_expect_failure 'Multiple heads warns about inability to fast forward' '
+	git reset --hard c1 &&
+	test_must_fail git pull . c2 c3 2>err &&
+	test_i18ngrep "Pulling without specifying how to reconcile" err
+'
+
+test_expect_failure 'Multiple can never be fast forwarded' '
+	git reset --hard c0 &&
+	test_must_fail git -c pull.ff=only pull . c1 c2 c3 2>err &&
+	test_i18ngrep ! "Pulling without specifying how to reconcile" err &&
+	# In addition to calling out "cannot fast-forward", we very much
+	# want the "multiple branches" piece to be called out to users.
+	test_i18ngrep "Cannot fast-forward to multiple branches" err
+'
+
+test_expect_success 'Cannot rebase with multiple heads' '
+	git reset --hard c0 &&
+	test_must_fail git -c pull.rebase=true pull . c1 c2 c3 2>err &&
+	test_i18ngrep ! "Pulling without specifying how to reconcile" err &&
+	test_i18ngrep "Cannot rebase onto multiple branches." err
+'
+
 test_expect_success 'merge c1 with c2' '
 	git reset --hard c1 &&
 	test -f c0.c &&
