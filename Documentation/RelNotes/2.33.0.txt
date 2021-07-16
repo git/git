@@ -50,6 +50,10 @@ Performance, Internal Implementation, Development Support etc.
  * The backend for "diff -G/-S" has been updated to use pcre2 engine
    when available.
 
+ * Use ".DELETE_ON_ERROR" pseudo target to simplify our Makefile.
+
+ * Code cleanup around struct_type_init() functions.
+
 
 Fixes since v2.32
 -----------------
@@ -151,6 +155,26 @@ Fixes since v2.32
    but instead segfaulted, which has been corrected.
    (merge fe7fe62d8d rs/grep-parser-fix later to maint).
 
+ * The merge code had funny interactions between content based rename
+   detection and directory rename detection.
+   (merge 3585d0ea23 en/merge-dir-rename-corner-case-fix later to maint).
+
+ * When rebuilding the multi-pack index file reusing an existing one,
+   we used to blindly trust the existing file and ended up carrying
+   corrupted data into the updated file, which has been corrected.
+   (merge f89ecf7988 tb/midx-use-checksum later to maint).
+
+ * Update the location of system-side configuration file on Windows.
+   (merge e355307692 js/gfw-system-config-loc-fix later to maint).
+
+ * Code recently added to support common ancestry negotiation during
+   "git push" did not sanity check its arguments carefully enough.
+   (merge eff40457a4 ab/fetch-negotiate-segv-fix later to maint).
+
+ * Update the documentation not to assume users are of certain gender
+   and adds to guidelines to do so.
+   (merge 46a237f42f ds/gender-neutral-doc later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bfe35a6165 ah/doc-describe later to maint).
    (merge f302c1e4aa jc/clarify-revision-range later to maint).
@@ -179,3 +203,8 @@ Fixes since v2.32
    (merge ce24797d38 mr/cmake later to maint).
    (merge 9eb542f2ee ab/pre-auto-gc-hook-test later to maint).
    (merge 9fffc38583 bk/doc-commit-typofix later to maint).
+   (merge 1cf823d8f0 ks/submodule-cleanup later to maint).
+   (merge ebbf5d2b70 js/config-mak-windows-pcre-fix later to maint).
+   (merge 617480d75b hn/refs-iterator-peel-returns-boolean later to maint).
+   (merge 6a24cc71ed ar/submodule-helper-include-cleanup later to maint).
+   (merge 5632e838f8 rs/khash-alloc-cleanup later to maint).
