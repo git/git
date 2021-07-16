@@ -213,6 +213,7 @@ struct rename_info {
 	 *   MERGE_SIDE2: cached data from side2 can be reused
 	 *   MERGE_SIDE1: cached data from side1 can be reused
 	 *   0:           no cached data can be reused
+	 *   -1:          See redo_after_renames; both sides can be reused.
 	 */
 	int cached_pairs_valid_side;
 
@@ -257,6 +258,28 @@ struct rename_info {
 	 * detection when cherry-picking/rebasing subsequent commits.
 	 */
 	struct strset cached_irrelevant[3];
+
+	/*
+	 * redo_after_renames: optimization flag for "restarting" the merge
+	 *
+	 * Sometimes it pays to detect renames, cache them, and then
+	 * restart the merge operation from the beginning.  The reason for
+	 * this is that when we know where all the renames are, we know
+	 * whether a certain directory has any paths under it affected --
+	 * and if a directory is not affected then it permits us to do
+	 * trivial tree merging in more cases.  Doing trivial tree merging
+	 * prevents the need to run process_entry() on every path
+	 * underneath trees that can be trivially merged, and
+	 * process_entry() is more expensive than collect_merge_info() --
+	 * plus, the second collect_merge_info() will be much faster since
+	 * it doesn't have to recurse into the relevant trees.
+	 *
+	 * Values for this flag:
+	 *   0 = don't bother, not worth it (or conditions not yet checked)
+	 *   1 = conditions for optimization met, optimization worthwhile
+	 *   2 = we already did it (don't restart merge yet again)
+	 */
+	unsigned redo_after_renames;
 
 	/*
 	 * needed_limit: value needed for inexact rename detection to run
@@ -541,7 +564,8 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 		strintmap_func(&renames->relevant_sources[i]);
 		if (!reinitialize)
 			assert(renames->cached_pairs_valid_side == 0);
-		if (i != renames->cached_pairs_valid_side) {
+		if (i != renames->cached_pairs_valid_side &&
+		    -1 != renames->cached_pairs_valid_side) {
 			strset_func(&renames->cached_target_names[i]);
 			strmap_func(&renames->cached_pairs[i], 1);
 			strset_func(&renames->cached_irrelevant[i]);
@@ -1249,7 +1273,9 @@ static int handle_deferred_entries(struct merge_options *opt,
 	struct hashmap_iter iter;
 	struct strmap_entry *entry;
 	int side, ret = 0;
+	int path_count_before, path_count_after = 0;
 
+	path_count_before = strmap_get_size(&opt->priv->paths);
 	for (side = MERGE_SIDE1; side <= MERGE_SIDE2; side++) {
 		unsigned optimization_okay = 1;
 		struct strintmap copy;
@@ -1385,7 +1411,32 @@ static int handle_deferred_entries(struct merge_options *opt,
 						path));
 			resolve_trivial_directory_merge(ci, side);
 		}
+		if (!optimization_okay || path_count_after)
+			path_count_after = strmap_get_size(&opt->priv->paths);
 	}
+	if (path_count_after) {
+		/*
+		 * The choice of wanted_factor here does not affect
+		 * correctness, only performance.  When the
+		 *    path_count_after / path_count_before
+		 * ratio is high, redoing after renames is a big
+		 * performance boost.  I suspect that redoing is a wash
+		 * somewhere near a value of 2, and below that redoing will
+		 * slow things down.  I applied a fudge factor and picked
+		 * 3; see the commit message when this was introduced for
+		 * back of the envelope calculations for this ratio.
+		 */
+		const int wanted_factor = 3;
+
+		/* We should only redo collect_merge_info one time */
+		assert(renames->redo_after_renames == 0);
+
+		if (path_count_after / path_count_before >= wanted_factor) {
+			renames->redo_after_renames = 1;
+			renames->cached_pairs_valid_side = -1;
+		}
+	} else if (renames->redo_after_renames == 2)
+		renames->redo_after_renames = 0;
 	return ret;
 }
 
@@ -2828,8 +2879,8 @@ static int compare_pairs(const void *a_, const void *b_)
 }
 
 /* Call diffcore_rename() to update deleted/added pairs into rename pairs */
-static void detect_regular_renames(struct merge_options *opt,
-				   unsigned side_index)
+static int detect_regular_renames(struct merge_options *opt,
+				  unsigned side_index)
 {
 	struct diff_options diff_opts;
 	struct rename_info *renames = &opt->priv->renames;
@@ -2842,7 +2893,7 @@ static void detect_regular_renames(struct merge_options *opt,
 		 * side had directory renames.
 		 */
 		resolve_diffpair_statuses(&renames->pairs[side_index]);
-		return;
+		return 0;
 	}
 
 	partial_clear_dir_rename_count(&renames->dir_rename_count[side_index]);
@@ -2868,6 +2919,8 @@ static void detect_regular_renames(struct merge_options *opt,
 	trace2_region_leave("diff", "diffcore_rename", opt->repo);
 	resolve_diffpair_statuses(&diff_queued_diff);
 
+	if (diff_opts.needed_rename_limit > 0)
+		renames->redo_after_renames = 0;
 	if (diff_opts.needed_rename_limit > renames->needed_limit)
 		renames->needed_limit = diff_opts.needed_rename_limit;
 
@@ -2877,6 +2930,8 @@ static void detect_regular_renames(struct merge_options *opt,
 	diff_queued_diff.nr = 0;
 	diff_queued_diff.queue = NULL;
 	diff_flush(&diff_opts);
+
+	return 1;
 }
 
 /*
@@ -2966,14 +3021,32 @@ static int detect_and_process_renames(struct merge_options *opt,
 	struct diff_queue_struct combined;
 	struct rename_info *renames = &opt->priv->renames;
 	int need_dir_renames, s, clean = 1;
+	unsigned detection_run = 0;
 
 	memset(&combined, 0, sizeof(combined));
 	if (!possible_renames(renames))
 		goto cleanup;
 
 	trace2_region_enter("merge", "regular renames", opt->repo);
-	detect_regular_renames(opt, MERGE_SIDE1);
-	detect_regular_renames(opt, MERGE_SIDE2);
+	detection_run |= detect_regular_renames(opt, MERGE_SIDE1);
+	detection_run |= detect_regular_renames(opt, MERGE_SIDE2);
+	if (renames->redo_after_renames && detection_run) {
+		int i, side;
+		struct diff_filepair *p;
+
+		/* Cache the renames, we found */
+		for (side = MERGE_SIDE1; side <= MERGE_SIDE2; side++) {
+			for (i = 0; i < renames->pairs[side].nr; ++i) {
+				p = renames->pairs[side].queue[i];
+				possibly_cache_new_pair(renames, p, side, NULL);
+			}
+		}
+
+		/* Restart the merge with the cached renames */
+		renames->redo_after_renames = 2;
+		trace2_region_leave("merge", "regular renames", opt->repo);
+		goto cleanup;
+	}
 	use_cached_pairs(opt, &renames->cached_pairs[1], &renames->pairs[1]);
 	use_cached_pairs(opt, &renames->cached_pairs[2], &renames->pairs[2]);
 	trace2_region_leave("merge", "regular renames", opt->repo);
@@ -4403,6 +4476,7 @@ static void merge_ort_nonrecursive_internal(struct merge_options *opt,
 					       opt->subtree_shift);
 	}
 
+redo:
 	trace2_region_enter("merge", "collect_merge_info", opt->repo);
 	if (collect_merge_info(opt, merge_base, side1, side2) != 0) {
 		/*
@@ -4422,6 +4496,12 @@ static void merge_ort_nonrecursive_internal(struct merge_options *opt,
 	result->clean = detect_and_process_renames(opt, merge_base,
 						   side1, side2);
 	trace2_region_leave("merge", "renames", opt->repo);
+	if (opt->priv->renames.redo_after_renames == 2) {
+		trace2_region_enter("merge", "reset_maps", opt->repo);
+		clear_or_reinit_internal_opts(opt->priv, 1);
+		trace2_region_leave("merge", "reset_maps", opt->repo);
+		goto redo;
+	}
 
 	trace2_region_enter("merge", "process_entries", opt->repo);
 	process_entries(opt, &working_tree_oid);
