@@ -608,7 +608,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 {
 	int require_work_tree = 0, show_tag = 0, i;
 	char *max_prefix;
-	struct dir_struct dir;
+	struct dir_struct dir = DIR_INIT;
 	struct pattern_list *pl;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct option builtin_ls_files_options[] = {
@@ -678,7 +678,6 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(ls_files_usage, builtin_ls_files_options);
 
-	dir_init(&dir);
 	prefix = cmd_prefix;
 	if (prefix)
 		prefix_len = strlen(prefix);

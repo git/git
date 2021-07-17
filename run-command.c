@@ -11,9 +11,8 @@
 
 void child_process_init(struct child_process *child)
 {
-	memset(child, 0, sizeof(*child));
-	strvec_init(&child->args);
-	strvec_init(&child->env_array);
+	struct child_process blank = CHILD_PROCESS_INIT;
+	memcpy(child, &blank, sizeof(*child));
 }
 
 void child_process_clear(struct child_process *child)
