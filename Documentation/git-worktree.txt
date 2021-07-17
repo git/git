@@ -9,7 +9,7 @@ git-worktree - Manage multiple working trees
 SYNOPSIS
 --------
 [verse]
-'git worktree add' [-f] [--detach] [--checkout] [--lock] [-b <new-branch>] <path> [<commit-ish>]
+'git worktree add' [-f] [--detach] [--checkout] [--lock [--reason <string>]] [-b <new-branch>] <path> [<commit-ish>]
 'git worktree list' [--porcelain]
 'git worktree lock' [--reason <string>] <worktree>
 'git worktree move' <worktree> <new-path>
@@ -242,7 +242,7 @@ With `list`, annotate missing working trees as prunable if they are
 older than `<time>`.
 
 --reason <string>::
-	With `lock`, an explanation why the working tree is locked.
+	With `lock` or with `add --lock`, an explanation why the working tree is locked.
 
 <worktree>::
 	Working trees can be identified by path, either relative or
