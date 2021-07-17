@@ -893,6 +893,8 @@ static int run_rebase(const struct object_id *newbase,
 	strvec_pushv(&args, opt_strategy_opts.v);
 	if (opt_gpg_sign)
 		strvec_push(&args, opt_gpg_sign);
+	if (opt_signoff)
+		strvec_push(&args, opt_signoff);
 	if (opt_autostash == 0)
 		strvec_push(&args, "--no-autostash");
 	else if (opt_autostash == 1)

@@ -19,13 +19,12 @@ Incorporates changes from a remote repository into the current branch.
 If the current branch is behind the remote, then by default it will
 fast-forward the current branch to match the remote.  If the current
 branch and the remote have diverged, the user needs to specify how to
-reconcile the divergent branches with `--no-ff`, `--ff`, or `--rebase`
-(or the corresponding configuration options in `pull.ff` or
-`pull.rebase`).
+reconcile the divergent branches with `--rebase` or `--no-rebase` (or
+the corresponding configuration option in `pull.rebase`).
 
 More precisely, `git pull` runs `git fetch` with the given parameters
 and then depending on configuration options or command line flags,
-will call either `git merge` or `git rebase` to reconcile diverging
+will call either `git rebase` or `git merge` to reconcile diverging
 branches.
 
 <repository> should be the name of a remote repository as
@@ -136,7 +135,7 @@ published that history already.  Do *not* use this option
 unless you have read linkgit:git-rebase[1] carefully.
 
 --no-rebase::
-	Override earlier --rebase.
+	This is shorthand for --rebase=false.
 
 Options related to fetching
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
