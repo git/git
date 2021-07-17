@@ -1023,12 +1023,26 @@ void *xmmap_gently(void *start, size_t length,
 	return ret;
 }
 
+const char *mmap_os_err(void)
+{
+	static const char blank[] = "";
+#if defined(__linux__)
+	if (errno == ENOMEM) {
+		/* this continues an existing error message: */
+		static const char enomem[] =
+", check sys.vm.max_map_count and/or RLIMIT_DATA";
+		return enomem;
+	}
+#endif /* OS-specific bits */
+	return blank;
+}
+
 void *xmmap(void *start, size_t length,
 	int prot, int flags, int fd, off_t offset)
 {
 	void *ret = xmmap_gently(start, length, prot, flags, fd, offset);
 	if (ret == MAP_FAILED)
-		die_errno(_("mmap failed"));
+		die_errno(_("mmap failed%s"), mmap_os_err());
 	return ret;
 }
 
