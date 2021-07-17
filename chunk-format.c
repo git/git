@@ -58,8 +58,10 @@ void add_chunk(struct chunkfile *cf,
 
 int write_chunkfile(struct chunkfile *cf, void *data)
 {
-	int i;
+	int i, result = 0;
 	uint64_t cur_offset = hashfile_total(cf->f);
+
+	trace2_region_enter("chunkfile", "write", the_repository);
 
 	/* Add the table of contents to the current offset */
 	cur_offset += (cf->chunks_nr + 1) * CHUNK_TOC_ENTRY_SIZE;
@@ -77,10 +79,10 @@ int write_chunkfile(struct chunkfile *cf, void *data)
 
 	for (i = 0; i < cf->chunks_nr; i++) {
 		off_t start_offset = hashfile_total(cf->f);
-		int result = cf->chunks[i].write_fn(cf->f, data);
+		result = cf->chunks[i].write_fn(cf->f, data);
 
 		if (result)
-			return result;
+			goto cleanup;
 
 		if (hashfile_total(cf->f) - start_offset != cf->chunks[i].size)
 			BUG("expected to write %"PRId64" bytes to chunk %"PRIx32", but wrote %"PRId64" instead",
@@ -88,7 +90,9 @@ int write_chunkfile(struct chunkfile *cf, void *data)
 			    hashfile_total(cf->f) - start_offset);
 	}
 
-	return 0;
+cleanup:
+	trace2_region_leave("chunkfile", "write", the_repository);
+	return result;
 }
 
 int read_table_of_contents(struct chunkfile *cf,

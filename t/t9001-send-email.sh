@@ -1829,7 +1829,7 @@ test_expect_success $PREREQ 'sendemail.aliasfiletype=mailrc' '
 	grep "^!somebody@example\.org!$" commandline1
 '
 
-test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
+test_expect_success $PREREQ 'sendemail.aliasesfile=~/.mailrc' '
 	clean_fake_sendmail &&
 	echo "alias sbd  someone@example.org" >"$HOME/.mailrc" &&
 	git config --replace-all sendemail.aliasesfile "~/.mailrc" &&
@@ -2165,6 +2165,37 @@ test_expect_success $PREREQ 'leading and trailing whitespaces are removed' '
 	0001-add-main.patch | replace_variable_fields \
 	>actual-list &&
 	test_cmp expected-list actual-list
+'
+
+test_expect_success $PREREQ 'test using command name with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	PATH="$(pwd):$PATH" \
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd="fake.sendmail" \
+		HEAD^ &&
+	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'test using arguments with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd='\''"$(pwd)/fake.sendmail" -f nobody@example.com'\'' \
+		HEAD^ &&
+	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'test shell expression with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd='\''f() { "$(pwd)/fake.sendmail" "$@"; };f'\'' \
+		HEAD^ &&
+	test_path_is_file commandline1
 '
 
 test_expect_success $PREREQ 'invoke hook' '

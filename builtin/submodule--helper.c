@@ -1300,7 +1300,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "cached", &cached,
 			 N_("use the commit stored in the index instead of the submodule HEAD")),
 		OPT_BOOL(0, "files", &files,
-			 N_("to compare the commit in the index with that in the submodule HEAD")),
+			 N_("compare the commit in the index with that in the submodule HEAD")),
 		OPT_BOOL(0, "for-status", &for_status,
 			 N_("skip submodules with 'ignore_config' value set to 'all'")),
 		OPT_INTEGER('n', "summary-limit", &summary_limit,

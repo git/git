@@ -1834,14 +1834,24 @@ test_expect_success 'log --graph --no-walk is forbidden' '
 	test_must_fail git log --graph --no-walk
 '
 
-test_expect_success 'log diagnoses bogus HEAD' '
+test_expect_success 'log on empty repo fails' '
 	git init empty &&
+	test_when_finished "rm -rf empty" &&
 	test_must_fail git -C empty log 2>stderr &&
-	test_i18ngrep does.not.have.any.commits stderr &&
+	test_i18ngrep does.not.have.any.commits stderr
+'
+
+test_expect_success REFFILES 'log diagnoses bogus HEAD hash' '
+	git init empty &&
+	test_when_finished "rm -rf empty" &&
 	echo 1234abcd >empty/.git/refs/heads/main &&
 	test_must_fail git -C empty log 2>stderr &&
-	test_i18ngrep broken stderr &&
-	echo "ref: refs/heads/invalid.lock" >empty/.git/HEAD &&
+	test_i18ngrep broken stderr
+'
+
+test_expect_success 'log diagnoses bogus HEAD symref' '
+	git init empty &&
+	git --git-dir empty/.git symbolic-ref HEAD refs/heads/invalid.lock &&
 	test_must_fail git -C empty log 2>stderr &&
 	test_i18ngrep broken stderr &&
 	test_must_fail git -C empty log --default totally-bogus 2>stderr &&

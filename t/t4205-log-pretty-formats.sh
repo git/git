@@ -988,7 +988,7 @@ test_expect_success '%(describe) vs git describe' '
 
 test_expect_success '%(describe:match=...) vs git describe --match ...' '
 	test_when_finished "git tag -d tag-match" &&
-	git tag -a -m tagged tag-match&&
+	git tag -a -m tagged tag-match &&
 	git describe --match "*-match" >expect &&
 	git log -1 --format="%(describe:match=*-match)" >actual &&
 	test_cmp expect actual

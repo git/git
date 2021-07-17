@@ -166,5 +166,5 @@ int cmd__reach(int ac, const char **av)
 		print_sorted_commit_ids(list);
 	}
 
-	exit(0);
+	return 0;
 }

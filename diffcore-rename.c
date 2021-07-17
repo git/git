@@ -568,7 +568,8 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 static void initialize_dir_rename_info(struct dir_rename_info *info,
 				       struct strintmap *relevant_sources,
 				       struct strintmap *dirs_removed,
-				       struct strmap *dir_rename_count)
+				       struct strmap *dir_rename_count,
+				       struct strmap *cached_pairs)
 {
 	struct hashmap_iter iter;
 	struct strmap_entry *entry;
@@ -631,6 +632,17 @@ static void initialize_dir_rename_info(struct dir_rename_info *info,
 		update_dir_rename_counts(info, dirs_removed,
 					 rename_dst[i].p->one->path,
 					 rename_dst[i].p->two->path);
+	}
+
+	/* Add cached_pairs to counts */
+	strmap_for_each_entry(cached_pairs, &iter, entry) {
+		const char *old_name = entry->key;
+		const char *new_name = entry->value;
+		if (!new_name)
+			/* known delete; ignore it */
+			continue;
+
+		update_dir_rename_counts(info, dirs_removed, old_name, new_name);
 	}
 
 	/*
@@ -1247,7 +1259,8 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 void diffcore_rename_extended(struct diff_options *options,
 			      struct strintmap *relevant_sources,
 			      struct strintmap *dirs_removed,
-			      struct strmap *dir_rename_count)
+			      struct strmap *dir_rename_count,
+			      struct strmap *cached_pairs)
 {
 	int detect_rename = options->detect_rename;
 	int minimum_score = options->rename_score;
@@ -1363,7 +1376,8 @@ void diffcore_rename_extended(struct diff_options *options,
 		/* Preparation for basename-driven matching. */
 		trace2_region_enter("diff", "dir rename setup", options->repo);
 		initialize_dir_rename_info(&info, relevant_sources,
-					   dirs_removed, dir_rename_count);
+					   dirs_removed, dir_rename_count,
+					   cached_pairs);
 		trace2_region_leave("diff", "dir rename setup", options->repo);
 
 		/* Utilize file basenames to quickly find renames. */
@@ -1560,5 +1574,5 @@ void diffcore_rename_extended(struct diff_options *options,
 
 void diffcore_rename(struct diff_options *options)
 {
-	diffcore_rename_extended(options, NULL, NULL, NULL);
+	diffcore_rename_extended(options, NULL, NULL, NULL, NULL);
 }

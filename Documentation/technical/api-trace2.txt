@@ -396,14 +396,14 @@ only present on the "start" and "atexit" events.
 }
 ------------
 
-`"discard"`::
+`"too_many_files"`::
 	This event is written to the git-trace2-discard sentinel file if there
 	are too many files in the target trace directory (see the
 	trace2.maxFiles config option).
 +
 ------------
 {
-	"event":"discard",
+	"event":"too_many_files",
 	...
 }
 ------------

@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "config.h"
 #include "diff.h"
+#include "diff-merges.h"
 #include "commit.h"
 #include "revision.h"
 #include "builtin.h"
@@ -27,6 +28,12 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	rev.abbrev = 0;
 	prefix = precompose_argv_prefix(argc, argv, prefix);
 
+	/*
+	 * We need no diff for merges options, and we need to avoid conflict
+	 * with our own meaning of "-m".
+	 */
+	diff_merges_suppress_options_parsing();
+
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -35,6 +42,8 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 			option |= DIFF_INDEX_CACHED;
 		else if (!strcmp(arg, "--merge-base"))
 			option |= DIFF_INDEX_MERGE_BASE;
+		else if (!strcmp(arg, "-m"))
+			rev.match_missing = 1;
 		else
 			usage(diff_cache_usage);
 	}

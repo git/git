@@ -29,6 +29,8 @@ struct merge_result {
 	 * !clean) and to print "CONFLICT" messages.  Not for external use.
 	 */
 	void *priv;
+	/* Also private */
+	unsigned _properly_initialized;
 };
 
 /*
