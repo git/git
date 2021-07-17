@@ -217,3 +217,19 @@ uint32_t crc32_end(struct hashfile *f)
 	f->do_crc = 0;
 	return f->crc32;
 }
+
+int hashfile_checksum_valid(const unsigned char *data, size_t total_len)
+{
+	unsigned char got[GIT_MAX_RAWSZ];
+	git_hash_ctx ctx;
+	size_t data_len = total_len - the_hash_algo->rawsz;
+
+	if (total_len < the_hash_algo->rawsz)
+		return 0; /* say "too short"? */
+
+	the_hash_algo->init_fn(&ctx);
+	the_hash_algo->update_fn(&ctx, data, data_len);
+	the_hash_algo->final_fn(got, &ctx);
+
+	return hasheq(got, data + data_len);
+}
