@@ -845,6 +845,32 @@ test_line_count () {
 	fi
 }
 
+# SYNOPSIS:
+# 	test_stdout_line_count <bin-ops> <value> <cmd> [<args>...]
+#
+# test_stdout_line_count checks that the output of a command has the number
+# of lines it ought to. For example:
+#
+# test_stdout_line_count = 3 git ls-files -u
+# test_stdout_line_count -gt 10 ls
+test_stdout_line_count () {
+	local ops val trashdir &&
+	if test "$#" -le 3
+	then
+		BUG "expect 3 or more arguments"
+	fi &&
+	ops="$1" &&
+	val="$2" &&
+	shift 2 &&
+	if ! trashdir="$(git rev-parse --git-dir)/trash"; then
+		BUG "expect to be run inside a worktree"
+	fi &&
+	mkdir -p "$trashdir" &&
+	"$@" >"$trashdir/output" &&
+	test_line_count "$ops" "$val" "$trashdir/output"
+}
+
+
 test_file_size () {
 	test "$#" -ne 1 && BUG "1 param"
 	test-tool path-utils file-size "$1"
