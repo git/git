@@ -3,21 +3,22 @@
 
 #include "strvec.h"
 #include "cache.h"
-
-struct ref_list {
-	unsigned int nr, alloc;
-	struct ref_list_entry {
-		struct object_id oid;
-		char *name;
-	} *list;
-};
+#include "string-list.h"
 
 struct bundle_header {
 	unsigned version;
-	struct ref_list prerequisites;
-	struct ref_list references;
+	struct string_list prerequisites;
+	struct string_list references;
 	const struct git_hash_algo *hash_algo;
 };
+
+#define BUNDLE_HEADER_INIT \
+{ \
+	.prerequisites = STRING_LIST_INIT_DUP, \
+	.references = STRING_LIST_INIT_DUP, \
+}
+void bundle_header_init(struct bundle_header *header);
+void bundle_header_release(struct bundle_header *header);
 
 int is_bundle(const char *path, int quiet);
 int read_bundle_header(const char *path, struct bundle_header *header);
