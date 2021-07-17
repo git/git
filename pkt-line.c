@@ -103,7 +103,7 @@ void packet_response_end(int fd)
 {
 	packet_trace("0002", 4, 1);
 	if (write_in_full(fd, "0002", 4) < 0)
-		die_errno(_("unable to write stateless separator packet"));
+		die_errno(_("unable to write response end packet"));
 }
 
 int packet_flush_gently(int fd)
