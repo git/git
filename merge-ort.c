@@ -765,12 +765,15 @@ static void add_pair(struct merge_options *opt,
 	int names_idx = is_add ? side : 0;
 
 	if (is_add) {
+		assert(match_mask == 0 || match_mask == 6);
 		if (strset_contains(&renames->cached_target_names[side],
 				    pathname))
 			return;
 	} else {
 		unsigned content_relevant = (match_mask == 0);
 		unsigned location_relevant = (dir_rename_mask == 0x07);
+
+		assert(match_mask == 0 || match_mask == 3 || match_mask == 5);
 
 		/*
 		 * If pathname is found in cached_irrelevant[side] due to
@@ -2533,7 +2536,7 @@ static int compare_pairs(const void *a_, const void *b_)
 	return strcmp(a->one->path, b->one->path);
 }
 
-/* Call diffcore_rename() to compute which files have changed on given side */
+/* Call diffcore_rename() to update deleted/added pairs into rename pairs */
 static void detect_regular_renames(struct merge_options *opt,
 				   unsigned side_index)
 {
@@ -2586,8 +2589,10 @@ static void detect_regular_renames(struct merge_options *opt,
 }
 
 /*
- * Get information of all renames which occurred in 'side_pairs', discarding
- * non-renames.
+ * Get information of all renames which occurred in 'side_pairs', making use
+ * of any implicit directory renames in side_dir_renames (also making use of
+ * implicit directory renames rename_exclusions as needed by
+ * check_for_directory_rename()).  Add all (updated) renames into result.
  */
 static int collect_renames(struct merge_options *opt,
 			   struct diff_queue_struct *result,
@@ -2746,31 +2751,58 @@ simple_cleanup:
 
 /*** Function Grouping: functions related to process_entries() ***/
 
-static int string_list_df_name_compare(const char *one, const char *two)
+static int sort_dirs_next_to_their_children(const char *one, const char *two)
 {
-	int onelen = strlen(one);
-	int twolen = strlen(two);
+	unsigned char c1, c2;
+
 	/*
-	 * Here we only care that entries for D/F conflicts are
-	 * adjacent, in particular with the file of the D/F conflict
-	 * appearing before files below the corresponding directory.
-	 * The order of the rest of the list is irrelevant for us.
+	 * Here we only care that entries for directories appear adjacent
+	 * to and before files underneath the directory.  We can achieve
+	 * that by pretending to add a trailing slash to every file and
+	 * then sorting.  In other words, we do not want the natural
+	 * sorting of
+	 *     foo
+	 *     foo.txt
+	 *     foo/bar
+	 * Instead, we want "foo" to sort as though it were "foo/", so that
+	 * we instead get
+	 *     foo.txt
+	 *     foo
+	 *     foo/bar
+	 * To achieve this, we basically implement our own strcmp, except that
+	 * if we get to the end of either string instead of comparing NUL to
+	 * another character, we compare '/' to it.
 	 *
-	 * To achieve this, we sort with df_name_compare and provide
-	 * the mode S_IFDIR so that D/F conflicts will sort correctly.
-	 * We use the mode S_IFDIR for everything else for simplicity,
-	 * since in other cases any changes in their order due to
-	 * sorting cause no problems for us.
+	 * If this unusual "sort as though '/' were appended" perplexes
+	 * you, perhaps it will help to note that this is not the final
+	 * sort.  write_tree() will sort again without the trailing slash
+	 * magic, but just on paths immediately under a given tree.
+	 *
+	 * The reason to not use df_name_compare directly was that it was
+	 * just too expensive (we don't have the string lengths handy), so
+	 * it was reimplemented.
 	 */
-	int cmp = df_name_compare(one, onelen, S_IFDIR,
-				  two, twolen, S_IFDIR);
+
 	/*
-	 * Now that 'foo' and 'foo/bar' compare equal, we have to make sure
-	 * that 'foo' comes before 'foo/bar'.
+	 * NOTE: This function will never be called with two equal strings,
+	 * because it is used to sort the keys of a strmap, and strmaps have
+	 * unique keys by construction.  That simplifies our c1==c2 handling
+	 * below.
 	 */
-	if (cmp)
-		return cmp;
-	return onelen - twolen;
+
+	while (*one && (*one == *two)) {
+		one++;
+		two++;
+	}
+
+	c1 = *one ? *one : '/';
+	c2 = *two ? *two : '/';
+
+	if (c1 == c2) {
+		/* Getting here means one is a leading directory of the other */
+		return (*one) ? 1 : -1;
+	} else
+		return c1 - c2;
 }
 
 static int read_oid_strbuf(struct merge_options *opt,
@@ -3457,6 +3489,8 @@ static void process_entry(struct merge_options *opt,
 	 */
 	if (!ci->merged.clean)
 		strmap_put(&opt->priv->conflicted, path, ci);
+
+	/* Record metadata for ci->merged in dir_metadata */
 	record_entry_for_tree(dir_metadata, path, &ci->merged);
 }
 
@@ -3490,7 +3524,7 @@ static void process_entries(struct merge_options *opt,
 	trace2_region_leave("merge", "plist copy", opt->repo);
 
 	trace2_region_enter("merge", "plist special sort", opt->repo);
-	plist.cmp = string_list_df_name_compare;
+	plist.cmp = sort_dirs_next_to_their_children;
 	string_list_sort(&plist);
 	trace2_region_leave("merge", "plist special sort", opt->repo);
 

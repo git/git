@@ -454,7 +454,7 @@ test_expect_success '1f: Split a directory into two other directories' '
 #   the directory renamed, but the files within it. (see 1b)
 #
 #   If renames split a directory into two or more others, the directory
-#   with the most renames, "wins" (see 1c).  However, see the testcases
+#   with the most renames, "wins" (see 1f).  However, see the testcases
 #   in section 2, plus testcases 3a and 4a.
 ###########################################################################
 
