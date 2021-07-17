@@ -529,6 +529,8 @@ static void free_object_directories(struct raw_object_store *o)
 		free_object_directory(o->odb);
 		o->odb = next;
 	}
+	kh_destroy_odb_path_map(o->odb_by_path);
+	o->odb_by_path = NULL;
 }
 
 void raw_object_store_clear(struct raw_object_store *o)

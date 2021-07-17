@@ -265,7 +265,7 @@ static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 
 /* Like oidcpy() but zero-pads the unused bytes in dst's hash array. */
 static inline void oidcpy_with_padding(struct object_id *dst,
-				       struct object_id *src)
+				       const struct object_id *src)
 {
 	size_t hashsz;
 
