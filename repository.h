@@ -10,6 +10,7 @@ struct lock_file;
 struct pathspec;
 struct raw_object_store;
 struct submodule_cache;
+struct promisor_remote_config;
 
 enum untracked_cache_setting {
 	UNTRACKED_CACHE_UNSET = -1,
@@ -138,6 +139,10 @@ struct repository {
 
 	/* True if commit-graph has been disabled within this process. */
 	int commit_graph_disabled;
+
+	/* Configurations related to promisor remotes. */
+	char *repository_format_partial_clone;
+	struct promisor_remote_config *promisor_remote_config;
 
 	/* Configurations */
 

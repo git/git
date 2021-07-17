@@ -468,8 +468,6 @@ static enum extension_result handle_extension_v0(const char *var,
 			data->precious_objects = git_config_bool(var, value);
 			return EXTENSION_OK;
 		} else if (!strcmp(ext, "partialclone")) {
-			if (!value)
-				return config_error_nonbool(var);
 			data->partial_clone = xstrdup(value);
 			return EXTENSION_OK;
 		} else if (!strcmp(ext, "worktreeconfig")) {
@@ -566,7 +564,6 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 	}
 
 	repository_format_precious_objects = candidate->precious_objects;
-	set_repository_format_partial_clone(candidate->partial_clone);
 	repository_format_worktree_config = candidate->worktree_config;
 	string_list_clear(&candidate->unknown_extensions, 0);
 	string_list_clear(&candidate->v1_only_extensions, 0);
@@ -1197,6 +1194,11 @@ int discover_git_directory(struct strbuf *commondir,
 		return -1;
 	}
 
+	/* take ownership of candidate.partial_clone */
+	the_repository->repository_format_partial_clone =
+		candidate.partial_clone;
+	candidate.partial_clone = NULL;
+
 	clear_repository_format(&candidate);
 	return 0;
 }
@@ -1304,8 +1306,13 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				gitdir = DEFAULT_GIT_DIR_ENVIRONMENT;
 			setup_git_env(gitdir);
 		}
-		if (startup_info->have_repository)
+		if (startup_info->have_repository) {
 			repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
+			/* take ownership of repo_fmt.partial_clone */
+			the_repository->repository_format_partial_clone =
+				repo_fmt.partial_clone;
+			repo_fmt.partial_clone = NULL;
+		}
 	}
 	/*
 	 * Since precompose_string_if_needed() needs to look at
@@ -1390,6 +1397,8 @@ void check_repository_format(struct repository_format *fmt)
 	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
 	repo_set_hash_algo(the_repository, fmt->hash_algo);
+	the_repository->repository_format_partial_clone =
+		xstrdup_or_null(fmt->partial_clone);
 	clear_repository_format(&repo_fmt);
 }
 
