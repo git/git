@@ -195,16 +195,27 @@ def decode_path(path):
     """Decode a given string (bytes or otherwise) using configured path encoding options
     """
     encoding = gitConfig('git-p4.pathEncoding') or 'utf_8'
+    return p4_decode_stream(path, encoding)
+
+def p4_decode_text(text):
+    """Decode a given string (bytes or otherwise) using configured text encoding options
+    """
+    encoding = gitConfig('git-p4.textEncoding') or 'utf-8'
+    return p4_decode_stream(text, encoding)
+    
+def p4_decode_stream(s, encoding):
+    """Decode a given string (bytes or otherwise) using encoding argument
+    """
     if bytes is not str:
-        return path.decode(encoding, errors='replace') if isinstance(path, bytes) else path
+        return s.decode(encoding, errors='replace') if isinstance(s, bytes) else s
     else:
         try:
-            path.decode('ascii')
+            s.decode('ascii')
         except:
-            path = path.decode(encoding, errors='replace')
+            s = s.decode(encoding, errors='replace')
             if verbose:
-                print('Path with non-ASCII characters detected. Used {} to decode: {}'.format(encoding, path))
-        return path
+                print('Text with non-ASCII characters detected. Used {} to decode: {}'.format(encoding, s))
+        return s
 
 def run_git_hook(cmd, param=[]):
     """Execute a hook if the hook exists."""
@@ -771,7 +782,7 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
                 for key, value in entry.items():
                     key = key.decode()
                     if isinstance(value, bytes) and not (key in ('data', 'path', 'clientFile') or key.startswith('depotFile')):
-                        value = value.decode()
+                        value = p4_decode_text(value)
                     decoded_entry[key] = value
                 # Parse out data if it's an error response
                 if decoded_entry.get('code') == 'error' and 'data' in decoded_entry:
