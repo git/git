@@ -211,4 +211,60 @@ test_expect_success 'rebase --apply describes fake ancestor base' '
 	)
 '
 
+test_setup_zdiff3 () {
+	test_create_repo zdiff3 &&
+	(
+		cd zdiff3 &&
+
+		test_write_lines 1 2 3 4 5 6 7 8 9 >basic &&
+		test_write_lines 1 2 3 AA 4 5 BB 6 7 8 >middle-common &&
+		test_write_lines 1 2 3 4 5 6 7 8 9 >interesting &&
+
+		git add basic middle-common &&
+		git commit -m base &&
+
+		git branch left &&
+		git branch right &&
+
+		git checkout left &&
+		test_write_lines 1 2 3 4 A B C D E 7 8 9 >basic &&
+		test_write_lines 1 2 3 CC 4 5 DD 6 7 8 >middle-common &&
+		test_write_lines 1 2 3 4 A B C D E F G H I J 7 8 9 >interesting &&
+		git add -u &&
+		git commit -m letters &&
+
+		git checkout right &&
+		test_write_lines 1 2 3 4 A X C Y E 7 8 9 >basic &&
+		test_write_lines 1 2 3 EE 4 5 FF 6 7 8 >middle-common &&
+		test_write_lines 1 2 3 4 A B C 5 6 G H I J 7 8 9 >interesting &&
+		git add -u &&
+		git commit -m permuted
+	)
+}
+
+test_expect_failure 'check zdiff3 markers' '
+	test_setup_zdiff3 &&
+	(
+		cd zdiff3 &&
+
+		git checkout left^0 &&
+
+		test_must_fail git -c merge.conflictstyle=zdiff3 merge -s recursive right^0 &&
+
+		test_write_lines 1 2 3 4 A "<<<<<<< HEAD" B C D "||||||| $(git rev-parse --short HEAD^1)" 5 6 ======= X C Y ">>>>>>> right^0" E 7 8 9 >expect &&
+		test_cmp expect basic &&
+
+		test_write_lines 1 2 3 "<<<<<<< HEAD" CC "||||||| $(git rev-parse --short HEAD^1)" AA ======= EE ">>>>>>> right^0" 4 5 "<<<<<<< HEAD" DD "||||||| $(git rev-parse --short HEAD^1)" BB ======= FF ">>>>>>> right^0" 6 7 8 >expect &&
+		test_cmp expect middle-common &&
+
+		# Not passing this one yet.  For some reason, after extracting
+		# the common lines "A B C" and "G H I J", the remaining part
+		# is comparing "5 6" in the base to "5 6" on the left and
+		# "D E F" on the right.  And zdiff3 currently picks the side
+		# that matches the base as the merge result.  Weird.
+		test_write_lines 1 2 3 4 A B C D E F G H I J 7 8 9 >expect &&
+		test_cmp expect interesting
+	)
+'
+
 test_done
