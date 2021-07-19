@@ -212,6 +212,7 @@ show tracked paths:
 * 'R' = renamed
 * 'C' = copied
 * 'U' = updated but unmerged
+* 'T' = type changed (e.g. a symbolic link becoming a file)
 
 ....
 X          Y     Meaning
