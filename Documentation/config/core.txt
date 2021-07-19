@@ -398,6 +398,17 @@ the largest projects.  You probably do not need to adjust this value.
 +
 Common unit suffixes of 'k', 'm', or 'g' are supported.
 
+core.freshenPackFiles::
+	Normally we avoid writing existing object by freshening the mtime
+	of the *.pack file which contains it in order to aid some processes
+	such like prune. Turning off this option on some servers can speed
+	up the execution of some commands like 'git-upload-pack'(e.g. some
+	servers that mount the same NFS disk will re-sync the *.pack files
+	to cached file system if the mtime cahnges).
++
+The default is true which means the *.pack file will be freshened if we
+want to write a existing object whthin it.
+
 core.deltaBaseCacheLimit::
 	Maximum number of bytes per thread to reserve for caching base objects
 	that may be referenced by multiple deltified objects.  By storing the

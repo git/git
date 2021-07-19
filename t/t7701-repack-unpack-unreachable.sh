@@ -112,6 +112,20 @@ test_expect_success 'do not bother loosening old objects' '
 	test_must_fail git cat-file -p $obj2
 '
 
+test_expect_success 'do not bother loosening old objects without freshen pack time' '
+	obj1=$(echo three | git hash-object -w --stdin) &&
+	obj2=$(echo four | git hash-object -w --stdin) &&
+	pack1=$(echo $obj1 | git -c core.freshenPackFiles=false pack-objects .git/objects/pack/pack) &&
+	pack2=$(echo $obj2 | git -c core.freshenPackFiles=false pack-objects .git/objects/pack/pack) &&
+	git -c core.freshenPackFiles=false prune-packed &&
+	git cat-file -p $obj1 &&
+	git cat-file -p $obj2 &&
+	test-tool chmtime =-86400 .git/objects/pack/pack-$pack2.pack &&
+	git -c core.freshenPackFiles=false repack -A -d --unpack-unreachable=1.hour.ago &&
+	git cat-file -p $obj1 &&
+	test_must_fail git cat-file -p $obj2
+'
+
 test_expect_success 'keep packed objects found only in index' '
 	echo my-unique-content >file &&
 	git add file &&
