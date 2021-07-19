@@ -1,0 +1,518 @@
+name: git-artifacts
+
+on:
+  # This workflow can be triggered manually in the Actions tab, see
+  # https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: 'Optionally restrict what artifacts to build'
+        required: false
+      ref:
+        description: 'Optionally override which branch to build'
+        required: false
+      repository:
+        description: 'Optionally override from where to fetch the specified ref'
+        required: false
+
+env:
+  GPG_OPTIONS: "--batch --yes --no-tty --list-options no-show-photos --verify-options no-show-photos --pinentry-mode loopback"
+  HOME: "${{github.workspace}}\\home"
+  MSYSTEM: MINGW64
+  USERPROFILE: "${{github.workspace}}\\home"
+  BUILD_ONLY: "${{github.event.inputs.build_only}}"
+  REPOSITORY: "${{github.event.inputs.repository}}"
+  REF: "${{github.event.inputs.ref}}"
+
+jobs:
+  bundle-artifacts:
+    runs-on: windows-latest
+    outputs:
+      latest-sdk64-extra-build-id: ${{ steps.determine-latest-sdk64-extra-build-id.outputs.id }}
+    steps:
+      - name: Configure user
+        shell: bash
+        run:
+          USER_NAME="${{github.actor}}" &&
+          USER_EMAIL="${{github.actor}}@users.noreply.github.com" &&
+          mkdir "$HOME" &&
+          git config --global user.name "$USER_NAME" &&
+          git config --global user.email "$USER_EMAIL" &&
+          echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+        with:
+          flavor: build-installers
+      - name: Clone build-extra
+        shell: bash
+        run: |
+          d=/usr/src/build-extra &&
+          if test ! -d $d/.git
+          then
+            git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
+          else
+            git -C $d fetch https://github.com/git-for-windows/build-extra main &&
+            git -C $d switch -C main FETCH_HEAD
+          fi
+      - name: Prepare home directory for GPG signing
+        if: env.GPGKEY != ''
+        shell: bash
+        run: |
+          echo '${{secrets.PRIVGPGKEY}}' | tr % '\n' | gpg $GPG_OPTIONS --import &&
+          mkdir -p home &&
+          git config --global gpg.program "/usr/src/build-extra/gnupg-with-gpgkey.sh" &&
+          info="$(gpg --list-keys --with-colons "${GPGKEY%% *}" | cut -d : -f 1,10 | sed -n '/^uid/{s|uid:||p;q}')" &&
+          git config --global user.name "${info% <*}" &&
+          git config --global user.email "<${info#*<}"
+        env:
+          GPGKEY: ${{secrets.GPGKEY}}
+      - name: Generate bundle artifacts
+        env:
+          GPGKEY: ${{secrets.GPGKEY}}
+        shell: bash
+        run: |
+          printf '#!/bin/sh\n\nexec /mingw64/bin/git.exe "$@"\n' >/usr/bin/git &&
+          mkdir -p bundle-artifacts &&
+
+          { test -n "$REPOSITORY" || REPOSITORY='${{github.repository}}'; } &&
+          { test -n "$REF" || REF='${{github.ref}}'; } &&
+          git -c init.defaultBranch=main init --bare &&
+          git remote add -f origin https://github.com/git-for-windows/git &&
+          git fetch "https://github.com/$REPOSITORY" "$REF:$REF" &&
+
+          tag_name="$(git describe --match 'v[0-9]*' FETCH_HEAD)-$(date +%Y%m%d%H%M%S)" &&
+          echo "prerelease-${tag_name#v}" >bundle-artifacts/ver &&
+          echo "${tag_name#v}" >bundle-artifacts/display_version &&
+          echo "$tag_name" >bundle-artifacts/next_version &&
+          git tag $(test -z "$GPGKEY" || echo " -s") -m "Snapshot build" "$tag_name" FETCH_HEAD &&
+          git bundle create bundle-artifacts/git.bundle origin/main.."$tag_name" &&
+
+          sh -x /usr/src/build-extra/please.sh mention feature "Snapshot of $(git show -s  --pretty='tformat:%h (%s, %ad)' --date=short FETCH_HEAD)" &&
+          git -C /usr/src/build-extra bundle create "$PWD/bundle-artifacts/build-extra.bundle" origin/main..main
+      - name: Clean up temporary files
+        if: always()
+        shell: bash
+        run: rm -rf home
+      - name: 'Publish Pipeline Artifact: bundle-artifacts'
+        uses: actions/upload-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+  pkg:
+    runs-on: windows-latest
+    needs: bundle-artifacts
+    outputs:
+      latest-sdk64-extra-build-id: ${{ needs.bundle-artifacts.outputs.latest-sdk64-extra-build-id }}
+    strategy:
+      matrix:
+        arch:
+          - name: x86_64
+            bitness: 64
+            bin: /amd64
+          - name: i686
+            bitness: 32
+            bin: ''
+    steps:
+      - name: Determine whether this job should be skipped
+        shell: bash
+        run: |
+          for e in ${BUILD_ONLY:-pkg}
+          do
+            case $e in
+            *-${{matrix.arch.name}}) exit 0;; # build this artifact
+            *-arm64) test i686 != ${{matrix.arch.name}} || exit 0;; # pkg-i686 is required for the ARM64 version
+            *-*) ;; # not this build artifact, keep looking
+            *) exit 0;; # build this artifact
+            esac
+          done
+          echo "SKIP=true" >>$GITHUB_ENV
+      - name: Configure user
+        if: env.SKIP != 'true'
+        shell: bash
+        run:
+          USER_NAME="${{github.actor}}" &&
+          USER_EMAIL="${{github.actor}}@users.noreply.github.com" &&
+          mkdir "$HOME" &&
+          git config --global user.name "$USER_NAME" &&
+          git config --global user.email "$USER_EMAIL" &&
+          echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+        if: env.SKIP != 'true'
+        with:
+          flavor: build-installers
+      - name: Download bundle-artifacts
+        if: env.SKIP != 'true'
+        uses: actions/download-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+      - name: Clone and update build-extra
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          d=/usr/src/build-extra &&
+          if test ! -d $d/.git
+          then
+            git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
+          else
+            git -C $d fetch https://github.com/git-for-windows/build-extra main &&
+            git -C $d switch -C main FETCH_HEAD
+          fi &&
+          git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
+      - name: Check out git/git
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          git -c init.defaultBranch=main init &&
+          git remote add -f origin https://github.com/git-for-windows/git &&
+          git fetch --tags bundle-artifacts/git.bundle $(cat bundle-artifacts/next_version) &&
+          git reset --hard $(cat bundle-artifacts/next_version)
+      - name: Prepare home directory for code-signing
+        env:
+          CODESIGN_P12: ${{secrets.CODESIGN_P12}}
+          CODESIGN_PASS: ${{secrets.CODESIGN_PASS}}
+        if: env.SKIP != 'true' && env.CODESIGN_P12 != '' && env.CODESIGN_PASS != ''
+        shell: bash
+        run: |
+          cd home &&
+          mkdir -p .sig &&
+          echo -n "$CODESIGN_P12" | tr % '\n' | base64 -d >.sig/codesign.p12 &&
+          echo -n "$CODESIGN_PASS" >.sig/codesign.pass
+          git config --global alias.signtool '!sh "/usr/src/build-extra/signtool.sh"'
+      - name: Prepare home directory for GPG signing
+        if: env.SKIP != 'true' && env.GPGKEY != ''
+        shell: bash
+        run: |
+          echo '${{secrets.PRIVGPGKEY}}' | tr % '\n' | gpg $GPG_OPTIONS --import &&
+          info="$(gpg --list-keys --with-colons "${GPGKEY%% *}" | cut -d : -f 1,10 | sed -n '/^uid/{s|uid:||p;q}')" &&
+          git config --global user.name "${info% <*}" &&
+          git config --global user.email "<${info#*<}"
+        env:
+          GPGKEY: ${{secrets.GPGKEY}}
+      - name: Build mingw-w64-${{matrix.arch.name}}-git
+        if: env.SKIP != 'true'
+        env:
+          GPGKEY: "${{secrets.GPGKEY}}"
+        shell: bash
+        run: |
+          set -x
+
+          # Make sure that there is a `/usr/bin/git` that can be used by `makepkg-mingw`
+          printf '#!/bin/sh\n\nexec /mingw64/bin/git.exe "$@"\n' >/usr/bin/git &&
+
+          # Restrict `PATH` to MSYS2 and to Visual Studio (to let `cv2pdb` find the relevant DLLs)
+          PATH="/mingw64/bin:/usr/bin:/C/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin${{matrix.arch.bin}}:/C/Windows/system32"
+
+          type -p mspdb140.dll || exit 1
+          sh -x /usr/src/build-extra/please.sh build-mingw-w64-git --only-${{matrix.arch.bitness}}-bit --build-src-pkg -o artifacts HEAD &&
+          cp bundle-artifacts/ver artifacts/ &&
+          if test -n "$GPGKEY"
+          then
+            for tar in artifacts/*.tar*
+            do
+              /usr/src/build-extra/gnupg-with-gpgkey.sh --detach-sign --no-armor $tar
+            done
+          fi &&
+
+          b=$PWD/artifacts &&
+          version=$(cat bundle-artifacts/next_version) &&
+          (cd /usr/src/MINGW-packages/mingw-w64-git &&
+          cp PKGBUILD.$version PKGBUILD &&
+          git commit -s -m "mingw-w64-git: new version ($version)" PKGBUILD &&
+          git bundle create "$b"/MINGW-packages.bundle origin/main..main)
+      - name: Clean up temporary files
+        if: always() && env.SKIP != 'true'
+        shell: bash
+        run: rm -rf home
+      - name: Publish mingw-w64-${{matrix.arch.name}}-git
+        if: env.SKIP != 'true'
+        uses: actions/upload-artifact@v1
+        with:
+          name: pkg-${{matrix.arch.name}}
+          path: artifacts
+  build-arm64:
+    needs: bundle-artifacts
+    runs-on: windows-latest
+    steps:
+      - name: Determine whether this job should be skipped
+        shell: bash
+        run: |
+          for e in ${BUILD_ONLY:-pkg}
+          do
+            case $e in
+            *-arm64) exit 0;; # build this artifact
+            *-*) ;; # not this build artifact, keep looking
+            *) exit 0;; # build this artifact
+            esac
+          done
+          echo "SKIP=true" >>$GITHUB_ENV
+      - name: Configure user
+        if: env.SKIP != 'true'
+        shell: bash
+        run:
+          USER_NAME="${{github.actor}}" &&
+          USER_EMAIL="${{github.actor}}@users.noreply.github.com" &&
+          mkdir -p "$HOME" &&
+          git config --global user.name "$USER_NAME" &&
+          git config --global user.email "$USER_EMAIL"
+      - name: Download bundle-artifacts
+        if: env.SKIP != 'true'
+        uses: actions/download-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+      - name: Check out git/git
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          git -c init.defaultBranch=main init &&
+          git remote add -f origin https://github.com/git-for-windows/git &&
+          git fetch --tags bundle-artifacts/git.bundle $(cat bundle-artifacts/next_version) &&
+          git reset --hard $(cat bundle-artifacts/next_version)
+      - name: initialize vcpkg
+        if: env.SKIP != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: 'microsoft/vcpkg'
+          path: 'compat/vcbuild/vcpkg'
+      - name: download vcpkg artifacts
+        if: env.SKIP != 'true'
+        uses: git-for-windows/get-azure-pipelines-artifact@v0
+        with:
+          repository: git/git
+          definitionId: 9
+      - name: add msbuild to PATH
+        if: env.SKIP != 'true'
+        uses: microsoft/setup-msbuild@v1
+      - name: copy dlls to root
+        if: env.SKIP != 'true'
+        shell: powershell
+        run: |
+          & compat\vcbuild\vcpkg_copy_dlls.bat release arm64-windows
+          if (!$?) { exit(1) }
+      - name: generate Visual Studio solution
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/arm64-windows \
+          -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=arm64 -DVCPKG_ARCH=arm64-windows \
+          -DCMAKE_INSTALL_PREFIX="`pwd`/git-arm64" -DSKIP_DASHED_BUILT_INS=ON -DHOST_CPU=arm64
+      - name: MSBuild
+        if: env.SKIP != 'true'
+        run: msbuild git.sln -property:Configuration=Release
+      - name: Link the Git executables
+        if: env.SKIP != 'true'
+        run: msbuild INSTALL.vcxproj -property:Configuration=Release
+      - name: upload build artifacts
+        if: env.SKIP != 'true'
+        uses: actions/upload-artifact@v1
+        with:
+          name: arm64-artifacts
+          path: ./git-arm64
+  artifacts:
+    runs-on: windows-latest
+    needs: [pkg, build-arm64]
+    strategy:
+      matrix:
+        artifact:
+          - name: installer
+            fileprefix: Git
+            fileextension: exe
+          - name: portable
+            fileprefix: PortableGit
+            fileextension: exe
+          - name: archive
+            fileprefix: Git
+            fileextension: tar.bz2
+          - name: mingit
+            fileprefix: MinGit
+            fileextension: zip
+          - name: mingit-busybox
+            fileprefix: MinGit
+            fileextension: zip
+        arch:
+          - name: x86_64
+            bitness: 64
+            arm64: false
+          - name: i686
+            bitness: 32
+            arm64: false
+          - name: i686
+            bitness: 32
+            arm64: true
+      fail-fast: false
+    env:
+      MSYSTEM: MINGW${{matrix.arch.bitness}}
+    steps:
+      - name: Determine whether this job should be skipped
+        shell: bash
+        run: |
+          suffix=${{matrix.arch.name}}
+          if test true = ${{matrix.arch.arm64}}
+          then
+            suffix=arm64
+          fi
+          case " $BUILD_ONLY " in
+          '  ') ;; # not set; build all
+          *" ${{matrix.artifact.name}} "*|*" ${{matrix.artifact.name}}-$suffix "*) ;; # build this artifact
+          *) echo "SKIP=true" >>$GITHUB_ENV;;
+          esac
+      - name: Download pkg-${{matrix.arch.name}}
+        if: env.SKIP != 'true'
+        uses: actions/download-artifact@v1
+        with:
+          name: pkg-${{matrix.arch.name}}
+          path: pkg-${{matrix.arch.name}}
+      - name: Download bundle-artifacts
+        if: env.SKIP != 'true'
+        uses: actions/download-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+        if: env.SKIP != 'true' && matrix.arch.bitness == '64'
+        with:
+          flavor: build-installers
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+        if: env.SKIP != 'true' && matrix.arch.bitness == '32'
+        with:
+          flavor: build-installers
+          architecture: i686
+      - name: Download arm64 artifact
+        if: env.SKIP != 'true' && matrix.arch.arm64 == true
+        uses: actions/download-artifact@v1
+        with:
+          name: arm64-artifacts
+          path: ${{github.workspace}}/arm64
+      # Workaround for Git Credential Manager Core on ARM64: https://github.com/git-for-windows/git/issues/3015
+      - name: Create git-credential-manager-core wrapper for ARM64
+        if: env.SKIP != 'true' && matrix.arch.arm64 == true
+        shell: bash
+        run: |
+          printf '%s\n' '#!/bin/sh' 'exec /mingw32/libexec/git-core/git-credential-manager-core.exe "$@"' > arm64/libexec/git-core/git-credential-manager-core
+          chmod +x arm64/libexec/git-core/git-credential-manager-core
+      - name: Clone and update build-extra
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          d=/usr/src/build-extra &&
+          if test ! -d $d/.git
+          then
+            git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
+          else
+            git -C $d fetch https://github.com/git-for-windows/build-extra main &&
+            git -C $d switch -C main FETCH_HEAD
+          fi &&
+          git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
+      - name: Prepare home directory for code-signing
+        env:
+          CODESIGN_P12: ${{secrets.CODESIGN_P12}}
+          CODESIGN_PASS: ${{secrets.CODESIGN_PASS}}
+        if: env.SKIP != 'true' && (matrix.artifact.name == 'installer' || matrix.artifact.name == 'portable') && env.CODESIGN_P12 != '' && env.CODESIGN_PASS != ''
+        shell: bash
+        run: |
+          mkdir -p home/.sig &&
+          echo -n "$CODESIGN_P12" | tr % '\n' | base64 -d >home/.sig/codesign.p12 &&
+          echo -n "$CODESIGN_PASS" >home/.sig/codesign.pass &&
+          git config --global alias.signtool '!sh "/usr/src/build-extra/signtool.sh"'
+      - name: Build ${{matrix.arch.bitness}}-bit ${{matrix.artifact.name}}
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          set -x
+          if test "${{matrix.arch.arm64}}" = true
+          then
+            ARM64="--include-arm64-artifacts=\"$PWD/arm64\""
+          else
+            ARM64=
+          fi
+
+          eval /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git $ARM64 --version=$(cat pkg-${{matrix.arch.name}}/ver) -o artifacts --${{matrix.artifact.name}} --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-[0-9]*.tar.xz --pkg=pkg-${{matrix.arch.name}}/mingw-w64-${{matrix.arch.name}}-git-doc-html-[0-9]*.tar.xz &&
+          if test portable = '${{matrix.artifact.name}}' && test -n "$(git config alias.signtool)"
+          then
+            git signtool artifacts/PortableGit-*.exe
+          fi &&
+          openssl dgst -sha256 artifacts/${{matrix.artifact.fileprefix}}-*.${{matrix.artifact.fileextension}} | sed "s/.* //" >artifacts/sha-256.txt
+      - name: Copy package-versions and pdbs
+        if: env.SKIP != 'true' && matrix.artifact.name == 'installer'
+        shell: bash
+        run: |
+          cp /usr/src/build-extra/installer/package-versions.txt artifacts/ &&
+
+          a=$PWD/artifacts &&
+          p=$PWD/pkg-${{matrix.arch.name}} &&
+          (cd /usr/src/build-extra &&
+          mkdir -p cached-source-packages &&
+          cp "$p"/*-pdb* cached-source-packages/ &&
+          GIT_CONFIG_PARAMETERS="'windows.sdk${{matrix.arch.bitness}}.path='" ./please.sh bundle_pdbs --arch=${{matrix.arch.name}} --directory="$a" installer/package-versions.txt)
+      - name: Clean up temporary files
+        if: always() && env.SKIP != 'true'
+        shell: bash
+        run: rm -rf home
+      - name: Publish ${{matrix.artifact.name}}-${{matrix.arch.name}}
+        if: env.SKIP != 'true' && matrix.arch.arm64 != true
+        uses: actions/upload-artifact@v1
+        with:
+          name: ${{matrix.artifact.name}}-${{matrix.arch.name}}
+          path: artifacts
+      - name: Publish ${{matrix.artifact.name}}-arm64
+        if: env.SKIP != 'true' && matrix.arch.arm64 == true
+        uses: actions/upload-artifact@v1
+        with:
+          name: ${{matrix.artifact.name}}-arm64
+          path: artifacts
+  nuget:
+    runs-on: windows-latest
+    needs: pkg
+    steps:
+      - name: Determine whether this job should be skipped
+        shell: bash
+        run: |
+          case " $BUILD_ONLY " in
+          '  ') ;; # not set; build all
+          *" nuget "*) ;; # build this artifact
+          *) echo "SKIP=true" >>$GITHUB_ENV;;
+          esac
+      - name: Download pkg-x86_64
+        if: env.SKIP != 'true'
+        uses: actions/download-artifact@v1
+        with:
+          name: pkg-x86_64
+          path: pkg-x86_64
+      - name: Download bundle-artifacts
+        if: env.SKIP != 'true'
+        uses: actions/download-artifact@v1
+        with:
+          name: bundle-artifacts
+          path: bundle-artifacts
+      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+        if: env.SKIP != 'true'
+        with:
+          flavor: build-installers
+      - name: Clone and update build-extra
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          d=/usr/src/build-extra &&
+          if test ! -d $d/.git
+          then
+            git clone --single-branch -b main https://github.com/git-for-windows/build-extra $d
+          else
+            git -C $d fetch https://github.com/git-for-windows/build-extra main &&
+            git -C $d switch -C main FETCH_HEAD
+          fi &&
+          git -C $d pull "$PWD"/bundle-artifacts/build-extra.bundle main
+      - uses: nuget/setup-nuget@v1
+        if: env.SKIP != 'true'
+      - name: Build 64-bit NuGet packages
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=$(cat pkg-x86_64/ver) -o artifacts --nuget --pkg=pkg-x86_64/mingw-w64-x86_64-git-[0-9]*.tar.xz --pkg=pkg-x86_64/mingw-w64-x86_64-git-doc-html-[0-9]*.tar.xz &&
+          /usr/src/build-extra/please.sh make_installers_from_mingw_w64_git --version=$(cat pkg-x86_64/ver) -o artifacts --nuget-mingit &&
+          openssl dgst -sha256 artifacts/Git*.nupkg | sed "s/.* //" >artifacts/sha-256.txt
+      - name: Publish nuget-x86_64
+        if: env.SKIP != 'true'
+        uses: actions/upload-artifact@v1
+        with:
+          name: nuget-x86_64
+          path: artifacts
