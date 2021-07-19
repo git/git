@@ -43,6 +43,14 @@
    you will have to add whatever macros your tool chain defines to indicate Big-Endianness.
  */
 
+#if defined(__BIG_ENDIAN__)
+#define SHA1DC_BIGENDIAN
+#endif
+
+/*
+   Required for GCC 4.0
+*/
+
 #if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__)
 /*
  * Should detect Big Endian under GCC since at least 4.6.0 (gcc svn
