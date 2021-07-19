@@ -223,7 +223,14 @@ endif()
 
 #default behaviour
 include_directories(${CMAKE_SOURCE_DIR})
-add_compile_definitions(GIT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
+
+# When cross-compiling, define HOST_CPU as the canonical name of the CPU on
+# which the built Git will run (for instance "x86_64").
+if(NOT HOST_CPU)
+	add_compile_definitions(GIT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
+else()
+	add_compile_definitions(GIT_HOST_CPU="${HOST_CPU}")
+endif()
 add_compile_definitions(SHA256_BLK INTERNAL_QSORT RUNTIME_PREFIX)
 add_compile_definitions(NO_OPENSSL SHA1_DC SHA1DC_NO_STANDARD_INCLUDES
 			SHA1DC_INIT_SAFE_HASH_DEFAULT=0
