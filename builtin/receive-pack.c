@@ -131,6 +131,8 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 {
 	int status = parse_hide_refs_config(var, value, "receive");
 
+	git_gpg_config(var, value, NULL);
+
 	if (status)
 		return status;
 
