@@ -90,7 +90,8 @@ sub handle_line {
 
 	if (!$in_hunk) {
 		$line_cb->($orig);
-		$in_hunk = /^$COLOR*\@\@ /;
+		$in_hunk = /^( *)$COLOR*\@\@/;
+		$graph_indent = length($1);
 	}
 	elsif (/^$COLOR*-/) {
 		push @removed, $orig;
