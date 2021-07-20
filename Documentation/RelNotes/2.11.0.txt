@@ -5,7 +5,7 @@ Backward compatibility notes.
 
  * An empty string used as a pathspec element has always meant
    'everything matches', but it is too easy to write a script that
-   finds a path to remove in $path and run 'git rm "$paht"' by
+   finds a path to remove in $path and run 'git rm "$path"' by
    mistake (when the user meant to give "$path"), which ends up
    removing everything.  This release starts warning about the
    use of an empty string that is used for 'everything matches' and

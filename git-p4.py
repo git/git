@@ -36,7 +36,7 @@ import ctypes
 import errno
 import glob
 
-# On python2.7 where raw_input() and input() are both availble,
+# On python2.7 where raw_input() and input() are both available,
 # we want raw_input's semantics, but aliased to input for python3
 # compatibility
 # support basestring in python3
@@ -252,7 +252,7 @@ def run_hook_command(cmd, param):
        be run with the Git for Windows Bash shell.  If there
        is no file extension, the file is deemed a bash shell
        and will be handed off to sh.exe. Otherwise, Windows
-       will be called with the shell to handle the file assocation.
+       will be called with the shell to handle the file association.
 
        For non Windows operating systems, the file is called
        as an executable.
@@ -1655,7 +1655,7 @@ class P4Submit(Command, P4UserMap):
     status from the script will abort the process.
 
     The purpose of the hook is to edit the message file in place, and it is not
-    supressed by the `--no-verify` option. This hook is called even if
+    suppressed by the `--no-verify` option. This hook is called even if
     `--prepare-p4-only` is set.
 
     The `p4-changelist` hook is executed after the changelist message has been

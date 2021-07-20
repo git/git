@@ -144,7 +144,7 @@ Fixes since v2.22
    a blanket ban against them.
 
  * The internal diff machinery can be made to read out of bounds while
-   looking for --funcion-context line in a corner case, which has been
+   looking for --function-context line in a corner case, which has been
    corrected.
 
 Also contains various documentation updates, code clean-ups and minor fixups.

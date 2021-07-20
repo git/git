@@ -1,4 +1,4 @@
-The git-cvsimport-script had a copule of small bugs that prevented me
+The git-cvsimport-script had a couple of small bugs that prevented me
 from importing a big CVS repository.
 
 The first was that it didn't handle removed files with a multi-digit

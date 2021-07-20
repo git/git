@@ -316,7 +316,7 @@ struct ipc_server_thread_data {
 
 /*
  * On Windows, the conceptual "ipc-server" is implemented as a pool of
- * n idential/peer "server-thread" threads.  That is, there is no
+ * n identical/peer "server-thread" threads.  That is, there is no
  * hierarchy of threads; and therefore no controller thread managing
  * the pool.  Each thread has an independent handle to the named pipe,
  * receives incoming connections, processes the client, and re-uses
@@ -541,7 +541,7 @@ static void *server_thread_proc(void *_server_thread_data)
 
 		case CR_CONNECT_PENDING:
 			/* By construction, this should not happen. */
-			BUG("ipc-server[%s]: unexpeced CR_CONNECT_PENDING",
+			BUG("ipc-server[%s]: unexpected CR_CONNECT_PENDING",
 			    server_thread_data->server_data->buf_path.buf);
 
 		case CR_CONNECT_ERROR:
