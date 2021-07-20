@@ -396,14 +396,14 @@ test_expect_success 'diff with renames and conflicts' '
 	done
 '
 
-# NEEDSWORK: the sparse-index fails to move HEAD across a directory/file
-# conflict such as when checking out df-conflict-1 and df-conflict2.
 test_expect_success 'diff with directory/file conflicts' '
 	init_repos &&
 
 	for branch in rename-out-to-out \
 		      rename-out-to-in \
 		      rename-in-to-out \
+		      df-conflict-1 \
+		      df-conflict-2 \
 		      fd-conflict
 	do
 		git -C full-checkout reset --hard &&
@@ -667,10 +667,7 @@ test_expect_success 'checkout behaves oddly with df-conflict-1' '
 	git -C sparse-checkout checkout df-conflict-1 \
 		1>sparse-checkout-out \
 		2>sparse-checkout-err &&
-
-	# NEEDSWORK: the sparse-index case refuses to change HEAD here,
-	# but for the wrong reason.
-	test_must_fail git -C sparse-index checkout df-conflict-1 \
+	git -C sparse-index checkout df-conflict-1 \
 		1>sparse-index-out \
 		2>sparse-index-err &&
 
@@ -684,7 +681,11 @@ test_expect_success 'checkout behaves oddly with df-conflict-1' '
 	test_cmp expect full-checkout-out &&
 	test_cmp expect sparse-checkout-out &&
 
+	# The sparse-index reports no output
+	test_must_be_empty sparse-index-out &&
+
 	# stderr: Switched to branch df-conflict-1
+	test_cmp full-checkout-err sparse-checkout-err &&
 	test_cmp full-checkout-err sparse-checkout-err
 '
 
@@ -719,17 +720,15 @@ test_expect_success 'checkout behaves oddly with df-conflict-2' '
 	git -C sparse-checkout checkout df-conflict-2 \
 		1>sparse-checkout-out \
 		2>sparse-checkout-err &&
-
-	# NEEDSWORK: the sparse-index case refuses to change HEAD
-	# here, but for the wrong reason.
-	test_must_fail git -C sparse-index checkout df-conflict-2 \
+	git -C sparse-index checkout df-conflict-2 \
 		1>sparse-index-out \
 		2>sparse-index-err &&
 
 	# The full checkout deviates from the df-conflict-1 case here!
 	# It drops the change to folder1/larger-content and leaves the
-	# folder1 path as-is on disk.
+	# folder1 path as-is on disk. The sparse-index behaves the same.
 	test_must_be_empty full-checkout-out &&
+	test_must_be_empty sparse-index-out &&
 
 	# In the sparse-checkout case, the checkout deletes the folder1
 	# file and adds the folder1/larger-content file, leaving all other
@@ -741,7 +740,8 @@ test_expect_success 'checkout behaves oddly with df-conflict-2' '
 	test_cmp expect sparse-checkout-out &&
 
 	# Switched to branch df-conflict-1
-	test_cmp full-checkout-err sparse-checkout-err
+	test_cmp full-checkout-err sparse-checkout-err &&
+	test_cmp full-checkout-err sparse-index-err
 '
 
 test_done

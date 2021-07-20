@@ -2619,6 +2619,17 @@ int twoway_merge(const struct cache_entry * const *src,
 			 same(current, oldtree) && !same(current, newtree)) {
 			/* 20 or 21 */
 			return merged_entry(newtree, current, o);
+		} else if (current && !oldtree && newtree &&
+			   S_ISSPARSEDIR(current->ce_mode) != S_ISSPARSEDIR(newtree->ce_mode) &&
+			   ce_stage(current) == 0) {
+			/*
+			 * This case is a directory/file conflict across the sparse-index
+			 * boundary. When we are changing from one path to another via
+			 * 'git checkout', then we want to replace one entry with another
+			 * via merged_entry(). If there are staged changes, then we should
+			 * reject the merge instead.
+			 */
+			return merged_entry(newtree, current, o);
 		} else
 			return reject_merge(current, o);
 	}
