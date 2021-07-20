@@ -14,6 +14,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+if test_have_prereq !REFFILES
+then
+  skip_all='skipping pack-refs tests; requires files ref backend'
+  test_done
+fi
+
 test_expect_success 'enable reflogs' '
 	git config core.logallrefupdates true
 '
