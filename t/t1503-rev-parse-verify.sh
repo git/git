@@ -142,7 +142,7 @@ test_expect_success 'main@{n} for various n' '
 	test_must_fail git rev-parse --verify main@{$Np1}
 '
 
-test_expect_success SYMLINKS 'ref resolution not confused by broken symlinks' '
+test_expect_success SYMLINKS,REFFILES 'ref resolution not confused by broken symlinks' '
 	ln -s does-not-exist .git/refs/heads/broken &&
 	test_must_fail git rev-parse --verify broken
 '

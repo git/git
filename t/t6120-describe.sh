@@ -107,7 +107,8 @@ test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 check_describe tags/A --all A^0
 
 test_expect_success 'renaming tag A to Q locally produces a warning' "
-	mv .git/refs/tags/A .git/refs/tags/Q &&
+	git update-ref refs/tags/Q $(git rev-parse refs/tags/A) &&
+	git update-ref -d refs/tags/A &&
 	git describe HEAD 2>err >out &&
 	cat >expected <<-\EOF &&
 	warning: tag 'Q' is externally known as 'A'
@@ -135,7 +136,8 @@ test_expect_success 'abbrev=0 will not break misplaced tag (2)' '
 '
 
 test_expect_success 'rename tag Q back to A' '
-	mv .git/refs/tags/Q .git/refs/tags/A
+	git update-ref refs/tags/A $(git rev-parse refs/tags/Q) &&
+	git update-ref -d refs/tags/Q
 '
 
 test_expect_success 'pack tag refs' 'git pack-refs'
