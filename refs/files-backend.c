@@ -531,7 +531,6 @@ static void unlock_ref(struct ref_lock *lock)
 static int lock_raw_ref(struct files_ref_store *refs,
 			const char *refname, int mustexist,
 			const struct string_list *extras,
-			const struct string_list *skip,
 			struct ref_lock **lock_p,
 			struct strbuf *referent,
 			unsigned int *type,
@@ -568,7 +567,7 @@ retry:
 		 * reason to expect this error to be transitory.
 		 */
 		if (refs_verify_refname_available(&refs->base, refname,
-						  extras, skip, err)) {
+						  extras, NULL, err)) {
 			if (mustexist) {
 				/*
 				 * To the user the relevant error is
@@ -673,7 +672,7 @@ retry:
 							  REMOVE_DIR_EMPTY_ONLY)) {
 				if (refs_verify_refname_available(
 						    &refs->base, refname,
-						    extras, skip, err)) {
+						    extras, NULL, err)) {
 					/*
 					 * The error message set by
 					 * verify_refname_available() is OK.
@@ -710,7 +709,7 @@ retry:
 		 */
 		if (refs_verify_refname_available(
 				    refs->packed_ref_store, refname,
-				    extras, skip, err))
+				    extras, NULL, err))
 			goto error_return;
 	}
 
@@ -2412,7 +2411,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	}
 
 	ret = lock_raw_ref(refs, update->refname, mustexist,
-			   affected_refnames, NULL,
+			   affected_refnames,
 			   &lock, &referent,
 			   &update->type, err);
 	if (ret) {
