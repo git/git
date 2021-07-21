@@ -1,12 +1,8 @@
 write_sub_test_lib_test () {
-	name="$1" descr="$2" # stdin is the body of the test code
+	name="$1" # stdin is the body of the test code
 	mkdir "$name" &&
 	write_script "$name/$name.sh" "$TEST_SHELL_PATH" <<-EOF &&
-	test_description='$descr (run in sub test-lib)
-
-	This is run in a sub test-lib so that we do not get incorrect
-	passing metrics
-	'
+	test_description='A test of test-lib.sh itself'
 
 	# Point to the t/test-lib.sh, which isn't in ../ as usual
 	. "\$TEST_DIRECTORY"/test-lib.sh
@@ -15,8 +11,8 @@ write_sub_test_lib_test () {
 }
 
 _run_sub_test_lib_test_common () {
-	neg="$1" name="$2" descr="$3" # stdin is the body of the test code
-	shift 3
+	neg="$1" name="$2" # stdin is the body of the test code
+	shift 2
 
 	# intercept pseudo-options at the front of the argument list that we
 	# will not pass to child script
