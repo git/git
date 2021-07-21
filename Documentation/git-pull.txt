@@ -117,7 +117,7 @@ When set to `preserve` (deprecated in favor of `merges`), rebase with the
 `--preserve-merges` option passed to `git rebase` so that locally created
 merge commits will not be flattened.
 +
-When false, merge the current branch into the upstream branch.
+When false, merge the upstream branch into the current branch.
 +
 When `interactive`, enable the interactive mode of rebase.
 +
