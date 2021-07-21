@@ -57,6 +57,15 @@ fi
 . "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
 export PERL_PATH SHELL_PATH
 
+# In t0000, we need to override test directories of nested testcases. In case
+# the developer has TEST_OUTPUT_DIRECTORY part of his build options, then we'd
+# reset this value to instead contain what the developer has specified. We thus
+# have this knob to allow overriding the directory.
+if test -n "${TEST_OUTPUT_DIRECTORY_OVERRIDE}"
+then
+	TEST_OUTPUT_DIRECTORY="${TEST_OUTPUT_DIRECTORY_OVERRIDE}"
+fi
+
 # Disallow the use of abbreviated options in the test suite by default
 if test -z "${GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS}"
 then
