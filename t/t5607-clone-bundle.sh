@@ -54,14 +54,14 @@ test_expect_success 'bundle --stdin <rev-list options>' '
 '
 
 test_expect_success 'empty bundle file is rejected' '
-	: >empty-bundle &&
+	>empty-bundle &&
 	test_must_fail git fetch empty-bundle
 '
 
 # This triggers a bug in older versions where the resulting line (with
 # --pretty=oneline) was longer than a 1024-char buffer.
 test_expect_success 'ridiculously long subject in boundary' '
-	: >file4 &&
+	>file4 &&
 	test_tick &&
 	git add file4 &&
 	printf "%01200d\n" 0 | git commit -F - &&
@@ -75,7 +75,7 @@ test_expect_success 'ridiculously long subject in boundary' '
 '
 
 test_expect_success 'prerequisites with an empty commit message' '
-	: >file1 &&
+	>file1 &&
 	git add file1 &&
 	test_tick &&
 	git commit --allow-empty-message -m "" &&
