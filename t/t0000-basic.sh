@@ -68,7 +68,7 @@ test_expect_success 'success is reported like this' '
 '
 
 test_expect_success 'pretend we have a fully passing test suite' '
-	run_sub_test_lib_test full-pass "3 passing tests" <<-\EOF &&
+	write_and_run_sub_test_lib_test full-pass "3 passing tests" <<-\EOF &&
 	for i in 1 2 3
 	do
 		test_expect_success "passing test #$i" "true"
@@ -85,7 +85,7 @@ test_expect_success 'pretend we have a fully passing test suite' '
 '
 
 test_expect_success 'pretend we have a partially passing test suite' '
-	run_sub_test_lib_test_err \
+	write_and_run_sub_test_lib_test_err \
 		partial-pass "2/3 tests passing" <<-\EOF &&
 	test_expect_success "passing test #1" "true"
 	test_expect_success "failing test #2" "false"
@@ -103,7 +103,7 @@ test_expect_success 'pretend we have a partially passing test suite' '
 '
 
 test_expect_success 'pretend we have a known breakage' '
-	run_sub_test_lib_test failing-todo "A failing TODO test" <<-\EOF &&
+	write_and_run_sub_test_lib_test failing-todo "A failing TODO test" <<-\EOF &&
 	test_expect_success "passing test" "true"
 	test_expect_failure "pretend we have a known breakage" "false"
 	test_done
@@ -118,7 +118,7 @@ test_expect_success 'pretend we have a known breakage' '
 '
 
 test_expect_success 'pretend we have fixed a known breakage' '
-	run_sub_test_lib_test passing-todo "A passing TODO test" <<-\EOF &&
+	write_and_run_sub_test_lib_test passing-todo "A passing TODO test" <<-\EOF &&
 	test_expect_failure "pretend we have fixed a known breakage" "true"
 	test_done
 	EOF
@@ -130,7 +130,7 @@ test_expect_success 'pretend we have fixed a known breakage' '
 '
 
 test_expect_success 'pretend we have fixed one of two known breakages (run in sub test-lib)' '
-	run_sub_test_lib_test partially-passing-todos \
+	write_and_run_sub_test_lib_test partially-passing-todos \
 		"2 TODO tests, one passing" <<-\EOF &&
 	test_expect_failure "pretend we have a known breakage" "false"
 	test_expect_success "pretend we have a passing test" "true"
@@ -149,7 +149,7 @@ test_expect_success 'pretend we have fixed one of two known breakages (run in su
 '
 
 test_expect_success 'pretend we have a pass, fail, and known breakage' '
-	run_sub_test_lib_test_err \
+	write_and_run_sub_test_lib_test_err \
 		mixed-results1 "mixed results #1" <<-\EOF &&
 	test_expect_success "passing test" "true"
 	test_expect_success "failing test" "false"
@@ -168,7 +168,7 @@ test_expect_success 'pretend we have a pass, fail, and known breakage' '
 '
 
 test_expect_success 'pretend we have a mix of all possible results' '
-	run_sub_test_lib_test_err \
+	write_and_run_sub_test_lib_test_err \
 		mixed-results2 "mixed results #2" <<-\EOF &&
 	test_expect_success "passing test" "true"
 	test_expect_success "passing test" "true"
@@ -204,7 +204,7 @@ test_expect_success 'pretend we have a mix of all possible results' '
 '
 
 test_expect_success 'test --verbose' '
-	run_sub_test_lib_test_err \
+	write_and_run_sub_test_lib_test_err \
 		t1234-verbose "test verbose" --verbose <<-\EOF &&
 	test_expect_success "passing test" true
 	test_expect_success "test with output" "echo foo"
@@ -231,7 +231,7 @@ test_expect_success 'test --verbose' '
 '
 
 test_expect_success 'test --verbose-only' '
-	run_sub_test_lib_test_err \
+	write_and_run_sub_test_lib_test_err \
 		t2345-verbose-only-2 "test verbose-only=2" \
 		--verbose-only=2 <<-\EOF &&
 	test_expect_success "passing test" true
@@ -255,7 +255,7 @@ test_expect_success 'test --verbose-only' '
 
 test_expect_success 'GIT_SKIP_TESTS' '
 	(
-		run_sub_test_lib_test git-skip-tests-basic \
+		write_and_run_sub_test_lib_test git-skip-tests-basic \
 			"GIT_SKIP_TESTS" \
 			--skip="git.2" <<-\EOF &&
 		for i in 1 2 3
@@ -276,7 +276,7 @@ test_expect_success 'GIT_SKIP_TESTS' '
 
 test_expect_success 'GIT_SKIP_TESTS several tests' '
 	(
-		run_sub_test_lib_test git-skip-tests-several \
+		write_and_run_sub_test_lib_test git-skip-tests-several \
 			"GIT_SKIP_TESTS several tests" \
 			--skip="git.2 git.5" <<-\EOF &&
 		for i in 1 2 3 4 5 6
@@ -300,7 +300,7 @@ test_expect_success 'GIT_SKIP_TESTS several tests' '
 
 test_expect_success 'GIT_SKIP_TESTS sh pattern' '
 	(
-		run_sub_test_lib_test git-skip-tests-sh-pattern \
+		write_and_run_sub_test_lib_test git-skip-tests-sh-pattern \
 			"GIT_SKIP_TESTS sh pattern" \
 			--skip="git.[2-5]" <<-\EOF &&
 		for i in 1 2 3 4 5 6
@@ -324,7 +324,7 @@ test_expect_success 'GIT_SKIP_TESTS sh pattern' '
 
 test_expect_success 'GIT_SKIP_TESTS entire suite' '
 	(
-		run_sub_test_lib_test git-skip-tests-entire-suite \
+		write_and_run_sub_test_lib_test git-skip-tests-entire-suite \
 			"GIT_SKIP_TESTS entire suite" \
 			--skip="git" <<-\EOF &&
 		for i in 1 2 3
@@ -341,7 +341,7 @@ test_expect_success 'GIT_SKIP_TESTS entire suite' '
 
 test_expect_success 'GIT_SKIP_TESTS does not skip unmatched suite' '
 	(
-		run_sub_test_lib_test git-skip-tests-unmatched-suite \
+		write_and_run_sub_test_lib_test git-skip-tests-unmatched-suite \
 			"GIT_SKIP_TESTS does not skip unmatched suite" \
 			--skip="notgit" <<-\EOF &&
 		for i in 1 2 3
@@ -361,7 +361,7 @@ test_expect_success 'GIT_SKIP_TESTS does not skip unmatched suite' '
 '
 
 test_expect_success '--run basic' '
-	run_sub_test_lib_test run-basic \
+	write_and_run_sub_test_lib_test run-basic \
 		"--run basic" --run="1,3,5" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -382,7 +382,7 @@ test_expect_success '--run basic' '
 '
 
 test_expect_success '--run with a range' '
-	run_sub_test_lib_test run-range \
+	write_and_run_sub_test_lib_test run-range \
 		"--run with a range" --run="1-3" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -403,7 +403,7 @@ test_expect_success '--run with a range' '
 '
 
 test_expect_success '--run with two ranges' '
-	run_sub_test_lib_test run-two-ranges \
+	write_and_run_sub_test_lib_test run-two-ranges \
 		"--run with two ranges" --run="1-2,5-6" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -424,7 +424,7 @@ test_expect_success '--run with two ranges' '
 '
 
 test_expect_success '--run with a left open range' '
-	run_sub_test_lib_test run-left-open-range \
+	write_and_run_sub_test_lib_test run-left-open-range \
 		"--run with a left open range" --run="-3" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -445,7 +445,7 @@ test_expect_success '--run with a left open range' '
 '
 
 test_expect_success '--run with a right open range' '
-	run_sub_test_lib_test run-right-open-range \
+	write_and_run_sub_test_lib_test run-right-open-range \
 		"--run with a right open range" --run="4-" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -466,7 +466,7 @@ test_expect_success '--run with a right open range' '
 '
 
 test_expect_success '--run with basic negation' '
-	run_sub_test_lib_test run-basic-neg \
+	write_and_run_sub_test_lib_test run-basic-neg \
 		"--run with basic negation" --run="!3" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -487,7 +487,7 @@ test_expect_success '--run with basic negation' '
 '
 
 test_expect_success '--run with two negations' '
-	run_sub_test_lib_test run-two-neg \
+	write_and_run_sub_test_lib_test run-two-neg \
 		"--run with two negations" --run="!3,!6" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -508,7 +508,7 @@ test_expect_success '--run with two negations' '
 '
 
 test_expect_success '--run a range and negation' '
-	run_sub_test_lib_test run-range-and-neg \
+	write_and_run_sub_test_lib_test run-range-and-neg \
 		"--run a range and negation" --run="-4,!2" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -529,7 +529,7 @@ test_expect_success '--run a range and negation' '
 '
 
 test_expect_success '--run range negation' '
-	run_sub_test_lib_test run-range-neg \
+	write_and_run_sub_test_lib_test run-range-neg \
 		"--run range negation" --run="!1-3" <<-\EOF &&
 	for i in 1 2 3 4 5 6
 	do
@@ -550,7 +550,7 @@ test_expect_success '--run range negation' '
 '
 
 test_expect_success '--run include, exclude and include' '
-	run_sub_test_lib_test run-inc-neg-inc \
+	write_and_run_sub_test_lib_test run-inc-neg-inc \
 		"--run include, exclude and include" \
 		--run="1-5,!1-3,2" <<-\EOF &&
 	for i in 1 2 3 4 5 6
@@ -572,7 +572,7 @@ test_expect_success '--run include, exclude and include' '
 '
 
 test_expect_success '--run include, exclude and include, comma separated' '
-	run_sub_test_lib_test run-inc-neg-inc-comma \
+	write_and_run_sub_test_lib_test run-inc-neg-inc-comma \
 		"--run include, exclude and include, comma separated" \
 		--run=1-5,!1-3,2 <<-\EOF &&
 	for i in 1 2 3 4 5 6
@@ -594,7 +594,7 @@ test_expect_success '--run include, exclude and include, comma separated' '
 '
 
 test_expect_success '--run exclude and include' '
-	run_sub_test_lib_test run-neg-inc \
+	write_and_run_sub_test_lib_test run-neg-inc \
 		"--run exclude and include" \
 		--run="!3-,5" <<-\EOF &&
 	for i in 1 2 3 4 5 6
@@ -616,7 +616,7 @@ test_expect_success '--run exclude and include' '
 '
 
 test_expect_success '--run empty selectors' '
-	run_sub_test_lib_test run-empty-sel \
+	write_and_run_sub_test_lib_test run-empty-sel \
 		"--run empty selectors" \
 		--run="1,,3,,,5" <<-\EOF &&
 	for i in 1 2 3 4 5 6
@@ -638,7 +638,7 @@ test_expect_success '--run empty selectors' '
 '
 
 test_expect_success '--run substring selector' '
-	run_sub_test_lib_test run-substring-selector \
+	write_and_run_sub_test_lib_test run-substring-selector \
 		"--run empty selectors" \
 		--run="relevant" <<-\EOF &&
 	test_expect_success "relevant test" "true"
@@ -662,7 +662,7 @@ test_expect_success '--run substring selector' '
 '
 
 test_expect_success '--run keyword selection' '
-	run_sub_test_lib_test_err run-inv-range-start \
+	write_and_run_sub_test_lib_test_err run-inv-range-start \
 		"--run invalid range start" \
 		--run="a-5" <<-\EOF &&
 	test_expect_success "passing test #1" "true"
@@ -677,7 +677,7 @@ test_expect_success '--run keyword selection' '
 '
 
 test_expect_success '--run invalid range end' '
-	run_sub_test_lib_test_err run-inv-range-end \
+	write_and_run_sub_test_lib_test_err run-inv-range-end \
 		"--run invalid range end" \
 		--run="1-z" <<-\EOF &&
 	test_expect_success "passing test #1" "true"
@@ -692,7 +692,7 @@ test_expect_success '--run invalid range end' '
 '
 
 test_expect_success 'tests respect prerequisites' '
-	run_sub_test_lib_test prereqs "tests respect prereqs" <<-\EOF &&
+	write_and_run_sub_test_lib_test prereqs "tests respect prereqs" <<-\EOF &&
 
 	test_set_prereq HAVEIT
 	test_expect_success HAVEIT "prereq is satisfied" "true"
@@ -722,7 +722,7 @@ test_expect_success 'tests respect prerequisites' '
 '
 
 test_expect_success 'tests respect lazy prerequisites' '
-	run_sub_test_lib_test lazy-prereqs "respect lazy prereqs" <<-\EOF &&
+	write_and_run_sub_test_lib_test lazy-prereqs "respect lazy prereqs" <<-\EOF &&
 
 	test_lazy_prereq LAZY_TRUE true
 	test_expect_success LAZY_TRUE "lazy prereq is satisifed" "true"
@@ -746,7 +746,7 @@ test_expect_success 'tests respect lazy prerequisites' '
 '
 
 test_expect_success 'nested lazy prerequisites' '
-	run_sub_test_lib_test nested-lazy "nested lazy prereqs" <<-\EOF &&
+	write_and_run_sub_test_lib_test nested-lazy "nested lazy prereqs" <<-\EOF &&
 
 	test_lazy_prereq NESTED_INNER "
 		>inner &&
@@ -772,7 +772,7 @@ test_expect_success 'nested lazy prerequisites' '
 '
 
 test_expect_success 'lazy prereqs do not turn off tracing' '
-	run_sub_test_lib_test lazy-prereq-and-tracing \
+	write_and_run_sub_test_lib_test lazy-prereq-and-tracing \
 		"lazy prereqs and -x" -v -x <<-\EOF &&
 	test_lazy_prereq LAZY true
 
@@ -785,7 +785,7 @@ test_expect_success 'lazy prereqs do not turn off tracing' '
 '
 
 test_expect_success 'tests clean up after themselves' '
-	run_sub_test_lib_test cleanup "test with cleanup" <<-\EOF &&
+	write_and_run_sub_test_lib_test cleanup "test with cleanup" <<-\EOF &&
 	clean=no
 	test_expect_success "do cleanup" "
 		test_when_finished clean=yes
@@ -805,7 +805,7 @@ test_expect_success 'tests clean up after themselves' '
 '
 
 test_expect_success 'tests clean up even on failures' '
-	run_sub_test_lib_test_err \
+	write_and_run_sub_test_lib_test_err \
 		failing-cleanup "Failing tests with cleanup commands" <<-\EOF &&
 	test_expect_success "tests clean up even after a failure" "
 		touch clean-after-failure &&
@@ -834,7 +834,7 @@ test_expect_success 'tests clean up even on failures' '
 '
 
 test_expect_success 'test_atexit is run' '
-	run_sub_test_lib_test_err \
+	write_and_run_sub_test_lib_test_err \
 		atexit-cleanup "Run atexit commands" -i <<-\EOF &&
 	test_expect_success "tests clean up even after a failure" "
 		> ../../clean-atexit &&
