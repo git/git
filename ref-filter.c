@@ -2226,8 +2226,12 @@ void ref_array_clear(struct ref_array *array)
 	FREE_AND_NULL(array->items);
 	array->nr = array->alloc = 0;
 
-	for (i = 0; i < used_atom_cnt; i++)
-		free((char *)used_atom[i].name);
+	for (i = 0; i < used_atom_cnt; i++) {
+		struct used_atom *atom = &used_atom[i];
+		if (atom->atom_type == ATOM_HEAD)
+			free(atom->u.head);
+		free((char *)atom->name);
+	}
 	FREE_AND_NULL(used_atom);
 	used_atom_cnt = 0;
 

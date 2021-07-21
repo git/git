@@ -503,7 +503,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	struct strbuf bname = STRBUF_INIT;
 	struct merge_remote_desc *desc;
 	const char *ptr;
-	char *found_ref;
+	char *found_ref = NULL;
 	int len, early;
 
 	strbuf_branchname(&bname, remote, 0);
@@ -586,6 +586,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	strbuf_addf(msg, "%s\t\tcommit '%s'\n",
 		oid_to_hex(&remote_head->object.oid), remote);
 cleanup:
+	free(found_ref);
 	strbuf_release(&buf);
 	strbuf_release(&bname);
 }
