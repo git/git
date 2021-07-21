@@ -1,20 +1,17 @@
 write_sub_test_lib_test () {
 	name="$1" descr="$2" # stdin is the body of the test code
 	mkdir "$name" &&
-	(
-		cd "$name" &&
-		write_script "$name.sh" "$TEST_SHELL_PATH" <<-EOF &&
-		test_description='$descr (run in sub test-lib)
+	write_script "$name/$name.sh" "$TEST_SHELL_PATH" <<-EOF &&
+	test_description='$descr (run in sub test-lib)
 
-		This is run in a sub test-lib so that we do not get incorrect
-		passing metrics
-		'
+	This is run in a sub test-lib so that we do not get incorrect
+	passing metrics
+	'
 
-		# Point to the t/test-lib.sh, which isn't in ../ as usual
-		. "\$TEST_DIRECTORY"/test-lib.sh
-		EOF
-		cat >>"$name.sh"
-	)
+	# Point to the t/test-lib.sh, which isn't in ../ as usual
+	. "\$TEST_DIRECTORY"/test-lib.sh
+	EOF
+	cat >>"$name/$name.sh"
 }
 
 _run_sub_test_lib_test_common () {
