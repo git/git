@@ -216,7 +216,7 @@ static void progress_interval(int signum)
  */
 void progress_test_force_update(void)
 {
-	progress_update = 1;
+	progress_interval(SIGALRM);
 }
 
 static void set_progress_signal(void)
