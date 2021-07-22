@@ -492,13 +492,7 @@ enum trace2_process_info_reason {
 	TRACE2_PROCESS_INFO_EXIT,
 };
 
-#if defined(GIT_WINDOWS_NATIVE)
 void trace2_collect_process_info(enum trace2_process_info_reason reason);
-#else
-#define trace2_collect_process_info(reason) \
-	do {                                \
-	} while (0)
-#endif
 
 const char *trace2_session_id(void);
 
