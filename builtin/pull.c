@@ -966,8 +966,22 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	parse_repo_refspecs(argc, argv, &repo, &refspecs);
 
-	if (!opt_ff)
+	if (!opt_ff) {
 		opt_ff = xstrdup_or_null(config_get_ff());
+		/*
+		 * A subtle point: opt_ff was set on the line above via
+		 * reading from config.  opt_rebase, in contrast, is set
+		 * before this point via command line options.  The setting
+		 * of opt_rebase via reading from config (using
+		 * config_get_rebase()) does not happen until later.  We
+		 * are relying on the next if-condition happening before
+		 * the config_get_rebase() call so that an explicit
+		 * "--rebase" can override a config setting of
+		 * pull.ff=only.
+		 */
+		if (opt_rebase >= 0 && opt_ff && !strcmp(opt_ff, "--ff-only"))
+			opt_ff = "--ff";
+	}
 
 	if (opt_rebase < 0)
 		opt_rebase = config_get_rebase(&rebase_unspecified);
