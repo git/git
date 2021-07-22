@@ -927,9 +927,9 @@ static int get_can_ff(struct object_id *orig_head, struct object_id *orig_merge_
 
 static void show_advice_pull_non_ff(void)
 {
-	advise(_("Pulling without specifying how to reconcile divergent branches is\n"
-		 "discouraged. You can squelch this message by running one of the following\n"
-		 "commands sometime before your next pull:\n"
+	advise(_("You have divergent branches and need to specify how to reconcile them.\n"
+		 "You can do so by running one of the following commands sometime before\n"
+		 "your next pull:\n"
 		 "\n"
 		 "  git config pull.rebase false  # merge (the default strategy)\n"
 		 "  git config pull.rebase true   # rebase\n"
@@ -1067,8 +1067,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		opt_rebase = REBASE_FALSE;
 	}
 	/* If no action specified and we can't fast forward, then warn. */
-	if (!opt_ff && rebase_unspecified && !can_ff)
+	if (!opt_ff && rebase_unspecified && !can_ff) {
 		show_advice_pull_non_ff();
+		die(_("Need to specify how to reconcile divergent branches."));
+	}
 
 	if (opt_rebase) {
 		int ret = 0;
