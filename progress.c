@@ -91,7 +91,8 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 	}
 
 	if (show_update) {
-		if (is_foreground_fd(fileno(stderr)) || done) {
+		int stderr_is_foreground_fd = is_foreground_fd(fileno(stderr));
+		if (stderr_is_foreground_fd || done) {
 			const char *eol = done ? done : "\r";
 			size_t clear_len = counters_sb->len < last_count_len ?
 					last_count_len - counters_sb->len + 1 :
@@ -115,7 +116,8 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 				fprintf(stderr, "%s: %s%*s", progress->title,
 					counters_sb->buf, (int) clear_len, eol);
 			}
-			fflush(stderr);
+			if (stderr_is_foreground_fd)
+				fflush(stderr);
 		}
 		progress_update = 0;
 	}
