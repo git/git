@@ -913,12 +913,18 @@ static int run_rebase(const struct object_id *newbase,
 	return ret;
 }
 
-static int get_can_ff(struct object_id *orig_head, struct object_id *orig_merge_head)
+static int get_can_ff(struct object_id *orig_head,
+		      struct oid_array *merge_heads)
 {
 	int ret;
 	struct commit_list *list = NULL;
 	struct commit *merge_head, *head;
+	struct object_id *orig_merge_head;
 
+	if (merge_heads->nr > 1)
+		return 0;
+
+	orig_merge_head = &merge_heads->oid[0];
 	head = lookup_commit_reference(the_repository, orig_head);
 	commit_list_insert(head, &list);
 	merge_head = lookup_commit_reference(the_repository, orig_merge_head);
@@ -1057,10 +1063,14 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			die(_("Cannot merge multiple branches into empty head."));
 		return pull_into_void(merge_heads.oid, &curr_head);
 	}
-	if (opt_rebase && merge_heads.nr > 1)
-		die(_("Cannot rebase onto multiple branches."));
+	if (merge_heads.nr > 1) {
+		if (opt_rebase)
+			die(_("Cannot rebase onto multiple branches."));
+		if (opt_ff && !strcmp(opt_ff, "--ff-only"))
+			die(_("Cannot fast-forward to multiple branches."));
+	}
 
-	can_ff = get_can_ff(&orig_head, &merge_heads.oid[0]);
+	can_ff = get_can_ff(&orig_head, &merge_heads);
 
 	/* ff-only takes precedence over rebase */
 	if (opt_ff && !strcmp(opt_ff, "--ff-only")) {
