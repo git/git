@@ -71,6 +71,7 @@ codes are:
 
 On success, the command returns the exit code 0.
 
+[[OPTIONS]]
 OPTIONS
 -------
 
@@ -143,7 +144,13 @@ See also <<FILES>>.
 
 -f config-file::
 --file config-file::
-	Use the given config file instead of the one specified by GIT_CONFIG.
+	For writing options: write to the specified file rather than the
+	repository `.git/config`.
++
+For reading options: read only from the specified file rather than from all
+available files.
++
+See also <<FILES>>.
 
 --blob blob::
 	Similar to `--file` but use the given blob instead of a file. E.g.
@@ -325,20 +332,13 @@ All writing options will per default write to the repository specific
 configuration file. Note that this also affects options like `--replace-all`
 and `--unset`. *'git config' will only ever change one file at a time*.
 
-You can override these rules either by command-line options or by environment
-variables. The `--global`, `--system` and `--worktree` options will limit
-the file used to the global, system-wide or per-worktree file respectively.
-The `GIT_CONFIG` environment variable has a similar effect, but you
-can specify any filename you want.
+You can override these rules using the `--global`, `--system`,
+`--local`, `--worktree`, and `--file` command-line options; see
+<<OPTIONS>> above.
 
 
 ENVIRONMENT
 -----------
-
-GIT_CONFIG::
-	Take the configuration from the given file instead of .git/config.
-	Using the "--global" option forces this to ~/.gitconfig. Using the
-	"--system" option forces this to $(prefix)/etc/gitconfig.
 
 GIT_CONFIG_GLOBAL::
 GIT_CONFIG_SYSTEM::
@@ -367,6 +367,12 @@ This is useful for cases where you want to spawn multiple git commands
 with a common configuration but cannot depend on a configuration file,
 for example when writing scripts.
 
+GIT_CONFIG::
+	If no `--file` option is provided to `git config`, use the file
+	given by `GIT_CONFIG` as if it were provided via `--file`. This
+	variable has no effect on other Git commands, and is mostly for
+	historical compatibility; there is generally no reason to use it
+	instead of the `--file` option.
 
 [[EXAMPLES]]
 EXAMPLES
