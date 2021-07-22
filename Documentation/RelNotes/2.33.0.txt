@@ -30,6 +30,9 @@ UI, Workflows & Features
 
  * The userdiff pattern for C# learned the token "record".
 
+ * "git rev-list" learns to omit the "commit <object-name>" header
+   lines from the output with the `--no-commit-header` option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -53,6 +56,11 @@ Performance, Internal Implementation, Development Support etc.
  * Use ".DELETE_ON_ERROR" pseudo target to simplify our Makefile.
 
  * Code cleanup around struct_type_init() functions.
+
+ * "git send-email" optimization.
+
+ * GitHub Actions / CI update.
+   (merge 0dc787a9f2 js/ci-windows-update later to maint).
 
 
 Fixes since v2.32
@@ -208,3 +216,5 @@ Fixes since v2.32
    (merge 617480d75b hn/refs-iterator-peel-returns-boolean later to maint).
    (merge 6a24cc71ed ar/submodule-helper-include-cleanup later to maint).
    (merge 5632e838f8 rs/khash-alloc-cleanup later to maint).
+   (merge b1d87fbaf1 jk/typofix later to maint).
+   (merge e04170697a ab/gitignore-discovery-doc later to maint).
