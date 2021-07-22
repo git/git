@@ -41,22 +41,59 @@ test_expect_success 'setup' '
 	echo "$added_iso88591" | git commit -F - &&
 	head1=$(git rev-parse --verify HEAD) &&
 	head1_short=$(git rev-parse --verify --short $head1) &&
+	head1_short4=$(git rev-parse --verify --short=4 $head1) &&
 	tree1=$(git rev-parse --verify HEAD:) &&
 	tree1_short=$(git rev-parse --verify --short $tree1) &&
 	echo "$changed" > foo &&
 	echo "$changed_iso88591" | git commit -a -F - &&
 	head2=$(git rev-parse --verify HEAD) &&
 	head2_short=$(git rev-parse --verify --short $head2) &&
+	head2_short4=$(git rev-parse --verify --short=4 $head2) &&
 	tree2=$(git rev-parse --verify HEAD:) &&
 	tree2_short=$(git rev-parse --verify --short $tree2) &&
 	git config --unset i18n.commitEncoding
 '
 
-# usage: test_format name format_string [failure] <expected_output
+# usage: test_format [argument...] name format_string [failure] <expected_output
 test_format () {
+	local args=
+	while true
+	do
+		case "$1" in
+		--*)
+			args="$args $1"
+			shift;;
+		*)
+			break;;
+		esac
+	done
 	cat >expect.$1
 	test_expect_${3:-success} "format $1" "
-		git rev-list --pretty=format:'$2' main >output.$1 &&
+		git rev-list $args --pretty=format:'$2' main >output.$1 &&
+		test_cmp expect.$1 output.$1
+	"
+}
+
+# usage: test_pretty [argument...] name format_name [failure] <expected_output
+test_pretty () {
+	local args=
+	while true
+	do
+		case "$1" in
+		--*)
+			args="$args $1"
+			shift;;
+		*)
+			break;;
+		esac
+	done
+	cat >expect.$1
+	test_expect_${3:-success} "pretty $1 (without --no-commit-header)" "
+		git rev-list $args --pretty='$2' main >output.$1 &&
+		test_cmp expect.$1 output.$1
+	"
+	test_expect_${3:-success} "pretty $1 (with --no-commit-header)" "
+		git rev-list $args --no-commit-header --pretty='$2' main >output.$1 &&
 		test_cmp expect.$1 output.$1
 	"
 }
@@ -91,6 +128,20 @@ $head2_short
 commit $head1
 $head1
 $head1_short
+EOF
+
+test_format --no-commit-header hash-no-header %H%n%h <<EOF
+$head2
+$head2_short
+$head1
+$head1_short
+EOF
+
+test_format --abbrev-commit --abbrev=0 --no-commit-header hash-no-header-abbrev %H%n%h <<EOF
+$head2
+$head2_short4
+$head1
+$head1_short4
 EOF
 
 test_format tree %T%n%t <<EOF
@@ -178,6 +229,31 @@ $changed
 
 commit $head1
 $added
+
+EOF
+
+test_format --no-commit-header raw-body-no-header %B <<EOF
+$changed
+
+$added
+
+EOF
+
+test_pretty oneline oneline <<EOF
+$head2 $changed
+$head1 $added
+EOF
+
+test_pretty short short <<EOF
+commit $head2
+Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+
+    $changed
+
+commit $head1
+Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+
+    $added
 
 EOF
 
