@@ -69,11 +69,11 @@ test_expect_success 'binary file with -Xours/-Xtheirs' '
 '
 
 test_expect_success 'pull passes -X to underlying merge' '
-	git reset --hard main && git pull -s recursive -Xours . side &&
-	git reset --hard main && git pull -s recursive -X ours . side &&
-	git reset --hard main && git pull -s recursive -Xtheirs . side &&
-	git reset --hard main && git pull -s recursive -X theirs . side &&
-	git reset --hard main && test_must_fail git pull -s recursive -X bork . side
+	git reset --hard main && git pull --no-rebase -s recursive -Xours . side &&
+	git reset --hard main && git pull --no-rebase -s recursive -X ours . side &&
+	git reset --hard main && git pull --no-rebase -s recursive -Xtheirs . side &&
+	git reset --hard main && git pull --no-rebase -s recursive -X theirs . side &&
+	git reset --hard main && test_must_fail git pull --no-rebase -s recursive -X bork . side
 '
 
 test_expect_success SYMLINKS 'symlink with -Xours/-Xtheirs' '
