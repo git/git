@@ -98,12 +98,12 @@ test_expect_success 'reflog_exists(HEAD)' '
 
 test_expect_success 'delete_reflog(HEAD)' '
 	$RUN delete-reflog HEAD &&
-	! test -f .git/logs/HEAD
+	test_must_fail git reflog exists HEAD
 '
 
 test_expect_success 'create-reflog(HEAD)' '
 	$RUN create-reflog HEAD 1 &&
-	test -f .git/logs/HEAD
+	git reflog exists HEAD
 '
 
 test_expect_success 'delete_ref(refs/heads/foo)' '
