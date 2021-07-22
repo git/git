@@ -1046,15 +1046,15 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	can_ff = get_can_ff(&orig_head, &merge_heads.oid[0]);
 
-	if (!can_ff) {
-		if (opt_ff) {
-			if (!strcmp(opt_ff, "--ff-only"))
-				die_ff_impossible();
-		} else {
-			if (rebase_unspecified && opt_verbosity >= 0)
-				show_advice_pull_non_ff();
-		}
+	/* ff-only takes precedence over rebase */
+	if (opt_ff && !strcmp(opt_ff, "--ff-only")) {
+		if (!can_ff)
+			die_ff_impossible();
+		opt_rebase = REBASE_FALSE;
 	}
+	/* If no action specified and we can't fast forward, then warn. */
+	if (!opt_ff && rebase_unspecified && !can_ff)
+		show_advice_pull_non_ff();
 
 	if (opt_rebase) {
 		int ret = 0;
