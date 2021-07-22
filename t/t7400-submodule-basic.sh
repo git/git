@@ -51,7 +51,7 @@ test_expect_success 'submodule update aborts on missing gitmodules url' '
 
 test_expect_success 'add aborts on repository with no commits' '
 	cat >expect <<-\EOF &&
-	'"'repo-no-commits'"' does not have a commit checked out
+	fatal: '"'repo-no-commits'"' does not have a commit checked out
 	EOF
 	git init repo-no-commits &&
 	test_must_fail git submodule add ../a ./repo-no-commits 2>actual &&
@@ -193,6 +193,17 @@ test_expect_success 'submodule add to .gitignored path with --force' '
 	(
 		cd addtest-ignore &&
 		git submodule add --force "$submodurl" submod
+	)
+'
+
+test_expect_success 'submodule add to path with tracked content fails' '
+	(
+		cd addtest &&
+		echo "fatal: '\''dir-tracked'\'' already exists in the index" >expect &&
+		mkdir dir-tracked &&
+		test_commit foo dir-tracked/bar &&
+		test_must_fail git submodule add "$submodurl" dir-tracked >actual 2>&1 &&
+		test_cmp expect actual
 	)
 '
 
