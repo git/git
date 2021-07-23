@@ -298,6 +298,11 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 		return -1;
 	}
 
+	if (!is_pack_valid(packfile)) {
+		close(fd);
+		return -1;
+	}
+
 	bitmap_git->pack = packfile;
 	bitmap_git->map_size = xsize_t(st.st_size);
 	bitmap_git->map = xmmap(NULL, bitmap_git->map_size, PROT_READ, MAP_PRIVATE, fd, 0);
