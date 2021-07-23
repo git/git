@@ -2776,7 +2776,7 @@ struct add_data {
 };
 #define ADD_DATA_INIT { .depth = -1 }
 
-static void show_fetch_remotes(FILE *output, const char *sm_name, const char *git_dir_path)
+static void show_fetch_remotes(FILE *output, const char *git_dir_path)
 {
 	struct child_process cp_remote = CHILD_PROCESS_INIT;
 	struct strbuf sb_remote_out = STRBUF_INIT;
@@ -2827,8 +2827,7 @@ static int add_submodule(const struct add_data *add_data)
 				fprintf(stderr, _("A git directory for '%s' is found "
 						  "locally with remote(s):"),
 					add_data->sm_name);
-				show_fetch_remotes(stderr, add_data->sm_name,
-						   submod_gitdir_path);
+				show_fetch_remotes(stderr, submod_gitdir_path);
 				free(submod_gitdir_path);
 				die(_("If you want to reuse this local git "
 				      "directory instead of cloning again from\n"
