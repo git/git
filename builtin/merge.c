@@ -1560,6 +1560,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 					  &head_commit->object.oid,
 					  &commit->object.oid,
 					  overwrite_ignore)) {
+			apply_autostash(git_path_merge_autostash(the_repository));
 			ret = 1;
 			goto done;
 		}

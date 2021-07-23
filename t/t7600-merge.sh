@@ -122,6 +122,8 @@ test_expect_success 'setup' '
 	c0=$(git rev-parse HEAD) &&
 	cp file.1 file &&
 	git add file &&
+	cp file.1 other &&
+	git add other &&
 	test_tick &&
 	git commit -m "commit 1" &&
 	git tag c1 &&
@@ -709,6 +711,15 @@ test_expect_success 'fast-forward merge with --autostash' '
 	git merge --autostash c1 2>err &&
 	test_i18ngrep "Applied autostash." err &&
 	test_cmp result.1-5 file
+'
+
+test_expect_success 'failed fast-forward merge with --autostash' '
+	git reset --hard c0 &&
+	git merge-file file file.orig file.5 &&
+	cp file.5 other &&
+	test_must_fail git merge --autostash c1 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	test_cmp file.5 file
 '
 
 test_expect_success 'octopus merge with --autostash' '
