@@ -732,6 +732,14 @@ test_expect_success 'octopus merge with --autostash' '
 	test_cmp result.1-3-5-9 file
 '
 
+test_expect_success 'failed merge (exit 2) with --autostash' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.5 &&
+	test_must_fail git merge -s recursive --autostash c2 c3 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	test_cmp result.1-5 file
+'
+
 test_expect_success 'conflicted merge with --autostash, --abort restores stash' '
 	git reset --hard c3 &&
 	cp file.1 file &&
