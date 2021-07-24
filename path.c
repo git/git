@@ -722,7 +722,7 @@ static struct passwd *getpw_str(const char *username, size_t len)
  * Return a string with ~ and ~user expanded via getpw*. Returns NULL on getpw
  * failure or if path is NULL.
  *
- * If real_home is true, strbuf_realpath($HOME) is used in the expansion.
+ * If real_home is true, strbuf_realpath($HOME) is used in the `~/` expansion.
  */
 char *expand_user_path(const char *path, int real_home)
 {
