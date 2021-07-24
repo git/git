@@ -719,9 +719,8 @@ static struct passwd *getpw_str(const char *username, size_t len)
 }
 
 /*
- * Return a string with ~ and ~user expanded via getpw*.  If buf != NULL,
- * then it is a newly allocated string. Returns NULL on getpw failure or
- * if path is NULL.
+ * Return a string with ~ and ~user expanded via getpw*. Returns NULL on getpw
+ * failure or if path is NULL.
  *
  * If real_home is true, strbuf_realpath($HOME) is used in the expansion.
  */
