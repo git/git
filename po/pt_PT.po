@@ -12,123 +12,150 @@
 #   English                          |  Portuguese
 #   ---------------------------------+--------------------------------------
 #   3-way merge                      |  tri-junção
-#   abbreviate                       |  
-#   alternate object database        |  
+#   abbreviate                       |  abreviar
+#   alternate object database        |  base dados de objetos alternativa
 #   amend                            |  emendar
-#   ancestor                         |  
-#   annotated tag                    |  
+#   ancestor                         |  antepassado
+#   annotated tag                    |  etiqueta anotada
 #   bare repository                  |  repositório nú
-#   bisect                           |  
-#   blob object                      |  
-#   bloom filter                     |  
+#   bisect                           |  bifurcar
+#   blob object                      |  objeto-blob
 #   branch                           |  ramo 
 #   bundle                           |  conjunto
-#   bypass                           |  
-#   cache                            |  cache
-#   chain                            |  
-#   changeset                        |  
-#   checkout                         |  
-#   checksum                         |  
+#   bypass                           |  desviar
+#   cache                            |  arquivador
+#   chain                            |  corrente
+#   changeset                        |  memória
+#   checkout                         |  observar
+#   checksum                         |  checksum
 #   cherry-picking                   |  apanhar
-#   clean                            |  
-#   clone                            |  
+#   clean                            |  limpa
+#   clone                            |  clone
 #   commit                           |  memorizar
 #   commit message                   |  mensagem de memória
-#   commit object                    |  objeto da memória
+#   commit object                    |  objeto de memória
 #   commit-ish (also committish)     |  mnemónica
 #   conflict                         |  conflito
-#   core Git                         |  
-#   cover letter                     |  
+#   core Git                         |  núcleo-Git
+#   cover letter                     |  carta de apresentação
 #   DAG                              |  DAG
-#   dangling object                  |  objeto DAG
+#   dangling object                  |  objeto perdido
 #   detached HEAD                    |  HEAD solta
 #   directory                        |  pasta
-#   dirty                            |  
-#   dumb HTTP protocol               |  
-#   evil merge                       |  
-#   fast-forward                     |  
+#   dirty                            |  suja
+#   dumb HTTP protocol               |  protocolo HTTP burro
+#   evil merge                       |  junção malvada
+#   fast-forward                     |  avanço
 #   fetch                            |  buscar
-#   file system                      |  
+#   file system                      |  sistema de ficheiro
 #   fork                             |  aforquilhar
-#   Git archive                      |  
-#   gitfile                          |  
-#   grafts                           |  
-#   hash                             |  
+#   Git archive                      |  repositório
+#   gitfile                          |  ficheiro-git
+#   grafts                           |  enxertos
+#   hash                             |  hash
 #   HEAD                             |  HEAD
-#   head                             |  
-#   head ref                         |  
+#   head                             |  cabeça
+#   head ref                         |  ref-cabeça
 #   header                           |  cabeçalho
-#   hook                             |  
+#   hook                             |  gancho
 #   hunk                             |  pedaço
-#   index                            |  
-#   index entry                      |  
-#   loose object                     |  
-#   loose refs                       |  
-#   master                           |  
+#   index                            |  arquivador
+#   index entry                      |  entrada no arquivo
+#   loose object                     |  objeto solto
+#   loose refs                       |  refs soltas
+#   master                           |  master
 #   merge                            |  junção 
-#   object                           |  
-#   object database                  |  
-#   object identifier                |  
-#   object name                      |  
-#   object type                      |  
-#   octopus                          |  
-#   origin                           |  
+#   object                           |  objeto
+#   object database                  |  base dados de objeto
+#   object identifier                |  identificador de objeto
+#   object name                      |  nome de objeto
+#   object type                      |  tipo de objeto
+#   octopus                          |  polvinho
+#   origin                           |  origin
 #   pack                             |  pacote
 #   pack index                       |  index de pacote
-#   packfile                         |  ficheiro de pacote
-#   parent                           |  
-#   patch                            |  
-#   pathspec                         |  
-#   pattern                          |  pattern
-#   pickaxe                          |  
-#   plumbing                         |  
-#   porcelain                        |  
-#   precious-objects repo            |  
-#   prune                            |  
+#   packfile                         |  ficheiro-pacote
+#   parent                           |  parente
+#   patch                            |  remendo
+#   pathspec                         |  espetro-caminho
+#   pattern                          |  padrão
+#   pickaxe                          |  picareta
+#   plumbing                         |  nuclear
+#   porcelain                        |  porcelana
+#   precious-objects repo            |  repo de objetos preciosos
+#   prune                            |  podar
 #   pull                             |  agarrar
 #   push                             |  atirar
-#   reachable                        |  
-#   rebase                           |  
-#   ref                              |  
-#   reflog                           |  
-#   refspec                          |  
-#   remote                           |  
-#   remote-tracking branch           |  ramo de monitorização remoto
-#   replay                           |  
+#   reachable                        |  acessível
+#   rebase                           |  rebasear
+#   ref                              |  ref
+#   reflog                           |  registro-ref
+#   refspec                          |  espetro-ref
+#   remote                           |  remoto
+#   remote-tracking branch           |  ramo remoto de monitorização
+#   replay                           |  replay
 #   repo                             |  repo
 #   repository                       |  repositório
-#   reset                            |  reposição
-#   resolve                          |  
+#   reset                            |  restabelecer
+#   resolve                          |  resolver
 #   revert                           |  reverter
 #   revision                         |  revisão
-#   rewind                           |  
-#   SCM                              |  
+#   rewind                           |  rebobinar
+#   SCM                              |  SCM
 #   SHA-1                            |  SHA-1
-#   shallow repository               |  
-#   signed tag                       |  
-#   smart HTTP protocol              |  
-#   squash                           |  
+#   shallow repository               |  repositório raso
+#   signed tag                       |  etiqueta assinada
+#   smart HTTP protocol              |  protocolo HTTP esperto
+#   squash                           |  esmagar
 #   squelch                          |  suprimir
 #   stage                            |  preparar
 #   stash                            |  arrumos
-#   submodule                        |  
-#   symref                           |  
-#   tag                              |  
-#   tag object                       |  
-#   tagger                           |  
-#   topic branch                     |  
+#   submodule                        |  submódulo
+#   superproject                     |  super-projeto
+#   symref                           |  ref-simbólica
+#   tag                              |  etiqueta
+#   tag object                       |  objeto-etiqueta
+#   tagger                           |  etiquetador
+#   topic branch                     |  ramo-tópico
 #   track                            |  seguir
-#   trailer                          |  
-#   tree                             |  
-#   tree object                      |  
-#   tree-ish (also treeish)          |  
-#   unmerged index                   |  
+#   trailer                          |  apêndice
+#   tree                             |  árvore
+#   tree object                      |  objeto-árvore
+#   tree-ish (also treeish)          |  arvoredo
+#   unmerged index                   |  arquivador por juntar
 #   unpack                           |  desempacotar
-#   unreachable object               |  
+#   unreachable object               |  objeto inacessível
 #   unstage                          |  despreparar
 #   upstream                         |  upstream
-#   upstream branch                  |  ramo upstream
+#   upstream branch                  |  ramo-upstream
 #   working tree                     |  árvore de trabalho
+#
+#
+#  Other translation table helper
+#
+#   English                          |  Portuguese
+#   ---------------------------------+--------------------------------------
+#   apply                            |  submeter
+#   bind                             |  vincular
+#   call                             |  chamar
+#   chain                            |  série
+#   change                           |  alteração
+#   default                          |  predefinido
+#   delete                           |  apagar
+#   edit                             |  modificação
+#   feature                          |  feição
+#   given                            |  fornecido
+#   handle                           |  pega
+#   in progress                      |  em curso
+#   named                            |  denominado
+#   not supported                    |  insustentado
+#   parse                            |  processar
+#   scan                             |  sondar
+#   set                              |  definir
+#   sparse                           |  disperso
+#   stat                             |  stat
+#   support                          |  sustenta
+#   
 #
 msgid ""
 msgstr ""
