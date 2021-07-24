@@ -724,7 +724,7 @@ static struct passwd *getpw_str(const char *username, size_t len)
  *
  * If real_home is true, strbuf_realpath($HOME) is used in the `~/` expansion.
  */
-char *expand_user_path(const char *path, int real_home)
+char *interpolate_path(const char *path, int real_home)
 {
 	struct strbuf user_path = STRBUF_INIT;
 	const char *to_copy = path;
@@ -811,7 +811,7 @@ const char *enter_repo(const char *path, int strict)
 		strbuf_add(&validated_path, path, len);
 
 		if (used_path.buf[0] == '~') {
-			char *newpath = expand_user_path(used_path.buf, 0);
+			char *newpath = interpolate_path(used_path.buf, 0);
 			if (!newpath)
 				return NULL;
 			strbuf_attach(&used_path, newpath, strlen(newpath),
