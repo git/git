@@ -65,6 +65,11 @@ StaticAnalysis)
 	sudo apt-get -q -y install coccinelle libcurl4-openssl-dev libssl-dev \
 		libexpat-dev gettext make
 	;;
+sparse)
+	sudo apt-get -q update -q
+	sudo apt-get -q -y install libssl-dev libcurl4-openssl-dev \
+		libexpat-dev gettext zlib1g-dev
+	;;
 Documentation)
 	sudo apt-get -q update
 	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns make

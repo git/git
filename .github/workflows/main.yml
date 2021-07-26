@@ -366,11 +366,9 @@ jobs:
         artifact: sparse-20.04
     - name: Install the current `sparse` package
       run: sudo dpkg -i sparse-20.04/sparse_*.deb
-    - name: Install other dependencies
-      run: |
-        sudo apt-get update -q &&
-        sudo apt-get install -q -y libssl-dev libcurl4-openssl-dev libexpat-dev gettext zlib1g-dev
     - uses: actions/checkout@v2
+    - name: Install other dependencies
+      run: ci/install-dependencies.sh
     - run: make sparse
   documentation:
     needs: ci-config
