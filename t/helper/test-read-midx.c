@@ -60,12 +60,26 @@ static int read_midx_file(const char *object_dir, int show_objects)
 	return 0;
 }
 
+static int read_midx_checksum(const char *object_dir)
+{
+	struct multi_pack_index *m;
+
+	setup_git_directory();
+	m = load_multi_pack_index(object_dir, 1);
+	if (!m)
+		return 1;
+	printf("%s\n", hash_to_hex(get_midx_checksum(m)));
+	return 0;
+}
+
 int cmd__read_midx(int argc, const char **argv)
 {
 	if (!(argc == 2 || argc == 3))
-		usage("read-midx [--show-objects] <object-dir>");
+		usage("read-midx [--show-objects|--checksum] <object-dir>");
 
 	if (!strcmp(argv[1], "--show-objects"))
 		return read_midx_file(argv[2], 1);
+	else if (!strcmp(argv[1], "--checksum"))
+		return read_midx_checksum(argv[2]);
 	return read_midx_file(argv[1], 0);
 }
