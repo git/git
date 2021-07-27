@@ -1116,22 +1116,26 @@ cleanup:
 	return NULL;
 }
 
-static void try_partial_reuse(struct bitmap_index *bitmap_git,
-			      size_t pos,
-			      struct bitmap *reuse,
-			      struct pack_window **w_curs)
+/*
+ * -1 means "stop trying further objects"; 0 means we may or may not have
+ * reused, but you can keep feeding bits.
+ */
+static int try_partial_reuse(struct bitmap_index *bitmap_git,
+			     size_t pos,
+			     struct bitmap *reuse,
+			     struct pack_window **w_curs)
 {
 	off_t offset, header;
 	enum object_type type;
 	unsigned long size;
 
 	if (pos >= bitmap_num_objects(bitmap_git))
-		return; /* not actually in the pack or MIDX */
+		return -1; /* not actually in the pack or MIDX */
 
 	offset = header = pack_pos_to_offset(bitmap_git->pack, pos);
 	type = unpack_object_header(bitmap_git->pack, w_curs, &offset, &size);
 	if (type < 0)
-		return; /* broken packfile, punt */
+		return -1; /* broken packfile, punt */
 
 	if (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA) {
 		off_t base_offset;
@@ -1148,9 +1152,9 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 		base_offset = get_delta_base(bitmap_git->pack, w_curs,
 					     &offset, type, header);
 		if (!base_offset)
-			return;
+			return 0;
 		if (offset_to_pack_pos(bitmap_git->pack, base_offset, &base_pos) < 0)
-			return;
+			return 0;
 
 		/*
 		 * We assume delta dependencies always point backwards. This
@@ -1162,7 +1166,7 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 		 * odd parameters.
 		 */
 		if (base_pos >= pos)
-			return;
+			return 0;
 
 		/*
 		 * And finally, if we're not sending the base as part of our
@@ -1173,13 +1177,14 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 		 * object_entry code path handle it.
 		 */
 		if (!bitmap_get(reuse, base_pos))
-			return;
+			return 0;
 	}
 
 	/*
 	 * If we got here, then the object is OK to reuse. Mark it.
 	 */
 	bitmap_set(reuse, pos);
+	return 0;
 }
 
 int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
@@ -1215,10 +1220,23 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
-			try_partial_reuse(bitmap_git, pos + offset, reuse, &w_curs);
+			if (try_partial_reuse(bitmap_git, pos + offset, reuse,
+					      &w_curs) < 0) {
+				/*
+				 * try_partial_reuse indicated we couldn't reuse
+				 * any bits, so there is no point in trying more
+				 * bits in the current word, or any other words
+				 * in result.
+				 *
+				 * Jump out of both loops to avoid future
+				 * unnecessary calls to try_partial_reuse.
+				 */
+				goto done;
+			}
 		}
 	}
 
+done:
 	unuse_pack(&w_curs);
 
 	*entries = bitmap_popcount(reuse);
