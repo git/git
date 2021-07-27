@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2021, #05; Wed, 21)
-X-master-at: daab8a564f8bbac55f70f8bf86c070e001a9b006
-X-next-at: 7e0b7c1f0c169fbf424a182c53f9a5a516fe85f4
+Subject: What's cooking in git.git (Jul 2021, #06; Mon, 26)
+X-master-at: eb27b338a3e71c7c4079fbac8aeae3f8fbb5c687
+X-next-at: 689316a459d26cd93a42ae056635db0b760bb0e9
 
-What's cooking in git.git (Jul 2021, #05; Wed, 21)
+What's cooking in git.git (Jul 2021, #06; Mon, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,15 +46,293 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ab/gitignore-discovery-doc (2021-07-06) 1 commit
+  (merged to 'next' on 2021-07-13 at 02f3b3deab)
+ + docs: .gitignore parsing is to the top of the repo
+
+ Doc update.
+
+
+* ab/imap-send-read-everything-simplify (2021-07-07) 1 commit
+  (merged to 'next' on 2021-07-13 at ab59128bfb)
+ + imap-send.c: use less verbose strbuf_fread() idiom
+
+ Code simplification.
+
+
+* ab/send-email-optim (2021-05-28) 13 commits
+  (merged to 'next' on 2021-07-08 at 35ac315894)
+ + perl: nano-optimize by replacing Cwd::cwd() with Cwd::getcwd()
+ + send-email: move trivial config handling to Perl
+ + perl: lazily load some common Git.pm setup code
+ + send-email: lazily load modules for a big speedup
+ + send-email: get rid of indirect object syntax
+ + send-email: use function syntax instead of barewords
+ + send-email: lazily shell out to "git var"
+ + send-email: lazily load config for a big speedup
+ + send-email: copy "config_regxp" into git-send-email.perl
+ + send-email: refactor sendemail.smtpencryption config parsing
+ + send-email: remove non-working support for "sendemail.smtpssl"
+ + send-email tests: test for boolean variables without a value
+ + send-email tests: support GIT_TEST_PERL_FATAL_WARNINGS=true
+
+ "git send-email" optimization.
+
+
+* bc/rev-list-without-commit-line (2021-07-12) 1 commit
+  (merged to 'next' on 2021-07-13 at 1ceed60061)
+ + rev-list: add option for --pretty=format without header
+
+ "git rev-list" learns to omit the "commit <object-name>" header
+ lines from the output with the `--no-commit-header` option.
+
+
+* jk/typofix (2021-07-13) 1 commit
+  (merged to 'next' on 2021-07-13 at cce3caa34e)
+ + doc/rev-list-options: fix duplicate word typo
+
+ Typofix.
+
+
+* js/ci-windows-update (2021-07-06) 7 commits
+  (merged to 'next' on 2021-07-13 at 329771e960)
+ + ci: accelerate the checkout
+ + ci (vs-build): build with NO_GETTEXT
+ + artifacts-tar: respect NO_GETTEXT
+ + ci (windows): transfer also the Git-tracked files to the test jobs
+ + ci: upgrade to using actions/{up,down}load-artifacts v2
+ + ci (vs-build): use `cmd` to copy the DLLs, not `powershell`
+ + ci: use the new GitHub Action to download git-sdk-64-minimal
+
+ GitHub Actions / CI update.
+
+--------------------------------------------------
 [New Topics]
 
-* ab/bundle-tests (2021-07-20) 2 commits
- - bundle tests: use test_cmp instead of grep
- - bundle tests: use ">file" not ": >file"
+* ab/http-drop-old-curl (2021-07-21) 5 commits
+ - http: rename CURLOPT_FILE to CURLOPT_WRITEDATA
+ - http: drop support for curl < 7.19.3 and < 7.16.4 (again)
+ - http: drop support for curl < 7.19.4
+ - http: drop support for curl < 7.16.0
+ - http: drop support for curl < 7.11.1
+
+ Support for ancient versions of cURL library has been dropped.
+
+ Expecting a hopefully final reroll to correct log messages.
+
+
+* ab/lib-subtest (2021-07-21) 10 commits
+ - test-lib tests: assert 1 exit code, not non-zero
+ - test-lib tests: refactor common part of check_sub_test_lib_test*()
+ - test-lib tests: avoid subshell for "test_cmp" for readability
+ - test-lib tests: get rid of copy/pasted mock test code
+ - test-lib tests: don't provide a description for the sub-tests
+ - test-lib tests: stop using a subshell in write_sub_test_lib_test()
+ - test-lib tests: split up "write and run" into two functions
+ - test-lib tests: move "run_sub_test" to a new lib-subtest.sh
+ - Merge branch 'ps/t0000-output-directory-fix' into ab/lib-subtest
+ - Merge branch 'jk/t0000-subtests-fix' into ab/lib-subtest
+ (this branch uses jk/t0000-subtests-fix and ps/t0000-output-directory-fix.)
+
+ Updates to the tests in t0000 to test th etest framework.
+
+
+* ds/add-with-sparse-index (2021-07-26) 5 commits
+ - add: remove ensure_full_index() with --renormalize
+ - add: ignore outside the sparse-checkout in refresh()
+ - pathspec: stop calling ensure_full_index
+ - add: allow operating on a sparse-only index
+ - t1092: test merge conflicts outside cone
+ (this branch uses ds/commit-and-checkout-with-sparse-index and ds/status-with-sparse-index.)
+
+ "git add" can work better with the sparse index.
+
+
+* fc/pull-no-rebase-merges-theirs-into-ours (2021-07-21) 1 commit
+ - doc: pull: fix rebase=false documentation
+
+ Documentation fix for "git pull --rebase=no".
+
+ Will merge to 'next'.
+
+
+* ab/only-single-progress-at-once (2021-07-23) 8 commits
+ - progress.c: add & assert a "global_progress" variable
+ - pack-bitmap-write.c: add a missing stop_progress()
+ - progress.c: add temporary variable from progress struct
+ - progress.c: stop eagerly fflush(stderr) when not a terminal
+ - progress.c: call progress_interval() from progress_test_force_update()
+ - progress.c: move signal handler functions lower
+ - progress.c tests: test some invalid usage
+ - progress.c tests: make start/stop verbs on stdin
+
+ Further tweaks on progress API.
+
+
+* ab/progress-users-adjust-counters (2021-07-23) 3 commits
+ - entry: show finer-grained counter in "Filtering content" progress line
+ - midx: don't provide a total for QSORT() progress
+ - commit-graph: fix bogus counter in "Scanning merged commits" progress line
+
+ The code to show progress indicator in a few codepaths did not
+ cover between 0-100%, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* ar/submodule-add-config (2021-07-26) 1 commit
+ - submodule--helper: introduce add-config subcommand
+ (this branch uses ar/submodule-add.)
+
+ Large part of "git submodule add" gets rewritten in C.
+
+
+* en/ort-perf-batch-15 (2021-07-23) 7 commits
+ - merge-ort: reuse path strings in pool_alloc_filespec
+ - merge-ort: store filepairs and filespecs in our mem_pool
+ - diffcore-rename, merge-ort: add wrapper functions for filepair alloc/dealloc
+ - merge-ort: switch our strmaps over to using memory pools
+ - merge-ort: add pool_alloc, pool_calloc, and pool_strndup wrappers
+ - merge-ort: set up a memory pool
+ - diffcore-rename: use a mem_pool for exact rename detection's hashmap
+ (this branch uses en/ort-perf-batch-14.)
+
+ Final batch for "merge -sort" optimization.
+
+
+* hn/refs-test-cleanup-contd (2021-07-22) 6 commits
+ - t6001: avoid direct file system access
+ - t6500: use "ls -1" to snapshot ref database state
+ - t7064: use update-ref -d to remove upstream branch
+ - t1410: mark test as REFFILES
+ - t1405: mark test for 'git pack-refs' as REFFILES
+ - t1405: use 'git reflog exists' to check reflog existence
+ (this branch uses hn/refs-test-cleanup.)
+
+ More test clean-up around refs
+
+ Probably I should combine this into the base topic and have them
+ graduate together.
+
+
+* jk/check-pack-valid-before-opening-bitmap (2021-07-23) 1 commit
+ - pack-bitmap: check pack validity when opening bitmap
+
+ A race between repacking and using pack bitmaps has been corrected.
+
+ Will merge to 'next'.
+
+
+* jt/bulk-prefetch (2021-07-23) 2 commits
+ - cache-tree: prefetch in partial clone read-tree
+ - unpack-trees: refactor prefetching code
+
+ "git read-tree" had a codepath where blobs are fetched one-by-one
+ from the promisor remote, which has been corrected to fetch in bulk.
+
+ Will merge to 'next'.
+
+
+* pb/merge-autostash-more (2021-07-23) 4 commits
+ - merge: apply autostash if merge strategy fails
+ - merge: apply autostash if fast-forward fails
+ - Documentation: define 'MERGE_AUTOSTASH'
+ - merge: add missing word "strategy" to a message
+
+ The local changes stashed by "git merge --autostash" were lost when
+ the merge failed in certain ways, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* ah/plugleaks (2021-07-26) 12 commits
+ - reset: clear_unpack_trees_porcelain to plug leak
+ - builtin/rebase: fix options.strategy memory lifecycle
+ - builtin/merge: free found_ref when done
+ - builtin/mv: free or UNLEAK multiple pointers at end of cmd_mv
+ - convert: release strbuf to avoid leak
+ - read-cache: call diff_setup_done to avoid leak
+ - ref-filter: also free head for ATOM_HEAD to avoid leak
+ - diffcore-rename: move old_dir/new_dir definition to plug leak
+ - builtin/for-each-repo: remove unnecessary argv copy to plug leak
+ - builtin/submodule--helper: release unused strbuf to avoid leak
+ - environment: move strbuf into block to plug leak
+ - fmt-merge-msg: free newly allocated temporary strings when done
+
+ Leak plugging.
+
+ Will merge to 'next'.
+
+
+* js/expand-runtime-prefix (2021-07-26) 6 commits
+ - expand_user_path: allow in-flight topics to keep using the old name
+ - interpolate_path(): allow specifying paths relative to the runtime prefix
+ - Use a better name for the function interpolating paths
+ - expand_user_path(): clarify the role of the `real_home` parameter
+ - expand_user_path(): remove stale part of the comment
+ - tests: exercise the RUNTIME_PREFIX feature
+
+ Pathname expansion (like "~username/") learned a way to specify a
+ location relative to Git installation (e.g. its $sharedir which is
+ $(prefix)/share), with "%(prefix)".
+
+
+* zh/cherry-pick-help-is-only-for-sequencer (2021-07-26) 1 commit
+ - cherry-pick: fix bug when used with GIT_CHERRY_PICK_HELP
+
+ "git cherry-pick" loses its state file when a stray
+ GIT_CHERRY_PICK_HELP environment is present, which has been
+ corrected.
+
+
+* dt/submodule-diff-fixes (2021-07-26) 3 commits
+ - diff --submodule=diff: do not print failure message twice
+ - diff --submodule=diff: do not fail on ever-initialied deleted submodules
+ - t4060: remove unused variable
+
+ "git diff --submodule=diff" showed failure from run_command() when
+ trying to run diff inside a submodule, when the user manually
+ removes the submodule directory.
+
+ It is clear that a problem exists, but it is unclear if the
+ proposed solution is a desirable one.
+
+--------------------------------------------------
+[Stalled]
+
+* ao/p4-avoid-decoding (2021-04-12) 2 commits
+ - git-p4: do not decode data from perforce by default
+ - git-p4: avoid decoding more data from perforce
+
+ "git p4" in Python-2 days used to accept a lot more kinds of data
+ from Perforce server as uninterrupted byte sequence, but after
+ switching to Python-3, too many things are expected to be in UTF-8,
+ which broke traditional use cases.
+
+ Waiting for reviews.
+
+
+* tv/p4-fallback-encoding (2021-04-30) 1 commit
+ - git-p4: git-p4.fallbackEncoding to specify non UTF-8 charset
+
+ "git p4" learns the fallbackEncoding configuration variable to
+ safely accept changeset descriptions that aren't written in UTF-8.
+
+ Waiting for reviews.
+
+--------------------------------------------------
+[Cooking]
+
+* ab/bundle-tests (2021-07-22) 2 commits
+  (merged to 'next' on 2021-07-22 at 053b5d0ecf)
+ + bundle tests: use test_cmp instead of grep
+ + bundle tests: use ">file" not ": >file"
 
  "git bundle" gained more test coverage.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/config-based-hooks (2021-07-20) 9 commits
@@ -99,17 +377,18 @@ Release tarballs are available at:
 
 
 * pb/submodule-recurse-doc (2021-07-20) 1 commit
- - doc: clarify description of 'submodule.recurse'
+  (merged to 'next' on 2021-07-22 at 4129e89833)
+ + doc: clarify description of 'submodule.recurse'
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ps/t0000-output-directory-fix (2021-07-20) 1 commit
   (merged to 'next' on 2021-07-20 at 7e0b7c1f0c)
  + t0000: fix test if run with TEST_OUTPUT_DIRECTORY
- (this branch uses jk/t0000-subtests-fix.)
+ (this branch is used by ab/lib-subtest; uses jk/t0000-subtests-fix.)
 
  "TEST_OUTPUT_DIRECTORY=there make test" failed to work, which has
  been corrected.
@@ -118,11 +397,12 @@ Release tarballs are available at:
 
 
 * tb/bitmap-type-filter-comment-fix (2021-07-20) 1 commit
- - pack-bitmap: clarify comment in filter_bitmap_exclude_type()
+  (merged to 'next' on 2021-07-22 at 8428556149)
+ + pack-bitmap: clarify comment in filter_bitmap_exclude_type()
 
  In-code comment update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tb/reverse-midx (2021-07-19) 1 commit
@@ -137,42 +417,19 @@ Release tarballs are available at:
 
 
 * hn/refs-test-cleanup (2021-07-19) 5 commits
- - t2402: use ref-store test helper to create broken symlink
- - t3320: use git-symbolic-ref rather than filesystem access
- - t6120: use git-update-ref rather than filesystem access
- - t1503: mark symlink test as REFFILES
- - t6050: use git-update-ref rather than filesystem access
+  (merged to 'next' on 2021-07-22 at 2ab8bc259a)
+ + t2402: use ref-store test helper to create broken symlink
+ + t3320: use git-symbolic-ref rather than filesystem access
+ + t6120: use git-update-ref rather than filesystem access
+ + t1503: mark symlink test as REFFILES
+ + t6050: use git-update-ref rather than filesystem access
+ (this branch is used by hn/refs-test-cleanup-contd.)
 
  A handful of tests that assumed implementation details of files
  backend for refs have been cleaned up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
---------------------------------------------------
-[Stalled]
-
-* ao/p4-avoid-decoding (2021-04-12) 2 commits
- - git-p4: do not decode data from perforce by default
- - git-p4: avoid decoding more data from perforce
-
- "git p4" in Python-2 days used to accept a lot more kinds of data
- from Perforce server as uninterrupted byte sequence, but after
- switching to Python-3, too many things are expected to be in UTF-8,
- which broke traditional use cases.
-
- Waiting for reviews.
-
-
-* tv/p4-fallback-encoding (2021-04-30) 1 commit
- - git-p4: git-p4.fallbackEncoding to specify non UTF-8 charset
-
- "git p4" learns the fallbackEncoding configuration variable to
- safely accept changeset descriptions that aren't written in UTF-8.
-
- Waiting for reviews.
-
---------------------------------------------------
-[Cooking]
 
 * hn/reftable (2021-07-20) 26 commits
  - t7004: avoid direct filesystem access
@@ -206,25 +463,30 @@ Release tarballs are available at:
 
 
 * jk/config-env-doc (2021-07-20) 3 commits
- - doc/git-config: simplify "override" advice for FILES section
- - doc/git-config: clarify GIT_CONFIG environment variable
- - doc/git-config: explain --file instead of referring to GIT_CONFIG
+  (merged to 'next' on 2021-07-22 at 45616c831e)
+ + doc/git-config: simplify "override" advice for FILES section
+ + doc/git-config: clarify GIT_CONFIG environment variable
+ + doc/git-config: explain --file instead of referring to GIT_CONFIG
 
  Documentation around GIT_CONFIG has been updated.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/ci-check-whitespace-updates (2021-07-14) 2 commits
- - ci(check-whitespace): restrict to the intended commits
- - ci(check-whitespace): stop requiring a read/write token
+  (merged to 'next' on 2021-07-22 at cdc9aa0622)
+ + ci(check-whitespace): restrict to the intended commits
+ + ci(check-whitespace): stop requiring a read/write token
 
  CI update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* js/ci-make-sparse (2021-07-14) 1 commit
+* js/ci-make-sparse (2021-07-26) 3 commits
+  (merged to 'next' on 2021-07-26 at 689316a459)
+ + ci/install-dependencies: handle "sparse" job package installs
+ + ci: run "apt-get update" before "apt-get install"
   (merged to 'next' on 2021-07-20 at 99f518bdef)
  + ci: run `make sparse` as part of the GitHub workflow
 
@@ -243,14 +505,13 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* ab/refs-files-cleanup (2021-07-20) 12 commits
+* ab/refs-files-cleanup (2021-07-26) 11 commits
  - refs/files: remove unused "errno != ENOTDIR" condition
  - refs/files: remove unused "errno == EISDIR" code
  - refs/files: remove unused "oid" in lock_ref_oid_basic()
  - reflog expire: don't lock reflogs using previously seen OID
  - refs/files: add a comment about refs_reflog_exists() call
  - refs: make repo_dwim_log() accept a NULL oid
- - refs API: pass the "lock OID" to reflog "prepare"
  - refs/debug: re-indent argument list for "prepare"
  - refs/files: remove unused "skip" in lock_raw_ref() too
  - refs/files: remove unused "extras/skip" in lock_ref_oid_basic()
@@ -263,7 +524,7 @@ Release tarballs are available at:
  Will merge to 'next'.
 
 
-* en/pull-conflicting-options (2021-07-20) 8 commits
+* en/pull-conflicting-options (2021-07-22) 8 commits
  - pull: fix handling of multiple heads
  - pull: update docs & code for option compatibility with rebasing
  - pull: abort by default when fast-forwarding is not possible
@@ -282,7 +543,7 @@ Release tarballs are available at:
 * jk/t0000-subtests-fix (2021-07-19) 1 commit
   (merged to 'next' on 2021-07-20 at 81412e1684)
  + t0000: clear GIT_SKIP_TESTS before running sub-tests
- (this branch is used by ps/t0000-output-directory-fix.)
+ (this branch is used by ab/lib-subtest and ps/t0000-output-directory-fix.)
 
  Test fix.
 
@@ -345,43 +606,6 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* jk/typofix (2021-07-13) 1 commit
-  (merged to 'next' on 2021-07-13 at cce3caa34e)
- + doc/rev-list-options: fix duplicate word typo
-
- Typofix.
-
- Will merge to 'master'.
-
-
-* ab/gitignore-discovery-doc (2021-07-06) 1 commit
-  (merged to 'next' on 2021-07-13 at 02f3b3deab)
- + docs: .gitignore parsing is to the top of the repo
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* bc/rev-list-without-commit-line (2021-07-12) 1 commit
-  (merged to 'next' on 2021-07-13 at 1ceed60061)
- + rev-list: add option for --pretty=format without header
-
- "git rev-list" learns to omit the "commit <object-name>" header
- lines from the output with the `--no-commit-header` option.
-
- Will merge to 'master'.
-
-
-* ab/imap-send-read-everything-simplify (2021-07-07) 1 commit
-  (merged to 'next' on 2021-07-13 at ab59128bfb)
- + imap-send.c: use less verbose strbuf_fread() idiom
-
- Code simplification.
-
- Will merge to 'master'.
-
-
 * ab/pkt-line-tests (2021-07-19) 1 commit
   (merged to 'next' on 2021-07-20 at 8e5e53450c)
  + test-lib-functions: use test-tool for [de]packetize()
@@ -410,6 +634,7 @@ Release tarballs are available at:
  - merge-ort: add data structures for allowable trivial directory resolves
  - merge-ort: add some more explanations in collect_merge_info_callback()
  - merge-ort: resolve paths early when we have sufficient information
+ (this branch is used by en/ort-perf-batch-15.)
 
  Further optimization on "merge -sort" backend.
 
@@ -427,11 +652,12 @@ Release tarballs are available at:
 
 
 * ps/perf-with-separate-output-directory (2021-07-02) 1 commit
- - perf: fix when running with TEST_OUTPUT_DIRECTORY
+  (merged to 'next' on 2021-07-22 at af51ca0a39)
+ + perf: fix when running with TEST_OUTPUT_DIRECTORY
 
  Test update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sm/worktree-add-lock (2021-07-15) 3 commits
@@ -476,7 +702,7 @@ Release tarballs are available at:
  - commit: integrate with sparse-index
  - p2000: compress repo names
  - p2000: add 'git checkout -' test and decrease depth
- (this branch uses ds/status-with-sparse-index.)
+ (this branch is used by ds/add-with-sparse-index; uses ds/status-with-sparse-index.)
 
  "git checkout" and "git commit" learn to work without unnecessarily
  expanding sparse indexes.
@@ -514,21 +740,6 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* js/ci-windows-update (2021-07-06) 7 commits
-  (merged to 'next' on 2021-07-13 at 329771e960)
- + ci: accelerate the checkout
- + ci (vs-build): build with NO_GETTEXT
- + artifacts-tar: respect NO_GETTEXT
- + ci (windows): transfer also the Git-tracked files to the test jobs
- + ci: upgrade to using actions/{up,down}load-artifacts v2
- + ci (vs-build): use `cmd` to copy the DLLs, not `powershell`
- + ci: use the new GitHub Action to download git-sdk-64-minimal
-
- GitHub Actions / CI update.
-
- Will merge to 'master'.
-
-
 * jt/push-negotiation-fixes (2021-07-15) 3 commits
  - fetch: die on invalid --negotiation-tip hash
  - send-pack: fix push nego. when remote has refs
@@ -540,19 +751,17 @@ Release tarballs are available at:
  Needs review.
 
 
-* ab/make-tags-cleanup (2021-06-29) 5 commits
+* ab/make-tags-cleanup (2021-07-22) 5 commits
  - Makefile: normalize clobbering & xargs for tags targets
+ - Makefile: the "cscope" target always creates a "cscope.out"
  - Makefile: don't use "FORCE" for tags targets
- - Makefile: fix "cscope" target to refer to cscope.out
  - Makefile: add QUIET_GEN to "cscope" target
  - Makefile: move ".PHONY: cscope" near its target
 
  Build clean-up for "make tags" and friends.
 
- Expecting a reroll.
- Hopefully with a final reroll it would become good enough shape for 'next'?
- cf. <YN5AwdVC3QAcy2tA@coredump.intra.peff.net>
- cf. <67c45b13-df8f-8065-377a-fbd2f80992ee@ramsayjones.plus.com>
+ Will merge to 'next'?
+ 4/5 may want a minor tweak to the log and the patch text but otherwise looks good.
 
 
 * tb/multi-pack-bitmaps (2021-06-28) 24 commits
@@ -606,7 +815,7 @@ Release tarballs are available at:
  + t1092: replace incorrect 'echo' with 'cat'
  + sparse-index: include EXTENDED flag when expanding
  + sparse-index: skip indexes with unmerged entries
- (this branch is used by ds/commit-and-checkout-with-sparse-index.)
+ (this branch is used by ds/add-with-sparse-index and ds/commit-and-checkout-with-sparse-index.)
 
  "git status" codepath learned to work with sparsely populated index
  without hydrating it fully.
@@ -732,7 +941,7 @@ Release tarballs are available at:
  --color-moved" feature.
 
 
-* hn/refs-errno-cleanup (2021-07-20) 7 commits
+* hn/refs-errno-cleanup (2021-07-26) 7 commits
  - refs: make errno output explicit for refs_resolve_ref_unsafe
  - refs: explicitly return failure_errno from parse_loose_ref_contents
  - refs: add failure_errno to refs_read_raw_ref() signature
@@ -769,15 +978,18 @@ Release tarballs are available at:
  Introduce handle_stdin_line callback to revision API and uses it.
 
 
-* ar/submodule-add (2021-07-12) 4 commits
- - submodule--helper: introduce add-clone subcommand
- - submodule--helper: refactor module_clone()
- - submodule: prefix die messages with 'fatal'
- - t7400: test failure to add submodule in tracked path
+* ar/submodule-add (2021-07-26) 5 commits
+ - submodule: drop unused sm_name parameter from show_fetch_remotes()
+  (merged to 'next' on 2021-07-22 at b8b636c9a1)
+ + submodule--helper: introduce add-clone subcommand
+ + submodule--helper: refactor module_clone()
+ + submodule: prefix die messages with 'fatal'
+ + t7400: test failure to add submodule in tracked path
+ (this branch is used by ar/submodule-add-config.)
 
  Rewrite of "git submodule" in C continues.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/gender-neutral-doc-guidelines (2021-07-16) 1 commit
@@ -821,34 +1033,19 @@ Release tarballs are available at:
  cf. <60be6f7fa4435_db80d208f2@natae.notmuch>
 
 
-* ab/update-submitting-patches (2021-06-08) 3 commits
- - SubmittingPatches: remove pine-specific hints from MUA hints
+* ab/update-submitting-patches (2021-07-22) 2 commits
  - SubmittingPatches: replace discussion of Travis with GitHub Actions
  - SubmittingPatches: move discussion of Signed-off-by above "send"
 
  Reorganize and update the SubmitingPatches document.
 
- Expecting a reroll.
- cf. <20210607172542.GA6312@szeder.dev>
- cf. <nycvar.QRO.7.76.6.2106072346560.55@tvgsbejvaqbjf.bet>
+ Will merge to 'next'.
 
 
-* zh/ref-filter-raw-data (2021-07-15) 18 commits
- - cat-file: use fast path when using default_format
- - ref-filter: remove grab_oid() function
- - cat-file: re-implement --textconv, --filters options
- - cat-file: reuse err buf in batch_object_write()
- - cat-file: reuse ref-filter logic
- - cat-file: create p1006-cat-file.sh
- - cat-file: change batch_objects parameter name
- - cat-file: add has_object_file() check
- - ref-filter: modify the error message and value in get_object
- - ref-filter: add cat_file_mode to ref_format
- - ref-filter: introduce free_ref_array_item_value() function
- - ref-filter: pass get_object() return value to their callers
+* zh/ref-filter-raw-data (2021-07-26) 6 commits
  - ref-filter: add %(rest) atom
  - ref-filter: use non-const ref_format in *_atom_parser()
- - ref-filter: --format=%(raw) re-support --perl
+ - ref-filter: --format=%(raw) support --perl
  - ref-filter: add %(raw) atom
  - ref-filter: add obj-type check in grab contents
  - Merge branch 'zh/cat-file-batch-fix' into zh/ref-filter-raw-data
@@ -857,7 +1054,7 @@ Release tarballs are available at:
  option of "git for-each-ref" and its friends to be used in "git
  cat-file --batch".
 
- Heavy performance degradation has been observed with this series.
+ Will merge to 'next'.
 
 
 * jh/builtin-fsmonitor (2021-07-12) 35 commits
@@ -903,35 +1100,14 @@ Release tarballs are available at:
  So, where are we with this topic?
 
 
-* es/trace2-log-parent-process-name (2021-06-09) 1 commit
+* es/trace2-log-parent-process-name (2021-07-22) 2 commits
  - tr2: log parent process name
+ - tr2: make process info collection platform-generic
 
  trace2 logs learned to show parent process name to see in what
  context Git was invoked.
 
- Expecting a reroll.
- cf. <YNux62he9Mk43Y1B@google.com>
-
-
-* ab/send-email-optim (2021-05-28) 13 commits
-  (merged to 'next' on 2021-07-08 at 35ac315894)
- + perl: nano-optimize by replacing Cwd::cwd() with Cwd::getcwd()
- + send-email: move trivial config handling to Perl
- + perl: lazily load some common Git.pm setup code
- + send-email: lazily load modules for a big speedup
- + send-email: get rid of indirect object syntax
- + send-email: use function syntax instead of barewords
- + send-email: lazily shell out to "git var"
- + send-email: lazily load config for a big speedup
- + send-email: copy "config_regxp" into git-send-email.perl
- + send-email: refactor sendemail.smtpencryption config parsing
- + send-email: remove non-working support for "sendemail.smtpssl"
- + send-email tests: test for boolean variables without a value
- + send-email tests: support GIT_TEST_PERL_FATAL_WARNINGS=true
-
- "git send-email" optimization.
-
- Will merge to 'master'.
+ Looking good.  Ready for 'next'?
 
 
 * ab/fsck-unexpected-type (2021-07-12) 21 commits
