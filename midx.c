@@ -888,7 +888,7 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 static void clear_midx_files_ext(struct repository *r, const char *ext,
 				 unsigned char *keep_hash);
 
-static int write_midx_internal(const char *object_dir, struct multi_pack_index *m,
+static int write_midx_internal(const char *object_dir,
 			       struct string_list *packs_to_drop,
 			       const char *preferred_pack_name,
 			       unsigned flags)
@@ -899,6 +899,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 	struct hashfile *f = NULL;
 	struct lock_file lk;
 	struct write_midx_context ctx = { 0 };
+	struct multi_pack_index *cur;
 	int pack_name_concat_len = 0;
 	int dropped_packs = 0;
 	int result = 0;
@@ -909,10 +910,14 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 		die_errno(_("unable to create leading directories of %s"),
 			  midx_name);
 
-	if (m)
-		ctx.m = m;
-	else
-		ctx.m = load_multi_pack_index(object_dir, 1);
+	for (cur = get_multi_pack_index(the_repository); cur; cur = cur->next) {
+		if (!strcmp(object_dir, cur->object_dir)) {
+			ctx.m = cur;
+			break;
+		}
+	}
+	if (!ctx.m)
+		ctx.m = get_local_multi_pack_index(the_repository);
 
 	ctx.nr = 0;
 	ctx.alloc = ctx.m ? ctx.m->num_packs : 16;
@@ -1172,8 +1177,7 @@ int write_midx_file(const char *object_dir,
 		    const char *preferred_pack_name,
 		    unsigned flags)
 {
-	return write_midx_internal(object_dir, NULL, NULL, preferred_pack_name,
-				   flags);
+	return write_midx_internal(object_dir, NULL, preferred_pack_name, flags);
 }
 
 struct clear_midx_data {
@@ -1447,8 +1451,10 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 
 	free(count);
 
-	if (packs_to_drop.nr)
-		result = write_midx_internal(object_dir, m, &packs_to_drop, NULL, flags);
+	if (packs_to_drop.nr) {
+		result = write_midx_internal(object_dir, &packs_to_drop, NULL, flags);
+		m = NULL;
+	}
 
 	string_list_clear(&packs_to_drop, 0);
 	return result;
@@ -1637,7 +1643,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 		goto cleanup;
 	}
 
-	result = write_midx_internal(object_dir, m, NULL, NULL, flags);
+	result = write_midx_internal(object_dir, NULL, NULL, flags);
 	m = NULL;
 
 cleanup:
