@@ -223,6 +223,13 @@ static inline uint8_t read_u8(const unsigned char *buffer, size_t *pos)
 
 #define MAX_XOR_OFFSET 160
 
+static int nth_bitmap_object_oid(struct bitmap_index *index,
+				 struct object_id *oid,
+				 uint32_t n)
+{
+	return nth_packed_object_id(oid, index->pack, n);
+}
+
 static int load_bitmap_entries_v1(struct bitmap_index *index)
 {
 	uint32_t i;
@@ -242,7 +249,7 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		xor_offset = read_u8(index->map, &index->map_pos);
 		flags = read_u8(index->map, &index->map_pos);
 
-		if (nth_packed_object_id(&oid, index->pack, commit_idx_pos) < 0)
+		if (nth_bitmap_object_oid(index, &oid, commit_idx_pos) < 0)
 			return error("corrupt ewah bitmap: commit index %u out of range",
 				     (unsigned)commit_idx_pos);
 
@@ -844,8 +851,8 @@ static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
 		off_t ofs = pack_pos_to_offset(pack, pos);
 		if (packed_object_info(the_repository, pack, ofs, &oi) < 0) {
 			struct object_id oid;
-			nth_packed_object_id(&oid, pack,
-					     pack_pos_to_index(pack, pos));
+			nth_bitmap_object_oid(bitmap_git, &oid,
+					      pack_pos_to_index(pack, pos));
 			die(_("unable to get size of %s"), oid_to_hex(&oid));
 		}
 	} else {
