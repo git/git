@@ -1479,46 +1479,24 @@ nongit () {
 	)
 } 7>&2 2>&4
 
-# convert function arguments or stdin (if not arguments given) to pktline
-# representation. If multiple arguments are given, they are separated by
-# whitespace and put in a single packet. Note that data containing NULs must be
-# given on stdin, and that empty input becomes an empty packet, not a flush
-# packet (for that you can just print 0000 yourself).
+# These functions are historical wrappers around "test-tool pkt-line"
+# for older tests. Use "test-tool pkt-line" itself in new tests.
 packetize () {
 	if test $# -gt 0
 	then
 		packet="$*"
 		printf '%04x%s' "$((4 + ${#packet}))" "$packet"
 	else
-		perl -e '
-			my $packet = do { local $/; <STDIN> };
-			printf "%04x%s", 4 + length($packet), $packet;
-		'
+		test-tool pkt-line pack
 	fi
 }
 
-# Parse the input as a series of pktlines, writing the result to stdout.
-# Sideband markers are removed automatically, and the output is routed to
-# stderr if appropriate.
-#
-# NUL bytes are converted to "\\0" for ease of parsing with text tools.
+packetize_raw () {
+	test-tool pkt-line pack-raw-stdin
+}
+
 depacketize () {
-	perl -e '
-		while (read(STDIN, $len, 4) == 4) {
-			if ($len eq "0000") {
-				print "FLUSH\n";
-			} else {
-				read(STDIN, $buf, hex($len) - 4);
-				$buf =~ s/\0/\\0/g;
-				if ($buf =~ s/^[\x2\x3]//) {
-					print STDERR $buf;
-				} else {
-					$buf =~ s/^\x1//;
-					print $buf;
-				}
-			}
-		}
-	'
+	test-tool pkt-line unpack
 }
 
 # Converts base-16 data into base-8. The output is given as a sequence of
