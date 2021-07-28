@@ -837,4 +837,9 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 	)
 '
 
+test_expect_success 'usage shown without sub-command' '
+	test_expect_code 129 git multi-pack-index 2>err &&
+	! test_i18ngrep "unrecognized subcommand" err
+'
+
 test_done
