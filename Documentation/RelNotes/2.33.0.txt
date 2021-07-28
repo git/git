@@ -33,6 +33,9 @@ UI, Workflows & Features
  * "git rev-list" learns to omit the "commit <object-name>" header
    lines from the output with the `--no-commit-header` option.
 
+ * "git worktree add --lock" learned to record why the worktree is
+   locked with a custom message.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -61,6 +64,34 @@ Performance, Internal Implementation, Development Support etc.
 
  * GitHub Actions / CI update.
    (merge 0dc787a9f2 js/ci-windows-update later to maint).
+
+ * Object accesses in repositories with many alternate object store
+   have been optimized.
+
+ * "git log" has been optimized not to waste cycles to load ref
+   decoration data that may not be needed.
+
+ * Many "printf"-like helper functions we have have been annotated
+   with __attribute__() to catch placeholder/parameter mismatches.
+
+ * Tests that cover protocol bits have been updated and helpers
+   used there have been consolidated.
+
+ * The CI gained a new job to run "make sparse" check.
+
+ * "git status" codepath learned to work with sparsely populated index
+   without hydrating it fully.
+
+ * A guideline for gender neutral documentation has been added.
+
+ * Documentation on "git diff -l<n>" and diff.renameLimit have been
+   updated, and the defaults for these limits have been raised.
+
+ * The completion support used to offer alternate spelling of options
+   that exist only for compatibility, which has been corrected.
+
+ * "TEST_OUTPUT_DIRECTORY=there make test" failed to work, which has
+   been corrected.
 
 
 Fixes since v2.32
@@ -183,6 +214,15 @@ Fixes since v2.32
    and adds to guidelines to do so.
    (merge 46a237f42f ds/gender-neutral-doc later to maint).
 
+ * "git commit --allow-empty-message" won't abort the operation upon
+   an empty message, but the hint shown in the editor said otherwise.
+   (merge 6f70f00b4f hj/commit-allow-empty-message later to maint).
+
+ * The code that gives an error message in "git multi-pack-index" when
+   no subcommand is given tried to print a NULL pointer as a strong,
+   which has been corrected.
+   (merge 88617d11f9 tb/reverse-midx later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bfe35a6165 ah/doc-describe later to maint).
    (merge f302c1e4aa jc/clarify-revision-range later to maint).
@@ -218,3 +258,6 @@ Fixes since v2.32
    (merge 5632e838f8 rs/khash-alloc-cleanup later to maint).
    (merge b1d87fbaf1 jk/typofix later to maint).
    (merge e04170697a ab/gitignore-discovery-doc later to maint).
+   (merge 8232a0ff48 dl/packet-read-response-end-fix later to maint).
+   (merge eb448631fb dl/diff-merge-base later to maint).
+   (merge c510928a25 hn/refs-debug-empty-prefix later to maint).
