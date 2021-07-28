@@ -1915,6 +1915,20 @@ test_expect_success '--exclude-promisor-objects does not BUG-crash' '
 	test_must_fail git log --exclude-promisor-objects source-a
 '
 
+test_expect_success 'log --decorate includes all levels of tag annotated tags' '
+	git checkout -b branch &&
+	git commit --allow-empty -m "new commit" &&
+	git tag lightweight HEAD &&
+	git tag -m annotated annotated HEAD &&
+	git tag -m double-0 double-0 HEAD &&
+	git tag -m double-1 double-1 double-0 &&
+	cat >expect <<-\EOF &&
+	HEAD -> branch, tag: lightweight, tag: double-1, tag: double-0, tag: annotated
+	EOF
+	git log -1 --format="%D" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'log --end-of-options' '
        git update-ref refs/heads/--source HEAD &&
        git log --end-of-options --source >actual &&
