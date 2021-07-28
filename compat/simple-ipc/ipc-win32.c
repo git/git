@@ -49,6 +49,9 @@ static enum ipc_active_state get_active_state(wchar_t *pipe_path)
 	if (GetLastError() == ERROR_FILE_NOT_FOUND)
 		return IPC_STATE__PATH_NOT_FOUND;
 
+	trace2_data_intmax("ipc-debug", NULL, "getstate/waitpipe/gle",
+			   (intmax_t)GetLastError());
+
 	return IPC_STATE__OTHER_ERROR;
 }
 
@@ -112,6 +115,11 @@ static enum ipc_active_state connect_to_server(
 				if (GetLastError() == ERROR_SEM_TIMEOUT)
 					return IPC_STATE__NOT_LISTENING;
 
+				gle = GetLastError();
+				trace2_data_intmax("ipc-debug", NULL,
+						   "connect/waitpipe/gle",
+						   (intmax_t)gle);
+
 				return IPC_STATE__OTHER_ERROR;
 			}
 
@@ -133,17 +141,31 @@ static enum ipc_active_state connect_to_server(
 			break; /* try again */
 
 		default:
+			trace2_data_intmax("ipc-debug", NULL,
+					   "connect/createfile/gle",
+					   (intmax_t)gle);
+
 			return IPC_STATE__OTHER_ERROR;
 		}
 	}
 
 	if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
+		gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL,
+				   "connect/setpipestate/gle",
+				   (intmax_t)gle);
+
 		CloseHandle(hPipe);
 		return IPC_STATE__OTHER_ERROR;
 	}
 
 	*pfd = _open_osfhandle((intptr_t)hPipe, O_RDWR|O_BINARY);
 	if (*pfd < 0) {
+		gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL,
+				   "connect/openosfhandle/gle",
+				   (intmax_t)gle);
+
 		CloseHandle(hPipe);
 		return IPC_STATE__OTHER_ERROR;
 	}
