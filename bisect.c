@@ -727,7 +727,6 @@ static int is_expected_rev(const struct object_id *oid)
 static enum bisect_error bisect_checkout(const struct object_id *bisect_rev, int no_checkout)
 {
 	char bisect_rev_hex[GIT_MAX_HEXSZ + 1];
-	enum bisect_error res = BISECT_OK;
 	struct commit *commit;
 	struct pretty_print_context pp = {0};
 	struct strbuf commit_msg = STRBUF_INIT;
@@ -740,14 +739,13 @@ static enum bisect_error bisect_checkout(const struct object_id *bisect_rev, int
 		update_ref(NULL, "BISECT_HEAD", bisect_rev, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 	} else {
-		res = run_command_v_opt(argv_checkout, RUN_GIT_CMD);
-		if (res)
+		if (run_command_v_opt(argv_checkout, RUN_GIT_CMD))
 			/*
 			 * Errors in `run_command()` itself, signaled by res < 0,
 			 * and errors in the child process, signaled by res > 0
-			 * can both be treated as regular BISECT_FAILURE (-1).
+			 * can both be treated as regular BISECT_FAILED (-1).
 			 */
-			return -abs(res);
+			return BISECT_FAILED;
 	}
 
 	commit = lookup_commit_reference(the_repository, bisect_rev);
@@ -755,7 +753,7 @@ static enum bisect_error bisect_checkout(const struct object_id *bisect_rev, int
 	fputs(commit_msg.buf, stdout);
 	strbuf_release(&commit_msg);
 
-	return -abs(res);
+	return BISECT_OK;
 }
 
 static struct commit *get_commit_reference(struct repository *r,
