@@ -588,11 +588,17 @@ When used together with `-B`, omit also the preimage in the deletion part
 of a delete/create pair.
 
 -l<num>::
-	The `-M` and `-C` options require O(n^2) processing time where n
-	is the number of potential rename/copy targets.  This
-	option prevents rename/copy detection from running if
-	the number of rename/copy targets exceeds the specified
-	number.
+	The `-M` and `-C` options involve some preliminary steps that
+	can detect subsets of renames/copies cheaply, followed by an
+	exhaustive fallback portion that compares all remaining
+	unpaired destinations to all relevant sources.  (For renames,
+	only remaining unpaired sources are relevant; for copies, all
+	original sources are relevant.)  For N sources and
+	destinations, this exhaustive check is O(N^2).  This option
+	prevents the exhaustive portion of rename/copy detection from
+	running if the number of source/destination files involved
+	exceeds the specified number.  Defaults to diff.renameLimit.
+	Note that a value of 0 is treated as unlimited.
 
 ifndef::git-format-patch[]
 --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]::

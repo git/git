@@ -1091,7 +1091,7 @@ static int too_many_rename_candidates(int num_destinations, int num_sources,
 	 * memory for the matrix anyway.
 	 */
 	if (rename_limit <= 0)
-		rename_limit = 32767;
+		return 0; /* treat as unlimited */
 	if (st_mult(num_destinations, num_sources)
 	    <= st_mult(rename_limit, rename_limit))
 		return 0;

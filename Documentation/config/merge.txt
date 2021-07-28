@@ -33,10 +33,12 @@ merge.verifySignatures::
 include::fmt-merge-msg.txt[]
 
 merge.renameLimit::
-	The number of files to consider when performing rename detection
-	during a merge; if not specified, defaults to the value of
-	diff.renameLimit. This setting has no effect if rename detection
-	is turned off.
+	The number of files to consider in the exhaustive portion of
+	rename detection during a merge.  If not specified, defaults
+	to the value of diff.renameLimit.  If neither
+	merge.renameLimit nor diff.renameLimit are specified,
+	currently defaults to 7000.  This setting has no effect if
+	rename detection is turned off.
 
 merge.renames::
 	Whether Git detects renames.  If set to "false", rename detection
