@@ -106,8 +106,11 @@ _run_sub_test_lib_test_common () {
 		EOF
 		cat >>"$name.sh" &&
 		export TEST_DIRECTORY &&
-		TEST_OUTPUT_DIRECTORY=$(pwd) &&
-		export TEST_OUTPUT_DIRECTORY &&
+		# The child test re-sources GIT-BUILD-OPTIONS and may thus
+		# override the test output directory. We thus pass it as an
+		# explicit override to the child.
+		TEST_OUTPUT_DIRECTORY_OVERRIDE=$(pwd) &&
+		export TEST_OUTPUT_DIRECTORY_OVERRIDE &&
 		GIT_SKIP_TESTS=$skip &&
 		export GIT_SKIP_TESTS &&
 		sane_unset GIT_TEST_FAIL_PREREQS &&
