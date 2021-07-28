@@ -232,7 +232,8 @@ debug_ref_iterator_begin(struct ref_store *ref_store, const char *prefix,
 	struct debug_ref_iterator *diter = xcalloc(1, sizeof(*diter));
 	base_ref_iterator_init(&diter->base, &debug_ref_iterator_vtable, 1);
 	diter->iter = res;
-	trace_printf_key(&trace_refs, "ref_iterator_begin: %s (0x%x)\n", prefix, flags);
+	trace_printf_key(&trace_refs, "ref_iterator_begin: \"%s\" (0x%x)\n",
+			 prefix, flags);
 	return &diter->base;
 }
 
