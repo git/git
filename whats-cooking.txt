@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2021, #06; Mon, 26)
-X-master-at: eb27b338a3e71c7c4079fbac8aeae3f8fbb5c687
-X-next-at: 689316a459d26cd93a42ae056635db0b760bb0e9
+Subject: What's cooking in git.git (Jul 2021, #07; Wed, 28)
+X-master-at: 940fe202adcbf9fa1825c648d97cbe1b90d26aec
+X-next-at: 8dce9f242233d743985a79191945e2a8ed1c4354
 
-What's cooking in git.git (Jul 2021, #06; Mon, 26)
+What's cooking in git.git (Jul 2021, #07; Wed, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,10 @@ another topic already in flight" or "this may turn out to be
 useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
+
+The seventh batch of topics in this round are now in 'master'.
+We'll start stabilizing early next month, aiming for 2.33 final
+hopefully by mid-August.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,68 +52,259 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/gitignore-discovery-doc (2021-07-06) 1 commit
-  (merged to 'next' on 2021-07-13 at 02f3b3deab)
- + docs: .gitignore parsing is to the top of the repo
+* ab/attribute-format (2021-07-13) 5 commits
+  (merged to 'next' on 2021-07-20 at 44e5606a6e)
+ + advice.h: add missing __attribute__((format)) & fix usage
+ + *.h: add a few missing __attribute__((format))
+ + *.c static functions: add missing __attribute__((format))
+ + sequencer.c: move static function to avoid forward decl
+ + *.c static functions: don't forward-declare __attribute__
 
- Doc update.
-
-
-* ab/imap-send-read-everything-simplify (2021-07-07) 1 commit
-  (merged to 'next' on 2021-07-13 at ab59128bfb)
- + imap-send.c: use less verbose strbuf_fread() idiom
-
- Code simplification.
+ Many "printf"-like helper functions we have have been annotated
+ with __attribute__() to catch placeholder/parameter mismatches.
 
 
-* ab/send-email-optim (2021-05-28) 13 commits
-  (merged to 'next' on 2021-07-08 at 35ac315894)
- + perl: nano-optimize by replacing Cwd::cwd() with Cwd::getcwd()
- + send-email: move trivial config handling to Perl
- + perl: lazily load some common Git.pm setup code
- + send-email: lazily load modules for a big speedup
- + send-email: get rid of indirect object syntax
- + send-email: use function syntax instead of barewords
- + send-email: lazily shell out to "git var"
- + send-email: lazily load config for a big speedup
- + send-email: copy "config_regxp" into git-send-email.perl
- + send-email: refactor sendemail.smtpencryption config parsing
- + send-email: remove non-working support for "sendemail.smtpssl"
- + send-email tests: test for boolean variables without a value
- + send-email tests: support GIT_TEST_PERL_FATAL_WARNINGS=true
+* ab/pkt-line-tests (2021-07-19) 1 commit
+  (merged to 'next' on 2021-07-20 at 8e5e53450c)
+ + test-lib-functions: use test-tool for [de]packetize()
 
- "git send-email" optimization.
+ Tests that cover protocol bits have been updated and helpers
+ used there have been consolidated.
 
 
-* bc/rev-list-without-commit-line (2021-07-12) 1 commit
-  (merged to 'next' on 2021-07-13 at 1ceed60061)
- + rev-list: add option for --pretty=format without header
+* dl/diff-merge-base (2021-07-12) 1 commit
+  (merged to 'next' on 2021-07-20 at 013d013bcf)
+ + git-diff: fix missing --merge-base docs
 
- "git rev-list" learns to omit the "commit <object-name>" header
- lines from the output with the `--no-commit-header` option.
-
-
-* jk/typofix (2021-07-13) 1 commit
-  (merged to 'next' on 2021-07-13 at cce3caa34e)
- + doc/rev-list-options: fix duplicate word typo
-
- Typofix.
+ "git diff --merge-base" documentation has been updated.
 
 
-* js/ci-windows-update (2021-07-06) 7 commits
-  (merged to 'next' on 2021-07-13 at 329771e960)
- + ci: accelerate the checkout
- + ci (vs-build): build with NO_GETTEXT
- + artifacts-tar: respect NO_GETTEXT
- + ci (windows): transfer also the Git-tracked files to the test jobs
- + ci: upgrade to using actions/{up,down}load-artifacts v2
- + ci (vs-build): use `cmd` to copy the DLLs, not `powershell`
- + ci: use the new GitHub Action to download git-sdk-64-minimal
+* dl/packet-read-response-end-fix (2021-07-09) 1 commit
+  (merged to 'next' on 2021-07-16 at 6a7734b6b5)
+ + pkt-line: replace "stateless separator" with "response end"
 
- GitHub Actions / CI update.
+ Error message update.
+
+
+* ds/gender-neutral-doc-guidelines (2021-07-16) 1 commit
+  (merged to 'next' on 2021-07-20 at 06d325e064)
+ + CodingGuidelines: recommend gender-neutral description
+
+ A guideline for gender neutral documentation has been added.
+
+
+* ds/status-with-sparse-index (2021-07-14) 16 commits
+  (merged to 'next' on 2021-07-20 at 1558d36c0f)
+ + t1092: document bad sparse-checkout behavior
+ + fsmonitor: integrate with sparse index
+ + wt-status: expand added sparse directory entries
+ + status: use sparse-index throughout
+ + status: skip sparse-checkout percentage with sparse-index
+ + diff-lib: handle index diffs with sparse dirs
+ + dir.c: accept a directory as part of cone-mode patterns
+ + unpack-trees: unpack sparse directory entries
+ + unpack-trees: rename unpack_nondirectories()
+ + unpack-trees: compare sparse directories correctly
+ + unpack-trees: preserve cache_bottom
+ + t1092: add tests for status/add and sparse files
+ + t1092: expand repository data shape
+ + t1092: replace incorrect 'echo' with 'cat'
+ + sparse-index: include EXTENDED flag when expanding
+ + sparse-index: skip indexes with unmerged entries
+ (this branch is used by ds/add-with-sparse-index and ds/commit-and-checkout-with-sparse-index.)
+
+ "git status" codepath learned to work with sparsely populated index
+ without hydrating it fully.
+
+
+* en/rename-limits-doc (2021-07-15) 4 commits
+  (merged to 'next' on 2021-07-20 at a89253d530)
+ + rename: bump limit defaults yet again
+ + diffcore-rename: treat a rename_limit of 0 as unlimited
+ + doc: clarify documentation for rename/copy limits
+ + diff: correct warning message when renameLimit exceeded
+
+ Documentation on "git diff -l<n>" and diff.renameLimit have been
+ updated, and the defaults for these limits have been raised.
+
+
+* ew/many-alternate-optim (2021-07-07) 5 commits
+  (merged to 'next' on 2021-07-16 at a2d8bc731d)
+ + oidtree: a crit-bit tree for odb_loose_cache
+ + oidcpy_with_padding: constify `src' arg
+ + make object_directory.loose_objects_subdir_seen a bitmap
+ + avoid strlen via strbuf_addstr in link_alt_odb_entry
+ + speed up alt_odb_usable() with many alternates
+
+ Optimization for repositories with many alternate object store.
+
+
+* hj/commit-allow-empty-message (2021-07-09) 2 commits
+  (merged to 'next' on 2021-07-16 at 86b79d3010)
+ + commit: remove irrelavent prompt on `--allow-empty-message`
+ + commit: reorganise commit hint strings
+
+ "git commit --allow-empty-message" won't abort the operation upon
+ an empty message, but the hint shown in the editor said otherwise.
+
+
+* hn/refs-debug-empty-prefix (2021-07-19) 1 commit
+  (merged to 'next' on 2021-07-20 at 2772d3efb2)
+ + refs/debug: quote prefix
+
+ Debugging aid.
+
+
+* jk/log-decorate-optim (2021-07-14) 7 commits
+  (merged to 'next' on 2021-07-16 at 5637878b90)
+ + load_ref_decorations(): fix decoration with tags
+  (merged to 'next' on 2021-07-08 at a3b6f978ab)
+ + add_ref_decoration(): rename s/type/deco_type/
+ + load_ref_decorations(): avoid parsing non-tag objects
+ + object.h: add lookup_object_by_type() function
+ + object.h: expand docstring for lookup_unknown_object()
+ + log: avoid loading decorations for userformats that don't need it
+ + pretty.h: update and expand docstring for userformat_find_requirements()
+
+ Optimize "git log" for cases where we wasted cycles to load ref
+ decoration data that may not be needed.
+
+
+* jk/t0000-subtests-fix (2021-07-19) 1 commit
+  (merged to 'next' on 2021-07-20 at 81412e1684)
+ + t0000: clear GIT_SKIP_TESTS before running sub-tests
+ (this branch is used by ab/lib-subtest and ps/t0000-output-directory-fix.)
+
+ Test fix.
+
+
+* js/ci-make-sparse (2021-07-26) 3 commits
+  (merged to 'next' on 2021-07-26 at 689316a459)
+ + ci/install-dependencies: handle "sparse" job package installs
+ + ci: run "apt-get update" before "apt-get install"
+  (merged to 'next' on 2021-07-20 at 99f518bdef)
+ + ci: run `make sparse` as part of the GitHub workflow
+
+ The CI gained a new job to run "make sparse" check.
+
+
+* pb/dont-complete-aliased-options (2021-07-16) 1 commit
+  (merged to 'next' on 2021-07-20 at bbc531c710)
+ + parse-options: don't complete option aliases by default
+
+ The completion support used to offer alternate spelling of options
+ that exist only for compatibility, which has been corrected.
+
+
+* ps/t0000-output-directory-fix (2021-07-20) 1 commit
+  (merged to 'next' on 2021-07-20 at 7e0b7c1f0c)
+ + t0000: fix test if run with TEST_OUTPUT_DIRECTORY
+ (this branch is used by ab/lib-subtest; uses jk/t0000-subtests-fix.)
+
+ "TEST_OUTPUT_DIRECTORY=there make test" failed to work, which has
+ been corrected.
+
+
+* sm/worktree-add-lock (2021-07-15) 3 commits
+  (merged to 'next' on 2021-07-16 at 609c0a4944)
+ + worktree: teach `add` to accept --reason <string> with --lock
+ + worktree: mark lock strings with `_()` for translation
+ + t2400: clean up '"add" worktree with lock' test
+
+ "git worktree add --lock" learned to record why the worktree is
+ locked with a custom message.
+
+
+* tb/reverse-midx (2021-07-19) 1 commit
+  (merged to 'next' on 2021-07-20 at 995cb54b5b)
+ + multi-pack-index: fix potential segfault without sub-command
+
+ The code that gives an error message in "git multi-pack-index" when
+ no subcommand is given tried to print a NULL pointer as a strong,
+ which has been corrected.
 
 --------------------------------------------------
 [New Topics]
+
+* jc/bisect-sans-show-branch (2021-07-28) 2 commits
+ - bisect: simplify return code from bisect_checkout()
+ - bisect: do not run show-branch just to show the current commit
+
+ "git bisect" spawned "git show-branch" only to pretty-print the
+ title of the commit after checking out the next version to be
+ tested; this has been rewritten in C.
+
+ Will merge to 'next'.
+
+
+* jc/trivial-threeway-binary-merge (2021-07-28) 1 commit
+ - ll-merge: teach ll_binary_merge() a trivial three-way merge
+
+ The built-in merge driver for binary files learned to resolve
+ trivial three-way merges (e.g. apply change, which turns A into B,
+ to content A) by itself, which would help "git apply --3way" used
+ when there is no need to use "--3way".
+
+ Needs review and design discussion.
+ As I wrote in the log message, I suspect that this may belong to
+ one layer higher, i.e. at ll_merge() before it dispatches to type
+ specific drivers.
+
+
+* os/bisect-runs-show-branch-without-pager (2021-07-27) 1 commit
+ - bisect: disable pager while invoking show-branch
+
+ When "git bisect" spawns "git show-branch" to pretty-print the
+ title of the commit to be tested, it could have invoked user's
+ pager if user configured to run pager while running show-branch.
+ The invocation of show-branch has been changed to disable pager,
+ even if one is configured.
+
+ Will discard.
+ This probably is unnecessary with the rewrite to get rid of the
+ show-branch invocation altogether.
+
+
+* hn/refs-test-cleanup-contd (2021-07-22) 11 commits
+  (merged to 'next' on 2021-07-28 at dd3af04939)
+ + t6001: avoid direct file system access
+ + t6500: use "ls -1" to snapshot ref database state
+ + t7064: use update-ref -d to remove upstream branch
+ + t1410: mark test as REFFILES
+ + t1405: mark test for 'git pack-refs' as REFFILES
+ + t1405: use 'git reflog exists' to check reflog existence
+  (merged to 'next' on 2021-07-22 at 2ab8bc259a)
+ + t2402: use ref-store test helper to create broken symlink
+ + t3320: use git-symbolic-ref rather than filesystem access
+ + t6120: use git-update-ref rather than filesystem access
+ + t1503: mark symlink test as REFFILES
+ + t6050: use git-update-ref rather than filesystem access
+
+--------------------------------------------------
+[Stalled]
+
+* ao/p4-avoid-decoding (2021-04-12) 2 commits
+ - git-p4: do not decode data from perforce by default
+ - git-p4: avoid decoding more data from perforce
+
+ "git p4" in Python-2 days used to accept a lot more kinds of data
+ from Perforce server as uninterrupted byte sequence, but after
+ switching to Python-3, too many things are expected to be in UTF-8,
+ which broke traditional use cases.
+
+ Waiting for reviews.
+
+
+* tv/p4-fallback-encoding (2021-04-30) 1 commit
+ - git-p4: git-p4.fallbackEncoding to specify non UTF-8 charset
+
+ "git p4" learns the fallbackEncoding configuration variable to
+ safely accept changeset descriptions that aren't written in UTF-8.
+
+ Waiting for reviews.
+
+--------------------------------------------------
+[Cooking]
 
 * ab/http-drop-old-curl (2021-07-21) 5 commits
  - http: rename CURLOPT_FILE to CURLOPT_WRITEDATA
@@ -134,7 +329,6 @@ Release tarballs are available at:
  - test-lib tests: move "run_sub_test" to a new lib-subtest.sh
  - Merge branch 'ps/t0000-output-directory-fix' into ab/lib-subtest
  - Merge branch 'jk/t0000-subtests-fix' into ab/lib-subtest
- (this branch uses jk/t0000-subtests-fix and ps/t0000-output-directory-fix.)
 
  Updates to the tests in t0000 to test th etest framework.
 
@@ -145,17 +339,18 @@ Release tarballs are available at:
  - pathspec: stop calling ensure_full_index
  - add: allow operating on a sparse-only index
  - t1092: test merge conflicts outside cone
- (this branch uses ds/commit-and-checkout-with-sparse-index and ds/status-with-sparse-index.)
+ (this branch uses ds/commit-and-checkout-with-sparse-index.)
 
  "git add" can work better with the sparse index.
 
 
 * fc/pull-no-rebase-merges-theirs-into-ours (2021-07-21) 1 commit
- - doc: pull: fix rebase=false documentation
+  (merged to 'next' on 2021-07-28 at f8e6567082)
+ + doc: pull: fix rebase=false documentation
 
  Documentation fix for "git pull --rebase=no".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ab/only-single-progress-at-once (2021-07-23) 8 commits
@@ -182,7 +377,7 @@ Release tarballs are available at:
  Will merge to 'next'.
 
 
-* ar/submodule-add-config (2021-07-26) 1 commit
+* ar/submodule-add-config (2021-07-28) 1 commit
  - submodule--helper: introduce add-config subcommand
  (this branch uses ar/submodule-add.)
 
@@ -202,37 +397,24 @@ Release tarballs are available at:
  Final batch for "merge -sort" optimization.
 
 
-* hn/refs-test-cleanup-contd (2021-07-22) 6 commits
- - t6001: avoid direct file system access
- - t6500: use "ls -1" to snapshot ref database state
- - t7064: use update-ref -d to remove upstream branch
- - t1410: mark test as REFFILES
- - t1405: mark test for 'git pack-refs' as REFFILES
- - t1405: use 'git reflog exists' to check reflog existence
- (this branch uses hn/refs-test-cleanup.)
-
- More test clean-up around refs
-
- Probably I should combine this into the base topic and have them
- graduate together.
-
-
 * jk/check-pack-valid-before-opening-bitmap (2021-07-23) 1 commit
- - pack-bitmap: check pack validity when opening bitmap
+  (merged to 'next' on 2021-07-28 at 98d5b4dc68)
+ + pack-bitmap: check pack validity when opening bitmap
 
  A race between repacking and using pack bitmaps has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jt/bulk-prefetch (2021-07-23) 2 commits
- - cache-tree: prefetch in partial clone read-tree
- - unpack-trees: refactor prefetching code
+  (merged to 'next' on 2021-07-28 at 26e28cab21)
+ + cache-tree: prefetch in partial clone read-tree
+ + unpack-trees: refactor prefetching code
 
  "git read-tree" had a codepath where blobs are fetched one-by-one
  from the promisor remote, which has been corrected to fetch in bulk.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pb/merge-autostash-more (2021-07-23) 4 commits
@@ -248,22 +430,23 @@ Release tarballs are available at:
 
 
 * ah/plugleaks (2021-07-26) 12 commits
- - reset: clear_unpack_trees_porcelain to plug leak
- - builtin/rebase: fix options.strategy memory lifecycle
- - builtin/merge: free found_ref when done
- - builtin/mv: free or UNLEAK multiple pointers at end of cmd_mv
- - convert: release strbuf to avoid leak
- - read-cache: call diff_setup_done to avoid leak
- - ref-filter: also free head for ATOM_HEAD to avoid leak
- - diffcore-rename: move old_dir/new_dir definition to plug leak
- - builtin/for-each-repo: remove unnecessary argv copy to plug leak
- - builtin/submodule--helper: release unused strbuf to avoid leak
- - environment: move strbuf into block to plug leak
- - fmt-merge-msg: free newly allocated temporary strings when done
+  (merged to 'next' on 2021-07-28 at fa15f6d1f4)
+ + reset: clear_unpack_trees_porcelain to plug leak
+ + builtin/rebase: fix options.strategy memory lifecycle
+ + builtin/merge: free found_ref when done
+ + builtin/mv: free or UNLEAK multiple pointers at end of cmd_mv
+ + convert: release strbuf to avoid leak
+ + read-cache: call diff_setup_done to avoid leak
+ + ref-filter: also free head for ATOM_HEAD to avoid leak
+ + diffcore-rename: move old_dir/new_dir definition to plug leak
+ + builtin/for-each-repo: remove unnecessary argv copy to plug leak
+ + builtin/submodule--helper: release unused strbuf to avoid leak
+ + environment: move strbuf into block to plug leak
+ + fmt-merge-msg: free newly allocated temporary strings when done
 
  Leak plugging.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/expand-runtime-prefix (2021-07-26) 6 commits
@@ -299,31 +482,6 @@ Release tarballs are available at:
  It is clear that a problem exists, but it is unclear if the
  proposed solution is a desirable one.
 
---------------------------------------------------
-[Stalled]
-
-* ao/p4-avoid-decoding (2021-04-12) 2 commits
- - git-p4: do not decode data from perforce by default
- - git-p4: avoid decoding more data from perforce
-
- "git p4" in Python-2 days used to accept a lot more kinds of data
- from Perforce server as uninterrupted byte sequence, but after
- switching to Python-3, too many things are expected to be in UTF-8,
- which broke traditional use cases.
-
- Waiting for reviews.
-
-
-* tv/p4-fallback-encoding (2021-04-30) 1 commit
- - git-p4: git-p4.fallbackEncoding to specify non UTF-8 charset
-
- "git p4" learns the fallbackEncoding configuration variable to
- safely accept changeset descriptions that aren't written in UTF-8.
-
- Waiting for reviews.
-
---------------------------------------------------
-[Cooking]
 
 * ab/bundle-tests (2021-07-22) 2 commits
   (merged to 'next' on 2021-07-22 at 053b5d0ecf)
@@ -350,8 +508,7 @@ Release tarballs are available at:
  The "hooks defined via the configuration variables" topic.
 
 
-* fs/ssh-signing (2021-07-20) 10 commits
- - SQUASH???
+* fs/ssh-signing (2021-07-28) 9 commits
  - ssh signing: add documentation
  - ssh signing: add more tests for logs, tags & push certs
  - ssh signing: duplicate t7510 tests for commits
@@ -364,16 +521,7 @@ Release tarballs are available at:
 
  Use ssh public crypto for object and push-cert signing.
 
- Seems to break tests when merged to 'seen'.
-
-
-* hn/refs-debug-empty-prefix (2021-07-19) 1 commit
-  (merged to 'next' on 2021-07-20 at 2772d3efb2)
- + refs/debug: quote prefix
-
- Debugging aid.
-
- Will merge to 'master'.
+ Comments?
 
 
 * pb/submodule-recurse-doc (2021-07-20) 1 commit
@@ -381,17 +529,6 @@ Release tarballs are available at:
  + doc: clarify description of 'submodule.recurse'
 
  Doc update.
-
- Will merge to 'master'.
-
-
-* ps/t0000-output-directory-fix (2021-07-20) 1 commit
-  (merged to 'next' on 2021-07-20 at 7e0b7c1f0c)
- + t0000: fix test if run with TEST_OUTPUT_DIRECTORY
- (this branch is used by ab/lib-subtest; uses jk/t0000-subtests-fix.)
-
- "TEST_OUTPUT_DIRECTORY=there make test" failed to work, which has
- been corrected.
 
  Will merge to 'master'.
 
@@ -405,25 +542,20 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* tb/reverse-midx (2021-07-19) 1 commit
-  (merged to 'next' on 2021-07-20 at 995cb54b5b)
- + multi-pack-index: fix potential segfault without sub-command
-
- The code that gives an error message in "git multi-pack-index" when
- no subcommand is given tried to print a NULL pointer as a strong,
- which has been corrected.
-
- Will merge to 'master'.
-
-
-* hn/refs-test-cleanup (2021-07-19) 5 commits
+* hn/refs-test-cleanup (2021-07-22) 11 commits
+  (merged to 'next' on 2021-07-28 at dd3af04939)
+ + t6001: avoid direct file system access
+ + t6500: use "ls -1" to snapshot ref database state
+ + t7064: use update-ref -d to remove upstream branch
+ + t1410: mark test as REFFILES
+ + t1405: mark test for 'git pack-refs' as REFFILES
+ + t1405: use 'git reflog exists' to check reflog existence
   (merged to 'next' on 2021-07-22 at 2ab8bc259a)
  + t2402: use ref-store test helper to create broken symlink
  + t3320: use git-symbolic-ref rather than filesystem access
  + t6120: use git-update-ref rather than filesystem access
  + t1503: mark symlink test as REFFILES
  + t6050: use git-update-ref rather than filesystem access
- (this branch is used by hn/refs-test-cleanup-contd.)
 
  A handful of tests that assumed implementation details of files
  backend for refs have been cleaned up.
@@ -461,6 +593,8 @@ Release tarballs are available at:
 
  The "reftable" backend for the refs API.
 
+ Seems to break CI jobs in 'seen'.
+
 
 * jk/config-env-doc (2021-07-20) 3 commits
   (merged to 'next' on 2021-07-22 at 45616c831e)
@@ -479,28 +613,6 @@ Release tarballs are available at:
  + ci(check-whitespace): stop requiring a read/write token
 
  CI update.
-
- Will merge to 'master'.
-
-
-* js/ci-make-sparse (2021-07-26) 3 commits
-  (merged to 'next' on 2021-07-26 at 689316a459)
- + ci/install-dependencies: handle "sparse" job package installs
- + ci: run "apt-get update" before "apt-get install"
-  (merged to 'next' on 2021-07-20 at 99f518bdef)
- + ci: run `make sparse` as part of the GitHub workflow
-
- The CI gained a new job to run "make sparse" check.
-
- Will merge to 'master'.
-
-
-* pb/dont-complete-aliased-options (2021-07-16) 1 commit
-  (merged to 'next' on 2021-07-20 at bbc531c710)
- + parse-options: don't complete option aliases by default
-
- The completion support used to offer alternate spelling of options
- that exist only for compatibility, which has been corrected.
 
  Will merge to 'master'.
 
@@ -538,82 +650,6 @@ Release tarballs are available at:
  around its --rebase backend, e.g. "git pull --ff-only" did not stop
  but went ahead and rebased when the history on other side is not a
  descendant of our history.  The series tries to fix them up.
-
-
-* jk/t0000-subtests-fix (2021-07-19) 1 commit
-  (merged to 'next' on 2021-07-20 at 81412e1684)
- + t0000: clear GIT_SKIP_TESTS before running sub-tests
- (this branch is used by ab/lib-subtest and ps/t0000-output-directory-fix.)
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* dl/packet-read-response-end-fix (2021-07-09) 1 commit
-  (merged to 'next' on 2021-07-16 at 6a7734b6b5)
- + pkt-line: replace "stateless separator" with "response end"
-
- Error message update.
-
- Will merge to 'master'.
-
-
-* hj/commit-allow-empty-message (2021-07-09) 2 commits
-  (merged to 'next' on 2021-07-16 at 86b79d3010)
- + commit: remove irrelavent prompt on `--allow-empty-message`
- + commit: reorganise commit hint strings
-
- "git commit --allow-empty-message" won't abort the operation upon
- an empty message, but the hint shown in the editor said otherwise.
-
- Will merge to 'master'.
-
-
-* ab/attribute-format (2021-07-13) 5 commits
-  (merged to 'next' on 2021-07-20 at 44e5606a6e)
- + advice.h: add missing __attribute__((format)) & fix usage
- + *.h: add a few missing __attribute__((format))
- + *.c static functions: add missing __attribute__((format))
- + sequencer.c: move static function to avoid forward decl
- + *.c static functions: don't forward-declare __attribute__
-
- Many "printf"-like helper functions we have have been annotated
- with __attribute__() to catch placeholder/parameter mismatches.
-
- Will merge to 'master'.
-
-
-* dl/diff-merge-base (2021-07-12) 1 commit
-  (merged to 'next' on 2021-07-20 at 013d013bcf)
- + git-diff: fix missing --merge-base docs
-
- "git diff --merge-base" documentation has been updated.
-
- Will merge to 'master'.
-
-
-* en/rename-limits-doc (2021-07-15) 4 commits
-  (merged to 'next' on 2021-07-20 at a89253d530)
- + rename: bump limit defaults yet again
- + diffcore-rename: treat a rename_limit of 0 as unlimited
- + doc: clarify documentation for rename/copy limits
- + diff: correct warning message when renameLimit exceeded
-
- Documentation on "git diff -l<n>" and diff.renameLimit have been
- updated, and the defaults for these limits have been raised.
-
- Will merge to 'master'.
-
-
-* ab/pkt-line-tests (2021-07-19) 1 commit
-  (merged to 'next' on 2021-07-20 at 8e5e53450c)
- + test-lib-functions: use test-tool for [de]packetize()
-
- Tests that cover protocol bits have been updated and helpers
- used there have been consolidated.
-
- Will merge to 'master'.
 
 
 * bc/inactive-submodules (2021-07-02) 1 commit
@@ -660,18 +696,6 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* sm/worktree-add-lock (2021-07-15) 3 commits
-  (merged to 'next' on 2021-07-16 at 609c0a4944)
- + worktree: teach `add` to accept --reason <string> with --lock
- + worktree: mark lock strings with `_()` for translation
- + t2400: clean up '"add" worktree with lock' test
-
- "git worktree add --lock" learned to record why the worktree is
- locked with a custom message.
-
- Will merge to 'master'.
-
-
 * ab/bundle-doc (2021-07-20) 3 commits
  - bundle doc: elaborate on rev<->ref restriction
  - bundle doc: elaborate on object prerequisites
@@ -702,42 +726,12 @@ Release tarballs are available at:
  - commit: integrate with sparse-index
  - p2000: compress repo names
  - p2000: add 'git checkout -' test and decrease depth
- (this branch is used by ds/add-with-sparse-index; uses ds/status-with-sparse-index.)
+ (this branch is used by ds/add-with-sparse-index.)
 
  "git checkout" and "git commit" learn to work without unnecessarily
  expanding sparse indexes.
 
  Will merge to 'next'.
-
-
-* ew/many-alternate-optim (2021-07-07) 5 commits
-  (merged to 'next' on 2021-07-16 at a2d8bc731d)
- + oidtree: a crit-bit tree for odb_loose_cache
- + oidcpy_with_padding: constify `src' arg
- + make object_directory.loose_objects_subdir_seen a bitmap
- + avoid strlen via strbuf_addstr in link_alt_odb_entry
- + speed up alt_odb_usable() with many alternates
-
- Optimization for repositories with many alternate object store.
-
- Will merge to 'master'.
-
-
-* jk/log-decorate-optim (2021-07-14) 7 commits
-  (merged to 'next' on 2021-07-16 at 5637878b90)
- + load_ref_decorations(): fix decoration with tags
-  (merged to 'next' on 2021-07-08 at a3b6f978ab)
- + add_ref_decoration(): rename s/type/deco_type/
- + load_ref_decorations(): avoid parsing non-tag objects
- + object.h: add lookup_object_by_type() function
- + object.h: expand docstring for lookup_unknown_object()
- + log: avoid loading decorations for userformats that don't need it
- + pretty.h: update and expand docstring for userformat_find_requirements()
-
- Optimize "git log" for cases where we wasted cycles to load ref
- decoration data that may not be needed.
-
- Will merge to 'master'.
 
 
 * jt/push-negotiation-fixes (2021-07-15) 3 commits
@@ -764,7 +758,7 @@ Release tarballs are available at:
  4/5 may want a minor tweak to the log and the patch text but otherwise looks good.
 
 
-* tb/multi-pack-bitmaps (2021-06-28) 24 commits
+* tb/multi-pack-bitmaps (2021-07-27) 25 commits
  - p5326: perf tests for MIDX bitmaps
  - p5310: extract full and partial bitmap tests
  - midx: respect 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
@@ -777,15 +771,16 @@ Release tarballs are available at:
  - t5310: move some tests to lib-bitmap.sh
  - pack-bitmap: write multi-pack bitmaps
  - pack-bitmap: read multi-pack bitmaps
+ - pack-bitmap.c: avoid redundant calls to try_partial_reuse
  - pack-bitmap.c: introduce 'bitmap_is_preferred_refname()'
  - pack-bitmap.c: introduce 'nth_bitmap_object_oid()'
  - pack-bitmap.c: introduce 'bitmap_num_objects()'
+ - midx: avoid opening multiple MIDXs when writing
+ - midx: close linked MIDXs, avoid leaking memory
  - midx: infer preferred pack when not given one
- - midx: respect 'core.multiPackIndex' when writing
+ - midx: reject empty `--preferred-pack`'s
  - midx: clear auxiliary .rev after replacing the MIDX
- - midx: make a number of functions non-static
  - Documentation: describe MIDX-based bitmaps
- - Documentation: build 'technical/bitmap-format' by default
  - pack-bitmap-write.c: free existing bitmaps
  - pack-bitmap-write.c: gracefully fail to write non-closed bitmaps
  - pack-bitmap.c: harden 'test_bitmap_walk()' to check type bitmaps
@@ -795,32 +790,6 @@ Release tarballs are available at:
  span across multiple packfiles.
 
  Comments?
-
-
-* ds/status-with-sparse-index (2021-07-14) 16 commits
-  (merged to 'next' on 2021-07-20 at 1558d36c0f)
- + t1092: document bad sparse-checkout behavior
- + fsmonitor: integrate with sparse index
- + wt-status: expand added sparse directory entries
- + status: use sparse-index throughout
- + status: skip sparse-checkout percentage with sparse-index
- + diff-lib: handle index diffs with sparse dirs
- + dir.c: accept a directory as part of cone-mode patterns
- + unpack-trees: unpack sparse directory entries
- + unpack-trees: rename unpack_nondirectories()
- + unpack-trees: compare sparse directories correctly
- + unpack-trees: preserve cache_bottom
- + t1092: add tests for status/add and sparse files
- + t1092: expand repository data shape
- + t1092: replace incorrect 'echo' with 'cat'
- + sparse-index: include EXTENDED flag when expanding
- + sparse-index: skip indexes with unmerged entries
- (this branch is used by ds/add-with-sparse-index and ds/commit-and-checkout-with-sparse-index.)
-
- "git status" codepath learned to work with sparsely populated index
- without hydrating it fully.
-
- Will merge to 'master'.
 
 
 * ab/config-based-hooks-base (2021-06-29) 33 commits
@@ -979,7 +948,8 @@ Release tarballs are available at:
 
 
 * ar/submodule-add (2021-07-26) 5 commits
- - submodule: drop unused sm_name parameter from show_fetch_remotes()
+  (merged to 'next' on 2021-07-28 at 7d315a0f67)
+ + submodule: drop unused sm_name parameter from show_fetch_remotes()
   (merged to 'next' on 2021-07-22 at b8b636c9a1)
  + submodule--helper: introduce add-clone subcommand
  + submodule--helper: refactor module_clone()
@@ -988,15 +958,6 @@ Release tarballs are available at:
  (this branch is used by ar/submodule-add-config.)
 
  Rewrite of "git submodule" in C continues.
-
- Will merge to 'master'.
-
-
-* ds/gender-neutral-doc-guidelines (2021-07-16) 1 commit
-  (merged to 'next' on 2021-07-20 at 06d325e064)
- + CodingGuidelines: recommend gender-neutral description
-
- A guideline for gender neutral documentation has been added.
 
  Will merge to 'master'.
 
