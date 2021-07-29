@@ -406,4 +406,14 @@ test_expect_success 'refuse to switch to branch checked out elsewhere' '
 	test_i18ngrep "already checked out" err
 '
 
+test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '
+	git checkout main &&
+	mv .git/logs actual_logs &&
+	cmd //c "mklink /D .git\logs ..\actual_logs" &&
+	git rebase -f HEAD^ &&
+	test -L .git/logs &&
+	rm .git/logs &&
+	mv actual_logs .git/logs
+'
+
 test_done
