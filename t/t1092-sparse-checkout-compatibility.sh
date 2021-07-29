@@ -339,11 +339,7 @@ test_expect_success 'status/add: outside sparse cone' '
 
 	# Adding the path outside of the sparse-checkout cone should fail.
 	test_sparse_match test_must_fail git add folder1/a &&
-
-	test_must_fail git -C sparse-checkout add --refresh folder1/a 2>sparse-checkout-err &&
-	test_must_fail git -C sparse-index add --refresh folder1/a 2>sparse-index-err &&
-	# NEEDSWORK: A sparse index changes the error message.
-	! test_cmp sparse-checkout-err sparse-index-err &&
+	test_sparse_match test_must_fail git add --refresh folder1/a &&
 
 	# NEEDSWORK: Adding a newly-tracked file outside the cone succeeds
 	test_sparse_match git add folder1/new &&
