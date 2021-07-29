@@ -340,21 +340,27 @@ test_expect_success 'status/add: outside sparse cone' '
 
 	test_sparse_match git status --porcelain=v2 &&
 
-	# This "git add folder1/a" fails with a warning
-	# in the sparse repos, differing from the full
-	# repo. This is intentional.
+	# Adding the path outside of the sparse-checkout cone should fail.
 	test_sparse_match test_must_fail git add folder1/a &&
-	test_sparse_match test_must_fail git add --refresh folder1/a &&
-	test_all_match git status --porcelain=v2 &&
+
+	test_must_fail git -C sparse-checkout add --refresh folder1/a 2>sparse-checkout-err &&
+	test_must_fail git -C sparse-index add --refresh folder1/a 2>sparse-index-err &&
+	# NEEDSWORK: A sparse index changes the error message.
+	! test_cmp sparse-checkout-err sparse-index-err &&
+
+	# NEEDSWORK: Adding a newly-tracked file outside the cone succeeds
+	test_sparse_match git add folder1/new &&
 
 	test_all_match git add . &&
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git commit -m folder1/new &&
+	test_all_match git rev-parse HEAD^{tree} &&
 
 	run_on_all ../edit-contents folder1/newer &&
 	test_all_match git add folder1/ &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git commit -m folder1/newer
+	test_all_match git commit -m folder1/newer &&
+	test_all_match git rev-parse HEAD^{tree}
 '
 
 test_expect_success 'checkout and reset --hard' '
@@ -641,7 +647,12 @@ test_expect_success 'sparse-index is not expanded' '
 	git -C sparse-index reset --hard &&
 	ensure_not_expanded checkout rename-out-to-out -- deep/deeper1 &&
 	git -C sparse-index reset --hard &&
-	ensure_not_expanded restore -s rename-out-to-out -- deep/deeper1
+	ensure_not_expanded restore -s rename-out-to-out -- deep/deeper1 &&
+
+	echo >>sparse-index/README.md &&
+	ensure_not_expanded add -A &&
+	echo >>sparse-index/extra.txt &&
+	ensure_not_expanded add extra.txt
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
