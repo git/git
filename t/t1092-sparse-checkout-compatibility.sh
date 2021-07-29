@@ -322,9 +322,6 @@ test_expect_success 'commit including unstaged changes' '
 test_expect_success 'status/add: outside sparse cone' '
 	init_repos &&
 
-	# adding a "missing" file outside the cone should fail
-	test_sparse_match test_must_fail git add folder1/a &&
-
 	# folder1 is at HEAD, but outside the sparse cone
 	run_on_sparse mkdir folder1 &&
 	cp initial-repo/folder1/a sparse-checkout/folder1/a &&
@@ -652,7 +649,9 @@ test_expect_success 'sparse-index is not expanded' '
 	echo >>sparse-index/README.md &&
 	ensure_not_expanded add -A &&
 	echo >>sparse-index/extra.txt &&
-	ensure_not_expanded add extra.txt
+	ensure_not_expanded add extra.txt &&
+	echo >>sparse-index/untracked.txt &&
+	ensure_not_expanded add .
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
