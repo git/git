@@ -322,7 +322,7 @@ initiating this "pull".  If Bob's work conflicts with what Alice did since
 their histories forked, Alice will use her working tree and the index to
 resolve conflicts, and existing local changes will interfere with the
 conflict resolution process (Git will still perform the fetch but will
-refuse to merge --- Alice will have to get rid of her local changes in
+refuse to merge -- Alice will have to get rid of her local changes in
 some way and pull again when this happens).
 
 Alice can peek at what Bob did without merging first, using the "fetch"
