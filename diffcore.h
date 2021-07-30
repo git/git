@@ -127,6 +127,8 @@ struct diff_filepair {
 #define DIFF_PAIR_MODE_CHANGED(p) ((p)->one->mode != (p)->two->mode)
 
 void diff_free_filepair(struct diff_filepair *);
+void pool_diff_free_filepair(struct mem_pool *pool,
+			     struct diff_filepair *p);
 
 int diff_unmodified_pair(struct diff_filepair *);
 
