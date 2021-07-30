@@ -93,6 +93,11 @@ Performance, Internal Implementation, Development Support etc.
  * "TEST_OUTPUT_DIRECTORY=there make test" failed to work, which has
    been corrected.
 
+ * "git bundle" gained more test coverage.
+
+ * "git read-tree" had a codepath where blobs are fetched one-by-one
+   from the promisor remote, which has been corrected to fetch in bulk.
+
 
 Fixes since v2.32
 -----------------
@@ -223,6 +228,15 @@ Fixes since v2.32
    which has been corrected.
    (merge 88617d11f9 tb/reverse-midx later to maint).
 
+ * CI update.
+   (merge a066a90db6 js/ci-check-whitespace-updates later to maint).
+
+ * Documentation fix for "git pull --rebase=no".
+   (merge d3236becec fc/pull-no-rebase-merges-theirs-into-ours later to maint).
+
+ * A race between repacking and using pack bitmaps has been corrected.
+   (merge dc1daacdcc jk/check-pack-valid-before-opening-bitmap later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bfe35a6165 ah/doc-describe later to maint).
    (merge f302c1e4aa jc/clarify-revision-range later to maint).
@@ -261,3 +275,6 @@ Fixes since v2.32
    (merge 8232a0ff48 dl/packet-read-response-end-fix later to maint).
    (merge eb448631fb dl/diff-merge-base later to maint).
    (merge c510928a25 hn/refs-debug-empty-prefix later to maint).
+   (merge ddcb189d9d tb/bitmap-type-filter-comment-fix later to maint).
+   (merge 878b399734 pb/submodule-recurse-doc later to maint).
+   (merge 734283855f jk/config-env-doc later to maint).
