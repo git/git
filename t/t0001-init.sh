@@ -356,7 +356,10 @@ test_lazy_prereq GETCWD_IGNORES_PERMS '
 	chmod 100 $base ||
 	BUG "cannot prepare $base"
 
-	(cd $base/dir && /bin/pwd -P)
+	(
+		cd $base/dir &&
+		test-tool getcwd
+	)
 	status=$?
 
 	chmod 700 $base &&
