@@ -694,17 +694,13 @@ static struct diff_filespec *pool_alloc_filespec(struct mem_pool *pool,
 						 const char *path)
 {
 	struct diff_filespec *spec;
-	size_t len;
 
 	if (!pool)
 		return alloc_filespec(path);
 
-	/* Same code as alloc_filespec, except allocate from pool */
-	len = strlen(path);
-
-	spec = mem_pool_calloc(pool, 1, st_add3(sizeof(*spec), len, 1));
-	memcpy(spec+1, path, len);
-	spec->path = (void*)(spec+1);
+	/* Similar to alloc_filespec, but allocate from pool and reuse path */
+	spec = mem_pool_calloc(pool, 1, sizeof(*spec));
+	spec->path = (char*)path; /* spec won't modify it */
 
 	spec->count = 1;
 	spec->is_binary = -1;
@@ -2904,6 +2900,25 @@ static void use_cached_pairs(struct merge_options *opt,
 		const char *new_name = entry->value;
 		if (!new_name)
 			new_name = old_name;
+		if (pool) {
+			/*
+			 * cached_pairs has _copies* of old_name and new_name,
+			 * because it has to persist across merges.  When
+			 *   pool != NULL
+			 * pool_alloc_filespec() will just re-use the existing
+			 * filenames, which will also get re-used by
+			 * opt->priv->paths if they become renames, and then
+			 * get freed at the end of the merge, leaving the copy
+			 * in cached_pairs dangling.  Avoid this by making a
+			 * copy here.
+			 *
+			 * When pool == NULL, pool_alloc_filespec() calls
+			 * alloc_filespec(), which makes a copy; we don't want
+			 * to add another.
+			 */
+			old_name = mem_pool_strdup(pool, old_name);
+			new_name = mem_pool_strdup(pool, new_name);
+		}
 
 		/* We don't care about oid/mode, only filenames and status */
 		one = pool_alloc_filespec(pool, old_name);
