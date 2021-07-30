@@ -37,6 +37,8 @@
 #include "unpack-trees.h"
 #include "xdiff-interface.h"
 
+#define USE_MEMORY_POOL 1 /* faster, but obscures memory leak hunting */
+
 /*
  * We have many arrays of size 3.  Whenever we have such an array, the
  * indices refer to one of the sides of the three-way merge.  This is so
@@ -340,6 +342,17 @@ struct merge_options_internal {
 	struct strmap conflicted;
 
 	/*
+	 * pool: memory pool for fast allocation/deallocation
+	 *
+	 * We allocate room for lots of filenames and auxiliary data
+	 * structures in merge_options_internal, and it tends to all be
+	 * freed together too.  Using a memory pool for these provides a
+	 * nice speedup.
+	 */
+	struct mem_pool internal_pool;
+	struct mem_pool *pool; /* NULL, or pointer to internal_pool */
+
+	/*
 	 * paths_to_free: additional list of strings to free
 	 *
 	 * If keys are removed from "paths", they are added to paths_to_free
@@ -602,6 +615,12 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 		}
 		strmap_clear(&opti->output, 0);
 	}
+
+#if USE_MEMORY_POOL
+	mem_pool_discard(&opti->internal_pool, 0);
+	if (!reinitialize)
+		opti->pool = NULL;
+#endif
 
 	/* Clean out callback_data as well. */
 	FREE_AND_NULL(renames->callback_data);
@@ -4381,6 +4400,12 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 
 	/* Initialization of various renames fields */
 	renames = &opt->priv->renames;
+#if USE_MEMORY_POOL
+	mem_pool_init(&opt->priv->internal_pool, 0);
+	opt->priv->pool = &opt->priv->internal_pool;
+#else
+	opt->priv->pool = NULL;
+#endif
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; i++) {
 		strintmap_init_with_options(&renames->dirs_removed[i],
 					    NOT_RELEVANT, NULL, 0);
