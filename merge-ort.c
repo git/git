@@ -519,11 +519,11 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 {
 	struct rename_info *renames = &opti->renames;
 	int i;
-	void (*strmap_func)(struct strmap *, int) =
+	void (*strmap_clear_func)(struct strmap *, int) =
 		reinitialize ? strmap_partial_clear : strmap_clear;
-	void (*strintmap_func)(struct strintmap *) =
+	void (*strintmap_clear_func)(struct strintmap *) =
 		reinitialize ? strintmap_partial_clear : strintmap_clear;
-	void (*strset_func)(struct strset *) =
+	void (*strset_clear_func)(struct strset *) =
 		reinitialize ? strset_partial_clear : strset_clear;
 
 	/*
@@ -534,14 +534,14 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 	 * to deallocate them.
 	 */
 	free_strmap_strings(&opti->paths);
-	strmap_func(&opti->paths, 1);
+	strmap_clear_func(&opti->paths, 1);
 
 	/*
 	 * All keys and values in opti->conflicted are a subset of those in
 	 * opti->paths.  We don't want to deallocate anything twice, so we
 	 * don't free the keys and we pass 0 for free_values.
 	 */
-	strmap_func(&opti->conflicted, 0);
+	strmap_clear_func(&opti->conflicted, 0);
 
 	/*
 	 * opti->paths_to_free is similar to opti->paths; we created it with
@@ -559,24 +559,24 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 
 	/* Free memory used by various renames maps */
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; ++i) {
-		strintmap_func(&renames->dirs_removed[i]);
-		strmap_func(&renames->dir_renames[i], 0);
-		strintmap_func(&renames->relevant_sources[i]);
+		strintmap_clear_func(&renames->dirs_removed[i]);
+		strmap_clear_func(&renames->dir_renames[i], 0);
+		strintmap_clear_func(&renames->relevant_sources[i]);
 		if (!reinitialize)
 			assert(renames->cached_pairs_valid_side == 0);
 		if (i != renames->cached_pairs_valid_side &&
 		    -1 != renames->cached_pairs_valid_side) {
-			strset_func(&renames->cached_target_names[i]);
-			strmap_func(&renames->cached_pairs[i], 1);
-			strset_func(&renames->cached_irrelevant[i]);
+			strset_clear_func(&renames->cached_target_names[i]);
+			strmap_clear_func(&renames->cached_pairs[i], 1);
+			strset_clear_func(&renames->cached_irrelevant[i]);
 			partial_clear_dir_rename_count(&renames->dir_rename_count[i]);
 			if (!reinitialize)
 				strmap_clear(&renames->dir_rename_count[i], 1);
 		}
 	}
 	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; ++i) {
-		strintmap_func(&renames->deferred[i].possible_trivial_merges);
-		strset_func(&renames->deferred[i].target_dirs);
+		strintmap_clear_func(&renames->deferred[i].possible_trivial_merges);
+		strset_clear_func(&renames->deferred[i].target_dirs);
 		renames->deferred[i].trivial_merges_okay = 1; /* 1 == maybe */
 	}
 	renames->cached_pairs_valid_side = 0;
