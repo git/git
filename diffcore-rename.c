@@ -1334,7 +1334,6 @@ static void free_filespec_data(struct diff_filespec *spec)
 		diff_free_filespec_data(spec);
 }
 
-MAYBE_UNUSED
 static void pool_free_filespec(struct mem_pool *pool,
 			       struct diff_filespec *spec)
 {
@@ -1351,7 +1350,6 @@ static void pool_free_filespec(struct mem_pool *pool,
 	free_filespec_data(spec);
 }
 
-MAYBE_UNUSED
 void pool_diff_free_filepair(struct mem_pool *pool,
 			     struct diff_filepair *p)
 {
@@ -1370,6 +1368,7 @@ void pool_diff_free_filepair(struct mem_pool *pool,
 }
 
 void diffcore_rename_extended(struct diff_options *options,
+			      struct mem_pool *pool,
 			      struct strintmap *relevant_sources,
 			      struct strintmap *dirs_removed,
 			      struct strmap *dir_rename_count,
@@ -1683,7 +1682,7 @@ void diffcore_rename_extended(struct diff_options *options,
 			pair_to_free = p;
 
 		if (pair_to_free)
-			diff_free_filepair(pair_to_free);
+			pool_diff_free_filepair(pool, pair_to_free);
 	}
 	diff_debug_queue("done copying original", &outq);
 
@@ -1693,7 +1692,7 @@ void diffcore_rename_extended(struct diff_options *options,
 
 	for (i = 0; i < rename_dst_nr; i++)
 		if (rename_dst[i].filespec_to_free)
-			free_filespec(rename_dst[i].filespec_to_free);
+			pool_free_filespec(pool, rename_dst[i].filespec_to_free);
 
 	cleanup_dir_rename_info(&info, dirs_removed, dir_rename_count != NULL);
 	FREE_AND_NULL(rename_dst);
@@ -1710,5 +1709,5 @@ void diffcore_rename_extended(struct diff_options *options,
 
 void diffcore_rename(struct diff_options *options)
 {
-	diffcore_rename_extended(options, NULL, NULL, NULL, NULL);
+	diffcore_rename_extended(options, NULL, NULL, NULL, NULL, NULL);
 }
