@@ -44,6 +44,7 @@ header indicating what references are contained within the bundle.
 
 Like the the packed archive format itself bundles can either be
 self-contained, or be created using exclusions.
+See the "OBJECT PREREQUISITES" section below.
 
 Bundles created using revision exclusions are "thin packs" created
 using the `--thin` option to linkgit:git-pack-objects[1], and
@@ -152,18 +153,48 @@ contained in the union of the given bases.  Each basis can be
 specified explicitly (e.g. `^master~10`), or implicitly (e.g.
 `master~10..master`, `--since=10.days.ago master`).
 
-It is very important that the basis used be held by the destination.
+OBJECT PREREQUISITES
+--------------------
+
+When creating bundles it is possible to create a self-contained bundle
+that can be unbundled in a repository with no common history, as well
+as providing negative revisions to exclude objects needed in the
+earlier parts of the history.
+
+Feeding a revision such as `new` to `git bundle create` will create a
+bundle file that contains all the objects reachable from the revision
+`new`. That bundle can be unbundled in any repository to obtain a full
+history that leads to the revision `new`:
+
+----------------
+$ git bundle create full.bundle new
+----------------
+
+A revision range such as `old..new` will produce a bundle file that
+will require the revision `old` (and any objects reachable from it)
+to exist for the bundle to be "unbundle"-able:
+
+----------------
+$ git bundle create full.bundle old..new
+----------------
+
+A self-contained bundle without any prerequisites can be extracted
+into anywhere, even into an empty repository, or be cloned from
+(i.e., `new`, but not `old..new`).
+
 It is okay to err on the side of caution, causing the bundle file
 to contain objects already in the destination, as these are ignored
 when unpacking at the destination.
 
-`git clone` can use any bundle created without negative refspecs
-(e.g., `new`, but not `old..new`).
 If you want to match `git clone --mirror`, which would include your
 refs such as `refs/remotes/*`, use `--all`.
 If you want to provide the same set of refs that a clone directly
 from the source repository would get, use `--branches --tags` for
 the `<git-rev-list-args>`.
+
+The 'git bundle verify' command can be used to check whether your
+recipient repository has the required prerequisite commits for a
+bundle.
 
 EXAMPLES
 --------
