@@ -18,21 +18,47 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Some workflows require that one or more branches of development on one
-machine be replicated on another machine, but the two machines cannot
-be directly connected, and therefore the interactive Git protocols (git,
-ssh, http) cannot be used.
+Create, unpack, and manipulate "bundle" files. Bundles are used for
+the "offline" transfer of Git objects without an active "server"
+sitting on the other side of the network connection.
 
-The 'git bundle' command packages objects and references in an archive
-at the originating machine, which can then be imported into another
-repository using 'git fetch', 'git pull', or 'git clone',
-after moving the archive by some means (e.g., by sneakernet).
+They can be used to create both incremental and full backups of a
+repository, and to relay the state of the references in one repository
+to another.
 
-As no
-direct connection between the repositories exists, the user must specify a
-basis for the bundle that is held by the destination repository: the
-bundle assumes that all objects in the basis are already in the
-destination repository.
+Git commands that fetch or otherwise "read" via protocols such as
+`ssh://` and `https://` can also operate on bundle files. It is
+possible linkgit:git-clone[1] a new repository from a bundle, to use
+linkgit:git-fetch[1] to fetch from one, and to list the references
+contained within it with linkgit:git-ls-remote[1]. There's no
+corresponding "write" support, i.e.a 'git push' into a bundle is not
+supported.
+
+See the "EXAMPLES" section below for examples of how to use bundles.
+
+BUNDLE FORMAT
+-------------
+
+Bundles are `.pack` files (see linkgit:git-pack-objects[1]) with a
+header indicating what references are contained within the bundle.
+
+Like the the packed archive format itself bundles can either be
+self-contained, or be created using exclusions.
+
+Bundles created using revision exclusions are "thin packs" created
+using the `--thin` option to linkgit:git-pack-objects[1], and
+unbundled using the `--fix-thin` option to linkgit:git-index-pack[1].
+
+There is no option to create a "thick pack" when using revision
+exclusions, users should not be concerned about the difference. By
+using "thin packs" bundles created using exclusions are smaller in
+size. That they're "thin" under the hood is merely noted here as a
+curiosity, and as a reference to other documentation
+
+See link:technical/bundle-format.html[the `bundle-format`
+documentation] for more details and the discussion of "thin pack" in
+link:technical/pack-format.html[the pack format documentation] for
+further details.
 
 OPTIONS
 -------
