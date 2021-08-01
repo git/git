@@ -37,11 +37,7 @@ theirs;;
 	no 'theirs' merge strategy to confuse this merge option with.
 
 patience;;
-	With this option, 'merge-recursive' spends a little extra time
-	to avoid mismerges that sometimes occur due to unimportant
-	matching lines (e.g., braces from distinct functions).  Use
-	this when the branches to be merged have diverged wildly.
-	See also linkgit:git-diff[1] `--patience`.
+	Deprecated synonym for `diff-algorithm=patience`.
 
 diff-algorithm=[patience|minimal|histogram|myers];;
 	Use a different diff algorithm while merging, which can help
