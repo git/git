@@ -75,9 +75,10 @@ no-renormalize;;
 	`merge.renormalize` configuration variable.
 
 no-renames;;
-	Turn off rename detection. This overrides the `merge.renames`
-	configuration variable.
-	See also linkgit:git-diff[1] `--no-renames`.
+	Turn off rename detection, which can be computationally
+	expensive.  This overrides the `merge.renames`
+	configuration variable.  See also linkgit:git-diff[1]
+	`--no-renames`.
 
 find-renames[=<n>];;
 	Turn on rename detection, optionally setting the similarity
