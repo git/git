@@ -96,6 +96,20 @@ subtree[=<path>];;
 	is prefixed (or stripped from the beginning) to make the shape of
 	two trees to match.
 
+ort::
+	This is meant as a drop-in replacement for the `recursive`
+	algorithm (as reflected in its acronym -- "Ostensibly
+	Recursive's Twin"), and will likely replace it in the future.
+	It fixes corner cases that the `recursive` strategy handles
+	suboptimally, and is significantly faster in large
+	repositories -- especially when many renames are involved.
++
+The `ort` strategy takes all the same options as `recursive`.
+However, it ignores three of those options: `no-renames`,
+`patience` and `diff-algorithm`.  It always runs with rename
+detection (it handles it much faster than `recursive` does), and
+it specifically uses diff-algorithm=histogram.
+
 resolve::
 	This can only resolve two heads (i.e. the current branch
 	and another branch you pulled from) using a 3-way merge
