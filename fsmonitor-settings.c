@@ -155,6 +155,11 @@ static void create_reason_message(struct repository *r,
 			      _("bare repos are incompatible with fsmonitor"));
 		return;
 
+	case FSMONITOR_REASON_VIRTUAL:
+		strbuf_addstr(buf_reason,
+			      _("virtual repos are incompatible with fsmonitor"));
+		return;
+
 	default:
 		BUG("Unhandled case in create_reason_message '%d'", s->reason);
 	}
