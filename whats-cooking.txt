@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2021, #07; Wed, 28)
+Subject: What's cooking in git.git (Aug 2021, #01; Sun, 1)
 X-master-at: 940fe202adcbf9fa1825c648d97cbe1b90d26aec
-X-next-at: 8dce9f242233d743985a79191945e2a8ed1c4354
+X-next-at: bfc8b41932b88e0d52dc2ef21dea9b33e3a8221b
 
-What's cooking in git.git (Jul 2021, #07; Wed, 28)
+What's cooking in git.git (Aug 2021, #01; Sun, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,9 +17,14 @@ useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-The seventh batch of topics in this round are now in 'master'.
-We'll start stabilizing early next month, aiming for 2.33 final
-hopefully by mid-August.
+This cycle may have seen more non-trivial topics thrown at the list
+than ever; I have a strong suspicion that among the topics not in
+'next' and are not explicitly marked to be merged to 'next', there
+are a handful of them that have already been adequately reviewed but
+I simply missed the conclusion.  There also may be some topics that
+only need the final nits picked before they are ready for the
+upcoming release.  Help is greatly appreciated to identify and give
+final polish to them as needed.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,235 +55,41 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ab/attribute-format (2021-07-13) 5 commits
-  (merged to 'next' on 2021-07-20 at 44e5606a6e)
- + advice.h: add missing __attribute__((format)) & fix usage
- + *.h: add a few missing __attribute__((format))
- + *.c static functions: add missing __attribute__((format))
- + sequencer.c: move static function to avoid forward decl
- + *.c static functions: don't forward-declare __attribute__
-
- Many "printf"-like helper functions we have have been annotated
- with __attribute__() to catch placeholder/parameter mismatches.
-
-
-* ab/pkt-line-tests (2021-07-19) 1 commit
-  (merged to 'next' on 2021-07-20 at 8e5e53450c)
- + test-lib-functions: use test-tool for [de]packetize()
-
- Tests that cover protocol bits have been updated and helpers
- used there have been consolidated.
-
-
-* dl/diff-merge-base (2021-07-12) 1 commit
-  (merged to 'next' on 2021-07-20 at 013d013bcf)
- + git-diff: fix missing --merge-base docs
-
- "git diff --merge-base" documentation has been updated.
-
-
-* dl/packet-read-response-end-fix (2021-07-09) 1 commit
-  (merged to 'next' on 2021-07-16 at 6a7734b6b5)
- + pkt-line: replace "stateless separator" with "response end"
-
- Error message update.
-
-
-* ds/gender-neutral-doc-guidelines (2021-07-16) 1 commit
-  (merged to 'next' on 2021-07-20 at 06d325e064)
- + CodingGuidelines: recommend gender-neutral description
-
- A guideline for gender neutral documentation has been added.
-
-
-* ds/status-with-sparse-index (2021-07-14) 16 commits
-  (merged to 'next' on 2021-07-20 at 1558d36c0f)
- + t1092: document bad sparse-checkout behavior
- + fsmonitor: integrate with sparse index
- + wt-status: expand added sparse directory entries
- + status: use sparse-index throughout
- + status: skip sparse-checkout percentage with sparse-index
- + diff-lib: handle index diffs with sparse dirs
- + dir.c: accept a directory as part of cone-mode patterns
- + unpack-trees: unpack sparse directory entries
- + unpack-trees: rename unpack_nondirectories()
- + unpack-trees: compare sparse directories correctly
- + unpack-trees: preserve cache_bottom
- + t1092: add tests for status/add and sparse files
- + t1092: expand repository data shape
- + t1092: replace incorrect 'echo' with 'cat'
- + sparse-index: include EXTENDED flag when expanding
- + sparse-index: skip indexes with unmerged entries
- (this branch is used by ds/add-with-sparse-index and ds/commit-and-checkout-with-sparse-index.)
-
- "git status" codepath learned to work with sparsely populated index
- without hydrating it fully.
-
-
-* en/rename-limits-doc (2021-07-15) 4 commits
-  (merged to 'next' on 2021-07-20 at a89253d530)
- + rename: bump limit defaults yet again
- + diffcore-rename: treat a rename_limit of 0 as unlimited
- + doc: clarify documentation for rename/copy limits
- + diff: correct warning message when renameLimit exceeded
-
- Documentation on "git diff -l<n>" and diff.renameLimit have been
- updated, and the defaults for these limits have been raised.
-
-
-* ew/many-alternate-optim (2021-07-07) 5 commits
-  (merged to 'next' on 2021-07-16 at a2d8bc731d)
- + oidtree: a crit-bit tree for odb_loose_cache
- + oidcpy_with_padding: constify `src' arg
- + make object_directory.loose_objects_subdir_seen a bitmap
- + avoid strlen via strbuf_addstr in link_alt_odb_entry
- + speed up alt_odb_usable() with many alternates
-
- Optimization for repositories with many alternate object store.
-
-
-* hj/commit-allow-empty-message (2021-07-09) 2 commits
-  (merged to 'next' on 2021-07-16 at 86b79d3010)
- + commit: remove irrelavent prompt on `--allow-empty-message`
- + commit: reorganise commit hint strings
-
- "git commit --allow-empty-message" won't abort the operation upon
- an empty message, but the hint shown in the editor said otherwise.
-
-
-* hn/refs-debug-empty-prefix (2021-07-19) 1 commit
-  (merged to 'next' on 2021-07-20 at 2772d3efb2)
- + refs/debug: quote prefix
-
- Debugging aid.
-
-
-* jk/log-decorate-optim (2021-07-14) 7 commits
-  (merged to 'next' on 2021-07-16 at 5637878b90)
- + load_ref_decorations(): fix decoration with tags
-  (merged to 'next' on 2021-07-08 at a3b6f978ab)
- + add_ref_decoration(): rename s/type/deco_type/
- + load_ref_decorations(): avoid parsing non-tag objects
- + object.h: add lookup_object_by_type() function
- + object.h: expand docstring for lookup_unknown_object()
- + log: avoid loading decorations for userformats that don't need it
- + pretty.h: update and expand docstring for userformat_find_requirements()
-
- Optimize "git log" for cases where we wasted cycles to load ref
- decoration data that may not be needed.
-
-
-* jk/t0000-subtests-fix (2021-07-19) 1 commit
-  (merged to 'next' on 2021-07-20 at 81412e1684)
- + t0000: clear GIT_SKIP_TESTS before running sub-tests
- (this branch is used by ab/lib-subtest and ps/t0000-output-directory-fix.)
-
- Test fix.
-
-
-* js/ci-make-sparse (2021-07-26) 3 commits
-  (merged to 'next' on 2021-07-26 at 689316a459)
- + ci/install-dependencies: handle "sparse" job package installs
- + ci: run "apt-get update" before "apt-get install"
-  (merged to 'next' on 2021-07-20 at 99f518bdef)
- + ci: run `make sparse` as part of the GitHub workflow
-
- The CI gained a new job to run "make sparse" check.
-
-
-* pb/dont-complete-aliased-options (2021-07-16) 1 commit
-  (merged to 'next' on 2021-07-20 at bbc531c710)
- + parse-options: don't complete option aliases by default
-
- The completion support used to offer alternate spelling of options
- that exist only for compatibility, which has been corrected.
-
-
-* ps/t0000-output-directory-fix (2021-07-20) 1 commit
-  (merged to 'next' on 2021-07-20 at 7e0b7c1f0c)
- + t0000: fix test if run with TEST_OUTPUT_DIRECTORY
- (this branch is used by ab/lib-subtest; uses jk/t0000-subtests-fix.)
-
- "TEST_OUTPUT_DIRECTORY=there make test" failed to work, which has
- been corrected.
-
-
-* sm/worktree-add-lock (2021-07-15) 3 commits
-  (merged to 'next' on 2021-07-16 at 609c0a4944)
- + worktree: teach `add` to accept --reason <string> with --lock
- + worktree: mark lock strings with `_()` for translation
- + t2400: clean up '"add" worktree with lock' test
-
- "git worktree add --lock" learned to record why the worktree is
- locked with a custom message.
-
-
-* tb/reverse-midx (2021-07-19) 1 commit
-  (merged to 'next' on 2021-07-20 at 995cb54b5b)
- + multi-pack-index: fix potential segfault without sub-command
-
- The code that gives an error message in "git multi-pack-index" when
- no subcommand is given tried to print a NULL pointer as a strong,
- which has been corrected.
-
---------------------------------------------------
 [New Topics]
 
-* jc/bisect-sans-show-branch (2021-07-28) 2 commits
- - bisect: simplify return code from bisect_checkout()
- - bisect: do not run show-branch just to show the current commit
+* tb/mingw-rmdir-symlink-to-directory (2021-07-29) 1 commit
+ - mingw: align symlinks-related rmdir() behavior with Linux
 
- "git bisect" spawned "git show-branch" only to pretty-print the
- title of the commit after checking out the next version to be
- tested; this has been rewritten in C.
+ Windows rmdir() equivalent behaves differently from POSIX ones in
+ that when used on a symbolic link that points at a directory, the
+ target directory gets removed, which has been corrected.
+
+ cf. <xmqqo8ak51mt.fsf@gitster.g>
+ cf. <CAPig+cR9rb+ydc5age+2FzLtTtXhg1t77p5NrA7bqN0iyU6Kyg@mail.gmail.com>
+
+
+* ab/getcwd-test (2021-07-30) 1 commit
+ - t0001: fix broken not-quite getcwd(3) test in bed67874e2
+
+ Portability test update.
 
  Will merge to 'next'.
 
 
-* jc/trivial-threeway-binary-merge (2021-07-28) 1 commit
- - ll-merge: teach ll_binary_merge() a trivial three-way merge
+* ar/doc-markup-fix (2021-07-30) 1 commit
+ - Documentation: render special characters correctly
 
- The built-in merge driver for binary files learned to resolve
- trivial three-way merges (e.g. apply change, which turns A into B,
- to content A) by itself, which would help "git apply --3way" used
- when there is no need to use "--3way".
+ Doc mark-up fix.
 
- Needs review and design discussion.
- As I wrote in the log message, I suspect that this may belong to
- one layer higher, i.e. at ll_merge() before it dispatches to type
- specific drivers.
+ Will merge to 'next'.
 
 
-* os/bisect-runs-show-branch-without-pager (2021-07-27) 1 commit
- - bisect: disable pager while invoking show-branch
+* rs/use-fspathhash (2021-07-30) 1 commit
+ - use fspathhash() everywhere
 
- When "git bisect" spawns "git show-branch" to pretty-print the
- title of the commit to be tested, it could have invoked user's
- pager if user configured to run pager while running show-branch.
- The invocation of show-branch has been changed to disable pager,
- even if one is configured.
+ Code simplification.
 
- Will discard.
- This probably is unnecessary with the rewrite to get rid of the
- show-branch invocation altogether.
-
-
-* hn/refs-test-cleanup-contd (2021-07-22) 11 commits
-  (merged to 'next' on 2021-07-28 at dd3af04939)
- + t6001: avoid direct file system access
- + t6500: use "ls -1" to snapshot ref database state
- + t7064: use update-ref -d to remove upstream branch
- + t1410: mark test as REFFILES
- + t1405: mark test for 'git pack-refs' as REFFILES
- + t1405: use 'git reflog exists' to check reflog existence
-  (merged to 'next' on 2021-07-22 at 2ab8bc259a)
- + t2402: use ref-store test helper to create broken symlink
- + t3320: use git-symbolic-ref rather than filesystem access
- + t6120: use git-update-ref rather than filesystem access
- + t1503: mark symlink test as REFFILES
- + t6050: use git-update-ref rather than filesystem access
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -306,16 +117,54 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ab/http-drop-old-curl (2021-07-21) 5 commits
+* jc/bisect-sans-show-branch (2021-07-28) 2 commits
+ - bisect: simplify return code from bisect_checkout()
+ - bisect: do not run show-branch just to show the current commit
+
+ "git bisect" spawned "git show-branch" only to pretty-print the
+ title of the commit after checking out the next version to be
+ tested; this has been rewritten in C.
+
+ Will merge to 'next'.
+
+
+* jc/trivial-threeway-binary-merge (2021-07-28) 1 commit
+ - ll-merge: teach ll_binary_merge() a trivial three-way merge
+
+ The built-in merge driver for binary files learned to resolve
+ trivial three-way merges (e.g. apply change, which turns A into B,
+ to content A) by itself, which would help "git apply --3way" used
+ when there is no need to use "--3way".
+
+ Will discard.
+ Replace with a trivial-merge logic in apply.c::try_treeway() or
+ apply.c::three_way_merge().
+
+
+* os/bisect-runs-show-branch-without-pager (2021-07-27) 1 commit
+ - bisect: disable pager while invoking show-branch
+
+ When "git bisect" spawns "git show-branch" to pretty-print the
+ title of the commit to be tested, it could have invoked user's
+ pager if user configured to run pager while running show-branch.
+ The invocation of show-branch has been changed to disable pager,
+ even if one is configured.
+
+ Will discard.
+ This probably is unnecessary with the rewrite to get rid of the
+ show-branch invocation altogether.
+
+
+* ab/http-drop-old-curl (2021-07-30) 5 commits
  - http: rename CURLOPT_FILE to CURLOPT_WRITEDATA
- - http: drop support for curl < 7.19.3 and < 7.16.4 (again)
+ - http: drop support for curl < 7.19.3 and < 7.17.0 (again)
  - http: drop support for curl < 7.19.4
  - http: drop support for curl < 7.16.0
  - http: drop support for curl < 7.11.1
 
  Support for ancient versions of cURL library has been dropped.
 
- Expecting a hopefully final reroll to correct log messages.
+ Will merge to 'next'.
 
 
 * ab/lib-subtest (2021-07-21) 10 commits
@@ -333,7 +182,7 @@ Release tarballs are available at:
  Updates to the tests in t0000 to test th etest framework.
 
 
-* ds/add-with-sparse-index (2021-07-26) 5 commits
+* ds/add-with-sparse-index (2021-07-29) 5 commits
  - add: remove ensure_full_index() with --renormalize
  - add: ignore outside the sparse-checkout in refresh()
  - pathspec: stop calling ensure_full_index
@@ -342,6 +191,8 @@ Release tarballs are available at:
  (this branch uses ds/commit-and-checkout-with-sparse-index.)
 
  "git add" can work better with the sparse index.
+
+ Will merge to 'next'.
 
 
 * fc/pull-no-rebase-merges-theirs-into-ours (2021-07-21) 1 commit
@@ -384,17 +235,21 @@ Release tarballs are available at:
  Large part of "git submodule add" gets rewritten in C.
 
 
-* en/ort-perf-batch-15 (2021-07-23) 7 commits
+* en/ort-perf-batch-15 (2021-07-30) 9 commits
+ - merge-ort: remove compile-time ability to turn off usage of memory pools
  - merge-ort: reuse path strings in pool_alloc_filespec
  - merge-ort: store filepairs and filespecs in our mem_pool
  - diffcore-rename, merge-ort: add wrapper functions for filepair alloc/dealloc
  - merge-ort: switch our strmaps over to using memory pools
- - merge-ort: add pool_alloc, pool_calloc, and pool_strndup wrappers
  - merge-ort: set up a memory pool
+ - merge-ort: add pool_alloc, pool_calloc, and pool_strndup wrappers
  - diffcore-rename: use a mem_pool for exact rename detection's hashmap
+ - merge-ort: rename str{map,intmap,set}_func()
  (this branch uses en/ort-perf-batch-14.)
 
  Final batch for "merge -sort" optimization.
+
+ Looking good.
 
 
 * jk/check-pack-valid-before-opening-bitmap (2021-07-23) 1 commit
@@ -418,15 +273,16 @@ Release tarballs are available at:
 
 
 * pb/merge-autostash-more (2021-07-23) 4 commits
- - merge: apply autostash if merge strategy fails
- - merge: apply autostash if fast-forward fails
- - Documentation: define 'MERGE_AUTOSTASH'
- - merge: add missing word "strategy" to a message
+  (merged to 'next' on 2021-07-30 at bfc8b41932)
+ + merge: apply autostash if merge strategy fails
+ + merge: apply autostash if fast-forward fails
+ + Documentation: define 'MERGE_AUTOSTASH'
+ + merge: add missing word "strategy" to a message
 
  The local changes stashed by "git merge --autostash" were lost when
  the merge failed in certain ways, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ah/plugleaks (2021-07-26) 12 commits
@@ -631,9 +487,8 @@ Release tarballs are available at:
  - refs/packet: add missing BUG() invocations to reflog callbacks
  (this branch is used by hn/refs-errno-cleanup.)
 
+ Waiting for a reroll.
  Patches are mostly good, but needs typofixes etc.
-
- Will merge to 'next'.
 
 
 * en/pull-conflicting-options (2021-07-22) 8 commits
@@ -663,18 +518,19 @@ Release tarballs are available at:
 
 
 * en/ort-perf-batch-14 (2021-07-20) 7 commits
- - merge-ort: restart merge with cached renames to reduce process entry cost
- - merge-ort: avoid recursing into directories when we don't need to
- - merge-ort: defer recursing into directories when merge base is matched
- - merge-ort: add a handle_deferred_entries() helper function
- - merge-ort: add data structures for allowable trivial directory resolves
- - merge-ort: add some more explanations in collect_merge_info_callback()
- - merge-ort: resolve paths early when we have sufficient information
+  (merged to 'next' on 2021-07-30 at 89cfdc4513)
+ + merge-ort: restart merge with cached renames to reduce process entry cost
+ + merge-ort: avoid recursing into directories when we don't need to
+ + merge-ort: defer recursing into directories when merge base is matched
+ + merge-ort: add a handle_deferred_entries() helper function
+ + merge-ort: add data structures for allowable trivial directory resolves
+ + merge-ort: add some more explanations in collect_merge_info_callback()
+ + merge-ort: resolve paths early when we have sufficient information
  (this branch is used by en/ort-perf-batch-15.)
 
  Further optimization on "merge -sort" backend.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * cf/fetch-set-upstream-while-detached (2021-07-06) 1 commit
@@ -719,19 +575,20 @@ Release tarballs are available at:
 
 
 * ds/commit-and-checkout-with-sparse-index (2021-07-20) 7 commits
- - unpack-trees: resolve sparse-directory/file conflicts
- - t1092: document bad 'git checkout' behavior
- - checkout: stop expanding sparse indexes
- - sparse-index: recompute cache-tree
- - commit: integrate with sparse-index
- - p2000: compress repo names
- - p2000: add 'git checkout -' test and decrease depth
+  (merged to 'next' on 2021-07-30 at 52ed1b0091)
+ + unpack-trees: resolve sparse-directory/file conflicts
+ + t1092: document bad 'git checkout' behavior
+ + checkout: stop expanding sparse indexes
+ + sparse-index: recompute cache-tree
+ + commit: integrate with sparse-index
+ + p2000: compress repo names
+ + p2000: add 'git checkout -' test and decrease depth
  (this branch is used by ds/add-with-sparse-index.)
 
  "git checkout" and "git commit" learn to work without unnecessarily
  expanding sparse indexes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jt/push-negotiation-fixes (2021-07-15) 3 commits
@@ -754,7 +611,7 @@ Release tarballs are available at:
 
  Build clean-up for "make tags" and friends.
 
- Will merge to 'next'?
+ Expecting a reroll.
  4/5 may want a minor tweak to the log and the patch text but otherwise looks good.
 
 
@@ -835,23 +692,6 @@ Release tarballs are available at:
  Waiting for reviews.
 
 
-* ab/doc-retire-alice-bob (2021-06-16) 6 commits
- - pack-protocol doc: use "www-data" in place of "alice"
- - doc: replace "alice" and "bob" with "jdoe" and "msmith"
- - fast-import doc: change "bob" in an example to "file.txt"
- - daemon doc + code comments: reword "alice" example
- - gitcvs-migration doc: replace "alice" and "bob" with "you" and "www-data"
- - gittutorial doc: replace "alice" and "bob" with "you" and "www-data"
-
- Documentation update to avoid Alice and Bob in contexts where Eve
- does not appear in.
-
- Will discard.
- Let's shelve this one for now, as it does not seem to solve any
- real problems (other than ceasing to use Alice and Bob in contexts
- that do not call for Eve).
-
-
 * ab/serve-cleanup (2021-06-28) 8 commits
  - upload-pack.c: convert to new serve.c "startup" config cb
  - serve: add support for a "startup" git_config() callback
@@ -923,7 +763,7 @@ Release tarballs are available at:
  Futz with the way 'errno' is relied on in the refs API to carry the
  failure modes up the callchain.
 
- Will merge to 'next'.
+ Blocked by ab/refs-files-cleanup but otherwise is ready for 'next'.
 
 
 * ab/test-tool-cache-cleanup (2021-06-08) 4 commits
@@ -995,12 +835,13 @@ Release tarballs are available at:
 
 
 * ab/update-submitting-patches (2021-07-22) 2 commits
- - SubmittingPatches: replace discussion of Travis with GitHub Actions
- - SubmittingPatches: move discussion of Signed-off-by above "send"
+  (merged to 'next' on 2021-07-30 at 9ae2de7f7a)
+ + SubmittingPatches: replace discussion of Travis with GitHub Actions
+ + SubmittingPatches: move discussion of Signed-off-by above "send"
 
  Reorganize and update the SubmitingPatches document.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * zh/ref-filter-raw-data (2021-07-26) 6 commits
@@ -1015,7 +856,7 @@ Release tarballs are available at:
  option of "git for-each-ref" and its friends to be used in "git
  cat-file --batch".
 
- Will merge to 'next'.
+ Performance issues are being looked into.
 
 
 * jh/builtin-fsmonitor (2021-07-12) 35 commits
@@ -1098,3 +939,40 @@ Release tarballs are available at:
  actual types of an object better.
 
  Needs review.
+
+--------------------------------------------------
+[Discarded]
+
+* ab/doc-retire-alice-bob (2021-06-16) 6 commits
+ . pack-protocol doc: use "www-data" in place of "alice"
+ . doc: replace "alice" and "bob" with "jdoe" and "msmith"
+ . fast-import doc: change "bob" in an example to "file.txt"
+ . daemon doc + code comments: reword "alice" example
+ . gitcvs-migration doc: replace "alice" and "bob" with "you" and "www-data"
+ . gittutorial doc: replace "alice" and "bob" with "you" and "www-data"
+
+ Documentation update to avoid Alice and Bob in contexts where Eve
+ does not appear in.
+
+ Will discard.
+ Let's shelve this one for now, as it does not seem to solve any
+ real problems (other than ceasing to use Alice and Bob in contexts
+ that do not call for Eve).
+
+
+* hn/refs-test-cleanup-contd (2021-07-22) 11 commits
+  (merged to 'next' on 2021-07-28 at dd3af04939)
+ + t6001: avoid direct file system access
+ + t6500: use "ls -1" to snapshot ref database state
+ + t7064: use update-ref -d to remove upstream branch
+ + t1410: mark test as REFFILES
+ + t1405: mark test for 'git pack-refs' as REFFILES
+ + t1405: use 'git reflog exists' to check reflog existence
+  (merged to 'next' on 2021-07-22 at 2ab8bc259a)
+ + t2402: use ref-store test helper to create broken symlink
+ + t3320: use git-symbolic-ref rather than filesystem access
+ + t6120: use git-update-ref rather than filesystem access
+ + t1503: mark symlink test as REFFILES
+ + t6050: use git-update-ref rather than filesystem access
+
+ Absorbed by the hn/refs-test-cleanup topic.
