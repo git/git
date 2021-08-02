@@ -16,6 +16,7 @@ enum fsmonitor_mode {
 enum fsmonitor_reason {
 	FSMONITOR_REASON_ZERO = 0,
 	FSMONITOR_REASON_BARE = 1,
+	FSMONITOR_REASON_VIRTUAL = 2,
 };
 
 void fsm_settings__set_ipc(struct repository *r);
