@@ -30,11 +30,12 @@ test_expect_success 'rejects invalid -o/--origin' '
 
 '
 
-test_expect_success 'disallows --bare with --origin' '
+test_expect_success '--bare works with -o/--origin' '
 
-	test_must_fail git clone -o foo --bare parent clone-bare-o 2>err &&
-	test_debug "cat err" &&
-	test_i18ngrep -e "--bare and --origin foo options are incompatible" err
+	git clone --bare --origin=somewhere parent clone-bare-o &&
+	url="$(git -C clone-bare-o config --local remote.somewhere.url)" &&
+	test -n "$url" &&
+	test_must_fail git -C clone-bare-o config --local remote.origin.url
 
 '
 
