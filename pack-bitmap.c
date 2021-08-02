@@ -809,8 +809,9 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	tips = find_tip_objects(bitmap_git, tip_objects, type);
 
 	/*
-	 * We can use the blob type-bitmap to work in whole words
-	 * for the objects that are actually in the bitmapped packfile.
+	 * We can use the type-level bitmap for 'type' to work in whole
+	 * words for the objects that are actually in the bitmapped
+	 * packfile.
 	 */
 	for (i = 0, init_type_iterator(&it, bitmap_git, type);
 	     i < to_filter->word_alloc && ewah_iterator_next(&mask, &it);
@@ -821,9 +822,9 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	}
 
 	/*
-	 * Clear any blobs that weren't in the packfile (and so would not have
-	 * been caught by the loop above. We'll have to check them
-	 * individually.
+	 * Clear any objects that weren't in the packfile (and so would
+	 * not have been caught by the loop above. We'll have to check
+	 * them individually.
 	 */
 	for (i = 0; i < eindex->count; i++) {
 		uint32_t pos = i + bitmap_git->pack->num_objects;
