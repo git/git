@@ -392,6 +392,11 @@ static void report_collided_checkout(struct index_state *index)
 	string_list_clear(&list, 0);
 }
 
+static int must_checkout(const struct cache_entry *ce)
+{
+	return ce->ce_flags & CE_UPDATE;
+}
+
 static int check_updates(struct unpack_trees_options *o,
 			 struct index_state *index)
 {
@@ -442,28 +447,12 @@ static int check_updates(struct unpack_trees_options *o,
 	if (should_update_submodules())
 		load_gitmodules_file(index, &state);
 
-	if (has_promisor_remote()) {
+	if (has_promisor_remote())
 		/*
 		 * Prefetch the objects that are to be checked out in the loop
 		 * below.
 		 */
-		struct oid_array to_fetch = OID_ARRAY_INIT;
-		for (i = 0; i < index->cache_nr; i++) {
-			struct cache_entry *ce = index->cache[i];
-
-			if (!(ce->ce_flags & CE_UPDATE) ||
-			    S_ISGITLINK(ce->ce_mode))
-				continue;
-			if (!oid_object_info_extended(the_repository, &ce->oid,
-						      NULL,
-						      OBJECT_INFO_FOR_PREFETCH))
-				continue;
-			oid_array_append(&to_fetch, &ce->oid);
-		}
-		promisor_remote_get_direct(the_repository,
-					   to_fetch.oid, to_fetch.nr);
-		oid_array_clear(&to_fetch);
-	}
+		prefetch_cache_entries(index, must_checkout);
 
 	get_parallel_checkout_configs(&pc_workers, &pc_threshold);
 
@@ -473,7 +462,7 @@ static int check_updates(struct unpack_trees_options *o,
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
-		if (ce->ce_flags & CE_UPDATE) {
+		if (must_checkout(ce)) {
 			size_t last_pc_queue_size = pc_queue_size();
 
 			if (ce->ce_flags & CE_WT_REMOVE)
