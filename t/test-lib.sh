@@ -1513,6 +1513,12 @@ test_lazy_prereq SYMLINKS '
 	ln -s x y && test -h y
 '
 
+test_lazy_prereq SYMLINKS_WINDOWS '
+	# test whether symbolic links are enabled on Windows
+	test_have_prereq MINGW &&
+	cmd //c "mklink y x" &> /dev/null && test -h y
+'
+
 test_lazy_prereq FILEMODE '
 	test "$(git config --bool core.filemode)" = true
 '
