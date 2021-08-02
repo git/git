@@ -9,12 +9,18 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 RUN="test-tool ref-store main"
 
-test_expect_success 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
-	test_commit one &&
+
+test_expect_success 'setup' '
+	test_commit one
+'
+
+test_expect_success REFFILES 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
 	N=`find .git/refs -type f | wc -l` &&
 	test "$N" != 0 &&
-	$RUN pack-refs 3 &&
-	N=`find .git/refs -type f | wc -l`
+	ALL_OR_PRUNE_FLAG=3 &&
+	$RUN pack-refs ${ALL_OR_PRUNE_FLAG} &&
+	N=`find .git/refs -type f` &&
+	test -z "$N"
 '
 
 test_expect_success 'create_symref(FOO, refs/heads/main)' '
