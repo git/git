@@ -17,6 +17,7 @@ env:
 jobs:
   job:
     runs-on: ubuntu-latest
+    environment: monitor-components
     strategy:
       matrix:
         component:
@@ -76,7 +77,7 @@ jobs:
           feed: ${{matrix.component.feed}}
           prefix: "[New ${{matrix.component.label}} version]"
           labels: component-update
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.MONITOR_COMPONENTS_PAT }}
           character-limit: ${{ env.CHARACTER_LIMIT }}
           max-age: ${{ env.MAX_AGE }}
           aggregate: ${{matrix.component.aggregate}}
