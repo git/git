@@ -95,7 +95,7 @@ static void parse_graph_colors_config(struct strvec *colors, const char *string)
 		if (!color_parse_mem(start, comma - start, color))
 			strvec_push(colors, color);
 		else
-			warning(_("ignore invalid color '%.*s' in log.graphColors"),
+			warning(_("ignored invalid color '%.*s' in log.graphColors"),
 				(int)(comma - start), start);
 		start = comma + 1;
 	}

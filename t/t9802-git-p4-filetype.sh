@@ -263,7 +263,7 @@ test_expect_success SYMLINKS 'ensure p4 symlink parsed correctly' '
 	(
 		cd "$git" &&
 		test -L symlink &&
-		test $(readlink symlink) = symlink-target
+		test $(test_readlink symlink) = symlink-target
 	)
 '
 
@@ -329,7 +329,7 @@ test_expect_success SYMLINKS 'empty symlink target' '
 	git p4 clone --dest="$git" //depot@all &&
 	(
 		cd "$git" &&
-		test $(readlink empty-symlink) = target2
+		test $(test_readlink empty-symlink) = target2
 	)
 '
 

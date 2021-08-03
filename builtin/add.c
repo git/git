@@ -470,7 +470,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int exit_status = 0;
 	struct pathspec pathspec;
-	struct dir_struct dir;
+	struct dir_struct dir = DIR_INIT;
 	int flags;
 	int add_new_files;
 	int require_pathspec;
@@ -577,7 +577,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	die_in_unpopulated_submodule(&the_index, prefix);
 	die_path_inside_submodule(&the_index, &pathspec);
 
-	dir_init(&dir);
 	if (add_new_files) {
 		int baselen;
 

@@ -69,7 +69,8 @@ fetch.negotiationAlgorithm::
 	setting defaults to "skipping".
 	Unknown values will cause 'git fetch' to error out.
 +
-See also the `--negotiation-tip` option for linkgit:git-fetch[1].
+See also the `--negotiate-only` and `--negotiation-tip` options to
+linkgit:git-fetch[1].
 
 fetch.showForcedUpdates::
 	Set to false to enable `--no-show-forced-updates` in

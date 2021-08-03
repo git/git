@@ -517,4 +517,45 @@ test_expect_success 'server-side error detected' '
 	test_i18ngrep "server-side error" actual
 '
 
+test_expect_success 'http auth remembers successful credentials' '
+	rm -f .git-credentials &&
+	test_config credential.helper store &&
+
+	# the first request prompts the user...
+	set_askpass user@host pass@host &&
+	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
+	expect_askpass both user@host &&
+
+	# ...and the second one uses the stored value rather than
+	# prompting the user.
+	set_askpass bogus-user bogus-pass &&
+	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
+	expect_askpass none
+'
+
+test_expect_success 'http auth forgets bogus credentials' '
+	# seed credential store with bogus values. In real life,
+	# this would probably come from a password which worked
+	# for a previous request.
+	rm -f .git-credentials &&
+	test_config credential.helper store &&
+	{
+		echo "url=$HTTPD_URL" &&
+		echo "username=bogus" &&
+		echo "password=bogus"
+	} | git credential approve &&
+
+	# we expect this to use the bogus values and fail, never even
+	# prompting the user...
+	set_askpass user@host pass@host &&
+	test_must_fail git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
+	expect_askpass none &&
+
+	# ...but now we should have forgotten the bad value, causing
+	# us to prompt the user again.
+	set_askpass user@host pass@host &&
+	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
+	expect_askpass both user@host
+'
+
 test_done

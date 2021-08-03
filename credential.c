@@ -10,8 +10,8 @@
 
 void credential_init(struct credential *c)
 {
-	memset(c, 0, sizeof(*c));
-	c->helpers.strdup_strings = 1;
+	struct credential blank = CREDENTIAL_INIT;
+	memcpy(c, &blank, sizeof(*c));
 }
 
 void credential_clear(struct credential *c)

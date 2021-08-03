@@ -413,7 +413,7 @@ test_expect_success 'amend! commit allows empty commit msg body with --allow-emp
 '
 
 test_fixup_reword_opt () {
-	test_expect_success C_LOCALE_OUTPUT "--fixup=reword: incompatible with $1" "
+	test_expect_success "--fixup=reword: incompatible with $1" "
 		echo 'fatal: reword option of --fixup is mutually exclusive with'\
 			'--patch/--interactive/--all/--include/--only' >expect &&
 		test_must_fail git commit --fixup=reword:HEAD~ $1 2>actual &&
@@ -498,7 +498,7 @@ test_expect_success 'invalid message options when using --fixup' '
 cat >expected-template <<EOF
 
 # Please enter the commit message for your changes. Lines starting
-# with '#' will be ignored, and an empty message aborts the commit.
+# with '#' will be ignored.
 #
 # Author:    A U Thor <author@example.com>
 #

@@ -1320,9 +1320,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			}
 
 		if (!is_local && !complete_refs_before_fetch) {
-			err = transport_fetch_refs(transport, mapped_refs);
-			if (err)
-				goto cleanup;
+			if (transport_fetch_refs(transport, mapped_refs))
+				die(_("remote transport reported error"));
 		}
 
 		remote_head = find_ref_by_name(refs, "HEAD");
@@ -1380,9 +1379,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (is_local)
 		clone_local(path, git_dir);
 	else if (refs && complete_refs_before_fetch) {
-		err = transport_fetch_refs(transport, mapped_refs);
-		if (err)
-			goto cleanup;
+		if (transport_fetch_refs(transport, mapped_refs))
+			die(_("remote transport reported error"));
 	}
 
 	update_remote_refs(refs, mapped_refs, remote_head_points_at,
@@ -1410,7 +1408,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	junk_mode = JUNK_LEAVE_REPO;
 	err = checkout(submodule_progress);
 
-cleanup:
 	free(remote_name);
 	strbuf_release(&reflog_msg);
 	strbuf_release(&branch_top);

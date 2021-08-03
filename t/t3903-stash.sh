@@ -859,7 +859,7 @@ test_expect_success 'setup stash with index and worktree changes' '
 	git stash
 '
 
-test_expect_success 'stash list implies --first-parent -m' '
+test_expect_success 'stash list -p shows simple diff' '
 	cat >expect <<-EOF &&
 	stash@{0}
 

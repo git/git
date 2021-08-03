@@ -121,7 +121,7 @@ static void dir_rename_entry_init(struct dir_rename_entry *entry,
 	entry->dir = directory;
 	entry->non_unique_new_dir = 0;
 	strbuf_init(&entry->new_dir, 0);
-	string_list_init(&entry->possible_new_dirs, 0);
+	string_list_init_nodup(&entry->possible_new_dirs);
 }
 
 struct collision_entry {
@@ -167,6 +167,7 @@ static void flush_output(struct merge_options *opt)
 	}
 }
 
+__attribute__((format (printf, 2, 3)))
 static int err(struct merge_options *opt, const char *err, ...)
 {
 	va_list params;
@@ -1879,7 +1880,7 @@ static struct diff_queue_struct *get_diffpairs(struct merge_options *opt,
 	 */
 	if (opts.detect_rename > DIFF_DETECT_RENAME)
 		opts.detect_rename = DIFF_DETECT_RENAME;
-	opts.rename_limit = (opt->rename_limit >= 0) ? opt->rename_limit : 1000;
+	opts.rename_limit = (opt->rename_limit >= 0) ? opt->rename_limit : 7000;
 	opts.rename_score = opt->rename_score;
 	opts.show_rename_progress = opt->show_rename_progress;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -2152,7 +2153,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
  *      implicit renaming of files that should be left in place.  (See
  *      testcase 6b in t6043 for details.)
  *   2. Prune directory renames if there are still files left in the
- *      the original directory.  These represent a partial directory rename,
+ *      original directory.  These represent a partial directory rename,
  *      i.e. a rename where only some of the files within the directory
  *      were renamed elsewhere.  (Technically, this could be done earlier
  *      in get_directory_renames(), except that would prevent us from
@@ -2804,12 +2805,19 @@ static int process_renames(struct merge_options *opt,
 			int renamed_stage = a_renames == renames1 ? 2 : 3;
 			int other_stage =   a_renames == renames1 ? 3 : 2;
 
+			/*
+			 * Directory renames have a funny corner case...
+			 */
+			int renamed_to_self = !strcmp(ren1_src, ren1_dst);
+
 			/* BUG: We should only remove ren1_src in the base
 			 * stage and in other_stage (think of rename +
 			 * add-source case).
 			 */
-			remove_file(opt, 1, ren1_src,
-				    renamed_stage == 2 || !was_tracked(opt, ren1_src));
+			if (!renamed_to_self)
+				remove_file(opt, 1, ren1_src,
+					    renamed_stage == 2 ||
+					    !was_tracked(opt, ren1_src));
 
 			oidcpy(&src_other.oid,
 			       &ren1->src_entry->stages[other_stage].oid);
@@ -2822,6 +2830,9 @@ static int process_renames(struct merge_options *opt,
 			if (oideq(&src_other.oid, null_oid()) &&
 			    ren1->dir_rename_original_type == 'A') {
 				setup_rename_conflict_info(RENAME_VIA_DIR,
+							   opt, ren1, NULL);
+			} else if (renamed_to_self) {
+				setup_rename_conflict_info(RENAME_NORMAL,
 							   opt, ren1, NULL);
 			} else if (oideq(&src_other.oid, null_oid())) {
 				setup_rename_conflict_info(RENAME_DELETE,
@@ -3180,7 +3191,6 @@ static int handle_rename_normal(struct merge_options *opt,
 	struct rename *ren = ci->ren1;
 	struct merge_file_info mfi;
 	int clean;
-	int side = (ren->branch == opt->branch1 ? 2 : 3);
 
 	/* Merge the content and write it out */
 	clean = handle_content_merge(&mfi, opt, path, was_dirty(opt, path),
@@ -3190,9 +3200,7 @@ static int handle_rename_normal(struct merge_options *opt,
 	    opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_CONFLICT &&
 	    ren->dir_rename_original_dest) {
 		if (update_stages(opt, path,
-				  NULL,
-				  side == 2 ? &mfi.blob : NULL,
-				  side == 2 ? NULL : &mfi.blob))
+				  &mfi.blob, &mfi.blob, &mfi.blob))
 			return -1;
 		clean = 0; /* not clean, but conflicted */
 	}
@@ -3703,7 +3711,7 @@ static int merge_start(struct merge_options *opt, struct tree *head)
 	}
 
 	CALLOC_ARRAY(opt->priv, 1);
-	string_list_init(&opt->priv->df_conflict_file_set, 1);
+	string_list_init_dup(&opt->priv->df_conflict_file_set);
 	return 0;
 }
 

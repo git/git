@@ -1190,13 +1190,11 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 	if (!dir)
 		die_errno(_("unable to open rr-cache directory"));
 	/* Collect stale conflict IDs ... */
-	while ((e = readdir(dir))) {
+	while ((e = readdir_skip_dot_and_dotdot(dir))) {
 		struct rerere_dir *rr_dir;
 		struct rerere_id id;
 		int now_empty;
 
-		if (is_dot_or_dotdot(e->d_name))
-			continue;
 		if (!is_rr_cache_dirname(e->d_name))
 			continue; /* or should we remove e->d_name? */
 

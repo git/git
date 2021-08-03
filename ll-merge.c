@@ -91,7 +91,9 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	 * With -Xtheirs or -Xours, we have cleanly merged;
 	 * otherwise we got a conflict.
 	 */
-	return (opts->variant ? 0 : 1);
+	return opts->variant == XDL_MERGE_FAVOR_OURS ||
+	       opts->variant == XDL_MERGE_FAVOR_THEIRS ?
+	       0 : 1;
 }
 
 static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
@@ -136,7 +138,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 
 static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  mmbuffer_t *result,
-			  const char *path_unused,
+			  const char *path,
 			  mmfile_t *orig, const char *orig_name,
 			  mmfile_t *src1, const char *name1,
 			  mmfile_t *src2, const char *name2,
@@ -148,8 +150,8 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 	assert(opts);
 	o = *opts;
 	o.variant = XDL_MERGE_FAVOR_UNION;
-	return ll_xdl_merge(drv_unused, result, path_unused,
-			    orig, NULL, src1, NULL, src2, NULL,
+	return ll_xdl_merge(drv_unused, result, path,
+			    orig, orig_name, src1, name1, src2, name2,
 			    &o, marker_size);
 }
 

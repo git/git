@@ -164,22 +164,13 @@ static int verify_packfile(struct repository *r,
 
 int verify_pack_index(struct packed_git *p)
 {
-	size_t len;
-	const unsigned char *index_base;
-	git_hash_ctx ctx;
-	unsigned char hash[GIT_MAX_RAWSZ];
 	int err = 0;
 
 	if (open_pack_index(p))
 		return error("packfile %s index not opened", p->pack_name);
-	index_base = p->index_data;
-	len = p->index_size - the_hash_algo->rawsz;
 
 	/* Verify SHA1 sum of the index file */
-	the_hash_algo->init_fn(&ctx);
-	the_hash_algo->update_fn(&ctx, index_base, len);
-	the_hash_algo->final_fn(hash, &ctx);
-	if (!hasheq(hash, index_base + len))
+	if (!hashfile_checksum_valid(p->index_data, p->index_size))
 		err = error("Packfile index for %s hash mismatch",
 			    p->pack_name);
 	return err;

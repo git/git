@@ -1126,7 +1126,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			if (rm->status == REF_STATUS_REJECT_SHALLOW) {
 				if (want_status == FETCH_HEAD_MERGE)
-					warning(_("reject %s because shallow roots are not allowed to be updated"),
+					warning(_("rejected %s because shallow roots are not allowed to be updated"),
 						rm->peer_ref ? rm->peer_ref->name : rm->name);
 				continue;
 			}
@@ -1989,6 +1989,9 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 		fetch_config_from_gitmodules(sfjc, rs);
 	}
+
+	if (negotiate_only && !negotiation_tip.nr)
+		die(_("--negotiate-only needs one or more --negotiate-tip=*"));
 
 	if (deepen_relative) {
 		if (deepen_relative < 0)

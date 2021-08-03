@@ -392,7 +392,7 @@ test_expect_success 'B: accept branch name "TEMP_TAG"' '
 		git gc
 		git prune" &&
 	git fast-import <input &&
-	test -f .git/TEMP_TAG &&
+	test $(test-tool ref-store main resolve-ref TEMP_TAG 0 | cut -f1 -d " " ) != "$ZERO_OID" &&
 	test $(git rev-parse main) = $(git rev-parse TEMP_TAG^)
 '
 
@@ -1538,7 +1538,6 @@ test_expect_success 'O: comments are all skipped' '
 	commit refs/heads/O1
 	# -- ignore all of this text
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	# $GIT_COMMITTER_NAME has inserted here for his benefit.
 	data <<COMMIT
 	dirty directory copy
 	COMMIT

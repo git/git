@@ -386,7 +386,9 @@ test_expect_success 'setup main' '
 	test_tick
 '
 
-
+# Disable extra chain-linting for the next set of tests. There are many
+# auto-generated ones that are not worth checking over and over.
+GIT_TEST_CHAIN_LINT_HARDER_DEFAULT=0
 
 warn_LF_CRLF="LF will be replaced by CRLF"
 warn_CRLF_LF="CRLF will be replaced by LF"
@@ -596,6 +598,9 @@ do
 	checkout_files     auto  "$id" ""     false   ""       $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 	checkout_files     auto  "$id" ""     false   native   $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 done
+
+# The rest of the tests are unique; do the usual linting.
+unset GIT_TEST_CHAIN_LINT_HARDER_DEFAULT
 
 # Should be the last test case: remove some files from the worktree
 test_expect_success 'ls-files --eol -d -z' '

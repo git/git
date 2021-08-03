@@ -411,7 +411,7 @@ static void send_one_item(int fd, struct parallel_checkout_item *pc_item)
 	len_data = sizeof(struct pc_item_fixed_portion) + name_len +
 		   working_tree_encoding_len;
 
-	data = xcalloc(1, len_data);
+	data = xmalloc(len_data);
 
 	fixed_portion = (struct pc_item_fixed_portion *)data;
 	fixed_portion->id = pc_item->id;
@@ -421,13 +421,12 @@ static void send_one_item(int fd, struct parallel_checkout_item *pc_item)
 	fixed_portion->name_len = name_len;
 	fixed_portion->working_tree_encoding_len = working_tree_encoding_len;
 	/*
-	 * We use hashcpy() instead of oidcpy() because the hash[] positions
-	 * after `the_hash_algo->rawsz` might not be initialized. And Valgrind
-	 * would complain about passing uninitialized bytes to a syscall
-	 * (write(2)). There is no real harm in this case, but the warning could
-	 * hinder the detection of actual errors.
+	 * We pad the unused bytes in the hash array because, otherwise,
+	 * Valgrind would complain about passing uninitialized bytes to a
+	 * write() syscall. The warning doesn't represent any real risk here,
+	 * but it could hinder the detection of actual errors.
 	 */
-	hashcpy(fixed_portion->oid.hash, pc_item->ce->oid.hash);
+	oidcpy_with_padding(&fixed_portion->oid, &pc_item->ce->oid);
 
 	variant = data + sizeof(*fixed_portion);
 	if (working_tree_encoding_len) {

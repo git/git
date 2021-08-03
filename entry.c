@@ -58,11 +58,8 @@ static void remove_subtree(struct strbuf *path)
 
 	if (!dir)
 		die_errno("cannot opendir '%s'", path->buf);
-	while ((de = readdir(dir)) != NULL) {
+	while ((de = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		struct stat st;
-
-		if (is_dot_or_dotdot(de->d_name))
-			continue;
 
 		strbuf_addch(path, '/');
 		strbuf_addstr(path, de->d_name);
@@ -146,8 +143,8 @@ void enable_delayed_checkout(struct checkout *state)
 	if (!state->delayed_checkout) {
 		state->delayed_checkout = xmalloc(sizeof(*state->delayed_checkout));
 		state->delayed_checkout->state = CE_CAN_DELAY;
-		string_list_init(&state->delayed_checkout->filters, 0);
-		string_list_init(&state->delayed_checkout->paths, 0);
+		string_list_init_nodup(&state->delayed_checkout->filters);
+		string_list_init_nodup(&state->delayed_checkout->paths);
 	}
 }
 

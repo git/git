@@ -410,6 +410,19 @@ test_expect_success 'git-fsck incorrect offset' '
 		"git -c core.multipackindex=true fsck"
 '
 
+test_expect_success 'corrupt MIDX is not reused' '
+	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
+		"incorrect object offset" &&
+	git multi-pack-index write 2>err &&
+	test_i18ngrep checksum.mismatch err &&
+	git multi-pack-index verify
+'
+
+test_expect_success 'verify incorrect checksum' '
+	pos=$(($(wc -c <$objdir/pack/multi-pack-index) - 1)) &&
+	corrupt_midx_and_verify $pos "\377" $objdir "incorrect checksum"
+'
+
 test_expect_success 'repack progress off for redirected stderr' '
 	GIT_PROGRESS_DELAY=0 git multi-pack-index --object-dir=$objdir repack 2>err &&
 	test_line_count = 0 err
@@ -822,6 +835,11 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 		mv $pack $pack.bak &&
 		git cat-file --batch-check="%(objectsize:disk)" <tip
 	)
+'
+
+test_expect_success 'usage shown without sub-command' '
+	test_expect_code 129 git multi-pack-index 2>err &&
+	! test_i18ngrep "unrecognized subcommand" err
 '
 
 test_done

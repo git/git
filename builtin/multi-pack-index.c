@@ -176,8 +176,8 @@ int cmd_multi_pack_index(int argc, const char **argv,
 	else if (!strcmp(argv[0], "expire"))
 		return cmd_multi_pack_index_expire(argc, argv);
 	else {
-usage:
 		error(_("unrecognized subcommand: %s"), argv[0]);
+usage:
 		usage_with_options(builtin_multi_pack_index_usage,
 				   builtin_multi_pack_index_options);
 	}

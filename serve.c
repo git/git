@@ -258,7 +258,7 @@ static int process_request(void)
 			state = PROCESS_REQUEST_DONE;
 			break;
 		case PACKET_READ_RESPONSE_END:
-			BUG("unexpected stateless separator packet");
+			BUG("unexpected response end packet");
 		}
 	}
 

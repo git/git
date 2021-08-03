@@ -121,7 +121,9 @@ depth is 4095.
 	If specified, multiple packfiles may be created, which also
 	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
-	`pack.packSizeLimit` is set.
+	`pack.packSizeLimit` is set. Note that this option may result in
+	a larger and slower repository; see the discussion in
+	`pack.packSizeLimit`.
 
 -b::
 --write-bitmap-index::

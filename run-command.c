@@ -11,9 +11,8 @@
 
 void child_process_init(struct child_process *child)
 {
-	memset(child, 0, sizeof(*child));
-	strvec_init(&child->args);
-	strvec_init(&child->env_array);
+	struct child_process blank = CHILD_PROCESS_INIT;
+	memcpy(child, &blank, sizeof(*child));
 }
 
 void child_process_clear(struct child_process *child)
@@ -1891,4 +1890,16 @@ int run_auto_maintenance(int quiet)
 	strvec_push(&maint.args, quiet ? "--quiet" : "--no-quiet");
 
 	return run_command(&maint);
+}
+
+void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir)
+{
+	const char * const *var;
+
+	for (var = local_repo_env; *var; var++) {
+		if (strcmp(*var, CONFIG_DATA_ENVIRONMENT) &&
+		    strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
+			strvec_push(env_array, *var);
+	}
+	strvec_pushf(env_array, "%s=%s", GIT_DIR_ENVIRONMENT, new_git_dir);
 }

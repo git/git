@@ -410,6 +410,15 @@ struct cache_entry *dup_cache_entry(const struct cache_entry *ce, struct index_s
  */
 void validate_cache_entries(const struct index_state *istate);
 
+/*
+ * Bulk prefetch all missing cache entries that are not GITLINKs and that match
+ * the given predicate. This function should only be called if
+ * has_promisor_remote() returns true.
+ */
+typedef int (*must_prefetch_predicate)(const struct cache_entry *);
+void prefetch_cache_entries(const struct index_state *istate,
+			    must_prefetch_predicate must_prefetch);
+
 #ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
 extern struct index_state the_index;
 
@@ -1385,6 +1394,7 @@ enum get_oid_result {
 };
 
 int repo_get_oid(struct repository *r, const char *str, struct object_id *oid);
+__attribute__((format (printf, 2, 3)))
 int get_oidf(struct object_id *oid, const char *fmt, ...);
 int repo_get_oid_commit(struct repository *r, const char *str, struct object_id *oid);
 int repo_get_oid_committish(struct repository *r, const char *str, struct object_id *oid);

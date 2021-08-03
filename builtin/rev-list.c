@@ -127,13 +127,15 @@ static void show_commit(struct commit *commit, void *data)
 	if (info->header_prefix)
 		fputs(info->header_prefix, stdout);
 
-	if (!revs->graph)
-		fputs(get_revision_mark(revs, commit), stdout);
-	if (revs->abbrev_commit && revs->abbrev)
-		fputs(find_unique_abbrev(&commit->object.oid, revs->abbrev),
-		      stdout);
-	else
-		fputs(oid_to_hex(&commit->object.oid), stdout);
+	if (revs->include_header) {
+		if (!revs->graph)
+			fputs(get_revision_mark(revs, commit), stdout);
+		if (revs->abbrev_commit && revs->abbrev)
+			fputs(find_unique_abbrev(&commit->object.oid, revs->abbrev),
+			      stdout);
+		else
+			fputs(oid_to_hex(&commit->object.oid), stdout);
+	}
 	if (revs->print_parents) {
 		struct commit_list *parents = commit->parents;
 		while (parents) {
@@ -153,7 +155,7 @@ static void show_commit(struct commit *commit, void *data)
 	show_decorations(revs, commit);
 	if (revs->commit_format == CMIT_FMT_ONELINE)
 		putchar(' ');
-	else
+	else if (revs->include_header)
 		putchar('\n');
 
 	if (revs->verbose_header) {
@@ -512,6 +514,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	repo_init_revisions(the_repository, &revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
+	revs.include_header = 1;
 
 	/*
 	 * Scan the argument list before invoking setup_revisions(), so that we
@@ -627,6 +630,16 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
+		if (!strcmp(arg, ("--commit-header"))) {
+			revs.include_header = 1;
+			continue;
+		}
+
+		if (!strcmp(arg, ("--no-commit-header"))) {
+			revs.include_header = 0;
+			continue;
+		}
+
 		if (!strcmp(arg, "--disk-usage")) {
 			show_disk_usage = 1;
 			info.flags |= REV_LIST_QUIET;
@@ -636,10 +649,12 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		usage(rev_list_usage);
 
 	}
+	if (revs.commit_format != CMIT_FMT_USERFORMAT)
+		revs.include_header = 1;
 	if (revs.commit_format != CMIT_FMT_UNSPECIFIED) {
 		/* The command line has a --pretty  */
 		info.hdr_termination = '\n';
-		if (revs.commit_format == CMIT_FMT_ONELINE)
+		if (revs.commit_format == CMIT_FMT_ONELINE || !revs.include_header)
 			info.header_prefix = "";
 		else
 			info.header_prefix = "commit ";

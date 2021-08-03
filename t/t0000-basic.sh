@@ -69,6 +69,23 @@ test_expect_success 'success is reported like this' '
 _run_sub_test_lib_test_common () {
 	neg="$1" name="$2" descr="$3" # stdin is the body of the test code
 	shift 3
+
+	# intercept pseudo-options at the front of the argument list that we
+	# will not pass to child script
+	skip=
+	while test $# -gt 0
+	do
+		case "$1" in
+		--skip=*)
+			skip=${1#--*=}
+			shift
+			;;
+		*)
+			break
+			;;
+		esac
+	done
+
 	mkdir "$name" &&
 	(
 		# Pretend we're not running under a test harness, whether we
@@ -84,17 +101,18 @@ _run_sub_test_lib_test_common () {
 		passing metrics
 		'
 
-		# Tell the framework that we are self-testing to make sure
-		# it yields a stable result.
-		GIT_TEST_FRAMEWORK_SELFTEST=t &&
-
 		# Point to the t/test-lib.sh, which isn't in ../ as usual
 		. "\$TEST_DIRECTORY"/test-lib.sh
 		EOF
 		cat >>"$name.sh" &&
 		export TEST_DIRECTORY &&
-		TEST_OUTPUT_DIRECTORY=$(pwd) &&
-		export TEST_OUTPUT_DIRECTORY &&
+		# The child test re-sources GIT-BUILD-OPTIONS and may thus
+		# override the test output directory. We thus pass it as an
+		# explicit override to the child.
+		TEST_OUTPUT_DIRECTORY_OVERRIDE=$(pwd) &&
+		export TEST_OUTPUT_DIRECTORY_OVERRIDE &&
+		GIT_SKIP_TESTS=$skip &&
+		export GIT_SKIP_TESTS &&
 		sane_unset GIT_TEST_FAIL_PREREQS &&
 		if test -z "$neg"
 		then
@@ -323,9 +341,9 @@ test_expect_success 'test --verbose-only' '
 
 test_expect_success 'GIT_SKIP_TESTS' '
 	(
-		GIT_SKIP_TESTS="git.2" && export GIT_SKIP_TESTS &&
 		run_sub_test_lib_test git-skip-tests-basic \
-			"GIT_SKIP_TESTS" <<-\EOF &&
+			"GIT_SKIP_TESTS" \
+			--skip="git.2" <<-\EOF &&
 		for i in 1 2 3
 		do
 			test_expect_success "passing test #$i" "true"
@@ -344,9 +362,9 @@ test_expect_success 'GIT_SKIP_TESTS' '
 
 test_expect_success 'GIT_SKIP_TESTS several tests' '
 	(
-		GIT_SKIP_TESTS="git.2 git.5" && export GIT_SKIP_TESTS &&
 		run_sub_test_lib_test git-skip-tests-several \
-			"GIT_SKIP_TESTS several tests" <<-\EOF &&
+			"GIT_SKIP_TESTS several tests" \
+			--skip="git.2 git.5" <<-\EOF &&
 		for i in 1 2 3 4 5 6
 		do
 			test_expect_success "passing test #$i" "true"
@@ -368,9 +386,9 @@ test_expect_success 'GIT_SKIP_TESTS several tests' '
 
 test_expect_success 'GIT_SKIP_TESTS sh pattern' '
 	(
-		GIT_SKIP_TESTS="git.[2-5]" && export GIT_SKIP_TESTS &&
 		run_sub_test_lib_test git-skip-tests-sh-pattern \
-			"GIT_SKIP_TESTS sh pattern" <<-\EOF &&
+			"GIT_SKIP_TESTS sh pattern" \
+			--skip="git.[2-5]" <<-\EOF &&
 		for i in 1 2 3 4 5 6
 		do
 			test_expect_success "passing test #$i" "true"
@@ -392,9 +410,9 @@ test_expect_success 'GIT_SKIP_TESTS sh pattern' '
 
 test_expect_success 'GIT_SKIP_TESTS entire suite' '
 	(
-		GIT_SKIP_TESTS="git" && export GIT_SKIP_TESTS &&
 		run_sub_test_lib_test git-skip-tests-entire-suite \
-			"GIT_SKIP_TESTS entire suite" <<-\EOF &&
+			"GIT_SKIP_TESTS entire suite" \
+			--skip="git" <<-\EOF &&
 		for i in 1 2 3
 		do
 			test_expect_success "passing test #$i" "true"
@@ -409,9 +427,9 @@ test_expect_success 'GIT_SKIP_TESTS entire suite' '
 
 test_expect_success 'GIT_SKIP_TESTS does not skip unmatched suite' '
 	(
-		GIT_SKIP_TESTS="notgit" && export GIT_SKIP_TESTS &&
 		run_sub_test_lib_test git-skip-tests-unmatched-suite \
-			"GIT_SKIP_TESTS does not skip unmatched suite" <<-\EOF &&
+			"GIT_SKIP_TESTS does not skip unmatched suite" \
+			--skip="notgit" <<-\EOF &&
 		for i in 1 2 3
 		do
 			test_expect_success "passing test #$i" "true"

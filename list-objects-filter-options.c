@@ -102,7 +102,7 @@ static int gently_parse_list_objects_filter(
 	} else if (skip_prefix(arg, "object:type=", &v0)) {
 		int type = type_from_string_gently(v0, strlen(v0), 1);
 		if (type < 0) {
-			strbuf_addf(errbuf, _("'%s' for 'object:type=<type>' is"
+			strbuf_addf(errbuf, _("'%s' for 'object:type=<type>' is "
 					      "not a valid object type"), v0);
 			return 1;
 		}

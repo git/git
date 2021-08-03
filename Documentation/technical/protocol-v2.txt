@@ -540,7 +540,7 @@ An `object-info` request takes the following arguments:
 	Indicates to the server an object which the client wants to obtain
 	information for.
 
-The response of `object-info` is a list of the the requested object ids
+The response of `object-info` is a list of the requested object ids
 and associated requested information, each separated by a single space.
 
 	output = info flush-pkt

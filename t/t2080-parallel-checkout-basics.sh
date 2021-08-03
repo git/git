@@ -114,7 +114,7 @@ do
 
 	test_expect_success "$mode checkout" '
 		repo=various_$mode &&
-		cp -R various $repo &&
+		cp -R -P various $repo &&
 
 		# The just copied files have more recent timestamps than their
 		# associated index entries. So refresh the cached timestamps

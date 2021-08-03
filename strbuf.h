@@ -263,6 +263,7 @@ static inline void strbuf_insertstr(struct strbuf *sb, size_t pos,
 void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt,
 		     va_list ap);
 
+__attribute__((format (printf, 3, 4)))
 void strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...);
 
 /**
@@ -337,8 +338,8 @@ const char *strbuf_join_argv(struct strbuf *buf, int argc,
  * placeholder is unknown, then the percent sign is copied, too.
  *
  * In order to facilitate caching and to make it possible to give
- * parameters to the callback, `strbuf_expand()` passes a context pointer,
- * which can be used by the programmer of the callback as she sees fit.
+ * parameters to the callback, `strbuf_expand()` passes a context
+ * pointer with any kind of data.
  */
 typedef size_t (*expand_fn_t) (struct strbuf *sb,
 			       const char *placeholder,

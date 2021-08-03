@@ -25,7 +25,8 @@ static struct strmap_entry *find_strmap_entry(struct strmap *map,
 
 void strmap_init(struct strmap *map)
 {
-	strmap_init_with_options(map, NULL, 1);
+	struct strmap blank = STRMAP_INIT;
+	memcpy(map, &blank, sizeof(*map));
 }
 
 void strmap_init_with_options(struct strmap *map,

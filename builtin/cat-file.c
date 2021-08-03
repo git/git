@@ -512,12 +512,6 @@ static int batch_objects(struct batch_options *opt)
 	if (opt->cmdmode)
 		data.split_on_whitespace = 1;
 
-	if (opt->all_objects) {
-		struct object_info empty = OBJECT_INFO_INIT;
-		if (!memcmp(&data.info, &empty, sizeof(empty)))
-			data.skip_object_info = 1;
-	}
-
 	/*
 	 * If we are printing out the object, then always fill in the type,
 	 * since we will want to decide whether or not to stream.
@@ -527,6 +521,10 @@ static int batch_objects(struct batch_options *opt)
 
 	if (opt->all_objects) {
 		struct object_cb_data cb;
+		struct object_info empty = OBJECT_INFO_INIT;
+
+		if (!memcmp(&data.info, &empty, sizeof(empty)))
+			data.skip_object_info = 1;
 
 		if (has_promisor_remote())
 			warning("This repository uses promisor remotes. Some objects may not be loaded.");

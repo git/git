@@ -237,6 +237,11 @@ int cache_tree_fully_valid(struct cache_tree *it)
 	return 1;
 }
 
+static int must_check_existence(const struct cache_entry *ce)
+{
+	return !(has_promisor_remote() && ce_skip_worktree(ce));
+}
+
 static int update_one(struct cache_tree *it,
 		      struct cache_entry **cache,
 		      int entries,
@@ -378,8 +383,7 @@ static int update_one(struct cache_tree *it,
 		}
 
 		ce_missing_ok = mode == S_IFGITLINK || missing_ok ||
-			(has_promisor_remote() &&
-			 ce_skip_worktree(ce));
+			!must_check_existence(ce);
 		if (is_null_oid(oid) ||
 		    (!ce_missing_ok && !has_object_file(oid))) {
 			strbuf_release(&buffer);
@@ -465,6 +469,9 @@ int cache_tree_update(struct index_state *istate, int flags)
 
 	if (!istate->cache_tree)
 		istate->cache_tree = cache_tree();
+
+	if (!(flags & WRITE_TREE_MISSING_OK) && has_promisor_remote())
+		prefetch_cache_entries(istate, must_check_existence);
 
 	trace_performance_enter();
 	trace2_region_enter("cache_tree", "update", the_repository);

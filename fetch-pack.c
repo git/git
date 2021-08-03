@@ -1645,6 +1645,15 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			if (process_section_header(&reader, "packfile-uris", 1))
 				receive_packfile_uris(&reader, &packfile_uris);
 			process_section_header(&reader, "packfile", 0);
+
+			/*
+			 * this is the final request we'll make of the server;
+			 * do a half-duplex shutdown to indicate that they can
+			 * hang up as soon as the pack is sent.
+			 */
+			close(fd[1]);
+			fd[1] = -1;
+
 			if (get_pack(args, fd, pack_lockfiles,
 				     packfile_uris.nr ? &index_pack_args : NULL,
 				     sought, nr_sought, &fsck_options.gitmodules_found))

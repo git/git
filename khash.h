@@ -74,7 +74,7 @@ static const double __ac_HASH_UPPER = 0.77;
 	void kh_destroy_##name(kh_##name##_t *h);					\
 	void kh_clear_##name(kh_##name##_t *h);						\
 	khint_t kh_get_##name(const kh_##name##_t *h, khkey_t key); \
-	int kh_resize_##name(kh_##name##_t *h, khint_t new_n_buckets); \
+	void kh_resize_##name(kh_##name##_t *h, khint_t new_n_buckets); \
 	khint_t kh_put_##name(kh_##name##_t *h, khkey_t key, int *ret); \
 	void kh_del_##name(kh_##name##_t *h, khint_t x);
 
@@ -116,7 +116,7 @@ static const double __ac_HASH_UPPER = 0.77;
 			return __ac_iseither(h->flags, i)? h->n_buckets : i;		\
 		} else return 0;												\
 	}																	\
-	SCOPE int kh_resize_##name(kh_##name##_t *h, khint_t new_n_buckets) \
+	SCOPE void kh_resize_##name(kh_##name##_t *h, khint_t new_n_buckets) \
 	{ /* This function uses 0.25*n_buckets bytes of working space instead of [sizeof(key_t+val_t)+.25]*n_buckets. */ \
 		khint32_t *new_flags = NULL;										\
 		khint_t j = 1;													\
@@ -126,7 +126,6 @@ static const double __ac_HASH_UPPER = 0.77;
 			if (h->size >= (khint_t)(new_n_buckets * __ac_HASH_UPPER + 0.5)) j = 0;	/* requested size is too small */ \
 			else { /* hash table size to be changed (shrink or expand); rehash */ \
 				ALLOC_ARRAY(new_flags, __ac_fsize(new_n_buckets)); \
-				if (!new_flags) return -1;								\
 				memset(new_flags, 0xaa, __ac_fsize(new_n_buckets) * sizeof(khint32_t)); \
 				if (h->n_buckets < new_n_buckets) {	/* expand */		\
 					REALLOC_ARRAY(h->keys, new_n_buckets); \
@@ -173,18 +172,15 @@ static const double __ac_HASH_UPPER = 0.77;
 			h->n_occupied = h->size;									\
 			h->upper_bound = (khint_t)(h->n_buckets * __ac_HASH_UPPER + 0.5); \
 		}																\
-		return 0;														\
 	}																	\
 	SCOPE khint_t kh_put_##name(kh_##name##_t *h, khkey_t key, int *ret) \
 	{																	\
 		khint_t x;														\
 		if (h->n_occupied >= h->upper_bound) { /* update the hash table */ \
 			if (h->n_buckets > (h->size<<1)) {							\
-				if (kh_resize_##name(h, h->n_buckets - 1) < 0) { /* clear "deleted" elements */ \
-					*ret = -1; return h->n_buckets;						\
-				}														\
-			} else if (kh_resize_##name(h, h->n_buckets + 1) < 0) { /* expand the hash table */ \
-				*ret = -1; return h->n_buckets;							\
+				kh_resize_##name(h, h->n_buckets - 1); /* clear "deleted" elements */ \
+			} else { \
+				kh_resize_##name(h, h->n_buckets + 1); /* expand the hash table */ \
 			}															\
 		} /* TODO: to implement automatically shrinking; resize() already support shrinking */ \
 		{																\

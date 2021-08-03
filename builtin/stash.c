@@ -26,7 +26,7 @@ static const char * const git_stash_usage[] = {
 	N_("git stash drop [-q|--quiet] [<stash>]"),
 	N_("git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"),
 	N_("git stash branch <branchname> [<stash>]"),
-	N_("git stash clear"),
+	"git stash clear",
 	N_("git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 	   "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
 	   "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
@@ -67,7 +67,7 @@ static const char * const git_stash_branch_usage[] = {
 };
 
 static const char * const git_stash_clear_usage[] = {
-	N_("git stash clear"),
+	"git stash clear",
 	NULL
 };
 
@@ -761,7 +761,7 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 
 	cp.git_cmd = 1;
 	strvec_pushl(&cp.args, "log", "--format=%gd: %gs", "-g",
-		     "--first-parent", "-m", NULL);
+		     "--first-parent", NULL);
 	strvec_pushv(&cp.args, argv);
 	strvec_push(&cp.args, ref_stash);
 	strvec_push(&cp.args, "--");
@@ -833,7 +833,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 		UNTRACKED_NONE,
 		UNTRACKED_INCLUDE,
 		UNTRACKED_ONLY
-	} show_untracked = UNTRACKED_NONE;
+	} show_untracked = show_include_untracked ? UNTRACKED_INCLUDE : UNTRACKED_NONE;
 	struct option options[] = {
 		OPT_SET_INT('u', "include-untracked", &show_untracked,
 			    N_("include untracked files in the stash"),
@@ -875,9 +875,6 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 
 		if (show_patch)
 			rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
-
-		if (show_include_untracked)
-			show_untracked = UNTRACKED_INCLUDE;
 
 		if (!show_stat && !show_patch) {
 			free_stash_info(&info);
@@ -994,9 +991,8 @@ static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 {
 	int i;
 	int found = 0;
-	struct dir_struct dir;
+	struct dir_struct dir = DIR_INIT;
 
-	dir_init(&dir);
 	if (include_untracked != INCLUDE_ALL_FILES)
 		setup_standard_excludes(&dir);
 

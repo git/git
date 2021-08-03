@@ -6,8 +6,12 @@
 #include "unix-socket.h"
 #include "unix-stream-server.h"
 
-#ifdef NO_UNIX_SOCKETS
-#error compat/simple-ipc/ipc-unix-socket.c requires Unix sockets
+#ifndef SUPPORTS_SIMPLE_IPC
+/*
+ * This source file should only be compiled when Simple IPC is supported.
+ * See the top-level Makefile.
+ */
+#error SUPPORTS_SIMPLE_IPC not defined
 #endif
 
 enum ipc_active_state ipc_get_active_state(const char *path)

@@ -153,7 +153,7 @@ static int check_ignore_stdin_paths(struct dir_struct *dir, const char *prefix)
 int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 {
 	int num_ignored;
-	struct dir_struct dir;
+	struct dir_struct dir = DIR_INIT;
 
 	git_config(git_default_config, NULL);
 
@@ -182,7 +182,6 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 	if (!no_index && read_cache() < 0)
 		die(_("index file corrupt"));
 
-	dir_init(&dir);
 	setup_standard_excludes(&dir);
 
 	if (stdin_paths) {

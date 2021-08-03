@@ -107,15 +107,12 @@ static void show_diff(struct merge_list *entry)
 	mmfile_t src, dst;
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
-	xdemitcb_t ecb;
+	xdemitcb_t ecb = { .out_line = show_outf };
 
 	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	ecb.out_hunk = NULL;
-	ecb.out_line = show_outf;
-	ecb.priv = NULL;
 
 	src.ptr = origin(entry, &size);
 	if (!src.ptr)

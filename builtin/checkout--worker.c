@@ -53,7 +53,7 @@ static void packet_to_pc_item(const char *buffer, int len,
 
 static void report_result(struct parallel_checkout_item *pc_item)
 {
-	struct pc_item_result res;
+	struct pc_item_result res = { 0 };
 	size_t size;
 
 	res.id = pc_item->id;

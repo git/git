@@ -128,10 +128,10 @@ depth is 4095.
 	into multiple independent packfiles, each not larger than the
 	given size. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
-	This option
-	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
-	`pack.packSizeLimit` is set.
+	`pack.packSizeLimit` is set. Note that this option may result in
+	a larger and slower repository; see the discussion in
+	`pack.packSizeLimit`.
 
 --honor-pack-keep::
 	This flag causes an object already in a local pack that

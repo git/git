@@ -128,7 +128,9 @@ struct credential {
 	char *path;
 };
 
-#define CREDENTIAL_INIT { STRING_LIST_INIT_DUP }
+#define CREDENTIAL_INIT { \
+	.helpers = STRING_LIST_INIT_DUP, \
+}
 
 /* Initialize a credential structure, setting all fields to empty. */
 void credential_init(struct credential *);

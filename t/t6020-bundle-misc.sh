@@ -80,31 +80,46 @@ test_commit_setvar () {
 	eval $var=$oid
 }
 
+get_abbrev_oid () {
+	oid=$1 &&
+	suffix=${oid#???????} &&
+	oid=${oid%$suffix} &&
+	if test -n "$oid"
+	then
+		echo "$oid"
+	else
+		echo "undefined-oid"
+	fi
+}
+
 # Format the output of git commands to make a user-friendly and stable
 # text.  We can easily prepare the expect text without having to worry
-# about future changes of the commit ID and spaces of the output.
+# about future changes of the commit ID.
 make_user_friendly_and_stable_output () {
 	sed \
-		-e "s/${A%${A#???????}}[0-9a-f]*/<COMMIT-A>/g" \
-		-e "s/${B%${B#???????}}[0-9a-f]*/<COMMIT-B>/g" \
-		-e "s/${C%${C#???????}}[0-9a-f]*/<COMMIT-C>/g" \
-		-e "s/${D%${D#???????}}[0-9a-f]*/<COMMIT-D>/g" \
-		-e "s/${E%${E#???????}}[0-9a-f]*/<COMMIT-E>/g" \
-		-e "s/${F%${F#???????}}[0-9a-f]*/<COMMIT-F>/g" \
-		-e "s/${G%${G#???????}}[0-9a-f]*/<COMMIT-G>/g" \
-		-e "s/${H%${H#???????}}[0-9a-f]*/<COMMIT-H>/g" \
-		-e "s/${I%${I#???????}}[0-9a-f]*/<COMMIT-I>/g" \
-		-e "s/${J%${J#???????}}[0-9a-f]*/<COMMIT-J>/g" \
-		-e "s/${K%${K#???????}}[0-9a-f]*/<COMMIT-K>/g" \
-		-e "s/${L%${L#???????}}[0-9a-f]*/<COMMIT-L>/g" \
-		-e "s/${M%${M#???????}}[0-9a-f]*/<COMMIT-M>/g" \
-		-e "s/${N%${N#???????}}[0-9a-f]*/<COMMIT-N>/g" \
-		-e "s/${O%${O#???????}}[0-9a-f]*/<COMMIT-O>/g" \
-		-e "s/${P%${P#???????}}[0-9a-f]*/<COMMIT-P>/g" \
-		-e "s/${TAG1%${TAG1#???????}}[0-9a-f]*/<TAG-1>/g" \
-		-e "s/${TAG2%${TAG2#???????}}[0-9a-f]*/<TAG-2>/g" \
-		-e "s/${TAG3%${TAG3#???????}}[0-9a-f]*/<TAG-3>/g" \
-		-e "s/ *\$//"
+		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<COMMIT-A>/g" \
+		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<COMMIT-B>/g" \
+		-e "s/$(get_abbrev_oid $C)[0-9a-f]*/<COMMIT-C>/g" \
+		-e "s/$(get_abbrev_oid $D)[0-9a-f]*/<COMMIT-D>/g" \
+		-e "s/$(get_abbrev_oid $E)[0-9a-f]*/<COMMIT-E>/g" \
+		-e "s/$(get_abbrev_oid $F)[0-9a-f]*/<COMMIT-F>/g" \
+		-e "s/$(get_abbrev_oid $G)[0-9a-f]*/<COMMIT-G>/g" \
+		-e "s/$(get_abbrev_oid $H)[0-9a-f]*/<COMMIT-H>/g" \
+		-e "s/$(get_abbrev_oid $I)[0-9a-f]*/<COMMIT-I>/g" \
+		-e "s/$(get_abbrev_oid $J)[0-9a-f]*/<COMMIT-J>/g" \
+		-e "s/$(get_abbrev_oid $K)[0-9a-f]*/<COMMIT-K>/g" \
+		-e "s/$(get_abbrev_oid $L)[0-9a-f]*/<COMMIT-L>/g" \
+		-e "s/$(get_abbrev_oid $M)[0-9a-f]*/<COMMIT-M>/g" \
+		-e "s/$(get_abbrev_oid $N)[0-9a-f]*/<COMMIT-N>/g" \
+		-e "s/$(get_abbrev_oid $O)[0-9a-f]*/<COMMIT-O>/g" \
+		-e "s/$(get_abbrev_oid $P)[0-9a-f]*/<COMMIT-P>/g" \
+		-e "s/$(get_abbrev_oid $TAG1)[0-9a-f]*/<TAG-1>/g" \
+		-e "s/$(get_abbrev_oid $TAG2)[0-9a-f]*/<TAG-2>/g" \
+		-e "s/$(get_abbrev_oid $TAG3)[0-9a-f]*/<TAG-3>/g"
+}
+
+format_and_save_expect () {
+	sed -e 's/Z$//' >expect
 }
 
 #            (C)   (D, pull/1/head, topic/1)
@@ -179,11 +194,11 @@ test_expect_success 'create bundle from special rev: main^!' '
 
 	git bundle verify special-rev.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	cat >expect <<-\EOF &&
+	format_and_save_expect <<-\EOF &&
 	The bundle contains this ref:
 	<COMMIT-P> refs/heads/main
 	The bundle requires this ref:
-	<COMMIT-O>
+	<COMMIT-O> Z
 	EOF
 	test_cmp expect actual &&
 
@@ -200,12 +215,12 @@ test_expect_success 'create bundle with --max-count option' '
 
 	git bundle verify max-count.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	cat >expect <<-\EOF &&
+	format_and_save_expect <<-\EOF &&
 	The bundle contains these 2 refs:
 	<COMMIT-P> refs/heads/main
 	<TAG-1> refs/tags/v1
 	The bundle requires this ref:
-	<COMMIT-O>
+	<COMMIT-O> Z
 	EOF
 	test_cmp expect actual &&
 
@@ -225,7 +240,7 @@ test_expect_success 'create bundle with --since option' '
 
 	git bundle verify since.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	cat >expect <<-\EOF &&
+	format_and_save_expect <<-\EOF &&
 	The bundle contains these 5 refs:
 	<COMMIT-P> refs/heads/main
 	<COMMIT-N> refs/heads/release
@@ -233,8 +248,8 @@ test_expect_success 'create bundle with --since option' '
 	<TAG-3> refs/tags/v3
 	<COMMIT-P> HEAD
 	The bundle requires these 2 refs:
-	<COMMIT-M>
-	<COMMIT-K>
+	<COMMIT-M> Z
+	<COMMIT-K> Z
 	EOF
 	test_cmp expect actual &&
 
@@ -293,13 +308,13 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 		--stdin \
 		release <input &&
 
-	cat >expect <<-\EOF &&
+	format_and_save_expect <<-\EOF &&
 	The bundle contains this ref:
 	<COMMIT-N> refs/heads/release
 	The bundle requires these 3 refs:
-	<COMMIT-D>
-	<COMMIT-E>
-	<COMMIT-G>
+	<COMMIT-D> Z
+	<COMMIT-E> Z
+	<COMMIT-G> Z
 	EOF
 
 	git bundle verify 2.bdl |
@@ -317,11 +332,11 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 test_expect_success 'fail to verify bundle without prerequisites' '
 	git init --bare test1.git &&
 
-	cat >expect <<-\EOF &&
+	format_and_save_expect <<-\EOF &&
 	error: Repository lacks these prerequisite commits:
-	error: <COMMIT-D>
-	error: <COMMIT-E>
-	error: <COMMIT-G>
+	error: <COMMIT-D> Z
+	error: <COMMIT-E> Z
+	error: <COMMIT-G> Z
 	EOF
 
 	test_must_fail git -C test1.git bundle verify ../2.bdl 2>&1 |
@@ -352,13 +367,13 @@ test_expect_success 'create bundle 3 - two refs, same object' '
 		--stdin \
 		main HEAD <input &&
 
-	cat >expect <<-\EOF &&
+	format_and_save_expect <<-\EOF &&
 	The bundle contains these 2 refs:
 	<COMMIT-P> refs/heads/main
 	<COMMIT-P> HEAD
 	The bundle requires these 2 refs:
-	<COMMIT-M>
-	<COMMIT-K>
+	<COMMIT-M> Z
+	<COMMIT-K> Z
 	EOF
 
 	git bundle verify 3.bdl |

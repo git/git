@@ -212,8 +212,9 @@ static int create_default_files(const char *template_path,
 	 * values (since we've just potentially changed what's available on
 	 * disk).
 	 */
-	git_config_get_value("init.templatedir", &init_template_dir);
+	git_config_get_pathname("init.templatedir", &init_template_dir);
 	copy_templates(template_path, init_template_dir);
+	free((char *)init_template_dir);
 	git_config_clear();
 	reset_shared_repository();
 	git_config(git_default_config, NULL);

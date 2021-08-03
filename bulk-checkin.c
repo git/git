@@ -100,6 +100,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 			  const char *path, unsigned flags)
 {
 	git_zstream s;
+	unsigned char ibuf[16384];
 	unsigned char obuf[16384];
 	unsigned hdrlen;
 	int status = Z_OK;
@@ -113,8 +114,6 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 	s.avail_out = sizeof(obuf) - hdrlen;
 
 	while (status != Z_STREAM_END) {
-		unsigned char ibuf[16384];
-
 		if (size && !s.avail_in) {
 			ssize_t rsize = size < sizeof(ibuf) ? size : sizeof(ibuf);
 			ssize_t read_result = read_in_full(fd, ibuf, rsize);

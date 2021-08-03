@@ -1306,7 +1306,7 @@ __git_count_arguments ()
 	local word i c=0
 
 	# Skip "git" (first argument)
-	for ((i="$__git_cmd_idx"; i < ${#words[@]}; i++)); do
+	for ((i=$__git_cmd_idx; i < ${#words[@]}; i++)); do
 		word="${words[i]}"
 
 		case "$word" in
@@ -1729,6 +1729,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--indent-heuristic --no-indent-heuristic
 			--textconv --no-textconv
 			--patch --no-patch
+			--anchored=
 "
 
 __git_diff_difftool_options="--cached --staged --pickaxe-all --pickaxe-regex
@@ -3512,6 +3513,7 @@ fi
 __git_func_wrap ()
 {
 	local cur words cword prev
+	local __git_cmd_idx=0
 	_get_comp_words_by_ref -n =: cur words cword prev
 	$1
 }

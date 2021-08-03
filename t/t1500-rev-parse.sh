@@ -146,6 +146,10 @@ test_expect_success '--path-format can change in the middle of the command line'
 	test_cmp expect actual
 '
 
+test_expect_success '--path-format does not segfault without an argument' '
+	test_must_fail git rev-parse --path-format
+'
+
 test_expect_success 'git-common-dir from worktree root' '
 	echo .git >expect &&
 	git rev-parse --git-common-dir >actual &&

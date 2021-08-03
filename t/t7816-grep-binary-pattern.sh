@@ -59,7 +59,7 @@ test_expect_success 'setup' "
 	git commit -m.
 "
 
-# Simple fixed-string matching that can use kwset (no -i && non-ASCII)
+# Simple fixed-string matching
 nul_match P P P '-F' 'yQf'
 nul_match P P P '-F' 'yQx'
 nul_match P P P '-Fi' 'YQf'
@@ -78,7 +78,7 @@ nul_match P P P '-Fi' '[Y]QF'
 nul_match P P P '-F' 'æQ[ð]'
 nul_match P P P '-F' '[æ]Qð'
 
-# The -F kwset codepath can't handle -i && non-ASCII...
+# Matching pattern and subject case with -i
 nul_match P 1 1 '-i' '[æ]Qð'
 
 # ...PCRE v2 only matches non-ASCII with -i casefolding under UTF-8
