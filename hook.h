@@ -36,6 +36,9 @@ struct run_hooks_opt
 
 	/* Path to initial working directory for subprocess */
 	const char *dir;
+
+	/* Path to file which should be piped to stdin for each hook */
+	const char *path_to_stdin;
 };
 
 #define RUN_HOOKS_OPT_INIT { \
