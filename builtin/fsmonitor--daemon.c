@@ -1302,7 +1302,7 @@ done:
 	return err;
 }
 
-static int try_to_run_foreground_daemon(void)
+static int try_to_run_foreground_daemon(int free_console)
 {
 	/*
 	 * Technically, we don't need to probe for an existing daemon
@@ -1319,6 +1319,11 @@ static int try_to_run_foreground_daemon(void)
 	printf(_("running fsmonitor-daemon in '%s'\n"),
 	       the_repository->worktree);
 	fflush(stdout);
+
+#ifdef GIT_WINDOWS_NATIVE
+	if (free_console)
+		FreeConsole();
+#endif
 
 	return !!fsmonitor_run_daemon();
 }
@@ -1351,6 +1356,7 @@ static int spawn_fsmonitor(pid_t *pid)
 	strvec_push(&args, git_exe);
 	strvec_push(&args, "fsmonitor--daemon");
 	strvec_push(&args, "run");
+	strvec_push(&args, "--free-console");
 	strvec_pushf(&args, "--ipc-threads=%d", fsmonitor__ipc_threads);
 
 	*pid = mingw_spawnvpe(args.v[0], args.v, NULL, NULL, in, out, out);
@@ -1514,8 +1520,10 @@ static int try_to_start_background_daemon(void)
 int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 {
 	const char *subcmd;
+	int free_console = 0;
 
 	struct option options[] = {
+		OPT_BOOL(0, "free-console", &free_console, N_("free console")),
 		OPT_INTEGER(0, "ipc-threads",
 			    &fsmonitor__ipc_threads,
 			    N_("use <n> ipc worker threads")),
@@ -1559,7 +1567,7 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 		return !!try_to_start_background_daemon();
 
 	if (!strcmp(subcmd, "run"))
-		return !!try_to_run_foreground_daemon();
+		return !!try_to_run_foreground_daemon(free_console);
 
 	if (!strcmp(subcmd, "stop"))
 		return !!do_as_client__send_stop();
