@@ -18,6 +18,7 @@
 #   dry-run          |  fer una prova
 #   fatal            |  fatal
 #   flush            |  buidar / buidatge
+#   hint             |  consell
 #   hook             |  lligam
 #   hunk             |  tros
 #   not supported    |  no està admès
@@ -42,7 +43,7 @@
 #   Anglès           |  Català
 #   -----------------+---------------------------------
 #   blame            |  «blame»
-#   HEAD             |  HEAD (f, la branca)
+#   HEAD             |  HEAD (f, la branca) - (no s'apostrofa)
 #   cherry pick      |  «cherry pick»
 #   rebase           |  «rebase»
 #   stage            |  «stage»
@@ -801,7 +802,7 @@ msgstr ""
 #: advice.c:161
 #, c-format
 msgid "%shint: %.*s%s\n"
-msgstr "%spista: %.*s%s\n"
+msgstr "%sconsell: %.*s%s\n"
 
 #: advice.c:252
 msgid "Cherry-picking is not possible because you have unmerged files."
@@ -3405,7 +3406,7 @@ msgid ""
 msgstr ""
 "el mode «%s» de «color-moved-ws» és desconegut, els valor possibles són "
 "«ignore-space-change», «ignore-space-at-eol», «ignore-all-space», «allow-"
-"indentation-change»."
+"indentation-change»"
 
 #: diff.c:333
 msgid ""
@@ -4088,7 +4089,7 @@ msgstr "no s'ha pogut migrar el directori de «%s» a «%s»"
 #: editor.c:74
 #, c-format
 msgid "hint: Waiting for your editor to close the file...%c"
-msgstr "pista: s'està esperant que el vostre editor tanqui el fitxer...%c"
+msgstr "consell: s'està esperant que el vostre editor tanqui el fitxer...%c"
 
 #: entry.c:179
 msgid "Filtering content"
@@ -4476,7 +4477,7 @@ msgstr "ordres de git disponibles d'altres llocs en el vostre $PATH"
 #: help.c:316
 msgid "These are common Git commands used in various situations:"
 msgstr ""
-"Aquestes són ordres del Git habitualment usades en diverses situacions:"
+"Aquestes són ordres habituals del Git usades en diverses situacions:"
 
 #: help.c:365 git.c:100
 #, c-format
@@ -4919,7 +4920,7 @@ msgstr ""
 msgid "CONFLICT (rename/delete): %s renamed to %s in %s, but deleted in %s."
 msgstr ""
 "CONFLICTE (canvi de nom/supressió): %s ara té el nom %s a %s, però s'ha suprimit "
-"a %s"
+"a %s."
 
 #: merge-ort.c:2550 merge-recursive.c:3002
 #, c-format
@@ -17053,7 +17054,7 @@ msgstr "escurça els remolcs buits"
 
 #: builtin/interpret-trailers.c:99
 msgid "where to place the new trailer"
-msgstr "on ubica"
+msgstr "on ubicar el «trailer» nou"
 
 #: builtin/interpret-trailers.c:101
 msgid "action if trailer already exists"
@@ -17302,30 +17303,25 @@ msgid "mark the series as Nth re-roll"
 msgstr "marca la sèrie com a l'enèsima llançada"
 
 #: builtin/log.c:1765
-#, fuzzy
 msgid "max length of output filename"
-msgstr "mida màxima de cada fitxer empaquetat de sortida"
+msgstr "mida màxima del nom del fitxer de sortida"
 
 #: builtin/log.c:1767
-#, fuzzy
 msgid "use [RFC PATCH] instead of [PATCH]"
-msgstr "Usa [RFC PATCH] en lloc de [PATCH]"
+msgstr "useu [RFC PATCH] en comptes de [PATCH]"
 
 #: builtin/log.c:1770
-#, fuzzy
 msgid "cover-from-description-mode"
-msgstr "preferences-from-description-mode"
+msgstr "cover-from-description-mode"
 
 #: builtin/log.c:1771
-#, fuzzy
 msgid "generate parts of a cover letter based on a branch's description"
 msgstr ""
-"genera parts d'una lletra de portada basant-se en la descripció d'una branca"
+"genera parts d'una carta de presentació basant-se en la descripció d'una branca"
 
 #: builtin/log.c:1773
-#, fuzzy
 msgid "use [<prefix>] instead of [PATCH]"
-msgstr "Usa [<prefix>] en lloc de [PATCH]"
+msgstr "useu [<prefix>] en comptes de [PATCH]"
 
 #: builtin/log.c:1776
 msgid "store resulting files in <dir>"
@@ -17438,10 +17434,9 @@ msgid "show progress while generating patches"
 msgstr "mostra el progrés durant la generació de pedaços"
 
 #: builtin/log.c:1821
-#, fuzzy
 msgid "show changes against <rev> in cover letter or single patch"
 msgstr ""
-"mostra els canvis contra <rev> a la lletra de la portada o a un sol pedaç"
+"mostra els canvis contra <rev> a la carta de presentació o a un sol pedaç"
 
 #: builtin/log.c:1824
 #, fuzzy
@@ -17450,7 +17445,6 @@ msgstr ""
 "mostra els canvis contra <refspec> a la lletra de la portada o a un sol pedaç"
 
 #: builtin/log.c:1826 builtin/range-diff.c:28
-#, fuzzy
 msgid "percentage by which creation is weighted"
 msgstr "percentatge pel qual la creació és ponderada"
 
@@ -17648,9 +17642,8 @@ msgid "show debugging data"
 msgstr "mostra les dades de depuració"
 
 #: builtin/ls-files.c:674
-#, fuzzy
 msgid "suppress duplicate entries"
-msgstr "omet anomenar cadenes"
+msgstr "suprimeix les entrades duplicades"
 
 #: builtin/ls-remote.c:9
 msgid ""
@@ -19073,16 +19066,14 @@ msgid "suboptimal pack - out of memory"
 msgstr "paquet subòptim - sense memòria"
 
 #: builtin/pack-objects.c:2691
-#, fuzzy, c-format
+#, c-format
 msgid "Delta compression using up to %d threads"
-msgstr "Compressió delta usant fils de fins a un 1%"
+msgstr "Compressió de diferències usant fins a %d fils"
 
 #: builtin/pack-objects.c:2830
-#, fuzzy, c-format
+#, c-format
 msgid "unable to pack objects reachable from tag %s"
-msgstr ""
-"no s'han pogut empaquetar els objectes abastables des de les etiquetes per "
-"cent"
+msgstr "no s'han pogut empaquetar els objectes abastables des de l'etiqueta %s"
 
 #: builtin/pack-objects.c:2916
 msgid "Compressing objects"
@@ -19407,13 +19398,13 @@ msgid "Enumerating objects"
 msgstr "S'estan enumerant els objectes"
 
 #: builtin/pack-objects.c:4052
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>), pack-"
 "reused %<PRIu32>"
 msgstr ""
-"Total%<PRIu32> (delta %<PRIu32>) reutilitzat%<PRIu32> (delta %<PRIu32>) pack-"
-"reutilitzat%<PRIu32>"
+"Total %<PRIu32> (%<PRIu32> diferències), reusats %<PRIu32> (%<PRIu32> diferències), paquets "
+"reusats %<PRIu32>"
 
 #: builtin/pack-redundant.c:601
 msgid ""
@@ -19894,7 +19885,6 @@ msgid "require old value of ref to be at this value"
 msgstr "requereix que el valor antic de la referència sigui d'aquest valor"
 
 #: builtin/push.c:566 builtin/send-pack.c:208
-#, fuzzy
 msgid "require remote updates to be integrated locally"
 msgstr "requereix que les actualitzacions remotes s'integrin localment"
 
@@ -20002,12 +19992,10 @@ msgstr ""
 "tip>."
 
 #: builtin/range-diff.c:10
-#, fuzzy
 msgid "git range-diff [<options>] <old-tip>...<new-tip>"
-msgstr "git range-diff [<opcions>] <old-tip><new-tip>"
+msgstr "git range-diff [<opcions>] <old-tip>...<new-tip>"
 
 #: builtin/range-diff.c:11
-#, fuzzy
 msgid "git range-diff [<options>] <base> <old-tip> <new-tip>"
 msgstr "git range-diff [<opcions>] <base> <old-tip> <new-tip>"
 
@@ -20128,7 +20116,6 @@ msgid "suppress feedback messages"
 msgstr "suprimeix els missatges de retroacció"
 
 #: builtin/read-tree.c:188
-#, fuzzy
 msgid "You need to resolve your current index first"
 msgstr "Primer heu de resoldre l'índex actual"
 
@@ -20207,9 +20194,8 @@ msgid "sign commits"
 msgstr "signa les comissions"
 
 #: builtin/rebase.c:507 builtin/rebase.c:1328
-#, fuzzy
 msgid "display a diffstat of what changed upstream"
-msgstr "mostra un «diffstat» de la font que ha canviat"
+msgstr "mostra un «diffstat» del que ha canviat a la font"
 
 #: builtin/rebase.c:509
 msgid "continue rebase"
@@ -20372,7 +20358,7 @@ msgstr ""
 "Resoleu tots els conflictes manualment, marqueu-los com a resolts amb\n"
 "«git add/rm <fitxers_amb_conflicte>», llavors executeu «git rebase --"
 "continue».\n"
-"Podeu en comptes ometre aquesta comissió: executeu «git rebase --skip».\n"
+"Alternativament podeu ometre aquesta comissió: executeu «git rebase --skip».\n"
 "Per a avortar i tornar a l'estat anterior abans de l'ordre «git rebase», "
 "executeu «git rebase --abort»."
 
@@ -20605,7 +20591,7 @@ msgstr "no es pot combinar «--keep-base» amb «--root»"
 #: builtin/rebase.c:1494
 #, fuzzy
 msgid "cannot combine '--root' with '--fork-point'"
-msgstr "no es pot combinar «--keep-base» amb «--root»"
+msgstr "no es pot combinar «--root» amb «--root»"
 
 #: builtin/rebase.c:1497
 msgid "No rebase in progress?"
@@ -24402,10 +24388,10 @@ msgid ""
 "to read about a specific subcommand or concept.\n"
 "See 'git help git' for an overview of the system."
 msgstr ""
-"«git help -a» i «git help -g» llisten subordres disponibles i\n"
+"«git help -a» i «git help -g» llisten les subordres disponibles i\n"
 "algunes guies de concepte. Vegeu «git help <ordre>» o\n"
-"«git help <concepte>» per a llegir sobre una subordre o concepte específic.\n"
-"Vegeu «git help git» per a una visió general del sistema."
+"«git help <concepte>» per a llegir sobre una subordre o concepte\n"
+"específic. Vegeu «git help git» per a una visió general del sistema."
 
 #: git.c:188
 #, c-format
@@ -25476,14 +25462,12 @@ msgid "Common Git shell script setup code"
 msgstr "Codi de scripts de configuració comuns pel Git shell"
 
 #: command-list.h:173
-#, fuzzy
 msgid "Initialize and modify the sparse-checkout"
-msgstr "Inicialitza i modifica la comprovació «sparse»"
+msgstr "Inicialitza i modifica el «sparse-checkout»"
 
 #: command-list.h:174
-#, fuzzy
 msgid "Stash the changes in a dirty working directory away"
-msgstr "Desa els canvis en un directori de treball brut"
+msgstr "Fes «stash» dels canvis en un directori de treball brut"
 
 #: command-list.h:175
 msgid "Add file contents to the staging area"
@@ -25507,7 +25491,7 @@ msgstr "Operació bidireccional entre un repositori a Subversion i Git"
 
 #: command-list.h:180
 msgid "Switch branches"
-msgstr "Commuta branques"
+msgstr "Commuta entre branques"
 
 #: command-list.h:181
 msgid "Read, modify and delete symbolic refs"
