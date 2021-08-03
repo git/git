@@ -6,8 +6,10 @@
 #include "gpg-interface.h"
 #include "sigchain.h"
 #include "tempfile.h"
+#include "alias.h"
 
 static char *configured_signing_key;
+static const char *ssh_default_key_command;
 static enum signature_trust_level configured_min_trust_level = TRUST_UNDEFINED;
 
 struct gpg_format {
@@ -21,6 +23,7 @@ struct gpg_format {
 				    size_t signature_size);
 	int (*sign_buffer)(struct strbuf *buffer, struct strbuf *signature,
 			   const char *signing_key);
+	const char *(*get_default_key)(void);
 };
 
 static const char *openpgp_verify_args[] = {
@@ -56,6 +59,8 @@ static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
 static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 			   const char *signing_key);
 
+static const char *get_default_ssh_signing_key(void);
+
 static struct gpg_format gpg_format[] = {
 	{
 		.name = "openpgp",
@@ -64,6 +69,7 @@ static struct gpg_format gpg_format[] = {
 		.sigs = openpgp_sigs,
 		.verify_signed_buffer = verify_gpg_signed_buffer,
 		.sign_buffer = sign_buffer_gpg,
+		.get_default_key = NULL,
 	},
 	{
 		.name = "x509",
@@ -72,6 +78,7 @@ static struct gpg_format gpg_format[] = {
 		.sigs = x509_sigs,
 		.verify_signed_buffer = verify_gpg_signed_buffer,
 		.sign_buffer = sign_buffer_gpg,
+		.get_default_key = NULL,
 	},
 	{
 		.name = "ssh",
@@ -79,7 +86,8 @@ static struct gpg_format gpg_format[] = {
 		.verify_args = ssh_verify_args,
 		.sigs = ssh_sigs,
 		.verify_signed_buffer = NULL, /* TODO */
-		.sign_buffer = sign_buffer_ssh
+		.sign_buffer = sign_buffer_ssh,
+		.get_default_key = get_default_ssh_signing_key,
 	},
 };
 
@@ -453,6 +461,12 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (!strcmp(var, "gpg.ssh.defaultkeycommand")) {
+		if (!value)
+			return config_error_nonbool(var);
+		return git_config_string(&ssh_default_key_command, var, value);
+	}
+
 	if (!strcmp(var, "gpg.program") || !strcmp(var, "gpg.openpgp.program"))
 		fmtname = "openpgp";
 
@@ -470,11 +484,63 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
+/* Returns the first public key from an ssh-agent to use for signing */
+static const char *get_default_ssh_signing_key(void)
+{
+	struct child_process ssh_default_key = CHILD_PROCESS_INIT;
+	int ret = -1;
+	struct strbuf key_stdout = STRBUF_INIT, key_stderr = STRBUF_INIT;
+	struct strbuf **keys;
+	char *key_command = NULL;
+	const char **argv;
+	int n;
+	char *default_key = NULL;
+
+	if (!ssh_default_key_command)
+		die(_("either user.signingkey or gpg.ssh.defaultKeyCommand needs to be configured"));
+
+	key_command = xstrdup(ssh_default_key_command);
+	n = split_cmdline(key_command, &argv);
+
+	if (n < 0)
+		die("malformed build-time gpg.ssh.defaultKeyCommand: %s",
+		    split_cmdline_strerror(n));
+
+	strvec_pushv(&ssh_default_key.args, argv);
+	ret = pipe_command(&ssh_default_key, NULL, 0, &key_stdout, 0,
+			   &key_stderr, 0);
+
+	if (!ret) {
+		keys = strbuf_split_max(&key_stdout, '\n', 2);
+		if (keys[0] && starts_with(keys[0]->buf, "ssh-")) {
+			default_key = strbuf_detach(keys[0], NULL);
+		} else {
+			warning(_("gpg.ssh.defaultKeycommand succeeded but returned no keys: %s %s"),
+				key_stderr.buf, key_stdout.buf);
+		}
+
+		strbuf_list_free(keys);
+	} else {
+		warning(_("gpg.ssh.defaultKeyCommand failed: %s %s"),
+			key_stderr.buf, key_stdout.buf);
+	}
+
+	free(key_command);
+	free(argv);
+	strbuf_release(&key_stdout);
+
+	return default_key;
+}
+
 const char *get_signing_key(void)
 {
 	if (configured_signing_key)
 		return configured_signing_key;
-	return git_committer_info(IDENT_STRICT|IDENT_NO_DATE);
+	if (use_format->get_default_key) {
+		return use_format->get_default_key();
+	}
+
+	return git_committer_info(IDENT_STRICT | IDENT_NO_DATE);
 }
 
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
