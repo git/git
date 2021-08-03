@@ -17,7 +17,7 @@ enum signature_trust_level {
 
 struct signature_check {
 	char *payload;
-	char *gpg_output;
+	char *output;
 	char *gpg_status;
 
 	/*

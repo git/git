@@ -15,6 +15,12 @@ struct gpg_format {
 	const char *program;
 	const char **verify_args;
 	const char **sigs;
+	int (*verify_signed_buffer)(struct signature_check *sigc,
+				    struct gpg_format *fmt, const char *payload,
+				    size_t payload_size, const char *signature,
+				    size_t signature_size);
+	int (*sign_buffer)(struct strbuf *buffer, struct strbuf *signature,
+			   const char *signing_key);
 };
 
 static const char *openpgp_verify_args[] = {
@@ -35,14 +41,29 @@ static const char *x509_sigs[] = {
 	NULL
 };
 
+static int verify_gpg_signed_buffer(struct signature_check *sigc,
+				    struct gpg_format *fmt, const char *payload,
+				    size_t payload_size, const char *signature,
+				    size_t signature_size);
+static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
+			   const char *signing_key);
+
 static struct gpg_format gpg_format[] = {
-	{ .name = "openpgp", .program = "gpg",
-	  .verify_args = openpgp_verify_args,
-	  .sigs = openpgp_sigs
+	{
+		.name = "openpgp",
+		.program = "gpg",
+		.verify_args = openpgp_verify_args,
+		.sigs = openpgp_sigs,
+		.verify_signed_buffer = verify_gpg_signed_buffer,
+		.sign_buffer = sign_buffer_gpg,
 	},
-	{ .name = "x509", .program = "gpgsm",
-	  .verify_args = x509_verify_args,
-	  .sigs = x509_sigs
+	{
+		.name = "x509",
+		.program = "gpgsm",
+		.verify_args = x509_verify_args,
+		.sigs = x509_sigs,
+		.verify_signed_buffer = verify_gpg_signed_buffer,
+		.sign_buffer = sign_buffer_gpg,
 	},
 };
 
@@ -72,7 +93,7 @@ static struct gpg_format *get_format_by_sig(const char *sig)
 void signature_check_clear(struct signature_check *sigc)
 {
 	FREE_AND_NULL(sigc->payload);
-	FREE_AND_NULL(sigc->gpg_output);
+	FREE_AND_NULL(sigc->output);
 	FREE_AND_NULL(sigc->gpg_status);
 	FREE_AND_NULL(sigc->signer);
 	FREE_AND_NULL(sigc->key);
@@ -257,16 +278,16 @@ error:
 	FREE_AND_NULL(sigc->key);
 }
 
-static int verify_signed_buffer(const char *payload, size_t payload_size,
-				const char *signature, size_t signature_size,
-				struct strbuf *gpg_output,
-				struct strbuf *gpg_status)
+static int verify_gpg_signed_buffer(struct signature_check *sigc,
+				    struct gpg_format *fmt, const char *payload,
+				    size_t payload_size, const char *signature,
+				    size_t signature_size)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
-	struct gpg_format *fmt;
 	struct tempfile *temp;
 	int ret;
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf gpg_stdout = STRBUF_INIT;
+	struct strbuf gpg_stderr = STRBUF_INIT;
 
 	temp = mks_tempfile_t(".git_vtag_tmpXXXXXX");
 	if (!temp)
@@ -279,10 +300,6 @@ static int verify_signed_buffer(const char *payload, size_t payload_size,
 		return -1;
 	}
 
-	fmt = get_format_by_sig(signature);
-	if (!fmt)
-		BUG("bad signature '%s'", signature);
-
 	strvec_push(&gpg.args, fmt->program);
 	strvec_pushv(&gpg.args, fmt->verify_args);
 	strvec_pushl(&gpg.args,
@@ -290,18 +307,22 @@ static int verify_signed_buffer(const char *payload, size_t payload_size,
 		     "--verify", temp->filename.buf, "-",
 		     NULL);
 
-	if (!gpg_status)
-		gpg_status = &buf;
-
 	sigchain_push(SIGPIPE, SIG_IGN);
-	ret = pipe_command(&gpg, payload, payload_size,
-			   gpg_status, 0, gpg_output, 0);
+	ret = pipe_command(&gpg, payload, payload_size, &gpg_stdout, 0,
+			   &gpg_stderr, 0);
 	sigchain_pop(SIGPIPE);
 
 	delete_tempfile(&temp);
 
-	ret |= !strstr(gpg_status->buf, "\n[GNUPG:] GOODSIG ");
-	strbuf_release(&buf); /* no matter it was used or not */
+	ret |= !strstr(gpg_stdout.buf, "\n[GNUPG:] GOODSIG ");
+	sigc->payload = xmemdupz(payload, payload_size);
+	sigc->output = strbuf_detach(&gpg_stderr, NULL);
+	sigc->gpg_status = strbuf_detach(&gpg_stdout, NULL);
+
+	parse_gpg_output(sigc);
+
+	strbuf_release(&gpg_stdout);
+	strbuf_release(&gpg_stderr);
 
 	return ret;
 }
@@ -309,35 +330,32 @@ static int verify_signed_buffer(const char *payload, size_t payload_size,
 int check_signature(const char *payload, size_t plen, const char *signature,
 	size_t slen, struct signature_check *sigc)
 {
-	struct strbuf gpg_output = STRBUF_INIT;
-	struct strbuf gpg_status = STRBUF_INIT;
+	struct gpg_format *fmt;
 	int status;
 
 	sigc->result = 'N';
 	sigc->trust_level = -1;
 
-	status = verify_signed_buffer(payload, plen, signature, slen,
-				      &gpg_output, &gpg_status);
-	if (status && !gpg_output.len)
-		goto out;
-	sigc->payload = xmemdupz(payload, plen);
-	sigc->gpg_output = strbuf_detach(&gpg_output, NULL);
-	sigc->gpg_status = strbuf_detach(&gpg_status, NULL);
-	parse_gpg_output(sigc);
+	fmt = get_format_by_sig(signature);
+	if (!fmt)
+		die(_("bad/incompatible signature '%s'"), signature);
+
+	status = fmt->verify_signed_buffer(sigc, fmt, payload, plen, signature,
+					   slen);
+
+	if (status && !sigc->output)
+		return !!status;
+
 	status |= sigc->result != 'G';
 	status |= sigc->trust_level < configured_min_trust_level;
-
- out:
-	strbuf_release(&gpg_status);
-	strbuf_release(&gpg_output);
 
 	return !!status;
 }
 
 void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 {
-	const char *output = flags & GPG_VERIFY_RAW ?
-		sigc->gpg_status : sigc->gpg_output;
+	const char *output = flags & GPG_VERIFY_RAW ? sigc->gpg_status :
+							    sigc->output;
 
 	if (flags & GPG_VERIFY_VERBOSE && sigc->payload)
 		fputs(sigc->payload, stdout);
@@ -441,6 +459,12 @@ const char *get_signing_key(void)
 }
 
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
+{
+	return use_format->sign_buffer(buffer, signature, signing_key);
+}
+
+static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
+			  const char *signing_key)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
 	int ret;
