@@ -203,11 +203,12 @@ int run_hooks(const char *hook_name, const char *hook_path,
 				   pick_next_hook,
 				   notify_start_failure,
 				   options->feed_pipe,
-				   NULL,
+				   options->consume_sideband,
 				   notify_hook_finished,
 				   &cb_data,
 				   "hook",
 				   hook_name);
+
 
 	if (options->absolute_path)
 		strbuf_release(&abs_path);
