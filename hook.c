@@ -92,6 +92,7 @@ static int pick_next_hook(struct child_process *cp,
 	cp->env = hook_cb->options->env.v;
 	cp->stdout_to_stderr = 1;
 	cp->trace2_hook_name = hook_cb->hook_name;
+	cp->dir = hook_cb->options->dir;
 
 	/* add command */
 	strvec_push(&cp->args, run_me->hook_path);
@@ -145,6 +146,7 @@ static int notify_hook_finished(int result,
 int run_hooks(const char *hook_name, const char *hook_path,
 	      struct run_hooks_opt *options)
 {
+	struct strbuf abs_path = STRBUF_INIT;
 	struct hook my_hook = {
 		.hook_path = hook_path,
 	};
@@ -158,6 +160,10 @@ int run_hooks(const char *hook_name, const char *hook_path,
 	if (!options)
 		BUG("a struct run_hooks_opt must be provided to run_hooks");
 
+	if (options->absolute_path) {
+		strbuf_add_absolute_path(&abs_path, hook_path);
+		my_hook.hook_path = abs_path.buf;
+	}
 	cb_data.run_me = &my_hook;
 
 	run_processes_parallel_tr2(jobs,
@@ -167,6 +173,9 @@ int run_hooks(const char *hook_name, const char *hook_path,
 				   &cb_data,
 				   "hook",
 				   hook_name);
+
+	if (options->absolute_path)
+		strbuf_release(&abs_path);
 
 	return cb_data.rc;
 }

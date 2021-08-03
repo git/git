@@ -28,6 +28,14 @@ struct run_hooks_opt
 
 	/* Args to be passed to each hook */
 	struct strvec args;
+
+	/* Resolve and run the "absolute_path(hook)" instead of
+	 * "hook". Used for "git worktree" hooks
+	 */
+	int absolute_path;
+
+	/* Path to initial working directory for subprocess */
+	const char *dir;
 };
 
 #define RUN_HOOKS_OPT_INIT { \
