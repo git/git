@@ -170,3 +170,24 @@ int run_hooks(const char *hook_name, const char *hook_path,
 
 	return cb_data.rc;
 }
+
+int run_hooks_oneshot(const char *hook_name, struct run_hooks_opt *options)
+{
+	const char *hook_path;
+	int ret;
+	struct run_hooks_opt hook_opt_scratch = RUN_HOOKS_OPT_INIT;
+
+	if (!options)
+		options = &hook_opt_scratch;
+
+	hook_path = find_hook(hook_name);
+	if (!hook_path) {
+		ret = 0;
+		goto cleanup;
+	}
+
+	ret = run_hooks(hook_name, hook_path, options);
+cleanup:
+	run_hooks_opt_clear(options);
+	return ret;
+}
