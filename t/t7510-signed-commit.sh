@@ -71,7 +71,25 @@ test_expect_success GPG 'create signed commits' '
 	git tag eleventh-signed $(cat oid) &&
 	echo 12 | git commit-tree --gpg-sign=B7227189 HEAD^{tree} >oid &&
 	test_line_count = 1 oid &&
-	git tag twelfth-signed-alt $(cat oid)
+	git tag twelfth-signed-alt $(cat oid) &&
+
+	cat >keydetails <<-\EOF &&
+	Key-Type: RSA
+	Key-Length: 2048
+	Subkey-Type: RSA
+	Subkey-Length: 2048
+	Name-Real: Unknown User
+	Name-Email: unknown@git.com
+	Expire-Date: 0
+	%no-ask-passphrase
+	%no-protection
+	EOF
+	gpg --batch --gen-key keydetails &&
+	echo 13 >file && git commit -a -S"unknown@git.com" -m thirteenth &&
+	git tag thirteenth-signed &&
+	DELETE_FINGERPRINT=$(gpg -K --with-colons --fingerprint --batch unknown@git.com | grep "^fpr" | head -n 1 | awk -F ":" "{print \$10;}") &&
+	gpg --batch --yes --delete-secret-keys $DELETE_FINGERPRINT &&
+	gpg --batch --yes --delete-keys unknown@git.com
 '
 
 test_expect_success GPG 'verify and show signatures' '
@@ -108,6 +126,13 @@ test_expect_success GPG 'verify and show signatures' '
 			echo $commit OK || exit 1
 		done
 	)
+'
+
+test_expect_success GPG 'verify-commit exits failure on unknown signature' '
+	test_must_fail git verify-commit thirteenth-signed 2>actual &&
+	! grep "Good signature from" actual &&
+	! grep "BAD signature from" actual &&
+	grep -q -F -e "No public key" -e "public key not found" actual
 '
 
 test_expect_success GPG 'verify-commit exits success on untrusted signature' '
@@ -338,6 +363,8 @@ test_expect_success GPG 'show double signature with custom format' '
 '
 
 
+# NEEDSWORK: This test relies on the test_tick commit/author dates from the first
+# 'create signed commits' test even though it creates its own
 test_expect_success GPG 'verify-commit verifies multiply signed commits' '
 	git init multiply-signed &&
 	cd multiply-signed &&
