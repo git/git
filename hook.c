@@ -173,6 +173,9 @@ static int notify_hook_finished(int result,
 
 	hook_cb->rc |= result;
 
+	if (hook_cb->invoked_hook)
+		*hook_cb->invoked_hook = 1;
+
 	return 0;
 }
 
@@ -187,6 +190,7 @@ int run_hooks(const char *hook_name, const char *hook_path,
 		.rc = 0,
 		.hook_name = hook_name,
 		.options = options,
+		.invoked_hook = options->invoked_hook,
 	};
 	int jobs = 1;
 
