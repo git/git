@@ -137,8 +137,14 @@ static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
 			break;
 		}
 	}
-	if (type == OBJ_COMMIT)
-		return (struct commit *) parse_object(the_repository, oid);
+
+	if (type == OBJ_COMMIT) {
+		struct commit *commit = lookup_commit(the_repository, oid);
+		if (!commit || repo_parse_commit(the_repository, commit))
+			return NULL;
+		return commit;
+	}
+
 	return NULL;
 }
 
