@@ -180,6 +180,16 @@ int fsm_settings__error_if_incompatible(struct repository *r)
 		      xgetcwd());
 		return 1;
 
+	case FSMONITOR_REASON_ERROR:
+		error(_("repository '%s' is incompatible with fsmonitor due to errors"),
+		      r->worktree);
+		return 1;
+
+	case FSMONITOR_REASON_REMOTE:
+		error(_("remote repository '%s' is incompatible with fsmonitor"),
+		      r->worktree);
+		return 1;
+
 	case FSMONITOR_REASON_VFS4GIT:
 		error(_("virtual repository '%s' is incompatible with fsmonitor"),
 		      r->worktree);
