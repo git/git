@@ -6,13 +6,6 @@ backend 'merge strategies' to be chosen with `-s` option.  Some strategies
 can also take their own options, which can be passed by giving `-X<option>`
 arguments to `git merge` and/or `git pull`.
 
-resolve::
-	This can only resolve two heads (i.e. the current branch
-	and another branch you pulled from) using a 3-way merge
-	algorithm.  It tries to carefully detect criss-cross
-	merge ambiguities and is considered generally safe and
-	fast.
-
 recursive::
 	This can only resolve two heads using a 3-way merge
 	algorithm.  When there is more than one common
@@ -105,6 +98,12 @@ subtree[=<path>];;
 	match with each other when merging.  Instead, the specified path
 	is prefixed (or stripped from the beginning) to make the shape of
 	two trees to match.
+
+resolve::
+	This can only resolve two heads (i.e. the current branch
+	and another branch you pulled from) using a 3-way merge
+	algorithm.  It tries to carefully detect criss-cross
+	merge ambiguities.  It does not handle renames.
 
 octopus::
 	This resolves cases with more than two heads, but refuses to do
