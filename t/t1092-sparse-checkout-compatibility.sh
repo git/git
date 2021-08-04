@@ -95,6 +95,25 @@ test_expect_success 'setup' '
 		git add . &&
 		git commit -m "rename deep/deeper1/... to folder1/..." &&
 
+		git checkout -b df-conflict-1 base &&
+		rm -rf folder1 &&
+		echo content >folder1 &&
+		git add . &&
+		git commit -m "dir to file" &&
+
+		git checkout -b df-conflict-2 base &&
+		rm -rf folder2 &&
+		echo content >folder2 &&
+		git add . &&
+		git commit -m "dir to file" &&
+
+		git checkout -b fd-conflict base &&
+		rm a &&
+		mkdir a &&
+		echo content >a/a &&
+		git add . &&
+		git commit -m "file to dir" &&
+
 		git checkout -b deepest base &&
 		echo "updated deepest" >deep/deeper1/deepest/a &&
 		git commit -a -m "update deepest" &&
@@ -262,6 +281,34 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout -
 '
 
+test_expect_success 'commit including unstaged changes' '
+	init_repos &&
+
+	write_script edit-file <<-\EOF &&
+	echo $1 >$2
+	EOF
+
+	run_on_all ../edit-file 1 a &&
+	run_on_all ../edit-file 1 deep/a &&
+
+	test_all_match git commit -m "-a" -a &&
+	test_all_match git status --porcelain=v2 &&
+
+	run_on_all ../edit-file 2 a &&
+	run_on_all ../edit-file 2 deep/a &&
+
+	test_all_match git commit -m "--include" --include deep/a &&
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git commit -m "--include" --include a &&
+	test_all_match git status --porcelain=v2 &&
+
+	run_on_all ../edit-file 3 a &&
+	run_on_all ../edit-file 3 deep/a &&
+
+	test_all_match git commit -m "--amend" -a --amend &&
+	test_all_match git status --porcelain=v2
+'
+
 test_expect_success 'status/add: outside sparse cone' '
 	init_repos &&
 
@@ -330,10 +377,16 @@ test_expect_success 'diff --staged' '
 	test_all_match git diff --staged
 '
 
+# NEEDSWORK: sparse-checkout behaves differently from full-checkout when
+# running this test with 'df-conflict-2' after 'df-conflict-1'.
 test_expect_success 'diff with renames and conflicts' '
 	init_repos &&
 
-	for branch in rename-out-to-out rename-out-to-in rename-in-to-out
+	for branch in rename-out-to-out \
+		      rename-out-to-in \
+		      rename-in-to-out \
+		      df-conflict-1 \
+		      fd-conflict
 	do
 		test_all_match git checkout rename-base &&
 		test_all_match git checkout $branch -- . &&
@@ -346,7 +399,12 @@ test_expect_success 'diff with renames and conflicts' '
 test_expect_success 'diff with directory/file conflicts' '
 	init_repos &&
 
-	for branch in rename-out-to-out rename-out-to-in rename-in-to-out
+	for branch in rename-out-to-out \
+		      rename-out-to-in \
+		      rename-in-to-out \
+		      df-conflict-1 \
+		      df-conflict-2 \
+		      fd-conflict
 	do
 		git -C full-checkout reset --hard &&
 		test_sparse_match git reset --hard &&
@@ -514,14 +572,33 @@ test_expect_success 'sparse-index is expanded and converted back' '
 	test_region index ensure_full_index trace2.txt
 '
 
-test_expect_success 'sparse-index is not expanded' '
-	init_repos &&
-
+ensure_not_expanded () {
 	rm -f trace2.txt &&
 	echo >>sparse-index/untracked.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
-		git -C sparse-index status &&
+		git -C sparse-index "$@" &&
 	test_region ! index ensure_full_index trace2.txt
+}
+
+test_expect_success 'sparse-index is not expanded' '
+	init_repos &&
+
+	ensure_not_expanded status &&
+	ensure_not_expanded commit --allow-empty -m empty &&
+	echo >>sparse-index/a &&
+	ensure_not_expanded commit -a -m a &&
+	echo >>sparse-index/a &&
+	ensure_not_expanded commit --include a -m a &&
+	echo >>sparse-index/deep/deeper1/a &&
+	ensure_not_expanded commit --include deep/deeper1/a -m deeper &&
+	ensure_not_expanded checkout rename-out-to-out &&
+	ensure_not_expanded checkout - &&
+	ensure_not_expanded switch rename-out-to-out &&
+	ensure_not_expanded switch - &&
+	git -C sparse-index reset --hard &&
+	ensure_not_expanded checkout rename-out-to-out -- deep/deeper1 &&
+	git -C sparse-index reset --hard &&
+	ensure_not_expanded restore -s rename-out-to-out -- deep/deeper1
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
@@ -557,6 +634,114 @@ test_expect_success 'add everything with deep new file' '
 	run_on_all touch deep/deeper1/x &&
 	test_all_match git add . &&
 	test_all_match git status --porcelain=v2
+'
+
+# NEEDSWORK: 'git checkout' behaves incorrectly in the case of
+# directory/file conflicts, even without sparse-checkout. Use this
+# test only as a documentation of the incorrect behavior, not a
+# measure of how it _should_ behave.
+test_expect_success 'checkout behaves oddly with df-conflict-1' '
+	init_repos &&
+
+	test_sparse_match git sparse-checkout disable &&
+
+	write_script edit-content <<-\EOF &&
+	echo content >>folder1/larger-content
+	git add folder1
+	EOF
+
+	run_on_all ../edit-content &&
+	test_all_match git status --porcelain=v2 &&
+
+	git -C sparse-checkout sparse-checkout init --cone &&
+	git -C sparse-index sparse-checkout init --cone --sparse-index &&
+
+	test_all_match git status --porcelain=v2 &&
+
+	# This checkout command should fail, because we have a staged
+	# change to folder1/larger-content, but the destination changes
+	# folder1 to a file.
+	git -C full-checkout checkout df-conflict-1 \
+		1>full-checkout-out \
+		2>full-checkout-err &&
+	git -C sparse-checkout checkout df-conflict-1 \
+		1>sparse-checkout-out \
+		2>sparse-checkout-err &&
+	git -C sparse-index checkout df-conflict-1 \
+		1>sparse-index-out \
+		2>sparse-index-err &&
+
+	# Instead, the checkout deletes the folder1 file and adds the
+	# folder1/larger-content file, leaving all other paths that were
+	# in folder1/ as deleted (without any warning).
+	cat >expect <<-EOF &&
+	D	folder1
+	A	folder1/larger-content
+	EOF
+	test_cmp expect full-checkout-out &&
+	test_cmp expect sparse-checkout-out &&
+
+	# The sparse-index reports no output
+	test_must_be_empty sparse-index-out &&
+
+	# stderr: Switched to branch df-conflict-1
+	test_cmp full-checkout-err sparse-checkout-err &&
+	test_cmp full-checkout-err sparse-checkout-err
+'
+
+# NEEDSWORK: 'git checkout' behaves incorrectly in the case of
+# directory/file conflicts, even without sparse-checkout. Use this
+# test only as a documentation of the incorrect behavior, not a
+# measure of how it _should_ behave.
+test_expect_success 'checkout behaves oddly with df-conflict-2' '
+	init_repos &&
+
+	test_sparse_match git sparse-checkout disable &&
+
+	write_script edit-content <<-\EOF &&
+	echo content >>folder2/larger-content
+	git add folder2
+	EOF
+
+	run_on_all ../edit-content &&
+	test_all_match git status --porcelain=v2 &&
+
+	git -C sparse-checkout sparse-checkout init --cone &&
+	git -C sparse-index sparse-checkout init --cone --sparse-index &&
+
+	test_all_match git status --porcelain=v2 &&
+
+	# This checkout command should fail, because we have a staged
+	# change to folder1/larger-content, but the destination changes
+	# folder1 to a file.
+	git -C full-checkout checkout df-conflict-2 \
+		1>full-checkout-out \
+		2>full-checkout-err &&
+	git -C sparse-checkout checkout df-conflict-2 \
+		1>sparse-checkout-out \
+		2>sparse-checkout-err &&
+	git -C sparse-index checkout df-conflict-2 \
+		1>sparse-index-out \
+		2>sparse-index-err &&
+
+	# The full checkout deviates from the df-conflict-1 case here!
+	# It drops the change to folder1/larger-content and leaves the
+	# folder1 path as-is on disk. The sparse-index behaves the same.
+	test_must_be_empty full-checkout-out &&
+	test_must_be_empty sparse-index-out &&
+
+	# In the sparse-checkout case, the checkout deletes the folder1
+	# file and adds the folder1/larger-content file, leaving all other
+	# paths that were in folder1/ as deleted (without any warning).
+	cat >expect <<-EOF &&
+	D	folder2
+	A	folder2/larger-content
+	EOF
+	test_cmp expect sparse-checkout-out &&
+
+	# Switched to branch df-conflict-1
+	test_cmp full-checkout-err sparse-checkout-err &&
+	test_cmp full-checkout-err sparse-index-err
 '
 
 test_done
