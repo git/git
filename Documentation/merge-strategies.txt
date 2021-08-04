@@ -51,10 +51,11 @@ patience;;
 	See also linkgit:git-diff[1] `--patience`.
 
 diff-algorithm=[patience|minimal|histogram|myers];;
-	Tells 'merge-recursive' to use a different diff algorithm, which
-	can help avoid mismerges that occur due to unimportant matching
-	lines (such as braces from distinct functions).  See also
-	linkgit:git-diff[1] `--diff-algorithm`.
+	Use a different diff algorithm while merging, which can help
+	avoid mismerges that occur due to unimportant matching lines
+	(such as braces from distinct functions).  See also
+	linkgit:git-diff[1] `--diff-algorithm`.  Defaults to the
+	`diff.algorithm` config setting.
 
 ignore-space-change;;
 ignore-all-space;;
