@@ -108,6 +108,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	struct origin_data *origin_data;
 	char *src;
 	const char *origin, *tag_name;
+	char *to_free = NULL;
 	struct src_data *src_data;
 	struct string_list_item *item;
 	int pulling_head = 0;
@@ -183,12 +184,13 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	if (!strcmp(".", src) || !strcmp(src, origin)) {
 		int len = strlen(origin);
 		if (origin[0] == '\'' && origin[len - 1] == '\'')
-			origin = xmemdupz(origin + 1, len - 2);
+			origin = to_free = xmemdupz(origin + 1, len - 2);
 	} else
-		origin = xstrfmt("%s of %s", origin, src);
+		origin = to_free = xstrfmt("%s of %s", origin, src);
 	if (strcmp(".", src))
 		origin_data->is_local_branch = 0;
 	string_list_append(&origins, origin)->util = origin_data;
+	free(to_free);
 	return 0;
 }
 

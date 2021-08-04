@@ -187,11 +187,13 @@ static char *relative_url(const char *remote_url,
 		out = xstrdup(sb.buf + 2);
 	else
 		out = xstrdup(sb.buf);
-	strbuf_reset(&sb);
 
-	if (!up_path || !is_relative)
+	if (!up_path || !is_relative) {
+		strbuf_release(&sb);
 		return out;
+	}
 
+	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s%s", up_path, out);
 	free(out);
 	return strbuf_detach(&sb, NULL);

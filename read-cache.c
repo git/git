@@ -2506,6 +2506,7 @@ int repo_index_has_changes(struct repository *repo,
 		opt.flags.exit_with_status = 1;
 		if (!sb)
 			opt.flags.quick = 1;
+		diff_setup_done(&opt);
 		do_diff_cache(&cmp, &opt);
 		diffcore_std(&opt);
 		for (i = 0; sb && i < diff_queued_diff.nr; i++) {
