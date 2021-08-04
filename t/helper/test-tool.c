@@ -33,6 +33,7 @@ static struct test_cmd cmds[] = {
 	{ "fast-rebase", cmd__fast_rebase },
 	{ "genrandom", cmd__genrandom },
 	{ "genzeros", cmd__genzeros },
+	{ "getcwd", cmd__getcwd },
 	{ "hashmap", cmd__hashmap },
 	{ "hash-speed", cmd__hash_speed },
 	{ "index-version", cmd__index_version },
