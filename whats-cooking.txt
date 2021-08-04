@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2021, #01; Sun, 1)
-X-master-at: 940fe202adcbf9fa1825c648d97cbe1b90d26aec
-X-next-at: bfc8b41932b88e0d52dc2ef21dea9b33e3a8221b
+Subject: What's cooking in git.git (Aug 2021, #02; Tue, 3)
+X-master-at: 66262451ec94d30ac4b80eb3123549cf7a788afd
+X-next-at: a027d43cca25f39e7d37f671db37ed5e34a42f4d
 
-What's cooking in git.git (Aug 2021, #01; Sun, 1)
+What's cooking in git.git (Aug 2021, #02; Tue, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,14 +17,7 @@ useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-This cycle may have seen more non-trivial topics thrown at the list
-than ever; I have a strong suspicion that among the topics not in
-'next' and are not explicitly marked to be merged to 'next', there
-are a handful of them that have already been adequately reviewed but
-I simply missed the conclusion.  There also may be some topics that
-only need the final nits picked before they are ready for the
-upcoming release.  Help is greatly appreciated to identify and give
-final polish to them as needed.
+A preview release Git 2.33-rc0 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -55,44 +48,180 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ab/bundle-tests (2021-07-22) 2 commits
+  (merged to 'next' on 2021-07-22 at 053b5d0ecf)
+ + bundle tests: use test_cmp instead of grep
+ + bundle tests: use ">file" not ": >file"
+
+ "git bundle" gained more test coverage.
+
+
+* fc/pull-no-rebase-merges-theirs-into-ours (2021-07-21) 1 commit
+  (merged to 'next' on 2021-07-28 at f8e6567082)
+ + doc: pull: fix rebase=false documentation
+
+ Documentation fix for "git pull --rebase=no".
+
+
+* jk/check-pack-valid-before-opening-bitmap (2021-07-23) 1 commit
+  (merged to 'next' on 2021-07-28 at 98d5b4dc68)
+ + pack-bitmap: check pack validity when opening bitmap
+
+ A race between repacking and using pack bitmaps has been corrected.
+
+
+* jk/config-env-doc (2021-07-20) 3 commits
+  (merged to 'next' on 2021-07-22 at 45616c831e)
+ + doc/git-config: simplify "override" advice for FILES section
+ + doc/git-config: clarify GIT_CONFIG environment variable
+ + doc/git-config: explain --file instead of referring to GIT_CONFIG
+
+ Documentation around GIT_CONFIG has been updated.
+
+
+* js/ci-check-whitespace-updates (2021-07-14) 2 commits
+  (merged to 'next' on 2021-07-22 at cdc9aa0622)
+ + ci(check-whitespace): restrict to the intended commits
+ + ci(check-whitespace): stop requiring a read/write token
+
+ CI update.
+
+
+* jt/bulk-prefetch (2021-07-23) 2 commits
+  (merged to 'next' on 2021-07-28 at 26e28cab21)
+ + cache-tree: prefetch in partial clone read-tree
+ + unpack-trees: refactor prefetching code
+
+ "git read-tree" had a codepath where blobs are fetched one-by-one
+ from the promisor remote, which has been corrected to fetch in bulk.
+
+
+* pb/submodule-recurse-doc (2021-07-20) 1 commit
+  (merged to 'next' on 2021-07-22 at 4129e89833)
+ + doc: clarify description of 'submodule.recurse'
+
+ Doc update.
+
+
+* ps/perf-with-separate-output-directory (2021-07-02) 1 commit
+  (merged to 'next' on 2021-07-22 at af51ca0a39)
+ + perf: fix when running with TEST_OUTPUT_DIRECTORY
+
+ Test update.
+
+
+* tb/bitmap-type-filter-comment-fix (2021-07-20) 1 commit
+  (merged to 'next' on 2021-07-22 at 8428556149)
+ + pack-bitmap: clarify comment in filter_bitmap_exclude_type()
+
+ In-code comment update.
+
+--------------------------------------------------
 [New Topics]
 
-* tb/mingw-rmdir-symlink-to-directory (2021-07-29) 1 commit
- - mingw: align symlinks-related rmdir() behavior with Linux
-
- Windows rmdir() equivalent behaves differently from POSIX ones in
- that when used on a symbolic link that points at a directory, the
- target directory gets removed, which has been corrected.
-
- cf. <xmqqo8ak51mt.fsf@gitster.g>
- cf. <CAPig+cR9rb+ydc5age+2FzLtTtXhg1t77p5NrA7bqN0iyU6Kyg@mail.gmail.com>
+* ab/test-columns (2021-08-02) 3 commits
+ - test-lib.sh: use GIT_TEST_COLUMNS over COLUMNS
+ - test-lib-functions.sh: add a test_with_columns function
+ - test-lib-functions.sh: rename test_must_fail_acceptable()
 
 
-* ab/getcwd-test (2021-07-30) 1 commit
- - t0001: fix broken not-quite getcwd(3) test in bed67874e2
-
- Portability test update.
-
- Will merge to 'next'.
-
-
-* ar/doc-markup-fix (2021-07-30) 1 commit
- - Documentation: render special characters correctly
-
- Doc mark-up fix.
-
- Will merge to 'next'.
+* cb/reftable-fixup (2021-08-02) 3 commits
+ - openbsd: allow reftable building with zlib 1.2.3
+ - reftable: clarify zlib version dependency
+ - fixup! Provide zlib's uncompress2 from compat/zlib-compat.c
+ (this branch uses hn/reftable.)
 
 
-* rs/use-fspathhash (2021-07-30) 1 commit
- - use fspathhash() everywhere
+* cb/t7508-regexp-fix (2021-08-02) 1 commit
+ - t7508: avoid non POSIX BRE
 
- Code simplification.
 
- Will merge to 'next'.
+* en/merge-strategy-docs (2021-08-03) 10 commits
+ - Update error message and code comment
+ - merge-strategies.txt: add coverage of the `ort` merge strategy
+ - git-rebase.txt: correct out-of-date and misleading text about renames
+ - merge-strategies.txt: fix simple capitalization error
+ - merge-strategies.txt: avoid giving special preference to patience algorithm
+ - merge-strategies.txt: do not imply using copy detection is desired
+ - merge-strategies.txt: update wording for the resolve strategy
+ - Documentation: edit awkward references to `git merge-recursive`
+ - directory-rename-detection.txt: small updates due to merge-ort optimizations
+ - git-rebase.txt: correct antiquated claims about --rebase-merges
+ (this branch is used by en/ort-becomes-the-default.)
+
+
+* en/ort-becomes-the-default (2021-08-03) 2 commits
+ - Change default merge backend from recursive to ort
+ - Update docs for change of default merge backend
+ (this branch uses en/merge-strategy-docs.)
+
+
+* js/log-protocol-version (2021-08-03) 1 commit
+ - connect, protocol: log negotiated protocol version
+
+
+* ow/clone-bare-origin (2021-08-03) 1 commit
+ - clone: Allow combining --bare and --origin
 
 --------------------------------------------------
 [Stalled]
+
+* gh/gitweb-branch-sort (2021-06-10) 1 commit
+ - gitweb: use HEAD as secondary sort key in git_get_heads_list()
+
+ Tie-break branches that point at the same object in the list of
+ branches on GitWeb to show the one pointed at by HEAD early.
+
+ Waiting for reviews.
+
+
+* lh/systemd-timers (2021-07-02) 3 commits
+ - maintenance: add support for systemd timers on Linux
+ - maintenance: `git maintenance run` learned `--scheduler=<scheduler>`
+ - cache.h: Introduce a generic "xdg_config_home_for(…)" function
+
+ "git maintenance" scheduler learned to use systemd timers as a
+ possible backend.
+
+ Waiting for reviews.
+
+
+* fc/completion-updates (2021-06-07) 4 commits
+ - completion: bash: add correct suffix in variables
+ - completion: bash: fix for multiple dash commands
+ - completion: bash: fix for suboptions with value
+ - completion: bash: fix prefix detection in branch.*
+
+ Command line completion updates.
+
+ Expecting a reroll.
+ cf. <60be6f7fa4435_db80d208f2@natae.notmuch>
+
+
+* es/superproject-aware-submodules (2021-06-16) 5 commits
+ - SQUASH???
+ - submodule: cache superproject gitdir during 'update'
+ - submodule: cache superproject gitdir during absorbgitdirs
+ - introduce submodule.superprojectGitDir cache
+ - t7400-submodule-basic: modernize inspect() helper
+
+ A configuration variable in a submodule points at the location of
+ the superproject it is bound to (RFC).
+
+ Waiting for reviews.
+
+
+* en/zdiff3 (2021-06-15) 2 commits
+ - update documentation for new zdiff3 conflictStyle
+ - xdiff: implement a zealous diff3, or "zdiff3"
+
+ "Zealous diff3" style of merge conflict presentation has been added.
+
+ Expecting a reroll.
+ cf. <CABPp-BE7-E03+x38EK-=AE5mwwdST+d50hiiud2eY2Nsf3rM5g@mail.gmail.com>
+
 
 * ao/p4-avoid-decoding (2021-04-12) 2 commits
  - git-p4: do not decode data from perforce by default
@@ -117,15 +246,54 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* tb/mingw-rmdir-symlink-to-directory (2021-08-02) 1 commit
+  (merged to 'next' on 2021-08-03 at a027d43cca)
+ + mingw: align symlinks-related rmdir() behavior with Linux
+
+ Windows rmdir() equivalent behaves differently from POSIX ones in
+ that when used on a symbolic link that points at a directory, the
+ target directory gets removed, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* ab/getcwd-test (2021-07-30) 1 commit
+  (merged to 'next' on 2021-08-02 at 22ecd02929)
+ + t0001: fix broken not-quite getcwd(3) test in bed67874e2
+
+ Portability test update.
+
+ Will merge to 'master'.
+
+
+* ar/doc-markup-fix (2021-07-30) 1 commit
+  (merged to 'next' on 2021-08-02 at b99073fa75)
+ + Documentation: render special characters correctly
+
+ Doc mark-up fix.
+
+ Will merge to 'master'.
+
+
+* rs/use-fspathhash (2021-07-30) 1 commit
+  (merged to 'next' on 2021-08-02 at 72c388e867)
+ + use fspathhash() everywhere
+
+ Code simplification.
+
+ Will merge to 'master'.
+
+
 * jc/bisect-sans-show-branch (2021-07-28) 2 commits
- - bisect: simplify return code from bisect_checkout()
- - bisect: do not run show-branch just to show the current commit
+  (merged to 'next' on 2021-08-02 at 89a8d9a47b)
+ + bisect: simplify return code from bisect_checkout()
+ + bisect: do not run show-branch just to show the current commit
 
  "git bisect" spawned "git show-branch" only to pretty-print the
  title of the commit after checking out the next version to be
  tested; this has been rewritten in C.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jc/trivial-threeway-binary-merge (2021-07-28) 1 commit
@@ -141,30 +309,17 @@ Release tarballs are available at:
  apply.c::three_way_merge().
 
 
-* os/bisect-runs-show-branch-without-pager (2021-07-27) 1 commit
- - bisect: disable pager while invoking show-branch
-
- When "git bisect" spawns "git show-branch" to pretty-print the
- title of the commit to be tested, it could have invoked user's
- pager if user configured to run pager while running show-branch.
- The invocation of show-branch has been changed to disable pager,
- even if one is configured.
-
- Will discard.
- This probably is unnecessary with the rewrite to get rid of the
- show-branch invocation altogether.
-
-
 * ab/http-drop-old-curl (2021-07-30) 5 commits
- - http: rename CURLOPT_FILE to CURLOPT_WRITEDATA
- - http: drop support for curl < 7.19.3 and < 7.17.0 (again)
- - http: drop support for curl < 7.19.4
- - http: drop support for curl < 7.16.0
- - http: drop support for curl < 7.11.1
+  (merged to 'next' on 2021-08-02 at b382ac042f)
+ + http: rename CURLOPT_FILE to CURLOPT_WRITEDATA
+ + http: drop support for curl < 7.19.3 and < 7.17.0 (again)
+ + http: drop support for curl < 7.19.4
+ + http: drop support for curl < 7.16.0
+ + http: drop support for curl < 7.11.1
 
  Support for ancient versions of cURL library has been dropped.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ab/lib-subtest (2021-07-21) 10 commits
@@ -179,29 +334,21 @@ Release tarballs are available at:
  - Merge branch 'ps/t0000-output-directory-fix' into ab/lib-subtest
  - Merge branch 'jk/t0000-subtests-fix' into ab/lib-subtest
 
- Updates to the tests in t0000 to test th etest framework.
+ Updates to the tests in t0000 to test the test framework.
 
 
 * ds/add-with-sparse-index (2021-07-29) 5 commits
- - add: remove ensure_full_index() with --renormalize
- - add: ignore outside the sparse-checkout in refresh()
- - pathspec: stop calling ensure_full_index
- - add: allow operating on a sparse-only index
- - t1092: test merge conflicts outside cone
+  (merged to 'next' on 2021-08-02 at ee3e1323bb)
+ + add: remove ensure_full_index() with --renormalize
+ + add: ignore outside the sparse-checkout in refresh()
+ + pathspec: stop calling ensure_full_index
+ + add: allow operating on a sparse-only index
+ + t1092: test merge conflicts outside cone
  (this branch uses ds/commit-and-checkout-with-sparse-index.)
 
  "git add" can work better with the sparse index.
 
- Will merge to 'next'.
-
-
-* fc/pull-no-rebase-merges-theirs-into-ours (2021-07-21) 1 commit
-  (merged to 'next' on 2021-07-28 at f8e6567082)
- + doc: pull: fix rebase=false documentation
-
- Documentation fix for "git pull --rebase=no".
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * ab/only-single-progress-at-once (2021-07-23) 8 commits
@@ -225,7 +372,8 @@ Release tarballs are available at:
  The code to show progress indicator in a few codepaths did not
  cover between 0-100%, which has been corrected.
 
- Will merge to 'next'.
+ Waiting for a clarification.
+ cf. <xmqqbl6slmer.fsf@gitster.g>
 
 
 * ar/submodule-add-config (2021-07-28) 1 commit
@@ -235,7 +383,7 @@ Release tarballs are available at:
  Large part of "git submodule add" gets rewritten in C.
 
 
-* en/ort-perf-batch-15 (2021-07-30) 9 commits
+* en/ort-perf-batch-15 (2021-08-03) 9 commits
  - merge-ort: remove compile-time ability to turn off usage of memory pools
  - merge-ort: reuse path strings in pool_alloc_filespec
  - merge-ort: store filepairs and filespecs in our mem_pool
@@ -249,27 +397,7 @@ Release tarballs are available at:
 
  Final batch for "merge -sort" optimization.
 
- Looking good.
-
-
-* jk/check-pack-valid-before-opening-bitmap (2021-07-23) 1 commit
-  (merged to 'next' on 2021-07-28 at 98d5b4dc68)
- + pack-bitmap: check pack validity when opening bitmap
-
- A race between repacking and using pack bitmaps has been corrected.
-
- Will merge to 'master'.
-
-
-* jt/bulk-prefetch (2021-07-23) 2 commits
-  (merged to 'next' on 2021-07-28 at 26e28cab21)
- + cache-tree: prefetch in partial clone read-tree
- + unpack-trees: refactor prefetching code
-
- "git read-tree" had a codepath where blobs are fetched one-by-one
- from the promisor remote, which has been corrected to fetch in bulk.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * pb/merge-autostash-more (2021-07-23) 4 commits
@@ -317,17 +445,22 @@ Release tarballs are available at:
  location relative to Git installation (e.g. its $sharedir which is
  $(prefix)/share), with "%(prefix)".
 
+ Will merge to 'next'.
 
-* zh/cherry-pick-help-is-only-for-sequencer (2021-07-26) 1 commit
+
+* zh/cherry-pick-help-is-only-for-sequencer (2021-08-03) 2 commits
+ - cherry-pick: use better advice message
  - cherry-pick: fix bug when used with GIT_CHERRY_PICK_HELP
 
  "git cherry-pick" loses its state file when a stray
  GIT_CHERRY_PICK_HELP environment is present, which has been
  corrected.
 
+ Will merge to 'next'.
 
-* dt/submodule-diff-fixes (2021-07-26) 3 commits
- - diff --submodule=diff: do not print failure message twice
+
+* dt/submodule-diff-fixes (2021-08-02) 3 commits
+ - diff --submodule=diff: Don't print failure message twice
  - diff --submodule=diff: do not fail on ever-initialied deleted submodules
  - t4060: remove unused variable
 
@@ -335,44 +468,18 @@ Release tarballs are available at:
  trying to run diff inside a submodule, when the user manually
  removes the submodule directory.
 
- It is clear that a problem exists, but it is unclear if the
- proposed solution is a desirable one.
+ Comments?
 
 
-* ab/bundle-tests (2021-07-22) 2 commits
-  (merged to 'next' on 2021-07-22 at 053b5d0ecf)
- + bundle tests: use test_cmp instead of grep
- + bundle tests: use ">file" not ": >file"
-
- "git bundle" gained more test coverage.
-
- Will merge to 'master'.
-
-
-* es/config-based-hooks (2021-07-20) 9 commits
- - hook: implement hookcmd.<name>.skip
- - hook: teach 'hookcmd' config to alias hook scripts
- - hook: allow out-of-repo 'git hook' invocations
- - hook: include hooks from the config
- - hook: allow running non-native hooks
- - hook: treat hookdir hook specially
- - hook: introduce "git hook list"
- - hook: allow parallel hook execution
- - hook: run a list of hooks instead
- (this branch uses ab/config-based-hooks-base.)
-
- The "hooks defined via the configuration variables" topic.
-
-
-* fs/ssh-signing (2021-07-28) 9 commits
- - ssh signing: add documentation
- - ssh signing: add more tests for logs, tags & push certs
+* fs/ssh-signing (2021-08-03) 9 commits
+ - ssh signing: test that gpg fails for unkown keys
+ - ssh signing: tests for logs, tags & push certs
  - ssh signing: duplicate t7510 tests for commits
- - ssh signing: add test prereqs
- - ssh signing: parse ssh-keygen output and verify signatures
- - ssh signing: provide a textual representation of the signing key
+ - ssh signing: verify signatures using ssh-keygen
+ - ssh signing: provide a textual signing_key_id
  - ssh signing: retrieve a default key from ssh-agent
- - ssh signing: add ssh signature format and signing using ssh keys
+ - ssh signing: add ssh key format and signing code
+ - ssh signing: add test prereqs
  - ssh signing: preliminary refactoring and clean-up
 
  Use ssh public crypto for object and push-cert signing.
@@ -380,43 +487,23 @@ Release tarballs are available at:
  Comments?
 
 
-* pb/submodule-recurse-doc (2021-07-20) 1 commit
-  (merged to 'next' on 2021-07-22 at 4129e89833)
- + doc: clarify description of 'submodule.recurse'
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* tb/bitmap-type-filter-comment-fix (2021-07-20) 1 commit
-  (merged to 'next' on 2021-07-22 at 8428556149)
- + pack-bitmap: clarify comment in filter_bitmap_exclude_type()
-
- In-code comment update.
-
- Will merge to 'master'.
-
-
-* hn/refs-test-cleanup (2021-07-22) 11 commits
-  (merged to 'next' on 2021-07-28 at dd3af04939)
- + t6001: avoid direct file system access
- + t6500: use "ls -1" to snapshot ref database state
- + t7064: use update-ref -d to remove upstream branch
- + t1410: mark test as REFFILES
- + t1405: mark test for 'git pack-refs' as REFFILES
- + t1405: use 'git reflog exists' to check reflog existence
-  (merged to 'next' on 2021-07-22 at 2ab8bc259a)
- + t2402: use ref-store test helper to create broken symlink
- + t3320: use git-symbolic-ref rather than filesystem access
- + t6120: use git-update-ref rather than filesystem access
- + t1503: mark symlink test as REFFILES
- + t6050: use git-update-ref rather than filesystem access
+* hn/refs-test-cleanup (2021-08-02) 11 commits
+ - t6001: avoid direct file system access
+ - t6500: use "ls -1" to snapshot ref database state
+ - t7064: use update-ref -d to remove upstream branch
+ - t1410: mark test as REFFILES
+ - t1405: mark test for 'git pack-refs' as REFFILES
+ - t1405: use 'git reflog exists' to check reflog existence
+ - t2402: use ref-store test helper to create broken symlink
+ - t3320: use git-symbolic-ref rather than filesystem access
+ - t6120: use git-update-ref rather than filesystem access
+ - t1503: mark symlink test as REFFILES
+ - t6050: use git-update-ref rather than filesystem access
 
  A handful of tests that assumed implementation details of files
  backend for refs have been cleaned up.
 
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * hn/reftable (2021-07-20) 26 commits
@@ -446,34 +533,14 @@ Release tarballs are available at:
  - reftable: RFC: add LICENSE
  - init-db: set the_repository->hash_algo early on
  - hash.h: provide constants for the hash IDs
+ (this branch is used by cb/reftable-fixup.)
 
  The "reftable" backend for the refs API.
 
  Seems to break CI jobs in 'seen'.
 
 
-* jk/config-env-doc (2021-07-20) 3 commits
-  (merged to 'next' on 2021-07-22 at 45616c831e)
- + doc/git-config: simplify "override" advice for FILES section
- + doc/git-config: clarify GIT_CONFIG environment variable
- + doc/git-config: explain --file instead of referring to GIT_CONFIG
-
- Documentation around GIT_CONFIG has been updated.
-
- Will merge to 'master'.
-
-
-* js/ci-check-whitespace-updates (2021-07-14) 2 commits
-  (merged to 'next' on 2021-07-22 at cdc9aa0622)
- + ci(check-whitespace): restrict to the intended commits
- + ci(check-whitespace): stop requiring a read/write token
-
- CI update.
-
- Will merge to 'master'.
-
-
-* ab/refs-files-cleanup (2021-07-26) 11 commits
+* ab/refs-files-cleanup (2021-08-02) 11 commits
  - refs/files: remove unused "errno != ENOTDIR" condition
  - refs/files: remove unused "errno == EISDIR" code
  - refs/files: remove unused "oid" in lock_ref_oid_basic()
@@ -487,8 +554,7 @@ Release tarballs are available at:
  - refs/packet: add missing BUG() invocations to reflog callbacks
  (this branch is used by hn/refs-errno-cleanup.)
 
- Waiting for a reroll.
- Patches are mostly good, but needs typofixes etc.
+ Will merge to 'next'.
 
 
 * en/pull-conflicting-options (2021-07-22) 8 commits
@@ -506,13 +572,15 @@ Release tarballs are available at:
  but went ahead and rebased when the history on other side is not a
  descendant of our history.  The series tries to fix them up.
 
+ Comments?
+
 
 * bc/inactive-submodules (2021-07-02) 1 commit
  - submodule: mark submodules with update=none as inactive
 
  Usability update for inactive submodules.
 
- Under review.
+ Comments?
  cf. <fc5ec100-1d42-4199-236e-7a99c9218f38@gmail.com>
  cf. <bf1893ee-6973-d8b2-659e-bb239a0a9ae2@gmail.com>
 
@@ -543,24 +611,15 @@ Release tarballs are available at:
  cf. <xmqqsg0ri5mq.fsf@gitster.g>
 
 
-* ps/perf-with-separate-output-directory (2021-07-02) 1 commit
-  (merged to 'next' on 2021-07-22 at af51ca0a39)
- + perf: fix when running with TEST_OUTPUT_DIRECTORY
-
- Test update.
-
- Will merge to 'master'.
-
-
-* ab/bundle-doc (2021-07-20) 3 commits
+* ab/bundle-doc (2021-08-02) 4 commits
+ - bundle doc: replace "basis" with "prerequsite(s)"
  - bundle doc: elaborate on rev<->ref restriction
  - bundle doc: elaborate on object prerequisites
  - bundle doc: rewrite the "DESCRIPTION" section
 
  Doc update.
 
- Expecting a reroll.
- at least for the second patch.
+ Will merge to 'next'.
 
 
 * ab/pack-stdin-packs-fix (2021-07-09) 2 commits
@@ -570,8 +629,7 @@ Release tarballs are available at:
  Input validation of "git pack-objects --stdin-packs" has been
  corrected.
 
- Ack?
- cf. <YND3h2l10PlnSNGJ@nand.local>
+ Will merge to 'next'.
 
 
 * ds/commit-and-checkout-with-sparse-index (2021-07-20) 7 commits
@@ -649,7 +707,7 @@ Release tarballs are available at:
  Comments?
 
 
-* ab/config-based-hooks-base (2021-06-29) 33 commits
+* ab/config-based-hooks-base (2021-08-03) 36 commits
  - hooks: fix a TOCTOU in "did we run a hook?" heuristic
  - receive-pack: convert receive hooks to hook.h
  - post-update: use hook.h library
@@ -657,7 +715,9 @@ Release tarballs are available at:
  - hooks: allow callers to capture output
  - run-command: allow capturing of collated output
  - reference-transaction: use hook.h to run hooks
- - transport: convert pre-push hook to use config
+ - hook tests: use a modern style for "pre-push" tests
+ - hook tests: test for exact "pre-push" hook input
+ - transport: convert pre-push hook to hook.h
  - hook: convert 'post-rewrite' hook in sequencer.c to hook.h
  - hook: provide stdin by string_list or callback
  - run-command: add stdin callback for parallelization
@@ -666,24 +726,24 @@ Release tarballs are available at:
  - run-command: allow stdin for run_processes_parallel
  - run-command: remove old run_hook_{le,ve}() hook API
  - receive-pack: convert push-to-checkout hook to hook.h
- - read-cache: convert post-index-change hook to use config
- - commit: use hook.h to execute hooks
+ - read-cache: convert post-index-change to use hook.h
+ - commit: convert {pre-commit,prepare-commit-msg} hook to hook.h
  - git-p4: use 'git hook' to run hooks
  - send-email: use 'git hook run' for 'sendemail-validate'
  - git hook run: add an --ignore-missing flag
- - merge: use config-based hooks for post-merge hook
+ - merge: convert post-merge to use hook.h
  - hooks: convert 'post-checkout' hook to hook library
- - am: convert applypatch hooks to use config
- - rebase: teach pre-rebase to use hook.h
+ - am: convert applypatch to use hook.h
+ - rebase: convert pre-rebase to use hook.h
  - gc: use hook library for pre-auto-gc hook
  - hook: add 'run' subcommand
  - hook-list.h: add a generated list of hooks, like config-list.h
+ - hook.c users: use "hook_exists()" insted of "find_hook()"
  - hook.c: add a hook_exists() wrapper and use it in bugreport.c
  - hook.[ch]: move find_hook() to this new library
  - Makefile: remove an out-of-date comment
  - Makefile: stop hardcoding {command,config}-list.h
  - Makefile: mark "check" target as .PHONY
- (this branch is used by es/config-based-hooks.)
 
  Restructuring of (a subset of) Emily's config-based-hooks series,
  to demonstrate that a series can be presented as a more logical and
@@ -692,10 +752,15 @@ Release tarballs are available at:
  Waiting for reviews.
 
 
-* ab/serve-cleanup (2021-06-28) 8 commits
+* ab/serve-cleanup (2021-08-03) 13 commits
+ - fixup! {upload,receive}-pack tests: add --advertise-refs tests
+ - serve.[ch]: don't pass "struct strvec *keys" to commands
  - upload-pack.c: convert to new serve.c "startup" config cb
+ - upload-pack: document and rename --advertise-refs
+ - {upload,receive}-pack tests: add --advertise-refs tests
+ - serve.[ch]: remove "serve_options", split up --advertise-refs code
+ - serve.c: move version line to advertise_capabilities()
  - serve: add support for a "startup" git_config() callback
- - serve.c: add trace2 regions for advertise & command
  - serve.c: add call_{advertise,command}() indirection
  - serve: use designated initializers
  - transport: use designated initializers
@@ -703,33 +768,6 @@ Release tarballs are available at:
  - serve: mark has_capability() as static
 
  Code clean-up around "git serve".
-
- Expecting a reroll.
- cf. <cover-0.8-00000000000-20210628T191634Z-avarab@gmail.com>
- cf. <87tul24iw2.fsf@evledraar.gmail.com>
-
-
-* es/superproject-aware-submodules (2021-06-16) 5 commits
- - SQUASH???
- - submodule: cache superproject gitdir during 'update'
- - submodule: cache superproject gitdir during absorbgitdirs
- - introduce submodule.superprojectGitDir cache
- - t7400-submodule-basic: modernize inspect() helper
-
- A configuration variable in a submodule points at the location of
- the superproject it is bound to (RFC).
-
- Waiting for reviews.
-
-
-* en/zdiff3 (2021-06-15) 2 commits
- - update documentation for new zdiff3 conflictStyle
- - xdiff: implement a zealous diff3, or "zdiff3"
-
- "Zealous diff3" style of merge conflict presentation has been added.
-
- Expecting a reroll.
- cf. <CABPp-BE7-E03+x38EK-=AE5mwwdST+d50hiiud2eY2Nsf3rM5g@mail.gmail.com>
 
 
 * pw/diff-color-moved-fix (2021-07-20) 12 commits
@@ -749,8 +787,10 @@ Release tarballs are available at:
  Long-overdue correctness and performance update to "diff
  --color-moved" feature.
 
+ Will merge to 'next'.
 
-* hn/refs-errno-cleanup (2021-07-26) 7 commits
+
+* hn/refs-errno-cleanup (2021-08-02) 7 commits
  - refs: make errno output explicit for refs_resolve_ref_unsafe
  - refs: explicitly return failure_errno from parse_loose_ref_contents
  - refs: add failure_errno to refs_read_raw_ref() signature
@@ -763,7 +803,7 @@ Release tarballs are available at:
  Futz with the way 'errno' is relied on in the refs API to carry the
  failure modes up the callchain.
 
- Blocked by ab/refs-files-cleanup but otherwise is ready for 'next'.
+ Will merge to 'next'.
 
 
 * ab/test-tool-cache-cleanup (2021-06-08) 4 commits
@@ -802,38 +842,6 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* gh/gitweb-branch-sort (2021-06-10) 1 commit
- - gitweb: use HEAD as secondary sort key in git_get_heads_list()
-
- Tie-break branches that point at the same object in the list of
- branches on GitWeb to show the one pointed at by HEAD early.
-
- Waiting for reviews.
-
-
-* lh/systemd-timers (2021-07-02) 3 commits
- - maintenance: add support for systemd timers on Linux
- - maintenance: `git maintenance run` learned `--scheduler=<scheduler>`
- - cache.h: Introduce a generic "xdg_config_home_for(…)" function
-
- "git maintenance" scheduler learned to use systemd timers as a
- possible backend.
-
- Waiting for reviews.
-
-
-* fc/completion-updates (2021-06-07) 4 commits
- - completion: bash: add correct suffix in variables
- - completion: bash: fix for multiple dash commands
- - completion: bash: fix for suboptions with value
- - completion: bash: fix prefix detection in branch.*
-
- Command line completion updates.
-
- Expecting a reroll.
- cf. <60be6f7fa4435_db80d208f2@natae.notmuch>
-
-
 * ab/update-submitting-patches (2021-07-22) 2 commits
   (merged to 'next' on 2021-07-30 at 9ae2de7f7a)
  + SubmittingPatches: replace discussion of Travis with GitHub Actions
@@ -856,7 +864,7 @@ Release tarballs are available at:
  option of "git for-each-ref" and its friends to be used in "git
  cat-file --batch".
 
- Performance issues are being looked into.
+ Will merge to 'next'.
 
 
 * jh/builtin-fsmonitor (2021-07-12) 35 commits
@@ -899,7 +907,7 @@ Release tarballs are available at:
  An attempt to write and ship with a watchman equivalent tailored
  for our use.
 
- So, where are we with this topic?
+ Expecting a reroll post 2.33 release.
 
 
 * es/trace2-log-parent-process-name (2021-07-22) 2 commits
@@ -909,7 +917,7 @@ Release tarballs are available at:
  trace2 logs learned to show parent process name to see in what
  context Git was invoked.
 
- Looking good.  Ready for 'next'?
+ Will merge to 'next'.
 
 
 * ab/fsck-unexpected-type (2021-07-12) 21 commits
@@ -976,3 +984,31 @@ Release tarballs are available at:
  + t6050: use git-update-ref rather than filesystem access
 
  Absorbed by the hn/refs-test-cleanup topic.
+
+
+* os/bisect-runs-show-branch-without-pager (2021-07-27) 1 commit
+ - bisect: disable pager while invoking show-branch
+
+ When "git bisect" spawns "git show-branch" to pretty-print the
+ title of the commit to be tested, it could have invoked user's
+ pager if user configured to run pager while running show-branch.
+ The invocation of show-branch has been changed to disable pager,
+ even if one is configured.
+
+ Will discard.
+ This probably is unnecessary with the rewrite to get rid of the
+ show-branch invocation altogether.
+
+
+* es/config-based-hooks (2021-07-20) 9 commits
+ - hook: implement hookcmd.<name>.skip
+ - hook: teach 'hookcmd' config to alias hook scripts
+ - hook: allow out-of-repo 'git hook' invocations
+ - hook: include hooks from the config
+ - hook: allow running non-native hooks
+ - hook: treat hookdir hook specially
+ - hook: introduce "git hook list"
+ - hook: allow parallel hook execution
+ - hook: run a list of hooks instead
+
+ Discarded to give room for updated ab/config-based-hooks-base.
