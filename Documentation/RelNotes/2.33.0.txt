@@ -48,7 +48,7 @@ Performance, Internal Implementation, Development Support etc.
    reduce code duplication.
 
  * Repeated rename detections in a sequence of mergy operations have
-   been optimize out.
+   been optimized out for the 'ort' merge strategy.
 
  * Preliminary clean-up of tests before the main reftable changes
    hits the codebase.
@@ -97,6 +97,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git read-tree" had a codepath where blobs are fetched one-by-one
    from the promisor remote, which has been corrected to fetch in bulk.
+
+ * Rewrite of "git submodule" in C continues.
+
+ * "git checkout" and "git commit" learn to work without unnecessarily
+   expanding sparse indexes.
 
 
 Fixes since v2.32
@@ -237,6 +242,14 @@ Fixes since v2.32
  * A race between repacking and using pack bitmaps has been corrected.
    (merge dc1daacdcc jk/check-pack-valid-before-opening-bitmap later to maint).
 
+ * The local changes stashed by "git merge --autostash" were lost when
+   the merge failed in certain ways, which has been corrected.
+
+ * Windows rmdir() equivalent behaves differently from POSIX ones in
+   that when used on a symbolic link that points at a directory, the
+   target directory gets removed, which has been corrected.
+   (merge 3e7d4888e5 tb/mingw-rmdir-symlink-to-directory later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bfe35a6165 ah/doc-describe later to maint).
    (merge f302c1e4aa jc/clarify-revision-range later to maint).
@@ -278,3 +291,5 @@ Fixes since v2.32
    (merge ddcb189d9d tb/bitmap-type-filter-comment-fix later to maint).
    (merge 878b399734 pb/submodule-recurse-doc later to maint).
    (merge 734283855f jk/config-env-doc later to maint).
+   (merge 482e1488a9 ab/getcwd-test later to maint).
+   (merge f0b922473e ar/doc-markup-fix later to maint).
