@@ -2730,18 +2730,19 @@ FIND_SOURCE_FILES = ( \
 FOUND_SOURCE_FILES = $(shell $(FIND_SOURCE_FILES))
 
 $(ETAGS_TARGET): $(FOUND_SOURCE_FILES)
-	$(QUIET_GEN)$(RM) "$(ETAGS_TARGET)+" && \
-	echo $(FOUND_SOURCE_FILES) | xargs etags -a -o "$(ETAGS_TARGET)+" && \
-	mv "$(ETAGS_TARGET)+" "$(ETAGS_TARGET)"
+	$(QUIET_GEN)$(RM) $@+ && \
+	echo $(FOUND_SOURCE_FILES) | xargs etags -a -o $@+ && \
+	mv $@+ $@
 
 tags: $(FOUND_SOURCE_FILES)
-	$(QUIET_GEN)$(RM) tags+ && \
-	echo $(FOUND_SOURCE_FILES) | xargs ctags -a -o tags+ && \
-	mv tags+ tags
+	$(QUIET_GEN)$(RM) $@+ && \
+	echo $(FOUND_SOURCE_FILES) | xargs ctags -a -o $@+ && \
+	mv $@+ $@
 
 cscope.out: $(FOUND_SOURCE_FILES)
-	$(QUIET_GEN)$(RM) $@ && \
-	echo $(FOUND_SOURCE_FILES) | xargs cscope -f$@ -b
+	$(QUIET_GEN)$(RM) $@+ && \
+	echo $(FOUND_SOURCE_FILES) | xargs cscope -f$@+ -b && \
+	mv $@+ $@
 
 .PHONY: cscope
 cscope: cscope.out
