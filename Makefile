@@ -2740,8 +2740,8 @@ tags: $(FOUND_SOURCE_FILES)
 	mv tags+ tags
 
 cscope.out: $(FOUND_SOURCE_FILES)
-	$(QUIET_GEN)$(RM) cscope* && \
-	echo $(FOUND_SOURCE_FILES) | xargs cscope -b
+	$(QUIET_GEN)$(RM) $@ && \
+	echo $(FOUND_SOURCE_FILES) | xargs cscope -f$@ -b
 
 .PHONY: cscope
 cscope: cscope.out
