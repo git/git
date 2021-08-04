@@ -782,9 +782,7 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 		translated->pattern = truncated;
 		translated->patternlen = given->patternlen - 2;
 		hashmap_entry_init(&translated->ent,
-				   ignore_case ?
-				   strihash(translated->pattern) :
-				   strhash(translated->pattern));
+				   fspathhash(translated->pattern));
 
 		if (!hashmap_get_entry(&pl->recursive_hashmap,
 				       translated, ent, NULL)) {
@@ -813,9 +811,7 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 	translated->pattern = dup_and_filter_pattern(given->pattern);
 	translated->patternlen = given->patternlen;
 	hashmap_entry_init(&translated->ent,
-			   ignore_case ?
-			   strihash(translated->pattern) :
-			   strhash(translated->pattern));
+			   fspathhash(translated->pattern));
 
 	hashmap_add(&pl->recursive_hashmap, &translated->ent);
 
@@ -845,10 +841,7 @@ static int hashmap_contains_path(struct hashmap *map,
 	/* Check straight mapping */
 	p.pattern = pattern->buf;
 	p.patternlen = pattern->len;
-	hashmap_entry_init(&p.ent,
-			   ignore_case ?
-			   strihash(p.pattern) :
-			   strhash(p.pattern));
+	hashmap_entry_init(&p.ent, fspathhash(p.pattern));
 	return !!hashmap_get_entry(map, &p, ent, NULL);
 }
 
