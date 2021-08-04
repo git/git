@@ -275,7 +275,7 @@ best to always use a regular merge commit.
 
 [[merge-two-revert-one]]
 If I make a change on two branches but revert it on one, why does the merge of those branches include the change?::
-	By default, when Git does a merge, it uses a strategy called the recursive
+	By default, when Git does a merge, it uses a strategy called the `ort`
 	strategy, which does a fancy three-way merge.  In such a case, when Git
 	performs the merge, it considers exactly three points: the two heads and a
 	third point, called the _merge base_, which is usually the common ancestor of
