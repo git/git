@@ -2517,31 +2517,6 @@ int git_config_get_max_percent_split_change(void)
 	return -1; /* default value */
 }
 
-int repo_config_get_fsmonitor(struct repository *r)
-{
-	if (!r->worktree) {
-		/* FSMonitor makes no sense in bare repositories */
-		core_fsmonitor = NULL;
-		return 1;
-	}
-
-	if (r->settings.use_builtin_fsmonitor > 0) {
-		core_fsmonitor = "(built-in daemon)";
-		return 1;
-	}
-
-	if (repo_config_get_pathname(r, "core.fsmonitor", &core_fsmonitor))
-		core_fsmonitor = getenv("GIT_TEST_FSMONITOR");
-
-	if (core_fsmonitor && !*core_fsmonitor)
-		core_fsmonitor = NULL;
-
-	if (core_fsmonitor)
-		return 1;
-
-	return 0;
-}
-
 int git_config_get_index_threads(int *dest)
 {
 	int is_bool, val;

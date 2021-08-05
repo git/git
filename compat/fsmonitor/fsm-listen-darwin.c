@@ -96,7 +96,7 @@ void FSEventStreamRelease(FSEventStreamRef stream);
 
 #include "cache.h"
 #include "fsmonitor.h"
-#include "fsmonitor-fs-listen.h"
+#include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
 
 struct fsmonitor_daemon_backend_data
@@ -376,7 +376,7 @@ force_shutdown:
  * https://developer.apple.com/documentation/coreservices/1443980-fseventstreamcreate
  */
 
-int fsmonitor_fs_listen__ctor(struct fsmonitor_daemon_state *state)
+int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 {
 	FSEventStreamCreateFlags flags = kFSEventStreamCreateFlagNoDefer |
 		kFSEventStreamCreateFlagWatchRoot |
@@ -428,7 +428,7 @@ failed:
 	return -1;
 }
 
-void fsmonitor_fs_listen__dtor(struct fsmonitor_daemon_state *state)
+void fsm_listen__dtor(struct fsmonitor_daemon_state *state)
 {
 	struct fsmonitor_daemon_backend_data *data;
 
@@ -448,7 +448,7 @@ void fsmonitor_fs_listen__dtor(struct fsmonitor_daemon_state *state)
 	FREE_AND_NULL(state->backend_data);
 }
 
-void fsmonitor_fs_listen__stop_async(struct fsmonitor_daemon_state *state)
+void fsm_listen__stop_async(struct fsmonitor_daemon_state *state)
 {
 	struct fsmonitor_daemon_backend_data *data;
 
@@ -458,7 +458,7 @@ void fsmonitor_fs_listen__stop_async(struct fsmonitor_daemon_state *state)
 	CFRunLoopStop(data->rl);
 }
 
-void fsmonitor_fs_listen__loop(struct fsmonitor_daemon_state *state)
+void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 {
 	struct fsmonitor_daemon_backend_data *data;
 

@@ -1,5 +1,5 @@
-#ifndef FSMONITOR_FS_LISTEN_H
-#define FSMONITOR_FS_LISTEN_H
+#ifndef FSM_LISTEN_H
+#define FSM_LISTEN_H
 
 /* This needs to be implemented by each backend */
 
@@ -15,13 +15,13 @@ struct fsmonitor_daemon_state;
  * Returns 0 if successful.
  * Returns -1 otherwise.
  */
-int fsmonitor_fs_listen__ctor(struct fsmonitor_daemon_state *state);
+int fsm_listen__ctor(struct fsmonitor_daemon_state *state);
 
 /*
  * Cleanup platform-specific data for the fsmonitor listener thread.
  * This will be called from the main thread AFTER joining the listener.
  */
-void fsmonitor_fs_listen__dtor(struct fsmonitor_daemon_state *state);
+void fsm_listen__dtor(struct fsmonitor_daemon_state *state);
 
 /*
  * The main body of the platform-specific event loop to watch for
@@ -36,14 +36,14 @@ void fsmonitor_fs_listen__dtor(struct fsmonitor_daemon_state *state);
  * It should set `state->error_code` to -1 if the daemon should exit
  * with an error.
  */
-void fsmonitor_fs_listen__loop(struct fsmonitor_daemon_state *state);
+void fsm_listen__loop(struct fsmonitor_daemon_state *state);
 
 /*
  * Gently request that the fsmonitor listener thread shutdown.
  * It does not wait for it to stop.  The caller should do a JOIN
  * to wait for it.
  */
-void fsmonitor_fs_listen__stop_async(struct fsmonitor_daemon_state *state);
+void fsm_listen__stop_async(struct fsmonitor_daemon_state *state);
 
 #endif /* HAVE_FSMONITOR_DAEMON_BACKEND */
-#endif /* FSMONITOR_FS_LISTEN_H */
+#endif /* FSM_LISTEN_H */

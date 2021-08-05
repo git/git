@@ -37,14 +37,14 @@ int fsmonitor_ipc__send_query(const char *since_token,
 	struct ipc_client_connection *connection = NULL;
 	struct ipc_client_connect_options options
 		= IPC_CLIENT_CONNECT_OPTIONS_INIT;
+	const char *tok = since_token ? since_token : "";
+	size_t tok_len = since_token ? strlen(since_token) : 0;
 
 	options.wait_if_busy = 1;
 	options.wait_if_not_found = 0;
 
 	trace2_region_enter("fsm_client", "query", NULL);
-
-	trace2_data_string("fsm_client", NULL, "query/command",
-			   since_token);
+	trace2_data_string("fsm_client", NULL, "query/command", tok);
 
 try_again:
 	state = ipc_client_try_connect(fsmonitor_ipc__get_path(), &options,
@@ -53,7 +53,7 @@ try_again:
 	switch (state) {
 	case IPC_STATE__LISTENING:
 		ret = ipc_client_send_command_to_connection(
-			connection, since_token, strlen(since_token), answer);
+			connection, tok, tok_len, answer);
 		ipc_client_close_connection(connection);
 
 		trace2_data_intmax("fsm_client", NULL,
@@ -115,6 +115,8 @@ int fsmonitor_ipc__send_command(const char *command,
 		= IPC_CLIENT_CONNECT_OPTIONS_INIT;
 	int ret;
 	enum ipc_active_state state;
+	const char *c = command ? command : "";
+	size_t c_len = command ? strlen(command) : 0;
 
 	strbuf_reset(answer);
 
@@ -128,14 +130,12 @@ int fsmonitor_ipc__send_command(const char *command,
 		return -1;
 	}
 
-	ret = ipc_client_send_command_to_connection(connection,
-						    command, strlen(command),
+	ret = ipc_client_send_command_to_connection(connection, c, c_len,
 						    answer);
 	ipc_client_close_connection(connection);
 
 	if (ret == -1) {
-		die("could not send '%s' command to fsmonitor--daemon",
-		    command);
+		die("could not send '%s' command to fsmonitor--daemon", c);
 		return -1;
 	}
 

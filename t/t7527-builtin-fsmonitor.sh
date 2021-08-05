@@ -4,12 +4,13 @@ test_description='built-in file system watcher'
 
 . ./test-lib.sh
 
-git version --build-options | grep "feature:" | grep "fsmonitor--daemon" || {
-	skip_all="The built-in FSMonitor is not supported on this platform"
+if ! test_have_prereq FSMONITOR_DAEMON
+then
+	skip_all="fsmonitor--daemon is not supported on this platform"
 	test_done
-}
+fi
 
-kill_repo () {
+stop_daemon_delete_repo () {
 	r=$1
 	git -C $r fsmonitor--daemon stop >/dev/null 2>/dev/null
 	rm -rf $1
@@ -28,8 +29,18 @@ start_daemon () {
 	return 0
 }
 
+# Is a Trace2 data event present with the given catetory and key?
+# We do not care what the value is.
+#
+have_t2_data_event () {
+	c=$1
+	k=$2
+
+	grep -e '"event":"data".*"category":"'"$c"'".*"key":"'"$k"'"'
+}
+
 test_expect_success 'explicit daemon start and stop' '
-	test_when_finished "kill_repo test_explicit" &&
+	test_when_finished "stop_daemon_delete_repo test_explicit" &&
 
 	git init test_explicit &&
 	start_daemon test_explicit &&
@@ -39,7 +50,7 @@ test_expect_success 'explicit daemon start and stop' '
 '
 
 test_expect_success 'implicit daemon start' '
-	test_when_finished "kill_repo test_implicit" &&
+	test_when_finished "stop_daemon_delete_repo test_implicit" &&
 
 	git init test_implicit &&
 	test_must_fail git -C test_implicit fsmonitor--daemon status &&
@@ -52,7 +63,7 @@ test_expect_success 'implicit daemon start' '
 	# but this test case is only concerned with whether the daemon was
 	# implicitly started.)
 
-	GIT_TRACE2_EVENT="$PWD/.git/trace" \
+	GIT_TRACE2_EVENT="$(pwd)/.git/trace" \
 		test-tool -C test_implicit fsmonitor-client query --token 0 >actual &&
 	nul_to_q <actual >actual.filtered &&
 	grep "builtin:" actual.filtered &&
@@ -63,7 +74,7 @@ test_expect_success 'implicit daemon start' '
 	# dependent, just confirm that the foreground command received a
 	# response from the daemon.
 
-	grep :\"query/response-length\" .git/trace &&
+	have_t2_data_event fsm_client query/response-length <.git/trace &&
 
 	git -C test_implicit fsmonitor--daemon status &&
 	git -C test_implicit fsmonitor--daemon stop &&
@@ -71,7 +82,7 @@ test_expect_success 'implicit daemon start' '
 '
 
 test_expect_success 'implicit daemon stop (delete .git)' '
-	test_when_finished "kill_repo test_implicit_1" &&
+	test_when_finished "stop_daemon_delete_repo test_implicit_1" &&
 
 	git init test_implicit_1 &&
 
@@ -80,13 +91,14 @@ test_expect_success 'implicit daemon stop (delete .git)' '
 	# deleting the .git directory will implicitly stop the daemon.
 	rm -rf test_implicit_1/.git &&
 
-	# Create an empty .git directory so that the following Git command
-	# will stay relative to the `-C` directory.  Without this, the Git
-	# command will (override the requested -C argument) and crawl out
-	# to the containing Git source tree.  This would make the test
-	# result dependent upon whether we were using fsmonitor on our
-	# development worktree.
-
+	# [1] Create an empty .git directory so that the following Git
+	#     command will stay relative to the `-C` directory.
+	#
+	#     Without this, the Git command will override the requested
+	#     -C argument and crawl out to the containing Git source tree.
+	#     This would make the test result dependent upon whether we
+	#     were using fsmonitor on our development worktree.
+	#
 	sleep 1 &&
 	mkdir test_implicit_1/.git &&
 
@@ -94,7 +106,7 @@ test_expect_success 'implicit daemon stop (delete .git)' '
 '
 
 test_expect_success 'implicit daemon stop (rename .git)' '
-	test_when_finished "kill_repo test_implicit_2" &&
+	test_when_finished "stop_daemon_delete_repo test_implicit_2" &&
 
 	git init test_implicit_2 &&
 
@@ -103,21 +115,111 @@ test_expect_success 'implicit daemon stop (rename .git)' '
 	# renaming the .git directory will implicitly stop the daemon.
 	mv test_implicit_2/.git test_implicit_2/.xxx &&
 
-	# Create an empty .git directory so that the following Git command
-	# will stay relative to the `-C` directory.  Without this, the Git
-	# command will (override the requested -C argument) and crawl out
-	# to the containing Git source tree.  This would make the test
-	# result dependent upon whether we were using fsmonitor on our
-	# development worktree.
-
+	# See [1] above.
+	#
 	sleep 1 &&
 	mkdir test_implicit_2/.git &&
 
 	test_must_fail git -C test_implicit_2 fsmonitor--daemon status
 '
 
+# File systems on Windows may or may not have shortnames.
+# This is a volume-specific setting on modern systems.
+# "C:/" drives are required to have them enabled.  Other
+# hard drives default to disabled.
+#
+# This is a crude test to see if shortnames are enabled
+# on the volume containing the test directory.  It is
+# crude, but it does not require elevation like `fsutil`.
+#
+test_lazy_prereq SHORTNAMES '
+	mkdir .foo &&
+	test -d "FOO~1"
+'
+
+# Here we assume that the shortname of ".git" is "GIT~1".
+test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~1)' '
+	test_when_finished "stop_daemon_delete_repo test_implicit_1s" &&
+
+	git init test_implicit_1s &&
+
+	start_daemon test_implicit_1s &&
+
+	# renaming the .git directory will implicitly stop the daemon.
+	# this moves {.git, GIT~1} to {.gitxyz, GITXYZ~1}.
+	# the rename-from FS Event will contain the shortname.
+	#
+	mv test_implicit_1s/GIT~1 test_implicit_1s/.gitxyz &&
+
+	sleep 1 &&
+	# put it back so that our status will not crawl out to our
+	# parent directory.
+	# this moves {.gitxyz, GITXYZ~1} to {.git, GIT~1}.
+	mv test_implicit_1s/.gitxyz test_implicit_1s/.git &&
+
+	test_must_fail git -C test_implicit_1s fsmonitor--daemon status
+'
+
+# Here we first create a file with LONGNAME of "GIT~1" before
+# we create the repo.  This will cause the shortname of ".git"
+# to be "GIT~2".
+test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~2)' '
+	test_when_finished "stop_daemon_delete_repo test_implicit_1s2" &&
+
+	mkdir test_implicit_1s2 &&
+	echo HELLO >test_implicit_1s2/GIT~1 &&
+	git init test_implicit_1s2 &&
+
+	test_path_is_file test_implicit_1s2/GIT~1 &&
+	test_path_is_dir  test_implicit_1s2/GIT~2 &&
+
+	start_daemon test_implicit_1s2 &&
+
+	# renaming the .git directory will implicitly stop the daemon.
+	# the rename-from FS Event will contain the shortname.
+	#
+	mv test_implicit_1s2/GIT~2 test_implicit_1s2/.gitxyz &&
+
+	sleep 1 &&
+	# put it back so that our status will not crawl out to our
+	# parent directory.
+	mv test_implicit_1s2/.gitxyz test_implicit_1s2/.git &&
+
+	test_must_fail git -C test_implicit_1s2 fsmonitor--daemon status
+'
+
+# Confirm that MacOS hides all of the Unicode normalization and/or
+# case folding from the FS events.  That is, are the pathnames in the
+# FS events reported using the spelling on the disk or in the spelling
+# used by the other process.
+#
+# Note that we assume that the filesystem is set to case insensitive.
+#
+# NEEDSWORK: APFS handles Unicode and Unicode normalization
+# differently than HFS+.  I only have an APFS partition, so
+# more testing here would be helpful.
+#
+
+# Rename .git using alternate spelling and confirm that the daemon
+# sees the event using the correct spelling and shutdown.
+test_expect_success UTF8_NFD_TO_NFC 'MacOS event spelling (rename .GIT)' '
+	test_when_finished "stop_daemon_delete_repo test_apfs" &&
+
+	git init test_apfs &&
+	start_daemon test_apfs &&
+
+	test_path_is_dir test_apfs/.git &&
+	test_path_is_dir test_apfs/.GIT &&
+
+	mv test_apfs/.GIT test_apfs/.FOO &&
+	sleep 1 &&
+	mv test_apfs/.FOO test_apfs/.git &&
+
+	test_must_fail git -C test_apfs fsmonitor--daemon status
+'
+
 test_expect_success 'cannot start multiple daemons' '
-	test_when_finished "kill_repo test_multiple" &&
+	test_when_finished "stop_daemon_delete_repo test_multiple" &&
 
 	git init test_multiple &&
 
@@ -129,6 +231,8 @@ test_expect_success 'cannot start multiple daemons' '
 	git -C test_multiple fsmonitor--daemon stop &&
 	test_must_fail git -C test_multiple fsmonitor--daemon status
 '
+
+# These tests use the main repo in the trash directory
 
 test_expect_success 'setup' '
 	>tracked &&
@@ -164,28 +268,44 @@ test_expect_success 'setup' '
 	git config core.useBuiltinFSMonitor true
 '
 
+# The test already explicitly stopped (or tried to stop) the daemon.
+# This is here in case something else fails first.
+#
+redundant_stop_daemon () {
+	git fsmonitor--daemon stop
+	return 0
+}
+
 test_expect_success 'update-index implicitly starts daemon' '
+	test_when_finished redundant_stop_daemon &&
+
 	test_must_fail git fsmonitor--daemon status &&
 
-	GIT_TRACE2_EVENT="$PWD/.git/trace_implicit_1" \
+	GIT_TRACE2_EVENT="$(pwd)/.git/trace_implicit_1" \
 		git update-index --fsmonitor &&
 
 	git fsmonitor--daemon status &&
 	test_might_fail git fsmonitor--daemon stop &&
 
-	grep \"event\":\"start\".*\"fsmonitor--daemon\" .git/trace_implicit_1
+	# Confirm that the trace2 log contains a record of the
+	# daemon starting.
+	test_subcommand git fsmonitor--daemon start <.git/trace_implicit_1
 '
 
 test_expect_success 'status implicitly starts daemon' '
+	test_when_finished redundant_stop_daemon &&
+
 	test_must_fail git fsmonitor--daemon status &&
 
-	GIT_TRACE2_EVENT="$PWD/.git/trace_implicit_2" \
+	GIT_TRACE2_EVENT="$(pwd)/.git/trace_implicit_2" \
 		git status >actual &&
 
 	git fsmonitor--daemon status &&
 	test_might_fail git fsmonitor--daemon stop &&
 
-	grep \"event\":\"start\".*\"fsmonitor--daemon\" .git/trace_implicit_2
+	# Confirm that the trace2 log contains a record of the
+	# daemon starting.
+	test_subcommand git fsmonitor--daemon start <.git/trace_implicit_2
 '
 
 edit_files() {
@@ -254,10 +374,10 @@ clean_up_repo_and_stop_daemon () {
 }
 
 test_expect_success 'edit some files' '
-	test_when_finished "clean_up_repo_and_stop_daemon" &&
+	test_when_finished clean_up_repo_and_stop_daemon &&
 
 	(
-		GIT_TRACE_FSMONITOR="$PWD/.git/trace" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/.git/trace" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon
@@ -274,10 +394,10 @@ test_expect_success 'edit some files' '
 '
 
 test_expect_success 'create some files' '
-	test_when_finished "clean_up_repo_and_stop_daemon" &&
+	test_when_finished clean_up_repo_and_stop_daemon &&
 
 	(
-		GIT_TRACE_FSMONITOR="$PWD/.git/trace" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/.git/trace" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon
@@ -293,10 +413,10 @@ test_expect_success 'create some files' '
 '
 
 test_expect_success 'delete some files' '
-	test_when_finished "clean_up_repo_and_stop_daemon" &&
+	test_when_finished clean_up_repo_and_stop_daemon &&
 
 	(
-		GIT_TRACE_FSMONITOR="$PWD/.git/trace" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/.git/trace" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon
@@ -312,10 +432,10 @@ test_expect_success 'delete some files' '
 '
 
 test_expect_success 'rename some files' '
-	test_when_finished "clean_up_repo_and_stop_daemon" &&
+	test_when_finished clean_up_repo_and_stop_daemon &&
 
 	(
-		GIT_TRACE_FSMONITOR="$PWD/.git/trace" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/.git/trace" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon
@@ -334,10 +454,10 @@ test_expect_success 'rename some files' '
 '
 
 test_expect_success 'rename directory' '
-	test_when_finished "clean_up_repo_and_stop_daemon" &&
+	test_when_finished clean_up_repo_and_stop_daemon &&
 
 	(
-		GIT_TRACE_FSMONITOR="$PWD/.git/trace" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/.git/trace" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon
@@ -352,10 +472,10 @@ test_expect_success 'rename directory' '
 '
 
 test_expect_success 'file changes to directory' '
-	test_when_finished "clean_up_repo_and_stop_daemon" &&
+	test_when_finished clean_up_repo_and_stop_daemon &&
 
 	(
-		GIT_TRACE_FSMONITOR="$PWD/.git/trace" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/.git/trace" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon
@@ -370,10 +490,10 @@ test_expect_success 'file changes to directory' '
 '
 
 test_expect_success 'directory changes to a file' '
-	test_when_finished "clean_up_repo_and_stop_daemon" &&
+	test_when_finished clean_up_repo_and_stop_daemon &&
 
 	(
-		GIT_TRACE_FSMONITOR="$PWD/.git/trace" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/.git/trace" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon
@@ -395,7 +515,7 @@ test_expect_success 'directory changes to a file' '
 # "flush" message to a running daemon and ask it to do a flush/resync.
 
 test_expect_success 'flush cached data' '
-	test_when_finished "kill_repo test_flush" &&
+	test_when_finished "stop_daemon_delete_repo test_flush" &&
 
 	git init test_flush &&
 
@@ -403,7 +523,7 @@ test_expect_success 'flush cached data' '
 		GIT_TEST_FSMONITOR_TOKEN=true &&
 		export GIT_TEST_FSMONITOR_TOKEN &&
 
-		GIT_TRACE_FSMONITOR="$PWD/.git/trace_daemon" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/.git/trace_daemon" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon test_flush
@@ -461,10 +581,10 @@ test_expect_success 'worktree with .git file' '
 	git -C wt-base worktree add ../wt-secondary &&
 
 	(
-		GIT_TRACE2_PERF="$PWD/trace2_wt_secondary" &&
+		GIT_TRACE2_PERF="$(pwd)/trace2_wt_secondary" &&
 		export GIT_TRACE2_PERF &&
 
-		GIT_TRACE_FSMONITOR="$PWD/trace_wt_secondary" &&
+		GIT_TRACE_FSMONITOR="$(pwd)/trace_wt_secondary" &&
 		export GIT_TRACE_FSMONITOR &&
 
 		start_daemon wt-secondary
@@ -474,14 +594,15 @@ test_expect_success 'worktree with .git file' '
 	test_must_fail git -C wt-secondary fsmonitor--daemon status
 '
 
-# TODO Repeat one of the "edit" tests on wt-secondary and confirm that
-# TODO we get the same events and behavior -- that is, that fsmonitor--daemon
-# TODO correctly listens to events on both the working directory and to the
-# TODO referenced GITDIR.
+# NEEDSWORK: Repeat one of the "edit" tests on wt-secondary and
+# confirm that we get the same events and behavior -- that is, that
+# fsmonitor--daemon correctly watches BOTH the working directory and
+# the external GITDIR directory and behaves the same as when ".git"
+# is a directory inside the working directory.
 
 test_expect_success 'cleanup worktrees' '
-	kill_repo wt-secondary &&
-	kill_repo wt-base
+	stop_daemon_delete_repo wt-secondary &&
+	stop_daemon_delete_repo wt-base
 '
 
 # The next few tests perform arbitrary/contrived file operations and
@@ -567,6 +688,29 @@ do
 		matrix_try $uc_val $fsm_val file_to_directory
 		matrix_try $uc_val $fsm_val directory_to_file
 	done
+done
+
+# Test Unicode UTF-8 characters in the pathname of the working
+# directory.  Use of "*A()" routines rather than "*W()" routines
+# on Windows can sometimes lead to odd failures.
+#
+u1=$(printf "u_c3_a6__\xC3\xA6")
+u2=$(printf "u_e2_99_ab__\xE2\x99\xAB")
+u_values="$u1 $u2"
+for u in $u_values
+do
+	test_expect_success "Unicode path: $u" '
+		test_when_finished "stop_daemon_delete_repo $u" &&
+
+		git init "$u" &&
+		echo 1 >"$u"/file1 &&
+		git -C "$u" add file1 &&
+		git -C "$u" config core.useBuiltinFSMonitor true &&
+
+		start_daemon "$u" &&
+		git -C "$u" status >actual &&
+		grep "new file:   file1" actual
+	'
 done
 
 test_done
