@@ -109,18 +109,22 @@ run_sub_test_lib_test_err () {
 	_run_sub_test_lib_test_common '!' "$@"
 }
 
+_check_sub_test_lib_test_common () {
+	name="$1" &&
+	sed -e 's/^> //' -e 's/Z$//' >"$name"/expect.out &&
+	test_cmp "$name"/expect.out "$name"/out
+}
+
 check_sub_test_lib_test () {
 	name="$1" # stdin is the expected output from the test
-	test_must_be_empty "$name"/err &&
-	sed -e 's/^> //' -e 's/Z$//' >"$name"/expect &&
-	test_cmp "$name/"expect "$name"/out
+	_check_sub_test_lib_test_common "$name" &&
+	test_must_be_empty "$name"/err
 }
 
 check_sub_test_lib_test_err () {
 	name="$1" # stdin is the expected output from the test
+	_check_sub_test_lib_test_common "$name" &&
 	# expected error output is in descriptor 3
-	sed -e 's/^> //' -e 's/Z$//' >"$name"/expect.out &&
-	test_cmp "$name"/expect.out "$name"/out &&
 	sed -e 's/^> //' -e 's/Z$//' <&3 >"$name"/expect.err &&
 	test_cmp "$name"/expect.err "$name"/err
 }
