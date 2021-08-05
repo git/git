@@ -73,5 +73,9 @@ case "$jobname" in
 	;;
 esac
 
+case " $MAKE_TARGETS " in
+*" all "*) make -C contrib/subtree test;;
+esac
+
 check_unignored_build_artifacts
 save_good_tree
