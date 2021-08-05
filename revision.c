@@ -2651,16 +2651,17 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	} else if (!strcmp(arg, "--not")) {
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
-		revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
+		revs->no_walk = 1;
 	} else if (skip_prefix(arg, "--no-walk=", &optarg)) {
 		/*
 		 * Detached form ("--no-walk X" as opposed to "--no-walk=X")
 		 * not allowed, since the argument is optional.
 		 */
+		revs->no_walk = 1;
 		if (!strcmp(optarg, "sorted"))
-			revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
+			revs->unsorted_input = 0;
 		else if (!strcmp(optarg, "unsorted"))
-			revs->no_walk = REVISION_WALK_NO_WALK_UNSORTED;
+			revs->unsorted_input = 1;
 		else
 			return error("invalid argument to --no-walk");
 	} else if (!strcmp(arg, "--do-walk")) {
@@ -3584,7 +3585,7 @@ int prepare_revision_walk(struct rev_info *revs)
 
 	if (!revs->reflog_info)
 		prepare_to_use_bloom_filter(revs);
-	if (revs->no_walk != REVISION_WALK_NO_WALK_UNSORTED)
+	if (!revs->unsorted_input)
 		commit_list_sort_by_date(&revs->commits);
 	if (revs->no_walk)
 		return 0;
