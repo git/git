@@ -1,3 +1,34 @@
+_assert_unique_sub_test () {
+	name=$1 &&
+
+	# Alert about the copy/paste programming
+	hash=$(git hash-object -w "$name") &&
+	cat >tag.sig <<-EOF &&
+	object $hash
+	type blob
+	tag $hash
+	tagger . <> 0 +0000
+
+	duplicate script detected!
+
+	This test script was already written as:
+
+	$name
+
+	You can just re-use its test code with your own
+	run_sub_test_lib_test*()
+	EOF
+
+	tag=$(git mktag <tag.sig) &&
+	if ! git update-ref refs/tags/blob-$hash $tag $(test_oid zero) 2>/dev/null
+	then
+		msg=$(git for-each-ref refs/tags/blob-$hash \
+			--format='%(contents)' refs/tags/blob-$hash)
+		error "on write of $name: $msg"
+		return 1
+	fi
+}
+
 write_sub_test_lib_test () {
 	name="$1" # stdin is the body of the test code
 	mkdir "$name" &&
@@ -7,7 +38,8 @@ write_sub_test_lib_test () {
 	# Point to the t/test-lib.sh, which isn't in ../ as usual
 	. "\$TEST_DIRECTORY"/test-lib.sh
 	EOF
-	cat >>"$name/$name.sh"
+	cat >>"$name/$name.sh" &&
+	_assert_unique_sub_test "$name/$name.sh"
 }
 
 _run_sub_test_lib_test_common () {
