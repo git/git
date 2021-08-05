@@ -8,6 +8,20 @@ test_expect_success 'setup' '
 	test_commit --no-tag initial
 '
 
+test_expect_success 'git upload-pack --http-backend-info-refs and --advertise-refs are aliased' '
+	git upload-pack --http-backend-info-refs . >expected 2>err.expected &&
+	git upload-pack --advertise-refs . >actual 2>err.actual &&
+	test_cmp err.expected err.actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git receive-pack --http-backend-info-refs and --advertise-refs are aliased' '
+	git receive-pack --http-backend-info-refs . >expected 2>err.expected &&
+	git receive-pack --advertise-refs . >actual 2>err.actual &&
+	test_cmp err.expected err.actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'git upload-pack --advertise-refs' '
 	cat >expect <<-EOF &&
 	$(git rev-parse HEAD) HEAD
