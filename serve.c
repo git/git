@@ -112,6 +112,9 @@ static void advertise_capabilities(void)
 	struct strbuf value = STRBUF_INIT;
 	int i;
 
+	/* serve by default supports v2 */
+	packet_write_fmt(1, "version 2\n");
+
 	for (i = 0; i < ARRAY_SIZE(capabilities); i++) {
 		struct protocol_capability *c = &capabilities[i];
 
@@ -304,9 +307,6 @@ static int process_request(void)
 void serve(struct serve_options *options)
 {
 	if (options->advertise_capabilities || !options->stateless_rpc) {
-		/* serve by default supports v2 */
-		packet_write_fmt(1, "version 2\n");
-
 		advertise_capabilities();
 		/*
 		 * If only the list of capabilities was requested exit
