@@ -1261,12 +1261,12 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 }
 
 static struct transport_vtable vtable = {
-	set_helper_option,
-	get_refs_list,
-	fetch_refs,
-	push_refs,
-	connect_helper,
-	release_helper
+	.set_option	= set_helper_option,
+	.get_refs_list	= get_refs_list,
+	.fetch_refs	= fetch_refs,
+	.push_refs	= push_refs,
+	.connect	= connect_helper,
+	.disconnect	= release_helper
 };
 
 int transport_helper_init(struct transport *transport, const char *name)
