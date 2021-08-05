@@ -9,7 +9,7 @@
 #include "serve.h"
 #include "upload-pack.h"
 
-static int advertise_sid;
+static int advertise_sid = -1;
 
 static int always_advertise(struct repository *r,
 			    struct strbuf *value)
@@ -35,6 +35,9 @@ static int object_format_advertise(struct repository *r,
 
 static int session_id_advertise(struct repository *r, struct strbuf *value)
 {
+	if (advertise_sid == -1 &&
+	    git_config_get_bool("transfer.advertisesid", &advertise_sid))
+		advertise_sid = 0;
 	if (!advertise_sid)
 		return 0;
 	if (value)
@@ -300,8 +303,6 @@ static int process_request(void)
 /* Main serve loop for protocol version 2 */
 void serve(struct serve_options *options)
 {
-	git_config_get_bool("transfer.advertisesid", &advertise_sid);
-
 	if (options->advertise_capabilities || !options->stateless_rpc) {
 		/* serve by default supports v2 */
 		packet_write_fmt(1, "version 2\n");
