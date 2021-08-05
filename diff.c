@@ -863,8 +863,7 @@ static int compute_ws_delta(const struct emitted_diff_symbol *a,
 	return a_width - b_width;
 }
 
-static int cmp_in_block_with_wsd(const struct diff_options *o,
-				 const struct moved_entry *cur,
+static int cmp_in_block_with_wsd(const struct moved_entry *cur,
 				 const struct emitted_diff_symbol *l,
 				 struct moved_block *pmb)
 {
@@ -1016,7 +1015,7 @@ static void pmb_advance_or_null(struct diff_options *o,
 		if (o->color_moved_ws_handling &
 		    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
 			match = cur &&
-				!cmp_in_block_with_wsd(o, cur, l, &pmb[i]);
+				!cmp_in_block_with_wsd(cur, l, &pmb[i]);
 		else
 			match = cur && cur->es->id == l->id;
 
