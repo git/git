@@ -11,10 +11,8 @@ struct upload_pack_options {
 void upload_pack(struct upload_pack_options *options);
 
 struct repository;
-struct strvec;
 struct packet_reader;
-int upload_pack_v2(struct repository *r, struct strvec *keys,
-		   struct packet_reader *request);
+int upload_pack_v2(struct repository *r, struct packet_reader *request);
 
 struct strbuf;
 int upload_pack_advertise(struct repository *r,
