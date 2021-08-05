@@ -106,7 +106,7 @@ static struct protocol_capability capabilities[] = {
 	},
 };
 
-static void advertise_capabilities(void)
+void protocol_v2_advertise_capabilities(void)
 {
 	struct strbuf capability = STRBUF_INIT;
 	struct strbuf value = STRBUF_INIT;
@@ -303,24 +303,16 @@ static int process_request(void)
 	return 0;
 }
 
-/* Main serve loop for protocol version 2 */
-void serve(struct serve_options *options)
+void protocol_v2_serve_loop(int stateless_rpc)
 {
-	if (options->advertise_capabilities || !options->stateless_rpc) {
-		advertise_capabilities();
-		/*
-		 * If only the list of capabilities was requested exit
-		 * immediately after advertising capabilities
-		 */
-		if (options->advertise_capabilities)
-			return;
-	}
+	if (!stateless_rpc)
+		protocol_v2_advertise_capabilities();
 
 	/*
 	 * If stateless-rpc was requested then exit after
 	 * a single request/response exchange
 	 */
-	if (options->stateless_rpc) {
+	if (stateless_rpc) {
 		process_request();
 	} else {
 		for (;;)

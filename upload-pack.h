@@ -1,14 +1,8 @@
 #ifndef UPLOAD_PACK_H
 #define UPLOAD_PACK_H
 
-struct upload_pack_options {
-	int stateless_rpc;
-	int advertise_refs;
-	unsigned int timeout;
-	int daemon_mode;
-};
-
-void upload_pack(struct upload_pack_options *options);
+void upload_pack(const int advertise_refs, const int stateless_rpc,
+		 const int timeout);
 
 struct repository;
 struct packet_reader;
