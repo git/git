@@ -38,13 +38,10 @@ case "$(get_family)" in
 gcc)
 	print_flags gcc
 	;;
-clang)
+clang | *" clang")
 	print_flags clang
 	;;
-"FreeBSD clang")
-	print_flags clang
-	;;
-"Apple LLVM"|"Apple clang")
+"Apple LLVM")
 	print_flags clang
 	;;
 *)
