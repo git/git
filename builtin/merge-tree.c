@@ -2,6 +2,9 @@
 #include "builtin.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
+#include "help.h"
+#include "commit-reach.h"
+#include "merge-ort.h"
 #include "object-store.h"
 #include "parse-options.h"
 #include "repository.h"
@@ -393,7 +396,57 @@ struct merge_tree_options {
 static int real_merge(struct merge_tree_options *o,
 		      const char *branch1, const char *branch2)
 {
-	die(_("real merges are not yet implemented"));
+	struct commit *parent1, *parent2;
+	struct commit_list *common;
+	struct commit_list *merge_bases = NULL;
+	struct commit_list *j;
+	struct merge_options opt;
+	struct merge_result result = { 0 };
+
+	parent1 = get_merge_parent(branch1);
+	if (!parent1)
+		help_unknown_ref(branch1, "merge",
+				 _("not something we can merge"));
+
+	parent2 = get_merge_parent(branch2);
+	if (!parent2)
+		help_unknown_ref(branch2, "merge",
+				 _("not something we can merge"));
+
+	init_merge_options(&opt, the_repository);
+	/*
+	 * TODO: Support subtree and other -X options?
+	if (use_strategies_nr == 1 &&
+	    !strcmp(use_strategies[0]->name, "subtree"))
+		opt.subtree_shift = "";
+	for (x = 0; x < xopts_nr; x++)
+		if (parse_merge_opt(&opt, xopts[x]))
+			die(_("Unknown strategy option: -X%s"), xopts[x]);
+	*/
+
+	opt.show_rename_progress = 0;
+
+	opt.branch1 = merge_remote_util(parent1)->name; /* or just branch1? */
+	opt.branch2 = merge_remote_util(parent2)->name; /* or just branch2? */
+
+	/*
+	 * Get the merge bases, in reverse order; see comment above
+	 * merge_incore_recursive in merge-ort.h
+	 */
+	common = get_merge_bases(parent1, parent2);
+	if (!common)
+		die(_("refusing to merge unrelated histories"));
+	for (j = common; j; j = j->next)
+		commit_list_insert(j->item, &merge_bases);
+
+	merge_incore_recursive(&opt, merge_bases, parent1, parent2, &result);
+	printf("%s\n", oid_to_hex(&result.tree->object.oid));
+	if (result.clean < 0)
+		die(_("failure to merge"));
+	else if (!result.clean)
+		printf(_("Conflicts!\n"));
+	merge_finalize(&opt, &result);
+	return !result.clean; /* result.clean < 0 handled above */
 }
 
 int cmd_merge_tree(int argc, const char **argv, const char *prefix)
