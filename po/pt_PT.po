@@ -23,7 +23,7 @@
 #   branch                           |  ramo 
 #   bundle                           |  conjunto
 #   bypass                           |  desviar
-#   cache                            |  arquivador
+#   cache                            |  cenário
 #   chain                            |  corrente
 #   changeset                        |  memória
 #   checkout                         |  observar
@@ -48,7 +48,7 @@
 #   fast-forward                     |  avanço
 #   fetch                            |  buscar
 #   file system                      |  sistema de ficheiro
-#   fork                             |  aforquilhar
+#   fork                             |  ramificar
 #   Git archive                      |  repositório
 #   gitfile                          |  ficheiro-git
 #   grafts                           |  enxertos
@@ -59,8 +59,8 @@
 #   header                           |  cabeçalho
 #   hook                             |  gancho
 #   hunk                             |  pedaço
-#   index                            |  arquivador
-#   index entry                      |  entrada no arquivo
+#   index                            |  cenário
+#   index entry                      |  entrada de cenário
 #   loose object                     |  objeto solto
 #   loose refs                       |  refs soltas
 #   master                           |  master
@@ -73,7 +73,7 @@
 #   octopus                          |  polvinho
 #   origin                           |  origin
 #   pack                             |  pacote
-#   pack index                       |  index de pacote
+#   pack index                       |  índice de pacote
 #   packfile                         |  ficheiro-pacote
 #   parent                           |  parente
 #   patch                            |  remendo
@@ -89,7 +89,7 @@
 #   reachable                        |  acessível
 #   rebase                           |  rebasear
 #   ref                              |  ref
-#   reflog                           |  registro-ref
+#   reflog                           |  registo-ref
 #   refspec                          |  espetro-ref
 #   remote                           |  remoto
 #   remote-tracking branch           |  ramo remoto de monitorização
@@ -108,8 +108,8 @@
 #   smart HTTP protocol              |  protocolo HTTP esperto
 #   squash                           |  esmagar
 #   squelch                          |  suprimir
-#   stage                            |  preparar
-#   stash                            |  arrumos
+#   stage                            |  cenário
+#   stash                            |  esconderijo
 #   submodule                        |  submódulo
 #   superproject                     |  super-projeto
 #   symref                           |  ref-simbólica
@@ -117,15 +117,15 @@
 #   tag object                       |  objeto-etiqueta
 #   tagger                           |  etiquetador
 #   topic branch                     |  ramo-tópico
-#   track                            |  seguir
-#   trailer                          |  apêndice
+#   track                            |  monitorizar
+#   trailer                          |  atribuições
 #   tree                             |  árvore
 #   tree object                      |  objeto-árvore
 #   tree-ish (also treeish)          |  arvoredo
-#   unmerged index                   |  arquivador por juntar
+#   unmerged index                   |  cenário por juntar
 #   unpack                           |  desempacotar
 #   unreachable object               |  objeto inacessível
-#   unstage                          |  despreparar
+#   unstage                          |  desencenar
 #   upstream                         |  upstream
 #   upstream branch                  |  ramo-upstream
 #   working tree                     |  árvore de trabalho
@@ -150,11 +150,13 @@
 #   named                            |  denominado
 #   not supported                    |  insustentado
 #   parse                            |  processar
+#   path                             |  caminho
 #   scan                             |  sondar
 #   set                              |  definir
 #   sparse                           |  disperso
 #   stat                             |  stat
 #   support                          |  sustenta
+#   untrack                          |  desmonitorizar
 #   
 #
 msgid ""
