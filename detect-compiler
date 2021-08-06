@@ -13,11 +13,11 @@ get_version_line() {
 }
 
 get_family() {
-	get_version_line | sed 's/^\(.*\) version [0-9][^ ]* .*/\1/'
+	get_version_line | sed 's/^\(.*\) version [0-9].*/\1/'
 }
 
 get_version() {
-	get_version_line | sed 's/^.* version \([0-9][^ ]*\) .*/\1/'
+	get_version_line | sed 's/^.* version \([0-9][^ ]*\).*/\1/'
 }
 
 print_flags() {
