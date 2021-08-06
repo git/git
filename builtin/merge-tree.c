@@ -391,6 +391,7 @@ static int trivial_merge(const char *base,
 struct merge_tree_options {
 	int real;
 	int trivial;
+	int show_messages;
 };
 
 static int real_merge(struct merge_tree_options *o,
@@ -440,22 +441,30 @@ static int real_merge(struct merge_tree_options *o,
 		commit_list_insert(j->item, &merge_bases);
 
 	merge_incore_recursive(&opt, merge_bases, parent1, parent2, &result);
-	printf("%s\n", oid_to_hex(&result.tree->object.oid));
+
 	if (result.clean < 0)
 		die(_("failure to merge"));
-	else if (!result.clean)
-		printf(_("Conflicts!\n"));
+
+	if (o->show_messages == -1)
+		o->show_messages = !result.clean;
+
+	printf("%s\n", oid_to_hex(&result.tree->object.oid));
+	if (o->show_messages) {
+		printf("\n");
+		merge_display_update_messages(&opt, &result, stdout);
+	}
 	merge_finalize(&opt, &result);
 	return !result.clean; /* result.clean < 0 handled above */
 }
 
 int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 {
-	struct merge_tree_options o = { 0 };
+	struct merge_tree_options o = { .show_messages = -1 };
 	int expected_remaining_argc;
+	int original_argc;
 
 	const char * const merge_tree_usage[] = {
-		N_("git merge-tree [--write-tree] <branch1> <branch2>"),
+		N_("git merge-tree [--write-tree] [<options>] <branch1> <branch2>"),
 		N_("git merge-tree [--trivial-merge] <base-tree> <branch1> <branch2>"),
 		NULL
 	};
@@ -464,6 +473,8 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 			 N_("do a real merge instead of a trivial merge")),
 		OPT_BOOL(0, "trivial-merge", &o.trivial,
 			 N_("do a trivial merge only")),
+		OPT_BOOL(0, "messages", &o.show_messages,
+			 N_("also show informational/conflict messages")),
 		OPT_END()
 	};
 
@@ -472,10 +483,13 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 		usage_with_options(merge_tree_usage, mt_options);
 
 	/* Parse arguments */
+	original_argc = argc;
 	argc = parse_options(argc, argv, prefix, mt_options,
 			     merge_tree_usage, 0);
 	if (o.real && o.trivial)
 		die(_("--write-tree and --trivial-merge are incompatible"));
+	if (!o.real && original_argc < argc)
+		die(_("--write-tree must be specified if any other options are"));
 	if (o.real || o.trivial) {
 		expected_remaining_argc = (o.real ? 2 : 3);
 		if (argc != expected_remaining_argc)
