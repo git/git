@@ -455,8 +455,8 @@ diff-tree --stat --compact-summary initial mode
 diff-tree -R --stat --compact-summary initial mode
 EOF
 
-test_expect_success 'log -m matches log -m -p' '
-	git log -m -p master >result &&
+test_expect_success 'log -m matches pure log' '
+	git log master >result &&
 	process_diffs result >expected &&
 	git log -m >result &&
 	process_diffs result >actual &&

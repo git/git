@@ -49,9 +49,10 @@ ifdef::git-log[]
 --diff-merges=m:::
 -m:::
 	This option makes diff output for merge commits to be shown in
-	the default format. The default format could be changed using
+	the default format. `-m` will produce the output only if `-p`
+	is given as well. The default format could be changed using
 	`log.diffMerges` configuration parameter, which default value
-	is `separate`. `-m` implies `-p`.
+	is `separate`.
 +
 --diff-merges=first-parent:::
 --diff-merges=1:::
@@ -61,8 +62,7 @@ ifdef::git-log[]
 --diff-merges=separate:::
 	This makes merge commits show the full diff with respect to
 	each of the parents. Separate log entry and diff is generated
-	for each parent. This is the format that `-m` produced
-	historically.
+	for each parent.
 +
 --diff-merges=combined:::
 --diff-merges=c:::
