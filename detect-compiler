@@ -44,7 +44,7 @@ clang)
 "FreeBSD clang")
 	print_flags clang
 	;;
-"Apple LLVM")
+"Apple LLVM"|"Apple clang")
 	print_flags clang
 	;;
 *)
