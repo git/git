@@ -56,6 +56,7 @@ static int coloring_mode;
 static struct string_list ignore_revs_file_list = STRING_LIST_INIT_NODUP;
 static int mark_unblamable_lines;
 static int mark_ignored_lines;
+static int ignorerevsfileisoptional;
 
 static struct date_mode blame_date_mode = { DATE_ISO8601 };
 static size_t blame_date_width;
@@ -715,6 +716,9 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		string_list_insert(&ignore_revs_file_list, str);
 		return 0;
 	}
+	if (!strcmp(var, "blame.ignorerevsfileisoptional")) {
+		ignorerevsfileisoptional = git_config_bool(var, value);
+	}
 	if (!strcmp(var, "blame.markunblamablelines")) {
 		mark_unblamable_lines = git_config_bool(var, value);
 		return 0;
@@ -835,7 +839,8 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 	for_each_string_list_item(i, ignore_revs_file_list) {
 		if (!strcmp(i->string, ""))
 			oidset_clear(&sb->ignore_list);
-		else
+		/* skip non-existent files if ignorerevsfileisoptional is set */
+		else if (!ignorerevsfileisoptional || file_exists(i->string))
 			oidset_parse_file_carefully(&sb->ignore_list, i->string,
 						    peel_to_commit_oid, sb);
 	}
