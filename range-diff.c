@@ -49,7 +49,7 @@ static int read_patches(const char *range, struct string_list *list,
 	struct patch_util *util = NULL;
 	int in_header = 1;
 	char *line, *current_filename = NULL;
-	int offset, len;
+	int len;
 	size_t size;
 
 	strvec_pushl(&cp.args, "log", "--no-color", "-p", "--no-merges",
@@ -86,7 +86,7 @@ static int read_patches(const char *range, struct string_list *list,
 
 	line = contents.buf;
 	size = contents.len;
-	for (offset = 0; size > 0; offset += len, size -= len, line += len) {
+	for (; size > 0; size -= len, line += len) {
 		const char *p;
 
 		len = find_end_of_line(line, size);
