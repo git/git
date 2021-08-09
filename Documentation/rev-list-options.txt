@@ -968,6 +968,11 @@ list of the missing objects.  Object IDs are prefixed with a ``?'' character.
 	objects.
 endif::git-rev-list[]
 
+--unsorted-input::
+	Show commits in the order they were given on the command line instead
+	of sorting them in reverse chronological order by commit time. Cannot
+	be combined with `--no-walk` or `--no-walk=sorted`.
+
 --no-walk[=(sorted|unsorted)]::
 	Only show the given commits, but do not traverse their ancestors.
 	This has no effect if a range is specified. If the argument
@@ -975,7 +980,8 @@ endif::git-rev-list[]
 	given on the command line. Otherwise (if `sorted` or no argument
 	was given), the commits are shown in reverse chronological order
 	by commit time.
-	Cannot be combined with `--graph`.
+	Cannot be combined with `--graph`. Cannot be combined with
+	`--unsorted-input` if `sorted` or no argument was given.
 
 --do-walk::
 	Overrides a previous `--no-walk`.

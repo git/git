@@ -2256,6 +2256,10 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--author-date-order")) {
 		revs->sort_order = REV_SORT_BY_AUTHOR_DATE;
 		revs->topo_order = 1;
+	} else if (!strcmp(arg, "--unsorted-input")) {
+		if (revs->no_walk)
+			die(_("--unsorted-input is incompatible with --no-walk"));
+		revs->unsorted_input = 1;
 	} else if (!strcmp(arg, "--early-output")) {
 		revs->early_output = 100;
 		revs->topo_order = 1;
@@ -2651,8 +2655,13 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	} else if (!strcmp(arg, "--not")) {
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
+		if (!revs->no_walk && revs->unsorted_input)
+			die(_("--no-walk is incompatible with --unsorted-input"));
 		revs->no_walk = 1;
 	} else if (skip_prefix(arg, "--no-walk=", &optarg)) {
+		if (!revs->no_walk && revs->unsorted_input)
+			die(_("--no-walk is incompatible with --unsorted-input"));
+
 		/*
 		 * Detached form ("--no-walk X" as opposed to "--no-walk=X")
 		 * not allowed, since the argument is optional.
