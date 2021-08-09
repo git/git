@@ -6,11 +6,6 @@
 #include "alloc.h"
 #include "hash.h"
 
-struct oidtree_node {
-	/* n.k[] is used to store "struct object_id" */
-	struct cb_node n;
-};
-
 struct oidtree_iter_data {
 	oidtree_iter fn;
 	void *arg;
@@ -35,13 +30,13 @@ void oidtree_clear(struct oidtree *ot)
 
 void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
 {
-	struct oidtree_node *on;
+	struct cb_node *on;
 
 	if (!oid->algo)
 		BUG("oidtree_insert requires oid->algo");
 
 	on = mem_pool_alloc(&ot->mem_pool, sizeof(*on) + sizeof(*oid));
-	oidcpy_with_padding((struct object_id *)on->n.k, oid);
+	oidcpy_with_padding((struct object_id *)on->k, oid);
 
 	/*
 	 * n.b. Current callers won't get us duplicates, here.  If a
@@ -49,7 +44,7 @@ void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
 	 * that won't be freed until oidtree_clear.  Currently it's not
 	 * worth maintaining a free list
 	 */
-	cb_insert(&ot->tree, &on->n, sizeof(*oid));
+	cb_insert(&ot->tree, on, sizeof(*oid));
 }
 
 
