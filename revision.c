@@ -360,20 +360,18 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 				    unsigned int flags)
 {
 	struct object *object;
+	struct commit *commit;
 
 	/*
-	 * If the repository has commit graphs, repo_parse_commit() avoids
-	 * reading the object buffer, so use it whenever possible.
+	 * If the repository has commit graphs, we try to opportunistically
+	 * look up the object ID in those graphs. Like this, we can avoid
+	 * parsing commit data from disk.
 	 */
-	if (oid_object_info(revs->repo, oid, NULL) == OBJ_COMMIT) {
-		struct commit *c = lookup_commit(revs->repo, oid);
-		if (!repo_parse_commit(revs->repo, c))
-			object = (struct object *) c;
-		else
-			object = NULL;
-	} else {
+	commit = lookup_commit_in_graph(revs->repo, oid);
+	if (commit)
+		object = &commit->object;
+	else
 		object = parse_object(revs->repo, oid);
-	}
 
 	if (!object) {
 		if (revs->ignore_missing)

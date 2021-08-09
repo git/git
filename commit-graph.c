@@ -891,6 +891,30 @@ static int find_commit_pos_in_graph(struct commit *item, struct commit_graph *g,
 	}
 }
 
+struct commit *lookup_commit_in_graph(struct repository *repo, const struct object_id *id)
+{
+	struct commit *commit;
+	uint32_t pos;
+
+	if (!repo->objects->commit_graph)
+		return NULL;
+	if (!search_commit_pos_in_graph(id, repo->objects->commit_graph, &pos))
+		return NULL;
+	if (!repo_has_object_file(repo, id))
+		return NULL;
+
+	commit = lookup_commit(repo, id);
+	if (!commit)
+		return NULL;
+	if (commit->object.parsed)
+		return commit;
+
+	if (!fill_commit_in_graph(repo, commit, repo->objects->commit_graph, pos))
+		return NULL;
+
+	return commit;
+}
+
 static int parse_commit_in_graph_one(struct repository *r,
 				     struct commit_graph *g,
 				     struct commit *item)
