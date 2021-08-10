@@ -187,6 +187,11 @@ done:
 	return ret;
 }
 
+void add_submodule_odb_by_path(const char *path)
+{
+	string_list_insert(&added_submodule_odb_paths, xstrdup(path));
+}
+
 int register_all_submodule_odb_as_alternates(void)
 {
 	int i;
