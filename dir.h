@@ -453,6 +453,17 @@ static inline int is_dot_or_dotdot(const char *name)
 
 int is_empty_dir(const char *dir);
 
+/*
+ * Retrieve the "humanish" basename of the given Git URL.
+ *
+ * For example:
+ * 	/path/to/repo.git => "repo"
+ * 	host.xz:foo/.git => "foo"
+ * 	http://example.com/user/bar.baz => "bar.baz"
+ */
+char *git_url_basename(const char *repo, int is_bundle, int is_bare);
+void strip_dir_trailing_slashes(char *dir);
+
 void setup_standard_excludes(struct dir_struct *dir);
 
 char *get_sparse_checkout_filename(void);
