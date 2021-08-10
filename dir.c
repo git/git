@@ -1439,6 +1439,35 @@ done:
 	return result;
 }
 
+int init_sparse_checkout_patterns(struct index_state *istate)
+{
+	if (istate->sparse_checkout_patterns)
+		return 0;
+
+	CALLOC_ARRAY(istate->sparse_checkout_patterns, 1);
+
+	if (get_sparse_checkout_patterns(istate->sparse_checkout_patterns) < 0) {
+		FREE_AND_NULL(istate->sparse_checkout_patterns);
+		return -1;
+	}
+
+	return 0;
+}
+
+enum pattern_match_result path_in_sparse_checkout(const char *path,
+						  struct index_state *istate)
+{
+	int dtype = DT_REG;
+	init_sparse_checkout_patterns(istate);
+
+	if (!istate->sparse_checkout_patterns)
+		return MATCHED;
+
+	return path_matches_pattern_list(path, strlen(path), NULL, &dtype,
+					 istate->sparse_checkout_patterns,
+					 istate);
+}
+
 static struct path_pattern *last_matching_pattern_from_lists(
 		struct dir_struct *dir, struct index_state *istate,
 		const char *pathname, int pathlen,
