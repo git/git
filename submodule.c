@@ -237,6 +237,11 @@ int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 /*
  * Determine if a submodule has been initialized at a given 'path'
  */
+/*
+ * NEEDSWORK: Emit a warning if submodule.active exists, but is valueless,
+ * ie, the config looks like: "[submodule] active\n".
+ * Since that is an invalid pathspec, we should inform the user.
+ */
 int is_submodule_active(struct repository *repo, const char *path)
 {
 	int ret = 0;
