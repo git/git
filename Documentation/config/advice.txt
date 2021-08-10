@@ -44,6 +44,9 @@ advice.*::
 		Shown when linkgit:git-push[1] rejects a forced update of
 		a branch when its remote-tracking ref has updates that we
 		do not have locally.
+	skippedCherryPicks::
+		Shown when linkgit:git-rebase[1] skips a commit that has already
+		been cherry-picked onto the upstream branch.
 	statusAheadBehind::
 		Shown when linkgit:git-status[1] computes the ahead/behind
 		counts for a local ref compared to its remote tracking ref,
