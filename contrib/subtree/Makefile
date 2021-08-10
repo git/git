@@ -94,7 +94,7 @@ $(GIT_SUBTREE_TEST): $(GIT_SUBTREE)
 	cp $< $@
 
 test: $(GIT_SUBTREE_TEST)
-	$(MAKE) -C t/ test
+	$(MAKE) -C t/ all
 
 clean:
 	$(RM) $(GIT_SUBTREE)
