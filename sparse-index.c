@@ -124,7 +124,7 @@ static int index_has_unmerged_entries(struct index_state *istate)
 	return 0;
 }
 
-int convert_to_sparse(struct index_state *istate)
+int convert_to_sparse(struct index_state *istate, int flags)
 {
 	int test_env;
 
@@ -135,20 +135,22 @@ int convert_to_sparse(struct index_state *istate)
 	if (!istate->repo)
 		istate->repo = the_repository;
 
-	/*
-	 * The GIT_TEST_SPARSE_INDEX environment variable triggers the
-	 * index.sparse config variable to be on.
-	 */
-	test_env = git_env_bool("GIT_TEST_SPARSE_INDEX", -1);
-	if (test_env >= 0)
-		set_sparse_index_config(istate->repo, test_env);
+	if (!(flags & SPARSE_INDEX_IGNORE_CONFIG)) {
+		/*
+		 * The GIT_TEST_SPARSE_INDEX environment variable triggers the
+		 * index.sparse config variable to be on.
+		 */
+		test_env = git_env_bool("GIT_TEST_SPARSE_INDEX", -1);
+		if (test_env >= 0)
+			set_sparse_index_config(istate->repo, test_env);
 
-	/*
-	 * Only convert to sparse if index.sparse is set.
-	 */
-	prepare_repo_settings(istate->repo);
-	if (!istate->repo->settings.sparse_index)
-		return 0;
+		/*
+		 * Only convert to sparse if index.sparse is set.
+		 */
+		prepare_repo_settings(istate->repo);
+		if (!istate->repo->settings.sparse_index)
+			return 0;
+	}
 
 	if (init_sparse_checkout_patterns(istate) < 0)
 		return 0;
