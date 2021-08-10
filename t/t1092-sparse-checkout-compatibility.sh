@@ -114,6 +114,16 @@ test_expect_success 'setup' '
 		git add . &&
 		git commit -m "file to dir" &&
 
+		for side in left right
+		do
+			git checkout -b merge-$side base &&
+			echo $side >>deep/deeper2/a &&
+			echo $side >>folder1/a &&
+			echo $side >>folder2/a &&
+			git add . &&
+			git commit -m "$side" || return 1
+		done &&
+
 		git checkout -b deepest base &&
 		echo "updated deepest" >deep/deeper1/deepest/a &&
 		git commit -a -m "update deepest" &&
@@ -312,9 +322,6 @@ test_expect_success 'commit including unstaged changes' '
 test_expect_success 'status/add: outside sparse cone' '
 	init_repos &&
 
-	# adding a "missing" file outside the cone should fail
-	test_sparse_match test_must_fail git add folder1/a &&
-
 	# folder1 is at HEAD, but outside the sparse cone
 	run_on_sparse mkdir folder1 &&
 	cp initial-repo/folder1/a sparse-checkout/folder1/a &&
@@ -330,21 +337,23 @@ test_expect_success 'status/add: outside sparse cone' '
 
 	test_sparse_match git status --porcelain=v2 &&
 
-	# This "git add folder1/a" fails with a warning
-	# in the sparse repos, differing from the full
-	# repo. This is intentional.
+	# Adding the path outside of the sparse-checkout cone should fail.
 	test_sparse_match test_must_fail git add folder1/a &&
 	test_sparse_match test_must_fail git add --refresh folder1/a &&
-	test_all_match git status --porcelain=v2 &&
+
+	# NEEDSWORK: Adding a newly-tracked file outside the cone succeeds
+	test_sparse_match git add folder1/new &&
 
 	test_all_match git add . &&
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git commit -m folder1/new &&
+	test_all_match git rev-parse HEAD^{tree} &&
 
 	run_on_all ../edit-contents folder1/newer &&
 	test_all_match git add folder1/ &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git commit -m folder1/newer
+	test_all_match git commit -m folder1/newer &&
+	test_all_match git rev-parse HEAD^{tree}
 '
 
 test_expect_success 'checkout and reset --hard' '
@@ -482,6 +491,39 @@ test_expect_success 'merge' '
 	test_all_match git rev-parse HEAD^{tree}
 '
 
+# NEEDSWORK: This test is documenting current behavior, but that
+# behavior can be confusing to users so there is desire to change it.
+# Right now, users might be using this flow to work through conflicts,
+# so any solution should present advice to users who try this sequence
+# of commands to follow whatever new method we create.
+test_expect_success 'merge with conflict outside cone' '
+	init_repos &&
+
+	test_all_match git checkout -b merge-tip merge-left &&
+	test_all_match git status --porcelain=v2 &&
+	test_all_match test_must_fail git merge -m merge merge-right &&
+	test_all_match git status --porcelain=v2 &&
+
+	# Resolve the conflict in different ways:
+	# 1. Revert to the base
+	test_all_match git checkout base -- deep/deeper2/a &&
+	test_all_match git status --porcelain=v2 &&
+
+	# 2. Add the file with conflict markers
+	test_all_match git add folder1/a &&
+	test_all_match git status --porcelain=v2 &&
+
+	# 3. Rename the file to another sparse filename and
+	#    accept conflict markers as resolved content.
+	run_on_all mv folder2/a folder2/z &&
+	test_all_match git add folder2 &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git merge --continue &&
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git rev-parse HEAD^{tree}
+'
+
 test_expect_success 'merge with outside renames' '
 	init_repos &&
 
@@ -598,7 +640,14 @@ test_expect_success 'sparse-index is not expanded' '
 	git -C sparse-index reset --hard &&
 	ensure_not_expanded checkout rename-out-to-out -- deep/deeper1 &&
 	git -C sparse-index reset --hard &&
-	ensure_not_expanded restore -s rename-out-to-out -- deep/deeper1
+	ensure_not_expanded restore -s rename-out-to-out -- deep/deeper1 &&
+
+	echo >>sparse-index/README.md &&
+	ensure_not_expanded add -A &&
+	echo >>sparse-index/extra.txt &&
+	ensure_not_expanded add extra.txt &&
+	echo >>sparse-index/untracked.txt &&
+	ensure_not_expanded add .
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
