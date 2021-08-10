@@ -164,6 +164,8 @@ enum protocol_version discover_version(struct packet_reader *reader)
 		BUG("unknown protocol version");
 	}
 
+	trace2_data_intmax("transfer", NULL, "negotiated-version", version);
+
 	return version;
 }
 

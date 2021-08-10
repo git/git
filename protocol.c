@@ -73,6 +73,8 @@ enum protocol_version determine_protocol_version_server(void)
 		string_list_clear(&list, 0);
 	}
 
+	trace2_data_intmax("transfer", NULL, "negotiated-version", version);
+
 	return version;
 }
 
