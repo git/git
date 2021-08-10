@@ -199,7 +199,7 @@ static char *relative_url(const char *remote_url,
 	return strbuf_detach(&sb, NULL);
 }
 
-static char *compute_submodule_clone_url(const char *rel_url, const char *up_path, int quiet)
+static char *resolve_relative_url(const char *rel_url, const char *up_path, int quiet)
 {
 	char *remoteurl, *resolved_url;
 	char *remote = get_default_remote();
@@ -634,7 +634,7 @@ static void init_submodule(const char *path, const char *prefix,
 		if (starts_with_dot_dot_slash(url) ||
 		    starts_with_dot_slash(url)) {
 			char *oldurl = url;
-			url = compute_submodule_clone_url(oldurl, NULL, 0);
+			url = resolve_relative_url(oldurl, NULL, 0);
 			free(oldurl);
 		}
 
@@ -1355,8 +1355,8 @@ static void sync_submodule(const char *path, const char *prefix,
 		if (starts_with_dot_dot_slash(sub->url) ||
 		    starts_with_dot_slash(sub->url)) {
 			char *up_path = get_up_path(path);
-			sub_origin_url = compute_submodule_clone_url(sub->url, up_path, 1);
-			super_config_url = compute_submodule_clone_url(sub->url, NULL, 1);
+			sub_origin_url = resolve_relative_url(sub->url, up_path, 1);
+			super_config_url = resolve_relative_url(sub->url, NULL, 1);
 			free(up_path);
 		} else {
 			sub_origin_url = xstrdup(sub->url);
@@ -2098,7 +2098,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	if (repo_config_get_string_tmp(the_repository, sb.buf, &url)) {
 		if (starts_with_dot_slash(sub->url) ||
 		    starts_with_dot_dot_slash(sub->url)) {
-			url = compute_submodule_clone_url(sub->url, NULL, 0);
+			url = resolve_relative_url(sub->url, NULL, 0);
 			need_free_url = 1;
 		} else
 			url = sub->url;
@@ -3026,7 +3026,7 @@ static int module_add(int argc, const char **argv, const char *prefix)
 			      "of the working tree"));
 
 		/* dereference source url relative to parent's url */
-		add_data.realrepo = compute_submodule_clone_url(add_data.repo, NULL, 1);
+		add_data.realrepo = resolve_relative_url(add_data.repo, NULL, 1);
 	} else if (is_dir_sep(add_data.repo[0]) || strchr(add_data.repo, ':')) {
 		add_data.realrepo = add_data.repo;
 	} else {
