@@ -51,4 +51,8 @@ esac
 make $MAKE_TARGETS
 check_unignored_build_artifacts
 
+case " $MAKE_TARGETS " in
+*" all "*) make -C contrib/subtree test;;
+esac
+
 save_good_tree
