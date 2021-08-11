@@ -10793,7 +10793,7 @@ msgstr "passar a opção -m ao git-mailinfo"
 
 #: builtin/am.c:2287
 msgid "pass --keep-cr flag to git-mailsplit for mbox format"
-msgstr "passar a opção --keep-cr ao gitmailsplit para formato de mbox"
+msgstr "passar flag --keep-cr para  git-mailsplit para formato mbox"
 
 #: builtin/am.c:2290
 msgid "do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"
@@ -21322,8 +21322,8 @@ msgid ""
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
 "--no-write-bitmap-index or disable the pack.writebitmaps configuration."
 msgstr ""
-"Repacks incrementais são incompatíveis com bitmap indexes. Usa\n"
-"--no-write-bitmap-índex ou desative a configuração pack.writebitmaps."
+"Repacks incrementais são incompatíveis com indexes bitmap. Usa\n"
+"--no-write-bitmap-index ou desativa a configuração pack.writebitmaps ."
 
 #: builtin/repack.c:198
 msgid "could not start pack-objects to repack promisor objects"
@@ -23584,7 +23584,7 @@ msgstr "a opção --contains só é permitida no modo lista"
 
 #: builtin/tag.c:552
 msgid "--no-contains option is only allowed in list mode"
-msgstr "a opção --contains só é permitida no modo lista"
+msgstr "opção --no-contains só é permitida no modo lista"
 
 #: builtin/tag.c:554
 msgid "--points-at option is only allowed in list mode"
@@ -25909,12 +25909,12 @@ msgstr "Incapaz apanhar $sha1"
 #: git-rebase--preserve-merges.sh:457
 #, sh-format
 msgid "This is the commit message #${n}:"
-msgstr "Esta é a mensagem de commit nº${n}:"
+msgstr "Esta é a mensagem de memória #${n}:"
 
 #: git-rebase--preserve-merges.sh:462
 #, sh-format
 msgid "The commit message #${n} will be skipped:"
-msgstr "A mensagem de commit nº${n} será ignorada:"
+msgstr "Mensagem de memória #${n} será ignorada:"
 
 #: git-rebase--preserve-merges.sh:473
 #, sh-format
