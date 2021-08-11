@@ -2474,7 +2474,7 @@ struct oidtree *odb_loose_cache(struct object_directory *odb,
 	struct strbuf buf = STRBUF_INIT;
 	size_t word_bits = bitsizeof(odb->loose_objects_subdir_seen[0]);
 	size_t word_index = subdir_nr / word_bits;
-	size_t mask = 1 << (subdir_nr % word_bits);
+	size_t mask = 1u << (subdir_nr % word_bits);
 	uint32_t *bitmap;
 
 	if (subdir_nr < 0 ||
