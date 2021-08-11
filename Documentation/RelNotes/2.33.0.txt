@@ -1,18 +1,6 @@
 Git 2.33 Release Notes
 ======================
 
-Backward compatibility notes
-----------------------------
-
- * The "-m" option in "git log -m" that does not specify which format,
-   if any, of diff is desired did not have any visible effect; it now
-   implies some form of diff (by default "--patch") is produced.
-
-   You can disable the diff output with "git log -m --no-patch", but
-   then there probably isn't much point in passing "-m" in the first
-   place ;-).
-
-
 Updates since Git 2.32
 ----------------------
 
