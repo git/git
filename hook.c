@@ -4,6 +4,28 @@
 #include "hook-list.h"
 #include "config.h"
 
+static void free_hook(struct hook *ptr)
+{
+	if (ptr) {
+		free(ptr->feed_pipe_cb_data);
+	}
+	free(ptr);
+}
+
+static void remove_hook(struct list_head *to_remove)
+{
+	struct hook *hook_to_remove = list_entry(to_remove, struct hook, list);
+	list_del(to_remove);
+	free_hook(hook_to_remove);
+}
+
+void clear_hook_list(struct list_head *head)
+{
+	struct list_head *pos, *tmp;
+	list_for_each_safe(pos, tmp, head)
+		remove_hook(pos);
+}
+
 static int known_hook(const char *name)
 {
 	const char **p;
@@ -71,6 +93,30 @@ int hook_exists(const char *name)
 	return !!find_hook(name);
 }
 
+struct list_head* hook_list(const char* hookname)
+{
+	struct list_head *hook_head = xmalloc(sizeof(struct list_head));
+
+	INIT_LIST_HEAD(hook_head);
+
+	if (!hookname)
+		return NULL;
+
+	if (have_git_dir()) {
+		const char *hook_path = find_hook(hookname);
+
+		/* Add the hook from the hookdir */
+		if (hook_path) {
+			struct hook *to_add = xmalloc(sizeof(*to_add));
+			to_add->hook_path = hook_path;
+			to_add->feed_pipe_cb_data = NULL;
+			list_add_tail(&to_add->list, hook_head);
+		}
+	}
+
+	return hook_head;
+}
+
 void run_hooks_opt_clear(struct run_hooks_opt *o)
 {
 	strvec_clear(&o->env);
@@ -128,7 +174,10 @@ static int pick_next_hook(struct child_process *cp,
 	cp->dir = hook_cb->options->dir;
 
 	/* add command */
-	strvec_push(&cp->args, run_me->hook_path);
+	if (hook_cb->options->absolute_path)
+		strvec_push(&cp->args, absolute_path(run_me->hook_path));
+	else
+		strvec_push(&cp->args, run_me->hook_path);
 
 	/*
 	 * add passed-in argv, without expanding - let the user get back
@@ -139,12 +188,12 @@ static int pick_next_hook(struct child_process *cp,
 	/* Provide context for errors if necessary */
 	*pp_task_cb = run_me;
 
-	/*
-	 * This pick_next_hook() will be called again, we're only
-	 * running one hook, so indicate that no more work will be
-	 * done.
-	 */
-	hook_cb->run_me = NULL;
+	/* Get the next entry ready */
+	if (hook_cb->run_me->list.next == hook_cb->head)
+		hook_cb->run_me = NULL;
+	else
+		hook_cb->run_me = list_entry(hook_cb->run_me->list.next,
+					     struct hook, list);
 
 	return 1;
 }
@@ -179,13 +228,9 @@ static int notify_hook_finished(int result,
 	return 0;
 }
 
-int run_hooks(const char *hook_name, const char *hook_path,
-	      struct run_hooks_opt *options)
+int run_hooks(const char *hook_name, struct list_head *hooks,
+		    struct run_hooks_opt *options)
 {
-	struct strbuf abs_path = STRBUF_INIT;
-	struct hook my_hook = {
-		.hook_path = hook_path,
-	};
 	struct hook_cb_data cb_data = {
 		.rc = 0,
 		.hook_name = hook_name,
@@ -197,11 +242,9 @@ int run_hooks(const char *hook_name, const char *hook_path,
 	if (!options)
 		BUG("a struct run_hooks_opt must be provided to run_hooks");
 
-	if (options->absolute_path) {
-		strbuf_add_absolute_path(&abs_path, hook_path);
-		my_hook.hook_path = abs_path.buf;
-	}
-	cb_data.run_me = &my_hook;
+
+	cb_data.head = hooks;
+	cb_data.run_me = list_first_entry(hooks, struct hook, list);
 
 	run_processes_parallel_tr2(jobs,
 				   pick_next_hook,
@@ -213,18 +256,15 @@ int run_hooks(const char *hook_name, const char *hook_path,
 				   "hook",
 				   hook_name);
 
-
-	if (options->absolute_path)
-		strbuf_release(&abs_path);
-	free(my_hook.feed_pipe_cb_data);
+	clear_hook_list(hooks);
 
 	return cb_data.rc;
 }
 
 int run_hooks_oneshot(const char *hook_name, struct run_hooks_opt *options)
 {
-	const char *hook_path;
-	int ret;
+	struct list_head *hooks;
+	int ret = 0;
 	struct run_hooks_opt hook_opt_scratch = RUN_HOOKS_OPT_INIT;
 
 	if (!options)
@@ -233,14 +273,19 @@ int run_hooks_oneshot(const char *hook_name, struct run_hooks_opt *options)
 	if (options->path_to_stdin && options->feed_pipe)
 		BUG("choose only one method to populate stdin");
 
-	hook_path = find_hook(hook_name);
-	if (!hook_path) {
-		ret = 0;
-		goto cleanup;
-	}
+	hooks = hook_list(hook_name);
 
-	ret = run_hooks(hook_name, hook_path, options);
+	/*
+	 * If you need to act on a missing hook, use run_found_hooks()
+	 * instead
+	 */
+	if (list_empty(hooks))
+		goto cleanup;
+
+	ret = run_hooks(hook_name, hooks, options);
+
 cleanup:
 	run_hooks_opt_clear(options);
+	clear_hook_list(hooks);
 	return ret;
 }

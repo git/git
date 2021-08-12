@@ -25,7 +25,8 @@ static int run(int argc, const char **argv, const char *prefix)
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	int ignore_missing = 0;
 	const char *hook_name;
-	const char *hook_path;
+	struct list_head *hooks;
+
 	struct option run_options[] = {
 		OPT_BOOL(0, "ignore-missing", &ignore_missing,
 			 N_("exit quietly with a zero exit code if the requested hook cannot be found")),
@@ -58,15 +59,16 @@ static int run(int argc, const char **argv, const char *prefix)
 	git_config(git_default_config, NULL);
 
 	hook_name = argv[0];
-	if (ignore_missing)
-		return run_hooks_oneshot(hook_name, &opt);
-	hook_path = find_hook(hook_name);
-	if (!hook_path) {
+	hooks = hook_list(hook_name);
+	if (list_empty(hooks)) {
+		/* ... act like run_hooks_oneshot() under --ignore-missing */
+		if (ignore_missing)
+			return 0;
 		error("cannot find a hook named %s", hook_name);
 		return 1;
 	}
 
-	ret = run_hooks(hook_name, hook_path, &opt);
+	ret = run_hooks(hook_name, hooks, &opt);
 	run_hooks_opt_clear(&opt);
 	return ret;
 usage:
