@@ -96,22 +96,20 @@ int hook_exists(const char *name)
 struct list_head* hook_list(const char* hookname)
 {
 	struct list_head *hook_head = xmalloc(sizeof(struct list_head));
+	const char *hook_path = find_hook(hookname);
+
 
 	INIT_LIST_HEAD(hook_head);
 
 	if (!hookname)
 		return NULL;
 
-	if (have_git_dir()) {
-		const char *hook_path = find_hook(hookname);
-
-		/* Add the hook from the hookdir */
-		if (hook_path) {
-			struct hook *to_add = xmalloc(sizeof(*to_add));
-			to_add->hook_path = hook_path;
-			to_add->feed_pipe_cb_data = NULL;
-			list_add_tail(&to_add->list, hook_head);
-		}
+	/* Add the hook from the hookdir */
+	if (hook_path) {
+		struct hook *to_add = xmalloc(sizeof(*to_add));
+		to_add->hook_path = hook_path;
+		to_add->feed_pipe_cb_data = NULL;
+		list_add_tail(&to_add->list, hook_head);
 	}
 
 	return hook_head;

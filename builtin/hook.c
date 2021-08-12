@@ -8,8 +8,11 @@
 
 #define BUILTIN_HOOK_RUN_USAGE \
 	N_("git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
+#define BUILTIN_HOOK_LIST_USAGE \
+	N_("git hook list <hook-name>")
 
 static const char * const builtin_hook_usage[] = {
+	BUILTIN_HOOK_LIST_USAGE,
 	BUILTIN_HOOK_RUN_USAGE,
 	NULL
 };
@@ -19,6 +22,50 @@ static const char * const builtin_hook_run_usage[] = {
 	NULL
 };
 
+static const char *const builtin_hook_list_usage[] = {
+	BUILTIN_HOOK_LIST_USAGE,
+	NULL
+};
+
+static int list(int argc, const char **argv, const char *prefix)
+{
+	struct list_head *head, *pos;
+	const char *hookname = NULL;
+	struct strbuf hookdir_annotation = STRBUF_INIT;
+
+	struct option list_options[] = {
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, list_options,
+			     builtin_hook_list_usage, 0);
+
+	if (argc < 1)
+		usage_msg_opt(_("You must specify a hook event name to list."),
+			      builtin_hook_list_usage, list_options);
+
+	hookname = argv[0];
+
+	head = hook_list(hookname);
+
+	if (list_empty(head)) {
+		printf(_("no commands configured for hook '%s'\n"),
+		       hookname);
+		return 0;
+	}
+
+	list_for_each(pos, head) {
+		struct hook *item = list_entry(pos, struct hook, list);
+		item = list_entry(pos, struct hook, list);
+		if (item)
+			printf("%s\n", item->hook_path);
+	}
+
+	clear_hook_list(head);
+	strbuf_release(&hookdir_annotation);
+
+	return 0;
+}
 static int run(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -88,6 +135,8 @@ int cmd_hook(int argc, const char **argv, const char *prefix)
 	if (!argc)
 		goto usage;
 
+	if (!strcmp(argv[0], "list"))
+		return list(argc, argv, prefix);
 	if (!strcmp(argv[0], "run"))
 		return run(argc, argv, prefix);
 
