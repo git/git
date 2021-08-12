@@ -9107,7 +9107,7 @@ msgstr "  (gunakan \"git add <berkas>...\" untuk menandai penyelesaian)"
 #: wt-status.c:199 wt-status.c:203
 msgid "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
 msgstr ""
-"  (gunakan \"git add.rm <berkas>...\" sebagaimana mestinya untuk menandai "
+"  (gunakan \"git add/rm <berkas>...\" sebagaimana mestinya untuk menandai "
 "penyelesaian)"
 
 #: wt-status.c:201
@@ -11866,7 +11866,7 @@ msgid ""
 "Consider \"git revert --quit\" or \"git worktree add\"."
 msgstr ""
 "tidak dapat mengganti cabang saat pembalikan\n"
-"Pertimbangkan untuk menggunakan \"git cherry-pick --quit\" atau \"git "
+"Pertimbangkan untuk menggunakan \"git revert --quit\" atau \"git "
 "worktree add\"."
 
 #: builtin/checkout.c:1432
@@ -12005,7 +12005,7 @@ msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
 msgstr ""
-"git checkout: --ours/theirs, --force dan --merge tidak kompatibel saat\n"
+"git checkout: --ours/--theirs, --force dan --merge tidak kompatibel saat\n"
 "men-checkout index"
 
 #: builtin/checkout.c:1759
@@ -16123,7 +16123,7 @@ msgid ""
 "dir=<directory>)"
 msgstr ""
 "%s (atau --work-tree=<direktori>) tidak diperbolehkan tanpa sebutkan %s "
-"(atau--git-dir=<direktori>)"
+"(atau --git-dir=<direktori>)"
 
 #: builtin/init-db.c:679
 #, c-format
@@ -22198,7 +22198,7 @@ msgstr "rekursi ke dalam submodul"
 
 #: builtin/submodule--helper.c:2580
 msgid "git submodule--helper absorb-git-dirs [<options>] [<path>...]"
-msgstr "giit submodule--helper absorb-git-dirs [<opsi>] [<jalur>...]"
+msgstr "git submodule--helper absorb-git-dirs [<opsi>] [<jalur>...]"
 
 #: builtin/submodule--helper.c:2636
 msgid "check if it is safe to write to the .gitmodules file"
