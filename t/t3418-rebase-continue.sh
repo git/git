@@ -31,6 +31,16 @@ test_expect_success 'merge based rebase --continue with works with touched file'
 	git rebase --continue
 '
 
+test_expect_success 'merge based rebase --continue removes .git/MERGE_MSG' '
+	git checkout -f --detach topic &&
+
+	test_must_fail git rebase --onto main HEAD^ &&
+	git read-tree --reset -u HEAD &&
+	test_path_is_file .git/MERGE_MSG &&
+	git rebase --continue &&
+	test_path_is_missing .git/MERGE_MSG
+'
+
 test_expect_success 'apply based rebase --continue works with touched file' '
 	rm -fr .git/rebase-* &&
 	git reset --hard &&

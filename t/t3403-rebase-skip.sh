@@ -20,6 +20,7 @@ test_expect_success setup '
 	git add hello &&
 	git commit -m "hello" &&
 	git branch skip-reference &&
+	git tag hello &&
 
 	echo world >> hello &&
 	git commit -a -m "hello world" &&
@@ -95,6 +96,13 @@ test_expect_success 'moved back to branch correctly' '
 '
 
 test_debug 'gitk --all & sleep 1'
+
+test_expect_success 'skipping final pick removes .git/MERGE_MSG' '
+	test_must_fail git rebase --onto hello reverted-goodbye^ \
+		reverted-goodbye &&
+	git rebase --skip &&
+	test_path_is_missing .git/MERGE_MSG
+'
 
 test_expect_success 'correct advice upon picking empty commit' '
 	test_when_finished "git rebase --abort" &&
