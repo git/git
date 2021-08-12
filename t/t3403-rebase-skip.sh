@@ -36,7 +36,8 @@ test_expect_success setup '
 	test_tick &&
 	GIT_AUTHOR_NAME="Another Author" \
 		GIT_AUTHOR_EMAIL="another.author@example.com" \
-		git commit --amend --no-edit -m amended-goodbye &&
+		git commit --amend --no-edit -m amended-goodbye \
+			--reset-author &&
 	test_tick &&
 	git tag amended-goodbye &&
 
