@@ -52,7 +52,7 @@ test_expect_success setup '
 	'
 
 test_expect_success 'rebase with git am -3 (default)' '
-	test_must_fail git rebase main
+	test_must_fail git rebase --apply main
 '
 
 test_expect_success 'rebase --skip can not be used with other options' '

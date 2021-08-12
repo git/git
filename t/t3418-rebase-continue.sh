@@ -21,7 +21,7 @@ test_expect_success 'setup' '
 	git checkout main
 '
 
-test_expect_success 'interactive rebase --continue works with touched file' '
+test_expect_success 'merge based rebase --continue with works with touched file' '
 	rm -fr .git/rebase-* &&
 	git reset --hard &&
 	git checkout main &&
@@ -31,12 +31,12 @@ test_expect_success 'interactive rebase --continue works with touched file' '
 	git rebase --continue
 '
 
-test_expect_success 'non-interactive rebase --continue works with touched file' '
+test_expect_success 'apply based rebase --continue works with touched file' '
 	rm -fr .git/rebase-* &&
 	git reset --hard &&
 	git checkout main &&
 
-	test_must_fail git rebase --onto main main topic &&
+	test_must_fail git rebase --apply --onto main main topic &&
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	test-tool chmtime =-60 F1 &&
@@ -254,7 +254,7 @@ test_rerere_autoupdate () {
 	'
 }
 
-test_rerere_autoupdate
+test_rerere_autoupdate --apply
 test_rerere_autoupdate -m
 GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
 test_rerere_autoupdate -i
