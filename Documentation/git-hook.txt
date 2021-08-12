@@ -18,6 +18,14 @@ This command is an interface to git hooks (see linkgit:githooks[5]).
 Currently it only provides a convenience wrapper for running hooks for
 use by git itself. In the future it might gain other functionality.
 
+It's possible to use this command to refer to hooks which are not native to Git,
+for example if a wrapper around Git wishes to expose hooks into its own
+operation in a way which is already familiar to Git users. However, wrappers
+invoking such hooks should be careful to name their hook events something which
+Git is unlikely to use for a native hook later on. For example, Git is much less
+likely to create a `mytool-validate-commit` hook than it is to create a
+`validate-commit` hook.
+
 SUBCOMMANDS
 -----------
 

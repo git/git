@@ -46,7 +46,7 @@ static int list(int argc, const char **argv, const char *prefix)
 
 	hookname = argv[0];
 
-	head = hook_list(hookname);
+	head = hook_list(hookname, 1);
 
 	if (list_empty(head)) {
 		printf(_("no commands configured for hook '%s'\n"),
@@ -108,7 +108,7 @@ static int run(int argc, const char **argv, const char *prefix)
 	git_config(git_default_config, NULL);
 
 	hook_name = argv[0];
-	hooks = hook_list(hook_name);
+	hooks = hook_list(hook_name, 1);
 	if (list_empty(hooks)) {
 		/* ... act like run_hooks_oneshot() under --ignore-missing */
 		if (ignore_missing)

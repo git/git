@@ -52,11 +52,20 @@ static int known_hook(const char *name)
 
 const char *find_hook(const char *name)
 {
-	static struct strbuf path = STRBUF_INIT;
+	const char *hook_path;
 
 	if (!known_hook(name))
 		die(_("the hook '%s' is not known to git, should be in hook-list.h via githooks(5)"),
 		    name);
+
+	hook_path = find_hook_gently(name);
+
+	return hook_path;
+}
+
+const char *find_hook_gently(const char *name)
+{
+	static struct strbuf path = STRBUF_INIT;
 
 	strbuf_reset(&path);
 	strbuf_git_path(&path, "hooks/%s", name);
@@ -93,16 +102,27 @@ int hook_exists(const char *name)
 	return !!find_hook(name);
 }
 
-struct list_head* hook_list(const char* hookname)
+struct hook_config_cb
+{
+	struct strbuf *hook_key;
+	struct list_head *list;
+};
+
+struct list_head* hook_list(const char* hookname, int allow_unknown)
 {
 	struct list_head *hook_head = xmalloc(sizeof(struct list_head));
-	const char *hook_path = find_hook(hookname);
+	const char *hook_path;
 
 
 	INIT_LIST_HEAD(hook_head);
 
 	if (!hookname)
 		return NULL;
+
+	if (allow_unknown)
+		hook_path = find_hook_gently(hookname);
+	else
+		hook_path = find_hook(hookname);
 
 	/* Add the hook from the hookdir */
 	if (hook_path) {
@@ -299,7 +319,11 @@ int run_hooks_oneshot(const char *hook_name, struct run_hooks_opt *options)
 	if (options->path_to_stdin && options->feed_pipe)
 		BUG("choose only one method to populate stdin");
 
-	hooks = hook_list(hook_name);
+	/*
+	 * 'git hooks run <hookname>' uses run_found_hooks, so we don't need to
+	 * allow unknown hooknames here.
+	 */
+	hooks = hook_list(hook_name, 0);
 
 	/*
 	 * If you need to act on a missing hook, use run_found_hooks()
