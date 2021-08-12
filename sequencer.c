@@ -1148,7 +1148,7 @@ int update_head_with_reflog(const struct commit *old_head,
 static int run_rewrite_hook(const struct object_id *oldoid,
 			    const struct object_id *newoid)
 {
-	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT_ASYNC;
 	struct strbuf tmp = STRBUF_INIT;
 	struct string_list to_stdin = STRING_LIST_INIT_DUP;
 	int code;
@@ -4522,7 +4522,7 @@ cleanup_head_ref:
 		if (!stat(rebase_path_rewritten_list(), &st) &&
 				st.st_size > 0) {
 			struct child_process notes_cp = CHILD_PROCESS_INIT;
-			struct run_hooks_opt hook_opt = RUN_HOOKS_OPT_INIT;
+			struct run_hooks_opt hook_opt = RUN_HOOKS_OPT_INIT_ASYNC;
 
 			notes_cp.in = open(rebase_path_rewritten_list(), O_RDONLY);
 			notes_cp.git_cmd = 1;

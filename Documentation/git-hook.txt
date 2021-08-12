@@ -8,7 +8,8 @@ git-hook - run git hooks
 SYNOPSIS
 --------
 [verse]
-'git hook' run [--to-stdin=<path>] [--ignore-missing] <hook-name> [-- <hook-args>]
+'git hook' run [--to-stdin=<path>] [--ignore-missing] [(-j|--jobs) <n>]
+	<hook-name> [-- <hook-args>]
 
 DESCRIPTION
 -----------
@@ -41,6 +42,20 @@ OPTIONS
 	Ignore any missing hook by quietly returning zero. Used for
 	tools that want to do a blind one-shot run of a hook that may
 	or may not be present.
+
+-j::
+--jobs::
+	Only valid for `run`.
++
+Specify how many hooks to run simultaneously. If this flag is not specified, use
+the value of the `hook.jobs` config. If the config is not specified, use the
+number of CPUs on the current system. Some hooks may be ineligible for
+parallelization: for example, 'commit-msg' intends hooks modify the commit
+message body and cannot be parallelized.
+
+CONFIGURATION
+-------------
+include::config/hook.txt[]
 
 SEE ALSO
 --------

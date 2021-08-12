@@ -43,6 +43,13 @@ struct run_hooks_opt
 	/* Args to be passed to each hook */
 	struct strvec args;
 
+	/*
+	 * Number of threads to parallelize across. Set to 0 to use the
+	 * 'hook.jobs' config or, if that config is unset, the number of cores
+	 * on the system.
+	 */
+	int jobs;
+
 	/* Resolve and run the "absolute_path(hook)" instead of
 	 * "hook". Used for "git worktree" hooks
 	 */
@@ -85,11 +92,6 @@ struct run_hooks_opt
 	int *invoked_hook;
 };
 
-#define RUN_HOOKS_OPT_INIT { \
-	.env = STRVEC_INIT, \
-	.args = STRVEC_INIT, \
-}
-
 /*
  * To specify a 'struct string_list', set 'run_hooks_opt.feed_pipe_ctx' to the
  * string_list and set 'run_hooks_opt.feed_pipe' to 'pipe_from_string_list()'.
@@ -110,6 +112,18 @@ struct hook_cb_data {
 	struct run_hooks_opt *options;
 	int *invoked_hook;
 };
+
+#define RUN_HOOKS_OPT_INIT_SYNC { \
+	.jobs = 1, \
+	.env = STRVEC_INIT, \
+	.args = STRVEC_INIT, \
+}
+
+#define RUN_HOOKS_OPT_INIT_ASYNC { \
+	.jobs = 0, \
+	.env = STRVEC_INIT, \
+	.args = STRVEC_INIT, \
+}
 
 void run_hooks_opt_clear(struct run_hooks_opt *o);
 

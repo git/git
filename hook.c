@@ -228,6 +228,28 @@ static int notify_hook_finished(int result,
 	return 0;
 }
 
+/*
+ * Determines how many jobs to use after we know we want to parallelize. First
+ * priority is the config 'hook.jobs' and second priority is the number of CPUs.
+ */
+static int configured_hook_jobs(void)
+{
+	/*
+	 * The config and the CPU count probably won't change during the process
+	 * lifetime, so cache the result in case we invoke multiple hooks during
+	 * one process.
+	 */
+	static int jobs = 0;
+	if (jobs)
+		return jobs;
+
+	if (git_config_get_int("hook.jobs", &jobs))
+		/* if the config isn't set, fall back to CPU count. */
+		jobs = online_cpus();
+
+	return jobs;
+}
+
 int run_hooks(const char *hook_name, struct list_head *hooks,
 		    struct run_hooks_opt *options)
 {
@@ -237,16 +259,18 @@ int run_hooks(const char *hook_name, struct list_head *hooks,
 		.options = options,
 		.invoked_hook = options->invoked_hook,
 	};
-	int jobs = 1;
 
 	if (!options)
 		BUG("a struct run_hooks_opt must be provided to run_hooks");
 
-
 	cb_data.head = hooks;
 	cb_data.run_me = list_first_entry(hooks, struct hook, list);
 
-	run_processes_parallel_tr2(jobs,
+	/* INIT_ASYNC sets jobs to 0, so go look up how many to use. */
+	if (!options->jobs)
+		options->jobs = configured_hook_jobs();
+
+	run_processes_parallel_tr2(options->jobs,
 				   pick_next_hook,
 				   notify_start_failure,
 				   options->feed_pipe,
@@ -265,7 +289,11 @@ int run_hooks_oneshot(const char *hook_name, struct run_hooks_opt *options)
 {
 	struct list_head *hooks;
 	int ret = 0;
-	struct run_hooks_opt hook_opt_scratch = RUN_HOOKS_OPT_INIT;
+	/*
+	 * Turn on parallelism by default. Hooks which don't want it should
+	 * specify their options accordingly.
+	 */
+	struct run_hooks_opt hook_opt_scratch = RUN_HOOKS_OPT_INIT_ASYNC;
 
 	if (!options)
 		options = &hook_opt_scratch;

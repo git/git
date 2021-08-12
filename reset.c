@@ -127,7 +127,8 @@ reset_head_refs:
 					    reflog_head);
 	}
 	if (run_hook) {
-		struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+		struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT_ASYNC;
+
 		strvec_pushl(&opt.args,
 			     oid_to_hex(orig ? orig : null_oid()),
 			     oid_to_hex(oid),
