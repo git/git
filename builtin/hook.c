@@ -49,7 +49,7 @@ static int list(int argc, const char **argv, const char *prefix)
 	head = hook_list(hookname, 1);
 
 	if (list_empty(head)) {
-		printf(_("no commands configured for hook '%s'\n"),
+		printf(_("no hooks configured for event '%s'\n"),
 		       hookname);
 		return 0;
 	}
@@ -58,7 +58,8 @@ static int list(int argc, const char **argv, const char *prefix)
 		struct hook *item = list_entry(pos, struct hook, list);
 		item = list_entry(pos, struct hook, list);
 		if (item)
-			printf("%s\n", item->hook_path);
+			printf("%s\n", item->name ? item->name
+						  : _("hook from hookdir"));
 	}
 
 	clear_hook_list(head);

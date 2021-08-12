@@ -26,12 +26,31 @@ Git is unlikely to use for a native hook later on. For example, Git is much less
 likely to create a `mytool-validate-commit` hook than it is to create a
 `validate-commit` hook.
 
+This command parses the default configuration files for pairs of configs like
+so:
+
+  [hook "linter"]
+    event = pre-commit
+    command = ~/bin/linter --c
+
+Conmmands are run in the order Git encounters their associated
+`hook.<name>.event` configs during the configuration parse (see
+linkgit:git-config[1]).
+
+In general, when instructions suggest adding a script to
+`.git/hooks/<hook-event>`, you can specify it in the config instead by running
+`git config --add hook.<some-name>.command <path-to-script> && git config --add
+hook.<some-name>.event <hook-event>` - this way you can share the script between
+multiple repos. That is, `cp ~/my-script.sh ~/project/.git/hooks/pre-commit`
+would become `git config --add hook.my-script.command ~/my-script.sh && git
+config --add hook.my-script.event pre-commit`.
+
 SUBCOMMANDS
 -----------
 
 run::
-	Run the `<hook-name>` hook. See linkgit:githooks[5] for
-	the hook names we support.
+	Runs hooks configured for `<hook-name>`, in the order they are
+	discovered during the config parse.
 +
 Any positional arguments to the hook should be passed after an
 optional `--` (or `--end-of-options`, see linkgit:gitcli[7]). The
