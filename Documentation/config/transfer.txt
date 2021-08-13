@@ -52,13 +52,17 @@ If you have multiple hideRefs values, later entries override earlier ones
 (and entries in more-specific config files override less-specific ones).
 +
 If a namespace is in use, the namespace prefix is stripped from each
-reference before it is matched against `transfer.hiderefs` patterns.
+reference before it is matched against `transfer.hiderefs` patterns. In
+order to match refs before stripping, add a `^` in front of the ref name. If
+you combine `!` and `^`, `!` must be specified first.
++
 For example, if `refs/heads/master` is specified in `transfer.hideRefs` and
 the current namespace is `foo`, then `refs/namespaces/foo/refs/heads/master`
-is omitted from the advertisements but `refs/heads/master` and
-`refs/namespaces/bar/refs/heads/master` are still advertised as so-called
-"have" lines. In order to match refs before stripping, add a `^` in front of
-the ref name. If you combine `!` and `^`, `!` must be specified first.
+is omitted from the advertisements. If `uploadpack.allowRefInWant` is set,
+`upload-pack` will treat `want-ref refs/heads/master` in a protocol v2
+`fetch` command as if `refs/namespaces/foo/refs/heads/master` did not exist.
+`receive-pack`, on the other hand, will still advertise the object id the
+ref is pointing to without mentioning its name (a so-called ".have" line).
 +
 Even if you hide refs, a client may still be able to steal the target
 objects via the techniques described in the "SECURITY" section of the
