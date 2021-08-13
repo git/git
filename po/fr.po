@@ -77,7 +77,7 @@ msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2021-08-03 17:06+0800\n"
-"PO-Revision-Date: 2021-08-03 22:11+0200\n"
+"PO-Revision-Date: 2021-08-12 21:06+0200\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -3441,9 +3441,7 @@ msgstr "  Paramètre dirstat inconnu '%s'\n"
 msgid ""
 "color moved setting must be one of 'no', 'default', 'blocks', 'zebra', "
 "'dimmed-zebra', 'plain'"
-msgstr ""
-"le paramètre de couleur de déplacement doit être parmi 'no', 'default', "
-"'blocks', 'zebra', 'dimmed_zebra' ou 'plain'"
+msgstr "le paramètre de couleur de déplacement doit être parmi 'no', 'default', 'blocks', 'zebra', 'dimmed-zebra' ou 'plain'"
 
 #: diff.c:325
 #, c-format
@@ -3529,7 +3527,7 @@ msgstr ""
 #: diff.c:4892
 #, c-format
 msgid "unknown change class '%c' in --diff-filter=%s"
-msgstr "classe de modification inconnue '%c' dans --diff-fileter=%s"
+msgstr "classe de modification inconnue '%c' dans --diff-filter=%s"
 
 #: diff.c:4916
 #, c-format
@@ -5721,7 +5719,7 @@ msgstr "type d'objet invalide"
 #: object-file.c:1481
 #, c-format
 msgid "unable to unpack %s header with --allow-unknown-type"
-msgstr "impossible de dépaqueter l'entête %s avec --allow-unknow-type"
+msgstr "impossible de dépaqueter l'entête %s avec --allow-unknown-type"
 
 #: object-file.c:1484
 #, c-format
@@ -5731,7 +5729,7 @@ msgstr "impossible de dépaqueter l'entête %s"
 #: object-file.c:1490
 #, c-format
 msgid "unable to parse %s header with --allow-unknown-type"
-msgstr "impossible d'analyser l'entête %s avec --allow-unknow-type"
+msgstr "impossible d'analyser l'entête %s avec --allow-unknown-type"
 
 #: object-file.c:1493
 #, c-format
@@ -8231,7 +8229,7 @@ msgid ""
 "try \"git %s --continue\""
 msgstr ""
 "avez-vous déjà validé ?\n"
-"essayez \"git %s -continue\""
+"essayez \"git %s --continue\""
 
 #: sequencer.c:3411 sequencer.c:4472
 msgid "cannot read HEAD"
@@ -9166,7 +9164,7 @@ msgstr "impossible de se connecter au sous-service %s"
 
 #: transport-helper.c:693 transport.c:400
 msgid "--negotiate-only requires protocol v2"
-msgstr "--negociate-only requiert le protocole v2"
+msgstr "--negotiate-only requiert le protocole v2"
 
 #: transport-helper.c:755
 msgid "'option' without a matching 'ok/error' directive"
@@ -11098,15 +11096,15 @@ msgstr "git bisect--helper --bisect-next"
 
 #: builtin/bisect--helper.c:29
 msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
-msgstr "git bisect--helper --bisect-reset (bad|new) [<rév>]"
+msgstr "git bisect--helper --bisect-state (bad|new) [<rév>]"
 
 #: builtin/bisect--helper.c:30
 msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
-msgstr "git bisect--helper --bisect-reset (good|old) [<rév>...]"
+msgstr "git bisect--helper --bisect-state (good|old) [<rév>...]"
 
 #: builtin/bisect--helper.c:31
 msgid "git bisect--helper --bisect-replay <filename>"
-msgstr "git bisect--helper --bisect-next <nom-de-fichier>"
+msgstr "git bisect--helper --bisect-replay <nom-de-fichier>"
 
 #: builtin/bisect--helper.c:32
 msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
@@ -13733,7 +13731,7 @@ msgstr ""
 "pour continuer le picorage des commits restants.\n"
 "Si vous souhaitez sauter ce commit, utilisez :\n"
 "\n"
-"    git cherry-pick --skipped\n"
+"    git cherry-pick --skip\n"
 "\n"
 
 #: builtin/commit.c:324
@@ -15329,7 +15327,7 @@ msgstr "lancer 'maintenance --auto' après la récupération"
 
 #: builtin/fetch.c:217 builtin/pull.c:243
 msgid "check for forced-updates on all updated branches"
-msgstr "vérifier les mises à jour forcées sur toutes les branches mises à jour"
+msgstr "vérifier les mises à jour forcées (forced-updates) sur toutes les branches mises à jour"
 
 #: builtin/fetch.c:219
 msgid "write the commit-graph after fetching"
@@ -15407,7 +15405,7 @@ msgid ""
 msgstr ""
 "Fetch indique normalement quelles branches ont subi une mise à jour forcée,\n"
 "mais ceci a été désactivé. Pour ré-activer, utilisez le drapeau\n"
-"'--show-forced-update' ou lancez 'git config fetch.showForcedUpdates true'."
+"'--show-forced-updates' ou lancez 'git config fetch.showForcedUpdates true'."
 
 #: builtin/fetch.c:1069
 #, c-format
@@ -15418,7 +15416,7 @@ msgid ""
 " to avoid this check.\n"
 msgstr ""
 "%.2f secondes ont été nécessaires pour vérifier les mises à jour forcées.\n"
-"Vous pouvez utiliser '--no-show-forced-update' ou lancer\n"
+"Vous pouvez utiliser '--no-show-forced-updates' ou lancer\n"
 "'git config fetch.showForcedUpdates false' pour éviter ceci.\n"
 
 #: builtin/fetch.c:1101
@@ -16050,7 +16048,7 @@ msgstr ""
 
 #: builtin/gc.c:745
 msgid "--no-schedule is not allowed"
-msgstr "--schedule n'est pas accepté"
+msgstr "--no-schedule n'est pas accepté"
 
 #: builtin/gc.c:750
 #, c-format
@@ -20461,7 +20459,7 @@ msgstr "synonyme pour --reset-author-date"
 
 #: builtin/rebase.c:1343 builtin/rebase.c:1347
 msgid "passed to 'git apply'"
-msgstr "passé jusqu'à git-apply"
+msgstr "passé jusqu'à git apply"
 
 #: builtin/rebase.c:1345
 msgid "ignore changes in whitespace"
@@ -20558,7 +20556,7 @@ msgstr ""
 
 #: builtin/rebase.c:1442
 msgid "It looks like 'git am' is in progress. Cannot rebase."
-msgstr "Il semble que 'git-am' soit en cours. Impossible de rebaser."
+msgstr "Il semble que 'git am' soit en cours. Impossible de rebaser."
 
 #: builtin/rebase.c:1483
 msgid ""
@@ -21477,7 +21475,7 @@ msgstr "passer --no-reuse-object à git-pack-objects"
 
 #: builtin/repack.c:471
 msgid "do not run git-update-server-info"
-msgstr "ne pas lancer git update-server-info"
+msgstr "ne pas lancer git-update-server-info"
 
 #: builtin/repack.c:474
 msgid "pass --local to git-pack-objects"
@@ -22068,7 +22066,7 @@ msgstr "--path-format exige un argument"
 #: builtin/rev-parse.c:769
 #, c-format
 msgid "unknown argument to --path-format: %s"
-msgstr "argument inconnu pour --patch-format : %s"
+msgstr "argument inconnu pour --path-format : %s"
 
 #: builtin/rev-parse.c:776
 msgid "--default requires an argument"
@@ -22447,9 +22445,7 @@ msgstr ""
 #: builtin/show-branch.c:711
 msgid ""
 "--reflog is incompatible with --all, --remotes, --independent or --merge-base"
-msgstr ""
-"--reflog est incompatible avec --all, --remotes, --independant et --merge-"
-"base"
+msgstr "--reflog est incompatible avec --all, --remotes, --independent et --merge-base"
 
 #: builtin/show-branch.c:735
 msgid "no branches given, and HEAD is not valid"
@@ -23380,7 +23376,7 @@ msgstr "parcourir récursivement les sous-modules"
 
 #: builtin/submodule--helper.c:2580
 msgid "git submodule--helper absorb-git-dirs [<options>] [<path>...]"
-msgstr "git submodule--helper embed-git-dir [<options>] [<chemin>...]"
+msgstr "git submodule--helper absorb-git-dirs [<options>] [<chemin>...]"
 
 #: builtin/submodule--helper.c:2636
 msgid "check if it is safe to write to the .gitmodules file"
@@ -23670,7 +23666,7 @@ msgstr "l'option --contains est autorisée seulement en mode de liste"
 
 #: builtin/tag.c:552
 msgid "--no-contains option is only allowed in list mode"
-msgstr "l'option --contains est autorisée seulement en mode liste"
+msgstr "l'option --no-contains est autorisée seulement en mode liste"
 
 #: builtin/tag.c:554
 msgid "--points-at option is only allowed in list mode"
@@ -24441,7 +24437,7 @@ msgstr "-c requiert une chaîne de configuration\n"
 #: git.c:260
 #, c-format
 msgid "no config key given for --config-env\n"
-msgstr "aucune clé de configuration fournie pour --conf-env\n"
+msgstr "aucune clé de configuration fournie pour --config-env\n"
 
 #: git.c:300
 #, c-format
@@ -26633,10 +26629,8 @@ msgid ""
 "Set sendemail.forbidSendmailVariables to false to disable this check.\n"
 msgstr ""
 "fatal : options de configuration trouvées pour 'sendmail'\n"
-"git-send-mail est configuré avec des options sendemail.* - veuillez noter le "
-"'e'.\n"
-"Positionnez sendemail.forbidSendmailVariables à false pour désactiver cette "
-"vérification.\n"
+"git-send-email est configuré avec des options sendemail.* - veuillez noter le 'e'.\n"
+"Positionnez sendemail.forbidSendmailVariables à false pour désactiver cette vérification.\n"
 
 #: git-send-email.perl:530 git-send-email.perl:746
 msgid "Cannot run git format-patch from outside a repository\n"
@@ -26982,76 +26976,3 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
-
-#~ msgid "unable to write stateless separator packet"
-#~ msgstr "impossible d'écrire le paquet de séparateur sans état"
-
-#~ msgid "git merge --abort"
-#~ msgstr "git merge --abort"
-
-#~ msgid "git merge --continue"
-#~ msgstr "git merge --continue"
-
-#~ msgid "git stash clear"
-#~ msgstr "git stash clear"
-
-#~ msgid "remote server sent stateless separator"
-#~ msgstr "le serveur distant a envoyé un séparateur sans état"
-
-#~ msgid "--cached and --3way cannot be used together."
-#~ msgstr "--cached et --3way ne peuvent pas être utilisés ensemble."
-
-#~ msgid "both"
-#~ msgstr "les deux"
-
-#~ msgid "one"
-#~ msgstr "un"
-
-#, c-format
-#~ msgid "Already up to date!"
-#~ msgstr "Déjà à jour !"
-
-#~ msgid "Already up to date. Yeeah!"
-#~ msgstr "Déjà à jour. Ouais !"
-
-#~ msgid "--batch-size option is only for 'repack' subcommand"
-#~ msgstr "l'option --batch-size ne sert que pour la sous-commande 'repack'"
-
-#~ msgid "Percentage by which creation is weighted"
-#~ msgstr "Pourcentage par lequel la création est pondérée"
-
-#~ msgid ""
-#~ "the rebase.useBuiltin support has been removed!\n"
-#~ "See its entry in 'git help config' for details."
-#~ msgstr ""
-#~ "les support de rebase.useBuiltin a été supprimé !\n"
-#~ "Voir son entrée dans 'git help config' pour plus de détails."
-
-#, perl-format
-#~ msgid "%s: patch contains a line longer than 998 characters"
-#~ msgstr "%s : le patch contient une ligne plus longue que 998 caractères"
-
-#~ msgid "repository contains replace objects; skipping commit-graph"
-#~ msgstr ""
-#~ "le dépôt contient des object de remplacement ; saut du graphe de commits"
-
-#~ msgid "repository contains (deprecated) grafts; skipping commit-graph"
-#~ msgstr ""
-#~ "le dépôt contient des greffes (déconseillées) ; saut du graphe de commits"
-
-#~ msgid "repository is shallow; skipping commit-graph"
-#~ msgstr "le dépôt est superficiel ; saut du graphe de commit"
-
-#, c-format
-#~ msgid "commit-graph improper chunk offset %08x%08x"
-#~ msgstr "décalage de bloc %08x%08x du graphe de commit inadéquat"
-
-#, c-format
-#~ msgid "commit-graph chunk id %08x appears multiple times"
-#~ msgstr "l'id de bloc de graphe de commit %08x apparaît des multiples fois"
-
-#~ msgid "invalid chunk offset (too large)"
-#~ msgstr "décalage de section invalide (trop grand)"
-
-#~ msgid "Writing chunks to multi-pack-index"
-#~ msgstr "Écriture des sections dans l'index multi-paquet"
