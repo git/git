@@ -173,10 +173,16 @@ set_reword_editor () {
 
 	write_script reword-editor.sh <<-EOF &&
 	# Save the oid of the first reworded commit so we can check rebase
-	# fast-forwards to it
+	# fast-forwards to it. Also check that we do not write .git/MERGE_MSG
+	# when fast-forwarding
 	if ! test -s reword-oid
 	then
-		git rev-parse HEAD >reword-oid
+		git rev-parse HEAD >reword-oid &&
+		if test -f .git/MERGE_MSG
+		then
+			echo 1>&2 "error: .git/MERGE_MSG exists"
+			exit 1
+		fi
 	fi &&
 	# There should be no uncommited changes
 	git diff --exit-code HEAD &&
