@@ -839,6 +839,19 @@ test_expect_success 'reword' '
 	git show HEAD~2 | grep "C changed"
 '
 
+test_expect_success 'no uncommited changes when rewording the todo list is reloaded' '
+	git checkout E &&
+	test_when_finished "git checkout @{-1}" &&
+	(
+		set_fake_editor &&
+		GIT_SEQUENCE_EDITOR="\"$PWD/fake-editor.sh\"" &&
+		export GIT_SEQUENCE_EDITOR &&
+		set_reword_editor &&
+		FAKE_LINES="reword 1 reword 2" git rebase -i C
+	) &&
+	check_reworded_commits D E
+'
+
 test_expect_success 'rebase -i can copy notes' '
 	git config notes.rewrite.rebase true &&
 	git config notes.rewriteRef "refs/notes/*" &&
