@@ -409,6 +409,12 @@ then
 	verbose=t
 fi
 
+# Since bash 5.0, checkwinsize is enabled by default which does
+# update the COLUMNS variable every time a non-builtin command
+# completes, even for non-interactive shells.
+# Disable that since we are aiming for repeatability.
+test -n "$BASH_VERSION" && shopt -u checkwinsize 2>/dev/null
+
 # For repeatability, reset the environment to known value.
 # TERM is sanitized below, after saving color control sequences.
 LANG=C
@@ -1543,6 +1549,12 @@ test_lazy_prereq PIPE '
 test_lazy_prereq SYMLINKS '
 	# test whether the filesystem supports symbolic links
 	ln -s x y && test -h y
+'
+
+test_lazy_prereq SYMLINKS_WINDOWS '
+	# test whether symbolic links are enabled on Windows
+	test_have_prereq MINGW &&
+	cmd //c "mklink y x" &> /dev/null && test -h y
 '
 
 test_lazy_prereq FILEMODE '

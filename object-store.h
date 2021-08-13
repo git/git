@@ -34,7 +34,7 @@ struct object_directory {
 };
 
 KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
-	struct object_directory *, 1, fspathhash, fspatheq);
+	struct object_directory *, 1, fspathhash, fspatheq)
 
 void prepare_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);

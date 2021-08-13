@@ -303,5 +303,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
+	string_list_clear(&src_for_dst, 0);
+	UNLEAK(source);
+	UNLEAK(dest_path);
+	free(submodule_gitfile);
+	free(modes);
 	return 0;
 }

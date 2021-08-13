@@ -380,10 +380,7 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 	struct pattern_entry *e = xmalloc(sizeof(*e));
 	e->patternlen = path->len;
 	e->pattern = strbuf_detach(path, NULL);
-	hashmap_entry_init(&e->ent,
-			   ignore_case ?
-			   strihash(e->pattern) :
-			   strhash(e->pattern));
+	hashmap_entry_init(&e->ent, fspathhash(e->pattern));
 
 	hashmap_add(&pl->recursive_hashmap, &e->ent);
 
@@ -399,10 +396,7 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 		e = xmalloc(sizeof(struct pattern_entry));
 		e->patternlen = newlen;
 		e->pattern = xstrndup(oldpattern, newlen);
-		hashmap_entry_init(&e->ent,
-				   ignore_case ?
-				   strihash(e->pattern) :
-				   strhash(e->pattern));
+		hashmap_entry_init(&e->ent, fspathhash(e->pattern));
 
 		if (!hashmap_get_entry(&pl->parent_hashmap, e, ent, NULL))
 			hashmap_add(&pl->parent_hashmap, &e->ent);

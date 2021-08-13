@@ -61,11 +61,6 @@ static int path_hashmap_cmp(const void *cmp_data,
 		return strcmp(a->path, key ? key : b->path);
 }
 
-static unsigned int path_hash(const char *path)
-{
-	return ignore_case ? strihash(path) : strhash(path);
-}
-
 /*
  * For dir_rename_entry, directory names are stored as a full path from the
  * toplevel of the repository and do not include a trailing '/'.  Also:
@@ -463,7 +458,7 @@ static int save_files_dirs(const struct object_id *oid,
 	strbuf_addstr(base, path);
 
 	FLEX_ALLOC_MEM(entry, path, base->buf, base->len);
-	hashmap_entry_init(&entry->e, path_hash(entry->path));
+	hashmap_entry_init(&entry->e, fspathhash(entry->path));
 	hashmap_add(&opt->priv->current_file_dir_set, &entry->e);
 
 	strbuf_setlen(base, baselen);
@@ -737,14 +732,14 @@ static char *unique_path(struct merge_options *opt,
 
 	base_len = newpath.len;
 	while (hashmap_get_from_hash(&opt->priv->current_file_dir_set,
-				     path_hash(newpath.buf), newpath.buf) ||
+				     fspathhash(newpath.buf), newpath.buf) ||
 	       (!opt->priv->call_depth && file_exists(newpath.buf))) {
 		strbuf_setlen(&newpath, base_len);
 		strbuf_addf(&newpath, "_%d", suffix++);
 	}
 
 	FLEX_ALLOC_MEM(entry, path, newpath.buf, newpath.len);
-	hashmap_entry_init(&entry->e, path_hash(entry->path));
+	hashmap_entry_init(&entry->e, fspathhash(entry->path));
 	hashmap_add(&opt->priv->current_file_dir_set, &entry->e);
 	return strbuf_detach(&newpath, NULL);
 }

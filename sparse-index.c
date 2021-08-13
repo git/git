@@ -170,6 +170,8 @@ int convert_to_sparse(struct index_state *istate)
 	if (index_has_unmerged_entries(istate))
 		return 0;
 
+	/* Clear and recompute the cache-tree */
+	cache_tree_free(&istate->cache_tree);
 	if (cache_tree_update(istate, 0)) {
 		warning(_("unable to update cache-tree, staying full"));
 		return -1;

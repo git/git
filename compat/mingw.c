@@ -341,6 +341,27 @@ int mingw_rmdir(const char *pathname)
 {
 	int ret, tries = 0;
 	wchar_t wpathname[MAX_PATH];
+	struct stat st;
+
+	/*
+	 * Contrary to Linux' `rmdir()`, Windows' _wrmdir() and _rmdir()
+	 * (and `RemoveDirectoryW()`) will attempt to remove the target of a
+	 * symbolic link (if it points to a directory).
+	 *
+	 * This behavior breaks the assumption of e.g. `remove_path()` which
+	 * upon successful deletion of a file will attempt to remove its parent
+	 * directories recursively until failure (which usually happens when
+	 * the directory is not empty).
+	 *
+	 * Therefore, before calling `_wrmdir()`, we first check if the path is
+	 * a symbolic link. If it is, we exit and return the same error as
+	 * Linux' `rmdir()` would, i.e. `ENOTDIR`.
+	 */
+	if (!mingw_lstat(pathname, &st) && S_ISLNK(st.st_mode)) {
+		errno = ENOTDIR;
+		return -1;
+	}
+
 	if (xutftowcs_path(wpathname, pathname) < 0)
 		return -1;
 
