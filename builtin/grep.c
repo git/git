@@ -349,7 +349,7 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 	struct grep_source gs;
 
 	grep_source_name(opt, filename, tree_name_len, &pathbuf);
-	grep_source_init_oid(&gs, pathbuf.buf, path, oid);
+	grep_source_init_oid(&gs, pathbuf.buf, path, oid, opt->repo);
 	strbuf_release(&pathbuf);
 
 	if (num_threads > 1) {
@@ -462,14 +462,11 @@ static int grep_submodule(struct grep_opt *opt,
 	repo_read_gitmodules(subrepo, 0);
 
 	/*
-	 * NEEDSWORK: This adds the submodule's object directory to the list of
-	 * alternates for the single in-memory object store.  This has some bad
-	 * consequences for memory (processed objects will never be freed) and
-	 * performance (this increases the number of pack files git has to pay
-	 * attention to, to the sum of the number of pack files in all the
-	 * repositories processed so far).  This can be removed once the object
-	 * store is no longer global and instead is a member of the repository
-	 * object.
+	 * All code paths tested by test code no longer need submodule ODBs to
+	 * be added as alternates, but add it to the list just in case.
+	 * Submodule ODBs added through add_submodule_odb_by_path() will be
+	 * lazily registered as alternates when needed (and except in an
+	 * unexpected code interaction, it won't be needed).
 	 */
 	add_submodule_odb_by_path(subrepo->objects->odb->path);
 	obj_read_unlock();
