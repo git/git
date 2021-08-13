@@ -45,6 +45,7 @@
 #   blame            |  «blame»
 #   HEAD             |  HEAD (f, la branca) - (no s'apostrofa)
 #   cherry pick      |  «cherry pick»
+#   promisor         |  «promisor»
 #   rebase           |  «rebase»
 #   stage            |  «stage»
 #   stash            |  «stash»
@@ -1903,7 +1904,7 @@ msgstr "no es pot usar --contents amb el nom d'objecte de la comissió final"
 #: blame.c:2811
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
-"--reverse i --first-parent-together requereixen una última comissió "
+"--reverse i --first-parent junts requereixen una última comissió "
 "especificada"
 
 #: blame.c:2820 bundle.c:213 ref-filter.c:2207 remote.c:2041 sequencer.c:2333
@@ -4652,9 +4653,9 @@ msgid "sparse:path filters support has been dropped"
 msgstr "sparse: s'ha eliminat la implementació de filtres de camí sparse"
 
 #: list-objects-filter-options.c:105
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' for 'object:type=<type>' isnot a valid object type"
-msgstr "«%s» per a «%s» no és una marca de temps vàlida"
+msgstr "«%s» per a «object:type=<type>» no és un tipus d'objecte vàlid"
 
 #: list-objects-filter-options.c:124
 #, c-format
@@ -5803,9 +5804,9 @@ msgid "unable to unpack contents of %s"
 msgstr "no s'han pogut desempaquetar els continguts de %s"
 
 #: object-name.c:486
-#, fuzzy, c-format
+#, c-format
 msgid "short object ID %s is ambiguous"
-msgstr "l'SHA1 %s curt és ambigu"
+msgstr "l'id d'objecte curt %s és ambigu"
 
 #: object-name.c:497
 msgid "The candidates are:"
@@ -5851,12 +5852,13 @@ msgid "path '%s' exists on disk, but not in '%.*s'"
 msgstr "el camí «%s» existeix al disc, però no a «%.*s»"
 
 #: object-name.c:1708
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "path '%s' exists, but not '%s'\n"
 "hint: Did you mean '%.*s:%s' aka '%.*s:./%s'?"
 msgstr ""
-"path '%s' existeix però no insinuacions '%s' vol dir '%.*s%s' aka '%.*s./%s'?"
+"el camí «%s» existeix, però no «%s»\n"
+"consell: volíeu dir «%.*s:%s» conegut com a «%.*s:./%s»?"
 
 #: object-name.c:1717
 #, c-format
@@ -5864,37 +5866,37 @@ msgid "path '%s' does not exist in '%.*s'"
 msgstr "el camí «%s» no existeix en «%.*s»"
 
 #: object-name.c:1745
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "path '%s' is in the index, but not at stage %d\n"
 "hint: Did you mean ':%d:%s'?"
 msgstr ""
-"La ruta \"%s\" està en l'índex però no en la indicació de l'etapa per cent."
+"el camí «%s» està a l'índex, però no a «stage» %d\n."
+"consell: volíeu dir «:%d:%s»?"
 
 #: object-name.c:1761
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "path '%s' is in the index, but not '%s'\n"
 "hint: Did you mean ':%d:%s' aka ':%d:./%s'?"
 msgstr ""
-"el camí '%s' està en l'índex però no en la indicació '%s' vol dir '%ds' aka "
-"'%d./%s'?"
+"el camí «%s» està a l'índex, però no a «%s»\n."
+"consell: volíeu dir «:%d:%s» conegut com a «:%d:./%s»?"
 
 #: object-name.c:1769
-#, fuzzy, c-format
+#, c-format
 msgid "path '%s' exists on disk, but not in the index"
-msgstr "el camí «%» existeix al disc però no a l'índex"
+msgstr "el camí «%s» existeix al disc, però no a l'índex"
 
 #: object-name.c:1771
-#, fuzzy, c-format
+#,  c-format
 msgid "path '%s' does not exist (neither on disk nor in the index)"
 msgstr "el camí «%s» no existeix (ni al disc ni a l'índex)"
 
 #: object-name.c:1784
-#, fuzzy
 msgid "relative path syntax can't be used outside working tree"
 msgstr ""
-"la sintaxi relativa del camí no es pot utilitzar fora de l'arbre de treball"
+"la sintaxi de camí relatiu no es pot utilitzar fora de l'arbre de treball"
 
 #: object-name.c:1922
 #, c-format
@@ -5971,14 +5973,14 @@ msgid "could not stat: %s"
 msgstr "no s'ha pogut fer stat a: %s"
 
 #: pack-write.c:283
-#, fuzzy, c-format
+#, c-format
 msgid "failed to make %s readable"
-msgstr "s'ha produït un error en analitzar %s"
+msgstr "s'ha produït un error en fer %s llegible"
 
 #: pack-write.c:522
-#, fuzzy, c-format
+#, c-format
 msgid "could not write '%s' promisor file"
-msgstr "no s'ha pogut escriure «%s»"
+msgstr "no s'ha pogut escriure «%s» al fitxer «promisor»"
 
 #: packfile.c:625
 msgid "offset before end of packfile (broken .idx?)"
@@ -6199,9 +6201,8 @@ msgid "unable to write delim packet"
 msgstr "no s'ha pogut escriure el paquet delim"
 
 #: pkt-line.c:106
-#, fuzzy
 msgid "unable to write stateless separator packet"
-msgstr "no s'ha pogut escriure el paquet de buidatge"
+msgstr "no s'ha pogut escriure el paquet de separació sense estat"
 
 #: pkt-line.c:113
 msgid "flush packet write failed"
@@ -6280,9 +6281,8 @@ msgid "promisor remote name cannot begin with '/': %s"
 msgstr "el nom remot «promisor» no pot començar amb «/»: %s"
 
 #: protocol-caps.c:103
-#, fuzzy
 msgid "object-info: expected flush after arguments"
-msgstr "s'esperava una neteja després de les capacitats"
+msgstr "object-info: s'esperava una neteja després dels arguments"
 
 #: prune-packed.c:35
 msgid "Removing duplicate objects"
@@ -6302,13 +6302,13 @@ msgid "could not parse commit '%s'"
 msgstr "no s'ha pogut analitzar la comissió «%s»"
 
 #: range-diff.c:115
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "could not parse first line of `log` output: did not start with 'commit ': "
 "'%s'"
 msgstr ""
-"no s'ha pogut analitzar la primera línia de la sortida `log` no s'ha iniciat "
-"amb 'commit '%s'"
+"no s'ha pogut analitzar la primera línia de la sortida «log»: no començava "
+"amb «commit»: «%s»"
 
 #: range-diff.c:140
 #, c-format
@@ -6320,9 +6320,9 @@ msgid "failed to generate diff"
 msgstr "s'ha produït un error en generar el diff"
 
 #: range-diff.c:558
-#, fuzzy
+#
 msgid "--left-only and --right-only are mutually exclusive"
-msgstr "-p i --overlay són mútuament excloents"
+msgstr "--left-only i --right-only són mútuament excloents"
 
 #: range-diff.c:561 range-diff.c:563
 #, c-format
@@ -6345,9 +6345,9 @@ msgstr ""
 "%s: només pot afegir fitxers normals, enllaços simbòlics o directoris git"
 
 #: read-cache.c:751
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' does not have a commit checked out"
-msgstr "\"%s\" no té una comissió comprovada"
+msgstr "«%s» no té una comissió comprovada"
 
 #: read-cache.c:803
 #, c-format
@@ -6426,19 +6426,18 @@ msgid "malformed name field in the index, near path '%s'"
 msgstr "camp del nom mal formatat l'índex, camí a prop «%s»"
 
 #: read-cache.c:1924
-#, fuzzy
 msgid "unordered stage entries in index"
-msgstr "entrades d'escenari no ordenades en l'índex"
+msgstr "entrades «stage» no ordenades en l'índex"
 
 #: read-cache.c:1927
-#, fuzzy, c-format
+#, c-format
 msgid "multiple stage entries for merged file '%s'"
-msgstr "múltiples entrades d'etapa per al fitxer fusionat «%s»"
+msgstr "múltiples entrades «stage» per al fitxer fusionat «%s»"
 
 #: read-cache.c:1930
-#, fuzzy, c-format
+#, c-format
 msgid "unordered stage entries for '%s'"
-msgstr "entrades d'etapa no ordenades per «%s»"
+msgstr "entrades «stage» no ordenades per a «%s»"
 
 #: read-cache.c:2036 read-cache.c:2333 rerere.c:549 rerere.c:583 rerere.c:1095
 #: submodule.c:1635 builtin/add.c:575 builtin/check-ignore.c:183
@@ -6505,9 +6504,8 @@ msgid "could not close '%s'"
 msgstr "no s'ha pogut tancar «%s»"
 
 #: read-cache.c:3138
-#, fuzzy
 msgid "failed to convert to a sparse-index"
-msgstr "s'ha produït un error en netejar l'índex"
+msgstr "s'ha produït un error en convertir a un índex dispers"
 
 #: read-cache.c:3209 sequencer.c:2684 sequencer.c:4441
 #, c-format
@@ -6530,9 +6528,9 @@ msgid "cannot fix permission bits on '%s'"
 msgstr "no s'han pogut corregir els bits de permisos en «%s»"
 
 #: read-cache.c:3412
-#, fuzzy, c-format
+#, c-format
 msgid "%s: cannot drop to stage #0"
-msgstr "els percentatges no poden descendir a l'escenari #0"
+msgstr "%s: no es pot baixar fins al «stage» #0"
 
 #: rebase-interactive.c:11
 msgid ""
@@ -6604,11 +6602,11 @@ msgstr ""
 "Es pot canviar l'ordre d'aquestes línies; s'executen de dalt a baix.\n"
 
 #: rebase-interactive.c:66
-#, fuzzy, c-format
+#, c-format
 msgid "Rebase %s onto %s (%d command)"
 msgid_plural "Rebase %s onto %s (%d commands)"
-msgstr[0] "Rebase %s en un 1% (ordre<unk>d)"
-msgstr[1] "Rebase de percentatges sobre els percentatges (ordres<unk>d)"
+msgstr[0] "Fes «rebase» de %s a %s (%d ordre)"
+msgstr[1] "Fes «rebase» de %s a %s (%d ordres)"
 
 #: rebase-interactive.c:75 git-rebase--preserve-merges.sh:218
 msgid ""
@@ -6994,19 +6992,19 @@ msgid "invalid branch name: %s = %s"
 msgstr "nom de branca no vàlida: %s = %s"
 
 #: refs.c:674
-#, fuzzy, c-format
+#, c-format
 msgid "ignoring dangling symref %s"
-msgstr "ignorant symref per sota"
+msgstr "s'està ignorant symref penjant %s"
 
 #: refs.c:922
-#, fuzzy, c-format
+#, c-format
 msgid "log for ref %s has gap after %s"
-msgstr "registre per a ref %s have gap després de percentatges"
+msgstr "registre per a ref %s té un buit després de %s"
 
 #: refs.c:929
-#, fuzzy, c-format
+#, , c-format
 msgid "log for ref %s unexpectedly ended on %s"
-msgstr "registre per als ref%s inesperadament ha acabat en percentatges"
+msgstr "registre per als ref %s ha acabat inesperadament a %s"
 
 #: refs.c:994
 #, c-format
@@ -7019,9 +7017,9 @@ msgid "refusing to update ref with bad name '%s'"
 msgstr "s'està refusant la referència amb nom malmès «%s»"
 
 #: refs.c:1157
-#, fuzzy, c-format
+#, c-format
 msgid "update_ref failed for ref '%s': %s"
-msgstr "ha fallat updateref per al ref '%s'%s"
+msgstr "ha fallat update_ref per a la ref «%s»: %s"
 
 #: refs.c:2051
 #, c-format
@@ -7033,9 +7031,8 @@ msgid "ref updates forbidden inside quarantine environment"
 msgstr "no està permès actualitzar les referències en un entorn de quarantena"
 
 #: refs.c:2142
-#, fuzzy
 msgid "ref updates aborted by hook"
-msgstr "les actualitzacions de referències s'han avortat per ganxo"
+msgstr "les actualitzacions de referències s'han avortat per un lligam"
 
 #: refs.c:2242 refs.c:2272
 #, c-format
@@ -7071,7 +7068,7 @@ msgstr "refspec no vàlida: «%s»"
 #: remote.c:351
 #, fuzzy, c-format
 msgid "config remote shorthand cannot begin with '/': %s"
-msgstr "config remote abreviation no pot començar amb «/» per cents"
+msgstr "config remote abreviation no pot començar amb «/»: %s"
 
 #: remote.c:399
 msgid "more than one receivepack given, using the first"
@@ -9015,9 +9012,9 @@ msgid "could not read ref %s"
 msgstr "no s'ha pogut llegir la referència %s"
 
 #: transport-helper.c:594
-#, fuzzy, c-format
+#, c-format
 msgid "unknown response to connect: %s"
-msgstr "resposta desconeguda per connectar els percentatges"
+msgstr "resposta desconeguda en connectar: %s"
 
 #: transport-helper.c:616
 msgid "setting remote service path not supported by protocol"
@@ -9133,12 +9130,12 @@ msgstr "ha fallat read(%)"
 #: transport-helper.c:1412
 #, fuzzy, c-format
 msgid "write(%s) failed"
-msgstr "ha fallat write(%)"
+msgstr "ha fallat l(%)"
 
 #: transport-helper.c:1461
-#, fuzzy, c-format
+#, c-format
 msgid "%s thread failed"
-msgstr "ha fallat el fil per cents"
+msgstr "%s ha fallat el fil"
 
 #: transport-helper.c:1465
 #, fuzzy, c-format
@@ -9215,9 +9212,8 @@ msgid "transport '%s' not allowed"
 msgstr "no es permet el transport «%s»"
 
 #: transport.c:1079
-#, fuzzy
 msgid "git-over-rsync is no longer supported"
-msgstr "git-over-rsync ja no és compatible"
+msgstr "git-over-rsync ja no s'admet"
 
 #: transport.c:1181
 #, c-format
@@ -9592,12 +9588,12 @@ msgid "failed to read '%s'"
 msgstr "s'ha produït un error en llegir «%s»"
 
 #: worktree.c:304
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' at main working tree is not the repository directory"
-msgstr "'%s' a l'arbre de treball principal no és el directori del repositori"
+msgstr "«%s» a l'arbre de treball principal no és al directori del repositori"
 
 #: worktree.c:315
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' file does not contain absolute path to the working tree location"
 msgstr ""
 "El fitxer «%s» no conté el camí absolut a la ubicació de l'arbre de treball"
@@ -9634,7 +9630,6 @@ msgid ".git file incorrect"
 msgstr "fitxer .git malmès"
 
 #: worktree.c:727
-#, fuzzy
 msgid "not a valid path"
 msgstr "no és un camí vàlid"
 
@@ -9643,9 +9638,8 @@ msgid "unable to locate repository; .git is not a file"
 msgstr "no s'ha pogut trobar el repositori; .git no és un fitxer"
 
 #: worktree.c:737
-#, fuzzy
 msgid "unable to locate repository; .git file does not reference a repository"
-msgstr "no s'ha pogut trobar el repositori; .git no és un fitxer"
+msgstr "no s'ha pogut trobar el repositori; el fitxer .git no fa referència a un repositori"
 
 #: worktree.c:741
 msgid "unable to locate repository; .git file broken"
@@ -9660,38 +9654,30 @@ msgid "gitdir incorrect"
 msgstr "gitdir incorrecte"
 
 #: worktree.c:776
-#, fuzzy
 msgid "not a valid directory"
-msgstr "no és en un directori git"
+msgstr "no és en un directori vàlid"
 
 #: worktree.c:782
-#, fuzzy
 msgid "gitdir file does not exist"
-msgstr "Eliminació de worktrees/%s: el fitxer gitdir no existeix"
+msgstr "el fitxer gitdir no existeix"
 
 #: worktree.c:787 worktree.c:796
-#, fuzzy, c-format
+#, c-format
 msgid "unable to read gitdir file (%s)"
-msgstr "no s'ha pogut llegir l'arbre (%s)"
+msgstr "no s'ha pogut llegir el fitxer gitdir (%s)"
 
 #: worktree.c:806
-#, fuzzy, c-format
+#, c-format
 msgid "short read (expected %<PRIuMAX> bytes, read %<PRIuMAX>)"
-msgstr ""
-"S'estan eliminant els arbres de treball/%s: lectura curta (s'esperaven "
-"%<PRIuMAX> bytes, se n'han llegit %<PRIuMAX>)"
+msgstr "lectura curta (s'esperaven %<PRIuMAX> bytes, llegits %<PRIuMAX>)"
 
 #: worktree.c:814
-#, fuzzy
 msgid "invalid gitdir file"
-msgstr "fitxer de configuració no vàlid %s"
+msgstr "fitxer gitdir no vàlid"
 
 #: worktree.c:822
-#, fuzzy
 msgid "gitdir file points to non-existent location"
-msgstr ""
-"Eliminació de worktrees/%s: el fitxer gitdir es refereix a una ubicació no "
-"existent"
+msgstr "el fitxer gitdir indica una ubicació no existent"
 
 #: wrapper.c:197 wrapper.c:367
 #, c-format
@@ -9712,14 +9698,13 @@ msgid "Unmerged paths:"
 msgstr "Camins sense fusionar:"
 
 #: wt-status.c:187 wt-status.c:219
-#, fuzzy
 msgid "  (use \"git restore --staged <file>...\" to unstage)"
-msgstr "(useu \"git restitution --staged <file>\" per a unstage)"
+msgstr "  (useu «git restore --staged <fitxer>...» per a fer «unstage»)"
 
 #: wt-status.c:190 wt-status.c:222
-#, fuzzy, c-format
+#, c-format
 msgid "  (use \"git restore --source=%s --staged <file>...\" to unstage)"
-msgstr "(useu \"git restitution --source=%s --staged <file>\" per a unstage)"
+msgstr "  (useu «git restore --source=%s --staged <fitxer>...» per a fer «unstage»)"
 
 #: wt-status.c:193 wt-status.c:225
 msgid "  (use \"git rm --cached <file>...\" to unstage)"
@@ -9756,12 +9741,10 @@ msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
 msgstr "  (useu «git add/rm <fitxer>...» per a actualitzar què es cometrà)"
 
 #: wt-status.c:241
-#, fuzzy
 msgid ""
 "  (use \"git restore <file>...\" to discard changes in working directory)"
 msgstr ""
-"(useu \"git restore <file>\" per descartar els canvis en el directori de "
-"treball)"
+"  (useu «git restore <file>...» per a descartar els canvis en el directori de treball)"
 
 #: wt-status.c:243
 msgid "  (commit or discard the untracked or modified content in submodules)"
@@ -9869,14 +9852,15 @@ msgstr ""
 "Tot el que hi ha a sota s'ignorarà."
 
 #: wt-status.c:1115
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "It took %.2f seconds to compute the branch ahead/behind values.\n"
 "You can use '--no-ahead-behind' to avoid this.\n"
 msgstr ""
-"S'ha trigat un 2%f segons a calcular la branca endavant/darrere dels valors. "
-"Podeu utilitzar «--no-perhead-behind» per evitar-ho."
+"\n"
+"S'ha trigat un %.2f segons a calcular els valors de la branca d'endavant i darrere.\n"
+"Podeu utilitzar «--no-ahead-behind» per a evitar-ho.\n"
 
 #: wt-status.c:1145
 msgid "You have unmerged paths."
@@ -20467,7 +20451,7 @@ msgstr "sinònim de --reset-author-date"
 
 #: builtin/rebase.c:1343 builtin/rebase.c:1347
 msgid "passed to 'git apply'"
-msgstr "passa-ho a «git-apply»"
+msgstr "passa-ho a «git apply»"
 
 #: builtin/rebase.c:1345
 msgid "ignore changes in whitespace"
@@ -25141,7 +25125,7 @@ msgstr "executa les tasques basades en l'estat del repositori"
 
 #: command-list.h:100
 msgid "Prepare patches for e-mail submission"
-msgstr "Prepara pedaços per enviar-los per correu electrònic"
+msgstr "Prepara pedaços per a enviar-los per correu electrònic"
 
 #: command-list.h:101
 msgid "Verifies the connectivity and validity of the objects in the database"
@@ -25162,7 +25146,7 @@ msgstr "Imprimeix les línies coincidents amb un patró"
 
 #: command-list.h:105
 msgid "A portable graphical interface to Git"
-msgstr "Una interfície gràfic portable per al Git"
+msgstr "Una interfície gràfica portable per al Git"
 
 #: command-list.h:106
 msgid "Compute object ID and optionally creates a blob from a file"
@@ -25353,10 +25337,9 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "Aplica un conjunt de pedaços cobert a la branca actual"
 
 #: command-list.h:147
-#, fuzzy
 msgid "Compare two commit ranges (e.g. two versions of a branch)"
 msgstr ""
-"Compara dos intervals de comissions (p. ex. dues versions d'una branca)"
+"Compara dos rangs de comissions (p. ex. dues versions d'una branca)"
 
 #: command-list.h:148
 msgid "Reads tree information into the index"
@@ -25367,7 +25350,6 @@ msgid "Reapply commits on top of another base tip"
 msgstr "Torna a aplicar les comissions sobre un altre punt de basament"
 
 #: command-list.h:150
-#, fuzzy
 msgid "Receive what is pushed into the repository"
 msgstr "Rep el que s'envia al repositori"
 
