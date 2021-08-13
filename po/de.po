@@ -3373,7 +3373,7 @@ msgid ""
 "'dimmed-zebra', 'plain'"
 msgstr ""
 "\"color moved\"-Einstellung muss eines von diesen sein: 'no', 'default', "
-"'blocks', 'zebra', 'dimmed_zebra', 'plain'"
+"'blocks', 'zebra', 'dimmed-zebra', 'plain'"
 
 #: diff.c:325
 #, c-format
@@ -4022,7 +4022,7 @@ msgstr "Pfad '%s' nicht im Diff gefunden"
 #: dir.c:593
 #, c-format
 msgid "pathspec '%s' did not match any file(s) known to git"
-msgstr "Pfadspezifikation '%s' stimmt mit keinen git-bekannten Dateien überein"
+msgstr "Pfadspezifikation '%s' stimmt mit keinen Git bekannten Dateien überein"
 
 #: dir.c:733 dir.c:762 dir.c:775
 #, c-format
@@ -9244,7 +9244,7 @@ msgstr "Konnte Paket '%s' nicht lesen."
 #: transport.c:223
 #, c-format
 msgid "transport: invalid depth option '%s'"
-msgstr "transport: ungültige --depth Option '%s'"
+msgstr "transport: ungültige depth Option '%s'"
 
 #: transport.c:275
 msgid "see protocol.version in 'git help config' for more details"
@@ -12320,7 +12320,7 @@ msgstr "git checkout-index [<Optionen>] [--] [<Datei>...]"
 
 #: builtin/checkout-index.c:169
 msgid "stage should be between 1 and 3 or all"
-msgstr "--stage sollte zwischen 1 und 3 oder 'all' sein"
+msgstr "stage sollte zwischen 1 und 3 oder 'all' sein"
 
 #: builtin/checkout-index.c:187
 msgid "check out all files in the index"
@@ -13099,7 +13099,7 @@ msgstr "ein Bare-Repository erstellen"
 
 #: builtin/clone.c:103
 msgid "create a mirror repository (implies bare)"
-msgstr "ein Spiegelarchiv erstellen (impliziert --bare)"
+msgstr "ein Spiegelarchiv erstellen (impliziert bare)"
 
 #: builtin/clone.c:105
 msgid "to clone from a local repository"
@@ -14004,19 +14004,19 @@ msgstr "--reset-author und --author können nicht gemeinsam verwendet werden"
 
 #: builtin/commit.c:1261
 msgid "You have nothing to amend."
-msgstr "Sie haben nichts für \"--amend\"."
+msgstr "Sie haben nichts zum Nachbessern."
 
 #: builtin/commit.c:1264
 msgid "You are in the middle of a merge -- cannot amend."
-msgstr "Ein Merge ist im Gange -- kann \"--amend\" nicht ausführen."
+msgstr "Ein Merge ist im Gange -- Nachbesserung nicht möglich."
 
 #: builtin/commit.c:1266
 msgid "You are in the middle of a cherry-pick -- cannot amend."
-msgstr "\"cherry-pick\" ist im Gange -- kann \"--amend\" nicht ausführen."
+msgstr "\"cherry-pick\" ist im Gange -- Nachbesserung nicht möglich."
 
 #: builtin/commit.c:1268
 msgid "You are in the middle of a rebase -- cannot amend."
-msgstr "Ein Rebase ist im Gange -- kann \"--amend\" nicht ausführen."
+msgstr "Ein Rebase ist im Gange -- Nachbesserung nicht möglich."
 
 #: builtin/commit.c:1271
 msgid "Options --squash and --fixup cannot be used together"
@@ -14033,7 +14033,7 @@ msgstr "Die Option -m kann nicht mit -c/-C/-F kombiniert werden."
 
 #: builtin/commit.c:1292
 msgid "--reset-author can be used only with -C, -c or --amend."
-msgstr "--reset--author kann nur mit -C, -c oder --amend verwendet werden"
+msgstr "--reset-author kann nur mit -C, -c oder --amend verwendet werden"
 
 #: builtin/commit.c:1310
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
@@ -14578,7 +14578,7 @@ msgid ""
 msgstr ""
 "--worktree kann nicht mit mehreren Arbeitsverzeichnissen verwendet werden,\n"
 "außer die Konfigurationserweiterung worktreeConfig ist aktiviert. Bitte\n"
-"lesen Sie die Sektion \"CONFIGURATION_FILE\" in \"git help worktree\" für "
+"lesen Sie die Sektion \"CONFIGURATION FILE\" in \"git help worktree\" für "
 "Details"
 
 #: builtin/config.c:743
@@ -14637,8 +14637,8 @@ msgid ""
 "       Use a regexp, --add or --replace-all to change %s."
 msgstr ""
 "kann nicht mehrere Werte mit einem einzigen Wert überschreiben\n"
-"       Benutzen Sie einen regulären Ausdruck, --add oder --replace, um %s\n"
-"       zu ändern."
+"       Benutzen Sie einen regulären Ausdruck, --add oder --replace-all, um\n"
+"       %s zu ändern."
 
 #: builtin/config.c:943 builtin/config.c:954
 #, c-format
@@ -15422,7 +15422,7 @@ msgid ""
 msgstr ""
 "Normalerweise zeigt 'fetch' welche Branches eine erzwungene Aktualisierung\n"
 "hatten, aber diese Überprüfung wurde deaktiviert. Um diese wieder zu\n"
-"aktivieren, nutzen Sie die Option '--show-forced-updated' oder führen\n"
+"aktivieren, nutzen Sie die Option '--show-forced-updates' oder führen\n"
 "Sie 'git config fetch.showForcedUpdates true' aus."
 
 #: builtin/fetch.c:1069
@@ -20579,7 +20579,7 @@ msgstr "versuchen, Rebase mit Merges auszuführen, statt diese zu überspringen"
 #: builtin/rebase.c:1411
 msgid "use 'merge-base --fork-point' to refine upstream"
 msgstr ""
-"'git merge-base --fork-point' benutzen, um Upstream-Branch zu bestimmen"
+"'merge-base --fork-point' benutzen, um Upstream-Branch zu bestimmen"
 
 #: builtin/rebase.c:1413
 msgid "use the given merge strategy"
@@ -20605,7 +20605,7 @@ msgstr ""
 
 #: builtin/rebase.c:1442
 msgid "It looks like 'git am' is in progress. Cannot rebase."
-msgstr "'git-am' scheint im Gange zu sein. Kann Rebase nicht durchführen."
+msgstr "'git am' scheint im Gange zu sein. Kann Rebase nicht durchführen."
 
 #: builtin/rebase.c:1483
 msgid ""
@@ -21037,7 +21037,7 @@ msgstr ""
 #: builtin/remote.c:148
 #, c-format
 msgid "unknown mirror argument: %s"
-msgstr "unbekanntes Argument für Option --mirror: %s"
+msgstr "unbekanntes Argument für Option mirror: %s"
 
 #: builtin/remote.c:164
 msgid "fetch the remote branches"
@@ -22004,7 +22004,7 @@ msgstr "'%s'-Reset ist in einem Bare-Repository nicht erlaubt"
 
 #: builtin/reset.c:392
 msgid "-N can only be used with --mixed"
-msgstr "-N kann nur mit -mixed benutzt werden"
+msgstr "-N kann nur mit --mixed benutzt werden"
 
 #: builtin/reset.c:413
 msgid "Unstaged changes after reset:"
@@ -23412,7 +23412,7 @@ msgstr "git submodule--helper update-clone [--prefix=<Pfad>] [<Pfad>...]"
 
 #: builtin/submodule--helper.c:2370
 msgid "bad value for update parameter"
-msgstr "Fehlerhafter Wert für --update Parameter"
+msgstr "Fehlerhafter Wert für update Parameter"
 
 #: builtin/submodule--helper.c:2418
 #, c-format
