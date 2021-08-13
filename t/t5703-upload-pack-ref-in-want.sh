@@ -299,6 +299,141 @@ test_expect_success 'fetching with wildcard that matches multiple refs' '
 	grep "want-ref refs/heads/o/bar" log
 '
 
+REPO="$(pwd)/repo-ns"
+
+test_expect_success 'setup namespaced repo' '
+	(
+		git init -b main "$REPO" &&
+		cd "$REPO" &&
+		test_commit a &&
+		test_commit b &&
+		git checkout a &&
+		test_commit c &&
+		git checkout a &&
+		test_commit d &&
+		git update-ref refs/heads/ns-no b &&
+		git update-ref refs/namespaces/ns/refs/heads/ns-yes c &&
+		git update-ref refs/namespaces/ns/refs/heads/hidden d
+	) &&
+	git -C "$REPO" config uploadpack.allowRefInWant true
+'
+
+test_expect_success 'with namespace: want-ref is considered relative to namespace' '
+	wanted_ref=refs/heads/ns-yes &&
+
+	oid=$(git -C "$REPO" rev-parse "refs/namespaces/ns/$wanted_ref") &&
+	cat >expected_refs <<-EOF &&
+	$oid $wanted_ref
+	EOF
+	cat >expected_commits <<-EOF &&
+	$oid
+	$(git -C "$REPO" rev-parse a)
+	EOF
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	GIT_NAMESPACE=ns test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	check_output
+'
+
+test_expect_success 'with namespace: want-ref outside namespace is unknown' '
+	wanted_ref=refs/heads/ns-no &&
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	test_must_fail env GIT_NAMESPACE=ns \
+		test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	grep "unknown ref" out
+'
+
+# Cross-check refs/heads/ns-no indeed exists
+test_expect_success 'without namespace: want-ref outside namespace succeeds' '
+	wanted_ref=refs/heads/ns-no &&
+
+	oid=$(git -C "$REPO" rev-parse $wanted_ref) &&
+	cat >expected_refs <<-EOF &&
+	$oid $wanted_ref
+	EOF
+	cat >expected_commits <<-EOF &&
+	$oid
+	$(git -C "$REPO" rev-parse a)
+	EOF
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	check_output
+'
+
+test_expect_success 'with namespace: hideRefs is matched, relative to namespace' '
+	wanted_ref=refs/heads/hidden &&
+	git -C "$REPO" config transfer.hideRefs $wanted_ref &&
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	test_must_fail env GIT_NAMESPACE=ns \
+		test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	grep "unknown ref" out
+'
+
+# Cross-check refs/heads/hidden indeed exists
+test_expect_success 'with namespace: want-ref succeeds if hideRefs is removed' '
+	wanted_ref=refs/heads/hidden &&
+	git -C "$REPO" config --unset transfer.hideRefs $wanted_ref &&
+
+	oid=$(git -C "$REPO" rev-parse "refs/namespaces/ns/$wanted_ref") &&
+	cat >expected_refs <<-EOF &&
+	$oid $wanted_ref
+	EOF
+	cat >expected_commits <<-EOF &&
+	$oid
+	$(git -C "$REPO" rev-parse a)
+	EOF
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	GIT_NAMESPACE=ns test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	check_output
+'
+
+test_expect_success 'without namespace: relative hideRefs does not match' '
+	wanted_ref=refs/namespaces/ns/refs/heads/hidden &&
+	git -C "$REPO" config transfer.hideRefs refs/heads/hidden &&
+
+	oid=$(git -C "$REPO" rev-parse $wanted_ref) &&
+	cat >expected_refs <<-EOF &&
+	$oid $wanted_ref
+	EOF
+	cat >expected_commits <<-EOF &&
+	$oid
+	$(git -C "$REPO" rev-parse a)
+	EOF
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	check_output
+'
+
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
