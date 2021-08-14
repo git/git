@@ -18231,9 +18231,9 @@ msgid "Merge with strategy %s failed.\n"
 msgstr "Falha ao integrar com a estratégia %s.\n"
 
 #: builtin/merge.c:1721
-#, fuzzy, c-format
+#, c-format
 msgid "Using the %s strategy to prepare resolving by hand.\n"
-msgstr "A usar %s para preparar resolução manual.\n"
+msgstr "Usando estratégia %s para preparar resolução manual.\n"
 
 #: builtin/merge.c:1735
 #, c-format
@@ -23083,15 +23083,15 @@ msgstr "Valor '%s' de submodule.alternateLocation é irreconhecível"
 #: builtin/submodule--helper.c:1800
 #, c-format
 msgid "refusing to create/use '%s' in another submodule's git dir"
-msgstr ""
+msgstr "recusando criar/usar '%s' em outra pasta de submódulo git"
 
 #: builtin/submodule--helper.c:1841
 #, c-format
 msgid "clone of '%s' into submodule path '%s' failed"
-msgstr "falha ao clonar '%s' no caminho de submódulo '%s'"
+msgstr "clonar '%s' no caminho de submódulo '%s' falhou"
 
 #: builtin/submodule--helper.c:1846
-#, fuzzy, c-format
+#, c-format
 msgid "directory not empty: '%s'"
 msgstr "pasta com conteúdo: '%s'"
 
@@ -23304,23 +23304,22 @@ msgid "--branch and --default are mutually exclusive"
 msgstr ""
 
 #: builtin/submodule--helper.c:2815
-#, fuzzy, c-format
+#, c-format
 msgid "Adding existing repo at '%s' to the index\n"
-msgstr "Adicionando repo existente em '$sm_path' ao index"
+msgstr "Adicionando repo existente em '%s' ao cenário\n"
 
 #: builtin/submodule--helper.c:2818
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' already exists and is not a valid git repo"
-msgstr "'$sm_path' já existe e é repositório git inválido"
+msgstr "'%s' já existe e é repositório git inválido"
 
 #: builtin/submodule--helper.c:2828
-#, fuzzy, c-format
+#, c-format
 msgid "A git directory for '%s' is found locally with remote(s):"
-msgstr ""
-"Um diretório git de '$sm_name' foi encontrado localmente com os remotos:"
+msgstr "Uma pasta git para '%s' foi encontrado localmente com remoto(s):"
 
 #: builtin/submodule--helper.c:2833
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "If you want to reuse this local git directory instead of cloning again from\n"
 "  %s\n"
@@ -23329,37 +23328,37 @@ msgid ""
 "or if you are unsure what this means, choose another name with the '--name' "
 "option.\n"
 msgstr ""
-"Se queres reutilizar esta past git local, em vez de voltares a clonar\n"
-"  $realrepo\n"
-"usa a opção --force. Se a pasta git local é o repo incorreto ou\n"
+"Se queres reutilizar esta pasta git local, em vez de voltares a clonar de\n"
+"  %s\n"
+"usa a opção '--force'. Se a pasta git local é o repo incorreto ou\n"
 "se tens pouca certeza sobre o que isto significa, podes mudar o nome com a "
-"opção '--name'."
+"opção '--name'.\n"
 
 #: builtin/submodule--helper.c:2842
-#, fuzzy, c-format
+#, c-format
 msgid "Reactivating local git directory for submodule '%s'\n"
-msgstr "A reativar o diretório git local do submódulo '$sm_name'."
+msgstr "Reactivando pasta git local para submódulo '%s'\n"
 
 #: builtin/submodule--helper.c:2875
-#, fuzzy, c-format
+#, c-format
 msgid "unable to checkout submodule '%s'"
-msgstr "Incapaz de checkout submódulo '$sm_path'"
+msgstr "incapaz de observar submódulo '%s'"
 
 #: builtin/submodule--helper.c:2888
 msgid "branch of repository to checkout on cloning"
-msgstr ""
+msgstr "ramo de repositório para observar na clonagem"
 
 #: builtin/submodule--helper.c:2910
-#, fuzzy
 msgid "allow adding an otherwise ignored submodule path"
-msgstr "permitir adicionar ficheiros ignorados"
+msgstr "permitir adicionar os caminhos de submódulo ignorados"
 
 #: builtin/submodule--helper.c:2917
-#, fuzzy
 msgid ""
 "git submodule--helper add-clone [<options>...] --url <url> --path <path> --"
 "name <name>"
-msgstr "git submodule--helper update_clone [--prefix=<caminho>] [<caminho>...]"
+msgstr ""
+"git submodule--helper add-clone [<opções>...] --url <url> --path <caminho> "
+"--name <nome>"
 
 #: builtin/submodule--helper.c:2985 git.c:449 git.c:724
 #, c-format
