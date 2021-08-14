@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: git 2.33.0-rc0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2021-08-03 17:06+0800\n"
-"PO-Revision-Date: 2021-08-09 07:58+0700\n"
+"PO-Revision-Date: 2021-08-12 14:03+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -1681,7 +1681,7 @@ msgstr "lệnh"
 
 #: archive.c:572 builtin/archive.c:94
 msgid "path to the remote git-upload-archive command"
-msgstr "đường dẫn đến lệnh git-upload-pack trên máy chủ"
+msgstr "đường dẫn đến lệnh git-upload-archive trên máy chủ"
 
 #: archive.c:579
 msgid "Unexpected option --remote"
@@ -1847,7 +1847,7 @@ msgstr[0] "Bisecting: còn %d điểm xét duyệt để kiểm sau %s này\n"
 
 #: blame.c:2776
 msgid "--contents and --reverse do not blend well."
-msgstr "tùy chọn--contents và --reverse không được trộn vào nhau."
+msgstr "tùy chọn --contents và --reverse không được trộn vào nhau."
 
 #: blame.c:2790
 msgid "cannot use --contents with final commit object name"
@@ -3309,7 +3309,7 @@ msgid ""
 "'dimmed-zebra', 'plain'"
 msgstr ""
 "cài đặt màu đã di chuyển phải là một trong “no”, “default”, “blocks”, "
-"“zebra”, “dimmed_zebra”, “plain”"
+"“zebra”, “dimmed-zebra”, “plain”"
 
 #: diff.c:325
 #, c-format
@@ -3367,7 +3367,7 @@ msgid ""
 "---pickaxe-all and --find-object are mutually exclusive, use --pickaxe-all "
 "with -G and -S"
 msgstr ""
-"tùy chọn ---pickaxe-all và --find-object loại từ lẫn nhau, hãy dùng ---"
+"tùy chọn ---pickaxe-all và --find-object loại từ lẫn nhau, hãy dùng --"
 "pickaxe-all với -G và -S"
 
 #: diff.c:4722
@@ -10896,7 +10896,7 @@ msgstr "git bisect--helper --bisect-state (bad|new) [<lần_chuyển_giao>]"
 
 #: builtin/bisect--helper.c:30
 msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
-msgstr "git bisect--helper --bisect-reset (good|old) [<lần_chuyển_giao>…]"
+msgstr "git bisect--helper --bisect-state (good|old) [<lần_chuyển_giao>…]"
 
 #: builtin/bisect--helper.c:31
 msgid "git bisect--helper --bisect-replay <filename>"
@@ -13732,7 +13732,7 @@ msgstr "Chế độ cho các tập tin chưa được theo dõi không hợp l�
 
 #: builtin/commit.c:1195
 msgid "--long and -z are incompatible"
-msgstr "hai tùy chọn -long và -z không tương thích với nhau"
+msgstr "hai tùy chọn --long và -z không tương thích với nhau"
 
 #: builtin/commit.c:1226
 msgid "You are in the middle of a merge -- cannot reword."
@@ -15300,7 +15300,7 @@ msgstr "Mức sâu là số âm trong --deepen là không được hỗ trợ"
 
 #: builtin/fetch.c:2000
 msgid "--deepen and --depth are mutually exclusive"
-msgstr "Các tùy chọn--deepen và --depth loại từ lẫn nhau"
+msgstr "Các tùy chọn --deepen và --depth loại từ lẫn nhau"
 
 #: builtin/fetch.c:2005
 msgid "--depth and --unshallow cannot be used together"
@@ -16893,7 +16893,7 @@ msgstr "git show [<các tùy chọn>] <đối-tượng>…"
 #: builtin/log.c:113
 #, c-format
 msgid "invalid --decorate option: %s"
-msgstr "tùy chọn--decorate không hợp lệ: %s"
+msgstr "tùy chọn --decorate không hợp lệ: %s"
 
 #: builtin/log.c:180
 msgid "show source"
@@ -17253,7 +17253,8 @@ msgstr "--check không hợp lý"
 
 #: builtin/log.c:1967
 msgid "--stdout, --output, and --output-directory are mutually exclusive"
-msgstr "Các tùy chọn--stdout, --output, và --output-directory loại từ lẫn nhau"
+msgstr ""
+"Các tùy chọn --stdout, --output, và --output-directory loại từ lẫn nhau"
 
 #: builtin/log.c:2089
 msgid "--interdiff requires --cover-letter or single patch"
@@ -20260,7 +20261,7 @@ msgstr ""
 #: builtin/rebase.c:1442
 msgid "It looks like 'git am' is in progress. Cannot rebase."
 msgstr ""
-"Hình như đang trong quá trình thực hiện lệnh “git-am”. Không thể rebase."
+"Hình như đang trong quá trình thực hiện lệnh “git am”. Không thể rebase."
 
 #: builtin/rebase.c:1483
 msgid ""
@@ -21646,7 +21647,8 @@ msgstr ""
 "\n"
 "Cần %.2f giây để kiểm đếm các thay đổi chưa đưa lên bệ phóng sau khi đặt "
 "lại.\n"
-"Bạn có thể sử dụng để tránh việc này. Đặt reset.quiet thành true trong\n"
+"Bạn có thể sử dụng '--quiet' để tránh việc này. Đặt reset.quiet thành true "
+"trong\n"
 "cài đặt config nếu bạn muốn thực hiện nó như là mặc định.\n"
 
 #: builtin/reset.c:434
@@ -21740,7 +21742,7 @@ msgstr "--path-format cần một tham số"
 #: builtin/rev-parse.c:769
 #, c-format
 msgid "unknown argument to --path-format: %s"
-msgstr "không hiều tham số cho --patch-format: %s"
+msgstr "không hiểu tham số cho --path-format: %s"
 
 #: builtin/rev-parse.c:776
 msgid "--default requires an argument"
@@ -22905,8 +22907,8 @@ msgid ""
 "<url> --path <path>"
 msgstr ""
 "git submodule--helper clone [--prefix=</đường/dẫn>] [--quiet] [--reference "
-"<kho>] [--name <tên>] [--depth <sâu>] [--single-branch] [--url <url>] --path "
-"</đường/dẫn>"
+"<kho>] [--name <tên>] [--depth <sâu>] [--single-branch] --url <url> --path </"
+"đường/dẫn>"
 
 #: builtin/submodule--helper.c:1873
 #, c-format
