@@ -986,6 +986,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct remote *remote;
 	int err = 0, complete_refs_before_fetch = 1;
 	int submodule_progress;
+	int sticky_recursive_clone;
 
 	struct transport_ls_refs_options transport_ls_refs_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
@@ -1128,6 +1129,11 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				    item->string);
 			string_list_append(&option_config,
 					   strbuf_detach(&sb, NULL));
+		}
+
+		if (!git_config_get_bool("submodule.stickyRecursiveClone", &sticky_recursive_clone)
+		    && sticky_recursive_clone) {
+		    string_list_append(&option_config, "submodule.recurse=true");
 		}
 
 		if (option_required_reference.nr &&
