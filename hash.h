@@ -115,7 +115,7 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
 
 struct object_id {
 	unsigned char hash[GIT_MAX_RAWSZ];
-	int algo;
+	int algo;	/* XXX requires 4-byte alignment */
 };
 
 /* A suitably aligned type for stack allocations of hash contexts. */
