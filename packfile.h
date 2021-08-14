@@ -32,6 +32,13 @@ char *sha1_pack_name(const unsigned char *sha1);
 char *sha1_pack_index_name(const unsigned char *sha1);
 
 /*
+ * Return the corresponding filename with given suffix from "file_name"
+ * which must has "strip" suffix.
+ */
+const char *derive_pack_filename(const char *file_name, const char *strip,
+		const char *suffix, struct strbuf *buf);
+
+/*
  * Return the basename of the packfile, omitting any containing directory
  * (e.g., "pack-1234abcd[...].pack").
  */

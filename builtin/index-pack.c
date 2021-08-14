@@ -1435,19 +1435,6 @@ static void fix_unresolved_deltas(struct hashfile *f)
 	free(sorted_by_pos);
 }
 
-static const char *derive_filename(const char *pack_name, const char *strip,
-				   const char *suffix, struct strbuf *buf)
-{
-	size_t len;
-	if (!strip_suffix(pack_name, strip, &len) || !len ||
-	    pack_name[len - 1] != '.')
-		die(_("packfile name '%s' does not end with '.%s'"),
-		    pack_name, strip);
-	strbuf_add(buf, pack_name, len);
-	strbuf_addstr(buf, suffix);
-	return buf->buf;
-}
-
 static void write_special_file(const char *suffix, const char *msg,
 			       const char *pack_name, const unsigned char *hash,
 			       const char **report)
@@ -1458,7 +1445,7 @@ static void write_special_file(const char *suffix, const char *msg,
 	int msg_len = strlen(msg);
 
 	if (pack_name)
-		filename = derive_filename(pack_name, "pack", suffix, &name_buf);
+		filename = derive_pack_filename(pack_name, "pack", suffix, &name_buf);
 	else
 		filename = odb_pack_name(&name_buf, hash, suffix);
 
@@ -1853,13 +1840,13 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (from_stdin && hash_algo)
 		die(_("--object-format cannot be used with --stdin"));
 	if (!index_name && pack_name)
-		index_name = derive_filename(pack_name, "pack", "idx", &index_name_buf);
+		index_name = derive_pack_filename(pack_name, "pack", "idx", &index_name_buf);
 
 	opts.flags &= ~(WRITE_REV | WRITE_REV_VERIFY);
 	if (rev_index) {
 		opts.flags |= verify ? WRITE_REV_VERIFY : WRITE_REV;
 		if (index_name)
-			rev_index_name = derive_filename(index_name,
+			rev_index_name = derive_pack_filename(index_name,
 							 "idx", "rev",
 							 &rev_index_name_buf);
 	}
