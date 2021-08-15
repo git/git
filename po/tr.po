@@ -90,7 +90,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2021-08-03 17:06+0800\n"
+"POT-Creation-Date: 2021-08-14 07:56+0800\n"
 "PO-Revision-Date: 2021-08-03 18:00+0300\n"
 "Last-Translator: Emir SARI <emir_sari@msn.com>\n"
 "Language-Team: Turkish (https://github.com/bitigchi/git-po/)\n"
@@ -105,7 +105,7 @@ msgstr ""
 msgid "Huh (%s)?"
 msgstr "Pardon (%s)?"
 
-#: add-interactive.c:529 add-interactive.c:830 reset.c:65 sequencer.c:3493
+#: add-interactive.c:529 add-interactive.c:830 reset.c:64 sequencer.c:3493
 #: sequencer.c:3964 sequencer.c:4119 builtin/rebase.c:1528
 #: builtin/rebase.c:1953
 msgid "could not read index"
@@ -135,7 +135,7 @@ msgstr "Güncelle"
 msgid "could not stage '%s'"
 msgstr "'%s' hazırlanamadı"
 
-#: add-interactive.c:703 add-interactive.c:892 reset.c:89 sequencer.c:3707
+#: add-interactive.c:703 add-interactive.c:892 reset.c:88 sequencer.c:3707
 msgid "could not write index"
 msgstr "indeks yazılamadı"
 
@@ -294,9 +294,10 @@ msgstr "hazırlanmamış"
 #: add-interactive.c:1144 apply.c:4994 apply.c:4997 builtin/am.c:2309
 #: builtin/am.c:2312 builtin/bugreport.c:135 builtin/clone.c:128
 #: builtin/fetch.c:152 builtin/merge.c:285 builtin/pull.c:190
-#: builtin/submodule--helper.c:408 builtin/submodule--helper.c:1818
-#: builtin/submodule--helper.c:1821 builtin/submodule--helper.c:2326
-#: builtin/submodule--helper.c:2329 builtin/submodule--helper.c:2572
+#: builtin/submodule--helper.c:410 builtin/submodule--helper.c:1886
+#: builtin/submodule--helper.c:1889 builtin/submodule--helper.c:2343
+#: builtin/submodule--helper.c:2346 builtin/submodule--helper.c:2589
+#: builtin/submodule--helper.c:2890 builtin/submodule--helper.c:2893
 #: git-add--interactive.perl:213
 msgid "path"
 msgstr "yol"
@@ -871,7 +872,7 @@ msgstr ""
 msgid "Exiting because of an unresolved conflict."
 msgstr "Çözüme kavuşturulmamış bir çakışmadan dolayı çıkılıyor."
 
-#: advice.c:283 builtin/merge.c:1374
+#: advice.c:283 builtin/merge.c:1375
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Birleştirmenizi sonuçlandırmadınız (MERGE_HEAD mevcut)."
 
@@ -1636,7 +1637,7 @@ msgstr "%s okunamıyor"
 
 #: archive.c:342 sequencer.c:460 sequencer.c:1915 sequencer.c:3095
 #: sequencer.c:3537 sequencer.c:3665 builtin/am.c:262 builtin/commit.c:833
-#: builtin/merge.c:1143
+#: builtin/merge.c:1144
 #, c-format
 msgid "could not read '%s'"
 msgstr "'%s' okunamadı"
@@ -1725,7 +1726,8 @@ msgid "list supported archive formats"
 msgstr "desteklenen arşiv biçimlerini listele"
 
 #: archive.c:569 builtin/archive.c:91 builtin/clone.c:118 builtin/clone.c:121
-#: builtin/submodule--helper.c:1830 builtin/submodule--helper.c:2335
+#: builtin/submodule--helper.c:1898 builtin/submodule--helper.c:2352
+#: builtin/submodule--helper.c:2902
 msgid "repo"
 msgstr "depo"
 
@@ -1919,7 +1921,7 @@ msgstr ""
 "--reverse ve --first-parent birlikte en son işlemenin belirtilmesini "
 "gerektiriyor"
 
-#: blame.c:2820 bundle.c:224 ref-filter.c:2274 remote.c:2041 sequencer.c:2333
+#: blame.c:2820 bundle.c:224 ref-filter.c:2278 remote.c:2041 sequencer.c:2333
 #: sequencer.c:4865 submodule.c:844 builtin/commit.c:1113 builtin/log.c:414
 #: builtin/log.c:1021 builtin/log.c:1629 builtin/log.c:2056 builtin/log.c:2346
 #: builtin/merge.c:428 builtin/pack-objects.c:3343 builtin/pack-objects.c:3806
@@ -3177,7 +3179,7 @@ msgstr "beklenmedik süzgeç türü"
 msgid "path name too long for external filter"
 msgstr "dış süzgeç için yol adı pek uzun"
 
-#: convert.c:934
+#: convert.c:935
 #, c-format
 msgid ""
 "external filter '%s' is not available anymore although not all paths have "
@@ -3185,16 +3187,16 @@ msgid ""
 msgstr ""
 "'%s' dış süzgeci artık kullanılamıyor; ancak tüm yolların süzümü bitmedi"
 
-#: convert.c:1234
+#: convert.c:1236
 msgid "true/false are no valid working-tree-encodings"
 msgstr "doğru/yanlış geçerli bir çalışma ağacı kodlaması değil"
 
-#: convert.c:1414 convert.c:1447
+#: convert.c:1416 convert.c:1449
 #, c-format
 msgid "%s: clean filter '%s' failed"
 msgstr "%s: temiz süzgeç '%s' başarısız oldu"
 
-#: convert.c:1490
+#: convert.c:1492
 #, c-format
 msgid "%s: smudge filter %s failed"
 msgstr "%s: is süzgeci %s başarısız oldu"
@@ -3424,15 +3426,16 @@ msgstr "-G, -S ve --find-object birlikte kullanılmaz"
 msgid ""
 "-G and --pickaxe-regex are mutually exclusive, use --pickaxe-regex with -S"
 msgstr ""
-"-G ve --pickaxe-regex birlikte kullanılamaz, --pickaxe-regex'i -S ile kullanın"
+"-G ve --pickaxe-regex birlikte kullanılamaz, --pickaxe-regex'i -S ile "
+"kullanın"
 
 #: diff.c:4643
 msgid ""
-"---pickaxe-all and --find-object are mutually exclusive, use --pickaxe-all "
+"--pickaxe-all and --find-object are mutually exclusive, use --pickaxe-all "
 "with -G and -S"
 msgstr ""
-"--pickaxe-all ve --find-object birlikte kullanılamaz, --pickaxe-all'u -G ve "
-"-S ile kullanın"
+"--pickaxe-all ve --find-object birlikte kullanılamaz, --pickaxe-all'u -G ve -"
+"S ile kullanın"
 
 #: diff.c:4722
 msgid "--follow requires exactly one pathspec"
@@ -3461,7 +3464,7 @@ msgstr ""
 #: diff.c:4892
 #, c-format
 msgid "unknown change class '%c' in --diff-filter=%s"
-msgstr "şurada bilinmeyen değişiklik sınıfı '%c': -diff-filter=%s"
+msgstr "şurada bilinmeyen değişiklik sınıfı '%c': --diff-filter=%s"
 
 #: diff.c:4916
 #, c-format
@@ -3573,7 +3576,7 @@ msgstr ""
 
 #: diff.c:5416
 msgid "synonym for --dirstat=cumulative"
-msgstr "--dirstat-cumulative eşanlamlısı"
+msgstr "--dirstat=cumulative eşanlamlısı"
 
 #: diff.c:5420
 msgid "synonym for --dirstat=files,param1,param2..."
@@ -3970,8 +3973,9 @@ msgstr "belirli bir dosyaya çıktı ver"
 
 #: diff.c:6298
 msgid "exhaustive rename detection was skipped due to too many files."
-msgstr "Geniş kapsamlı yeniden adlandırma algılaması çok fazla dosya "
-"olmasından dolayı atlandı."
+msgstr ""
+"Geniş kapsamlı yeniden adlandırma algılaması çok fazla dosya olmasından "
+"dolayı atlandı."
 
 #: diff.c:6301
 msgid "only found copies from modified paths due to too many files."
@@ -3992,7 +3996,7 @@ msgstr ""
 msgid "failed to read orderfile '%s'"
 msgstr "orderfile '%s' okunamadı"
 
-#: diffcore-rename.c:1510
+#: diffcore-rename.c:1514
 msgid "Performing inexact rename detection"
 msgstr "Kesin olmayan yeniden adlandırma algılaması gerçekleştiriliyor"
 
@@ -4011,49 +4015,49 @@ msgstr "yol belirteci '%s' git'in tanıdığı herhangi bir dosya ile eşleşmed
 msgid "unrecognized pattern: '%s'"
 msgstr "tanımlanamayan dizgi: '%s'"
 
-#: dir.c:792 dir.c:806
+#: dir.c:790 dir.c:804
 #, c-format
 msgid "unrecognized negative pattern: '%s'"
 msgstr "tanımlanamayan negatif dizgi: '%s'"
 
-#: dir.c:824
+#: dir.c:820
 #, c-format
 msgid "your sparse-checkout file may have issues: pattern '%s' is repeated"
 msgstr "sparse-checkout dosyanızın sorunları olabilir: '%s' dizgisi yinelenmiş"
 
-#: dir.c:834
+#: dir.c:830
 msgid "disabling cone pattern matching"
 msgstr "koni dizgi eşleşmesi devre dışı bırakılıyor"
 
-#: dir.c:1221
+#: dir.c:1214
 #, c-format
 msgid "cannot use %s as an exclude file"
 msgstr "%s bir 'exclude' dosyası olarak kullanılamıyor"
 
-#: dir.c:2358
+#: dir.c:2351
 #, c-format
 msgid "could not open directory '%s'"
 msgstr "'%s' dizini açılamadı"
 
-#: dir.c:2660
+#: dir.c:2653
 msgid "failed to get kernel name and information"
 msgstr "çekirdek adı ve bilgisi alınamadı"
 
-#: dir.c:2784
+#: dir.c:2777
 msgid "untracked cache is disabled on this system or location"
 msgstr "izlenmeyen önbellek bu sistemde veya konumda devre dışı bırakılmış"
 
-#: dir.c:3617
+#: dir.c:3610
 #, c-format
 msgid "index file corrupt in repo %s"
 msgstr "%s deposundaki indeks dosyası hasarlı"
 
-#: dir.c:3664 dir.c:3669
+#: dir.c:3657 dir.c:3662
 #, c-format
 msgid "could not create directories for %s"
 msgstr "%s için dizinler oluşturulamadı"
 
-#: dir.c:3698
+#: dir.c:3691
 #, c-format
 msgid "could not migrate git directory from '%s' to '%s'"
 msgstr "git dizini '%s' konumundan '%s' konumuna göç ettirilemedi"
@@ -4077,7 +4081,7 @@ msgstr "'%s' dosyasının bilgileri alınamadı"
 msgid "bad git namespace path \"%s\""
 msgstr "hatalı git ad alanı yolu \"%s\""
 
-#: environment.c:335
+#: environment.c:334
 #, c-format
 msgid "could not set GIT_DIR to '%s'"
 msgstr "GIT_DIR şuna ayarlanamadı: '%s'"
@@ -4714,32 +4718,32 @@ msgstr "alıntılanmış CRLF algılandı"
 msgid "bad action '%s' for '%s'"
 msgstr "hatalı eylem '%s', '%s' için"
 
-#: merge-ort.c:1228 merge-recursive.c:1206
+#: merge-ort.c:1569 merge-recursive.c:1201
 #, c-format
 msgid "Failed to merge submodule %s (not checked out)"
 msgstr "%s altmodülü birleştirilemedi (çıkış yapılmadı)"
 
-#: merge-ort.c:1237 merge-recursive.c:1213
+#: merge-ort.c:1578 merge-recursive.c:1208
 #, c-format
 msgid "Failed to merge submodule %s (commits not present)"
 msgstr "%s altmodülü birleştirilemedi (işlemeler mevcut değil)"
 
-#: merge-ort.c:1246 merge-recursive.c:1220
+#: merge-ort.c:1587 merge-recursive.c:1215
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
 msgstr "%s altmodülü birleştirilemedi (işlemeler merge-base'i takip etmiyor)"
 
-#: merge-ort.c:1256 merge-ort.c:1263
+#: merge-ort.c:1597 merge-ort.c:1604
 #, c-format
 msgid "Note: Fast-forwarding submodule %s to %s"
 msgstr "Not: %s altmodülü %s yönüne ileri sarılıyor"
 
-#: merge-ort.c:1284
+#: merge-ort.c:1625
 #, c-format
 msgid "Failed to merge submodule %s"
 msgstr "'%s' altmodülünü birleştirilemedi"
 
-#: merge-ort.c:1291
+#: merge-ort.c:1632
 #, c-format
 msgid ""
 "Failed to merge submodule %s, but a possible merge resolution exists:\n"
@@ -4748,7 +4752,7 @@ msgstr ""
 "%s altmodülü birleştirilemedi; ancak olası bir birleştirme çözümü mevcut:\n"
 "%s\n"
 
-#: merge-ort.c:1295 merge-recursive.c:1274
+#: merge-ort.c:1636 merge-recursive.c:1269
 #, c-format
 msgid ""
 "If this is correct simply add it to the index for example\n"
@@ -4764,7 +4768,7 @@ msgstr ""
 "\n"
 "komutu bu öneriyi kabul edecektir.\n"
 
-#: merge-ort.c:1308
+#: merge-ort.c:1649
 #, c-format
 msgid ""
 "Failed to merge submodule %s, but multiple possible merges exist:\n"
@@ -4774,21 +4778,21 @@ msgstr ""
 "mevcut:\n"
 "%s"
 
-#: merge-ort.c:1527 merge-recursive.c:1363
+#: merge-ort.c:1868 merge-recursive.c:1358
 msgid "Failed to execute internal merge"
 msgstr "İç birleştirme çalıştırılamadı"
 
-#: merge-ort.c:1532 merge-recursive.c:1368
+#: merge-ort.c:1873 merge-recursive.c:1363
 #, c-format
 msgid "Unable to add %s to database"
 msgstr "%s veritabanına eklenemedi"
 
-#: merge-ort.c:1539 merge-recursive.c:1401
+#: merge-ort.c:1880 merge-recursive.c:1396
 #, c-format
 msgid "Auto-merging %s"
 msgstr "%s kendiliğinden birleştiriliyor"
 
-#: merge-ort.c:1678 merge-recursive.c:2123
+#: merge-ort.c:2019 merge-recursive.c:2118
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
@@ -4798,7 +4802,7 @@ msgstr ""
 "örtülü yeniden adlandırmanın aşağıdaki yolları oraya koymasına engel oluyor: "
 "%s."
 
-#: merge-ort.c:1688 merge-recursive.c:2133
+#: merge-ort.c:2029 merge-recursive.c:2128
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Cannot map more than one path to %s; "
@@ -4808,7 +4812,7 @@ msgstr ""
 "eşlemlenemiyor; örtülü dizin yeniden adlandırmaları aşağıdaki yolları oraya "
 "koymayı denedi: %s."
 
-#: merge-ort.c:1746
+#: merge-ort.c:2087
 #, c-format
 msgid ""
 "CONFLICT (directory rename split): Unclear where to rename %s to; it was "
@@ -4819,7 +4823,7 @@ msgstr ""
 "adlandırılacağı belirsiz; herhangi bir hedef dosyaların çoğunu almadan "
 "birden çok başka dizine yeniden adlandırılmıştı."
 
-#: merge-ort.c:1900 merge-recursive.c:2469
+#: merge-ort.c:2241 merge-recursive.c:2464
 #, c-format
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
@@ -4828,7 +4832,7 @@ msgstr ""
 "UYARI: %s -> %s yeniden adlandırmasını %s ögesine uygulamadan kaçınılıyor, "
 "çünkü %s ögesinin kendisi yeniden adlandırıldı."
 
-#: merge-ort.c:2044 merge-recursive.c:3252
+#: merge-ort.c:2385 merge-recursive.c:3247
 #, c-format
 msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
@@ -4837,7 +4841,7 @@ msgstr ""
 "Yol güncellendi: %s, (%s içinde eklenen) %s içinde yeniden adlandırılan bir "
 "dizinde; onu %s konumuna taşıdı."
 
-#: merge-ort.c:2051 merge-recursive.c:3259
+#: merge-ort.c:2392 merge-recursive.c:3254
 #, c-format
 msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
@@ -4846,7 +4850,7 @@ msgstr ""
 "Yol güncellendi: %s, %s olarak yeniden adlandırıldı (%s içinde), %s içinde "
 "yeniden adlandırılan bir dizinde; onu %s konumuna taşıdı."
 
-#: merge-ort.c:2064 merge-recursive.c:3255
+#: merge-ort.c:2405 merge-recursive.c:3250
 #, c-format
 msgid ""
 "CONFLICT (file location): %s added in %s inside a directory that was renamed "
@@ -4855,7 +4859,7 @@ msgstr ""
 "ÇAKIŞMA (dosya konumu): %s, (%s içinde eklenen) %s içinde yeniden "
 "adlandırılan bir dizinde, belki de %s konumuna taşınmalı."
 
-#: merge-ort.c:2072 merge-recursive.c:3262
+#: merge-ort.c:2413 merge-recursive.c:3257
 #, c-format
 msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
@@ -4864,14 +4868,14 @@ msgstr ""
 "ÇAKIŞMA (dosya konumu): %s, %s olarak yeniden adlandırıldı (%s içinde), %s "
 "içinde yeniden adlandırılan bir dizinde, belki de %s konumuna taşınmalı."
 
-#: merge-ort.c:2228
+#: merge-ort.c:2569
 #, c-format
 msgid "CONFLICT (rename/rename): %s renamed to %s in %s and to %s in %s."
 msgstr ""
 "ÇAKIŞMA (y. adlandır/y. adlandır): %s->%s olarak adlandırıldı (%s içinde) ve "
 "ek olarak %s olarak da adlandırıldı (%s içinde)."
 
-#: merge-ort.c:2323
+#: merge-ort.c:2664
 #, c-format
 msgid ""
 "CONFLICT (rename involved in collision): rename of %s -> %s has content "
@@ -4882,24 +4886,24 @@ msgstr ""
 "içerik çakışmaları var ve başka bir yolla çarpışıyor; bu iç içe geçmiş "
 "çakışmaimleyicilerine neden olabilir."
 
-#: merge-ort.c:2342 merge-ort.c:2366
+#: merge-ort.c:2683 merge-ort.c:2707
 #, c-format
 msgid "CONFLICT (rename/delete): %s renamed to %s in %s, but deleted in %s."
 msgstr ""
 "ÇAKIŞMA (yeniden adlandır/sil): %s->%s olarak adlandırıldı (%s içinde); "
 "ancak %s içinde silindi."
 
-#: merge-ort.c:2819 merge-recursive.c:3013
+#: merge-ort.c:3182 merge-recursive.c:3008
 #, c-format
 msgid "cannot read object %s"
 msgstr "%s nesnesi okunamıyor"
 
-#: merge-ort.c:2822 merge-recursive.c:3016
+#: merge-ort.c:3185 merge-recursive.c:3011
 #, c-format
 msgid "object %s is not a blob"
 msgstr "%s nesnesi ikili bir nesne değil"
 
-#: merge-ort.c:3250
+#: merge-ort.c:3613
 #, c-format
 msgid ""
 "CONFLICT (file/directory): directory in the way of %s from %s; moving it to "
@@ -4908,7 +4912,7 @@ msgstr ""
 "ÇAKIŞMA (dosya/dizin): Dizin, şuradan %s yolunda: %s; bunun yerine %s "
 "konumuna taşınıyor."
 
-#: merge-ort.c:3326
+#: merge-ort.c:3689
 #, c-format
 msgid ""
 "CONFLICT (distinct types): %s had different types on each side; renamed both "
@@ -4918,7 +4922,7 @@ msgstr ""
 "ikisi de yeniden adlandırıldı; böylelikle başka bir yerde kayıtları "
 "yazılabilir."
 
-#: merge-ort.c:3333
+#: merge-ort.c:3696
 #, c-format
 msgid ""
 "CONFLICT (distinct types): %s had different types on each side; renamed one "
@@ -4928,24 +4932,24 @@ msgstr ""
 "bir tanesi yeniden adlandırıldı; böylelikle her birinin başka bir yerde "
 "kayıtları yazılabilir."
 
-#: merge-ort.c:3433 merge-recursive.c:3092
+#: merge-ort.c:3796 merge-recursive.c:3087
 msgid "content"
 msgstr "içerik"
 
-#: merge-ort.c:3435 merge-recursive.c:3096
+#: merge-ort.c:3798 merge-recursive.c:3091
 msgid "add/add"
 msgstr "ekle/ekle"
 
-#: merge-ort.c:3437 merge-recursive.c:3141
+#: merge-ort.c:3800 merge-recursive.c:3136
 msgid "submodule"
 msgstr "altmodül"
 
-#: merge-ort.c:3439 merge-recursive.c:3142
+#: merge-ort.c:3802 merge-recursive.c:3137
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "ÇAKIŞMA (%s): %s içinde birleştirme çakışması"
 
-#: merge-ort.c:3470
+#: merge-ort.c:3833
 #, c-format
 msgid ""
 "CONFLICT (modify/delete): %s deleted in %s and modified in %s.  Version %s "
@@ -4954,7 +4958,7 @@ msgstr ""
 "ÇAKIŞMA (değiştir/sil): %s silindi (%s içinde) ve %s içinde değiştirildi. %s "
 "sürümü (şunun: %s) ağaçta bırakıldı."
 
-#: merge-ort.c:3757
+#: merge-ort.c:4120
 #, c-format
 msgid ""
 "Note: %s not up to date and in way of checking out conflicted version; old "
@@ -4966,12 +4970,12 @@ msgstr ""
 #. TRANSLATORS: The %s arguments are: 1) tree hash of a merge
 #. base, and 2-3) the trees for the two trees we're merging.
 #.
-#: merge-ort.c:4116
+#: merge-ort.c:4487
 #, c-format
 msgid "collecting merge info failed for trees %s, %s, %s"
 msgstr "şu ağaçlar için birleştirme bilgisi toplama başarısız: %s, %s, %s"
 
-#: merge-ort-wrappers.c:13 merge-recursive.c:3707
+#: merge-ort-wrappers.c:13 merge-recursive.c:3702
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
@@ -4981,107 +4985,107 @@ msgstr ""
 "yazılacak:\n"
 "\t%s"
 
-#: merge-ort-wrappers.c:33 merge-recursive.c:3473 builtin/merge.c:402
+#: merge-ort-wrappers.c:33 merge-recursive.c:3468 builtin/merge.c:402
 msgid "Already up to date."
 msgstr "Tümü güncel."
 
-#: merge-recursive.c:357
+#: merge-recursive.c:352
 msgid "(bad commit)\n"
 msgstr "(hatalı işleme)\n"
 
-#: merge-recursive.c:380
+#: merge-recursive.c:375
 #, c-format
 msgid "add_cacheinfo failed for path '%s'; merge aborting."
 msgstr ""
 "add_cacheinfo '%s' yolu için başarısız oldu; birleştirme iptal ediliyor."
 
-#: merge-recursive.c:389
+#: merge-recursive.c:384
 #, c-format
 msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
 msgstr "add_cacheinfo '%s' yolu için yenilenemedi; birleştirme iptal ediliyor."
 
-#: merge-recursive.c:877
+#: merge-recursive.c:872
 #, c-format
 msgid "failed to create path '%s'%s"
 msgstr "'%s'%s yolu oluşturulamadı"
 
-#: merge-recursive.c:888
+#: merge-recursive.c:883
 #, c-format
 msgid "Removing %s to make room for subdirectory\n"
 msgstr "Altdizine yer açmak için %s kaldırılıyor\n"
 
-#: merge-recursive.c:902 merge-recursive.c:921
+#: merge-recursive.c:897 merge-recursive.c:916
 msgid ": perhaps a D/F conflict?"
 msgstr ": bir D/F çakışması olabilir mi?"
 
-#: merge-recursive.c:911
+#: merge-recursive.c:906
 #, c-format
 msgid "refusing to lose untracked file at '%s'"
 msgstr "'%s' konumundaki izlenmeyen dosyayı kaybetme reddediliyor"
 
-#: merge-recursive.c:952 builtin/cat-file.c:41
+#: merge-recursive.c:947 builtin/cat-file.c:41
 #, c-format
 msgid "cannot read object %s '%s'"
 msgstr "%s '%s' nesnesi okunamıyor"
 
-#: merge-recursive.c:957
+#: merge-recursive.c:952
 #, c-format
 msgid "blob expected for %s '%s'"
 msgstr "%s '%s' için ikili nesne bekleniyordu"
 
-#: merge-recursive.c:982
+#: merge-recursive.c:977
 #, c-format
 msgid "failed to open '%s': %s"
 msgstr "'%s' açılamadı: %s"
 
-#: merge-recursive.c:993
+#: merge-recursive.c:988
 #, c-format
 msgid "failed to symlink '%s': %s"
 msgstr "'%s' için sembolik bağ oluşturulamadı: %s"
 
-#: merge-recursive.c:998
+#: merge-recursive.c:993
 #, c-format
 msgid "do not know what to do with %06o %s '%s'"
 msgstr "şununla ne yapılacağı bilinmiyor: %06o %s '%s'"
 
-#: merge-recursive.c:1228 merge-recursive.c:1240
+#: merge-recursive.c:1223 merge-recursive.c:1235
 #, c-format
 msgid "Fast-forwarding submodule %s to the following commit:"
 msgstr "%s altmodülü şu işlemeye ileri sarılıyor:"
 
-#: merge-recursive.c:1231 merge-recursive.c:1243
+#: merge-recursive.c:1226 merge-recursive.c:1238
 #, c-format
 msgid "Fast-forwarding submodule %s"
 msgstr "%s altmodülü ileri sarılıyor"
 
-#: merge-recursive.c:1266
+#: merge-recursive.c:1261
 #, c-format
 msgid "Failed to merge submodule %s (merge following commits not found)"
 msgstr ""
 "%s altmodülü birleştirilemedi (işlemeleri takip eden birleştirme bulunamadı)"
 
-#: merge-recursive.c:1270
+#: merge-recursive.c:1265
 #, c-format
 msgid "Failed to merge submodule %s (not fast-forward)"
 msgstr "%s altmodülü birleştirilemedi (ileri sarım değil)"
 
-#: merge-recursive.c:1271
+#: merge-recursive.c:1266
 msgid "Found a possible merge resolution for the submodule:\n"
 msgstr "Şu altmodül için olası bir birleştirme çözümü bulundu:\n"
 
-#: merge-recursive.c:1283
+#: merge-recursive.c:1278
 #, c-format
 msgid "Failed to merge submodule %s (multiple merges found)"
 msgstr "%s altmodülü birleştirilemedi (birden çok birleştirme bulundu)"
 
-#: merge-recursive.c:1425
+#: merge-recursive.c:1420
 #, c-format
 msgid "Error: Refusing to lose untracked file at %s; writing to %s instead."
 msgstr ""
 "Hata: %s konumundaki izlenmeyen dosyayı kaybetme reddediliyor, bunun yerine "
 "%s konumuna yazılacak."
 
-#: merge-recursive.c:1497
+#: merge-recursive.c:1492
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
@@ -5090,7 +5094,7 @@ msgstr ""
 "ÇAKIŞMA (%s/silme): %s silindi (%s içinde) ve %s (%s içinde). %s (%s) sürümü "
 "ağaçta bırakıldı."
 
-#: merge-recursive.c:1502
+#: merge-recursive.c:1497
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
@@ -5099,7 +5103,7 @@ msgstr ""
 "ÇAKIŞMA (%s/silme): %s silindi (%s içinde) ve %s şuraya: %s (%s içinde). %s "
 "(%s) sürümü ağaçta bırakıldı."
 
-#: merge-recursive.c:1509
+#: merge-recursive.c:1504
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
@@ -5108,7 +5112,7 @@ msgstr ""
 "ÇAKIŞMA (%s/silme): %s silindi (%s içinde) ve %s (%s içinde). %s (%s) sürümü "
 "ağaçta %s konumunda bırakıldı."
 
-#: merge-recursive.c:1514
+#: merge-recursive.c:1509
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
@@ -5117,45 +5121,45 @@ msgstr ""
 "ÇAKIŞMA (%s/silme): %s silindi (%s içinde) ve %s şuraya: %s (%s içinde). %s "
 "(%s) sürümü ağaçta %s konumunda bırakıldı."
 
-#: merge-recursive.c:1549
+#: merge-recursive.c:1544
 msgid "rename"
 msgstr "yeniden adlandır"
 
-#: merge-recursive.c:1549
+#: merge-recursive.c:1544
 msgid "renamed"
 msgstr "yeniden adlandırıldı"
 
-#: merge-recursive.c:1600 merge-recursive.c:2506 merge-recursive.c:3169
+#: merge-recursive.c:1595 merge-recursive.c:2501 merge-recursive.c:3164
 #, c-format
 msgid "Refusing to lose dirty file at %s"
 msgstr "%s konumundaki kirli dosyayı kaybetme reddediliyor"
 
-#: merge-recursive.c:1610
+#: merge-recursive.c:1605
 #, c-format
 msgid "Refusing to lose untracked file at %s, even though it's in the way."
 msgstr ""
 "Engel olduğu halde %s konumundaki izlenmeyen dosyayı kaybetme reddediliyor."
 
-#: merge-recursive.c:1668
+#: merge-recursive.c:1663
 #, c-format
 msgid "CONFLICT (rename/add): Rename %s->%s in %s.  Added %s in %s"
 msgstr ""
 "ÇAKIŞMA (yeniden adlandır/ekle): %s->%s olarak adlandırıldı (%s içinde). %s "
 "eklendi (%s içinde)."
 
-#: merge-recursive.c:1699
+#: merge-recursive.c:1694
 #, c-format
 msgid "%s is a directory in %s adding as %s instead"
 msgstr "%s bir dizin (%s içinde), bunun yerine %s olarak ekleniyor"
 
-#: merge-recursive.c:1704
+#: merge-recursive.c:1699
 #, c-format
 msgid "Refusing to lose untracked file at %s; adding as %s instead"
 msgstr ""
 "%s konumundaki izlenmeyen dosyayı kaybetme reddediliyor, bunun yerine %s "
 "olarak ekleniyor"
 
-#: merge-recursive.c:1731
+#: merge-recursive.c:1726
 #, c-format
 msgid ""
 "CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
@@ -5164,18 +5168,18 @@ msgstr ""
 "ÇAKIŞMA (y. adlandır/y. adlandır): \"%s\"->\"%s\" olarak adlandır (\"%s\" "
 "dalında), \"%s\"->\"%s\" olarak adlandır (\"%s\"%s içinde)"
 
-#: merge-recursive.c:1736
+#: merge-recursive.c:1731
 msgid " (left unresolved)"
 msgstr " (çözülmeden bırakıldı)"
 
-#: merge-recursive.c:1828
+#: merge-recursive.c:1823
 #, c-format
 msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
 msgstr ""
 "ÇAKIŞMA (y. adlandır/y. adlandır): %s->%s olarak adlandır (%s içinde). %s->"
 "%s olarak adlandır (%s içinde)"
 
-#: merge-recursive.c:2091
+#: merge-recursive.c:2086
 #, c-format
 msgid ""
 "CONFLICT (directory rename split): Unclear where to place %s because "
@@ -5186,7 +5190,7 @@ msgstr ""
 "yerleştirileceği belirsiz; çünkü %s dizini birden çok başka dizine yeniden "
 "adlandırılırken hiçbir hedef dosyaların büyük çoğunluğunu almadı."
 
-#: merge-recursive.c:2225
+#: merge-recursive.c:2220
 #, c-format
 msgid ""
 "CONFLICT (rename/rename): Rename directory %s->%s in %s. Rename directory %s-"
@@ -5195,79 +5199,79 @@ msgstr ""
 "ÇAKIŞMA (y. adlandır/y. adlandır): Dizini %s->%s olarak adlandır (%s "
 "içinde). Dizini %s->%s olarak adlandır (%s içinde)."
 
-#: merge-recursive.c:3080
+#: merge-recursive.c:3075
 msgid "modify"
 msgstr "değiştir"
 
-#: merge-recursive.c:3080
+#: merge-recursive.c:3075
 msgid "modified"
 msgstr "değiştirilmiş"
 
-#: merge-recursive.c:3119
+#: merge-recursive.c:3114
 #, c-format
 msgid "Skipped %s (merged same as existing)"
 msgstr "%s atlandı (mevcut ile aynı biçimde birleştirildi)"
 
-#: merge-recursive.c:3172
+#: merge-recursive.c:3167
 #, c-format
 msgid "Adding as %s instead"
 msgstr "Bunun yerine %s olarak ekleniyor"
 
-#: merge-recursive.c:3376
+#: merge-recursive.c:3371
 #, c-format
 msgid "Removing %s"
 msgstr "%s kaldırılıyor"
 
-#: merge-recursive.c:3399
+#: merge-recursive.c:3394
 msgid "file/directory"
 msgstr "dosya/dizin"
 
-#: merge-recursive.c:3404
+#: merge-recursive.c:3399
 msgid "directory/file"
 msgstr "dizin/dosya"
 
-#: merge-recursive.c:3411
+#: merge-recursive.c:3406
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
 msgstr ""
 "ÇAKIŞMA (%s): %s adıyla bir dizin var (%s içinde). %s, %s olarak ekleniyor."
 
-#: merge-recursive.c:3420
+#: merge-recursive.c:3415
 #, c-format
 msgid "Adding %s"
 msgstr "%s ekleniyor"
 
-#: merge-recursive.c:3429
+#: merge-recursive.c:3424
 #, c-format
 msgid "CONFLICT (add/add): Merge conflict in %s"
 msgstr "ÇAKIŞMA (ekle/ekle): %s içinde birleştirme çakışması"
 
-#: merge-recursive.c:3482
+#: merge-recursive.c:3477
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr "%s ve %s ağaçlarının birleştirilmesi başarısız"
 
-#: merge-recursive.c:3576
+#: merge-recursive.c:3571
 msgid "Merging:"
 msgstr "Birleştiriliyor:"
 
-#: merge-recursive.c:3589
+#: merge-recursive.c:3584
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] "%u ortak ata bulundu:"
 msgstr[1] "%u ortak ata bulundu:"
 
-#: merge-recursive.c:3639
+#: merge-recursive.c:3634
 msgid "merge returned no commit"
 msgstr "birleştirme herhangi bir işleme döndürmedi"
 
-#: merge-recursive.c:3804
+#: merge-recursive.c:3799
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "'%s' nesnesi ayrıştırılamadı"
 
-#: merge-recursive.c:3822 builtin/merge.c:716 builtin/merge.c:900
+#: merge-recursive.c:3817 builtin/merge.c:717 builtin/merge.c:901
 #: builtin/stash.c:473
 msgid "Unable to write index."
 msgstr "İndeks yazılamıyor."
@@ -5277,7 +5281,7 @@ msgid "failed to read the cache"
 msgstr "önbellek okunamadı"
 
 #: merge.c:108 rerere.c:704 builtin/am.c:1932 builtin/am.c:1966
-#: builtin/checkout.c:595 builtin/checkout.c:849 builtin/clone.c:821
+#: builtin/checkout.c:590 builtin/checkout.c:844 builtin/clone.c:821
 #: builtin/stash.c:267
 msgid "unable to write new index file"
 msgstr "yeni indeks dosyası yazılamıyor"
@@ -6284,7 +6288,7 @@ msgstr "diff oluşturulamadı"
 
 #: range-diff.c:559
 msgid "--left-only and --right-only are mutually exclusive"
-msgstr "-p ve --overlay birlikte kullanılmaz"
+msgstr "--left-only ve --right-only birlikte kullanılmaz"
 
 #: range-diff.c:562 range-diff.c:564
 #, c-format
@@ -6403,10 +6407,10 @@ msgstr "'%s' için sırasız hazırlama alanı girdileri"
 
 #: read-cache.c:2041 read-cache.c:2339 rerere.c:549 rerere.c:583 rerere.c:1095
 #: submodule.c:1622 builtin/add.c:575 builtin/check-ignore.c:183
-#: builtin/checkout.c:522 builtin/checkout.c:711 builtin/clean.c:987
+#: builtin/checkout.c:519 builtin/checkout.c:706 builtin/clean.c:987
 #: builtin/commit.c:377 builtin/diff-tree.c:122 builtin/grep.c:505
 #: builtin/mv.c:146 builtin/reset.c:247 builtin/rm.c:291
-#: builtin/submodule--helper.c:331
+#: builtin/submodule--helper.c:333
 msgid "index file corrupt"
 msgstr "indeks dosyası hasar görmüş"
 
@@ -6460,36 +6464,36 @@ msgstr "paylaşılan indeks '%s' tazelenemedi"
 msgid "broken index, expect %s in %s, got %s"
 msgstr "bozuk indeks, %s bekleniyordu (%s içinde), %s alındı"
 
-#: read-cache.c:3031 strbuf.c:1173 wrapper.c:633 builtin/merge.c:1145
+#: read-cache.c:3032 strbuf.c:1173 wrapper.c:633 builtin/merge.c:1146
 #, c-format
 msgid "could not close '%s'"
 msgstr "'%s' kapatılamadı"
 
-#: read-cache.c:3074
+#: read-cache.c:3075
 msgid "failed to convert to a sparse-index"
 msgstr "bir sparse-index'e dönüştürülemedi"
 
-#: read-cache.c:3145 sequencer.c:2684 sequencer.c:4440
+#: read-cache.c:3146 sequencer.c:2684 sequencer.c:4440
 #, c-format
 msgid "could not stat '%s'"
 msgstr "'%s' bilgileri alınamadı"
 
-#: read-cache.c:3158
+#: read-cache.c:3159
 #, c-format
 msgid "unable to open git dir: %s"
 msgstr "git dizini açılamıyor: %s"
 
-#: read-cache.c:3170
+#: read-cache.c:3171
 #, c-format
 msgid "unable to unlink: %s"
 msgstr "bağlantı kesilemiyor: %s"
 
-#: read-cache.c:3199
+#: read-cache.c:3200
 #, c-format
 msgid "cannot fix permission bits on '%s'"
 msgstr "'%s' üzerindeki izin bitleri onarılamıyor"
 
-#: read-cache.c:3348
+#: read-cache.c:3349
 #, c-format
 msgid "%s: cannot drop to stage #0"
 msgstr "%s: #0 numaralı hazırlama alanına bırakılamıyor"
@@ -6903,17 +6907,17 @@ msgstr "bozuk ada iye %s başvurusu yok sayılıyor"
 msgid "ignoring broken ref %s"
 msgstr "bozuk başvuru %s yok sayılıyor"
 
-#: ref-filter.c:2498
+#: ref-filter.c:2502
 #, c-format
 msgid "format: %%(end) atom missing"
 msgstr "biçim: %%(end) ögeciği eksik"
 
-#: ref-filter.c:2592
+#: ref-filter.c:2596
 #, c-format
 msgid "malformed object name %s"
 msgstr "hatalı oluşturulmuş nesne adı %s"
 
-#: ref-filter.c:2597
+#: ref-filter.c:2601
 #, c-format
 msgid "option `%s' must point to a commit"
 msgstr "'%s' bir işlemeye işaret etmeli"
@@ -7370,7 +7374,7 @@ msgid "Recorded preimage for '%s'"
 msgstr "'%s' için öngörüntü kaydedildi"
 
 #: rerere.c:865 submodule.c:2076 builtin/log.c:2002
-#: builtin/submodule--helper.c:1878 builtin/submodule--helper.c:1890
+#: builtin/submodule--helper.c:1805 builtin/submodule--helper.c:1848
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "'%s' dizini oluşturulamadı"
@@ -7408,7 +7412,7 @@ msgstr "rr-cache dizini açılamıyor"
 msgid "could not determine HEAD revision"
 msgstr "HEAD revizyonu saptanamadı"
 
-#: reset.c:70 reset.c:76 sequencer.c:3689
+#: reset.c:69 reset.c:75 sequencer.c:3689
 #, c-format
 msgid "failed to find tree of %s"
 msgstr "%s ögesinin ağacı bulunamadı"
@@ -7616,7 +7620,7 @@ msgid "unable to dequote value of '%s'"
 msgstr "'%s' ögesinin tırnakları kaldırılamıyor"
 
 #: sequencer.c:827 wrapper.c:201 wrapper.c:371 builtin/am.c:729
-#: builtin/am.c:821 builtin/merge.c:1140 builtin/rebase.c:910
+#: builtin/am.c:821 builtin/merge.c:1141 builtin/rebase.c:910
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr "'%s' okuma için açılamadı"
@@ -7763,7 +7767,7 @@ msgstr "HEAD ayrıştırılamadı"
 msgid "HEAD %s is not a commit!"
 msgstr "HEAD %s bir işleme değil"
 
-#: sequencer.c:1354 sequencer.c:1432 builtin/commit.c:1702
+#: sequencer.c:1354 sequencer.c:1432 builtin/commit.c:1705
 msgid "could not parse HEAD commit"
 msgstr "HEAD işlemesi ayrıştırılamadı"
 
@@ -7771,7 +7775,7 @@ msgstr "HEAD işlemesi ayrıştırılamadı"
 msgid "unable to parse commit author"
 msgstr "işleme yazarı ayrıştırılamıyor"
 
-#: sequencer.c:1421 builtin/am.c:1615 builtin/merge.c:706
+#: sequencer.c:1421 builtin/am.c:1615 builtin/merge.c:707
 msgid "git write-tree failed to write a tree"
 msgstr "git write-tree bir ağaca yazamadı"
 
@@ -7789,8 +7793,8 @@ msgstr "geçersiz yazar kimliği '%s'"
 msgid "corrupt author: missing date information"
 msgstr "hasar görmüş yazar: tarih bilgisi eksik"
 
-#: sequencer.c:1530 builtin/am.c:1642 builtin/commit.c:1816 builtin/merge.c:909
-#: builtin/merge.c:934 t/helper/test-fast-rebase.c:78
+#: sequencer.c:1530 builtin/am.c:1642 builtin/commit.c:1819 builtin/merge.c:910
+#: builtin/merge.c:935 t/helper/test-fast-rebase.c:78
 msgid "failed to write commit object"
 msgstr "işleme nesnesi yazılamadı"
 
@@ -8578,11 +8582,11 @@ msgstr "setsid başarısız"
 msgid "attempting to use sparse-index without cone mode"
 msgstr "koni kipi olmadan sparse-index kullanılmaya çalışılıyor"
 
-#: sparse-index.c:174
+#: sparse-index.c:176
 msgid "unable to update cache-tree, staying full"
 msgstr "önbellek ağacı güncellenemiyor, dolu kalınıyor"
 
-#: sparse-index.c:261
+#: sparse-index.c:263
 #, c-format
 msgid "index entry is a directory, but not sparse (%08x)"
 msgstr "indeks girdisi bir dizin; ancak aralıklı değil (%08x)"
@@ -8738,7 +8742,7 @@ msgstr ""
 msgid "process for submodule '%s' failed"
 msgstr "'%s' altmodülü için işlem başarısız oldu"
 
-#: submodule.c:1145 builtin/branch.c:691 builtin/submodule--helper.c:2469
+#: submodule.c:1145 builtin/branch.c:691 builtin/submodule--helper.c:2486
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "HEAD geçerli bir başvuru olarak çözülemedi."
 
@@ -9480,7 +9484,7 @@ msgstr ""
 msgid "Updating index flags"
 msgstr "İndeks bayrakları güncelleniyor"
 
-#: unpack-trees.c:2707
+#: unpack-trees.c:2718
 #, c-format
 msgid "worktree and untracked commit have duplicate entries: %s"
 msgstr "çalışma ağacı ve izlenmeyen işlemenin yinelenmiş girdileri var: %s"
@@ -10268,7 +10272,7 @@ msgstr "sınama turu"
 msgid "interactive picking"
 msgstr "etkileşimli seçim"
 
-#: builtin/add.c:367 builtin/checkout.c:1567 builtin/reset.c:308
+#: builtin/add.c:367 builtin/checkout.c:1562 builtin/reset.c:308
 msgid "select hunks interactively"
 msgstr "parçaları etkileşimli olarak seç"
 
@@ -10403,12 +10407,12 @@ msgstr ""
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "--chmod param '%s' ya -x ya da +x olmalıdır"
 
-#: builtin/add.c:544 builtin/checkout.c:1735 builtin/commit.c:363
+#: builtin/add.c:544 builtin/checkout.c:1733 builtin/commit.c:363
 #: builtin/reset.c:328 builtin/rm.c:273 builtin/stash.c:1633
 msgid "--pathspec-from-file is incompatible with pathspec arguments"
 msgstr "--pathspec-from-file yol belirteci argümanları ile uyumsuz"
 
-#: builtin/add.c:551 builtin/checkout.c:1747 builtin/commit.c:369
+#: builtin/add.c:551 builtin/checkout.c:1745 builtin/commit.c:369
 #: builtin/reset.c:334 builtin/rm.c:279 builtin/stash.c:1639
 msgid "--pathspec-file-nul requires --pathspec-from-file"
 msgstr "--pathspec-file-nul, --pathspec-from-file gerektiriyor"
@@ -11089,7 +11093,7 @@ msgstr "Bunu sizin yerinize benim yapmamı ister misiniz [Y/n]? "
 
 #: builtin/bisect--helper.c:844
 msgid "Please call `--bisect-state` with at least one argument"
-msgstr "Lütfen '--bisec-state'i en az bir argümanla çalıştırın"
+msgstr "Lütfen '--bisect-state'i en az bir argümanla çağırın"
 
 #: builtin/bisect--helper.c:857
 #, c-format
@@ -11231,7 +11235,7 @@ msgstr "kök işlemelerini sınır olarak değerlendirme (Öntanımlı: Kapalı)
 msgid "show work cost statistics"
 msgstr "iş maliyet istatistiklerini göster"
 
-#: builtin/blame.c:871 builtin/checkout.c:1524 builtin/clone.c:94
+#: builtin/blame.c:871 builtin/checkout.c:1519 builtin/clone.c:94
 #: builtin/commit-graph.c:84 builtin/commit-graph.c:222 builtin/fetch.c:179
 #: builtin/merge.c:297 builtin/multi-pack-index.c:55 builtin/pull.c:119
 #: builtin/push.c:566 builtin/send-pack.c:198
@@ -12025,7 +12029,7 @@ msgstr "dosya adlarını stdin'den oku"
 msgid "terminate input and output records by a NUL character"
 msgstr "girdi ve çıktı kayıtlarını bir NUL karakteri ile sonlandır"
 
-#: builtin/check-ignore.c:21 builtin/checkout.c:1520 builtin/gc.c:549
+#: builtin/check-ignore.c:21 builtin/checkout.c:1515 builtin/gc.c:549
 #: builtin/worktree.c:493
 msgid "suppress progress reporting"
 msgstr "ilerleme bildirimini gizle"
@@ -12084,9 +12088,10 @@ msgid "git checkout--worker [<options>]"
 msgstr "git checkout--worker [<seçenekler>]"
 
 #: builtin/checkout--worker.c:118 builtin/checkout-index.c:201
-#: builtin/column.c:31 builtin/submodule--helper.c:1824
-#: builtin/submodule--helper.c:1827 builtin/submodule--helper.c:1835
-#: builtin/submodule--helper.c:2333 builtin/worktree.c:491
+#: builtin/column.c:31 builtin/submodule--helper.c:1892
+#: builtin/submodule--helper.c:1895 builtin/submodule--helper.c:1903
+#: builtin/submodule--helper.c:2350 builtin/submodule--helper.c:2896
+#: builtin/submodule--helper.c:2899 builtin/worktree.c:491
 #: builtin/worktree.c:728
 msgid "string"
 msgstr "dizi"
@@ -12181,68 +12186,68 @@ msgstr "'%s' yolu: Birleştirilemiyor"
 msgid "Unable to add merge result for '%s'"
 msgstr "'%s' için birleştirme sonuçları eklenemiyor"
 
-#: builtin/checkout.c:414
+#: builtin/checkout.c:411
 #, c-format
 msgid "Recreated %d merge conflict"
 msgid_plural "Recreated %d merge conflicts"
 msgstr[0] "%d birleştirme çakışması yeniden oluşturuldu"
 msgstr[1] "%d birleştirme çakışması yeniden oluşturuldu"
 
-#: builtin/checkout.c:419
+#: builtin/checkout.c:416
 #, c-format
 msgid "Updated %d path from %s"
 msgid_plural "Updated %d paths from %s"
 msgstr[0] "%d yol şuradan güncellendi: %s"
 msgstr[1] "%d yol şuradan güncellendi: %s"
 
-#: builtin/checkout.c:426
+#: builtin/checkout.c:423
 #, c-format
 msgid "Updated %d path from the index"
 msgid_plural "Updated %d paths from the index"
 msgstr[0] "%d yol indeksten güncellendi"
 msgstr[1] "%d yol indeksten güncellendi"
 
-#: builtin/checkout.c:449 builtin/checkout.c:452 builtin/checkout.c:455
-#: builtin/checkout.c:459
+#: builtin/checkout.c:446 builtin/checkout.c:449 builtin/checkout.c:452
+#: builtin/checkout.c:456
 #, c-format
 msgid "'%s' cannot be used with updating paths"
 msgstr "'%s' güncellenmekte olan yollarla kullanılamaz"
 
-#: builtin/checkout.c:462 builtin/checkout.c:465
+#: builtin/checkout.c:459 builtin/checkout.c:462
 #, c-format
 msgid "'%s' cannot be used with %s"
 msgstr "'%s', %s ile birlikte kullanılamaz"
 
-#: builtin/checkout.c:469
+#: builtin/checkout.c:466
 #, c-format
 msgid "Cannot update paths and switch to branch '%s' at the same time."
 msgstr "Aynı anda hem yolları güncelleyip hem de '%s' dalına geçilemiyor."
 
-#: builtin/checkout.c:473
+#: builtin/checkout.c:470
 #, c-format
 msgid "neither '%s' or '%s' is specified"
 msgstr "ne '%s' ne de '%s' belirtilmiş"
 
-#: builtin/checkout.c:477
+#: builtin/checkout.c:474
 #, c-format
 msgid "'%s' must be used when '%s' is not specified"
 msgstr "'%s', '%s' ögesinin belirtilmediği durumlarda kullanılmalıdır"
 
-#: builtin/checkout.c:482 builtin/checkout.c:487
+#: builtin/checkout.c:479 builtin/checkout.c:484
 #, c-format
 msgid "'%s' or '%s' cannot be used with %s"
 msgstr "'%s' veya '%s', %s ile birlikte kullanılamaz"
 
-#: builtin/checkout.c:563 builtin/checkout.c:570
+#: builtin/checkout.c:558 builtin/checkout.c:565
 #, c-format
 msgid "path '%s' is unmerged"
 msgstr "'%s' yolu birleştirilmemiş"
 
-#: builtin/checkout.c:739
+#: builtin/checkout.c:734
 msgid "you need to resolve your current index first"
 msgstr "önce geçerli indeksinizi çözmelisiniz"
 
-#: builtin/checkout.c:793
+#: builtin/checkout.c:788
 #, c-format
 msgid ""
 "cannot continue with staged changes in the following files:\n"
@@ -12251,50 +12256,50 @@ msgstr ""
 "aşağıdaki dosyalardaki hazırlanan değişikliklerle sürdürülemiyor:\n"
 "%s"
 
-#: builtin/checkout.c:886
+#: builtin/checkout.c:881
 #, c-format
 msgid "Can not do reflog for '%s': %s\n"
 msgstr "'%s' için başvuru günlüğü yapılamıyor: %s\n"
 
-#: builtin/checkout.c:928
+#: builtin/checkout.c:923
 msgid "HEAD is now at"
 msgstr "HEAD konumu:"
 
-#: builtin/checkout.c:932 builtin/clone.c:725 t/helper/test-fast-rebase.c:203
+#: builtin/checkout.c:927 builtin/clone.c:725 t/helper/test-fast-rebase.c:203
 msgid "unable to update HEAD"
 msgstr "HEAD güncellenemiyor"
 
-#: builtin/checkout.c:936
+#: builtin/checkout.c:931
 #, c-format
 msgid "Reset branch '%s'\n"
 msgstr "'%s' dalı sıfırlandı.\n"
 
-#: builtin/checkout.c:939
+#: builtin/checkout.c:934
 #, c-format
 msgid "Already on '%s'\n"
 msgstr "Halihazırda '%s' üzerinde\n"
 
-#: builtin/checkout.c:943
+#: builtin/checkout.c:938
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
 msgstr "'%s' dalına geçildi ve sıfırlandı.\n"
 
-#: builtin/checkout.c:945 builtin/checkout.c:1376
+#: builtin/checkout.c:940 builtin/checkout.c:1371
 #, c-format
 msgid "Switched to a new branch '%s'\n"
 msgstr "Yeni '%s' dalına geçildi.\n"
 
-#: builtin/checkout.c:947
+#: builtin/checkout.c:942
 #, c-format
 msgid "Switched to branch '%s'\n"
 msgstr "'%s' dalına geçildi.\n"
 
-#: builtin/checkout.c:998
+#: builtin/checkout.c:993
 #, c-format
 msgid " ... and %d more.\n"
 msgstr "... ve %d daha.\n"
 
-#: builtin/checkout.c:1004
+#: builtin/checkout.c:999
 #, c-format
 msgid ""
 "Warning: you are leaving %d commit behind, not connected to\n"
@@ -12317,7 +12322,7 @@ msgstr[1] ""
 "\n"
 "%s\n"
 
-#: builtin/checkout.c:1023
+#: builtin/checkout.c:1018
 #, c-format
 msgid ""
 "If you want to keep it by creating a new branch, this may be a good time\n"
@@ -12344,19 +12349,19 @@ msgstr[1] ""
 "\tgit branch <yeni-dal-adı> %s\n"
 "\n"
 
-#: builtin/checkout.c:1058
+#: builtin/checkout.c:1053
 msgid "internal error in revision walk"
 msgstr "revizyonlarda gezinirken iç hata"
 
-#: builtin/checkout.c:1062
+#: builtin/checkout.c:1057
 msgid "Previous HEAD position was"
 msgstr "Önceki HEAD konumu şuydu:"
 
-#: builtin/checkout.c:1102 builtin/checkout.c:1371
+#: builtin/checkout.c:1097 builtin/checkout.c:1366
 msgid "You are on a branch yet to be born"
 msgstr "Henüz doğmamış bir dal üzerindesiniz"
 
-#: builtin/checkout.c:1184
+#: builtin/checkout.c:1179
 #, c-format
 msgid ""
 "'%s' could be both a local file and a tracking branch.\n"
@@ -12365,7 +12370,7 @@ msgstr ""
 "'%s' hem bir yerel dosya hem de bir izleme dalı olabilir.\n"
 "Lütfen -- (ve isteğe bağlı olarak --no-guess) kullanıp belirsizliği giderin."
 
-#: builtin/checkout.c:1191
+#: builtin/checkout.c:1186
 msgid ""
 "If you meant to check out a remote tracking branch on, e.g. 'origin',\n"
 "you can do so by fully qualifying the name with the --track option:\n"
@@ -12385,51 +12390,51 @@ msgstr ""
 "isterseniz, örn. 'origin', yapılandırmanızda checkout.defaultRemote=origin\n"
 "ayarını yapmayı düşünün."
 
-#: builtin/checkout.c:1201
+#: builtin/checkout.c:1196
 #, c-format
 msgid "'%s' matched multiple (%d) remote tracking branches"
 msgstr "'%s' birden çok (%d) uzak izleme dalıyla eşleşti"
 
-#: builtin/checkout.c:1267
+#: builtin/checkout.c:1262
 msgid "only one reference expected"
 msgstr "yalnızca bir başvuru bekleniyordu"
 
-#: builtin/checkout.c:1284
+#: builtin/checkout.c:1279
 #, c-format
 msgid "only one reference expected, %d given."
 msgstr "yalnızca bir başvuru bekleniyordu, %d verildi"
 
-#: builtin/checkout.c:1330 builtin/worktree.c:268 builtin/worktree.c:436
+#: builtin/checkout.c:1325 builtin/worktree.c:268 builtin/worktree.c:436
 #, c-format
 msgid "invalid reference: %s"
 msgstr "geçersiz başvuru: %s"
 
-#: builtin/checkout.c:1343 builtin/checkout.c:1709
+#: builtin/checkout.c:1338 builtin/checkout.c:1707
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr "başvuru bir ağaca değil: %s"
 
-#: builtin/checkout.c:1390
+#: builtin/checkout.c:1385
 #, c-format
 msgid "a branch is expected, got tag '%s'"
 msgstr "bir dal bekleniyordu, '%s' etiketi alındı"
 
-#: builtin/checkout.c:1392
+#: builtin/checkout.c:1387
 #, c-format
 msgid "a branch is expected, got remote branch '%s'"
 msgstr "bir dal bekleniyordu, '%s' uzak dalı alındı"
 
-#: builtin/checkout.c:1393 builtin/checkout.c:1401
+#: builtin/checkout.c:1388 builtin/checkout.c:1396
 #, c-format
 msgid "a branch is expected, got '%s'"
 msgstr "bir dal bekleniyordu, '%s' alındı"
 
-#: builtin/checkout.c:1396
+#: builtin/checkout.c:1391
 #, c-format
 msgid "a branch is expected, got commit '%s'"
 msgstr "bir dal bekleniyordu, '%s' işlemesi alındı"
 
-#: builtin/checkout.c:1412
+#: builtin/checkout.c:1407
 msgid ""
 "cannot switch branch while merging\n"
 "Consider \"git merge --quit\" or \"git worktree add\"."
@@ -12437,7 +12442,7 @@ msgstr ""
 "Birleştirme yaparken dal değiştirilemiyor.\n"
 "\"git merge --quit\" veya \"git worktree add\" yapmayı düşünün."
 
-#: builtin/checkout.c:1416
+#: builtin/checkout.c:1411
 msgid ""
 "cannot switch branch in the middle of an am session\n"
 "Consider \"git am --quit\" or \"git worktree add\"."
@@ -12445,7 +12450,7 @@ msgstr ""
 "Bir \"am\" oturumunun ortasında dal değiştirilemiyor.\n"
 "\"git am --quit\" veya \"git worktree add\" yapmayı düşünün."
 
-#: builtin/checkout.c:1420
+#: builtin/checkout.c:1415
 msgid ""
 "cannot switch branch while rebasing\n"
 "Consider \"git rebase --quit\" or \"git worktree add\"."
@@ -12453,7 +12458,7 @@ msgstr ""
 "Yeniden temellendirme yaparken dal değiştirilemiyor.\n"
 "\"git rebase --quit\" veya \"git worktree add\" yapmayı düşünün."
 
-#: builtin/checkout.c:1424
+#: builtin/checkout.c:1419
 msgid ""
 "cannot switch branch while cherry-picking\n"
 "Consider \"git cherry-pick --quit\" or \"git worktree add\"."
@@ -12461,7 +12466,7 @@ msgstr ""
 "Seç-al yaparken dal değiştirilemiyor.\n"
 "\"git cherry-pick --quit\" veya \"git worktree add\" yapmayı düşünün."
 
-#: builtin/checkout.c:1428
+#: builtin/checkout.c:1423
 msgid ""
 "cannot switch branch while reverting\n"
 "Consider \"git revert --quit\" or \"git worktree add\"."
@@ -12469,138 +12474,138 @@ msgstr ""
 "Geriye al yaparken dal değiştirilemiyor.\n"
 "\"git revert --quit\" veya \"git worktree add\" yapmayı düşünün."
 
-#: builtin/checkout.c:1432
+#: builtin/checkout.c:1427
 msgid "you are switching branch while bisecting"
 msgstr "ikili arama yaparken dal değiştiriyorsunuz"
 
-#: builtin/checkout.c:1439
+#: builtin/checkout.c:1434
 msgid "paths cannot be used with switching branches"
 msgstr "dal değiştirilirken yollar kullanılamaz"
 
-#: builtin/checkout.c:1442 builtin/checkout.c:1446 builtin/checkout.c:1450
+#: builtin/checkout.c:1437 builtin/checkout.c:1441 builtin/checkout.c:1445
 #, c-format
 msgid "'%s' cannot be used with switching branches"
 msgstr "dal değiştirilirken '%s' kullanılamaz"
 
-#: builtin/checkout.c:1454 builtin/checkout.c:1457 builtin/checkout.c:1460
-#: builtin/checkout.c:1465 builtin/checkout.c:1470
+#: builtin/checkout.c:1449 builtin/checkout.c:1452 builtin/checkout.c:1455
+#: builtin/checkout.c:1460 builtin/checkout.c:1465
 #, c-format
 msgid "'%s' cannot be used with '%s'"
 msgstr "'%s', '%s' ile birlikte kullanılamaz"
 
-#: builtin/checkout.c:1467
+#: builtin/checkout.c:1462
 #, c-format
 msgid "'%s' cannot take <start-point>"
 msgstr "'%s', <başlama-noktası> alamaz"
 
-#: builtin/checkout.c:1475
+#: builtin/checkout.c:1470
 #, c-format
 msgid "Cannot switch branch to a non-commit '%s'"
 msgstr "Dal, işleme olmayan '%s' ögesine değiştirilemez"
 
-#: builtin/checkout.c:1482
+#: builtin/checkout.c:1477
 msgid "missing branch or commit argument"
 msgstr "dal veya işleme argümanı eksik"
 
-#: builtin/checkout.c:1525
+#: builtin/checkout.c:1520
 msgid "perform a 3-way merge with the new branch"
 msgstr "yeni dal ile bir 3 yönlü birleştirme gerçekleştir"
 
-#: builtin/checkout.c:1526 builtin/log.c:1810 parse-options.h:323
+#: builtin/checkout.c:1521 builtin/log.c:1810 parse-options.h:323
 msgid "style"
 msgstr "stil"
 
-#: builtin/checkout.c:1527
+#: builtin/checkout.c:1522
 msgid "conflict style (merge or diff3)"
 msgstr "çakışma stili (birleştirme veya diff3)"
 
-#: builtin/checkout.c:1539 builtin/worktree.c:488
+#: builtin/checkout.c:1534 builtin/worktree.c:488
 msgid "detach HEAD at named commit"
 msgstr "adı verilen işlemede HEAD'i ayır"
 
-#: builtin/checkout.c:1540
+#: builtin/checkout.c:1535
 msgid "set upstream info for new branch"
 msgstr "yeni dal için üstkaynak bilgisi ayarla"
 
-#: builtin/checkout.c:1542
+#: builtin/checkout.c:1537
 msgid "force checkout (throw away local modifications)"
 msgstr "zorla çıkış yap (yerel değişiklikleri çöpe at)"
 
-#: builtin/checkout.c:1544
+#: builtin/checkout.c:1539
 msgid "new-branch"
 msgstr "yeni dal"
 
-#: builtin/checkout.c:1544
+#: builtin/checkout.c:1539
 msgid "new unparented branch"
 msgstr "yeni üst ögesi olmayan dal"
 
-#: builtin/checkout.c:1546 builtin/merge.c:301
+#: builtin/checkout.c:1541 builtin/merge.c:301
 msgid "update ignored files (default)"
 msgstr "yok sayılan dosyaları güncelle (öntanımlı)"
 
-#: builtin/checkout.c:1549
+#: builtin/checkout.c:1544
 msgid "do not check if another worktree is holding the given ref"
 msgstr ""
 "verilen başvuruyu başka bir çalışma ağacının tutup tutmadığını denetleme"
 
-#: builtin/checkout.c:1562
+#: builtin/checkout.c:1557
 msgid "checkout our version for unmerged files"
 msgstr "birleştirilmeyen dosyalar için bizdeki sürümü çıkış yap"
 
-#: builtin/checkout.c:1565
+#: builtin/checkout.c:1560
 msgid "checkout their version for unmerged files"
 msgstr "birleştirilmeyen dosyalar için onlardaki sürümünü çıkış yap"
 
-#: builtin/checkout.c:1569
+#: builtin/checkout.c:1564
 msgid "do not limit pathspecs to sparse entries only"
 msgstr "yol belirteçlerini yalnızca aralıklı girdilere kısıtlama"
 
-#: builtin/checkout.c:1624
+#: builtin/checkout.c:1622
 #, c-format
 msgid "-%c, -%c and --orphan are mutually exclusive"
 msgstr "-%c, -%c ve --orphan birlikte kullanılmaz"
 
-#: builtin/checkout.c:1628
+#: builtin/checkout.c:1626
 msgid "-p and --overlay are mutually exclusive"
 msgstr "-p ve --overlay birlikte kullanılmaz"
 
-#: builtin/checkout.c:1665
+#: builtin/checkout.c:1663
 msgid "--track needs a branch name"
 msgstr "--track için bir dal adı gerekli"
 
-#: builtin/checkout.c:1670
+#: builtin/checkout.c:1668
 #, c-format
 msgid "missing branch name; try -%c"
 msgstr "eksik dal adı; -%c deneyin"
 
-#: builtin/checkout.c:1702
+#: builtin/checkout.c:1700
 #, c-format
 msgid "could not resolve %s"
 msgstr "%s çözülemedi"
 
-#: builtin/checkout.c:1718
+#: builtin/checkout.c:1716
 msgid "invalid path specification"
 msgstr "geçersiz yol belirtimi"
 
-#: builtin/checkout.c:1725
+#: builtin/checkout.c:1723
 #, c-format
 msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
 msgstr "'%s' bir işleme değil ve ondan bir '%s' dalı oluşturulamaz"
 
-#: builtin/checkout.c:1729
+#: builtin/checkout.c:1727
 #, c-format
 msgid "git checkout: --detach does not take a path argument '%s'"
 msgstr "git checkout: --detach bir '%s' yol argümanı almıyor"
 
-#: builtin/checkout.c:1738
+#: builtin/checkout.c:1736
 msgid "--pathspec-from-file is incompatible with --detach"
 msgstr "--pathspec-from-file, --detach ile uyumsuz"
 
-#: builtin/checkout.c:1741 builtin/reset.c:325 builtin/stash.c:1630
+#: builtin/checkout.c:1739 builtin/reset.c:325 builtin/stash.c:1630
 msgid "--pathspec-from-file is incompatible with --patch"
 msgstr "--pathspec-from-file, --patch ile uyumsuz"
 
-#: builtin/checkout.c:1754
+#: builtin/checkout.c:1752
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
@@ -12608,70 +12613,71 @@ msgstr ""
 "git checkout: --ours/--theirs, --force ve --merge indeks çıkışı yapılırken\n"
 "birlikte kullanılamaz"
 
-#: builtin/checkout.c:1759
+#: builtin/checkout.c:1757
 msgid "you must specify path(s) to restore"
 msgstr "eski durumuna getirilecek yolları belirtmelisiniz"
 
-#: builtin/checkout.c:1785 builtin/checkout.c:1787 builtin/checkout.c:1836
-#: builtin/checkout.c:1838 builtin/clone.c:126 builtin/remote.c:170
-#: builtin/remote.c:172 builtin/submodule--helper.c:2719 builtin/worktree.c:484
+#: builtin/checkout.c:1783 builtin/checkout.c:1785 builtin/checkout.c:1834
+#: builtin/checkout.c:1836 builtin/clone.c:126 builtin/remote.c:170
+#: builtin/remote.c:172 builtin/submodule--helper.c:2736
+#: builtin/submodule--helper.c:2887 builtin/worktree.c:484
 #: builtin/worktree.c:486
 msgid "branch"
 msgstr "dal"
 
-#: builtin/checkout.c:1786
+#: builtin/checkout.c:1784
 msgid "create and checkout a new branch"
 msgstr "yeni bir dal oluştur ve çıkış yap"
 
-#: builtin/checkout.c:1788
+#: builtin/checkout.c:1786
 msgid "create/reset and checkout a branch"
 msgstr "bir dal oluştur/sıfırla ve çıkış yap"
 
-#: builtin/checkout.c:1789
+#: builtin/checkout.c:1787
 msgid "create reflog for new branch"
 msgstr "yeni dal için başvuru günlüğü oluştur"
 
-#: builtin/checkout.c:1791
+#: builtin/checkout.c:1789
 msgid "second guess 'git checkout <no-such-branch>' (default)"
 msgstr "'git checkout <böyle-bir-dal-yok>'a temkinli yaklaş (öntanımlı)"
 
-#: builtin/checkout.c:1792
+#: builtin/checkout.c:1790
 msgid "use overlay mode (default)"
 msgstr "yerpaylaşım kipini kullan (öntanımlı)"
 
-#: builtin/checkout.c:1837
+#: builtin/checkout.c:1835
 msgid "create and switch to a new branch"
 msgstr "yeni bir dal oluştur ve ona geç"
 
-#: builtin/checkout.c:1839
+#: builtin/checkout.c:1837
 msgid "create/reset and switch to a branch"
 msgstr "bir dal oluştur/sıfırla ve ona geç"
 
-#: builtin/checkout.c:1841
+#: builtin/checkout.c:1839
 msgid "second guess 'git switch <no-such-branch>'"
 msgstr "'git switch <böyle-bir-dal-yok>'a temkinli yaklaş"
 
-#: builtin/checkout.c:1843
+#: builtin/checkout.c:1841
 msgid "throw away local modifications"
 msgstr "yerel değişiklikleri çöpe at"
 
-#: builtin/checkout.c:1877
+#: builtin/checkout.c:1875
 msgid "which tree-ish to checkout from"
 msgstr "çıkış yapılacak ağacımsı"
 
-#: builtin/checkout.c:1879
+#: builtin/checkout.c:1877
 msgid "restore the index"
 msgstr "indeksi eski durumuna getir"
 
-#: builtin/checkout.c:1881
+#: builtin/checkout.c:1879
 msgid "restore the working tree (default)"
 msgstr "çalışma ağacını eski durumuna getir"
 
-#: builtin/checkout.c:1883
+#: builtin/checkout.c:1881
 msgid "ignore unmerged entries"
 msgstr "birleştirilmemiş girdileri yok say"
 
-#: builtin/checkout.c:1884
+#: builtin/checkout.c:1882
 msgid "use overlay mode"
 msgstr "yerpaylaşım kipini kullan"
 
@@ -12900,13 +12906,13 @@ msgstr "şablon dizini"
 msgid "directory from which templates will be used"
 msgstr "şablonların kullanılacağı dizin"
 
-#: builtin/clone.c:119 builtin/clone.c:121 builtin/submodule--helper.c:1831
-#: builtin/submodule--helper.c:2336
+#: builtin/clone.c:119 builtin/clone.c:121 builtin/submodule--helper.c:1899
+#: builtin/submodule--helper.c:2353 builtin/submodule--helper.c:2903
 msgid "reference repository"
 msgstr "başvuru deposu"
 
-#: builtin/clone.c:123 builtin/submodule--helper.c:1833
-#: builtin/submodule--helper.c:2338
+#: builtin/clone.c:123 builtin/submodule--helper.c:1901
+#: builtin/submodule--helper.c:2355 builtin/submodule--helper.c:2905
 msgid "use --reference only while cloning"
 msgstr "--reference'ı yalnızca klonlarken kullan"
 
@@ -12955,8 +12961,8 @@ msgstr "revizyon"
 msgid "deepen history of shallow clone, excluding rev"
 msgstr "revizyonu hariç tutarak sığ klonun geçmişini derinleştir"
 
-#: builtin/clone.c:137 builtin/submodule--helper.c:1843
-#: builtin/submodule--helper.c:2352
+#: builtin/clone.c:137 builtin/submodule--helper.c:1911
+#: builtin/submodule--helper.c:2369
 msgid "clone only one branch, HEAD or --branch"
 msgstr "yalnızca bir dal klonla, HEAD veya --branch"
 
@@ -13481,7 +13487,7 @@ msgstr ""
 "kullanın.\n"
 "Bu işlemeyi atlamak isterseniz şunu kullanın:\n"
 "\n"
-"\tgit cherry-pick --continue\n"
+"\tgit cherry-pick --skip\n"
 "\n"
 
 #: builtin/commit.c:324
@@ -14016,36 +14022,36 @@ msgstr "boş bir değişikliğin kaydı yazılabilir"
 msgid "ok to record a change with an empty message"
 msgstr "boş iletili bir değişikliğin kaydı yazılabilir"
 
-#: builtin/commit.c:1747
+#: builtin/commit.c:1750
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Hasar görmüş MERGE_HEAD dosyası (%s)"
 
-#: builtin/commit.c:1754
+#: builtin/commit.c:1757
 msgid "could not read MERGE_MODE"
 msgstr "MERGE_MODE okunamadı"
 
-#: builtin/commit.c:1775
+#: builtin/commit.c:1778
 #, c-format
 msgid "could not read commit message: %s"
 msgstr "işleme iletisi okunamadı: %s"
 
-#: builtin/commit.c:1782
+#: builtin/commit.c:1785
 #, c-format
 msgid "Aborting commit due to empty commit message.\n"
 msgstr "İşleme iletisinin boş olmasından dolayı iptal ediliyor.\n"
 
-#: builtin/commit.c:1787
+#: builtin/commit.c:1790
 #, c-format
 msgid "Aborting commit; you did not edit the message.\n"
 msgstr "İşleme iptal ediliyor; iletiyi düzenlenmedi.\n"
 
-#: builtin/commit.c:1798
+#: builtin/commit.c:1801
 #, c-format
 msgid "Aborting commit due to empty commit message body.\n"
 msgstr "İşleme iletisi gövdesinin boş olmasından dolayı iptal ediliyor.\n"
 
-#: builtin/commit.c:1834
+#: builtin/commit.c:1837
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -14138,7 +14144,7 @@ msgstr "tüm eşleşmeleri kaldır: ad [değer-dizgisi]"
 
 #: builtin/config.c:146
 msgid "rename section: old-name new-name"
-msgstr "bölümü yeniden adlandır: eski_ad yeni_ad"
+msgstr "bölümü yeniden adlandır: eski-ad yeni-ad"
 
 #: builtin/config.c:147
 msgid "remove a section: name"
@@ -14708,7 +14714,7 @@ msgstr "belirtilen diff aracını kullan"
 
 #: builtin/difftool.c:712
 msgid "print a list of diff tools that may be used with `--tool`"
-msgstr "'-tool' ile birlikte kullanılabilecek diff araçlarının listesini çıkar"
+msgstr "'--tool' ile birlikte kullanılabilecek diff araçlarının listesini çıkar"
 
 #: builtin/difftool.c:715
 msgid ""
@@ -14732,7 +14738,7 @@ msgstr "difftool, çalışma ağacı veya --no-index gerektiriyor"
 
 #: builtin/difftool.c:741
 msgid "--dir-diff is incompatible with --no-index"
-msgstr "-dir-diff, --no-index ile uyumsuz"
+msgstr "--dir-diff, --no-index ile uyumsuz"
 
 #: builtin/difftool.c:744
 msgid "--gui, --tool and --extcmd are mutually exclusive"
@@ -15230,7 +15236,7 @@ msgid ""
 "you need to specify exactly one branch with the --set-upstream option."
 msgstr ""
 "Kaynak dal bulunamadı.\n"
-"--set-upstream-option ile tam olarak bir dal belirtmeniz gerekiyor."
+"--set-upstream seçeneği ile tam olarak bir dal belirtmeniz gerekiyor."
 
 #: builtin/fetch.c:1768 builtin/fetch.c:1831
 #, c-format
@@ -15261,8 +15267,8 @@ msgstr "Bir etiket adı belirtmeniz gerekiyor."
 
 #: builtin/fetch.c:1994
 msgid "--negotiate-only needs one or more --negotiate-tip=*"
-msgstr "--negotiate-only'nin bir veya daha çok --negotiate-tip=* gereksinimi "
-"var"
+msgstr ""
+"--negotiate-only'nin bir veya daha çok --negotiate-tip=* gereksinimi var"
 
 #: builtin/fetch.c:1998
 msgid "Negative depth in --deepen is not supported"
@@ -15413,15 +15419,15 @@ msgstr "yalnızca işlemeyi içermeyen başvuruları yazdır"
 msgid "git for-each-repo --config=<config> <command-args>"
 msgstr "git for-each-repo --config=<yapılandırma> <komut-argümanları>"
 
-#: builtin/for-each-repo.c:37
+#: builtin/for-each-repo.c:34
 msgid "config"
 msgstr "yapılandırma"
 
-#: builtin/for-each-repo.c:38
+#: builtin/for-each-repo.c:35
 msgid "config key storing a list of repository paths"
 msgstr "bir depo yolları listesi tutan yapılandırma anahtarı"
 
-#: builtin/for-each-repo.c:46
+#: builtin/for-each-repo.c:43
 msgid "missing --config=<config>"
 msgstr "--config=<yapılandırma> eksik"
 
@@ -15791,11 +15797,11 @@ msgstr "uzak konumlar önden getirilemedi"
 
 #: builtin/gc.c:1022
 msgid "failed to start 'git pack-objects' process"
-msgstr "'git-pack-objects' işlemi başlatılamadı"
+msgstr "'git pack-objects' işlemi başlatılamadı"
 
 #: builtin/gc.c:1039
 msgid "failed to finish 'git pack-objects' process"
-msgstr "'git-pack-objects' işlemi bitirilemedi"
+msgstr "'git pack-objects' işlemi bitirilemedi"
 
 #: builtin/gc.c:1091
 msgid "failed to write multi-pack-index"
@@ -17779,36 +17785,36 @@ msgstr "Birleştirme iletisi yok -- HEAD güncellenmiyor\n"
 msgid "'%s' does not point to a commit"
 msgstr "'%s' bir işlemeye işaret etmiyor"
 
-#: builtin/merge.c:602
+#: builtin/merge.c:603
 #, c-format
 msgid "Bad branch.%s.mergeoptions string: %s"
 msgstr "Hatalı branch.%s.mergeoptions dizisi: %s"
 
-#: builtin/merge.c:728
+#: builtin/merge.c:729
 msgid "Not handling anything other than two heads merge."
 msgstr "İki uç işlemenin birleştirilmesi dışında bir şey yapılmıyor."
 
-#: builtin/merge.c:741
+#: builtin/merge.c:742
 #, c-format
 msgid "Unknown option for merge-recursive: -X%s"
 msgstr "merge-recursive için geçersiz seçenek: -X%s"
 
-#: builtin/merge.c:760 t/helper/test-fast-rebase.c:223
+#: builtin/merge.c:761 t/helper/test-fast-rebase.c:223
 #, c-format
 msgid "unable to write %s"
 msgstr "%s yazılamıyor"
 
-#: builtin/merge.c:812
+#: builtin/merge.c:813
 #, c-format
 msgid "Could not read from '%s'"
 msgstr "Şu konumdan okunamadı: '%s'"
 
-#: builtin/merge.c:821
+#: builtin/merge.c:822
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
 msgstr "Birleştirme işlenmiyor, tamamlamak için 'git commit' kullanın.\n"
 
-#: builtin/merge.c:827
+#: builtin/merge.c:828
 msgid ""
 "Please enter a commit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
@@ -17818,11 +17824,11 @@ msgstr ""
 "girin, özellikle güncellenmiş bir üstkaynağı kişisel dala birleştiriyorsa.\n"
 "\n"
 
-#: builtin/merge.c:832
+#: builtin/merge.c:833
 msgid "An empty message aborts the commit.\n"
 msgstr "Boş bir ileti işlemeyi iptal eder.\n"
 
-#: builtin/merge.c:835
+#: builtin/merge.c:836
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
@@ -17831,72 +17837,72 @@ msgstr ""
 "'%c' ile başlayan satırlar yok sayılacaktır. Boş bir ileti işlemeyi\n"
 "iptal eder.\n"
 
-#: builtin/merge.c:888
+#: builtin/merge.c:889
 msgid "Empty commit message."
 msgstr "Boş işleme iletisi."
 
-#: builtin/merge.c:903
+#: builtin/merge.c:904
 #, c-format
 msgid "Wonderful.\n"
 msgstr "Harika.\n"
 
-#: builtin/merge.c:964
+#: builtin/merge.c:965
 #, c-format
 msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
 msgstr "Otomatik birleştirme başarısız; çakışmaları çözün ve sonucu işleyin.\n"
 
-#: builtin/merge.c:1003
+#: builtin/merge.c:1004
 msgid "No current branch."
 msgstr "Geçerli dal yok."
 
-#: builtin/merge.c:1005
+#: builtin/merge.c:1006
 msgid "No remote for the current branch."
 msgstr "Geçerli dal için uzak konum yok."
 
-#: builtin/merge.c:1007
+#: builtin/merge.c:1008
 msgid "No default upstream defined for the current branch."
 msgstr "Geçerli dal için öntanımlı üstkaynak tanımlanmamış."
 
-#: builtin/merge.c:1012
+#: builtin/merge.c:1013
 #, c-format
 msgid "No remote-tracking branch for %s from %s"
 msgstr "%s için %s konumundan uzak izleme dalı yok"
 
-#: builtin/merge.c:1069
+#: builtin/merge.c:1070
 #, c-format
 msgid "Bad value '%s' in environment '%s'"
 msgstr "Hatalı değer '%s', '%s' ortamında"
 
-#: builtin/merge.c:1172
+#: builtin/merge.c:1173
 #, c-format
 msgid "not something we can merge in %s: %s"
 msgstr "%s içinde birleştirebileceğimiz bir şey değil: %s"
 
-#: builtin/merge.c:1206
+#: builtin/merge.c:1207
 msgid "not something we can merge"
 msgstr "birleştirebileceğimiz bir şey değil"
 
-#: builtin/merge.c:1316
+#: builtin/merge.c:1317
 msgid "--abort expects no arguments"
 msgstr "--abort bir argüman beklemez"
 
-#: builtin/merge.c:1320
+#: builtin/merge.c:1321
 msgid "There is no merge to abort (MERGE_HEAD missing)."
 msgstr "İptal edilecek bir birleştirme yok (MERGE_HEAD eksik)."
 
-#: builtin/merge.c:1338
+#: builtin/merge.c:1339
 msgid "--quit expects no arguments"
 msgstr "--quit bir argüman beklemez"
 
-#: builtin/merge.c:1351
+#: builtin/merge.c:1352
 msgid "--continue expects no arguments"
 msgstr "--continue bir argüman beklemez"
 
-#: builtin/merge.c:1355
+#: builtin/merge.c:1356
 msgid "There is no merge in progress (MERGE_HEAD missing)."
 msgstr "İlerlemekte olan bir birleştirme yok (MERGE_HEAD eksik)."
 
-#: builtin/merge.c:1371
+#: builtin/merge.c:1372
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
 "Please, commit your changes before you merge."
@@ -17904,7 +17910,7 @@ msgstr ""
 "Birleştirmenizi sonuçlandırmadınız (MERGE_HEAD mevcut).\n"
 "Lütfen birleştirmeden önce değişikliklerinizi işleyin."
 
-#: builtin/merge.c:1378
+#: builtin/merge.c:1379
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you merge."
@@ -17912,89 +17918,89 @@ msgstr ""
 "Seç-al'ınızı sonuçlandırmadınız (CHERRY_PICK_HEAD mevcut).\n"
 "Lütfen birleştirmeden önce değişikliklerinizi işleyin."
 
-#: builtin/merge.c:1381
+#: builtin/merge.c:1382
 msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "Seç-al'ınızı sonuçlandırmadınız (CHERRY_PICK_HEAD mevcut)."
 
-#: builtin/merge.c:1395
+#: builtin/merge.c:1396
 msgid "You cannot combine --squash with --no-ff."
 msgstr "--squash ile --no-ff birlikte kullanılamaz."
 
-#: builtin/merge.c:1397
+#: builtin/merge.c:1398
 msgid "You cannot combine --squash with --commit."
 msgstr "--squash ile --commit birlikte kullanılamaz."
 
-#: builtin/merge.c:1413
+#: builtin/merge.c:1414
 msgid "No commit specified and merge.defaultToUpstream not set."
 msgstr "Belirtilen bir işleme yok ve merge.defaultToUpstream ayarlanmamış."
 
-#: builtin/merge.c:1430
+#: builtin/merge.c:1431
 msgid "Squash commit into empty head not supported yet"
 msgstr "İşlemeyi boş dal ucuna tıkıştırma henüz desteklenmiyor"
 
-#: builtin/merge.c:1432
+#: builtin/merge.c:1433
 msgid "Non-fast-forward commit does not make sense into an empty head"
 msgstr ""
 "İleri sarım olmayan işlemeyi boş dal ucuna yapmak bir anlam ifade etmiyor"
 
-#: builtin/merge.c:1437
+#: builtin/merge.c:1438
 #, c-format
 msgid "%s - not something we can merge"
 msgstr "%s - birleştirebileceğimiz bir şey değil"
 
-#: builtin/merge.c:1439
+#: builtin/merge.c:1440
 msgid "Can merge only exactly one commit into empty head"
 msgstr "Boş dal ucuna tam olarak yalnızca bir işleme birleştirilebilir"
 
-#: builtin/merge.c:1520
+#: builtin/merge.c:1521
 msgid "refusing to merge unrelated histories"
 msgstr "birbiriyle ilişkisi olmayan geçmişleri birleştirme reddediliyor"
 
-#: builtin/merge.c:1539
+#: builtin/merge.c:1540
 #, c-format
 msgid "Updating %s..%s\n"
 msgstr "Güncelleniyor: %s..%s\n"
 
-#: builtin/merge.c:1585
+#: builtin/merge.c:1587
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
 msgstr "Gerçekten önemsiz indeks içi birleştirme deneniyor...\n"
 
-#: builtin/merge.c:1592
+#: builtin/merge.c:1594
 #, c-format
 msgid "Nope.\n"
 msgstr "Yok.\n"
 
-#: builtin/merge.c:1623
+#: builtin/merge.c:1625
 msgid "Not possible to fast-forward, aborting."
 msgstr "İleri sarma olanaklı değil, iptal ediliyor."
 
-#: builtin/merge.c:1651 builtin/merge.c:1716
+#: builtin/merge.c:1653 builtin/merge.c:1719
 #, c-format
 msgid "Rewinding the tree to pristine...\n"
 msgstr "Ağaç bozulmamış durumuna geri sarılıyor...\n"
 
-#: builtin/merge.c:1655
+#: builtin/merge.c:1657
 #, c-format
 msgid "Trying merge strategy %s...\n"
 msgstr "%s birleştirme stratejisi deneniyor...\n"
 
-#: builtin/merge.c:1707
+#: builtin/merge.c:1709
 #, c-format
 msgid "No merge strategy handled the merge.\n"
 msgstr "Birleştirmeyi hiçbir birleştirme stratejisi işlemedi\n"
 
-#: builtin/merge.c:1709
+#: builtin/merge.c:1711
 #, c-format
 msgid "Merge with strategy %s failed.\n"
 msgstr "%s stratejisi ile birleştirme başarısız oldu.\n"
 
-#: builtin/merge.c:1718
+#: builtin/merge.c:1721
 #, c-format
-msgid "Using the %s to prepare resolving by hand.\n"
-msgstr "El ile çözümü hazırlamak için %s kullanılıyor.\n"
+msgid "Using the %s strategy to prepare resolving by hand.\n"
+msgstr "El ile çözümü hazırlamak için %s stratejisi kullanılıyor.\n"
 
-#: builtin/merge.c:1732
+#: builtin/merge.c:1735
 #, c-format
 msgid "Automatic merge went well; stopped before committing as requested\n"
 msgstr ""
@@ -19253,7 +19259,7 @@ msgstr "%s işlemesine erişilemedi"
 
 #: builtin/pull.c:902
 msgid "ignoring --verify-signatures for rebase"
-msgstr "yeniden temellendirme için --verify-signature yok sayılıyor"
+msgstr "yeniden temellendirme için --verify-signatures yok sayılıyor"
 
 #: builtin/pull.c:930
 msgid ""
@@ -20329,7 +20335,7 @@ msgid "fatal: no such branch/commit '%s'"
 msgstr "onulmaz: böyle bir dal/işleme yok: '%s'"
 
 #: builtin/rebase.c:1929 builtin/submodule--helper.c:39
-#: builtin/submodule--helper.c:2414
+#: builtin/submodule--helper.c:2431
 #, c-format
 msgid "No such ref: %s"
 msgstr "Böyle bir başvuru yok: %s"
@@ -20609,7 +20615,7 @@ msgid ""
 "\t use --mirror=fetch or --mirror=push instead"
 msgstr ""
 "--mirror tehlikeli ve artık kullanılmamalı; lütfen\n"
-"\t yerine --mirror-fetch veya --mirror=push kullanın."
+"\t yerine --mirror=fetch veya --mirror=push kullanın."
 
 #: builtin/remote.c:148
 #, c-format
@@ -21081,7 +21087,7 @@ msgstr "-a ile aynı ve ulaşılamayan nesneleri serbest bırakır"
 
 #: builtin/repack.c:465
 msgid "remove redundant packs, and run git-prune-packed"
-msgstr "gereksiz paketleri kaldır ve 'git prune-packed' çalıştır"
+msgstr "gereksiz paketleri kaldır ve 'git-prune-packed' çalıştır"
 
 #: builtin/repack.c:467
 msgid "pass --no-reuse-delta to git-pack-objects"
@@ -22187,37 +22193,37 @@ msgstr "sparse-index yapılandırması değiştirilemedi"
 msgid "failed to open '%s'"
 msgstr "'%s' açılamadı"
 
-#: builtin/sparse-checkout.c:419
+#: builtin/sparse-checkout.c:413
 #, c-format
 msgid "could not normalize path %s"
 msgstr "'%s' yolu olağanlaştırılamadı"
 
-#: builtin/sparse-checkout.c:431
+#: builtin/sparse-checkout.c:425
 msgid "git sparse-checkout (set|add) (--stdin | <patterns>)"
 msgstr "git sparse-checkout (set|add) (--stdin | <dizgiler>)"
 
-#: builtin/sparse-checkout.c:456
+#: builtin/sparse-checkout.c:450
 #, c-format
 msgid "unable to unquote C-style string '%s'"
 msgstr "C biçemli '%s' dizisinin tırnakları kaldırılamıyor"
 
-#: builtin/sparse-checkout.c:510 builtin/sparse-checkout.c:534
+#: builtin/sparse-checkout.c:504 builtin/sparse-checkout.c:528
 msgid "unable to load existing sparse-checkout patterns"
 msgstr "mevcut aralıklı çıkış dizgileri yüklenemiyor"
 
-#: builtin/sparse-checkout.c:579
+#: builtin/sparse-checkout.c:573
 msgid "read patterns from standard in"
 msgstr "dizgileri stdin'den oku"
 
-#: builtin/sparse-checkout.c:594
+#: builtin/sparse-checkout.c:588
 msgid "git sparse-checkout reapply"
 msgstr "git sparse-checkout reapply"
 
-#: builtin/sparse-checkout.c:613
+#: builtin/sparse-checkout.c:607
 msgid "git sparse-checkout disable"
 msgstr "git sparse-checkout disable"
 
-#: builtin/sparse-checkout.c:644
+#: builtin/sparse-checkout.c:638
 msgid "error while refreshing working directory"
 msgstr "çalışma dizini yenilenirken hata"
 
@@ -22501,7 +22507,7 @@ msgstr "yorum karakteri ile başlayan tüm satırları atla ve kaldır"
 msgid "prepend comment character and space to each line"
 msgstr "her satırın başına yorum karakteri ve boşluk koy"
 
-#: builtin/submodule--helper.c:46 builtin/submodule--helper.c:2423
+#: builtin/submodule--helper.c:46 builtin/submodule--helper.c:2440
 #, c-format
 msgid "Expecting a full ref name, got %s"
 msgstr "Tam bir başvuru adı bekleniyordu, %s alındı"
@@ -22515,26 +22521,27 @@ msgstr "submodule--helper print-default-remote argümanı almaz"
 msgid "cannot strip one component off url '%s'"
 msgstr "'%s' url'sinden bir bileşen çıkarılamıyor"
 
-#: builtin/submodule--helper.c:409 builtin/submodule--helper.c:1819
+#: builtin/submodule--helper.c:411 builtin/submodule--helper.c:1887
+#: builtin/submodule--helper.c:2891
 msgid "alternative anchor for relative paths"
 msgstr "göreceli yollar için alternatif tutturucu"
 
-#: builtin/submodule--helper.c:414
+#: builtin/submodule--helper.c:416
 msgid "git submodule--helper list [--prefix=<path>] [<path>...]"
 msgstr "git submodule--helper list [--prefix=<yol>] [<yol>...]"
 
-#: builtin/submodule--helper.c:472 builtin/submodule--helper.c:629
-#: builtin/submodule--helper.c:652
+#: builtin/submodule--helper.c:474 builtin/submodule--helper.c:631
+#: builtin/submodule--helper.c:654
 #, c-format
 msgid "No url found for submodule path '%s' in .gitmodules"
 msgstr ".gitmodules içinde '%s' altmodül yolu için url bulunamadı"
 
-#: builtin/submodule--helper.c:524
+#: builtin/submodule--helper.c:526
 #, c-format
 msgid "Entering '%s'\n"
 msgstr "Giriliyor: '%s'\n"
 
-#: builtin/submodule--helper.c:527
+#: builtin/submodule--helper.c:529
 #, c-format
 msgid ""
 "run_command returned non-zero status for %s\n"
@@ -22543,7 +22550,7 @@ msgstr ""
 "run_command, %s için sıfır olmayan durum döndürdü\n"
 "."
 
-#: builtin/submodule--helper.c:549
+#: builtin/submodule--helper.c:551
 #, c-format
 msgid ""
 "run_command returned non-zero status while recursing in the nested "
@@ -22553,20 +22560,20 @@ msgstr ""
 "run_command, %s ögesinin iç içe geçmiş altmodülleri içinde özyinelerken "
 "sıfır olmayan durum döndürdü"
 
-#: builtin/submodule--helper.c:565
+#: builtin/submodule--helper.c:567
 msgid "suppress output of entering each submodule command"
 msgstr "her bir altmodül komutu girişinin çıktısını gizle"
 
-#: builtin/submodule--helper.c:567 builtin/submodule--helper.c:888
-#: builtin/submodule--helper.c:1487
+#: builtin/submodule--helper.c:569 builtin/submodule--helper.c:890
+#: builtin/submodule--helper.c:1489
 msgid "recurse into nested submodules"
 msgstr "iç içe geçmiş altmodüle özyinele"
 
-#: builtin/submodule--helper.c:572
+#: builtin/submodule--helper.c:574
 msgid "git submodule--helper foreach [--quiet] [--recursive] [--] <command>"
 msgstr "git submodule--helper foreach [--quiet] [--recursive] [--] <komut>"
 
-#: builtin/submodule--helper.c:599
+#: builtin/submodule--helper.c:601
 #, c-format
 msgid ""
 "could not look up configuration '%s'. Assuming this repository is its own "
@@ -22575,54 +22582,54 @@ msgstr ""
 "'%s' yapılandırması aranamadı. Bu deponun kendi yetkili üstkaynağı olduğu "
 "varsayılıyor."
 
-#: builtin/submodule--helper.c:666
+#: builtin/submodule--helper.c:668
 #, c-format
 msgid "Failed to register url for submodule path '%s'"
 msgstr "Altmodül yolu url'si '%s' kaydı yapılamadı"
 
-#: builtin/submodule--helper.c:670
+#: builtin/submodule--helper.c:672
 #, c-format
 msgid "Submodule '%s' (%s) registered for path '%s'\n"
 msgstr "'%s' altmodülü (%s), '%s' yoluna kaydı yapıldı\n"
 
-#: builtin/submodule--helper.c:680
+#: builtin/submodule--helper.c:682
 #, c-format
 msgid "warning: command update mode suggested for submodule '%s'\n"
 msgstr "uyarı: '%s' altmodülü için komut güncellemesi önerilmiyor\n"
 
-#: builtin/submodule--helper.c:687
+#: builtin/submodule--helper.c:689
 #, c-format
 msgid "Failed to register update mode for submodule path '%s'"
 msgstr "'%s' altmodülü yolu için güncelleme kipi kaydı yapılamadı"
 
-#: builtin/submodule--helper.c:709
+#: builtin/submodule--helper.c:711
 msgid "suppress output for initializing a submodule"
 msgstr "bir altmodül ilklendirmesi çıktısını gizle"
 
-#: builtin/submodule--helper.c:714
+#: builtin/submodule--helper.c:716
 msgid "git submodule--helper init [<options>] [<path>]"
 msgstr "git submodule--helper init [<seçenekler>] [<yol>]"
 
-#: builtin/submodule--helper.c:787 builtin/submodule--helper.c:922
+#: builtin/submodule--helper.c:789 builtin/submodule--helper.c:924
 #, c-format
 msgid "no submodule mapping found in .gitmodules for path '%s'"
 msgstr "'%s' yolu için .gitmodules içinde altmodül eşlemi bulunmadı"
 
-#: builtin/submodule--helper.c:835
+#: builtin/submodule--helper.c:837
 #, c-format
 msgid "could not resolve HEAD ref inside the submodule '%s'"
 msgstr "'%s' altmodülü içinde HEAD başvurusu çözülemedi"
 
-#: builtin/submodule--helper.c:862 builtin/submodule--helper.c:1457
+#: builtin/submodule--helper.c:864 builtin/submodule--helper.c:1459
 #, c-format
 msgid "failed to recurse into submodule '%s'"
 msgstr "'%s' altmodülüne özyinelenemedi"
 
-#: builtin/submodule--helper.c:886 builtin/submodule--helper.c:1623
+#: builtin/submodule--helper.c:888 builtin/submodule--helper.c:1625
 msgid "suppress submodule status output"
 msgstr "altmodül durum çıktısını gizle"
 
-#: builtin/submodule--helper.c:887
+#: builtin/submodule--helper.c:889
 msgid ""
 "use commit stored in the index instead of the one stored in the submodule "
 "HEAD"
@@ -22630,96 +22637,96 @@ msgstr ""
 "altmodül HEAD'i içinde depolanan işleme yerine indekste depolanan işlemeyi "
 "kullan"
 
-#: builtin/submodule--helper.c:893
+#: builtin/submodule--helper.c:895
 msgid "git submodule status [--quiet] [--cached] [--recursive] [<path>...]"
 msgstr "git submodule status [--quiet] [--cached] [--recursive] [<yol>...]"
 
-#: builtin/submodule--helper.c:917
+#: builtin/submodule--helper.c:919
 msgid "git submodule--helper name <path>"
 msgstr "git submodule--helper name <yol>"
 
-#: builtin/submodule--helper.c:989
+#: builtin/submodule--helper.c:991
 #, c-format
 msgid "* %s %s(blob)->%s(submodule)"
 msgstr "* %s %s(ikili nesne)->%s(altmodül)"
 
-#: builtin/submodule--helper.c:992
+#: builtin/submodule--helper.c:994
 #, c-format
 msgid "* %s %s(submodule)->%s(blob)"
 msgstr "* %s %s(altmodül)->%s(ikili nesne)"
 
-#: builtin/submodule--helper.c:1005
+#: builtin/submodule--helper.c:1007
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: builtin/submodule--helper.c:1055
+#: builtin/submodule--helper.c:1057
 #, c-format
 msgid "couldn't hash object from '%s'"
 msgstr "'%s' üzerinden nesne sağlaması yapılamadı"
 
-#: builtin/submodule--helper.c:1059
+#: builtin/submodule--helper.c:1061
 #, c-format
 msgid "unexpected mode %o\n"
 msgstr "beklenmedik kip %o\n"
 
-#: builtin/submodule--helper.c:1300
+#: builtin/submodule--helper.c:1302
 msgid "use the commit stored in the index instead of the submodule HEAD"
 msgstr "altmodül HEAD'i içindeki işleme ile indekstekini karşılaştırmak için"
 
-#: builtin/submodule--helper.c:1302
+#: builtin/submodule--helper.c:1304
 msgid "compare the commit in the index with that in the submodule HEAD"
 msgstr "indeksteki işlemeyi altmodül HEAD'inde olan ile karşılaştır"
 
-#: builtin/submodule--helper.c:1304
+#: builtin/submodule--helper.c:1306
 msgid "skip submodules with 'ignore_config' value set to 'all'"
 msgstr "'ignore_config' değeri 'all' olan altmodülleri atla"
 
-#: builtin/submodule--helper.c:1306
+#: builtin/submodule--helper.c:1308
 msgid "limit the summary size"
 msgstr "özet boyutunu sınırla"
 
-#: builtin/submodule--helper.c:1311
+#: builtin/submodule--helper.c:1313
 msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
 msgstr "git submodule--helper summary [<seçenekler>] [<işleme>] [--] [<yol>]"
 
-#: builtin/submodule--helper.c:1335
+#: builtin/submodule--helper.c:1337
 msgid "could not fetch a revision for HEAD"
 msgstr "HEAD için bir revizyon getirilemedi"
 
-#: builtin/submodule--helper.c:1340
+#: builtin/submodule--helper.c:1342
 msgid "--cached and --files are mutually exclusive"
 msgstr "--cached ve --files birlikte kullanılamaz"
 
-#: builtin/submodule--helper.c:1407
+#: builtin/submodule--helper.c:1409
 #, c-format
 msgid "Synchronizing submodule url for '%s'\n"
 msgstr "'%s' için altmodül url'si eşitleniyor\n"
 
-#: builtin/submodule--helper.c:1413
+#: builtin/submodule--helper.c:1415
 #, c-format
 msgid "failed to register url for submodule path '%s'"
 msgstr "'%s' altmodülü yolu için url kaydı yapılamadı"
 
-#: builtin/submodule--helper.c:1427
+#: builtin/submodule--helper.c:1429
 #, c-format
 msgid "failed to get the default remote for submodule '%s'"
 msgstr "'%s' altmodülü için öntanımlı uzak konum alınamadı"
 
-#: builtin/submodule--helper.c:1438
+#: builtin/submodule--helper.c:1440
 #, c-format
 msgid "failed to update remote for submodule '%s'"
 msgstr "'%s' altmodülü için uzak konum güncellenemedi"
 
-#: builtin/submodule--helper.c:1485
+#: builtin/submodule--helper.c:1487
 msgid "suppress output of synchronizing submodule url"
 msgstr "altmodül url'si eşitleme çıktısını gizle"
 
-#: builtin/submodule--helper.c:1492
+#: builtin/submodule--helper.c:1494
 msgid "git submodule--helper sync [--quiet] [--recursive] [<path>]"
 msgstr "git submodule--helper sync [--quiet] [--recursive] [<yol>]"
 
-#: builtin/submodule--helper.c:1546
+#: builtin/submodule--helper.c:1548
 #, c-format
 msgid ""
 "Submodule work tree '%s' contains a .git directory (use 'rm -rf' if you "
@@ -22728,7 +22735,7 @@ msgstr ""
 "Altmodül çalışma ağacı '%s' bir .git dizini içeriyor (tüm geçmişi dahil "
 "olacak biçimde kaldırmak istiyorsanız 'rm -rf' kullanın)"
 
-#: builtin/submodule--helper.c:1558
+#: builtin/submodule--helper.c:1560
 #, c-format
 msgid ""
 "Submodule work tree '%s' contains local modifications; use '-f' to discard "
@@ -22737,47 +22744,47 @@ msgstr ""
 "Altmodül çalışma ağacı '%s' yerel değişiklikler içeriyor; onları atmak için "
 "'-f' kullanın"
 
-#: builtin/submodule--helper.c:1566
+#: builtin/submodule--helper.c:1568
 #, c-format
 msgid "Cleared directory '%s'\n"
 msgstr "'%s' dizini temizlendi\n"
 
-#: builtin/submodule--helper.c:1568
+#: builtin/submodule--helper.c:1570
 #, c-format
 msgid "Could not remove submodule work tree '%s'\n"
 msgstr "'%s' altmodül çalışma ağacı kaldırılamadı\n"
 
-#: builtin/submodule--helper.c:1579
+#: builtin/submodule--helper.c:1581
 #, c-format
 msgid "could not create empty submodule directory %s"
 msgstr "boş altmodül dizini %s oluşturulamadı"
 
-#: builtin/submodule--helper.c:1595
+#: builtin/submodule--helper.c:1597
 #, c-format
 msgid "Submodule '%s' (%s) unregistered for path '%s'\n"
 msgstr "'%s' altmodülü (%s), '%s' yoluna kaydı yapılmamış\n"
 
-#: builtin/submodule--helper.c:1624
+#: builtin/submodule--helper.c:1626
 msgid "remove submodule working trees even if they contain local changes"
 msgstr "altmodül çalışma ağaçlarını yerel değişiklikler içerseler bile kaldır"
 
-#: builtin/submodule--helper.c:1625
+#: builtin/submodule--helper.c:1627
 msgid "unregister all submodules"
 msgstr "tüm altmodüllerin kaydını kaldır"
 
-#: builtin/submodule--helper.c:1630
+#: builtin/submodule--helper.c:1632
 msgid ""
 "git submodule deinit [--quiet] [-f | --force] [--all | [--] [<path>...]]"
 msgstr ""
 "git submodule deinit [--quiet] [-f | --force] [--all | [--] [<yol>...]]"
 
-#: builtin/submodule--helper.c:1644
+#: builtin/submodule--helper.c:1646
 msgid "Use '--all' if you really want to deinitialize all submodules"
 msgstr ""
-"Tüm altmodüllerin ilklendirmesini gerçekten geri almak istiyorsanız '-all' "
+"Tüm altmodüllerin ilklendirmesini gerçekten geri almak istiyorsanız '--all' "
 "kullanın"
 
-#: builtin/submodule--helper.c:1713
+#: builtin/submodule--helper.c:1690
 msgid ""
 "An alternate computed from a superproject's alternate is invalid.\n"
 "To allow Git to clone without an alternate in such a case, set\n"
@@ -22789,46 +22796,68 @@ msgstr ""
 "submodule.alternateErrorStrategy ayarını 'info'ya ayarlayın veya\n"
 "--reference yerine --reference-if-able kullanarak klonlayın."
 
-#: builtin/submodule--helper.c:1752 builtin/submodule--helper.c:1755
+#: builtin/submodule--helper.c:1729 builtin/submodule--helper.c:1732
 #, c-format
 msgid "submodule '%s' cannot add alternate: %s"
 msgstr "'%s' altmodülü alternatif ekleyemiyor: %s"
 
-#: builtin/submodule--helper.c:1791
+#: builtin/submodule--helper.c:1768
 #, c-format
 msgid "Value '%s' for submodule.alternateErrorStrategy is not recognized"
 msgstr "'%s' submodule.alternateErrorStrategy değeri tanımlanamadı"
 
-#: builtin/submodule--helper.c:1798
+#: builtin/submodule--helper.c:1775
 #, c-format
 msgid "Value '%s' for submodule.alternateLocation is not recognized"
 msgstr "'%s' submodule.alternateLocation değeri tanımlanamadı"
 
-#: builtin/submodule--helper.c:1822
+#: builtin/submodule--helper.c:1800
+#, c-format
+msgid "refusing to create/use '%s' in another submodule's git dir"
+msgstr ""
+"başka bir altmodülün git dizininde '%s' oluşturma/kullanma reddediliyor"
+
+#: builtin/submodule--helper.c:1841
+#, c-format
+msgid "clone of '%s' into submodule path '%s' failed"
+msgstr "'%s' ögesinin '%s' altmodül yoluna klonlanması başarısız"
+
+#: builtin/submodule--helper.c:1846
+#, c-format
+msgid "directory not empty: '%s'"
+msgstr "dizin boş değil: '%s'"
+
+#: builtin/submodule--helper.c:1858
+#, c-format
+msgid "could not get submodule directory for '%s'"
+msgstr "'%s' için altmodül dizini alınamadı"
+
+#: builtin/submodule--helper.c:1890 builtin/submodule--helper.c:2894
 msgid "where the new submodule will be cloned to"
 msgstr "yeni altmodülün nereye klonlanacağı"
 
-#: builtin/submodule--helper.c:1825
+#: builtin/submodule--helper.c:1893 builtin/submodule--helper.c:2897
 msgid "name of the new submodule"
 msgstr "yeni altmodülün adı"
 
-#: builtin/submodule--helper.c:1828
+#: builtin/submodule--helper.c:1896 builtin/submodule--helper.c:2900
 msgid "url where to clone the submodule from"
 msgstr "altmodülün klonlanacağı url konumu"
 
-#: builtin/submodule--helper.c:1836
+#: builtin/submodule--helper.c:1904 builtin/submodule--helper.c:2907
 msgid "depth for shallow clones"
 msgstr "sığ klonların derinliği"
 
-#: builtin/submodule--helper.c:1839 builtin/submodule--helper.c:2348
+#: builtin/submodule--helper.c:1907 builtin/submodule--helper.c:2365
+#: builtin/submodule--helper.c:2909
 msgid "force cloning progress"
 msgstr "zorla klonla"
 
-#: builtin/submodule--helper.c:1841 builtin/submodule--helper.c:2350
+#: builtin/submodule--helper.c:1909 builtin/submodule--helper.c:2367
 msgid "disallow cloning into non-empty directory"
 msgstr "boş olmayan dizine klonlamaya izin verme"
 
-#: builtin/submodule--helper.c:1848
+#: builtin/submodule--helper.c:1916
 msgid ""
 "git submodule--helper clone [--prefix=<path>] [--quiet] [--reference "
 "<repository>] [--name <name>] [--depth <depth>] [--single-branch] --url "
@@ -22837,103 +22866,82 @@ msgstr ""
 "git submodule--helper clone [--prefix=<yol>] [--quiet] [--reference <depo>] "
 "[--name <ad>] [--depth <derinlik>] [--single-branch] --url <url> --path <yol>"
 
-#: builtin/submodule--helper.c:1873
-#, c-format
-msgid "refusing to create/use '%s' in another submodule's git dir"
-msgstr ""
-"başka bir altmodülün git dizininde '%s' oluşturma/kullanma reddediliyor"
-
-#: builtin/submodule--helper.c:1884
-#, c-format
-msgid "clone of '%s' into submodule path '%s' failed"
-msgstr "'%s' ögesinin '%s' altmodül yoluna klonlanması başarısız"
-
-#: builtin/submodule--helper.c:1888
-#, c-format
-msgid "directory not empty: '%s'"
-msgstr "dizin boş değil: '%s'"
-
-#: builtin/submodule--helper.c:1900
-#, c-format
-msgid "could not get submodule directory for '%s'"
-msgstr "'%s' için altmodül dizini alınamadı"
-
-#: builtin/submodule--helper.c:1936
+#: builtin/submodule--helper.c:1953
 #, c-format
 msgid "Invalid update mode '%s' for submodule path '%s'"
 msgstr "Geçersiz güncelleme kipi '%s', '%s' altmodül yolu için"
 
-#: builtin/submodule--helper.c:1940
+#: builtin/submodule--helper.c:1957
 #, c-format
 msgid "Invalid update mode '%s' configured for submodule path '%s'"
 msgstr "Geçersiz güncelleme kipi '%s', '%s' altmodül yolu için yapılandırılmış"
 
-#: builtin/submodule--helper.c:2041
+#: builtin/submodule--helper.c:2058
 #, c-format
 msgid "Submodule path '%s' not initialized"
 msgstr "Altmodül yolu '%s' ilklendirilmedi"
 
-#: builtin/submodule--helper.c:2045
+#: builtin/submodule--helper.c:2062
 msgid "Maybe you want to use 'update --init'?"
 msgstr "'update --init' mi kullanmak istersiniz?"
 
-#: builtin/submodule--helper.c:2075
+#: builtin/submodule--helper.c:2092
 #, c-format
 msgid "Skipping unmerged submodule %s"
 msgstr "Birleştirilmemiş altmodül %s atlanıyor"
 
-#: builtin/submodule--helper.c:2104
+#: builtin/submodule--helper.c:2121
 #, c-format
 msgid "Skipping submodule '%s'"
 msgstr "'%s' altmodülü atlanıyor"
 
-#: builtin/submodule--helper.c:2254
+#: builtin/submodule--helper.c:2271
 #, c-format
 msgid "Failed to clone '%s'. Retry scheduled"
 msgstr "'%s' klonlanamadı. Yeniden deneme zamanlandı."
 
-#: builtin/submodule--helper.c:2265
+#: builtin/submodule--helper.c:2282
 #, c-format
 msgid "Failed to clone '%s' a second time, aborting"
 msgstr "'%s' ikinci bir kez klonlanamadı, iptal ediliyor"
 
-#: builtin/submodule--helper.c:2327 builtin/submodule--helper.c:2573
+#: builtin/submodule--helper.c:2344 builtin/submodule--helper.c:2590
 msgid "path into the working tree"
 msgstr "çalışma ağacına giden yol"
 
-#: builtin/submodule--helper.c:2330
+#: builtin/submodule--helper.c:2347
 msgid "path into the working tree, across nested submodule boundaries"
 msgstr "iç içe geçmiş altmodül sınırları üzerinden çalışma ağacına giden yol"
 
-#: builtin/submodule--helper.c:2334
+#: builtin/submodule--helper.c:2351
 msgid "rebase, merge, checkout or none"
 msgstr "rebase, merge, checkout veya none"
 
-#: builtin/submodule--helper.c:2340
+#: builtin/submodule--helper.c:2357
 msgid "create a shallow clone truncated to the specified number of revisions"
 msgstr "belirli bir revizyon sayısına kısaltılmış sığ klon oluştur"
 
-#: builtin/submodule--helper.c:2343
+#: builtin/submodule--helper.c:2360
 msgid "parallel jobs"
 msgstr "paralel işler"
 
-#: builtin/submodule--helper.c:2345
+#: builtin/submodule--helper.c:2362
 msgid "whether the initial clone should follow the shallow recommendation"
 msgstr "ilk klonun sığlık üzerine olan tavsiyeyi izleyip izlemeyeceği"
 
-#: builtin/submodule--helper.c:2346
+#: builtin/submodule--helper.c:2363
 msgid "don't print cloning progress"
 msgstr "klonlama işlemini yazdırma"
 
-#: builtin/submodule--helper.c:2357
+#: builtin/submodule--helper.c:2374
 msgid "git submodule--helper update-clone [--prefix=<path>] [<path>...]"
 msgstr "git submodule--helper update-clone [--prefix=<yol>] [<yol>...]"
 
-#: builtin/submodule--helper.c:2370
+#: builtin/submodule--helper.c:2387
 msgid "bad value for update parameter"
 msgstr "güncelleme parametresi için hatalı değer"
 
-#: builtin/submodule--helper.c:2418
+#: builtin/submodule--helper.c:2435
 #, c-format
 msgid ""
 "Submodule (%s) branch configured to inherit branch from superproject, but "
@@ -22942,84 +22950,142 @@ msgstr ""
 "Altmodül (%s) dalı süperproje dalından devralmak üzere yapılandırıldı; ancak "
 "süperproje herhangi bir dalda değil"
 
-#: builtin/submodule--helper.c:2541
+#: builtin/submodule--helper.c:2558
 #, c-format
 msgid "could not get a repository handle for submodule '%s'"
 msgstr "'%s' altmodülü için depo tutacağı alınamadı"
 
-#: builtin/submodule--helper.c:2574
+#: builtin/submodule--helper.c:2591
 msgid "recurse into submodules"
 msgstr "altmodüllere özyinele"
 
-#: builtin/submodule--helper.c:2580
+#: builtin/submodule--helper.c:2597
 msgid "git submodule--helper absorb-git-dirs [<options>] [<path>...]"
 msgstr "git submodule--helper absorb-git-dirs [<seçenekler>] [<yol>...]"
 
-#: builtin/submodule--helper.c:2636
+#: builtin/submodule--helper.c:2653
 msgid "check if it is safe to write to the .gitmodules file"
 msgstr ".gitmodules dosyasına yazım güvenli mi değil mi denetle"
 
-#: builtin/submodule--helper.c:2639
+#: builtin/submodule--helper.c:2656
 msgid "unset the config in the .gitmodules file"
 msgstr ".gitmodules dosyasındaki yapılandırmayı kaldır"
 
-#: builtin/submodule--helper.c:2644
+#: builtin/submodule--helper.c:2661
 msgid "git submodule--helper config <name> [<value>]"
 msgstr "git submodule--helper config <ad> [<değer>]"
 
-#: builtin/submodule--helper.c:2645
+#: builtin/submodule--helper.c:2662
 msgid "git submodule--helper config --unset <name>"
 msgstr "git submodule--helper config --unset <ad>"
 
-#: builtin/submodule--helper.c:2646
+#: builtin/submodule--helper.c:2663
 msgid "git submodule--helper config --check-writeable"
 msgstr "git submodule--helper config --check-writeable"
 
-#: builtin/submodule--helper.c:2665 git-submodule.sh:150
+#: builtin/submodule--helper.c:2682 git-submodule.sh:150
 #, sh-format
 msgid "please make sure that the .gitmodules file is in the working tree"
 msgstr ".gitmodules dosyasının çalışma ağacında olduğundan lütfen emin ol"
 
-#: builtin/submodule--helper.c:2681
+#: builtin/submodule--helper.c:2698
 msgid "suppress output for setting url of a submodule"
 msgstr "bir altmodül url ayarlanması çıktısını gizle"
 
-#: builtin/submodule--helper.c:2685
+#: builtin/submodule--helper.c:2702
 msgid "git submodule--helper set-url [--quiet] <path> <newurl>"
 msgstr "git submodule--helper set-url [--quiet] <yol> <yeniurl>"
 
-#: builtin/submodule--helper.c:2718
+#: builtin/submodule--helper.c:2735
 msgid "set the default tracking branch to master"
 msgstr "öntanımlı izleme dalını master olarak ayarla"
 
-#: builtin/submodule--helper.c:2720
+#: builtin/submodule--helper.c:2737
 msgid "set the default tracking branch"
 msgstr "öntanımlı izleme dalını ayarla"
 
-#: builtin/submodule--helper.c:2724
+#: builtin/submodule--helper.c:2741
 msgid "git submodule--helper set-branch [-q|--quiet] (-d|--default) <path>"
 msgstr "git submodule--helper set-branch [-q|--quiet] (-d|--default) <yol>"
 
-#: builtin/submodule--helper.c:2725
+#: builtin/submodule--helper.c:2742
 msgid ""
 "git submodule--helper set-branch [-q|--quiet] (-b|--branch) <branch> <path>"
 msgstr ""
 "git submodule--helper set-branch [-q|--quiet] (-b|--branch) <dal> <yol>"
 
-#: builtin/submodule--helper.c:2732
+#: builtin/submodule--helper.c:2749
 msgid "--branch or --default required"
 msgstr "--branch veya --default gerekli"
 
-#: builtin/submodule--helper.c:2735
+#: builtin/submodule--helper.c:2752
 msgid "--branch and --default are mutually exclusive"
 msgstr "--branch ve --default birlikte kullanılamaz"
 
-#: builtin/submodule--helper.c:2792 git.c:449 git.c:724
+#: builtin/submodule--helper.c:2815
+#, c-format
+msgid "Adding existing repo at '%s' to the index\n"
+msgstr "'%s' konumundaki mevcut repo indekse ekleniyor\n"
+
+#: builtin/submodule--helper.c:2818
+#, c-format
+msgid "'%s' already exists and is not a valid git repo"
+msgstr "'%s' halihazırda mevcut ve geçerli bir git deposu değil"
+
+#: builtin/submodule--helper.c:2828
+#, c-format
+msgid "A git directory for '%s' is found locally with remote(s):"
+msgstr "'%s' için bir git deposu yerelde şu uzak konumlarla bulundu:"
+
+#: builtin/submodule--helper.c:2833
+#, c-format
+msgid ""
+"If you want to reuse this local git directory instead of cloning again from\n"
+"  %s\n"
+"use the '--force' option. If the local git directory is not the correct "
+"repo\n"
+"or if you are unsure what this means, choose another name with the '--name' "
+"option.\n"
+msgstr ""
+"Eğer bu yerel git dizinini\n"
+"  %s\n"
+"konumundan yeniden klonlama yerine kullanmak isterseniz '--force'\n"
+"seçeneğini kullanın. Eğer bu yerel git dizini doğru depo değilse veya bunun\n"
+"ne anlama geldiğinden emin değilseniz '--name' seçeneği ile başka bir ad\n"
+"seçin.\n"
+
+#: builtin/submodule--helper.c:2842
+#, c-format
+msgid "Reactivating local git directory for submodule '%s'\n"
+msgstr "'%s' altmodülü için yerel git dizini yeniden etkinleştiriliyor\n"
+
+#: builtin/submodule--helper.c:2875
+#, c-format
+msgid "unable to checkout submodule '%s'"
+msgstr "'%s' altmodülü çıkış yapılamıyor"
+
+#: builtin/submodule--helper.c:2888
+msgid "branch of repository to checkout on cloning"
+msgstr "klonlamada çıkış yapılacak depo dalı"
+
+#: builtin/submodule--helper.c:2910
+msgid "allow adding an otherwise ignored submodule path"
+msgstr "başka bir durumda yok sayılan altmodül yolunun eklenmesine izin ver"
+
+#: builtin/submodule--helper.c:2917
+msgid ""
+"git submodule--helper add-clone [<options>...] --url <url> --path <path> --"
+"name <name>"
+msgstr ""
+"git submodule--helper add-clone [<seçenekler>...] --url <url> --path <yol> --"
+"name <ad>"
+
+#: builtin/submodule--helper.c:2985 git.c:449 git.c:724
 #, c-format
 msgid "%s doesn't support --super-prefix"
 msgstr "%s, --super-prefix desteklemiyor"
 
-#: builtin/submodule--helper.c:2798
+#: builtin/submodule--helper.c:2991
 #, c-format
 msgid "'%s' is not a valid submodule--helper subcommand"
 msgstr "'%s' geçerli bir submodule--helper altkomutu değil"
@@ -25226,69 +25292,27 @@ msgstr "'$sm_path' indekste halihazırda var ve bir altmodül değil"
 msgid "'$sm_path' does not have a commit checked out"
 msgstr "'$sm_path' çıkış yapılan bir işlemeye iye değil"
 
-#: git-submodule.sh:249
-#, sh-format
-msgid "Adding existing repo at '$sm_path' to the index"
-msgstr "'$sm_path' konumundaki mevcut depo indekse ekleniyor"
-
-#: git-submodule.sh:251
-#, sh-format
-msgid "'$sm_path' already exists and is not a valid git repo"
-msgstr "'$sm_path' halihazırda mevcut ve geçerli bir git deposu değil"
-
-#: git-submodule.sh:259
-#, sh-format
-msgid "A git directory for '$sm_name' is found locally with remote(s):"
-msgstr "'$sm_name' için bir git deposu yerelde şu uzak konumlarla bulundu:"
-
-#: git-submodule.sh:261
-#, sh-format
-msgid ""
-"If you want to reuse this local git directory instead of cloning again from\n"
-"  $realrepo\n"
-"use the '--force' option. If the local git directory is not the correct "
-"repo\n"
-"or you are unsure what this means choose another name with the '--name' "
-"option."
-msgstr ""
-"Bu yerel git dizinini\n"
-"  $realrepo\n"
-"konumundan bir kez daha klonlamak yerine yeniden kullanmak istiyorsanız\n"
-"--force seçeneğini kullanın. Eğer bu git dizini doğru depo değilse veya \n"
-"bunun ne anlama geldiğinden emin değilseniz --name seçeneği ile başka bir\n"
-"ad seçin."
-
-#: git-submodule.sh:267
-#, sh-format
-msgid "Reactivating local git directory for submodule '$sm_name'."
-msgstr "'$sm_name' altmodülü için yerel git dizini yeniden etkinleştiriliyor."
-
-#: git-submodule.sh:279
-#, sh-format
-msgid "Unable to checkout submodule '$sm_path'"
-msgstr "'$sm_path' altmodülü çıkış yapılamıyor"
-
-#: git-submodule.sh:284
+#: git-submodule.sh:248
 #, sh-format
 msgid "Failed to add submodule '$sm_path'"
 msgstr "'$sm_path' altmodülü eklenemedi"
 
-#: git-submodule.sh:293
+#: git-submodule.sh:257
 #, sh-format
 msgid "Failed to register submodule '$sm_path'"
 msgstr "'$sm_path' altmodülü kaydı yapılamadı"
 
-#: git-submodule.sh:568
+#: git-submodule.sh:532
 #, sh-format
 msgid "Unable to find current revision in submodule path '$displaypath'"
 msgstr "'$displaypath' altmodül yolunda geçerli revizyon bulunamadı"
 
-#: git-submodule.sh:578
+#: git-submodule.sh:542
 #, sh-format
 msgid "Unable to fetch in submodule path '$sm_path'"
 msgstr "'$sm_path' altmodül yolunda getirme yapılamadı"
 
-#: git-submodule.sh:583
+#: git-submodule.sh:547
 #, sh-format
 msgid ""
 "Unable to find current ${remote_name}/${branch} revision in submodule path "
@@ -25297,7 +25321,7 @@ msgstr ""
 "'$sm_path' altmodül yolunda geçerli ${remote_name}/${branch} revizyonu "
 "bulunamadı"
 
-#: git-submodule.sh:601
+#: git-submodule.sh:565
 #, sh-format
 msgid ""
 "Unable to fetch in submodule path '$displaypath'; trying to directly fetch "
@@ -25306,7 +25330,7 @@ msgstr ""
 "'$displaypath' altmodül yolunda getirme yapılamadı; $sha1 doğrudan "
 "getirilmeye çalışılıyor"
 
-#: git-submodule.sh:607
+#: git-submodule.sh:571
 #, sh-format
 msgid ""
 "Fetched in submodule path '$displaypath', but it did not contain $sha1. "
@@ -25315,47 +25339,47 @@ msgstr ""
 "'$displaypath' altmodül yolunda getirme tamamlandı; ancak $sha1 içermiyor. "
 "Bu işlemenin doğrudan getirilmesi başarısız oldu."
 
-#: git-submodule.sh:614
+#: git-submodule.sh:578
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$displaypath'"
 msgstr "'$displaypath' altmodül yolunda '$sha1' çıkışı yapılamadı"
 
-#: git-submodule.sh:615
+#: git-submodule.sh:579
 #, sh-format
 msgid "Submodule path '$displaypath': checked out '$sha1'"
 msgstr "Altmodül yolu '$displaypath': '$sha1' çıkışı yaptı"
 
-#: git-submodule.sh:619
+#: git-submodule.sh:583
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
 msgstr "'$sha1', '$displaypath' altmodül yolunda yeniden temellendirilemedi"
 
-#: git-submodule.sh:620
+#: git-submodule.sh:584
 #, sh-format
 msgid "Submodule path '$displaypath': rebased into '$sha1'"
 msgstr "Altmodül yolu '$displaypath': '$sha1' içine yeniden temellendirildi"
 
-#: git-submodule.sh:625
+#: git-submodule.sh:589
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$displaypath'"
 msgstr "'$sha1', '$displaypath' altmodül yolunda birleştirilemedi"
 
-#: git-submodule.sh:626
+#: git-submodule.sh:590
 #, sh-format
 msgid "Submodule path '$displaypath': merged in '$sha1'"
 msgstr "Altmodül yolu '$displaypath': '$sha1' içinde birleştirildi"
 
-#: git-submodule.sh:631
+#: git-submodule.sh:595
 #, sh-format
 msgid "Execution of '$command $sha1' failed in submodule path '$displaypath'"
 msgstr "'$displaypath' altmodül yolunda '$command $sha1' çalıştırılamadı"
 
-#: git-submodule.sh:632
+#: git-submodule.sh:596
 #, sh-format
 msgid "Submodule path '$displaypath': '$command $sha1'"
 msgstr "Altmodül yolu '$displaypath': '$command $sha1'"
 
-#: git-submodule.sh:663
+#: git-submodule.sh:627
 #, sh-format
 msgid "Failed to recurse into submodule path '$displaypath'"
 msgstr "'$displaypath' altmodül yoluna özyinelenemedi"
