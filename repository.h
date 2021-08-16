@@ -27,6 +27,14 @@ enum fetch_negotiation_setting {
 	FETCH_NEGOTIATION_NOOP = 3,
 };
 
+enum fsmonitor_mode {
+	FSMONITOR_MODE_INCOMPATIBLE = -2,
+	FSMONITOR_MODE_UNSET = -1,
+	FSMONITOR_MODE_DISABLED = 0,
+	FSMONITOR_MODE_HOOK = 1, /* core.fsmonitor */
+	FSMONITOR_MODE_IPC = 2, /* core.useBuiltinFSMonitor */
+};
+
 struct repo_settings {
 	int initialized;
 
@@ -34,6 +42,9 @@ struct repo_settings {
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
+
+	enum fsmonitor_mode fsmonitor_mode;
+	char *fsmonitor_hook_path;
 
 	int index_version;
 	enum untracked_cache_setting core_untracked_cache;
