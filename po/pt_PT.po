@@ -98,7 +98,7 @@
 #   pull                             |  agarrar
 #   push                             |  atirar
 #   range                            |  intervalo
-#   reachable                        |  acessível
+#   reachable                        |  alcançável
 #   rebase                           |  rebasear
 #   record                           |  registo
 #   ref                              |  ref
@@ -144,7 +144,7 @@
 #   tree-ish (also treeish)          |  arvoredo
 #   unmerged                         |  por juntar
 #   unpack                           |  desempacotar
-#   unreachable object               |  objeto inacessível
+#   unreachable object               |  objeto inalcançável
 #   unstage                          |  desencenar
 #   upstream                         |  upstream
 #   upstream branch                  |  ramo-upstream
