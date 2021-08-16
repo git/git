@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2021, #05; Thu, 12)
-X-master-at: 5d213e46bb7b880238ff5ea3914e940a50ae9369
-X-next-at: ed5fa647cd5d07bf513e4487e6352c72bffe54ea
+Subject: What's cooking in git.git (Aug 2021, #06; Mon, 16)
+X-master-at: 225bc32a989d7a22fa6addafd4ce7dcd04675dbf
+X-next-at: 9b09ab0cd71e3176c74aab77531d8c6b18775e2d
 
-What's cooking in git.git (Aug 2021, #05; Thu, 12)
+What's cooking in git.git (Aug 2021, #06; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,11 +17,7 @@ useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-Git 2.33-rc2 has been tagged.  The last couple of days, I may have
-ignored patches on new topics that are irrelevant to the upcoming
-release, and will continue to do so until the current cycle is over.
-Please resend them after the final release of Git 2.33 if they are
-still relevant.
+Git 2.33 (final) has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -54,102 +50,60 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cb/many-alternate-optim-fixup (2021-08-11) 3 commits
-  (merged to 'next' on 2021-08-11 at 02b3558652)
- + object-file: use unsigned arithmetic with bit mask
-  (merged to 'next' on 2021-08-09 at 3572bef349)
- + object-store: avoid extra ';' from KHASH_INIT
- + oidtree: avoid nested struct oidtree_node
- (this branch is used by cb/ci-build-pedantic.)
+* rs/oidtree-alignment-fix (2021-08-15) 1 commit
+  (merged to 'next' on 2021-08-15 at f03b174faa)
+ + oidtree: avoid unaligned access to crit-bit tree
 
- Build fix.
-
-
-* jn/log-m-does-not-imply-p (2021-08-09) 1 commit
-  (merged to 'next' on 2021-08-09 at d937d09924)
- + Revert 'diff-merges: let "-m" imply "-p"'
-
- Earlier "git log -m" was changed to always produce patch output,
- which would break existing scripts, which has been reverted.
+ Codepath to access recently added oidtree data structure had
+ to make unaligned accesses to oids, which has been corrected.
 
 --------------------------------------------------
 [New Topics]
 
-* th/userdiff-more-java (2021-08-11) 1 commit
- - userdiff: improve java hunk header regex
+* ar/submodule-run-update-procedure (2021-08-13) 1 commit
+ - submodule--helper: run update procedures from C
 
- The userdiff pattern for "java" language has been updated.
+ Reimplementation of parts of "git submodule" in C continues.
+
+
+* cb/ci-use-upload-artifacts-v1 (2021-08-15) 1 commit
+ - ci: use upload-artifacts v1 for dockerized jobs
+
+ Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
+ new version has a blocker bug for that architecture.
 
  Will merge to 'next'.
 
 
-* zh/cherry-pick-advice (2021-08-11) 1 commit
- - cherry-pick: use better advice message
+* pw/rebase-skip-final-fix (2021-08-13) 3 commits
+ - rebase --continue: remove .git/MERGE_MSG
+ - rebase --apply: restore some tests
+ - t3403: fix commit authorship
 
- The advice message that "git cherry-pick" gives when it asks
- conflicted replay of a commit to be resolved by the end user has
- been updated.
+ Checking out all the paths from HEAD during the last conflicted
+ step in "git rebase" and continuing would cause the step to be
+ skipped (which is expected), but leaves MERGE_HEAD file behind in
+ $GIT_DIR and confuses the next "git commit", which has been
+ corrected.
 
- cf. <a510722c-d5a2-f00c-dd20-dd7f76da2408@gmail.com>
-
-
-* es/config-based-hooks (2021-08-11) 7 commits
- - hook: allow out-of-repo 'git hook' invocations
- - hook: include hooks from the config
- - hook: allow running non-native hooks
- - hook: introduce "git hook list"
- - hook: allow parallel hook execution
- - hook: run a list of hooks instead
- - Merge branch 'ab/config-based-hooks-base' into es/config-based-hooks
- (this branch uses ab/config-based-hooks-base.)
-
- Revamp the hooks subsystem to allow multiple of them to trigger
- upon the same event and control via the configuration variables.
+ Will merge to 'next'.
 
 
-* mk/clone-recurse-submodules (2021-08-11) 1 commit
- - clone: set submodule.recurse=true if user enables feature.experimental flag
+* ab/help-autocorrect-prompt (2021-08-14) 1 commit
+ - help.c: help.autocorrect=prompt waits for user action
 
- It is proposed that in the future "git clone --recurse-submodules"
- unconditionally sets "submodule.recurse" configuration variable to
- true.  Users can opt into the future early to enable this (and
- other new features) by setting the "feature.experimental" variable
+ The logic for auto-correction of misspelt subcommands learned to go
+ interactive when the help.autocorrect configuration variable is set
  to true.
 
 
-* bc/t5607-avoid-broken-test-fail-prereqs (2021-08-11) 1 commit
- - t5607: avoid using prerequisites to select algorithm
+* pw/rebase-r-fixes (2021-08-15) 4 commits
+ - rebase -r: fix merge -c with a merge strategy
+ - rebase -r: don't write .git/MERGE_MSG when fast-forwarding
+ - rebase -i: Add another reword test
+ - rebase -r: make 'merge -c' behave like reword
 
- The current implementation of GIT_TEST_FAIL_PREREQS is broken in
- that checking for the lack of a prerequisite would not work.  Avoid
- the use of "if ! test_have_prereq X" in a test script.
-
- Will merge to 'next'.
-
-
-* jk/commit-edit-fixup-fix (2021-08-12) 1 commit
- - commit: restore --edit when combined with --fixup
-
- "git commit --fixup" now works with "--edit" again, after it was
- broken in v2.32.
-
- Will merge to 'next'?
-
-
-* tl/traverse-non-commits-rename (2021-08-12) 1 commit
- - list-objects.c: rename "traverse_trees_and_blobs" to "traverse_non_commits"
-
- Meh.
-
- Will merge to 'next'.
-
-
-* cb/ci-freebsd-update (2021-08-12) 1 commit
- - ci: update freebsd 12 cirrus job
-
- Update FreeBSD CI job
-
- Will merge to 'next'.
+ Various bugs in "git rebase -r" have been fixed.
 
 --------------------------------------------------
 [Stalled]
@@ -232,6 +186,81 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* th/userdiff-more-java (2021-08-11) 1 commit
+ - userdiff: improve java hunk header regex
+
+ The userdiff pattern for "java" language has been updated.
+
+ Will merge to 'next'.
+
+
+* zh/cherry-pick-advice (2021-08-14) 1 commit
+ - cherry-pick: use better advice message
+
+ The advice message that "git cherry-pick" gives when it asks
+ conflicted replay of a commit to be resolved by the end user has
+ been updated.
+
+
+* es/config-based-hooks (2021-08-11) 7 commits
+ - hook: allow out-of-repo 'git hook' invocations
+ - hook: include hooks from the config
+ - hook: allow running non-native hooks
+ - hook: introduce "git hook list"
+ - hook: allow parallel hook execution
+ - hook: run a list of hooks instead
+ - Merge branch 'ab/config-based-hooks-base' into es/config-based-hooks
+ (this branch uses ab/config-based-hooks-base.)
+
+ Revamp the hooks subsystem to allow multiple of them to trigger
+ upon the same event and control via the configuration variables.
+
+
+* mk/clone-recurse-submodules (2021-08-14) 1 commit
+ - clone: set submodule.recurse=true if submodule.stickyRecursiveClone enabled
+
+ After "git clone --recurse-submodules", all submodules are cloned
+ but they are not by default recursed into by other commands.  With
+ submodule.stickyRecursiveClone configuration set, submodule.recurse
+ configuration is set to true in a repository created by "clone"
+ with "--recurse-submodules" option.
+
+
+* bc/t5607-avoid-broken-test-fail-prereqs (2021-08-11) 1 commit
+ - t5607: avoid using prerequisites to select algorithm
+
+ The current implementation of GIT_TEST_FAIL_PREREQS is broken in
+ that checking for the lack of a prerequisite would not work.  Avoid
+ the use of "if ! test_have_prereq X" in a test script.
+
+ Will merge to 'next'.
+
+
+* jk/commit-edit-fixup-fix (2021-08-15) 1 commit
+ - commit: restore --edit when combined with --fixup
+
+ "git commit --fixup" now works with "--edit" again, after it was
+ broken in v2.32.
+
+ Will merge to 'next'?
+
+
+* tl/traverse-non-commits-rename (2021-08-12) 1 commit
+ - list-objects.c: rename "traverse_trees_and_blobs" to "traverse_non_commits"
+
+ Meh.
+
+ Will merge to 'next'.
+
+
+* cb/ci-freebsd-update (2021-08-12) 1 commit
+ - ci: update freebsd 12 cirrus job
+
+ Update FreeBSD CI job
+
+ Will merge to 'next'.
+
+
 * cb/builtin-merge-format-string-fix (2021-08-09) 1 commit
  - builtin/merge: avoid -Wformat-extra-args from ancient Xcode
 
@@ -240,7 +269,7 @@ Release tarballs are available at:
  Will merge to 'next'.
 
 
-* ka/want-ref-in-namespace (2021-08-09) 3 commits
+* ka/want-ref-in-namespace (2021-08-13) 3 commits
  - docs: clarify the interaction of transfer.hideRefs and namespaces
  - upload-pack.c: treat want-ref relative to namespace
  - t5730: introduce fetch command helper
@@ -333,8 +362,9 @@ Release tarballs are available at:
  duplicated changes.
 
 
-* jt/grep-wo-submodule-odb-as-alternate (2021-08-10) 7 commits
+* jt/grep-wo-submodule-odb-as-alternate (2021-08-13) 8 commits
  - t7814: show lack of alternate ODB-adding
+ - submodule-config: pass repo upon blob config read
  - grep: add repository to OID grep sources
  - grep: allocate subrepos on heap
  - grep: read submodule entry with explicit repo
@@ -404,17 +434,6 @@ Release tarballs are available at:
  Code cleanup.
 
  Will cook in 'next'.
-
-
-* cb/reftable-fixup (2021-08-02) 3 commits
- - openbsd: allow reftable building with zlib 1.2.3
- - reftable: clarify zlib version dependency
- - fixup! Provide zlib's uncompress2 from compat/zlib-compat.c
- (this branch uses hn/reftable.)
-
- Fixes to another topic.
-
- Will discard after they are picked up by the target topic.
 
 
 * en/merge-strategy-docs (2021-08-05) 10 commits
@@ -657,8 +676,7 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* hn/reftable (2021-07-20) 26 commits
- - t7004: avoid direct filesystem access
+* hn/reftable (2021-08-16) 25 commits
  - t1404: annotate test cases with REFFILES
  - t1401,t2011: parameterize HEAD.lock for REFFILES
  - t1301: document what needs to be done for reftable
@@ -684,12 +702,8 @@ Release tarballs are available at:
  - reftable: RFC: add LICENSE
  - init-db: set the_repository->hash_algo early on
  - hash.h: provide constants for the hash IDs
- (this branch is used by cb/reftable-fixup.)
 
  The "reftable" backend for the refs API.
-
- Seems to break CI jobs in 'seen'.
- cf. https://github.com/git/git/runs/3257622953?check_suite_focus=true#step:4:1685
 
 
 * ab/refs-files-cleanup (2021-08-02) 11 commits
@@ -726,15 +740,6 @@ Release tarballs are available at:
  descendant of our history.  The series tries to fix them up.
 
  Will merge to 'next'.
-
-
-* bc/inactive-submodules (2021-07-02) 1 commit
- - submodule: mark submodules with update=none as inactive
-
- Usability update for inactive submodules.
-
- Retracted for now.
- cf. <YRMpEV/uuHrxcOug@camp.crustytoothpaste.net>
 
 
 * cf/fetch-set-upstream-while-detached (2021-07-06) 1 commit
@@ -1057,9 +1062,9 @@ Release tarballs are available at:
 [Discarded]
 
 * ab/test-columns (2021-08-05) 3 commits
- - test-lib.sh: use GIT_TEST_COLUMNS over COLUMNS
- - test-lib-functions.sh: add a test_with_columns function
- - test-lib-functions.sh: rename test_must_fail_acceptable()
+ . test-lib.sh: use GIT_TEST_COLUMNS over COLUMNS
+ . test-lib-functions.sh: add a test_with_columns function
+ . test-lib-functions.sh: rename test_must_fail_acceptable()
 
  Shells that adjust COLUMNS (e.g. bash with checkwinsize shell
  option), affect and break tests on progress meters and anything
@@ -1068,3 +1073,20 @@ Release tarballs are available at:
 
  Seems too involved for a last-minute fix.
  cf. <20210804212825.GH23408@szeder.dev>
+
+
+* cb/reftable-fixup (2021-08-02) 3 commits
+ . openbsd: allow reftable building with zlib 1.2.3
+ . reftable: clarify zlib version dependency
+ . fixup! Provide zlib's uncompress2 from compat/zlib-compat.c
+
+ Fix-up for hn/reftable topic (no longer applicable).
+
+
+* bc/inactive-submodules (2021-07-02) 1 commit
+ . submodule: mark submodules with update=none as inactive
+
+ Usability update for inactive submodules.
+
+ Retracted for now.
+ cf. <YRMpEV/uuHrxcOug@camp.crustytoothpaste.net>

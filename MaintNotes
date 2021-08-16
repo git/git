@@ -165,8 +165,13 @@ viewed online at:
 
 * How various branches are used.
 
-There are four branches in git.git repository that track the source tree
-of git: "master", "maint", "next", and "seen".
+There are four "integration" branches in git.git repository that track
+the source tree of git: "master", "maint", "next", and "seen".  They
+however almost never get new commits made directly on them.  Instead,
+a branch is forked from either "master" or "maint" for each "topic",
+whether it is a new feature or fix for a bug, and holds a set of
+commits that belong to the same theme, and then such a "topic branch"
+is merged to these integration branches.
 
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a
@@ -175,24 +180,25 @@ named with three dotted decimal digits (e.g. "1.8.5"), but we have
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
 
-The last such release was 2.32 done on June 6th, 2021.  You can expect
-that the tip of the "master" branch is always more stable than any of
-the released versions.
+The last such release was 2.33 done on August 16th, 2021.  You can
+expect that the tip of the "master" branch is always more stable than
+any of the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
 "master" at that point.  Obvious and safe fixes after a feature
-release are applied to this branch and maintenance releases are cut
-from it.  Usually the fixes are merged to the "master" branch first,
+release are merged to this branch and maintenance releases are cut
+from it.  Usually these fixes are merged to the "master" branch first,
 several days before merged to the "maint" branch, to reduce the chance
 of last-minute issues.  The maintenance releases used to be named with
 four dotted decimal, named after the feature release they are updates
 to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
 feature release).  These days, maintenance releases are named by
-incrementing the last digit of three-dotted decimal name (e.g. "2.29.2"
-was the second maintenance release for the "2.29" series).
+incrementing the last digit of three-dotted decimal name (e.g.
+"2.29.2" was the second maintenance release for the "2.29" series).
 
-New features never go to the 'maint' branch.  It is merged into "master"
-primarily to propagate the description in the release notes forward.
+New features never go to the "maint" branch.  It is merged into
+"master" primarily to propagate the description in the release notes
+forward.
 
 A new development does not usually happen on "master". When you send a
 series of patches, after review on the mailing list, a separate topic
