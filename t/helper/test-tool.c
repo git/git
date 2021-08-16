@@ -57,6 +57,8 @@ static struct test_cmd cmds[] = {
 	{ "progress", cmd__progress },
 	{ "reach", cmd__reach },
 	{ "read-cache", cmd__read_cache },
+	{ "read-cache-again", cmd__read_cache_again },
+	{ "read-cache-perf", cmd__read_cache_perf },
 	{ "read-graph", cmd__read_graph },
 	{ "read-midx", cmd__read_midx },
 	{ "ref-store", cmd__ref_store },
