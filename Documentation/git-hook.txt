@@ -8,7 +8,8 @@ git-hook - run git hooks
 SYNOPSIS
 --------
 [verse]
-'git hook' run [--to-stdin=<path>] [--ignore-missing] <hook-name> [-- <hook-args>]
+'git hook' run [--to-stdin=<path>] [--ignore-missing] [(-j|--jobs) <n>]
+	<hook-name> [-- <hook-args>]
 
 DESCRIPTION
 -----------
@@ -17,12 +18,39 @@ This command is an interface to git hooks (see linkgit:githooks[5]).
 Currently it only provides a convenience wrapper for running hooks for
 use by git itself. In the future it might gain other functionality.
 
+It's possible to use this command to refer to hooks which are not native to Git,
+for example if a wrapper around Git wishes to expose hooks into its own
+operation in a way which is already familiar to Git users. However, wrappers
+invoking such hooks should be careful to name their hook events something which
+Git is unlikely to use for a native hook later on. For example, Git is much less
+likely to create a `mytool-validate-commit` hook than it is to create a
+`validate-commit` hook.
+
+This command parses the default configuration files for pairs of configs like
+so:
+
+  [hook "linter"]
+    event = pre-commit
+    command = ~/bin/linter --c
+
+Conmmands are run in the order Git encounters their associated
+`hook.<name>.event` configs during the configuration parse (see
+linkgit:git-config[1]).
+
+In general, when instructions suggest adding a script to
+`.git/hooks/<hook-event>`, you can specify it in the config instead by running
+`git config --add hook.<some-name>.command <path-to-script> && git config --add
+hook.<some-name>.event <hook-event>` - this way you can share the script between
+multiple repos. That is, `cp ~/my-script.sh ~/project/.git/hooks/pre-commit`
+would become `git config --add hook.my-script.command ~/my-script.sh && git
+config --add hook.my-script.event pre-commit`.
+
 SUBCOMMANDS
 -----------
 
 run::
-	Run the `<hook-name>` hook. See linkgit:githooks[5] for
-	the hook names we support.
+	Runs hooks configured for `<hook-name>`, in the order they are
+	discovered during the config parse.
 +
 Any positional arguments to the hook should be passed after an
 optional `--` (or `--end-of-options`, see linkgit:gitcli[7]). The
@@ -41,6 +69,20 @@ OPTIONS
 	Ignore any missing hook by quietly returning zero. Used for
 	tools that want to do a blind one-shot run of a hook that may
 	or may not be present.
+
+-j::
+--jobs::
+	Only valid for `run`.
++
+Specify how many hooks to run simultaneously. If this flag is not specified, use
+the value of the `hook.jobs` config. If the config is not specified, use the
+number of CPUs on the current system. Some hooks may be ineligible for
+parallelization: for example, 'commit-msg' intends hooks modify the commit
+message body and cannot be parallelized.
+
+CONFIGURATION
+-------------
+include::config/hook.txt[]
 
 SEE ALSO
 --------

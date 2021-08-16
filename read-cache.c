@@ -3069,7 +3069,7 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 {
 	int ret;
 	int was_full = !istate->sparse_index;
-	struct run_hooks_opt hook_opt = RUN_HOOKS_OPT_INIT;
+	struct run_hooks_opt hook_opt = RUN_HOOKS_OPT_INIT_ASYNC;
 
 	ret = convert_to_sparse(istate, 0);
 

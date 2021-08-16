@@ -662,7 +662,7 @@ static int checkout(int submodule_progress)
 	struct tree *tree;
 	struct tree_desc t;
 	int err = 0;
-	struct run_hooks_opt hook_opt = RUN_HOOKS_OPT_INIT;
+	struct run_hooks_opt hook_opt = RUN_HOOKS_OPT_INIT_SYNC;
 
 	if (option_no_checkout)
 		return 0;

@@ -1700,7 +1700,7 @@ int run_commit_hook(int editor_is_used, const char *index_file,
 		    int *invoked_hook,
 		    const char *name, ...)
 {
-	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT_SYNC;
 	va_list args;
 	const char *arg;
 
