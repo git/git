@@ -144,8 +144,6 @@ static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
 {
 	int i, retval = 0;
 
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(&the_index);
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 
@@ -192,13 +190,21 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 	struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
 	int flags = REFRESH_IGNORE_SKIP_WORKTREE |
 		    (verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET);
+	struct pattern_list pl = { 0 };
+	int sparse_checkout_enabled = !get_sparse_checkout_patterns(&pl);
 
 	seen = xcalloc(pathspec->nr, 1);
 	refresh_index(&the_index, flags, pathspec, seen,
 		      _("Unstaged changes after refreshing the index:"));
 	for (i = 0; i < pathspec->nr; i++) {
 		if (!seen[i]) {
-			if (matches_skip_worktree(pathspec, i, &skip_worktree_seen)) {
+			const char *path = pathspec->items[i].original;
+			int dtype = DT_REG;
+
+			if (matches_skip_worktree(pathspec, i, &skip_worktree_seen) ||
+			    (sparse_checkout_enabled &&
+			     !path_matches_pattern_list(path, strlen(path), NULL,
+							&dtype, &pl, &the_index))) {
 				string_list_append(&only_match_skip_worktree,
 						   pathspec->items[i].original);
 			} else {
@@ -527,6 +533,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	add_new_files = !take_worktree_changes && !refresh_only && !add_renormalize;
 	require_pathspec = !(take_worktree_changes || (0 < addremove_explicit));
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
