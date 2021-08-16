@@ -2,6 +2,9 @@
 --no-commit::
 	Perform the merge and commit the result. This option can
 	be used to override --no-commit.
+ifdef::git-pull[]
+	Only useful when merging.
+endif::git-pull[]
 +
 With --no-commit perform the merge and stop just before creating
 a merge commit, to give the user a chance to inspect and further
@@ -39,6 +42,7 @@ set to `no` at the beginning of them.
 	to `MERGE_MSG` before being passed on to the commit machinery in the
 	case of a merge conflict.
 
+ifdef::git-merge[]
 --ff::
 --no-ff::
 --ff-only::
@@ -47,6 +51,22 @@ set to `no` at the beginning of them.
 	default unless merging an annotated (and possibly signed) tag
 	that is not stored in its natural place in the `refs/tags/`
 	hierarchy, in which case `--no-ff` is assumed.
+endif::git-merge[]
+ifdef::git-pull[]
+--ff-only::
+	Only update to the new history if there is no divergent local
+	history.  This is the default when no method for reconciling
+	divergent histories is provided (via the --rebase=* flags).
+
+--ff::
+--no-ff::
+	When merging rather than rebasing, specifies how a merge is
+	handled when the merged-in history is already a descendant of
+	the current history.  If merging is requested, `--ff` is the
+	default unless merging an annotated (and possibly signed) tag
+	that is not stored in its natural place in the `refs/tags/`
+	hierarchy, in which case `--no-ff` is assumed.
+endif::git-pull[]
 +
 With `--ff`, when possible resolve the merge as a fast-forward (only
 update the branch pointer to match the merged branch; do not create a
@@ -55,9 +75,11 @@ descendant of the current history), create a merge commit.
 +
 With `--no-ff`, create a merge commit in all cases, even when the merge
 could instead be resolved as a fast-forward.
+ifdef::git-merge[]
 +
 With `--ff-only`, resolve the merge as a fast-forward when possible.
 When not possible, refuse to merge and exit with a non-zero status.
+endif::git-merge[]
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
@@ -73,6 +95,9 @@ When not possible, refuse to merge and exit with a non-zero status.
 	In addition to branch names, populate the log message with
 	one-line descriptions from at most <n> actual commits that are being
 	merged. See also linkgit:git-fmt-merge-msg[1].
+ifdef::git-pull[]
+	Only useful when merging.
+endif::git-pull[]
 +
 With --no-log do not list one-line descriptions from the
 actual commits being merged.
@@ -102,10 +127,17 @@ With --no-squash perform the merge and commit the result. This
 option can be used to override --squash.
 +
 With --squash, --commit is not allowed, and will fail.
+ifdef::git-pull[]
++
+Only useful when merging.
+endif::git-pull[]
 
 --no-verify::
 	This option bypasses the pre-merge and commit-msg hooks.
 	See also linkgit:githooks[5].
+ifdef::git-pull[]
+	Only useful when merging.
+endif::git-pull[]
 
 -s <strategy>::
 --strategy=<strategy>::
@@ -127,6 +159,10 @@ With --squash, --commit is not allowed, and will fail.
 	default trust model, this means the signing key has been signed by
 	a trusted key.  If the tip commit of the side branch is not signed
 	with a valid key, the merge is aborted.
+ifdef::git-pull[]
++
+Only useful when merging.
+endif::git-pull[]
 
 --summary::
 --no-summary::
@@ -167,3 +203,7 @@ endif::git-pull[]
 	projects that started their lives independently. As that is
 	a very rare occasion, no configuration variable to enable
 	this by default exists and will not be added.
+ifdef::git-pull[]
++
+Only useful when merging.
+endif::git-pull[]
