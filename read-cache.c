@@ -3071,7 +3071,7 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 	int was_full = !istate->sparse_index;
 	struct run_hooks_opt hook_opt = RUN_HOOKS_OPT_INIT;
 
-	ret = convert_to_sparse(istate);
+	ret = convert_to_sparse(istate, 0);
 
 	if (ret) {
 		warning(_("failed to convert to a sparse-index"));
@@ -3187,7 +3187,7 @@ static int write_shared_index(struct index_state *istate,
 	int ret, was_full = !istate->sparse_index;
 
 	move_cache_to_base_index(istate);
-	convert_to_sparse(istate);
+	convert_to_sparse(istate, 0);
 
 	trace2_region_enter_printf("index", "shared/do_write_index",
 				   the_repository, "%s", get_tempfile_path(*temp));
