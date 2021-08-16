@@ -65,6 +65,9 @@ static int todo_done;
 /* Has all work items been added? */
 static int all_work_added;
 
+static struct repository **repos_to_free;
+static size_t repos_to_free_nr, repos_to_free_alloc;
+
 /* This lock protects all the variables above. */
 static pthread_mutex_t grep_mutex;
 
@@ -166,6 +169,19 @@ static void work_done(struct work_item *w)
 		pthread_cond_signal(&cond_result);
 
 	grep_unlock();
+}
+
+static void free_repos(void)
+{
+	int i;
+
+	for (i = 0; i < repos_to_free_nr; i++) {
+		repo_clear(repos_to_free[i]);
+		free(repos_to_free[i]);
+	}
+	FREE_AND_NULL(repos_to_free);
+	repos_to_free_nr = 0;
+	repos_to_free_alloc = 0;
 }
 
 static void *run(void *arg)
@@ -415,19 +431,24 @@ static int grep_submodule(struct grep_opt *opt,
 			  const struct object_id *oid,
 			  const char *filename, const char *path, int cached)
 {
-	struct repository subrepo;
+	struct repository *subrepo;
 	struct repository *superproject = opt->repo;
 	const struct submodule *sub;
 	struct grep_opt subopt;
-	int hit;
+	int hit = 0;
 
 	sub = submodule_from_path(superproject, null_oid(), path);
 
 	if (!is_submodule_active(superproject, path))
 		return 0;
 
-	if (repo_submodule_init(&subrepo, superproject, sub))
+	subrepo = xmalloc(sizeof(*subrepo));
+	if (repo_submodule_init(subrepo, superproject, sub)) {
+		free(subrepo);
 		return 0;
+	}
+	ALLOC_GROW(repos_to_free, repos_to_free_nr + 1, repos_to_free_alloc);
+	repos_to_free[repos_to_free_nr++] = subrepo;
 
 	/*
 	 * NEEDSWORK: repo_read_gitmodules() might call
@@ -438,7 +459,7 @@ static int grep_submodule(struct grep_opt *opt,
 	 * subrepo's odbs to the in-memory alternates list.
 	 */
 	obj_read_lock();
-	repo_read_gitmodules(&subrepo, 0);
+	repo_read_gitmodules(subrepo, 0);
 
 	/*
 	 * NEEDSWORK: This adds the submodule's object directory to the list of
@@ -450,11 +471,11 @@ static int grep_submodule(struct grep_opt *opt,
 	 * store is no longer global and instead is a member of the repository
 	 * object.
 	 */
-	add_submodule_odb_by_path(subrepo.objects->odb->path);
+	add_submodule_odb_by_path(subrepo->objects->odb->path);
 	obj_read_unlock();
 
 	memcpy(&subopt, opt, sizeof(subopt));
-	subopt.repo = &subrepo;
+	subopt.repo = subrepo;
 
 	if (oid) {
 		enum object_type object_type;
@@ -464,9 +485,9 @@ static int grep_submodule(struct grep_opt *opt,
 		struct strbuf base = STRBUF_INIT;
 
 		obj_read_lock();
-		object_type = oid_object_info(&subrepo, oid, NULL);
+		object_type = oid_object_info(subrepo, oid, NULL);
 		obj_read_unlock();
-		data = read_object_with_reference(&subrepo,
+		data = read_object_with_reference(subrepo,
 						  oid, tree_type,
 						  &size, NULL);
 		if (!data)
@@ -484,7 +505,6 @@ static int grep_submodule(struct grep_opt *opt,
 		hit = grep_cache(&subopt, pathspec, cached);
 	}
 
-	repo_clear(&subrepo);
 	return hit;
 }
 
@@ -1182,5 +1202,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		run_pager(&opt, prefix);
 	clear_pathspec(&pathspec);
 	free_grep_patterns(&opt);
+	free_repos();
 	return !hit;
 }
