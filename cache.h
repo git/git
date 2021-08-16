@@ -1212,7 +1212,9 @@ enum scld_error safe_create_leading_directories_const(const char *path);
 enum scld_error safe_create_leading_directories_no_share(char *path);
 
 int mkdir_in_gitdir(const char *path);
-char *expand_user_path(const char *path, int real_home);
+char *interpolate_path(const char *path, int real_home);
+/* NEEDSWORK: remove this synonym once in-flight topics have migrated */
+#define expand_user_path interpolate_path
 const char *enter_repo(const char *path, int strict);
 static inline int is_absolute_path(const char *path)
 {

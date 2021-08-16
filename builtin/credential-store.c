@@ -173,7 +173,7 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
 	if (file) {
 		string_list_append(&fns, file);
 	} else {
-		if ((file = expand_user_path("~/.git-credentials", 0)))
+		if ((file = interpolate_path("~/.git-credentials", 0)))
 			string_list_append_nodup(&fns, file);
 		file = xdg_config_home("credentials");
 		if (file)

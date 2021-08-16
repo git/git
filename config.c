@@ -137,7 +137,7 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 	if (!path)
 		return config_error_nonbool("include.path");
 
-	expanded = expand_user_path(path, 0);
+	expanded = interpolate_path(path, 0);
 	if (!expanded)
 		return error(_("could not expand include path '%s'"), path);
 	path = expanded;
@@ -185,7 +185,7 @@ static int prepare_include_condition_pattern(struct strbuf *pat)
 	char *expanded;
 	int prefix = 0;
 
-	expanded = expand_user_path(pat->buf, 1);
+	expanded = interpolate_path(pat->buf, 1);
 	if (expanded) {
 		strbuf_reset(pat);
 		strbuf_addstr(pat, expanded);
@@ -1270,7 +1270,7 @@ int git_config_pathname(const char **dest, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
-	*dest = expand_user_path(value, 0);
+	*dest = interpolate_path(value, 0);
 	if (!*dest)
 		die(_("failed to expand user dir in: '%s'"), value);
 	return 0;
@@ -1845,7 +1845,7 @@ void git_global_config(char **user_out, char **xdg_out)
 	char *xdg_config = NULL;
 
 	if (!user_config) {
-		user_config = expand_user_path("~/.gitconfig", 0);
+		user_config = interpolate_path("~/.gitconfig", 0);
 		xdg_config = xdg_config_home("config");
 	}
 
