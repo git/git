@@ -457,27 +457,27 @@ static int grep_submodule(struct grep_opt *opt,
 	subopt.repo = &subrepo;
 
 	if (oid) {
-		struct object *object;
+		enum object_type object_type;
 		struct tree_desc tree;
 		void *data;
 		unsigned long size;
 		struct strbuf base = STRBUF_INIT;
 
 		obj_read_lock();
-		object = parse_object_or_die(oid, NULL);
+		object_type = oid_object_info(&subrepo, oid, NULL);
 		obj_read_unlock();
 		data = read_object_with_reference(&subrepo,
-						  &object->oid, tree_type,
+						  oid, tree_type,
 						  &size, NULL);
 		if (!data)
-			die(_("unable to read tree (%s)"), oid_to_hex(&object->oid));
+			die(_("unable to read tree (%s)"), oid_to_hex(oid));
 
 		strbuf_addstr(&base, filename);
 		strbuf_addch(&base, '/');
 
 		init_tree_desc(&tree, data, size);
 		hit = grep_tree(&subopt, pathspec, &tree, &base, base.len,
-				object->type == OBJ_COMMIT);
+				object_type == OBJ_COMMIT);
 		strbuf_release(&base);
 		free(data);
 	} else {
