@@ -1,8 +1,8 @@
 # Portugal's Portuguese translations for Git package.
-# Copyright (C) 2021 Daniel Santos <hello@brighterdan.com> 
+# Copyright (C) 2021 Daniel Santos <daniel@brilhante.top>
 # This file is distributed under the same license as the Git package.
 # Contributors:
-#   - Daniel Santos <hello@brighterdan.com>
+#   - Daniel Santos <daniel@brilhante.top>
 # Past Contributors:
 #   - Marco Sousa <marcomsousa AT gmail.com>
 #   - Vasco Almeida <vascomalmeida@sapo.pt>, 2016, 2017.
