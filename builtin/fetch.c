@@ -1428,7 +1428,9 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 		if (!has_glob_specials(s)) {
 			struct object_id oid;
 			if (get_oid(s, &oid))
-				die("%s is not a valid object", s);
+				die(_("%s is not a valid object"), s);
+			if (!has_object(the_repository, &oid, 0))
+				die(_("the object %s does not exist"), s);
 			oid_array_append(oids, &oid);
 			continue;
 		}
