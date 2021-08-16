@@ -104,6 +104,7 @@ int bad_to_remove_submodule(const char *path, unsigned flags);
  * the_repository.
  */
 int add_submodule_odb(const char *path);
+void add_submodule_odb_by_path(const char *path);
 int register_all_submodule_odb_as_alternates(void);
 
 /*
