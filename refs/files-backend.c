@@ -1925,17 +1925,15 @@ static int show_one_reflog_ent(struct strbuf *sb, each_reflog_ent_fn fn, void *c
 	int tz;
 	const char *p = sb->buf;
 
-	/* old SP new SP name <email> SP time TAB msg LF */
-	if (!sb->len || sb->buf[sb->len - 1] != '\n' ||
-	    parse_oid_hex(p, &ooid, &p) || *p++ != ' ' ||
+	/* old SP new SP name <email> SP time TAB msg */
+	if (!sb->len || parse_oid_hex(p, &ooid, &p) || *p++ != ' ' ||
 	    parse_oid_hex(p, &noid, &p) || *p++ != ' ' ||
-	    !(email_end = strchr(p, '>')) ||
-	    email_end[1] != ' ' ||
+	    !(email_end = strchr(p, '>')) || email_end[1] != ' ' ||
 	    !(timestamp = parse_timestamp(email_end + 2, &message, 10)) ||
 	    !message || message[0] != ' ' ||
-	    (message[1] != '+' && message[1] != '-') ||
-	    !isdigit(message[2]) || !isdigit(message[3]) ||
-	    !isdigit(message[4]) || !isdigit(message[5]))
+	    (message[1] != '+' && message[1] != '-') || !isdigit(message[2]) ||
+	    !isdigit(message[3]) || !isdigit(message[4]) ||
+	    !isdigit(message[5]))
 		return 0; /* corrupt? */
 	email_end[1] = '\0';
 	tz = strtol(message + 1, NULL, 10);
@@ -2027,6 +2025,7 @@ static int files_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 				strbuf_splice(&sb, 0, 0, bp + 1, endp - (bp + 1));
 				scanp = bp;
 				endp = bp + 1;
+				strbuf_trim_trailing_newline(&sb);
 				ret = show_one_reflog_ent(&sb, fn, cb_data);
 				strbuf_reset(&sb);
 				if (ret)
@@ -2039,6 +2038,7 @@ static int files_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 				 * Process it, and we can end the loop.
 				 */
 				strbuf_splice(&sb, 0, 0, buf, endp - buf);
+				strbuf_trim_trailing_newline(&sb);
 				ret = show_one_reflog_ent(&sb, fn, cb_data);
 				strbuf_reset(&sb);
 				break;
@@ -2088,7 +2088,7 @@ static int files_for_each_reflog_ent(struct ref_store *ref_store,
 	if (!logfp)
 		return -1;
 
-	while (!ret && !strbuf_getwholeline(&sb, logfp, '\n'))
+	while (!ret && !strbuf_getline(&sb, logfp))
 		ret = show_one_reflog_ent(&sb, fn, cb_data);
 	fclose(logfp);
 	strbuf_release(&sb);
@@ -3048,18 +3048,18 @@ static int expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 	if ((*cb->should_prune_fn)(ooid, noid, email, timestamp, tz,
 				   message, policy_cb)) {
 		if (!cb->newlog)
-			printf("would prune %s", message);
+			printf("would prune %s\n", message);
 		else if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
-			printf("prune %s", message);
+			printf("prune %s\n", message);
 	} else {
 		if (cb->newlog) {
-			fprintf(cb->newlog, "%s %s %s %"PRItime" %+05d\t%s",
-				oid_to_hex(ooid), oid_to_hex(noid),
-				email, timestamp, tz, message);
+			fprintf(cb->newlog, "%s %s %s %" PRItime " %+05d\t%s\n",
+				oid_to_hex(ooid), oid_to_hex(noid), email,
+				timestamp, tz, message);
 			oidcpy(&cb->last_kept_oid, noid);
 		}
 		if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
-			printf("keep %s", message);
+			printf("keep %s\n", message);
 	}
 	return 0;
 }

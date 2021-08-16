@@ -761,7 +761,6 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			char *logmsg;
 			char *nth_desc;
 			const char *msg;
-			char *end;
 			timestamp_t timestamp;
 			int tz;
 
@@ -771,10 +770,6 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				reflog = i;
 				break;
 			}
-
-			end = strchr(logmsg, '\n');
-			if (end)
-				*end = '\0';
 
 			msg = (*logmsg == '\0') ? "(none)" : logmsg;
 			reflog_msg[i] = xstrfmt("(%s) %s",
