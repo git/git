@@ -333,7 +333,7 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 	struct grep_source gs;
 
 	grep_source_name(opt, filename, tree_name_len, &pathbuf);
-	grep_source_init(&gs, GREP_SOURCE_OID, pathbuf.buf, path, oid);
+	grep_source_init_oid(&gs, pathbuf.buf, path, oid);
 	strbuf_release(&pathbuf);
 
 	if (num_threads > 1) {
@@ -359,7 +359,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	struct grep_source gs;
 
 	grep_source_name(opt, filename, 0, &buf);
-	grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename, filename);
+	grep_source_init_file(&gs, buf.buf, filename);
 	strbuf_release(&buf);
 
 	if (num_threads > 1) {
