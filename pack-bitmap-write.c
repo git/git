@@ -581,6 +581,7 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 	if (indexed_commits_nr < 100) {
 		for (i = 0; i < indexed_commits_nr; ++i)
 			push_bitmapped_commit(indexed_commits[i]);
+		stop_progress(&writer.progress);
 		return;
 	}
 
