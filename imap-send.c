@@ -1517,11 +1517,7 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 	if (cred.username) {
 		if (res == CURLE_OK)
 			credential_approve(&cred);
-#if LIBCURL_VERSION_NUM >= 0x070d01
 		else if (res == CURLE_LOGIN_DENIED)
-#else
-		else
-#endif
 			credential_reject(&cred);
 	}
 
