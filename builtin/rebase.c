@@ -1713,7 +1713,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		int i;
 
 		if (!options.strategy)
-			options.strategy = "recursive";
+			options.strategy = "ort";
 
 		strbuf_reset(&buf);
 		for (i = 0; i < strategy_options.nr; i++)

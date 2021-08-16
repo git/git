@@ -88,9 +88,9 @@ static int autostash;
 static int no_verify;
 
 static struct strategy all_strategy[] = {
-	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
+	{ "recursive",  NO_TRIVIAL },
 	{ "octopus",    DEFAULT_OCTOPUS },
-	{ "ort",        NO_TRIVIAL },
+	{ "ort",        DEFAULT_TWOHEAD | NO_TRIVIAL },
 	{ "resolve",    0 },
 	{ "ours",       NO_FAST_FORWARD | NO_TRIVIAL },
 	{ "subtree",    NO_FAST_FORWARD | NO_TRIVIAL },
@@ -1485,6 +1485,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			fast_forward = FF_NO;
 	}
 
+	if (!use_strategies && !pull_twohead &&
+	    remoteheads && !remoteheads->next) {
+		char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
+		if (default_strategy)
+			append_strategy(get_strategy(default_strategy));
+	}
 	if (!use_strategies) {
 		if (!remoteheads)
 			; /* already up-to-date */
