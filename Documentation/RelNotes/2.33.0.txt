@@ -12,10 +12,6 @@ UI, Workflows & Features
    "smtp-server" that is meant to name the server to instead name the
    command to talk to the server.
 
- * The "-m" option in "git log -m" that does not specify which format,
-   if any, of diff is desired did not have any visible effect; it now
-   implies some form of diff (by default "--patch") is produced.
-
  * The userdiff pattern for C# learned the token "record".
 
  * "git rev-list" learns to omit the "commit <object-name>" header
