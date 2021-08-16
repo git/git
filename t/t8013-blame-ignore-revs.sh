@@ -127,16 +127,22 @@ test_expect_success override_ignore_revs_file '
 	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
 	test_cmp expect actual
 	'
-test_expect_success bad_files_and_revs '
+test_expect_success bad_revs '
 	test_must_fail git blame file --ignore-rev NOREV 2>err &&
 	test_i18ngrep "cannot find revision NOREV to ignore" err &&
-
-	test_must_fail git blame file --ignore-revs-file NOFILE 2>err &&
-	test_i18ngrep "could not open.*: NOFILE" err &&
 
 	echo NOREV >ignore_norev &&
 	test_must_fail git blame file --ignore-revs-file ignore_norev 2>err &&
 	test_i18ngrep "invalid object name: NOREV" err
+'
+
+# Non-existent ignore-revs-file should fail unless
+# blame.ignoreRevsFileIsOptional is set
+test_expect_success bad_file '
+	test_must_fail git blame file --ignore-revs-file NOFILE &&
+
+	git config --add blame.ignorerevsfileisoptional true &&
+	git blame file --ignore-revs-file NOFILE
 '
 
 # For ignored revs that have added 'unblamable' lines, mark those lines with a

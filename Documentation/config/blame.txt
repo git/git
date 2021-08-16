@@ -27,6 +27,11 @@ blame.ignoreRevsFile::
 	file names will reset the list of ignored revisions.  This option will
 	be handled before the command line option `--ignore-revs-file`.
 
+blame.ignoreRevsFileIsOptional::
+	Silently skip missing files specified by ignoreRevsFile or the command line
+	option `--ignore-revs-file`. If unset, or set to false, missing files will
+	cause a nonrecoverable error.
+
 blame.markUnblamableLines::
 	Mark lines that were changed by an ignored revision that we could not
 	attribute to another commit with a '*' in the output of

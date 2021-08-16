@@ -134,7 +134,8 @@ take effect.
 	`fsck.skipList`.  This option may be repeated, and these files will be
 	processed after any files specified with the `blame.ignoreRevsFile` config
 	option.  An empty file name, `""`, will clear the list of revs from
-	previously processed files.
+	previously processed files. If `blame.ignoreRevsFileIsOptional` is true,
+	missing files will be silently ignored.
 
 -h::
 	Show help message.
