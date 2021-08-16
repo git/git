@@ -31,12 +31,19 @@ void oidtree_clear(struct oidtree *ot)
 void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
 {
 	struct cb_node *on;
+	struct object_id k;
 
 	if (!oid->algo)
 		BUG("oidtree_insert requires oid->algo");
 
 	on = mem_pool_alloc(&ot->mem_pool, sizeof(*on) + sizeof(*oid));
-	oidcpy_with_padding((struct object_id *)on->k, oid);
+
+	/*
+	 * Clear the padding and copy the result in separate steps to
+	 * respect the 4-byte alignment needed by struct object_id.
+	 */
+	oidcpy_with_padding(&k, oid);
+	memcpy(on->k, &k, sizeof(k));
 
 	/*
 	 * n.b. Current callers won't get us duplicates, here.  If a
@@ -68,17 +75,20 @@ int oidtree_contains(struct oidtree *ot, const struct object_id *oid)
 static enum cb_next iter(struct cb_node *n, void *arg)
 {
 	struct oidtree_iter_data *x = arg;
-	const struct object_id *oid = (const struct object_id *)n->k;
+	struct object_id k;
 
-	if (x->algo != GIT_HASH_UNKNOWN && x->algo != oid->algo)
+	/* Copy to provide 4-byte alignment needed by struct object_id. */
+	memcpy(&k, n->k, sizeof(k));
+
+	if (x->algo != GIT_HASH_UNKNOWN && x->algo != k.algo)
 		return CB_CONTINUE;
 
 	if (x->last_nibble_at) {
-		if ((oid->hash[*x->last_nibble_at] ^ x->last_byte) & 0xf0)
+		if ((k.hash[*x->last_nibble_at] ^ x->last_byte) & 0xf0)
 			return CB_CONTINUE;
 	}
 
-	return x->fn(oid, x->arg);
+	return x->fn(&k, x->arg);
 }
 
 void oidtree_each(struct oidtree *ot, const struct object_id *oid,
