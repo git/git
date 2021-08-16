@@ -97,7 +97,14 @@ int submodule_uses_gitfile(const char *path);
 #define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1<<2)
 int bad_to_remove_submodule(const char *path, unsigned flags);
 
+/*
+ * Call add_submodule_odb() to add the submodule at the given path to a list.
+ * When register_all_submodule_odb_as_alternates() is called, the object stores
+ * of all submodules in that list will be added as alternates in
+ * the_repository.
+ */
 int add_submodule_odb(const char *path);
+int register_all_submodule_odb_as_alternates(void);
 
 /*
  * Checks if there are submodule changes in a..b. If a is the null OID,
