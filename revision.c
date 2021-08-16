@@ -2088,7 +2088,7 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 	return 0;
 }
 
-int handle_revision_arg(const char *arg, struct rev_info *revs, int flags, unsigned revarg_opt)
+static int handle_revision_arg(const char *arg, struct rev_info *revs, int flags, unsigned revarg_opt)
 {
 	int ret = handle_revision_arg_1(arg, revs, flags, revarg_opt);
 	if (!ret)
@@ -2118,6 +2118,19 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 		int len = sb.len;
 		if (!len)
 			break;
+
+		if (revs->handle_stdin_line) {
+			enum rev_info_stdin_line ret = revs->handle_stdin_line(
+				revs, &sb, revs->stdin_line_priv);
+
+			switch (ret) {
+			case REV_INFO_STDIN_LINE_PROCESS:
+				break;
+			case REV_INFO_STDIN_LINE_CONTINUE:
+				continue;
+			}
+		}
+
 		if (sb.buf[0] == '-') {
 			if (len == 2 && sb.buf[1] == '-') {
 				seen_dashdash = 1;
@@ -2125,7 +2138,7 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 			}
 			die("options not supported in --stdin mode");
 		}
-		if (handle_revision_arg(sb.buf, revs, 0,
+		if (handle_revision_arg(sb.buf, revs, revs->revarg_flags,
 					REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", sb.buf);
 	}
@@ -2750,14 +2763,18 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			}
 
 			if (!strcmp(arg, "--stdin")) {
-				if (revs->disable_stdin) {
+				switch (revs->stdin_handling) {
+				case REV_INFO_STDIN_ALWAYS_READ:
+				case REV_INFO_STDIN_IGNORE:
 					argv[left++] = arg;
 					continue;
+				case REV_INFO_STDIN_CONSUME_ON_OPTION:
+					if (revs->consumed_stdin)
+						die("--stdin given twice?");
+					read_revisions_from_stdin(revs, &prune_data);
+					revs->consumed_stdin = 1;
+					continue;
 				}
-				if (revs->read_from_stdin++)
-					die("--stdin given twice?");
-				read_revisions_from_stdin(revs, &prune_data);
-				continue;
 			}
 
 			if (!strcmp(arg, "--end-of-options")) {
@@ -2795,6 +2812,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			break;
 		}
 	}
+
+	/*
+	 * We're asked to ALWAYS_READ from stdin, but no --stdin
+	 * option (or "consumed_stdin" would be set).
+	 */
+	if (!revs->consumed_stdin &&
+	    revs->stdin_handling == REV_INFO_STDIN_ALWAYS_READ)
+		read_revisions_from_stdin(revs, &prune_data);
 
 	if (prune_data.nr) {
 		/*

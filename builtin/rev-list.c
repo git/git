@@ -666,7 +666,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if ((!revs.commits && reflog_walk_empty(revs.reflog_info) &&
 	     (!(revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
 	      !revs.pending.nr) &&
-	     !revs.rev_input_given && !revs.read_from_stdin) ||
+	     !revs.rev_input_given && !revs.consumed_stdin) ||
 	    revs.diff)
 		usage(rev_list_usage);
 

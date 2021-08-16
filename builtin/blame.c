@@ -1061,7 +1061,7 @@ parse_done:
 		argv[argc - 1] = "--";
 	}
 
-	revs.disable_stdin = 1;
+	revs.stdin_handling = REV_INFO_STDIN_IGNORE;
 	setup_revisions(argc, argv, &revs, NULL);
 	if (!revs.pending.nr && is_bare_repository()) {
 		struct commit *head_commit;

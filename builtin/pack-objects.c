@@ -3762,53 +3762,46 @@ static void mark_bitmap_preferred_tips(void)
 	}
 }
 
+static enum rev_info_stdin_line get_object_list_handle_stdin_line(
+	struct rev_info *revs, struct strbuf *line_sb, void *stdin_line_priv)
+{
+	char *line = line_sb->buf;
+
+	if (*line != '-')
+		return REV_INFO_STDIN_LINE_PROCESS;
+
+	if (!strcmp(line, "--not")) {
+		revs->revarg_flags ^= UNINTERESTING;
+		write_bitmap_index = 0;
+		return REV_INFO_STDIN_LINE_CONTINUE;
+	} else if (starts_with(line, "--shallow ")) {
+		struct object_id oid;
+		if (get_oid_hex(line + 10, &oid))
+			die("not an object name '%s'", line + 10);
+		register_shallow(the_repository, &oid);
+		use_bitmap_index = 0;
+		return REV_INFO_STDIN_LINE_CONTINUE;
+	} else {
+		die(_("not a rev '%s'"), line);
+	}
+}
+
 static void get_object_list(int ac, const char **av)
 {
 	struct rev_info revs;
 	struct setup_revision_opt s_r_opt = {
 		.allow_exclude_promisor_objects = 1,
 	};
-	char line[1000];
-	int flags = 0;
-	int save_warning;
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
-	setup_revisions(ac, av, &revs, &s_r_opt);
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);
 
-	save_warning = warn_on_object_refname_ambiguity;
-	warn_on_object_refname_ambiguity = 0;
-
-	while (fgets(line, sizeof(line), stdin) != NULL) {
-		int len = strlen(line);
-		if (len && line[len - 1] == '\n')
-			line[--len] = 0;
-		if (!len)
-			break;
-		if (*line == '-') {
-			if (!strcmp(line, "--not")) {
-				flags ^= UNINTERESTING;
-				write_bitmap_index = 0;
-				continue;
-			}
-			if (starts_with(line, "--shallow ")) {
-				struct object_id oid;
-				if (get_oid_hex(line + 10, &oid))
-					die("not an object name '%s'", line + 10);
-				register_shallow(the_repository, &oid);
-				use_bitmap_index = 0;
-				continue;
-			}
-			die(_("not a rev '%s'"), line);
-		}
-		if (handle_revision_arg(line, &revs, flags, REVARG_CANNOT_BE_FILENAME))
-			die(_("bad revision '%s'"), line);
-	}
-
-	warn_on_object_refname_ambiguity = save_warning;
+	revs.stdin_handling = REV_INFO_STDIN_ALWAYS_READ;
+	revs.handle_stdin_line = get_object_list_handle_stdin_line;
+	setup_revisions(ac, av, &revs, &s_r_opt);
 
 	if (use_bitmap_index && !get_object_list_from_bitmap(&revs))
 		return;

@@ -82,6 +82,20 @@ struct rev_cmdline_info {
 struct oidset;
 struct topo_walk_info;
 
+enum rev_info_stdin {
+	REV_INFO_STDIN_CONSUME_ON_OPTION,
+	REV_INFO_STDIN_IGNORE,
+	REV_INFO_STDIN_ALWAYS_READ,
+};
+
+enum rev_info_stdin_line {
+	REV_INFO_STDIN_LINE_PROCESS,
+	REV_INFO_STDIN_LINE_CONTINUE,
+};
+
+typedef enum rev_info_stdin_line (*rev_info_stdin_line_func)(
+	struct rev_info *revs, struct strbuf *line, void *stdin_line_priv);
+
 struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
@@ -110,9 +124,47 @@ struct rev_info {
 	int rev_input_given;
 
 	/*
-	 * Whether we read from stdin due to the --stdin option.
+	 * How should we handle seeing --stdin?
+	 *
+	 * Defaults to REV_INFO_STDIN_CONSUME_ON_OPTION where we'll
+	 * attempt to read it if we see the --stdin option.
+	 *
+	 * Can be set to REV_INFO_STDIN_IGNORE to ignore the --stdin
+	 * option.
+	 *
+	 * Set it to REV_INFO_STDIN_ALWAYS_READ if there's always data
+	 * on stdin to be read, even if no --stdin option is provided.
 	 */
-	int read_from_stdin;
+	enum rev_info_stdin stdin_handling;
+
+	/*
+	 * Did we read from stdin due to stdin_handling ==
+	 * REV_INFO_STDIN_CONSUME_ON_OPTION and seeing the --stdin
+	 * option?
+	 */
+	unsigned int consumed_stdin:1;
+
+	/*
+	 * When reading from stdin (see "stdin_handling" above) define
+	 * a handle_stdin_line function to consume the lines.
+	 *
+	 * - Return REV_INFO_STDIN_LINE_PROCESS to continue
+	 *   revision.c's normal processing of the line (after
+	 *   possibly munging the provided strbuf).
+	 *
+	 *   Change "revarg_flags" to affect the subsequent handling
+	 *   in handle_revision_arg()
+	 *
+	 * - Return REV_INFO_STDIN_LINE_CONTINUE to indicate that the
+	 *   line is fully processed, moving onto the next line (if
+	 *   any)
+	 *
+	 * Use the "stdin_line_priv" to optionally pass your own data
+	 * around.
+	 */
+	rev_info_stdin_line_func handle_stdin_line;
+	int revarg_flags;
+	void *stdin_line_priv;
 
 	/* topo-sort */
 	enum rev_sort_order sort_order;
@@ -214,7 +266,6 @@ struct rev_info {
 			preserve_subject:1,
 			encode_email_headers:1,
 			include_header:1;
-	unsigned int	disable_stdin:1;
 	/* --show-linear-break */
 	unsigned int	track_linear:1,
 			track_first_time:1,
@@ -373,8 +424,6 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 			const char * const usagestr[]);
 #define REVARG_CANNOT_BE_FILENAME 01
 #define REVARG_COMMITTISH 02
-int handle_revision_arg(const char *arg, struct rev_info *revs,
-			int flags, unsigned revarg_opt);
 
 /**
  * Reset the flags used by the revision walking api. You can use this to do

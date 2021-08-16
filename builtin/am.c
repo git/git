@@ -1356,7 +1356,7 @@ static void write_commit_patch(const struct am_state *state, struct commit *comm
 	repo_init_revisions(the_repository, &rev_info, NULL);
 	rev_info.diff = 1;
 	rev_info.abbrev = 0;
-	rev_info.disable_stdin = 1;
+	rev_info.stdin_handling = REV_INFO_STDIN_IGNORE;
 	rev_info.show_root_diff = 1;
 	rev_info.diffopt.output_format = DIFF_FORMAT_PATCH;
 	rev_info.no_commit_id = 1;
@@ -1391,7 +1391,7 @@ static void write_index_patch(const struct am_state *state)
 	fp = xfopen(am_path(state, "patch"), "w");
 	repo_init_revisions(the_repository, &rev_info, NULL);
 	rev_info.diff = 1;
-	rev_info.disable_stdin = 1;
+	rev_info.stdin_handling = REV_INFO_STDIN_IGNORE;
 	rev_info.no_commit_id = 1;
 	rev_info.diffopt.output_format = DIFF_FORMAT_PATCH;
 	rev_info.diffopt.use_color = 0;
