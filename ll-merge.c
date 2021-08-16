@@ -46,6 +46,13 @@ void reset_merge_attributes(void)
 	merge_attributes = NULL;
 }
 
+static int same_mmfile(mmfile_t *a, mmfile_t *b)
+{
+	if (a->size != b->size)
+		return 0;
+	return !memcmp(a->ptr, b->ptr, a->size);
+}
+
 /*
  * Built-in low-levels
  */
@@ -58,8 +65,17 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 			   const struct ll_merge_options *opts,
 			   int marker_size)
 {
+	int status;
 	mmfile_t *stolen;
 	assert(opts);
+
+	/*
+	 * With -Xtheirs or -Xours, we have cleanly merged;
+	 * otherwise we got a conflict, unless 3way trivially
+	 * resolves.
+	 */
+	status = (opts->variant == XDL_MERGE_FAVOR_OURS ||
+		  opts->variant == XDL_MERGE_FAVOR_THEIRS) ? 0 : 1;
 
 	/*
 	 * The tentative merge result is the common ancestor for an
@@ -68,18 +84,30 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	 */
 	if (opts->virtual_ancestor) {
 		stolen = orig;
+		status = 0;
 	} else {
-		switch (opts->variant) {
-		default:
-			warning("Cannot merge binary files: %s (%s vs. %s)",
-				path, name1, name2);
-			/* fallthru */
-		case XDL_MERGE_FAVOR_OURS:
-			stolen = src1;
-			break;
-		case XDL_MERGE_FAVOR_THEIRS:
+		if (same_mmfile(orig, src1)) {
 			stolen = src2;
-			break;
+			status = 0;
+		} else if (same_mmfile(orig, src2)) {
+			stolen = src1;
+			status = 0;
+		} else if (same_mmfile(src1, src2)) {
+			stolen = src1;
+			status = 0;
+		} else {
+			switch (opts->variant) {
+			default:
+				warning("Cannot merge binary files: %s (%s vs. %s)",
+					path, name1, name2);
+				/* fallthru */
+			case XDL_MERGE_FAVOR_OURS:
+				stolen = src1;
+				break;
+			case XDL_MERGE_FAVOR_THEIRS:
+				stolen = src2;
+				break;
+			}
 		}
 	}
 
@@ -87,13 +115,7 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	result->size = stolen->size;
 	stolen->ptr = NULL;
 
-	/*
-	 * With -Xtheirs or -Xours, we have cleanly merged;
-	 * otherwise we got a conflict.
-	 */
-	return opts->variant == XDL_MERGE_FAVOR_OURS ||
-	       opts->variant == XDL_MERGE_FAVOR_THEIRS ?
-	       0 : 1;
+	return status;
 }
 
 static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
