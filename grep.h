@@ -120,7 +120,20 @@ struct grep_opt {
 	struct grep_pat *header_list;
 	struct grep_pat **header_tail;
 	struct grep_expr *pattern_expression;
+
+	/*
+	 * NEEDSWORK: See if we can remove this field, because the repository
+	 * should probably be per-source. That is, grep.c functions using this
+	 * field should probably start using "repo" in "struct grep_source"
+	 * instead.
+	 *
+	 * This is potentially the cause of at least one bug - "git grep"
+	 * ignoring the textconv attributes from submodules. See [1] for more
+	 * information.
+	 * [1] https://lore.kernel.org/git/CAHd-oW5iEQarYVxEXoTG-ua2zdoybTrSjCBKtO0YT292fm0NQQ@mail.gmail.com/
+	 */
 	struct repository *repo;
+
 	const char *prefix;
 	int prefix_length;
 	regex_t regexp;
@@ -187,6 +200,7 @@ struct grep_source {
 		GREP_SOURCE_BUF,
 	} type;
 	void *identifier;
+	struct repository *repo; /* if GREP_SOURCE_OID */
 
 	char *buf;
 	unsigned long size;
@@ -198,7 +212,8 @@ struct grep_source {
 void grep_source_init_file(struct grep_source *gs, const char *name,
 			   const char *path);
 void grep_source_init_oid(struct grep_source *gs, const char *name,
-			  const char *path, const struct object_id *oid);
+			  const char *path, const struct object_id *oid,
+			  struct repository *repo);
 void grep_source_clear_data(struct grep_source *gs);
 void grep_source_clear(struct grep_source *gs);
 void grep_source_load_driver(struct grep_source *gs,
