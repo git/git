@@ -340,9 +340,7 @@ See also INCOMPATIBLE OPTIONS below.
 
 -m::
 --merge::
-	Use merging strategies to rebase.  When the recursive (default) merge
-	strategy is used, this allows rebase to be aware of renames on the
-	upstream side.  This is the default.
+	Using merging strategies to rebase (default).
 +
 Note that a rebase merge works by replaying each commit from the working
 branch on top of the <upstream> branch.  Because of this, when a merge
@@ -354,9 +352,8 @@ See also INCOMPATIBLE OPTIONS below.
 
 -s <strategy>::
 --strategy=<strategy>::
-	Use the given merge strategy.
-	If there is no `-s` option 'git merge-recursive' is used
-	instead.  This implies --merge.
+	Use the given merge strategy, instead of the default
+	`recursive`.  This implies `--merge`.
 +
 Because 'git rebase' replays each commit from the working branch
 on top of the <upstream> branch using the given strategy, using
@@ -530,7 +527,7 @@ The `--rebase-merges` mode is similar in spirit to the deprecated
 where commits can be reordered, inserted and dropped at will.
 +
 It is currently only possible to recreate the merge commits using the
-`recursive` merge strategy; Different merge strategies can be used only via
+`recursive` merge strategy; different merge strategies can be used only via
 explicit `exec git merge -s <strategy> [...]` commands.
 +
 See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
@@ -1219,12 +1216,16 @@ successful merge so that the user can edit the message.
 If a `merge` command fails for any reason other than merge conflicts (i.e.
 when the merge operation did not even start), it is rescheduled immediately.
 
-At this time, the `merge` command will *always* use the `recursive`
-merge strategy for regular merges, and `octopus` for octopus merges,
-with no way to choose a different one. To work around
-this, an `exec` command can be used to call `git merge` explicitly,
-using the fact that the labels are worktree-local refs (the ref
-`refs/rewritten/onto` would correspond to the label `onto`, for example).
+By default, the `merge` command will use the `recursive` merge
+strategy for regular merges, and `octopus` for octopus merges.  One
+can specify a default strategy for all merges using the `--strategy`
+argument when invoking rebase, or can override specific merges in the
+interactive list of commands by using an `exec` command to call `git
+merge` explicitly with a `--strategy` argument.  Note that when
+calling `git merge` explicitly like this, you can make use of the fact
+that the labels are worktree-local refs (the ref `refs/rewritten/onto`
+would correspond to the label `onto`, for example) in order to refer
+to the branches you want to merge.
 
 Note: the first command (`label onto`) labels the revision onto which
 the commits are rebased; The name `onto` is just a convention, as a nod
