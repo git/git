@@ -20,20 +20,13 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	if (argc < 2)
-		usage_with_options(builtin_fsmonitor__daemon_usage, options);
-
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(builtin_fsmonitor__daemon_usage, options);
-
 	git_config(git_default_config, NULL);
-
-	subcmd = argv[1];
-	argv--;
-	argc++;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_fsmonitor__daemon_usage, 0);
+	if (argc != 1)
+		usage_with_options(builtin_fsmonitor__daemon_usage, options);
+	subcmd = argv[0];
 
 	die(_("Unhandled subcommand '%s'"), subcmd);
 }
