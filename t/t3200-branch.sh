@@ -109,6 +109,20 @@ test_expect_success 'git branch -m n/n n should work' '
 	git reflog exists refs/heads/n
 '
 
+test_expect_success 'git branch -m with symlinked .git/refs' '
+	git init subdir &&
+	test_when_finished "rm -rf subdir" &&
+	(cd subdir &&
+		for d in refs objects packed-refs ; do
+		rm -rf .git/$d &&
+		ln -s ../../.git/$d .git/$d ; done ) &&
+	git --git-dir subdir/.git/ branch rename-src &&
+	expect=$(git rev-parse rename-src) &&
+	git --git-dir subdir/.git/ branch -m rename-src rename-dest &&
+	test $(git rev-parse rename-dest) = "$expect" &&
+	git branch -D rename-dest
+'
+
 # The topmost entry in reflog for branch bbb is about branch creation.
 # Hence, we compare bbb@{1} (instead of bbb@{0}) with aaa@{0}.
 

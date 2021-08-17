@@ -454,6 +454,7 @@ stat_ref:
 	}
 	strbuf_reset(&sb_contents);
 	if (strbuf_read(&sb_contents, fd, 256) < 0) {
+		myerr = errno;
 		close(fd);
 		goto out;
 	}
