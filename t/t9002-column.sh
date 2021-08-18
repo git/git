@@ -42,6 +42,24 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success '--nl' '
+	cat >expected <<\EOF &&
+oneZ
+twoZ
+threeZ
+fourZ
+fiveZ
+sixZ
+sevenZ
+eightZ
+nineZ
+tenZ
+elevenZ
+EOF
+	git column --nl="Z$LF" --mode=plain <lista >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success '80 columns' '
 	cat >expected <<\EOF &&
 one    two    three  four   five   six    seven  eight  nine   ten    eleven
