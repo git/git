@@ -35,6 +35,8 @@ import zlib
 import ctypes
 import errno
 import glob
+import queue
+import threading
 
 # On python2.7 where raw_input() and input() are both availble,
 # we want raw_input's semantics, but aliased to input for python3
@@ -725,9 +727,7 @@ class P4CommandException(P4Exception):
 def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
-def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
-        errors_as_exceptions=False):
-
+def buildP4ListCmd(cmd, stdin=None, stdout=None, stdin_mode='w+b'):
     if not isinstance(cmd, list):
         cmd = "-G " + cmd
         expand = True
@@ -754,15 +754,47 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
         stdin_file.flush()
         stdin_file.seek(0)
 
-    p4 = subprocess.Popen(cmd,
+    return subprocess.Popen(cmd,
                           shell=expand,
                           stdin=stdin_file,
-                          stdout=subprocess.PIPE)
+                          stdout=stdout)
 
+def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
+        errors_as_exceptions=False):
+
+    p4 = buildP4ListCmd(cmd, stdin, subprocess.PIPE, stdin_mode)
+
+    result = unmarshalp4Output(p4.stdout, cb=cb, skip_info=skip_info)
+
+    exitCode = p4.wait()
+    if exitCode != 0:
+        if errors_as_exceptions:
+            if len(result) > 0:
+                data = result[0].get('data')
+                if data:
+                    m = re.search('Too many rows scanned \(over (\d+)\)', data)
+                    if not m:
+                        m = re.search('Request too large \(over (\d+)\)', data)
+
+                    if m:
+                        limit = int(m.group(1))
+                        raise P4RequestSizeException(exitCode, result, limit)
+
+                raise P4ServerException(exitCode, result)
+            else:
+                raise P4Exception(exitCode)
+        else:
+            entry = {}
+            entry["p4ExitCode"] = exitCode
+            result.append(entry)
+
+    return result
+
+def unmarshalp4Output(f, cb=None, skip_info=False):
     result = []
     try:
         while True:
-            entry = marshal.load(p4.stdout)
+            entry = marshal.load(f)
             if bytes is not str:
                 # Decode unmarshalled dict to use str keys and values, except for:
                 #   - `data` which may contain arbitrary binary data
@@ -786,27 +818,6 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
                 result.append(entry)
     except EOFError:
         pass
-    exitCode = p4.wait()
-    if exitCode != 0:
-        if errors_as_exceptions:
-            if len(result) > 0:
-                data = result[0].get('data')
-                if data:
-                    m = re.search('Too many rows scanned \(over (\d+)\)', data)
-                    if not m:
-                        m = re.search('Request too large \(over (\d+)\)', data)
-
-                    if m:
-                        limit = int(m.group(1))
-                        raise P4RequestSizeException(exitCode, result, limit)
-
-                raise P4ServerException(exitCode, result)
-            else:
-                raise P4Exception(exitCode)
-        else:
-            entry = {}
-            entry["p4ExitCode"] = exitCode
-            result.append(entry)
 
     return result
 
@@ -2753,6 +2764,8 @@ class P4Sync(Command, P4UserMap):
                 optparse.make_option("-/", dest="cloneExclude",
                                      action="callback", callback=cloneExcludeCallback, type="string",
                                      help="exclude depot path"),
+                optparse.make_option("--threads", dest="threads", type="int"),
+                
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -2786,6 +2799,7 @@ class P4Sync(Command, P4UserMap):
         self.tempBranchLocation = "refs/git-p4-tmp"
         self.largeFileSystem = None
         self.suppress_meta_comment = False
+        self.threads = 10
 
         if gitConfig('git-p4.largeFileSystem'):
             largeFileSystemConstructor = globals()[gitConfig('git-p4.largeFileSystem')]
@@ -3116,13 +3130,11 @@ class P4Sync(Command, P4UserMap):
         self.stream_have_file_info = True
 
     # Stream directly from "p4 files" into "git fast-import"
-    def streamP4Files(self, files):
-        filesForCommit = []
+    def streamP4Files(self, files, localPath=None):
         filesToRead = []
         filesToDelete = []
 
         for f in files:
-            filesForCommit.append(f)
             if f['action'] in self.delete_actions:
                 filesToDelete.append(f)
             else:
@@ -3152,13 +3164,38 @@ class P4Sync(Command, P4UserMap):
 
                 fileArgs.append(fileArg)
 
-            p4CmdList(["-x", "-", "print"],
+            if localPath:
+                with open(localPath, 'r+b') as f:
+                    unmarshalp4Output(f, cb=streamP4FilesCbSelf)
+            else:
+                p4CmdList(["-x", "-", "print"],
                       stdin=fileArgs,
                       cb=streamP4FilesCbSelf)
 
             # do the last chunk
             if 'depotFile' in self.stream_file:
                 self.streamOneP4File(self.stream_file, self.stream_contents)
+
+    # Get all the files to pass to p4 print
+    def prepFileArgs(self, files):
+        filesToRead = []
+
+        for f in files:
+            if f['action'] not in self.delete_actions:
+                filesToRead.append(f)
+
+        fileArgs = []
+        for f in filesToRead:
+            if 'shelved_cl' in f:
+                # Handle shelved CLs using the "p4 print file@=N" syntax to print
+                # the contents
+                fileArg = f['path'] + encode_text_stream('@={}'.format(f['shelved_cl']))
+            else:
+                fileArg = f['path'] + encode_text_stream('#{}'.format(f['rev']))
+
+            fileArgs.append(fileArg)
+        
+        return fileArgs
 
     def make_email(self, userid):
         if userid in self.users:
@@ -3254,7 +3291,7 @@ class P4Sync(Command, P4UserMap):
                     'rev': record['headRev'],
                     'type': record['headType']})
 
-    def commit(self, details, files, branch, parent = "", allow_empty=False):
+    def commit(self, details, files, branch, parent = "", allow_empty=False, localPath = ""):
         epoch = details["time"]
         author = details["user"]
         jobs = self.extractJobsFromCommit(details)
@@ -3308,7 +3345,7 @@ class P4Sync(Command, P4UserMap):
                 print("parent %s" % parent)
             self.gitStream.write("from %s\n" % parent)
 
-        self.streamP4Files(files)
+        self.streamP4Files(files, localPath=localPath)
         self.gitStream.write("\n")
 
         change = int(details["change"])
@@ -3616,8 +3653,144 @@ class P4Sync(Command, P4UserMap):
                 return commit
         return None
 
+    def importChangesInParallel(self, changes):
+        # create a temporary directory to store p4 changes as files
+        tempDir = tempfile.TemporaryDirectory()
+        
+        # q is used to distribute each change to the worker pool
+        q = queue.Queue(1)
+
+        # whenever a worker has finished downloading
+        # a commit, it will send it to this queue.
+        # this queue must never block
+        out = queue.Queue(len(changes))
+
+        exitThread = False
+
+        # stats
+        lock = threading.Lock()
+        downloaded = 0
+        commited = 0
+
+        threads = self.threads - 1
+        if threads < 2:
+            threads = 2
+
+        def printProgress():
+            sys.stdout.write("\rDownloaded: %s / %s, Committed: %s / %s" % (downloaded, len(changes), commited, len(changes)))
+            sys.stdout.flush()
+    
+        # thread responsible for downloading commits one by one
+        # and write them to a file in the tempDir directory.
+        # each file will be named <change number>.txt and contain
+        # the raw input of the "p4 -G -x - print" command.
+        # Once the file is created, it is closed and the path
+        # is pushed to the "out" queue 
+        def commitDownloader():
+            nonlocal downloaded, commited, exitThread
+            while True:
+                if q.empty() and exitThread:
+                    return
+
+                try:
+                    change = q.get(timeout=0.5)
+                except queue.Empty:
+                    continue
+
+                description = p4_describe(change)
+                lock.acquire()
+                self.updateOptionDict(description)
+                lock.release()
+
+                files = self.extractFilesFromCommit(description)
+                fileArgs = self.prepFileArgs(files)
+
+                path = "{}/{}.txt".format(tempDir.name, change)
+
+                with open(path, 'w+b') as stdoutFile:
+                    p4 = buildP4ListCmd(["-x", "-", "print"],
+                        stdin=fileArgs,
+                        stdout=stdoutFile)
+
+                    p4.wait()
+
+                lock.acquire()
+                downloaded += 1
+                printProgress()
+                lock.release()
+    
+                out.put_nowait({
+                    "change": change,
+                    "filePath": path,
+                    "description": description,
+                    "files": files,
+                })
+
+        # run as a single thread and responsible for creating commits.
+        # it reads from the "out" queue and ensures commits are created in order.
+        def commiter():
+            nonlocal downloaded, commited, exitThread
+
+            done = {}
+            while True:
+                if out.empty() and exitThread and commited >= len(changes):
+                    return
+
+                if commited < len(changes):
+                    try:
+                        task = out.get(timeout=0.5)
+                    except queue.Empty:
+                        continue
+
+                    done[task["change"]] = task
+
+                while commited < len(changes):
+                    try:
+                        toCommit = done.pop(changes[commited])
+                    except KeyError:
+                        break
+                    
+                    self.commit(toCommit["description"], toCommit["files"], self.branch,
+                                self.initialParent, localPath=toCommit["filePath"])
+                    
+                    lock.acquire()
+                    commited += 1
+                    printProgress()
+                    lock.release()
+
+        # start the commit downloader threads
+        threads = []
+        for i in range (0, self.threads - 1):
+            t = threading.Thread(target=commitDownloader)
+            t.start()
+            threads.append(t)
+
+        # start the commiter thread (only one)
+        t = threading.Thread(target=commiter)
+        t.start()
+        threads.append(t)
+
+        # send the list of changes to q
+        for change in changes:
+            q.put(change)
+
+        # signal the threads that there is no work done
+        # and wait for them to finish
+        exitThread = True
+        for t in threads:
+            t.join()
+        
+        # cleanup the temp directory
+        tempDir.cleanup()
+
     def importChanges(self, changes, origin_revision=0):
         cnt = 1
+        # apply the optimization to simple use cases for now
+        if not self.detectBranches:
+            self.importChangesInParallel(changes)
+            self.initialParent = ""
+            return
+
         for change in changes:
             description = p4_describe(change)
             self.updateOptionDict(description)
@@ -3800,6 +3973,7 @@ class P4Sync(Command, P4UserMap):
                 print("Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
                                                           self.changeRange))
             changes = p4ChangesForPaths(self.depotPaths, self.changeRange, self.changes_block_size)
+            # print("Changes", changes)
 
             if len(self.maxChanges) > 0:
                 changes = changes[:min(int(self.maxChanges), len(changes))]
