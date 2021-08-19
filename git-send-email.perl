@@ -219,8 +219,18 @@ sub system_or_msg {
 	my $exit_code = $? >> 8;
 	return unless $signalled or $exit_code;
 
+	my @sprintf_args = ($args->[0], $exit_code);
+	if (defined $msg) {
+		# Quiet the 'redundant' warning category, except we
+		# need to support down to Perl 5.8, so we can't do a
+		# "no warnings 'redundant'", since that category was
+		# introduced in perl 5.22, and asking for it will die
+		# on older perls.
+		no warnings;
+		return sprintf($msg, @sprintf_args);
+	}
 	return sprintf(__("fatal: command '%s' died with exit code %d"),
-		       $args->[0], $exit_code);
+		       @sprintf_args);
 }
 
 sub system_or_die {
@@ -1949,7 +1959,8 @@ sub validate_patch {
 	my ($fn, $xfer_encoding) = @_;
 
 	if ($repo) {
-		my $validate_hook = catfile($repo->hooks_path(),
+		my $hooks_path = $repo->command_oneline('rev-parse', '--git-path', 'hooks');
+		my $validate_hook = catfile($hooks_path,
 					    'sendemail-validate');
 		my $hook_error;
 		if (-x $validate_hook) {

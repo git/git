@@ -40,6 +40,30 @@ language, so that the l10n coordinator only needs to interact with one
 person per language.
 
 
+Core translation
+----------------
+The core translation is the smallest set of work that must be completed
+for a new language translation. Because there are more than 5000 messages
+in the template message file "po/git.pot" that need to be translated,
+this is not a piece of cake for the contributor for a new language.
+
+The core template message file which contains a small set of messages
+will be generated in "po-core/core.pot" automatically by running a helper
+program named "git-po-helper" (described later).
+
+    git-po-helper init --core XX.po
+
+After translating the generated "po-core/XX.po", you can merge it to
+"po/XX.po" using the following commands:
+
+    msgcat po-core/XX.po po/XX.po -s -o /tmp/XX.po
+    mv /tmp/XX.po po/XX.po
+    git-po-helper update XX.po
+
+Edit "po/XX.po" by hand to fix "fuzzy" messages, which may have misplaced
+translated messages and duplicate messages.
+
+
 Translation Process Flow
 ------------------------
 The overall data-flow looks like this:
@@ -134,6 +158,18 @@ in the po/ directory, where XX.po is the file you want to update.
 
 Once you are done testing the translation (see below), commit the result
 and ask the l10n coordinator to pull from you.
+
+Fuzzy translation
+-----------------
+
+Fuzzy translation is a translation marked by comment "fuzzy" to let you
+know that the translation is out of date because the "msgid" has been
+changed. A fuzzy translation will be ignored when compiling using "msgfmt".
+Fuzzy translation can be marked by hands, but for most cases they are
+marked automatically when running "msgmerge" to update your "XX.po" file.
+
+After fixing the corresponding translation, you must remove the "fuzzy"
+tag in the comment.
 
 
 Testing your changes
@@ -286,3 +322,80 @@ Testing marked strings
 
 Git's tests are run under LANG=C LC_ALL=C. So the tests do not need be
 changed to account for translations as they're added.
+
+
+PO helper
+---------
+
+To make the maintenance of XX.po easier, the l10n coordinator and l10n
+team leaders can use a helper program named "git-po-helper". It is a
+wrapper to gettext suite, specifically written for the purpose of Git
+l10n workflow.
+
+To build and install the helper program from source, see
+[git-po-helper/README][].
+
+Usage for git-po-helper:
+
+  - To start a new language translation:
+
+        git-po-helper init XX.po
+
+  - To update your XX.po file:
+
+        git-po-helper update XX.po
+
+  - To check commit log and syntax of XX.po:
+
+        git-po-helper check-po XX.po
+        git-po-helper check-commits
+
+Run "git-po-helper" without arguments to show usage.
+
+
+Conventions
+-----------
+
+There are some conventions that l10n contributors must follow:
+
+1. The subject of each l10n commit should be prefixed with "l10n: ".
+2. Do not use non-ASCII characters in the subject of a commit.
+3. The length of commit subject (first line of the commit log) should
+   be less than 50 characters, and the length of other lines of the
+   commit log should be no more than 72 characters.
+4. Add "Signed-off-by" trailer to your commit log, like other commits
+   in Git. You can automatically add the trailer by committing with
+   the following command:
+
+        git commit -s
+
+5. Check syntax with "msgfmt" or the following command before creating
+   your commit:
+
+        git-po-helper check-po <XX.po>
+
+6. Squash trivial commits to make history clear.
+7. DO NOT edit files outside "po/" directory.
+8. Other subsystems ("git-gui", "gitk", and Git itself) have their
+   own workflow. See [Documentation/SubmittingPatches][] for
+   instructions on how to contribute patches to these subsystems.
+
+To contribute for a new l10n language, contributor should follow
+additional conventions:
+
+1. Initialize proper filename of the "XX.po" file conforming to
+   iso-639 and iso-3166.
+2. Must complete a minimal translation based on the "po-core/core.pot"
+   template. Using the following command to initialize the minimal
+   "po-core/XX.po" file:
+
+        git-po-helper init --core <your-language>
+
+3. Add a new entry in the "po/TEAMS" file with proper format, and check
+   the syntax of "po/TEAMS" by runnning the following command:
+
+        git-po-helper team --check
+
+
+[git-po-helper/README]: https://github.com/git-l10n/git-po-helper#readme
+[Documentation/SubmittingPatches]: Documentation/SubmittingPatches

@@ -11,25 +11,25 @@
 #
 #   English                          |  Portuguese
 #   ---------------------------------+--------------------------------------
-#   3-way merge                      |  junção-de-3
+#   3-way merge                      |  tri-junção
 #   abbreviate                       |  
 #   alternate object database        |  
 #   amend                            |  
 #   ancestor                         |  
 #   annotated tag                    |  
-#   bare repository                  |  
+#   bare repository                  |  repositório nú
 #   bisect                           |  
 #   blob object                      |  
 #   bloom filter                     |  
 #   branch                           |  ramo 
 #   bundle                           |  
 #   bypass                           |  
-#   cache                            |  index
+#   cache                            |  cache
 #   chain                            |  
 #   changeset                        |  
 #   checkout                         |  
 #   checksum                         |  
-#   cherry-picking                   |  
+#   cherry-picking                   |  apanhar
 #   clean                            |  
 #   clone                            |  
 #   commit                           |  memorizar
@@ -39,17 +39,17 @@
 #   conflict                         |  conflito
 #   core Git                         |  
 #   cover letter                     |  
-#   DAG                              |  
-#   dangling object                  |  DAG
+#   DAG                              |  DAG
+#   dangling object                  |  objeto DAG
 #   detached HEAD                    |  HEAD solta
 #   directory                        |  pasta
 #   dirty                            |  
 #   dumb HTTP protocol               |  
 #   evil merge                       |  
 #   fast-forward                     |  
-#   fetch                            |  
+#   fetch                            |  buscar
 #   file system                      |  
-#   fork                             |  
+#   fork                             |  aforquilhar
 #   Git archive                      |  
 #   gitfile                          |  
 #   grafts                           |  
@@ -57,7 +57,7 @@
 #   HEAD                             |  HEAD
 #   head                             |  
 #   head ref                         |  
-#   header                           |  início
+#   header                           |  cabeçalho
 #   hook                             |  
 #   hunk                             |  pedaço
 #   index                            |  
@@ -79,7 +79,7 @@
 #   parent                           |  
 #   patch                            |  
 #   pathspec                         |  
-#   pattern                          |  
+#   pattern                          |  pattern
 #   pickaxe                          |  
 #   plumbing                         |  
 #   porcelain                        |  
@@ -97,6 +97,7 @@
 #   replay                           |  
 #   repo                             |  repo
 #   repository                       |  repositório
+#   reset                            |  reposição
 #   resolve                          |  
 #   revert                           |  reverter
 #   revision                         |  revisão
@@ -107,7 +108,8 @@
 #   signed tag                       |  
 #   smart HTTP protocol              |  
 #   squash                           |  
-#   stage                            |  
+#   squelch                          |  suprimir
+#   stage                            |  preparar
 #   stash                            |  arrumos
 #   submodule                        |  
 #   symref                           |  
@@ -115,7 +117,7 @@
 #   tag object                       |  
 #   tagger                           |  
 #   topic branch                     |  
-#   track                            |  
+#   track                            |  seguir
 #   trailer                          |  
 #   tree                             |  
 #   tree object                      |  
@@ -123,7 +125,7 @@
 #   unmerged index                   |  
 #   unpack                           |  
 #   unreachable object               |  
-#   unstage                          |  
+#   unstage                          |  despreparar
 #   upstream                         |  upstream
 #   upstream branch                  |  ramo upstream
 #   working tree                     |  
@@ -192,7 +194,7 @@ msgstr[1] "actualizou %d paths\n"
 #: add-interactive.c:724 git-add--interactive.perl:676
 #, c-format, perl-format
 msgid "note: %s is untracked now.\n"
-msgstr "nota: %s agora está untracked.\n"
+msgstr "nota: %s agora está por seguir.\n"
 
 #: add-interactive.c:729 apply.c:4127 builtin/checkout.c:295
 #: builtin/reset.c:145
@@ -786,8 +788,8 @@ msgstr "'git apply --cached' falhou"
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
 msgstr ""
-"Problema na submissão de pedaço editado. Editar de novo (responder \"não\" descarta!) "
-"[y/n]? "
+"Problema na submissão de pedaço editado. Editar de novo (responder "
+"\"n\" para \"não\" descarta!) [y/n]? "
 
 #: add-patch.c:1289
 #, fuzzy
@@ -1272,11 +1274,11 @@ msgstr "%s: tem inexistência no index"
 #: apply.c:3537 apply.c:3708 apply.c:3953
 #, c-format
 msgid "%s: does not match index"
-msgstr "%s: tem correspondência nenhuma no index"
+msgstr "%s: no index há correspondência nenhuma"
 
 #: apply.c:3572
 msgid "repository lacks the necessary blob to fall back on 3-way merge."
-msgstr "repositório falta o blob necessário para recorrer à junção-de-3."
+msgstr "repositório falta o blob necessário para recorrer à tri-junção."
 
 #: apply.c:3575
 #, c-format
@@ -1286,7 +1288,7 @@ msgstr "A recorrer a integração com 3 pontos...\n"
 #: apply.c:3591 apply.c:3595
 #, c-format
 msgid "cannot read the current contents of '%s'"
-msgstr "não é possível ler o conteúdo atual de '%s'"
+msgstr "incapaz ler conteúdo atual de '%s'"
 
 #: apply.c:3607
 #, c-format
@@ -1336,12 +1338,12 @@ msgstr "%s: já existe no diretório de trabalho"
 #: apply.c:3976
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o)"
-msgstr "o novo modo (%o) de %s não corresponde ao modo antigo (%o)"
+msgstr "novo modo (%o) de %s é incorrespondente ao modo antigo (%o)"
 
 #: apply.c:3981
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o) of %s"
-msgstr "o novo modo (%o) de %s não corresponde ao modo antigo (%o) de %s"
+msgstr "novo modo (%o) de %s é incorrespondente ao modo antigo (%o) de %s"
 
 #: apply.c:4001
 #, c-format
@@ -1351,7 +1353,7 @@ msgstr "o ficheiro afetado '%s' é indicado por uma ligação simbólica"
 #: apply.c:4005
 #, c-format
 msgid "%s: patch does not apply"
-msgstr "%s: patch não se aplica com sucesso"
+msgstr "%s: patch submete-se de maneira nenhuma"
 
 #: apply.c:4020
 #, c-format
@@ -1361,32 +1363,32 @@ msgstr "A verificar o patch %s..."
 #: apply.c:4112
 #, c-format
 msgid "sha1 information is lacking or useless for submodule %s"
-msgstr "falta informação de sha1 ou não é útil para o submódulo %s"
+msgstr "sha1 tem falta informação ou é inútil para o submódulo %s"
 
 #: apply.c:4119
 #, c-format
 msgid "mode change for %s, which is not in current HEAD"
-msgstr "alteração de modo de %s que não está na HEAD atual"
+msgstr "alteração de modo para %s, que está fora da HEAD atual"
 
 #: apply.c:4122
 #, c-format
 msgid "sha1 information is lacking or useless (%s)."
-msgstr "falta informação de sha1 ou não é útil (%s)."
+msgstr "informação de sha1 está faltando ou é inútil (%s)."
 
 #: apply.c:4131
 #, c-format
 msgid "could not add %s to temporary index"
-msgstr "não foi possível adicionar %s ao índice temporário"
+msgstr "incapaz adicionar %s ao índex temporário"
 
 #: apply.c:4141
 #, c-format
 msgid "could not write temporary index to %s"
-msgstr "não foi possível escrever índice temporário para %s"
+msgstr "incapaz escrever index temporário para %s"
 
 #: apply.c:4279
 #, c-format
 msgid "unable to remove %s from index"
-msgstr "não é possível remover %s do índice"
+msgstr "impossível remover %s de index"
 
 #: apply.c:4313
 #, c-format
@@ -1396,33 +1398,32 @@ msgstr "patch corrompido no submódulo %s"
 #: apply.c:4319
 #, c-format
 msgid "unable to stat newly created file '%s'"
-msgstr "não é possível obter estado do novo ficheiro criado '%s'"
+msgstr "incapaz obter estatutário de ficheiro recém-criado '%s'"
 
 #: apply.c:4327
 #, c-format
 msgid "unable to create backing store for newly created file %s"
-msgstr ""
-"não é possível criar armazenamento de segurança do ficheiro recém-criado %s"
+msgstr "incapaz criar armazenamento de backup para ficheiro recém-criado %s"
 
 #: apply.c:4333 apply.c:4478
 #, c-format
 msgid "unable to add cache entry for %s"
-msgstr "não é possível adicionar %s à cache"
+msgstr "incapaz adicionar entrada de cache para %s"
 
 #: apply.c:4376 builtin/bisect--helper.c:524
 #, c-format
 msgid "failed to write to '%s'"
-msgstr "falha ao escrever para '%s'"
+msgstr "falha a escrever para '%s'"
 
 #: apply.c:4380
 #, c-format
 msgid "closing file '%s'"
-msgstr "a fechar o ficheiro '%s'"
+msgstr "fechando ficheiro '%s'"
 
 #: apply.c:4450
 #, c-format
 msgid "unable to write file '%s' mode %o"
-msgstr "não é possível escrever o ficheiro '%s' com o modo %o"
+msgstr "incapaz escrever ficheiro '%s' com modo %o"
 
 #: apply.c:4548
 #, c-format
@@ -1448,7 +1449,7 @@ msgstr "a truncar o nome do ficheiro .rej em %.*s.rej"
 #: apply.c:4578 builtin/fetch.c:927 builtin/fetch.c:1228
 #, c-format
 msgid "cannot open %s"
-msgstr "não é possível abrir %s"
+msgstr "incapaz abrir %s"
 
 #: apply.c:4592
 #, c-format
@@ -1467,16 +1468,16 @@ msgstr "Patch '%s' ignorado."
 
 #: apply.c:4728
 msgid "unrecognized input"
-msgstr "entrada não reconhecida"
+msgstr "input desconhecido"
 
 #: apply.c:4748
 msgid "unable to read index file"
-msgstr "não foi possível ler o ficheiro de índice"
+msgstr "incapaz ler ficheiro index"
 
 #: apply.c:4905
 #, c-format
 msgid "can't open patch '%s': %s"
-msgstr "não é possível abrir o patch '%s': %s"
+msgstr "incapaz abrir patch '%s': %s"
 
 #: apply.c:4932
 #, c-format
@@ -1501,15 +1502,15 @@ msgstr[1] "%d linhas aplicadas depois de corrigir erros de espaço em branco."
 
 #: apply.c:4962 builtin/add.c:618 builtin/mv.c:304 builtin/rm.c:406
 msgid "Unable to write new index file"
-msgstr "Não foi possível escrever novo ficheiro de índice"
+msgstr "Incapaz de escrever novo ficheiro index"
 
 #: apply.c:4990
 msgid "don't apply changes matching the given path"
-msgstr "não aplicar alterações que correspondam ao caminho fornecido"
+msgstr "submeter de maneira nenhuma alterações correspondentes a path fornecido"
 
 #: apply.c:4993
 msgid "apply changes matching the given path"
-msgstr "aplicar alterações que correspondam ao caminho fornecido"
+msgstr "submeter alterações correspondentes a path fornecido"
 
 #: apply.c:4995 builtin/am.c:2266
 msgid "num"
@@ -1561,7 +1562,7 @@ msgstr "aplicar o patch também (use com --stat/--summary/--check)"
 
 #: apply.c:5022
 msgid "attempt three-way merge if a patch does not apply"
-msgstr "tentar integração com três pontos se um patch não se aplica com êxito"
+msgstr "tentar tri-junção se um patch submete-se de maneira nenhuma"
 
 #: apply.c:5024
 msgid "build a temporary index based on embedded index information"
@@ -1619,7 +1620,7 @@ msgstr ""
 
 #: apply.c:5052
 msgid "do not trust the line counts in the hunk headers"
-msgstr "não confiar na contagem de linhas no cabeçalho dos excertos"
+msgstr "desconfia da contagem de linhas nos headers de pedaços"
 
 #: apply.c:5054 builtin/am.c:2254
 msgid "root"
@@ -1632,22 +1633,22 @@ msgstr "preceder <root> a todos os nomes de ficheiro"
 #: archive-tar.c:125 archive-zip.c:345
 #, fuzzy, c-format
 msgid "cannot stream blob %s"
-msgstr "não é possível guardar %s"
+msgstr "incapaz streamar blob %s"
 
 #: archive-tar.c:265 archive-zip.c:358
 #, fuzzy, c-format
 msgid "unsupported file mode: 0%o (SHA1: %s)"
-msgstr "versão de índice %s não suportada"
+msgstr "modo de ficheiro fora de suporte: 0%o (SHA1: %s)"
 
 #: archive-tar.c:450
 #, fuzzy, c-format
 msgid "unable to start '%s' filter"
-msgstr "não foi possível criar '%s'"
+msgstr "incapaz iniciar filtro '%s'"
 
 #: archive-tar.c:453
 #, fuzzy
 msgid "unable to redirect descriptor"
-msgstr "não foi possível refrescar o índice"
+msgstr "incapaz redirecionar descritor"
 
 #: archive-tar.c:460
 #, c-format
@@ -1696,14 +1697,14 @@ msgstr "git archive --remote <repo> [--exec <cmd>] --list"
 #: archive.c:192
 #, fuzzy, c-format
 msgid "cannot read %s"
-msgstr "não é possível ler '%s'"
+msgstr "incapaz ler '%s'"
 
 #: archive.c:345 sequencer.c:459 sequencer.c:1736 sequencer.c:2886
 #: sequencer.c:3327 sequencer.c:3436 builtin/am.c:249 builtin/commit.c:786
 #: builtin/merge.c:1138
 #, c-format
 msgid "could not read '%s'"
-msgstr "não foi possível ler '%s'"
+msgstr "incapaz ler '%s'"
 
 #: archive.c:430 builtin/add.c:181 builtin/add.c:594 builtin/rm.c:315
 #, c-format
@@ -1718,27 +1719,27 @@ msgstr "referência inexistente %s"
 #: archive.c:460
 #, fuzzy, c-format
 msgid "not a valid object name: %s"
-msgstr "%s não é um nome de objeto válido"
+msgstr "nome de objeto inválido: %s"
 
 #: archive.c:473
 #, fuzzy, c-format
 msgid "not a tree object: %s"
-msgstr "nome de objeto inválido: %s"
+msgstr "é objeto árvore nenhum: %s"
 
 #: archive.c:485
 #, fuzzy
 msgid "current working directory is untracked"
-msgstr "não é possível de obter o diretório de trabalho atual"
+msgstr "pasta de trabalho atual está por seguir"
 
 #: archive.c:526
 #, fuzzy, c-format
 msgid "File not found: %s"
-msgstr "objeto não encontrado: %s"
+msgstr "ficheiro por encontrar: %s"
 
 #: archive.c:528
 #, fuzzy, c-format
 msgid "Not a regular file: %s"
-msgstr "o ficheiro %s não é um ficheiro regular"
+msgstr "É ficheiro normal nenhum: %s"
 
 #: archive.c:555
 msgid "fmt"
@@ -1768,11 +1769,11 @@ msgstr "ficheiro"
 #: archive.c:559
 #, fuzzy
 msgid "add untracked file to archive"
-msgstr "Modo inválido de ficheiros não controlados '%s'"
+msgstr "adiciona ficheiro por seguir a arquivo"
 
 #: archive.c:562 builtin/archive.c:90
 msgid "write the archive to this file"
-msgstr "escrever o arquivo para este ficheiro"
+msgstr "escreve arquivo para este ficheiro"
 
 #: archive.c:564
 msgid "read .gitattributes in working directory"
@@ -1824,7 +1825,7 @@ msgstr "Opção inesperada --output"
 #: archive.c:588
 #, fuzzy
 msgid "Options --add-file and --remote cannot be used together"
-msgstr "As opções --squash e --fixup não podem ser usadas juntas"
+msgstr "Opções --add-file e --remote podem nada ser usadas juntas"
 
 #: archive.c:610
 #, c-format
@@ -1834,12 +1835,12 @@ msgstr "Formato de arquivo desconhecido '%s'"
 #: archive.c:619
 #, c-format
 msgid "Argument not supported for format '%s': -%d"
-msgstr "Argumento não suportado para o formato '%s': -%d"
+msgstr "Argumento por ser suportado para formato '%s': -%d"
 
 #: attr.c:202
 #, c-format
 msgid "%.*s is not a valid attribute name"
-msgstr "%.*s não é um nome de atributo válido"
+msgstr "%.*s é nome de atributo inválido"
 
 #: attr.c:359
 #, fuzzy, c-format
@@ -1862,12 +1863,12 @@ msgstr "Conteúdo incorretamente citado no ficheiro '%s': %s"
 #: bisect.c:699
 #, c-format
 msgid "We cannot bisect more!\n"
-msgstr "Não se está a bissetar mais!\n"
+msgstr "Conseguimos bisectar mais nenhum!\n"
 
 #: bisect.c:766
 #, c-format
 msgid "Not a valid commit name %s"
-msgstr "%s não é um nome de commit válido"
+msgstr "Nome de commit inválido %s"
 
 #: bisect.c:791
 #, c-format
@@ -1903,9 +1904,9 @@ msgid ""
 "git bisect cannot work properly in this case.\n"
 "Maybe you mistook %s and %s revs?\n"
 msgstr ""
-"Algumas revisões %s não antecedem a revisão %s.\n"
-"git bisect não pode funcionar corretamente nesta situação.\n"
-"Talvez confundiu revisões %s e %s?\n"
+"Algumas revisões %s são sucessores da revisão %s.\n"
+"git bisect pode funcionar incorretamente nesta situação.\n"
+"Talvez tenhas confundido revisões %s e %s?\n"
 
 #: bisect.c:822
 #, c-format
@@ -1914,10 +1915,9 @@ msgid ""
 "So we cannot be sure the first %s commit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
-"tem-se que saltar a base de integração entre %s e [%s].\n"
-"Portanto não se pode ter a certeza que o primeiro commit %s está entre %s e "
-"%s.\n"
-"Continua-se de qualquer maneira."
+"a base de junção entre %s e [%s] tem de ser saltada.\n"
+"Portanto temos incerteza quanto a o primeiro commit %s estar entre %s e %s.\n"
+"Continuemos de qualquer maneira."
 
 #: bisect.c:861
 #, c-format
@@ -1932,12 +1932,12 @@ msgstr "precisa-se de uma revisão %s"
 #: bisect.c:941 builtin/notes.c:177 builtin/tag.c:255
 #, c-format
 msgid "could not create file '%s'"
-msgstr "não foi possível criar o ficheiro '%s'"
+msgstr "incapaz criar ficheiro '%s'"
 
 #: bisect.c:987 builtin/merge.c:152
 #, c-format
 msgid "could not read file '%s'"
-msgstr "não foi possível ler o ficheiro '%s'"
+msgstr "incapaz ler ficheiro '%s'"
 
 #: bisect.c:1027
 msgid "reading bisect refs failed"
@@ -1976,11 +1976,11 @@ msgstr[1] "A bissetar: faltam %d revisões para testar depois desta %s\n"
 
 #: blame.c:2777
 msgid "--contents and --reverse do not blend well."
-msgstr "--contents e --reverse não se misturam bem."
+msgstr "--contents e --reverse são imiscíveis."
 
 #: blame.c:2791
 msgid "cannot use --contents with final commit object name"
-msgstr "não é possível usar --contents com nome de objeto commit final"
+msgstr "usar --contents com nome de objeto commit final é impossível"
 
 #: blame.c:2812
 msgid "--reverse and --first-parent together require specified latest commit"
@@ -2004,12 +2004,12 @@ msgstr ""
 #: blame.c:2850
 #, c-format
 msgid "no such path %s in %s"
-msgstr "o caminho %s não existe em %s"
+msgstr "path %s inexistente em %s"
 
 #: blame.c:2861
 #, c-format
 msgid "cannot read blob %s for path %s"
-msgstr "não é possível ler o blob %s do caminho %s"
+msgstr "incapaz ler blob %s para path %s"
 
 #: branch.c:53
 #, c-format
@@ -2027,7 +2027,7 @@ msgstr ""
 #: branch.c:67
 #, c-format
 msgid "Not setting branch %s as its own upstream."
-msgstr "O ramo %s não foi configurado com ramo a montante dele próprio."
+msgstr "Indefinindo ramo %s como seu próprio upstream."
 
 #: branch.c:93
 #, fuzzy, c-format
@@ -2071,17 +2071,17 @@ msgstr "Ramo %s configurado para seguir a referência local %s."
 
 #: branch.c:119
 msgid "Unable to write upstream branch configuration"
-msgstr "Não foi possível escrever a configuração do ramo a montante"
+msgstr "Incapaz de escrever configuração de ramo upstream"
 
 #: branch.c:156
 #, c-format
 msgid "Not tracking: ambiguous information for ref %s"
-msgstr "Não seguido: informação da referência %s ambígua"
+msgstr "Incapaz de seguir: informação ambígua para ref %s"
 
 #: branch.c:189
 #, c-format
 msgid "'%s' is not a valid branch name."
-msgstr "'%s' não é um nome válido para um ramo."
+msgstr "'%s' é um nome inválido para ramo."
 
 #: branch.c:208
 #, c-format
@@ -2090,18 +2090,17 @@ msgstr "Já existe um ramo designado '%s'."
 
 #: branch.c:213
 msgid "Cannot force update the current branch."
-msgstr "Não é possível forçar a atualização do ramo atual."
+msgstr "Incapaz de forçar a atualização do ramo atual."
 
 #: branch.c:233
 #, c-format
 msgid "Cannot setup tracking information; starting point '%s' is not a branch."
-msgstr ""
-"Não é possível configurar ramo a seguir; o ponto inicial '%s' não é um ramo."
+msgstr "Impossível configurar informação sobre seguir; o ponto inicial '%s' é ramo nenhum."
 
 #: branch.c:235
 #, c-format
 msgid "the requested upstream branch '%s' does not exist"
-msgstr "o ramo a montante solicitado '%s' não existe"
+msgstr "o ramo upstream solicitado '%s' é inexistente"
 
 #: branch.c:237
 msgid ""
@@ -2146,42 +2145,42 @@ msgstr "'%s' foi já extraído em '%s'"
 #: branch.c:388
 #, c-format
 msgid "HEAD of working tree %s is not updated"
-msgstr "HEAD da árvore de trabalho %s não está atualizada"
+msgstr "HEAD da working tree %s está desatualizada"
 
 #: bundle.c:41
 #, fuzzy, c-format
 msgid "unrecognized bundle hash algorithm: %s"
-msgstr "patch binário não reconhecido na linha %d"
+msgstr "algoritmo hash de bundle irreconhecível: %s"
 
 #: bundle.c:45
 #, fuzzy, c-format
 msgid "unknown capability '%s'"
-msgstr "Commit desconhecido %s"
+msgstr "capacidade desconhecida '%s'"
 
 #: bundle.c:71
 #, fuzzy, c-format
 msgid "'%s' does not look like a v2 or v3 bundle file"
-msgstr "'%s' não parece ser um ficheiro bundle v2"
+msgstr "'%s' parece-se com ficheiro bundle v2 ou v3 nenhum"
 
 #: bundle.c:110
 #, c-format
 msgid "unrecognized header: %s%s (%d)"
-msgstr "cabeçalho não reconhecido: %s%s (%d)"
+msgstr "cabeçalho irreconhecível: %s%s (%d)"
 
 #: bundle.c:136 rerere.c:480 rerere.c:690 sequencer.c:2390 sequencer.c:3176
 #: builtin/commit.c:814
 #, c-format
 msgid "could not open '%s'"
-msgstr "não foi possível abrir '%s'"
+msgstr "incapaz abrir '%s'"
 
 #: bundle.c:189
 msgid "Repository lacks these prerequisite commits:"
-msgstr "O repositório não possuí estes commits pré-requisitados:"
+msgstr "Falta ao repositório estes pré-requisitos de commits:"
 
 #: bundle.c:192
 #, fuzzy
 msgid "need a repository to verify a bundle"
-msgstr "É necessário um repositório para criar um bundle."
+msgstr "é preciso repositório para verificar um bundle."
 
 #: bundle.c:243
 #, c-format
@@ -2204,15 +2203,15 @@ msgstr[1] "O bundle requer estas %d referências:"
 #: bundle.c:319
 #, fuzzy
 msgid "unable to dup bundle descriptor"
-msgstr "não foi possível atualizar %s"
+msgstr "incapaz de dup descritor de bundle"
 
 #: bundle.c:326
 msgid "Could not spawn pack-objects"
-msgstr "Não foi possível lançar pack-objects"
+msgstr "Impossível gerar pack-objects"
 
 #: bundle.c:337
 msgid "pack-objects died"
-msgstr "pack-objects terminou inesperadamente"
+msgstr "pack-objects terminaram inesperadamente"
 
 #: bundle.c:379
 msgid "rev-list died"
@@ -2226,7 +2225,7 @@ msgstr "a referência '%s' é excluída pelas opções de rev-list"
 #: bundle.c:498
 #, fuzzy, c-format
 msgid "unsupported bundle version %d"
-msgstr "versão de índice %s não suportada"
+msgstr "fora de suporte versão bundle %d"
 
 #: bundle.c:500
 #, c-format
@@ -2236,7 +2235,7 @@ msgstr ""
 #: bundle.c:522 builtin/log.c:209 builtin/log.c:1927 builtin/shortlog.c:408
 #, c-format
 msgid "unrecognized argument: %s"
-msgstr "argumento não reconhecido: %s"
+msgstr "argumento irreconhecível: %s"
 
 #: bundle.c:530
 msgid "Refusing to create empty bundle."
@@ -2245,7 +2244,7 @@ msgstr "Criação de bundle vazio recusada."
 #: bundle.c:540
 #, c-format
 msgid "cannot create '%s'"
-msgstr "não é possível criar '%s'"
+msgstr "incapaz criar '%s'"
 
 #: bundle.c:565
 msgid "index-pack died"
@@ -2268,12 +2267,12 @@ msgstr ""
 #: commit-graph.c:311
 #, fuzzy, c-format
 msgid "commit-graph signature %X does not match signature %X"
-msgstr "O commit %s não tem uma assinatura GPG."
+msgstr "assinatura commit-graph %X corresponde a assinatura %X nenhuma"
 
 #: commit-graph.c:318
 #, fuzzy, c-format
 msgid "commit-graph version %X does not match version %X"
-msgstr "o commit %s não tem o pai %d"
+msgstr "commit-graph versão %X corresponde a versão %X nenhuma"
 
 #: commit-graph.c:325
 #, c-format
@@ -2311,7 +2310,7 @@ msgstr ""
 #: commit-graph.c:581
 #, fuzzy
 msgid "unable to find all commit-graph files"
-msgstr "não foi possível analisar o commit %s"
+msgstr "incapaz de encontrar todos ficheiros commit-graph"
 
 #: commit-graph.c:721 commit-graph.c:785
 msgid "invalid commit position. commit-graph is likely corrupt"
@@ -2320,17 +2319,17 @@ msgstr ""
 #: commit-graph.c:742
 #, fuzzy, c-format
 msgid "could not find commit %s"
-msgstr "não foi possível analisar o commit %s"
+msgstr "incapaz encontrar commit %s"
 
 #: commit-graph.c:1042 builtin/am.c:1292
 #, c-format
 msgid "unable to parse commit %s"
-msgstr "não foi possível analisar o commit %s"
+msgstr "incapaz analisar commit %s"
 
 #: commit-graph.c:1265 builtin/pack-objects.c:2864
 #, fuzzy, c-format
 msgid "unable to get type of object %s"
-msgstr "não foi possível analisar o objeto: %s"
+msgstr "incapaz obter tipo de objeto %s"
 
 #: commit-graph.c:1301
 msgid "Loading known commits in commit graph"
@@ -2355,7 +2354,7 @@ msgstr ""
 #: commit-graph.c:1501
 #, fuzzy
 msgid "Collecting referenced commits"
-msgstr "Não foi possível inicializar commits reescritos"
+msgstr "Recolhendo commits referênciados"
 
 #: commit-graph.c:1526
 #, c-format
@@ -2393,17 +2392,17 @@ msgstr ""
 #: commit-graph.c:1720 midx.c:819
 #, fuzzy, c-format
 msgid "unable to create leading directories of %s"
-msgstr "não foi possível criar os diretórios superiores de '%s'"
+msgstr "incapaz criar as pastas superiores a %s"
 
 #: commit-graph.c:1733
 #, fuzzy
 msgid "unable to create temporary graph layer"
-msgstr "não foi possível criar índice temporário"
+msgstr "incapaz criar camada de grafo temporária"
 
 #: commit-graph.c:1738
 #, fuzzy, c-format
 msgid "unable to adjust shared permissions for '%s'"
-msgstr "Não é possível adicionar os resultados da integração de '%s'"
+msgstr "incapaz de ajustar permissão partilhada para '%s'"
 
 #: commit-graph.c:1808
 #, c-format
@@ -2415,7 +2414,7 @@ msgstr[1] ""
 #: commit-graph.c:1853
 #, fuzzy
 msgid "unable to open commit-graph chain file"
-msgstr "não é possível abrir ou ler %s"
+msgstr "incapaz abrir ficheiro commit-graph chain"
 
 #: commit-graph.c:1869
 #, fuzzy
@@ -2425,7 +2424,7 @@ msgstr "Falha ao criar os ficheiros de saída"
 #: commit-graph.c:1889
 #, fuzzy
 msgid "failed to rename temporary commit-graph file"
-msgstr "não é possível escrever ficheiro de índice temporário"
+msgstr "falha a renomear ficheiro commit-graph temporário"
 
 #: commit-graph.c:2015
 #, fuzzy
@@ -2448,7 +2447,7 @@ msgstr ""
 #: commit-graph.c:2285
 #, fuzzy
 msgid "too many commits to write graph"
-msgstr "mostrar apenas commits não presentes no primeiro ramo"
+msgstr "demasiados commits para escrever grafo"
 
 #: commit-graph.c:2378
 msgid "the commit-graph file has incorrect checksum and is likely corrupt"
@@ -2467,7 +2466,7 @@ msgstr ""
 #: commit-graph.c:2405
 #, fuzzy, c-format
 msgid "failed to parse commit %s from commit-graph"
-msgstr "não foi possível analisar o commit %s"
+msgstr "incapaz analisar commit %s de commit-graph"
 
 #: commit-graph.c:2423
 msgid "Verifying commits in commit graph"
@@ -2524,12 +2523,12 @@ msgstr ""
 #: builtin/am.c:1371 builtin/am.c:2018 builtin/replace.c:457
 #, c-format
 msgid "could not parse %s"
-msgstr "não foi possível analisar %s"
+msgstr "incapaz analisar %s"
 
 #: commit.c:54
 #, c-format
 msgid "%s %s is not a commit!"
-msgstr "%s %s não é um commit!"
+msgstr "%s %s é commit nenhum!"
 
 #: commit.c:194
 msgid ""
@@ -2546,25 +2545,22 @@ msgstr ""
 #: commit.c:1172
 #, c-format
 msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
-msgstr ""
-"A assinatura GPG do commit %s, alegadamente assinada por %s, não é de "
-"confiança."
+msgstr "Commit %s tem assinatura GPG desconfiada, alegadamente por %s."
 
 #: commit.c:1176
 #, c-format
 msgid "Commit %s has a bad GPG signature allegedly by %s."
-msgstr ""
-"A assinatura GPG do commit %s, alegadamente assinada por %s, está incorreta."
+msgstr "Commit %s tem assinatura GPG incorreta, alegadamente por %s."
 
 #: commit.c:1179
 #, c-format
 msgid "Commit %s does not have a GPG signature."
-msgstr "O commit %s não tem uma assinatura GPG."
+msgstr "Commit %s tem assinatura GPG nenhuma."
 
 #: commit.c:1182
 #, c-format
 msgid "Commit %s has a good GPG signature by %s\n"
-msgstr "A assinatura GPG do commit %s por %s está correta\n"
+msgstr "Commit %s tem assinatura correta, por %s\n"
 
 #: commit.c:1436
 msgid ""
@@ -2572,10 +2568,10 @@ msgid ""
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n"
 msgstr ""
-"aviso: a mensagem de commit não conforma com UTF-8.\n"
-"Pode querer emendá-lo depois de corrigir a mensagem ou definir a\n"
-"variável de configuração i18n.commitencoding com a codificação que\n"
-"o seu projeto utiliza.\n"
+"aviso: a mensagem de commit é inconforme com UTF-8.\n"
+"Podes querer emendá-lo depois de corrigir a mensagem, ou definir a\n"
+"variável de config i18n.commitencoding com a codificação que o teu\n"
+"projeto usa.\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
 msgid "memory exhausted"
@@ -2594,7 +2590,7 @@ msgstr ""
 #: config.c:141
 #, fuzzy, c-format
 msgid "could not expand include path '%s'"
-msgstr "não foi possível analisar o patch '%s'"
+msgstr "incapaz de expandir include path '%s'"
 
 #: config.c:152
 #, fuzzy
@@ -2610,7 +2606,7 @@ msgstr ""
 #: config.c:378
 #, fuzzy, c-format
 msgid "key does not contain a section: %s"
-msgstr "Não foi possível remover a secção de configuração '%s'"
+msgstr "chave contém secção nenhuma: %s"
 
 #: config.c:384
 #, c-format
@@ -2722,7 +2718,7 @@ msgstr "falha ao expandir diretório de utilizador em: '%s'"
 #: config.c:1132
 #, c-format
 msgid "'%s' for '%s' is not a valid timestamp"
-msgstr "'%s' em '%s' não é um carimbo de data/hora válido"
+msgstr "'%s' em '%s' é carimbo de data/hora inválido"
 
 #: config.c:1223
 #, c-format
@@ -2746,7 +2742,7 @@ msgstr "modo inválido para criação de objeto: %s"
 #: config.c:1445
 #, fuzzy, c-format
 msgid "malformed value for %s"
-msgstr "valor inválido de %s"
+msgstr "valor desformado para %s"
 
 #: config.c:1471
 #, fuzzy, c-format
@@ -2765,26 +2761,26 @@ msgstr "nível de compactação do pacote %d incorreto"
 #: config.c:1655
 #, fuzzy, c-format
 msgid "unable to load config blob object '%s'"
-msgstr "não foi possível iniciar o comando 'show' sobre o objeto '%s'"
+msgstr "incapaz carregar objeto blob config '%s'"
 
 #: config.c:1658
 #, fuzzy, c-format
 msgid "reference '%s' does not point to a blob"
-msgstr "'%s' não aponta para um commit"
+msgstr "referência '%s' aponta para blob nenhum"
 
 #: config.c:1675
 #, fuzzy, c-format
 msgid "unable to resolve config blob '%s'"
-msgstr "não foi possível resolver revisão: %s"
+msgstr "incapaz resolver blog config '%s'"
 
 #: config.c:1705
 #, fuzzy, c-format
 msgid "failed to parse %s"
-msgstr "falha ao ler %s"
+msgstr "falha a analisar %s"
 
 #: config.c:1759
 msgid "unable to parse command-line config"
-msgstr "não é possível analisar configuração de linha de comandos"
+msgstr "incapaz analisar config de linha de comandos"
 
 #: config.c:2122
 msgid "unknown error occurred while reading the configuration files"
@@ -2804,7 +2800,7 @@ msgstr "o valor '%d' de splitIndex.maxPercentChange deve estar entre 0 e 100"
 #: config.c:2387
 #, c-format
 msgid "unable to parse '%s' from command-line config"
-msgstr "não é possível analisar '%s' da configuração de linha de comandos"
+msgstr "incapaz analisar '%s' da configuração de linha de comandos"
 
 #: config.c:2389
 #, c-format
@@ -2824,27 +2820,27 @@ msgstr "%s tem múltiplos valores"
 #: config.c:2534
 #, fuzzy, c-format
 msgid "failed to write new configuration file %s"
-msgstr "não é possível criar o ficheiro de configuração %s"
+msgstr "falha a escrever novo ficheiro configuração %s"
 
 #: config.c:2786 config.c:3112
 #, fuzzy, c-format
 msgid "could not lock config file %s"
-msgstr "não é possível fechar o ficheiro %s"
+msgstr "incapaz trancar ficheiro config %s"
 
 #: config.c:2797
 #, fuzzy, c-format
 msgid "opening %s"
-msgstr "A eliminar %s"
+msgstr "abrindo %s"
 
 #: config.c:2834 builtin/config.c:361
 #, fuzzy, c-format
 msgid "invalid pattern: %s"
-msgstr "opção inválida: %s"
+msgstr "padrão inválido: %s"
 
 #: config.c:2859
 #, fuzzy, c-format
 msgid "invalid config file %s"
-msgstr "ficheiro inválido: '%s'"
+msgstr "ficheiro config inválido %s"
 
 #: config.c:2872 config.c:3125
 #, c-format
@@ -2854,7 +2850,7 @@ msgstr "falha de fstat de %s"
 #: config.c:2883
 #, fuzzy, c-format
 msgid "unable to mmap '%s'"
-msgstr "não é possível aceder a '%s'"
+msgstr "incapaz mmap '%s'"
 
 #: config.c:2892 config.c:3130
 #, fuzzy, c-format
@@ -2864,17 +2860,17 @@ msgstr "falha de fstat de %s"
 #: config.c:2977 config.c:3227
 #, fuzzy, c-format
 msgid "could not write config file %s"
-msgstr "não é possível ler o ficheiro de log '%s'"
+msgstr "incapaz escrever ficheiro config %s"
 
 #: config.c:3011
 #, c-format
 msgid "could not set '%s' to '%s'"
-msgstr "não foi possível definir '%s' como '%s'"
+msgstr "incapaz definir '%s' como '%s'"
 
 #: config.c:3013 builtin/remote.c:657 builtin/remote.c:855 builtin/remote.c:863
 #, c-format
 msgid "could not unset '%s'"
-msgstr "não foi possível reiniciar '%s'"
+msgstr "incapaz desdefinir '%s'"
 
 #: config.c:3103
 #, fuzzy, c-format
@@ -2898,20 +2894,20 @@ msgid ""
 "Please make sure you have the correct access rights\n"
 "and the repository exists."
 msgstr ""
-"Não foi possível ler do repositório remoto.\n"
+"Incapaz de ler o repositório remoto.\n"
 "\n"
-"Certifica-se que tem os direitos de acesso corretos\n"
+"Certifica-te que tem as permissões de acesso corretas\n"
 "e que o repositório existe."
 
 #: connect.c:81
 #, fuzzy, c-format
 msgid "server doesn't support '%s'"
-msgstr "O servidor não suporta STARTTLS! %s"
+msgstr "servidor tem fora de suporte '%s'"
 
 #: connect.c:118
 #, fuzzy, c-format
 msgid "server doesn't support feature '%s'"
-msgstr "O servidor não suporta --deepen"
+msgstr "servidor tem fora suporte a característica '%s'"
 
 #: connect.c:129
 msgid "expected flush after capabilities"
@@ -2966,7 +2962,7 @@ msgstr ""
 #: connect.c:640
 #, fuzzy, c-format
 msgid "protocol '%s' is not supported"
-msgstr "'%s' não está trancada"
+msgstr "protocolo '%s' é insustentado"
 
 #: connect.c:691
 msgid "unable to set SO_KEEPALIVE on socket"
@@ -2980,7 +2976,7 @@ msgstr "A verificar o patch %s..."
 #: connect.c:735
 #, fuzzy, c-format
 msgid "unable to look up %s (port %s) (%s)"
-msgstr "não foi possível mover %s para %s"
+msgstr "incapaz procurar %s (porta %s) (%s)"
 
 #. TRANSLATORS: this is the end of "Looking up %s ... "
 #: connect.c:739 connect.c:810
@@ -3008,7 +3004,7 @@ msgstr "concluído."
 #: connect.c:798
 #, fuzzy, c-format
 msgid "unable to look up %s (%s)"
-msgstr "não é possível abrir %s: %s"
+msgstr "incapaz procurar %s (%s)"
 
 #: connect.c:804
 #, fuzzy, c-format
@@ -3028,7 +3024,7 @@ msgstr ""
 #: connect.c:953
 #, fuzzy, c-format
 msgid "cannot start proxy %s"
-msgstr "não é possível invocar stat sobre '%s'"
+msgstr "incapaz começar proxy %s"
 
 #: connect.c:1024
 msgid "no path specified; see 'git help pull' for valid url syntax"
@@ -3045,7 +3041,7 @@ msgstr ""
 #: connect.c:1248
 #, fuzzy
 msgid "ssh variant 'simple' does not support setting port"
-msgstr "o recetor não suporta publicação com --signed"
+msgstr "ssh variant 'simple' insustenta definir porta"
 
 #: connect.c:1360
 #, c-format
@@ -3055,7 +3051,7 @@ msgstr ""
 #: connect.c:1408
 #, fuzzy
 msgid "unable to fork"
-msgstr "não foi possível analisar o formato"
+msgstr "incapaz de aforquilhar"
 
 #: connected.c:108 builtin/fsck.c:209 builtin/prune.c:45
 msgid "Checking connectivity"
@@ -3063,7 +3059,7 @@ msgstr "A verificar conectividade"
 
 #: connected.c:120
 msgid "Could not run 'git rev-list'"
-msgstr "Não foi possível executar 'git rev-list'"
+msgstr "Impossível executar 'git rev-list'"
 
 #: connected.c:144
 msgid "failed write to rev-list"
@@ -3143,17 +3139,17 @@ msgstr ""
 #: convert.c:665
 #, fuzzy, c-format
 msgid "cannot fork to run external filter '%s'"
-msgstr "não é possível escrever o ficheiro de conservação '%s'"
+msgstr "incapaz aforquilhar para correr filtro externo '%s'"
 
 #: convert.c:685
 #, fuzzy, c-format
 msgid "cannot feed the input to external filter '%s'"
-msgstr "não é possível ler o conteúdo atual de '%s'"
+msgstr "incapaz introduzir input para filtro externo '%s'"
 
 #: convert.c:692
 #, fuzzy, c-format
 msgid "external filter '%s' failed %d"
-msgstr "falha ao mudar o nome de '%s'"
+msgstr "filtro externo '%s' falhou %d"
 
 #: convert.c:727 convert.c:730
 #, c-format
@@ -3221,7 +3217,7 @@ msgstr "Remoto inexistente: %s"
 #: credential.c:511
 #, fuzzy, c-format
 msgid "credential url cannot be parsed: %s"
-msgstr "não foi possível analisar %s"
+msgstr "incapaz analisar url credencial: %s"
 
 #: date.c:138
 msgid "in the future"
@@ -3326,7 +3322,7 @@ msgstr ""
 #: diff-lib.c:553
 #, fuzzy
 msgid "unable to get HEAD"
-msgstr "não foi possível atualizar HEAD"
+msgstr "incapaz obter HEAD"
 
 #: diff-lib.c:560
 msgid "no merge base found"
@@ -3441,7 +3437,7 @@ msgstr ""
 #: diff.c:4914
 #, fuzzy, c-format
 msgid "unable to resolve '%s'"
-msgstr "não foi possível criar '%s'"
+msgstr "incapaz resolver '%s'"
 
 #: diff.c:4964 diff.c:4970
 #, c-format
@@ -3456,7 +3452,7 @@ msgstr ""
 #: diff.c:5003
 #, fuzzy, c-format
 msgid "bad --color-moved argument: %s"
-msgstr "argumento não reconhecido: %s"
+msgstr "argumento incorreto --color-moved: %s"
 
 #: diff.c:5022
 #, fuzzy, c-format
@@ -3985,12 +3981,12 @@ msgstr "especificador de path '%s' correspondeu a ficheiro nenhum "
 #: dir.c:718 dir.c:747 dir.c:760
 #, fuzzy, c-format
 msgid "unrecognized pattern: '%s'"
-msgstr "argumento não reconhecido: %s"
+msgstr "padrão irreconhecível: '%s'"
 
 #: dir.c:777 dir.c:791
 #, fuzzy, c-format
 msgid "unrecognized negative pattern: '%s'"
-msgstr "opção de espaço em branco não reconhecida '%s'"
+msgstr "por reconhecer padrão negativo: '%s'"
 
 #: dir.c:809
 #, c-format
@@ -4004,12 +4000,12 @@ msgstr ""
 #: dir.c:1198
 #, fuzzy, c-format
 msgid "cannot use %s as an exclude file"
-msgstr "não é possível guardar o ficheiro índice"
+msgstr "incapaz usar %s como ficheiro de exclusão"
 
 #: dir.c:2305
 #, fuzzy, c-format
 msgid "could not open directory '%s'"
-msgstr "não foi possível criar o diretório '%s'"
+msgstr "incapaz abrir pasta '%s'"
 
 #: dir.c:2605
 msgid "failed to get kernel name and information"
@@ -4018,7 +4014,7 @@ msgstr "falha ao obter nome e informação do kernel"
 #: dir.c:2729
 #, fuzzy
 msgid "untracked cache is disabled on this system or location"
-msgstr "A cache não controlada está desativada neste sistema ou localização."
+msgstr "cache untracked está desativada neste sistema ou localização."
 
 #: dir.c:3520
 #, fuzzy, c-format
@@ -4028,12 +4024,12 @@ msgstr "ficheiro de índice corrompido"
 #: dir.c:3565 dir.c:3570
 #, c-format
 msgid "could not create directories for %s"
-msgstr "não foi possível criar o diretórios para %s"
+msgstr "incapaz criar pasta para %s"
 
 #: dir.c:3599
 #, c-format
 msgid "could not migrate git directory from '%s' to '%s'"
-msgstr "não foi possível migrar o diretório git de '%s' para '%s'"
+msgstr "incapaz migrar pasta git de '%s' para '%s'"
 
 #: editor.c:74
 #, c-format
@@ -4048,7 +4044,7 @@ msgstr "imprimir conteúdo da tag"
 #: entry.c:478
 #, c-format
 msgid "could not stat file '%s'"
-msgstr "não foi possível obter stat do ficheiro '%s'"
+msgstr "incapaz obter estatutário de ficheiro '%s'"
 
 #: environment.c:150
 #, c-format
@@ -4058,7 +4054,7 @@ msgstr ""
 #: environment.c:337
 #, fuzzy, c-format
 msgid "could not set GIT_DIR to '%s'"
-msgstr "não foi possível definir '%s' como '%s'"
+msgstr "incapaz definir GIT_DIR para '%s'"
 
 #: exec-cmd.c:363
 #, fuzzy, c-format
@@ -4087,7 +4083,7 @@ msgstr "git fetch-pack: esperava-se ACK/NAK, obteve-se '%s'"
 #: fetch-pack.c:222
 #, fuzzy
 msgid "unable to write to remote"
-msgstr "não foi possível escrever o ficheiro da tag"
+msgstr "incapaz escrever para remoto"
 
 #: fetch-pack.c:283
 msgid "--stateless-rpc requires multi_ack_detailed"
@@ -4106,7 +4102,7 @@ msgstr "linha para aprofundar inválida: %s"
 #: fetch-pack.c:386 fetch-pack.c:1414
 #, c-format
 msgid "object not found: %s"
-msgstr "objeto não encontrado: %s"
+msgstr "objeto perdido: %s"
 
 #: fetch-pack.c:389 fetch-pack.c:1417
 #, c-format
@@ -4116,7 +4112,7 @@ msgstr "erro no objeto: %s"
 #: fetch-pack.c:391 fetch-pack.c:1419
 #, c-format
 msgid "no shallow found: %s"
-msgstr "raso não encontrado: %s"
+msgstr "shallow perdido: %s"
 
 #: fetch-pack.c:394 fetch-pack.c:1423
 #, c-format
@@ -4158,7 +4154,7 @@ msgstr "já se tem %s (%s)"
 
 #: fetch-pack.c:827
 msgid "fetch-pack: unable to fork off sideband demultiplexer"
-msgstr "fetch-pack: não é possível efetuar fork de sideband demultiplexer"
+msgstr "fetch-pack: incapaz de aforquilhar demultiplexer sideband"
 
 #: fetch-pack.c:835
 msgid "protocol error: bad pack header"
@@ -4167,7 +4163,7 @@ msgstr "erro de protocolo: cabeçalho de pacote incorreto"
 #: fetch-pack.c:919
 #, c-format
 msgid "fetch-pack: unable to fork off %s"
-msgstr "fetch-pack: não é possível criar processo filho %s"
+msgstr "fetch-pack: incapaz de aforquilhar %s"
 
 #: fetch-pack.c:937
 #, c-format
@@ -4176,7 +4172,7 @@ msgstr "%s falhou"
 
 #: fetch-pack.c:939
 msgid "error in sideband demultiplexer"
-msgstr "erro no sideband demultiplexer"
+msgstr "erro em demultiplexer sideband"
 
 #: fetch-pack.c:982
 #, c-format
@@ -4193,24 +4189,24 @@ msgstr "O servidor suporta side-band"
 
 #: fetch-pack.c:992
 msgid "Server does not support shallow clients"
-msgstr "O servidor não suporta clientes rasos"
+msgstr "Servidor insustenta clientes shallow"
 
 #: fetch-pack.c:1052
 msgid "Server does not support --shallow-since"
-msgstr "O servidor não suporta --shallow-since"
+msgstr "Servidor insustenta --shallow-since"
 
 #: fetch-pack.c:1057
 msgid "Server does not support --shallow-exclude"
-msgstr "O servidor não suporta --shallow-exclude"
+msgstr "Servidor insustenta --shallow-exclude"
 
 #: fetch-pack.c:1061
 msgid "Server does not support --deepen"
-msgstr "O servidor não suporta --deepen"
+msgstr "Servidor insustenta --deepen"
 
 #: fetch-pack.c:1063
 #, fuzzy
 msgid "Server does not support this repository's object format"
-msgstr "O servidor não suporta --deepen"
+msgstr "Servidor insustenta formato de objeto deste repositório"
 
 #: fetch-pack.c:1076
 msgid "no common commits"
@@ -4228,22 +4224,22 @@ msgstr ""
 #: fetch-pack.c:1218
 #, fuzzy, c-format
 msgid "the server does not support algorithm '%s'"
-msgstr "O servidor não suporta clientes rasos"
+msgstr "o servidor insustenta algoritmo '%s'"
 
 #: fetch-pack.c:1238
 #, fuzzy
 msgid "Server does not support shallow requests"
-msgstr "O servidor não suporta clientes rasos"
+msgstr "Servidor insustenta pedidos shallow"
 
 #: fetch-pack.c:1245
 #, fuzzy
 msgid "Server supports filter"
-msgstr "O servidor suporta ofs-delta"
+msgstr "Servidor sustenta filtro"
 
 #: fetch-pack.c:1284
 #, fuzzy
 msgid "unable to write request to remote"
-msgstr "não foi possível escrever os parâmetros no ficheiro de configuração"
+msgstr "incapaz escrever pedidos para remoto"
 
 #: fetch-pack.c:1302
 #, c-format
@@ -4300,11 +4296,11 @@ msgstr "git fetch-pack: esperava-se lista rasa"
 
 #: fetch-pack.c:1897
 msgid "no matching remote head"
-msgstr "remote head nenhuma que corresponda"
+msgstr "corresponde a remote head nenhuma"
 
 #: fetch-pack.c:1920 builtin/clone.c:693
 msgid "remote did not send all necessary objects"
-msgstr "o remoto não enviou todos os objetos necessários"
+msgstr "remoto faltou enviar todos objetos necessários"
 
 #: fetch-pack.c:1947
 #, c-format
@@ -4314,11 +4310,11 @@ msgstr "referência remota %s inexistente"
 #: fetch-pack.c:1950
 #, c-format
 msgid "Server does not allow request for unadvertised object %s"
-msgstr "O servidor não permite pedido do objeto não anunciado %s"
+msgstr "Servidor proíbe pedido de objeto por anunciar %s"
 
 #: gpg-interface.c:272
 msgid "could not create temporary file"
-msgstr "não foi possível criar ficheiro temporário"
+msgstr "incapaz criar ficheiro temporário"
 
 #: gpg-interface.c:275
 #, c-format
@@ -4327,7 +4323,7 @@ msgstr "falha ao escrever assinatura destacada em '%s'"
 
 #: gpg-interface.c:457
 msgid "gpg failed to sign the data"
-msgstr "gpg não assinou os dados"
+msgstr "gpg falhou assinar os dados"
 
 #: graph.c:98
 #, c-format
@@ -4343,7 +4339,7 @@ msgstr ""
 #: grep.c:2100
 #, c-format
 msgid "'%s': unable to read %s"
-msgstr "'%s': não foi possível ler %s"
+msgstr "'%s': incapaz ler %s"
 
 #: grep.c:2117 setup.c:176 builtin/clone.c:412 builtin/diff.c:89
 #: builtin/rm.c:135
@@ -4424,7 +4420,7 @@ msgstr "Estes são comandos do Git comuns usados em diversas situações:"
 #: help.c:365 git.c:99
 #, fuzzy, c-format
 msgid "unsupported command listing type '%s'"
-msgstr "versão de índice %s não suportada"
+msgstr "insustento para listagem tipo comandos '%s'"
 
 #: help.c:405
 #, fuzzy
@@ -4450,22 +4446,22 @@ msgid ""
 "'%s' appears to be a git command, but we were not\n"
 "able to execute it. Maybe git-%s is broken?"
 msgstr ""
-"'%s' parece ser um comando do git, mas não é possível\n"
-"executá-lo. Talvez git-%s esteja danificado?"
+"'%s' parece ser comando git, mas incapaz executá-lo.\n"
+"Talvez git-%s esteja danificado?"
 
 #: help.c:543 help.c:631
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
-msgstr "git: '%s' não é um comando do git. Consulte 'git --help'."
+msgstr "git: '%s' é comando git nenhum. Vê 'git --help'."
 
 #: help.c:591
 msgid "Uh oh. Your system reports no Git commands at all."
-msgstr "Oh não. Teu sistema de reporta comando nenhum de Git."
+msgstr "Carago. Teu sistema reporta comandos Git nenhuns."
 
 #: help.c:613
 #, fuzzy, c-format
 msgid "WARNING: You called a Git command named '%s', which does not exist."
-msgstr "AVISO: Invocou um comando do Git designado '%s', que não existe."
+msgstr "AVISO: Chamou comando Git designado '%s', que é inexistente."
 
 #: help.c:618
 #, c-format
@@ -4552,8 +4548,7 @@ msgstr "foi dado email nenhum e deteção automática está desativada"
 #: ident.c:402
 #, c-format
 msgid "unable to auto-detect email address (got '%s')"
-msgstr ""
-"não é possível detetar automaticamente endereço de e-mail (obteve-se '%s')"
+msgstr "incapaz auto-detetar endereço de e-mail (recebi '%s')"
 
 #: ident.c:419
 msgid "no name was given and auto-detection is disabled"
@@ -4562,17 +4557,17 @@ msgstr "foi dado nome nenhum e deteção automática está desativada"
 #: ident.c:425
 #, c-format
 msgid "unable to auto-detect name (got '%s')"
-msgstr "não é possível detetar automaticamente o nome (obteve-se '%s')"
+msgstr "incapaz auto-detetar nome (recebi '%s')"
 
 #: ident.c:433
 #, c-format
 msgid "empty ident name (for <%s>) not allowed"
-msgstr "nome de identificação vazio (de <%s>) não é permitido"
+msgstr "nome de identação vazio (para <%s>) proíbido"
 
 #: ident.c:439
 #, c-format
 msgid "name consists only of disallowed characters: %s"
-msgstr "nome consiste apenas de caracteres não permitidos: %s"
+msgstr "nome consiste apenas de caracteres proíbidos: %s"
 
 #: ident.c:454 builtin/commit.c:634
 #, c-format
@@ -4612,12 +4607,12 @@ msgstr ""
 #: list-objects-filter.c:492
 #, fuzzy, c-format
 msgid "unable to access sparse blob in '%s'"
-msgstr "não é possível aceder a '%s'"
+msgstr "incapaz acessar blob sparse em '%s'"
 
 #: list-objects-filter.c:495
 #, fuzzy, c-format
 msgid "unable to parse sparse filter data in %s"
-msgstr "não foi possível analisar o formato de --pretty"
+msgstr "incapaz analisar dados de filtro sparse em %s"
 
 #: list-objects.c:127
 #, c-format
@@ -4632,7 +4627,7 @@ msgstr ""
 #: list-objects.c:375
 #, fuzzy, c-format
 msgid "unable to load root tree for commit %s"
-msgstr "não foi possível analisar o commit %s"
+msgstr "incapaz carregar raiz de árvore para commit %s"
 
 #: lockfile.c:152
 #, c-format
@@ -4645,18 +4640,18 @@ msgid ""
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
 msgstr ""
-"Não é possível criar '%s.lock': %s.\n"
+"Incapaz de criar '%s.lock': %s.\n"
 "\n"
-"Outro processo git parece estar a executar neste repositório, e.g.\n"
-"um editor aberto por 'git commit'. Certifique-se que todos os processos\n"
-"terminaram e tente de novo. Se ainda assim falhar, um processo git\n"
-"pode ter falhado anteriormente no repositório:\n"
-"remova o ficheiro manualmente para continuar."
+"Outro processo git parece estar a correr neste repositório, e.g.\n"
+"um editor aberto por 'git commit'. Por favor, certifica-te que todos\n"
+"os processos são terminados e tenta de novo. Se ainda assim falhar,\n"
+"um processo git anterior pode ter crashado neste repositório:\n"
+"remove o ficheiro manualmente para continuar."
 
 #: lockfile.c:160
 #, c-format
 msgid "Unable to create '%s.lock': %s"
-msgstr "Não é foi possível criar '%s.lock': %s"
+msgstr "Incapaz de criar '%s.lock': %s"
 
 #: ls-refs.c:109
 msgid "expected flush after ls-refs arguments"
@@ -4708,12 +4703,12 @@ msgstr ": talvez um conflito D/F?"
 #: merge-recursive.c:908
 #, c-format
 msgid "refusing to lose untracked file at '%s'"
-msgstr "perda de ficheiro não controlado em '%s' recusada"
+msgstr "recusando perder ficheiro untracked em '%s'"
 
 #: merge-recursive.c:949 builtin/cat-file.c:41
 #, c-format
 msgid "cannot read object %s '%s'"
-msgstr "não é possível ler o objeto %s: '%s'"
+msgstr "incapaz ler objeto %s '%s'"
 
 #: merge-recursive.c:954
 #, c-format
@@ -4733,7 +4728,7 @@ msgstr "falha ao criar a ligação simbólica '%s': %s"
 #: merge-recursive.c:995
 #, c-format
 msgid "do not know what to do with %06o %s '%s'"
-msgstr "não sei o que fazer com %06o %s '%s'"
+msgstr "desconheço que fazer com %06o %s '%s'"
 
 #: merge-recursive.c:1191
 #, fuzzy, c-format
@@ -4797,7 +4792,7 @@ msgstr "Falha ao executar integração interna"
 #: merge-recursive.c:1346
 #, c-format
 msgid "Unable to add %s to database"
-msgstr "Não é possível adicionar %s à base de dados"
+msgstr "Incapaz de adicionar %s à base de dados"
 
 #: merge-recursive.c:1378
 #, c-format
@@ -4807,7 +4802,8 @@ msgstr "A integrar automaticamente %s"
 #: merge-recursive.c:1402
 #, fuzzy, c-format
 msgid "Error: Refusing to lose untracked file at %s; writing to %s instead."
-msgstr "perda de ficheiro não controlado em '%s' recusada"
+msgstr "Erro: Recusando perder ficheiro untracked de '%s'; escrevendo "
+"invés para %s"
 
 #: merge-recursive.c:1474
 #, c-format
@@ -4856,12 +4852,13 @@ msgstr "nome mudado"
 #: merge-recursive.c:1577 merge-recursive.c:2484 merge-recursive.c:3129
 #, fuzzy, c-format
 msgid "Refusing to lose dirty file at %s"
-msgstr "perda de ficheiro não controlado em '%s' recusada"
+msgstr "Recusando perder ficheiro sujo de %s"
 
 #: merge-recursive.c:1587
 #, fuzzy, c-format
 msgid "Refusing to lose untracked file at %s, even though it's in the way."
-msgstr "perda de ficheiro não controlado em '%s' recusada"
+msgstr "Recusando perder ficheiro untracked de %s, apesar de este estar "
+"no caminho."
 
 #: merge-recursive.c:1645
 #, fuzzy, c-format
@@ -4878,7 +4875,8 @@ msgstr "%s é um diretório em %s adicionando %s no seu lugar"
 #: merge-recursive.c:1681
 #, fuzzy, c-format
 msgid "Refusing to lose untracked file at %s; adding as %s instead"
-msgstr "perda de ficheiro não controlado em '%s' recusada"
+msgstr "Recusando perder ficheiro untracked de %s; adicionado-o como %s "
+"invés"
 
 #: merge-recursive.c:1708
 #, c-format
@@ -4941,12 +4939,12 @@ msgstr ""
 #: merge-recursive.c:2973
 #, c-format
 msgid "cannot read object %s"
-msgstr "não foi possível ler o objeto %s"
+msgstr "incapaz ler objeto %s"
 
 #: merge-recursive.c:2976
 #, c-format
 msgid "object %s is not a blob"
-msgstr "o objeto %s não é um blob"
+msgstr "objeto %s é blob nenhum"
 
 #: merge-recursive.c:3040
 msgid "modify"
@@ -5063,11 +5061,11 @@ msgstr "junção retornou commit nenhum"
 #: merge-recursive.c:3769
 #, c-format
 msgid "Could not parse object '%s'"
-msgstr "Não foi possível analisar o objeto '%s'"
+msgstr "Incapaz de analisar objeto '%s'"
 
 #: merge-recursive.c:3787 builtin/merge.c:711 builtin/merge.c:895
 msgid "Unable to write index."
-msgstr "Não é possível escrever no índice."
+msgstr "Incapaz de escrever no index."
 
 #: merge.c:41
 msgid "failed to read the cache"
@@ -5077,7 +5075,7 @@ msgstr "falha ao ler a cache"
 #: builtin/checkout.c:573 builtin/checkout.c:829 builtin/clone.c:817
 #: builtin/stash.c:265
 msgid "unable to write new index file"
-msgstr "não foi possível escrever novo ficheiro de índice"
+msgstr "incapaz escrever novo ficheiro index"
 
 #: midx.c:80
 #, c-format
@@ -5164,7 +5162,7 @@ msgstr ""
 #: midx.c:931
 #, fuzzy
 msgid "no pack files to index."
-msgstr "Não é possível escrever no índice."
+msgstr "pack files nenhuns para index."
 
 #: midx.c:982
 msgid "Writing chunks to multi-pack-index"
@@ -5215,7 +5213,7 @@ msgstr "A escrever objetos"
 #: midx.c:1205
 #, fuzzy, c-format
 msgid "failed to load pack entry for oid[%d] = %s"
-msgstr "não é possível adicionar %s à cache"
+msgstr "falhou carregar entrada pack para oid[%d] = %s"
 
 #: midx.c:1211
 #, fuzzy, c-format
@@ -5230,7 +5228,7 @@ msgstr ""
 #: midx.c:1245
 #, fuzzy
 msgid "Counting referenced objects"
-msgstr "eliminar ficheiros não referenciados"
+msgstr "Contando objetos referenciados"
 
 #: midx.c:1255
 msgid "Finding and deleting unreferenced packfiles"
@@ -5239,27 +5237,27 @@ msgstr ""
 #: midx.c:1446
 #, fuzzy
 msgid "could not start pack-objects"
-msgstr "Não foi possível lançar pack-objects"
+msgstr "incapaz de começar pack-objects"
 
 #: midx.c:1466
 #, fuzzy
 msgid "could not finish pack-objects"
-msgstr "Não foi possível lançar pack-objects"
+msgstr "incapaz de terminar pack-objects"
 
 #: name-hash.c:537
 #, fuzzy, c-format
 msgid "unable to create lazy_dir thread: %s"
-msgstr "não foi possível criar thread: %s"
+msgstr "incapaz criar thread lazy_dir: %s"
 
 #: name-hash.c:559
 #, fuzzy, c-format
 msgid "unable to create lazy_name thread: %s"
-msgstr "não foi possível criar thread: %s"
+msgstr "incapaz criar thread lazy_name: %s"
 
 #: name-hash.c:565
 #, fuzzy, c-format
 msgid "unable to join lazy_name thread: %s"
-msgstr "não foi possível criar thread: %s"
+msgstr "incapaz juntar a thread lazy_name: %s"
 
 #: notes-merge.c:277
 #, c-format
@@ -5268,19 +5266,18 @@ msgid ""
 "Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
 "commit/abort the previous merge before you start a new notes merge."
 msgstr ""
-"Não concluíu a integração de notas anterior (%s existe).\n"
-"Use 'git notes merge --commit' ou 'git notes merge --abort' para submeter/"
-"abortar a integração anterior antes de começar uma nova integração de notas."
+"Ficou por concluír a anterior junção de notas (%s existe).\n"
+"Por favor, usa 'git notes merge --commit' ou 'git notes merge --abort' para "
+"commitar/abortar a junção anterior antes de começares uma nova junção de notas."
 
 #: notes-merge.c:284
 #, c-format
 msgid "You have not concluded your notes merge (%s exists)."
-msgstr "Não concluído a integração de integração de notas (%s presente)."
+msgstr "Ficou por concluír a tua junção de notas (%s existe)."
 
 #: notes-utils.c:46
 msgid "Cannot commit uninitialized/unreferenced notes tree"
-msgstr ""
-"Não é possível submeter árvore de notas não inicializada ou não referenciada"
+msgstr "Impossível commit notas de árvore que estejam por iniciar/por referênciar"
 
 #: notes-utils.c:105
 #, c-format
@@ -5309,7 +5306,7 @@ msgstr "objeto blob inválido %s"
 #: object.c:173
 #, fuzzy, c-format
 msgid "object %s is a %s, not a %s"
-msgstr "o objeto %s não é um blob"
+msgstr "objeto %s é %s, é %s nenhum(a)"
 
 #: object.c:233
 #, fuzzy, c-format
@@ -5319,7 +5316,7 @@ msgstr "objeto de tipo desconhecido"
 #: object.c:246
 #, c-format
 msgid "unable to parse object: %s"
-msgstr "não foi possível analisar o objeto: %s"
+msgstr "incapaz analisar objeto: %s"
 
 #: object.c:266 object.c:278
 #, c-format
@@ -5329,7 +5326,7 @@ msgstr ""
 #: pack-bitmap.c:815 pack-bitmap.c:821 builtin/pack-objects.c:2216
 #, fuzzy, c-format
 msgid "unable to get size of %s"
-msgstr "não foi possível mover %s para %s"
+msgstr "incapaz obter tamanho de %s"
 
 #: packfile.c:615
 msgid "offset before end of packfile (broken .idx?)"
@@ -5388,7 +5385,7 @@ msgstr "%s tem múltiplos valores"
 #: parse-options.c:94
 #, fuzzy, c-format
 msgid "%s isn't available"
-msgstr "a tag anotada %s não está disponível"
+msgstr "%s está indisponível"
 
 #: parse-options.c:217
 #, c-format
@@ -5454,13 +5451,11 @@ msgstr "-NUM"
 #: path.c:915
 #, c-format
 msgid "Could not make %s writable by group"
-msgstr "Não foi possível dar permissão de escrita ao grupo a %s"
+msgstr "Incapaz de fazer %s escrevível ao grupo"
 
 #: pathspec.c:130
 msgid "Escape character '\\' not allowed as last character in attr value"
-msgstr ""
-"O carácter de escape '\\' não pode ser usado como último carácter no valor "
-"de attr"
+msgstr "Carácter de escape '\\' é proíbido como último carácter no valor attr"
 
 #: pathspec.c:148
 msgid "Only one 'attr:' specification is allowed."
@@ -5468,7 +5463,7 @@ msgstr "Só se pode especificar um 'attr:'."
 
 #: pathspec.c:151
 msgid "attr spec must not be empty"
-msgstr "especificador attr não pode estar vazio"
+msgstr "attr spec tem de ter algum conteúdo"
 
 #: pathspec.c:194
 #, c-format
@@ -5506,7 +5501,7 @@ msgstr "Falta um ')' no final da mágica do especificador de caminho em '%s'"
 #: pathspec.c:370
 #, c-format
 msgid "Unimplemented pathspec magic '%c' in '%s'"
-msgstr "Mágica de especificador de caminho '%c' em '%s' não implementada"
+msgstr "Por implementar, magic pathspec '%c' em '%s'"
 
 #: pathspec.c:429
 #, c-format
@@ -5526,8 +5521,7 @@ msgstr "'%s' (mnemónica: '%c')"
 #: pathspec.c:531
 #, c-format
 msgid "%s: pathspec magic not supported by this command: %s"
-msgstr ""
-"%s: mágica de especificador de caminho não suportada por este comando: %s"
+msgstr "%s: magic pathspec insustentado por este comando: %s"
 
 #: pathspec.c:598
 #, c-format
@@ -5542,22 +5536,22 @@ msgstr ""
 #: pkt-line.c:92
 #, fuzzy
 msgid "unable to write flush packet"
-msgstr "não foi possível escrever %s"
+msgstr "incapaz escrever pacote flush"
 
 #: pkt-line.c:99
 #, fuzzy
 msgid "unable to write delim packet"
-msgstr "não é possível escrever o ficheiro de índice"
+msgstr "incapaz escrever pacote delim"
 
 #: pkt-line.c:106
 #, fuzzy
 msgid "unable to write stateless separator packet"
-msgstr "não é possível escrever o objeto de nota"
+msgstr "incapaz escrever pacote de separador sem estado"
 
 #: pkt-line.c:113
 #, fuzzy
 msgid "flush packet write failed"
-msgstr "não foi possível escrever o ficheiro da tag"
+msgstr "escrita de pacote flush falhou"
 
 #: pkt-line.c:153 pkt-line.c:239
 msgid "protocol error: impossibly long line"
@@ -5566,7 +5560,7 @@ msgstr ""
 #: pkt-line.c:169 pkt-line.c:171
 #, fuzzy
 msgid "packet write with format failed"
-msgstr "não foi possível escrever o ficheiro da tag"
+msgstr "escrita de pacote com formato falhou"
 
 #: pkt-line.c:203
 msgid "packet write failed - data exceeds max packet size"
@@ -5575,7 +5569,7 @@ msgstr ""
 #: pkt-line.c:210 pkt-line.c:217
 #, fuzzy
 msgid "packet write failed"
-msgstr "não foi possível escrever o ficheiro da tag"
+msgstr "escrita de pacote falhou"
 
 #: pkt-line.c:302
 #, fuzzy
@@ -5605,16 +5599,16 @@ msgstr "erro remoto: %s"
 #: preload-index.c:119
 #, fuzzy
 msgid "Refreshing index"
-msgstr "não foi possível refrescar o índice"
+msgstr "Refrescando index"
 
 #: preload-index.c:138
 #, fuzzy, c-format
 msgid "unable to create threaded lstat: %s"
-msgstr "não foi possível criar thread: %s"
+msgstr "incapaz criar thread de lstat: %s"
 
 #: pretty.c:983
 msgid "unable to parse --pretty format"
-msgstr "não foi possível analisar o formato de --pretty"
+msgstr "incapaz analisar formato de --pretty"
 
 #: promisor-remote.c:30
 msgid "promisor-remote: unable to fork off fetch subprocess"
@@ -5640,17 +5634,17 @@ msgstr "A remover objetos duplicados"
 #: range-diff.c:77
 #, fuzzy
 msgid "could not start `log`"
-msgstr "não foi possível obter stat de %s"
+msgstr "incapaz começar `log`"
 
 #: range-diff.c:79
 #, fuzzy
 msgid "could not read `log` output"
-msgstr "não foi possível ler a saída do comando 'show'"
+msgstr "incapaz ler output de `log`"
 
 #: range-diff.c:98 sequencer.c:5310
 #, fuzzy, c-format
 msgid "could not parse commit '%s'"
-msgstr "não foi possível analisar o commit %s"
+msgstr "incapaz analisar commit '%s'"
 
 #: range-diff.c:112
 #, c-format
@@ -5662,7 +5656,7 @@ msgstr ""
 #: range-diff.c:137
 #, fuzzy, c-format
 msgid "could not parse git header '%.*s'"
-msgstr "não foi possível analisar o patch '%s'"
+msgstr "incapaz analisar cabeçalho git '%.*s'"
 
 #: range-diff.c:299
 #, fuzzy
@@ -5672,7 +5666,7 @@ msgstr "falha ao criar o ficheiro %s"
 #: range-diff.c:532 range-diff.c:534
 #, fuzzy, c-format
 msgid "could not parse log for '%s'"
-msgstr "não é possível ler o ficheiro de log '%s'"
+msgstr "incapaz analisar log para '%s'"
 
 #: read-cache.c:682
 #, fuzzy, c-format
@@ -5692,32 +5686,32 @@ msgstr ""
 #: read-cache.c:725
 #, fuzzy, c-format
 msgid "'%s' does not have a commit checked out"
-msgstr "'%s' não aponta para um commit"
+msgstr "'%s' tem commit checked out nenhum"
 
 #: read-cache.c:777
 #, fuzzy, c-format
 msgid "unable to index file '%s'"
-msgstr "não foi possível ler o ficheiro de índice"
+msgstr "incapaz indexar ficheiro '%s'"
 
 #: read-cache.c:796
 #, fuzzy, c-format
 msgid "unable to add '%s' to index"
-msgstr "Não é possível adicionar %s à base de dados"
+msgstr "incapaz adicionar %s a index"
 
 #: read-cache.c:807
 #, fuzzy, c-format
 msgid "unable to stat '%s'"
-msgstr "não foi possível criar '%s'"
+msgstr "incapaz obter estatutário de '%s'"
 
 #: read-cache.c:1318
 #, fuzzy, c-format
 msgid "'%s' appears as both a file and as a directory"
-msgstr "%s existe e não é um diretório"
+msgstr "'%s' aparece ambo como ficheiro e como pasta"
 
 #: read-cache.c:1524
 #, fuzzy
 msgid "Refresh index"
-msgstr "não foi possível refrescar o índice"
+msgstr "Refresca index"
 
 #: read-cache.c:1639
 #, c-format
@@ -5779,12 +5773,12 @@ msgstr ""
 #: read-cache.c:1862
 #, fuzzy, c-format
 msgid "multiple stage entries for merged file '%s'"
-msgstr "extrair a versão deles dos ficheiros não integrados"
+msgstr "multíplas entradas de estágio para ficheiro juntado '%s'"
 
 #: read-cache.c:1865
 #, fuzzy, c-format
 msgid "unordered stage entries for '%s'"
-msgstr "não foi possível criar o diretórios para %s"
+msgstr "entradas de estágio desordenadas para '%s'"
 
 #: read-cache.c:1971 read-cache.c:2262 rerere.c:565 rerere.c:599 rerere.c:1111
 #: submodule.c:1628 builtin/add.c:538 builtin/check-ignore.c:181
@@ -5798,12 +5792,12 @@ msgstr "ficheiro de índice corrompido"
 #: read-cache.c:2115
 #, fuzzy, c-format
 msgid "unable to create load_cache_entries thread: %s"
-msgstr "não foi possível criar thread: %s"
+msgstr "incapaz criar thread load_cache_entries: %s"
 
 #: read-cache.c:2128
 #, fuzzy, c-format
 msgid "unable to join load_cache_entries thread: %s"
-msgstr "não foi possível criar thread: %s"
+msgstr "incapaz juntar a thread load_cache_entries: %s"
 
 #: read-cache.c:2161
 #, fuzzy, c-format
@@ -5813,7 +5807,7 @@ msgstr "falha ao adicionar ficheiros"
 #: read-cache.c:2165
 #, fuzzy, c-format
 msgid "%s: cannot stat the open index"
-msgstr "não é possível ler o índice"
+msgstr "%s: incapaz obter estatutário de index aberto"
 
 #: read-cache.c:2169
 #, c-format
@@ -5823,22 +5817,22 @@ msgstr ""
 #: read-cache.c:2173
 #, fuzzy, c-format
 msgid "%s: unable to map index file"
-msgstr "não foi possível ler o ficheiro de índice"
+msgstr "%s: incapaz mapear ficheiro index"
 
 #: read-cache.c:2215
 #, fuzzy, c-format
 msgid "unable to create load_index_extensions thread: %s"
-msgstr "não foi possível criar thread: %s"
+msgstr "incapaz criar thread load_index_extensions: %s"
 
 #: read-cache.c:2242
 #, fuzzy, c-format
 msgid "unable to join load_index_extensions thread: %s"
-msgstr "não foi possível criar thread: %s"
+msgstr "incapaz juntar a thread load_index_extensions: %s"
 
 #: read-cache.c:2274
 #, fuzzy, c-format
 msgid "could not freshen shared index '%s'"
-msgstr "não foi possível ler o ficheiro '%s'"
+msgstr "incapaz refrescar index partilhado '%s'"
 
 #: read-cache.c:2321
 #, c-format
@@ -5848,32 +5842,32 @@ msgstr ""
 #: read-cache.c:3017 strbuf.c:1171 wrapper.c:633 builtin/merge.c:1140
 #, c-format
 msgid "could not close '%s'"
-msgstr "não foi possível fechar '%s'"
+msgstr "incapaz fechar '%s'"
 
 #: read-cache.c:3120 sequencer.c:2479 sequencer.c:4231
 #, fuzzy, c-format
 msgid "could not stat '%s'"
-msgstr "não foi possível obter stat de '%s'"
+msgstr "incapaz obter estatutário '%s'"
 
 #: read-cache.c:3133
 #, c-format
 msgid "unable to open git dir: %s"
-msgstr "não é possível diretório git: %s"
+msgstr "incapaz abrir pasta git: %s"
 
 #: read-cache.c:3145
 #, c-format
 msgid "unable to unlink: %s"
-msgstr "não é possível invocar unlink: %s"
+msgstr "incapaz deslinkar: %s"
 
 #: read-cache.c:3170
 #, fuzzy, c-format
 msgid "cannot fix permission bits on '%s'"
-msgstr "não é possível abrir o ficheiro '%s'"
+msgstr "incapaz arranjar bits de permissão em '%s'"
 
 #: read-cache.c:3319
 #, fuzzy, c-format
 msgid "%s: cannot drop to stage #0"
-msgstr "não é possível mudar para o diretório %s"
+msgstr "%s: incapaz baixar para estágio #0"
 
 #: rebase-interactive.c:11
 #, fuzzy
@@ -5978,13 +5972,13 @@ msgstr ""
 #: sequencer.c:3633 sequencer.c:5416 builtin/fsck.c:347 builtin/rebase.c:270
 #, fuzzy, c-format
 msgid "could not write '%s'"
-msgstr "não foi possível escrever em '%s'"
+msgstr "incapaz escrever '%s'"
 
 #: rebase-interactive.c:116 builtin/rebase.c:202 builtin/rebase.c:228
 #: builtin/rebase.c:252
 #, fuzzy, c-format
 msgid "could not write '%s'."
-msgstr "não foi possível escrever em '%s'"
+msgstr "incapaz escrever '%s'."
 
 #: rebase-interactive.c:193
 #, fuzzy, c-format
@@ -6017,11 +6011,11 @@ msgstr ""
 #: builtin/rebase.c:264
 #, c-format
 msgid "could not read '%s'."
-msgstr "não foi possível ler '%s'."
+msgstr "incapaz ler '%s'."
 
 #: ref-filter.c:42 wt-status.c:1973
 msgid "gone"
-msgstr "desaparecido"
+msgstr "desapareceu"
 
 #: ref-filter.c:43
 #, c-format
@@ -6046,7 +6040,7 @@ msgstr "formato esperado: %%(color:<cor>)"
 #: ref-filter.c:171
 #, c-format
 msgid "unrecognized color: %%(color:%s)"
-msgstr "cor não reconhecida: %%(color:%s)"
+msgstr "cor desconhecida: %%(color:%s)"
 
 #: ref-filter.c:193
 #, c-format
@@ -6061,37 +6055,37 @@ msgstr "Valor inteiro esperado refname:rstrip=%s"
 #: ref-filter.c:199
 #, c-format
 msgid "unrecognized %%(%s) argument: %s"
-msgstr "argumento de %%(%s) não reconhecido: %s"
+msgstr "argumento %%(%s) desconhecido: %s"
 
 #: ref-filter.c:254
 #, fuzzy, c-format
 msgid "%%(objecttype) does not take arguments"
-msgstr "%%(subject) não leva argumentos"
+msgstr "%%(objecttype) leva argumentos nenhuns"
 
 #: ref-filter.c:276
 #, fuzzy, c-format
 msgid "unrecognized %%(objectsize) argument: %s"
-msgstr "argumento de %%(objectname) não reconhecido: %s"
+msgstr "argumento %%(objectsize) desconhecido: %s"
 
 #: ref-filter.c:284
 #, fuzzy, c-format
 msgid "%%(deltabase) does not take arguments"
-msgstr "%%(trailers) não leva argumentos"
+msgstr "%%(deltabase) leva argumentos nenhuns"
 
 #: ref-filter.c:296
 #, c-format
 msgid "%%(body) does not take arguments"
-msgstr "%%(body) não leva argumentos"
+msgstr "%%(body) leva argumentos nenhuns"
 
 #: ref-filter.c:309
 #, fuzzy, c-format
 msgid "unrecognized %%(subject) argument: %s"
-msgstr "argumento de %%(objectname) não reconhecido: %s"
+msgstr "argumento %%(subject) desconhecido: %s"
 
 #: ref-filter.c:330
 #, fuzzy, c-format
 msgid "unknown %%(trailers) argument: %s"
-msgstr "argumento de mirror desconhecido: %s"
+msgstr "argumento %%(trailers) desconhecido: %s"
 
 #: ref-filter.c:363
 #, c-format
@@ -6101,7 +6095,7 @@ msgstr "valor positivo esperado contents:lines=%s"
 #: ref-filter.c:365
 #, c-format
 msgid "unrecognized %%(contents) argument: %s"
-msgstr "argumento de %%(contents) não reconhecido: %s"
+msgstr "argumento %%(contents) desconhecido: %s"
 
 #: ref-filter.c:380
 #, fuzzy, c-format
@@ -6111,12 +6105,12 @@ msgstr "valor positivo esperado contents:lines=%s"
 #: ref-filter.c:384
 #, fuzzy, c-format
 msgid "unrecognized argument '%s' in %%(%s)"
-msgstr "argumento não reconhecido: %s"
+msgstr "argumento '%s' desconhecido em %%(%s)"
 
 #: ref-filter.c:398
 #, fuzzy, c-format
 msgid "unrecognized email option: %s"
-msgstr "posição não reconhecida:%s"
+msgstr "opção de email desconhecida: %s"
 
 #: ref-filter.c:428
 #, c-format
@@ -6126,17 +6120,17 @@ msgstr "formato esperado: %%(align:<largura>,<posição>)"
 #: ref-filter.c:440
 #, c-format
 msgid "unrecognized position:%s"
-msgstr "posição não reconhecida:%s"
+msgstr "posição desconhecida: %s"
 
 #: ref-filter.c:447
 #, c-format
 msgid "unrecognized width:%s"
-msgstr "largura não reconhecida:%s"
+msgstr "largura desconhecida: %s"
 
 #: ref-filter.c:456
 #, c-format
 msgid "unrecognized %%(align) argument: %s"
-msgstr "argumento de %%(align) não reconhecido: %s"
+msgstr "argumento %%(align) desconhecido: %s"
 
 #: ref-filter.c:464
 #, c-format
@@ -6146,7 +6140,7 @@ msgstr "largura positiva esperada com o átomo %%(algn)"
 #: ref-filter.c:482
 #, c-format
 msgid "unrecognized %%(if) argument: %s"
-msgstr "argumento de %%(if) não reconhecido: %s"
+msgstr "argumento %%(if) desconhecido: %s"
 
 #: ref-filter.c:584
 #, c-format
@@ -6267,17 +6261,17 @@ msgstr "nome de objeto malformado %s"
 #: ref-filter.c:2576
 #, fuzzy, c-format
 msgid "option `%s' must point to a commit"
-msgstr "'%s' não aponta para um commit"
+msgstr "opção '%s' tem apontar para um commit"
 
 #: refs.c:264
 #, fuzzy, c-format
 msgid "%s does not point to a valid object!"
-msgstr "'%s' não aponta para um commit"
+msgstr "'%s' aponta para objeto válido nenhum!"
 
 #: refs.c:575
 #, fuzzy, c-format
 msgid "could not retrieve `%s`"
-msgstr "não foi possível remover '%s'"
+msgstr "incapaz recuperar '%s'"
 
 #: refs.c:582
 #, fuzzy, c-format
@@ -6317,7 +6311,7 @@ msgstr "falha ao abrir '%s': %s"
 #: refs.c:1947
 #, fuzzy, c-format
 msgid "multiple updates for ref '%s' not allowed"
-msgstr "nome de identificação vazio (de <%s>) não é permitido"
+msgstr "atualizações múltiplas para ref '%s' proíbidas"
 
 #: refs.c:2027
 msgid "ref updates forbidden inside quarantine environment"
@@ -6330,29 +6324,28 @@ msgstr ""
 #: refs.c:2138 refs.c:2168
 #, fuzzy, c-format
 msgid "'%s' exists; cannot create '%s'"
-msgstr "não é possível criar '%s'"
+msgstr "'%s' existe; incapaz criar '%s'"
 
 #: refs.c:2144 refs.c:2179
 #, fuzzy, c-format
 msgid "cannot process '%s' and '%s' at the same time"
-msgstr ""
-"Não é possível atualizar os caminhos e mudar para o ramo '%s' ao mesmo tempo."
+msgstr "incapaz processar '%s' e '%s' ao mesmo tempo"
 
 #: refs/files-backend.c:1228
 #, c-format
 msgid "could not remove reference %s"
-msgstr "não foi possível eliminar a referência %s"
+msgstr "incapaz remover referência %s"
 
 #: refs/files-backend.c:1242 refs/packed-backend.c:1542
 #: refs/packed-backend.c:1552
 #, c-format
 msgid "could not delete reference %s: %s"
-msgstr "não foi possível eliminar a referência %s: %s"
+msgstr "incapaz apagar referência %s: %s"
 
 #: refs/files-backend.c:1245 refs/packed-backend.c:1555
 #, c-format
 msgid "could not delete references: %s"
-msgstr "não foi possível eliminar as referências: %s"
+msgstr "incapaz apagar referências: %s"
 
 #: refspec.c:170
 #, fuzzy, c-format
@@ -6375,12 +6368,12 @@ msgstr ""
 #: remote.c:590
 #, c-format
 msgid "Cannot fetch both %s and %s to %s"
-msgstr "Não é possível obter %s e %s ao mesmo tempo para %s"
+msgstr "Incapaz buscar ambos %s e %s para %s"
 
 #: remote.c:594
 #, c-format
 msgid "%s usually tracks %s, not %s"
-msgstr "%s geralmente segue %s, não %s"
+msgstr "%s geralmente segue %s, invés de %s"
 
 #: remote.c:598
 #, c-format
@@ -6400,7 +6393,7 @@ msgstr ""
 #: remote.c:1073
 #, fuzzy, c-format
 msgid "src refspec %s does not match any"
-msgstr "%s: não tem correspondência no índice"
+msgstr "src refspec %s corresponde a nenhum"
 
 #: remote.c:1078
 #, c-format
@@ -6460,12 +6453,12 @@ msgstr ""
 #: remote.c:1164
 #, fuzzy, c-format
 msgid "%s cannot be resolved to branch"
-msgstr "'%s' não pode ser usado ao mudar de ramo"
+msgstr "%s incapaz ser resolvido para ramo"
 
 #: remote.c:1175
 #, fuzzy, c-format
 msgid "unable to delete '%s': remote ref does not exist"
-msgstr "não é possível escrever o ficheiro '%s' com o modo %o"
+msgstr "incapaz apagar '%s': ref remoto é inexistente"
 
 #: remote.c:1187
 #, c-format
@@ -6479,7 +6472,7 @@ msgstr ""
 
 #: remote.c:1714 remote.c:1815
 msgid "HEAD does not point to a branch"
-msgstr "HEAD não aponta para um ramo"
+msgstr "HEAD aponta para ramo nenhum"
 
 #: remote.c:1723
 #, c-format
@@ -6494,8 +6487,7 @@ msgstr "configurado upstream nenhum para ramo '%s'"
 #: remote.c:1732
 #, c-format
 msgid "upstream branch '%s' not stored as a remote-tracking branch"
-msgstr ""
-"o ramo a montante '%s' não está guardado como um ramo de monitorização remoto"
+msgstr "incapaz gravar ramo upstream '%s' como ramo remote-tracking"
 
 #: remote.c:1747
 #, c-format
@@ -6510,9 +6502,7 @@ msgstr "ramo '%s' tem remoto para atirar nenhum"
 #: remote.c:1769
 #, c-format
 msgid "push refspecs for '%s' do not include '%s'"
-msgstr ""
-"'%2$s' não faz parte dos especificadores de referência de '%1$s' para "
-"publicação"
+msgstr "refspecs de atirar para '%s'incluí '%s' nenhum"
 
 #: remote.c:1782
 msgid "push has no destination (push.default is 'nothing')"
@@ -6520,12 +6510,12 @@ msgstr "publicação sem destino (push.default é 'nothing')"
 
 #: remote.c:1804
 msgid "cannot resolve 'simple' push to a single destination"
-msgstr "não é possível resolver a publicação 'simple' num único destino"
+msgstr "incapaz resolver atiranço 'simple' para destino único"
 
 #: remote.c:1933
 #, fuzzy, c-format
 msgid "couldn't find remote ref %s"
-msgstr "Referência remota HEAD não encontrada"
+msgstr "incapaz encontrar ref remoto %s"
 
 #: remote.c:1946
 #, c-format
@@ -6605,7 +6595,7 @@ msgstr "  (use \"git pull\" para integrar o ramo remoto no seu ramo)\n"
 #: remote.c:2348
 #, fuzzy, c-format
 msgid "cannot parse expected object name '%s'"
-msgstr "não é possível ler o objeto %s: '%s'"
+msgstr "incapaz analisar nome de objeto esperado '%s'"
 
 #: replace-object.c:21
 #, fuzzy, c-format
@@ -6629,7 +6619,7 @@ msgstr ""
 #: rerere.c:264 rerere.c:269
 #, fuzzy
 msgid "unable to write rerere record"
-msgstr "não é possível escrever o objeto de nota"
+msgstr "incapaz escrever registro rerere"
 
 #: rerere.c:495
 #, c-format
@@ -6644,7 +6634,7 @@ msgstr "falha ao invocar stat de '%s'"
 #: rerere.c:503 rerere.c:1039
 #, fuzzy, c-format
 msgid "could not parse conflict hunks in '%s'"
-msgstr "não foi possível analisar o objeto '%s'"
+msgstr "incapaz analisar pedaços conflituosos em '%s'"
 
 #: rerere.c:684
 #, fuzzy, c-format
@@ -6674,7 +6664,7 @@ msgstr ""
 #: rerere.c:803
 #, fuzzy, c-format
 msgid "cannot unlink stray '%s'"
-msgstr "não é possível criar a ligação simbólica '%s' '%s'"
+msgstr "incapaz deslinkar o perdido '%s'"
 
 #: rerere.c:807
 #, c-format
@@ -6685,7 +6675,7 @@ msgstr ""
 #: builtin/submodule--helper.c:1878 builtin/submodule--helper.c:1890
 #, c-format
 msgid "could not create directory '%s'"
-msgstr "não foi possível criar o diretório '%s'"
+msgstr "incapaz criar pasta '%s'"
 
 #: rerere.c:1057
 #, fuzzy, c-format
@@ -6695,12 +6685,12 @@ msgstr "falha ao criar a ligação '%s'"
 #: rerere.c:1068 rerere.c:1075
 #, fuzzy, c-format
 msgid "no remembered resolution for '%s'"
-msgstr "Não é possível adicionar os resultados da integração de '%s'"
+msgstr "a faltar a lembrança da solução para '%s'"
 
 #: rerere.c:1077
 #, fuzzy, c-format
 msgid "cannot unlink '%s'"
-msgstr "não é possível ler (readlink) '%s'"
+msgstr "incapaz de deslinkar '%s'"
 
 #: rerere.c:1087
 #, c-format
@@ -6710,17 +6700,17 @@ msgstr ""
 #: rerere.c:1096
 #, fuzzy, c-format
 msgid "Forgot resolution for '%s'\n"
-msgstr "não foi possível resolver a referência '%s'\n"
+msgstr "Está esquecida resolução para '%s'\n"
 
 #: rerere.c:1199
 #, fuzzy
 msgid "unable to open rr-cache directory"
-msgstr "não é possível de obter o diretório de trabalho atual"
+msgstr "incapaz abrir pasta rr-cache"
 
 #: reset.c:42
 #, fuzzy
 msgid "could not determine HEAD revision"
-msgstr "não foi possível destacar HEAD"
+msgstr "incapaz determinar revisão de HEAD"
 
 #: reset.c:70 reset.c:76 sequencer.c:3460
 #, fuzzy, c-format
@@ -6817,7 +6807,7 @@ msgstr "Modo de limpeza inválido %s"
 #: sequencer.c:323
 #, fuzzy, c-format
 msgid "could not delete '%s'"
-msgstr "Não foi possível eliminar %s"
+msgstr "incapaz de apagar '%s'"
 
 #: sequencer.c:343 builtin/rebase.c:755 builtin/rebase.c:1596 builtin/rm.c:385
 #, c-format
@@ -6907,7 +6897,7 @@ msgstr "Modo de limpeza inválido %s"
 #: sequencer.c:670
 #, c-format
 msgid "%s: Unable to write new index file"
-msgstr "%s: Não foi possível escrever novo ficheiro de índice"
+msgstr "%s: Incapaz de escrever novo ficheiro index"
 
 #: sequencer.c:687
 #, fuzzy
@@ -7368,7 +7358,7 @@ msgstr "o ficheiro HEAD de pre-cherry-pick '%s' está corrompido"
 
 #: sequencer.c:2970
 msgid "You seem to have moved HEAD. Not rewinding, check your HEAD!"
-msgstr "Parece que a HEAD se moveu. Não recuando, verifique a HEAD."
+msgstr "Parece que moveste a HEAD. Recusando rebobinar, verifique a tua HEAD!"
 
 #: sequencer.c:3011
 #, fuzzy
@@ -7432,7 +7422,7 @@ msgstr "não foi possível aplicar %s... %s"
 #: sequencer.c:3244
 #, fuzzy, c-format
 msgid "Could not merge %.*s"
-msgstr "Não foi possível ler %s."
+msgstr "Incapaz de juntar %.*s"
 
 #: sequencer.c:3258 sequencer.c:3262 builtin/difftool.c:640
 #, c-format
@@ -7488,7 +7478,7 @@ msgstr "nome de ficheiro malformado: %.*s"
 #: sequencer.c:3416
 #, fuzzy
 msgid "writing fake root commit"
-msgstr "não há nada para submeter"
+msgstr "escrevendo commit de raíz falso"
 
 #: sequencer.c:3421
 msgid "writing squash-onto"
@@ -7531,11 +7521,11 @@ msgstr "não foi possível validar a tag '%s'"
 #: sequencer.c:3796
 #, fuzzy
 msgid "merge: Unable to write new index file"
-msgstr "%s: Não foi possível escrever novo ficheiro de índice"
+msgstr "merge: Incapaz de escrever novo ficheiro index"
 
 #: sequencer.c:3870
 msgid "Cannot autostash"
-msgstr "Não é possível empilhar automaticamente (autostash)"
+msgstr "Incapaz de arrumar automaticamente (autostash)"
 
 #: sequencer.c:3873
 #, fuzzy, c-format
@@ -7545,7 +7535,7 @@ msgstr "Resposta de squash inexperada: '%s'"
 #: sequencer.c:3879
 #, fuzzy, c-format
 msgid "Could not create directory for '%s'"
-msgstr "Não foi possível criar o diretório '%s'"
+msgstr "Incapaz de criar a pasta para '%s'"
 
 #: sequencer.c:3882
 #, fuzzy, c-format
@@ -7713,12 +7703,12 @@ msgstr ""
 #: sequencer.c:5374 sequencer.c:5391
 #, fuzzy
 msgid "nothing to do"
-msgstr "há nada a fazer"
+msgstr "nada a fazer"
 
 #: sequencer.c:5410
 #, fuzzy
 msgid "could not skip unnecessary pick commands"
-msgstr "Não foi possível saltar comandos pick desnecessários"
+msgstr "incapaz de saltar comandos pick desnecessários"
 
 #: sequencer.c:5504
 msgid "the script was already rearranged."
@@ -7813,12 +7803,12 @@ msgstr "formato de data inválido: %s"
 #: setup.c:708
 #, fuzzy, c-format
 msgid "no path in gitfile: %s"
-msgstr "Não é possível abrir o ficheiro de patch %s"
+msgstr "gitfile sem path: %s"
 
 #: setup.c:710
 #, fuzzy, c-format
 msgid "not a git repository: %s"
-msgstr "Não é um repositório git"
+msgstr "é repositório git nenhum: %s"
 
 #: setup.c:812
 #, c-format
@@ -7828,7 +7818,7 @@ msgstr ""
 #: setup.c:826
 #, fuzzy, c-format
 msgid "not a git repository: '%s'"
-msgstr "Não é um repositório git"
+msgstr "é repositório git nenhum: '%s'"
 
 #: setup.c:855 setup.c:857 setup.c:888
 #, fuzzy, c-format
@@ -7838,7 +7828,7 @@ msgstr "não é possível mudar para o diretório %s"
 #: setup.c:860 setup.c:916 setup.c:926 setup.c:965 setup.c:973
 #, fuzzy
 msgid "cannot come back to cwd"
-msgstr "Não é possível voltar ao diretório de trabalho atual"
+msgstr "incapaz de voltar para cwd"
 
 #: setup.c:987
 #, fuzzy, c-format
@@ -7847,7 +7837,7 @@ msgstr "falha ao invocar stat de '%s'"
 
 #: setup.c:1225
 msgid "Unable to read current working directory"
-msgstr "Não é possível ler o diretório de trabalho atual"
+msgstr "Incapaz de ler pasta atual de trabalho"
 
 #: setup.c:1234 setup.c:1240
 #, fuzzy, c-format
@@ -7857,7 +7847,7 @@ msgstr "não é possível mudar para '%s'"
 #: setup.c:1245
 #, fuzzy, c-format
 msgid "not a git repository (or any of the parent directories): %s"
-msgstr "Não é um repositório git (ou um dos diretórios pai): %s"
+msgstr "é repositório git nenhum (ou em pastas parente nenhuma): %s"
 
 #: setup.c:1251
 #, fuzzy, c-format
@@ -7865,9 +7855,9 @@ msgid ""
 "not a git repository (or any parent up to mount point %s)\n"
 "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
-"Não é um repositório git (ou um diretório pai até ao ponto de montagem %s)\n"
-"Interrompido no limite do sistema de ficheiros "
-"(GIT_DISCOVERY_ACROSS_FILESYSTEM não definido)."
+"é repositório git nenhum (ou em pai nenhum até ao ponto de montagem %s)\n"
+"Parando na fronteira do sistema de ficheiros (GIT_DISCOVERY_ACROSS_FILESYSTEM "
+"indefinido)."
 
 #: setup.c:1362
 #, fuzzy, c-format
@@ -8182,18 +8172,15 @@ msgid ""
 "examine these refs and maybe delete them. Turn this message off by\n"
 "running \"git config advice.objectNameWarning false\""
 msgstr ""
-"Normalmente o Git nunca cria referências que terminem em 40 caracteres "
-"hexadecimais,\n"
-"pois uma referência destas seria ignorada se indicasse só 40 caracteres "
-"hexadecimais.\n"
-"Estas referências podem ser criadas por engano. Como no exemplo,\n"
+"Normalmente o Git nunca cria refs que terminem em 40 caracteres\n"
+"hexadecimais, porque será ignorada quando apenas se indica 40-hex.\n"
+"Poderam-se criar estas refs por engano. Como no exemplo,\n"
 "\n"
-"  git checkout -b $br $(git rev-parse ...)\n"
+"  git switch -c $br $(git rev-parse ...)\n"
 "\n"
-"onde \"$br\" está vazio e é criada uma referência de 40 caracteres "
-"hexadecimais.\n"
-"Analise estas referências e elimine-as se desejar. Desative esta\n"
-"mensagem executando \"git config advice.objectNameWarning false\""
+"onde \"$br\" fica vazio e uma ref de 40-hex é criada. Por favor\n"
+"examine estas refs e talvez apague-as. Desative esta mensagem\n"
+"executando \"git config advice.objectNameWarning false\""
 
 #: sha1-name.c:916
 #, c-format
@@ -8344,13 +8331,12 @@ msgstr "valor inválido de %s"
 #: submodule-config.c:766
 #, c-format
 msgid "Could not update .gitmodules entry %s"
-msgstr "Não foi possível atualizar o elemento %s de .gitmodules"
+msgstr "Incapaz de atualizar entrada de .gitmodules %s"
 
 #: submodule.c:114 submodule.c:143
 msgid "Cannot change unmerged .gitmodules, resolve merge conflicts first"
-msgstr ""
-"Não é possível alterar .gitmodules não integrado, resolva primeiro os "
-"conflitos de integração"
+msgstr "Incapaz de alterar .gitmodules por juntar, resolve os conflitos "
+"de junção primeiro"
 
 #: submodule.c:118 submodule.c:147
 #, c-format
@@ -8360,7 +8346,7 @@ msgstr "Secção de .gitmodules cujo path=%s não encontrada"
 #: submodule.c:154
 #, c-format
 msgid "Could not remove .gitmodules entry for %s"
-msgstr "Não foi possível remover o elemento %s de .gitmodules"
+msgstr "Incapaz de remover a entrada de .gitmodules para %s"
 
 #: submodule.c:165
 msgid "staging updated .gitmodules failed"
@@ -8466,7 +8452,7 @@ msgstr "não foi possível executar 'git status' no submódulo '%s'"
 #: submodule.c:1832
 #, fuzzy, c-format
 msgid "Could not unset core.worktree setting in submodule '%s'"
-msgstr "Não foi possível definir core.worktree em %s"
+msgstr "Incapaz de remover a definição core.worktree em submódulo '%s'"
 
 #: submodule.c:1859 submodule.c:2169
 #, c-format
@@ -8593,7 +8579,7 @@ msgstr "imprimir estado do programa auxiliar remoto"
 #: transport-helper.c:145
 #, fuzzy, c-format
 msgid "unable to find remote helper for '%s'"
-msgstr "Não é possível adicionar os resultados da integração de '%s'"
+msgstr "incapaz de encontrar helper remoto para '%s'"
 
 #: transport-helper.c:161 transport-helper.c:575
 msgid "can't dup helper output fd"
@@ -8633,12 +8619,12 @@ msgstr "erro ao fechar ficheiro de pacote"
 #: transport-helper.c:549 transport-helper.c:1236
 #, fuzzy, c-format
 msgid "could not read ref %s"
-msgstr "Não foi possível ler a referência %s"
+msgstr "incapaz de ler ref %s"
 
 #: transport-helper.c:594
 #, fuzzy, c-format
 msgid "unknown response to connect: %s"
-msgstr "Não sei como clonar %s"
+msgstr "resposta de conexão desconhecida: %s"
 
 #: transport-helper.c:616
 msgid "setting remote service path not supported by protocol"
@@ -9080,7 +9066,7 @@ msgstr ""
 #: unpack-trees.c:172
 #, c-format
 msgid "Entry '%s' overlaps with '%s'.  Cannot bind."
-msgstr "A entrada '%s' sobrepõe-se com '%s'. Não é possível vincular."
+msgstr "Entrada '%s' sobrepõe-se a '%s'. Impossível vincular."
 
 #: unpack-trees.c:175
 #, c-format
@@ -9088,7 +9074,7 @@ msgid ""
 "Cannot update submodule:\n"
 "%s"
 msgstr ""
-"Não é possível atualizar submódulo:\n"
+"Impossível atualizar submódulo:\n"
 "%s"
 
 #: unpack-trees.c:178
@@ -9217,7 +9203,7 @@ msgstr "'%s' não aponta para um commit"
 #: worktree.c:587
 #, fuzzy
 msgid "not a directory"
-msgstr "Não é um repositório git"
+msgstr "é pasta nenhuma"
 
 #: worktree.c:596
 #, fuzzy
@@ -9431,8 +9417,8 @@ msgid ""
 "Do not modify or remove the line above.\n"
 "Everything below it will be ignored."
 msgstr ""
-"Não altere a linha acima.\n"
-"Tudo o que estiver abaixo será removido."
+"Deixe estar a linha acima.\n"
+"Tudo abaixo será ignorado."
 
 #: wt-status.c:1110
 #, c-format
@@ -9730,13 +9716,13 @@ msgstr "Sem alterações"
 #: wt-status.c:1807
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
-msgstr "alteração nenhuma adicionada a commit (usa \"git add\" e/ou \"git "
+msgstr "foi adicionado a commit alteração nenhuma (usa \"git add\" e/ou \"git "
 "commit -a\")\n"
 
 #: wt-status.c:1811
 #, c-format
 msgid "no changes added to commit\n"
-msgstr "alteração nenhuma adicionada a commit\n"
+msgstr "foi adicionado a commit alteração nenhuma\n"
 
 #: wt-status.c:1815
 #, c-format
@@ -9744,18 +9730,18 @@ msgid ""
 "nothing added to commit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
-"não foi adicionado nada para submeter, mas existem ficheiros não controlados "
-"(use \"git add\" para controlá-los)\n"
+"nada adicionado para commit mas há ficheiros por seguir presentes (usa"
+"(\"git add\" para seguir)\n"
 
 #: wt-status.c:1819
 #, c-format
 msgid "nothing added to commit but untracked files present\n"
-msgstr "nada adicionado para commit mas ficheiros untracked presentes\n"
+msgstr "nada adicionado para commit mas ficheiros por seguir presentes\n"
 
 #: wt-status.c:1823
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
-msgstr "nada a commit (cria/copia ficheiros e usa \"git add\" para track)\n"
+msgstr "nada a commit (cria/copia ficheiros e usa \"git add\" para seguir)\n"
 
 #: wt-status.c:1827 wt-status.c:1833
 #, c-format
@@ -9765,12 +9751,12 @@ msgstr "nada a commit\n"
 #: wt-status.c:1830
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
-msgstr "nada a commit (use -u para mostrar ficheiros untracked)\n"
+msgstr "nada a commit (use -u para mostrar ficheiros por seguir)\n"
 
 #: wt-status.c:1835
 #, c-format
 msgid "nothing to commit, working tree clean\n"
-msgstr "não há nada para submeter, árvore de trabalho limpa\n"
+msgstr "nada a commitar, worktree limpa\n"
 
 #: wt-status.c:1940
 #, fuzzy
@@ -9837,25 +9823,25 @@ msgstr "Alterações não preparadas depois de atualizar o índice:"
 
 #: builtin/add.c:272 builtin/rev-parse.c:908
 msgid "Could not read the index"
-msgstr "Não foi possível ler o índice"
+msgstr "Incapaz ler o index"
 
 #: builtin/add.c:283
 #, c-format
 msgid "Could not open '%s' for writing."
-msgstr "Não foi possível abrir '%s' para escrita."
+msgstr "Incapaz de abrir '%s' para escrita."
 
 #: builtin/add.c:287
 msgid "Could not write patch"
-msgstr "Não foi possível escrever patch"
+msgstr "Incapaz de escrever patch"
 
 #: builtin/add.c:290
 msgid "editing patch failed"
-msgstr "falha ao editar patch"
+msgstr "edição de patch falhou"
 
 #: builtin/add.c:293
 #, c-format
 msgid "Could not stat '%s'"
-msgstr "Não foi possível obter stat de '%s'"
+msgstr "Impossível fazer stat de '%s'"
 
 #: builtin/add.c:295
 msgid "Empty patch. Aborted."
@@ -9864,7 +9850,7 @@ msgstr "Patch vazio. Abortado."
 #: builtin/add.c:300
 #, c-format
 msgid "Could not apply '%s'"
-msgstr "Não foi possível aplicar '%s'"
+msgstr "Impossível submeter '%s'"
 
 #: builtin/add.c:308
 msgid "The following paths are ignored by one of your .gitignore files:\n"
@@ -10010,7 +9996,7 @@ msgstr ""
 #: builtin/add.c:518
 #, c-format
 msgid "Nothing specified, nothing added.\n"
-msgstr "Não foi especificado nada, nada adicionado.\n"
+msgstr ".\n"
 
 #: builtin/add.c:520
 msgid ""
@@ -10127,8 +10113,8 @@ msgid ""
 "Did you hand edit your patch?\n"
 "It does not apply to blobs recorded in its index."
 msgstr ""
-"Editou o patch manualmente?\n"
-"Não é possível aplicá-lo aos blobs registados no índice."
+"Editaste o patch manualmente?\n"
+"No registo de index, aplica-se a blobs nenhuns."
 
 #: builtin/am.c:1516
 msgid "Falling back to patching base and 3-way merge..."
@@ -10195,9 +10181,9 @@ msgid ""
 "If there is nothing left to stage, chances are that something else\n"
 "already introduced the same changes; you might want to skip this patch."
 msgstr ""
-"Sem alterações - esqueceu-se de usar 'git add'?\n"
-"Se não há nada por preparar, provavelmente essas mesmas alterações\n"
-"já foram introduzidas; pode querer ignorar este patch."
+"Sem alterações - esqueceste-te de usar 'git add'?\n"
+"Se há mais nada por preparar, provavelmente essas mesmas alterações\n"
+"já foram introduzidas; poderás querer saltar este patch."
 
 #: builtin/am.c:1826
 msgid ""
@@ -10211,7 +10197,7 @@ msgstr ""
 #: builtin/reset.c:355
 #, c-format
 msgid "Could not parse object '%s'."
-msgstr "Não foi possível analisar o objeto '%s'."
+msgstr "Incapaz analisar objeto '%s'."
 
 #: builtin/am.c:1985
 msgid "failed to clean index"
@@ -10222,8 +10208,8 @@ msgid ""
 "You seem to have moved HEAD since the last 'am' failure.\n"
 "Not rewinding to ORIG_HEAD"
 msgstr ""
-"Parece que a HEAD foi movida desde a última vez que o 'am' falhou.\n"
-"Não recuando a ORIG_HEAD"
+"Parece que moveste HEAD desde a última falha de 'am'.\n"
+"Recusando rebobinar até ORIG_HEAD"
 
 #: builtin/am.c:2136
 #, c-format
@@ -10562,7 +10548,7 @@ msgstr "não foi possível criar o diretório de árvore de trabalho '%s'"
 #: builtin/bisect--helper.c:272
 #, fuzzy, c-format
 msgid "couldn't open the file '%s'"
-msgstr "Não foi possível abrir o ficheiro '%s'"
+msgstr "incapaz abrir o ficheiro '%s'"
 
 #: builtin/bisect--helper.c:298
 #, fuzzy, c-format
@@ -10820,7 +10806,7 @@ msgstr "Mostar SHA-1 dos commits limite em branco (Predefinição: desativado)"
 
 #: builtin/blame.c:871
 msgid "Do not treat root commits as boundaries (Default: off)"
-msgstr "Não tratar os commits raiz como limites (Predefinição: desativado)"
+msgstr "Tratar commits raiz como limite nenhum (Predefinição: desativado)"
 
 #: builtin/blame.c:872
 msgid "Show work cost statistics"
@@ -10925,7 +10911,7 @@ msgstr "Localizar linhas movidas dentro e entre ficheiros"
 #: builtin/blame.c:894
 #, fuzzy
 msgid "range"
-msgstr "Não é um intervalo."
+msgstr "intervalo"
 
 #: builtin/blame.c:895
 #, fuzzy
@@ -11011,7 +10997,7 @@ msgstr ""
 #: builtin/branch.c:172
 #, c-format
 msgid "Couldn't look up commit object for '%s'"
-msgstr "Não foi possível pesquisar pelo objeto commit de '%s'"
+msgstr "Incapaz pesquisar objeto commit para '%s'"
 
 #: builtin/branch.c:176
 #, c-format
@@ -11032,12 +11018,12 @@ msgstr "não é possível usar -a com -d"
 
 #: builtin/branch.c:226
 msgid "Couldn't look up commit object for HEAD"
-msgstr "Não foi possível pesquisar pelo objeto commit de HEAD"
+msgstr "Incapaz de pesquisar objeto commit para HEAD"
 
 #: builtin/branch.c:240
 #, c-format
 msgid "Cannot delete branch '%s' checked out at '%s'"
-msgstr "Não é possível eliminar o ramo '%s' extraído em '%s'"
+msgstr "Impossível apagar ramo '%s' checked out em '%s'"
 
 #: builtin/branch.c:255
 #, c-format
@@ -11306,7 +11292,7 @@ msgstr "nome do ramo é obrigatório"
 
 #: builtin/branch.c:751
 msgid "Cannot give description to detached HEAD"
-msgstr "Não é possível atribuir descrição a HEAD destacada"
+msgstr "Impossível dar descrição a HEAD solta"
 
 #: builtin/branch.c:756
 msgid "cannot edit description of more than one branch"
@@ -11376,7 +11362,8 @@ msgstr "O ramo '%s' não tem informação sobre o ramo a montante"
 msgid ""
 "The -a, and -r, options to 'git branch' do not take a branch name.\n"
 "Did you mean to use: -a|-r --list <pattern>?"
-msgstr "As opções -a, e -r, em 'git branch' levam nome de branch nenhum.\n"
+msgstr ""
+"As opções -a, e -r, em 'git branch' levam nome de branch nenhum.\n"
 "Quiseste utilizar: -a|-r --list <pattern>? "
 
 #: builtin/branch.c:843
@@ -11800,7 +11787,7 @@ msgstr "caminho '%s': não é possível integrar"
 #: builtin/checkout.c:291
 #, c-format
 msgid "Unable to add merge result for '%s'"
-msgstr "Não é possível adicionar os resultados da integração de '%s'"
+msgstr "Impossível adicionar o resultado da junção para '%s'"
 
 #: builtin/checkout.c:396
 #, c-format
@@ -11837,8 +11824,7 @@ msgstr "'%s' não pode ser usado com %s"
 #: builtin/checkout.c:451
 #, c-format
 msgid "Cannot update paths and switch to branch '%s' at the same time."
-msgstr ""
-"Não é possível atualizar os caminhos e mudar para o ramo '%s' ao mesmo tempo."
+msgstr "Incapaz atualizar paths e mudar para ramo '%s' ao mesmo tempo."
 
 #: builtin/checkout.c:455
 #, c-format
@@ -11874,7 +11860,7 @@ msgstr ""
 #: builtin/checkout.c:866
 #, c-format
 msgid "Can not do reflog for '%s': %s\n"
-msgstr "Não é possível efetuar reflog de '%s': %s\n"
+msgstr "Incapaz fazer reflog para '%s': %s\n"
 
 #: builtin/checkout.c:908
 msgid "HEAD is now at"
@@ -12023,7 +12009,7 @@ msgstr "a referência não é uma árvore: %s"
 #: builtin/checkout.c:1370
 #, fuzzy, c-format
 msgid "a branch is expected, got tag '%s'"
-msgstr "Não é possível eliminar o ramo '%s' extraído em '%s'"
+msgstr "esperado um ramo, recebi tag '%s'"
 
 #: builtin/checkout.c:1372
 #, fuzzy, c-format
@@ -12098,7 +12084,7 @@ msgstr "'%s' não pode ser usado com caminhos em atualização"
 #: builtin/checkout.c:1455
 #, c-format
 msgid "Cannot switch branch to a non-commit '%s'"
-msgstr "Não é possível mudar de ramo para '%s', visto que não é um commit"
+msgstr "Incapaz mudar ramo para '%s', pois está fora de ser um commit"
 
 #: builtin/checkout.c:1462
 #, fuzzy
@@ -12420,7 +12406,7 @@ msgstr[1] "Removeria os seguintes itens:"
 
 #: builtin/clean.c:841
 msgid "No more files to clean, exiting."
-msgstr "Não há mais ficheiros por limpar, a terminar."
+msgstr "Mais ficheiro por limpar nenhum, saindo."
 
 #: builtin/clean.c:903
 msgid "do not print names of files removed"
@@ -12642,13 +12628,13 @@ msgid ""
 "No directory name could be guessed.\n"
 "Please specify a directory on the command line"
 msgstr ""
-"Não foi possível adivinhar o nome do diretório.\n"
-"Especifique um diretório na linha de comandos"
+"Incapaz adivinhar nome de pasta.\n"
+"Por favor especifique uma pasta na linha de comandos"
 
 #: builtin/clone.c:341
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
-msgstr "info: Não foi possível adicionar sobressalente de '%s': %s\n"
+msgstr "info: Incapaz adicionar sobressalente para '%s': %s\n"
 
 #: builtin/clone.c:414
 #, c-format
@@ -12904,7 +12890,7 @@ msgstr ""
 #: builtin/commit-graph.c:106
 #, fuzzy, c-format
 msgid "Could not open commit-graph '%s'"
-msgstr "Não foi possível abrir o ficheiro '%s'"
+msgstr "Incapaz abrir commit-graph '%s'"
 
 #: builtin/commit-graph.c:142
 #, fuzzy, c-format
@@ -13272,7 +13258,7 @@ msgstr "%sCommitter: %.*s <%.*s>"
 
 #: builtin/commit.c:926
 msgid "Cannot read index"
-msgstr "Não é possível ler o índice"
+msgstr "Incapaz ler index"
 
 #: builtin/commit.c:997
 msgid "Error building trees"
@@ -13306,11 +13292,11 @@ msgstr "--long e -z são incompatíveis"
 
 #: builtin/commit.c:1171
 msgid "Using both --reset-author and --author does not make sense"
-msgstr "Não faz sentido usar --reset-author e --author ao mesmo tempo"
+msgstr "Usar ambos --reset-author e --author faz sentido nenhum"
 
 #: builtin/commit.c:1180
 msgid "You have nothing to amend."
-msgstr "Não há nada para emendar."
+msgstr "Tens nada para emendar."
 
 #: builtin/commit.c:1183
 msgid "You are in the middle of a merge -- cannot amend."
@@ -13814,12 +13800,12 @@ msgstr "não é possível analisar o valor de cor por omissão"
 #: builtin/config.c:536 builtin/config.c:833
 #, fuzzy
 msgid "not in a git directory"
-msgstr "Não é um repositório git"
+msgstr "está fora de pasta git"
 
 #: builtin/config.c:539
 #, fuzzy
 msgid "writing to stdin is not supported"
-msgstr "Não é suportada profundidade negativa em --deepen"
+msgstr "escrever para stdin tem suporte nenhum"
 
 #: builtin/config.c:542
 #, fuzzy
@@ -13910,12 +13896,12 @@ msgstr "usar ficheiro de configuração do repositório"
 #: builtin/config.c:835
 #, fuzzy
 msgid "editing stdin is not supported"
-msgstr "Não é suportada profundidade negativa em --deepen"
+msgstr "editar stdin tem suporte nenhum"
 
 #: builtin/config.c:837
 #, fuzzy
 msgid "editing blobs is not supported"
-msgstr "Não é suportada profundidade negativa em --deepen"
+msgstr "editar blobs tem suporte nenhum"
 
 #: builtin/config.c:851
 #, c-format
@@ -14026,8 +14012,8 @@ msgid ""
 "No annotated tags can describe '%s'.\n"
 "However, there were unannotated tags: try --tags."
 msgstr ""
-"Não é possível usar tags anotadas para descrever '%s'.\n"
-"No entanto, é possível com tags não anotadas: tente --tags."
+"'%s' pode ser descrição de tag anotada nenhuma.\n"
+"No entanto, houve fora das tags anotadas: tenta --tags."
 
 #: builtin/describe.c:428
 #, c-format
@@ -14035,8 +14021,8 @@ msgid ""
 "No tags can describe '%s'.\n"
 "Try --always, or create some tags."
 msgstr ""
-"Não é possível usar tags para descrever '%s'.\n"
-"Tente --always, ou crie algumas tags."
+"'%s' pode ser descrição de tag nenhuma.\n"
+"Tenta --always, ou cria algumas tags."
 
 #: builtin/describe.c:458
 #, c-format
@@ -14169,7 +14155,7 @@ msgstr ""
 
 #: builtin/diff.c:485
 msgid "Not a git repository"
-msgstr "Não é um repositório git"
+msgstr "É repositório git nenhum"
 
 #: builtin/diff.c:530 builtin/grep.c:681
 #, c-format
@@ -14783,7 +14769,7 @@ msgstr "A obter de %s\n"
 #: builtin/fetch.c:1608 builtin/fetch.c:1663 builtin/remote.c:101
 #, c-format
 msgid "Could not fetch %s"
-msgstr "Não foi possível obter de %s"
+msgstr "Incapaz buscar %s"
 
 #: builtin/fetch.c:1620
 #, fuzzy, c-format
@@ -14804,7 +14790,7 @@ msgstr "Deve especificar um nome para a tag."
 
 #: builtin/fetch.c:1825
 msgid "Negative depth in --deepen is not supported"
-msgstr "Não é suportada profundidade negativa em --deepen"
+msgstr "Profundidade negativa em --deepen tem suporte nenhum"
 
 #: builtin/fetch.c:1827
 msgid "--deepen and --depth are mutually exclusive"
@@ -14833,7 +14819,7 @@ msgstr "O remoto ou grupo remoto não existe: %s"
 
 #: builtin/fetch.c:1869
 msgid "Fetching a group and specifying refspecs does not make sense"
-msgstr "Não faz sentido obter um grupo e especificar uma referência"
+msgstr "Buscar um grupo e especificar refspecs faz sentido nenhum"
 
 #: builtin/fetch.c:1887
 msgid ""
@@ -15328,12 +15314,12 @@ msgstr "falha ao remover %s"
 #: builtin/gc.c:1024
 #, fuzzy
 msgid "failed to start 'git pack-objects' process"
-msgstr "Não foi possível lançar pack-objects"
+msgstr "começar processo 'git pack-objects' falhou"
 
 #: builtin/gc.c:1041
 #, fuzzy
 msgid "failed to finish 'git pack-objects' process"
-msgstr "Não foi possível lançar pack-objects"
+msgstr "terminar processo 'git pack-objects' falhou"
 
 #: builtin/gc.c:1093
 #, fuzzy
@@ -15681,7 +15667,7 @@ msgstr "permitir invocar grep(1) (ignorado nesta compilação)"
 #: builtin/grep.c:1014
 #, fuzzy
 msgid "no pattern given"
-msgstr "fornecido padrão nenhum"
+msgstr "fornecido pattern nenhum"
 
 #: builtin/grep.c:1050
 msgid "--no-index or --untracked cannot be used with revs"
@@ -15856,7 +15842,7 @@ msgstr "'%s': visualizador de manual desconhecido."
 
 #: builtin/help.c:453
 msgid "no man viewer handled the request"
-msgstr "atendeu ao pedido visualizador de manual nenhum"
+msgstr "atendeu ao pedido visualizador de man nenhum"
 
 #: builtin/help.c:461
 msgid "no info viewer handled the request"
@@ -16122,12 +16108,12 @@ msgstr "pack.indexversion=%<PRIu32> incorreto"
 #: builtin/index-pack.c:1631
 #, c-format
 msgid "Cannot open existing pack file '%s'"
-msgstr "Não é possível abrir o ficheiro de pacote '%s' existente"
+msgstr "Incapaz abrir ficheiro pack existente '%s'"
 
 #: builtin/index-pack.c:1633
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
-msgstr "Não é possível abrir o ficheiro de índice do pacote existente de '%s'"
+msgstr "Incapaz abrir ficheiro idx existente para '%s'"
 
 #: builtin/index-pack.c:1681
 #, c-format
@@ -16145,13 +16131,13 @@ msgstr[1] "comprimento de cadeia = %d: %lu objetos"
 
 #: builtin/index-pack.c:1728
 msgid "Cannot come back to cwd"
-msgstr "Não é possível voltar ao diretório de trabalho atual"
+msgstr "Incapaz voltar a cwd"
 
 #: builtin/index-pack.c:1777 builtin/index-pack.c:1780
 #: builtin/index-pack.c:1796 builtin/index-pack.c:1800
 #, c-format
 msgid "bad %s"
-msgstr "%s incorreto"
+msgstr "mau %s"
 
 #: builtin/index-pack.c:1806 builtin/init-db.c:391 builtin/init-db.c:623
 #, fuzzy, c-format
@@ -16326,12 +16312,12 @@ msgstr ""
 #: builtin/init-db.c:688
 #, c-format
 msgid "Cannot access work tree '%s'"
-msgstr "Não é possível aceder à árvore de trabalho '%s'"
+msgstr "Incapaz aceder work tree '%s'"
 
 #: builtin/init-db.c:693
 #, fuzzy
 msgid "--separate-git-dir incompatible with bare repository"
-msgstr "--first-parent é incompatível com --bisect"
+msgstr "--separate-git-dir incompatível com repositório nú"
 
 #: builtin/interpret-trailers.c:16
 msgid ""
@@ -16400,7 +16386,7 @@ msgstr "--name-only não faz sentido"
 
 #: builtin/interpret-trailers.c:133
 msgid "no input file given for in-place editing"
-msgstr "fornecido para edição no local ficheiro de entrada nenhum"
+msgstr "fornecido para edição in-place, ficheiro de entrada nenhum"
 
 #: builtin/log.c:58
 msgid "git log [<options>] [<revision-range>] [[--] <path>...]"
@@ -16461,7 +16447,7 @@ msgstr "git show %s: ficheiro incorreto"
 #: builtin/log.c:579 builtin/log.c:674
 #, fuzzy, c-format
 msgid "could not read object %s"
-msgstr "Não foi possível ler o objeto %s"
+msgstr "incapaz ler objeto %s"
 
 #: builtin/log.c:699
 #, fuzzy, c-format
@@ -16480,7 +16466,7 @@ msgstr "format.headers sem valor"
 #: builtin/log.c:984
 #, fuzzy, c-format
 msgid "cannot open patch file %s"
-msgstr "Não é possível abrir o ficheiro de patch %s"
+msgstr "incapaz abrir ficheiro patch %s"
 
 #: builtin/log.c:1001
 #, fuzzy
@@ -16490,7 +16476,7 @@ msgstr "É necessário exatamente um intervalo."
 #: builtin/log.c:1011
 #, fuzzy
 msgid "not a range"
-msgstr "Não é um intervalo."
+msgstr "é intervalo nenhum"
 
 #: builtin/log.c:1175
 #, fuzzy
@@ -16530,7 +16516,7 @@ msgstr "falha ao resolver '%s' como uma referência válida."
 #: builtin/log.c:1518
 #, fuzzy
 msgid "could not find exact merge base"
-msgstr "Não foi possível encontrar a base exata de integração."
+msgstr "incapaz encontrar a exata base de junção."
 
 #: builtin/log.c:1528
 #, fuzzy
@@ -17293,7 +17279,7 @@ msgstr "falha ao executar o comando read-tree"
 
 #: builtin/merge.c:398
 msgid " (nothing to squash)"
-msgstr " (não há nada para esmagar)"
+msgstr " (nada para esmagar)"
 
 #: builtin/merge.c:409
 #, c-format
@@ -17317,7 +17303,7 @@ msgstr "Valor de branch.%s.mergeoptions incorreto: %s"
 
 #: builtin/merge.c:723
 msgid "Not handling anything other than two heads merge."
-msgstr "Não se processa outra coisa senão incorporação de duas cabeças."
+msgstr "Lidando nada além da junção de duas heads."
 
 #: builtin/merge.c:736
 #, c-format
@@ -17332,12 +17318,12 @@ msgstr "não foi possível escrever %s"
 #: builtin/merge.c:807
 #, c-format
 msgid "Could not read from '%s'"
-msgstr "Não foi possível ler '%s'"
+msgstr "Incapaz ler de '%s'"
 
 #: builtin/merge.c:816
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
-msgstr "Usa 'git commit' para completar o merge. Committando merge nenhum.\n"
+msgstr "Usa 'git commit' para completar a junção. Committando junção nenhuma.\n"
 
 #: builtin/merge.c:822
 #, fuzzy
@@ -17387,7 +17373,7 @@ msgstr "Nenhum ramo atual."
 
 #: builtin/merge.c:1000
 msgid "No remote for the current branch."
-msgstr "Não há um remoto para o ramo atual."
+msgstr "Ŕamo atual de remoto nenhum."
 
 #: builtin/merge.c:1002
 msgid "No default upstream defined for the current branch."
@@ -17438,8 +17424,8 @@ msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
 "Please, commit your changes before you merge."
 msgstr ""
-"Não concluiu a integração (MERGE_HEAD presente).\n"
-"Submeta as suas alterações antes de integrar."
+"Junção está por concluir (MERGE_HEAD existe).\n"
+"Por favor, faz commit das tuas alterações antes de juntar."
 
 #: builtin/merge.c:1373
 msgid ""
@@ -17455,12 +17441,12 @@ msgstr "Cherry-pick não concluído (CHERRY_PICK_HEAD presente)."
 
 #: builtin/merge.c:1390
 msgid "You cannot combine --squash with --no-ff."
-msgstr "Não é possível combinar --squash e --no-ff."
+msgstr "Impossível combinar --squash com --no-ff."
 
 #: builtin/merge.c:1392
 #, fuzzy
 msgid "You cannot combine --squash with --commit."
-msgstr "Não é possível combinar --squash e --no-ff."
+msgstr "Impossível combinar --squash com --commit."
 
 #: builtin/merge.c:1408
 msgid "No commit specified and merge.defaultToUpstream not set."
@@ -17468,13 +17454,11 @@ msgstr "Nenhum commit especificado e merge.defaultToUpstream não definido."
 
 #: builtin/merge.c:1425
 msgid "Squash commit into empty head not supported yet"
-msgstr "Esmagar um commit numa cabeça vazia ainda não é suportado"
+msgstr "Esmagar commit para uma cabeça vazia por enquanto tem suporte nenhum"
 
 #: builtin/merge.c:1427
 msgid "Non-fast-forward commit does not make sense into an empty head"
-msgstr ""
-"Não faz sentido submeter de modo não suscetível a avanço rápido, numa cabeça "
-"vazia"
+msgstr "Non-fast-forward commit para uma cabeça vazia faz sentido nenhum"
 
 #: builtin/merge.c:1432
 #, c-format
@@ -17507,7 +17491,7 @@ msgstr "A tentar integração mesmo trivial no interior do índice...\n"
 #: builtin/merge.c:1587
 #, c-format
 msgid "Nope.\n"
-msgstr "Não.\n"
+msgstr "Nada.\n"
 
 #: builtin/merge.c:1612
 #, fuzzy
@@ -17516,7 +17500,7 @@ msgstr "Já está atualizado. Sim!"
 
 #: builtin/merge.c:1618
 msgid "Not possible to fast-forward, aborting."
-msgstr "Não é possível avançar rapidamente, a abortar."
+msgstr "Impossível fazer fast-forward, abortando."
 
 #: builtin/merge.c:1646 builtin/merge.c:1711
 #, c-format
@@ -17601,7 +17585,7 @@ msgstr "git mv [<opções>] <origem>... <destino>"
 #: builtin/mv.c:83
 #, c-format
 msgid "Directory %s is in index and no submodule?"
-msgstr "A pasta %s está no index porém nenhum submódulo?"
+msgstr "A pasta %s está no index porém submódulo nenhum?"
 
 #: builtin/mv.c:85
 msgid "Please stage your changes to .gitmodules or stash them to proceed"
@@ -17666,7 +17650,7 @@ msgstr "a substituir '%s'"
 
 #: builtin/mv.c:241
 msgid "Cannot overwrite"
-msgstr "Não é possível substituir"
+msgstr "Incapaz subscrever"
 
 #: builtin/mv.c:244
 msgid "multiple sources for the same target"
@@ -17959,8 +17943,8 @@ msgid ""
 "Cannot add notes. Found existing notes for object %s. Use '-f' to overwrite "
 "existing notes"
 msgstr ""
-"Não é possível adicionar notas. Notas do objeto %s encontradas. Use '-f' "
-"para substituí-las."
+"Incapaz adicionar notas. Encontrei notas existentes para objeto %s. Usa '-f' "
+"para subscrever notas existentes"
 
 #: builtin/notes.c:463 builtin/notes.c:544
 #, c-format
@@ -17990,13 +17974,13 @@ msgid ""
 "Cannot copy notes. Found existing notes for object %s. Use '-f' to overwrite "
 "existing notes"
 msgstr ""
-"Não é possível copiar notas. Notas do objeto %s encontradas. Use '-f' para "
-"substituí-las."
+"Incapaz copiar notas. Encontrei Notas existentes para objeto %s. Usa '-f' para "
+"subscrever notas existentes"
 
 #: builtin/notes.c:550
 #, c-format
 msgid "missing notes on source object %s. Cannot copy."
-msgstr "faltam notas no objeto de origem %s. Não é possível copiar."
+msgstr "faltando notas para objeto fonte %s. Incapaz copiar."
 
 #: builtin/notes.c:603
 #, c-format
@@ -18762,8 +18746,8 @@ msgid ""
 "$ git reset --hard\n"
 "to recover."
 msgstr ""
-"Não é possível avançar rapidamente a árvore de trabalho.\n"
-"Depois de guardar todas as alterações importantes indicadas por\n"
+"Incapaz de fast-forward a tua working tree.\n"
+"Após confirmares que guardaste algo precioso do resultado de\n"
 "$ git diff %s\n"
 "execute\n"
 "$ git reset --hard\n"
@@ -18771,11 +18755,11 @@ msgstr ""
 
 #: builtin/pull.c:1023
 msgid "Cannot merge multiple branches into empty head."
-msgstr "Não é possível integrar múltiplos ramos numa cabeça vazia."
+msgstr "Incapaz de juntar ramos múltiplos para head vazia."
 
 #: builtin/pull.c:1027
 msgid "Cannot rebase onto multiple branches."
-msgstr "Não é possível efetuar rebase sobre múltiplos ramos."
+msgstr "Incapaz de rebasear sobre ramos múltiplos."
 
 #: builtin/pull.c:1041
 msgid "cannot rebase with locally recorded submodule modifications"
@@ -18835,11 +18819,10 @@ msgid ""
 "\n"
 "    git push %s HEAD:<name-of-remote-branch>\n"
 msgstr ""
-"Não se encontra em nenhum ramo neste momento.\n"
-"Para publicar o histórico que conduziu ao estado atual (de HEAD\n"
-"destacada), use\n"
+"Atualmente estás em ramo nenhum.\n"
+"Para atirar a história que leva ao estado atual (HEAD solta), usa\n"
 "\n"
-"    git push %s HEAD:<name-of-remote-branch>\n"
+"    git push %s HEAD:<nome-de-ramo-remoto>\n"
 
 #: builtin/push.c:194
 #, c-format
@@ -18849,8 +18832,8 @@ msgid ""
 "\n"
 "    git push --set-upstream %s %s\n"
 msgstr ""
-"O ramo atual %s não tem nenhum ramo a montante.\n"
-"Para publicar o ramo atual e definir o remoto a montante, use\n"
+"O ramo atual %s tem ramo upstream nenhum.\n"
+"Para atirar o ramo atual e definir o remoto como upstream, usa\n"
 "\n"
 "    git push --set-upstream %s %s\n"
 
@@ -18874,8 +18857,7 @@ msgstr ""
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
 msgstr ""
-"Não indicou nenhum especificador de referência para publicar e o valor de "
-"push.default é \"nothing\"."
+"Indicou refspecs nenhum para atirar, e push.default é \"nothing\"."
 
 #: builtin/push.c:267
 msgid ""
@@ -18925,9 +18907,9 @@ msgid ""
 "or update a remote ref to make it point at a non-commit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
-"Não é possível atualizar uma referência remota que aponte para um\n"
-"objeto não commit, ou atualizar uma referência remota fazendo-a\n"
-"apontar para um objeto não commit, sem usar a opção '--force'.\n"
+"És impedido de atualizar uma ref remota que aponte para um objecto\n"
+"fora de commit, ou atualizar uma ref remota fazendo-a apontar para um\n"
+"objeto fora de commit, sem usar a opção '--force'.\n"
 
 #: builtin/push.c:294
 #, fuzzy
@@ -19247,7 +19229,7 @@ msgstr "não foi possível criar ficheiro temporário"
 #: builtin/rebase.c:316
 #, fuzzy
 msgid "could not mark as interactive"
-msgstr "Não foi possível marcar como interativo"
+msgstr "incapaz marcar como interativo"
 
 #: builtin/rebase.c:369
 #, fuzzy
@@ -19671,7 +19653,7 @@ msgstr ""
 #: builtin/rebase.c:1446
 #, fuzzy
 msgid "It looks like 'git am' is in progress. Cannot rebase."
-msgstr "Parece que o git-am está em curso. Não é possível efetuar rebase."
+msgstr "Parece que 'git am' está em curso. Incapaz de rebasear."
 
 #: builtin/rebase.c:1487
 msgid ""
@@ -19681,17 +19663,17 @@ msgstr ""
 #: builtin/rebase.c:1492
 #, fuzzy
 msgid "cannot combine '--keep-base' with '--onto'"
-msgstr "Não é possível combinar --squash e --no-ff."
+msgstr "incapaz de combinar '--keep-base' com '--onto'"
 
 #: builtin/rebase.c:1494
 #, fuzzy
 msgid "cannot combine '--keep-base' with '--root'"
-msgstr "Não é possível combinar --squash e --no-ff."
+msgstr "incapaz de combinar '--keep-base' com '--root'"
 
 #: builtin/rebase.c:1498
 #, fuzzy
 msgid "cannot combine '--root' with '--fork-point'"
-msgstr "Não é possível combinar --squash e --no-ff."
+msgstr "incapaz de combinar '--root' com '--fork-point'"
 
 #: builtin/rebase.c:1501
 msgid "No rebase in progress?"
@@ -19703,7 +19685,7 @@ msgstr "A ação --edit-todo só pode ser usada durante um rebase interativo."
 
 #: builtin/rebase.c:1528 t/helper/test-fast-rebase.c:123
 msgid "Cannot read HEAD"
-msgstr "Não é possível ler HEAD"
+msgstr "Incapaz ler HEAD"
 
 #: builtin/rebase.c:1540
 msgid ""
@@ -19716,12 +19698,12 @@ msgstr ""
 #: builtin/rebase.c:1559
 #, fuzzy
 msgid "could not discard worktree changes"
-msgstr "Não é possível remover as alterações da árvore de trabalho"
+msgstr "incapaz de descartar alterações de worktree"
 
 #: builtin/rebase.c:1578
 #, fuzzy, c-format
 msgid "could not move back to %s"
-msgstr "Não foi possível voltar para $head_name"
+msgstr "incapaz de retroceder a %s"
 
 #: builtin/rebase.c:1624
 #, fuzzy, c-format
@@ -19803,7 +19785,7 @@ msgstr "É necessário exatamente um intervalo."
 #: builtin/rebase.c:1897
 #, fuzzy, c-format
 msgid "Does not point to a valid commit '%s'"
-msgstr "Não aponta para um commit válido: $onto_name"
+msgstr "Aponta nada para commit válido '%s'"
 
 #: builtin/rebase.c:1923
 #, fuzzy, c-format
@@ -19924,14 +19906,14 @@ msgid ""
 "\n"
 "To squelch this message, you can set it to 'refuse'."
 msgstr ""
-"Por predefinição, eliminar o ramo atual é proibido, porque o próximo\n"
-"'git clone' não resultará em nenhum ficheiro extraído, causando confusão.\n"
+"Por predefinição, apagar o ramo atual é proibido, porque o próximo\n"
+"'git clone' resultará em ficheiro nenhum checked out, causando confusão.\n"
 "\n"
-"Pode definir a variável de configuração 'receive.denyDeleteCurrent' como\n"
+"Podes definir a variável de configuração 'receive.denyDeleteCurrent' como\n"
 "'warn' ou 'ignore' no repositório remoto para permitir eliminar o\n"
-"ramo atual, com ou sem uma mensagem de aviso.\n"
+"ramo atual, com ou sem a mensagem de aviso.\n"
 "\n"
-"Para suprimir esta mensagem, pode definí-la como 'refuse'."
+"Para suprimir esta mensagem, podes definí-la como 'refuse'."
 
 #: builtin/receive-pack.c:2481
 msgid "quiet"
@@ -19976,22 +19958,22 @@ msgstr ""
 #: builtin/reflog.c:696
 #, fuzzy
 msgid "no reflog specified to delete"
-msgstr "nenhum remoto especificado"
+msgstr "especificado reflog nenhum para apagar"
 
 #: builtin/reflog.c:705
 #, fuzzy, c-format
 msgid "not a reflog: %s"
-msgstr "Referência inválida: %s"
+msgstr "reflog inválido: %s"
 
 #: builtin/reflog.c:710
 #, fuzzy, c-format
 msgid "no reflog for '%s'"
-msgstr "Impossível efetuar reflog de '%s'"
+msgstr "reflog nenhum para '%s'"
 
 #: builtin/reflog.c:756
 #, fuzzy, c-format
 msgid "invalid ref format: %s"
-msgstr "formato de data inválido: %s"
+msgstr "formato de ref inválido: %s"
 
 #: builtin/reflog.c:765
 msgid "git reflog [ show | expire | delete | exists ]"
@@ -20107,7 +20089,7 @@ msgstr "importar todas as tags e objetos associados ao obter"
 
 #: builtin/remote.c:169
 msgid "or do not fetch any tag at all (--no-tags)"
-msgstr "ou não obter nenhuma tag (--no-tags)"
+msgstr "ou busca tag nenhuma (--no-tags)"
 
 #: builtin/remote.c:171
 msgid "branch(es) to track"
@@ -20137,13 +20119,12 @@ msgstr "o remoto %s já existe."
 #: builtin/remote.c:240
 #, c-format
 msgid "Could not setup master '%s'"
-msgstr "Não foi possível configuração o ramo mestre '%s'"
+msgstr "Incapaz configurar master '%s'"
 
 #: builtin/remote.c:355
 #, c-format
 msgid "Could not get fetch map for refspec %s"
-msgstr ""
-"Não foi possível obter o mapa de fetch do especificador de referência %s"
+msgstr "Incapaz de obter mapa de busca para refspec %s"
 
 #: builtin/remote.c:454 builtin/remote.c:462
 msgid "(matching)"
@@ -20151,7 +20132,7 @@ msgstr "(correspondente)"
 
 #: builtin/remote.c:466
 msgid "(delete)"
-msgstr "(eliminado)"
+msgstr "(apagar)"
 
 #: builtin/remote.c:655
 #, fuzzy, c-format
@@ -20174,8 +20155,7 @@ msgstr "Remoto inexistente '%s'"
 #: builtin/remote.c:710
 #, c-format
 msgid "Could not rename config section '%s' to '%s'"
-msgstr ""
-"Não foi possível mudar o nome da secção de configuração de '%s' para '%s'"
+msgstr "Incapaz de mudar o nome a secção de configuração '%s' para '%s'"
 
 #: builtin/remote.c:730
 #, c-format
@@ -20216,7 +20196,7 @@ msgstr[1] ""
 #: builtin/remote.c:896
 #, c-format
 msgid "Could not remove config section '%s'"
-msgstr "Não foi possível remover a secção de configuração '%s'"
+msgstr "Incapaz remover secção de configuração '%s'"
 
 #: builtin/remote.c:999
 #, c-format
@@ -20327,7 +20307,7 @@ msgstr "  Obter    do URL: %s"
 
 #: builtin/remote.c:1241 builtin/remote.c:1257 builtin/remote.c:1396
 msgid "(no URL)"
-msgstr "(nenhum URL)"
+msgstr "(URL nenhum)"
 
 #. TRANSLATORS: the colon ':' should align
 #. with the one in " Fetch URL: %s"
@@ -20395,7 +20375,7 @@ msgstr "eliminar refs/remotes/<nome>/HEAD"
 
 #: builtin/remote.c:1341
 msgid "Cannot determine remote HEAD"
-msgstr "Não é possível determinar o remoto HEAD"
+msgstr "Incapaz de determinar o HEAD remoto"
 
 #: builtin/remote.c:1343
 msgid "Multiple remote HEAD branches. Please choose one explicitly with:"
@@ -20404,7 +20384,7 @@ msgstr "Múltiplos ramos HEAD remotos. Escolha um explicitamente com:"
 #: builtin/remote.c:1353
 #, c-format
 msgid "Could not delete %s"
-msgstr "Não foi possível eliminar %s"
+msgstr "Incapaz eliminar %s"
 
 #: builtin/remote.c:1361
 #, c-format
@@ -20414,7 +20394,7 @@ msgstr "Referência inválida: %s"
 #: builtin/remote.c:1363
 #, c-format
 msgid "Could not setup %s"
-msgstr "Não foi possível configurar %s"
+msgstr "Incapaz configurar %s"
 
 #: builtin/remote.c:1381
 #, c-format
@@ -20461,7 +20441,7 @@ msgstr "adicionar ramo"
 
 #: builtin/remote.c:1546
 msgid "no remote specified"
-msgstr "nenhum remoto especificado"
+msgstr "especificado remoto nenhum"
 
 #: builtin/remote.c:1563
 msgid "query push URLs rather than fetch URLs"
@@ -20474,7 +20454,7 @@ msgstr "retornar todos os URLs"
 #: builtin/remote.c:1595
 #, c-format
 msgid "no URLs configured for remote '%s'"
-msgstr "o remoto '%s' não tem nenhum URL configurado"
+msgstr "o remoto '%s' tem configurado URL nenhum"
 
 #: builtin/remote.c:1621
 msgid "manipulate push URLs"
@@ -20504,7 +20484,7 @@ msgstr "URL não encontrado: %s"
 
 #: builtin/remote.c:1683
 msgid "Will not delete all non-push URLs"
-msgstr "Não é possível remover todos os URLs de não publicação"
+msgstr "Eliminarei apenas alguns URLs de não-atirar"
 
 #: builtin/repack.c:25
 msgid "git repack [<options>]"
@@ -20974,7 +20954,7 @@ msgstr "HEAD está agora em %s"
 #: builtin/reset.c:195
 #, c-format
 msgid "Cannot do a %s reset in the middle of a merge."
-msgstr "Não é possível repor de modo %s durante uma integração."
+msgstr "Incapaz de fazer uma reposição %s durante uma junção."
 
 #: builtin/reset.c:295 builtin/stash.c:520 builtin/stash.c:594
 #: builtin/stash.c:618
@@ -21023,12 +21003,12 @@ msgstr ""
 #: builtin/reset.c:373
 #, c-format
 msgid "Cannot do %s reset with paths."
-msgstr "Não é possível repor de modo %s com caminhos."
+msgstr "Incapaz de fazer uma reposição %s com paths."
 
 #: builtin/reset.c:388
 #, c-format
 msgid "%s reset is not allowed in a bare repository"
-msgstr "Não é permitido repor de modo %s num repositório nu"
+msgstr "%s reset é proíbido num repositório nú"
 
 #: builtin/reset.c:392
 msgid "-N can only be used with --mixed"
@@ -21050,11 +21030,11 @@ msgstr ""
 #: builtin/reset.c:434
 #, c-format
 msgid "Could not reset index file to revision '%s'."
-msgstr "Não foi possível repor o ficheiro índice para a revisão '%s'."
+msgstr "Incapaz repor ficheiro index para a revisão '%s'."
 
 #: builtin/reset.c:439
 msgid "Could not write new index file."
-msgstr "Não foi possível escrever novo ficheiro de índice."
+msgstr "Incapaz escrever novo ficheiro index."
 
 #: builtin/rev-list.c:499
 msgid "cannot combine --exclude-promisor-objects and --missing"
@@ -21392,7 +21372,7 @@ msgstr[1] "ingorar %s; não é possível processar mais do que %d referências"
 #: builtin/show-branch.c:548
 #, c-format
 msgid "no matching refs with %s"
-msgstr "nenhuma referência corresponde com %s"
+msgstr "correspondência de refs com %s nenhuma"
 
 #: builtin/show-branch.c:645
 msgid "show remote-tracking and local branches"
@@ -21467,7 +21447,7 @@ msgstr ""
 
 #: builtin/show-branch.c:735
 msgid "no branches given, and HEAD is not valid"
-msgstr "nenhum ramo fornecido e HEAD não é válida"
+msgstr "fornecido ramo nenhum, e HEAD é inválida"
 
 #: builtin/show-branch.c:738
 msgid "--reflog option needs one branch name"
@@ -21719,7 +21699,7 @@ msgstr "não está implementado git stash clear com parâmetros"
 #: builtin/stash.c:404
 #, fuzzy
 msgid "cannot apply a stash in the middle of a merge"
-msgstr "Não é possível aplicar uma pilha durante uma integração"
+msgstr "incapaz aplicar arrumação durante uma junção"
 
 #: builtin/stash.c:415
 #, fuzzy, c-format
@@ -21734,17 +21714,17 @@ msgstr "Conflitos no índice. Tente sem --index."
 #: builtin/stash.c:428
 #, fuzzy
 msgid "could not save index tree"
-msgstr "Não foi possível guardar árvore do índice"
+msgstr "incapaz guardar árvore index"
 
 #: builtin/stash.c:437
 #, fuzzy
 msgid "could not restore untracked files from stash"
-msgstr "Não foi possível restaurar os ficheiros não controlados da pilha"
+msgstr "incapaz restaurar ficheiros por controlar de arrumos"
 
 #: builtin/stash.c:451
 #, fuzzy, c-format
 msgid "Merging %s with %s"
-msgstr "A fazer merge %s com %s"
+msgstr "Juntando %s com %s"
 
 #: builtin/stash.c:461
 msgid "Index was not unstashed."
@@ -21763,7 +21743,7 @@ msgstr "A descartar ${REV} ($s)"
 #: builtin/stash.c:569
 #, fuzzy, c-format
 msgid "%s: Could not drop stash entry"
-msgstr "${REV}: Não foi possível descartar elemento da pilha"
+msgstr "%s: Incapaz descartar entrada de arrumos"
 
 #: builtin/stash.c:582
 #, fuzzy, c-format
@@ -21782,7 +21762,7 @@ msgstr "Nenhum nome de ramo especificado"
 #: builtin/stash.c:799 builtin/stash.c:836
 #, fuzzy, c-format
 msgid "Cannot update %s with %s"
-msgstr "Não é possível atualizar $ref_stash com $w_commit"
+msgstr "Incapaz atualizar %s com %s"
 
 #: builtin/stash.c:817 builtin/stash.c:1471 builtin/stash.c:1536
 #, fuzzy
@@ -21803,24 +21783,23 @@ msgstr "O commit inicial ainda não existe"
 
 #: builtin/stash.c:1169
 msgid "Cannot save the current index state"
-msgstr "Não é possível guardar o estado atual do índice"
+msgstr "Incapaz guardar estado atual de index"
 
 #: builtin/stash.c:1178
 msgid "Cannot save the untracked files"
-msgstr "Não é possível guardar os ficheiros não controlados"
+msgstr "Incapaz de guardar ficheiros por controlar"
 
 #: builtin/stash.c:1189 builtin/stash.c:1198
 msgid "Cannot save the current worktree state"
-msgstr "Não é possível guardar o estado atual da árvore de trabalho"
+msgstr "Incapaz guardar o estado atual de worktree"
 
 #: builtin/stash.c:1226
 msgid "Cannot record working tree state"
-msgstr "Não é possível gravar o estado da árvore de trabalho"
+msgstr "Incapaz gravar o estado de worktree"
 
 #: builtin/stash.c:1275
 msgid "Can't use --patch and --include-untracked or --all at the same time"
-msgstr ""
-"Não é possível usar --patch e --include-untracked ou --all ao mesmo tempo"
+msgstr "Impossível usar --patch e --include-untracked ou --all ao mesmo tempo"
 
 #: builtin/stash.c:1291
 #, fuzzy
@@ -21829,15 +21808,15 @@ msgstr "Será que falta 'git add'?"
 
 #: builtin/stash.c:1306
 msgid "No local changes to save"
-msgstr "Não há alterações locais para guardar"
+msgstr "Com alterações locais para guardar nenhumas"
 
 #: builtin/stash.c:1313
 msgid "Cannot initialize stash"
-msgstr "Não é possível inicializar a pilha"
+msgstr "Incapaz inicializar arrumos"
 
 #: builtin/stash.c:1328
 msgid "Cannot save the current status"
-msgstr "Não é possível guardar o estado atual"
+msgstr "Incapaz guardar o estado atual"
 
 #: builtin/stash.c:1333
 #, fuzzy, c-format
@@ -21846,7 +21825,7 @@ msgstr "Diretório de trabalho e estado do índice $stash_msg guardados"
 
 #: builtin/stash.c:1423
 msgid "Cannot remove worktree changes"
-msgstr "Não é possível remover as alterações da árvore de trabalho"
+msgstr "Incapaz remover alterações de worktree"
 
 #: builtin/stash.c:1462 builtin/stash.c:1527
 msgid "keep index"
@@ -21997,8 +21976,7 @@ msgstr "git submodule--helper init [<caminho>]"
 #: builtin/submodule--helper.c:787 builtin/submodule--helper.c:922
 #, c-format
 msgid "no submodule mapping found in .gitmodules for path '%s'"
-msgstr ""
-"nenhum mapeamento de submódulo do caminho '%s' encontrado em .gitmodules"
+msgstr "para path '%s' encontrei em .gitmodules, mapeamento de submódulo nenhum"
 
 #: builtin/submodule--helper.c:835
 #, fuzzy, c-format
@@ -22154,7 +22132,7 @@ msgstr "Impossível remover submodule work tree '%s'\n"
 #: builtin/submodule--helper.c:1579
 #, fuzzy, c-format
 msgid "could not create empty submodule directory %s"
-msgstr "Não foi possível criar o diretório vazio do submódulo '$displaypath'"
+msgstr "incapaz criar pasta vazio de submódulo %s"
 
 #: builtin/submodule--helper.c:1595
 #, fuzzy, c-format
@@ -22342,8 +22320,8 @@ msgid ""
 "Submodule (%s) branch configured to inherit branch from superproject, but "
 "the superproject is not on any branch"
 msgstr ""
-"O ramo do submódulo (%s) foi configurado para herdar o ramo do superprojeto, "
-"mas o superprojeto não está em nenhum ramo"
+"Ramo de submódulo (%s) foi configurado para herdar o ramo do superprojeto, "
+"mas o superprojeto está em ramo nenhum"
 
 #: builtin/submodule--helper.c:2541
 #, fuzzy, c-format
@@ -23370,7 +23348,7 @@ msgstr ""
 #: http-fetch.c:122
 #, fuzzy
 msgid "not a git repository"
-msgstr "Não é um repositório git"
+msgstr "é repositório git nenhum"
 
 #: t/helper/test-fast-rebase.c:141
 #, fuzzy
@@ -23532,21 +23510,21 @@ msgstr ""
 
 #: http.c:420
 msgid "Delegation control is not supported with cURL < 7.22.0"
-msgstr "Não é suportado delegar controlo com cURL < 7.22.0"
+msgstr "Delegação de controlo tem suporte nenhum com cURL < 7.22.0"
 
 #: http.c:429
 msgid "Public key pinning not supported with cURL < 7.44.0"
-msgstr "Não é suportado afixar chaves públicas com cURL < 7.44.0"
+msgstr "Afixar chaves públicas tem suporte nenhum com cURL < 7.44.0"
 
 #: http.c:910
 #, fuzzy
 msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
-msgstr "Não é suportado afixar chaves públicas com cURL < 7.44.0"
+msgstr "CURLSSLOPT_NO_REVOKE tem suporte nenhum com cURL < 7.44.0"
 
 #: http.c:989
 #, fuzzy
 msgid "Protocol restrictions not supported with cURL < 7.19.4"
-msgstr "Não é suportado afixar chaves públicas com cURL < 7.44.0"
+msgstr "Restrição protocolar tem suporte nenhum com cURL < 7.44.0"
 
 #: http.c:1132
 #, c-format
@@ -23561,7 +23539,7 @@ msgstr ""
 #: http.c:1143
 #, fuzzy, c-format
 msgid "Could not set SSL backend to '%s': already set"
-msgstr "Não foi possível voltar para $head_name"
+msgstr "Incapaz de definir backend SSL para '%s': já definido"
 
 #: http.c:2025
 #, c-format
@@ -24071,7 +24049,7 @@ msgstr ""
 #: command-list.h:116
 #, fuzzy
 msgid "The Git repository browser"
-msgstr "Não é um repositório git"
+msgstr "O browser de repositórios Git"
 
 #: command-list.h:117
 msgid "Show commit logs"
@@ -24203,7 +24181,7 @@ msgstr "Atualizar referências remotas juntamente com objetos associados"
 #: command-list.h:146
 #, fuzzy
 msgid "Applies a quilt patchset onto the current branch"
-msgstr "Não está definido nenhum ramo a montante para o ramo atual."
+msgstr "Submete a mistura de patchset para o ramo atual."
 
 #: command-list.h:147
 msgid "Compare two commit ranges (e.g. two versions of a branch)"
@@ -24571,7 +24549,7 @@ msgstr "bissecção concluída com sucesso"
 
 #: git-bisect.sh:173
 msgid "We are not bisecting."
-msgstr "Não se está a bissetar."
+msgstr "Estamos bissetando nada."
 
 #: git-merge-octopus.sh:46
 msgid ""
@@ -24587,12 +24565,12 @@ msgstr "A integração automática não funcionou."
 
 #: git-merge-octopus.sh:62
 msgid "Should not be doing an octopus."
-msgstr "Não se deviria estar a fazer um polvo."
+msgstr "Deverias estar a fazer polvo nenhum."
 
 #: git-merge-octopus.sh:73
 #, sh-format
 msgid "Unable to find common commit with $pretty_name"
-msgstr "Não é possível encontrar commit comum com $pretty_name"
+msgstr "Incapaz de encontrar commit comum com $pretty_name"
 
 #: git-merge-octopus.sh:77
 #, fuzzy, sh-format
@@ -24679,7 +24657,7 @@ msgstr "A reativar o diretório git local do submódulo '$sm_name'."
 #: git-submodule.sh:279
 #, sh-format
 msgid "Unable to checkout submodule '$sm_path'"
-msgstr "Não foi possível extrair o submódulo '$sm_path'"
+msgstr "Incapaz de checkout submódulo '$sm_path'"
 
 #: git-submodule.sh:284
 #, sh-format
@@ -24694,30 +24672,28 @@ msgstr "Falha ao registar o submódulo '$sm_path'"
 #: git-submodule.sh:568
 #, sh-format
 msgid "Unable to find current revision in submodule path '$displaypath'"
-msgstr ""
-"Não foi possível encontrar a revisão atual no caminho de submódulo "
-"'$displaypath'"
+msgstr "Incapaz encontrar revisão atual em path de submódulo '$displaypath'"
 
 #: git-submodule.sh:578
 #, sh-format
 msgid "Unable to fetch in submodule path '$sm_path'"
-msgstr "Não foi possível obter no caminho de submódulo '$sm_path'"
+msgstr "Incapaz de buscar em path de submódulo '$sm_path'"
 
 #: git-submodule.sh:583
 #, sh-format
 msgid ""
 "Unable to find current ${remote_name}/${branch} revision in submodule path "
 "'$sm_path'"
-msgstr ""
-"Não foi possível encontrar a revisão atual ${remote_name}/${branch} no "
-"caminho de submódulo '$sm_path'"
+msgstr "Incapaz de encontrar revisão atual ${remote_name}/${branch} em path de "
+"submódulo '$sm_path'"
 
 #: git-submodule.sh:601
 #, fuzzy, sh-format
 msgid ""
 "Unable to fetch in submodule path '$displaypath'; trying to directly fetch "
 "$sha1:"
-msgstr "Não é possível obter no caminho de submódulo '$displaypath'"
+msgstr "Incapaz de buscar em path de submódulo '$displaypath'; tentando "
+"buscar $sha1 directamente:"
 
 #: git-submodule.sh:607
 #, sh-format
@@ -24731,7 +24707,7 @@ msgstr ""
 #: git-submodule.sh:614
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$displaypath'"
-msgstr "Não é possível extrair '$sha1' no caminho de submódulo '$displaypath'"
+msgstr "Incapaz de checkout '$sha1' no path de submódulo '$displaypath'"
 
 #: git-submodule.sh:615
 #, sh-format
@@ -24741,9 +24717,7 @@ msgstr "Caminho de submódulo '$displaypath': '$sha1' extraído"
 #: git-submodule.sh:619
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
-msgstr ""
-"Não foi possível efetuar rebase de '$sha1' no caminho de submódulo "
-"'$displaypath'"
+msgstr "Incapaz de rebasear '$sha1' em path de submódulo '$displaypath'"
 
 #: git-submodule.sh:620
 #, sh-format
@@ -24753,7 +24727,7 @@ msgstr "Caminho de submódulo '$displaypath': rebase concluído em '$sha1'"
 #: git-submodule.sh:625
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$displaypath'"
-msgstr "Não é possível integrar '$sha1' no caminho de submódulo '$displaypath'"
+msgstr "Incapaz juntar '$sha1' em path de submódulo '$displaypath'"
 
 #: git-submodule.sh:626
 #, sh-format
@@ -24783,7 +24757,7 @@ msgstr "Pilha automática (autostash) aplicada."
 #: git-rebase--preserve-merges.sh:112
 #, sh-format
 msgid "Cannot store $stash_sha1"
-msgstr "Não é possível guardar $stash_sha1"
+msgstr "Incapaz guardar $stash_sha1"
 
 #: git-rebase--preserve-merges.sh:113
 msgid ""
@@ -24870,7 +24844,7 @@ msgstr "Nome de commit inválido: $sha1"
 
 #: git-rebase--preserve-merges.sh:354
 msgid "Cannot write current commit's replacement sha1"
-msgstr "Não é possível escrever o sha1 substituto do commit"
+msgstr "Incapaz escrever sha1 substituto de commit"
 
 #: git-rebase--preserve-merges.sh:405
 #, sh-format
@@ -24880,12 +24854,12 @@ msgstr "Avanço-rápido para $sha1"
 #: git-rebase--preserve-merges.sh:407
 #, sh-format
 msgid "Cannot fast-forward to $sha1"
-msgstr "Não é possível avançar rapidamente para $sha1"
+msgstr "Incapaz fast-forward até $sha1"
 
 #: git-rebase--preserve-merges.sh:416
 #, sh-format
 msgid "Cannot move HEAD to $first_parent"
-msgstr "Não é possível mover HEAD para $first_parent"
+msgstr "Incapaz mover HEAD até $first_parent"
 
 #: git-rebase--preserve-merges.sh:421
 #, sh-format
@@ -24900,7 +24874,7 @@ msgstr "Erro ao refazer integração $sha1"
 #: git-rebase--preserve-merges.sh:448
 #, sh-format
 msgid "Could not pick $sha1"
-msgstr "Não foi possível apanhar $sha1"
+msgstr "Incapaz apanhar $sha1"
 
 #: git-rebase--preserve-merges.sh:457
 #, sh-format
@@ -24922,7 +24896,7 @@ msgstr[1] "Isto é a combinação de $count commits."
 #: git-rebase--preserve-merges.sh:482
 #, sh-format
 msgid "Cannot write $fixup_msg"
-msgstr "Não é possível escrever $fixup_msg"
+msgstr "Incapaz escrever $fixup_msg"
 
 #: git-rebase--preserve-merges.sh:485
 msgid "This is a combination of 2 commits."
@@ -24932,7 +24906,7 @@ msgstr "Isto é a combinação de 2 commits."
 #: git-rebase--preserve-merges.sh:572
 #, sh-format
 msgid "Could not apply $sha1... $rest"
-msgstr "Não foi possível aplicar $sha1... $rest"
+msgstr "Incapaz submeter $sha1... $rest"
 
 #: git-rebase--preserve-merges.sh:601
 #, sh-format
@@ -24956,7 +24930,7 @@ msgstr "Parou em $sha1_abbrev... $rest"
 #: git-rebase--preserve-merges.sh:631
 #, sh-format
 msgid "Cannot '$squash_style' without a previous commit"
-msgstr "Não é possível efetuar '$squash_style' sem um commit anterior"
+msgstr "Incapaz '$squash_style' sem um commit anterior"
 
 #: git-rebase--preserve-merges.sh:673
 #, sh-format
@@ -25014,7 +24988,7 @@ msgstr "$head_name rebaseado e atualizado com sucesso."
 
 #: git-rebase--preserve-merges.sh:802
 msgid "Could not remove CHERRY_PICK_HEAD"
-msgstr "Não foi possível remover CHERRY_PICK_HEAD"
+msgstr "Incapaz remover CHERRY_PICK_HEAD"
 
 #: git-rebase--preserve-merges.sh:807
 #, sh-format
@@ -25061,29 +25035,29 @@ msgstr ""
 
 #: git-rebase--preserve-merges.sh:834 git-rebase--preserve-merges.sh:838
 msgid "Could not commit staged changes."
-msgstr "Não foi possível submeter as alterações preparadas."
+msgstr "Incapaz de commit alterações preparadas."
 
 #: git-rebase--preserve-merges.sh:869 git-rebase--preserve-merges.sh:955
 msgid "Could not execute editor"
-msgstr "Não foi possível executar o editor"
+msgstr "Incapaz executar editor"
 
 #: git-rebase--preserve-merges.sh:890
 #, sh-format
 msgid "Could not checkout $switch_to"
-msgstr "Não foi possível extrair $switch_to"
+msgstr "Incapaz checkout $switch_to"
 
 #: git-rebase--preserve-merges.sh:897
 msgid "No HEAD?"
-msgstr "Sem HEAD?"
+msgstr "HEAD nenhuma?"
 
 #: git-rebase--preserve-merges.sh:898
 #, sh-format
 msgid "Could not create temporary $state_dir"
-msgstr "Não foi possível criar $state_dir temporário"
+msgstr "Incapaz criar $state_dir temporário"
 
 #: git-rebase--preserve-merges.sh:901
 msgid "Could not mark as interactive"
-msgstr "Não foi possível marcar como interativo"
+msgstr "Incapaz marcar como interativo"
 
 #: git-rebase--preserve-merges.sh:933
 #, sh-format
@@ -25098,7 +25072,7 @@ msgstr "Note que commits vazios são comentados"
 
 #: git-rebase--preserve-merges.sh:987 git-rebase--preserve-merges.sh:992
 msgid "Could not init rewritten commits"
-msgstr "Não foi possível inicializar commits reescritos"
+msgstr "Incapaz inicializar commits reescritos"
 
 #: git-sh-setup.sh:89 git-sh-setup.sh:94
 #, sh-format
@@ -25108,8 +25082,7 @@ msgstr "utilização: $dashless $USAGE"
 #: git-sh-setup.sh:191
 #, sh-format
 msgid "Cannot chdir to $cdup, the toplevel of the working tree"
-msgstr ""
-"Não é possível mudar de diretório para $cdup, o topo da árvore de trabalho"
+msgstr "Incapaz chdir para $cdup, o topo da working tree"
 
 #: git-sh-setup.sh:200 git-sh-setup.sh:207
 #, sh-format
@@ -25118,35 +25091,33 @@ msgstr "fatal: $program_name não pode ser usado sem uma árvore de trabalho."
 
 #: git-sh-setup.sh:221
 msgid "Cannot rebase: You have unstaged changes."
-msgstr "Não é possível rebasear: tem alterações não preparadas."
+msgstr "Incapaz rebasear: Tens alterações despreparadas."
 
 #: git-sh-setup.sh:224
 msgid "Cannot rewrite branches: You have unstaged changes."
-msgstr "Não é possível reescrever ramos: tem alterações não preparadas."
+msgstr "Incapaz reescrever ramos: Tens alterações despreparadas."
 
 #: git-sh-setup.sh:227
 msgid "Cannot pull with rebase: You have unstaged changes."
-msgstr "Não é possível puxar com rebase: tem alterações não preparadas."
+msgstr "Incapaz agarrar com rebase: Tens alterações despreparadas."
 
 #: git-sh-setup.sh:230
 #, sh-format
 msgid "Cannot $action: You have unstaged changes."
-msgstr "Não é possível efetuar $action: tem alterações não preparadas."
+msgstr "Incapaz $action: Tens alterações despreparadas."
 
 #: git-sh-setup.sh:243
 msgid "Cannot rebase: Your index contains uncommitted changes."
-msgstr "Não é possível rebasear: o índice contém alterações não submetidas."
+msgstr "Incapaz rebasear: Teu index contém alterações por commitar."
 
 #: git-sh-setup.sh:246
 msgid "Cannot pull with rebase: Your index contains uncommitted changes."
-msgstr ""
-"Não é possível puxar com rebase: o índice contém alterações não submetidas."
+msgstr "Incapaz agarrar com rebase: Teu index contém alterações por commitar."
 
 #: git-sh-setup.sh:249
 #, sh-format
 msgid "Cannot $action: Your index contains uncommitted changes."
-msgstr ""
-"Não é possível efetuar $action: o índice contém alterações não submetidas."
+msgstr "Incapaz $action: Teu index contém alterações por commitar."
 
 #: git-sh-setup.sh:253
 msgid "Additionally, your index contains uncommitted changes."
@@ -25159,7 +25130,7 @@ msgstr ""
 
 #: git-sh-setup.sh:378
 msgid "Unable to determine absolute path of git directory"
-msgstr "Não é possível determinar o caminho absoluto do diretório git"
+msgstr "Incapaz determinar caminho absoluto de pasta git"
 
 #. TRANSLATORS: you can adjust this to align "git add -i" status menu
 #: git-add--interactive.perl:212
@@ -25319,11 +25290,11 @@ msgid ""
 "a - discard this hunk and all later hunks in the file\n"
 "d - do not discard this hunk or any of the later hunks in the file"
 msgstr ""
-"y - descartar este excerto do índice e da árvore de trabalho\n"
-"n - não descartar este excerto do índice nem da árvore de trabalho\n"
-"q - sair; não descartar este excerto nem nenhum dos restantes\n"
-"a - descartar este excerto e todos os excertos seguintes no ficheiro\n"
-"d - não descartar este excerto nem os excertos seguintes no ficheiro"
+"y - descartar este pedaço de index e worktree\n"
+"n - manter este pedeço no index e worktree\n"
+"q - sair; manter este pedaço e qualquer outro restante\n"
+"a - descartar este pedaço e qualquer próximo deste ficheiro\n"
+"d - manter este pedaço e qualquer próximo deste ficheiro"
 
 #: git-add--interactive.perl:1287
 msgid ""
@@ -25537,7 +25508,7 @@ msgstr ""
 
 #: git-send-email.perl:489 git-send-email.perl:691
 msgid "Cannot run git format-patch from outside a repository\n"
-msgstr "Não é possível executar git format-patch fora de um repositório\n"
+msgstr "Incapaz executar git format-patch fora de um repositório\n"
 
 #: git-send-email.perl:492
 msgid ""
@@ -25602,7 +25573,7 @@ msgid ""
 "warning: no patches were sent\n"
 msgstr ""
 "fatal: %s: %s\n"
-"aviso: nenhum patch foi enviado\n"
+"aviso: enviado patch nenhum\n"
 
 #: git-send-email.perl:713
 msgid ""
@@ -25767,9 +25738,7 @@ msgstr ""
 
 #: git-send-email.perl:1564
 msgid "Unable to initialize SMTP properly. Check config and use --smtp-debug."
-msgstr ""
-"Não é possível inicializar SMTP devidamente. Verifique a configuração e use "
-"--smtp-debug."
+msgstr "Incapaz inicializar SMTP devidamente. Verifica configuração e usa --smtp-debug."
 
 #: git-send-email.perl:1582
 #, perl-format
@@ -25830,7 +25799,7 @@ msgstr "(body) Adicionar cc: %s da linha '%s'\n"
 #: git-send-email.perl:1876
 #, perl-format
 msgid "(%s) Could not execute '%s'"
-msgstr "(%s) Não foi possível executar '%s'"
+msgstr "(%s) Incapaz executar '%s'"
 
 #: git-send-email.perl:1883
 #, perl-format
@@ -25999,7 +25968,7 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 
 #, c-format
 #~ msgid "Could not open '%s' for writing"
-#~ msgstr "Não foi possível abrir '%s' para escrita"
+#~ msgstr "Incapaz abrir '%s' para escrita"
 
 #, c-format
 #~ msgid "positive value expected objectname:short=%s"
@@ -26161,7 +26130,7 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 
 #, c-format
 #~ msgid "annotated tag %s has no embedded name"
-#~ msgstr "a tag anotada %s não tem nenhum nome incorporado"
+#~ msgstr "tag anotada %s falta o nome incorporado"
 
 #~ msgid "<command>"
 #~ msgstr "<comando>"
@@ -26171,7 +26140,7 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 
 #, c-format
 #~ msgid "Don't know how to fetch from %s"
-#~ msgstr "Não sei como obter de %s"
+#~ msgstr "Desconheço como buscar de %s"
 
 #, c-format
 #~ msgid "Can't stat %s"
@@ -26243,7 +26212,7 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 
 #, sh-format
 #~ msgid "$onto_name: there is no merge base"
-#~ msgstr "$onto_name: não há nenhuma base de integração"
+#~ msgstr "$onto_name: há base de junção nenhuma"
 
 #, sh-format
 #~ msgid "fatal: no such branch: $branch_name"
@@ -26254,7 +26223,7 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 #~ msgstr "$branch_name avançado rapidamente para $onto_name."
 
 #~ msgid "Cannot remove temporary index (can't happen)"
-#~ msgstr "Não é possível remover o índice temporário (não pode acontecer)"
+#~ msgstr "Incapaz remover index temporário (pode acontecer de maneira nenhuma)"
 
 #, sh-format
 #~ msgid ""
@@ -26273,7 +26242,7 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 #~ msgstr "$reference não é uma referência válida"
 
 #~ msgid "Cannot unstage modified files"
-#~ msgstr "Não é possível despreparar os ficheiros modificado"
+#~ msgstr "Incapaz despreparar ficheiros modificado"
 
 #~ msgid "(To restore them type \"git stash apply\")"
 #~ msgstr "(Para os restaurar execute \"git stash apply\")"
@@ -26354,8 +26323,8 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 #~ "There is nothing to exclude from by :(exclude) patterns.\n"
 #~ "Perhaps you forgot to add either ':/' or '.' ?"
 #~ msgstr ""
-#~ "Não há nada para excluir de acordo com o padrão :(excluir).\n"
-#~ "Talvez se tenha esquecido de acrescentar ':/' ou '.' ?"
+#~ "Há nada a excluir de acordo com a pattern :(exclude).\n"
+#~ "Talvez tenhas-te esquecido de acrescentar ':/' ou '.' ?"
 
 #~ msgid "unrecognized format: %%(%s)"
 #~ msgstr "formato não reconhecido: %%(%s)"
@@ -26427,7 +26396,7 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 #~ "(use 'rm -rf' se pretende mesmo removê-lo, incluindo todo o seu histórico)"
 
 #~ msgid "Could not write to %s"
-#~ msgstr "Não foi possível escrever em %s"
+#~ msgstr "Incapaz escrever em %s"
 
 #~ msgid "Error wrapping up %s."
 #~ msgstr "Erro ao rematar %s."
@@ -26436,18 +26405,16 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 #~ msgstr "As suas alterações locais serão substituídas por cherry-pick."
 
 #~ msgid "Cannot revert during another revert."
-#~ msgstr "Não é possível reverter durante outra reversão."
+#~ msgstr "Incapaz reverter durante outra reversão."
 
 #~ msgid "Cannot cherry-pick during another cherry-pick."
-#~ msgstr ""
-#~ "Não é possível efetuar cherry-pick durante outro cherry-pick. durante um "
-#~ "cherry-pick."
+#~ msgstr "Incapaz apanhar durante outra apanha."
 
 #~ msgid "Could not open %s"
-#~ msgstr "Não foi possível abrir %s"
+#~ msgstr "Incapaz abrir %s"
 
 #~ msgid "Could not format %s."
-#~ msgstr "Não foi possível formatar %s."
+#~ msgstr "Incapaz formatar %s."
 
 #~ msgid "You need to set your committer info first"
 #~ msgstr "Primeiro tem de definir a sua informação de committer"
@@ -26585,10 +26552,10 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 #~ msgstr "Caminho não processado??? %s"
 
 #~ msgid "Cannot %s during a %s"
-#~ msgstr "Não foi possível efetuar %s durante %s"
+#~ msgstr "Incapaz %s durante %s"
 
 #~ msgid "Can't cherry-pick into empty head"
-#~ msgstr "Não é possível efetuar cherry-pick numa cabeça vazia"
+#~ msgstr "Incapaz apanhar para uma head vazia"
 
 #~ msgid "could not write branch description template"
 #~ msgstr "não foi possível escrever o modelo da descrição do ramo"
@@ -26741,7 +26708,7 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 #~ msgstr "check|on-demand|no"
 
 #~ msgid "Could not append '%s'"
-#~ msgstr "Não foi possível acrescentar '%s'"
+#~ msgstr "Incapaz acrescentar '%s'"
 
 #~ msgid "Testing "
 #~ msgstr "A testar "
@@ -26785,10 +26752,10 @@ msgstr "Deseja mesmo enviar %s? [y|N]: "
 #~ msgstr ", atrás "
 
 #~ msgid "no files added"
-#~ msgstr "nenhum ficheiros adicionado"
+#~ msgstr "adicionado ficheiro nenhum"
 
 #~ msgid "Could not extract email from committer identity."
-#~ msgstr "Não foi possível extrair a identidade do committer do e-mail."
+#~ msgstr "Incapaz extrair email apartir identidade committer."
 
 #~ msgid "option %s does not accept negative form"
 #~ msgstr "opção %s não aceita formato negativo"

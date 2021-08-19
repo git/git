@@ -4,8 +4,12 @@
 #include "pkt-line.h"
 #include "thread-utils.h"
 
-#ifndef GIT_WINDOWS_NATIVE
-#error This file can only be compiled on Windows
+#ifndef SUPPORTS_SIMPLE_IPC
+/*
+ * This source file should only be compiled when Simple IPC is supported.
+ * See the top-level Makefile.
+ */
+#error SUPPORTS_SIMPLE_IPC not defined
 #endif
 
 static int initialize_pipe_name(const char *path, wchar_t *wpath, size_t alloc)

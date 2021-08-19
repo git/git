@@ -109,7 +109,8 @@ static int fsck_error_func(struct fsck_options *o,
 
 static struct object_array pending;
 
-static int mark_object(struct object *obj, int type, void *data, struct fsck_options *options)
+static int mark_object(struct object *obj, enum object_type type,
+		       void *data, struct fsck_options *options)
 {
 	struct object *parent = data;
 

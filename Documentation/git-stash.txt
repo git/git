@@ -91,8 +91,10 @@ show [-u|--include-untracked|--only-untracked] [<diff-options>] [<stash>]::
 	By default, the command shows the diffstat, but it will accept any
 	format known to 'git diff' (e.g., `git stash show -p stash@{1}`
 	to view the second most recent entry in patch form).
-	You can use stash.showIncludeUntracked, stash.showStat, and
-	stash.showPatch config variables to change the default behavior.
+	If no `<diff-option>` is provided, the default behavior will be given
+	by the `stash.showStat`, and `stash.showPatch` config variables. You
+	can also use `stash.showIncludeUntracked` to set whether
+	`--include-untracked` is enabled by default.
 
 pop [--index] [-q|--quiet] [<stash>]::
 

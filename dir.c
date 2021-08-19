@@ -59,8 +59,7 @@ void dir_init(struct dir_struct *dir)
 	memset(dir, 0, sizeof(*dir));
 }
 
-struct dirent *
-readdir_skip_dot_and_dotdot(DIR *dirp)
+struct dirent *readdir_skip_dot_and_dotdot(DIR *dirp)
 {
 	struct dirent *e;
 
