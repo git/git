@@ -128,6 +128,7 @@ static void credential_apply_config(struct credential *c)
 	normalized_url = url_normalize(url.buf, &config.url);
 
 	git_config(urlmatch_config_entry, &config);
+	string_list_clear(&config.vars, 1);
 	free(normalized_url);
 	strbuf_release(&url);
 
