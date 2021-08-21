@@ -66,7 +66,9 @@ test_atom() {
 			case $type in
 			tag)
 				# We cannot use $3 as it expects sanitize_pgp to run
-				expect=$(git cat-file tag $ref | tail -n +6 | wc -c) ;;
+				git cat-file tag $ref >out &&
+				expect=$(tail -n +6 out | wc -c) &&
+				rm -f out ;;
 			tree | blob)
 				expect="" ;;
 			commit)
