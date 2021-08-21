@@ -77,25 +77,29 @@ test_expect_success setup '
 	{
 	    echo "*.t filter=rot13"
 	    echo "*.i ident"
+	    echo "*.ci ident=customId"
 	} >.gitattributes &&
 
 	{
 	    echo a b c d e f g h i j k l m
 	    echo n o p q r s t u v w x y z
 	    echo '\''$Id$'\''
+	    echo '\''$customId$'\''
 	} >test &&
 	cat test >test.t &&
 	cat test >test.o &&
 	cat test >test.i &&
-	git add test test.t test.i &&
-	rm -f test test.t test.i &&
-	git checkout -- test test.t test.i &&
+	cat test >test.ci &&
+	git add test test.t test.i test.ci &&
+	rm -f test test.t test.i test.ci &&
+	git checkout -- test test.t test.i test.ci &&
 
 	echo "content-test2" >test2.o &&
 	echo "content-test3 - filename with special characters" >"test3 '\''sq'\'',\$x=.o"
 '
 
-script='s/^\$Id: \([0-9a-f]*\) \$/\1/p'
+script_i='s/^\$Id: \([0-9a-f]*\) \$/\1/p'
+script_ci='s/^\$customId: \([0-9a-f]*\) \$/\1/p'
 
 test_expect_success check '
 
@@ -105,8 +109,14 @@ test_expect_success check '
 	# ident should be stripped in the repository
 	git diff --raw --exit-code :test :test.i &&
 	id=$(git rev-parse --verify :test) &&
-	embedded=$(sed -ne "$script" test.i) &&
+	embedded=$(sed -ne "$script_i" test.i) &&
+	nembedded=$(sed -ne "$script_ci" test.i) &&
 	test "z$id" = "z$embedded" &&
+	test "z" = "z$nembedded" &&
+	embedded=$(sed -ne "$script_ci" test.ci) &&
+	nembedded=$(sed -ne "$script_i" test.ci) &&
+	test "z$id" = "z$embedded" &&
+	test "z" = "z$nembedded" &&
 
 	git cat-file blob :test.t >test.r &&
 
@@ -114,61 +124,84 @@ test_expect_success check '
 	test_cmp test.r test.t
 '
 
+gen_expanded_keywords() {
+	local id="${1}"
+	echo "File with expanded keywords"
+	echo "\$$id\$"
+	echo "\$$id:\$"
+	echo "\$$id: 0000000000000000000000000000000000000000 \$"
+	echo "\$$id: NoSpaceAtEnd\$"
+	echo "\$$id:NoSpaceAtFront \$"
+	echo "\$$id:NoSpaceAtEitherEnd\$"
+	echo "\$$id: NoTerminatingSymbol"
+	echo "\$$id: Foreign Commit With Spaces \$"
+	printf "\$$id: NoTerminatingSymbolAtEOF"
+}
+
+gen_expected_output_0() {
+	local id="${1}"
+	local hid="${2}"
+	echo "File with expanded keywords"
+	echo "\$$id: $hid \$"
+	echo "\$$id: $hid \$"
+	echo "\$$id: $hid \$"
+	echo "\$$id: $hid \$"
+	echo "\$$id: $hid \$"
+	echo "\$$id: $hid \$"
+	echo "\$$id: NoTerminatingSymbol"
+	echo "\$$id: Foreign Commit With Spaces \$"
+}
+
+gen_expected_output() {
+	local id="${1}"
+	gen_expected_output_0 "${@}"
+	printf "\$$id: NoTerminatingSymbolAtEOF"
+}
+
+gen_expected_output_crlf() {
+	local id="${1}"
+	gen_expected_output_0 "${@}" | append_cr
+	printf "\$$id: NoTerminatingSymbolAtEOF"
+}
+
 # If an expanded ident ever gets into the repository, we want to make sure that
 # it is collapsed before being expanded again on checkout
 test_expect_success expanded_in_repo '
-	{
-		echo "File with expanded keywords"
-		echo "\$Id\$"
-		echo "\$Id:\$"
-		echo "\$Id: 0000000000000000000000000000000000000000 \$"
-		echo "\$Id: NoSpaceAtEnd\$"
-		echo "\$Id:NoSpaceAtFront \$"
-		echo "\$Id:NoSpaceAtEitherEnd\$"
-		echo "\$Id: NoTerminatingSymbol"
-		echo "\$Id: Foreign Commit With Spaces \$"
-	} >expanded-keywords.0 &&
-
-	{
-		cat expanded-keywords.0 &&
-		printf "\$Id: NoTerminatingSymbolAtEOF"
-	} >expanded-keywords &&
+	gen_expanded_keywords Id >expanded-keywords &&
+	gen_expanded_keywords customId >expanded-keywords_ci &&
 	cat expanded-keywords >expanded-keywords-crlf &&
+	cat expanded-keywords_ci >expanded-keywords-crlf_ci &&
 	git add expanded-keywords expanded-keywords-crlf &&
+	git add expanded-keywords_ci expanded-keywords-crlf_ci &&
 	git commit -m "File with keywords expanded" &&
 	id=$(git rev-parse --verify :expanded-keywords) &&
+	id_ci=$(git rev-parse --verify :expanded-keywords_ci) &&
 
-	{
-		echo "File with expanded keywords"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: NoTerminatingSymbol"
-		echo "\$Id: Foreign Commit With Spaces \$"
-	} >expected-output.0 &&
-	{
-		cat expected-output.0 &&
-		printf "\$Id: NoTerminatingSymbolAtEOF"
-	} >expected-output &&
-	{
-		append_cr <expected-output.0 &&
-		printf "\$Id: NoTerminatingSymbolAtEOF"
-	} >expected-output-crlf &&
+	gen_expected_output Id $id >expected-output &&
+	gen_expected_output customId $id_ci >expected-output_ci &&
+	gen_expected_output_crlf Id $id >expected-output-crlf &&
+	gen_expected_output_crlf customId $id_ci >expected-output-crlf_ci &&
 	{
 		echo "expanded-keywords ident"
+		echo "expanded-keywords_ci ident=customId"
 		echo "expanded-keywords-crlf ident text eol=crlf"
+		echo "expanded-keywords-crlf_ci ident=customId text eol=crlf"
 	} >>.gitattributes &&
 
 	rm -f expanded-keywords expanded-keywords-crlf &&
+	rm -f expanded-keywords_ci expanded-keywords-crlf_ci &&
 
 	git checkout -- expanded-keywords &&
 	test_cmp expected-output expanded-keywords &&
 
 	git checkout -- expanded-keywords-crlf &&
-	test_cmp expected-output-crlf expanded-keywords-crlf
+	test_cmp expected-output-crlf expanded-keywords-crlf &&
+
+	git checkout -- expanded-keywords_ci &&
+	test_cmp expected-output_ci expanded-keywords_ci &&
+
+	git checkout -- expanded-keywords-crlf_ci &&
+	test_cmp expected-output-crlf_ci expanded-keywords-crlf_ci
 '
 
 # The use of %f in a filter definition is expanded to the path to

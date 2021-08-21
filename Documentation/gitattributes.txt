@@ -382,6 +382,14 @@ sign `$` upon checkout.  Any byte sequence that begins with
 `$Id:` and ends with `$` in the worktree file is replaced
 with `$Id$` upon check-in.
 
+The `ident` attribute can also provide an optional value,
+which if supplied is going to be used for expansion instead of
+the string `Id`.
+
+------------------------
+*.[ch]		ident=FreeBSD
+------------------------
+
 
 `filter`
 ^^^^^^^^

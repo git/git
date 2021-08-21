@@ -20,16 +20,19 @@ test_expect_success 'parallel-checkout with ident' '
 	(
 		cd ident &&
 		echo "A ident" >.gitattributes &&
+		echo "C ident=MyCusomVeryLongAndWordyId" >>.gitattributes &&
 		echo "\$Id\$" >A &&
 		echo "\$Id\$" >B &&
+		echo "\$MyCusomVeryLongAndWordyId\$" >C &&
 		git add -A &&
 		git commit -m id &&
 
-		rm A B &&
+		rm A B C &&
 		test_checkout_workers 2 git reset --hard &&
 		hexsz=$(test_oid hexsz) &&
 		grep -E "\\\$Id: [0-9a-f]{$hexsz} \\\$" A &&
-		grep "\\\$Id\\\$" B
+		grep "\\\$Id\\\$" B &&
+		grep -E "\\\$MyCusomVeryLongAndWordyId: [0-9a-f]{$hexsz} \\\$" C
 	)
 '
 

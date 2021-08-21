@@ -1056,7 +1056,10 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static int count_ident(const char *cp, unsigned long size)
+#define ID_STR_DEFAULT "Id"
+
+static int count_ident(const char *cp, unsigned long size,
+		       const struct ident_action *idact)
 {
 	/*
 	 * "$Id: 0000000000000000000000000000000000000000 $" <=> "$Id$"
@@ -1069,13 +1072,13 @@ static int count_ident(const char *cp, unsigned long size)
 		size--;
 		if (ch != '$')
 			continue;
-		if (size < 3)
+		if (size < idact->id_len + 1)
 			break;
-		if (memcmp("Id", cp, 2))
+		if (memcmp(idact->id, cp, idact->id_len))
 			continue;
-		ch = cp[2];
-		cp += 3;
-		size -= 3;
+		ch = cp[idact->id_len];
+		cp += idact->id_len + 1;
+		size -= idact->id_len + 1;
 		if (ch == '$')
 			cnt++; /* $Id$ */
 		if (ch != ':')
@@ -1099,11 +1102,11 @@ static int count_ident(const char *cp, unsigned long size)
 }
 
 static int ident_to_git(const char *src, size_t len,
-			struct strbuf *buf, int ident)
+			struct strbuf *buf, const struct ident_action *idact)
 {
 	char *dst, *dollar;
 
-	if (!ident || (src && !count_ident(src, len)))
+	if (!idact->id || (src && !count_ident(src, len, idact)))
 		return 0;
 
 	if (!buf)
@@ -1122,17 +1125,18 @@ static int ident_to_git(const char *src, size_t len,
 		len -= dollar + 1 - src;
 		src  = dollar + 1;
 
-		if (len > 3 && !memcmp(src, "Id:", 3)) {
-			dollar = memchr(src + 3, '$', len - 3);
+		if (len > idact->id_len + 1 && !memcmp(src, idact->id, idact->id_len) && src[idact->id_len] == ':') {
+			dollar = memchr(src + idact->id_len + 1, '$', len - (idact->id_len + 1));
 			if (!dollar)
 				break;
-			if (memchr(src + 3, '\n', dollar - src - 3)) {
+			if (memchr(src + idact->id_len + 1, '\n', dollar - src - (idact->id_len + 1))) {
 				/* Line break before the next dollar. */
 				continue;
 			}
 
-			memcpy(dst, "Id$", 3);
-			dst += 3;
+			memcpy(dst, idact->id, idact->id_len);
+			dst[idact->id_len] = '$';
+			dst += idact->id_len + 1;
 			len -= dollar + 1 - src;
 			src  = dollar + 1;
 		}
@@ -1143,16 +1147,16 @@ static int ident_to_git(const char *src, size_t len,
 }
 
 static int ident_to_worktree(const char *src, size_t len,
-			     struct strbuf *buf, int ident)
+			     struct strbuf *buf, const struct ident_action *idact)
 {
 	struct object_id oid;
 	char *to_free = NULL, *dollar, *spc;
 	int cnt;
 
-	if (!ident)
+	if (!idact->id)
 		return 0;
 
-	cnt = count_ident(src, len);
+	cnt = count_ident(src, len, idact);
 	if (!cnt)
 		return 0;
 
@@ -1161,7 +1165,7 @@ static int ident_to_worktree(const char *src, size_t len,
 		to_free = strbuf_detach(buf, NULL);
 	hash_object_file(the_hash_algo, src, len, "blob", &oid);
 
-	strbuf_grow(buf, len + cnt * (the_hash_algo->hexsz + 3));
+	strbuf_grow(buf, len + cnt * (the_hash_algo->hexsz + idact->id_len + 1));
 	for (;;) {
 		/* step 1: run to the next '$' */
 		dollar = memchr(src, '$', len);
@@ -1172,14 +1176,14 @@ static int ident_to_worktree(const char *src, size_t len,
 		src  = dollar + 1;
 
 		/* step 2: does it looks like a bit like Id:xxx$ or Id$ ? */
-		if (len < 3 || memcmp("Id", src, 2))
+		if (len < idact->id_len + 1 || memcmp(idact->id, src, idact->id_len))
 			continue;
 
 		/* step 3: skip over Id$ or Id:xxxxx$ */
-		if (src[2] == '$') {
-			src += 3;
-			len -= 3;
-		} else if (src[2] == ':') {
+		if (src[idact->id_len] == '$') {
+			src += idact->id_len + 1;
+			len -= idact->id_len + 1;
+		} else if (src[idact->id_len] == ':') {
 			/*
 			 * It's possible that an expanded Id has crept its way into the
 			 * repository, we cope with that by stripping the expansion out.
@@ -1187,18 +1191,18 @@ static int ident_to_worktree(const char *src, size_t len,
 			 * on checkout, which won't go away by stash, but let's keep it
 			 * for git-style ids.
 			 */
-			dollar = memchr(src + 3, '$', len - 3);
+			dollar = memchr(src + idact->id_len + 1, '$', len - (idact->id_len + 1));
 			if (!dollar) {
 				/* incomplete keyword, no more '$', so just quit the loop */
 				break;
 			}
 
-			if (memchr(src + 3, '\n', dollar - src - 3)) {
+			if (memchr(src + idact->id_len + 1, '\n', dollar - src - (idact->id_len + 1))) {
 				/* Line break before the next dollar. */
 				continue;
 			}
 
-			spc = memchr(src + 4, ' ', dollar - src - 4);
+			spc = memchr(src + idact->id_len + 2, ' ', dollar - src - (idact->id_len + 2));
 			if (spc && spc < dollar-1) {
 				/* There are spaces in unexpected places.
 				 * This is probably an id from some other
@@ -1215,7 +1219,8 @@ static int ident_to_worktree(const char *src, size_t len,
 		}
 
 		/* step 4: substitute */
-		strbuf_addstr(buf, "Id: ");
+		strbuf_addstr(buf, idact->id);
+		strbuf_addstr(buf, ": ");
 		strbuf_addstr(buf, oid_to_hex(&oid));
 		strbuf_addstr(buf, " $");
 	}
@@ -1286,11 +1291,19 @@ static struct convert_driver *git_path_check_convert(struct attr_check_item *che
 	return NULL;
 }
 
-static int git_path_check_ident(struct attr_check_item *check)
+static struct ident_action git_path_check_ident(struct attr_check_item *check)
 {
+	struct ident_action idact = {.id = NULL, .id_len = 0};
 	const char *value = check->value;
 
-	return !!ATTR_TRUE(value);
+	if (!ATTR_UNSET(value) && !ATTR_FALSE(value)) {
+		if (ATTR_TRUE(value))
+			idact.id = ID_STR_DEFAULT;
+		else
+			idact.id = value;
+		idact.id_len = strlen(idact.id);
+	}
+	return idact;
 }
 
 static struct attr_check *check;
@@ -1313,7 +1326,7 @@ void convert_attrs(struct index_state *istate,
 	ca->crlf_action = git_path_check_crlf(ccheck + 4);
 	if (ca->crlf_action == CRLF_UNDEFINED)
 		ca->crlf_action = git_path_check_crlf(ccheck + 0);
-	ca->ident = git_path_check_ident(ccheck + 1);
+	ca->ident_action = git_path_check_ident(ccheck + 1);
 	ca->drv = git_path_check_convert(ccheck + 2);
 	if (ca->crlf_action != CRLF_BINARY) {
 		enum eol eol_attr = git_path_check_eol(ccheck + 3);
@@ -1433,7 +1446,7 @@ int convert_to_git(struct index_state *istate,
 			len = dst->len;
 		}
 	}
-	return ret | ident_to_git(src, len, dst, ca.ident);
+	return ret | ident_to_git(src, len, dst, &ca.ident_action);
 }
 
 void convert_to_git_filter_fd(struct index_state *istate,
@@ -1450,7 +1463,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
 
 	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
 	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
-	ident_to_git(dst->buf, dst->len, dst, ca.ident);
+	ident_to_git(dst->buf, dst->len, dst, &ca.ident_action);
 }
 
 static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
@@ -1462,7 +1475,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
 {
 	int ret = 0, ret_filter = 0;
 
-	ret |= ident_to_worktree(src, len, dst, ca->ident);
+	ret |= ident_to_worktree(src, len, dst, &(ca->ident_action));
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -1810,14 +1823,17 @@ struct ident_filter {
 	struct stream_filter filter;
 	struct strbuf left;
 	int state;
+	const struct ident_action *idact;
 	char ident[GIT_MAX_HEXSZ + 5]; /* ": x40 $" */
 };
 
-static int is_foreign_ident(const char *str)
+static int is_foreign_ident(const struct ident_action *idact, const char *str)
 {
 	int i;
 
-	if (!skip_prefix(str, "$Id: ", &str))
+	if (str[0] != '$' || strlen(str) < idact->id_len + 3 ||
+	    memcmp(str + 1, idact->id, idact->id_len) != 0 ||
+	    !skip_prefix(str + 1 + idact->id_len, ": ", &str))
 		return 0;
 	for (i = 0; str[i]; i++) {
 		if (isspace(str[i]) && str[i+1] != '$')
@@ -1847,13 +1863,16 @@ static int ident_filter_fn(struct stream_filter *filter,
 			   char *output, size_t *osize_p)
 {
 	struct ident_filter *ident = (struct ident_filter *)filter;
-	static const char head[] = "$Id";
+	const struct ident_action *idact = ident->idact;
 
 	if (!input) {
 		/* drain upon eof */
 		switch (ident->state) {
 		default:
-			strbuf_add(&ident->left, head, ident->state);
+			if (ident->state > 0)
+				strbuf_addch(&ident->left, '$');
+			if (ident->state > 1)
+				strbuf_add(&ident->left, idact->id, ident->state - 1);
 			/* fallthrough */
 		case IDENT_SKIPPING:
 			/* fallthrough */
@@ -1884,23 +1903,27 @@ static int ident_filter_fn(struct stream_filter *filter,
 			strbuf_addch(&ident->left, ch);
 			if (ch != '\n' && ch != '$')
 				continue;
-			if (ch == '$' && !is_foreign_ident(ident->left.buf)) {
-				strbuf_setlen(&ident->left, sizeof(head) - 1);
+			if (ch == '$' && !is_foreign_ident(idact, ident->left.buf)) {
+				strbuf_setlen(&ident->left, idact->id_len + 1);
 				strbuf_addstr(&ident->left, ident->ident);
 			}
 			ident->state = IDENT_DRAINING;
 			continue;
 		}
 
-		if (ident->state < sizeof(head) &&
-		    head[ident->state] == ch) {
+		if ((ident->state == 0 && ch == '$') ||
+		    (ident->state > 0 && ident->state < idact->id_len + 1 &&
+		     idact->id[ident->state - 1] == ch)) {
 			ident->state++;
 			continue;
 		}
 
-		if (ident->state)
-			strbuf_add(&ident->left, head, ident->state);
-		if (ident->state == sizeof(head) - 1) {
+		if (ident->state) {
+			strbuf_addch(&ident->left, '$');
+			if (ident->state > 1)
+				strbuf_add(&ident->left, idact->id, ident->state - 1);
+		}
+		if (ident->state == idact->id_len + 1) {
 			if (ch != ':' && ch != '$') {
 				strbuf_addch(&ident->left, ch);
 				ident->state = 0;
@@ -1935,7 +1958,7 @@ static struct stream_filter_vtbl ident_vtbl = {
 	ident_free_fn,
 };
 
-static struct stream_filter *ident_filter(const struct object_id *oid)
+static struct stream_filter *ident_filter(const struct object_id *oid, const struct ident_action *idact)
 {
 	struct ident_filter *ident = xmalloc(sizeof(*ident));
 
@@ -1944,6 +1967,7 @@ static struct stream_filter *ident_filter(const struct object_id *oid)
 	strbuf_init(&ident->left, 0);
 	ident->filter.vtbl = &ident_vtbl;
 	ident->state = 0;
+	ident->idact = idact;
 	return (struct stream_filter *)ident;
 }
 
@@ -1963,8 +1987,8 @@ struct stream_filter *get_stream_filter_ca(const struct conv_attrs *ca,
 	if (classify_conv_attrs(ca) != CA_CLASS_STREAMABLE)
 		return NULL;
 
-	if (ca->ident)
-		filter = ident_filter(oid);
+	if (ca->ident_action.id)
+		filter = ident_filter(oid, &(ca->ident_action));
 
 	if (output_eol(ca->crlf_action) == EOL_CRLF)
 		filter = cascade_filter(filter, lf_to_crlf_filter());

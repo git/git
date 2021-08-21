@@ -76,11 +76,16 @@ enum convert_crlf_action {
 
 struct convert_driver;
 
+struct ident_action {
+	const char *id;
+	size_t id_len;
+};
+
 struct conv_attrs {
 	struct convert_driver *drv;
 	enum convert_crlf_action attr_action; /* What attr says */
 	enum convert_crlf_action crlf_action; /* When no attr is set, use core.autocrlf */
-	int ident;
+	struct ident_action ident_action; /* What ident says */
 	const char *working_tree_encoding; /* Supported encoding or default encoding if NULL */
 };
 

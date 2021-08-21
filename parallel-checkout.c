@@ -91,7 +91,8 @@ static int is_eligible_for_parallel_checkout(const struct cache_entry *ce,
 		return 0;
 
 	packed_item_size = sizeof(struct pc_item_fixed_portion) + ce->ce_namelen +
-		(ca->working_tree_encoding ? strlen(ca->working_tree_encoding) : 0);
+		(ca->working_tree_encoding ? strlen(ca->working_tree_encoding) : 0) +
+		ca->ident_action.id_len;
 
 	/*
 	 * The amount of data we send to the workers per checkout item is
@@ -403,13 +404,15 @@ static void send_one_item(int fd, struct parallel_checkout_item *pc_item)
 	size_t name_len = pc_item->ce->ce_namelen;
 	size_t working_tree_encoding_len = working_tree_encoding ?
 					   strlen(working_tree_encoding) : 0;
+	const char *ident_action_id = pc_item->ca.ident_action.id;
+	size_t ident_action_len = pc_item->ca.ident_action.id_len;
 
 	/*
 	 * Any changes in the calculation of the message size must also be made
 	 * in is_eligible_for_parallel_checkout().
 	 */
 	len_data = sizeof(struct pc_item_fixed_portion) + name_len +
-		   working_tree_encoding_len;
+		   working_tree_encoding_len + ident_action_len;
 
 	data = xmalloc(len_data);
 
@@ -417,7 +420,7 @@ static void send_one_item(int fd, struct parallel_checkout_item *pc_item)
 	fixed_portion->id = pc_item->id;
 	fixed_portion->ce_mode = pc_item->ce->ce_mode;
 	fixed_portion->crlf_action = pc_item->ca.crlf_action;
-	fixed_portion->ident = pc_item->ca.ident;
+	fixed_portion->ident_action_len = ident_action_len;
 	fixed_portion->name_len = name_len;
 	fixed_portion->working_tree_encoding_len = working_tree_encoding_len;
 	/*
@@ -434,6 +437,11 @@ static void send_one_item(int fd, struct parallel_checkout_item *pc_item)
 		variant += working_tree_encoding_len;
 	}
 	memcpy(variant, pc_item->ce->name, name_len);
+	variant += name_len;
+	if (ident_action_len) {
+		memcpy(variant, ident_action_id, ident_action_len);
+		variant += ident_action_len;
+	}
 
 	packet_write(fd, data, len_data);
 

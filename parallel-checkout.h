@@ -76,9 +76,9 @@ struct parallel_checkout_item {
 
 /*
  * The fixed-size portion of `struct parallel_checkout_item` that is sent to the
- * workers. Following this will be 2 strings: ca.working_tree_encoding and
- * ce.name; These are NOT null terminated, since we have the size in the fixed
- * portion.
+ * workers. Following this will be 3 strings: ca.working_tree_encoding, ca.name
+ * and ca.ident_action.id; These are NOT null terminated, since we have the size
+ * in the fixed portion.
  *
  * Note that not all fields of conv_attrs and cache_entry are passed, only the
  * ones that will be required by the workers to smudge and write the entry.
@@ -88,7 +88,7 @@ struct pc_item_fixed_portion {
 	struct object_id oid;
 	unsigned int ce_mode;
 	enum convert_crlf_action crlf_action;
-	int ident;
+	size_t ident_action_len;
 	size_t working_tree_encoding_len;
 	size_t name_len;
 };
